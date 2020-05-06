@@ -38,6 +38,9 @@ impl system::Trait for Test {
 	type MaximumBlockWeight = MaximumBlockWeight;
 	type MaximumBlockLength = MaximumBlockLength;
 	type AvailableBlockRatio = AvailableBlockRatio;
+	type BlockExecutionWeight = ();
+	type DbWeight = ();
+	type ExtrinsicBaseWeight = ();
 	type Version = ();
 	type ModuleToIndex = ();
 	type AccountData = ();

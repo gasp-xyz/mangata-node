@@ -40,7 +40,7 @@ edition = '2018'
 homepage = 'https://substrate.io'
 license = 'Unlicense'
 name = 'pallet-template'
-repository = 'https://github.com/substrate-developer-hub/substrate-pallet-template/'
+repository = 'https://github.com/substrate-developer-hub/substrate-node-template/'
 version = '2.0.0-rc3'
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']

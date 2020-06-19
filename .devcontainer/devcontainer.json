@@ -14,5 +14,5 @@
     3000,
     9944
   ],
-  "image": "jeluard/substrate-playground-template-node-template:sha-64ca567"
+  "image": "paritytech/substrate-playground-template-node-template:sha-b98e1d2"
 }

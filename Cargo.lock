@@ -3273,6 +3273,7 @@ version = "2.0.0-rc6"
 dependencies = [
  "jsonrpc-core",
  "node-template-runtime",
+ "pallet-generic-asset",
  "pallet-transaction-payment-rpc",
  "sc-basic-authorship",
  "sc-cli",
@@ -3310,6 +3311,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "pallet-aura",
  "pallet-balances",
+ "pallet-generic-asset",
  "pallet-grandpa",
  "pallet-randomness-collective-flip",
  "pallet-sudo",
@@ -3317,6 +3319,7 @@ dependencies = [
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
+ "pallet-xyk",
  "parity-scale-codec",
  "serde",
  "sp-api",
@@ -3545,6 +3548,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-generic-asset"
+version = "2.0.0-rc6"
+source = "git+https://github.com/paritytech/substrate.git?tag=v2.0.0-rc6#be8bb186d87b9d2b47a2907c9b51ae1e252362c3"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-grandpa"
 version = "2.0.0-rc6"
 source = "git+https://github.com/paritytech/substrate.git?tag=v2.0.0-rc6#be8bb186d87b9d2b47a2907c9b51ae1e252362c3"
@@ -3688,6 +3703,19 @@ dependencies = [
  "sp-api",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-xyk"
+version = "2.0.0-rc6"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-generic-asset",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
 ]
 
 [[package]]

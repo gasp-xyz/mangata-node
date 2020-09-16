@@ -40,6 +40,8 @@ pub use frame_support::{
 
 /// Import the template pallet.
 pub use template;
+pub use xyk;
+use generic_asset;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -257,9 +259,21 @@ impl pallet_sudo::Trait for Runtime {
 	type Call = Call;
 }
 
+impl generic_asset::Trait for Runtime {
+    /// The type for recording an account's balance.
+    type Balance = Balance;
+    type AssetId = u32;
+    type Event = Event;
+}
+
 /// Configure the pallet template in pallets/template.
 impl template::Trait for Runtime {
 	type Event = Event;
+}
+
+impl xyk::Trait for Runtime {
+    type Event = Event;
+    type Randomness = RandomnessCollectiveFlip;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -277,8 +291,10 @@ construct_runtime!(
 		Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Module, Storage},
 		Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
+		GenericAsset: generic_asset::{Module, Call, Storage, Event<T>},
 		// Include the custom logic from the template pallet in the runtime.
 		TemplateModule: template::{Module, Call, Storage, Event<T>},
+		Xyk: xyk::{Module, Call, Storage, Event<T>},
 	}
 );
 

@@ -165,6 +165,19 @@ package = 'pallet-template'
 path = '../pallets/template'
 version = '2.0.0-rc6'
 
+[dependencies.generic-asset]
+default-features = false
+git = 'https://github.com/paritytech/substrate.git'
+package = 'pallet-generic-asset'
+tag = 'v2.0.0-rc6'
+version = '2.0.0-rc6'
+
+[dependencies.xyk]
+default-features = false
+package = 'pallet-xyk'
+path = '../pallets/xyk'
+version = '2.0.0-rc6'
+
 [features]
 default = ['std']
 std = [

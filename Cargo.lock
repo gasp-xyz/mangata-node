@@ -3237,7 +3237,7 @@ dependencies = [
  "frame-benchmarking-cli",
  "jsonrpc-core",
  "node-template-runtime",
- "pallet-generic-asset",
+ "pallet-assets 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "pallet-transaction-payment-rpc",
  "sc-basic-authorship",
  "sc-cli",
@@ -3276,9 +3276,9 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "hex-literal",
+ "pallet-assets 2.0.0",
  "pallet-aura",
  "pallet-balances",
- "pallet-generic-asset",
  "pallet-grandpa",
  "pallet-randomness-collective-flip",
  "pallet-sudo",
@@ -3451,6 +3451,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-assets"
+version = "2.0.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-assets"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee8096df10f954c2c55886ea0ba39361a0dfc0994479684b2f0eb87116deb825"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "sp-runtime",
+]
+
+[[package]]
 name = "pallet-aura"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3514,18 +3540,6 @@ dependencies = [
  "serde",
  "sp-finality-tracker",
  "sp-inherents",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-generic-asset"
-version = "2.0.0-rc6"
-source = "git+https://github.com/paritytech/substrate.git?tag=v2.0.0-rc6#be8bb186d87b9d2b47a2907c9b51ae1e252362c3"
-dependencies = [
- "frame-support",
- "frame-system",
- "parity-scale-codec",
  "sp-runtime",
  "sp-std",
 ]
@@ -3687,11 +3701,11 @@ dependencies = [
 
 [[package]]
 name = "pallet-xyk"
-version = "2.0.0-rc6"
+version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
- "pallet-generic-asset",
+ "pallet-assets 2.0.0",
  "parity-scale-codec",
  "sp-core",
  "sp-io",

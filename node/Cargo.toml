@@ -18,13 +18,6 @@ targets = ['x86_64-unknown-linux-gnu']
 [build-dependencies]
 substrate-build-script-utils = '2.0.0'
 
-[dependencies.generic-asset]
-default-features = false
-git = 'https://github.com/paritytech/substrate.git'
-package = 'pallet-generic-asset'
-tag = 'v2.0.0-rc6'
-version = '2.0.0-rc6'
-
 [dependencies]
 jsonrpc-core = '15.0.0'
 structopt = '0.3.8'
@@ -58,6 +51,7 @@ sp-inherents = '2.0.0'
 sp-runtime = '2.0.0'
 sp-transaction-pool = '2.0.0'
 substrate-frame-rpc-system = '2.0.0'
+pallet-assets = { default-features = false, version = '2.0.0' }
 
 [features]
 default = []

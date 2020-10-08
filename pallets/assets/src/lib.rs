@@ -291,6 +291,17 @@ impl<T: Trait> Module<T> {
 
 		Ok(())
 	}
+
+	pub fn assets_mint(id: &T::AssetId, to: &T::AccountId, amount: &T::Balance) -> T::Balance {
+		<Balances<T>>::mutate((id, to), |balance| *balance += *amount);
+		<Balances<T>>::get((id, to))
+	}
+
+	pub fn assets_burn(id: &T::AssetId, to: &T::AccountId, amount: &T::Balance) -> T::Balance {
+		//TODO ensure amount
+		<Balances<T>>::mutate((id, to), |balance| *balance -= *amount);
+		<Balances<T>>::get((id, to))
+	}
 }
 
 #[cfg(test)]

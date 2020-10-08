@@ -22,11 +22,6 @@ mod tests;
 
 pub trait Trait: assets::Trait {
     // TODO: Add other types and constants required configure this module.
-    // type Hashing = BlakeTwo256;
-
-    // type Balance: From<Balance<Self>>;
-    // type NextAssetId: pallet_assets::Trait::NextAssetId;
-    // type Assets: pallet_assets::Trait;
     type Randomness: Randomness<Self::Hash>;
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 }
@@ -324,6 +319,11 @@ decl_module! {
             //     &sender,
             //     &liquidity_assets_minted,
             //)?;
+            <assets::Module<T>>::assets_mint(
+                &liquidity_asset_id,
+                &sender,
+                &liquidity_assets_minted
+            );
 
             Ok(())
         }
@@ -388,6 +388,7 @@ decl_module! {
             //    &sender,
             //    &liquidity_asset_amount,
             //)?;
+            <assets::Module<T>>::assets_burn(&liquidity_asset_id, &sender, &liquidity_asset_amount);
 
             Ok(())
         }

@@ -29,11 +29,34 @@ node-template-runtime = { path = '../runtime', version = '2.0.0' }
 frame-benchmarking = '2.0.0'
 frame-benchmarking-cli = '2.0.0'
 pallet-transaction-payment-rpc = '2.0.0'
+pallet-transaction-payment = '2.0.0'
 sc-basic-authorship = '0.8.0'
 sc-cli = { features = ['wasmtime'], version = '0.8.0' }
 sc-client-api = '2.0.0'
 sc-consensus = '0.8.0'
-sc-consensus-aura = '0.8.0'
+sc-consensus-babe = '0.8.0'
+sp-consensus-babe = '0.8.0'
+sp-authority-discovery = '2.0.0'
+#grandpa-primitives = {package = 'sp-finality-grandpa', version = '2.0.0'}
+sp-timestamp = '2.0.0'
+sp-finality-tracker = '2.0.0'
+sp-keyring  = '2.0.0'
+sp-io  = '2.0.0'
+sc-chain-spec  = '2.0.0'
+sc-network  = '0.8.0'
+#grandpa  = {package = 'sc-finality-grandpa', version = '0.8.0'}
+sc-client-db  = '0.8.0'
+sc-offchain  = '2.0.0'
+sc-tracing  = '2.0.0'
+sc-telemetry  = '2.0.0'
+sc-authority-discovery  = '0.8.0'
+frame-system  = '2.0.0'
+pallet-balances = '2.0.0'
+frame-support = '2.0.0'
+pallet-authority-discovery = '2.0.0'
+pallet-staking = '2.0.0'
+pallet-grandpa = '2.0.0'
+
 sc-executor = { features = ['wasmtime'], version = '0.8.0' }
 sc-finality-grandpa = '0.8.0'
 sc-rpc = '2.0.0'
@@ -44,7 +67,6 @@ sp-api = '2.0.0'
 sp-block-builder = '2.0.0'
 sp-blockchain = '2.0.0'
 sp-consensus = '0.8.0'
-sp-consensus-aura = '0.8.0'
 sp-core = '2.0.0'
 sp-finality-grandpa = '2.0.0'
 sp-inherents = '2.0.0'
@@ -52,6 +74,7 @@ sp-runtime = '2.0.0'
 sp-transaction-pool = '2.0.0'
 substrate-frame-rpc-system = '2.0.0'
 pallet-assets = { default-features = false, version = '2.0.0' }
+
 
 [features]
 default = []

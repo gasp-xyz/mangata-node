@@ -7,3 +7,6 @@ members = [
     'pallets/template',
     'runtime',
 ]
+
+[patch.crates-io]
+sc-block-builder = { default-features = false, version = '0.8.0', path = './client/block-builder' }

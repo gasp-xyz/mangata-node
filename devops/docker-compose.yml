@@ -3,7 +3,7 @@ services:
   node_alice:
     image: mangata/node
     container_name: alice
-    entrypoint: ./node --dev --alice --validator --unsafe-ws-external --rpc-cors=all -lruntime=debug
+    entrypoint: ./node --dev --alice --validator --unsafe-ws-external --rpc-cors=all -lruntime=debug --node-key=0000000000000000000000000000000000000000000000000000000000000001
     ports:
       - "30333:30333"
       - "9933:9933"
@@ -15,7 +15,7 @@ services:
   node_bob:
     image: mangata/node
     container_name: bob
-    entrypoint: ./node --dev --bob --validator --unsafe-ws-external --rpc-cors=all -lruntime=debug
+    entrypoint: ./node --dev --bob --unsafe-ws-external --rpc-cors=all -lruntime=debug --bootnodes='/ip4/172.28.1.1/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp'
     ports:
       - "30335:30333"
       - "9935:9933"

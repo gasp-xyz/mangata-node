@@ -877,13 +877,13 @@ impl<B, E, Block, RA> Client<B, E, Block, RA> where
 					*parent_hash,
 				)?;
 
-				if import_block.header.state_root()
-					!= &gen_storage_changes.transaction_storage_root
-				{
-					return Err(Error::InvalidStateRoot)
-				} else {
+				// if import_block.header.state_root()
+				// 	!= &gen_storage_changes.transaction_storage_root
+				// {
+				// 	return Err(Error::InvalidStateRoot)
+				// } else {
 					**storage_changes = Some(gen_storage_changes);
-				}
+				// }
 			},
 			// No block body, no storage changes
 			(true, None, None) => {},

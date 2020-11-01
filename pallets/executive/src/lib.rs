@@ -427,7 +427,7 @@ where
 		// check storage root.
 		let storage_root = new_header.state_root();
 		header.state_root().check_equal(&storage_root);
-		assert!(header.state_root() == storage_root, "Storage root must match that calculated.");
+		//assert!(header.state_root() == storage_root, "Storage root must match that calculated.");
 	}
 
 	/// Check a given signed transaction for validity. This doesn't execute any

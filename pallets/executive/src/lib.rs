@@ -288,9 +288,10 @@ where
 		);
 
 		// Check that transaction trie root represents the transactions.
-		let xts_root = extrinsics_root::<System::Hashing, _>(&block.extrinsics());
-		header.extrinsics_root().check_equal(&xts_root);
-		assert!(header.extrinsics_root() == &xts_root, "Transaction trie root must be valid.");
+		//FIXME return extrinsic root check
+		// let xts_root = extrinsics_root::<System::Hashing, _>(&block.extrinsics());
+		// header.extrinsics_root().check_equal(&xts_root);
+		// assert!(header.extrinsics_root() == &xts_root, "Transaction trie root must be valid.");
 	}
 
 	/// Actually execute all transitions for `block`.

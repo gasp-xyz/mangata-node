@@ -141,6 +141,7 @@ where
 
 		let block_id = BlockId::Hash(parent_hash);
 
+		info!("Api call to initialize the block");
 		api.initialize_block_with_context(
 			&block_id, ExecutionContext::BlockConstruction, &header,
 		)?;
@@ -161,25 +162,30 @@ where
 		let block_id = &self.block_id;
 		let extrinsics = &mut self.extrinsics;
 
-		info!("Going to call api tx execution");
-		self.api.execute_in_transaction(|api| {
-			match api.apply_extrinsic_with_context(
-				block_id,
-				ExecutionContext::BlockConstruction,
-				xt.clone(),
-			) {
-				Ok(Ok(_)) => {
-					extrinsics.push(xt);
-					TransactionOutcome::Commit(Ok(()))
-				}
-				Ok(Err(tx_validity)) => {
-					TransactionOutcome::Rollback(
-						Err(ApplyExtrinsicFailed::Validity(tx_validity).into()),
-					)
-				},
-				Err(e) => TransactionOutcome::Rollback(Err(e)),
-			}
-		})
+		//FIXME add test execution with state rejection
+		info!("Pushing transactions without execution");
+		extrinsics.push(xt);
+		Ok(())
+
+		// info!("Going to call api tx execution");
+		// self.api.execute_in_transaction(|api| {
+		// 	match api.apply_extrinsic_with_context(
+		// 		block_id,
+		// 		ExecutionContext::BlockConstruction,
+		// 		xt.clone(),
+		// 	) {
+		// 		Ok(Ok(_)) => {
+		// 			extrinsics.push(xt);
+		// 			TransactionOutcome::Commit(Ok(()))
+		// 		}
+		// 		Ok(Err(tx_validity)) => {
+		// 			TransactionOutcome::Rollback(
+		// 				Err(ApplyExtrinsicFailed::Validity(tx_validity).into()),
+		// 			)
+		// 		},
+		// 		Err(e) => TransactionOutcome::Rollback(Err(e)),
+		// 	}
+		// })
 	}
 
 	/// Consume the builder to build a valid `Block` containing all pushed extrinsics.
@@ -191,6 +197,29 @@ where
 		BuiltBlock<Block, backend::StateBackendFor<B, Block>>,
 		ApiErrorFor<A, Block>
 	> {
+		let mut extrinsics = self.extrinsics.clone();
+		let block_id = &self.block_id;
+		// self.backend.revert(1.into(), false);
+		info!("transaction execution after reversion");
+		extrinsics.into_iter().rev().for_each(|xt| {
+			self.api.execute_in_transaction(|api| {
+				match api.apply_extrinsic_with_context(
+					block_id,
+					ExecutionContext::BlockConstruction,
+					xt.clone(),
+				) {
+					Ok(Ok(_)) => {
+						TransactionOutcome::Commit(())
+					}
+					Ok(Err(tx_validity)) => {
+						TransactionOutcome::Rollback(())
+					},
+					Err(e) => TransactionOutcome::Rollback(()),
+				}
+			})
+		});
+
+
 		let header = self.api.finalize_block_with_context(
 			&self.block_id, ExecutionContext::BlockConstruction
 		)?;

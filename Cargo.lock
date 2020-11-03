@@ -5089,8 +5089,6 @@ dependencies = [
 [[package]]
 name = "sc-consensus-babe"
 version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "075c3826f181c49723215636f1b840b22c00e9be2acbaea21a86121b4dddb709"
 dependencies = [
  "derive_more",
  "fork-tree",
@@ -5363,8 +5361,6 @@ dependencies = [
 [[package]]
 name = "sc-network"
 version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b9e58ccd69ea8dd0c1e1d98e5e7ed2969aaf14d45dcf98416c679a968e752850"
 dependencies = [
  "async-std",
  "async-trait",
@@ -5563,8 +5559,6 @@ dependencies = [
 [[package]]
 name = "sc-service"
 version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e04b2096d7dac26c52656cd2c85bc208d2ca3316ea2185fd775763d558a980da"
 dependencies = [
  "derive_more",
  "directories",

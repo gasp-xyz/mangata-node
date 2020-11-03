@@ -11,3 +11,5 @@ members = [
 [patch.crates-io]
 sc-block-builder = { default-features = false, version = '0.8.0', path = './client/block-builder' }
 sc-service = { default-features = false, version = '0.8.0', path = './client/service' }
+sc-consensus-babe = { default-features = false, version = '0.8.0', path = './client/consensus/babe' }
+sc-network = { default-features = false, version = '0.8.0', path = './client/network' }

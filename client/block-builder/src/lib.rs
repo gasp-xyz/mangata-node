@@ -27,6 +27,9 @@
 #![warn(missing_docs)]
 
 use sp_runtime::print;
+use rand::{Rng, SeedableRng};
+use rand::seq::SliceRandom;
+use rand::rngs::StdRng;
 use log::{info};
 use codec::Encode;
 
@@ -198,6 +201,19 @@ where
 		ApiErrorFor<A, Block>
 	> {
 		let mut extrinsics = self.extrinsics.clone();
+		let parent_hash = self.parent_hash;
+
+		//FIXME ugly and unsafe
+		let mut i = 0;
+		let mut hash_array: [u8; 32] = [0; 32];
+		for element in &mut hash_array {
+			*element = parent_hash.as_ref()[i];
+			i += 1;
+		}
+
+		let mut rng: StdRng = SeedableRng::from_seed(hash_array);
+		extrinsics.shuffle(&mut rng);
+
 		let block_id = &self.block_id;
 		// self.backend.revert(1.into(), false);
 		info!("transaction execution after reversion");
@@ -238,7 +254,6 @@ where
 			&self.block_id,
 			self.backend.changes_trie_storage(),
 		)?;
-		let parent_hash = self.parent_hash;
 
 		let storage_changes = self.api.into_storage_changes(
 			&state,

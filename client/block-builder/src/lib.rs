@@ -217,7 +217,7 @@ where
 		let block_id = &self.block_id;
 		// self.backend.revert(1.into(), false);
 		info!("transaction execution after reversion");
-		extrinsics.into_iter().rev().for_each(|xt| {
+		extrinsics.into_iter().for_each(|xt| {
 			self.api.execute_in_transaction(|api| {
 				match api.apply_extrinsic_with_context(
 					block_id,

@@ -37,7 +37,7 @@ use sp_runtime::{
 	generic::BlockId,
 	traits::{Header as HeaderT, Hash, Block as BlockT, HashFor, DigestFor, NumberFor, One},
 };
-use sp_blockchain::{ApplyExtrinsicFailed, Error};
+use sp_blockchain::{ApplyExtrinsicFailed, Error, Backend};
 use sp_core::ExecutionContext;
 use sp_api::{
 	Core, ApiExt, ApiErrorFor, ApiRef, ProvideRuntimeApi, StorageChanges, StorageProof,
@@ -200,42 +200,75 @@ where
 		BuiltBlock<Block, backend::StateBackendFor<B, Block>>,
 		ApiErrorFor<A, Block>
 	> {
+		let block_id = &self.block_id;
+
 		let mut extrinsics = self.extrinsics.clone();
 		let parent_hash = self.parent_hash;
 
-		//FIXME ugly and unsafe
-		let mut i = 0;
-		let mut hash_array: [u8; 32] = [0; 32];
-		for element in &mut hash_array {
-			*element = parent_hash.as_ref()[i];
-			i += 1;
+		//FIXME
+		let tmp = self.backend.blockchain().body(BlockId::Hash(parent_hash)).unwrap();
+		match self.backend.blockchain().body(BlockId::Hash(parent_hash)).unwrap() {
+			Some(mut previous_block_extrinsics) => {
+				if previous_block_extrinsics.is_empty() {
+					info!("No extrinsics found for previous block");
+					extrinsics.into_iter().for_each(|xt| {
+						self.api.execute_in_transaction(|api| {
+							match api.apply_extrinsic_with_context(
+								block_id,
+								ExecutionContext::BlockConstruction,
+								xt.clone(),
+							) {
+								Ok(Ok(_)) => {
+									TransactionOutcome::Commit(())
+								}
+								Ok(Err(tx_validity)) => {
+									TransactionOutcome::Rollback(())
+								},
+								Err(e) => TransactionOutcome::Rollback(()),
+							}
+						})
+					});
+				} else {
+					info!("transaction count {}", previous_block_extrinsics.len());
+					//FIXME ugly and unsafe
+					let mut i = 0;
+					let mut hash_array: [u8; 32] = [0; 32];
+					for element in &mut hash_array {
+						*element = parent_hash.as_ref()[i];
+						i += 1;
+					}
+
+					let mut rng: StdRng = SeedableRng::from_seed(hash_array);
+					previous_block_extrinsics.shuffle(&mut rng);
+
+					// self.backend.revert(1.into(), false);
+					info!("transaction execution after reversion");
+					previous_block_extrinsics.into_iter().for_each(|xt| {
+						self.api.execute_in_transaction(|api| {
+							match api.apply_extrinsic_with_context(
+								block_id,
+								ExecutionContext::BlockConstruction,
+								xt.clone(),
+							) {
+								Ok(Ok(_)) => {
+									TransactionOutcome::Commit(())
+								}
+								Ok(Err(tx_validity)) => {
+									TransactionOutcome::Rollback(())
+								},
+								Err(e) => TransactionOutcome::Rollback(()),
+							}
+						})
+					});
+				}
+
+			},
+			None => {
+				info!("No extrinsics found for previous block");
+			},
 		}
 
-		let mut rng: StdRng = SeedableRng::from_seed(hash_array);
-		extrinsics.shuffle(&mut rng);
-
-		let block_id = &self.block_id;
-		// self.backend.revert(1.into(), false);
-		info!("transaction execution after reversion");
-		extrinsics.into_iter().for_each(|xt| {
-			self.api.execute_in_transaction(|api| {
-				match api.apply_extrinsic_with_context(
-					block_id,
-					ExecutionContext::BlockConstruction,
-					xt.clone(),
-				) {
-					Ok(Ok(_)) => {
-						TransactionOutcome::Commit(())
-					}
-					Ok(Err(tx_validity)) => {
-						TransactionOutcome::Rollback(())
-					},
-					Err(e) => TransactionOutcome::Rollback(()),
-				}
-			})
-		});
-
-
+		info!("Finalizing block");
 		let header = self.api.finalize_block_with_context(
 			&self.block_id, ExecutionContext::BlockConstruction
 		)?;

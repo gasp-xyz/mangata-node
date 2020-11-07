@@ -3737,8 +3737,6 @@ dependencies = [
 [[package]]
 name = "pallet-timestamp"
 version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ccddd55b713f541dff6ccf063cc7ddbc4fc41e92a9fdad8ec9562a0e3b465016"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -3746,6 +3744,7 @@ dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec",
  "serde",
+ "sp-core",
  "sp-inherents",
  "sp-io",
  "sp-runtime",

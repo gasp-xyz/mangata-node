@@ -1280,11 +1280,13 @@ dependencies = [
 [[package]]
 name = "frame-executive"
 version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c843800f05a7ad4653bc0db53a15e3d9bdd1cf14103e15c29e8aca200dbb1188"
 dependencies = [
  "frame-support",
  "frame-system",
+ "hex-literal",
+ "pallet-balances",
+ "pallet-indices",
+ "pallet-transaction-payment",
  "parity-scale-codec",
  "serde",
  "sp-core",
@@ -1292,6 +1294,7 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "sp-tracing",
+ "sp-version",
 ]
 
 [[package]]
@@ -3239,7 +3242,7 @@ dependencies = [
  "frame-system",
  "jsonrpc-core",
  "node-template-runtime",
- "pallet-assets 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "pallet-assets",
  "pallet-authority-discovery",
  "pallet-balances",
  "pallet-grandpa",
@@ -3295,7 +3298,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "hex-literal",
- "pallet-assets 2.0.0",
+ "pallet-assets",
  "pallet-authorship",
  "pallet-babe",
  "pallet-balances",
@@ -3489,18 +3492,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-assets"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee8096df10f954c2c55886ea0ba39361a0dfc0994479684b2f0eb87116deb825"
-dependencies = [
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "sp-runtime",
-]
-
-[[package]]
 name = "pallet-authority-discovery"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3611,6 +3602,23 @@ dependencies = [
  "sp-runtime",
  "sp-session",
  "sp-staking",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-indices"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4d234bf46076a835b473a987f089299ffa3efd961a92b5be9384cc280fcc8c8f"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-keyring",
+ "sp-runtime",
  "sp-std",
 ]
 
@@ -3728,8 +3736,6 @@ dependencies = [
 [[package]]
 name = "pallet-timestamp"
 version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ccddd55b713f541dff6ccf063cc7ddbc4fc41e92a9fdad8ec9562a0e3b465016"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -3737,6 +3743,7 @@ dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec",
  "serde",
+ "sp-core",
  "sp-inherents",
  "sp-io",
  "sp-runtime",
@@ -3801,7 +3808,7 @@ version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
- "pallet-assets 2.0.0",
+ "pallet-assets",
  "parity-scale-codec",
  "sp-core",
  "sp-io",
@@ -4904,10 +4911,10 @@ dependencies = [
 [[package]]
 name = "sc-block-builder"
 version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5bee59dc560f30e72ee95c224e3e75299b53b619e659a38af9db2639803c08ee"
 dependencies = [
+ "log",
  "parity-scale-codec",
+ "rand 0.7.3",
  "sc-client-api",
  "sp-api",
  "sp-block-builder",
@@ -5082,8 +5089,6 @@ dependencies = [
 [[package]]
 name = "sc-consensus-babe"
 version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "075c3826f181c49723215636f1b840b22c00e9be2acbaea21a86121b4dddb709"
 dependencies = [
  "derive_more",
  "fork-tree",
@@ -5356,8 +5361,6 @@ dependencies = [
 [[package]]
 name = "sc-network"
 version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b9e58ccd69ea8dd0c1e1d98e5e7ed2969aaf14d45dcf98416c679a968e752850"
 dependencies = [
  "async-std",
  "async-trait",
@@ -5556,8 +5559,6 @@ dependencies = [
 [[package]]
 name = "sc-service"
 version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e04b2096d7dac26c52656cd2c85bc208d2ca3316ea2185fd775763d558a980da"
 dependencies = [
  "derive_more",
  "directories",
@@ -6875,8 +6876,6 @@ dependencies = [
 [[package]]
 name = "substrate-frame-rpc-system"
 version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44e6202803178f25f71a3218a69341289d38c1369cc63e78dfe51577599163f7"
 dependencies = [
  "frame-system-rpc-runtime-api",
  "futures 0.3.5",
@@ -6887,12 +6886,14 @@ dependencies = [
  "parity-scale-codec",
  "sc-client-api",
  "sc-rpc-api",
+ "sc-transaction-pool",
  "serde",
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
  "sp-core",
  "sp-runtime",
+ "sp-tracing",
  "sp-transaction-pool",
 ]
 

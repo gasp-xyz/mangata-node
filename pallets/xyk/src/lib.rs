@@ -5,6 +5,7 @@
 // TODO documentation!
 use sp_runtime::traits::{BlakeTwo256, Hash, One, SaturatedConversion, Zero};
 
+use sp_runtime::print;
 use codec::{Decode, Encode};
 use frame_support::{
     decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult, ensure,
@@ -453,6 +454,8 @@ impl<T: Trait> Module<T> {
         origin: T::Origin,
         amount: T::Balance
     ) -> DispatchResult {
+
+        print("creating liquidity asset");
         let vault: T::AccountId = <VaultId<T>>::get();
         let sender = ensure_signed(origin.clone())?;
 

@@ -867,11 +867,28 @@ impl<B, E, Block, RA> Client<B, E, Block, RA> where
 
 
 				info!("Will execute block on client");
-				runtime_api.execute_block_with_context(
-					&at,
-					execution_context,
-					Block::new(import_block.header.clone(), body.clone()),
-				)?;
+				match self.backend.blockchain().body(BlockId::Hash(*parent_hash)).unwrap() {
+					Some(mut previous_block_extrinsics) => {
+						if previous_block_extrinsics.is_empty() {
+							info!("previous block extrinsics has 0 length");
+							runtime_api.execute_block_with_context(
+								&at,
+								execution_context,
+								Block::new(import_block.header.clone(), body.clone()),
+							)?;
+						} else {
+							info!("previous block has extrinsics");
+							runtime_api.execute_block_with_context(
+								&at,
+								execution_context,
+								Block::new(import_block.header.clone(), previous_block_extrinsics),
+							)?;
+						}
+					},
+					None => {
+						info!("previous block is empty");
+					}
+				}
 
 				let state = self.backend.state_at(at)?;
 				let changes_trie_state = changes_tries_state_at_block(

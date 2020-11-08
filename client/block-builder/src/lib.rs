@@ -206,7 +206,6 @@ where
 		let parent_hash = self.parent_hash;
 
 		//FIXME
-		let tmp = self.backend.blockchain().body(BlockId::Hash(parent_hash)).unwrap();
 		match self.backend.blockchain().body(BlockId::Hash(parent_hash)).unwrap() {
 			Some(mut previous_block_extrinsics) => {
 				if previous_block_extrinsics.is_empty() {

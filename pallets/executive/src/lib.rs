@@ -115,9 +115,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 use sp_runtime::print;
-use rand::{Rng, SeedableRng};
-use rand::seq::SliceRandom;
-use rand::rngs::StdRng;
 use sp_std::{prelude::*, marker::PhantomData};
 use frame_support::{
 	storage::StorageValue, weights::{GetDispatchInfo, DispatchInfo, DispatchClass},
@@ -314,24 +311,11 @@ where
 			let signature_batching = sp_runtime::SignatureBatching::start();
 
 			frame_support::debug::RuntimeLogger::init();
-			let parent_hash = block.header().parent_hash().clone();
 
 			// execute extrinsics
 			let (header, extrinsics) = block.deconstruct();
 
-			let mut shuffled_extrinsics = extrinsics.clone();
-			//FIXME ugly and unsafe
-			let mut i = 0;
-			let mut hash_array: [u8; 32] = [0; 32];
-			for element in &mut hash_array {
-				*element = parent_hash.as_ref()[i];
-				i += 1;
-			}
-
-			let mut rng: StdRng = SeedableRng::from_seed(hash_array);
-			shuffled_extrinsics.shuffle(&mut rng);
-
-			Self::execute_extrinsics_with_book_keeping(shuffled_extrinsics, *header.number());
+			Self::execute_extrinsics_with_book_keeping(extrinsics.clone(), *header.number());
 
 			if !signature_batching.verify() {
 				panic!("Signature verification failed.");

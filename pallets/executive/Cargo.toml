@@ -22,7 +22,6 @@ sp-tracing = { version = "2.0.0", default-features = false }
 sp-std = { version = "2.0.0", default-features = false }
 sp-io = { version = "2.0.0", default-features = false }
 sp-core = { version = "2.0.0", default-features = false }
-rand = { version = "0.7.3", default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.3.1"
@@ -46,6 +45,5 @@ std = [
 	"sp-core/std",
 	"sp-runtime/std",
 	"sp-tracing/std",
-	"sp-std/std",
-	"rand/std"
+	"sp-std/std"
 ]

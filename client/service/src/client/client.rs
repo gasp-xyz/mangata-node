@@ -18,6 +18,9 @@
 
 //! Substrate Client
 
+use rand::{Rng, SeedableRng};
+use rand::seq::SliceRandom;
+use rand::rngs::StdRng;
 use std::{
 	marker::PhantomData,
 	collections::{HashSet, BTreeMap, HashMap},
@@ -37,7 +40,7 @@ use sp_runtime::{
 	Justification, BuildStorage,
 	generic::{BlockId, SignedBlock, DigestItem},
 	traits::{
-		Block as BlockT, Header as HeaderT, Zero, NumberFor,
+		BlakeTwo256, Hash, Block as BlockT, Header as HeaderT, Zero, NumberFor,
 		HashFor, SaturatedConversion, One, DigestFor,
 	},
 };
@@ -88,7 +91,6 @@ use super::{
 	genesis, block_rules::{BlockRules, LookupResult as BlockLookupResult},
 };
 use sc_light::{call_executor::prove_execution, fetcher::ChangesProof};
-use rand::Rng;
 
 #[cfg(feature="test-helpers")]
 use {
@@ -878,10 +880,14 @@ impl<B, E, Block, RA> Client<B, E, Block, RA> where
 							)?;
 						} else {
 							info!("previous block has extrinsics");
+							let extrinsics_hash = BlakeTwo256::hash(&body.clone().encode());
+							let mut shuffled_extrinsics = previous_block_extrinsics.clone();
+							let mut rng: StdRng = SeedableRng::from_seed(extrinsics_hash.to_fixed_bytes());
+							shuffled_extrinsics.shuffle(&mut rng);
 							runtime_api.execute_block_with_context(
 								&at,
 								execution_context,
-								Block::new(import_block.header.clone(), previous_block_extrinsics),
+								Block::new(import_block.header.clone(), shuffled_extrinsics),
 							)?;
 						}
 					},

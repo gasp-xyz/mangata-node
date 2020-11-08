@@ -35,7 +35,7 @@ use codec::Encode;
 
 use sp_runtime::{
 	generic::BlockId,
-	traits::{Header as HeaderT, Hash, Block as BlockT, HashFor, DigestFor, NumberFor, One},
+	traits::{BlakeTwo256, Header as HeaderT, Hash, Block as BlockT, HashFor, DigestFor, NumberFor, One},
 };
 use sp_blockchain::{ApplyExtrinsicFailed, Error, Backend};
 use sp_core::ExecutionContext;
@@ -204,6 +204,7 @@ where
 
 		let mut extrinsics = self.extrinsics.clone();
 		let parent_hash = self.parent_hash;
+		let extrinsics_hash = BlakeTwo256::hash(&extrinsics.encode());
 
 		//FIXME
 		match self.backend.blockchain().body(BlockId::Hash(parent_hash)).unwrap() {
@@ -229,15 +230,8 @@ where
 					});
 				} else {
 					info!("transaction count {}", previous_block_extrinsics.len());
-					//FIXME ugly and unsafe
-					let mut i = 0;
-					let mut hash_array: [u8; 32] = [0; 32];
-					for element in &mut hash_array {
-						*element = parent_hash.as_ref()[i];
-						i += 1;
-					}
 
-					let mut rng: StdRng = SeedableRng::from_seed(hash_array);
+					let mut rng: StdRng = SeedableRng::from_seed(extrinsics_hash.to_fixed_bytes());
 					previous_block_extrinsics.shuffle(&mut rng);
 
 					// self.backend.revert(1.into(), false);

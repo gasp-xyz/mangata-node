@@ -1288,7 +1288,6 @@ dependencies = [
  "pallet-indices",
  "pallet-transaction-payment",
  "parity-scale-codec",
- "rand 0.7.3",
  "serde",
  "sp-core",
  "sp-io",

@@ -1,5 +1,5 @@
 use sp_core::{Pair, Public, sr25519};
-use node_template_runtime::{
+use mangata_runtime::{
 	AccountId, BabeConfig, BalancesConfig, GenesisConfig, GrandpaConfig, SessionConfig,
 	SudoConfig, SystemConfig, WASM_BINARY, Signature, StakerStatus, StakingConfig, SessionKeys
 };

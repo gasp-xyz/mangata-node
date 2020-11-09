@@ -8,8 +8,8 @@ RUN WASM_BUILD_TOOLCHAIN=nightly-2020-05-23 cargo build --release
 FROM debian:stretch
 LABEL description="mangata node"
 WORKDIR /mangata
-COPY --from=builder /mangata/target/release/node-template /mangata/node
-COPY --from=builder /mangata/target/release/wbuild/node-template-runtime/node_template_runtime.compact.wasm /mangata/runtime.compact.wasm
+COPY --from=builder /mangata/target/release/mangata-node /mangata/node
+COPY --from=builder /mangata/target/release/wbuild/mangata-runtime/mangata_runtime.compact.wasm /mangata/runtime.compact.wasm
 
 RUN /mangata/node --version
 

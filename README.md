@@ -1,5 +1,5 @@
 # Mangata node
-##The fair DEX
+## The fair DEX
 The most reliable decentralized exchange (DEX) - capable of working across multiple blockchains using interoperability. The exchange is using an innovative consensus algorithm that solves frontrunning problems and makes all participants equal. 
 
 Our mission is to bring fair and equal rules for exchange participants, fix volatile fees of trading and reuse exchange assets to maximize gains. Our goal is to create the number one Go-To protocol for traders and liquidity providers of digital currencies online.

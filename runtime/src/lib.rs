@@ -46,6 +46,7 @@ pub use frame_support::{
 pub use pallet_template;
 pub use pallet_xyk;
 pub use pallet_assets;
+pub use pallet_assets_info;
 pub use pallet_staking::StakerStatus;
 use pallet_session::{historical as pallet_session_historical};
 
@@ -423,6 +424,10 @@ impl pallet_xyk::Trait for Runtime {
     type Randomness = RandomnessCollectiveFlip;
 }
 
+impl pallet_assets_info::Trait for Runtime {
+    type Event = Event;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -447,6 +452,7 @@ construct_runtime!(
 		// Include the custom logic from the template pallet in the runtime.
 		TemplateModule: pallet_template::{Module, Call, Storage, Event<T>},
 		Xyk: pallet_xyk::{Module, Call, Storage, Event<T>},
+		AssetsInfoModule: pallet_assets_info::{Module, Call, Storage, Event<T>},
 	}
 );
 

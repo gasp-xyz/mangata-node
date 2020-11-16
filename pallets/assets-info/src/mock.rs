@@ -20,6 +20,13 @@ parameter_types! {
 	pub const MaximumBlockWeight: Weight = 1024;
 	pub const MaximumBlockLength: u32 = 2 * 1024;
 	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
+	pub const MinLengthName: usize = 0;
+	pub const MaxLengthName: usize = 32;
+	pub const MinLengthSymbol: usize = 3;
+	pub const MaxLengthSymbol: usize = 8;
+	pub const MinLengthDescription: usize = 0;
+	pub const MaxLengthDescription: usize = 255;
+	pub const MaxDecimals: u32 = 10;
 }
 
 impl system::Trait for Test {
@@ -58,6 +65,13 @@ impl assets::Trait for Test {
 
 impl Trait for Test {
 	type Event = ();
+	type MinLengthName = MinLengthName;
+	type MaxLengthName = MaxLengthName;
+	type MinLengthSymbol = MinLengthSymbol;
+	type MaxLengthSymbol = MaxLengthSymbol;
+	type MinLengthDescription = MinLengthDescription;
+	type MaxLengthDescription = MaxLengthDescription;
+	type MaxDecimals = MaxDecimals;
 }
 
 pub type AssetsInfoModule = Module<Test>;

@@ -64,7 +64,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
 				authority_keys_from_seed("Alice"),
 			],
 			// Initial relay account
-			get_account_id_from_seed::<sr25519::Public>("Alice"),
+			get_account_id_from_seed::<sr25519::Public>("Relay"),
 			// Sudo account
 			get_account_id_from_seed::<sr25519::Public>("Alice"),
 			// Pre-funded accounts
@@ -73,6 +73,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
 				get_account_id_from_seed::<sr25519::Public>("Bob"),
 				get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
 				get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+				get_account_id_from_seed::<sr25519::Public>("Relay"),
 			],
 			true,
 		),
@@ -106,7 +107,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 				authority_keys_from_seed("Bob"),
 			],
 			// Initial relay account
-			get_account_id_from_seed::<sr25519::Public>("Alice"),
+			get_account_id_from_seed::<sr25519::Public>("Relay"),
 			// Sudo account
 			get_account_id_from_seed::<sr25519::Public>("Alice"),
 			// Pre-funded accounts

@@ -6,19 +6,19 @@ fn set_info_and_retrieve_works_ok() {
     new_test_ext().execute_with(|| {
         const ASSET_ID: u32 = 0;
         let info = AssetInfo {
-            name: b"name".to_vec(),
-            symbol: b"SYM".to_vec(),
-            description: b"desc".to_vec(),
-            decimals: 8,
+            name: Some(b"name".to_vec()),
+            symbol: Some(b"SYM".to_vec()),
+            description: Some(b"desc".to_vec()),
+            decimals: Some(8),
         };
         // Dispatch a signed extrinsic.
         assert_ok!(AssetsInfoModule::set_info(
             Origin::root(),
             ASSET_ID,
-            Some(info.name.clone()),
-            Some(info.symbol.clone()),
-            Some(info.description.clone()),
-            Some(info.decimals)
+            info.name.clone(),
+            info.symbol.clone(),
+            info.description.clone(),
+            info.decimals.clone(),
         ));
         // Read pallet storage and assert an expected result.
         assert_eq!(AssetsInfoModule::get_info(ASSET_ID), info);
@@ -30,10 +30,10 @@ fn set_info_optional_and_retrieve_works_ok() {
     new_test_ext().execute_with(|| {
         const ASSET_ID: u32 = 0;
         let info = AssetInfo {
-            name: vec![],
-            symbol: b"SYM".to_vec(),
-            description: vec![],
-            decimals: 8,
+            name: None,
+            symbol: Some(b"SYM".to_vec()),
+            description: None,
+            decimals: Some(8),
         };
         // Dispatch a signed extrinsic.
         assert_ok!(AssetsInfoModule::set_info(
@@ -41,9 +41,9 @@ fn set_info_optional_and_retrieve_works_ok() {
             ASSET_ID,
             None,
             // None,
-            Some(info.symbol.clone()),
+            info.symbol.clone(),
             None,
-            Some(info.decimals)
+            info.decimals,
         ));
         // Read pallet storage and assert an expected result.
         assert_eq!(AssetsInfoModule::get_info(ASSET_ID), info);
@@ -59,7 +59,7 @@ fn correct_error_for_invalid_symbol_value() {
                 Origin::root(),
                 0,
                 None,
-                None,
+                Some(vec![]),
                 None,
                 None,
             ),

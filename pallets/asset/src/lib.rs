@@ -40,6 +40,7 @@ use frame_support::{
 use codec::{Encode, Decode};
 
 use artemis_core::BridgedAssetId;
+use pallet_assets as assets;
 
 #[cfg(test)]
 mod mock;
@@ -54,14 +55,16 @@ pub struct AccountData {
 
 type AssetAccountData = AccountData;
 
-pub trait Trait: system::Trait {
+pub trait Trait: assets::Trait {
 	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 }
 
 decl_storage! {
 	trait Store for Module<T: Trait> as Asset {
-		pub TotalIssuance: map        hasher(blake2_128_concat) BridgedAssetId => U256;
-		pub Account:       double_map hasher(blake2_128_concat) BridgedAssetId, hasher(blake2_128_concat) T::AccountId => AssetAccountData;
+		pub NativeAsset get(fn get_native_asset_id): map hasher(blake2_128_concat) BridgedAssetId => T::AssetId;
+		pub BridgedAsset get(fn get_bridged_asset_id): map hasher(blake2_128_concat) T::AssetId => BridgedAssetId;
+		//pub TotalIssuance: map        hasher(blake2_128_concat) BridgedAssetId => U256;
+		//pub Account:       double_map hasher(blake2_128_concat) BridgedAssetId, hasher(blake2_128_concat) T::AccountId => AssetAccountData;
 	}
 }
 
@@ -105,7 +108,7 @@ decl_module! {
 		#[weight = 0]
 		pub fn transfer(origin, asset_id: BridgedAssetId, to: T::AccountId, amount: U256) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			Self::do_transfer(asset_id, &who, &to, amount)?;
+			// Self::do_transfer(asset_id, &who, &to, amount)?;
 			Ok(())
 		}
 
@@ -114,6 +117,16 @@ decl_module! {
 
 impl<T: Trait> Module<T> {
 
+	pub fn link_assets(native_asset_id: T::AssetId, bridged_asset_id: BridgedAssetId) {
+		<NativeAsset<T>>::insert(bridged_asset_id, native_asset_id);
+		<BridgedAsset<T>>::insert(native_asset_id, bridged_asset_id);
+	}
+
+	pub fn exists(bridged_asset_id: BridgedAssetId) -> bool {
+		<NativeAsset<T>>::contains_key(bridged_asset_id)
+	}
+
+	/*
 	pub fn free_balance(asset_id: BridgedAssetId, who: &T::AccountId) -> U256 {
 		<Account<T>>::get(asset_id, who).free
 	}
@@ -172,5 +185,6 @@ impl<T: Trait> Module<T> {
 		Self::deposit_event(RawEvent::Transferred(asset_id, from.clone(), to.clone(), amount));
 		Ok(())
 	}
+	*/
 
 }

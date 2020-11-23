@@ -25,9 +25,12 @@ use frame_support::{
 };
 use sp_std::prelude::*;
 use sp_core::{H160, U256};
+use sp_std::convert::TryInto;
 
 use artemis_core::{Application, BridgedAssetId};
 use artemis_asset as asset;
+use pallet_assets as assets;
+use sp_runtime::traits::{SaturatedConversion};
 
 mod payload;
 use payload::Payload;
@@ -80,7 +83,11 @@ decl_module! {
 		pub fn burn(origin, recipient: H160, amount: U256) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			let asset_id: BridgedAssetId = H160::zero();
-			<asset::Module<T>>::do_burn(asset_id, &who, amount)?;
+
+			// <asset::Module<T>>::do_burn(asset_id, &who, amount)?;
+			let asset_id = <asset::Module<T>>::get_native_asset_id(asset_id);
+			<assets::Module<T>>::assets_burn(&asset_id, &who, &amount.low_u128().saturated_into::<T::Balance>());
+
 			Self::deposit_event(RawEvent::Transfer(who.clone(), recipient, amount));
 			Ok(())
 		}
@@ -92,7 +99,20 @@ impl<T: Trait> Module<T> {
 
 	fn handle_event(payload: Payload<T::AccountId>) -> DispatchResult {
 		let asset_id: BridgedAssetId = H160::zero();
-		<asset::Module<T>>::do_mint(asset_id, &payload.recipient_addr, payload.amount)
+		// <asset::Module<T>>::do_mint(asset_id, &payload.recipient_addr, payload.amount)
+
+		//FIXME overflow unsafe!
+		if !<asset::Module<T>>::exists(asset_id) {
+			let id = <assets::Module<T>>::assets_issue(&payload.recipient_addr,
+													   &payload.amount.low_u128().saturated_into::<T::Balance>());
+			<asset::Module<T>>::link_assets(id, asset_id);
+		} else {
+			let id = <asset::Module<T>>::get_native_asset_id(asset_id);
+			<assets::Module<T>>::assets_mint(&id, &payload.recipient_addr,
+											 &payload.amount.low_u128().saturated_into::<T::Balance>());
+		}
+
+		Ok(())
 	}
 }
 

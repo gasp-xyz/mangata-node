@@ -29,6 +29,8 @@ use frame_support::{
 
 use artemis_core::{Application, BridgedAssetId};
 use artemis_asset as asset;
+use pallet_assets as assets;
+use sp_runtime::traits::{SaturatedConversion};
 
 mod payload;
 use payload::Payload;
@@ -39,7 +41,7 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-pub trait Trait: system::Trait + asset::Trait {
+pub trait Trait: system::Trait + asset::Trait + assets::Trait {
 	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 }
 
@@ -85,7 +87,10 @@ decl_module! {
 				return Err(Error::<T>::InvalidAssetId.into())
 			}
 
-			<asset::Module<T>>::do_burn(asset_id, &who, amount)?;
+			// <asset::Module<T>>::do_burn(asset_id, &who, amount)?;
+			let native_asset_id = <asset::Module<T>>::get_native_asset_id(asset_id);
+			<assets::Module<T>>::assets_burn(&native_asset_id, &who, &amount.low_u128().saturated_into::<T::Balance>());
+
 			Self::deposit_event(RawEvent::Transfer(asset_id, who.clone(), recipient, amount));
 			Ok(())
 		}
@@ -100,7 +105,17 @@ impl<T: Trait> Module<T> {
 			return Err(Error::<T>::InvalidAssetId.into())
 		}
 
-		<asset::Module<T>>::do_mint(payload.token_addr, &payload.recipient_addr, payload.amount)?;
+		// <asset::Module<T>>::do_mint(payload.token_addr, &payload.recipient_addr, payload.amount)?;
+		//FIXME overflow unsafe!
+		if !<asset::Module<T>>::exists(payload.token_addr) {
+			let id = <assets::Module<T>>::assets_issue(&payload.recipient_addr,
+													   &payload.amount.low_u128().saturated_into::<T::Balance>());
+			<asset::Module<T>>::link_assets(id, payload.token_addr);
+		} else {
+			let id = <asset::Module<T>>::get_native_asset_id(payload.token_addr);
+			<assets::Module<T>>::assets_mint(&id, &payload.recipient_addr,
+											 &payload.amount.low_u128().saturated_into::<T::Balance>());
+		}
 
 		Ok(())
 	}

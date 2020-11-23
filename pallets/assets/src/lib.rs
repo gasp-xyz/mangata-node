@@ -292,14 +292,27 @@ impl<T: Trait> Module<T> {
 		Ok(())
 	}
 
+	pub fn assets_issue(origin: &T::AccountId, total: &T::Balance) -> T::AssetId {
+		let id = Self::next_asset_id();
+		<NextAssetId<T>>::mutate(|id| *id += One::one());
+
+		<Balances<T>>::insert((id, &origin), total);
+		<TotalSupply<T>>::insert(id, total);
+
+		// Self::deposit_event(RawEvent::Issued(id, origin, total));
+		id
+	}
+
 	pub fn assets_mint(id: &T::AssetId, to: &T::AccountId, amount: &T::Balance) -> T::Balance {
 		<Balances<T>>::mutate((id, to), |balance| *balance += *amount);
+		<TotalSupply<T>>::mutate((id), |total| *total += *amount);
 		<Balances<T>>::get((id, to))
 	}
 
 	pub fn assets_burn(id: &T::AssetId, to: &T::AccountId, amount: &T::Balance) -> T::Balance {
 		//TODO ensure amount
 		<Balances<T>>::mutate((id, to), |balance| *balance -= *amount);
+		<TotalSupply<T>>::mutate((id), |total| *total -= *amount);
 		<Balances<T>>::get((id, to))
 	}
 }

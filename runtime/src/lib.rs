@@ -46,6 +46,7 @@ pub use frame_support::{
 pub use pallet_template;
 pub use pallet_xyk;
 pub use pallet_assets;
+pub use pallet_assets_info;
 pub use pallet_staking::StakerStatus;
 use pallet_session::{historical as pallet_session_historical};
 
@@ -423,6 +424,26 @@ impl pallet_xyk::Trait for Runtime {
     type Randomness = RandomnessCollectiveFlip;
 }
 
+parameter_types! {
+	pub const MinLengthName: usize = 0;
+	pub const MaxLengthName: usize = 32;
+	pub const MinLengthSymbol: usize = 3;
+	pub const MaxLengthSymbol: usize = 8;
+	pub const MinLengthDescription: usize = 0;
+	pub const MaxLengthDescription: usize = 255;
+	pub const MaxDecimals: u32 = 10;
+}
+impl pallet_assets_info::Trait for Runtime {
+    type Event = Event;
+	type MinLengthName = MinLengthName;
+	type MaxLengthName = MaxLengthName;
+	type MinLengthSymbol = MinLengthSymbol;
+	type MaxLengthSymbol = MaxLengthSymbol;
+	type MinLengthDescription = MinLengthDescription;
+	type MaxLengthDescription = MaxLengthDescription;
+	type MaxDecimals = MaxDecimals;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -447,6 +468,7 @@ construct_runtime!(
 		// Include the custom logic from the template pallet in the runtime.
 		TemplateModule: pallet_template::{Module, Call, Storage, Event<T>},
 		Xyk: pallet_xyk::{Module, Call, Storage, Event<T>},
+		AssetsInfo: pallet_assets_info::{Module, Call, Storage, Event<T>},
 	}
 );
 

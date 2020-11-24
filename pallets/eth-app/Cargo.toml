@@ -69,7 +69,7 @@ path = "../../primitives/ethereum"
 
 [dependencies.artemis-asset]
 default-features = false
-path = "../../pallets/asset"
+path = "../../pallets/bridged-asset"
 
 
 [features]

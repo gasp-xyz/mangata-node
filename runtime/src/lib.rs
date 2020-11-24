@@ -52,7 +52,7 @@ use pallet_session::{historical as pallet_session_historical};
 /// Bridge pallets
 pub use bridge;
 pub use verifier;
-pub use asset;
+pub use bridged_asset;
 pub use eth_app;
 pub use erc20_app;
 
@@ -444,7 +444,7 @@ impl verifier::Trait for Runtime {
 	type Event = Event;
 }
 
-impl asset::Trait for Runtime {
+impl bridged_asset::Trait for Runtime {
 	type Event = Event;
 }
 
@@ -483,7 +483,7 @@ construct_runtime!(
 		// Snowfork pallets
 		Bridge: bridge::{Module, Call, Storage, Event},
 		Verifier: verifier::{Module, Call, Storage, Event, Config<T>},
-		Asset: asset::{Module, Call, Storage, Event<T>},
+		BridgedAsset: bridged_asset::{Module, Call, Storage, Event<T>},
 		ETH: eth_app::{Module, Call, Storage, Event<T>},
 		ERC20: erc20_app::{Module, Call, Storage, Event<T>},
 	}

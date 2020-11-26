@@ -30,6 +30,14 @@ Find manual setup instructions at the
 
 ### Local target
 
+Recommended rustc version for the build is `nightly-2020-10-01`
+
+Environment variables for ethereum apps should be set up before the build:
+```bash
+ETH_APP_ID=0xdd514baa317bf095ddba2c0a847765feb389c6a0
+ENV ERC20_APP_ID=0x00e392c04743359e39f00cd268a5390d27ef6b44
+```
+build node:
 ```bash
 cargo build --release
 ```

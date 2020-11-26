@@ -50,6 +50,14 @@ pub use pallet_assets_info;
 pub use pallet_staking::StakerStatus;
 use pallet_session::{historical as pallet_session_historical};
 
+/// Bridge pallets
+pub use bridge;
+pub use verifier;
+pub use bridged_asset;
+pub use eth_app;
+pub use erc20_app;
+
+
 /// An index to a block.
 pub type BlockNumber = u32;
 
@@ -107,8 +115,8 @@ impl_opaque_keys! {
 }
 
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("node-template"),
-	impl_name: create_runtime_str!("node-template"),
+	spec_name: create_runtime_str!("mangata"),
+	impl_name: create_runtime_str!("mangata"),
 	authoring_version: 1,
 	spec_version: 1,
 	impl_version: 1,
@@ -424,6 +432,31 @@ impl pallet_xyk::Trait for Runtime {
     type Randomness = RandomnessCollectiveFlip;
 }
 
+// Snowfork traits
+
+impl bridge::Trait for Runtime {
+	type Event = Event;
+	type Verifier = verifier::Module<Runtime>;
+	type AppETH = eth_app::Module<Runtime>;
+	type AppERC20 = erc20_app::Module<Runtime>;
+}
+
+impl verifier::Trait for Runtime {
+	type Event = Event;
+}
+
+impl bridged_asset::Trait for Runtime {
+	type Event = Event;
+}
+
+impl eth_app::Trait for Runtime {
+	type Event = Event;
+}
+
+impl erc20_app::Trait for Runtime {
+	type Event = Event;
+}
+
 parameter_types! {
 	pub const MinLengthName: usize = 0;
 	pub const MaxLengthName: usize = 32;
@@ -468,6 +501,12 @@ construct_runtime!(
 		// Include the custom logic from the template pallet in the runtime.
 		TemplateModule: pallet_template::{Module, Call, Storage, Event<T>},
 		Xyk: pallet_xyk::{Module, Call, Storage, Event<T>},
+		// Snowfork pallets
+		Bridge: bridge::{Module, Call, Storage, Event},
+		Verifier: verifier::{Module, Call, Storage, Event, Config<T>},
+		BridgedAsset: bridged_asset::{Module, Call, Storage, Event<T>},
+		ETH: eth_app::{Module, Call, Storage, Event<T>},
+		ERC20: erc20_app::{Module, Call, Storage, Event<T>},
 		AssetsInfo: pallet_assets_info::{Module, Call, Storage, Event<T>},
 	}
 );

@@ -1,7 +1,7 @@
 use sp_core::{Pair, Public, sr25519};
 use mangata_runtime::{
 	AccountId, BabeConfig, BalancesConfig, GenesisConfig, GrandpaConfig, SessionConfig,
-	SudoConfig, SystemConfig, WASM_BINARY, Signature, StakerStatus, StakingConfig, SessionKeys
+	SudoConfig, SystemConfig, WASM_BINARY, Signature, StakerStatus, StakingConfig, SessionKeys, VerifierConfig
 };
 use sp_consensus_babe::{AuthorityId as BabeId};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
@@ -63,6 +63,8 @@ pub fn development_config() -> Result<ChainSpec, String> {
 			vec![
 				authority_keys_from_seed("Alice"),
 			],
+			// Initial relay account
+			get_account_id_from_seed::<sr25519::Public>("Relay"),
 			// Sudo account
 			get_account_id_from_seed::<sr25519::Public>("Alice"),
 			// Pre-funded accounts
@@ -71,6 +73,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
 				get_account_id_from_seed::<sr25519::Public>("Bob"),
 				get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
 				get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+				get_account_id_from_seed::<sr25519::Public>("Relay"),
 			],
 			true,
 		),
@@ -103,6 +106,8 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 				authority_keys_from_seed("Alice"),
 				authority_keys_from_seed("Bob"),
 			],
+			// Initial relay account
+			get_account_id_from_seed::<sr25519::Public>("Relay"),
 			// Sudo account
 			get_account_id_from_seed::<sr25519::Public>("Alice"),
 			// Pre-funded accounts
@@ -139,6 +144,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 fn testnet_genesis(
 	wasm_binary: &[u8],
 	initial_authorities: Vec<(BabeId, GrandpaId, AccountId)>,
+	relay_key: AccountId,
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
 	_enable_println: bool,
@@ -180,6 +186,9 @@ fn testnet_genesis(
 		pallet_sudo: Some(SudoConfig {
 			// Assign network admin rights.
 			key: root_key,
+		}),
+		verifier: Some(VerifierConfig {
+			key: relay_key,
 		}),
 	}
 }

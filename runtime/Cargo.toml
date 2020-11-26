@@ -29,6 +29,7 @@ pallet-xyk = { path = '../pallets/xyk', default-features = false, version = '0.1
 pallet-assets = { path = '../pallets/assets', default-features = false, version = '2.0.0' }
 frame-executive = { path = '../pallets/executive', default-features = false, version = '2.0.0' }
 pallet-timestamp = { path = '../pallets/timestamp', default-features = false, version = '2.0.0' }
+pallet-assets-info = { path = '../pallets/assets-info', default-features = false, version = '2.0.0' }
 
 # Substrate dependencies
 frame-benchmarking = { default-features = false, optional = true, version = '2.0.0' }

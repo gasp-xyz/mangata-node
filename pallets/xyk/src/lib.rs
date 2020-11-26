@@ -10,6 +10,7 @@ use codec::{Decode, Encode};
 use frame_support::{
     decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult, ensure,
     traits::Randomness, StorageMap,
+    weights::Pays,
 };
 
 use pallet_assets as assets;
@@ -146,7 +147,7 @@ decl_module! {
         }
 
         // you will sell your sold_asset_amount of sold_asset_id to get some amount of bought_asset_id
-        #[weight = 10_000]
+        #[weight = (10_000, Pays::No)]
         fn sell_asset (
             origin,
             sold_asset_id: T::AssetId,
@@ -194,7 +195,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = 10_000]
+        #[weight = (10_000, Pays::No)]
         fn buy_asset (
             origin,
             sold_asset_id: T::AssetId,

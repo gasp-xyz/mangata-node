@@ -19,7 +19,6 @@
 
 use std::sync::Arc;
 
-use sp_runtime::print;
 use codec::{self, Codec, Decode, Encode};
 use sc_client_api::light::{future_header, RemoteBlockchain, Fetcher, RemoteCallRequest};
 use jsonrpc_core::{
@@ -149,7 +148,6 @@ where
 				data: Some(format!("{:?}", e).into()),
 			})?;
 
-			print("dry running transactions");
 			let result = "test";
 			// let result = api.apply_extrinsic(&at, uxt)
 			// 	.map_err(|e| RpcError {

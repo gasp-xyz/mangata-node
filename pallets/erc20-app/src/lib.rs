@@ -105,7 +105,6 @@ impl<T: Trait> Module<T> {
 			return Err(Error::<T>::InvalidAssetId.into())
 		}
 
-		// <asset::Module<T>>::do_mint(payload.token_addr, &payload.recipient_addr, payload.amount)?;
 		//FIXME overflow unsafe!
 		if !<asset::Module<T>>::exists(payload.token_addr) {
 			let id = <assets::Module<T>>::assets_issue(&payload.recipient_addr,

@@ -612,9 +612,7 @@ impl<B, C, E, I, Error, SO> sc_consensus_slots::SimpleSlotWorker<B> for BabeSlot
 				))?;
 			let digest_item = <DigestItemFor<B> as CompatibleDigestItem>::babe_seal(signature.into());
 
-			info!("Block import params using Babe");
 			let mut import_block = BlockImportParams::new(BlockOrigin::Own, header);
-			info!("Pushing digest to block");
 			import_block.post_digests.push(digest_item);
 			import_block.body = Some(body);
 			import_block.storage_changes = Some(storage_changes);
@@ -1127,7 +1125,6 @@ impl<Block, Client, Inner> BlockImport<Block> for BabeBlockImport<Block, Client,
 		mut block: BlockImportParams<Block, Self::Transaction>,
 		new_cache: HashMap<CacheKeyId, Vec<u8>>,
 	) -> Result<ImportResult, Self::Error> {
-		info!("Importing block using Babe");
 		let hash = block.post_hash();
 		let number = *block.header.number();
 
@@ -1152,8 +1149,6 @@ impl<Block, Client, Inner> BlockImport<Block> for BabeBlockImport<Block, Client,
 				Error::<Block>::ParentUnavailable(parent_hash, hash)
 			).into()))?;
 
-
-		info!("Parent slot pre digest");
 		let parent_slot = find_pre_digest::<Block>(&parent_header)
 			.map(|d| d.slot_number())
 			.expect("parent is non-genesis; valid BABE headers contain a pre-digest; \
@@ -1413,7 +1408,6 @@ pub fn block_import<Client, Block: BlockT, I>(
 	Client: AuxStore + HeaderBackend<Block> + HeaderMetadata<Block, Error = sp_blockchain::Error>,
 {
 
-	info!("Block import using Babe");
 	let epoch_changes = aux_schema::load_epoch_changes::<Block, _>(&*client, &config)?;
 	let link = BabeLink {
 		epoch_changes: epoch_changes.clone(),

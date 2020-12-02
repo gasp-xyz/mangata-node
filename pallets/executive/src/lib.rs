@@ -114,7 +114,6 @@
 //! ```
 
 #![cfg_attr(not(feature = "std"), no_std)]
-use sp_runtime::print;
 use sp_std::{prelude::*, marker::PhantomData};
 use frame_support::{
 	storage::StorageValue, weights::{GetDispatchInfo, DispatchInfo, DispatchClass},
@@ -122,7 +121,7 @@ use frame_support::{
 	dispatch::PostDispatchInfo,
 };
 use sp_runtime::{
-	generic::Digest, ApplyExtrinsicResult,
+	print, generic::Digest, ApplyExtrinsicResult,
 	traits::{
 		self, Header, Zero, One, Checkable, Applyable, CheckEqual, ValidateUnsigned, NumberFor,
 		Block as BlockT, Dispatchable, Saturating,
@@ -275,7 +274,6 @@ where
 
 	fn initial_checks(block: &Block) {
 
-		print("Initial checks");
 		sp_tracing::enter_span!(sp_tracing::Level::TRACE, "initial_checks");
 		let header = block.header();
 
@@ -296,13 +294,11 @@ where
 
 	/// Actually execute all transitions for `block`.
 	pub fn execute_block(block: Block) {
-		print("Block is being executed");
 		sp_io::init_tracing();
 		sp_tracing::within_span! {
 			sp_tracing::info_span!( "execute_block", ?block);
 		{
 
-			print("inside block execution");
 			Self::initialize_block(block.header());
 
 			// any initial checks
@@ -328,7 +324,6 @@ where
 
 	/// Execute given extrinsics and take care of post-extrinsics book-keeping.
 	fn execute_extrinsics_with_book_keeping(extrinsics: Vec<Block::Extrinsic>, block_number: NumberFor<Block>) {
-		print("extrinsic are executed with book keeping (dont expect to see this message)");
 		extrinsics.into_iter().for_each(Self::apply_extrinsic_no_note);
 
 		// post-extrinsics book-keeping
@@ -340,7 +335,6 @@ where
 	/// Finalize the block - it is up the caller to ensure that all header fields are valid
 	/// except state-root.
 	pub fn finalize_block() -> System::Header {
-		print("block is being finalized");
 		sp_io::init_tracing();
 		sp_tracing::enter_span!( sp_tracing::Level::TRACE, "finalize_block" );
 		<frame_system::Module<System>>::note_finished_extrinsics();
@@ -358,7 +352,6 @@ where
 	/// This doesn't attempt to validate anything regarding the block, but it builds a list of uxt
 	/// hashes.
 	pub fn apply_extrinsic(uxt: Block::Extrinsic) -> ApplyExtrinsicResult {
-		print("extrinsic applied outside block execution");
 		sp_io::init_tracing();
 		let encoded = uxt.encode();
 		let encoded_len = encoded.len();
@@ -371,7 +364,6 @@ where
 
 	/// Apply an extrinsic inside the block execution function.
 	fn apply_extrinsic_no_note(uxt: Block::Extrinsic) {
-		print("extrinsic applied inside block execution");
 		let l = uxt.encode().len();
 		match Self::apply_extrinsic_with_len(uxt, l, None) {
 			Ok(_) => (),
@@ -385,7 +377,6 @@ where
 		encoded_len: usize,
 		to_note: Option<Vec<u8>>,
 	) -> ApplyExtrinsicResult {
-		print("extrinsic application from unknown origin");
 		sp_tracing::enter_span!(
 			sp_tracing::info_span!("apply_extrinsic",
 				ext=?sp_core::hexdisplay::HexDisplay::from(&uxt.encode()))

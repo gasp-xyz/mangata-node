@@ -234,8 +234,6 @@ where
 					let mut rng: StdRng = SeedableRng::from_seed(extrinsics_hash.to_fixed_bytes());
 					previous_block_extrinsics.shuffle(&mut rng);
 
-					// self.backend.revert(1.into(), false);
-					info!("transaction execution after reversion");
 					previous_block_extrinsics.into_iter().for_each(|xt| {
 						self.api.execute_in_transaction(|api| {
 							match api.apply_extrinsic_with_context(
@@ -261,7 +259,6 @@ where
 			},
 		}
 
-		info!("Finalizing block");
 		let header = self.api.finalize_block_with_context(
 			&self.block_id, ExecutionContext::BlockConstruction
 		)?;

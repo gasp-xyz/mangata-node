@@ -34,7 +34,7 @@ impl fmt::Display for StringError {
 const DEFAULT_APP_ID: [u8; 20] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-	let out_dir = env::var("OUT_DIR").unwrap();
+	/*let out_dir = env::var("OUT_DIR").unwrap();
     let appid_envs: Vec<&str> = vec!["ETH_APP_ID", "ERC20_APP_ID"];
 
     for appid_env in appid_envs.into_iter() {
@@ -61,6 +61,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-env-changed=ETH_APP_ID");
     println!("cargo:rerun-if-env-changed=ERC20_APP_ID");
     println!("cargo:rerun-if-changed=build.rs");
-
+    */
     Ok(())
 }

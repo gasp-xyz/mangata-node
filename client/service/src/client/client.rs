@@ -604,7 +604,6 @@ impl<B, E, Block, RA> Client<B, E, Block, RA> where
 			ApiExt<Block, StateBackend = B::State>,
 	{
 
-		info!("Applying block");
 		let BlockImportParams {
 			origin,
 			header,
@@ -698,7 +697,6 @@ impl<B, E, Block, RA> Client<B, E, Block, RA> where
 				ApiExt<Block, StateBackend = B::State>,
 	{
 
-		info!("Executing and importing block");
 		let parent_hash = import_headers.post().parent_hash().clone();
 		let status = self.backend.blockchain().status(BlockId::Hash(hash))?;
 		match (import_existing, status) {
@@ -842,7 +840,6 @@ impl<B, E, Block, RA> Client<B, E, Block, RA> where
 				ApiExt<Block, StateBackend = B::State>,
 	{
 
-		info!("Preparing block storage changes");
 		let parent_hash = import_block.header.parent_hash();
 		let at = BlockId::Hash(*parent_hash);
 		let enact_state = match self.block_status(&at)? {
@@ -867,8 +864,6 @@ impl<B, E, Block, RA> Client<B, E, Block, RA> where
 					ExecutionContext::Importing
 				};
 
-
-				info!("Will execute block on client");
 				match self.backend.blockchain().body(BlockId::Hash(*parent_hash)).unwrap() {
 					Some(mut previous_block_extrinsics) => {
 						if previous_block_extrinsics.is_empty() {
@@ -1242,7 +1237,6 @@ impl<B, E, Block, RA> ProofProvider<Block> for Client<B, E, Block, RA> where
 		method: &str,
 		call_data: &[u8]
 	) -> sp_blockchain::Result<(Vec<u8>, StorageProof)> {
-		info!("Execution proof?");
 		// Make sure we include the `:code` and `:heap_pages` in the execution proof to be
 		// backwards compatible.
 		//
@@ -1306,7 +1300,6 @@ impl<B, E, Block, RA> BlockBuilderProvider<B, Block, Self> for Client<B, E, Bloc
 		inherent_digests: DigestFor<Block>,
 		record_proof: R,
 	) -> sp_blockchain::Result<sc_block_builder::BlockBuilder<Block, Self, B>> {
-		info!("New block at");
 		sc_block_builder::BlockBuilder::new(
 			self,
 			self.expect_block_hash_from_id(parent)?,
@@ -1321,7 +1314,6 @@ impl<B, E, Block, RA> BlockBuilderProvider<B, Block, Self> for Client<B, E, Bloc
 		&self,
 		inherent_digests: DigestFor<Block>,
 	) -> sp_blockchain::Result<sc_block_builder::BlockBuilder<Block, Self, B>> {
-		info!("New block");
 		let info = self.chain_info();
 		sc_block_builder::BlockBuilder::new(
 			self,
@@ -1725,11 +1717,9 @@ impl<B, E, Block, RA> sp_consensus::BlockImport<Block> for &Client<B, E, Block, 
 		mut import_block: BlockImportParams<Block, backend::TransactionFor<B, Block>>,
 		new_cache: HashMap<CacheKeyId, Vec<u8>>,
 	) -> Result<ImportResult, Self::Error> {
-		info!("Unsafe block importing");
 		let span = tracing::span!(tracing::Level::DEBUG, "import_block");
 		let _enter = span.enter();
 
-		info!("Calling prepare changes");
 		if let Some(res) = self.prepare_block_storage_changes(&mut import_block).map_err(|e| {
 			warn!("Block prepare storage changes error:\n{:?}", e);
 			ConsensusError::ClientImport(e.to_string())

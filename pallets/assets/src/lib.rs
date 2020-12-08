@@ -247,6 +247,8 @@ decl_error! {
 		BalanceLow,
 		/// Balance should be non-zero
 		BalanceZero,
+		/// Overflow
+		Overflow,
 	}
 }
 
@@ -303,17 +305,21 @@ impl<T: Trait> Module<T> {
 		id
 	}
 
-	pub fn assets_mint(id: &T::AssetId, to: &T::AccountId, amount: &T::Balance) -> T::Balance {
+	pub fn assets_mint(id: &T::AssetId, to: &T::AccountId, amount: &T::Balance) -> DispatchResult {
+		let origin_balance = <Balances<T>>::get((id, to));
 		<Balances<T>>::mutate((id, to), |balance| *balance += *amount);
 		<TotalSupply<T>>::mutate((id), |total| *total += *amount);
-		<Balances<T>>::get((id, to))
+		let final_balance = <Balances<T>>::get((id, to));
+		ensure!(final_balance >= origin_balance, Error::<T>::Overflow);
+		Ok(())
 	}
 
-	pub fn assets_burn(id: &T::AssetId, to: &T::AccountId, amount: &T::Balance) -> T::Balance {
-		//TODO ensure amount
-		<Balances<T>>::mutate((id, to), |balance| *balance -= *amount);
+	pub fn assets_burn(id: &T::AssetId, from: &T::AccountId, amount: &T::Balance) -> DispatchResult {
+		let origin_balance = <Balances<T>>::get((id, from));
+		ensure!(origin_balance >= *amount, Error::<T>::BalanceLow);
+		<Balances<T>>::mutate((id, from), |balance| *balance -= *amount);
 		<TotalSupply<T>>::mutate((id), |total| *total -= *amount);
-		<Balances<T>>::get((id, to))
+		Ok(())
 	}
 }
 

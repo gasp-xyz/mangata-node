@@ -457,13 +457,13 @@ impl erc20_app::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const MinLengthName: usize = 0;
-	pub const MaxLengthName: usize = 32;
-	pub const MinLengthSymbol: usize = 3;
-	pub const MaxLengthSymbol: usize = 8;
-	pub const MinLengthDescription: usize = 0;
+	pub const MinLengthName: usize = 1;
+	pub const MaxLengthName: usize = 255;
+	pub const MinLengthSymbol: usize = 1;
+	pub const MaxLengthSymbol: usize = 255;
+	pub const MinLengthDescription: usize = 1;
 	pub const MaxLengthDescription: usize = 255;
-	pub const MaxDecimals: u32 = 10;
+	pub const MaxDecimals: u32 = 255;
 }
 impl pallet_assets_info::Trait for Runtime {
     type Event = Event;

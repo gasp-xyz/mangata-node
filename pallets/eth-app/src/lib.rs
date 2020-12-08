@@ -21,7 +21,7 @@
 use frame_system::{self as system, ensure_signed};
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage,
-	dispatch::DispatchResult,
+	dispatch::DispatchResult, ensure,
 };
 use sp_std::prelude::*;
 use sp_core::{H160, U256};
@@ -66,6 +66,8 @@ decl_error! {
 	pub enum Error for Module<T: Trait> {
 		/// The submitted payload could not be decoded.
 		InvalidPayload,
+		/// Asset could not be burned
+		BurnFailure,
 	}
 }
 
@@ -86,8 +88,9 @@ decl_module! {
 
 			// <asset::Module<T>>::do_burn(asset_id, &who, amount)?;
 			let asset_id = <asset::Module<T>>::get_native_asset_id(asset_id);
-			<assets::Module<T>>::assets_burn(&asset_id, &who, &amount.low_u128().saturated_into::<T::Balance>());
+			let result = <assets::Module<T>>::assets_burn(&asset_id, &who, &amount.low_u128().saturated_into::<T::Balance>());
 
+			ensure!(result.is_ok(), Error::<T>::BurnFailure);
 			Self::deposit_event(RawEvent::Transfer(who.clone(), recipient, amount));
 			Ok(())
 		}

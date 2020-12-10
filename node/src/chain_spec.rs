@@ -66,7 +66,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
 			// Initial relay account
 			get_account_id_from_seed::<sr25519::Public>("Relay"),
 			// Sudo account
-			get_account_id_from_seed::<sr25519::Public>("Alice"),
+			"0xec00ad0ec6eeb271a9689888f644d9262016a26a25314ff4ff5d756404c44112".parse().unwrap(),
 			// Pre-funded accounts
 			vec![
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -74,6 +74,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
 				get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
 				get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
 				get_account_id_from_seed::<sr25519::Public>("Relay"),
+				"0xec00ad0ec6eeb271a9689888f644d9262016a26a25314ff4ff5d756404c44112".parse().unwrap(),
 			],
 			true,
 		),

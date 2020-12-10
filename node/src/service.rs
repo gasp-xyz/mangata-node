@@ -1,3 +1,5 @@
+// Copyright (C) 2020 Mangata team
+
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 use std::sync::Arc;

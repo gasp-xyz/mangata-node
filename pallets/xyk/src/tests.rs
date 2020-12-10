@@ -1,3 +1,5 @@
+// Copyright (C) 2020 Mangata team
+
 use super::*;
 use crate::mock::*;
 use crate::mock::Test;

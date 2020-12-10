@@ -1,3 +1,5 @@
+// Copyright (C) 2020 Mangata team
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 /// For more guidance on Substrate modules, see the example module

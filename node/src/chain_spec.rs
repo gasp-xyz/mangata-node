@@ -1,3 +1,5 @@
+// Copyright (C) 2020 Mangata team
+
 use sp_core::{Pair, Public, sr25519};
 use mangata_runtime::{
 	AccountId, BabeConfig, BalancesConfig, GenesisConfig, GrandpaConfig, SessionConfig,

@@ -1,3 +1,5 @@
+// Copyright (C) 2020 Mangata team
+
 use structopt::StructOpt;
 use sc_cli::RunCmd;
 

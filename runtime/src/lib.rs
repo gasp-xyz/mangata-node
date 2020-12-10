@@ -1,3 +1,5 @@
+// Copyright (C) 2020 Mangata team
+
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit="256"]
@@ -41,8 +43,6 @@ pub use frame_support::{
 	},
 };
 
-/// Import the template pallet.
-pub use pallet_template;
 pub use pallet_xyk;
 pub use pallet_assets;
 pub use pallet_assets_info;
@@ -421,11 +421,6 @@ impl pallet_assets::Trait for Runtime {
     type Event = Event;
 }
 
-/// Configure the template pallet in pallets/template.
-impl pallet_template::Trait for Runtime {
-	type Event = Event;
-}
-
 impl pallet_xyk::Trait for Runtime {
     type Event = Event;
     type Randomness = RandomnessCollectiveFlip;
@@ -497,8 +492,6 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
 		Assets: pallet_assets::{Module, Call, Storage, Event<T>},
 		Offences: pallet_offences::{Module, Call, Storage, Event},
-		// Include the custom logic from the template pallet in the runtime.
-		TemplateModule: pallet_template::{Module, Call, Storage, Event<T>},
 		Xyk: pallet_xyk::{Module, Call, Storage, Event<T>},
 		// Snowfork pallets
 		Bridge: bridge::{Module, Call, Storage, Event},

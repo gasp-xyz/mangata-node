@@ -1,3 +1,5 @@
+// Copyright (C) 2020 Mangata team
+
 use crate::{mock::*, AssetInfo, Error};
 use frame_support::{assert_noop, assert_ok};
 

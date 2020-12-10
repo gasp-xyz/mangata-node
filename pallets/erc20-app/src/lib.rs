@@ -1,3 +1,5 @@
+// Copyright (C) 2020 Mangata team
+// Based on Snowfork bridge implementation
 //! # ERC20
 //!
 //! An application that implements bridged ERC20 token assets.

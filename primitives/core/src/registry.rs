@@ -1,4 +1,5 @@
-
+// Copyright (C) 2020 Mangata team
+// Based on Snowfork bridge implementation
 use crate::types::AppId;
 use sp_std::convert::TryInto;
 

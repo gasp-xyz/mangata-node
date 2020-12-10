@@ -1,3 +1,5 @@
+// Copyright (C) 2020 Mangata team
+
 use crate::{Module, Trait};
 use sp_core::H256;
 

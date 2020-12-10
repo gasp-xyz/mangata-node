@@ -1,3 +1,5 @@
+// Copyright (C) 2020 Mangata team
+// Based on Snowfork bridge implementation
 use std::env;
 use std::fs;
 use std::path::Path;

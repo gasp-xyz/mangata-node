@@ -1,3 +1,5 @@
+// Copyright (C) 2020 Mangata team
+
 use crate::{Module, Trait};
 use sp_core::H256;
 use frame_support::{impl_outer_origin, parameter_types, weights::Weight};

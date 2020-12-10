@@ -1,3 +1,6 @@
+// Copyright (C) 2020 Mangata team
+// Based on Snowfork bridge implementation
+
 //! # Asset
 //!
 //! The asset module provides functionality for handling bridged asset balances.

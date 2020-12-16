@@ -76,17 +76,17 @@ decl_module! {
 
         fn deposit_event() = default;
 
-        #[weight = 10_000]
-        fn set_vault_id(origin) -> DispatchResult{
-            let sender = ensure_signed(origin)?;
-            ensure!(
-                !<VaultId<T>>::exists(),
-                Error::<T>::VaultAlreadySet,
-            );
-            <VaultId<T>>::put(sender);
-
-            Ok(())
-        }
+        // #[weight = 10_000]
+        // fn set_vault_id(origin) -> DispatchResult{
+        //     let sender = ensure_signed(origin)?;
+        //     ensure!(
+        //         !<VaultId<T>>::exists(),
+        //         Error::<T>::VaultAlreadySet,
+        //     );
+        //     <VaultId<T>>::put(sender);
+        //
+        //     Ok(())
+        // }
 
         #[weight = 10_000]
         fn create_pool(
@@ -383,6 +383,12 @@ decl_module! {
                 (&second_asset_id, &first_asset_id),
                 second_asset_reserve - second_asset_amount,
             );
+
+            if (first_asset_reserve - first_asset_amount == 0.saturated_into::<T::Balance>())
+                || (second_asset_reserve - second_asset_amount == 0.saturated_into::<T::Balance>()) {
+                <Pools<T>>::remove((first_asset_id, second_asset_id));
+                <Pools<T>>::remove((second_asset_id, first_asset_id));
+            }
 
             //TODO burn_free of liqudity_pool_id asset to sender in an amount of += liquidity_assets_minted
             //TODO introduce burn function to only portion of holder's tokens

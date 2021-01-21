@@ -337,13 +337,19 @@ decl_module! {
             origin,
             first_asset_id: T::AssetId,
             second_asset_id: T::AssetId,
-            liquidity_asset_amount: T::Balance,
+            first_asset_amount: T::Balance,
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
             let vault = <VaultId<T>>::get();
 
+            let first_asset_reserve = <Pools<T>>::get((first_asset_id, second_asset_id));
+            let second_asset_reserve = <Pools<T>>::get((second_asset_id, first_asset_id));
+
             //get liquidity_asset_id of selected pool
             let liquidity_asset_id = Self::get_liquidity_asset(first_asset_id, second_asset_id);
+
+            //get liquidity_asset_amount corresponding to first_asset_amount
+            let liquidity_asset_amount = first_asset_amount * <assets::Module<T>>::total_supply(liquidity_asset_id) / first_asset_reserve
 
             ensure!(
                 <Pools<T>>::contains_key((first_asset_id, second_asset_id)),
@@ -355,9 +361,6 @@ decl_module! {
                 Error::<T>::NotEnoughAssets,
             );
 
-            let first_asset_reserve = <Pools<T>>::get((first_asset_id, second_asset_id));
-            let second_asset_reserve = <Pools<T>>::get((second_asset_id, first_asset_id));
-            let first_asset_amount = first_asset_reserve * liquidity_asset_amount / <assets::Module<T>>::total_supply(liquidity_asset_id);
             let second_asset_amount = second_asset_reserve * liquidity_asset_amount / <assets::Module<T>>::total_supply(liquidity_asset_id);
 
             <assets::Module<T>>::assets_transfer(

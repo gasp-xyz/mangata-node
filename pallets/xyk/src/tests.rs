@@ -317,7 +317,7 @@ fn burn_W() {
 			Origin::signed(2),
 			0,
 			1,
-			500000,
+			250000,
 		);
 
 		assert_eq!(XykStorage::get_total_issuance(2), 500000); // total liquidity assets
@@ -339,7 +339,7 @@ fn burn_W_other_way() {
 			Origin::signed(2),
 			1,
 			0,
-			500000,
+			250000,
 		);
 
 		assert_eq!(XykStorage::get_total_issuance(2), 500000); // total liquidity assets
@@ -363,7 +363,7 @@ fn burn_N_not_enough_liquidity_asset() {
 				Origin::signed(2),
 				0,
 				1,
-				1500000,
+				600000,
 			),
 			Error::<Test>::NotEnoughAssets,
 		);

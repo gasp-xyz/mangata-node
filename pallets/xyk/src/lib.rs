@@ -155,6 +155,7 @@ decl_module! {
             sold_asset_id: T::AssetId,
             bought_asset_id: T::AssetId,
             sold_asset_amount: T::Balance,
+            min_amount_out: T::Balance
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
             // TODO ensure sender has enough assets
@@ -172,6 +173,10 @@ decl_module! {
             ensure!(
                 <assets::Module<T>>::balance(sold_asset_id, sender.clone()) >= sold_asset_amount,
                 Error::<T>::NotEnoughAssets,
+            );
+            ensure!(
+                sold_asset_amount >= min_amount_out,
+                Error::<T>::InsufficientOutputAmount,
             );
             let vault = <VaultId<T>>::get();
             <assets::Module<T>>::assets_transfer(
@@ -203,6 +208,7 @@ decl_module! {
             sold_asset_id: T::AssetId,
             bought_asset_id: T::AssetId,
             bought_asset_amount: T::Balance,
+            max_amount_in: T::Balance
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
             ensure!(
@@ -225,6 +231,10 @@ decl_module! {
             ensure!(
                 <assets::Module<T>>::balance(sold_asset_id, sender.clone()) >= sold_asset_amount,
                 Error::<T>::NotEnoughAssets,
+            );
+            ensure!(
+                sold_asset_amount <= max_amount_in,
+                Error::<T>::InsufficientInputAmount,
             );
             let vault = <VaultId<T>>::get();
             <assets::Module<T>>::assets_transfer(

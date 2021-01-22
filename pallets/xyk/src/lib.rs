@@ -349,7 +349,7 @@ decl_module! {
             let liquidity_asset_id = Self::get_liquidity_asset(first_asset_id, second_asset_id);
 
             //get liquidity_asset_amount corresponding to first_asset_amount
-            let liquidity_asset_amount = first_asset_amount * <assets::Module<T>>::total_supply(liquidity_asset_id) / first_asset_reserve
+            let liquidity_asset_amount = first_asset_amount * <assets::Module<T>>::total_supply(liquidity_asset_id) / first_asset_reserve;
 
             ensure!(
                 <Pools<T>>::contains_key((first_asset_id, second_asset_id)),

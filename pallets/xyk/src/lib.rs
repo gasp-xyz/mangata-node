@@ -175,7 +175,7 @@ decl_module! {
                 Error::<T>::NotEnoughAssets,
             );
             ensure!(
-                sold_asset_amount >= min_amount_out,
+                bought_asset_amount >= min_amount_out,
                 Error::<T>::InsufficientOutputAmount,
             );
             let vault = <VaultId<T>>::get();

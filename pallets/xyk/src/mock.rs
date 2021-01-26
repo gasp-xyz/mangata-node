@@ -62,7 +62,7 @@ impl Trait for Test {
 
 }
 
-impl generic_asset::Trait for Test {
+impl assets::Trait for Test {
 	type Balance = u128;
 	type AssetId = u32;
 	type Event = ();

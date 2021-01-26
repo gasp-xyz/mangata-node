@@ -30,6 +30,8 @@ pub trait Trait: assets::Trait {
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 }
 
+
+
 decl_error! {
     /// Error for the generic-asset module.
 
@@ -40,8 +42,12 @@ decl_error! {
         NoSuchPool,
         NotEnoughReserve,
         ZeroAmount,
+        InsufficientInputAmount,
+        InsufficientOutputAmount,
     }
 }
+
+
 
 decl_event!(
     pub enum Event<T>
@@ -97,7 +103,7 @@ decl_module! {
             second_asset_amount: T::Balance
         ) -> DispatchResult {
             let sender = ensure_signed(origin.clone())?;
-            let vault_address: T::AccountId  = <VaultId<T>>::get();
+            let vault: T::AccountId  = <VaultId<T>>::get();
             //  TODO ensure assets exists ?
             //  TODO asset1 != asset2
             ensure!(
@@ -136,13 +142,13 @@ decl_module! {
             <assets::Module<T>>::assets_transfer(
                 &first_asset_id,
                 &sender,
-                &vault_address,
+                &vault,
                 &first_asset_amount
             )?;
             <assets::Module<T>>::assets_transfer(
                 &second_asset_id,
                 &sender,
-                &vault_address,
+                &vault,
                 &second_asset_amount
             )?;
             Ok(())
@@ -155,7 +161,7 @@ decl_module! {
             sold_asset_id: T::AssetId,
             bought_asset_id: T::AssetId,
             sold_asset_amount: T::Balance,
-            min_amount_out: T::Balance
+            min_amount_out: Option<T::Balance>
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
             // TODO ensure sender has enough assets
@@ -175,7 +181,7 @@ decl_module! {
                 Error::<T>::NotEnoughAssets,
             );
             ensure!(
-                bought_asset_amount >= min_amount_out,
+                bought_asset_amount >= min_amount_out.unwrap_or(0.saturated_into::<T::Balance>()),
                 Error::<T>::InsufficientOutputAmount,
             );
             let vault = <VaultId<T>>::get();
@@ -202,13 +208,15 @@ decl_module! {
             Ok(())
         }
 
+        
+
         #[weight = (10_000, Pays::No)]
         fn buy_asset (
             origin,
             sold_asset_id: T::AssetId,
             bought_asset_id: T::AssetId,
             bought_asset_amount: T::Balance,
-            max_amount_in: T::Balance
+            max_amount_in: Option<T::Balance>
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
             ensure!(
@@ -232,8 +240,9 @@ decl_module! {
                 <assets::Module<T>>::balance(sold_asset_id, sender.clone()) >= sold_asset_amount,
                 Error::<T>::NotEnoughAssets,
             );
+       
             ensure!(
-                sold_asset_amount <= max_amount_in,
+                sold_asset_amount <= max_amount_in.unwrap_or(u128::MAX.saturated_into::<T::Balance>()),
                 Error::<T>::InsufficientInputAmount,
             );
             let vault = <VaultId<T>>::get();

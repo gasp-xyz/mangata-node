@@ -4,12 +4,14 @@ use crate::{Module, Trait};
 use sp_core::H256;
 
 use sp_runtime::{
-	Perbill,
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
+	Perbill,
 };
 
-use frame_support::{parameter_types, impl_outer_event, impl_outer_origin, weights::Weight};
+use frame_support::{
+	impl_outer_event, impl_outer_origin, parameter_types, traits::Randomness, weights::Weight,
+};
 use frame_system as system;
 
 use super::*;
@@ -57,9 +59,8 @@ impl system::Trait for Test {
 }
 
 impl Trait for Test {
+	//	type Randomness = ();
 	type Event = ();
-	type Randomness = ();
-
 }
 
 impl assets::Trait for Test {
@@ -70,11 +71,11 @@ impl assets::Trait for Test {
 
 pub type XykStorage = Module<Test>;
 
-
-
-
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+	system::GenesisConfig::default()
+		.build_storage::<Test>()
+		.unwrap()
+		.into()
 }

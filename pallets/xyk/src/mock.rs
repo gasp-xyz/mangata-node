@@ -9,9 +9,7 @@ use sp_runtime::{
 	Perbill,
 };
 
-use frame_support::{
-	impl_outer_event, impl_outer_origin, parameter_types, traits::Randomness, weights::Weight,
-};
+use frame_support::{impl_outer_event, impl_outer_origin, parameter_types, weights::Weight};
 use frame_system as system;
 
 use super::*;
@@ -59,7 +57,6 @@ impl system::Trait for Test {
 }
 
 impl Trait for Test {
-	//	type Randomness = ();
 	type Event = ();
 }
 

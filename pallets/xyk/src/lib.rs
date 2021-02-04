@@ -10,7 +10,7 @@ use sp_runtime::traits::{BlakeTwo256, Hash, One, SaturatedConversion, Zero};
 use codec::{Decode, Encode};
 use frame_support::{
     decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult, ensure,
-    traits::Randomness, weights::Pays, StorageMap,
+    weights::Pays, StorageMap,
 };
 use sp_runtime::print;
 
@@ -25,7 +25,6 @@ mod tests;
 
 pub trait Trait: assets::Trait {
     // TODO: Add other types and constants required configure this module.
-    // type Randomness: Randomness<Self::Hash>;
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 }
 
@@ -422,21 +421,6 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
-    // fn generate_random_hash() -> T::Hash {
-    //     let nonce = <Nonce>::get();
-
-    //     let random_seed = T::Randomness::random_seed();
-    //     let new_random = (random_seed, nonce)
-    //         .using_encoded(|b| BlakeTwo256::hash(b))
-    //         .using_encoded(|mut b| u64::decode(&mut b))
-    //         .expect("Hash must be bigger than 8 bytes; Qed");
-
-    //     let new_nonce = <Nonce>::get() + 1;
-    //     <Nonce>::put(new_nonce);
-
-    //     return (new_random).using_encoded(<T as frame_system::Trait>::Hashing::hash);
-    // }
-
     pub fn calculate_sell_price(
         input_reserve: T::Balance,
         output_reserve: T::Balance,

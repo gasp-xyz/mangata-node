@@ -366,22 +366,21 @@ decl_module! {
             let liquidity_asset_id = Self::get_liquidity_asset(first_asset_id, second_asset_id);
             let total_liquidity_assets = <assets::Module<T>>::total_supply(liquidity_asset_id);
 
-            //get liquidity_asset_id of selected pool
-            let liquidity_asset_id = Self::get_liquidity_asset(first_asset_id, second_asset_id);
-
             let first_asset_amount_u256: U256 = first_asset_amount.saturated_into::<u128>().into();
             let first_asset_reserve_u256: U256 = first_asset_reserve.saturated_into::<u128>().into();
             let second_asset_reserve_u256: U256 = second_asset_reserve.saturated_into::<u128>().into();
-            let total_liquidity_assets_u256: U256 = total_liquidity_assets.saturated_into::<u128>().into();
-            //get liquidity_asset_amount corresponding to first_asset_amount
-            let liquidity_asset_amount_u256: U256 = first_asset_amount_u256 * total_liquidity_assets_u256 / first_asset_amount_u256;
-            let liquidity_asset_amount = liquidity_asset_amount_u256.saturated_into::<u128>()
-            .saturated_into::<T::Balance>();
 
             ensure!(
                 <Pools<T>>::contains_key((first_asset_id, second_asset_id)),
                 Error::<T>::NoSuchPool,
             );
+            let total_liquidity_assets_u256: U256 = total_liquidity_assets.saturated_into::<u128>().into();
+            //get liquidity_asset_amount corresponding to first_asset_amount
+            let liquidity_asset_amount_u256: U256 = first_asset_amount_u256 * total_liquidity_assets_u256 / first_asset_reserve_u256;
+            let liquidity_asset_amount = liquidity_asset_amount_u256.saturated_into::<u128>()
+            .saturated_into::<T::Balance>();
+
+
 
             ensure!(
                 <assets::Module<T>>::balance(liquidity_asset_id, sender.clone()) >= liquidity_asset_amount,
@@ -392,6 +391,10 @@ decl_module! {
             let second_asset_amount = second_asset_amount_u256.saturated_into::<u128>()
             .saturated_into::<T::Balance>();
 
+            ensure!(
+                !first_asset_amount.is_zero() && !second_asset_amount.is_zero(),
+                Error::<T>::ZeroAmount,
+            );
 
             <assets::Module<T>>::assets_transfer(
                 &first_asset_id,
@@ -432,7 +435,6 @@ decl_module! {
             //    &liquidity_asset_amount,
             //)?;
             <assets::Module<T>>::assets_burn(&liquidity_asset_id, &sender, &liquidity_asset_amount);
-
             Ok(())
         }
     }

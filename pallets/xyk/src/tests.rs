@@ -303,16 +303,40 @@ fn sell_W() {
 #[test]
 fn buy_W() {
 	new_test_ext().execute_with(|| {
-		initialize();
-		// buying 150000 liquidity assetId 1 of pool 0 1
-		XykStorage::buy_asset(Origin::signed(2), 0, 1, 166333, 500000);
+		let accId: u64 = 2;
+		let amount: u128 = 100000000000000000000;
+		let amount1: u128 = 100000000000000000000;
+		<pallet_assets::Module<Test>>::assets_issue(&accId, &amount);
+		<pallet_assets::Module<Test>>::assets_issue(&accId, &amount1);
 
-		assert_eq!(<pallet_assets::Module<Test>>::balance(0, 2), 249999); // amount in user acc after selling
-		assert_eq!(<pallet_assets::Module<Test>>::balance(1, 2), 666333); // amount in user acc after buying (check rounding should be 666333?)); // amount in user acc after buying
-		assert_eq!(XykStorage::asset_pool((0, 1)), 750001); // amount in pool map
-		assert_eq!(XykStorage::asset_pool((1, 0)), 333667); // amount in pool map
-		                                            // assert_eq!(XykStorage::get_free_balance(0, 1), 750000); // amount in vault acc
-		                                            // assert_eq!(XykStorage::get_free_balance(1, 1), 333668); // amount in vault acc
+		// buying 150000 liquidity assetId 1 of pool 0 1
+		XykStorage::create_pool(
+			Origin::signed(2),
+			0,
+			50000000000000000000,
+			1,
+			50000000000000000000,
+		);
+
+		XykStorage::buy_asset(
+			Origin::signed(2),
+			0,
+			1,
+			15000000000000000000,
+			25000000000000000000000,
+		);
+		assert_eq!(
+			<pallet_assets::Module<Test>>::balance(0, 2),
+			28506949419687634331
+		); // amount in user acc after selling
+		assert_eq!(
+			<pallet_assets::Module<Test>>::balance(1, 2),
+			65000000000000000000
+		); // amount in user acc after buying (check rounding should be 666333?)); // amount in user acc after buying
+		assert_eq!(XykStorage::asset_pool((0, 1)), 71493050580312365669); // amount in pool map
+		assert_eq!(XykStorage::asset_pool((1, 0)), 35000000000000000000); // amount in pool map
+		                                                          // assert_eq!(XykStorage::get_free_balance(0, 1), 750000); // amount in vault acc
+		                                                          // assert_eq!(XykStorage::get_free_balance(1, 1), 333668); // amount in vault acc
 	});
 }
 

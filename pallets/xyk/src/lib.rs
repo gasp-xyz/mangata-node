@@ -2,21 +2,20 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-/// For more guidance on Substrate modules, see the example module
-/// https://github.com/paritytech/substrate/blob/master/frame/example/src/lib.rs
-// TODO documentation!
-use sp_runtime::traits::{BlakeTwo256, Hash, One, SaturatedConversion, Zero};
-
 use codec::{Decode, Encode};
 use frame_support::{
     decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult, ensure,
     traits::Randomness, weights::Pays, StorageMap,
 };
-use sp_runtime::print;
-
 use frame_system::ensure_signed;
 use pallet_assets as assets;
 
+use sp_core::U256;
+/// For more guidance on Substrate modules, see the example module
+/// https://github.com/paritytech/substrate/blob/master/frame/example/src/lib.rs
+// TODO documentation!
+use sp_runtime::print;
+use sp_runtime::traits::{BlakeTwo256, Hash, One, SaturatedConversion, Zero};
 #[cfg(test)]
 mod mock;
 
@@ -284,13 +283,21 @@ decl_module! {
                 Error::<T>::NoSuchPool,
             );
 
-
-
             let first_asset_reserve = <Pools<T>>::get((first_asset_id, second_asset_id));
             let second_asset_reserve = <Pools<T>>::get((second_asset_id, first_asset_id));
-            let second_asset_amount = first_asset_amount * second_asset_reserve / first_asset_reserve + 1.saturated_into::<T::Balance>();
             let total_liquidity_assets = <assets::Module<T>>::total_supply(liquidity_asset_id);
-            let liquidity_assets_minted = first_asset_amount * total_liquidity_assets / first_asset_reserve;
+
+            let first_asset_amount_u256: U256 = first_asset_amount.saturated_into::<u128>().into();
+            let first_asset_reserve_u256: U256 = first_asset_reserve.saturated_into::<u128>().into();
+            let second_asset_reserve_u256: U256 = second_asset_reserve.saturated_into::<u128>().into();
+            let total_liquidity_assets_u256: U256 = total_liquidity_assets.saturated_into::<u128>().into();
+            let second_asset_amount_u256: U256 = first_asset_amount_u256 * second_asset_reserve_u256 / first_asset_reserve_u256 + 1;
+            let liquidity_assets_minted_u256: U256 = first_asset_amount_u256 * total_liquidity_assets_u256 / first_asset_reserve_u256;
+            let second_asset_amount = second_asset_amount_u256.saturated_into::<u128>()
+            .saturated_into::<T::Balance>();
+            let liquidity_assets_minted = liquidity_assets_minted_u256.saturated_into::<u128>()
+            .saturated_into::<T::Balance>();
+
 
             ensure!(
                 !first_asset_amount.is_zero() && !second_asset_amount.is_zero(),
@@ -350,13 +357,47 @@ decl_module! {
             origin,
             first_asset_id: T::AssetId,
             second_asset_id: T::AssetId,
-            liquidity_asset_amount: T::Balance,
+            first_asset_amount: T::Balance,
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
             let vault = <VaultId<T>>::get();
 
+
+
+            // let first_asset_reserve = <Pools<T>>::get((first_asset_id, second_asset_id));
+            // let second_asset_reserve = <Pools<T>>::get((second_asset_id, first_asset_id));
+            // let total_liquidity_assets = <assets::Module<T>>::total_supply(liquidity_asset_id);
+
+            // let first_asset_amount_u256: U256 = first_asset_amount.saturated_into::<u128>().into();
+            // let first_asset_reserve_u256: U256 = first_asset_reserve.saturated_into::<u128>().into();
+            // let second_asset_reserve_u256: U256 = second_asset_reserve.saturated_into::<u128>().into();
+            // let total_liquidity_assets_u256: U256 = total_liquidity_assets.saturated_into::<u128>().into();
+            // let second_asset_amount_u256: U256 = first_asset_amount_u256 * second_asset_reserve_u256 / first_asset_reserve_u256 + 1;
+            // let liquidity_assets_minted_u256: U256 = first_asset_amount_u256 * total_liquidity_assets_u256 / first_asset_reserve_u256;
+            // let second_asset_amount = second_asset_amount_u256.saturated_into::<u128>()
+            // .saturated_into::<T::Balance>();
+            // let liquidity_assets_minted = liquidity_assets_minted_u256.saturated_into::<u128>()
+            // .saturated_into::<T::Balance>();
+
+
+
+
+            let first_asset_reserve = <Pools<T>>::get((first_asset_id, second_asset_id));
+            let second_asset_reserve = <Pools<T>>::get((second_asset_id, first_asset_id));
+            let liquidity_asset_id = Self::get_liquidity_asset(first_asset_id, second_asset_id);
+            let total_liquidity_assets = <assets::Module<T>>::total_supply(liquidity_asset_id);
+
             //get liquidity_asset_id of selected pool
             let liquidity_asset_id = Self::get_liquidity_asset(first_asset_id, second_asset_id);
+
+            let first_asset_amount_u256: U256 = first_asset_amount.saturated_into::<u128>().into();
+            let first_asset_reserve_u256: U256 = first_asset_reserve.saturated_into::<u128>().into();
+            let second_asset_reserve_u256: U256 = second_asset_reserve.saturated_into::<u128>().into();
+            let total_liquidity_assets_u256: U256 = total_liquidity_assets.saturated_into::<u128>().into();
+            //get liquidity_asset_amount corresponding to first_asset_amount
+            let liquidity_asset_amount_u256: U256 = first_asset_amount_u256 * total_liquidity_assets_u256 / first_asset_amount_u256;
+            let liquidity_asset_amount = liquidity_asset_amount_u256.saturated_into::<u128>()
+            .saturated_into::<T::Balance>();
 
             ensure!(
                 <Pools<T>>::contains_key((first_asset_id, second_asset_id)),
@@ -368,10 +409,10 @@ decl_module! {
                 Error::<T>::NotEnoughAssets,
             );
 
-            let first_asset_reserve = <Pools<T>>::get((first_asset_id, second_asset_id));
-            let second_asset_reserve = <Pools<T>>::get((second_asset_id, first_asset_id));
-            let first_asset_amount = first_asset_reserve * liquidity_asset_amount / <assets::Module<T>>::total_supply(liquidity_asset_id);
-            let second_asset_amount = second_asset_reserve * liquidity_asset_amount / <assets::Module<T>>::total_supply(liquidity_asset_id);
+            let second_asset_amount_u256 = second_asset_reserve_u256 * liquidity_asset_amount_u256 / total_liquidity_assets_u256;
+            let second_asset_amount = second_asset_amount_u256.saturated_into::<u128>()
+            .saturated_into::<T::Balance>();
+
 
             <assets::Module<T>>::assets_transfer(
                 &first_asset_id,
@@ -439,26 +480,32 @@ impl<T: Trait> Module<T> {
         output_reserve: T::Balance,
         sell_amount: T::Balance,
     ) -> T::Balance {
-        // input_amount_with_fee: uint256 = input_amount * 997
-        let input_amount_with_fee = sell_amount * 997.saturated_into::<T::Balance>();
-        // numerator: uint256 = input_amount_with_fee * output_reserve
-        let numerator = input_amount_with_fee * output_reserve;
-        // denominator: uint256 = (input_reserve * 1000) + input_amount_with_fee
-        let denominator =
-            (input_reserve * 1000.saturated_into::<T::Balance>()) + input_amount_with_fee;
-        numerator / denominator
-    }
+        let input_reserve_saturated: U256 = input_reserve.saturated_into::<u128>().into();
+        let output_reserve_saturated: U256 = output_reserve.saturated_into::<u128>().into();
+        let sell_amount_saturated: U256 = sell_amount.saturated_into::<u128>().into();
+        let input_amount_with_fee: U256 = sell_amount_saturated * 997;
+        let numerator: U256 = input_amount_with_fee * output_reserve_saturated;
+        let denominator: U256 = input_reserve_saturated * 1000 + input_amount_with_fee;
 
+        let result: U256 = numerator / denominator;
+        return result
+            .saturated_into::<u128>()
+            .saturated_into::<T::Balance>();
+    }
     pub fn calculate_buy_price(
         input_reserve: T::Balance,
         output_reserve: T::Balance,
         buy_amount: T::Balance,
     ) -> T::Balance {
-        // numerator: uint256 = input_reserve * output_amount * 1000
-        let numerator = input_reserve * buy_amount * 1000.saturated_into::<T::Balance>();
-        // denominator: uint256 = (output_reserve - output_amount) * 997
-        let denominator = (output_reserve - buy_amount) * 997.saturated_into::<T::Balance>();
-        numerator / denominator + 1.saturated_into::<T::Balance>()
+        let input_reserve_saturated: U256 = input_reserve.saturated_into::<u128>().into();
+        let output_reserve_saturated: U256 = output_reserve.saturated_into::<u128>().into();
+        let buy_amount_saturated: U256 = buy_amount.saturated_into::<u128>().into();
+        let numerator: U256 = input_reserve_saturated * buy_amount_saturated * 1000;
+        let denominator: U256 = (output_reserve_saturated - buy_amount_saturated) * 997;
+        let result: U256 = numerator / denominator + 1;
+        return result
+            .saturated_into::<u128>()
+            .saturated_into::<T::Balance>();
     }
 
     pub fn get_liquidity_asset(

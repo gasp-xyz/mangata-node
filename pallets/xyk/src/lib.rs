@@ -122,7 +122,6 @@ decl_module! {
             <Pools<T>>::insert(
                 (second_asset_id, first_asset_id), second_asset_amount
             );
-            //let liquidity_asset_id = <generic_asset::Module<T>>::next_asset_id();
             let liquidity_asset_id = <assets::Module<T>>::assets_next_asset_id();
             <LiquidityAssets<T>>::insert(
                 (first_asset_id, second_asset_id), liquidity_asset_id
@@ -361,26 +360,6 @@ decl_module! {
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
             let vault = <VaultId<T>>::get();
-
-
-
-            // let first_asset_reserve = <Pools<T>>::get((first_asset_id, second_asset_id));
-            // let second_asset_reserve = <Pools<T>>::get((second_asset_id, first_asset_id));
-            // let total_liquidity_assets = <assets::Module<T>>::total_supply(liquidity_asset_id);
-
-            // let first_asset_amount_u256: U256 = first_asset_amount.saturated_into::<u128>().into();
-            // let first_asset_reserve_u256: U256 = first_asset_reserve.saturated_into::<u128>().into();
-            // let second_asset_reserve_u256: U256 = second_asset_reserve.saturated_into::<u128>().into();
-            // let total_liquidity_assets_u256: U256 = total_liquidity_assets.saturated_into::<u128>().into();
-            // let second_asset_amount_u256: U256 = first_asset_amount_u256 * second_asset_reserve_u256 / first_asset_reserve_u256 + 1;
-            // let liquidity_assets_minted_u256: U256 = first_asset_amount_u256 * total_liquidity_assets_u256 / first_asset_reserve_u256;
-            // let second_asset_amount = second_asset_amount_u256.saturated_into::<u128>()
-            // .saturated_into::<T::Balance>();
-            // let liquidity_assets_minted = liquidity_assets_minted_u256.saturated_into::<u128>()
-            // .saturated_into::<T::Balance>();
-
-
-
 
             let first_asset_reserve = <Pools<T>>::get((first_asset_id, second_asset_id));
             let second_asset_reserve = <Pools<T>>::get((second_asset_id, first_asset_id));

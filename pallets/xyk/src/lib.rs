@@ -7,16 +7,15 @@
 // TODO documentation!
 use sp_runtime::traits::{BlakeTwo256, Hash, One, SaturatedConversion, Zero};
 
-use sp_runtime::print;
 use codec::{Decode, Encode};
 use frame_support::{
     decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult, ensure,
-    traits::Randomness, StorageMap,
-    weights::Pays,
+    weights::Pays, StorageMap,
 };
+use sp_runtime::print;
 
-use pallet_assets as assets;
 use frame_system::ensure_signed;
+use pallet_assets as assets;
 
 #[cfg(test)]
 mod mock;
@@ -26,7 +25,6 @@ mod tests;
 
 pub trait Trait: assets::Trait {
     // TODO: Add other types and constants required configure this module.
-    type Randomness: Randomness<Self::Hash>;
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 }
 
@@ -40,6 +38,8 @@ decl_error! {
         NoSuchPool,
         NotEnoughReserve,
         ZeroAmount,
+        InsufficientInputAmount,
+        InsufficientOutputAmount,
     }
 }
 
@@ -97,7 +97,7 @@ decl_module! {
             second_asset_amount: T::Balance
         ) -> DispatchResult {
             let sender = ensure_signed(origin.clone())?;
-            let vault_address: T::AccountId  = <VaultId<T>>::get();
+            let vault: T::AccountId  = <VaultId<T>>::get();
             //  TODO ensure assets exists ?
             //  TODO asset1 != asset2
             ensure!(
@@ -136,13 +136,13 @@ decl_module! {
             <assets::Module<T>>::assets_transfer(
                 &first_asset_id,
                 &sender,
-                &vault_address,
+                &vault,
                 &first_asset_amount
             )?;
             <assets::Module<T>>::assets_transfer(
                 &second_asset_id,
                 &sender,
-                &vault_address,
+                &vault,
                 &second_asset_amount
             )?;
             Ok(())
@@ -155,6 +155,7 @@ decl_module! {
             sold_asset_id: T::AssetId,
             bought_asset_id: T::AssetId,
             sold_asset_amount: T::Balance,
+            min_amount_out: T::Balance,
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
             // TODO ensure sender has enough assets
@@ -172,6 +173,10 @@ decl_module! {
             ensure!(
                 <assets::Module<T>>::balance(sold_asset_id, sender.clone()) >= sold_asset_amount,
                 Error::<T>::NotEnoughAssets,
+            );
+            ensure!(
+                bought_asset_amount >= min_amount_out,
+                Error::<T>::InsufficientOutputAmount,
             );
             let vault = <VaultId<T>>::get();
             <assets::Module<T>>::assets_transfer(
@@ -197,12 +202,15 @@ decl_module! {
             Ok(())
         }
 
+
+
         #[weight = (10_000, Pays::No)]
         fn buy_asset (
             origin,
             sold_asset_id: T::AssetId,
             bought_asset_id: T::AssetId,
             bought_asset_amount: T::Balance,
+            max_amount_in: T::Balance,
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
             ensure!(
@@ -225,6 +233,10 @@ decl_module! {
             ensure!(
                 <assets::Module<T>>::balance(sold_asset_id, sender.clone()) >= sold_asset_amount,
                 Error::<T>::NotEnoughAssets,
+            );
+            ensure!(
+                sold_asset_amount <= max_amount_in,
+                Error::<T>::InsufficientInputAmount,
             );
             let vault = <VaultId<T>>::get();
             <assets::Module<T>>::assets_transfer(
@@ -409,21 +421,6 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
-    fn generate_random_hash() -> T::Hash {
-        let nonce = <Nonce>::get();
-
-        let random_seed = T::Randomness::random_seed();
-        let new_random = (random_seed, nonce)
-            .using_encoded(|b| BlakeTwo256::hash(b))
-            .using_encoded(|mut b| u64::decode(&mut b))
-            .expect("Hash must be bigger than 8 bytes; Qed");
-
-        let new_nonce = <Nonce>::get() + 1;
-        <Nonce>::put(new_nonce);
-
-        return (new_random).using_encoded(<T as frame_system::Trait>::Hashing::hash);
-    }
-
     pub fn calculate_sell_price(
         input_reserve: T::Balance,
         output_reserve: T::Balance,
@@ -462,11 +459,7 @@ impl<T: Trait> Module<T> {
         }
     }
 
-    fn create_asset(
-        origin: T::Origin,
-        amount: T::Balance
-    ) -> DispatchResult {
-
+    fn create_asset(origin: T::Origin, amount: T::Balance) -> DispatchResult {
         print("creating liquidity asset");
         let vault: T::AccountId = <VaultId<T>>::get();
         let sender = ensure_signed(origin.clone())?;
@@ -491,18 +484,13 @@ impl<T: Trait> Module<T> {
         Ok(())
     }
 
-    fn get_free_balance(
-        assetId: T::AssetId,
-        from: T::AccountId
-    ) -> T::Balance {
-        return <assets::Module<T>>::balance(assetId, from);
-    }
+    // fn get_free_balance(assetId: T::AssetId, from: T::AccountId) -> T::Balance {
+    //     return <assets::Module<T>>::balance(assetId, from);
+    // }
 
-    fn get_total_issuance(
-        assetId: T::AssetId
-    ) -> T::Balance {
-        return <assets::Module<T>>::total_supply(assetId);
-    }
+    // fn get_total_issuance(assetId: T::AssetId) -> T::Balance {
+    //     return <assets::Module<T>>::total_supply(assetId);
+    // }
     // //Read-only function to be used by RPC
     // pub fn get_exchange_input_price(
     //     input_asset_id: T::AssetId,

@@ -3,7 +3,6 @@
 use super::*;
 use crate::mock::Test;
 use crate::mock::*;
-use frame_support::sp_runtime::ModuleId;
 use frame_support::{assert_err, assert_noop, assert_ok};
 use frame_system as system;
 use pallet_assets;

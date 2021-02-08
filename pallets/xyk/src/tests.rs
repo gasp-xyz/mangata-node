@@ -45,7 +45,7 @@ use pallet_assets;
 // 0 amount
 
 //liquidity assets after trade, after burn, after mint
-const PALLET_ID: ModuleId = pallet_xyk(*b"Treasury");
+
 pub trait Trait: assets::Trait {
 	// TODO: Add other types and constants required configure this module.
 	// type Hashing = BlakeTwo256;
@@ -56,12 +56,6 @@ pub trait Trait: assets::Trait {
 
 // W - should work
 // N - should not work
-impl<T: Trait> Module<Test> {
-	/// The account ID that holds the pallet's treasury pool
-	fn account_id() -> T::AccountId {
-		PALLET_ID.into_account()
-	}
-}
 
 fn initialize() {
 	// creating asset with assetId 0 and minting to accountId 2
@@ -83,7 +77,6 @@ fn initialize() {
 fn create_pool_W() {
 	new_test_ext().execute_with(|| {
 		initialize();
-		assert_eq!(account_id(), 1);
 		assert_eq!(XykStorage::asset_pool((0, 1)), 40000000000000000000); // amount of asset 0 in pool map
 		assert_eq!(XykStorage::asset_pool((1, 0)), 60000000000000000000); // amount of asset 1 in pool map
 		assert_eq!(XykStorage::liquidity_asset((0, 1)), 2); // liquidity assetId corresponding to newly created pool

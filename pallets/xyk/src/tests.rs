@@ -3,6 +3,7 @@
 use super::*;
 use crate::mock::Test;
 use crate::mock::*;
+use frame_support::sp_runtime::ModuleId;
 use frame_support::{assert_err, assert_noop, assert_ok};
 use frame_system as system;
 use pallet_assets;
@@ -44,7 +45,7 @@ use pallet_assets;
 // 0 amount
 
 //liquidity assets after trade, after burn, after mint
-
+const PALLET_ID: ModuleId = pallet_xyk(*b"Treasury");
 pub trait Trait: assets::Trait {
 	// TODO: Add other types and constants required configure this module.
 	// type Hashing = BlakeTwo256;
@@ -55,9 +56,14 @@ pub trait Trait: assets::Trait {
 
 // W - should work
 // N - should not work
+impl<T: Trait> Module<Test> {
+	/// The account ID that holds the pallet's treasury pool
+	fn account_id() -> T::AccountId {
+		PALLET_ID.into_account()
+	}
+}
 
 fn initialize() {
-	//XykStorage::set_vault_id(Origin::signed(1));
 	// creating asset with assetId 0 and minting to accountId 2
 	let accId: u64 = 2;
 	let amount: u128 = 1000000000000000000000;
@@ -77,7 +83,7 @@ fn initialize() {
 fn create_pool_W() {
 	new_test_ext().execute_with(|| {
 		initialize();
-
+		assert_eq!(account_id(), 1);
 		assert_eq!(XykStorage::asset_pool((0, 1)), 40000000000000000000); // amount of asset 0 in pool map
 		assert_eq!(XykStorage::asset_pool((1, 0)), 60000000000000000000); // amount of asset 1 in pool map
 		assert_eq!(XykStorage::liquidity_asset((0, 1)), 2); // liquidity assetId corresponding to newly created pool
@@ -171,8 +177,16 @@ fn sell_W() {
 		); // amount in user acc after buying
 		assert_eq!(XykStorage::asset_pool((0, 1)), 60000000000000000000); // amount of asset 0 in pool map
 		assert_eq!(XykStorage::asset_pool((1, 0)), 40040040040040040041); // amount of asset 1 in pool map
-		                                                          // assert_eq!(<pallet_assets::Module<Test>>::balance(0, 1), 750000); // amount in vault acc
-		                                                          // assert_eq!(<pallet_assets::Module<Test>>::balance(1, 1), 333668); // amount in vault acc
+		assert_eq!(
+			<pallet_assets::Module<Test>>::balance(0, 2),
+			940000000000000000000
+		); // amount of asset 0 on account 2
+		assert_eq!(
+			<pallet_assets::Module<Test>>::balance(1, 2),
+			959959959959959959959
+		); // amount of asset 1 on account 2
+		 // assert_eq!(<pallet_assets::Module<Test>>::balance(0, 1), 750000); // amount in vault acc
+		 // assert_eq!(<pallet_assets::Module<Test>>::balance(1, 1), 333668); // amount in vault acc
 	});
 }
 
@@ -192,8 +206,16 @@ fn sell_W_other_way() {
 		); // amount of asset 1 in user acc after buying
 		assert_eq!(XykStorage::asset_pool((0, 1)), 26693360026693360027); // amount of asset 0 in pool map
 		assert_eq!(XykStorage::asset_pool((1, 0)), 90000000000000000000); // amount of asset 1 in pool map
-		                                                          // assert_eq!(<pallet_assets::Module<Test>>::balance(0, 1), 750000); // amount in vault acc
-		                                                          // assert_eq!(<pallet_assets::Module<Test>>::balance(1, 1), 333668); // amount in vault acc
+		assert_eq!(
+			<pallet_assets::Module<Test>>::balance(0, 2),
+			973306639973306639973
+		); // amount of asset 0 on account 2
+		assert_eq!(
+			<pallet_assets::Module<Test>>::balance(1, 2),
+			910000000000000000000
+		); // amount of asset 1 on account 2
+		 // assert_eq!(<pallet_assets::Module<Test>>::balance(0, 1), 750000); // amount in vault acc
+		 // assert_eq!(<pallet_assets::Module<Test>>::balance(1, 1), 333668); // amount in vault acc
 	});
 }
 
@@ -254,8 +276,16 @@ fn buy_W() {
 		); // amount in user acc after buying
 		assert_eq!(XykStorage::asset_pool((0, 1)), 80120361083249749248); // amount in pool map
 		assert_eq!(XykStorage::asset_pool((1, 0)), 30000000000000000000); // amount in pool map
-		                                                          // assert_eq!(<pallet_assets::Module<Test>>::balance(0, 1), 750000); // amount in vault acc
-		                                                          // assert_eq!(<pallet_assets::Module<Test>>::balance(1, 1), 333668); // amount in vault acc
+		assert_eq!(
+			<pallet_assets::Module<Test>>::balance(0, 2),
+			919879638916750250752
+		); // amount of asset 0 on account 2
+		assert_eq!(
+			<pallet_assets::Module<Test>>::balance(1, 2),
+			970000000000000000000
+		); // amount of asset 1 on account 2
+		 // assert_eq!(<pallet_assets::Module<Test>>::balance(0, 1), 750000); // amount in vault acc
+		 // assert_eq!(<pallet_assets::Module<Test>>::balance(1, 1), 333668); // amount in vault acc
 	});
 }
 
@@ -281,8 +311,16 @@ fn buy_W_other_way() {
 		); // amount in user acc after buying
 		assert_eq!(XykStorage::asset_pool((0, 1)), 10000000000000000000); // amount in pool map
 		assert_eq!(XykStorage::asset_pool((1, 0)), 240541624874623871615); // amount in pool map
-		                                                           // assert_eq!(<pallet_assets::Module<Test>>::balance(0, 1), 750000); // amount in vault acc
-		                                                           // assert_eq!(<pallet_assets::Module<Test>>::balance(1, 1), 333668); // amount in vault acc
+		assert_eq!(
+			<pallet_assets::Module<Test>>::balance(0, 2),
+			990000000000000000000
+		); // amount of asset 0 on account 2
+		assert_eq!(
+			<pallet_assets::Module<Test>>::balance(1, 2),
+			759458375125376128385
+		); // amount of asset 1 on account 2
+		 // assert_eq!(<pallet_assets::Module<Test>>::balance(0, 1), 750000); // amount in vault acc
+		 // assert_eq!(<pallet_assets::Module<Test>>::balance(1, 1), 333668); // amount in vault acc
 	});
 }
 
@@ -364,6 +402,8 @@ fn mint_W() {
 			<pallet_assets::Module<Test>>::balance(2, 2),
 			150000000000000000000
 		); // amount of liquidity assets owned by user by creating pool and minting
+		assert_eq!(XykStorage::asset_pool((0, 1)), 60000000000000000000); // amount in pool map
+		assert_eq!(XykStorage::asset_pool((1, 0)), 90000000000000000001); // amount in pool map
 		assert_eq!(
 			<pallet_assets::Module<Test>>::balance(0, 2),
 			940000000000000000000
@@ -392,6 +432,8 @@ fn mint_W_other_way() {
 			<pallet_assets::Module<Test>>::balance(2, 2),
 			150000000000000000000
 		); // amount of liquidity assets owned by user by creating pool and minting
+		assert_eq!(XykStorage::asset_pool((0, 1)), 60000000000000000001); // amount in pool map
+		assert_eq!(XykStorage::asset_pool((1, 0)), 90000000000000000000); // amount in pool map
 		assert_eq!(
 			<pallet_assets::Module<Test>>::balance(0, 2),
 			939999999999999999999
@@ -449,6 +491,8 @@ fn burn_W() {
 			<pallet_assets::Module<Test>>::balance(2, 2),
 			50000000000000000000
 		); // amount of liquidity assets owned by user by creating pool and burning
+		assert_eq!(XykStorage::asset_pool((0, 1)), 20000000000000000000); // amount in pool map
+		assert_eq!(XykStorage::asset_pool((1, 0)), 30000000000000000000); // amount in pool map
 		assert_eq!(
 			<pallet_assets::Module<Test>>::balance(0, 2),
 			980000000000000000000
@@ -472,6 +516,8 @@ fn burn_W_other_way() {
 			<pallet_assets::Module<Test>>::balance(2, 2),
 			50000000000000000000
 		); // amount of liquidity assets owned by user by creating pool and burning
+		assert_eq!(XykStorage::asset_pool((0, 1)), 20000000000000000000); // amount in pool map
+		assert_eq!(XykStorage::asset_pool((1, 0)), 30000000000000000000); // amount in pool map
 		assert_eq!(
 			<pallet_assets::Module<Test>>::balance(0, 2),
 			980000000000000000000

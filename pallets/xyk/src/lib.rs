@@ -76,18 +76,6 @@ decl_module! {
 
         fn deposit_event() = default;
 
-        // #[weight = 10_000]
-        // fn set_vault_id(origin) -> DispatchResult{
-        //     let sender = ensure_signed(origin)?;
-        //     ensure!(
-        //         !<VaultId<T>>::exists(),
-        //         Error::<T>::VaultAlreadySet,
-        //     );
-        //     <VaultId<T>>::put(sender);
-        //
-        //     Ok(())
-        // }
-
         #[weight = 10_000]
         fn create_pool(
             origin,
@@ -441,21 +429,6 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
-    // fn generate_random_hash() -> T::Hash {
-    //     let nonce = <Nonce>::get();
-
-    //     let random_seed = T::Randomness::random_seed();
-    //     let new_random = (random_seed, nonce)
-    //         .using_encoded(|b| BlakeTwo256::hash(b))
-    //         .using_encoded(|mut b| u64::decode(&mut b))
-    //         .expect("Hash must be bigger than 8 bytes; Qed");
-
-    //     let new_nonce = <Nonce>::get() + 1;
-    //     <Nonce>::put(new_nonce);
-
-    //     return (new_random).using_encoded(<T as frame_system::Trait>::Hashing::hash);
-    // }
-
     pub fn calculate_sell_price(
         input_reserve: T::Balance,
         output_reserve: T::Balance,
@@ -510,15 +483,6 @@ impl<T: Trait> Module<T> {
         //    mint: Owner::Address(vault.clone()),
         //    burn: Owner::Address(vault.clone()),
         //};
-
-        //<generic_asset::Module<T>>::create_asset(
-        //    None,
-        //    Some(sender),
-        //    generic_asset::AssetOptions {
-        //        initial_issuance: amount,
-        //        permissions: default_permission,
-        //    },
-        //)?;
 
         <assets::Module<T>>::issue(origin, amount);
 

@@ -5,7 +5,7 @@
 use codec::{Decode, Encode};
 use frame_support::{
     decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult, ensure,
-    traits::Randomness, weights::Pays, StorageMap,
+    weights::Pays, StorageMap,
 };
 use frame_system::ensure_signed;
 use pallet_assets as assets;
@@ -24,7 +24,6 @@ mod tests;
 
 pub trait Trait: assets::Trait {
     // TODO: Add other types and constants required configure this module.
-    // type Randomness: Randomness<Self::Hash>;
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 }
 
@@ -357,6 +356,9 @@ decl_module! {
             let first_asset_amount_u256: U256 = first_asset_amount.saturated_into::<u128>().into();
             let first_asset_reserve_u256: U256 = first_asset_reserve.saturated_into::<u128>().into();
             let second_asset_reserve_u256: U256 = second_asset_reserve.saturated_into::<u128>().into();
+
+            //get liquidity_asset_amount corresponding to first_asset_amount
+            let liquidity_asset_amount = first_asset_amount * <assets::Module<T>>::total_supply(liquidity_asset_id) / first_asset_reserve;
 
             ensure!(
                 <Pools<T>>::contains_key((first_asset_id, second_asset_id)),

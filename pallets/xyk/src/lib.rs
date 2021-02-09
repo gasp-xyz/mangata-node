@@ -3,7 +3,7 @@
 use codec::{Decode, Encode};
 use frame_support::{
     decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult, ensure,
-    traits::Randomness, weights::Pays, StorageMap,
+    weights::Pays, StorageMap, sp_runtime::ModuleId,
 };
 use frame_system::ensure_signed;
 use pallet_assets as assets;
@@ -11,6 +11,7 @@ use sp_core::U256;
 // TODO documentation!
 use sp_runtime::print;
 use sp_runtime::traits::{BlakeTwo256, Hash, One, SaturatedConversion, Zero};
+use frame_support::sp_runtime::traits::AccountIdConversion;
 
 #[cfg(test)]
 mod mock;
@@ -21,6 +22,7 @@ pub trait Trait: assets::Trait {
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 }
 
+const PALLET_ID: ModuleId = ModuleId(*b"Treasury");
 
 decl_error! {
     /// Errors
@@ -79,7 +81,7 @@ decl_module! {
         ) -> DispatchResult {
 
             let sender = ensure_signed(origin.clone())?;
-            let vault: T::AccountId  = <VaultId<T>>::get();
+            let vault: T::AccountId  = Self::account_id();
 
             //  TODO ensure assets exists ?
             //  TODO asset1 != asset2
@@ -172,7 +174,7 @@ decl_module! {
                 Error::<T>::InsufficientOutputAmount,
             );
 
-            let vault = <VaultId<T>>::get();
+            let vault = Self::account_id();
 
             <assets::Module<T>>::assets_transfer(
                 &sold_asset_id,
@@ -239,7 +241,7 @@ decl_module! {
                 Error::<T>::InsufficientInputAmount,
             );
 
-            let vault = <VaultId<T>>::get();
+            let vault = Self::account_id();
 
             <assets::Module<T>>::assets_transfer(
                 &sold_asset_id,
@@ -275,7 +277,7 @@ decl_module! {
         ) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
-            let vault = <VaultId<T>>::get();
+            let vault = Self::account_id();
 
             //get liquidity_asset_id of selected pool
             let liquidity_asset_id = Self::get_liquidity_asset(
@@ -360,7 +362,7 @@ decl_module! {
         ) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
-            let vault = <VaultId<T>>::get();
+            let vault = Self::account_id();
 
             ensure!(
                 <Pools<T>>::contains_key((first_asset_id, second_asset_id)),
@@ -433,13 +435,11 @@ decl_module! {
 
 
 impl<T: Trait> Module<T> {
-
     pub fn calculate_sell_price(
         input_reserve: T::Balance,
         output_reserve: T::Balance,
         sell_amount: T::Balance,
     ) -> T::Balance {
-
         let input_reserve_saturated: U256 = input_reserve.saturated_into::<u128>().into();
         let output_reserve_saturated: U256 = output_reserve.saturated_into::<u128>().into();
         let sell_amount_saturated: U256 = sell_amount.saturated_into::<u128>().into();
@@ -459,7 +459,6 @@ impl<T: Trait> Module<T> {
         output_reserve: T::Balance,
         buy_amount: T::Balance,
     ) -> T::Balance {
-
         let input_reserve_saturated: U256 = input_reserve.saturated_into::<u128>().into();
         let output_reserve_saturated: U256 = output_reserve.saturated_into::<u128>().into();
         let buy_amount_saturated: U256 = buy_amount.saturated_into::<u128>().into();
@@ -477,7 +476,6 @@ impl<T: Trait> Module<T> {
         first_asset_id: T::AssetId,
         second_asset_id: T::AssetId,
     ) -> T::AssetId {
-
         if <LiquidityAssets<T>>::contains_key((first_asset_id, second_asset_id)) {
             return <LiquidityAssets<T>>::get((first_asset_id, second_asset_id));
         } else {
@@ -490,7 +488,11 @@ impl<T: Trait> Module<T> {
         <assets::Module<T>>::issue(origin, amount);
         Ok(())
     }
-    
+
+    fn account_id() -> T::AccountId {
+        PALLET_ID.into_account()
+    }
+
     // //Read-only function to be used by RPC
     // pub fn get_exchange_input_price(
     //     input_asset_id: T::AssetId,

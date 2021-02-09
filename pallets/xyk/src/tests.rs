@@ -132,7 +132,7 @@ fn create_pool_N_not_enough_first_asset() {
 		<pallet_assets::Module<Test>>::assets_issue(&accId, &amount);
 
 		assert_err!(
-			XykStorage::create_pool(Origin::signed(2), 0, 1500000, 1, 500000,),
+			XykStorage::create_pool(Origin::signed(2), 0, 1500000, 10, 500000,),
 			Error::<Test>::NotEnoughAssets,
 		); //asset 0 issued to user 1000000, trying to create pool using 1500000
 	});

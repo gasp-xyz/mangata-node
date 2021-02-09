@@ -38,11 +38,10 @@ decl_error! {
 
 
 decl_event!(
-    pub enum Event<T>
-    where
-        AccountId = <T as frame_system::Trait>::AccountId,
+    pub enum Event<T> where AccountId = <T as frame_system::Trait>::AccountId,
     {
         //TODO add trading events
+        SomethingStored(u32, AccountId),
     }
 );
 

@@ -3,15 +3,15 @@
 use codec::{Decode, Encode};
 use frame_support::{
     decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult, ensure,
-    weights::Pays, StorageMap, sp_runtime::ModuleId,
+    sp_runtime::ModuleId, weights::Pays, StorageMap,
 };
 use frame_system::ensure_signed;
 use pallet_assets as assets;
 use sp_core::U256;
 // TODO documentation!
+use frame_support::sp_runtime::traits::AccountIdConversion;
 use sp_runtime::print;
 use sp_runtime::traits::{BlakeTwo256, Hash, One, SaturatedConversion, Zero};
-use frame_support::sp_runtime::traits::AccountIdConversion;
 
 #[cfg(test)]
 mod mock;
@@ -35,18 +35,19 @@ decl_error! {
         ZeroAmount,
         InsufficientInputAmount,
         InsufficientOutputAmount,
+        SameAsset,
     }
 }
 
-
 decl_event!(
-    pub enum Event<T> where AccountId = <T as frame_system::Trait>::AccountId,
+    pub enum Event<T>
+    where
+        AccountId = <T as frame_system::Trait>::AccountId,
     {
         //TODO add trading events
         SomethingStored(u32, AccountId),
     }
 );
-
 
 // XYK exchange pallet storage.
 decl_storage! {
@@ -63,7 +64,6 @@ decl_storage! {
         Nonce get (fn nonce): u32;
     }
 }
-
 
 // XYK extrinsics.
 decl_module! {
@@ -83,8 +83,11 @@ decl_module! {
             let sender = ensure_signed(origin.clone())?;
             let vault: T::AccountId  = Self::account_id();
 
-            //  TODO ensure assets exists ?
-            //  TODO asset1 != asset2
+
+            ensure!(
+                !first_asset_amount.is_zero() && !second_asset_amount.is_zero(),
+                Error::<T>::ZeroAmount,
+            );
 
             ensure!(
                 !<Pools<T>>::contains_key((first_asset_id, second_asset_id)),
@@ -104,6 +107,11 @@ decl_module! {
             ensure!(
                 <assets::Module<T>>::balance(second_asset_id, sender.clone()) >= second_asset_amount,
                 Error::<T>::NotEnoughAssets,
+            );
+
+            ensure!(
+                first_asset_id != second_asset_id,
+                Error::<T>::SameAsset,
             );
 
             <Pools<T>>::insert(
@@ -154,6 +162,11 @@ decl_module! {
             ensure!(
                 <Pools<T>>::contains_key((sold_asset_id,bought_asset_id)),
                 Error::<T>::NoSuchPool,
+            );
+
+            ensure!(
+                !sold_asset_amount.is_zero(),
+                Error::<T>::ZeroAmount,
             );
 
             let input_reserve = <Pools<T>>::get((sold_asset_id, bought_asset_id));
@@ -223,6 +236,11 @@ decl_module! {
             ensure!(
                 output_reserve > bought_asset_amount,
                 Error::<T>::NotEnoughReserve,
+            );
+
+            ensure!(
+                !bought_asset_amount.is_zero(),
+                Error::<T>::ZeroAmount,
             );
 
             let sold_asset_amount = Self::calculate_buy_price(
@@ -432,7 +450,6 @@ decl_module! {
         }
     }
 }
-
 
 impl<T: Trait> Module<T> {
     pub fn calculate_sell_price(

@@ -22,7 +22,7 @@ pub trait Trait: assets::Trait {
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 }
 
-const PALLET_ID: ModuleId = ModuleId(*b"Treasury");
+const PALLET_ID: ModuleId = ModuleId(*b"79b14c96");
 
 decl_error! {
     /// Errors
@@ -52,8 +52,6 @@ decl_event!(
 // XYK exchange pallet storage.
 decl_storage! {
     trait Store for Module<T: Trait> as XykStorage {
-
-        VaultId get(fn vault_id): T::AccountId;
 
         Pools get(fn asset_pool): map hasher(opaque_blake2_256) (T::AssetId, T::AssetId) => T::Balance;
 
@@ -452,11 +450,13 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
+
     pub fn calculate_sell_price(
         input_reserve: T::Balance,
         output_reserve: T::Balance,
         sell_amount: T::Balance,
     ) -> T::Balance {
+
         let input_reserve_saturated: U256 = input_reserve.saturated_into::<u128>().into();
         let output_reserve_saturated: U256 = output_reserve.saturated_into::<u128>().into();
         let sell_amount_saturated: U256 = sell_amount.saturated_into::<u128>().into();

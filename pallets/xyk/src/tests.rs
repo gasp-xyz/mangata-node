@@ -12,14 +12,16 @@ use pallet_assets;
 //fn create_pool_N_already_exists_other_way(): create_pool not working if pool already exists other way around (create pool X-Y, but pool Y-X exists) //DONE
 //fn create_pool_N_not_enough_first_asset(): create_pool not working if account has not enough first asset for initial mint //DONE
 //fn create_pool_N_not_enough_second_asset(): create_pool not working if account has not enough second asset for initial mint //DONE
-// 0 amount
+//fn create_pool_N_same_asset(): create_pool not working if creating pool with same asset on both sides //DONE
+//fn create_pool_N_zero_first_amount(): create_pool not working if creating with 0 amount of first asset
+//fn create_pool_N_zero_second_amount(): create_pool not working if creating with 0 amount of first asset
 
 //fn sell_W(): sell working assert (maps,acocounts values) //DONE
 //fn sell_W_other_way(): sell working if sell order in different order as pool (sell pool X-Y, but pool Y-X exists), assert (maps,acocounts values) //DONE
 //fn sell_N_not_enough_selling_assset(): sell not working if not enough asset to sell //DONE
 //fn sell_N_no_such_pool(): sell not working if pool does not exist //DONE
 //fn sell_N_insufficient_output_amount(): sell not working if insufficient_output_amount //DONE
-// 0 amount
+//fn sell_N_zero_amount(): sell not working if trying to sell 0 asset
 
 //fn buy_W(): buy working assert (maps,acocounts values) //DONE
 //fn buy_W_other_way(): buy working if buy order in different order as pool (buy pool X-Y, but pool Y-X exists), assert (maps,acocounts values) //DONE
@@ -27,21 +29,21 @@ use pallet_assets;
 //fn buy_N_not_enough_reserve(): buy not working if not enough liquidity in pool //DONE
 //fn buy_N_no_such_pool(): buy not working if pool does not exist //DONE
 //fn buy_N_insufficient_input_amount(): sell not working if insufficient_output_amount
-// 0 amount
+//fn buy_N_zero_amount(): buy not working if trying to buy 0 asset
 
 //fn mint_W(): mint working assert (maps,acocounts values) //DONE
 //fn mint_W_other_way(): mint working if mint order in different order as pool (mint pool X-Y, but pool Y-X exists), assert (maps,acocounts values) //DONE
 //fn mint_N_no_such_pool(): mint not working if pool does not exist //DONE
 //fn mint_N_not_enough_first_asset(): mint not working, not enough first asset to mint with //DONE
 //fn mint_N_not_enough_second_asset(): mint not working, not enough second asset to mint with //DONE
-// 0 amount
+//fn min_N_zero_amount(): mint not working if trying to mint 0 asset
 
 //fn burn_W(): burn working assert (maps,acocounts values) //DONE
 //fn burn_W_other_way(): burn working if burn order in different order as pool (burn pool X-Y, but pool Y-X exists), assert (maps,acocounts values) //DONE
 //fn burn_N_no_such_pool(): burn not working if pool does not exist //DONE
 //fn burn_N_not_enough_first_asset(): burn not enough first asset in liquidity pool to burn //DONE
 //fn burn_N_not_enough_second_asset(): burn not enough second asset in liquidity pool to burn //DONE
-// 0 amount
+//fn burn_N_zero_amount(): burn not working if trying to burn 0 asset
 
 //liquidity assets after trade, after burn, after mint
 
@@ -96,6 +98,14 @@ fn create_pool_W() {
 			<pallet_assets::Module<Test>>::balance(1, 2),
 			940000000000000000000
 		); // amount of asset 1 in user acc after creating pool / initial minting
+		assert_eq!(
+			<pallet_assets::Module<Test>>::balance(0, XykStorage::account_id()),
+			40000000000000000000
+		); // amount of asset 0 in vault acc after creating pool
+		assert_eq!(
+			<pallet_assets::Module<Test>>::balance(1, XykStorage::account_id()),
+			60000000000000000000
+		); // amount of asset 1 in vault acc after creating pool
 	});
 }
 
@@ -154,6 +164,42 @@ fn create_pool_N_not_enough_second_asset() {
 }
 
 #[test]
+fn create_pool_N_same_asset() {
+	new_test_ext().execute_with(|| {
+		initialize();
+
+		assert_err!(
+			XykStorage::create_pool(Origin::signed(2), 0, 500000, 0, 500000,),
+			Error::<Test>::SameAsset,
+		);
+	});
+}
+
+#[test]
+fn create_pool_N_zero_first_amount() {
+	new_test_ext().execute_with(|| {
+		initialize();
+
+		assert_err!(
+			XykStorage::create_pool(Origin::signed(2), 0, 0, 0, 500000,),
+			Error::<Test>::ZeroAmount,
+		);
+	});
+}
+
+#[test]
+fn create_pool_N_zero_second_amount() {
+	new_test_ext().execute_with(|| {
+		initialize();
+
+		assert_err!(
+			XykStorage::create_pool(Origin::signed(2), 0, 500000, 0, 0,),
+			Error::<Test>::ZeroAmount,
+		);
+	});
+}
+
+#[test]
 fn sell_W() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -177,8 +223,14 @@ fn sell_W() {
 			<pallet_assets::Module<Test>>::balance(1, 2),
 			959959959959959959959
 		); // amount of asset 1 on account 2
-		 // assert_eq!(<pallet_assets::Module<Test>>::balance(0, 1), 750000); // amount in vault acc
-		 // assert_eq!(<pallet_assets::Module<Test>>::balance(1, 1), 333668); // amount in vault acc
+		assert_eq!(
+			<pallet_assets::Module<Test>>::balance(0, XykStorage::account_id()),
+			60000000000000000000
+		); // amount of asset 0 in vault acc after creating pool
+		assert_eq!(
+			<pallet_assets::Module<Test>>::balance(1, XykStorage::account_id()),
+			40040040040040040041
+		); // amount of asset 1 in vault acc after creating pool
 	});
 }
 
@@ -206,8 +258,14 @@ fn sell_W_other_way() {
 			<pallet_assets::Module<Test>>::balance(1, 2),
 			910000000000000000000
 		); // amount of asset 1 on account 2
-		 // assert_eq!(<pallet_assets::Module<Test>>::balance(0, 1), 750000); // amount in vault acc
-		 // assert_eq!(<pallet_assets::Module<Test>>::balance(1, 1), 333668); // amount in vault acc
+		assert_eq!(
+			<pallet_assets::Module<Test>>::balance(0, XykStorage::account_id()),
+			26693360026693360027
+		); // amount of asset 0 in vault acc after creating pool
+		assert_eq!(
+			<pallet_assets::Module<Test>>::balance(1, XykStorage::account_id()),
+			90000000000000000000
+		); // amount of asset 1 in vault acc after creating pool
 	});
 }
 
@@ -247,6 +305,18 @@ fn sell_N_insufficient_output_amount() {
 }
 
 #[test]
+fn sell_N_zero_amount() {
+	new_test_ext().execute_with(|| {
+		initialize();
+
+		assert_err!(
+			XykStorage::sell_asset(Origin::signed(2), 0, 1, 0, 500000),
+			Error::<Test>::ZeroAmount,
+		); // selling 0 assetId 0 of pool 0 1
+	});
+}
+
+#[test]
 fn buy_W() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -276,8 +346,14 @@ fn buy_W() {
 			<pallet_assets::Module<Test>>::balance(1, 2),
 			970000000000000000000
 		); // amount of asset 1 on account 2
-		 // assert_eq!(<pallet_assets::Module<Test>>::balance(0, 1), 750000); // amount in vault acc
-		 // assert_eq!(<pallet_assets::Module<Test>>::balance(1, 1), 333668); // amount in vault acc
+		assert_eq!(
+			<pallet_assets::Module<Test>>::balance(0, XykStorage::account_id()),
+			80120361083249749248
+		); // amount of asset 0 in vault acc after creating pool
+		assert_eq!(
+			<pallet_assets::Module<Test>>::balance(1, XykStorage::account_id()),
+			30000000000000000000
+		); // amount of asset 1 in vault acc after creating pool
 	});
 }
 
@@ -311,8 +387,14 @@ fn buy_W_other_way() {
 			<pallet_assets::Module<Test>>::balance(1, 2),
 			759458375125376128385
 		); // amount of asset 1 on account 2
-		 // assert_eq!(<pallet_assets::Module<Test>>::balance(0, 1), 750000); // amount in vault acc
-		 // assert_eq!(<pallet_assets::Module<Test>>::balance(1, 1), 333668); // amount in vault acc
+		assert_eq!(
+			<pallet_assets::Module<Test>>::balance(0, XykStorage::account_id()),
+			10000000000000000000
+		); // amount of asset 0 in vault acc after creating pool
+		assert_eq!(
+			<pallet_assets::Module<Test>>::balance(1, XykStorage::account_id()),
+			240541624874623871615
+		); // amount of asset 1 in vault acc after creating pool
 	});
 }
 
@@ -380,6 +462,18 @@ fn buy_N_insufficient_input_amount() {
 }
 
 #[test]
+fn buy_N_zero_amount() {
+	new_test_ext().execute_with(|| {
+		initialize();
+
+		assert_err!(
+			XykStorage::buy_asset(Origin::signed(2), 0, 1, 0, 0),
+			Error::<Test>::ZeroAmount,
+		); // buying 0 assetId 0 of pool 0 1
+	});
+}
+
+#[test]
 fn mint_W() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -404,8 +498,14 @@ fn mint_W() {
 			<pallet_assets::Module<Test>>::balance(1, 2),
 			909999999999999999999
 		); // amount of asset 1 in user acc after minting
-		 // assert_eq!(<pallet_assets::Module<Test>>::balance(0, 1), 750000); // amount in vault acc
-		 // assert_eq!(<pallet_assets::Module<Test>>::balance(1, 1), 750001); // amount in vault acc
+		assert_eq!(
+			<pallet_assets::Module<Test>>::balance(0, XykStorage::account_id()),
+			60000000000000000000
+		); // amount of asset 0 in vault acc after creating pool
+		assert_eq!(
+			<pallet_assets::Module<Test>>::balance(1, XykStorage::account_id()),
+			90000000000000000001
+		); // amount of asset 1 in vault acc after creating pool
 	});
 }
 
@@ -434,8 +534,14 @@ fn mint_W_other_way() {
 			<pallet_assets::Module<Test>>::balance(1, 2),
 			910000000000000000000
 		); // amount of asset 1 in user acc after minting
-		 // assert_eq!(<pallet_assets::Module<Test>>::balance(0, 1), 750000); // amount in vault acc
-		 // assert_eq!(<pallet_assets::Module<Test>>::balance(1, 1), 750001); // amount in vault acc
+		assert_eq!(
+			<pallet_assets::Module<Test>>::balance(0, XykStorage::account_id()),
+			60000000000000000001
+		); // amount of asset 0 in vault acc after creating pool
+		assert_eq!(
+			<pallet_assets::Module<Test>>::balance(1, XykStorage::account_id()),
+			90000000000000000000
+		); // amount of asset 1 in vault acc after creating pool
 	});
 }
 
@@ -473,6 +579,17 @@ fn mint_N_not_enough_second_asset() {
 }
 
 #[test]
+fn min_N_zero_amount() {
+	new_test_ext().execute_with(|| {
+		initialize();
+		assert_err!(
+			XykStorage::mint_liquidity(Origin::signed(2), 1, 0, 0,),
+			Error::<Test>::ZeroAmount,
+		); // minting pool 0 1 with 0 assetId 1
+	});
+}
+
+#[test]
 fn burn_W() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -493,8 +610,14 @@ fn burn_W() {
 			<pallet_assets::Module<Test>>::balance(1, 2),
 			970000000000000000000
 		); // amount of asset 1 in user acc after burning
-		 // assert_eq!(<pallet_assets::Module<Test>>::balance(0, 1), 250000); // amount in vault acc
-		 // assert_eq!(<pallet_assets::Module<Test>>::balance(1, 1), 250000); // amount in vault acc
+		assert_eq!(
+			<pallet_assets::Module<Test>>::balance(0, XykStorage::account_id()),
+			20000000000000000000
+		); // amount of asset 0 in vault acc after creating pool
+		assert_eq!(
+			<pallet_assets::Module<Test>>::balance(1, XykStorage::account_id()),
+			30000000000000000000
+		); // amount of asset 1 in vault acc after creating pool
 	});
 }
 
@@ -518,8 +641,14 @@ fn burn_W_other_way() {
 			<pallet_assets::Module<Test>>::balance(1, 2),
 			970000000000000000000
 		); // amount of asset 1 in user acc after burning
-		 // assert_eq!(<pallet_assets::Module<Test>>::balance(0, 1), 250000); // amount in vault acc
-		 // assert_eq!(<pallet_assets::Module<Test>>::balance(1, 1), 250000); // amount in vault acc
+		assert_eq!(
+			<pallet_assets::Module<Test>>::balance(0, XykStorage::account_id()),
+			20000000000000000000
+		); // amount of asset 0 in vault acc after creating pool
+		assert_eq!(
+			<pallet_assets::Module<Test>>::balance(1, XykStorage::account_id()),
+			30000000000000000000
+		); // amount of asset 1 in vault acc after creating pool
 	});
 }
 
@@ -556,5 +685,16 @@ fn burn_N_no_such_pool() {
 			XykStorage::burn_liquidity(Origin::signed(2), 0, 10, 250000,),
 			Error::<Test>::NoSuchPool,
 		);
+	});
+}
+
+#[test]
+fn burn_N_zero_amount() {
+	new_test_ext().execute_with(|| {
+		initialize();
+		assert_err!(
+			XykStorage::burn_liquidity(Origin::signed(2), 1, 0, 0,),
+			Error::<Test>::ZeroAmount,
+		); // burning pool 0 1 with 0 assetId 1
 	});
 }

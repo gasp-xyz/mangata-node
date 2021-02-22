@@ -43,8 +43,13 @@ decl_event!(
     pub enum Event<T>
     where
         AccountId = <T as frame_system::Trait>::AccountId,
+        Balance =  <T as assets::Trait>::Balance,
+        AssetId =  <T as assets::Trait>::AssetId,
+
     {
         //TODO add trading events
+        PoolCreated(AssetId, Balance, AssetId, Balance),
+        Swapped(AccountId, AssetId, Balance, AssetId, Balance),
         SomethingStored(u32, AccountId),
     }
 );
@@ -141,6 +146,8 @@ decl_module! {
                 &vault,
                 &second_asset_amount
             )?;
+
+            Self::deposit_event(RawEvent::PoolCreated(first_asset_id, first_asset_amount, second_asset_id, second_asset_amount));
 
             Ok(())
         }

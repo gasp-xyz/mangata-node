@@ -49,8 +49,11 @@ decl_event!(
     {
         //TODO add trading events
         PoolCreated(AssetId, Balance, AssetId, Balance),
-        Swapped(AccountId, AssetId, Balance, AssetId, Balance),
-        SomethingStored(u32, AccountId),
+        AssetsSwapped(AccountId, AssetId, Balance, AssetId, Balance),
+        LiquidityMinted(AccountId,AssetId, Balance, AssetId, Balance),
+        LiquidityBurned(AccountId,AssetId, Balance, AssetId, Balance),
+        LiquidityAssetsGained(AccountId,AssetId, Balance),
+        LiquidityAssetsBurned(AccountId,AssetId, Balance),
     }
 );
 
@@ -216,6 +219,8 @@ decl_module! {
                 output_reserve - bought_asset_amount,
             );
 
+            Self::deposit_event(RawEvent::AssetsSwapped(sender,sold_asset_id, sold_asset_amount, bought_asset_id, bought_asset_amount));
+
             Ok(())
         }
 
@@ -287,6 +292,8 @@ decl_module! {
                 (bought_asset_id, sold_asset_id),
                 output_reserve - bought_asset_amount,
             );
+
+            Self::deposit_event(RawEvent::AssetsSwapped(sender,sold_asset_id, sold_asset_amount, bought_asset_id, bought_asset_amount));
 
             Ok(())
         }
@@ -373,6 +380,9 @@ decl_module! {
                 &liquidity_assets_minted
             );
 
+            Self::deposit_event(RawEvent::LiquidityMinted(sender.clone(),first_asset_id, first_asset_amount, second_asset_id, second_asset_amount));
+            Self::deposit_event(RawEvent::LiquidityAssetsGained(sender.clone(),liquidity_asset_id, second_asset_amount));
+
             Ok(())
         }
 
@@ -450,6 +460,9 @@ decl_module! {
             }
 
             <assets::Module<T>>::assets_burn(&liquidity_asset_id, &sender, &liquidity_asset_amount);
+
+            Self::deposit_event(RawEvent::LiquidityBurned(sender.clone(),first_asset_id, first_asset_amount, second_asset_id, second_asset_amount));
+            Self::deposit_event(RawEvent::LiquidityAssetsBurned(sender.clone(),liquidity_asset_id, second_asset_amount));
 
             Ok(())
         }

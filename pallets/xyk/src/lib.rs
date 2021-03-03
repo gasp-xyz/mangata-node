@@ -1,6 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use codec::{Decode, Encode};
 use frame_support::{
     decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult, ensure,
     sp_runtime::ModuleId, weights::Pays, StorageMap,
@@ -11,7 +10,7 @@ use sp_core::U256;
 // TODO documentation!
 use frame_support::sp_runtime::traits::AccountIdConversion;
 use sp_runtime::print;
-use sp_runtime::traits::{BlakeTwo256, Hash, One, SaturatedConversion, Zero};
+use sp_runtime::traits::{SaturatedConversion, Zero};
 
 #[cfg(test)]
 mod mock;
@@ -450,13 +449,11 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
-
     pub fn calculate_sell_price(
         input_reserve: T::Balance,
         output_reserve: T::Balance,
         sell_amount: T::Balance,
     ) -> T::Balance {
-
         let input_reserve_saturated: U256 = input_reserve.saturated_into::<u128>().into();
         let output_reserve_saturated: U256 = output_reserve.saturated_into::<u128>().into();
         let sell_amount_saturated: U256 = sell_amount.saturated_into::<u128>().into();

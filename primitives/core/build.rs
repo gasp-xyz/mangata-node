@@ -1,24 +1,19 @@
 // Copyright (C) 2020 Mangata team
 // Based on Snowfork bridge implementation
-use std::env;
-use std::fs;
-use std::path::Path;
-use hex::FromHex;
 
-
-use std::fmt;
 use std::error::Error;
+use std::fmt;
 
 /// Wraps `&'static str` and implements the `Error` trait for it.
 #[derive(Debug)]
 struct StringError {
-    error: &'static str
+    error: &'static str,
 }
 
 impl StringError {
-    fn new(error: &'static str) -> Self {
-        return StringError { error }
-    }
+    // fn new(error: &'static str) -> Self {
+    //     return StringError { error }
+    // }
 }
 
 impl Error for StringError {
@@ -33,10 +28,10 @@ impl fmt::Display for StringError {
     }
 }
 
-const DEFAULT_APP_ID: [u8; 20] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+// const DEFAULT_APP_ID: [u8; 20] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-	/*let out_dir = env::var("OUT_DIR").unwrap();
+    /*let out_dir = env::var("OUT_DIR").unwrap();
     let appid_envs: Vec<&str> = vec!["ETH_APP_ID", "ERC20_APP_ID"];
 
     for appid_env in appid_envs.into_iter() {

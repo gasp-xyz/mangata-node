@@ -116,7 +116,7 @@ impl<T: Trait> Module<T> {
 				&id,
 				&payload.recipient_addr,
 				&payload.amount.low_u128().saturated_into::<T::Balance>(),
-			);
+			)?;
 		}
 
 		Ok(())

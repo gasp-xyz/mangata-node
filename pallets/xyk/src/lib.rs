@@ -126,7 +126,7 @@ decl_module! {
 
             //for example, doesn't really matter
             let initial_liquidity = first_asset_amount + second_asset_amount;
-            Self::create_asset(origin, initial_liquidity);
+            Self::create_asset(origin, initial_liquidity)?;
 
             <assets::Module<T>>::assets_transfer(
                 &first_asset_id,
@@ -363,7 +363,7 @@ decl_module! {
                 &liquidity_asset_id,
                 &sender,
                 &liquidity_assets_minted
-            );
+            )?;
 
             Ok(())
         }
@@ -441,7 +441,7 @@ decl_module! {
                 <Pools<T>>::remove((second_asset_id, first_asset_id));
             }
 
-            <assets::Module<T>>::assets_burn(&liquidity_asset_id, &sender, &liquidity_asset_amount);
+            <assets::Module<T>>::assets_burn(&liquidity_asset_id, &sender, &liquidity_asset_amount)?;
 
             Ok(())
         }
@@ -499,7 +499,7 @@ impl<T: Trait> Module<T> {
 
     fn create_asset(origin: T::Origin, amount: T::Balance) -> DispatchResult {
         print("creating liquidity asset");
-        <assets::Module<T>>::issue(origin, amount);
+        <assets::Module<T>>::issue(origin, amount)?;
         Ok(())
     }
 

@@ -1,5 +1,5 @@
 [package]
-authors = ['Block Unison']
+authors = ['Mangata team']
 edition = '2018'
 name = 'pallet-xyk'
 version = '0.1.0'

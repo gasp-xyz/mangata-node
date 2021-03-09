@@ -50,6 +50,7 @@ pub use pallet_assets_info;
 use pallet_session::historical as pallet_session_historical;
 pub use pallet_staking::StakerStatus;
 pub use pallet_xyk;
+use xyk_runtime_api::RpcResult;
 
 /// Bridge pallets
 pub use bridge;
@@ -692,6 +693,28 @@ impl_runtime_apis! {
 			len: u32,
 		) -> pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo<Balance> {
 			TransactionPayment::query_info(uxt, len)
+		}
+	}
+
+	impl xyk_runtime_api::XykApi<Block, Balance> for Runtime {
+		fn calculate_sell_price(
+			input_reserve: Balance,
+        	output_reserve: Balance,
+        	sell_amount: Balance
+        ) -> RpcResult<Balance> {
+			RpcResult {
+				price: Xyk::calculate_sell_price(input_reserve, output_reserve, sell_amount)
+			}
+		}
+
+		fn calculate_buy_price(
+			input_reserve: Balance,
+        	output_reserve: Balance,
+        	buy_amount: Balance
+        ) -> RpcResult<Balance> {
+			RpcResult {
+				price: Xyk::calculate_buy_price(input_reserve, output_reserve, buy_amount)
+			}
 		}
 	}
 

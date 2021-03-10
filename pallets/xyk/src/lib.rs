@@ -43,9 +43,34 @@ decl_event!(
     pub enum Event<T>
     where
         AccountId = <T as frame_system::Trait>::AccountId,
+        Balance = <T as assets::Trait>::Balance,
+        AssetId = <T as assets::Trait>::AssetId,
     {
         //TODO add trading events
-        SomethingStored(u32, AccountId),
+        PoolCreated(AccountId, AssetId, Balance, AssetId, Balance),
+        AssetsSwapped(AccountId, AssetId, Balance, AssetId, Balance),
+        LiquidityMinted(
+            AccountId,
+            AssetId,
+            Balance,
+            AssetId,
+            Balance,
+            AssetId,
+            Balance,
+        ),
+        LiquidityBurned(
+            AccountId,
+            AssetId,
+            Balance,
+            AssetId,
+            Balance,
+            AssetId,
+            Balance,
+        ),
+        // LiquidityMinted(AccountId, AssetId, Balance, AssetId, Balance),
+        // LiquidityBurned(AccountId, AssetId, Balance, AssetId, Balance),
+        // LiquidityAssetsGained(AccountId, AssetId, Balance),
+        // LiquidityAssetsBurned(AccountId, AssetId, Balance),
     }
 );
 
@@ -142,6 +167,8 @@ decl_module! {
                 &second_asset_amount
             )?;
 
+            Self::deposit_event(RawEvent::PoolCreated(sender, first_asset_id, first_asset_amount, second_asset_id, second_asset_amount));
+
             Ok(())
         }
 
@@ -208,6 +235,8 @@ decl_module! {
                 (bought_asset_id, sold_asset_id),
                 output_reserve - bought_asset_amount,
             );
+
+            Self::deposit_event(RawEvent::AssetsSwapped(sender,sold_asset_id, sold_asset_amount, bought_asset_id, bought_asset_amount));
 
             Ok(())
         }
@@ -280,6 +309,8 @@ decl_module! {
                 (bought_asset_id, sold_asset_id),
                 output_reserve - bought_asset_amount,
             );
+
+            Self::deposit_event(RawEvent::AssetsSwapped(sender,sold_asset_id, sold_asset_amount, bought_asset_id, bought_asset_amount));
 
             Ok(())
         }
@@ -366,6 +397,9 @@ decl_module! {
                 &liquidity_assets_minted
             );
 
+            Self::deposit_event(RawEvent::LiquidityMinted(sender.clone(),first_asset_id, first_asset_amount, second_asset_id, second_asset_amount,liquidity_asset_id, second_asset_amount));
+          //  Self::deposit_event(RawEvent::LiquidityAssetsGained(sender.clone(),liquidity_asset_id, second_asset_amount));
+
             Ok(())
         }
 
@@ -444,19 +478,20 @@ decl_module! {
 
             <assets::Module<T>>::assets_burn(&liquidity_asset_id, &sender, &liquidity_asset_amount);
 
+            Self::deposit_event(RawEvent::LiquidityBurned(sender.clone(),first_asset_id, first_asset_amount, second_asset_id, second_asset_amount,liquidity_asset_id, second_asset_amount));
+           // Self::deposit_event(RawEvent::LiquidityAssetsBurned(sender.clone(),liquidity_asset_id, second_asset_amount));
+
             Ok(())
         }
     }
 }
 
 impl<T: Trait> Module<T> {
-
     pub fn calculate_sell_price(
         input_reserve: T::Balance,
         output_reserve: T::Balance,
         sell_amount: T::Balance,
     ) -> T::Balance {
-
         let input_reserve_saturated: U256 = input_reserve.saturated_into::<u128>().into();
         let output_reserve_saturated: U256 = output_reserve.saturated_into::<u128>().into();
         let sell_amount_saturated: U256 = sell_amount.saturated_into::<u128>().into();

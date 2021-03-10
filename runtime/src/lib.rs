@@ -699,9 +699,9 @@ impl_runtime_apis! {
 	impl xyk_runtime_api::XykApi<Block, Balance> for Runtime {
 		fn calculate_sell_price(
 			input_reserve: Balance,
-        	output_reserve: Balance,
-        	sell_amount: Balance
-        ) -> RpcResult<Balance> {
+			output_reserve: Balance,
+			sell_amount: Balance
+		) -> RpcResult<Balance> {
 			RpcResult {
 				price: Xyk::calculate_sell_price(input_reserve, output_reserve, sell_amount)
 			}
@@ -709,9 +709,9 @@ impl_runtime_apis! {
 
 		fn calculate_buy_price(
 			input_reserve: Balance,
-        	output_reserve: Balance,
-        	buy_amount: Balance
-        ) -> RpcResult<Balance> {
+			output_reserve: Balance,
+			buy_amount: Balance
+		) -> RpcResult<Balance> {
 			RpcResult {
 				price: Xyk::calculate_buy_price(input_reserve, output_reserve, buy_amount)
 			}

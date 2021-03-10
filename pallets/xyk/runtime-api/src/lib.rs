@@ -33,18 +33,18 @@ fn deserialize_from_string<'de, D: Deserializer<'de>, T: std::str::FromStr>(dese
 }
 
 sp_api::decl_runtime_apis! {
-	pub trait XykApi<Balance> where
-		Balance: Codec + MaybeDisplay + MaybeFromStr {
-		fn calculate_sell_price(
-		    input_reserve: Balance,
+    pub trait XykApi<Balance> where
+        Balance: Codec + MaybeDisplay + MaybeFromStr {
+        fn calculate_sell_price(
+            input_reserve: Balance,
         	output_reserve: Balance,
         	sell_amount: Balance
         ) -> RpcResult<Balance>;
 
         fn calculate_buy_price(
-		    input_reserve: Balance,
+           input_reserve: Balance,
         	output_reserve: Balance,
         	buy_amount: Balance
         ) -> RpcResult<Balance>;
-	}
+    }
 }

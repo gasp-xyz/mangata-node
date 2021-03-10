@@ -18,7 +18,9 @@ targets = ['x86_64-unknown-linux-gnu']
 substrate-build-script-utils = '2.0.0'
 
 [dependencies]
-jsonrpc-core = '15.0.0'
+jsonrpc-core = "15.0"
+jsonrpc-core-client = "15.0"
+jsonrpc-derive = "15.0"
 structopt = '0.3.8'
 
 # local dependencies
@@ -73,6 +75,8 @@ sp-runtime = '2.0.0'
 sp-transaction-pool = '2.0.0'
 substrate-frame-rpc-system = { version = '2.0.0', path = '../utils/frame/rpc/system'}
 pallet-assets = { default-features = false, version = '2.0.0', path = '../pallets/assets' }
+xyk-rpc = { default-features = false, version = '2.0.0', path = '../pallets/xyk/rpc' }
+xyk-runtime-api = { default-features = false, version = '2.0.0', path = '../pallets/xyk/runtime-api' }
 
 [features]
 default = []

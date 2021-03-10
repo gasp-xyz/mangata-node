@@ -510,32 +510,4 @@ impl<T: Trait> Module<T> {
         PALLET_ID.into_account()
     }
 
-    // //Read-only function to be used by RPC
-    // pub fn get_exchange_input_price(
-    //     input_asset_id: T::AssetId,
-    //     output_asset_id: T::AssetId,
-    //     input_amount: T::Balance,
-    // ) -> T::Balance {
-    //     let pool = <Pools<T>>::get((input_asset_id, output_asset_id));
-    //     let output_amount = Self::calculate_input_price(
-    //         pool.first_asset_amount,
-    //         pool.second_asset_amount,
-    //         input_amount,
-    //     );
-    //     output_amount
-    // }
-    // //Read-only function to be used by RPC
-    // pub fn get_exchange_output_price(
-    //     input_asset_id: T::AssetId,
-    //     output_asset_id: T::AssetId,
-    //     output_amount: T::Balance,
-    // ) -> T::Balance {
-    //     let pool = <Pools<T>>::get((input_asset_id, output_asset_id));
-    //     let input_amount = Self::calculate_output_price(
-    //         pool.first_asset_amount,
-    //         pool.second_asset_amount,
-    //         output_amount,
-    //     );
-    //     input_amount
-    // }
 }

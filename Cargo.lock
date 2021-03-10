@@ -3311,6 +3311,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
  "mangata-runtime",
  "pallet-assets",
  "pallet-authority-discovery",
@@ -3355,6 +3357,8 @@ dependencies = [
  "structopt",
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
+ "xyk-rpc",
+ "xyk-runtime-api",
 ]
 
 [[package]]
@@ -3403,6 +3407,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder-runner",
+ "xyk-runtime-api",
 ]
 
 [[package]]
@@ -8528,6 +8533,36 @@ dependencies = [
  "curve25519-dalek 3.0.0",
  "rand_core 0.5.1",
  "zeroize",
+]
+
+[[package]]
+name = "xyk-rpc"
+version = "2.0.0"
+dependencies = [
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "parity-scale-codec",
+ "serde",
+ "sp-api",
+ "sp-blockchain",
+ "sp-rpc",
+ "sp-runtime",
+ "xyk-runtime-api",
+]
+
+[[package]]
+name = "xyk-runtime-api"
+version = "2.0.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "serde_json",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
 ]
 
 [[package]]

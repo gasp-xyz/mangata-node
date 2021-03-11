@@ -150,9 +150,11 @@ decl_module! {
             <LiquidityAssets<T>>::insert((first_asset_id, second_asset_id), liquidity_asset_id);
             <LiquidityPools<T>>::insert(liquidity_asset_id, (first_asset_id, second_asset_id));
 
-            //for example, doesn't really matter
             let initial_liquidity = first_asset_amount + second_asset_amount;
-            Self::create_asset(origin, initial_liquidity);
+            <assets::Module<T>>::assets_issue(
+                &sender,
+                &initial_liquidity
+            );
 
             <assets::Module<T>>::assets_transfer(
                 &first_asset_id,
@@ -533,12 +535,6 @@ impl<T: Trait> Module<T> {
         } else {
             return <LiquidityAssets<T>>::get((second_asset_id, first_asset_id));
         }
-    }
-
-    fn create_asset(origin: T::Origin, amount: T::Balance) -> DispatchResult {
-        print("creating liquidity asset");
-        <assets::Module<T>>::issue(origin, amount);
-        Ok(())
     }
 
     fn account_id() -> T::AccountId {

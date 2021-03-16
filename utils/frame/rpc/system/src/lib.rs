@@ -128,33 +128,32 @@ where
 
 	fn dry_run(
 		&self,
-		_extrinsic: Bytes,
-		_at: Option<<Block as traits::Block>::Hash>,
+		extrinsic: Bytes,
+		at: Option<<Block as traits::Block>::Hash>,
 	) -> FutureResult<Bytes> {
 		if let Err(err) = self.deny_unsafe.check_if_safe() {
 			return Box::new(rpc_future::err(err.into()));
 		}
 
 		let dry_run = || {
-			// let api = self.client.runtime_api();
-			// let at = BlockId::<Block>::hash(at.unwrap_or_else(||
-			// 	// If the block hash is not supplied assume the best block.
-			// 	self.client.info().best_hash
-			// ));
+			let api = self.client.runtime_api();
+			let at = BlockId::<Block>::hash(at.unwrap_or_else(||
+				// If the block hash is not supplied assume the best block.
+				self.client.info().best_hash));
 
-			// let uxt: <Block as traits::Block>::Extrinsic = Decode::decode(&mut &*extrinsic).map_err(|e| RpcError {
-			// 	code: ErrorCode::ServerError(Error::DecodeError.into()),
-			// 	message: "Unable to dry run extrinsic.".into(),
-			// 	data: Some(format!("{:?}", e).into()),
-			// })?;
+			let uxt: <Block as traits::Block>::Extrinsic = Decode::decode(&mut &*extrinsic)
+				.map_err(|e| RpcError {
+					code: ErrorCode::ServerError(Error::DecodeError.into()),
+					message: "Unable to dry run extrinsic.".into(),
+					data: Some(format!("{:?}", e).into()),
+				})?;
 
-			let result = "test";
-			// let result = api.apply_extrinsic(&at, uxt)
-			// 	.map_err(|e| RpcError {
-			// 		code: ErrorCode::ServerError(Error::RuntimeError.into()),
-			// 		message: "Unable to dry run extrinsic.".into(),
-			// 		data: Some(format!("{:?}", e).into()),
-			// 	})?;
+			let _result = "test";
+			let result = api.apply_extrinsic(&at, uxt).map_err(|e| RpcError {
+				code: ErrorCode::ServerError(Error::RuntimeError.into()),
+				message: "Unable to dry run extrinsic.".into(),
+				data: Some(format!("{:?}", e).into()),
+			})?;
 
 			Ok(Encode::encode(&result).into())
 		};

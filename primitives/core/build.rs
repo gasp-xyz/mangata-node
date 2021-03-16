@@ -11,9 +11,9 @@ struct StringError {
 }
 
 impl StringError {
-    // fn new(error: &'static str) -> Self {
-    //     return StringError { error }
-    // }
+    fn new(error: &'static str) -> Self {
+        return StringError { error };
+    }
 }
 
 impl Error for StringError {
@@ -28,7 +28,7 @@ impl fmt::Display for StringError {
     }
 }
 
-// const DEFAULT_APP_ID: [u8; 20] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+const _DEFAULT_APP_ID: [u8; 20] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     /*let out_dir = env::var("OUT_DIR").unwrap();

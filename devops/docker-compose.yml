@@ -15,7 +15,7 @@ services:
   node_bob:
     image: mangata/node
     container_name: bob
-    entrypoint: ./node --dev --bob --unsafe-ws-external --rpc-cors=all -lframe_executive=debug --bootnodes='/ip4/172.28.1.1/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp'
+    entrypoint: ./node --dev --bob --unsafe-ws-external --rpc-cors=all -lruntime=debug --bootnodes='/ip4/172.28.1.1/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp'
     ports:
       - "30335:30333"
       - "9935:9933"
@@ -25,6 +25,20 @@ services:
     networks:
       testing_net:
         ipv4_address: 172.28.1.2
+
+  node_charlie:
+    image: mangata/node
+    container_name: charlie
+    entrypoint: ./node --dev --charlie --unsafe-ws-external --rpc-cors=all -lruntime=debug --bootnodes='/ip4/172.28.1.1/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp'
+    ports:
+      - "30337:30333"
+      - "9937:9933"
+      - "9946:9944"
+    links:
+      - "node_alice:alice"
+    networks:
+      testing_net:
+        ipv4_address: 172.28.1.3
 
 networks:
   testing_net:

@@ -368,7 +368,12 @@ where
 		let l = uxt.encode().len();
 		match Self::apply_extrinsic_with_len(uxt, l, None) {
 			Ok(_) => (),
-			Err(e) => { let err: &'static str = e.into(); panic!(err) },
+			Err(e) => {
+				let err: &'static str = e.into();
+				print("error during tx application");
+				print(err)
+				// panic!(err)
+			},
 		}
 	}
 

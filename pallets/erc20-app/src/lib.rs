@@ -70,6 +70,8 @@ decl_error! {
 		InvalidPayload,
 		/// Asset could not be burned
 		BurnFailure,
+		/// The recipient address is null/default value
+		NullRecipient
 	}
 }
 
@@ -108,6 +110,10 @@ impl<T: Trait> Module<T> {
 	fn handle_event(payload: Payload<T::AccountId>) -> DispatchResult {
 		if payload.token_addr.is_zero() {
 			return Err(Error::<T>::InvalidAssetId.into())
+		}
+
+		if ( T::AccountId::default() == payload.recipient_addr ) {
+			return Err(Error::<T>::NullRecipient.into())
 		}
 
 		//FIXME overflow unsafe!

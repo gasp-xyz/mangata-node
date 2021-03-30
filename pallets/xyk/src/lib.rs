@@ -9,7 +9,6 @@ use pallet_assets as assets;
 use sp_core::U256;
 // TODO documentation!
 use frame_support::sp_runtime::traits::AccountIdConversion;
-use sp_runtime::print;
 use sp_runtime::traits::{SaturatedConversion, Zero};
 
 #[cfg(test)]
@@ -42,9 +41,34 @@ decl_event!(
     pub enum Event<T>
     where
         AccountId = <T as frame_system::Trait>::AccountId,
+        Balance = <T as assets::Trait>::Balance,
+        AssetId = <T as assets::Trait>::AssetId,
     {
         //TODO add trading events
-        SomethingStored(u32, AccountId),
+        PoolCreated(AccountId, AssetId, Balance, AssetId, Balance),
+        AssetsSwapped(AccountId, AssetId, Balance, AssetId, Balance),
+        LiquidityMinted(
+            AccountId,
+            AssetId,
+            Balance,
+            AssetId,
+            Balance,
+            AssetId,
+            Balance,
+        ),
+        LiquidityBurned(
+            AccountId,
+            AssetId,
+            Balance,
+            AssetId,
+            Balance,
+            AssetId,
+            Balance,
+        ),
+        // LiquidityMinted(AccountId, AssetId, Balance, AssetId, Balance),
+        // LiquidityBurned(AccountId, AssetId, Balance, AssetId, Balance),
+        // LiquidityAssetsGained(AccountId, AssetId, Balance),
+        // LiquidityAssetsBurned(AccountId, AssetId, Balance),
     }
 );
 
@@ -124,9 +148,11 @@ decl_module! {
             <LiquidityAssets<T>>::insert((first_asset_id, second_asset_id), liquidity_asset_id);
             <LiquidityPools<T>>::insert(liquidity_asset_id, (first_asset_id, second_asset_id));
 
-            //for example, doesn't really matter
             let initial_liquidity = first_asset_amount + second_asset_amount;
-            Self::create_asset(origin, initial_liquidity)?;
+            <assets::Module<T>>::assets_issue(
+                &sender,
+                &initial_liquidity
+            );
 
             <assets::Module<T>>::assets_transfer(
                 &first_asset_id,
@@ -140,6 +166,8 @@ decl_module! {
                 &vault,
                 &second_asset_amount
             )?;
+
+            Self::deposit_event(RawEvent::PoolCreated(sender, first_asset_id, first_asset_amount, second_asset_id, second_asset_amount));
 
             Ok(())
         }
@@ -207,6 +235,8 @@ decl_module! {
                 (bought_asset_id, sold_asset_id),
                 output_reserve - bought_asset_amount,
             );
+
+            Self::deposit_event(RawEvent::AssetsSwapped(sender,sold_asset_id, sold_asset_amount, bought_asset_id, bought_asset_amount));
 
             Ok(())
         }
@@ -279,6 +309,8 @@ decl_module! {
                 (bought_asset_id, sold_asset_id),
                 output_reserve - bought_asset_amount,
             );
+
+            Self::deposit_event(RawEvent::AssetsSwapped(sender,sold_asset_id, sold_asset_amount, bought_asset_id, bought_asset_amount));
 
             Ok(())
         }
@@ -365,6 +397,9 @@ decl_module! {
                 &liquidity_assets_minted
             )?;
 
+            Self::deposit_event(RawEvent::LiquidityMinted(sender.clone(),first_asset_id, first_asset_amount, second_asset_id, second_asset_amount,liquidity_asset_id, second_asset_amount));
+          //  Self::deposit_event(RawEvent::LiquidityAssetsGained(sender.clone(),liquidity_asset_id, second_asset_amount));
+
             Ok(())
         }
 
@@ -443,6 +478,9 @@ decl_module! {
 
             <assets::Module<T>>::assets_burn(&liquidity_asset_id, &sender, &liquidity_asset_amount)?;
 
+            Self::deposit_event(RawEvent::LiquidityBurned(sender.clone(),first_asset_id, first_asset_amount, second_asset_id, second_asset_amount,liquidity_asset_id, second_asset_amount));
+           // Self::deposit_event(RawEvent::LiquidityAssetsBurned(sender.clone(),liquidity_asset_id, second_asset_amount));
+
             Ok(())
         }
     }
@@ -497,42 +535,7 @@ impl<T: Trait> Module<T> {
         }
     }
 
-    fn create_asset(origin: T::Origin, amount: T::Balance) -> DispatchResult {
-        print("creating liquidity asset");
-        <assets::Module<T>>::issue(origin, amount)?;
-        Ok(())
-    }
-
     fn account_id() -> T::AccountId {
         PALLET_ID.into_account()
     }
-
-    // //Read-only function to be used by RPC
-    // pub fn get_exchange_input_price(
-    //     input_asset_id: T::AssetId,
-    //     output_asset_id: T::AssetId,
-    //     input_amount: T::Balance,
-    // ) -> T::Balance {
-    //     let pool = <Pools<T>>::get((input_asset_id, output_asset_id));
-    //     let output_amount = Self::calculate_input_price(
-    //         pool.first_asset_amount,
-    //         pool.second_asset_amount,
-    //         input_amount,
-    //     );
-    //     output_amount
-    // }
-    // //Read-only function to be used by RPC
-    // pub fn get_exchange_output_price(
-    //     input_asset_id: T::AssetId,
-    //     output_asset_id: T::AssetId,
-    //     output_amount: T::Balance,
-    // ) -> T::Balance {
-    //     let pool = <Pools<T>>::get((input_asset_id, output_asset_id));
-    //     let input_amount = Self::calculate_output_price(
-    //         pool.first_asset_amount,
-    //         pool.second_asset_amount,
-    //         output_amount,
-    //     );
-    //     input_amount
-    // }
 }

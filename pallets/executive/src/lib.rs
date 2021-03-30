@@ -396,7 +396,9 @@ where
 			Ok(_) => (),
 			Err(e) => {
 				let err: &'static str = e.into();
-				panic!(err)
+				print("error during tx application");
+				print(err)
+				// panic!(err)
 			}
 		}
 	}

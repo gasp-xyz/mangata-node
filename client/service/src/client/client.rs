@@ -932,6 +932,7 @@ where
 							info!("previous block has extrinsics");
 							let extrinsics_hash = BlakeTwo256::hash(&body.clone().encode());
 							let mut shuffled_extrinsics = previous_block_extrinsics.clone();
+							info!("seed: {:?}", extrinsics_hash.to_fixed_bytes());
 							let mut rng: StdRng =
 								SeedableRng::from_seed(extrinsics_hash.to_fixed_bytes());
 							shuffled_extrinsics.shuffle(&mut rng);

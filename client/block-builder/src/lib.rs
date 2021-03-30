@@ -238,6 +238,7 @@ where
 					});
 				} else {
 					info!("transaction count {}", previous_block_extrinsics.len());
+					info!("seed: {:?}", extrinsics_hash.to_fixed_bytes());
 
 					let mut rng: StdRng = SeedableRng::from_seed(extrinsics_hash.to_fixed_bytes());
 					previous_block_extrinsics.shuffle(&mut rng);

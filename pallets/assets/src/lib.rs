@@ -137,7 +137,7 @@
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult, ensure, Parameter,
 };
-use frame_system::ensure_signed;
+use frame_system::{ensure_root, ensure_signed};
 use sp_runtime::traits::One;
 use sp_runtime::traits::{AtLeast32Bit, AtLeast32BitUnsigned, Member, StaticLookup, Zero};
 
@@ -169,16 +169,16 @@ decl_module! {
 		/// - 1 event.
 		/// # </weight>
 		#[weight = 0]
-		pub fn issue(origin, #[compact] total: T::Balance) {
-			let origin = ensure_signed(origin)?;
-
+		pub fn issue(origin,
+			#[compact] total: T::Balance,
+			to: T::AccountId
+		) {
+			ensure_root(origin)?;
 			let id = Self::next_asset_id();
 			<NextAssetId<T>>::mutate(|id| *id += One::one());
-
-			<Balances<T>>::insert((id, &origin), total);
+			<Balances<T>>::insert((id, &to), total);
 			<TotalSupply<T>>::insert(id, total);
-
-			Self::deposit_event(RawEvent::Issued(id, origin, total));
+			Self::deposit_event(RawEvent::Issued(id, to, total));
 		}
 
 		/// Move some assets from one holder to another.

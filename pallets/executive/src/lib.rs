@@ -211,312 +211,290 @@ where
     OriginOf<Block::Extrinsic, Context>: From<Option<System::AccountId>>,
     UnsignedValidator: ValidateUnsigned<Call = CallOf<Block::Extrinsic, Context>>,
 {
-    /// Start the execution of a particular block.
-    pub fn initialize_block(header: &System::Header) {
-        print("Initialized block");
-        sp_io::init_tracing();
-        sp_tracing::enter_span!(sp_tracing::Level::TRACE, "init_block");
-        let digests = Self::extract_pre_digest(&header);
-        Self::initialize_block_impl(
-            header.number(),
-            header.parent_hash(),
-            header.extrinsics_root(),
-            &digests,
-        );
-    }
 
-    fn extract_pre_digest(header: &System::Header) -> DigestOf<System> {
-        let mut digest = <DigestOf<System>>::default();
-        header.digest().logs().iter().for_each(|d| {
-            if d.as_pre_runtime().is_some() {
-                digest.push(d.clone())
-            }
-        });
-        digest
-    }
+	/// Start the execution of a particular block.
+	pub fn initialize_block(header: &System::Header) {
 
-    fn initialize_block_impl(
-        block_number: &System::BlockNumber,
-        parent_hash: &System::Hash,
-        extrinsics_root: &System::Hash,
-        digest: &Digest<System::Hash>,
-    ) {
-        if Self::runtime_upgraded() {
-            // System is not part of `AllModules`, so we need to call this manually.
-            let mut weight =
-                <frame_system::Module<System> as OnRuntimeUpgrade>::on_runtime_upgrade();
-            weight = weight.saturating_add(COnRuntimeUpgrade::on_runtime_upgrade());
-            weight = weight.saturating_add(<AllModules as OnRuntimeUpgrade>::on_runtime_upgrade());
-            <frame_system::Module<System>>::register_extra_weight_unchecked(
-                weight,
-                DispatchClass::Mandatory,
-            );
-        }
-        <frame_system::Module<System>>::initialize(
-            block_number,
-            parent_hash,
-            extrinsics_root,
-            digest,
-            frame_system::InitKind::Full,
-        );
-        <frame_system::Module<System> as OnInitialize<System::BlockNumber>>::on_initialize(
-            *block_number,
-        );
-        let weight =
-            <AllModules as OnInitialize<System::BlockNumber>>::on_initialize(*block_number)
-                .saturating_add(
-                    <System::BlockExecutionWeight as frame_support::traits::Get<_>>::get(),
-                );
-        <frame_system::Module<System>>::register_extra_weight_unchecked(
-            weight,
-            DispatchClass::Mandatory,
-        );
+		print("Initialized block");
+		sp_io::init_tracing();
+		sp_tracing::enter_span!(sp_tracing::Level::TRACE, "init_block");
+		let digests = Self::extract_pre_digest(&header);
+		Self::initialize_block_impl(
+			header.number(),
+			header.parent_hash(),
+			header.extrinsics_root(),
+			&digests
+		);
+	}
 
-        frame_system::Module::<System>::note_finished_initialize();
-    }
+	fn extract_pre_digest(header: &System::Header) -> DigestOf<System> {
+		let mut digest = <DigestOf<System>>::default();
+		header.digest().logs()
+			.iter()
+			.for_each(|d| if d.as_pre_runtime().is_some() {
+				digest.push(d.clone())
+			});
+		digest
+	}
 
-    /// Returns if the runtime was upgraded since the last time this function was called.
-    fn runtime_upgraded() -> bool {
-        let last = frame_system::LastRuntimeUpgrade::get();
-        let current = <System::Version as frame_support::traits::Get<_>>::get();
+	fn initialize_block_impl(
+		block_number: &System::BlockNumber,
+		parent_hash: &System::Hash,
+		extrinsics_root: &System::Hash,
+		digest: &Digest<System::Hash>,
+	) {
+		if Self::runtime_upgraded() {
+			// System is not part of `AllModules`, so we need to call this manually.
+			let mut weight = <frame_system::Module::<System> as OnRuntimeUpgrade>::on_runtime_upgrade();
+			weight = weight.saturating_add(COnRuntimeUpgrade::on_runtime_upgrade());
+			weight = weight.saturating_add(<AllModules as OnRuntimeUpgrade>::on_runtime_upgrade());
+			<frame_system::Module<System>>::register_extra_weight_unchecked(weight, DispatchClass::Mandatory);
+		}
+		<frame_system::Module<System>>::initialize(
+			block_number,
+			parent_hash,
+			extrinsics_root,
+			digest,
+			frame_system::InitKind::Full,
+		);
+		<frame_system::Module<System> as OnInitialize<System::BlockNumber>>::on_initialize(*block_number);
+		let weight = <AllModules as OnInitialize<System::BlockNumber>>::on_initialize(*block_number)
+			.saturating_add(<System::BlockExecutionWeight as frame_support::traits::Get<_>>::get());
+		<frame_system::Module::<System>>::register_extra_weight_unchecked(weight, DispatchClass::Mandatory);
 
-        if last.map(|v| v.was_upgraded(&current)).unwrap_or(true) {
-            frame_system::LastRuntimeUpgrade::put(frame_system::LastRuntimeUpgradeInfo::from(
-                current,
-            ));
-            true
-        } else {
-            false
-        }
-    }
+		frame_system::Module::<System>::note_finished_initialize();
+	}
 
-    fn initial_checks(block: &Block) {
-        sp_tracing::enter_span!(sp_tracing::Level::TRACE, "initial_checks");
-        let header = block.header();
+	/// Returns if the runtime was upgraded since the last time this function was called.
+	fn runtime_upgraded() -> bool {
+		let last = frame_system::LastRuntimeUpgrade::get();
+		let current = <System::Version as frame_support::traits::Get<_>>::get();
 
-        // Check that `parent_hash` is correct.
-        let n = header.number().clone();
-        assert!(
-            n > System::BlockNumber::zero()
-                && <frame_system::Module<System>>::block_hash(n - System::BlockNumber::one())
-                    == *header.parent_hash(),
-            "Parent hash should be valid."
-        );
+		if last.map(|v| v.was_upgraded(&current)).unwrap_or(true) {
+			frame_system::LastRuntimeUpgrade::put(
+				frame_system::LastRuntimeUpgradeInfo::from(current),
+			);
+			true
+		} else {
+			false
+		}
+	}
 
-        // Check that transaction trie root represents the transactions.
-        //FIXME return extrinsic root check
-        // let xts_root = extrinsics_root::<System::Hashing, _>(&block.extrinsics());
-        // header.extrinsics_root().check_equal(&xts_root);
-        // assert!(header.extrinsics_root() == &xts_root, "Transaction trie root must be valid.");
-    }
+	fn initial_checks(block: &Block) {
 
-    /// Actually execute all transitions for `block`.
-    pub fn execute_block(block: Block) {
-        sp_io::init_tracing();
-        sp_tracing::within_span! {
-            sp_tracing::info_span!( "execute_block", ?block);
-        {
+		sp_tracing::enter_span!(sp_tracing::Level::TRACE, "initial_checks");
+		let header = block.header();
 
-            Self::initialize_block(block.header());
+		// Check that `parent_hash` is correct.
+		let n = header.number().clone();
+		assert!(
+			n > System::BlockNumber::zero()
+			&& <frame_system::Module<System>>::block_hash(n - System::BlockNumber::one()) == *header.parent_hash(),
+			"Parent hash should be valid."
+		);
 
-            // any initial checks
-            Self::initial_checks(&block);
+		// Check that transaction trie root represents the transactions.
+		//FIXME return extrinsic root check
+		// let xts_root = extrinsics_root::<System::Hashing, _>(&block.extrinsics());
+		// header.extrinsics_root().check_equal(&xts_root);
+		// assert!(header.extrinsics_root() == &xts_root, "Transaction trie root must be valid.");
+	}
 
-            let signature_batching = sp_runtime::SignatureBatching::start();
+	/// Actually execute all transitions for `block`.
+	pub fn execute_block(block: Block) {
+		sp_io::init_tracing();
+		sp_tracing::within_span! {
+			sp_tracing::info_span!( "execute_block", ?block);
+		{
 
-            frame_support::debug::RuntimeLogger::init();
+			Self::initialize_block(block.header());
 
-            // execute extrinsics
-            let (header, extrinsics) = block.deconstruct();
+			// any initial checks
+			Self::initial_checks(&block);
 
-            Self::execute_extrinsics_with_book_keeping(extrinsics.clone(), *header.number());
+			let signature_batching = sp_runtime::SignatureBatching::start();
 
-            if !signature_batching.verify() {
-                panic!("Signature verification failed.");
-            }
+			frame_support::debug::RuntimeLogger::init();
 
-            // any final checks
-            Self::final_checks(&header);
-        } };
-    }
+			// execute extrinsics
+			let (header, extrinsics) = block.deconstruct();
 
-    /// Execute given extrinsics and take care of post-extrinsics book-keeping.
-    fn execute_extrinsics_with_book_keeping(
-        extrinsics: Vec<Block::Extrinsic>,
-        block_number: NumberFor<Block>,
-    ) {
-        extrinsics
-            .into_iter()
-            .for_each(Self::apply_extrinsic_no_note);
+			Self::execute_extrinsics_with_book_keeping(extrinsics.clone(), *header.number());
 
-        // post-extrinsics book-keeping
-        <frame_system::Module<System>>::note_finished_extrinsics();
-        <frame_system::Module<System> as OnFinalize<System::BlockNumber>>::on_finalize(
-            block_number,
-        );
-        <AllModules as OnFinalize<System::BlockNumber>>::on_finalize(block_number);
-    }
+			if !signature_batching.verify() {
+				panic!("Signature verification failed.");
+			}
 
-    /// Finalize the block - it is up the caller to ensure that all header fields are valid
-    /// except state-root.
-    pub fn finalize_block() -> System::Header {
-        sp_io::init_tracing();
-        sp_tracing::enter_span!(sp_tracing::Level::TRACE, "finalize_block");
-        <frame_system::Module<System>>::note_finished_extrinsics();
-        let block_number = <frame_system::Module<System>>::block_number();
-        <frame_system::Module<System> as OnFinalize<System::BlockNumber>>::on_finalize(
-            block_number,
-        );
-        <AllModules as OnFinalize<System::BlockNumber>>::on_finalize(block_number);
+			// any final checks
+			Self::final_checks(&header);
+		} };
+	}
 
-        // set up extrinsics
-        <frame_system::Module<System>>::derive_extrinsics();
-        <frame_system::Module<System>>::finalize()
-    }
+	/// Execute given extrinsics and take care of post-extrinsics book-keeping.
+	fn execute_extrinsics_with_book_keeping(extrinsics: Vec<Block::Extrinsic>, block_number: NumberFor<Block>) {
+		extrinsics.into_iter().for_each(Self::apply_extrinsic_no_note);
 
-    /// Apply extrinsic outside of the block execution function.
-    ///
-    /// This doesn't attempt to validate anything regarding the block, but it builds a list of uxt
-    /// hashes.
-    pub fn apply_extrinsic(uxt: Block::Extrinsic) -> ApplyExtrinsicResult {
-        sp_io::init_tracing();
-        let encoded = uxt.encode();
-        let encoded_len = encoded.len();
-        Self::apply_extrinsic_with_len(uxt, encoded_len, Some(encoded))
-    }
+		// post-extrinsics book-keeping
+		<frame_system::Module<System>>::note_finished_extrinsics();
+		<frame_system::Module<System> as OnFinalize<System::BlockNumber>>::on_finalize(block_number);
+		<AllModules as OnFinalize<System::BlockNumber>>::on_finalize(block_number);
+	}
 
-    pub fn mock_apply_extrinsic(uxt: Block::Extrinsic) -> ApplyExtrinsicResult {
-        Ok(Ok(()))
-    }
+	/// Finalize the block - it is up the caller to ensure that all header fields are valid
+	/// except state-root.
+	pub fn finalize_block() -> System::Header {
+		sp_io::init_tracing();
+		sp_tracing::enter_span!( sp_tracing::Level::TRACE, "finalize_block" );
+		<frame_system::Module<System>>::note_finished_extrinsics();
+		let block_number = <frame_system::Module<System>>::block_number();
+		<frame_system::Module<System> as OnFinalize<System::BlockNumber>>::on_finalize(block_number);
+		<AllModules as OnFinalize<System::BlockNumber>>::on_finalize(block_number);
 
-    /// Apply an extrinsic inside the block execution function.
-    fn apply_extrinsic_no_note(uxt: Block::Extrinsic) {
-        let l = uxt.encode().len();
-        match Self::apply_extrinsic_with_len(uxt, l, None) {
-            Ok(_) => (),
-            Err(e) => {
-                let err: &'static str = e.into();
-                panic!(err)
-            }
-        }
-    }
+		// set up extrinsics
+		<frame_system::Module<System>>::derive_extrinsics();
+		<frame_system::Module<System>>::finalize()
+	}
 
-    /// Actually apply an extrinsic given its `encoded_len`; this doesn't note its hash.
-    fn apply_extrinsic_with_len(
-        uxt: Block::Extrinsic,
-        encoded_len: usize,
-        to_note: Option<Vec<u8>>,
-    ) -> ApplyExtrinsicResult {
-        sp_tracing::enter_span!(sp_tracing::info_span!("apply_extrinsic",
-				ext=?sp_core::hexdisplay::HexDisplay::from(&uxt.encode())));
-        // Verify that the signature is good.
-        let xt = uxt.check(&Default::default())?;
+	/// Apply extrinsic outside of the block execution function.
+	///
+	/// This doesn't attempt to validate anything regarding the block, but it builds a list of uxt
+	/// hashes.
+	pub fn apply_extrinsic(uxt: Block::Extrinsic) -> ApplyExtrinsicResult {
+		sp_io::init_tracing();
+		let encoded = uxt.encode();
+		let encoded_len = encoded.len();
+		Self::apply_extrinsic_with_len(uxt, encoded_len, Some(encoded))
+	}
 
-        // We don't need to make sure to `note_extrinsic` only after we know it's going to be
-        // executed to prevent it from leaking in storage since at this point, it will either
-        // execute or panic (and revert storage changes).
-        if let Some(encoded) = to_note {
-            <frame_system::Module<System>>::note_extrinsic(encoded);
-        }
+	pub fn mock_apply_extrinsic(uxt: Block::Extrinsic) -> ApplyExtrinsicResult {
+		Ok(Ok(()))
+	}
 
-        // AUDIT: Under no circumstances may this function panic from here onwards.
+	/// Apply an extrinsic inside the block execution function.
+	fn apply_extrinsic_no_note(uxt: Block::Extrinsic) {
+		let l = uxt.encode().len();
+		match Self::apply_extrinsic_with_len(uxt, l, None) {
+			Ok(_) => (),
+			Err(e) => {
+				let err: &'static str = e.into();
+				print("error during tx application");
+				print(err)
+				// panic!(err)
+			},
+		}
+	}
 
-        // Decode parameters and dispatch
-        let dispatch_info = xt.get_dispatch_info();
-        let r = Applyable::apply::<UnsignedValidator>(xt, &dispatch_info, encoded_len)?;
+	/// Actually apply an extrinsic given its `encoded_len`; this doesn't note its hash.
+	fn apply_extrinsic_with_len(
+		uxt: Block::Extrinsic,
+		encoded_len: usize,
+		to_note: Option<Vec<u8>>,
+	) -> ApplyExtrinsicResult {
+		sp_tracing::enter_span!(
+			sp_tracing::info_span!("apply_extrinsic",
+				ext=?sp_core::hexdisplay::HexDisplay::from(&uxt.encode()))
+		);
+		// Verify that the signature is good.
+		let xt = uxt.check(&Default::default())?;
 
-        <frame_system::Module<System>>::note_applied_extrinsic(&r, dispatch_info);
+		// We don't need to make sure to `note_extrinsic` only after we know it's going to be
+		// executed to prevent it from leaking in storage since at this point, it will either
+		// execute or panic (and revert storage changes).
+		if let Some(encoded) = to_note {
+			<frame_system::Module<System>>::note_extrinsic(encoded);
+		}
 
-        Ok(r.map(|_| ()).map_err(|e| e.error))
-    }
+		// AUDIT: Under no circumstances may this function panic from here onwards.
 
-    fn final_checks(header: &System::Header) {
-        sp_tracing::enter_span!(sp_tracing::Level::TRACE, "final_checks");
-        // remove temporaries
-        let new_header = <frame_system::Module<System>>::finalize();
+		// Decode parameters and dispatch
+		let dispatch_info = xt.get_dispatch_info();
+		let r = Applyable::apply::<UnsignedValidator>(xt, &dispatch_info, encoded_len)?;
 
-        // check digest
-        assert_eq!(
-            header.digest().logs().len(),
-            new_header.digest().logs().len(),
-            "Number of digest items must match that calculated."
-        );
-        let items_zip = header
-            .digest()
-            .logs()
-            .iter()
-            .zip(new_header.digest().logs().iter());
-        for (header_item, computed_item) in items_zip {
-            header_item.check_equal(&computed_item);
-            assert!(
-                header_item == computed_item,
-                "Digest item must match that calculated."
-            );
-        }
+		<frame_system::Module<System>>::note_applied_extrinsic(&r, dispatch_info);
 
-        // check storage root.
-        let storage_root = new_header.state_root();
-        header.state_root().check_equal(&storage_root);
-        //assert!(header.state_root() == storage_root, "Storage root must match that calculated.");
-    }
+		Ok(r.map(|_| ()).map_err(|e| e.error))
+	}
 
-    /// Check a given signed transaction for validity. This doesn't execute any
-    /// side-effects; it merely checks whether the transaction would panic if it were included or not.
-    ///
-    /// Changes made to storage should be discarded.
-    pub fn validate_transaction(
-        source: TransactionSource,
-        uxt: Block::Extrinsic,
-    ) -> TransactionValidity {
-        sp_io::init_tracing();
-        use sp_tracing::{enter_span, within_span};
+	fn final_checks(header: &System::Header) {
+		sp_tracing::enter_span!(sp_tracing::Level::TRACE, "final_checks");
+		// remove temporaries
+		let new_header = <frame_system::Module<System>>::finalize();
 
-        enter_span! { sp_tracing::Level::TRACE, "validate_transaction" };
+		// check digest
+		assert_eq!(
+			header.digest().logs().len(),
+			new_header.digest().logs().len(),
+			"Number of digest items must match that calculated."
+		);
+		let items_zip = header.digest().logs().iter().zip(new_header.digest().logs().iter());
+		for (header_item, computed_item) in items_zip {
+			header_item.check_equal(&computed_item);
+			assert!(header_item == computed_item, "Digest item must match that calculated.");
+		}
 
-        let encoded_len = within_span! { sp_tracing::Level::TRACE, "using_encoded";
-            uxt.using_encoded(|d| d.len())
-        };
+		// check storage root.
+		let storage_root = new_header.state_root();
+		header.state_root().check_equal(&storage_root);
+		//assert!(header.state_root() == storage_root, "Storage root must match that calculated.");
+	}
 
-        let xt = within_span! { sp_tracing::Level::TRACE, "check";
-            uxt.check(&Default::default())
-        }?;
+	/// Check a given signed transaction for validity. This doesn't execute any
+	/// side-effects; it merely checks whether the transaction would panic if it were included or not.
+	///
+	/// Changes made to storage should be discarded.
+	pub fn validate_transaction(
+		source: TransactionSource,
+		uxt: Block::Extrinsic,
+	) -> TransactionValidity {
+		sp_io::init_tracing();
+		use sp_tracing::{enter_span, within_span};
 
-        let dispatch_info = within_span! { sp_tracing::Level::TRACE, "dispatch_info";
-            xt.get_dispatch_info()
-        };
+		enter_span!{ sp_tracing::Level::TRACE, "validate_transaction" };
 
-        within_span! {
-            sp_tracing::Level::TRACE, "validate";
-            xt.validate::<UnsignedValidator>(source, &dispatch_info, encoded_len)
-        }
-    }
+		let encoded_len = within_span!{ sp_tracing::Level::TRACE, "using_encoded";
+			uxt.using_encoded(|d| d.len())
+		};
 
-    /// Start an offchain worker and generate extrinsics.
-    pub fn offchain_worker(header: &System::Header) {
-        sp_io::init_tracing();
-        // We need to keep events available for offchain workers,
-        // hence we initialize the block manually.
-        // OffchainWorker RuntimeApi should skip initialization.
-        let digests = Self::extract_pre_digest(header);
+		let xt = within_span!{ sp_tracing::Level::TRACE, "check";
+			uxt.check(&Default::default())
+		}?;
 
-        <frame_system::Module<System>>::initialize(
-            header.number(),
-            header.parent_hash(),
-            header.extrinsics_root(),
-            &digests,
-            frame_system::InitKind::Inspection,
-        );
+		let dispatch_info = within_span!{ sp_tracing::Level::TRACE, "dispatch_info";
+			xt.get_dispatch_info()
+		};
 
-        // Initialize logger, so the log messages are visible
-        // also when running WASM.
-        frame_support::debug::RuntimeLogger::init();
+		within_span! {
+			sp_tracing::Level::TRACE, "validate";
+			xt.validate::<UnsignedValidator>(source, &dispatch_info, encoded_len)
+		}
+	}
 
-        <AllModules as OffchainWorker<System::BlockNumber>>::offchain_worker(
-            // to maintain backward compatibility we call module offchain workers
-            // with parent block number.
-            header.number().saturating_sub(1.into()),
-        )
-    }
+	/// Start an offchain worker and generate extrinsics.
+	pub fn offchain_worker(header: &System::Header) {
+		sp_io::init_tracing();
+		// We need to keep events available for offchain workers,
+		// hence we initialize the block manually.
+		// OffchainWorker RuntimeApi should skip initialization.
+		let digests = Self::extract_pre_digest(header);
+
+		<frame_system::Module<System>>::initialize(
+			header.number(),
+			header.parent_hash(),
+			header.extrinsics_root(),
+			&digests,
+			frame_system::InitKind::Inspection,
+		);
+
+		// Initialize logger, so the log messages are visible
+		// also when running WASM.
+		frame_support::debug::RuntimeLogger::init();
+
+		<AllModules as OffchainWorker<System::BlockNumber>>::offchain_worker(
+			// to maintain backward compatibility we call module offchain workers
+			// with parent block number.
+			header.number().saturating_sub(1.into())
+		)
+	}
 }
 
 #[cfg(test)]

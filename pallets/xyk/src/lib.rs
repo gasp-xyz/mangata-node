@@ -540,5 +540,4 @@ impl<T: Trait> Module<T> {
     fn account_id() -> T::AccountId {
         PALLET_ID.into_account()
     }
-
 }

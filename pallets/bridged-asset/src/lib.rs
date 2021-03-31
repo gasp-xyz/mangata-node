@@ -32,15 +32,12 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use frame_support::{decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult};
+use frame_system::{self as system};
+use sp_core::{RuntimeDebug, U256};
 use sp_std::prelude::*;
-use sp_core::{U256, RuntimeDebug};
-use frame_system::{self as system, ensure_signed};
-use frame_support::{
-	decl_error, decl_event, decl_module, decl_storage,
-	dispatch::{DispatchResult, DispatchError},
-};
 
-use codec::{Encode, Decode};
+use codec::{Decode, Encode};
 
 use artemis_core::BridgedAssetId;
 use pallet_assets as assets;
@@ -53,10 +50,10 @@ mod tests;
 
 #[derive(Encode, Decode, Clone, PartialEq, Eq, Default, RuntimeDebug)]
 pub struct AccountData {
-	pub free: U256
+	pub free: U256,
 }
 
-type AssetAccountData = AccountData;
+// type AssetAccountData = AccountData;
 
 pub trait Trait: assets::Trait {
 	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
@@ -110,7 +107,7 @@ decl_module! {
 		// TODO: Calculate weight
 		#[weight = 0]
 		pub fn transfer(origin, asset_id: BridgedAssetId, to: T::AccountId, amount: U256) -> DispatchResult {
-			let who = ensure_signed(origin)?;
+			// let who = ensure_signed(origin)?;
 			// Self::do_transfer(asset_id, &who, &to, amount)?;
 			Ok(())
 		}
@@ -119,7 +116,6 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
-
 	pub fn link_assets(native_asset_id: T::AssetId, bridged_asset_id: BridgedAssetId) {
 		<NativeAsset<T>>::insert(bridged_asset_id, native_asset_id);
 		<BridgedAsset<T>>::insert(native_asset_id, bridged_asset_id);
@@ -189,5 +185,4 @@ impl<T: Trait> Module<T> {
 		Ok(())
 	}
 	*/
-
 }

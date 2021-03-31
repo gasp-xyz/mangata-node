@@ -95,26 +95,22 @@
 mod benchmarking;
 mod default_weights;
 
-use sp_std::{result, cmp};
-use sp_inherents::{ProvideInherent, InherentData, InherentIdentifier};
 #[cfg(feature = "std")]
 use frame_support::debug;
 use frame_support::{
-	Parameter, decl_storage, decl_module,
-	traits::{Time, UnixTime, Get},
+	decl_module, decl_storage,
+	traits::{Get, Time, UnixTime},
 	weights::{DispatchClass, Weight},
-};
-use sp_runtime::{
-	RuntimeString,
-	traits::{
-		AtLeast32Bit, Zero, SaturatedConversion, Scale
-	}
+	Parameter,
 };
 use frame_system::ensure_none;
-use sp_timestamp::{
-	InherentError, INHERENT_IDENTIFIER, InherentType,
-	OnTimestampSet,
+use sp_inherents::{InherentData, InherentIdentifier, ProvideInherent};
+use sp_runtime::{
+	traits::{AtLeast32Bit, SaturatedConversion, Scale, Zero},
+	RuntimeString,
 };
+use sp_std::{cmp, result};
+use sp_timestamp::{InherentError, InherentType, OnTimestampSet, INHERENT_IDENTIFIER};
 
 pub trait WeightInfo {
 	fn set() -> Weight;
@@ -124,8 +120,11 @@ pub trait WeightInfo {
 /// The module configuration trait
 pub trait Trait: frame_system::Trait {
 	/// Type used for expressing timestamp.
-	type Moment: Parameter + Default + AtLeast32Bit
-		+ Scale<Self::BlockNumber, Output = Self::Moment> + Copy;
+	type Moment: Parameter
+		+ Default
+		+ AtLeast32Bit
+		+ Scale<Self::BlockNumber, Output = Self::Moment>
+		+ Copy;
 
 	/// Something which can be notified when the timestamp is set. Set this to `()` if not needed.
 	type OnTimestampSet: OnTimestampSet<Self::Moment>;
@@ -170,7 +169,7 @@ decl_module! {
 		fn set(origin, #[compact] now: T::Moment) {
 			ensure_none(origin)?;
 			assert!(!<Self as Store>::DidUpdate::exists(), "Timestamp must be updated only once in the block");
-			let prev = Self::now();
+			//let prev = Self::now();
 			//FIXME bring back the check
 			// assert!(
 			// 	prev.is_zero() || now >= prev + T::MinimumPeriod::get(),
@@ -256,7 +255,9 @@ impl<T: Trait> ProvideInherent for Module<T> {
 
 		let minimum = (Self::now() + T::MinimumPeriod::get()).saturated_into::<u64>();
 		if t > data + MAX_TIMESTAMP_DRIFT_MILLIS {
-			Err(InherentError::Other("Timestamp too far in future to accept".into()))
+			Err(InherentError::Other(
+				"Timestamp too far in future to accept".into(),
+			))
 		} else if t < minimum {
 			Err(InherentError::ValidAtTimestamp(minimum))
 		} else {
@@ -297,13 +298,19 @@ impl<T: Trait> UnixTime for Module<T> {
 mod tests {
 	use super::*;
 
-	use frame_support::{impl_outer_origin, assert_ok, parameter_types, weights::Weight};
-	use sp_io::TestExternalities;
+	use frame_support::{assert_ok, impl_outer_origin, parameter_types, weights::Weight};
 	use sp_core::H256;
-	use sp_runtime::{Perbill, traits::{BlakeTwo256, IdentityLookup}, testing::Header};
+	use sp_io::TestExternalities;
+	use sp_runtime::{
+		testing::Header,
+		traits::{BlakeTwo256, IdentityLookup},
+		Perbill,
+	};
 
 	pub fn new_test_ext() -> TestExternalities {
-		let t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+		let t = frame_system::GenesisConfig::default()
+			.build_storage::<Test>()
+			.unwrap();
 		TestExternalities::new(t)
 	}
 
@@ -377,7 +384,9 @@ mod tests {
 	}
 
 	#[test]
-	#[should_panic(expected = "Timestamp must increment by at least <MinimumPeriod> between sequential blocks")]
+	#[should_panic(
+		expected = "Timestamp must increment by at least <MinimumPeriod> between sequential blocks"
+	)]
 	fn block_period_minimum_enforced() {
 		new_test_ext().execute_with(|| {
 			Timestamp::set_timestamp(42);

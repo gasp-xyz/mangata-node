@@ -27,7 +27,7 @@
 //! order to update it.
 //!
 
-use codec::Encode;
+
 use blocks::BlockCollection;
 use sp_blockchain::{Error as ClientError, Info as BlockchainInfo, HeaderMetadata};
 use sp_consensus::{BlockOrigin, BlockStatus,
@@ -46,7 +46,7 @@ use log::{debug, trace, warn, info, error};
 use sp_runtime::{
 	Justification,
 	generic::BlockId,
-	traits::{Block as BlockT, Header, NumberFor, Zero, One, CheckedSub, SaturatedConversion, Hash, HashFor}
+	traits::{Block as BlockT, Header, NumberFor, Zero, One, CheckedSub, SaturatedConversion}
 };
 use sp_arithmetic::traits::Saturating;
 use std::{fmt, ops::Range, collections::{HashMap, HashSet, VecDeque}, sync::Arc};

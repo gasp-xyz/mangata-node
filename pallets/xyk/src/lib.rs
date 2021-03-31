@@ -1,6 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use codec::{Decode, Encode};
 use frame_support::{
     decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult, ensure,
     sp_runtime::ModuleId, weights::Pays, StorageMap,
@@ -10,8 +9,7 @@ use pallet_assets as assets;
 use sp_core::U256;
 // TODO documentation!
 use frame_support::sp_runtime::traits::AccountIdConversion;
-use sp_runtime::print;
-use sp_runtime::traits::{BlakeTwo256, Hash, One, SaturatedConversion, Zero};
+use sp_runtime::traits::{SaturatedConversion, Zero};
 
 #[cfg(test)]
 mod mock;
@@ -397,7 +395,7 @@ decl_module! {
                 &liquidity_asset_id,
                 &sender,
                 &liquidity_assets_minted
-            );
+            )?;
 
             Self::deposit_event(RawEvent::LiquidityMinted(sender.clone(),first_asset_id, first_asset_amount, second_asset_id, second_asset_amount,liquidity_asset_id, second_asset_amount));
           //  Self::deposit_event(RawEvent::LiquidityAssetsGained(sender.clone(),liquidity_asset_id, second_asset_amount));
@@ -478,7 +476,7 @@ decl_module! {
                 <Pools<T>>::remove((second_asset_id, first_asset_id));
             }
 
-            <assets::Module<T>>::assets_burn(&liquidity_asset_id, &sender, &liquidity_asset_amount);
+            <assets::Module<T>>::assets_burn(&liquidity_asset_id, &sender, &liquidity_asset_amount)?;
 
             Self::deposit_event(RawEvent::LiquidityBurned(sender.clone(),first_asset_id, first_asset_amount, second_asset_id, second_asset_amount,liquidity_asset_id, second_asset_amount));
            // Self::deposit_event(RawEvent::LiquidityAssetsBurned(sender.clone(),liquidity_asset_id, second_asset_amount));
@@ -540,5 +538,4 @@ impl<T: Trait> Module<T> {
     fn account_id() -> T::AccountId {
         PALLET_ID.into_account()
     }
-
 }

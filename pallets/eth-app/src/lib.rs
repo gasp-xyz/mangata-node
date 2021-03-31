@@ -20,19 +20,17 @@
 //!
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_system::{self as system, ensure_signed};
 use frame_support::{
-	decl_error, decl_event, decl_module, decl_storage,
-	dispatch::DispatchResult, ensure,
+	decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult, ensure,
 };
-use sp_std::prelude::*;
+use frame_system::{self as system, ensure_signed};
 use sp_core::{H160, U256};
-use sp_std::convert::TryInto;
+use sp_std::prelude::*;
 
-use artemis_core::{Application, BridgedAssetId};
 use artemis_asset as asset;
+use artemis_core::{Application, BridgedAssetId};
 use pallet_assets as assets;
-use sp_runtime::traits::{SaturatedConversion};
+use sp_runtime::traits::SaturatedConversion;
 
 mod payload;
 use payload::Payload;
@@ -54,10 +52,10 @@ decl_storage! {
 }
 
 decl_event!(
-    /// Events for the ETH module.
+	/// Events for the ETH module.
 	pub enum Event<T>
 	where
-		AccountId = <T as system::Trait>::AccountId
+		AccountId = <T as system::Trait>::AccountId,
 	{
 		/// Signal a cross-chain transfer.
 		Transfer(AccountId, H160, U256),
@@ -101,20 +99,24 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
-
 	fn handle_event(payload: Payload<T::AccountId>) -> DispatchResult {
 		let asset_id: BridgedAssetId = H160::zero();
 		// <asset::Module<T>>::do_mint(asset_id, &payload.recipient_addr, payload.amount)
 
 		//FIXME overflow unsafe!
 		if !<asset::Module<T>>::exists(asset_id) {
-			let id = <assets::Module<T>>::assets_issue(&payload.recipient_addr,
-													   &payload.amount.low_u128().saturated_into::<T::Balance>());
+			let id = <assets::Module<T>>::assets_issue(
+				&payload.recipient_addr,
+				&payload.amount.low_u128().saturated_into::<T::Balance>(),
+			);
 			<asset::Module<T>>::link_assets(id, asset_id);
 		} else {
 			let id = <asset::Module<T>>::get_native_asset_id(asset_id);
-			<assets::Module<T>>::assets_mint(&id, &payload.recipient_addr,
-											 &payload.amount.low_u128().saturated_into::<T::Balance>());
+			<assets::Module<T>>::assets_mint(
+				&id,
+				&payload.recipient_addr,
+				&payload.amount.low_u128().saturated_into::<T::Balance>(),
+			)?;
 		}
 
 		Ok(())
@@ -123,8 +125,7 @@ impl<T: Trait> Module<T> {
 
 impl<T: Trait> Application for Module<T> {
 	fn handle(payload: Vec<u8>) -> DispatchResult {
-		let payload_decoded = Payload::decode(payload)
-			.map_err(|_| Error::<T>::InvalidPayload)?;
+		let payload_decoded = Payload::decode(payload).map_err(|_| Error::<T>::InvalidPayload)?;
 
 		Self::handle_event(payload_decoded)
 	}

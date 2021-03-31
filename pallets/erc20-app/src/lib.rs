@@ -21,18 +21,17 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use sp_std::prelude::*;
-use sp_core::{H160, U256};
-use frame_system::{self as system, ensure_signed};
 use frame_support::{
-	decl_error, decl_event, decl_module, decl_storage,
-	dispatch::DispatchResult, ensure,
+	decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult, ensure,
 };
+use frame_system::{self as system, ensure_signed};
+use sp_core::{H160, U256};
+use sp_std::prelude::*;
 
-use artemis_core::{Application, BridgedAssetId};
 use artemis_asset as asset;
+use artemis_core::{Application, BridgedAssetId};
 use pallet_assets as assets;
-use sp_runtime::traits::{SaturatedConversion};
+use sp_runtime::traits::SaturatedConversion;
 
 mod payload;
 use payload::Payload;
@@ -52,7 +51,7 @@ decl_storage! {
 }
 
 decl_event!(
-    /// Events for the ERC20 module.
+	/// Events for the ERC20 module.
 	pub enum Event<T>
 	where
 		AccountId = <T as system::Trait>::AccountId,
@@ -104,32 +103,34 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
-
 	fn handle_event(payload: Payload<T::AccountId>) -> DispatchResult {
 		if payload.token_addr.is_zero() {
-			return Err(Error::<T>::InvalidAssetId.into())
+			return Err(Error::<T>::InvalidAssetId.into());
 		}
 
 		//FIXME overflow unsafe!
 		if !<asset::Module<T>>::exists(payload.token_addr) {
-			let id = <assets::Module<T>>::assets_issue(&payload.recipient_addr,
-													   &payload.amount.low_u128().saturated_into::<T::Balance>());
+			let id = <assets::Module<T>>::assets_issue(
+				&payload.recipient_addr,
+				&payload.amount.low_u128().saturated_into::<T::Balance>(),
+			);
 			<asset::Module<T>>::link_assets(id, payload.token_addr);
 		} else {
 			let id = <asset::Module<T>>::get_native_asset_id(payload.token_addr);
-			<assets::Module<T>>::assets_mint(&id, &payload.recipient_addr,
-											 &payload.amount.low_u128().saturated_into::<T::Balance>());
+			<assets::Module<T>>::assets_mint(
+				&id,
+				&payload.recipient_addr,
+				&payload.amount.low_u128().saturated_into::<T::Balance>(),
+			)?;
 		}
 
 		Ok(())
 	}
-
 }
 
 impl<T: Trait> Application for Module<T> {
 	fn handle(payload: Vec<u8>) -> DispatchResult {
-		let payload_decoded = Payload::decode(payload)
-			.map_err(|_| Error::<T>::InvalidPayload)?;
+		let payload_decoded = Payload::decode(payload).map_err(|_| Error::<T>::InvalidPayload)?;
 
 		Self::handle_event(payload_decoded)
 	}

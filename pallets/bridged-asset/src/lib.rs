@@ -73,8 +73,8 @@ decl_storage! {
         config(bridged_assets_links): Vec<(T::AssetId, BridgedAssetId, T::Balance, T::AccountId)>;
         build(|config: &GenesisConfig<T>|
 			{
-				for (native_asset_id, bridged_asset_id, initialSupply, initialOwner) in config.bridged_assets_links.iter(){
-					let initialized_asset_id = <assets::Module<T>>::assets_issue(&initialOwner, &initialSupply);
+				for (native_asset_id, bridged_asset_id, initial_supply, initial_owner) in config.bridged_assets_links.iter(){
+					let initialized_asset_id = <assets::Module<T>>::assets_issue(&initial_owner, &initial_supply);
 					assert!(initialized_asset_id == *native_asset_id, "Assets not initialized in the sequence of the asset ids provided");
 					Module::<T>::link_assets(native_asset_id.clone(), bridged_asset_id.clone());
 

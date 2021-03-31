@@ -64,9 +64,9 @@ decl_storage! {
 	add_extra_genesis {
         config(bridged_assets_info): Vec<(Option<Vec<u8>>, Option<Vec<u8>>, Option<Vec<u8>>, Option<u32>, T::AssetId)>;
         build(|config: &GenesisConfig<T>|{
-			for (name, token, description, decimals, assetId) in config.bridged_assets_info.iter(){
+			for (name, token, description, decimals, asset_id) in config.bridged_assets_info.iter(){
 				<AssetsInfo<T>>::insert(
-					assetId,
+					asset_id,
 					AssetInfo {
 			            name: name.clone(),
 			            symbol: token.clone(),

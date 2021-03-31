@@ -78,7 +78,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
 						(
 							"Mangata".as_bytes().to_vec(), "MNG".as_bytes().to_vec(), "Mangata Asset".as_bytes().to_vec(),
 							18u32, 0u32, H160::from_slice(&hex!["F8F7758FbcEfd546eAEff7dE24AFf666B6228e73"][..]),
-							1_000_000u128, get_account_id_from_seed::<sr25519::Public>("Alice")
+							100_000_000__000_000_000_000_000_000u128, get_account_id_from_seed::<sr25519::Public>("Alice")
 						),
 						(
 							"Ether".as_bytes().to_vec(), "ETH".as_bytes().to_vec(), "Ethereum Ether".as_bytes().to_vec(),
@@ -140,7 +140,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 						(
 							"Mangata".as_bytes().to_vec(), "MNG".as_bytes().to_vec(), "Mangata Asset".as_bytes().to_vec(),
 							18u32, 0u32, H160::from_slice(&hex!["F8F7758FbcEfd546eAEff7dE24AFf666B6228e73"][..]),
-							1_000_000u128, get_account_id_from_seed::<sr25519::Public>("Alice")
+							100_000_000__000_000_000_000_000_000u128, get_account_id_from_seed::<sr25519::Public>("Alice")
 						),
 						(
 							"Ether".as_bytes().to_vec(), "ETH".as_bytes().to_vec(), "Ethereum Ether".as_bytes().to_vec(),
@@ -186,7 +186,7 @@ fn testnet_genesis(
 	initial_authorities: Vec<(BabeId, GrandpaId, AccountId)>,
 	relay_key: AccountId,
 	root_key: AccountId,
-	_bridged_assets : Vec<(Vec<u8>, Vec<u8>, Vec<u8>, u32, u32, H160, u128, AccountId)>,
+	bridged_assets : Vec<(Vec<u8>, Vec<u8>, Vec<u8>, u32, u32, H160, u128, AccountId)>,
 	endowed_accounts: Vec<AccountId>,
 	_enable_println: bool,
 ) -> GenesisConfig {
@@ -240,21 +240,21 @@ fn testnet_genesis(
 		verifier: Some(VerifierConfig { key: relay_key }),
 
 		pallet_assets_info: Some(AssetsInfoConfig {
-			bridged_assets_info: _bridged_assets.iter().cloned()
+			bridged_assets_info: bridged_assets.iter().cloned()
 							.map(|x|
 								{
-									let (name, token, description, decimals, assetId, .. ) = x;
-									(Some(name), Some(token), Some(description), Some(decimals), assetId.into())
+									let (name, token, description, decimals, asset_id, .. ) = x;
+									(Some(name), Some(token), Some(description), Some(decimals), asset_id.into())
 								}
 							).collect(),
 		}),
 
 		bridged_asset: Some(BridgedAssetConfig {
-			bridged_assets_links: _bridged_assets.iter().cloned()
+			bridged_assets_links: bridged_assets.iter().cloned()
 							.map(|x|
 								{
-									let (.. , assetId, bridgedAssetId, initialSupply, initialOwner) = x;
-									(assetId.into(), bridgedAssetId.into(), initialSupply, initialOwner)
+									let (.. , asset_id, bridged_asset_id, initial_supply, initial_owner) = x;
+									(asset_id.into(), bridged_asset_id.into(), initial_supply, initial_owner)
 								}
 							).collect(),
 		}),

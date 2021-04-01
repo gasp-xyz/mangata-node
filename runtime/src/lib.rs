@@ -497,10 +497,10 @@ construct_runtime!(
 		// Snowfork pallets
 		Bridge: bridge::{Module, Call, Storage, Event},
 		Verifier: verifier::{Module, Call, Storage, Event, Config<T>},
-		BridgedAsset: bridged_asset::{Module, Call, Storage, Event<T>},
+		BridgedAsset: bridged_asset::{Module, Call, Config<T>, Storage, Event<T>},
 		ETH: eth_app::{Module, Call, Storage, Event<T>},
 		ERC20: erc20_app::{Module, Call, Storage, Event<T>},
-		AssetsInfo: pallet_assets_info::{Module, Call, Storage, Event<T>},
+		AssetsInfo: pallet_assets_info::{Module, Call, Config<T>, Storage, Event<T>},
 	}
 );
 

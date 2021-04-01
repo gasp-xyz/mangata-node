@@ -2,17 +2,18 @@
 
 use mangata_runtime::{
 	AccountId, BabeConfig, BalancesConfig, GenesisConfig, GrandpaConfig, SessionConfig,
-	SessionKeys, Signature, StakerStatus, StakingConfig, SudoConfig, SystemConfig, VerifierConfig,
+	SessionKeys, Signature, StakerStatus, StakingConfig, AssetsInfoConfig, BridgedAssetConfig, SudoConfig, SystemConfig, VerifierConfig,
 	WASM_BINARY,
 };
 use sc_service::ChainType;
 use sp_consensus_babe::AuthorityId as BabeId;
-use sp_core::{sr25519, Pair, Public};
+use sp_core::{sr25519, Pair, Public, H160};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::{
 	traits::{IdentifyAccount, Verify},
 	Perbill,
 };
+use hex_literal::hex;
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -72,6 +73,20 @@ pub fn development_config() -> Result<ChainSpec, String> {
 				"0xec00ad0ec6eeb271a9689888f644d9262016a26a25314ff4ff5d756404c44112"
 					.parse()
 					.unwrap(),
+				// SnowBridged Assets
+				vec![
+						(
+							"Mangata".as_bytes().to_vec(), "MNG".as_bytes().to_vec(), "Mangata Asset".as_bytes().to_vec(),
+							18u32, 0u32, H160::from_slice(&hex!["F8F7758FbcEfd546eAEff7dE24AFf666B6228e73"][..]),
+							100_000_000__000_000_000_000_000_000u128, get_account_id_from_seed::<sr25519::Public>("Alice")
+						),
+						(
+							"Ether".as_bytes().to_vec(), "ETH".as_bytes().to_vec(), "Ethereum Ether".as_bytes().to_vec(),
+							18u32, 1u32, H160::zero(),
+							0u128, get_account_id_from_seed::<sr25519::Public>("Alice")
+						),
+				],
+
 				// Pre-funded accounts
 				vec![
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -120,6 +135,20 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 				get_account_id_from_seed::<sr25519::Public>("Relay"),
 				// Sudo account
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				// SnowBridged Assets
+				vec![
+						(
+							"Mangata".as_bytes().to_vec(), "MNG".as_bytes().to_vec(), "Mangata Asset".as_bytes().to_vec(),
+							18u32, 0u32, H160::from_slice(&hex!["F8F7758FbcEfd546eAEff7dE24AFf666B6228e73"][..]),
+							100_000_000__000_000_000_000_000_000u128, get_account_id_from_seed::<sr25519::Public>("Alice")
+						),
+						(
+							"Ether".as_bytes().to_vec(), "ETH".as_bytes().to_vec(), "Ethereum Ether".as_bytes().to_vec(),
+							18u32, 1u32, H160::zero(),
+							0u128, get_account_id_from_seed::<sr25519::Public>("Alice")
+						),
+				],
+
 				// Pre-funded accounts
 				vec![
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -157,6 +186,7 @@ fn testnet_genesis(
 	initial_authorities: Vec<(BabeId, GrandpaId, AccountId)>,
 	relay_key: AccountId,
 	root_key: AccountId,
+	bridged_assets : Vec<(Vec<u8>, Vec<u8>, Vec<u8>, u32, u32, H160, u128, AccountId)>,
 	endowed_accounts: Vec<AccountId>,
 	_enable_println: bool,
 ) -> GenesisConfig {
@@ -208,5 +238,25 @@ fn testnet_genesis(
 			key: root_key,
 		}),
 		verifier: Some(VerifierConfig { key: relay_key }),
+
+		pallet_assets_info: Some(AssetsInfoConfig {
+			bridged_assets_info: bridged_assets.iter().cloned()
+							.map(|x|
+								{
+									let (name, token, description, decimals, asset_id, .. ) = x;
+									(Some(name), Some(token), Some(description), Some(decimals), asset_id.into())
+								}
+							).collect(),
+		}),
+
+		bridged_asset: Some(BridgedAssetConfig {
+			bridged_assets_links: bridged_assets.iter().cloned()
+							.map(|x|
+								{
+									let (.. , asset_id, bridged_asset_id, initial_supply, initial_owner) = x;
+									(asset_id.into(), bridged_asset_id.into(), initial_supply, initial_owner)
+								}
+							).collect(),
+		}),
 	}
 }

@@ -78,6 +78,8 @@ pallet-assets = { default-features = false, version = '2.0.0', path = '../pallet
 xyk-rpc = { default-features = false, version = '2.0.0', path = '../pallets/xyk/rpc' }
 xyk-runtime-api = { default-features = false, version = '2.0.0', path = '../pallets/xyk/runtime-api' }
 
+hex-literal = { version = "0.3.1", default-features = false }
+
 [features]
 default = []
 runtime-benchmarks = ['mangata-runtime/runtime-benchmarks']

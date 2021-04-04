@@ -495,7 +495,7 @@ construct_runtime!(
 		Offences: pallet_offences::{Module, Call, Storage, Event},
 		Xyk: pallet_xyk::{Module, Call, Storage, Event<T>},
 		// Snowfork pallets
-		Bridge: bridge::{Module, Call, Storage, Event},
+		Bridge: bridge::{Module, Call, Config, Storage, Event},
 		Verifier: verifier::{Module, Call, Storage, Event, Config<T>},
 		BridgedAsset: bridged_asset::{Module, Call, Config<T>, Storage, Event<T>},
 		ETH: eth_app::{Module, Call, Storage, Event<T>},

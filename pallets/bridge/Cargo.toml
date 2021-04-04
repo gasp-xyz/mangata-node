@@ -9,6 +9,12 @@ repository = "https://github.com/Snowfork/polkadot-ethereum"
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 
+[dependencies.serde]
+package = "serde"
+optional = true
+version = "1.0.101"
+features = ["derive"]
+
 [dependencies.codec]
 default-features = false
 features = ["derive"]
@@ -46,6 +52,7 @@ path = "../../primitives/core"
 [features]
 default = ["std"]
 std = [
+		"serde",
     "codec/std",
     "frame-support/std",
     "frame-system/std",

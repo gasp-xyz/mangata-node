@@ -16,14 +16,13 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(unused_variables)]
 
-use frame_support::{decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult};
-use frame_system::{self as system, ensure_signed};
+use frame_support::{decl_error, decl_event, decl_module, decl_storage, ensure, dispatch::DispatchResult};
+use frame_system::{self as system, ensure_signed, ensure_root};
 
 use sp_std::prelude::*;
 
 use artemis_core::{
-	registry::{App, lookup_app},
-	AppId, Application, Message, Verifier,
+	App, AppId, Application, Message, Verifier,
 };
 
 pub trait Trait: system::Trait {
@@ -41,20 +40,38 @@ pub trait Trait: system::Trait {
 
 decl_storage! {
 	trait Store for Module<T: Trait> as BridgeModule {
+		AppRegistry get(fn app_registry): map hasher(blake2_128_concat) AppId => Option<App>;
+	}
+	add_extra_genesis {
+        config(bridged_app_id_registry): Vec<(App, AppId)>;
+        build(|config: &GenesisConfig|{
+			for (entry_app, entry_app_id) in config.bridged_app_id_registry.iter(){
+				AppRegistry::insert(
+					entry_app_id,
+					entry_app
+				);
+			}
+		});
+    }
+}
 
+decl_event!{
+	/// Events for the Bridge module.
+	pub enum Event
+		{
+		/// An AppRegistry entry has been updated
+		AppUpdated(App, AppId),
 	}
 }
 
-decl_event!(
-    /// Events for the Bridge module.
-	pub enum Event {
-	}
-);
 
 decl_error! {
 	pub enum Error for Module<T: Trait> {
     	/// Target application not found.
-		AppNotFound
+		AppNotFound,
+
+		/// Updated AppId is the same as current
+		DifferentAppIdRequired
 	}
 }
 
@@ -65,11 +82,50 @@ decl_module! {
 
 		fn deposit_event() = default;
 
+		/// Updates an app registry entry. Can use provided current_app_id_option to reduce DB reads.
+		#[weight = 0 ] //TODO
+		pub fn update_registry(origin, app: App, current_app_id_option: Option<AppId>, updated_app_id: AppId) -> DispatchResult {
+
+			ensure_root(origin)?;
+
+			let mut current_app_id: AppId = AppId::default();
+			let mut current_app_id_found: bool = false;
+
+			match current_app_id_option{
+				Some(provided_app_id) => {
+					ensure!( AppRegistry::contains_key(&provided_app_id), Error::<T>::AppNotFound);
+					current_app_id = provided_app_id;
+					current_app_id_found = true;
+				},
+
+				None => {
+					for (entry_app_id, entry_app) in AppRegistry::iter(){
+						if entry_app == app{
+							current_app_id = entry_app_id;
+							current_app_id_found = true;
+						}
+					}
+				}
+			}
+
+			if current_app_id_found {
+				ensure!(!(updated_app_id == current_app_id), Error::<T>::DifferentAppIdRequired);
+				AppRegistry::remove(&current_app_id);
+			};
+
+			AppRegistry::insert(updated_app_id, app);
+
+			Self::deposit_event(Event::AppUpdated(app, updated_app_id));
+			Ok(())
+
+		}
+
+
 		/// Submit `message` for dispatch to a target application identified by `app_id`.
 		#[weight = 0]
 		pub fn submit(origin, app_id: AppId, message: Message) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let app = lookup_app(app_id).ok_or(Error::<T>::AppNotFound)?;
+			let app = AppRegistry::get(&app_id).ok_or_else(|| Error::<T>::AppNotFound)?;
 			Self::verify(who, app_id, &message)?;
 			Self::dispatch(app, message)
 		}
@@ -91,4 +147,3 @@ impl<T: Trait> Module<T> {
 	}
 
 }
-

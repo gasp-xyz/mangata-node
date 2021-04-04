@@ -17,6 +17,10 @@ targets = ['x86_64-unknown-linux-gnu']
 [build-dependencies]
 substrate-build-script-utils = '2.0.0'
 
+[dependencies.artemis-core]
+default-features = false
+path = "../primitives/core"
+
 [dependencies]
 jsonrpc-core = "15.0"
 jsonrpc-core-client = "15.0"

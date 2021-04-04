@@ -69,6 +69,19 @@ fn changing_app_id_without_current_should_work() {
 			),
 			Some(App::ERC20)
 		);
+
+		assert_eq!(
+			BridgeModule::app_registry(
+				hex!["Fc97A6197dc90bef6bbEFD672742Ed75E9768553"]
+			),
+			None
+		);
+		assert_eq!(
+			BridgeModule::app_registry(
+				hex!["EDa338E4dC46038493b885327842fD3E301CaB39"]
+			),
+			None
+		);
 	});
 }
 
@@ -107,6 +120,19 @@ fn changing_app_id_with_current_should_work() {
 				hex!["EDa338E4dC46038493b885327842fD3E301CaB00"]
 			),
 			Some(App::ERC20)
+		);
+
+		assert_eq!(
+			BridgeModule::app_registry(
+				hex!["Fc97A6197dc90bef6bbEFD672742Ed75E9768553"]
+			),
+			None
+		);
+		assert_eq!(
+			BridgeModule::app_registry(
+				hex!["EDa338E4dC46038493b885327842fD3E301CaB39"]
+			),
+			None
 		);
 	});
 }
@@ -149,6 +175,19 @@ fn changing_app_id_with_wrong_current_should_not_work() {
 			),
 			Some(App::ERC20)
 		);
+
+		assert_eq!(
+			BridgeModule::app_registry(
+				hex!["Fc97A6197dc90bef6bbEFD672742Ed75E9768500"]
+			),
+			None
+		);
+		assert_eq!(
+			BridgeModule::app_registry(
+				hex!["EDa338E4dC46038493b885327842fD3E301CaB00"]
+			),
+			None
+		);
 	});
 }
 
@@ -189,6 +228,19 @@ fn changing_app_id_to_current_should_not_work() {
 				hex!["EDa338E4dC46038493b885327842fD3E301CaB39"]
 			),
 			Some(App::ERC20)
+		);
+
+		assert_eq!(
+			BridgeModule::app_registry(
+				hex!["Fc97A6197dc90bef6bbEFD672742Ed75E9768500"]
+			),
+			None
+		);
+		assert_eq!(
+			BridgeModule::app_registry(
+				hex!["EDa338E4dC46038493b885327842fD3E301CaB00"]
+			),
+			None
 		);
 	});
 }

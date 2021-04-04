@@ -25,6 +25,12 @@ use artemis_core::{
 	App, AppId, Application, Message, Verifier,
 };
 
+#[cfg(test)]
+mod mock;
+
+#[cfg(test)]
+mod tests;
+
 pub trait Trait: system::Trait {
 	type Event: From<Event> + Into<<Self as system::Trait>::Event>;
 

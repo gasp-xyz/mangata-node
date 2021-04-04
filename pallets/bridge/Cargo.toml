@@ -49,6 +49,14 @@ version = "2.0.0"
 default-features = false
 path = "../../primitives/core"
 
+[dev-dependencies]
+pallet-verifier = {path = "../verifier"}
+artemis-erc20-app = {path = "../erc20-app"}
+artemis-eth-app = {path = "../eth-app"}
+artemis-asset = {path = "../bridged-asset"}
+pallet-assets = {path = "../assets"}
+hex-literal = { version = "0.3.1", default-features = false }
+
 [features]
 default = ["std"]
 std = [

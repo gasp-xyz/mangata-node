@@ -29,7 +29,7 @@ version = "2.0.0"
 [features]
 default = ["std"]
 std = [
-		"serde",
+    "serde",
     "codec/std",
     "frame-support/std",
     "sp-std/std",

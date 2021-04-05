@@ -1,7 +1,6 @@
 use super::*;
 use crate::Module as BridgeModule;
 use frame_benchmarking::{benchmarks};
-use frame_support::{assert_ok};
 use sp_core::H160;
 use frame_system::{RawOrigin};
 use hex_literal::hex;
@@ -11,21 +10,32 @@ benchmarks! {
 
 	update_registry_without_current_app_id{
 
-		assert_ok!(
-			BridgeModule::<T>::update_registry(
-				RawOrigin::Root.into(),
-				App::ETH,
-				None,
-				H160::from_slice(&hex!["Fc97A6197dc90bef6bbEFD672742Ed75E9768553"][..]).into()
-				)
+		BridgeModule::<T>::update_registry(
+			RawOrigin::Root.into(),
+			App::ETH,
+			None,
+			H160::from_slice(&hex!["Fc97A6197dc90bef6bbEFD672742Ed75E9768553"][..]).into()
 		);
-		assert_ok!(
-			BridgeModule::<T>::update_registry(
-				RawOrigin::Root.into(),
-				App::ERC20,
-				None,
-				H160::from_slice(&hex!["EDa338E4dC46038493b885327842fD3E301CaB39"][..]).into()
-				)
+
+		BridgeModule::<T>::update_registry(
+			RawOrigin::Root.into(),
+			App::ERC20,
+			None,
+			H160::from_slice(&hex!["EDa338E4dC46038493b885327842fD3E301CaB39"][..]).into()
+		);
+
+		assert_eq!(
+			BridgeModule::<T>::app_registry(
+				hex!["Fc97A6197dc90bef6bbEFD672742Ed75E9768553"]
+			),
+			Some(App::ETH)
+		);
+
+		assert_eq!(
+			BridgeModule::<T>::app_registry(
+				hex!["EDa338E4dC46038493b885327842fD3E301CaB39"]
+			),
+			Some(App::ERC20)
 		);
 
 	}: update_registry(
@@ -39,21 +49,32 @@ benchmarks! {
 
 	update_registry_with_current_app_id{
 
-		assert_ok!(
-			BridgeModule::<T>::update_registry(
-				RawOrigin::Root.into(),
-				App::ETH,
-				None,
-				H160::from_slice(&hex!["Fc97A6197dc90bef6bbEFD672742Ed75E9768553"][..]).into()
-				)
+		BridgeModule::<T>::update_registry(
+			RawOrigin::Root.into(),
+			App::ETH,
+			None,
+			H160::from_slice(&hex!["Fc97A6197dc90bef6bbEFD672742Ed75E9768553"][..]).into()
 		);
-		assert_ok!(
-			BridgeModule::<T>::update_registry(
-				RawOrigin::Root.into(),
-				App::ERC20,
-				None,
-				H160::from_slice(&hex!["EDa338E4dC46038493b885327842fD3E301CaB39"][..]).into()
-				)
+
+		BridgeModule::<T>::update_registry(
+			RawOrigin::Root.into(),
+			App::ERC20,
+			None,
+			H160::from_slice(&hex!["EDa338E4dC46038493b885327842fD3E301CaB39"][..]).into()
+		);
+
+		assert_eq!(
+			BridgeModule::<T>::app_registry(
+				hex!["Fc97A6197dc90bef6bbEFD672742Ed75E9768553"]
+			),
+			Some(App::ETH)
+		);
+
+		assert_eq!(
+			BridgeModule::<T>::app_registry(
+				hex!["EDa338E4dC46038493b885327842fD3E301CaB39"]
+			),
+			Some(App::ERC20)
 		);
 
 	}: update_registry(
@@ -74,9 +95,15 @@ mod tests {
 	use frame_support::assert_ok;
 
 	#[test]
-	fn test_benchmarks() {
+	fn benchmark_update_registry_without_current_app_id() {
 		new_test_ext().execute_with(|| {
 			assert_ok!(test_benchmark_update_registry_without_current_app_id::<Test>());
+		});
+	}
+
+	#[test]
+	fn benchmark_update_registry_with_current_app_id() {
+		new_test_ext().execute_with(|| {
 			assert_ok!(test_benchmark_update_registry_with_current_app_id::<Test>());
 		});
 	}

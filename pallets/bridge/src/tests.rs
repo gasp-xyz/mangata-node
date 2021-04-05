@@ -1,5 +1,5 @@
 use super::*;
-use crate::mock::{new_test_ext, BridgeModule, SystemModule};
+use crate::mock::{new_test_ext, BridgeModule};
 use frame_support::{assert_ok, assert_noop};
 use frame_system::{RawOrigin};
 use hex_literal::hex;

@@ -85,5 +85,9 @@ xyk-runtime-api = { default-features = false, version = '2.0.0', path = '../pall
 hex-literal = { version = "0.3.1", default-features = false }
 
 [features]
-default = []
+default = ['std']
 runtime-benchmarks = ['mangata-runtime/runtime-benchmarks']
+std = [
+		"mangata-runtime/std",
+		"xyk-rpc/std",
+]

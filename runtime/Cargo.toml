@@ -140,4 +140,5 @@ std = [
     "bridged-asset/std",
     "eth-app/std",
     "erc20-app/std",
+		"pallet-assets-info/std",
 ]

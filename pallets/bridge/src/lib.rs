@@ -25,6 +25,10 @@ use artemis_core::{
 	App, AppId, Application, Message, Verifier,
 };
 
+mod weights;
+use weights::WeightInfoTrait;
+use weights::WeightInfo;
+
 #[cfg(test)]
 mod mock;
 
@@ -92,7 +96,7 @@ decl_module! {
 		fn deposit_event() = default;
 
 		/// Updates an app registry entry. Can use provided current_app_id_option to reduce DB reads.
-		#[weight = 0 ] //TODO
+		#[weight = WeightInfo::update_registry(*current_app_id_option)]
 		pub fn update_registry(origin, app: App, current_app_id_option: Option<AppId>, updated_app_id: AppId) -> DispatchResult {
 
 			ensure_root(origin)?;
@@ -112,6 +116,8 @@ decl_module! {
 						if entry_app == app{
 							current_app_id = entry_app_id;
 							current_app_id_found = true;
+							#[cfg(not(feature = "runtime-benchmarks"))]
+							break;
 						}
 					}
 				}

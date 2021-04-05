@@ -49,13 +49,17 @@ version = "2.0.0"
 default-features = false
 path = "../../primitives/core"
 
+
+[dependencies]
+hex-literal = { version = "0.3.1", default-features = true }
+frame-benchmarking = { version = "2.0.0", default-features = false, optional = true }
+
 [dev-dependencies]
 pallet-verifier = {path = "../verifier"}
 artemis-erc20-app = {path = "../erc20-app"}
 artemis-eth-app = {path = "../eth-app"}
 artemis-asset = {path = "../bridged-asset"}
 pallet-assets = {path = "../assets"}
-hex-literal = { version = "0.3.1", default-features = false }
 
 [features]
 default = ["std"]
@@ -69,4 +73,10 @@ std = [
     "sp-runtime/std",
     "sp-std/std",
     "artemis-core/std"
+]
+runtime-benchmarks = [
+	"frame-benchmarking",
+	"sp-runtime/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
 ]

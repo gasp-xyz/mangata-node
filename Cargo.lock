@@ -3967,6 +3967,7 @@ dependencies = [
  "artemis-core",
  "artemis-erc20-app",
  "artemis-eth-app",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "hex-literal",

@@ -1,3 +1,5 @@
+#![allow(unused_must_use)]
+
 use super::*;
 use crate::Module as BridgeModule;
 use frame_benchmarking::{benchmarks};

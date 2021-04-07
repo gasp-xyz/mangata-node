@@ -80,10 +80,10 @@ pub fn development_config() -> Result<ChainSpec, String> {
 				// Ethereum AppId for SnowBridged Assets
 				vec![
 						(
-							App::ETH, H160::from_slice(&hex!["Fc97A6197dc90bef6bbEFD672742Ed75E9768553"][..]).into()
+							App::ETH, H160::from_slice(&hex!["dd514baa317bf095ddba2c0a847765feb389c6a0"][..]).into()
 						),
 						(
-							App::ERC20, H160::from_slice(&hex!["EDa338E4dC46038493b885327842fD3E301CaB39"][..]).into()
+							App::ERC20, H160::from_slice(&hex!["00e392c04743359e39f00cd268a5390d27ef6b44"][..]).into()
 						),
 				],
 				// SnowBridged Assets
@@ -151,10 +151,10 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 				// Ethereum AppId for SnowBridged Assets
 				vec![
 						(
-							App::ETH, H160::from_slice(&hex!["Fc97A6197dc90bef6bbEFD672742Ed75E9768553"][..]).into()
+							App::ETH, H160::from_slice(&hex!["dd514baa317bf095ddba2c0a847765feb389c6a0"][..]).into()
 						),
 						(
-							App::ERC20, H160::from_slice(&hex!["EDa338E4dC46038493b885327842fD3E301CaB39"][..]).into()
+							App::ERC20, H160::from_slice(&hex!["00e392c04743359e39f00cd268a5390d27ef6b44"][..]).into()
 						),
 				],
 				// SnowBridged Assets

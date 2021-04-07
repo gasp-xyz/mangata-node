@@ -46,5 +46,12 @@ sp_api::decl_runtime_apis! {
         	output_reserve: Balance,
         	buy_amount: Balance
         ) -> RpcResult<Balance>;
+
+        fn get_burn_amount(
+            first_asset_id: AssetId,
+            second_asset_id: AssetId,
+            liquidity_asset_amount: Balance,
+        ) -> RpcResult<(Balance,Balance)>;
+        
     }
 }

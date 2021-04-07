@@ -11,7 +11,7 @@ pub use xyk_runtime_api::XykApi as XykRuntimeApi;
 use xyk_runtime_api::RpcResult;
 
 #[rpc]
-pub trait XykApi<BlockHash, Balance, ResponseType> {
+pub trait XykApi<BlockHash, Balance, ResponseType, AssetId> {
     #[rpc(name = "xyk_calculate_sell_price")]
     fn calculate_sell_price(
         &self,
@@ -30,6 +30,16 @@ pub trait XykApi<BlockHash, Balance, ResponseType> {
         buy_amount: Balance,
         at: Option<BlockHash>
     ) -> Result<ResponseType>;
+
+    #[rpc(name = "xyk_get_burn_amount")]
+    pub fn get_burn_amount(
+        &self,
+        first_asset_reserve: AssetId,
+        second_asset_reserve: AssetId,
+        liquidity_asset_amount: Balance,
+        at: Option<BlockHash>
+    ) -> Result<ResponseType>;
+    
 }
 
 pub struct Xyk<C, M> {
@@ -43,7 +53,7 @@ impl<C, P> Xyk<C, P> {
     }
 }
 
-impl<C, Block, Balance> XykApi<<Block as BlockT>::Hash, Balance, RpcResult<Balance>>
+impl<C, Block, Balance> XykApi<<Block as BlockT>::Hash, Balance, RpcResult<Balance>,RpcResult<(Balance, Balance)>>
 for Xyk<C, Block>
     where
         Block: BlockT,
@@ -94,4 +104,25 @@ for Xyk<C, Block>
             data: Some(format!("{:?}", e).into()),
         })
     }
+
+    fn get_burn_amount(
+        &self,
+        first_asset_id: AssetId,
+        second_asset_id: AssetId,
+        liquidity_asset_amount : Balance,
+        at: Option<<Block as BlockT>::Hash>
+    ) -> Result<RpcResult<(Balance, Balance)>> {
+        let api = self.client.runtime_api();
+        let at = BlockId::<Block>::hash(at.unwrap_or_else(||
+            // If the block hash is not supplied assume the best block.
+            self.client.info().best_hash
+        ));
+
+        let runtime_api_result = api.get_burn_amount(&at, first_asset_id, second_asset_id, liquidity_asset_amount);
+        runtime_api_result.map_err(|e| RpcError {
+            code: ErrorCode::ServerError(1),
+            message: "Unable to serve the request".into(),
+            data: Some(format!("{:?}", e).into()),
+        })
+    
 }

@@ -696,7 +696,7 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl xyk_runtime_api::XykApi<Block, Balance> for Runtime {
+	impl xyk_runtime_api::XykApi<Block, Balance, AssetId> for Runtime {
 		fn calculate_sell_price(
 			input_reserve: Balance,
 			output_reserve: Balance,
@@ -716,6 +716,18 @@ impl_runtime_apis! {
 				price: Xyk::calculate_buy_price(input_reserve, output_reserve, buy_amount)
 			}
 		}
+
+
+		fn get_burn_amount(
+			first_asset_id: AssetId,
+            second_asset_id: AssetId,
+            liquidity_asset_amount: Balance
+		) -> RpcResult<(Balance, Balance)> {
+			RpcResult {
+				price: Xyk::get_burn_amount(first_asset_id, second_asset_id, liquidity_asset_amount)
+			}
+		}
+		
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]

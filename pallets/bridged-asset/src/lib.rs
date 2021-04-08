@@ -50,152 +50,152 @@ mod tests;
 
 #[derive(Encode, Decode, Clone, PartialEq, Eq, Default, RuntimeDebug)]
 pub struct AccountData {
-	pub free: U256,
+    pub free: U256,
 }
 
 // type AssetAccountData = AccountData;
 
 pub trait Trait: assets::Trait {
-	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
+    type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait> as Asset {
-		pub NativeAsset get(fn get_native_asset_id): map hasher(blake2_128_concat) BridgedAssetId => T::AssetId;
-		pub BridgedAsset get(fn get_bridged_asset_id): map hasher(blake2_128_concat) T::AssetId => BridgedAssetId;
-		//pub TotalIssuance: map        hasher(blake2_128_concat) BridgedAssetId => U256;
-		//pub Account:       double_map hasher(blake2_128_concat) BridgedAssetId, hasher(blake2_128_concat) T::AccountId => AssetAccountData;
-	}
-	add_extra_genesis {
+    trait Store for Module<T: Trait> as Asset {
+        pub NativeAsset get(fn get_native_asset_id): map hasher(blake2_128_concat) BridgedAssetId => T::AssetId;
+        pub BridgedAsset get(fn get_bridged_asset_id): map hasher(blake2_128_concat) T::AssetId => BridgedAssetId;
+        //pub TotalIssuance: map        hasher(blake2_128_concat) BridgedAssetId => U256;
+        //pub Account:       double_map hasher(blake2_128_concat) BridgedAssetId, hasher(blake2_128_concat) T::AccountId => AssetAccountData;
+    }
+    add_extra_genesis {
         config(bridged_assets_links): Vec<(T::AssetId, BridgedAssetId, T::Balance, T::AccountId)>;
         build(|config: &GenesisConfig<T>|
-			{
-				for (native_asset_id, bridged_asset_id, initial_supply, initial_owner) in config.bridged_assets_links.iter(){
-					let initialized_asset_id = <assets::Module<T>>::assets_issue(&initial_owner, &initial_supply);
-					assert!(initialized_asset_id == *native_asset_id, "Assets not initialized in the sequence of the asset ids provided");
-					Module::<T>::link_assets(native_asset_id.clone(), bridged_asset_id.clone());
+            {
+                for (native_asset_id, bridged_asset_id, initial_supply, initial_owner) in config.bridged_assets_links.iter(){
+                    let initialized_asset_id = <assets::Module<T>>::assets_issue(&initial_owner, &initial_supply);
+                    assert!(initialized_asset_id == *native_asset_id, "Assets not initialized in the sequence of the asset ids provided");
+                    Module::<T>::link_assets(native_asset_id.clone(), bridged_asset_id.clone());
 
-				}
-			}
-		)
+                }
+            }
+        )
     }
 }
 
 decl_event!(
-	pub enum Event<T>
-	where
-		AccountId = <T as system::Trait>::AccountId,
-	{
-		Burned(BridgedAssetId, AccountId, U256),
-		Minted(BridgedAssetId, AccountId, U256),
-		Transferred(BridgedAssetId, AccountId, AccountId, U256),
-	}
+    pub enum Event<T>
+    where
+        AccountId = <T as system::Trait>::AccountId,
+    {
+        Burned(BridgedAssetId, AccountId, U256),
+        Minted(BridgedAssetId, AccountId, U256),
+        Transferred(BridgedAssetId, AccountId, AccountId, U256),
+    }
 );
 
 decl_error! {
-	pub enum Error for Module<T: Trait> {
-		/// Free balance got overflowed after transfer.
-		FreeTransferOverflow,
-		/// Total issuance got overflowed after minting.
-		TotalMintingOverflow,
-		/// Free balance got overflowed after minting.
-		FreeMintingOverflow,
-		/// Total issuance got underflowed after burning.
-		TotalBurningUnderflow,
-		/// Free balance got underflowed after burning.
-		FreeBurningUnderflow,
-		InsufficientBalance,
-	}
+    pub enum Error for Module<T: Trait> {
+        /// Free balance got overflowed after transfer.
+        FreeTransferOverflow,
+        /// Total issuance got overflowed after minting.
+        TotalMintingOverflow,
+        /// Free balance got overflowed after minting.
+        FreeMintingOverflow,
+        /// Total issuance got underflowed after burning.
+        TotalBurningUnderflow,
+        /// Free balance got underflowed after burning.
+        FreeBurningUnderflow,
+        InsufficientBalance,
+    }
 }
 
 decl_module! {
 
-	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+    pub struct Module<T: Trait> for enum Call where origin: T::Origin {
 
-		type Error = Error<T>;
+        type Error = Error<T>;
 
-		fn deposit_event() = default;
+        fn deposit_event() = default;
 
-		/// Transfer some free balance to another account.
-		// TODO: Calculate weight
-		#[weight = 0]
-		pub fn transfer(origin, asset_id: BridgedAssetId, to: T::AccountId, amount: U256) -> DispatchResult {
-			// let who = ensure_signed(origin)?;
-			// Self::do_transfer(asset_id, &who, &to, amount)?;
-			Ok(())
-		}
+        /// Transfer some free balance to another account.
+        // TODO: Calculate weight
+        #[weight = 0]
+        pub fn transfer(origin, asset_id: BridgedAssetId, to: T::AccountId, amount: U256) -> DispatchResult {
+            // let who = ensure_signed(origin)?;
+            // Self::do_transfer(asset_id, &who, &to, amount)?;
+            Ok(())
+        }
 
-	}
+    }
 }
 
 impl<T: Trait> Module<T> {
-	pub fn link_assets(native_asset_id: T::AssetId, bridged_asset_id: BridgedAssetId) {
-		<NativeAsset<T>>::insert(bridged_asset_id, native_asset_id);
-		<BridgedAsset<T>>::insert(native_asset_id, bridged_asset_id);
-	}
+    pub fn link_assets(native_asset_id: T::AssetId, bridged_asset_id: BridgedAssetId) {
+        <NativeAsset<T>>::insert(bridged_asset_id, native_asset_id);
+        <BridgedAsset<T>>::insert(native_asset_id, bridged_asset_id);
+    }
 
-	pub fn exists(bridged_asset_id: BridgedAssetId) -> bool {
-		<NativeAsset<T>>::contains_key(bridged_asset_id)
-	}
+    pub fn exists(bridged_asset_id: BridgedAssetId) -> bool {
+        <NativeAsset<T>>::contains_key(bridged_asset_id)
+    }
 
-	/*
-	pub fn free_balance(asset_id: BridgedAssetId, who: &T::AccountId) -> U256 {
-		<Account<T>>::get(asset_id, who).free
-	}
+    /*
+    pub fn free_balance(asset_id: BridgedAssetId, who: &T::AccountId) -> U256 {
+        <Account<T>>::get(asset_id, who).free
+    }
 
-	pub fn do_mint(asset_id: BridgedAssetId, who: &T::AccountId, amount: U256) -> DispatchResult  {
-		if amount.is_zero() {
-			return Ok(())
-		}
-		<Account<T>>::try_mutate(asset_id, who, |account| -> Result<(), DispatchError> {
-			let current_total_issuance = <TotalIssuance>::get(asset_id);
-			let new_total_issuance = current_total_issuance.checked_add(amount)
-			.ok_or(Error::<T>::TotalMintingOverflow)?;
-			account.free = account.free.checked_add(amount)
-				.ok_or(Error::<T>::FreeMintingOverflow)?;
-			<TotalIssuance>::insert(asset_id, new_total_issuance);
-			Ok(())
-		})?;
-		Self::deposit_event(RawEvent::Minted(asset_id, who.clone(), amount));
-		Ok(())
-	}
+    pub fn do_mint(asset_id: BridgedAssetId, who: &T::AccountId, amount: U256) -> DispatchResult  {
+        if amount.is_zero() {
+            return Ok(())
+        }
+        <Account<T>>::try_mutate(asset_id, who, |account| -> Result<(), DispatchError> {
+            let current_total_issuance = <TotalIssuance>::get(asset_id);
+            let new_total_issuance = current_total_issuance.checked_add(amount)
+            .ok_or(Error::<T>::TotalMintingOverflow)?;
+            account.free = account.free.checked_add(amount)
+                .ok_or(Error::<T>::FreeMintingOverflow)?;
+            <TotalIssuance>::insert(asset_id, new_total_issuance);
+            Ok(())
+        })?;
+        Self::deposit_event(RawEvent::Minted(asset_id, who.clone(), amount));
+        Ok(())
+    }
 
-	pub fn do_burn(asset_id: BridgedAssetId, who: &T::AccountId, amount: U256) -> DispatchResult  {
-		if amount.is_zero() {
-			return Ok(())
-		}
-		<Account<T>>::try_mutate(asset_id, who, |account| -> Result<(), DispatchError> {
-			let current_total_issuance = <TotalIssuance>::get(asset_id);
-			let new_total_issuance = current_total_issuance.checked_sub(amount)
-			.ok_or(Error::<T>::TotalBurningUnderflow)?;
-			account.free = account.free.checked_sub(amount)
-				.ok_or(Error::<T>::FreeBurningUnderflow)?;
-			<TotalIssuance>::insert(asset_id, new_total_issuance);
-			Ok(())
-		})?;
-		Self::deposit_event(RawEvent::Burned(asset_id, who.clone(), amount));
-		Ok(())
-	}
+    pub fn do_burn(asset_id: BridgedAssetId, who: &T::AccountId, amount: U256) -> DispatchResult  {
+        if amount.is_zero() {
+            return Ok(())
+        }
+        <Account<T>>::try_mutate(asset_id, who, |account| -> Result<(), DispatchError> {
+            let current_total_issuance = <TotalIssuance>::get(asset_id);
+            let new_total_issuance = current_total_issuance.checked_sub(amount)
+            .ok_or(Error::<T>::TotalBurningUnderflow)?;
+            account.free = account.free.checked_sub(amount)
+                .ok_or(Error::<T>::FreeBurningUnderflow)?;
+            <TotalIssuance>::insert(asset_id, new_total_issuance);
+            Ok(())
+        })?;
+        Self::deposit_event(RawEvent::Burned(asset_id, who.clone(), amount));
+        Ok(())
+    }
 
-	fn do_transfer(
-		asset_id: BridgedAssetId,
-		from: &T::AccountId,
-		to: &T::AccountId,
-		amount: U256)
-	-> DispatchResult {
-		if amount.is_zero() || from == to {
-			return Ok(())
-		}
-		<Account<T>>::try_mutate(asset_id, from, |from_account| -> DispatchResult {
-			<Account<T>>::try_mutate(asset_id, to, |to_account| -> DispatchResult {
-				from_account.free = from_account.free.checked_sub(amount).ok_or(Error::<T>::InsufficientBalance)?;
-				// In theory we'll never hit overflow here since Sum(Account.free) == TotalIssuance.
-				to_account.free = to_account.free.checked_add(amount).ok_or(Error::<T>::FreeTransferOverflow)?;
-				Ok(())
-			})
-		})?;
-		Self::deposit_event(RawEvent::Transferred(asset_id, from.clone(), to.clone(), amount));
-		Ok(())
-	}
-	*/
+    fn do_transfer(
+        asset_id: BridgedAssetId,
+        from: &T::AccountId,
+        to: &T::AccountId,
+        amount: U256)
+    -> DispatchResult {
+        if amount.is_zero() || from == to {
+            return Ok(())
+        }
+        <Account<T>>::try_mutate(asset_id, from, |from_account| -> DispatchResult {
+            <Account<T>>::try_mutate(asset_id, to, |to_account| -> DispatchResult {
+                from_account.free = from_account.free.checked_sub(amount).ok_or(Error::<T>::InsufficientBalance)?;
+                // In theory we'll never hit overflow here since Sum(Account.free) == TotalIssuance.
+                to_account.free = to_account.free.checked_add(amount).ok_or(Error::<T>::FreeTransferOverflow)?;
+                Ok(())
+            })
+        })?;
+        Self::deposit_event(RawEvent::Transferred(asset_id, from.clone(), to.clone(), amount));
+        Ok(())
+    }
+    */
 }

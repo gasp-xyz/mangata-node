@@ -1,11 +1,11 @@
 // Copyright (C) 2020 Mangata team
+#![allow(non_snake_case)]
 
 use super::*;
 use crate::mock::Test;
 use crate::mock::*;
-use frame_support::{assert_err, assert_noop, assert_ok};
+use frame_support::assert_err;
 use frame_system as system;
-use pallet_assets;
 
 //fn create_pool_W(): create_pool working assert (maps,acocounts values)  //DONE
 //fn create_pool_N_already_exists(): create_pool not working if pool already exists  //DONE
@@ -60,35 +60,37 @@ pub trait Trait: assets::Trait {
 
 fn initialize() {
     // creating asset with assetId 0 and minting to accountId 2
-    let accId: u64 = 2;
+    let acc_id: u64 = 2;
     let amount: u128 = 1000000000000000000000;
 
-    <pallet_assets::Module<Test>>::assets_issue(&accId, &amount);
-    <pallet_assets::Module<Test>>::assets_issue(&accId, &amount);
+    <pallet_assets::Module<Test>>::assets_issue(&acc_id, &amount);
+    <pallet_assets::Module<Test>>::assets_issue(&acc_id, &amount);
     XykStorage::create_pool(
         Origin::signed(2),
         0,
         40000000000000000000,
         1,
         60000000000000000000,
-    );
+    )
+    .unwrap();
 }
 
 #[test]
 fn multi() {
     new_test_ext().execute_with(|| {
-        let accId: u64 = 2;
+        let acc_id: u64 = 2;
         let amount: u128 = 2000000000000000000000000;
 
-        <pallet_assets::Module<Test>>::assets_issue(&accId, &amount);
-        <pallet_assets::Module<Test>>::assets_issue(&accId, &amount);
+        <pallet_assets::Module<Test>>::assets_issue(&acc_id, &amount);
+        <pallet_assets::Module<Test>>::assets_issue(&acc_id, &amount);
         XykStorage::create_pool(
             Origin::signed(2),
             0,
             1000000000000000000000000,
             1,
             500000000000000000000000,
-        );
+        )
+        .unwrap();
         assert_eq!(XykStorage::asset_pool((0, 1)), 1000000000000000000000000); // amount of asset 0 in pool map
         assert_eq!(XykStorage::asset_pool((1, 0)), 500000000000000000000000); // amount of asset 1 in pool map
         assert_eq!(XykStorage::liquidity_asset((0, 1)), 2); // liquidity assetId corresponding to newly created pool
@@ -118,7 +120,7 @@ fn multi() {
             500000000000000000000000
         ); // amount of asset 1 in vault acc after creating pool
 
-        XykStorage::mint_liquidity(Origin::signed(2), 0, 1, 500000000000000000000000);
+        XykStorage::mint_liquidity(Origin::signed(2), 0, 1, 500000000000000000000000).unwrap();
 
         assert_eq!(XykStorage::asset_pool((0, 1)), 1500000000000000000000000); // amount of asset 0 in pool map
         assert_eq!(XykStorage::asset_pool((1, 0)), 750000000000000000000001); // amount of asset 1 in pool map
@@ -147,7 +149,7 @@ fn multi() {
             750000000000000000000001
         ); // amount of asset 1 in vault acc after creating pool
 
-        XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 300000000000000000000000);
+        XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 300000000000000000000000).unwrap();
 
         assert_eq!(XykStorage::asset_pool((0, 1)), 1200000000000000000000000); // amount of asset 0 in pool map
         assert_eq!(XykStorage::asset_pool((1, 0)), 600000000000000000000001); // amount of asset 1 in pool map
@@ -176,7 +178,7 @@ fn multi() {
             600000000000000000000001
         ); // amount of asset 1 in vault acc after creating pool
 
-        XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 300000000000000000000000);
+        XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 300000000000000000000000).unwrap();
 
         assert_eq!(XykStorage::asset_pool((0, 1)), 900000000000000000000000); // amount of asset 0 in pool map
         assert_eq!(XykStorage::asset_pool((1, 0)), 450000000000000000000001); // amount of asset 1 in pool map
@@ -205,7 +207,7 @@ fn multi() {
             450000000000000000000001
         ); // amount of asset 1 in vault acc after creating pool
 
-        XykStorage::mint_liquidity(Origin::signed(2), 0, 1, 1000000000000000000000000);
+        XykStorage::mint_liquidity(Origin::signed(2), 0, 1, 1000000000000000000000000).unwrap();
 
         assert_eq!(XykStorage::asset_pool((0, 1)), 1900000000000000000000000); // amount of asset 0 in pool map
         assert_eq!(XykStorage::asset_pool((1, 0)), 950000000000000000000003); // amount of asset 1 in pool map
@@ -298,10 +300,10 @@ fn create_pool_N_already_exists_other_way() {
 #[test]
 fn create_pool_N_not_enough_first_asset() {
     new_test_ext().execute_with(|| {
-        let accId: u64 = 2;
+        let acc_id: u64 = 2;
         let amount: u128 = 1000000;
-        <pallet_assets::Module<Test>>::assets_issue(&accId, &amount);
-        <pallet_assets::Module<Test>>::assets_issue(&accId, &amount);
+        <pallet_assets::Module<Test>>::assets_issue(&acc_id, &amount);
+        <pallet_assets::Module<Test>>::assets_issue(&acc_id, &amount);
 
         assert_err!(
             XykStorage::create_pool(Origin::signed(2), 0, 1500000, 1, 500000,),
@@ -313,10 +315,10 @@ fn create_pool_N_not_enough_first_asset() {
 #[test]
 fn create_pool_N_not_enough_second_asset() {
     new_test_ext().execute_with(|| {
-        let accId: u64 = 2;
+        let acc_id: u64 = 2;
         let amount: u128 = 1000000;
-        <pallet_assets::Module<Test>>::assets_issue(&accId, &amount);
-        <pallet_assets::Module<Test>>::assets_issue(&accId, &amount);
+        <pallet_assets::Module<Test>>::assets_issue(&acc_id, &amount);
+        <pallet_assets::Module<Test>>::assets_issue(&acc_id, &amount);
 
         assert_err!(
             XykStorage::create_pool(Origin::signed(2), 0, 500000, 1, 1500000,),
@@ -365,7 +367,7 @@ fn create_pool_N_zero_second_amount() {
 fn sell_W() {
     new_test_ext().execute_with(|| {
         initialize();
-        XykStorage::sell_asset(Origin::signed(2), 0, 1, 20000000000000000000, 0); // selling 20000000000000000000 assetId 0 of pool 0 1
+        XykStorage::sell_asset(Origin::signed(2), 0, 1, 20000000000000000000, 0).unwrap(); // selling 20000000000000000000 assetId 0 of pool 0 1
 
         assert_eq!(
             <pallet_assets::Module<Test>>::balance(0, 2),
@@ -400,7 +402,7 @@ fn sell_W() {
 fn sell_W_other_way() {
     new_test_ext().execute_with(|| {
         initialize();
-        XykStorage::sell_asset(Origin::signed(2), 1, 0, 30000000000000000000, 0); // selling 30000000000000000000 assetId 1 of pool 0 1
+        XykStorage::sell_asset(Origin::signed(2), 1, 0, 30000000000000000000, 0).unwrap(); // selling 30000000000000000000 assetId 1 of pool 0 1
 
         assert_eq!(
             <pallet_assets::Module<Test>>::balance(0, 2),
@@ -489,7 +491,8 @@ fn buy_W() {
             1,
             30000000000000000000,
             3000000000000000000000,
-        );
+        )
+        .unwrap();
         assert_eq!(
             <pallet_assets::Module<Test>>::balance(0, 2),
             919879638916750250752
@@ -530,7 +533,8 @@ fn buy_W_other_way() {
             0,
             30000000000000000000,
             3000000000000000000000,
-        );
+        )
+        .unwrap();
         assert_eq!(
             <pallet_assets::Module<Test>>::balance(0, 2),
             990000000000000000000
@@ -640,7 +644,7 @@ fn mint_W() {
     new_test_ext().execute_with(|| {
         initialize();
         // minting pool 0 1 with 20000000000000000000 assetId 0
-        XykStorage::mint_liquidity(Origin::signed(2), 0, 1, 20000000000000000000);
+        XykStorage::mint_liquidity(Origin::signed(2), 0, 1, 20000000000000000000).unwrap();
 
         assert_eq!(
             <pallet_assets::Module<Test>>::total_supply(2),
@@ -676,7 +680,7 @@ fn mint_W_other_way() {
     new_test_ext().execute_with(|| {
         initialize();
         // minting pool 0 1 with 30000000000000000000 assetId 1
-        XykStorage::mint_liquidity(Origin::signed(2), 1, 0, 30000000000000000000);
+        XykStorage::mint_liquidity(Origin::signed(2), 1, 0, 30000000000000000000).unwrap();
 
         assert_eq!(
             <pallet_assets::Module<Test>>::total_supply(2),
@@ -756,7 +760,7 @@ fn burn_W() {
     new_test_ext().execute_with(|| {
         initialize();
 
-        XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 20000000000000000000); // burning 20000000000000000000 asset 0 of pool 0 1
+        XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 20000000000000000000).unwrap(); // burning 20000000000000000000 asset 0 of pool 0 1
 
         assert_eq!(
             <pallet_assets::Module<Test>>::balance(2, 2),
@@ -787,7 +791,7 @@ fn burn_W() {
 fn burn_W_other_way() {
     new_test_ext().execute_with(|| {
         initialize();
-        XykStorage::burn_liquidity(Origin::signed(2), 1, 0, 30000000000000000000); // burning 30000000000000000000 asset 1 of pool 0 1
+        XykStorage::burn_liquidity(Origin::signed(2), 1, 0, 30000000000000000000).unwrap(); // burning 30000000000000000000 asset 1 of pool 0 1
 
         assert_eq!(
             <pallet_assets::Module<Test>>::balance(2, 2),

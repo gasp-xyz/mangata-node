@@ -62,7 +62,7 @@ where
     // to call into the runtime.
     // `io.extend_with(YourRpcTrait::to_delegate(YourRpcStruct::new(ReferenceToClient, ...)));`
 
-    io.extend_with(XykApi::to_delegate(Xyk::new(client.clone())));
+    io.extend_with(XykApi::to_delegate(Xyk::new(client)));
 
     io
 }

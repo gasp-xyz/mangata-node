@@ -56,7 +56,8 @@ fn session_keys(grandpa: GrandpaId, babe: BabeId) -> SessionKeys {
 }
 
 pub fn development_config() -> Result<ChainSpec, String> {
-    let wasm_binary = WASM_BINARY.ok_or("Development wasm binary not available".to_string())?;
+    let wasm_binary =
+        WASM_BINARY.ok_or_else(|| "Development wasm binary not available".to_string())?;
 
     Ok(ChainSpec::from_genesis(
         // Name
@@ -91,19 +92,19 @@ pub fn development_config() -> Result<ChainSpec, String> {
                 // SnowBridged Assets
                 vec![
                     (
-                        "Mangata".as_bytes().to_vec(),
-                        "MNG".as_bytes().to_vec(),
-                        "Mangata Asset".as_bytes().to_vec(),
+                        "Mangata".to_string().into_bytes(),
+                        "MNG".to_string().into_bytes(),
+                        "Mangata Asset".to_string().into_bytes(),
                         18u32,
                         0u32,
                         H160::from_slice(&hex!["F8F7758FbcEfd546eAEff7dE24AFf666B6228e73"][..]),
-                        100_000_000__000_000_000_000_000_000u128,
+                        100_000_000_000_000_000_000_000_000u128,
                         get_account_id_from_seed::<sr25519::Public>("Alice"),
                     ),
                     (
-                        "Ether".as_bytes().to_vec(),
-                        "ETH".as_bytes().to_vec(),
-                        "Ethereum Ether".as_bytes().to_vec(),
+                        "Ether".to_string().into_bytes(),
+                        "ETH".to_string().into_bytes(),
+                        "Ethereum Ether".to_string().into_bytes(),
                         18u32,
                         1u32,
                         H160::zero(),
@@ -139,7 +140,8 @@ pub fn development_config() -> Result<ChainSpec, String> {
 }
 
 pub fn local_testnet_config() -> Result<ChainSpec, String> {
-    let wasm_binary = WASM_BINARY.ok_or("Development wasm binary not available".to_string())?;
+    let wasm_binary =
+        WASM_BINARY.ok_or_else(|| "Development wasm binary not available".to_string())?;
 
     Ok(ChainSpec::from_genesis(
         // Name
@@ -175,19 +177,19 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                 // SnowBridged Assets
                 vec![
                     (
-                        "Mangata".as_bytes().to_vec(),
-                        "MNG".as_bytes().to_vec(),
-                        "Mangata Asset".as_bytes().to_vec(),
+                        "Mangata".to_string().into_bytes(),
+                        "MNG".to_string().into_bytes(),
+                        "Mangata Asset".to_string().into_bytes(),
                         18u32,
                         0u32,
                         H160::from_slice(&hex!["F8F7758FbcEfd546eAEff7dE24AFf666B6228e73"][..]),
-                        100_000_000__000_000_000_000_000_000u128,
+                        100_000_000_000_000_000_000_000_000u128,
                         get_account_id_from_seed::<sr25519::Public>("Alice"),
                     ),
                     (
-                        "Ether".as_bytes().to_vec(),
-                        "ETH".as_bytes().to_vec(),
-                        "Ethereum Ether".as_bytes().to_vec(),
+                        "Ether".to_string().into_bytes(),
+                        "ETH".to_string().into_bytes(),
+                        "Ethereum Ether".to_string().into_bytes(),
                         18u32,
                         1u32,
                         H160::zero(),
@@ -225,15 +227,17 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
         None,
     ))
 }
+type BriedgedAssetsType = Vec<(Vec<u8>, Vec<u8>, Vec<u8>, u32, u32, H160, u128, AccountId)>;
 
 /// Configure initial storage state for FRAME modules.
+#[allow(clippy::too_many_arguments)]
 fn testnet_genesis(
     wasm_binary: &[u8],
     initial_authorities: Vec<(BabeId, GrandpaId, AccountId)>,
     relay_key: AccountId,
     root_key: AccountId,
     bridged_app_ids: Vec<(App, AppId)>,
-    bridged_assets: Vec<(Vec<u8>, Vec<u8>, Vec<u8>, u32, u32, H160, u128, AccountId)>,
+    bridged_assets: BriedgedAssetsType,
     endowed_accounts: Vec<AccountId>,
     _enable_println: bool,
 ) -> GenesisConfig {
@@ -301,7 +305,7 @@ fn testnet_genesis(
                         Some(token),
                         Some(description),
                         Some(decimals),
-                        asset_id.into(),
+                        asset_id,
                     )
                 })
                 .collect(),
@@ -313,12 +317,7 @@ fn testnet_genesis(
                 .cloned()
                 .map(|x| {
                     let (.., asset_id, bridged_asset_id, initial_supply, initial_owner) = x;
-                    (
-                        asset_id.into(),
-                        bridged_asset_id.into(),
-                        initial_supply,
-                        initial_owner,
-                    )
+                    (asset_id, bridged_asset_id, initial_supply, initial_owner)
                 })
                 .collect(),
         }),

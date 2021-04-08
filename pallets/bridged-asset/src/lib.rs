@@ -33,7 +33,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_support::{decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult};
-use frame_system::{self as system};
+use frame_system as system;
 use sp_core::{RuntimeDebug, U256};
 use sp_std::prelude::*;
 
@@ -67,13 +67,14 @@ decl_storage! {
         //pub Account:       double_map hasher(blake2_128_concat) BridgedAssetId, hasher(blake2_128_concat) T::AccountId => AssetAccountData;
     }
     add_extra_genesis {
+        #[allow(clippy::type_complexity)]
         config(bridged_assets_links): Vec<(T::AssetId, BridgedAssetId, T::Balance, T::AccountId)>;
         build(|config: &GenesisConfig<T>|
             {
                 for (native_asset_id, bridged_asset_id, initial_supply, initial_owner) in config.bridged_assets_links.iter(){
                     let initialized_asset_id = <assets::Module<T>>::assets_issue(&initial_owner, &initial_supply);
                     assert!(initialized_asset_id == *native_asset_id, "Assets not initialized in the sequence of the asset ids provided");
-                    Module::<T>::link_assets(native_asset_id.clone(), bridged_asset_id.clone());
+                    Module::<T>::link_assets(native_asset_id.to_owned(), bridged_asset_id.to_owned());
 
                 }
             }

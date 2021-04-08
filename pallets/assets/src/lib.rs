@@ -93,28 +93,28 @@
 //! pub trait Trait: assets::Trait { }
 //!
 //! decl_module! {
-//! 	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
-//! 		pub fn issue_token_airdrop(origin) -> dispatch::DispatchResult {
-//! 			let sender = ensure_signed(origin).map_err(|e| e.as_str())?;
+//!     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+//!         pub fn issue_token_airdrop(origin) -> dispatch::DispatchResult {
+//!             let sender = ensure_signed(origin).map_err(|e| e.as_str())?;
 //!
-//! 			const ACCOUNT_ALICE: u64 = 1;
-//! 			const ACCOUNT_BOB: u64 = 2;
-//! 			const COUNT_AIRDROP_RECIPIENTS: u64 = 2;
-//! 			const TOKENS_FIXED_SUPPLY: u64 = 100;
+//!             const ACCOUNT_ALICE: u64 = 1;
+//!             const ACCOUNT_BOB: u64 = 2;
+//!             const COUNT_AIRDROP_RECIPIENTS: u64 = 2;
+//!             const TOKENS_FIXED_SUPPLY: u64 = 100;
 //!
-//! 			ensure!(!COUNT_AIRDROP_RECIPIENTS.is_zero(), "Divide by zero error.");
+//!             ensure!(!COUNT_AIRDROP_RECIPIENTS.is_zero(), "Divide by zero error.");
 //!
-//! 			let asset_id = Self::next_asset_id();
+//!             let asset_id = Self::next_asset_id();
 //!
-//! 			<NextAssetId<T>>::mutate(|asset_id| *asset_id += 1);
-//! 			<Balances<T>>::insert((asset_id, &ACCOUNT_ALICE), TOKENS_FIXED_SUPPLY / COUNT_AIRDROP_RECIPIENTS);
-//! 			<Balances<T>>::insert((asset_id, &ACCOUNT_BOB), TOKENS_FIXED_SUPPLY / COUNT_AIRDROP_RECIPIENTS);
-//! 			<TotalSupply<T>>::insert(asset_id, TOKENS_FIXED_SUPPLY);
+//!             <NextAssetId<T>>::mutate(|asset_id| *asset_id += 1);
+//!             <Balances<T>>::insert((asset_id, &ACCOUNT_ALICE), TOKENS_FIXED_SUPPLY / COUNT_AIRDROP_RECIPIENTS);
+//!             <Balances<T>>::insert((asset_id, &ACCOUNT_BOB), TOKENS_FIXED_SUPPLY / COUNT_AIRDROP_RECIPIENTS);
+//!             <TotalSupply<T>>::insert(asset_id, TOKENS_FIXED_SUPPLY);
 //!
-//! 			Self::deposit_event(RawEvent::Issued(asset_id, sender, TOKENS_FIXED_SUPPLY));
-//! 			Ok(())
-//! 		}
-//! 	}
+//!             Self::deposit_event(RawEvent::Issued(asset_id, sender, TOKENS_FIXED_SUPPLY));
+//!             Ok(())
+//!         }
+//!     }
 //! }
 //! ```
 //!

@@ -2,7 +2,7 @@
 
 use mangata_runtime::{
 	AccountId, BabeConfig, BalancesConfig, GenesisConfig, GrandpaConfig, SessionConfig,
-	SessionKeys, Signature, StakerStatus, StakingConfig, AssetsInfoConfig, BridgedAssetConfig, SudoConfig, SystemConfig, VerifierConfig,
+	SessionKeys, Signature, StakerStatus, StakingConfig, AssetsInfoConfig, BridgeConfig, BridgedAssetConfig, SudoConfig, SystemConfig, VerifierConfig,
 	WASM_BINARY,
 };
 use sc_service::ChainType;
@@ -14,6 +14,10 @@ use sp_runtime::{
 	Perbill,
 };
 use hex_literal::hex;
+
+use artemis_core::{
+	App, AppId,
+};
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -73,6 +77,15 @@ pub fn development_config() -> Result<ChainSpec, String> {
 				"0xec00ad0ec6eeb271a9689888f644d9262016a26a25314ff4ff5d756404c44112"
 					.parse()
 					.unwrap(),
+				// Ethereum AppId for SnowBridged Assets
+				vec![
+						(
+							App::ETH, H160::from_slice(&hex!["dd514baa317bf095ddba2c0a847765feb389c6a0"][..]).into()
+						),
+						(
+							App::ERC20, H160::from_slice(&hex!["00e392c04743359e39f00cd268a5390d27ef6b44"][..]).into()
+						),
+				],
 				// SnowBridged Assets
 				vec![
 						(
@@ -135,6 +148,15 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 				get_account_id_from_seed::<sr25519::Public>("Relay"),
 				// Sudo account
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				// Ethereum AppId for SnowBridged Assets
+				vec![
+						(
+							App::ETH, H160::from_slice(&hex!["dd514baa317bf095ddba2c0a847765feb389c6a0"][..]).into()
+						),
+						(
+							App::ERC20, H160::from_slice(&hex!["00e392c04743359e39f00cd268a5390d27ef6b44"][..]).into()
+						),
+				],
 				// SnowBridged Assets
 				vec![
 						(
@@ -186,6 +208,7 @@ fn testnet_genesis(
 	initial_authorities: Vec<(BabeId, GrandpaId, AccountId)>,
 	relay_key: AccountId,
 	root_key: AccountId,
+	bridged_app_ids : Vec<(App, AppId)>,
 	bridged_assets : Vec<(Vec<u8>, Vec<u8>, Vec<u8>, u32, u32, H160, u128, AccountId)>,
 	endowed_accounts: Vec<AccountId>,
 	_enable_println: bool,
@@ -238,6 +261,10 @@ fn testnet_genesis(
 			key: root_key,
 		}),
 		verifier: Some(VerifierConfig { key: relay_key }),
+
+		bridge: Some(BridgeConfig{
+			bridged_app_id_registry: bridged_app_ids
+		}),
 
 		pallet_assets_info: Some(AssetsInfoConfig {
 			bridged_assets_info: bridged_assets.iter().cloned()

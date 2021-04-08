@@ -3,13 +3,23 @@
 use sp_std::vec::Vec;
 use sp_core::H160;
 
+#[cfg(feature = "std")]
+use serde::{Serialize, Deserialize};
 use codec::{Encode, Decode};
+
 
 /// Identifier for an application module registered within the runtime.
 ///
 /// Typically an identifier of this type will hold an Ethereum contract address. This provides a mechanism
 /// for cross-chain routing of messages.
 pub type AppId = [u8; 20];
+
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Copy, Clone, Encode, Decode, Debug, Eq, PartialEq)]
+pub enum App {
+	ETH,
+	ERC20,
+}
 
 /// A message relayed from Ethereum.
 #[derive(Debug, PartialEq, Clone, Encode, Decode)]

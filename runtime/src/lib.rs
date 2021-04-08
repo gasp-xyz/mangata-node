@@ -76,6 +76,9 @@ pub type AccountIndex = u32;
 /// Balance of an account.
 pub type Balance = u128;
 
+/// AssetId of an account.
+pub type AssetId = u32;
+
 /// Index of a transaction in the chain.
 pub type Index = u32;
 
@@ -419,7 +422,7 @@ impl pallet_sudo::Trait for Runtime {
 impl pallet_assets::Trait for Runtime {
 	/// The type for recording an account's balance.
 	type Balance = Balance;
-	type AssetId = u32;
+	type AssetId = AssetId;
 	type Event = Event;
 }
 

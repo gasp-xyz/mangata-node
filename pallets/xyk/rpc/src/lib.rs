@@ -11,7 +11,7 @@ pub use xyk_runtime_api::XykApi as XykRuntimeApi;
 use xyk_runtime_api::RpcResult;
 
 #[rpc]
-pub trait XykApi<BlockHash, Balance, ResponseType, AssetId> {
+pub trait XykApi<BlockHash, Balance, AssetId, ResponseType, ResponseTypeTupple > {
     #[rpc(name = "xyk_calculate_sell_price")]
     fn calculate_sell_price(
         &self,
@@ -32,13 +32,13 @@ pub trait XykApi<BlockHash, Balance, ResponseType, AssetId> {
     ) -> Result<ResponseType>;
 
     #[rpc(name = "xyk_get_burn_amount")]
-    pub fn get_burn_amount(
+    fn get_burn_amount(
         &self,
-        first_asset_reserve: AssetId,
-        second_asset_reserve: AssetId,
+        first_asset_id: AssetId,
+        second_asset_id: AssetId,
         liquidity_asset_amount: Balance,
         at: Option<BlockHash>
-    ) -> Result<ResponseType>;
+    ) -> Result<ResponseTypeTupple>;
     
 }
 
@@ -53,15 +53,16 @@ impl<C, P> Xyk<C, P> {
     }
 }
 
-impl<C, Block, Balance> XykApi<<Block as BlockT>::Hash, Balance, RpcResult<Balance>,RpcResult<(Balance, Balance)>>
+impl<C, Block, Balance, AssetId> XykApi<<Block as BlockT>::Hash, Balance, AssetId, RpcResult<Balance>, RpcResult<(Balance, Balance)>>
 for Xyk<C, Block>
     where
         Block: BlockT,
         C: Send + Sync + 'static,
         C: ProvideRuntimeApi<Block>,
         C: HeaderBackend<Block>,
-        C::Api: XykRuntimeApi<Block, Balance>,
+        C::Api: XykRuntimeApi<Block, Balance, AssetId>,
         Balance: Codec + MaybeDisplay + MaybeFromStr,
+        AssetId: Codec + MaybeDisplay + MaybeFromStr,
 {
     fn calculate_sell_price(
         &self,
@@ -124,5 +125,5 @@ for Xyk<C, Block>
             message: "Unable to serve the request".into(),
             data: Some(format!("{:?}", e).into()),
         })
-    
+    }
 }

@@ -8,6 +8,7 @@ use codec::{Encode, Codec, Decode};
 #[cfg(feature = "std")]
 use serde::{Serialize, Deserialize, Serializer, Deserializer};
 use sp_runtime::traits::{MaybeDisplay, MaybeFromStr};
+use std::fmt;
 
 // Workaround for substrate/serde issue
 #[derive(Eq, PartialEq, Encode, Decode, Default)]
@@ -32,9 +33,18 @@ fn deserialize_from_string<'de, D: Deserializer<'de>, T: std::str::FromStr>(dese
     s.parse::<T>().map_err(|_| serde::de::Error::custom("Parse from string failed"))
 }
 
+struct ResponseTypeTuple(u128,u128); 
+
+impl fmt::Display for ResponseTypeTuple {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f,"ignore")
+    }
+}
+
 sp_api::decl_runtime_apis! {
-    pub trait XykApi<Balance> where
-        Balance: Codec + MaybeDisplay + MaybeFromStr {
+    pub trait XykApi<Balance, AssetId> where
+        Balance: Codec + MaybeDisplay + MaybeFromStr,
+        AssetId: Codec + MaybeDisplay + MaybeFromStr,{
         fn calculate_sell_price(
             input_reserve: Balance,
         	output_reserve: Balance,
@@ -51,7 +61,7 @@ sp_api::decl_runtime_apis! {
             first_asset_id: AssetId,
             second_asset_id: AssetId,
             liquidity_asset_amount: Balance,
-        ) -> RpcResult<(Balance,Balance)>;
+        ) -> RpcResult<ResponseTypeTuple>;
         
     }
 }

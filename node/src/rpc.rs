@@ -7,7 +7,7 @@
 
 use std::sync::Arc;
 
-use mangata_runtime::{opaque::Block, AccountId, Balance, Index};
+use mangata_runtime::{opaque::Block, AccountId, Balance, AssetId, Index};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::{Error as BlockChainError, HeaderMetadata, HeaderBackend};
 use sp_block_builder::BlockBuilder;
@@ -34,7 +34,7 @@ pub fn create_full<C, P>(
 	C: Send + Sync + 'static,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
-	C::Api: xyk_rpc::XykRuntimeApi<Block, Balance>,
+	C::Api: xyk_rpc::XykRuntimeApi<Block, Balance, AssetId>,
 	C::Api: BlockBuilder<Block>,
 	P: TransactionPool + 'static,
 {

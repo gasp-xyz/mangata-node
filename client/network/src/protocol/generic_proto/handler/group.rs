@@ -45,6 +45,8 @@
 //! notification, and `SendLegacy`, to send any other kind of message.
 //!
 
+#![warn(clippy::never_loop)]
+
 use crate::protocol::generic_proto::{
 	handler::legacy::{LegacyProtoHandler, LegacyProtoHandlerProto, LegacyProtoHandlerIn, LegacyProtoHandlerOut},
 	handler::notif_in::{NotifsInHandlerProto, NotifsInHandler, NotifsInHandlerIn, NotifsInHandlerOut},

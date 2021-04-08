@@ -57,14 +57,7 @@ fn correct_error_for_invalid_symbol_value() {
     new_test_ext().execute_with(|| {
         // Ensure the expected error is thrown when no value is present.
         assert_noop!(
-            AssetsInfoModule::set_info(
-                Origin::root(),
-                0,
-                None,
-                Some(vec![]),
-                None,
-                None,
-            ),
+            AssetsInfoModule::set_info(Origin::root(), 0, None, Some(vec![]), None, None,),
             Error::<Test>::TooShortSymbol
         );
     });

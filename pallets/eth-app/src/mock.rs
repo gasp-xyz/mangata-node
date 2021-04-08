@@ -11,6 +11,7 @@ use sp_runtime::{
 };
 
 use artemis_asset as asset;
+use pallet_assets as assets;
 
 impl_outer_origin! {
     pub enum Origin for MockRuntime {}
@@ -24,6 +25,7 @@ impl_outer_event! {
     pub enum MockEvent for MockRuntime {
         system<T>,
         asset<T>,
+        assets<T>,
         test_events<T>,
     }
 }
@@ -63,7 +65,7 @@ impl system::Trait for MockRuntime {
     type MaximumBlockLength = MaximumBlockLength;
     type AvailableBlockRatio = AvailableBlockRatio;
     type Version = ();
-    type ModuleToIndex = ();
+    type PalletInfo = ();
     type AccountData = ();
     type OnNewAccount = ();
     type OnKilledAccount = ();
@@ -72,6 +74,12 @@ impl system::Trait for MockRuntime {
 
 impl asset::Trait for MockRuntime {
     type Event = MockEvent;
+}
+
+impl assets::Trait for MockRuntime {
+    type Event = MockEvent;
+    type Balance = u32;
+    type AssetId = u32;
 }
 
 impl Trait for MockRuntime {

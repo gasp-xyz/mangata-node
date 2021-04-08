@@ -67,5 +67,5 @@ std = [
     "sp-std/std",
     "sp-io/std",
     "sp-runtime/std",
-    "artemis-core/std"
+    "artemis-core/std",
 ]

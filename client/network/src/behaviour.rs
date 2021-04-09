@@ -176,6 +176,7 @@ pub enum BehaviourOut<B: BlockT> {
 
 impl<B: BlockT, H: ExHashT> Behaviour<B, H> {
 	/// Builds a new `Behaviour`.
+    #[allow(clippy::too_many_arguments)]
 	pub fn new(
 		substrate: Protocol<B, H>,
 		role: Role,

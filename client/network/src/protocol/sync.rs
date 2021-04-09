@@ -582,7 +582,7 @@ impl<B: BlockT> ChainSync<B> {
 		}
 
 		self.fork_targets
-			.entry(hash.clone())
+			.entry(hash.to_owned())
 			.or_insert_with(|| ForkTarget {
 				number,
 				peers: Default::default(),

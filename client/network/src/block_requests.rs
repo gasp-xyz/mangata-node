@@ -185,7 +185,7 @@ impl Config {
 	/// Set protocol to use for upgrade negotiation.
 	pub fn set_protocol(&mut self, id: &ProtocolId) -> &mut Self {
 		let mut s = String::new();
-		s.push_str("/");
+		s.push('/');
 		s.push_str(id.as_ref());
 		s.push_str("/sync/2");
 		self.protocol = s;
@@ -291,7 +291,7 @@ where
 		let protobuf_rq = build_protobuf_block_request(
 			req.fields,
 			req.from.clone(),
-			req.to.clone(),
+			req.to,
 			req.direction,
 			req.max,
 		);
@@ -399,7 +399,7 @@ where
 		let mut total_size = 0;
 		while let Some(header) = self.chain.header(block_id).unwrap_or(None) {
 			if blocks.len() >= max_blocks as usize
-				|| (blocks.len() >= 1 && total_size > self.config.max_block_body_bytes)
+				|| (!blocks.is_empty() && total_size > self.config.max_block_body_bytes)
 			{
 				break
 			}

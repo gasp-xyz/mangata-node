@@ -55,6 +55,7 @@ fn session_keys(grandpa: GrandpaId, babe: BabeId) -> SessionKeys {
     SessionKeys { grandpa, babe }
 }
 
+#[allow(clippy::inconsistent_digit_grouping)]
 pub fn development_config() -> Result<ChainSpec, String> {
     let wasm_binary =
         WASM_BINARY.ok_or_else(|| "Development wasm binary not available".to_string())?;
@@ -92,19 +93,19 @@ pub fn development_config() -> Result<ChainSpec, String> {
                 // SnowBridged Assets
                 vec![
                     (
-                        "Mangata".to_string().into_bytes(),
-                        "MNG".to_string().into_bytes(),
-                        "Mangata Asset".to_string().into_bytes(),
+                        b"Mangata".to_vec(),
+                        b"MNG".to_vec(),
+                        b"Mangata Asset".to_vec(),
                         18u32,
                         0u32,
                         H160::from_slice(&hex!["F8F7758FbcEfd546eAEff7dE24AFf666B6228e73"][..]),
-                        100_000_000_000_000_000_000_000_000u128,
+                        100_000_000__000_000_000_000_000_000u128,
                         get_account_id_from_seed::<sr25519::Public>("Alice"),
                     ),
                     (
-                        "Ether".to_string().into_bytes(),
-                        "ETH".to_string().into_bytes(),
-                        "Ethereum Ether".to_string().into_bytes(),
+                        b"Ether".to_vec(),
+                        b"ETH".to_vec(),
+                        b"Ethereum Ether".to_vec(),
                         18u32,
                         1u32,
                         H160::zero(),
@@ -177,9 +178,9 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                 // SnowBridged Assets
                 vec![
                     (
-                        "Mangata".to_string().into_bytes(),
-                        "MNG".to_string().into_bytes(),
-                        "Mangata Asset".to_string().into_bytes(),
+                        b"Mangata".to_vec(),
+                        b"MNG".to_vec(),
+                        b"Mangata Asset".to_vec(),
                         18u32,
                         0u32,
                         H160::from_slice(&hex!["F8F7758FbcEfd546eAEff7dE24AFf666B6228e73"][..]),
@@ -187,9 +188,9 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                         get_account_id_from_seed::<sr25519::Public>("Alice"),
                     ),
                     (
-                        "Ether".to_string().into_bytes(),
-                        "ETH".to_string().into_bytes(),
-                        "Ethereum Ether".to_string().into_bytes(),
+                        b"Ether".to_vec(),
+                        b"ETH".to_vec(),
+                        b"Ethereum Ether".to_vec(),
                         18u32,
                         1u32,
                         H160::zero(),

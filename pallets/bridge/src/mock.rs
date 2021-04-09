@@ -3,7 +3,6 @@ use crate::{Module, Trait};
 use frame_support::{
     impl_outer_dispatch, impl_outer_event, impl_outer_origin, parameter_types, weights::Weight,
 };
-use frame_system;
 use sp_core::H256;
 use sp_runtime::{
     testing::Header,

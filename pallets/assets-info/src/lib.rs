@@ -62,6 +62,7 @@ decl_storage! {
         AssetsInfo get(fn get_info): map hasher(twox_64_concat) T::AssetId => AssetInfo;
     }
     add_extra_genesis {
+        #[allow(clippy::type_complexity)]
         config(bridged_assets_info): Vec<(Option<Vec<u8>>, Option<Vec<u8>>, Option<Vec<u8>>, Option<u32>, T::AssetId)>;
         build(|config: &GenesisConfig<T>|{
             for (name, token, description, decimals, asset_id) in config.bridged_assets_info.iter(){
@@ -71,7 +72,7 @@ decl_storage! {
                         name: name.clone(),
                         symbol: token.clone(),
                         description: description.clone(),
-                        decimals: decimals.clone(),
+                        decimals: decimals.to_owned(),
                     }
                 );
             }

@@ -20,7 +20,7 @@ fn set_info_and_retrieve_works_ok() {
             info.name.clone(),
             info.symbol.clone(),
             info.description.clone(),
-            info.decimals.clone(),
+            info.decimals,
         ));
         // Read pallet storage and assert an expected result.
         assert_eq!(AssetsInfoModule::get_info(ASSET_ID), info);

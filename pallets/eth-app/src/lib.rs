@@ -91,7 +91,7 @@ decl_module! {
             let result = <assets::Module<T>>::assets_burn(&asset_id, &who, &amount.low_u128().saturated_into::<T::Balance>());
 
             ensure!(result.is_ok(), Error::<T>::BurnFailure);
-            Self::deposit_event(RawEvent::Transfer(who.clone(), recipient, amount));
+            Self::deposit_event(RawEvent::Transfer(who, recipient, amount));
             Ok(())
         }
 

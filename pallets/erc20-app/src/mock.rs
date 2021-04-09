@@ -1,8 +1,10 @@
+#![allow(dead_code)]
 // Mock runtime
 
 use crate::{Module, Trait};
 use frame_support::{impl_outer_event, impl_outer_origin, parameter_types, weights::Weight};
 use frame_system as system;
+use pallet_assets as assets;
 use sp_core::H256;
 use sp_runtime::{
     testing::Header,
@@ -25,6 +27,7 @@ impl_outer_event! {
     pub enum MockEvent for MockRuntime {
         system<T>,
         asset<T>,
+        assets<T>,
         test_events<T>,
     }
 }
@@ -64,11 +67,17 @@ impl system::Trait for MockRuntime {
     type MaximumBlockLength = MaximumBlockLength;
     type AvailableBlockRatio = AvailableBlockRatio;
     type Version = ();
-    type ModuleToIndex = ();
+    type PalletInfo = ();
     type AccountData = ();
     type OnNewAccount = ();
     type OnKilledAccount = ();
     type SystemWeightInfo = ();
+}
+
+impl assets::Trait for MockRuntime {
+    type Event = MockEvent;
+    type Balance = u32;
+    type AssetId = u32;
 }
 
 impl asset::Trait for MockRuntime {

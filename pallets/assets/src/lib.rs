@@ -93,28 +93,28 @@
 //! pub trait Trait: assets::Trait { }
 //!
 //! decl_module! {
-//! 	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
-//! 		pub fn issue_token_airdrop(origin) -> dispatch::DispatchResult {
-//! 			let sender = ensure_signed(origin).map_err(|e| e.as_str())?;
+//!     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+//!         pub fn issue_token_airdrop(origin) -> dispatch::DispatchResult {
+//!             let sender = ensure_signed(origin).map_err(|e| e.as_str())?;
 //!
-//! 			const ACCOUNT_ALICE: u64 = 1;
-//! 			const ACCOUNT_BOB: u64 = 2;
-//! 			const COUNT_AIRDROP_RECIPIENTS: u64 = 2;
-//! 			const TOKENS_FIXED_SUPPLY: u64 = 100;
+//!             const ACCOUNT_ALICE: u64 = 1;
+//!             const ACCOUNT_BOB: u64 = 2;
+//!             const COUNT_AIRDROP_RECIPIENTS: u64 = 2;
+//!             const TOKENS_FIXED_SUPPLY: u64 = 100;
 //!
-//! 			ensure!(!COUNT_AIRDROP_RECIPIENTS.is_zero(), "Divide by zero error.");
+//!             ensure!(!COUNT_AIRDROP_RECIPIENTS.is_zero(), "Divide by zero error.");
 //!
-//! 			let asset_id = Self::next_asset_id();
+//!             let asset_id = Self::next_asset_id();
 //!
-//! 			<NextAssetId<T>>::mutate(|asset_id| *asset_id += 1);
-//! 			<Balances<T>>::insert((asset_id, &ACCOUNT_ALICE), TOKENS_FIXED_SUPPLY / COUNT_AIRDROP_RECIPIENTS);
-//! 			<Balances<T>>::insert((asset_id, &ACCOUNT_BOB), TOKENS_FIXED_SUPPLY / COUNT_AIRDROP_RECIPIENTS);
-//! 			<TotalSupply<T>>::insert(asset_id, TOKENS_FIXED_SUPPLY);
+//!             <NextAssetId<T>>::mutate(|asset_id| *asset_id += 1);
+//!             <Balances<T>>::insert((asset_id, &ACCOUNT_ALICE), TOKENS_FIXED_SUPPLY / COUNT_AIRDROP_RECIPIENTS);
+//!             <Balances<T>>::insert((asset_id, &ACCOUNT_BOB), TOKENS_FIXED_SUPPLY / COUNT_AIRDROP_RECIPIENTS);
+//!             <TotalSupply<T>>::insert(asset_id, TOKENS_FIXED_SUPPLY);
 //!
-//! 			Self::deposit_event(RawEvent::Issued(asset_id, sender, TOKENS_FIXED_SUPPLY));
-//! 			Ok(())
-//! 		}
-//! 	}
+//!             Self::deposit_event(RawEvent::Issued(asset_id, sender, TOKENS_FIXED_SUPPLY));
+//!             Ok(())
+//!         }
+//!     }
 //! }
 //! ```
 //!
@@ -407,7 +407,7 @@ mod tests {
     #[test]
     fn issuing_asset_units_to_issuer_should_work() {
         new_test_ext().execute_with(|| {
-            assert_ok!(Assets::issue(Origin::signed(1), 100));
+            assert_ok!(Assets::issue(Origin::root(), 100, 1));
             assert_eq!(Assets::balance(0, 1), 100);
         });
     }
@@ -415,7 +415,7 @@ mod tests {
     #[test]
     fn querying_total_supply_should_work() {
         new_test_ext().execute_with(|| {
-            assert_ok!(Assets::issue(Origin::signed(1), 100));
+            assert_ok!(Assets::issue(Origin::root(), 100, 1));
             assert_eq!(Assets::balance(0, 1), 100);
             assert_ok!(Assets::transfer(Origin::signed(1), 0, 2, 50));
             assert_eq!(Assets::balance(0, 1), 50);
@@ -432,7 +432,7 @@ mod tests {
     #[test]
     fn transferring_amount_above_available_balance_should_work() {
         new_test_ext().execute_with(|| {
-            assert_ok!(Assets::issue(Origin::signed(1), 100));
+            assert_ok!(Assets::issue(Origin::root(), 100, 1));
             assert_eq!(Assets::balance(0, 1), 100);
             assert_ok!(Assets::transfer(Origin::signed(1), 0, 2, 50));
             assert_eq!(Assets::balance(0, 1), 50);
@@ -443,7 +443,7 @@ mod tests {
     #[test]
     fn transferring_amount_more_than_available_balance_should_not_work() {
         new_test_ext().execute_with(|| {
-            assert_ok!(Assets::issue(Origin::signed(1), 100));
+            assert_ok!(Assets::issue(Origin::root(), 100, 1));
             assert_eq!(Assets::balance(0, 1), 100);
             assert_ok!(Assets::transfer(Origin::signed(1), 0, 2, 50));
             assert_eq!(Assets::balance(0, 1), 50);
@@ -460,7 +460,7 @@ mod tests {
     #[test]
     fn transferring_less_than_one_unit_should_not_work() {
         new_test_ext().execute_with(|| {
-            assert_ok!(Assets::issue(Origin::signed(1), 100));
+            assert_ok!(Assets::issue(Origin::root(), 100, 1));
             assert_eq!(Assets::balance(0, 1), 100);
             assert_noop!(
                 Assets::transfer(Origin::signed(1), 0, 2, 0),
@@ -472,7 +472,7 @@ mod tests {
     #[test]
     fn transferring_more_units_than_total_supply_should_not_work() {
         new_test_ext().execute_with(|| {
-            assert_ok!(Assets::issue(Origin::signed(1), 100));
+            assert_ok!(Assets::issue(Origin::root(), 100, 1));
             assert_eq!(Assets::balance(0, 1), 100);
             assert_noop!(
                 Assets::transfer(Origin::signed(1), 0, 2, 101),
@@ -484,7 +484,7 @@ mod tests {
     #[test]
     fn destroying_asset_balance_with_positive_balance_should_work() {
         new_test_ext().execute_with(|| {
-            assert_ok!(Assets::issue(Origin::signed(1), 100));
+            assert_ok!(Assets::issue(Origin::root(), 100, 1));
             assert_eq!(Assets::balance(0, 1), 100);
             assert_ok!(Assets::destroy(Origin::signed(1), 0));
         });
@@ -493,7 +493,7 @@ mod tests {
     #[test]
     fn destroying_asset_balance_with_zero_balance_should_not_work() {
         new_test_ext().execute_with(|| {
-            assert_ok!(Assets::issue(Origin::signed(1), 100));
+            assert_ok!(Assets::issue(Origin::root(), 100, 1));
             assert_eq!(Assets::balance(0, 2), 0);
             assert_noop!(
                 Assets::destroy(Origin::signed(2), 0),

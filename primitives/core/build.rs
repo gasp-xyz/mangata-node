@@ -13,7 +13,7 @@ struct StringError {
 impl StringError {
     #[allow(dead_code)]
     fn new(error: &'static str) -> Self {
-        return StringError { error };
+        StringError { error }
     }
 }
 

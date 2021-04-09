@@ -139,7 +139,7 @@ decl_module! {
         #[weight = 0]
         pub fn submit(origin, app_id: AppId, message: Message) -> DispatchResult {
             let who = ensure_signed(origin)?;
-            let app = AppRegistry::get(&app_id).ok_or_else(|| Error::<T>::AppNotFound)?;
+            let app = AppRegistry::get(&app_id).ok_or(Error::<T>::AppNotFound)?;
             Self::verify(who, app_id, &message)?;
             Self::dispatch(app, message)
         }

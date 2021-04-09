@@ -69,14 +69,14 @@
 //! pub trait Trait: timestamp::Trait {}
 //!
 //! decl_module! {
-//! 	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
-//! 		#[weight = 0]
-//! 		pub fn get_time(origin) -> dispatch::DispatchResult {
-//! 			let _sender = ensure_signed(origin)?;
-//! 			let _now = <timestamp::Module<T>>::get();
-//! 			Ok(())
-//! 		}
-//! 	}
+//!     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+//!         #[weight = 0]
+//!         pub fn get_time(origin) -> dispatch::DispatchResult {
+//!             let _sender = ensure_signed(origin)?;
+//!             let _now = <timestamp::Module<T>>::get();
+//!             Ok(())
+//!         }
+//!     }
 //! }
 //! # fn main() {}
 //! ```
@@ -240,7 +240,7 @@ impl<T: Trait> ProvideInherent for Module<T> {
             .saturated_into();
 
         let next_time = cmp::max(data, Self::now() + T::MinimumPeriod::get());
-        Some(Call::set(next_time.into()))
+        Some(Call::set(next_time))
     }
 
     fn check_inherent(call: &Self::Call, data: &InherentData) -> result::Result<(), Self::Error> {
@@ -251,7 +251,7 @@ impl<T: Trait> ProvideInherent for Module<T> {
             _ => return Ok(()),
         };
 
-        let data = extract_inherent_data(data).map_err(|e| InherentError::Other(e))?;
+        let data = extract_inherent_data(data).map_err(InherentError::Other)?;
 
         let minimum = (Self::now() + T::MinimumPeriod::get()).saturated_into::<u64>();
         if t > data + MAX_TIMESTAMP_DRIFT_MILLIS {
@@ -384,6 +384,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     #[should_panic(
         expected = "Timestamp must increment by at least <MinimumPeriod> between sequential blocks"
     )]

@@ -143,18 +143,15 @@ pub enum Event {
 	},
 }
 
-
-type ProtocolsType = HashMap<
-		Cow<'static, str>,
-		(RequestResponse<GenericCodec>, Option<mpsc::Sender<IncomingRequest>>)
-	>;
-
 /// Implementation of `NetworkBehaviour` that provides support for request-response protocols.
 pub struct RequestResponsesBehaviour {
 	/// The multiple sub-protocols, by name.
 	/// Contains the underlying libp2p `RequestResponse` behaviour, plus an optional
 	/// "response builder" used to build responses for incoming requests.
-	protocols: ProtocolsType,
+	protocols: HashMap<
+		Cow<'static, str>,
+		(RequestResponse<GenericCodec>, Option<mpsc::Sender<IncomingRequest>>)
+	>,
 
 	/// Whenever an incoming request arrives, a `Future` is added to this list and will yield the
 	/// response to send back to the remote.

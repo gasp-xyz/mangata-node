@@ -109,7 +109,7 @@ impl<M> QueuedSender<M> {
 	/// Locks the queue of messages towards this peer.
 	///
 	/// The returned `Future` is expected to be ready quite quickly.
-	pub async fn lock_queue(& self) -> QueueGuard<'_, M> {
+	pub async fn lock_queue<'a>(&'a self) -> QueueGuard<'a, M> {
 		QueueGuard {
 			messages_queue: self.shared.messages_queue.lock().await,
 			condvar: &self.shared.condvar,

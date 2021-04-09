@@ -335,7 +335,7 @@ fn build_status_message<B: BlockT>(protocol_config: &ProtocolConfig, chain: &Arc
 		version: CURRENT_VERSION,
 		min_supported_version: MIN_VERSION,
 		genesis_hash: info.genesis_hash,
-		roles: protocol_config.roles,
+		roles: protocol_config.roles.into(),
 		best_number: info.best_number,
 		best_hash: info.best_hash,
 		chain_status: Vec::new(), // TODO: find a way to make this backwards-compatible
@@ -355,11 +355,8 @@ enum Fallback {
 	BlockAnnounce,
 }
 
-type BlockImportOrError<B> = Result<BlockImportResult<NumberFor<B>>, BlockImportError>;
-
 impl<B: BlockT, H: ExHashT> Protocol<B, H> {
 	/// Create a new instance.
-    #[allow(clippy::too_many_arguments)]
 	pub fn new(
 		config: ProtocolConfig,
 		local_peer_id: PeerId,
@@ -397,7 +394,7 @@ impl<B: BlockT, H: ExHashT> Protocol<B, H> {
 
 		let transactions_protocol: Cow<'static, str> = Cow::from({
 			let mut proto = String::new();
-			proto.push('/');
+			proto.push_str("/");
 			proto.push_str(protocol_id.as_ref());
 			proto.push_str("/transactions/1");
 			proto
@@ -406,7 +403,7 @@ impl<B: BlockT, H: ExHashT> Protocol<B, H> {
 
 		let block_announces_protocol: Cow<'static, str> = Cow::from({
 			let mut proto = String::new();
-			proto.push('/');
+			proto.push_str("/");
 			proto.push_str(protocol_id.as_ref());
 			proto.push_str("/block-announces/1");
 			proto
@@ -418,7 +415,7 @@ impl<B: BlockT, H: ExHashT> Protocol<B, H> {
 			let block_announces_handshake = BlockAnnouncesHandshake::build(&config, &chain).encode();
 			GenericProto::new(
 				local_peer_id,
-				protocol_id,
+				protocol_id.clone(),
 				versions,
 				build_status_message(&config, &chain),
 				peerset,
@@ -1168,7 +1165,7 @@ impl<B: BlockT, H: ExHashT> Protocol<B, H> {
 		let number = *announce.header.number();
 
 		if let Some(ref mut peer) = self.context_data.peers.get_mut(&who) {
-			peer.known_blocks.insert(hash);
+			peer.known_blocks.insert(hash.clone());
 		}
 
 		let is_their_best = match announce.state.unwrap_or(message::BlockState::Best) {
@@ -1202,7 +1199,7 @@ impl<B: BlockT, H: ExHashT> Protocol<B, H> {
 				id: 0,
 				blocks: vec![
 					message::generic::BlockData {
-						hash,
+						hash: hash,
 						header: Some(announce.header),
 						body: None,
 						receipt: None,
@@ -1264,10 +1261,10 @@ impl<B: BlockT, H: ExHashT> Protocol<B, H> {
 		&mut self,
 		imported: usize,
 		count: usize,
-		results: Vec<(BlockImportOrError<B>, B::Hash)>
+		results: Vec<(Result<BlockImportResult<NumberFor<B>>, BlockImportError>, B::Hash)>
 	) {
 		let new_best = results.iter().rev().find_map(|r| match r {
-			(Ok(BlockImportResult::ImportedUnknown(n, aux, _)), hash) if aux.is_new_best => Some((*n, hash)),
+			(Ok(BlockImportResult::ImportedUnknown(n, aux, _)), hash) if aux.is_new_best => Some((*n, hash.clone())),
 			_ => None,
 		});
 		if let Some((best_num, best_hash)) = new_best {
@@ -1574,7 +1571,7 @@ impl<B: BlockT, H: ExHashT> NetworkBehaviour for Protocol<B, H> {
 				// `received_handshake` can be either a `Status` message if received from the
 				// legacy substream ,or a `BlockAnnouncesHandshake` if received from the block
 				// announces substream.
-				match <Message<B> as DecodeAll>::decode_all(&&received_handshake[..]) {
+				match <Message<B> as DecodeAll>::decode_all(&mut &received_handshake[..]) {
 					Ok(GenericMessage::Status(handshake)) => {
 						let handshake = BlockAnnouncesHandshake {
 							roles: handshake.roles,
@@ -1596,7 +1593,7 @@ impl<B: BlockT, H: ExHashT> NetworkBehaviour for Protocol<B, H> {
 						CustomMessageOutcome::None
 					}
 					Err(err) => {
-						match <BlockAnnouncesHandshake<B> as DecodeAll>::decode_all(&&received_handshake[..]) {
+						match <BlockAnnouncesHandshake<B> as DecodeAll>::decode_all(&mut &received_handshake[..]) {
 							Ok(handshake) => {
 								self.on_peer_connected(peer_id, handshake, notifications_sink)
 							}

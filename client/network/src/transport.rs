@@ -118,8 +118,8 @@ pub fn build_transport(
 		}
 
 		core::upgrade::SelectUpgrade::new(yamux_config, mplex_config)
-			.map_inbound(core::muxing::StreamMuxerBox::new)
-			.map_outbound(core::muxing::StreamMuxerBox::new)
+			.map_inbound(move |muxer| core::muxing::StreamMuxerBox::new(muxer))
+			.map_outbound(move |muxer| core::muxing::StreamMuxerBox::new(muxer))
 	};
 
 	let transport = transport.upgrade(upgrade::Version::V1)

@@ -110,7 +110,7 @@ impl Config {
 	/// - request timeout = 15s
 	pub fn new(id: &ProtocolId) -> Self {
 		let mut c = Config {
-			max_request_size: 1024 * 1024,
+			max_request_size: 1 * 1024 * 1024,
 			max_response_size: 16 * 1024 * 1024,
 			max_pending_requests: 128,
 			inactivity_timeout: Duration::from_secs(15),
@@ -172,7 +172,6 @@ impl Config {
 
 /// Possible errors while handling light clients.
 #[derive(Debug, thiserror::Error)]
-#[allow(clippy::large_enum_variant)]
 pub enum Error {
 	/// There are currently too many pending request.
 	#[error("too many pending requests")]
@@ -198,10 +197,6 @@ pub enum Error {
 //
 // This is modeled after light_dispatch.rs's `RequestData` which is not
 // used because we currently only support a subset of those.
-type ReadSenderType = oneshot::Sender<Result<HashMap<Vec<u8>, Option<Vec<u8>>>, ClientError>>;
-type SenderType = oneshot::Sender<Result<HashMap<Vec<u8>, Option<Vec<u8>>>, ClientError>>;
-type ChangesSenderType<B> = oneshot::Sender<Result<Vec<(NumberFor<B>, u32)>, ClientError>>;
-
 #[derive(Debug)]
 pub enum Request<B: Block> {
 	Body {
@@ -214,11 +209,11 @@ pub enum Request<B: Block> {
 	},
 	Read {
 		request: light::RemoteReadRequest<B::Header>,
-		sender: ReadSenderType
+		sender: oneshot::Sender<Result<HashMap<Vec<u8>, Option<Vec<u8>>>, ClientError>>
 	},
 	ReadChild {
 		request: light::RemoteReadChildRequest<B::Header>,
-		sender: ReadSenderType
+		sender: oneshot::Sender<Result<HashMap<Vec<u8>, Option<Vec<u8>>>, ClientError>>
 	},
 	Call {
 		request: light::RemoteCallRequest<B::Header>,
@@ -226,7 +221,7 @@ pub enum Request<B: Block> {
 	},
 	Changes {
 		request: light::RemoteChangesRequest<B::Header>,
-		sender: ChangesSenderType<B>
+		sender: oneshot::Sender<Result<Vec<(NumberFor<B>, u32)>, ClientError>>
 	}
 }
 

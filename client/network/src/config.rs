@@ -55,8 +55,6 @@ use std::{
 };
 use zeroize::Zeroize;
 
-type ExecutorType = Option<Box<dyn Fn(Pin<Box<dyn Future<Output = ()> + Send>>) + Send>>;
-
 /// Network initialization parameters.
 pub struct Params<B: BlockT, H: ExHashT> {
 	/// Assigned role for our node (full, light, ...).
@@ -64,7 +62,7 @@ pub struct Params<B: BlockT, H: ExHashT> {
 
 	/// How to spawn background tasks. If you pass `None`, then a threads pool will be used by
 	/// default.
-	pub executor: ExecutorType,
+	pub executor: Option<Box<dyn Fn(Pin<Box<dyn Future<Output = ()> + Send>>) + Send>>,
 
 	/// Network layer configuration.
 	pub network_config: NetworkConfiguration,
@@ -269,7 +267,7 @@ impl fmt::Debug for ProtocolId {
 /// ```
 /// # use sc_network::{Multiaddr, PeerId, config::parse_str_addr};
 /// let (peer_id, addr) = parse_str_addr(
-///     "/ip4/198.51.100.19/tcp/30333/p2p/QmSk5HQbn6LhUwDiNMseVUjuRYhEtYj4aUZ6WfWoGURpdV"
+/// 	"/ip4/198.51.100.19/tcp/30333/p2p/QmSk5HQbn6LhUwDiNMseVUjuRYhEtYj4aUZ6WfWoGURpdV"
 /// ).unwrap();
 /// assert_eq!(peer_id, "QmSk5HQbn6LhUwDiNMseVUjuRYhEtYj4aUZ6WfWoGURpdV".parse::<PeerId>().unwrap());
 /// assert_eq!(addr, "/ip4/198.51.100.19/tcp/30333".parse::<Multiaddr>().unwrap());
@@ -300,7 +298,7 @@ pub fn parse_addr(mut addr: Multiaddr)-> Result<(PeerId, Multiaddr), ParseErr> {
 /// ```
 /// # use sc_network::{Multiaddr, PeerId, config::MultiaddrWithPeerId};
 /// let addr: MultiaddrWithPeerId =
-///     "/ip4/198.51.100.19/tcp/30333/p2p/QmSk5HQbn6LhUwDiNMseVUjuRYhEtYj4aUZ6WfWoGURpdV".parse().unwrap();
+/// 	"/ip4/198.51.100.19/tcp/30333/p2p/QmSk5HQbn6LhUwDiNMseVUjuRYhEtYj4aUZ6WfWoGURpdV".parse().unwrap();
 /// assert_eq!(addr.peer_id.to_base58(), "QmSk5HQbn6LhUwDiNMseVUjuRYhEtYj4aUZ6WfWoGURpdV");
 /// assert_eq!(addr.multiaddr.to_string(), "/ip4/198.51.100.19/tcp/30333");
 /// ```

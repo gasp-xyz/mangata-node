@@ -140,6 +140,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
     ))
 }
 
+#[allow(clippy::inconsistent_digit_grouping)]
 pub fn local_testnet_config() -> Result<ChainSpec, String> {
     let wasm_binary =
         WASM_BINARY.ok_or_else(|| "Development wasm binary not available".to_string())?;
@@ -184,7 +185,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                         18u32,
                         0u32,
                         H160::from_slice(&hex!["F8F7758FbcEfd546eAEff7dE24AFf666B6228e73"][..]),
-                        100_000_000_000_000_000_000_000_000u128,
+                        100_000_000__000_000_000_000_000_000u128,
                         get_account_id_from_seed::<sr25519::Public>("Alice"),
                     ),
                     (

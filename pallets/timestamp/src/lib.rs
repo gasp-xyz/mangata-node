@@ -384,6 +384,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     #[should_panic(
         expected = "Timestamp must increment by at least <MinimumPeriod> between sequential blocks"
     )]

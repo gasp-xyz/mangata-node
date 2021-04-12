@@ -50,7 +50,7 @@ pub use pallet_assets_info;
 use pallet_session::historical as pallet_session_historical;
 pub use pallet_staking::StakerStatus;
 pub use pallet_xyk;
-use xyk_runtime_api::RpcResult;
+use xyk_runtime_api::{RpcResult, RpcAmountsResult};
 
 /// Bridge pallets
 pub use bridge;
@@ -725,10 +725,13 @@ impl_runtime_apis! {
 			first_asset_id: AssetId,
             second_asset_id: AssetId,
             liquidity_asset_amount: Balance
-		) -> RpcResult<(Balance, Balance)> {
-			RpcResult {
-				price: Xyk::get_burn_amount(first_asset_id, second_asset_id, liquidity_asset_amount)
+		) -> RpcAmountsResult<Balance> {
+			let (first_asset_amount, second_asset_amount) = Xyk::get_burn_amount(first_asset_id, second_asset_id, liquidity_asset_amount);
+			RpcAmountsResult{
+				first_asset_amount,
+				second_asset_amount
 			}
+			
 		}
 		
 	}

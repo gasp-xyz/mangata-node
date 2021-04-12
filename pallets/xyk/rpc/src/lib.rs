@@ -8,7 +8,7 @@ use sp_runtime::{generic::BlockId, traits::{Block as BlockT, MaybeDisplay, Maybe
 use std::sync::Arc;
 use codec::Codec;
 pub use xyk_runtime_api::XykApi as XykRuntimeApi;
-use xyk_runtime_api::RpcResult;
+use xyk_runtime_api::{RpcResult, RpcAmountsResult};
 
 #[rpc]
 pub trait XykApi<BlockHash, Balance, AssetId, ResponseType, ResponseTypeTupple > {
@@ -53,7 +53,7 @@ impl<C, P> Xyk<C, P> {
     }
 }
 
-impl<C, Block, Balance, AssetId> XykApi<<Block as BlockT>::Hash, Balance, AssetId, RpcResult<Balance>, RpcResult<(Balance, Balance)>>
+impl<C, Block, Balance, AssetId> XykApi<<Block as BlockT>::Hash, Balance, AssetId, RpcResult<Balance>, RpcAmountsResult<Balance>>
 for Xyk<C, Block>
     where
         Block: BlockT,
@@ -112,7 +112,7 @@ for Xyk<C, Block>
         second_asset_id: AssetId,
         liquidity_asset_amount : Balance,
         at: Option<<Block as BlockT>::Hash>
-    ) -> Result<RpcResult<(Balance, Balance)>> {
+    ) -> Result<RpcAmountsResult<Balance>> {
         let api = self.client.runtime_api();
         let at = BlockId::<Block>::hash(at.unwrap_or_else(||
             // If the block hash is not supplied assume the best block.

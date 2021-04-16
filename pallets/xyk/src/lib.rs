@@ -3,10 +3,11 @@
 use codec::{Decode, Encode};
 use frame_support::{
     decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult, ensure,
-    sp_runtime::ModuleId, weights::Pays, StorageMap,
+    sp_runtime::ModuleId, weights::Pays, StorageMap
 };
 use frame_system::ensure_signed;
 use pallet_assets as assets;
+
 use sp_core::U256;
 // TODO documentation!
 use frame_support::sp_runtime::traits::AccountIdConversion;
@@ -20,9 +21,16 @@ mod tests;
 
 pub trait Trait: assets::Trait {
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+    
 }
 
 const PALLET_ID: ModuleId = ModuleId(*b"79b14c96");
+// 1/100 %
+ const TREASURY_PERCENTAGE: u128 = 5; 
+ const BUYANDBURN_PERCENTAGE:  u128 = 5; 
+ const SWAPFEE_PERCENTAGE:  u128 = 30; 
+
+// const MANGATA_ID: frame_system::AssetId = 0;
 
 decl_error! {
     /// Errors
@@ -218,8 +226,9 @@ decl_module! {
                 Error::<T>::InsufficientOutputAmount,
             );
 
-            let treasury_burn_amount = sold_asset_amount * 10.saturated_into::<T::Balance>() / 10000.saturated_into::<T::Balance>();
-            let sold_asset_amount_to_pool = sold_asset_amount * 999.saturated_into::<T::Balance>() / 1000.saturated_into::<T::Balance>();
+            let treasury_and_burn_amount = sold_asset_amount * (TREASURY_PERCENTAGE + BUYANDBURN_PERCENTAGE).saturated_into::<T::Balance>() / 10000.saturated_into::<T::Balance>();
+            let sold_asset_amount_to_pool = sold_asset_amount * (10000 - TREASURY_PERCENTAGE - BUYANDBURN_PERCENTAGE).saturated_into::<T::Balance>() / 10000.saturated_into::<T::Balance>();
+
             let vault = Self::account_id();
 
             <assets::Module<T>>::assets_transfer(
@@ -237,14 +246,14 @@ decl_module! {
 
             <Pools<T>>::insert(
                 (sold_asset_id, bought_asset_id),
-                input_reserve + sold_asset_to_pool,
+                input_reserve + sold_asset_amount_to_pool,
             );
             <Pools<T>>::insert(
                 (bought_asset_id, sold_asset_id),
                 output_reserve - bought_asset_amount,
             );
 
-            
+            Self::settle_tresury_and_burn(sold_asset_id, treasury_and_burn_amount);
 
 
             Self::deposit_event(RawEvent::AssetsSwapped(sender,sold_asset_id, sold_asset_amount, bought_asset_id, bought_asset_amount));
@@ -547,15 +556,20 @@ impl<T: Trait> Module<T> {
     }
 
     // TODO vault takeout treasury fn
-    fn settle_tresury_burn(settling_asset_id: T::AssetId, other_asset_id: T::AssetId, settling_asset_amount: T::Balance) {
-        let mangata_id = 0.saturated_into::<T::AssetId>())
+    // TODO parametrize %, mangata id
+    // TODO treasury as pallet
+    // TODO burn Y not X 
+    // TODO burn X if X is mangata
+    fn settle_tresury_and_burn(settling_asset_id: T::AssetId, settling_asset_amount: T::Balance) {
+        let mangata_id = 0.saturated_into::<T::AssetId>();
         let vault = Self::account_id();
-        let burn_percentage = 5.saturated_into::<T::Balance>());
-        let treasury_percentage = 5.saturated_into::<T::Balance>());
-        let mut burn_amount = settling_asset_amount * burn_percentage / 10.saturated_into::<T::Balance>())
-        let mut treasury_amount = settling_asset_amount * treasury_percentage / 10.saturated_into::<T::Balance>())
+        //parametrize %, mangata id
+        let burn_percentage = 5.saturated_into::<T::Balance>();
+        let treasury_percentage = 5.saturated_into::<T::Balance>();
+        let mut burn_amount = settling_asset_amount * burn_percentage / 10.saturated_into::<T::Balance>();
+        let mut treasury_amount = settling_asset_amount * treasury_percentage / 10.saturated_into::<T::Balance>();
 
-        if sold_asset_id == mangata_id {
+        if settling_asset_id == mangata_id {
            
 
             <Treasury<T>>::insert(
@@ -568,15 +582,18 @@ impl<T: Trait> Module<T> {
        
         else if <Pools<T>>::contains_key((settling_asset_id,mangata_id)){
 
+            //TODO takeout to separate fn
             let input_reserve = <Pools<T>>::get((settling_asset_id, mangata_id));
             let output_reserve = <Pools<T>>::get((mangata_id, settling_asset_id));
+           
+            //todo, bez slipu amount
             let mangata_amount = Self::calculate_sell_price(
                 input_reserve,
                 output_reserve,
                 settling_asset_amount,
             );
-            burn_amount = mangata_amount * burn_percentage / 10.saturated_into::<T::Balance>())
-            treasury_amount = mangata_amount * treasury_percentage / 10.saturated_into::<T::Balance>())
+            burn_amount = mangata_amount * burn_percentage / 10.saturated_into::<T::Balance>();
+            treasury_amount = mangata_amount * treasury_percentage / 10.saturated_into::<T::Balance>();
 
             <Pools<T>>::insert(
                 (settling_asset_id, mangata_id),
@@ -596,12 +613,12 @@ impl<T: Trait> Module<T> {
         }
         else {
             <Treasury<T>>::insert(
-                mangata_id,
+                settling_asset_id,
                 <Treasury<T>>::get(settling_asset_id) + treasury_amount
             );
             <TreasuryBurn<T>>::insert(
-                mangata_id,
-                <TreasuryBurn<T>>::get(settling_asset_id) + treasury_amount
+                settling_asset_id,
+                <TreasuryBurn<T>>::get(settling_asset_id) + burn_amount
             );
         }
 

@@ -104,6 +104,7 @@ runtime-benchmarks = [
     'pallet-balances/runtime-benchmarks',
     'pallet-timestamp/runtime-benchmarks',
     'sp-runtime/runtime-benchmarks',
+    'bridge/runtime-benchmarks',
 ]
 std = [
     'codec/std',
@@ -139,4 +140,5 @@ std = [
     "bridged-asset/std",
     "eth-app/std",
     "erc20-app/std",
+    "pallet-assets-info/std",
 ]

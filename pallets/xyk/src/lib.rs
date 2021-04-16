@@ -67,10 +67,6 @@ decl_event!(
             AssetId,
             Balance,
         ),
-        // LiquidityMinted(AccountId, AssetId, Balance, AssetId, Balance),
-        // LiquidityBurned(AccountId, AssetId, Balance, AssetId, Balance),
-        // LiquidityAssetsGained(AccountId, AssetId, Balance),
-        // LiquidityAssetsBurned(AccountId, AssetId, Balance),
     }
 );
 
@@ -400,7 +396,6 @@ decl_module! {
             );
 
             Self::deposit_event(RawEvent::LiquidityMinted(sender.clone(),first_asset_id, first_asset_amount, second_asset_id, second_asset_amount,liquidity_asset_id, second_asset_amount));
-          //  Self::deposit_event(RawEvent::LiquidityAssetsGained(sender.clone(),liquidity_asset_id, second_asset_amount));
 
             Ok(())
         }
@@ -424,12 +419,6 @@ decl_module! {
             let first_asset_reserve = <Pools<T>>::get((first_asset_id, second_asset_id));
             let second_asset_reserve = <Pools<T>>::get((second_asset_id, first_asset_id));
             let liquidity_asset_id = Self::get_liquidity_asset(first_asset_id, second_asset_id);
-            // let total_liquidity_assets = <assets::Module<T>>::total_supply(liquidity_asset_id);
-
-            // let first_asset_reserve_u256: U256 = first_asset_reserve.saturated_into::<u128>().into();
-            // let second_asset_reserve_u256: U256 = second_asset_reserve.saturated_into::<u128>().into();
-            // let total_liquidity_assets_u256: U256 = total_liquidity_assets.saturated_into::<u128>().into();
-            // let liquidity_asset_amount_u256: U256 = liquidity_asset_amount.saturated_into::<u128>().into();
 
             ensure!(
                 <assets::Module<T>>::balance(liquidity_asset_id, sender.clone()) >= liquidity_asset_amount,
@@ -437,16 +426,6 @@ decl_module! {
             );
 
             let (first_asset_amount, second_asset_amount) =  Self::get_burn_amount(first_asset_id, second_asset_id, liquidity_asset_amount);
-            // let asset_amounts = Self::get_burn_amount(first_asset_id, second_asset_id, liquidity_asset_amount);
-            // let first_asset_amount = asset_amounts.0;
-            // let second_asset_amount = asset_amounts.1;
-            // let first_asset_amount_u256 = first_asset_reserve_u256 * liquidity_asset_amount_u256 / total_liquidity_assets_u256;
-            // let second_asset_amount_u256 = second_asset_reserve_u256 * liquidity_asset_amount_u256 / total_liquidity_assets_u256;
-            // let second_asset_amount = second_asset_amount_u256.saturated_into::<u128>()
-            //     .saturated_into::<T::Balance>();
-            // let first_asset_amount = first_asset_amount_u256.saturated_into::<u128>()
-            //     .saturated_into::<T::Balance>();
-
 
             ensure!(
                 !first_asset_amount.is_zero() && !second_asset_amount.is_zero(),
@@ -484,7 +463,6 @@ decl_module! {
             <assets::Module<T>>::assets_burn(&liquidity_asset_id, &sender, &liquidity_asset_amount);
 
             Self::deposit_event(RawEvent::LiquidityBurned(sender.clone(),first_asset_id, first_asset_amount, second_asset_id, second_asset_amount,liquidity_asset_id, second_asset_amount));
-           // Self::deposit_event(RawEvent::LiquidityAssetsBurned(sender.clone(),liquidity_asset_id, second_asset_amount));
 
             Ok(())
         }

@@ -30,6 +30,8 @@ pallet-assets = { path = '../pallets/assets', default-features = false, version 
 frame-executive = { path = '../pallets/executive', default-features = false, version = '2.0.0' }
 pallet-timestamp = { path = '../pallets/timestamp', default-features = false, version = '2.0.0' }
 pallet-assets-info = { path = '../pallets/assets-info', default-features = false, version = '2.0.0' }
+pallet-staking = { path = '../pallets/staking', default-features = false, version = "2.0.0" }
+pallet-staking-reward-curve = { path = '../pallets/staking/reward-curve', default-features = false, version = "2.0.0" }
 
 # Substrate dependencies
 frame-benchmarking = { default-features = false, optional = true, version = '2.0.0' }
@@ -40,8 +42,6 @@ frame-system-rpc-runtime-api = { default-features = false, version = '2.0.0' }
 pallet-babe = { default-features = false, version = "2.0.0" }
 pallet-offences = { default-features = false, version = "2.0.0" }
 pallet-session = { default-features = false, version = "2.0.0" }
-pallet-staking = { default-features = false, version = "2.0.0" }
-pallet-staking-reward-curve = { default-features = false, version = "2.0.0" }
 pallet-authorship = { default-features = false, version = "2.0.0" }
 pallet-balances = { default-features = false, version = '2.0.0' }
 pallet-grandpa = { default-features = false, version = '2.0.0' }

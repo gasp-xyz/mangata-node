@@ -226,8 +226,13 @@ impl frame_system::Trait for Test {
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
 }
+
+parameter_types! {
+    pub const MaxLocks: u32 = 50;
+}
+
 impl pallet_balances::Trait for Test {
-	type MaxLocks = ();
+	type MaxLocks = MaxLocks;
 	type Balance = Balance;
 	type Event = MetaEvent;
 	type DustRemoval = ();

@@ -205,7 +205,6 @@ dependencies = [
  "frame-support",
  "parity-scale-codec",
  "rustc-hex",
- "serde",
  "sp-core",
  "sp-std",
 ]
@@ -3307,12 +3306,10 @@ dependencies = [
 name = "mangata-node"
 version = "2.0.0"
 dependencies = [
- "artemis-core",
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "frame-support",
  "frame-system",
- "hex-literal",
  "jsonrpc-core",
  "jsonrpc-core-client",
  "jsonrpc-derive",
@@ -3879,7 +3876,6 @@ dependencies = [
  "frame-system",
  "pallet-assets",
  "parity-scale-codec",
- "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -3963,18 +3959,10 @@ dependencies = [
 name = "pallet-bridge"
 version = "0.1.1"
 dependencies = [
- "artemis-asset",
  "artemis-core",
- "artemis-erc20-app",
- "artemis-eth-app",
- "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hex-literal",
- "pallet-assets",
- "pallet-verifier",
  "parity-scale-codec",
- "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",

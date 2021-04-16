@@ -33,8 +33,6 @@
 //! is used to handle incoming requests.
 //!
 
-#![warn(clippy::never_loop)]
-
 use futures::{channel::{mpsc, oneshot}, prelude::*};
 use libp2p::{
 	core::{

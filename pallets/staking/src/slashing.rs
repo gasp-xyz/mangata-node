@@ -633,6 +633,8 @@ pub(crate) fn apply_slash<T: Trait>(unapplied_slash: UnappliedSlash<T::AccountId
 		);
 	}
 
+	// TODO
+	// Pass the liquidity token id of the validator into pay_reporters
 	pay_reporters::<T>(reward_payout, slashed_imbalance, &unapplied_slash.reporters);
 }
 
@@ -659,6 +661,8 @@ fn pay_reporters<T: Trait>(
 		let (reporter_reward, rest) = reward_payout.split(per_reporter);
 		reward_payout = rest;
 
+		// TODO
+		// Change below to Token call with token id
 		// this cancels out the reporter reward imbalance internally, leading
 		// to no change in total issuance.
 		T::Currency::resolve_creating(reporter, reporter_reward);

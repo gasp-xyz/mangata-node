@@ -524,19 +524,31 @@ impl<T: Trait> Module<T> {
         liquidity_asset_amount: T::Balance,
     ) -> (T::Balance, T::Balance) {
         let liquidity_asset_id = Self::get_liquidity_asset(first_asset_id, second_asset_id);
-        let first_asset_reserve_u256: U256 = <Pools<T>>::get((first_asset_id, second_asset_id)).saturated_into::<u128>().into();
-        let second_asset_reserve_u256: U256 = <Pools<T>>::get((second_asset_id, first_asset_id)).saturated_into::<u128>().into();
-        let total_liquidity_assets_u256: U256 = <assets::Module<T>>::total_supply(liquidity_asset_id).saturated_into::<u128>().into();
-        let liquidity_asset_amount_u256: U256 = liquidity_asset_amount.saturated_into::<u128>().into();
+        let first_asset_reserve_u256: U256 = <Pools<T>>::get((first_asset_id, second_asset_id))
+            .saturated_into::<u128>()
+            .into();
+        let second_asset_reserve_u256: U256 = <Pools<T>>::get((second_asset_id, first_asset_id))
+            .saturated_into::<u128>()
+            .into();
+        let total_liquidity_assets_u256: U256 =
+            <assets::Module<T>>::total_supply(liquidity_asset_id)
+                .saturated_into::<u128>()
+                .into();
+        let liquidity_asset_amount_u256: U256 =
+            liquidity_asset_amount.saturated_into::<u128>().into();
 
-        let first_asset_amount_u256 = first_asset_reserve_u256 * liquidity_asset_amount_u256 / total_liquidity_assets_u256;
-        let second_asset_amount_u256 = second_asset_reserve_u256 * liquidity_asset_amount_u256 / total_liquidity_assets_u256;
-        let second_asset_amount = second_asset_amount_u256.saturated_into::<u128>()
+        let first_asset_amount_u256 =
+            first_asset_reserve_u256 * liquidity_asset_amount_u256 / total_liquidity_assets_u256;
+        let second_asset_amount_u256 =
+            second_asset_reserve_u256 * liquidity_asset_amount_u256 / total_liquidity_assets_u256;
+        let second_asset_amount = second_asset_amount_u256
+            .saturated_into::<u128>()
             .saturated_into::<T::Balance>();
-        let first_asset_amount = first_asset_amount_u256.saturated_into::<u128>()
+        let first_asset_amount = first_asset_amount_u256
+            .saturated_into::<u128>()
             .saturated_into::<T::Balance>();
 
-        return (first_asset_amount, second_asset_amount)    
+        return (first_asset_amount, second_asset_amount);
     }
 
     fn account_id() -> T::AccountId {

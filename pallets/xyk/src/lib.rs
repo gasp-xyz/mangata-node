@@ -459,7 +459,7 @@ decl_module! {
                 <Pools<T>>::remove((second_asset_id, first_asset_id));
             }
 
-            <assets::Module<T>>::assets_burn(&liquidity_asset_id, &sender, &liquidity_asset_amount);
+            <assets::Module<T>>::assets_burn(&liquidity_asset_id, &sender, &liquidity_asset_amount)?;
 
             Self::deposit_event(RawEvent::LiquidityBurned(sender.clone(),first_asset_id, first_asset_amount, second_asset_id, second_asset_amount,liquidity_asset_id, second_asset_amount));
 

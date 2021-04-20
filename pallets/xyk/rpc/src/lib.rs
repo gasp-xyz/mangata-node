@@ -14,7 +14,7 @@ pub use xyk_runtime_api::XykApi as XykRuntimeApi;
 use xyk_runtime_api::{RpcAmountsResult, RpcResult};
 
 #[rpc]
-pub trait XykApi<BlockHash, Balance, AssetId, ResponseType, ResponseTypeTupple> {
+pub trait XykApi<BlockHash, Balance, AssetId, ResponseTypePrice, ResponseTypeAmounts> {
     #[rpc(name = "xyk_calculate_sell_price")]
     fn calculate_sell_price(
         &self,
@@ -22,7 +22,7 @@ pub trait XykApi<BlockHash, Balance, AssetId, ResponseType, ResponseTypeTupple> 
         output_reserve: Balance,
         sell_amount: Balance,
         at: Option<BlockHash>,
-    ) -> Result<ResponseType>;
+    ) -> Result<ResponseTypePrice>;
 
     #[rpc(name = "xyk_calculate_buy_price")]
     fn calculate_buy_price(
@@ -31,7 +31,7 @@ pub trait XykApi<BlockHash, Balance, AssetId, ResponseType, ResponseTypeTupple> 
         output_reserve: Balance,
         buy_amount: Balance,
         at: Option<BlockHash>,
-    ) -> Result<ResponseType>;
+    ) -> Result<ResponseTypePrice>;
 
     #[rpc(name = "xyk_get_burn_amount")]
     fn get_burn_amount(
@@ -40,7 +40,7 @@ pub trait XykApi<BlockHash, Balance, AssetId, ResponseType, ResponseTypeTupple> 
         second_asset_id: AssetId,
         liquidity_asset_amount: Balance,
         at: Option<BlockHash>,
-    ) -> Result<ResponseTypeTupple>;
+    ) -> Result<ResponseTypeAmounts>;
 }
 
 pub struct Xyk<C, M> {

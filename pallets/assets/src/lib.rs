@@ -265,6 +265,7 @@ decl_storage! {
         ///
         /// TWOX-NOTE: `AssetId` is trusted, so this is safe.
         TotalSupply: map hasher(twox_64_concat) T::AssetId => T::Balance;
+
     }
 }
 

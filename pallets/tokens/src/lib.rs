@@ -48,7 +48,7 @@ use frame_support::{
 	weights::Weight,
 	Parameter, StorageMap,
 };
-use frame_system::ensure_signed;
+use frame_system::{ensure_signed, ensure_root};
 use sp_runtime::{
 	traits::{
 		AtLeast32BitUnsigned, Bounded, CheckedAdd, CheckedSub, MaybeSerializeDeserialize, Member, Saturating,
@@ -62,6 +62,8 @@ use sp_std::{
 	prelude::*,
 	result,
 };
+use sp_runtime::traits::One;
+use frame_support::dispatch::result::Result;
 
 #[cfg(feature = "std")]
 use sp_std::collections::btree_map::BTreeMap;
@@ -77,6 +79,7 @@ mod default_weight;
 mod imbalances;
 mod mock;
 mod tests;
+use codec::FullCodec;
 
 pub trait WeightInfo {
 	fn transfer() -> Weight;
@@ -101,7 +104,7 @@ pub trait Trait: frame_system::Trait {
 		+ MaybeSerializeDeserialize;
 
 	/// The currency ID type
-	type CurrencyId: Parameter + Member + Copy + MaybeSerializeDeserialize + Ord;
+	type CurrencyId: Parameter + Member + Copy + MaybeSerializeDeserialize + Ord + Default + AtLeast32BitUnsigned + FullCodec;
 
 	/// Hook when some fund is deposited into an account
 	type OnReceived: OnReceived<Self::AccountId, Self::CurrencyId, Self::Balance>;
@@ -186,6 +189,8 @@ decl_storage! {
 		///
 		/// NOTE: This is only used in the case that this module is used to store balances.
 		pub Accounts get(fn accounts): double_map hasher(blake2_128_concat) T::AccountId, hasher(twox_64_concat) T::CurrencyId => AccountData<T::Balance>;
+
+        NextCurrencyId get(fn next_asset_id): T::CurrencyId;
 	}
 	add_extra_genesis {
 		config(endowed_accounts): Vec<(T::AccountId, T::CurrencyId, T::Balance)>;
@@ -196,6 +201,7 @@ decl_storage! {
 			})
 		})
 	}
+
 }
 
 decl_event!(
@@ -206,6 +212,8 @@ decl_event!(
 	{
 		/// Token transfer success. [currency_id, from, to, amount]
 		Transferred(CurrencyId, AccountId, AccountId, Balance),
+		Issued(CurrencyId, AccountId, Balance),
+		Minted(CurrencyId, AccountId, AccountId, Balance),
 	}
 );
 
@@ -264,6 +272,28 @@ decl_module! {
 
 			Self::deposit_event(RawEvent::Transferred(currency_id, from, to, balance));
 		}
+
+		#[weight = 10_000]
+		pub fn issue(
+			origin,
+			currency_id: T::CurrencyId,
+			account_id: T::AccountId,
+			amount: T::Balance,
+		) {
+			ensure_root(origin)?;
+			<Self as MultiCurrencyMintable<T::AccountId>>::issue(&account_id, amount);
+		}
+
+		#[weight = 10_000]
+		pub fn mint(
+			origin,
+			currency_id: T::CurrencyId,
+			account_id: T::AccountId,
+			amount: T::Balance,
+		) -> frame_support::dispatch::DispatchResult{
+			ensure_root(origin)?;
+			<Self as MultiCurrencyMintable<T::AccountId>>::mint(currency_id, &account_id, amount)
+		}
 	}
 }
 
@@ -280,6 +310,8 @@ decl_error! {
 		AmountIntoBalanceFailed,
 		/// Failed because liquidity restrictions due to locking
 		LiquidityRestrictions,
+		/// Failed because token with given id does not exits
+		TokenIdNotExists,
 	}
 }
 
@@ -874,4 +906,50 @@ where
 	fn remove_lock(id: LockIdentifier, who: &T::AccountId) {
 		Module::<T>::remove_lock(id, GetCurrencyId::get(), who)
 	}
+}
+
+/// Extended `MultiCurrency` with additional helper types and methods.
+pub trait MultiCurrencyMintable<AccountId>: MultiCurrency<AccountId>
+{
+	fn issue(address: &AccountId, amount: Self::Balance) -> Self::CurrencyId;
+	fn mint(currency_id: Self::CurrencyId, address: &AccountId, amount: Self::Balance) -> DispatchResult;
+}
+
+impl<T: Trait> MultiCurrencyMintable<T::AccountId> for Module<T> {
+
+	fn issue(address: &T::AccountId, amount: Self::Balance) -> Self::CurrencyId{
+
+		let currency_id = <NextCurrencyId<T>>::get();
+		<NextCurrencyId<T>>::mutate(|id| *id += One::one());
+
+		<TotalIssuance<T>>::insert(currency_id, amount);
+		<Accounts<T>>::insert(address, currency_id, AccountData::<Self::Balance>{free: amount, reserved: 0.into(), frozen: 0.into()}); 
+
+        Self::deposit_event(RawEvent::Issued(currency_id, address.clone(), amount));
+
+		currency_id
+	}
+
+	fn mint(currency_id: Self::CurrencyId, address: &T::AccountId, mut amount: Self::Balance) -> DispatchResult{
+		// make sure that asset exists
+		ensure!(
+			<TotalIssuance<T>>::contains_key(currency_id),
+			Error::<T>::TokenIdNotExists
+		);
+
+		<TotalIssuance<T>>::mutate(currency_id, |issued| {
+			*issued = issued.checked_add(&amount).unwrap_or_else(|| {
+				amount = Self::Balance::max_value() - *issued;
+				Self::Balance::max_value()
+			})
+		});
+
+		<Accounts<T>>::mutate(address, currency_id, |account_data| 
+			account_data.free = account_data.free.checked_add(&amount).unwrap_or_else(|| {
+				Self::Balance::max_value()
+			}));
+			
+        Ok(())
+	}
+
 }

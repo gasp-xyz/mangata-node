@@ -47,8 +47,10 @@ pub use pallet_timestamp::Call as TimestampCall;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
+pub use orml_tokens;
 pub use pallet_assets;
 pub use pallet_assets_info;
+
 use pallet_session::historical as pallet_session_historical;
 pub use pallet_staking::StakerStatus;
 pub use pallet_xyk;
@@ -430,6 +432,7 @@ impl pallet_assets::Trait for Runtime {
 
 impl pallet_xyk::Trait for Runtime {
     type Event = Event;
+    type MultiCurrency = Tokens;
 }
 
 // Snowfork traits
@@ -466,6 +469,7 @@ parameter_types! {
     pub const MaxLengthDescription: usize = 255;
     pub const MaxDecimals: u32 = 255;
 }
+
 impl pallet_assets_info::Trait for Runtime {
     type Event = Event;
     type MinLengthName = MinLengthName;
@@ -475,6 +479,19 @@ impl pallet_assets_info::Trait for Runtime {
     type MinLengthDescription = MinLengthDescription;
     type MaxLengthDescription = MaxLengthDescription;
     type MaxDecimals = MaxDecimals;
+}
+
+impl orml_tokens::Trait for Runtime {
+    type Event = Event;
+    type Balance = Balance;
+    type Amount = i128;
+    type CurrencyId = u32;
+    type OnReceived = ();
+    type WeightInfo = ();
+}
+
+parameter_types! {
+    pub const GetNativeCurrencyId: u32 = 0;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -506,6 +523,7 @@ construct_runtime!(
         ETH: eth_app::{Module, Call, Storage, Event<T>},
         ERC20: erc20_app::{Module, Call, Storage, Event<T>},
         AssetsInfo: pallet_assets_info::{Module, Call, Config<T>, Storage, Event<T>},
+        Tokens: orml_tokens::{Module, Storage, Call, Event<T>, Config<T>},
     }
 );
 

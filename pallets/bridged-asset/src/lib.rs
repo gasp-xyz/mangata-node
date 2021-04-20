@@ -42,12 +42,6 @@ use codec::{Decode, Encode};
 use artemis_core::BridgedAssetId;
 use pallet_assets as assets;
 
-// #[cfg(test)]
-// mod mock;
-//
-// #[cfg(test)]
-// mod tests;
-
 #[derive(Encode, Decode, Clone, PartialEq, Eq, Default, RuntimeDebug)]
 pub struct AccountData {
     pub free: U256,

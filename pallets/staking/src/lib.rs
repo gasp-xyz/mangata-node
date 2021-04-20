@@ -285,6 +285,9 @@
 // TODO
 // Address TODOs in slashing.rs
 
+// TODO
+// Contemplate repercussions of keyed Imbalances
+
 
 #![recursion_limit = "128"]
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -454,8 +457,6 @@ pub enum StakerStatus<AccountId> {
 /// A destination account for payment.
 #[derive(PartialEq, Eq, Copy, Clone, Encode, Decode, RuntimeDebug)]
 pub enum RewardDestination<AccountId> {
-	/// Pay into the stash account, increasing the amount at stake accordingly.
-	Staked,
 	/// Pay into the stash account, not increasing the amount at stake.
 	Stash,
 	/// Pay into the controller account.
@@ -466,7 +467,7 @@ pub enum RewardDestination<AccountId> {
 
 impl<AccountId> Default for RewardDestination<AccountId> {
 	fn default() -> Self {
-		RewardDestination::Staked
+		RewardDestination::Stash
 	}
 }
 
@@ -798,7 +799,7 @@ impl<T: Trait> SessionInterface<<T as frame_system::Trait>::AccountId> for T whe
 /// at the time of the snapshot
 pub struct Valuation <Balance> {
 	/// Value of the liquidity token staked
-	pub liquidity_token: Balance,
+	pub liquidity_token_amount: Balance,
 
 	/// Valutaion of the liquidity token in MNG
 	pub mng_valuation: Balance
@@ -1176,7 +1177,7 @@ decl_storage! {
 					T::Origin::from(Some(stash.clone()).into()),
 					T::Lookup::unlookup(controller.clone()),
 					balance,
-					RewardDestination::Staked,
+					RewardDestination::Stash,
 				);
 				let _ = match status {
 					StakerStatus::Validator => {
@@ -1479,7 +1480,11 @@ decl_module! {
 			}
 
 			// TODO
+			// Use valuations to check if the liquidity_token is a valid one
+			T::Valuations
+
 			// Insert the liquidity_token against stash in StashLiquidityToken
+			<StashLiquidityToken<T>>::insert(&stash, Some(liquidity_token));
 
 			// You're auto-bonded forever, here. We might improve this by only bonding when
 			// you actually validate/nominate and remove once you unbond __everything__.
@@ -1732,6 +1737,9 @@ decl_module! {
 				.take(MAX_NOMINATIONS)
 				.map(|t| T::Lookup::lookup(t))
 				.collect::<result::Result<Vec<T::AccountId>, _>>()?;
+
+			// TODO
+			// Ensure all targets have the same liquidity token as the nominator
 
 			let nominations = Nominations {
 				targets,
@@ -2223,10 +2231,8 @@ impl<T: Trait> Module<T> {
 	/// The total balance that can be slashed from a stash account as of right now.
 	pub fn slashable_balance_of(stash: &T::AccountId) -> BalanceOf<T> {
 		// Weight note: consider making the stake accessible through stash.
-		Self::bonded(stash).and_then(Self::ledger).map(|l| l.active).unwrap_or_default()
-
-		// TODO
 		// return valuation
+		Self::get_stash_staked_valuation(stash).map(|v| v.mng_valuation).unwrap_or_default()
 	}
 
 	/// internal impl of [`slashable_balance_of`] that returns [`VoteWeight`].
@@ -2252,28 +2258,6 @@ impl<T: Trait> Module<T> {
 		let num_nominators = nominators.len();
 		add_db_reads_writes((num_validators + num_nominators) as Weight, 0);
 
-		// Note: A Stash can't be both nominator and validator
-		validators::iter().map(|validator|{
-			// TODO
-			// get validator's controller
-			// get validator's controller's ledger
-			// get validator's staked liquidity token amount, i.e., validator's controller's ledger.active
-			// get validator's stash's tokenId
-			// get the valuation on staked liquidity token amount in MNG via Valuations pallet
-			// Insert the staked liquidity token amount and its valuation as Valuation against validator's stash
-		});
-
-		nominators::iter().map(|nominator|{
-			// TODO
-			// get nominator's controller
-			// get nominator's controller's ledger
-			// get nominator's staked liquidity token amount, i.e., nominator's controller's ledger.active
-			// get nominator's stash's tokenId
-			// get the valuation on staked liquidity token amount in MNG via Valuations pallet
-			// Insert the staked liquidity token amount and its valuation as Valuation against nominator's stash
-		});
-
-
 		if
 			num_validators > MAX_VALIDATORS ||
 			num_nominators.saturating_add(num_validators) > MAX_NOMINATORS
@@ -2288,6 +2272,38 @@ impl<T: Trait> Module<T> {
 			);
 			(false, consumed_weight)
 		} else {
+
+			// Note: A Stash can't be both nominator and validator
+			validators::iter().map(|validator|{
+				// get validator's staked liquidity token amount, i.e., validator's controller's ledger.active
+				// get validator's stash's tokenId
+				// get the valuation on staked liquidity token amount in MNG via Valuations pallet
+				// Insert the staked liquidity token amount and its valuation as Valuation against validator's stash
+				let liquidity_token_amount = Self::bonded(validator).and_then(Self::ledger).map(|l| l.active).unwrap_or_default();
+				let liquidity_token_id = Self::get_stash_liquidity_token(validator);
+				let mng_valuation = T::Valuations::valuate_liquidity_token(liquidity_token_id, liquidity_token_amount);
+				<StashStakedValuation<T>>::insert(&validator, Valuation{
+						liquidity_token_amount: liquidity_token_amount,
+						mng_valuation: mng_valuation
+						});
+
+			});
+
+			nominators::iter().map(|nominator|{
+				// get nominator's staked liquidity token amount, i.e., nominator's controller's ledger.active
+				// get nominator's stash's tokenId
+				// get the valuation on staked liquidity token amount in MNG via Valuations pallet
+				// Insert the staked liquidity token amount and its valuation as Valuation against nominator's stash
+				let liquidity_token_amount = Self::bonded(nominator).and_then(Self::ledger).map(|l| l.active).unwrap_or_default();
+				let liquidity_token_id = Self::get_stash_liquidity_token(nominator);
+				let mng_valuation = T::Valuations::valuate_liquidity_token(liquidity_token_id, liquidity_token_amount);
+				<StashStakedValuation<T>>::insert(&nominator, Valuation{
+						liquidity_token_amount: liquidity_token_amount,
+						mng_valuation: mng_valuation
+						});
+
+			});
+
 			// all validators nominate themselves;
 			nominators.extend(validators.clone());
 
@@ -2303,8 +2319,8 @@ impl<T: Trait> Module<T> {
 		<SnapshotValidators<T>>::kill();
 		<SnapshotNominators<T>>::kill();
 
-		// TODO
 		// Remove Stash's liquidity valuation details
+		<StashStakedValuation<T>>::kill();
 	}
 
 	fn do_payout_stakers(
@@ -2435,15 +2451,6 @@ impl<T: Trait> Module<T> {
 				),
 			RewardDestination::Stash =>
 				T::Currency::deposit_into_existing(stash, amount).ok(),
-			RewardDestination::Staked => Self::bonded(stash)
-				.and_then(|c| Self::ledger(&c).map(|l| (c, l)))
-				.and_then(|(controller, mut l)| {
-					l.active += amount;
-					l.total += amount;
-					let r = T::Currency::deposit_into_existing(stash, amount).ok();
-					Self::update_ledger(&controller, &l);
-					r
-				}),
 			RewardDestination::Account(dest_account) => {
 				Some(T::Currency::deposit_creating(&dest_account, amount))
 			}
@@ -3071,8 +3078,8 @@ impl<T: Trait> Module<T> {
 		<Validators<T>>::remove(stash);
 		<Nominators<T>>::remove(stash);
 
-		// TODO
 		// Remove the liquidity_token against stash in StashLiquidityToken
+		<StashLiquidityToken<T>>::remove(stash);
 
 		system::Module::<T>::dec_ref(stash);
 
@@ -3083,8 +3090,11 @@ impl<T: Trait> Module<T> {
 	fn clear_era_information(era_index: EraIndex) {
 		<ErasStakers<T>>::remove_prefix(era_index);
 		<ErasStakersClipped<T>>::remove_prefix(era_index);
-		// TODO
+
 		// Remove ErasStakersRaw and ErasStakersClippedRaw
+		<ErasStakersRaw<T>>::remove_prefix(era_index);
+		<ErasStakersClippedRaw<T>>::remove_prefix(era_index);
+
 		<ErasValidatorPrefs<T>>::remove_prefix(era_index);
 		<ErasValidatorReward<T>>::remove(era_index);
 		<ErasRewardPoints<T>>::remove(era_index);
@@ -3253,12 +3263,21 @@ impl<T: Trait> Convert<T::AccountId, Option<Exposure<T::AccountId, BalanceOf<T>>
 	}
 }
 
-// TODO
-// Create ExposureOfRaw similar to ExposureOf
+// ExposureOfRaw similar to ExposureOf
+pub struct ExposureOfRaw<T>(sp_std::marker::PhantomData<T>);
 
+impl<T: Trait> Convert<T::AccountId, Option<Exposure<T::AccountId, BalanceOf<T>>>>
+	for ExposureOfRaw<T>
+{
+	fn convert(validator: T::AccountId) -> Option<Exposure<T::AccountId, BalanceOf<T>>> {
+		if let Some(active_era) = <Module<T>>::active_era() {
+			Some(<Module<T>>::eras_stakers_clipped(active_era.index, &validator))
+		} else {
+			None
+		}
+	}
+}
 
-// TODO
-// Below replace ExposureOf with ExposureOfRaw
 /// This is intended to be used with `FilterHistoricalOffences`.
 impl <T: Trait>
 	OnOffenceHandler<T::AccountId, pallet_session::historical::IdentificationTuple<T>, Weight>
@@ -3266,7 +3285,7 @@ for Module<T> where
 	T: pallet_session::Trait<ValidatorId = <T as frame_system::Trait>::AccountId>,
 	T: pallet_session::historical::Trait<
 		FullIdentification = Exposure<<T as frame_system::Trait>::AccountId, BalanceOf<T>>,
-		FullIdentificationOf = ExposureOf<T>,
+		FullIdentificationOf = ExposureOfRaw<T>,
 	>,
 	T::SessionHandler: pallet_session::SessionHandler<<T as frame_system::Trait>::AccountId>,
 	T::SessionManager: pallet_session::SessionManager<<T as frame_system::Trait>::AccountId>,

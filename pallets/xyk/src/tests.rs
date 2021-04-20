@@ -41,8 +41,7 @@ use frame_system as system;
 //fn burn_W(): burn working assert (maps,acocounts values) //DONE
 //fn burn_W_other_way(): burn working if burn order in different order as pool (burn pool X-Y, but pool Y-X exists), assert (maps,acocounts values) //DONE
 //fn burn_N_no_such_pool(): burn not working if pool does not exist //DONE
-//fn burn_N_not_enough_first_asset(): burn not enough first asset in liquidity pool to burn //DONE
-//fn burn_N_not_enough_second_asset(): burn not enough second asset in liquidity pool to burn //DONE
+//fn burn_N_not_enough_liquidity_asset(): burn not enough liquidity asset in liquidity pool to burn //DONE
 //fn burn_N_zero_amount(): burn not working if trying to burn 0 asset
 
 //liquidity assets after trade, after burn, after mint
@@ -149,7 +148,7 @@ fn multi() {
             750000000000000000000001
         ); // amount of asset 1 in vault acc after creating pool
 
-        XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 300000000000000000000000).unwrap();
+        XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 450000000000000000000000).unwrap();
 
         assert_eq!(XykStorage::asset_pool((0, 1)), 1200000000000000000000000); // amount of asset 0 in pool map
         assert_eq!(XykStorage::asset_pool((1, 0)), 600000000000000000000001); // amount of asset 1 in pool map
@@ -178,7 +177,7 @@ fn multi() {
             600000000000000000000001
         ); // amount of asset 1 in vault acc after creating pool
 
-        XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 300000000000000000000000).unwrap();
+        XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 450000000000000000000000).unwrap();
 
         assert_eq!(XykStorage::asset_pool((0, 1)), 900000000000000000000000); // amount of asset 0 in pool map
         assert_eq!(XykStorage::asset_pool((1, 0)), 450000000000000000000001); // amount of asset 1 in pool map
@@ -760,7 +759,7 @@ fn burn_W() {
     new_test_ext().execute_with(|| {
         initialize();
 
-        XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 20000000000000000000).unwrap(); // burning 20000000000000000000 asset 0 of pool 0 1
+        XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 50000000000000000000).unwrap(); // burning 20000000000000000000 asset 0 of pool 0 1
 
         assert_eq!(
             <pallet_assets::Module<Test>>::balance(2, 2),
@@ -791,7 +790,7 @@ fn burn_W() {
 fn burn_W_other_way() {
     new_test_ext().execute_with(|| {
         initialize();
-        XykStorage::burn_liquidity(Origin::signed(2), 1, 0, 30000000000000000000).unwrap(); // burning 30000000000000000000 asset 1 of pool 0 1
+        XykStorage::burn_liquidity(Origin::signed(2), 1, 0, 50000000000000000000).unwrap(); // burning 30000000000000000000 asset 1 of pool 0 1
 
         assert_eq!(
             <pallet_assets::Module<Test>>::balance(2, 2),
@@ -819,24 +818,12 @@ fn burn_W_other_way() {
 }
 
 #[test]
-fn burn_N_not_enough_first_asset() {
+fn burn_N_not_enough_liquidity_asset() {
     new_test_ext().execute_with(|| {
         initialize();
-        // burning pool 0 1 with 50000000000000000000 assetId 0 (user has only 40000000000000000000 assetId 0 in liquidity pool)
+        // burning pool 0 1 with 500000000000000000000 liquidity asset amount (user has only 100000000000000000000 liquidity asset amount)
         assert_err!(
-            XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 50000000000000000000,),
-            Error::<Test>::NotEnoughAssets,
-        );
-    });
-}
-
-#[test]
-fn burn_N_not_enough_second_asset() {
-    new_test_ext().execute_with(|| {
-        initialize();
-        // burning pool 0 1 with 70000000000000000000 assetId 0 (user has only 60000000000000000000 assetId 0 in liquidity pool)
-        assert_err!(
-            XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 70000000000000000000,),
+            XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 500000000000000000000,),
             Error::<Test>::NotEnoughAssets,
         );
     });

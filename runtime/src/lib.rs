@@ -52,7 +52,7 @@ pub use pallet_assets_info;
 use pallet_session::historical as pallet_session_historical;
 pub use pallet_staking::StakerStatus;
 pub use pallet_xyk;
-use xyk_runtime_api::RpcResult;
+use xyk_runtime_api::{RpcAmountsResult, RpcResult};
 
 /// Bridge pallets
 pub use bridge;
@@ -77,6 +77,9 @@ pub type AccountIndex = u32;
 
 /// Balance of an account.
 pub type Balance = u128;
+
+/// AssetId of an account.
+pub type AssetId = u32;
 
 /// Index of a transaction in the chain.
 pub type Index = u32;
@@ -698,7 +701,7 @@ impl_runtime_apis! {
         }
     }
 
-    impl xyk_runtime_api::XykApi<Block, Balance> for Runtime {
+    impl xyk_runtime_api::XykApi<Block, Balance, AssetId> for Runtime {
         fn calculate_sell_price(
             input_reserve: Balance,
             output_reserve: Balance,
@@ -716,6 +719,18 @@ impl_runtime_apis! {
         ) -> RpcResult<Balance> {
             RpcResult {
                 price: Xyk::calculate_buy_price(input_reserve, output_reserve, buy_amount)
+            }
+        }
+        
+        fn get_burn_amount(
+            first_asset_id: AssetId,
+            second_asset_id: AssetId,
+            liquidity_asset_amount: Balance
+        ) -> RpcAmountsResult<Balance> {
+            let (first_asset_amount, second_asset_amount) = Xyk::get_burn_amount(first_asset_id, second_asset_id, liquidity_asset_amount);
+            RpcAmountsResult{
+                first_asset_amount,
+                second_asset_amount
             }
         }
     }

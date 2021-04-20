@@ -7,7 +7,7 @@
 
 use std::sync::Arc;
 
-use mangata_runtime::{opaque::Block, AccountId, Balance, Index};
+use mangata_runtime::{opaque::Block, AccountId, AssetId, Balance, Index};
 pub use sc_rpc_api::DenyUnsafe;
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
@@ -32,7 +32,7 @@ where
     C: Send + Sync + 'static,
     C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
     C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
-    C::Api: xyk_rpc::XykRuntimeApi<Block, Balance>,
+    C::Api: xyk_rpc::XykRuntimeApi<Block, Balance, AssetId>,
     C::Api: BlockBuilder<Block>,
     P: TransactionPool + 'static,
 {

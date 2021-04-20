@@ -3321,7 +3321,7 @@ dependencies = [
  "pallet-authority-discovery",
  "pallet-balances",
  "pallet-grandpa",
- "pallet-staking",
+ "pallet-staking 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc",
  "sc-authority-discovery",
@@ -3388,7 +3388,7 @@ dependencies = [
  "pallet-offences",
  "pallet-randomness-collective-flip",
  "pallet-session",
- "pallet-staking",
+ "pallet-staking 2.0.0",
  "pallet-staking-reward-curve",
  "pallet-sudo",
  "pallet-timestamp",
@@ -4092,6 +4092,36 @@ dependencies = [
 [[package]]
 name = "pallet-staking"
 version = "2.0.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex",
+ "pallet-authorship",
+ "pallet-balances",
+ "pallet-session",
+ "pallet-staking-reward-curve",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "parking_lot 0.10.2",
+ "rand_chacha 0.2.2",
+ "serde",
+ "sp-application-crypto",
+ "sp-core",
+ "sp-io",
+ "sp-npos-elections",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
+ "sp-storage",
+ "sp-tracing",
+ "static_assertions",
+ "substrate-test-utils",
+]
+
+[[package]]
+name = "pallet-staking"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9d296b36c5c32d1e480de15d0bf08460bb6d8e1771d928a6017e88a6a1de6bf7"
 dependencies = [
@@ -4113,12 +4143,11 @@ dependencies = [
 [[package]]
 name = "pallet-staking-reward-curve"
 version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1eae721ac36af88b42806d3d7eb32cd6fe8b0a5a6ba590ae397ede5af3dc53fc"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
  "quote",
+ "sp-runtime",
  "syn",
 ]
 
@@ -7336,6 +7365,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "substrate-test-utils"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "974d8429436089109975f180a3969d7f905ce6db4d325e427b1339eed67bcfe6"
+dependencies = [
+ "futures 0.3.8",
+ "substrate-test-utils-derive",
+ "tokio 0.2.22",
+]
+
+[[package]]
+name = "substrate-test-utils-derive"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c9c7fb300e48fa297cc02b0b5b6fea2ddaeafb05d7e0be76b6872ea3d8adf117"
+dependencies = [
+ "proc-macro-crate",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "substrate-wasm-builder-runner"
 version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7552,6 +7603,7 @@ dependencies = [
  "pin-project-lite",
  "signal-hook-registry",
  "slab",
+ "tokio-macros",
  "winapi 0.3.9",
 ]
 
@@ -7628,6 +7680,17 @@ dependencies = [
  "bytes 0.4.12",
  "futures 0.1.30",
  "log",
+]
+
+[[package]]
+name = "tokio-macros"
+version = "0.2.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e44da00bfc73a25f814cd8d7e57a68a5c31b74b3152a0a1d1f590c97ed06265a"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

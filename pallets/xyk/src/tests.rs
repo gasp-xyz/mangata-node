@@ -98,9 +98,6 @@ fn initialize() {
 fn sell_mangata() {
 		new_test_ext().execute_with(|| {
 			initialize();
-			treasury 0.05
-			buyandburn 0.05
-			0.1
 			XykStorage::sell_asset(Origin::signed(2), 0, 1, 10000, 0);
 
 			assert_eq!(XykStorage::asset_pool((0, 1)), 1009990); // pool - goes 10 less (not 10000), which goes for buy and burn
@@ -124,7 +121,6 @@ fn sell_other_with_mangata_pool() {
 		initialize();
 
 		XykStorage::sell_asset(Origin::signed(2), 1, 2, 10000, 0);
-		10/9
 		assert_eq!(XykStorage::asset_pool((1, 2)), 1009990); // pool - goes 10 less (not 10000), which goes for buy and burn
 		assert_eq!(XykStorage::asset_pool((2, 1)), 990129); // pool - regular trade result
 		assert_eq!(XykStorage::asset_pool((0, 1)), 999991); // pool - 10 assets1 got exchanged in pool 0-1 for 9 mangata

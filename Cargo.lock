@@ -4218,6 +4218,7 @@ version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
+ "log",
  "pallet-assets",
  "parity-scale-codec",
  "sp-core",

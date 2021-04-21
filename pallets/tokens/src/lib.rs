@@ -930,24 +930,20 @@ impl<T: Trait> MultiCurrencyMintable<T::AccountId> for Module<T> {
 		currency_id
 	}
 
-	fn mint(currency_id: Self::CurrencyId, address: &T::AccountId, mut amount: Self::Balance) -> DispatchResult{
+	fn mint(currency_id: Self::CurrencyId, address: &T::AccountId, amount: Self::Balance) -> DispatchResult{
 		// make sure that asset exists
 		ensure!(
 			<TotalIssuance<T>>::contains_key(currency_id),
 			Error::<T>::TokenIdNotExists
 		);
 
-		<TotalIssuance<T>>::mutate(currency_id, |issued| {
-			*issued = issued.checked_add(&amount).unwrap_or_else(|| {
-				amount = Self::Balance::max_value() - *issued;
-				Self::Balance::max_value()
-			})
-		});
+		<TotalIssuance<T>>::try_mutate(currency_id, |issued|
+			issued.checked_add(&amount).ok_or(Error::<T>::BalanceOverflow)
+		)?;
 
-		<Accounts<T>>::mutate(address, currency_id, |account_data| 
-			account_data.free = account_data.free.checked_add(&amount).unwrap_or_else(|| {
-				Self::Balance::max_value()
-			}));
+		<Accounts<T>>::try_mutate(address, currency_id, |account_data|
+			account_data.free.checked_add(&amount).ok_or(Error::<T>::BalanceOverflow)
+        )?;
 			
         Ok(())
 	}

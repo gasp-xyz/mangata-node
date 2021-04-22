@@ -663,8 +663,6 @@ fn pay_reporters<T: Trait>(
 
 		// TODO
 		// Change below to Token call with token id
-		// this cancels out the reporter reward imbalance internally, leading
-		// to no change in total issuance.
 		T::Currency::resolve_creating(reporter, reporter_reward);
 	}
 

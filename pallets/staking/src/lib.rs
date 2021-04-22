@@ -1297,6 +1297,10 @@ decl_error! {
 		IncorrectHistoryDepth,
 		/// Incorrect number of slashing spans provided.
 		IncorrectSlashingSpans,
+		/// A nominator is attempting to nominate a validator that uses a different liquidity token for staking
+		NominatingToDifferentToken,
+		/// The liquidity token that the user is trying to bond with belong to a pool that does not (atleast directly) involve MNG
+		NotMNGPool,
 	}
 }
 
@@ -1479,9 +1483,8 @@ decl_module! {
 				Err(Error::<T>::InsufficientValue)?
 			}
 
-			// TODO
 			// Use valuations to check if the liquidity_token is a valid one
-			T::Valuations
+			T::Valuations::validate_if_mng_liquidity_token(liquidity_token).then(||()).ok_or(Error::<T>::NotMNGPool)?;
 
 			// Insert the liquidity_token against stash in StashLiquidityToken
 			<StashLiquidityToken<T>>::insert(&stash, Some(liquidity_token));
@@ -1738,8 +1741,11 @@ decl_module! {
 				.map(|t| T::Lookup::lookup(t))
 				.collect::<result::Result<Vec<T::AccountId>, _>>()?;
 
-			// TODO
 			// Ensure all targets have the same liquidity token as the nominator
+			stash_liquidity_token = Self::get_stash_liquidity_token(stash);
+			for nomination in targets.iter(){
+				ensure!(Self::get_stash_liquidity_token(nomination)==stash_liquidity_token, Error::<T>::NominatingToDifferentToken);
+			}
 
 			let nominations = Nominations {
 				targets,
@@ -2873,17 +2879,32 @@ impl<T: Trait> Module<T> {
 				}
 				<ErasStakersClipped<T>>::insert(&current_era, &stash, exposure_clipped);
 
-				// TODO
 				// Create ErasStakersRaw and ErasStakersClippedRaw
-				// <ErasStakers<T>>::insert(current_era, &stash, &exposure);
 
-				// let mut exposure_clipped = exposure;
-				// let clipped_max_len = T::MaxNominatorRewardedPerValidator::get() as usize;
-				// if exposure_clipped.others.len() > clipped_max_len {
-				// 	exposure_clipped.others.sort_by(|a, b| a.value.cmp(&b.value).reverse());
-				// 	exposure_clipped.others.truncate(clipped_max_len);
-				// }
-				// <ErasStakersClipped<T>>::insert(&current_era, &stash, exposure_clipped);
+				let Exposure{total: exposure_total, own: exposure_own, others: exposure_others} =  exposure;
+
+				let mut exposure_raw_total: Balance = Zero::zero();
+				let mut exposure_raw_others: Vec<IndividualExposure<AccountId, Balance>> = Vec<IndividualExposure<AccountId, Balance>>::new();
+				for individual_exposure in exposure_others.iter(){
+					let IndividualExposure{ who: individual_exposure_who, value: individual_exposure_value } = individual_exposure;
+					let who_staked_valuation = Self::get_stash_staked_valuation(individual_exposure_who);
+					let individual_exposure_raw_value = T::Valuations::scale_valuation(who_staked_valuation.mng_valuation, who_staked_valuation.liquidity_token_amount, individual_exposure_value);
+					exposure_raw_others.push(IndividualExposure{ who: individual_exposure_who, value: individual_exposure_raw_value });
+					exposure_raw_total.saturating_add(individual_exposure_raw_value);
+				}
+
+				let stash_staked_valuation = Self::get_stash_staked_valuation(stash);
+				let exposure_raw_own = T::Valuations::scale_valuation(stash_staked_valuation.mng_valuation, stash_staked_valuation.liquidity_token_amount, exposure_own);
+
+				let exposure_raw = Exposure{total: exposure_raw_total, own: exposure_raw_own, others: exposure_raw_others};
+				<ErasStakersRaw<T>>::insert(current_era, &stash, &exposure_raw);
+
+				let mut exposure_raw_clipped = exposure_raw;
+				if exposure_raw_clipped.others.len() > clipped_max_len {
+					exposure_raw_clipped.others.sort_by(|a, b| a.value.cmp(&b.value).reverse());
+					exposure_raw_clipped.others.truncate(clipped_max_len);
+				}
+				<ErasStakersClipped<T>>::insert(&current_era, &stash, exposure_raw_clipped);
 
 			});
 

@@ -539,3 +539,9 @@ impl<T: Trait> Module<T> {
         PALLET_ID.into_account()
     }
 }
+
+pub Trait Valuate{
+    fn validate_if_mng_liquidity_token
+    valuate_liquidity_token
+    scale_valuation
+}

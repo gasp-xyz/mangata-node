@@ -11,8 +11,9 @@ use sp_runtime::{
 
 use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
 use frame_system as system;
+use orml_tokens::{MultiTokenCreatableCurrency, MultiTokenCurrencyAdapter, MultiTokenCurrency};
+use crate::{BalanceOf, CurrencyIdOf};
 
-use super::*;
 impl_outer_origin! {
     pub enum Origin for Test {}
 }
@@ -56,17 +57,33 @@ impl system::Trait for Test {
     type SystemWeightInfo = ();
 }
 
-impl Trait for Test {
+impl orml_tokens::Trait for Test {
     type Event = ();
+    type Balance = u128;
+    type Amount = i128;
+    type CurrencyId = u32;
+    type OnReceived = ();
+    type WeightInfo = ();
 }
 
-impl assets::Trait for Test {
-    type Balance = u128;
-    type AssetId = u32;
+impl Trait for Test {
     type Event = ();
+    type Currency = MultiTokenCurrencyAdapter<Test>;
 }
 
 pub type XykStorage = Module<Test>;
+
+impl<T: Trait> Module<T> {
+    pub fn balance(id: CurrencyIdOf<T>, who: T::AccountId) -> BalanceOf<T> {
+        T::Currency::free_balance(id, &who)
+    }
+    pub fn total_supply(id: CurrencyIdOf<T>) -> BalanceOf<T> {
+        T::Currency::total_issuance(id)
+    }
+    pub fn create_new_token(who: &T::AccountId, id: BalanceOf<T>) -> CurrencyIdOf<T> {
+        T::Currency::create(who, id)
+    }
+}
 
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup.

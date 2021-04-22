@@ -4,7 +4,7 @@
 use crate::{Module, Trait};
 use frame_support::{impl_outer_event, impl_outer_origin, parameter_types, weights::Weight};
 use frame_system as system;
-use pallet_assets as assets;
+use orml_tokens::MultiTokenCurrencyAdapter;
 use sp_core::H256;
 use sp_runtime::{
     testing::Header,
@@ -27,7 +27,7 @@ impl_outer_event! {
     pub enum MockEvent for MockRuntime {
         system<T>,
         asset<T>,
-        assets<T>,
+        orml_tokens<T>,
         test_events<T>,
     }
 }
@@ -74,14 +74,18 @@ impl system::Trait for MockRuntime {
     type SystemWeightInfo = ();
 }
 
-impl assets::Trait for MockRuntime {
+impl orml_tokens::Trait for MockRuntime {
     type Event = MockEvent;
-    type Balance = u32;
-    type AssetId = u32;
+    type Balance = u128;
+    type Amount = i128;
+    type CurrencyId = u32;
+    type OnReceived = ();
+    type WeightInfo = ();
 }
 
 impl asset::Trait for MockRuntime {
     type Event = MockEvent;
+    type Currency = MultiTokenCurrencyAdapter<MockRuntime>;
 }
 
 impl Trait for MockRuntime {

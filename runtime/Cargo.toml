@@ -26,7 +26,6 @@ serde = { features = ['derive'], optional = true, version = '1.0.101' }
 # local dependencies
 pallet-xyk = { path = '../pallets/xyk', default-features = false, version = '0.1.0' }
 xyk-runtime-api = { path = '../pallets/xyk/runtime-api', default-features = false, version = '2.0.0' }
-pallet-assets = { path = '../pallets/assets', default-features = false, version = '2.0.0' }
 frame-executive = { path = '../pallets/executive', default-features = false, version = '2.0.0' }
 pallet-timestamp = { path = '../pallets/timestamp', default-features = false, version = '2.0.0' }
 pallet-assets-info = { path = '../pallets/assets-info', default-features = false, version = '2.0.0' }
@@ -60,6 +59,7 @@ sp-session = { default-features = false, version = '2.0.0' }
 sp-std = { default-features = false, version = '2.0.0' }
 sp-transaction-pool = { default-features = false, version = '2.0.0' }
 sp-version = { default-features = false, version = '2.0.0' }
+orml-tokens = { path="../pallets/tokens", default-features = false, version = '0.3.1' }
 
 # Snowfork pallets
 
@@ -141,4 +141,5 @@ std = [
     "eth-app/std",
     "erc20-app/std",
     "pallet-assets-info/std",
+    'orml-tokens/std',
 ]

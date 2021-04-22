@@ -1,4 +1,3 @@
-// Copyright (C) 2020 Mangata team
 // Based on Snowfork bridge implementation
 //! # ERC20
 //!
@@ -30,8 +29,9 @@ use sp_std::prelude::*;
 
 use artemis_asset as asset;
 use artemis_core::{Application, BridgedAssetId};
-use pallet_assets as assets;
 use sp_runtime::traits::SaturatedConversion;
+
+use orml_tokens::{MultiTokenCreatableCurrency, MultiTokenCurrency};
 
 mod payload;
 use payload::Payload;
@@ -42,9 +42,13 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-pub trait Trait: system::Trait + asset::Trait + assets::Trait {
+pub trait Trait: system::Trait + asset::Trait
+{
     type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 }
+
+type BalanceOf<T> =
+    <<T as artemis_asset::Trait>::Currency as MultiTokenCurrency<<T as frame_system::Trait>::AccountId>>::Balance;
 
 decl_storage! {
     trait Store for Module<T: Trait> as Erc20Module {}
@@ -92,11 +96,23 @@ decl_module! {
                 return Err(Error::<T>::InvalidAssetId.into())
             }
 
-            // <asset::Module<T>>::do_burn(asset_id, &who, amount)?;
-            let native_asset_id = <asset::Module<T>>::get_native_asset_id(asset_id);
-            let result = <assets::Module<T>>::assets_burn(&native_asset_id, &who, &amount.low_u128().saturated_into::<T::Balance>());
 
-            ensure!(result.is_ok(), Error::<T>::BurnFailure);
+            let native_asset_id = <asset::Module<T>>::get_native_asset_id(asset_id);
+
+            ensure!(T::Currency::can_slash(
+                native_asset_id,
+                &who,
+                amount.low_u128().saturated_into::<BalanceOf<T>>(),
+                ),
+                Error::<T>::BurnFailure);
+
+            T::Currency::slash(
+                native_asset_id,
+                &who,
+                amount.low_u128().saturated_into::<BalanceOf<T>>(),
+                );
+
+
             Self::deposit_event(RawEvent::Transfer(asset_id, who, recipient, amount));
             Ok(())
         }
@@ -116,17 +132,17 @@ impl<T: Trait> Module<T> {
 
         //FIXME overflow unsafe!
         if !<asset::Module<T>>::exists(payload.token_addr) {
-            let id = <assets::Module<T>>::assets_issue(
+            let id = T::Currency::create(
                 &payload.recipient_addr,
-                &payload.amount.low_u128().saturated_into::<T::Balance>(),
+                payload.amount.low_u128().saturated_into::<BalanceOf<T>>(),
             );
             <asset::Module<T>>::link_assets(id, payload.token_addr);
         } else {
             let id = <asset::Module<T>>::get_native_asset_id(payload.token_addr);
-            <assets::Module<T>>::assets_mint(
-                &id,
+            T::Currency::mint(
+                id,
                 &payload.recipient_addr,
-                &payload.amount.low_u128().saturated_into::<T::Balance>(),
+                payload.amount.low_u128().saturated_into::<BalanceOf<T>>(),
             )?;
         }
 

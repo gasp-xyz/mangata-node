@@ -33,6 +33,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_support::{decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult};
+use orml_tokens::{MultiTokenCreatableCurrency, MultiTokenCurrency};
 use frame_system as system;
 use sp_core::{RuntimeDebug, U256};
 use sp_std::prelude::*;
@@ -40,13 +41,6 @@ use sp_std::prelude::*;
 use codec::{Decode, Encode};
 
 use artemis_core::BridgedAssetId;
-use pallet_assets as assets;
-
-// #[cfg(test)]
-// mod mock;
-//
-// #[cfg(test)]
-// mod tests;
 
 #[derive(Encode, Decode, Clone, PartialEq, Eq, Default, RuntimeDebug)]
 pub struct AccountData {
@@ -55,24 +49,32 @@ pub struct AccountData {
 
 // type AssetAccountData = AccountData;
 
-pub trait Trait: assets::Trait {
+pub trait Trait: frame_system::Trait {
     type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
+    type Currency: MultiTokenCreatableCurrency<Self::AccountId>;
 }
+
+type BalanceOf<T> =
+    <<T as Trait>::Currency as MultiTokenCurrency<<T as frame_system::Trait>::AccountId>>::Balance;
+
+type CurrencyIdOf<T> = <<T as Trait>::Currency as MultiTokenCurrency<
+    <T as frame_system::Trait>::AccountId,
+>>::CurrencyId;
 
 decl_storage! {
     trait Store for Module<T: Trait> as Asset {
-        pub NativeAsset get(fn get_native_asset_id): map hasher(blake2_128_concat) BridgedAssetId => T::AssetId;
-        pub BridgedAsset get(fn get_bridged_asset_id): map hasher(blake2_128_concat) T::AssetId => BridgedAssetId;
+        pub NativeAsset get(fn get_native_asset_id): map hasher(blake2_128_concat) BridgedAssetId => CurrencyIdOf<T>;
+        pub BridgedAsset get(fn get_bridged_asset_id): map hasher(blake2_128_concat) CurrencyIdOf<T> => BridgedAssetId;
         //pub TotalIssuance: map        hasher(blake2_128_concat) BridgedAssetId => U256;
         //pub Account:       double_map hasher(blake2_128_concat) BridgedAssetId, hasher(blake2_128_concat) T::AccountId => AssetAccountData;
     }
     add_extra_genesis {
         #[allow(clippy::type_complexity)]
-        config(bridged_assets_links): Vec<(T::AssetId, BridgedAssetId, T::Balance, T::AccountId)>;
+        config(bridged_assets_links): Vec<(CurrencyIdOf<T>, BridgedAssetId, BalanceOf<T>, T::AccountId)>;
         build(|config: &GenesisConfig<T>|
             {
                 for (native_asset_id, bridged_asset_id, initial_supply, initial_owner) in config.bridged_assets_links.iter(){
-                    let initialized_asset_id = <assets::Module<T>>::assets_issue(&initial_owner, &initial_supply);
+                    let initialized_asset_id = T::Currency::create(&initial_owner, *initial_supply);
                     assert!(initialized_asset_id == *native_asset_id, "Assets not initialized in the sequence of the asset ids provided");
                     Module::<T>::link_assets(native_asset_id.to_owned(), bridged_asset_id.to_owned());
 
@@ -130,7 +132,7 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
-    pub fn link_assets(native_asset_id: T::AssetId, bridged_asset_id: BridgedAssetId) {
+    pub fn link_assets(native_asset_id: CurrencyIdOf<T>, bridged_asset_id: BridgedAssetId) {
         <NativeAsset<T>>::insert(bridged_asset_id, native_asset_id);
         <BridgedAsset<T>>::insert(native_asset_id, bridged_asset_id);
     }

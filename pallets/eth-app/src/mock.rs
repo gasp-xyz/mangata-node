@@ -12,7 +12,7 @@ use sp_runtime::{
 };
 
 use artemis_asset as asset;
-use pallet_assets as assets;
+use orml_tokens;
 
 impl_outer_origin! {
     pub enum Origin for MockRuntime {}
@@ -26,7 +26,7 @@ impl_outer_event! {
     pub enum MockEvent for MockRuntime {
         system<T>,
         asset<T>,
-        assets<T>,
+        orml_tokens<T>,
         test_events<T>,
     }
 }
@@ -75,12 +75,16 @@ impl system::Trait for MockRuntime {
 
 impl asset::Trait for MockRuntime {
     type Event = MockEvent;
+    type Currency = orml_tokens::MultiTokenCurrencyAdapter<MockRuntime>;
 }
 
-impl assets::Trait for MockRuntime {
+impl orml_tokens::Trait for MockRuntime {
     type Event = MockEvent;
-    type Balance = u32;
-    type AssetId = u32;
+    type Balance = u128;
+    type Amount = i128;
+    type CurrencyId = u32;
+    type OnReceived = ();
+    type WeightInfo = ();
 }
 
 impl Trait for MockRuntime {

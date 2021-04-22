@@ -9,6 +9,7 @@ use sp_runtime::{
     traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
     MultiSignature, Perbill,
 };
+use orml_tokens::MultiTokenCurrencyAdapter;
 use sp_std::convert::From;
 
 impl_outer_dispatch! {
@@ -19,7 +20,7 @@ impl_outer_dispatch! {
         artemis_eth_app::AppETHModule,
         artemis_erc20_app::AppERC20Module,
         artemis_asset::ArtemisAssetModule,
-        pallet_assets::AssetsModule,
+        orml_tokens::TokensModule,
     }
 }
 
@@ -40,7 +41,7 @@ impl_outer_event! {
         artemis_eth_app<T>,
         artemis_erc20_app<T>,
         artemis_asset<T>,
-        pallet_assets<T>,
+        orml_tokens<T>,
     }
 }
 
@@ -100,12 +101,16 @@ impl artemis_erc20_app::Trait for Test {
 
 impl artemis_asset::Trait for Test {
     type Event = Event;
+    type Currency = MultiTokenCurrencyAdapter<Test>;
 }
 
-impl pallet_assets::Trait for Test {
-    type Balance = u128;
-    type AssetId = u32;
+impl orml_tokens::Trait for Test {
     type Event = Event;
+    type Balance = u128;
+    type Amount = i128;
+    type CurrencyId = u32;
+    type OnReceived = ();
+    type WeightInfo = ();
 }
 
 impl Trait for Test {
@@ -121,7 +126,7 @@ pub type VerifierModule = pallet_verifier::Module<Test>;
 pub type AppETHModule = artemis_eth_app::Module<Test>;
 pub type AppERC20Module = artemis_erc20_app::Module<Test>;
 pub type ArtemisAssetModule = artemis_asset::Module<Test>;
-pub type AssetsModule = pallet_assets::Module<Test>;
+pub type TokensModule = orml_tokens::Module<Test>;
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
     frame_system::GenesisConfig::default()

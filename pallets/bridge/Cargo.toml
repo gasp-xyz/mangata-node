@@ -59,7 +59,8 @@ pallet-verifier = {path = "../verifier"}
 artemis-erc20-app = {path = "../erc20-app"}
 artemis-eth-app = {path = "../eth-app"}
 artemis-asset = {path = "../bridged-asset"}
-pallet-assets = {path = "../assets"}
+orml-tokens = {path = "../tokens", default-features = false, version="0.3.1"}
+orml-traits = {default-features = false, version="0.3.1"}
 
 [features]
 default = ["std"]
@@ -72,7 +73,7 @@ std = [
     "sp-io/std",
     "sp-runtime/std",
     "sp-std/std",
-    "artemis-core/std"
+    "artemis-core/std",
 ]
 runtime-benchmarks = [
 	"frame-benchmarking",

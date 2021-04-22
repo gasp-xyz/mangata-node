@@ -29,8 +29,8 @@ use sp_std::prelude::*;
 
 use artemis_asset as asset;
 use artemis_core::{Application, BridgedAssetId};
-use pallet_assets as assets;
 use sp_runtime::traits::SaturatedConversion;
+use orml_tokens::{MultiTokenCreatableCurrency, MultiTokenCurrency};
 
 mod payload;
 use payload::Payload;
@@ -44,6 +44,9 @@ mod tests;
 pub trait Trait: system::Trait + asset::Trait {
     type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 }
+
+type BalanceOf<T> =
+    <<T as artemis_asset::Trait>::Currency as MultiTokenCurrency<<T as frame_system::Trait>::AccountId>>::Balance;
 
 decl_storage! {
     trait Store for Module<T: Trait> as Erc20Module {
@@ -86,11 +89,21 @@ decl_module! {
             let who = ensure_signed(origin)?;
             let asset_id: BridgedAssetId = H160::zero();
 
-            // <asset::Module<T>>::do_burn(asset_id, &who, amount)?;
             let asset_id = <asset::Module<T>>::get_native_asset_id(asset_id);
-            let result = <assets::Module<T>>::assets_burn(&asset_id, &who, &amount.low_u128().saturated_into::<T::Balance>());
 
-            ensure!(result.is_ok(), Error::<T>::BurnFailure);
+            ensure!(T::Currency::can_slash(
+                asset_id,
+                &who,
+                amount.low_u128().saturated_into::<BalanceOf<T>>(),
+                ),
+                Error::<T>::BurnFailure);
+
+            T::Currency::slash(
+                asset_id,
+                &who,
+                amount.low_u128().saturated_into::<BalanceOf<T>>(),
+                );
+
             Self::deposit_event(RawEvent::Transfer(who, recipient, amount));
             Ok(())
         }
@@ -105,17 +118,17 @@ impl<T: Trait> Module<T> {
 
         //FIXME overflow unsafe!
         if !<asset::Module<T>>::exists(asset_id) {
-            let id = <assets::Module<T>>::assets_issue(
+            let id = T::Currency::create(
                 &payload.recipient_addr,
-                &payload.amount.low_u128().saturated_into::<T::Balance>(),
+                payload.amount.low_u128().saturated_into::<BalanceOf<T>>(),
             );
             <asset::Module<T>>::link_assets(id, asset_id);
         } else {
             let id = <asset::Module<T>>::get_native_asset_id(asset_id);
-            <assets::Module<T>>::assets_mint(
-                &id,
+            T::Currency::mint(
+                id,
                 &payload.recipient_addr,
-                &payload.amount.low_u128().saturated_into::<T::Balance>(),
+                payload.amount.low_u128().saturated_into::<BalanceOf<T>>(),
             )?;
         }
 

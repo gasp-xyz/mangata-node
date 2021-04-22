@@ -67,6 +67,8 @@ fn initialize() {
 	<pallet_assets::Module<Test>>::assets_issue(&accId, &amount);
 	<pallet_assets::Module<Test>>::assets_issue(&accId, &amount);
 	<pallet_assets::Module<Test>>::assets_issue(&accId, &amount);
+	<pallet_assets::Module<Test>>::assets_issue(&accId, &amount);
+
 	XykStorage::create_pool(
 		Origin::signed(2),
 		0,
@@ -77,7 +79,7 @@ fn initialize() {
 
 	XykStorage::create_pool(
 		Origin::signed(2),
-		1,
+		0,
 		1000000,
 		2,
 		1000000,
@@ -85,85 +87,159 @@ fn initialize() {
 
 	XykStorage::create_pool(
 		Origin::signed(2),
-		2,
+		1,
 		1000000,
 		3,
 		1000000,
 	);
 
+	XykStorage::create_pool(
+		Origin::signed(2),
+		3,
+		1000000,
+		4,
+		1000000,
+	);
 
+	XykStorage::create_pool(
+		Origin::signed(2),
+		1,
+		1000000,
+		2,
+		1000000,
+	);
 }
 
 #[test]
-fn sell_mangata() {
+//mangata pool
+fn buy_and_burn_sell_mangata() {
 		new_test_ext().execute_with(|| {
 			initialize();
 			XykStorage::sell_asset(Origin::signed(2), 0, 1, 10000, 0);
 
-			assert_eq!(XykStorage::asset_pool((0, 1)), 1009990); // pool - goes 10 less (not 10000), which goes for buy and burn
+			assert_eq!(XykStorage::asset_pool((0, 1)), 1009990); // pool - regular trade result = + 10000 - 5 treasury - 5 burn
  			assert_eq!(XykStorage::asset_pool((1, 0)), 990129); // pool - regular trade result
-			assert_eq!(<pallet_assets::Module<Test>>::balance(0, 2),8990000); // user acc - regular trade result
-			assert_eq!(<pallet_assets::Module<Test>>::balance(1, 2),8009871); // user acc - regular trade result
-			assert_eq!(<pallet_assets::Module<Test>>::balance(0, XykStorage::account_id()),1009995); // vault - pool + treasury
-			assert_eq!(<pallet_assets::Module<Test>>::balance(1, XykStorage::account_id()),1990129); // vault - regular trade result
+			assert_eq!(<pallet_assets::Module<Test>>::balance(0, 2),7990000); // user acc - regular trade result
+			assert_eq!(<pallet_assets::Module<Test>>::balance(1, 2),7009871); // user acc - regular trade result
+			assert_eq!(<pallet_assets::Module<Test>>::balance(0, XykStorage::account_id()),2009995); // vault - pool (0-1), pool (0-2), treasury (5)
+			assert_eq!(<pallet_assets::Module<Test>>::balance(1, XykStorage::account_id()),2990129); // vault - regular trade result
 			assert_eq!(XykStorage::treasury(0), 5); // 5 mangata in treasury
-			assert_eq!(XykStorage::treasury(1), 0);
-			assert_eq!(XykStorage::treasury(2), 0);
+			assert_eq!(XykStorage::treasury(1), 0);			
 			assert_eq!(XykStorage::treasury_burn(0), 0);
 			assert_eq!(XykStorage::treasury_burn(1), 0);
-			assert_eq!(XykStorage::treasury_burn(2), 0);
+			
 	});
 }
 
 #[test]
-fn sell_other_with_mangata_pool() {
+//mangata pool
+fn buy_and_burn_sell_other_for_mangata() {
 	new_test_ext().execute_with(|| {
 		initialize();
-
-		XykStorage::sell_asset(Origin::signed(2), 1, 2, 10000, 0);
-		assert_eq!(XykStorage::asset_pool((1, 2)), 1009990); // pool - goes 10 less (not 10000), which goes for buy and burn
-		assert_eq!(XykStorage::asset_pool((2, 1)), 990129); // pool - regular trade result
-		assert_eq!(XykStorage::asset_pool((0, 1)), 999991); // pool - 10 assets1 got exchanged in pool 0-1 for 9 mangata
-		assert_eq!(XykStorage::asset_pool((1, 0)), 1000010); // pool - 10 assets1 got exchanged in pool 0-1 for 9 mangata
-		assert_eq!(<pallet_assets::Module<Test>>::balance(1, 2),7990000); // user acc - regular trade result
-		assert_eq!(<pallet_assets::Module<Test>>::balance(2, 2),8009871); // user acc - regular trade result
-		assert_eq!(<pallet_assets::Module<Test>>::balance(1, XykStorage::account_id()),2010000); // vault - regular trade result
-		assert_eq!(<pallet_assets::Module<Test>>::balance(2, XykStorage::account_id()),1990129); // vault - regular trade result
-		//TODO rounding error check
-		assert_eq!(<pallet_assets::Module<Test>>::balance(0, XykStorage::account_id()),999996); // vault - pool + treasury
-		assert_eq!(XykStorage::treasury(0), 4); // 4 mangata in treasury 
-		assert_eq!(XykStorage::treasury(1), 0);
-		assert_eq!(XykStorage::treasury(2), 0);
-		assert_eq!(XykStorage::treasury_burn(0), 0);
-		assert_eq!(XykStorage::treasury_burn(1), 0);
-		assert_eq!(XykStorage::treasury_burn(2), 0);
-
+		XykStorage::sell_asset(Origin::signed(2), 1, 0, 10000, 0);
+		
+		assert_eq!(XykStorage::asset_pool((0, 1)), 990121); // pool - regular trade result = - 9871 - 4 treasury - 4 burn
+		assert_eq!(XykStorage::asset_pool((1, 0)), 1010000); // pool - regular trade result
+	    assert_eq!(<pallet_assets::Module<Test>>::balance(0, 2),8009871); // user acc - regular trade result
+	    assert_eq!(<pallet_assets::Module<Test>>::balance(1, 2),6990000); // user acc - regular trade result
+	    assert_eq!(<pallet_assets::Module<Test>>::balance(0, XykStorage::account_id()),1990125); // vault - pool (0-1), pool (0-2), treasury (4)
+	    assert_eq!(<pallet_assets::Module<Test>>::balance(1, XykStorage::account_id()),3010000); // vault - regular trade result
+	    assert_eq!(XykStorage::treasury(0), 4); // 4 mangata in treasury
+	    assert_eq!(XykStorage::treasury(1), 0);			
+	    assert_eq!(XykStorage::treasury_burn(0), 0);
+	    assert_eq!(XykStorage::treasury_burn(1), 0);	
 });
 }
+
 #[test]
-fn sell_other_wo_mangata_pool() {
+fn buy_and_burn_sell_only_sold_has_mangata_pair() {
 	new_test_ext().execute_with(|| {
-
 		initialize();
+		XykStorage::sell_asset(Origin::signed(2), 1, 3, 10000, 0);
 
+		assert_eq!(XykStorage::asset_pool((0, 1)), 999992); // pool - 4 treasury - 4 burn
+ 		assert_eq!(XykStorage::asset_pool((1, 0)), 1000010); // pool + 5 treasury + 5 burn / swapped for - 4 - 4 in pool (0-1)
+		assert_eq!(XykStorage::asset_pool((1, 3)), 1009990); // pool - 5 treasury - 5 burn
+ 		assert_eq!(XykStorage::asset_pool((3, 1)), 990129); // pool regular trade result
+		assert_eq!(<pallet_assets::Module<Test>>::balance(1, 2),6990000); // user acc - regular trade result
+		assert_eq!(<pallet_assets::Module<Test>>::balance(3, 2),8009871); // user acc - regular trade result
+		assert_eq!(<pallet_assets::Module<Test>>::balance(0, XykStorage::account_id()),1999996); // vault - pool (0-1), pool (0-2), treasury (4)
+		assert_eq!(<pallet_assets::Module<Test>>::balance(1, XykStorage::account_id()),3010000); // vault - regular trade result
+		assert_eq!(<pallet_assets::Module<Test>>::balance(3, XykStorage::account_id()),1990129); // vault - regular trade result
+		assert_eq!(XykStorage::treasury(0), 4); // 4 mangata in treasury
+		assert_eq!(XykStorage::treasury(1), 0);			
+		assert_eq!(XykStorage::treasury_burn(0), 0);
+		assert_eq!(XykStorage::treasury_burn(1), 0);
+});
+}
+
+#[test]
+fn buy_and_burn_sell_only_bought_has_mangata_pair() {
+	new_test_ext().execute_with(|| {
+		initialize();
+		XykStorage::sell_asset(Origin::signed(2), 3, 1, 10000, 0);
+
+		assert_eq!(XykStorage::asset_pool((0, 1)), 999994); // pool - 3 treasury - 3 burn
+		assert_eq!(XykStorage::asset_pool((1, 0)), 1000008); // pool + 4 treasury + 4 burn / swapped for - 4 - 4 in pool (0-1)
+	    assert_eq!(XykStorage::asset_pool((1, 3)), 990121); // pool - 4 treasury - 4 burn
+		assert_eq!(XykStorage::asset_pool((3, 1)), 1010000); // pool regular trade result
+	    assert_eq!(<pallet_assets::Module<Test>>::balance(1, 2),7009871); // user acc - regular trade result
+	    assert_eq!(<pallet_assets::Module<Test>>::balance(3, 2),7990000); // user acc - regular trade result
+	    assert_eq!(<pallet_assets::Module<Test>>::balance(0, XykStorage::account_id()),1999997); // vault - pool (0-1), pool (0-2), treasury (4)
+	    assert_eq!(<pallet_assets::Module<Test>>::balance(1, XykStorage::account_id()),2990129); // vault - regular trade result
+	    assert_eq!(<pallet_assets::Module<Test>>::balance(3, XykStorage::account_id()),2010000); // vault - regular trade result
+	    assert_eq!(XykStorage::treasury(0), 3); // 4 mangata in treasury
+	    assert_eq!(XykStorage::treasury(1), 0);			
+	    assert_eq!(XykStorage::treasury_burn(0), 0);
+	    assert_eq!(XykStorage::treasury_burn(1), 0);
+});
+}
+
+#[test]
+fn buy_and_burn_sell_both_have_mangata_pair() {
+	new_test_ext().execute_with(|| {
+		initialize();
 		XykStorage::sell_asset(Origin::signed(2), 2, 1, 10000, 0);
 
-		assert_eq!(XykStorage::asset_pool((2, 1)), 1009990); 
-		assert_eq!(XykStorage::asset_pool((1, 2)), 990129); 
-		assert_eq!(XykStorage::asset_pool((0, 1)), 1000000);
-		assert_eq!(<pallet_assets::Module<Test>>::balance(2, 2),7990000); 
-		assert_eq!(<pallet_assets::Module<Test>>::balance(1, 2),8009871); 
-		assert_eq!(<pallet_assets::Module<Test>>::balance(2, XykStorage::account_id()),2010000); 
-		assert_eq!(<pallet_assets::Module<Test>>::balance(1, XykStorage::account_id()),1990129); 
-		assert_eq!(XykStorage::treasury(0), 0);
-		assert_eq!(XykStorage::treasury(1), 0);
-		assert_eq!(XykStorage::treasury(2), 5);
-		assert_eq!(XykStorage::treasury_burn(0), 0);
-		assert_eq!(XykStorage::treasury_burn(1), 0);
-		assert_eq!(XykStorage::treasury_burn(2), 5);
+		assert_eq!(XykStorage::asset_pool((0, 1)), 999994); // pool - 3 treasury - 3 burn
+		assert_eq!(XykStorage::asset_pool((1, 0)), 1000008); // pool + 4 treasury + 4 burn / swapped for - 4 - 4 in pool (0-1)
+	    assert_eq!(XykStorage::asset_pool((1, 2)), 990121); // pool - 4 treasury - 4 burn
+		assert_eq!(XykStorage::asset_pool((2, 1)), 1010000); // pool regular trade result
+	    assert_eq!(<pallet_assets::Module<Test>>::balance(1, 2),7009871); // user acc - regular trade result
+	    assert_eq!(<pallet_assets::Module<Test>>::balance(2, 2),7990000); // user acc - regular trade result
+	    assert_eq!(<pallet_assets::Module<Test>>::balance(0, XykStorage::account_id()),1999997); // vault - pool (0-1), pool (0-2), treasury (4)
+	    assert_eq!(<pallet_assets::Module<Test>>::balance(1, XykStorage::account_id()),2990129); // vault - regular trade result
+	    assert_eq!(<pallet_assets::Module<Test>>::balance(2, XykStorage::account_id()),2010000); // vault - regular trade result
+	    assert_eq!(XykStorage::treasury(0), 3); // 4 mangata in treasury
+	    assert_eq!(XykStorage::treasury(1), 0);			
+	    assert_eq!(XykStorage::treasury_burn(0), 0);
+	    assert_eq!(XykStorage::treasury_burn(1), 0);
+});
+}
+
+#[test]
+fn buy_and_burn_sell_none_have_mangata_pair() {
+	new_test_ext().execute_with(|| {
+		initialize();
+		XykStorage::sell_asset(Origin::signed(2), 3, 4, 10000, 0);
+
+		assert_eq!(XykStorage::asset_pool((0, 1)), 1000000); // pool - 3 treasury - 3 burn
+		assert_eq!(XykStorage::asset_pool((1, 0)), 1000000); // pool + 4 treasury + 4 burn / swapped for - 4 - 4 in pool (0-1)
+	    assert_eq!(XykStorage::asset_pool((3, 4)), 1010000); // pool - 4 treasury - 4 burn
+		assert_eq!(XykStorage::asset_pool((4, 3)), 990121); // pool regular trade result
+	    assert_eq!(<pallet_assets::Module<Test>>::balance(3, 2),7990000); // user acc - regular trade result
+	    assert_eq!(<pallet_assets::Module<Test>>::balance(4, 2),9009871); // user acc - regular trade result
+	    assert_eq!(<pallet_assets::Module<Test>>::balance(0, XykStorage::account_id()),2000000); // vault - pool (0-1), pool (0-2), treasury (4)
+	    assert_eq!(<pallet_assets::Module<Test>>::balance(3, XykStorage::account_id()),2010000); // vault - regular trade result
+	    assert_eq!(<pallet_assets::Module<Test>>::balance(4, XykStorage::account_id()),990129); // vault - regular trade result
+	    assert_eq!(XykStorage::treasury(0), 0); 
+	    assert_eq!(XykStorage::treasury(4), 4); // 4 token 4 in treasury
+	    assert_eq!(XykStorage::treasury_burn(0), 0);
+	    assert_eq!(XykStorage::treasury_burn(4), 4); // 4 token 4 in burn
 
 });
 }
+
 // #[test]
 // fn create_pool_W() {
 // 	new_test_ext().execute_with(|| {

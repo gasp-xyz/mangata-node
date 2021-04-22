@@ -27,9 +27,9 @@ pub trait Trait: assets::Trait {
 const PALLET_ID: ModuleId = ModuleId(*b"79b14c96");
 // 1/100 %
 const TREASURY_PERCENTAGE: u128 = 5; 
-const BUYANDBURN_PERCENTAGE:  u128 = 5; 
-const SWAPFEE_PERCENTAGE:  u128 = 30; 
-const MANGATA_ID:  u128 = 0; 
+const BUYANDBURN_PERCENTAGE: u128 = 5; 
+const SWAPFEE_PERCENTAGE: u128 = 30; 
+const MANGATA_ID: u128 = 0; 
 
 // const MANGATA_ID: frame_system::AssetId = 0;
 
@@ -652,9 +652,12 @@ impl<T: Trait> Module<T> {
 fn settle_treasury_and_burn( 
     sold_asset_id: T::AssetId,
     bought_asset_id: T::AssetId,
-    sold_asset_amount: T::Balance,) {
+    sold_asset_amount: T::Balance,)
+    {
 
+    let vault = Self::account_id();
     let mangata_id = MANGATA_ID.saturated_into::<T::AssetId>();
+    //TODO cucat z fn
     let input_reserve = <Pools<T>>::get((sold_asset_id, bought_asset_id));
     let output_reserve = <Pools<T>>::get((bought_asset_id, sold_asset_id));
 
@@ -737,10 +740,7 @@ fn settle_treasury_and_burn(
             <TreasuryBurn<T>>::get(settling_asset_id) + burn_amount
         );
     }
-
-
 }
-
 
     fn account_id() -> T::AccountId {
         PALLET_ID.into_account()

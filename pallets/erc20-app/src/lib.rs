@@ -100,26 +100,13 @@ decl_module! {
             if asset_id == H160::zero() {
                 return Err(Error::<T>::InvalidAssetId.into())
             }
-
             let native_asset_id = <asset::Module<T>>::get_native_asset_id(asset_id);
 
-
-            let new_balance = T::Currency::free_balance(native_asset_id, &who).checked_sub(&amount).ok_or(Error::<T>::BurnFailure)?;
-
-            ensure!(T::Currency::ensure_can_withdraw(
+            T::Currency::burn_and_settle(
                 native_asset_id,
                 &who,
                 amount,
-                WithdrawReasons::all(),
-                new_balance).is_ok(),
-                Error::<T>::BurnFailure);
-
-            T::Currency::slash(
-                native_asset_id,
-                &who,
-                amount,
-                );
-
+                ).map_err(|_| Error::<T>::BurnFailure)?;
 
             Self::deposit_event(transfer_event);
             Ok(())

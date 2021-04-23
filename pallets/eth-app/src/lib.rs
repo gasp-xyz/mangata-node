@@ -96,25 +96,11 @@ decl_module! {
 
             let amount = amount.low_u128().saturated_into::<BalanceOf<T>>();
 
-            ensure!(T::Currency::can_slash(
-                asset_id,
-                &who,
-                amount
-                ),
-                Error::<T>::BurnFailure);
-
-            let new_balance = T::Currency::free_balance(asset_id, &who) - amount;
-            T::Currency::ensure_can_withdraw(asset_id,
-                &who,
-                amount,
-                WithdrawReasons::all(),
-                new_balance).or(Err(Error::<T>::BurnFailure))?;
-
-            T::Currency::slash(
+            T::Currency::burn_and_settle(
                 asset_id,
                 &who,
                 amount,
-                );
+                ).map_err(|_| Error::<T>::BurnFailure)?;
 
             Self::deposit_event(transfer_event);
             Ok(())

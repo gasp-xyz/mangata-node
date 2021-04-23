@@ -1137,7 +1137,7 @@ where
 
 
 impl<T> MultiTokenCurrencyExtended<T::AccountId> for MultiTokenCurrencyAdapter<T> where
-    T: Trait
+T: Trait
 {
 	fn create(address: &T::AccountId, amount: T::Balance) -> T::CurrencyId{
 		let token_id = <NextCurrencyId<T>>::get();
@@ -1162,6 +1162,19 @@ impl<T> MultiTokenCurrencyExtended<T::AccountId> for MultiTokenCurrencyAdapter<T
 
 	fn exists(currency_id: Self::CurrencyId) -> bool{
 		<TotalIssuance<T>>::contains_key(currency_id)
+	}
+
+	/// either succeeds or leaves state unchanged
+	fn burn_and_settle(currency_id: T::CurrencyId, who: &T::AccountId, amount: T::Balance) -> DispatchResult{
+		Module::<T>::ensure_can_withdraw(currency_id, who, amount)?;
+		let tokens = <Self as MultiTokenCurrency<T::AccountId>>::burn(currency_id, amount);
+		let _ = <Self as MultiTokenCurrency<T::AccountId>>::settle(
+			currency_id,
+			who,
+			tokens,
+			WithdrawReasons::all(),
+			ExistenceRequirement::AllowDeath);
+		Ok(())
 	}
 
 }

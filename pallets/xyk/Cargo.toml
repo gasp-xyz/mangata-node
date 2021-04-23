@@ -34,8 +34,8 @@ sp-io = { default-features = false, version = '2.0.0' }
 default = ['std']
 std = [
     'codec/std',
+    "sp-std/std",
     'frame-support/std',
     'frame-system/std',
     'orml-traits/std',
-    "sp-std/std",
 ]

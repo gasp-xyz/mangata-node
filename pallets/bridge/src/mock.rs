@@ -3,13 +3,13 @@ use crate::{Module, Trait};
 use frame_support::{
     impl_outer_dispatch, impl_outer_event, impl_outer_origin, parameter_types, weights::Weight,
 };
+use orml_tokens::MultiTokenCurrencyAdapter;
 use sp_core::H256;
 use sp_runtime::{
     testing::Header,
     traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
     MultiSignature, Perbill,
 };
-use orml_tokens::MultiTokenCurrencyAdapter;
 use sp_std::convert::From;
 
 impl_outer_dispatch! {

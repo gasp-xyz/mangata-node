@@ -20,6 +20,7 @@
 //!
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use frame_support::traits::WithdrawReasons;
 use frame_support::{
     decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult, ensure,
 };
@@ -29,8 +30,8 @@ use sp_std::prelude::*;
 
 use artemis_asset as asset;
 use artemis_core::{Application, BridgedAssetId};
+use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 use sp_runtime::traits::SaturatedConversion;
-use orml_tokens::{MultiTokenCreatableCurrency, MultiTokenCurrency};
 
 mod payload;
 use payload::Payload;
@@ -45,8 +46,9 @@ pub trait Trait: system::Trait + asset::Trait {
     type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 }
 
-type BalanceOf<T> =
-    <<T as artemis_asset::Trait>::Currency as MultiTokenCurrency<<T as frame_system::Trait>::AccountId>>::Balance;
+type BalanceOf<T> = <<T as artemis_asset::Trait>::Currency as MultiTokenCurrency<
+    <T as frame_system::Trait>::AccountId,
+>>::Balance;
 
 decl_storage! {
     trait Store for Module<T: Trait> as Erc20Module {
@@ -89,22 +91,32 @@ decl_module! {
             let who = ensure_signed(origin)?;
             let asset_id: BridgedAssetId = H160::zero();
 
+            let transfer_event = RawEvent::Transfer(who.clone(), recipient, amount);
             let asset_id = <asset::Module<T>>::get_native_asset_id(asset_id);
+
+            let amount = amount.low_u128().saturated_into::<BalanceOf<T>>();
 
             ensure!(T::Currency::can_slash(
                 asset_id,
                 &who,
-                amount.low_u128().saturated_into::<BalanceOf<T>>(),
+                amount
                 ),
                 Error::<T>::BurnFailure);
+
+            let new_balance = T::Currency::free_balance(asset_id, &who) - amount;
+            T::Currency::ensure_can_withdraw(asset_id,
+                &who,
+                amount,
+                WithdrawReasons::all(),
+                new_balance).or(Err(Error::<T>::BurnFailure))?;
 
             T::Currency::slash(
                 asset_id,
                 &who,
-                amount.low_u128().saturated_into::<BalanceOf<T>>(),
+                amount,
                 );
 
-            Self::deposit_event(RawEvent::Transfer(who, recipient, amount));
+            Self::deposit_event(transfer_event);
             Ok(())
         }
 

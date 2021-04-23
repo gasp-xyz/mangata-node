@@ -33,8 +33,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_support::{decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult};
-use orml_tokens::{MultiTokenCreatableCurrency, MultiTokenCurrency};
 use frame_system as system;
+use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 use sp_core::{RuntimeDebug, U256};
 use sp_std::prelude::*;
 
@@ -51,7 +51,7 @@ pub struct AccountData {
 
 pub trait Trait: frame_system::Trait {
     type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
-    type Currency: MultiTokenCreatableCurrency<Self::AccountId>;
+    type Currency: MultiTokenCurrencyExtended<Self::AccountId>;
 }
 
 type BalanceOf<T> =

@@ -13,7 +13,7 @@ use frame_support::{
 };
 use frame_system::ensure_root;
 
-use orml_tokens::{MultiTokenCreatableCurrency, MultiTokenCurrency};
+use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 // use pallet_assets as assets;
 
 #[cfg(test)]
@@ -23,7 +23,7 @@ mod mock;
 mod tests;
 
 /// Configure the pallet by specifying the parameters and types on which it depends.
-pub trait Trait: frame_system::Trait{
+pub trait Trait: frame_system::Trait {
     /// Because this pallet emits events, it depends on the runtime's definition of an event.
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
@@ -48,7 +48,7 @@ pub trait Trait: frame_system::Trait{
     /// The maximum decimal points an asset may be.
     type MaxDecimals: Get<u32>;
 
-    type Currency: MultiTokenCreatableCurrency<Self::AccountId>;
+    type Currency: MultiTokenCurrencyExtended<Self::AccountId>;
 }
 
 type CurrencyIdOf<T> = <<T as Trait>::Currency as MultiTokenCurrency<

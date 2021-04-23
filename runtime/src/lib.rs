@@ -80,6 +80,9 @@ pub type AccountIndex = u32;
 /// Balance of an account.
 pub type Balance = u128;
 
+/// Balance of an account.
+pub type Amount = i128;
+
 /// AssetId of an account.
 pub type AssetId = u32;
 
@@ -479,14 +482,10 @@ impl pallet_assets_info::Trait for Runtime {
 impl orml_tokens::Trait for Runtime {
     type Event = Event;
     type Balance = Balance;
-    type Amount = i128;
+    type Amount = Amount;
     type CurrencyId = u32;
     type OnReceived = ();
     type WeightInfo = ();
-}
-
-parameter_types! {
-    pub const GetNativeCurrencyId: u32 = 0;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -508,7 +507,6 @@ construct_runtime!(
         Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
         TransactionPayment: pallet_transaction_payment::{Module, Storage},
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
-        // Assets: pallet_assets::{Module, Call, Storage, Event<T>},
         Offences: pallet_offences::{Module, Call, Storage, Event},
         Xyk: pallet_xyk::{Module, Call, Storage, Event<T>},
         // Snowfork pallets
@@ -734,7 +732,7 @@ impl_runtime_apis! {
                 price: Xyk::calculate_buy_price(input_reserve, output_reserve, buy_amount)
             }
         }
-        
+
         fn get_burn_amount(
             first_asset_id: AssetId,
             second_asset_id: AssetId,

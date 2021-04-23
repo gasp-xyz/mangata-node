@@ -82,7 +82,7 @@ mod tests;
 mod multi_token_currency;
 mod multi_token_imbalances;
 
-pub use multi_token_currency::{MultiTokenCurrency, MultiTokenLockableCurrency, MultiTokenReservableCurrency, MultiTokenCreatableCurrency};
+pub use multi_token_currency::{MultiTokenCurrency, MultiTokenLockableCurrency, MultiTokenReservableCurrency, MultiTokenCurrencyExtended};
 use codec::FullCodec;
 
 pub trait WeightInfo {
@@ -194,7 +194,7 @@ decl_storage! {
 		/// NOTE: This is only used in the case that this module is used to store balances.
 		pub Accounts get(fn accounts): double_map hasher(blake2_128_concat) T::AccountId, hasher(twox_64_concat) T::CurrencyId => AccountData<T::Balance>;
 
-        NextCurrencyId get(fn next_asset_id): T::CurrencyId;
+		NextCurrencyId get(fn next_asset_id): T::CurrencyId;
 	}
 	add_extra_genesis {
 		config(endowed_accounts): Vec<(T::AccountId, T::CurrencyId, T::Balance)>;
@@ -1136,31 +1136,33 @@ where
 }
 
 
-impl<T> MultiTokenCreatableCurrency<T::AccountId> for MultiTokenCurrencyAdapter<T> where
+impl<T> MultiTokenCurrencyExtended<T::AccountId> for MultiTokenCurrencyAdapter<T> where
     T: Trait
 {
 	fn create(address: &T::AccountId, amount: T::Balance) -> T::CurrencyId{
-        let token_id = <NextCurrencyId<T>>::get();
+		let token_id = <NextCurrencyId<T>>::get();
 		<NextCurrencyId<T>>::mutate(|id| *id += One::one());
-        let tokens = <Self as MultiTokenCurrency<T::AccountId>>::issue(token_id, amount);
-        // we are creating new token so amount can not be overflowed as its always true
-        // 0 + amount < T::Balance::max_value()
-        let _ = <Self as MultiTokenCurrency<T::AccountId>>::resolve_into_existing(token_id, address, tokens);
-        token_id
-    }
+		// we are creating new token so amount can not be overflowed as its always true
+		// 0 + amount < T::Balance::max_value()
+		let _ = <Self as MultiTokenCurrency<T::AccountId>>::deposit_creating(token_id, address, amount);
+		token_id
+	}
 
-    fn mint(currency_id: T::CurrencyId, address: &T::AccountId, amount: T::Balance) -> DispatchResult {
-        let curren_balance =  <Self as MultiTokenCurrency<T::AccountId>>::total_balance(currency_id, address);
-        // check for overflow while minting
-        let _ = curren_balance.checked_add(&amount).ok_or(Error::<T>::BalanceOverflow)?;
-        let tokens = <Self as MultiTokenCurrency<T::AccountId>>::issue(currency_id, amount);
-        // we are always sure that there will be no overflow as it was checked
-        let _ = <Self as MultiTokenCurrency<T::AccountId>>::resolve_into_existing(currency_id, address, tokens);
-        Ok(())
-    }
+	fn mint(currency_id: T::CurrencyId, address: &T::AccountId, amount: T::Balance) -> DispatchResult {
+		if ! Self::exists(currency_id){
+			return Err(DispatchError::from(Error::<T>::TokenIdNotExists));
+		}
+		let current_balance =  <Self as MultiTokenCurrency<T::AccountId>>::total_balance(currency_id, address);
+		// check for overflow while minting
+		current_balance.checked_add(&amount).ok_or(Error::<T>::BalanceOverflow)?;
+		let tokens = <Self as MultiTokenCurrency<T::AccountId>>::issue(currency_id, amount);
+		// we are always sure that there will be no overflow as it was checked
+		let _ = <Self as MultiTokenCurrency<T::AccountId>>::resolve_into_existing(currency_id, address, tokens);
+		Ok(())
+	}
 
-    fn exists(currency_id: Self::CurrencyId) -> bool{
+	fn exists(currency_id: Self::CurrencyId) -> bool{
 		<TotalIssuance<T>>::contains_key(currency_id)
-    }
+	}
 
 }

@@ -9,10 +9,10 @@ use sp_runtime::{
     Perbill,
 };
 
+use crate::{BalanceOf, CurrencyIdOf};
 use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
 use frame_system as system;
-use orml_tokens::{MultiTokenCreatableCurrency, MultiTokenCurrencyAdapter, MultiTokenCurrency};
-use crate::{BalanceOf, CurrencyIdOf};
+use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
 
 impl_outer_origin! {
     pub enum Origin for Test {}

@@ -8,21 +8,19 @@ use frame_system::ensure_signed;
 use sp_core::U256;
 // TODO documentation!
 use frame_support::sp_runtime::traits::AccountIdConversion;
-use frame_support::traits::ExistenceRequirement;
+use frame_support::traits::{ExistenceRequirement, WithdrawReasons};
 use sp_runtime::traits::{SaturatedConversion, Zero};
 
-use orml_tokens::{MultiTokenCreatableCurrency, MultiTokenCurrency};
+use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
 mod tests;
 
-use frame_support::debug;
-
 pub trait Trait: frame_system::Trait {
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
-    type Currency: MultiTokenCreatableCurrency<Self::AccountId>;
+    type Currency: MultiTokenCurrencyExtended<Self::AccountId>;
 }
 
 type BalanceOf<T> =
@@ -129,15 +127,27 @@ decl_module! {
                 Error::<T>::PoolAlreadyExists,
             );
 
+            let first_asset_free_balance = T::Currency::free_balance(first_asset_id, &sender);
+            let second_asset_free_balance = T::Currency::free_balance(second_asset_id, &sender);
+
             ensure!(
-                T::Currency::free_balance(first_asset_id, &sender) >= first_asset_amount,
+                first_asset_free_balance >= first_asset_amount,
                 Error::<T>::NotEnoughAssets,
             );
 
             ensure!(
-                T::Currency::free_balance(second_asset_id, &sender) >= second_asset_amount,
+                second_asset_free_balance >= second_asset_amount,
                 Error::<T>::NotEnoughAssets,
             );
+
+            T::Currency::ensure_can_withdraw(first_asset_id, &sender, first_asset_amount,
+                WithdrawReasons::all()
+                ,first_asset_free_balance - first_asset_amount ).or(Err(Error::<T>::NotEnoughAssets))?;
+
+            T::Currency::ensure_can_withdraw(second_asset_id, &sender, second_asset_amount,
+                WithdrawReasons::all()
+                ,second_asset_free_balance - second_asset_amount).or(Err(Error::<T>::NotEnoughAssets))?;
+
 
             ensure!(
                 first_asset_id != second_asset_id,
@@ -195,7 +205,6 @@ decl_module! {
 
             let sender = ensure_signed(origin)?;
 
-            debug::native::error!("hwllo world");
             ensure!(
                 <Pools<T>>::contains_key((sold_asset_id,bought_asset_id)),
                 Error::<T>::NoSuchPool,
@@ -445,6 +454,13 @@ decl_module! {
                 T::Currency::can_slash(liquidity_asset_id, &sender, liquidity_asset_amount),
                 Error::<T>::NotEnoughAssets,
             );
+            let new_balance = T::Currency::free_balance(liquidity_asset_id, &sender) - liquidity_asset_amount;
+
+            T::Currency::ensure_can_withdraw(liquidity_asset_id,
+                &sender,
+                liquidity_asset_amount,
+                WithdrawReasons::all(),
+                new_balance).or(Err(Error::<T>::NotEnoughAssets))?;
 
             let (first_asset_amount, second_asset_amount) =  Self::get_burn_amount(first_asset_id, second_asset_id, liquidity_asset_amount);
 
@@ -553,10 +569,9 @@ impl<T: Trait> Module<T> {
         let second_asset_reserve_u256: U256 = <Pools<T>>::get((second_asset_id, first_asset_id))
             .saturated_into::<u128>()
             .into();
-        let total_liquidity_assets_u256: U256 =
-            T::Currency::total_issuance(liquidity_asset_id)
-                .saturated_into::<u128>()
-                .into();
+        let total_liquidity_assets_u256: U256 = T::Currency::total_issuance(liquidity_asset_id)
+            .saturated_into::<u128>()
+            .into();
         let liquidity_asset_amount_u256: U256 =
             liquidity_asset_amount.saturated_into::<u128>().into();
 
@@ -573,7 +588,7 @@ impl<T: Trait> Module<T> {
 
         (first_asset_amount, second_asset_amount)
     }
-    
+
     fn account_id() -> T::AccountId {
         PALLET_ID.into_account()
     }

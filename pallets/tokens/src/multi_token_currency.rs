@@ -310,7 +310,7 @@ pub trait MultiTokenLockableCurrency<AccountId>: MultiTokenCurrency<AccountId> {
 	);
 }
 
-pub trait MultiTokenCreatableCurrency<AccountId>: MultiTokenCurrency<AccountId> {
+pub trait MultiTokenCurrencyExtended<AccountId>: MultiTokenCurrency<AccountId> {
 	fn create(address: &AccountId, amount: Self::Balance) -> Self::CurrencyId;
     fn mint(currency_id: Self::CurrencyId, address: &AccountId, amount: Self::Balance) -> DispatchResult;
     fn exists(currency_id: Self::CurrencyId) -> bool;

@@ -937,7 +937,7 @@ where
 		Module::<T>::total_issuance(currency_id)
 	}
 
-	fn minimum_balance() -> Self::Balance {
+	fn minimum_balance(_currency_id: T::CurrencyId) -> Self::Balance {
 		Zero::zero()
 	}
 

@@ -36,7 +36,7 @@ pub trait MultiTokenCurrency<AccountId>{
 
 	/// The minimum balance any single account may have. This is equivalent to the `Balances` module's
 	/// `ExistentialDeposit`.
-	fn minimum_balance() -> Self::Balance;
+	fn minimum_balance(currency_id: Self::CurrencyId) -> Self::Balance;
 
 	/// Reduce the total issuance by `amount` and return the according imbalance. The imbalance will
 	/// typically be used to reduce an account by the same amount with e.g. `settle`.

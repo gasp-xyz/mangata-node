@@ -170,12 +170,6 @@ decl_module! {
                 (second_asset_id, first_asset_id), second_asset_amount
             );
 
-
-            let liquidity_asset_id = T::Currency::create(&sender, initial_liquidity);
-
-            <LiquidityAssets<T>>::insert((first_asset_id, second_asset_id), liquidity_asset_id);
-            <LiquidityPools<T>>::insert(liquidity_asset_id, (first_asset_id, second_asset_id));
-
             T::Currency::transfer(
                 first_asset_id,
                 &sender,
@@ -191,6 +185,11 @@ decl_module! {
                 second_asset_amount,
                 ExistenceRequirement::AllowDeath
             )?;
+
+            let liquidity_asset_id = T::Currency::create(&sender, initial_liquidity);
+
+            <LiquidityAssets<T>>::insert((first_asset_id, second_asset_id), liquidity_asset_id);
+            <LiquidityPools<T>>::insert(liquidity_asset_id, (first_asset_id, second_asset_id));
 
 
             Self::deposit_event(RawEvent::PoolCreated(sender, first_asset_id, first_asset_amount, second_asset_id, second_asset_amount));

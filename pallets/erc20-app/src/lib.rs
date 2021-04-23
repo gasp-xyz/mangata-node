@@ -21,18 +21,16 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_support::{
-    decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult, ensure,
+    decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult
 };
 use frame_system::{self as system, ensure_signed};
 use sp_core::{H160, U256};
-use sp_runtime::traits::CheckedSub;
 use sp_std::prelude::*;
 
 use artemis_asset as asset;
 use artemis_core::{Application, BridgedAssetId};
 use sp_runtime::traits::SaturatedConversion;
 
-use frame_support::traits::WithdrawReasons;
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 
 mod payload;

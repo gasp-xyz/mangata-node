@@ -20,9 +20,8 @@
 //!
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::traits::WithdrawReasons;
 use frame_support::{
-    decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult, ensure,
+    decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult
 };
 use frame_system::{self as system, ensure_signed};
 use sp_core::{H160, U256};

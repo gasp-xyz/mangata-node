@@ -719,7 +719,7 @@ impl_runtime_apis! {
             sell_amount: Balance
         ) -> RpcResult<Balance> {
             RpcResult {
-                price: Xyk::calculate_sell_price(input_reserve, output_reserve, sell_amount)
+                price: Xyk::calculate_sell_price(input_reserve, output_reserve, sell_amount).unwrap_or_default()
             }
         }
 

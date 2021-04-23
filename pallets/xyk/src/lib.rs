@@ -51,6 +51,7 @@ decl_error! {
         SameAsset,
         AssetAlreadyExists,
         AssetDoesNotExists,
+        DivisionByZero,
     }
 }
 
@@ -226,7 +227,7 @@ decl_module! {
                 input_reserve,
                 output_reserve,
                 sold_asset_amount,
-            );
+            )?;
 
             ensure!(
                 T::Currency::free_balance(sold_asset_id, &sender) >= sold_asset_amount,
@@ -519,7 +520,7 @@ impl<T: Trait> Module<T> {
         input_reserve: BalanceOf<T>,
         output_reserve: BalanceOf<T>,
         sell_amount: BalanceOf<T>,
-    ) -> BalanceOf<T> {
+    ) -> Result<BalanceOf<T>, DispatchError> {
         let input_reserve_saturated: U256 = input_reserve.saturated_into::<u128>().into();
         let output_reserve_saturated: U256 = output_reserve.saturated_into::<u128>().into();
         let sell_amount_saturated: U256 = sell_amount.saturated_into::<u128>().into();
@@ -527,11 +528,12 @@ impl<T: Trait> Module<T> {
         let input_amount_with_fee: U256 = sell_amount_saturated * 997;
         let numerator: U256 = input_amount_with_fee * output_reserve_saturated;
         let denominator: U256 = input_reserve_saturated * 1000 + input_amount_with_fee;
-        let result: U256 = numerator / denominator;
-
-        result
+        let result = numerator
+            .checked_div(denominator)
+            .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
+        Ok(result
             .saturated_into::<u128>()
-            .saturated_into::<BalanceOf<T>>()
+            .saturated_into::<BalanceOf<T>>())
     }
 
     pub fn calculate_buy_price(
@@ -601,7 +603,7 @@ impl<T: Trait> Module<T> {
 
                 (first_asset_amount, second_asset_amount)
             }
-            None => (0.into(), 0.into()),
+            None => (BalanceOf::<T>::default(), BalanceOf::<T>::default()),
         }
     }
 

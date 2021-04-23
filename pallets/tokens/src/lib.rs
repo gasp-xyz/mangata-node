@@ -1155,9 +1155,8 @@ impl<T> MultiTokenCurrencyExtended<T::AccountId> for MultiTokenCurrencyAdapter<T
 		let current_balance =  <Self as MultiTokenCurrency<T::AccountId>>::total_balance(currency_id, address);
 		// check for overflow while minting
 		current_balance.checked_add(&amount).ok_or(Error::<T>::BalanceOverflow)?;
-		let tokens = <Self as MultiTokenCurrency<T::AccountId>>::issue(currency_id, amount);
-		// we are always sure that there will be no overflow as it was checked
-		let _ = <Self as MultiTokenCurrency<T::AccountId>>::resolve_into_existing(currency_id, address, tokens);
+
+		let _ = <Self as MultiTokenCurrency<T::AccountId>>::deposit_creating(currency_id, address, amount);
 		Ok(())
 	}
 

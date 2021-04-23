@@ -181,7 +181,7 @@ decl_module! {
                 &sender,
                 &vault,
                 first_asset_amount,
-                ExistenceRequirement::KeepAlive
+                ExistenceRequirement::AllowDeath
             )?;
 
             T::Currency::transfer(
@@ -189,7 +189,7 @@ decl_module! {
                 &sender,
                 &vault,
                 second_asset_amount,
-                ExistenceRequirement::KeepAlive
+                ExistenceRequirement::AllowDeath
             )?;
 
 

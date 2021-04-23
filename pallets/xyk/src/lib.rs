@@ -404,8 +404,6 @@ decl_module! {
                 Error::<T>::NotEnoughAssets,
             );
 
-            T::Currency::mint(liquidity_asset_id,&sender, liquidity_assets_minted)?;
-
             T::Currency::transfer(
                 first_asset_id,
                 &sender,
@@ -420,6 +418,8 @@ decl_module! {
                 second_asset_amount,
                 ExistenceRequirement::KeepAlive,
             )?;
+
+            T::Currency::mint(liquidity_asset_id,&sender, liquidity_assets_minted)?;
 
             <Pools<T>>::insert(
                 (&first_asset_id, &second_asset_id),

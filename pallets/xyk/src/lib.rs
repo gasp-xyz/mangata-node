@@ -92,8 +92,8 @@ decl_storage! {
 
         Pools get(fn asset_pool): map hasher(opaque_blake2_256) (CurrencyIdOf<T>, CurrencyIdOf<T>) => BalanceOf<T>;
 
-        LiquidityAssets get(fn liquidity_asset): map hasher(opaque_blake2_256) (CurrencyIdOf<T>, CurrencyIdOf<T>) => Option<CurrencyIdOf<T>>;
-        LiquidityPools get(fn liquidity_pool): map hasher(opaque_blake2_256) CurrencyIdOf<T> => Option<(CurrencyIdOf<T>, CurrencyIdOf<T>)>;
+        LiquidityAssets get(fn liquidity_asset): map hasher(opaque_blake2_256) (CurrencyIdOf<T>, CurrencyIdOf<T>) => CurrencyIdOf<T>;
+        LiquidityPools get(fn liquidity_pool): map hasher(opaque_blake2_256) CurrencyIdOf<T> => (CurrencyIdOf<T>, CurrencyIdOf<T>);
 
         Nonce get (fn nonce): u32;
 
@@ -364,7 +364,7 @@ decl_module! {
             let liquidity_asset_id = Self::get_liquidity_asset(
                  first_asset_id,
                  second_asset_id
-            ).ok_or_else(|| DispatchError::from(Error::<T>::NoSuchLiquidityAsset))?;
+            );
 
             ensure!(
                 (<Pools<T>>::contains_key((first_asset_id, second_asset_id)) || <Pools<T>>::contains_key((second_asset_id, first_asset_id))),
@@ -453,9 +453,7 @@ decl_module! {
 
             let first_asset_reserve = <Pools<T>>::get((first_asset_id, second_asset_id));
             let second_asset_reserve = <Pools<T>>::get((second_asset_id, first_asset_id));
-            let liquidity_asset_id = Self::get_liquidity_asset(first_asset_id, second_asset_id).ok_or_else(||
-                DispatchError::from(Error::<T>::NoSuchLiquidityAsset)
-                )?;
+            let liquidity_asset_id = Self::get_liquidity_asset(first_asset_id, second_asset_id);
 
             ensure!(
                 T::Currency::can_slash(liquidity_asset_id, &sender, liquidity_asset_amount),
@@ -556,13 +554,12 @@ impl<T: Trait> Module<T> {
     pub fn get_liquidity_asset(
         first_asset_id: CurrencyIdOf<T>,
         second_asset_id: CurrencyIdOf<T>,
-    ) -> Option<CurrencyIdOf<T>> {
-        [
-            (first_asset_id, second_asset_id),
-            (second_asset_id, first_asset_id),
-        ]
-        .iter()
-        .find_map(<LiquidityAssets<T>>::get)
+    ) -> CurrencyIdOf<T> {
+        if <LiquidityAssets<T>>::contains_key((first_asset_id, second_asset_id)) {
+            <LiquidityAssets<T>>::get((first_asset_id, second_asset_id))
+        } else {
+            <LiquidityAssets<T>>::get((second_asset_id, first_asset_id))
+        }
     }
 
     pub fn get_burn_amount(
@@ -570,40 +567,32 @@ impl<T: Trait> Module<T> {
         second_asset_id: CurrencyIdOf<T>,
         liquidity_asset_amount: BalanceOf<T>,
     ) -> (BalanceOf<T>, BalanceOf<T>) {
-        match Self::get_liquidity_asset(first_asset_id, second_asset_id) {
-            Some(liquidity_asset_id) => {
-                let first_asset_reserve_u256: U256 =
-                    <Pools<T>>::get((first_asset_id, second_asset_id))
-                        .saturated_into::<u128>()
-                        .into();
-                let second_asset_reserve_u256: U256 =
-                    <Pools<T>>::get((second_asset_id, first_asset_id))
-                        .saturated_into::<u128>()
-                        .into();
-                let total_liquidity_assets_u256: U256 =
-                    T::Currency::total_issuance(liquidity_asset_id)
-                        .saturated_into::<u128>()
-                        .into();
-                let liquidity_asset_amount_u256: U256 =
-                    liquidity_asset_amount.saturated_into::<u128>().into();
+        let liquidity_asset_id = Self::get_liquidity_asset(first_asset_id, second_asset_id);
+        let first_asset_reserve_u256: U256 = <Pools<T>>::get((first_asset_id, second_asset_id))
+            .saturated_into::<u128>()
+            .into();
+        let second_asset_reserve_u256: U256 = <Pools<T>>::get((second_asset_id, first_asset_id))
+            .saturated_into::<u128>()
+            .into();
+        let total_liquidity_assets_u256: U256 =
+            T::Currency::total_issuance(liquidity_asset_id)
+                .saturated_into::<u128>()
+                .into();
+        let liquidity_asset_amount_u256: U256 =
+            liquidity_asset_amount.saturated_into::<u128>().into();
 
-                let first_asset_amount_u256 = first_asset_reserve_u256
-                    * liquidity_asset_amount_u256
-                    / total_liquidity_assets_u256;
-                let second_asset_amount_u256 = second_asset_reserve_u256
-                    * liquidity_asset_amount_u256
-                    / total_liquidity_assets_u256;
-                let second_asset_amount = second_asset_amount_u256
-                    .saturated_into::<u128>()
-                    .saturated_into::<BalanceOf<T>>();
-                let first_asset_amount = first_asset_amount_u256
-                    .saturated_into::<u128>()
-                    .saturated_into::<BalanceOf<T>>();
+        let first_asset_amount_u256 =
+            first_asset_reserve_u256 * liquidity_asset_amount_u256 / total_liquidity_assets_u256;
+        let second_asset_amount_u256 =
+            second_asset_reserve_u256 * liquidity_asset_amount_u256 / total_liquidity_assets_u256;
+        let second_asset_amount = second_asset_amount_u256
+            .saturated_into::<u128>()
+            .saturated_into::<BalanceOf<T>>();
+        let first_asset_amount = first_asset_amount_u256
+            .saturated_into::<u128>()
+            .saturated_into::<BalanceOf<T>>();
 
-                (first_asset_amount, second_asset_amount)
-            }
-            None => (BalanceOf::<T>::default(), BalanceOf::<T>::default()),
-        }
+        (first_asset_amount, second_asset_amount)
     }
 
     fn account_id() -> T::AccountId {

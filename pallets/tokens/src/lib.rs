@@ -1166,14 +1166,12 @@ T: Trait
 
 	/// either succeeds or leaves state unchanged
 	fn burn_and_settle(currency_id: T::CurrencyId, who: &T::AccountId, amount: T::Balance) -> DispatchResult{
+		if amount.is_zero() {
+			return Ok(());
+		}
 		Module::<T>::ensure_can_withdraw(currency_id, who, amount)?;
-		let tokens = <Self as MultiTokenCurrency<T::AccountId>>::burn(currency_id, amount);
-		let _ = <Self as MultiTokenCurrency<T::AccountId>>::settle(
-			currency_id,
-			who,
-			tokens,
-			WithdrawReasons::all(),
-			ExistenceRequirement::AllowDeath);
+		<TotalIssuance<T>>::mutate(currency_id, |v| *v -= amount);
+		Module::<T>::set_free_balance(currency_id, who, Self::free_balance(currency_id, who) - amount);
 		Ok(())
 	}
 

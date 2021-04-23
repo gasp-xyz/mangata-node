@@ -2,9 +2,7 @@
   "name": "Mangata",
   "id": "test",
   "chainType": "Public testnet",
-  "bootNodes": [
-    "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWNiTyXGKX4BAZ3WeK4oZNuHEU8MNt2Caa1RNT8jJ9knhJ"
-  ],
+  "bootNodes": [],
   "telemetryEndpoints": null,
   "protocolId": null,
   "properties": null,

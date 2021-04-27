@@ -474,13 +474,13 @@ impl<T: Trait> Module<T> {
         output_reserve: T::Balance,
         sell_amount: T::Balance,
     ) -> T::Balance {
-        let input_reserve_saturated: U256 = input_reserve.saturated_into::<u128>().into();
-        let output_reserve_saturated: U256 = output_reserve.saturated_into::<u128>().into();
-        let sell_amount_saturated: U256 = sell_amount.saturated_into::<u128>().into();
+        let input_reserve_u256: U256 = input_reserve.saturated_into::<u128>().into();
+        let output_reserve_u256: U256 = output_reserve.saturated_into::<u128>().into();
+        let sell_amount_u256: U256 = sell_amount.saturated_into::<u128>().into();
 
-        let input_amount_with_fee: U256 = sell_amount_saturated * 997;
-        let numerator: U256 = input_amount_with_fee * output_reserve_saturated;
-        let denominator: U256 = input_reserve_saturated * 1000 + input_amount_with_fee;
+        let input_amount_with_fee: U256 = sell_amount_u256 * 997;
+        let numerator: U256 = input_amount_with_fee * output_reserve_u256;
+        let denominator: U256 = input_reserve_u256 * 1000 + input_amount_with_fee;
         let result: U256 = numerator / denominator;
 
         result
@@ -493,18 +493,56 @@ impl<T: Trait> Module<T> {
         output_reserve: T::Balance,
         buy_amount: T::Balance,
     ) -> T::Balance {
-        let input_reserve_saturated: U256 = input_reserve.saturated_into::<u128>().into();
-        let output_reserve_saturated: U256 = output_reserve.saturated_into::<u128>().into();
-        let buy_amount_saturated: U256 = buy_amount.saturated_into::<u128>().into();
+        let input_reserve_u256: U256 = input_reserve.saturated_into::<u128>().into();
+        let output_reserve_u256: U256 = output_reserve.saturated_into::<u128>().into();
+        let buy_amount_u256: U256 = buy_amount.saturated_into::<u128>().into();
 
-        let numerator: U256 = input_reserve_saturated * buy_amount_saturated * 1000;
-        let denominator: U256 = (output_reserve_saturated - buy_amount_saturated) * 997;
+        let numerator: U256 = input_reserve_u256 * buy_amount_u256 * 1000;
+        let denominator: U256 = (output_reserve_u256 - buy_amount_u256) * 997;
         let result: U256 = numerator / denominator + 1;
 
         result
             .saturated_into::<u128>()
             .saturated_into::<T::Balance>()
     }
+
+    pub fn calculate_sell_price_id(
+        sold_asset_id: T::AssetId,
+        bought_asset_id: T::AssetId,
+        sell_amount: T::Balance,
+    ) -> T::Balance {
+        let input_reserve_u256: U256 = <Pools<T>>::get((sold_asset_id, bought_asset_id)).saturated_into::<u128>().into();
+        let output_reserve_u256: U256 = <Pools<T>>::get((bought_asset_id, sold_asset_id)).saturated_into::<u128>().into();
+        let sell_amount_u256: U256 = sell_amount.saturated_into::<u128>().into();
+
+        let input_amount_with_fee: U256 = sell_amount_u256 * 997;
+        let numerator: U256 = input_amount_with_fee * output_reserve_u256;
+        let denominator: U256 = input_reserve_u256 * 1000 + input_amount_with_fee;
+        let result: U256 = numerator / denominator;
+
+        result
+            .saturated_into::<u128>()
+            .saturated_into::<T::Balance>()
+    }
+
+    pub fn calculate_buy_price_id(
+        sold_asset_id: T::AssetId,
+        bought_asset_id: T::AssetId,
+        buy_amount: T::Balance,
+    ) -> T::Balance {
+        let input_reserve_u256: U256 = <Pools<T>>::get((sold_asset_id, bought_asset_id)).saturated_into::<u128>().into();
+        let output_reserve_u256: U256 = <Pools<T>>::get((bought_asset_id, sold_asset_id)).saturated_into::<u128>().into();
+        let buy_amount_u256: U256 = buy_amount.saturated_into::<u128>().into();
+
+        let numerator: U256 = input_reserve_u256 * buy_amount_u256 * 1000;
+        let denominator: U256 = (output_reserve_u256 - buy_amount_u256) * 997;
+        let result: U256 = numerator / denominator + 1;
+
+        result
+            .saturated_into::<u128>()
+            .saturated_into::<T::Balance>()
+    }
+
 
     pub fn get_liquidity_asset(
         first_asset_id: T::AssetId,

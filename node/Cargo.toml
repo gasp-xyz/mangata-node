@@ -78,7 +78,6 @@ sp-inherents = '2.0.0'
 sp-runtime = '2.0.0'
 sp-transaction-pool = '2.0.0'
 substrate-frame-rpc-system = { version = '2.0.0', path = '../utils/frame/rpc/system'}
-pallet-assets = { default-features = false, version = '2.0.0', path = '../pallets/assets' }
 xyk-rpc = { default-features = false, version = '2.0.0', path = '../pallets/xyk/rpc' }
 xyk-runtime-api = { default-features = false, version = '2.0.0', path = '../pallets/xyk/runtime-api' }
 

@@ -4,7 +4,7 @@ use hex_literal::hex;
 use mangata_runtime::{
     AccountId, AssetsInfoConfig, BabeConfig, BalancesConfig, BridgeConfig, BridgedAssetConfig,
     GenesisConfig, GrandpaConfig, SessionConfig, SessionKeys, Signature, StakerStatus,
-    StakingConfig, SudoConfig, SystemConfig, VerifierConfig, WASM_BINARY,
+    StakingConfig, SudoConfig, SystemConfig, TokensConfig, VerifierConfig, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sp_consensus_babe::AuthorityId as BabeId;
@@ -321,6 +321,13 @@ fn testnet_genesis(
                     let (.., asset_id, bridged_asset_id, initial_supply, initial_owner) = x;
                     (asset_id, bridged_asset_id, initial_supply, initial_owner)
                 })
+                .collect(),
+        }),
+        orml_tokens: Some(TokensConfig {
+            endowed_accounts: endowed_accounts
+                .iter()
+                // TODO initialize accounts with Mangata token
+                .flat_map(|_| vec![])
                 .collect(),
         }),
     }

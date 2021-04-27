@@ -47,8 +47,10 @@ pub use pallet_timestamp::Call as TimestampCall;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
-pub use pallet_assets;
+pub use orml_tokens;
+// pub use pallet_assets;
 pub use pallet_assets_info;
+
 use pallet_session::historical as pallet_session_historical;
 pub use pallet_staking::StakerStatus;
 pub use pallet_xyk;
@@ -77,6 +79,9 @@ pub type AccountIndex = u32;
 
 /// Balance of an account.
 pub type Balance = u128;
+
+/// Balance of an account.
+pub type Amount = i128;
 
 /// AssetId of an account.
 pub type AssetId = u32;
@@ -421,15 +426,9 @@ impl pallet_sudo::Trait for Runtime {
     type Call = Call;
 }
 
-impl pallet_assets::Trait for Runtime {
-    /// The type for recording an account's balance.
-    type Balance = Balance;
-    type AssetId = u32;
-    type Event = Event;
-}
-
 impl pallet_xyk::Trait for Runtime {
     type Event = Event;
+    type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 }
 
 // Snowfork traits
@@ -447,6 +446,7 @@ impl verifier::Trait for Runtime {
 
 impl bridged_asset::Trait for Runtime {
     type Event = Event;
+    type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 }
 
 impl eth_app::Trait for Runtime {
@@ -466,6 +466,7 @@ parameter_types! {
     pub const MaxLengthDescription: usize = 255;
     pub const MaxDecimals: u32 = 255;
 }
+
 impl pallet_assets_info::Trait for Runtime {
     type Event = Event;
     type MinLengthName = MinLengthName;
@@ -475,6 +476,16 @@ impl pallet_assets_info::Trait for Runtime {
     type MinLengthDescription = MinLengthDescription;
     type MaxLengthDescription = MaxLengthDescription;
     type MaxDecimals = MaxDecimals;
+    type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+}
+
+impl orml_tokens::Trait for Runtime {
+    type Event = Event;
+    type Balance = Balance;
+    type Amount = Amount;
+    type CurrencyId = u32;
+    type OnReceived = ();
+    type WeightInfo = ();
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -496,7 +507,6 @@ construct_runtime!(
         Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
         TransactionPayment: pallet_transaction_payment::{Module, Storage},
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
-        Assets: pallet_assets::{Module, Call, Storage, Event<T>},
         Offences: pallet_offences::{Module, Call, Storage, Event},
         Xyk: pallet_xyk::{Module, Call, Storage, Event<T>},
         // Snowfork pallets
@@ -506,6 +516,7 @@ construct_runtime!(
         ETH: eth_app::{Module, Call, Storage, Event<T>},
         ERC20: erc20_app::{Module, Call, Storage, Event<T>},
         AssetsInfo: pallet_assets_info::{Module, Call, Config<T>, Storage, Event<T>},
+        Tokens: orml_tokens::{Module, Storage, Call, Event<T>, Config<T>},
     }
 );
 
@@ -708,7 +719,7 @@ impl_runtime_apis! {
             sell_amount: Balance
         ) -> RpcResult<Balance> {
             RpcResult {
-                price: Xyk::calculate_sell_price(input_reserve, output_reserve, sell_amount)
+                price: Xyk::calculate_sell_price(input_reserve, output_reserve, sell_amount).unwrap_or_default()
             }
         }
 
@@ -721,7 +732,7 @@ impl_runtime_apis! {
                 price: Xyk::calculate_buy_price(input_reserve, output_reserve, buy_amount)
             }
         }
-        
+
         fn get_burn_amount(
             first_asset_id: AssetId,
             second_asset_id: AssetId,

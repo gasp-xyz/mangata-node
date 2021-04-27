@@ -12,7 +12,6 @@ hex = { package = "rustc-hex", version = "2.1.0", default-features = false }
 rlp = { version = "0.4", default-features = false }
 hex-literal = { version = "0.3.1", default-features = false }
 orml-tokens = { path = '../tokens', default-features = false, version = '0.3.1' }
-orml-traits = { default-features = false, version = '0.3.1' }
 
 [dependencies.codec]
 default-features = false
@@ -89,5 +88,4 @@ std = [
     "artemis-asset/std",
     "ethabi/std",
     "rlp/std",
-    'orml-traits/std',
 ]

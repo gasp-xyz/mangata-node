@@ -12,7 +12,7 @@ use frame_support::{
     traits::{Get, Vec},
 };
 use frame_system::ensure_root;
-use mangata_traits::MangataPrimitives;
+use mangata_traits;
 
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 // use pallet_assets as assets;
@@ -154,7 +154,7 @@ impl<T: Trait> Module<T> {
         // is this the correct approach, could be a separate fn at least ?
         #[cfg(not(test))]
         {
-            ensure!(T::Currency::exists(asset), Error::<T>::AssetNotExist);
+            ensure!(T::Currency::exists(asset.into()), Error::<T>::AssetNotExist);
         }
 
         let current: AssetInfo = Self::get_info(asset);

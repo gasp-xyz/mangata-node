@@ -59,10 +59,6 @@ path = '../tokens'
 default-features = false
 version = '0.3.1'
 
-[dependencies.orml-traits]
-version = "0.3.1"
-default-features = false
-
 [features]
 default = ["std"]
 std = [
@@ -76,5 +72,4 @@ std = [
     "sp-io/std",
     "sp-runtime/std",
     "artemis-core/std",
-    'orml-traits/std',
 ]

@@ -60,7 +60,6 @@ artemis-erc20-app = {path = "../erc20-app"}
 artemis-eth-app = {path = "../eth-app"}
 artemis-asset = {path = "../bridged-asset"}
 orml-tokens = {path = "../tokens", default-features = false, version="0.3.1"}
-orml-traits = {default-features = false, version="0.3.1"}
 
 [features]
 default = ["std"]

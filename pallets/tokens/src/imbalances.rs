@@ -5,7 +5,7 @@ use frame_support::storage::StorageMap;
 use frame_support::traits::{Get, Imbalance, TryDrop};
 use sp_runtime::traits::{Saturating, Zero};
 use sp_std::{marker, mem, result};
-use mangata_traits::MangataPrimitives;
+use mangata_traits;
 
 /// Opaque, move-only struct with private fields that serves as a token
 /// denoting that funds have been created without any equal and opposite

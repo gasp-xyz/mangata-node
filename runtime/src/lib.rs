@@ -86,6 +86,9 @@ pub type Amount = i128;
 /// AssetId of an asset.
 pub type AssetId = u32;
 
+/// TokenId of an token.
+pub type TokenId = u32;
+
 /// Index of a transaction in the chain.
 pub type Index = u32;
 
@@ -486,6 +489,10 @@ impl orml_tokens::Trait for Runtime {
     type CurrencyId = u32;
     type OnReceived = ();
     type WeightInfo = ();
+}
+
+impl mangata_traits::Trait for Runtime {
+    type TokenId = TokenId;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

@@ -217,7 +217,7 @@ decl_event!(
 		/// Token transfer success. [currency_id, from, to, amount]
 		Transferred(CurrencyId, AccountId, AccountId, Balance),
 		Issued(CurrencyId, AccountId, Balance),
-		Minted(CurrencyId, AccountId, AccountId, Balance),
+		Minted(CurrencyId, AccountId, Balance),
 	}
 );
 
@@ -280,12 +280,12 @@ decl_module! {
 		#[weight = 10_000]
 		pub fn create(
 			origin,
-			currency_id: T::CurrencyId,
 			account_id: T::AccountId,
 			amount: T::Balance,
 		) {
 			ensure_root(origin)?;
-            MultiTokenCurrencyAdapter::<T>::create(&account_id, amount);
+			let currency_id = MultiTokenCurrencyAdapter::<T>::create(&account_id, amount);
+			Self::deposit_event(RawEvent::Issued(currency_id, account_id, amount));
 		}
 
 		#[weight = 10_000]
@@ -295,8 +295,9 @@ decl_module! {
 			account_id: T::AccountId,
 			amount: T::Balance,
 		) -> frame_support::dispatch::DispatchResult{
-			ensure_root(origin)?;
-			MultiTokenCurrencyAdapter::<T>::mint(currency_id, &account_id, amount)
+			MultiTokenCurrencyAdapter::<T>::mint(currency_id, &account_id, amount)?;
+			Self::deposit_event(RawEvent::Minted(currency_id, account_id, amount));
+			Ok(())
 		}
 	}
 }

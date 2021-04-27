@@ -50,7 +50,7 @@ pub use sp_runtime::{Perbill, Permill};
 pub use orml_tokens;
 // pub use pallet_assets;
 pub use pallet_assets_info;
-pub use mangata_primitives::{TokenId, Balance, Amount};
+pub use mangata_primitives::{TokenId, Balance};
 
 use pallet_session::historical as pallet_session_historical;
 pub use pallet_staking::StakerStatus;
@@ -473,7 +473,6 @@ impl pallet_assets_info::Trait for Runtime {
 
 impl orml_tokens::Trait for Runtime {
     type Event = Event;
-    type Amount = Amount;
     type OnReceived = ();
     type WeightInfo = ();
 }

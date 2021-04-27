@@ -19,7 +19,7 @@ use frame_support::{
 		LockIdentifier
 	}
 };
-use mangata_primitives::{TokenId, Balance};
+use mangata_primitives::{TokenId, Balance, Amount};
 
 /// Abstraction over a fungible multi-currency system.
 pub trait MultiCurrency<AccountId> {
@@ -69,20 +69,10 @@ pub trait MultiCurrency<AccountId> {
 
 /// Extended `MultiCurrency` with additional helper types and methods.
 pub trait MultiCurrencyExtended<AccountId>: MultiCurrency<AccountId> {
-	/// The type for balance related operations, typically signed int.
-	type Amount: arithmetic::Signed
-		+ TryInto<Balance>
-		+ TryFrom<Balance>
-		+ arithmetic::SimpleArithmetic
-		+ Codec
-		+ Copy
-		+ MaybeSerializeDeserialize
-		+ Debug
-		+ Default;
 
 	/// Add or remove abs(`by_amount`) from the balance of `who` under
 	/// `currency_id`. If positive `by_amount`, do add, else do remove.
-	fn update_balance(currency_id: TokenId, who: &AccountId, by_amount: Self::Amount) -> DispatchResult;
+	fn update_balance(currency_id: TokenId, who: &AccountId, by_amount: Amount) -> DispatchResult;
 }
 
 /// A fungible multi-currency system whose accounts can have liquidity
@@ -217,20 +207,10 @@ pub trait BasicCurrency<AccountId> {
 
 /// Extended `BasicCurrency` with additional helper types and methods.
 pub trait BasicCurrencyExtended<AccountId>: BasicCurrency<AccountId> {
-	/// The signed type for balance related operations, typically signed int.
-	type Amount: arithmetic::Signed
-		+ TryInto<Balance>
-		+ TryFrom<Balance>
-		+ arithmetic::SimpleArithmetic
-		+ Codec
-		+ Copy
-		+ MaybeSerializeDeserialize
-		+ Debug
-		+ Default;
 
 	/// Add or remove abs(`by_amount`) from the balance of `who`. If positive
 	/// `by_amount`, do add, else do remove.
-	fn update_balance(who: &AccountId, by_amount: Self::Amount) -> DispatchResult;
+	fn update_balance(who: &AccountId, by_amount: Amount) -> DispatchResult;
 }
 
 /// A fungible single currency system whose accounts can have liquidity

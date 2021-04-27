@@ -9,10 +9,10 @@ use sp_runtime::{
     Perbill,
 };
 
-use crate::{BalanceOf, CurrencyIdOf};
 use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
 use frame_system as system;
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
+use mangata_primitives::{TokenId, Balance};
 
 impl_outer_origin! {
     pub enum Origin for Test {}
@@ -59,9 +59,6 @@ impl system::Trait for Test {
 
 impl orml_tokens::Trait for Test {
     type Event = ();
-    type Balance = u128;
-    type Amount = i128;
-    type CurrencyId = u32;
     type OnReceived = ();
     type WeightInfo = ();
 }
@@ -74,13 +71,13 @@ impl Trait for Test {
 pub type XykStorage = Module<Test>;
 
 impl<T: Trait> Module<T> {
-    pub fn balance(id: CurrencyIdOf<T>, who: T::AccountId) -> BalanceOf<T> {
+    pub fn balance(id: TokenId, who: T::AccountId) -> Balance {
         T::Currency::free_balance(id, &who)
     }
-    pub fn total_supply(id: CurrencyIdOf<T>) -> BalanceOf<T> {
+    pub fn total_supply(id: TokenId) -> Balance {
         T::Currency::total_issuance(id)
     }
-    pub fn create_new_token(who: &T::AccountId, id: BalanceOf<T>) -> CurrencyIdOf<T> {
+    pub fn create_new_token(who: &T::AccountId, id: Balance) -> TokenId {
         T::Currency::create(who, id)
     }
 }

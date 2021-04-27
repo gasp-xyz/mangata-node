@@ -106,9 +106,6 @@ impl artemis_asset::Trait for Test {
 
 impl orml_tokens::Trait for Test {
     type Event = Event;
-    type Balance = u128;
-    type Amount = i128;
-    type CurrencyId = u32;
     type OnReceived = ();
     type WeightInfo = ();
 }

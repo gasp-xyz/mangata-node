@@ -76,9 +76,6 @@ impl system::Trait for MockRuntime {
 
 impl orml_tokens::Trait for MockRuntime {
     type Event = MockEvent;
-    type Balance = u128;
-    type Amount = i128;
-    type CurrencyId = u32;
     type OnReceived = ();
     type WeightInfo = ();
 }

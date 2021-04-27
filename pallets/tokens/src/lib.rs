@@ -70,7 +70,7 @@ use frame_support::dispatch::result::Result;
 use sp_std::collections::btree_map::BTreeMap;
 
 pub use crate::imbalances::{NegativeImbalance, PositiveImbalance};
-use mangata_primitives::{TokenId, Balance};
+use mangata_primitives::{TokenId, Balance, Amount};
 
 mod default_weight;
 mod imbalances;
@@ -97,17 +97,6 @@ pub trait WeightInfo {
 
 pub trait Trait: frame_system::Trait {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
-
-	/// The amount type, should be signed version of `Balance`
-	type Amount: Signed
-		+ TryInto<Balance>
-		+ TryFrom<Balance>
-		+ Parameter
-		+ Member
-		+ arithmetic::SimpleArithmetic
-		+ Default
-		+ Copy
-		+ MaybeSerializeDeserialize;
 
 	/// Hook when some fund is deposited into an account
 	type OnReceived: OnReceived<Self::AccountId, TokenId, Balance>;
@@ -499,17 +488,16 @@ impl<T: Trait> MultiCurrency<T::AccountId> for Module<T> {
 }
 
 impl<T: Trait> MultiCurrencyExtended<T::AccountId> for Module<T> {
-	type Amount = T::Amount;
 
-	fn update_balance(currency_id: TokenId, who: &T::AccountId, by_amount: Self::Amount) -> DispatchResult {
+	fn update_balance(currency_id: TokenId, who: &T::AccountId, by_amount: Amount) -> DispatchResult {
 		if by_amount.is_zero() {
 			return Ok(());
 		}
 
 		// Ensure this doesn't overflow. There isn't any traits that exposes
 		// `saturating_abs` so we need to do it manually.
-		let by_amount_abs = if by_amount == Self::Amount::min_value() {
-			Self::Amount::max_value()
+		let by_amount_abs = if by_amount == Amount::min_value() {
+			Amount::max_value()
 		} else {
 			by_amount.abs()
 		};

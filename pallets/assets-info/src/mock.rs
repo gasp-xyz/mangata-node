@@ -64,9 +64,6 @@ impl system::Trait for Test {
 
 impl assets::Trait for Test {
     type Event = ();
-    type Balance = u128;
-    type Amount = i128;
-    type CurrencyId = u32;
     type OnReceived = ();
     type WeightInfo = ();
 }

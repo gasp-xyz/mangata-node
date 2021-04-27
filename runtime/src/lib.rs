@@ -83,7 +83,7 @@ pub type Balance = u128;
 /// Balance of an account.
 pub type Amount = i128;
 
-/// AssetId of an account.
+/// AssetId of an asset.
 pub type AssetId = u32;
 
 /// Index of a transaction in the chain.

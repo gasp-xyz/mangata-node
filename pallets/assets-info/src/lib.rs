@@ -12,6 +12,7 @@ use frame_support::{
     traits::{Get, Vec},
 };
 use frame_system::ensure_root;
+use mangata_traits::MangataPrimitives;
 
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 // use pallet_assets as assets;
@@ -23,7 +24,7 @@ mod mock;
 mod tests;
 
 /// Configure the pallet by specifying the parameters and types on which it depends.
-pub trait Trait: frame_system::Trait {
+pub trait Trait: frame_system::Trait + MangataPrimitives {
     /// Because this pallet emits events, it depends on the runtime's definition of an event.
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
@@ -51,9 +52,9 @@ pub trait Trait: frame_system::Trait {
     type Currency: MultiTokenCurrencyExtended<Self::AccountId>;
 }
 
-type CurrencyIdOf<T> = <<T as Trait>::Currency as MultiTokenCurrency<
-    <T as frame_system::Trait>::AccountId,
->>::CurrencyId;
+// type CurrencyIdOf<T> = <<T as Trait>::Currency as MultiTokenCurrency<
+//     <T as frame_system::Trait>::AccountId,
+// >>::CurrencyId;
 
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq)]
 pub struct AssetInfo {
@@ -66,11 +67,11 @@ pub struct AssetInfo {
 decl_storage! {
     trait Store for Module<T: Trait> as AssetsInfoModule {
         /// TWOX-NOTE: `AssetId` is trusted, so this is safe.
-        AssetsInfo get(fn get_info): map hasher(twox_64_concat) CurrencyIdOf<T> => AssetInfo;
+        AssetsInfo get(fn get_info): map hasher(twox_64_concat) T::TokenId => AssetInfo;
     }
     add_extra_genesis {
         #[allow(clippy::type_complexity)]
-        config(bridged_assets_info): Vec<(Option<Vec<u8>>, Option<Vec<u8>>, Option<Vec<u8>>, Option<u32>, CurrencyIdOf<T>)>;
+        config(bridged_assets_info): Vec<(Option<Vec<u8>>, Option<Vec<u8>>, Option<Vec<u8>>, Option<u32>, T::TokenId)>;
         build(|config: &GenesisConfig<T>|{
             for (name, token, description, decimals, asset_id) in config.bridged_assets_info.iter(){
                 <AssetsInfo<T>>::insert(
@@ -92,11 +93,11 @@ decl_storage! {
 // https://substrate.dev/docs/en/knowledgebase/runtime/events
 decl_event!(
     pub enum Event<T>
-    where
-        AssetId = CurrencyIdOf<T>,
+    where 
+    <T as MangataPrimitives>::TokenId,
     {
         /// Asset info stored. [assetId, info]
-        InfoStored(AssetId, AssetInfo),
+        InfoStored(TokenId, AssetInfo),
     }
 );
 
@@ -130,7 +131,7 @@ decl_module! {
         fn deposit_event() = default;
 
         #[weight = 10_000 + T::DbWeight::get().writes(1) + T::DbWeight::get().reads(1)]
-        pub fn set_info(origin, asset: CurrencyIdOf<T>, name: Option<Vec<u8>>, symbol: Option<Vec<u8>>, description: Option<Vec<u8>>, decimals: Option<u32>) -> dispatch::DispatchResult {
+        pub fn set_info(origin, asset: T::TokenId, name: Option<Vec<u8>>, symbol: Option<Vec<u8>>, description: Option<Vec<u8>>, decimals: Option<u32>) -> dispatch::DispatchResult {
             ensure_root(origin)?;
 
             let info = Self::set_asset_info(asset, name, symbol, description, decimals)?;
@@ -144,7 +145,7 @@ decl_module! {
 
 impl<T: Trait> Module<T> {
     pub fn set_asset_info(
-        asset: CurrencyIdOf<T>,
+        asset: T::TokenId,
         name: Option<Vec<u8>>,
         symbol: Option<Vec<u8>>,
         description: Option<Vec<u8>>,

@@ -31,6 +31,7 @@ pallet-timestamp = { path = '../pallets/timestamp', default-features = false, ve
 pallet-assets-info = { path = '../pallets/assets-info', default-features = false, version = '2.0.0' }
 pallet-staking = { path = '../pallets/staking', default-features = false, version = "2.0.0" }
 pallet-staking-reward-curve = { path = '../pallets/staking/reward-curve', default-features = false, version = "2.0.0" }
+mangata-traits = { path = '../pallets/mangata-traits', default-features = false, version = "0.1.0" }
 
 # Substrate dependencies
 frame-benchmarking = { default-features = false, optional = true, version = '2.0.0' }
@@ -114,6 +115,7 @@ std = [
     'frame-system/std',
     'frame-system-rpc-runtime-api/std',
     "sp-consensus-babe/std",
+    "mangata-traits/std",
     "pallet-babe/std",
     "pallet-offences/std",
     "pallet-staking/std",

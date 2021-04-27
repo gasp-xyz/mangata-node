@@ -5,10 +5,10 @@ use frame_support::Parameter;
 use frame_support::traits::{Imbalance, WithdrawReasons, ExistenceRequirement, SignedImbalance, Get, BalanceStatus};
 use sp_std::fmt::Debug;
 use sp_std::result;
-use mangata_traits;
+use mangata_primitives::TokenId;
 
 /// Abstraction over a fungible assets system.
-pub trait MultiTokenCurrency<AccountId>: MangataPrimitives{
+pub trait MultiTokenCurrency<AccountId>{
 	/// The balance of an account.
 	type Balance: AtLeast32BitUnsigned + FullCodec + Copy + MaybeSerializeDeserialize + Debug +
 		Default;
@@ -24,25 +24,25 @@ pub trait MultiTokenCurrency<AccountId>: MangataPrimitives{
 	// PUBLIC IMMUTABLES
 
 	/// The combined balance of `who`.
-	fn total_balance(currency_id: <Self as MangataPrimitives>::TokenId, who: &AccountId) -> Self::Balance;
+	fn total_balance(currency_id: TokenId, who: &AccountId) -> Self::Balance;
 
 	/// Same result as `slash(who, value)` (but without the side-effects) assuming there are no
 	/// balance changes in the meantime and only the reserved balance is not taken into account.
-	fn can_slash(currency_id: <Self as MangataPrimitives>::TokenId, who: &AccountId, value: Self::Balance) -> bool;
+	fn can_slash(currency_id: TokenId, who: &AccountId, value: Self::Balance) -> bool;
 
 	/// The total amount of issuance in the system.
-	fn total_issuance(currency_id: <Self as MangataPrimitives>::TokenId) -> Self::Balance;
+	fn total_issuance(currency_id: TokenId) -> Self::Balance;
 
 	/// The minimum balance any single account may have. This is equivalent to the `Balances` module's
 	/// `ExistentialDeposit`.
-	fn minimum_balance(currency_id: <Self as MangataPrimitives>::TokenId) -> Self::Balance;
+	fn minimum_balance(currency_id: TokenId) -> Self::Balance;
 
 	/// Reduce the total issuance by `amount` and return the according imbalance. The imbalance will
 	/// typically be used to reduce an account by the same amount with e.g. `settle`.
 	///
 	/// This is infallible, but doesn't guarantee that the entire `amount` is burnt, for example
 	/// in the case of underflow.
-	fn burn(currency_id: <Self as MangataPrimitives>::TokenId, amount: Self::Balance) -> Self::PositiveImbalance;
+	fn burn(currency_id: TokenId, amount: Self::Balance) -> Self::PositiveImbalance;
 
 	/// Increase the total issuance by `amount` and return the according imbalance. The imbalance
 	/// will typically be used to increase an account by the same amount with e.g.
@@ -50,13 +50,13 @@ pub trait MultiTokenCurrency<AccountId>: MangataPrimitives{
 	///
 	/// This is infallible, but doesn't guarantee that the entire `amount` is issued, for example
 	/// in the case of overflow.
-	fn issue(acurrency_id: <Self as MangataPrimitives>::TokenId, amount: Self::Balance) -> Self::NegativeImbalance;
+	fn issue(acurrency_id: TokenId, amount: Self::Balance) -> Self::NegativeImbalance;
 
 	/// Produce a pair of imbalances that cancel each other out exactly.
 	///
 	/// This is just the same as burning and issuing the same amount and has no effect on the
 	/// total issuance.
-	fn pair(currency_id: <Self as MangataPrimitives>::TokenId, amount: Self::Balance) -> (Self::PositiveImbalance, Self::NegativeImbalance) {
+	fn pair(currency_id: TokenId, amount: Self::Balance) -> (Self::PositiveImbalance, Self::NegativeImbalance) {
 		(Self::burn(currency_id, amount.clone()), Self::issue(currency_id, amount))
 	}
 
@@ -69,14 +69,14 @@ pub trait MultiTokenCurrency<AccountId>: MangataPrimitives{
 	///
 	/// `system::AccountNonce` is also deleted if `ReservedBalance` is also zero (it also gets
 	/// collapsed to zero if it ever becomes less than `ExistentialDeposit`.
-	fn free_balance(currency_id: <Self as MangataPrimitives>::TokenId, who: &AccountId) -> Self::Balance;
+	fn free_balance(currency_id: TokenId, who: &AccountId) -> Self::Balance;
 
 	/// Returns `Ok` iff the account is able to make a withdrawal of the given amount
 	/// for the given reason. Basically, it's just a dry-run of `withdraw`.
 	///
 	/// `Err(...)` with the reason why not otherwise.
 	fn ensure_can_withdraw(
-        currency_id: <Self as MangataPrimitives>::TokenId,
+        currency_id: TokenId,
 		who: &AccountId,
 		_amount: Self::Balance,
 		reasons: WithdrawReasons,
@@ -90,7 +90,7 @@ pub trait MultiTokenCurrency<AccountId>: MangataPrimitives{
 	/// This is a very high-level function. It will ensure all appropriate fees are paid
 	/// and no imbalance in the system remains.
 	fn transfer(
-        currency_id: <Self as MangataPrimitives>::TokenId,
+        currency_id: TokenId,
 		source: &AccountId,
 		dest: &AccountId,
 		value: Self::Balance,
@@ -105,7 +105,7 @@ pub trait MultiTokenCurrency<AccountId>: MangataPrimitives{
 	/// As much funds up to `value` will be deducted as possible. If this is less than `value`,
 	/// then a non-zero second item will be returned.
 	fn slash(
-        currency_id: <Self as MangataPrimitives>::TokenId,
+        currency_id: TokenId,
 		who: &AccountId,
 		value: Self::Balance
 	) -> (Self::NegativeImbalance, Self::Balance);
@@ -114,7 +114,7 @@ pub trait MultiTokenCurrency<AccountId>: MangataPrimitives{
 	///
 	/// If `who` doesn't exist, nothing is done and an Err returned.
 	fn deposit_into_existing(
-        currency_id: <Self as MangataPrimitives>::TokenId,
+        currency_id: TokenId,
 		who: &AccountId,
 		value: Self::Balance
 	) -> result::Result<Self::PositiveImbalance, DispatchError>;
@@ -122,7 +122,7 @@ pub trait MultiTokenCurrency<AccountId>: MangataPrimitives{
 	/// Similar to deposit_creating, only accepts a `NegativeImbalance` and returns nothing on
 	/// success.
 	fn resolve_into_existing(
-        currency_id: <Self as MangataPrimitives>::TokenId,
+        currency_id: TokenId,
 		who: &AccountId,
 		value: Self::NegativeImbalance,
 	) -> result::Result<(), Self::NegativeImbalance> {
@@ -137,7 +137,7 @@ pub trait MultiTokenCurrency<AccountId>: MangataPrimitives{
 	///
 	/// Infallible.
 	fn deposit_creating(
-        currency_id: <Self as MangataPrimitives>::TokenId,
+        currency_id: TokenId,
 		who: &AccountId,
 		value: Self::Balance,
 	) -> Self::PositiveImbalance;
@@ -145,7 +145,7 @@ pub trait MultiTokenCurrency<AccountId>: MangataPrimitives{
 	/// Similar to deposit_creating, only accepts a `NegativeImbalance` and returns nothing on
 	/// success.
 	fn resolve_creating(
-        currency_id: <Self as MangataPrimitives>::TokenId,
+        currency_id: TokenId,
 		who: &AccountId,
 		value: Self::NegativeImbalance,
 	) {
@@ -162,7 +162,7 @@ pub trait MultiTokenCurrency<AccountId>: MangataPrimitives{
 	/// If the operation is successful, this will return `Ok` with a `NegativeImbalance` whose value
 	/// is `value`.
 	fn withdraw(
-        currency_id: <Self as MangataPrimitives>::TokenId,
+        currency_id: TokenId,
 		who: &AccountId,
 		value: Self::Balance,
 		reasons: WithdrawReasons,
@@ -171,7 +171,7 @@ pub trait MultiTokenCurrency<AccountId>: MangataPrimitives{
 
 	/// Similar to withdraw, only accepts a `PositiveImbalance` and returns nothing on success.
 	fn settle(
-        currency_id: <Self as MangataPrimitives>::TokenId,
+        currency_id: TokenId,
 		who: &AccountId,
 		value: Self::PositiveImbalance,
 		reasons: WithdrawReasons,
@@ -190,7 +190,7 @@ pub trait MultiTokenCurrency<AccountId>: MangataPrimitives{
 	/// Returns a signed imbalance and status to indicate if the account was successfully updated or update
 	/// has led to killing of the account.
 	fn make_free_balance_be(
-        currency_id: <Self as MangataPrimitives>::TokenId,
+        currency_id: TokenId,
 		who: &AccountId,
 		balance: Self::Balance,
 	) -> SignedImbalance<Self::Balance, Self::PositiveImbalance>;
@@ -200,14 +200,14 @@ pub trait MultiTokenCurrency<AccountId>: MangataPrimitives{
 pub trait MultiTokenReservableCurrency<AccountId>: MultiTokenCurrency<AccountId> {
 	/// Same result as `reserve(who, value)` (but without the side-effects) assuming there
 	/// are no balance changes in the meantime.
-	fn can_reserve(currency_id: <Self as MangataPrimitives>::TokenId, who: &AccountId, value: Self::Balance) -> bool;
+	fn can_reserve(currency_id: TokenId, who: &AccountId, value: Self::Balance) -> bool;
 
 	/// Deducts up to `value` from reserved balance of `who`. This function cannot fail.
 	///
 	/// As much funds up to `value` will be deducted as possible. If the reserve balance of `who`
 	/// is less than `value`, then a non-zero second item will be returned.
 	fn slash_reserved(
-        currency_id: <Self as MangataPrimitives>::TokenId,
+        currency_id: TokenId,
 		who: &AccountId,
 		value: Self::Balance
 	) -> (Self::NegativeImbalance, Self::Balance);
@@ -223,13 +223,13 @@ pub trait MultiTokenReservableCurrency<AccountId>: MultiTokenCurrency<AccountId>
 	///
 	/// `system::AccountNonce` is also deleted if `FreeBalance` is also zero (it also gets
 	/// collapsed to zero if it ever becomes less than `ExistentialDeposit`.
-	fn reserved_balance(currency_id: <Self as MangataPrimitives>::TokenId, who: &AccountId) -> Self::Balance;
+	fn reserved_balance(currency_id: TokenId, who: &AccountId) -> Self::Balance;
 
 	/// Moves `value` from balance to reserved balance.
 	///
 	/// If the free balance is lower than `value`, then no funds will be moved and an `Err` will
 	/// be returned to notify of this. This is different behavior than `unreserve`.
-	fn reserve(currency_id: <Self as MangataPrimitives>::TokenId, who: &AccountId, value: Self::Balance) -> DispatchResult;
+	fn reserve(currency_id: TokenId, who: &AccountId, value: Self::Balance) -> DispatchResult;
 
 	/// Moves up to `value` from reserved balance to free balance. This function cannot fail.
 	///
@@ -241,7 +241,7 @@ pub trait MultiTokenReservableCurrency<AccountId>: MultiTokenCurrency<AccountId>
 	/// - This is different from `reserve`.
 	/// - If the remaining reserved balance is less than `ExistentialDeposit`, it will
 	/// invoke `on_reserved_too_low` and could reap the account.
-	fn unreserve(currency_id: <Self as MangataPrimitives>::TokenId, who: &AccountId, value: Self::Balance) -> Self::Balance;
+	fn unreserve(currency_id: TokenId, who: &AccountId, value: Self::Balance) -> Self::Balance;
 
 	/// Moves up to `value` from reserved balance of account `slashed` to balance of account
 	/// `beneficiary`. `beneficiary` must exist for this to succeed. If it does not, `Err` will be
@@ -251,7 +251,7 @@ pub trait MultiTokenReservableCurrency<AccountId>: MultiTokenCurrency<AccountId>
 	/// As much funds up to `value` will be deducted as possible. If this is less than `value`,
 	/// then `Ok(non_zero)` will be returned.
 	fn repatriate_reserved(
-        currency_id: <Self as MangataPrimitives>::TokenId,
+        currency_id: TokenId,
 		slashed: &AccountId,
 		beneficiary: &AccountId,
 		value: Self::Balance,
@@ -278,7 +278,7 @@ pub trait MultiTokenLockableCurrency<AccountId>: MultiTokenCurrency<AccountId> {
 	///
 	/// If the lock `id` already exists, this will update it.
 	fn set_lock(
-        currency_id: <Self as MangataPrimitives>::TokenId,
+        currency_id: TokenId,
 		id: LockIdentifier,
 		who: &AccountId,
 		amount: Self::Balance,
@@ -294,7 +294,7 @@ pub trait MultiTokenLockableCurrency<AccountId>: MultiTokenCurrency<AccountId> {
 	/// - maximum `amount`
 	/// - bitwise mask of all `reasons`
 	fn extend_lock(
-        currency_id: <Self as MangataPrimitives>::TokenId,
+        currency_id: TokenId,
 		id: LockIdentifier,
 		who: &AccountId,
 		amount: Self::Balance,
@@ -303,15 +303,15 @@ pub trait MultiTokenLockableCurrency<AccountId>: MultiTokenCurrency<AccountId> {
 
 	/// Remove an existing lock.
 	fn remove_lock(
-        currency_id: <Self as MangataPrimitives>::TokenId,
+        currency_id: TokenId,
 		id: LockIdentifier,
 		who: &AccountId,
 	);
 }
 
 pub trait MultiTokenCurrencyExtended<AccountId>: MultiTokenCurrency<AccountId> {
-	fn create(address: &AccountId, amount: Self::Balance) -> <Self as MangataPrimitives>::TokenId;
-    fn mint(currency_id: <Self as MangataPrimitives>::TokenId, address: &AccountId, amount: Self::Balance) -> DispatchResult;
-    fn exists(currency_id: <Self as MangataPrimitives>::TokenId) -> bool;
-    fn burn_and_settle(currency_id: <Self as MangataPrimitives>::TokenId, who: &AccountId, amount: Self::Balance) -> DispatchResult;
+	fn create(address: &AccountId, amount: Self::Balance) -> TokenId;
+    fn mint(currency_id: TokenId, address: &AccountId, amount: Self::Balance) -> DispatchResult;
+    fn exists(currency_id: TokenId) -> bool;
+    fn burn_and_settle(currency_id: TokenId, who: &AccountId, amount: Self::Balance) -> DispatchResult;
 }

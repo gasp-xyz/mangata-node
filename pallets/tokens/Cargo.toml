@@ -17,7 +17,7 @@ sp-std = { version = "2.0.0", default-features = false }
 frame-support = { version = "2.0.0", default-features = false }
 frame-system = { version = "2.0.0", default-features = false }
 
-mangata-traits = { path = '../mangata-traits', default-features = false, version = '0.1.0' }
+mangata-primitives = { path = '../../primitives/mangata', default-features = false, version = '0.1.0' }
 num-traits = { version = "0.2.11", default-features = false }
 impl-trait-for-tuples = "0.1.3"
 

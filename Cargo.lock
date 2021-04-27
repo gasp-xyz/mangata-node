@@ -3373,6 +3373,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "mangata-primitives"
+version = "0.1.0"
+
+[[package]]
 name = "mangata-runtime"
 version = "2.0.0"
 dependencies = [
@@ -3386,7 +3390,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "hex-literal",
- "mangata-traits",
+ "mangata-primitives",
  "orml-tokens",
  "pallet-assets-info",
  "pallet-authorship",
@@ -3420,16 +3424,6 @@ dependencies = [
  "sp-version",
  "substrate-wasm-builder-runner",
  "xyk-runtime-api",
-]
-
-[[package]]
-name = "mangata-traits"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "parity-scale-codec",
- "sp-io",
- "sp-runtime",
 ]
 
 [[package]]
@@ -3875,7 +3869,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "impl-trait-for-tuples",
- "mangata-traits",
+ "mangata-primitives",
  "num-traits",
  "pallet-elections-phragmen",
  "pallet-treasury",
@@ -3902,7 +3896,6 @@ version = "2.0.0"
 dependencies = [
  "frame-support",
  "frame-system",
- "mangata-traits",
  "orml-tokens",
  "parity-scale-codec",
  "serde",

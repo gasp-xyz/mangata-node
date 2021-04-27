@@ -5,18 +5,18 @@ use frame_support::storage::StorageMap;
 use frame_support::traits::{Get, Imbalance, TryDrop};
 use sp_runtime::traits::{Saturating, Zero};
 use sp_std::{marker, mem, result};
-use mangata_traits;
+use mangata_primitives::TokenId;
 
 /// Opaque, move-only struct with private fields that serves as a token
 /// denoting that funds have been created without any equal and opposite
 /// accounting.
 #[must_use]
-pub struct PositiveImbalance<T: Trait, GetCurrencyId: Get<<T as MangataPrimitives>::TokenId>>(
+pub struct PositiveImbalance<T: Trait, GetCurrencyId: Get<TokenId>>(
 	T::Balance,
 	marker::PhantomData<GetCurrencyId>,
 );
 
-impl<T: Trait, GetCurrencyId: Get<<T as MangataPrimitives>::TokenId>> PositiveImbalance<T, GetCurrencyId> {
+impl<T: Trait, GetCurrencyId: Get<TokenId>> PositiveImbalance<T, GetCurrencyId> {
 	/// Create a new positive imbalance from a balance.
 	pub fn new(amount: T::Balance) -> Self {
 		PositiveImbalance(amount, marker::PhantomData::<GetCurrencyId>)
@@ -27,25 +27,25 @@ impl<T: Trait, GetCurrencyId: Get<<T as MangataPrimitives>::TokenId>> PositiveIm
 /// denoting that funds have been destroyed without any equal and opposite
 /// accounting.
 #[must_use]
-pub struct NegativeImbalance<T: Trait, GetCurrencyId: Get<<T as MangataPrimitives>::TokenId>>(
+pub struct NegativeImbalance<T: Trait, GetCurrencyId: Get<TokenId>>(
 	T::Balance,
 	marker::PhantomData<GetCurrencyId>,
 );
 
-impl<T: Trait, GetCurrencyId: Get<<T as MangataPrimitives>::TokenId>> NegativeImbalance<T, GetCurrencyId> {
+impl<T: Trait, GetCurrencyId: Get<TokenId>> NegativeImbalance<T, GetCurrencyId> {
 	/// Create a new negative imbalance from a balance.
 	pub fn new(amount: T::Balance) -> Self {
 		NegativeImbalance(amount, marker::PhantomData::<GetCurrencyId>)
 	}
 }
 
-impl<T: Trait, GetCurrencyId: Get<<T as MangataPrimitives>::TokenId>> TryDrop for PositiveImbalance<T, GetCurrencyId> {
+impl<T: Trait, GetCurrencyId: Get<TokenId>> TryDrop for PositiveImbalance<T, GetCurrencyId> {
 	fn try_drop(self) -> result::Result<(), Self> {
 		self.drop_zero()
 	}
 }
 
-impl<T: Trait, GetCurrencyId: Get<<T as MangataPrimitives>::TokenId>> Imbalance<T::Balance> for PositiveImbalance<T, GetCurrencyId> {
+impl<T: Trait, GetCurrencyId: Get<TokenId>> Imbalance<T::Balance> for PositiveImbalance<T, GetCurrencyId> {
 	type Opposite = NegativeImbalance<T, GetCurrencyId>;
 
 	fn zero() -> Self {
@@ -90,13 +90,13 @@ impl<T: Trait, GetCurrencyId: Get<<T as MangataPrimitives>::TokenId>> Imbalance<
 	}
 }
 
-impl<T: Trait, GetCurrencyId: Get<<T as MangataPrimitives>::TokenId>> TryDrop for NegativeImbalance<T, GetCurrencyId> {
+impl<T: Trait, GetCurrencyId: Get<TokenId>> TryDrop for NegativeImbalance<T, GetCurrencyId> {
 	fn try_drop(self) -> result::Result<(), Self> {
 		self.drop_zero()
 	}
 }
 
-impl<T: Trait, GetCurrencyId: Get<<T as MangataPrimitives>::TokenId>> Imbalance<T::Balance> for NegativeImbalance<T, GetCurrencyId> {
+impl<T: Trait, GetCurrencyId: Get<TokenId>> Imbalance<T::Balance> for NegativeImbalance<T, GetCurrencyId> {
 	type Opposite = PositiveImbalance<T, GetCurrencyId>;
 
 	fn zero() -> Self {
@@ -141,14 +141,14 @@ impl<T: Trait, GetCurrencyId: Get<<T as MangataPrimitives>::TokenId>> Imbalance<
 	}
 }
 
-impl<T: Trait, GetCurrencyId: Get<<T as MangataPrimitives>::TokenId>> Drop for PositiveImbalance<T, GetCurrencyId> {
+impl<T: Trait, GetCurrencyId: Get<TokenId>> Drop for PositiveImbalance<T, GetCurrencyId> {
 	/// Basic drop handler will just square up the total issuance.
 	fn drop(&mut self) {
 		<TotalIssuance<T>>::mutate(GetCurrencyId::get(), |v| *v = v.saturating_add(self.0));
 	}
 }
 
-impl<T: Trait, GetCurrencyId: Get<<T as MangataPrimitives>::TokenId>> Drop for NegativeImbalance<T, GetCurrencyId> {
+impl<T: Trait, GetCurrencyId: Get<TokenId>> Drop for NegativeImbalance<T, GetCurrencyId> {
 	/// Basic drop handler will just square up the total issuance.
 	fn drop(&mut self) {
 		<TotalIssuance<T>>::mutate(GetCurrencyId::get(), |v| *v = v.saturating_sub(self.0));

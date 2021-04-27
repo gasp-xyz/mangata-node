@@ -12,7 +12,6 @@ use frame_support::{
     traits::{Get, Vec},
 };
 use frame_system::ensure_root;
-use mangata_traits;
 
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 // use pallet_assets as assets;
@@ -24,7 +23,7 @@ mod mock;
 mod tests;
 
 /// Configure the pallet by specifying the parameters and types on which it depends.
-pub trait Trait: frame_system::Trait + MangataPrimitives {
+pub trait Trait: frame_system::Trait {
     /// Because this pallet emits events, it depends on the runtime's definition of an event.
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
@@ -94,7 +93,7 @@ decl_storage! {
 decl_event!(
     pub enum Event<T>
     where 
-    <T as MangataPrimitives>::TokenId,
+    TokenId,
     {
         /// Asset info stored. [assetId, info]
         InfoStored(TokenId, AssetInfo),

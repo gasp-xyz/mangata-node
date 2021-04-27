@@ -5,24 +5,24 @@ use frame_support::storage::StorageMap;
 use frame_support::traits::{Imbalance, TryDrop};
 use sp_runtime::traits::{Saturating, Zero};
 use sp_std::{mem, result};
-use mangata_traits;
+use mangata_primitives::TokenId;
 
 /// Opaque, move-only struct with private fields that serves as a token
 /// denoting that funds have been created without any equal and opposite
 /// accounting.
 #[must_use]
 pub struct PositiveImbalance<T: Trait>(
-    <T as MangataPrimitives>::TokenId,
+    TokenId,
 	T::Balance,
 );
 
 impl<T: Trait> PositiveImbalance<T> {
 	/// Create a new positive imbalance from a balance.
-	pub fn new(currency_id: <T as MangataPrimitives>::TokenId, amount: T::Balance) -> Self {
+	pub fn new(currency_id: TokenId, amount: T::Balance) -> Self {
 		PositiveImbalance(currency_id, amount)
 	}
 
-	pub fn zero(currency_id: <T as MangataPrimitives>::TokenId) -> Self {
+	pub fn zero(currency_id: TokenId) -> Self {
 		PositiveImbalance(currency_id, Zero::zero())
 	}
 }
@@ -32,17 +32,17 @@ impl<T: Trait> PositiveImbalance<T> {
 /// accounting.
 #[must_use]
 pub struct NegativeImbalance<T: Trait>(
-    <T as MangataPrimitives>::TokenId,
+    TokenId,
 	T::Balance,
 );
 
 impl<T: Trait> NegativeImbalance<T> {
 	/// Create a new negative imbalance from a balance.
-	pub fn new(currency_id: <T as MangataPrimitives>::TokenId, amount: T::Balance) -> Self {
+	pub fn new(currency_id: TokenId, amount: T::Balance) -> Self {
 		NegativeImbalance(currency_id, amount)
 	}
 
-	pub fn zero(currency_id: <T as MangataPrimitives>::TokenId) -> Self {
+	pub fn zero(currency_id: TokenId) -> Self {
 		NegativeImbalance(currency_id, Zero::zero())
 	}
 

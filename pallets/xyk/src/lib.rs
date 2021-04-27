@@ -14,8 +14,8 @@ use sp_core::U256;
 use frame_support::sp_runtime::traits::AccountIdConversion;
 use frame_support::traits::{ExistenceRequirement, WithdrawReasons};
 use sp_runtime::traits::{SaturatedConversion, Zero};
-
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
+use mangata_primitives::TokenId;
 
 #[cfg(test)]
 mod mock;
@@ -29,10 +29,6 @@ pub trait Trait: frame_system::Trait {
 
 type BalanceOf<T> =
     <<T as Trait>::Currency as MultiTokenCurrency<<T as frame_system::Trait>::AccountId>>::Balance;
-
-type CurrencyIdOf<T> = <<T as Trait>::Currency as MultiTokenCurrency<
-    <T as frame_system::Trait>::AccountId,
->>::CurrencyId;
 
 const PALLET_ID: ModuleId = ModuleId(*b"79b14c96");
 
@@ -60,27 +56,26 @@ decl_event!(
     where
         AccountId = <T as frame_system::Trait>::AccountId,
         Balance = BalanceOf<T>,
-        CurrencyId = CurrencyIdOf<T>,
     {
         //TODO add trading events
-        PoolCreated(AccountId, CurrencyId, Balance, CurrencyId, Balance),
-        AssetsSwapped(AccountId, CurrencyId, Balance, CurrencyId, Balance),
+        PoolCreated(AccountId, TokenId, Balance, TokenId, Balance),
+        AssetsSwapped(AccountId, TokenId, Balance, TokenId, Balance),
         LiquidityMinted(
             AccountId,
-            CurrencyId,
+            TokenId,
             Balance,
-            CurrencyId,
+            TokenId,
             Balance,
-            CurrencyId,
+            TokenId,
             Balance,
         ),
         LiquidityBurned(
             AccountId,
-            CurrencyId,
+            TokenId,
             Balance,
-            CurrencyId,
+            TokenId,
             Balance,
-            CurrencyId,
+            TokenId,
             Balance,
         ),
     }
@@ -90,10 +85,10 @@ decl_event!(
 decl_storage! {
     trait Store for Module<T: Trait> as XykStorage {
 
-        Pools get(fn asset_pool): map hasher(opaque_blake2_256) (CurrencyIdOf<T>, CurrencyIdOf<T>) => BalanceOf<T>;
+        Pools get(fn asset_pool): map hasher(opaque_blake2_256) (TokenId, TokenId) => BalanceOf<T>;
 
-        LiquidityAssets get(fn liquidity_asset): map hasher(opaque_blake2_256) (CurrencyIdOf<T>, CurrencyIdOf<T>) => CurrencyIdOf<T>;
-        LiquidityPools get(fn liquidity_pool): map hasher(opaque_blake2_256) CurrencyIdOf<T> => (CurrencyIdOf<T>, CurrencyIdOf<T>);
+        LiquidityAssets get(fn liquidity_asset): map hasher(opaque_blake2_256) (TokenId, TokenId) => TokenId;
+        LiquidityPools get(fn liquidity_pool): map hasher(opaque_blake2_256) TokenId => (TokenId, TokenId);
 
         Nonce get (fn nonce): u32;
 
@@ -109,9 +104,9 @@ decl_module! {
         #[weight = 10_000]
         fn create_pool(
             origin,
-            first_asset_id: CurrencyIdOf<T>,
+            first_asset_id: TokenId,
             first_asset_amount: BalanceOf<T>,
-            second_asset_id: CurrencyIdOf<T>,
+            second_asset_id: TokenId,
             second_asset_amount: BalanceOf<T>
         ) -> DispatchResult {
 
@@ -188,8 +183,8 @@ decl_module! {
 
             let liquidity_asset_id = T::Currency::create(&sender, initial_liquidity);
 
-            <LiquidityAssets<T>>::insert((first_asset_id, second_asset_id), liquidity_asset_id);
-            <LiquidityPools<T>>::insert(liquidity_asset_id, (first_asset_id, second_asset_id));
+            LiquidityAssets::insert((first_asset_id, second_asset_id), liquidity_asset_id);
+            LiquidityPools::insert(liquidity_asset_id, (first_asset_id, second_asset_id));
 
 
             Self::deposit_event(RawEvent::PoolCreated(sender, first_asset_id, first_asset_amount, second_asset_id, second_asset_amount));
@@ -202,8 +197,8 @@ decl_module! {
         #[weight = (10_000, Pays::No)]
         fn sell_asset (
             origin,
-            sold_asset_id: CurrencyIdOf<T>,
-            bought_asset_id: CurrencyIdOf<T>,
+            sold_asset_id: TokenId,
+            bought_asset_id: TokenId,
             sold_asset_amount: BalanceOf<T>,
             min_amount_out: BalanceOf<T>,
         ) -> DispatchResult {
@@ -272,8 +267,8 @@ decl_module! {
         #[weight = (10_000, Pays::No)]
         fn buy_asset (
             origin,
-            sold_asset_id: CurrencyIdOf<T>,
-            bought_asset_id: CurrencyIdOf<T>,
+            sold_asset_id: TokenId,
+            bought_asset_id: TokenId,
             bought_asset_amount: BalanceOf<T>,
             max_amount_in: BalanceOf<T>,
         ) -> DispatchResult {
@@ -348,8 +343,8 @@ decl_module! {
         #[weight = 10_000]
         fn mint_liquidity (
             origin,
-            first_asset_id: CurrencyIdOf<T>,
-            second_asset_id: CurrencyIdOf<T>,
+            first_asset_id: TokenId,
+            second_asset_id: TokenId,
             first_asset_amount: BalanceOf<T>,
         ) -> DispatchResult {
 
@@ -357,7 +352,7 @@ decl_module! {
             let vault = Self::account_id();
 
             ensure!(
-                (<LiquidityAssets<T>>::contains_key((first_asset_id, second_asset_id)) || <LiquidityAssets<T>>::contains_key((second_asset_id, first_asset_id))),
+                (LiquidityAssets::contains_key((first_asset_id, second_asset_id)) || LiquidityAssets::contains_key((second_asset_id, first_asset_id))),
                 Error::<T>::NoSuchPool,
             );
 
@@ -438,8 +433,8 @@ decl_module! {
         #[weight = 10_000]
         fn burn_liquidity (
             origin,
-            first_asset_id: CurrencyIdOf<T>,
-            second_asset_id: CurrencyIdOf<T>,
+            first_asset_id: TokenId,
+            second_asset_id: TokenId,
             liquidity_asset_amount: BalanceOf<T>,
         ) -> DispatchResult {
 
@@ -552,19 +547,19 @@ impl<T: Trait> Module<T> {
     }
 
     pub fn get_liquidity_asset(
-        first_asset_id: CurrencyIdOf<T>,
-        second_asset_id: CurrencyIdOf<T>,
-    ) -> CurrencyIdOf<T> {
-        if <LiquidityAssets<T>>::contains_key((first_asset_id, second_asset_id)) {
-            <LiquidityAssets<T>>::get((first_asset_id, second_asset_id))
+        first_asset_id: TokenId,
+        second_asset_id: TokenId,
+    ) -> TokenId {
+        if LiquidityAssets::contains_key((first_asset_id, second_asset_id)) {
+            LiquidityAssets::get((first_asset_id, second_asset_id))
         } else {
-            <LiquidityAssets<T>>::get((second_asset_id, first_asset_id))
+            LiquidityAssets::get((second_asset_id, first_asset_id))
         }
     }
 
     pub fn get_burn_amount(
-        first_asset_id: CurrencyIdOf<T>,
-        second_asset_id: CurrencyIdOf<T>,
+        first_asset_id: TokenId,
+        second_asset_id: TokenId,
         liquidity_asset_amount: BalanceOf<T>,
     ) -> (BalanceOf<T>, BalanceOf<T>) {
         let liquidity_asset_id = Self::get_liquidity_asset(first_asset_id, second_asset_id);

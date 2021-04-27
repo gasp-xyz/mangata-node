@@ -74,7 +74,7 @@ decl_storage! {
         config(bridged_assets_info): Vec<(Option<Vec<u8>>, Option<Vec<u8>>, Option<Vec<u8>>, Option<u32>, TokenId)>;
         build(|config: &GenesisConfig|{
             for (name, token, description, decimals, asset_id) in config.bridged_assets_info.iter(){
-                <AssetsInfo<T>>::insert(
+                AssetsInfo::insert(
                     asset_id,
                     AssetInfo {
                         name: name.clone(),
@@ -206,7 +206,7 @@ impl<T: Trait> Module<T> {
             );
         }
 
-        <AssetsInfo<T>>::insert(asset, info.clone());
+        AssetsInfo::insert(asset, info.clone());
 
         Ok(info)
     }

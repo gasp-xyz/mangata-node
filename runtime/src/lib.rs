@@ -50,6 +50,7 @@ pub use sp_runtime::{Perbill, Permill};
 pub use orml_tokens;
 // pub use pallet_assets;
 pub use pallet_assets_info;
+pub use mangata_primitives::TokenId;
 
 use pallet_session::historical as pallet_session_historical;
 pub use pallet_staking::StakerStatus;
@@ -82,9 +83,6 @@ pub type Balance = u128;
 
 /// Balance of an account.
 pub type Amount = i128;
-
-/// AssetId of an asset.
-pub type AssetId = u32;
 
 /// Index of a transaction in the chain.
 pub type Index = u32;
@@ -483,7 +481,6 @@ impl orml_tokens::Trait for Runtime {
     type Event = Event;
     type Balance = Balance;
     type Amount = Amount;
-    type CurrencyId = u32;
     type OnReceived = ();
     type WeightInfo = ();
 }
@@ -515,7 +512,7 @@ construct_runtime!(
         BridgedAsset: bridged_asset::{Module, Call, Config<T>, Storage, Event<T>},
         ETH: eth_app::{Module, Call, Storage, Event<T>},
         ERC20: erc20_app::{Module, Call, Storage, Event<T>},
-        AssetsInfo: pallet_assets_info::{Module, Call, Config<T>, Storage, Event<T>},
+        AssetsInfo: pallet_assets_info::{Module, Call, Config, Storage, Event},
         Tokens: orml_tokens::{Module, Storage, Call, Event<T>, Config<T>},
     }
 );
@@ -712,7 +709,7 @@ impl_runtime_apis! {
         }
     }
 
-    impl xyk_runtime_api::XykApi<Block, Balance, AssetId> for Runtime {
+    impl xyk_runtime_api::XykApi<Block, Balance, TokenId> for Runtime {
         fn calculate_sell_price(
             input_reserve: Balance,
             output_reserve: Balance,
@@ -734,8 +731,8 @@ impl_runtime_apis! {
         }
 
         fn get_burn_amount(
-            first_asset_id: AssetId,
-            second_asset_id: AssetId,
+            first_asset_id: TokenId,
+            second_asset_id: TokenId,
             liquidity_asset_amount: Balance
         ) -> RpcAmountsResult<Balance> {
             let (first_asset_amount, second_asset_amount) = Xyk::get_burn_amount(first_asset_id, second_asset_id, liquidity_asset_amount);

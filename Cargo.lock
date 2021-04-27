@@ -187,6 +187,7 @@ dependencies = [
  "artemis-core",
  "frame-support",
  "frame-system",
+ "mangata-primitives",
  "orml-tokens",
  "parity-scale-codec",
  "rustc-hex",
@@ -4309,6 +4310,7 @@ version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
+ "mangata-primitives",
  "orml-tokens",
  "parity-scale-codec",
  "sp-core",

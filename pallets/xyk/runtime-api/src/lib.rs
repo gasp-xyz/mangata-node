@@ -70,9 +70,9 @@ fn deserialize_from_string<'de, D: Deserializer<'de>, T: std::str::FromStr>(
 }
 
 sp_api::decl_runtime_apis! {
-    pub trait XykApi<Balance, AssetId> where
+    pub trait XykApi<Balance, TokenId> where
         Balance: Codec + MaybeDisplay + MaybeFromStr,
-        AssetId: Codec + MaybeDisplay + MaybeFromStr,{
+        TokenId: Codec + MaybeDisplay + MaybeFromStr,{
         fn calculate_sell_price(
             input_reserve: Balance,
             output_reserve: Balance,
@@ -84,8 +84,8 @@ sp_api::decl_runtime_apis! {
             buy_amount: Balance
         ) -> RpcResult<Balance>;
         fn get_burn_amount(
-            first_asset_id: AssetId,
-            second_asset_id: AssetId,
+            first_asset_id: TokenId,
+            second_asset_id: TokenId,
             liquidity_asset_amount: Balance,
         ) -> RpcAmountsResult<Balance>;
     }

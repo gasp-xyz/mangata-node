@@ -15,7 +15,7 @@ use frame_support::sp_runtime::traits::AccountIdConversion;
 use frame_support::traits::{ExistenceRequirement, WithdrawReasons};
 use sp_runtime::traits::{SaturatedConversion, Zero};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
-use mangata_primitives::TokenId;
+use mangata_primitives::{TokenId, Balance};
 
 #[cfg(test)]
 mod mock;
@@ -26,9 +26,6 @@ pub trait Trait: frame_system::Trait {
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
     type Currency: MultiTokenCurrencyExtended<Self::AccountId>;
 }
-
-type BalanceOf<T> =
-    <<T as Trait>::Currency as MultiTokenCurrency<<T as frame_system::Trait>::AccountId>>::Balance;
 
 const PALLET_ID: ModuleId = ModuleId(*b"79b14c96");
 
@@ -54,8 +51,7 @@ decl_error! {
 decl_event!(
     pub enum Event<T>
     where
-        AccountId = <T as frame_system::Trait>::AccountId,
-        Balance = BalanceOf<T>,
+        AccountId = <T as frame_system::Trait>::AccountId
     {
         //TODO add trading events
         PoolCreated(AccountId, TokenId, Balance, TokenId, Balance),
@@ -85,7 +81,7 @@ decl_event!(
 decl_storage! {
     trait Store for Module<T: Trait> as XykStorage {
 
-        Pools get(fn asset_pool): map hasher(opaque_blake2_256) (TokenId, TokenId) => BalanceOf<T>;
+        Pools get(fn asset_pool): map hasher(opaque_blake2_256) (TokenId, TokenId) => Balance;
 
         LiquidityAssets get(fn liquidity_asset): map hasher(opaque_blake2_256) (TokenId, TokenId) => TokenId;
         LiquidityPools get(fn liquidity_pool): map hasher(opaque_blake2_256) TokenId => (TokenId, TokenId);
@@ -105,9 +101,9 @@ decl_module! {
         fn create_pool(
             origin,
             first_asset_id: TokenId,
-            first_asset_amount: BalanceOf<T>,
+            first_asset_amount: Balance,
             second_asset_id: TokenId,
-            second_asset_amount: BalanceOf<T>
+            second_asset_amount: Balance
         ) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -119,12 +115,12 @@ decl_module! {
             );
 
             ensure!(
-                !<Pools<T>>::contains_key((first_asset_id, second_asset_id)),
+                !Pools::contains_key((first_asset_id, second_asset_id)),
                 Error::<T>::PoolAlreadyExists,
             );
 
             ensure!(
-                !<Pools<T>>::contains_key((second_asset_id,first_asset_id)),
+                !Pools::contains_key((second_asset_id,first_asset_id)),
                 Error::<T>::PoolAlreadyExists,
             );
 
@@ -157,11 +153,11 @@ decl_module! {
 
             let initial_liquidity = first_asset_amount + second_asset_amount;
 
-            <Pools<T>>::insert(
+            Pools::insert(
                 (first_asset_id, second_asset_id), first_asset_amount
             );
 
-            <Pools<T>>::insert(
+            Pools::insert(
                 (second_asset_id, first_asset_id), second_asset_amount
             );
 
@@ -199,14 +195,14 @@ decl_module! {
             origin,
             sold_asset_id: TokenId,
             bought_asset_id: TokenId,
-            sold_asset_amount: BalanceOf<T>,
-            min_amount_out: BalanceOf<T>,
+            sold_asset_amount: Balance,
+            min_amount_out: Balance,
         ) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
 
             ensure!(
-                <Pools<T>>::contains_key((sold_asset_id,bought_asset_id)),
+                Pools::contains_key((sold_asset_id,bought_asset_id)),
                 Error::<T>::NoSuchPool,
             );
 
@@ -215,8 +211,8 @@ decl_module! {
                 Error::<T>::ZeroAmount,
             );
 
-            let input_reserve = <Pools<T>>::get((sold_asset_id, bought_asset_id));
-            let output_reserve = <Pools<T>>::get((bought_asset_id, sold_asset_id));
+            let input_reserve = Pools::get((sold_asset_id, bought_asset_id));
+            let output_reserve = Pools::get((bought_asset_id, sold_asset_id));
             let bought_asset_amount = Self::calculate_sell_price(
                 input_reserve,
                 output_reserve,
@@ -250,11 +246,11 @@ decl_module! {
                 ExistenceRequirement::KeepAlive,
             )?;
 
-            <Pools<T>>::insert(
+            Pools::insert(
                 (sold_asset_id, bought_asset_id),
                 input_reserve + sold_asset_amount,
             );
-            <Pools<T>>::insert(
+            Pools::insert(
                 (bought_asset_id, sold_asset_id),
                 output_reserve - bought_asset_amount,
             );
@@ -269,19 +265,19 @@ decl_module! {
             origin,
             sold_asset_id: TokenId,
             bought_asset_id: TokenId,
-            bought_asset_amount: BalanceOf<T>,
-            max_amount_in: BalanceOf<T>,
+            bought_asset_amount: Balance,
+            max_amount_in: Balance,
         ) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
 
             ensure!(
-                <Pools<T>>::contains_key((sold_asset_id,bought_asset_id)),
+                Pools::contains_key((sold_asset_id,bought_asset_id)),
                 Error::<T>::NoSuchPool,
             );
 
-            let input_reserve = <Pools<T>>::get((sold_asset_id, bought_asset_id));
-            let output_reserve = <Pools<T>>::get((bought_asset_id, sold_asset_id));
+            let input_reserve = Pools::get((sold_asset_id, bought_asset_id));
+            let output_reserve = Pools::get((bought_asset_id, sold_asset_id));
 
             ensure!(
                 output_reserve > bought_asset_amount,
@@ -326,11 +322,11 @@ decl_module! {
                 ExistenceRequirement::KeepAlive,
             )?;
 
-            <Pools<T>>::insert(
+            Pools::insert(
                 (sold_asset_id, bought_asset_id),
                 input_reserve + sold_asset_amount,
             );
-            <Pools<T>>::insert(
+            Pools::insert(
                 (bought_asset_id, sold_asset_id),
                 output_reserve - bought_asset_amount,
             );
@@ -345,7 +341,7 @@ decl_module! {
             origin,
             first_asset_id: TokenId,
             second_asset_id: TokenId,
-            first_asset_amount: BalanceOf<T>,
+            first_asset_amount: Balance,
         ) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -362,12 +358,12 @@ decl_module! {
             );
 
             ensure!(
-                (<Pools<T>>::contains_key((first_asset_id, second_asset_id)) || <Pools<T>>::contains_key((second_asset_id, first_asset_id))),
+                (Pools::contains_key((first_asset_id, second_asset_id)) || Pools::contains_key((second_asset_id, first_asset_id))),
                 Error::<T>::NoSuchPool,
             );
 
-            let first_asset_reserve = <Pools<T>>::get((first_asset_id, second_asset_id));
-            let second_asset_reserve = <Pools<T>>::get((second_asset_id, first_asset_id));
+            let first_asset_reserve = Pools::get((first_asset_id, second_asset_id));
+            let second_asset_reserve = Pools::get((second_asset_id, first_asset_id));
             let total_liquidity_assets = T::Currency::total_issuance(liquidity_asset_id);
 
             let first_asset_amount_u256: U256 = first_asset_amount.saturated_into::<u128>().into();
@@ -379,9 +375,9 @@ decl_module! {
             let liquidity_assets_minted_u256: U256 = first_asset_amount_u256 * total_liquidity_assets_u256 / first_asset_reserve_u256;
 
             let second_asset_amount = second_asset_amount_u256.saturated_into::<u128>()
-                .saturated_into::<BalanceOf<T>>();
+                .saturated_into::<Balance>();
             let liquidity_assets_minted = liquidity_assets_minted_u256.saturated_into::<u128>()
-                .saturated_into::<BalanceOf<T>>();
+                .saturated_into::<Balance>();
 
             ensure!(
                 !first_asset_amount.is_zero() && !second_asset_amount.is_zero(),
@@ -415,11 +411,11 @@ decl_module! {
 
             T::Currency::mint(liquidity_asset_id,&sender, liquidity_assets_minted)?;
 
-            <Pools<T>>::insert(
+            Pools::insert(
                 (&first_asset_id, &second_asset_id),
                 first_asset_reserve + first_asset_amount,
             );
-            <Pools<T>>::insert(
+            Pools::insert(
                 (&second_asset_id, &first_asset_id),
                 second_asset_reserve + second_asset_amount,
             );
@@ -435,19 +431,19 @@ decl_module! {
             origin,
             first_asset_id: TokenId,
             second_asset_id: TokenId,
-            liquidity_asset_amount: BalanceOf<T>,
+            liquidity_asset_amount: Balance,
         ) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
             let vault = Self::account_id();
 
             ensure!(
-                <Pools<T>>::contains_key((first_asset_id, second_asset_id)),
+                Pools::contains_key((first_asset_id, second_asset_id)),
                 Error::<T>::NoSuchPool,
             );
 
-            let first_asset_reserve = <Pools<T>>::get((first_asset_id, second_asset_id));
-            let second_asset_reserve = <Pools<T>>::get((second_asset_id, first_asset_id));
+            let first_asset_reserve = Pools::get((first_asset_id, second_asset_id));
+            let second_asset_reserve = Pools::get((second_asset_id, first_asset_id));
             let liquidity_asset_id = Self::get_liquidity_asset(first_asset_id, second_asset_id);
 
             ensure!(
@@ -483,19 +479,19 @@ decl_module! {
                 second_asset_amount,
                 ExistenceRequirement::KeepAlive,
             )?;
-            <Pools<T>>::insert(
+            Pools::insert(
                 (&first_asset_id, &second_asset_id),
                 first_asset_reserve - first_asset_amount,
             );
-            <Pools<T>>::insert(
+            Pools::insert(
                 (&second_asset_id, &first_asset_id),
                 second_asset_reserve - second_asset_amount,
             );
 
-            if (first_asset_reserve - first_asset_amount == 0.saturated_into::<BalanceOf<T>>())
-                || (second_asset_reserve - second_asset_amount == 0.saturated_into::<BalanceOf<T>>()) {
-                <Pools<T>>::remove((first_asset_id, second_asset_id));
-                <Pools<T>>::remove((second_asset_id, first_asset_id));
+            if (first_asset_reserve - first_asset_amount == 0.saturated_into::<Balance>())
+                || (second_asset_reserve - second_asset_amount == 0.saturated_into::<Balance>()) {
+                Pools::remove((first_asset_id, second_asset_id));
+                Pools::remove((second_asset_id, first_asset_id));
             }
 
             T::Currency::slash(liquidity_asset_id, &sender, liquidity_asset_amount);
@@ -509,10 +505,10 @@ decl_module! {
 
 impl<T: Trait> Module<T> {
     pub fn calculate_sell_price(
-        input_reserve: BalanceOf<T>,
-        output_reserve: BalanceOf<T>,
-        sell_amount: BalanceOf<T>,
-    ) -> Result<BalanceOf<T>, DispatchError> {
+        input_reserve: Balance,
+        output_reserve: Balance,
+        sell_amount: Balance,
+    ) -> Result<Balance, DispatchError> {
         let input_reserve_saturated: U256 = input_reserve.saturated_into::<u128>().into();
         let output_reserve_saturated: U256 = output_reserve.saturated_into::<u128>().into();
         let sell_amount_saturated: U256 = sell_amount.saturated_into::<u128>().into();
@@ -525,14 +521,14 @@ impl<T: Trait> Module<T> {
             .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
         Ok(result
             .saturated_into::<u128>()
-            .saturated_into::<BalanceOf<T>>())
+            .saturated_into::<Balance>())
     }
 
     pub fn calculate_buy_price(
-        input_reserve: BalanceOf<T>,
-        output_reserve: BalanceOf<T>,
-        buy_amount: BalanceOf<T>,
-    ) -> BalanceOf<T> {
+        input_reserve: Balance,
+        output_reserve: Balance,
+        buy_amount: Balance,
+    ) -> Balance {
         let input_reserve_saturated: U256 = input_reserve.saturated_into::<u128>().into();
         let output_reserve_saturated: U256 = output_reserve.saturated_into::<u128>().into();
         let buy_amount_saturated: U256 = buy_amount.saturated_into::<u128>().into();
@@ -543,7 +539,7 @@ impl<T: Trait> Module<T> {
 
         result
             .saturated_into::<u128>()
-            .saturated_into::<BalanceOf<T>>()
+            .saturated_into::<Balance>()
     }
 
     pub fn get_liquidity_asset(
@@ -560,13 +556,13 @@ impl<T: Trait> Module<T> {
     pub fn get_burn_amount(
         first_asset_id: TokenId,
         second_asset_id: TokenId,
-        liquidity_asset_amount: BalanceOf<T>,
-    ) -> (BalanceOf<T>, BalanceOf<T>) {
+        liquidity_asset_amount: Balance,
+    ) -> (Balance, Balance) {
         let liquidity_asset_id = Self::get_liquidity_asset(first_asset_id, second_asset_id);
-        let first_asset_reserve_u256: U256 = <Pools<T>>::get((first_asset_id, second_asset_id))
+        let first_asset_reserve_u256: U256 = Pools::get((first_asset_id, second_asset_id))
             .saturated_into::<u128>()
             .into();
-        let second_asset_reserve_u256: U256 = <Pools<T>>::get((second_asset_id, first_asset_id))
+        let second_asset_reserve_u256: U256 = Pools::get((second_asset_id, first_asset_id))
             .saturated_into::<u128>()
             .into();
         let total_liquidity_assets_u256: U256 =
@@ -582,10 +578,10 @@ impl<T: Trait> Module<T> {
             second_asset_reserve_u256 * liquidity_asset_amount_u256 / total_liquidity_assets_u256;
         let second_asset_amount = second_asset_amount_u256
             .saturated_into::<u128>()
-            .saturated_into::<BalanceOf<T>>();
+            .saturated_into::<Balance>();
         let first_asset_amount = first_asset_amount_u256
             .saturated_into::<u128>()
-            .saturated_into::<BalanceOf<T>>();
+            .saturated_into::<Balance>();
 
         (first_asset_amount, second_asset_amount)
     }

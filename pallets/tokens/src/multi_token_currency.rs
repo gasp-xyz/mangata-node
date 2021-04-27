@@ -5,44 +5,41 @@ use frame_support::Parameter;
 use frame_support::traits::{Imbalance, WithdrawReasons, ExistenceRequirement, SignedImbalance, Get, BalanceStatus};
 use sp_std::fmt::Debug;
 use sp_std::result;
-use mangata_primitives::TokenId;
+use mangata_primitives::{TokenId, Balance};
 
 /// Abstraction over a fungible assets system.
 pub trait MultiTokenCurrency<AccountId>{
-	/// The balance of an account.
-	type Balance: AtLeast32BitUnsigned + FullCodec + Copy + MaybeSerializeDeserialize + Debug +
-		Default;
 
 	/// The opaque token type for an imbalance. This is returned by unbalanced operations
 	/// and must be dealt with. It may be dropped but cannot be cloned.
-	type PositiveImbalance: Imbalance<Self::Balance, Opposite=Self::NegativeImbalance>;
+	type PositiveImbalance: Imbalance<Balance, Opposite=Self::NegativeImbalance>;
 
 	/// The opaque token type for an imbalance. This is returned by unbalanced operations
 	/// and must be dealt with. It may be dropped but cannot be cloned.
-	type NegativeImbalance: Imbalance<Self::Balance, Opposite=Self::PositiveImbalance>;
+	type NegativeImbalance: Imbalance<Balance, Opposite=Self::PositiveImbalance>;
 
 	// PUBLIC IMMUTABLES
 
 	/// The combined balance of `who`.
-	fn total_balance(currency_id: TokenId, who: &AccountId) -> Self::Balance;
+	fn total_balance(currency_id: TokenId, who: &AccountId) -> Balance;
 
 	/// Same result as `slash(who, value)` (but without the side-effects) assuming there are no
 	/// balance changes in the meantime and only the reserved balance is not taken into account.
-	fn can_slash(currency_id: TokenId, who: &AccountId, value: Self::Balance) -> bool;
+	fn can_slash(currency_id: TokenId, who: &AccountId, value: Balance) -> bool;
 
 	/// The total amount of issuance in the system.
-	fn total_issuance(currency_id: TokenId) -> Self::Balance;
+	fn total_issuance(currency_id: TokenId) -> Balance;
 
 	/// The minimum balance any single account may have. This is equivalent to the `Balances` module's
 	/// `ExistentialDeposit`.
-	fn minimum_balance(currency_id: TokenId) -> Self::Balance;
+	fn minimum_balance(currency_id: TokenId) -> Balance;
 
 	/// Reduce the total issuance by `amount` and return the according imbalance. The imbalance will
 	/// typically be used to reduce an account by the same amount with e.g. `settle`.
 	///
 	/// This is infallible, but doesn't guarantee that the entire `amount` is burnt, for example
 	/// in the case of underflow.
-	fn burn(currency_id: TokenId, amount: Self::Balance) -> Self::PositiveImbalance;
+	fn burn(currency_id: TokenId, amount: Balance) -> Self::PositiveImbalance;
 
 	/// Increase the total issuance by `amount` and return the according imbalance. The imbalance
 	/// will typically be used to increase an account by the same amount with e.g.
@@ -50,13 +47,13 @@ pub trait MultiTokenCurrency<AccountId>{
 	///
 	/// This is infallible, but doesn't guarantee that the entire `amount` is issued, for example
 	/// in the case of overflow.
-	fn issue(acurrency_id: TokenId, amount: Self::Balance) -> Self::NegativeImbalance;
+	fn issue(acurrency_id: TokenId, amount: Balance) -> Self::NegativeImbalance;
 
 	/// Produce a pair of imbalances that cancel each other out exactly.
 	///
 	/// This is just the same as burning and issuing the same amount and has no effect on the
 	/// total issuance.
-	fn pair(currency_id: TokenId, amount: Self::Balance) -> (Self::PositiveImbalance, Self::NegativeImbalance) {
+	fn pair(currency_id: TokenId, amount: Balance) -> (Self::PositiveImbalance, Self::NegativeImbalance) {
 		(Self::burn(currency_id, amount.clone()), Self::issue(currency_id, amount))
 	}
 
@@ -69,7 +66,7 @@ pub trait MultiTokenCurrency<AccountId>{
 	///
 	/// `system::AccountNonce` is also deleted if `ReservedBalance` is also zero (it also gets
 	/// collapsed to zero if it ever becomes less than `ExistentialDeposit`.
-	fn free_balance(currency_id: TokenId, who: &AccountId) -> Self::Balance;
+	fn free_balance(currency_id: TokenId, who: &AccountId) -> Balance;
 
 	/// Returns `Ok` iff the account is able to make a withdrawal of the given amount
 	/// for the given reason. Basically, it's just a dry-run of `withdraw`.
@@ -78,9 +75,9 @@ pub trait MultiTokenCurrency<AccountId>{
 	fn ensure_can_withdraw(
         currency_id: TokenId,
 		who: &AccountId,
-		_amount: Self::Balance,
+		_amount: Balance,
 		reasons: WithdrawReasons,
-		new_balance: Self::Balance,
+		new_balance: Balance,
 	) -> DispatchResult;
 
 	// PUBLIC MUTABLES (DANGEROUS)
@@ -93,7 +90,7 @@ pub trait MultiTokenCurrency<AccountId>{
         currency_id: TokenId,
 		source: &AccountId,
 		dest: &AccountId,
-		value: Self::Balance,
+		value: Balance,
 		existence_requirement: ExistenceRequirement,
 	) -> DispatchResult;
 
@@ -107,8 +104,8 @@ pub trait MultiTokenCurrency<AccountId>{
 	fn slash(
         currency_id: TokenId,
 		who: &AccountId,
-		value: Self::Balance
-	) -> (Self::NegativeImbalance, Self::Balance);
+		value: Balance
+	) -> (Self::NegativeImbalance, Balance);
 
 	/// Mints `value` to the free balance of `who`.
 	///
@@ -116,7 +113,7 @@ pub trait MultiTokenCurrency<AccountId>{
 	fn deposit_into_existing(
         currency_id: TokenId,
 		who: &AccountId,
-		value: Self::Balance
+		value: Balance
 	) -> result::Result<Self::PositiveImbalance, DispatchError>;
 
 	/// Similar to deposit_creating, only accepts a `NegativeImbalance` and returns nothing on
@@ -139,7 +136,7 @@ pub trait MultiTokenCurrency<AccountId>{
 	fn deposit_creating(
         currency_id: TokenId,
 		who: &AccountId,
-		value: Self::Balance,
+		value: Balance,
 	) -> Self::PositiveImbalance;
 
 	/// Similar to deposit_creating, only accepts a `NegativeImbalance` and returns nothing on
@@ -164,7 +161,7 @@ pub trait MultiTokenCurrency<AccountId>{
 	fn withdraw(
         currency_id: TokenId,
 		who: &AccountId,
-		value: Self::Balance,
+		value: Balance,
 		reasons: WithdrawReasons,
 		liveness: ExistenceRequirement,
 	) -> result::Result<Self::NegativeImbalance, DispatchError>;
@@ -192,15 +189,15 @@ pub trait MultiTokenCurrency<AccountId>{
 	fn make_free_balance_be(
         currency_id: TokenId,
 		who: &AccountId,
-		balance: Self::Balance,
-	) -> SignedImbalance<Self::Balance, Self::PositiveImbalance>;
+		balance: Balance,
+	) -> SignedImbalance<Balance, Self::PositiveImbalance>;
 }
 
 /// A currency where funds can be reserved from the user.
 pub trait MultiTokenReservableCurrency<AccountId>: MultiTokenCurrency<AccountId> {
 	/// Same result as `reserve(who, value)` (but without the side-effects) assuming there
 	/// are no balance changes in the meantime.
-	fn can_reserve(currency_id: TokenId, who: &AccountId, value: Self::Balance) -> bool;
+	fn can_reserve(currency_id: TokenId, who: &AccountId, value: Balance) -> bool;
 
 	/// Deducts up to `value` from reserved balance of `who`. This function cannot fail.
 	///
@@ -209,8 +206,8 @@ pub trait MultiTokenReservableCurrency<AccountId>: MultiTokenCurrency<AccountId>
 	fn slash_reserved(
         currency_id: TokenId,
 		who: &AccountId,
-		value: Self::Balance
-	) -> (Self::NegativeImbalance, Self::Balance);
+		value: Balance
+	) -> (Self::NegativeImbalance, Balance);
 
 	/// The amount of the balance of a given account that is externally reserved; this can still get
 	/// slashed, but gets slashed last of all.
@@ -223,13 +220,13 @@ pub trait MultiTokenReservableCurrency<AccountId>: MultiTokenCurrency<AccountId>
 	///
 	/// `system::AccountNonce` is also deleted if `FreeBalance` is also zero (it also gets
 	/// collapsed to zero if it ever becomes less than `ExistentialDeposit`.
-	fn reserved_balance(currency_id: TokenId, who: &AccountId) -> Self::Balance;
+	fn reserved_balance(currency_id: TokenId, who: &AccountId) -> Balance;
 
 	/// Moves `value` from balance to reserved balance.
 	///
 	/// If the free balance is lower than `value`, then no funds will be moved and an `Err` will
 	/// be returned to notify of this. This is different behavior than `unreserve`.
-	fn reserve(currency_id: TokenId, who: &AccountId, value: Self::Balance) -> DispatchResult;
+	fn reserve(currency_id: TokenId, who: &AccountId, value: Balance) -> DispatchResult;
 
 	/// Moves up to `value` from reserved balance to free balance. This function cannot fail.
 	///
@@ -241,7 +238,7 @@ pub trait MultiTokenReservableCurrency<AccountId>: MultiTokenCurrency<AccountId>
 	/// - This is different from `reserve`.
 	/// - If the remaining reserved balance is less than `ExistentialDeposit`, it will
 	/// invoke `on_reserved_too_low` and could reap the account.
-	fn unreserve(currency_id: TokenId, who: &AccountId, value: Self::Balance) -> Self::Balance;
+	fn unreserve(currency_id: TokenId, who: &AccountId, value: Balance) -> Balance;
 
 	/// Moves up to `value` from reserved balance of account `slashed` to balance of account
 	/// `beneficiary`. `beneficiary` must exist for this to succeed. If it does not, `Err` will be
@@ -254,9 +251,9 @@ pub trait MultiTokenReservableCurrency<AccountId>: MultiTokenCurrency<AccountId>
         currency_id: TokenId,
 		slashed: &AccountId,
 		beneficiary: &AccountId,
-		value: Self::Balance,
+		value: Balance,
 		status: BalanceStatus,
-	) -> result::Result<Self::Balance, DispatchError>;
+	) -> result::Result<Balance, DispatchError>;
 }
 
 /// An identifier for a lock. Used for disambiguating different locks so that
@@ -281,7 +278,7 @@ pub trait MultiTokenLockableCurrency<AccountId>: MultiTokenCurrency<AccountId> {
         currency_id: TokenId,
 		id: LockIdentifier,
 		who: &AccountId,
-		amount: Self::Balance,
+		amount: Balance,
 		reasons: WithdrawReasons,
 	);
 
@@ -297,7 +294,7 @@ pub trait MultiTokenLockableCurrency<AccountId>: MultiTokenCurrency<AccountId> {
         currency_id: TokenId,
 		id: LockIdentifier,
 		who: &AccountId,
-		amount: Self::Balance,
+		amount: Balance,
 		reasons: WithdrawReasons,
 	);
 
@@ -310,8 +307,8 @@ pub trait MultiTokenLockableCurrency<AccountId>: MultiTokenCurrency<AccountId> {
 }
 
 pub trait MultiTokenCurrencyExtended<AccountId>: MultiTokenCurrency<AccountId> {
-	fn create(address: &AccountId, amount: Self::Balance) -> TokenId;
-    fn mint(currency_id: TokenId, address: &AccountId, amount: Self::Balance) -> DispatchResult;
+	fn create(address: &AccountId, amount: Balance) -> TokenId;
+    fn mint(currency_id: TokenId, address: &AccountId, amount: Balance) -> DispatchResult;
     fn exists(currency_id: TokenId) -> bool;
-    fn burn_and_settle(currency_id: TokenId, who: &AccountId, amount: Self::Balance) -> DispatchResult;
+    fn burn_and_settle(currency_id: TokenId, who: &AccountId, amount: Balance) -> DispatchResult;
 }

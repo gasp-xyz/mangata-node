@@ -38,7 +38,7 @@ use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 use sp_core::{RuntimeDebug, U256};
 use sp_std::prelude::*;
 use codec::{Decode, Encode};
-use mangata_primitives::TokenId;
+use mangata_primitives::{TokenId, Balance};
 
 use artemis_core::BridgedAssetId;
 
@@ -54,9 +54,6 @@ pub trait Trait: frame_system::Trait {
     type Currency: MultiTokenCurrencyExtended<Self::AccountId>;
 }
 
-type BalanceOf<T> =
-    <<T as Trait>::Currency as MultiTokenCurrency<<T as frame_system::Trait>::AccountId>>::Balance;
-
 
 decl_storage! {
     trait Store for Module<T: Trait> as Asset {
@@ -67,7 +64,7 @@ decl_storage! {
     }
     add_extra_genesis {
         #[allow(clippy::type_complexity)]
-        config(bridged_assets_links): Vec<(TokenId, BridgedAssetId, BalanceOf<T>, T::AccountId)>;
+        config(bridged_assets_links): Vec<(TokenId, BridgedAssetId, Balance, T::AccountId)>;
         build(|config: &GenesisConfig<T>|
             {
                 for (native_asset_id, bridged_asset_id, initial_supply, initial_owner) in config.bridged_assets_links.iter(){

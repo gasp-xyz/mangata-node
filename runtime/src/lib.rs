@@ -50,7 +50,7 @@ pub use sp_runtime::{Perbill, Permill};
 pub use orml_tokens;
 // pub use pallet_assets;
 pub use pallet_assets_info;
-pub use mangata_primitives::TokenId;
+pub use mangata_primitives::{TokenId, Balance, Amount};
 
 use pallet_session::historical as pallet_session_historical;
 pub use pallet_staking::StakerStatus;
@@ -77,12 +77,6 @@ pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::Account
 /// The type for looking up accounts. We don't expect more than 4 billion of them, but you
 /// never know...
 pub type AccountIndex = u32;
-
-/// Balance of an account.
-pub type Balance = u128;
-
-/// Balance of an account.
-pub type Amount = i128;
 
 /// Index of a transaction in the chain.
 pub type Index = u32;
@@ -479,7 +473,6 @@ impl pallet_assets_info::Trait for Runtime {
 
 impl orml_tokens::Trait for Runtime {
     type Event = Event;
-    type Balance = Balance;
     type Amount = Amount;
     type OnReceived = ();
     type WeightInfo = ();

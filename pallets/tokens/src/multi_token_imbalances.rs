@@ -5,20 +5,20 @@ use frame_support::storage::StorageMap;
 use frame_support::traits::{Imbalance, TryDrop};
 use sp_runtime::traits::{Saturating, Zero};
 use sp_std::{mem, result};
-use mangata_primitives::TokenId;
+use mangata_primitives::{TokenId, Balance};
 
 /// Opaque, move-only struct with private fields that serves as a token
 /// denoting that funds have been created without any equal and opposite
 /// accounting.
 #[must_use]
-pub struct PositiveImbalance<T: Trait>(
+pub struct PositiveImbalance(
     TokenId,
-	T::Balance,
+	Balance,
 );
 
-impl<T: Trait> PositiveImbalance<T> {
+impl PositiveImbalance {
 	/// Create a new positive imbalance from a balance.
-	pub fn new(currency_id: TokenId, amount: T::Balance) -> Self {
+	pub fn new(currency_id: TokenId, amount: Balance) -> Self {
 		PositiveImbalance(currency_id, amount)
 	}
 
@@ -31,14 +31,14 @@ impl<T: Trait> PositiveImbalance<T> {
 /// denoting that funds have been destroyed without any equal and opposite
 /// accounting.
 #[must_use]
-pub struct NegativeImbalance<T: Trait>(
+pub struct NegativeImbalance(
     TokenId,
-	T::Balance,
+	Balance,
 );
 
-impl<T: Trait> NegativeImbalance<T> {
+impl NegativeImbalance {
 	/// Create a new negative imbalance from a balance.
-	pub fn new(currency_id: TokenId, amount: T::Balance) -> Self {
+	pub fn new(currency_id: TokenId, amount: Balance) -> Self {
 		NegativeImbalance(currency_id, amount)
 	}
 
@@ -48,14 +48,14 @@ impl<T: Trait> NegativeImbalance<T> {
 
 }
 
-impl<T: Trait> TryDrop for PositiveImbalance<T> {
+impl TryDrop for PositiveImbalance {
 	fn try_drop(self) -> result::Result<(), Self> {
 		self.drop_zero()
 	}
 }
 
-impl<T: Trait> Imbalance<T::Balance> for PositiveImbalance<T> {
-	type Opposite = NegativeImbalance<T>;
+impl Imbalance<Balance> for PositiveImbalance {
+	type Opposite = NegativeImbalance;
 
 	fn zero() -> Self {
         unimplemented!("PositiveImbalance::zero is not implemented");
@@ -68,7 +68,7 @@ impl<T: Trait> Imbalance<T::Balance> for PositiveImbalance<T> {
 			Err(self)
 		}
 	}
-	fn split(self, amount: T::Balance) -> (Self, Self) {
+	fn split(self, amount: Balance) -> (Self, Self) {
 		let first = self.1.min(amount);
 		let second = self.1 - first;
         let currency_id = self.0;
@@ -99,19 +99,19 @@ impl<T: Trait> Imbalance<T::Balance> for PositiveImbalance<T> {
             Err(NegativeImbalance::new(currency_id, b - a))
         }
 	}
-	fn peek(&self) -> T::Balance {
+	fn peek(&self) -> Balance {
 		self.1
 	}
 }
 
-impl<T: Trait> TryDrop for NegativeImbalance<T> {
+impl TryDrop for NegativeImbalance {
 	fn try_drop(self) -> result::Result<(), Self> {
 		self.drop_zero()
 	}
 }
 
-impl<T: Trait> Imbalance<T::Balance> for NegativeImbalance<T> {
-	type Opposite = PositiveImbalance<T>;
+impl Imbalance<Balance> for NegativeImbalance {
+	type Opposite = PositiveImbalance;
 
 	fn zero() -> Self {
         unimplemented!("NegativeImbalance::zero is not implemented");
@@ -123,7 +123,7 @@ impl<T: Trait> Imbalance<T::Balance> for NegativeImbalance<T> {
 			Err(self)
 		}
 	}
-	fn split(self, amount: T::Balance) -> (Self, Self) {
+	fn split(self, amount: Balance) -> (Self, Self) {
 		let first = self.1.min(amount);
 		let second = self.1 - first;
         let currency_id = self.0;
@@ -153,21 +153,21 @@ impl<T: Trait> Imbalance<T::Balance> for NegativeImbalance<T> {
             Err(PositiveImbalance::new(currency_id, b - a))
         }
 	}
-	fn peek(&self) -> T::Balance {
+	fn peek(&self) -> Balance {
 		self.1
 	}
 }
 
-impl<T: Trait> Drop for PositiveImbalance<T> {
+impl Drop for PositiveImbalance {
 	/// Basic drop handler will just square up the total issuance.
 	fn drop(&mut self) {
-		<TotalIssuance<T>>::mutate(self.0, |v| *v = v.saturating_add(self.1));
+		TotalIssuance::mutate(self.0, |v| *v = v.saturating_add(self.1));
 	}
 }
 
-impl<T: Trait> Drop for NegativeImbalance<T> {
+impl Drop for NegativeImbalance {
 	/// Basic drop handler will just square up the total issuance.
 	fn drop(&mut self) {
-		<TotalIssuance<T>>::mutate(self.0, |v| *v = v.saturating_sub(self.1));
+		TotalIssuance::mutate(self.0, |v| *v = v.saturating_sub(self.1));
 	}
 }

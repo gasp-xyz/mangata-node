@@ -31,6 +31,7 @@ use artemis_asset as asset;
 use artemis_core::{Application, BridgedAssetId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 use sp_runtime::traits::SaturatedConversion;
+use mangata_primitives::Balance;
 
 mod payload;
 use payload::Payload;
@@ -45,9 +46,6 @@ pub trait Trait: system::Trait + asset::Trait {
     type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 }
 
-type BalanceOf<T> = <<T as artemis_asset::Trait>::Currency as MultiTokenCurrency<
-    <T as frame_system::Trait>::AccountId,
->>::Balance;
 
 decl_storage! {
     trait Store for Module<T: Trait> as Erc20Module {
@@ -93,7 +91,7 @@ decl_module! {
             let transfer_event = RawEvent::Transfer(who.clone(), recipient, amount);
             let asset_id = <asset::Module<T>>::get_native_asset_id(asset_id);
 
-            let amount = amount.low_u128().saturated_into::<BalanceOf<T>>();
+            let amount = amount.low_u128().saturated_into::<Balance>();
 
             T::Currency::burn_and_settle(
                 asset_id,
@@ -117,7 +115,7 @@ impl<T: Trait> Module<T> {
         if !<asset::Module<T>>::exists(asset_id) {
             let id = T::Currency::create(
                 &payload.recipient_addr,
-                payload.amount.low_u128().saturated_into::<BalanceOf<T>>(),
+                payload.amount.low_u128().saturated_into::<Balance>(),
             );
             <asset::Module<T>>::link_assets(id, asset_id);
         } else {
@@ -125,7 +123,7 @@ impl<T: Trait> Module<T> {
             T::Currency::mint(
                 id,
                 &payload.recipient_addr,
-                payload.amount.low_u128().saturated_into::<BalanceOf<T>>(),
+                payload.amount.low_u128().saturated_into::<Balance>(),
             )?;
         }
 

@@ -23,6 +23,7 @@ frame-support = { default-features = false, version = '2.0.0' }
 frame-system = { default-features = false, version = '2.0.0' }
 orml-tokens = { path = '../tokens', default-features = false, version = '0.3.1' }
 serde = { version = "1.0.101", optional = true }
+mangata-primitives = { path = '../../primitives/mangata', default-features = false, version = '0.1.0' }
 
 [dev-dependencies]
 sp-core = { default-features = false, version = '2.0.0' }

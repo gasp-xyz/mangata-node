@@ -213,7 +213,6 @@ decl_storage! {
 decl_event!(
 	pub enum Event<T> where
 		<T as frame_system::Trait>::AccountId,
-		TokenId,
 		<T as Trait>::Balance
 	{
 		/// Token transfer success. [currency_id, from, to, amount]
@@ -1142,7 +1141,7 @@ T: Trait
 {
 	fn create(address: &T::AccountId, amount: T::Balance) -> TokenId{
 		let token_id = NextCurrencyId::get();
-		NextCurrencyId::mutate(|id| *id += 1u32 as TokenId );
+		NextCurrencyId::mutate(|id| *id += 1u32 as TokenId);
 		// we are creating new token so amount can not be overflowed as its always true
 		// 0 + amount < T::Balance::max_value()
 		let _ = <Self as MultiTokenCurrency<T::AccountId>>::deposit_creating(token_id, address, amount);

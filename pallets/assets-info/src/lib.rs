@@ -12,6 +12,7 @@ use frame_support::{
     traits::{Get, Vec},
 };
 use frame_system::ensure_root;
+use mangata_primitives::TokenId;
 
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 // use pallet_assets as assets;
@@ -25,7 +26,7 @@ mod tests;
 /// Configure the pallet by specifying the parameters and types on which it depends.
 pub trait Trait: frame_system::Trait {
     /// Because this pallet emits events, it depends on the runtime's definition of an event.
-    type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+    type Event: From<Event> + Into<<Self as frame_system::Trait>::Event>;
 
     /// The minimum length a name may be.
     type MinLengthName: Get<usize>;
@@ -66,12 +67,12 @@ pub struct AssetInfo {
 decl_storage! {
     trait Store for Module<T: Trait> as AssetsInfoModule {
         /// TWOX-NOTE: `AssetId` is trusted, so this is safe.
-        AssetsInfo get(fn get_info): map hasher(twox_64_concat) T::TokenId => AssetInfo;
+        AssetsInfo get(fn get_info): map hasher(twox_64_concat) TokenId => AssetInfo;
     }
     add_extra_genesis {
         #[allow(clippy::type_complexity)]
-        config(bridged_assets_info): Vec<(Option<Vec<u8>>, Option<Vec<u8>>, Option<Vec<u8>>, Option<u32>, T::TokenId)>;
-        build(|config: &GenesisConfig<T>|{
+        config(bridged_assets_info): Vec<(Option<Vec<u8>>, Option<Vec<u8>>, Option<Vec<u8>>, Option<u32>, TokenId)>;
+        build(|config: &GenesisConfig|{
             for (name, token, description, decimals, asset_id) in config.bridged_assets_info.iter(){
                 <AssetsInfo<T>>::insert(
                     asset_id,
@@ -91,9 +92,7 @@ decl_storage! {
 // Pallets use events to inform users when important changes are made.
 // https://substrate.dev/docs/en/knowledgebase/runtime/events
 decl_event!(
-    pub enum Event<T>
-    where 
-    TokenId,
+    pub enum Event
     {
         /// Asset info stored. [assetId, info]
         InfoStored(TokenId, AssetInfo),
@@ -130,12 +129,12 @@ decl_module! {
         fn deposit_event() = default;
 
         #[weight = 10_000 + T::DbWeight::get().writes(1) + T::DbWeight::get().reads(1)]
-        pub fn set_info(origin, asset: T::TokenId, name: Option<Vec<u8>>, symbol: Option<Vec<u8>>, description: Option<Vec<u8>>, decimals: Option<u32>) -> dispatch::DispatchResult {
+        pub fn set_info(origin, asset: TokenId, name: Option<Vec<u8>>, symbol: Option<Vec<u8>>, description: Option<Vec<u8>>, decimals: Option<u32>) -> dispatch::DispatchResult {
             ensure_root(origin)?;
 
             let info = Self::set_asset_info(asset, name, symbol, description, decimals)?;
 
-            Self::deposit_event(RawEvent::InfoStored(asset, info));
+            Self::deposit_event(Event::InfoStored(asset, info));
 
             Ok(())
         }
@@ -144,7 +143,7 @@ decl_module! {
 
 impl<T: Trait> Module<T> {
     pub fn set_asset_info(
-        asset: T::TokenId,
+        asset: TokenId,
         name: Option<Vec<u8>>,
         symbol: Option<Vec<u8>>,
         description: Option<Vec<u8>>,

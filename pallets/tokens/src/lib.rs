@@ -41,10 +41,9 @@ use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
 	traits::Get,
 	traits::{
-		BalanceStatus, ExistenceRequirement, Imbalance,
-		SignedImbalance,
+		BalanceStatus as Status, Currency as PalletCurrency, ExistenceRequirement, Imbalance,
+		LockableCurrency as PalletLockableCurrency, ReservableCurrency as PalletReservableCurrency, SignedImbalance,
 		WithdrawReasons,
-		LockIdentifier,
 	},
 	weights::Weight,
 	Parameter, StorageMap,
@@ -70,7 +69,11 @@ use frame_support::dispatch::result::Result;
 use sp_std::collections::btree_map::BTreeMap;
 
 pub use crate::imbalances::{NegativeImbalance, PositiveImbalance};
-use mangata_primitives::{TokenId, Balance, Amount};
+use orml_traits::{
+	arithmetic::{self, Signed},
+	BalanceStatus, LockIdentifier, MultiCurrency, MultiCurrencyExtended, MultiLockableCurrency,
+	MultiReservableCurrency, OnReceived,
+};
 
 mod default_weight;
 mod imbalances;
@@ -78,14 +81,6 @@ mod mock;
 mod tests;
 mod multi_token_currency;
 mod multi_token_imbalances;
-mod arithmetic;
-mod currency;
-
-pub use arithmetic::Signed;
-pub use currency::{MultiCurrency, MultiCurrencyExtended, MultiLockableCurrency,
-	MultiReservableCurrency, OnReceived
-};
-pub use currency::{Currency as PalletCurrency, LockableCurrency as PalletLockableCurrency, ReservableCurrency as PalletReservableCurrency};
 
 pub use multi_token_currency::{MultiTokenCurrency, MultiTokenLockableCurrency, MultiTokenReservableCurrency, MultiTokenCurrencyExtended};
 use codec::FullCodec;
@@ -98,8 +93,25 @@ pub trait WeightInfo {
 pub trait Trait: frame_system::Trait {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
+	/// The balance type
+	type Balance: Parameter + Member + AtLeast32BitUnsigned + Default + Copy + MaybeSerializeDeserialize;
+
+	/// The amount type, should be signed version of `Balance`
+	type Amount: Signed
+		+ TryInto<Self::Balance>
+		+ TryFrom<Self::Balance>
+		+ Parameter
+		+ Member
+		+ arithmetic::SimpleArithmetic
+		+ Default
+		+ Copy
+		+ MaybeSerializeDeserialize;
+
+	/// The currency ID type
+	type CurrencyId: Parameter + Member + Copy + MaybeSerializeDeserialize + Ord + Default + AtLeast32BitUnsigned + FullCodec;
+
 	/// Hook when some fund is deposited into an account
-	type OnReceived: OnReceived<Self::AccountId, TokenId, Balance>;
+	type OnReceived: OnReceived<Self::AccountId, Self::CurrencyId, Self::Balance>;
 
 	/// Weight information for extrinsics in this module.
 	type WeightInfo: WeightInfo;
@@ -159,9 +171,9 @@ decl_storage! {
 				.endowed_accounts
 				.iter()
 				.map(|(_, currency_id, initial_balance)| (currency_id, initial_balance))
-				.fold(BTreeMap::<TokenId, Balance>::new(), |mut acc, (currency_id, initial_balance)| {
+				.fold(BTreeMap::<T::CurrencyId, T::Balance>::new(), |mut acc, (currency_id, initial_balance)| {
 					if let Some(issuance) = acc.get_mut(currency_id) {
-						*issuance = issuance.checked_add(*initial_balance).expect("total issuance cannot overflow when building genesis");
+						*issuance = issuance.checked_add(initial_balance).expect("total issuance cannot overflow when building genesis");
 					} else {
 						acc.insert(*currency_id, *initial_balance);
 					}
@@ -169,23 +181,23 @@ decl_storage! {
 				})
 				.into_iter()
 				.collect::<Vec<_>>()
-		}): map hasher(twox_64_concat) TokenId => Balance;
+		}): map hasher(twox_64_concat) T::CurrencyId => T::Balance;
 
 		/// Any liquidity locks of a token type under an account.
 		/// NOTE: Should only be accessed when setting, changing and freeing a lock.
-		pub Locks get(fn locks): double_map hasher(blake2_128_concat) T::AccountId, hasher(twox_64_concat) TokenId => Vec<BalanceLock<Balance>>;
+		pub Locks get(fn locks): double_map hasher(blake2_128_concat) T::AccountId, hasher(twox_64_concat) T::CurrencyId => Vec<BalanceLock<T::Balance>>;
 
 		/// The balance of a token type under an account.
 		///
 		/// NOTE: If the total is ever zero, decrease account ref account.
 		///
 		/// NOTE: This is only used in the case that this module is used to store balances.
-		pub Accounts get(fn accounts): double_map hasher(blake2_128_concat) T::AccountId, hasher(twox_64_concat) TokenId => AccountData<Balance>;
+		pub Accounts get(fn accounts): double_map hasher(blake2_128_concat) T::AccountId, hasher(twox_64_concat) T::CurrencyId => AccountData<T::Balance>;
 
-		NextCurrencyId get(fn next_asset_id): TokenId;
+		NextCurrencyId get(fn next_asset_id): T::CurrencyId;
 	}
 	add_extra_genesis {
-		config(endowed_accounts): Vec<(T::AccountId, TokenId, Balance)>;
+		config(endowed_accounts): Vec<(T::AccountId, T::CurrencyId, T::Balance)>;
 
 		build(|config: &GenesisConfig<T>| {
 			config.endowed_accounts.iter().for_each(|(account_id, currency_id, initial_balance)| {
@@ -199,11 +211,13 @@ decl_storage! {
 decl_event!(
 	pub enum Event<T> where
 		<T as frame_system::Trait>::AccountId,
+		<T as Trait>::CurrencyId,
+		<T as Trait>::Balance
 	{
 		/// Token transfer success. [currency_id, from, to, amount]
-		Transferred(TokenId, AccountId, AccountId, Balance),
-		Issued(TokenId, AccountId, Balance),
-		Minted(TokenId, AccountId, Balance),
+		Transferred(CurrencyId, AccountId, AccountId, Balance),
+		Issued(CurrencyId, AccountId, Balance),
+		Minted(CurrencyId, AccountId, Balance),
 	}
 );
 
@@ -228,8 +242,8 @@ decl_module! {
 		pub fn transfer(
 			origin,
 			dest: <T::Lookup as StaticLookup>::Source,
-			currency_id: TokenId,
-			#[compact] amount: Balance,
+			currency_id: T::CurrencyId,
+			#[compact] amount: T::Balance,
 		) {
 			let from = ensure_signed(origin)?;
 			let to = T::Lookup::lookup(dest)?;
@@ -253,7 +267,7 @@ decl_module! {
 		pub fn transfer_all(
 			origin,
 			dest: <T::Lookup as StaticLookup>::Source,
-			currency_id: TokenId,
+			currency_id: T::CurrencyId,
 		) {
 			let from = ensure_signed(origin)?;
 			let to = T::Lookup::lookup(dest)?;
@@ -267,7 +281,7 @@ decl_module! {
 		pub fn create(
 			origin,
 			account_id: T::AccountId,
-			amount: Balance,
+			amount: T::Balance,
 		) {
 			ensure_root(origin)?;
 			let currency_id = MultiTokenCurrencyAdapter::<T>::create(&account_id, amount);
@@ -277,9 +291,9 @@ decl_module! {
 		#[weight = 10_000]
 		pub fn mint(
 			origin,
-			currency_id: TokenId,
+			currency_id: T::CurrencyId,
 			account_id: T::AccountId,
-			amount: Balance,
+			amount: T::Balance,
 		) -> frame_support::dispatch::DispatchResult{
 			MultiTokenCurrencyAdapter::<T>::mint(currency_id, &account_id, amount)?;
 			Self::deposit_event(RawEvent::Minted(currency_id, account_id, amount));
@@ -310,7 +324,7 @@ impl<T: Trait> Module<T> {
 	/// Set free balance of `who` to a new value.
 	///
 	/// Note this will not maintain total issuance.
-	fn set_free_balance(currency_id: TokenId, who: &T::AccountId, balance: Balance) {
+	fn set_free_balance(currency_id: T::CurrencyId, who: &T::AccountId, balance: T::Balance) {
 		<Accounts<T>>::mutate(who, currency_id, |account_data| account_data.free = balance);
 	}
 
@@ -319,12 +333,12 @@ impl<T: Trait> Module<T> {
 	///
 	/// Note this will not maintain total issuance, and the caller is expected
 	/// to do it.
-	fn set_reserved_balance(currency_id: TokenId, who: &T::AccountId, balance: Balance) {
+	fn set_reserved_balance(currency_id: T::CurrencyId, who: &T::AccountId, balance: T::Balance) {
 		<Accounts<T>>::mutate(who, currency_id, |account_data| account_data.reserved = balance);
 	}
 
 	/// Update the account entry for `who` under `currency_id`, given the locks.
-	fn update_locks(currency_id: TokenId, who: &T::AccountId, locks: &[BalanceLock<Balance>]) {
+	fn update_locks(currency_id: T::CurrencyId, who: &T::AccountId, locks: &[BalanceLock<T::Balance>]) {
 		// update account data
 		<Accounts<T>>::mutate(who, currency_id, |account_data| {
 			account_data.frozen = Zero::zero();
@@ -352,29 +366,31 @@ impl<T: Trait> Module<T> {
 }
 
 impl<T: Trait> MultiCurrency<T::AccountId> for Module<T> {
+	type CurrencyId = T::CurrencyId;
+	type Balance = T::Balance;
 
-	fn total_issuance(currency_id: TokenId) -> Balance {
-		TotalIssuance::get(currency_id)
+	fn total_issuance(currency_id: Self::CurrencyId) -> Self::Balance {
+		<TotalIssuance<T>>::get(currency_id)
 	}
 
-	fn total_balance(currency_id: TokenId, who: &T::AccountId) -> Balance {
+	fn total_balance(currency_id: Self::CurrencyId, who: &T::AccountId) -> Self::Balance {
 		Self::accounts(who, currency_id).total()
 	}
 
-	fn free_balance(currency_id: TokenId, who: &T::AccountId) -> Balance {
+	fn free_balance(currency_id: Self::CurrencyId, who: &T::AccountId) -> Self::Balance {
 		Self::accounts(who, currency_id).free
 	}
 
 	// Ensure that an account can withdraw from their free balance given any
 	// existing withdrawal restrictions like locks and vesting balance.
 	// Is a no-op if amount to be withdrawn is zero.
-	fn ensure_can_withdraw(currency_id: TokenId, who: &T::AccountId, amount: Balance) -> DispatchResult {
+	fn ensure_can_withdraw(currency_id: Self::CurrencyId, who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
 		if amount.is_zero() {
 			return Ok(());
 		}
 
 		let new_balance = Self::free_balance(currency_id, who)
-			.checked_sub(amount)
+			.checked_sub(&amount)
 			.ok_or(Error::<T>::BalanceTooLow)?;
 		ensure!(
 			new_balance >= Self::accounts(who, currency_id).frozen(),
@@ -387,10 +403,10 @@ impl<T: Trait> MultiCurrency<T::AccountId> for Module<T> {
 	/// Is a no-op if value to be transferred is zero or the `from` is the same
 	/// as `to`.
 	fn transfer(
-		currency_id: TokenId,
+		currency_id: Self::CurrencyId,
 		from: &T::AccountId,
 		to: &T::AccountId,
-		amount: Balance,
+		amount: Self::Balance,
 	) -> DispatchResult {
 		if amount.is_zero() || from == to {
 			return Ok(());
@@ -399,7 +415,7 @@ impl<T: Trait> MultiCurrency<T::AccountId> for Module<T> {
 
 		let from_balance = Self::free_balance(currency_id, from);
 		let to_balance = Self::free_balance(currency_id, to)
-			.checked_add(amount)
+			.checked_add(&amount)
 			.ok_or(Error::<T>::BalanceOverflow)?;
 		// Cannot underflow because ensure_can_withdraw check
 		Self::set_free_balance(currency_id, from, from_balance - amount);
@@ -412,36 +428,36 @@ impl<T: Trait> MultiCurrency<T::AccountId> for Module<T> {
 	/// Deposit some `amount` into the free balance of account `who`.
 	///
 	/// Is a no-op if the `amount` to be deposited is zero.
-	fn deposit(currency_id: TokenId, who: &T::AccountId, amount: Balance) -> DispatchResult {
+	fn deposit(currency_id: Self::CurrencyId, who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
 		if amount.is_zero() {
 			return Ok(());
 		}
 
 		let new_total = Self::total_issuance(currency_id)
-			.checked_add(amount)
+			.checked_add(&amount)
 			.ok_or(Error::<T>::TotalIssuanceOverflow)?;
-		TotalIssuance::insert(currency_id, new_total);
+		<TotalIssuance<T>>::insert(currency_id, new_total);
 		Self::set_free_balance(currency_id, who, Self::free_balance(currency_id, who) + amount);
 		T::OnReceived::on_received(who, currency_id, amount);
 
 		Ok(())
 	}
 
-	fn withdraw(currency_id: TokenId, who: &T::AccountId, amount: Balance) -> DispatchResult {
+	fn withdraw(currency_id: Self::CurrencyId, who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
 		if amount.is_zero() {
 			return Ok(());
 		}
 		Self::ensure_can_withdraw(currency_id, who, amount)?;
 
 		// Cannot underflow because ensure_can_withdraw check
-		TotalIssuance::mutate(currency_id, |v| *v -= amount);
+		<TotalIssuance<T>>::mutate(currency_id, |v| *v -= amount);
 		Self::set_free_balance(currency_id, who, Self::free_balance(currency_id, who) - amount);
 
 		Ok(())
 	}
 
 	// Check if `value` amount of free balance can be slashed from `who`.
-	fn can_slash(currency_id: TokenId, who: &T::AccountId, value: Balance) -> bool {
+	fn can_slash(currency_id: Self::CurrencyId, who: &T::AccountId, value: Self::Balance) -> bool {
 		if value.is_zero() {
 			return true;
 		}
@@ -455,7 +471,7 @@ impl<T: Trait> MultiCurrency<T::AccountId> for Module<T> {
 	/// prior to `slash()` to avoid having to draw from reserved funds, however
 	/// we err on the side of punishment if things are inconsistent
 	/// or `can_slash` wasn't used appropriately.
-	fn slash(currency_id: TokenId, who: &T::AccountId, amount: Balance) -> Balance {
+	fn slash(currency_id: Self::CurrencyId, who: &T::AccountId, amount: Self::Balance) -> Self::Balance {
 		if amount.is_zero() {
 			return amount;
 		}
@@ -482,28 +498,29 @@ impl<T: Trait> MultiCurrency<T::AccountId> for Module<T> {
 
 		// Cannot underflow because the slashed value cannot be greater than total
 		// issuance
-		TotalIssuance::mutate(currency_id, |v| *v -= amount - remaining_slash);
+		<TotalIssuance<T>>::mutate(currency_id, |v| *v -= amount - remaining_slash);
 		remaining_slash
 	}
 }
 
 impl<T: Trait> MultiCurrencyExtended<T::AccountId> for Module<T> {
+	type Amount = T::Amount;
 
-	fn update_balance(currency_id: TokenId, who: &T::AccountId, by_amount: Amount) -> DispatchResult {
+	fn update_balance(currency_id: Self::CurrencyId, who: &T::AccountId, by_amount: Self::Amount) -> DispatchResult {
 		if by_amount.is_zero() {
 			return Ok(());
 		}
 
 		// Ensure this doesn't overflow. There isn't any traits that exposes
 		// `saturating_abs` so we need to do it manually.
-		let by_amount_abs = if by_amount == Amount::min_value() {
-			Amount::max_value()
+		let by_amount_abs = if by_amount == Self::Amount::min_value() {
+			Self::Amount::max_value()
 		} else {
 			by_amount.abs()
 		};
 
 		let by_balance =
-			TryInto::<Balance>::try_into(by_amount_abs).map_err(|_| Error::<T>::AmountIntoBalanceFailed)?;
+			TryInto::<Self::Balance>::try_into(by_amount_abs).map_err(|_| Error::<T>::AmountIntoBalanceFailed)?;
 		if by_amount.is_positive() {
 			Self::deposit(currency_id, who, by_balance)
 		} else {
@@ -517,7 +534,7 @@ impl<T: Trait> MultiLockableCurrency<T::AccountId> for Module<T> {
 
 	// Set a lock on the balance of `who` under `currency_id`.
 	// Is a no-op if lock amount is zero.
-	fn set_lock(lock_id: LockIdentifier, currency_id: TokenId, who: &T::AccountId, amount: Balance) {
+	fn set_lock(lock_id: LockIdentifier, currency_id: Self::CurrencyId, who: &T::AccountId, amount: Self::Balance) {
 		if amount.is_zero() {
 			return;
 		}
@@ -540,7 +557,7 @@ impl<T: Trait> MultiLockableCurrency<T::AccountId> for Module<T> {
 
 	// Extend a lock on the balance of `who` under `currency_id`.
 	// Is a no-op if lock amount is zero
-	fn extend_lock(lock_id: LockIdentifier, currency_id: TokenId, who: &T::AccountId, amount: Balance) {
+	fn extend_lock(lock_id: LockIdentifier, currency_id: Self::CurrencyId, who: &T::AccountId, amount: Self::Balance) {
 		if amount.is_zero() {
 			return;
 		}
@@ -564,7 +581,7 @@ impl<T: Trait> MultiLockableCurrency<T::AccountId> for Module<T> {
 		Self::update_locks(currency_id, who, &locks[..]);
 	}
 
-	fn remove_lock(lock_id: LockIdentifier, currency_id: TokenId, who: &T::AccountId) {
+	fn remove_lock(lock_id: LockIdentifier, currency_id: Self::CurrencyId, who: &T::AccountId) {
 		let mut locks = Self::locks(who, currency_id);
 		locks.retain(|lock| lock.id != lock_id);
 		Self::update_locks(currency_id, who, &locks[..]);
@@ -575,7 +592,7 @@ impl<T: Trait> MultiReservableCurrency<T::AccountId> for Module<T> {
 	/// Check if `who` can reserve `value` from their free balance.
 	///
 	/// Always `true` if value to be reserved is zero.
-	fn can_reserve(currency_id: TokenId, who: &T::AccountId, value: Balance) -> bool {
+	fn can_reserve(currency_id: Self::CurrencyId, who: &T::AccountId, value: Self::Balance) -> bool {
 		if value.is_zero() {
 			return true;
 		}
@@ -586,7 +603,7 @@ impl<T: Trait> MultiReservableCurrency<T::AccountId> for Module<T> {
 	/// slashed.
 	///
 	/// Is a no-op if the value to be slashed is zero.
-	fn slash_reserved(currency_id: TokenId, who: &T::AccountId, value: Balance) -> Balance {
+	fn slash_reserved(currency_id: Self::CurrencyId, who: &T::AccountId, value: Self::Balance) -> Self::Balance {
 		if value.is_zero() {
 			return value;
 		}
@@ -594,18 +611,18 @@ impl<T: Trait> MultiReservableCurrency<T::AccountId> for Module<T> {
 		let reserved_balance = Self::reserved_balance(currency_id, who);
 		let actual = reserved_balance.min(value);
 		Self::set_reserved_balance(currency_id, who, reserved_balance - actual);
-		TotalIssuance::mutate(currency_id, |v| *v -= actual);
+		<TotalIssuance<T>>::mutate(currency_id, |v| *v -= actual);
 		value - actual
 	}
 
-	fn reserved_balance(currency_id: TokenId, who: &T::AccountId) -> Balance {
+	fn reserved_balance(currency_id: Self::CurrencyId, who: &T::AccountId) -> Self::Balance {
 		Self::accounts(who, currency_id).reserved
 	}
 
 	/// Move `value` from the free balance from `who` to their reserved balance.
 	///
 	/// Is a no-op if value to be reserved is zero.
-	fn reserve(currency_id: TokenId, who: &T::AccountId, value: Balance) -> DispatchResult {
+	fn reserve(currency_id: Self::CurrencyId, who: &T::AccountId, value: Self::Balance) -> DispatchResult {
 		if value.is_zero() {
 			return Ok(());
 		}
@@ -623,7 +640,7 @@ impl<T: Trait> MultiReservableCurrency<T::AccountId> for Module<T> {
 	/// unreserved.
 	///
 	/// Is a no-op if the value to be unreserved is zero.
-	fn unreserve(currency_id: TokenId, who: &T::AccountId, value: Balance) -> Balance {
+	fn unreserve(currency_id: Self::CurrencyId, who: &T::AccountId, value: Self::Balance) -> Self::Balance {
 		if value.is_zero() {
 			return value;
 		}
@@ -644,12 +661,12 @@ impl<T: Trait> MultiReservableCurrency<T::AccountId> for Module<T> {
 	/// - the `slashed` id equal to `beneficiary` and the `status` is
 	///   `Reserved`.
 	fn repatriate_reserved(
-		currency_id: TokenId,
+		currency_id: Self::CurrencyId,
 		slashed: &T::AccountId,
 		beneficiary: &T::AccountId,
-		value: Balance,
+		value: Self::Balance,
 		status: BalanceStatus,
-	) -> result::Result<Balance, DispatchError> {
+	) -> result::Result<Self::Balance, DispatchError> {
 		if value.is_zero() {
 			return Ok(value);
 		}
@@ -683,33 +700,34 @@ pub struct CurrencyAdapter<T, GetCurrencyId>(marker::PhantomData<(T, GetCurrency
 impl<T, GetCurrencyId> PalletCurrency<T::AccountId> for CurrencyAdapter<T, GetCurrencyId>
 where
 	T: Trait,
-	GetCurrencyId: Get<TokenId>,
+	GetCurrencyId: Get<T::CurrencyId>,
 {
-	type PositiveImbalance = PositiveImbalance<GetCurrencyId>;
-	type NegativeImbalance = NegativeImbalance<GetCurrencyId>;
+	type Balance = T::Balance;
+	type PositiveImbalance = PositiveImbalance<T, GetCurrencyId>;
+	type NegativeImbalance = NegativeImbalance<T, GetCurrencyId>;
 
-	fn total_balance(who: &T::AccountId) -> Balance {
+	fn total_balance(who: &T::AccountId) -> Self::Balance {
 		Module::<T>::total_balance(GetCurrencyId::get(), who)
 	}
 
-	fn can_slash(who: &T::AccountId, value: Balance) -> bool {
+	fn can_slash(who: &T::AccountId, value: Self::Balance) -> bool {
 		Module::<T>::can_slash(GetCurrencyId::get(), who, value)
 	}
 
-	fn total_issuance() -> Balance {
+	fn total_issuance() -> Self::Balance {
 		Module::<T>::total_issuance(GetCurrencyId::get())
 	}
 
-	fn minimum_balance() -> Balance {
+	fn minimum_balance() -> Self::Balance {
 		Zero::zero()
 	}
 
-	fn burn(mut amount: Balance) -> Self::PositiveImbalance {
+	fn burn(mut amount: Self::Balance) -> Self::PositiveImbalance {
 		if amount.is_zero() {
 			return PositiveImbalance::zero();
 		}
-		TotalIssuance::mutate(GetCurrencyId::get(), |issued| {
-			*issued = issued.checked_sub(amount).unwrap_or_else(|| {
+		<TotalIssuance<T>>::mutate(GetCurrencyId::get(), |issued| {
+			*issued = issued.checked_sub(&amount).unwrap_or_else(|| {
 				amount = *issued;
 				Zero::zero()
 			});
@@ -717,28 +735,28 @@ where
 		PositiveImbalance::new(amount)
 	}
 
-	fn issue(mut amount: Balance) -> Self::NegativeImbalance {
+	fn issue(mut amount: Self::Balance) -> Self::NegativeImbalance {
 		if amount.is_zero() {
 			return NegativeImbalance::zero();
 		}
-		TotalIssuance::mutate(GetCurrencyId::get(), |issued| {
-			*issued = issued.checked_add(amount).unwrap_or_else(|| {
-				amount = Balance::max_value() - *issued;
-				Balance::max_value()
+		<TotalIssuance<T>>::mutate(GetCurrencyId::get(), |issued| {
+			*issued = issued.checked_add(&amount).unwrap_or_else(|| {
+				amount = Self::Balance::max_value() - *issued;
+				Self::Balance::max_value()
 			})
 		});
 		NegativeImbalance::new(amount)
 	}
 
-	fn free_balance(who: &T::AccountId) -> Balance {
+	fn free_balance(who: &T::AccountId) -> Self::Balance {
 		Module::<T>::free_balance(GetCurrencyId::get(), who)
 	}
 
 	fn ensure_can_withdraw(
 		who: &T::AccountId,
-		amount: Balance,
+		amount: Self::Balance,
 		_reasons: WithdrawReasons,
-		_new_balance: Balance,
+		_new_balance: Self::Balance,
 	) -> DispatchResult {
 		Module::<T>::ensure_can_withdraw(GetCurrencyId::get(), who, amount)
 	}
@@ -746,13 +764,13 @@ where
 	fn transfer(
 		source: &T::AccountId,
 		dest: &T::AccountId,
-		value: Balance,
+		value: Self::Balance,
 		_existence_requirement: ExistenceRequirement,
 	) -> DispatchResult {
 		<Module<T> as MultiCurrency<T::AccountId>>::transfer(GetCurrencyId::get(), &source, &dest, value)
 	}
 
-	fn slash(who: &T::AccountId, value: Balance) -> (Self::NegativeImbalance, Balance) {
+	fn slash(who: &T::AccountId, value: Self::Balance) -> (Self::NegativeImbalance, Self::Balance) {
 		if value.is_zero() {
 			return (Self::NegativeImbalance::zero(), value);
 		}
@@ -783,27 +801,27 @@ where
 
 	fn deposit_into_existing(
 		who: &T::AccountId,
-		value: Balance,
+		value: Self::Balance,
 	) -> result::Result<Self::PositiveImbalance, DispatchError> {
 		if value.is_zero() {
 			return Ok(Self::PositiveImbalance::zero());
 		}
 		let currency_id = GetCurrencyId::get();
 		let new_total = Module::<T>::free_balance(currency_id, who)
-			.checked_add(value)
+			.checked_add(&value)
 			.ok_or(Error::<T>::TotalIssuanceOverflow)?;
 		Module::<T>::set_free_balance(currency_id, who, new_total);
 
 		Ok(Self::PositiveImbalance::new(value))
 	}
 
-	fn deposit_creating(who: &T::AccountId, value: Balance) -> Self::PositiveImbalance {
+	fn deposit_creating(who: &T::AccountId, value: Self::Balance) -> Self::PositiveImbalance {
 		Self::deposit_into_existing(who, value).unwrap_or_else(|_| Self::PositiveImbalance::zero())
 	}
 
 	fn withdraw(
 		who: &T::AccountId,
-		value: Balance,
+		value: Self::Balance,
 		_reasons: WithdrawReasons,
 		_liveness: ExistenceRequirement,
 	) -> result::Result<Self::NegativeImbalance, DispatchError> {
@@ -819,12 +837,12 @@ where
 
 	fn make_free_balance_be(
 		who: &T::AccountId,
-		value: Balance,
-	) -> SignedImbalance<Balance, Self::PositiveImbalance> {
+		value: Self::Balance,
+	) -> SignedImbalance<Self::Balance, Self::PositiveImbalance> {
 		<Accounts<T>>::mutate(
 			who,
 			GetCurrencyId::get(),
-			|account| -> Result<SignedImbalance<Balance, Self::PositiveImbalance>, ()> {
+			|account| -> Result<SignedImbalance<Self::Balance, Self::PositiveImbalance>, ()> {
 				let imbalance = if account.free <= value {
 					SignedImbalance::Positive(PositiveImbalance::new(value - account.free))
 				} else {
@@ -841,35 +859,35 @@ where
 impl<T, GetCurrencyId> PalletReservableCurrency<T::AccountId> for CurrencyAdapter<T, GetCurrencyId>
 where
 	T: Trait,
-	GetCurrencyId: Get<TokenId>,
+	GetCurrencyId: Get<T::CurrencyId>,
 {
-	fn can_reserve(who: &T::AccountId, value: Balance) -> bool {
+	fn can_reserve(who: &T::AccountId, value: Self::Balance) -> bool {
 		Module::<T>::can_reserve(GetCurrencyId::get(), who, value)
 	}
 
-	fn slash_reserved(who: &T::AccountId, value: Balance) -> (Self::NegativeImbalance, Balance) {
+	fn slash_reserved(who: &T::AccountId, value: Self::Balance) -> (Self::NegativeImbalance, Self::Balance) {
 		let actual = Module::<T>::slash_reserved(GetCurrencyId::get(), who, value);
 		(Self::NegativeImbalance::zero(), actual)
 	}
 
-	fn reserved_balance(who: &T::AccountId) -> Balance {
+	fn reserved_balance(who: &T::AccountId) -> Self::Balance {
 		Module::<T>::reserved_balance(GetCurrencyId::get(), who)
 	}
 
-	fn reserve(who: &T::AccountId, value: Balance) -> DispatchResult {
+	fn reserve(who: &T::AccountId, value: Self::Balance) -> DispatchResult {
 		Module::<T>::reserve(GetCurrencyId::get(), who, value)
 	}
 
-	fn unreserve(who: &T::AccountId, value: Balance) -> Balance {
+	fn unreserve(who: &T::AccountId, value: Self::Balance) -> Self::Balance {
 		Module::<T>::unreserve(GetCurrencyId::get(), who, value)
 	}
 
 	fn repatriate_reserved(
 		slashed: &T::AccountId,
 		beneficiary: &T::AccountId,
-		value: Balance,
-		status: BalanceStatus,
-	) -> result::Result<Balance, DispatchError> {
+		value: Self::Balance,
+		status: Status,
+	) -> result::Result<Self::Balance, DispatchError> {
 		Module::<T>::repatriate_reserved(GetCurrencyId::get(), slashed, beneficiary, value, status)
 	}
 }
@@ -877,16 +895,16 @@ where
 impl<T, GetCurrencyId> PalletLockableCurrency<T::AccountId> for CurrencyAdapter<T, GetCurrencyId>
 where
 	T: Trait,
-	GetCurrencyId: Get<TokenId>,
+	GetCurrencyId: Get<T::CurrencyId>,
 {
 	type Moment = T::BlockNumber;
 	type MaxLocks = ();
 
-	fn set_lock(id: LockIdentifier, who: &T::AccountId, amount: Balance, _reasons: WithdrawReasons) {
+	fn set_lock(id: LockIdentifier, who: &T::AccountId, amount: Self::Balance, _reasons: WithdrawReasons) {
 		Module::<T>::set_lock(id, GetCurrencyId::get(), who, amount)
 	}
 
-	fn extend_lock(id: LockIdentifier, who: &T::AccountId, amount: Balance, _reasons: WithdrawReasons) {
+	fn extend_lock(id: LockIdentifier, who: &T::AccountId, amount: Self::Balance, _reasons: WithdrawReasons) {
 		Module::<T>::extend_lock(id, GetCurrencyId::get(), who, amount)
 	}
 
@@ -903,32 +921,34 @@ impl<T> MultiTokenCurrency<T::AccountId> for MultiTokenCurrencyAdapter<T>
 where
 	T: Trait,
 {
-	type PositiveImbalance = MultiTokenPositiveImbalance;
-	type NegativeImbalance = MultiTokenNegativeImbalance;
+	type Balance = T::Balance;
+	type CurrencyId = T::CurrencyId;
+	type PositiveImbalance = MultiTokenPositiveImbalance<T>;
+	type NegativeImbalance = MultiTokenNegativeImbalance<T>;
 
-	fn total_balance(currency_id: TokenId, who: &T::AccountId) -> Balance {
+	fn total_balance(currency_id: T::CurrencyId, who: &T::AccountId) -> Self::Balance {
 		Module::<T>::total_balance(currency_id, who)
 	}
 
-	fn can_slash(currency_id: TokenId, who: &T::AccountId, value: Balance) -> bool {
+	fn can_slash(currency_id: T::CurrencyId, who: &T::AccountId, value: Self::Balance) -> bool {
 		Module::<T>::can_slash(currency_id, who, value)
 	}
 
-	fn total_issuance(currency_id: TokenId) -> Balance {
+	fn total_issuance(currency_id: T::CurrencyId) -> Self::Balance {
 		Module::<T>::total_issuance(currency_id)
 	}
 
-	fn minimum_balance(_currency_id: TokenId) -> Balance {
+	fn minimum_balance(_currency_id: T::CurrencyId) -> Self::Balance {
 		Zero::zero()
 	}
 
-	fn burn(currency_id: TokenId, mut amount: Balance) -> Self::PositiveImbalance {
+	fn burn(currency_id: T::CurrencyId, mut amount: Self::Balance) -> Self::PositiveImbalance {
 		if amount.is_zero() {
 			return MultiTokenPositiveImbalance::zero(currency_id);
 		}
 
-		TotalIssuance::mutate(currency_id, |issued| {
-			*issued = issued.checked_sub(amount).unwrap_or_else(|| {
+		<TotalIssuance<T>>::mutate(currency_id, |issued| {
+			*issued = issued.checked_sub(&amount).unwrap_or_else(|| {
 				amount = *issued;
 				Zero::zero()
 			});
@@ -937,44 +957,44 @@ where
 	}
 
     // NOTE: should not be called directly - may invalidate NextCurrencyId ids
-	fn issue(currency_id: TokenId, mut amount: Balance) -> Self::NegativeImbalance {
+	fn issue(currency_id: T::CurrencyId, mut amount: Self::Balance) -> Self::NegativeImbalance {
 		if amount.is_zero() {
 			return MultiTokenNegativeImbalance::zero(currency_id);
 		}
-		TotalIssuance::mutate(currency_id, |issued| {
-			*issued = issued.checked_add(amount).unwrap_or_else(|| {
-				amount = Balance::max_value() - *issued;
-				Balance::max_value()
+		<TotalIssuance<T>>::mutate(currency_id, |issued| {
+			*issued = issued.checked_add(&amount).unwrap_or_else(|| {
+				amount = Self::Balance::max_value() - *issued;
+				Self::Balance::max_value()
 			})
 		});
 		MultiTokenNegativeImbalance::new(currency_id, amount)
 	}
 
-	fn free_balance(currency_id: TokenId, who: &T::AccountId) -> Balance {
+	fn free_balance(currency_id: T::CurrencyId, who: &T::AccountId) -> Self::Balance {
 		Module::<T>::free_balance(currency_id, who)
 	}
 
 	fn ensure_can_withdraw(
-        currency_id: TokenId,
+        currency_id: T::CurrencyId,
 		who: &T::AccountId,
-		amount: Balance,
+		amount: Self::Balance,
 		_reasons: WithdrawReasons,
-		_new_balance: Balance,
+		_new_balance: Self::Balance,
 	) -> DispatchResult {
 		Module::<T>::ensure_can_withdraw(currency_id, who, amount)
 	}
 
 	fn transfer(
-        currency_id: TokenId,
+        currency_id: T::CurrencyId,
 		source: &T::AccountId,
 		dest: &T::AccountId,
-		value: Balance,
+		value: Self::Balance,
 		_existence_requirement: ExistenceRequirement,
 	) -> DispatchResult {
 		<Module<T> as MultiCurrency<T::AccountId>>::transfer(currency_id, &source, &dest, value)
 	}
 
-	fn slash(currency_id: TokenId, who: &T::AccountId, value: Balance) -> (Self::NegativeImbalance, Balance) {
+	fn slash(currency_id: T::CurrencyId, who: &T::AccountId, value: Self::Balance) -> (Self::NegativeImbalance, Self::Balance) {
 		if value.is_zero() {
 			return (MultiTokenNegativeImbalance::zero(currency_id), value);
 		}
@@ -1003,29 +1023,29 @@ where
 	}
 
 	fn deposit_into_existing(
-        currency_id: TokenId,
+        currency_id: T::CurrencyId,
 		who: &T::AccountId,
-		value: Balance,
+		value: Self::Balance,
 	) -> result::Result<Self::PositiveImbalance, DispatchError> {
 		if value.is_zero() {
 			return Ok(MultiTokenPositiveImbalance::zero(currency_id));
 		}
 		let new_total = Module::<T>::free_balance(currency_id, who)
-			.checked_add(value)
+			.checked_add(&value)
 			.ok_or(Error::<T>::TotalIssuanceOverflow)?;
 		Module::<T>::set_free_balance(currency_id, who, new_total);
 
 		Ok(Self::PositiveImbalance::new(currency_id, value))
 	}
 
-	fn deposit_creating(currency_id: TokenId, who: &T::AccountId, value: Balance) -> Self::PositiveImbalance {
+	fn deposit_creating(currency_id: T::CurrencyId, who: &T::AccountId, value: Self::Balance) -> Self::PositiveImbalance {
 		Self::deposit_into_existing(currency_id, who, value).unwrap_or_else(|_| MultiTokenPositiveImbalance::zero(currency_id))
 	}
 
 	fn withdraw(
-        currency_id: TokenId,
+        currency_id: T::CurrencyId,
 		who: &T::AccountId,
-		value: Balance,
+		value: Self::Balance,
 		_reasons: WithdrawReasons,
 		_liveness: ExistenceRequirement,
 	) -> result::Result<Self::NegativeImbalance, DispatchError> {
@@ -1039,14 +1059,14 @@ where
 	}
 
 	fn make_free_balance_be(
-        currency_id: TokenId,
+        currency_id: T::CurrencyId,
 		who: &T::AccountId,
-		value: Balance,
-	) -> SignedImbalance<Balance, Self::PositiveImbalance> {
+		value: Self::Balance,
+	) -> SignedImbalance<Self::Balance, Self::PositiveImbalance> {
 		<Accounts<T>>::mutate(
 			who,
 			currency_id,
-			|account| -> Result<SignedImbalance<Balance, Self::PositiveImbalance>, ()> {
+			|account| -> Result<SignedImbalance<Self::Balance, Self::PositiveImbalance>, ()> {
 				let imbalance = if account.free <= value {
 					SignedImbalance::Positive(MultiTokenPositiveImbalance::new(currency_id, value - account.free))
 				} else {
@@ -1064,34 +1084,34 @@ impl<T> MultiTokenReservableCurrency<T::AccountId> for MultiTokenCurrencyAdapter
 where
 	T: Trait,
 {
-	fn can_reserve(currency_id : TokenId, who: &T::AccountId, value: Balance) -> bool {
+	fn can_reserve(currency_id : T::CurrencyId, who: &T::AccountId, value: Self::Balance) -> bool {
 		Module::<T>::can_reserve(currency_id, who, value)
 	}
 
-	fn slash_reserved(currency_id: TokenId, who: &T::AccountId, value: Balance) -> (Self::NegativeImbalance, Balance) {
+	fn slash_reserved(currency_id: T::CurrencyId, who: &T::AccountId, value: Self::Balance) -> (Self::NegativeImbalance, Self::Balance) {
 		let actual = Module::<T>::slash_reserved(currency_id, who, value);
 		(MultiTokenNegativeImbalance::zero(currency_id), actual)
 	}
 
-	fn reserved_balance(currency_id: TokenId, who: &T::AccountId) -> Balance {
+	fn reserved_balance(currency_id: T::CurrencyId, who: &T::AccountId) -> Self::Balance {
 		Module::<T>::reserved_balance(currency_id, who)
 	}
 
-	fn reserve(currency_id: TokenId, who: &T::AccountId, value: Balance) -> DispatchResult {
+	fn reserve(currency_id: T::CurrencyId, who: &T::AccountId, value: Self::Balance) -> DispatchResult {
 		Module::<T>::reserve(currency_id, who, value)
 	}
 
-	fn unreserve(currency_id: TokenId, who: &T::AccountId, value: Balance) -> Balance {
+	fn unreserve(currency_id: T::CurrencyId, who: &T::AccountId, value: Self::Balance) -> Self::Balance {
 		Module::<T>::unreserve(currency_id, who, value)
 	}
 
 	fn repatriate_reserved(
-        currency_id: TokenId,
+        currency_id: T::CurrencyId,
 		slashed: &T::AccountId,
 		beneficiary: &T::AccountId,
-		value: Balance,
-		status: BalanceStatus,
-	) -> result::Result<Balance, DispatchError> {
+		value: Self::Balance,
+		status: Status,
+	) -> result::Result<Self::Balance, DispatchError> {
 		Module::<T>::repatriate_reserved(currency_id, slashed, beneficiary, value, status)
 	}
 }
@@ -1103,15 +1123,15 @@ where
 	type Moment = T::BlockNumber;
 	type MaxLocks = ();
 
-	fn set_lock(currency_id: TokenId, id: LockIdentifier, who: &T::AccountId, amount: Balance, _reasons: WithdrawReasons) {
+	fn set_lock(currency_id: T::CurrencyId, id: LockIdentifier, who: &T::AccountId, amount: Self::Balance, _reasons: WithdrawReasons) {
 		Module::<T>::set_lock(id, currency_id, who, amount)
 	}
 
-	fn extend_lock(currency_id: TokenId, id: LockIdentifier, who: &T::AccountId, amount: Balance, _reasons: WithdrawReasons) {
+	fn extend_lock(currency_id: T::CurrencyId, id: LockIdentifier, who: &T::AccountId, amount: Self::Balance, _reasons: WithdrawReasons) {
 		Module::<T>::extend_lock(id, currency_id, who, amount)
 	}
 
-	fn remove_lock(currency_id: TokenId, id: LockIdentifier, who: &T::AccountId) {
+	fn remove_lock(currency_id: T::CurrencyId, id: LockIdentifier, who: &T::AccountId) {
 		Module::<T>::remove_lock(id, currency_id, who)
 	}
 }
@@ -1120,38 +1140,38 @@ where
 impl<T> MultiTokenCurrencyExtended<T::AccountId> for MultiTokenCurrencyAdapter<T> where
 T: Trait
 {
-	fn create(address: &T::AccountId, amount: Balance) -> TokenId{
-		let token_id = NextCurrencyId::get();
-		NextCurrencyId::mutate(|id| *id += 1u32 as TokenId);
+	fn create(address: &T::AccountId, amount: T::Balance) -> T::CurrencyId{
+		let token_id = <NextCurrencyId<T>>::get();
+		<NextCurrencyId<T>>::mutate(|id| *id += One::one());
 		// we are creating new token so amount can not be overflowed as its always true
-		// 0 + amount < Balance::max_value()
+		// 0 + amount < T::Balance::max_value()
 		let _ = <Self as MultiTokenCurrency<T::AccountId>>::deposit_creating(token_id, address, amount);
 		token_id
 	}
 
-	fn mint(currency_id: TokenId, address: &T::AccountId, amount: Balance) -> DispatchResult {
+	fn mint(currency_id: T::CurrencyId, address: &T::AccountId, amount: T::Balance) -> DispatchResult {
 		if ! Self::exists(currency_id){
 			return Err(DispatchError::from(Error::<T>::TokenIdNotExists));
 		}
 		let current_balance =  <Self as MultiTokenCurrency<T::AccountId>>::total_balance(currency_id, address);
 		// check for overflow while minting
-		current_balance.checked_add(amount).ok_or(Error::<T>::BalanceOverflow)?;
+		current_balance.checked_add(&amount).ok_or(Error::<T>::BalanceOverflow)?;
 
 		let _ = <Self as MultiTokenCurrency<T::AccountId>>::deposit_creating(currency_id, address, amount);
 		Ok(())
 	}
 
-	fn exists(currency_id: TokenId) -> bool{
-		TotalIssuance::contains_key(currency_id)
+	fn exists(currency_id: Self::CurrencyId) -> bool{
+		<TotalIssuance<T>>::contains_key(currency_id)
 	}
 
 	/// either succeeds or leaves state unchanged
-	fn burn_and_settle(currency_id: TokenId, who: &T::AccountId, amount: Balance) -> DispatchResult{
+	fn burn_and_settle(currency_id: T::CurrencyId, who: &T::AccountId, amount: T::Balance) -> DispatchResult{
 		if amount.is_zero() {
 			return Ok(());
 		}
 		Module::<T>::ensure_can_withdraw(currency_id, who, amount)?;
-		TotalIssuance::mutate(currency_id, |v| *v -= amount);
+		<TotalIssuance<T>>::mutate(currency_id, |v| *v -= amount);
 		Module::<T>::set_free_balance(currency_id, who, Self::free_balance(currency_id, who) - amount);
 		Ok(())
 	}

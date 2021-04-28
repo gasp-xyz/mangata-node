@@ -5,24 +5,23 @@ use frame_support::storage::StorageMap;
 use frame_support::traits::{Imbalance, TryDrop};
 use sp_runtime::traits::{Saturating, Zero};
 use sp_std::{mem, result};
-use mangata_primitives::{TokenId, Balance};
 
 /// Opaque, move-only struct with private fields that serves as a token
 /// denoting that funds have been created without any equal and opposite
 /// accounting.
 #[must_use]
-pub struct PositiveImbalance(
-    TokenId,
-	Balance,
+pub struct PositiveImbalance<T: Trait>(
+    T::CurrencyId,
+	T::Balance,
 );
 
-impl PositiveImbalance {
+impl<T: Trait> PositiveImbalance<T> {
 	/// Create a new positive imbalance from a balance.
-	pub fn new(currency_id: TokenId, amount: Balance) -> Self {
+	pub fn new(currency_id: T::CurrencyId, amount: T::Balance) -> Self {
 		PositiveImbalance(currency_id, amount)
 	}
 
-	pub fn zero(currency_id: TokenId) -> Self {
+	pub fn zero(currency_id: T::CurrencyId) -> Self {
 		PositiveImbalance(currency_id, Zero::zero())
 	}
 }
@@ -31,31 +30,31 @@ impl PositiveImbalance {
 /// denoting that funds have been destroyed without any equal and opposite
 /// accounting.
 #[must_use]
-pub struct NegativeImbalance(
-    TokenId,
-	Balance,
+pub struct NegativeImbalance<T: Trait>(
+    T::CurrencyId,
+	T::Balance,
 );
 
-impl NegativeImbalance {
+impl<T: Trait> NegativeImbalance<T> {
 	/// Create a new negative imbalance from a balance.
-	pub fn new(currency_id: TokenId, amount: Balance) -> Self {
+	pub fn new(currency_id: T::CurrencyId, amount: T::Balance) -> Self {
 		NegativeImbalance(currency_id, amount)
 	}
 
-	pub fn zero(currency_id: TokenId) -> Self {
+	pub fn zero(currency_id: T::CurrencyId) -> Self {
 		NegativeImbalance(currency_id, Zero::zero())
 	}
 
 }
 
-impl TryDrop for PositiveImbalance {
+impl<T: Trait> TryDrop for PositiveImbalance<T> {
 	fn try_drop(self) -> result::Result<(), Self> {
 		self.drop_zero()
 	}
 }
 
-impl Imbalance<Balance> for PositiveImbalance {
-	type Opposite = NegativeImbalance;
+impl<T: Trait> Imbalance<T::Balance> for PositiveImbalance<T> {
+	type Opposite = NegativeImbalance<T>;
 
 	fn zero() -> Self {
         unimplemented!("PositiveImbalance::zero is not implemented");
@@ -68,7 +67,7 @@ impl Imbalance<Balance> for PositiveImbalance {
 			Err(self)
 		}
 	}
-	fn split(self, amount: Balance) -> (Self, Self) {
+	fn split(self, amount: T::Balance) -> (Self, Self) {
 		let first = self.1.min(amount);
 		let second = self.1 - first;
         let currency_id = self.0;
@@ -99,19 +98,19 @@ impl Imbalance<Balance> for PositiveImbalance {
             Err(NegativeImbalance::new(currency_id, b - a))
         }
 	}
-	fn peek(&self) -> Balance {
+	fn peek(&self) -> T::Balance {
 		self.1
 	}
 }
 
-impl TryDrop for NegativeImbalance {
+impl<T: Trait> TryDrop for NegativeImbalance<T> {
 	fn try_drop(self) -> result::Result<(), Self> {
 		self.drop_zero()
 	}
 }
 
-impl Imbalance<Balance> for NegativeImbalance {
-	type Opposite = PositiveImbalance;
+impl<T: Trait> Imbalance<T::Balance> for NegativeImbalance<T> {
+	type Opposite = PositiveImbalance<T>;
 
 	fn zero() -> Self {
         unimplemented!("NegativeImbalance::zero is not implemented");
@@ -123,7 +122,7 @@ impl Imbalance<Balance> for NegativeImbalance {
 			Err(self)
 		}
 	}
-	fn split(self, amount: Balance) -> (Self, Self) {
+	fn split(self, amount: T::Balance) -> (Self, Self) {
 		let first = self.1.min(amount);
 		let second = self.1 - first;
         let currency_id = self.0;
@@ -153,21 +152,21 @@ impl Imbalance<Balance> for NegativeImbalance {
             Err(PositiveImbalance::new(currency_id, b - a))
         }
 	}
-	fn peek(&self) -> Balance {
+	fn peek(&self) -> T::Balance {
 		self.1
 	}
 }
 
-impl Drop for PositiveImbalance {
+impl<T: Trait> Drop for PositiveImbalance<T> {
 	/// Basic drop handler will just square up the total issuance.
 	fn drop(&mut self) {
-		TotalIssuance::mutate(self.0, |v| *v = v.saturating_add(self.1));
+		<TotalIssuance<T>>::mutate(self.0, |v| *v = v.saturating_add(self.1));
 	}
 }
 
-impl Drop for NegativeImbalance {
+impl<T: Trait> Drop for NegativeImbalance<T> {
 	/// Basic drop handler will just square up the total issuance.
 	fn drop(&mut self) {
-		TotalIssuance::mutate(self.0, |v| *v = v.saturating_sub(self.1));
+		<TotalIssuance<T>>::mutate(self.0, |v| *v = v.saturating_sub(self.1));
 	}
 }

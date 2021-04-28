@@ -15,7 +15,6 @@ use sp_runtime::{
 };
 use sp_std::cell::RefCell;
 use std::collections::HashMap;
-// pub use mangata_primitives::{TokenId, Balance};
 
 use super::*;
 
@@ -45,10 +44,6 @@ parameter_types! {
 	pub const MaximumBlockLength: u32 = 2 * 1024;
 	pub const AvailableBlockRatio: Perbill = Perbill::one();
 }
-
-
-type TokenId = u32;
-pub type Balance = u64;
 
 type AccountId = u64;
 impl frame_system::Trait for Runtime {
@@ -80,14 +75,16 @@ impl frame_system::Trait for Runtime {
 }
 pub type System = system::Module<Runtime>;
 
+type CurrencyId = u32;
+pub type Balance = u64;
 
 thread_local! {
-	pub static ACCUMULATED_RECEIVED: RefCell<HashMap<(AccountId, TokenId), Balance>> = RefCell::new(HashMap::new());
+	pub static ACCUMULATED_RECEIVED: RefCell<HashMap<(AccountId, CurrencyId), Balance>> = RefCell::new(HashMap::new());
 }
 
 pub struct MockOnReceived;
-impl OnReceived<AccountId, TokenId, Balance> for MockOnReceived {
-	fn on_received(who: &AccountId, currency_id: TokenId, amount: Balance) {
+impl OnReceived<AccountId, CurrencyId, Balance> for MockOnReceived {
+	fn on_received(who: &AccountId, currency_id: CurrencyId, amount: Balance) {
 		ACCUMULATED_RECEIVED.with(|v| {
 			let mut old_map = v.borrow().clone();
 			if let Some(before) = old_map.get_mut(&(*who, currency_id)) {
@@ -137,7 +134,7 @@ parameter_types! {
 	pub const SpendPeriod: u64 = 2;
 	pub const Burn: Permill = Permill::from_percent(50);
 	pub const TreasuryModuleId: ModuleId = ModuleId(*b"py/trsry");
-	pub const GetTokenId: TokenId = TEST_TOKEN_ID;
+	pub const GetTokenId: CurrencyId = TEST_TOKEN_ID;
 }
 
 impl pallet_treasury::Trait for Runtime {
@@ -289,6 +286,9 @@ impl pallet_elections_phragmen::Trait for Runtime {
 
 impl Trait for Runtime {
 	type Event = TestEvent;
+	type Balance = Balance;
+	type Amount = i64;
+	type CurrencyId = CurrencyId;
 	type OnReceived = MockOnReceived;
 	type WeightInfo = ();
 }
@@ -296,7 +296,7 @@ impl Trait for Runtime {
 pub type Tokens = Module<Runtime>;
 pub type TreasuryCurrencyAdapter = <Runtime as pallet_treasury::Trait>::Currency;
 
-pub const TEST_TOKEN_ID: TokenId = 1;
+pub const TEST_TOKEN_ID: CurrencyId = 1;
 pub const ALICE: AccountId = 1;
 pub const BOB: AccountId = 2;
 pub const TREASURY_ACCOUNT: AccountId = 3;
@@ -304,7 +304,7 @@ pub const ID_1: LockIdentifier = *b"1       ";
 pub const ID_2: LockIdentifier = *b"2       ";
 
 pub struct ExtBuilder {
-	endowed_accounts: Vec<(AccountId, TokenId, Balance)>,
+	endowed_accounts: Vec<(AccountId, CurrencyId, Balance)>,
 	treasury_genesis: bool,
 }
 
@@ -318,7 +318,7 @@ impl Default for ExtBuilder {
 }
 
 impl ExtBuilder {
-	pub fn balances(mut self, endowed_accounts: Vec<(AccountId, TokenId, Balance)>) -> Self {
+	pub fn balances(mut self, endowed_accounts: Vec<(AccountId, CurrencyId, Balance)>) -> Self {
 		self.endowed_accounts = endowed_accounts;
 		self
 	}

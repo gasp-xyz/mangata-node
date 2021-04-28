@@ -3,7 +3,8 @@
 use crate::{Module, Trait};
 use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
 use frame_system as system;
-use pallet_assets as assets;
+use orml_tokens as assets;
+use orml_tokens::MultiTokenCurrencyAdapter;
 use sp_core::H256;
 use sp_runtime::{
     testing::Header,
@@ -63,8 +64,11 @@ impl system::Trait for Test {
 
 impl assets::Trait for Test {
     type Event = ();
-    type Balance = u64;
-    type AssetId = u32;
+    type Balance = u128;
+    type Amount = i128;
+    type CurrencyId = u32;
+    type OnReceived = ();
+    type WeightInfo = ();
 }
 
 impl Trait for Test {
@@ -76,6 +80,7 @@ impl Trait for Test {
     type MinLengthDescription = MinLengthDescription;
     type MaxLengthDescription = MaxLengthDescription;
     type MaxDecimals = MaxDecimals;
+    type Currency = MultiTokenCurrencyAdapter<Test>;
 }
 
 pub type AssetsInfoModule = Module<Test>;

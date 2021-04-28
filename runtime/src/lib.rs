@@ -285,7 +285,9 @@ parameter_types! {
 }
 
 impl pallet_staking::Trait for Runtime {
-    type Currency = Balances;
+    type NativeCurrencyId = NativeCurrencyId;
+    type TokenId = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+    type Valuations = Xyk;
     type UnixTime = Timestamp;
     type CurrencyToVote = ();
     type RewardRemainder = ();
@@ -426,9 +428,14 @@ impl pallet_sudo::Trait for Runtime {
     type Call = Call;
 }
 
+parameter_types! {
+    pub const NativeCurrencyId: u32 = 0;
+}
+
 impl pallet_xyk::Trait for Runtime {
     type Event = Event;
     type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+    type NativeCurrencyId = NativeCurrencyId;
 }
 
 // Snowfork traits

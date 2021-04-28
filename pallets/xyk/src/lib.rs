@@ -12,7 +12,7 @@ use frame_system::ensure_signed;
 use sp_core::U256;
 // TODO documentation!
 use frame_support::sp_runtime::traits::AccountIdConversion;
-use frame_support::traits::{ExistenceRequirement, WithdrawReasons};
+use frame_support::traits::{Get, ExistenceRequirement, WithdrawReasons};
 use sp_runtime::traits::{SaturatedConversion, Zero};
 
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
@@ -25,6 +25,7 @@ mod tests;
 pub trait Trait: frame_system::Trait {
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
     type Currency: MultiTokenCurrencyExtended<Self::AccountId>;
+    type NativeCurrencyId: Get<CurrencyIdOf<Self>>;
 }
 
 type BalanceOf<T> =
@@ -52,6 +53,7 @@ decl_error! {
         AssetAlreadyExists,
         AssetDoesNotExists,
         DivisionByZero,
+        NotMangataLiquidityAsset,
     }
 }
 
@@ -600,8 +602,53 @@ impl<T: Trait> Module<T> {
     }
 }
 
-pub Trait Valuate{
-    fn validate_if_mng_liquidity_token
-    valuate_liquidity_token
-    scale_valuation
+pub trait Valuate {
+
+	type Balance: AtLeast32BitUnsigned + FullCodec + Copy + MaybeSerializeDeserialize + Debug +	Default;
+
+	type CurrencyId: Parameter + Member + Copy + MaybeSerializeDeserialize + Ord + Default + AtLeast32BitUnsigned + FullCodec;
+
+    fn get_liquidity_token_mng_pool(liquidity_token_id: Self::CurrencyId) -> Result<(Self::CurrencyId, Self::CurrencyId), DispatchError>;
+
+    fn valuate_liquidity_token(liquidity_token_id: Self::CurrencyId, liquidity_token_amount: Self::Balance) -> Self::Balance;
+    
+    fn scale_liquidity_by_mng_valuation(mng_valuation: Self::Balance, liquidity_token_amount: Self::Balance, mng_token_amount: Self::Balance)-> Self::Balance;
+}
+
+impl<T: Trait> Valuate for Module<T>{
+
+	type Balance = BalanceOf<T>;
+
+	type CurrencyId = CurrencyIdOf<T>;
+
+    fn get_liquidity_token_mng_pool(liquidity_token_id: Self::CurrencyId) -> Result<(Self::CurrencyId, Self::CurrencyId), DispatchError> {
+        let (first_token_id, second_token_id) = <LiquidityPools<T>>::get(liquidity_token_id);
+        let native_currency_id = T::NativeCurrencyId::get();
+        match native_currency_id{
+            first_token_id => Ok((first_token_id, second_token_id)),
+            second_token_id => Ok((second_token_id, first_token_id)),
+            _ => Err(Error::<T>::NotMangataLiquidityAsset)
+        }
+    }
+
+    fn valuate_liquidity_token(liquidity_token_id: Self::CurrencyId, liquidity_token_amount: Self::Balance) -> Self::Balance {
+        let (mng_token_id, other_token_id) = Self::get_liquidity_token_mng_pool(liquidity_token_id);
+        let mng_token_reserve = <Pools<T>>::get((mng_token_id, other_token_id));
+        let liquidity_token_reserve = T::Currency::total_issuance(liquidity_token_id);
+        let mng_token_reserve_u256: U256 = mng_token_reserve.saturated_into::<u128>().into();
+        let liquidity_token_reserve_u256: U256 = liquidity_token_reserve.saturated_into::<u128>().into();
+        let mng_token_amount_u256 = mng_token_reserve_u256 * liquidity_token_amount / liquidity_token_reserve_u256;
+        let mng_token_amount = mng_token_amount_u256.saturated_into::<u128>().saturated_into::<Self::Balance>();
+        mng_token_amount
+    }
+
+    fn scale_liquidity_by_mng_valuation(mng_valuation: Self::Balance, liquidity_token_amount: Self::Balance, mng_token_amount: Self::Balance)-> Self::Balance{
+        let mng_valuation_u256: U256 = mng_valuation.saturated_into::<u128>().into();
+        let liquidity_token_amount_u256: U256 = liquidity_token_amount.saturated_into::<u128>().into();
+        let mng_token_amount_u256: U256 = mng_token_amount.saturated_into::<u128>().into();
+        let scaled_liquidity_token_amount_u256 = liquidity_token_amount_u256 * mng_token_amount_u256 / mng_valuation_u256;
+        let scaled_liquidity_token_amount = scaled_liquidity_token_amount_u256.saturated_into::<u128>().saturated_into::<Self::Balance>();
+        scaled_liquidity_token_amount
+    }
+
 }

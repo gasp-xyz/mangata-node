@@ -269,12 +269,16 @@ fn testnet_genesis(
                 })
                 .collect::<Vec<_>>(),
         }),
+
+        // TODO
+        // Create two tokens and corresponding pool through xyk for the authority account and pass it in here.
+
         pallet_staking: Some(StakingConfig {
             validator_count: initial_authorities.len() as u32 * 2,
             minimum_validator_count: initial_authorities.len() as u32,
             stakers: initial_authorities
                 .iter()
-                .map(|x| (x.2.clone(), x.2.clone(), 0_u128, StakerStatus::Validator))
+                .map(|x| (x.2.clone(), x.2.clone(), 0u32, 0_u128, StakerStatus::Validator))
                 .collect(),
             invulnerables: initial_authorities.iter().map(|x| x.2.clone()).collect(),
             slash_reward_fraction: Perbill::from_percent(10),

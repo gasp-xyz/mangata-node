@@ -592,10 +592,11 @@ pub fn do_slash<T: Trait>(
 		None => return, // nothing to do.
 	};
 
-	let value = ledger.slash(value, T::Currency::minimum_balance());
+	let stash_liquidity_token = Self::get_stash_liquidity_token(stash);
+	let value = ledger.slash(value, T::Tokens::minimum_balance(stash_liquidity_token));
 
 	if !value.is_zero() {
-		let (imbalance, missing) = T::Currency::slash(stash, value);
+		let (imbalance, missing) = T::Tokens::slash(stash_liquidity_token, stash, value);
 		slashed_imbalance.subsume(imbalance);
 
 		if !missing.is_zero() {
@@ -633,14 +634,16 @@ pub(crate) fn apply_slash<T: Trait>(unapplied_slash: UnappliedSlash<T::AccountId
 		);
 	}
 
-	// TODO
+	let validator_liquidity_token = Self::get_stash_liquidity_token(unapplied_slash.validator);
+	
 	// Pass the liquidity token id of the validator into pay_reporters
-	pay_reporters::<T>(reward_payout, slashed_imbalance, &unapplied_slash.reporters);
+	pay_reporters::<T>(validator_liquidity_token, reward_payout, slashed_imbalance, &unapplied_slash.reporters);
 }
 
 
 /// Apply a reward payout to some reporters, paying the rewards out of the slashed imbalance.
 fn pay_reporters<T: Trait>(
+	validator_liquidity_token: TokenId<T>,
 	reward_payout: BalanceOf<T>,
 	slashed_imbalance: NegativeImbalanceOf<T>,
 	reporters: &[T::AccountId],
@@ -661,9 +664,8 @@ fn pay_reporters<T: Trait>(
 		let (reporter_reward, rest) = reward_payout.split(per_reporter);
 		reward_payout = rest;
 
-		// TODO
-		// Change below to Token call with token id
-		T::Currency::resolve_creating(reporter, reporter_reward);
+		// Token call with token id
+		T::Tokens::resolve_creating(validator_liquidity_token, reporter, reporter_reward);
 	}
 
 	// the rest goes to the on-slash imbalance handler (e.g. treasury)

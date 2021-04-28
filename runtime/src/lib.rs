@@ -473,6 +473,9 @@ impl pallet_assets_info::Trait for Runtime {
 
 impl orml_tokens::Trait for Runtime {
     type Event = Event;
+    type Balance = Balance;
+    type Amount = Amount;
+    type CurrencyId = TokenId;
     type OnReceived = ();
     type WeightInfo = ();
 }

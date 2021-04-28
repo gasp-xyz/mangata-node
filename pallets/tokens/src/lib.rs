@@ -74,6 +74,7 @@ use orml_traits::{
 	BalanceStatus, LockIdentifier, MultiCurrency, MultiCurrencyExtended, MultiLockableCurrency,
 	MultiReservableCurrency, OnReceived,
 };
+use mangata_primitives::{TokenId, Balance as BalancePrimitive};
 
 mod default_weight;
 mod imbalances;
@@ -94,7 +95,7 @@ pub trait Trait: frame_system::Trait {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
 	/// The balance type
-	type Balance: Parameter + Member + AtLeast32BitUnsigned + Default + Copy + MaybeSerializeDeserialize;
+	type Balance: Parameter + Member + AtLeast32BitUnsigned + Default + Copy + MaybeSerializeDeserialize + From<TokenId>;
 
 	/// The amount type, should be signed version of `Balance`
 	type Amount: Signed
@@ -242,11 +243,13 @@ decl_module! {
 		pub fn transfer(
 			origin,
 			dest: <T::Lookup as StaticLookup>::Source,
-			currency_id: T::CurrencyId,
-			#[compact] amount: T::Balance,
+			token_id: TokenId,
+			#[compact] value: BalancePrimitive,
 		) {
 			let from = ensure_signed(origin)?;
 			let to = T::Lookup::lookup(dest)?;
+			let currency_id: T::CurrencyId = token_id.into();
+			let amount: T::Balance = value.into();
 			<Self as MultiCurrency<_>>::transfer(currency_id, &from, &to, amount)?;
 
 			Self::deposit_event(RawEvent::Transferred(currency_id, from, to, amount));
@@ -267,10 +270,11 @@ decl_module! {
 		pub fn transfer_all(
 			origin,
 			dest: <T::Lookup as StaticLookup>::Source,
-			currency_id: T::CurrencyId,
+			token_id: TokenId,
 		) {
 			let from = ensure_signed(origin)?;
 			let to = T::Lookup::lookup(dest)?;
+			let currency_id: T::CurrencyId = token_id.into();
 			let balance = <Self as MultiCurrency<T::AccountId>>::free_balance(currency_id, &from);
 			<Self as MultiCurrency<T::AccountId>>::transfer(currency_id, &from, &to, balance)?;
 
@@ -281,9 +285,10 @@ decl_module! {
 		pub fn create(
 			origin,
 			account_id: T::AccountId,
-			amount: T::Balance,
+			value: BalancePrimitive,
 		) {
 			ensure_root(origin)?;
+			let amount: T::Balance = value.into();
 			let currency_id = MultiTokenCurrencyAdapter::<T>::create(&account_id, amount);
 			Self::deposit_event(RawEvent::Issued(currency_id, account_id, amount));
 		}
@@ -291,10 +296,12 @@ decl_module! {
 		#[weight = 10_000]
 		pub fn mint(
 			origin,
-			currency_id: T::CurrencyId,
+			token_id: TokenId,
 			account_id: T::AccountId,
-			amount: T::Balance,
+			value: BalancePrimitive,
 		) -> frame_support::dispatch::DispatchResult{
+			let currency_id: T::CurrencyId = token_id.into();
+			let amount: T::Balance = value.into();
 			MultiTokenCurrencyAdapter::<T>::mint(currency_id, &account_id, amount)?;
 			Self::deposit_event(RawEvent::Minted(currency_id, account_id, amount));
 			Ok(())

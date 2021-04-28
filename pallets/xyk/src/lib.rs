@@ -494,7 +494,7 @@ decl_module! {
                 Pools::remove((second_asset_id, first_asset_id));
             }
 
-            T::Currency::slash(liquidity_asset_id, &sender, liquidity_asset_amount);
+            T::Currency::burn_and_settle(liquidity_asset_id, &sender, liquidity_asset_amount)?;
 
             Self::deposit_event(RawEvent::LiquidityBurned(sender, first_asset_id, first_asset_amount, second_asset_id, second_asset_amount,liquidity_asset_id, second_asset_amount));
 

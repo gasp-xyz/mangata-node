@@ -14,6 +14,10 @@ use sp_core::U256;
 use frame_support::sp_runtime::traits::AccountIdConversion;
 use frame_support::traits::{Get, ExistenceRequirement, WithdrawReasons};
 use sp_runtime::traits::{SaturatedConversion, Zero};
+use sp_runtime::traits::{AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member};
+use codec::FullCodec;
+use frame_support::Parameter;
+use sp_std::fmt::Debug;
 
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 
@@ -625,19 +629,23 @@ impl<T: Trait> Valuate for Module<T>{
         let (first_token_id, second_token_id) = <LiquidityPools<T>>::get(liquidity_token_id);
         let native_currency_id = T::NativeCurrencyId::get();
         match native_currency_id{
-            first_token_id => Ok((first_token_id, second_token_id)),
-            second_token_id => Ok((second_token_id, first_token_id)),
-            _ => Err(Error::<T>::NotMangataLiquidityAsset)
+            _ if native_currency_id == first_token_id => Ok((first_token_id, second_token_id)),
+            _ if native_currency_id == second_token_id => Ok((second_token_id, first_token_id)),
+            _ => Err(Error::<T>::NotMangataLiquidityAsset.into())
         }
     }
 
     fn valuate_liquidity_token(liquidity_token_id: Self::CurrencyId, liquidity_token_amount: Self::Balance) -> Self::Balance {
-        let (mng_token_id, other_token_id) = Self::get_liquidity_token_mng_pool(liquidity_token_id);
+        let (mng_token_id, other_token_id) = match Self::get_liquidity_token_mng_pool(liquidity_token_id){
+            Ok(pool) => pool,
+            Err(_) => return Default::default(),
+        };
         let mng_token_reserve = <Pools<T>>::get((mng_token_id, other_token_id));
         let liquidity_token_reserve = T::Currency::total_issuance(liquidity_token_id);
         let mng_token_reserve_u256: U256 = mng_token_reserve.saturated_into::<u128>().into();
+        let liquidity_token_amount_u256: U256 = liquidity_token_amount.saturated_into::<u128>().into(); 
         let liquidity_token_reserve_u256: U256 = liquidity_token_reserve.saturated_into::<u128>().into();
-        let mng_token_amount_u256 = mng_token_reserve_u256 * liquidity_token_amount / liquidity_token_reserve_u256;
+        let mng_token_amount_u256 = mng_token_reserve_u256 * liquidity_token_amount_u256 / liquidity_token_reserve_u256;
         let mng_token_amount = mng_token_amount_u256.saturated_into::<u128>().saturated_into::<Self::Balance>();
         mng_token_amount
     }

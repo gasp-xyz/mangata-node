@@ -4145,6 +4145,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex",
+ "orml-tokens",
  "pallet-authorship",
  "pallet-balances",
  "pallet-session",

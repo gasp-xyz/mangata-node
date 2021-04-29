@@ -264,6 +264,10 @@
 //! - [Session](../pallet_session/index.html): Used to manage sessions. Also, a list of new
 //!   validators is stored in the Session module's `Validators` at the end of each era.
 
+
+// TODO
+// Morph chainspec accordingly
+
 // TODO
 // Change all Currency references
 
@@ -355,6 +359,8 @@ use sp_npos_elections::{
 	build_support_map, evaluate_support, seq_phragmen, generate_solution_type,
 	is_score_better, VotingLimit, SupportMap, VoteWeight,
 };
+use orml_tokens::{MultiTokenCurrency, MultiTokenLockableCurrency};
+use pallet_xyk::Valuate;
 
 const STAKING_ID: LockIdentifier = *b"staking ";
 pub const MAX_UNLOCKING_CHUNKS: usize = 32;
@@ -409,15 +415,15 @@ pub type OffchainAccuracy = PerU16;
 
 /// The balance type of this module.
 pub type BalanceOf<T> =
-	<<T as Trait>::Tokens as PalletCurrency<<T as frame_system::Trait>::AccountId>>::Balance;
+	<<T as Trait>::Tokens as MultiTokenCurrency<<T as frame_system::Trait>::AccountId>>::Balance;
 
 pub type TokenId<T> =
-	<<T as Trait>::Tokens as PalletCurrency<<T as frame_system::Trait>::AccountId>>::CurrencyId;
+	<<T as Trait>::Tokens as MultiTokenCurrency<<T as frame_system::Trait>::AccountId>>::CurrencyId;
 
 type PositiveImbalanceOf<T> =
-	<<T as Trait>::Tokens as PalletCurrency<<T as frame_system::Trait>::AccountId>>::PositiveImbalance;
+	<<T as Trait>::Tokens as MultiTokenCurrency<<T as frame_system::Trait>::AccountId>>::PositiveImbalance;
 type NegativeImbalanceOf<T> =
-	<<T as Trait>::Tokens as PalletCurrency<<T as frame_system::Trait>::AccountId>>::NegativeImbalance;
+	<<T as Trait>::Tokens as MultiTokenCurrency<<T as frame_system::Trait>::AccountId>>::NegativeImbalance;
 
 /// Information regarding the active era (era in used in session).
 #[derive(Encode, Decode, RuntimeDebug)]
@@ -797,6 +803,7 @@ impl<T: Trait> SessionInterface<<T as frame_system::Trait>::AccountId> for T whe
 
 /// Records the amount of the liquidity token staked and its valutaion in terms MNG of the user's stash
 /// at the time of the snapshot
+#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
 pub struct Valuation <Balance> {
 	/// Value of the liquidity token staked
 	pub liquidity_token_amount: Balance,
@@ -963,6 +970,10 @@ impl Default for Releases {
 		Releases::V4_0_0
 	}
 }
+
+
+// TODO
+// Morph chainspec accordingly
 
 decl_storage! {
 	trait Store for Module<T: Trait> as Staking {
@@ -1161,10 +1172,8 @@ decl_storage! {
 		pub StashLiquidityToken get(fn get_stash_liquidity_token): map hasher(blake2_128_concat) T::AccountId => Option<TokenId<T>>;
 
 		/// The mapping from Stash to its staked Valuation
-		pub StashStakedValuation get(fn get_stash_staked_valuation): map hasher(blake2_128_concat) T::AccountId => Option<Valuation<BalanceOf<T>>;
+		pub StashStakedValuation get(fn get_stash_staked_valuation): map hasher(blake2_128_concat) T::AccountId => Option<Valuation<BalanceOf<T>>>;
 	}
-	// TODO
-	// Morph chainspec accordingly
 	add_extra_genesis {
 		config(stakers):
 			Vec<(T::AccountId, T::AccountId, TokenId<T>, BalanceOf<T>, StakerStatus<T::AccountId>)>;
@@ -1486,7 +1495,7 @@ decl_module! {
 			}
 
 			// Use valuations to check if the liquidity_token is a valid one
-			T::Valuations::validate_if_mng_liquidity_token(liquidity_token).then(||()).ok_or(Error::<T>::NotMNGPool)?;
+			T::Valuations::get_liquidity_token_mng_pool(liquidity_token)?;
 
 			// Insert the liquidity_token against stash in StashLiquidityToken
 			<StashLiquidityToken<T>>::insert(&stash, Some(liquidity_token));
@@ -1599,7 +1608,7 @@ decl_module! {
 			);
 
 			let mut value = value.min(ledger.active);
-			let stash_liquidity_token = Self::get_stash_liquidity_token(stash);
+			let stash_liquidity_token = Self::get_stash_liquidity_token(ledger.stash);
 
 			if !value.is_zero() {
 				ledger.active -= value;
@@ -2288,7 +2297,7 @@ impl<T: Trait> Module<T> {
 		} else {
 
 			// Note: A Stash can't be both nominator and validator
-			validators::iter().map(|validator|{
+			validators.iter().map(|validator|{
 				// get validator's staked liquidity token amount, i.e., validator's controller's ledger.active
 				// get validator's stash's tokenId
 				// get the valuation on staked liquidity token amount in MNG via Valuations pallet
@@ -2303,7 +2312,7 @@ impl<T: Trait> Module<T> {
 
 			});
 
-			nominators::iter().map(|nominator|{
+			nominators.iter().map(|nominator|{
 				// get nominator's staked liquidity token amount, i.e., nominator's controller's ledger.active
 				// get nominator's stash's tokenId
 				// get the valuation on staked liquidity token amount in MNG via Valuations pallet
@@ -2896,7 +2905,7 @@ impl<T: Trait> Module<T> {
 				let Exposure{total: exposure_total, own: exposure_own, others: exposure_others} =  exposure;
 
 				let mut exposure_raw_total: Balance = Zero::zero();
-				let mut exposure_raw_others: Vec<IndividualExposure<AccountId, Balance>> = Vec<IndividualExposure<AccountId, Balance>>::new();
+				let mut exposure_raw_others: Vec<IndividualExposure<AccountId, Balance>> = Vec::<IndividualExposure<AccountId, Balance>>::new();
 				for individual_exposure in exposure_others.iter(){
 					let IndividualExposure{ who: individual_exposure_who, value: individual_exposure_value } = individual_exposure;
 					let who_staked_valuation = Self::get_stash_staked_valuation(individual_exposure_who);

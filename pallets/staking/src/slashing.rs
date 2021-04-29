@@ -50,7 +50,7 @@
 //! Based on research at https://research.web3.foundation/en/latest/polkadot/slashing/npos/
 
 use super::{
-	EraIndex, Trait, Module, Store, BalanceOf, Exposure, Perbill, SessionInterface,
+	EraIndex, Trait, Module, Store, TokenId, BalanceOf, Exposure, Perbill, SessionInterface,
 	NegativeImbalanceOf, UnappliedSlash, Error,
 };
 use sp_runtime::{traits::{Zero, Saturating}, RuntimeDebug, DispatchResult};
@@ -592,7 +592,7 @@ pub fn do_slash<T: Trait>(
 		None => return, // nothing to do.
 	};
 
-	let stash_liquidity_token = Self::get_stash_liquidity_token(stash);
+	let stash_liquidity_token = <Module<T>>::get_stash_liquidity_token(stash);
 	let value = ledger.slash(value, T::Tokens::minimum_balance(stash_liquidity_token));
 
 	if !value.is_zero() {
@@ -634,7 +634,7 @@ pub(crate) fn apply_slash<T: Trait>(unapplied_slash: UnappliedSlash<T::AccountId
 		);
 	}
 
-	let validator_liquidity_token = Self::get_stash_liquidity_token(unapplied_slash.validator);
+	let validator_liquidity_token = <Module<T>>::get_stash_liquidity_token(unapplied_slash.validator);
 	
 	// Pass the liquidity token id of the validator into pay_reporters
 	pay_reporters::<T>(validator_liquidity_token, reward_payout, slashed_imbalance, &unapplied_slash.reporters);

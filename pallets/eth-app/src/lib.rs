@@ -31,7 +31,7 @@ use artemis_asset as asset;
 use artemis_core::{Application, BridgedAssetId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 use sp_runtime::traits::SaturatedConversion;
-use mangata_primitives::Balance;
+use mangata_primitives::{TokenId, Balance};
 
 mod payload;
 use payload::Payload;
@@ -94,9 +94,9 @@ decl_module! {
             let amount = amount.low_u128().saturated_into::<Balance>();
 
             T::Currency::burn_and_settle(
-                asset_id,
+                asset_id.into(),
                 &who,
-                amount,
+                amount.into(),
                 ).map_err(|_| Error::<T>::BurnFailure)?;
 
             Self::deposit_event(transfer_event);
@@ -113,17 +113,17 @@ impl<T: Trait> Module<T> {
 
         //FIXME overflow unsafe!
         if !<asset::Module<T>>::exists(asset_id) {
-            let id = T::Currency::create(
+            let id: TokenId = T::Currency::create(
                 &payload.recipient_addr,
-                payload.amount.low_u128().saturated_into::<Balance>(),
-            );
+                payload.amount.low_u128().saturated_into::<Balance>().into(),
+            ).into();
             <asset::Module<T>>::link_assets(id, asset_id);
         } else {
             let id = <asset::Module<T>>::get_native_asset_id(asset_id);
             T::Currency::mint(
-                id,
+                id.into(),
                 &payload.recipient_addr,
-                payload.amount.low_u128().saturated_into::<Balance>(),
+                payload.amount.low_u128().saturated_into::<Balance>().into(),
             )?;
         }
 

@@ -76,13 +76,18 @@ mod mock;
 mod tests;
 mod multi_token_currency;
 mod multi_token_imbalances;
-mod arithmetic;
-mod currency;
 
-use arithmetic::{Signed};
-use currency::{MultiCurrency, MultiCurrencyExtended, MultiLockableCurrency,
-	MultiReservableCurrency, OnReceived, Currency as PalletCurrency,
-	LockableCurrency as PalletLockableCurrency, ReservableCurrency as PalletReservableCurrency
+use orml_traits::{
+	arithmetic::{self, Signed},
+	MultiCurrency, MultiCurrencyExtended, MultiLockableCurrency,
+	MultiReservableCurrency, OnReceived,
+};
+
+use frame_support::{
+	traits::{
+		Currency as PalletCurrency,
+		LockableCurrency as PalletLockableCurrency, ReservableCurrency as PalletReservableCurrency
+	},
 };
 
 pub use multi_token_currency::{MultiTokenCurrency, MultiTokenLockableCurrency, MultiTokenReservableCurrency, MultiTokenCurrencyExtended};

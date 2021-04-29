@@ -10,6 +10,7 @@ use sp_runtime::{
     traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
     MultiSignature, Perbill,
 };
+use mangata_primitives::{TokenId, Balance, Amount};
 
 use artemis_asset as asset;
 use orml_tokens;

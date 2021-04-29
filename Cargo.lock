@@ -3871,14 +3871,29 @@ dependencies = [
  "clear_on_drop",
  "frame-support",
  "frame-system",
- "impl-trait-for-tuples",
  "mangata-primitives",
- "num-traits",
+ "orml-traits",
  "pallet-elections-phragmen",
  "pallet-treasury",
  "parity-scale-codec",
  "serde",
  "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "orml-traits"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1894c45ef7dd34390c71ee63189d1bfdb873347982d33c7378a7698d818aba1f"
+dependencies = [
+ "frame-support",
+ "impl-trait-for-tuples",
+ "num-traits",
+ "parity-scale-codec",
+ "serde",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -3994,6 +4009,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
+ "mangata-primitives",
  "orml-tokens",
  "pallet-verifier",
  "parity-scale-codec",

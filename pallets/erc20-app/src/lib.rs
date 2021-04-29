@@ -30,7 +30,7 @@ use sp_std::prelude::*;
 use artemis_asset as asset;
 use artemis_core::{Application, BridgedAssetId};
 use sp_runtime::traits::SaturatedConversion;
-use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
+use orml_tokens::{MultiTokenCurrencyExtended};
 use mangata_primitives::{TokenId, Balance};
 
 mod payload;

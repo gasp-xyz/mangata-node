@@ -11,6 +11,7 @@ use sp_runtime::{
     traits::{BlakeTwo256, IdentityLookup},
     Perbill,
 };
+use mangata_primitives::{TokenId, Balance, Amount};
 
 impl_outer_origin! {
     pub enum Origin for Test {}
@@ -64,6 +65,9 @@ impl system::Trait for Test {
 
 impl assets::Trait for Test {
     type Event = ();
+    type Balance = Balance;
+    type Amount = Amount;
+    type CurrencyId = TokenId;
     type OnReceived = ();
     type WeightInfo = ();
 }

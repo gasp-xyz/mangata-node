@@ -11,6 +11,7 @@ use sp_runtime::{
     MultiSignature, Perbill,
 };
 use sp_std::convert::From;
+use mangata_primitives::{TokenId, Balance, Amount};
 
 impl_outer_dispatch! {
     pub enum Call for Test where origin: Origin {

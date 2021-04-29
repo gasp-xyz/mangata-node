@@ -34,7 +34,7 @@
 
 use frame_support::{decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult};
 use frame_system as system;
-use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
+use orml_tokens::{MultiTokenCurrencyExtended};
 use sp_core::{RuntimeDebug, U256};
 use sp_std::prelude::*;
 use codec::{Decode, Encode};

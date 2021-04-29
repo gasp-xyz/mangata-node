@@ -12,7 +12,7 @@ use sp_runtime::{
 use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
 use frame_system as system;
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
-use mangata_primitives::{TokenId, Balance};
+use mangata_primitives::{TokenId, Balance, Amount};
 
 impl_outer_origin! {
     pub enum Origin for Test {}
@@ -75,13 +75,13 @@ pub type XykStorage = Module<Test>;
 
 impl<T: Trait> Module<T> {
     pub fn balance(id: TokenId, who: T::AccountId) -> Balance {
-        T::Currency::free_balance(id, &who)
+        T::Currency::free_balance(id.into(), &who).into()
     }
     pub fn total_supply(id: TokenId) -> Balance {
-        T::Currency::total_issuance(id)
+        T::Currency::total_issuance(id.into()).into()
     }
-    pub fn create_new_token(who: &T::AccountId, id: Balance) -> TokenId {
-        T::Currency::create(who, id)
+    pub fn create_new_token(who: &T::AccountId, amount: Balance) -> TokenId {
+        T::Currency::create(who, amount.into()).into()
     }
 }
 

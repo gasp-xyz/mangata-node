@@ -12,6 +12,7 @@ use sp_runtime::{
     MultiSignature, Perbill,
 };
 use sp_std::convert::From;
+use mangata_primitives::{TokenId, Balance, Amount};
 
 use artemis_asset as asset;
 

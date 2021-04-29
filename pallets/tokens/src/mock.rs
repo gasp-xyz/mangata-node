@@ -76,7 +76,7 @@ impl frame_system::Trait for Runtime {
 pub type System = system::Module<Runtime>;
 
 type CurrencyId = u32;
-pub type Balance = u64;
+pub type Balance = u128;
 
 thread_local! {
 	pub static ACCUMULATED_RECEIVED: RefCell<HashMap<(AccountId, CurrencyId), Balance>> = RefCell::new(HashMap::new());
@@ -174,6 +174,11 @@ impl Convert<u128, u64> for CurrencyToVoteHandler {
 		x as u64
 	}
 }
+impl Convert<u128, u128> for CurrencyToVoteHandler {
+	fn convert(x: u128) -> u128 {
+		x as u128
+	}
+}
 
 parameter_types! {
 	pub const CandidacyBond: u64 = 3;
@@ -190,6 +195,11 @@ pub struct VotingBond;
 impl Get<u64> for VotingBond {
 	fn get() -> u64 {
 		VOTING_BOND.with(|v| *v.borrow())
+	}
+}
+impl Get<u128> for VotingBond {
+	fn get() -> u128 {
+		VOTING_BOND.with(|v| *v.borrow()).into()
 	}
 }
 
@@ -287,7 +297,7 @@ impl pallet_elections_phragmen::Trait for Runtime {
 impl Trait for Runtime {
 	type Event = TestEvent;
 	type Balance = Balance;
-	type Amount = i64;
+	type Amount = i128;
 	type CurrencyId = CurrencyId;
 	type OnReceived = MockOnReceived;
 	type WeightInfo = ();

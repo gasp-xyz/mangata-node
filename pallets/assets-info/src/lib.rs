@@ -14,7 +14,7 @@ use frame_support::{
 use frame_system::ensure_root;
 use mangata_primitives::TokenId;
 
-use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
+use orml_tokens::{MultiTokenCurrencyExtended};
 // use pallet_assets as assets;
 
 #[cfg(test)]

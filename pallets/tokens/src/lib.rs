@@ -68,7 +68,7 @@ use frame_support::dispatch::result::Result;
 use sp_std::collections::btree_map::BTreeMap;
 
 pub use crate::imbalances::{NegativeImbalance, PositiveImbalance};
-use mangata_primitives::{TokenId, Balance as BalancePrimitive, Amount as AmountPrimitive};
+use mangata_primitives::{TokenId, Balance, Amount};
 
 mod default_weight;
 mod imbalances;
@@ -97,7 +97,7 @@ pub trait Trait: frame_system::Trait {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
 	/// The balance type
-	type Balance: Parameter + Member + AtLeast32BitUnsigned + Default + Copy + MaybeSerializeDeserialize + From<BalancePrimitive> + Into<BalancePrimitive>;
+	type Balance: Parameter + Member + AtLeast32BitUnsigned + Default + Copy + MaybeSerializeDeserialize + From<Balance> + Into<Balance>;
 
 	/// The amount type, should be signed version of `Balance`
 	type Amount: Signed
@@ -109,7 +109,7 @@ pub trait Trait: frame_system::Trait {
 		+ Default
 		+ Copy
 		+ MaybeSerializeDeserialize
-		+ From<AmountPrimitive> + Into<AmountPrimitive>;
+		+ From<Amount> + Into<Amount>;
 
 	/// The currency ID type
 	type CurrencyId: Parameter + Member + Copy + MaybeSerializeDeserialize + Ord + Default + AtLeast32BitUnsigned + FullCodec + From<TokenId> + Into<TokenId>;
@@ -247,7 +247,7 @@ decl_module! {
 			origin,
 			dest: <T::Lookup as StaticLookup>::Source,
 			token_id: TokenId,
-			#[compact] value: BalancePrimitive,
+			#[compact] value: Balance,
 		) {
 			let from = ensure_signed(origin)?;
 			let to = T::Lookup::lookup(dest)?;
@@ -288,7 +288,7 @@ decl_module! {
 		pub fn create(
 			origin,
 			account_id: T::AccountId,
-			value: BalancePrimitive,
+			value: Balance,
 		) {
 			ensure_root(origin)?;
 			let amount: T::Balance = value.into();
@@ -301,7 +301,7 @@ decl_module! {
 			origin,
 			token_id: TokenId,
 			account_id: T::AccountId,
-			value: BalancePrimitive,
+			value: Balance,
 		) -> frame_support::dispatch::DispatchResult{
 			let currency_id: T::CurrencyId = token_id.into();
 			let amount: T::Balance = value.into();

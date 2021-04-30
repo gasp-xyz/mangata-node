@@ -20,9 +20,8 @@ frame-system = { default-features = false, version = '2.0.0' }
 orml-tokens = { path = '../tokens', default-features = false, version = '0.3.1' }
 sp-runtime = { default-features = false, version = '2.0.0' }
 sp-core = { default-features = false, version = '2.0.0' }
-
-orml-traits = { version = "0.3.1", default-features = false }
 sp-std = { version = "2.0.0", default-features = false }
+mangata-primitives = { path = '../../primitives/mangata', default-features = false, version = '0.1.0' }
 
 
 
@@ -37,5 +36,4 @@ std = [
     "sp-std/std",
     'frame-support/std',
     'frame-system/std',
-    'orml-traits/std',
 ]

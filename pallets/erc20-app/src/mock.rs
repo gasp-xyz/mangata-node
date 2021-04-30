@@ -4,6 +4,7 @@
 use crate::{Module, Trait};
 use frame_support::{impl_outer_event, impl_outer_origin, parameter_types, weights::Weight};
 use frame_system as system;
+use mangata_primitives::{Amount, Balance, TokenId};
 use orml_tokens::MultiTokenCurrencyAdapter;
 use sp_core::H256;
 use sp_runtime::{
@@ -76,9 +77,9 @@ impl system::Trait for MockRuntime {
 
 impl orml_tokens::Trait for MockRuntime {
     type Event = MockEvent;
-    type Balance = u128;
-    type Amount = i128;
-    type CurrencyId = u32;
+    type Balance = Balance;
+    type Amount = Amount;
+    type CurrencyId = TokenId;
     type OnReceived = ();
     type WeightInfo = ();
 }

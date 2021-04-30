@@ -9,6 +9,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 hex = { package = "rustc-hex", version = "2.1.0", default-features = false }
+mangata-primitives = { path = '../../primitives/mangata', default-features = false, version = '0.1.0' }
 
 [dependencies.codec]
 default-features = false
@@ -59,10 +60,6 @@ path = '../tokens'
 default-features = false
 version = '0.3.1'
 
-[dependencies.orml-traits]
-version = "0.3.1"
-default-features = false
-
 [features]
 default = ["std"]
 std = [
@@ -76,5 +73,4 @@ std = [
     "sp-io/std",
     "sp-runtime/std",
     "artemis-core/std",
-    'orml-traits/std',
 ]

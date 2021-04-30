@@ -18,8 +18,9 @@ use sp_runtime::traits::{AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member
 use codec::FullCodec;
 use frame_support::Parameter;
 use sp_std::fmt::Debug;
-
+use mangata_primitives::{Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
+use sp_runtime::traits::{SaturatedConversion, Zero};
 
 #[cfg(test)]
 mod mock;
@@ -31,13 +32,6 @@ pub trait Trait: frame_system::Trait {
     type Currency: MultiTokenCurrencyExtended<Self::AccountId>;
     type NativeCurrencyId: Get<CurrencyIdOf<Self>>;
 }
-
-type BalanceOf<T> =
-    <<T as Trait>::Currency as MultiTokenCurrency<<T as frame_system::Trait>::AccountId>>::Balance;
-
-type CurrencyIdOf<T> = <<T as Trait>::Currency as MultiTokenCurrency<
-    <T as frame_system::Trait>::AccountId,
->>::CurrencyId;
 
 const PALLET_ID: ModuleId = ModuleId(*b"79b14c96");
 
@@ -65,28 +59,26 @@ decl_event!(
     pub enum Event<T>
     where
         AccountId = <T as frame_system::Trait>::AccountId,
-        Balance = BalanceOf<T>,
-        CurrencyId = CurrencyIdOf<T>,
     {
         //TODO add trading events
-        PoolCreated(AccountId, CurrencyId, Balance, CurrencyId, Balance),
-        AssetsSwapped(AccountId, CurrencyId, Balance, CurrencyId, Balance),
+        PoolCreated(AccountId, TokenId, Balance, TokenId, Balance),
+        AssetsSwapped(AccountId, TokenId, Balance, TokenId, Balance),
         LiquidityMinted(
             AccountId,
-            CurrencyId,
+            TokenId,
             Balance,
-            CurrencyId,
+            TokenId,
             Balance,
-            CurrencyId,
+            TokenId,
             Balance,
         ),
         LiquidityBurned(
             AccountId,
-            CurrencyId,
+            TokenId,
             Balance,
-            CurrencyId,
+            TokenId,
             Balance,
-            CurrencyId,
+            TokenId,
             Balance,
         ),
     }
@@ -96,10 +88,10 @@ decl_event!(
 decl_storage! {
     trait Store for Module<T: Trait> as XykStorage {
 
-        Pools get(fn asset_pool): map hasher(opaque_blake2_256) (CurrencyIdOf<T>, CurrencyIdOf<T>) => BalanceOf<T>;
+        Pools get(fn asset_pool): map hasher(opaque_blake2_256) (TokenId, TokenId) => Balance;
 
-        LiquidityAssets get(fn liquidity_asset): map hasher(opaque_blake2_256) (CurrencyIdOf<T>, CurrencyIdOf<T>) => CurrencyIdOf<T>;
-        LiquidityPools get(fn liquidity_pool): map hasher(opaque_blake2_256) CurrencyIdOf<T> => (CurrencyIdOf<T>, CurrencyIdOf<T>);
+        LiquidityAssets get(fn liquidity_asset): map hasher(opaque_blake2_256) (TokenId, TokenId) => TokenId;
+        LiquidityPools get(fn liquidity_pool): map hasher(opaque_blake2_256) TokenId => (TokenId, TokenId);
 
         Nonce get (fn nonce): u32;
 
@@ -115,10 +107,10 @@ decl_module! {
         #[weight = 10_000]
         fn create_pool(
             origin,
-            first_asset_id: CurrencyIdOf<T>,
-            first_asset_amount: BalanceOf<T>,
-            second_asset_id: CurrencyIdOf<T>,
-            second_asset_amount: BalanceOf<T>
+            first_asset_id: TokenId,
+            first_asset_amount: Balance,
+            second_asset_id: TokenId,
+            second_asset_amount: Balance
         ) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -130,17 +122,17 @@ decl_module! {
             );
 
             ensure!(
-                !<Pools<T>>::contains_key((first_asset_id, second_asset_id)),
+                !Pools::contains_key((first_asset_id, second_asset_id)),
                 Error::<T>::PoolAlreadyExists,
             );
 
             ensure!(
-                !<Pools<T>>::contains_key((second_asset_id,first_asset_id)),
+                !Pools::contains_key((second_asset_id,first_asset_id)),
                 Error::<T>::PoolAlreadyExists,
             );
 
-            let first_asset_free_balance = T::Currency::free_balance(first_asset_id, &sender);
-            let second_asset_free_balance = T::Currency::free_balance(second_asset_id, &sender);
+            let first_asset_free_balance: Balance = T::Currency::free_balance(first_asset_id.into(), &sender).into();
+            let second_asset_free_balance: Balance = T::Currency::free_balance(second_asset_id.into(), &sender).into();
 
             ensure!(
                 first_asset_free_balance >= first_asset_amount,
@@ -152,13 +144,13 @@ decl_module! {
                 Error::<T>::NotEnoughAssets,
             );
 
-            T::Currency::ensure_can_withdraw(first_asset_id, &sender, first_asset_amount,
+            T::Currency::ensure_can_withdraw(first_asset_id.into(), &sender, first_asset_amount.into(),
                 WithdrawReasons::all()
-                ,first_asset_free_balance - first_asset_amount ).or(Err(Error::<T>::NotEnoughAssets))?;
+                ,{first_asset_free_balance - first_asset_amount}.into() ).or(Err(Error::<T>::NotEnoughAssets))?;
 
-            T::Currency::ensure_can_withdraw(second_asset_id, &sender, second_asset_amount,
+            T::Currency::ensure_can_withdraw(second_asset_id.into(), &sender, second_asset_amount.into(),
                 WithdrawReasons::all()
-                ,second_asset_free_balance - second_asset_amount).or(Err(Error::<T>::NotEnoughAssets))?;
+                ,{second_asset_free_balance - second_asset_amount}.into()).or(Err(Error::<T>::NotEnoughAssets))?;
 
 
             ensure!(
@@ -168,34 +160,34 @@ decl_module! {
 
             let initial_liquidity = first_asset_amount + second_asset_amount;
 
-            <Pools<T>>::insert(
+            Pools::insert(
                 (first_asset_id, second_asset_id), first_asset_amount
             );
 
-            <Pools<T>>::insert(
+            Pools::insert(
                 (second_asset_id, first_asset_id), second_asset_amount
             );
 
             T::Currency::transfer(
-                first_asset_id,
+                first_asset_id.into(),
                 &sender,
                 &vault,
-                first_asset_amount,
+                first_asset_amount.into(),
                 ExistenceRequirement::AllowDeath
             )?;
 
             T::Currency::transfer(
-                second_asset_id,
+                second_asset_id.into(),
                 &sender,
                 &vault,
-                second_asset_amount,
+                second_asset_amount.into(),
                 ExistenceRequirement::AllowDeath
             )?;
 
-            let liquidity_asset_id = T::Currency::create(&sender, initial_liquidity);
+            let liquidity_asset_id: TokenId = T::Currency::create(&sender, initial_liquidity.into()).into();
 
-            <LiquidityAssets<T>>::insert((first_asset_id, second_asset_id), liquidity_asset_id);
-            <LiquidityPools<T>>::insert(liquidity_asset_id, (first_asset_id, second_asset_id));
+            LiquidityAssets::insert((first_asset_id, second_asset_id), liquidity_asset_id);
+            LiquidityPools::insert(liquidity_asset_id, (first_asset_id, second_asset_id));
 
 
             Self::deposit_event(RawEvent::PoolCreated(sender, first_asset_id, first_asset_amount, second_asset_id, second_asset_amount));
@@ -208,16 +200,16 @@ decl_module! {
         #[weight = (10_000, Pays::No)]
         fn sell_asset (
             origin,
-            sold_asset_id: CurrencyIdOf<T>,
-            bought_asset_id: CurrencyIdOf<T>,
-            sold_asset_amount: BalanceOf<T>,
-            min_amount_out: BalanceOf<T>,
+            sold_asset_id: TokenId,
+            bought_asset_id: TokenId,
+            sold_asset_amount: Balance,
+            min_amount_out: Balance,
         ) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
 
             ensure!(
-                <Pools<T>>::contains_key((sold_asset_id,bought_asset_id)),
+                Pools::contains_key((sold_asset_id,bought_asset_id)),
                 Error::<T>::NoSuchPool,
             );
 
@@ -226,8 +218,8 @@ decl_module! {
                 Error::<T>::ZeroAmount,
             );
 
-            let input_reserve = <Pools<T>>::get((sold_asset_id, bought_asset_id));
-            let output_reserve = <Pools<T>>::get((bought_asset_id, sold_asset_id));
+            let input_reserve = Pools::get((sold_asset_id, bought_asset_id));
+            let output_reserve = Pools::get((bought_asset_id, sold_asset_id));
             let bought_asset_amount = Self::calculate_sell_price(
                 input_reserve,
                 output_reserve,
@@ -235,7 +227,7 @@ decl_module! {
             )?;
 
             ensure!(
-                T::Currency::free_balance(sold_asset_id, &sender) >= sold_asset_amount,
+                T::Currency::free_balance(sold_asset_id.into(), &sender).into() >= sold_asset_amount,
                 Error::<T>::NotEnoughAssets,
             );
 
@@ -247,25 +239,25 @@ decl_module! {
             let vault = Self::account_id();
 
             T::Currency::transfer(
-                sold_asset_id,
+                sold_asset_id.into(),
                 &sender,
                 &vault,
-                sold_asset_amount,
+                sold_asset_amount.into(),
                 ExistenceRequirement::KeepAlive,
             )?;
             T::Currency::transfer(
-                bought_asset_id,
+                bought_asset_id.into(),
                 &vault,
                 &sender,
-                bought_asset_amount,
+                bought_asset_amount.into(),
                 ExistenceRequirement::KeepAlive,
             )?;
 
-            <Pools<T>>::insert(
+            Pools::insert(
                 (sold_asset_id, bought_asset_id),
                 input_reserve + sold_asset_amount,
             );
-            <Pools<T>>::insert(
+            Pools::insert(
                 (bought_asset_id, sold_asset_id),
                 output_reserve - bought_asset_amount,
             );
@@ -278,21 +270,21 @@ decl_module! {
         #[weight = (10_000, Pays::No)]
         fn buy_asset (
             origin,
-            sold_asset_id: CurrencyIdOf<T>,
-            bought_asset_id: CurrencyIdOf<T>,
-            bought_asset_amount: BalanceOf<T>,
-            max_amount_in: BalanceOf<T>,
+            sold_asset_id: TokenId,
+            bought_asset_id: TokenId,
+            bought_asset_amount: Balance,
+            max_amount_in: Balance,
         ) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
 
             ensure!(
-                <Pools<T>>::contains_key((sold_asset_id,bought_asset_id)),
+                Pools::contains_key((sold_asset_id,bought_asset_id)),
                 Error::<T>::NoSuchPool,
             );
 
-            let input_reserve = <Pools<T>>::get((sold_asset_id, bought_asset_id));
-            let output_reserve = <Pools<T>>::get((bought_asset_id, sold_asset_id));
+            let input_reserve = Pools::get((sold_asset_id, bought_asset_id));
+            let output_reserve = Pools::get((bought_asset_id, sold_asset_id));
 
             ensure!(
                 output_reserve > bought_asset_amount,
@@ -311,7 +303,7 @@ decl_module! {
             );
 
             ensure!(
-                T::Currency::free_balance(sold_asset_id, &sender) >= sold_asset_amount,
+                T::Currency::free_balance(sold_asset_id.into(), &sender).into() >= sold_asset_amount,
                 Error::<T>::NotEnoughAssets,
             );
 
@@ -323,25 +315,25 @@ decl_module! {
             let vault = Self::account_id();
 
             T::Currency::transfer(
-                sold_asset_id,
+                sold_asset_id.into(),
                 &sender,
                 &vault,
-                sold_asset_amount,
+                sold_asset_amount.into(),
                 ExistenceRequirement::KeepAlive,
             )?;
             T::Currency::transfer(
-                bought_asset_id,
+                bought_asset_id.into(),
                 &vault,
                 &sender,
-                bought_asset_amount,
+                bought_asset_amount.into(),
                 ExistenceRequirement::KeepAlive,
             )?;
 
-            <Pools<T>>::insert(
+            Pools::insert(
                 (sold_asset_id, bought_asset_id),
                 input_reserve + sold_asset_amount,
             );
-            <Pools<T>>::insert(
+            Pools::insert(
                 (bought_asset_id, sold_asset_id),
                 output_reserve - bought_asset_amount,
             );
@@ -354,16 +346,16 @@ decl_module! {
         #[weight = 10_000]
         fn mint_liquidity (
             origin,
-            first_asset_id: CurrencyIdOf<T>,
-            second_asset_id: CurrencyIdOf<T>,
-            first_asset_amount: BalanceOf<T>,
+            first_asset_id: TokenId,
+            second_asset_id: TokenId,
+            first_asset_amount: Balance,
         ) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
             let vault = Self::account_id();
 
             ensure!(
-                (<LiquidityAssets<T>>::contains_key((first_asset_id, second_asset_id)) || <LiquidityAssets<T>>::contains_key((second_asset_id, first_asset_id))),
+                (LiquidityAssets::contains_key((first_asset_id, second_asset_id)) || LiquidityAssets::contains_key((second_asset_id, first_asset_id))),
                 Error::<T>::NoSuchPool,
             );
 
@@ -373,13 +365,13 @@ decl_module! {
             );
 
             ensure!(
-                (<Pools<T>>::contains_key((first_asset_id, second_asset_id)) || <Pools<T>>::contains_key((second_asset_id, first_asset_id))),
+                (Pools::contains_key((first_asset_id, second_asset_id)) || Pools::contains_key((second_asset_id, first_asset_id))),
                 Error::<T>::NoSuchPool,
             );
 
-            let first_asset_reserve = <Pools<T>>::get((first_asset_id, second_asset_id));
-            let second_asset_reserve = <Pools<T>>::get((second_asset_id, first_asset_id));
-            let total_liquidity_assets = T::Currency::total_issuance(liquidity_asset_id);
+            let first_asset_reserve = Pools::get((first_asset_id, second_asset_id));
+            let second_asset_reserve = Pools::get((second_asset_id, first_asset_id));
+            let total_liquidity_assets: Balance = T::Currency::total_issuance(liquidity_asset_id.into()).into();
 
             let first_asset_amount_u256: U256 = first_asset_amount.saturated_into::<u128>().into();
             let first_asset_reserve_u256: U256 = first_asset_reserve.saturated_into::<u128>().into();
@@ -390,9 +382,9 @@ decl_module! {
             let liquidity_assets_minted_u256: U256 = first_asset_amount_u256 * total_liquidity_assets_u256 / first_asset_reserve_u256;
 
             let second_asset_amount = second_asset_amount_u256.saturated_into::<u128>()
-                .saturated_into::<BalanceOf<T>>();
+                .saturated_into::<Balance>();
             let liquidity_assets_minted = liquidity_assets_minted_u256.saturated_into::<u128>()
-                .saturated_into::<BalanceOf<T>>();
+                .saturated_into::<Balance>();
 
             ensure!(
                 !first_asset_amount.is_zero() && !second_asset_amount.is_zero(),
@@ -400,37 +392,37 @@ decl_module! {
             );
 
             ensure!(
-                T::Currency::free_balance(first_asset_id, &sender) >= first_asset_amount,
+                T::Currency::free_balance(first_asset_id.into(), &sender).into() >= first_asset_amount,
                 Error::<T>::NotEnoughAssets,
             );
 
             ensure!(
-                T::Currency::free_balance(second_asset_id, &sender) >= second_asset_amount,
+                T::Currency::free_balance(second_asset_id.into(), &sender).into() >= second_asset_amount,
                 Error::<T>::NotEnoughAssets,
             );
 
             T::Currency::transfer(
-                first_asset_id,
+                first_asset_id.into(),
                 &sender,
                 &vault,
-                first_asset_amount,
+                first_asset_amount.into(),
                 ExistenceRequirement::KeepAlive,
             )?;
             T::Currency::transfer(
-                second_asset_id,
+                second_asset_id.into(),
                 &sender,
                 &vault,
-                second_asset_amount,
+                second_asset_amount.into(),
                 ExistenceRequirement::KeepAlive,
             )?;
 
-            T::Currency::mint(liquidity_asset_id,&sender, liquidity_assets_minted)?;
+            T::Currency::mint(liquidity_asset_id.into(),&sender, liquidity_assets_minted.into())?;
 
-            <Pools<T>>::insert(
+            Pools::insert(
                 (&first_asset_id, &second_asset_id),
                 first_asset_reserve + first_asset_amount,
             );
-            <Pools<T>>::insert(
+            Pools::insert(
                 (&second_asset_id, &first_asset_id),
                 second_asset_reserve + second_asset_amount,
             );
@@ -444,34 +436,34 @@ decl_module! {
         #[weight = 10_000]
         fn burn_liquidity (
             origin,
-            first_asset_id: CurrencyIdOf<T>,
-            second_asset_id: CurrencyIdOf<T>,
-            liquidity_asset_amount: BalanceOf<T>,
+            first_asset_id: TokenId,
+            second_asset_id: TokenId,
+            liquidity_asset_amount: Balance,
         ) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
             let vault = Self::account_id();
 
             ensure!(
-                <Pools<T>>::contains_key((first_asset_id, second_asset_id)),
+                Pools::contains_key((first_asset_id, second_asset_id)),
                 Error::<T>::NoSuchPool,
             );
 
-            let first_asset_reserve = <Pools<T>>::get((first_asset_id, second_asset_id));
-            let second_asset_reserve = <Pools<T>>::get((second_asset_id, first_asset_id));
+            let first_asset_reserve = Pools::get((first_asset_id, second_asset_id));
+            let second_asset_reserve = Pools::get((second_asset_id, first_asset_id));
             let liquidity_asset_id = Self::get_liquidity_asset(first_asset_id, second_asset_id);
 
             ensure!(
-                T::Currency::can_slash(liquidity_asset_id, &sender, liquidity_asset_amount),
+                T::Currency::can_slash(liquidity_asset_id.into(), &sender, liquidity_asset_amount.into()),
                 Error::<T>::NotEnoughAssets,
             );
-            let new_balance = T::Currency::free_balance(liquidity_asset_id, &sender) - liquidity_asset_amount;
+            let new_balance: Balance = T::Currency::free_balance(liquidity_asset_id.into(), &sender).into() - liquidity_asset_amount;
 
-            T::Currency::ensure_can_withdraw(liquidity_asset_id,
+            T::Currency::ensure_can_withdraw(liquidity_asset_id.into(),
                 &sender,
-                liquidity_asset_amount,
+                liquidity_asset_amount.into(),
                 WithdrawReasons::all(),
-                new_balance).or(Err(Error::<T>::NotEnoughAssets))?;
+                new_balance.into()).or(Err(Error::<T>::NotEnoughAssets))?;
 
             let (first_asset_amount, second_asset_amount) =  Self::get_burn_amount(first_asset_id, second_asset_id, liquidity_asset_amount);
 
@@ -481,35 +473,35 @@ decl_module! {
             );
 
             T::Currency::transfer(
-                first_asset_id,
+                first_asset_id.into(),
                 &vault,
                 &sender,
-                first_asset_amount,
+                first_asset_amount.into(),
                 ExistenceRequirement::KeepAlive,
             )?;
             T::Currency::transfer(
-                second_asset_id,
+                second_asset_id.into(),
                 &vault,
                 &sender,
-                second_asset_amount,
+                second_asset_amount.into(),
                 ExistenceRequirement::KeepAlive,
             )?;
-            <Pools<T>>::insert(
+            Pools::insert(
                 (&first_asset_id, &second_asset_id),
                 first_asset_reserve - first_asset_amount,
             );
-            <Pools<T>>::insert(
+            Pools::insert(
                 (&second_asset_id, &first_asset_id),
                 second_asset_reserve - second_asset_amount,
             );
 
-            if (first_asset_reserve - first_asset_amount == 0.saturated_into::<BalanceOf<T>>())
-                || (second_asset_reserve - second_asset_amount == 0.saturated_into::<BalanceOf<T>>()) {
-                <Pools<T>>::remove((first_asset_id, second_asset_id));
-                <Pools<T>>::remove((second_asset_id, first_asset_id));
+            if (first_asset_reserve - first_asset_amount == 0.saturated_into::<Balance>())
+                || (second_asset_reserve - second_asset_amount == 0.saturated_into::<Balance>()) {
+                Pools::remove((first_asset_id, second_asset_id));
+                Pools::remove((second_asset_id, first_asset_id));
             }
 
-            T::Currency::burn_and_settle(liquidity_asset_id, &sender, liquidity_asset_amount)?;
+            T::Currency::burn_and_settle(liquidity_asset_id.into(), &sender, liquidity_asset_amount.into())?;
 
             Self::deposit_event(RawEvent::LiquidityBurned(sender, first_asset_id, first_asset_amount, second_asset_id, second_asset_amount,liquidity_asset_id, second_asset_amount));
 
@@ -520,10 +512,10 @@ decl_module! {
 
 impl<T: Trait> Module<T> {
     pub fn calculate_sell_price(
-        input_reserve: BalanceOf<T>,
-        output_reserve: BalanceOf<T>,
-        sell_amount: BalanceOf<T>,
-    ) -> Result<BalanceOf<T>, DispatchError> {
+        input_reserve: Balance,
+        output_reserve: Balance,
+        sell_amount: Balance,
+    ) -> Result<Balance, DispatchError> {
         let input_reserve_saturated: U256 = input_reserve.saturated_into::<u128>().into();
         let output_reserve_saturated: U256 = output_reserve.saturated_into::<u128>().into();
         let sell_amount_saturated: U256 = sell_amount.saturated_into::<u128>().into();
@@ -534,16 +526,14 @@ impl<T: Trait> Module<T> {
         let result = numerator
             .checked_div(denominator)
             .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
-        Ok(result
-            .saturated_into::<u128>()
-            .saturated_into::<BalanceOf<T>>())
+        Ok(result.saturated_into::<u128>().saturated_into::<Balance>())
     }
 
     pub fn calculate_buy_price(
-        input_reserve: BalanceOf<T>,
-        output_reserve: BalanceOf<T>,
-        buy_amount: BalanceOf<T>,
-    ) -> BalanceOf<T> {
+        input_reserve: Balance,
+        output_reserve: Balance,
+        buy_amount: Balance,
+    ) -> Balance {
         let input_reserve_saturated: U256 = input_reserve.saturated_into::<u128>().into();
         let output_reserve_saturated: U256 = output_reserve.saturated_into::<u128>().into();
         let buy_amount_saturated: U256 = buy_amount.saturated_into::<u128>().into();
@@ -552,36 +542,31 @@ impl<T: Trait> Module<T> {
         let denominator: U256 = (output_reserve_saturated - buy_amount_saturated) * 997;
         let result: U256 = numerator / denominator + 1;
 
-        result
-            .saturated_into::<u128>()
-            .saturated_into::<BalanceOf<T>>()
+        result.saturated_into::<u128>().saturated_into::<Balance>()
     }
 
-    pub fn get_liquidity_asset(
-        first_asset_id: CurrencyIdOf<T>,
-        second_asset_id: CurrencyIdOf<T>,
-    ) -> CurrencyIdOf<T> {
-        if <LiquidityAssets<T>>::contains_key((first_asset_id, second_asset_id)) {
-            <LiquidityAssets<T>>::get((first_asset_id, second_asset_id))
+    pub fn get_liquidity_asset(first_asset_id: TokenId, second_asset_id: TokenId) -> TokenId {
+        if LiquidityAssets::contains_key((first_asset_id, second_asset_id)) {
+            LiquidityAssets::get((first_asset_id, second_asset_id))
         } else {
-            <LiquidityAssets<T>>::get((second_asset_id, first_asset_id))
+            LiquidityAssets::get((second_asset_id, first_asset_id))
         }
     }
 
     pub fn get_burn_amount(
-        first_asset_id: CurrencyIdOf<T>,
-        second_asset_id: CurrencyIdOf<T>,
-        liquidity_asset_amount: BalanceOf<T>,
-    ) -> (BalanceOf<T>, BalanceOf<T>) {
+        first_asset_id: TokenId,
+        second_asset_id: TokenId,
+        liquidity_asset_amount: Balance,
+    ) -> (Balance, Balance) {
         let liquidity_asset_id = Self::get_liquidity_asset(first_asset_id, second_asset_id);
-        let first_asset_reserve_u256: U256 = <Pools<T>>::get((first_asset_id, second_asset_id))
+        let first_asset_reserve_u256: U256 = Pools::get((first_asset_id, second_asset_id))
             .saturated_into::<u128>()
             .into();
-        let second_asset_reserve_u256: U256 = <Pools<T>>::get((second_asset_id, first_asset_id))
+        let second_asset_reserve_u256: U256 = Pools::get((second_asset_id, first_asset_id))
             .saturated_into::<u128>()
             .into();
         let total_liquidity_assets_u256: U256 =
-            T::Currency::total_issuance(liquidity_asset_id)
+            T::Currency::total_issuance(liquidity_asset_id.into())
                 .saturated_into::<u128>()
                 .into();
         let liquidity_asset_amount_u256: U256 =
@@ -593,10 +578,10 @@ impl<T: Trait> Module<T> {
             second_asset_reserve_u256 * liquidity_asset_amount_u256 / total_liquidity_assets_u256;
         let second_asset_amount = second_asset_amount_u256
             .saturated_into::<u128>()
-            .saturated_into::<BalanceOf<T>>();
+            .saturated_into::<Balance>();
         let first_asset_amount = first_asset_amount_u256
             .saturated_into::<u128>()
-            .saturated_into::<BalanceOf<T>>();
+            .saturated_into::<Balance>();
 
         (first_asset_amount, second_asset_amount)
     }

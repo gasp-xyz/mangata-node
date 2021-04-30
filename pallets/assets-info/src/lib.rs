@@ -12,8 +12,9 @@ use frame_support::{
     traits::{Get, Vec},
 };
 use frame_system::ensure_root;
+use mangata_primitives::TokenId;
 
-use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
+use orml_tokens::MultiTokenCurrencyExtended;
 // use pallet_assets as assets;
 
 #[cfg(test)]
@@ -25,7 +26,7 @@ mod tests;
 /// Configure the pallet by specifying the parameters and types on which it depends.
 pub trait Trait: frame_system::Trait {
     /// Because this pallet emits events, it depends on the runtime's definition of an event.
-    type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+    type Event: From<Event> + Into<<Self as frame_system::Trait>::Event>;
 
     /// The minimum length a name may be.
     type MinLengthName: Get<usize>;
@@ -51,10 +52,6 @@ pub trait Trait: frame_system::Trait {
     type Currency: MultiTokenCurrencyExtended<Self::AccountId>;
 }
 
-type CurrencyIdOf<T> = <<T as Trait>::Currency as MultiTokenCurrency<
-    <T as frame_system::Trait>::AccountId,
->>::CurrencyId;
-
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq)]
 pub struct AssetInfo {
     name: Option<Vec<u8>>,
@@ -66,14 +63,14 @@ pub struct AssetInfo {
 decl_storage! {
     trait Store for Module<T: Trait> as AssetsInfoModule {
         /// TWOX-NOTE: `AssetId` is trusted, so this is safe.
-        AssetsInfo get(fn get_info): map hasher(twox_64_concat) CurrencyIdOf<T> => AssetInfo;
+        AssetsInfo get(fn get_info): map hasher(twox_64_concat) TokenId => AssetInfo;
     }
     add_extra_genesis {
         #[allow(clippy::type_complexity)]
-        config(bridged_assets_info): Vec<(Option<Vec<u8>>, Option<Vec<u8>>, Option<Vec<u8>>, Option<u32>, CurrencyIdOf<T>)>;
-        build(|config: &GenesisConfig<T>|{
+        config(bridged_assets_info): Vec<(Option<Vec<u8>>, Option<Vec<u8>>, Option<Vec<u8>>, Option<u32>, TokenId)>;
+        build(|config: &GenesisConfig|{
             for (name, token, description, decimals, asset_id) in config.bridged_assets_info.iter(){
-                <AssetsInfo<T>>::insert(
+                AssetsInfo::insert(
                     asset_id,
                     AssetInfo {
                         name: name.clone(),
@@ -91,12 +88,9 @@ decl_storage! {
 // Pallets use events to inform users when important changes are made.
 // https://substrate.dev/docs/en/knowledgebase/runtime/events
 decl_event!(
-    pub enum Event<T>
-    where
-        AssetId = CurrencyIdOf<T>,
-    {
+    pub enum Event {
         /// Asset info stored. [assetId, info]
-        InfoStored(AssetId, AssetInfo),
+        InfoStored(TokenId, AssetInfo),
     }
 );
 
@@ -130,12 +124,12 @@ decl_module! {
         fn deposit_event() = default;
 
         #[weight = 10_000 + T::DbWeight::get().writes(1) + T::DbWeight::get().reads(1)]
-        pub fn set_info(origin, asset: CurrencyIdOf<T>, name: Option<Vec<u8>>, symbol: Option<Vec<u8>>, description: Option<Vec<u8>>, decimals: Option<u32>) -> dispatch::DispatchResult {
+        pub fn set_info(origin, asset: TokenId, name: Option<Vec<u8>>, symbol: Option<Vec<u8>>, description: Option<Vec<u8>>, decimals: Option<u32>) -> dispatch::DispatchResult {
             ensure_root(origin)?;
 
             let info = Self::set_asset_info(asset, name, symbol, description, decimals)?;
 
-            Self::deposit_event(RawEvent::InfoStored(asset, info));
+            Self::deposit_event(Event::InfoStored(asset, info));
 
             Ok(())
         }
@@ -144,7 +138,7 @@ decl_module! {
 
 impl<T: Trait> Module<T> {
     pub fn set_asset_info(
-        asset: CurrencyIdOf<T>,
+        asset: TokenId,
         name: Option<Vec<u8>>,
         symbol: Option<Vec<u8>>,
         description: Option<Vec<u8>>,
@@ -153,7 +147,7 @@ impl<T: Trait> Module<T> {
         // is this the correct approach, could be a separate fn at least ?
         #[cfg(not(test))]
         {
-            ensure!(T::Currency::exists(asset), Error::<T>::AssetNotExist);
+            ensure!(T::Currency::exists(asset.into()), Error::<T>::AssetNotExist);
         }
 
         let current: AssetInfo = Self::get_info(asset);
@@ -207,7 +201,7 @@ impl<T: Trait> Module<T> {
             );
         }
 
-        <AssetsInfo<T>>::insert(asset, info.clone());
+        AssetsInfo::insert(asset, info.clone());
 
         Ok(info)
     }

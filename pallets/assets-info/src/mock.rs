@@ -3,6 +3,7 @@
 use crate::{Module, Trait};
 use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
 use frame_system as system;
+use mangata_primitives::{Amount, Balance, TokenId};
 use orml_tokens as assets;
 use orml_tokens::MultiTokenCurrencyAdapter;
 use sp_core::H256;
@@ -64,9 +65,9 @@ impl system::Trait for Test {
 
 impl assets::Trait for Test {
     type Event = ();
-    type Balance = u128;
-    type Amount = i128;
-    type CurrencyId = u32;
+    type Balance = Balance;
+    type Amount = Amount;
+    type CurrencyId = TokenId;
     type OnReceived = ();
     type WeightInfo = ();
 }

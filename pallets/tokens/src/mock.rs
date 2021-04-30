@@ -77,6 +77,7 @@ pub type System = system::Module<Runtime>;
 
 type CurrencyId = u32;
 pub type Balance = u128;
+pub type Amount = i128;
 
 thread_local! {
 	pub static ACCUMULATED_RECEIVED: RefCell<HashMap<(AccountId, CurrencyId), Balance>> = RefCell::new(HashMap::new());
@@ -297,7 +298,7 @@ impl pallet_elections_phragmen::Trait for Runtime {
 impl Trait for Runtime {
 	type Event = TestEvent;
 	type Balance = Balance;
-	type Amount = i128;
+	type Amount = Amount;
 	type CurrencyId = CurrencyId;
 	type OnReceived = MockOnReceived;
 	type WeightInfo = ();

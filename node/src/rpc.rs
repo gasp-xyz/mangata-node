@@ -7,7 +7,7 @@
 
 use std::sync::Arc;
 
-use mangata_runtime::{opaque::Block, AccountId, TokenId, Balance, Index};
+use mangata_runtime::{opaque::Block, AccountId, Balance, Index, TokenId};
 pub use sc_rpc_api::DenyUnsafe;
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;

@@ -47,9 +47,9 @@ pub use pallet_timestamp::Call as TimestampCall;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
+pub use mangata_primitives::{Amount, Balance, TokenId};
 pub use orml_tokens;
 pub use pallet_assets_info;
-pub use mangata_primitives::{TokenId, Balance, Amount};
 
 use pallet_session::historical as pallet_session_historical;
 pub use pallet_staking::StakerStatus;

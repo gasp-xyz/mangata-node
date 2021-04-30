@@ -11,6 +11,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 hex = { package = "rustc-hex", version = "2.1.0", default-features = false }
 hex-literal = { version = "0.3.1", default-features = false }
 rlp = { version = "0.4", default-features = false }
+mangata-primitives = { path = '../../primitives/mangata', default-features = false, version = '0.1.0' }
 
 [dependencies.codec]
 default-features = false
@@ -75,11 +76,6 @@ default-features = false
 path = "../../pallets/tokens"
 version = "0.3.1"
 
-[dependencies.orml-traits]
-default-features = false
-version = "0.3.1"
-
-
 
 [features]
 default = ["std"]
@@ -98,5 +94,4 @@ std = [
     "artemis-asset/std",
     "ethabi/std",
     "rlp/std",
-    "orml-traits/std"
 ]

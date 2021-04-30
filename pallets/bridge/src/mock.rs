@@ -11,6 +11,7 @@ use sp_runtime::{
     MultiSignature, Perbill,
 };
 use sp_std::convert::From;
+use mangata_primitives::{TokenId, Balance, Amount};
 
 impl_outer_dispatch! {
     pub enum Call for Test where origin: Origin {
@@ -106,9 +107,9 @@ impl artemis_asset::Trait for Test {
 
 impl orml_tokens::Trait for Test {
     type Event = Event;
-    type Balance = u128;
-    type Amount = i128;
-    type CurrencyId = u32;
+    type Balance = Balance;
+    type Amount = Amount;
+    type CurrencyId = TokenId;
     type OnReceived = ();
     type WeightInfo = ();
 }

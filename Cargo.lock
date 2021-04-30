@@ -187,8 +187,8 @@ dependencies = [
  "artemis-core",
  "frame-support",
  "frame-system",
+ "mangata-primitives",
  "orml-tokens",
- "orml-traits",
  "parity-scale-codec",
  "rustc-hex",
  "serde",
@@ -222,8 +222,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
+ "mangata-primitives",
  "orml-tokens",
- "orml-traits",
  "parity-scale-codec",
  "rlp",
  "rustc-hex",
@@ -246,8 +246,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
+ "mangata-primitives",
  "orml-tokens",
- "orml-traits",
  "parity-scale-codec",
  "rlp",
  "rustc-hex",
@@ -3376,6 +3376,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "mangata-primitives"
+version = "0.1.0"
+
+[[package]]
 name = "mangata-runtime"
 version = "2.0.0"
 dependencies = [
@@ -3389,6 +3393,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "hex-literal",
+ "mangata-primitives",
  "orml-tokens",
  "pallet-assets-info",
  "pallet-authorship",
@@ -3866,6 +3871,7 @@ dependencies = [
  "clear_on_drop",
  "frame-support",
  "frame-system",
+ "mangata-primitives",
  "orml-traits",
  "pallet-elections-phragmen",
  "pallet-treasury",
@@ -3908,8 +3914,8 @@ version = "2.0.0"
 dependencies = [
  "frame-support",
  "frame-system",
+ "mangata-primitives",
  "orml-tokens",
- "orml-traits",
  "parity-scale-codec",
  "serde",
  "sp-core",
@@ -4003,8 +4009,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
+ "mangata-primitives",
  "orml-tokens",
- "orml-traits",
  "pallet-verifier",
  "parity-scale-codec",
  "serde",
@@ -4322,8 +4328,8 @@ version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
+ "mangata-primitives",
  "orml-tokens",
- "orml-traits",
  "parity-scale-codec",
  "sp-core",
  "sp-io",

@@ -14,7 +14,7 @@ pub use xyk_runtime_api::XykApi as XykRuntimeApi;
 use xyk_runtime_api::{RpcAmountsResult, RpcResult};
 
 #[rpc]
-pub trait XykApi<BlockHash, Balance, AssetId, ResponseTypePrice, ResponseTypeAmounts> {
+pub trait XykApi<BlockHash, Balance, TokenId, ResponseTypePrice, ResponseTypeAmounts> {
     #[rpc(name = "xyk_calculate_sell_price")]
     fn calculate_sell_price(
         &self,
@@ -36,8 +36,8 @@ pub trait XykApi<BlockHash, Balance, AssetId, ResponseTypePrice, ResponseTypeAmo
     #[rpc(name = "xyk_get_burn_amount")]
     fn get_burn_amount(
         &self,
-        first_asset_id: AssetId,
-        second_asset_id: AssetId,
+        first_asset_id: TokenId,
+        second_asset_id: TokenId,
         liquidity_asset_amount: Balance,
         at: Option<BlockHash>,
     ) -> Result<ResponseTypeAmounts>;
@@ -57,17 +57,17 @@ impl<C, P> Xyk<C, P> {
     }
 }
 
-impl<C, Block, Balance, AssetId>
-    XykApi<<Block as BlockT>::Hash, Balance, AssetId, RpcResult<Balance>, RpcAmountsResult<Balance>>
+impl<C, Block, Balance, TokenId>
+    XykApi<<Block as BlockT>::Hash, Balance, TokenId, RpcResult<Balance>, RpcAmountsResult<Balance>>
     for Xyk<C, Block>
 where
     Block: BlockT,
     C: Send + Sync + 'static,
     C: ProvideRuntimeApi<Block>,
     C: HeaderBackend<Block>,
-    C::Api: XykRuntimeApi<Block, Balance, AssetId>,
+    C::Api: XykRuntimeApi<Block, Balance, TokenId>,
     Balance: Codec + MaybeDisplay + MaybeFromStr,
-    AssetId: Codec + MaybeDisplay + MaybeFromStr,
+    TokenId: Codec + MaybeDisplay + MaybeFromStr,
 {
     fn calculate_sell_price(
         &self,
@@ -113,8 +113,8 @@ where
 
     fn get_burn_amount(
         &self,
-        first_asset_id: AssetId,
-        second_asset_id: AssetId,
+        first_asset_id: TokenId,
+        second_asset_id: TokenId,
         liquidity_asset_amount: Balance,
         at: Option<<Block as BlockT>::Hash>,
     ) -> Result<RpcAmountsResult<Balance>> {

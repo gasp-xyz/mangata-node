@@ -1,0 +1,12 @@
+[package]
+name = "mangata-primitives"
+version = "0.1.0"
+authors = ['Mangata team']
+edition = "2018"
+
+[dependencies]
+
+[features]
+default = ["std"]
+std = [
+]

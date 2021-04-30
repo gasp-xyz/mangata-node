@@ -34,11 +34,11 @@
 
 use frame_support::{decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult};
 use frame_system as system;
-use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
+use orml_tokens::{MultiTokenCurrencyExtended};
 use sp_core::{RuntimeDebug, U256};
 use sp_std::prelude::*;
-
 use codec::{Decode, Encode};
+use mangata_primitives::{TokenId, Balance};
 
 use artemis_core::BridgedAssetId;
 
@@ -54,27 +54,21 @@ pub trait Trait: frame_system::Trait {
     type Currency: MultiTokenCurrencyExtended<Self::AccountId>;
 }
 
-type BalanceOf<T> =
-    <<T as Trait>::Currency as MultiTokenCurrency<<T as frame_system::Trait>::AccountId>>::Balance;
-
-type CurrencyIdOf<T> = <<T as Trait>::Currency as MultiTokenCurrency<
-    <T as frame_system::Trait>::AccountId,
->>::CurrencyId;
 
 decl_storage! {
     trait Store for Module<T: Trait> as Asset {
-        pub NativeAsset get(fn get_native_asset_id): map hasher(blake2_128_concat) BridgedAssetId => CurrencyIdOf<T>;
-        pub BridgedAsset get(fn get_bridged_asset_id): map hasher(blake2_128_concat) CurrencyIdOf<T> => BridgedAssetId;
+        pub NativeAsset get(fn get_native_asset_id): map hasher(blake2_128_concat) BridgedAssetId => TokenId;
+        pub BridgedAsset get(fn get_bridged_asset_id): map hasher(blake2_128_concat) TokenId => BridgedAssetId;
         //pub TotalIssuance: map        hasher(blake2_128_concat) BridgedAssetId => U256;
         //pub Account:       double_map hasher(blake2_128_concat) BridgedAssetId, hasher(blake2_128_concat) T::AccountId => AssetAccountData;
     }
     add_extra_genesis {
         #[allow(clippy::type_complexity)]
-        config(bridged_assets_links): Vec<(CurrencyIdOf<T>, BridgedAssetId, BalanceOf<T>, T::AccountId)>;
+        config(bridged_assets_links): Vec<(TokenId, BridgedAssetId, Balance, T::AccountId)>;
         build(|config: &GenesisConfig<T>|
             {
                 for (native_asset_id, bridged_asset_id, initial_supply, initial_owner) in config.bridged_assets_links.iter(){
-                    let initialized_asset_id = T::Currency::create(&initial_owner, *initial_supply);
+                    let initialized_asset_id: TokenId = T::Currency::create(&initial_owner, {*initial_supply}.into()).into();
                     assert!(initialized_asset_id == *native_asset_id, "Assets not initialized in the sequence of the asset ids provided");
                     Module::<T>::link_assets(native_asset_id.to_owned(), bridged_asset_id.to_owned());
 
@@ -132,13 +126,13 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
-    pub fn link_assets(native_asset_id: CurrencyIdOf<T>, bridged_asset_id: BridgedAssetId) {
-        <NativeAsset<T>>::insert(bridged_asset_id, native_asset_id);
-        <BridgedAsset<T>>::insert(native_asset_id, bridged_asset_id);
+    pub fn link_assets(native_asset_id: TokenId, bridged_asset_id: BridgedAssetId) {
+        NativeAsset::insert(bridged_asset_id, native_asset_id);
+        BridgedAsset::insert(native_asset_id, bridged_asset_id);
     }
 
     pub fn exists(bridged_asset_id: BridgedAssetId) -> bool {
-        <NativeAsset<T>>::contains_key(bridged_asset_id)
+        NativeAsset::contains_key(bridged_asset_id)
     }
 
     /*

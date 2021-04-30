@@ -5,14 +5,15 @@ use frame_support::Parameter;
 use frame_support::traits::{Imbalance, WithdrawReasons, ExistenceRequirement, SignedImbalance, Get, BalanceStatus};
 use sp_std::fmt::Debug;
 use sp_std::result;
+use mangata_primitives::{TokenId, Balance as BalancePrimitive};
 
 /// Abstraction over a fungible assets system.
 pub trait MultiTokenCurrency<AccountId>{
 	/// The balance of an account.
 	type Balance: AtLeast32BitUnsigned + FullCodec + Copy + MaybeSerializeDeserialize + Debug +
-		Default;
+		Default + From<BalancePrimitive> + Into<BalancePrimitive>;
 
-	type CurrencyId: Parameter + Member + Copy + MaybeSerializeDeserialize + Ord + Default + AtLeast32BitUnsigned + FullCodec;
+	type CurrencyId: Parameter + Member + Copy + MaybeSerializeDeserialize + Ord + Default + AtLeast32BitUnsigned + FullCodec + From<TokenId> + Into<TokenId>;
 
 	/// The opaque token type for an imbalance. This is returned by unbalanced operations
 	/// and must be dealt with. It may be dropped but cannot be cloned.

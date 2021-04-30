@@ -12,6 +12,7 @@ use sp_runtime::{
     MultiSignature, Perbill,
 };
 use sp_std::convert::From;
+use mangata_primitives::{TokenId, Balance, Amount};
 
 use artemis_asset as asset;
 
@@ -76,9 +77,9 @@ impl system::Trait for MockRuntime {
 
 impl orml_tokens::Trait for MockRuntime {
     type Event = MockEvent;
-    type Balance = u128;
-    type Amount = i128;
-    type CurrencyId = u32;
+    type Balance = Balance;
+    type Amount = Amount;
+    type CurrencyId = TokenId;
     type OnReceived = ();
     type WeightInfo = ();
 }

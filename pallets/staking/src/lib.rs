@@ -2304,7 +2304,7 @@ impl<T: Trait> Module<T> {
 				// Insert the staked liquidity token amount and its valuation as Valuation against validator's stash
 				let liquidity_token_amount = Self::bonded(validator).and_then(Self::ledger).map(|l| l.active).unwrap_or_default();
 				let liquidity_token_id = Self::get_stash_liquidity_token(validator);
-				let mng_valuation = T::Valuations::valuate_liquidity_token(liquidity_token_id, liquidity_token_amount);
+				let mng_valuation = T::Valuations::valuate_liquidity_token(liquidity_token_id.into(), liquidity_token_amount.into());
 				<StashStakedValuation<T>>::insert(&validator, Valuation{
 						liquidity_token_amount: liquidity_token_amount,
 						mng_valuation: mng_valuation
@@ -2904,8 +2904,8 @@ impl<T: Trait> Module<T> {
 
 				let Exposure{total: exposure_total, own: exposure_own, others: exposure_others} =  exposure;
 
-				let mut exposure_raw_total: Balance = Zero::zero();
-				let mut exposure_raw_others: Vec<IndividualExposure<AccountId, Balance>> = Vec::<IndividualExposure<AccountId, Balance>>::new();
+				let mut exposure_raw_total: BalanceOf<T> = Zero::zero();
+				let mut exposure_raw_others: Vec<IndividualExposure<T::AccountId, BalanceOf<T>>> = Vec::<IndividualExposure<T::AccountId, BalanceOf<T>>>::new();
 				for individual_exposure in exposure_others.iter(){
 					let IndividualExposure{ who: individual_exposure_who, value: individual_exposure_value } = individual_exposure;
 					let who_staked_valuation = Self::get_stash_staked_valuation(individual_exposure_who);

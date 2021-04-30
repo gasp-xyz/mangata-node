@@ -3,6 +3,7 @@ use crate::{Module, Trait};
 use frame_support::{
     impl_outer_dispatch, impl_outer_event, impl_outer_origin, parameter_types, weights::Weight,
 };
+use mangata_primitives::{Amount, Balance, TokenId};
 use orml_tokens::MultiTokenCurrencyAdapter;
 use sp_core::H256;
 use sp_runtime::{
@@ -11,7 +12,6 @@ use sp_runtime::{
     MultiSignature, Perbill,
 };
 use sp_std::convert::From;
-use mangata_primitives::{TokenId, Balance, Amount};
 
 impl_outer_dispatch! {
     pub enum Call for Test where origin: Origin {

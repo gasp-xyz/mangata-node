@@ -32,13 +32,13 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use codec::{Decode, Encode};
 use frame_support::{decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult};
 use frame_system as system;
-use orml_tokens::{MultiTokenCurrencyExtended};
+use mangata_primitives::{Balance, TokenId};
+use orml_tokens::MultiTokenCurrencyExtended;
 use sp_core::{RuntimeDebug, U256};
 use sp_std::prelude::*;
-use codec::{Decode, Encode};
-use mangata_primitives::{TokenId, Balance};
 
 use artemis_core::BridgedAssetId;
 
@@ -53,7 +53,6 @@ pub trait Trait: frame_system::Trait {
     type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
     type Currency: MultiTokenCurrencyExtended<Self::AccountId>;
 }
-
 
 decl_storage! {
     trait Store for Module<T: Trait> as Asset {

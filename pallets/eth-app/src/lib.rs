@@ -20,18 +20,16 @@
 //!
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::{
-    decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult
-};
+use frame_support::{decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult};
 use frame_system::{self as system, ensure_signed};
 use sp_core::{H160, U256};
 use sp_std::prelude::*;
 
 use artemis_asset as asset;
 use artemis_core::{Application, BridgedAssetId};
-use orml_tokens::{MultiTokenCurrencyExtended};
+use mangata_primitives::{Balance, TokenId};
+use orml_tokens::MultiTokenCurrencyExtended;
 use sp_runtime::traits::SaturatedConversion;
-use mangata_primitives::{TokenId, Balance};
 
 mod payload;
 use payload::Payload;
@@ -45,7 +43,6 @@ mod tests;
 pub trait Trait: system::Trait + asset::Trait {
     type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 }
-
 
 decl_storage! {
     trait Store for Module<T: Trait> as Erc20Module {
@@ -116,7 +113,8 @@ impl<T: Trait> Module<T> {
             let id: TokenId = T::Currency::create(
                 &payload.recipient_addr,
                 payload.amount.low_u128().saturated_into::<Balance>().into(),
-            ).into();
+            )
+            .into();
             <asset::Module<T>>::link_assets(id, asset_id);
         } else {
             let id = <asset::Module<T>>::get_native_asset_id(asset_id);

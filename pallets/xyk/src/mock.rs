@@ -11,8 +11,8 @@ use sp_runtime::{
 
 use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
 use frame_system as system;
+use mangata_primitives::{Amount, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
-use mangata_primitives::{TokenId, Balance, Amount};
 
 impl_outer_origin! {
     pub enum Origin for Test {}

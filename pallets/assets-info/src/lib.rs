@@ -14,7 +14,7 @@ use frame_support::{
 use frame_system::ensure_root;
 use mangata_primitives::TokenId;
 
-use orml_tokens::{MultiTokenCurrencyExtended};
+use orml_tokens::MultiTokenCurrencyExtended;
 // use pallet_assets as assets;
 
 #[cfg(test)]
@@ -88,8 +88,7 @@ decl_storage! {
 // Pallets use events to inform users when important changes are made.
 // https://substrate.dev/docs/en/knowledgebase/runtime/events
 decl_event!(
-    pub enum Event
-    {
+    pub enum Event {
         /// Asset info stored. [assetId, info]
         InfoStored(TokenId, AssetInfo),
     }

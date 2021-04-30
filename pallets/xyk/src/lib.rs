@@ -13,9 +13,9 @@ use sp_core::U256;
 // TODO documentation!
 use frame_support::sp_runtime::traits::AccountIdConversion;
 use frame_support::traits::{ExistenceRequirement, WithdrawReasons};
-use sp_runtime::traits::{SaturatedConversion, Zero};
+use mangata_primitives::{Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
-use mangata_primitives::{TokenId, Balance};
+use sp_runtime::traits::{SaturatedConversion, Zero};
 
 #[cfg(test)]
 mod mock;
@@ -51,7 +51,7 @@ decl_error! {
 decl_event!(
     pub enum Event<T>
     where
-        AccountId = <T as frame_system::Trait>::AccountId
+        AccountId = <T as frame_system::Trait>::AccountId,
     {
         //TODO add trading events
         PoolCreated(AccountId, TokenId, Balance, TokenId, Balance),
@@ -519,9 +519,7 @@ impl<T: Trait> Module<T> {
         let result = numerator
             .checked_div(denominator)
             .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
-        Ok(result
-            .saturated_into::<u128>()
-            .saturated_into::<Balance>())
+        Ok(result.saturated_into::<u128>().saturated_into::<Balance>())
     }
 
     pub fn calculate_buy_price(
@@ -537,15 +535,10 @@ impl<T: Trait> Module<T> {
         let denominator: U256 = (output_reserve_saturated - buy_amount_saturated) * 997;
         let result: U256 = numerator / denominator + 1;
 
-        result
-            .saturated_into::<u128>()
-            .saturated_into::<Balance>()
+        result.saturated_into::<u128>().saturated_into::<Balance>()
     }
 
-    pub fn get_liquidity_asset(
-        first_asset_id: TokenId,
-        second_asset_id: TokenId,
-    ) -> TokenId {
+    pub fn get_liquidity_asset(first_asset_id: TokenId, second_asset_id: TokenId) -> TokenId {
         if LiquidityAssets::contains_key((first_asset_id, second_asset_id)) {
             LiquidityAssets::get((first_asset_id, second_asset_id))
         } else {

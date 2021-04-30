@@ -52,10 +52,6 @@ pub trait Trait: frame_system::Trait {
     type Currency: MultiTokenCurrencyExtended<Self::AccountId>;
 }
 
-// type CurrencyIdOf<T> = <<T as Trait>::Currency as MultiTokenCurrency<
-//     <T as frame_system::Trait>::AccountId,
-// >>::CurrencyId;
-
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq)]
 pub struct AssetInfo {
     name: Option<Vec<u8>>,

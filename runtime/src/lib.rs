@@ -277,7 +277,7 @@ parameter_types! {
 
 impl pallet_staking::Trait for Runtime {
     type NativeCurrencyId = NativeCurrencyId;
-    type TokenId = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+    type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
     type Valuations = Xyk;
     type UnixTime = Timestamp;
     type CurrencyToVote = ();

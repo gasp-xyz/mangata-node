@@ -320,8 +320,8 @@ use frame_support::{
     ensure,
     storage::IterableStorageMap,
     traits::{
-        Currency, EnsureOrigin, EstimateNextNewSession, Get, Imbalance, LockIdentifier,
-        LockableCurrency, OnUnbalanced, UnixTime, WithdrawReasons,
+        EnsureOrigin, EstimateNextNewSession, Get, Imbalance, LockIdentifier,
+        OnUnbalanced, UnixTime, WithdrawReasons,
     },
     weights::{
         constants::{WEIGHT_PER_MICROS, WEIGHT_PER_NANOS},
@@ -364,7 +364,9 @@ use sp_std::{
 };
 use orml_tokens::{MultiTokenCurrency, MultiTokenLockableCurrency};
 use pallet_xyk::Valuate;
+use mangata_primitives::{Balance, TokenId};
 
+const DUMMY_VALUE: u8 = 0u8;
 const STAKING_ID: LockIdentifier = *b"staking ";
 pub const MAX_UNLOCKING_CHUNKS: usize = 32;
 pub const MAX_NOMINATIONS: usize = <CompactAssignments as VotingLimit>::LIMIT;
@@ -415,13 +417,6 @@ pub type ChainAccuracy = Perbill;
 
 /// Accuracy used for off-chain election. This better be small.
 pub type OffchainAccuracy = PerU16;
-
-/// The balance type of this module.
-pub type BalanceOf<T> =
-	<<T as Trait>::Tokens as MultiTokenCurrency<<T as frame_system::Trait>::AccountId>>::Balance;
-
-pub type TokenId<T> =
-	<<T as Trait>::Tokens as MultiTokenCurrency<<T as frame_system::Trait>::AccountId>>::CurrencyId;
 
 type PositiveImbalanceOf<T> =
 	<<T as Trait>::Tokens as MultiTokenCurrency<<T as frame_system::Trait>::AccountId>>::PositiveImbalance;
@@ -782,7 +777,7 @@ impl<T: Trait> SessionInterface<<T as frame_system::Trait>::AccountId> for T
 where
     T: pallet_session::Trait<ValidatorId = <T as frame_system::Trait>::AccountId>,
     T: pallet_session::historical::Trait<
-        FullIdentification = Exposure<<T as frame_system::Trait>::AccountId, BalanceOf<T>>,
+        FullIdentification = Exposure<<T as frame_system::Trait>::AccountId, Balance>,
         FullIdentificationOf = ExposureOf<T>,
     >,
     T::SessionHandler: pallet_session::SessionHandler<<T as frame_system::Trait>::AccountId>,
@@ -807,7 +802,7 @@ where
 
 /// Records the amount of the liquidity token staked and its valutaion in terms MNG of the user's stash
 /// at the time of the snapshot
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
+#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, Default)]
 pub struct Valuation <Balance> {
 	/// Value of the liquidity token staked
 	pub liquidity_token_amount: Balance,
@@ -845,10 +840,10 @@ pub trait WeightInfo {
 
 pub trait Trait: frame_system::Trait + SendTransactionTypes<Call<Self>> {
 
-	type NativeCurrencyId: Get<TokenId<Self>>;
+	type NativeCurrencyId: Get<TokenId>;
 
 	/// The pallet used for tokens
-	type Tokens: MultiTokenLockableCurrency<Self::AccountId>;
+	type Tokens: MultiTokenLockableCurrency<Self::AccountId, Moment=Self::BlockNumber>;
 
 	/// The pallet used for Valuations
 	type Valuations: Valuate;
@@ -864,7 +859,7 @@ pub trait Trait: frame_system::Trait + SendTransactionTypes<Call<Self>> {
 	/// [`sp_npos_elections`] crate which accepts u64 numbers and does operations in 128.
 	/// Consequently, the backward convert is used convert the u128s from sp-elections back to a
 	/// [`BalanceOf`].
-	type CurrencyToVote: Convert<BalanceOf<Self>, VoteWeight> + Convert<u128, BalanceOf<Self>>;
+	type CurrencyToVote: Convert<Balance, VoteWeight> + Convert<u128, Balance>;
 
 	/// Tokens have been minted and are unused for validator-reward.
 	/// See [Era payout](./index.html#era-payout).
@@ -1009,7 +1004,7 @@ decl_storage! {
 		/// Map from all (unlocked) "controller" accounts to the info regarding the staking.
 		pub Ledger get(fn ledger):
 			map hasher(blake2_128_concat) T::AccountId
-			=> Option<StakingLedger<T::AccountId, BalanceOf<T>>>;
+			=> Option<StakingLedger<T::AccountId, Balance>>;
 
 		/// Where the reward payment should be made. Keyed by stash.
 		pub Payee get(fn payee): map hasher(twox_64_concat) T::AccountId => RewardDestination<T::AccountId>;
@@ -1046,7 +1041,7 @@ decl_storage! {
 		/// If stakers hasn't been set or has been removed then empty exposure is returned.
 		pub ErasStakers get(fn eras_stakers):
 			double_map hasher(twox_64_concat) EraIndex, hasher(twox_64_concat) T::AccountId
-			=> Exposure<T::AccountId, BalanceOf<T>>;
+			=> Exposure<T::AccountId, Balance>;
 
 		/// Clipped Exposure of validator at era.
 		///
@@ -1061,17 +1056,17 @@ decl_storage! {
 		/// If stakers hasn't been set or has been removed then empty exposure is returned.
 		pub ErasStakersClipped get(fn eras_stakers_clipped):
 			double_map hasher(twox_64_concat) EraIndex, hasher(twox_64_concat) T::AccountId
-			=> Exposure<T::AccountId, BalanceOf<T>>;
+			=> Exposure<T::AccountId, Balance>;
 
 		/// Stores the exposures in terms of liquidity tokens 
 		pub ErasStakersRaw get(fn eras_stakers_raw):
 			double_map hasher(twox_64_concat) EraIndex, hasher(twox_64_concat) T::AccountId
-			=> Exposure<T::AccountId, BalanceOf<T>>;
+			=> Exposure<T::AccountId, Balance>;
 
 		/// Stores the clipped exposures in terms of liquidity tokens 
 		pub ErasStakersClippedRaw get(fn eras_stakers_clipped_raw):
 			double_map hasher(twox_64_concat) EraIndex, hasher(twox_64_concat) T::AccountId
-			=> Exposure<T::AccountId, BalanceOf<T>>;
+			=> Exposure<T::AccountId, Balance>;
 
 		/// Similar to `ErasStakers`, this holds the preferences of validators.
 		///
@@ -1087,7 +1082,7 @@ decl_storage! {
 		///
 		/// Eras that haven't finished yet or has been removed doesn't have reward.
 		pub ErasValidatorReward get(fn eras_validator_reward):
-			map hasher(twox_64_concat) EraIndex => Option<BalanceOf<T>>;
+			map hasher(twox_64_concat) EraIndex => Option<Balance>;
 
 		/// Rewards for the last `HISTORY_DEPTH` eras.
 		/// If reward hasn't been set or has been removed then 0 reward is returned.
@@ -1097,7 +1092,7 @@ decl_storage! {
 		/// The total amount staked for the last `HISTORY_DEPTH` eras.
 		/// If total hasn't been set or has been removed then 0 stake is returned.
 		pub ErasTotalStake get(fn eras_total_stake):
-			map hasher(twox_64_concat) EraIndex => BalanceOf<T>;
+			map hasher(twox_64_concat) EraIndex => Balance;
 
 		/// Mode of era forcing.
 		pub ForceEra get(fn force_era) config(): Forcing;
@@ -1109,11 +1104,11 @@ decl_storage! {
 
 		/// The amount of currency given to reporters of a slash event which was
 		/// canceled by extraordinary circumstances (e.g. governance).
-		pub CanceledSlashPayout get(fn canceled_payout) config(): BalanceOf<T>;
+		pub CanceledSlashPayout get(fn canceled_payout) config(): Balance;
 
 		/// All unapplied slashes that are queued for later.
 		pub UnappliedSlashes:
-			map hasher(twox_64_concat) EraIndex => Vec<UnappliedSlash<T::AccountId, BalanceOf<T>>>;
+			map hasher(twox_64_concat) EraIndex => Vec<UnappliedSlash<T::AccountId, Balance>>;
 
 		/// A mapping from still-bonded eras to the first session index of that era.
 		///
@@ -1125,12 +1120,12 @@ decl_storage! {
 		/// and slash value of the era.
 		ValidatorSlashInEra:
 			double_map hasher(twox_64_concat) EraIndex, hasher(twox_64_concat) T::AccountId
-			=> Option<(Perbill, BalanceOf<T>)>;
+			=> Option<(Perbill, Balance)>;
 
 		/// All slashing events on nominators, mapped by era to the highest slash value of the era.
 		NominatorSlashInEra:
 			double_map hasher(twox_64_concat) EraIndex, hasher(twox_64_concat) T::AccountId
-			=> Option<BalanceOf<T>>;
+			=> Option<Balance>;
 
 		/// Slashing spans for stash accounts.
 		SlashingSpans get(fn slashing_spans): map hasher(twox_64_concat) T::AccountId => Option<slashing::SlashingSpans>;
@@ -1139,7 +1134,7 @@ decl_storage! {
 		/// as well as how much reward has been paid out.
 		SpanSlash:
 			map hasher(twox_64_concat) (T::AccountId, slashing::SpanIndex)
-			=> slashing::SpanRecord<BalanceOf<T>>;
+			=> slashing::SpanRecord<Balance>;
 
 		/// The earliest era for which we have a pending, unapplied slash.
 		EarliestUnappliedSlash: Option<EraIndex>;
@@ -1155,7 +1150,7 @@ decl_storage! {
 		/// The next validator set. At the end of an era, if this is available (potentially from the
 		/// result of an offchain worker), it is immediately used. Otherwise, the on-chain election
 		/// is executed.
-		pub QueuedElected get(fn queued_elected): Option<ElectionResult<T::AccountId, BalanceOf<T>>>;
+		pub QueuedElected get(fn queued_elected): Option<ElectionResult<T::AccountId, Balance>>;
 
 		/// The score of the current [`QueuedElected`].
 		pub QueuedScore get(fn queued_score): Option<ElectionScore>;
@@ -1175,18 +1170,18 @@ decl_storage! {
 		StorageVersion build(|_: &GenesisConfig<T>| Releases::V4_0_0): Releases;
 
 		/// The mapping from Stash to the liquidity token in use
-		pub StashLiquidityToken get(fn get_stash_liquidity_token): map hasher(blake2_128_concat) T::AccountId => Option<TokenId<T>>;
+		pub StashLiquidityToken get(fn get_stash_liquidity_token): map hasher(blake2_128_concat) T::AccountId => Option<TokenId>;
 
 		/// The mapping from Stash to its staked Valuation
-		pub StashStakedValuation get(fn get_stash_staked_valuation): map hasher(blake2_128_concat) T::AccountId => Option<Valuation<BalanceOf<T>>>;
+		pub StashStakedValuation get(fn get_stash_staked_valuation): double_map hasher(identity) u8, hasher(blake2_128_concat) T::AccountId => Option<Valuation<Balance>>;
 	}
 	add_extra_genesis {
 		config(stakers):
-			Vec<(T::AccountId, T::AccountId, TokenId<T>, BalanceOf<T>, StakerStatus<T::AccountId>)>;
+			Vec<(T::AccountId, T::AccountId, TokenId, Balance, StakerStatus<T::AccountId>)>;
 		build(|config: &GenesisConfig<T>| {
 			for &(ref stash, ref controller, liquidity_token, balance, ref status) in &config.stakers {
 				assert!(
-					T::Tokens::free_balance(liquidity_token, &stash) >= balance,
+					T::Tokens::free_balance(liquidity_token.into(), &stash).into() >= balance,
 					"Stash does not have enough balance to bond."
 				);
 				let _ = <Module<T>>::bond(
@@ -1216,7 +1211,7 @@ decl_storage! {
 }
 
 decl_event!(
-    pub enum Event<T> where Balance = BalanceOf<T>, <T as frame_system::Trait>::AccountId {
+    pub enum Event<T> where Balance = Balance, <T as frame_system::Trait>::AccountId {
         /// The era payout has been set; the first balance is the validator-payout; the second is
         /// the remainder from the maximum amount of reward.
         /// \[era_index, validator_payout, remainder\]
@@ -1318,6 +1313,8 @@ decl_error! {
 		NominatingToDifferentToken,
 		/// The liquidity token that the user is trying to bond with belong to a pool that does not (atleast directly) involve MNG
 		NotMNGPool,
+		/// Stash's liquidity token not found in storage
+		StashLiquidityTokenNotFound,
 	}
 }
 
@@ -1479,9 +1476,9 @@ decl_module! {
 		#[weight = T::WeightInfo::bond()]
 		pub fn bond(origin,
 			controller: <T::Lookup as StaticLookup>::Source,
-			#[compact] value: BalanceOf<T>,
+			#[compact] value: Balance,
 			payee: RewardDestination<T::AccountId>,
-			liquidity_token: TokenId<T>
+			liquidity_token: TokenId
 		) {
 			let stash = ensure_signed(origin)?;
 
@@ -1496,15 +1493,15 @@ decl_module! {
 			}
 
 			// reject a bond which is considered to be _dust_.
-			if value < T::Tokens::minimum_balance(liquidity_token) {
+			if value < T::Tokens::minimum_balance(liquidity_token.into()).into() {
 				Err(Error::<T>::InsufficientValue)?
 			}
 
 			// Use valuations to check if the liquidity_token is a valid one
-			T::Valuations::get_liquidity_token_mng_pool(liquidity_token)?;
+			T::Valuations::get_liquidity_token_mng_pool(liquidity_token.into())?;
 
 			// Insert the liquidity_token against stash in StashLiquidityToken
-			<StashLiquidityToken<T>>::insert(&stash, Some(liquidity_token));
+			<StashLiquidityToken<T>>::insert(&stash, liquidity_token);
 
 			// You're auto-bonded forever, here. We might improve this by only bonding when
 			// you actually validate/nominate and remove once you unbond __everything__.
@@ -1517,7 +1514,7 @@ decl_module! {
 			let history_depth = Self::history_depth();
 			let last_reward_era = current_era.saturating_sub(history_depth);
 
-			let stash_balance = T::Tokens::free_balance(liquidity_token, &stash);
+			let stash_balance: Balance = T::Tokens::free_balance(liquidity_token.into(), &stash).into();
 			let value = value.min(stash_balance);
 			Self::deposit_event(RawEvent::Bonded(stash.clone(), value));
 			let item = StakingLedger {
@@ -1527,7 +1524,7 @@ decl_module! {
 				unlocking: vec![],
 				claimed_rewards: (last_reward_era..current_era).collect(),
 			};
-			Self::update_ledger(&controller, &item);
+			Self::update_ledger(&controller, &item)?;
 		}
 
 		/// Add some extra amount that have appeared in the stash `free_balance` into the balance up
@@ -1552,22 +1549,22 @@ decl_module! {
 		/// - Write: [Origin Account], Locks, Ledger
 		/// # </weight>
 		#[weight = T::WeightInfo::bond_extra()]
-		fn bond_extra(origin, #[compact] max_additional: BalanceOf<T>) {
+		fn bond_extra(origin, #[compact] max_additional: Balance) {
 			ensure!(Self::era_election_status().is_closed(), Error::<T>::CallNotAllowed);
 			let stash = ensure_signed(origin)?;
 
 			let controller = Self::bonded(&stash).ok_or(Error::<T>::NotStash)?;
 			let mut ledger = Self::ledger(&controller).ok_or(Error::<T>::NotController)?;
 
-			let stash_liquidity_token = Self::get_stash_liquidity_token(stash);
-			let stash_balance = T::Tokens::free_balance(stash_liquidity_token, &stash);
+			let stash_liquidity_token = Self::get_stash_liquidity_token(&stash).ok_or_else(|| Error::<T>::StashLiquidityTokenNotFound)?;
+			let stash_balance: Balance = T::Tokens::free_balance(stash_liquidity_token.into(), &stash).into();
 
-			if let Some(extra) = stash_balance.checked_sub(&ledger.total) {
+			if let Some(extra) = stash_balance.checked_sub(ledger.total) {
 				let extra = extra.min(max_additional);
 				ledger.total += extra;
 				ledger.active += extra;
-				Self::deposit_event(RawEvent::Bonded(stash, extra));
-				Self::update_ledger(&controller, &ledger);
+				Self::deposit_event(RawEvent::Bonded(stash, extra.into()));
+				Self::update_ledger(&controller, &ledger)?;
 			}
 		}
 
@@ -1604,7 +1601,7 @@ decl_module! {
 		/// - Write: Locks, Ledger, BalanceOf Stash,
 		/// </weight>
 		#[weight = T::WeightInfo::unbond()]
-		fn unbond(origin, #[compact] value: BalanceOf<T>) {
+		fn unbond(origin, #[compact] value: Balance) {
 			ensure!(Self::era_election_status().is_closed(), Error::<T>::CallNotAllowed);
 			let controller = ensure_signed(origin)?;
 			let mut ledger = Self::ledger(&controller).ok_or(Error::<T>::NotController)?;
@@ -1614,13 +1611,13 @@ decl_module! {
 			);
 
 			let mut value = value.min(ledger.active);
-			let stash_liquidity_token = Self::get_stash_liquidity_token(ledger.stash);
+			let stash_liquidity_token = Self::get_stash_liquidity_token(&ledger.stash).ok_or_else(|| Error::<T>::StashLiquidityTokenNotFound)?;
 
 			if !value.is_zero() {
 				ledger.active -= value;
 
 				// Avoid there being a dust balance left in the staking system.
-				if ledger.active < T::Tokens::minimum_balance(stash_liquidity_token) {
+				if ledger.active < T::Tokens::minimum_balance(stash_liquidity_token.into()).into() {
 					value += ledger.active;
 					ledger.active = Zero::zero();
 				}
@@ -1628,7 +1625,7 @@ decl_module! {
 				// Note: in case there is no current era it is fine to bond one era more.
 				let era = Self::current_era().unwrap_or(0) + T::BondingDuration::get();
 				ledger.unlocking.push(UnlockChunk { value, era });
-				Self::update_ledger(&controller, &ledger);
+				Self::update_ledger(&controller, &ledger)?;
 				Self::deposit_event(RawEvent::Unbonded(ledger.stash, value));
 			}
 		}
@@ -1674,19 +1671,19 @@ decl_module! {
 				ledger = ledger.consolidate_unlocked(current_era)
 			}
 
-			let stash_liquidity_token = Self::get_stash_liquidity_token(ledger.stash);
+			let stash_liquidity_token = Self::get_stash_liquidity_token(&ledger.stash).ok_or_else(|| Error::<T>::StashLiquidityTokenNotFound)?;
 			let post_info_weight = if ledger.unlocking.is_empty() && ledger.active.is_zero() {
 				// This account must have called `unbond()` with some value that caused the active
 				// portion to fall below existential deposit + will have no more unlocking chunks
 				// left. We can now safely remove all staking-related information.
 				Self::kill_stash(&stash, num_slashing_spans)?;
 				// remove the lock.
-				T::Tokens::remove_lock(stash_liquidity_token, STAKING_ID, &stash);
+				T::Tokens::remove_lock(stash_liquidity_token.into(), STAKING_ID, &stash);
 				// This is worst case scenario, so we use the full weight and return None
 				None
 			} else {
 				// This was the consequence of a partial unbond. just update the ledger and move on.
-				Self::update_ledger(&controller, &ledger);
+				Self::update_ledger(&controller, &ledger)?;
 
 				// This is only an update, so we use less overall weight.
 				Some(T::WeightInfo::withdraw_unbonded_update(num_slashing_spans))
@@ -1762,9 +1759,10 @@ decl_module! {
 				.collect::<result::Result<Vec<T::AccountId>, _>>()?;
 
 			// Ensure all targets have the same liquidity token as the nominator
-			let stash_liquidity_token = Self::get_stash_liquidity_token(stash);
+			let stash_liquidity_token = Self::get_stash_liquidity_token(stash).ok_or_else(|| Error::<T>::StashLiquidityTokenNotFound)?;
 			for nomination in targets.iter(){
-				ensure!(Self::get_stash_liquidity_token(nomination)==stash_liquidity_token, Error::<T>::NominatingToDifferentToken);
+				let nominations_liquidity_token = Self::get_stash_liquidity_token(nomination).ok_or_else(|| Error::<T>::StashLiquidityTokenNotFound)?;
+				ensure!(nominations_liquidity_token==stash_liquidity_token, Error::<T>::NominatingToDifferentToken);
 			}
 
 			let nominations = Nominations {
@@ -1958,13 +1956,13 @@ decl_module! {
 		fn force_unstake(origin, stash: T::AccountId, num_slashing_spans: u32) {
 			ensure_root(origin)?;
 
-			let stash_liquidity_token = Self::get_stash_liquidity_token(stash);
+			let stash_liquidity_token = Self::get_stash_liquidity_token(&stash).ok_or_else(|| Error::<T>::StashLiquidityTokenNotFound)?;
 
 			// remove all staking-related information.
 			Self::kill_stash(&stash, num_slashing_spans)?;
 
 			// remove the lock.
-			T::Tokens::remove_lock(stash_liquidity_token, STAKING_ID, &stash);
+			T::Tokens::remove_lock(stash_liquidity_token.into(), STAKING_ID, &stash);
 		}
 
 		/// Force there to be a new era at the end of sessions indefinitely.
@@ -2063,14 +2061,14 @@ decl_module! {
 		///     - Writes: [Origin Account], Locks, Ledger
 		/// # </weight>
 		#[weight = T::WeightInfo::rebond(MAX_UNLOCKING_CHUNKS as u32)]
-		fn rebond(origin, #[compact] value: BalanceOf<T>) -> DispatchResultWithPostInfo {
+		fn rebond(origin, #[compact] value: Balance) -> DispatchResultWithPostInfo {
 			ensure!(Self::era_election_status().is_closed(), Error::<T>::CallNotAllowed);
 			let controller = ensure_signed(origin)?;
 			let ledger = Self::ledger(&controller).ok_or(Error::<T>::NotController)?;
 			ensure!(!ledger.unlocking.is_empty(), Error::<T>::NoUnlockChunk);
 
 			let ledger = ledger.rebond(value);
-			Self::update_ledger(&controller, &ledger);
+			Self::update_ledger(&controller, &ledger)?;
 			Ok(Some(
 				35 * WEIGHT_PER_MICROS
 				+ 50 * WEIGHT_PER_NANOS * (ledger.unlocking.len() as Weight)
@@ -2134,10 +2132,10 @@ decl_module! {
 		/// # </weight>
 		#[weight = T::WeightInfo::reap_stash(*num_slashing_spans)]
 		fn reap_stash(_origin, stash: T::AccountId, num_slashing_spans: u32) {
-			let stash_liquidity_token = Self::get_stash_liquidity_token(stash);
-			ensure!(T::Tokens::total_balance(stash_liquidity_token, &stash).is_zero(), Error::<T>::FundedTarget);
+			let stash_liquidity_token = Self::get_stash_liquidity_token(&stash).ok_or_else(|| Error::<T>::StashLiquidityTokenNotFound)?;
+			ensure!(T::Tokens::total_balance(stash_liquidity_token.into(), &stash).is_zero(), Error::<T>::FundedTarget);
 			Self::kill_stash(&stash, num_slashing_spans)?;
-			T::Tokens::remove_lock(stash_liquidity_token, STAKING_ID, &stash);
+			T::Tokens::remove_lock(stash_liquidity_token.into(), STAKING_ID, &stash);
 		}
 
 		/// Submit an election result to the chain. If the solution:
@@ -2258,15 +2256,15 @@ decl_module! {
 
 impl<T: Trait> Module<T> {
 	/// The total balance that can be slashed from a stash account as of right now.
-	pub fn slashable_balance_of(stash: &T::AccountId) -> BalanceOf<T> {
+	pub fn slashable_balance_of(stash: &T::AccountId) -> Balance {
 		// Weight note: consider making the stake accessible through stash.
 		// return valuation
-		Self::get_stash_staked_valuation(stash).map(|v| v.mng_valuation).unwrap_or_default()
+		Self::get_stash_staked_valuation(DUMMY_VALUE, stash).map(|v| v.mng_valuation).unwrap_or_default()
 	}
 
 	/// internal impl of [`slashable_balance_of`] that returns [`VoteWeight`].
 	fn slashable_balance_of_vote_weight(stash: &T::AccountId) -> VoteWeight {
-		<T::CurrencyToVote as Convert<BalanceOf<T>, VoteWeight>>::convert(
+		<T::CurrencyToVote as Convert<Balance, VoteWeight>>::convert(
 			Self::slashable_balance_of(stash)
 		)
 	}
@@ -2303,35 +2301,41 @@ impl<T: Trait> Module<T> {
 		} else {
 
 			// Note: A Stash can't be both nominator and validator
-			validators.iter().map(|validator|{
+			for validator in validators.iter() {
 				// get validator's staked liquidity token amount, i.e., validator's controller's ledger.active
 				// get validator's stash's tokenId
 				// get the valuation on staked liquidity token amount in MNG via Valuations pallet
 				// Insert the staked liquidity token amount and its valuation as Valuation against validator's stash
 				let liquidity_token_amount = Self::bonded(validator).and_then(Self::ledger).map(|l| l.active).unwrap_or_default();
-				let liquidity_token_id = Self::get_stash_liquidity_token(validator);
-				let mng_valuation = T::Valuations::valuate_liquidity_token(liquidity_token_id.into(), liquidity_token_amount.into());
-				<StashStakedValuation<T>>::insert(&validator, Valuation{
+				let liquidity_token_id = match Self::get_stash_liquidity_token(validator){
+					Some(liquidity_token) => liquidity_token,
+					None => return (false, consumed_weight),
+				};
+				let mng_valuation: Balance = T::Valuations::valuate_liquidity_token(liquidity_token_id.into(), liquidity_token_amount.into()).into();
+				<StashStakedValuation<T>>::insert(DUMMY_VALUE, &validator, Valuation{
 						liquidity_token_amount: liquidity_token_amount,
 						mng_valuation: mng_valuation
 						});
 
-			});
+			};
 
-			nominators.iter().map(|nominator|{
+			for nominator in nominators.iter(){
 				// get nominator's staked liquidity token amount, i.e., nominator's controller's ledger.active
 				// get nominator's stash's tokenId
 				// get the valuation on staked liquidity token amount in MNG via Valuations pallet
 				// Insert the staked liquidity token amount and its valuation as Valuation against nominator's stash
 				let liquidity_token_amount = Self::bonded(nominator).and_then(Self::ledger).map(|l| l.active).unwrap_or_default();
-				let liquidity_token_id = Self::get_stash_liquidity_token(nominator);
-				let mng_valuation = T::Valuations::valuate_liquidity_token(liquidity_token_id, liquidity_token_amount);
-				<StashStakedValuation<T>>::insert(&nominator, Valuation{
+				let liquidity_token_id = match Self::get_stash_liquidity_token(nominator){
+					Some(liquidity_token) => liquidity_token,
+					None => return (false, consumed_weight),
+				};
+				let mng_valuation: Balance = T::Valuations::valuate_liquidity_token(liquidity_token_id.into(), liquidity_token_amount.into()).into();
+				<StashStakedValuation<T>>::insert(DUMMY_VALUE, &nominator, Valuation{
 						liquidity_token_amount: liquidity_token_amount,
 						mng_valuation: mng_valuation
 						});
 
-			});
+			};
 
 			// all validators nominate themselves;
 			nominators.extend(validators.clone());
@@ -2349,7 +2353,7 @@ impl<T: Trait> Module<T> {
 		<SnapshotNominators<T>>::kill();
 
 		// Remove Stash's liquidity valuation details
-		<StashStakedValuation<T>>::kill();
+		<StashStakedValuation<T>>::remove_prefix(DUMMY_VALUE);
 	}
 
 	fn do_payout_stakers(
@@ -2364,7 +2368,7 @@ impl<T: Trait> Module<T> {
 
 		// Note: if era has no reward to be claimed, era may be future. better not to update
 		// `ledger.claimed_rewards` in this case.
-		let era_payout = <ErasValidatorReward<T>>::get(&era)
+		let era_payout = ErasValidatorReward::get(&era)
 			.ok_or_else(|| Error::<T>::InvalidEraToReward)?;
 
 		let controller = Self::bonded(&validator_stash).ok_or(Error::<T>::NotStash)?;
@@ -2426,7 +2430,7 @@ impl<T: Trait> Module<T> {
 			&ledger.stash,
 			validator_staking_payout + validator_commission_payout
 		) {
-			Self::deposit_event(RawEvent::Reward(ledger.stash, imbalance.peek()));
+			Self::deposit_event(RawEvent::Reward(ledger.stash, imbalance.peek().into()));
 		}
 
 		// Lets now calculate how this is split to the nominators.
@@ -2437,10 +2441,10 @@ impl<T: Trait> Module<T> {
 				exposure.total,
 			);
 
-			let nominator_reward: BalanceOf<T> = nominator_exposure_part * validator_leftover_payout;
+			let nominator_reward: Balance = nominator_exposure_part * validator_leftover_payout;
 			// We can now make nominator payout:
 			if let Some(imbalance) = Self::make_payout(&nominator.who, nominator_reward) {
-				Self::deposit_event(RawEvent::Reward(nominator.who.clone(), imbalance.peek()));
+				Self::deposit_event(RawEvent::Reward(nominator.who.clone(), imbalance.peek().into()));
 			}
 		}
 
@@ -2452,17 +2456,18 @@ impl<T: Trait> Module<T> {
 	/// This will also update the stash lock.
 	fn update_ledger(
 		controller: &T::AccountId,
-		ledger: &StakingLedger<T::AccountId, BalanceOf<T>>
-	) {
-		let stash_liquidity_token = Self::get_stash_liquidity_token(ledger.stash);
+		ledger: &StakingLedger<T::AccountId, Balance>
+	) -> DispatchResult {
+		let stash_liquidity_token = Self::get_stash_liquidity_token(&ledger.stash).ok_or_else(|| Error::<T>::StashLiquidityTokenNotFound)?;
 		T::Tokens::set_lock(
-			stash_liquidity_token,
+			stash_liquidity_token.into(),
 			STAKING_ID,
 			&ledger.stash,
-			ledger.total,
+			ledger.total.into(),
 			WithdrawReasons::all(),
 		);
 		<Ledger<T>>::insert(controller, ledger);
+		Ok(())
 	}
 
 	/// Chill a stash account.
@@ -2473,18 +2478,21 @@ impl<T: Trait> Module<T> {
 
 	/// Actually make a payment to a staker. This uses the currency's reward function
 	/// to pay the right payee for the given staker account.
-	fn make_payout(stash: &T::AccountId, amount: BalanceOf<T>) -> Option<PositiveImbalanceOf<T>> {
+	fn make_payout(stash: &T::AccountId, amount: Balance) -> Option<PositiveImbalanceOf<T>> {
 		let dest = Self::payee(stash);
-		let stash_liquidity_token = Self::get_stash_liquidity_token(stash);
+		let stash_liquidity_token = match Self::get_stash_liquidity_token(stash){
+			Some(liquidity_token) => liquidity_token,
+			None => return None,
+		};
 		match dest {
 			RewardDestination::Controller => Self::bonded(stash)
 				.and_then(|controller|
-					Some(T::Tokens::deposit_creating(stash_liquidity_token, &controller, amount))
+					Some(T::Tokens::deposit_creating(stash_liquidity_token.into(), &controller, amount.into()))
 				),
 			RewardDestination::Stash =>
-				T::Tokens::deposit_into_existing(stash_liquidity_token, stash, amount).ok(),
+				T::Tokens::deposit_into_existing(stash_liquidity_token.into(), stash, amount.into()).ok(),
 			RewardDestination::Account(dest_account) => {
-				Some(T::Tokens::deposit_creating(stash_liquidity_token, &dest_account, amount))
+				Some(T::Tokens::deposit_creating(stash_liquidity_token.into(), &dest_account, amount.into()))
 			}
 		}
 	}
@@ -2824,7 +2832,7 @@ impl<T: Trait> Module<T> {
 			let (validator_payout, max_payout) = inflation::compute_total_payout(
 				&T::RewardCurve::get(),
 				Self::eras_total_stake(&active_era.index),
-				T::Tokens::total_issuance(native_currency_id),
+				T::Tokens::total_issuance(native_currency_id.into()).into(),
 				// Duration of era; more than u64::MAX is rewarded as u64::MAX.
 				era_duration.saturated_into::<u64>(),
 			);
@@ -2833,8 +2841,8 @@ impl<T: Trait> Module<T> {
 			Self::deposit_event(RawEvent::EraPayout(active_era.index, validator_payout, rest));
 
 			// Set ending era reward.
-			<ErasValidatorReward<T>>::insert(&active_era.index, validator_payout);
-			T::RewardRemainder::on_unbalanced(T::Tokens::issue(native_currency_id, rest));
+			ErasValidatorReward::insert(&active_era.index, validator_payout);
+			T::RewardRemainder::on_unbalanced(T::Tokens::issue(native_currency_id.into(), rest.into()));
 		}
 	}
 
@@ -2884,7 +2892,7 @@ impl<T: Trait> Module<T> {
 	///
 	/// This should only be called at the end of an era.
 	fn select_and_update_validators(current_era: EraIndex) -> Option<Vec<T::AccountId>> {
-		if let Some(ElectionResult::<T::AccountId, BalanceOf<T>> {
+		if let Some(ElectionResult::<T::AccountId, Balance> {
 			elected_stashes,
 			exposures,
 			compute,
@@ -2893,12 +2901,12 @@ impl<T: Trait> Module<T> {
 			// Self::close_election_window();
 
 			// Populate Stakers and write slot stake.
-			let mut total_stake: BalanceOf<T> = Zero::zero();
+			let mut total_stake: Balance = Zero::zero();
 			exposures.into_iter().for_each(|(stash, exposure)| {
 				total_stake = total_stake.saturating_add(exposure.total);
 				<ErasStakers<T>>::insert(current_era, &stash, &exposure);
 
-				let mut exposure_clipped = exposure;
+				let mut exposure_clipped = exposure.clone();
 				let clipped_max_len = T::MaxNominatorRewardedPerValidator::get() as usize;
 				if exposure_clipped.others.len() > clipped_max_len {
 					exposure_clipped.others.sort_by(|a, b| a.value.cmp(&b.value).reverse());
@@ -2908,20 +2916,20 @@ impl<T: Trait> Module<T> {
 
 				// Create ErasStakersRaw and ErasStakersClippedRaw
 
-				let Exposure{total: exposure_total, own: exposure_own, others: exposure_others} =  exposure;
+				let Exposure{total: _exposure_total, own: exposure_own, others: exposure_others} =  exposure;
 
-				let mut exposure_raw_total: BalanceOf<T> = Zero::zero();
-				let mut exposure_raw_others: Vec<IndividualExposure<T::AccountId, BalanceOf<T>>> = Vec::<IndividualExposure<T::AccountId, BalanceOf<T>>>::new();
-				for individual_exposure in exposure_others.iter(){
+				let mut exposure_raw_total: Balance = Zero::zero();
+				let mut exposure_raw_others: Vec<IndividualExposure<T::AccountId, Balance>> = Vec::<IndividualExposure<T::AccountId, Balance>>::new();
+				for individual_exposure in exposure_others.into_iter(){
 					let IndividualExposure{ who: individual_exposure_who, value: individual_exposure_value } = individual_exposure;
-					let who_staked_valuation = Self::get_stash_staked_valuation(individual_exposure_who);
-					let individual_exposure_raw_value = T::Valuations::scale_liquidity_by_mng_valuation(who_staked_valuation.mng_valuation, who_staked_valuation.liquidity_token_amount, individual_exposure_value);
+					let who_staked_valuation = Self::get_stash_staked_valuation(DUMMY_VALUE, &individual_exposure_who).unwrap_or_default();
+					let individual_exposure_raw_value: Balance = T::Valuations::scale_liquidity_by_mng_valuation(who_staked_valuation.mng_valuation.into(), who_staked_valuation.liquidity_token_amount.into(), individual_exposure_value.into()).into();
 					exposure_raw_others.push(IndividualExposure{ who: individual_exposure_who, value: individual_exposure_raw_value });
-					exposure_raw_total.saturating_add(individual_exposure_raw_value);
+					exposure_raw_total = exposure_raw_total.saturating_add(individual_exposure_raw_value);
 				}
 
-				let stash_staked_valuation = Self::get_stash_staked_valuation(stash);
-				let exposure_raw_own = T::Valuations::scale_liquidity_by_mng_valuation(stash_staked_valuation.mng_valuation, stash_staked_valuation.liquidity_token_amount, exposure_own);
+				let stash_staked_valuation = Self::get_stash_staked_valuation(DUMMY_VALUE, &stash).unwrap_or_default();
+				let exposure_raw_own: Balance = T::Valuations::scale_liquidity_by_mng_valuation(stash_staked_valuation.mng_valuation.into(), stash_staked_valuation.liquidity_token_amount.into(), exposure_own.into()).into();
 
 				let exposure_raw = Exposure{total: exposure_raw_total, own: exposure_raw_own, others: exposure_raw_others};
 				<ErasStakersRaw<T>>::insert(current_era, &stash, &exposure_raw);
@@ -2931,7 +2939,7 @@ impl<T: Trait> Module<T> {
 					exposure_raw_clipped.others.sort_by(|a, b| a.value.cmp(&b.value).reverse());
 					exposure_raw_clipped.others.truncate(clipped_max_len);
 				}
-				<ErasStakersClipped<T>>::insert(&current_era, &stash, exposure_raw_clipped);
+				<ErasStakersClippedRaw<T>>::insert(&current_era, &stash, exposure_raw_clipped);
 
 			});
 
@@ -2939,7 +2947,7 @@ impl<T: Trait> Module<T> {
 			Self::close_election_window();
 
 			// Insert current era staking information
-			<ErasTotalStake<T>>::insert(&current_era, total_stake);
+			ErasTotalStake::insert(&current_era, total_stake);
 
 			// collect the pref of all winners
 			for stash in &elected_stashes {
@@ -2969,7 +2977,7 @@ impl<T: Trait> Module<T> {
 	///
 	/// If [`QueuedElected`] and [`QueuedScore`] exists, they are both removed. No further storage
 	/// is updated.
-	fn try_do_election() -> Option<ElectionResult<T::AccountId, BalanceOf<T>>> {
+	fn try_do_election() -> Option<ElectionResult<T::AccountId, Balance>> {
 		// an election result from either a stored submission or locally executed one.
 		let next_result = <QueuedElected<T>>::take().or_else(||
 			Self::do_phragmen_with_post_processing::<ChainAccuracy>(ElectionCompute::OnChain)
@@ -2990,7 +2998,7 @@ impl<T: Trait> Module<T> {
 	///
 	/// No storage item is updated.
 	fn do_phragmen_with_post_processing<Accuracy: PerThing>(compute: ElectionCompute)
-		-> Option<ElectionResult<T::AccountId, BalanceOf<T>>>
+		-> Option<ElectionResult<T::AccountId, Balance>>
 	where
 		Accuracy: sp_std::ops::Mul<ExtendedBalance, Output=ExtendedBalance>,
 		ExtendedBalance: From<<Accuracy as PerThing>::Inner>,
@@ -3018,7 +3026,7 @@ impl<T: Trait> Module<T> {
 			// new validator set even if it's the same as the old, as long as any underlying
 			// economic conditions have changed, we don't attempt to do any optimization where we
 			// compare against the prior set.
-			Some(ElectionResult::<T::AccountId, BalanceOf<T>> {
+			Some(ElectionResult::<T::AccountId, Balance> {
 				elected_stashes,
 				exposures,
 				compute,
@@ -3076,15 +3084,15 @@ impl<T: Trait> Module<T> {
 	}
 
 	/// Consume a set of [`Supports`] from [`sp_npos_elections`] and collect them into a [`Exposure`]
-	fn collect_exposure(supports: SupportMap<T::AccountId>) -> Vec<(T::AccountId, Exposure<T::AccountId, BalanceOf<T>>)> {
+	fn collect_exposure(supports: SupportMap<T::AccountId>) -> Vec<(T::AccountId, Exposure<T::AccountId, Balance>)> {
 		let to_balance = |e: ExtendedBalance|
-			<T::CurrencyToVote as Convert<ExtendedBalance, BalanceOf<T>>>::convert(e);
+			<T::CurrencyToVote as Convert<ExtendedBalance, Balance>>::convert(e);
 
 		supports.into_iter().map(|(validator, support)| {
 			// build `struct exposure` from `support`
 			let mut others = Vec::with_capacity(support.voters.len());
-			let mut own: BalanceOf<T> = Zero::zero();
-			let mut total: BalanceOf<T> = Zero::zero();
+			let mut own: Balance = Zero::zero();
+			let mut total: Balance = Zero::zero();
 			support.voters
 				.into_iter()
 				.map(|(nominator, weight)| (nominator, to_balance(weight)))
@@ -3144,9 +3152,9 @@ impl<T: Trait> Module<T> {
 		<ErasStakersClippedRaw<T>>::remove_prefix(era_index);
 
 		<ErasValidatorPrefs<T>>::remove_prefix(era_index);
-		<ErasValidatorReward<T>>::remove(era_index);
+		ErasValidatorReward::remove(era_index);
 		<ErasRewardPoints<T>>::remove(era_index);
-		<ErasTotalStake<T>>::remove(era_index);
+		ErasTotalStake::remove(era_index);
 		ErasStartSessionIndex::remove(era_index);
 	}
 
@@ -3207,7 +3215,7 @@ impl<T: Trait> Module<T> {
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
-	pub fn add_era_stakers(current_era: EraIndex, controller: T::AccountId, exposure: Exposure<T::AccountId, BalanceOf<T>>) {
+	pub fn add_era_stakers(current_era: EraIndex, controller: T::AccountId, exposure: Exposure<T::AccountId, Balance>) {
 		<ErasStakers<T>>::insert(&current_era, &controller, &exposure);
 	}
 
@@ -3240,12 +3248,12 @@ impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
     }
 }
 
-impl<T: Trait> historical::SessionManager<T::AccountId, Exposure<T::AccountId, BalanceOf<T>>>
+impl<T: Trait> historical::SessionManager<T::AccountId, Exposure<T::AccountId, Balance>>
     for Module<T>
 {
     fn new_session(
         new_index: SessionIndex,
-    ) -> Option<Vec<(T::AccountId, Exposure<T::AccountId, BalanceOf<T>>)>> {
+    ) -> Option<Vec<(T::AccountId, Exposure<T::AccountId, Balance>)>> {
         <Self as pallet_session::SessionManager<_>>::new_session(new_index).map(|validators| {
             let current_era = Self::current_era()
                 // Must be some as a new era has been created.
@@ -3304,10 +3312,10 @@ impl<T: Trait> Convert<T::AccountId, Option<T::AccountId>> for StashOf<T> {
 /// `active_era`. It can differ from the latest planned exposure in `current_era`.
 pub struct ExposureOf<T>(sp_std::marker::PhantomData<T>);
 
-impl<T: Trait> Convert<T::AccountId, Option<Exposure<T::AccountId, BalanceOf<T>>>>
+impl<T: Trait> Convert<T::AccountId, Option<Exposure<T::AccountId, Balance>>>
     for ExposureOf<T>
 {
-    fn convert(validator: T::AccountId) -> Option<Exposure<T::AccountId, BalanceOf<T>>> {
+    fn convert(validator: T::AccountId) -> Option<Exposure<T::AccountId, Balance>> {
         if let Some(active_era) = <Module<T>>::active_era() {
             Some(<Module<T>>::eras_stakers(active_era.index, &validator))
         } else {
@@ -3316,29 +3324,14 @@ impl<T: Trait> Convert<T::AccountId, Option<Exposure<T::AccountId, BalanceOf<T>>
     }
 }
 
-// ExposureOfRaw similar to ExposureOf
-pub struct ExposureOfRaw<T>(sp_std::marker::PhantomData<T>);
-
-impl<T: Trait> Convert<T::AccountId, Option<Exposure<T::AccountId, BalanceOf<T>>>>
-	for ExposureOfRaw<T>
-{
-	fn convert(validator: T::AccountId) -> Option<Exposure<T::AccountId, BalanceOf<T>>> {
-		if let Some(active_era) = <Module<T>>::active_era() {
-			Some(<Module<T>>::eras_stakers_clipped(active_era.index, &validator))
-		} else {
-			None
-		}
-	}
-}
-
 /// This is intended to be used with `FilterHistoricalOffences`.
 impl <T: Trait>
 	OnOffenceHandler<T::AccountId, pallet_session::historical::IdentificationTuple<T>, Weight>
 for Module<T> where
 	T: pallet_session::Trait<ValidatorId = <T as frame_system::Trait>::AccountId>,
 	T: pallet_session::historical::Trait<
-		FullIdentification = Exposure<<T as frame_system::Trait>::AccountId, BalanceOf<T>>,
-		FullIdentificationOf = ExposureOfRaw<T>,
+		FullIdentification = Exposure<<T as frame_system::Trait>::AccountId, Balance>,
+		FullIdentificationOf = ExposureOf<T>,
 	>,
 	T::SessionHandler: pallet_session::SessionHandler<<T as frame_system::Trait>::AccountId>,
 	T::SessionManager: pallet_session::SessionManager<<T as frame_system::Trait>::AccountId>,
@@ -3347,134 +3340,125 @@ for Module<T> where
 		Option<<T as frame_system::Trait>::AccountId>,
 	>,
 {
-    fn on_offence(
-        offenders: &[OffenceDetails<
-            T::AccountId,
-            pallet_session::historical::IdentificationTuple<T>,
-        >],
-        slash_fraction: &[Perbill],
-        slash_session: SessionIndex,
-    ) -> Result<Weight, ()> {
-        if !Self::can_report() {
-            return Err(());
-        }
+	fn on_offence(
+		offenders: &[OffenceDetails<T::AccountId, pallet_session::historical::IdentificationTuple<T>>],
+		slash_fraction: &[Perbill],
+		slash_session: SessionIndex,
+	) -> Result<Weight, ()> {
+		if !Self::can_report() {
+			return Err(())
+		}
 
-        let reward_proportion = SlashRewardFraction::get();
-        let mut consumed_weight: Weight = 0;
-        let mut add_db_reads_writes = |reads, writes| {
-            consumed_weight += T::DbWeight::get().reads_writes(reads, writes);
-        };
+		let reward_proportion = SlashRewardFraction::get();
+		let mut consumed_weight: Weight = 0;
+		let mut add_db_reads_writes = |reads, writes| {
+			consumed_weight += T::DbWeight::get().reads_writes(reads, writes);
+		};
 
-        let active_era = {
-            let active_era = Self::active_era();
-            add_db_reads_writes(1, 0);
-            if active_era.is_none() {
-                // this offence need not be re-submitted.
-                return Ok(consumed_weight);
-            }
-            active_era
-                .expect("value checked not to be `None`; qed")
-                .index
-        };
-        let active_era_start_session_index = Self::eras_start_session_index(active_era)
-            .unwrap_or_else(|| {
-                frame_support::print("Error: start_session_index must be set for current_era");
-                0
-            });
-        add_db_reads_writes(1, 0);
+		let active_era = {
+			let active_era = Self::active_era();
+			add_db_reads_writes(1, 0);
+			if active_era.is_none() {
+				// this offence need not be re-submitted.
+				return Ok(consumed_weight)
+			}
+			active_era.expect("value checked not to be `None`; qed").index
+		};
+		let active_era_start_session_index = Self::eras_start_session_index(active_era)
+			.unwrap_or_else(|| {
+				frame_support::print("Error: start_session_index must be set for current_era");
+				0
+			});
+		add_db_reads_writes(1, 0);
 
-        let window_start = active_era.saturating_sub(T::BondingDuration::get());
+		let window_start = active_era.saturating_sub(T::BondingDuration::get());
 
-        // fast path for active-era report - most likely.
-        // `slash_session` cannot be in a future active era. It must be in `active_era` or before.
-        let slash_era = if slash_session >= active_era_start_session_index {
-            active_era
-        } else {
-            let eras = BondedEras::get();
-            add_db_reads_writes(1, 0);
+		// fast path for active-era report - most likely.
+		// `slash_session` cannot be in a future active era. It must be in `active_era` or before.
+		let slash_era = if slash_session >= active_era_start_session_index {
+			active_era
+		} else {
+			let eras = BondedEras::get();
+			add_db_reads_writes(1, 0);
 
-            // reverse because it's more likely to find reports from recent eras.
-            match eras
-                .iter()
-                .rev()
-                .filter(|&&(_, ref sesh)| sesh <= &slash_session)
-                .next()
-            {
-                Some(&(ref slash_era, _)) => *slash_era,
-                // before bonding period. defensive - should be filtered out.
-                None => return Ok(consumed_weight),
-            }
-        };
+			// reverse because it's more likely to find reports from recent eras.
+			match eras.iter().rev().filter(|&&(_, ref sesh)| sesh <= &slash_session).next() {
+				Some(&(ref slash_era, _)) => *slash_era,
+				// before bonding period. defensive - should be filtered out.
+				None => return Ok(consumed_weight),
+			}
+		};
 
-        <Self as Store>::EarliestUnappliedSlash::mutate(|earliest| {
-            if earliest.is_none() {
-                *earliest = Some(active_era)
-            }
-        });
-        add_db_reads_writes(1, 1);
+		<Self as Store>::EarliestUnappliedSlash::mutate(|earliest| {
+			if earliest.is_none() {
+				*earliest = Some(active_era)
+			}
+		});
+		add_db_reads_writes(1, 1);
 
-        let slash_defer_duration = T::SlashDeferDuration::get();
+		let slash_defer_duration = T::SlashDeferDuration::get();
 
-        let invulnerables = Self::invulnerables();
-        add_db_reads_writes(1, 0);
+		let invulnerables = Self::invulnerables();
+		add_db_reads_writes(1, 0);
 
-        for (details, slash_fraction) in offenders.iter().zip(slash_fraction) {
-            let (stash, exposure) = &details.offender;
+		for (details, slash_fraction) in offenders.iter().zip(slash_fraction) {
+			let (stash, _) = &details.offender;
+			let exposure = &Self::eras_stakers_raw(active_era, &stash);
+			// Skip if the validator is invulnerable.
+			if invulnerables.contains(stash) {
+				continue
+			}
 
-            // Skip if the validator is invulnerable.
-            if invulnerables.contains(stash) {
-                continue;
-            }
+			let unapplied = slashing::compute_slash::<T>(slashing::SlashParams {
+				stash,
+				slash: *slash_fraction,
+				exposure,
+				slash_era,
+				window_start,
+				now: active_era,
+				reward_proportion,
+			});
 
-            let unapplied = slashing::compute_slash::<T>(slashing::SlashParams {
-                stash,
-                slash: *slash_fraction,
-                exposure,
-                slash_era,
-                window_start,
-                now: active_era,
-                reward_proportion,
-            });
+			if let Some(mut unapplied) = unapplied {
+				let nominators_len = unapplied.others.len() as u64;
+				let reporters_len = details.reporters.len() as u64;
 
-            if let Some(mut unapplied) = unapplied {
-                let nominators_len = unapplied.others.len() as u64;
-                let reporters_len = details.reporters.len() as u64;
+				{
+					let upper_bound = 1 /* Validator/NominatorSlashInEra */ + 2 /* fetch_spans */;
+					let rw = upper_bound + nominators_len * upper_bound;
+					add_db_reads_writes(rw, rw);
+				}
+				unapplied.reporters = details.reporters.clone();
+				if slash_defer_duration == 0 {
+					// apply right away.
+					slashing::apply_slash::<T>(unapplied);
+					{
+						let slash_cost = (6, 5);
+						let reward_cost = (2, 2);
+						add_db_reads_writes(
+							(1 + nominators_len) * slash_cost.0 + reward_cost.0 * reporters_len,
+							(1 + nominators_len) * slash_cost.1 + reward_cost.1 * reporters_len
+						);
+					}
+				} else {
+					// defer to end of some `slash_defer_duration` from now.
+					<Self as Store>::UnappliedSlashes::mutate(
+						active_era,
+						move |for_later| for_later.push(unapplied),
+					);
+					add_db_reads_writes(1, 1);
+				}
+			} else {
+				add_db_reads_writes(4 /* fetch_spans */, 5 /* kick_out_if_recent */)
+			}
+		}
 
-                {
-                    let upper_bound = 1 /* Validator/NominatorSlashInEra */ + 2 /* fetch_spans */;
-                    let rw = upper_bound + nominators_len * upper_bound;
-                    add_db_reads_writes(rw, rw);
-                }
-                unapplied.reporters = details.reporters.clone();
-                if slash_defer_duration == 0 {
-                    // apply right away.
-                    slashing::apply_slash::<T>(unapplied);
-                    {
-                        let slash_cost = (6, 5);
-                        let reward_cost = (2, 2);
-                        add_db_reads_writes(
-                            (1 + nominators_len) * slash_cost.0 + reward_cost.0 * reporters_len,
-                            (1 + nominators_len) * slash_cost.1 + reward_cost.1 * reporters_len,
-                        );
-                    }
-                } else {
-                    // defer to end of some `slash_defer_duration` from now.
-                    <Self as Store>::UnappliedSlashes::mutate(active_era, move |for_later| {
-                        for_later.push(unapplied)
-                    });
-                    add_db_reads_writes(1, 1);
-                }
-            } else {
-                add_db_reads_writes(4 /* fetch_spans */, 5 /* kick_out_if_recent */)
-            }
-        }
+		Ok(consumed_weight)
+	}
 
-        Ok(consumed_weight)
-    }
-
-    fn can_report() -> bool {
-        Self::era_election_status().is_closed()
-    }
+	fn can_report() -> bool {
+		Self::era_election_status().is_closed()
+	}
 }
 
 /// Filter historical offences out and only allow those from the bonding period.

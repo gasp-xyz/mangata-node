@@ -4151,6 +4151,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex",
+ "mangata-primitives",
  "orml-tokens",
  "pallet-authorship",
  "pallet-balances",

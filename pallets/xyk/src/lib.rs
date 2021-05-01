@@ -20,7 +20,6 @@ use frame_support::Parameter;
 use sp_std::fmt::Debug;
 use mangata_primitives::{Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
-use sp_runtime::traits::{SaturatedConversion, Zero};
 
 #[cfg(test)]
 mod mock;
@@ -30,7 +29,7 @@ mod tests;
 pub trait Trait: frame_system::Trait {
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
     type Currency: MultiTokenCurrencyExtended<Self::AccountId>;
-    type NativeCurrencyId: Get<CurrencyIdOf<Self>>;
+    type NativeCurrencyId: Get<TokenId>;
 }
 
 const PALLET_ID: ModuleId = ModuleId(*b"79b14c96");
@@ -593,9 +592,9 @@ impl<T: Trait> Module<T> {
 
 pub trait Valuate {
 
-	type Balance: AtLeast32BitUnsigned + FullCodec + Copy + MaybeSerializeDeserialize + Debug +	Default;
+	type Balance: AtLeast32BitUnsigned + FullCodec + Copy + MaybeSerializeDeserialize + Debug +	Default + From<Balance> + Into<Balance>;
 
-	type CurrencyId: Parameter + Member + Copy + MaybeSerializeDeserialize + Ord + Default + AtLeast32BitUnsigned + FullCodec;
+	type CurrencyId: Parameter + Member + Copy + MaybeSerializeDeserialize + Ord + Default + AtLeast32BitUnsigned + FullCodec + From<TokenId> + Into<TokenId>;
 
     fn get_liquidity_token_mng_pool(liquidity_token_id: Self::CurrencyId) -> Result<(Self::CurrencyId, Self::CurrencyId), DispatchError>;
 
@@ -606,12 +605,12 @@ pub trait Valuate {
 
 impl<T: Trait> Valuate for Module<T>{
 
-	type Balance = BalanceOf<T>;
+	type Balance = Balance;
 
-	type CurrencyId = CurrencyIdOf<T>;
+	type CurrencyId = TokenId;
 
     fn get_liquidity_token_mng_pool(liquidity_token_id: Self::CurrencyId) -> Result<(Self::CurrencyId, Self::CurrencyId), DispatchError> {
-        let (first_token_id, second_token_id) = <LiquidityPools<T>>::get(liquidity_token_id);
+        let (first_token_id, second_token_id) = LiquidityPools::get(liquidity_token_id);
         let native_currency_id = T::NativeCurrencyId::get();
         match native_currency_id{
             _ if native_currency_id == first_token_id => Ok((first_token_id, second_token_id)),
@@ -625,8 +624,8 @@ impl<T: Trait> Valuate for Module<T>{
             Ok(pool) => pool,
             Err(_) => return Default::default(),
         };
-        let mng_token_reserve = <Pools<T>>::get((mng_token_id, other_token_id));
-        let liquidity_token_reserve = T::Currency::total_issuance(liquidity_token_id);
+        let mng_token_reserve = Pools::get((mng_token_id, other_token_id));
+        let liquidity_token_reserve = T::Currency::total_issuance(liquidity_token_id.into());
         let mng_token_reserve_u256: U256 = mng_token_reserve.saturated_into::<u128>().into();
         let liquidity_token_amount_u256: U256 = liquidity_token_amount.saturated_into::<u128>().into(); 
         let liquidity_token_reserve_u256: U256 = liquidity_token_reserve.saturated_into::<u128>().into();

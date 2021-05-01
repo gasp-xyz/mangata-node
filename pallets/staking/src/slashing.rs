@@ -50,17 +50,17 @@
 //! Based on research at https://research.web3.foundation/en/latest/polkadot/slashing/npos/
 
 use super::{
-    BalanceOf, TokenId, EraIndex, Error, Exposure, Module, NegativeImbalanceOf, Perbill, SessionInterface,
-    Store, Trait, UnappliedSlash,
+    Balance, TokenId, EraIndex, Error, Exposure, Module, NegativeImbalanceOf, Perbill, SessionInterface,
+    Store, Trait, UnappliedSlash, MultiTokenCurrency
 };
 use codec::{Decode, Encode};
 use frame_support::{
     ensure,
-    traits::{Currency, Imbalance, OnUnbalanced},
+    traits::{Imbalance, OnUnbalanced},
     StorageDoubleMap, StorageMap,
 };
 use sp_runtime::{
-    traits::{Saturating, Zero},
+    traits::{Zero},
     DispatchResult, RuntimeDebug,
 };
 use sp_std::vec::Vec;
@@ -214,7 +214,7 @@ pub(crate) struct SlashParams<'a, T: 'a + Trait> {
     /// The proportion of the slash.
     pub(crate) slash: Perbill,
     /// The exposure of the stash and all nominators.
-    pub(crate) exposure: &'a Exposure<T::AccountId, BalanceOf<T>>,
+    pub(crate) exposure: &'a Exposure<T::AccountId, Balance>,
     /// The era where the offence occurred.
     pub(crate) slash_era: EraIndex,
     /// The first era in the current bonding period.
@@ -234,7 +234,7 @@ pub(crate) struct SlashParams<'a, T: 'a + Trait> {
 /// to be set at a higher level, if any.
 pub(crate) fn compute_slash<T: Trait>(
     params: SlashParams<T>,
-) -> Option<UnappliedSlash<T::AccountId, BalanceOf<T>>> {
+) -> Option<UnappliedSlash<T::AccountId, Balance>> {
     let SlashParams {
         stash,
         slash,
@@ -349,8 +349,8 @@ fn kick_out_if_recent<T: Trait>(params: SlashParams<T>) {
 fn slash_nominators<T: Trait>(
     params: SlashParams<T>,
     prior_slash_p: Perbill,
-    nominators_slashed: &mut Vec<(T::AccountId, BalanceOf<T>)>,
-) -> BalanceOf<T> {
+    nominators_slashed: &mut Vec<(T::AccountId, Balance)>,
+) -> Balance {
     let SlashParams {
         stash: _,
         slash,
@@ -422,8 +422,8 @@ struct InspectingSpans<'a, T: Trait + 'a> {
     window_start: EraIndex,
     stash: &'a T::AccountId,
     spans: SlashingSpans,
-    paid_out: &'a mut BalanceOf<T>,
-    slash_of: &'a mut BalanceOf<T>,
+    paid_out: &'a mut Balance,
+    slash_of: &'a mut Balance,
     reward_proportion: Perbill,
     _marker: sp_std::marker::PhantomData<T>,
 }
@@ -432,8 +432,8 @@ struct InspectingSpans<'a, T: Trait + 'a> {
 fn fetch_spans<'a, T: Trait + 'a>(
     stash: &'a T::AccountId,
     window_start: EraIndex,
-    paid_out: &'a mut BalanceOf<T>,
-    slash_of: &'a mut BalanceOf<T>,
+    paid_out: &'a mut Balance,
+    slash_of: &'a mut Balance,
     reward_proportion: Perbill,
 ) -> InspectingSpans<'a, T> {
     let spans = <Module<T> as Store>::SlashingSpans::get(stash).unwrap_or_else(|| {
@@ -466,7 +466,7 @@ impl<'a, T: 'a + Trait> InspectingSpans<'a, T> {
     // add some value to the slash of the staker.
     // invariant: the staker is being slashed for non-zero value here
     // although `amount` may be zero, as it is only a difference.
-    fn add_slash(&mut self, amount: BalanceOf<T>, slash_era: EraIndex) {
+    fn add_slash(&mut self, amount: Balance, slash_era: EraIndex) {
         *self.slash_of += amount;
         self.spans.last_nonzero_slash = sp_std::cmp::max(self.spans.last_nonzero_slash, slash_era);
     }
@@ -483,7 +483,7 @@ impl<'a, T: 'a + Trait> InspectingSpans<'a, T> {
     fn compare_and_update_span_slash(
         &mut self,
         slash_era: EraIndex,
-        slash: BalanceOf<T>,
+        slash: Balance,
     ) -> Option<SpanIndex> {
         let target_span = self.era_span(slash_era)?;
         let span_slash_key = (self.stash.clone(), target_span.index);
@@ -582,11 +582,10 @@ pub(crate) fn clear_stash_metadata<T: Trait>(
 // can only occur when overlapping locked funds have been slashed.
 pub fn do_slash<T: Trait>(
     stash: &T::AccountId,
-    value: BalanceOf<T>,
-    reward_payout: &mut BalanceOf<T>,
+    value: Balance,
+    reward_payout: &mut Balance,
     slashed_imbalance: &mut NegativeImbalanceOf<T>,
 ) {
-<<<<<<< HEAD
 	let controller = match <Module<T>>::bonded(stash) {
 		None => return, // defensive: should always exist.
 		Some(c) => c,
@@ -597,58 +596,33 @@ pub fn do_slash<T: Trait>(
 		None => return, // nothing to do.
 	};
 
-	let stash_liquidity_token = <Module<T>>::get_stash_liquidity_token(stash);
-	let value = ledger.slash(value, T::Tokens::minimum_balance(stash_liquidity_token));
+	let stash_liquidity_token = match <Module<T>>::get_stash_liquidity_token(stash){
+        Some(liquidity_token) => liquidity_token,
+		None => return, // nothing to do.
+    };
+	let value = ledger.slash(value, T::Tokens::minimum_balance(stash_liquidity_token.into()).into());
 
 	if !value.is_zero() {
-		let (imbalance, missing) = T::Tokens::slash(stash_liquidity_token, stash, value);
+		let (imbalance, missing) = T::Tokens::slash(stash_liquidity_token.into(), stash, value.into());
 		slashed_imbalance.subsume(imbalance);
 
 		if !missing.is_zero() {
 			// deduct overslash from the reward payout
-			*reward_payout = reward_payout.saturating_sub(missing);
+			*reward_payout = reward_payout.saturating_sub(missing.into());
 		}
 
-		<Module<T>>::update_ledger(&controller, &ledger);
+        // This will succeed as we have checked earlier that the stash's liquidity token exists in storage
+		<Module<T>>::update_ledger(&controller, &ledger).ok();
 
 		// trigger the event
 		<Module<T>>::deposit_event(
 			super::RawEvent::Slash(stash.clone(), value)
 		);
 	}
-=======
-    let controller = match <Module<T>>::bonded(stash) {
-        None => return, // defensive: should always exist.
-        Some(c) => c,
-    };
-
-    let mut ledger = match <Module<T>>::ledger(&controller) {
-        Some(ledger) => ledger,
-        None => return, // nothing to do.
-    };
-
-    let value = ledger.slash(value, T::Currency::minimum_balance());
-
-    if !value.is_zero() {
-        let (imbalance, missing) = T::Currency::slash(stash, value);
-        slashed_imbalance.subsume(imbalance);
-
-        if !missing.is_zero() {
-            // deduct overslash from the reward payout
-            *reward_payout = reward_payout.saturating_sub(missing);
-        }
-
-        <Module<T>>::update_ledger(&controller, &ledger);
-
-        // trigger the event
-        <Module<T>>::deposit_event(super::RawEvent::Slash(stash.clone(), value));
-    }
->>>>>>> develop
 }
 
 /// Apply a previously-unapplied slash.
-pub(crate) fn apply_slash<T: Trait>(unapplied_slash: UnappliedSlash<T::AccountId, BalanceOf<T>>) {
-<<<<<<< HEAD
+pub(crate) fn apply_slash<T: Trait>(unapplied_slash: UnappliedSlash<T::AccountId, Balance>) {
 	let mut slashed_imbalance = NegativeImbalanceOf::<T>::zero();
 	let mut reward_payout = unapplied_slash.payout;
 
@@ -668,39 +642,19 @@ pub(crate) fn apply_slash<T: Trait>(unapplied_slash: UnappliedSlash<T::AccountId
 		);
 	}
 
-	let validator_liquidity_token = <Module<T>>::get_stash_liquidity_token(unapplied_slash.validator);
+	let validator_liquidity_token = match <Module<T>>::get_stash_liquidity_token(unapplied_slash.validator){
+        Some(liquidity_token) => liquidity_token,
+		None => return, // nothing to do.
+    };
 	
 	// Pass the liquidity token id of the validator into pay_reporters
 	pay_reporters::<T>(validator_liquidity_token, reward_payout, slashed_imbalance, &unapplied_slash.reporters);
-=======
-    let mut slashed_imbalance = NegativeImbalanceOf::<T>::zero();
-    let mut reward_payout = unapplied_slash.payout;
-
-    do_slash::<T>(
-        &unapplied_slash.validator,
-        unapplied_slash.own,
-        &mut reward_payout,
-        &mut slashed_imbalance,
-    );
-
-    for &(ref nominator, nominator_slash) in &unapplied_slash.others {
-        do_slash::<T>(
-            &nominator,
-            nominator_slash,
-            &mut reward_payout,
-            &mut slashed_imbalance,
-        );
-    }
-
-    pay_reporters::<T>(reward_payout, slashed_imbalance, &unapplied_slash.reporters);
->>>>>>> develop
 }
 
 /// Apply a reward payout to some reporters, paying the rewards out of the slashed imbalance.
 fn pay_reporters<T: Trait>(
-<<<<<<< HEAD
-	validator_liquidity_token: TokenId<T>,
-	reward_payout: BalanceOf<T>,
+	validator_liquidity_token: TokenId,
+	reward_payout: Balance,
 	slashed_imbalance: NegativeImbalanceOf<T>,
 	reporters: &[T::AccountId],
 ) {
@@ -712,51 +666,21 @@ fn pay_reporters<T: Trait>(
 	}
 
 	// take rewards out of the slashed imbalance.
-	let reward_payout = reward_payout.min(slashed_imbalance.peek());
-	let (mut reward_payout, mut value_slashed) = slashed_imbalance.split(reward_payout);
+	let reward_payout = reward_payout.min(slashed_imbalance.peek().into());
+	let (mut reward_payout, mut value_slashed) = slashed_imbalance.split(reward_payout.into());
 
-	let per_reporter = reward_payout.peek() / (reporters.len() as u32).into();
+	let per_reporter: Balance = {reward_payout.peek() / (reporters.len() as u32).into()}.into();
 	for reporter in reporters {
-		let (reporter_reward, rest) = reward_payout.split(per_reporter);
+		let (reporter_reward, rest) = reward_payout.split(per_reporter.into());
 		reward_payout = rest;
 
 		// Token call with token id
-		T::Tokens::resolve_creating(validator_liquidity_token, reporter, reporter_reward);
+		T::Tokens::resolve_creating(validator_liquidity_token.into(), reporter, reporter_reward);
 	}
 
 	// the rest goes to the on-slash imbalance handler (e.g. treasury)
 	value_slashed.subsume(reward_payout); // remainder of reward division remains.
 	T::Slash::on_unbalanced(value_slashed);
-=======
-    reward_payout: BalanceOf<T>,
-    slashed_imbalance: NegativeImbalanceOf<T>,
-    reporters: &[T::AccountId],
-) {
-    if reward_payout.is_zero() || reporters.is_empty() {
-        // nobody to pay out to or nothing to pay;
-        // just treat the whole value as slashed.
-        T::Slash::on_unbalanced(slashed_imbalance);
-        return;
-    }
-
-    // take rewards out of the slashed imbalance.
-    let reward_payout = reward_payout.min(slashed_imbalance.peek());
-    let (mut reward_payout, mut value_slashed) = slashed_imbalance.split(reward_payout);
-
-    let per_reporter = reward_payout.peek() / (reporters.len() as u32).into();
-    for reporter in reporters {
-        let (reporter_reward, rest) = reward_payout.split(per_reporter);
-        reward_payout = rest;
-
-        // this cancels out the reporter reward imbalance internally, leading
-        // to no change in total issuance.
-        T::Currency::resolve_creating(reporter, reporter_reward);
-    }
-
-    // the rest goes to the on-slash imbalance handler (e.g. treasury)
-    value_slashed.subsume(reward_payout); // remainder of reward division remains.
-    T::Slash::on_unbalanced(value_slashed);
->>>>>>> develop
 }
 
 #[cfg(test)]

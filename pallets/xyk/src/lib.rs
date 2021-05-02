@@ -95,6 +95,18 @@ decl_storage! {
         Nonce get (fn nonce): u32;
 
     }
+    add_extra_genesis {
+        config(created_pools_for_staking): Vec<(T::AccountId, TokenId, Balance, TokenId, Balance, TokenId)>;
+
+        build(|config: &GenesisConfig<T>| {
+            config.created_pools_for_staking.iter().for_each(|(account_id, native_token_id, native_token_amount, pooled_token_id, pooled_token_amount, liquidity_token_id)| {
+                let created_liquidity_token_id: TokenId = T::Currency::get_next_currency_id().into();
+                assert!(created_liquidity_token_id == *liquidity_token_id, "Assets not initialized in the expected sequence");
+                assert!(<Module<T>>::create_pool( T::Origin::from(Some(account_id.clone()).into()), *native_token_id, *native_token_amount, *pooled_token_id, *pooled_token_amount).is_ok(), "Pool creation failed");
+                
+            })
+        })
+    }
 }
 
 // XYK extrinsics.

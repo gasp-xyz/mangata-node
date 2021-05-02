@@ -4334,6 +4334,7 @@ dependencies = [
  "mangata-primitives",
  "orml-tokens",
  "parity-scale-codec",
+ "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",

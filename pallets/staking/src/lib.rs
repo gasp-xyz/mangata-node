@@ -266,31 +266,7 @@
 
 
 // TODO
-// Morph chainspec accordingly
-
-// TODO
-// Change all Currency references
-
-// TODO
-// Add Valuate trait and implement it in xyk pallet
-
-// TODO
-// pull in the Tokens implementation
-
-// TODO
-// Create/Update exposures_liquidity_tokens when EraStakers(Clipped) is updated 
-
-// TODO
-// Valuation mechanism 
-
-// TODO
-// Add restriction that nominators can only nominate validators that use the same liquidity_token
-
-// TODO
-// Address TODOs in slashing.rs
-
-// TODO
-// Contemplate repercussions of keyed Imbalances
+// Maybe add DipatchResult as return for extrinsics
 
 
 #![recursion_limit = "128"]
@@ -971,10 +947,6 @@ impl Default for Releases {
         Releases::V4_0_0
     }
 }
-
-
-// TODO
-// Morph chainspec accordingly
 
 decl_storage! {
 	trait Store for Module<T: Trait> as Staking {

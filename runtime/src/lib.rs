@@ -497,7 +497,6 @@ construct_runtime!(
         RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
         Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
         Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
-        Staking: pallet_staking::{Module, Call, Config<T>, Storage, Event<T>, ValidateUnsigned},
         Authorship: pallet_authorship::{Module, Call, Storage, Inherent},
         Babe: pallet_babe::{Module, Call, Storage, Config, Inherent, ValidateUnsigned},
         Historical: pallet_session_historical::{Module},
@@ -506,7 +505,6 @@ construct_runtime!(
         TransactionPayment: pallet_transaction_payment::{Module, Storage},
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
         Offences: pallet_offences::{Module, Call, Storage, Event},
-        Xyk: pallet_xyk::{Module, Call, Storage, Event<T>},
         // Snowfork pallets
         Bridge: bridge::{Module, Call, Config, Storage, Event},
         Verifier: verifier::{Module, Call, Storage, Event, Config<T>},
@@ -515,6 +513,8 @@ construct_runtime!(
         ERC20: erc20_app::{Module, Call, Storage, Event<T>},
         AssetsInfo: pallet_assets_info::{Module, Call, Config, Storage, Event},
         Tokens: orml_tokens::{Module, Storage, Call, Event<T>, Config<T>},
+        Xyk: pallet_xyk::{Module, Call, Storage, Event<T>, Config<T>},
+        Staking: pallet_staking::{Module, Call, Config<T>, Storage, Event<T>, ValidateUnsigned},
     }
 );
 

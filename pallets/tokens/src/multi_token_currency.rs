@@ -345,6 +345,7 @@ pub trait MultiTokenCurrencyExtended<AccountId>: MultiTokenCurrency<AccountId> {
         address: &AccountId,
         amount: Self::Balance,
     ) -> DispatchResult;
+    fn get_next_currency_id() -> Self::CurrencyId;
     fn exists(currency_id: Self::CurrencyId) -> bool;
     fn burn_and_settle(
         currency_id: Self::CurrencyId,

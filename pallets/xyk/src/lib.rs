@@ -529,6 +529,23 @@ impl<T: Trait> Module<T> {
         Ok(result.saturated_into::<u128>().saturated_into::<Balance>())
     }
 
+    pub fn calculate_sell_price_no_fee(
+        input_reserve: Balance,
+        output_reserve: Balance,
+        sell_amount: Balance,
+    ) -> Result<Balance, DispatchError> {
+        let input_reserve_saturated: U256 = input_reserve.saturated_into::<u128>().into();
+        let output_reserve_saturated: U256 = output_reserve.saturated_into::<u128>().into();
+        let sell_amount_saturated: U256 = sell_amount.saturated_into::<u128>().into();
+
+        let numerator: U256 = sell_amount_saturated * output_reserve_saturated;
+        let denominator: U256 = input_reserve_saturated + sell_amount_saturated;
+        let result = numerator
+            .checked_div(denominator)
+            .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
+        Ok(result.saturated_into::<u128>().saturated_into::<Balance>())
+    }
+
     pub fn calculate_buy_price(
         input_reserve: Balance,
         output_reserve: Balance,
@@ -589,7 +606,7 @@ impl<T: Trait> Module<T> {
     fn settle_treasury_and_burn( 
         sold_asset_id: TokenId,
         bought_asset_id: TokenId,
-        sold_asset_amount: Balance,)
+        sold_asset_amount: Balance,) -> DispatchResult
         {
     
         let vault = Self::account_id();
@@ -629,7 +646,7 @@ impl<T: Trait> Module<T> {
                 Treasury::get(mangata_id) + treasury_amount
             );
             
-            T::Currency::burn_and_settle(mangata_id.into(), &vault, burn_amount.into());
+            T::Currency::burn_and_settle(mangata_id.into(), &vault, burn_amount.into())?;
         }
     
         //swap settling asset to mangata
@@ -641,29 +658,27 @@ impl<T: Trait> Module<T> {
                 input_reserve,
                 output_reserve,
                 treasury_amount,
-            );
+            )?;
             let burn_amount_in_mangata = Self::calculate_sell_price_no_fee(
                 input_reserve,
                 output_reserve,
                 burn_amount,
-            );
+            )?;
     
             Pools::insert(
                 (settling_asset_id, mangata_id),
                 input_reserve + treasury_amount + burn_amount,
-            );
-    
+            );    
             Pools::insert(
                 (mangata_id, settling_asset_id),
                 output_reserve - treasury_amount_in_mangata - burn_amount_in_mangata,
             );
-    
             Treasury::insert(
                 mangata_id,
                 Treasury::get(mangata_id) + treasury_amount_in_mangata
             );
 
-            T::Currency::burn_and_settle(mangata_id.into(), &vault, burn_amount.into());
+            T::Currency::burn_and_settle(mangata_id.into(), &vault, burn_amount.into())?;
         }
         // if settling token has no mangata connection, settling token is added to treasuries
         else {
@@ -676,9 +691,9 @@ impl<T: Trait> Module<T> {
                 TreasuryBurn::get(settling_asset_id) + burn_amount
             );
         }
+        Ok(())
     }
     
-
     fn account_id() -> T::AccountId {
         PALLET_ID.into_account()
     }

@@ -63,7 +63,7 @@ sp-api = "2.0.0"
 sc-client-db = { version = "0.8.0", default-features = false }
 codec = { package = "parity-scale-codec", version = "1.3.4" }
 sc-executor = "0.8.0"
-sc-transaction-pool = "2.0.0"
+sc-transaction-pool = { path='../transaction-pool', version = "2.0.0"}
 sp-transaction-pool = "2.0.0"
 sc-rpc-server = "2.0.0"
 sc-rpc = "2.0.0"

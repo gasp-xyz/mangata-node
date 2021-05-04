@@ -297,6 +297,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "assert_matches"
+version = "1.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b34d609dfbaf33d6889b2b7106d3ca345eacad44200913df5ba02bfd31d2ba9"
+
+[[package]]
 name = "async-channel"
 version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6246,22 +6252,25 @@ dependencies = [
 [[package]]
 name = "sc-transaction-pool"
 version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "248d4bcde22c936b462e4aa6c32e0f49a96942b123a1a46bc60cd02fbf907002"
 dependencies = [
+ "assert_matches",
  "derive_more",
  "futures 0.3.8",
  "futures-diagnose",
+ "hex",
  "intervalier",
  "log",
  "parity-scale-codec",
  "parity-util-mem",
  "parking_lot 0.10.2",
+ "sc-block-builder",
  "sc-client-api",
  "sc-transaction-graph",
  "sp-api",
  "sp-blockchain",
+ "sp-consensus",
  "sp-core",
+ "sp-keyring",
  "sp-runtime",
  "sp-tracing",
  "sp-transaction-pool",

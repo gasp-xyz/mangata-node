@@ -85,6 +85,8 @@ decl_storage! {
 
         LiquidityAssets get(fn liquidity_asset): map hasher(opaque_blake2_256) (TokenId, TokenId) => TokenId;
         LiquidityPools get(fn liquidity_pool): map hasher(opaque_blake2_256) TokenId => (TokenId, TokenId);
+        Treasury get(fn treasury): map hasher(opaque_blake2_256) TokenId => Balance;
+        TreasuryBurn get(fn treasury_burn): map hasher(opaque_blake2_256) TokenId => Balance;
 
         Nonce get (fn nonce): u32;
 

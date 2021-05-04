@@ -28,6 +28,11 @@ pub trait Trait: frame_system::Trait {
 }
 
 const PALLET_ID: ModuleId = ModuleId(*b"79b14c96");
+// 1/100 %
+const TREASURY_PERCENTAGE: u128 = 5; 
+const BUYANDBURN_PERCENTAGE: u128 = 5; 
+const SWAPFEE_PERCENTAGE: u128 = 30; 
+const MANGATA_ID: u128 = 0; 
 
 decl_error! {
     /// Errors
@@ -580,6 +585,100 @@ impl<T: Trait> Module<T> {
 
         (first_asset_amount, second_asset_amount)
     }
+
+    fn settle_treasury_and_burn( 
+        sold_asset_id: TokenId,
+        bought_asset_id: TokenId,
+        sold_asset_amount: Balance,)
+        {
+    
+        let vault = Self::account_id();
+        let mangata_id = MANGATA_ID.saturated_into::<TokenId>();
+        //TODO cucat z fn
+        let input_reserve = <Pools<T>>::get((sold_asset_id, bought_asset_id));
+        let output_reserve = <Pools<T>>::get((bought_asset_id, sold_asset_id));
+    
+        let mut settling_asset_id = bought_asset_id;
+        let mut treasury_amount = sold_asset_amount * TREASURY_PERCENTAGE.saturated_into::<T::Balance>() / 10000.saturated_into::<T::Balance>();
+        let mut burn_amount = sold_asset_amount * BUYANDBURN_PERCENTAGE.saturated_into::<T::Balance>() / 10000.saturated_into::<T::Balance>();
+        
+        //Check whether to settle treasury and buyburn with sold or bought asset.
+        //By default we are using bought, only in case if sold is directly mangata, or is in pair with mangata and bought is not
+        if sold_asset_id == mangata_id  || (<Pools<T>>::contains_key((sold_asset_id,mangata_id)) && !<Pools<T>>::contains_key((bought_asset_id,mangata_id))){
+            settling_asset_id = sold_asset_id;
+    
+            <Pools<T>>::insert(
+                (&sold_asset_id, &bought_asset_id),
+                input_reserve - burn_amount - treasury_amount,
+            );
+        }
+        //sold amount recalculated to bought asset amount 
+        else {
+            treasury_amount = treasury_amount * output_reserve / input_reserve; 
+            burn_amount = burn_amount * output_reserve / input_reserve; 
+    
+            <Pools<T>>::insert(
+                (&bought_asset_id, &sold_asset_id),
+                output_reserve - treasury_amount - burn_amount,
+            );
+        }
+    
+        if settling_asset_id == mangata_id {
+    
+            <Treasury<T>>::insert(
+                mangata_id,
+                <Treasury<T>>::get(mangata_id) + treasury_amount
+            );
+            
+            T::Currency::burn_and_settle(&mangata_id.into(), &vault, &burn_amount.into())?;
+        }
+    
+        //swap settling asset to mangata
+        else if <Pools<T>>::contains_key((settling_asset_id,mangata_id)){
+            let input_reserve = <Pools<T>>::get((settling_asset_id, mangata_id));
+            let output_reserve = <Pools<T>>::get((mangata_id, settling_asset_id));
+    
+            let treasury_amount_in_mangata = Self::calculate_sell_price_no_fee(
+                input_reserve,
+                output_reserve,
+                treasury_amount,
+            );
+            let burn_amount_in_mangata = Self::calculate_sell_price_no_fee(
+                input_reserve,
+                output_reserve,
+                burn_amount,
+            );
+    
+            <Pools<T>>::insert(
+                (settling_asset_id, mangata_id),
+                input_reserve + treasury_amount + burn_amount,
+            );
+    
+            <Pools<T>>::insert(
+                (mangata_id, settling_asset_id),
+                output_reserve - treasury_amount_in_mangata - burn_amount_in_mangata,
+            );
+    
+            <Treasury<T>>::insert(
+                mangata_id,
+                <Treasury<T>>::get(mangata_id) + treasury_amount_in_mangata
+            );
+
+            T::Currency::burn_and_settle(&mangata_id.into(), &vault, &burn_amount.into())?;
+        }
+        // if settling token has no mangata connection, settling token is added to treasuries
+        else {
+            <Treasury<T>>::insert(
+                settling_asset_id,
+                <Treasury<T>>::get(settling_asset_id) + treasury_amount
+            );
+            <TreasuryBurn<T>>::insert(
+                settling_asset_id,
+                <TreasuryBurn<T>>::get(settling_asset_id) + burn_amount
+            );
+        }
+    }
+    
 
     fn account_id() -> T::AccountId {
         PALLET_ID.into_account()

@@ -5432,17 +5432,17 @@ dependencies = [
 [[package]]
 name = "sc-basic-authorship"
 version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "527f6822cf592ac2b4a6ca7d04601c48d6728b8c03d9a9cc0488e4b535c69c6d"
 dependencies = [
  "futures 0.3.8",
  "futures-timer 3.0.2",
  "log",
  "parity-scale-codec",
+ "parking_lot 0.10.2",
  "sc-block-builder",
  "sc-client-api",
  "sc-proposer-metrics",
  "sc-telemetry",
+ "sc-transaction-pool",
  "sp-api",
  "sp-blockchain",
  "sp-consensus",
@@ -5470,6 +5470,7 @@ dependencies = [
  "sp-inherents",
  "sp-runtime",
  "sp-state-machine",
+ "sp-trie",
 ]
 
 [[package]]

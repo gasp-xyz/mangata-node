@@ -262,6 +262,12 @@ decl_module! {
                 output_reserve - bought_asset_amount,
             );
 
+            Self::settle_treasury_and_burn(
+                sold_asset_id,
+                bought_asset_id,
+                sold_asset_amount
+            )?;
+
             Self::deposit_event(RawEvent::AssetsSwapped(sender,sold_asset_id, sold_asset_amount, bought_asset_id, bought_asset_amount));
 
             Ok(())
@@ -337,6 +343,12 @@ decl_module! {
                 (bought_asset_id, sold_asset_id),
                 output_reserve - bought_asset_amount,
             );
+
+            Self::settle_treasury_and_burn(
+                sold_asset_id,
+                bought_asset_id,
+                sold_asset_amount
+            )?;
 
             Self::deposit_event(RawEvent::AssetsSwapped(sender,sold_asset_id, sold_asset_amount, bought_asset_id, bought_asset_amount));
 

@@ -615,6 +615,7 @@ impl<T: Trait> Module<T> {
         (first_asset_amount, second_asset_amount)
     }
 
+    //TODO U256?
     fn settle_treasury_and_burn( 
         sold_asset_id: TokenId,
         bought_asset_id: TokenId,
@@ -631,8 +632,8 @@ impl<T: Trait> Module<T> {
         let mut burn_amount = sold_asset_amount * BUYANDBURN_PERCENTAGE.saturated_into::<Balance>() / 10000.saturated_into::<Balance>();
         
         //Check whether to settle treasury and buyburn with sold or bought asset.
-        //By default we are using bought, only in case if sold is directly mangata, or is in pair with mangata and bought is not
-        if sold_asset_id == mangata_id  || (Pools::contains_key((sold_asset_id,mangata_id)) && !Pools::contains_key((bought_asset_id,mangata_id))){
+        //By default we are using bought id, only in case if sold is directly mangata, or is in pair with mangata and bought id is not
+        if sold_asset_id == mangata_id  || (Pools::contains_key((sold_asset_id,mangata_id)) && !Pools::contains_key((bought_asset_id,mangata_id)) && bought_asset_id != mangata_id){
             settling_asset_id = sold_asset_id;
     
             Pools::insert(
@@ -690,7 +691,7 @@ impl<T: Trait> Module<T> {
                 Treasury::get(mangata_id) + treasury_amount_in_mangata
             );
 
-            T::Currency::burn_and_settle(mangata_id.into(), &vault, burn_amount.into())?;
+            T::Currency::burn_and_settle(mangata_id.into(), &vault, burn_amount_in_mangata.into())?;
         }
         // if settling token has no mangata connection, settling token is added to treasuries
         else {

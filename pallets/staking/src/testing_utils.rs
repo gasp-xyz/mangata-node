@@ -18,6 +18,7 @@
 //! Testing utils for staking. Provides some common functions to setup staking state, such as
 //! bonding validators, nominators, and generating different types of solutions.
 
+use crate::Module as Staking;
 use crate::*;
 use frame_benchmarking::account;
 use frame_system::RawOrigin;
@@ -27,18 +28,34 @@ use rand_chacha::{
 };
 use sp_io::hashing::blake2_256;
 use sp_npos_elections::*;
-use sp_runtime::traits::{SaturatedConversion, Zero};
-use sp_std::{
-    collections::btree_map::BTreeMap,
-    convert::{From, TryInto},
-    mem::size_of,
-    prelude::*,
-    result,
-};
-use codec::{Encode, Decode};
 
-pub use pallet_staking::offchain_election;
-pub use pallet_staking::slashing;
+use sp_core::U256;
+
+
+const BASE_TOKEN_VALUE: u128 = 100__000_000_000_000_000_000u128;
+const SEED: u32 = 0;
+
+// use crate::*;
+// use frame_benchmarking::account;
+// use frame_system::RawOrigin;
+// use rand_chacha::{
+//     rand_core::{RngCore, SeedableRng},
+//     ChaChaRng,
+// };
+// use sp_io::hashing::blake2_256;
+// use sp_npos_elections::*;
+// use sp_runtime::traits::{SaturatedConversion, Zero};
+// use sp_std::{
+//     collections::btree_map::BTreeMap,
+//     convert::{From, TryInto},
+//     mem::size_of,
+//     prelude::*,
+//     result,
+// };
+// use codec::{Encode, Decode};
+
+// pub use pallet_staking::offchain_election;
+// pub use pallet_staking::slashing;
 
 // /// Create a liquidity pool in Xyk.
 // pub fn create_xyk_pool<T: Trait>(

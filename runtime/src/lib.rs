@@ -55,6 +55,7 @@ pub use pallet_assets_info;
 use pallet_session::historical as pallet_session_historical;
 pub use pallet_staking::StakerStatus;
 pub use pallet_xyk;
+use pallet_xyk::XykFunctionsTrait;
 use xyk_runtime_api::{RpcAmountsResult, RpcResult};
 
 /// Bridge pallets
@@ -319,6 +320,8 @@ impl pallet_staking::Trait for Runtime {
     type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
     type UnsignedPriority = ();
     type WeightInfo = weights::pallet_staking::WeightInfo;
+    #[cfg(feature = "runtime-benchmarks")]
+	type Xyk = Xyk;
 }
 
 parameter_types! {
@@ -771,14 +774,8 @@ impl_runtime_apis! {
             use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
 
             use frame_system_benchmarking::Module as SystemBench;
-			use pallet_staking_benchmarking::Module as StakingBench;
 
             impl frame_system_benchmarking::Trait for Runtime {}
-
-			impl pallet_staking_benchmarking::Trait for Runtime {
-                type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-                type Xyk = Xyk;
-            }
 
             let whitelist: Vec<TrackedStorageKey> = vec![
                 // Block Number
@@ -800,7 +797,7 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, pallet_balances, Balances);
             add_benchmark!(params, batches, pallet_timestamp, Timestamp);
             add_benchmark!(params, batches, bridge, Bridge);
-			add_benchmark!(params, batches, pallet_staking, StakingBench::<Runtime>);
+			add_benchmark!(params, batches, pallet_staking, Staking);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)

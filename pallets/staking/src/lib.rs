@@ -277,6 +277,11 @@
 // #[cfg(test)]
 // mod tests;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod testing_utils;
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
 pub mod default_weights;
 pub mod inflation;
 pub mod offchain_election;
@@ -334,9 +339,10 @@ use sp_std::{
     prelude::*,
     result,
 };
-use orml_tokens::{MultiTokenCurrency, MultiTokenLockableCurrency};
+use orml_tokens::{MultiTokenCurrency, MultiTokenLockableCurrency, MultiTokenCurrencyExtended};
 use pallet_xyk::Valuate;
 use mangata_primitives::{Balance, TokenId};
+use pallet_xyk::XykFunctionsTrait;
 
 const DUMMY_VALUE: u8 = 0u8;
 const STAKING_ID: LockIdentifier = *b"staking ";
@@ -815,7 +821,7 @@ pub trait Trait: frame_system::Trait + SendTransactionTypes<Call<Self>> {
 	type NativeCurrencyId: Get<TokenId>;
 
 	/// The pallet used for tokens
-	type Tokens: MultiTokenLockableCurrency<Self::AccountId, Moment=Self::BlockNumber>;
+	type Tokens: MultiTokenLockableCurrency<Self::AccountId, Moment=Self::BlockNumber> + MultiTokenCurrencyExtended<Self::AccountId>;
 
 	/// The pallet used for Valuations
 	type Valuations: Valuate;
@@ -905,6 +911,9 @@ pub trait Trait: frame_system::Trait + SendTransactionTypes<Call<Self>> {
 
 	/// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
+
+	#[cfg(feature = "runtime-benchmarks")]
+	type Xyk: XykFunctionsTrait<Self::AccountId>;
 }
 
 /// Mode of era-forcing.

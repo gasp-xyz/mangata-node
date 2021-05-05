@@ -3,37 +3,41 @@
 
 // mod mock;
 use super::*;
-mod testing_utils;
+use crate::Module as Staking;
 use testing_utils::*;
 
-use sp_std::prelude::*;
-use sp_std::vec;
+pub use frame_benchmarking::{account, benchmarks, whitelisted_caller};
+use frame_system::RawOrigin;
+use sp_runtime::traits::One;
+
+// use sp_std::prelude::*;
+// use sp_std::vec;
 use sp_core::U256;
 
-use frame_system::{RawOrigin, Module as System, Trait as SystemTrait, Call as SystemCall};
-use frame_benchmarking::{benchmarks, account, whitelisted_caller};
-use frame_support::traits::{OnInitialize, Get, Imbalance};
-use frame_support::{decl_module, ensure, storage::{IterableStorageMap, StorageValue, StorageMap, StorageDoubleMap}};
+// use frame_system::{RawOrigin, Module as System, Trait as SystemTrait, Call as SystemCall};
+// use frame_benchmarking::{benchmarks, account, whitelisted_caller};
+// use frame_support::traits::{OnInitialize, Get, Imbalance};
+// use frame_support::{decl_module, ensure, storage::{IterableStorageMap, StorageValue, StorageMap, StorageDoubleMap}};
 
-use sp_runtime::{Perbill, traits::{One, Convert, StaticLookup, Saturating, UniqueSaturatedInto, SaturatedConversion, Zero}};
-use sp_staking::offence::{ReportOffence, Offence, OffenceDetails};
-use sp_staking::SessionIndex;
+// use sp_runtime::{Perbill, traits::{One, Convert, StaticLookup, Saturating, UniqueSaturatedInto, SaturatedConversion, Zero}};
+// use sp_staking::offence::{ReportOffence, Offence, OffenceDetails};
+// use sp_staking::SessionIndex;
 
-use pallet_staking::{
-	Module as Staking, Trait as StakingTrait, RewardDestination, ValidatorPrefs, Store as StakingStore,
-	Exposure, IndividualExposure, ElectionStatus, MAX_NOMINATIONS, Event as StakingEvent, *
-};
-use pallet_xyk::{Trait as XykTrait, Module as XykModule, XykFunctionsTrait};
-use orml_tokens::{MultiTokenCurrency, MultiTokenLockableCurrency, MultiTokenCurrencyExtended};
-use mangata_primitives::{Balance, TokenId};
+// use pallet_staking::{
+// 	Module as Staking, Trait as StakingTrait, RewardDestination, ValidatorPrefs, Store as StakingStore,
+// 	Exposure, IndividualExposure, ElectionStatus, MAX_NOMINATIONS, Event as StakingEvent, *
+// };
+// use pallet_xyk::{Trait as XykTrait, Module as XykModule, XykFunctionsTrait};
+// use orml_tokens::{MultiTokenCurrency, MultiTokenLockableCurrency, MultiTokenCurrencyExtended};
+// use mangata_primitives::{Balance, TokenId};
 
-pub struct Module<T: Trait>(Staking<T>);
+// pub struct Module<T: Trait>(Staking<T>);
 
-pub trait Trait: StakingTrait + XykTrait
-{
-    type Tokens: MultiTokenLockableCurrency<Self::AccountId> + MultiTokenCurrencyExtended<Self::AccountId>;
-    type Xyk: XykFunctionsTrait<Self::AccountId>;
-}
+// pub trait Trait: StakingTrait + XykTrait
+// {
+//     type Tokens: MultiTokenLockableCurrency<Self::AccountId> + MultiTokenCurrencyExtended<Self::AccountId>;
+//     type Xyk: XykFunctionsTrait<Self::AccountId>;
+// }
 
 
 const SEED: u32 = 0;

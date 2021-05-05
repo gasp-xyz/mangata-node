@@ -22,21 +22,16 @@ use pallet_staking::{
 	Module as Staking, Trait as StakingTrait, RewardDestination, ValidatorPrefs, Store as StakingStore,
 	Exposure, IndividualExposure, ElectionStatus, MAX_NOMINATIONS, Event as StakingEvent, *
 };
-use pallet_xyk::{Trait as XykTrait, Module as XykModule};
+use pallet_xyk::{Trait as XykTrait, Module as XykModule, XykFunctionsTrait};
 use orml_tokens::{MultiTokenCurrency, MultiTokenLockableCurrency, MultiTokenCurrencyExtended};
 use mangata_primitives::{Balance, TokenId};
 
-// pub struct Module<T: Trait>(Staking<T>);
+pub struct Module<T: Trait>(Staking<T>);
 
 pub trait Trait: StakingTrait + XykTrait
 {
     type Tokens: MultiTokenLockableCurrency<Self::AccountId> + MultiTokenCurrencyExtended<Self::AccountId>;
-}
-
-decl_module! {
-    pub struct Module<T: Trait> for enum Call where origin: T::Origin {
-
-    }
+    type Xyk: XykFunctionsTrait<Self::AccountId>;
 }
 
 
@@ -149,9 +144,9 @@ benchmarks! {
     _{}
 
     bond {
-        let _ = create_xyk_pool::<T>
-            (SEED_FOR_DEFAULT_USERS, 0, NATIVE_TOKEN_ID, DUMMY_TOKEN_FOR_POOL_ID, DEFAULT_LIQUIDITY_TOKEN_ID, 300);
-        // let stash = create_funded_user::<T>("stash", USER_SEED, DEFAULT_LIQUIDITY_TOKEN_ID, 100);
+        // let _ = create_xyk_pool::<T>
+            // (SEED_FOR_DEFAULT_USERS, 0, NATIVE_TOKEN_ID, DUMMY_TOKEN_FOR_POOL_ID, DEFAULT_LIQUIDITY_TOKEN_ID, 300);
+        let stash = create_funded_user::<T>("stash", USER_SEED, DEFAULT_LIQUIDITY_TOKEN_ID, 100);
         // let controller = create_funded_user::<T>("controller", USER_SEED, DEFAULT_LIQUIDITY_TOKEN_ID, 100);
         // let controller_lookup: <T::Lookup as StaticLookup>::Source = T::Lookup::unlookup(controller.clone());
         // let reward_destination = RewardDestination::Stash;
@@ -170,8 +165,6 @@ benchmarks! {
     }
 
     // bond_extra {
-    //     let _ = create_xyk_pool::<T>
-    //         (SEED_FOR_DEFAULT_USERS, 0, NATIVE_TOKEN_ID, DUMMY_TOKEN_FOR_POOL_ID, DEFAULT_LIQUIDITY_TOKEN_ID, 300);
     //     let (stash, controller) = create_stash_controller::<T>(USER_SEED, DEFAULT_LIQUIDITY_TOKEN_ID, 100, Default::default())?;
         
     //     let x_u256: U256 = BASE_TOKEN_VALUE.saturated_into::<u128>().into();
@@ -191,8 +184,6 @@ benchmarks! {
     // }
 
     // unbond {
-    //     let _ = create_xyk_pool::<T>
-    //         (SEED_FOR_DEFAULT_USERS, 0, NATIVE_TOKEN_ID, DUMMY_TOKEN_FOR_POOL_ID, DEFAULT_LIQUIDITY_TOKEN_ID, 300);
     //     let (_, controller) = create_stash_controller::<T>(USER_SEED, DEFAULT_LIQUIDITY_TOKEN_ID, 100, Default::default())?;
         
     //     let x_u256: U256 = BASE_TOKEN_VALUE.saturated_into::<u128>().into();

@@ -777,6 +777,7 @@ impl_runtime_apis! {
 
 			impl pallet_staking_benchmarking::Trait for Runtime {
                 type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+                type Xyk = Xyk;
             }
 
             let whitelist: Vec<TrackedStorageKey> = vec![

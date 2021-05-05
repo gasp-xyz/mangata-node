@@ -40,51 +40,51 @@ use codec::{Encode, Decode};
 pub use pallet_staking::offchain_election;
 pub use pallet_staking::slashing;
 
-/// Create a liquidity pool in Xyk.
-pub fn create_xyk_pool<T: Trait>(
-    string: &'static str,
-    n: u32,
-    first_asset_id: u32,
-    second_asset_id: u32,
-    liquidity_token_id: u32,
-    balance_factor: u32,
-) -> T::AccountId {
+// /// Create a liquidity pool in Xyk.
+// pub fn create_xyk_pool<T: Trait>(
+//     string: &'static str,
+//     n: u32,
+//     first_asset_id: u32,
+//     second_asset_id: u32,
+//     liquidity_token_id: u32,
+//     balance_factor: u32,
+// ) -> T::AccountId {
 
-    // assert!(<T as Trait>::Tokens::exists(first_asset_id.into()));
-    // assert!(<T as Trait>::Tokens::exists(second_asset_id.into()));
-    // assert!(<T as Trait>::Tokens::exists(liquidity_token_id.into()));
+//     // assert!(<T as Trait>::Tokens::exists(first_asset_id.into()));
+//     // assert!(<T as Trait>::Tokens::exists(second_asset_id.into()));
+//     // assert!(<T as Trait>::Tokens::exists(liquidity_token_id.into()));
 
-    // assert!(<T as Trait>::Tokens::total_issuance(first_asset_id.into()).is_zero());
-    // assert!(<T as Trait>::Tokens::total_issuance(second_asset_id.into()).is_zero());
-    // assert!(<T as Trait>::Tokens::total_issuance(liquidity_token_id.into()).is_zero());
+//     // assert!(<T as Trait>::Tokens::total_issuance(first_asset_id.into()).is_zero());
+//     // assert!(<T as Trait>::Tokens::total_issuance(second_asset_id.into()).is_zero());
+//     // assert!(<T as Trait>::Tokens::total_issuance(liquidity_token_id.into()).is_zero());
 
-    let user: T::AccountId = account(string, n, SEED);
+//     let user: T::AccountId = account(string, n, SEED);
 
-    let base_token_value_u256: U256 = BASE_TOKEN_VALUE.saturated_into::<u128>().into();
-    let balance_factor_u256: U256 = balance_factor.saturated_into::<u128>().into();
-    let balance_u256 = base_token_value_u256 * balance_factor_u256;
-    let balance: u128 = balance_u256.saturated_into::<u128>();
+//     let base_token_value_u256: U256 = BASE_TOKEN_VALUE.saturated_into::<u128>().into();
+//     let balance_factor_u256: U256 = balance_factor.saturated_into::<u128>().into();
+//     let balance_u256 = base_token_value_u256 * balance_factor_u256;
+//     let balance: u128 = balance_u256.saturated_into::<u128>();
 
-    let first_asset_id: u32 = NATIVE_TOKEN_ID;
-    let first_asset_amount: u128 = balance;
-    let second_asset_id: u32 = DUMMY_TOKEN_FOR_POOL_ID;
-    let second_asset_amount: u128 = balance;
+//     let first_asset_id: u32 = NATIVE_TOKEN_ID;
+//     let first_asset_amount: u128 = balance;
+//     let second_asset_id: u32 = DUMMY_TOKEN_FOR_POOL_ID;
+//     let second_asset_amount: u128 = balance;
 
-    // mint MNG
-    assert!(<T as Trait>::Tokens::mint(first_asset_id.into(), &user, first_asset_amount.into()).is_ok());
-    // mint pooled token
-    assert!(<T as Trait>::Tokens::mint(second_asset_id.into(), &user, second_asset_amount.into()).is_ok());
-    // let xyk_call_result = Xyk::<T>::create_pool(RawOrigin::Signed(user.clone()).into(), first_asset_id, first_asset_amount / 2, second_asset_id, second_asset_amount / 2);
-    // frame_support::debug::RuntimeLogger::init();
-    // frame_support::debug::debug!(target: "customTarget", "{:?}", xyk_call_result);
-    // RawOrigin::Signed(user.clone()).into(),
-    // let test = 
-    let xyk_call = pallet_xyk::Call::create_pool( first_asset_id, first_asset_amount / 2, second_asset_id, second_asset_amount / 2);
-    let xyk_call_disptach_result = Call::Xyk(xyk_call).disptach();
-    // mint liquidity
-    assert!(xyk_call_result.is_ok());
-    user
-}
+//     // mint MNG
+//     assert!(<T as Trait>::Tokens::mint(first_asset_id.into(), &user, first_asset_amount.into()).is_ok());
+//     // mint pooled token
+//     assert!(<T as Trait>::Tokens::mint(second_asset_id.into(), &user, second_asset_amount.into()).is_ok());
+//     let xyk_call_result = XykModule::<T>::create_pool(RawOrigin::Root.into(), first_asset_id, first_asset_amount / 2, second_asset_id, second_asset_amount / 2);
+//     // frame_support::debug::RuntimeLogger::init();
+//     // frame_support::debug::debug!(target: "customTarget", "{:?}", xyk_call_result);
+//     // RawOrigin::Signed(user.clone()).into(),
+//     // let test = 
+//     // let xyk_call = pallet_xyk::Call::create_pool( first_asset_id, first_asset_amount / 2, second_asset_id, second_asset_amount / 2);
+//     // let xyk_call_disptach_result = Call::Xyk(xyk_call).disptach();
+//     // mint liquidity
+//     assert!(xyk_call_result.is_ok());
+//     user
+// }
 
 /// Grab a funded user.
 pub fn create_funded_user<T: Trait>(
@@ -101,13 +101,19 @@ pub fn create_funded_user<T: Trait>(
     let balance: u128 = balance_u256.saturated_into::<u128>();
 
     // calculate MNG required and pooled_token_required.
-    let (first_asset_id, first_asset_amount, second_asset_id, second_asset_amount) = XykModule::<T>::get_tokens_required_for_minting(liquidity_token_id, balance);
+    let (first_asset_id, first_asset_amount, second_asset_id, second_asset_amount) = <T as Trait>::Xyk::get_tokens_required_for_minting(liquidity_token_id.into(), balance.into()).into();
+    
+    let first_asset_id: u32 = first_asset_id.into();
+    let first_asset_amount: u128 = first_asset_amount.into();
+    let second_asset_id: u32 = second_asset_id.into();
+    let second_asset_amount: u128 = second_asset_amount.into();
+
     // mint MNG
     assert!(<T as Trait>::Tokens::mint(first_asset_id.into(), &user, first_asset_amount.into()).is_ok());
     // mint pooled token
     assert!(<T as Trait>::Tokens::mint(second_asset_id.into(), &user, second_asset_amount.into()).is_ok());
     // mint liquidity
-    assert!(XykModule::<T>::mint_liquidity(RawOrigin::Signed(user.clone()).into(), first_asset_id, second_asset_id, first_asset_amount).is_ok());
+    assert!(<T as Trait>::Xyk::mint_liquidity(user.clone(), first_asset_id.into(), second_asset_id.into(), first_asset_amount.into()).is_ok());
     user
 }
 

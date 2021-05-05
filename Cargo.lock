@@ -3405,6 +3405,7 @@ dependencies = [
  "pallet-randomness-collective-flip",
  "pallet-session",
  "pallet-staking 2.0.0",
+ "pallet-staking-benchmarking",
  "pallet-staking-reward-curve",
  "pallet-sudo",
  "pallet-timestamp",
@@ -4189,6 +4190,29 @@ dependencies = [
  "parity-scale-codec",
  "serde",
  "sp-application-crypto",
+ "sp-io",
+ "sp-npos-elections",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
+ "static_assertions",
+]
+
+[[package]]
+name = "pallet-staking-benchmarking"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "mangata-primitives",
+ "orml-tokens",
+ "pallet-staking 2.0.0",
+ "pallet-xyk",
+ "parity-scale-codec",
+ "rand_chacha 0.2.2",
+ "serde",
+ "sp-core",
  "sp-io",
  "sp-npos-elections",
  "sp-runtime",

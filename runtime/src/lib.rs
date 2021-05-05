@@ -15,7 +15,7 @@ use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::curve::PiecewiseLinear;
 use sp_runtime::traits::{
     BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, NumberFor, OpaqueKeys,
-    Saturating, Verify,
+    Saturating, Verify, Convert
 };
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
@@ -49,6 +49,7 @@ pub use sp_runtime::{Perbill, Permill};
 
 pub use mangata_primitives::{Amount, Balance, TokenId};
 pub use orml_tokens;
+use orml_tokens::MultiTokenCurrency;
 pub use pallet_assets_info;
 
 use pallet_session::historical as pallet_session_historical;
@@ -107,6 +108,8 @@ pub mod opaque {
 }
 
 mod weights;
+
+pub const NATIVE_CURRENCY_ID: u32 = 0;
 
 impl_opaque_keys! {
     pub struct SessionKeys {
@@ -275,12 +278,28 @@ parameter_types! {
     pub MinSolutionScoreBump: Perbill = Perbill::from_rational_approximation(5u32, 10_000);
 }
 
+/// Struct that handles the conversion of Balance -> `u64`. This is used for staking's election
+/// calculation.
+pub struct CurrencyToVoteHandler;
+
+impl CurrencyToVoteHandler {
+	fn factor() -> Balance { (orml_tokens::MultiTokenCurrencyAdapter::<Runtime>::total_issuance(NATIVE_CURRENCY_ID) / u64::max_value() as Balance).max(1) }
+}
+
+impl Convert<Balance, u64> for CurrencyToVoteHandler {
+	fn convert(x: Balance) -> u64 { (x / Self::factor()) as u64 }
+}
+
+impl Convert<u128, Balance> for CurrencyToVoteHandler {
+	fn convert(x: u128) -> Balance { x * Self::factor() }
+}
+
 impl pallet_staking::Trait for Runtime {
     type NativeCurrencyId = NativeCurrencyId;
     type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
     type Valuations = Xyk;
     type UnixTime = Timestamp;
-    type CurrencyToVote = ();
+    type CurrencyToVote = CurrencyToVoteHandler;
     type RewardRemainder = ();
     type Event = Event;
     type Slash = (); // send the slashed funds to the treasury.
@@ -420,7 +439,7 @@ impl pallet_sudo::Trait for Runtime {
 }
 
 parameter_types! {
-    pub const NativeCurrencyId: u32 = 0;
+    pub const NativeCurrencyId: u32 = NATIVE_CURRENCY_ID;
 }
 
 impl pallet_xyk::Trait for Runtime {
@@ -752,7 +771,13 @@ impl_runtime_apis! {
             use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
 
             use frame_system_benchmarking::Module as SystemBench;
+			use pallet_staking_benchmarking::Module as StakingBench;
+
             impl frame_system_benchmarking::Trait for Runtime {}
+
+			impl pallet_staking_benchmarking::Trait for Runtime {
+                type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+            }
 
             let whitelist: Vec<TrackedStorageKey> = vec![
                 // Block Number
@@ -774,6 +799,7 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, pallet_balances, Balances);
             add_benchmark!(params, batches, pallet_timestamp, Timestamp);
             add_benchmark!(params, batches, bridge, Bridge);
+			add_benchmark!(params, batches, pallet_staking, StakingBench::<Runtime>);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)

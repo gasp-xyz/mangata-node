@@ -116,7 +116,7 @@ decl_module! {
         fn deposit_event() = default;
 
         #[weight = 10_000]
-        fn create_pool(
+        pub fn create_pool(
             origin,
             first_asset_id: TokenId,
             first_asset_amount: Balance,
@@ -200,7 +200,6 @@ decl_module! {
             LiquidityAssets::insert((first_asset_id, second_asset_id), liquidity_asset_id);
             LiquidityPools::insert(liquidity_asset_id, (first_asset_id, second_asset_id));
 
-
             Self::deposit_event(RawEvent::PoolCreated(sender, first_asset_id, first_asset_amount, second_asset_id, second_asset_amount));
 
             Ok(())
@@ -209,7 +208,7 @@ decl_module! {
 
         // you will sell your sold_asset_amount of sold_asset_id to get some amount of bought_asset_id
         #[weight = (10_000, Pays::No)]
-        fn sell_asset (
+        pub fn sell_asset (
             origin,
             sold_asset_id: TokenId,
             bought_asset_id: TokenId,
@@ -279,7 +278,7 @@ decl_module! {
         }
 
         #[weight = (10_000, Pays::No)]
-        fn buy_asset (
+        pub fn buy_asset (
             origin,
             sold_asset_id: TokenId,
             bought_asset_id: TokenId,
@@ -355,7 +354,7 @@ decl_module! {
         }
 
         #[weight = 10_000]
-        fn mint_liquidity (
+        pub fn mint_liquidity (
             origin,
             first_asset_id: TokenId,
             second_asset_id: TokenId,
@@ -445,7 +444,7 @@ decl_module! {
         }
 
         #[weight = 10_000]
-        fn burn_liquidity (
+        pub fn burn_liquidity (
             origin,
             first_asset_id: TokenId,
             second_asset_id: TokenId,
@@ -595,6 +594,30 @@ impl<T: Trait> Module<T> {
             .saturated_into::<Balance>();
 
         (first_asset_amount, second_asset_amount)
+    }
+
+    // This function has not been verified
+    pub fn get_tokens_required_for_minting(liquidity_asset_id: TokenId, liquidity_token_amount: Balance) -> (TokenId, Balance, TokenId, Balance){
+        let (first_asset_id, second_asset_id) = LiquidityPools::get(liquidity_asset_id);
+        let first_asset_reserve = Pools::get((first_asset_id, second_asset_id));
+        let second_asset_reserve = Pools::get((second_asset_id, first_asset_id));
+        let total_liquidity_assets: Balance = T::Currency::total_issuance(liquidity_asset_id.into()).into();
+
+        let liquidity_token_amount_u256: U256 = liquidity_token_amount.saturated_into::<u128>().into();
+        let first_asset_reserve_u256: U256 = first_asset_reserve.saturated_into::<u128>().into();
+        let second_asset_reserve_u256: U256 = second_asset_reserve.saturated_into::<u128>().into();
+        let total_liquidity_assets_u256: U256 = total_liquidity_assets.saturated_into::<u128>().into();
+
+        let second_asset_amount_u256: U256 = liquidity_token_amount_u256 * second_asset_reserve_u256 / total_liquidity_assets_u256 + 1;
+        let first_asset_amount_u256: U256 = liquidity_token_amount_u256 * first_asset_reserve_u256 / total_liquidity_assets_u256 + 1;
+
+        let second_asset_amount = second_asset_amount_u256.saturated_into::<u128>()
+            .saturated_into::<Balance>();
+        let first_asset_amount = first_asset_amount_u256.saturated_into::<u128>()
+            .saturated_into::<Balance>();
+
+        (first_asset_id, first_asset_amount, second_asset_id, second_asset_amount)
+
     }
 
     fn account_id() -> T::AccountId {

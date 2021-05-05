@@ -272,14 +272,10 @@
 #![recursion_limit = "128"]
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(any(feature = "runtime-benchmarks", test))]
-pub mod benchmarking;
-#[cfg(test)]
-mod mock;
-#[cfg(any(feature = "runtime-benchmarks", test))]
-pub mod testing_utils;
-#[cfg(test)]
-mod tests;
+// #[cfg(test)]
+// mod mock;
+// #[cfg(test)]
+// mod tests;
 
 pub mod default_weights;
 pub mod inflation;
@@ -394,9 +390,9 @@ pub type ChainAccuracy = Perbill;
 /// Accuracy used for off-chain election. This better be small.
 pub type OffchainAccuracy = PerU16;
 
-type PositiveImbalanceOf<T> =
+pub type PositiveImbalanceOf<T> =
 	<<T as Trait>::Tokens as MultiTokenCurrency<<T as frame_system::Trait>::AccountId>>::PositiveImbalance;
-type NegativeImbalanceOf<T> =
+pub type NegativeImbalanceOf<T> =
 	<<T as Trait>::Tokens as MultiTokenCurrency<<T as frame_system::Trait>::AccountId>>::NegativeImbalance;
 
 /// Information regarding the active era (era in used in session).
@@ -408,7 +404,7 @@ pub struct ActiveEraInfo {
     ///
     /// Start can be none if start hasn't been set for the era yet,
     /// Start is set on the first on_finalize of the era to guarantee usage of `Time`.
-    start: Option<u64>,
+    pub start: Option<u64>,
 }
 
 /// Reward points of an era. Used to split era total payout between validators.
@@ -417,9 +413,9 @@ pub struct ActiveEraInfo {
 #[derive(PartialEq, Encode, Decode, Default, RuntimeDebug)]
 pub struct EraRewardPoints<AccountId: Ord> {
     /// Total number of points. Equals the sum of reward points for each validator.
-    total: RewardPoint,
+    pub total: RewardPoint,
     /// The reward points earned by a given validator.
-    individual: BTreeMap<AccountId, RewardPoint>,
+    pub individual: BTreeMap<AccountId, RewardPoint>,
 }
 
 /// Indicates the initial status of the staker.
@@ -473,10 +469,10 @@ impl Default for ValidatorPrefs {
 pub struct UnlockChunk<Balance: HasCompact> {
     /// Amount of funds to be unlocked.
     #[codec(compact)]
-    value: Balance,
+    pub value: Balance,
     /// Era number at which point it'll be unlocked.
     #[codec(compact)]
-    era: EraIndex,
+    pub era: EraIndex,
 }
 
 /// The ledger of a (bonded) stash.
@@ -949,7 +945,7 @@ impl Default for Releases {
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait> as Staking {
+	pub trait Store for Module<T: Trait> as Staking {
 		/// Number of eras to keep in history.
 		///
 		/// Information is kept for eras in `[current_era - history_depth; current_era]`.
@@ -957,7 +953,7 @@ decl_storage! {
 		/// Must be more than the number of eras delayed by session otherwise. I.e. active era must
 		/// always be in history. I.e. `active_era > current_era - history_depth` must be
 		/// guaranteed.
-		HistoryDepth get(fn history_depth) config(): u32 = 84;
+		pub HistoryDepth get(fn history_depth) config(): u32 = 84;
 
 		/// The ideal number of staking participants.
 		pub ValidatorCount get(fn validator_count) config(): u32;
@@ -1086,30 +1082,30 @@ decl_storage! {
 		///
 		/// Must contains information for eras for the range:
 		/// `[active_era - bounding_duration; active_era]`
-		BondedEras: Vec<(EraIndex, SessionIndex)>;
+		pub BondedEras: Vec<(EraIndex, SessionIndex)>;
 
 		/// All slashing events on validators, mapped by era to the highest slash proportion
 		/// and slash value of the era.
-		ValidatorSlashInEra:
+		pub ValidatorSlashInEra:
 			double_map hasher(twox_64_concat) EraIndex, hasher(twox_64_concat) T::AccountId
 			=> Option<(Perbill, Balance)>;
 
 		/// All slashing events on nominators, mapped by era to the highest slash value of the era.
-		NominatorSlashInEra:
+		pub NominatorSlashInEra:
 			double_map hasher(twox_64_concat) EraIndex, hasher(twox_64_concat) T::AccountId
 			=> Option<Balance>;
 
 		/// Slashing spans for stash accounts.
-		SlashingSpans get(fn slashing_spans): map hasher(twox_64_concat) T::AccountId => Option<slashing::SlashingSpans>;
+		pub SlashingSpans get(fn slashing_spans): map hasher(twox_64_concat) T::AccountId => Option<slashing::SlashingSpans>;
 
 		/// Records information about the maximum slash of a stash within a slashing span,
 		/// as well as how much reward has been paid out.
-		SpanSlash:
+		pub SpanSlash:
 			map hasher(twox_64_concat) (T::AccountId, slashing::SpanIndex)
 			=> slashing::SpanRecord<Balance>;
 
 		/// The earliest era for which we have a pending, unapplied slash.
-		EarliestUnappliedSlash: Option<EraIndex>;
+		pub EarliestUnappliedSlash: Option<EraIndex>;
 
 		/// Snapshot of validators at the beginning of the current election window. This should only
 		/// have a value when [`EraElectionStatus`] == `ElectionStatus::Open(_)`.
@@ -1139,7 +1135,7 @@ decl_storage! {
 		/// Storage version of the pallet.
 		///
 		/// This is set to v3.0.0 for new networks.
-		StorageVersion build(|_: &GenesisConfig<T>| Releases::V4_0_0): Releases;
+		pub StorageVersion build(|_: &GenesisConfig<T>| Releases::V4_0_0): Releases;
 
 		/// The mapping from Stash to the liquidity token in use
 		pub StashLiquidityToken get(fn get_stash_liquidity_token): map hasher(blake2_128_concat) T::AccountId => Option<TokenId>;
@@ -1573,7 +1569,7 @@ decl_module! {
 		/// - Write: Locks, Ledger, BalanceOf Stash,
 		/// </weight>
 		#[weight = T::WeightInfo::unbond()]
-		fn unbond(origin, #[compact] value: Balance) {
+		pub fn unbond(origin, #[compact] value: Balance) {
 			ensure!(Self::era_election_status().is_closed(), Error::<T>::CallNotAllowed);
 			let controller = ensure_signed(origin)?;
 			let mut ledger = Self::ledger(&controller).ok_or(Error::<T>::NotController)?;
@@ -2012,7 +2008,7 @@ decl_module! {
 		///   Paying even a dead controller is cheaper weight-wise. We don't do any refunds here.
 		/// # </weight>
 		#[weight = T::WeightInfo::payout_stakers_alive_staked(T::MaxNominatorRewardedPerValidator::get())]
-		fn payout_stakers(origin, validator_stash: T::AccountId, era: EraIndex) -> DispatchResult {
+		pub fn payout_stakers(origin, validator_stash: T::AccountId, era: EraIndex) -> DispatchResult {
 			ensure!(Self::era_election_status().is_closed(), Error::<T>::CallNotAllowed);
 			ensure_signed(origin)?;
 			Self::do_payout_stakers(validator_stash, era)
@@ -2819,7 +2815,7 @@ impl<T: Trait> Module<T> {
 	}
 
 	/// Plan a new era. Return the potential new staking set.
-	fn new_era(start_session_index: SessionIndex) -> Option<Vec<T::AccountId>> {
+	pub fn new_era(start_session_index: SessionIndex) -> Option<Vec<T::AccountId>> {
 		// Increment or set current era.
 		let current_era = CurrentEra::mutate(|s| {
 			*s = Some(s.map(|s| s + 1).unwrap_or(0));
@@ -3018,7 +3014,7 @@ impl<T: Trait> Module<T> {
 	/// Self votes are added and nominations before the most recent slashing span are reaped.
 	///
 	/// No storage item is updated.
-	fn do_phragmen<Accuracy: PerThing>() -> Option<PrimitiveElectionResult<T::AccountId, Accuracy>> {
+	pub fn do_phragmen<Accuracy: PerThing>() -> Option<PrimitiveElectionResult<T::AccountId, Accuracy>> {
 		let mut all_nominators: Vec<(T::AccountId, VoteWeight, Vec<T::AccountId>)> = Vec::new();
 		let mut all_validators = Vec::new();
 		for (validator, _) in <Validators<T>>::iter() {

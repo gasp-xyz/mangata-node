@@ -32,6 +32,7 @@ pallet-assets-info = { path = '../pallets/assets-info', default-features = false
 pallet-staking = { path = '../pallets/staking', default-features = false, version = "2.0.0" }
 pallet-staking-reward-curve = { path = '../pallets/staking/reward-curve', default-features = false, version = "2.0.0" }
 mangata-primitives = { path = '../primitives/mangata', default-features = false, version = "0.1.0" }
+pallet-staking-benchmarking = { version = "0.1.0", path = "../pallets/staking/benchmarking", default-features = false, optional = true }
 
 # Substrate dependencies
 frame-benchmarking = { default-features = false, optional = true, version = '2.0.0' }
@@ -106,6 +107,7 @@ runtime-benchmarks = [
     'pallet-timestamp/runtime-benchmarks',
     'sp-runtime/runtime-benchmarks',
     'bridge/runtime-benchmarks',
+	"pallet-staking-benchmarking",
 ]
 std = [
     'codec/std',
@@ -143,4 +145,5 @@ std = [
     "erc20-app/std",
     "pallet-assets-info/std",
     'orml-tokens/std',
+    "pallet-xyk/std",
 ]

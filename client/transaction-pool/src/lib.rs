@@ -41,6 +41,7 @@ use parking_lot::Mutex;
 use sp_runtime::{
 	generic::BlockId,
 	traits::{Block as BlockT, NumberFor, AtLeast32Bit, Extrinsic, Zero},
+	AccountId32
 };
 use sp_core::traits::SpawnNamed;
 use sp_transaction_pool::{
@@ -68,6 +69,12 @@ type PolledIterator<PoolApi> = Pin<Box<dyn Future<Output=ReadyIteratorFor<PoolAp
 pub type FullPool<Block, Client> = BasicPool<FullChainApi<Client, Block>, Block>;
 /// A transaction pool for a light node.
 pub type LightPool<Block, Client, Fetcher> = BasicPool<LightChainApi<Client, Fetcher, Block>, Block>;
+
+/// Provides information about Extrinsic
+pub trait TransactionInfoProvider<Hash>{
+	/// returns information about extrinsic creator and nonce
+	fn get_extrinsic_info(&self, hash: Hash) -> (AccountId32, u32);
+}
 
 /// Basic implementation of transaction pool that can be customized by providing PoolApi.
 pub struct BasicPool<PoolApi, Block>
@@ -221,6 +228,16 @@ impl<PoolApi, Block> BasicPool<PoolApi, Block>
 	pub fn pool(&self) -> &Arc<sc_transaction_graph::Pool<PoolApi>> {
 		&self.pool
 	}
+}
+
+impl<PoolApi, Block> TransactionInfoProvider<ExtrinsicHash<PoolApi>> for BasicPool<PoolApi, Block>
+	where
+		Block: BlockT,
+		PoolApi: 'static + ChainApi<Block=Block>,
+{
+	fn get_extrinsic_info(&self, hash: ExtrinsicHash<PoolApi>) -> (AccountId32, u32){
+        self.pool.get_transacion_info(hash)
+    }
 }
 
 impl<PoolApi, Block> TransactionPool for BasicPool<PoolApi, Block>

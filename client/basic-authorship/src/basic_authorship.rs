@@ -30,6 +30,7 @@ use sp_runtime::{
 	generic::BlockId,
 	traits::{Block as BlockT, Hash as HashT, Header as HeaderT, DigestFor, BlakeTwo256},
 };
+use sc_transaction_pool::TransactionInfoProvider;
 use sp_transaction_pool::{TransactionPool, InPoolTransaction};
 use sc_telemetry::{telemetry, CONSENSUS_INFO};
 use sc_block_builder::{BlockBuilderApi, BlockBuilderProvider};
@@ -70,13 +71,14 @@ impl<A, B, C> ProposerFactory<A, B, C> {
 
 impl<B, Block, C, A> ProposerFactory<A, B, C>
 	where
-		A: TransactionPool<Block = Block> + 'static,
+		A: TransactionInfoProvider<<Block as BlockT>::Hash> + TransactionPool<Block = Block, Hash=<Block as BlockT>::Hash> + 'static,
 		B: backend::Backend<Block> + Send + Sync + 'static,
 		Block: BlockT,
 		C: BlockBuilderProvider<B, Block, C> + HeaderBackend<Block> + ProvideRuntimeApi<Block>
 			+ Send + Sync + 'static,
 		C::Api: ApiExt<Block, StateBackend = backend::StateBackendFor<B, Block>>
 			+ BlockBuilderApi<Block, Error = sp_blockchain::Error>,
+
 {
 	pub fn init_with_now(
 		&mut self,
@@ -107,7 +109,7 @@ impl<B, Block, C, A> ProposerFactory<A, B, C>
 impl<A, B, Block, C> sp_consensus::Environment<Block> for
 	ProposerFactory<A, B, C>
 		where
-			A: TransactionPool<Block = Block> + 'static,
+			A: TransactionInfoProvider<<Block as BlockT>::Hash> + TransactionPool<Block = Block,  Hash=<Block as BlockT>::Hash> + 'static,
 			B: backend::Backend<Block> + Send + Sync + 'static,
 			Block: BlockT,
 			C: BlockBuilderProvider<B, Block, C> + HeaderBackend<Block> + ProvideRuntimeApi<Block>
@@ -128,7 +130,7 @@ impl<A, B, Block, C> sp_consensus::Environment<Block> for
 }
 
 /// The proposer logic.
-pub struct Proposer<B, Block: BlockT, C, A: TransactionPool> {
+pub struct Proposer<B, Block: BlockT, C, A: TransactionPool + TransactionInfoProvider<<Block as BlockT>::Hash>> {
 	client: Arc<C>,
 	parent_hash: <Block as BlockT>::Hash,
 	parent_id: BlockId<Block>,
@@ -142,7 +144,7 @@ pub struct Proposer<B, Block: BlockT, C, A: TransactionPool> {
 impl<A, B, Block, C> sp_consensus::Proposer<Block> for
 	Proposer<B, Block, C, A>
 		where
-			A: TransactionPool<Block = Block> + 'static,
+			A: TransactionInfoProvider<<Block as BlockT>::Hash> + TransactionPool<Block = Block, Hash=<Block as BlockT>::Hash> + 'static,
 			B: backend::Backend<Block> + Send + Sync + 'static,
 			Block: BlockT,
 			C: BlockBuilderProvider<B, Block, C> + HeaderBackend<Block> + ProvideRuntimeApi<Block>
@@ -173,7 +175,7 @@ impl<A, B, Block, C> sp_consensus::Proposer<Block> for
 
 impl<A, B, Block, C> Proposer<B, Block, C, A>
 	where
-		A: TransactionPool<Block = Block>,
+		A: TransactionInfoProvider<<Block as BlockT>::Hash> + TransactionPool<Block = Block, Hash=<Block as BlockT>::Hash>,
 		B: backend::Backend<Block> + Send + Sync + 'static,
 		Block: BlockT,
 		C: BlockBuilderProvider<B, Block, C> + HeaderBackend<Block> + ProvideRuntimeApi<Block>
@@ -200,7 +202,7 @@ impl<A, B, Block, C> Proposer<B, Block, C, A>
 		)?;
 
 		for inherent in block_builder.create_inherents(inherent_data)? {
-			match block_builder.push(inherent) {
+			match block_builder.push(inherent, None) {
 				Err(ApplyExtrinsicFailed(Validity(e))) if e.exhausted_resources() =>
 					warn!("⚠️  Dropping non-mandatory inherent from overweight block."),
 				Err(ApplyExtrinsicFailed(Validity(e))) if e.was_mandatory() => {
@@ -218,6 +220,7 @@ impl<A, B, Block, C> Proposer<B, Block, C, A>
 		let block_timer = time::Instant::now();
 		let mut skipped = 0;
 		let mut unqueue_invalid = Vec::new();
+
 		let pending_iterator = match executor::block_on(future::select(
 			self.transaction_pool.ready_at(self.parent_number),
 			futures_timer::Delay::new(deadline.saturating_duration_since((self.now)()) / 8),
@@ -246,7 +249,8 @@ impl<A, B, Block, C> Proposer<B, Block, C, A>
 			let pending_tx_data = pending_tx.data().clone();
 			let pending_tx_hash = pending_tx.hash().clone();
 			trace!("[{:?}] Pushing to the block.", pending_tx_hash);
-			match sc_block_builder::BlockBuilder::push(&mut block_builder, pending_tx_data) {
+			let info = self.transaction_pool.get_extrinsic_info(pending_tx_hash);
+			match sc_block_builder::BlockBuilder::push(&mut block_builder, pending_tx_data, Some(info)) {
 				Ok(()) => {
 					debug!("[{:?}] Pushed to the block.", pending_tx_hash);
 				}

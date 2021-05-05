@@ -19,21 +19,27 @@ log = "0.4.8"
 parking_lot = "0.10.0"
 serde = { version = "1.0.101", features = ["derive"] }
 wasm-timer = "0.2"
-sp-blockchain = { version = "2.0.0", path = "../../../primitives/blockchain" }
-sp-utils = { version = "2.0.0", path = "../../../primitives/utils" }
-sp-core = { version = "2.0.0", path = "../../../primitives/core" }
-sp-runtime = { version = "2.0.0", path = "../../../primitives/runtime" }
-sp-transaction-pool = { version = "2.0.0", path = "../../../primitives/transaction-pool" }
+sp-blockchain = { version = "2.0.0"}
+sp-utils = { version = "2.0.0"}
+sp-core = { version = "2.0.0"}
+sp-runtime = { version = "2.0.0"}
+sp-transaction-pool = { version = "2.0.0"}
 parity-util-mem = { version = "0.7.0", default-features = false, features = ["primitive-types"] }
 linked-hash-map = "0.5.2"
 retain_mut = "0.1.1"
+sp-std = { version = "2.0.0", default-features = false}
 
 [dev-dependencies]
 assert_matches = "1.3.0"
 codec = { package = "parity-scale-codec", version = "1.3.4" }
-substrate-test-runtime = { version = "2.0.0", path = "../../../test-utils/runtime" }
 criterion = "0.3"
 
 [[bench]]
 name = "basics"
 harness = false
+
+[features]
+default = ["std"]
+std = [
+    "sp-std/std",
+]

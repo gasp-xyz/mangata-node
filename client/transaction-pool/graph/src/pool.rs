@@ -34,7 +34,11 @@ use sp_runtime::{
 use sp_transaction_pool::error;
 use wasm_timer::Instant;
 use futures::channel::mpsc::Receiver;
+use sp_std::collections::btree_map::BTreeMap;
+use sp_std::sync::Mutex;
+use sp_runtime::AccountId32;
 
+use std::convert::TryInto;
 use crate::validated_pool::ValidatedPool;
 pub use crate::validated_pool::ValidatedTransaction;
 
@@ -136,6 +140,8 @@ enum CheckBannedBeforeVerify {
 /// Extrinsics pool that performs validation.
 pub struct Pool<B: ChainApi> {
 	validated_pool: Arc<ValidatedPool<B>>,
+    transaction_info: Arc<Mutex<BTreeMap<ExtrinsicHash<B>, (AccountId32, u32)>>>
+
 }
 
 #[cfg(not(target_os = "unknown"))]
@@ -153,6 +159,7 @@ impl<B: ChainApi> Pool<B> {
 	pub fn new(options: Options, api: Arc<B>) -> Self {
 		Pool {
 			validated_pool: Arc::new(ValidatedPool::new(options, api)),
+            transaction_info: Default::default()
 		}
 	}
 
@@ -208,6 +215,14 @@ impl<B: ChainApi> Pool<B> {
 			xt,
 			CheckBannedBeforeVerify::Yes,
 		).await;
+
+        // only interested in pre validated transacions
+        if let ValidatedTransaction::Valid(transaction) = &tx{
+            let who: AccountId32 = (&transaction.provides[0][0..32]).try_into().unwrap();
+            let nonce: u32 = u32::from_le_bytes((&transaction.provides[0][32..36]).try_into().unwrap());
+            self.transaction_info.lock().expect("lock poison").insert(transaction.hash, (who,nonce) );
+        }
+
 		self.validated_pool.submit_and_watch(tx)
 	}
 
@@ -444,12 +459,18 @@ impl<B: ChainApi> Pool<B> {
 	pub fn validated_pool(&self) ->  &ValidatedPool<B> {
 		&self.validated_pool
 	}
+
+    /// returns informamation abount Nonce and transaction creator
+    pub fn get_transacion_info(&self, hash: ExtrinsicHash<B>) -> (AccountId32, u32){
+        self.transaction_info.lock().unwrap().get(&hash).unwrap().to_owned()
+    }
 }
 
 impl<B: ChainApi> Clone for Pool<B> {
 	fn clone(&self) -> Self {
 		Self {
 			validated_pool: self.validated_pool.clone(),
+            transaction_info: self.transaction_info.clone(),
 		}
 	}
 }

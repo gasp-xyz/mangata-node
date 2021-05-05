@@ -47,7 +47,13 @@ use sp_runtime::{
 	},
 };
 
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash as HHash, Hasher};
+use sp_core::crypto::Ss58Codec;
+
 pub use sp_block_builder::BlockBuilder as BlockBuilderApi;
+use sp_runtime::AccountId32;
+use std::collections::HashMap;
 
 use sc_client_api::backend;
 
@@ -108,9 +114,13 @@ where
 	) -> sp_blockchain::Result<BlockBuilder<Block, RA, B>>;
 }
 
+/// Extrinsic unique id calculated from its bytes
+pub type ExtrinsicId = u64;
+
 /// Utility for building new (valid) blocks from a stream of extrinsics.
 pub struct BlockBuilder<'a, Block: BlockT, A: ProvideRuntimeApi<Block>, B> {
 	extrinsics: Vec<Block::Extrinsic>,
+	extrinsics_info: HashMap<ExtrinsicId, AccountId32>,
 	api: ApiRef<'a, A::Api>,
 	block_id: BlockId<Block>,
 	parent_hash: Block::Hash,
@@ -160,22 +170,40 @@ where
 		Ok(Self {
 			parent_hash,
 			extrinsics: Vec::new(),
+			extrinsics_info: HashMap::new(),
 			api,
 			block_id,
 			backend,
 		})
 	}
 
+	fn calculate_hash<T: Encode>(&self, input: &T) -> u64{
+		let mut s = DefaultHasher::new();
+		input.encode().hash(&mut s);
+		s.finish()
+	}
+
+	fn calculate_ss58_hash<T: Encode>(&self, input: &T) -> String{
+		let hash = BlakeTwo256::hash(&input.encode());
+        let bytes = AccountId32::from(hash.to_fixed_bytes());
+        bytes.to_ss58check()
+    }
+
 	/// Push onto the block's list of extrinsics.
 	///
 	/// This will ensure the extrinsic can be validly executed (by executing it).
-	pub fn push(&mut self, xt: <Block as BlockT>::Extrinsic) -> Result<(), ApiErrorFor<A, Block>> {
+	pub fn push(&mut self, xt: <Block as BlockT>::Extrinsic, info: Option<(AccountId32, u32)>) -> Result<(), ApiErrorFor<A, Block>> {
 		// let block_id = &self.block_id;
-		let extrinsics = &mut self.extrinsics;
+		// let extrinsics = &mut self.extrinsics;
 
 		//FIXME add test execution with state rejection
 		info!("Pushing transactions without execution");
-		extrinsics.push(xt);
+		if let Some((who,nonce)) = info {
+            log::debug!(target: "block_shuffler", "storing extrinsic:{} signed by:{} nonce:{}", self.calculate_ss58_hash(&xt), who.to_ss58check(), nonce);
+            let hash = self.calculate_hash(&xt);
+			self.extrinsics_info.insert(hash, who); 
+		}
+		self.extrinsics.push(xt);
 		Ok(())
 
 		// info!("Going to call api tx execution");
@@ -220,7 +248,7 @@ where
 			.body(BlockId::Hash(parent_hash))
 			.unwrap()
 		{
-			Some(mut previous_block_extrinsics) => {
+			Some(previous_block_extrinsics) => {
 				if previous_block_extrinsics.is_empty() {
 					info!("No extrinsics found for previous block");
 					extrinsics.into_iter().for_each(|xt| {
@@ -240,10 +268,24 @@ where
 					info!("transaction count {}", previous_block_extrinsics.len());
 					info!("seed: {:?}", extrinsics_hash.to_fixed_bytes());
 
-					let mut rng: StdRng = SeedableRng::from_seed(extrinsics_hash.to_fixed_bytes());
-					previous_block_extrinsics.shuffle(&mut rng);
+					let mut grouped_extrinsics: Vec<(_,Vec<_>)> = previous_block_extrinsics
+						.into_iter()
+						.fold(HashMap::new(), |mut groups, tx| {
+							let group = self.extrinsics_info.get(&self.calculate_hash(&tx));
+							groups.entry(group).or_insert(vec![]).push(tx);
+							groups
+						}).into_iter().collect();
 
-					previous_block_extrinsics.into_iter().for_each(|xt| {
+					let mut rng: StdRng = SeedableRng::from_seed(extrinsics_hash.to_fixed_bytes());
+					grouped_extrinsics.shuffle(&mut rng);
+
+                    for (id,txs) in grouped_extrinsics.iter(){
+                        log::debug!(target: "block_shuffler", "{:?} - {} extrinsics ", id, txs.len());
+                    }
+
+					grouped_extrinsics.into_iter().flat_map(|(_,tx)| tx.into_iter()).for_each(|xt| {
+
+                        log::debug!(target: "block_shuffler", "executing extrinsic :{:?}", self.calculate_ss58_hash(&xt));
 						self.api.execute_in_transaction(|api| {
 							match api.apply_extrinsic_with_context(
 								block_id,

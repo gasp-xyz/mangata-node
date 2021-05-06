@@ -1,4 +1,3 @@
-
 #![cfg_attr(not(feature = "std"), no_std)]
 
 // mod mock;
@@ -39,7 +38,6 @@ use sp_core::U256;
 //     type Xyk: XykFunctionsTrait<Self::AccountId>;
 // }
 
-
 const SEED: u32 = 0;
 
 const BASE_TOKEN_VALUE: u128 = 100__000_000_000_000_000_000u128;
@@ -50,7 +48,7 @@ const MAX_SLASHES: u32 = 1000;
 const USER_SEED: u32 = 999666;
 
 const NATIVE_TOKEN_ID: u32 = 0u32;
-const DUMMY_TOKEN_FOR_POOL_ID: u32 =  2u32;
+const DUMMY_TOKEN_FOR_POOL_ID: u32 = 2u32;
 const DEFAULT_LIQUIDITY_TOKEN_ID: u32 = 3u32;
 const SEED_FOR_DEFAULT_USERS: &'static str = "default_users";
 
@@ -87,16 +85,16 @@ pub fn create_validator_with_nominators<T: Trait>(
     upper_bound: u32,
     dead: bool,
     destination: RewardDestination<T::AccountId>,
-    liquidity_token_id: u32
+    liquidity_token_id: u32,
 ) -> Result<T::AccountId, &'static str> {
-    
     // Not to be used for dead controllers
     let dead = false;
 
     let mut points_total = 0;
     let mut points_individual = Vec::new();
 
-    let (v_stash, v_controller) = create_stash_controller::<T>(0, liquidity_token_id, 100, destination.clone())?;
+    let (v_stash, v_controller) =
+        create_stash_controller::<T>(0, liquidity_token_id, 100, destination.clone())?;
     let validator_prefs = ValidatorPrefs {
         commission: Perbill::from_percent(50),
     };
@@ -108,13 +106,12 @@ pub fn create_validator_with_nominators<T: Trait>(
 
     // Give the validator n nominators, but keep total users in the system the same.
     for i in 0..upper_bound {
-        let (_n_stash, n_controller) = 
-        // if !dead {
-            create_stash_controller::<T>(u32::max_value() - i, liquidity_token_id, 100, destination.clone())?
-        // } else {
-            // create_stash_and_dead_controller::<T>(u32::max_value() - i, liquidity_token_id, 100, destination.clone())?
-        // }
-        ;
+        let (_n_stash, n_controller) = create_stash_controller::<T>(
+            u32::max_value() - i,
+            liquidity_token_id,
+            100,
+            destination.clone(),
+        )?;
         if i < n {
             Staking::<T>::nominate(
                 RawOrigin::Signed(n_controller.clone()).into(),
@@ -150,7 +147,6 @@ pub fn create_validator_with_nominators<T: Trait>(
     Ok(v_stash)
 }
 
-
 benchmarks! {
     _{}
 
@@ -177,7 +173,7 @@ benchmarks! {
 
     bond_extra {
         let (stash, controller) = create_stash_controller::<T>(USER_SEED, DEFAULT_LIQUIDITY_TOKEN_ID, 100, Default::default())?;
-        
+
         let x_u256: U256 = BASE_TOKEN_VALUE.saturated_into::<u128>().into();
         let y_u256: U256 = 10u32.saturated_into::<u128>().into();
         let z_u256 = x_u256 * y_u256;
@@ -196,7 +192,7 @@ benchmarks! {
 
     unbond {
         let (_, controller) = create_stash_controller::<T>(USER_SEED, DEFAULT_LIQUIDITY_TOKEN_ID, 100, Default::default())?;
-        
+
         let x_u256: U256 = BASE_TOKEN_VALUE.saturated_into::<u128>().into();
         let y_u256: U256 = 10u32.saturated_into::<u128>().into();
         let z_u256 = x_u256 * y_u256;
@@ -392,7 +388,7 @@ benchmarks! {
             T::MaxNominatorRewardedPerValidator::get() as u32,
             false,
             RewardDestination::Stash,
-            DEFAULT_LIQUIDITY_TOKEN_ID, 
+            DEFAULT_LIQUIDITY_TOKEN_ID,
         )?;
 
         let current_era = CurrentEra::get().unwrap();
@@ -440,7 +436,7 @@ benchmarks! {
             <ErasStakers<T>>::insert(i, T::AccountId::default(), Exposure::<T::AccountId, Balance>::default());
             <ErasStakersClipped<T>>::insert(i, T::AccountId::default(), Exposure::<T::AccountId, Balance>::default());
             <ErasStakersRaw<T>>::insert(i, T::AccountId::default(), Exposure::<T::AccountId, Balance>::default());
-		    <ErasStakersClippedRaw<T>>::insert(i, T::AccountId::default(), Exposure::<T::AccountId, Balance>::default());
+            <ErasStakersClippedRaw<T>>::insert(i, T::AccountId::default(), Exposure::<T::AccountId, Balance>::default());
             <ErasValidatorPrefs<T>>::insert(i, T::AccountId::default(), ValidatorPrefs::default());
             ErasValidatorReward::insert(i, Balance::one());
             <ErasRewardPoints<T>>::insert(i, EraRewardPoints::<T::AccountId>::default());
@@ -939,10 +935,9 @@ benchmarks! {
 //     }
 // }
 
-
 // benchmarks!{
 //     _{}
-    
+
 //     test_bench {
 
 //     }: {

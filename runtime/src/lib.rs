@@ -14,8 +14,8 @@ use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::curve::PiecewiseLinear;
 use sp_runtime::traits::{
-    BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, NumberFor, OpaqueKeys,
-    Saturating, Verify, Convert
+    BlakeTwo256, Block as BlockT, Convert, IdentifyAccount, IdentityLookup, NumberFor, OpaqueKeys,
+    Saturating, Verify,
 };
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
@@ -284,15 +284,23 @@ parameter_types! {
 pub struct CurrencyToVoteHandler;
 
 impl CurrencyToVoteHandler {
-	fn factor() -> Balance { (orml_tokens::MultiTokenCurrencyAdapter::<Runtime>::total_issuance(NATIVE_CURRENCY_ID) / u64::max_value() as Balance).max(1) }
+    fn factor() -> Balance {
+        (orml_tokens::MultiTokenCurrencyAdapter::<Runtime>::total_issuance(NATIVE_CURRENCY_ID)
+            / u64::max_value() as Balance)
+            .max(1)
+    }
 }
 
 impl Convert<Balance, u64> for CurrencyToVoteHandler {
-	fn convert(x: Balance) -> u64 { (x / Self::factor()) as u64 }
+    fn convert(x: Balance) -> u64 {
+        (x / Self::factor()) as u64
+    }
 }
 
 impl Convert<u128, Balance> for CurrencyToVoteHandler {
-	fn convert(x: u128) -> Balance { x * Self::factor() }
+    fn convert(x: u128) -> Balance {
+        x * Self::factor()
+    }
 }
 
 impl pallet_staking::Trait for Runtime {
@@ -321,7 +329,7 @@ impl pallet_staking::Trait for Runtime {
     type UnsignedPriority = ();
     type WeightInfo = weights::pallet_staking::WeightInfo;
     #[cfg(feature = "runtime-benchmarks")]
-	type Xyk = Xyk;
+    type Xyk = Xyk;
 }
 
 parameter_types! {
@@ -797,7 +805,7 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, pallet_balances, Balances);
             add_benchmark!(params, batches, pallet_timestamp, Timestamp);
             add_benchmark!(params, batches, bridge, Bridge);
-			add_benchmark!(params, batches, pallet_staking, Staking);
+            add_benchmark!(params, batches, pallet_staking, Staking);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)

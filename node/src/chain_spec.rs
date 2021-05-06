@@ -4,7 +4,7 @@ use hex_literal::hex;
 use mangata_runtime::{
     AccountId, AssetsInfoConfig, BabeConfig, BalancesConfig, BridgeConfig, BridgedAssetConfig,
     GenesisConfig, GrandpaConfig, SessionConfig, SessionKeys, Signature, StakerStatus,
-    StakingConfig, SudoConfig, SystemConfig, TokensConfig, XykConfig, VerifierConfig, WASM_BINARY,
+    StakingConfig, SudoConfig, SystemConfig, TokensConfig, VerifierConfig, XykConfig, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sp_consensus_babe::AuthorityId as BabeId;
@@ -126,24 +126,22 @@ pub fn development_config() -> Result<ChainSpec, String> {
                 ],
                 // Config for Staking
                 // Currently only setup for one initial staker
-                vec![
-                    (
-                        // Who gets to stake initially
-                        get_account_id_from_seed::<sr25519::Public>("Alice"),
-                        // Id of MNG token,
-                        0u32,                        
-                        // How much mangata they stake
-                        10_000__000_000_000_000_000_000u128,
-                        // Id of the dummy token,
-                        2u32,
-                        // How many dummy tokens they pool,
-                        20_000__000_000_000_000_000_000u128,
-                        // Id of the liquidity token that is generated
-                        3u32,
-                        // How many liquidity tokens they stake,
-                        10_000__000_000_000_000_000_000u128,
-                    ),
-                ],
+                vec![(
+                    // Who gets to stake initially
+                    get_account_id_from_seed::<sr25519::Public>("Alice"),
+                    // Id of MNG token,
+                    0u32,
+                    // How much mangata they stake
+                    10_000__000_000_000_000_000_000u128,
+                    // Id of the dummy token,
+                    2u32,
+                    // How many dummy tokens they pool,
+                    20_000__000_000_000_000_000_000u128,
+                    // Id of the liquidity token that is generated
+                    3u32,
+                    // How many liquidity tokens they stake,
+                    10_000__000_000_000_000_000_000u128,
+                )],
                 true,
             )
         },
@@ -175,9 +173,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
             testnet_genesis(
                 wasm_binary,
                 // Initial PoA authorities
-                vec![
-                    authority_keys_from_seed("Alice"),
-                ],
+                vec![authority_keys_from_seed("Alice")],
                 // Initial relay account
                 get_account_id_from_seed::<sr25519::Public>("Relay"),
                 // Sudo account
@@ -235,24 +231,22 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                 ],
                 // Config for Staking
                 // Currently only setup for one initial staker
-                vec![
-                    (
-                        // Who gets to stake initially
-                        get_account_id_from_seed::<sr25519::Public>("Alice"),
-                        // Id of MNG token,
-                        0u32,                        
-                        // How much mangata they stake
-                        10_000__000_000_000_000_000_000u128,
-                        // Id of the dummy token,
-                        2u32,
-                        // How many dummy tokens they stake,
-                        20_000__000_000_000_000_000_000u128,
-                        // Id of the liquidity token that is generated
-                        3u32,
-                        // How many liquidity tokens they stake,
-                        10_000__000_000_000_000_000_000u128,
-                    ),
-                ],
+                vec![(
+                    // Who gets to stake initially
+                    get_account_id_from_seed::<sr25519::Public>("Alice"),
+                    // Id of MNG token,
+                    0u32,
+                    // How much mangata they stake
+                    10_000__000_000_000_000_000_000u128,
+                    // Id of the dummy token,
+                    2u32,
+                    // How many dummy tokens they stake,
+                    20_000__000_000_000_000_000_000u128,
+                    // Id of the liquidity token that is generated
+                    3u32,
+                    // How many liquidity tokens they stake,
+                    10_000__000_000_000_000_000_000u128,
+                )],
                 true,
             )
         },
@@ -312,7 +306,6 @@ fn testnet_genesis(
 
         // TODO
         // Create two tokens and corresponding pool through xyk for the authority account and pass it in here.
-
         pallet_staking: Some(StakingConfig {
             validator_count: initial_authorities.len() as u32 * 2,
             minimum_validator_count: initial_authorities.len() as u32,
@@ -320,7 +313,13 @@ fn testnet_genesis(
                 .iter()
                 .map(|x| {
                     let (account_id, _, _, _, _, liquidity_token_id, liquidity_token_amount) = x;
-                    (account_id.clone(), account_id.clone(), *liquidity_token_id, *liquidity_token_amount, StakerStatus::Validator)
+                    (
+                        account_id.clone(),
+                        account_id.clone(),
+                        *liquidity_token_id,
+                        *liquidity_token_amount,
+                        StakerStatus::Validator,
+                    )
                 })
                 .collect(),
             invulnerables: initial_authorities.iter().map(|x| x.2.clone()).collect(),
@@ -383,14 +382,28 @@ fn testnet_genesis(
                     (who.clone(), *token_id, *initial_amount)
                 })
                 .collect(),
-
         }),
-        pallet_xyk: Some(XykConfig{
+        pallet_xyk: Some(XykConfig {
             created_pools_for_staking: staking_accounts
                 .iter()
                 .map(|x| {
-                    let (account_id, native_token_id, native_token_amount, pooled_token_id, pooled_token_amount, liquidity_token_id, _) = x;
-                    (account_id.clone(), *native_token_id, *native_token_amount, *pooled_token_id, *pooled_token_amount, *liquidity_token_id)
+                    let (
+                        account_id,
+                        native_token_id,
+                        native_token_amount,
+                        pooled_token_id,
+                        pooled_token_amount,
+                        liquidity_token_id,
+                        _,
+                    ) = x;
+                    (
+                        account_id.clone(),
+                        *native_token_id,
+                        *native_token_amount,
+                        *pooled_token_id,
+                        *pooled_token_amount,
+                        *liquidity_token_id,
+                    )
                 })
                 .collect(),
         }),

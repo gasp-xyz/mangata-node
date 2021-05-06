@@ -11,19 +11,15 @@ pub trait MultiTokenImbalanceWithZeroTrait<CurrencyId> {
 }
 
 impl<T: Trait> MultiTokenImbalanceWithZeroTrait<T::CurrencyId> for PositiveImbalance<T> {
-    
-    fn from_zero(currency_id: T::CurrencyId) -> Self{
+    fn from_zero(currency_id: T::CurrencyId) -> Self {
         Self::new(currency_id, Zero::zero())
     }
-
 }
 
 impl<T: Trait> MultiTokenImbalanceWithZeroTrait<T::CurrencyId> for NegativeImbalance<T> {
-    
-    fn from_zero(currency_id: T::CurrencyId) -> Self{
+    fn from_zero(currency_id: T::CurrencyId) -> Self {
         Self::new(currency_id, Zero::zero())
     }
-
 }
 
 /// Opaque, move-only struct with private fields that serves as a token

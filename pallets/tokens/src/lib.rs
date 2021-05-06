@@ -1056,7 +1056,6 @@ where
     }
 }
 
-
 pub struct MultiTokenCurrencyAdapter<T>(marker::PhantomData<T>);
 
 impl<T> MultiTokenCurrency<T::AccountId> for MultiTokenCurrencyAdapter<T>

@@ -31,7 +31,6 @@ use sp_npos_elections::*;
 
 use sp_core::U256;
 
-
 const BASE_TOKEN_VALUE: u128 = 100__000_000_000_000_000_000u128;
 const SEED: u32 = 0;
 
@@ -95,7 +94,7 @@ const SEED: u32 = 0;
 //     // frame_support::debug::RuntimeLogger::init();
 //     // frame_support::debug::debug!(target: "customTarget", "{:?}", xyk_call_result);
 //     // RawOrigin::Signed(user.clone()).into(),
-//     // let test = 
+//     // let test =
 //     // let xyk_call = pallet_xyk::Call::create_pool( first_asset_id, first_asset_amount / 2, second_asset_id, second_asset_amount / 2);
 //     // let xyk_call_disptach_result = Call::Xyk(xyk_call).disptach();
 //     // mint liquidity
@@ -112,7 +111,7 @@ pub fn create_funded_user<T: Trait>(
 ) -> T::AccountId {
     let user: T::AccountId = account(string, n, SEED);
 
-    let balance_factor_2: u64 = (balance_factor*2).into();
+    let balance_factor_2: u64 = (balance_factor * 2).into();
 
     let base_token_value_u256: U256 = BASE_TOKEN_VALUE.saturated_into::<u128>().into();
     let balance_factor_u256: U256 = balance_factor_2.saturated_into::<u128>().into();
@@ -120,19 +119,35 @@ pub fn create_funded_user<T: Trait>(
     let balance: u128 = balance_u256.saturated_into::<u128>();
 
     // calculate MNG required and pooled_token_required.
-    let (first_asset_id, first_asset_amount, second_asset_id, second_asset_amount) = <T as Trait>::Xyk::get_tokens_required_for_minting(liquidity_token_id.into(), balance.into()).into();
-    
+    let (first_asset_id, first_asset_amount, second_asset_id, second_asset_amount) =
+        <T as Trait>::Xyk::get_tokens_required_for_minting(
+            liquidity_token_id.into(),
+            balance.into(),
+        )
+        .into();
+
     let first_asset_id: u32 = first_asset_id.into();
     let first_asset_amount: u128 = first_asset_amount.into();
     let second_asset_id: u32 = second_asset_id.into();
     let second_asset_amount: u128 = second_asset_amount.into();
 
     // mint MNG
-    assert!(<T as Trait>::Tokens::mint(first_asset_id.into(), &user, first_asset_amount.into()).is_ok());
+    assert!(
+        <T as Trait>::Tokens::mint(first_asset_id.into(), &user, first_asset_amount.into()).is_ok()
+    );
     // mint pooled token
-    assert!(<T as Trait>::Tokens::mint(second_asset_id.into(), &user, second_asset_amount.into()).is_ok());
+    assert!(
+        <T as Trait>::Tokens::mint(second_asset_id.into(), &user, second_asset_amount.into())
+            .is_ok()
+    );
     // mint liquidity
-    assert!(<T as Trait>::Xyk::mint_liquidity(user.clone(), first_asset_id.into(), second_asset_id.into(), {first_asset_amount / 2}.into()).is_ok());
+    assert!(<T as Trait>::Xyk::mint_liquidity(
+        user.clone(),
+        first_asset_id.into(),
+        second_asset_id.into(),
+        { first_asset_amount / 2 }.into()
+    )
+    .is_ok());
     user
 }
 
@@ -141,13 +156,13 @@ pub fn create_stash_controller<T: Trait>(
     n: u32,
     liquidity_token_id: u32,
     balance_factor: u32,
-    destination: RewardDestination<T::AccountId>
+    destination: RewardDestination<T::AccountId>,
 ) -> Result<(T::AccountId, T::AccountId), &'static str> {
     let stash = create_funded_user::<T>("stash", n, liquidity_token_id, balance_factor);
     let controller = create_funded_user::<T>("controller", n, liquidity_token_id, balance_factor);
     let controller_lookup: <T::Lookup as StaticLookup>::Source =
         T::Lookup::unlookup(controller.clone());
-    
+
     let base_token_value_u256: U256 = BASE_TOKEN_VALUE.saturated_into::<u128>().into();
     let balance_factor_u256: U256 = balance_factor.saturated_into::<u128>().into();
     let balance_u256 = base_token_value_u256 * balance_factor_u256;
@@ -161,12 +176,12 @@ pub fn create_stash_controller<T: Trait>(
         controller_lookup,
         amount,
         destination,
-        liquidity_token_id
+        liquidity_token_id,
     )?;
     return Ok((stash, controller));
 }
 
-// I expect this won't make a difference with ORML tokens 
+// I expect this won't make a difference with ORML tokens
 // /// Create a stash and controller pair, where the controller is dead, and payouts go to controller.
 // /// This is used to test worst case payout scenarios.
 // pub fn create_stash_and_dead_controller<T: Trait>(
@@ -179,7 +194,7 @@ pub fn create_stash_controller<T: Trait>(
 //     let controller = create_funded_user::<T>("controller", n, liquidity_token_id, 0);
 //     let controller_lookup: <T::Lookup as StaticLookup>::Source =
 //         T::Lookup::unlookup(controller.clone());
-    
+
 //     let base_token_value_u256: U256 = BASE_TOKEN_VALUE.saturated_into::<u128>().into();
 //     let balance_factor_u256: U256 = balance_factor.saturated_into::<u128>().into();
 //     let balance_u256 = base_token_value_u256 * balance_factor_u256;
@@ -206,8 +221,12 @@ pub fn create_validators<T: Trait>(
 ) -> Result<Vec<<T::Lookup as StaticLookup>::Source>, &'static str> {
     let mut validators: Vec<<T::Lookup as StaticLookup>::Source> = Vec::with_capacity(max as usize);
     for i in 0..max {
-        let (stash, controller) =
-            create_stash_controller::<T>(i, liquidity_token_id, balance_factor, RewardDestination::Stash)?;
+        let (stash, controller) = create_stash_controller::<T>(
+            i,
+            liquidity_token_id,
+            balance_factor,
+            RewardDestination::Stash,
+        )?;
         let validator_prefs = ValidatorPrefs {
             commission: Perbill::from_percent(50),
         };
@@ -249,8 +268,12 @@ pub fn create_validators_with_nominators_for_era<T: Trait>(
         } else {
             100u32
         };
-        let (v_stash, v_controller) =
-            create_stash_controller::<T>(i, liquidity_token_id, balance_factor, RewardDestination::Stash)?;
+        let (v_stash, v_controller) = create_stash_controller::<T>(
+            i,
+            liquidity_token_id,
+            balance_factor,
+            RewardDestination::Stash,
+        )?;
         let validator_prefs = ValidatorPrefs {
             commission: Perbill::from_percent(50),
         };
@@ -368,9 +391,9 @@ pub fn get_weak_solution<T: Trait>(
             .and_then(|i| <usize as TryInto<ValidatorIndex>>::try_into(i).ok())
     };
     let stake_of = |who: &T::AccountId| -> VoteWeight {
-        <T::CurrencyToVote as Convert<Balance, u64>>::convert(
-            <Staking<T>>::slashable_balance_of(who),
-        )
+        <T::CurrencyToVote as Convert<Balance, u64>>::convert(<Staking<T>>::slashable_balance_of(
+            who,
+        ))
     };
 
     // convert back to ratio assignment. This takes less space.

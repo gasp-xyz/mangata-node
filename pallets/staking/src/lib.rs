@@ -339,7 +339,7 @@ use sp_std::{
     prelude::*,
     result,
 };
-use orml_tokens::{MultiTokenCurrency, MultiTokenLockableCurrency, MultiTokenCurrencyExtended};
+use orml_tokens::{MultiTokenCurrency, MultiTokenLockableCurrency, MultiTokenCurrencyExtended, MultiTokenImbalanceWithZeroTrait};
 use pallet_xyk::Valuate;
 use mangata_primitives::{Balance, TokenId};
 use pallet_xyk::XykFunctionsTrait;

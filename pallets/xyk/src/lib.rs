@@ -784,6 +784,9 @@ impl<T: Trait> Valuate for Module<T>{
     }
 
     fn scale_liquidity_by_mng_valuation(mng_valuation: Self::Balance, liquidity_token_amount: Self::Balance, mng_token_amount: Self::Balance)-> Self::Balance{
+        if mng_valuation.is_zero(){
+            return 0u128.into()
+        }
         let mng_valuation_u256: U256 = mng_valuation.saturated_into::<u128>().into();
         let liquidity_token_amount_u256: U256 = liquidity_token_amount.saturated_into::<u128>().into();
         let mng_token_amount_u256: U256 = mng_token_amount.saturated_into::<u128>().into();

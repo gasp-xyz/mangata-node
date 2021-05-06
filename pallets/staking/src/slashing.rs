@@ -51,7 +51,7 @@
 
 use super::{
     Balance, TokenId, EraIndex, Error, Exposure, Module, NegativeImbalanceOf, Perbill, SessionInterface,
-    Store, Trait, UnappliedSlash, MultiTokenCurrency
+    Store, Trait, UnappliedSlash, MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait
 };
 use codec::{Decode, Encode};
 use frame_support::{
@@ -623,7 +623,13 @@ pub fn do_slash<T: Trait>(
 
 /// Apply a previously-unapplied slash.
 pub(crate) fn apply_slash<T: Trait>(unapplied_slash: UnappliedSlash<T::AccountId, Balance>) {
-	let mut slashed_imbalance = NegativeImbalanceOf::<T>::zero();
+
+    let validator_liquidity_token = match <Module<T>>::get_stash_liquidity_token(&unapplied_slash.validator){
+        Some(liquidity_token) => liquidity_token,
+		None => return, // nothing to do.
+    };
+
+	let mut slashed_imbalance = NegativeImbalanceOf::<T>::from_zero(validator_liquidity_token.into());
 	let mut reward_payout = unapplied_slash.payout;
 
 	do_slash::<T>(
@@ -641,11 +647,6 @@ pub(crate) fn apply_slash<T: Trait>(unapplied_slash: UnappliedSlash<T::AccountId
 			&mut slashed_imbalance,
 		);
 	}
-
-	let validator_liquidity_token = match <Module<T>>::get_stash_liquidity_token(unapplied_slash.validator){
-        Some(liquidity_token) => liquidity_token,
-		None => return, // nothing to do.
-    };
 	
 	// Pass the liquidity token id of the validator into pay_reporters
 	pay_reporters::<T>(validator_liquidity_token, reward_payout, slashed_imbalance, &unapplied_slash.reporters);

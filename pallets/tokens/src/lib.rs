@@ -94,6 +94,13 @@ pub use multi_token_currency::{
     MultiTokenReservableCurrency,
 };
 
+use multi_token_imbalances::{
+    NegativeImbalance as MultiTokenNegativeImbalance,
+    PositiveImbalance as MultiTokenPositiveImbalance,
+};
+
+pub use multi_token_imbalances::MultiTokenImbalanceWithZeroTrait;
+
 pub trait WeightInfo {
     fn transfer() -> Weight;
     fn transfer_all() -> Weight;
@@ -1049,10 +1056,7 @@ where
     }
 }
 
-use multi_token_imbalances::{
-    NegativeImbalance as MultiTokenNegativeImbalance,
-    PositiveImbalance as MultiTokenPositiveImbalance,
-};
+
 pub struct MultiTokenCurrencyAdapter<T>(marker::PhantomData<T>);
 
 impl<T> MultiTokenCurrency<T::AccountId> for MultiTokenCurrencyAdapter<T>

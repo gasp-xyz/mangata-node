@@ -112,8 +112,10 @@ pub fn create_funded_user<T: Trait>(
 ) -> T::AccountId {
     let user: T::AccountId = account(string, n, SEED);
 
+    let balance_factor_2: u64 = (balance_factor*2).into();
+
     let base_token_value_u256: U256 = BASE_TOKEN_VALUE.saturated_into::<u128>().into();
-    let balance_factor_u256: U256 = balance_factor.saturated_into::<u128>().into();
+    let balance_factor_u256: U256 = balance_factor_2.saturated_into::<u128>().into();
     let balance_u256 = base_token_value_u256 * balance_factor_u256;
     let balance: u128 = balance_u256.saturated_into::<u128>();
 
@@ -130,7 +132,7 @@ pub fn create_funded_user<T: Trait>(
     // mint pooled token
     assert!(<T as Trait>::Tokens::mint(second_asset_id.into(), &user, second_asset_amount.into()).is_ok());
     // mint liquidity
-    assert!(<T as Trait>::Xyk::mint_liquidity(user.clone(), first_asset_id.into(), second_asset_id.into(), first_asset_amount.into()).is_ok());
+    assert!(<T as Trait>::Xyk::mint_liquidity(user.clone(), first_asset_id.into(), second_asset_id.into(), {first_asset_amount / 2}.into()).is_ok());
     user
 }
 
@@ -165,36 +167,36 @@ pub fn create_stash_controller<T: Trait>(
 }
 
 // I expect this won't make a difference with ORML tokens 
-/// Create a stash and controller pair, where the controller is dead, and payouts go to controller.
-/// This is used to test worst case payout scenarios.
-pub fn create_stash_and_dead_controller<T: Trait>(
-    n: u32,
-    liquidity_token_id: u32,
-    balance_factor: u32,
-    destination: RewardDestination<T::AccountId>
-) -> Result<(T::AccountId, T::AccountId), &'static str> {
-    let stash = create_funded_user::<T>("stash", n, liquidity_token_id, balance_factor);
-    let controller = create_funded_user::<T>("controller", n, liquidity_token_id, 0);
-    let controller_lookup: <T::Lookup as StaticLookup>::Source =
-        T::Lookup::unlookup(controller.clone());
+// /// Create a stash and controller pair, where the controller is dead, and payouts go to controller.
+// /// This is used to test worst case payout scenarios.
+// pub fn create_stash_and_dead_controller<T: Trait>(
+//     n: u32,
+//     liquidity_token_id: u32,
+//     balance_factor: u32,
+//     destination: RewardDestination<T::AccountId>
+// ) -> Result<(T::AccountId, T::AccountId), &'static str> {
+//     let stash = create_funded_user::<T>("stash", n, liquidity_token_id, balance_factor);
+//     let controller = create_funded_user::<T>("controller", n, liquidity_token_id, 0);
+//     let controller_lookup: <T::Lookup as StaticLookup>::Source =
+//         T::Lookup::unlookup(controller.clone());
     
-    let base_token_value_u256: U256 = BASE_TOKEN_VALUE.saturated_into::<u128>().into();
-    let balance_factor_u256: U256 = balance_factor.saturated_into::<u128>().into();
-    let balance_u256 = base_token_value_u256 * balance_factor_u256;
-    let balance: u128 = balance_u256.saturated_into::<u128>();
+//     let base_token_value_u256: U256 = BASE_TOKEN_VALUE.saturated_into::<u128>().into();
+//     let balance_factor_u256: U256 = balance_factor.saturated_into::<u128>().into();
+//     let balance_u256 = base_token_value_u256 * balance_factor_u256;
+//     let balance: u128 = balance_u256.saturated_into::<u128>();
 
-    // stake a tenth of liquidity tokens
-    let amount: u128 = (balance / 10).max(1).into();
+//     // stake a tenth of liquidity tokens
+//     let amount: u128 = (balance / 10).max(1).into();
 
-    Staking::<T>::bond(
-        RawOrigin::Signed(stash.clone()).into(),
-        controller_lookup,
-        amount,
-        destination,
-        liquidity_token_id
-    )?;
-    return Ok((stash, controller));
-}
+//     Staking::<T>::bond(
+//         RawOrigin::Signed(stash.clone()).into(),
+//         controller_lookup,
+//         amount,
+//         destination,
+//         liquidity_token_id
+//     )?;
+//     return Ok((stash, controller));
+// }
 
 /// create `max` validators.
 pub fn create_validators<T: Trait>(

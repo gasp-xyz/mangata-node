@@ -8,6 +8,7 @@ use sp_runtime::traits::{AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member
 use sp_runtime::{DispatchError, DispatchResult};
 use sp_std::fmt::Debug;
 use sp_std::result;
+use crate::MultiTokenImbalanceWithZeroTrait;
 
 /// Abstraction over a fungible assets system.
 pub trait MultiTokenCurrency<AccountId> {
@@ -34,11 +35,11 @@ pub trait MultiTokenCurrency<AccountId> {
 
     /// The opaque token type for an imbalance. This is returned by unbalanced operations
     /// and must be dealt with. It may be dropped but cannot be cloned.
-    type PositiveImbalance: Imbalance<Self::Balance, Opposite = Self::NegativeImbalance>;
+    type PositiveImbalance: Imbalance<Self::Balance, Opposite = Self::NegativeImbalance> + MultiTokenImbalanceWithZeroTrait<Self::CurrencyId>;
 
     /// The opaque token type for an imbalance. This is returned by unbalanced operations
     /// and must be dealt with. It may be dropped but cannot be cloned.
-    type NegativeImbalance: Imbalance<Self::Balance, Opposite = Self::PositiveImbalance>;
+    type NegativeImbalance: Imbalance<Self::Balance, Opposite = Self::PositiveImbalance> + MultiTokenImbalanceWithZeroTrait<Self::CurrencyId>;
 
     // PUBLIC IMMUTABLES
 

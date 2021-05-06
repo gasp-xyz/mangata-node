@@ -2484,24 +2484,23 @@ impl<T: Trait> Module<T> {
     /// to pay the right payee for the given staker account.
     fn make_payout(stash: &T::AccountId, amount: Balance) -> Option<PositiveImbalanceOf<T>> {
         let dest = Self::payee(stash);
-        let stash_liquidity_token = match Self::get_stash_liquidity_token(stash) {
-            Some(liquidity_token) => liquidity_token,
-            None => return None,
-        };
+        let native_liquidity_token = T::NativeCurrencyId::get();
         match dest {
             RewardDestination::Controller => Self::bonded(stash).and_then(|controller| {
                 Some(T::Tokens::deposit_creating(
-                    stash_liquidity_token.into(),
+                    native_liquidity_token.into(),
                     &controller,
                     amount.into(),
                 ))
             }),
-            RewardDestination::Stash => {
-                T::Tokens::deposit_into_existing(stash_liquidity_token.into(), stash, amount.into())
-                    .ok()
-            }
+            RewardDestination::Stash => T::Tokens::deposit_into_existing(
+                native_liquidity_token.into(),
+                stash,
+                amount.into(),
+            )
+            .ok(),
             RewardDestination::Account(dest_account) => Some(T::Tokens::deposit_creating(
-                stash_liquidity_token.into(),
+                native_liquidity_token.into(),
                 &dest_account,
                 amount.into(),
             )),

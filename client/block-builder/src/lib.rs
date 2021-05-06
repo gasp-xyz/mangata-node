@@ -30,8 +30,8 @@
 use codec::Encode;
 use log::info;
 use rand::rngs::StdRng;
-use rand::seq::SliceRandom;
 use rand::SeedableRng;
+use rand::seq::SliceRandom;
 
 use sp_api::{
 	ApiErrorFor, ApiExt, ApiRef, Core, ProvideRuntimeApi, StorageChanges, StorageProof,
@@ -48,6 +48,7 @@ use sp_runtime::{
 };
 
 use std::collections::hash_map::DefaultHasher;
+use std::collections::VecDeque;
 use std::hash::{Hash as HHash, Hasher};
 use sp_core::crypto::Ss58Codec;
 
@@ -268,23 +269,40 @@ where
 					info!("transaction count {}", previous_block_extrinsics.len());
 					info!("seed: {:?}", extrinsics_hash.to_fixed_bytes());
 
-					let mut grouped_extrinsics: Vec<(_,Vec<_>)> = previous_block_extrinsics
+                    // group extrinsics by author - extrinsics are already received in order
+					let mut grouped_extrinsics = previous_block_extrinsics
 						.into_iter()
 						.fold(HashMap::new(), |mut groups, tx| {
 							let group = self.extrinsics_info.get(&self.calculate_hash(&tx));
-							groups.entry(group).or_insert(vec![]).push(tx);
+							groups.entry(group).or_insert(VecDeque::new()).push_back(tx);
 							groups
-						}).into_iter().collect();
+						});
 
 					let mut rng: StdRng = SeedableRng::from_seed(extrinsics_hash.to_fixed_bytes());
-					grouped_extrinsics.shuffle(&mut rng);
 
-                    for (id,txs) in grouped_extrinsics.iter(){
-                        log::debug!(target: "block_shuffler", "{:?} - {} extrinsics ", id, txs.len());
-                    }
+                    // generate exact number of slots for each account
+                    // [ Alice, Alice, Alice, ... , Bob, Bob, Bob, ... ]
+                    let mut slots: Vec<_> = grouped_extrinsics
+                        .iter()
+                        .map(|(who,extrinsics)| vec![who;extrinsics.len()])
+                        .flatten()
+                        .map(|elem| elem.to_owned())
+                        .collect();
 
-					grouped_extrinsics.into_iter().flat_map(|(_,tx)| tx.into_iter()).for_each(|xt| {
+                    // shuffle slots
+					slots.shuffle(&mut rng);
 
+                    // fill slots using extrinsics in order
+                    // [ Alice, Bob, ... , Alice, Bob ]
+                    //              ↓↓↓
+                    // [ AliceExtrinsic1, BobExtrinsic1, ... , AliceExtrinsicN, BobExtrinsicN ]
+                    let shuffled_extrinsics: Vec<_> = slots
+                        .into_iter()
+                        .map(|who| grouped_extrinsics.get_mut(&who).unwrap().pop_front().unwrap())
+                        .collect();
+
+
+                    for xt in shuffled_extrinsics.into_iter() {
                         log::debug!(target: "block_shuffler", "executing extrinsic :{:?}", self.calculate_ss58_hash(&xt));
 						self.api.execute_in_transaction(|api| {
 							match api.apply_extrinsic_with_context(
@@ -297,7 +315,7 @@ where
 								Err(_e) => TransactionOutcome::Rollback(()),
 							}
 						})
-					});
+					};
 				}
 			}
 			None => {

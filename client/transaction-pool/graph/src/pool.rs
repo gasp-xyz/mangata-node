@@ -26,7 +26,7 @@ use crate::{base_pool as base, watcher::Watcher};
 use futures::Future;
 use sp_runtime::{
 	generic::BlockId,
-	traits::{self, SaturatedConversion, Block as BlockT},
+	traits::{self, SaturatedConversion, Block as BlockT, BlakeTwo256, Hash},
 	transaction_validity::{
 		TransactionValidity, TransactionTag as Tag, TransactionValidityError, TransactionSource,
 	},
@@ -37,10 +37,12 @@ use futures::channel::mpsc::Receiver;
 use sp_std::collections::btree_map::BTreeMap;
 use sp_std::sync::Mutex;
 use sp_runtime::AccountId32;
+use codec::Encode;
 
 use std::convert::TryInto;
 use crate::validated_pool::ValidatedPool;
 pub use crate::validated_pool::ValidatedTransaction;
+use sp_core::H256;
 
 /// Modification notification event stream type;
 pub type EventStream<H> = Receiver<H>;
@@ -140,7 +142,7 @@ enum CheckBannedBeforeVerify {
 /// Extrinsics pool that performs validation.
 pub struct Pool<B: ChainApi> {
 	validated_pool: Arc<ValidatedPool<B>>,
-    transaction_info: Arc<Mutex<BTreeMap<ExtrinsicHash<B>, (AccountId32, u32)>>>
+    transaction_info: Arc<Mutex<BTreeMap<H256, (AccountId32, u32)>>>
 
 }
 
@@ -220,7 +222,8 @@ impl<B: ChainApi> Pool<B> {
         if let ValidatedTransaction::Valid(transaction) = &tx{
             let who: AccountId32 = (&transaction.provides[0][0..32]).try_into().unwrap();
             let nonce: u32 = u32::from_le_bytes((&transaction.provides[0][32..36]).try_into().unwrap());
-            self.transaction_info.lock().expect("lock poison").insert(transaction.hash, (who,nonce) );
+            let hash = BlakeTwo256::hash(&transaction.data.encode());
+            self.transaction_info.lock().expect("lock poison").insert(hash, (who,nonce) );
         }
 
 		self.validated_pool.submit_and_watch(tx)
@@ -461,9 +464,17 @@ impl<B: ChainApi> Pool<B> {
 	}
 
     /// returns informamation abount Nonce and transaction creator
-    pub fn get_transacion_info(&self, hash: ExtrinsicHash<B>) -> (AccountId32, u32){
-        self.transaction_info.lock().unwrap().get(&hash).unwrap().to_owned()
+    pub fn get_transacion_info(&self, hash: H256) -> Option<(AccountId32, u32)>{
+        self.transaction_info.lock().unwrap().get(&hash).map(|x| x.to_owned())
     }
+
+	/// returns informamation abount Nonce and transaction creator
+	pub fn prune_transacion_info(&self, hashes: &Vec<H256>){
+		let mut db = self.transaction_info.lock().unwrap();
+		for h in hashes.into_iter(){
+			db.remove(&h);
+		}
+	}
 }
 
 impl<B: ChainApi> Clone for Pool<B> {

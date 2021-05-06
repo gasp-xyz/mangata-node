@@ -54,6 +54,7 @@ use wasm_timer::Instant;
 
 use prometheus_endpoint::Registry as PrometheusRegistry;
 use crate::metrics::MetricsLink as PrometheusMetrics;
+use sp_core::H256;
 
 type BoxedReadyIterator<Hash, Data> = Box<
 	dyn Iterator<Item=Arc<sc_transaction_graph::base_pool::Transaction<Hash, Data>>> + Send
@@ -71,9 +72,11 @@ pub type FullPool<Block, Client> = BasicPool<FullChainApi<Client, Block>, Block>
 pub type LightPool<Block, Client, Fetcher> = BasicPool<LightChainApi<Client, Fetcher, Block>, Block>;
 
 /// Provides information about Extrinsic
-pub trait TransactionInfoProvider<Hash>{
+pub trait TransactionInfoProvider{
 	/// returns information about extrinsic creator and nonce
-	fn get_extrinsic_info(&self, hash: Hash) -> (AccountId32, u32);
+	fn get_extrinsic_info(&self, hash: H256) -> Option<(AccountId32, u32)>;
+	/// prune information that are no longer needed
+	fn prune(&self, hashes: &Vec<H256>);
 }
 
 /// Basic implementation of transaction pool that can be customized by providing PoolApi.
@@ -230,14 +233,18 @@ impl<PoolApi, Block> BasicPool<PoolApi, Block>
 	}
 }
 
-impl<PoolApi, Block> TransactionInfoProvider<ExtrinsicHash<PoolApi>> for BasicPool<PoolApi, Block>
+impl<PoolApi, Block> TransactionInfoProvider for BasicPool<PoolApi, Block>
 	where
 		Block: BlockT,
 		PoolApi: 'static + ChainApi<Block=Block>,
 {
-	fn get_extrinsic_info(&self, hash: ExtrinsicHash<PoolApi>) -> (AccountId32, u32){
+	fn get_extrinsic_info(&self, hash: H256) -> Option<(AccountId32, u32)>{
         self.pool.get_transacion_info(hash)
     }
+
+	fn prune(&self, hashes: &Vec<H256>){
+		self.pool.prune_transacion_info(hashes)
+	}
 }
 
 impl<PoolApi, Block> TransactionPool for BasicPool<PoolApi, Block>

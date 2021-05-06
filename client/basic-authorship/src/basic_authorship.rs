@@ -22,7 +22,7 @@
 
 use std::{time, sync::Arc};
 use sc_client_api::backend;
-use codec::Decode;
+use codec::{Encode, Decode};
 use sp_consensus::{evaluation, Proposal, RecordProof};
 use sp_inherents::InherentData;
 use log::{error, info, debug, trace, warn};
@@ -71,7 +71,7 @@ impl<A, B, C> ProposerFactory<A, B, C> {
 
 impl<B, Block, C, A> ProposerFactory<A, B, C>
 	where
-		A: TransactionInfoProvider<<Block as BlockT>::Hash> + TransactionPool<Block = Block, Hash=<Block as BlockT>::Hash> + 'static,
+		A: TransactionInfoProvider + TransactionPool<Block = Block> + 'static,
 		B: backend::Backend<Block> + Send + Sync + 'static,
 		Block: BlockT,
 		C: BlockBuilderProvider<B, Block, C> + HeaderBackend<Block> + ProvideRuntimeApi<Block>
@@ -109,7 +109,7 @@ impl<B, Block, C, A> ProposerFactory<A, B, C>
 impl<A, B, Block, C> sp_consensus::Environment<Block> for
 	ProposerFactory<A, B, C>
 		where
-			A: TransactionInfoProvider<<Block as BlockT>::Hash> + TransactionPool<Block = Block,  Hash=<Block as BlockT>::Hash> + 'static,
+			A: TransactionInfoProvider + TransactionPool<Block = Block> + 'static,
 			B: backend::Backend<Block> + Send + Sync + 'static,
 			Block: BlockT,
 			C: BlockBuilderProvider<B, Block, C> + HeaderBackend<Block> + ProvideRuntimeApi<Block>
@@ -130,7 +130,7 @@ impl<A, B, Block, C> sp_consensus::Environment<Block> for
 }
 
 /// The proposer logic.
-pub struct Proposer<B, Block: BlockT, C, A: TransactionPool + TransactionInfoProvider<<Block as BlockT>::Hash>> {
+pub struct Proposer<B, Block: BlockT, C, A: TransactionPool + TransactionInfoProvider> {
 	client: Arc<C>,
 	parent_hash: <Block as BlockT>::Hash,
 	parent_id: BlockId<Block>,
@@ -144,7 +144,7 @@ pub struct Proposer<B, Block: BlockT, C, A: TransactionPool + TransactionInfoPro
 impl<A, B, Block, C> sp_consensus::Proposer<Block> for
 	Proposer<B, Block, C, A>
 		where
-			A: TransactionInfoProvider<<Block as BlockT>::Hash> + TransactionPool<Block = Block, Hash=<Block as BlockT>::Hash> + 'static,
+			A: TransactionInfoProvider + TransactionPool<Block = Block> + 'static,
 			B: backend::Backend<Block> + Send + Sync + 'static,
 			Block: BlockT,
 			C: BlockBuilderProvider<B, Block, C> + HeaderBackend<Block> + ProvideRuntimeApi<Block>
@@ -175,7 +175,7 @@ impl<A, B, Block, C> sp_consensus::Proposer<Block> for
 
 impl<A, B, Block, C> Proposer<B, Block, C, A>
 	where
-		A: TransactionInfoProvider<<Block as BlockT>::Hash> + TransactionPool<Block = Block, Hash=<Block as BlockT>::Hash>,
+		A: TransactionInfoProvider + TransactionPool<Block = Block>,
 		B: backend::Backend<Block> + Send + Sync + 'static,
 		Block: BlockT,
 		C: BlockBuilderProvider<B, Block, C> + HeaderBackend<Block> + ProvideRuntimeApi<Block>
@@ -202,7 +202,7 @@ impl<A, B, Block, C> Proposer<B, Block, C, A>
 		)?;
 
 		for inherent in block_builder.create_inherents(inherent_data)? {
-			match block_builder.push(inherent, None) {
+			match block_builder.push(inherent) {
 				Err(ApplyExtrinsicFailed(Validity(e))) if e.exhausted_resources() =>
 					warn!("⚠️  Dropping non-mandatory inherent from overweight block."),
 				Err(ApplyExtrinsicFailed(Validity(e))) if e.was_mandatory() => {
@@ -249,8 +249,7 @@ impl<A, B, Block, C> Proposer<B, Block, C, A>
 			let pending_tx_data = pending_tx.data().clone();
 			let pending_tx_hash = pending_tx.hash().clone();
 			trace!("[{:?}] Pushing to the block.", pending_tx_hash);
-			let info = self.transaction_pool.get_extrinsic_info(pending_tx_hash);
-			match sc_block_builder::BlockBuilder::push(&mut block_builder, pending_tx_data, Some(info)) {
+			match sc_block_builder::BlockBuilder::push(&mut block_builder, pending_tx_data) {
 				Ok(()) => {
 					debug!("[{:?}] Pushed to the block.", pending_tx_hash);
 				}
@@ -283,7 +282,9 @@ impl<A, B, Block, C> Proposer<B, Block, C, A>
 
 		self.transaction_pool.remove_invalid(&unqueue_invalid);
 
-		let (block, storage_changes, proof) = block_builder.build()?.into_inner();
+		let (built_block, consumed) = block_builder.build(&|hash|self.transaction_pool.get_extrinsic_info(hash))?;
+		let (block, storage_changes, proof) = built_block.into_inner();
+		self.transaction_pool.prune(&consumed);
 
 		self.metrics.report(
 			|metrics| {

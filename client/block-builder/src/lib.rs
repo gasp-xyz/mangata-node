@@ -39,17 +39,14 @@ use sp_api::{
 };
 use sp_blockchain::{Backend, Error};
 use sp_consensus::RecordProof;
-use sp_core::ExecutionContext;
+use sp_core::{ExecutionContext, H256};
 use sp_runtime::{
 	generic::BlockId,
 	traits::{
 		BlakeTwo256, Block as BlockT, DigestFor, Hash, HashFor, Header as HeaderT, NumberFor, One,
 	},
 };
-
-use std::collections::hash_map::DefaultHasher;
 use std::collections::VecDeque;
-use std::hash::{Hash as HHash, Hasher};
 use sp_core::crypto::Ss58Codec;
 
 pub use sp_block_builder::BlockBuilder as BlockBuilderApi;
@@ -121,7 +118,6 @@ pub type ExtrinsicId = u64;
 /// Utility for building new (valid) blocks from a stream of extrinsics.
 pub struct BlockBuilder<'a, Block: BlockT, A: ProvideRuntimeApi<Block>, B> {
 	extrinsics: Vec<Block::Extrinsic>,
-	extrinsics_info: HashMap<ExtrinsicId, AccountId32>,
 	api: ApiRef<'a, A::Api>,
 	block_id: BlockId<Block>,
 	parent_hash: Block::Hash,
@@ -171,39 +167,21 @@ where
 		Ok(Self {
 			parent_hash,
 			extrinsics: Vec::new(),
-			extrinsics_info: HashMap::new(),
 			api,
 			block_id,
 			backend,
 		})
 	}
 
-	fn calculate_hash<T: Encode>(&self, input: &T) -> u64{
-		let mut s = DefaultHasher::new();
-		input.encode().hash(&mut s);
-		s.finish()
-	}
-
-	fn calculate_ss58_hash<T: Encode>(&self, input: &T) -> String{
-		let hash = BlakeTwo256::hash(&input.encode());
-        let bytes = AccountId32::from(hash.to_fixed_bytes());
-        bytes.to_ss58check()
-    }
-
 	/// Push onto the block's list of extrinsics.
 	///
 	/// This will ensure the extrinsic can be validly executed (by executing it).
-	pub fn push(&mut self, xt: <Block as BlockT>::Extrinsic, info: Option<(AccountId32, u32)>) -> Result<(), ApiErrorFor<A, Block>> {
+	pub fn push(&mut self, xt: <Block as BlockT>::Extrinsic) -> Result<(), ApiErrorFor<A, Block>> {
 		// let block_id = &self.block_id;
 		// let extrinsics = &mut self.extrinsics;
 
 		//FIXME add test execution with state rejection
 		info!("Pushing transactions without execution");
-		if let Some((who,nonce)) = info {
-            log::debug!(target: "block_shuffler", "storing extrinsic:{} signed by:{} nonce:{}", self.calculate_ss58_hash(&xt), who.to_ss58check(), nonce);
-            let hash = self.calculate_hash(&xt);
-			self.extrinsics_info.insert(hash, who); 
-		}
 		self.extrinsics.push(xt);
 		Ok(())
 
@@ -235,7 +213,8 @@ where
 	/// The storage proof will be `Some(_)` when proof recording was enabled.
 	pub fn build(
 		mut self,
-	) -> Result<BuiltBlock<Block, backend::StateBackendFor<B, Block>>, ApiErrorFor<A, Block>> {
+		context_provider: &dyn Fn(H256) -> Option<(AccountId32, u32)>
+	) -> Result<(BuiltBlock<Block, backend::StateBackendFor<B, Block>>, Vec<H256>), ApiErrorFor<A, Block>> {
 		let block_id = &self.block_id;
 
 		let extrinsics = self.extrinsics.clone();
@@ -243,7 +222,7 @@ where
 		let extrinsics_hash = BlakeTwo256::hash(&extrinsics.encode());
 
 		//FIXME
-		match self
+		let consumed_extrinsics: Vec<H256> = match self
 			.backend
 			.blockchain()
 			.body(BlockId::Hash(parent_hash))
@@ -265,16 +244,22 @@ where
 							}
 						})
 					});
+					vec![]
 				} else {
 					info!("transaction count {}", previous_block_extrinsics.len());
 					info!("seed: {:?}", extrinsics_hash.to_fixed_bytes());
 
+
                     // group extrinsics by author - extrinsics are already received in order
-					let mut grouped_extrinsics = previous_block_extrinsics
+					let mut grouped_extrinsics: HashMap<Option<AccountId32>, VecDeque<_>> = previous_block_extrinsics
 						.into_iter()
 						.fold(HashMap::new(), |mut groups, tx| {
-							let group = self.extrinsics_info.get(&self.calculate_hash(&tx));
-							groups.entry(group).or_insert(VecDeque::new()).push_back(tx);
+							let tx_hash = BlakeTwo256::hash(&tx.encode());
+							let who = context_provider(tx_hash).map(|x| Some(x.0)).unwrap_or(None);
+
+							log::debug!(target: "block_shuffler", "who:{:32}  extrinsic:{:?}",who.clone().map(|x| x.to_ss58check()).unwrap_or_else(|| String::from("None")), tx_hash);
+
+							groups.entry(who).or_insert(VecDeque::new()).push_back(tx);
 							groups
 						});
 
@@ -284,7 +269,7 @@ where
                     // [ Alice, Alice, Alice, ... , Bob, Bob, Bob, ... ]
                     let mut slots: Vec<_> = grouped_extrinsics
                         .iter()
-                        .map(|(who,extrinsics)| vec![who;extrinsics.len()])
+                        .map(|(who, txs)| vec![who;txs.len()])
                         .flatten()
                         .map(|elem| elem.to_owned())
                         .collect();
@@ -302,8 +287,8 @@ where
                         .collect();
 
 
-                    for xt in shuffled_extrinsics.into_iter() {
-                        log::debug!(target: "block_shuffler", "executing extrinsic :{:?}", self.calculate_ss58_hash(&xt));
+                    for xt in shuffled_extrinsics.iter() {
+                        log::debug!(target: "block_shuffler", "executing extrinsic :{:?}", BlakeTwo256::hash(&xt.encode()));
 						self.api.execute_in_transaction(|api| {
 							match api.apply_extrinsic_with_context(
 								block_id,
@@ -316,12 +301,15 @@ where
 							}
 						})
 					};
+
+					shuffled_extrinsics.into_iter().map(|tx| BlakeTwo256::hash(&tx.encode())).collect()
 				}
 			}
 			None => {
 				info!("No extrinsics found for previous block");
+				vec![]
 			}
-		}
+		};
 
 		let header = self
 			.api
@@ -346,11 +334,14 @@ where
 			self.api
 				.into_storage_changes(&state, changes_trie_state.as_ref(), parent_hash)?;
 
-		Ok(BuiltBlock {
+		Ok(
+			(BuiltBlock {
 			block: <Block as BlockT>::new(header, self.extrinsics),
 			storage_changes,
 			proof,
-		})
+			},
+			consumed_extrinsics)
+		)
 	}
 
 	/// Create the inherents for the block.

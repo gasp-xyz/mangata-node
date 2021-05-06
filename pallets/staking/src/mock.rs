@@ -48,16 +48,40 @@ pub(crate) type AccountIndex = u64;
 pub(crate) type BlockNumber = u64;
 pub(crate) type Balance = u128;
 
-/// Simple structure that exposes how u64 currency can be represented as... u64.
+// /// Simple structure that exposes how u64 currency can be represented as... u64.
+// pub struct CurrencyToVoteHandler;
+// impl Convert<Balance, u64> for CurrencyToVoteHandler {
+//     fn convert(x: Balance) -> u64 {
+//         x.saturated_into()
+//     }
+// }
+// impl Convert<u128, Balance> for CurrencyToVoteHandler {
+//     fn convert(x: u128) -> Balance {
+//         x
+//     }
+// }
+
+/// Struct that handles the conversion of Balance -> `u64`. This is used for staking's election
+/// calculation.
 pub struct CurrencyToVoteHandler;
-impl Convert<Balance, u64> for CurrencyToVoteHandler {
-    fn convert(x: Balance) -> u64 {
-        x.saturated_into()
+
+impl CurrencyToVoteHandler {
+    fn factor() -> Balance {
+        (orml_tokens::MultiTokenCurrencyAdapter::<Runtime>::total_issuance(NATIVE_CURRENCY_ID)
+            / u64::max_value() as Balance)
+            .max(1)
     }
 }
+
+impl Convert<Balance, u64> for CurrencyToVoteHandler {
+    fn convert(x: Balance) -> u64 {
+        (x / Self::factor()) as u64
+    }
+}
+
 impl Convert<u128, Balance> for CurrencyToVoteHandler {
     fn convert(x: u128) -> Balance {
-        x
+        x * Self::factor()
     }
 }
 
@@ -172,6 +196,7 @@ mod staking {
     // Re-export needed for `impl_outer_event!`.
     pub use super::super::*;
 }
+
 use frame_system as system;
 use pallet_balances as balances;
 use pallet_session as session;
@@ -343,6 +368,27 @@ impl Trait for Test {
     type MinSolutionScoreBump = MinSolutionScoreBump;
     type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
     type UnsignedPriority = UnsignedPriority;
+    type WeightInfo = ();
+}
+
+
+parameter_types! {
+    pub const NativeCurrencyId: u32 = NATIVE_CURRENCY_ID;
+}
+
+impl pallet_xyk::Trait for Runtime {
+    type Event = Event;
+    type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+    type NativeCurrencyId = NativeCurrencyId;
+}
+
+
+impl orml_tokens::Trait for Runtime {
+    type Event = Event;
+    type Balance = Balance;
+    type Amount = Amount;
+    type CurrencyId = TokenId;
+    type OnReceived = ();
     type WeightInfo = ();
 }
 

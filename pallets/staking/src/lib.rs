@@ -277,7 +277,7 @@
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
-#[cfg(feature = "runtime-benchmarks")]
+#[cfg(any(feature = "runtime-benchmarks", test))]
 mod testing_utils;
 
 pub mod default_weights;

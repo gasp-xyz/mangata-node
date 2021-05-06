@@ -1,6 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-// mod mock;
 use super::*;
 use crate::Module as Staking;
 use testing_utils::*;
@@ -396,10 +395,10 @@ benchmarks! {
         <ErasValidatorPrefs<T>>::insert(current_era, validator.clone(), <Staking<T>>::validators(&validator));
 
         let caller = whitelisted_caller();
-        let balance_before = <T as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID.into(), &validator);
+        let balance_before = <T as Trait>::Tokens::free_balance(NATIVE_TOKEN_ID.into(), &validator);
     }: payout_stakers(RawOrigin::Signed(caller), validator.clone(), current_era)
     verify {
-        let balance_after = <T as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID.into(), &validator);
+        let balance_after = <T as Trait>::Tokens::free_balance(NATIVE_TOKEN_ID.into(), &validator);
         assert!(
             balance_before < balance_after,
             "Balance of stash {:?} should have increased after payout.",

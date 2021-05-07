@@ -136,22 +136,22 @@ fn basic_setup_works() {
         assert_eq!(
             Staking::eras_stakers(Staking::active_era().unwrap().index, 11),
             Exposure {
-                total: 1125,
-                own: 1000,
+                total: 500 + 62,
+                own: 500,
                 others: vec![IndividualExposure {
                     who: 101,
-                    value: 125
+                    value: 62
                 }]
             },
         );
         assert_eq!(
             Staking::eras_stakers(Staking::active_era().unwrap().index, 21),
             Exposure {
-                total: 1375,
-                own: 1000,
+                total: 500 + 187,
+                own: 500,
                 others: vec![IndividualExposure {
                     who: 101,
-                    value: 375
+                    value: 187
                 }]
             },
         );
@@ -159,7 +159,7 @@ fn basic_setup_works() {
         // initial total stake = 1125 + 1375
         assert_eq!(
             Staking::eras_total_stake(Staking::active_era().unwrap().index),
-            2500
+            500 + 62 + 500 + 187
         );
 
         // The number of validators required.
@@ -168,9 +168,8 @@ fn basic_setup_works() {
         // Initial Era and session
         assert_eq!(Staking::active_era().unwrap().index, 0);
 
-        // Account 10 has `balance_factor` free balance
-        assert_eq!(Balances::free_balance(10), 1);
-        assert_eq!(Balances::free_balance(10), 1);
+        // Account 10 has `0` free balance as liquidity tokens
+        assert_eq!(<Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &10), 0);
 
         // New era is not being forced
         assert_eq!(Staking::force_era(), Forcing::NotForcing);
@@ -1108,7 +1107,7 @@ fn bond_extra_works() {
         );
 
         // Give account 11 some large free balance greater than total
-        let _ = Balances::make_free_balance_be(&11, 1000000);
+        let _ = <Test as Trait>::Tokens::make_free_balance_be(DEFAULT_LIQUIDITY_TOKEN_ID, &11, 1000000);
 
         // Call the bond_extra function from controller, add only 100
         assert_ok!(Staking::bond_extra(Origin::signed(11), 100));
@@ -1151,6 +1150,29 @@ fn bond_extra_and_withdraw_unbonded_works() {
     // * it can unbond a portion of its funds from the stash account.
     // * Once the unbonding period is done, it can actually take the funds out of the stash.
     ExtBuilder::default().nominate(false).build_and_execute(|| {
+
+        log!(info, "block_number-from_test:{:?}", System::block_number());
+
+        let this_active_era = Staking::active_era().unwrap().index;
+        let this_current_era = Staking::current_era().unwrap();
+
+        assert!(this_active_era == this_current_era);
+
+        log!(info, "eras_stakers:{:?}", Staking::eras_stakers(this_active_era, 11));
+        log!(info, "eras_stakers:{:?}", Staking::eras_stakers(this_active_era, 21));
+        log!(info, "eras_stakers:{:?}", Staking::eras_stakers(this_active_era, 31));
+        log!(info, "eras_stakers:{:?}", Staking::eras_stakers(this_active_era, 41));
+        log!(info, "eras_stakers:{:?}", Staking::eras_stakers(this_active_era, 101));
+
+        log!(info, "history_depth:{:?}", Staking::history_depth());
+        log!(info, "election_lookahead:{:?}", <Test as Trait>::ElectionLookahead::get());
+
+        log!(info, "get_stash_staked_valuation:{:?}", Staking::get_stash_staked_valuation(DUMMY_VALUE, 11));
+        log!(info, "get_stash_staked_valuation:{:?}", Staking::get_stash_staked_valuation(DUMMY_VALUE, 21));
+        log!(info, "get_stash_staked_valuation:{:?}", Staking::get_stash_staked_valuation(DUMMY_VALUE, 31));
+        log!(info, "get_stash_staked_valuation:{:?}", Staking::get_stash_staked_valuation(DUMMY_VALUE, 41));
+        log!(info, "get_stash_staked_valuation:{:?}", Staking::get_stash_staked_valuation(DUMMY_VALUE, 101));
+
         // Set payee to controller. avoids confusion
         assert_ok!(Staking::set_payee(
             Origin::signed(10),
@@ -1158,17 +1180,45 @@ fn bond_extra_and_withdraw_unbonded_works() {
         ));
 
         // Give account 11 some large free balance greater than total
-        let _ = Balances::make_free_balance_be(&11, 1000000);
+        let _ = <Test as Trait>::Tokens::make_free_balance_be(DEFAULT_LIQUIDITY_TOKEN_ID, &11, 1000000);
 
         // Initial config should be correct
         assert_eq!(Staking::active_era().unwrap().index, 0);
         assert_eq!(Session::current_index(), 0);
 
         // check the balance of a validator accounts.
-        assert_eq!(Balances::total_balance(&10), 1);
+        assert_eq!(<Test as Trait>::Tokens::total_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &10), 0);
 
         // confirm that 10 is a normal validator and gets paid at the end of the era.
         mock::start_era(1);
+
+        let this_active_era = Staking::active_era().unwrap().index;
+        let this_current_era = Staking::current_era().unwrap();
+
+        assert!(this_active_era == this_current_era);
+
+        log!(info, "eras_stakers:{:?}", Staking::eras_stakers(this_active_era, 11));
+        log!(info, "eras_stakers:{:?}", Staking::eras_stakers(this_active_era, 21));
+        log!(info, "eras_stakers:{:?}", Staking::eras_stakers(this_active_era, 31));
+        log!(info, "eras_stakers:{:?}", Staking::eras_stakers(this_active_era, 41));
+        log!(info, "eras_stakers:{:?}", Staking::eras_stakers(this_active_era, 101));
+
+        log!(info, "history_depth:{:?}", Staking::history_depth());
+
+        log!(info, "get_stash_staked_valuation:{:?}", Staking::get_stash_staked_valuation(DUMMY_VALUE, 11));
+        log!(info, "get_stash_staked_valuation:{:?}", Staking::get_stash_staked_valuation(DUMMY_VALUE, 21));
+        log!(info, "get_stash_staked_valuation:{:?}", Staking::get_stash_staked_valuation(DUMMY_VALUE, 31));
+        log!(info, "get_stash_staked_valuation:{:?}", Staking::get_stash_staked_valuation(DUMMY_VALUE, 41));
+        log!(info, "get_stash_staked_valuation:{:?}", Staking::get_stash_staked_valuation(DUMMY_VALUE, 101));
+
+        assert_eq!(
+            Staking::eras_stakers(Staking::active_era().unwrap().index, 11),
+            Exposure {
+                total: 500,
+                own: 500,
+                others: vec![]
+            }
+        );
 
         // Initial state of 10
         assert_eq!(
@@ -1181,6 +1231,23 @@ fn bond_extra_and_withdraw_unbonded_works() {
                 claimed_rewards: vec![],
             })
         );
+
+        let this_active_era = Staking::active_era().unwrap().index;
+        let this_current_era = Staking::current_era().unwrap();
+
+        assert!(this_active_era == this_current_era);
+
+        log!(info, "eras_stakers:{:?}", Staking::eras_stakers(this_active_era, 11));
+        log!(info, "eras_stakers:{:?}", Staking::eras_stakers(this_active_era, 21));
+        log!(info, "eras_stakers:{:?}", Staking::eras_stakers(this_active_era, 31));
+        log!(info, "eras_stakers:{:?}", Staking::eras_stakers(this_active_era, 41));
+        log!(info, "eras_stakers:{:?}", Staking::eras_stakers(this_active_era, 101));
+
+        log!(info, "nominators:{:?}", Staking::nominators(101));
+
+        log!(info, "snapshot_validators_test:{:?}", Staking::snapshot_validators());
+        log!(info, "snapshot_nominators_test:{:?}", Staking::snapshot_nominators());
+
         assert_eq!(
             Staking::eras_stakers(Staking::active_era().unwrap().index, 11),
             Exposure {
@@ -2366,6 +2433,23 @@ fn reward_from_authorship_event_handler_works() {
 #[test]
 fn add_reward_points_fns_works() {
     ExtBuilder::default().build_and_execute(|| {
+
+        let this_active_era = Staking::active_era().unwrap().index;
+        let this_current_era = Staking::current_era().unwrap();
+
+        assert!(this_active_era == this_current_era);
+
+        log!(info, "eras_stakers:{:?}", Staking::eras_stakers(this_active_era, 11));
+        log!(info, "eras_stakers:{:?}", Staking::eras_stakers(this_active_era, 21));
+        log!(info, "eras_stakers:{:?}", Staking::eras_stakers(this_active_era, 31));
+        log!(info, "eras_stakers:{:?}", Staking::eras_stakers(this_active_era, 41));
+        log!(info, "eras_stakers:{:?}", Staking::eras_stakers(this_active_era, 101));
+
+        log!(info, "nominators:{:?}", Staking::nominators(101));
+
+        log!(info, "snapshot_validators_test:{:?}", Staking::snapshot_validators());
+        log!(info, "snapshot_nominators_test:{:?}", Staking::snapshot_nominators());
+
         // Not mandatory but must be coherent with rewards
         assert_eq!(Session::validators(), vec![21, 11]);
 

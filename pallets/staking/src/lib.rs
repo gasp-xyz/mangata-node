@@ -265,7 +265,19 @@
 //!   validators is stored in the Session module's `Validators` at the end of each era.
 
 // TODO
-// Maybe add DipatchResult as return for extrinsics
+// Change add_extra_genesis to init StashStakedValuation properly
+
+// TODO
+// Change back all the structs and sub fields made public
+
+// TODO
+// Change back that one function in testing utils to use the struct rather than calls 
+
+// TODO
+// Remove all logs
+
+// TODO
+// Setup dependencies for testing and benchmarking correctly
 
 #![recursion_limit = "128"]
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -1186,6 +1198,11 @@ decl_storage! {
                     }, _ => Ok(())
                 };
             }
+
+            // TODO
+            // Change this
+            Module::<T>::create_stakers_snapshot();
+
         });
     }
 }
@@ -1351,16 +1368,24 @@ decl_module! {
                 consumed_weight += T::DbWeight::get().reads_writes(reads, writes);
                 consumed_weight += weight;
             };
+            log!(info, "on_initialize");
+                log!(info, "now:{:?}", now);
             if
                 // if we don't have any ongoing offchain compute.
                 Self::era_election_status().is_closed() &&
                 // either current session final based on the plan, or we're forcing.
                 (Self::is_current_session_final() || Self::will_era_be_forced())
-            {
+            {   log!(info, "snapshot-maybe");
                 if let Some(next_session_change) = T::NextNewSession::estimate_next_new_session(now) {
+                    log!(info, "snapshot-maybe-after-estimate_next_new_session");
+                    log!(info, "next_session_change:{:?}", next_session_change);
                     if let Some(remaining) = next_session_change.checked_sub(&now) {
+
+                        log!(info, "remaining:{:?}", remaining);
+
                         if remaining <= T::ElectionLookahead::get() && !remaining.is_zero() {
                             // create snapshot.
+                            log!(info, "snapshot-now");
                             let (did_snapshot, snapshot_weight) = Self::create_stakers_snapshot();
                             add_weight(0, 0, snapshot_weight);
                             if did_snapshot {
@@ -2342,6 +2367,15 @@ impl<T: Trait> Module<T> {
 
             <SnapshotValidators<T>>::put(validators);
             <SnapshotNominators<T>>::put(nominators);
+
+            log!(info, "snapshot_validators:{:?}", Self::snapshot_validators());
+            log!(info, "snapshot_nominators:{:?}", Self::snapshot_nominators());
+
+
+            for valuation in <StashStakedValuation<T>>::iter_prefix(DUMMY_VALUE){
+                log!(info, "StashStakedValuation:{:?}", valuation);
+            }
+
             add_db_reads_writes(0, 2);
             (true, consumed_weight)
         }
@@ -2352,7 +2386,8 @@ impl<T: Trait> Module<T> {
         <SnapshotValidators<T>>::kill();
         <SnapshotNominators<T>>::kill();
 
-        // Remove Stash's liquidity valuation details
+        // Remove Stash's liquidity valuation details but not for testing as mock uses session length of 1 and create_stakers_snapshot is never triggered from on_initilize
+        #[cfg(not(test))]
         <StashStakedValuation<T>>::remove_prefix(DUMMY_VALUE);
     }
 
@@ -2517,11 +2552,12 @@ impl<T: Trait> Module<T> {
                     frame_support::print("Error: start_session_index must be set for current_era");
                     0
                 });
-
+            log!(info, "session_index:{:?}", session_index);
+            log!(info, "current_era_start_session_index:{:?}", current_era_start_session_index);
             let era_length = session_index
                 .checked_sub(current_era_start_session_index)
                 .unwrap_or(0); // Must never happen.
-
+            log!(info, "era_length:{:?}", era_length);
             match ForceEra::get() {
                 Forcing::ForceNew => ForceEra::kill(),
                 Forcing::ForceAlways => (),
@@ -3154,6 +3190,9 @@ impl<T: Trait> Module<T> {
             (n, s, ns)
         }));
 
+        log!(info, "do_phragmen_validators {:?}", all_validators);
+        log!(info, "do_phragmen_nominators {:?}", all_nominators);
+
         seq_phragmen::<_, Accuracy>(
             Self::validator_count() as usize,
             Self::minimum_validator_count().max(1) as usize,
@@ -3229,6 +3268,9 @@ impl<T: Trait> Module<T> {
 
     /// Clear all era information for given era.
     fn clear_era_information(era_index: EraIndex) {
+
+        log!(info, "clear_era_information-called");
+
         <ErasStakers<T>>::remove_prefix(era_index);
         <ErasStakersClipped<T>>::remove_prefix(era_index);
 

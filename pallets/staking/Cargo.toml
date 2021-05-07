@@ -63,6 +63,8 @@ std = [
 	"frame-system/std",
 	"pallet-authorship/std",
 	"sp-application-crypto/std",
+	"orml-tokens/std",
+	"pallet-xyk/std",
 ]
 runtime-benchmarks = [
 	"frame-benchmarking",

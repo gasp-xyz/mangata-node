@@ -39,6 +39,7 @@ use sp_staking::{
     SessionIndex,
 };
 use std::{cell::RefCell, collections::HashSet};
+use orml_tokens::MultiTokenReservableCurrency;
 
 pub const INIT_TIMESTAMP: u64 = 30_000;
 pub const NATIVE_CURRENCY_ID: u32 = 0;
@@ -205,6 +206,8 @@ mod staking {
 use frame_system as system;
 use pallet_balances as balances;
 use pallet_session as session;
+use orml_tokens;
+use pallet_xyk;
 
 impl_outer_event! {
     pub enum MetaEvent for Test {
@@ -361,7 +364,7 @@ parameter_types! {
 impl Trait for Test {
     type NativeCurrencyId = NativeCurrencyId;
     type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
-    type Valuations = Xyk;
+    type Valuations = XykModule;
     type UnixTime = Timestamp;
     type CurrencyToVote = CurrencyToVoteHandler;
     type RewardRemainder = RewardRemainderMock;
@@ -383,7 +386,7 @@ impl Trait for Test {
     type UnsignedPriority = UnsignedPriority;
     type WeightInfo = ();
     #[cfg(any(feature = "runtime-benchmarks", test))]
-    type Xyk = Xyk;
+    type Xyk = XykModule;
 }
 
 impl pallet_xyk::Trait for Test {
@@ -728,7 +731,8 @@ pub type Balances = pallet_balances::Module<Test>;
 pub type Session = pallet_session::Module<Test>;
 pub type Timestamp = pallet_timestamp::Module<Test>;
 pub type Staking = Module<Test>;
-pub type Xyk = pallet_xyk::Module<Test>;
+pub type XykModule = pallet_xyk::Module<Test>;
+pub type TokensModule = orml_tokens::Module<Test>;
 
 pub(crate) fn current_era() -> EraIndex {
     Staking::current_era().unwrap()
@@ -823,9 +827,16 @@ fn assert_ledger_consistent(ctrl: AccountId) {
     assert_eq!(real_total, ledger.total);
 }
 
+pub(crate) fn mint_liquidity_for_user(user: &AccountId, val: Balance){
+    <Test as Trait>::Tokens::mint(DEFAULT_LIQUIDITY_TOKEN_ID, user, val * 4);
+    <Test as Trait>::Tokens::mint(DUMMY_TOKEN_FOR_POOL_ID, user, val * 4);
+
+    <Test as Trait>::Xyk::mint_liquidity(Origin::from(Some(user.clone())).into(), DEFAULT_LIQUIDITY_TOKEN_ID, DUMMY_TOKEN_FOR_POOL_ID, val * 2);
+}
+
 pub(crate) fn bond_validator(stash: AccountId, ctrl: AccountId, val: Balance) {
-    let _ = Balances::make_free_balance_be(&stash, val);
-    let _ = Balances::make_free_balance_be(&ctrl, val);
+    let _ = mint_liquidity_for_user(&stash, val);
+    let _ = mint_liquidity_for_user(&ctrl, val);
     assert_ok!(Staking::bond(
         Origin::signed(stash),
         ctrl,
@@ -845,8 +856,8 @@ pub(crate) fn bond_nominator(
     val: Balance,
     target: Vec<AccountId>,
 ) {
-    let _ = Balances::make_free_balance_be(&stash, val);
-    let _ = Balances::make_free_balance_be(&ctrl, val);
+    let _ = mint_liquidity_for_user(&stash, val);
+    let _ = mint_liquidity_for_user(&ctrl, val);
     assert_ok!(Staking::bond(
         Origin::signed(stash),
         ctrl,
@@ -881,8 +892,11 @@ pub(crate) fn start_session(session_index: SessionIndex) {
         "start_session can only be used with session length 1."
     );
     for i in Session::current_index()..session_index {
+        log!(info, "i:{:?}", i);
+        log!(info, "block_number-from_start_session-before_set_block_number:{:?}", System::block_number());
         Staking::on_finalize(System::block_number());
         System::set_block_number((i + 1).into());
+        log!(info, "block_number-from_start_session-after_set_block_number:{:?}", System::block_number());
         Timestamp::set_timestamp(System::block_number() * 1000 + INIT_TIMESTAMP);
         Session::on_initialize(System::block_number());
         Staking::on_initialize(System::block_number());
@@ -904,7 +918,7 @@ pub(crate) fn current_total_payout_for_duration(duration: u64) -> Balance {
     inflation::compute_total_payout(
         <Test as Trait>::RewardCurve::get(),
         Staking::eras_total_stake(Staking::active_era().unwrap().index),
-        Balances::total_issuance(),
+        <Test as Trait>::Tokens::total_issuance(NATIVE_TOKEN_ID.into()),
         duration,
     )
     .0
@@ -1249,5 +1263,5 @@ pub(crate) fn staking_events() -> Vec<Event<Test>> {
 }
 
 pub(crate) fn balances(who: &AccountId) -> (Balance, Balance) {
-    (Balances::free_balance(who), Balances::reserved_balance(who))
+    (<Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, who), <Test as Trait>::Tokens::reserved_balance(DEFAULT_LIQUIDITY_TOKEN_ID, who))
 }

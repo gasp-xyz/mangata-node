@@ -352,7 +352,7 @@ impl ExtBuilder {
 
         GenesisConfig::<Runtime> {
             endowed_accounts: self.endowed_accounts,
-            created_tokens_for_staking: self.created_tokens_for_staking
+            created_tokens_for_staking: self.created_tokens_for_staking,
         }
         .assimilate_storage(&mut t)
         .unwrap();

@@ -23,7 +23,7 @@ use frame_support::{
     traits::{Currency, OnFinalize, OnInitialize, ReservableCurrency},
     StorageMap,
 };
-use mock::*;
+use mock::{Balance, *};
 use pallet_balances::Error as BalancesError;
 use sp_runtime::{assert_eq_error_rate, traits::BadOrigin};
 use sp_staking::offence::OffenceDetails;
@@ -358,7 +358,8 @@ fn staking_should_work() {
                 Origin::signed(3),
                 4,
                 1500,
-                RewardDestination::Controller
+                RewardDestination::Controller,
+                DEFAULT_LIQUIDITY_TOKEN_ID,
             ));
             assert_ok!(Staking::validate(
                 Origin::signed(4),
@@ -520,7 +521,8 @@ fn nominating_and_rewards_should_work() {
                 Origin::signed(1),
                 2,
                 1000,
-                RewardDestination::Controller
+                RewardDestination::Controller,
+                DEFAULT_LIQUIDITY_TOKEN_ID,
             ));
             assert_ok!(Staking::nominate(Origin::signed(2), vec![11, 21, 31]));
             // 4 will nominate for 10, 20, 40
@@ -528,7 +530,8 @@ fn nominating_and_rewards_should_work() {
                 Origin::signed(3),
                 4,
                 1000,
-                RewardDestination::Controller
+                RewardDestination::Controller,
+                DEFAULT_LIQUIDITY_TOKEN_ID,
             ));
             assert_ok!(Staking::nominate(Origin::signed(4), vec![11, 21, 41]));
 
@@ -697,7 +700,8 @@ fn double_staking_should_fail() {
             Origin::signed(1),
             2,
             arbitrary_value,
-            RewardDestination::default()
+            RewardDestination::default(),
+            DEFAULT_LIQUIDITY_TOKEN_ID,
         ));
         // 4 = not used so far, 1 stashed => not allowed.
         assert_noop!(
@@ -705,7 +709,8 @@ fn double_staking_should_fail() {
                 Origin::signed(1),
                 4,
                 arbitrary_value,
-                RewardDestination::default()
+                RewardDestination::default(),
+                DEFAULT_LIQUIDITY_TOKEN_ID,
             ),
             Error::<Test>::AlreadyBonded,
         );
@@ -731,6 +736,7 @@ fn double_controlling_should_fail() {
             2,
             arbitrary_value,
             RewardDestination::default(),
+            DEFAULT_LIQUIDITY_TOKEN_ID,
         ));
         // 2 = controller, 3 stashed (Note that 2 is reused.) => no-op
         assert_noop!(
@@ -738,7 +744,8 @@ fn double_controlling_should_fail() {
                 Origin::signed(3),
                 2,
                 arbitrary_value,
-                RewardDestination::default()
+                RewardDestination::default(),
+                DEFAULT_LIQUIDITY_TOKEN_ID,
             ),
             Error::<Test>::AlreadyPaired,
         );
@@ -947,7 +954,7 @@ fn reward_destination_works() {
         mock::make_all_reward_payment(0);
 
         // Check that RewardDestination is Staked (default)
-        assert_eq!(Staking::payee(&11), RewardDestination::Staked);
+        assert_eq!(Staking::payee(&11), RewardDestination::Stash);
         // Check that reward went to the stash account of validator
         assert_eq!(Balances::free_balance(11), 1000 + total_payout_0);
         // Check that amount at stake increased accordingly
@@ -1837,7 +1844,8 @@ fn switching_roles() {
             Origin::signed(1),
             2,
             2000,
-            RewardDestination::Controller
+            RewardDestination::Controller,
+            DEFAULT_LIQUIDITY_TOKEN_ID,
         ));
         assert_ok!(Staking::nominate(Origin::signed(2), vec![11, 5]));
 
@@ -1845,7 +1853,8 @@ fn switching_roles() {
             Origin::signed(3),
             4,
             500,
-            RewardDestination::Controller
+            RewardDestination::Controller,
+            DEFAULT_LIQUIDITY_TOKEN_ID,
         ));
         assert_ok!(Staking::nominate(Origin::signed(4), vec![21, 1]));
 
@@ -1854,7 +1863,8 @@ fn switching_roles() {
             Origin::signed(5),
             6,
             1000,
-            RewardDestination::Controller
+            RewardDestination::Controller,
+            DEFAULT_LIQUIDITY_TOKEN_ID,
         ));
         assert_ok!(Staking::validate(
             Origin::signed(6),
@@ -1902,7 +1912,8 @@ fn wrong_vote_is_null() {
                 Origin::signed(1),
                 2,
                 2000,
-                RewardDestination::default()
+                RewardDestination::default(),
+                DEFAULT_LIQUIDITY_TOKEN_ID,
             ));
             assert_ok!(Staking::nominate(
                 Origin::signed(2),
@@ -1932,7 +1943,13 @@ fn bond_with_no_staked_value() {
         .execute_with(|| {
             // Can't bond with 1
             assert_noop!(
-                Staking::bond(Origin::signed(1), 2, 1, RewardDestination::Controller),
+                Staking::bond(
+                    Origin::signed(1),
+                    2,
+                    1,
+                    RewardDestination::Controller,
+                    DEFAULT_LIQUIDITY_TOKEN_ID,
+                ),
                 Error::<Test>::InsufficientValue,
             );
             // bonded with absolute minimum value possible.
@@ -1940,7 +1957,8 @@ fn bond_with_no_staked_value() {
                 Origin::signed(1),
                 2,
                 5,
-                RewardDestination::Controller
+                RewardDestination::Controller,
+                DEFAULT_LIQUIDITY_TOKEN_ID,
             ));
             assert_eq!(Balances::locks(&1)[0].amount, 5);
 
@@ -1998,7 +2016,8 @@ fn bond_with_little_staked_value_bounded() {
                 Origin::signed(1),
                 2,
                 1,
-                RewardDestination::Controller
+                RewardDestination::Controller,
+                DEFAULT_LIQUIDITY_TOKEN_ID,
             ));
             assert_ok!(Staking::validate(
                 Origin::signed(2),
@@ -2086,7 +2105,8 @@ fn bond_with_duplicate_vote_should_be_ignored_by_npos_election() {
                 Origin::signed(1),
                 2,
                 1000,
-                RewardDestination::Controller
+                RewardDestination::Controller,
+                DEFAULT_LIQUIDITY_TOKEN_ID,
             ));
             assert_ok!(Staking::nominate(
                 Origin::signed(2),
@@ -2097,7 +2117,8 @@ fn bond_with_duplicate_vote_should_be_ignored_by_npos_election() {
                 Origin::signed(3),
                 4,
                 1000,
-                RewardDestination::Controller
+                RewardDestination::Controller,
+                DEFAULT_LIQUIDITY_TOKEN_ID,
             ));
             assert_ok!(Staking::nominate(Origin::signed(4), vec![21, 31]));
 
@@ -2158,7 +2179,8 @@ fn bond_with_duplicate_vote_should_be_ignored_by_npos_election_elected() {
                 Origin::signed(1),
                 2,
                 1000,
-                RewardDestination::Controller
+                RewardDestination::Controller,
+                DEFAULT_LIQUIDITY_TOKEN_ID,
             ));
             assert_ok!(Staking::nominate(
                 Origin::signed(2),
@@ -2169,7 +2191,8 @@ fn bond_with_duplicate_vote_should_be_ignored_by_npos_election_elected() {
                 Origin::signed(3),
                 4,
                 1000,
-                RewardDestination::Controller
+                RewardDestination::Controller,
+                DEFAULT_LIQUIDITY_TOKEN_ID,
             ));
             assert_ok!(Staking::nominate(Origin::signed(4), vec![21, 31]));
 
@@ -2264,7 +2287,7 @@ fn reward_validator_slashing_validator_does_not_overflow() {
         ErasRewardPoints::<Test>::insert(0, reward);
         ErasStakers::<Test>::insert(0, 11, &exposure);
         ErasStakersClipped::<Test>::insert(0, 11, exposure);
-        ErasValidatorReward::<Test>::insert(0, stake);
+        ErasValidatorReward::insert(0, stake);
         assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11, 0));
         assert_eq!(Balances::total_balance(&11), stake * 2);
 
@@ -2279,6 +2302,7 @@ fn reward_validator_slashing_validator_does_not_overflow() {
             20000,
             stake - 1,
             RewardDestination::default(),
+            DEFAULT_LIQUIDITY_TOKEN_ID,
         )
         .unwrap();
         // Override exposure of 11
@@ -4750,7 +4774,8 @@ fn test_max_nominator_rewarded_per_validator_and_cant_steal_someone_else_reward(
                 Origin::signed(stash),
                 controller,
                 balance,
-                RewardDestination::Stash
+                RewardDestination::Stash,
+                DEFAULT_LIQUIDITY_TOKEN_ID,
             ));
             assert_ok!(Staking::nominate(Origin::signed(controller), vec![11]));
         }

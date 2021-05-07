@@ -42,9 +42,9 @@ use std::{cell::RefCell, collections::HashSet};
 
 pub const INIT_TIMESTAMP: u64 = 30_000;
 pub const NATIVE_CURRENCY_ID: u32 = 0;
-const NATIVE_TOKEN_ID: u32 = 0u32;
-const DUMMY_TOKEN_FOR_POOL_ID: u32 = 2u32;
-const DEFAULT_LIQUIDITY_TOKEN_ID: u32 = 3u32;
+pub const NATIVE_TOKEN_ID: u32 = 0u32;
+pub const DUMMY_TOKEN_FOR_POOL_ID: u32 = 2u32;
+pub const DEFAULT_LIQUIDITY_TOKEN_ID: u32 = 3u32;
 
 /// The AccountId alias in this test module.
 pub(crate) type AccountId = u64;
@@ -386,13 +386,11 @@ impl Trait for Test {
     type Xyk = Xyk;
 }
 
-
 impl pallet_xyk::Trait for Test {
     type Event = MetaEvent;
     type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
     type NativeCurrencyId = NativeCurrencyId;
 }
-
 
 impl orml_tokens::Trait for Test {
     type Event = MetaEvent;
@@ -558,8 +556,6 @@ impl ExtBuilder {
 
         // Setup tokens and xyk for the liquiity required.
 
-        
-
         let mut stakers = vec![];
         if self.has_stakers {
             let stake_21 = if self.fair { 1000 } else { 2000 };
@@ -583,9 +579,27 @@ impl ExtBuilder {
                     balance_factor * 1000,
                     StakerStatus::<AccountId>::Validator,
                 ),
-                (21, 20, DEFAULT_LIQUIDITY_TOKEN_ID, stake_21, StakerStatus::<AccountId>::Validator),
-                (31, 30, DEFAULT_LIQUIDITY_TOKEN_ID, stake_31, StakerStatus::<AccountId>::Validator),
-                (41, 40, DEFAULT_LIQUIDITY_TOKEN_ID, balance_factor * 1000, status_41),
+                (
+                    21,
+                    20,
+                    DEFAULT_LIQUIDITY_TOKEN_ID,
+                    stake_21,
+                    StakerStatus::<AccountId>::Validator,
+                ),
+                (
+                    31,
+                    30,
+                    DEFAULT_LIQUIDITY_TOKEN_ID,
+                    stake_31,
+                    StakerStatus::<AccountId>::Validator,
+                ),
+                (
+                    41,
+                    40,
+                    DEFAULT_LIQUIDITY_TOKEN_ID,
+                    balance_factor * 1000,
+                    status_41,
+                ),
                 // nominator
                 (
                     101,
@@ -616,11 +630,46 @@ impl ExtBuilder {
 
         let _ = pallet_xyk::GenesisConfig::<Test> {
             created_pools_for_staking: vec![
-                (11, NATIVE_TOKEN_ID, balance_factor * 1000 * 2, DUMMY_TOKEN_FOR_POOL_ID, balance_factor * 1000 * 2, DEFAULT_LIQUIDITY_TOKEN_ID),
-                (21, NATIVE_TOKEN_ID, 2000 * 2, DUMMY_TOKEN_FOR_POOL_ID, 2000 * 2, DEFAULT_LIQUIDITY_TOKEN_ID),
-                (31, NATIVE_TOKEN_ID, balance_factor * 1000 * 2, DUMMY_TOKEN_FOR_POOL_ID, balance_factor * 1000 * 2, DEFAULT_LIQUIDITY_TOKEN_ID),
-                (41, NATIVE_TOKEN_ID, balance_factor * 1000 * 2, DUMMY_TOKEN_FOR_POOL_ID, balance_factor * 1000 * 2, DEFAULT_LIQUIDITY_TOKEN_ID),
-                (101, NATIVE_TOKEN_ID, balance_factor * 500 * 2, DUMMY_TOKEN_FOR_POOL_ID, balance_factor * 500 * 2, DEFAULT_LIQUIDITY_TOKEN_ID),
+                (
+                    11,
+                    NATIVE_TOKEN_ID,
+                    balance_factor * 1000 * 2,
+                    DUMMY_TOKEN_FOR_POOL_ID,
+                    balance_factor * 1000 * 2,
+                    DEFAULT_LIQUIDITY_TOKEN_ID,
+                ),
+                (
+                    21,
+                    NATIVE_TOKEN_ID,
+                    2000 * 2,
+                    DUMMY_TOKEN_FOR_POOL_ID,
+                    2000 * 2,
+                    DEFAULT_LIQUIDITY_TOKEN_ID,
+                ),
+                (
+                    31,
+                    NATIVE_TOKEN_ID,
+                    balance_factor * 1000 * 2,
+                    DUMMY_TOKEN_FOR_POOL_ID,
+                    balance_factor * 1000 * 2,
+                    DEFAULT_LIQUIDITY_TOKEN_ID,
+                ),
+                (
+                    41,
+                    NATIVE_TOKEN_ID,
+                    balance_factor * 1000 * 2,
+                    DUMMY_TOKEN_FOR_POOL_ID,
+                    balance_factor * 1000 * 2,
+                    DEFAULT_LIQUIDITY_TOKEN_ID,
+                ),
+                (
+                    101,
+                    NATIVE_TOKEN_ID,
+                    balance_factor * 500 * 2,
+                    DUMMY_TOKEN_FOR_POOL_ID,
+                    balance_factor * 500 * 2,
+                    DEFAULT_LIQUIDITY_TOKEN_ID,
+                ),
             ],
         }
         .assimilate_storage(&mut storage);

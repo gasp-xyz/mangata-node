@@ -126,7 +126,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
                 ],
                 // Config for Staking
                 // Currently only setup for one initial staker
-                // Make sure it works with initial-authorities as staking uses both 
+                // Make sure it works with initial-authorities as staking uses both
                 vec![(
                     // Who gets to stake initially
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -232,7 +232,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                 ],
                 // Config for Staking
                 // Currently only setup for one initial staker
-                // Make sure it works with initial-authorities as staking uses both 
+                // Make sure it works with initial-authorities as staking uses both
                 vec![(
                     // Who gets to stake initially
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -372,63 +372,33 @@ fn testnet_genesis(
                 .collect(),
         }),
         orml_tokens: Some(TokensConfig {
-            // let created_tokens_for_staking_token_1 = staking_accounts
-            //     .iter()
-            //     .map(|x| {
-            //         let (who, _, _, token_id, initial_amount, _, _) = x;
-            //         (who.clone(), *token_id, *initial_amount)
-            //     })
-            //     .collect();
-            // let created_tokens_for_staking_token_2 = staking_accounts
-            //     .iter()
-            //     .map(|x| {
-            //         let (who, token_id, initial_amount, _, _, _, _) = x;
-            //         (who.clone(), *token_id, *initial_amount)
-            //     })
-            //     .collect();
             endowed_accounts: endowed_accounts
                 .iter()
                 // TODO initialize accounts with Mangata token
                 .flat_map(|_| vec![])
                 .collect(),
-            created_tokens_for_staking: 
-            // { let mut staking_tokens : Vec<(AccountId, u32, u128)> = Vec::new();
-            //     staking_tokens.append({staking_accounts
-            //         .iter().cloned()
-            //         .map(|x| {
-            //             let (who, _, _, token_id, initial_amount, _, _) = x;
-            //             (who.clone(), token_id, initial_amount)
-            //         })
-            //         .collect()}
-            //     )
-            //     .append({staking_accounts
-            //         .iter().cloned()
-            //         .map(|x| {
-            //             let (who, token_id, initial_amount, _, _, _, _) = x;
-            //             (who.clone(), token_id, initial_amount)
-            //         })
-            //         .collect()}
-            //     );
-            //     staking_tokens
-                {
-                    let mut created_tokens_for_staking_token_1: Vec<(AccountId, u32, u128)> = staking_accounts
-                        .iter().cloned()
+            created_tokens_for_staking: {
+                let mut created_tokens_for_staking_token_1: Vec<(AccountId, u32, u128)> =
+                    staking_accounts
+                        .iter()
+                        .cloned()
                         .map(|x| {
                             let (who, _, _, token_id, initial_amount, _, _) = x;
                             (who.clone(), token_id, initial_amount)
                         })
                         .collect();
-                    let mut created_tokens_for_staking_token_2: Vec<(AccountId, u32, u128)> = staking_accounts
-                        .iter().cloned()
+                let mut created_tokens_for_staking_token_2: Vec<(AccountId, u32, u128)> =
+                    staking_accounts
+                        .iter()
+                        .cloned()
                         .map(|x| {
                             let (who, token_id, initial_amount, _, _, _, _) = x;
                             (who.clone(), token_id, initial_amount)
                         })
                         .collect();
-                    created_tokens_for_staking_token_1.append(&mut created_tokens_for_staking_token_2);
-                    created_tokens_for_staking_token_1
-                }
-            ,
+                created_tokens_for_staking_token_1.append(&mut created_tokens_for_staking_token_2);
+                created_tokens_for_staking_token_1
+            },
         }),
         pallet_xyk: Some(XykConfig {
             created_pools_for_staking: staking_accounts

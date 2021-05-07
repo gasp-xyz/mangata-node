@@ -43,8 +43,8 @@ use std::{cell::RefCell, collections::HashSet};
 pub const INIT_TIMESTAMP: u64 = 30_000;
 pub const NATIVE_CURRENCY_ID: u32 = 0;
 pub const NATIVE_TOKEN_ID: u32 = 0u32;
-pub const DUMMY_TOKEN_FOR_POOL_ID: u32 = 2u32;
-pub const DEFAULT_LIQUIDITY_TOKEN_ID: u32 = 3u32;
+pub const DUMMY_TOKEN_FOR_POOL_ID: u32 = 1u32;
+pub const DEFAULT_LIQUIDITY_TOKEN_ID: u32 = 2u32;
 
 /// The AccountId alias in this test module.
 pub(crate) type AccountId = u64;

@@ -79,10 +79,10 @@ mod tests;
 
 use orml_traits::{
     arithmetic::{self, Signed},
-    MultiCurrency, MultiCurrencyExtended, MultiLockableCurrency, MultiReservableCurrency,
+    MultiCurrencyExtended, MultiLockableCurrency, MultiReservableCurrency,
     OnReceived,
 };
-
+pub use orml_traits::MultiCurrency;
 use frame_support::traits::{
     Currency as PalletCurrency, LockableCurrency as PalletLockableCurrency,
     ReservableCurrency as PalletReservableCurrency,

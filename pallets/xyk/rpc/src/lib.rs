@@ -33,6 +33,24 @@ pub trait XykApi<BlockHash, Balance, TokenId, ResponseTypePrice, ResponseTypeAmo
         at: Option<BlockHash>,
     ) -> Result<ResponseTypePrice>;
 
+    #[rpc(name = "xyk_calculate_sell_price_id")]
+    fn calculate_sell_price_id(
+        &self,
+        sold_token_id: TokenId,
+        bought_token_id: TokenId,
+        sell_amount: Balance,
+        at: Option<BlockHash>,
+    ) -> Result<ResponseTypePrice>;
+
+    #[rpc(name = "xyk_calculate_buy_price_id")]
+    fn calculate_buy_price_id(
+        &self,
+        sold_token_id: TokenId,
+        bought_token_id: TokenId,
+        buy_amount: Balance,
+        at: Option<BlockHash>,
+    ) -> Result<ResponseTypePrice>;
+
     #[rpc(name = "xyk_get_burn_amount")]
     fn get_burn_amount(
         &self,
@@ -104,6 +122,48 @@ where
 
         let runtime_api_result =
             api.calculate_buy_price(&at, input_reserve, output_reserve, buy_amount);
+        runtime_api_result.map_err(|e| RpcError {
+            code: ErrorCode::ServerError(1),
+            message: "Unable to serve the request".into(),
+            data: Some(format!("{:?}", e).into()),
+        })
+    }
+
+    fn calculate_sell_price_id(
+        &self,
+        sold_token_id: TokenId,
+        bought_token_id: TokenId,
+        sell_amount: Balance,
+        at: Option<<Block as BlockT>::Hash>,
+    ) -> Result<RpcResult<Balance>> {
+        let api = self.client.runtime_api();
+        let at = BlockId::<Block>::hash(at.unwrap_or_else(||
+            // If the block hash is not supplied assume the best block.
+            self.client.info().best_hash));
+
+        let runtime_api_result =
+            api.calculate_sell_price_id(&at, sold_token_id, bought_token_id, sell_amount);
+        runtime_api_result.map_err(|e| RpcError {
+            code: ErrorCode::ServerError(1),
+            message: "Unable to serve the request".into(),
+            data: Some(format!("{:?}", e).into()),
+        })
+    }
+
+    fn calculate_buy_price_id(
+        &self,
+        sold_token_id: TokenId,
+        bought_token_id: TokenId,
+        buy_amount: Balance,
+        at: Option<<Block as BlockT>::Hash>,
+    ) -> Result<RpcResult<Balance>> {
+        let api = self.client.runtime_api();
+        let at = BlockId::<Block>::hash(at.unwrap_or_else(||
+            // If the block hash is not supplied assume the best block.
+            self.client.info().best_hash));
+
+        let runtime_api_result =
+            api.calculate_buy_price_id(&at, sold_token_id, bought_token_id, buy_amount);
         runtime_api_result.map_err(|e| RpcError {
             code: ErrorCode::ServerError(1),
             message: "Unable to serve the request".into(),

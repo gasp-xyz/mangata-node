@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 // Mock runtime
 
 use crate::{Module, Trait};

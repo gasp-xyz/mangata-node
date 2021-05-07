@@ -14,6 +14,8 @@ use frame_system as system;
 use mangata_primitives::{Amount, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
 
+pub const NATIVE_CURRENCY_ID: u32 = 0;
+
 impl_outer_origin! {
     pub enum Origin for Test {}
 }
@@ -66,9 +68,14 @@ impl orml_tokens::Trait for Test {
     type WeightInfo = ();
 }
 
+parameter_types! {
+    pub const NativeCurrencyId: u32 = NATIVE_CURRENCY_ID;
+}
+
 impl Trait for Test {
     type Event = ();
     type Currency = MultiTokenCurrencyAdapter<Test>;
+    type NativeCurrencyId = NativeCurrencyId;
 }
 
 pub type XykStorage = Module<Test>;

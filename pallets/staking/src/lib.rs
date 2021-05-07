@@ -270,8 +270,8 @@
 #![recursion_limit = "128"]
 #![cfg_attr(not(feature = "std"), no_std)]
 
-// #[cfg(test)]
-// mod mock;
+#[cfg(test)]
+mod mock;
 // #[cfg(test)]
 // mod tests;
 
@@ -915,7 +915,7 @@ pub trait Trait: frame_system::Trait + SendTransactionTypes<Call<Self>> {
     /// Weight information for extrinsics in this pallet.
     type WeightInfo: WeightInfo;
 
-    #[cfg(feature = "runtime-benchmarks")]
+    #[cfg(any(feature = "runtime-benchmarks", test))]
     type Xyk: XykFunctionsTrait<Self::AccountId>;
 }
 

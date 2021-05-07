@@ -41,49 +41,54 @@ use sp_staking::{
 use std::{cell::RefCell, collections::HashSet};
 
 pub const INIT_TIMESTAMP: u64 = 30_000;
+pub const NATIVE_CURRENCY_ID: u32 = 0;
+const NATIVE_TOKEN_ID: u32 = 0u32;
+const DUMMY_TOKEN_FOR_POOL_ID: u32 = 2u32;
+const DEFAULT_LIQUIDITY_TOKEN_ID: u32 = 3u32;
 
 /// The AccountId alias in this test module.
 pub(crate) type AccountId = u64;
 pub(crate) type AccountIndex = u64;
 pub(crate) type BlockNumber = u64;
 pub(crate) type Balance = u128;
+pub(crate) type Amount = i128;
 
-// /// Simple structure that exposes how u64 currency can be represented as... u64.
-// pub struct CurrencyToVoteHandler;
-// impl Convert<Balance, u64> for CurrencyToVoteHandler {
-//     fn convert(x: Balance) -> u64 {
-//         x.saturated_into()
-//     }
-// }
-// impl Convert<u128, Balance> for CurrencyToVoteHandler {
-//     fn convert(x: u128) -> Balance {
-//         x
-//     }
-// }
-
-/// Struct that handles the conversion of Balance -> `u64`. This is used for staking's election
-/// calculation.
+/// Simple structure that exposes how u64 currency can be represented as... u64.
 pub struct CurrencyToVoteHandler;
-
-impl CurrencyToVoteHandler {
-    fn factor() -> Balance {
-        (orml_tokens::MultiTokenCurrencyAdapter::<Runtime>::total_issuance(NATIVE_CURRENCY_ID)
-            / u64::max_value() as Balance)
-            .max(1)
-    }
-}
-
 impl Convert<Balance, u64> for CurrencyToVoteHandler {
     fn convert(x: Balance) -> u64 {
-        (x / Self::factor()) as u64
+        x.saturated_into()
+    }
+}
+impl Convert<u128, Balance> for CurrencyToVoteHandler {
+    fn convert(x: u128) -> Balance {
+        x
     }
 }
 
-impl Convert<u128, Balance> for CurrencyToVoteHandler {
-    fn convert(x: u128) -> Balance {
-        x * Self::factor()
-    }
-}
+// /// Struct that handles the conversion of Balance -> `u64`. This is used for staking's election
+// /// calculation.
+// pub struct CurrencyToVoteHandler;
+
+// impl CurrencyToVoteHandler {
+//     fn factor() -> Balance {
+//         (orml_tokens::MultiTokenCurrencyAdapter::<Runtime>::total_issuance(NATIVE_CURRENCY_ID)
+//             / u64::max_value() as Balance)
+//             .max(1)
+//     }
+// }
+
+// impl Convert<Balance, u64> for CurrencyToVoteHandler {
+//     fn convert(x: Balance) -> u64 {
+//         (x / Self::factor()) as u64
+//     }
+// }
+
+// impl Convert<u128, Balance> for CurrencyToVoteHandler {
+//     fn convert(x: u128) -> Balance {
+//         x * Self::factor()
+//     }
+// }
 
 thread_local! {
     static SESSION: RefCell<(Vec<AccountId>, HashSet<AccountId>)> = RefCell::new(Default::default());
@@ -207,6 +212,8 @@ impl_outer_event! {
         balances<T>,
         session,
         staking<T>,
+        orml_tokens<T>,
+        pallet_xyk<T>,
     }
 }
 
@@ -347,8 +354,14 @@ impl OnUnbalanced<NegativeImbalanceOf<Test>> for RewardRemainderMock {
     }
 }
 
+parameter_types! {
+    pub const NativeCurrencyId: u32 = NATIVE_CURRENCY_ID;
+}
+
 impl Trait for Test {
-    type Currency = Balances;
+    type NativeCurrencyId = NativeCurrencyId;
+    type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
+    type Valuations = Xyk;
     type UnixTime = Timestamp;
     type CurrencyToVote = CurrencyToVoteHandler;
     type RewardRemainder = RewardRemainderMock;
@@ -369,22 +382,20 @@ impl Trait for Test {
     type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
     type UnsignedPriority = UnsignedPriority;
     type WeightInfo = ();
+    #[cfg(any(feature = "runtime-benchmarks", test))]
+    type Xyk = Xyk;
 }
 
 
-parameter_types! {
-    pub const NativeCurrencyId: u32 = NATIVE_CURRENCY_ID;
-}
-
-impl pallet_xyk::Trait for Runtime {
-    type Event = Event;
-    type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+impl pallet_xyk::Trait for Test {
+    type Event = MetaEvent;
+    type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
     type NativeCurrencyId = NativeCurrencyId;
 }
 
 
-impl orml_tokens::Trait for Runtime {
-    type Event = Event;
+impl orml_tokens::Trait for Test {
+    type Event = MetaEvent;
     type Balance = Balance;
     type Amount = Amount;
     type CurrencyId = TokenId;
@@ -545,6 +556,10 @@ impl ExtBuilder {
         }
         .assimilate_storage(&mut storage);
 
+        // Setup tokens and xyk for the liquiity required.
+
+        
+
         let mut stakers = vec![];
         if self.has_stakers {
             let stake_21 = if self.fair { 1000 } else { 2000 };
@@ -560,25 +575,56 @@ impl ExtBuilder {
             };
             let nominated = if self.nominate { vec![11, 21] } else { vec![] };
             stakers = vec![
-                // (stash, controller, staked_amount, status)
+                // (stash, controller, liquidity_token_id, staked_amount, status)
                 (
                     11,
                     10,
+                    DEFAULT_LIQUIDITY_TOKEN_ID,
                     balance_factor * 1000,
                     StakerStatus::<AccountId>::Validator,
                 ),
-                (21, 20, stake_21, StakerStatus::<AccountId>::Validator),
-                (31, 30, stake_31, StakerStatus::<AccountId>::Validator),
-                (41, 40, balance_factor * 1000, status_41),
+                (21, 20, DEFAULT_LIQUIDITY_TOKEN_ID, stake_21, StakerStatus::<AccountId>::Validator),
+                (31, 30, DEFAULT_LIQUIDITY_TOKEN_ID, stake_31, StakerStatus::<AccountId>::Validator),
+                (41, 40, DEFAULT_LIQUIDITY_TOKEN_ID, balance_factor * 1000, status_41),
                 // nominator
                 (
                     101,
                     100,
+                    DEFAULT_LIQUIDITY_TOKEN_ID,
                     balance_factor * 500,
                     StakerStatus::<AccountId>::Nominator(nominated),
                 ),
             ];
         }
+
+        let _ = orml_tokens::GenesisConfig::<Test> {
+            endowed_accounts: vec![],
+            created_tokens_for_staking: vec![
+                (11, NATIVE_TOKEN_ID, balance_factor * 1000 * 4),
+                (11, DUMMY_TOKEN_FOR_POOL_ID, balance_factor * 1000 * 4),
+                (21, NATIVE_TOKEN_ID, 2000 * 4),
+                (21, DUMMY_TOKEN_FOR_POOL_ID, 2000 * 4),
+                (31, NATIVE_TOKEN_ID, balance_factor * 1000 * 4),
+                (31, DUMMY_TOKEN_FOR_POOL_ID, balance_factor * 1000 * 4),
+                (41, NATIVE_TOKEN_ID, balance_factor * 1000 * 4),
+                (41, DUMMY_TOKEN_FOR_POOL_ID, balance_factor * 1000 * 4),
+                (101, NATIVE_TOKEN_ID, balance_factor * 500 * 4),
+                (101, DUMMY_TOKEN_FOR_POOL_ID, balance_factor * 500 * 4),
+            ],
+        }
+        .assimilate_storage(&mut storage);
+
+        let _ = pallet_xyk::GenesisConfig::<Test> {
+            created_pools_for_staking: vec![
+                (11, NATIVE_TOKEN_ID, balance_factor * 1000 * 2, DUMMY_TOKEN_FOR_POOL_ID, balance_factor * 1000 * 2, DEFAULT_LIQUIDITY_TOKEN_ID),
+                (21, NATIVE_TOKEN_ID, 2000 * 2, DUMMY_TOKEN_FOR_POOL_ID, 2000 * 2, DEFAULT_LIQUIDITY_TOKEN_ID),
+                (31, NATIVE_TOKEN_ID, balance_factor * 1000 * 2, DUMMY_TOKEN_FOR_POOL_ID, balance_factor * 1000 * 2, DEFAULT_LIQUIDITY_TOKEN_ID),
+                (41, NATIVE_TOKEN_ID, balance_factor * 1000 * 2, DUMMY_TOKEN_FOR_POOL_ID, balance_factor * 1000 * 2, DEFAULT_LIQUIDITY_TOKEN_ID),
+                (101, NATIVE_TOKEN_ID, balance_factor * 500 * 2, DUMMY_TOKEN_FOR_POOL_ID, balance_factor * 500 * 2, DEFAULT_LIQUIDITY_TOKEN_ID),
+            ],
+        }
+        .assimilate_storage(&mut storage);
+
         let _ = GenesisConfig::<Test> {
             stakers: stakers,
             validator_count: self.validator_count,
@@ -633,6 +679,7 @@ pub type Balances = pallet_balances::Module<Test>;
 pub type Session = pallet_session::Module<Test>;
 pub type Timestamp = pallet_timestamp::Module<Test>;
 pub type Staking = Module<Test>;
+pub type Xyk = pallet_xyk::Module<Test>;
 
 pub(crate) fn current_era() -> EraIndex {
     Staking::current_era().unwrap()
@@ -735,6 +782,7 @@ pub(crate) fn bond_validator(stash: AccountId, ctrl: AccountId, val: Balance) {
         ctrl,
         val,
         RewardDestination::Controller,
+        DEFAULT_LIQUIDITY_TOKEN_ID,
     ));
     assert_ok!(Staking::validate(
         Origin::signed(ctrl),
@@ -755,6 +803,7 @@ pub(crate) fn bond_nominator(
         ctrl,
         val,
         RewardDestination::Controller,
+        DEFAULT_LIQUIDITY_TOKEN_ID,
     ));
     assert_ok!(Staking::nominate(Origin::signed(ctrl), target));
 }

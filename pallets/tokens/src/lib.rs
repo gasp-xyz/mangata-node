@@ -239,8 +239,12 @@ decl_storage! {
                 <Accounts<T>>::mutate(account_id, currency_id, |account_data| account_data.free = *initial_balance)
             });
             config.created_tokens_for_staking.iter().for_each(|(account_id, token_id, initial_balance)| {
-                let created_token_id = MultiTokenCurrencyAdapter::<T>::create(account_id, *initial_balance);
-                assert!(created_token_id == *token_id, "Assets not initialized in the expected sequence");
+                if MultiTokenCurrencyAdapter::<T>::exists(*token_id){
+                    assert!(MultiTokenCurrencyAdapter::<T>::mint(*token_id, account_id, *initial_balance).is_ok(), "Tokens mint failed");
+                }else{
+                    let created_token_id = MultiTokenCurrencyAdapter::<T>::create(account_id, *initial_balance);
+                    assert!(created_token_id == *token_id, "Assets not initialized in the expected sequence");
+                }
             })
         })
     }

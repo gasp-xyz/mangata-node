@@ -4264,6 +4264,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "impl-trait-for-tuples",
+ "log",
  "parity-scale-codec",
  "serde",
  "sp-core",

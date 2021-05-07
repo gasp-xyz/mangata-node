@@ -325,12 +325,12 @@ decl_module! {
             token_id: TokenId,
             account_id: T::AccountId,
             value: Balance,
-        ) -> frame_support::dispatch::DispatchResult{
+        ) {
+            ensure_root(origin)?;
             let currency_id: T::CurrencyId = token_id.into();
             let amount: T::Balance = value.into();
             MultiTokenCurrencyAdapter::<T>::mint(currency_id, &account_id, amount)?;
             Self::deposit_event(RawEvent::Minted(currency_id, account_id, amount));
-            Ok(())
         }
     }
 }

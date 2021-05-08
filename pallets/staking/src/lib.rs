@@ -1202,6 +1202,11 @@ decl_storage! {
             // TODO
             // Change this
             Module::<T>::create_stakers_snapshot();
+            
+            log!(info, "valuate_liquidity_token:{:?}", T::Valuations::valuate_liquidity_token(
+                    2u32.into(),
+                    1000u128.into(),
+                ));
 
         });
     }
@@ -1377,6 +1382,12 @@ decl_module! {
                 (Self::is_current_session_final() || Self::will_era_be_forced())
             {   log!(info, "snapshot-maybe");
                 if let Some(next_session_change) = T::NextNewSession::estimate_next_new_session(now) {
+                    // TODO
+                    // Update this to a better version
+                    if next_session_change.is_zero(){
+                        #[cfg(test)]
+                        Module::<T>::create_stakers_snapshot();
+                    }
                     log!(info, "snapshot-maybe-after-estimate_next_new_session");
                     log!(info, "next_session_change:{:?}", next_session_change);
                     if let Some(remaining) = next_session_change.checked_sub(&now) {
@@ -2374,6 +2385,11 @@ impl<T: Trait> Module<T> {
 
             for valuation in <StashStakedValuation<T>>::iter_prefix(DUMMY_VALUE){
                 log!(info, "StashStakedValuation:{:?}", valuation);
+                let liquidity_token_amount_test = Self::bonded(valuation.0)
+                    .and_then(Self::ledger)
+                    .map(|l| l.active)
+                    .unwrap_or_default();
+                log!(info, "liquidity_token_amount:{:?}", liquidity_token_amount_test);
             }
 
             add_db_reads_writes(0, 2);
@@ -2387,7 +2403,7 @@ impl<T: Trait> Module<T> {
         <SnapshotNominators<T>>::kill();
 
         // Remove Stash's liquidity valuation details but not for testing as mock uses session length of 1 and create_stakers_snapshot is never triggered from on_initilize
-        #[cfg(not(test))]
+        // #[cfg(not(test))]
         <StashStakedValuation<T>>::remove_prefix(DUMMY_VALUE);
     }
 
@@ -2442,6 +2458,8 @@ impl<T: Trait> Module<T> {
         if validator_reward_points.is_zero() {
             return Ok(());
         }
+
+        log!(info, "validator_reward_points:{:?} for: {:?}", validator_reward_points, validator_stash);
 
         // This is the fraction of the total reward that the validator and the
         // nominators will get.
@@ -2498,6 +2516,12 @@ impl<T: Trait> Module<T> {
     ) -> DispatchResult {
         let stash_liquidity_token = Self::get_stash_liquidity_token(&ledger.stash)
             .ok_or_else(|| Error::<T>::StashLiquidityTokenNotFound)?;
+        log!(info, "update_ledger-about_to_call_set_lock: {:?}", (
+            stash_liquidity_token,
+            STAKING_ID,
+            &ledger.stash,
+            ledger.total,
+        ));
         T::Tokens::set_lock(
             stash_liquidity_token.into(),
             STAKING_ID,
@@ -2895,6 +2919,8 @@ impl<T: Trait> Module<T> {
 
             let native_currency_id = T::NativeCurrencyId::get();
             let era_duration = now_as_millis_u64 - active_era_start;
+            #[cfg(test)]
+            log!(info, "reward-curve:{:?}", T::RewardCurve::get());
             let (validator_payout, max_payout) = inflation::compute_total_payout(
                 &T::RewardCurve::get(),
                 Self::eras_total_stake(&active_era.index),
@@ -2902,6 +2928,13 @@ impl<T: Trait> Module<T> {
                 // Duration of era; more than u64::MAX is rewarded as u64::MAX.
                 era_duration.saturated_into::<u64>(),
             );
+
+            #[cfg(test)]
+            log!(info, "inflation-eras_total_stake:{:?}", Self::eras_total_stake(&active_era.index));
+            log!(info, "inflation-total_issuance:{:?}", T::Tokens::total_issuance(native_currency_id.into()));
+            log!(info, "inflation-validator_payout:{:?}", validator_payout);
+            log!(info, "inflation-max_payout:{:?}", max_payout);
+
             let rest = max_payout.saturating_sub(validator_payout);
 
             Self::deposit_event(RawEvent::EraPayout(

@@ -326,10 +326,10 @@ impl pallet_timestamp::Trait for Test {
 }
 pallet_staking_reward_curve::build! {
     const I_NPOS: PiecewiseLinear<'static> = curve!(
-        min_inflation: 0_025_000,
-        max_inflation: 0_100_000,
+        min_inflation: 0_800_000,
+        max_inflation: 0_900_000,
         ideal_stake: 0_500_000,
-        falloff: 0_050_000,
+        falloff: 1_000_000,
         max_piece_count: 40,
         test_precision: 0_005_000,
     );
@@ -627,6 +627,8 @@ impl ExtBuilder {
                 (41, DUMMY_TOKEN_FOR_POOL_ID, balance_factor * 1000 * 4),
                 (101, NATIVE_TOKEN_ID, balance_factor * 500 * 4),
                 (101, DUMMY_TOKEN_FOR_POOL_ID, balance_factor * 500 * 4),
+                // This allows us to have a total_payout different from 0.
+                (999, NATIVE_TOKEN_ID, 1_000_000_000_000),
             ],
         }
         .assimilate_storage(&mut storage);
@@ -915,6 +917,16 @@ pub(crate) fn start_era(era_index: EraIndex) {
 }
 
 pub(crate) fn current_total_payout_for_duration(duration: u64) -> Balance {
+    log!(info, "eras_total_stake:{:?}", Staking::eras_total_stake(Staking::active_era().unwrap().index));
+    log!(info, "total_issuance:{:?}", <Test as Trait>::Tokens::total_issuance(NATIVE_TOKEN_ID.into()));
+    let (payout, max) = inflation::compute_total_payout(
+        <Test as Trait>::RewardCurve::get(),
+        Staking::eras_total_stake(Staking::active_era().unwrap().index),
+        1000000011734u128,
+        duration,
+    );
+    log!(info, "current_total_payout_for_duration-(payout, max):{:?}", (payout, max));
+
     inflation::compute_total_payout(
         <Test as Trait>::RewardCurve::get(),
         Staking::eras_total_stake(Staking::active_era().unwrap().index),

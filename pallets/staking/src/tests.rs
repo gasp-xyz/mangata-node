@@ -2956,9 +2956,13 @@ fn garbage_collection_after_slashing() {
                 }],
                 &[Perbill::from_percent(10)],
             );
+            
+            assert!(<Test as Trait>::Tokens::transfer(DEFAULT_LIQUIDITY_TOKEN_ID, &11, &999, 3000*256, ExistenceRequirement::AllowDeath).is_ok());
 
-            assert_eq!(<Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &11), 4000*256 - (1000*256/10));
+            assert_eq!(<Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &11), 1000*256 - (1000*256/10));
+
             assert!(<Staking as crate::Store>::SlashingSpans::get(&11).is_some());
+
             assert_eq!(
                 <Staking as crate::Store>::SpanSlash::get(&(11, 0)).amount_slashed(),
                 &25600
@@ -2977,12 +2981,6 @@ fn garbage_collection_after_slashing() {
 
             // validator and nominator slash in era are garbage-collected by era change,
             // so we don't test those here.
-
-            assert_eq!(<Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &11), 4000*256 - (1000*256/10) - (1000*256 - (1000*256/10)) );
-            assert_eq!(<Test as Trait>::Tokens::total_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &11), 4000*256 - (1000*256/10) - (1000*256 - (1000*256/10)) );
-
-            log!(info, "ledger:{:?}", Module::<Test>::ledger(&11));
-            assert!(<Test as Trait>::Tokens::transfer(DEFAULT_LIQUIDITY_TOKEN_ID, &11, &999, 4000*256 - (1000*256/10) - (1000*256 - (1000*256/10)), ExistenceRequirement::AllowDeath).is_ok());
 
             assert_eq!(<Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &11), 0 );
             assert_eq!(<Test as Trait>::Tokens::total_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &11), 0 );

@@ -2475,6 +2475,8 @@ impl<T: Trait> Module<T> {
         let validator_commission_payout = validator_commission * validator_total_payout;
 
         let validator_leftover_payout = validator_total_payout - validator_commission_payout;
+
+        log!(info, "validator_exposure_part:{:?} of: {:?}", exposure.own, exposure.total);
         // Now let's calculate how this is split to the validator.
         let validator_exposure_part =
             Perbill::from_rational_approximation(exposure.own, exposure.total);

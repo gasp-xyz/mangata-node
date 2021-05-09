@@ -18,9 +18,9 @@
 //! Test utilities
 
 use crate::*;
-use frame_support::{
+pub use frame_support::{
     assert_ok, impl_outer_dispatch, impl_outer_event, impl_outer_origin, parameter_types,
-    traits::{Currency, FindAuthor, Get, OnFinalize, OnInitialize},
+    traits::{Currency, FindAuthor, Get, OnFinalize, OnInitialize, ExistenceRequirement},
     weights::{constants::RocksDbWeight, Weight},
     IterableStorageMap, StorageDoubleMap, StorageMap, StorageValue,
 };
@@ -39,7 +39,7 @@ use sp_staking::{
     SessionIndex,
 };
 use std::{cell::RefCell, collections::HashSet};
-use orml_tokens::MultiTokenReservableCurrency;
+pub use orml_tokens::MultiTokenReservableCurrency;
 
 pub const INIT_TIMESTAMP: u64 = 30_000;
 pub const NATIVE_CURRENCY_ID: u32 = 0;
@@ -922,7 +922,7 @@ pub(crate) fn current_total_payout_for_duration(duration: u64) -> Balance {
     let (payout, max) = inflation::compute_total_payout(
         <Test as Trait>::RewardCurve::get(),
         Staking::eras_total_stake(Staking::active_era().unwrap().index),
-        1000000011734u128,
+        <Test as Trait>::Tokens::total_issuance(NATIVE_TOKEN_ID.into()),
         duration,
     );
     log!(info, "current_total_payout_for_duration-(payout, max):{:?}", (payout, max));

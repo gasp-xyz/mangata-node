@@ -628,7 +628,11 @@ impl<T: Trait> MultiLockableCurrency<T::AccountId> for Module<T> {
         amount: Self::Balance,
     ) {
         if amount.is_zero() {
-            return;
+            // COMMENT
+            // This is important especially for staking
+            // Idk how substrate works without it
+            // There may be a problem with substrate
+            Self::remove_lock(lock_id, currency_id, who);
         }
         let mut new_lock = Some(BalanceLock {
             id: lock_id,

@@ -38,8 +38,8 @@ fn force_unstake_works() {
         add_slash(&11);
         // Cant transfer
         assert_noop!(
-            Balances::transfer(Origin::signed(11), 1, 10),
-            BalancesError::<Test, _>::LiquidityRestrictions
+            <Test as Trait>::Tokens::transfer(DEFAULT_LIQUIDITY_TOKEN_ID, &11, &999, 3001, ExistenceRequirement::AllowDeath),
+            orml_tokens::Error::<Test>::LiquidityRestrictions,
         );
         // Force unstake requires root.
         assert_noop!(Staking::force_unstake(Origin::signed(11), 11, 2), BadOrigin);
@@ -50,7 +50,7 @@ fn force_unstake_works() {
         // No longer bonded.
         assert_eq!(Staking::bonded(&11), None);
         // Transfer works.
-        assert_ok!(Balances::transfer(Origin::signed(11), 1, 10));
+        assert_ok!(<Test as Trait>::Tokens::transfer(DEFAULT_LIQUIDITY_TOKEN_ID, &11, &999, 3001, ExistenceRequirement::AllowDeath));
     });
 }
 
@@ -850,22 +850,24 @@ fn cannot_transfer_staked_balance() {
         // Confirm account 11 is stashed
         assert_eq!(Staking::bonded(&11), Some(10));
         // Confirm account 11 has some free balance
-        assert_eq!(Balances::free_balance(11), 1000);
+        assert_eq!(<Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &11), 4000);
         // Confirm account 11 (via controller 10) is totally staked
         assert_eq!(
             Staking::eras_stakers(Staking::active_era().unwrap().index, 11).total,
-            1000
+            500
         );
-        // Confirm account 11 cannot transfer as a result
+
+        <Test as Trait>::Tokens::transfer(DEFAULT_LIQUIDITY_TOKEN_ID, &11, &999, 3000, ExistenceRequirement::AllowDeath);
+        // Confirm account 11 cannot reserve as a result
         assert_noop!(
-            Balances::transfer(Origin::signed(11), 20, 1),
-            BalancesError::<Test, _>::LiquidityRestrictions
+            <Test as Trait>::Tokens::transfer(DEFAULT_LIQUIDITY_TOKEN_ID, &11, &999, 1, ExistenceRequirement::AllowDeath),
+            orml_tokens::Error::<Test>::LiquidityRestrictions,
         );
 
         // Give account 11 extra free balance
-        let _ = Balances::make_free_balance_be(&11, 10000);
+        let _ = mint_liquidity_for_user(&11, 20000);
         // Confirm that account 11 can now transfer some balance
-        assert_ok!(Balances::transfer(Origin::signed(11), 20, 1));
+        assert_ok!(<Test as Trait>::Tokens::transfer(DEFAULT_LIQUIDITY_TOKEN_ID, &11, &999, 1, ExistenceRequirement::AllowDeath));
     });
 }
 
@@ -881,18 +883,18 @@ fn cannot_transfer_staked_balance_2() {
             // Confirm account 21 is stashed
             assert_eq!(Staking::bonded(&21), Some(20));
             // Confirm account 21 has some free balance
-            assert_eq!(Balances::free_balance(21), 2000);
+            assert_eq!(<Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &21), 8000);
             // Confirm account 21 (via controller 20) is totally staked
             assert_eq!(
                 Staking::eras_stakers(Staking::active_era().unwrap().index, 21).total,
-                1000
+                500
             );
             // Confirm account 21 can transfer at most 1000
             assert_noop!(
-                Balances::transfer(Origin::signed(21), 20, 1001),
-                BalancesError::<Test, _>::LiquidityRestrictions
+                <Test as Trait>::Tokens::transfer(DEFAULT_LIQUIDITY_TOKEN_ID, &21, &999, 7001, ExistenceRequirement::AllowDeath),
+                orml_tokens::Error::<Test>::LiquidityRestrictions,
             );
-            assert_ok!(Balances::transfer(Origin::signed(21), 20, 1000));
+            assert_ok!(<Test as Trait>::Tokens::transfer(DEFAULT_LIQUIDITY_TOKEN_ID, &21, &999, 7000, ExistenceRequirement::AllowDeath));
         });
 }
 
@@ -903,22 +905,23 @@ fn cannot_reserve_staked_balance() {
         // Confirm account 11 is stashed
         assert_eq!(Staking::bonded(&11), Some(10));
         // Confirm account 11 has some free balance
-        assert_eq!(Balances::free_balance(11), 1000);
+        assert_eq!(<Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &11), 4000);
         // Confirm account 11 (via controller 10) is totally staked
         assert_eq!(
             Staking::eras_stakers(Staking::active_era().unwrap().index, 11).own,
-            1000
+            500
         );
+        <Test as Trait>::Tokens::transfer(DEFAULT_LIQUIDITY_TOKEN_ID, &11, &999, 3000, ExistenceRequirement::AllowDeath);
         // Confirm account 11 cannot reserve as a result
         assert_noop!(
-            Balances::reserve(&11, 1),
-            BalancesError::<Test, _>::LiquidityRestrictions,
+            <Test as Trait>::Tokens::reserve(DEFAULT_LIQUIDITY_TOKEN_ID, &11, 1),
+            orml_tokens::Error::<Test>::LiquidityRestrictions,
         );
 
         // Give account 11 extra free balance
-        let _ = Balances::make_free_balance_be(&11, 10000);
+        let _ = mint_liquidity_for_user(&11, 20000);
         // Confirm account 11 can now reserve balance
-        assert_ok!(Balances::reserve(&11, 1));
+        assert_ok!(<Test as Trait>::Tokens::reserve(DEFAULT_LIQUIDITY_TOKEN_ID, &11, 1));
     });
 }
 
@@ -2941,7 +2944,7 @@ fn garbage_collection_after_slashing() {
     ExtBuilder::default()
         .existential_deposit(2)
         .build_and_execute(|| {
-            assert_eq!(Balances::free_balance(11), 256_000);
+            assert_eq!(<Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &11), 4000*256);
 
             on_offence_now(
                 &[OffenceDetails {
@@ -2954,11 +2957,11 @@ fn garbage_collection_after_slashing() {
                 &[Perbill::from_percent(10)],
             );
 
-            assert_eq!(Balances::free_balance(11), 256_000 - 25_600);
+            assert_eq!(<Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &11), 4000*256 - (1000*256/10));
             assert!(<Staking as crate::Store>::SlashingSpans::get(&11).is_some());
             assert_eq!(
                 <Staking as crate::Store>::SpanSlash::get(&(11, 0)).amount_slashed(),
-                &25_600
+                &25600
             );
 
             on_offence_now(
@@ -2975,8 +2978,14 @@ fn garbage_collection_after_slashing() {
             // validator and nominator slash in era are garbage-collected by era change,
             // so we don't test those here.
 
-            assert_eq!(Balances::free_balance(11), 0);
-            assert_eq!(Balances::total_balance(&11), 0);
+            assert_eq!(<Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &11), 4000*256 - (1000*256/10) - (1000*256 - (1000*256/10)) );
+            assert_eq!(<Test as Trait>::Tokens::total_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &11), 4000*256 - (1000*256/10) - (1000*256 - (1000*256/10)) );
+
+            log!(info, "ledger:{:?}", Module::<Test>::ledger(&11));
+            assert!(<Test as Trait>::Tokens::transfer(DEFAULT_LIQUIDITY_TOKEN_ID, &11, &999, 4000*256 - (1000*256/10) - (1000*256 - (1000*256/10)), ExistenceRequirement::AllowDeath).is_ok());
+
+            assert_eq!(<Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &11), 0 );
+            assert_eq!(<Test as Trait>::Tokens::total_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &11), 0 );
 
             let slashing_spans = <Staking as crate::Store>::SlashingSpans::get(&11).unwrap();
             assert_eq!(slashing_spans.iter().count(), 2);
@@ -3237,10 +3246,10 @@ fn deferred_slashes_are_deferred() {
         .build_and_execute(|| {
             mock::start_era(1);
 
-            assert_eq!(Balances::free_balance(11), 1000);
+            assert_eq!(<Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &11), 4000);
 
             let exposure = Staking::eras_stakers(Staking::active_era().unwrap().index, 11);
-            assert_eq!(Balances::free_balance(101), 2000);
+            assert_eq!(<Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &101), 2000);
             let nominated_value = exposure.others.iter().find(|o| o.who == 101).unwrap().value;
 
             on_offence_now(
@@ -3254,25 +3263,25 @@ fn deferred_slashes_are_deferred() {
                 &[Perbill::from_percent(10)],
             );
 
-            assert_eq!(Balances::free_balance(11), 1000);
-            assert_eq!(Balances::free_balance(101), 2000);
+            assert_eq!(<Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &11), 4000);
+            assert_eq!(<Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &101), 2000);
 
             mock::start_era(2);
 
-            assert_eq!(Balances::free_balance(11), 1000);
-            assert_eq!(Balances::free_balance(101), 2000);
+            assert_eq!(<Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &11), 4000);
+            assert_eq!(<Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &101), 2000);
 
             mock::start_era(3);
 
-            assert_eq!(Balances::free_balance(11), 1000);
-            assert_eq!(Balances::free_balance(101), 2000);
+            assert_eq!(<Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &11), 4000);
+            assert_eq!(<Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &101), 2000);
 
             // at the start of era 4, slashes from era 1 are processed,
             // after being deferred for at least 2 full eras.
             mock::start_era(4);
 
-            assert_eq!(Balances::free_balance(11), 900);
-            assert_eq!(Balances::free_balance(101), 2000 - (nominated_value / 10));
+            assert_eq!(<Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &11), 3900);
+            assert_eq!(<Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &101), 2000 - (nominated_value * 2 / 10));
         })
 }
 
@@ -4699,11 +4708,11 @@ fn claim_reward_at_the_last_era_and_no_double_claim_and_invalid_claim() {
     // * an invalid era to claim doesn't update last_reward
     // * double claim of one era fails
     ExtBuilder::default().nominate(true).build_and_execute(|| {
-        let init_balance_10 = Balances::total_balance(&10);
-        let init_balance_100 = Balances::total_balance(&100);
+        let init_balance_10 = <Test as Trait>::Tokens::free_balance(NATIVE_TOKEN_ID, &10);
+        let init_balance_100 = <Test as Trait>::Tokens::free_balance(NATIVE_TOKEN_ID, &100);
 
-        let part_for_10 = Perbill::from_rational_approximation::<u32>(1000, 1125);
-        let part_for_100 = Perbill::from_rational_approximation::<u32>(125, 1125);
+        let part_for_10 = Perbill::from_rational_approximation::<u32>(1000, 1124);
+        let part_for_100 = Perbill::from_rational_approximation::<u32>(124, 1124);
 
         // Check state
         Payee::<Test>::insert(11, RewardDestination::Controller);
@@ -4718,7 +4727,7 @@ fn claim_reward_at_the_last_era_and_no_double_claim_and_invalid_claim() {
 
         <Module<Test>>::reward_by_ids(vec![(11, 1)]);
         // Change total issuance in order to modify total payout
-        let _ = Balances::deposit_creating(&999, 1_000_000_000);
+        let _ = <Test as Trait>::Tokens::mint(NATIVE_TOKEN_ID, &999, 1_000_000_000_000);
         // Compute total payout now for whole duration as other parameter won't change
         let total_payout_1 = current_total_payout_for_duration(3000);
         assert!(total_payout_1 > 10); // Test is meaningful if reward something
@@ -4728,7 +4737,7 @@ fn claim_reward_at_the_last_era_and_no_double_claim_and_invalid_claim() {
 
         <Module<Test>>::reward_by_ids(vec![(11, 1)]);
         // Change total issuance in order to modify total payout
-        let _ = Balances::deposit_creating(&999, 1_000_000_000);
+        let _ = <Test as Trait>::Tokens::mint(NATIVE_TOKEN_ID, &999, 1_000_000_000_000);
         // Compute total payout now for whole duration as other parameter won't change
         let total_payout_2 = current_total_payout_for_duration(3000);
         assert!(total_payout_2 > 10); // Test is meaningful if reward something
@@ -4765,12 +4774,14 @@ fn claim_reward_at_the_last_era_and_no_double_claim_and_invalid_claim() {
         // Era 0 can't be rewarded anymore and current era can't be rewarded yet
         // only era 1 and 2 can be rewarded.
 
+
+
         assert_eq!(
-            Balances::total_balance(&10),
+            <Test as Trait>::Tokens::free_balance(NATIVE_TOKEN_ID, &10),
             init_balance_10 + part_for_10 * (total_payout_1 + total_payout_2),
         );
         assert_eq!(
-            Balances::total_balance(&100),
+            <Test as Trait>::Tokens::free_balance(NATIVE_TOKEN_ID, &100),
             init_balance_100 + part_for_100 * (total_payout_1 + total_payout_2),
         );
     });

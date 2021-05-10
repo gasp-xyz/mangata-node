@@ -4542,7 +4542,9 @@ mod offchain_election {
                     &inner,
                 ),
                 TransactionValidity::Ok(ValidTransaction {
-                    priority: UnsignedPriority::get() + 1125, // the proposed slot stake.
+                    priority: UnsignedPriority::get() + 562 + 1, // the proposed slot stake.
+                    // COMMENT
+                    // error? + 1?
                     requires: vec![],
                     provides: vec![("StakingOffchain", current_era()).encode()],
                     longevity: 3,
@@ -4586,7 +4588,7 @@ mod offchain_election {
                 ),
                 TransactionValidity::Ok(ValidTransaction {
                     // the proposed slot stake, with balance_solution.
-                    priority: UnsignedPriority::get() + 1250,
+                    priority: UnsignedPriority::get() + 625,
                     requires: vec![],
                     provides: vec![("StakingOffchain", active_era()).encode()],
                     longevity: 3,

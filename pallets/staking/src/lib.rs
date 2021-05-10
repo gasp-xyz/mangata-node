@@ -290,6 +290,9 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+#[cfg(test)]
+use crate::mock::{BlockNumber, Period};
+
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 #[cfg(any(feature = "runtime-benchmarks", test))]
@@ -1387,9 +1390,13 @@ decl_module! {
                 if let Some(next_session_change) = T::NextNewSession::estimate_next_new_session(now) {
                     // TODO
                     // Update this to a better version
-                    if next_session_change.is_zero(){
-                        #[cfg(test)]
+                    #[cfg(test)]
+                    {
+                    if next_session_change.is_zero() && <Period as Get<BlockNumber>>::get()==1{
+                        log!(info, "about_to_call-create_stakers_snapshot");
+
                         Module::<T>::create_stakers_snapshot();
+                    }
                     }
                     log!(info, "snapshot-maybe-after-estimate_next_new_session");
                     log!(info, "next_session_change:{:?}", next_session_change);
@@ -2295,11 +2302,12 @@ impl<T: Trait> Module<T> {
     /// This data is used to efficiently evaluate election results. returns `true` if the operation
     /// is successful.
     pub fn create_stakers_snapshot() -> (bool, Weight) {
+        log!(info, "CREATING_STAKERS_SNAPSHOT");
         let mut consumed_weight = 0;
         let mut add_db_reads_writes = |reads, writes| {
             consumed_weight += T::DbWeight::get().reads_writes(reads, writes);
         };
-        let validators = <Validators<T>>::iter().map(|(v, _)| v).collect::<Vec<_>>();
+        let mut validators = <Validators<T>>::iter().map(|(v, _)| v).collect::<Vec<_>>();
         let mut nominators = <Nominators<T>>::iter().map(|(n, _)| n).collect::<Vec<_>>();
 
         let num_validators = validators.len();
@@ -2319,6 +2327,7 @@ impl<T: Trait> Module<T> {
             );
             (false, consumed_weight)
         } else {
+            let mut validators_to_be_removed = Vec::new();
             // Note: A Stash can't be both nominator and validator
             for validator in validators.iter() {
                 // get validator's staked liquidity token amount, i.e., validator's controller's ledger.active
@@ -2338,16 +2347,23 @@ impl<T: Trait> Module<T> {
                     liquidity_token_amount.into(),
                 )
                 .into();
-                <StashStakedValuation<T>>::insert(
-                    DUMMY_VALUE,
-                    &validator,
-                    Valuation {
-                        liquidity_token_amount: liquidity_token_amount,
-                        mng_valuation: mng_valuation,
-                    },
-                );
+                if mng_valuation.is_zero() {
+                    validators_to_be_removed.push(validator.clone());
+                } else {
+                    <StashStakedValuation<T>>::insert(
+                        DUMMY_VALUE,
+                        &validator,
+                        Valuation {
+                            liquidity_token_amount: liquidity_token_amount,
+                            mng_valuation: mng_valuation,
+                        },
+                    );
+                }
             }
 
+            validators.retain(|validator| !validators_to_be_removed.contains(&validator));
+
+            let mut nominators_to_be_removed = Vec::new();
             for nominator in nominators.iter() {
                 // get nominator's staked liquidity token amount, i.e., nominator's controller's ledger.active
                 // get nominator's stash's tokenId
@@ -2366,15 +2382,21 @@ impl<T: Trait> Module<T> {
                     liquidity_token_amount.into(),
                 )
                 .into();
-                <StashStakedValuation<T>>::insert(
-                    DUMMY_VALUE,
-                    &nominator,
-                    Valuation {
-                        liquidity_token_amount: liquidity_token_amount,
-                        mng_valuation: mng_valuation,
-                    },
-                );
+                if mng_valuation.is_zero() {
+                    nominators_to_be_removed.push(nominator.clone());
+                } else {
+                    <StashStakedValuation<T>>::insert(
+                        DUMMY_VALUE,
+                        &nominator,
+                        Valuation {
+                            liquidity_token_amount: liquidity_token_amount,
+                            mng_valuation: mng_valuation,
+                        },
+                    );
+                }
             }
+
+            nominators.retain(|nominator| !nominators_to_be_removed.contains(&nominator));
 
             // all validators nominate themselves;
             nominators.extend(validators.clone());
@@ -2413,6 +2435,7 @@ impl<T: Trait> Module<T> {
 
     /// Clears both snapshots of stakers.
     fn kill_stakers_snapshot() {
+        log!(info, "DESTROYING-STAKERS-SNAPSHOT");
         <SnapshotValidators<T>>::kill();
         <SnapshotNominators<T>>::kill();
 
@@ -2627,6 +2650,7 @@ impl<T: Trait> Module<T> {
                     } else if era_length >= T::SessionsPerEra::get() {
                         // Should only happen when we are ready to trigger an era but we have ForceNone,
                         // otherwise previous arm would short circuit.
+                        log!(info, "about_to_call-close_election_window");
                         Self::close_election_window();
                     }
                     return None;
@@ -2688,6 +2712,14 @@ impl<T: Trait> Module<T> {
         // Do the basic checks. era, claimed score and window open.
         let _ = Self::pre_dispatch_checks(claimed_score, era)?;
 
+        log!(info, "before-compact_assignments_length_check");
+        log!(
+            info,
+            "compact_assignments.unique_targets().len():{:?}",
+            compact_assignments.unique_targets().len()
+        );
+        log!(info, "winners.len():{:?}", winners.len());
+
         // before we read any further state, we check that the unique targets in compact is same as
         // compact. is a all in-memory check and easy to do. Moreover, it ensures that the solution
         // is not full of bogus edges that can cause lots of reads to SlashingSpans. Thus, we can
@@ -2697,6 +2729,8 @@ impl<T: Trait> Module<T> {
             compact_assignments.unique_targets().len() == winners.len(),
             Error::<T>::OffchainElectionBogusWinnerCount,
         );
+
+        log!(info, "passed-compact_assignments_length_check");
 
         // Check that the number of presented winners is sane. Most often we have more candidates
         // than we need. Then it should be `Self::validator_count()`. Else it should be all the
@@ -3234,10 +3268,16 @@ impl<T: Trait> Module<T> {
         let mut all_nominators: Vec<(T::AccountId, VoteWeight, Vec<T::AccountId>)> = Vec::new();
         let mut all_validators = Vec::new();
         for (validator, _) in <Validators<T>>::iter() {
+            let slashable_balance_of_vote_weight_of_validator =
+                Self::slashable_balance_of_vote_weight(&validator);
+            if slashable_balance_of_vote_weight_of_validator.is_zero() {
+                continue;
+            }
+
             // append self vote
             let self_vote = (
                 validator.clone(),
-                Self::slashable_balance_of_vote_weight(&validator),
+                slashable_balance_of_vote_weight_of_validator,
                 vec![validator.clone()],
             );
             all_nominators.push(self_vote);
@@ -3260,10 +3300,19 @@ impl<T: Trait> Module<T> {
 
             (nominator, targets)
         });
+
         all_nominators.extend(nominator_votes.map(|(n, ns)| {
             let s = Self::slashable_balance_of_vote_weight(&n);
             (n, s, ns)
         }));
+
+        all_nominators.retain(|(_, s, _)| !s.is_zero());
+
+        for (_, _, ref mut ns) in all_nominators.iter_mut() {
+            ns.retain(|nominated| !Self::slashable_balance_of_vote_weight(&nominated).is_zero())
+        }
+
+        all_nominators.retain(|(_, _, ns)| !ns.is_empty());
 
         log!(info, "do_phragmen_validators {:?}", all_validators);
         log!(info, "do_phragmen_nominators {:?}", all_nominators);
@@ -3361,6 +3410,7 @@ impl<T: Trait> Module<T> {
 
     /// Apply previously-unapplied slashes on the beginning of a new era, after a delay.
     fn apply_unapplied_slashes(active_era: EraIndex) {
+        log!(info, "apply_unapplied_slashes");
         let slash_defer_duration = T::SlashDeferDuration::get();
         <Self as Store>::EarliestUnappliedSlash::mutate(|earliest| {
             if let Some(ref mut earliest) = earliest {
@@ -3368,6 +3418,7 @@ impl<T: Trait> Module<T> {
                 for era in (*earliest)..keep_from {
                     let era_slashes = <Self as Store>::UnappliedSlashes::take(&era);
                     for slash in era_slashes {
+                        log!(info, "slashing::apply_slash:{:?}", slash);
                         slashing::apply_slash::<T>(slash);
                     }
                 }

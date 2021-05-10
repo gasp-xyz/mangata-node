@@ -1165,6 +1165,11 @@ pub(crate) fn prepare_submission_with(
         winners,
         assignments,
     } = Staking::do_phragmen::<OffchainAccuracy>().unwrap();
+    log!(
+        info,
+        "prepare_submission_with-winners.len():{:?}",
+        winners.len()
+    );
     let winners = sp_npos_elections::to_without_backing(winners);
 
     let stake_of = |who: &AccountId| -> VoteWeight {

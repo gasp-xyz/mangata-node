@@ -1,14 +1,14 @@
 //! # XYK pallet
 
 //! Provides functions for token operations, swapping tokens, creating token pools, minting and burning liquidity and supporting public functions
-//! 
-//! ### Token operation functions: 
+//!
+//! ### Token operation functions:
 //! - create_pool
 //! - mint_liquidity
 //! - burn_liquidity
 //! - sell_asset
 //! - buy_asset
-//! 
+//!
 //! ### Supporting public functions:
 //! - calculate_sell_price
 //! - calculate_buy_price
@@ -22,7 +22,7 @@
 //! # fn create_pool
 //! -Sets the initial ratio/price of both assets to each other depending on amounts of each assets when creating pool.
 //!
-//! -Transfers assets from user to vault and makes appropriate entry to pools map, where are assets amounts kept. 
+//! -Transfers assets from user to vault and makes appropriate entry to pools map, where are assets amounts kept.
 //!
 //! -Issues new liquidity asset in amount corresponding to amounts creating the pool, marks them as liquidity assets corresponding to this pool and transfers them to user.
 //! first_token_amount
@@ -48,7 +48,7 @@
 //! )
 //! ```
 //! Account_id 1 created pool with tokens 0 and 1, with amounts 1000, 2000. Initial ratio is 1:2. Liquidity token with new id created in an amount of 3000 and transfered to user 1.
-//! 
+//!
 //! ### Errors
 //! `ZeroAmount` - creating pool with 0 amount of first or second token
 //!
@@ -59,7 +59,7 @@
 //! `SameToken` - creating pool with same token
 //!
 //! # fn sell_token
-//! -Sells/exchanges set amount of sold token for corresponding amount by xyk formula of bought token 
+//! -Sells/exchanges set amount of sold token for corresponding amount by xyk formula of bought token
 //! ### arguments
 //! `origin` - sender of a fn, user creating the pool
 //!
@@ -67,7 +67,7 @@
 //!
 //! `bought_token_id` - token which will be bought
 //!
-//! `sold_token_amount` - amount of token to be sold 
+//! `sold_token_amount` - amount of token to be sold
 //!
 //! `min_amount_out` - minimal acceptable amount of bought token received after swap
 //!
@@ -93,7 +93,7 @@
 //! `InsufficientOutputAmount` - bought tokens to receive amount is lower then required min_amount_out
 //!
 //! # fn buy_token
-//! -Buys/exchanges set amount of bought token for corresponding amount by xyk formula of sold token 
+//! -Buys/exchanges set amount of bought token for corresponding amount by xyk formula of sold token
 //! ### arguments
 //! `origin` - sender of a fn, user creating the pool
 //!
@@ -101,7 +101,7 @@
 //!
 //! `bought_token_id` - token which will be bought
 //!
-//! `bought_token_amount` - amount of token to be bought 
+//! `bought_token_amount` - amount of token to be bought
 //!
 //! `max_amount_in` - maximal acceptable amount of sold token to pay for requested bought amount
 //!
@@ -154,7 +154,7 @@
 //! Account_id 1 added liquidity to pool token 0 - token 1, by providing 1000 token 0 and corresponding amount of token 1. In this case 2000, as the ratio in pool is 1:2.
 //! Account_id 1 also receives corresponding liquidity tokens in corresponding amount. In this case he gets 10% of all corresponding liquidity tokens, as he is providing 10% of all provided liquidity in pool.
 //! 3000 out of total 30000 liquidity tokens is now owned by Account_id 1
-//! 
+//!
 //! ### Errors
 //! `ZeroAmount` - minting with 0 tokens
 //!
@@ -183,12 +183,12 @@
 //!    1,
 //!    3000,
 //!)
-//! ``` 
+//! ```
 //! If pool token 0 - token 1 has tokens in amounts 10000:20000 (total liquidity tokens 30000)
 //!
 //! Account_id 1 is burning 3000 liquidity tokens of pool token 0 - token 1
 //! As Account_id 1 is burning 10% of total liquidity tokens for this pool, user receives in this case 1000 token 0 and 2000 token 1
-//! 
+//!
 //! ### Errors
 //! `ZeroAmount` - burning 0 liquidity tokens
 //!
@@ -215,7 +215,6 @@
 //! - First step is deciding whether we are using sold or bought token id, depending which is closer to mangata token
 //! - In second step, if tokens are mangata, they are placed to treasury and removed from corresponding pool. If tokens are not mangata, but are available in mangata pool,
 //!   they are swapped to mangata and placed to treasury and removed from corresponding pool. If token is not connected to mangata, token is temporarily placed to treasury and burn treasury.
-
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -248,10 +247,10 @@ pub trait Trait: frame_system::Trait {
 
 const PALLET_ID: ModuleId = ModuleId(*b"79b14c96");
 // 1/100 %
-const TREASURY_PERCENTAGE: u128 = 5; 
-const BUYANDBURN_PERCENTAGE: u128 = 5; 
-const SWAPFEE_PERCENTAGE: u128 = 30; 
-const MANGATA_ID: u128 = 0; 
+const TREASURY_PERCENTAGE: u128 = 5;
+const BUYANDBURN_PERCENTAGE: u128 = 5;
+const SWAPFEE_PERCENTAGE: u128 = 30;
+const MANGATA_ID: u128 = 0;
 
 decl_error! {
     /// Errors
@@ -376,7 +375,7 @@ decl_module! {
                 WithdrawReasons::all()
                 ,{second_asset_free_balance - second_asset_amount}.into()).or(Err(Error::<T>::NotEnoughAssets))?;
 
-            // Ensure pool is not created with same token in pair   
+            // Ensure pool is not created with same token in pair
             ensure!(
                 first_asset_id != second_asset_id,
                 Error::<T>::SameAsset,
@@ -653,7 +652,7 @@ decl_module! {
             let liquidity_assets_minted = liquidity_assets_minted_u256.saturated_into::<u128>()
                 .saturated_into::<Balance>();
 
-            // Ensure minting amounts are not zero    
+            // Ensure minting amounts are not zero
             ensure!(
                 !first_asset_amount.is_zero() && !second_asset_amount.is_zero(),
                 Error::<T>::ZeroAmount,
@@ -722,7 +721,7 @@ decl_module! {
                 Error::<T>::NoSuchPool,
             );
 
-            // Get token reserves and liquidity asset id 
+            // Get token reserves and liquidity asset id
             let first_asset_reserve = Pools::get((first_asset_id, second_asset_id));
             let second_asset_reserve = Pools::get((second_asset_id, first_asset_id));
             let liquidity_asset_id = Self::get_liquidity_asset(first_asset_id, second_asset_id);
@@ -741,7 +740,7 @@ decl_module! {
                 WithdrawReasons::all(),
                 new_balance.into()).or(Err(Error::<T>::NotEnoughAssets))?;
 
-            // Calculate first and second token amounts depending on liquidity amount to burn    
+            // Calculate first and second token amounts depending on liquidity amount to burn
             let (first_asset_amount, second_asset_amount) =  Self::get_burn_amount(first_asset_id, second_asset_id, liquidity_asset_amount);
 
             // Ensure not withdrawing zero amounts
@@ -856,13 +855,13 @@ impl<T: Trait> Module<T> {
         }
     }
 
-    // Calculate first and second token amounts depending on liquidity amount to burn    
+    // Calculate first and second token amounts depending on liquidity amount to burn
     pub fn get_burn_amount(
         first_asset_id: TokenId,
         second_asset_id: TokenId,
         liquidity_asset_amount: Balance,
     ) -> (Balance, Balance) {
-        // Get token reserves and liquidity asset id 
+        // Get token reserves and liquidity asset id
         let liquidity_asset_id = Self::get_liquidity_asset(first_asset_id, second_asset_id);
         let first_asset_reserve_u256: U256 = Pools::get((first_asset_id, second_asset_id))
             .saturated_into::<u128>()
@@ -877,13 +876,13 @@ impl<T: Trait> Module<T> {
         let liquidity_asset_amount_u256: U256 =
             liquidity_asset_amount.saturated_into::<u128>().into();
 
-        // Calculate first and second token amount to be withdrawn   
+        // Calculate first and second token amount to be withdrawn
         let first_asset_amount_u256 =
             first_asset_reserve_u256 * liquidity_asset_amount_u256 / total_liquidity_assets_u256;
         let second_asset_amount_u256 =
             second_asset_reserve_u256 * liquidity_asset_amount_u256 / total_liquidity_assets_u256;
 
-        // Conversion to Balance    
+        // Conversion to Balance
         let second_asset_amount = second_asset_amount_u256
             .saturated_into::<u128>()
             .saturated_into::<Balance>();
@@ -895,86 +894,79 @@ impl<T: Trait> Module<T> {
     }
 
     //TODO U256?
-    fn settle_treasury_and_burn( 
+    fn settle_treasury_and_burn(
         sold_asset_id: TokenId,
         bought_asset_id: TokenId,
-        sold_asset_amount: Balance,) -> DispatchResult
-        {
-    
+        sold_asset_amount: Balance,
+    ) -> DispatchResult {
         let vault = Self::account_id();
         let mangata_id = MANGATA_ID.saturated_into::<TokenId>();
 
         // Getting token reserves
         let input_reserve = Pools::get((sold_asset_id, bought_asset_id));
         let output_reserve = Pools::get((bought_asset_id, sold_asset_id));
-    
+
         // Setting initial settling token id, treasury and burn amount
         let mut settling_asset_id = bought_asset_id;
-        let mut treasury_amount = sold_asset_amount * TREASURY_PERCENTAGE.saturated_into::<Balance>() / 10000.saturated_into::<Balance>();
-        let mut burn_amount = sold_asset_amount * BUYANDBURN_PERCENTAGE.saturated_into::<Balance>() / 10000.saturated_into::<Balance>();
-        
+        let mut treasury_amount = sold_asset_amount
+            * TREASURY_PERCENTAGE.saturated_into::<Balance>()
+            / 10000.saturated_into::<Balance>();
+        let mut burn_amount = sold_asset_amount * BUYANDBURN_PERCENTAGE.saturated_into::<Balance>()
+            / 10000.saturated_into::<Balance>();
+
         // Check whether to settle treasury and buyburn with sold or bought asset.
         // If sold token is directly mangata, or is in pair with mangata and bought id is not and bought token is not mangata, we use sold token as settling token
-        if sold_asset_id == mangata_id  || (Pools::contains_key((sold_asset_id,mangata_id)) && !Pools::contains_key((bought_asset_id,mangata_id)) && bought_asset_id != mangata_id){
+        if sold_asset_id == mangata_id
+            || (Pools::contains_key((sold_asset_id, mangata_id))
+                && !Pools::contains_key((bought_asset_id, mangata_id))
+                && bought_asset_id != mangata_id)
+        {
             settling_asset_id = sold_asset_id;
-    
+
             // Removing settling amount from pool
             Pools::insert(
                 (&sold_asset_id, &bought_asset_id),
                 input_reserve - burn_amount - treasury_amount,
             );
         }
-
         // Bought token is used as settling token in rest of the cases
         else {
-            // Sold amount recalculated to bought asset amount 
-            treasury_amount = treasury_amount * output_reserve / input_reserve; 
-            burn_amount = burn_amount * output_reserve / input_reserve; 
-    
+            // Sold amount recalculated to bought asset amount
+            treasury_amount = treasury_amount * output_reserve / input_reserve;
+            burn_amount = burn_amount * output_reserve / input_reserve;
+
             // Removing settling amount from pool
             Pools::insert(
                 (&bought_asset_id, &sold_asset_id),
                 output_reserve - treasury_amount - burn_amount,
             );
         }
-    
+
         // If settling token is mangata, treasury amount is added to treasury and burn amount is burned from corresponding pool
         if settling_asset_id == mangata_id {
-    
             // Mangata insert to treasury
-            Treasury::insert(
-                mangata_id,
-                Treasury::get(mangata_id) + treasury_amount
-            );
-            
+            Treasury::insert(mangata_id, Treasury::get(mangata_id) + treasury_amount);
+
             // Mangata burned from pool
             T::Currency::burn_and_settle(mangata_id.into(), &vault, burn_amount.into())?;
         }
-    
         //If settling token is connected to mangata, token is swapped in corresponding pool to mangata without fee
-        else if Pools::contains_key((settling_asset_id,mangata_id)){
-
+        else if Pools::contains_key((settling_asset_id, mangata_id)) {
             // Getting token reserves
             let input_reserve = Pools::get((settling_asset_id, mangata_id));
             let output_reserve = Pools::get((mangata_id, settling_asset_id));
-    
+
             // Calculating swapped mangata amount
-            let treasury_amount_in_mangata = Self::calculate_sell_price_no_fee(
-                input_reserve,
-                output_reserve,
-                treasury_amount,
-            )?;
-            let burn_amount_in_mangata = Self::calculate_sell_price_no_fee(
-                input_reserve,
-                output_reserve,
-                burn_amount,
-            )?;
-    
+            let treasury_amount_in_mangata =
+                Self::calculate_sell_price_no_fee(input_reserve, output_reserve, treasury_amount)?;
+            let burn_amount_in_mangata =
+                Self::calculate_sell_price_no_fee(input_reserve, output_reserve, burn_amount)?;
+
             // Apply changes in token pools, adding treasury and burn amounts of settling token, removing  treasury and burn amounts of mangata
             Pools::insert(
                 (settling_asset_id, mangata_id),
                 input_reserve + treasury_amount + burn_amount,
-            );    
+            );
             Pools::insert(
                 (mangata_id, settling_asset_id),
                 output_reserve - treasury_amount_in_mangata - burn_amount_in_mangata,
@@ -983,7 +975,7 @@ impl<T: Trait> Module<T> {
             // Mangata insert to treasury
             Treasury::insert(
                 mangata_id,
-                Treasury::get(mangata_id) + treasury_amount_in_mangata
+                Treasury::get(mangata_id) + treasury_amount_in_mangata,
             );
 
             // Mangata burned from pool
@@ -994,17 +986,17 @@ impl<T: Trait> Module<T> {
             // Settling token insert to treasury
             Treasury::insert(
                 settling_asset_id,
-                Treasury::get(settling_asset_id) + treasury_amount
+                Treasury::get(settling_asset_id) + treasury_amount,
             );
             // Settling token insert to treasury for later burn
             TreasuryBurn::insert(
                 settling_asset_id,
-                TreasuryBurn::get(settling_asset_id) + burn_amount
+                TreasuryBurn::get(settling_asset_id) + burn_amount,
             );
         }
         Ok(())
     }
-    
+
     fn account_id() -> T::AccountId {
         PALLET_ID.into_account()
     }

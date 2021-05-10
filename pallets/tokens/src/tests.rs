@@ -5,9 +5,8 @@
 use super::*;
 use frame_support::{assert_noop, assert_ok, traits::WithdrawReason};
 use mock::{
-    Balance, ExtBuilder, Runtime, System, TestEvent, Tokens, TreasuryCurrencyAdapter,
+    Balance, ExtBuilder, Origin, Runtime, System, TestEvent, Tokens, TreasuryCurrencyAdapter,
     ACCUMULATED_RECEIVED, ALICE, BOB, ID_1, ID_2, TEST_TOKEN_ID, TREASURY_ACCOUNT,
-    Origin
 };
 
 #[test]
@@ -1191,8 +1190,6 @@ fn mint_tokens_as_root() {
 
         assert_ok!(Tokens::create(Origin::root(), ALICE.into(), 100000),);
 
-        assert_ok!(
-            Tokens::mint(Origin::root(), 0, ALICE.into(), 100000),
-        );
+        assert_ok!(Tokens::mint(Origin::root(), 0, ALICE.into(), 100000),);
     });
 }

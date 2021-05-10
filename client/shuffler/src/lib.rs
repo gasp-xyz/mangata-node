@@ -1,33 +1,39 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-use sp_runtime::traits::{Block as BlockT, BlakeTwo256};
-use sp_runtime::generic::BlockId;
-use sp_runtime::AccountId32;
-use sp_api::{ApiRef, ProvideRuntimeApi, Encode, HashT};
 use extrinsic_info_runtime_api::runtime_api::ExtrinsicInfoRuntimeApi;
-use sp_std::collections::vec_deque::VecDeque;
-use sp_std::collections::btree_map::BTreeMap;
-use sp_std::vec::Vec;
+use sp_api::{ApiRef, Encode, HashT, ProvideRuntimeApi};
 use sp_core::crypto::Ss58Codec;
-// , HashMap};
-use rand::rngs::StdRng;                                                                                 
+use sp_core::H256;
+use sp_runtime::generic::BlockId;
+use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
+use sp_runtime::AccountId32;
+use sp_std::collections::btree_map::BTreeMap;
+use sp_std::collections::vec_deque::VecDeque;
+use sp_std::vec::Vec;
 use rand::prelude::SliceRandom;
+use rand::rngs::StdRng;
+use rand::SeedableRng;
 
-
-pub fn shuffle<'a, Block, Api>(api: &ApiRef<'a, Api::Api>, block_id: &BlockId<Block>, extrinsics: Vec<Block::Extrinsic>, mut seed: StdRng) -> Vec<Block::Extrinsic> where
-Block: BlockT,
-Api: ProvideRuntimeApi<Block> + 'a,
-Api::Api: ExtrinsicInfoRuntimeApi<Block>
-
+/// shuffles extrinsics assuring that extrinsics signed by single account will be still evaluated
+/// in proper order
+pub fn shuffle<'a, Block, Api>(
+    api: &ApiRef<'a, Api::Api>,
+    block_id: &BlockId<Block>,
+    extrinsics: Vec<Block::Extrinsic>,
+    hash: H256,
+) -> Vec<Block::Extrinsic>
+where
+    Block: BlockT,
+    Api: ProvideRuntimeApi<Block> + 'a,
+    Api::Api: ExtrinsicInfoRuntimeApi<Block>,
 {
+    log::debug!(target: "block_shuffler", "shuffling extrinsics with seed: {:#X}", hash);
 
-    log::debug!(target: "block_shuffler", "origin order:");
     let mut grouped_extrinsics: BTreeMap<Option<AccountId32>, VecDeque<_>> = extrinsics
         .into_iter()
-        .fold(BTreeMap::new(), |mut groups, tx| {
-            let tx_hash = BlakeTwo256::hash(&tx.encode());
+        .fold(BTreeMap::new(), |mut groups, tx| { let tx_hash = BlakeTwo256::hash(&tx.encode());
             let who = api.get_info(block_id, tx.clone()).unwrap_or(None).map(|info| Some(info.who)).unwrap_or(None);
 
-            log::debug!(target: "block_shuffler", "who:{:32}  extrinsic:{:?}",who.clone().map(|x| x.to_ss58check()).unwrap_or_else(|| String::from("None")), tx_hash);
+            log::debug!(target: "block_shuffler", "who:{:48}  extrinsic:{:?}",who.clone().map(|x| x.to_ss58check()).unwrap_or_else(|| String::from("None")), tx_hash);
             
             groups.entry(who).or_insert(VecDeque::new()).push_back(tx);
             groups
@@ -37,12 +43,13 @@ Api::Api: ExtrinsicInfoRuntimeApi<Block>
     // [ Alice, Alice, Alice, ... , Bob, Bob, Bob, ... ]
     let mut slots: Vec<_> = grouped_extrinsics
         .iter()
-        .map(|(who, txs)| vec![who;txs.len()])
+        .map(|(who, txs)| vec![who; txs.len()])
         .flatten()
         .map(|elem| elem.to_owned())
         .collect();
 
     // shuffle slots
+    let mut seed: StdRng = SeedableRng::from_seed(hash.to_fixed_bytes());
     slots.shuffle(&mut seed);
 
     // fill slots using extrinsics in order
@@ -51,13 +58,19 @@ Api::Api: ExtrinsicInfoRuntimeApi<Block>
     // [ AliceExtrinsic1, BobExtrinsic1, ... , AliceExtrinsicN, BobExtrinsicN ]
     let shuffled_extrinsics: Vec<_> = slots
         .into_iter()
-        .map(|who| grouped_extrinsics.get_mut(&who).unwrap().pop_front().unwrap())
+        .map(|who| {
+            grouped_extrinsics
+                .get_mut(&who)
+                .unwrap()
+                .pop_front()
+                .unwrap()
+        })
         .collect();
 
     log::debug!(target: "block_shuffler", "shuffled order");
     for tx in shuffled_extrinsics.iter() {
-            let tx_hash = BlakeTwo256::hash(&tx.encode());
-            log::debug!(target: "block_shuffler", "extrinsic:{:?}", tx_hash);
+        let tx_hash = BlakeTwo256::hash(&tx.encode());
+        log::debug!(target: "block_shuffler", "extrinsic:{:?}", tx_hash);
     }
 
     shuffled_extrinsics

@@ -297,6 +297,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "assert_matches"
+version = "1.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b34d609dfbaf33d6889b2b7106d3ca345eacad44200913df5ba02bfd31d2ba9"
+
+[[package]]
 name = "async-channel"
 version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1407,6 +1413,41 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e43f2f1833d64e33f15592464d6fdd70f349dda7b1a53088eb83cd94014008c5"
 dependencies = [
  "futures 0.3.8",
+]
+
+[[package]]
+name = "extrinsic-info-runtime-api"
+version = "2.0.0"
+dependencies = [
+ "derive_more",
+ "futures 0.3.8",
+ "log",
+ "parity-scale-codec",
+ "serde",
+ "sp-api",
+ "sp-blockchain",
+ "sp-runtime",
+]
+
+[[package]]
+name = "extrinsic-shuffler"
+version = "0.8.0"
+dependencies = [
+ "extrinsic-info-runtime-api",
+ "log",
+ "parity-scale-codec",
+ "rand 0.7.3",
+ "sc-client-api",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-std",
+ "sp-trie",
 ]
 
 [[package]]
@@ -3320,6 +3361,7 @@ name = "mangata-node"
 version = "2.0.0"
 dependencies = [
  "artemis-core",
+ "extrinsic-info-runtime-api",
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "frame-support",
@@ -3386,6 +3428,7 @@ dependencies = [
  "artemis-asset",
  "artemis-erc20-app",
  "artemis-eth-app",
+ "extrinsic-info-runtime-api",
  "frame-benchmarking",
  "frame-executive",
  "frame-support",
@@ -5438,17 +5481,18 @@ dependencies = [
 [[package]]
 name = "sc-basic-authorship"
 version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "527f6822cf592ac2b4a6ca7d04601c48d6728b8c03d9a9cc0488e4b535c69c6d"
 dependencies = [
+ "extrinsic-info-runtime-api",
  "futures 0.3.8",
  "futures-timer 3.0.2",
  "log",
  "parity-scale-codec",
+ "parking_lot 0.10.2",
  "sc-block-builder",
  "sc-client-api",
  "sc-proposer-metrics",
  "sc-telemetry",
+ "sc-transaction-pool",
  "sp-api",
  "sp-blockchain",
  "sp-consensus",
@@ -5464,6 +5508,8 @@ dependencies = [
 name = "sc-block-builder"
 version = "0.8.0"
 dependencies = [
+ "extrinsic-info-runtime-api",
+ "extrinsic-shuffler",
  "log",
  "parity-scale-codec",
  "rand 0.7.3",
@@ -5476,6 +5522,8 @@ dependencies = [
  "sp-inherents",
  "sp-runtime",
  "sp-state-machine",
+ "sp-std",
+ "sp-trie",
 ]
 
 [[package]]
@@ -6115,6 +6163,8 @@ dependencies = [
  "derive_more",
  "directories",
  "exit-future",
+ "extrinsic-info-runtime-api",
+ "extrinsic-shuffler",
  "futures 0.1.30",
  "futures 0.3.8",
  "futures-timer 3.0.2",
@@ -6228,9 +6278,9 @@ dependencies = [
 
 [[package]]
 name = "sc-transaction-graph"
-version = "2.0.0"
+version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "31fed765b519362f7ae824a2d3a2e6ee9912ac972e8ff61838d4ff0831cb3077"
+checksum = "53f57f64ce160124404e4a140da79c7d363627830e5bb31b6ac54c6cd6955fdb"
 dependencies = [
  "derive_more",
  "futures 0.3.8",
@@ -6251,22 +6301,25 @@ dependencies = [
 [[package]]
 name = "sc-transaction-pool"
 version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "248d4bcde22c936b462e4aa6c32e0f49a96942b123a1a46bc60cd02fbf907002"
 dependencies = [
+ "assert_matches",
  "derive_more",
  "futures 0.3.8",
  "futures-diagnose",
+ "hex",
  "intervalier",
  "log",
  "parity-scale-codec",
  "parity-util-mem",
  "parking_lot 0.10.2",
+ "sc-block-builder",
  "sc-client-api",
  "sc-transaction-graph",
  "sp-api",
  "sp-blockchain",
+ "sp-consensus",
  "sp-core",
+ "sp-keyring",
  "sp-runtime",
  "sp-tracing",
  "sp-transaction-pool",

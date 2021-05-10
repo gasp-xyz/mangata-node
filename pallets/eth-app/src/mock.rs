@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 // Mock runtime
 
 use crate::{Module, Trait};
@@ -93,7 +92,7 @@ impl Trait for MockRuntime {
 }
 
 pub type System = system::Module<MockRuntime>;
-pub type Asset = asset::Module<MockRuntime>;
+pub type Tokens = <MockRuntime as asset::Trait>::Currency;
 pub type ETH = Module<MockRuntime>;
 
 pub fn new_tester() -> sp_io::TestExternalities {

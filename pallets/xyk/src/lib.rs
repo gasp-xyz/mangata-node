@@ -1,3 +1,222 @@
+//! # XYK pallet
+
+//! Provides functions for token operations, swapping tokens, creating token pools, minting and burning liquidity and supporting public functions
+//! 
+//! ### Token operation functions: 
+//! - create_pool
+//! - mint_liquidity
+//! - burn_liquidity
+//! - sell_asset
+//! - buy_asset
+//! 
+//! ### Supporting public functions:
+//! - calculate_sell_price
+//! - calculate_buy_price
+//! - calculate_sell_price_id
+//! - calculate_buy_price_id
+//! - get_liquidity_token
+//! - get_burn_amount
+//! - account_id
+//! - settle_treasury_buy_and_burn
+//!
+//! # fn create_pool
+//! -Sets the initial ratio/price of both assets to each other depending on amounts of each assets when creating pool.
+//!
+//! -Transfers assets from user to vault and makes appropriate entry to pools map, where are assets amounts kept. 
+//!
+//! -Issues new liquidity asset in amount corresponding to amounts creating the pool, marks them as liquidity assets corresponding to this pool and transfers them to user.
+//! first_token_amount
+//! ### arguments
+//! `origin` - sender of a fn, user creating the pool
+//!
+//! `first_token_id` - id of first token which will be directly inter-tradeable in a pair of first_token_id-second_token_id
+//!
+//! `first_token_amount` - amount of first token in which the pool will be initiated, which will set their initial ratio/price
+//!
+//! `second_token_id` - id of second token which will be directly inter-tradeable in a pair of first_token_id-second_token_id
+//!
+//! `second_token_amount` - amount of second token in which the pool will be initiated, which will set their initial ratio/price
+//!
+//! ### Example
+//! ```
+//! create_pool(
+//!    Origin::signed(1),
+//!    0,
+//!    1000,
+//!    1,
+//!    2000,
+//! )
+//! ```
+//! Account_id 1 created pool with tokens 0 and 1, with amounts 1000, 2000. Initial ratio is 1:2. Liquidity token with new id created in an amount of 3000 and transfered to user 1.
+//! 
+//! ### Errors
+//! `ZeroAmount` - creating pool with 0 amount of first or second token
+//!
+//! `PoolAlreadyExists` - creating pool which already exists
+//!
+//! `NotEnoughTokens` - creating pool with amounts higher then user owns
+//!
+//! `SameToken` - creating pool with same token
+//!
+//! # fn sell_token
+//! -Sells/exchanges set amount of sold token for corresponding amount by xyk formula of bought token 
+//! ### arguments
+//! `origin` - sender of a fn, user creating the pool
+//!
+//! `sold_token_id` - token which will be sold
+//!
+//! `bought_token_id` - token which will be bought
+//!
+//! `sold_token_amount` - amount of token to be sold 
+//!
+//! `min_amount_out` - minimal acceptable amount of bought token received after swap
+//!
+//! ### Example
+//! ```
+//! sell_token (
+//!    Origin::signed(1),
+//!    0,
+//!    1,
+//!    1000,
+//!    800,
+//!)
+//! ```
+//! Account_id 1 sells/exchanges 1000 token 0 for corresponding amount of token 1, while requiring at least 800 token 1
+//!
+//! ### Errors
+//! `ZeroAmount` - buying 0 tokens
+//!
+//! `NoSuchPool` - pool sold_token_id - bought_token_id does not exist
+//!
+//! `NotEnoughTokens` - selling more tokens then user owns
+//!
+//! `InsufficientOutputAmount` - bought tokens to receive amount is lower then required min_amount_out
+//!
+//! # fn buy_token
+//! -Buys/exchanges set amount of bought token for corresponding amount by xyk formula of sold token 
+//! ### arguments
+//! `origin` - sender of a fn, user creating the pool
+//!
+//! `sold_token_id` - token which will be sold
+//!
+//! `bought_token_id` - token which will be bought
+//!
+//! `bought_token_amount` - amount of token to be bought 
+//!
+//! `max_amount_in` - maximal acceptable amount of sold token to pay for requested bought amount
+//!
+//! ### Example
+//! ```
+//! buy_token (
+//!    Origin::signed(1),
+//!    0,
+//!    1,
+//!    1000,
+//!    800,
+//!)
+//! ```
+//! Account_id 1 buys/exchanges 1000 tokens 1 by paying corresponding amount by xyk formula of tokens 0
+//!
+//! ### Errors
+//! `ZeroAmount` - selling 0 tokens
+//!
+//! `NoSuchPool` - pool sold_token_id - bought_token_id does not exist
+//!
+//! `NotEnoughTokens` - selling more tokens then user owns
+//!
+//! `InsufficientInputAmount` - sold tokens to pay is higher then maximum acceptable value of max_amount_in
+//!
+//! # fn mint_liquidity
+//! -Adds liquidity to pool, providing both tokens in actual ratio
+//! -First token amount is provided by user, second token amount is calculated by function, depending on actual ratio
+//! -Mints and transfers corresponding amount of liquidity token to mintin user
+//!
+//! ### arguments
+//! `origin` - sender of a fn, user creating the pool
+//!
+//! first_token_id - first token in pair
+//!
+//! second_token_id - second token in pair
+//!
+//! first_token_amount - amount of first_token_id, second token amount will be calculated
+//!
+//! ### Example
+//! ```
+//! mint_liquidity (
+//!    Origin::signed(1),
+//!    0,
+//!    1,
+//!    1000,
+//!)
+//! ```
+//! If pool token 0 - token 1 has tokens in amounts 9000:18000 (total liquidity tokens 27000)
+//!
+//! Account_id 1 added liquidity to pool token 0 - token 1, by providing 1000 token 0 and corresponding amount of token 1. In this case 2000, as the ratio in pool is 1:2.
+//! Account_id 1 also receives corresponding liquidity tokens in corresponding amount. In this case he gets 10% of all corresponding liquidity tokens, as he is providing 10% of all provided liquidity in pool.
+//! 3000 out of total 30000 liquidity tokens is now owned by Account_id 1
+//! 
+//! ### Errors
+//! `ZeroAmount` - minting with 0 tokens
+//!
+//! `NoSuchPool` - pool first_token_id - second_token_id does not exist
+//!
+//! `NotEnoughTokens` -  minting with more tokens then user owns, either first_token_id or second_token_id
+//!     
+//! # fn burn_liquidity
+//! -Removes tokens from liquidity pool and transfers them to user, by burning user owned liquidity tokens
+//! -Amount of tokens is determined by their ratio in pool and amount of liq tokens burned
+//!
+//! ### arguments
+//! `origin` - sender of a fn, user creating the pool
+//!
+//! first_token_id - first token in pair
+//!
+//! second_token_id - second token in pair
+//!
+//! liquidity_token_amount - amount of liquidity token amount to burn
+//!
+//! ### Example
+//! ```
+//! burn_liquidity (
+//!    Origin::signed(1),
+//!    0,
+//!    1,
+//!    3000,
+//!)
+//! ``` 
+//! If pool token 0 - token 1 has tokens in amounts 10000:20000 (total liquidity tokens 30000)
+//!
+//! Account_id 1 is burning 3000 liquidity tokens of pool token 0 - token 1
+//! As Account_id 1 is burning 10% of total liquidity tokens for this pool, user receives in this case 1000 token 0 and 2000 token 1
+//! 
+//! ### Errors
+//! `ZeroAmount` - burning 0 liquidity tokens
+//!
+//! `NoSuchPool` - pool first_token_id - second_token_id does not exist
+//!
+//! `NotEnoughTokens` -  burning more liquidity tokens than user owns
+//!
+//! # calculate_sell_price
+//! - Supporting public function accessible through rpc call which calculates and returns bought_token_amount while providing sold_token_amount and respective reserves
+//! # calculate_buy_price
+//! - Supporting public function accessible through rpc call which calculates and returns sold_token_amount while providing bought_token_amount and respective reserves
+//! # calculate_sell_price_id
+//! - Same as calculate_sell_price, but providing token_id instead of reserves. Reserves are fetched by function.
+//! # calculate_buy_price_id
+//! - Same as calculate_buy_price, but providing token_id instead of reserves. Reserves are fetched by function.
+//! # get_liquidity_token
+//! - Supporting public function accessible through rpc call which returns liquidity_token_id while providing pair token ids
+//! # get_burn_amount
+//! - Supporting public function accessible through rpc call which returns amounts of tokens received by burning provided liquidity_token_amount in pool of provided token ids
+//! # account_id
+//! - Returns palled account_id
+//! # settle_treasury_buy_and_burn
+//! - Supporting function which takes tokens to alocate to treasury and tokens to be used to burn mangata
+//! - First step is deciding whether we are using sold or bought token id, depending which is closer to mangata token
+//! - In second step, if tokens are mangata, they are placed to treasury and removed from corresponding pool. If tokens are not mangata, but are available in mangata pool,
+//!   they are swapped to mangata and placed to treasury and removed from corresponding pool. If token is not connected to mangata, token is temporarily placed to treasury and burn treasury.
+
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_support::{
@@ -116,24 +335,29 @@ decl_module! {
             let sender = ensure_signed(origin)?;
             let vault: T::AccountId  = Self::account_id();
 
+            // Ensure pool is not created with zero amount
             ensure!(
                 !first_asset_amount.is_zero() && !second_asset_amount.is_zero(),
                 Error::<T>::ZeroAmount,
             );
 
+            // Ensure pool does not exists yet
             ensure!(
-                !Pools::contains_key((first_asset_id, second_asset_id)),
+                !<Pools<T>>::contains_key((first_asset_id, second_asset_id)),
                 Error::<T>::PoolAlreadyExists,
             );
 
+            // Ensure pool does not exists yet
             ensure!(
-                !Pools::contains_key((second_asset_id,first_asset_id)),
+                !<Pools<T>>::contains_key((second_asset_id,first_asset_id)),
                 Error::<T>::PoolAlreadyExists,
             );
 
+            // Getting users token balances
             let first_asset_free_balance: Balance = T::Currency::free_balance(first_asset_id.into(), &sender).into();
             let second_asset_free_balance: Balance = T::Currency::free_balance(second_asset_id.into(), &sender).into();
 
+            // Ensure user has enough withdrawable tokens to create pool in amounts required
             ensure!(
                 first_asset_free_balance >= first_asset_amount,
                 Error::<T>::NotEnoughAssets,
@@ -152,12 +376,13 @@ decl_module! {
                 WithdrawReasons::all()
                 ,{second_asset_free_balance - second_asset_amount}.into()).or(Err(Error::<T>::NotEnoughAssets))?;
 
-
+            // Ensure pool is not created with same token in pair   
             ensure!(
                 first_asset_id != second_asset_id,
                 Error::<T>::SameAsset,
             );
 
+            // Liquidity token amount calculation
             let initial_liquidity = first_asset_amount + second_asset_amount;
 
             Pools::insert(
@@ -168,6 +393,7 @@ decl_module! {
                 (second_asset_id, first_asset_id), second_asset_amount
             );
 
+            // Moving tokens from user to vault
             T::Currency::transfer(
                 first_asset_id.into(),
                 &sender,
@@ -184,8 +410,10 @@ decl_module! {
                 ExistenceRequirement::AllowDeath
             )?;
 
+            // Creating new liquidity token and transfering it to user
             let liquidity_asset_id: TokenId = T::Currency::create(&sender, initial_liquidity.into()).into();
 
+            // Adding info about liquidity asset
             LiquidityAssets::insert((first_asset_id, second_asset_id), liquidity_asset_id);
             LiquidityPools::insert(liquidity_asset_id, (first_asset_id, second_asset_id));
 
@@ -208,29 +436,36 @@ decl_module! {
 
             let sender = ensure_signed(origin)?;
 
+            // Ensure pool exists
             ensure!(
                 Pools::contains_key((sold_asset_id,bought_asset_id)),
                 Error::<T>::NoSuchPool,
             );
 
+            // Ensure not selling zero amount
             ensure!(
                 !sold_asset_amount.is_zero(),
                 Error::<T>::ZeroAmount,
             );
 
+            // Get token reserves
             let input_reserve = Pools::get((sold_asset_id, bought_asset_id));
             let output_reserve = Pools::get((bought_asset_id, sold_asset_id));
+
+            // Calculate bought asset amount to be received by paying sold asset amount
             let bought_asset_amount = Self::calculate_sell_price(
                 input_reserve,
                 output_reserve,
                 sold_asset_amount,
             )?;
 
+            // Ensure user has enought tokens to sell
             ensure!(
                 T::Currency::free_balance(sold_asset_id.into(), &sender).into() >= sold_asset_amount,
                 Error::<T>::NotEnoughAssets,
             );
 
+            // Ensure bought token amount is higher then requested minimal amount
             ensure!(
                 bought_asset_amount >= min_amount_out,
                 Error::<T>::InsufficientOutputAmount,
@@ -238,6 +473,7 @@ decl_module! {
 
             let vault = Self::account_id();
 
+            // Transfer sold token amount from user to vault and bought token amount from vault to user
             T::Currency::transfer(
                 sold_asset_id.into(),
                 &sender,
@@ -253,6 +489,7 @@ decl_module! {
                 ExistenceRequirement::KeepAlive,
             )?;
 
+            // Apply changes in token pools, adding sold amount and removing bought amount
             Pools::insert(
                 (sold_asset_id, bought_asset_id),
                 input_reserve + sold_asset_amount,
@@ -262,6 +499,7 @@ decl_module! {
                 output_reserve - bought_asset_amount,
             );
 
+            // Settle tokens which goes to treasury and for buy and burn purpose
             Self::settle_treasury_and_burn(
                 sold_asset_id,
                 bought_asset_id,
@@ -284,35 +522,42 @@ decl_module! {
 
             let sender = ensure_signed(origin)?;
 
+            // Ensure pool exists
             ensure!(
                 Pools::contains_key((sold_asset_id,bought_asset_id)),
                 Error::<T>::NoSuchPool,
             );
 
+            // Get token reserves
             let input_reserve = Pools::get((sold_asset_id, bought_asset_id));
             let output_reserve = Pools::get((bought_asset_id, sold_asset_id));
 
+            // Ensure there are enough tokens in reserves
             ensure!(
                 output_reserve > bought_asset_amount,
                 Error::<T>::NotEnoughReserve,
             );
 
+            // Ensure not buying zero amount
             ensure!(
                 !bought_asset_amount.is_zero(),
                 Error::<T>::ZeroAmount,
             );
 
+            // Calculate amount to be paid from bought amount
             let sold_asset_amount = Self::calculate_buy_price(
                 input_reserve,
                 output_reserve,
                 bought_asset_amount,
             );
 
+            // Ensure user has enought tokens to sell
             ensure!(
                 T::Currency::free_balance(sold_asset_id.into(), &sender).into() >= sold_asset_amount,
                 Error::<T>::NotEnoughAssets,
             );
 
+            // Ensure paid amount is less then maximum allowed price
             ensure!(
                 sold_asset_amount <= max_amount_in,
                 Error::<T>::InsufficientInputAmount,
@@ -320,6 +565,7 @@ decl_module! {
 
             let vault = Self::account_id();
 
+            // Transfer sold token amount from user to vault and bought token amount from vault to user
             T::Currency::transfer(
                 sold_asset_id.into(),
                 &sender,
@@ -335,6 +581,7 @@ decl_module! {
                 ExistenceRequirement::KeepAlive,
             )?;
 
+            // Apply changes in token pools, adding sold amount and removing bought amount
             Pools::insert(
                 (sold_asset_id, bought_asset_id),
                 input_reserve + sold_asset_amount,
@@ -344,6 +591,7 @@ decl_module! {
                 output_reserve - bought_asset_amount,
             );
 
+            // Settle tokens which goes to treasury and for buy and burn purpose
             Self::settle_treasury_and_burn(
                 sold_asset_id,
                 bought_asset_id,
@@ -366,43 +614,52 @@ decl_module! {
             let sender = ensure_signed(origin)?;
             let vault = Self::account_id();
 
+            // Ensure pool exists
             ensure!(
                 (LiquidityAssets::contains_key((first_asset_id, second_asset_id)) || LiquidityAssets::contains_key((second_asset_id, first_asset_id))),
                 Error::<T>::NoSuchPool,
             );
 
+            // Get liquidity token id
             let liquidity_asset_id = Self::get_liquidity_asset(
                  first_asset_id,
                  second_asset_id
             );
 
+            // Ensure pool exists
             ensure!(
                 (Pools::contains_key((first_asset_id, second_asset_id)) || Pools::contains_key((second_asset_id, first_asset_id))),
                 Error::<T>::NoSuchPool,
             );
 
+            // Get token reserves
             let first_asset_reserve = Pools::get((first_asset_id, second_asset_id));
             let second_asset_reserve = Pools::get((second_asset_id, first_asset_id));
             let total_liquidity_assets: Balance = T::Currency::total_issuance(liquidity_asset_id.into()).into();
 
+            // Conversion to U256
             let first_asset_amount_u256: U256 = first_asset_amount.saturated_into::<u128>().into();
             let first_asset_reserve_u256: U256 = first_asset_reserve.saturated_into::<u128>().into();
             let second_asset_reserve_u256: U256 = second_asset_reserve.saturated_into::<u128>().into();
             let total_liquidity_assets_u256: U256 = total_liquidity_assets.saturated_into::<u128>().into();
 
+            // Calculation of required second asset amount and received liquidity token amount
             let second_asset_amount_u256: U256 = first_asset_amount_u256 * second_asset_reserve_u256 / first_asset_reserve_u256 + 1;
             let liquidity_assets_minted_u256: U256 = first_asset_amount_u256 * total_liquidity_assets_u256 / first_asset_reserve_u256;
 
+            // Conversion to Balance
             let second_asset_amount = second_asset_amount_u256.saturated_into::<u128>()
                 .saturated_into::<Balance>();
             let liquidity_assets_minted = liquidity_assets_minted_u256.saturated_into::<u128>()
                 .saturated_into::<Balance>();
 
+            // Ensure minting amounts are not zero    
             ensure!(
                 !first_asset_amount.is_zero() && !second_asset_amount.is_zero(),
                 Error::<T>::ZeroAmount,
             );
 
+            // Ensure user has enought first adn second token amount
             ensure!(
                 T::Currency::free_balance(first_asset_id.into(), &sender).into() >= first_asset_amount,
                 Error::<T>::NotEnoughAssets,
@@ -413,6 +670,7 @@ decl_module! {
                 Error::<T>::NotEnoughAssets,
             );
 
+            // Transfer of token amounts from user to vault
             T::Currency::transfer(
                 first_asset_id.into(),
                 &sender,
@@ -428,8 +686,10 @@ decl_module! {
                 ExistenceRequirement::KeepAlive,
             )?;
 
+            // Creating new liquidity tokens to user
             T::Currency::mint(liquidity_asset_id.into(),&sender, liquidity_assets_minted.into())?;
 
+            // Apply changes in token pools, adding minted amounts
             Pools::insert(
                 (&first_asset_id, &second_asset_id),
                 first_asset_reserve + first_asset_amount,
@@ -456,34 +716,41 @@ decl_module! {
             let sender = ensure_signed(origin)?;
             let vault = Self::account_id();
 
+            // Ensure pool exists
             ensure!(
                 Pools::contains_key((first_asset_id, second_asset_id)),
                 Error::<T>::NoSuchPool,
             );
 
+            // Get token reserves and liquidity asset id 
             let first_asset_reserve = Pools::get((first_asset_id, second_asset_id));
             let second_asset_reserve = Pools::get((second_asset_id, first_asset_id));
             let liquidity_asset_id = Self::get_liquidity_asset(first_asset_id, second_asset_id);
 
+            // Ensure user has enought liquidity tokens to burn
             ensure!(
                 T::Currency::can_slash(liquidity_asset_id.into(), &sender, liquidity_asset_amount.into()),
                 Error::<T>::NotEnoughAssets,
             );
             let new_balance: Balance = T::Currency::free_balance(liquidity_asset_id.into(), &sender).into() - liquidity_asset_amount;
 
+            // ??
             T::Currency::ensure_can_withdraw(liquidity_asset_id.into(),
                 &sender,
                 liquidity_asset_amount.into(),
                 WithdrawReasons::all(),
                 new_balance.into()).or(Err(Error::<T>::NotEnoughAssets))?;
 
+            // Calculate first and second token amounts depending on liquidity amount to burn    
             let (first_asset_amount, second_asset_amount) =  Self::get_burn_amount(first_asset_id, second_asset_id, liquidity_asset_amount);
 
+            // Ensure not withdrawing zero amounts
             ensure!(
                 !first_asset_amount.is_zero() && !second_asset_amount.is_zero(),
                 Error::<T>::ZeroAmount,
             );
 
+            // Transfer withdrawn amounts from vault to user
             T::Currency::transfer(
                 first_asset_id.into(),
                 &vault,
@@ -498,6 +765,8 @@ decl_module! {
                 second_asset_amount.into(),
                 ExistenceRequirement::KeepAlive,
             )?;
+
+            // Apply changes in token pools, removing withdrawn amounts
             Pools::insert(
                 (&first_asset_id, &second_asset_id),
                 first_asset_reserve - first_asset_amount,
@@ -507,12 +776,14 @@ decl_module! {
                 second_asset_reserve - second_asset_amount,
             );
 
+            // Destroying token pool, if no tokens left
             if (first_asset_reserve - first_asset_amount == 0.saturated_into::<Balance>())
                 || (second_asset_reserve - second_asset_amount == 0.saturated_into::<Balance>()) {
                 Pools::remove((first_asset_id, second_asset_id));
                 Pools::remove((second_asset_id, first_asset_id));
             }
 
+            // Destroying burnt liquidity tokens
             T::Currency::burn_and_settle(liquidity_asset_id.into(), &sender, liquidity_asset_amount.into())?;
 
             Self::deposit_event(RawEvent::LiquidityBurned(sender, first_asset_id, first_asset_amount, second_asset_id, second_asset_amount,liquidity_asset_id, second_asset_amount));
@@ -523,6 +794,7 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
+    // Callculate amount of tokens to be bought by sellling sell_amount
     pub fn calculate_sell_price(
         input_reserve: Balance,
         output_reserve: Balance,
@@ -542,6 +814,7 @@ impl<T: Trait> Module<T> {
     }
 
     pub fn calculate_sell_price_no_fee(
+        // Callculate amount of tokens to be received by sellling sell_amount, without fee
         input_reserve: Balance,
         output_reserve: Balance,
         sell_amount: Balance,
@@ -558,6 +831,7 @@ impl<T: Trait> Module<T> {
         Ok(result.saturated_into::<u128>().saturated_into::<Balance>())
     }
 
+    // Callculate amount of tokens to be paid, when buying buy_amount
     pub fn calculate_buy_price(
         input_reserve: Balance,
         output_reserve: Balance,
@@ -582,11 +856,13 @@ impl<T: Trait> Module<T> {
         }
     }
 
+    // Calculate first and second token amounts depending on liquidity amount to burn    
     pub fn get_burn_amount(
         first_asset_id: TokenId,
         second_asset_id: TokenId,
         liquidity_asset_amount: Balance,
     ) -> (Balance, Balance) {
+        // Get token reserves and liquidity asset id 
         let liquidity_asset_id = Self::get_liquidity_asset(first_asset_id, second_asset_id);
         let first_asset_reserve_u256: U256 = Pools::get((first_asset_id, second_asset_id))
             .saturated_into::<u128>()
@@ -601,10 +877,13 @@ impl<T: Trait> Module<T> {
         let liquidity_asset_amount_u256: U256 =
             liquidity_asset_amount.saturated_into::<u128>().into();
 
+        // Calculate first and second token amount to be withdrawn   
         let first_asset_amount_u256 =
             first_asset_reserve_u256 * liquidity_asset_amount_u256 / total_liquidity_assets_u256;
         let second_asset_amount_u256 =
             second_asset_reserve_u256 * liquidity_asset_amount_u256 / total_liquidity_assets_u256;
+
+        // Conversion to Balance    
         let second_asset_amount = second_asset_amount_u256
             .saturated_into::<u128>()
             .saturated_into::<Balance>();
@@ -624,49 +903,62 @@ impl<T: Trait> Module<T> {
     
         let vault = Self::account_id();
         let mangata_id = MANGATA_ID.saturated_into::<TokenId>();
+
+        // Getting token reserves
         let input_reserve = Pools::get((sold_asset_id, bought_asset_id));
         let output_reserve = Pools::get((bought_asset_id, sold_asset_id));
     
+        // Setting initial settling token id, treasury and burn amount
         let mut settling_asset_id = bought_asset_id;
         let mut treasury_amount = sold_asset_amount * TREASURY_PERCENTAGE.saturated_into::<Balance>() / 10000.saturated_into::<Balance>();
         let mut burn_amount = sold_asset_amount * BUYANDBURN_PERCENTAGE.saturated_into::<Balance>() / 10000.saturated_into::<Balance>();
         
-        //Check whether to settle treasury and buyburn with sold or bought asset.
-        //By default we are using bought id, only in case if sold is directly mangata, or is in pair with mangata and bought id is not
+        // Check whether to settle treasury and buyburn with sold or bought asset.
+        // If sold token is directly mangata, or is in pair with mangata and bought id is not and bought token is not mangata, we use sold token as settling token
         if sold_asset_id == mangata_id  || (Pools::contains_key((sold_asset_id,mangata_id)) && !Pools::contains_key((bought_asset_id,mangata_id)) && bought_asset_id != mangata_id){
             settling_asset_id = sold_asset_id;
     
+            // Removing settling amount from pool
             Pools::insert(
                 (&sold_asset_id, &bought_asset_id),
                 input_reserve - burn_amount - treasury_amount,
             );
         }
-        //sold amount recalculated to bought asset amount 
+
+        // Bought token is used as settling token in rest of the cases
         else {
+            // Sold amount recalculated to bought asset amount 
             treasury_amount = treasury_amount * output_reserve / input_reserve; 
             burn_amount = burn_amount * output_reserve / input_reserve; 
     
+            // Removing settling amount from pool
             Pools::insert(
                 (&bought_asset_id, &sold_asset_id),
                 output_reserve - treasury_amount - burn_amount,
             );
         }
     
+        // If settling token is mangata, treasury amount is added to treasury and burn amount is burned from corresponding pool
         if settling_asset_id == mangata_id {
     
+            // Mangata insert to treasury
             Treasury::insert(
                 mangata_id,
                 Treasury::get(mangata_id) + treasury_amount
             );
             
+            // Mangata burned from pool
             T::Currency::burn_and_settle(mangata_id.into(), &vault, burn_amount.into())?;
         }
     
-        //swap settling asset to mangata
+        //If settling token is connected to mangata, token is swapped in corresponding pool to mangata without fee
         else if Pools::contains_key((settling_asset_id,mangata_id)){
+
+            // Getting token reserves
             let input_reserve = Pools::get((settling_asset_id, mangata_id));
             let output_reserve = Pools::get((mangata_id, settling_asset_id));
     
+            // Calculating swapped mangata amount
             let treasury_amount_in_mangata = Self::calculate_sell_price_no_fee(
                 input_reserve,
                 output_reserve,
@@ -678,6 +970,7 @@ impl<T: Trait> Module<T> {
                 burn_amount,
             )?;
     
+            // Apply changes in token pools, adding treasury and burn amounts of settling token, removing  treasury and burn amounts of mangata
             Pools::insert(
                 (settling_asset_id, mangata_id),
                 input_reserve + treasury_amount + burn_amount,
@@ -686,19 +979,24 @@ impl<T: Trait> Module<T> {
                 (mangata_id, settling_asset_id),
                 output_reserve - treasury_amount_in_mangata - burn_amount_in_mangata,
             );
+
+            // Mangata insert to treasury
             Treasury::insert(
                 mangata_id,
                 Treasury::get(mangata_id) + treasury_amount_in_mangata
             );
 
+            // Mangata burned from pool
             T::Currency::burn_and_settle(mangata_id.into(), &vault, burn_amount_in_mangata.into())?;
         }
-        // if settling token has no mangata connection, settling token is added to treasuries
+        // Settling token has no mangata connection, settling token is added to treasuries
         else {
+            // Settling token insert to treasury
             Treasury::insert(
                 settling_asset_id,
                 Treasury::get(settling_asset_id) + treasury_amount
             );
+            // Settling token insert to treasury for later burn
             TreasuryBurn::insert(
                 settling_asset_id,
                 TreasuryBurn::get(settling_asset_id) + burn_amount

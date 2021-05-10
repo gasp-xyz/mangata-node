@@ -830,12 +830,12 @@ fn assert_ledger_consistent(ctrl: AccountId) {
 }
 
 pub(crate) fn mint_liquidity_for_user(user: &AccountId, val: Balance) {
-    <Test as Trait>::Tokens::mint(DEFAULT_LIQUIDITY_TOKEN_ID, user, val * 4);
+    <Test as Trait>::Tokens::mint(NATIVE_TOKEN_ID, user, val * 4);
     <Test as Trait>::Tokens::mint(DUMMY_TOKEN_FOR_POOL_ID, user, val * 4);
 
     <Test as Trait>::Xyk::mint_liquidity(
         Origin::from(Some(user.clone())).into(),
-        DEFAULT_LIQUIDITY_TOKEN_ID,
+        NATIVE_TOKEN_ID,
         DUMMY_TOKEN_FOR_POOL_ID,
         val * 2,
     );
@@ -1299,9 +1299,9 @@ pub(crate) fn staking_events() -> Vec<Event<Test>> {
         .collect()
 }
 
-pub(crate) fn balances(who: &AccountId) -> (Balance, Balance) {
+pub(crate) fn balances(token_id: TokenId, who: &AccountId) -> (Balance, Balance) {
     (
-        <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, who),
-        <Test as Trait>::Tokens::reserved_balance(DEFAULT_LIQUIDITY_TOKEN_ID, who),
+        <Test as Trait>::Tokens::free_balance(token_id, who),
+        <Test as Trait>::Tokens::reserved_balance(token_id, who),
     )
 }

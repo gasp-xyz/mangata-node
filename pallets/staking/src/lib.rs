@@ -2403,7 +2403,7 @@ impl<T: Trait> Module<T> {
         <SnapshotNominators<T>>::kill();
 
         // Remove Stash's liquidity valuation details but not for testing as mock uses session length of 1 and create_stakers_snapshot is never triggered from on_initilize
-        // #[cfg(not(test))]
+        #[cfg(not(test))]
         <StashStakedValuation<T>>::remove_prefix(DUMMY_VALUE);
     }
 

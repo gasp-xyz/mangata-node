@@ -7,6 +7,7 @@ use frame_support::{assert_noop, assert_ok, traits::WithdrawReason};
 use mock::{
     Balance, ExtBuilder, Runtime, System, TestEvent, Tokens, TreasuryCurrencyAdapter,
     ACCUMULATED_RECEIVED, ALICE, BOB, ID_1, ID_2, TEST_TOKEN_ID, TREASURY_ACCOUNT,
+    Origin
 };
 
 #[test]
@@ -1167,7 +1168,7 @@ fn fail_to_create_tokens_as_regular_user() {
 fn mint_currency_as_root() {
     ExtBuilder::default().build().execute_with(|| {
         System::set_block_number(1);
-        assert_ok!(Tokens::create(Origin::root(), ALICE.into(), 100000),);
+        assert_ok!(Tokens::create(Origin::root(), ALICE.into(), 100000));
     });
 }
 
@@ -1184,15 +1185,14 @@ fn fail_to_mint_tokens_as_regular_user() {
 }
 
 #[test]
-fn mint_tokens_as_regular_user() {
+fn mint_tokens_as_root() {
     ExtBuilder::default().build().execute_with(|| {
         System::set_block_number(1);
 
         assert_ok!(Tokens::create(Origin::root(), ALICE.into(), 100000),);
 
-        assert_noop!(
-            Tokens::mint(Origin::root(), 1, ALICE.into(), 100000),
-            DispatchError::BadOrigin,
+        assert_ok!(
+            Tokens::mint(Origin::root(), 0, ALICE.into(), 100000),
         );
     });
 }

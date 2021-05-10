@@ -50,9 +50,9 @@
 //! Based on research at https://research.web3.foundation/en/latest/polkadot/slashing/npos/
 
 use super::{
-    Balance, EraIndex, Error, Exposure, Module, MultiTokenCurrency,
+    log, Balance, EraIndex, Error, Exposure, Module, MultiTokenCurrency,
     MultiTokenImbalanceWithZeroTrait, NegativeImbalanceOf, Perbill, SessionInterface, Store,
-    TokenId, Trait, UnappliedSlash, log
+    TokenId, Trait, UnappliedSlash,
 };
 use codec::{Decode, Encode};
 use frame_support::{
@@ -623,7 +623,6 @@ pub fn do_slash<T: Trait>(
 
 /// Apply a previously-unapplied slash.
 pub(crate) fn apply_slash<T: Trait>(unapplied_slash: UnappliedSlash<T::AccountId, Balance>) {
-
     log!(info, "Slash Applied");
 
     let validator_liquidity_token =

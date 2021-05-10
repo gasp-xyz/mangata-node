@@ -271,13 +271,16 @@
 // Change back all the structs and sub fields made public
 
 // TODO
-// Change back that one function in testing utils to use the struct rather than calls 
+// Change back that one function in testing utils to use the struct rather than calls
 
 // TODO
 // Remove all logs
 
 // TODO
 // Setup dependencies for testing and benchmarking correctly
+
+// TODO
+// Edit consumed_weights
 
 #![recursion_limit = "128"]
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -1202,7 +1205,7 @@ decl_storage! {
             // TODO
             // Change this
             Module::<T>::create_stakers_snapshot();
-            
+
             log!(info, "valuate_liquidity_token:{:?}", T::Valuations::valuate_liquidity_token(
                     2u32.into(),
                     1000u128.into(),
@@ -2379,17 +2382,28 @@ impl<T: Trait> Module<T> {
             <SnapshotValidators<T>>::put(validators);
             <SnapshotNominators<T>>::put(nominators);
 
-            log!(info, "snapshot_validators:{:?}", Self::snapshot_validators());
-            log!(info, "snapshot_nominators:{:?}", Self::snapshot_nominators());
+            log!(
+                info,
+                "snapshot_validators:{:?}",
+                Self::snapshot_validators()
+            );
+            log!(
+                info,
+                "snapshot_nominators:{:?}",
+                Self::snapshot_nominators()
+            );
 
-
-            for valuation in <StashStakedValuation<T>>::iter_prefix(DUMMY_VALUE){
+            for valuation in <StashStakedValuation<T>>::iter_prefix(DUMMY_VALUE) {
                 log!(info, "StashStakedValuation:{:?}", valuation);
                 let liquidity_token_amount_test = Self::bonded(valuation.0)
                     .and_then(Self::ledger)
                     .map(|l| l.active)
                     .unwrap_or_default();
-                log!(info, "liquidity_token_amount:{:?}", liquidity_token_amount_test);
+                log!(
+                    info,
+                    "liquidity_token_amount:{:?}",
+                    liquidity_token_amount_test
+                );
             }
 
             add_db_reads_writes(0, 2);
@@ -2459,7 +2473,12 @@ impl<T: Trait> Module<T> {
             return Ok(());
         }
 
-        log!(info, "validator_reward_points:{:?} for: {:?}", validator_reward_points, validator_stash);
+        log!(
+            info,
+            "validator_reward_points:{:?} for: {:?}",
+            validator_reward_points,
+            validator_stash
+        );
 
         // This is the fraction of the total reward that the validator and the
         // nominators will get.
@@ -2476,7 +2495,12 @@ impl<T: Trait> Module<T> {
 
         let validator_leftover_payout = validator_total_payout - validator_commission_payout;
 
-        log!(info, "validator_exposure_part:{:?} of: {:?}", exposure.own, exposure.total);
+        log!(
+            info,
+            "validator_exposure_part:{:?} of: {:?}",
+            exposure.own,
+            exposure.total
+        );
         // Now let's calculate how this is split to the validator.
         let validator_exposure_part =
             Perbill::from_rational_approximation(exposure.own, exposure.total);
@@ -2518,12 +2542,16 @@ impl<T: Trait> Module<T> {
     ) -> DispatchResult {
         let stash_liquidity_token = Self::get_stash_liquidity_token(&ledger.stash)
             .ok_or_else(|| Error::<T>::StashLiquidityTokenNotFound)?;
-        log!(info, "update_ledger-about_to_call_set_lock: {:?}", (
-            stash_liquidity_token,
-            STAKING_ID,
-            &ledger.stash,
-            ledger.total,
-        ));
+        log!(
+            info,
+            "update_ledger-about_to_call_set_lock: {:?}",
+            (
+                stash_liquidity_token,
+                STAKING_ID,
+                &ledger.stash,
+                ledger.total,
+            )
+        );
         T::Tokens::set_lock(
             stash_liquidity_token.into(),
             STAKING_ID,
@@ -2579,7 +2607,11 @@ impl<T: Trait> Module<T> {
                     0
                 });
             log!(info, "session_index:{:?}", session_index);
-            log!(info, "current_era_start_session_index:{:?}", current_era_start_session_index);
+            log!(
+                info,
+                "current_era_start_session_index:{:?}",
+                current_era_start_session_index
+            );
             let era_length = session_index
                 .checked_sub(current_era_start_session_index)
                 .unwrap_or(0); // Must never happen.
@@ -2932,8 +2964,16 @@ impl<T: Trait> Module<T> {
             );
 
             #[cfg(test)]
-            log!(info, "inflation-eras_total_stake:{:?}", Self::eras_total_stake(&active_era.index));
-            log!(info, "inflation-total_issuance:{:?}", T::Tokens::total_issuance(native_currency_id.into()));
+            log!(
+                info,
+                "inflation-eras_total_stake:{:?}",
+                Self::eras_total_stake(&active_era.index)
+            );
+            log!(
+                info,
+                "inflation-total_issuance:{:?}",
+                T::Tokens::total_issuance(native_currency_id.into())
+            );
             log!(info, "inflation-validator_payout:{:?}", validator_payout);
             log!(info, "inflation-max_payout:{:?}", max_payout);
 
@@ -3303,7 +3343,6 @@ impl<T: Trait> Module<T> {
 
     /// Clear all era information for given era.
     fn clear_era_information(era_index: EraIndex) {
-
         log!(info, "clear_era_information-called");
 
         <ErasStakers<T>>::remove_prefix(era_index);

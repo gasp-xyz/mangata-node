@@ -17,4 +17,4 @@
 .vscode
 
 # dev stuff
-./run-result
+/run-result

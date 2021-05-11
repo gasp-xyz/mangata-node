@@ -285,6 +285,9 @@
 // TODO
 // Enable benchmark tests
 
+// TODO
+// Maybe add liquidity token check between validators and nominators in do_phragmen 
+
 #![recursion_limit = "128"]
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -3303,6 +3306,9 @@ impl<T: Trait> Module<T> {
 
             (nominator, targets)
         });
+
+        // TODO
+        // Maybe add check here to ensure that nominators and validators use the same liquidity token. 
 
         all_nominators.extend(nominator_votes.map(|(n, ns)| {
             let s = Self::slashable_balance_of_vote_weight(&n);

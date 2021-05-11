@@ -987,7 +987,11 @@ pub(crate) fn on_offence_in_era(
     let bonded_eras = crate::BondedEras::get();
     for &(bonded_era, start_session) in bonded_eras.iter() {
         if bonded_era == era {
-            log!(info, "(bonded_era, start_session):{:?}", (bonded_era, start_session));
+            log!(
+                info,
+                "(bonded_era, start_session):{:?}",
+                (bonded_era, start_session)
+            );
             let _ = Staking::on_offence(offenders, slash_fraction, start_session).unwrap();
             return;
         } else if bonded_era > era {
@@ -1253,6 +1257,11 @@ pub(crate) fn prepare_submission_with(
 
 /// Make all validator and nominator request their payment
 pub(crate) fn make_all_reward_payment(era: EraIndex) {
+    log!(
+        info,
+        "mock-beginning_to_execute-make_all_reward_payment-for_era:{:?}",
+        era
+    );
     let validators_with_reward = ErasRewardPoints::<Test>::get(era)
         .individual
         .keys()

@@ -286,7 +286,11 @@
 // Enable benchmark tests
 
 // TODO
-// Maybe add liquidity token check between validators and nominators in do_phragmen 
+// Maybe add liquidity token check between validators and nominators in do_phragmen
+
+// TODO
+// Check Era Forcing
+// Snapshot not created when forcing era? Is that a problem? How big?
 
 #![recursion_limit = "128"]
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -1401,7 +1405,15 @@ decl_module! {
                     if next_session_change.is_zero() && <Period as Get<BlockNumber>>::get()==1{
                         log!(info, "about_to_call-create_stakers_snapshot");
 
-                        Module::<T>::create_stakers_snapshot();
+                        Self::create_stakers_snapshot();
+                        // let (did_snapshot, _) = Self::create_stakers_snapshot();
+                        //     if did_snapshot {
+                        //         // Set the flag to make sure we don't waste any compute here in the same era
+                        //         // after we have triggered the offline compute.
+                        //         <EraElectionStatus<T>>::put(
+                        //             ElectionStatus::<T::BlockNumber>::Open(now)
+                        //         );
+                        //     }
                     }
                     }
                     log!(info, "snapshot-maybe-after-estimate_next_new_session");
@@ -2627,6 +2639,11 @@ impl<T: Trait> Module<T> {
 
     /// Plan a new session potentially trigger a new era.
     fn new_session(session_index: SessionIndex) -> Option<Vec<T::AccountId>> {
+        log!(
+            info,
+            "ENTERED-new_session-session_index:{:?}",
+            session_index
+        );
         if let Some(current_era) = Self::current_era() {
             // Initial era has been set.
 
@@ -2645,13 +2662,16 @@ impl<T: Trait> Module<T> {
                 .checked_sub(current_era_start_session_index)
                 .unwrap_or(0); // Must never happen.
             log!(info, "era_length:{:?}", era_length);
+            log!(info, "ForceEra::get():{:?}", ForceEra::get());
             match ForceEra::get() {
                 Forcing::ForceNew => ForceEra::kill(),
                 Forcing::ForceAlways => (),
-                Forcing::NotForcing if era_length >= T::SessionsPerEra::get() => (),
+                Forcing::NotForcing if era_length >= T::SessionsPerEra::get() => //(),
+                    log!(info, "TRIGGERED-Forcing::NotForcing if era_length >= T::SessionsPerEra::get(): {:?}, {:?}", era_length,T::SessionsPerEra::get()),
                 _ => {
                     // Either `ForceNone`, or `NotForcing && era_length < T::SessionsPerEra::get()`.
                     if era_length + 1 == T::SessionsPerEra::get() {
+                        log!(info, "new_session-about_to_set-IsCurrentSessionFinal-to_true");
                         IsCurrentSessionFinal::put(true);
                     } else if era_length >= T::SessionsPerEra::get() {
                         // Should only happen when we are ready to trigger an era but we have ForceNone,
@@ -2928,6 +2948,7 @@ impl<T: Trait> Module<T> {
                 Self::start_era(start_session);
             }
         }
+        log!(info, "start_session-started_session:{:?}", start_session);
     }
 
     /// End a session potentially ending an era.
@@ -3036,6 +3057,11 @@ impl<T: Trait> Module<T> {
 
     /// Plan a new era. Return the potential new staking set.
     pub fn new_era(start_session_index: SessionIndex) -> Option<Vec<T::AccountId>> {
+        log!(
+            info,
+            "ENTERED-new_era-start_session_index:{:?}",
+            start_session_index
+        );
         // Increment or set current era.
         let current_era = CurrentEra::mutate(|s| {
             *s = Some(s.map(|s| s + 1).unwrap_or(0));
@@ -3094,6 +3120,11 @@ impl<T: Trait> Module<T> {
             exposures.into_iter().for_each(|(stash, exposure)| {
                 total_stake = total_stake.saturating_add(exposure.total);
                 <ErasStakers<T>>::insert(current_era, &stash, &exposure);
+                log!(
+                    info,
+                    "select_and_update_validators-exposure_inserted_into-ErasStakers:{:?}",
+                    (current_era, &stash, &exposure)
+                );
 
                 let mut exposure_clipped = exposure.clone();
                 let clipped_max_len = T::MaxNominatorRewardedPerValidator::get() as usize;
@@ -3148,12 +3179,19 @@ impl<T: Trait> Module<T> {
                 )
                 .into();
 
+                exposure_raw_total = exposure_raw_total.saturating_add(exposure_raw_own);
+
                 let exposure_raw = Exposure {
                     total: exposure_raw_total,
                     own: exposure_raw_own,
                     others: exposure_raw_others,
                 };
                 <ErasStakersRaw<T>>::insert(current_era, &stash, &exposure_raw);
+                log!(
+                    info,
+                    "select_and_update_validators-exposure_inserted_into-ErasStakersRaw:{:?}",
+                    (current_era, &stash, &exposure_raw)
+                );
 
                 let mut exposure_raw_clipped = exposure_raw;
                 if exposure_raw_clipped.others.len() > clipped_max_len {
@@ -3308,7 +3346,7 @@ impl<T: Trait> Module<T> {
         });
 
         // TODO
-        // Maybe add check here to ensure that nominators and validators use the same liquidity token. 
+        // Maybe add check here to ensure that nominators and validators use the same liquidity token.
 
         all_nominators.extend(nominator_votes.map(|(n, ns)| {
             let s = Self::slashable_balance_of_vote_weight(&n);
@@ -3677,7 +3715,11 @@ where
         for (details, slash_fraction) in offenders.iter().zip(slash_fraction) {
             let (stash, _) = &details.offender;
             let exposure = &Self::eras_stakers_raw(slash_era, &stash);
-            log!(info, "on_offence-exposure_from-eras_stakers_raw:{:?}", exposure);
+            log!(
+                info,
+                "on_offence-exposure_from-eras_stakers_raw:{:?}",
+                exposure
+            );
             // Skip if the validator is invulnerable.
             if invulnerables.contains(stash) {
                 continue;
@@ -3693,7 +3735,11 @@ where
                 reward_proportion,
             });
 
-            log!(info, "on_offence-unapplied-after_compute_slash:{:?}", unapplied);
+            log!(
+                info,
+                "on_offence-unapplied-after_compute_slash:{:?}",
+                unapplied
+            );
 
             if let Some(mut unapplied) = unapplied {
                 let nominators_len = unapplied.others.len() as u64;
@@ -3718,7 +3764,11 @@ where
                         );
                     }
                 } else {
-                    log!(info, "on_offence-pushing_unapplied_to-UnappliedSlashes:{:?}", unapplied);
+                    log!(
+                        info,
+                        "on_offence-pushing_unapplied_to-UnappliedSlashes:{:?}",
+                        unapplied
+                    );
                     // defer to end of some `slash_defer_duration` from now.
                     <Self as Store>::UnappliedSlashes::mutate(active_era, move |for_later| {
                         for_later.push(unapplied)

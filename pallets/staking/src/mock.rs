@@ -987,6 +987,7 @@ pub(crate) fn on_offence_in_era(
     let bonded_eras = crate::BondedEras::get();
     for &(bonded_era, start_session) in bonded_eras.iter() {
         if bonded_era == era {
+            log!(info, "(bonded_era, start_session):{:?}", (bonded_era, start_session));
             let _ = Staking::on_offence(offenders, slash_fraction, start_session).unwrap();
             return;
         } else if bonded_era > era {

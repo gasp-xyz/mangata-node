@@ -3676,7 +3676,8 @@ where
 
         for (details, slash_fraction) in offenders.iter().zip(slash_fraction) {
             let (stash, _) = &details.offender;
-            let exposure = &Self::eras_stakers_raw(active_era, &stash);
+            let exposure = &Self::eras_stakers_raw(slash_era, &stash);
+            log!(info, "on_offence-exposure_from-eras_stakers_raw:{:?}", exposure);
             // Skip if the validator is invulnerable.
             if invulnerables.contains(stash) {
                 continue;
@@ -3692,6 +3693,8 @@ where
                 reward_proportion,
             });
 
+            log!(info, "on_offence-unapplied-after_compute_slash:{:?}", unapplied);
+
             if let Some(mut unapplied) = unapplied {
                 let nominators_len = unapplied.others.len() as u64;
                 let reporters_len = details.reporters.len() as u64;
@@ -3702,6 +3705,7 @@ where
                     add_db_reads_writes(rw, rw);
                 }
                 unapplied.reporters = details.reporters.clone();
+                log!(info, "on_offence-unapplied:{:?}", unapplied);
                 if slash_defer_duration == 0 {
                     // apply right away.
                     slashing::apply_slash::<T>(unapplied);
@@ -3714,6 +3718,7 @@ where
                         );
                     }
                 } else {
+                    log!(info, "on_offence-pushing_unapplied_to-UnappliedSlashes:{:?}", unapplied);
                     // defer to end of some `slash_defer_duration` from now.
                     <Self as Store>::UnappliedSlashes::mutate(active_era, move |for_later| {
                         for_later.push(unapplied)
@@ -3724,7 +3729,7 @@ where
                 add_db_reads_writes(4 /* fetch_spans */, 5 /* kick_out_if_recent */)
             }
         }
-
+        log!(info, "on_offence-about_to_return-Ok()");
         Ok(consumed_weight)
     }
 

@@ -290,7 +290,18 @@
 
 // TODO
 // Check Era Forcing
-// Snapshot not created when forcing era? Is that a problem? How big?
+// Snapshot not created/updated when forcing era? Is that a problem? How big?
+
+// TODO
+// Maybe StashStakedValuation should never be completly destroyed, just updated.
+// To accomodate situations like ad-hoc NewEra Forcing
+
+// TODO
+// Maybe update StashStakedValuation or ErasStakersRaw or both when the ledger is updated
+// Especially in case where slashing is called and/or NewEra is forced
+
+// Or perhaps we can leverage ErasStakersRaw appropritately allowing destroying StashStakedValuation.
+// And maybe StashStakedValuation must be taken only during pre-determined times so that the users can expect valuations
 
 #![recursion_limit = "128"]
 #![cfg_attr(not(feature = "std"), no_std)]

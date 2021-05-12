@@ -56,7 +56,7 @@ const SEED: u32 = 0;
 // pub use pallet_staking::offchain_election;
 // pub use pallet_staking::slashing;
 
-// /// Create a liquidity pool in Xyk.
+/// Create a liquidity pool in Xyk.
 // pub fn create_xyk_pool<T: Trait>(
 //     string: &'static str,
 //     n: u32,
@@ -76,21 +76,21 @@ const SEED: u32 = 0;
 
 //     let user: T::AccountId = account(string, n, SEED);
 
+//     let balance_factor_2: u64 = (balance_factor * 2).into();
+
 //     let base_token_value_u256: U256 = BASE_TOKEN_VALUE.saturated_into::<u128>().into();
-//     let balance_factor_u256: U256 = balance_factor.saturated_into::<u128>().into();
+//     let balance_factor_u256: U256 = balance_factor_2.saturated_into::<u128>().into();
 //     let balance_u256 = base_token_value_u256 * balance_factor_u256;
 //     let balance: u128 = balance_u256.saturated_into::<u128>();
 
-//     let first_asset_id: u32 = NATIVE_TOKEN_ID;
 //     let first_asset_amount: u128 = balance;
-//     let second_asset_id: u32 = DUMMY_TOKEN_FOR_POOL_ID;
 //     let second_asset_amount: u128 = balance;
 
 //     // mint MNG
 //     assert!(<T as Trait>::Tokens::mint(first_asset_id.into(), &user, first_asset_amount.into()).is_ok());
 //     // mint pooled token
 //     assert!(<T as Trait>::Tokens::mint(second_asset_id.into(), &user, second_asset_amount.into()).is_ok());
-//     let xyk_call_result = XykModule::<T>::create_pool(RawOrigin::Root.into(), first_asset_id, first_asset_amount / 2, second_asset_id, second_asset_amount / 2);
+//     assert!(<T as Trait>::Xyk::create_pool(user.clone(), first_asset_id.into(), {first_asset_amount / 2}.into(), second_asset_id.into(), {second_asset_amount / 2}.into()).is_ok());
 //     // frame_support::debug::RuntimeLogger::init();
 //     // frame_support::debug::debug!(target: "customTarget", "{:?}", xyk_call_result);
 //     // RawOrigin::Signed(user.clone()).into(),
@@ -98,7 +98,6 @@ const SEED: u32 = 0;
 //     // let xyk_call = pallet_xyk::Call::create_pool( first_asset_id, first_asset_amount / 2, second_asset_id, second_asset_amount / 2);
 //     // let xyk_call_disptach_result = Call::Xyk(xyk_call).disptach();
 //     // mint liquidity
-//     assert!(xyk_call_result.is_ok());
 //     user
 // }
 
@@ -158,8 +157,10 @@ pub fn create_stash_controller<T: Trait>(
     balance_factor: u32,
     destination: RewardDestination<T::AccountId>,
 ) -> Result<(T::AccountId, T::AccountId), &'static str> {
+    log!(info, "DEBUG 0.0002");
     let stash = create_funded_user::<T>("stash", n, liquidity_token_id, balance_factor);
     let controller = create_funded_user::<T>("controller", n, liquidity_token_id, balance_factor);
+    log!(info, "DEBUG 0.002");
     let controller_lookup: <T::Lookup as StaticLookup>::Source =
         T::Lookup::unlookup(controller.clone());
 

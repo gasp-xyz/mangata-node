@@ -265,6 +265,10 @@
 //!   validators is stored in the Session module's `Validators` at the end of each era.
 
 // TODO
+// Clean benchmarks!!
+// create_stakers_snapshot and run select_and_update validators when necessary.
+
+// TODO
 // Change add_extra_genesis to init StashStakedValuation properly
 
 // TODO
@@ -303,6 +307,14 @@
 // Or perhaps we can leverage ErasStakersRaw appropritately allowing destroying StashStakedValuation.
 // And maybe StashStakedValuation must be taken only during pre-determined times so that the users can expect valuations
 
+// Solution
+// Treat StashStakedValuation the same as ledger (or ledger.active)
+// Create it in genesis
+// Update it by scaling (only down?) whenever ledger is updated. This particular step will matter for when new_era is called but snapshot was not taken. We need to decide if we want this step, i.e., should bond/bond_extra/unbond/slahsing affect the election process in case of a ForcedEra. In vanilla substrate staking, it does. We could also scale down when ledge.active is reduced, but when bond/bonding_extra update using the current pool state.
+// Maintain it for all users, it's usage will however be gated by Validators and Nominators
+// When create_stakers_snapshot is called, StashStakedValuation will be deleted and built from scratch. This point will mark the point in time where valuations are updated as per pool state.
+// Also remove StashStakedValuation when kill_stash?
+
 #![recursion_limit = "128"]
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -314,7 +326,7 @@ mod tests;
 #[cfg(test)]
 use crate::mock::{BlockNumber, Period};
 
-#[cfg(feature = "runtime-benchmarks")]
+#[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarking;
 #[cfg(any(feature = "runtime-benchmarks", test))]
 mod testing_utils;

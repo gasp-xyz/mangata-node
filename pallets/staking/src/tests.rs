@@ -24,7 +24,6 @@ use frame_support::{
     StorageMap,
 };
 use mock::{Balance, *};
-use pallet_balances::Error as BalancesError;
 use sp_runtime::{assert_eq_error_rate, traits::BadOrigin};
 use sp_staking::offence::OffenceDetails;
 use substrate_test_utils::assert_eq_uvec;
@@ -370,7 +369,7 @@ fn staking_should_work() {
 
             // put some money in account that we'll use.
             for i in 1..5 {
-                let _ = Balances::make_free_balance_be(&i, 2000);
+                let _ = mint_liquidity_for_user(&i, 2000);
             }
 
             // --- Block 2:
@@ -436,10 +435,14 @@ fn staking_should_work() {
             );
             // e.g. it cannot reserve more than 500 that it has free from the total 2000
             assert_noop!(
-                Balances::reserve(&3, 501),
-                BalancesError::<Test, _>::LiquidityRestrictions
+                <Test as Trait>::Tokens::reserve(DEFAULT_LIQUIDITY_TOKEN_ID, &3, 6501),
+                orml_tokens::Error::<Test>::LiquidityRestrictions
             );
-            assert_ok!(Balances::reserve(&3, 409));
+            assert_ok!(<Test as Trait>::Tokens::reserve(
+                DEFAULT_LIQUIDITY_TOKEN_ID,
+                &3,
+                6500
+            ));
         });
 }
 
@@ -1664,7 +1667,7 @@ fn rebond_works() {
             ));
 
             // Give account 11 some large free balance greater than total
-            let _ = Balances::make_free_balance_be(&11, 1000000);
+            let _ = mint_liquidity_for_user(&11, 1000000);
 
             // confirm that 10 is a normal validator and gets paid at the end of the era.
             mock::start_era(1);
@@ -1809,7 +1812,7 @@ fn rebond_is_fifo() {
             ));
 
             // Give account 11 some large free balance greater than total
-            let _ = Balances::make_free_balance_be(&11, 1000000);
+            let _ = mint_liquidity_for_user(&11, 1000000);
 
             // confirm that 10 is a normal validator and gets paid at the end of the era.
             mock::start_era(1);
@@ -2188,7 +2191,7 @@ fn switching_roles() {
 
         // put some money in account that we'll use.
         for i in 1..7 {
-            let _ = Balances::deposit_creating(&i, 5000);
+            let _ = mint_liquidity_for_user(&i, 5000);
         }
 
         // add 2 nominators
@@ -2199,7 +2202,6 @@ fn switching_roles() {
             RewardDestination::Controller,
             DEFAULT_LIQUIDITY_TOKEN_ID,
         ));
-        assert_ok!(Staking::nominate(Origin::signed(2), vec![11, 5]));
 
         assert_ok!(Staking::bond(
             Origin::signed(3),
@@ -2208,7 +2210,6 @@ fn switching_roles() {
             RewardDestination::Controller,
             DEFAULT_LIQUIDITY_TOKEN_ID,
         ));
-        assert_ok!(Staking::nominate(Origin::signed(4), vec![21, 1]));
 
         // add a new validator candidate
         assert_ok!(Staking::bond(
@@ -2218,6 +2219,9 @@ fn switching_roles() {
             RewardDestination::Controller,
             DEFAULT_LIQUIDITY_TOKEN_ID,
         ));
+
+        assert_ok!(Staking::nominate(Origin::signed(2), vec![11, 5]));
+        assert_ok!(Staking::nominate(Origin::signed(4), vec![21, 1]));
         assert_ok!(Staking::validate(
             Origin::signed(6),
             ValidatorPrefs::default()
@@ -2673,7 +2677,7 @@ fn phragmen_should_not_overflow() {
         let _ = Staking::chill(Origin::signed(10));
         let _ = Staking::chill(Origin::signed(20));
 
-        bond_validator(3, 2, 100 as Balance);
+        bond_validator(3, 2, Votes::max_value() as Balance);
         bond_validator(5, 4, Votes::max_value() as Balance);
 
         bond_nominator(7, 6, Votes::max_value() as Balance, vec![3, 5]);
@@ -3036,12 +3040,16 @@ fn offence_deselects_validator_even_when_slash_is_zero() {
 
 #[test]
 fn slashing_performed_according_exposure() {
-    // This test checks that slashing is performed according the exposure (or more precisely,
+    // This test checks that slashing is performed according the raw exposure (or more precisely,
     // historical exposure), not the current balance.
     ExtBuilder::default().build_and_execute(|| {
         assert_eq!(
-            Staking::eras_stakers(Staking::active_era().unwrap().index, 11).own,
+            Staking::eras_stakers_raw(Staking::active_era().unwrap().index, 11).own,
             1000
+        );
+        assert_eq!(
+            <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &11),
+            4000
         );
 
         // Handle an offence with a historical exposure.
@@ -3061,7 +3069,10 @@ fn slashing_performed_according_exposure() {
         );
 
         // The stash account should be slashed for 250 (50% of 500).
-        assert_eq!(Balances::free_balance(11), 1000 - 250);
+        assert_eq!(
+            <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &11),
+            4000 - 500
+        );
     });
 }
 
@@ -3181,10 +3192,10 @@ fn subsequent_reports_in_same_span_pay_out_less() {
     // amount, but less and less if they submit multiple reports in one span.
     ExtBuilder::default().build_and_execute(|| {
         // The reporters' reward is calculated from the total exposure.
-        let initial_balance = 1125;
+        let initial_balance = 1124;
 
         assert_eq!(
-            Staking::eras_stakers(Staking::active_era().unwrap().index, 11).total,
+            Staking::eras_stakers_raw(Staking::active_era().unwrap().index, 11).total,
             initial_balance
         );
 
@@ -3192,7 +3203,7 @@ fn subsequent_reports_in_same_span_pay_out_less() {
             &[OffenceDetails {
                 offender: (
                     11,
-                    Staking::eras_stakers(Staking::active_era().unwrap().index, 11),
+                    Staking::eras_stakers_raw(Staking::active_era().unwrap().index, 11),
                 ),
                 reporters: vec![1],
             }],
@@ -3202,13 +3213,16 @@ fn subsequent_reports_in_same_span_pay_out_less() {
         // F1 * (reward_proportion * slash - 0)
         // 50% * (10% * initial_balance * 20%)
         let reward = (initial_balance / 5) / 20;
-        assert_eq!(Balances::free_balance(1), 10 + reward);
+        assert_eq!(
+            <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &1),
+            reward
+        );
 
         on_offence_now(
             &[OffenceDetails {
                 offender: (
                     11,
-                    Staking::eras_stakers(Staking::active_era().unwrap().index, 11),
+                    Staking::eras_stakers_raw(Staking::active_era().unwrap().index, 11),
                 ),
                 reporters: vec![1],
             }],
@@ -3220,7 +3234,10 @@ fn subsequent_reports_in_same_span_pay_out_less() {
         // F1 * (reward_proportion * slash - prior_payout)
         // 50% * (10% * (initial_balance / 2) - prior_payout)
         let reward = ((initial_balance / 20) - prior_payout) / 2;
-        assert_eq!(Balances::free_balance(1), 10 + prior_payout + reward);
+        assert_eq!(
+            <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &1),
+            prior_payout + reward
+        );
     });
 }
 
@@ -3239,13 +3256,13 @@ fn invulnerables_are_not_slashed() {
                 8000
             );
 
-            let exposure = Staking::eras_stakers(Staking::active_era().unwrap().index, 21);
+            let exposure = Staking::eras_stakers_raw(Staking::active_era().unwrap().index, 21);
             let initial_balance = Staking::slashable_balance_of(&21);
 
             let nominator_balances: Vec<_> = exposure
                 .others
                 .iter()
-                .map(|o| Balances::free_balance(&o.who))
+                .map(|o| <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &o.who))
                 .collect();
 
             on_offence_now(
@@ -3285,7 +3302,7 @@ fn invulnerables_are_not_slashed() {
             for (initial_balance, other) in nominator_balances.into_iter().zip(exposure.others) {
                 assert_eq!(
                     <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &other.who),
-                    initial_balance - (2 * 2 * other.value / 10) - 1,
+                    initial_balance - (2 * other.value / 10) - 1,
                     // COMMENT
                     // error? - 1?
                 );
@@ -3297,7 +3314,10 @@ fn invulnerables_are_not_slashed() {
 fn dont_slash_if_fraction_is_zero() {
     // Don't slash if the fraction is zero.
     ExtBuilder::default().build_and_execute(|| {
-        assert_eq!(Balances::free_balance(11), 1000);
+        assert_eq!(
+            <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &11),
+            4000
+        );
 
         on_offence_now(
             &[OffenceDetails {
@@ -3311,7 +3331,10 @@ fn dont_slash_if_fraction_is_zero() {
         );
 
         // The validator hasn't been slashed. The new era is not forced.
-        assert_eq!(Balances::free_balance(11), 1000);
+        assert_eq!(
+            <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &11),
+            4000
+        );
         assert_eq!(Staking::force_era(), Forcing::ForceNew);
     });
 }
@@ -3478,7 +3501,10 @@ fn garbage_collection_on_window_pruning() {
         let now = Staking::active_era().unwrap().index;
 
         let exposure = Staking::eras_stakers(now, 11);
-        assert_eq!(Balances::free_balance(101), 2000);
+        assert_eq!(
+            <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &101),
+            2000
+        );
         let nominated_value = exposure.others.iter().find(|o| o.who == 101).unwrap().value;
 
         on_offence_now(
@@ -3521,13 +3547,22 @@ fn slashing_nominators_by_span_max() {
         mock::start_era(2);
         mock::start_era(3);
 
-        assert_eq!(Balances::free_balance(11), 1000);
-        assert_eq!(Balances::free_balance(21), 2000);
-        assert_eq!(Balances::free_balance(101), 2000);
-        assert_eq!(Staking::slashable_balance_of(&21), 1000);
+        assert_eq!(
+            <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &11),
+            4000
+        );
+        assert_eq!(
+            <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &21),
+            8000
+        );
+        assert_eq!(
+            <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &101),
+            2000
+        );
+        assert_eq!(Staking::slashable_balance_of(&21), 500);
 
-        let exposure_11 = Staking::eras_stakers(Staking::active_era().unwrap().index, 11);
-        let exposure_21 = Staking::eras_stakers(Staking::active_era().unwrap().index, 21);
+        let exposure_11 = Staking::eras_stakers_raw(Staking::active_era().unwrap().index, 11);
+        let exposure_21 = Staking::eras_stakers_raw(Staking::active_era().unwrap().index, 21);
         let nominated_value_11 = exposure_11
             .others
             .iter()
@@ -3553,10 +3588,16 @@ fn slashing_nominators_by_span_max() {
             2,
         );
 
-        assert_eq!(Balances::free_balance(11), 900);
+        assert_eq!(
+            <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &11),
+            3900
+        );
 
         let slash_1_amount = Perbill::from_percent(10) * nominated_value_11;
-        assert_eq!(Balances::free_balance(101), 2000 - slash_1_amount);
+        assert_eq!(
+            <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &101),
+            2000 - slash_1_amount
+        );
 
         let expected_spans = vec![
             slashing::SlashingSpan {
@@ -3591,14 +3632,23 @@ fn slashing_nominators_by_span_max() {
         );
 
         // 11 was not further slashed, but 21 and 101 were.
-        assert_eq!(Balances::free_balance(11), 900);
-        assert_eq!(Balances::free_balance(21), 1700);
+        assert_eq!(
+            <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &11),
+            3900
+        );
+        assert_eq!(
+            <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &21),
+            7700
+        );
 
         let slash_2_amount = Perbill::from_percent(30) * nominated_value_21;
         assert!(slash_2_amount > slash_1_amount);
 
         // only the maximum slash in a single span is taken.
-        assert_eq!(Balances::free_balance(101), 2000 - slash_2_amount);
+        assert_eq!(
+            <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &101),
+            2000 - slash_2_amount
+        );
 
         // third slash: in same era and on same validator as first, higher
         // in-era value, but lower slash value than slash 2.
@@ -3615,15 +3665,24 @@ fn slashing_nominators_by_span_max() {
         );
 
         // 11 was further slashed, but 21 and 101 were not.
-        assert_eq!(Balances::free_balance(11), 800);
-        assert_eq!(Balances::free_balance(21), 1700);
+        assert_eq!(
+            <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &11),
+            3800
+        );
+        assert_eq!(
+            <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &21),
+            7700
+        );
 
         let slash_3_amount = Perbill::from_percent(20) * nominated_value_21;
         assert!(slash_3_amount < slash_2_amount);
         assert!(slash_3_amount > slash_1_amount);
 
         // only the maximum slash in a single span is taken.
-        assert_eq!(Balances::free_balance(101), 2000 - slash_2_amount);
+        assert_eq!(
+            <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &101),
+            2000 - slash_2_amount
+        );
     });
 }
 
@@ -3634,8 +3693,11 @@ fn slashes_are_summed_across_spans() {
         mock::start_era(2);
         mock::start_era(3);
 
-        assert_eq!(Balances::free_balance(21), 2000);
-        assert_eq!(Staking::slashable_balance_of(&21), 1000);
+        assert_eq!(
+            <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &21),
+            8000
+        );
+        assert_eq!(Staking::slashable_balance_of(&21), 500);
 
         let get_span = |account| <Staking as crate::Store>::SlashingSpans::get(&account).unwrap();
 
@@ -3664,14 +3726,26 @@ fn slashes_are_summed_across_spans() {
         ];
 
         assert_eq!(get_span(21).iter().collect::<Vec<_>>(), expected_spans);
-        assert_eq!(Balances::free_balance(21), 1900);
+        assert_eq!(
+            <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &21),
+            7900
+        );
 
         // 21 has been force-chilled. re-signal intent to validate.
         Staking::validate(Origin::signed(20), Default::default()).unwrap();
 
         mock::start_era(4);
 
-        assert_eq!(Staking::slashable_balance_of(&21), 900);
+        assert_eq!(
+            Staking::ledger(&20),
+            Some(StakingLedger {
+                stash: 21,
+                total: 900,
+                active: 900,
+                unlocking: vec![],
+                claimed_rewards: vec![],
+            })
+        );
 
         on_offence_now(
             &[OffenceDetails {
@@ -3703,7 +3777,10 @@ fn slashes_are_summed_across_spans() {
         ];
 
         assert_eq!(get_span(21).iter().collect::<Vec<_>>(), expected_spans);
-        assert_eq!(Balances::free_balance(21), 1810);
+        assert_eq!(
+            <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &21),
+            7800
+        );
     });
 }
 
@@ -5582,10 +5659,16 @@ fn zero_slash_keeps_nominators() {
     ExtBuilder::default().build_and_execute(|| {
         mock::start_era(1);
 
-        assert_eq!(Balances::free_balance(11), 1000);
+        assert_eq!(
+            <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &11),
+            4000
+        );
 
         let exposure = Staking::eras_stakers(Staking::active_era().unwrap().index, 11);
-        assert_eq!(Balances::free_balance(101), 2000);
+        assert_eq!(
+            <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &101),
+            2000
+        );
 
         on_offence_now(
             &[OffenceDetails {
@@ -5595,8 +5678,14 @@ fn zero_slash_keeps_nominators() {
             &[Perbill::from_percent(0)],
         );
 
-        assert_eq!(Balances::free_balance(11), 1000);
-        assert_eq!(Balances::free_balance(101), 2000);
+        assert_eq!(
+            <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &11),
+            4000
+        );
+        assert_eq!(
+            <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &101),
+            2000
+        );
 
         // This is the best way to check that the validator was chilled; `get` will
         // return default value.
@@ -5755,39 +5844,78 @@ fn test_payout_stakers() {
     ExtBuilder::default()
         .has_stakers(false)
         .build_and_execute(|| {
+            assert_eq!(
+                <Test as Trait>::Tokens::free_balance(NATIVE_TOKEN_ID, &10000),
+                0
+            );
+            for i in 36..100 {
+                assert_eq!(
+                    <Test as Trait>::Tokens::free_balance(NATIVE_TOKEN_ID, &(100000 + i)),
+                    0
+                );
+            }
+            // The bottom 36 do not
+            for i in 0..36 {
+                assert_eq!(
+                    <Test as Trait>::Tokens::free_balance(NATIVE_TOKEN_ID, &(100000 + i)),
+                    0
+                );
+            }
             let balance = 1000;
             // Create a validator:
-            bond_validator(11, 10, balance); // Default(64)
+            bond_validator(11000, 10000, balance); // Default(64)
 
             // Create nominators, targeting stash of validators
             for i in 0..100 {
-                bond_nominator(1000 + i, 100 + i, balance + i as Balance, vec![11]);
+                bond_nominator(1000000 + i, 100000 + i, balance + i as Balance, vec![11000]);
             }
-
+            assert_eq!(
+                <Test as Trait>::Tokens::free_balance(NATIVE_TOKEN_ID, &10000),
+                balance * 2
+            );
+            for i in 36..100 {
+                assert_eq!(
+                    <Test as Trait>::Tokens::free_balance(NATIVE_TOKEN_ID, &(100000 + i)),
+                    (balance + i as Balance) * 2
+                );
+            }
+            // The bottom 36 do not
+            for i in 0..36 {
+                assert_eq!(
+                    <Test as Trait>::Tokens::free_balance(NATIVE_TOKEN_ID, &(100000 + i)),
+                    (balance + i as Balance) * 2
+                );
+            }
             mock::start_era(1);
-            Staking::reward_by_ids(vec![(11, 1)]);
+            Staking::reward_by_ids(vec![(11000, 1)]);
             // Compute total payout now for whole duration as other parameter won't change
             let total_payout_0 = current_total_payout_for_duration(3 * 1000);
             assert!(total_payout_0 > 100); // Test is meaningful if reward something
             mock::start_era(2);
-            assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11, 1));
+            assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11000, 1));
 
             // Top 64 nominators of validator 11 automatically paid out, including the validator
             // Validator payout goes to controller.
-            assert!(Balances::free_balance(&10) > balance);
+            assert!(<Test as Trait>::Tokens::free_balance(NATIVE_TOKEN_ID, &10000) > balance * 2);
             for i in 36..100 {
-                assert!(Balances::free_balance(&(100 + i)) > balance + i as Balance);
+                assert!(
+                    <Test as Trait>::Tokens::free_balance(NATIVE_TOKEN_ID, &(100000 + i))
+                        > (balance + i as Balance) * 2
+                );
             }
             // The bottom 36 do not
             for i in 0..36 {
-                assert_eq!(Balances::free_balance(&(100 + i)), balance + i as Balance);
+                assert_eq!(
+                    <Test as Trait>::Tokens::free_balance(NATIVE_TOKEN_ID, &(100000 + i)),
+                    (balance + i as Balance) * 2
+                );
             }
 
             // We track rewards in `claimed_rewards` vec
             assert_eq!(
-                Staking::ledger(&10),
+                Staking::ledger(&10000),
                 Some(StakingLedger {
-                    stash: 11,
+                    stash: 11000,
                     total: 1000,
                     active: 1000,
                     unlocking: vec![],
@@ -5796,19 +5924,19 @@ fn test_payout_stakers() {
             );
 
             for i in 3..16 {
-                Staking::reward_by_ids(vec![(11, 1)]);
+                Staking::reward_by_ids(vec![(11000, 1)]);
                 // Compute total payout now for whole duration as other parameter won't change
                 let total_payout_0 = current_total_payout_for_duration(3 * 1000);
                 assert!(total_payout_0 > 100); // Test is meaningful if reward something
                 mock::start_era(i);
-                assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11, i - 1));
+                assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11000, i - 1));
             }
 
             // We track rewards in `claimed_rewards` vec
             assert_eq!(
-                Staking::ledger(&10),
+                Staking::ledger(&10000),
                 Some(StakingLedger {
-                    stash: 11,
+                    stash: 11000,
                     total: 1000,
                     active: 1000,
                     unlocking: vec![],
@@ -5817,7 +5945,7 @@ fn test_payout_stakers() {
             );
 
             for i in 16..100 {
-                Staking::reward_by_ids(vec![(11, 1)]);
+                Staking::reward_by_ids(vec![(11000, 1)]);
                 // Compute total payout now for whole duration as other parameter won't change
                 let total_payout_0 = current_total_payout_for_duration(3 * 1000);
                 assert!(total_payout_0 > 100); // Test is meaningful if reward something
@@ -5825,12 +5953,12 @@ fn test_payout_stakers() {
             }
 
             // We clean it up as history passes
-            assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11, 15));
-            assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11, 98));
+            assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11000, 15));
+            assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11000, 98));
             assert_eq!(
-                Staking::ledger(&10),
+                Staking::ledger(&10000),
                 Some(StakingLedger {
-                    stash: 11,
+                    stash: 11000,
                     total: 1000,
                     active: 1000,
                     unlocking: vec![],
@@ -5839,13 +5967,13 @@ fn test_payout_stakers() {
             );
 
             // Out of order claims works.
-            assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11, 69));
-            assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11, 23));
-            assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11, 42));
+            assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11000, 69));
+            assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11000, 23));
+            assert_ok!(Staking::payout_stakers(Origin::signed(1337), 11000, 42));
             assert_eq!(
-                Staking::ledger(&10),
+                Staking::ledger(&10000),
                 Some(StakingLedger {
-                    stash: 11,
+                    stash: 11000,
                     total: 1000,
                     active: 1000,
                     unlocking: vec![],

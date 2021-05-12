@@ -1,5 +1,15 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(not(test))]
+const DUMMY_TOKEN_FOR_POOL_ID: u32 = 2u32;
+#[cfg(not(test))]
+const DEFAULT_LIQUIDITY_TOKEN_ID: u32 = 3u32;
+
+#[cfg(test)]
+const DUMMY_TOKEN_FOR_POOL_ID: u32 = 1u32;
+#[cfg(test)]
+const DEFAULT_LIQUIDITY_TOKEN_ID: u32 = 2u32;
+
 use super::*;
 use crate::Module as Staking;
 use testing_utils::*;
@@ -47,8 +57,7 @@ const MAX_SLASHES: u32 = 1000;
 const USER_SEED: u32 = 999666;
 
 const NATIVE_TOKEN_ID: u32 = 0u32;
-const DUMMY_TOKEN_FOR_POOL_ID: u32 = 2u32;
-const DEFAULT_LIQUIDITY_TOKEN_ID: u32 = 3u32;
+
 const SEED_FOR_DEFAULT_USERS: &'static str = "default_users";
 
 macro_rules! do_whitelist {
@@ -91,12 +100,14 @@ pub fn create_validator_with_nominators<T: Trait>(
 
     let mut points_total = 0;
     let mut points_individual = Vec::new();
-
+    log!(info, "DEBUG 0.0001");
     let (v_stash, v_controller) =
         create_stash_controller::<T>(0, liquidity_token_id, 100, destination.clone())?;
+    log!(info, "DEBUG 0.001");
     let validator_prefs = ValidatorPrefs {
         commission: Perbill::from_percent(50),
     };
+    log!(info, "DEBUG 0.01");
     Staking::<T>::validate(RawOrigin::Signed(v_controller).into(), validator_prefs)?;
     let stash_lookup: <T::Lookup as StaticLookup>::Source = T::Lookup::unlookup(v_stash.clone());
 
@@ -118,6 +129,8 @@ pub fn create_validator_with_nominators<T: Trait>(
             )?;
         }
     }
+
+    log!(info, "DEBUG 0.1");
 
     ValidatorCount::put(1);
 
@@ -382,6 +395,18 @@ benchmarks! {
 
     payout_stakers_alive_staked {
         let n in 1 .. T::MaxNominatorRewardedPerValidator::get() as u32;
+        log!(info, "bench-payout_stakers_alive_staked");
+
+        #[cfg(test)]
+        {
+        let (stash, controller) = create_stash_controller::<T>(411000, DEFAULT_LIQUIDITY_TOKEN_ID, 100, Default::default())?;
+        Staking::<T>::validate(RawOrigin::Signed(controller).into(), Default::default())?;
+        let current_era = CurrentEra::get().unwrap();
+        assert!(Staking::<T>::create_stakers_snapshot().0);
+        Staking::<T>::select_and_update_validators(current_era);
+        }
+
+
         let validator = create_validator_with_nominators::<T>(
             n,
             T::MaxNominatorRewardedPerValidator::get() as u32,
@@ -389,6 +414,13 @@ benchmarks! {
             RewardDestination::Stash,
             DEFAULT_LIQUIDITY_TOKEN_ID,
         )?;
+        // Do we need create_stakers_snapshot or select_and_update_validators? I don't think so.
+        #[cfg(test)]
+        {
+        let current_era = CurrentEra::get().unwrap();
+        assert!(Staking::<T>::create_stakers_snapshot().0);
+        Staking::<T>::select_and_update_validators(current_era);
+        }
 
         let current_era = CurrentEra::get().unwrap();
         // set the commission for this particular era as well.
@@ -449,6 +481,14 @@ benchmarks! {
 
     reap_stash {
         let s in 1 .. MAX_SPANS;
+        #[cfg(test)]
+        {
+        let (stash, controller) = create_stash_controller::<T>(411000, DEFAULT_LIQUIDITY_TOKEN_ID, 100, Default::default())?;
+        Staking::<T>::validate(RawOrigin::Signed(controller).into(), Default::default())?;
+        let current_era = CurrentEra::get().unwrap();
+        assert!(Staking::<T>::create_stakers_snapshot().0);
+        Staking::<T>::select_and_update_validators(current_era);
+        }
         let (stash, controller) = create_stash_controller::<T>(0, DEFAULT_LIQUIDITY_TOKEN_ID, 100, Default::default())?;
         add_slashing_spans::<T>(&stash, s);
         <T as Trait>::Tokens::make_free_balance_be(DEFAULT_LIQUIDITY_TOKEN_ID.into(), &stash, 0.into());
@@ -461,8 +501,24 @@ benchmarks! {
     new_era {
         let v in 1 .. 10;
         let n in 1 .. 100;
-
+        #[cfg(test)]
+        {
+        let (stash, controller) = create_stash_controller::<T>(411000, DEFAULT_LIQUIDITY_TOKEN_ID, 100, Default::default())?;
+        Staking::<T>::validate(RawOrigin::Signed(controller).into(), Default::default())?;
+        let current_era = CurrentEra::get().unwrap();
+        assert!(Staking::<T>::create_stakers_snapshot().0);
+        Staking::<T>::select_and_update_validators(current_era);
+        }
         create_validators_with_nominators_for_era::<T>(v, n, MAX_NOMINATIONS, false, None, DEFAULT_LIQUIDITY_TOKEN_ID)?;
+        // Might need create_stakers_snapshot
+        #[cfg(test)]
+        {
+        let created_stash: T::AccountId = account("stash", 411000, 0);
+        Staking::<T>::chill_stash(&created_stash);
+        // let current_era = CurrentEra::get().unwrap();
+        assert!(Staking::<T>::create_stakers_snapshot().0);
+        // Staking::<T>::select_and_update_validators(current_era);
+        }
         let session_index = SessionIndex::one();
     }: {
         let validators = Staking::<T>::new_era(session_index).ok_or("`new_era` failed")?;
@@ -473,6 +529,9 @@ benchmarks! {
         let v in 1 .. 10;
         let n in 1 .. 100;
         create_validators_with_nominators_for_era::<T>(v, n, MAX_NOMINATIONS, false, None, DEFAULT_LIQUIDITY_TOKEN_ID)?;
+        // Might need create_stakers_snapshot
+        #[cfg(test)]
+        Staking::<T>::create_stakers_snapshot();
         // Start a new Era
         let new_validators = Staking::<T>::new_era(SessionIndex::one()).unwrap();
         assert!(new_validators.len() == v as usize);
@@ -759,191 +818,272 @@ benchmarks! {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     use crate::mock::{Balances, ExtBuilder, Origin, Staking, Test};
-//     use frame_support::assert_ok;
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::mock::{bond_nominator, bond_validator, ExtBuilder, Origin, Staking, Test};
+    use frame_support::assert_ok;
 
-//     #[test]
-//     fn create_validators_with_nominators_for_era_works() {
-//         ExtBuilder::default()
-//             .has_stakers(false)
-//             .build()
-//             .execute_with(|| {
-//                 let v = 10;
-//                 let n = 100;
+    #[test]
+    fn create_validators_with_nominators_for_era_works() {
+        ExtBuilder::default()
+            .has_stakers(false)
+            .build()
+            .execute_with(|| {
+                let v = 10;
+                let n = 100;
 
-//                 create_validators_with_nominators_for_era::<Test>(
-//                     v,
-//                     n,
-//                     MAX_NOMINATIONS,
-//                     false,
-//                     None,
-//                 )
-//                 .unwrap();
+                create_validators_with_nominators_for_era::<Test>(
+                    v,
+                    n,
+                    MAX_NOMINATIONS,
+                    false,
+                    None,
+                    DEFAULT_LIQUIDITY_TOKEN_ID,
+                )
+                .unwrap();
 
-//                 let count_validators = Validators::<Test>::iter().count();
-//                 let count_nominators = Nominators::<Test>::iter().count();
+                let count_validators = Validators::<Test>::iter().count();
+                let count_nominators = Nominators::<Test>::iter().count();
 
-//                 assert_eq!(count_validators, v as usize);
-//                 assert_eq!(count_nominators, n as usize);
-//             });
-//     }
+                assert_eq!(count_validators, v as usize);
+                assert_eq!(count_nominators, n as usize);
+            });
+    }
 
-//     #[test]
-//     fn create_validator_with_nominators_works() {
-//         ExtBuilder::default()
-//             .has_stakers(false)
-//             .build()
-//             .execute_with(|| {
-//                 let n = 10;
+    #[test]
+    fn create_validator_with_nominators_works() {
+        ExtBuilder::default()
+            .has_stakers(false)
+            .build()
+            .execute_with(|| {
+                let n = 10;
 
-//                 let validator_stash = create_validator_with_nominators::<Test>(
-//                     n,
-//                     <Test as Trait>::MaxNominatorRewardedPerValidator::get() as u32,
-//                     false,
-//                     RewardDestination::Stash,
-//                 )
-//                 .unwrap();
+                bond_validator(3, 2, BASE_TOKEN_VALUE as Balance);
+                bond_validator(5, 4, BASE_TOKEN_VALUE as Balance);
 
-//                 let current_era = CurrentEra::get().unwrap();
+                bond_nominator(7, 6, BASE_TOKEN_VALUE as Balance, vec![3, 5]);
+                bond_nominator(9, 8, BASE_TOKEN_VALUE as Balance, vec![3, 5]);
 
-//                 let original_free_balance = Balances::free_balance(&validator_stash);
-//                 assert_ok!(Staking::payout_stakers(
-//                     Origin::signed(1337),
-//                     validator_stash,
-//                     current_era
-//                 ));
-//                 let new_free_balance = Balances::free_balance(&validator_stash);
+                assert!(Staking::create_stakers_snapshot().0);
 
-//                 assert!(original_free_balance < new_free_balance);
-//             });
-//     }
+                let validator_stash = create_validator_with_nominators::<Test>(
+                    n,
+                    <Test as Trait>::MaxNominatorRewardedPerValidator::get() as u32,
+                    false,
+                    RewardDestination::Stash,
+                    DEFAULT_LIQUIDITY_TOKEN_ID,
+                )
+                .unwrap();
 
-//     #[test]
-//     fn add_slashing_spans_works() {
-//         ExtBuilder::default()
-//             .has_stakers(false)
-//             .build()
-//             .execute_with(|| {
-//                 let n = 10;
+                let current_era = CurrentEra::get().unwrap();
 
-//                 let validator_stash = create_validator_with_nominators::<Test>(
-//                     n,
-//                     <Test as Trait>::MaxNominatorRewardedPerValidator::get() as u32,
-//                     false,
-//                     RewardDestination::Stash,
-//                 )
-//                 .unwrap();
+                assert!(Staking::create_stakers_snapshot().0);
+                Staking::select_and_update_validators(current_era);
 
-//                 // Add 20 slashing spans
-//                 let num_of_slashing_spans = 20;
-//                 add_slashing_spans::<Test>(&validator_stash, num_of_slashing_spans);
+                let original_free_balance =
+                    <Test as Trait>::Tokens::free_balance(NATIVE_TOKEN_ID, &validator_stash);
+                assert_ok!(Staking::payout_stakers(
+                    Origin::signed(1337),
+                    validator_stash,
+                    current_era
+                ));
+                let new_free_balance =
+                    <Test as Trait>::Tokens::free_balance(NATIVE_TOKEN_ID, &validator_stash);
 
-//                 let slashing_spans = SlashingSpans::<Test>::get(&validator_stash).unwrap();
-//                 assert_eq!(
-//                     slashing_spans.iter().count(),
-//                     num_of_slashing_spans as usize
-//                 );
-//                 for i in 0..num_of_slashing_spans {
-//                     assert!(Staking::<Test>::SpanSlash::contains_key((&validator_stash, i)));
-//                 }
+                assert!(original_free_balance < new_free_balance);
+            });
+    }
 
-//                 // Test everything is cleaned up
-//                 assert_ok!(Staking::kill_stash(&validator_stash, num_of_slashing_spans));
-//                 assert!(SlashingSpans::<Test>::get(&validator_stash).is_none());
-//                 for i in 0..num_of_slashing_spans {
-//                     assert!(!Staking::<Test>::SpanSlash::contains_key((&validator_stash, i)));
-//                 }
-//             });
-//     }
+    #[test]
+    fn add_slashing_spans_works() {
+        ExtBuilder::default()
+            .has_stakers(false)
+            .build()
+            .execute_with(|| {
+                let n = 10;
 
-//     #[test]
-//     fn test_payout_all() {
-//         ExtBuilder::default()
-//             .has_stakers(false)
-//             .build()
-//             .execute_with(|| {
-//                 let v = 10;
-//                 let n = 100;
+                log!(info, "DEBUG 0.0");
 
-//                 let selected_benchmark = SelectedBenchmark::payout_all;
-//                 let c = vec![
-//                     (frame_benchmarking::BenchmarkParameter::v, v),
-//                     (frame_benchmarking::BenchmarkParameter::n, n),
-//                 ];
-//                 let closure_to_benchmark =
-//                     <SelectedBenchmark as frame_benchmarking::BenchmarkingSetup<Test>>::instance(
-//                         &selected_benchmark,
-//                         &c,
-//                         true,
-//                     )
-//                     .unwrap();
+                bond_validator(3, 2, 1000 as Balance);
+                bond_validator(5, 4, 1000 as Balance);
 
-//                 assert_ok!(closure_to_benchmark());
-//             });
-//     }
+                bond_nominator(7, 6, 1000 as Balance, vec![3, 5]);
+                bond_nominator(9, 8, 1000 as Balance, vec![3, 5]);
 
-//     #[test]
-//     fn test_benchmarks() {
-//         ExtBuilder::default()
-//             .has_stakers(false)
-//             .build()
-//             .execute_with(|| {
-//                 assert_ok!(test_benchmark_bond::<Test>());
-//                 assert_ok!(test_benchmark_bond_extra::<Test>());
-//                 assert_ok!(test_benchmark_unbond::<Test>());
-//                 assert_ok!(test_benchmark_withdraw_unbonded_update::<Test>());
-//                 assert_ok!(test_benchmark_withdraw_unbonded_kill::<Test>());
-//                 assert_ok!(test_benchmark_validate::<Test>());
-//                 assert_ok!(test_benchmark_nominate::<Test>());
-//                 assert_ok!(test_benchmark_chill::<Test>());
-//                 assert_ok!(test_benchmark_set_payee::<Test>());
-//                 assert_ok!(test_benchmark_set_controller::<Test>());
-//                 assert_ok!(test_benchmark_set_validator_count::<Test>());
-//                 assert_ok!(test_benchmark_force_no_eras::<Test>());
-//                 assert_ok!(test_benchmark_force_new_era::<Test>());
-//                 assert_ok!(test_benchmark_force_new_era_always::<Test>());
-//                 assert_ok!(test_benchmark_set_invulnerables::<Test>());
-//                 assert_ok!(test_benchmark_force_unstake::<Test>());
-//                 assert_ok!(test_benchmark_cancel_deferred_slash::<Test>());
-//                 assert_ok!(test_benchmark_payout_stakers_dead_controller::<Test>());
-//                 assert_ok!(test_benchmark_payout_stakers_alive_staked::<Test>());
-//                 assert_ok!(test_benchmark_rebond::<Test>());
-//                 assert_ok!(test_benchmark_set_history_depth::<Test>());
-//                 assert_ok!(test_benchmark_reap_stash::<Test>());
-//                 assert_ok!(test_benchmark_new_era::<Test>());
-//                 assert_ok!(test_benchmark_do_slash::<Test>());
-//                 assert_ok!(test_benchmark_payout_all::<Test>());
-//                 // only run one of them to same time on the CI. ignore the other two.
-//                 assert_ok!(test_benchmark_submit_solution_initial::<Test>());
-//             });
-//     }
+                assert!(Staking::create_stakers_snapshot().0);
 
-//     #[test]
-//     #[ignore]
-//     fn test_benchmarks_offchain() {
-//         ExtBuilder::default()
-//             .has_stakers(false)
-//             .build()
-//             .execute_with(|| {
-//                 assert_ok!(test_benchmark_submit_solution_better::<Test>());
-//                 assert_ok!(test_benchmark_submit_solution_weaker::<Test>());
-//             });
-//     }
-// }
+                let validator_stash = create_validator_with_nominators::<Test>(
+                    n,
+                    <Test as Trait>::MaxNominatorRewardedPerValidator::get() as u32,
+                    false,
+                    RewardDestination::Stash,
+                    DEFAULT_LIQUIDITY_TOKEN_ID,
+                )
+                .unwrap();
 
-// benchmarks!{
-//     _{}
+                log!(info, "DEBUG 1");
+                // Add 20 slashing spans
+                let num_of_slashing_spans = 20;
+                add_slashing_spans::<Test>(&validator_stash, num_of_slashing_spans);
 
-//     test_bench {
+                let slashing_spans = SlashingSpans::<Test>::get(&validator_stash).unwrap();
+                assert_eq!(
+                    slashing_spans.iter().count(),
+                    num_of_slashing_spans as usize
+                );
+                for i in 0..num_of_slashing_spans {
+                    assert!(<Staking as Store>::SpanSlash::contains_key((
+                        &validator_stash,
+                        i
+                    )));
+                }
 
-//     }: {
+                // Test everything is cleaned up
+                assert_ok!(Staking::kill_stash(&validator_stash, num_of_slashing_spans));
+                assert!(SlashingSpans::<Test>::get(&validator_stash).is_none());
+                for i in 0..num_of_slashing_spans {
+                    assert!(!<Staking as Store>::SpanSlash::contains_key((
+                        &validator_stash,
+                        i
+                    )));
+                }
+            });
+    }
 
-//     }
-//     verify{
+    #[test]
+    fn test_payout_all() {
+        ExtBuilder::default()
+            .has_stakers(false)
+            .build()
+            .execute_with(|| {
+                let v = 10;
+                let n = 100;
 
-//     }
+                bond_validator(3, 2, 1000 as Balance);
+                bond_validator(5, 4, 1000 as Balance);
 
-// }
+                bond_nominator(7, 6, 1000 as Balance, vec![3, 5]);
+                bond_nominator(9, 8, 1000 as Balance, vec![3, 5]);
+
+                // let current_era = CurrentEra::get().unwrap();
+                assert!(Staking::create_stakers_snapshot().0);
+                // Staking::select_and_update_validators(current_era);
+
+                let selected_benchmark = SelectedBenchmark::payout_all;
+                let c = vec![
+                    (frame_benchmarking::BenchmarkParameter::v, v),
+                    (frame_benchmarking::BenchmarkParameter::n, n),
+                ];
+                let closure_to_benchmark =
+                    <SelectedBenchmark as frame_benchmarking::BenchmarkingSetup<Test>>::instance(
+                        &selected_benchmark,
+                        &c,
+                        true,
+                    )
+                    .unwrap();
+
+                assert_ok!(closure_to_benchmark());
+            });
+    }
+
+    #[test]
+    fn test_benchmarks() {
+        ExtBuilder::default()
+            .has_stakers(false)
+            .build()
+            .execute_with(|| {
+                bond_validator(3, 2, 1000 as Balance);
+                bond_validator(5, 4, 1000 as Balance);
+
+                bond_nominator(7, 6, 1000 as Balance, vec![3, 5]);
+                bond_nominator(9, 8, 1000 as Balance, vec![3, 5]);
+
+                let current_era = CurrentEra::get().unwrap();
+                assert!(Staking::create_stakers_snapshot().0);
+                Staking::select_and_update_validators(current_era);
+
+                assert_ok!(test_benchmark_bond::<Test>());
+                log!(info, "test_benchmark_bond-completed");
+                assert_ok!(test_benchmark_bond_extra::<Test>());
+                log!(info, "test_benchmark_bond_extra-completed");
+                assert_ok!(test_benchmark_unbond::<Test>());
+                log!(info, "test_benchmark_unbond-completed");
+                assert_ok!(test_benchmark_withdraw_unbonded_update::<Test>());
+                log!(info, "test_benchmark_withdraw_unbonded_update-completed");
+                assert_ok!(test_benchmark_withdraw_unbonded_kill::<Test>());
+                log!(info, "test_benchmark_withdraw_unbonded_kill-completed");
+                assert_ok!(test_benchmark_validate::<Test>());
+                log!(info, "test_benchmark_validate-completed");
+                assert_ok!(test_benchmark_nominate::<Test>());
+                log!(info, "test_benchmark_nominate-completed");
+                assert_ok!(test_benchmark_chill::<Test>());
+                log!(info, "test_benchmark_chill-completed");
+                assert_ok!(test_benchmark_set_payee::<Test>());
+                log!(info, "test_benchmark_set_payee-completed");
+                assert_ok!(test_benchmark_set_controller::<Test>());
+                log!(info, "test_benchmark_set_controller-completed");
+                assert_ok!(test_benchmark_set_validator_count::<Test>());
+                log!(info, "test_benchmark_set_validator_count-completed");
+                assert_ok!(test_benchmark_force_no_eras::<Test>());
+                log!(info, "test_benchmark_force_no_eras-completed");
+                assert_ok!(test_benchmark_force_new_era::<Test>());
+                log!(info, "test_benchmark_force_new_era-completed");
+                assert_ok!(test_benchmark_force_new_era_always::<Test>());
+                log!(info, "test_benchmark_force_new_era_always-completed");
+                assert_ok!(test_benchmark_set_invulnerables::<Test>());
+                log!(info, "test_benchmark_set_invulnerables-completed");
+                assert_ok!(test_benchmark_force_unstake::<Test>());
+                log!(info, "test_benchmark_force_unstake-completed");
+                assert_ok!(test_benchmark_cancel_deferred_slash::<Test>());
+                log!(info, "test_benchmark_cancel_deferred_slash-completed");
+            });
+    }
+
+    #[test]
+    fn test_benchmarks_2() {
+        ExtBuilder::default()
+            .has_stakers(false)
+            .build()
+            .execute_with(|| {
+                bond_validator(3, 2, 1000 as Balance);
+                bond_validator(5, 4, 1000 as Balance);
+
+                bond_nominator(7, 6, 1000 as Balance, vec![3, 5]);
+                bond_nominator(9, 8, 1000 as Balance, vec![3, 5]);
+
+                let current_era = CurrentEra::get().unwrap();
+                assert!(Staking::create_stakers_snapshot().0);
+                Staking::select_and_update_validators(current_era);
+
+                assert_ok!(test_benchmark_payout_stakers_alive_staked::<Test>());
+                log!(info, "test_benchmark_payout_stakers_alive_staked-completed");
+                assert_ok!(test_benchmark_rebond::<Test>());
+                log!(info, "test_benchmark_rebond-completed");
+                assert_ok!(test_benchmark_set_history_depth::<Test>());
+                log!(info, "test_benchmark_set_history_depth-completed");
+                assert_ok!(test_benchmark_reap_stash::<Test>());
+                log!(info, "test_benchmark_reap_stash-completed");
+                assert_ok!(test_benchmark_new_era::<Test>());
+                log!(info, "test_benchmark_new_era-completed");
+                assert_ok!(test_benchmark_do_slash::<Test>());
+                log!(info, "test_benchmark_do_slash-completed");
+                assert_ok!(test_benchmark_payout_all::<Test>());
+                log!(info, "test_benchmark_payout_all-completed");
+                // only run one of them to same time on the CI. ignore the other two.
+                assert_ok!(test_benchmark_submit_solution_initial::<Test>());
+            });
+    }
+
+    #[test]
+    #[ignore]
+    fn test_benchmarks_offchain() {
+        ExtBuilder::default()
+            .has_stakers(false)
+            .build()
+            .execute_with(|| {
+                assert_ok!(test_benchmark_submit_solution_better::<Test>());
+                assert_ok!(test_benchmark_submit_solution_weaker::<Test>());
+            });
+    }
+}

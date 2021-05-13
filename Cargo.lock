@@ -1437,17 +1437,10 @@ dependencies = [
  "log",
  "parity-scale-codec",
  "rand 0.7.3",
- "sc-client-api",
  "sp-api",
- "sp-block-builder",
- "sp-blockchain",
- "sp-consensus",
  "sp-core",
- "sp-inherents",
  "sp-runtime",
- "sp-state-machine",
  "sp-std",
- "sp-trie",
 ]
 
 [[package]]

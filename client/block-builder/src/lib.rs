@@ -106,9 +106,6 @@ where
     ) -> sp_blockchain::Result<BlockBuilder<Block, RA, B>>;
 }
 
-/// Extrinsic unique id calculated from its bytes
-pub type ExtrinsicId = u64;
-
 /// Utility for building new (valid) blocks from a stream of extrinsics.
 pub struct BlockBuilder<'a, Block: BlockT, A: ProvideRuntimeApi<Block>, B> {
     extrinsics: Vec<Block::Extrinsic>,
@@ -172,7 +169,6 @@ where
     ///
     /// This will ensure the extrinsic can be validly executed (by executing it).
     pub fn push(&mut self, xt: <Block as BlockT>::Extrinsic) -> Result<(), ApiErrorFor<A, Block>> {
-
         info!("Pushing transactions without execution");
         self.extrinsics.push(xt);
         Ok(())
@@ -212,7 +208,6 @@ where
         let parent_hash = self.parent_hash;
         let extrinsics_hash = BlakeTwo256::hash(&extrinsics.encode());
 
-        //FIXME
         match self
             .backend
             .blockchain()

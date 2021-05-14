@@ -33,6 +33,7 @@ use sp_runtime::{
 use sp_transaction_pool::{TransactionPool, InPoolTransaction};
 use sc_telemetry::{telemetry, CONSENSUS_INFO};
 use sc_block_builder::{BlockBuilderApi, BlockBuilderProvider};
+use extrinsic_info_runtime_api::{runtime_api::ExtrinsicInfoRuntimeApi};
 use sp_api::{ProvideRuntimeApi, ApiExt};
 use futures::{executor, future, future::Either};
 use sp_blockchain::{HeaderBackend, ApplyExtrinsicFailed::Validity, Error::ApplyExtrinsicFailed};
@@ -77,6 +78,7 @@ impl<B, Block, C, A> ProposerFactory<A, B, C>
 			+ Send + Sync + 'static,
 		C::Api: ApiExt<Block, StateBackend = backend::StateBackendFor<B, Block>>
 			+ BlockBuilderApi<Block, Error = sp_blockchain::Error>,
+
 {
 	pub fn init_with_now(
 		&mut self,
@@ -113,7 +115,7 @@ impl<A, B, Block, C> sp_consensus::Environment<Block> for
 			C: BlockBuilderProvider<B, Block, C> + HeaderBackend<Block> + ProvideRuntimeApi<Block>
 				+ Send + Sync + 'static,
 			C::Api: ApiExt<Block, StateBackend = backend::StateBackendFor<B, Block>>
-				+ BlockBuilderApi<Block, Error = sp_blockchain::Error>,
+				+ BlockBuilderApi<Block, Error = sp_blockchain::Error> + ExtrinsicInfoRuntimeApi<Block>,
 {
 	type CreateProposer = future::Ready<Result<Self::Proposer, Self::Error>>;
 	type Proposer = Proposer<B, Block, C, A>;
@@ -148,7 +150,7 @@ impl<A, B, Block, C> sp_consensus::Proposer<Block> for
 			C: BlockBuilderProvider<B, Block, C> + HeaderBackend<Block> + ProvideRuntimeApi<Block>
 				+ Send + Sync + 'static,
 			C::Api: ApiExt<Block, StateBackend = backend::StateBackendFor<B, Block>>
-				+ BlockBuilderApi<Block, Error = sp_blockchain::Error>,
+				+ BlockBuilderApi<Block, Error = sp_blockchain::Error> + ExtrinsicInfoRuntimeApi<Block>,
 {
 	type Transaction = backend::TransactionFor<B, Block>;
 	type Proposal = tokio_executor::blocking::Blocking<
@@ -179,7 +181,7 @@ impl<A, B, Block, C> Proposer<B, Block, C, A>
 		C: BlockBuilderProvider<B, Block, C> + HeaderBackend<Block> + ProvideRuntimeApi<Block>
 			+ Send + Sync + 'static,
 		C::Api: ApiExt<Block, StateBackend = backend::StateBackendFor<B, Block>>
-			+ BlockBuilderApi<Block, Error = sp_blockchain::Error>,
+			+ BlockBuilderApi<Block, Error = sp_blockchain::Error> + ExtrinsicInfoRuntimeApi<Block>,
 {
 	fn propose_with(
 		self,
@@ -218,6 +220,7 @@ impl<A, B, Block, C> Proposer<B, Block, C, A>
 		let block_timer = time::Instant::now();
 		let mut skipped = 0;
 		let mut unqueue_invalid = Vec::new();
+
 		let pending_iterator = match executor::block_on(future::select(
 			self.transaction_pool.ready_at(self.parent_number),
 			futures_timer::Delay::new(deadline.saturating_duration_since((self.now)()) / 8),

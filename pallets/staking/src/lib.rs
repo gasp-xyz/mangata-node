@@ -2352,6 +2352,7 @@ impl<T: Trait> Module<T> {
         let mut nominators = <Nominators<T>>::iter().map(|(n, _)| n).collect::<Vec<_>>();
 
         <StashStakedValuation<T>>::remove_prefix(DUMMY_VALUE);
+        add_db_reads_writes(1, 1);
 
         let num_validators = validators.len();
         let num_nominators = nominators.len();
@@ -2390,6 +2391,7 @@ impl<T: Trait> Module<T> {
                     liquidity_token_amount.into(),
                 )
                 .into();
+                add_db_reads_writes(6, 0);
                 if mng_valuation.is_zero() {
                     validators_to_be_removed.push(validator.clone());
                 } else {
@@ -2401,6 +2403,7 @@ impl<T: Trait> Module<T> {
                             mng_valuation: mng_valuation,
                         },
                     );
+                    add_db_reads_writes(0, 1);
                 }
             }
 
@@ -2425,6 +2428,7 @@ impl<T: Trait> Module<T> {
                     liquidity_token_amount.into(),
                 )
                 .into();
+                add_db_reads_writes(6, 0);
                 if mng_valuation.is_zero() {
                     nominators_to_be_removed.push(nominator.clone());
                 } else {
@@ -2436,6 +2440,7 @@ impl<T: Trait> Module<T> {
                             mng_valuation: mng_valuation,
                         },
                     );
+                    add_db_reads_writes(0, 1);
                 }
             }
 
@@ -2458,18 +2463,18 @@ impl<T: Trait> Module<T> {
                 Self::snapshot_nominators()
             );
 
-            for valuation in <StashStakedValuation<T>>::iter_prefix(DUMMY_VALUE) {
-                log!(info, "StashStakedValuation:{:?}", valuation);
-                let liquidity_token_amount_test = Self::bonded(valuation.0)
-                    .and_then(Self::ledger)
-                    .map(|l| l.active)
-                    .unwrap_or_default();
-                log!(
-                    info,
-                    "liquidity_token_amount:{:?}",
-                    liquidity_token_amount_test
-                );
-            }
+            // for valuation in <StashStakedValuation<T>>::iter_prefix(DUMMY_VALUE) {
+            //     log!(info, "StashStakedValuation:{:?}", valuation);
+            //     let liquidity_token_amount_test = Self::bonded(valuation.0)
+            //         .and_then(Self::ledger)
+            //         .map(|l| l.active)
+            //         .unwrap_or_default();
+            //     log!(
+            //         info,
+            //         "liquidity_token_amount:{:?}",
+            //         liquidity_token_amount_test
+            //     );
+            // }
 
             add_db_reads_writes(0, 2);
             (true, consumed_weight)
@@ -3749,6 +3754,7 @@ where
         for (details, slash_fraction) in offenders.iter().zip(slash_fraction) {
             let (stash, _) = &details.offender;
             let exposure = &Self::eras_stakers_raw(slash_era, &stash);
+            add_db_reads_writes(1, 0);
             log!(
                 info,
                 "on_offence-exposure_from-eras_stakers_raw:{:?}",
@@ -3790,8 +3796,11 @@ where
                     // apply right away.
                     slashing::apply_slash::<T>(unapplied);
                     {
-                        let slash_cost = (6, 5);
+                        let slash_cost = (6 + 2, 5);
                         let reward_cost = (2, 2);
+                        add_db_reads_writes(
+                            1, 0
+                        );
                         add_db_reads_writes(
                             (1 + nominators_len) * slash_cost.0 + reward_cost.0 * reporters_len,
                             (1 + nominators_len) * slash_cost.1 + reward_cost.1 * reporters_len,

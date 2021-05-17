@@ -134,6 +134,8 @@ pub fn create_validator_with_nominators<T: Trait>(
 
     ValidatorCount::put(1);
 
+    Staking::<T>::create_stakers_snapshot();
+
     // Start a new Era
     let new_validators = Staking::<T>::new_era(SessionIndex::one()).unwrap();
 
@@ -397,14 +399,14 @@ benchmarks! {
         let n in 1 .. T::MaxNominatorRewardedPerValidator::get() as u32;
         log!(info, "bench-payout_stakers_alive_staked");
 
-        #[cfg(test)]
-        {
-        let (stash, controller) = create_stash_controller::<T>(411000, DEFAULT_LIQUIDITY_TOKEN_ID, 100, Default::default())?;
-        Staking::<T>::validate(RawOrigin::Signed(controller).into(), Default::default())?;
-        let current_era = CurrentEra::get().unwrap();
-        assert!(Staking::<T>::create_stakers_snapshot().0);
-        Staking::<T>::select_and_update_validators(current_era);
-        }
+        // #[cfg(test)]
+        // {
+        // let (stash, controller) = create_stash_controller::<T>(411000, DEFAULT_LIQUIDITY_TOKEN_ID, 100, Default::default())?;
+        // Staking::<T>::validate(RawOrigin::Signed(controller).into(), Default::default())?;
+        // let current_era = CurrentEra::get().unwrap();
+        // assert!(Staking::<T>::create_stakers_snapshot().0);
+        // Staking::<T>::select_and_update_validators(current_era);
+        // }
 
 
         let validator = create_validator_with_nominators::<T>(
@@ -414,13 +416,12 @@ benchmarks! {
             RewardDestination::Stash,
             DEFAULT_LIQUIDITY_TOKEN_ID,
         )?;
-        // Do we need create_stakers_snapshot or select_and_update_validators? I don't think so.
-        #[cfg(test)]
-        {
-        let current_era = CurrentEra::get().unwrap();
-        assert!(Staking::<T>::create_stakers_snapshot().0);
-        Staking::<T>::select_and_update_validators(current_era);
-        }
+        // #[cfg(test)]
+        // {
+        // let current_era = CurrentEra::get().unwrap();
+        // assert!(Staking::<T>::create_stakers_snapshot().0);
+        // Staking::<T>::select_and_update_validators(current_era);
+        // }
 
         let current_era = CurrentEra::get().unwrap();
         // set the commission for this particular era as well.
@@ -481,14 +482,14 @@ benchmarks! {
 
     reap_stash {
         let s in 1 .. MAX_SPANS;
-        #[cfg(test)]
-        {
-        let (stash, controller) = create_stash_controller::<T>(411000, DEFAULT_LIQUIDITY_TOKEN_ID, 100, Default::default())?;
-        Staking::<T>::validate(RawOrigin::Signed(controller).into(), Default::default())?;
-        let current_era = CurrentEra::get().unwrap();
-        assert!(Staking::<T>::create_stakers_snapshot().0);
-        Staking::<T>::select_and_update_validators(current_era);
-        }
+        // #[cfg(test)]
+        // {
+        // let (stash, controller) = create_stash_controller::<T>(411000, DEFAULT_LIQUIDITY_TOKEN_ID, 100, Default::default())?;
+        // Staking::<T>::validate(RawOrigin::Signed(controller).into(), Default::default())?;
+        // let current_era = CurrentEra::get().unwrap();
+        // assert!(Staking::<T>::create_stakers_snapshot().0);
+        // Staking::<T>::select_and_update_validators(current_era);
+        // }
         let (stash, controller) = create_stash_controller::<T>(0, DEFAULT_LIQUIDITY_TOKEN_ID, 100, Default::default())?;
         add_slashing_spans::<T>(&stash, s);
         <T as Trait>::Tokens::make_free_balance_be(DEFAULT_LIQUIDITY_TOKEN_ID.into(), &stash, 0.into());
@@ -501,24 +502,26 @@ benchmarks! {
     new_era {
         let v in 1 .. 10;
         let n in 1 .. 100;
-        #[cfg(test)]
-        {
-        let (stash, controller) = create_stash_controller::<T>(411000, DEFAULT_LIQUIDITY_TOKEN_ID, 100, Default::default())?;
-        Staking::<T>::validate(RawOrigin::Signed(controller).into(), Default::default())?;
-        let current_era = CurrentEra::get().unwrap();
-        assert!(Staking::<T>::create_stakers_snapshot().0);
-        Staking::<T>::select_and_update_validators(current_era);
-        }
-        create_validators_with_nominators_for_era::<T>(v, n, MAX_NOMINATIONS, false, None, DEFAULT_LIQUIDITY_TOKEN_ID)?;
-        // Might need create_stakers_snapshot
-        #[cfg(test)]
-        {
-        let created_stash: T::AccountId = account("stash", 411000, 0);
-        Staking::<T>::chill_stash(&created_stash);
+        // #[cfg(test)]
+        // {
+        // let (stash, controller) = create_stash_controller::<T>(411000, DEFAULT_LIQUIDITY_TOKEN_ID, 100, Default::default())?;
+        // Staking::<T>::validate(RawOrigin::Signed(controller).into(), Default::default())?;
         // let current_era = CurrentEra::get().unwrap();
-        assert!(Staking::<T>::create_stakers_snapshot().0);
+        // assert!(Staking::<T>::create_stakers_snapshot().0);
         // Staking::<T>::select_and_update_validators(current_era);
-        }
+        // }
+        create_validators_with_nominators_for_era::<T>(v, n, MAX_NOMINATIONS, false, None, DEFAULT_LIQUIDITY_TOKEN_ID)?;
+
+        assert!(Staking::<T>::create_stakers_snapshot().0);
+
+        // #[cfg(test)]
+        // {
+        // let created_stash: T::AccountId = account("stash", 411000, 0);
+        // Staking::<T>::chill_stash(&created_stash);
+        // // let current_era = CurrentEra::get().unwrap();
+        // assert!(Staking::<T>::create_stakers_snapshot().0);
+        // // Staking::<T>::select_and_update_validators(current_era);
+        // }
         let session_index = SessionIndex::one();
     }: {
         let validators = Staking::<T>::new_era(session_index).ok_or("`new_era` failed")?;
@@ -529,9 +532,11 @@ benchmarks! {
         let v in 1 .. 10;
         let n in 1 .. 100;
         create_validators_with_nominators_for_era::<T>(v, n, MAX_NOMINATIONS, false, None, DEFAULT_LIQUIDITY_TOKEN_ID)?;
-        // Might need create_stakers_snapshot
-        #[cfg(test)]
-        Staking::<T>::create_stakers_snapshot();
+        
+        assert!(Staking::<T>::create_stakers_snapshot().0);
+
+        // #[cfg(test)]
+        // Staking::<T>::create_stakers_snapshot();
         // Start a new Era
         let new_validators = Staking::<T>::new_era(SessionIndex::one()).unwrap();
         assert!(new_validators.len() == v as usize);
@@ -859,13 +864,13 @@ mod tests {
             .execute_with(|| {
                 let n = 10;
 
-                bond_validator(3, 2, BASE_TOKEN_VALUE as Balance);
-                bond_validator(5, 4, BASE_TOKEN_VALUE as Balance);
+                // bond_validator(3, 2, BASE_TOKEN_VALUE as Balance);
+                // bond_validator(5, 4, BASE_TOKEN_VALUE as Balance);
 
-                bond_nominator(7, 6, BASE_TOKEN_VALUE as Balance, vec![3, 5]);
-                bond_nominator(9, 8, BASE_TOKEN_VALUE as Balance, vec![3, 5]);
+                // bond_nominator(7, 6, BASE_TOKEN_VALUE as Balance, vec![3, 5]);
+                // bond_nominator(9, 8, BASE_TOKEN_VALUE as Balance, vec![3, 5]);
 
-                assert!(Staking::create_stakers_snapshot().0);
+                // assert!(Staking::create_stakers_snapshot().0);
 
                 let validator_stash = create_validator_with_nominators::<Test>(
                     n,
@@ -905,13 +910,13 @@ mod tests {
 
                 log!(info, "DEBUG 0.0");
 
-                bond_validator(3, 2, 1000 as Balance);
-                bond_validator(5, 4, 1000 as Balance);
+                // bond_validator(3, 2, 1000 as Balance);
+                // bond_validator(5, 4, 1000 as Balance);
 
-                bond_nominator(7, 6, 1000 as Balance, vec![3, 5]);
-                bond_nominator(9, 8, 1000 as Balance, vec![3, 5]);
+                // bond_nominator(7, 6, 1000 as Balance, vec![3, 5]);
+                // bond_nominator(9, 8, 1000 as Balance, vec![3, 5]);
 
-                assert!(Staking::create_stakers_snapshot().0);
+                // assert!(Staking::create_stakers_snapshot().0);
 
                 let validator_stash = create_validator_with_nominators::<Test>(
                     n,
@@ -960,15 +965,15 @@ mod tests {
                 let v = 10;
                 let n = 100;
 
-                bond_validator(3, 2, 1000 as Balance);
-                bond_validator(5, 4, 1000 as Balance);
+                // bond_validator(3, 2, 1000 as Balance);
+                // bond_validator(5, 4, 1000 as Balance);
 
-                bond_nominator(7, 6, 1000 as Balance, vec![3, 5]);
-                bond_nominator(9, 8, 1000 as Balance, vec![3, 5]);
+                // bond_nominator(7, 6, 1000 as Balance, vec![3, 5]);
+                // bond_nominator(9, 8, 1000 as Balance, vec![3, 5]);
 
-                // let current_era = CurrentEra::get().unwrap();
-                assert!(Staking::create_stakers_snapshot().0);
-                // Staking::select_and_update_validators(current_era);
+                // // let current_era = CurrentEra::get().unwrap();
+                // assert!(Staking::create_stakers_snapshot().0);
+                // // Staking::select_and_update_validators(current_era);
 
                 let selected_benchmark = SelectedBenchmark::payout_all;
                 let c = vec![
@@ -993,15 +998,15 @@ mod tests {
             .has_stakers(false)
             .build()
             .execute_with(|| {
-                bond_validator(3, 2, 1000 as Balance);
-                bond_validator(5, 4, 1000 as Balance);
+                // bond_validator(3, 2, 1000 as Balance);
+                // bond_validator(5, 4, 1000 as Balance);
 
-                bond_nominator(7, 6, 1000 as Balance, vec![3, 5]);
-                bond_nominator(9, 8, 1000 as Balance, vec![3, 5]);
+                // bond_nominator(7, 6, 1000 as Balance, vec![3, 5]);
+                // bond_nominator(9, 8, 1000 as Balance, vec![3, 5]);
 
-                let current_era = CurrentEra::get().unwrap();
-                assert!(Staking::create_stakers_snapshot().0);
-                Staking::select_and_update_validators(current_era);
+                // let current_era = CurrentEra::get().unwrap();
+                // assert!(Staking::create_stakers_snapshot().0);
+                // Staking::select_and_update_validators(current_era);
 
                 assert_ok!(test_benchmark_bond::<Test>());
                 log!(info, "test_benchmark_bond-completed");
@@ -1037,25 +1042,6 @@ mod tests {
                 log!(info, "test_benchmark_force_unstake-completed");
                 assert_ok!(test_benchmark_cancel_deferred_slash::<Test>());
                 log!(info, "test_benchmark_cancel_deferred_slash-completed");
-            });
-    }
-
-    #[test]
-    fn test_benchmarks_2() {
-        ExtBuilder::default()
-            .has_stakers(false)
-            .build()
-            .execute_with(|| {
-                bond_validator(3, 2, 1000 as Balance);
-                bond_validator(5, 4, 1000 as Balance);
-
-                bond_nominator(7, 6, 1000 as Balance, vec![3, 5]);
-                bond_nominator(9, 8, 1000 as Balance, vec![3, 5]);
-
-                let current_era = CurrentEra::get().unwrap();
-                assert!(Staking::create_stakers_snapshot().0);
-                Staking::select_and_update_validators(current_era);
-
                 assert_ok!(test_benchmark_payout_stakers_alive_staked::<Test>());
                 log!(info, "test_benchmark_payout_stakers_alive_staked-completed");
                 assert_ok!(test_benchmark_rebond::<Test>());

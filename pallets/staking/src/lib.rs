@@ -2351,6 +2351,8 @@ impl<T: Trait> Module<T> {
         let mut validators = <Validators<T>>::iter().map(|(v, _)| v).collect::<Vec<_>>();
         let mut nominators = <Nominators<T>>::iter().map(|(n, _)| n).collect::<Vec<_>>();
 
+        <StashStakedValuation<T>>::remove_prefix(DUMMY_VALUE);
+
         let num_validators = validators.len();
         let num_nominators = nominators.len();
         add_db_reads_writes((num_validators + num_nominators) as Weight, 0);
@@ -2481,8 +2483,8 @@ impl<T: Trait> Module<T> {
         <SnapshotNominators<T>>::kill();
 
         // Remove Stash's liquidity valuation details but not for testing as mock uses session length of 1 and create_stakers_snapshot is never triggered from on_initilize
-        #[cfg(not(test))]
-        <StashStakedValuation<T>>::remove_prefix(DUMMY_VALUE);
+        // #[cfg(not(test))]
+        // <StashStakedValuation<T>>::remove_prefix(DUMMY_VALUE);
     }
 
     fn do_payout_stakers(validator_stash: T::AccountId, era: EraIndex) -> DispatchResult {
@@ -3351,6 +3353,9 @@ impl<T: Trait> Module<T> {
             all_validators.push(validator);
         }
 
+        log!(info, "do_phragmen-all_validators-debug_1 {:?}", all_validators);
+        log!(info, "do_phragmen-all_nominators-debug_1 {:?}", all_nominators);
+
         let nominator_votes = <Nominators<T>>::iter().map(|(nominator, nominations)| {
             let Nominations {
                 submitted_in,
@@ -3378,8 +3383,13 @@ impl<T: Trait> Module<T> {
 
         all_nominators.retain(|(_, s, _)| !s.is_zero());
 
-        for (_, _, ref mut ns) in all_nominators.iter_mut() {
-            ns.retain(|nominated| !Self::slashable_balance_of_vote_weight(&nominated).is_zero())
+        for (n, _, ref mut ns) in all_nominators.iter_mut() {
+            let nominators_liquidity_token = Self::get_stash_liquidity_token(n);
+            ns.retain(|nominated| {
+                (!Self::slashable_balance_of_vote_weight(&nominated).is_zero())
+                &&
+                (nominators_liquidity_token == Self::get_stash_liquidity_token(nominated))
+            })
         }
 
         all_nominators.retain(|(_, _, ns)| !ns.is_empty());
@@ -3583,7 +3593,8 @@ impl<T: Trait> historical::SessionManager<T::AccountId, Exposure<T::AccountId, B
             let current_era = Self::current_era()
                 // Must be some as a new era has been created.
                 .unwrap_or(0);
-
+            log!(info, "historical::SessionManager-new_index:{:?}", new_index);
+            log!(info, "historical::SessionManager-new_session-validators:{:?}", validators);
             validators
                 .into_iter()
                 .map(|v| {

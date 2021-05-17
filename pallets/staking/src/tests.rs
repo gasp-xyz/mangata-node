@@ -3100,12 +3100,19 @@ fn slash_in_old_span_does_not_deselect() {
 
         mock::start_era(2);
 
+        log!(info, "just_before-Staking::validate(Origin::signed(10))");
         Staking::validate(Origin::signed(10), Default::default()).unwrap();
+        log!(info, "just_after-Staking::validate(Origin::signed(10))");
         assert_eq!(Staking::force_era(), Forcing::NotForcing);
         assert!(<Validators<Test>>::contains_key(11));
         assert!(!Session::validators().contains(&11));
 
+        Staking::create_stakers_snapshot();
+
+        log!(info, "just_before-start_era(3)");
         mock::start_era(3);
+        log!(info, "just_after-start_era(3)");
+        assert!(Session::validators().contains(&11));
 
         // this staker is in a new slashing span now, having re-registered after
         // their prior slash.

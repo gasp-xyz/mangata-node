@@ -6108,7 +6108,8 @@ fn offences_weight_calculated_correctly() {
 
 		// On Offence with N offenders, Unapplied: 4 Reads, 1 Write + 4 Reads, 5 Writes
 		let n_offence_unapplied_weight = <Test as frame_system::Trait>::DbWeight::get().reads_writes(4, 1)
-			+ <Test as frame_system::Trait>::DbWeight::get().reads_writes(4, 5);
+			+ <Test as frame_system::Trait>::DbWeight::get().reads_writes(4, 5)
+            + <Test as frame_system::Trait>::DbWeight::get().reads_writes(1, 0);
 
 		let offenders: Vec<OffenceDetails<<Test as frame_system::Trait>::AccountId, pallet_session::historical::IdentificationTuple<Test>>>
 			= (1..10).map(|i|
@@ -6130,11 +6131,14 @@ fn offences_weight_calculated_correctly() {
 		let n = 1; // Number of offenders
 		let rw = 3 + 3 * n; // rw reads and writes
 		let one_offence_unapplied_weight = <Test as frame_system::Trait>::DbWeight::get().reads_writes(4, 1)
+            + <Test as frame_system::Trait>::DbWeight::get().reads_writes(1, 0)
 			+ <Test as frame_system::Trait>::DbWeight::get().reads_writes(rw, rw)
 			// One `slash_cost`
-			+ <Test as frame_system::Trait>::DbWeight::get().reads_writes(6, 5)
+			+ <Test as frame_system::Trait>::DbWeight::get().reads_writes(6 + 2, 5)
 			// `slash_cost` * nominators (1)
-			+ <Test as frame_system::Trait>::DbWeight::get().reads_writes(6, 5)
+			+ <Test as frame_system::Trait>::DbWeight::get().reads_writes(6 + 2, 5)
+            // added
+            + <Test as frame_system::Trait>::DbWeight::get().reads_writes(1, 0)
 			// `reward_cost` * reporters (1)
 			+ <Test as frame_system::Trait>::DbWeight::get().reads_writes(2, 2);
 
@@ -6173,7 +6177,10 @@ fn on_initialize_weight_is_correct() {
             // - (4 + 5) reads
             // - 3 Writes
             let final_weight =
-                <Test as frame_system::Trait>::DbWeight::get().reads_writes(4 + 9, 3);
+                <Test as frame_system::Trait>::DbWeight::get().reads_writes(4 + 9, 3)
+                + <Test as frame_system::Trait>::DbWeight::get().reads_writes(1, 1)
+                + <Test as frame_system::Trait>::DbWeight::get().reads_writes(24, 4)
+                + <Test as frame_system::Trait>::DbWeight::get().reads_writes(30, 5);
             assert_eq!(final_weight, Staking::on_initialize(System::block_number()));
         });
 }

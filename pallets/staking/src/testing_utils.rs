@@ -34,73 +34,6 @@ use sp_core::U256;
 const BASE_TOKEN_VALUE: u128 = 100__000_000_000_000_000_000u128;
 const SEED: u32 = 0;
 
-// use crate::*;
-// use frame_benchmarking::account;
-// use frame_system::RawOrigin;
-// use rand_chacha::{
-//     rand_core::{RngCore, SeedableRng},
-//     ChaChaRng,
-// };
-// use sp_io::hashing::blake2_256;
-// use sp_npos_elections::*;
-// use sp_runtime::traits::{SaturatedConversion, Zero};
-// use sp_std::{
-//     collections::btree_map::BTreeMap,
-//     convert::{From, TryInto},
-//     mem::size_of,
-//     prelude::*,
-//     result,
-// };
-// use codec::{Encode, Decode};
-
-// pub use pallet_staking::offchain_election;
-// pub use pallet_staking::slashing;
-
-/// Create a liquidity pool in Xyk.
-// pub fn create_xyk_pool<T: Trait>(
-//     string: &'static str,
-//     n: u32,
-//     first_asset_id: u32,
-//     second_asset_id: u32,
-//     liquidity_token_id: u32,
-//     balance_factor: u32,
-// ) -> T::AccountId {
-
-//     // assert!(<T as Trait>::Tokens::exists(first_asset_id.into()));
-//     // assert!(<T as Trait>::Tokens::exists(second_asset_id.into()));
-//     // assert!(<T as Trait>::Tokens::exists(liquidity_token_id.into()));
-
-//     // assert!(<T as Trait>::Tokens::total_issuance(first_asset_id.into()).is_zero());
-//     // assert!(<T as Trait>::Tokens::total_issuance(second_asset_id.into()).is_zero());
-//     // assert!(<T as Trait>::Tokens::total_issuance(liquidity_token_id.into()).is_zero());
-
-//     let user: T::AccountId = account(string, n, SEED);
-
-//     let balance_factor_2: u64 = (balance_factor * 2).into();
-
-//     let base_token_value_u256: U256 = BASE_TOKEN_VALUE.saturated_into::<u128>().into();
-//     let balance_factor_u256: U256 = balance_factor_2.saturated_into::<u128>().into();
-//     let balance_u256 = base_token_value_u256 * balance_factor_u256;
-//     let balance: u128 = balance_u256.saturated_into::<u128>();
-
-//     let first_asset_amount: u128 = balance;
-//     let second_asset_amount: u128 = balance;
-
-//     // mint MNG
-//     assert!(<T as Trait>::Tokens::mint(first_asset_id.into(), &user, first_asset_amount.into()).is_ok());
-//     // mint pooled token
-//     assert!(<T as Trait>::Tokens::mint(second_asset_id.into(), &user, second_asset_amount.into()).is_ok());
-//     assert!(<T as Trait>::Xyk::create_pool(user.clone(), first_asset_id.into(), {first_asset_amount / 2}.into(), second_asset_id.into(), {second_asset_amount / 2}.into()).is_ok());
-//     // frame_support::debug::RuntimeLogger::init();
-//     // frame_support::debug::debug!(target: "customTarget", "{:?}", xyk_call_result);
-//     // RawOrigin::Signed(user.clone()).into(),
-//     // let test =
-//     // let xyk_call = pallet_xyk::Call::create_pool( first_asset_id, first_asset_amount / 2, second_asset_id, second_asset_amount / 2);
-//     // let xyk_call_disptach_result = Call::Xyk(xyk_call).disptach();
-//     // mint liquidity
-//     user
-// }
-
 /// Grab a funded user.
 pub fn create_funded_user<T: Trait>(
     string: &'static str,
@@ -181,38 +114,6 @@ pub fn create_stash_controller<T: Trait>(
     )?;
     return Ok((stash, controller));
 }
-
-// I expect this won't make a difference with ORML tokens
-// /// Create a stash and controller pair, where the controller is dead, and payouts go to controller.
-// /// This is used to test worst case payout scenarios.
-// pub fn create_stash_and_dead_controller<T: Trait>(
-//     n: u32,
-//     liquidity_token_id: u32,
-//     balance_factor: u32,
-//     destination: RewardDestination<T::AccountId>
-// ) -> Result<(T::AccountId, T::AccountId), &'static str> {
-//     let stash = create_funded_user::<T>("stash", n, liquidity_token_id, balance_factor);
-//     let controller = create_funded_user::<T>("controller", n, liquidity_token_id, 0);
-//     let controller_lookup: <T::Lookup as StaticLookup>::Source =
-//         T::Lookup::unlookup(controller.clone());
-
-//     let base_token_value_u256: U256 = BASE_TOKEN_VALUE.saturated_into::<u128>().into();
-//     let balance_factor_u256: U256 = balance_factor.saturated_into::<u128>().into();
-//     let balance_u256 = base_token_value_u256 * balance_factor_u256;
-//     let balance: u128 = balance_u256.saturated_into::<u128>();
-
-//     // stake a tenth of liquidity tokens
-//     let amount: u128 = (balance / 10).max(1).into();
-
-//     Staking::<T>::bond(
-//         RawOrigin::Signed(stash.clone()).into(),
-//         controller_lookup,
-//         amount,
-//         destination,
-//         liquidity_token_id
-//     )?;
-//     return Ok((stash, controller));
-// }
 
 /// create `max` validators.
 pub fn create_validators<T: Trait>(

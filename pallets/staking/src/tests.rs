@@ -216,140 +216,6 @@ fn change_controller_works() {
     })
 }
 
-// COMMENT
-// This is not working even in substrate_201
-
-// #[test]
-// fn rewards_should_work() {
-//     // should check that:
-//     // * rewards get recorded per session
-//     // * rewards get paid per Era
-//     // * `RewardRemainder::on_unbalanced` is called
-//     // * Check that nominators are also rewarded
-//     ExtBuilder::default().nominate(true).build_and_execute(|| {
-//         let init_balance_10 = <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &10);
-//         let init_balance_11 = <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &11);
-//         let init_balance_20 = <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &20);
-//         let init_balance_21 = <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &21);
-//         let init_balance_100 = <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &100);
-//         let init_balance_101 = <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &101);
-
-//         // Check state
-//         Payee::<Test>::insert(11, RewardDestination::Controller);
-//         Payee::<Test>::insert(21, RewardDestination::Controller);
-//         Payee::<Test>::insert(101, RewardDestination::Controller);
-
-//         <Module<Test>>::reward_by_ids(vec![(11, 50)]);
-//         <Module<Test>>::reward_by_ids(vec![(11, 50)]);
-//         // This is the second validator of the current elected set.
-//         <Module<Test>>::reward_by_ids(vec![(21, 50)]);
-
-//         // Compute total payout now for whole duration as other parameter won't change
-//         let total_payout_0 = current_total_payout_for_duration(3 * 1000);
-//         assert!(total_payout_0 > 10); // Test is meaningful if reward something
-
-//         start_session(1);
-
-//         assert_eq!(<Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &10), init_balance_10);
-//         assert_eq!(<Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &11), init_balance_11);
-//         assert_eq!(<Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &20), init_balance_20);
-//         assert_eq!(<Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &21), init_balance_21);
-//         assert_eq!(<Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &100), init_balance_100);
-//         assert_eq!(<Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &101), init_balance_101);
-//         assert_eq_uvec!(Session::validators(), vec![11, 21]);
-//         assert_eq!(
-//             Staking::eras_reward_points(Staking::active_era().unwrap().index),
-//             EraRewardPoints {
-//                 total: 50 * 3,
-//                 individual: vec![(11, 100), (21, 50)].into_iter().collect(),
-//             }
-//         );
-//         let part_for_10 = Perbill::from_rational_approximation::<u32>(1000, 1124);
-//         let part_for_20 = Perbill::from_rational_approximation::<u32>(1000, 1374);
-//         let part_for_100_from_10 = Perbill::from_rational_approximation::<u32>(124, 1124);
-//         let part_for_100_from_20 = Perbill::from_rational_approximation::<u32>(374, 1374);
-
-//         start_session(2);
-//         start_session(3);
-
-//         assert_eq!(Staking::active_era().unwrap().index, 1);
-
-//         // COMMENT
-//         // This is behaving very strangely for some reason
-//         assert_eq!(
-//             mock::REWARD_REMAINDER_UNBALANCED.with(|v| *v.borrow()),
-//             7050 * 4 / 3
-//         );
-//         assert_eq!(
-//             *mock::staking_events().last().unwrap(),
-//             RawEvent::EraPayout(0, 2350 * 4 * 4 * 2, 7050 * 4 / 3)
-//         );
-//         mock::make_all_reward_payment(0);
-
-//         assert_eq_error_rate!(
-//             <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &10),
-//             init_balance_10 + part_for_10 * total_payout_0 * 2 / 3,
-//             2
-//         );
-//         assert_eq_error_rate!(<Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &11), init_balance_11, 2);
-//         assert_eq_error_rate!(
-//             <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &20),
-//             init_balance_20 + part_for_20 * total_payout_0 * 1 / 3,
-//             2
-//         );
-//         assert_eq_error_rate!(<Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &21), init_balance_21, 2);
-//         assert_eq_error_rate!(
-//             <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &100),
-//             init_balance_100
-//                 + part_for_100_from_10 * total_payout_0 * 2 / 3
-//                 + part_for_100_from_20 * total_payout_0 * 1 / 3,
-//             2
-//         );
-//         assert_eq_error_rate!(<Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &101), init_balance_101, 2);
-
-//         assert_eq_uvec!(Session::validators(), vec![11, 21]);
-//         <Module<Test>>::reward_by_ids(vec![(11, 1)]);
-
-//         // Compute total payout now for whole duration as other parameter won't change
-//         let total_payout_1 = current_total_payout_for_duration(3 * 1000);
-//         assert!(total_payout_1 > 10); // Test is meaningful if reward something
-
-//         mock::start_era(2);
-//         assert_eq!(
-//             mock::REWARD_REMAINDER_UNBALANCED.with(|v| *v.borrow()),
-//             7050 * 4 * 2 / 3
-//         );
-
-//         assert_eq!(
-//             *mock::staking_events().last().unwrap(),
-//             RawEvent::EraPayout(1, 2350 * 4 * 4 * 2, 7050 * 4 / 3)
-//         );
-
-//         mock::make_all_reward_payment(1);
-
-//         assert_eq_error_rate!(
-//             <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &10),
-//             init_balance_10 + part_for_10 * (total_payout_0 * 2 / 3 + total_payout_1),
-//             2
-//         );
-//         assert_eq_error_rate!(<Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &11), init_balance_11, 2);
-//         assert_eq_error_rate!(
-//             <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &20),
-//             init_balance_20 + part_for_20 * total_payout_0 * 1 / 3,
-//             2
-//         );
-//         assert_eq_error_rate!(<Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &21), init_balance_21, 2);
-//         assert_eq_error_rate!(
-//             <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &100),
-//             init_balance_100
-//                 + part_for_100_from_10 * (total_payout_0 * 2 / 3 + total_payout_1)
-//                 + part_for_100_from_20 * total_payout_0 * 1 / 3,
-//             2
-//         );
-//         assert_eq_error_rate!(<Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &101), init_balance_101, 2);
-//     });
-// }
-
 #[test]
 fn staking_should_work() {
     // should test:
@@ -1346,12 +1212,6 @@ fn bond_extra_and_withdraw_unbonded_works() {
             RewardDestination::Controller
         ));
 
-        // COMMENT
-        // Idk why we are doing this but its messing with valuations
-        // Give account 11 some large free balance greater than total
-        // let _ = <Test as Trait>::Tokens::make_free_balance_be(DEFAULT_LIQUIDITY_TOKEN_ID, &11, 1000000);
-        // let _ = mint_liquidity_for_user(&11, 22000);
-
         // Initial config should be correct
         assert_eq!(Staking::active_era().unwrap().index, 0);
         assert_eq!(Session::current_index(), 0);
@@ -2334,20 +2194,6 @@ fn bond_with_no_staked_value() {
         .minimum_validator_count(1)
         .build()
         .execute_with(|| {
-            // COMMENT
-            // Since minimum_balance is zero the folloing assertion will pass
-            // Can't bond with 1
-            // assert_noop!(
-            //     Staking::bond(
-            //         Origin::signed(1),
-            //         2,
-            //         1,
-            //         RewardDestination::Controller,
-            //         DEFAULT_LIQUIDITY_TOKEN_ID,
-            //     ),
-            //     Error::<Test>::InsufficientValue,
-            // );
-
             let _ = mint_liquidity_for_user(&1, 20);
 
             // bonded with a low value possible.
@@ -2429,8 +2275,6 @@ fn bond_with_little_staked_value_bounded() {
                 Origin::signed(2),
                 ValidatorPrefs::default()
             ));
-
-            // Staking::create_stakers_snapshot();
 
             // reward era 0
             let total_payout_0 = current_total_payout_for_duration(3000);
@@ -2686,8 +2530,6 @@ fn phragmen_should_not_overflow() {
         log!(info, "Staking::ledger(&3):{:?}", Staking::ledger(&2));
         log!(info, "Staking::ledger(&5):{:?}", Staking::ledger(&4));
 
-        // Staking::create_stakers_snapshot();
-
         let mng_token_reserve_test =
             XykModule::asset_pool((NATIVE_TOKEN_ID, DUMMY_TOKEN_FOR_POOL_ID));
         log!(info, "mng_token_reserve_test:{:?}", mng_token_reserve_test);
@@ -2778,8 +2620,6 @@ fn reward_validator_slashing_validator_does_not_overflow() {
             <Test as Trait>::Tokens::total_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &2),
             stake
         );
-        // assert!(<Test as Trait>::Tokens::transfer(NATIVE_TOKEN_ID, &2, &999, stake * 3 / 2, ExistenceRequirement::AllowDeath).is_ok());
-        // assert_eq!(<Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &2), stake / 2);
 
         // only slashes out of bonded stake are applied. without this line,
         // it is 0.
@@ -3310,8 +3150,6 @@ fn invulnerables_are_not_slashed() {
                 assert_eq!(
                     <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &other.who),
                     initial_balance - (2 * other.value / 10) - 1,
-                    // COMMENT
-                    // error? - 1?
                 );
             }
         });
@@ -4046,8 +3884,7 @@ fn remove_deferred() {
             );
             assert_eq!(
                 <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &101),
-                2000 - actual_slash - 1 // COMMENT
-                                        // error? + 1?
+                2000 - actual_slash - 1
             );
         })
 }
@@ -4057,35 +3894,7 @@ fn remove_multi_deferred() {
     ExtBuilder::default()
         .slash_defer_duration(2)
         .build_and_execute(|| {
-            // let _ = mint_liquidity_for_user(&42, 20000);
-            // let _ = mint_liquidity_for_user(&69, 40000);
-
-            // assert_ok!(Staking::bond(
-            //     Origin::signed(42),
-            //     43,
-            //     1000,
-            //     RewardDestination::Controller,
-            //     DEFAULT_LIQUIDITY_TOKEN_ID,
-            // ));
-            // assert_ok!(Staking::nominate(Origin::signed(43), vec![11, 21, 31]));
-
-            // assert_ok!(Staking::bond(
-            //     Origin::signed(69),
-            //     70,
-            //     1000,
-            //     RewardDestination::Controller,
-            //     DEFAULT_LIQUIDITY_TOKEN_ID,
-            // ));
-            // assert_ok!(Staking::nominate(Origin::signed(70), vec![11, 21, 31]));
-
-            // log!(info, "<Module<Test> as Store>::StashStakedValuation::get(42):{:?}", <Module<Test> as Store>::StashStakedValuation::get(DUMMY_VALUE, 42));
-            // Module::<Test>::create_stakers_snapshot();
-
-            // log!(info, "<Module<Test> as Store>::StashStakedValuation::get(42):{:?}", <Module<Test> as Store>::StashStakedValuation::get(DUMMY_VALUE, 42));
-
             mock::start_era(1);
-
-            // log!(info, "<Module<Test> as Store>::StashStakedValuation::get(42):{:?}", <Module<Test> as Store>::StashStakedValuation::get(DUMMY_VALUE, 42));
 
             for era_staker_raw in <Module<Test> as Store>::ErasStakersRaw::iter_prefix(
                 Staking::active_era().unwrap().index,
@@ -4135,24 +3944,6 @@ fn remove_multi_deferred() {
                 }],
                 &[Perbill::from_percent(25)],
             );
-
-            // COMMENT
-            // You can only slash the selected validators of the era
-            // on_offence_now(
-            //     &[OffenceDetails {
-            //         offender: (42, exposure.clone()),
-            //         reporters: vec![],
-            //     }],
-            //     &[Perbill::from_percent(25)],
-            // );
-
-            // on_offence_now(
-            //     &[OffenceDetails {
-            //         offender: (69, exposure.clone()),
-            //         reporters: vec![],
-            //     }],
-            //     &[Perbill::from_percent(25)],
-            // );
 
             assert_eq!(<Staking as Store>::UnappliedSlashes::get(&1).len(), 3);
 
@@ -4792,8 +4583,6 @@ mod offchain_election {
                 ),
                 TransactionValidity::Ok(ValidTransaction {
                     priority: UnsignedPriority::get() + 562 + 1, // the proposed slot stake.
-                    // COMMENT
-                    // error? + 1?
                     requires: vec![],
                     provides: vec![("StakingOffchain", current_era()).encode()],
                     longevity: 3,
@@ -4855,8 +4644,6 @@ mod offchain_election {
             .build();
         let state = offchainify(&mut ext, 0);
         ext.execute_with(|| {
-            // Staking::bond_extra(Origin::signed(31), 999);
-            // Module::<Test>::create_stakers_snapshot();
             run_to_block(12);
 
             // put a good solution on-chain
@@ -6176,8 +5963,8 @@ fn on_initialize_weight_is_correct() {
             // With 4 validators and 5 nominator, we should increase weight by:
             // - (4 + 5) reads
             // - 3 Writes
-            let final_weight =
-                <Test as frame_system::Trait>::DbWeight::get().reads_writes(4 + 9, 3)
+            let final_weight = <Test as frame_system::Trait>::DbWeight::get()
+                .reads_writes(4 + 9, 3)
                 + <Test as frame_system::Trait>::DbWeight::get().reads_writes(1, 1)
                 + <Test as frame_system::Trait>::DbWeight::get().reads_writes(24, 4)
                 + <Test as frame_system::Trait>::DbWeight::get().reads_writes(30, 5);

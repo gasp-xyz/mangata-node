@@ -1429,14 +1429,6 @@ decl_module! {
                         log!(info, "about_to_call-create_stakers_snapshot");
 
                         Self::create_stakers_snapshot();
-                        // let (did_snapshot, _) = Self::create_stakers_snapshot();
-                        //     if did_snapshot {
-                        //         // Set the flag to make sure we don't waste any compute here in the same era
-                        //         // after we have triggered the offline compute.
-                        //         <EraElectionStatus<T>>::put(
-                        //             ElectionStatus::<T::BlockNumber>::Open(now)
-                        //         );
-                        //     }
                     }
                     }
                     log!(info, "snapshot-maybe-after-estimate_next_new_session");
@@ -2351,6 +2343,7 @@ impl<T: Trait> Module<T> {
         let mut validators = <Validators<T>>::iter().map(|(v, _)| v).collect::<Vec<_>>();
         let mut nominators = <Nominators<T>>::iter().map(|(n, _)| n).collect::<Vec<_>>();
 
+        // Removing old valuation details
         <StashStakedValuation<T>>::remove_prefix(DUMMY_VALUE);
         add_db_reads_writes(1, 1);
 
@@ -2463,19 +2456,6 @@ impl<T: Trait> Module<T> {
                 Self::snapshot_nominators()
             );
 
-            // for valuation in <StashStakedValuation<T>>::iter_prefix(DUMMY_VALUE) {
-            //     log!(info, "StashStakedValuation:{:?}", valuation);
-            //     let liquidity_token_amount_test = Self::bonded(valuation.0)
-            //         .and_then(Self::ledger)
-            //         .map(|l| l.active)
-            //         .unwrap_or_default();
-            //     log!(
-            //         info,
-            //         "liquidity_token_amount:{:?}",
-            //         liquidity_token_amount_test
-            //     );
-            // }
-
             add_db_reads_writes(0, 2);
             (true, consumed_weight)
         }
@@ -2486,10 +2466,6 @@ impl<T: Trait> Module<T> {
         log!(info, "DESTROYING-STAKERS-SNAPSHOT");
         <SnapshotValidators<T>>::kill();
         <SnapshotNominators<T>>::kill();
-
-        // Remove Stash's liquidity valuation details but not for testing as mock uses session length of 1 and create_stakers_snapshot is never triggered from on_initilize
-        // #[cfg(not(test))]
-        // <StashStakedValuation<T>>::remove_prefix(DUMMY_VALUE);
     }
 
     fn do_payout_stakers(validator_stash: T::AccountId, era: EraIndex) -> DispatchResult {
@@ -3358,8 +3334,16 @@ impl<T: Trait> Module<T> {
             all_validators.push(validator);
         }
 
-        log!(info, "do_phragmen-all_validators-debug_1 {:?}", all_validators);
-        log!(info, "do_phragmen-all_nominators-debug_1 {:?}", all_nominators);
+        log!(
+            info,
+            "do_phragmen-all_validators-debug_1 {:?}",
+            all_validators
+        );
+        log!(
+            info,
+            "do_phragmen-all_nominators-debug_1 {:?}",
+            all_nominators
+        );
 
         let nominator_votes = <Nominators<T>>::iter().map(|(nominator, nominations)| {
             let Nominations {
@@ -3392,8 +3376,7 @@ impl<T: Trait> Module<T> {
             let nominators_liquidity_token = Self::get_stash_liquidity_token(n);
             ns.retain(|nominated| {
                 (!Self::slashable_balance_of_vote_weight(&nominated).is_zero())
-                &&
-                (nominators_liquidity_token == Self::get_stash_liquidity_token(nominated))
+                    && (nominators_liquidity_token == Self::get_stash_liquidity_token(nominated))
             })
         }
 
@@ -3599,7 +3582,11 @@ impl<T: Trait> historical::SessionManager<T::AccountId, Exposure<T::AccountId, B
                 // Must be some as a new era has been created.
                 .unwrap_or(0);
             log!(info, "historical::SessionManager-new_index:{:?}", new_index);
-            log!(info, "historical::SessionManager-new_session-validators:{:?}", validators);
+            log!(
+                info,
+                "historical::SessionManager-new_session-validators:{:?}",
+                validators
+            );
             validators
                 .into_iter()
                 .map(|v| {
@@ -3798,9 +3785,7 @@ where
                     {
                         let slash_cost = (6 + 2, 5);
                         let reward_cost = (2, 2);
-                        add_db_reads_writes(
-                            1, 0
-                        );
+                        add_db_reads_writes(1, 0);
                         add_db_reads_writes(
                             (1 + nominators_len) * slash_cost.0 + reward_cost.0 * reporters_len,
                             (1 + nominators_len) * slash_cost.1 + reward_cost.1 * reporters_len,

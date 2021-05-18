@@ -77,15 +77,14 @@ mod multi_token_currency;
 mod multi_token_imbalances;
 mod tests;
 
-use orml_traits::{
-    arithmetic::{self, Signed},
-    MultiCurrencyExtended, MultiLockableCurrency, MultiReservableCurrency,
-    OnReceived,
-};
-pub use orml_traits::MultiCurrency;
 use frame_support::traits::{
     Currency as PalletCurrency, LockableCurrency as PalletLockableCurrency,
     ReservableCurrency as PalletReservableCurrency,
+};
+pub use orml_traits::MultiCurrency;
+use orml_traits::{
+    arithmetic::{self, Signed},
+    MultiCurrencyExtended, MultiLockableCurrency, MultiReservableCurrency, OnReceived,
 };
 
 use codec::FullCodec;

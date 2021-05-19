@@ -265,55 +265,13 @@
 //!   validators is stored in the Session module's `Validators` at the end of each era.
 
 // TODO
-// Clean benchmarks!!
-// create_stakers_snapshot and run select_and_update validators when necessary.
+// Update consumed_weights to be more accurate
 
 // TODO
-// Change add_extra_genesis to init StashStakedValuation properly
+// Maybe update StashStakedValuation when the ledger is updated
 
 // TODO
-// Change back all the structs and sub fields made public
-
-// TODO
-// Change back that one function in testing utils to use the struct rather than calls
-
-// TODO
-// Remove all logs
-
-// TODO
-// Setup dependencies for testing and benchmarking correctly
-
-// TODO
-// Edit consumed_weights
-
-// TODO
-// Enable benchmark tests
-
-// TODO
-// Maybe add liquidity token check between validators and nominators in do_phragmen
-
-// TODO
-// Check Era Forcing
-// Snapshot not created/updated when forcing era? Is that a problem? How big?
-
-// TODO
-// Maybe StashStakedValuation should never be completly destroyed, just updated.
-// To accomodate situations like ad-hoc NewEra Forcing
-
-// TODO
-// Maybe update StashStakedValuation or ErasStakersRaw or both when the ledger is updated
-// Especially in case where slashing is called and/or NewEra is forced
-
-// Or perhaps we can leverage ErasStakersRaw appropritately allowing destroying StashStakedValuation.
-// And maybe StashStakedValuation must be taken only during pre-determined times so that the users can expect valuations
-
-// Solution
-// Treat StashStakedValuation the same as ledger (or ledger.active)
-// Create it in genesis
-// Update it by scaling (only down?) whenever ledger is updated. This particular step will matter for when new_era is called but snapshot was not taken. We need to decide if we want this step, i.e., should bond/bond_extra/unbond/slahsing affect the election process in case of a ForcedEra. In vanilla substrate staking, it does. We could also scale down when ledge.active is reduced, but when bond/bonding_extra update using the current pool state.
-// Maintain it for all users, it's usage will however be gated by Validators and Nominators
-// When create_stakers_snapshot is called, StashStakedValuation will be deleted and built from scratch. This point will mark the point in time where valuations are updated as per pool state.
-// Also remove StashStakedValuation when kill_stash?
+// Optimize modifications
 
 #![recursion_limit = "128"]
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -364,6 +322,7 @@ use orml_tokens::{
 };
 use pallet_session::historical;
 use pallet_xyk::Valuate;
+#[cfg(any(feature = "runtime-benchmarks", test))]
 use pallet_xyk::XykFunctionsTrait;
 use sp_npos_elections::{
     build_support_map, evaluate_support, generate_solution_type, is_score_better, seq_phragmen,
@@ -1238,14 +1197,7 @@ decl_storage! {
                 };
             }
 
-            // TODO
-            // Change this
             Module::<T>::create_stakers_snapshot();
-
-            log!(info, "valuate_liquidity_token:{:?}", T::Valuations::valuate_liquidity_token(
-                    2u32.into(),
-                    1000u128.into(),
-                ));
 
         });
     }
@@ -1412,34 +1364,25 @@ decl_module! {
                 consumed_weight += T::DbWeight::get().reads_writes(reads, writes);
                 consumed_weight += weight;
             };
-            log!(info, "on_initialize");
-                log!(info, "now:{:?}", now);
             if
                 // if we don't have any ongoing offchain compute.
                 Self::era_election_status().is_closed() &&
                 // either current session final based on the plan, or we're forcing.
                 (Self::is_current_session_final() || Self::will_era_be_forced())
-            {   log!(info, "snapshot-maybe");
+            {
                 if let Some(next_session_change) = T::NextNewSession::estimate_next_new_session(now) {
-                    // TODO
-                    // Update this to a better version
                     #[cfg(test)]
                     {
                     if next_session_change.is_zero() && <Period as Get<BlockNumber>>::get()==1{
-                        log!(info, "about_to_call-create_stakers_snapshot");
 
                         Self::create_stakers_snapshot();
                     }
                     }
-                    log!(info, "snapshot-maybe-after-estimate_next_new_session");
-                    log!(info, "next_session_change:{:?}", next_session_change);
                     if let Some(remaining) = next_session_change.checked_sub(&now) {
 
-                        log!(info, "remaining:{:?}", remaining);
 
                         if remaining <= T::ElectionLookahead::get() && !remaining.is_zero() {
                             // create snapshot.
-                            log!(info, "snapshot-now");
                             let (did_snapshot, snapshot_weight) = Self::create_stakers_snapshot();
                             add_weight(0, 0, snapshot_weight);
                             if did_snapshot {
@@ -2335,7 +2278,6 @@ impl<T: Trait> Module<T> {
     /// This data is used to efficiently evaluate election results. returns `true` if the operation
     /// is successful.
     pub fn create_stakers_snapshot() -> (bool, Weight) {
-        log!(info, "CREATING_STAKERS_SNAPSHOT");
         let mut consumed_weight = 0;
         let mut add_db_reads_writes = |reads, writes| {
             consumed_weight += T::DbWeight::get().reads_writes(reads, writes);
@@ -2445,17 +2387,6 @@ impl<T: Trait> Module<T> {
             <SnapshotValidators<T>>::put(validators);
             <SnapshotNominators<T>>::put(nominators);
 
-            log!(
-                info,
-                "snapshot_validators:{:?}",
-                Self::snapshot_validators()
-            );
-            log!(
-                info,
-                "snapshot_nominators:{:?}",
-                Self::snapshot_nominators()
-            );
-
             add_db_reads_writes(0, 2);
             (true, consumed_weight)
         }
@@ -2463,7 +2394,6 @@ impl<T: Trait> Module<T> {
 
     /// Clears both snapshots of stakers.
     fn kill_stakers_snapshot() {
-        log!(info, "DESTROYING-STAKERS-SNAPSHOT");
         <SnapshotValidators<T>>::kill();
         <SnapshotNominators<T>>::kill();
     }
@@ -2520,13 +2450,6 @@ impl<T: Trait> Module<T> {
             return Ok(());
         }
 
-        log!(
-            info,
-            "validator_reward_points:{:?} for: {:?}",
-            validator_reward_points,
-            validator_stash
-        );
-
         // This is the fraction of the total reward that the validator and the
         // nominators will get.
         let validator_total_reward_part =
@@ -2542,12 +2465,6 @@ impl<T: Trait> Module<T> {
 
         let validator_leftover_payout = validator_total_payout - validator_commission_payout;
 
-        log!(
-            info,
-            "validator_exposure_part:{:?} of: {:?}",
-            exposure.own,
-            exposure.total
-        );
         // Now let's calculate how this is split to the validator.
         let validator_exposure_part =
             Perbill::from_rational_approximation(exposure.own, exposure.total);
@@ -2589,16 +2506,6 @@ impl<T: Trait> Module<T> {
     ) -> DispatchResult {
         let stash_liquidity_token = Self::get_stash_liquidity_token(&ledger.stash)
             .ok_or_else(|| Error::<T>::StashLiquidityTokenNotFound)?;
-        log!(
-            info,
-            "update_ledger-about_to_call_set_lock: {:?}",
-            (
-                stash_liquidity_token,
-                STAKING_ID,
-                &ledger.stash,
-                ledger.total,
-            )
-        );
         T::Tokens::set_lock(
             stash_liquidity_token.into(),
             STAKING_ID,
@@ -2645,11 +2552,6 @@ impl<T: Trait> Module<T> {
 
     /// Plan a new session potentially trigger a new era.
     fn new_session(session_index: SessionIndex) -> Option<Vec<T::AccountId>> {
-        log!(
-            info,
-            "ENTERED-new_session-session_index:{:?}",
-            session_index
-        );
         if let Some(current_era) = Self::current_era() {
             // Initial era has been set.
 
@@ -2658,31 +2560,20 @@ impl<T: Trait> Module<T> {
                     frame_support::print("Error: start_session_index must be set for current_era");
                     0
                 });
-            log!(info, "session_index:{:?}", session_index);
-            log!(
-                info,
-                "current_era_start_session_index:{:?}",
-                current_era_start_session_index
-            );
             let era_length = session_index
                 .checked_sub(current_era_start_session_index)
                 .unwrap_or(0); // Must never happen.
-            log!(info, "era_length:{:?}", era_length);
-            log!(info, "ForceEra::get():{:?}", ForceEra::get());
             match ForceEra::get() {
                 Forcing::ForceNew => ForceEra::kill(),
                 Forcing::ForceAlways => (),
-                Forcing::NotForcing if era_length >= T::SessionsPerEra::get() => //(),
-                    log!(info, "TRIGGERED-Forcing::NotForcing if era_length >= T::SessionsPerEra::get(): {:?}, {:?}", era_length,T::SessionsPerEra::get()),
+                Forcing::NotForcing if era_length >= T::SessionsPerEra::get() => (),
                 _ => {
                     // Either `ForceNone`, or `NotForcing && era_length < T::SessionsPerEra::get()`.
                     if era_length + 1 == T::SessionsPerEra::get() {
-                        log!(info, "new_session-about_to_set-IsCurrentSessionFinal-to_true");
                         IsCurrentSessionFinal::put(true);
                     } else if era_length >= T::SessionsPerEra::get() {
                         // Should only happen when we are ready to trigger an era but we have ForceNone,
                         // otherwise previous arm would short circuit.
-                        log!(info, "about_to_call-close_election_window");
                         Self::close_election_window();
                     }
                     return None;
@@ -2744,14 +2635,6 @@ impl<T: Trait> Module<T> {
         // Do the basic checks. era, claimed score and window open.
         let _ = Self::pre_dispatch_checks(claimed_score, era)?;
 
-        log!(info, "before-compact_assignments_length_check");
-        log!(
-            info,
-            "compact_assignments.unique_targets().len():{:?}",
-            compact_assignments.unique_targets().len()
-        );
-        log!(info, "winners.len():{:?}", winners.len());
-
         // before we read any further state, we check that the unique targets in compact is same as
         // compact. is a all in-memory check and easy to do. Moreover, it ensures that the solution
         // is not full of bogus edges that can cause lots of reads to SlashingSpans. Thus, we can
@@ -2761,8 +2644,6 @@ impl<T: Trait> Module<T> {
             compact_assignments.unique_targets().len() == winners.len(),
             Error::<T>::OffchainElectionBogusWinnerCount,
         );
-
-        log!(info, "passed-compact_assignments_length_check");
 
         // Check that the number of presented winners is sane. Most often we have more candidates
         // than we need. Then it should be `Self::validator_count()`. Else it should be all the
@@ -2954,7 +2835,6 @@ impl<T: Trait> Module<T> {
                 Self::start_era(start_session);
             }
         }
-        log!(info, "start_session-started_session:{:?}", start_session);
     }
 
     /// End a session potentially ending an era.
@@ -3020,8 +2900,6 @@ impl<T: Trait> Module<T> {
 
             let native_currency_id = T::NativeCurrencyId::get();
             let era_duration = now_as_millis_u64 - active_era_start;
-            #[cfg(test)]
-            log!(info, "reward-curve:{:?}", T::RewardCurve::get());
             let (validator_payout, max_payout) = inflation::compute_total_payout(
                 &T::RewardCurve::get(),
                 Self::eras_total_stake(&active_era.index),
@@ -3029,20 +2907,6 @@ impl<T: Trait> Module<T> {
                 // Duration of era; more than u64::MAX is rewarded as u64::MAX.
                 era_duration.saturated_into::<u64>(),
             );
-
-            #[cfg(test)]
-            log!(
-                info,
-                "inflation-eras_total_stake:{:?}",
-                Self::eras_total_stake(&active_era.index)
-            );
-            log!(
-                info,
-                "inflation-total_issuance:{:?}",
-                T::Tokens::total_issuance(native_currency_id.into())
-            );
-            log!(info, "inflation-validator_payout:{:?}", validator_payout);
-            log!(info, "inflation-max_payout:{:?}", max_payout);
 
             let rest = max_payout.saturating_sub(validator_payout);
 
@@ -3063,11 +2927,6 @@ impl<T: Trait> Module<T> {
 
     /// Plan a new era. Return the potential new staking set.
     pub fn new_era(start_session_index: SessionIndex) -> Option<Vec<T::AccountId>> {
-        log!(
-            info,
-            "ENTERED-new_era-start_session_index:{:?}",
-            start_session_index
-        );
         // Increment or set current era.
         let current_era = CurrentEra::mutate(|s| {
             *s = Some(s.map(|s| s + 1).unwrap_or(0));
@@ -3126,11 +2985,6 @@ impl<T: Trait> Module<T> {
             exposures.into_iter().for_each(|(stash, exposure)| {
                 total_stake = total_stake.saturating_add(exposure.total);
                 <ErasStakers<T>>::insert(current_era, &stash, &exposure);
-                log!(
-                    info,
-                    "select_and_update_validators-exposure_inserted_into-ErasStakers:{:?}",
-                    (current_era, &stash, &exposure)
-                );
 
                 let mut exposure_clipped = exposure.clone();
                 let clipped_max_len = T::MaxNominatorRewardedPerValidator::get() as usize;
@@ -3193,11 +3047,6 @@ impl<T: Trait> Module<T> {
                     others: exposure_raw_others,
                 };
                 <ErasStakersRaw<T>>::insert(current_era, &stash, &exposure_raw);
-                log!(
-                    info,
-                    "select_and_update_validators-exposure_inserted_into-ErasStakersRaw:{:?}",
-                    (current_era, &stash, &exposure_raw)
-                );
 
                 let mut exposure_raw_clipped = exposure_raw;
                 if exposure_raw_clipped.others.len() > clipped_max_len {
@@ -3334,17 +3183,6 @@ impl<T: Trait> Module<T> {
             all_validators.push(validator);
         }
 
-        log!(
-            info,
-            "do_phragmen-all_validators-debug_1 {:?}",
-            all_validators
-        );
-        log!(
-            info,
-            "do_phragmen-all_nominators-debug_1 {:?}",
-            all_nominators
-        );
-
         let nominator_votes = <Nominators<T>>::iter().map(|(nominator, nominations)| {
             let Nominations {
                 submitted_in,
@@ -3362,9 +3200,6 @@ impl<T: Trait> Module<T> {
             (nominator, targets)
         });
 
-        // TODO
-        // Maybe add check here to ensure that nominators and validators use the same liquidity token.
-
         all_nominators.extend(nominator_votes.map(|(n, ns)| {
             let s = Self::slashable_balance_of_vote_weight(&n);
             (n, s, ns)
@@ -3381,9 +3216,6 @@ impl<T: Trait> Module<T> {
         }
 
         all_nominators.retain(|(_, _, ns)| !ns.is_empty());
-
-        log!(info, "do_phragmen_validators {:?}", all_validators);
-        log!(info, "do_phragmen_nominators {:?}", all_nominators);
 
         seq_phragmen::<_, Accuracy>(
             Self::validator_count() as usize,
@@ -3460,8 +3292,6 @@ impl<T: Trait> Module<T> {
 
     /// Clear all era information for given era.
     fn clear_era_information(era_index: EraIndex) {
-        log!(info, "clear_era_information-called");
-
         <ErasStakers<T>>::remove_prefix(era_index);
         <ErasStakersClipped<T>>::remove_prefix(era_index);
 
@@ -3478,7 +3308,6 @@ impl<T: Trait> Module<T> {
 
     /// Apply previously-unapplied slashes on the beginning of a new era, after a delay.
     fn apply_unapplied_slashes(active_era: EraIndex) {
-        log!(info, "apply_unapplied_slashes");
         let slash_defer_duration = T::SlashDeferDuration::get();
         <Self as Store>::EarliestUnappliedSlash::mutate(|earliest| {
             if let Some(ref mut earliest) = earliest {
@@ -3486,7 +3315,6 @@ impl<T: Trait> Module<T> {
                 for era in (*earliest)..keep_from {
                     let era_slashes = <Self as Store>::UnappliedSlashes::take(&era);
                     for slash in era_slashes {
-                        log!(info, "slashing::apply_slash:{:?}", slash);
                         slashing::apply_slash::<T>(slash);
                     }
                 }
@@ -3581,12 +3409,6 @@ impl<T: Trait> historical::SessionManager<T::AccountId, Exposure<T::AccountId, B
             let current_era = Self::current_era()
                 // Must be some as a new era has been created.
                 .unwrap_or(0);
-            log!(info, "historical::SessionManager-new_index:{:?}", new_index);
-            log!(
-                info,
-                "historical::SessionManager-new_session-validators:{:?}",
-                validators
-            );
             validators
                 .into_iter()
                 .map(|v| {
@@ -3742,11 +3564,6 @@ where
             let (stash, _) = &details.offender;
             let exposure = &Self::eras_stakers_raw(slash_era, &stash);
             add_db_reads_writes(1, 0);
-            log!(
-                info,
-                "on_offence-exposure_from-eras_stakers_raw:{:?}",
-                exposure
-            );
             // Skip if the validator is invulnerable.
             if invulnerables.contains(stash) {
                 continue;
@@ -3762,12 +3579,6 @@ where
                 reward_proportion,
             });
 
-            log!(
-                info,
-                "on_offence-unapplied-after_compute_slash:{:?}",
-                unapplied
-            );
-
             if let Some(mut unapplied) = unapplied {
                 let nominators_len = unapplied.others.len() as u64;
                 let reporters_len = details.reporters.len() as u64;
@@ -3778,7 +3589,6 @@ where
                     add_db_reads_writes(rw, rw);
                 }
                 unapplied.reporters = details.reporters.clone();
-                log!(info, "on_offence-unapplied:{:?}", unapplied);
                 if slash_defer_duration == 0 {
                     // apply right away.
                     slashing::apply_slash::<T>(unapplied);
@@ -3792,11 +3602,6 @@ where
                         );
                     }
                 } else {
-                    log!(
-                        info,
-                        "on_offence-pushing_unapplied_to-UnappliedSlashes:{:?}",
-                        unapplied
-                    );
                     // defer to end of some `slash_defer_duration` from now.
                     <Self as Store>::UnappliedSlashes::mutate(active_era, move |for_later| {
                         for_later.push(unapplied)
@@ -3807,7 +3612,6 @@ where
                 add_db_reads_writes(4 /* fetch_spans */, 5 /* kick_out_if_recent */)
             }
         }
-        log!(info, "on_offence-about_to_return-Ok()");
         Ok(consumed_weight)
     }
 

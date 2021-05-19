@@ -50,7 +50,7 @@
 //! Based on research at https://research.web3.foundation/en/latest/polkadot/slashing/npos/
 
 use super::{
-    log, Balance, EraIndex, Error, Exposure, Module, MultiTokenCurrency,
+    Balance, EraIndex, Error, Exposure, Module, MultiTokenCurrency,
     MultiTokenImbalanceWithZeroTrait, NegativeImbalanceOf, Perbill, SessionInterface, Store,
     TokenId, Trait, UnappliedSlash,
 };
@@ -623,8 +623,6 @@ pub fn do_slash<T: Trait>(
 
 /// Apply a previously-unapplied slash.
 pub(crate) fn apply_slash<T: Trait>(unapplied_slash: UnappliedSlash<T::AccountId, Balance>) {
-    log!(info, "Slash Applied");
-
     let validator_liquidity_token =
         match <Module<T>>::get_stash_liquidity_token(&unapplied_slash.validator) {
             Some(liquidity_token) => liquidity_token,

@@ -705,7 +705,6 @@ impl ExtBuilder {
 }
 
 pub type System = frame_system::Module<Test>;
-pub type Balances = pallet_balances::Module<Test>;
 pub type Session = pallet_session::Module<Test>;
 pub type Timestamp = pallet_timestamp::Module<Test>;
 pub type Staking = Module<Test>;
@@ -806,15 +805,23 @@ fn assert_ledger_consistent(ctrl: AccountId) {
 }
 
 pub(crate) fn mint_liquidity_for_user(user: &AccountId, val: Balance) {
-    <Test as Trait>::Tokens::mint(NATIVE_TOKEN_ID, user, val * 4);
-    <Test as Trait>::Tokens::mint(DUMMY_TOKEN_FOR_POOL_ID, user, val * 4);
+    assert_ok!(<Test as Trait>::Tokens::mint(
+        NATIVE_TOKEN_ID,
+        user,
+        val * 4
+    ));
+    assert_ok!(<Test as Trait>::Tokens::mint(
+        DUMMY_TOKEN_FOR_POOL_ID,
+        user,
+        val * 4
+    ));
 
-    <Test as Trait>::Xyk::mint_liquidity(
+    assert_ok!(<Test as Trait>::Xyk::mint_liquidity(
         Origin::from(Some(user.clone())).into(),
         NATIVE_TOKEN_ID,
         DUMMY_TOKEN_FOR_POOL_ID,
         val * 2,
-    );
+    ));
 }
 
 pub(crate) fn bond_validator(stash: AccountId, ctrl: AccountId, val: Balance) {
@@ -875,19 +882,8 @@ pub(crate) fn start_session(session_index: SessionIndex) {
         "start_session can only be used with session length 1."
     );
     for i in Session::current_index()..session_index {
-        log!(info, "i:{:?}", i);
-        log!(
-            info,
-            "block_number-from_start_session-before_set_block_number:{:?}",
-            System::block_number()
-        );
         Staking::on_finalize(System::block_number());
         System::set_block_number((i + 1).into());
-        log!(
-            info,
-            "block_number-from_start_session-after_set_block_number:{:?}",
-            System::block_number()
-        );
         Timestamp::set_timestamp(System::block_number() * 1000 + INIT_TIMESTAMP);
         Session::on_initialize(System::block_number());
         Staking::on_initialize(System::block_number());
@@ -906,28 +902,6 @@ pub(crate) fn start_era(era_index: EraIndex) {
 }
 
 pub(crate) fn current_total_payout_for_duration(duration: u64) -> Balance {
-    log!(
-        info,
-        "eras_total_stake:{:?}",
-        Staking::eras_total_stake(Staking::active_era().unwrap().index)
-    );
-    log!(
-        info,
-        "total_issuance:{:?}",
-        <Test as Trait>::Tokens::total_issuance(NATIVE_TOKEN_ID.into())
-    );
-    let (payout, max) = inflation::compute_total_payout(
-        <Test as Trait>::RewardCurve::get(),
-        Staking::eras_total_stake(Staking::active_era().unwrap().index),
-        <Test as Trait>::Tokens::total_issuance(NATIVE_TOKEN_ID.into()),
-        duration,
-    );
-    log!(
-        info,
-        "current_total_payout_for_duration-(payout, max):{:?}",
-        (payout, max)
-    );
-
     inflation::compute_total_payout(
         <Test as Trait>::RewardCurve::get(),
         Staking::eras_total_stake(Staking::active_era().unwrap().index),
@@ -963,11 +937,6 @@ pub(crate) fn on_offence_in_era(
     let bonded_eras = crate::BondedEras::get();
     for &(bonded_era, start_session) in bonded_eras.iter() {
         if bonded_era == era {
-            log!(
-                info,
-                "(bonded_era, start_session):{:?}",
-                (bonded_era, start_session)
-            );
             let _ = Staking::on_offence(offenders, slash_fraction, start_session).unwrap();
             return;
         } else if bonded_era > era {
@@ -1146,11 +1115,6 @@ pub(crate) fn prepare_submission_with(
         winners,
         assignments,
     } = Staking::do_phragmen::<OffchainAccuracy>().unwrap();
-    log!(
-        info,
-        "prepare_submission_with-winners.len():{:?}",
-        winners.len()
-    );
     let winners = sp_npos_elections::to_without_backing(winners);
 
     let stake_of = |who: &AccountId| -> VoteWeight {
@@ -1233,11 +1197,6 @@ pub(crate) fn prepare_submission_with(
 
 /// Make all validator and nominator request their payment
 pub(crate) fn make_all_reward_payment(era: EraIndex) {
-    log!(
-        info,
-        "mock-beginning_to_execute-make_all_reward_payment-for_era:{:?}",
-        era
-    );
     let validators_with_reward = ErasRewardPoints::<Test>::get(era)
         .individual
         .keys()
@@ -1276,6 +1235,7 @@ macro_rules! assert_session_era {
     };
 }
 
+#[allow(dead_code)]
 pub(crate) fn staking_events() -> Vec<Event<Test>> {
     System::events()
         .into_iter()

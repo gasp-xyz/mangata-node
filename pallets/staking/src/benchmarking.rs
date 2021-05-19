@@ -7,6 +7,7 @@ const DUMMY_TOKEN_FOR_POOL_ID: u32 = 2u32;
 const DEFAULT_LIQUIDITY_TOKEN_ID: u32 = 3u32;
 
 #[cfg(test)]
+#[allow(dead_code)]
 const DUMMY_TOKEN_FOR_POOL_ID: u32 = 1u32;
 #[cfg(test)]
 const DEFAULT_LIQUIDITY_TOKEN_ID: u32 = 2u32;
@@ -73,14 +74,11 @@ pub fn create_validator_with_nominators<T: Trait>(
 
     let mut points_total = 0;
     let mut points_individual = Vec::new();
-    log!(info, "DEBUG 0.0001");
     let (v_stash, v_controller) =
         create_stash_controller::<T>(0, liquidity_token_id, 100, destination.clone())?;
-    log!(info, "DEBUG 0.001");
     let validator_prefs = ValidatorPrefs {
         commission: Perbill::from_percent(50),
     };
-    log!(info, "DEBUG 0.01");
     Staking::<T>::validate(RawOrigin::Signed(v_controller).into(), validator_prefs)?;
     let stash_lookup: <T::Lookup as StaticLookup>::Source = T::Lookup::unlookup(v_stash.clone());
 
@@ -102,8 +100,6 @@ pub fn create_validator_with_nominators<T: Trait>(
             )?;
         }
     }
-
-    log!(info, "DEBUG 0.1");
 
     ValidatorCount::put(1);
 
@@ -341,7 +337,6 @@ benchmarks! {
 
     payout_stakers_alive_staked {
         let n in 1 .. T::MaxNominatorRewardedPerValidator::get() as u32;
-        log!(info, "bench-payout_stakers_alive_staked");
 
         let validator = create_validator_with_nominators::<T>(
             n,
@@ -728,7 +723,7 @@ benchmarks! {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::mock::{bond_nominator, bond_validator, ExtBuilder, Origin, Staking, Test};
+    use crate::mock::{ExtBuilder, Origin, Staking, Test};
     use frame_support::assert_ok;
 
     #[test]
@@ -802,8 +797,6 @@ mod tests {
             .execute_with(|| {
                 let n = 10;
 
-                log!(info, "DEBUG 0.0");
-
                 let validator_stash = create_validator_with_nominators::<Test>(
                     n,
                     <Test as Trait>::MaxNominatorRewardedPerValidator::get() as u32,
@@ -813,7 +806,6 @@ mod tests {
                 )
                 .unwrap();
 
-                log!(info, "DEBUG 1");
                 // Add 20 slashing spans
                 let num_of_slashing_spans = 20;
                 add_slashing_spans::<Test>(&validator_stash, num_of_slashing_spans);
@@ -875,53 +867,53 @@ mod tests {
             .build()
             .execute_with(|| {
                 assert_ok!(test_benchmark_bond::<Test>());
-                log!(info, "test_benchmark_bond-completed");
+
                 assert_ok!(test_benchmark_bond_extra::<Test>());
-                log!(info, "test_benchmark_bond_extra-completed");
+
                 assert_ok!(test_benchmark_unbond::<Test>());
-                log!(info, "test_benchmark_unbond-completed");
+
                 assert_ok!(test_benchmark_withdraw_unbonded_update::<Test>());
-                log!(info, "test_benchmark_withdraw_unbonded_update-completed");
+
                 assert_ok!(test_benchmark_withdraw_unbonded_kill::<Test>());
-                log!(info, "test_benchmark_withdraw_unbonded_kill-completed");
+
                 assert_ok!(test_benchmark_validate::<Test>());
-                log!(info, "test_benchmark_validate-completed");
+
                 assert_ok!(test_benchmark_nominate::<Test>());
-                log!(info, "test_benchmark_nominate-completed");
+
                 assert_ok!(test_benchmark_chill::<Test>());
-                log!(info, "test_benchmark_chill-completed");
+
                 assert_ok!(test_benchmark_set_payee::<Test>());
-                log!(info, "test_benchmark_set_payee-completed");
+
                 assert_ok!(test_benchmark_set_controller::<Test>());
-                log!(info, "test_benchmark_set_controller-completed");
+
                 assert_ok!(test_benchmark_set_validator_count::<Test>());
-                log!(info, "test_benchmark_set_validator_count-completed");
+
                 assert_ok!(test_benchmark_force_no_eras::<Test>());
-                log!(info, "test_benchmark_force_no_eras-completed");
+
                 assert_ok!(test_benchmark_force_new_era::<Test>());
-                log!(info, "test_benchmark_force_new_era-completed");
+
                 assert_ok!(test_benchmark_force_new_era_always::<Test>());
-                log!(info, "test_benchmark_force_new_era_always-completed");
+
                 assert_ok!(test_benchmark_set_invulnerables::<Test>());
-                log!(info, "test_benchmark_set_invulnerables-completed");
+
                 assert_ok!(test_benchmark_force_unstake::<Test>());
-                log!(info, "test_benchmark_force_unstake-completed");
+
                 assert_ok!(test_benchmark_cancel_deferred_slash::<Test>());
-                log!(info, "test_benchmark_cancel_deferred_slash-completed");
+
                 assert_ok!(test_benchmark_payout_stakers_alive_staked::<Test>());
-                log!(info, "test_benchmark_payout_stakers_alive_staked-completed");
+
                 assert_ok!(test_benchmark_rebond::<Test>());
-                log!(info, "test_benchmark_rebond-completed");
+
                 assert_ok!(test_benchmark_set_history_depth::<Test>());
-                log!(info, "test_benchmark_set_history_depth-completed");
+
                 assert_ok!(test_benchmark_reap_stash::<Test>());
-                log!(info, "test_benchmark_reap_stash-completed");
+
                 assert_ok!(test_benchmark_new_era::<Test>());
-                log!(info, "test_benchmark_new_era-completed");
+
                 assert_ok!(test_benchmark_do_slash::<Test>());
-                log!(info, "test_benchmark_do_slash-completed");
+
                 assert_ok!(test_benchmark_payout_all::<Test>());
-                log!(info, "test_benchmark_payout_all-completed");
+
                 // only run one of them to same time on the CI. ignore the other two.
                 assert_ok!(test_benchmark_submit_solution_initial::<Test>());
             });

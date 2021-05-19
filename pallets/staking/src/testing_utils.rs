@@ -363,104 +363,43 @@ pub fn get_seq_phragmen_solution<T: Trait>(
 
 /// Returns a solution in which only one winner is elected with just a self vote.
 pub fn get_single_winner_solution<T: Trait>(
-    winner: T::AccountId,
-) -> Result<
-    (
-        Vec<ValidatorIndex>,
-        CompactAssignments,
-        ElectionScore,
-        ElectionSize,
-    ),
-    &'static str,
-> {
-    let snapshot_validators = <Staking<T>>::snapshot_validators().unwrap();
-    let snapshot_nominators = <Staking<T>>::snapshot_nominators().unwrap();
+	winner: T::AccountId
+) -> Result<(Vec<ValidatorIndex>, CompactAssignments, ElectionScore, ElectionSize), &'static str> {
+	let snapshot_validators = <Module<T>>::snapshot_validators().unwrap();
+	let snapshot_nominators = <Module<T>>::snapshot_nominators().unwrap();
 
-    let val_index = snapshot_validators
-        .iter()
-        .position(|x| *x == winner)
-        .ok_or("not a validator")?;
-    let nom_index = snapshot_nominators
-        .iter()
-        .position(|x| *x == winner)
-        .ok_or("not a nominator")?;
+	let val_index = snapshot_validators.iter().position(|x| *x == winner).ok_or("not a validator")?;
+	let nom_index = snapshot_nominators.iter().position(|x| *x == winner).ok_or("not a nominator")?;
 
-    let stake = <Staking<T>>::slashable_balance_of(&winner);
-    let stake =
-        <T::CurrencyToVote as Convert<Balance, VoteWeight>>::convert(stake) as ExtendedBalance;
+	let stake = <Staking<T>>::slashable_balance_of(&winner);
+	let stake = <T::CurrencyToVote as Convert<Balance, VoteWeight>>::convert(stake)
+		as ExtendedBalance;
 
-    let winners = vec![winner];
+	let val_index = val_index as ValidatorIndex;
+	let nom_index = nom_index as NominatorIndex;
 
-    let mut staked_assignments: Vec<StakedAssignment<T::AccountId>> = Vec::new();
-    // you could at this point start adding some of the nominator's stake, but for now we don't.
-    // This solution must be bad.
+	let winners = vec![val_index];
+	let compact = CompactAssignments {
+		votes1: vec![(nom_index, val_index)],
+		..Default::default()
+	};
+	let score = [stake, stake, stake * stake];
+	let size = ElectionSize {
+		validators: snapshot_validators.len() as ValidatorIndex,
+		nominators: snapshot_nominators.len() as NominatorIndex,
+	};
 
-    // add self support to winners.
-    winners.iter().for_each(|w| {
-        staked_assignments.push(StakedAssignment {
-            who: w.clone(),
-            distribution: vec![(
-                w.clone(),
-                <T::CurrencyToVote as Convert<Balance, u64>>::convert(
-                    <Staking<T>>::slashable_balance_of(&w),
-                ) as ExtendedBalance,
-            )],
-        })
-    });
-
-    let nominator_index = |a: &T::AccountId| -> Option<NominatorIndex> {
-        snapshot_nominators
-            .iter()
-            .position(|x| x == a)
-            .and_then(|i| <usize as TryInto<NominatorIndex>>::try_into(i).ok())
-    };
-    let validator_index = |a: &T::AccountId| -> Option<ValidatorIndex> {
-        snapshot_validators
-            .iter()
-            .position(|x| x == a)
-            .and_then(|i| <usize as TryInto<ValidatorIndex>>::try_into(i).ok())
-    };
-
-    // convert back to ratio assignment. This takes less space.
-    let low_accuracy_assignment =
-        assignment_staked_to_ratio_normalized(staked_assignments).expect("Failed to normalize");
-    // compact encode the assignment.
-    let compact = CompactAssignments::from_assignment(
-        low_accuracy_assignment,
-        nominator_index,
-        validator_index,
-    )
-    .unwrap();
-
-    let score = [stake, stake, stake * stake];
-
-    // winners to index.
-    let winners = winners
-        .into_iter()
-        .map(|w| {
-            snapshot_validators
-                .iter()
-                .position(|v| *v == w)
-                .unwrap()
-                .try_into()
-                .unwrap()
-        })
-        .collect::<Vec<ValidatorIndex>>();
-
-    let size = ElectionSize {
-        validators: snapshot_validators.len() as ValidatorIndex,
-        nominators: snapshot_nominators.len() as NominatorIndex,
-    };
-
-    Ok((winners, compact, score, size))
+	Ok((winners, compact, score, size))
 }
 
 /// get the active era.
+#[allow(dead_code)]
 pub fn current_era<T: Trait>() -> EraIndex {
     <Staking<T>>::current_era().unwrap_or(0)
 }
 
 /// initialize the first era.
+#[allow(dead_code)]
 pub fn init_active_era() {
     ActiveEra::put(ActiveEraInfo {
         index: 1,

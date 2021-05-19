@@ -1,6 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(not(test))]
+#[allow(dead_code)]
 const DUMMY_TOKEN_FOR_POOL_ID: u32 = 2u32;
 #[cfg(not(test))]
 const DEFAULT_LIQUIDITY_TOKEN_ID: u32 = 3u32;
@@ -25,11 +26,10 @@ const BASE_TOKEN_VALUE: u128 = 100__000_000_000_000_000_000u128;
 const MAX_SPANS: u32 = 100;
 const MAX_VALIDATORS: u32 = 1000;
 const MAX_SLASHES: u32 = 1000;
-
 const USER_SEED: u32 = 999666;
-
 const NATIVE_TOKEN_ID: u32 = 0u32;
 
+#[allow(dead_code)]
 const SEED_FOR_DEFAULT_USERS: &'static str = "default_users";
 
 macro_rules! do_whitelist {
@@ -60,6 +60,7 @@ fn add_slashing_spans<T: Trait>(who: &T::AccountId, spans: u32) {
 
 // This function generates one validator being nominated by n nominators, and returns the validator
 // stash account. It also starts an era and creates pending payouts.
+#[allow(unused_variables)]
 pub fn create_validator_with_nominators<T: Trait>(
     n: u32,
     upper_bound: u32,
@@ -137,8 +138,6 @@ benchmarks! {
     _{}
 
     bond {
-        // let _ = create_xyk_pool::<T>
-            // (SEED_FOR_DEFAULT_USERS, 0, NATIVE_TOKEN_ID, DUMMY_TOKEN_FOR_POOL_ID, DEFAULT_LIQUIDITY_TOKEN_ID, 300);
         let stash = create_funded_user::<T>("stash", USER_SEED, DEFAULT_LIQUIDITY_TOKEN_ID, 100);
         let controller = create_funded_user::<T>("controller", USER_SEED, DEFAULT_LIQUIDITY_TOKEN_ID, 100);
         let controller_lookup: <T::Lookup as StaticLookup>::Source = T::Lookup::unlookup(controller.clone());

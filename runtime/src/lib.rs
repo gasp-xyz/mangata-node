@@ -55,7 +55,6 @@ pub use pallet_assets_info;
 use pallet_session::historical as pallet_session_historical;
 pub use pallet_staking::StakerStatus;
 pub use pallet_xyk;
-use pallet_xyk::XykFunctionsTrait;
 use xyk_runtime_api::{RpcAmountsResult, RpcResult};
 
 /// Bridge pallets

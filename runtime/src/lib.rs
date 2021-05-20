@@ -742,10 +742,15 @@ impl_runtime_apis! {
             second_asset_id: TokenId,
             liquidity_asset_amount: Balance
         ) -> RpcAmountsResult<Balance> {
-            let (first_asset_amount, second_asset_amount) = Xyk::get_burn_amount(first_asset_id, second_asset_id, liquidity_asset_amount);
-            RpcAmountsResult{
-                first_asset_amount,
-                second_asset_amount
+            match Xyk::get_burn_amount(first_asset_id, second_asset_id, liquidity_asset_amount){
+                Ok((first_asset_amount, second_asset_amount)) => RpcAmountsResult{
+                                                                    first_asset_amount,
+                                                                    second_asset_amount
+                                                                },
+                Err(_) => RpcAmountsResult{
+                    first_asset_amount: 0u32.into(),
+                    second_asset_amount: 0u32.into()
+                },
             }
         }
     }

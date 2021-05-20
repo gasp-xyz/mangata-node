@@ -268,6 +268,7 @@ decl_error! {
         AssetAlreadyExists,
         AssetDoesNotExists,
         DivisionByZero,
+        UnexpectedFailure,
     }
 }
 
@@ -342,13 +343,13 @@ decl_module! {
 
             // Ensure pool does not exists yet
             ensure!(
-                !<Pools<T>>::contains_key((first_asset_id, second_asset_id)),
+                !Pools::contains_key((first_asset_id, second_asset_id)),
                 Error::<T>::PoolAlreadyExists,
             );
 
             // Ensure pool does not exists yet
             ensure!(
-                !<Pools<T>>::contains_key((second_asset_id,first_asset_id)),
+                !Pools::contains_key((second_asset_id,first_asset_id)),
                 Error::<T>::PoolAlreadyExists,
             );
 
@@ -743,6 +744,25 @@ decl_module! {
             // Calculate first and second token amounts depending on liquidity amount to burn
             let (first_asset_amount, second_asset_amount) =  Self::get_burn_amount(first_asset_id, second_asset_id, liquidity_asset_amount);
 
+            let total_liquidity_assets: Balance = T::Currency::total_issuance(liquidity_asset_id.into()).into();
+            // If all liquidity assets are being burned then
+            // both asset amounts must be equal to their reserve values
+            // All storage values related to this pool must be destroyed
+            if liquidity_asset_amount == total_liquidity_assets{
+                ensure!((first_asset_reserve - first_asset_amount).is_zero()
+                && (second_asset_reserve - second_asset_amount).is_zero(),
+                Error::<T>::UnexpectedFailure
+            );
+            }else
+            {
+                ensure!(!((first_asset_reserve - first_asset_amount).is_zero()
+                || (second_asset_reserve - second_asset_amount).is_zero()),
+                Error::<T>::UnexpectedFailure
+            );
+            }
+            // If all liquidity assets are not being burned then
+            // both asset amounts must be less than their reserve values
+
             // Ensure not withdrawing zero amounts
             ensure!(
                 !first_asset_amount.is_zero() && !second_asset_amount.is_zero(),
@@ -765,21 +785,22 @@ decl_module! {
                 ExistenceRequirement::KeepAlive,
             )?;
 
-            // Apply changes in token pools, removing withdrawn amounts
-            Pools::insert(
-                (&first_asset_id, &second_asset_id),
-                first_asset_reserve - first_asset_amount,
-            );
-            Pools::insert(
-                (&second_asset_id, &first_asset_id),
-                second_asset_reserve - second_asset_amount,
-            );
-
-            // Destroying token pool, if no tokens left
-            if (first_asset_reserve - first_asset_amount == 0.saturated_into::<Balance>())
-                || (second_asset_reserve - second_asset_amount == 0.saturated_into::<Balance>()) {
+            if liquidity_asset_amount == total_liquidity_assets{
                 Pools::remove((first_asset_id, second_asset_id));
                 Pools::remove((second_asset_id, first_asset_id));
+                LiquidityAssets::remove((first_asset_id, second_asset_id));
+                LiquidityAssets::remove((second_asset_id, first_asset_id));
+                LiquidityPools::remove(liquidity_asset_id);
+            }else{
+                // Apply changes in token pools, removing withdrawn amounts
+                Pools::insert(
+                    (&first_asset_id, &second_asset_id),
+                    first_asset_reserve - first_asset_amount,
+                );
+                Pools::insert(
+                    (&second_asset_id, &first_asset_id),
+                    second_asset_reserve - second_asset_amount,
+                );
             }
 
             // Destroying burnt liquidity tokens

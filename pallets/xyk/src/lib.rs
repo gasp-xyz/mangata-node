@@ -342,13 +342,13 @@ decl_module! {
 
             // Ensure pool does not exists yet
             ensure!(
-                !<Pools<T>>::contains_key((first_asset_id, second_asset_id)),
+                !<Pools>::contains_key((first_asset_id, second_asset_id)),
                 Error::<T>::PoolAlreadyExists,
             );
 
             // Ensure pool does not exists yet
             ensure!(
-                !<Pools<T>>::contains_key((second_asset_id,first_asset_id)),
+                !<Pools>::contains_key((second_asset_id,first_asset_id)),
                 Error::<T>::PoolAlreadyExists,
             );
 

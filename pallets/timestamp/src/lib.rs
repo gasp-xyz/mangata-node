@@ -177,7 +177,7 @@ decl_module! {
             // - 2nd time in second block when extrinsics from the previous block(1st block)
 
             let timestamp = if prev.is_zero() {
-                // only happens for the first block - in order to have below assertion working 
+                // only happens for the first block - in order to have below assertion working
                 // lets modify timestamp of the first block so when it is executed for the second
                 // time assertion will be still correct
                 now - T::MinimumPeriod::get()

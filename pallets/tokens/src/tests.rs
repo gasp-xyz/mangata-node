@@ -5,7 +5,7 @@
 use super::*;
 use frame_support::{assert_noop, assert_ok, traits::WithdrawReason};
 use mock::{
-    Balance, ExtBuilder, Runtime, System, TestEvent, Tokens, TreasuryCurrencyAdapter,
+    Balance, ExtBuilder, Origin, Runtime, System, TestEvent, Tokens, TreasuryCurrencyAdapter,
     ACCUMULATED_RECEIVED, ALICE, BOB, ID_1, ID_2, TEST_TOKEN_ID, TREASURY_ACCOUNT,
 };
 
@@ -1138,5 +1138,58 @@ fn currency_adapter_transferring_too_high_value_should_not_panic() {
             Balance::max_value().into()
         );
         assert_eq!(TreasuryCurrencyAdapter::free_balance(&ALICE), 1);
+    });
+}
+
+#[test]
+fn fail_to_create_currency_as_regular_user() {
+    ExtBuilder::default().build().execute_with(|| {
+        System::set_block_number(1);
+        assert_noop!(
+            Tokens::create(Some(ALICE).into(), ALICE.into(), 100000),
+            DispatchError::BadOrigin,
+        );
+    });
+}
+
+#[test]
+fn fail_to_create_tokens_as_regular_user() {
+    ExtBuilder::default().build().execute_with(|| {
+        System::set_block_number(1);
+        assert_noop!(
+            Tokens::create(Some(ALICE).into(), ALICE.into(), 100000),
+            DispatchError::BadOrigin,
+        );
+    });
+}
+
+#[test]
+fn mint_currency_as_root() {
+    ExtBuilder::default().build().execute_with(|| {
+        System::set_block_number(1);
+        assert_ok!(Tokens::create(Origin::root(), ALICE.into(), 100000));
+    });
+}
+
+#[test]
+fn fail_to_mint_tokens_as_regular_user() {
+    ExtBuilder::default().build().execute_with(|| {
+        System::set_block_number(1);
+
+        assert_noop!(
+            Tokens::mint(Some(ALICE).into(), 1, ALICE.into(), 100000),
+            DispatchError::BadOrigin,
+        );
+    });
+}
+
+#[test]
+fn mint_tokens_as_root() {
+    ExtBuilder::default().build().execute_with(|| {
+        System::set_block_number(1);
+
+        assert_ok!(Tokens::create(Origin::root(), ALICE.into(), 100000),);
+
+        assert_ok!(Tokens::mint(Origin::root(), 0, ALICE.into(), 100000),);
     });
 }

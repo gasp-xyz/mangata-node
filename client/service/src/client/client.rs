@@ -28,10 +28,9 @@ use hash_db::Prefix;
 use log::{info, trace, warn};
 use parking_lot::{Mutex, RwLock};
 use prometheus_endpoint::Registry;
-use rand::rngs::StdRng;
-use rand::seq::SliceRandom;
-use rand::{Rng, SeedableRng};
+use rand::Rng;
 use sc_block_builder::{BlockBuilderApi, BlockBuilderProvider};
+use extrinsic_info_runtime_api::runtime_api::ExtrinsicInfoRuntimeApi;
 use sc_client_api::{
 	backend::{
 		self, apply_aux, changes_tries_state_at_block, BlockImportOperation, ClientImportOperation,
@@ -884,7 +883,7 @@ where
 	where
 		Self: ProvideRuntimeApi<Block>,
 		<Self as ProvideRuntimeApi<Block>>::Api:
-			CoreApi<Block, Error = Error> + ApiExt<Block, StateBackend = B::State>,
+			CoreApi<Block, Error = Error> + ApiExt<Block, StateBackend = B::State> + ExtrinsicInfoRuntimeApi<Block>,
 	{
 		let parent_hash = import_block.header.parent_hash();
 		let at = BlockId::Hash(*parent_hash);
@@ -929,13 +928,11 @@ where
 								Block::new(import_block.header.clone(), body.clone()),
 							)?;
 						} else {
+
 							info!("previous block has extrinsics");
 							let extrinsics_hash = BlakeTwo256::hash(&body.clone().encode());
-							let mut shuffled_extrinsics = previous_block_extrinsics.clone();
-							info!("seed: {:?}", extrinsics_hash.to_fixed_bytes());
-							let mut rng: StdRng =
-								SeedableRng::from_seed(extrinsics_hash.to_fixed_bytes());
-							shuffled_extrinsics.shuffle(&mut rng);
+                            let shuffled_extrinsics = extrinsic_shuffler::shuffle::<Block, Self>(&runtime_api, &at,previous_block_extrinsics, extrinsics_hash);
+
 							runtime_api.execute_block_with_context(
 								&at,
 								execution_context,
@@ -1371,7 +1368,7 @@ where
 	Block: BlockT,
 	Self: ChainHeaderBackend<Block> + ProvideRuntimeApi<Block>,
 	<Self as ProvideRuntimeApi<Block>>::Api: ApiExt<Block, StateBackend = backend::StateBackendFor<B, Block>>
-		+ BlockBuilderApi<Block, Error = Error>,
+		+ BlockBuilderApi<Block, Error = Error> + ExtrinsicInfoRuntimeApi<Block> ,
 {
 	fn new_block_at<R: Into<RecordProof>>(
 		&self,
@@ -1839,7 +1836,7 @@ where
 	Block: BlockT,
 	Client<B, E, Block, RA>: ProvideRuntimeApi<Block>,
 	<Client<B, E, Block, RA> as ProvideRuntimeApi<Block>>::Api:
-		CoreApi<Block, Error = Error> + ApiExt<Block, StateBackend = B::State>,
+		CoreApi<Block, Error = Error> + ApiExt<Block, StateBackend = B::State> + ExtrinsicInfoRuntimeApi<Block> ,
 {
 	type Error = ConsensusError;
 	type Transaction = backend::TransactionFor<B, Block>;
@@ -1943,7 +1940,7 @@ where
 	Block: BlockT,
 	Self: ProvideRuntimeApi<Block>,
 	<Self as ProvideRuntimeApi<Block>>::Api:
-		CoreApi<Block, Error = Error> + ApiExt<Block, StateBackend = B::State>,
+		CoreApi<Block, Error = Error> + ApiExt<Block, StateBackend = B::State> + ExtrinsicInfoRuntimeApi<Block>,
 {
 	type Error = ConsensusError;
 	type Transaction = backend::TransactionFor<B, Block>;

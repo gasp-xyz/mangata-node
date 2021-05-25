@@ -77,15 +77,14 @@ mod multi_token_currency;
 mod multi_token_imbalances;
 mod tests;
 
-use orml_traits::{
-    arithmetic::{self, Signed},
-    MultiCurrency, MultiCurrencyExtended, MultiLockableCurrency, MultiReservableCurrency,
-    OnReceived,
-};
-
 use frame_support::traits::{
     Currency as PalletCurrency, LockableCurrency as PalletLockableCurrency,
     ReservableCurrency as PalletReservableCurrency,
+};
+pub use orml_traits::MultiCurrency;
+use orml_traits::{
+    arithmetic::{self, Signed},
+    MultiCurrencyExtended, MultiLockableCurrency, MultiReservableCurrency, OnReceived,
 };
 
 use codec::FullCodec;
@@ -341,12 +340,12 @@ decl_module! {
             token_id: TokenId,
             account_id: T::AccountId,
             value: Balance,
-        ) -> frame_support::dispatch::DispatchResult{
+        ) {
+            ensure_root(origin)?;
             let currency_id: T::CurrencyId = token_id.into();
             let amount: T::Balance = value.into();
             MultiTokenCurrencyAdapter::<T>::mint(currency_id, &account_id, amount)?;
             Self::deposit_event(RawEvent::Minted(currency_id, account_id, amount));
-            Ok(())
         }
     }
 }

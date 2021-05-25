@@ -412,87 +412,9 @@ decl_module! {
         ) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
-<<<<<<< HEAD
 
             <Self as XykFunctionsTrait<T::AccountId>>::burn_liquidity(sender, first_asset_id.into(), second_asset_id.into(), liquidity_asset_amount.into())
 
-=======
-            let vault = Self::account_id();
-
-            // Ensure pool exists
-            ensure!(
-                Pools::contains_key((first_asset_id, second_asset_id)),
-                Error::<T>::NoSuchPool,
-            );
-
-            // Get token reserves and liquidity asset id
-            let first_asset_reserve = Pools::get((first_asset_id, second_asset_id));
-            let second_asset_reserve = Pools::get((second_asset_id, first_asset_id));
-            let liquidity_asset_id = Self::get_liquidity_asset(first_asset_id, second_asset_id);
-
-            // Ensure user has enought liquidity tokens to burn
-            ensure!(
-                T::Currency::can_slash(liquidity_asset_id.into(), &sender, liquidity_asset_amount.into()),
-                Error::<T>::NotEnoughAssets,
-            );
-            let new_balance: Balance = T::Currency::free_balance(liquidity_asset_id.into(), &sender).into() - liquidity_asset_amount;
-
-            // ??
-            T::Currency::ensure_can_withdraw(liquidity_asset_id.into(),
-                &sender,
-                liquidity_asset_amount.into(),
-                WithdrawReasons::all(),
-                new_balance.into()).or(Err(Error::<T>::NotEnoughAssets))?;
-
-            // Calculate first and second token amounts depending on liquidity amount to burn
-            let (first_asset_amount, second_asset_amount) =  Self::get_burn_amount(first_asset_id, second_asset_id, liquidity_asset_amount);
-
-            // Ensure not withdrawing zero amounts
-            ensure!(
-                !first_asset_amount.is_zero() && !second_asset_amount.is_zero(),
-                Error::<T>::ZeroAmount,
-            );
-
-            // Transfer withdrawn amounts from vault to user
-            T::Currency::transfer(
-                first_asset_id.into(),
-                &vault,
-                &sender,
-                first_asset_amount.into(),
-                ExistenceRequirement::KeepAlive,
-            )?;
-            T::Currency::transfer(
-                second_asset_id.into(),
-                &vault,
-                &sender,
-                second_asset_amount.into(),
-                ExistenceRequirement::KeepAlive,
-            )?;
-
-            // Apply changes in token pools, removing withdrawn amounts
-            Pools::insert(
-                (&first_asset_id, &second_asset_id),
-                first_asset_reserve - first_asset_amount,
-            );
-            Pools::insert(
-                (&second_asset_id, &first_asset_id),
-                second_asset_reserve - second_asset_amount,
-            );
-
-            // Destroying token pool, if no tokens left
-            if (first_asset_reserve - first_asset_amount == 0.saturated_into::<Balance>())
-                || (second_asset_reserve - second_asset_amount == 0.saturated_into::<Balance>()) {
-                Pools::remove((first_asset_id, second_asset_id));
-                Pools::remove((second_asset_id, first_asset_id));
-            }
-
-            // Destroying burnt liquidity tokens
-            T::Currency::burn_and_settle(liquidity_asset_id.into(), &sender, liquidity_asset_amount.into())?;
-
-            Self::deposit_event(RawEvent::LiquidityBurned(sender, first_asset_id, first_asset_amount, second_asset_id, second_asset_amount,liquidity_asset_id, second_asset_amount));
-
-            Ok(())
->>>>>>> develop
         }
     }
 }

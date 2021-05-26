@@ -2527,23 +2527,20 @@ impl<T: Trait> Module<T> {
     /// to pay the right payee for the given staker account.
     fn make_payout(stash: &T::AccountId, amount: Balance) -> Option<PositiveImbalanceOf<T>> {
         let dest = Self::payee(stash);
-        let native_liquidity_token = T::NativeCurrencyId::get();
+        let native_token_id = T::NativeCurrencyId::get();
         match dest {
             RewardDestination::Controller => Self::bonded(stash).and_then(|controller| {
                 Some(T::Tokens::deposit_creating(
-                    native_liquidity_token.into(),
+                    native_token_id.into(),
                     &controller,
                     amount.into(),
                 ))
             }),
-            RewardDestination::Stash => T::Tokens::deposit_into_existing(
-                native_liquidity_token.into(),
-                stash,
-                amount.into(),
-            )
-            .ok(),
+            RewardDestination::Stash => {
+                T::Tokens::deposit_into_existing(native_token_id.into(), stash, amount.into()).ok()
+            }
             RewardDestination::Account(dest_account) => Some(T::Tokens::deposit_creating(
-                native_liquidity_token.into(),
+                native_token_id.into(),
                 &dest_account,
                 amount.into(),
             )),
@@ -2977,9 +2974,6 @@ impl<T: Trait> Module<T> {
             compute,
         }) = Self::try_do_election()
         {
-            // // Totally close the election round and data.
-            // Self::close_election_window();
-
             // Populate Stakers and write slot stake.
             let mut total_stake: Balance = Zero::zero();
             exposures.into_iter().for_each(|(stash, exposure)| {

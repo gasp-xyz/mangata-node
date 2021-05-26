@@ -217,6 +217,180 @@ fn change_controller_works() {
 }
 
 #[test]
+#[ignore]
+fn rewards_should_work() {
+    // should check that:
+    // * rewards get recorded per session
+    // * rewards get paid per Era
+    // * `RewardRemainder::on_unbalanced` is called
+    // * Check that nominators are also rewarded
+    ExtBuilder::default().nominate(true).build_and_execute(|| {
+        let init_balance_10 = <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &10);
+        let init_balance_11 = <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &11);
+        let init_balance_20 = <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &20);
+        let init_balance_21 = <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &21);
+        let init_balance_100 = <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &100);
+        let init_balance_101 = <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &101);
+
+        // Check state
+        Payee::<Test>::insert(11, RewardDestination::Controller);
+        Payee::<Test>::insert(21, RewardDestination::Controller);
+        Payee::<Test>::insert(101, RewardDestination::Controller);
+
+        <Module<Test>>::reward_by_ids(vec![(11, 50)]);
+        <Module<Test>>::reward_by_ids(vec![(11, 50)]);
+        // This is the second validator of the current elected set.
+        <Module<Test>>::reward_by_ids(vec![(21, 50)]);
+
+        // Compute total payout now for whole duration as other parameter won't change
+        let total_payout_0 = current_total_payout_for_duration(3 * 1000);
+        assert!(total_payout_0 > 10); // Test is meaningful if reward something
+
+        start_session(1);
+
+        assert_eq!(
+            <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &10),
+            init_balance_10
+        );
+        assert_eq!(
+            <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &11),
+            init_balance_11
+        );
+        assert_eq!(
+            <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &20),
+            init_balance_20
+        );
+        assert_eq!(
+            <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &21),
+            init_balance_21
+        );
+        assert_eq!(
+            <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &100),
+            init_balance_100
+        );
+        assert_eq!(
+            <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &101),
+            init_balance_101
+        );
+        assert_eq_uvec!(Session::validators(), vec![11, 21]);
+        assert_eq!(
+            Staking::eras_reward_points(Staking::active_era().unwrap().index),
+            EraRewardPoints {
+                total: 50 * 3,
+                individual: vec![(11, 100), (21, 50)].into_iter().collect(),
+            }
+        );
+        let part_for_10 = Perbill::from_rational_approximation::<u32>(1000, 1124);
+        let part_for_20 = Perbill::from_rational_approximation::<u32>(1000, 1374);
+        let part_for_100_from_10 = Perbill::from_rational_approximation::<u32>(124, 1124);
+        let part_for_100_from_20 = Perbill::from_rational_approximation::<u32>(374, 1374);
+
+        start_session(2);
+        start_session(3);
+
+        assert_eq!(Staking::active_era().unwrap().index, 1);
+
+        // COMMENT
+        // This is behaving very strangely for some reason
+        assert_eq!(
+            mock::REWARD_REMAINDER_UNBALANCED.with(|v| *v.borrow()),
+            7050 * 4 / 3
+        );
+        assert_eq!(
+            *mock::staking_events().last().unwrap(),
+            RawEvent::EraPayout(0, 2350 * 4 * 4 * 2, 7050 * 4 / 3)
+        );
+        mock::make_all_reward_payment(0);
+
+        assert_eq_error_rate!(
+            <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &10),
+            init_balance_10 + part_for_10 * total_payout_0 * 2 / 3,
+            2
+        );
+        assert_eq_error_rate!(
+            <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &11),
+            init_balance_11,
+            2
+        );
+        assert_eq_error_rate!(
+            <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &20),
+            init_balance_20 + part_for_20 * total_payout_0 * 1 / 3,
+            2
+        );
+        assert_eq_error_rate!(
+            <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &21),
+            init_balance_21,
+            2
+        );
+        assert_eq_error_rate!(
+            <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &100),
+            init_balance_100
+                + part_for_100_from_10 * total_payout_0 * 2 / 3
+                + part_for_100_from_20 * total_payout_0 * 1 / 3,
+            2
+        );
+        assert_eq_error_rate!(
+            <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &101),
+            init_balance_101,
+            2
+        );
+
+        assert_eq_uvec!(Session::validators(), vec![11, 21]);
+        <Module<Test>>::reward_by_ids(vec![(11, 1)]);
+
+        // Compute total payout now for whole duration as other parameter won't change
+        let total_payout_1 = current_total_payout_for_duration(3 * 1000);
+        assert!(total_payout_1 > 10); // Test is meaningful if reward something
+
+        mock::start_era(2);
+        assert_eq!(
+            mock::REWARD_REMAINDER_UNBALANCED.with(|v| *v.borrow()),
+            7050 * 4 * 2 / 3
+        );
+
+        assert_eq!(
+            *mock::staking_events().last().unwrap(),
+            RawEvent::EraPayout(1, 2350 * 4 * 4 * 2, 7050 * 4 / 3)
+        );
+
+        mock::make_all_reward_payment(1);
+
+        assert_eq_error_rate!(
+            <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &10),
+            init_balance_10 + part_for_10 * (total_payout_0 * 2 / 3 + total_payout_1),
+            2
+        );
+        assert_eq_error_rate!(
+            <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &11),
+            init_balance_11,
+            2
+        );
+        assert_eq_error_rate!(
+            <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &20),
+            init_balance_20 + part_for_20 * total_payout_0 * 1 / 3,
+            2
+        );
+        assert_eq_error_rate!(
+            <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &21),
+            init_balance_21,
+            2
+        );
+        assert_eq_error_rate!(
+            <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &100),
+            init_balance_100
+                + part_for_100_from_10 * (total_payout_0 * 2 / 3 + total_payout_1)
+                + part_for_100_from_20 * total_payout_0 * 1 / 3,
+            2
+        );
+        assert_eq_error_rate!(
+            <Test as Trait>::Tokens::total_balance(NATIVE_TOKEN_ID, &101),
+            init_balance_101,
+            2
+        );
+    });
+}
+
+#[test]
 fn staking_should_work() {
     // should test:
     // * new validators can be added to the default set

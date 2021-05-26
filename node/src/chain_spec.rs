@@ -125,7 +125,6 @@ pub fn development_config() -> Result<ChainSpec, String> {
                         .unwrap(),
                 ],
                 // Config for Staking
-                // Currently only setup for one initial staker
                 // Make sure it works with initial-authorities as staking uses both
                 vec![(
                     // Who gets to stake initially
@@ -231,7 +230,6 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                     get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
                 ],
                 // Config for Staking
-                // Currently only setup for one initial staker
                 // Make sure it works with initial-authorities as staking uses both
                 vec![(
                     // Who gets to stake initially
@@ -306,8 +304,6 @@ fn testnet_genesis(
                 .collect::<Vec<_>>(),
         }),
 
-        // TODO
-        // Create two tokens and corresponding pool through xyk for the authority account and pass it in here.
         pallet_staking: Some(StakingConfig {
             validator_count: initial_authorities.len() as u32 * 2,
             minimum_validator_count: initial_authorities.len() as u32,

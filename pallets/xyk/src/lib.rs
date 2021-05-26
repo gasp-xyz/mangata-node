@@ -876,11 +876,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         );
 
         // Settle tokens which goes to treasury and for buy and burn purpose
-        Module::<T>::settle_treasury_and_burn(
-            sold_asset_id,
-            bought_asset_id,
-            sold_asset_amount
-        )?;
+        Module::<T>::settle_treasury_and_burn(sold_asset_id, bought_asset_id, sold_asset_amount)?;
 
         Module::<T>::deposit_event(RawEvent::AssetsSwapped(
             sender,
@@ -964,11 +960,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         );
 
         // Settle tokens which goes to treasury and for buy and burn purpose
-        Self::settle_treasury_and_burn(
-            sold_asset_id,
-            bought_asset_id,
-            sold_asset_amount
-        )?;
+        Self::settle_treasury_and_burn(sold_asset_id, bought_asset_id, sold_asset_amount)?;
 
         Module::<T>::deposit_event(RawEvent::AssetsSwapped(
             sender,

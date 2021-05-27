@@ -3438,6 +3438,7 @@ dependencies = [
  "pallet-bridge",
  "pallet-grandpa",
  "pallet-offences",
+ "pallet-random-seed",
  "pallet-randomness-collective-flip",
  "pallet-session",
  "pallet-staking 2.0.0",
@@ -4140,6 +4141,25 @@ dependencies = [
  "sp-runtime",
  "sp-staking",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-random-seed"
+version = "2.0.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "impl-trait-for-tuples",
+ "log",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-inherents",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-timestamp",
 ]
 
 [[package]]
@@ -5507,6 +5527,7 @@ dependencies = [
  "extrinsic-info-runtime-api",
  "extrinsic-shuffler",
  "log",
+ "pallet-random-seed",
  "parity-scale-codec",
  "rand 0.7.3",
  "sc-client-api",

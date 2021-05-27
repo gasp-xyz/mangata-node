@@ -6,6 +6,22 @@ use frame_support::traits::{Imbalance, TryDrop};
 use sp_runtime::traits::{Saturating, Zero};
 use sp_std::{mem, result};
 
+pub trait MultiTokenImbalanceWithZeroTrait<CurrencyId> {
+    fn from_zero(currency_id: CurrencyId) -> Self;
+}
+
+impl<T: Trait> MultiTokenImbalanceWithZeroTrait<T::CurrencyId> for PositiveImbalance<T> {
+    fn from_zero(currency_id: T::CurrencyId) -> Self {
+        Self::new(currency_id, Zero::zero())
+    }
+}
+
+impl<T: Trait> MultiTokenImbalanceWithZeroTrait<T::CurrencyId> for NegativeImbalance<T> {
+    fn from_zero(currency_id: T::CurrencyId) -> Self {
+        Self::new(currency_id, Zero::zero())
+    }
+}
+
 /// Opaque, move-only struct with private fields that serves as a token
 /// denoting that funds have been created without any equal and opposite
 /// accounting.

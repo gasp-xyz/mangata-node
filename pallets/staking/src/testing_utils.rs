@@ -29,60 +29,86 @@ use rand_chacha::{
 use sp_io::hashing::blake2_256;
 use sp_npos_elections::*;
 
+use sp_core::U256;
+
+const BASE_TOKEN_VALUE: u128 = 100__000_000_000_000_000_000u128;
 const SEED: u32 = 0;
 
 /// Grab a funded user.
 pub fn create_funded_user<T: Trait>(
     string: &'static str,
     n: u32,
+    liquidity_token_id: u32,
     balance_factor: u32,
 ) -> T::AccountId {
-    let user = account(string, n, SEED);
-    let balance = T::Currency::minimum_balance() * balance_factor.into();
-    T::Currency::make_free_balance_be(&user, balance);
-    // ensure T::CurrencyToVote will work correctly.
-    T::Currency::issue(balance);
+    let user: T::AccountId = account(string, n, SEED);
+
+    let balance_factor_2: u64 = (balance_factor * 2).into();
+
+    let base_token_value_u256: U256 = BASE_TOKEN_VALUE.saturated_into::<u128>().into();
+    let balance_factor_u256: U256 = balance_factor_2.saturated_into::<u128>().into();
+    let balance_u256 = base_token_value_u256 * balance_factor_u256;
+    let balance: u128 = balance_u256.saturated_into::<u128>();
+
+    // calculate MNG required and pooled_token_required.
+    let (first_asset_id, first_asset_amount, second_asset_id, second_asset_amount) =
+        <T as Trait>::Xyk::get_tokens_required_for_minting(
+            liquidity_token_id.into(),
+            balance.into(),
+        )
+        .into();
+
+    let first_asset_id: u32 = first_asset_id.into();
+    let first_asset_amount: u128 = first_asset_amount.into();
+    let second_asset_id: u32 = second_asset_id.into();
+    let second_asset_amount: u128 = second_asset_amount.into();
+
+    // mint MNG
+    assert!(
+        <T as Trait>::Tokens::mint(first_asset_id.into(), &user, first_asset_amount.into()).is_ok()
+    );
+    // mint pooled token
+    assert!(
+        <T as Trait>::Tokens::mint(second_asset_id.into(), &user, second_asset_amount.into())
+            .is_ok()
+    );
+    // mint liquidity
+    assert!(<T as Trait>::Xyk::mint_liquidity(
+        user.clone(),
+        first_asset_id.into(),
+        second_asset_id.into(),
+        { first_asset_amount / 2 }.into()
+    )
+    .is_ok());
     user
 }
 
 /// Create a stash and controller pair.
 pub fn create_stash_controller<T: Trait>(
     n: u32,
+    liquidity_token_id: u32,
     balance_factor: u32,
     destination: RewardDestination<T::AccountId>,
 ) -> Result<(T::AccountId, T::AccountId), &'static str> {
-    let stash = create_funded_user::<T>("stash", n, balance_factor);
-    let controller = create_funded_user::<T>("controller", n, balance_factor);
+    let stash = create_funded_user::<T>("stash", n, liquidity_token_id, balance_factor);
+    let controller = create_funded_user::<T>("controller", n, liquidity_token_id, balance_factor);
     let controller_lookup: <T::Lookup as StaticLookup>::Source =
         T::Lookup::unlookup(controller.clone());
-    let amount = T::Currency::minimum_balance() * (balance_factor / 10).max(1).into();
-    Staking::<T>::bond(
-        RawOrigin::Signed(stash.clone()).into(),
-        controller_lookup,
-        amount,
-        destination,
-    )?;
-    return Ok((stash, controller));
-}
 
-/// Create a stash and controller pair, where the controller is dead, and payouts go to controller.
-/// This is used to test worst case payout scenarios.
-pub fn create_stash_and_dead_controller<T: Trait>(
-    n: u32,
-    balance_factor: u32,
-    destination: RewardDestination<T::AccountId>,
-) -> Result<(T::AccountId, T::AccountId), &'static str> {
-    let stash = create_funded_user::<T>("stash", n, balance_factor);
-    // controller has no funds
-    let controller = create_funded_user::<T>("controller", n, 0);
-    let controller_lookup: <T::Lookup as StaticLookup>::Source =
-        T::Lookup::unlookup(controller.clone());
-    let amount = T::Currency::minimum_balance() * (balance_factor / 10).max(1).into();
+    let base_token_value_u256: U256 = BASE_TOKEN_VALUE.saturated_into::<u128>().into();
+    let balance_factor_u256: U256 = balance_factor.saturated_into::<u128>().into();
+    let balance_u256 = base_token_value_u256 * balance_factor_u256;
+    let balance: u128 = balance_u256.saturated_into::<u128>();
+
+    // stake a tenth of liquidity tokens
+    let amount: u128 = (balance / 10).max(1).into();
+
     Staking::<T>::bond(
         RawOrigin::Signed(stash.clone()).into(),
         controller_lookup,
         amount,
         destination,
+        liquidity_token_id,
     )?;
     return Ok((stash, controller));
 }
@@ -90,12 +116,17 @@ pub fn create_stash_and_dead_controller<T: Trait>(
 /// create `max` validators.
 pub fn create_validators<T: Trait>(
     max: u32,
+    liquidity_token_id: u32,
     balance_factor: u32,
 ) -> Result<Vec<<T::Lookup as StaticLookup>::Source>, &'static str> {
     let mut validators: Vec<<T::Lookup as StaticLookup>::Source> = Vec::with_capacity(max as usize);
     for i in 0..max {
-        let (stash, controller) =
-            create_stash_controller::<T>(i, balance_factor, RewardDestination::Staked)?;
+        let (stash, controller) = create_stash_controller::<T>(
+            i,
+            liquidity_token_id,
+            balance_factor,
+            RewardDestination::Stash,
+        )?;
         let validator_prefs = ValidatorPrefs {
             commission: Perbill::from_percent(50),
         };
@@ -124,6 +155,7 @@ pub fn create_validators_with_nominators_for_era<T: Trait>(
     edge_per_nominator: usize,
     randomize_stake: bool,
     to_nominate: Option<u32>,
+    liquidity_token_id: u32,
 ) -> Result<Vec<<T::Lookup as StaticLookup>::Source>, &'static str> {
     let mut validators_stash: Vec<<T::Lookup as StaticLookup>::Source> =
         Vec::with_capacity(validators as usize);
@@ -136,8 +168,12 @@ pub fn create_validators_with_nominators_for_era<T: Trait>(
         } else {
             100u32
         };
-        let (v_stash, v_controller) =
-            create_stash_controller::<T>(i, balance_factor, RewardDestination::Staked)?;
+        let (v_stash, v_controller) = create_stash_controller::<T>(
+            i,
+            liquidity_token_id,
+            balance_factor,
+            RewardDestination::Stash,
+        )?;
         let validator_prefs = ValidatorPrefs {
             commission: Perbill::from_percent(50),
         };
@@ -162,8 +198,9 @@ pub fn create_validators_with_nominators_for_era<T: Trait>(
         };
         let (_n_stash, n_controller) = create_stash_controller::<T>(
             u32::max_value() - j,
+            liquidity_token_id,
             balance_factor,
-            RewardDestination::Staked,
+            RewardDestination::Stash,
         )?;
 
         // Have them randomly validate
@@ -197,13 +234,13 @@ pub fn get_weak_solution<T: Trait>(
     ElectionScore,
     ElectionSize,
 ) {
-    let mut backing_stake_of: BTreeMap<T::AccountId, BalanceOf<T>> = BTreeMap::new();
+    let mut backing_stake_of: BTreeMap<T::AccountId, Balance> = BTreeMap::new();
 
     // self stake
     <Validators<T>>::iter().for_each(|(who, _p)| {
         *backing_stake_of
             .entry(who.clone())
-            .or_insert_with(|| Zero::zero()) += <Module<T>>::slashable_balance_of(&who)
+            .or_insert_with(|| Zero::zero()) += <Staking<T>>::slashable_balance_of(&who)
     });
 
     // elect winners. We chose the.. least backed ones.
@@ -213,7 +250,7 @@ pub fn get_weak_solution<T: Trait>(
         .iter()
         .rev()
         .cloned()
-        .take(<Module<T>>::validator_count() as usize)
+        .take(<Staking<T>>::validator_count() as usize)
         .collect();
 
     let mut staked_assignments: Vec<StakedAssignment<T::AccountId>> = Vec::new();
@@ -226,8 +263,8 @@ pub fn get_weak_solution<T: Trait>(
             who: w.clone(),
             distribution: vec![(
                 w.clone(),
-                <T::CurrencyToVote as Convert<BalanceOf<T>, u64>>::convert(
-                    <Module<T>>::slashable_balance_of(&w),
+                <T::CurrencyToVote as Convert<Balance, u64>>::convert(
+                    <Staking<T>>::slashable_balance_of(&w),
                 ) as ExtendedBalance,
             )],
         })
@@ -238,8 +275,8 @@ pub fn get_weak_solution<T: Trait>(
     }
 
     // helpers for building the compact
-    let snapshot_validators = <Module<T>>::snapshot_validators().unwrap();
-    let snapshot_nominators = <Module<T>>::snapshot_nominators().unwrap();
+    let snapshot_validators = <Staking<T>>::snapshot_validators().unwrap();
+    let snapshot_nominators = <Staking<T>>::snapshot_nominators().unwrap();
 
     let nominator_index = |a: &T::AccountId| -> Option<NominatorIndex> {
         snapshot_nominators
@@ -254,9 +291,9 @@ pub fn get_weak_solution<T: Trait>(
             .and_then(|i| <usize as TryInto<ValidatorIndex>>::try_into(i).ok())
     };
     let stake_of = |who: &T::AccountId| -> VoteWeight {
-        <T::CurrencyToVote as Convert<BalanceOf<T>, u64>>::convert(
-            <Module<T>>::slashable_balance_of(who),
-        )
+        <T::CurrencyToVote as Convert<Balance, u64>>::convert(<Staking<T>>::slashable_balance_of(
+            who,
+        ))
     };
 
     // convert back to ratio assignment. This takes less space.
@@ -317,7 +354,7 @@ pub fn get_seq_phragmen_solution<T: Trait>(
     let sp_npos_elections::ElectionResult {
         winners,
         assignments,
-    } = <Module<T>>::do_phragmen::<OffchainAccuracy>().unwrap();
+    } = <Staking<T>>::do_phragmen::<OffchainAccuracy>().unwrap();
 
     offchain_election::prepare_submission::<T>(assignments, winners, do_reduce).unwrap()
 }
@@ -348,7 +385,7 @@ pub fn get_single_winner_solution<T: Trait>(
 
     let stake = <Staking<T>>::slashable_balance_of(&winner);
     let stake =
-        <T::CurrencyToVote as Convert<BalanceOf<T>, VoteWeight>>::convert(stake) as ExtendedBalance;
+        <T::CurrencyToVote as Convert<Balance, VoteWeight>>::convert(stake) as ExtendedBalance;
 
     let val_index = val_index as ValidatorIndex;
     let nom_index = nom_index as NominatorIndex;
@@ -368,11 +405,13 @@ pub fn get_single_winner_solution<T: Trait>(
 }
 
 /// get the active era.
+#[allow(dead_code)]
 pub fn current_era<T: Trait>() -> EraIndex {
-    <Module<T>>::current_era().unwrap_or(0)
+    <Staking<T>>::current_era().unwrap_or(0)
 }
 
 /// initialize the first era.
+#[allow(dead_code)]
 pub fn init_active_era() {
     ActiveEra::put(ActiveEraInfo {
         index: 1,

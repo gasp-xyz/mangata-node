@@ -316,6 +316,7 @@ pub const ID_2: LockIdentifier = *b"2       ";
 
 pub struct ExtBuilder {
     endowed_accounts: Vec<(AccountId, CurrencyId, Balance)>,
+    created_tokens_for_staking: Vec<(AccountId, CurrencyId, Balance)>,
     treasury_genesis: bool,
 }
 
@@ -323,6 +324,7 @@ impl Default for ExtBuilder {
     fn default() -> Self {
         Self {
             endowed_accounts: vec![],
+            created_tokens_for_staking: vec![],
             treasury_genesis: false,
         }
     }
@@ -350,6 +352,7 @@ impl ExtBuilder {
 
         GenesisConfig::<Runtime> {
             endowed_accounts: self.endowed_accounts,
+            created_tokens_for_staking: self.created_tokens_for_staking,
         }
         .assimilate_storage(&mut t)
         .unwrap();

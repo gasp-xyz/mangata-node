@@ -35,7 +35,7 @@ jobs:
         with:
           file: "devops/dockerfiles/node-and-runtime/Dockerfile"
           push: true
-          tags: mangatasolutions/mangata-node:latest
+          tags: mangatasolutions/mangata-node:latest,mangatasolutions/mangata-node:${{ github.sha }},mangatasolutions/mangata-node:${{ github.run_id }}
 
       - name: Install doctl
         uses: digitalocean/action-doctl@v2

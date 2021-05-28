@@ -43,6 +43,10 @@ where
             .map(|info| Some(info.who)).unwrap_or(None);
 
             log::debug!(target: "block_shuffler", "who:{:48}  extrinsic:{:?}",who.clone().map(|x| x.to_ss58check()).unwrap_or_else(|| String::from("None")), tx_hash);
+<<<<<<< HEAD
+=======
+
+>>>>>>> develop
             groups.entry(who).or_insert(VecDeque::new()).push_back(tx);
             groups
         });

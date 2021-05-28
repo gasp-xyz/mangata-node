@@ -107,6 +107,7 @@ runtime-benchmarks = [
     'pallet-timestamp/runtime-benchmarks',
     'sp-runtime/runtime-benchmarks',
     'bridge/runtime-benchmarks',
+	"pallet-staking/runtime-benchmarks",
 ]
 std = [
     'codec/std',
@@ -118,7 +119,6 @@ std = [
     "sp-consensus-babe/std",
     "pallet-babe/std",
     "pallet-offences/std",
-    "pallet-staking/std",
     "pallet-authorship/std",
     'pallet-balances/std',
     'pallet-grandpa/std',
@@ -144,4 +144,6 @@ std = [
     "erc20-app/std",
     "pallet-assets-info/std",
     'orml-tokens/std',
+    "pallet-xyk/std",
+    "pallet-staking/std",
 ]

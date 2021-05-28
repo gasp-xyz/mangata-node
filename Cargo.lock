@@ -3979,8 +3979,6 @@ dependencies = [
 [[package]]
 name = "pallet-authorship"
 version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "65706c382ae14ef2768e7411c5faaf1e0a310b4a86d17c3a93dfacb2c5987576"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4187,11 +4185,14 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex",
+ "mangata-primitives",
+ "orml-tokens",
  "pallet-authorship",
  "pallet-balances",
  "pallet-session",
  "pallet-staking-reward-curve",
  "pallet-timestamp",
+ "pallet-xyk",
  "parity-scale-codec",
  "parking_lot 0.10.2",
  "rand_chacha 0.2.2",
@@ -4368,6 +4369,7 @@ dependencies = [
  "mangata-primitives",
  "orml-tokens",
  "parity-scale-codec",
+ "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",

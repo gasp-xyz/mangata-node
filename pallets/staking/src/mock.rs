@@ -335,10 +335,12 @@ impl OnUnbalanced<NegativeImbalanceOf<Test>> for RewardRemainderMock {
 
 parameter_types! {
     pub const NativeCurrencyId: u32 = NATIVE_CURRENCY_ID;
+    pub const MinStakeAmount: Balance = 1;
 }
 
 impl Trait for Test {
     type NativeCurrencyId = NativeCurrencyId;
+    type MinStakeAmount = MinStakeAmount;
     type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
     type Valuations = XykModule;
     type UnixTime = Timestamp;

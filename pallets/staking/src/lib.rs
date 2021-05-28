@@ -832,6 +832,8 @@ pub trait WeightInfo {
 pub trait Trait: frame_system::Trait + SendTransactionTypes<Call<Self>> {
     type NativeCurrencyId: Get<TokenId>;
 
+    type MinStakeAmount: Get<Balance>;
+
     /// The pallet used for tokens
     type Tokens: MultiTokenLockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
         + MultiTokenCurrencyExtended<Self::AccountId>;
@@ -2306,6 +2308,7 @@ impl<T: Trait> Module<T> {
             );
             (false, consumed_weight)
         } else {
+            let min_stake_amount = T::MinStakeAmount::get();
             let mut validators_to_be_removed = Vec::new();
             // Note: A Stash can't be both nominator and validator
             for validator in validators.iter() {
@@ -2327,7 +2330,7 @@ impl<T: Trait> Module<T> {
                 )
                 .into();
                 add_db_reads_writes(6, 0);
-                if mng_valuation.is_zero() {
+                if mng_valuation < min_stake_amount {
                     validators_to_be_removed.push(validator.clone());
                 } else {
                     <StashStakedValuation<T>>::insert(
@@ -2364,7 +2367,7 @@ impl<T: Trait> Module<T> {
                 )
                 .into();
                 add_db_reads_writes(6, 0);
-                if mng_valuation.is_zero() {
+                if mng_valuation < min_stake_amount {
                     nominators_to_be_removed.push(nominator.clone());
                 } else {
                     <StashStakedValuation<T>>::insert(
@@ -3156,21 +3159,23 @@ impl<T: Trait> Module<T> {
     /// Self votes are added and nominations before the most recent slashing span are reaped.
     ///
     /// No storage item is updated.
-    pub fn do_phragmen<Accuracy: PerThing>(
-    ) -> Option<PrimitiveElectionResult<T::AccountId, Accuracy>> {
+    fn do_phragmen<Accuracy: PerThing>() -> Option<PrimitiveElectionResult<T::AccountId, Accuracy>>
+    {
         let mut all_nominators: Vec<(T::AccountId, VoteWeight, Vec<T::AccountId>)> = Vec::new();
         let mut all_validators = Vec::new();
+        let min_stake_amount = T::MinStakeAmount::get();
         for (validator, _) in <Validators<T>>::iter() {
-            let slashable_balance_of_vote_weight_of_validator =
-                Self::slashable_balance_of_vote_weight(&validator);
-            if slashable_balance_of_vote_weight_of_validator.is_zero() {
+            let slashable_balance_of_validator = Self::slashable_balance_of(&validator);
+            if slashable_balance_of_validator < min_stake_amount {
                 continue;
             }
 
             // append self vote
             let self_vote = (
                 validator.clone(),
-                slashable_balance_of_vote_weight_of_validator,
+                <T::CurrencyToVote as Convert<Balance, VoteWeight>>::convert(
+                    slashable_balance_of_validator,
+                ),
                 vec![validator.clone()],
             );
             all_nominators.push(self_vote);
@@ -3199,12 +3204,12 @@ impl<T: Trait> Module<T> {
             (n, s, ns)
         }));
 
-        all_nominators.retain(|(_, s, _)| !s.is_zero());
+        all_nominators.retain(|(n, _, _)| !(Self::slashable_balance_of(&n) < min_stake_amount));
 
         for (n, _, ref mut ns) in all_nominators.iter_mut() {
             let nominators_liquidity_token = Self::get_stash_liquidity_token(n);
             ns.retain(|nominated| {
-                (!Self::slashable_balance_of_vote_weight(&nominated).is_zero())
+                (!(Self::slashable_balance_of(&nominated) < min_stake_amount))
                     && (nominators_liquidity_token == Self::get_stash_liquidity_token(nominated))
             })
         }

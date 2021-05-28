@@ -1135,6 +1135,27 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         let (first_asset_amount, second_asset_amount) =
             Module::<T>::get_burn_amount(first_asset_id, second_asset_id, liquidity_asset_amount);
 
+        let total_liquidity_assets: Balance =
+            T::Currency::total_issuance(liquidity_asset_id.into()).into();
+        // If all liquidity assets are being burned then
+        // both asset amounts must be equal to their reserve values
+        // All storage values related to this pool must be destroyed
+        if liquidity_asset_amount == total_liquidity_assets {
+            ensure!(
+                (first_asset_reserve - first_asset_amount).is_zero()
+                    && (second_asset_reserve - second_asset_amount).is_zero(),
+                Error::<T>::UnexpectedFailure
+            );
+        } else {
+            ensure!(
+                !((first_asset_reserve - first_asset_amount).is_zero()
+                    || (second_asset_reserve - second_asset_amount).is_zero()),
+                Error::<T>::UnexpectedFailure
+            );
+        }
+        // If all liquidity assets are not being burned then
+        // both asset amounts must be less than their reserve values
+
         // Ensure not withdrawing zero amounts
         ensure!(
             !first_asset_amount.is_zero() && !second_asset_amount.is_zero(),
@@ -1157,22 +1178,22 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             ExistenceRequirement::KeepAlive,
         )?;
 
-        // Apply changes in token pools, removing withdrawn amounts
-        Pools::insert(
-            (&first_asset_id, &second_asset_id),
-            first_asset_reserve - first_asset_amount,
-        );
-        Pools::insert(
-            (&second_asset_id, &first_asset_id),
-            second_asset_reserve - second_asset_amount,
-        );
-
-        // Destroying token pool, if no tokens left
-        if (first_asset_reserve - first_asset_amount == 0.saturated_into::<Self::Balance>())
-            || (second_asset_reserve - second_asset_amount == 0.saturated_into::<Self::Balance>())
-        {
+        if liquidity_asset_amount == total_liquidity_assets {
             Pools::remove((first_asset_id, second_asset_id));
             Pools::remove((second_asset_id, first_asset_id));
+            LiquidityAssets::remove((first_asset_id, second_asset_id));
+            LiquidityAssets::remove((second_asset_id, first_asset_id));
+            LiquidityPools::remove(liquidity_asset_id);
+        } else {
+            // Apply changes in token pools, removing withdrawn amounts
+            Pools::insert(
+                (&first_asset_id, &second_asset_id),
+                first_asset_reserve - first_asset_amount,
+            );
+            Pools::insert(
+                (&second_asset_id, &first_asset_id),
+                second_asset_reserve - second_asset_amount,
+            );
         }
 
         // Destroying burnt liquidity tokens

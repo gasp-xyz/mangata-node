@@ -930,7 +930,14 @@ where
 						} else {
 
 							info!("previous block has extrinsics");
-							let extrinsics_hash = BlakeTwo256::hash(&body.clone().encode());
+                            let mut this_block_extrinsics = body.clone();
+                            // TODO that step will be obsolete when better randomness source will
+                            // be used
+                            this_block_extrinsics.pop().unwrap(); // remove inherent
+                            this_block_extrinsics.pop().unwrap(); // remove inherent
+                            // TODO some extra check that compares calculated seed with one from
+                            // stroed in inherent would be nice idea
+							let extrinsics_hash = BlakeTwo256::hash(&this_block_extrinsics.encode());
                             let shuffled_extrinsics = extrinsic_shuffler::shuffle::<Block, Self>(&runtime_api, &at,previous_block_extrinsics, extrinsics_hash);
 
 							runtime_api.execute_block_with_context(

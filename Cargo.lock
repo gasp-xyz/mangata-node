@@ -1436,7 +1436,6 @@ dependencies = [
  "extrinsic-info-runtime-api",
  "log",
  "parity-scale-codec",
- "rand 0.7.3",
  "sp-api",
  "sp-core",
  "sp-runtime",

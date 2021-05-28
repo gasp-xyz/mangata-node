@@ -35,7 +35,7 @@ use sp_api::{
     ApiErrorFor, ApiExt, ApiRef, Core, ProvideRuntimeApi, StorageChanges, StorageProof,
     TransactionOutcome,
 };
-use sp_blockchain::{ApplyExtrinsicFailed, Backend, Error};
+use sp_blockchain::{Backend, Error};
 use sp_consensus::RecordProof;
 use sp_core::ExecutionContext;
 use sp_runtime::{
@@ -173,27 +173,31 @@ where
     ///
     /// This will ensure the extrinsic can be validly executed (by executing it).
     pub fn push(&mut self, xt: <Block as BlockT>::Extrinsic) -> Result<(), ApiErrorFor<A, Block>> {
-        let block_id = &self.block_id;
         let exts = &mut self.extrinsics;
+        exts.push(xt.clone());
+        Ok(())
+        // TODO: check if its possible to verify transaction by first
+        // applying all the transactions from current block and then applying
+        // particular one from passed to BlockBuilder::push as in origin implementation
 
-		self.api.execute_in_transaction(|api| {
-			match api.apply_extrinsic_with_context(
-				&block_id,
-				ExecutionContext::BlockConstruction,
-				xt.clone(),
-			) {
-				Ok(Ok(_)) => {
-                    exts.push(xt.clone());
-					TransactionOutcome::Rollback(Ok(()))
-				}
-				Ok(Err(tx_validity)) => {
-					TransactionOutcome::Rollback(
-						Err(ApplyExtrinsicFailed::Validity(tx_validity).into()),
-					)
-				},
-				Err(e) => TransactionOutcome::Rollback(Err(e)),
-			}
-		})
+        // self.api.execute_in_transaction(|api| {
+        // 	match api.apply_extrinsic_with_context(
+        // 		&block_id,
+        // 		ExecutionContext::BlockConstruction,
+        // 		xt.clone(),
+        // 	) {
+        // 		Ok(Ok(_)) => {
+        // 		exts.push(xt.clone());
+        // 			TransactionOutcome::Rollback(Ok(()))
+        // 		}
+        // 		Ok(Err(tx_validity)) => {
+        // 			TransactionOutcome::Rollback(
+        // 				Err(ApplyExtrinsicFailed::Validity(tx_validity).into()),
+        // 			)
+        // 		},
+        // 		Err(e) => TransactionOutcome::Rollback(Err(e)),
+        // 	}
+        // })
     }
 
 

@@ -1,21 +1,13 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(feature = "std")]
-use frame_support::debug;
 use frame_support::{
     decl_module, decl_storage,
-    traits::{Get, Time, UnixTime},
-    weights::{DispatchClass, Weight},
-    Parameter,
+    weights::DispatchClass,
 };
-use frame_system::ensure_none;
 use sp_inherents::{InherentData, InherentIdentifier, ProvideInherent, IsFatalError};
-use sp_runtime::{
-    traits::{AtLeast32Bit, SaturatedConversion, Scale, Zero},
-    RuntimeString,
-};
-use sp_std::{cmp, result};
+use sp_runtime::RuntimeString;
+use sp_std::result;
 use sp_core::H256;
 use codec::Encode;
 use codec::Decode;
@@ -45,9 +37,6 @@ decl_storage! {
     trait Store for Module<T: Trait> as Timestamp {
         /// Current time for the current block.
         pub Seed get(fn seed) : H256;
-
-        /// Did the timestamp get updated in this block?
-        DidUpdate: bool;
     }
 }
 

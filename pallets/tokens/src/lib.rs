@@ -93,6 +93,13 @@ pub use multi_token_currency::{
     MultiTokenReservableCurrency,
 };
 
+use multi_token_imbalances::{
+    NegativeImbalance as MultiTokenNegativeImbalance,
+    PositiveImbalance as MultiTokenPositiveImbalance,
+};
+
+pub use multi_token_imbalances::MultiTokenImbalanceWithZeroTrait;
+
 pub trait WeightInfo {
     fn transfer() -> Weight;
     fn transfer_all() -> Weight;
@@ -220,14 +227,23 @@ decl_storage! {
         /// NOTE: This is only used in the case that this module is used to store balances.
         pub Accounts get(fn accounts): double_map hasher(blake2_128_concat) T::AccountId, hasher(twox_64_concat) T::CurrencyId => AccountData<T::Balance>;
 
-        NextCurrencyId get(fn next_asset_id): T::CurrencyId;
+        pub NextCurrencyId get(fn next_asset_id): T::CurrencyId;
     }
     add_extra_genesis {
         config(endowed_accounts): Vec<(T::AccountId, T::CurrencyId, T::Balance)>;
+        config(created_tokens_for_staking): Vec<(T::AccountId, T::CurrencyId, T::Balance)>;
 
         build(|config: &GenesisConfig<T>| {
             config.endowed_accounts.iter().for_each(|(account_id, currency_id, initial_balance)| {
                 <Accounts<T>>::mutate(account_id, currency_id, |account_data| account_data.free = *initial_balance)
+            });
+            config.created_tokens_for_staking.iter().for_each(|(account_id, token_id, initial_balance)| {
+                if MultiTokenCurrencyAdapter::<T>::exists(*token_id){
+                    assert!(MultiTokenCurrencyAdapter::<T>::mint(*token_id, account_id, *initial_balance).is_ok(), "Tokens mint failed");
+                }else{
+                    let created_token_id = MultiTokenCurrencyAdapter::<T>::create(account_id, *initial_balance);
+                    assert!(created_token_id == *token_id, "Assets not initialized in the expected sequence");
+                }
             })
         })
     }
@@ -1043,10 +1059,6 @@ where
     }
 }
 
-use multi_token_imbalances::{
-    NegativeImbalance as MultiTokenNegativeImbalance,
-    PositiveImbalance as MultiTokenPositiveImbalance,
-};
 pub struct MultiTokenCurrencyAdapter<T>(marker::PhantomData<T>);
 
 impl<T> MultiTokenCurrency<T::AccountId> for MultiTokenCurrencyAdapter<T>
@@ -1358,6 +1370,10 @@ where
             amount,
         );
         Ok(())
+    }
+
+    fn get_next_currency_id() -> Self::CurrencyId {
+        <Module<T>>::next_asset_id()
     }
 
     fn exists(currency_id: Self::CurrencyId) -> bool {

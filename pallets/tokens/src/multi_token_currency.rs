@@ -1,3 +1,4 @@
+use crate::MultiTokenImbalanceWithZeroTrait;
 use codec::FullCodec;
 use frame_support::traits::{
     BalanceStatus, ExistenceRequirement, Get, Imbalance, SignedImbalance, WithdrawReasons,
@@ -34,11 +35,13 @@ pub trait MultiTokenCurrency<AccountId> {
 
     /// The opaque token type for an imbalance. This is returned by unbalanced operations
     /// and must be dealt with. It may be dropped but cannot be cloned.
-    type PositiveImbalance: Imbalance<Self::Balance, Opposite = Self::NegativeImbalance>;
+    type PositiveImbalance: Imbalance<Self::Balance, Opposite = Self::NegativeImbalance>
+        + MultiTokenImbalanceWithZeroTrait<Self::CurrencyId>;
 
     /// The opaque token type for an imbalance. This is returned by unbalanced operations
     /// and must be dealt with. It may be dropped but cannot be cloned.
-    type NegativeImbalance: Imbalance<Self::Balance, Opposite = Self::PositiveImbalance>;
+    type NegativeImbalance: Imbalance<Self::Balance, Opposite = Self::PositiveImbalance>
+        + MultiTokenImbalanceWithZeroTrait<Self::CurrencyId>;
 
     // PUBLIC IMMUTABLES
 
@@ -345,6 +348,7 @@ pub trait MultiTokenCurrencyExtended<AccountId>: MultiTokenCurrency<AccountId> {
         address: &AccountId,
         amount: Self::Balance,
     ) -> DispatchResult;
+    fn get_next_currency_id() -> Self::CurrencyId;
     fn exists(currency_id: Self::CurrencyId) -> bool;
     fn burn_and_settle(
         currency_id: Self::CurrencyId,

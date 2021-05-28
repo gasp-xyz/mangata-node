@@ -475,11 +475,16 @@ impl<T: Trait> Module<T> {
         result.saturated_into::<u128>().saturated_into::<Balance>()
     }
 
-    pub fn get_liquidity_asset(first_asset_id: TokenId, second_asset_id: TokenId) -> Result<TokenId, DispatchError> {
+    pub fn get_liquidity_asset(
+        first_asset_id: TokenId,
+        second_asset_id: TokenId,
+    ) -> Result<TokenId, DispatchError> {
         if LiquidityAssets::contains_key((first_asset_id, second_asset_id)) {
-            LiquidityAssets::get((first_asset_id, second_asset_id)).ok_or_else(|| Error::<T>::UnexpectedFailure.into())
+            LiquidityAssets::get((first_asset_id, second_asset_id))
+                .ok_or_else(|| Error::<T>::UnexpectedFailure.into())
         } else {
-            LiquidityAssets::get((second_asset_id, first_asset_id)).ok_or_else(|| Error::<T>::NoSuchPool.into())
+            LiquidityAssets::get((second_asset_id, first_asset_id))
+                .ok_or_else(|| Error::<T>::NoSuchPool.into())
         }
     }
 
@@ -692,12 +697,15 @@ pub trait XykFunctionsTrait<AccountId> {
     fn get_tokens_required_for_minting(
         liquidity_asset_id: Self::CurrencyId,
         liquidity_token_amount: Self::Balance,
-    ) -> (
-        Self::CurrencyId,
-        Self::Balance,
-        Self::CurrencyId,
-        Self::Balance,
-    );
+    ) -> Result<
+        (
+            Self::CurrencyId,
+            Self::Balance,
+            Self::CurrencyId,
+            Self::Balance,
+        ),
+        DispatchError,
+    >;
 }
 
 impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
@@ -1220,13 +1228,17 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
     fn get_tokens_required_for_minting(
         liquidity_asset_id: Self::CurrencyId,
         liquidity_token_amount: Self::Balance,
-    ) -> (
-        Self::CurrencyId,
-        Self::Balance,
-        Self::CurrencyId,
-        Self::Balance,
-    ) {
-        let (first_asset_id, second_asset_id) = LiquidityPools::get(liquidity_asset_id);
+    ) -> Result<
+        (
+            Self::CurrencyId,
+            Self::Balance,
+            Self::CurrencyId,
+            Self::Balance,
+        ),
+        DispatchError,
+    > {
+        let (first_asset_id, second_asset_id) = LiquidityPools::get(liquidity_asset_id)
+            .ok_or_else(|| Error::<T>::NoSuchLiquidityAsset)?;
         let first_asset_reserve = Pools::get((first_asset_id, second_asset_id));
         let second_asset_reserve = Pools::get((second_asset_id, first_asset_id));
         let total_liquidity_assets: Balance =
@@ -1253,12 +1265,12 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             .saturated_into::<u128>()
             .saturated_into::<Balance>();
 
-        (
+        Ok((
             first_asset_id,
             first_asset_amount,
             second_asset_id,
             second_asset_amount,
-        )
+        ))
     }
 }
 
@@ -1307,7 +1319,8 @@ impl<T: Trait> Valuate for Module<T> {
     fn get_liquidity_token_mng_pool(
         liquidity_token_id: Self::CurrencyId,
     ) -> Result<(Self::CurrencyId, Self::CurrencyId), DispatchError> {
-        let (first_token_id, second_token_id) = LiquidityPools::get(liquidity_token_id);
+        let (first_token_id, second_token_id) = LiquidityPools::get(liquidity_token_id)
+            .ok_or_else(|| Error::<T>::NoSuchLiquidityAsset)?;
         let native_currency_id = T::NativeCurrencyId::get();
         match native_currency_id {
             _ if native_currency_id == first_token_id => Ok((first_token_id, second_token_id)),

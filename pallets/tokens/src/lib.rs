@@ -1341,7 +1341,7 @@ where
 {
     fn create(address: &T::AccountId, amount: T::Balance) -> T::CurrencyId {
         let token_id = <NextCurrencyId<T>>::get();
-        <NextCurrencyId<T>>::mutate(|id| *id += One::one());
+        NextCurrencyId::<T>::mutate(|id| *id += One::one());
         // we are creating new token so amount can not be overflowed as its always true
         // 0 + amount < T::Balance::max_value()
         let _ =

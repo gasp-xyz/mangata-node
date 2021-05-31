@@ -276,6 +276,7 @@ parameter_types! {
     pub const MaxIterations: u32 = 10;
     // 0.05%. The higher the value, the more strict solution acceptance becomes.
     pub MinSolutionScoreBump: Perbill = Perbill::from_rational_approximation(5u32, 10_000);
+    pub const MinStakeAmount: Balance = 1;
 }
 
 /// Struct that handles the conversion of Balance -> `u64`. This is used for staking's election
@@ -304,6 +305,7 @@ impl Convert<u128, Balance> for CurrencyToVoteHandler {
 
 impl pallet_staking::Trait for Runtime {
     type NativeCurrencyId = NativeCurrencyId;
+    type MinStakeAmount = MinStakeAmount;
     type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
     type Valuations = Xyk;
     type UnixTime = Timestamp;

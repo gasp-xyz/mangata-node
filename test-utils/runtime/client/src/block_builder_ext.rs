@@ -23,6 +23,7 @@ use sc_client_api::backend;
 use sp_runtime::traits::HashFor;
 
 use sc_block_builder::BlockBuilderApi;
+use extrinsic_info_runtime_api::runtime_api::ExtrinsicInfoRuntimeApi;
 
 /// Extension trait for test block builder.
 pub trait BlockBuilderExt {
@@ -44,6 +45,7 @@ pub trait BlockBuilderExt {
 impl<'a, A, B> BlockBuilderExt for sc_block_builder::BlockBuilder<'a, substrate_test_runtime::Block, A, B> where
 	A: ProvideRuntimeApi<substrate_test_runtime::Block> + 'a,
 	A::Api: BlockBuilderApi<substrate_test_runtime::Block, Error = sp_blockchain::Error> +
+        ExtrinsicInfoRuntimeApi<substrate_test_runtime::Block> +
 		ApiExt<
 			substrate_test_runtime::Block,
 			StateBackend = backend::StateBackendFor<B, substrate_test_runtime::Block>

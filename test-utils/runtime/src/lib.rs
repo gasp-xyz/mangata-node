@@ -566,6 +566,20 @@ cfg_if! {
 				}
 			}
 
+            impl extrinsic_info_runtime_api::runtime_api::ExtrinsicInfoRuntimeApi<Block> for Runtime {
+                fn get_info(
+                    tx: <Block as BlockT>::Extrinsic,
+                ) -> Option<extrinsic_info_runtime_api::ExtrinsicInfo> {
+                    None
+                    // tx.signature.clone().map(|sig|
+                    //     extrinsic_info_runtime_api::ExtrinsicInfo{
+                    //         who: sig.0,
+                    //         nonce: 0,
+                    //     }
+                    // )
+                }
+            }
+
 			impl sp_api::Metadata<Block> for Runtime {
 				fn metadata() -> OpaqueMetadata {
 					unimplemented!()
@@ -807,6 +821,20 @@ cfg_if! {
 					system::initialize_block(header)
 				}
 			}
+
+            impl extrinsic_info_runtime_api::runtime_api::ExtrinsicInfoRuntimeApi<Block> for Runtime {
+                fn get_info(
+                    tx: <Block as BlockT>::Extrinsic,
+                ) -> Option<extrinsic_info_runtime_api::ExtrinsicInfo> {
+                    None
+                    // tx.signature.clone().map(|sig|
+                    //     extrinsic_info_runtime_api::ExtrinsicInfo{
+                    //         who: sig.0,
+                    //         nonce: 0,
+                    //     }
+                    // )
+                }
+            }
 
 			impl sp_api::Metadata<Block> for Runtime {
 				fn metadata() -> OpaqueMetadata {

@@ -56,6 +56,7 @@ pub fn create_funded_user<T: Trait>(
             liquidity_token_id.into(),
             balance.into(),
         )
+        .unwrap()
         .into();
 
     let first_asset_id: u32 = first_asset_id.into();

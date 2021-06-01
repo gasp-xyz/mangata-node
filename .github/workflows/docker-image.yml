@@ -3,6 +3,9 @@ name: Docker Image CI
 on:
   push:
     branches: [ develop ]
+  
+  workflow_dispatch:
+    # For manually trigger
 #   pull_request:
 #     branches: [ develop ]
 
@@ -11,7 +14,11 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-
+    env:
+      API_URL: 'ws://127.0.0.1:9944'
+      TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}
+      TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
+  
     steps:
       -
         name: Checkout
@@ -42,6 +49,22 @@ jobs:
         with:
           image: mangatasolutions/mangata-node:latest
           run: ./target/release/mangata-node --dev
+
+      - 
+        name: Checkout tests
+        uses: actions/checkout@v1
+        with:
+          repository: mangata-finance/mangata-e2e
+          token: ${{ secrets.E2E_GITHUB_CHECKOUT_TOKEN }}
+          ref: 'trigger_build_from_outside'
+      
+      - name: Install dependencies
+        run: yarn
+      - name: Docker ps
+        run: docker ps
+      - name: Run e2e tests
+        run: yarn test-sequential-e2e
+      
 
 #
 #      - name: Install doctl

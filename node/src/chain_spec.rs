@@ -4,7 +4,7 @@ use hex_literal::hex;
 use mangata_runtime::{
     AccountId, AssetsInfoConfig, BabeConfig, BalancesConfig, BridgeConfig, BridgedAssetConfig,
     GenesisConfig, GrandpaConfig, SessionConfig, SessionKeys, Signature, StakerStatus,
-    StakingConfig, SudoConfig, SystemConfig, TokensConfig, VerifierConfig, WASM_BINARY,
+    StakingConfig, SudoConfig, SystemConfig, TokensConfig, VerifierConfig, XykConfig, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sp_consensus_babe::AuthorityId as BabeId;
@@ -124,6 +124,24 @@ pub fn development_config() -> Result<ChainSpec, String> {
                         .parse()
                         .unwrap(),
                 ],
+                // Config for Staking
+                // Make sure it works with initial-authorities as staking uses both
+                vec![(
+                    // Who gets to stake initially
+                    get_account_id_from_seed::<sr25519::Public>("Alice"),
+                    // Id of MNG token,
+                    0u32,
+                    // How much mangata they pool
+                    10_000__000_000_000_000_000_000u128,
+                    // Id of the dummy token,
+                    2u32,
+                    // How many dummy tokens they pool,
+                    20_000__000_000_000_000_000_000u128,
+                    // Id of the liquidity token that is generated
+                    3u32,
+                    // How many liquidity tokens they stake,
+                    10_000__000_000_000_000_000_000u128,
+                )],
                 true,
             )
         },
@@ -155,10 +173,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
             testnet_genesis(
                 wasm_binary,
                 // Initial PoA authorities
-                vec![
-                    authority_keys_from_seed("Alice"),
-                    authority_keys_from_seed("Bob"),
-                ],
+                vec![authority_keys_from_seed("Alice")],
                 // Initial relay account
                 get_account_id_from_seed::<sr25519::Public>("Relay"),
                 // Sudo account
@@ -214,6 +229,24 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                     get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
                     get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
                 ],
+                // Config for Staking
+                // Make sure it works with initial-authorities as staking uses both
+                vec![(
+                    // Who gets to stake initially
+                    get_account_id_from_seed::<sr25519::Public>("Alice"),
+                    // Id of MNG token,
+                    0u32,
+                    // How much mangata they pool
+                    10_000__000_000_000_000_000_000u128,
+                    // Id of the dummy token,
+                    2u32,
+                    // How many dummy tokens they pool,
+                    20_000__000_000_000_000_000_000u128,
+                    // Id of the liquidity token that is generated
+                    3u32,
+                    // How many liquidity tokens they stake,
+                    10_000__000_000_000_000_000_000u128,
+                )],
                 true,
             )
         },
@@ -229,7 +262,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
         None,
     ))
 }
-type BriedgedAssetsType = Vec<(Vec<u8>, Vec<u8>, Vec<u8>, u32, u32, H160, u128, AccountId)>;
+type BridgedAssetsType = Vec<(Vec<u8>, Vec<u8>, Vec<u8>, u32, u32, H160, u128, AccountId)>;
 
 /// Configure initial storage state for FRAME modules.
 #[allow(clippy::too_many_arguments)]
@@ -239,8 +272,9 @@ fn testnet_genesis(
     relay_key: AccountId,
     root_key: AccountId,
     bridged_app_ids: Vec<(App, AppId)>,
-    bridged_assets: BriedgedAssetsType,
+    bridged_assets: BridgedAssetsType,
     endowed_accounts: Vec<AccountId>,
+    staking_accounts: Vec<(AccountId, u32, u128, u32, u128, u32, u128)>,
     _enable_println: bool,
 ) -> GenesisConfig {
     GenesisConfig {
@@ -269,12 +303,22 @@ fn testnet_genesis(
                 })
                 .collect::<Vec<_>>(),
         }),
+
         pallet_staking: Some(StakingConfig {
             validator_count: initial_authorities.len() as u32 * 2,
             minimum_validator_count: initial_authorities.len() as u32,
-            stakers: initial_authorities
+            stakers: staking_accounts
                 .iter()
-                .map(|x| (x.2.clone(), x.2.clone(), 0_u128, StakerStatus::Validator))
+                .map(|x| {
+                    let (account_id, _, _, _, _, liquidity_token_id, liquidity_token_amount) = x;
+                    (
+                        account_id.clone(),
+                        account_id.clone(),
+                        *liquidity_token_id,
+                        *liquidity_token_amount,
+                        StakerStatus::Validator,
+                    )
+                })
                 .collect(),
             invulnerables: initial_authorities.iter().map(|x| x.2.clone()).collect(),
             slash_reward_fraction: Perbill::from_percent(10),
@@ -328,6 +372,52 @@ fn testnet_genesis(
                 .iter()
                 // TODO initialize accounts with Mangata token
                 .flat_map(|_| vec![])
+                .collect(),
+            created_tokens_for_staking: {
+                let mut created_tokens_for_staking_token_1: Vec<(AccountId, u32, u128)> =
+                    staking_accounts
+                        .iter()
+                        .cloned()
+                        .map(|x| {
+                            let (who, _, _, token_id, initial_amount, _, _) = x;
+                            (who.clone(), token_id, initial_amount)
+                        })
+                        .collect();
+                let mut created_tokens_for_staking_token_2: Vec<(AccountId, u32, u128)> =
+                    staking_accounts
+                        .iter()
+                        .cloned()
+                        .map(|x| {
+                            let (who, token_id, initial_amount, _, _, _, _) = x;
+                            (who.clone(), token_id, initial_amount)
+                        })
+                        .collect();
+                created_tokens_for_staking_token_1.append(&mut created_tokens_for_staking_token_2);
+                created_tokens_for_staking_token_1
+            },
+        }),
+        pallet_xyk: Some(XykConfig {
+            created_pools_for_staking: staking_accounts
+                .iter()
+                .map(|x| {
+                    let (
+                        account_id,
+                        native_token_id,
+                        native_token_amount,
+                        pooled_token_id,
+                        pooled_token_amount,
+                        liquidity_token_id,
+                        _,
+                    ) = x;
+                    (
+                        account_id.clone(),
+                        *native_token_id,
+                        *native_token_amount,
+                        *pooled_token_id,
+                        *pooled_token_amount,
+                        *liquidity_token_id,
+                    )
+                })
                 .collect(),
         }),
     }

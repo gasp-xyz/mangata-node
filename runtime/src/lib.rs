@@ -14,7 +14,7 @@ use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::curve::PiecewiseLinear;
 use sp_runtime::traits::{
-    BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, NumberFor, OpaqueKeys,
+    BlakeTwo256, Block as BlockT, Convert, IdentifyAccount, IdentityLookup, NumberFor, OpaqueKeys,
     Saturating, Verify,
 };
 use sp_runtime::{
@@ -49,6 +49,7 @@ pub use sp_runtime::{Perbill, Permill};
 
 pub use mangata_primitives::{Amount, Balance, TokenId};
 pub use orml_tokens;
+use orml_tokens::MultiTokenCurrency;
 pub use pallet_assets_info;
 
 use pallet_session::historical as pallet_session_historical;
@@ -107,6 +108,8 @@ pub mod opaque {
 }
 
 mod weights;
+
+pub const NATIVE_CURRENCY_ID: u32 = 0;
 
 impl_opaque_keys! {
     pub struct SessionKeys {
@@ -273,12 +276,40 @@ parameter_types! {
     pub const MaxIterations: u32 = 10;
     // 0.05%. The higher the value, the more strict solution acceptance becomes.
     pub MinSolutionScoreBump: Perbill = Perbill::from_rational_approximation(5u32, 10_000);
+    pub const MinStakeAmount: Balance = 1;
+}
+
+/// Struct that handles the conversion of Balance -> `u64`. This is used for staking's election
+/// calculation.
+pub struct CurrencyToVoteHandler;
+
+impl CurrencyToVoteHandler {
+    fn factor() -> Balance {
+        (orml_tokens::MultiTokenCurrencyAdapter::<Runtime>::total_issuance(NATIVE_CURRENCY_ID)
+            / u64::max_value() as Balance)
+            .max(1)
+    }
+}
+
+impl Convert<Balance, u64> for CurrencyToVoteHandler {
+    fn convert(x: Balance) -> u64 {
+        (x / Self::factor()) as u64
+    }
+}
+
+impl Convert<u128, Balance> for CurrencyToVoteHandler {
+    fn convert(x: u128) -> Balance {
+        x * Self::factor()
+    }
 }
 
 impl pallet_staking::Trait for Runtime {
-    type Currency = Balances;
+    type NativeCurrencyId = NativeCurrencyId;
+    type MinStakeAmount = MinStakeAmount;
+    type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+    type Valuations = Xyk;
     type UnixTime = Timestamp;
-    type CurrencyToVote = ();
+    type CurrencyToVote = CurrencyToVoteHandler;
     type RewardRemainder = ();
     type Event = Event;
     type Slash = (); // send the slashed funds to the treasury.
@@ -298,6 +329,8 @@ impl pallet_staking::Trait for Runtime {
     type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
     type UnsignedPriority = ();
     type WeightInfo = weights::pallet_staking::WeightInfo;
+    #[cfg(feature = "runtime-benchmarks")]
+    type Xyk = Xyk;
 }
 
 parameter_types! {
@@ -417,9 +450,14 @@ impl pallet_sudo::Trait for Runtime {
     type Call = Call;
 }
 
+parameter_types! {
+    pub const NativeCurrencyId: u32 = NATIVE_CURRENCY_ID;
+}
+
 impl pallet_xyk::Trait for Runtime {
     type Event = Event;
     type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+    type NativeCurrencyId = NativeCurrencyId;
 }
 
 // Snowfork traits
@@ -479,6 +517,9 @@ impl orml_tokens::Trait for Runtime {
     type WeightInfo = ();
 }
 
+impl pallet_random_seed::Trait for Runtime{
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
     pub enum Runtime where
@@ -489,8 +530,8 @@ construct_runtime!(
         System: frame_system::{Module, Call, Config, Storage, Event<T>},
         RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
         Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
+        Random: pallet_random_seed::{Module, Call, Storage, Inherent},
         Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
-        Staking: pallet_staking::{Module, Call, Config<T>, Storage, Event<T>, ValidateUnsigned},
         Authorship: pallet_authorship::{Module, Call, Storage, Inherent},
         Babe: pallet_babe::{Module, Call, Storage, Config, Inherent, ValidateUnsigned},
         Historical: pallet_session_historical::{Module},
@@ -499,7 +540,6 @@ construct_runtime!(
         TransactionPayment: pallet_transaction_payment::{Module, Storage},
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
         Offences: pallet_offences::{Module, Call, Storage, Event},
-        Xyk: pallet_xyk::{Module, Call, Storage, Event<T>},
         // Snowfork pallets
         Bridge: bridge::{Module, Call, Config, Storage, Event},
         Verifier: verifier::{Module, Call, Storage, Event, Config<T>},
@@ -508,6 +548,8 @@ construct_runtime!(
         ERC20: erc20_app::{Module, Call, Storage, Event<T>},
         AssetsInfo: pallet_assets_info::{Module, Call, Config, Storage, Event},
         Tokens: orml_tokens::{Module, Storage, Call, Event<T>, Config<T>},
+        Xyk: pallet_xyk::{Module, Call, Storage, Event<T>, Config<T>},
+        Staking: pallet_staking::{Module, Call, Config<T>, Storage, Event<T>, ValidateUnsigned},
     }
 );
 
@@ -596,6 +638,19 @@ impl_runtime_apis! {
             tx: <Block as BlockT>::Extrinsic,
         ) -> TransactionValidity {
             Executive::validate_transaction(source, tx)
+        }
+    }
+
+    impl extrinsic_info_runtime_api::runtime_api::ExtrinsicInfoRuntimeApi<Block> for Runtime {
+        fn get_info(
+            tx: <Block as BlockT>::Extrinsic,
+        ) -> Option<extrinsic_info_runtime_api::ExtrinsicInfo> {
+            tx.signature.clone().map(|sig|
+                extrinsic_info_runtime_api::ExtrinsicInfo{
+                    who: sig.0,
+                    nonce: 0,
+                }
+            )
         }
     }
 
@@ -749,10 +804,15 @@ impl_runtime_apis! {
             second_asset_id: TokenId,
             liquidity_asset_amount: Balance
         ) -> RpcAmountsResult<Balance> {
-            let (first_asset_amount, second_asset_amount) = Xyk::get_burn_amount(first_asset_id, second_asset_id, liquidity_asset_amount);
-            RpcAmountsResult{
-                first_asset_amount,
-                second_asset_amount
+            match Xyk::get_burn_amount(first_asset_id, second_asset_id, liquidity_asset_amount){
+                Ok((first_asset_amount, second_asset_amount)) => RpcAmountsResult{
+                                                                    first_asset_amount,
+                                                                    second_asset_amount
+                                                                },
+                Err(_) => RpcAmountsResult{
+                    first_asset_amount: 0u32.into(),
+                    second_asset_amount: 0u32.into()
+                },
             }
         }
     }
@@ -765,6 +825,7 @@ impl_runtime_apis! {
             use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
 
             use frame_system_benchmarking::Module as SystemBench;
+
             impl frame_system_benchmarking::Trait for Runtime {}
 
             let whitelist: Vec<TrackedStorageKey> = vec![
@@ -787,6 +848,7 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, pallet_balances, Balances);
             add_benchmark!(params, batches, pallet_timestamp, Timestamp);
             add_benchmark!(params, batches, bridge, Bridge);
+            add_benchmark!(params, batches, pallet_staking, Staking);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)

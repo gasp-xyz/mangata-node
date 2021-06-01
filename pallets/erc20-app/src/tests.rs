@@ -1,4 +1,4 @@
-use crate::mock::{new_tester, AccountId, MockEvent, MockRuntime, Origin, System, ERC20, Tokens};
+use crate::mock::{new_tester, AccountId, MockEvent, MockRuntime, Origin, System, Tokens, ERC20};
 use frame_support::assert_ok;
 use frame_system as system;
 use hex_literal::hex;
@@ -33,17 +33,11 @@ fn mints_after_handling_ethereum_event() {
 
         // crating token with ID = 0
         assert_ok!(ERC20::handle_event(event.clone()));
-        assert_eq!(
-            Tokens::free_balance(id_of_first_minted_token, &bob),
-            10
-        );
+        assert_eq!(Tokens::free_balance(id_of_first_minted_token, &bob), 10);
 
         // minting previously created token
         assert_ok!(ERC20::handle_event(event));
-        assert_eq!(
-            Tokens::free_balance(id_of_first_minted_token, &bob),
-            20
-        );
+        assert_eq!(Tokens::free_balance(id_of_first_minted_token, &bob), 20);
     });
 }
 

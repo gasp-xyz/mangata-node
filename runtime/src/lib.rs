@@ -517,8 +517,7 @@ impl orml_tokens::Trait for Runtime {
     type WeightInfo = ();
 }
 
-impl pallet_random_seed::Trait for Runtime{
-}
+impl pallet_random_seed::Trait for Runtime {}
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(

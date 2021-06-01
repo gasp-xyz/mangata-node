@@ -371,7 +371,7 @@ decl_module! {
         ) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
-            
+
             <Self as XykFunctionsTrait<T::AccountId>>::sell_asset(sender, sold_asset_id.into(), bought_asset_id.into(), sold_asset_amount.into(), min_amount_out.into())
 
         }
@@ -953,7 +953,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
 
         // Calculate amount to be paid from bought amount
         let sold_asset_amount =
-            Module::<T>::calculate_buy_price(input_reserve, output_reserve, bought_asset_amount);
+            Module::<T>::calculate_buy_price(input_reserve, output_reserve, bought_asset_amount)?;
 
         // Ensure user has enought tokens to sell
         ensure!(

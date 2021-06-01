@@ -29,6 +29,7 @@ xyk-runtime-api = { path = '../pallets/xyk/runtime-api', default-features = fals
 extrinsic-info-runtime-api = { path = '../primitives/extrinsic-info-runtime-api', default-features = false, version = '2.0.0' }
 frame-executive = { path = '../pallets/executive', default-features = false, version = '2.0.0' }
 pallet-timestamp = { path = '../pallets/timestamp', default-features = false, version = '2.0.0' }
+pallet-random-seed = { path='../pallets/random-seed', default-features = false, version='2.0.0' }
 pallet-assets-info = { path = '../pallets/assets-info', default-features = false, version = '2.0.0' }
 pallet-staking = { path = '../pallets/staking', default-features = false, version = "2.0.0" }
 pallet-staking-reward-curve = { path = '../pallets/staking/reward-curve', default-features = false, version = "2.0.0" }

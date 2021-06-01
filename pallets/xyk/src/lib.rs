@@ -254,7 +254,7 @@ const PALLET_ID: ModuleId = ModuleId(*b"79b14c96");
 // 1/100 %
 const TREASURY_PERCENTAGE: u128 = 5;
 const BUYANDBURN_PERCENTAGE: u128 = 5;
-const SWAPFEE_PERCENTAGE: u128 = 30;
+const FEE_PERCENTAGE: u128 = 30;
 const MANGATA_ID: u128 = 0;
 
 decl_error! {
@@ -427,17 +427,29 @@ impl<T: Trait> Module<T> {
         output_reserve: Balance,
         sell_amount: Balance,
     ) -> Result<Balance, DispatchError> {
+        let after_fee_percentage: u128 = 10000 - FEE_PERCENTAGE;
         let input_reserve_saturated: U256 = input_reserve.saturated_into::<u128>().into();
         let output_reserve_saturated: U256 = output_reserve.saturated_into::<u128>().into();
         let sell_amount_saturated: U256 = sell_amount.saturated_into::<u128>().into();
 
-        let input_amount_with_fee: U256 = sell_amount_saturated * 997;
-        let numerator: U256 = input_amount_with_fee * output_reserve_saturated;
-        let denominator: U256 = input_reserve_saturated * 1000 + input_amount_with_fee;
-        let result = numerator
-            .checked_div(denominator)
+        let input_amount_with_fee: U256 = sell_amount_saturated
+            .checked_mul(after_fee_percentage.into())
             .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
-        Ok(result.saturated_into::<u128>().saturated_into::<Balance>())
+
+        let numerator: U256 = input_amount_with_fee
+            .checked_mul(output_reserve_saturated)
+            .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
+
+        let denominator: U256 = input_reserve_saturated
+            .checked_mul(10000.into())
+            .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?
+            .checked_add(input_amount_with_fee)
+            .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
+
+        Ok(numerator
+            .checked_div(denominator)
+            .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?
+            .saturated_into::<u128>())
     }
 
     pub fn calculate_sell_price_no_fee(
@@ -450,12 +462,18 @@ impl<T: Trait> Module<T> {
         let output_reserve_saturated: U256 = output_reserve.saturated_into::<u128>().into();
         let sell_amount_saturated: U256 = sell_amount.saturated_into::<u128>().into();
 
-        let numerator: U256 = sell_amount_saturated * output_reserve_saturated;
-        let denominator: U256 = input_reserve_saturated + sell_amount_saturated;
-        let result = numerator
-            .checked_div(denominator)
+        let numerator: U256 = sell_amount_saturated
+            .checked_mul(output_reserve_saturated)
             .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
-        Ok(result.saturated_into::<u128>().saturated_into::<Balance>())
+
+        let denominator: U256 = input_reserve_saturated
+            .checked_add(sell_amount_saturated)
+            .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
+
+        Ok(numerator
+            .checked_div(denominator)
+            .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?
+            .saturated_into::<u128>())
     }
 
     // Callculate amount of tokens to be paid, when buying buy_amount
@@ -463,16 +481,27 @@ impl<T: Trait> Module<T> {
         input_reserve: Balance,
         output_reserve: Balance,
         buy_amount: Balance,
-    ) -> Balance {
+    ) -> Result<Balance, DispatchError> {
+        let after_fee_percentage: u128 = 10000 - FEE_PERCENTAGE;
         let input_reserve_saturated: U256 = input_reserve.saturated_into::<u128>().into();
         let output_reserve_saturated: U256 = output_reserve.saturated_into::<u128>().into();
         let buy_amount_saturated: U256 = buy_amount.saturated_into::<u128>().into();
 
-        let numerator: U256 = input_reserve_saturated * buy_amount_saturated * 1000;
-        let denominator: U256 = (output_reserve_saturated - buy_amount_saturated) * 997;
-        let result: U256 = numerator / denominator + 1;
+        let numerator: U256 = input_reserve_saturated
+            .checked_mul(buy_amount_saturated)
+            .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?
+            .checked_mul(10000.into())
+            .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
 
-        result.saturated_into::<u128>().saturated_into::<Balance>()
+        let denominator: U256 = (output_reserve_saturated - buy_amount_saturated)
+            .checked_mul(after_fee_percentage.into())
+            .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
+
+        Ok((numerator
+            .checked_div(denominator)
+            .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?
+            - 1)
+        .saturated_into::<u128>())
     }
 
     pub fn get_liquidity_asset(
@@ -926,7 +955,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
 
         // Calculate amount to be paid from bought amount
         let sold_asset_amount =
-            Module::<T>::calculate_buy_price(input_reserve, output_reserve, bought_asset_amount);
+            Module::<T>::calculate_buy_price(input_reserve, output_reserve, bought_asset_amount)?;
 
         // Ensure user has enought tokens to sell
         ensure!(

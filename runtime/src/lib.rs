@@ -517,8 +517,7 @@ impl orml_tokens::Trait for Runtime {
     type WeightInfo = ();
 }
 
-impl pallet_random_seed::Trait for Runtime{
-}
+impl pallet_random_seed::Trait for Runtime {}
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -775,7 +774,7 @@ impl_runtime_apis! {
             buy_amount: Balance
         ) -> RpcResult<Balance> {
             RpcResult {
-                price: Xyk::calculate_buy_price(input_reserve, output_reserve, buy_amount)
+                price: Xyk::calculate_buy_price(input_reserve, output_reserve, buy_amount).unwrap_or_default()
             }
         }
 

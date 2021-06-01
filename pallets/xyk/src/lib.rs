@@ -497,11 +497,11 @@ impl<T: Trait> Module<T> {
             .checked_mul(after_fee_percentage.into())
             .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
 
-        Ok((numerator
+        Ok(numerator
             .checked_div(denominator)
             .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?
-            - 1)
-        .saturated_into::<u128>())
+            .saturated_into::<u128>()
+            + 1.saturated_into::<u128>())
     }
 
     pub fn get_liquidity_asset(

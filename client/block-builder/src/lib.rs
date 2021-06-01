@@ -173,8 +173,7 @@ where
     ///
     /// This will ensure the extrinsic can be validly executed (by executing it).
     pub fn push(&mut self, xt: <Block as BlockT>::Extrinsic) -> Result<(), ApiErrorFor<A, Block>> {
-        let exts = &mut self.extrinsics;
-        exts.push(xt.clone());
+        self.extrinsics.push(xt);
         Ok(())
         // TODO: check if its possible to verify transaction by first
         // applying all the transactions from current block and then applying

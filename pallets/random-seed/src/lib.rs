@@ -34,7 +34,7 @@ decl_module! {
 }
 
 decl_storage! {
-    trait Store for Module<T: Trait> as Timestamp {
+    trait Store for Module<T: Trait> as RandomSeed {
         /// Current time for the current block.
         pub Seed get(fn seed) : H256;
     }
@@ -77,8 +77,8 @@ impl IsFatalError for RandomSeedInherentError {
 
 fn extract_inherent_data(data: &InherentData) -> Result<RandomSeedInherentType, RuntimeString> {
     data.get_data::<RandomSeedInherentType>(&RANDOM_SEED_INHERENT_IDENTIFIER)
-        .map_err(|_| RuntimeString::from("Invalid timestamp inherent data encoding."))?
-        .ok_or_else(|| "Timestamp inherent data is not provided.".into())
+        .map_err(|_| RuntimeString::from("Invalid random seed inherent data encoding."))?
+        .ok_or_else(|| "Random Seed inherent data is not provided.".into())
 }
 
 #[cfg(feature = "std")]

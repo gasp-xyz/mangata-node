@@ -22,32 +22,40 @@ jobs:
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
+#      -
+#        name: Login to Docker Hub
+#        uses: docker/login-action@v1
+#        with:
+#          username: ${{ secrets.DOCKERHUB_USERNAME }}
+#          password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
-        name: Login to Docker Hub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      -
-        name: Build and push
+        name: Build Only
         id: docker_build
         uses: docker/build-push-action@v2
         with:
           file: "devops/dockerfiles/node-and-runtime/Dockerfile"
-          push: true
+          push: false
           tags: mangatasolutions/mangata-node:latest,mangatasolutions/mangata-node:${{ github.sha }},mangatasolutions/mangata-node:${{ github.run_id }}
-
-      - name: Install doctl
-        uses: digitalocean/action-doctl@v2
+      - 
+        name: Start docker img
+        uses: addnab/docker-run-action@v3
         with:
-          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-        
-      - name: Save DigitalOcean kubeconfig with short-lived credentials
-        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 ${{ secrets.K8S_CLUSTER_ID }}
-      
-      - name: Deploy to DigitalOcean Kubernetes
-        run: kubectl rollout restart deployment/mangata-node
+          image: mangatasolutions/mangata-node:latest
+          run: ./target/release/mangata-node --dev
 
-      - name: Verify deployment
-        run: kubectl rollout status deployment/mangata-node
-      
+#
+#      - name: Install doctl
+#        uses: digitalocean/action-doctl@v2
+#        with:
+#          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+#        
+#      - name: Save DigitalOcean kubeconfig with short-lived credentials
+#        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 ${{ secrets.K8S_CLUSTER_ID }}
+#      
+#      - name: Deploy to DigitalOcean Kubernetes
+#        run: kubectl rollout restart deployment/mangata-node
+#
+#      - name: Verify deployment
+#        run: kubectl rollout status deployment/mangata-node
+#      
+#

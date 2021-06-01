@@ -1032,7 +1032,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         ensure!(
             second_asset_amount <= expected_second_asset_amount * 101 / 100,
             Error::<T>::SecondAssetAmountExceededExpectations,
-        );   
+        );
 
         // Ensure minting amounts are not zero
         ensure!(

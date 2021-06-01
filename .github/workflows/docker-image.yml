@@ -67,7 +67,7 @@ jobs:
         name: Start docker img
         uses: addnab/docker-run-action@v3
         with:
-          image: ${{ github.run_id }}
+          image: mangatasolutions/mangata-node:${{ github.run_id }}
           run: /mangata/node --dev
 
       - 

@@ -43,12 +43,32 @@ jobs:
           file: "devops/dockerfiles/node-and-runtime/Dockerfile"
           push: false
           tags: mangatasolutions/mangata-node:latest,mangatasolutions/mangata-node:${{ github.sha }},mangatasolutions/mangata-node:${{ github.run_id }}
+          outputs: type=docker,dest=/tmp/${{ github.run_id }}.tar
+      
+      -
+        name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ github.run_id }}
+          path: /tmp/${{ github.run_id }}.tar
+      
+            -
+        name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ github.run_id }}
+          path: /tmp
+      -
+        name: Load Docker image
+        run: |
+          docker load --input /tmp/${{ github.run_id }}.tar
+          docker image ls -a
       - 
         name: Start docker img
         uses: addnab/docker-run-action@v3
         with:
-          image: mangatasolutions/mangata-node:latest
-          run: ./target/release/mangata-node --dev
+          image: ${{ github.run_id }}
+          run: /mangata/node --dev
 
       - 
         name: Checkout tests

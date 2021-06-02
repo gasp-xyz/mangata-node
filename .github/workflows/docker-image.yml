@@ -1,4 +1,8 @@
 name: Docker Image CI
+# available flags: 
+## skip-e2e-tests: skip running e2e tests
+## skip-build : run the test with latest version.
+## skip-publish: skip publish 
 
 on: 
   pull_request:
@@ -21,7 +25,7 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-
+    if: github.event.label.name != 'skip-build'
     steps:
       -
         name: Checkout
@@ -61,12 +65,14 @@ jobs:
     steps:
       -
         name: Download artifact
+        if: github.event.label.name != 'skip-build'
         uses: actions/download-artifact@v2
         with:
           name: ${{ github.run_id }}
           path: /tmp
       -
         name: Load Docker image
+        if: github.event.label.name != 'skip-build'
         run: |
           docker load --input /tmp/${{ github.run_id }}.tar
           docker image ls -a
@@ -78,8 +84,13 @@ jobs:
           token: ${{ secrets.E2E_GITHUB_CHECKOUT_TOKEN }}
           ref: 'trigger_build_from_outside'
 
-      - name: Start mangata-node node
-        run: docker-compose -f devops/dockerfiles/e2e/docker-compose.yml up -d
+      - name: Start mangata-node node with local build
+        if: github.event.label.name != 'skip-build'
+        run: docker-compose -f devops/dockerfiles/node-build/docker-compose.yml up -d
+      
+      - name: Start mangata-node node with latest
+        if: github.event.label.name == 'skip-build'
+        run: docker-compose -f devops/dockerfiles/docker-compose.yml up -d
 
       - name: Install dependencies
         run: yarn
@@ -101,6 +112,7 @@ jobs:
   publish:
     needs: test
     runs-on: ubuntu-latest
+    if: github.event.label.name != 'skip-publish'
     if: ${{ github.event_name == 'push'}} # its a push to develop.
     steps:
       -

@@ -22,8 +22,8 @@ jobs:
       API_URL: 'ws://172.16.238.10:9944'
       TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}
       TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
-      MANGATA_NODE_VERSION: 'latest'
-      #MANGATA_NODE_VERSION:${{ github.run_id }}
+      #MANGATA_NODE_VERSION: 'latest'
+      MANGATA_NODE_VERSION: ${{ github.run_id }}
 
     steps:
       -
@@ -35,40 +35,40 @@ jobs:
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-#      -
-#        name: Login to Docker Hub
-#        uses: docker/login-action@v1
-#        with:
-#          username: ${{ secrets.DOCKERHUB_USERNAME }}
-#          password: ${{ secrets.DOCKERHUB_TOKEN }}
-#      -
-#        name: Build Only
-#        id: docker_build
-#        uses: docker/build-push-action@v2
-#        with:
-#          file: "devops/dockerfiles/node-and-runtime/Dockerfile"
-#          push: false
-#          tags: mangatasolutions/mangata-node:latest,mangatasolutions/mangata-node:${{ github.sha }},mangatasolutions/mangata-node:${{ github.run_id }}
-#          outputs: type=docker,dest=/tmp/${{ github.run_id }}.tar
-#      
-#      -
-#        name: Upload artifact
-#        uses: actions/upload-artifact@v2
-#        with:
-#          name: ${{ github.run_id }}
-#          path: /tmp/${{ github.run_id }}.tar
-#      
-#      -
-#        name: Download artifact
-#        uses: actions/download-artifact@v2
-#        with:
-#          name: ${{ github.run_id }}
-#          path: /tmp
-#      -
-#        name: Load Docker image
-#        run: |
-#          docker load --input /tmp/${{ github.run_id }}.tar
-#          docker image ls -a
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      -
+        name: Build Only
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          file: "devops/dockerfiles/node-and-runtime/Dockerfile"
+          push: false
+          tags: mangatasolutions/mangata-node:latest,mangatasolutions/mangata-node:${{ github.sha }},mangatasolutions/mangata-node:${{ github.run_id }}
+          outputs: type=docker,dest=/tmp/${{ github.run_id }}.tar
+      
+      -
+        name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ github.run_id }}
+          path: /tmp/${{ github.run_id }}.tar
+      
+      -
+        name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ github.run_id }}
+          path: /tmp
+      -
+        name: Load Docker image
+        run: |
+          docker load --input /tmp/${{ github.run_id }}.tar
+          docker image ls -a
 
       - name: Start mangata-node node
         run: docker-compose -f devops/dockerfiles/e2e/docker-compose.yml up -d
@@ -80,6 +80,7 @@ jobs:
           token: ${{ secrets.E2E_GITHUB_CHECKOUT_TOKEN }}
           ref: 'trigger_build_from_outside'
           path: 'e2eTests'
+          
       - name: debug info
         run: |
           pwd             
@@ -88,11 +89,22 @@ jobs:
       - name: Install dependencies
         working-directory: ../e2eTests
         run: yarn
+
       - name: Docker ps
         run: docker ps
+
       - name: Run e2e tests
         working-directory: ../e2eTests
         run: yarn test-sequential-e2e
+
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        working-directory: ../e2eTests
+        if: success() || failure()    # run this step even if previous step failed
+        with:
+          name: JEST Tests            # Name of the check run which will be created
+          path: reports/jest-*.xml    # Path to test results
+          reporter: jest-junit        # Format of test results
       
 
 #

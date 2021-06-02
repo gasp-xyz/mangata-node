@@ -23,6 +23,7 @@ sp-runtime = { default-features = false, version = '2.0.0' }
 sp-core = { default-features = false, version = '2.0.0' }
 sp-std = { version = "2.0.0", default-features = false }
 mangata-primitives = { path = '../../primitives/mangata', default-features = false, version = '0.1.0' }
+sp-arithmetic = { default-features = false, version = '2.0.0' }
 
 
 

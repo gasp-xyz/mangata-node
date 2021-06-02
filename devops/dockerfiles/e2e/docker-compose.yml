@@ -1,0 +1,21 @@
+version: "3"
+networks:
+    testing_net_automation:
+      ipam:
+        driver: default
+        config:
+          - subnet: 172.16.238.0/24
+
+services:
+  node_alice:
+    image: mangatasolutions/mangata-node:${env.MANGATA_NODE_VERSION}
+    container_name: alice
+    entrypoint: ./node --dev --alice --validator --unsafe-ws-external --rpc-cors=all -lruntime=debug --node-key=0000000000000000000000000000000000000000000000000000000000000001
+    ports:
+      - "30333:30333"
+      - "9933:9933"
+      - "9944:9944"
+    networks:
+        testing_net_automation:
+            ipv4_address: 172.16.238.10
+

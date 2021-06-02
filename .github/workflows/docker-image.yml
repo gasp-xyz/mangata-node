@@ -15,10 +15,12 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
-      API_URL: 'ws://0.0.0.0:9944'
+      API_URL: 'ws://172.16.238.10:9944'
       TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}
       TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
-  
+      MANGATA_NODE_VERSION:'latest'
+      #MANGATA_NODE_VERSION:${{ github.run_id }}
+
     steps:
       -
         name: Checkout
@@ -63,16 +65,9 @@ jobs:
 #        run: |
 #          docker load --input /tmp/${{ github.run_id }}.tar
 #          docker image ls -a
-      - 
-        name: Start docker img
-        uses: mosteo-actions/docker-run@v1
-        with:
-#          image: mangatasolutions/mangata-node:${{ github.run_id }}
-          image: mangatasolutions/mangata-node:latest
 
-          command: /mangata/node --dev
-          params: '-d -p 9944:9944'
-
+      - name: Start mangata-node node
+        run: docker-compose -f devops/dockerfiles/e2e/docker-compose.yml up -d
       - 
         name: Checkout tests
         uses: actions/checkout@v1

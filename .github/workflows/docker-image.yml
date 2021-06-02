@@ -1,6 +1,17 @@
 name: Docker Image CI
 
-on: [push, pull_request]
+on: [pull_request]
+
+inputs:
+  skip-unit-tests:
+    description: 'true if you want to skip unit tests'
+    required: false
+    default: 'false'
+  skip-e2e-tests:
+    description: 'true if you want to skip e2e tests run'
+    required: false
+    default: 'false'
+
 #on:
 #  push:
 #    branches: [ develop ]
@@ -9,7 +20,7 @@ on: [push, pull_request]
 #    branches:
 #      - develop
 
-  #workflow_dispatch:
+  workflow_dispatch:
     # For manually trigger
 
 
@@ -48,6 +59,7 @@ jobs:
   test:
     needs: build
     runs-on: ubuntu-latest
+    if: ${{ inputs.skip-e2e-tests }} == 'false'
     env:
       API_URL: 'ws://172.16.238.10:9944'
       TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}
@@ -78,11 +90,6 @@ jobs:
           ref: 'trigger_build_from_outside'
           path: 'e2eTests'
 
-      - name: debug info
-        run: |
-          pwd             
-          echo "${{ github.workspace }}"
-
       - name: Install dependencies
         working-directory: ../e2eTests
         run: yarn
@@ -105,7 +112,7 @@ jobs:
   publish:
     needs: build
     runs-on: ubuntu-latest
-
+    if: ${{ github.event_name == 'push'}} # its a push to develop.
     steps:
       -
         name: Login to Docker Hub

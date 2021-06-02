@@ -84,16 +84,16 @@ jobs:
           repository: mangata-finance/mangata-e2e
           token: ${{ secrets.E2E_GITHUB_CHECKOUT_TOKEN }}
           ref: 'trigger_build_from_outside'
-      - name: Debug
-        run: pwd
+      - name: Change dir
+        run: cd ../mangata-e2e/
 
       - name: Start mangata-node node with local build
         if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
-        run: docker-compose -f devops/dockerfiles/node-build/docker-compose.yml up -d
+        run: docker-compose -f ./devops/dockerfiles/node-build/docker-compose.yml up -d
       
       - name: Start mangata-node node with latest
         if: "contains(github.event.pull_request.labels.*.name, 'skip-build')"
-        run: docker-compose -f devops/dockerfiles/docker-compose.yml up -d
+        run: docker-compose -f ./devops/dockerfiles/docker-compose.yml up -d
 
       - name: Install dependencies
         run: yarn
@@ -137,6 +137,9 @@ jobs:
         run: |
           docker load --input /tmp/${{ github.run_id }}.tar
           docker image ls -a
+
+      - name: Change dir
+        run: cd ../mangata-node/
 
       -
         name: Publish Only

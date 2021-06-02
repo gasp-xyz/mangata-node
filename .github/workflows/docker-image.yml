@@ -85,6 +85,11 @@ jobs:
           token: ${{ secrets.E2E_GITHUB_CHECKOUT_TOKEN }}
           ref: 'trigger_build_from_outside'
           path: 'e2eTests'
+      - name: debug
+        run: pwd
+
+      - name: debug
+        run: ls
       
       - name: Start mangata-node node with local build
         if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"

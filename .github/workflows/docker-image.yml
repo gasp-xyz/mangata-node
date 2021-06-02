@@ -64,6 +64,7 @@ jobs:
       MANGATA_NODE_VERSION: ${{ github.run_id }}
 
     steps:
+    ####IDK, but this is neccesary for reports
       -
         name: Checkout
         uses: actions/checkout@v2
@@ -110,13 +111,7 @@ jobs:
       - name: Run e2e tests
         working-directory: e2eTests
         run: yarn test-sequential-e2e
-
-      - name: debug
-        run: pwd
-
-      - name: debug
-        run: ls e2eTests/reports
-      
+     
       - name: Test Report
         uses: dorny/test-reporter@v1
         if: success() || failure()    # run this step even if previous step failed

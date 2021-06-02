@@ -372,6 +372,7 @@ decl_module! {
         ) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
+
             <Self as XykFunctionsTrait<T::AccountId>>::sell_asset(sender, sold_asset_id.into(), bought_asset_id.into(), sold_asset_amount.into(), min_amount_out.into())
 
         }
@@ -464,16 +465,19 @@ impl<T: Trait> Module<T> {
         input_reserve: Balance,
         output_reserve: Balance,
         buy_amount: Balance,
-    ) -> Balance {
+    ) -> Result<Balance, DispatchError> {
         let input_reserve_saturated: U256 = input_reserve.into();
         let output_reserve_saturated: U256 = output_reserve.into();
         let buy_amount_saturated: U256 = buy_amount.into();
 
         let numerator: U256 = input_reserve_saturated * buy_amount_saturated * 1000;
         let denominator: U256 = (output_reserve_saturated - buy_amount_saturated) * 997;
-        let result: U256 = numerator / denominator + 1;
+        let result = numerator
+            .checked_div(denominator)
+            .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?
+            + 1;
 
-        result.saturated_into()
+        Ok(result.saturated_into())
     }
 
     pub fn get_liquidity_asset(
@@ -487,6 +491,28 @@ impl<T: Trait> Module<T> {
             LiquidityAssets::get((second_asset_id, first_asset_id))
                 .ok_or_else(|| Error::<T>::NoSuchPool.into())
         }
+    }
+
+    pub fn calculate_sell_price_id(
+        sold_token_id: TokenId,
+        bought_token_id: TokenId,
+        sell_amount: Balance,
+    ) -> Result<Balance, DispatchError> {
+        let input_reserve = Pools::get((sold_token_id, bought_token_id));
+        let output_reserve = Pools::get((bought_token_id, sold_token_id));
+
+        Self::calculate_sell_price(input_reserve, output_reserve, sell_amount)
+    }
+
+    pub fn calculate_buy_price_id(
+        sold_token_id: TokenId,
+        bought_token_id: TokenId,
+        buy_amount: Balance,
+    ) -> Result<Balance, DispatchError> {
+        let input_reserve = Pools::get((sold_token_id, bought_token_id));
+        let output_reserve = Pools::get((bought_token_id, sold_token_id));
+
+        Self::calculate_buy_price(input_reserve, output_reserve, buy_amount)
     }
 
     // Calculate first and second token amounts depending on liquidity amount to burn
@@ -917,7 +943,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
 
         // Calculate amount to be paid from bought amount
         let sold_asset_amount =
-            Module::<T>::calculate_buy_price(input_reserve, output_reserve, bought_asset_amount);
+            Module::<T>::calculate_buy_price(input_reserve, output_reserve, bought_asset_amount)?;
 
         // Ensure user has enought tokens to sell
         ensure!(

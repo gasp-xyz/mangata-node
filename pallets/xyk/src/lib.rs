@@ -475,7 +475,7 @@ impl<T: Trait> Module<T> {
         let result = numerator
             .checked_div(denominator)
             .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?
-            - 1;
+            + 1;
 
         Ok(result.saturated_into::<u128>().saturated_into::<Balance>())
     }

@@ -15,7 +15,7 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
-      API_URL: 'ws://127.0.0.1:9944'
+      API_URL: 'ws://0.0.0.0:9944'
       TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}
       TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
   

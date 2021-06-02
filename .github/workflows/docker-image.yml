@@ -112,8 +112,8 @@ jobs:
   publish:
     needs: test
     runs-on: ubuntu-latest
-    if: not contains(github.event.pull_request.labels.*.name, 'skip-publish') 
-    if: ${{ github.event_name == 'push'}} # its a push to develop.
+    if: not contains(github.event.pull_request.labels.*.name, 'skip-publish') && ${{ github.event_name == 'push'}}
+    #if: # its a push to develop.
     steps:
       -
         name: Login to Docker Hub

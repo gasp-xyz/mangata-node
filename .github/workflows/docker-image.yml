@@ -84,8 +84,15 @@ jobs:
           repository: mangata-finance/mangata-e2e
           token: ${{ secrets.E2E_GITHUB_CHECKOUT_TOKEN }}
           ref: 'trigger_build_from_outside'
+      
       - name: Change dir
         run: cd ../mangata-e2e/
+
+      - name: debug info
+        run: pwd
+      
+      - name: debug info 2
+        run: ls devops/
 
       - name: Start mangata-node node with local build
         if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"

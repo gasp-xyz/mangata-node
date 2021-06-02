@@ -7,11 +7,10 @@ on:
   pull_request:
     branches:
       - develop
-  
+
   workflow_dispatch:
     # For manually trigger
-#   pull_request:
-#     branches: [ develop ]
+
 
 jobs:
 
@@ -22,7 +21,7 @@ jobs:
       API_URL: 'ws://172.16.238.10:9944'
       TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}
       TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
-      MANGATA_NODE_VERSION:'latest'
+      MANGATA_NODE_VERSION: 'latest'
       #MANGATA_NODE_VERSION:${{ github.run_id }}
 
     steps:

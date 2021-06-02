@@ -774,7 +774,27 @@ impl_runtime_apis! {
             buy_amount: Balance
         ) -> RpcResult<Balance> {
             RpcResult {
-                price: Xyk::calculate_buy_price(input_reserve, output_reserve, buy_amount)
+                price: Xyk::calculate_buy_price(input_reserve, output_reserve, buy_amount).unwrap_or_default()
+            }
+        }
+
+        fn calculate_sell_price_id(
+            sold_token_id: TokenId,
+            bought_token_id: TokenId,
+            sell_amount: Balance
+        ) -> RpcResult<Balance> {
+            RpcResult {
+                price: Xyk::calculate_sell_price_id(sold_token_id, bought_token_id, sell_amount).unwrap_or_default()
+            }
+        }
+
+        fn calculate_buy_price_id(
+            sold_token_id: TokenId,
+            bought_token_id: TokenId,
+            buy_amount: Balance
+        ) -> RpcResult<Balance> {
+            RpcResult {
+                price: Xyk::calculate_buy_price_id(sold_token_id, bought_token_id, buy_amount).unwrap_or_default()
             }
         }
 

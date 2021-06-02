@@ -58,16 +58,18 @@ jobs:
 #        with:
 #          name: ${{ github.run_id }}
 #          path: /tmp
-      -
-        name: Load Docker image
-        run: |
-          docker load --input /tmp/${{ github.run_id }}.tar
-          docker image ls -a
+#      -
+#        name: Load Docker image
+#        run: |
+#          docker load --input /tmp/${{ github.run_id }}.tar
+#          docker image ls -a
       - 
         name: Start docker img
         uses: mosteo-actions/docker-run@v1
         with:
-          image: mangatasolutions/mangata-node:${{ github.run_id }}
+#          image: mangatasolutions/mangata-node:${{ github.run_id }}
+          image: mangatasolutions/mangata-node:latest
+
           command: /mangata/node --dev
           params: '-d -p 9944:9944'
 

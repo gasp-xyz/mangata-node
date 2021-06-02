@@ -89,7 +89,7 @@ jobs:
         run: pwd
 
       - name: debug
-        run: ls
+        run: ls e2eTests
       
       - name: Start mangata-node node with local build
         if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"

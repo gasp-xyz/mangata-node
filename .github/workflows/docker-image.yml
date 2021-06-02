@@ -18,12 +18,6 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    env:
-      API_URL: 'ws://172.16.238.10:9944'
-      TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}
-      TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
-      #MANGATA_NODE_VERSION: 'latest'
-      MANGATA_NODE_VERSION: ${{ github.run_id }}
 
     steps:
       -
@@ -36,12 +30,6 @@ jobs:
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
       -
-        name: Login to Docker Hub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      -
         name: Build Only
         id: docker_build
         uses: docker/build-push-action@v2
@@ -50,7 +38,6 @@ jobs:
           push: false
           tags: mangatasolutions/mangata-node:latest,mangatasolutions/mangata-node:${{ github.sha }},mangatasolutions/mangata-node:${{ github.run_id }}
           outputs: type=docker,dest=/tmp/${{ github.run_id }}.tar
-      
       -
         name: Upload artifact
         uses: actions/upload-artifact@v2
@@ -58,6 +45,16 @@ jobs:
           name: ${{ github.run_id }}
           path: /tmp/${{ github.run_id }}.tar
       
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      API_URL: 'ws://172.16.238.10:9944'
+      TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}
+      TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
+      MANGATA_NODE_VERSION: ${{ github.run_id }}
+
+    steps:
       -
         name: Download artifact
         uses: actions/download-artifact@v2
@@ -104,8 +101,42 @@ jobs:
           name: JEST Tests            # Name of the check run which will be created
           path: ../e2eTests/reports/jest-*.xml    # Path to test results
           reporter: jest-junit        # Format of test results
-      
 
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      -
+        name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ github.run_id }}
+          path: /tmp
+      
+      -
+        name: Load Docker image
+        run: |
+          docker load --input /tmp/${{ github.run_id }}.tar
+          docker image ls -a
+
+      -
+        name: Publish Only
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          file: "devops/dockerfiles/node-and-runtime/Dockerfile"
+          push: false
+          tags: mangatasolutions/mangata-node:latest,mangatasolutions/mangata-node:${{ github.sha }},mangatasolutions/mangata-node:${{ github.run_id }}
+          outputs: type=docker,dest=/tmp/${{ github.run_id }}.tar
+   
 #
 #      - name: Install doctl
 #        uses: digitalocean/action-doctl@v2

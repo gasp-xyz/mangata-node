@@ -85,11 +85,6 @@ jobs:
           token: ${{ secrets.E2E_GITHUB_CHECKOUT_TOKEN }}
           ref: 'trigger_build_from_outside'
           path: 'e2eTests'
-      - name: debug
-        run: pwd
-
-      - name: debug
-        run: ls e2eTests
       
       - name: Start mangata-node node with local build
         if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
@@ -112,6 +107,12 @@ jobs:
         working-directory: e2eTests
         run: yarn test-sequential-e2e
 
+      - name: debug
+        run: pwd
+
+      - name: debug
+        run: ls e2eTests/reports
+      
       - name: Test Report
         uses: dorny/test-reporter@v1
         if: success() || failure()    # run this step even if previous step failed
@@ -119,6 +120,7 @@ jobs:
           name: JEST Tests            # Name of the check run which will be created
           path: e2eTests/reports/jest-*.xml    # Path to test results
           reporter: jest-junit        # Format of test results
+          token: ${{ secrets.E2E_GITHUB_CHECKOUT_TOKEN }}
 
   publish:
     needs: test

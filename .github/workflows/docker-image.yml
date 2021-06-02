@@ -52,12 +52,12 @@ jobs:
 #          name: ${{ github.run_id }}
 #          path: /tmp/${{ github.run_id }}.tar
 #      
-      -
-        name: Download artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: ${{ github.run_id }}
-          path: /tmp
+#      -
+#        name: Download artifact
+#        uses: actions/download-artifact@v2
+#        with:
+#          name: ${{ github.run_id }}
+#          path: /tmp
       -
         name: Load Docker image
         run: |

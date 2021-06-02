@@ -1,16 +1,8 @@
 name: Docker Image CI
 
-on: [pull_request]
-
-inputs:
-  skip-unit-tests:
-    description: 'true if you want to skip unit tests'
-    required: false
-    default: 'false'
-  skip-e2e-tests:
-    description: 'true if you want to skip e2e tests run'
-    required: false
-    default: 'false'
+on: 
+  pull_request:
+    types: [labeled]
 
 #on:
 #  push:
@@ -59,7 +51,7 @@ jobs:
   test:
     needs: build
     runs-on: ubuntu-latest
-    if: ${{ inputs.skip-e2e-tests }} == 'false'
+    if: github.event.label.name != 'skip-e2e-tests'
     env:
       API_URL: 'ws://172.16.238.10:9944'
       TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}

@@ -65,6 +65,10 @@ jobs:
 
     steps:
       -
+        name: Checkout
+        uses: actions/checkout@v2
+
+      -
         name: Download artifact
         if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
         uses: actions/download-artifact@v2

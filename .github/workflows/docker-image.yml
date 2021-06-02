@@ -83,7 +83,9 @@ jobs:
           repository: mangata-finance/mangata-e2e
           token: ${{ secrets.E2E_GITHUB_CHECKOUT_TOKEN }}
           ref: 'trigger_build_from_outside'
-
+      - name: Debug
+        run: pwd
+        
       - name: Start mangata-node node with local build
         if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
         run: docker-compose -f devops/dockerfiles/node-build/docker-compose.yml up -d

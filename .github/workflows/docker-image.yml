@@ -25,7 +25,6 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
     steps:
       -
         name: Checkout
@@ -39,6 +38,7 @@ jobs:
       -
         name: Build Only
         id: docker_build
+        if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
         uses: docker/build-push-action@v2
         with:
           file: "devops/dockerfiles/node-and-runtime/Dockerfile"
@@ -48,6 +48,7 @@ jobs:
       -
         name: Upload artifact
         uses: actions/upload-artifact@v2
+        if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
         with:
           name: ${{ github.run_id }}
           path: /tmp/${{ github.run_id }}.tar
@@ -85,7 +86,7 @@ jobs:
           ref: 'trigger_build_from_outside'
       - name: Debug
         run: pwd
-        
+
       - name: Start mangata-node node with local build
         if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
         run: docker-compose -f devops/dockerfiles/node-build/docker-compose.yml up -d

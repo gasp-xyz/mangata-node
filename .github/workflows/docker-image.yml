@@ -80,7 +80,7 @@ jobs:
           token: ${{ secrets.E2E_GITHUB_CHECKOUT_TOKEN }}
           ref: 'trigger_build_from_outside'
           path: 'e2eTests'
-          
+
       - name: debug info
         run: |
           pwd             
@@ -99,11 +99,10 @@ jobs:
 
       - name: Test Report
         uses: dorny/test-reporter@v1
-        working-directory: ../e2eTests
         if: success() || failure()    # run this step even if previous step failed
         with:
           name: JEST Tests            # Name of the check run which will be created
-          path: reports/jest-*.xml    # Path to test results
+          path: ../e2eTests/reports/jest-*.xml    # Path to test results
           reporter: jest-junit        # Format of test results
       
 

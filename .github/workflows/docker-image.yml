@@ -79,7 +79,7 @@ jobs:
           docker image ls -a
       - 
         name: Checkout tests
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
         with:
           repository: mangata-finance/mangata-e2e
           token: ${{ secrets.E2E_GITHUB_CHECKOUT_TOKEN }}

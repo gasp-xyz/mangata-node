@@ -84,31 +84,27 @@ jobs:
           repository: mangata-finance/mangata-e2e
           token: ${{ secrets.E2E_GITHUB_CHECKOUT_TOKEN }}
           ref: 'trigger_build_from_outside'
+          path: 'e2eTests'
       
-      - name: Change dir
-        run: cd ../mangata-e2e/
-
-      - name: debug info
-        run: pwd
-      
-      - name: debug info 2
-        run: ls devops/
-
       - name: Start mangata-node node with local build
         if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
+        working-directory: ../e2eTests
         run: docker-compose -f devops/dockerfiles/node-build/docker-compose.yml up -d
       
       - name: Start mangata-node node with latest
         if: "contains(github.event.pull_request.labels.*.name, 'skip-build')"
+        working-directory: ../e2eTests
         run: docker-compose -f devops/dockerfiles/docker-compose.yml up -d
 
       - name: Install dependencies
+        working-directory: ../e2eTests
         run: yarn
 
       - name: Docker ps
         run: docker ps
 
       - name: Run e2e tests
+        working-directory: ../e2eTests
         run: yarn test-sequential-e2e
 
       - name: Test Report
@@ -116,7 +112,7 @@ jobs:
         if: success() || failure()    # run this step even if previous step failed
         with:
           name: JEST Tests            # Name of the check run which will be created
-          path: reports/jest-*.xml    # Path to test results
+          path: ../e2eTests/reports/jest-*.xml    # Path to test results
           reporter: jest-junit        # Format of test results
 
   publish:

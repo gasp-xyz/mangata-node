@@ -80,15 +80,15 @@ jobs:
           repository: mangata-finance/mangata-e2e
           token: ${{ secrets.E2E_GITHUB_CHECKOUT_TOKEN }}
           ref: 'trigger_build_from_outside'
-          path: './e2eTests'
+          path: 'e2eTests'
       
       - name: Install dependencies
-        working-directory: ./e2eTests
+        working-directory: ${{ github.workspace }}/e2eTests
         run: yarn
       - name: Docker ps
         run: docker ps
       - name: Run e2e tests
-        working-directory: ./e2eTests
+        working-directory: ${{ github.workspace }}/e2eTests
         run: yarn test-sequential-e2e
       
 

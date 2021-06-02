@@ -45,9 +45,9 @@ use sp_runtime::{
     },
 };
 
-use sp_inherents::ProvideInherentData;
 use pallet_random_seed::RandomSeedInherentDataProvider;
 use sp_core::H256;
+use sp_inherents::ProvideInherentData;
 
 pub use sp_block_builder::BlockBuilder as BlockBuilderApi;
 
@@ -199,7 +199,6 @@ where
         // })
     }
 
-
     /// Consume the builder to build a valid `Block` containing all pushed extrinsics.
     ///
     /// Returns the build `Block`, the changes to the storage and an optional `StorageProof`
@@ -207,13 +206,12 @@ where
     /// The storage proof will be `Some(_)` when proof recording was enabled.
     pub fn build(
         mut self,
-        seed: H256
+        seed: H256,
     ) -> Result<BuiltBlock<Block, backend::StateBackendFor<B, Block>>, ApiErrorFor<A, Block>> {
         let extrinsics = self.extrinsics.clone();
         let parent_hash = self.parent_hash;
 
         let block_id = &self.block_id;
-
 
         match self
             .backend
@@ -304,22 +302,25 @@ where
     pub fn create_inherents(
         &mut self,
         mut inherent_data: sp_inherents::InherentData,
-    ) -> 
-        Result<(H256,Vec<Block::Extrinsic>), ApiErrorFor<A, Block>> {
+    ) -> Result<(H256, Vec<Block::Extrinsic>), ApiErrorFor<A, Block>> {
         let block_id = self.block_id.clone();
         // Result<(H256,Vec<Block::Extrinsic>), ApiErrorFor<A, Block>> {
         let seed = BlakeTwo256::hash(&self.extrinsics.encode());
-        RandomSeedInherentDataProvider(seed).provide_inherent_data(&mut inherent_data).unwrap();
+        RandomSeedInherentDataProvider(seed)
+            .provide_inherent_data(&mut inherent_data)
+            .unwrap();
 
-        self.api.execute_in_transaction(move |api| {
-            // `create_inherents` should not change any state, to ensure this we always rollback
-            // the transaction.
-            TransactionOutcome::Rollback(api.inherent_extrinsics_with_context(
-                &block_id,
-                ExecutionContext::BlockConstruction,
-                inherent_data,
-            ))
-        }).map(|inherents| (seed,inherents))
+        self.api
+            .execute_in_transaction(move |api| {
+                // `create_inherents` should not change any state, to ensure this we always rollback
+                // the transaction.
+                TransactionOutcome::Rollback(api.inherent_extrinsics_with_context(
+                    &block_id,
+                    ExecutionContext::BlockConstruction,
+                    inherent_data,
+                ))
+            })
+            .map(|inherents| (seed, inherents))
     }
 }
 

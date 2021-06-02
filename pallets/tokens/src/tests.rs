@@ -1172,10 +1172,9 @@ fn create_token_as_root() {
         assert_ok!(Tokens::create(Origin::root(), ALICE.into(), amount));
         assert!(System::events()
             .iter()
-            .any(|record| record.event == TestEvent::tokens(RawEvent::Issued(token_id, ALICE, amount))));
-
+            .any(|record| record.event
+                == TestEvent::tokens(RawEvent::Issued(token_id, ALICE, amount))));
     });
-
 }
 
 #[test]
@@ -1202,7 +1201,8 @@ fn mint_tokens_as_root() {
 
         assert!(System::events()
             .iter()
-            .any(|record| record.event == TestEvent::tokens(RawEvent::Minted(token_id, ALICE, amount))));
+            .any(|record| record.event
+                == TestEvent::tokens(RawEvent::Minted(token_id, ALICE, amount))));
     });
 }
 
@@ -1212,7 +1212,7 @@ fn multi_token_currency_extended_create() {
         System::set_block_number(1);
         let amount = 1_000_000;
         let currency_id = <MultiTokenCurrencyAdapter<Runtime>>::create(&ALICE.into(), amount);
-        assert_eq!(Tokens::accounts(&ALICE, currency_id).free , amount);
+        assert_eq!(Tokens::accounts(&ALICE, currency_id).free, amount);
         assert_eq!(Tokens::total_issuance(currency_id), amount);
     });
 }
@@ -1224,11 +1224,16 @@ fn multi_token_currency_extended_mint() {
         let initial_amount = 1_000_000;
         let minted_amount = 500_000;
 
-        let currency_id = <MultiTokenCurrencyAdapter<Runtime>>::create(&ALICE.into(), initial_amount);
-        assert_ok!(<MultiTokenCurrencyAdapter<Runtime>>::mint(currency_id, &ALICE.into(), minted_amount));
+        let currency_id =
+            <MultiTokenCurrencyAdapter<Runtime>>::create(&ALICE.into(), initial_amount);
+        assert_ok!(<MultiTokenCurrencyAdapter<Runtime>>::mint(
+            currency_id,
+            &ALICE.into(),
+            minted_amount
+        ));
 
         let expected_amount = initial_amount + minted_amount;
-        assert_eq!(Tokens::accounts(&ALICE, currency_id).free , expected_amount);
+        assert_eq!(Tokens::accounts(&ALICE, currency_id).free, expected_amount);
         assert_eq!(Tokens::total_issuance(currency_id), expected_amount);
     });
 }
@@ -1252,7 +1257,11 @@ fn multi_token_currency_extended_burn_and_settle_fail_to_burn_too_many_tokens() 
 
         let token_id = <MultiTokenCurrencyAdapter<Runtime>>::create(&ALICE.into(), 1_000_000);
         assert_noop!(
-            <MultiTokenCurrencyAdapter<Runtime>>::burn_and_settle(token_id, &ALICE.into(), 2_000_000),
+            <MultiTokenCurrencyAdapter<Runtime>>::burn_and_settle(
+                token_id,
+                &ALICE.into(),
+                2_000_000
+            ),
             Error::<Runtime>::BalanceTooLow,
         );
     });
@@ -1264,11 +1273,13 @@ fn multi_token_currency_extended_burn_and_settle_verify_burned_amount() {
         System::set_block_number(1);
 
         let currency_id = <MultiTokenCurrencyAdapter<Runtime>>::create(&ALICE.into(), 1_000_000);
-        assert_ok!(
-            <MultiTokenCurrencyAdapter<Runtime>>::burn_and_settle(currency_id, &ALICE.into(), 500_000)
-        );
+        assert_ok!(<MultiTokenCurrencyAdapter<Runtime>>::burn_and_settle(
+            currency_id,
+            &ALICE.into(),
+            500_000
+        ));
 
-        assert_eq!(Tokens::accounts(&ALICE, currency_id).free , 500_000);
+        assert_eq!(Tokens::accounts(&ALICE, currency_id).free, 500_000);
         assert_eq!(Tokens::total_issuance(currency_id), 500_000);
     });
 }

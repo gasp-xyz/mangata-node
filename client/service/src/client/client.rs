@@ -30,7 +30,10 @@ use parking_lot::{Mutex, RwLock};
 use prometheus_endpoint::Registry;
 use rand::Rng;
 use sc_block_builder::{BlockBuilderApi, BlockBuilderProvider};
+use sp_block_builder::BlockBuilder as BlockBuilderRuntimeApi;
 use extrinsic_info_runtime_api::runtime_api::ExtrinsicInfoRuntimeApi;
+use random_seed_runtime_api::RandomSeedApi;
+
 use sc_client_api::{
 	backend::{
 		self, apply_aux, changes_tries_state_at_block, BlockImportOperation, ClientImportOperation,
@@ -71,7 +74,7 @@ use sp_core::{
 use sp_runtime::{
 	generic::{BlockId, DigestItem, SignedBlock},
 	traits::{
-		BlakeTwo256, Block as BlockT, DigestFor, Hash, HashFor, Header as HeaderT, NumberFor, One,
+		Block as BlockT, DigestFor, HashFor, Header as HeaderT, NumberFor, One,
 		SaturatedConversion, Zero,
 	},
 	BuildStorage, Justification,
@@ -883,7 +886,7 @@ where
 	where
 		Self: ProvideRuntimeApi<Block>,
 		<Self as ProvideRuntimeApi<Block>>::Api:
-			CoreApi<Block, Error = Error> + ApiExt<Block, StateBackend = B::State> + ExtrinsicInfoRuntimeApi<Block>,
+			CoreApi<Block, Error = Error> + ApiExt<Block, StateBackend = B::State> + ExtrinsicInfoRuntimeApi<Block> + RandomSeedApi<Block> + BlockBuilderRuntimeApi<Block>,
 	{
 		let parent_hash = import_block.header.parent_hash();
 		let at = BlockId::Hash(*parent_hash);
@@ -930,16 +933,22 @@ where
 						} else {
 
 							info!("previous block has extrinsics");
-                            let mut this_block_extrinsics = body.clone();
-                            // TODO that step will be obsolete when better randomness source will
-                            // be used
-                            this_block_extrinsics.pop().unwrap(); // remove inherent
-                            this_block_extrinsics.pop().unwrap(); // remove inherent
-                            // TODO some extra check that compares calculated seed with one from
-                            // stroed in inherent would be nice idea
-							let extrinsics_hash = BlakeTwo256::hash(&this_block_extrinsics.encode());
-                            let shuffled_extrinsics = extrinsic_shuffler::shuffle::<Block, Self>(&runtime_api, &at,previous_block_extrinsics, extrinsics_hash);
+							// TODO consider filtering inherents using fact that there are not
+							// signed. Can someone take advantage on that ??
 
+							// apply inherentes that set shuffle seed and read it using runtime api
+							let inherents = body.iter().take(2).cloned().collect::<Vec<_>>();
+							let seed = runtime_api.execute_in_transaction(|api| {
+								for xt in inherents{
+									api.apply_extrinsic(
+										&at,
+										xt,
+									).unwrap().unwrap().unwrap();
+								}
+								sp_api::TransactionOutcome::Rollback(api.get_seed(&at))
+							}).expect("cannot fetch seed from current block");
+
+							let shuffled_extrinsics = extrinsic_shuffler::shuffle::<Block, Self>(&runtime_api, &at,previous_block_extrinsics, seed);
 							runtime_api.execute_block_with_context(
 								&at,
 								execution_context,
@@ -1375,7 +1384,7 @@ where
 	Block: BlockT,
 	Self: ChainHeaderBackend<Block> + ProvideRuntimeApi<Block>,
 	<Self as ProvideRuntimeApi<Block>>::Api: ApiExt<Block, StateBackend = backend::StateBackendFor<B, Block>>
-		+ BlockBuilderApi<Block, Error = Error> + ExtrinsicInfoRuntimeApi<Block> ,
+		+ BlockBuilderApi<Block, Error = Error> + ExtrinsicInfoRuntimeApi<Block> + RandomSeedApi<Block>+ BlockBuilderRuntimeApi<Block>,
 {
 	fn new_block_at<R: Into<RecordProof>>(
 		&self,
@@ -1843,7 +1852,7 @@ where
 	Block: BlockT,
 	Client<B, E, Block, RA>: ProvideRuntimeApi<Block>,
 	<Client<B, E, Block, RA> as ProvideRuntimeApi<Block>>::Api:
-		CoreApi<Block, Error = Error> + ApiExt<Block, StateBackend = B::State> + ExtrinsicInfoRuntimeApi<Block> ,
+		CoreApi<Block, Error = Error> + ApiExt<Block, StateBackend = B::State> + ExtrinsicInfoRuntimeApi<Block> + RandomSeedApi<Block> + BlockBuilderRuntimeApi<Block>,
 {
 	type Error = ConsensusError;
 	type Transaction = backend::TransactionFor<B, Block>;
@@ -1947,7 +1956,12 @@ where
 	Block: BlockT,
 	Self: ProvideRuntimeApi<Block>,
 	<Self as ProvideRuntimeApi<Block>>::Api:
-		CoreApi<Block, Error = Error> + ApiExt<Block, StateBackend = B::State> + ExtrinsicInfoRuntimeApi<Block>,
+		CoreApi<Block, Error = Error> +
+        ApiExt<Block, StateBackend = B::State> +
+        ExtrinsicInfoRuntimeApi<Block> +
+        RandomSeedApi<Block> +
+        BlockBuilderRuntimeApi<Block>
+        ,
 {
 	type Error = ConsensusError;
 	type Transaction = backend::TransactionFor<B, Block>;

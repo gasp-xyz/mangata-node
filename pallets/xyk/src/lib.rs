@@ -433,9 +433,9 @@ impl<T: Trait> Module<T> {
         let output_reserve_saturated: U256 = output_reserve.into();
         let sell_amount_saturated: U256 = sell_amount.into();
 
-        let input_amount_with_fee: U256 = sell_amount_saturated * 997;
-        let numerator: U256 = input_amount_with_fee * output_reserve_saturated;
-        let denominator: U256 = input_reserve_saturated * 1000 + input_amount_with_fee;
+        let input_amount_with_fee: U256 = sell_amount_saturated.saturating_mul(997.into());
+        let numerator: U256 = input_amount_with_fee.saturating_mul(output_reserve_saturated);
+        let denominator: U256 = input_reserve_saturated.saturating_mul(1000.into()).saturating_add(input_amount_with_fee);
         let result = numerator
             .checked_div(denominator)
             .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
@@ -452,8 +452,8 @@ impl<T: Trait> Module<T> {
         let output_reserve_saturated: U256 = output_reserve.into();
         let sell_amount_saturated: U256 = sell_amount.into();
 
-        let numerator: U256 = sell_amount_saturated * output_reserve_saturated;
-        let denominator: U256 = input_reserve_saturated + sell_amount_saturated;
+        let numerator: U256 = sell_amount_saturated.saturating_mul(output_reserve_saturated);
+        let denominator: U256 = input_reserve_saturated.saturating_add(sell_amount_saturated);
         let result = numerator
             .checked_div(denominator)
             .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
@@ -470,8 +470,8 @@ impl<T: Trait> Module<T> {
         let output_reserve_saturated: U256 = output_reserve.into();
         let buy_amount_saturated: U256 = buy_amount.into();
 
-        let numerator: U256 = input_reserve_saturated * buy_amount_saturated * 1000;
-        let denominator: U256 = (output_reserve_saturated - buy_amount_saturated) * 997;
+        let numerator: U256 = input_reserve_saturated.saturating_mul(buy_amount_saturated).saturating_mul(1000.into());
+        let denominator: U256 = output_reserve_saturated.saturating_sub(buy_amount_saturated).saturating_mul(997.into());
         let result = numerator
             .checked_div(denominator)
             .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?
@@ -532,6 +532,7 @@ impl<T: Trait> Module<T> {
                 .into();
 
         // Calculate first and second token amount to be withdrawn
+        ensure!(!total_liquidity_assets.is_zero(), Error::<T>::DivisionByZero);
         let first_asset_amount =
             multiply_by_rational(first_asset_reserve, liquidity_asset_amount, total_liquidity_assets).map_err(|_| Error::<T>::UnexpectedFailure)?.into();
         let second_asset_amount =
@@ -576,19 +577,26 @@ impl<T: Trait> Module<T> {
             // Removing settling amount from pool
             Pools::insert(
                 (&sold_asset_id, &bought_asset_id),
-                input_reserve - burn_amount - treasury_amount,
+                input_reserve
+                    .saturating_sub(burn_amount)
+                    .saturating_sub(treasury_amount)
+                ,
             );
         }
         // Bought token is used as settling token in rest of the cases
         else {
+
             // Sold amount recalculated to bought asset amount
-            treasury_amount = treasury_amount * output_reserve / input_reserve;
-            burn_amount = burn_amount * output_reserve / input_reserve;
+            ensure!(!input_reserve.is_zero(), Error::<T>::DivisionByZero);
+            treasury_amount = multiply_by_rational(treasury_amount, output_reserve, input_reserve).unwrap_or_else(|_| Balance::max_value());
+            burn_amount = multiply_by_rational(burn_amount, output_reserve, input_reserve).unwrap_or_else(|_| Balance::max_value());
 
             // Removing settling amount from pool
             Pools::insert(
                 (&bought_asset_id, &sold_asset_id),
-                output_reserve - treasury_amount - burn_amount,
+                output_reserve
+                    .saturating_sub(treasury_amount)
+                    .saturating_sub(burn_amount)
             );
         }
 
@@ -1031,6 +1039,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             T::Currency::total_issuance(liquidity_asset_id.into()).into();
 
         // Calculation of required second asset amount and received liquidity token amount
+        ensure!(!first_asset_reserve.is_zero(), Error::<T>::DivisionByZero);
         let second_asset_amount =
             multiply_by_rational(first_asset_amount, second_asset_reserve, first_asset_reserve).map_err(|_| Error::<T>::UnexpectedFailure)? + 1;
         let liquidity_assets_minted =
@@ -1246,6 +1255,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         let total_liquidity_assets: Balance =
             T::Currency::total_issuance(liquidity_asset_id.into()).into();
 
+        ensure!(!total_liquidity_assets.is_zero(), Error::<T>::DivisionByZero);
         let second_asset_amount =
             multiply_by_rational(liquidity_token_amount, second_asset_reserve, total_liquidity_assets).map_err(|_| Error::<T>::UnexpectedFailure)?
                 + 1;
@@ -1333,7 +1343,9 @@ impl<T: Trait> Valuate for Module<T> {
             liquidity_token_amount.into();
         let liquidity_token_reserve_u256: U256 =
             liquidity_token_reserve.into();
-        (mng_token_reserve_u256 * liquidity_token_amount_u256 / liquidity_token_reserve_u256).saturated_into()
+        
+        if liquidity_token_reserve_u256.is_zero(){return Default::default();}
+        (mng_token_reserve_u256.saturating_mul(liquidity_token_amount_u256).checked_div(liquidity_token_reserve_u256).unwrap_or_default()).saturated_into()
     }
 
     fn scale_liquidity_by_mng_valuation(
@@ -1342,13 +1354,13 @@ impl<T: Trait> Valuate for Module<T> {
         mng_token_amount: Self::Balance,
     ) -> Self::Balance {
         if mng_valuation.is_zero() {
-            return 0u128.into();
+            return Default::default();
         }
         let mng_valuation_u256: U256 = mng_valuation.into();
         let liquidity_token_amount_u256: U256 =
             liquidity_token_amount.into();
         let mng_token_amount_u256: U256 = mng_token_amount.into();
 
-        (liquidity_token_amount_u256 * mng_token_amount_u256 / mng_valuation_u256).saturated_into()
+        (liquidity_token_amount_u256.saturating_mul(mng_token_amount_u256).checked_div(mng_valuation_u256).unwrap_or_default()).saturated_into()
     }
 }

@@ -79,8 +79,18 @@ sp_api::decl_runtime_apis! {
             sell_amount: Balance
         ) -> RpcResult<Balance>;
         fn calculate_buy_price(
-           input_reserve: Balance,
+            input_reserve: Balance,
             output_reserve: Balance,
+            buy_amount: Balance
+        ) -> RpcResult<Balance>;
+        fn calculate_sell_price_id(
+            sold_token_id: TokenId,
+            bought_token_id: TokenId,
+            sell_amount: Balance
+        ) -> RpcResult<Balance>;
+        fn calculate_buy_price_id(
+            sold_token_id: TokenId,
+            bought_token_id: TokenId,
             buy_amount: Balance
         ) -> RpcResult<Balance>;
         fn get_burn_amount(

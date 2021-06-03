@@ -206,7 +206,7 @@ where
     /// The storage proof will be `Some(_)` when proof recording was enabled.
     pub fn build(
         mut self,
-        seed: H256,
+        seed: SeedType
     ) -> Result<BuiltBlock<Block, backend::StateBackendFor<B, Block>>, ApiErrorFor<A, Block>> {
         let extrinsics = self.extrinsics.clone();
         let parent_hash = self.parent_hash;
@@ -301,8 +301,8 @@ where
     /// Returns the inherents created by the runtime or an error if something failed.
     pub fn create_inherents(
         &mut self,
-        mut inherent_data: sp_inherents::InherentData,
-    ) -> Result<(H256, Vec<Block::Extrinsic>), ApiErrorFor<A, Block>> {
+        inherent_data: sp_inherents::InherentData,
+    ) -> Result<(SeedType,Vec<Block::Extrinsic>), ApiErrorFor<A, Block>> {
         let block_id = self.block_id.clone();
         // Result<(H256,Vec<Block::Extrinsic>), ApiErrorFor<A, Block>> {
         let seed = BlakeTwo256::hash(&self.extrinsics.encode());

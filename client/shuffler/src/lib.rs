@@ -1,8 +1,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 use extrinsic_info_runtime_api::runtime_api::ExtrinsicInfoRuntimeApi;
+use pallet_random_seed::SeedType;
 use sp_api::{ApiExt, ApiRef, Encode, HashT, ProvideRuntimeApi, TransactionOutcome};
 use sp_core::crypto::Ss58Codec;
-use pallet_random_seed::SeedType;
 use sp_runtime::generic::BlockId;
 use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 use sp_runtime::AccountId32;
@@ -61,7 +61,7 @@ impl Xoshiro256PlusPlus {
 ///     j ← random integer such that 0 ≤ j ≤ i
 ///     exchange a[j] and a[i]
 ///
-fn fisher_yates<T>(data: &mut Vec<T>, seed: [u8;32]) {
+fn fisher_yates<T>(data: &mut Vec<T>, seed: [u8; 32]) {
     let mut s = Xoshiro256PlusPlus::from_seed(seed);
     for i in (1..(data.len())).rev() {
         let j = s.next_u32() % (i as u32);
@@ -82,7 +82,7 @@ where
     Api: ProvideRuntimeApi<Block> + 'a,
     Api::Api: ExtrinsicInfoRuntimeApi<Block>,
 {
-    let seed: [u8;32] = AsRef::<[u8;64]>::as_ref(&seed)[0..32].try_into().unwrap();
+    let seed: [u8; 32] = AsRef::<[u8; 64]>::as_ref(&seed)[0..32].try_into().unwrap();
 
     log::debug!(target: "block_shuffler", "shuffling extrinsics with seed: {:#X?} => {}", seed, Xoshiro256PlusPlus::from_seed(seed).next_u32() );
 

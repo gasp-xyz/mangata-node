@@ -5,8 +5,8 @@ use codec::Encode;
 use frame_support::{decl_module, decl_storage, weights::DispatchClass};
 use sp_inherents::{InherentData, InherentIdentifier, IsFatalError, ProvideInherent};
 use sp_runtime::RuntimeString;
-use sp_std::result;
 use sp_std::convert::TryInto;
+use sp_std::result;
 
 #[cfg(feature = "std")]
 use sp_inherents::ProvideInherentData;
@@ -15,33 +15,32 @@ use sp_inherents::ProvideInherentData;
 pub trait Trait: frame_system::Trait {}
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq)]
-pub struct SeedType([u8;64]);
+pub struct SeedType([u8; 64]);
 
-impl SeedType{
+impl SeedType {
     /// panics on non matching slice
-    pub fn from_slice(bytes: &[u8]) -> Self{
+    pub fn from_slice(bytes: &[u8]) -> Self {
         Self(bytes.try_into().unwrap())
     }
 }
 
-impl Default for SeedType{
-    fn default() -> Self{
-        SeedType([0_u8;64])
+impl Default for SeedType {
+    fn default() -> Self {
+        SeedType([0_u8; 64])
     }
 }
 
-impl AsRef<[u8;64]> for SeedType{
-    fn as_ref(&self) -> &[u8;64] {
+impl AsRef<[u8; 64]> for SeedType {
+    fn as_ref(&self) -> &[u8; 64] {
         return &self.0;
     }
 }
 
-impl AsRef<[u8]> for SeedType{
+impl AsRef<[u8]> for SeedType {
     fn as_ref(&self) -> &[u8] {
         return &self.0;
     }
 }
-
 
 decl_module! {
     pub struct Module<T: Trait> for enum Call where origin: T::Origin {

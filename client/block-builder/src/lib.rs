@@ -205,7 +205,7 @@ where
     /// The storage proof will be `Some(_)` when proof recording was enabled.
     pub fn build(
         mut self,
-        seed: SeedType
+        seed: SeedType,
     ) -> Result<BuiltBlock<Block, backend::StateBackendFor<B, Block>>, ApiErrorFor<A, Block>> {
         let extrinsics = self.extrinsics.clone();
         let parent_hash = self.parent_hash;
@@ -301,7 +301,7 @@ where
     pub fn create_inherents(
         &mut self,
         inherent_data: sp_inherents::InherentData,
-    ) -> Result<(SeedType,Vec<Block::Extrinsic>), ApiErrorFor<A, Block>> {
+    ) -> Result<(SeedType, Vec<Block::Extrinsic>), ApiErrorFor<A, Block>> {
         let block_id = self.block_id.clone();
         let seed = pallet_random_seed::extract_inherent_data(&inherent_data).unwrap();
         self.api

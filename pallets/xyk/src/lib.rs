@@ -557,7 +557,6 @@ impl<T: Trait> Module<T> {
         Ok((first_asset_amount, second_asset_amount))
     }
 
-    //TODO U256?
     fn settle_treasury_and_burn(
         sold_asset_id: TokenId,
         bought_asset_id: TokenId,

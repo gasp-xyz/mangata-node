@@ -32,7 +32,7 @@ pallet-random-seed = { path='../../pallets/random-seed', version='2.0.0' }
 rand = "0.7.3"
 
 [dev-dependencies]
-#substrate-test-runtime-client = { path = "../../test-utils/runtime/client" }
+substrate-test-runtime-client = { path = "../../test-utils/runtime/client" }
 sp-trie = "2.0.0"
 
 

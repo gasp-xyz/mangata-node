@@ -6,15 +6,10 @@ name: Docker Image CI
 
 on: 
   pull_request:
-    types: [labeled]
-
-#on:
-#  push:
-#    branches: [ develop ]
-#
-#  pull_request:
-#    branches:
-#      - develop
+    branches:
+      - develop
+  push:
+    branches: [ develop ]
 
   workflow_dispatch:
     # For manually trigger

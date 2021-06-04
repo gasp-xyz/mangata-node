@@ -1379,18 +1379,15 @@ impl<T: Trait> Valuate for Module<T> {
         let mng_token_reserve = Pools::get((mng_token_id, other_token_id));
         let liquidity_token_reserve: Balance =
             T::Currency::total_issuance(liquidity_token_id.into()).into();
-        let mng_token_reserve_u256: U256 = mng_token_reserve.into();
-        let liquidity_token_amount_u256: U256 = liquidity_token_amount.into();
-        let liquidity_token_reserve_u256: U256 = liquidity_token_reserve.into();
 
-        if liquidity_token_reserve_u256.is_zero() {
+        if liquidity_token_reserve.is_zero() {
             return Default::default();
         }
-        (mng_token_reserve_u256
-            .saturating_mul(liquidity_token_amount_u256)
-            .checked_div(liquidity_token_reserve_u256)
-            .unwrap_or_default())
-        .saturated_into()
+
+        multiply_by_rational(mng_token_reserve,
+            liquidity_token_amount,
+            liquidity_token_reserve)
+            .unwrap_or_else(|_| Balance::max_value())
     }
 
     fn scale_liquidity_by_mng_valuation(
@@ -1401,14 +1398,10 @@ impl<T: Trait> Valuate for Module<T> {
         if mng_valuation.is_zero() {
             return Default::default();
         }
-        let mng_valuation_u256: U256 = mng_valuation.into();
-        let liquidity_token_amount_u256: U256 = liquidity_token_amount.into();
-        let mng_token_amount_u256: U256 = mng_token_amount.into();
 
-        (liquidity_token_amount_u256
-            .saturating_mul(mng_token_amount_u256)
-            .checked_div(mng_valuation_u256)
-            .unwrap_or_default())
-        .saturated_into()
+        multiply_by_rational(liquidity_token_amount,
+            mng_token_amount,
+            mng_valuation)
+            .unwrap_or_else(|_| Balance::max_value())
     }
 }

@@ -38,7 +38,7 @@
 //! `second_token_amount` - amount of second token in which the pool will be initiated, which will set their initial ratio/price
 //!
 //! ### Example
-//! ```
+//! ```ignore
 //! create_pool(
 //!    Origin::signed(1),
 //!    0,
@@ -72,7 +72,7 @@
 //! `min_amount_out` - minimal acceptable amount of bought token received after swap
 //!
 //! ### Example
-//! ```
+//! ```ignore
 //! sell_token (
 //!    Origin::signed(1),
 //!    0,
@@ -106,7 +106,7 @@
 //! `max_amount_in` - maximal acceptable amount of sold token to pay for requested bought amount
 //!
 //! ### Example
-//! ```
+//! ```ignore
 //! buy_token (
 //!    Origin::signed(1),
 //!    0,
@@ -141,7 +141,7 @@
 //! first_token_amount - amount of first_token_id, second token amount will be calculated
 //!
 //! ### Example
-//! ```
+//! ```ignore
 //! mint_liquidity (
 //!    Origin::signed(1),
 //!    0,
@@ -176,7 +176,7 @@
 //! liquidity_token_amount - amount of liquidity token amount to burn
 //!
 //! ### Example
-//! ```
+//! ```ignore
 //! burn_liquidity (
 //!    Origin::signed(1),
 //!    0,

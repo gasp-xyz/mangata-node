@@ -5534,6 +5534,7 @@ dependencies = [
  "sp-runtime",
  "sp-transaction-pool",
  "substrate-prometheus-endpoint",
+ "substrate-test-runtime-client",
  "tokio-executor 0.2.0-alpha.6",
 ]
 

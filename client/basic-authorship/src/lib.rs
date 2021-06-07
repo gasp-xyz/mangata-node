@@ -20,7 +20,7 @@
 //!
 //! # Example
 //!
-//! ```
+//! ```no_run
 //! # use sc_basic_authorship::ProposerFactory;
 //! # use sp_consensus::{Environment, Proposer, RecordProof};
 //! # use sp_runtime::generic::BlockId;

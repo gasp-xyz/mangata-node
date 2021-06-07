@@ -396,7 +396,7 @@ decl_module! {
             first_asset_id: TokenId,
             second_asset_id: TokenId,
             first_asset_amount: Balance,
-            expected_second_asset_amount: Balance,
+            expected_second_asset_amount: Option<Balance>,
         ) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
@@ -681,7 +681,7 @@ pub trait XykFunctionsTrait<AccountId> {
         first_asset_id: Self::CurrencyId,
         second_asset_id: Self::CurrencyId,
         first_asset_amount: Self::Balance,
-        expected_second_asset_amount: Self::Balance,
+        expected_second_asset_amount: Option<Self::Balance>,
     ) -> DispatchResult;
 
     fn burn_liquidity(
@@ -976,12 +976,13 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         Ok(())
     }
 
+
     fn mint_liquidity(
         sender: T::AccountId,
         first_asset_id: Self::CurrencyId,
         second_asset_id: Self::CurrencyId,
         first_asset_amount: Self::Balance,
-        expected_second_asset_amount: Self::Balance,
+        expected_second_asset_amount: Option<Self::Balance>,
     ) -> DispatchResult {
         let vault = Module::<T>::account_id();
 
@@ -1029,11 +1030,12 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             .saturated_into::<u128>()
             .saturated_into::<Self::Balance>();
 
+
         ensure!(
-            second_asset_amount <= expected_second_asset_amount,
+            second_asset_amount <= expected_second_asset_amount.unwrap_or(second_asset_amount),
             Error::<T>::SecondAssetAmountExceededExpectations,
         );
-
+        
         // Ensure minting amounts are not zero
         ensure!(
             !first_asset_amount.is_zero() && !second_asset_amount.is_zero(),

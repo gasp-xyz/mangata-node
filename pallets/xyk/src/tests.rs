@@ -36,6 +36,7 @@ use frame_support::assert_err;
 //fn mint_N_not_enough_first_asset(): mint not working, not enough first asset to mint with //DONE
 //fn mint_N_not_enough_second_asset(): mint not working, not enough second asset to mint with //DONE
 //fn mint_N_second_token_amount_exceeded_expectations:  mint not working, required more second token amount then expected // DONE
+//fn mint_W_no_expected_argument:  mint works when providing only 3 arguments // DONE
 //fn min_N_zero_amount(): mint not working if trying to mint 0 asset
 
 //fn burn_W(): burn working assert (maps,acocounts values) //DONE
@@ -366,7 +367,7 @@ fn multi() {
             0,
             1,
             1000000000000000000000000,
-            500000000000000000000000,
+            5000000000000000000000000,
         )
         .unwrap();
 
@@ -791,6 +792,37 @@ fn mint_W_other_way() {
 }
 
 #[test]
+fn mint_W_no_expected_argument() {
+    new_test_ext().execute_with(|| {
+        initialize();
+        // minting pool 0 1 with 20000000000000000000 assetId 0
+        XykStorage::mint_liquidity(
+            Origin::signed(2),
+            0,
+            1,
+            20000000000000000000,
+            None
+        )
+        .unwrap();
+
+        assert_eq!(XykStorage::total_supply(2), 150000000000000000000); // total liquidity assets
+        assert_eq!(XykStorage::balance(2, 2), 150000000000000000000); // amount of liquidity assets owned by user by creating pool and minting
+        assert_eq!(XykStorage::asset_pool((0, 1)), 60000000000000000000); // amount in pool map
+        assert_eq!(XykStorage::asset_pool((1, 0)), 90000000000000000001); // amount in pool map
+        assert_eq!(XykStorage::balance(0, 2), 940000000000000000000); // amount of asset 0 in user acc after minting
+        assert_eq!(XykStorage::balance(1, 2), 909999999999999999999); // amount of asset 1 in user acc after minting
+        assert_eq!(
+            XykStorage::balance(0, XykStorage::account_id()),
+            60000000000000000000
+        ); // amount of asset 0 in vault acc after creating pool
+        assert_eq!(
+            XykStorage::balance(1, XykStorage::account_id()),
+            90000000000000000001
+        ); // amount of asset 1 in vault acc after creating pool
+    });
+}
+
+#[test]
 fn mint_N_no_such_pool() {
     new_test_ext().execute_with(|| {
         initialize();
@@ -811,7 +843,7 @@ fn mint_N_not_enough_first_asset() {
                 0,
                 1,
                 1000000000000000000000,
-                10000000000000000000000
+                Some(10000000000000000000000)
             ),
             Error::<Test>::NotEnoughAssets,
         ); // minting pool 0 1 with 1000000000000000000000 assetId 0 (user has only 960000000000000000000)

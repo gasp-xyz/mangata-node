@@ -1030,7 +1030,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             .saturated_into::<Self::Balance>();
 
         ensure!(
-            second_asset_amount <= expected_second_asset_amount * 101 / 100,
+            second_asset_amount <= expected_second_asset_amount,
             Error::<T>::SecondAssetAmountExceededExpectations,
         );
 

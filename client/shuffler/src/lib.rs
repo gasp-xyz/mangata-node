@@ -82,7 +82,7 @@ where
     Api: ProvideRuntimeApi<Block> + 'a,
     Api::Api: ExtrinsicInfoRuntimeApi<Block>,
 {
-    let seed: [u8; 32] = AsRef::<[u8; 64]>::as_ref(&seed)[0..32].try_into().unwrap();
+    let seed: [u8; 32] = seed.seed;
 
     log::debug!(target: "block_shuffler", "shuffling extrinsics with seed: {:#X?} => {}", seed, Xoshiro256PlusPlus::from_seed(seed).next_u32() );
 

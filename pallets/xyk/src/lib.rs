@@ -327,7 +327,7 @@ decl_storage! {
         build(|config: &GenesisConfig<T>| {
             config.created_pools_for_staking.iter().for_each(|(account_id, native_token_id, native_token_amount, pooled_token_id, pooled_token_amount, liquidity_token_id)| {
                 if T::Currency::exists({*liquidity_token_id}.into()){
-                    assert!(<Module<T>>::mint_liquidity( T::Origin::from(Some(account_id.clone()).into()), *native_token_id, *pooled_token_id, *native_token_amount, *pooled_token_amount).is_ok(), "Pool mint failed");
+                    assert!(<Module<T>>::mint_liquidity( T::Origin::from(Some(account_id.clone()).into()), *native_token_id, *pooled_token_id, *native_token_amount, Some(*pooled_token_amount)).is_ok(), "Pool mint failed");
                 }
                 else{
                     let created_liquidity_token_id: TokenId = T::Currency::get_next_currency_id().into();

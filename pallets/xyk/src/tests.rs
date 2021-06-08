@@ -309,7 +309,7 @@ fn multi() {
             0,
             1,
             500000000000000000000000,
-            2500000000000000000000000,
+            None,
         )
         .unwrap();
 
@@ -367,7 +367,7 @@ fn multi() {
             0,
             1,
             1000000000000000000000000,
-            5000000000000000000000000,
+            None,
         )
         .unwrap();
 
@@ -739,7 +739,7 @@ fn mint_W() {
             0,
             1,
             20000000000000000000,
-            200000000000000000000,
+            Some(200000000000000000000),
         )
         .unwrap();
 
@@ -770,7 +770,7 @@ fn mint_W_other_way() {
             1,
             0,
             30000000000000000000,
-            300000000000000000000,
+            Some(300000000000000000000),
         )
         .unwrap();
 
@@ -827,7 +827,7 @@ fn mint_N_no_such_pool() {
     new_test_ext().execute_with(|| {
         initialize();
         assert_err!(
-            XykStorage::mint_liquidity(Origin::signed(2), 0, 10, 250000, 2500000),
+            XykStorage::mint_liquidity(Origin::signed(2), 0, 10, 250000, None),
             Error::<Test>::NoSuchPool,
         ); // minting pool 0 10 with 250000 assetId 0 (only pool 0 1 exists)
     });
@@ -843,7 +843,7 @@ fn mint_N_not_enough_first_asset() {
                 0,
                 1,
                 1000000000000000000000,
-                Some(10000000000000000000000)
+                None
             ),
             Error::<Test>::NotEnoughAssets,
         ); // minting pool 0 1 with 1000000000000000000000 assetId 0 (user has only 960000000000000000000)
@@ -860,7 +860,7 @@ fn mint_N_not_enough_second_asset() {
                 1,
                 0,
                 1000000000000000000000,
-                10000000000000000000000
+                None
             ),
             Error::<Test>::NotEnoughAssets,
         ); // minting pool 0 1 with 1000000000000000000000 assetId 1 (user has only 940000000000000000000)
@@ -872,7 +872,7 @@ fn min_N_zero_amount() {
     new_test_ext().execute_with(|| {
         initialize();
         assert_err!(
-            XykStorage::mint_liquidity(Origin::signed(2), 1, 0, 0, 10),
+            XykStorage::mint_liquidity(Origin::signed(2), 1, 0, 0, None),
             Error::<Test>::ZeroAmount,
         ); // minting pool 0 1 with 0 assetId 1
     });
@@ -883,7 +883,7 @@ fn mint_N_second_asset_amount_exceeded_expectations() {
     new_test_ext().execute_with(|| {
         initialize();
         assert_err!(
-            XykStorage::mint_liquidity(Origin::signed(2), 0, 1, 250000, 10),
+            XykStorage::mint_liquidity(Origin::signed(2), 0, 1, 250000, Some(10)),
             Error::<Test>::SecondAssetAmountExceededExpectations,
         ); // minting pool 0 10 with 250000 assetId 0 (only pool 0 1 exists)
     });

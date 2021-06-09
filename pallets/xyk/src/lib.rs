@@ -238,6 +238,7 @@ use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
 use sp_runtime::traits::{AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member};
 use sp_runtime::traits::{SaturatedConversion, Zero};
+use sp_std::convert::TryFrom;
 use sp_std::fmt::Debug;
 
 #[cfg(test)]
@@ -276,6 +277,7 @@ decl_error! {
         DivisionByZero,
         UnexpectedFailure,
         NotMangataLiquidityAsset,
+        MathOverflow,
     }
 }
 
@@ -434,14 +436,18 @@ impl<T: Trait> Module<T> {
         let sell_amount_saturated: U256 = sell_amount.into();
 
         let input_amount_with_fee: U256 = sell_amount_saturated.saturating_mul(997.into());
-        let numerator: U256 = input_amount_with_fee.saturating_mul(output_reserve_saturated);
+        let numerator: U256 = input_amount_with_fee
+            .checked_mul(output_reserve_saturated)
+            .ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
         let denominator: U256 = input_reserve_saturated
             .saturating_mul(1000.into())
-            .saturating_add(input_amount_with_fee);
-        let result = numerator
+            .checked_add(input_amount_with_fee.into())
+            .ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+        let result_u256 = numerator
             .checked_div(denominator)
             .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
-        Ok(result.saturated_into())
+        Ok(Balance::try_from(result_u256)
+            .map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?)
     }
 
     pub fn calculate_sell_price_no_fee(
@@ -459,7 +465,7 @@ impl<T: Trait> Module<T> {
         let result = numerator
             .checked_div(denominator)
             .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
-        Ok(result.saturated_into())
+        Ok(Balance::try_from(result).map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?)
     }
 
     // Callculate amount of tokens to be paid, when buying buy_amount
@@ -474,16 +480,21 @@ impl<T: Trait> Module<T> {
 
         let numerator: U256 = input_reserve_saturated
             .saturating_mul(buy_amount_saturated)
-            .saturating_mul(1000.into());
+            .checked_mul(1000.into())
+            .ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
         let denominator: U256 = output_reserve_saturated
-            .saturating_sub(buy_amount_saturated)
-            .saturating_mul(997.into());
-        let result = numerator
+            .checked_sub(buy_amount_saturated)
+            .ok_or_else(|| DispatchError::from(Error::<T>::NotEnoughReserve))?
+            .checked_mul(997.into())
+            .ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+        let result_u256 = numerator
             .checked_div(denominator)
             .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?
-            .saturating_add(1.into());
+            .checked_add(1.into())
+            .ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 
-        Ok(result.saturated_into())
+        Ok(Balance::try_from(result_u256)
+            .map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?)
     }
 
     pub fn get_liquidity_asset(
@@ -587,6 +598,8 @@ impl<T: Trait> Module<T> {
             settling_asset_id = sold_asset_id;
 
             // Removing settling amount from pool
+            // Does not underflow because in both instances where settle_treasury_and_burn is called input_reserve is added by sold_asset_amount
+            // Also treasury_amount + burn amount <= sold_asset_amount
             Pools::insert(
                 (&sold_asset_id, &bought_asset_id),
                 input_reserve
@@ -604,6 +617,7 @@ impl<T: Trait> Module<T> {
                 .unwrap_or_else(|_| Balance::max_value());
 
             // Removing settling amount from pool
+            // Treasury_amount + burn amount <= output_reserve
             Pools::insert(
                 (&bought_asset_id, &sold_asset_id),
                 output_reserve
@@ -806,6 +820,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             &sender,
             first_asset_amount.into(),
             WithdrawReasons::all(),
+            // Does not fail due to earlier ensure
             { first_asset_free_balance.saturating_sub(first_asset_amount) }.into(),
         )
         .or(Err(Error::<T>::NotEnoughAssets))?;
@@ -815,6 +830,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             &sender,
             second_asset_amount.into(),
             WithdrawReasons::all(),
+            // Does not fail due to earlier ensure
             { second_asset_free_balance.saturating_sub(second_asset_amount) }.into(),
         )
         .or(Err(Error::<T>::NotEnoughAssets))?;
@@ -823,7 +839,9 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         ensure!(first_asset_id != second_asset_id, Error::<T>::SameAsset,);
 
         // Liquidity token amount calculation
-        let initial_liquidity = first_asset_amount.saturating_add(second_asset_amount);
+        let initial_liquidity = first_asset_amount
+            .checked_add(second_asset_amount)
+            .ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 
         Pools::insert((first_asset_id, second_asset_id), first_asset_amount);
 
@@ -884,6 +902,12 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         // Get token reserves
         let input_reserve = Pools::get((sold_asset_id, bought_asset_id));
         let output_reserve = Pools::get((bought_asset_id, sold_asset_id));
+
+        ensure!(
+            input_reserve.checked_add(sold_asset_amount).is_some(),
+            Error::<T>::MathOverflow
+        );
+
         // Calculate bought asset amount to be received by paying sold asset amount
         let bought_asset_amount =
             Module::<T>::calculate_sell_price(input_reserve, output_reserve, sold_asset_amount)?;
@@ -919,6 +943,8 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         )?;
 
         // Apply changes in token pools, adding sold amount and removing bought amount
+        // Neither should fall to zero let alone underflow, due to how pool destruction works
+        // Won't overflow due to earlier ensure
         Pools::insert(
             (sold_asset_id, bought_asset_id),
             input_reserve.saturating_add(sold_asset_amount),
@@ -972,6 +998,11 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         let sold_asset_amount =
             Module::<T>::calculate_buy_price(input_reserve, output_reserve, bought_asset_amount)?;
 
+        ensure!(
+            input_reserve.checked_add(sold_asset_amount).is_some(),
+            Error::<T>::MathOverflow
+        );
+
         // Ensure user has enought tokens to sell
         ensure!(
             T::Currency::free_balance(sold_asset_id.into(), &sender).into() >= sold_asset_amount,
@@ -1003,6 +1034,8 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         )?;
 
         // Apply changes in token pools, adding sold amount and removing bought amount
+        // Neither should fall to zero let alone underflow, due to how pool destruction works
+        // Won't overflow due to earlier ensure
         Pools::insert(
             (sold_asset_id, bought_asset_id),
             input_reserve.saturating_add(sold_asset_amount),
@@ -1065,7 +1098,8 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             first_asset_reserve,
         )
         .map_err(|_| Error::<T>::UnexpectedFailure)?
-        .saturating_add(1);
+        .checked_add(1)
+        .ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
         let liquidity_assets_minted = multiply_by_rational(
             first_asset_amount,
             total_liquidity_assets,
@@ -1079,7 +1113,20 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             Error::<T>::ZeroAmount,
         );
 
-        // Ensure user has enough first adn second token amount
+        ensure!(
+            first_asset_reserve
+                .checked_add(first_asset_amount)
+                .is_some(),
+            Error::<T>::MathOverflow
+        );
+        ensure!(
+            second_asset_reserve
+                .checked_add(second_asset_amount)
+                .is_some(),
+            Error::<T>::MathOverflow
+        );
+
+        // Ensure user has enough first and second token amount
         ensure!(
             T::Currency::free_balance(first_asset_id.into(), &sender).into() >= first_asset_amount,
             Error::<T>::NotEnoughAssets,
@@ -1115,6 +1162,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         )?;
 
         // Apply changes in token pools, adding minted amounts
+        // Won't overflow due earlier ensure
         Pools::insert(
             (&first_asset_id, &second_asset_id),
             first_asset_reserve.saturating_add(first_asset_amount),
@@ -1168,7 +1216,8 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         let new_balance: Self::Balance =
             T::Currency::free_balance(liquidity_asset_id.into(), &sender)
                 .into()
-                .saturating_sub(liquidity_asset_amount);
+                .checked_sub(liquidity_asset_amount)
+                .ok_or_else(|| DispatchError::from(Error::<T>::NotEnoughAssets))?;
 
         T::Currency::ensure_can_withdraw(
             liquidity_asset_id.into(),
@@ -1185,19 +1234,20 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
 
         let total_liquidity_assets: Balance =
             T::Currency::total_issuance(liquidity_asset_id.into()).into();
+
         // If all liquidity assets are being burned then
         // both asset amounts must be equal to their reserve values
         // All storage values related to this pool must be destroyed
         if liquidity_asset_amount == total_liquidity_assets {
             ensure!(
-                (first_asset_reserve.saturating_sub(first_asset_amount)).is_zero()
-                    && (second_asset_reserve.saturating_sub(second_asset_amount)).is_zero(),
+                (first_asset_reserve == first_asset_amount)
+                    && (second_asset_reserve == second_asset_amount),
                 Error::<T>::UnexpectedFailure
             );
         } else {
             ensure!(
-                !((first_asset_reserve.saturating_sub(first_asset_amount)).is_zero()
-                    || (second_asset_reserve.saturating_sub(second_asset_amount)).is_zero()),
+                (first_asset_reserve >= first_asset_amount)
+                    && (second_asset_reserve >= second_asset_amount),
                 Error::<T>::UnexpectedFailure
             );
         }
@@ -1234,6 +1284,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             LiquidityPools::remove(liquidity_asset_id);
         } else {
             // Apply changes in token pools, removing withdrawn amounts
+            // Cannot underflow due to earlier ensure
             Pools::insert(
                 (&first_asset_id, &second_asset_id),
                 first_asset_reserve.saturating_sub(first_asset_amount),
@@ -1294,14 +1345,16 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             total_liquidity_assets,
         )
         .map_err(|_| Error::<T>::UnexpectedFailure)?
-        .saturating_add(1);
+        .checked_add(1)
+        .ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
         let first_asset_amount = multiply_by_rational(
             liquidity_token_amount,
             first_asset_reserve,
             total_liquidity_assets,
         )
         .map_err(|_| Error::<T>::UnexpectedFailure)?
-        .saturating_add(1);
+        .checked_add(1)
+        .ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 
         Ok((
             first_asset_id,
@@ -1384,10 +1437,12 @@ impl<T: Trait> Valuate for Module<T> {
             return Default::default();
         }
 
-        multiply_by_rational(mng_token_reserve,
+        multiply_by_rational(
+            mng_token_reserve,
             liquidity_token_amount,
-            liquidity_token_reserve)
-            .unwrap_or_else(|_| Balance::max_value())
+            liquidity_token_reserve,
+        )
+        .unwrap_or_else(|_| Balance::max_value())
     }
 
     fn scale_liquidity_by_mng_valuation(
@@ -1399,9 +1454,7 @@ impl<T: Trait> Valuate for Module<T> {
             return Default::default();
         }
 
-        multiply_by_rational(liquidity_token_amount,
-            mng_token_amount,
-            mng_valuation)
+        multiply_by_rational(liquidity_token_amount, mng_token_amount, mng_valuation)
             .unwrap_or_else(|_| Balance::max_value())
     }
 }

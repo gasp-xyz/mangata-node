@@ -933,27 +933,45 @@ where
 						} else {
 
 							info!("previous block has extrinsics");
-							// TODO consider filtering inherents using fact that there are not
-							// signed. Can someone take advantage on that ??
-
-							// apply inherentes that set shuffle seed and read it using runtime api
 							let inherents = body.iter().take(2).cloned().collect::<Vec<_>>();
 							let seed = runtime_api.execute_in_transaction(|api| {
-								for xt in inherents{
-									api.apply_extrinsic(
-										&at,
-										xt,
-									).unwrap().unwrap().unwrap();
-								}
-								sp_api::TransactionOutcome::Rollback(api.get_seed(&at))
-							}).expect("cannot fetch seed from current block");
+                                let result: Option<Vec<_>> = inherents.into_iter().take(2).map(|xt|
+                                {
+                                    match api.apply_extrinsic(
+                                        &at,
+                                        xt,
+                                    ) {
+                                        Ok(Ok(Ok(_))) => Some(()),
+                                        _ => {
+                                            None
+                                        }
+                                    }
+                                })
+                                .collect();
 
-							let shuffled_extrinsics = extrinsic_shuffler::shuffle::<Block, Self>(&runtime_api, &at,previous_block_extrinsics, seed);
-							runtime_api.execute_block_with_context(
-								&at,
-								execution_context,
-								Block::new(import_block.header.clone(), shuffled_extrinsics),
-							)?;
+								sp_api::TransactionOutcome::Rollback(
+                                    match result {
+                                        Some(_) => api.get_seed(&at).ok(),
+                                        _ => None
+                                    }
+                                )
+							});
+
+                            match seed {
+                                Some(s) => {
+                                    let shuffled_extrinsics = extrinsic_shuffler::shuffle::<Block, Self>(&runtime_api, &at,previous_block_extrinsics, s);
+                                    runtime_api.execute_block_with_context(
+                                        &at,
+                                        execution_context,
+                                        Block::new(import_block.header.clone(), shuffled_extrinsics),
+                                    )?;
+                                }
+                                None => {
+                                    warn!("cannot fetch shuffling seed from the block");
+                                    return Ok(Some(ImportResult::MissingState));
+                                }
+                            }
+
 						}
 					}
 					None => {

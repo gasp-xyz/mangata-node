@@ -5530,6 +5530,7 @@ dependencies = [
  "futures 0.3.8",
  "futures-timer 3.0.2",
  "log",
+ "pallet-random-seed",
  "parity-scale-codec",
  "parking_lot 0.10.2",
  "sc-block-builder",

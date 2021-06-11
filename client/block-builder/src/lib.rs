@@ -303,7 +303,9 @@ where
         inherent_data: sp_inherents::InherentData,
     ) -> Result<(SeedType, Vec<Block::Extrinsic>), ApiErrorFor<A, Block>> {
         let block_id = self.block_id.clone();
-        let seed = pallet_random_seed::extract_inherent_data(&inherent_data).unwrap();
+        let seed = pallet_random_seed::extract_inherent_data(&inherent_data).map_err(|_|{
+            String::from("cannot random seed from inherents data")    
+        })?;
         self.api
             .execute_in_transaction(move |api| {
                 // `create_inherents` should not change any state, to ensure this we always rollback

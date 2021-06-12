@@ -955,25 +955,17 @@ where
                                         _ => None
                                     }
                                 )
-							});
+							}).ok_or(sp_blockchain::Error::Backend(String::from("shuffling seed not found")))?;
 
-                            match seed {
-                                Some(s) => {
-                                    let shuffled_extrinsics = extrinsic_shuffler::shuffle::<Block, Self>(&runtime_api, &at,previous_block_extrinsics, s);
-                                    runtime_api.execute_block_with_context(
-                                        &at,
-                                        execution_context,
-                                        Block::new(import_block.header.clone(), shuffled_extrinsics),
-                                    )?;
-                                }
-                                None => {
-                                    warn!("cannot fetch shuffling seed from the block");
-                                    return Ok(Some(ImportResult::MissingState));
-                                }
-                            }
+                            let shuffled_extrinsics = extrinsic_shuffler::shuffle::<Block, Self>(&runtime_api, &at,previous_block_extrinsics, seed);
+                            runtime_api.execute_block_with_context(
+                                &at,
+                                execution_context,
+                                Block::new(import_block.header.clone(), shuffled_extrinsics),
+                            )?;
+                        }
 
-						}
-					}
+                    },
 					None => {
 						info!("previous block is empty");
 					}

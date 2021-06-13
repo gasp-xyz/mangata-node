@@ -96,6 +96,36 @@ fn initialize_buy_and_burn() {
 }
 
 #[test]
+fn set_info_should_work() {
+    new_test_ext().execute_with(|| {
+        // creating asset with assetId 0 and minting to accountId 2
+        let acc_id: u64 = 2;
+        let amount: u128 = 1000000000000000000000;
+        XykStorage::create_new_token(&acc_id, amount);
+        XykStorage::create_new_token(&acc_id, amount);
+
+        XykStorage::create_pool(
+            Origin::signed(2),
+            0,
+            40000000000000000000,
+            1,
+            60000000000000000000,
+        )
+        .unwrap();
+
+        assert_eq!(
+            <assets_info::Module<Test>>::get_info(2u32),
+            assets_info::AssetInfo {
+                name: Some(b"LiquidityPoolToken0x00000002".to_vec()),
+                symbol: Some(b"TKN0x00000000-TKN0x00000001".to_vec()),
+                description: Some(b"Generated Info for Liquidity Pool Token".to_vec()),
+                decimals: Some(18u32),
+            }
+        );
+    });
+}
+
+#[test]
 fn buy_and_burn_sell_mangata() {
     new_test_ext().execute_with(|| {
         initialize_buy_and_burn();

@@ -309,7 +309,7 @@ fn multi() {
             0,
             1,
             500000000000000000000000,
-            None,
+            5000000000000000000000000,
         )
         .unwrap();
 
@@ -367,7 +367,7 @@ fn multi() {
             0,
             1,
             1000000000000000000000000,
-            None,
+            10000000000000000000000000,
         )
         .unwrap();
 
@@ -739,7 +739,7 @@ fn mint_W() {
             0,
             1,
             20000000000000000000,
-            Some(200000000000000000000),
+            200000000000000000000,
         )
         .unwrap();
 
@@ -770,7 +770,7 @@ fn mint_W_other_way() {
             1,
             0,
             30000000000000000000,
-            Some(300000000000000000000),
+            300000000000000000000,
         )
         .unwrap();
 
@@ -791,43 +791,13 @@ fn mint_W_other_way() {
     });
 }
 
-#[test]
-fn mint_W_no_expected_argument() {
-    new_test_ext().execute_with(|| {
-        initialize();
-        // minting pool 0 1 with 20000000000000000000 assetId 0
-        XykStorage::mint_liquidity(
-            Origin::signed(2),
-            0,
-            1,
-            20000000000000000000,
-            None
-        )
-        .unwrap();
-
-        assert_eq!(XykStorage::total_supply(2), 150000000000000000000); // total liquidity assets
-        assert_eq!(XykStorage::balance(2, 2), 150000000000000000000); // amount of liquidity assets owned by user by creating pool and minting
-        assert_eq!(XykStorage::asset_pool((0, 1)), 60000000000000000000); // amount in pool map
-        assert_eq!(XykStorage::asset_pool((1, 0)), 90000000000000000001); // amount in pool map
-        assert_eq!(XykStorage::balance(0, 2), 940000000000000000000); // amount of asset 0 in user acc after minting
-        assert_eq!(XykStorage::balance(1, 2), 909999999999999999999); // amount of asset 1 in user acc after minting
-        assert_eq!(
-            XykStorage::balance(0, XykStorage::account_id()),
-            60000000000000000000
-        ); // amount of asset 0 in vault acc after creating pool
-        assert_eq!(
-            XykStorage::balance(1, XykStorage::account_id()),
-            90000000000000000001
-        ); // amount of asset 1 in vault acc after creating pool
-    });
-}
 
 #[test]
 fn mint_N_no_such_pool() {
     new_test_ext().execute_with(|| {
         initialize();
         assert_err!(
-            XykStorage::mint_liquidity(Origin::signed(2), 0, 10, 250000, None),
+            XykStorage::mint_liquidity(Origin::signed(2), 0, 10, 250000, 250000),
             Error::<Test>::NoSuchPool,
         ); // minting pool 0 10 with 250000 assetId 0 (only pool 0 1 exists)
     });
@@ -843,7 +813,7 @@ fn mint_N_not_enough_first_asset() {
                 0,
                 1,
                 1000000000000000000000,
-                None
+                10000000000000000000000
             ),
             Error::<Test>::NotEnoughAssets,
         ); // minting pool 0 1 with 1000000000000000000000 assetId 0 (user has only 960000000000000000000)
@@ -860,7 +830,7 @@ fn mint_N_not_enough_second_asset() {
                 1,
                 0,
                 1000000000000000000000,
-                None
+                10000000000000000000000,
             ),
             Error::<Test>::NotEnoughAssets,
         ); // minting pool 0 1 with 1000000000000000000000 assetId 1 (user has only 940000000000000000000)
@@ -872,7 +842,7 @@ fn min_N_zero_amount() {
     new_test_ext().execute_with(|| {
         initialize();
         assert_err!(
-            XykStorage::mint_liquidity(Origin::signed(2), 1, 0, 0, None),
+            XykStorage::mint_liquidity(Origin::signed(2), 1, 0, 0, 10),
             Error::<Test>::ZeroAmount,
         ); // minting pool 0 1 with 0 assetId 1
     });
@@ -883,7 +853,7 @@ fn mint_N_second_asset_amount_exceeded_expectations() {
     new_test_ext().execute_with(|| {
         initialize();
         assert_err!(
-            XykStorage::mint_liquidity(Origin::signed(2), 0, 1, 250000, Some(10)),
+            XykStorage::mint_liquidity(Origin::signed(2), 0, 1, 250000, 10),
             Error::<Test>::SecondAssetAmountExceededExpectations,
         ); // minting pool 0 10 with 250000 assetId 0 (only pool 0 1 exists)
     });

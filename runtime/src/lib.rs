@@ -276,6 +276,7 @@ parameter_types! {
     pub const MaxIterations: u32 = 10;
     // 0.05%. The higher the value, the more strict solution acceptance becomes.
     pub MinSolutionScoreBump: Perbill = Perbill::from_rational_approximation(5u32, 10_000);
+    pub const MinStakeAmount: Balance = 1;
 }
 
 /// Struct that handles the conversion of Balance -> `u64`. This is used for staking's election
@@ -304,6 +305,7 @@ impl Convert<u128, Balance> for CurrencyToVoteHandler {
 
 impl pallet_staking::Trait for Runtime {
     type NativeCurrencyId = NativeCurrencyId;
+    type MinStakeAmount = MinStakeAmount;
     type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
     type Valuations = Xyk;
     type UnixTime = Timestamp;
@@ -515,6 +517,8 @@ impl orml_tokens::Trait for Runtime {
     type WeightInfo = ();
 }
 
+impl pallet_random_seed::Trait for Runtime {}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
     pub enum Runtime where
@@ -525,6 +529,7 @@ construct_runtime!(
         System: frame_system::{Module, Call, Config, Storage, Event<T>},
         RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
         Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
+        Random: pallet_random_seed::{Module, Call, Storage, Inherent},
         Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
         Authorship: pallet_authorship::{Module, Call, Storage, Inherent},
         Babe: pallet_babe::{Module, Call, Storage, Config, Inherent, ValidateUnsigned},
@@ -769,7 +774,27 @@ impl_runtime_apis! {
             buy_amount: Balance
         ) -> RpcResult<Balance> {
             RpcResult {
-                price: Xyk::calculate_buy_price(input_reserve, output_reserve, buy_amount)
+                price: Xyk::calculate_buy_price(input_reserve, output_reserve, buy_amount).unwrap_or_default()
+            }
+        }
+
+        fn calculate_sell_price_id(
+            sold_token_id: TokenId,
+            bought_token_id: TokenId,
+            sell_amount: Balance
+        ) -> RpcResult<Balance> {
+            RpcResult {
+                price: Xyk::calculate_sell_price_id(sold_token_id, bought_token_id, sell_amount).unwrap_or_default()
+            }
+        }
+
+        fn calculate_buy_price_id(
+            sold_token_id: TokenId,
+            bought_token_id: TokenId,
+            buy_amount: Balance
+        ) -> RpcResult<Balance> {
+            RpcResult {
+                price: Xyk::calculate_buy_price_id(sold_token_id, bought_token_id, buy_amount).unwrap_or_default()
             }
         }
 
@@ -778,10 +803,15 @@ impl_runtime_apis! {
             second_asset_id: TokenId,
             liquidity_asset_amount: Balance
         ) -> RpcAmountsResult<Balance> {
-            let (first_asset_amount, second_asset_amount) = Xyk::get_burn_amount(first_asset_id, second_asset_id, liquidity_asset_amount);
-            RpcAmountsResult{
-                first_asset_amount,
-                second_asset_amount
+            match Xyk::get_burn_amount(first_asset_id, second_asset_id, liquidity_asset_amount){
+                Ok((first_asset_amount, second_asset_amount)) => RpcAmountsResult{
+                                                                    first_asset_amount,
+                                                                    second_asset_amount
+                                                                },
+                Err(_) => RpcAmountsResult{
+                    first_asset_amount: 0u32.into(),
+                    second_asset_amount: 0u32.into()
+                },
             }
         }
     }

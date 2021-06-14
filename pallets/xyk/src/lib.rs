@@ -38,7 +38,7 @@
 //! `second_token_amount` - amount of second token in which the pool will be initiated, which will set their initial ratio/price
 //!
 //! ### Example
-//! ```
+//! ```ignore
 //! create_pool(
 //!    Origin::signed(1),
 //!    0,
@@ -72,7 +72,7 @@
 //! `min_amount_out` - minimal acceptable amount of bought token received after swap
 //!
 //! ### Example
-//! ```
+//! ```ignore
 //! sell_token (
 //!    Origin::signed(1),
 //!    0,
@@ -106,7 +106,7 @@
 //! `max_amount_in` - maximal acceptable amount of sold token to pay for requested bought amount
 //!
 //! ### Example
-//! ```
+//! ```ignore
 //! buy_token (
 //!    Origin::signed(1),
 //!    0,
@@ -141,7 +141,7 @@
 //! first_token_amount - amount of first_token_id, second token amount will be calculated
 //!
 //! ### Example
-//! ```
+//! ```ignore
 //! mint_liquidity (
 //!    Origin::signed(1),
 //!    0,
@@ -176,7 +176,7 @@
 //! liquidity_token_amount - amount of liquidity token amount to burn
 //!
 //! ### Example
-//! ```
+//! ```ignore
 //! burn_liquidity (
 //!    Origin::signed(1),
 //!    0,
@@ -238,6 +238,7 @@ use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 use sp_runtime::traits::{AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member};
 use sp_runtime::traits::{SaturatedConversion, Zero};
 use sp_std::fmt::Debug;
+use sp_arithmetic::helpers_128bit::multiply_by_rational;
 
 #[cfg(test)]
 mod mock;
@@ -273,6 +274,7 @@ decl_error! {
         AssetAlreadyExists,
         AssetDoesNotExists,
         DivisionByZero,
+        UnexpectedFailure,
         NotMangataLiquidityAsset,
         SecondAssetAmountExceededExpectations,
     }
@@ -313,8 +315,8 @@ decl_storage! {
 
         Pools get(fn asset_pool): map hasher(opaque_blake2_256) (TokenId, TokenId) => Balance;
 
-        LiquidityAssets get(fn liquidity_asset): map hasher(opaque_blake2_256) (TokenId, TokenId) => TokenId;
-        LiquidityPools get(fn liquidity_pool): map hasher(opaque_blake2_256) TokenId => (TokenId, TokenId);
+        LiquidityAssets get(fn liquidity_asset): map hasher(opaque_blake2_256) (TokenId, TokenId) => Option<TokenId>;
+        LiquidityPools get(fn liquidity_pool): map hasher(opaque_blake2_256) TokenId => Option<(TokenId, TokenId)>;
         Treasury get(fn treasury): map hasher(opaque_blake2_256) TokenId => Balance;
         TreasuryBurn get(fn treasury_burn): map hasher(opaque_blake2_256) TokenId => Balance;
 
@@ -371,6 +373,7 @@ decl_module! {
         ) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
+
             <Self as XykFunctionsTrait<T::AccountId>>::sell_asset(sender, sold_asset_id.into(), bought_asset_id.into(), sold_asset_amount.into(), min_amount_out.into())
 
         }
@@ -428,9 +431,9 @@ impl<T: Trait> Module<T> {
         output_reserve: Balance,
         sell_amount: Balance,
     ) -> Result<Balance, DispatchError> {
-        let input_reserve_saturated: U256 = input_reserve.saturated_into::<u128>().into();
-        let output_reserve_saturated: U256 = output_reserve.saturated_into::<u128>().into();
-        let sell_amount_saturated: U256 = sell_amount.saturated_into::<u128>().into();
+        let input_reserve_saturated: U256 = input_reserve.into();
+        let output_reserve_saturated: U256 = output_reserve.into();
+        let sell_amount_saturated: U256 = sell_amount.into();
 
         let input_amount_with_fee: U256 = sell_amount_saturated * 997;
         let numerator: U256 = input_amount_with_fee * output_reserve_saturated;
@@ -438,7 +441,7 @@ impl<T: Trait> Module<T> {
         let result = numerator
             .checked_div(denominator)
             .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
-        Ok(result.saturated_into::<u128>().saturated_into::<Balance>())
+        Ok(result.saturated_into())
     }
 
     pub fn calculate_sell_price_no_fee(
@@ -447,16 +450,16 @@ impl<T: Trait> Module<T> {
         output_reserve: Balance,
         sell_amount: Balance,
     ) -> Result<Balance, DispatchError> {
-        let input_reserve_saturated: U256 = input_reserve.saturated_into::<u128>().into();
-        let output_reserve_saturated: U256 = output_reserve.saturated_into::<u128>().into();
-        let sell_amount_saturated: U256 = sell_amount.saturated_into::<u128>().into();
+        let input_reserve_saturated: U256 = input_reserve.into();
+        let output_reserve_saturated: U256 = output_reserve.into();
+        let sell_amount_saturated: U256 = sell_amount.into();
 
         let numerator: U256 = sell_amount_saturated * output_reserve_saturated;
         let denominator: U256 = input_reserve_saturated + sell_amount_saturated;
         let result = numerator
             .checked_div(denominator)
             .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
-        Ok(result.saturated_into::<u128>().saturated_into::<Balance>())
+        Ok(result.saturated_into())
     }
 
     // Callculate amount of tokens to be paid, when buying buy_amount
@@ -464,24 +467,54 @@ impl<T: Trait> Module<T> {
         input_reserve: Balance,
         output_reserve: Balance,
         buy_amount: Balance,
-    ) -> Balance {
-        let input_reserve_saturated: U256 = input_reserve.saturated_into::<u128>().into();
-        let output_reserve_saturated: U256 = output_reserve.saturated_into::<u128>().into();
-        let buy_amount_saturated: U256 = buy_amount.saturated_into::<u128>().into();
+    ) -> Result<Balance, DispatchError> {
+        let input_reserve_saturated: U256 = input_reserve.into();
+        let output_reserve_saturated: U256 = output_reserve.into();
+        let buy_amount_saturated: U256 = buy_amount.into();
 
         let numerator: U256 = input_reserve_saturated * buy_amount_saturated * 1000;
         let denominator: U256 = (output_reserve_saturated - buy_amount_saturated) * 997;
-        let result: U256 = numerator / denominator + 1;
+        let result = numerator
+            .checked_div(denominator)
+            .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?
+            + 1;
 
-        result.saturated_into::<u128>().saturated_into::<Balance>()
+        Ok(result.saturated_into())
     }
 
-    pub fn get_liquidity_asset(first_asset_id: TokenId, second_asset_id: TokenId) -> TokenId {
+    pub fn get_liquidity_asset(
+        first_asset_id: TokenId,
+        second_asset_id: TokenId,
+    ) -> Result<TokenId, DispatchError> {
         if LiquidityAssets::contains_key((first_asset_id, second_asset_id)) {
             LiquidityAssets::get((first_asset_id, second_asset_id))
+                .ok_or_else(|| Error::<T>::UnexpectedFailure.into())
         } else {
             LiquidityAssets::get((second_asset_id, first_asset_id))
+                .ok_or_else(|| Error::<T>::NoSuchPool.into())
         }
+    }
+
+    pub fn calculate_sell_price_id(
+        sold_token_id: TokenId,
+        bought_token_id: TokenId,
+        sell_amount: Balance,
+    ) -> Result<Balance, DispatchError> {
+        let input_reserve = Pools::get((sold_token_id, bought_token_id));
+        let output_reserve = Pools::get((bought_token_id, sold_token_id));
+
+        Self::calculate_sell_price(input_reserve, output_reserve, sell_amount)
+    }
+
+    pub fn calculate_buy_price_id(
+        sold_token_id: TokenId,
+        bought_token_id: TokenId,
+        buy_amount: Balance,
+    ) -> Result<Balance, DispatchError> {
+        let input_reserve = Pools::get((sold_token_id, bought_token_id));
+        let output_reserve = Pools::get((bought_token_id, sold_token_id));
+
+        Self::calculate_buy_price(input_reserve, output_reserve, buy_amount)
     }
 
     // Calculate first and second token amounts depending on liquidity amount to burn
@@ -489,39 +522,28 @@ impl<T: Trait> Module<T> {
         first_asset_id: TokenId,
         second_asset_id: TokenId,
         liquidity_asset_amount: Balance,
-    ) -> (Balance, Balance) {
+    ) -> Result<(Balance, Balance), DispatchError> {
         // Get token reserves and liquidity asset id
-        let liquidity_asset_id = Self::get_liquidity_asset(first_asset_id, second_asset_id);
-        let first_asset_reserve_u256: U256 = Pools::get((first_asset_id, second_asset_id))
-            .saturated_into::<u128>()
+        let liquidity_asset_id = Self::get_liquidity_asset(first_asset_id, second_asset_id)?;
+        let first_asset_reserve: Balance = Pools::get((first_asset_id, second_asset_id))
             .into();
-        let second_asset_reserve_u256: U256 = Pools::get((second_asset_id, first_asset_id))
-            .saturated_into::<u128>()
+        let second_asset_reserve: Balance = Pools::get((second_asset_id, first_asset_id))
             .into();
-        let total_liquidity_assets_u256: U256 =
+        let total_liquidity_assets: Balance =
             T::Currency::total_issuance(liquidity_asset_id.into())
-                .saturated_into::<u128>()
                 .into();
-        let liquidity_asset_amount_u256: U256 =
-            liquidity_asset_amount.saturated_into::<u128>().into();
 
         // Calculate first and second token amount to be withdrawn
-        let first_asset_amount_u256 =
-            first_asset_reserve_u256 * liquidity_asset_amount_u256 / total_liquidity_assets_u256;
-        let second_asset_amount_u256 =
-            second_asset_reserve_u256 * liquidity_asset_amount_u256 / total_liquidity_assets_u256;
+        let first_asset_amount =
+            multiply_by_rational(first_asset_reserve, liquidity_asset_amount, total_liquidity_assets).map_err(|_| Error::<T>::UnexpectedFailure)?.into();
+        let second_asset_amount =
+            multiply_by_rational(second_asset_reserve, liquidity_asset_amount, total_liquidity_assets).map_err(|_| Error::<T>::UnexpectedFailure)?.into();
 
-        // Conversion to Balance
-        let second_asset_amount = second_asset_amount_u256
-            .saturated_into::<u128>()
-            .saturated_into::<Balance>();
-        let first_asset_amount = first_asset_amount_u256
-            .saturated_into::<u128>()
-            .saturated_into::<Balance>();
 
-        (first_asset_amount, second_asset_amount)
+        Ok((first_asset_amount, second_asset_amount))
     }
-
+    
+    
     //TODO U256?
     fn settle_treasury_and_burn(
         sold_asset_id: TokenId,
@@ -529,7 +551,7 @@ impl<T: Trait> Module<T> {
         sold_asset_amount: Balance,
     ) -> DispatchResult {
         let vault = Self::account_id();
-        let mangata_id = MANGATA_ID.saturated_into::<TokenId>();
+        let mangata_id: TokenId = MANGATA_ID.saturated_into();
 
         // Getting token reserves
         let input_reserve = Pools::get((sold_asset_id, bought_asset_id));
@@ -537,11 +559,12 @@ impl<T: Trait> Module<T> {
 
         // Setting initial settling token id, treasury and burn amount
         let mut settling_asset_id = bought_asset_id;
-        let mut treasury_amount = sold_asset_amount
-            * TREASURY_PERCENTAGE.saturated_into::<Balance>()
-            / 10000.saturated_into::<Balance>();
-        let mut burn_amount = sold_asset_amount * BUYANDBURN_PERCENTAGE.saturated_into::<Balance>()
-            / 10000.saturated_into::<Balance>();
+        let mut treasury_amount = multiply_by_rational(sold_asset_amount,
+            TREASURY_PERCENTAGE,
+            10000).map_err(|_| Error::<T>::UnexpectedFailure)?;
+        let mut burn_amount = multiply_by_rational(sold_asset_amount,
+            BUYANDBURN_PERCENTAGE,
+            10000).map_err(|_| Error::<T>::UnexpectedFailure)?;
 
         // Check whether to settle treasury and buyburn with sold or bought asset.
         // If sold token is directly mangata, or is in pair with mangata and bought id is not and bought token is not mangata, we use sold token as settling token
@@ -694,12 +717,15 @@ pub trait XykFunctionsTrait<AccountId> {
     fn get_tokens_required_for_minting(
         liquidity_asset_id: Self::CurrencyId,
         liquidity_token_amount: Self::Balance,
-    ) -> (
-        Self::CurrencyId,
-        Self::Balance,
-        Self::CurrencyId,
-        Self::Balance,
-    );
+    ) -> Result<
+        (
+            Self::CurrencyId,
+            Self::Balance,
+            Self::CurrencyId,
+            Self::Balance,
+        ),
+        DispatchError,
+    >;
 }
 
 impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
@@ -920,7 +946,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
 
         // Calculate amount to be paid from bought amount
         let sold_asset_amount =
-            Module::<T>::calculate_buy_price(input_reserve, output_reserve, bought_asset_amount);
+            Module::<T>::calculate_buy_price(input_reserve, output_reserve, bought_asset_amount)?;
 
         // Ensure user has enought tokens to sell
         ensure!(
@@ -994,7 +1020,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         );
 
         // Get liquidity token id
-        let liquidity_asset_id = Module::<T>::get_liquidity_asset(first_asset_id, second_asset_id);
+        let liquidity_asset_id = Module::<T>::get_liquidity_asset(first_asset_id, second_asset_id)?;
 
         // Ensure pool exists
         ensure!(
@@ -1009,26 +1035,11 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         let total_liquidity_assets: Self::Balance =
             T::Currency::total_issuance(liquidity_asset_id.into()).into();
 
-        // Conversion to U256
-        let first_asset_amount_u256: U256 = first_asset_amount.saturated_into::<u128>().into();
-        let first_asset_reserve_u256: U256 = first_asset_reserve.saturated_into::<u128>().into();
-        let second_asset_reserve_u256: U256 = second_asset_reserve.saturated_into::<u128>().into();
-        let total_liquidity_assets_u256: U256 =
-            total_liquidity_assets.saturated_into::<u128>().into();
-
         // Calculation of required second asset amount and received liquidity token amount
-        let second_asset_amount_u256: U256 =
-            first_asset_amount_u256 * second_asset_reserve_u256 / first_asset_reserve_u256 + 1;
-        let liquidity_assets_minted_u256: U256 =
-            first_asset_amount_u256 * total_liquidity_assets_u256 / first_asset_reserve_u256;
-
-        // Conversion to Balance
-        let second_asset_amount = second_asset_amount_u256
-            .saturated_into::<u128>()
-            .saturated_into::<Self::Balance>();
-        let liquidity_assets_minted = liquidity_assets_minted_u256
-            .saturated_into::<u128>()
-            .saturated_into::<Self::Balance>();
+        let second_asset_amount =
+            multiply_by_rational(first_asset_amount, second_asset_reserve, first_asset_reserve).map_err(|_| Error::<T>::UnexpectedFailure)? + 1;
+        let liquidity_assets_minted =
+            multiply_by_rational(first_asset_amount, total_liquidity_assets, first_asset_reserve).map_err(|_| Error::<T>::UnexpectedFailure)?;
 
 
         ensure!(
@@ -1117,7 +1128,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         // Get token reserves and liquidity asset id
         let first_asset_reserve = Pools::get((first_asset_id, second_asset_id));
         let second_asset_reserve = Pools::get((second_asset_id, first_asset_id));
-        let liquidity_asset_id = Module::<T>::get_liquidity_asset(first_asset_id, second_asset_id);
+        let liquidity_asset_id = Module::<T>::get_liquidity_asset(first_asset_id, second_asset_id)?;
 
         // Ensure user has enought liquidity tokens to burn
         ensure!(
@@ -1143,7 +1154,28 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
 
         // Calculate first and second token amounts depending on liquidity amount to burn
         let (first_asset_amount, second_asset_amount) =
-            Module::<T>::get_burn_amount(first_asset_id, second_asset_id, liquidity_asset_amount);
+            Module::<T>::get_burn_amount(first_asset_id, second_asset_id, liquidity_asset_amount)?;
+
+        let total_liquidity_assets: Balance =
+            T::Currency::total_issuance(liquidity_asset_id.into()).into();
+        // If all liquidity assets are being burned then
+        // both asset amounts must be equal to their reserve values
+        // All storage values related to this pool must be destroyed
+        if liquidity_asset_amount == total_liquidity_assets {
+            ensure!(
+                (first_asset_reserve - first_asset_amount).is_zero()
+                    && (second_asset_reserve - second_asset_amount).is_zero(),
+                Error::<T>::UnexpectedFailure
+            );
+        } else {
+            ensure!(
+                !((first_asset_reserve - first_asset_amount).is_zero()
+                    || (second_asset_reserve - second_asset_amount).is_zero()),
+                Error::<T>::UnexpectedFailure
+            );
+        }
+        // If all liquidity assets are not being burned then
+        // both asset amounts must be less than their reserve values
 
         // Ensure not withdrawing zero amounts
         ensure!(
@@ -1167,22 +1199,22 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             ExistenceRequirement::KeepAlive,
         )?;
 
-        // Apply changes in token pools, removing withdrawn amounts
-        Pools::insert(
-            (&first_asset_id, &second_asset_id),
-            first_asset_reserve - first_asset_amount,
-        );
-        Pools::insert(
-            (&second_asset_id, &first_asset_id),
-            second_asset_reserve - second_asset_amount,
-        );
-
-        // Destroying token pool, if no tokens left
-        if (first_asset_reserve - first_asset_amount == 0.saturated_into::<Self::Balance>())
-            || (second_asset_reserve - second_asset_amount == 0.saturated_into::<Self::Balance>())
-        {
+        if liquidity_asset_amount == total_liquidity_assets {
             Pools::remove((first_asset_id, second_asset_id));
             Pools::remove((second_asset_id, first_asset_id));
+            LiquidityAssets::remove((first_asset_id, second_asset_id));
+            LiquidityAssets::remove((second_asset_id, first_asset_id));
+            LiquidityPools::remove(liquidity_asset_id);
+        } else {
+            // Apply changes in token pools, removing withdrawn amounts
+            Pools::insert(
+                (&first_asset_id, &second_asset_id),
+                first_asset_reserve - first_asset_amount,
+            );
+            Pools::insert(
+                (&second_asset_id, &first_asset_id),
+                second_asset_reserve - second_asset_amount,
+            );
         }
 
         // Destroying burnt liquidity tokens
@@ -1209,45 +1241,35 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
     fn get_tokens_required_for_minting(
         liquidity_asset_id: Self::CurrencyId,
         liquidity_token_amount: Self::Balance,
-    ) -> (
-        Self::CurrencyId,
-        Self::Balance,
-        Self::CurrencyId,
-        Self::Balance,
-    ) {
-        let (first_asset_id, second_asset_id) = LiquidityPools::get(liquidity_asset_id);
+    ) -> Result<
+        (
+            Self::CurrencyId,
+            Self::Balance,
+            Self::CurrencyId,
+            Self::Balance,
+        ),
+        DispatchError,
+    > {
+        let (first_asset_id, second_asset_id) = LiquidityPools::get(liquidity_asset_id)
+            .ok_or_else(|| Error::<T>::NoSuchLiquidityAsset)?;
         let first_asset_reserve = Pools::get((first_asset_id, second_asset_id));
         let second_asset_reserve = Pools::get((second_asset_id, first_asset_id));
         let total_liquidity_assets: Balance =
             T::Currency::total_issuance(liquidity_asset_id.into()).into();
 
-        let liquidity_token_amount_u256: U256 =
-            liquidity_token_amount.saturated_into::<u128>().into();
-        let first_asset_reserve_u256: U256 = first_asset_reserve.saturated_into::<u128>().into();
-        let second_asset_reserve_u256: U256 = second_asset_reserve.saturated_into::<u128>().into();
-        let total_liquidity_assets_u256: U256 =
-            total_liquidity_assets.saturated_into::<u128>().into();
-
-        let second_asset_amount_u256: U256 =
-            liquidity_token_amount_u256 * second_asset_reserve_u256 / total_liquidity_assets_u256
+        let second_asset_amount =
+            multiply_by_rational(liquidity_token_amount, second_asset_reserve, total_liquidity_assets).map_err(|_| Error::<T>::UnexpectedFailure)?
                 + 1;
-        let first_asset_amount_u256: U256 = liquidity_token_amount_u256 * first_asset_reserve_u256
-            / total_liquidity_assets_u256
+        let first_asset_amount = multiply_by_rational(liquidity_token_amount, first_asset_reserve
+            , total_liquidity_assets).map_err(|_| Error::<T>::UnexpectedFailure)?
             + 1;
 
-        let second_asset_amount = second_asset_amount_u256
-            .saturated_into::<u128>()
-            .saturated_into::<Balance>();
-        let first_asset_amount = first_asset_amount_u256
-            .saturated_into::<u128>()
-            .saturated_into::<Balance>();
-
-        (
+        Ok((
             first_asset_id,
             first_asset_amount,
             second_asset_id,
             second_asset_amount,
-        )
+        ))
     }
 }
 
@@ -1296,7 +1318,8 @@ impl<T: Trait> Valuate for Module<T> {
     fn get_liquidity_token_mng_pool(
         liquidity_token_id: Self::CurrencyId,
     ) -> Result<(Self::CurrencyId, Self::CurrencyId), DispatchError> {
-        let (first_token_id, second_token_id) = LiquidityPools::get(liquidity_token_id);
+        let (first_token_id, second_token_id) = LiquidityPools::get(liquidity_token_id)
+            .ok_or_else(|| Error::<T>::NoSuchLiquidityAsset)?;
         let native_currency_id = T::NativeCurrencyId::get();
         match native_currency_id {
             _ if native_currency_id == first_token_id => Ok((first_token_id, second_token_id)),
@@ -1315,18 +1338,13 @@ impl<T: Trait> Valuate for Module<T> {
                 Err(_) => return Default::default(),
             };
         let mng_token_reserve = Pools::get((mng_token_id, other_token_id));
-        let liquidity_token_reserve = T::Currency::total_issuance(liquidity_token_id.into());
-        let mng_token_reserve_u256: U256 = mng_token_reserve.saturated_into::<u128>().into();
+        let liquidity_token_reserve: Balance = T::Currency::total_issuance(liquidity_token_id.into()).into();
+        let mng_token_reserve_u256: U256 = mng_token_reserve.into();
         let liquidity_token_amount_u256: U256 =
-            liquidity_token_amount.saturated_into::<u128>().into();
+            liquidity_token_amount.into();
         let liquidity_token_reserve_u256: U256 =
-            liquidity_token_reserve.saturated_into::<u128>().into();
-        let mng_token_amount_u256 =
-            mng_token_reserve_u256 * liquidity_token_amount_u256 / liquidity_token_reserve_u256;
-        let mng_token_amount = mng_token_amount_u256
-            .saturated_into::<u128>()
-            .saturated_into::<Self::Balance>();
-        mng_token_amount
+            liquidity_token_reserve.into();
+        (mng_token_reserve_u256 * liquidity_token_amount_u256 / liquidity_token_reserve_u256).saturated_into()
     }
 
     fn scale_liquidity_by_mng_valuation(
@@ -1337,15 +1355,11 @@ impl<T: Trait> Valuate for Module<T> {
         if mng_valuation.is_zero() {
             return 0u128.into();
         }
-        let mng_valuation_u256: U256 = mng_valuation.saturated_into::<u128>().into();
+        let mng_valuation_u256: U256 = mng_valuation.into();
         let liquidity_token_amount_u256: U256 =
-            liquidity_token_amount.saturated_into::<u128>().into();
-        let mng_token_amount_u256: U256 = mng_token_amount.saturated_into::<u128>().into();
-        let scaled_liquidity_token_amount_u256 =
-            liquidity_token_amount_u256 * mng_token_amount_u256 / mng_valuation_u256;
-        let scaled_liquidity_token_amount = scaled_liquidity_token_amount_u256
-            .saturated_into::<u128>()
-            .saturated_into::<Self::Balance>();
-        scaled_liquidity_token_amount
+            liquidity_token_amount.into();
+        let mng_token_amount_u256: U256 = mng_token_amount.into();
+
+        (liquidity_token_amount_u256 * mng_token_amount_u256 / mng_valuation_u256).saturated_into()
     }
 }

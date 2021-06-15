@@ -82,7 +82,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: mangata-finance/mangata-e2e
-          ref: 'main'
+          ref: 'feature/mint-liquidity-second-asset-amount-added'
           path: 'e2eTests'
       
       - name: Start mangata-node node with local build

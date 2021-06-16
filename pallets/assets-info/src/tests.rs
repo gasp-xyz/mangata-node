@@ -32,7 +32,7 @@ fn set_info_and_retrieve_works_ok() {
     //     .any(|record| record.event == transferred_event));
 
         let infoStored_event =
-        Event::InfoStored(Event::InfoStored(ASSET_ID, info));
+        TestEvent::assets_info(Event::InfoStored(ASSET_ID, info));
         
             assert!(System::events()
                 .iter()

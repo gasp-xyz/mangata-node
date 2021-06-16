@@ -27,7 +27,8 @@ impl_outer_origin! {
 impl_outer_event! {
     pub enum TestEvent for Test {
         frame_system<T>,
-        assets_info<T>,
+        assets<T>,
+        assets_info,
     }
 }
 
@@ -60,7 +61,7 @@ impl system::Trait for Test {
     type AccountId = u64;
     type Lookup = IdentityLookup<Self::AccountId>;
     type Header = Header;
-    type Event = ();
+    type Event = TestEvent;
     type BlockHashCount = BlockHashCount;
     type MaximumBlockWeight = MaximumBlockWeight;
     type DbWeight = ();
@@ -78,7 +79,7 @@ impl system::Trait for Test {
 }
 
 impl assets::Trait for Test {
-    type Event = ();
+    type Event = TestEvent;
     type Balance = Balance;
     type Amount = Amount;
     type CurrencyId = TokenId;
@@ -87,7 +88,7 @@ impl assets::Trait for Test {
 }
 
 impl Trait for Test {
-    type Event = ();
+    type Event = TestEvent;
     type MinLengthName = MinLengthName;
     type MaxLengthName = MaxLengthName;
     type MinLengthSymbol = MinLengthSymbol;

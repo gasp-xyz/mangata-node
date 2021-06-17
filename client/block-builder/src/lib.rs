@@ -45,9 +45,7 @@ use sp_runtime::{
     },
 };
 
-use pallet_random_seed::RandomSeedInherentDataProvider;
-use sp_core::H256;
-use sp_inherents::ProvideInherentData;
+use pallet_random_seed::SeedType;
 
 pub use sp_block_builder::BlockBuilder as BlockBuilderApi;
 
@@ -173,6 +171,7 @@ where
     ///
     /// This will ensure the extrinsic can be validly executed (by executing it).
     pub fn push(&mut self, xt: <Block as BlockT>::Extrinsic) -> Result<(), ApiErrorFor<A, Block>> {
+        info!("Pushing transactions without execution");
         self.extrinsics.push(xt);
         Ok(())
         // TODO: check if its possible to verify transaction by first
@@ -206,7 +205,7 @@ where
     /// The storage proof will be `Some(_)` when proof recording was enabled.
     pub fn build(
         mut self,
-        seed: H256,
+        seed: SeedType,
     ) -> Result<BuiltBlock<Block, backend::StateBackendFor<B, Block>>, ApiErrorFor<A, Block>> {
         let extrinsics = self.extrinsics.clone();
         let parent_hash = self.parent_hash;
@@ -301,15 +300,10 @@ where
     /// Returns the inherents created by the runtime or an error if something failed.
     pub fn create_inherents(
         &mut self,
-        mut inherent_data: sp_inherents::InherentData,
-    ) -> Result<(H256, Vec<Block::Extrinsic>), ApiErrorFor<A, Block>> {
+        inherent_data: sp_inherents::InherentData,
+    ) -> Result<(SeedType, Vec<Block::Extrinsic>), ApiErrorFor<A, Block>> {
         let block_id = self.block_id.clone();
-        // Result<(H256,Vec<Block::Extrinsic>), ApiErrorFor<A, Block>> {
-        let seed = BlakeTwo256::hash(&self.extrinsics.encode());
-        RandomSeedInherentDataProvider(seed)
-            .provide_inherent_data(&mut inherent_data)
-            .unwrap();
-
+        let seed = pallet_random_seed::extract_inherent_data(&inherent_data).unwrap();
         self.api
             .execute_in_transaction(move |api| {
                 // `create_inherents` should not change any state, to ensure this we always rollback

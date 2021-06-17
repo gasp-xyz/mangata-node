@@ -79,6 +79,7 @@ sp-tracing = "2.0.0"
 tracing = "0.1.19"
 parity-util-mem = { version = "0.7.0", default-features = false, features = ["primitive-types"] }
 extrinsic-info-runtime-api = { path='../../primitives/extrinsic-info-runtime-api', version='2.0.0' }
+random-seed-runtime-api = {path='../../pallets/random-seed/runtime-api', version="2.0.0"}
 
 [target.'cfg(not(target_os = "unknown"))'.dependencies]
 tempfile = "3.1.0"

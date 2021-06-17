@@ -126,6 +126,10 @@ use schnorrkel::SignatureError;
 use codec::{Encode, Decode};
 use sp_api::ApiExt;
 
+use random_seed_runtime_api::RandomSeedApi;
+use pallet_random_seed::{SeedType, RandomSeedInherentDataProvider};
+use sp_inherents::ProvideInherentData;
+
 mod verification;
 mod migration;
 
@@ -379,7 +383,7 @@ pub fn start_babe<B, C, SC, E, I, SO, CAW, Error>(BabeParams {
 	B: BlockT,
 	C: ProvideRuntimeApi<B> + ProvideCache<B> + ProvideUncles<B> + BlockchainEvents<B>
 		+ HeaderBackend<B> + HeaderMetadata<B, Error = ClientError> + Send + Sync + 'static,
-	C::Api: BabeApi<B>,
+	C::Api: BabeApi<B> + random_seed_runtime_api::RandomSeedApi<B>,
 	SC: SelectChain<B> + 'static,
 	E: Environment<B, Error = Error> + Send + Sync + 'static,
 	E::Proposer: Proposer<B, Error = Error, Transaction = sp_api::TransactionFor<C, B>>,
@@ -480,7 +484,7 @@ impl<B, C, E, I, Error, SO> sc_consensus_slots::SimpleSlotWorker<B> for BabeSlot
 		ProvideCache<B> +
 		HeaderBackend<B> +
 		HeaderMetadata<B, Error = ClientError>,
-	C::Api: BabeApi<B>,
+	C::Api: BabeApi<B> + random_seed_runtime_api::RandomSeedApi<B>,
 	E: Environment<B, Error = Error>,
 	E::Proposer: Proposer<B, Error = Error, Transaction = sp_api::TransactionFor<C, B>>,
 	I: BlockImport<B, Transaction = sp_api::TransactionFor<C, B>> + Send + Sync + 'static,
@@ -673,7 +677,7 @@ impl<B, C, E, I, Error, SO> SlotWorker<B> for BabeSlotWorker<B, C, E, I, SO> whe
 		ProvideCache<B> +
 		HeaderBackend<B> +
 		HeaderMetadata<B, Error = ClientError> + Send + Sync,
-	C::Api: BabeApi<B>,
+	C::Api: BabeApi<B> + random_seed_runtime_api::RandomSeedApi<B>,
 	E: Environment<B, Error = Error> + Send + Sync,
 	E::Proposer: Proposer<B, Error = Error, Transaction = sp_api::TransactionFor<C, B>>,
 	I: BlockImport<B, Transaction = sp_api::TransactionFor<C, B>> + Send + Sync + 'static,
@@ -682,7 +686,23 @@ impl<B, C, E, I, Error, SO> SlotWorker<B> for BabeSlotWorker<B, C, E, I, SO> whe
 {
 	type OnSlot = Pin<Box<dyn Future<Output = Result<(), sp_consensus::Error>> + Send>>;
 
-	fn on_slot(&mut self, chain_head: B::Header, slot_info: SlotInfo) -> Self::OnSlot {
+	fn on_slot(&mut self, chain_head: B::Header, mut slot_info: SlotInfo) -> Self::OnSlot {
+		let block_id = BlockId::<B>::Hash(chain_head.hash());
+		let seed = self.client.runtime_api().get_seed(&block_id).unwrap();
+		let epoch_data = <Self as sc_consensus_slots::SimpleSlotWorker<B>>::epoch_data(self, &chain_head, slot_info.number).unwrap();
+		if let Some((_, public)) = <Self as sc_consensus_slots::SimpleSlotWorker<B>>::claim_slot(self, &chain_head, slot_info.number, &epoch_data){
+			// inject inherents that sets seed if its my turn to build the block
+			let pair = public.clone().into();
+			let signature = self.keystore.read()
+				.sign_with(
+					<AuthorityId as AppKey>::ID,
+					&pair,
+					seed.as_ref()
+				).unwrap();
+			RandomSeedInherentDataProvider(SeedType::from_slice(&signature))
+				.provide_inherent_data(&mut slot_info.inherent_data)
+				.unwrap();
+		}
 		<Self as sc_consensus_slots::SimpleSlotWorker<B>>::on_slot(self, chain_head, slot_info)
 	}
 }

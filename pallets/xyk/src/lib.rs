@@ -434,9 +434,9 @@ impl<T: Trait> Module<T> {
         sell_amount: Balance,
     ) -> Result<Balance, DispatchError> {
         let after_fee_percentage: u128 = 10000 - FEE_PERCENTAGE;
-        let input_reserve_saturated: U256 = input_reserve.saturated_into::<u128>().into();
-        let output_reserve_saturated: U256 = output_reserve.saturated_into::<u128>().into();
-        let sell_amount_saturated: U256 = sell_amount.saturated_into::<u128>().into();
+        let input_reserve_saturated: U256 = input_reserve.into();
+        let output_reserve_saturated: U256 = output_reserve.into();
+        let sell_amount_saturated: U256 = sell_amount.into();
 
         let input_amount_with_fee: U256 = sell_amount_saturated
             .saturating_mul(after_fee_percentage.into());
@@ -484,9 +484,9 @@ impl<T: Trait> Module<T> {
         buy_amount: Balance,
     ) -> Result<Balance, DispatchError> {
         let after_fee_percentage: u128 = 10000 - FEE_PERCENTAGE;
-        let input_reserve_saturated: U256 = input_reserve.saturated_into::<u128>().into();
-        let output_reserve_saturated: U256 = output_reserve.saturated_into::<u128>().into();
-        let buy_amount_saturated: U256 = buy_amount.saturated_into::<u128>().into();
+        let input_reserve_saturated: U256 = input_reserve.into();
+        let output_reserve_saturated: U256 = output_reserve.into();
+        let buy_amount_saturated: U256 = buy_amount.into();
 
         let numerator: U256 = input_reserve_saturated
             .saturating_mul(buy_amount_saturated)

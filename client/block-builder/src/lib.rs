@@ -347,7 +347,7 @@ mod tests {
             &*backend,
         )
         .unwrap()
-        .build()
+        .build(Default::default())
         .unwrap();
 
         let proof = block.proof.expect("Proof is build on request");

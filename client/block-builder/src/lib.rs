@@ -36,6 +36,7 @@ use sp_api::{
     TransactionOutcome,
 };
 use sp_blockchain::{Backend, Error};
+
 use sp_consensus::RecordProof;
 use sp_core::ExecutionContext;
 use sp_runtime::{
@@ -45,7 +46,7 @@ use sp_runtime::{
     },
 };
 
-use pallet_random_seed::SeedType;
+use pallet_random_seed::{extract_inherent_data, SeedType};
 
 pub use sp_block_builder::BlockBuilder as BlockBuilderApi;
 
@@ -171,31 +172,49 @@ where
     ///
     /// This will ensure the extrinsic can be validly executed (by executing it).
     pub fn push(&mut self, xt: <Block as BlockT>::Extrinsic) -> Result<(), ApiErrorFor<A, Block>> {
-        info!("Pushing transactions without execution");
         self.extrinsics.push(xt);
         Ok(())
-        // TODO: check if its possible to verify transaction by first
-        // applying all the transactions from current block and then applying
-        // particular one from passed to BlockBuilder::push as in origin implementation
+    }
 
-        // self.api.execute_in_transaction(|api| {
-        // 	match api.apply_extrinsic_with_context(
-        // 		&block_id,
-        // 		ExecutionContext::BlockConstruction,
-        // 		xt.clone(),
-        // 	) {
-        // 		Ok(Ok(_)) => {
-        // 		exts.push(xt.clone());
-        // 			TransactionOutcome::Rollback(Ok(()))
-        // 		}
-        // 		Ok(Err(tx_validity)) => {
-        // 			TransactionOutcome::Rollback(
-        // 				Err(ApplyExtrinsicFailed::Validity(tx_validity).into()),
-        // 			)
-        // 		},
-        // 		Err(e) => TransactionOutcome::Rollback(Err(e)),
-        // 	}
-        // })
+    /// Fetches previous block extrinsics, temporary applies them and then try
+    /// to applies incomming transactions in order to prevalidate them
+    ///
+    pub fn consume_valid_transactions(
+        &mut self,
+        foo: Box<
+            dyn FnOnce(
+                &BlockId<Block>,
+                &<A as ProvideRuntimeApi<Block>>::Api,
+            ) -> Vec<Block::Extrinsic>,
+        >,
+    ) -> () {
+        let parent_hash = self.parent_hash;
+        let block_id = &self.block_id;
+        let previous_block_extrinsics = self
+            .backend
+            .blockchain()
+            .body(BlockId::Hash(parent_hash))
+            .unwrap()
+            .unwrap_or_default();
+
+        let valid_extrinsics = self.api.execute_in_transaction(|api| {
+            for tx in previous_block_extrinsics {
+                // TODO return error
+                api.apply_extrinsic_with_context(
+                    block_id,
+                    ExecutionContext::BlockConstruction,
+                    tx.clone(),
+                )
+                .unwrap()
+                .unwrap()
+                .unwrap();
+            }
+            TransactionOutcome::Rollback(foo(block_id, api))
+        });
+
+        for xt in valid_extrinsics.into_iter() {
+            self.extrinsics.push(xt);
+        }
     }
 
     /// Consume the builder to build a valid `Block` containing all pushed extrinsics.

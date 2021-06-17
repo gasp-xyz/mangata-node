@@ -437,7 +437,7 @@ impl<T: Trait> Module<T> {
         let sell_amount_saturated: U256 = sell_amount.saturated_into::<u128>().into();
 
         let input_amount_with_fee: U256 = sell_amount_saturated
-            .saturating_mul(after_fee_percentage.into())
+            .saturating_mul(after_fee_percentage.into());
 
         let numerator: U256 = input_amount_with_fee
             .checked_mul(output_reserve_saturated)
@@ -496,7 +496,7 @@ impl<T: Trait> Module<T> {
             .ok_or_else(|| DispatchError::from(Error::<T>::NotEnoughReserve))?
             .checked_mul(after_fee_percentage.into())
             .ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
-            
+
         let result_u256 = numerator
             .checked_div(denominator)
             .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?

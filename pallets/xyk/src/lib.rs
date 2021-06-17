@@ -277,6 +277,7 @@ decl_error! {
         DivisionByZero,
         UnexpectedFailure,
         NotMangataLiquidityAsset,
+        SecondAssetAmountExceededExpectations,
         MathOverflow,
     }
 }
@@ -330,7 +331,7 @@ decl_storage! {
         build(|config: &GenesisConfig<T>| {
             config.created_pools_for_staking.iter().for_each(|(account_id, native_token_id, native_token_amount, pooled_token_id, pooled_token_amount, liquidity_token_id)| {
                 if T::Currency::exists({*liquidity_token_id}.into()){
-                    assert!(<Module<T>>::mint_liquidity( T::Origin::from(Some(account_id.clone()).into()), *native_token_id, *pooled_token_id, *native_token_amount).is_ok(), "Pool mint failed");
+                    assert!(<Module<T>>::mint_liquidity( T::Origin::from(Some(account_id.clone()).into()), *native_token_id, *pooled_token_id, *native_token_amount, *pooled_token_amount).is_ok(), "Pool mint failed");
                 }
                 else{
                     let created_liquidity_token_id: TokenId = T::Currency::get_next_currency_id().into();
@@ -400,11 +401,12 @@ decl_module! {
             first_asset_id: TokenId,
             second_asset_id: TokenId,
             first_asset_amount: Balance,
+            expected_second_asset_amount: Balance,
         ) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
 
-            <Self as XykFunctionsTrait<T::AccountId>>::mint_liquidity(sender, first_asset_id.into(), second_asset_id.into(), first_asset_amount.into())
+            <Self as XykFunctionsTrait<T::AccountId>>::mint_liquidity(sender, first_asset_id.into(), second_asset_id.into(), first_asset_amount.into(), expected_second_asset_amount.into())
 
         }
 
@@ -753,6 +755,7 @@ pub trait XykFunctionsTrait<AccountId> {
         first_asset_id: Self::CurrencyId,
         second_asset_id: Self::CurrencyId,
         first_asset_amount: Self::Balance,
+        expected_second_asset_amount: Self::Balance,
     ) -> DispatchResult;
 
     fn burn_liquidity(
@@ -1069,11 +1072,13 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         Ok(())
     }
 
+
     fn mint_liquidity(
         sender: T::AccountId,
         first_asset_id: Self::CurrencyId,
         second_asset_id: Self::CurrencyId,
         first_asset_amount: Self::Balance,
+        expected_second_asset_amount: Self::Balance,
     ) -> DispatchResult {
         let vault = Module::<T>::account_id();
 
@@ -1117,6 +1122,12 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         )
         .map_err(|_| Error::<T>::UnexpectedFailure)?;
 
+
+        ensure!(
+            second_asset_amount <= expected_second_asset_amount,
+            Error::<T>::SecondAssetAmountExceededExpectations,
+        );
+        
         // Ensure minting amounts are not zero
         ensure!(
             !first_asset_amount.is_zero() && !second_asset_amount.is_zero(),

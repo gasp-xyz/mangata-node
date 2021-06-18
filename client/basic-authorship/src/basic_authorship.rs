@@ -593,7 +593,7 @@ mod tests {
 
         let mut proposer_factory = ProposerFactory::new(client.clone(), txpool.clone(), None);
         let mut propose_block =
-            |client: &TestClient, number, expected_block_extrinsics, expected_pool_transactions| {
+            |client: &TestClient, number, _expected_block_extrinsics, expected_pool_transactions| {
                 let proposer = proposer_factory.init_with_now(
                     &client.header(&BlockId::number(number)).unwrap().unwrap(),
                     Box::new(move || time::Instant::now()),

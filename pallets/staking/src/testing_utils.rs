@@ -78,7 +78,8 @@ pub fn create_funded_user<T: Trait>(
         user.clone(),
         first_asset_id.into(),
         second_asset_id.into(),
-        { first_asset_amount / 2 }.into()
+        { first_asset_amount / 2 }.into(),
+        u128::MAX.into()
     )
     .is_ok());
     user

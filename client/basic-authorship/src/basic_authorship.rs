@@ -320,7 +320,7 @@ where
                 };
             }
             extrinsics
-        }));
+        }))?;
 
         self.transaction_pool
             .remove_invalid(unqueue_invalid.borrow().as_slice());

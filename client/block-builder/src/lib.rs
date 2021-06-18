@@ -187,34 +187,45 @@ where
                 &<A as ProvideRuntimeApi<Block>>::Api,
             ) -> Vec<Block::Extrinsic>,
         >,
-    ) -> () {
+    ) -> Result<(), ApiErrorFor<A, Block>> {
         let parent_hash = self.parent_hash;
         let block_id = &self.block_id;
         let previous_block_extrinsics = self
             .backend
             .blockchain()
-            .body(BlockId::Hash(parent_hash))
-            .unwrap()
+            .body(BlockId::Hash(parent_hash))?
             .unwrap_or_default();
 
         let valid_extrinsics = self.api.execute_in_transaction(|api| {
             for tx in previous_block_extrinsics {
                 // TODO return error
-                api.apply_extrinsic_with_context(
+                match api.apply_extrinsic_with_context(
                     block_id,
                     ExecutionContext::BlockConstruction,
                     tx.clone(),
-                )
-                .unwrap()
-                .unwrap()
-                .unwrap();
+                ) {
+                    Ok(Ok(_)) => {}
+                    Ok(Err(validity)) => {
+                        return TransactionOutcome::Rollback(Err(format!(
+                            "pre validatio problem - {:?}",
+                            validity
+                        )))
+                    }
+                    Err(e) => {
+                        return TransactionOutcome::Rollback(Err(format!(
+                            "pre validatio problem - {}",
+                            e
+                        )))
+                    }
+                }
             }
-            TransactionOutcome::Rollback(foo(block_id, api))
+            TransactionOutcome::Rollback(Ok(foo(block_id, api)))
         });
 
-        for xt in valid_extrinsics.into_iter() {
+        for xt in valid_extrinsics?.into_iter() {
             self.extrinsics.push(xt);
         }
+        Ok(())
     }
 
     /// Consume the builder to build a valid `Block` containing all pushed extrinsics.

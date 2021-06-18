@@ -20,7 +20,7 @@ example shuffled order:
 
 As shuffling occurs on block execution not creation, every node needs to calculate the same order and agree on storage state afterwards. That is achieved using Fisher-Yates shuffling algorithm with Xoshiro256++ as PRNG initialized with seed stored in blockchain storage.  Usage of sr25519 key pair together with VRF capabilities guarantees that block producer cannot impact execution order and it's easy to validate if the seed was properly calculated by validators/following nodes (thanks to VRF verification that only requires block author public key). Seed itself is stored into the storage and is publically accessible through dedicated runtime API(TODO PUT NAME HERE).
 
-PRNG initialization seed for block `N-1` is calculated as:
+PRNG initialization seed for block `N-1` is signature of 'input message' signed with block producer private key where 'input message' is defined as:
 - Seed from block `N-1`
 - babe epoch randomness (changed in every epoch)
 

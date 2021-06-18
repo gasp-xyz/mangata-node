@@ -191,6 +191,7 @@ where
 impl<A, B, Block, C> Proposer<B, Block, C, A>
 where
     A: TransactionPool<Block = Block>,
+    A: 'static,
     <A as sp_transaction_pool::TransactionPool>::InPoolTransaction: 'static,
     B: backend::Backend<Block> + Send + Sync + 'static,
     Block: BlockT,
@@ -247,24 +248,30 @@ where
         let mut skipped = 0;
         let unqueue_invalid = Rc::new(RefCell::new(Vec::new()));
         let invalid = unqueue_invalid.clone();
-
-        let pending_iterator = match executor::block_on(future::select(
-            self.transaction_pool.ready_at(self.parent_number),
-            futures_timer::Delay::new(deadline.saturating_duration_since((self.now)()) / 8),
-        )) {
-            Either::Left((iterator, _)) => iterator,
-            Either::Right(_) => {
-                log::warn!(
-					"Timeout fired waiting for transaction pool at block #{}. Proceeding with production.",
-					self.parent_number,
-				);
-                self.transaction_pool.ready()
-            }
-        };
+        let parent_number = self.parent_number;
+        let transaction_pool = self.transaction_pool.clone();
+        let now = self.now;
 
         debug!("Attempting to push transactions from the pool.");
         debug!("Pool status: {:?}", self.transaction_pool.status());
         block_builder.consume_valid_transactions(Box::new(move |at,api|{
+
+
+            let pending_iterator = match executor::block_on(future::select(
+                transaction_pool.ready_at(parent_number),
+                futures_timer::Delay::new(deadline.saturating_duration_since((now)()) / 8),
+            )) {
+                Either::Left((iterator, _)) => iterator,
+                Either::Right(_) => {
+                    log::warn!(
+                        "Timeout fired waiting for transaction pool at block #{}. Proceeding with production.",
+                        parent_number,
+                    );
+                    transaction_pool.ready()
+                }
+            };
+
+
             let mut extrinsics: Vec<_> = Vec::new();
             for p in pending_iterator{
                 let pending_tx_data = p.data().clone();

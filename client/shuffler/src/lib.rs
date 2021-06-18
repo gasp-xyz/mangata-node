@@ -1,8 +1,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 use extrinsic_info_runtime_api::runtime_api::ExtrinsicInfoRuntimeApi;
+use pallet_random_seed::SeedType;
 use sp_api::{ApiExt, ApiRef, Encode, HashT, ProvideRuntimeApi, TransactionOutcome};
 use sp_core::crypto::Ss58Codec;
-use sp_core::H256;
 use sp_runtime::generic::BlockId;
 use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 use sp_runtime::AccountId32;
@@ -10,6 +10,8 @@ use sp_std::collections::btree_map::BTreeMap;
 use sp_std::collections::vec_deque::VecDeque;
 use sp_std::convert::TryInto;
 use sp_std::vec::Vec;
+use sp_block_builder::BlockBuilder as BlockBuilderRuntimeApi;
+use random_seed_runtime_api::RandomSeedApi;
 
 pub struct Xoshiro256PlusPlus {
     s: [u64; 4],
@@ -61,8 +63,8 @@ impl Xoshiro256PlusPlus {
 ///     j ← random integer such that 0 ≤ j ≤ i
 ///     exchange a[j] and a[i]
 ///
-fn fisher_yates<T>(data: &mut Vec<T>, seed: H256) {
-    let mut s = Xoshiro256PlusPlus::from_seed(seed.into());
+fn fisher_yates<T>(data: &mut Vec<T>, seed: [u8; 32]) {
+    let mut s = Xoshiro256PlusPlus::from_seed(seed);
     for i in (1..(data.len())).rev() {
         let j = s.next_u32() % (i as u32);
         data.swap(i, j as usize);
@@ -75,14 +77,16 @@ pub fn shuffle<'a, Block, Api>(
     api: &ApiRef<'a, Api::Api>,
     block_id: &BlockId<Block>,
     extrinsics: Vec<Block::Extrinsic>,
-    seed: H256,
+    seed: SeedType,
 ) -> Vec<Block::Extrinsic>
 where
     Block: BlockT,
     Api: ProvideRuntimeApi<Block> + 'a,
     Api::Api: ExtrinsicInfoRuntimeApi<Block>,
 {
-    log::debug!(target: "block_shuffler", "shuffling extrinsics with seed: {:#X} => {}", seed, Xoshiro256PlusPlus::from_seed(seed.into()).next_u32() );
+    let seed: [u8; 32] = seed.seed;
+
+    log::debug!(target: "block_shuffler", "shuffling extrinsics with seed: {:#X?} => {}", seed, Xoshiro256PlusPlus::from_seed(seed).next_u32() );
 
     let extrinsics: Vec<(Option<AccountId32>, Block::Extrinsic)> = extrinsics
         .into_iter()
@@ -91,11 +95,10 @@ where
             let who = api.execute_in_transaction(|api| {
                 // store deserialized data and revert state modification caused by 'get_info' call
                 match api.get_info(block_id, tx.clone()){
-                    Ok(result) => TransactionOutcome::Rollback(Ok(result)),
-                    Err(_) => TransactionOutcome::Rollback(Err(()))
+                    Ok(result) => TransactionOutcome::Rollback(result),
+                    Err(_) => TransactionOutcome::Rollback(None)
                 }
             })
-            .expect("extrinsic deserialization should not fail!")
             .map(|info| Some(info.who)).unwrap_or(None);
             log::debug!(target: "block_shuffler", "who:{:48}  extrinsic:{:?}",who.clone().map(|x| x.to_ss58check()).unwrap_or_else(|| String::from("None")), tx_hash);
             (who, tx)
@@ -138,4 +141,59 @@ where
     }
 
     shuffled_extrinsics
+}
+
+#[derive(derive_more::Display, Debug)]
+pub enum Error {
+	#[display(fmt = "Cannot apply inherents")]
+	InherentApplyError,
+	#[display(fmt = "Cannot read seed from the runtime api ")]
+	SeedFetchingError,
+}
+
+pub fn fetch_seed<'a, Block, Api>(
+    api: &ApiRef<'a, Api::Api>,
+    block_id: &BlockId<Block>,
+) -> Result<SeedType, Error>
+where
+    Block: BlockT,
+    Api: ProvideRuntimeApi<Block> + 'a,
+    Api::Api: BlockBuilderRuntimeApi<Block> + RandomSeedApi<Block>,
+{
+    api.get_seed(block_id)
+        .map_err(|_|Error::SeedFetchingError)
+}
+
+
+/// shuffles extrinsics assuring that extrinsics signed by single account will be still evaluated
+/// in proper order
+pub fn apply_inherents_and_fetch_seed<'a, Block, Api>(
+    api: &ApiRef<'a, Api::Api>,
+    block_id: &BlockId<Block>,
+    extrinsics: Vec<Block::Extrinsic>,
+) -> Result<SeedType, Error>
+where
+    Block: BlockT,
+    Api: ProvideRuntimeApi<Block> + 'a,
+    Api::Api: BlockBuilderRuntimeApi<Block> + RandomSeedApi<Block>,
+{
+    api.execute_in_transaction(|api|
+        sp_api::TransactionOutcome::Rollback(
+                extrinsics.into_iter().take(2).map(|xt|
+                {
+                    match api.apply_extrinsic(
+                        block_id,
+                        xt,
+                    ) {
+                        Ok(Ok(Ok(_))) => Ok(()),
+                        _ => Err(Error::InherentApplyError)
+                    }
+                })
+                .collect::<Result<Vec<_>, _>>()
+                .and_then(|_|
+                    api.get_seed(block_id)
+                        .map_err(|_|Error::SeedFetchingError)
+                )
+            )
+    )
 }

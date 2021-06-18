@@ -3,7 +3,6 @@
 use codec::Decode;
 use codec::Encode;
 use frame_support::{decl_module, decl_storage, weights::DispatchClass};
-use sp_core::H256;
 use sp_inherents::{InherentData, InherentIdentifier, IsFatalError, ProvideInherent};
 use sp_runtime::RuntimeString;
 use sp_std::result;
@@ -14,6 +13,21 @@ use sp_inherents::ProvideInherentData;
 /// The module configuration trait
 pub trait Trait: frame_system::Trait {}
 
+#[derive(Encode, Decode, Debug, Clone, PartialEq)]
+pub struct SeedType{
+    pub seed: [u8;32],
+    pub proof: [u8;64]
+}
+
+impl Default for SeedType {
+    fn default() -> Self {
+        SeedType{
+            seed: Default::default(),
+            proof: [0_u8;64],
+        }
+    }
+}
+
 decl_module! {
     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
 
@@ -21,7 +35,8 @@ decl_module! {
             10_000,
             DispatchClass::Mandatory
         )]
-        fn set(origin, seed: H256) {
+        fn set(origin, seed: SeedType) {
+            log::debug!(target: "mat", "set seed: ${:X?}", seed);
             <Self as Store>::Seed::put(seed);
         }
 
@@ -31,19 +46,19 @@ decl_module! {
 decl_storage! {
     trait Store for Module<T: Trait> as RandomSeed {
         /// Current time for the current block.
-        pub Seed get(fn seed) : H256;
+        pub Seed get(fn seed) : SeedType;
     }
 }
 
 impl<T: Trait> Module<T> {
-    pub fn get() -> H256 {
+    pub fn get() -> SeedType {
         Self::seed()
     }
 }
 
 // originally in sp-module
-pub type RandomSeedInherentType = H256;
-const RANDOM_SEED_INHERENT_IDENTIFIER: InherentIdentifier = *b"blckseed";
+pub type RandomSeedInherentType = SeedType;
+pub const RANDOM_SEED_INHERENT_IDENTIFIER: InherentIdentifier = *b"blckseed";
 
 #[derive(Encode, sp_runtime::RuntimeDebug)]
 #[cfg_attr(feature = "std", derive(Decode))]
@@ -69,14 +84,14 @@ impl IsFatalError for RandomSeedInherentError {
     }
 }
 
-fn extract_inherent_data(data: &InherentData) -> Result<RandomSeedInherentType, RuntimeString> {
+pub fn extract_inherent_data(data: &InherentData) -> Result<RandomSeedInherentType, RuntimeString> {
     data.get_data::<RandomSeedInherentType>(&RANDOM_SEED_INHERENT_IDENTIFIER)
         .map_err(|_| RuntimeString::from("Invalid random seed inherent data encoding."))?
         .ok_or_else(|| "Random Seed inherent data is not provided.".into())
 }
 
 #[cfg(feature = "std")]
-pub struct RandomSeedInherentDataProvider(pub H256);
+pub struct RandomSeedInherentDataProvider(pub SeedType);
 
 #[cfg(feature = "std")]
 impl ProvideInherentData for RandomSeedInherentDataProvider {
@@ -104,7 +119,7 @@ impl<T: Trait> ProvideInherent for Module<T> {
 
     fn create_inherent(data: &InherentData) -> Option<Self::Call> {
         log::debug!(target: "rand-seed", "initializing random seed");
-        let seed: H256 = extract_inherent_data(data).expect("Gets and decodes random seed");
+        let seed: SeedType = extract_inherent_data(data).expect("Gets and decodes random seed");
         Some(Call::set(seed))
     }
 

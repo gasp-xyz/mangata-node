@@ -81,12 +81,12 @@ pub fn development_config() -> Result<ChainSpec, String> {
                 vec![
                     (
                         App::ETH,
-                        H160::from_slice(&hex!["f6c4d8e8c65c267bfade16a95978da85743c950d"][..])
+                        H160::from_slice(&hex!["dd514baa317bf095ddba2c0a847765feb389c6a0"][..])
                             .into(),
                     ),
                     (
                         App::ERC20,
-                        H160::from_slice(&hex!["24fc6d717c4864bee368e63de9edb5276c263f7a"][..])
+                        H160::from_slice(&hex!["00e392c04743359e39f00cd268a5390d27ef6b44"][..])
                             .into(),
                     ),
                 ],
@@ -177,17 +177,19 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                 // Initial relay account
                 get_account_id_from_seed::<sr25519::Public>("Relay"),
                 // Sudo account
-                get_account_id_from_seed::<sr25519::Public>("Alice"),
+                "0xec00ad0ec6eeb271a9689888f644d9262016a26a25314ff4ff5d756404c44112"
+                    .parse()
+                    .unwrap(),
                 // Ethereum AppId for SnowBridged Assets
                 vec![
                     (
                         App::ETH,
-                        H160::from_slice(&hex!["f6c4d8e8c65c267bfade16a95978da85743c950d"][..])
+                        H160::from_slice(&hex!["Fc97A6197dc90bef6bbEFD672742Ed75E9768553"][..])
                             .into(),
                     ),
                     (
                         App::ERC20,
-                        H160::from_slice(&hex!["24fc6d717c4864bee368e63de9edb5276c263f7a"][..])
+                        H160::from_slice(&hex!["EDa338E4dC46038493b885327842fD3E301CaB39"][..])
                             .into(),
                     ),
                 ],
@@ -228,6 +230,10 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                     get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
                     get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
                     get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+                    get_account_id_from_seed::<sr25519::Public>("Relay"),
+                    "0xec00ad0ec6eeb271a9689888f644d9262016a26a25314ff4ff5d756404c44112"
+                        .parse()
+                        .unwrap(),
                 ],
                 // Config for Staking
                 // Make sure it works with initial-authorities as staking uses both

@@ -181,7 +181,7 @@ where
     ///
     pub fn consume_valid_transactions(
         &mut self,
-        foo: Box<
+        transaction_provider: Box<
             dyn FnOnce(
                 &BlockId<Block>,
                 &<A as ProvideRuntimeApi<Block>>::Api,
@@ -219,7 +219,7 @@ where
                     }
                 }
             }
-            TransactionOutcome::Rollback(Ok(foo(block_id, api)))
+            TransactionOutcome::Rollback(Ok(transaction_provider(block_id, api)))
         });
 
         for xt in valid_extrinsics?.into_iter() {

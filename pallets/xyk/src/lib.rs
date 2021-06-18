@@ -256,7 +256,7 @@ const PALLET_ID: ModuleId = ModuleId(*b"79b14c96");
 // 1/100 %
 const TREASURY_PERCENTAGE: u128 = 5;
 const BUYANDBURN_PERCENTAGE: u128 = 5;
-const SWAPFEE_PERCENTAGE: u128 = 30;
+const FEE_PERCENTAGE: u128 = 30;
 const MANGATA_ID: u128 = 0;
 
 decl_error! {
@@ -433,23 +433,30 @@ impl<T: Trait> Module<T> {
         output_reserve: Balance,
         sell_amount: Balance,
     ) -> Result<Balance, DispatchError> {
+        let after_fee_percentage: u128 = 10000 - FEE_PERCENTAGE;
         let input_reserve_saturated: U256 = input_reserve.into();
         let output_reserve_saturated: U256 = output_reserve.into();
         let sell_amount_saturated: U256 = sell_amount.into();
 
-        let input_amount_with_fee: U256 = sell_amount_saturated.saturating_mul(997.into());
+        let input_amount_with_fee: U256 = sell_amount_saturated
+            .saturating_mul(after_fee_percentage.into());
+
         let numerator: U256 = input_amount_with_fee
             .checked_mul(output_reserve_saturated)
             .ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+
         let denominator: U256 = input_reserve_saturated
-            .saturating_mul(1000.into())
-            .checked_add(input_amount_with_fee.into())
+            .saturating_mul(10000.into())
+            .checked_add(input_amount_with_fee)
             .ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+
         let result_u256 = numerator
             .checked_div(denominator)
             .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
+
         Ok(Balance::try_from(result_u256)
-            .map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?)
+            .map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?)    
+                
     }
 
     pub fn calculate_sell_price_no_fee(
@@ -476,19 +483,22 @@ impl<T: Trait> Module<T> {
         output_reserve: Balance,
         buy_amount: Balance,
     ) -> Result<Balance, DispatchError> {
+        let after_fee_percentage: u128 = 10000 - FEE_PERCENTAGE;
         let input_reserve_saturated: U256 = input_reserve.into();
         let output_reserve_saturated: U256 = output_reserve.into();
         let buy_amount_saturated: U256 = buy_amount.into();
 
         let numerator: U256 = input_reserve_saturated
             .saturating_mul(buy_amount_saturated)
-            .checked_mul(1000.into())
+            .checked_mul(10000.into())
             .ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+
         let denominator: U256 = output_reserve_saturated
             .checked_sub(buy_amount_saturated)
             .ok_or_else(|| DispatchError::from(Error::<T>::NotEnoughReserve))?
-            .checked_mul(997.into())
+            .checked_mul(after_fee_percentage.into())
             .ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+
         let result_u256 = numerator
             .checked_div(denominator)
             .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?

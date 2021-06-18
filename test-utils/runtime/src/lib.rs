@@ -595,21 +595,15 @@ cfg_if! {
 
             impl extrinsic_info_runtime_api::runtime_api::ExtrinsicInfoRuntimeApi<Block> for Runtime {
                 fn get_info(
-                    tx: <Block as BlockT>::Extrinsic,
+                    _tx: <Block as BlockT>::Extrinsic,
                 ) -> Option<extrinsic_info_runtime_api::ExtrinsicInfo> {
-                    None
-                    // tx.signature.clone().map(|sig|
-                    //     extrinsic_info_runtime_api::ExtrinsicInfo{
-                    //         who: sig.0,
-                    //         nonce: 0,
-                    //     }
-                    // )
+                    unimplemented!()
                 }
             }
 
             impl random_seed_runtime_api::RandomSeedApi<Block> for Runtime {
                 fn get_seed() -> pallet_random_seed::SeedType{
-                    Default::default()
+                    unimplemented!()
                 }
             }
 

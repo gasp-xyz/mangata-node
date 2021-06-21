@@ -1,4 +1,4 @@
-FROM liuchong/rustup:stable AS builder
+FROM liuchong/rustup:stable AS env_builder
 LABEL description="Compiles all workspace artifacts"
 WORKDIR /mangata
 COPY . /mangata
@@ -11,6 +11,8 @@ RUN apt-get update && apt-get install -y cmake pkg-config libssl-dev git build-e
 RUN rustup install nightly-2020-10-01
 RUN rustup default nightly-2020-10-01
 RUN rustup target add wasm32-unknown-unknown --toolchain nightly-2020-10-01
+
+FROM env_builder as builder
 RUN cargo build --release
 
 FROM debian:stretch

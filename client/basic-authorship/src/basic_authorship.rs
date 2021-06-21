@@ -216,6 +216,28 @@ where
             self.client
                 .new_block_at(&self.parent_id, inherent_digests, record_proof)?;
 
+        let (seed, inherents) = block_builder.create_inherents(inherent_data)?;
+        for inherent in inherents {
+            match block_builder.push(inherent) {
+                Err(ApplyExtrinsicFailed(Validity(e))) if e.exhausted_resources() => {
+                    warn!("⚠️  Dropping non-mandatory inherent from overweight block.")
+                }
+                Err(ApplyExtrinsicFailed(Validity(e))) if e.was_mandatory() => {
+                    error!(
+                        "❌️ Mandatory inherent extrinsic returned error. Block cannot be produced."
+                    );
+                    Err(ApplyExtrinsicFailed(Validity(e)))?
+                }
+                Err(e) => {
+                    warn!(
+                        "❗️ Inherent extrinsic returned unexpected error: {}. Dropping.",
+                        e
+                    );
+                }
+                Ok(_) => {}
+            }
+        }
+
         // proceed with transactions
         let block_timer = time::Instant::now();
         let mut skipped = 0;
@@ -280,28 +302,6 @@ where
         }
 
         self.transaction_pool.remove_invalid(&unqueue_invalid);
-
-        let (seed, inherents) = block_builder.create_inherents(inherent_data)?;
-        for inherent in inherents {
-            match block_builder.push(inherent) {
-                Err(ApplyExtrinsicFailed(Validity(e))) if e.exhausted_resources() => {
-                    warn!("⚠️  Dropping non-mandatory inherent from overweight block.")
-                }
-                Err(ApplyExtrinsicFailed(Validity(e))) if e.was_mandatory() => {
-                    error!(
-                        "❌️ Mandatory inherent extrinsic returned error. Block cannot be produced."
-                    );
-                    Err(ApplyExtrinsicFailed(Validity(e)))?
-                }
-                Err(e) => {
-                    warn!(
-                        "❗️ Inherent extrinsic returned unexpected error: {}. Dropping.",
-                        e
-                    );
-                }
-                Ok(_) => {}
-            }
-        }
 
         let (block, storage_changes, proof) = block_builder.build(seed)?.into_inner();
 

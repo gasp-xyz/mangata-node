@@ -1433,10 +1433,14 @@ dependencies = [
 name = "extrinsic-shuffler"
 version = "0.8.0"
 dependencies = [
+ "derive_more",
  "extrinsic-info-runtime-api",
  "log",
+ "pallet-random-seed",
  "parity-scale-codec",
+ "random-seed-runtime-api",
  "sp-api",
+ "sp-block-builder",
  "sp-core",
  "sp-runtime",
  "sp-std",
@@ -3466,6 +3470,7 @@ dependencies = [
  "pallet-verifier",
  "pallet-xyk",
  "parity-scale-codec",
+ "random-seed-runtime-api",
  "serde",
  "sp-api",
  "sp-block-builder",
@@ -4163,7 +4168,6 @@ dependencies = [
 name = "pallet-random-seed"
 version = "2.0.0"
 dependencies = [
- "frame-benchmarking",
  "frame-support",
  "frame-system",
  "impl-trait-for-tuples",
@@ -4175,7 +4179,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "sp-timestamp",
 ]
 
 [[package]]
@@ -5186,6 +5189,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "random-seed-runtime-api"
+version = "2.0.0"
+dependencies = [
+ "pallet-random-seed",
+ "sp-api",
+]
+
+[[package]]
 name = "raw-cpuid"
 version = "7.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5727,6 +5738,7 @@ name = "sc-consensus-babe"
 version = "0.8.0"
 dependencies = [
  "derive_more",
+ "extrinsic-shuffler",
  "fork-tree",
  "futures 0.3.8",
  "futures-timer 3.0.2",
@@ -5735,10 +5747,12 @@ dependencies = [
  "num-bigint",
  "num-rational",
  "num-traits",
+ "pallet-random-seed",
  "parity-scale-codec",
  "parking_lot 0.10.2",
  "pdqselect",
  "rand 0.7.3",
+ "random-seed-runtime-api",
  "retain_mut",
  "sc-client-api",
  "sc-consensus-epochs",
@@ -6214,6 +6228,7 @@ dependencies = [
  "parking_lot 0.10.2",
  "pin-project 0.4.27",
  "rand 0.7.3",
+ "random-seed-runtime-api",
  "sc-block-builder",
  "sc-chain-spec",
  "sc-client-api",
@@ -7577,9 +7592,11 @@ dependencies = [
  "log",
  "memory-db",
  "pallet-babe",
+ "pallet-random-seed",
  "pallet-timestamp",
  "parity-scale-codec",
  "parity-util-mem",
+ "random-seed-runtime-api",
  "sc-block-builder",
  "sc-executor",
  "sc-service",

@@ -2,7 +2,6 @@
 #![allow(non_snake_case)]
 
 use super::*;
-use crate::mock::Test;
 use crate::mock::*;
 use frame_support::assert_err;
 
@@ -60,6 +59,7 @@ use frame_support::assert_err;
 
 fn initialize() {
     // creating asset with assetId 0 and minting to accountId 2
+    System::set_block_number(1);
     let acc_id: u64 = 2;
     let amount: u128 = 1000000000000000000000;
     XykStorage::create_new_token(&acc_id, amount);
@@ -73,6 +73,13 @@ fn initialize() {
         60000000000000000000,
     )
     .unwrap();
+
+    let pool_created_event =
+        TestEvent::xyk(Event::PoolCreated(acc_id, 0, 40000000000000000000, 1, 60000000000000000000));
+        
+            assert!(System::events()
+                .iter()
+                .any(|record| record.event == pool_created_event));
 }
 
 fn initialize_buy_and_burn() {
@@ -408,6 +415,7 @@ fn create_pool_W() {
             XykStorage::balance(1, XykStorage::account_id()),
             60000000000000000000
         ); // amount of asset 1 in vault acc after creating pool
+    
     });
 }
 

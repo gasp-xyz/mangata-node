@@ -9,17 +9,27 @@ use sp_runtime::{
     Perbill,
 };
 
-use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
+use frame_support::{impl_outer_origin, impl_outer_event, parameter_types, weights::Weight};
 use frame_system as system;
 use mangata_primitives::{Amount, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
 
 pub const NATIVE_CURRENCY_ID: u32 = 0;
+mod xyk {
+    pub use crate::Event;
+}
 
 impl_outer_origin! {
     pub enum Origin for Test {}
 }
 
+impl_outer_event! {
+    pub enum TestEvent for Test {
+        frame_system<T>,
+        xyk<T>,
+        orml_tokens<T>,
+    }
+}
 // For testing the pallet, we construct most of a mock runtime. This means
 // first constructing a configuration type (`Test`) which `impl`s each of the
 // configuration traits of pallets we want to use.
@@ -42,7 +52,7 @@ impl system::Trait for Test {
     type AccountId = u64;
     type Lookup = IdentityLookup<Self::AccountId>;
     type Header = Header;
-    type Event = ();
+    type Event = TestEvent;
     type BlockHashCount = BlockHashCount;
     type MaximumBlockWeight = MaximumBlockWeight;
     type DbWeight = ();
@@ -60,7 +70,7 @@ impl system::Trait for Test {
 }
 
 impl orml_tokens::Trait for Test {
-    type Event = ();
+    type Event = TestEvent;
     type Balance = Balance;
     type Amount = Amount;
     type CurrencyId = TokenId;
@@ -73,12 +83,13 @@ parameter_types! {
 }
 
 impl Trait for Test {
-    type Event = ();
+    type Event = TestEvent;
     type Currency = MultiTokenCurrencyAdapter<Test>;
     type NativeCurrencyId = NativeCurrencyId;
 }
 
 pub type XykStorage = Module<Test>;
+pub type System = system::Module<Test>;
 
 impl<T: Trait> Module<T> {
     pub fn balance(id: TokenId, who: T::AccountId) -> Balance {

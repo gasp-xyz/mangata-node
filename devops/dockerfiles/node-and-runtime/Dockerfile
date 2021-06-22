@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y cmake pkg-config libssl-dev git build-e
 RUN rustup install nightly-2020-10-01
 RUN rustup default nightly-2020-10-01
 RUN rustup target add wasm32-unknown-unknown --toolchain nightly-2020-10-01
+RUN cargo install cargo2junit
 
 FROM env_builder as builder
 RUN cargo build --release

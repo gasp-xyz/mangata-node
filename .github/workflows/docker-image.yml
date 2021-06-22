@@ -53,7 +53,20 @@ jobs:
       -
         name: Run tests
         run: |
-          docker run --entrypoint /root/.cargo/bin/cargo mangatasolutions/mangata-node-ut:${{ github.sha }} test
+          docker run --entrypoint /root/.cargo/bin/cargo mangatasolutions/mangata-node-ut:${{ github.sha }} test -- -Z unstable-options --format json --report-time | tee /mangata/ut-results.json
+      -
+        name: Convert test report
+        if: success() || failure()    # run this step even if previous step failed
+        run: |
+          cat /mangata/ut-results.json | cargo2junit > /mangata/ut-results.xml
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: success() || failure()
+        with:
+          name: Unit Tests
+          path: /mangata/ut-results.xml
+          reporter: jest-junit
+
 
   build:
     runs-on: ubuntu-latest

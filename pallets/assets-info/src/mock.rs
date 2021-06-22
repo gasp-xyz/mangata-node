@@ -12,13 +12,9 @@ use sp_runtime::{
     traits::{BlakeTwo256, IdentityLookup},
     Perbill,
 };
-
 mod assets_info {
     pub use crate::Event;
 }
-
-
-
 
 impl_outer_origin! {
     pub enum Origin for Test {}

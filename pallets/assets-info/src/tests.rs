@@ -6,6 +6,7 @@ use frame_support::{assert_noop, assert_ok};
 #[test]
 fn set_info_and_retrieve_works_ok() {
     new_test_ext().execute_with(|| {
+        System::set_block_number(1);
         const ASSET_ID: u32 = 0;
         let info = AssetInfo {
             name: Some(b"name".to_vec()),
@@ -25,18 +26,12 @@ fn set_info_and_retrieve_works_ok() {
         // Read pallet storage and assert an expected result.
         assert_eq!(AssetsInfoModule::get_info(ASSET_ID), info);
 
-    //     let transferred_event =
-    //     TestEvent::tokens(RawEvent::Transferred(TEST_TOKEN_ID, ALICE, BOB, 50));
-    // assert!(System::events()
-    //     .iter()
-    //     .any(|record| record.event == transferred_event));
-
-        let infoStored_event =
+        let info_stored_event =
         TestEvent::assets_info(Event::InfoStored(ASSET_ID, info));
         
             assert!(System::events()
                 .iter()
-                .any(|record| record.event == infoStored_event));
+                .any(|record| record.event == info_stored_event));
     });
 }
 

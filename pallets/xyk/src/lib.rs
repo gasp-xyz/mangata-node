@@ -1200,7 +1200,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             second_asset_id,
             second_asset_amount,
             liquidity_asset_id,
-            second_asset_amount,
+            liquidity_assets_minted,
         ));
 
         Ok(())
@@ -1330,7 +1330,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             second_asset_id,
             second_asset_amount,
             liquidity_asset_id,
-            second_asset_amount,
+            liquidity_asset_amount,
         ));
 
         Ok(())

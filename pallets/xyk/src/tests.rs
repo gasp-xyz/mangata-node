@@ -74,12 +74,9 @@ fn initialize() {
     )
     .unwrap();
 
-    let pool_created_event =
-        TestEvent::xyk(Event::PoolCreated(acc_id, 0, 40000000000000000000, 1, 60000000000000000000));
+    let pool_created_event = TestEvent::xyk(Event::<Test>::PoolCreated(acc_id, 0, 40000000000000000000, 1, 60000000000000000000));
         
-            assert!(System::events()
-                .iter()
-                .any(|record| record.event == pool_created_event));
+    assert!(System::events().iter().any(|record| record.event == pool_created_event));
 }
 
 fn initialize_buy_and_burn() {
@@ -512,6 +509,7 @@ fn create_pool_N_zero_second_amount() {
 #[test]
 fn sell_W() {
     new_test_ext().execute_with(|| {
+        System::set_block_number(1);
         initialize();
         XykStorage::sell_asset(Origin::signed(2), 0, 1, 20000000000000000000, 0).unwrap(); // selling 20000000000000000000 assetId 0 of pool 0 1
 
@@ -529,6 +527,10 @@ fn sell_W() {
             XykStorage::balance(1, XykStorage::account_id()),
             40040040040040040041
         ); // amount of asset 1 in vault acc after creating pool
+
+        let assets_swapped_event = TestEvent::xyk(Event::<Test>::AssetsSwapped(2, 0, 20000000000000000000, 1, 19959959959959959959));
+        
+        assert!(System::events().iter().any(|record| record.event == assets_swapped_event));
     });
 }
 
@@ -605,6 +607,7 @@ fn sell_N_zero_amount() {
 #[test]
 fn buy_W() {
     new_test_ext().execute_with(|| {
+        System::set_block_number(1);
         initialize();
         // buying 30000000000000000000 assetId 1 of pool 0 1
         XykStorage::buy_asset(
@@ -629,6 +632,10 @@ fn buy_W() {
             XykStorage::balance(1, XykStorage::account_id()),
             30000000000000000000
         ); // amount of asset 1 in vault acc after creating pool
+
+        let assets_swapped_event = TestEvent::xyk(Event::<Test>::AssetsSwapped(2, 0, 40120361083249749248, 1, 30000000000000000000));
+        
+        assert!(System::events().iter().any(|record| record.event == assets_swapped_event));
     });
 }
 
@@ -765,6 +772,9 @@ fn mint_W() {
             XykStorage::balance(1, XykStorage::account_id()),
             90000000000000000001
         ); // amount of asset 1 in vault acc after creating pool
+        let liquidity_minted_event = TestEvent::xyk(Event::<Test>::LiquidityMinted(2, 0, 20000000000000000000, 1, 30000000000000000001, 2, 50000000000000000000 ));
+        
+        assert!(System::events().iter().any(|record| record.event == liquidity_minted_event));
     });
 }
 
@@ -887,6 +897,10 @@ fn burn_W() {
             XykStorage::balance(1, XykStorage::account_id()),
             30000000000000000000
         ); // amount of asset 1 in vault acc after creating pool
+
+        let liquidity_burned = TestEvent::xyk(Event::<Test>::LiquidityBurned(2, 0, 20000000000000000000, 1, 30000000000000000000, 2, 50000000000000000000));
+        
+        assert!(System::events().iter().any(|record| record.event == liquidity_burned));
     });
 }
 

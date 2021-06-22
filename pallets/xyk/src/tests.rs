@@ -75,7 +75,7 @@ fn initialize() {
     .unwrap();
 
     let pool_created_event =
-        TestEvent::xyk(Event::PoolCreated(acc_id, 0, 40000000000000000000, 1, 60000000000000000000));
+        TestEvent::xyk(Event::<Test>::PoolCreated(1, 0, 40000000000000000000, 1, 60000000000000000000));
         
             assert!(System::events()
                 .iter()

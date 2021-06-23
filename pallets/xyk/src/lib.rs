@@ -438,8 +438,8 @@ impl<T: Trait> Module<T> {
         let output_reserve_saturated: U256 = output_reserve.into();
         let sell_amount_saturated: U256 = sell_amount.into();
 
-        let input_amount_with_fee: U256 = sell_amount_saturated
-            .saturating_mul(after_fee_percentage.into());
+        let input_amount_with_fee: U256 =
+            sell_amount_saturated.saturating_mul(after_fee_percentage.into());
 
         let numerator: U256 = input_amount_with_fee
             .checked_mul(output_reserve_saturated)
@@ -455,8 +455,7 @@ impl<T: Trait> Module<T> {
             .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
 
         Ok(Balance::try_from(result_u256)
-            .map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?)    
-                
+            .map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?)
     }
 
     pub fn calculate_sell_price_no_fee(
@@ -1070,7 +1069,6 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         Ok(())
     }
 
-
     fn mint_liquidity(
         sender: T::AccountId,
         first_asset_id: Self::CurrencyId,
@@ -1120,12 +1118,11 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         )
         .map_err(|_| Error::<T>::UnexpectedFailure)?;
 
-
         ensure!(
             second_asset_amount <= expected_second_asset_amount,
             Error::<T>::SecondAssetAmountExceededExpectations,
         );
-        
+
         // Ensure minting amounts are not zero
         ensure!(
             !first_asset_amount.is_zero() && !second_asset_amount.is_zero(),
@@ -1347,7 +1344,8 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         ),
         DispatchError,
     > {
-        let (first_asset_id, second_asset_id) = LiquidityPools::get(liquidity_asset_id).ok_or(Error::<T>::NoSuchLiquidityAsset)?;
+        let (first_asset_id, second_asset_id) =
+            LiquidityPools::get(liquidity_asset_id).ok_or(Error::<T>::NoSuchLiquidityAsset)?;
         let first_asset_reserve = Pools::get((first_asset_id, second_asset_id));
         let second_asset_reserve = Pools::get((second_asset_id, first_asset_id));
         let total_liquidity_assets: Balance =
@@ -1428,7 +1426,8 @@ impl<T: Trait> Valuate for Module<T> {
     fn get_liquidity_token_mng_pool(
         liquidity_token_id: Self::CurrencyId,
     ) -> Result<(Self::CurrencyId, Self::CurrencyId), DispatchError> {
-        let (first_token_id, second_token_id) = LiquidityPools::get(liquidity_token_id).ok_or(Error::<T>::NoSuchLiquidityAsset)?;
+        let (first_token_id, second_token_id) =
+            LiquidityPools::get(liquidity_token_id).ok_or(Error::<T>::NoSuchLiquidityAsset)?;
         let native_currency_id = T::NativeCurrencyId::get();
         match native_currency_id {
             _ if native_currency_id == first_token_id => Ok((first_token_id, second_token_id)),

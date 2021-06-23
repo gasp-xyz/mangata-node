@@ -14,16 +14,16 @@ use sp_inherents::ProvideInherentData;
 pub trait Trait: frame_system::Trait {}
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq)]
-pub struct SeedType{
-    pub seed: [u8;32],
-    pub proof: [u8;64]
+pub struct SeedType {
+    pub seed: [u8; 32],
+    pub proof: [u8; 64],
 }
 
 impl Default for SeedType {
     fn default() -> Self {
-        SeedType{
+        SeedType {
             seed: Default::default(),
-            proof: [0_u8;64],
+            proof: [0_u8; 64],
         }
     }
 }

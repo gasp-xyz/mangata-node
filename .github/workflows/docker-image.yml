@@ -37,7 +37,25 @@ jobs:
       -
         name: Check formatting
         run: |
-          [ -z "$(docker run --entrypoint /root/.cargo/bin/cargo mangatasolutions/mangata-node-fmt-check:${{ github.sha }} fmt -- --check)" ]
+          docker run --entrypoint /root/.cargo/bin/cargo mangatasolutions/mangata-node-fmt-check:${{ github.sha }} fmt -- --check
+
+  clippy:
+    name: Rust project
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install latest nightly
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: nightly-2020-10-01
+            override: true
+            components: clippy
+
+      - name: Run cargo check
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: -- -p pallet-xyk
 
   unit-test:
     runs-on: ubuntu-latest

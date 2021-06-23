@@ -46,6 +46,8 @@ frame-benchmarking = { version = "2.0.0"}
 rand_chacha = { version = "0.2" }
 parking_lot = "0.10.2"
 hex = "0.4"
+pallet-assets-info = { path = '../assets-info', default-features = false, version = '2.0.0' }
+
 
 [features]
 default = ["std"]

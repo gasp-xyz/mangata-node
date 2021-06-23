@@ -54,10 +54,10 @@ pub trait Trait: frame_system::Trait {
 
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq)]
 pub struct AssetInfo {
-    name: Option<Vec<u8>>,
-    symbol: Option<Vec<u8>>,
-    description: Option<Vec<u8>>,
-    decimals: Option<u32>,
+    pub name: Option<Vec<u8>>,
+    pub symbol: Option<Vec<u8>>,
+    pub description: Option<Vec<u8>>,
+    pub decimals: Option<u32>,
 }
 
 decl_storage! {

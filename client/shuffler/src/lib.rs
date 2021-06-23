@@ -1,7 +1,9 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 use extrinsic_info_runtime_api::runtime_api::ExtrinsicInfoRuntimeApi;
 use pallet_random_seed::SeedType;
+use random_seed_runtime_api::RandomSeedApi;
 use sp_api::{ApiExt, ApiRef, Encode, HashT, ProvideRuntimeApi, TransactionOutcome};
+use sp_block_builder::BlockBuilder as BlockBuilderRuntimeApi;
 use sp_core::crypto::Ss58Codec;
 use sp_runtime::generic::BlockId;
 use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
@@ -10,8 +12,6 @@ use sp_std::collections::btree_map::BTreeMap;
 use sp_std::collections::vec_deque::VecDeque;
 use sp_std::convert::TryInto;
 use sp_std::vec::Vec;
-use sp_block_builder::BlockBuilder as BlockBuilderRuntimeApi;
-use random_seed_runtime_api::RandomSeedApi;
 
 pub struct Xoshiro256PlusPlus {
     s: [u64; 4],
@@ -46,7 +46,7 @@ impl Xoshiro256PlusPlus {
 
         self.s[3] = rotl(self.s[3], 45);
 
-        return (self.s[0].wrapping_add(self.s[3])) as u32;
+        (self.s[0].wrapping_add(self.s[3])) as u32
     }
 }
 
@@ -112,7 +112,10 @@ where
     let mut grouped_extrinsics: BTreeMap<Option<AccountId32>, VecDeque<_>> = extrinsics
         .into_iter()
         .fold(BTreeMap::new(), |mut groups, (who, tx)| {
-            groups.entry(who).or_insert(VecDeque::new()).push_back(tx);
+            groups
+                .entry(who)
+                .or_insert_with(VecDeque::new)
+                .push_back(tx);
             groups
         });
 
@@ -145,10 +148,10 @@ where
 
 #[derive(derive_more::Display, Debug)]
 pub enum Error {
-	#[display(fmt = "Cannot apply inherents")]
-	InherentApplyError,
-	#[display(fmt = "Cannot read seed from the runtime api ")]
-	SeedFetchingError,
+    #[display(fmt = "Cannot apply inherents")]
+    InherentApplyError,
+    #[display(fmt = "Cannot read seed from the runtime api ")]
+    SeedFetchingError,
 }
 
 pub fn fetch_seed<'a, Block, Api>(
@@ -160,10 +163,8 @@ where
     Api: ProvideRuntimeApi<Block> + 'a,
     Api::Api: BlockBuilderRuntimeApi<Block> + RandomSeedApi<Block>,
 {
-    api.get_seed(block_id)
-        .map_err(|_|Error::SeedFetchingError)
+    api.get_seed(block_id).map_err(|_| Error::SeedFetchingError)
 }
-
 
 /// shuffles extrinsics assuring that extrinsics signed by single account will be still evaluated
 /// in proper order
@@ -177,23 +178,17 @@ where
     Api: ProvideRuntimeApi<Block> + 'a,
     Api::Api: BlockBuilderRuntimeApi<Block> + RandomSeedApi<Block>,
 {
-    api.execute_in_transaction(|api|
+    api.execute_in_transaction(|api| {
         sp_api::TransactionOutcome::Rollback(
-                extrinsics.into_iter().take(2).map(|xt|
-                {
-                    match api.apply_extrinsic(
-                        block_id,
-                        xt,
-                    ) {
-                        Ok(Ok(Ok(_))) => Ok(()),
-                        _ => Err(Error::InherentApplyError)
-                    }
+            extrinsics
+                .into_iter()
+                .take(2)
+                .map(|xt| match api.apply_extrinsic(block_id, xt) {
+                    Ok(Ok(Ok(_))) => Ok(()),
+                    _ => Err(Error::InherentApplyError),
                 })
                 .collect::<Result<Vec<_>, _>>()
-                .and_then(|_|
-                    api.get_seed(block_id)
-                        .map_err(|_|Error::SeedFetchingError)
-                )
-            )
-    )
+                .and_then(|_| api.get_seed(block_id).map_err(|_| Error::SeedFetchingError)),
+        )
+    })
 }

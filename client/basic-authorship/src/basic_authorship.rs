@@ -352,16 +352,16 @@ where
 mod tests {
     use super::*;
 
+    use pallet_random_seed::RandomSeedInherentDataProvider;
     use parking_lot::Mutex;
     use sc_client_api::Backend;
     use sc_transaction_pool::BasicPool;
     use sp_api::Core;
     use sp_blockchain::HeaderBackend;
     use sp_consensus::{BlockOrigin, Proposer};
+    use sp_inherents::{InherentData, ProvideInherentData};
     use sp_runtime::traits::NumberFor;
     use sp_transaction_pool::{ChainEvent, MaintainedTransactionPool, TransactionSource};
-    use sp_inherents::{InherentData, ProvideInherentData};
-    use pallet_random_seed::RandomSeedInherentDataProvider;
 
     use substrate_test_runtime_client::{
         prelude::*,
@@ -372,7 +372,7 @@ mod tests {
     const SOURCE: TransactionSource = TransactionSource::External;
 
     /// inject shuffling seed that is mandatory in mangata
-    fn create_inherents() -> InherentData{
+    fn create_inherents() -> InherentData {
         let mut data: InherentData = Default::default();
         RandomSeedInherentDataProvider(Default::default())
             .provide_inherent_data(&mut data)
@@ -557,9 +557,9 @@ mod tests {
     #[test]
     // TODO this tests fails due two reasons. It verifies extrinsics order compairing extrinsic
     // root hash block-builder/src/lib.rs:272 and due to fact that extrinsic validation mechanism
-    // has been disabled BlockBuilder::push. Once shuffling will be done at runtime and validation 
+    // has been disabled BlockBuilder::push. Once shuffling will be done at runtime and validation
     // will be reverted it can be enalbed again
-    #[ignore] 
+    #[ignore]
     fn should_not_remove_invalid_transactions_when_skipping() {
         // given
         let mut client = Arc::new(substrate_test_runtime_client::new());
@@ -592,31 +592,33 @@ mod tests {
         .unwrap();
 
         let mut proposer_factory = ProposerFactory::new(client.clone(), txpool.clone(), None);
-        let mut propose_block =
-            |client: &TestClient, number, _expected_block_extrinsics, expected_pool_transactions| {
-                let proposer = proposer_factory.init_with_now(
-                    &client.header(&BlockId::number(number)).unwrap().unwrap(),
-                    Box::new(move || time::Instant::now()),
-                );
+        let mut propose_block = |client: &TestClient,
+                                 number,
+                                 _expected_block_extrinsics,
+                                 expected_pool_transactions| {
+            let proposer = proposer_factory.init_with_now(
+                &client.header(&BlockId::number(number)).unwrap().unwrap(),
+                Box::new(move || time::Instant::now()),
+            );
 
-                // when
-                let deadline = time::Duration::from_secs(9);
-                let block = futures::executor::block_on(proposer.propose(
-                    create_inherents(),
-                    Default::default(),
-                    deadline,
-                    RecordProof::No,
-                ))
-                .map(|r| r.block)
-                .unwrap();
+            // when
+            let deadline = time::Duration::from_secs(9);
+            let block = futures::executor::block_on(proposer.propose(
+                create_inherents(),
+                Default::default(),
+                deadline,
+                RecordProof::No,
+            ))
+            .map(|r| r.block)
+            .unwrap();
 
-                // then
-                // block should have some extrinsics although we have some more in the pool.
-                //assert_eq!(block.extrinsics().len(), expected_block_extrinsics);
-                assert_eq!(txpool.ready().count(), expected_pool_transactions);
+            // then
+            // block should have some extrinsics although we have some more in the pool.
+            //assert_eq!(block.extrinsics().len(), expected_block_extrinsics);
+            assert_eq!(txpool.ready().count(), expected_pool_transactions);
 
-                block
-            };
+            block
+        };
 
         futures::executor::block_on(
             txpool.maintain(chain_event(

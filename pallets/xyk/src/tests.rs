@@ -791,7 +791,6 @@ fn mint_W_other_way() {
     });
 }
 
-
 #[test]
 fn mint_N_no_such_pool() {
     new_test_ext().execute_with(|| {

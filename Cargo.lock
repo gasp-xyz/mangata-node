@@ -5530,6 +5530,7 @@ dependencies = [
  "futures 0.3.8",
  "futures-timer 3.0.2",
  "log",
+ "pallet-random-seed",
  "parity-scale-codec",
  "parking_lot 0.10.2",
  "sc-block-builder",
@@ -6376,6 +6377,8 @@ dependencies = [
  "sp-transaction-pool",
  "sp-utils",
  "substrate-prometheus-endpoint",
+ "substrate-test-runtime-client",
+ "substrate-test-runtime-transaction-pool",
  "wasm-timer",
 ]
 
@@ -7645,6 +7648,21 @@ dependencies = [
  "sp-runtime",
  "substrate-test-client",
  "substrate-test-runtime",
+]
+
+[[package]]
+name = "substrate-test-runtime-transaction-pool"
+version = "2.0.0"
+dependencies = [
+ "derive_more",
+ "futures 0.3.8",
+ "parity-scale-codec",
+ "parking_lot 0.10.2",
+ "sc-transaction-graph",
+ "sp-blockchain",
+ "sp-runtime",
+ "sp-transaction-pool",
+ "substrate-test-runtime-client",
 ]
 
 [[package]]

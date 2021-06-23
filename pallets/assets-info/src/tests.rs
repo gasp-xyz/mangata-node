@@ -2,7 +2,6 @@
 
 use crate::{mock::*, AssetInfo, Error};
 use frame_support::{assert_noop, assert_ok};
-use frame_system as system;
 
 #[test]
 fn set_info_and_retrieve_works_ok() {

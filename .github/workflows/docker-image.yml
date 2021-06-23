@@ -80,7 +80,7 @@ jobs:
           docker run mangatasolutions/mangata-node-ut:${{ github.sha }} /bin/bash -c \
             'cargo test -p pallet-xyk --no-run'
           docker run mangatasolutions/mangata-node-ut:${{ github.sha }} /bin/bash -c \
-            'cargo test -p pallet-xyk -- -Z unstable-options --format json --report-time |cargo2junit' | tee ut-results.xml
+            'cargo test -- -Z unstable-options --format json --report-time |cargo2junit' | tee ut-results.xml
           # remove empty tests suites
           sed -i '/<testsuite.*\/>$/d' ut-results.xml
           sed -i 's/<testsuites>/<testsuites time="0">/g' ut-results.xml

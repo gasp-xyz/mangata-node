@@ -360,7 +360,7 @@ decl_module! {
 
             let sender = ensure_signed(origin)?;
 
-            <Self as XykFunctionsTrait<T::AccountId>>::create_pool(sender, first_asset_id.into(), first_asset_amount.into(), second_asset_id.into(), second_asset_amount.into())
+            <Self as XykFunctionsTrait<T::AccountId>>::create_pool(sender, first_asset_id, first_asset_amount, second_asset_id, second_asset_amount)
 
         }
 
@@ -376,7 +376,7 @@ decl_module! {
 
             let sender = ensure_signed(origin)?;
 
-            <Self as XykFunctionsTrait<T::AccountId>>::sell_asset(sender, sold_asset_id.into(), bought_asset_id.into(), sold_asset_amount.into(), min_amount_out.into())
+            <Self as XykFunctionsTrait<T::AccountId>>::sell_asset(sender, sold_asset_id, bought_asset_id, sold_asset_amount, min_amount_out)
 
         }
 
@@ -391,7 +391,7 @@ decl_module! {
 
             let sender = ensure_signed(origin)?;
 
-            <Self as XykFunctionsTrait<T::AccountId>>::buy_asset(sender, sold_asset_id.into(), bought_asset_id.into(), bought_asset_amount.into(), max_amount_in.into())
+            <Self as XykFunctionsTrait<T::AccountId>>::buy_asset(sender, sold_asset_id, bought_asset_id, bought_asset_amount, max_amount_in)
 
         }
 
@@ -406,7 +406,7 @@ decl_module! {
 
             let sender = ensure_signed(origin)?;
 
-            <Self as XykFunctionsTrait<T::AccountId>>::mint_liquidity(sender, first_asset_id.into(), second_asset_id.into(), first_asset_amount.into(), expected_second_asset_amount.into())
+            <Self as XykFunctionsTrait<T::AccountId>>::mint_liquidity(sender, first_asset_id, second_asset_id, first_asset_amount, expected_second_asset_amount)
 
         }
 
@@ -420,7 +420,7 @@ decl_module! {
 
             let sender = ensure_signed(origin)?;
 
-            <Self as XykFunctionsTrait<T::AccountId>>::burn_liquidity(sender, first_asset_id.into(), second_asset_id.into(), liquidity_asset_amount.into())
+            <Self as XykFunctionsTrait<T::AccountId>>::burn_liquidity(sender, first_asset_id, second_asset_id, liquidity_asset_amount)
 
         }
     }
@@ -552,8 +552,8 @@ impl<T: Trait> Module<T> {
     ) -> Result<(Balance, Balance), DispatchError> {
         // Get token reserves and liquidity asset id
         let liquidity_asset_id = Self::get_liquidity_asset(first_asset_id, second_asset_id)?;
-        let first_asset_reserve: Balance = Pools::get((first_asset_id, second_asset_id)).into();
-        let second_asset_reserve: Balance = Pools::get((second_asset_id, first_asset_id)).into();
+        let first_asset_reserve: Balance = Pools::get((first_asset_id, second_asset_id));
+        let second_asset_reserve: Balance = Pools::get((second_asset_id, first_asset_id));
         let total_liquidity_assets: Balance =
             T::Currency::total_issuance(liquidity_asset_id.into()).into();
 
@@ -567,15 +567,13 @@ impl<T: Trait> Module<T> {
             liquidity_asset_amount,
             total_liquidity_assets,
         )
-        .map_err(|_| Error::<T>::UnexpectedFailure)?
-        .into();
+        .map_err(|_| Error::<T>::UnexpectedFailure)?;
         let second_asset_amount = multiply_by_rational(
             second_asset_reserve,
             liquidity_asset_amount,
             total_liquidity_assets,
         )
-        .map_err(|_| Error::<T>::UnexpectedFailure)?
-        .into();
+        .map_err(|_| Error::<T>::UnexpectedFailure)?;
 
         Ok((first_asset_amount, second_asset_amount))
     }
@@ -1349,8 +1347,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         ),
         DispatchError,
     > {
-        let (first_asset_id, second_asset_id) = LiquidityPools::get(liquidity_asset_id)
-            .ok_or_else(|| Error::<T>::NoSuchLiquidityAsset)?;
+        let (first_asset_id, second_asset_id) = LiquidityPools::get(liquidity_asset_id).ok_or(Error::<T>::NoSuchLiquidityAsset)?;
         let first_asset_reserve = Pools::get((first_asset_id, second_asset_id));
         let second_asset_reserve = Pools::get((second_asset_id, first_asset_id));
         let total_liquidity_assets: Balance =
@@ -1431,8 +1428,7 @@ impl<T: Trait> Valuate for Module<T> {
     fn get_liquidity_token_mng_pool(
         liquidity_token_id: Self::CurrencyId,
     ) -> Result<(Self::CurrencyId, Self::CurrencyId), DispatchError> {
-        let (first_token_id, second_token_id) = LiquidityPools::get(liquidity_token_id)
-            .ok_or_else(|| Error::<T>::NoSuchLiquidityAsset)?;
+        let (first_token_id, second_token_id) = LiquidityPools::get(liquidity_token_id).ok_or(Error::<T>::NoSuchLiquidityAsset)?;
         let native_currency_id = T::NativeCurrencyId::get();
         match native_currency_id {
             _ if native_currency_id == first_token_id => Ok((first_token_id, second_token_id)),

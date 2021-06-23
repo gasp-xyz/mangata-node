@@ -46,7 +46,7 @@ impl Xoshiro256PlusPlus {
 
         self.s[3] = rotl(self.s[3], 45);
 
-        return (self.s[0].wrapping_add(self.s[3])) as u32;
+        (self.s[0].wrapping_add(self.s[3])) as u32
     }
 }
 
@@ -112,7 +112,7 @@ where
     let mut grouped_extrinsics: BTreeMap<Option<AccountId32>, VecDeque<_>> = extrinsics
         .into_iter()
         .fold(BTreeMap::new(), |mut groups, (who, tx)| {
-            groups.entry(who).or_insert(VecDeque::new()).push_back(tx);
+            groups.entry(who).or_insert_with(VecDeque::new).push_back(tx);
             groups
         });
 

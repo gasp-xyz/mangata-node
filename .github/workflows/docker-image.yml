@@ -55,7 +55,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: -- -p pallet-xyk
+          args: -p pallet-xyk
 
   unit-test:
     runs-on: ubuntu-latest

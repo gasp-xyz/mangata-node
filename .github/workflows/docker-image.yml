@@ -191,7 +191,7 @@ jobs:
           reporter: jest-junit        # Format of test results
 
   publish:
-    needs: [rustfmt-check, unit-test, e2e-test]
+    needs: [rustfmt-check, unit-test, e2e-test, clippy]
     runs-on: ubuntu-latest
     if: "!contains(github.event.pull_request.labels.*.name, 'skip-publish') && ${{ github.event_name == 'push'}}"
     #if: # its a push to develop.

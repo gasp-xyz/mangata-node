@@ -626,7 +626,7 @@ impl ExtBuilder {
                     NATIVE_TOKEN_ID,
                     2000 * 2,
                     DUMMY_TOKEN_FOR_POOL_ID,
-                    2000 * 2,
+                    2000 * 2 + 1,
                     DEFAULT_LIQUIDITY_TOKEN_ID,
                 ),
                 (
@@ -634,7 +634,7 @@ impl ExtBuilder {
                     NATIVE_TOKEN_ID,
                     balance_factor * 1000 * 2,
                     DUMMY_TOKEN_FOR_POOL_ID,
-                    balance_factor * 1000 * 2,
+                    balance_factor * 1000 * 2 + 1,
                     DEFAULT_LIQUIDITY_TOKEN_ID,
                 ),
                 (
@@ -642,7 +642,7 @@ impl ExtBuilder {
                     NATIVE_TOKEN_ID,
                     balance_factor * 1000 * 2,
                     DUMMY_TOKEN_FOR_POOL_ID,
-                    balance_factor * 1000 * 2,
+                    balance_factor * 1000 * 2 + 1,
                     DEFAULT_LIQUIDITY_TOKEN_ID,
                 ),
                 (
@@ -650,7 +650,7 @@ impl ExtBuilder {
                     NATIVE_TOKEN_ID,
                     balance_factor * 500 * 2,
                     DUMMY_TOKEN_FOR_POOL_ID,
-                    balance_factor * 500 * 2,
+                    balance_factor * 500 * 2 + 1,
                     DEFAULT_LIQUIDITY_TOKEN_ID,
                 ),
             ],
@@ -823,6 +823,7 @@ pub(crate) fn mint_liquidity_for_user(user: &AccountId, val: Balance) {
         NATIVE_TOKEN_ID,
         DUMMY_TOKEN_FOR_POOL_ID,
         val * 2,
+        u128::MAX,
     ));
 }
 

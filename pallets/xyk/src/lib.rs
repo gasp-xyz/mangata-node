@@ -269,7 +269,7 @@ const PALLET_ID: ModuleId = ModuleId(*b"79b14c96");
 // 1/100 %
 const TREASURY_PERCENTAGE: u128 = 5;
 const BUYANDBURN_PERCENTAGE: u128 = 5;
-const SWAPFEE_PERCENTAGE: u128 = 30;
+const FEE_PERCENTAGE: u128 = 30;
 const MANGATA_ID: u128 = 0;
 
 decl_error! {
@@ -290,6 +290,7 @@ decl_error! {
         DivisionByZero,
         UnexpectedFailure,
         NotMangataLiquidityAsset,
+        SecondAssetAmountExceededExpectations,
         MathOverflow,
     }
 }
@@ -343,7 +344,7 @@ decl_storage! {
         build(|config: &GenesisConfig<T>| {
             config.created_pools_for_staking.iter().for_each(|(account_id, native_token_id, native_token_amount, pooled_token_id, pooled_token_amount, liquidity_token_id)| {
                 if T::Currency::exists({*liquidity_token_id}.into()){
-                    assert!(<Module<T>>::mint_liquidity( T::Origin::from(Some(account_id.clone()).into()), *native_token_id, *pooled_token_id, *native_token_amount).is_ok(), "Pool mint failed");
+                    assert!(<Module<T>>::mint_liquidity( T::Origin::from(Some(account_id.clone()).into()), *native_token_id, *pooled_token_id, *native_token_amount, *pooled_token_amount).is_ok(), "Pool mint failed");
                 }
                 else{
                     let created_liquidity_token_id: TokenId = T::Currency::get_next_currency_id().into();
@@ -372,7 +373,7 @@ decl_module! {
 
             let sender = ensure_signed(origin)?;
 
-            <Self as XykFunctionsTrait<T::AccountId>>::create_pool(sender, first_asset_id.into(), first_asset_amount.into(), second_asset_id.into(), second_asset_amount.into())
+            <Self as XykFunctionsTrait<T::AccountId>>::create_pool(sender, first_asset_id, first_asset_amount, second_asset_id, second_asset_amount)
 
         }
 
@@ -388,7 +389,7 @@ decl_module! {
 
             let sender = ensure_signed(origin)?;
 
-            <Self as XykFunctionsTrait<T::AccountId>>::sell_asset(sender, sold_asset_id.into(), bought_asset_id.into(), sold_asset_amount.into(), min_amount_out.into())
+            <Self as XykFunctionsTrait<T::AccountId>>::sell_asset(sender, sold_asset_id, bought_asset_id, sold_asset_amount, min_amount_out)
 
         }
 
@@ -403,7 +404,7 @@ decl_module! {
 
             let sender = ensure_signed(origin)?;
 
-            <Self as XykFunctionsTrait<T::AccountId>>::buy_asset(sender, sold_asset_id.into(), bought_asset_id.into(), bought_asset_amount.into(), max_amount_in.into())
+            <Self as XykFunctionsTrait<T::AccountId>>::buy_asset(sender, sold_asset_id, bought_asset_id, bought_asset_amount, max_amount_in)
 
         }
 
@@ -413,11 +414,12 @@ decl_module! {
             first_asset_id: TokenId,
             second_asset_id: TokenId,
             first_asset_amount: Balance,
+            expected_second_asset_amount: Balance,
         ) -> DispatchResult {
 
             let sender = ensure_signed(origin)?;
 
-            <Self as XykFunctionsTrait<T::AccountId>>::mint_liquidity(sender, first_asset_id.into(), second_asset_id.into(), first_asset_amount.into())
+            <Self as XykFunctionsTrait<T::AccountId>>::mint_liquidity(sender, first_asset_id, second_asset_id, first_asset_amount, expected_second_asset_amount)
 
         }
 
@@ -431,7 +433,7 @@ decl_module! {
 
             let sender = ensure_signed(origin)?;
 
-            <Self as XykFunctionsTrait<T::AccountId>>::burn_liquidity(sender, first_asset_id.into(), second_asset_id.into(), liquidity_asset_amount.into())
+            <Self as XykFunctionsTrait<T::AccountId>>::burn_liquidity(sender, first_asset_id, second_asset_id, liquidity_asset_amount)
 
         }
     }
@@ -444,21 +446,27 @@ impl<T: Trait> Module<T> {
         output_reserve: Balance,
         sell_amount: Balance,
     ) -> Result<Balance, DispatchError> {
+        let after_fee_percentage: u128 = 10000 - FEE_PERCENTAGE;
         let input_reserve_saturated: U256 = input_reserve.into();
         let output_reserve_saturated: U256 = output_reserve.into();
         let sell_amount_saturated: U256 = sell_amount.into();
 
-        let input_amount_with_fee: U256 = sell_amount_saturated.saturating_mul(997.into());
+        let input_amount_with_fee: U256 =
+            sell_amount_saturated.saturating_mul(after_fee_percentage.into());
+
         let numerator: U256 = input_amount_with_fee
             .checked_mul(output_reserve_saturated)
             .ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+
         let denominator: U256 = input_reserve_saturated
-            .saturating_mul(1000.into())
-            .checked_add(input_amount_with_fee.into())
+            .saturating_mul(10000.into())
+            .checked_add(input_amount_with_fee)
             .ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+
         let result_u256 = numerator
             .checked_div(denominator)
             .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
+      
         let result = Balance::try_from(result_u256)
             .map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
         log!(
@@ -506,19 +514,22 @@ impl<T: Trait> Module<T> {
         output_reserve: Balance,
         buy_amount: Balance,
     ) -> Result<Balance, DispatchError> {
+        let after_fee_percentage: u128 = 10000 - FEE_PERCENTAGE;
         let input_reserve_saturated: U256 = input_reserve.into();
         let output_reserve_saturated: U256 = output_reserve.into();
         let buy_amount_saturated: U256 = buy_amount.into();
 
         let numerator: U256 = input_reserve_saturated
             .saturating_mul(buy_amount_saturated)
-            .checked_mul(1000.into())
+            .checked_mul(10000.into())
             .ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+
         let denominator: U256 = output_reserve_saturated
             .checked_sub(buy_amount_saturated)
             .ok_or_else(|| DispatchError::from(Error::<T>::NotEnoughReserve))?
-            .checked_mul(997.into())
+            .checked_mul(after_fee_percentage.into())
             .ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+
         let result_u256 = numerator
             .checked_div(denominator)
             .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?
@@ -581,8 +592,8 @@ impl<T: Trait> Module<T> {
     ) -> Result<(Balance, Balance), DispatchError> {
         // Get token reserves and liquidity asset id
         let liquidity_asset_id = Self::get_liquidity_asset(first_asset_id, second_asset_id)?;
-        let first_asset_reserve: Balance = Pools::get((first_asset_id, second_asset_id)).into();
-        let second_asset_reserve: Balance = Pools::get((second_asset_id, first_asset_id)).into();
+        let first_asset_reserve: Balance = Pools::get((first_asset_id, second_asset_id));
+        let second_asset_reserve: Balance = Pools::get((second_asset_id, first_asset_id));
         let total_liquidity_assets: Balance =
             T::Currency::total_issuance(liquidity_asset_id.into()).into();
 
@@ -596,15 +607,13 @@ impl<T: Trait> Module<T> {
             liquidity_asset_amount,
             total_liquidity_assets,
         )
-        .map_err(|_| Error::<T>::UnexpectedFailure)?
-        .into();
+        .map_err(|_| Error::<T>::UnexpectedFailure)?;
         let second_asset_amount = multiply_by_rational(
             second_asset_reserve,
             liquidity_asset_amount,
             total_liquidity_assets,
         )
-        .map_err(|_| Error::<T>::UnexpectedFailure)?
-        .into();
+        .map_err(|_| Error::<T>::UnexpectedFailure)?;
 
         log!(
             info,
@@ -794,6 +803,7 @@ pub trait XykFunctionsTrait<AccountId> {
         first_asset_id: Self::CurrencyId,
         second_asset_id: Self::CurrencyId,
         first_asset_amount: Self::Balance,
+        expected_second_asset_amount: Self::Balance,
     ) -> DispatchResult;
 
     fn burn_liquidity(
@@ -1174,6 +1184,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         first_asset_id: Self::CurrencyId,
         second_asset_id: Self::CurrencyId,
         first_asset_amount: Self::Balance,
+        expected_second_asset_amount: Self::Balance,
     ) -> DispatchResult {
         let vault = Module::<T>::account_id();
 
@@ -1216,6 +1227,11 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             first_asset_reserve,
         )
         .map_err(|_| Error::<T>::UnexpectedFailure)?;
+
+        ensure!(
+            second_asset_amount <= expected_second_asset_amount,
+            Error::<T>::SecondAssetAmountExceededExpectations,
+        );
 
         // Ensure minting amounts are not zero
         ensure!(
@@ -1496,8 +1512,8 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         ),
         DispatchError,
     > {
-        let (first_asset_id, second_asset_id) = LiquidityPools::get(liquidity_asset_id)
-            .ok_or_else(|| Error::<T>::NoSuchLiquidityAsset)?;
+        let (first_asset_id, second_asset_id) =
+            LiquidityPools::get(liquidity_asset_id).ok_or(Error::<T>::NoSuchLiquidityAsset)?;
         let first_asset_reserve = Pools::get((first_asset_id, second_asset_id));
         let second_asset_reserve = Pools::get((second_asset_id, first_asset_id));
         let total_liquidity_assets: Balance =
@@ -1589,8 +1605,8 @@ impl<T: Trait> Valuate for Module<T> {
     fn get_liquidity_token_mng_pool(
         liquidity_token_id: Self::CurrencyId,
     ) -> Result<(Self::CurrencyId, Self::CurrencyId), DispatchError> {
-        let (first_token_id, second_token_id) = LiquidityPools::get(liquidity_token_id)
-            .ok_or_else(|| Error::<T>::NoSuchLiquidityAsset)?;
+        let (first_token_id, second_token_id) =
+            LiquidityPools::get(liquidity_token_id).ok_or(Error::<T>::NoSuchLiquidityAsset)?;
         let native_currency_id = T::NativeCurrencyId::get();
         match native_currency_id {
             _ if native_currency_id == first_token_id => Ok((first_token_id, second_token_id)),

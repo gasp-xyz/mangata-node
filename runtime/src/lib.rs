@@ -816,6 +816,12 @@ impl_runtime_apis! {
         }
     }
 
+    impl random_seed_runtime_api::RandomSeedApi<Block> for Runtime {
+        fn get_seed() -> pallet_random_seed::SeedType{
+            Random::seed()
+        }
+    }
+
     #[cfg(feature = "runtime-benchmarks")]
     impl frame_benchmarking::Benchmark<Block> for Runtime {
         fn dispatch_benchmark(

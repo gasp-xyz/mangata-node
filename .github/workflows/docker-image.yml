@@ -17,8 +17,84 @@ on:
 
 jobs:
 
-  build:
+  rustfmt-check:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      -
+        name: Build Docker Image
+        uses: docker/build-push-action@v2
+        with:
+          file: "devops/dockerfiles/node-and-runtime/Dockerfile"
+          load: true
+          tags: mangatasolutions/mangata-node-fmt-check:${{ github.sha }}
+          target: env_builder
+      -
+        name: Check formatting
+        run: |
+          docker run --entrypoint /root/.cargo/bin/cargo mangatasolutions/mangata-node-fmt-check:${{ github.sha }} fmt -- --check
 
+  clippy:
+    name: Clippy check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install latest nightly
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: nightly-2020-10-01
+            target: wasm32-unknown-unknown
+            override: true
+            components: clippy
+
+      - name: Run cargo check
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: -p pallet-xyk -p sc-block-builder -p sc-basic-authorship -p extrinsic-shuffler -p pallet-random-seed -p random-seed-runtime-api -p xyk-runtime-api -p mangata-primitives -p extrinsic-info-runtime-api
+
+  unit-test:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Build Docker Image
+        uses: docker/build-push-action@v2
+        with:
+          file: "devops/dockerfiles/node-and-runtime/Dockerfile"
+          load: true
+          tags: mangatasolutions/mangata-node-ut:${{ github.sha }}
+          target: env_builder
+      -
+        name: Run Tests
+        run: |
+          pwd
+          ls -la
+          docker run mangatasolutions/mangata-node-ut:${{ github.sha }} /bin/bash -c \
+            'cargo test -p pallet-xyk --no-run'
+          docker run mangatasolutions/mangata-node-ut:${{ github.sha }} /bin/bash -c \
+            'cargo test -- -Z unstable-options --format json --report-time |cargo2junit' | tee ut-results.xml
+          # remove empty tests suites
+          sed -i '/<testsuite.*\/>$/d' ut-results.xml
+          sed -i 's/<testsuites>/<testsuites time="0">/g' ut-results.xml
+          cat ut-results.xml
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: success() || failure()
+        with:
+          name: Unit Tests
+          path: ut-results.xml
+          reporter: jest-junit
+
+
+  build:
     runs-on: ubuntu-latest
     steps:
       -
@@ -48,7 +124,7 @@ jobs:
           name: ${{ github.run_id }}
           path: /tmp/${{ github.run_id }}.tar
       
-  test:
+  e2e-test:
     needs: build
     runs-on: ubuntu-latest
     if: "!contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests')"
@@ -82,7 +158,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: mangata-finance/mangata-e2e
-          ref: 'trigger_build_from_outside'
+          ref: 'feature/mint-liquidity-second-asset-amount-added'
           path: 'e2eTests'
       
       - name: Start mangata-node node with local build
@@ -115,7 +191,7 @@ jobs:
           reporter: jest-junit        # Format of test results
 
   publish:
-    needs: test
+    needs: [rustfmt-check, unit-test, e2e-test, clippy]
     runs-on: ubuntu-latest
     if: "!contains(github.event.pull_request.labels.*.name, 'skip-publish') && ${{ github.event_name == 'push'}}"
     #if: # its a push to develop.

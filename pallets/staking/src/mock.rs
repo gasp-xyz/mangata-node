@@ -25,6 +25,7 @@ pub use frame_support::{
     IterableStorageMap, StorageDoubleMap, StorageMap, StorageValue,
 };
 pub use orml_tokens::MultiTokenReservableCurrency;
+use pallet_assets_info as assets_info;
 use sp_core::H256;
 use sp_io;
 use sp_npos_elections::{
@@ -40,7 +41,6 @@ use sp_staking::{
     SessionIndex,
 };
 use std::{cell::RefCell, collections::HashSet};
-use pallet_assets_info as assets_info;
 
 pub const INIT_TIMESTAMP: u64 = 30_000;
 pub const NATIVE_CURRENCY_ID: u32 = 0;

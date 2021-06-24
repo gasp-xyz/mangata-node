@@ -247,6 +247,19 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+pub(crate) const LOG_TARGET: &'static str = "xyk";
+
+// syntactic sugar for logging.
+#[macro_export]
+macro_rules! log {
+	($level:tt, $patter:expr $(, $values:expr)* $(,)?) => {
+		frame_support::debug::$level!(
+			target: crate::LOG_TARGET,
+			$patter $(, $values)*
+		)
+	};
+}
+
 pub trait Trait: frame_system::Trait + pallet_assets_info::Trait {
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
     type Currency: MultiTokenCurrencyExtended<Self::AccountId>;
@@ -507,8 +520,17 @@ impl<T: Trait> Module<T> {
             .checked_div(denominator)
             .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
 
-        Ok(Balance::try_from(result_u256)
-            .map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?)
+        let result = Balance::try_from(result_u256)
+            .map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
+        log!(
+            info,
+            "calculate_sell_price: ({}, {}, {}) -> {}",
+            input_reserve,
+            output_reserve,
+            sell_amount,
+            result
+        );
+        Ok(result)
     }
 
     pub fn calculate_sell_price_no_fee(
@@ -523,10 +545,20 @@ impl<T: Trait> Module<T> {
 
         let numerator: U256 = sell_amount_saturated.saturating_mul(output_reserve_saturated);
         let denominator: U256 = input_reserve_saturated.saturating_add(sell_amount_saturated);
-        let result = numerator
+        let result_u256 = numerator
             .checked_div(denominator)
             .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
-        Ok(Balance::try_from(result).map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?)
+        let result = Balance::try_from(result_u256)
+            .map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
+        log!(
+            info,
+            "calculate_sell_price_no_fee: ({}, {}, {}) -> {}",
+            input_reserve,
+            output_reserve,
+            sell_amount,
+            result
+        );
+        Ok(result)
     }
 
     // Calculate amount of tokens to be paid, when buying buy_amount
@@ -557,8 +589,17 @@ impl<T: Trait> Module<T> {
             .checked_add(1.into())
             .ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 
-        Ok(Balance::try_from(result_u256)
-            .map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?)
+        let result = Balance::try_from(result_u256)
+            .map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
+        log!(
+            info,
+            "calculate_buy_price: ({}, {}, {}) -> {}",
+            input_reserve,
+            output_reserve,
+            buy_amount,
+            result
+        );
+        Ok(result)
     }
 
     pub fn get_liquidity_asset(
@@ -626,6 +667,16 @@ impl<T: Trait> Module<T> {
             total_liquidity_assets,
         )
         .map_err(|_| Error::<T>::UnexpectedFailure)?;
+
+        log!(
+            info,
+            "get_burn_amount: ({}, {}, {}) -> ({}, {})",
+            first_asset_id,
+            second_asset_id,
+            liquidity_asset_amount,
+            first_asset_amount,
+            second_asset_amount
+        );
 
         Ok((first_asset_amount, second_asset_amount))
     }
@@ -939,6 +990,28 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         LiquidityAssets::insert((first_asset_id, second_asset_id), liquidity_asset_id);
         LiquidityPools::insert(liquidity_asset_id, (first_asset_id, second_asset_id));
 
+        log!(
+            info,
+            "create_pool: ({:?}, {}, {}, {}, {}) -> ({}, {})",
+            sender,
+            first_asset_id,
+            first_asset_amount,
+            second_asset_id,
+            second_asset_amount,
+            liquidity_asset_id,
+            initial_liquidity
+        );
+
+        log!(
+            info,
+            "pool-state: [({}, {}) -> {}, ({}, {}) -> {}]",
+            first_asset_id,
+            second_asset_id,
+            first_asset_amount,
+            second_asset_id,
+            first_asset_id,
+            second_asset_amount
+        );
         // This, will and should, never fail
         Module::<T>::set_liquidity_asset_info(liquidity_asset_id, first_asset_id, second_asset_id)?;
 
@@ -1016,17 +1089,35 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         // Apply changes in token pools, adding sold amount and removing bought amount
         // Neither should fall to zero let alone underflow, due to how pool destruction works
         // Won't overflow due to earlier ensure
-        Pools::insert(
-            (sold_asset_id, bought_asset_id),
-            input_reserve.saturating_add(sold_asset_amount),
-        );
-        Pools::insert(
-            (bought_asset_id, sold_asset_id),
-            output_reserve.saturating_sub(bought_asset_amount),
-        );
+        let input_reserve_updated = input_reserve.saturating_add(sold_asset_amount);
+        let output_reserve_updated = output_reserve.saturating_sub(bought_asset_amount);
+        Pools::insert((sold_asset_id, bought_asset_id), input_reserve_updated);
+        Pools::insert((bought_asset_id, sold_asset_id), output_reserve_updated);
 
         // Settle tokens which goes to treasury and for buy and burn purpose
         Module::<T>::settle_treasury_and_burn(sold_asset_id, bought_asset_id, sold_asset_amount)?;
+
+        log!(
+            info,
+            "sell_asset: ({:?}, {}, {}, {}, {}) -> {}",
+            sender,
+            sold_asset_id,
+            bought_asset_id,
+            sold_asset_amount,
+            min_amount_out,
+            bought_asset_amount
+        );
+
+        log!(
+            info,
+            "pool-state: [({}, {}) -> {}, ({}, {}) -> {}]",
+            sold_asset_id,
+            bought_asset_id,
+            input_reserve_updated,
+            bought_asset_id,
+            sold_asset_id,
+            output_reserve_updated
+        );
 
         Module::<T>::deposit_event(RawEvent::AssetsSwapped(
             sender,
@@ -1108,17 +1199,35 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         // Apply changes in token pools, adding sold amount and removing bought amount
         // Neither should fall to zero let alone underflow, due to how pool destruction works
         // Won't overflow due to earlier ensure
-        Pools::insert(
-            (sold_asset_id, bought_asset_id),
-            input_reserve.saturating_add(sold_asset_amount),
-        );
-        Pools::insert(
-            (bought_asset_id, sold_asset_id),
-            output_reserve.saturating_sub(bought_asset_amount),
-        );
+        let input_reserve_updated = input_reserve.saturating_add(sold_asset_amount);
+        let output_reserve_updated = output_reserve.saturating_sub(bought_asset_amount);
+        Pools::insert((sold_asset_id, bought_asset_id), input_reserve_updated);
+        Pools::insert((bought_asset_id, sold_asset_id), output_reserve_updated);
 
         // Settle tokens which goes to treasury and for buy and burn purpose
         Self::settle_treasury_and_burn(sold_asset_id, bought_asset_id, sold_asset_amount)?;
+
+        log!(
+            info,
+            "buy_asset: ({:?}, {}, {}, {}, {}) -> {}",
+            sender,
+            sold_asset_id,
+            bought_asset_id,
+            bought_asset_amount,
+            max_amount_in,
+            sold_asset_amount
+        );
+
+        log!(
+            info,
+            "pool-state: [({}, {}) -> {}, ({}, {}) -> {}]",
+            sold_asset_id,
+            bought_asset_id,
+            input_reserve_updated,
+            bought_asset_id,
+            sold_asset_id,
+            output_reserve_updated
+        );
 
         Module::<T>::deposit_event(RawEvent::AssetsSwapped(
             sender,
@@ -1242,13 +1351,38 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
 
         // Apply changes in token pools, adding minted amounts
         // Won't overflow due earlier ensure
+        let first_asset_reserve_updated = first_asset_reserve.saturating_add(first_asset_amount);
+        let second_asset_reserve_updated = second_asset_reserve.saturating_add(second_asset_amount);
         Pools::insert(
             (&first_asset_id, &second_asset_id),
-            first_asset_reserve.saturating_add(first_asset_amount),
+            first_asset_reserve_updated,
         );
         Pools::insert(
             (&second_asset_id, &first_asset_id),
-            second_asset_reserve.saturating_add(second_asset_amount),
+            second_asset_reserve_updated,
+        );
+
+        log!(
+            info,
+            "mint_liquidity: ({:?}, {}, {}, {}) -> ({}, {}, {})",
+            sender,
+            first_asset_id,
+            second_asset_id,
+            first_asset_amount,
+            second_asset_amount,
+            liquidity_asset_id,
+            liquidity_assets_minted
+        );
+
+        log!(
+            info,
+            "pool-state: [({}, {}) -> {}, ({}, {}) -> {}]",
+            first_asset_id,
+            second_asset_id,
+            first_asset_reserve_updated,
+            second_asset_id,
+            first_asset_id,
+            second_asset_reserve_updated
         );
 
         Module::<T>::deposit_event(RawEvent::LiquidityMinted(
@@ -1355,7 +1489,26 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             ExistenceRequirement::KeepAlive,
         )?;
 
+        log!(
+            info,
+            "burn_liquidity: ({:?}, {}, {}, {}) -> ({}, {})",
+            sender,
+            first_asset_id,
+            second_asset_id,
+            liquidity_asset_amount,
+            first_asset_amount,
+            second_asset_amount
+        );
+
         if liquidity_asset_amount == total_liquidity_assets {
+            log!(
+                info,
+                "pool-state: [({}, {}) -> Removed, ({}, {}) -> Removed]",
+                first_asset_id,
+                second_asset_id,
+                second_asset_id,
+                first_asset_id,
+            );
             Pools::remove((first_asset_id, second_asset_id));
             Pools::remove((second_asset_id, first_asset_id));
             LiquidityAssets::remove((first_asset_id, second_asset_id));
@@ -1364,13 +1517,27 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         } else {
             // Apply changes in token pools, removing withdrawn amounts
             // Cannot underflow due to earlier ensure
+            let first_asset_reserve_updated =
+                first_asset_reserve.saturating_sub(first_asset_amount);
+            let second_asset_reserve_updated =
+                second_asset_reserve.saturating_sub(second_asset_amount);
             Pools::insert(
                 (&first_asset_id, &second_asset_id),
-                first_asset_reserve.saturating_sub(first_asset_amount),
+                first_asset_reserve_updated,
             );
             Pools::insert(
                 (&second_asset_id, &first_asset_id),
-                second_asset_reserve.saturating_sub(second_asset_amount),
+                second_asset_reserve_updated,
+            );
+            log!(
+                info,
+                "pool-state: [({}, {}) -> {}, ({}, {}) -> {}]",
+                first_asset_id,
+                second_asset_id,
+                first_asset_reserve_updated,
+                second_asset_id,
+                first_asset_id,
+                second_asset_reserve_updated
             );
         }
 
@@ -1434,6 +1601,17 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         .map_err(|_| Error::<T>::UnexpectedFailure)?
         .checked_add(1)
         .ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+
+        log!(
+            info,
+            "get_tokens_required_for_minting: ({}, {}) -> ({}, {}, {}, {})",
+            liquidity_asset_id,
+            liquidity_token_amount,
+            first_asset_id,
+            first_asset_amount,
+            second_asset_id,
+            second_asset_amount,
+        );
 
         Ok((
             first_asset_id,

@@ -466,7 +466,7 @@ impl<T: Trait> Module<T> {
         let result_u256 = numerator
             .checked_div(denominator)
             .ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
-      
+
         let result = Balance::try_from(result_u256)
             .map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
         log!(

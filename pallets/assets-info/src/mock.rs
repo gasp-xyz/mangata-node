@@ -1,7 +1,7 @@
 // Copyright (C) 2020 Mangata team
 
 use crate::{Module, Trait};
-use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
+use frame_support::{impl_outer_origin, impl_outer_event, parameter_types, weights::Weight};
 use frame_system as system;
 use mangata_primitives::{Amount, Balance, TokenId};
 use orml_tokens as assets;
@@ -12,9 +12,20 @@ use sp_runtime::{
     traits::{BlakeTwo256, IdentityLookup},
     Perbill,
 };
+mod assets_info {
+    pub use crate::Event;
+}
 
 impl_outer_origin! {
     pub enum Origin for Test {}
+}
+
+impl_outer_event! {
+    pub enum TestEvent for Test {
+        frame_system<T>,
+        assets<T>,
+        assets_info,
+    }
 }
 
 // Configure a mock runtime to test the pallet.
@@ -26,12 +37,12 @@ parameter_types! {
     pub const MaximumBlockWeight: Weight = 1024;
     pub const MaximumBlockLength: u32 = 2 * 1024;
     pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
-    pub const MinLengthName: usize = 0;
-    pub const MaxLengthName: usize = 32;
-    pub const MinLengthSymbol: usize = 3;
+    pub const MinLengthName: usize = 1;
+    pub const MaxLengthName: usize = 8;
+    pub const MinLengthSymbol: usize = 1;
     pub const MaxLengthSymbol: usize = 8;
-    pub const MinLengthDescription: usize = 0;
-    pub const MaxLengthDescription: usize = 255;
+    pub const MinLengthDescription: usize = 1;
+    pub const MaxLengthDescription: usize = 8;
     pub const MaxDecimals: u32 = 10;
 }
 
@@ -46,7 +57,7 @@ impl system::Trait for Test {
     type AccountId = u64;
     type Lookup = IdentityLookup<Self::AccountId>;
     type Header = Header;
-    type Event = ();
+    type Event = TestEvent;
     type BlockHashCount = BlockHashCount;
     type MaximumBlockWeight = MaximumBlockWeight;
     type DbWeight = ();
@@ -64,7 +75,7 @@ impl system::Trait for Test {
 }
 
 impl assets::Trait for Test {
-    type Event = ();
+    type Event = TestEvent;
     type Balance = Balance;
     type Amount = Amount;
     type CurrencyId = TokenId;
@@ -73,7 +84,7 @@ impl assets::Trait for Test {
 }
 
 impl Trait for Test {
-    type Event = ();
+    type Event = TestEvent;
     type MinLengthName = MinLengthName;
     type MaxLengthName = MaxLengthName;
     type MinLengthSymbol = MinLengthSymbol;
@@ -84,6 +95,7 @@ impl Trait for Test {
     type Currency = MultiTokenCurrencyAdapter<Test>;
 }
 
+pub type System = system::Module<Test>;
 pub type AssetsInfoModule = Module<Test>;
 
 // Build genesis storage according to the mock runtime.

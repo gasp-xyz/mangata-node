@@ -13,6 +13,7 @@ use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
 use frame_system as system;
 use mangata_primitives::{Amount, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
+use pallet_assets_info as assets_info;
 
 pub const NATIVE_CURRENCY_ID: u32 = 0;
 
@@ -69,6 +70,28 @@ impl orml_tokens::Trait for Test {
 }
 
 parameter_types! {
+    pub const MinLengthName: usize = 1;
+    pub const MaxLengthName: usize = 255;
+    pub const MinLengthSymbol: usize = 1;
+    pub const MaxLengthSymbol: usize = 255;
+    pub const MinLengthDescription: usize = 1;
+    pub const MaxLengthDescription: usize = 255;
+    pub const MaxDecimals: u32 = 255;
+}
+
+impl assets_info::Trait for Test {
+    type Event = ();
+    type MinLengthName = MinLengthName;
+    type MaxLengthName = MaxLengthName;
+    type MinLengthSymbol = MinLengthSymbol;
+    type MaxLengthSymbol = MaxLengthSymbol;
+    type MinLengthDescription = MinLengthDescription;
+    type MaxLengthDescription = MaxLengthDescription;
+    type MaxDecimals = MaxDecimals;
+    type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
+}
+
+parameter_types! {
     pub const NativeCurrencyId: u32 = NATIVE_CURRENCY_ID;
 }
 
@@ -82,13 +105,13 @@ pub type XykStorage = Module<Test>;
 
 impl<T: Trait> Module<T> {
     pub fn balance(id: TokenId, who: T::AccountId) -> Balance {
-        T::Currency::free_balance(id.into(), &who).into()
+        <T as Trait>::Currency::free_balance(id.into(), &who).into()
     }
     pub fn total_supply(id: TokenId) -> Balance {
-        T::Currency::total_issuance(id.into()).into()
+        <T as Trait>::Currency::total_issuance(id.into()).into()
     }
     pub fn create_new_token(who: &T::AccountId, amount: Balance) -> TokenId {
-        T::Currency::create(who, amount.into()).into()
+        <T as Trait>::Currency::create(who, amount.into()).into()
     }
 }
 

@@ -216,13 +216,13 @@ where
                     Ok(Ok(_)) => {}
                     Ok(Err(validity)) => {
                         return TransactionOutcome::Rollback(Err(format!(
-                            "pre validatio problem - {:?}",
+                            "cannot apply previous block extrinsics - {:?}",
                             validity
                         )))
                     }
                     Err(e) => {
                         return TransactionOutcome::Rollback(Err(format!(
-                            "pre validatio problem - {}",
+                            "cannot apply previous block extrinsics - {}",
                             e
                         )))
                     }

@@ -421,7 +421,7 @@ pub fn start_babe<B, C, SC, E, I, SO, CAW, Error>(BabeParams {
 		&inherent_data_providers,
 	)?;
 
-	info!(target: "babe", "� Starting BABE Authorship worker");;
+	info!(target: "babe", "� Starting BABE Authorship worker");
 	let inner = sc_consensus_slots::start_slot_worker(
 		config.0,
 		select_chain,
@@ -678,9 +678,7 @@ impl<B, C, E, I, Error, SO> sc_consensus_slots::SimpleSlotWorker<B> for BabeSlot
 }
 
 fn inject_inherents<'a>(keystore: KeyStorePtr, public: &'a sr25519::Public, seed: SeedType, epoch: Epoch, slot_info: &'a mut SlotInfo) -> Result<(), sp_consensus::Error>{
-
-
-    let transcript_data = create_shuffling_seed_input_data(&seed, &epoch);
+    let transcript_data = create_shuffling_seed_input_data(&seed);
     let signature = keystore.read()
         .sr25519_vrf_sign(<AuthorityId as AppKey>::ID, public, transcript_data)
         .map_err(|_| sp_consensus::Error::StateUnavailable(String::from("signing seed failure")))?;
@@ -848,12 +846,11 @@ impl<Block: BlockT> BabeLink<Block> {
 }
 
 /// calculates input that after signing will become next shuffling seed
-fn create_shuffling_seed_input_data<'a>(prev_seed: &'a SeedType, epoch: &'a Epoch) -> vrf::VRFTranscriptData<'a>{
+fn create_shuffling_seed_input_data<'a>(prev_seed: &'a SeedType) -> vrf::VRFTranscriptData<'a>{
      vrf::VRFTranscriptData {
          label: b"shuffling_seed",                                                         
          items: vec![                                                          
              ("prev_seed", vrf::VRFTranscriptValue::Bytes(&prev_seed.seed)),                   
-             ("epoch_randomness", vrf::VRFTranscriptValue::Bytes(&epoch.randomness)),                   
          ]                                                                                        
      }                                                                          
 }
@@ -996,7 +993,6 @@ where
         block_id: &BlockId<Block>,
         inherents: Vec<Block::Extrinsic>,
         public_key: &[u8],
-        epoch: &Epoch
 	) -> Result<(), Error<Block>> {
         let runtime_api = self.client.runtime_api();
 
@@ -1009,7 +1005,7 @@ where
             .map_err(|_| Error::SeedVerificationErrorStr(String::from("cannot deserialize seed")))?;
         let proof = VRFProof::from_bytes(&new.proof)
             .map_err(|_| Error::SeedVerificationErrorStr(String::from("cannot deserialize seed proof")))?;
-        let input = make_transcript(create_shuffling_seed_input_data(&prev, &epoch));
+        let input = make_transcript(create_shuffling_seed_input_data(&prev));
 
         schnorrkel::PublicKey::from_bytes(public_key).and_then(|p| {
             p.vrf_verify(input, &output, &proof)
@@ -1128,7 +1124,6 @@ where
                     &BlockId::Hash(parent_hash),
                     extrinsics,
                     key.0.as_ref(),
-                    viable_epoch.as_ref()
                 )?;
 
 				trace!(target: "babe", "Checked {:?}; importing.", pre_header);
@@ -1362,7 +1357,7 @@ impl<Block, Client, Inner> BlockImport<Block> for BabeBlockImport<Block, Client,
 
 			log!(target: "babe",
 				log_level,
-				"� New epoch {} launching at block {} (block slot {} >= start slot {}).",,
+				"👶 New epoch {} launching at block {} (block slot {} >= start slot {}).",
 				viable_epoch.as_ref().epoch_index,
 				hash,
 				slot_number,
@@ -1373,7 +1368,7 @@ impl<Block, Client, Inner> BlockImport<Block> for BabeBlockImport<Block, Client,
 
 			log!(target: "babe",
 				log_level,
-				"� Next epoch starts at slot {}",,
+				"👶 Next epoch starts at slot {}",
 				next_epoch.as_ref().start_slot,
 			);
 

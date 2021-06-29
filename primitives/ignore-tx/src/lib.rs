@@ -2,12 +2,11 @@
 
 use codec::Decode;
 use codec::Encode;
-use sp_runtime::RuntimeString;
 use sp_inherents::{InherentData, InherentIdentifier};
+use sp_runtime::RuntimeString;
 
 #[cfg(feature = "std")]
 use sp_inherents::ProvideInherentData;
-
 
 pub const IGNORE_TX_INHERENT_IDENTIFIER: InherentIdentifier = *b"ignoreTX";
 

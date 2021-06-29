@@ -189,15 +189,13 @@ where
         >,
         inherent_data: sp_inherents::InherentData,
     ) -> Result<(), ApiErrorFor<A, Block>> {
-
         let is_next_block_epoch = sp_ignore_tx::extract_inherent_data(&inherent_data)
             .map_err(|_| String::from("cannot random seed from inherents data"))?;
 
-        if is_next_block_epoch{
+        if is_next_block_epoch {
             log::debug!(target: "block_builder", "the next block is new epoch - no transactions will be included");
-            return Ok(())
+            return Ok(());
         }
-
 
         let parent_hash = self.parent_hash;
         let block_id = &self.block_id;

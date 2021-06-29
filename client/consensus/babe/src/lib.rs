@@ -82,7 +82,7 @@ use sp_consensus::{ImportResult, CanAuthorWith};
 use sp_consensus::import_queue::{
 	BoxJustificationImport, BoxFinalityProofImport,
 };
-use sp_core::{crypto::Public, traits::BareCryptoStore, vrf};
+use sp_core::{sr25519, crypto::Public, traits::BareCryptoStore, vrf};
 use sp_application_crypto::AppKey;
 use sp_runtime::{
 	generic::{BlockId, OpaqueDigestItemId}, Justification,
@@ -677,6 +677,36 @@ impl<B, C, E, I, Error, SO> sc_consensus_slots::SimpleSlotWorker<B> for BabeSlot
 	}
 }
 
+fn inject_inherents<'a>(keystore: KeyStorePtr, public: &'a sr25519::Public, seed: SeedType, epoch: Epoch, slot_info: &'a mut SlotInfo) -> Result<(), sp_consensus::Error>{
+
+
+    let transcript_data = create_shuffling_seed_input_data(&seed, &epoch);
+    let signature = keystore.read()
+        .sr25519_vrf_sign(<AuthorityId as AppKey>::ID, public, transcript_data)
+        .map_err(|_| sp_consensus::Error::StateUnavailable(String::from("signing seed failure")))?;
+
+    sp_ignore_tx::IgnoreTXInherentDataProvider(
+        {
+            let flag = slot_info.number == (epoch.start_slot + epoch.duration - 1);
+            debug!(target:"mat2", "curr:{} start:{} duration:{} FLAG:{}",slot_info.number, epoch.start_slot, epoch.duration, flag);
+            flag
+        }
+    )
+    .provide_inherent_data(&mut slot_info.inherent_data)
+    .map_err(|_| sp_consensus::Error::StateUnavailable(String::from("cannot inject RandomSeed inherent data")))?;
+
+    RandomSeedInherentDataProvider(
+        SeedType{
+            seed: signature.output.to_bytes(),
+            proof: signature.proof.to_bytes()
+        }
+    )
+    .provide_inherent_data(&mut slot_info.inherent_data)
+    .map_err(|_| sp_consensus::Error::StateUnavailable(String::from("cannot inject RandomSeed inherent data")))?;
+
+    Ok(())
+}
+
 impl<B, C, E, I, Error, SO> SlotWorker<B> for BabeSlotWorker<B, C, E, I, SO> where
 	B: BlockT,
 	C: ProvideRuntimeApi<B> +
@@ -699,63 +729,19 @@ impl<B, C, E, I, Error, SO> SlotWorker<B> for BabeSlotWorker<B, C, E, I, SO> whe
 
 		if let Some((_, public)) = <Self as sc_consensus_slots::SimpleSlotWorker<B>>::claim_slot(self, &chain_head, slot_info.number, &epoch_data){
             let changes = self.epoch_changes.lock(); 
-
-
-            // TODO refactor
             let epoch = changes.viable_epoch(
                     &epoch_data,
                     |slot| Epoch::genesis(&self.config, slot)
                 )
                 .ok_or(sp_consensus::Error::StateUnavailable(String::from("cannot fetch epoch for seed generation purposes")));
 
-            let epoch2 = changes.viable_epoch(
-                    &epoch_data,
-                    |slot| Epoch::genesis(&self.config, slot)
-                )
-                .ok_or(sp_consensus::Error::StateUnavailable(String::from("cannot fetch epoch for seed generation purposes")));
+            let inherent_injection_status = epoch.and_then(
+                |epoch| inject_inherents(self.keystore.clone(), &public.into(), seed, epoch.into_cloned_inner(), &mut slot_info)
+            );
 
-            let signature = epoch.and_then(|epoch|
-                    {
-                        let transcript_data = create_shuffling_seed_input_data(&seed, &epoch.as_ref());
-                        self.keystore.read()
-                            .sr25519_vrf_sign(<AuthorityId as AppKey>::ID, &public.into(), transcript_data)
-                            .map_err(|_| sp_consensus::Error::StateUnavailable(String::from("signing seed failure")))
-                    }
-                );
-            
-            let inject_randome_seed_inherent_data = signature.and_then(|sig| {
-                RandomSeedInherentDataProvider(
-                    SeedType{
-                        seed: sig.output.to_bytes(),
-                        proof: sig.proof.to_bytes()
-                    }
-                )
-                .provide_inherent_data(&mut slot_info.inherent_data)
-                .map_err(|_| sp_consensus::Error::StateUnavailable(String::from("cannot inject RandomSeed inherent data")))
-            });
-
-            if let Err(e) = inject_randome_seed_inherent_data{
+            if let Err(e) = inherent_injection_status{
                 return Box::pin(future::ready(Err(e)));
             }
-
-            let inject_tx_ignore_flag = epoch2.and_then(|epoch| {
-                sp_ignore_tx::IgnoreTXInherentDataProvider(
-                    {
-                        let e = epoch.into_cloned_inner();
-                        let flag = slot_info.number == (e.start_slot + e.duration - 1);
-                        debug!(target:"mat2", "curr:{} start:{} duration:{} FLAG:{}",slot_info.number, e.start_slot, e.duration, flag);
-                        flag
-                    }
-                )
-                .provide_inherent_data(&mut slot_info.inherent_data)
-                .map_err(|_| sp_consensus::Error::StateUnavailable(String::from("cannot inject RandomSeed inherent data")))
-            });
-
-
-            if let Err(e) = inject_tx_ignore_flag{
-                return Box::pin(future::ready(Err(e)));
-            }
-
         }
 		<Self as sc_consensus_slots::SimpleSlotWorker<B>>::on_slot(self, chain_head, slot_info)
 	}

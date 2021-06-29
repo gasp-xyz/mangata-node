@@ -399,6 +399,10 @@ mod tests {
         RandomSeedInherentDataProvider(Default::default())
             .provide_inherent_data(&mut data)
             .unwrap();
+
+        sp_ignore_tx::IgnoreTXInherentDataProvider(false)
+            .provide_inherent_data(&mut data)
+            .unwrap();
         data
     }
 
@@ -476,7 +480,7 @@ mod tests {
 
         // then
         // block should have some extrinsics although we have some more in the pool.
-        assert_eq!(block.extrinsics().len(), 1);
+        assert_eq!(block.extrinsics().len(), 2); // inherents only [set_timestamp, shuffling_seed]
         assert_eq!(txpool.ready().count(), 2);
     }
 

@@ -190,7 +190,7 @@ where
         inherent_data: sp_inherents::InherentData,
     ) -> Result<(), ApiErrorFor<A, Block>> {
         let is_next_block_epoch = sp_ignore_tx::extract_inherent_data(&inherent_data)
-            .map_err(|_| String::from("cannot random seed from inherents data"))?;
+            .map_err(|_| String::from("cannot fetch information about ignore_tx flag"))?;
 
         if is_next_block_epoch {
             log::debug!(target: "block_builder", "the next block is new epoch - no transactions will be included");
@@ -343,7 +343,7 @@ where
     ) -> Result<(SeedType, Vec<Block::Extrinsic>), ApiErrorFor<A, Block>> {
         let block_id = self.block_id.clone();
         let seed = pallet_random_seed::extract_inherent_data(&inherent_data)
-            .map_err(|_| String::from("cannot random seed from inherents data"))?;
+            .map_err(|_| String::from("cannot read random seed from inherents data"))?;
         self.api
             .execute_in_transaction(move |api| {
                 // `create_inherents` should not change any state, to ensure this we always rollback

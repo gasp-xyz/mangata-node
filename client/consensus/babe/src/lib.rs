@@ -686,7 +686,6 @@ fn inject_inherents<'a>(keystore: KeyStorePtr, public: &'a sr25519::Public, seed
     sp_ignore_tx::IgnoreTXInherentDataProvider(
         {
             let flag = slot_info.number == (epoch.start_slot + epoch.duration - 1);
-            debug!(target:"mat2", "curr:{} start:{} duration:{} FLAG:{}",slot_info.number, epoch.start_slot, epoch.duration, flag);
             flag
         }
     )

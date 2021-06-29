@@ -12,8 +12,8 @@ pub const IGNORE_TX_INHERENT_IDENTIFIER: InherentIdentifier = *b"ignoreTX";
 
 pub fn extract_inherent_data(data: &InherentData) -> Result<bool, RuntimeString> {
     data.get_data::<bool>(&IGNORE_TX_INHERENT_IDENTIFIER)
-        .map_err(|_| RuntimeString::from("Invalid ign seed inherent data encoding."))?
-        .ok_or_else(|| "Random Seed inherent data is not provided.".into())
+        .map_err(|_| RuntimeString::from("Invalid inherent data encoding."))?
+        .ok_or_else(|| "Ignore Transaction flag is not provided.".into())
 }
 
 #[cfg(feature = "std")]

@@ -1,7 +1,7 @@
 // Copyright (C) 2020 Mangata team
 
 use crate::{Module, Trait};
-use frame_support::{impl_outer_origin, impl_outer_event, parameter_types, weights::Weight};
+use frame_support::{impl_outer_event, impl_outer_origin, parameter_types, weights::Weight};
 use frame_system as system;
 use mangata_primitives::{Amount, Balance, TokenId};
 use orml_tokens as assets;

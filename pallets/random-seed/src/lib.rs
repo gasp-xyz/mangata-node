@@ -48,6 +48,16 @@ decl_storage! {
         /// Current time for the current block.
         pub Seed get(fn seed) : SeedType;
     }
+    add_extra_genesis {
+        #[allow(clippy::type_complexity)]
+        config(random_seed): [u8; 32];
+        build(|config: &GenesisConfig|{
+            Seed::set(SeedType{
+                seed: config.random_seed,
+                proof: [0_u8; 64]
+            });
+        });
+    }
 }
 
 impl<T: Trait> Module<T> {

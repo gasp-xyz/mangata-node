@@ -46,7 +46,7 @@ use sp_runtime::{
     },
 };
 
-use pallet_random_seed::{extract_inherent_data, SeedType};
+use pallet_random_seed::SeedType;
 
 pub use sp_block_builder::BlockBuilder as BlockBuilderApi;
 
@@ -187,7 +187,18 @@ where
                 &<A as ProvideRuntimeApi<Block>>::Api,
             ) -> Vec<Block::Extrinsic>,
         >,
+        inherent_data: sp_inherents::InherentData,
     ) -> Result<(), ApiErrorFor<A, Block>> {
+
+        let is_next_block_epoch = sp_ignore_tx::extract_inherent_data(&inherent_data)
+            .map_err(|_| String::from("cannot random seed from inherents data"))?;
+
+        if is_next_block_epoch{
+            log::debug!(target: "block_builder", "the next block is new epoch - no transactions will be included");
+            return Ok(())
+        }
+
+
         let parent_hash = self.parent_hash;
         let block_id = &self.block_id;
         let previous_block_extrinsics = self

@@ -221,7 +221,7 @@ where
             self.client
                 .new_block_at(&self.parent_id, inherent_digests, record_proof)?;
 
-        let (seed, inherents) = block_builder.create_inherents(inherent_data)?;
+        let (seed, inherents) = block_builder.create_inherents(inherent_data.clone())?;
         for inherent in inherents {
             match block_builder.push(inherent) {
                 Err(ApplyExtrinsicFailed(Validity(e))) if e.exhausted_resources() => {
@@ -320,7 +320,7 @@ where
                 };
             }
             extrinsics
-        }))?;
+        }), inherent_data)?;
 
         self.transaction_pool
             .remove_invalid(unqueue_invalid.borrow().as_slice());

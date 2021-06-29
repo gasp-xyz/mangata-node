@@ -421,7 +421,7 @@ pub fn start_babe<B, C, SC, E, I, SO, CAW, Error>(BabeParams {
 		&inherent_data_providers,
 	)?;
 
-	info!(target: "babe", "👶 Starting BABE Authorship worker");
+	info!(target: "babe", "� Starting BABE Authorship worker");;
 	let inner = sc_consensus_slots::start_slot_worker(
 		config.0,
 		select_chain,
@@ -698,11 +698,30 @@ impl<B, C, E, I, Error, SO> SlotWorker<B> for BabeSlotWorker<B, C, E, I, SO> whe
 		let epoch_data = <Self as sc_consensus_slots::SimpleSlotWorker<B>>::epoch_data(self, &chain_head, slot_info.number).unwrap();
 
 		if let Some((_, public)) = <Self as sc_consensus_slots::SimpleSlotWorker<B>>::claim_slot(self, &chain_head, slot_info.number, &epoch_data){
+            let changes = self.epoch_changes.lock(); 
 
-            let transcript_data = create_shuffling_seed_input_data(&seed);
-            let signature = self.keystore.read()
-                .sr25519_vrf_sign(<AuthorityId as AppKey>::ID, &public.into(), transcript_data)
-                .map_err(|_| sp_consensus::Error::StateUnavailable(String::from("signing seed failure")));
+
+            // TODO refactor
+            let epoch = changes.viable_epoch(
+                    &epoch_data,
+                    |slot| Epoch::genesis(&self.config, slot)
+                )
+                .ok_or(sp_consensus::Error::StateUnavailable(String::from("cannot fetch epoch for seed generation purposes")));
+
+            let epoch2 = changes.viable_epoch(
+                    &epoch_data,
+                    |slot| Epoch::genesis(&self.config, slot)
+                )
+                .ok_or(sp_consensus::Error::StateUnavailable(String::from("cannot fetch epoch for seed generation purposes")));
+
+            let signature = epoch.and_then(|epoch|
+                    {
+                        let transcript_data = create_shuffling_seed_input_data(&seed, &epoch.as_ref());
+                        self.keystore.read()
+                            .sr25519_vrf_sign(<AuthorityId as AppKey>::ID, &public.into(), transcript_data)
+                            .map_err(|_| sp_consensus::Error::StateUnavailable(String::from("signing seed failure")))
+                    }
+                );
             
             let inject_randome_seed_inherent_data = signature.and_then(|sig| {
                 RandomSeedInherentDataProvider(
@@ -718,6 +737,25 @@ impl<B, C, E, I, Error, SO> SlotWorker<B> for BabeSlotWorker<B, C, E, I, SO> whe
             if let Err(e) = inject_randome_seed_inherent_data{
                 return Box::pin(future::ready(Err(e)));
             }
+
+            let inject_tx_ignore_flag = epoch2.and_then(|epoch| {
+                sp_ignore_tx::IgnoreTXInherentDataProvider(
+                    {
+                        let e = epoch.into_cloned_inner();
+                        let flag = slot_info.number == (e.start_slot + e.duration - 1);
+                        debug!(target:"mat2", "curr:{} start:{} duration:{} FLAG:{}",slot_info.number, e.start_slot, e.duration, flag);
+                        flag
+                    }
+                )
+                .provide_inherent_data(&mut slot_info.inherent_data)
+                .map_err(|_| sp_consensus::Error::StateUnavailable(String::from("cannot inject RandomSeed inherent data")))
+            });
+
+
+            if let Err(e) = inject_tx_ignore_flag{
+                return Box::pin(future::ready(Err(e)));
+            }
+
         }
 		<Self as sc_consensus_slots::SimpleSlotWorker<B>>::on_slot(self, chain_head, slot_info)
 	}
@@ -824,11 +862,12 @@ impl<Block: BlockT> BabeLink<Block> {
 }
 
 /// calculates input that after signing will become next shuffling seed
-fn create_shuffling_seed_input_data<'a>(prev_seed: &'a SeedType) -> vrf::VRFTranscriptData<'a>{
+fn create_shuffling_seed_input_data<'a>(prev_seed: &'a SeedType, epoch: &'a Epoch) -> vrf::VRFTranscriptData<'a>{
      vrf::VRFTranscriptData {
          label: b"shuffling_seed",                                                         
          items: vec![                                                          
              ("prev_seed", vrf::VRFTranscriptValue::Bytes(&prev_seed.seed)),                   
+             ("epoch_randomness", vrf::VRFTranscriptValue::Bytes(&epoch.randomness)),                   
          ]                                                                                        
      }                                                                          
 }
@@ -971,6 +1010,7 @@ where
         block_id: &BlockId<Block>,
         inherents: Vec<Block::Extrinsic>,
         public_key: &[u8],
+        epoch: &Epoch
 	) -> Result<(), Error<Block>> {
         let runtime_api = self.client.runtime_api();
 
@@ -983,7 +1023,7 @@ where
             .map_err(|_| Error::SeedVerificationErrorStr(String::from("cannot deserialize seed")))?;
         let proof = VRFProof::from_bytes(&new.proof)
             .map_err(|_| Error::SeedVerificationErrorStr(String::from("cannot deserialize seed proof")))?;
-        let input = make_transcript(create_shuffling_seed_input_data(&prev));
+        let input = make_transcript(create_shuffling_seed_input_data(&prev, &epoch));
 
         schnorrkel::PublicKey::from_bytes(public_key).and_then(|p| {
             p.vrf_verify(input, &output, &proof)
@@ -1102,6 +1142,7 @@ where
                     &BlockId::Hash(parent_hash),
                     extrinsics,
                     key.0.as_ref(),
+                    viable_epoch.as_ref()
                 )?;
 
 				trace!(target: "babe", "Checked {:?}; importing.", pre_header);
@@ -1335,7 +1376,7 @@ impl<Block, Client, Inner> BlockImport<Block> for BabeBlockImport<Block, Client,
 
 			log!(target: "babe",
 				log_level,
-				"👶 New epoch {} launching at block {} (block slot {} >= start slot {}).",
+				"� New epoch {} launching at block {} (block slot {} >= start slot {}).",,
 				viable_epoch.as_ref().epoch_index,
 				hash,
 				slot_number,
@@ -1346,7 +1387,7 @@ impl<Block, Client, Inner> BlockImport<Block> for BabeBlockImport<Block, Client,
 
 			log!(target: "babe",
 				log_level,
-				"👶 Next epoch starts at slot {}",
+				"� Next epoch starts at slot {}",,
 				next_epoch.as_ref().start_slot,
 			);
 

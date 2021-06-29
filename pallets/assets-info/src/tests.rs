@@ -26,16 +26,13 @@ fn set_info_and_retrieve_works_ok() {
         // Read pallet storage and assert an expected result.
         assert_eq!(AssetsInfoModule::get_info(ASSET_ID), info);
 
-        let info_stored_event =
-        TestEvent::assets_info(Event::InfoStored(ASSET_ID, info));
-        
-            assert!(System::events()
-                .iter()
-                .any(|record| record.event == info_stored_event));
+        let info_stored_event = TestEvent::assets_info(Event::InfoStored(ASSET_ID, info));
+
+        assert!(System::events()
+            .iter()
+            .any(|record| record.event == info_stored_event));
     });
 }
-
-
 
 #[test]
 fn set_info_optional_and_retrieve_works_ok() {
@@ -73,7 +70,7 @@ fn min_length_name_check() {
             decimals: None,
         };
         // Dispatch a signed extrinsic.
-        
+
         assert_noop!(
             AssetsInfoModule::set_info(
                 Origin::root(),
@@ -86,7 +83,6 @@ fn min_length_name_check() {
             Error::<Test>::TooShortName
         );
         // Read pallet storage and assert an expected result.
-        
     });
 }
 
@@ -113,7 +109,6 @@ fn min_length_symbol_check() {
             Error::<Test>::TooShortSymbol
         );
         // Read pallet storage and assert an expected result.
-        
     });
 }
 
@@ -140,7 +135,6 @@ fn min_length_description_check() {
             Error::<Test>::TooShortDescription
         );
         // Read pallet storage and assert an expected result.
-        
     });
 }
 
@@ -167,7 +161,6 @@ fn max_length_name_check() {
             Error::<Test>::TooLongName
         );
         // Read pallet storage and assert an expected result.
-        
     });
 }
 
@@ -194,7 +187,6 @@ fn max_length_symbol_check() {
             Error::<Test>::TooLongSymbol
         );
         // Read pallet storage and assert an expected result.
-        
     });
 }
 
@@ -221,7 +213,6 @@ fn max_length_description_check() {
             Error::<Test>::TooLongDescription
         );
         // Read pallet storage and assert an expected result.
-        
     });
 }
 
@@ -248,6 +239,5 @@ fn max_decimals_check() {
             Error::<Test>::DecimalsOutOfRange
         );
         // Read pallet storage and assert an expected result.
-        
     });
 }

@@ -9,7 +9,7 @@ use sp_runtime::{
     Perbill,
 };
 
-use frame_support::{impl_outer_origin, impl_outer_event, parameter_types, weights::Weight};
+use frame_support::{impl_outer_event, impl_outer_origin, parameter_types, weights::Weight};
 use frame_system as system;
 use mangata_primitives::{Amount, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
@@ -26,6 +26,7 @@ impl_outer_origin! {
 
 impl_outer_event! {
     pub enum TestEvent for Test {
+        assets_info,
         frame_system<T>,
         xyk<T>,
         orml_tokens<T>,
@@ -90,7 +91,7 @@ parameter_types! {
 }
 
 impl assets_info::Trait for Test {
-    type Event = ();
+    type Event = TestEvent;
     type MinLengthName = MinLengthName;
     type MaxLengthName = MaxLengthName;
     type MinLengthSymbol = MinLengthSymbol;

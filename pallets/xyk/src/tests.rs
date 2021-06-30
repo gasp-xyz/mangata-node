@@ -509,8 +509,8 @@ fn sell_W() {
 
         assert_eq!(XykStorage::balance(0, 2), 940000000000000000000); // amount in user acc after selling
         assert_eq!(XykStorage::balance(1, 2), 959959959959959959959); // amount in user acc after buying
-        assert_eq!(XykStorage::asset_pool((0, 1)), 59980000000000000000); // amount of asset 0 in pool map
-        assert_eq!(XykStorage::asset_pool((1, 0)), 40040040040040040041); // amount of asset 1 in pool map
+        assert_eq!(XykStorage::asset_pool2((0, 1)), (59980000000000000000,40040040040040040041)); // amount of asset 0 in pool map
+     //   assert_eq!(XykStorage::asset_pool2((1, 0)), 40040040040040040041); // amount of asset 1 in pool map
         assert_eq!(XykStorage::balance(0, 2), 940000000000000000000); // amount of asset 0 on account 2
         assert_eq!(XykStorage::balance(1, 2), 959959959959959959959); // amount of asset 1 on account 2
         assert_eq!(

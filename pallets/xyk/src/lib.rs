@@ -315,8 +315,8 @@ decl_event!(
 decl_storage! {
     trait Store for Module<T: Trait> as XykStorage {
 
-        Pools get(fn asset_pool): map hasher(opaque_blake2_256) (TokenId, TokenId) => Balance;
-        Pools2 get(fn asset_pool2): map hasher(opaque_blake2_256) (TokenId, TokenId) => (Balance, Balance);
+        // Pools get(fn asset_pool): map hasher(opaque_blake2_256) (TokenId, TokenId) => Balance;
+        Pools get(fn asset_pool2): map hasher(opaque_blake2_256) (TokenId, TokenId) => (Balance, Balance);
 
         LiquidityAssets get(fn liquidity_asset): map hasher(opaque_blake2_256) (TokenId, TokenId) => Option<TokenId>;
         LiquidityPools get(fn liquidity_pool): map hasher(opaque_blake2_256) TokenId => Option<(TokenId, TokenId)>;
@@ -544,6 +544,29 @@ impl<T: Trait> Module<T> {
         Self::calculate_buy_price(input_reserve, output_reserve, buy_amount)
     }
 
+pub fn get_reserves(
+    first_asset_id: TokenId,
+    second_asset_id: TokenId,
+)
+-> Result<(Balance, Balance), DispatchError> {
+
+    let reserves = Pools::get((first_asset_id, second_asset_id));
+
+        if Pools::contains_key((first_asset_id, second_asset_id))
+        {
+             
+        }
+        else if Pools::contains_key((second_asset_id, first_asset_id))
+        {
+            let reserves = Pools::get((second_asset_id, first_asset_id));
+        }
+        else
+        {
+            Error::<T>::NoSuchPool;
+        }
+        
+        Ok((reserves.0, reserves.1))
+}
     // Calculate first and second token amounts depending on liquidity amount to burn
     pub fn get_burn_amount(
         first_asset_id: TokenId,
@@ -854,7 +877,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             .checked_add(second_asset_amount)
             .ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 
-        Pools2::insert((first_asset_id, second_asset_id), (first_asset_amount,second_asset_amount));
+        Pools::insert((first_asset_id, second_asset_id), (first_asset_amount,second_asset_amount));
 
        // Pools::insert((second_asset_id, first_asset_id), second_asset_amount);
 
@@ -912,16 +935,16 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         ensure!(!sold_asset_amount.is_zero(), Error::<T>::ZeroAmount,);
 
         let mut poolOrderSwitched = false;
-        let reserves = Pools2::get((sold_asset_id, bought_asset_id));
+        let reserves = Pools::get((sold_asset_id, bought_asset_id));
 
-        if Pools2::contains_key((sold_asset_id, bought_asset_id))
+        if Pools::contains_key((sold_asset_id, bought_asset_id))
         {
              
         }
-        else if Pools2::contains_key((bought_asset_id, sold_asset_id))
+        else if Pools::contains_key((bought_asset_id, sold_asset_id))
         {
             poolOrderSwitched = true;
-            let reserves = Pools2::get((bought_asset_id, sold_asset_id));
+            let reserves = Pools::get((bought_asset_id, sold_asset_id));
         }
         else
         {
@@ -993,13 +1016,13 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         // instead of these 2 writes, we have 1 if with 1 write    
 
         if poolOrderSwitched {
-            Pools2::insert(
+            Pools::insert(
                 (bought_asset_id, sold_asset_id),
                 (output_reserve.saturating_sub(bought_asset_amount),input_reserve.saturating_add(sold_asset_amount))
             );
         }
         else {
-            Pools2::insert(
+            Pools::insert(
                 (sold_asset_id, bought_asset_id),
                 (input_reserve.saturating_add(sold_asset_amount),output_reserve.saturating_sub(bought_asset_amount))
             ); 

@@ -27,9 +27,10 @@ use log::{debug, error, info, trace, warn};
 use sc_block_builder::{BlockBuilderApi, BlockBuilderProvider};
 use sc_client_api::backend;
 use sc_telemetry::{telemetry, CONSENSUS_INFO};
-use sp_api::{ApiExt, ProvideRuntimeApi};
+use sp_api::{ApiExt, ProvideRuntimeApi, TransactionOutcome};
 use sp_blockchain::{ApplyExtrinsicFailed::Validity, Error::ApplyExtrinsicFailed, HeaderBackend};
 use sp_consensus::{evaluation, Proposal, RecordProof};
+use sp_core::ExecutionContext;
 use sp_inherents::InherentData;
 use sp_runtime::{
     generic::BlockId,
@@ -41,6 +42,8 @@ use std::{sync::Arc, time};
 
 use prometheus_endpoint::Registry as PrometheusRegistry;
 use sc_proposer_metrics::MetricsLink as PrometheusMetrics;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 /// Proposer factory.
 pub struct ProposerFactory<A, B, C> {
@@ -188,6 +191,8 @@ where
 impl<A, B, Block, C> Proposer<B, Block, C, A>
 where
     A: TransactionPool<Block = Block>,
+    A: 'static,
+    <A as sp_transaction_pool::TransactionPool>::InPoolTransaction: 'static,
     B: backend::Backend<Block> + Send + Sync + 'static,
     Block: BlockT,
     C: BlockBuilderProvider<B, Block, C>
@@ -216,7 +221,7 @@ where
             self.client
                 .new_block_at(&self.parent_id, inherent_digests, record_proof)?;
 
-        let (seed, inherents) = block_builder.create_inherents(inherent_data)?;
+        let (seed, inherents) = block_builder.create_inherents(inherent_data.clone())?;
         for inherent in inherents {
             match block_builder.push(inherent) {
                 Err(ApplyExtrinsicFailed(Validity(e))) if e.exhausted_resources() => {
@@ -241,67 +246,84 @@ where
         // proceed with transactions
         let block_timer = time::Instant::now();
         let mut skipped = 0;
-        let mut unqueue_invalid = Vec::new();
-
-        let pending_iterator = match executor::block_on(future::select(
-            self.transaction_pool.ready_at(self.parent_number),
-            futures_timer::Delay::new(deadline.saturating_duration_since((self.now)()) / 8),
-        )) {
-            Either::Left((iterator, _)) => iterator,
-            Either::Right(_) => {
-                log::warn!(
-					"Timeout fired waiting for transaction pool at block #{}. Proceeding with production.",
-					self.parent_number,
-				);
-                self.transaction_pool.ready()
-            }
-        };
+        let unqueue_invalid = Rc::new(RefCell::new(Vec::new()));
+        let invalid = unqueue_invalid.clone();
+        let parent_number = self.parent_number;
+        let transaction_pool = self.transaction_pool.clone();
+        let now = self.now;
 
         debug!("Attempting to push transactions from the pool.");
         debug!("Pool status: {:?}", self.transaction_pool.status());
-        for pending_tx in pending_iterator {
-            if (self.now)() > deadline {
-                debug!(
-                    "Consensus deadline reached when pushing block transactions, \
-					proceeding with proposing."
-                );
-                break;
-            }
+        block_builder.consume_valid_transactions(Box::new(move |at,api|{
 
-            let pending_tx_data = pending_tx.data().clone();
-            let pending_tx_hash = pending_tx.hash().clone();
-            trace!("[{:?}] Pushing to the block.", pending_tx_hash);
-            match sc_block_builder::BlockBuilder::push(&mut block_builder, pending_tx_data) {
-                Ok(()) => {
-                    debug!("[{:?}] Pushed to the block.", pending_tx_hash);
-                }
-                Err(ApplyExtrinsicFailed(Validity(e))) if e.exhausted_resources() => {
-                    if skipped < MAX_SKIPPED_TRANSACTIONS {
-                        skipped += 1;
-                        debug!(
-                            "Block seems full, but will try {} more transactions before quitting.",
-                            MAX_SKIPPED_TRANSACTIONS - skipped,
-                        );
-                    } else {
-                        debug!("Block is full, proceed with proposing.");
-                        break;
-                    }
-                }
-                Err(e) if skipped > 0 => {
-                    trace!(
-                        "[{:?}] Ignoring invalid transaction when skipping: {}",
-                        pending_tx_hash,
-                        e
+
+            let pending_iterator = match executor::block_on(future::select(
+                transaction_pool.ready_at(parent_number),
+                futures_timer::Delay::new(deadline.saturating_duration_since((now)()) / 8),
+            )) {
+                Either::Left((iterator, _)) => iterator,
+                Either::Right(_) => {
+                    log::warn!(
+                        "Timeout fired waiting for transaction pool at block #{}. Proceeding with production.",
+                        parent_number,
                     );
+                    transaction_pool.ready()
                 }
-                Err(e) => {
-                    debug!("[{:?}] Invalid transaction: {}", pending_tx_hash, e);
-                    unqueue_invalid.push(pending_tx_hash);
-                }
-            }
-        }
+            };
 
-        self.transaction_pool.remove_invalid(&unqueue_invalid);
+
+            let mut extrinsics: Vec<_> = Vec::new();
+            for p in pending_iterator{
+                let pending_tx_data = p.data().clone();
+                let pending_tx_hash = p.hash().clone();
+                let execution_status = api.execute_in_transaction(|_| {
+                    match api.apply_extrinsic_with_context(
+                        at,
+                        ExecutionContext::BlockConstruction,
+                        pending_tx_data.clone(),
+                    ) {
+                        Ok(Ok(_)) => TransactionOutcome::Commit(Ok(())),
+                        Ok(Err(tx_validity)) => TransactionOutcome::Rollback(Err(Validity(tx_validity).into())),
+                        Err(e) => TransactionOutcome::Rollback(Err(e)),
+                    }
+                });
+
+                match execution_status{
+                    Ok(()) => {
+                        extrinsics.push(pending_tx_data);
+                        debug!("[{:?}] Pushed to the block.", pending_tx_hash);
+                    }
+                    Err(ApplyExtrinsicFailed(Validity(e)))
+                            if e.exhausted_resources() => {
+                        if skipped < MAX_SKIPPED_TRANSACTIONS {
+                            skipped += 1;
+                            debug!(
+                                "Block seems full, but will try {} more transactions before quitting.",
+                                MAX_SKIPPED_TRANSACTIONS - skipped,
+                            );
+                        } else {
+                            debug!("Block is full, proceed with proposing.");
+                            break;
+                        }
+                    }
+                    Err(e) if skipped > 0 => {
+                        trace!(
+                            "[{:?}] Ignoring invalid transaction when skipping: {}",
+                            pending_tx_hash,
+                            e
+                        );
+                    }
+                    Err(e) => {
+                        debug!("[{:?}] Invalid transaction: {}", pending_tx_hash, e);
+                        invalid.borrow_mut().push(pending_tx_hash);
+                    }
+                };
+            }
+            extrinsics
+        }), inherent_data)?;
+
+        self.transaction_pool
+            .remove_invalid(unqueue_invalid.borrow().as_slice());
 
         let (block, storage_changes, proof) = block_builder.build(seed)?.into_inner();
 
@@ -375,6 +397,10 @@ mod tests {
     fn create_inherents() -> InherentData {
         let mut data: InherentData = Default::default();
         RandomSeedInherentDataProvider(Default::default())
+            .provide_inherent_data(&mut data)
+            .unwrap();
+
+        sp_ignore_tx::IgnoreTXInherentDataProvider(false)
             .provide_inherent_data(&mut data)
             .unwrap();
         data
@@ -454,7 +480,7 @@ mod tests {
 
         // then
         // block should have some extrinsics although we have some more in the pool.
-        assert_eq!(block.extrinsics().len(), 1);
+        assert_eq!(block.extrinsics().len(), 2); // inherents only [set_timestamp, shuffling_seed]
         assert_eq!(txpool.ready().count(), 2);
     }
 

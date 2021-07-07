@@ -82,7 +82,7 @@ use sp_consensus::{ImportResult, CanAuthorWith};
 use sp_consensus::import_queue::{
 	BoxJustificationImport, BoxFinalityProofImport,
 };
-use sp_core::{crypto::Public, traits::BareCryptoStore, vrf};
+use sp_core::{sr25519, crypto::Public, traits::BareCryptoStore, vrf};
 use sp_application_crypto::AppKey;
 use sp_runtime::{
 	generic::{BlockId, OpaqueDigestItemId}, Justification,
@@ -421,7 +421,7 @@ pub fn start_babe<B, C, SC, E, I, SO, CAW, Error>(BabeParams {
 		&inherent_data_providers,
 	)?;
 
-	info!(target: "babe", "👶 Starting BABE Authorship worker");
+	info!(target: "babe", "� Starting BABE Authorship worker");
 	let inner = sc_consensus_slots::start_slot_worker(
 		config.0,
 		select_chain,
@@ -677,6 +677,33 @@ impl<B, C, E, I, Error, SO> sc_consensus_slots::SimpleSlotWorker<B> for BabeSlot
 	}
 }
 
+fn inject_inherents<'a>(keystore: KeyStorePtr, public: &'a sr25519::Public, seed: SeedType, epoch: Epoch, slot_info: &'a mut SlotInfo) -> Result<(), sp_consensus::Error>{
+    let transcript_data = create_shuffling_seed_input_data(&seed);
+    let signature = keystore.read()
+        .sr25519_vrf_sign(<AuthorityId as AppKey>::ID, public, transcript_data)
+        .map_err(|_| sp_consensus::Error::StateUnavailable(String::from("signing seed failure")))?;
+
+    sp_ignore_tx::IgnoreTXInherentDataProvider(
+        {
+            let flag = slot_info.number == (epoch.start_slot + epoch.duration - 1);
+            flag
+        }
+    )
+    .provide_inherent_data(&mut slot_info.inherent_data)
+    .map_err(|_| sp_consensus::Error::StateUnavailable(String::from("cannot inject RandomSeed inherent data")))?;
+
+    RandomSeedInherentDataProvider(
+        SeedType{
+            seed: signature.output.to_bytes(),
+            proof: signature.proof.to_bytes()
+        }
+    )
+    .provide_inherent_data(&mut slot_info.inherent_data)
+    .map_err(|_| sp_consensus::Error::StateUnavailable(String::from("cannot inject RandomSeed inherent data")))?;
+
+    Ok(())
+}
+
 impl<B, C, E, I, Error, SO> SlotWorker<B> for BabeSlotWorker<B, C, E, I, SO> where
 	B: BlockT,
 	C: ProvideRuntimeApi<B> +
@@ -698,24 +725,18 @@ impl<B, C, E, I, Error, SO> SlotWorker<B> for BabeSlotWorker<B, C, E, I, SO> whe
 		let epoch_data = <Self as sc_consensus_slots::SimpleSlotWorker<B>>::epoch_data(self, &chain_head, slot_info.number).unwrap();
 
 		if let Some((_, public)) = <Self as sc_consensus_slots::SimpleSlotWorker<B>>::claim_slot(self, &chain_head, slot_info.number, &epoch_data){
-
-            let transcript_data = create_shuffling_seed_input_data(&seed);
-            let signature = self.keystore.read()
-                .sr25519_vrf_sign(<AuthorityId as AppKey>::ID, &public.into(), transcript_data)
-                .map_err(|_| sp_consensus::Error::StateUnavailable(String::from("signing seed failure")));
-            
-            let inject_randome_seed_inherent_data = signature.and_then(|sig| {
-                RandomSeedInherentDataProvider(
-                    SeedType{
-                        seed: sig.output.to_bytes(),
-                        proof: sig.proof.to_bytes()
-                    }
+            let changes = self.epoch_changes.lock(); 
+            let epoch = changes.viable_epoch(
+                    &epoch_data,
+                    |slot| Epoch::genesis(&self.config, slot)
                 )
-                .provide_inherent_data(&mut slot_info.inherent_data)
-                .map_err(|_| sp_consensus::Error::StateUnavailable(String::from("cannot inject RandomSeed inherent data")))
-            });
+                .ok_or(sp_consensus::Error::StateUnavailable(String::from("cannot fetch epoch for seed generation purposes")));
 
-            if let Err(e) = inject_randome_seed_inherent_data{
+            let inherent_injection_status = epoch.and_then(
+                |epoch| inject_inherents(self.keystore.clone(), &public.into(), seed, epoch.into_cloned_inner(), &mut slot_info)
+            );
+
+            if let Err(e) = inherent_injection_status{
                 return Box::pin(future::ready(Err(e)));
             }
         }

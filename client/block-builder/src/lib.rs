@@ -36,6 +36,7 @@ use sp_api::{
     TransactionOutcome,
 };
 use sp_blockchain::{Backend, Error};
+
 use sp_consensus::RecordProof;
 use sp_core::ExecutionContext;
 use sp_runtime::{
@@ -171,31 +172,69 @@ where
     ///
     /// This will ensure the extrinsic can be validly executed (by executing it).
     pub fn push(&mut self, xt: <Block as BlockT>::Extrinsic) -> Result<(), ApiErrorFor<A, Block>> {
-        info!("Pushing transactions without execution");
         self.extrinsics.push(xt);
         Ok(())
-        // TODO: check if its possible to verify transaction by first
-        // applying all the transactions from current block and then applying
-        // particular one from passed to BlockBuilder::push as in origin implementation
+    }
 
-        // self.api.execute_in_transaction(|api| {
-        // 	match api.apply_extrinsic_with_context(
-        // 		&block_id,
-        // 		ExecutionContext::BlockConstruction,
-        // 		xt.clone(),
-        // 	) {
-        // 		Ok(Ok(_)) => {
-        // 		exts.push(xt.clone());
-        // 			TransactionOutcome::Rollback(Ok(()))
-        // 		}
-        // 		Ok(Err(tx_validity)) => {
-        // 			TransactionOutcome::Rollback(
-        // 				Err(ApplyExtrinsicFailed::Validity(tx_validity).into()),
-        // 			)
-        // 		},
-        // 		Err(e) => TransactionOutcome::Rollback(Err(e)),
-        // 	}
-        // })
+    /// Fetches previous block extrinsics, temporary applies them and then try
+    /// to applies incomming transactions in order to prevalidate them
+    ///
+    pub fn consume_valid_transactions(
+        &mut self,
+        transaction_provider: Box<
+            dyn FnOnce(
+                &BlockId<Block>,
+                &<A as ProvideRuntimeApi<Block>>::Api,
+            ) -> Vec<Block::Extrinsic>,
+        >,
+        inherent_data: sp_inherents::InherentData,
+    ) -> Result<(), ApiErrorFor<A, Block>> {
+        let is_next_block_epoch = sp_ignore_tx::extract_inherent_data(&inherent_data)
+            .map_err(|_| String::from("cannot fetch information about ignore_tx flag"))?;
+
+        if is_next_block_epoch {
+            log::debug!(target: "block_builder", "the next block is new epoch - no transactions will be included");
+            return Ok(());
+        }
+
+        let parent_hash = self.parent_hash;
+        let block_id = &self.block_id;
+        let previous_block_extrinsics = self
+            .backend
+            .blockchain()
+            .body(BlockId::Hash(parent_hash))?
+            .unwrap_or_default();
+
+        let valid_extrinsics = self.api.execute_in_transaction(|api| {
+            for tx in previous_block_extrinsics {
+                // TODO return error
+                match api.apply_extrinsic_with_context(
+                    block_id,
+                    ExecutionContext::BlockConstruction,
+                    tx.clone(),
+                ) {
+                    Ok(Ok(_)) => {}
+                    Ok(Err(validity)) => {
+                        return TransactionOutcome::Rollback(Err(format!(
+                            "cannot apply previous block extrinsics - {:?}",
+                            validity
+                        )))
+                    }
+                    Err(e) => {
+                        return TransactionOutcome::Rollback(Err(format!(
+                            "cannot apply previous block extrinsics - {}",
+                            e
+                        )))
+                    }
+                }
+            }
+            TransactionOutcome::Rollback(Ok(transaction_provider(block_id, api)))
+        });
+
+        for xt in valid_extrinsics?.into_iter() {
+            self.extrinsics.push(xt);
+        }
+        Ok(())
     }
 
     /// Consume the builder to build a valid `Block` containing all pushed extrinsics.
@@ -304,7 +343,7 @@ where
     ) -> Result<(SeedType, Vec<Block::Extrinsic>), ApiErrorFor<A, Block>> {
         let block_id = self.block_id.clone();
         let seed = pallet_random_seed::extract_inherent_data(&inherent_data)
-            .map_err(|_| String::from("cannot random seed from inherents data"))?;
+            .map_err(|_| String::from("cannot read random seed from inherents data"))?;
         self.api
             .execute_in_transaction(move |api| {
                 // `create_inherents` should not change any state, to ensure this we always rollback

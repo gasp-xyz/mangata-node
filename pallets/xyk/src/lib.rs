@@ -344,8 +344,6 @@ decl_storage! {
         Treasury get(fn treasury): map hasher(opaque_blake2_256) TokenId => Balance;
         TreasuryBurn get(fn treasury_burn): map hasher(opaque_blake2_256) TokenId => Balance;
 
-        Nonce get (fn nonce): u32;
-
     }
     add_extra_genesis {
         config(created_pools_for_staking): Vec<(T::AccountId, TokenId, Balance, TokenId, Balance, TokenId)>;

@@ -1584,7 +1584,7 @@ impl<T: Trait> Valuate for Module<T> {
             liquidity_token_amount,
             liquidity_token_reserve,
         )
-        .unwrap_or_else(|_| Balance::max_value())
+        .unwrap_or_else(|_| Ok(Balance::max_value()))
     }
 
     fn scale_liquidity_by_mng_valuation(

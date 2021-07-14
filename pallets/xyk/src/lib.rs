@@ -548,13 +548,14 @@ impl<T: Trait> Module<T> {
         first_asset_id: TokenId,
         second_asset_id: TokenId,
     ) -> Result<(Balance, Balance), DispatchError> {
-        let reserves = Pools::get((first_asset_id, second_asset_id));
+        let mut reserves = Pools::get((first_asset_id, second_asset_id));
 
         if Pools::contains_key((first_asset_id, second_asset_id)) {
+
         } else if Pools::contains_key((second_asset_id, first_asset_id)) {
-            let reserves = Pools::get((second_asset_id, first_asset_id));
+            reserves = Pools::get((second_asset_id, first_asset_id));
         } else {
-            Error::<T>::NoSuchPool;
+            return Err(DispatchError::from(Error::<T>::NoSuchPool));
         }
 
         Ok((reserves.0, reserves.1))
@@ -577,7 +578,7 @@ impl<T: Trait> Module<T> {
                 (second_asset_amount, first_asset_amount),
             );
         } else {
-            Error::<T>::NoSuchPool;
+            return Err(DispatchError::from(Error::<T>::NoSuchPool));
         }
 
         Ok(())
@@ -1429,12 +1430,13 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             // Apply changes in token pools, removing withdrawn amounts
             // Cannot underflow due to earlier ensure
 
+            // check was executed in get_reserves call
             Module::<T>::set_reserves(
                 first_asset_id,
                 first_asset_reserve.saturating_sub(first_asset_amount),
                 second_asset_id,
                 second_asset_reserve.saturating_sub(second_asset_amount),
-            );
+            ).unwrap();
         }
 
         // Destroying burnt liquidity tokens
@@ -1565,13 +1567,18 @@ impl<T: Trait> Valuate for Module<T> {
     fn valuate_liquidity_token(
         liquidity_token_id: Self::CurrencyId,
         liquidity_token_amount: Self::Balance,
-    ) -> Result<Self::Balance, DispatchError> {
+    ) -> Self::Balance {
         let (mng_token_id, other_token_id) =
-            match Self::get_liquidity_token_mng_pool(liquidity_token_id) {
-                Ok(pool) => pool,
-                Err(_) => return Default::default(),
-            };
-        let mng_token_reserve = Module::<T>::get_reserves(mng_token_id, other_token_id)?.0;
+        match Self::get_liquidity_token_mng_pool(liquidity_token_id) {
+            Ok(pool) => pool,
+            Err(_) => return Default::default(),
+        };
+
+        let mng_token_reserve = match Module::<T>::get_reserves(mng_token_id, other_token_id){
+            Ok(reserves) => reserves.0,
+            Err(_) => return Default::default(),
+        };
+
         let liquidity_token_reserve: Balance =
             T::Currency::total_issuance(liquidity_token_id.into()).into();
 
@@ -1584,7 +1591,7 @@ impl<T: Trait> Valuate for Module<T> {
             liquidity_token_amount,
             liquidity_token_reserve,
         )
-        .unwrap_or_else(|_| Ok(Balance::max_value()))
+        .unwrap_or_else(|_| Balance::max_value())
     }
 
     fn scale_liquidity_by_mng_valuation(

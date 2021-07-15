@@ -592,7 +592,10 @@ impl_runtime_apis! {
         }
 
         fn execute_block(block: Block) {
-            Executive::execute_block(block)
+            let authors :Vec<_> = block.extrinsics().iter().map(
+                |tx| tx.clone().signature.map(|info| info.0) ).collect();
+
+            Executive::execute_block(block, authors)
         }
 
         fn initialize_block(header: &<Block as BlockT>::Header) {

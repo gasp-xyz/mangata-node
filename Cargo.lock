@@ -1621,11 +1621,14 @@ dependencies = [
 name = "frame-executive"
 version = "2.0.0"
 dependencies = [
+ "extrinsic-shuffler",
  "frame-support",
  "frame-system",
  "hex-literal",
+ "log",
  "pallet-balances",
  "pallet-indices",
+ "pallet-random-seed",
  "pallet-transaction-payment",
  "parity-scale-codec",
  "serde",
@@ -7198,9 +7201,9 @@ dependencies = [
 
 [[package]]
 name = "sp-runtime"
-version = "2.0.0"
+version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62542f8ce9d5fcb43a4dd3c3a53326d33aacf9b0bc9d353d6fe9fd5ff3031747"
+checksum = "85d8d12cba8cb9c50d8c0eee517d74044c22faa9322260e88dccb5bd06bf0762"
 dependencies = [
  "either",
  "hash256-std-hasher",

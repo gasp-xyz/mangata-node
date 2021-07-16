@@ -433,5 +433,6 @@ fn testnet_genesis(
         pallet_random_seed: Some(RandomConfig {
             random_seed: init_seed,
         }),
+        pallet_treasury: Some(Default::default()),
     }
 }

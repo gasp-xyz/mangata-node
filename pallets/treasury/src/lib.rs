@@ -1499,3 +1499,20 @@ impl<T: Trait<I>, I: Instance> OnUnbalanced<NegativeImbalanceOf<T, I>> for Modul
         Self::deposit_event(RawEvent::Deposit(numeric_amount));
     }
 }
+
+pub struct NoTippers {}
+
+impl Contains<sp_runtime::AccountId32> for NoTippers {
+    fn sorted_members() -> Vec<sp_runtime::AccountId32> {
+        Vec::new()
+    }
+}
+
+impl ContainsLengthBound for NoTippers {
+    fn max_len() -> usize {
+        0
+    }
+    fn min_len() -> usize {
+        0
+    }
+}

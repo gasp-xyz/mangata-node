@@ -517,7 +517,7 @@ parameter_types! {
 
 impl pallet_treasury::Trait for Runtime {
     type ModuleId = TreasuryModuleId;
-    type Currency = Balances;
+    type Currency = orml_tokens::CurrencyAdapter<Runtime, MGATokenID>;
     type ApproveOrigin = EnsureOneOf<
         AccountId,
         EnsureRoot<AccountId>,

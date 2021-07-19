@@ -151,6 +151,7 @@ use sp_runtime::{
     traits::{AccountIdConversion, BadOrigin, Hash, Saturating, StaticLookup, Zero},
     DispatchResult, ModuleId, Percent, Permill, RuntimeDebug,
 };
+use orml_tokens::{MultiTokenNegativeImbalance, MultiTokenCurrency, MultiTokenCurrencyAdapter};
 use sp_std::prelude::*;
 
 mod benchmarking;
@@ -162,6 +163,7 @@ type BalanceOf<T, I> =
 type PositiveImbalanceOf<T, I> = <<T as Trait<I>>::Currency as Currency<
     <T as frame_system::Trait>::AccountId,
 >>::PositiveImbalance;
+
 type NegativeImbalanceOf<T, I> = <<T as Trait<I>>::Currency as Currency<
     <T as frame_system::Trait>::AccountId,
 >>::NegativeImbalance;
@@ -1489,14 +1491,23 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
     }
 }
 
-impl<T: Trait<I>, I: Instance> OnUnbalanced<NegativeImbalanceOf<T, I>> for Module<T, I> {
-    fn on_nonzero_unbalanced(amount: NegativeImbalanceOf<T, I>) {
-        let numeric_amount = amount.peek();
+impl<T, I, Tokens> OnUnbalanced<MultiTokenNegativeImbalance<Tokens>> for Module<T, I>
+where
+    T: Trait<I>,
+    I: Instance, 
+    Tokens: orml_tokens::Trait,
+    Tokens::AccountId: From<T::AccountId>,
+    <T::Currency as Currency<T::AccountId>>::Balance : From<u128>,
+{
+
+    fn on_nonzero_unbalanced(amount: MultiTokenNegativeImbalance<Tokens>) {
+        let numeric_amount = amount.peek().into();
+        let currency_id = amount.0;
 
         // Must resolve into existing but better to be safe.
-        let _ = T::Currency::resolve_creating(&Self::account_id(), amount);
+        let _ = MultiTokenCurrencyAdapter::<Tokens>::resolve_creating(currency_id, &Self::account_id().into(), amount);
 
-        Self::deposit_event(RawEvent::Deposit(numeric_amount));
+        Module::<T,I>::deposit_event(RawEvent::Deposit(numeric_amount.into()));
     }
 }
 

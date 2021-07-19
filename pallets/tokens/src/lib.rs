@@ -93,7 +93,7 @@ pub use multi_token_currency::{
     MultiTokenReservableCurrency,
 };
 
-use multi_token_imbalances::{
+pub use multi_token_imbalances::{
     NegativeImbalance as MultiTokenNegativeImbalance,
     PositiveImbalance as MultiTokenPositiveImbalance,
 };

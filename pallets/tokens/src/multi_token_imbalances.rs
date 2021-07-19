@@ -43,7 +43,7 @@ impl<T: Trait> PositiveImbalance<T> {
 /// denoting that funds have been destroyed without any equal and opposite
 /// accounting.
 #[must_use]
-pub struct NegativeImbalance<T: Trait>(T::CurrencyId, T::Balance);
+pub struct NegativeImbalance<T: Trait>(pub T::CurrencyId, T::Balance);
 
 impl<T: Trait> NegativeImbalance<T> {
     /// Create a new negative imbalance from a balance.

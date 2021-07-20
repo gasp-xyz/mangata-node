@@ -20,7 +20,7 @@ use sp_runtime::traits::{
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult, MultiSignature,
+    ApplyExtrinsicResult, FixedPointNumber, MultiSignature, Perquintill,
 };
 use sp_std::prelude::*;
 //use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -58,6 +58,7 @@ pub use pallet_xyk;
 use xyk_runtime_api::{RpcAmountsResult, RpcResult};
 
 use frame_system::EnsureOneOf;
+pub use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
 
 /// Bridge pallets
 pub use bridge;
@@ -438,6 +439,9 @@ impl pallet_balances::Trait for Runtime {
 parameter_types! {
     pub const TransactionByteFee: Balance = 1;
     pub const MGATokenID: TokenId = 1;
+    pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
+    pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(1, 100_000);
+    pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000_000u128);
 }
 
 impl pallet_transaction_payment::Trait for Runtime {
@@ -445,7 +449,8 @@ impl pallet_transaction_payment::Trait for Runtime {
     type OnTransactionPayment = ();
     type TransactionByteFee = TransactionByteFee;
     type WeightToFee = IdentityFee<Balance>;
-    type FeeMultiplierUpdate = ();
+    type FeeMultiplierUpdate =
+        TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
 }
 
 impl pallet_sudo::Trait for Runtime {

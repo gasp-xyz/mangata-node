@@ -622,6 +622,11 @@ pub trait Header:
     /// Sets the parent hash.
     fn set_parent_hash(&mut self, hash: Self::Hash);
 
+    /// Returns a reference to the parent hash.
+    fn seed(&self) -> &Self::Hash;
+    /// Sets the parent hash.
+    fn set_seed(&mut self, seed: Self::Hash);
+
     /// Returns a reference to the digest.
     fn digest(&self) -> &Digest<Self::Hash>;
     /// Get a mutable reference to the digest.

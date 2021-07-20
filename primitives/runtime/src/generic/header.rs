@@ -51,6 +51,8 @@ pub struct Header<Number: Copy + Into<U256> + TryFrom<U256>, Hash: HashT> {
     pub extrinsics_root: Hash::Output,
     /// A chain-specific digest of data useful for light clients or referencing auxiliary data.
     pub digest: Digest<Hash::Output>,
+    /// Shuffling Seed
+    pub seed: Hash::Output,
 }
 
 #[cfg(feature = "std")]
@@ -66,6 +68,7 @@ where
             + self.state_root.size_of(ops)
             + self.extrinsics_root.size_of(ops)
             + self.digest.size_of(ops)
+            + self.seed.size_of(ops)
     }
 }
 
@@ -103,6 +106,7 @@ where
             state_root: Decode::decode(input)?,
             extrinsics_root: Decode::decode(input)?,
             digest: Decode::decode(input)?,
+            seed: Decode::decode(input)?,
         })
     }
 }
@@ -119,6 +123,7 @@ where
         dest.push(&self.state_root);
         dest.push(&self.extrinsics_root);
         dest.push(&self.digest);
+        dest.push(&self.seed);
     }
 }
 
@@ -212,7 +217,16 @@ where
             state_root,
             parent_hash,
             digest,
+            seed: Default::default(),
         }
+    }
+
+    fn seed(&self) -> &Self::Hash {
+        &self.seed
+    }
+
+    fn set_seed(&mut self, seed: Self::Hash) {
+        self.seed = seed;
     }
 }
 

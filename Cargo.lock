@@ -7199,8 +7199,6 @@ dependencies = [
 [[package]]
 name = "sp-runtime"
 version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62542f8ce9d5fcb43a4dd3c3a53326d33aacf9b0bc9d353d6fe9fd5ff3031747"
 dependencies = [
  "either",
  "hash256-std-hasher",
@@ -7211,11 +7209,13 @@ dependencies = [
  "paste",
  "rand 0.7.3",
  "serde",
+ "serde_json",
  "sp-application-crypto",
  "sp-arithmetic",
  "sp-core",
  "sp-inherents",
  "sp-io",
+ "sp-state-machine",
  "sp-std",
 ]
 

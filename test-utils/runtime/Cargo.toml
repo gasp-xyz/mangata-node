@@ -31,7 +31,7 @@ frame-support = { version = "2.0.0", default-features = false}
 sp-version = { version = "2.0.0", default-features = false}
 sp-session = { version = "2.0.0", default-features = false}
 sp-api = { version = "2.0.0", default-features = false}
-sp-runtime = { version = "2.0.0", default-features = false}
+sp-runtime = { version = "2.0.0", default-features = false, path = "/home/dev/mangata-node/primitives/runtime/" }
 pallet-babe = { version = "2.0.0", default-features = false}
 frame-system = { version = "2.0.0", default-features = false}
 frame-system-rpc-runtime-api = { version = "2.0.0", default-features = false}

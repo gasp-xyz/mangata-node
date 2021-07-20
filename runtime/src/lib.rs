@@ -596,6 +596,7 @@ impl_runtime_apis! {
         }
 
         fn initialize_block(header: &<Block as BlockT>::Header) {
+            let number = header.number;
             Executive::initialize_block(header)
         }
     }

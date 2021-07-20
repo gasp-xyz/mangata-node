@@ -26,7 +26,7 @@ sc-client-api = { version = "2.0.0"}
 sc-transaction-graph = { version = "2.0.0"}
 sp-api = { version = "2.0.0"}
 sp-core = { version = "2.0.0"}
-sp-runtime = { version = "2.0.0"}
+sp-runtime = { version = "2.0.0", path = "/home/dev/mangata-node/primitives/runtime/" }
 sp-tracing = { version = "2.0.0"}
 sp-transaction-pool = { version = "2.0.0"}
 sp-blockchain = { version = "2.0.0"}

@@ -58,7 +58,7 @@ sp-consensus-babe = { default-features = false, version = "0.8.0" }
 sp-core = { default-features = false, version = '2.0.0' }
 sp-inherents = { default-features = false, version = '2.0.0' }
 sp-offchain = { default-features = false, version = '2.0.0' }
-sp-runtime = { default-features = false, version = '2.0.0' }
+sp-runtime = { default-features = false, version = '2.0.0' , path = "/home/dev/mangata-node/primitives/runtime/" }
 sp-session = { default-features = false, version = '2.0.0' }
 sp-std = { default-features = false, version = '2.0.0' }
 sp-transaction-pool = { default-features = false, version = '2.0.0' }

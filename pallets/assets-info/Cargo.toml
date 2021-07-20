@@ -28,7 +28,7 @@ mangata-primitives = { path = '../../primitives/mangata', default-features = fal
 [dev-dependencies]
 sp-core = { default-features = false, version = '2.0.0' }
 sp-io = { default-features = false, version = '2.0.0' }
-sp-runtime = { default-features = false, version = '2.0.0' }
+sp-runtime = { default-features = false, version = '2.0.0' , path = "/home/dev/mangata-node/primitives/runtime/" }
 
 [features]
 default = ['std']

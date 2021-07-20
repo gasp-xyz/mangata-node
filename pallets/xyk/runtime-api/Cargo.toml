@@ -8,7 +8,7 @@ license = "GPL-3.0-or-later"
 [dependencies]
 serde = { version = "1.0.101", optional = true, features = ["derive"] }
 sp-api = { version = '2.0.0', default-features = false}
-sp-runtime = { default-features = false, version = '2.0.0' }
+sp-runtime = { default-features = false, version = '2.0.0' , path = "/home/dev/mangata-node/primitives/runtime/" }
 frame-support = { default-features = false, version = '2.0.0' }
 frame-system = { default-features = false, version = '2.0.0' }
 sp-core = { default-features = false, version = '2.0.0' }

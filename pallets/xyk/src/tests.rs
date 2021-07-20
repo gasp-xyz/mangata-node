@@ -75,6 +75,7 @@ fn initialize() {
     .unwrap();
 }
 
+
 fn initialize_buy_and_burn() {
     // creating asset with assetId 0 and minting to accountId 2
     let acc_id: u64 = 2;
@@ -774,7 +775,7 @@ fn mint_W() {
         assert_eq!(XykStorage::balance(2, 2), 150000000000000000000); // amount of liquidity assets owned by user by creating pool and minting
         // assert_eq!(XykStorage::asset_pool((0, 1)), 60000000000000000000); // amount in pool map
         // assert_eq!(XykStorage::asset_pool((1, 0)), 90000000000000000001); // amount in pool map
-        assert_eq!(XykStorage::asset_pool((0, 1)), (60000000000000000001, 90000000000000000000));
+        assert_eq!(XykStorage::asset_pool((0, 1)), (60000000000000000000, 90000000000000000001));
         assert_eq!(XykStorage::balance(0, 2), 940000000000000000000); // amount of asset 0 in user acc after minting
         assert_eq!(XykStorage::balance(1, 2), 909999999999999999999); // amount of asset 1 in user acc after minting
         assert_eq!(

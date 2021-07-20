@@ -551,14 +551,15 @@ impl<T: Trait> Module<T> {
         let mut reserves = Pools::get((first_asset_id, second_asset_id));
 
         if Pools::contains_key((first_asset_id, second_asset_id)) {
-
+            return Ok((reserves.0, reserves.1));
         } else if Pools::contains_key((second_asset_id, first_asset_id)) {
             reserves = Pools::get((second_asset_id, first_asset_id));
+            return Ok((reserves.1, reserves.0));
         } else {
             return Err(DispatchError::from(Error::<T>::NoSuchPool));
         }
 
-        Ok((reserves.0, reserves.1))
+       
     }
 
     pub fn set_reserves(
@@ -644,8 +645,9 @@ impl<T: Trait> Module<T> {
         // Check whether to settle treasury and buyburn with sold or bought asset.
         // If sold token is directly mangata, or is in pair with mangata and bought id is not and bought token is not mangata, we use sold token as settling token
         if sold_asset_id == mangata_id
-            || (Pools::contains_key((sold_asset_id, mangata_id))
+            || ((Pools::contains_key((sold_asset_id, mangata_id)) || Pools::contains_key((mangata_id, sold_asset_id)))
                 && !Pools::contains_key((bought_asset_id, mangata_id))
+                && !Pools::contains_key((mangata_id, bought_asset_id))
                 && bought_asset_id != mangata_id)
         {
             settling_asset_id = sold_asset_id;
@@ -697,7 +699,7 @@ impl<T: Trait> Module<T> {
             T::Currency::burn_and_settle(mangata_id.into(), &vault, burn_amount.into())?;
         }
         //If settling token is connected to mangata, token is swapped in corresponding pool to mangata without fee
-        else if Pools::contains_key((settling_asset_id, mangata_id)) {
+        else if Pools::contains_key((settling_asset_id, mangata_id)) ||  Pools::contains_key((mangata_id, settling_asset_id)) {
             // Getting token reserves
             let (input_reserve, output_reserve) =
             Module::<T>::get_reserves(settling_asset_id, mangata_id)?;

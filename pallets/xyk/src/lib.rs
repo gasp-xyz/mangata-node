@@ -683,7 +683,7 @@ impl<T: Trait> Module<T> {
     fn settle_treasury_and_burn(
         sold_asset_id: TokenId,
         bought_asset_id: TokenId,
-        buy_and_burn_amount: Balance, 
+        burn_amount: Balance, 
         treasury_amount: Balance,
     ) -> DispatchResult {
         let vault = Self::account_id();
@@ -909,7 +909,8 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         // Liquidity token amount calculation
         let initial_liquidity = first_asset_amount
             .checked_add(second_asset_amount)
-            .ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+            .ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+            / 2;
 
         Pools::insert((first_asset_id, second_asset_id), first_asset_amount);
 
@@ -1035,7 +1036,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
 
         // Calculate bought asset amount to be received by paying sold asset amount
         let bought_asset_amount =
-            Module::<T>::calculate_sell_price_no_fee(input_reserve, output_reserve, sold_asset_amount - pool_fee_amount - buy_and_burn_settle_amount)?;
+            Module::<T>::calculate_sell_price_no_fee(input_reserve, output_reserve, sold_asset_amount - pool_fee_amount - treasury_amount - buy_and_burn_amount)?;
 
         // Ensure user has enough tokens to sell
         ensure!(
@@ -1046,7 +1047,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
 
         let vault = Module::<T>::account_id();
 
-        // Transfer of fees, before tx can succeed
+        // Transfer of fees, before tx can fail
         <T as Trait>::Currency::transfer(
             sold_asset_id.into(),
             &sender,
@@ -1136,35 +1137,6 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             Error::<T>::NoSuchPool,
         );
 
-        let mut buy_and_burn_amount =  multiply_by_rational(
-            sold_asset_amount,
-            BUYANDBURN_PERCENTAGE,
-            10000,
-        )
-        .map_err(|_| Error::<T>::UnexpectedFailure)?;
-
-        let mut treasury_amount =  multiply_by_rational(
-            sold_asset_amount,
-            TREASURY_PERCENTAGE,
-            10000,
-        )
-        .map_err(|_| Error::<T>::UnexpectedFailure)?;
-
-        let mut pool_fee_amount =  multiply_by_rational(
-            sold_asset_amount,
-            POOL_FEE_PERCENTAGE,
-            10000,
-        )
-        .map_err(|_| Error::<T>::UnexpectedFailure)?;
-
-        // TODO maybe min amounts in constants
-        let min_fee: u128 = 0;
-
-        if buy_and_burn_amount + treasury_amount + pool_fee_amount < min_fee {
-            buy_and_burn_amount = min_fee * FEE_PERCENTAGE / BUYANDBURN_PERCENTAGE;
-            treasury_amount = min_fee * FEE_PERCENTAGE / TREASURY_PERCENTAGE;
-            pool_fee_amount = min_fee - buy_and_burn_amount - treasury_amount;
-        }
 
         // Get token reserves
         let input_reserve = Pools::get((sold_asset_id, bought_asset_id));
@@ -1182,6 +1154,37 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         // Calculate amount to be paid from bought amount
         let sold_asset_amount =
             Module::<T>::calculate_buy_price(input_reserve, output_reserve, bought_asset_amount)?;
+
+        
+            let mut buy_and_burn_amount =  multiply_by_rational(
+                sold_asset_amount,
+                BUYANDBURN_PERCENTAGE,
+                10000,
+            )
+            .map_err(|_| Error::<T>::UnexpectedFailure)?;
+    
+            let mut treasury_amount =  multiply_by_rational(
+                sold_asset_amount,
+                TREASURY_PERCENTAGE,
+                10000,
+            )
+            .map_err(|_| Error::<T>::UnexpectedFailure)?;
+    
+            let mut pool_fee_amount =  multiply_by_rational(
+                sold_asset_amount,
+                POOL_FEE_PERCENTAGE,
+                10000,
+            )
+            .map_err(|_| Error::<T>::UnexpectedFailure)?;
+    
+            // TODO maybe min amounts in constants
+            let min_fee: u128 = 0;
+    
+            if buy_and_burn_amount + treasury_amount + pool_fee_amount < min_fee {
+                buy_and_burn_amount = min_fee * FEE_PERCENTAGE / BUYANDBURN_PERCENTAGE;
+                treasury_amount = min_fee * FEE_PERCENTAGE / TREASURY_PERCENTAGE;
+                pool_fee_amount = min_fee - buy_and_burn_amount - treasury_amount;
+            }
 
         ensure!(
             input_reserve.checked_add(sold_asset_amount).is_some(),

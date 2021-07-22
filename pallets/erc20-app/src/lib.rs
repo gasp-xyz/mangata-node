@@ -29,7 +29,7 @@ use artemis_asset as asset;
 use artemis_core::{Application, BridgedAssetId};
 use mangata_primitives::{Balance, TokenId};
 use orml_tokens::MultiTokenCurrencyExtended;
-use sp_runtime::traits::SaturatedConversion;
+use sp_std::convert::TryInto;
 
 mod payload;
 use payload::Payload;
@@ -68,7 +68,9 @@ decl_error! {
         /// Asset could not be burned
         BurnFailure,
         /// The recipient address is null/default value
-        NullRecipient
+        NullRecipient,
+        /// Passed amount is too big
+        TooBigAmount,
     }
 }
 
@@ -82,11 +84,12 @@ decl_module! {
 
         /// Burn an ERC20 token balance
         #[weight = 0]
-        pub fn burn(origin, asset_id: BridgedAssetId, recipient: H160, amount: U256) -> DispatchResult {
+        pub fn burn(origin, asset_id: BridgedAssetId, recipient: H160, input_amount: U256) -> DispatchResult {
             let who = ensure_signed(origin)?;
 
-            let transfer_event = RawEvent::Transfer(asset_id, who.clone(), recipient, amount);
-            let amount = amount.low_u128().saturated_into::<Balance>();
+            let amount: Balance = input_amount
+                .try_into()
+                .or(Err(Error::<T>::TooBigAmount))?;
 
             // The asset_id 0 is reserved for the ETH app
             if asset_id == H160::zero() {
@@ -100,7 +103,7 @@ decl_module! {
                 amount.into(),
                 ).map_err(|_| Error::<T>::BurnFailure)?;
 
-            Self::deposit_event(transfer_event);
+            Self::deposit_event(RawEvent::Transfer(asset_id, who.clone(), recipient, input_amount));
             Ok(())
         }
 
@@ -117,21 +120,17 @@ impl<T: Trait> Module<T> {
             return Err(Error::<T>::NullRecipient.into());
         }
 
-        //FIXME overflow unsafe!
+        let amount: Balance = payload
+            .amount
+            .try_into()
+            .or(Err(Error::<T>::TooBigAmount))?;
+
         if !<asset::Module<T>>::exists(payload.token_addr) {
-            let id: TokenId = T::Currency::create(
-                &payload.recipient_addr,
-                payload.amount.low_u128().saturated_into::<Balance>().into(),
-            )
-            .into();
+            let id: TokenId = T::Currency::create(&payload.recipient_addr, amount.into()).into();
             <asset::Module<T>>::link_assets(id, payload.token_addr);
         } else {
             let id = <asset::Module<T>>::get_native_asset_id(payload.token_addr);
-            T::Currency::mint(
-                id.into(),
-                &payload.recipient_addr,
-                payload.amount.low_u128().saturated_into::<Balance>().into(),
-            )?;
+            T::Currency::mint(id.into(), &payload.recipient_addr, amount.into())?;
         }
 
         Ok(())

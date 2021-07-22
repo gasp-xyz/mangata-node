@@ -29,7 +29,7 @@ use artemis_asset as asset;
 use artemis_core::{Application, BridgedAssetId};
 use mangata_primitives::{Balance, TokenId};
 use orml_tokens::MultiTokenCurrencyExtended;
-use sp_runtime::traits::SaturatedConversion;
+use sp_std::convert::TryInto;
 
 mod payload;
 use payload::Payload;
@@ -67,6 +67,8 @@ decl_error! {
         InvalidPayload,
         /// Asset could not be burned
         BurnFailure,
+        /// Passed amount is too big
+        TooBigAmount,
     }
 }
 
@@ -81,14 +83,13 @@ decl_module! {
         // Users should burn their holdings to release funds on the Ethereum side
         // TODO: Calculate weights
         #[weight = 0]
-        pub fn burn(origin, recipient: H160, amount: U256) -> DispatchResult {
+        pub fn burn(origin, recipient: H160, input_amount: U256) -> DispatchResult {
             let who = ensure_signed(origin)?;
-            let asset_id: BridgedAssetId = H160::zero();
+            let asset_id = <asset::Module<T>>::get_native_asset_id(H160::zero());
 
-            let transfer_event = RawEvent::Transfer(who.clone(), recipient, amount);
-            let asset_id = <asset::Module<T>>::get_native_asset_id(asset_id);
-
-            let amount = amount.low_u128().saturated_into::<Balance>();
+            let amount: Balance = input_amount
+                .try_into()
+                .or(Err(Error::<T>::TooBigAmount))?;
 
             T::Currency::burn_and_settle(
                 asset_id.into(),
@@ -96,7 +97,7 @@ decl_module! {
                 amount.into(),
                 ).map_err(|_| Error::<T>::BurnFailure)?;
 
-            Self::deposit_event(transfer_event);
+            Self::deposit_event(RawEvent::Transfer(who.clone(), recipient, input_amount));
             Ok(())
         }
 
@@ -106,23 +107,18 @@ decl_module! {
 impl<T: Trait> Module<T> {
     fn handle_event(payload: Payload<T::AccountId>) -> DispatchResult {
         let asset_id: BridgedAssetId = H160::zero();
-        // <asset::Module<T>>::do_mint(asset_id, &payload.recipient_addr, payload.amount)
 
-        //FIXME overflow unsafe!
+        let amount: Balance = payload
+            .amount
+            .try_into()
+            .or(Err(Error::<T>::TooBigAmount))?;
+
         if !<asset::Module<T>>::exists(asset_id) {
-            let id: TokenId = T::Currency::create(
-                &payload.recipient_addr,
-                payload.amount.low_u128().saturated_into::<Balance>().into(),
-            )
-            .into();
+            let id: TokenId = T::Currency::create(&payload.recipient_addr, amount.into()).into();
             <asset::Module<T>>::link_assets(id, asset_id);
         } else {
             let id = <asset::Module<T>>::get_native_asset_id(asset_id);
-            T::Currency::mint(
-                id.into(),
-                &payload.recipient_addr,
-                payload.amount.low_u128().saturated_into::<Balance>().into(),
-            )?;
+            T::Currency::mint(id.into(), &payload.recipient_addr, amount.into())?;
         }
 
         Ok(())

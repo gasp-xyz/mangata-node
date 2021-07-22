@@ -809,22 +809,25 @@ mod tests {
     #[test]
     fn block_import_works() {
         new_test_ext(1).execute_with(|| {
-            Executive::execute_block(Block {
-                header: Header {
-                    parent_hash: [69u8; 32].into(),
-                    number: 1,
-                    state_root: hex!(
-                        "465a1569d309039bdf84b0479d28064ea29e6584584dc7d788904bb14489c6f6"
-                    )
-                    .into(),
-                    extrinsics_root: hex!(
-                        "03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314"
-                    )
-                    .into(),
-                    digest: Digest { logs: vec![] },
+            Executive::execute_block(
+                Block {
+                    header: Header {
+                        parent_hash: [69u8; 32].into(),
+                        number: 1,
+                        state_root: hex!(
+                            "465a1569d309039bdf84b0479d28064ea29e6584584dc7d788904bb14489c6f6"
+                        )
+                        .into(),
+                        extrinsics_root: hex!(
+                            "03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314"
+                        )
+                        .into(),
+                        digest: Digest { logs: vec![] },
+                    },
+                    extrinsics: vec![],
                 },
-                extrinsics: vec![],
-            });
+                Default::default(),
+            );
         });
     }
 
@@ -833,19 +836,22 @@ mod tests {
     #[should_panic]
     fn block_import_of_bad_state_root_fails() {
         new_test_ext(1).execute_with(|| {
-            Executive::execute_block(Block {
-                header: Header {
-                    parent_hash: [69u8; 32].into(),
-                    number: 1,
-                    state_root: [0u8; 32].into(),
-                    extrinsics_root: hex!(
-                        "03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314"
-                    )
-                    .into(),
-                    digest: Digest { logs: vec![] },
+            Executive::execute_block(
+                Block {
+                    header: Header {
+                        parent_hash: [69u8; 32].into(),
+                        number: 1,
+                        state_root: [0u8; 32].into(),
+                        extrinsics_root: hex!(
+                            "03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314"
+                        )
+                        .into(),
+                        digest: Digest { logs: vec![] },
+                    },
+                    extrinsics: vec![],
                 },
-                extrinsics: vec![],
-            });
+                Default::default(),
+            );
         });
     }
 
@@ -854,19 +860,22 @@ mod tests {
     #[should_panic]
     fn block_import_of_bad_extrinsic_root_fails() {
         new_test_ext(1).execute_with(|| {
-            Executive::execute_block(Block {
-                header: Header {
-                    parent_hash: [69u8; 32].into(),
-                    number: 1,
-                    state_root: hex!(
-                        "49cd58a254ccf6abc4a023d9a22dcfc421e385527a250faec69f8ad0d8ed3e48"
-                    )
-                    .into(),
-                    extrinsics_root: [0u8; 32].into(),
-                    digest: Digest { logs: vec![] },
+            Executive::execute_block(
+                Block {
+                    header: Header {
+                        parent_hash: [69u8; 32].into(),
+                        number: 1,
+                        state_root: hex!(
+                            "49cd58a254ccf6abc4a023d9a22dcfc421e385527a250faec69f8ad0d8ed3e48"
+                        )
+                        .into(),
+                        extrinsics_root: [0u8; 32].into(),
+                        digest: Digest { logs: vec![] },
+                    },
+                    extrinsics: vec![],
                 },
-                extrinsics: vec![],
-            });
+                Default::default(),
+            );
         });
     }
 

@@ -1437,7 +1437,6 @@ dependencies = [
  "extrinsic-info-runtime-api",
  "log",
  "pallet-random-seed",
- "parity-scale-codec",
  "random-seed-runtime-api",
  "sp-api",
  "sp-block-builder",

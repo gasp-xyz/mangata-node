@@ -36,16 +36,23 @@ decl_module! {
             DispatchClass::Mandatory
         )]
         fn set(origin, seed: SeedType) {
+            // SBP M1 review: probably need to ensure the origin is Inherent (cfr. Timestamp pallet)
+            // ensure_none(origin)?;
+            // SBP M1 review: also ensure the seed is set only once per block ?  (cfr. Timestamp pallet)
+            // assert!(!<Self as Store>::DidUpdate::exists(), "Seed must be updated only once in the block");
             log::debug!(target: "mat", "set seed: ${:X?}", seed);
             <Self as Store>::Seed::put(seed);
         }
 
+        // SBP M1 review: more inspiration from the Timestamp pallet ... you could enforce the invariant that
+        // the seed MUST be updated once per block (see Timestamp pallet's on_finalize)
     }
 }
 
 decl_storage! {
     trait Store for Module<T: Trait> as RandomSeed {
-        /// Current time for the current block.
+        // SBP M1 review: doc typo
+        /// Current seed for the current block.
         pub Seed get(fn seed) : SeedType;
     }
     add_extra_genesis {

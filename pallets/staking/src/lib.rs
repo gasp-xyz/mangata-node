@@ -830,6 +830,18 @@ pub trait WeightInfo {
 }
 
 pub trait Trait: frame_system::Trait + SendTransactionTypes<Call<Self>> {
+    // SBP M1 review: it's very difficult to figure out what are the changes you implemented
+    // in this local fork of the FRAME staking pallet. I see you use the ORML Multi-currency,
+    // and integrated the staking pallet with your liquidity token ... for the rest, because
+    // reformatting was applied to all sources, it makes it extra hard to spot the alterations
+    // compared to the original implementation.
+    // > Maybe you can point me to those specific parts that were modified ? thx !
+    //
+    // This will also make it harder for you to integrate latest changes / fixes (or upgrade)
+    // from upstream (e.g. Substrate & FRAME v3.0 or monthly-xx-xx-xx version).
+    // A better strategy could be to fork the whole Substrate repo, this will allow to pull
+    // upstream changes more easily. And you can maintain your changes in a dedicated feature
+    // branch, which your can reference in your runtime.
     type NativeCurrencyId: Get<TokenId>;
 
     type MinStakeAmount: Get<Balance>;

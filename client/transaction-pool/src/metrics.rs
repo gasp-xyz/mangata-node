@@ -18,6 +18,8 @@
 
 //! Transaction pool Prometheus metrics.
 
+// SBP M1 review: very difficult to see what was changed as the whole file was re-formatted ...
+
 use std::sync::Arc;
 
 use prometheus_endpoint::{register, Counter, PrometheusError, Registry, U64};

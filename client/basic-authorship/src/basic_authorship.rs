@@ -18,6 +18,8 @@
 
 //! A consensus proposer for "basic" chains which use the primitive inherent-data.
 
+// SBP M1 review: very difficult to see what was changed as the whole file was re-formatted ...
+
 // FIXME #1021 move this into sp-consensus
 
 use codec::Decode;

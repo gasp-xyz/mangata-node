@@ -18,6 +18,8 @@
 
 //! Transaction pool error.
 
+// SBP M1 review: very difficult to see what was changed as the whole file was re-formatted ...
+
 use sp_transaction_pool::error::Error as TxPoolError;
 
 /// Transaction pool result.

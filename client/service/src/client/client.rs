@@ -19,6 +19,8 @@
 
 //! Substrate Client
 
+// SBP M1 review: very difficult to see what was changed as the whole file was re-formatted ...
+
 use super::{
 	block_rules::{BlockRules, LookupResult as BlockLookupResult},
 	genesis,

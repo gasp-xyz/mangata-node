@@ -18,6 +18,8 @@
 
 //! Chain api required for the transaction pool.
 
+// SBP M1 review: very difficult to see what was changed as the whole file was re-formatted ...
+
 use codec::{Decode, Encode};
 use futures::{
     channel::oneshot,

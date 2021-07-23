@@ -247,6 +247,8 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+// SBP-M1 review: no need for the 'static here, constants have by default a `'static` lifetime 
+// (you may want to run `cargo clippy` in a CI job)
 pub(crate) const LOG_TARGET: &'static str = "xyk";
 
 // syntactic sugar for logging.
@@ -267,6 +269,8 @@ pub trait Trait: frame_system::Trait + pallet_assets_info::Trait {
 }
 
 const PALLET_ID: ModuleId = ModuleId(*b"79b14c96");
+// SBP M1 review: You could sp_arithmetics/sp_runtime PerThings types
+// see https://substrate.dev/rustdocs/latest/sp_runtime/struct.Permill.html 
 // 1/100 %
 const TREASURY_PERCENTAGE: u128 = 5;
 const BUYANDBURN_PERCENTAGE: u128 = 5;
@@ -336,7 +340,8 @@ decl_event!(
 // XYK exchange pallet storage.
 decl_storage! {
     trait Store for Module<T: Trait> as XykStorage {
-
+        // SBP-M1 review: opaque hashers have been deprecated, use a transparent hasher instead e.g. blake2_128_concat
+        // See: https://substrate.dev/docs/en/knowledgebase/runtime/storage#hashing-algorithms
         Pools get(fn asset_pool): map hasher(opaque_blake2_256) (TokenId, TokenId) => Balance;
 
         LiquidityAssets get(fn liquidity_asset): map hasher(opaque_blake2_256) (TokenId, TokenId) => Option<TokenId>;
@@ -373,13 +378,19 @@ decl_module! {
         pub fn create_pool(
             origin,
             first_asset_id: TokenId,
+            // SBP M1 review: You could use #[compact] encoding for amounts
+            // See e.g. https://github.com/paritytech/substrate/blob/1d5abf01abafdb6c15bcd0172f5de09fd87c5fbf/frame/balances/src/lib.rs#L273
             first_asset_amount: Balance,
             second_asset_id: TokenId,
             second_asset_amount: Balance
         ) -> DispatchResult {
 
+            // SBP-M1 review: anyone can create a pool ?            
             let sender = ensure_signed(origin)?;
 
+            // SBP-M1 review: should use atomic transaction storage updates
+            // See ORML's with_transaction_result (for Substrate v2.0)
+            // or the new #[transactional] annotation (Substrate V3.0)
             <Self as XykFunctionsTrait<T::AccountId>>::create_pool(sender, first_asset_id, first_asset_amount, second_asset_id, second_asset_amount)
 
         }
@@ -1641,6 +1652,8 @@ pub trait Valuate {
         + From<TokenId>
         + Into<TokenId>;
 
+    // SBP M1 review: might not be a good idea to use the token ticker in function name
+    // (in the rare case you need to rename it ... which seems to be the case)
     fn get_liquidity_token_mng_pool(
         liquidity_token_id: Self::CurrencyId,
     ) -> Result<(Self::CurrencyId, Self::CurrencyId), DispatchError>;

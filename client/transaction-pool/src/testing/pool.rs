@@ -16,6 +16,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+// SBP M1 review: very difficult to see what was changed as the whole file was re-formatted ...
+
 use crate::*;
 use codec::Encode;
 use futures::executor::{block_on, block_on_stream};

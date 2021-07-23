@@ -25,6 +25,8 @@
 //! The block builder utility is used in the node as an abstraction over the runtime api to
 //! initialize a block, to push extrinsics and to finalize a block.
 
+// SBP M1 review: very difficult to see what was changed as the whole file was re-formatted ...
+
 #![warn(missing_docs)]
 
 use codec::Encode;

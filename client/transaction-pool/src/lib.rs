@@ -18,6 +18,8 @@
 
 //! Substrate transaction pool implementation.
 
+// SBP M1 review: very difficult to see what was changed as the whole file was re-formatted ...
+
 #![recursion_limit = "256"]
 #![warn(missing_docs)]
 #![warn(unused_extern_crates)]

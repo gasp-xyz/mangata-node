@@ -1531,6 +1531,8 @@ fn validate_blocks<Block: BlockT>(blocks: &Vec<message::BlockData<Block>>, who: 
 				return Err(BadPeer(who.clone(), rep::BAD_BLOCK))
 			}
 		}
+		// SBP M1 review: this seems like an important invariant to remove ...
+		// /!\ Make sure you understand the impact.
 		//FIXME add extrinsic root check
 		// if let (Some(header), Some(body)) = (&b.header, &b.body) {
 		// 	let expected = *header.extrinsics_root();

@@ -568,7 +568,7 @@ pub type SignedExtra = (
     frame_system::CheckTxVersion<Runtime>,
     frame_system::CheckGenesis<Runtime>,
     frame_system::CheckEra<Runtime>,
-    frame_system::CheckNonce<Runtime>,
+    check_nonce_mangata::CheckNonce<Runtime>,
     frame_system::CheckWeight<Runtime>,
     pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 );
@@ -645,9 +645,12 @@ impl_runtime_apis! {
             tx: <Block as BlockT>::Extrinsic,
         ) -> Option<extrinsic_info_runtime_api::ExtrinsicInfo> {
             tx.signature.clone().map(|sig|
+                {
+                let nonce: check_nonce_mangata::CheckNonce<_> = sig.2.4;
                 extrinsic_info_runtime_api::ExtrinsicInfo{
                     who: sig.0,
-                    nonce: 0,
+                    nonce: nonce.0,
+                }
                 }
             )
         }

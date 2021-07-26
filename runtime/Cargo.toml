@@ -33,6 +33,7 @@ pallet-timestamp = { path = '../pallets/timestamp', default-features = false, ve
 pallet-random-seed = { path='../pallets/random-seed', default-features = false, version='2.0.0' }
 pallet-assets-info = { path = '../pallets/assets-info', default-features = false, version = '2.0.0' }
 pallet-staking = { path = '../pallets/staking', default-features = false, version = "2.0.0" }
+check-nonce-mangata = { path = '../primitives/check-nonce', default-features = false, version = "2.0.0" }
 pallet-staking-reward-curve = { path = '../pallets/staking/reward-curve', default-features = false, version = "2.0.0" }
 mangata-primitives = { path = '../primitives/mangata', default-features = false, version = "0.1.0" }
 

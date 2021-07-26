@@ -955,9 +955,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         ensure!(first_asset_id != second_asset_id, Error::<T>::SameAsset,);
 
         // Liquidity token amount calculation
-        let initial_liquidity = first_asset_amount
-            .checked_add(second_asset_amount)
-            .ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+        let initial_liquidity = first_asset_amount;
 
         Pools::insert((first_asset_id, second_asset_id), first_asset_amount);
 

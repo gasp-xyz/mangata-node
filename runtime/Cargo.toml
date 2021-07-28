@@ -63,7 +63,7 @@ sp-session = { default-features = false, version = '2.0.0' }
 sp-std = { default-features = false, version = '2.0.0' }
 sp-transaction-pool = { default-features = false, version = '2.0.0' }
 sp-version = { default-features = false, version = '2.0.0' }
-orml-tokens = { path="../pallets/tokens", default-features = false, version = '0.3.1' }
+orml-tokens = { git = 'https://github.com/mateuszaaa/open-runtime-module-library', default-features = false, branch="fork" }
 
 # Snowfork pallets
 

@@ -189,7 +189,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "mangata-primitives 0.1.0 (git+https://github.com/mangata-finance/mangata-node?rev=f3ecab)",
- "orml-tokens 0.3.1 (git+https://github.com/mateuszaaa/open-runtime-module-library?branch=fork)",
+ "orml-tokens",
  "parity-scale-codec",
  "rustc-hex",
  "serde",
@@ -225,7 +225,7 @@ dependencies = [
  "frame-system",
  "hex-literal",
  "mangata-primitives 0.1.0 (git+https://github.com/mangata-finance/mangata-node?rev=f3ecab)",
- "orml-tokens 0.3.1 (git+https://github.com/mateuszaaa/open-runtime-module-library?branch=fork)",
+ "orml-tokens",
  "parity-scale-codec",
  "rlp",
  "rustc-hex",
@@ -249,7 +249,7 @@ dependencies = [
  "frame-system",
  "hex-literal",
  "mangata-primitives 0.1.0 (git+https://github.com/mangata-finance/mangata-node?rev=f3ecab)",
- "orml-tokens 0.3.1 (git+https://github.com/mateuszaaa/open-runtime-module-library?branch=fork)",
+ "orml-tokens",
  "parity-scale-codec",
  "rlp",
  "rustc-hex",
@@ -838,15 +838,6 @@ dependencies = [
  "textwrap",
  "unicode-width",
  "vec_map",
-]
-
-[[package]]
-name = "clear_on_drop"
-version = "0.2.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c9cc5db465b294c3fa986d5bbb0f3017cd850bff6dd6c52f9ccff8b4d21b7b08"
-dependencies = [
- "cc",
 ]
 
 [[package]]
@@ -3457,7 +3448,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "hex-literal",
  "mangata-primitives 0.1.0",
- "orml-tokens 0.3.1",
+ "orml-tokens",
  "pallet-assets-info",
  "pallet-authorship",
  "pallet-babe",
@@ -3932,31 +3923,12 @@ checksum = "77af24da69f9d9341038eba93a073b1fdaaa1b788221b00a69bce9e762cb32de"
 [[package]]
 name = "orml-tokens"
 version = "0.3.1"
-dependencies = [
- "clear_on_drop",
- "frame-support",
- "frame-system",
- "mangata-primitives 0.1.0",
- "orml-traits 0.3.2",
- "pallet-elections-phragmen",
- "pallet-treasury",
- "parity-scale-codec",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "orml-tokens"
-version = "0.3.1"
 source = "git+https://github.com/mateuszaaa/open-runtime-module-library?branch=fork#f4e7017d48cbf41b0662f576a342a9c3d354d7b3"
 dependencies = [
  "frame-support",
  "frame-system",
  "mangata-primitives 0.1.0 (git+https://github.com/mangata-finance/mangata-node?rev=f3ecab)",
- "orml-traits 0.3.1",
+ "orml-traits",
  "parity-scale-codec",
  "serde",
  "sp-io",
@@ -3968,22 +3940,6 @@ dependencies = [
 name = "orml-traits"
 version = "0.3.1"
 source = "git+https://github.com/mateuszaaa/open-runtime-module-library?branch=fork#f4e7017d48cbf41b0662f576a342a9c3d354d7b3"
-dependencies = [
- "frame-support",
- "impl-trait-for-tuples",
- "num-traits",
- "parity-scale-codec",
- "serde",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "orml-traits"
-version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1894c45ef7dd34390c71ee63189d1bfdb873347982d33c7378a7698d818aba1f"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
@@ -4011,7 +3967,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "mangata-primitives 0.1.0",
- "orml-tokens 0.3.1",
+ "orml-tokens",
  "parity-scale-codec",
  "serde",
  "sp-core",
@@ -4104,27 +4060,12 @@ dependencies = [
  "frame-system",
  "hex-literal",
  "mangata-primitives 0.1.0",
- "orml-tokens 0.3.1 (git+https://github.com/mateuszaaa/open-runtime-module-library?branch=fork)",
+ "orml-tokens",
  "pallet-verifier",
  "parity-scale-codec",
  "serde",
  "sp-core",
  "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-elections-phragmen"
-version = "2.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6eea3cf2f885b0a195bbd3abe47f965112331cae5b8b6a81826681c1a2ee6d68"
-dependencies = [
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "serde",
- "sp-npos-elections",
  "sp-runtime",
  "sp-std",
 ]
@@ -4263,7 +4204,7 @@ dependencies = [
  "frame-system",
  "hex",
  "mangata-primitives 0.1.0",
- "orml-tokens 0.3.1",
+ "orml-tokens",
  "pallet-assets-info",
  "pallet-authorship",
  "pallet-balances",
@@ -4406,21 +4347,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-treasury"
-version = "2.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "805a91aba6aca050e7a60d3e07070eaa28790d752c2ebbfd5961e1c5c6a95ebd"
-dependencies = [
- "frame-support",
- "frame-system",
- "pallet-balances",
- "parity-scale-codec",
- "serde",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-verifier"
 version = "0.1.1"
 source = "git+https://github.com/mateuszaaa/snowbridge?branch=fork#5e27fcdbfaac6141198fa577bf92e60ab7081a5d"
@@ -4446,7 +4372,7 @@ dependencies = [
  "frame-system",
  "hex-literal",
  "mangata-primitives 0.1.0",
- "orml-tokens 0.3.1",
+ "orml-tokens",
  "pallet-assets-info",
  "parity-scale-codec",
  "rustc-hex",

@@ -20,7 +20,7 @@ hex-literal = { version = "0.3.1", default-features = false }
 serde = { version = "1.0.111", optional = true }
 frame-support = { default-features = false, version = '2.0.0' }
 frame-system = { default-features = false, version = '2.0.0' }
-orml-tokens = { path = '../tokens', default-features = false, version = '0.3.1' }
+orml-tokens = { git = 'https://github.com/mateuszaaa/open-runtime-module-library', default-features = false, branch="fork" }
 sp-runtime = { default-features = false, version = '2.0.0' }
 sp-core = { default-features = false, version = '2.0.0' }
 sp-std = { version = "2.0.0", default-features = false }

@@ -649,7 +649,7 @@ impl_runtime_apis! {
                 let nonce: check_nonce_mangata::CheckNonce<_> = sig.2.4;
                 extrinsic_info_runtime_api::ExtrinsicInfo{
                     who: sig.0,
-                    nonce: nonce.0,
+                    nonce: nonce.clone().0,
                 }
                 }
             )

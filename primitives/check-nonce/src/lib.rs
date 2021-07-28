@@ -9,7 +9,7 @@ use sp_runtime::{
 };
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq)]
-pub struct CheckNonce<T: Trait>(pub T::Index);
+pub struct CheckNonce<T: Trait>(#[codec(compact)] pub T::Index);
 
 impl<T: Trait> CheckNonce<T> {
     /// utility constructor. Used only in client/factory code.

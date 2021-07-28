@@ -50,7 +50,7 @@ pub fn create_funded_user<T: Trait>(
     let balance_u256 = base_token_value_u256 * balance_factor_u256;
     let balance: u128 = balance_u256.saturated_into::<u128>();
 
-    // calculate MNG required and pooled_token_required.
+    // calculate MGA required and pooled_token_required.
     let (first_asset_id, first_asset_amount, second_asset_id, second_asset_amount) =
         <T as Trait>::Xyk::get_tokens_required_for_minting(
             liquidity_token_id.into(),
@@ -64,7 +64,7 @@ pub fn create_funded_user<T: Trait>(
     let second_asset_id: u32 = second_asset_id.into();
     let second_asset_amount: u128 = second_asset_amount.into();
 
-    // mint MNG
+    // mint MGA
     assert!(
         <T as Trait>::Tokens::mint(first_asset_id.into(), &user, first_asset_amount.into()).is_ok()
     );

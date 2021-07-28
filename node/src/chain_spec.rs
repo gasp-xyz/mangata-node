@@ -95,7 +95,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
                 vec![
                     (
                         b"Mangata".to_vec(),
-                        b"MNG".to_vec(),
+                        b"MGA".to_vec(),
                         b"Mangata Asset".to_vec(),
                         18u32,
                         0u32,
@@ -130,7 +130,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
                 vec![(
                     // Who gets to stake initially
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
-                    // Id of MNG token,
+                    // Id of MGA token,
                     0u32,
                     // How much mangata they pool
                     10_000__000_000_000_000_000_000u128,
@@ -199,7 +199,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                 vec![
                     (
                         b"Mangata".to_vec(),
-                        b"MNG".to_vec(),
+                        b"MGA".to_vec(),
                         b"Mangata Asset".to_vec(),
                         18u32,
                         0u32,
@@ -242,7 +242,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                 vec![(
                     // Who gets to stake initially
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
-                    // Id of MNG token,
+                    // Id of MGA token,
                     0u32,
                     // How much mangata they pool
                     10_000__000_000_000_000_000_000u128,

@@ -183,18 +183,18 @@ checksum = "23b62fc65de8e4e7f52534fb52b0f3ed04746ae267519eef2a83941e8085068b"
 [[package]]
 name = "artemis-asset"
 version = "0.1.1"
+source = "git+https://github.com/mateuszaaa/snowbridge?branch=fork#5e27fcdbfaac6141198fa577bf92e60ab7081a5d"
 dependencies = [
  "artemis-core",
  "frame-support",
  "frame-system",
- "mangata-primitives",
- "orml-tokens",
+ "mangata-primitives 0.1.0 (git+https://github.com/mangata-finance/mangata-node?rev=f3ecab)",
+ "orml-tokens 0.3.1 (git+https://github.com/mateuszaaa/open-runtime-module-library?branch=fork)",
  "parity-scale-codec",
  "rustc-hex",
  "serde",
  "sp-core",
  "sp-io",
- "sp-keyring",
  "sp-runtime",
  "sp-std",
 ]
@@ -202,6 +202,7 @@ dependencies = [
 [[package]]
 name = "artemis-core"
 version = "0.1.1"
+source = "git+https://github.com/mateuszaaa/snowbridge?branch=fork#5e27fcdbfaac6141198fa577bf92e60ab7081a5d"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -214,6 +215,7 @@ dependencies = [
 [[package]]
 name = "artemis-erc20-app"
 version = "0.1.1"
+source = "git+https://github.com/mateuszaaa/snowbridge?branch=fork#5e27fcdbfaac6141198fa577bf92e60ab7081a5d"
 dependencies = [
  "artemis-asset",
  "artemis-core",
@@ -222,15 +224,14 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
- "mangata-primitives",
- "orml-tokens",
+ "mangata-primitives 0.1.0 (git+https://github.com/mangata-finance/mangata-node?rev=f3ecab)",
+ "orml-tokens 0.3.1 (git+https://github.com/mateuszaaa/open-runtime-module-library?branch=fork)",
  "parity-scale-codec",
  "rlp",
  "rustc-hex",
  "serde",
  "sp-core",
  "sp-io",
- "sp-keyring",
  "sp-runtime",
  "sp-std",
 ]
@@ -238,6 +239,7 @@ dependencies = [
 [[package]]
 name = "artemis-eth-app"
 version = "0.1.1"
+source = "git+https://github.com/mateuszaaa/snowbridge?branch=fork#5e27fcdbfaac6141198fa577bf92e60ab7081a5d"
 dependencies = [
  "artemis-asset",
  "artemis-core",
@@ -246,15 +248,14 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
- "mangata-primitives",
- "orml-tokens",
+ "mangata-primitives 0.1.0 (git+https://github.com/mangata-finance/mangata-node?rev=f3ecab)",
+ "orml-tokens 0.3.1 (git+https://github.com/mateuszaaa/open-runtime-module-library?branch=fork)",
  "parity-scale-codec",
  "rlp",
  "rustc-hex",
  "serde",
  "sp-core",
  "sp-io",
- "sp-keyring",
  "sp-runtime",
  "sp-std",
 ]
@@ -262,6 +263,7 @@ dependencies = [
 [[package]]
 name = "artemis-ethereum"
 version = "0.1.0"
+source = "git+https://github.com/mateuszaaa/snowbridge?branch=fork#5e27fcdbfaac6141198fa577bf92e60ab7081a5d"
 dependencies = [
  "ethabi-decode",
  "ethereum-types",
@@ -3435,6 +3437,11 @@ name = "mangata-primitives"
 version = "0.1.0"
 
 [[package]]
+name = "mangata-primitives"
+version = "0.1.0"
+source = "git+https://github.com/mangata-finance/mangata-node?rev=f3ecab#f3ecabc3221cece08dd7f543d8a2f451cec3fe97"
+
+[[package]]
 name = "mangata-runtime"
 version = "2.0.0"
 dependencies = [
@@ -3449,8 +3456,8 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "hex-literal",
- "mangata-primitives",
- "orml-tokens",
+ "mangata-primitives 0.1.0",
+ "orml-tokens 0.3.1",
  "pallet-assets-info",
  "pallet-authorship",
  "pallet-babe",
@@ -3929,13 +3936,44 @@ dependencies = [
  "clear_on_drop",
  "frame-support",
  "frame-system",
- "mangata-primitives",
- "orml-traits",
+ "mangata-primitives 0.1.0",
+ "orml-traits 0.3.2",
  "pallet-elections-phragmen",
  "pallet-treasury",
  "parity-scale-codec",
  "serde",
  "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "orml-tokens"
+version = "0.3.1"
+source = "git+https://github.com/mateuszaaa/open-runtime-module-library?branch=fork#f4e7017d48cbf41b0662f576a342a9c3d354d7b3"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "mangata-primitives 0.1.0 (git+https://github.com/mangata-finance/mangata-node?rev=f3ecab)",
+ "orml-traits 0.3.1",
+ "parity-scale-codec",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "orml-traits"
+version = "0.3.1"
+source = "git+https://github.com/mateuszaaa/open-runtime-module-library?branch=fork#f4e7017d48cbf41b0662f576a342a9c3d354d7b3"
+dependencies = [
+ "frame-support",
+ "impl-trait-for-tuples",
+ "num-traits",
+ "parity-scale-codec",
+ "serde",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -3972,8 +4010,8 @@ version = "2.0.0"
 dependencies = [
  "frame-support",
  "frame-system",
- "mangata-primitives",
- "orml-tokens",
+ "mangata-primitives 0.1.0",
+ "orml-tokens 0.3.1",
  "parity-scale-codec",
  "serde",
  "sp-core",
@@ -4065,8 +4103,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
- "mangata-primitives",
- "orml-tokens",
+ "mangata-primitives 0.1.0",
+ "orml-tokens 0.3.1 (git+https://github.com/mateuszaaa/open-runtime-module-library?branch=fork)",
  "pallet-verifier",
  "parity-scale-codec",
  "serde",
@@ -4224,8 +4262,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex",
- "mangata-primitives",
- "orml-tokens",
+ "mangata-primitives 0.1.0",
+ "orml-tokens 0.3.1",
  "pallet-assets-info",
  "pallet-authorship",
  "pallet-balances",
@@ -4385,6 +4423,7 @@ dependencies = [
 [[package]]
 name = "pallet-verifier"
 version = "0.1.1"
+source = "git+https://github.com/mateuszaaa/snowbridge?branch=fork#5e27fcdbfaac6141198fa577bf92e60ab7081a5d"
 dependencies = [
  "artemis-core",
  "artemis-ethereum",
@@ -4395,7 +4434,6 @@ dependencies = [
  "serde",
  "sp-core",
  "sp-io",
- "sp-keyring",
  "sp-runtime",
  "sp-std",
 ]
@@ -4407,8 +4445,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
- "mangata-primitives",
- "orml-tokens",
+ "mangata-primitives 0.1.0",
+ "orml-tokens 0.3.1",
  "pallet-assets-info",
  "parity-scale-codec",
  "rustc-hex",

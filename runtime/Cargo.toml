@@ -76,26 +76,26 @@ version = "0.1.1"
 [dependencies.verifier]
 default-features = false
 package = "pallet-verifier"
-path = "../pallets/verifier"
-version = "0.1.1"
+git = 'https://github.com/mateuszaaa/snowbridge'
+branch= 'fork'
 
 [dependencies.bridged-asset]
 default-features = false
 package = "artemis-asset"
-path = "../pallets/bridged-asset"
-version = "0.1.1"
+git = 'https://github.com/mateuszaaa/snowbridge'
+branch= 'fork'
 
 [dependencies.eth-app]
 default-features = false
 package = "artemis-eth-app"
-path = "../pallets/eth-app"
-version = "0.1.1"
+git = 'https://github.com/mateuszaaa/snowbridge'
+branch= 'fork'
 
 [dependencies.erc20-app]
 default-features = false
 package = "artemis-erc20-app"
-path = "../pallets/erc20-app"
-version = "0.1.1"
+git = 'https://github.com/mateuszaaa/snowbridge'
+branch= 'fork'
 
 [features]
 default = ['std']

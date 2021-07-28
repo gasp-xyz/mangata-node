@@ -47,7 +47,8 @@ version = "2.0.0"
 
 [dependencies.artemis-core]
 default-features = false
-path = "../../primitives/core"
+git = 'https://github.com/mateuszaaa/snowbridge'
+branch= 'fork'
 
 
 [dependencies]
@@ -55,18 +56,19 @@ hex-literal = { version = "0.3.1", default-features = true }
 frame-benchmarking = { version = "2.0.0", default-features = false, optional = true }
 
 [dev-dependencies]
-pallet-verifier = {path = "../verifier"}
-artemis-erc20-app = {path = "../erc20-app"}
-artemis-eth-app = {path = "../eth-app"}
-artemis-asset = {path = "../bridged-asset"}
-orml-tokens = {path = "../tokens", default-features = false, version="0.3.1"}
+pallet-verifier = { git = 'https://github.com/mateuszaaa/snowbridge', branch="fork" }
+artemis-erc20-app = { git = 'https://github.com/mateuszaaa/snowbridge', branch="fork" }
+artemis-eth-app = { git = 'https://github.com/mateuszaaa/snowbridge', branch="fork" }
+artemis-asset = { git = 'https://github.com/mateuszaaa/snowbridge', branch="fork" }
+orml-tokens = { git = 'https://github.com/mateuszaaa/open-runtime-module-library', branch="fork" }
+
 mangata-primitives = { path = '../../primitives/mangata', default-features = false, version = '0.1.0' }
 
 
 [features]
 default = ["std"]
 std = [
-		"serde",
+    "serde",
     "codec/std",
     "frame-support/std",
     "frame-system/std",

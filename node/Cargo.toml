@@ -19,7 +19,8 @@ substrate-build-script-utils = '2.0.0'
 
 [dependencies.artemis-core]
 default-features = false
-path = "../primitives/core"
+git = 'https://github.com/mateuszaaa/snowbridge'
+branch= 'fork'
 
 [dependencies]
 jsonrpc-core = "15.0"

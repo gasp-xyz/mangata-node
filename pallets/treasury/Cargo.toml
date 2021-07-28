@@ -20,6 +20,7 @@ sp-runtime = { version = "2.0.0", default-features = false }
 frame-support = { version = "2.0.0", default-features = false }
 frame-system = { version = "2.0.0", default-features = false }
 pallet-balances = { version = "2.0.0", default-features = false }
+orml-tokens = { path = '../tokens', default-features = false, version = '0.3.1' }
 
 frame-benchmarking = { version = "2.0.0", default-features = false, optional = true }
 

@@ -3467,6 +3467,7 @@ dependencies = [
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
+ "pallet-treasury 2.0.0",
  "pallet-verifier",
  "pallet-xyk",
  "parity-scale-codec",
@@ -3932,7 +3933,7 @@ dependencies = [
  "mangata-primitives",
  "orml-traits",
  "pallet-elections-phragmen",
- "pallet-treasury",
+ "pallet-treasury 2.0.1",
  "parity-scale-codec",
  "serde",
  "sp-core",
@@ -4365,6 +4366,24 @@ dependencies = [
  "sp-api",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-treasury"
+version = "2.0.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "orml-tokens",
+ "pallet-balances",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-storage",
 ]
 
 [[package]]

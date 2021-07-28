@@ -1,17 +1,29 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-use extrinsic_info_runtime_api::runtime_api::ExtrinsicInfoRuntimeApi;
-use pallet_random_seed::SeedType;
-use random_seed_runtime_api::RandomSeedApi;
-use sp_api::{ApiExt, ApiRef, Encode, HashT, ProvideRuntimeApi, TransactionOutcome};
-use sp_block_builder::BlockBuilder as BlockBuilderRuntimeApi;
-use sp_core::crypto::Ss58Codec;
-use sp_runtime::generic::BlockId;
+use sp_api::Encode;
+use sp_api::HashT;
+
 use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 use sp_runtime::AccountId32;
 use sp_std::collections::btree_map::BTreeMap;
-use sp_std::collections::vec_deque::VecDeque;
 use sp_std::convert::TryInto;
+
+use sp_std::collections::vec_deque::VecDeque;
 use sp_std::vec::Vec;
+
+#[cfg(feature = "std")]
+use extrinsic_info_runtime_api::runtime_api::ExtrinsicInfoRuntimeApi;
+#[cfg(feature = "std")]
+use pallet_random_seed::SeedType;
+#[cfg(feature = "std")]
+use random_seed_runtime_api::RandomSeedApi;
+#[cfg(feature = "std")]
+use sp_api::{ApiExt, ApiRef, ProvideRuntimeApi, TransactionOutcome};
+#[cfg(feature = "std")]
+use sp_block_builder::BlockBuilder as BlockBuilderRuntimeApi;
+#[cfg(feature = "std")]
+use sp_core::crypto::Ss58Codec;
+#[cfg(feature = "std")]
+use sp_runtime::generic::BlockId;
 
 pub struct Xoshiro256PlusPlus {
     s: [u64; 4],
@@ -71,39 +83,10 @@ fn fisher_yates<T>(data: &mut Vec<T>, seed: [u8; 32]) {
     }
 }
 
-/// shuffles extrinsics assuring that extrinsics signed by single account will be still evaluated
-/// in proper order
-pub fn shuffle<'a, Block, Api>(
-    api: &ApiRef<'a, Api::Api>,
-    block_id: &BlockId<Block>,
-    extrinsics: Vec<Block::Extrinsic>,
-    seed: SeedType,
-) -> Vec<Block::Extrinsic>
-where
-    Block: BlockT,
-    Api: ProvideRuntimeApi<Block> + 'a,
-    Api::Api: ExtrinsicInfoRuntimeApi<Block>,
-{
-    let seed: [u8; 32] = seed.seed;
-
-    log::debug!(target: "block_shuffler", "shuffling extrinsics with seed: {:#X?} => {}", seed, Xoshiro256PlusPlus::from_seed(seed).next_u32() );
-
-    let extrinsics: Vec<(Option<AccountId32>, Block::Extrinsic)> = extrinsics
-        .into_iter()
-        .map(|tx| {
-            let tx_hash = BlakeTwo256::hash(&tx.encode());
-            let who = api.execute_in_transaction(|api| {
-                // store deserialized data and revert state modification caused by 'get_info' call
-                match api.get_info(block_id, tx.clone()){
-                    Ok(result) => TransactionOutcome::Rollback(result),
-                    Err(_) => TransactionOutcome::Rollback(None)
-                }
-            })
-            .map(|info| Some(info.who)).unwrap_or(None);
-            log::debug!(target: "block_shuffler", "who:{:48}  extrinsic:{:?}",who.clone().map(|x| x.to_ss58check()).unwrap_or_else(|| String::from("None")), tx_hash);
-            (who, tx)
-        }).collect();
-
+pub fn shuffle_using_seed<Block: BlockT>(
+    extrinsics: Vec<(Option<AccountId32>, Block::Extrinsic)>,
+    seed: [u8; 32],
+) -> Vec<Block::Extrinsic> {
     // generate exact number of slots for each account
     // [ Alice, Alice, Alice, ... , Bob, Bob, Bob, ... ]
     let mut slots: Vec<Option<AccountId32>> =
@@ -146,6 +129,41 @@ where
     shuffled_extrinsics
 }
 
+/// shuffles extrinsics assuring that extrinsics signed by single account will be still evaluated
+/// in proper order
+#[cfg(feature = "std")]
+pub fn shuffle<'a, Block, Api>(
+    api: &ApiRef<'a, Api::Api>,
+    block_id: &BlockId<Block>,
+    extrinsics: Vec<Block::Extrinsic>,
+    seed: SeedType,
+) -> Vec<Block::Extrinsic>
+where
+    Block: BlockT,
+    Api: ProvideRuntimeApi<Block> + 'a,
+    Api::Api: ExtrinsicInfoRuntimeApi<Block>,
+{
+    log::debug!(target: "block_shuffler", "shuffling extrinsics with seed: {:#X?}", seed.seed );
+
+    let extrinsics: Vec<(Option<AccountId32>, Block::Extrinsic)> = extrinsics
+        .into_iter()
+        .map(|tx| {
+            let tx_hash = BlakeTwo256::hash(&tx.encode());
+            let who = api.execute_in_transaction(|api| {
+                // store deserialized data and revert state modification caused by 'get_info' call
+                match api.get_info(block_id, tx.clone()){
+                    Ok(result) => TransactionOutcome::Rollback(result),
+                    Err(_) => TransactionOutcome::Rollback(None)
+                }
+            })
+            .map(|info| Some(info.who)).unwrap_or(None);
+            log::debug!(target: "block_shuffler", "who:{:48}  extrinsic:{:?}",who.clone().map(|x| x.to_ss58check()).unwrap_or_else(|| String::from("None")), tx_hash);
+            (who, tx)
+        }).collect();
+
+    shuffle_using_seed::<Block>(extrinsics, seed.seed)
+}
+
 #[derive(derive_more::Display, Debug)]
 pub enum Error {
     #[display(fmt = "Cannot apply inherents")]
@@ -154,6 +172,7 @@ pub enum Error {
     SeedFetchingError,
 }
 
+#[cfg(feature = "std")]
 pub fn fetch_seed<'a, Block, Api>(
     api: &ApiRef<'a, Api::Api>,
     block_id: &BlockId<Block>,
@@ -168,6 +187,7 @@ where
 
 /// shuffles extrinsics assuring that extrinsics signed by single account will be still evaluated
 /// in proper order
+#[cfg(feature = "std")]
 pub fn apply_inherents_and_fetch_seed<'a, Block, Api>(
     api: &ApiRef<'a, Api::Api>,
     block_id: &BlockId<Block>,

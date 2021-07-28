@@ -116,6 +116,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 use codec::{Codec, Encode};
+use extrinsic_shuffler::shuffle_using_seed;
 use frame_support::{
     dispatch::PostDispatchInfo,
     storage::StorageValue,
@@ -123,6 +124,7 @@ use frame_support::{
     weights::{DispatchClass, DispatchInfo, GetDispatchInfo},
 };
 use frame_system::DigestOf;
+use sp_runtime::AccountId32;
 use sp_runtime::{
     generic::Digest,
     print,
@@ -138,7 +140,7 @@ use sp_std::{marker::PhantomData, prelude::*};
 /// Trait that can be used to execute a block.
 pub trait ExecuteBlock<Block: BlockT> {
     /// Actually execute all transitions for `block`.
-    fn execute_block(block: Block);
+    fn execute_block(block: Block, info: Vec<Option<AccountId32>>);
 }
 
 pub type CheckedOf<E, C> = <E as Checkable<C>>::Checked;
@@ -187,8 +189,10 @@ where
     OriginOf<Block::Extrinsic, Context>: From<Option<System::AccountId>>,
     UnsignedValidator: ValidateUnsigned<Call = CallOf<Block::Extrinsic, Context>>,
 {
-    fn execute_block(block: Block) {
-        Executive::<System, Block, Context, UnsignedValidator, AllModules>::execute_block(block);
+    fn execute_block(block: Block, info: Vec<Option<AccountId32>>) {
+        Executive::<System, Block, Context, UnsignedValidator, AllModules>::execute_block(
+            block, info,
+        );
     }
 }
 
@@ -311,7 +315,7 @@ where
     }
 
     /// Actually execute all transitions for `block`.
-    pub fn execute_block(block: Block) {
+    pub fn execute_block(block: Block, info: Vec<Option<AccountId32>>) {
         sp_io::init_tracing();
         sp_tracing::within_span! {
             sp_tracing::info_span!( "execute_block", ?block);
@@ -329,7 +333,17 @@ where
             // execute extrinsics
             let (header, extrinsics) = block.deconstruct();
 
-            Self::execute_extrinsics_with_book_keeping(extrinsics, *header.number());
+            let extrinsics_with_author: Vec<(Option<_>,_)> = info.into_iter().zip(extrinsics.into_iter()).collect();
+            let mut seed: [u8;32] = Default::default();
+            // NOTE: separation of block creating and block execution results with
+            // disabling of extrinsic_root validation on block execution. Therefor
+            // temporarly we can use that field in header to inject shuffling seed without
+            // changing API. Ideally new field `seed` should be introduced to
+            // sp_runtime::traits::Header - TBD
+            seed.copy_from_slice(header.extrinsics_root().as_ref());
+            let shuffled_extrinsics = shuffle_using_seed::<Block>(extrinsics_with_author, seed);
+
+            Self::execute_extrinsics_with_book_keeping(shuffled_extrinsics, *header.number());
 
             if !signature_batching.verify() {
                 panic!("Signature verification failed.");
@@ -795,22 +809,25 @@ mod tests {
     #[test]
     fn block_import_works() {
         new_test_ext(1).execute_with(|| {
-            Executive::execute_block(Block {
-                header: Header {
-                    parent_hash: [69u8; 32].into(),
-                    number: 1,
-                    state_root: hex!(
-                        "465a1569d309039bdf84b0479d28064ea29e6584584dc7d788904bb14489c6f6"
-                    )
-                    .into(),
-                    extrinsics_root: hex!(
-                        "03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314"
-                    )
-                    .into(),
-                    digest: Digest { logs: vec![] },
+            Executive::execute_block(
+                Block {
+                    header: Header {
+                        parent_hash: [69u8; 32].into(),
+                        number: 1,
+                        state_root: hex!(
+                            "465a1569d309039bdf84b0479d28064ea29e6584584dc7d788904bb14489c6f6"
+                        )
+                        .into(),
+                        extrinsics_root: hex!(
+                            "03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314"
+                        )
+                        .into(),
+                        digest: Digest { logs: vec![] },
+                    },
+                    extrinsics: vec![],
                 },
-                extrinsics: vec![],
-            });
+                Default::default(),
+            );
         });
     }
 
@@ -819,19 +836,22 @@ mod tests {
     #[should_panic]
     fn block_import_of_bad_state_root_fails() {
         new_test_ext(1).execute_with(|| {
-            Executive::execute_block(Block {
-                header: Header {
-                    parent_hash: [69u8; 32].into(),
-                    number: 1,
-                    state_root: [0u8; 32].into(),
-                    extrinsics_root: hex!(
-                        "03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314"
-                    )
-                    .into(),
-                    digest: Digest { logs: vec![] },
+            Executive::execute_block(
+                Block {
+                    header: Header {
+                        parent_hash: [69u8; 32].into(),
+                        number: 1,
+                        state_root: [0u8; 32].into(),
+                        extrinsics_root: hex!(
+                            "03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314"
+                        )
+                        .into(),
+                        digest: Digest { logs: vec![] },
+                    },
+                    extrinsics: vec![],
                 },
-                extrinsics: vec![],
-            });
+                Default::default(),
+            );
         });
     }
 
@@ -840,19 +860,22 @@ mod tests {
     #[should_panic]
     fn block_import_of_bad_extrinsic_root_fails() {
         new_test_ext(1).execute_with(|| {
-            Executive::execute_block(Block {
-                header: Header {
-                    parent_hash: [69u8; 32].into(),
-                    number: 1,
-                    state_root: hex!(
-                        "49cd58a254ccf6abc4a023d9a22dcfc421e385527a250faec69f8ad0d8ed3e48"
-                    )
-                    .into(),
-                    extrinsics_root: [0u8; 32].into(),
-                    digest: Digest { logs: vec![] },
+            Executive::execute_block(
+                Block {
+                    header: Header {
+                        parent_hash: [69u8; 32].into(),
+                        number: 1,
+                        state_root: hex!(
+                            "49cd58a254ccf6abc4a023d9a22dcfc421e385527a250faec69f8ad0d8ed3e48"
+                        )
+                        .into(),
+                        extrinsics_root: [0u8; 32].into(),
+                        digest: Digest { logs: vec![] },
+                    },
+                    extrinsics: vec![],
                 },
-                extrinsics: vec![],
-            });
+                Default::default(),
+            );
         });
     }
 

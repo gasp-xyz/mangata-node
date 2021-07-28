@@ -933,22 +933,23 @@ where
 						} else {
 
 							info!("previous block has extrinsics");
-                            let seed = extrinsic_shuffler::apply_inherents_and_fetch_seed::<Block, Self>(&runtime_api, &at, body.clone())
+                            let mut seed = extrinsic_shuffler::apply_inherents_and_fetch_seed::<Block, Self>(&runtime_api, &at, body.clone())
                                 .map_err(|e| {
                                     warn!("cannot fetch shuffling seed from the block");
                                     sp_blockchain::Error::Backend(format!("{}", e))
                                 })?;
 
-                            let shuffled_extrinsics = extrinsic_shuffler::shuffle::<Block, Self>(
-                                &runtime_api,
-                                &at,
-                                previous_block_extrinsics,
-                                seed);
+                            let mut header = import_block.header.clone();
+                            let mut slice: &[u8] = & mut seed.seed;
+
+                            log::warn!("CLIENT SEED {:?}", slice);
+
+                            header.set_extrinsics_root(<Block::Hash>::decode(& mut slice).unwrap());
 
                             runtime_api.execute_block_with_context(
                                 &at,
                                 execution_context,
-                                Block::new(import_block.header.clone(), shuffled_extrinsics),
+                                Block::new(header, previous_block_extrinsics),
                             )?;
 
 						}

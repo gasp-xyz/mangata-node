@@ -558,8 +558,6 @@ impl<T: Trait> Module<T> {
         } else {
             return Err(DispatchError::from(Error::<T>::NoSuchPool));
         }
-
-       
     }
 
     pub fn set_reserves(
@@ -620,7 +618,7 @@ impl<T: Trait> Module<T> {
         Ok((first_asset_amount, second_asset_amount))
     }
 
-    //TODO if pool contains key ! 
+    //TODO if pool contains key !
     fn settle_treasury_and_burn(
         sold_asset_id: TokenId,
         bought_asset_id: TokenId,
@@ -630,8 +628,8 @@ impl<T: Trait> Module<T> {
         let mangata_id: TokenId = MANGATA_ID.saturated_into();
 
         // Getting token reserves
-        
-      let (input_reserve, output_reserve) =
+
+        let (input_reserve, output_reserve) =
             Module::<T>::get_reserves(sold_asset_id, bought_asset_id)?;
 
         // Setting initial settling token id, treasury and burn amount
@@ -645,7 +643,8 @@ impl<T: Trait> Module<T> {
         // Check whether to settle treasury and buyburn with sold or bought asset.
         // If sold token is directly mangata, or is in pair with mangata and bought id is not and bought token is not mangata, we use sold token as settling token
         if sold_asset_id == mangata_id
-            || ((Pools::contains_key((sold_asset_id, mangata_id)) || Pools::contains_key((mangata_id, sold_asset_id)))
+            || ((Pools::contains_key((sold_asset_id, mangata_id))
+                || Pools::contains_key((mangata_id, sold_asset_id)))
                 && !Pools::contains_key((bought_asset_id, mangata_id))
                 && !Pools::contains_key((mangata_id, bought_asset_id))
                 && bought_asset_id != mangata_id)
@@ -699,10 +698,12 @@ impl<T: Trait> Module<T> {
             T::Currency::burn_and_settle(mangata_id.into(), &vault, burn_amount.into())?;
         }
         //If settling token is connected to mangata, token is swapped in corresponding pool to mangata without fee
-        else if Pools::contains_key((settling_asset_id, mangata_id)) ||  Pools::contains_key((mangata_id, settling_asset_id)) {
+        else if Pools::contains_key((settling_asset_id, mangata_id))
+            || Pools::contains_key((mangata_id, settling_asset_id))
+        {
             // Getting token reserves
             let (input_reserve, output_reserve) =
-            Module::<T>::get_reserves(settling_asset_id, mangata_id)?;
+                Module::<T>::get_reserves(settling_asset_id, mangata_id)?;
 
             // Calculating swapped mangata amount
             let treasury_amount_in_mangata =
@@ -954,7 +955,6 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         sold_asset_amount: Self::Balance,
         min_amount_out: Self::Balance,
     ) -> DispatchResult {
-
         // Ensure not selling zero amount
         ensure!(!sold_asset_amount.is_zero(), Error::<T>::ZeroAmount,);
 
@@ -1032,7 +1032,6 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         bought_asset_amount: Self::Balance,
         max_amount_in: Self::Balance,
     ) -> DispatchResult {
-        
         // Get token reserves
         let (input_reserve, output_reserve) =
             Module::<T>::get_reserves(sold_asset_id, bought_asset_id)?;
@@ -1317,7 +1316,8 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
                 first_asset_reserve.saturating_sub(first_asset_amount),
                 second_asset_id,
                 second_asset_reserve.saturating_sub(second_asset_amount),
-            ).unwrap();
+            )
+            .unwrap();
         }
 
         // Destroying burnt liquidity tokens
@@ -1450,12 +1450,12 @@ impl<T: Trait> Valuate for Module<T> {
         liquidity_token_amount: Self::Balance,
     ) -> Self::Balance {
         let (mng_token_id, other_token_id) =
-        match Self::get_liquidity_token_mng_pool(liquidity_token_id) {
-            Ok(pool) => pool,
-            Err(_) => return Default::default(),
-        };
+            match Self::get_liquidity_token_mng_pool(liquidity_token_id) {
+                Ok(pool) => pool,
+                Err(_) => return Default::default(),
+            };
 
-        let mng_token_reserve = match Module::<T>::get_reserves(mng_token_id, other_token_id){
+        let mng_token_reserve = match Module::<T>::get_reserves(mng_token_id, other_token_id) {
             Ok(reserves) => reserves.0,
             Err(_) => return Default::default(),
         };

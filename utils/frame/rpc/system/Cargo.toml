@@ -29,6 +29,7 @@ sp-blockchain = "2.0.0"
 sp-transaction-pool = "2.0.0"
 sp-block-builder = "2.0.0"
 sc-rpc-api = "0.8.0"
+extrinsic-info-runtime-api = { path='../../../../primitives/extrinsic-info-runtime-api', version='2.0.0' }
 
 [dev-dependencies]
 #substrate-test-runtime-client = "2.0.0"

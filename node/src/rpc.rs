@@ -13,6 +13,10 @@ use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_transaction_pool::TransactionPool;
+use sc_client_api::{
+	client::{BlockBackend},
+};
+use extrinsic_info_runtime_api::runtime_api::ExtrinsicInfoRuntimeApi;
 
 /// Full client dependencies.
 pub struct FullDeps<C, P> {
@@ -34,6 +38,8 @@ where
     C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
     C::Api: xyk_rpc::XykRuntimeApi<Block, Balance, TokenId>,
     C::Api: BlockBuilder<Block>,
+    C::Api: ExtrinsicInfoRuntimeApi<Block>,
+    C: BlockBackend<Block>,
     P: TransactionPool + 'static,
 {
     use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};

@@ -3,7 +3,7 @@ use sp_runtime::traits::Block as BlockT;
 use sp_runtime::AccountId32;
 
 /// Information about extrinsic fetched from runtime API
-#[derive(Encode, Decode, PartialEq)]
+#[derive(Encode, Decode, PartialEq, Default)]
 pub struct ExtrinsicInfo {
     /// extrinsic signer
     pub who: AccountId32,

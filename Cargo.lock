@@ -7564,6 +7564,7 @@ dependencies = [
 name = "substrate-frame-rpc-system"
 version = "2.0.0"
 dependencies = [
+ "extrinsic-info-runtime-api",
  "frame-system-rpc-runtime-api",
  "futures 0.3.8",
  "jsonrpc-core",

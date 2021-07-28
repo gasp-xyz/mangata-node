@@ -1,11 +1,14 @@
+use super::*;
 use crate::mock::{new_tester, AccountId, MockEvent, MockRuntime, Origin, System, Tokens, ETH};
 use crate::RawEvent;
 use codec::Decode;
+use frame_support::assert_err;
 use frame_support::assert_ok;
 use frame_system as system;
 use hex_literal::hex;
 use orml_tokens::MultiTokenCurrency;
 use sp_core::H160;
+use sp_core::U256;
 use sp_keyring::AccountKeyring as Keyring;
 
 use crate::payload::Payload;
@@ -61,6 +64,22 @@ fn burn_should_emit_bridge_event() {
         assert_eq!(
             MockEvent::test_events(RawEvent::Transfer(bob, recipient, 20.into())),
             last_event()
+        );
+    });
+}
+
+#[test]
+fn handle_event_should_return_error_on_overflow() {
+    new_tester().execute_with(|| {
+        let event: Payload<TestAccountId> = Payload {
+            sender_addr: H160::repeat_byte(1),
+            recipient_addr: Keyring::Bob.into(),
+            amount: U256::max_value(),
+        };
+
+        assert_err!(
+            ETH::handle_event(event.clone()),
+            Error::<MockRuntime>::TooBigAmount,
         );
     });
 }

@@ -1,10 +1,12 @@
+use super::*;
 use crate::mock::{new_tester, AccountId, MockEvent, MockRuntime, Origin, System, Tokens, ERC20};
+use frame_support::assert_err;
 use frame_support::assert_ok;
 use frame_system as system;
 use hex_literal::hex;
 use mangata_primitives::TokenId;
 use orml_tokens::MultiTokenCurrency;
-use sp_core::H160;
+use sp_core::{H160, U256};
 use sp_keyring::AccountKeyring as Keyring;
 
 use crate::RawEvent;
@@ -66,6 +68,42 @@ fn burn_should_emit_bridge_event() {
         assert_eq!(
             MockEvent::test_events(RawEvent::Transfer(token_addr, bob, recipient, 20.into())),
             last_event()
+        );
+    });
+}
+
+#[test]
+fn burn_should_return_error_on_overflow() {
+    new_tester().execute_with(|| {
+        let token_addr = H160::repeat_byte(1);
+        let recipient = H160::repeat_byte(2);
+        let bob: AccountId = Keyring::Bob.into();
+
+        assert_err!(
+            ERC20::burn(
+                Origin::signed(bob.clone()),
+                token_addr,
+                recipient,
+                U256::max_value()
+            ),
+            Error::<MockRuntime>::TooBigAmount,
+        );
+    });
+}
+
+#[test]
+fn handle_event_should_return_error_on_overflow() {
+    new_tester().execute_with(|| {
+        let event: Payload<TestAccountId> = Payload {
+            sender_addr: H160::repeat_byte(1),
+            recipient_addr: Keyring::Bob.into(),
+            token_addr: H160::repeat_byte(1),
+            amount: U256::max_value(),
+        };
+
+        assert_err!(
+            ERC20::handle_event(event.clone()),
+            Error::<MockRuntime>::TooBigAmount,
         );
     });
 }

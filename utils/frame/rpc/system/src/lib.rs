@@ -32,13 +32,11 @@ use sc_client_api::{
 };
 use sc_rpc_api::DenyUnsafe;
 use sp_block_builder::BlockBuilder;
-use sp_blockchain::{Error as ClientError, HeaderBackend, Backend};
+use sp_blockchain::{Error as ClientError, HeaderBackend};
 use sp_core::{hexdisplay::HexDisplay, Bytes};
 use sp_runtime::{generic::BlockId, traits};
-use sp_runtime::traits::{One, Zero, Saturating};
 use sp_transaction_pool::{InPoolTransaction, TransactionPool};
 use sp_api::{ApiExt, ApiRef, ProvideRuntimeApi, TransactionOutcome};
-use sp_runtime::AccountId32;
 
 pub use self::gen_client::Client as SystemClient;
 pub use frame_system_rpc_runtime_api::AccountNonceApi;
@@ -249,6 +247,7 @@ where
             data: Some(format!("{:?}", e).into()),
         });
 
+        #[allow(unused_variables)]
         let pool = self.pool.clone();
 
         // // FIXME Fetch block extrinsics rather than use default. 
@@ -300,7 +299,7 @@ where
         // Otherwise nonce for AccountId32=0 will be miscalculated as 0
         .map_or_else( || Default::default(), |info| (info.who, info.nonce));
 
-        if ((<AccountId>::decode(&mut &<[u8; 32]>::from(tx_who)[..]).unwrap() == account) && (Index::from(tx_nonce) == current_nonce)) {
+        if (<AccountId>::decode(&mut &<[u8; 32]>::from(tx_who)[..]).unwrap() == account) && (Index::from(tx_nonce) == current_nonce) {
             current_nonce += traits::One::one();
         }
 

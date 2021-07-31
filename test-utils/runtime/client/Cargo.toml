@@ -14,7 +14,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 sc-light = { version = "2.0.0" }
 sp-consensus = { version = "0.8.0" }
-sc-block-builder = { version = "0.8.0", path="../../../client/block-builder"}
+sc-block-builder = { version = "0.8.0", path="/home/dev/substrate/client/block-builder"}
 extrinsic-info-runtime-api = { path='/home/dev/substrate/primitives/extrinsic-info-runtime-api', version='2.0.0' }
 substrate-test-client = { version = "2.0.0", path = "../../client" }
 sp-core = { version = "2.0.0"}

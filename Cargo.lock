@@ -5511,8 +5511,6 @@ dependencies = [
  "sp-state-machine",
  "sp-std",
  "sp-transaction-pool",
- "sp-trie",
- "substrate-test-runtime-client",
 ]
 
 [[package]]
@@ -5953,7 +5951,9 @@ dependencies = [
 
 [[package]]
 name = "sc-network"
-version = "0.8.0"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7e41944816f2543f1a350576325b2f43937589df99911440b41edd85accbe793"
 dependencies = [
  "async-std",
  "async-trait",

@@ -54,7 +54,7 @@ log = { version = "0.4.8", optional = true }
 serde = { version = "1.0.101", optional = true, features = ["derive"] }
 
 [dev-dependencies]
-sc-block-builder = { version = "0.8.0", path="../../client/block-builder"}
+sc-block-builder = { version = "0.8.0", path="/home/dev/substrate/client/block-builder"}
 sc-executor = { version = "0.8.0"}
 substrate-test-runtime-client = { version = "2.0.0", path = "./client"}
 

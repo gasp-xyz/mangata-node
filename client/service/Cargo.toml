@@ -67,7 +67,7 @@ sc-transaction-pool = { version = "2.0.0"}
 sp-transaction-pool = "2.0.0"
 sc-rpc-server = "2.0.0"
 sc-rpc = "2.0.0"
-sc-block-builder = { version = "0.8.0", path = "../block-builder" }
+sc-block-builder = { version = "0.8.0", path = "/home/dev/substrate/client/block-builder" }
 extrinsic-shuffler = { version='0.8.0' ,path='/home/dev/substrate/client/shuffler'}
 sp-block-builder = "2.0.0"
 sc-informant = "0.8.0"

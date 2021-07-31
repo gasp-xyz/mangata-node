@@ -39,7 +39,7 @@ sc-consensus-uncles = "0.8.0"
 sc-consensus-slots = "0.8.0"
 sp-runtime = "2.0.0"
 sp-utils = "2.0.0"
-sp-ignore-tx = { "version" = "2.0.0", path = "../../../primitives/ignore-tx" }
+sp-ignore-tx = { "version" = "2.0.0", path = "/home/dev/substrate/primitives/ignore-tx" }
 fork-tree = "2.0.0"
 prometheus-endpoint = { package = "substrate-prometheus-endpoint", version = "0.8.0"}
 futures = "0.3.4"

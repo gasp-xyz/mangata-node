@@ -7019,17 +7019,11 @@ dependencies = [
 name = "sp-ignore-tx"
 version = "2.0.0"
 dependencies = [
- "frame-support",
- "frame-system",
- "impl-trait-for-tuples",
  "log",
  "parity-scale-codec",
  "serde",
- "sp-core",
  "sp-inherents",
- "sp-io",
  "sp-runtime",
- "sp-std",
 ]
 
 [[package]]

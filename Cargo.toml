@@ -11,6 +11,6 @@ members = [
 [patch.crates-io]
 sc-block-builder = { default-features = false, version = '0.8.0', path = "/home/dev/substrate/client/block-builder" }
 sc-service = { default-features = false, version = '0.8.0', path = './client/service' }
-sc-consensus-babe = { default-features = false, version = '0.8.0', path = './client/consensus/babe' }
+sc-consensus-babe = { default-features = false, version = '0.8.0', path = '/home/dev/substrate/client/consensus/babe' }
 pallet-timestamp = { path = '/home/dev/substrate/frame/timestamp', default-features = false, version = '2.0.0' }
 pallet-authorship = { path = '/home/dev/substrate/frame/authorship', default-features = false, version = '2.0.0' }

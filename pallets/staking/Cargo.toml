@@ -39,7 +39,7 @@ rand_chacha = { version = "0.2", default-features = false, optional = true }
 sp-storage = { version = "2.0.0" }
 sp-tracing = { version = "2.0.0" }
 pallet-balances = { version = "2.0.0" }
-pallet-timestamp = { version = "2.0.0", path = '/home/dev/substrate/frame/timestamp' }
+pallet-timestamp = { version = "2.0.0", git = 'https://github.com/mateuszaaa/substrate', branch='fork-new' }
 pallet-staking-reward-curve = { version = "2.0.0",  path = "../staking/reward-curve" }
 substrate-test-utils = { version = "2.0.0" }
 frame-benchmarking = { version = "2.0.0"}

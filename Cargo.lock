@@ -1405,6 +1405,7 @@ dependencies = [
 [[package]]
 name = "extrinsic-info-runtime-api"
 version = "2.0.0"
+source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#f40a8309c4fde2e6779987cacbd47407b4fdfed9"
 dependencies = [
  "derive_more",
  "futures 0.3.8",
@@ -1419,6 +1420,7 @@ dependencies = [
 [[package]]
 name = "extrinsic-shuffler"
 version = "0.8.0"
+source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#f40a8309c4fde2e6779987cacbd47407b4fdfed9"
 dependencies = [
  "derive_more",
  "extrinsic-info-runtime-api",
@@ -1607,6 +1609,7 @@ dependencies = [
 [[package]]
 name = "frame-executive"
 version = "2.0.0"
+source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#f40a8309c4fde2e6779987cacbd47407b4fdfed9"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3352,7 +3355,7 @@ dependencies = [
  "pallet-authority-discovery",
  "pallet-balances",
  "pallet-grandpa",
- "pallet-staking 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "pallet-staking",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc",
  "sc-authority-discovery",
@@ -3431,7 +3434,7 @@ dependencies = [
  "pallet-random-seed",
  "pallet-randomness-collective-flip",
  "pallet-session",
- "pallet-staking 2.0.0",
+ "pallet-staking",
  "pallet-staking-reward-curve",
  "pallet-sudo",
  "pallet-timestamp",
@@ -3966,7 +3969,9 @@ dependencies = [
 
 [[package]]
 name = "pallet-authorship"
-version = "2.0.0"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a4b04a80b2d09fcaacaea6190926012348df6ddb225690de098cb8c4cf3fd19b"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4101,6 +4106,7 @@ dependencies = [
 [[package]]
 name = "pallet-random-seed"
 version = "2.0.0"
+source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#f40a8309c4fde2e6779987cacbd47407b4fdfed9"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4184,27 +4190,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-staking"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d296b36c5c32d1e480de15d0bf08460bb6d8e1771d928a6017e88a6a1de6bf7"
-dependencies = [
- "frame-support",
- "frame-system",
- "pallet-authorship",
- "pallet-session",
- "parity-scale-codec",
- "serde",
- "sp-application-crypto",
- "sp-io",
- "sp-npos-elections",
- "sp-runtime",
- "sp-staking",
- "sp-std",
- "static_assertions",
-]
-
-[[package]]
 name = "pallet-staking-reward-curve"
 version = "2.0.0"
 dependencies = [
@@ -4233,6 +4218,7 @@ dependencies = [
 [[package]]
 name = "pallet-timestamp"
 version = "2.0.0"
+source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#f40a8309c4fde2e6779987cacbd47407b4fdfed9"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5112,6 +5098,7 @@ dependencies = [
 [[package]]
 name = "random-seed-runtime-api"
 version = "2.0.0"
+source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#f40a8309c4fde2e6779987cacbd47407b4fdfed9"
 dependencies = [
  "pallet-random-seed",
  "sp-api",
@@ -5446,6 +5433,7 @@ dependencies = [
 [[package]]
 name = "sc-basic-authorship"
 version = "0.8.0"
+source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#f40a8309c4fde2e6779987cacbd47407b4fdfed9"
 dependencies = [
  "extrinsic-info-runtime-api",
  "futures 0.3.8",
@@ -5471,6 +5459,7 @@ dependencies = [
 [[package]]
 name = "sc-block-builder"
 version = "0.8.0"
+source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#f40a8309c4fde2e6779987cacbd47407b4fdfed9"
 dependencies = [
  "extrinsic-info-runtime-api",
  "extrinsic-shuffler",
@@ -5654,10 +5643,11 @@ dependencies = [
 
 [[package]]
 name = "sc-consensus-babe"
-version = "0.8.0"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6f1f50e27ce3cddd9bed5aeab449ab5f62dbdf8670cba6b1a012e07323ca89b3"
 dependencies = [
  "derive_more",
- "extrinsic-shuffler",
  "fork-tree",
  "futures 0.3.8",
  "futures-timer 3.0.2",
@@ -5666,12 +5656,10 @@ dependencies = [
  "num-bigint",
  "num-rational",
  "num-traits",
- "pallet-random-seed",
  "parity-scale-codec",
  "parking_lot 0.10.2",
  "pdqselect",
  "rand 0.7.3",
- "random-seed-runtime-api",
  "retain_mut",
  "sc-client-api",
  "sc-consensus-epochs",
@@ -5689,7 +5677,6 @@ dependencies = [
  "sp-consensus-babe",
  "sp-consensus-vrf",
  "sp-core",
- "sp-ignore-tx",
  "sp-inherents",
  "sp-io",
  "sp-runtime",
@@ -6131,6 +6118,7 @@ dependencies = [
 [[package]]
 name = "sc-service"
 version = "0.8.0"
+source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#f40a8309c4fde2e6779987cacbd47407b4fdfed9"
 dependencies = [
  "derive_more",
  "directories",
@@ -6970,6 +6958,7 @@ dependencies = [
 [[package]]
 name = "sp-ignore-tx"
 version = "2.0.0"
+source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#f40a8309c4fde2e6779987cacbd47407b4fdfed9"
 dependencies = [
  "log",
  "parity-scale-codec",
@@ -8810,3 +8799,13 @@ dependencies = [
  "itertools 0.9.0",
  "libc",
 ]
+
+[[patch.unused]]
+name = "pallet-authorship"
+version = "2.0.0"
+source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#f40a8309c4fde2e6779987cacbd47407b4fdfed9"
+
+[[patch.unused]]
+name = "sc-consensus-babe"
+version = "0.8.0"
+source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#f40a8309c4fde2e6779987cacbd47407b4fdfed9"

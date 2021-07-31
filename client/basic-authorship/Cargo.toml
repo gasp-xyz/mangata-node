@@ -28,10 +28,10 @@ sp-inherents = { version = "2.0.0"}
 sc-telemetry = { version = "2.0.0"}
 sp-transaction-pool = { version = "2.0.0"}
 sc-block-builder = { version = "0.8.0", path = "../block-builder" }
-extrinsic-info-runtime-api = { version = "2.0.0", path = "../../primitives/extrinsic-info-runtime-api" }
+extrinsic-info-runtime-api = { version = "2.0.0", path='/home/dev/substrate/primitives/extrinsic-info-runtime-api' }
 sc-proposer-metrics = { version = "0.8.0"}
 tokio-executor = { version = "0.2.0-alpha.6", features = ["blocking"] }
-sc-transaction-pool = { path='../transaction-pool', version = "2.0.0"}
+sc-transaction-pool = {  version = "2.0.0"}
 
 [dev-dependencies]
 parking_lot = "0.10.0"

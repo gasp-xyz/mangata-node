@@ -44,7 +44,7 @@ parity-util-mem = { version = "0.7.0", default-features = false, features = ["pr
 sc-service = { version = "0.8.0", default-features = false, optional = true, features = ["test-helpers"]}
 sp-state-machine = { version = "0.8.0", default-features = false}
 sp-externalities = { version = "0.8.0", default-features = false}
-extrinsic-info-runtime-api = { path = '../../primitives/extrinsic-info-runtime-api', default-features = false, version = '2.0.0' }
+extrinsic-info-runtime-api = { path = '/home/dev/substrate/primitives/extrinsic-info-runtime-api', default-features = false, version = '2.0.0' }
 random-seed-runtime-api = {path = '../../pallets/random-seed/runtime-api', default-features = false, version = '2.0.0' }
 pallet-random-seed = {path = '../../pallets/random-seed', default-features = false, version = '2.0.0' }
 

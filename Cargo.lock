@@ -299,12 +299,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "assert_matches"
-version = "1.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b34d609dfbaf33d6889b2b7106d3ca345eacad44200913df5ba02bfd31d2ba9"
-
-[[package]]
 name = "async-channel"
 version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6301,33 +6295,28 @@ dependencies = [
 
 [[package]]
 name = "sc-transaction-pool"
-version = "2.0.0"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "749ff49bf873dc43ed85ac86fce64d169c7c7397b720194799e7e6c6eb269972"
 dependencies = [
- "assert_matches",
  "derive_more",
  "futures 0.3.8",
  "futures-diagnose",
- "hex",
  "intervalier",
  "log",
  "parity-scale-codec",
  "parity-util-mem",
  "parking_lot 0.10.2",
- "sc-block-builder",
  "sc-client-api",
  "sc-transaction-graph",
  "sp-api",
  "sp-blockchain",
- "sp-consensus",
  "sp-core",
- "sp-keyring",
  "sp-runtime",
  "sp-tracing",
  "sp-transaction-pool",
  "sp-utils",
  "substrate-prometheus-endpoint",
- "substrate-test-runtime-client",
- "substrate-test-runtime-transaction-pool",
  "wasm-timer",
 ]
 
@@ -7608,21 +7597,6 @@ dependencies = [
  "sp-runtime",
  "substrate-test-client",
  "substrate-test-runtime",
-]
-
-[[package]]
-name = "substrate-test-runtime-transaction-pool"
-version = "2.0.0"
-dependencies = [
- "derive_more",
- "futures 0.3.8",
- "parity-scale-codec",
- "parking_lot 0.10.2",
- "sc-transaction-graph",
- "sp-blockchain",
- "sp-runtime",
- "sp-transaction-pool",
- "substrate-test-runtime-client",
 ]
 
 [[package]]

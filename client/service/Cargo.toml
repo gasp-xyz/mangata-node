@@ -63,7 +63,7 @@ sp-api = "2.0.0"
 sc-client-db = { version = "0.8.0", default-features = false }
 codec = { package = "parity-scale-codec", version = "1.3.4" }
 sc-executor = "0.8.0"
-sc-transaction-pool = { path='../transaction-pool', version = "2.0.0"}
+sc-transaction-pool = { version = "2.0.0"}
 sp-transaction-pool = "2.0.0"
 sc-rpc-server = "2.0.0"
 sc-rpc = "2.0.0"
@@ -78,7 +78,7 @@ sc-tracing = "2.0.0"
 sp-tracing = "2.0.0"
 tracing = "0.1.19"
 parity-util-mem = { version = "0.7.0", default-features = false, features = ["primitive-types"] }
-extrinsic-info-runtime-api = { path='../../primitives/extrinsic-info-runtime-api', version='2.0.0' }
+extrinsic-info-runtime-api = { path='/home/dev/substrate/primitives/extrinsic-info-runtime-api', version='2.0.0' }
 random-seed-runtime-api = {path='../../pallets/random-seed/runtime-api', version="2.0.0"}
 
 [target.'cfg(not(target_os = "unknown"))'.dependencies]

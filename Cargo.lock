@@ -4287,7 +4287,6 @@ dependencies = [
  "log",
  "parity-scale-codec",
  "serde",
- "sp-core",
  "sp-inherents",
  "sp-io",
  "sp-runtime",

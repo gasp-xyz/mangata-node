@@ -52,9 +52,9 @@ merlin = "2.0"
 pdqselect = "0.1.0"
 derive_more = "0.99.2"
 retain_mut = "0.1.1"
-random-seed-runtime-api = {path="../../../pallets/random-seed/runtime-api", version="2.0.0"}
-pallet-random-seed = { path='../../../pallets/random-seed', version='2.0.0' }
-extrinsic-shuffler = { path='../../shuffler', version='0.8.0' }
+random-seed-runtime-api = {path="/home/dev/substrate/frame/random-seed/runtime-api", version="2.0.0"}
+pallet-random-seed = { path='/home/dev/substrate/frame/random-seed', version='2.0.0' }
+extrinsic-shuffler = { path='/home/dev/substrate/client/shuffler', version='0.8.0' }
 
 [dev-dependencies]
 sp-keyring = "2.0.0"

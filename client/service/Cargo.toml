@@ -68,7 +68,7 @@ sp-transaction-pool = "2.0.0"
 sc-rpc-server = "2.0.0"
 sc-rpc = "2.0.0"
 sc-block-builder = { version = "0.8.0", path = "../block-builder" }
-extrinsic-shuffler = { version='0.8.0' ,path='../shuffler'}
+extrinsic-shuffler = { version='0.8.0' ,path='/home/dev/substrate/client/shuffler'}
 sp-block-builder = "2.0.0"
 sc-informant = "0.8.0"
 sc-telemetry = "2.0.0"
@@ -79,7 +79,7 @@ sp-tracing = "2.0.0"
 tracing = "0.1.19"
 parity-util-mem = { version = "0.7.0", default-features = false, features = ["primitive-types"] }
 extrinsic-info-runtime-api = { path='/home/dev/substrate/primitives/extrinsic-info-runtime-api', version='2.0.0' }
-random-seed-runtime-api = {path='../../pallets/random-seed/runtime-api', version="2.0.0"}
+random-seed-runtime-api = {path='/home/dev/substrate/frame/random-seed/runtime-api', version="2.0.0"}
 
 [target.'cfg(not(target_os = "unknown"))'.dependencies]
 tempfile = "3.1.0"

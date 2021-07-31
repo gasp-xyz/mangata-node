@@ -35,6 +35,6 @@ sc-transaction-pool = {  version = "2.0.0"}
 
 [dev-dependencies]
 parking_lot = "0.10.0"
-pallet-random-seed = { path = "../../pallets/random-seed", version = "2.0.0" }
+pallet-random-seed = { path = "/home/dev/substrate/frame/random-seed", version = "2.0.0" }
 substrate-test-runtime-client = { version = "2.0.0", path = "../../test-utils/runtime/client" }
 sp-ignore-tx = { "version" = "2.0.0", path = "/home/dev/substrate/primitives/ignore-tx" }

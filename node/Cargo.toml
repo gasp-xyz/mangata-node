@@ -36,7 +36,7 @@ frame-benchmarking = '2.0.0'
 frame-benchmarking-cli = '2.0.0'
 pallet-transaction-payment-rpc = '2.0.0'
 pallet-transaction-payment = '2.0.0'
-sc-basic-authorship = { path='../client/basic-authorship', version = '0.8.0'}
+sc-basic-authorship = { path='/home/dev/substrate/client/basic-authorship', version = '0.8.0'}
 sc-cli = { features = ['wasmtime'], version = '0.8.0' }
 sc-client-api = '2.0.0'
 sc-consensus = '0.8.0'

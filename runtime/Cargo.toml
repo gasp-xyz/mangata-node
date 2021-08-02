@@ -64,6 +64,7 @@ sp-std = { default-features = false, version = '2.0.0' }
 sp-transaction-pool = { default-features = false, version = '2.0.0' }
 sp-version = { default-features = false, version = '2.0.0' }
 orml-tokens = { git = 'https://github.com/mateuszaaa/open-runtime-module-library', default-features = false, branch="fork" }
+pallet-treasury = { path = '/home/dev/substrate/frame/treasury', default-features = false, version = '2.0.0' }
 
 # Snowfork pallets
 

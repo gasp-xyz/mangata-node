@@ -3440,6 +3440,7 @@ dependencies = [
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
+ "pallet-treasury",
  "pallet-verifier",
  "pallet-xyk",
  "parity-scale-codec",
@@ -3898,7 +3899,7 @@ checksum = "77af24da69f9d9341038eba93a073b1fdaaa1b788221b00a69bce9e762cb32de"
 [[package]]
 name = "orml-tokens"
 version = "0.3.1"
-source = "git+https://github.com/mateuszaaa/open-runtime-module-library?branch=fork#f4e7017d48cbf41b0662f576a342a9c3d354d7b3"
+source = "git+https://github.com/mateuszaaa/open-runtime-module-library?branch=fork#33089e9a8010626db8bcfa14eabc71c8c812929f"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3914,7 +3915,7 @@ dependencies = [
 [[package]]
 name = "orml-traits"
 version = "0.3.1"
-source = "git+https://github.com/mateuszaaa/open-runtime-module-library?branch=fork#f4e7017d48cbf41b0662f576a342a9c3d354d7b3"
+source = "git+https://github.com/mateuszaaa/open-runtime-module-library?branch=fork#33089e9a8010626db8bcfa14eabc71c8c812929f"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
@@ -4281,6 +4282,20 @@ dependencies = [
  "parity-scale-codec",
  "serde",
  "sp-api",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-treasury"
+version = "2.0.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "orml-tokens",
+ "pallet-balances",
+ "parity-scale-codec",
+ "serde",
  "sp-runtime",
  "sp-std",
 ]
@@ -8087,7 +8102,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04f8ab788026715fa63b31960869617cba39117e520eb415b0139543e325ab59"
 dependencies = [
  "cfg-if 0.1.10",
- "rand 0.7.3",
+ "rand 0.3.23",
  "static_assertions",
 ]
 

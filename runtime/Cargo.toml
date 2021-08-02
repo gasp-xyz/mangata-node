@@ -34,7 +34,6 @@ pallet-random-seed = { git = 'https://github.com/mateuszaaa/substrate', branch='
 pallet-assets-info = { path = '../pallets/assets-info', default-features = false, version = '2.0.0' }
 pallet-staking = { path = '../pallets/staking', default-features = false, version = "2.0.0" }
 pallet-staking-reward-curve = { path = '../pallets/staking/reward-curve', default-features = false, version = "2.0.0" }
-pallet-treasury = { path = '../pallets/treasury', default-features = false, version = '2.0.0' }
 mangata-primitives = { path = '../primitives/mangata', default-features = false, version = "0.1.0" }
 
 # Substrate dependencies
@@ -150,4 +149,5 @@ std = [
     'orml-tokens/std',
     "pallet-xyk/std",
     "pallet-staking/std",
+    "pallet-treasury/std",
 ]

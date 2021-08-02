@@ -40,7 +40,7 @@ sc-basic-authorship = { git = 'https://github.com/mateuszaaa/substrate', branch=
 sc-cli = { features = ['wasmtime'], version = '0.8.0' }
 sc-client-api = '2.0.0'
 sc-consensus = '0.8.0'
-sc-consensus-babe = '0.8.0'
+sc-consensus-babe = { git = 'https://github.com/mateuszaaa/substrate', branch='fork-new', version = '0.8.0'}
 sp-consensus-babe = '0.8.0'
 sp-authority-discovery = '2.0.0'
 #grandpa-primitives = {package = 'sp-finality-grandpa', version = '2.0.0'}

@@ -5661,11 +5661,11 @@ dependencies = [
 
 [[package]]
 name = "sc-consensus-babe"
-version = "0.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f1f50e27ce3cddd9bed5aeab449ab5f62dbdf8670cba6b1a012e07323ca89b3"
+version = "0.8.0"
+source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#764d48ab334f8dbfef35a6067cac3dd2529b3adc"
 dependencies = [
  "derive_more",
+ "extrinsic-shuffler",
  "fork-tree",
  "futures 0.3.8",
  "futures-timer 3.0.2",
@@ -5674,10 +5674,12 @@ dependencies = [
  "num-bigint",
  "num-rational",
  "num-traits",
+ "pallet-random-seed",
  "parity-scale-codec",
  "parking_lot 0.10.2",
  "pdqselect",
  "rand 0.7.3",
+ "random-seed-runtime-api",
  "retain_mut",
  "sc-client-api",
  "sc-consensus-epochs",
@@ -5695,6 +5697,7 @@ dependencies = [
  "sp-consensus-babe",
  "sp-consensus-vrf",
  "sp-core",
+ "sp-ignore-tx",
  "sp-inherents",
  "sp-io",
  "sp-runtime",
@@ -8823,9 +8826,4 @@ dependencies = [
 [[patch.unused]]
 name = "pallet-authorship"
 version = "2.0.0"
-source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#f40a8309c4fde2e6779987cacbd47407b4fdfed9"
-
-[[patch.unused]]
-name = "sc-consensus-babe"
-version = "0.8.0"
 source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#f40a8309c4fde2e6779987cacbd47407b4fdfed9"

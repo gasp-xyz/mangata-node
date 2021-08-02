@@ -145,13 +145,13 @@ use frame_support::traits::{
 use frame_support::weights::{DispatchClass, Weight};
 use frame_support::{decl_error, decl_event, decl_module, decl_storage, ensure, print, Parameter};
 use frame_system::{self as system, ensure_signed};
+use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter, MultiTokenNegativeImbalance};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 use sp_runtime::{
     traits::{AccountIdConversion, BadOrigin, Hash, Saturating, StaticLookup, Zero},
     DispatchResult, ModuleId, Percent, Permill, RuntimeDebug,
 };
-use orml_tokens::{MultiTokenNegativeImbalance, MultiTokenCurrency, MultiTokenCurrencyAdapter};
 use sp_std::prelude::*;
 
 mod benchmarking;
@@ -1494,20 +1494,23 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 impl<T, I, Tokens> OnUnbalanced<MultiTokenNegativeImbalance<Tokens>> for Module<T, I>
 where
     T: Trait<I>,
-    I: Instance, 
+    I: Instance,
     Tokens: orml_tokens::Trait,
     Tokens::AccountId: From<T::AccountId>,
-    <T::Currency as Currency<T::AccountId>>::Balance : From<u128>,
+    <T::Currency as Currency<T::AccountId>>::Balance: From<u128>,
 {
-
     fn on_nonzero_unbalanced(amount: MultiTokenNegativeImbalance<Tokens>) {
         let numeric_amount = amount.peek().into();
         let currency_id = amount.0;
 
         // Must resolve into existing but better to be safe.
-        let _ = MultiTokenCurrencyAdapter::<Tokens>::resolve_creating(currency_id, &Self::account_id().into(), amount);
+        let _ = MultiTokenCurrencyAdapter::<Tokens>::resolve_creating(
+            currency_id,
+            &Self::account_id().into(),
+            amount,
+        );
 
-        Module::<T,I>::deposit_event(RawEvent::Deposit(numeric_amount.into()));
+        Module::<T, I>::deposit_event(RawEvent::Deposit(numeric_amount.into()));
     }
 }
 

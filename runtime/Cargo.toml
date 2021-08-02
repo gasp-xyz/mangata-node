@@ -34,6 +34,7 @@ pallet-random-seed = { git = 'https://github.com/mateuszaaa/substrate', branch='
 pallet-assets-info = { path = '../pallets/assets-info', default-features = false, version = '2.0.0' }
 pallet-staking = { path = '../pallets/staking', default-features = false, version = "2.0.0" }
 pallet-staking-reward-curve = { path = '../pallets/staking/reward-curve', default-features = false, version = "2.0.0" }
+pallet-treasury = { git = 'https://github.com/mateuszaaa/substrate', branch='fork-new', default-features = false, version='2.0.0' }
 mangata-primitives = { path = '../primitives/mangata', default-features = false, version = "0.1.0" }
 
 # Substrate dependencies
@@ -64,7 +65,6 @@ sp-std = { default-features = false, version = '2.0.0' }
 sp-transaction-pool = { default-features = false, version = '2.0.0' }
 sp-version = { default-features = false, version = '2.0.0' }
 orml-tokens = { git = 'https://github.com/mateuszaaa/open-runtime-module-library', default-features = false, branch="fork" }
-pallet-treasury = { path = '/home/dev/substrate/frame/treasury', default-features = false, version = '2.0.0' }
 
 # Snowfork pallets
 

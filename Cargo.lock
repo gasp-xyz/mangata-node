@@ -1405,7 +1405,7 @@ dependencies = [
 [[package]]
 name = "extrinsic-info-runtime-api"
 version = "2.0.0"
-source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#f40a8309c4fde2e6779987cacbd47407b4fdfed9"
+source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#0aed0a368b6a2575b00f2780ac1f5b7b220152b9"
 dependencies = [
  "derive_more",
  "futures 0.3.8",
@@ -1420,7 +1420,7 @@ dependencies = [
 [[package]]
 name = "extrinsic-shuffler"
 version = "0.8.0"
-source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#f40a8309c4fde2e6779987cacbd47407b4fdfed9"
+source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#0aed0a368b6a2575b00f2780ac1f5b7b220152b9"
 dependencies = [
  "derive_more",
  "extrinsic-info-runtime-api",
@@ -1609,7 +1609,7 @@ dependencies = [
 [[package]]
 name = "frame-executive"
 version = "2.0.0"
-source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#f40a8309c4fde2e6779987cacbd47407b4fdfed9"
+source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#0aed0a368b6a2575b00f2780ac1f5b7b220152b9"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4107,7 +4107,7 @@ dependencies = [
 [[package]]
 name = "pallet-random-seed"
 version = "2.0.0"
-source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#f40a8309c4fde2e6779987cacbd47407b4fdfed9"
+source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#0aed0a368b6a2575b00f2780ac1f5b7b220152b9"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4219,7 +4219,7 @@ dependencies = [
 [[package]]
 name = "pallet-timestamp"
 version = "2.0.0"
-source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#f40a8309c4fde2e6779987cacbd47407b4fdfed9"
+source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#0aed0a368b6a2575b00f2780ac1f5b7b220152b9"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -4289,6 +4289,7 @@ dependencies = [
 [[package]]
 name = "pallet-treasury"
 version = "2.0.0"
+source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#0aed0a368b6a2575b00f2780ac1f5b7b220152b9"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5113,7 +5114,7 @@ dependencies = [
 [[package]]
 name = "random-seed-runtime-api"
 version = "2.0.0"
-source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#f40a8309c4fde2e6779987cacbd47407b4fdfed9"
+source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#0aed0a368b6a2575b00f2780ac1f5b7b220152b9"
 dependencies = [
  "pallet-random-seed",
  "sp-api",
@@ -5448,7 +5449,7 @@ dependencies = [
 [[package]]
 name = "sc-basic-authorship"
 version = "0.8.0"
-source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#f40a8309c4fde2e6779987cacbd47407b4fdfed9"
+source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#0aed0a368b6a2575b00f2780ac1f5b7b220152b9"
 dependencies = [
  "extrinsic-info-runtime-api",
  "futures 0.3.8",
@@ -5474,7 +5475,7 @@ dependencies = [
 [[package]]
 name = "sc-block-builder"
 version = "0.8.0"
-source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#f40a8309c4fde2e6779987cacbd47407b4fdfed9"
+source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#0aed0a368b6a2575b00f2780ac1f5b7b220152b9"
 dependencies = [
  "extrinsic-info-runtime-api",
  "extrinsic-shuffler",
@@ -6973,7 +6974,7 @@ dependencies = [
 [[package]]
 name = "sp-ignore-tx"
 version = "2.0.0"
-source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#f40a8309c4fde2e6779987cacbd47407b4fdfed9"
+source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#0aed0a368b6a2575b00f2780ac1f5b7b220152b9"
 dependencies = [
  "log",
  "parity-scale-codec",
@@ -8102,7 +8103,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04f8ab788026715fa63b31960869617cba39117e520eb415b0139543e325ab59"
 dependencies = [
  "cfg-if 0.1.10",
- "rand 0.3.23",
+ "rand 0.7.3",
  "static_assertions",
 ]
 

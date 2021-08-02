@@ -3456,7 +3456,6 @@ dependencies = [
  "pallet-assets-info",
  "pallet-authorship",
  "pallet-babe",
- "pallet-balances",
  "pallet-bridge",
  "pallet-grandpa",
  "pallet-offences",

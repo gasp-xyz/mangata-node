@@ -199,22 +199,7 @@ impl<Balance: Saturating + Copy + Ord> AccountData<Balance> {
 decl_storage! {
     trait Store for Module<T: Trait> as Tokens {
         /// The total issuance of a token type.
-        pub TotalIssuance get(fn total_issuance) build(|config: &GenesisConfig<T>| {
-            config
-                .endowed_accounts
-                .iter()
-                .map(|(_, currency_id, initial_balance)| (currency_id, initial_balance))
-                .fold(BTreeMap::<T::CurrencyId, T::Balance>::new(), |mut acc, (currency_id, initial_balance)| {
-                    if let Some(issuance) = acc.get_mut(currency_id) {
-                        *issuance = issuance.checked_add(initial_balance).expect("total issuance cannot overflow when building genesis");
-                    } else {
-                        acc.insert(*currency_id, *initial_balance);
-                    }
-                    acc
-                })
-                .into_iter()
-                .collect::<Vec<_>>()
-        }): map hasher(twox_64_concat) T::CurrencyId => T::Balance;
+        pub TotalIssuance get(fn total_issuance): map hasher(twox_64_concat) T::CurrencyId => T::Balance;
 
         /// Any liquidity locks of a token type under an account.
         /// NOTE: Should only be accessed when setting, changing and freeing a lock.
@@ -230,12 +215,18 @@ decl_storage! {
         pub NextCurrencyId get(fn next_asset_id): T::CurrencyId;
     }
     add_extra_genesis {
-        config(endowed_accounts): Vec<(T::AccountId, T::CurrencyId, T::Balance)>;
+        config(tokens_endowment): Vec<(T::AccountId, T::CurrencyId, T::Balance)>;
+
         config(created_tokens_for_staking): Vec<(T::AccountId, T::CurrencyId, T::Balance)>;
 
         build(|config: &GenesisConfig<T>| {
-            config.endowed_accounts.iter().for_each(|(account_id, currency_id, initial_balance)| {
-                <Accounts<T>>::mutate(account_id, currency_id, |account_data| account_data.free = *initial_balance)
+            config.tokens_endowment.iter().for_each(|(account_id, token_id, initial_balance)| {
+                if MultiTokenCurrencyAdapter::<T>::exists(*token_id){
+                    assert!(MultiTokenCurrencyAdapter::<T>::mint(*token_id, account_id, *initial_balance).is_ok(), "Tokens mint failed");
+                }else{
+                    let created_token_id = MultiTokenCurrencyAdapter::<T>::create(account_id, *initial_balance);
+                    assert!(created_token_id == *token_id, "Assets not initialized in the expected sequence");
+                }
             });
             config.created_tokens_for_staking.iter().for_each(|(account_id, token_id, initial_balance)| {
                 if MultiTokenCurrencyAdapter::<T>::exists(*token_id){

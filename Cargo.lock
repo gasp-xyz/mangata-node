@@ -183,7 +183,7 @@ checksum = "23b62fc65de8e4e7f52534fb52b0f3ed04746ae267519eef2a83941e8085068b"
 [[package]]
 name = "artemis-asset"
 version = "0.1.1"
-source = "git+https://github.com/mateuszaaa/snowbridge?branch=fork#5e27fcdbfaac6141198fa577bf92e60ab7081a5d"
+source = "git+https://github.com/mangata-finance/snowbridge?branch=mangata-dev#5eaeafedf30dbd9a199cdf5a3d5d7375adf083df"
 dependencies = [
  "artemis-core",
  "frame-support",
@@ -202,7 +202,7 @@ dependencies = [
 [[package]]
 name = "artemis-core"
 version = "0.1.1"
-source = "git+https://github.com/mateuszaaa/snowbridge?branch=fork#5e27fcdbfaac6141198fa577bf92e60ab7081a5d"
+source = "git+https://github.com/mangata-finance/snowbridge?branch=mangata-dev#5eaeafedf30dbd9a199cdf5a3d5d7375adf083df"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -215,7 +215,7 @@ dependencies = [
 [[package]]
 name = "artemis-erc20-app"
 version = "0.1.1"
-source = "git+https://github.com/mateuszaaa/snowbridge?branch=fork#5e27fcdbfaac6141198fa577bf92e60ab7081a5d"
+source = "git+https://github.com/mangata-finance/snowbridge?branch=mangata-dev#5eaeafedf30dbd9a199cdf5a3d5d7375adf083df"
 dependencies = [
  "artemis-asset",
  "artemis-core",
@@ -239,7 +239,7 @@ dependencies = [
 [[package]]
 name = "artemis-eth-app"
 version = "0.1.1"
-source = "git+https://github.com/mateuszaaa/snowbridge?branch=fork#5e27fcdbfaac6141198fa577bf92e60ab7081a5d"
+source = "git+https://github.com/mangata-finance/snowbridge?branch=mangata-dev#5eaeafedf30dbd9a199cdf5a3d5d7375adf083df"
 dependencies = [
  "artemis-asset",
  "artemis-core",
@@ -263,7 +263,7 @@ dependencies = [
 [[package]]
 name = "artemis-ethereum"
 version = "0.1.0"
-source = "git+https://github.com/mateuszaaa/snowbridge?branch=fork#5e27fcdbfaac6141198fa577bf92e60ab7081a5d"
+source = "git+https://github.com/mangata-finance/snowbridge?branch=mangata-dev#5eaeafedf30dbd9a199cdf5a3d5d7375adf083df"
 dependencies = [
  "ethabi-decode",
  "ethereum-types",
@@ -1405,7 +1405,7 @@ dependencies = [
 [[package]]
 name = "extrinsic-info-runtime-api"
 version = "2.0.0"
-source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#764d48ab334f8dbfef35a6067cac3dd2529b3adc"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#c94327a21d3fd4a14d4ba4f1709150bcb5ea0db4"
 dependencies = [
  "derive_more",
  "futures 0.3.8",
@@ -1420,7 +1420,7 @@ dependencies = [
 [[package]]
 name = "extrinsic-shuffler"
 version = "0.8.0"
-source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#764d48ab334f8dbfef35a6067cac3dd2529b3adc"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#c94327a21d3fd4a14d4ba4f1709150bcb5ea0db4"
 dependencies = [
  "derive_more",
  "extrinsic-info-runtime-api",
@@ -1608,7 +1608,7 @@ dependencies = [
 [[package]]
 name = "frame-executive"
 version = "2.0.0"
-source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#764d48ab334f8dbfef35a6067cac3dd2529b3adc"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#c94327a21d3fd4a14d4ba4f1709150bcb5ea0db4"
 dependencies = [
  "extrinsic-shuffler",
  "frame-support",
@@ -3901,7 +3901,7 @@ checksum = "77af24da69f9d9341038eba93a073b1fdaaa1b788221b00a69bce9e762cb32de"
 [[package]]
 name = "orml-tokens"
 version = "0.3.1"
-source = "git+https://github.com/mateuszaaa/open-runtime-module-library?branch=fork#02edcd563b3107ee9b831b960bf6bf30fc307256"
+source = "git+https://github.com/mangata-finance/open-runtime-module-library?branch=mangata-dev#c6446b1e77277d10ad4c7181b4fcc1840fe28237"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3917,7 +3917,7 @@ dependencies = [
 [[package]]
 name = "orml-traits"
 version = "0.3.1"
-source = "git+https://github.com/mateuszaaa/open-runtime-module-library?branch=fork#02edcd563b3107ee9b831b960bf6bf30fc307256"
+source = "git+https://github.com/mangata-finance/open-runtime-module-library?branch=mangata-dev#c6446b1e77277d10ad4c7181b4fcc1840fe28237"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
@@ -4109,7 +4109,7 @@ dependencies = [
 [[package]]
 name = "pallet-random-seed"
 version = "2.0.0"
-source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#764d48ab334f8dbfef35a6067cac3dd2529b3adc"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#c94327a21d3fd4a14d4ba4f1709150bcb5ea0db4"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4221,7 +4221,7 @@ dependencies = [
 [[package]]
 name = "pallet-timestamp"
 version = "2.0.0"
-source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#764d48ab334f8dbfef35a6067cac3dd2529b3adc"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#c94327a21d3fd4a14d4ba4f1709150bcb5ea0db4"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -4291,7 +4291,7 @@ dependencies = [
 [[package]]
 name = "pallet-treasury"
 version = "2.0.0"
-source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#764d48ab334f8dbfef35a6067cac3dd2529b3adc"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#c94327a21d3fd4a14d4ba4f1709150bcb5ea0db4"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4306,7 +4306,7 @@ dependencies = [
 [[package]]
 name = "pallet-verifier"
 version = "0.1.1"
-source = "git+https://github.com/mateuszaaa/snowbridge?branch=fork#5e27fcdbfaac6141198fa577bf92e60ab7081a5d"
+source = "git+https://github.com/mangata-finance/snowbridge?branch=mangata-dev#5eaeafedf30dbd9a199cdf5a3d5d7375adf083df"
 dependencies = [
  "artemis-core",
  "artemis-ethereum",
@@ -5116,7 +5116,7 @@ dependencies = [
 [[package]]
 name = "random-seed-runtime-api"
 version = "2.0.0"
-source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#764d48ab334f8dbfef35a6067cac3dd2529b3adc"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#c94327a21d3fd4a14d4ba4f1709150bcb5ea0db4"
 dependencies = [
  "pallet-random-seed",
  "sp-api",
@@ -5451,7 +5451,7 @@ dependencies = [
 [[package]]
 name = "sc-basic-authorship"
 version = "0.8.0"
-source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#764d48ab334f8dbfef35a6067cac3dd2529b3adc"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#c94327a21d3fd4a14d4ba4f1709150bcb5ea0db4"
 dependencies = [
  "extrinsic-info-runtime-api",
  "futures 0.3.8",
@@ -5477,7 +5477,7 @@ dependencies = [
 [[package]]
 name = "sc-block-builder"
 version = "0.8.0"
-source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#764d48ab334f8dbfef35a6067cac3dd2529b3adc"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#c94327a21d3fd4a14d4ba4f1709150bcb5ea0db4"
 dependencies = [
  "extrinsic-info-runtime-api",
  "extrinsic-shuffler",
@@ -5662,7 +5662,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-babe"
 version = "0.8.0"
-source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#764d48ab334f8dbfef35a6067cac3dd2529b3adc"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#c94327a21d3fd4a14d4ba4f1709150bcb5ea0db4"
 dependencies = [
  "derive_more",
  "extrinsic-shuffler",
@@ -6139,7 +6139,7 @@ dependencies = [
 [[package]]
 name = "sc-service"
 version = "0.8.0"
-source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#f40a8309c4fde2e6779987cacbd47407b4fdfed9"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#c94327a21d3fd4a14d4ba4f1709150bcb5ea0db4"
 dependencies = [
  "derive_more",
  "directories",
@@ -6979,7 +6979,7 @@ dependencies = [
 [[package]]
 name = "sp-ignore-tx"
 version = "2.0.0"
-source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#764d48ab334f8dbfef35a6067cac3dd2529b3adc"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#c94327a21d3fd4a14d4ba4f1709150bcb5ea0db4"
 dependencies = [
  "log",
  "parity-scale-codec",
@@ -8108,7 +8108,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04f8ab788026715fa63b31960869617cba39117e520eb415b0139543e325ab59"
 dependencies = [
  "cfg-if 0.1.10",
- "rand 0.3.23",
+ "rand 0.6.5",
  "static_assertions",
 ]
 
@@ -8826,4 +8826,4 @@ dependencies = [
 [[patch.unused]]
 name = "pallet-authorship"
 version = "2.0.0"
-source = "git+https://github.com/mateuszaaa/substrate?branch=fork-new#f40a8309c4fde2e6779987cacbd47407b4fdfed9"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#c94327a21d3fd4a14d4ba4f1709150bcb5ea0db4"

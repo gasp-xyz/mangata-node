@@ -19,8 +19,8 @@ substrate-build-script-utils = '2.0.0'
 
 [dependencies.artemis-core]
 default-features = false
-git = 'https://github.com/mateuszaaa/snowbridge'
-branch= 'fork'
+git = 'https://github.com/mangata-finance/snowbridge'
+branch= 'mangata-dev'
 
 [dependencies]
 jsonrpc-core = "15.0"
@@ -36,11 +36,11 @@ frame-benchmarking = '2.0.0'
 frame-benchmarking-cli = '2.0.0'
 pallet-transaction-payment-rpc = '2.0.0'
 pallet-transaction-payment = '2.0.0'
-sc-basic-authorship = { git = 'https://github.com/mateuszaaa/substrate', branch='fork-new', version = '0.8.0'}
+sc-basic-authorship = { git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev', version = '0.8.0'}
 sc-cli = { features = ['wasmtime'], version = '0.8.0' }
 sc-client-api = '2.0.0'
 sc-consensus = '0.8.0'
-sc-consensus-babe = { git = 'https://github.com/mateuszaaa/substrate', branch='fork-new', version = '0.8.0'}
+sc-consensus-babe = { git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev', version = '0.8.0'}
 sp-consensus-babe = '0.8.0'
 sp-authority-discovery = '2.0.0'
 #grandpa-primitives = {package = 'sp-finality-grandpa', version = '2.0.0'}
@@ -81,7 +81,7 @@ sp-transaction-pool = '2.0.0'
 substrate-frame-rpc-system = { version = '2.0.0', path = '../utils/frame/rpc/system'}
 xyk-rpc = { default-features = false, version = '2.0.0', path = '../pallets/xyk/rpc' }
 xyk-runtime-api = { default-features = false, version = '2.0.0', path = '../pallets/xyk/runtime-api' }
-extrinsic-info-runtime-api = { git = 'https://github.com/mateuszaaa/substrate', branch='fork-new', default-features = false, version = '2.0.0' }
+extrinsic-info-runtime-api = { git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev', default-features = false, version = '2.0.0' }
 
 hex-literal = { version = "0.3.1", default-features = false }
 

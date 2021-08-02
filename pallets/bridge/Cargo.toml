@@ -3,8 +3,8 @@ name = "pallet-bridge"
 description = "Artemis Bridge Pallet"
 version = "0.1.1"
 edition = "2018"
-authors = ["Snowfork <contact@snowfork.com>"]
-repository = "https://github.com/Snowfork/polkadot-ethereum"
+authors = ["Snowmangata-dev <contact@snowmangata-dev.com>"]
+repository = "https://github.com/Snowmangata-dev/polkadot-ethereum"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
@@ -47,8 +47,8 @@ version = "2.0.0"
 
 [dependencies.artemis-core]
 default-features = false
-git = 'https://github.com/mateuszaaa/snowbridge'
-branch= 'fork'
+git = 'https://github.com/mangata-finance/snowbridge'
+branch= 'mangata-dev'
 
 
 [dependencies]
@@ -56,11 +56,11 @@ hex-literal = { version = "0.3.1", default-features = true }
 frame-benchmarking = { version = "2.0.0", default-features = false, optional = true }
 
 [dev-dependencies]
-pallet-verifier = { git = 'https://github.com/mateuszaaa/snowbridge', branch="fork" }
-artemis-erc20-app = { git = 'https://github.com/mateuszaaa/snowbridge', branch="fork" }
-artemis-eth-app = { git = 'https://github.com/mateuszaaa/snowbridge', branch="fork" }
-artemis-asset = { git = 'https://github.com/mateuszaaa/snowbridge', branch="fork" }
-orml-tokens = { git = 'https://github.com/mateuszaaa/open-runtime-module-library', branch="fork" }
+pallet-verifier = { git = 'https://github.com/mangata-finance/snowbridge', branch="mangata-dev" }
+artemis-erc20-app = { git = 'https://github.com/mangata-finance/snowbridge', branch="mangata-dev" }
+artemis-eth-app = { git = 'https://github.com/mangata-finance/snowbridge', branch="mangata-dev" }
+artemis-asset = { git = 'https://github.com/mangata-finance/snowbridge', branch="mangata-dev" }
+orml-tokens = { git = 'https://github.com/mangata-finance/open-runtime-module-library', branch="mangata-dev" }
 
 mangata-primitives = { path = '../../primitives/mangata', default-features = false, version = '0.1.0' }
 

@@ -21,7 +21,8 @@ use artemis_core::{App, AppId};
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
-/// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
+/// Specialized `ChainSpec`. This is a specialization of the general Substrate
+/// ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
 
 /// Generate a crypto pair from seed.
@@ -121,22 +122,22 @@ pub fn development_config() -> Result<ChainSpec, String> {
                         40_000_000__000_000_000_000_000_000u128,
                         "0xec00ad0ec6eeb271a9689888f644d9262016a26a25314ff4ff5d756404c44112"
                             .parse()
-                            .unwrap()
+                            .unwrap(),
                     ),
                     (
                         0u32,
                         10_000_000__000_000_000_000_000_000u128,
-                        get_account_id_from_seed::<sr25519::Public>("Relay")
+                        get_account_id_from_seed::<sr25519::Public>("Relay"),
                     ),
                     (
                         0u32,
                         10_000_000__000_000_000_000_000_000u128,
-                        get_account_id_from_seed::<sr25519::Public>("Bob")
+                        get_account_id_from_seed::<sr25519::Public>("Bob"),
                     ),
                     (
                         0u32,
                         10_000_000__000_000_000_000_000_000u128,
-                        get_account_id_from_seed::<sr25519::Public>("Charlie")
+                        get_account_id_from_seed::<sr25519::Public>("Charlie"),
                     ),
                 ],
                 // Pre-funded accounts
@@ -250,22 +251,22 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                         40_000_000__000_000_000_000_000_000u128,
                         "0xec00ad0ec6eeb271a9689888f644d9262016a26a25314ff4ff5d756404c44112"
                             .parse()
-                            .unwrap()
+                            .unwrap(),
                     ),
                     (
                         0u32,
                         10_000_000__000_000_000_000_000_000u128,
-                        get_account_id_from_seed::<sr25519::Public>("Relay")
+                        get_account_id_from_seed::<sr25519::Public>("Relay"),
                     ),
                     (
                         0u32,
                         10_000_000__000_000_000_000_000_000u128,
-                        get_account_id_from_seed::<sr25519::Public>("Bob")
+                        get_account_id_from_seed::<sr25519::Public>("Bob"),
                     ),
                     (
                         0u32,
                         10_000_000__000_000_000_000_000_000u128,
-                        get_account_id_from_seed::<sr25519::Public>("Charlie")
+                        get_account_id_from_seed::<sr25519::Public>("Charlie"),
                     ),
                 ],
                 // Pre-funded accounts
@@ -430,11 +431,9 @@ fn testnet_genesis(
         }),
         orml_tokens: Some(TokensConfig {
             tokens_endowment: tokens_endowment
-                                .into_iter()
-                                .map(|(token_id, amount, account)|{
-                                    (account, token_id, amount)
-                                })
-                                .collect(),
+                .into_iter()
+                .map(|(token_id, amount, account)| (account, token_id, amount))
+                .collect(),
             created_tokens_for_staking: {
                 let mut created_tokens_for_staking_token_1: Vec<(AccountId, u32, u128)> =
                     staking_accounts

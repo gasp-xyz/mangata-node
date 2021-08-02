@@ -1,6 +1,7 @@
 // Copyright (C) 2020 Mangata team
 
-//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
+//! Service and ServiceFactory implementation. Specialized wrapper over
+//! substrate service.
 
 use mangata_runtime::{self, opaque::Block, RuntimeApi};
 use sc_client_api::{ExecutorProvider, RemoteBackend};

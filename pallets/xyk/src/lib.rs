@@ -1655,7 +1655,7 @@ pub trait Valuate {
         + From<TokenId>
         + Into<TokenId>;
 
-    fn get_liquidity_token_mng_pool(
+    fn get_liquidity_token_mga_pool(
         liquidity_token_id: Self::CurrencyId,
     ) -> Result<(Self::CurrencyId, Self::CurrencyId), DispatchError>;
 
@@ -1664,10 +1664,10 @@ pub trait Valuate {
         liquidity_token_amount: Self::Balance,
     ) -> Self::Balance;
 
-    fn scale_liquidity_by_mng_valuation(
-        mng_valuation: Self::Balance,
+    fn scale_liquidity_by_mga_valuation(
+        mga_valuation: Self::Balance,
         liquidity_token_amount: Self::Balance,
-        mng_token_amount: Self::Balance,
+        mga_token_amount: Self::Balance,
     ) -> Self::Balance;
 }
 
@@ -1676,7 +1676,7 @@ impl<T: Trait> Valuate for Module<T> {
 
     type CurrencyId = TokenId;
 
-    fn get_liquidity_token_mng_pool(
+    fn get_liquidity_token_mga_pool(
         liquidity_token_id: Self::CurrencyId,
     ) -> Result<(Self::CurrencyId, Self::CurrencyId), DispatchError> {
         let (first_token_id, second_token_id) =
@@ -1693,12 +1693,12 @@ impl<T: Trait> Valuate for Module<T> {
         liquidity_token_id: Self::CurrencyId,
         liquidity_token_amount: Self::Balance,
     ) -> Self::Balance {
-        let (mng_token_id, other_token_id) =
-            match Self::get_liquidity_token_mng_pool(liquidity_token_id) {
+        let (mga_token_id, other_token_id) =
+            match Self::get_liquidity_token_mga_pool(liquidity_token_id) {
                 Ok(pool) => pool,
                 Err(_) => return Default::default(),
             };
-        let mng_token_reserve = Pools::get((mng_token_id, other_token_id));
+        let mga_token_reserve = Pools::get((mga_token_id, other_token_id));
         let liquidity_token_reserve: Balance =
             <T as Trait>::Currency::total_issuance(liquidity_token_id.into()).into();
 
@@ -1707,23 +1707,23 @@ impl<T: Trait> Valuate for Module<T> {
         }
 
         multiply_by_rational(
-            mng_token_reserve,
+            mga_token_reserve,
             liquidity_token_amount,
             liquidity_token_reserve,
         )
         .unwrap_or_else(|_| Balance::max_value())
     }
 
-    fn scale_liquidity_by_mng_valuation(
-        mng_valuation: Self::Balance,
+    fn scale_liquidity_by_mga_valuation(
+        mga_valuation: Self::Balance,
         liquidity_token_amount: Self::Balance,
-        mng_token_amount: Self::Balance,
+        mga_token_amount: Self::Balance,
     ) -> Self::Balance {
-        if mng_valuation.is_zero() {
+        if mga_valuation.is_zero() {
             return Default::default();
         }
 
-        multiply_by_rational(liquidity_token_amount, mng_token_amount, mng_valuation)
+        multiply_by_rational(liquidity_token_amount, mga_token_amount, mga_valuation)
             .unwrap_or_else(|_| Balance::max_value())
     }
 }

@@ -26,14 +26,15 @@ serde = { features = ['derive'], optional = true, version = '1.0.101' }
 # local dependencies
 pallet-xyk = { path = '../pallets/xyk', default-features = false, version = '0.1.0' }
 xyk-runtime-api = { path = '../pallets/xyk/runtime-api', default-features = false, version = '2.0.0' }
-random-seed-runtime-api = { path = '../pallets/random-seed/runtime-api', default-features = false, version = '2.0.0' }
-extrinsic-info-runtime-api = { path = '../primitives/extrinsic-info-runtime-api', default-features = false, version = '2.0.0' }
-frame-executive = { path = '../pallets/executive', default-features = false, version = '2.0.0' }
-pallet-timestamp = { path = '../pallets/timestamp', default-features = false, version = '2.0.0' }
-pallet-random-seed = { path='../pallets/random-seed', default-features = false, version='2.0.0' }
+random-seed-runtime-api = { git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev', default-features = false, version = '2.0.0' }
+extrinsic-info-runtime-api = { git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev', default-features = false, version = '2.0.0' }
+frame-executive = { git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev', default-features = false, version = '2.0.0' }
+pallet-timestamp = { git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev', default-features = false, version = '2.0.0' }
+pallet-random-seed = { git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev', default-features = false, version='2.0.0' }
 pallet-assets-info = { path = '../pallets/assets-info', default-features = false, version = '2.0.0' }
 pallet-staking = { path = '../pallets/staking', default-features = false, version = "2.0.0" }
 pallet-staking-reward-curve = { path = '../pallets/staking/reward-curve', default-features = false, version = "2.0.0" }
+pallet-treasury = { git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev', default-features = false, version='2.0.0' }
 mangata-primitives = { path = '../primitives/mangata', default-features = false, version = "0.1.0" }
 
 # Substrate dependencies
@@ -63,9 +64,9 @@ sp-session = { default-features = false, version = '2.0.0' }
 sp-std = { default-features = false, version = '2.0.0' }
 sp-transaction-pool = { default-features = false, version = '2.0.0' }
 sp-version = { default-features = false, version = '2.0.0' }
-orml-tokens = { path="../pallets/tokens", default-features = false, version = '0.3.1' }
+orml-tokens = { git = 'https://github.com/mangata-finance/open-runtime-module-library', default-features = false, branch="mangata-dev" }
 
-# Snowfork pallets
+# Snowmangata-dev pallets
 
 [dependencies.bridge]
 default-features = false
@@ -76,26 +77,26 @@ version = "0.1.1"
 [dependencies.verifier]
 default-features = false
 package = "pallet-verifier"
-path = "../pallets/verifier"
-version = "0.1.1"
+git = 'https://github.com/mangata-finance/snowbridge'
+branch= 'mangata-dev'
 
 [dependencies.bridged-asset]
 default-features = false
 package = "artemis-asset"
-path = "../pallets/bridged-asset"
-version = "0.1.1"
+git = 'https://github.com/mangata-finance/snowbridge'
+branch= 'mangata-dev'
 
 [dependencies.eth-app]
 default-features = false
 package = "artemis-eth-app"
-path = "../pallets/eth-app"
-version = "0.1.1"
+git = 'https://github.com/mangata-finance/snowbridge'
+branch= 'mangata-dev'
 
 [dependencies.erc20-app]
 default-features = false
 package = "artemis-erc20-app"
-path = "../pallets/erc20-app"
-version = "0.1.1"
+git = 'https://github.com/mangata-finance/snowbridge'
+branch= 'mangata-dev'
 
 [features]
 default = ['std']
@@ -148,4 +149,5 @@ std = [
     'orml-tokens/std',
     "pallet-xyk/std",
     "pallet-staking/std",
+    "pallet-treasury/std",
 ]

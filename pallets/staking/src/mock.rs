@@ -617,7 +617,7 @@ impl ExtBuilder {
         }
 
         let _ = orml_tokens::GenesisConfig::<Test> {
-            endowed_accounts: vec![],
+            tokens_endowment: vec![],
             created_tokens_for_staking: vec![
                 (11, NATIVE_TOKEN_ID, balance_factor * 1000 * 4),
                 (11, DUMMY_TOKEN_FOR_POOL_ID, balance_factor * 1000 * 4),

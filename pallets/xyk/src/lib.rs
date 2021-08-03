@@ -338,7 +338,8 @@ decl_event!(
 decl_storage! {
     trait Store for Module<T: Trait> as XykStorage {
 
-        Pools get(fn asset_pool): map hasher(opaque_blake2_256) (TokenId, TokenId) => Balance;
+        // Pools get(fn asset_pool): map hasher(opaque_blake2_256) (TokenId, TokenId) => Balance;
+        Pools get(fn asset_pool): map hasher(opaque_blake2_256) (TokenId, TokenId) => (Balance, Balance);
 
         LiquidityAssets get(fn liquidity_asset): map hasher(opaque_blake2_256) (TokenId, TokenId) => Option<TokenId>;
         LiquidityPools get(fn liquidity_pool): map hasher(opaque_blake2_256) TokenId => Option<(TokenId, TokenId)>;
@@ -619,8 +620,8 @@ impl<T: Trait> Module<T> {
         bought_token_id: TokenId,
         sell_amount: Balance,
     ) -> Result<Balance, DispatchError> {
-        let input_reserve = Pools::get((sold_token_id, bought_token_id));
-        let output_reserve = Pools::get((bought_token_id, sold_token_id));
+        let (input_reserve, output_reserve) =
+            Module::<T>::get_reserves(sold_token_id, bought_token_id)?;
 
         Self::calculate_sell_price(input_reserve, output_reserve, sell_amount)
     }
@@ -630,10 +631,49 @@ impl<T: Trait> Module<T> {
         bought_token_id: TokenId,
         buy_amount: Balance,
     ) -> Result<Balance, DispatchError> {
-        let input_reserve = Pools::get((sold_token_id, bought_token_id));
-        let output_reserve = Pools::get((bought_token_id, sold_token_id));
+        let (input_reserve, output_reserve) =
+            Module::<T>::get_reserves(sold_token_id, bought_token_id)?;
 
         Self::calculate_buy_price(input_reserve, output_reserve, buy_amount)
+    }
+
+    pub fn get_reserves(
+        first_asset_id: TokenId,
+        second_asset_id: TokenId,
+    ) -> Result<(Balance, Balance), DispatchError> {
+        let mut reserves = Pools::get((first_asset_id, second_asset_id));
+
+        if Pools::contains_key((first_asset_id, second_asset_id)) {
+            return Ok((reserves.0, reserves.1));
+        } else if Pools::contains_key((second_asset_id, first_asset_id)) {
+            reserves = Pools::get((second_asset_id, first_asset_id));
+            return Ok((reserves.1, reserves.0));
+        } else {
+            return Err(DispatchError::from(Error::<T>::NoSuchPool));
+        }
+    }
+
+    pub fn set_reserves(
+        first_asset_id: TokenId,
+        first_asset_amount: Balance,
+        second_asset_id: TokenId,
+        second_asset_amount: Balance,
+    ) -> DispatchResult {
+        if Pools::contains_key((first_asset_id, second_asset_id)) {
+            Pools::insert(
+                (first_asset_id, second_asset_id),
+                (first_asset_amount, second_asset_amount),
+            );
+        } else if Pools::contains_key((second_asset_id, first_asset_id)) {
+            Pools::insert(
+                (second_asset_id, first_asset_id),
+                (second_asset_amount, first_asset_amount),
+            );
+        } else {
+            return Err(DispatchError::from(Error::<T>::NoSuchPool));
+        }
+
+        Ok(())
     }
 
     // Calculate first and second token amounts depending on liquidity amount to burn
@@ -644,8 +684,9 @@ impl<T: Trait> Module<T> {
     ) -> Result<(Balance, Balance), DispatchError> {
         // Get token reserves and liquidity asset id
         let liquidity_asset_id = Self::get_liquidity_asset(first_asset_id, second_asset_id)?;
-        let first_asset_reserve: Balance = Pools::get((first_asset_id, second_asset_id));
-        let second_asset_reserve: Balance = Pools::get((second_asset_id, first_asset_id));
+        let (first_asset_reserve, second_asset_reserve) =
+            Module::<T>::get_reserves(first_asset_id, second_asset_id)?;
+
         let total_liquidity_assets: Balance =
             <T as Trait>::Currency::total_issuance(liquidity_asset_id.into()).into();
 
@@ -680,6 +721,7 @@ impl<T: Trait> Module<T> {
         Ok((first_asset_amount, second_asset_amount))
     }
 
+    //TODO if pool contains key !
     fn settle_treasury_and_burn(
         sold_asset_id: TokenId,
         bought_asset_id: TokenId,
@@ -701,10 +743,12 @@ impl<T: Trait> Module<T> {
             <T as Trait>::Currency::burn_and_settle(mangata_id.into(), &vault, burn_amount.into())?;
         }
         //If settling token is connected to mangata, token is swapped in corresponding pool to mangata without fee
-        else if Pools::contains_key((sold_asset_id, mangata_id)) {
+        else if Pools::contains_key((settling_asset_id, mangata_id))
+            || Pools::contains_key((mangata_id, settling_asset_id))
+        {
             // Getting token reserves
-            let input_reserve = Pools::get((sold_asset_id, mangata_id));
-            let output_reserve = Pools::get((mangata_id, sold_asset_id));
+            let (input_reserve, output_reserve) =
+                Module::<T>::get_reserves(settling_asset_id, mangata_id)?;
 
             // Calculating swapped mangata amount
             let treasury_amount_in_mangata =
@@ -713,18 +757,17 @@ impl<T: Trait> Module<T> {
                 Self::calculate_sell_price_no_fee(input_reserve, output_reserve, burn_amount)?;
 
             // Apply changes in token pools, adding treasury and burn amounts of settling token, removing  treasury and burn amounts of mangata
-            Pools::insert(
-                (sold_asset_id, mangata_id),
+
+            Module::<T>::set_reserves(
+                settling_asset_id,
                 input_reserve
                     .saturating_add(treasury_amount)
                     .saturating_add(burn_amount),
-            );
-            Pools::insert(
-                (mangata_id, sold_asset_id),
+                mangata_id,
                 output_reserve
                     .saturating_sub(treasury_amount_in_mangata)
                     .saturating_sub(burn_amount_in_mangata),
-            );
+            )?;
 
             // Mangata insert to treasury
             Treasury::insert(
@@ -912,9 +955,12 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             .ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
             / 2;
 
-        Pools::insert((first_asset_id, second_asset_id), first_asset_amount);
+        Pools::insert(
+            (first_asset_id, second_asset_id),
+            (first_asset_amount, second_asset_amount),
+        );
 
-        Pools::insert((second_asset_id, first_asset_id), second_asset_amount);
+        // Pools::insert((second_asset_id, first_asset_id), second_asset_amount);
 
         // Moving tokens from user to vault
         <T as Trait>::Currency::transfer(
@@ -984,12 +1030,6 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         sold_asset_amount: Self::Balance,
         min_amount_out: Self::Balance,
     ) -> DispatchResult {
-        // Ensure pool exists
-        ensure!(
-            Pools::contains_key((sold_asset_id, bought_asset_id)),
-            Error::<T>::NoSuchPool,
-        );
-
         // Ensure not selling zero amount
         ensure!(!sold_asset_amount.is_zero(), Error::<T>::ZeroAmount,);
 
@@ -1027,8 +1067,9 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         // }
 
         // Get token reserves
-        let input_reserve = Pools::get((sold_asset_id, bought_asset_id));
-        let output_reserve = Pools::get((bought_asset_id, sold_asset_id));
+
+        let (input_reserve, output_reserve) =
+            Module::<T>::get_reserves(sold_asset_id, bought_asset_id)?;
 
         ensure!(
             input_reserve.checked_add(sold_asset_amount).is_some(),
@@ -1087,10 +1128,12 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         // Apply changes in token pools, adding sold amount and removing bought amount
         // Neither should fall to zero let alone underflow, due to how pool destruction works
         // Won't overflow due to earlier ensure
-        let input_reserve_updated = input_reserve.saturating_add(sold_asset_amount);
-        let output_reserve_updated = output_reserve.saturating_sub(bought_asset_amount);
-        Pools::insert((sold_asset_id, bought_asset_id), input_reserve_updated);
-        Pools::insert((bought_asset_id, sold_asset_id), output_reserve_updated);    
+        Module::<T>::set_reserves(
+            sold_asset_id,
+            input_reserve.saturating_add(sold_asset_amount),
+            bought_asset_id,
+            output_reserve.saturating_sub(bought_asset_amount),
+        )?;
 
         log!(
             info,
@@ -1132,16 +1175,9 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         bought_asset_amount: Self::Balance,
         max_amount_in: Self::Balance,
     ) -> DispatchResult {
-        // Ensure pool exists
-        ensure!(
-            Pools::contains_key((sold_asset_id, bought_asset_id)),
-            Error::<T>::NoSuchPool,
-        );
-
-
         // Get token reserves
-        let input_reserve = Pools::get((sold_asset_id, bought_asset_id));
-        let output_reserve = Pools::get((bought_asset_id, sold_asset_id));
+        let (input_reserve, output_reserve) =
+            Module::<T>::get_reserves(sold_asset_id, bought_asset_id)?;
 
         // Ensure there are enough tokens in reserves
         ensure!(
@@ -1243,10 +1279,12 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         // Apply changes in token pools, adding sold amount and removing bought amount
         // Neither should fall to zero let alone underflow, due to how pool destruction works
         // Won't overflow due to earlier ensure
-        let input_reserve_updated = input_reserve.saturating_add(sold_asset_amount);
-        let output_reserve_updated = output_reserve.saturating_sub(bought_asset_amount);
-        Pools::insert((sold_asset_id, bought_asset_id), input_reserve_updated);
-        Pools::insert((bought_asset_id, sold_asset_id), output_reserve_updated);
+        Module::<T>::set_reserves(
+            sold_asset_id,
+            input_reserve.saturating_add(sold_asset_amount),
+            bought_asset_id,
+            output_reserve.saturating_sub(bought_asset_amount),
+        )?;
 
         // Settle tokens which goes to treasury and for buy and burn purpose
         Self::settle_treasury_and_burn(sold_asset_id, bought_asset_id, buy_and_burn_amount, treasury_amount)?;
@@ -1300,19 +1338,13 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             Error::<T>::NoSuchPool,
         );
 
+        // TODO move ensure in get_liq_asset ?
         // Get liquidity token id
         let liquidity_asset_id = Module::<T>::get_liquidity_asset(first_asset_id, second_asset_id)?;
 
-        // Ensure pool exists
-        ensure!(
-            (Pools::contains_key((first_asset_id, second_asset_id))
-                || Pools::contains_key((second_asset_id, first_asset_id))),
-            Error::<T>::NoSuchPool,
-        );
-
         // Get token reserves
-        let first_asset_reserve = Pools::get((first_asset_id, second_asset_id));
-        let second_asset_reserve = Pools::get((second_asset_id, first_asset_id));
+        let (first_asset_reserve, second_asset_reserve) =
+            Module::<T>::get_reserves(first_asset_id, second_asset_id)?;
         let total_liquidity_assets: Self::Balance =
             <T as Trait>::Currency::total_issuance(liquidity_asset_id.into()).into();
 
@@ -1342,19 +1374,6 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         ensure!(
             !first_asset_amount.is_zero() && !second_asset_amount.is_zero(),
             Error::<T>::ZeroAmount,
-        );
-
-        ensure!(
-            first_asset_reserve
-                .checked_add(first_asset_amount)
-                .is_some(),
-            Error::<T>::MathOverflow
-        );
-        ensure!(
-            second_asset_reserve
-                .checked_add(second_asset_amount)
-                .is_some(),
-            Error::<T>::MathOverflow
         );
 
         // Ensure user has enough first and second token amount
@@ -1395,16 +1414,12 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
 
         // Apply changes in token pools, adding minted amounts
         // Won't overflow due earlier ensure
-        let first_asset_reserve_updated = first_asset_reserve.saturating_add(first_asset_amount);
-        let second_asset_reserve_updated = second_asset_reserve.saturating_add(second_asset_amount);
-        Pools::insert(
-            (&first_asset_id, &second_asset_id),
-            first_asset_reserve_updated,
-        );
-        Pools::insert(
-            (&second_asset_id, &first_asset_id),
-            second_asset_reserve_updated,
-        );
+        Module::<T>::set_reserves(
+            first_asset_id,
+            first_asset_reserve.saturating_add(first_asset_amount),
+            second_asset_id,
+            second_asset_reserve.saturating_add(second_asset_amount),
+        )?;
 
         log!(
             info,
@@ -1450,15 +1465,9 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
     ) -> DispatchResult {
         let vault = Module::<T>::account_id();
 
-        // Ensure pool exists
-        ensure!(
-            Pools::contains_key((first_asset_id, second_asset_id)),
-            Error::<T>::NoSuchPool,
-        );
-
         // Get token reserves and liquidity asset id
-        let first_asset_reserve = Pools::get((first_asset_id, second_asset_id));
-        let second_asset_reserve = Pools::get((second_asset_id, first_asset_id));
+        let (first_asset_reserve, second_asset_reserve) =
+            Module::<T>::get_reserves(first_asset_id, second_asset_id)?;
         let liquidity_asset_id = Module::<T>::get_liquidity_asset(first_asset_id, second_asset_id)?;
 
         // Ensure user has enought liquidity tokens to burn
@@ -1561,18 +1570,15 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         } else {
             // Apply changes in token pools, removing withdrawn amounts
             // Cannot underflow due to earlier ensure
-            let first_asset_reserve_updated =
-                first_asset_reserve.saturating_sub(first_asset_amount);
-            let second_asset_reserve_updated =
-                second_asset_reserve.saturating_sub(second_asset_amount);
-            Pools::insert(
-                (&first_asset_id, &second_asset_id),
-                first_asset_reserve_updated,
-            );
-            Pools::insert(
-                (&second_asset_id, &first_asset_id),
-                second_asset_reserve_updated,
-            );
+           // check was executed in get_reserves call
+           Module::<T>::set_reserves(
+            first_asset_id,
+            first_asset_reserve.saturating_sub(first_asset_amount),
+            second_asset_id,
+            second_asset_reserve.saturating_sub(second_asset_amount),
+        )
+        .unwrap();
+        
             log!(
                 info,
                 "pool-state: [({}, {}) -> {}, ({}, {}) -> {}]",
@@ -1583,6 +1589,8 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
                 first_asset_id,
                 second_asset_reserve_updated
             );
+
+            
         }
 
         // Destroying burnt liquidity tokens
@@ -1620,8 +1628,8 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
     > {
         let (first_asset_id, second_asset_id) =
             LiquidityPools::get(liquidity_asset_id).ok_or(Error::<T>::NoSuchLiquidityAsset)?;
-        let first_asset_reserve = Pools::get((first_asset_id, second_asset_id));
-        let second_asset_reserve = Pools::get((second_asset_id, first_asset_id));
+        let (first_asset_reserve, second_asset_reserve) =
+            Module::<T>::get_reserves(first_asset_id, second_asset_id)?;
         let total_liquidity_assets: Balance =
             <T as Trait>::Currency::total_issuance(liquidity_asset_id.into()).into();
 
@@ -1730,7 +1738,12 @@ impl<T: Trait> Valuate for Module<T> {
                 Ok(pool) => pool,
                 Err(_) => return Default::default(),
             };
-        let mga_token_reserve = Pools::get((mga_token_id, other_token_id));
+
+        let mng_token_reserve = match Module::<T>::get_reserves(mng_token_id, other_token_id) {
+            Ok(reserves) => reserves.0,
+            Err(_) => return Default::default(),
+        };
+
         let liquidity_token_reserve: Balance =
             <T as Trait>::Currency::total_issuance(liquidity_token_id.into()).into();
 

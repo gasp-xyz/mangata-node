@@ -20,7 +20,7 @@ use sp_runtime::traits::{
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult, MultiSignature,
+    ApplyExtrinsicResult, FixedPointNumber, MultiSignature, Perquintill,
 };
 use sp_std::prelude::*;
 //use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -56,6 +56,9 @@ use pallet_session::historical as pallet_session_historical;
 pub use pallet_staking::StakerStatus;
 pub use pallet_xyk;
 use xyk_runtime_api::{RpcAmountsResult, RpcResult};
+
+use frame_system::EnsureOneOf;
+pub use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
 
 /// Bridge pallets
 pub use bridge;
@@ -139,7 +142,7 @@ pub const DAYS: BlockNumber = HOURS * 24;
 
 // 1 in 4 blocks (on average, not counting collisions) will be primary BABE blocks.
 pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
-pub const EPOCH_DURATION_IN_BLOCKS: BlockNumber = 1 * MINUTES;
+pub const EPOCH_DURATION_IN_BLOCKS: BlockNumber = 10 * MINUTES;
 pub const EPOCH_DURATION_IN_SLOTS: u64 = {
     const SLOT_FILL_RATE: f64 = MILLISECS_PER_BLOCK as f64 / SLOT_DURATION as f64;
 
@@ -312,7 +315,7 @@ impl pallet_staking::Trait for Runtime {
     type CurrencyToVote = CurrencyToVoteHandler;
     type RewardRemainder = ();
     type Event = Event;
-    type Slash = (); // send the slashed funds to the treasury.
+    type Slash = Treasury; // send the slashed funds to the treasury.
     type Reward = (); // rewards are minted from the void
     type SessionsPerEra = SessionsPerEra;
     type BondingDuration = BondingDuration;
@@ -435,14 +438,19 @@ impl pallet_balances::Trait for Runtime {
 
 parameter_types! {
     pub const TransactionByteFee: Balance = 1;
+    pub const MGATokenID: TokenId = 0;
+    pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
+    pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(1, 100_000);
+    pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000_000u128);
 }
 
 impl pallet_transaction_payment::Trait for Runtime {
-    type Currency = Balances;
+    type Currency = orml_tokens::CurrencyAdapter<Runtime, MGATokenID>;
     type OnTransactionPayment = ();
     type TransactionByteFee = TransactionByteFee;
     type WeightToFee = IdentityFee<Balance>;
-    type FeeMultiplierUpdate = ();
+    type FeeMultiplierUpdate =
+        TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
 }
 
 impl pallet_sudo::Trait for Runtime {
@@ -484,6 +492,70 @@ impl eth_app::Trait for Runtime {
 
 impl erc20_app::Trait for Runtime {
     type Event = Event;
+}
+
+mod currency {
+    use mangata_primitives::Balance;
+
+    pub const MILLICENTS: Balance = 1_000_000_000;
+    pub const CENTS: Balance = 1_000 * MILLICENTS; // assume this is worth about a cent.
+    pub const DOLLARS: Balance = 100 * CENTS;
+}
+
+parameter_types! {
+    pub const TreasuryModuleId: sp_runtime::ModuleId = sp_runtime::ModuleId(*b"py/trsry");
+    pub const ProposalBond: sp_runtime::Permill = sp_runtime::Permill::from_percent(5);
+    pub const ProposalBondMinimum: Balance = 1 * currency::DOLLARS;
+    pub const SpendPeriod: BlockNumber = 1 * DAYS;
+    pub const Burn: sp_runtime::Permill = sp_runtime::Permill::from_percent(50);
+    pub const TipCountdown: BlockNumber = 1 * DAYS;
+    pub const TipFindersFee: sp_runtime::Percent = sp_runtime::Percent::from_percent(20);
+    pub const TipReportDepositBase: Balance = 1 * currency::DOLLARS;
+    pub const DataDepositPerByte: Balance = 1 * currency::CENTS;
+    pub const BountyDepositBase: Balance = 1 * currency::DOLLARS;
+    pub const BountyDepositPayoutDelay: BlockNumber = 1 * DAYS;
+    pub const BountyUpdatePeriod: BlockNumber = 14 * DAYS;
+    pub const MaximumReasonLength: u32 = 16384;
+    pub const BountyCuratorDeposit: Permill = Permill::from_percent(50);
+    pub const BountyValueMinimum: Balance = 5 * currency::DOLLARS;
+}
+
+impl pallet_treasury::Trait for Runtime {
+    type ModuleId = TreasuryModuleId;
+    type Currency = orml_tokens::CurrencyAdapter<Runtime, MGATokenID>;
+    type ApproveOrigin = EnsureOneOf<
+        AccountId,
+        EnsureRoot<AccountId>,
+        EnsureRoot<AccountId>,
+        // TODO: do we want to support pallet_collective?
+        // pallet_collective::EnsureMembers<_4, AccountId, CouncilCollective>
+    >;
+    type RejectOrigin = EnsureOneOf<
+        AccountId,
+        EnsureRoot<AccountId>,
+        EnsureRoot<AccountId>,
+        // TODO: do we want to support pallet_collective?
+        // pallet_collective::EnsureMembers<_2, AccountId, CouncilCollective>
+    >;
+    type Tippers = pallet_treasury::NoTippers;
+    type TipCountdown = TipCountdown;
+    type TipFindersFee = TipFindersFee;
+    type TipReportDepositBase = TipReportDepositBase;
+    type DataDepositPerByte = DataDepositPerByte;
+    type Event = Event;
+    type OnSlash = ();
+    type ProposalBond = ProposalBond;
+    type ProposalBondMinimum = ProposalBondMinimum;
+    type SpendPeriod = SpendPeriod;
+    type Burn = Burn;
+    type BountyDepositBase = BountyDepositBase;
+    type BountyDepositPayoutDelay = BountyDepositPayoutDelay;
+    type BountyUpdatePeriod = BountyUpdatePeriod;
+    type BountyCuratorDeposit = BountyCuratorDeposit;
+    type BountyValueMinimum = BountyValueMinimum;
+    type MaximumReasonLength = MaximumReasonLength;
+    type BurnDestination = ();
+    type WeightInfo = (); // default weights info
 }
 
 parameter_types! {
@@ -549,6 +621,7 @@ construct_runtime!(
         Tokens: orml_tokens::{Module, Storage, Call, Event<T>, Config<T>},
         Xyk: pallet_xyk::{Module, Call, Storage, Event<T>, Config<T>},
         Staking: pallet_staking::{Module, Call, Config<T>, Storage, Event<T>, ValidateUnsigned},
+        Treasury: pallet_treasury::{Module, Call, Storage, Config, Event<T>},
     }
 );
 
@@ -592,7 +665,10 @@ impl_runtime_apis! {
         }
 
         fn execute_block(block: Block) {
-            Executive::execute_block(block)
+            let authors :Vec<_> = block.extrinsics().iter().map(
+                |tx| tx.clone().signature.map(|info| info.0) ).collect();
+
+            Executive::execute_block(block, authors)
         }
 
         fn initialize_block(header: &<Block as BlockT>::Header) {
@@ -854,6 +930,7 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, pallet_timestamp, Timestamp);
             add_benchmark!(params, batches, bridge, Bridge);
             add_benchmark!(params, batches, pallet_staking, Staking);
+            add_benchmark!(params, batches, pallet_treasury, Treasury);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)

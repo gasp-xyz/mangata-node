@@ -56,7 +56,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: -p pallet-xyk -p sc-block-builder -p sc-basic-authorship -p extrinsic-shuffler -p pallet-random-seed -p random-seed-runtime-api -p xyk-runtime-api -p mangata-primitives -p extrinsic-info-runtime-api
+          args: -p pallet-xyk -p pallet-assets-info -p pallet-bridge
 
   unit-test:
     runs-on: ubuntu-latest

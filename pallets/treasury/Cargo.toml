@@ -27,6 +27,7 @@ frame-benchmarking = { version = "2.0.0", default-features = false, optional = t
 sp-io = { version = "2.0.0" }
 sp-core = { version = "2.0.0" }
 sp-storage = { version = "2.0.0" }
+pallet-balances = { version = "2.0.0", default-features = false }
 
 [features]
 default = ["std"]
@@ -37,6 +38,7 @@ std = [
 	"sp-runtime/std",
 	"frame-support/std",
 	"frame-system/std",
+	"pallet-balances/std",
 ]
 runtime-benchmarks = [
 	"frame-benchmarking",

@@ -4376,6 +4376,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "orml-tokens",
+ "pallet-balances",
  "parity-scale-codec",
  "serde",
  "sp-core",

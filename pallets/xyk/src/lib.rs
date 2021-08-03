@@ -646,8 +646,13 @@ impl<T: Trait> Module<T> {
         let first_asset_reserve: Balance = Pools::get((first_asset_id, second_asset_id));
         let second_asset_reserve: Balance = Pools::get((second_asset_id, first_asset_id));
 
-        let (first_asset_amount, second_asset_amount) = Self::get_burn_amount_reserves(first_asset_reserve, second_asset_reserve, liquidity_asset_id, liquidity_asset_amount)?;
-       
+        let (first_asset_amount, second_asset_amount) = Self::get_burn_amount_reserves(
+            first_asset_reserve,
+            second_asset_reserve,
+            liquidity_asset_id,
+            liquidity_asset_amount,
+        )?;
+
         log!(
             info,
             "get_burn_amount: ({}, {}, {}) -> ({}, {})",
@@ -668,7 +673,7 @@ impl<T: Trait> Module<T> {
         liquidity_asset_amount: Balance,
     ) -> Result<(Balance, Balance), DispatchError> {
         // Get token reserves and liquidity asset id
-       
+
         let total_liquidity_assets: Balance =
             <T as Trait>::Currency::total_issuance(liquidity_asset_id.into()).into();
 

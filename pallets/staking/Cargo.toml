@@ -27,7 +27,7 @@ pallet-session = { version = "2.0.0", default-features = false, features = ["his
 pallet-authorship = { version = "2.0.0", default-features = false }
 sp-application-crypto = { version = "2.0.0", default-features = false }
 pallet-xyk = { version = "0.1.0", default-features = false, path = "../xyk" }
-orml-tokens = { git = 'https://github.com/mangata-finance/open-runtime-module-library', default-features=false, branch="mangata-dev" }
+orml-tokens = { version = "0.3.1", default-features=false}
 mangata-primitives = { path = '../../primitives/mangata', default-features = false, version = '0.1.0' }
 sp-core = { version = "2.0.0", default-features = false }
 
@@ -39,7 +39,7 @@ rand_chacha = { version = "0.2", default-features = false, optional = true }
 sp-storage = { version = "2.0.0" }
 sp-tracing = { version = "2.0.0" }
 pallet-balances = { version = "2.0.0" }
-pallet-timestamp = { version = "2.0.0", git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev' }
+pallet-timestamp = { version = "2.0.0"}
 pallet-staking-reward-curve = { version = "2.0.0",  path = "../staking/reward-curve" }
 substrate-test-utils = { version = "2.0.0" }
 frame-benchmarking = { version = "2.0.0"}

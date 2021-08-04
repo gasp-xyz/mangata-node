@@ -9,10 +9,21 @@ members = [
 ]
 
 [patch.crates-io]
-sc-block-builder = { default-features = false, version = '0.8.0', git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev' }
-sc-service = { default-features = false, version = '0.8.0', git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev' }
-sc-consensus-babe = { default-features = false, version = '0.8.0', git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev' }
-sc-basic-authorship = { default-features = false, version = '0.8.0', git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev' }
-pallet-timestamp = { git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev', default-features = false, version = '2.0.0' }
-pallet-authorship = { git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev', default-features = false, version = '2.0.0' }
-pallet-staking = { path="pallets/staking" , default-features = false, version = '2.0.0' }
+artemis-asset = { git = 'https://github.com/mangata-finance/snowbridge', branch="mangata-dev" }
+artemis-core = { git = 'https://github.com/mangata-finance/snowbridge', branch="mangata-dev" }
+artemis-erc20-app = { git = 'https://github.com/mangata-finance/snowbridge', branch="mangata-dev" }
+artemis-eth-app = { git = 'https://github.com/mangata-finance/snowbridge', branch="mangata-dev" }
+extrinsic-info-runtime-api = { git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev', version = '2.0.0' }
+frame-executive = { git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev', version = '2.0.0' }
+orml-tokens = { git = 'https://github.com/mangata-finance/open-runtime-module-library', branch="mangata-dev" }
+pallet-authorship = { git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev', version = '2.0.0' }
+pallet-random-seed = { git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev', version='2.0.0' }
+pallet-staking = { path="pallets/staking" , version = '2.0.0' }
+pallet-timestamp = { git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev', version = '2.0.0' }
+pallet-treasury = { git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev', version = '2.0.0' }
+pallet-verifier = { git = 'https://github.com/mangata-finance/snowbridge', branch="mangata-dev" }
+random-seed-runtime-api = { git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev', version = '2.0.0' }
+sc-basic-authorship = { version = '0.8.0', git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev' }
+sc-block-builder = { version = '0.8.0', git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev' }
+sc-consensus-babe = { git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev', version = '0.8.0'}
+sc-service = { version = '0.8.0', git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev' }

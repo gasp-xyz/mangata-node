@@ -2,7 +2,7 @@
 
 use hex_literal::hex;
 use mangata_runtime::{
-    AccountId, AssetsInfoConfig, BabeConfig, BalancesConfig, BridgeConfig, BridgedAssetConfig,
+    AccountId, AssetsInfoConfig, BabeConfig, BridgeConfig, BridgedAssetConfig,
     GenesisConfig, GrandpaConfig, RandomConfig, SessionConfig, SessionKeys, Signature,
     StakerStatus, StakingConfig, SudoConfig, SystemConfig, TokensConfig, VerifierConfig, XykConfig,
     WASM_BINARY,
@@ -140,17 +140,6 @@ pub fn development_config() -> Result<ChainSpec, String> {
                         get_account_id_from_seed::<sr25519::Public>("Charlie"),
                     ),
                 ],
-                // Pre-funded accounts
-                vec![
-                    get_account_id_from_seed::<sr25519::Public>("Alice"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob"),
-                    get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Relay"),
-                    "0xec00ad0ec6eeb271a9689888f644d9262016a26a25314ff4ff5d756404c44112"
-                        .parse()
-                        .unwrap(),
-                ],
                 // Config for Staking
                 // Make sure it works with initial-authorities as staking uses both
                 vec![(
@@ -269,25 +258,6 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                         get_account_id_from_seed::<sr25519::Public>("Charlie"),
                     ),
                 ],
-                // Pre-funded accounts
-                vec![
-                    get_account_id_from_seed::<sr25519::Public>("Alice"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob"),
-                    get_account_id_from_seed::<sr25519::Public>("Charlie"),
-                    get_account_id_from_seed::<sr25519::Public>("Dave"),
-                    get_account_id_from_seed::<sr25519::Public>("Eve"),
-                    get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-                    get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Relay"),
-                    "0xec00ad0ec6eeb271a9689888f644d9262016a26a25314ff4ff5d756404c44112"
-                        .parse()
-                        .unwrap(),
-                ],
                 // Config for Staking
                 // Make sure it works with initial-authorities as staking uses both
                 vec![(
@@ -334,7 +304,6 @@ fn testnet_genesis(
     bridged_app_ids: Vec<(App, AppId)>,
     bridged_assets: BridgedAssetsType,
     tokens_endowment: Vec<(u32, u128, AccountId)>,
-    endowed_accounts: Vec<AccountId>,
     staking_accounts: Vec<(AccountId, u32, u128, u32, u128, u32, u128)>,
     _enable_println: bool,
     init_seed: [u8; 32],
@@ -344,14 +313,6 @@ fn testnet_genesis(
             // Add Wasm runtime to storage.
             code: wasm_binary.to_vec(),
             changes_trie_config: Default::default(),
-        }),
-        pallet_balances: Some(BalancesConfig {
-            // Configure endowed accounts with initial balance of 1 << 60.
-            balances: endowed_accounts
-                .iter()
-                .cloned()
-                .map(|k| (k, 1 << 60))
-                .collect(),
         }),
         pallet_session: Some(SessionConfig {
             keys: initial_authorities

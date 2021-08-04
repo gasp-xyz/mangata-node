@@ -41,7 +41,6 @@ pub use frame_support::{
     StorageValue,
 };
 use frame_system::EnsureRoot;
-pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -226,7 +225,7 @@ impl frame_system::Trait for Runtime {
     /// What to do if an account is fully reaped from the system.
     type OnKilledAccount = ();
     /// The data to be stored in an account.
-    type AccountData = pallet_balances::AccountData<Balance>;
+    type AccountData = ();
     /// Weight information for the extrinsics of this pallet.
     type SystemWeightInfo = ();
 }
@@ -420,23 +419,6 @@ impl pallet_timestamp::Trait for Runtime {
 }
 
 parameter_types! {
-    pub const ExistentialDeposit: u128 = 500;
-    pub const MaxLocks: u32 = 50;
-}
-
-impl pallet_balances::Trait for Runtime {
-    type MaxLocks = MaxLocks;
-    /// The type for recording an account's balance.
-    type Balance = Balance;
-    /// The ubiquitous event type.
-    type Event = Event;
-    type DustRemoval = ();
-    type ExistentialDeposit = ExistentialDeposit;
-    type AccountStore = System;
-    type WeightInfo = ();
-}
-
-parameter_types! {
     pub const TransactionByteFee: Balance = 1;
     pub const MGATokenID: TokenId = 0;
     pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
@@ -607,7 +589,6 @@ construct_runtime!(
         Babe: pallet_babe::{Module, Call, Storage, Config, Inherent, ValidateUnsigned},
         Historical: pallet_session_historical::{Module},
         Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
-        Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
         TransactionPayment: pallet_transaction_payment::{Module, Storage},
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
         Offences: pallet_offences::{Module, Call, Storage, Event},
@@ -926,7 +907,6 @@ impl_runtime_apis! {
             let params = (&config, &whitelist);
 
             add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
-            add_benchmark!(params, batches, pallet_balances, Balances);
             add_benchmark!(params, batches, pallet_timestamp, Timestamp);
             add_benchmark!(params, batches, bridge, Bridge);
             add_benchmark!(params, batches, pallet_staking, Staking);

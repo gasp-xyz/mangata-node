@@ -47,7 +47,6 @@ pallet-babe = { default-features = false, version = "2.0.0" }
 pallet-offences = { default-features = false, version = "2.0.0" }
 pallet-session = { default-features = false, version = "2.0.0" }
 pallet-authorship = { default-features = false, version = "2.0.0" }
-pallet-balances = { default-features = false, version = '2.0.0' }
 pallet-grandpa = { default-features = false, version = '2.0.0' }
 pallet-randomness-collective-flip = { default-features = false, version = '2.0.0' }
 pallet-sudo = { default-features = false, version = '2.0.0' }
@@ -106,7 +105,6 @@ runtime-benchmarks = [
     'frame-support/runtime-benchmarks',
     'frame-system-benchmarking',
     'frame-system/runtime-benchmarks',
-    'pallet-balances/runtime-benchmarks',
     'pallet-timestamp/runtime-benchmarks',
     'sp-runtime/runtime-benchmarks',
     'bridge/runtime-benchmarks',
@@ -123,7 +121,6 @@ std = [
     "pallet-babe/std",
     "pallet-offences/std",
     "pallet-authorship/std",
-    'pallet-balances/std',
     'pallet-grandpa/std',
     'pallet-randomness-collective-flip/std',
     'pallet-sudo/std',

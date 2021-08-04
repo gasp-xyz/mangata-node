@@ -1460,7 +1460,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
 
         // Calculate first and second token amounts depending on liquidity amount to burn
         let (first_asset_amount, second_asset_amount) =
-            Module::<T>::get_burn_amount(first_asset_id, second_asset_id, liquidity_asset_amount)?;
+            Module::<T>::get_burn_amount_reserves(first_asset_reserve, second_asset_reserve, liquidity_asset_id, liquidity_asset_amount)?;
 
         let total_liquidity_assets: Balance =
             <T as Trait>::Currency::total_issuance(liquidity_asset_id.into()).into();

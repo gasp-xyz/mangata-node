@@ -146,14 +146,14 @@ fn buy_and_burn_sell_mangata() {
         initialize_buy_and_burn();
         XykStorage::sell_asset(Origin::signed(2), 0, 1, 50000000000000, 0).unwrap();
 
-        // assert_eq!(XykStorage::asset_pool((0, 1)), 149950000000000); // pool: regular trade result - 25000000000 treasury - 25000000000 burn
+        // assert_eq!(XykStorage::asset_pool((1, 2)), 149950000000000); // pool: regular trade result - 25000000000 treasury - 25000000000 burn
         // assert_eq!(XykStorage::asset_pool((1, 0)), 66733400066734); // pool: regular trade result
         assert_eq!(
-            XykStorage::asset_pool((0, 1)),
+            XykStorage::asset_pool((1, 2)),
             (149950000000000, 66733400066734)
         );
-        assert_eq!(XykStorage::balance(0, 2), 750000000000000); // user acc: regular trade result
-        assert_eq!(XykStorage::balance(1, 2), 733266599933266); // user acc: regular trade result
+        assert_eq!(XykStorage::balance(1, 2), 750000000000000); // user acc: regular trade result
+        assert_eq!(XykStorage::balance(2, 2), 733266599933266); // user acc: regular trade result
         assert_eq!(
             XykStorage::balance(0, XykStorage::account_id()),
             249975000000000
@@ -175,14 +175,14 @@ fn buy_and_burn_sell_other_for_mangata() {
         initialize_buy_and_burn();
         XykStorage::sell_asset(Origin::signed(2), 1, 0, 50000000000000, 0).unwrap();
 
-        // assert_eq!(XykStorage::asset_pool((0, 1)), 66711155600046); // pool: regular trade result - 11122233344 treasury 11122233344 burn
+        // assert_eq!(XykStorage::asset_pool((1, 2)), 66711155600046); // pool: regular trade result - 11122233344 treasury 11122233344 burn
         // assert_eq!(XykStorage::asset_pool((1, 0)), 150000000000000); // pool: regular trade result
         assert_eq!(
-            XykStorage::asset_pool((0, 1)),
+            XykStorage::asset_pool((1, 2)),
             (66711155600046, 150000000000000)
         );
-        assert_eq!(XykStorage::balance(0, 2), 833266599933266); // user acc: regular trade result
-        assert_eq!(XykStorage::balance(1, 2), 650000000000000); // user acc: regular trade result
+        assert_eq!(XykStorage::balance(1, 2), 833266599933266); // user acc: regular trade result
+        assert_eq!(XykStorage::balance(2, 2), 650000000000000); // user acc: regular trade result
         assert_eq!(
             XykStorage::balance(0, XykStorage::account_id()),
             166722277833390
@@ -204,10 +204,10 @@ fn buy_and_burn_sell_only_sold_has_mangata_pair() {
         initialize_buy_and_burn();
         XykStorage::sell_asset(Origin::signed(2), 1, 3, 50000000000000, 0).unwrap();
 
-        // assert_eq!(XykStorage::asset_pool((0, 1)), 99950012496876); // pool: regular trade result - 24993751562 treasury - 24993751562 burn
+        // assert_eq!(XykStorage::asset_pool((1, 2)), 99950012496876); // pool: regular trade result - 24993751562 treasury - 24993751562 burn
         // assert_eq!(XykStorage::asset_pool((1, 0)), 100050000000000); // pool: regular trade result + 25000000000 treasury + 25000000000 burn / swapped for 24993751562 in pool (0-1)
         assert_eq!(
-            XykStorage::asset_pool((0, 1)),
+            XykStorage::asset_pool((1, 2)),
             (99950012496876, 100050000000000)
         );
         // assert_eq!(XykStorage::asset_pool((1, 3)), 149950000000000); // pool: regular trade result - 25000000000 treasury - 25000000000 burn
@@ -216,7 +216,7 @@ fn buy_and_burn_sell_only_sold_has_mangata_pair() {
             XykStorage::asset_pool((1, 3)),
             (149950000000000, 66733400066734)
         );
-        assert_eq!(XykStorage::balance(1, 2), 650000000000000); // user acc: regular trade result
+        assert_eq!(XykStorage::balance(2, 2), 650000000000000); // user acc: regular trade result
         assert_eq!(XykStorage::balance(3, 2), 833266599933266); // user acc: regular trade result
         assert_eq!(
             XykStorage::balance(0, XykStorage::account_id()),
@@ -243,10 +243,10 @@ fn buy_and_burn_sell_only_bought_has_mangata_pair() {
         initialize_buy_and_burn();
         XykStorage::sell_asset(Origin::signed(2), 3, 1, 50000000000000, 0).unwrap();
 
-        // assert_eq!(XykStorage::asset_pool((0, 1)), 99977758007120); // pool: regular trade result - 11120996440 treasury - 11120996440 burn
+        // assert_eq!(XykStorage::asset_pool((1, 2)), 99977758007120); // pool: regular trade result - 11120996440 treasury - 11120996440 burn
         // assert_eq!(XykStorage::asset_pool((1, 0)), 100022244466688); // pool: regular trade result + 11122233344 treasury + 11122233344 burn / swapped for 11120996440 in pool (0-1)
         assert_eq!(
-            XykStorage::asset_pool((0, 1)),
+            XykStorage::asset_pool((1, 2)),
             (99977758007120, 100022244466688)
         );
         // assert_eq!(XykStorage::asset_pool((1, 3)), 66711155600046); // pool: regular trade result - 11122233344 treasury - 11122233344 burn
@@ -255,7 +255,7 @@ fn buy_and_burn_sell_only_bought_has_mangata_pair() {
             XykStorage::asset_pool((1, 3)),
             (66711155600046, 150000000000000)
         );
-        assert_eq!(XykStorage::balance(1, 2), 733266599933266); // user acc: regular trade result
+        assert_eq!(XykStorage::balance(2, 2), 733266599933266); // user acc: regular trade result
         assert_eq!(XykStorage::balance(3, 2), 750000000000000); // user acc: regular trade result
         assert_eq!(
             XykStorage::balance(0, XykStorage::account_id()),
@@ -282,10 +282,10 @@ fn buy_and_burn_sell_both_have_mangata_pair() {
         initialize_buy_and_burn();
         XykStorage::sell_asset(Origin::signed(2), 2, 1, 50000000000000, 0).unwrap();
 
-        // assert_eq!(XykStorage::asset_pool((0, 1)), 99977758007120); // pool: regular trade result - 11120996440 treasury - 11120996440 burn
+        // assert_eq!(XykStorage::asset_pool((1, 2)), 99977758007120); // pool: regular trade result - 11120996440 treasury - 11120996440 burn
         // assert_eq!(XykStorage::asset_pool((1, 0)), 100022244466688); // pool: regular trade result + 11122233344 treasury + 11122233344 burn / swapped for 11120996440 in pool (0-1)
         assert_eq!(
-            XykStorage::asset_pool((0, 1)),
+            XykStorage::asset_pool((1, 2)),
             (99977758007120, 100022244466688)
         );
         // assert_eq!(XykStorage::asset_pool((1, 2)), 66711155600046); // pool: regular trade result - 11122233344 treasury - 11122233344 burn
@@ -294,7 +294,7 @@ fn buy_and_burn_sell_both_have_mangata_pair() {
             XykStorage::asset_pool((1, 2)),
             (66711155600046, 150000000000000)
         );
-        assert_eq!(XykStorage::balance(1, 2), 733266599933266); // user acc: regular trade result
+        assert_eq!(XykStorage::balance(2, 2), 733266599933266); // user acc: regular trade result
         assert_eq!(XykStorage::balance(2, 2), 750000000000000); // user acc: regular trade result
         assert_eq!(
             XykStorage::balance(0, XykStorage::account_id()),
@@ -321,10 +321,10 @@ fn buy_and_burn_sell_none_have_mangata_pair() {
         initialize_buy_and_burn();
         XykStorage::sell_asset(Origin::signed(2), 3, 4, 50000000000000, 0).unwrap();
 
-        // assert_eq!(XykStorage::asset_pool((0, 1)), 100000000000000); // pool - 3 treasury - 3 burn
+        // assert_eq!(XykStorage::asset_pool((1, 2)), 100000000000000); // pool - 3 treasury - 3 burn
         // assert_eq!(XykStorage::asset_pool((1, 0)), 100000000000000); // pool + 4 treasury + 4 burn / swapped for - 4 - 4 in pool (0-1)
         assert_eq!(
-            XykStorage::asset_pool((0, 1)),
+            XykStorage::asset_pool((1, 2)),
             (100000000000000, 100000000000000)
         );
         // assert_eq!(XykStorage::asset_pool((3, 4)), 150000000000000); // pool - 4 treasury - 4 burn
@@ -370,18 +370,18 @@ fn multi() {
             500000000000000000000000,
         )
         .unwrap();
-        // assert_eq!(XykStorage::asset_pool((0, 1)), 1000000000000000000000000); // amount of asset 0 in pool map
+        // assert_eq!(XykStorage::asset_pool((1, 2)), 1000000000000000000000000); // amount of asset 0 in pool map
         // assert_eq!(XykStorage::asset_pool((1, 0)), 500000000000000000000000); // amount of asset 1 in pool map
         assert_eq!(
-            XykStorage::asset_pool((0, 1)),
+            XykStorage::asset_pool((1, 2)),
             (1000000000000000000000000, 500000000000000000000000)
         );
         assert_eq!(XykStorage::liquidity_asset((0, 1)), Some(2)); // liquidity assetId corresponding to newly created pool
         assert_eq!(XykStorage::liquidity_pool(2), Some((0, 1))); // liquidity assetId corresponding to newly created pool
         assert_eq!(XykStorage::total_supply(2), 1500000000000000000000000); // total liquidity assets
         assert_eq!(XykStorage::balance(2, 2), 1500000000000000000000000); // amount of liquidity assets owned by user by creating pool / initial minting
-        assert_eq!(XykStorage::balance(0, 2), 1000000000000000000000000); // amount of asset 0 in user acc after creating pool / initial minting
-        assert_eq!(XykStorage::balance(1, 2), 1500000000000000000000000); // amount of asset 1 in user acc after creating pool / initial minting
+        assert_eq!(XykStorage::balance(1, 2), 1000000000000000000000000); // amount of asset 0 in user acc after creating pool / initial minting
+        assert_eq!(XykStorage::balance(2, 2), 1500000000000000000000000); // amount of asset 1 in user acc after creating pool / initial minting
         assert_eq!(
             XykStorage::balance(0, XykStorage::account_id()),
             1000000000000000000000000
@@ -400,16 +400,16 @@ fn multi() {
         )
         .unwrap();
 
-        // assert_eq!(XykStorage::asset_pool((0, 1)), 1500000000000000000000000); // amount of asset 0 in pool map
+        // assert_eq!(XykStorage::asset_pool((1, 2)), 1500000000000000000000000); // amount of asset 0 in pool map
         // assert_eq!(XykStorage::asset_pool((1, 0)), 750000000000000000000001); // amount of asset 1 in pool map
         assert_eq!(
-            XykStorage::asset_pool((0, 1)),
+            XykStorage::asset_pool((1, 2)),
             (1500000000000000000000000, 750000000000000000000001)
         );
         assert_eq!(XykStorage::total_supply(2), 2250000000000000000000000); // total liquidity assets
         assert_eq!(XykStorage::balance(2, 2), 2250000000000000000000000); // amount of liquidity assets owned by user by creating pool / initial minting
-        assert_eq!(XykStorage::balance(0, 2), 500000000000000000000000); // amount of asset 0 in user acc after creating pool / initial minting
-        assert_eq!(XykStorage::balance(1, 2), 1249999999999999999999999); // amount of asset 1 in user acc after creating pool / initial minting
+        assert_eq!(XykStorage::balance(1, 2), 500000000000000000000000); // amount of asset 0 in user acc after creating pool / initial minting
+        assert_eq!(XykStorage::balance(2, 2), 1249999999999999999999999); // amount of asset 1 in user acc after creating pool / initial minting
         assert_eq!(
             XykStorage::balance(0, XykStorage::account_id()),
             1500000000000000000000000
@@ -421,16 +421,16 @@ fn multi() {
 
         XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 450000000000000000000000).unwrap();
 
-        // assert_eq!(XykStorage::asset_pool((0, 1)), 1200000000000000000000000); // amount of asset 0 in pool map
+        // assert_eq!(XykStorage::asset_pool((1, 2)), 1200000000000000000000000); // amount of asset 0 in pool map
         // assert_eq!(XykStorage::asset_pool((1, 0)), 600000000000000000000001); // amount of asset 1 in pool map
         assert_eq!(
-            XykStorage::asset_pool((0, 1)),
+            XykStorage::asset_pool((1, 2)),
             (1200000000000000000000000, 600000000000000000000001)
         );
         assert_eq!(XykStorage::total_supply(2), 1800000000000000000000000); // total liquidity assets
         assert_eq!(XykStorage::balance(2, 2), 1800000000000000000000000); // amount of liquidity assets owned by user by creating pool / initial minting
-        assert_eq!(XykStorage::balance(0, 2), 800000000000000000000000); // amount of asset 0 in user acc after creating pool / initial minting
-        assert_eq!(XykStorage::balance(1, 2), 1399999999999999999999999); // amount of asset 1 in user acc after creating pool / initial minting
+        assert_eq!(XykStorage::balance(1, 2), 800000000000000000000000); // amount of asset 0 in user acc after creating pool / initial minting
+        assert_eq!(XykStorage::balance(2, 2), 1399999999999999999999999); // amount of asset 1 in user acc after creating pool / initial minting
         assert_eq!(
             XykStorage::balance(0, XykStorage::account_id()),
             1200000000000000000000000
@@ -442,16 +442,16 @@ fn multi() {
 
         XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 450000000000000000000000).unwrap();
 
-        // assert_eq!(XykStorage::asset_pool((0, 1)), 900000000000000000000000); // amount of asset 0 in pool map
+        // assert_eq!(XykStorage::asset_pool((1, 2)), 900000000000000000000000); // amount of asset 0 in pool map
         // assert_eq!(XykStorage::asset_pool((1, 0)), 450000000000000000000001); // amount of asset 1 in pool map
         assert_eq!(
-            XykStorage::asset_pool((0, 1)),
+            XykStorage::asset_pool((1, 2)),
             (900000000000000000000000, 450000000000000000000001)
         );
         assert_eq!(XykStorage::total_supply(2), 1350000000000000000000000); // total liquidity assets
         assert_eq!(XykStorage::balance(2, 2), 1350000000000000000000000); // amount of liquidity assets owned by user by creating pool / initial minting
-        assert_eq!(XykStorage::balance(0, 2), 1100000000000000000000000); // amount of asset 0 in user acc after creating pool / initial minting
-        assert_eq!(XykStorage::balance(1, 2), 1549999999999999999999999); // amount of asset 1 in user acc after creating pool / initial minting
+        assert_eq!(XykStorage::balance(1, 2), 1100000000000000000000000); // amount of asset 0 in user acc after creating pool / initial minting
+        assert_eq!(XykStorage::balance(2, 2), 1549999999999999999999999); // amount of asset 1 in user acc after creating pool / initial minting
         assert_eq!(
             XykStorage::balance(0, XykStorage::account_id()),
             900000000000000000000000
@@ -470,16 +470,16 @@ fn multi() {
         )
         .unwrap();
 
-        // assert_eq!(XykStorage::asset_pool((0, 1)), 1900000000000000000000000); // amount of asset 0 in pool map
+        // assert_eq!(XykStorage::asset_pool((1, 2)), 1900000000000000000000000); // amount of asset 0 in pool map
         // assert_eq!(XykStorage::asset_pool((1, 0)), 950000000000000000000003); // amount of asset 1 in pool map
         assert_eq!(
-            XykStorage::asset_pool((0, 1)),
+            XykStorage::asset_pool((1, 2)),
             (1900000000000000000000000, 950000000000000000000003)
         );
         assert_eq!(XykStorage::total_supply(2), 2850000000000000000000000); // total liquidity assets
         assert_eq!(XykStorage::balance(2, 2), 2850000000000000000000000); // amount of liquidity assets owned by user by creating pool / initial minting
-        assert_eq!(XykStorage::balance(0, 2), 100000000000000000000000); // amount of asset 0 in user acc after creating pool / initial minting
-        assert_eq!(XykStorage::balance(1, 2), 1049999999999999999999997); // amount of asset 1 in user acc after creating pool / initial minting
+        assert_eq!(XykStorage::balance(1, 2), 100000000000000000000000); // amount of asset 0 in user acc after creating pool / initial minting
+        assert_eq!(XykStorage::balance(2, 2), 1049999999999999999999997); // amount of asset 1 in user acc after creating pool / initial minting
         assert_eq!(
             XykStorage::balance(0, XykStorage::account_id()),
             1900000000000000000000000
@@ -495,7 +495,7 @@ fn multi() {
 fn create_pool_W() {
     new_test_ext().execute_with(|| {
         initialize();
-        // assert_eq!(XykStorage::asset_pool((0, 1)), 40000000000000000000); // amount of asset 0 in pool map
+        // assert_eq!(XykStorage::asset_pool((1, 2)), 40000000000000000000); // amount of asset 0 in pool map
         // assert_eq!(XykStorage::asset_pool((1, 0)), 60000000000000000000); // amount of asset 1 in pool map
         assert_eq!(
             XykStorage::asset_pool((1, 2)),
@@ -505,7 +505,7 @@ fn create_pool_W() {
         assert_eq!(XykStorage::liquidity_pool(3), Some((1, 2))); // liquidity assetId corresponding to newly created pool
         assert_eq!(XykStorage::total_supply(3), 50000000000000000000); // total liquidity assets
         assert_eq!(XykStorage::balance(3, 2), 50000000000000000000); // amount of liquidity assets owned by user by creating pool / initial minting
-        assert_eq!(XykStorage::balance(1, 2), 960000000000000000000); // amount of asset 0 in user acc after creating pool / initial minting
+        assert_eq!(XykStorage::balance(2, 2), 960000000000000000000); // amount of asset 0 in user acc after creating pool / initial minting
         assert_eq!(XykStorage::balance(2, 2), 940000000000000000000); // amount of asset 1 in user acc after creating pool / initial minting
         assert_eq!(
             XykStorage::balance(1, XykStorage::account_id()),
@@ -590,7 +590,7 @@ fn create_pool_N_zero_first_amount() {
         initialize();
 
         assert_err!(
-            XykStorage::create_pool(Origin::signed(2), 0, 0, 0, 500000,),
+            XykStorage::create_pool(Origin::signed(2), 0, 0, 1, 500000,),
             Error::<Test>::ZeroAmount,
         );
     });
@@ -602,7 +602,7 @@ fn create_pool_N_zero_second_amount() {
         initialize();
 
         assert_err!(
-            XykStorage::create_pool(Origin::signed(2), 0, 500000, 0, 0,),
+            XykStorage::create_pool(Origin::signed(2), 0, 500000, 1, 0,),
             Error::<Test>::ZeroAmount,
         );
     });
@@ -613,31 +613,31 @@ fn sell_W() {
     new_test_ext().execute_with(|| {
         System::set_block_number(1);
         initialize();
-        XykStorage::sell_asset(Origin::signed(2), 0, 1, 20000000000000000000, 0).unwrap(); // selling 20000000000000000000 assetId 0 of pool 0 1
+        XykStorage::sell_asset(Origin::signed(2), 1, 2, 20000000000000000000, 0).unwrap(); // selling 20000000000000000000 assetId 0 of pool 0 1
 
-        assert_eq!(XykStorage::balance(0, 2), 940000000000000000000); // amount in user acc after selling
-        assert_eq!(XykStorage::balance(1, 2), 959959959959959959959); // amount in user acc after buying
+        assert_eq!(XykStorage::balance(1, 2), 940000000000000000000); // amount in user acc after selling
+        assert_eq!(XykStorage::balance(2, 2), 959959959959959959959); // amount in user acc after buying
         assert_eq!(
-            XykStorage::asset_pool((0, 1)),
+            XykStorage::asset_pool((1, 2)),
             (59980000000000000000, 40040040040040040041)
         ); // amount of asset 0 in pool map
            //   assert_eq!(XykStorage::asset_pool2((1, 0)), 40040040040040040041); // amount of asset 1 in pool map
-        assert_eq!(XykStorage::balance(0, 2), 940000000000000000000); // amount of asset 0 on account 2
-        assert_eq!(XykStorage::balance(1, 2), 959959959959959959959); // amount of asset 1 on account 2
+        assert_eq!(XykStorage::balance(1, 2), 940000000000000000000); // amount of asset 0 on account 2
+        assert_eq!(XykStorage::balance(2, 2), 959959959959959959959); // amount of asset 1 on account 2
         assert_eq!(
-            XykStorage::balance(0, XykStorage::account_id()),
+            XykStorage::balance(1, XykStorage::account_id()),
             59990000000000000000
         ); // amount of asset 0 in vault acc after creating pool
         assert_eq!(
-            XykStorage::balance(1, XykStorage::account_id()),
+            XykStorage::balance(2, XykStorage::account_id()),
             40040040040040040041
         ); // amount of asset 1 in vault acc after creating pool
 
         let assets_swapped_event = TestEvent::xyk(Event::<Test>::AssetsSwapped(
             2,
-            0,
-            20000000000000000000,
             1,
+            20000000000000000000,
+            2,
             19959959959959959959,
         ));
 
@@ -651,18 +651,18 @@ fn sell_W() {
 fn sell_W_other_way() {
     new_test_ext().execute_with(|| {
         initialize();
-        XykStorage::sell_asset(Origin::signed(2), 1, 0, 30000000000000000000, 0).unwrap(); // selling 30000000000000000000 assetId 1 of pool 0 1
+        XykStorage::sell_asset(Origin::signed(2), 2, 1, 30000000000000000000, 0).unwrap(); // selling 30000000000000000000 assetId 1 of pool 0 1
 
-        assert_eq!(XykStorage::balance(0, 2), 973306639973306639973); // amount of asset 0 in user acc after selling
-        assert_eq!(XykStorage::balance(1, 2), 910000000000000000000); // amount of asset 1 in user acc after buying
-                                                                      // assert_eq!(XykStorage::asset_pool((0, 1)), 26684462240017795575); // amount of asset 0 in pool map
+        assert_eq!(XykStorage::balance(1, 2), 973306639973306639973); // amount of asset 0 in user acc after selling
+        assert_eq!(XykStorage::balance(2, 2), 910000000000000000000); // amount of asset 1 in user acc after buying
+                                                                      // assert_eq!(XykStorage::asset_pool((1, 2)), 26684462240017795575); // amount of asset 0 in pool map
                                                                       // assert_eq!(XykStorage::asset_pool((1, 0)), 90000000000000000000); // amount of asset 1 in pool map
         assert_eq!(
-            XykStorage::asset_pool((0, 1)),
+            XykStorage::asset_pool((1, 2)),
             (26684462240017795575, 90000000000000000000)
         );
-        assert_eq!(XykStorage::balance(0, 2), 973306639973306639973); // amount of asset 0 on account 2
-        assert_eq!(XykStorage::balance(1, 2), 910000000000000000000); // amount of asset 1 on account 2
+        assert_eq!(XykStorage::balance(1, 2), 973306639973306639973); // amount of asset 0 on account 2
+        assert_eq!(XykStorage::balance(2, 2), 910000000000000000000); // amount of asset 1 on account 2
         assert_eq!(
             XykStorage::balance(0, XykStorage::account_id()),
             26688911133355577801
@@ -703,7 +703,7 @@ fn sell_N_insufficient_output_amount() {
         initialize();
 
         assert_err!(
-            XykStorage::sell_asset(Origin::signed(2), 0, 1, 250000, 500000),
+            XykStorage::sell_asset(Origin::signed(2), 1, 2, 250000, 500000),
             Error::<Test>::InsufficientOutputAmount,
         ); // selling 250000 assetId 0 of pool 0 1, by the formula user should get 166333 asset 1, but is requesting 500000
     });
@@ -715,7 +715,7 @@ fn sell_N_zero_amount() {
         initialize();
 
         assert_err!(
-            XykStorage::sell_asset(Origin::signed(2), 0, 1, 0, 500000),
+            XykStorage::sell_asset(Origin::signed(2), 0, 1, 2, 500000),
             Error::<Test>::ZeroAmount,
         ); // selling 0 assetId 0 of pool 0 1
     });
@@ -735,16 +735,16 @@ fn buy_W() {
             3000000000000000000000,
         )
         .unwrap();
-        assert_eq!(XykStorage::balance(0, 2), 919879638916750250752); // amount in user acc after selling
-        assert_eq!(XykStorage::balance(1, 2), 970000000000000000000); // amount in user acc after buying
-                                                                      // assert_eq!(XykStorage::asset_pool((0, 1)), 80080240722166499500); // amount in pool map
+        assert_eq!(XykStorage::balance(1, 2), 919879638916750250752); // amount in user acc after selling
+        assert_eq!(XykStorage::balance(2, 2), 970000000000000000000); // amount in user acc after buying
+                                                                      // assert_eq!(XykStorage::asset_pool((1, 2)), 80080240722166499500); // amount in pool map
                                                                       // assert_eq!(XykStorage::asset_pool((1, 0)), 30000000000000000000); // amount in pool map
         assert_eq!(
-            XykStorage::asset_pool((0, 1)),
+            XykStorage::asset_pool((1, 2)),
             (80080240722166499500, 30000000000000000000)
         );
-        assert_eq!(XykStorage::balance(0, 2), 919879638916750250752); // amount of asset 0 on account 2
-        assert_eq!(XykStorage::balance(1, 2), 970000000000000000000); // amount of asset 1 on account 2
+        assert_eq!(XykStorage::balance(1, 2), 919879638916750250752); // amount of asset 0 on account 2
+        assert_eq!(XykStorage::balance(2, 2), 970000000000000000000); // amount of asset 1 on account 2
         assert_eq!(
             XykStorage::balance(0, XykStorage::account_id()),
             80100300902708124374
@@ -789,16 +789,16 @@ fn buy_W_other_way() {
             XykStorage::balance(1, XykStorage::account_id()),
             240541624874623871615
         ); // amount of asset 1 in vault acc after creating pool
-        assert_eq!(XykStorage::balance(0, 2), 990000000000000000000); // amount in user acc after selling
-        assert_eq!(XykStorage::balance(1, 2), 759458375125376128385); // amount in user acc after buying
-                                                                      // assert_eq!(XykStorage::asset_pool((0, 1)), 9992494370778083564); // amount in pool map
+        assert_eq!(XykStorage::balance(1, 2), 990000000000000000000); // amount in user acc after selling
+        assert_eq!(XykStorage::balance(2, 2), 759458375125376128385); // amount in user acc after buying
+                                                                      // assert_eq!(XykStorage::asset_pool((1, 2)), 9992494370778083564); // amount in pool map
                                                                       // assert_eq!(XykStorage::asset_pool((1, 0)), 240541624874623871615); // amount in pool map
         assert_eq!(
-            XykStorage::asset_pool((0, 1)),
+            XykStorage::asset_pool((1, 2)),
             (9992494370778083564, 240541624874623871615)
         );
-        assert_eq!(XykStorage::balance(0, 2), 990000000000000000000); // amount of asset 0 on account 2
-        assert_eq!(XykStorage::balance(1, 2), 759458375125376128385); // amount of asset 1 on account 2
+        assert_eq!(XykStorage::balance(1, 2), 990000000000000000000); // amount of asset 0 on account 2
+        assert_eq!(XykStorage::balance(2, 2), 759458375125376128385); // amount of asset 1 on account 2
         assert_eq!(
             XykStorage::balance(0, XykStorage::account_id()),
             9996247185389041782
@@ -901,14 +901,14 @@ fn mint_W() {
 
         assert_eq!(XykStorage::total_supply(2), 150000000000000000000); // total liquidity assets
         assert_eq!(XykStorage::balance(2, 2), 150000000000000000000); // amount of liquidity assets owned by user by creating pool and minting
-                                                                      // assert_eq!(XykStorage::asset_pool((0, 1)), 60000000000000000000); // amount in pool map
+                                                                      // assert_eq!(XykStorage::asset_pool((1, 2)), 60000000000000000000); // amount in pool map
                                                                       // assert_eq!(XykStorage::asset_pool((1, 0)), 90000000000000000001); // amount in pool map
         assert_eq!(
-            XykStorage::asset_pool((0, 1)),
+            XykStorage::asset_pool((1, 2)),
             (60000000000000000000, 90000000000000000001)
         );
-        assert_eq!(XykStorage::balance(0, 2), 940000000000000000000); // amount of asset 0 in user acc after minting
-        assert_eq!(XykStorage::balance(1, 2), 909999999999999999999); // amount of asset 1 in user acc after minting
+        assert_eq!(XykStorage::balance(1, 2), 940000000000000000000); // amount of asset 0 in user acc after minting
+        assert_eq!(XykStorage::balance(2, 2), 909999999999999999999); // amount of asset 1 in user acc after minting
         assert_eq!(
             XykStorage::balance(0, XykStorage::account_id()),
             60000000000000000000
@@ -949,14 +949,14 @@ fn mint_W_other_way() {
 
         assert_eq!(XykStorage::total_supply(2), 150000000000000000000); // total liquidity assets
         assert_eq!(XykStorage::balance(2, 2), 150000000000000000000); // amount of liquidity assets owned by user by creating pool and minting
-                                                                      // assert_eq!(XykStorage::asset_pool((0, 1)), 60000000000000000001); // amount in pool map
+                                                                      // assert_eq!(XykStorage::asset_pool((1, 2)), 60000000000000000001); // amount in pool map
                                                                       // assert_eq!(XykStorage::asset_pool((1, 0)), 90000000000000000000); // amount in pool map
         assert_eq!(
-            XykStorage::asset_pool((0, 1)),
+            XykStorage::asset_pool((1, 2)),
             (60000000000000000001, 90000000000000000000)
         );
-        assert_eq!(XykStorage::balance(0, 2), 939999999999999999999); // amount of asset 0 in user acc after minting
-        assert_eq!(XykStorage::balance(1, 2), 910000000000000000000); // amount of asset 1 in user acc after minting
+        assert_eq!(XykStorage::balance(1, 2), 939999999999999999999); // amount of asset 0 in user acc after minting
+        assert_eq!(XykStorage::balance(2, 2), 910000000000000000000); // amount of asset 1 in user acc after minting
         assert_eq!(
             XykStorage::balance(0, XykStorage::account_id()),
             60000000000000000001
@@ -1043,14 +1043,14 @@ fn burn_W() {
         XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 50000000000000000000).unwrap(); // burning 20000000000000000000 asset 0 of pool 0 1
 
         assert_eq!(XykStorage::balance(2, 2), 50000000000000000000); // amount of liquidity assets owned by user by creating pool and burning
-                                                                     // assert_eq!(XykStorage::asset_pool((0, 1)), 20000000000000000000); // amount in pool map
+                                                                     // assert_eq!(XykStorage::asset_pool((1, 2)), 20000000000000000000); // amount in pool map
                                                                      // assert_eq!(XykStorage::asset_pool((1, 0)), 30000000000000000000); // amount in pool map
         assert_eq!(
-            XykStorage::asset_pool((0, 1)),
+            XykStorage::asset_pool((1, 2)),
             (20000000000000000000, 30000000000000000000)
         );
-        assert_eq!(XykStorage::balance(0, 2), 980000000000000000000); // amount of asset 0 in user acc after burning
-        assert_eq!(XykStorage::balance(1, 2), 970000000000000000000); // amount of asset 1 in user acc after burning
+        assert_eq!(XykStorage::balance(1, 2), 980000000000000000000); // amount of asset 0 in user acc after burning
+        assert_eq!(XykStorage::balance(2, 2), 970000000000000000000); // amount of asset 1 in user acc after burning
         assert_eq!(
             XykStorage::balance(0, XykStorage::account_id()),
             20000000000000000000
@@ -1083,14 +1083,14 @@ fn burn_W_other_way() {
         XykStorage::burn_liquidity(Origin::signed(2), 1, 0, 50000000000000000000).unwrap(); // burning 30000000000000000000 asset 1 of pool 0 1
 
         assert_eq!(XykStorage::balance(2, 2), 50000000000000000000); // amount of liquidity assets owned by user by creating pool and burning
-                                                                     // assert_eq!(XykStorage::asset_pool((0, 1)), 20000000000000000000); // amount in pool map
+                                                                     // assert_eq!(XykStorage::asset_pool((1, 2)), 20000000000000000000); // amount in pool map
                                                                      // assert_eq!(XykStorage::asset_pool((1, 0)), 30000000000000000000); // amount in pool map
         assert_eq!(
-            XykStorage::asset_pool((0, 1)),
+            XykStorage::asset_pool((1, 2)),
             (20000000000000000000, 30000000000000000000)
         );
-        assert_eq!(XykStorage::balance(0, 2), 980000000000000000000); // amount of asset 0 in user acc after burning
-        assert_eq!(XykStorage::balance(1, 2), 970000000000000000000); // amount of asset 1 in user acc after burning
+        assert_eq!(XykStorage::balance(1, 2), 980000000000000000000); // amount of asset 0 in user acc after burning
+        assert_eq!(XykStorage::balance(2, 2), 970000000000000000000); // amount of asset 1 in user acc after burning
         assert_eq!(
             XykStorage::balance(0, XykStorage::account_id()),
             20000000000000000000

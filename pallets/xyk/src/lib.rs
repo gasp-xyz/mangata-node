@@ -1081,13 +1081,13 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         )?;
 
         // Add pool fee to pool
-        Pools::insert(
-            (sold_asset_id, bought_asset_id),
-            (
-                input_reserve.saturating_add(pool_fee_amount),
-                output_reserve,
-            ),
-        );
+        Module::<T>::set_reserves(
+            sold_asset_id,
+            input_reserve.saturating_add(pool_fee_amount),
+            bought_asset_id,
+            output_reserve,
+        )?;
+
         // Settle tokens which goes to treasury and for buy and burn purpose
         Module::<T>::settle_treasury_and_burn(sold_asset_id, buy_and_burn_amount, treasury_amount)?;
 
@@ -1119,6 +1119,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         let input_reserve_updated =
             input_reserve.saturating_add(sold_asset_amount - treasury_amount - buy_and_burn_amount);
         let output_reserve_updated = output_reserve.saturating_sub(bought_asset_amount);
+
         Module::<T>::set_reserves(
             sold_asset_id,
             input_reserve_updated,
@@ -1233,13 +1234,14 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         )?;
 
         // Add pool fee to pool
-        Pools::insert(
-            (sold_asset_id, bought_asset_id),
-            (
-                input_reserve.saturating_add(pool_fee_amount),
-                output_reserve,
-            ),
-        );
+        // Add pool fee to pool
+        Module::<T>::set_reserves(
+            sold_asset_id,
+            input_reserve.saturating_add(pool_fee_amount),
+            bought_asset_id,
+            output_reserve,
+        )?;
+
         // Settle tokens which goes to treasury and for buy and burn purpose
         Module::<T>::settle_treasury_and_burn(sold_asset_id, buy_and_burn_amount, treasury_amount)?;
 

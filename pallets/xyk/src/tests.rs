@@ -626,7 +626,7 @@ fn sell_W() {
         assert_eq!(XykStorage::balance(2, 2), 959959959959959959959); // amount of asset 1 on account 2
         assert_eq!(
             XykStorage::balance(1, XykStorage::account_id()),
-            59990000000000000000
+            60000000000000000000
         ); // amount of asset 0 in vault acc after creating pool
         assert_eq!(
             XykStorage::balance(2, XykStorage::account_id()),
@@ -651,6 +651,7 @@ fn sell_W() {
 fn sell_W_other_way() {
     new_test_ext().execute_with(|| {
         initialize();
+
         XykStorage::sell_asset(Origin::signed(2), 2, 1, 30000000000000000000, 0).unwrap(); // selling 30000000000000000000 assetId 1 of pool 0 1
 
         assert_eq!(XykStorage::balance(1, 2), 973306639973306639973); // amount of asset 0 in user acc after selling
@@ -659,16 +660,16 @@ fn sell_W_other_way() {
                                                                       // assert_eq!(XykStorage::asset_pool((1, 0)), 90000000000000000000); // amount of asset 1 in pool map
         assert_eq!(
             XykStorage::asset_pool((1, 2)),
-            (26684462240017795575, 90000000000000000000)
+            (26693360026693360027, 89970000000000000000)
         );
         assert_eq!(XykStorage::balance(1, 2), 973306639973306639973); // amount of asset 0 on account 2
         assert_eq!(XykStorage::balance(2, 2), 910000000000000000000); // amount of asset 1 on account 2
         assert_eq!(
-            XykStorage::balance(0, XykStorage::account_id()),
-            26688911133355577801
+            XykStorage::balance(1, XykStorage::account_id()),
+            26693360026693360027
         ); // amount of asset 0 in vault acc after creating pool
         assert_eq!(
-            XykStorage::balance(1, XykStorage::account_id()),
+            XykStorage::balance(2, XykStorage::account_id()),
             90000000000000000000
         ); // amount of asset 1 in vault acc after creating pool
     });
@@ -691,7 +692,7 @@ fn sell_N_not_enough_selling_assset() {
         initialize();
 
         assert_err!(
-            XykStorage::sell_asset(Origin::signed(2), 0, 1, 1000000000000000000000, 0),
+            XykStorage::sell_asset(Origin::signed(2), 1, 2, 1000000000000000000000, 0),
             Error::<Test>::NotEnoughAssets,
         ); // selling 1000000000000000000000 assetId 0 of pool 0 1 (user has only 960000000000000000000)
     });
@@ -715,7 +716,7 @@ fn sell_N_zero_amount() {
         initialize();
 
         assert_err!(
-            XykStorage::sell_asset(Origin::signed(2), 0, 1, 2, 500000),
+            XykStorage::sell_asset(Origin::signed(2), 1, 2, 0, 500000),
             Error::<Test>::ZeroAmount,
         ); // selling 0 assetId 0 of pool 0 1
     });

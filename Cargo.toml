@@ -7,12 +7,3 @@ members = [
     'pallets/xyk',
     'runtime',
 ]
-
-[patch.crates-io]
-sc-block-builder = { default-features = false, version = '0.8.0', git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev' }
-sc-service = { default-features = false, version = '0.8.0', git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev' }
-sc-consensus-babe = { default-features = false, version = '0.8.0', git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev' }
-sc-basic-authorship = { default-features = false, version = '0.8.0', git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev' }
-pallet-timestamp = { git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev', default-features = false, version = '2.0.0' }
-pallet-authorship = { git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev', default-features = false, version = '2.0.0' }
-pallet-staking = { path="pallets/staking" , default-features = false, version = '2.0.0' }

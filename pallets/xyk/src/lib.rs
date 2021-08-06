@@ -1024,13 +1024,16 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
 
         let buy_and_burn_amount =
             multiply_by_rational(sold_asset_amount, BUYANDBURN_PERCENTAGE, 10000)
-                .map_err(|_| Error::<T>::UnexpectedFailure)?;
+                .map_err(|_| Error::<T>::UnexpectedFailure)?
+                + 1;
 
         let treasury_amount = multiply_by_rational(sold_asset_amount, TREASURY_PERCENTAGE, 10000)
-            .map_err(|_| Error::<T>::UnexpectedFailure)?;
+            .map_err(|_| Error::<T>::UnexpectedFailure)?
+            + 1;
 
         let pool_fee_amount = multiply_by_rational(sold_asset_amount, POOL_FEE_PERCENTAGE, 10000)
-            .map_err(|_| Error::<T>::UnexpectedFailure)?;
+            .map_err(|_| Error::<T>::UnexpectedFailure)?
+            + 1;
 
         // for future implementation of min fee if necessary
         // let min_fee: u128 = 0;
@@ -1186,13 +1189,16 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
 
         let buy_and_burn_amount =
             multiply_by_rational(sold_asset_amount, BUYANDBURN_PERCENTAGE, 10000)
-                .map_err(|_| Error::<T>::UnexpectedFailure)?;
+                .map_err(|_| Error::<T>::UnexpectedFailure)?
+                + 1;
 
         let treasury_amount = multiply_by_rational(sold_asset_amount, TREASURY_PERCENTAGE, 10000)
-            .map_err(|_| Error::<T>::UnexpectedFailure)?;
+            .map_err(|_| Error::<T>::UnexpectedFailure)?
+            + 1;
 
         let pool_fee_amount = multiply_by_rational(sold_asset_amount, POOL_FEE_PERCENTAGE, 10000)
-            .map_err(|_| Error::<T>::UnexpectedFailure)?;
+            .map_err(|_| Error::<T>::UnexpectedFailure)?
+            + 1;
 
         // for future implementation of min fee if necessary
         // let min_fee: u128 = 0;
@@ -1256,7 +1262,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             sold_asset_id.into(),
             &sender,
             &vault,
-            sold_asset_amount.into(),
+            (sold_asset_amount - buy_and_burn_amount - treasury_amount - pool_fee_amount).into(),
             ExistenceRequirement::KeepAlive,
         )?;
         <T as Trait>::Currency::transfer(

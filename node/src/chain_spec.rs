@@ -2,10 +2,9 @@
 
 use hex_literal::hex;
 use mangata_runtime::{
-    AccountId, AssetsInfoConfig, BabeConfig, BridgeConfig, BridgedAssetConfig,
-    GenesisConfig, GrandpaConfig, RandomConfig, SessionConfig, SessionKeys, Signature,
-    StakerStatus, StakingConfig, SudoConfig, SystemConfig, TokensConfig, VerifierConfig, XykConfig,
-    WASM_BINARY,
+    AccountId, AssetsInfoConfig, BabeConfig, BridgeConfig, BridgedAssetConfig, GenesisConfig,
+    GrandpaConfig, RandomConfig, SessionConfig, SessionKeys, Signature, StakerStatus,
+    StakingConfig, SudoConfig, SystemConfig, TokensConfig, VerifierConfig, XykConfig, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sp_consensus_babe::AuthorityId as BabeId;

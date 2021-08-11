@@ -745,8 +745,8 @@ fn nominators_also_get_slashed_pro_rata() {
         // both stakes must have been decreased pro-rata.
         assert_eq!(
             Staking::ledger(100).unwrap().active,
-            nominator_stake - nominator_share,  // COMMENT
-                                                    // ERROR +6 ??
+            nominator_stake - nominator_share, // COMMENT
+                                               // ERROR +6 ??
         );
         assert_eq!(
             Staking::ledger(10).unwrap().active,
@@ -2284,7 +2284,7 @@ fn bond_with_little_staked_value_bounded() {
             assert_eq!(
                 <Test as Trait>::Tokens::free_balance(NATIVE_TOKEN_ID, &10),
                 init_balance_10 + total_payout_0 / 3 + 1 // COMMENT
-                                                        // error? + 1?
+                                                         // error? + 1?
             );
             // no rewards paid to 2. This was initial election.
             assert_eq!(
@@ -3277,7 +3277,7 @@ fn garbage_collection_on_window_pruning() {
         );
         assert_eq!(
             <Test as Trait>::Tokens::free_balance(DEFAULT_LIQUIDITY_TOKEN_ID, &101),
-            1000 - (nominated_value  / 10)
+            1000 - (nominated_value / 10)
         );
 
         assert!(<Staking as crate::Store>::ValidatorSlashInEra::get(&now, &11).is_some());
@@ -5183,7 +5183,7 @@ fn claim_reward_at_the_last_era_and_no_double_claim_and_invalid_claim() {
         assert_eq!(
             <Test as Trait>::Tokens::free_balance(NATIVE_TOKEN_ID, &10),
             init_balance_10 + part_for_10 * (total_payout_1 + total_payout_2), // COMMENT
-                                                                                    // ERROR +2 ??
+                                                                               // ERROR +2 ??
         );
         assert_eq!(
             <Test as Trait>::Tokens::free_balance(NATIVE_TOKEN_ID, &100),

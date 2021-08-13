@@ -161,7 +161,6 @@ jobs:
       - name: Set branch variable
         run:  |
           echo "BRANCHNAME=${{ github.event.inputs.e2eBranch || env.E2EBRANCH }}" >> $GITHUB_ENV
- 
       - 
         name: Checkout tests
         uses: actions/checkout@v2

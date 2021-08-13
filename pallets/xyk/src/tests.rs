@@ -193,119 +193,103 @@ fn buy_and_burn_sell_has_mangata_pair() {
     });
 }
 
-// #[test]
-// fn buy_and_burn_sell_only_sold_has_mangata_pair() {
-//     new_test_ext().execute_with(|| {
-//         initialize_buy_and_burn();
-//         XykStorage::sell_asset(Origin::signed(2), 1, 3, 50000000000000, 0).unwrap();
+#[test]
+fn buy_and_burn_sell_none_have_mangata_pair() {
+    new_test_ext().execute_with(|| {
+        initialize_buy_and_burn();
+        XykStorage::sell_asset(Origin::signed(2), 2, 1, 50000000000000, 0).unwrap();
 
-//         // assert_eq!(XykStorage::asset_pool((1, 2)), 99950012496876); // pool: regular trade result - 24993751562 treasury - 24993751562 burn
-//         // assert_eq!(XykStorage::asset_pool((1, 0)), 100050000000000); // pool: regular trade result + 25000000000 treasury + 25000000000 burn / swapped for 24993751562 in pool (0-1)
-//         assert_eq!(
-//             XykStorage::asset_pool((1, 2)),
-//             (99950012496876, 100050000000000)
-//         );
-//         // assert_eq!(XykStorage::asset_pool((1, 3)), 149950000000000); // pool: regular trade result - 25000000000 treasury - 25000000000 burn
-//         // assert_eq!(XykStorage::asset_pool((3, 1)), 66733400066734); // pool: regular trade result
-//         assert_eq!(
-//             XykStorage::asset_pool((1, 3)),
-//             (149950000000000, 66733400066734)
-//         );
-//         assert_eq!(XykStorage::balance(2, 2), 650000000000000); // user acc: regular trade result
-//         assert_eq!(XykStorage::balance(3, 2), 833266599933266); // user acc: regular trade result
-//         assert_eq!(
-//             XykStorage::balance(0, XykStorage::account_id()),
-//             199975006248438
-//         ); // vault:  pool (0-1) + pool (0-2) + 24993751562 treasury
-//         assert_eq!(
-//             XykStorage::balance(1, XykStorage::account_id()),
-//             350000000000000
-//         ); // vault: - regular trade result
-//         assert_eq!(
-//             XykStorage::balance(3, XykStorage::account_id()),
-//             166733400066734
-//         ); // vault: - regular trade result
-//         assert_eq!(XykStorage::treasury(0), 24993751562); // 24993751562 mangata in treasury
-//         assert_eq!(XykStorage::treasury(1), 0);
-//         assert_eq!(XykStorage::treasury_burn(0), 0);
-//         assert_eq!(XykStorage::treasury_burn(1), 0);
-//     });
-// }
+        
+        assert_eq!(
+            XykStorage::asset_pool((0, 1)),
+            (100000000000000, 100000000000000)
+        );
+        assert_eq!(
+            XykStorage::asset_pool((1, 2)),
+            (66733400066734, 149949999999998)
+        );
+        assert_eq!(XykStorage::balance(1, 2), 833266599933266); // user acc: regular trade result
+        assert_eq!(XykStorage::balance(2, 2), 850000000000000); // user acc: regular trade result
+        assert_eq!(
+            XykStorage::balance(0, XykStorage::account_id()),
+            100000000000000
+        ); 
+        assert_eq!(
+            XykStorage::balance(1, XykStorage::account_id()),
+            166733400066734
+        ); 
+        assert_eq!(
+            XykStorage::balance(2, XykStorage::account_id()),
+            150000000000000
+        ); // vault: regular trade result
+        assert_eq!(XykStorage::treasury(0), 0); // 24987506247 mangata in treasury
+        assert_eq!(XykStorage::treasury(2), 25000000001);
+        assert_eq!(XykStorage::treasury_burn(0), 0);
+        assert_eq!(XykStorage::treasury_burn(2), 25000000001);
+    });
+}
 
-// #[test]
-// fn buy_and_burn_sell_only_bought_has_mangata_pair() {
-//     new_test_ext().execute_with(|| {
-//         initialize_buy_and_burn();
-//         XykStorage::sell_asset(Origin::signed(2), 3, 1, 50000000000000, 0).unwrap();
+#[test]
+fn buy_and_burn_buy_mangata() {
+    new_test_ext().execute_with(|| {
+        initialize_buy_and_burn();
+        XykStorage::sell_asset(Origin::signed(2), 0, 1, 50000000000000, 0).unwrap();
 
-//         assert_eq!(
-//             XykStorage::asset_pool((1, 2)),
-//             (99977758007120, 100022244466688)
-//         );
+        assert_eq!(
+            XykStorage::asset_pool((0, 1)),
+            (149949999999998, 66733400066734)
+        );
+        assert_eq!(XykStorage::balance(0, 2), 850000000000000);
+        assert_eq!(XykStorage::balance(1, 2), 833266599933266);
+        assert_eq!(
+            XykStorage::balance(0, XykStorage::account_id()),
+            149974999999999
+        );
+        assert_eq!(
+            XykStorage::balance(1, XykStorage::account_id()),
+            166733400066734
+        );
+        assert_eq!(XykStorage::treasury(0), 25000000001);
+        assert_eq!(XykStorage::treasury(1), 0);
+        assert_eq!(XykStorage::treasury_burn(0), 0);
+        assert_eq!(XykStorage::treasury_burn(1), 0);
+    });
+}
 
-//         assert_eq!(
-//             XykStorage::asset_pool((1, 3)),
-//             (66711155600046, 150000000000000)
-//         );
-//         assert_eq!(XykStorage::balance(2, 2), 733266599933266); // user acc: regular trade result
-//         assert_eq!(XykStorage::balance(3, 2), 750000000000000); // user acc: regular trade result
-//         assert_eq!(
-//             XykStorage::balance(0, XykStorage::account_id()),
-//             199988879003560
-//         ); // vault:  pool (0-1) + pool (0-2) + 11120996440 treasury
-//         assert_eq!(
-//             XykStorage::balance(1, XykStorage::account_id()),
-//             266733400066734
-//         ); // vault - pool (0-1) + pool (1-3)
-//         assert_eq!(
-//             XykStorage::balance(3, XykStorage::account_id()),
-//             250000000000000
-//         ); // vault - regular trade result
-//         assert_eq!(XykStorage::treasury(0), 11120996440); // 11120996440 mangata in treasury
-//         assert_eq!(XykStorage::treasury(1), 0);
-//         assert_eq!(XykStorage::treasury_burn(0), 0);
-//         assert_eq!(XykStorage::treasury_burn(1), 0);
-//     });
-// }
-
-// #[test]
-// fn buy_and_burn_sell_both_have_mangata_pair() {
-//     new_test_ext().execute_with(|| {
-//         initialize_buy_and_burn();
-//         XykStorage::sell_asset(Origin::signed(2), 2, 1, 50000000000000, 0).unwrap();
-
-//         // assert_eq!(XykStorage::asset_pool((1, 2)), 99977758007120); // pool: regular trade result - 11120996440 treasury - 11120996440 burn
-//         // assert_eq!(XykStorage::asset_pool((1, 0)), 100022244466688); // pool: regular trade result + 11122233344 treasury + 11122233344 burn / swapped for 11120996440 in pool (0-1)
-//         assert_eq!(
-//             XykStorage::asset_pool((1, 2)),
-//             (99977758007120, 100022244466688)
-//         );
-//         // assert_eq!(XykStorage::asset_pool((1, 2)), 66711155600046); // pool: regular trade result - 11122233344 treasury - 11122233344 burn
-//         // assert_eq!(XykStorage::asset_pool((2, 1)), 150000000000000); // pool regular trade result
-//         assert_eq!(
-//             XykStorage::asset_pool((1, 2)),
-//             (66711155600046, 150000000000000)
-//         );
-//         assert_eq!(XykStorage::balance(2, 2), 733266599933266); // user acc: regular trade result
-//         assert_eq!(XykStorage::balance(2, 2), 750000000000000); // user acc: regular trade result
-//         assert_eq!(
-//             XykStorage::balance(0, XykStorage::account_id()),
-//             199988879003560
-//         ); // vault:  pool (0-1) + pool (0-2) + 11120996440 treasury
-//         assert_eq!(
-//             XykStorage::balance(1, XykStorage::account_id()),
-//             266733400066734
-//         ); // vault - pool (0-1) + pool (1-3)
-//         assert_eq!(
-//             XykStorage::balance(2, XykStorage::account_id()),
-//             250000000000000
-//         ); // vault - regular trade result
-//         assert_eq!(XykStorage::treasury(0), 11120996440); // 11120996440 mangata in treasury
-//         assert_eq!(XykStorage::treasury(1), 0);
-//         assert_eq!(XykStorage::treasury_burn(0), 0);
-//         assert_eq!(XykStorage::treasury_burn(1), 0);
-//     });
-// }
+#[test]
+fn buy_and_burn_buy_has_mangata_pair() {
+    new_test_ext().execute_with(|| {
+        initialize_buy_and_burn();
+        XykStorage::sell_asset(Origin::signed(2), 1, 2, 50000000000000, 0).unwrap();
+        
+        assert_eq!(
+            XykStorage::asset_pool((0, 1)),
+            (99950012496874, 100050000000002)
+        );
+        assert_eq!(
+            XykStorage::asset_pool((1, 2)),
+            (149949999999998, 66733400066734)
+        );
+        assert_eq!(XykStorage::balance(1, 2), 750000000000000); // user acc: regular trade result
+        assert_eq!(XykStorage::balance(2, 2), 933266599933266); // user acc: regular trade result
+        assert_eq!(
+            XykStorage::balance(0, XykStorage::account_id()),
+            99975006248437
+        ); 
+        assert_eq!(
+            XykStorage::balance(1, XykStorage::account_id()),
+            250000000000000
+        ); 
+        assert_eq!(
+            XykStorage::balance(2, XykStorage::account_id()),
+            66733400066734
+        ); // vault: regular trade result
+        assert_eq!(XykStorage::treasury(0), 24993751563); // 24987506247 mangata in treasury
+        assert_eq!(XykStorage::treasury(1), 0);
+        assert_eq!(XykStorage::treasury_burn(0), 0);
+        assert_eq!(XykStorage::treasury_burn(1), 0);
+    });
+}
 
 #[test]
 fn buy_and_burn_sell_none_have_mangata_pair() {
@@ -342,6 +326,7 @@ fn buy_and_burn_sell_none_have_mangata_pair() {
         assert_eq!(XykStorage::treasury_burn(2), 25000000001);
     });
 }
+
 
 #[test]
 fn multi() {

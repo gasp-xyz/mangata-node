@@ -342,7 +342,6 @@ fn multi() {
             500000000000000000000000,
         )
         .unwrap();
-
         assert_eq!(
             XykStorage::asset_pool((1, 2)),
             (1000000000000000000000000, 500000000000000000000000)
@@ -390,8 +389,6 @@ fn multi() {
 
         XykStorage::burn_liquidity(Origin::signed(2), 1, 2, 225000000000000000000000).unwrap();
 
-        // assert_eq!(XykStorage::asset_pool((1, 2)), 1200000000000000000000000); // amount of asset 0 in pool map
-        // assert_eq!(XykStorage::asset_pool((1, 0)), 600000000000000000000001); // amount of asset 1 in pool map
         assert_eq!(
             XykStorage::asset_pool((1, 2)),
             (1200000000000000000000000, 600000000000000000000001)
@@ -460,8 +457,7 @@ fn multi() {
 fn create_pool_W() {
     new_test_ext().execute_with(|| {
         initialize();
-        // assert_eq!(XykStorage::asset_pool((1, 2)), 40000000000000000000); // amount of asset 0 in pool map
-        // assert_eq!(XykStorage::asset_pool((1, 0)), 60000000000000000000); // amount of asset 1 in pool map
+
         assert_eq!(
             XykStorage::asset_pool((1, 2)),
             (40000000000000000000, 60000000000000000000)
@@ -1039,8 +1035,6 @@ fn burn_W_other_way() {
         XykStorage::burn_liquidity(Origin::signed(2), 2, 1, 25000000000000000000).unwrap(); // burning 30000000000000000000 asset 1 of pool 0 1
 
         assert_eq!(XykStorage::balance(3, 2), 25000000000000000000); // amount of liquidity assets owned by user by creating pool and burning
-                                                                     // assert_eq!(XykStorage::asset_pool((1, 2)), 20000000000000000000); // amount in pool map
-                                                                     // assert_eq!(XykStorage::asset_pool((1, 0)), 30000000000000000000); // amount in pool map
         assert_eq!(
             XykStorage::asset_pool((1, 2)),
             (20000000000000000000, 30000000000000000000)

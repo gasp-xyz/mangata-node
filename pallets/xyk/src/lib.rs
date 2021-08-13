@@ -1284,9 +1284,6 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             output_reserve_updated,
         )?;
 
-        // Settle tokens which goes to treasury and for buy and burn purpose
-        Self::settle_treasury_and_burn(sold_asset_id, buy_and_burn_amount, treasury_amount)?;
-
         log!(
             info,
             "buy_asset: ({:?}, {}, {}, {}, {}) -> {}",

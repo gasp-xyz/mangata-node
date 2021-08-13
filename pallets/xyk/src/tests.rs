@@ -163,7 +163,7 @@ fn buy_and_burn_sell_has_mangata_pair() {
     new_test_ext().execute_with(|| {
         initialize_buy_and_burn();
         XykStorage::sell_asset(Origin::signed(2), 1, 2, 50000000000000, 0).unwrap();
-        
+
         assert_eq!(
             XykStorage::asset_pool((0, 1)),
             (99950012496874, 100050000000002)
@@ -177,11 +177,11 @@ fn buy_and_burn_sell_has_mangata_pair() {
         assert_eq!(
             XykStorage::balance(0, XykStorage::account_id()),
             99975006248437
-        ); 
+        );
         assert_eq!(
             XykStorage::balance(1, XykStorage::account_id()),
             250000000000000
-        ); 
+        );
         assert_eq!(
             XykStorage::balance(2, XykStorage::account_id()),
             66733400066734
@@ -199,7 +199,6 @@ fn buy_and_burn_sell_none_have_mangata_pair() {
         initialize_buy_and_burn();
         XykStorage::sell_asset(Origin::signed(2), 2, 1, 50000000000000, 0).unwrap();
 
-        
         assert_eq!(
             XykStorage::asset_pool((0, 1)),
             (100000000000000, 100000000000000)
@@ -213,11 +212,11 @@ fn buy_and_burn_sell_none_have_mangata_pair() {
         assert_eq!(
             XykStorage::balance(0, XykStorage::account_id()),
             100000000000000
-        ); 
+        );
         assert_eq!(
             XykStorage::balance(1, XykStorage::account_id()),
             166733400066734
-        ); 
+        );
         assert_eq!(
             XykStorage::balance(2, XykStorage::account_id()),
             150000000000000
@@ -261,7 +260,7 @@ fn buy_and_burn_buy_has_mangata_pair() {
     new_test_ext().execute_with(|| {
         initialize_buy_and_burn();
         XykStorage::sell_asset(Origin::signed(2), 1, 2, 50000000000000, 0).unwrap();
-        
+
         assert_eq!(
             XykStorage::asset_pool((0, 1)),
             (99950012496874, 100050000000002)
@@ -275,11 +274,11 @@ fn buy_and_burn_buy_has_mangata_pair() {
         assert_eq!(
             XykStorage::balance(0, XykStorage::account_id()),
             99975006248437
-        ); 
+        );
         assert_eq!(
             XykStorage::balance(1, XykStorage::account_id()),
             250000000000000
-        ); 
+        );
         assert_eq!(
             XykStorage::balance(2, XykStorage::account_id()),
             66733400066734
@@ -297,7 +296,6 @@ fn buy_and_burn_sell_none_have_mangata_pair() {
         initialize_buy_and_burn();
         XykStorage::sell_asset(Origin::signed(2), 2, 1, 50000000000000, 0).unwrap();
 
-        
         assert_eq!(
             XykStorage::asset_pool((0, 1)),
             (100000000000000, 100000000000000)
@@ -311,11 +309,11 @@ fn buy_and_burn_sell_none_have_mangata_pair() {
         assert_eq!(
             XykStorage::balance(0, XykStorage::account_id()),
             100000000000000
-        ); 
+        );
         assert_eq!(
             XykStorage::balance(1, XykStorage::account_id()),
             166733400066734
-        ); 
+        );
         assert_eq!(
             XykStorage::balance(2, XykStorage::account_id()),
             150000000000000
@@ -326,7 +324,6 @@ fn buy_and_burn_sell_none_have_mangata_pair() {
         assert_eq!(XykStorage::treasury_burn(2), 25000000001);
     });
 }
-
 
 #[test]
 fn multi() {

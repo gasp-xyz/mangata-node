@@ -15,10 +15,12 @@ serde = { version = "1.0", features = ["derive"], optional = true }
 
 # Substrate packages
 
-sp-api = { version = '2.0.0', default-features = false }
-sp-blockchain = { version = '2.0.0', default-features = false}
-sp-rpc = { version = '2.0.0', default-features = false}
-sp-runtime = { version = '2.0.0', default-features = false}
+sp-api = { version = '2.0.0', default-features = false , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-blockchain = { version = '2.0.0', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-rpc = { version = '2.0.0', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-core = { version = '2.0.0', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-std = { version = '2.0.0', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-runtime = { version = '2.0.0', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
 # local packages
 
@@ -29,6 +31,8 @@ default = ["std"]
 std = [
     "serde",
     "sp-api/std",
+    "sp-core/std",
+    "sp-std/std",
     "sp-runtime/std",
     "xyk-runtime-api/std"
 ]

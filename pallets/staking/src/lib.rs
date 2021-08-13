@@ -791,15 +791,15 @@ where
     }
 }
 
-/// Records the amount of the liquidity token staked and its valutaion in terms MNG of the user's stash
+/// Records the amount of the liquidity token staked and its valutaion in terms MGA of the user's stash
 /// at the time of the snapshot
 #[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, Default)]
 pub struct Valuation<Balance> {
     /// Value of the liquidity token staked
     pub liquidity_token_amount: Balance,
 
-    /// Valutaion of the liquidity token in MNG
-    pub mng_valuation: Balance,
+    /// Valutaion of the liquidity token in MGA
+    pub mga_valuation: Balance,
 }
 
 pub trait WeightInfo {
@@ -1306,8 +1306,8 @@ decl_error! {
         IncorrectSlashingSpans,
         /// A nominator is attempting to nominate a validator that uses a different liquidity token for staking
         NominatingToDifferentToken,
-        /// The liquidity token that the user is trying to bond with belong to a pool that does not (atleast directly) involve MNG
-        NotMNGPool,
+        /// The liquidity token that the user is trying to bond with belong to a pool that does not (atleast directly) involve MGA
+        NotMGAPool,
         /// Stash's liquidity token not found in storage
         StashLiquidityTokenNotFound,
     }
@@ -1502,7 +1502,7 @@ decl_module! {
             }
 
             // Use valuations to check if the liquidity_token is a valid one
-            T::Valuations::get_liquidity_token_mng_pool(liquidity_token.into())?;
+            T::Valuations::get_liquidity_token_mga_pool(liquidity_token.into())?;
 
             // Insert the liquidity_token against stash in StashLiquidityToken
             <StashLiquidityToken<T>>::insert(&stash, liquidity_token);
@@ -2264,7 +2264,7 @@ impl<T: Trait> Module<T> {
         // Weight note: consider making the stake accessible through stash.
         // return valuation
         Self::get_stash_staked_valuation(DUMMY_VALUE, stash)
-            .map(|v| v.mng_valuation)
+            .map(|v| v.mga_valuation)
             .unwrap_or_default()
     }
 
@@ -2314,7 +2314,7 @@ impl<T: Trait> Module<T> {
             for validator in validators.iter() {
                 // get validator's staked liquidity token amount, i.e., validator's controller's ledger.active
                 // get validator's stash's tokenId
-                // get the valuation on staked liquidity token amount in MNG via Valuations pallet
+                // get the valuation on staked liquidity token amount in MGA via Valuations pallet
                 // Insert the staked liquidity token amount and its valuation as Valuation against validator's stash
                 let liquidity_token_amount = Self::bonded(validator)
                     .and_then(Self::ledger)
@@ -2324,13 +2324,13 @@ impl<T: Trait> Module<T> {
                     Some(liquidity_token) => liquidity_token,
                     None => return (false, consumed_weight),
                 };
-                let mng_valuation: Balance = T::Valuations::valuate_liquidity_token(
+                let mga_valuation: Balance = T::Valuations::valuate_liquidity_token(
                     liquidity_token_id.into(),
                     liquidity_token_amount.into(),
                 )
                 .into();
                 add_db_reads_writes(6, 0);
-                if mng_valuation < min_stake_amount {
+                if mga_valuation < min_stake_amount {
                     validators_to_be_removed.push(validator.clone());
                 } else {
                     <StashStakedValuation<T>>::insert(
@@ -2338,7 +2338,7 @@ impl<T: Trait> Module<T> {
                         &validator,
                         Valuation {
                             liquidity_token_amount: liquidity_token_amount,
-                            mng_valuation: mng_valuation,
+                            mga_valuation: mga_valuation,
                         },
                     );
                     add_db_reads_writes(0, 1);
@@ -2351,7 +2351,7 @@ impl<T: Trait> Module<T> {
             for nominator in nominators.iter() {
                 // get nominator's staked liquidity token amount, i.e., nominator's controller's ledger.active
                 // get nominator's stash's tokenId
-                // get the valuation on staked liquidity token amount in MNG via Valuations pallet
+                // get the valuation on staked liquidity token amount in MGA via Valuations pallet
                 // Insert the staked liquidity token amount and its valuation as Valuation against nominator's stash
                 let liquidity_token_amount = Self::bonded(nominator)
                     .and_then(Self::ledger)
@@ -2361,13 +2361,13 @@ impl<T: Trait> Module<T> {
                     Some(liquidity_token) => liquidity_token,
                     None => return (false, consumed_weight),
                 };
-                let mng_valuation: Balance = T::Valuations::valuate_liquidity_token(
+                let mga_valuation: Balance = T::Valuations::valuate_liquidity_token(
                     liquidity_token_id.into(),
                     liquidity_token_amount.into(),
                 )
                 .into();
                 add_db_reads_writes(6, 0);
-                if mng_valuation < min_stake_amount {
+                if mga_valuation < min_stake_amount {
                     nominators_to_be_removed.push(nominator.clone());
                 } else {
                     <StashStakedValuation<T>>::insert(
@@ -2375,7 +2375,7 @@ impl<T: Trait> Module<T> {
                         &nominator,
                         Valuation {
                             liquidity_token_amount: liquidity_token_amount,
-                            mng_valuation: mng_valuation,
+                            mga_valuation: mga_valuation,
                         },
                     );
                     add_db_reads_writes(0, 1);
@@ -3013,8 +3013,8 @@ impl<T: Trait> Module<T> {
                         Self::get_stash_staked_valuation(DUMMY_VALUE, &individual_exposure_who)
                             .unwrap_or_default();
                     let individual_exposure_raw_value: Balance =
-                        T::Valuations::scale_liquidity_by_mng_valuation(
-                            who_staked_valuation.mng_valuation.into(),
+                        T::Valuations::scale_liquidity_by_mga_valuation(
+                            who_staked_valuation.mga_valuation.into(),
                             who_staked_valuation.liquidity_token_amount.into(),
                             individual_exposure_value.into(),
                         )
@@ -3029,8 +3029,8 @@ impl<T: Trait> Module<T> {
 
                 let stash_staked_valuation =
                     Self::get_stash_staked_valuation(DUMMY_VALUE, &stash).unwrap_or_default();
-                let exposure_raw_own: Balance = T::Valuations::scale_liquidity_by_mng_valuation(
-                    stash_staked_valuation.mng_valuation.into(),
+                let exposure_raw_own: Balance = T::Valuations::scale_liquidity_by_mga_valuation(
+                    stash_staked_valuation.mga_valuation.into(),
                     stash_staked_valuation.liquidity_token_amount.into(),
                     exposure_own.into(),
                 )

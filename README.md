@@ -45,7 +45,7 @@ cargo build --release
 ### Docker container
 
 ```bash
-./scripts/build-manga-node-docker-image.sh
+./scripts/build-mangata-node-docker-image.sh
 ```
 
 ## Run

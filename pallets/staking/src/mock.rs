@@ -25,6 +25,7 @@ pub use frame_support::{
     IterableStorageMap, StorageDoubleMap, StorageMap, StorageValue,
 };
 pub use orml_tokens::MultiTokenReservableCurrency;
+use pallet_assets_info as assets_info;
 use sp_core::H256;
 use sp_io;
 use sp_npos_elections::{
@@ -193,6 +194,7 @@ impl_outer_event! {
         staking<T>,
         orml_tokens<T>,
         pallet_xyk<T>,
+        assets_info,
     }
 }
 
@@ -331,6 +333,28 @@ impl OnUnbalanced<NegativeImbalanceOf<Test>> for RewardRemainderMock {
         });
         drop(amount);
     }
+}
+
+parameter_types! {
+    pub const MinLengthName: usize = 1;
+    pub const MaxLengthName: usize = 255;
+    pub const MinLengthSymbol: usize = 1;
+    pub const MaxLengthSymbol: usize = 255;
+    pub const MinLengthDescription: usize = 1;
+    pub const MaxLengthDescription: usize = 255;
+    pub const MaxDecimals: u32 = 255;
+}
+
+impl assets_info::Trait for Test {
+    type Event = MetaEvent;
+    type MinLengthName = MinLengthName;
+    type MaxLengthName = MaxLengthName;
+    type MinLengthSymbol = MinLengthSymbol;
+    type MaxLengthSymbol = MaxLengthSymbol;
+    type MinLengthDescription = MinLengthDescription;
+    type MaxLengthDescription = MaxLengthDescription;
+    type MaxDecimals = MaxDecimals;
+    type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 }
 
 parameter_types! {
@@ -593,7 +617,7 @@ impl ExtBuilder {
         }
 
         let _ = orml_tokens::GenesisConfig::<Test> {
-            endowed_accounts: vec![],
+            tokens_endowment: vec![],
             created_tokens_for_staking: vec![
                 (11, NATIVE_TOKEN_ID, balance_factor * 1000 * 4),
                 (11, DUMMY_TOKEN_FOR_POOL_ID, balance_factor * 1000 * 4),

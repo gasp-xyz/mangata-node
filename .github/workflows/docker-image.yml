@@ -56,7 +56,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: -p pallet-xyk -p sc-block-builder -p sc-basic-authorship -p extrinsic-shuffler -p pallet-random-seed -p random-seed-runtime-api -p xyk-runtime-api -p mangata-primitives -p extrinsic-info-runtime-api
+          args: -p pallet-xyk -p pallet-assets-info -p pallet-bridge
 
   unit-test:
     runs-on: ubuntu-latest
@@ -158,7 +158,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: mangata-finance/mangata-e2e
-          ref: 'feature/mint-liquidity-second-asset-amount-added'
+          ref: 'main'
           path: 'e2eTests'
       
       - name: Start mangata-node node with local build
@@ -237,9 +237,9 @@ jobs:
       - name: Save DigitalOcean kubeconfig with short-lived credentials
         run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 ${{ secrets.K8S_CLUSTER_ID }}
       
-      - name: Deploy to DigitalOcean Kubernetes
-        run: kubectl rollout restart deployment/mangata-node
-
-      - name: Verify deployment
-        run: kubectl rollout status deployment/mangata-node
+      # - name: Deploy to DigitalOcean Kubernetes
+      #   run: kubectl rollout restart deployment/mangata-node
+      #
+      # - name: Verify deployment
+      #   run: kubectl rollout status deployment/mangata-node
       

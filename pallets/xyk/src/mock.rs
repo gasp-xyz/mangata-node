@@ -9,17 +9,29 @@ use sp_runtime::{
     Perbill,
 };
 
-use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
+use frame_support::{impl_outer_event, impl_outer_origin, parameter_types, weights::Weight};
 use frame_system as system;
 use mangata_primitives::{Amount, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
+use pallet_assets_info as assets_info;
 
 pub const NATIVE_CURRENCY_ID: u32 = 0;
+mod xyk {
+    pub use crate::Event;
+}
 
 impl_outer_origin! {
     pub enum Origin for Test {}
 }
 
+impl_outer_event! {
+    pub enum TestEvent for Test {
+        assets_info,
+        frame_system<T>,
+        xyk<T>,
+        orml_tokens<T>,
+    }
+}
 // For testing the pallet, we construct most of a mock runtime. This means
 // first constructing a configuration type (`Test`) which `impl`s each of the
 // configuration traits of pallets we want to use.
@@ -42,7 +54,7 @@ impl system::Trait for Test {
     type AccountId = u64;
     type Lookup = IdentityLookup<Self::AccountId>;
     type Header = Header;
-    type Event = ();
+    type Event = TestEvent;
     type BlockHashCount = BlockHashCount;
     type MaximumBlockWeight = MaximumBlockWeight;
     type DbWeight = ();
@@ -60,7 +72,7 @@ impl system::Trait for Test {
 }
 
 impl orml_tokens::Trait for Test {
-    type Event = ();
+    type Event = TestEvent;
     type Balance = Balance;
     type Amount = Amount;
     type CurrencyId = TokenId;
@@ -69,26 +81,49 @@ impl orml_tokens::Trait for Test {
 }
 
 parameter_types! {
+    pub const MinLengthName: usize = 1;
+    pub const MaxLengthName: usize = 255;
+    pub const MinLengthSymbol: usize = 1;
+    pub const MaxLengthSymbol: usize = 255;
+    pub const MinLengthDescription: usize = 1;
+    pub const MaxLengthDescription: usize = 255;
+    pub const MaxDecimals: u32 = 255;
+}
+
+impl assets_info::Trait for Test {
+    type Event = TestEvent;
+    type MinLengthName = MinLengthName;
+    type MaxLengthName = MaxLengthName;
+    type MinLengthSymbol = MinLengthSymbol;
+    type MaxLengthSymbol = MaxLengthSymbol;
+    type MinLengthDescription = MinLengthDescription;
+    type MaxLengthDescription = MaxLengthDescription;
+    type MaxDecimals = MaxDecimals;
+    type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
+}
+
+parameter_types! {
     pub const NativeCurrencyId: u32 = NATIVE_CURRENCY_ID;
 }
 
 impl Trait for Test {
-    type Event = ();
+    type Event = TestEvent;
     type Currency = MultiTokenCurrencyAdapter<Test>;
     type NativeCurrencyId = NativeCurrencyId;
 }
 
 pub type XykStorage = Module<Test>;
+pub type System = system::Module<Test>;
 
 impl<T: Trait> Module<T> {
     pub fn balance(id: TokenId, who: T::AccountId) -> Balance {
-        T::Currency::free_balance(id.into(), &who).into()
+        <T as Trait>::Currency::free_balance(id.into(), &who).into()
     }
     pub fn total_supply(id: TokenId) -> Balance {
-        T::Currency::total_issuance(id.into()).into()
+        <T as Trait>::Currency::total_issuance(id.into()).into()
     }
     pub fn create_new_token(who: &T::AccountId, amount: Balance) -> TokenId {
-        T::Currency::create(who, amount.into()).into()
+        <T as Trait>::Currency::create(who, amount.into()).into()
     }
 }
 

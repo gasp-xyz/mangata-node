@@ -45,7 +45,7 @@ cargo build --release
 ### Docker container
 
 ```bash
-./scripts/build-manga-node-docker-image.sh
+./scripts/build-mangata-node-docker-image.sh
 ```
 
 ## Run
@@ -70,3 +70,22 @@ Start a dev chain:
 cd ./devops
 docker-compose up
 ```
+## Debug Single Node
+
+### VS code
+
+Export RUSTFLAGS
+```bash
+export RUSTFLAGS="-g"
+```
+Build node:
+```bash
+cargo build --release
+```
+Run node:
+```bash
+RUSTFLAGS="-g" cargo run -j12 --release -- --tmp --dev
+```
+Go to VS code and attach the process!
+
+

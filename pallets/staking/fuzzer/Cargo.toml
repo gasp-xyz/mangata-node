@@ -17,17 +17,17 @@ honggfuzz = "0.5"
 codec = { package = "parity-scale-codec", version = "1.3.1", default-features = false, features = ["derive"] }
 pallet-staking = { version = "2.0.0", features = ["runtime-benchmarks"], path = ".." }
 pallet-staking-reward-curve = { version = "2.0.0",  path = "../reward-curve" }
-pallet-session = { version = "2.0.0" }
-pallet-indices = { version = "2.0.0" }
-pallet-balances = { version = "2.0.0" }
-pallet-timestamp = { version = "2.0.0", git = 'https://github.com/mangata-finance/substrate', branch='mangata-dev' }
-frame-system = { version = "2.0.0" }
-frame-support = { version = "2.0.0" }
-sp-std = { version = "2.0.0" }
-sp-io ={ version = "2.0.0" }
-sp-core = { version = "2.0.0" }
-sp-npos-elections = { version = "2.0.0" }
-sp-runtime = { version = "2.0.0" }
+pallet-session = { version = "2.0.0" , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev"  }
+pallet-indices = { version = "2.0.0" , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev"  }
+pallet-balances = { version = "2.0.0" , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev"  }
+pallet-timestamp = { version = "2.0.0" , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev"  }
+frame-system = { version = "2.0.0" , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev"  }
+frame-support = { version = "2.0.0" , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev"  }
+sp-std = { version = "2.0.0" , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev"  }
+sp-io ={ version = "2.0.0" , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev"  }
+sp-core = { version = "2.0.0" , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev"  }
+sp-npos-elections = { version = "2.0.0" , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev"  }
+sp-runtime = { version = "2.0.0" , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev"  }
 
 [[bin]]
 name = "submit_solution"

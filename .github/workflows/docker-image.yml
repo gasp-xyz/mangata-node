@@ -237,9 +237,9 @@ jobs:
       - name: Save DigitalOcean kubeconfig with short-lived credentials
         run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 ${{ secrets.K8S_CLUSTER_ID }}
       
-      - name: Deploy to DigitalOcean Kubernetes
-        run: kubectl rollout restart deployment/mangata-node
-
-      - name: Verify deployment
-        run: kubectl rollout status deployment/mangata-node
+      # - name: Deploy to DigitalOcean Kubernetes
+      #   run: kubectl rollout restart deployment/mangata-node
+      #
+      # - name: Verify deployment
+      #   run: kubectl rollout status deployment/mangata-node
       

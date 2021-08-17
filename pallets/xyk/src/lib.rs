@@ -1135,6 +1135,9 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         // Apply changes in token pools, adding sold amount and removing bought amount
         // Neither should fall to zero let alone underflow, due to how pool destruction works
         // Won't overflow due to earlier ensure
+        let input_reserve_updated =
+            input_reserve.saturating_add(sold_asset_amount);
+        let output_reserve_updated = output_reserve.saturating_sub(bought_asset_amount);
 
         Module::<T>::set_reserves(
             sold_asset_id,
@@ -1237,6 +1240,10 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         // Apply changes in token pools, adding sold amount and removing bought amount
         // Neither should fall to zero let alone underflow, due to how pool destruction works
         // Won't overflow due to earlier ensure
+        let input_reserve_updated =
+            input_reserve.saturating_add(sold_asset_amount);
+        let output_reserve_updated = output_reserve.saturating_sub(bought_asset_amount);
+
         Module::<T>::set_reserves(
             sold_asset_id,
             input_reserve.saturating_add(sold_asset_amount),
@@ -1663,7 +1670,7 @@ impl<T: Trait> Valuate for Module<T> {
                 Err(_) => return Default::default(),
             };
 
-        let mng_token_reserve = match Module::<T>::get_reserves(mng_token_id, other_token_id) {
+        let mga_token_reserve = match Module::<T>::get_reserves(mga_token_id, other_token_id) {
             Ok(reserves) => reserves.0,
             Err(_) => return Default::default(),
         };

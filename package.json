@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "repository": "https://github.com/mangata-finance/mangata-node.git",
   "author": "Mangata Finance",
-  "license": "MIT",
+  "license": "GPL-3.0",
   "scripts": {
     "bump:major": "standard-version --release-as major",
     "bump:minor": "standard-version --release-as minor",

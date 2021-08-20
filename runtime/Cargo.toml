@@ -22,6 +22,7 @@ version = '1.3.4'
 [dependencies]
 hex-literal = { optional = true, version = '0.3.1' }
 serde = { features = ['derive'], optional = true, version = '1.0.101' }
+static_assertions = "1.1.0"
 
 # local dependencies
 pallet-xyk = { path = '../pallets/xyk', default-features = false, version = '0.1.0' }
@@ -70,6 +71,8 @@ verifier = { default-features = false, package = "pallet-verifier", version = "0
 bridged-asset = { default-features = false, package = "artemis-asset", version = "0.1.1" , git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
 eth-app = { default-features = false, package = "artemis-eth-app", version = "0.1.1" , git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
 erc20-app = { default-features = false, package = "artemis-erc20-app", version = "0.1.1" , git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
+pallet-elections-phragmen = { version = "2.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+pallet-collective = { version = "2.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
 # Snowmangata-dev pallets
 
@@ -130,4 +133,7 @@ std = [
     "pallet-xyk/std",
     "pallet-staking/std",
     "pallet-treasury/std",
+    "pallet-sudo-origin/std",
+    "pallet-collective/std",
+    "pallet-elections-phragmen/std",
 ]

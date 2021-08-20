@@ -1257,6 +1257,7 @@ dependencies = [
 [[package]]
 name = "extrinsic-info-runtime-api"
 version = "2.0.0"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "derive_more",
  "futures 0.3.5",
@@ -1271,6 +1272,7 @@ dependencies = [
 [[package]]
 name = "extrinsic-shuffler"
 version = "0.8.0"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "derive_more",
  "extrinsic-info-runtime-api",
@@ -1398,6 +1400,7 @@ checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 [[package]]
 name = "fork-tree"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "parity-scale-codec",
 ]
@@ -1405,6 +1408,7 @@ dependencies = [
 [[package]]
 name = "frame-benchmarking"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -1422,6 +1426,7 @@ dependencies = [
 [[package]]
 name = "frame-benchmarking-cli"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "frame-benchmarking",
  "parity-scale-codec",
@@ -1439,6 +1444,7 @@ dependencies = [
 [[package]]
 name = "frame-executive"
 version = "2.0.0"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "extrinsic-shuffler",
  "frame-support",
@@ -1457,6 +1463,7 @@ dependencies = [
 [[package]]
 name = "frame-metadata"
 version = "12.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "parity-scale-codec",
  "serde",
@@ -1467,6 +1474,7 @@ dependencies = [
 [[package]]
 name = "frame-support"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "bitmask",
  "frame-metadata",
@@ -1491,6 +1499,7 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "frame-support-procedural-tools",
  "proc-macro2",
@@ -1501,6 +1510,7 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural-tools"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "frame-support-procedural-tools-derive",
  "proc-macro-crate",
@@ -1512,6 +1522,7 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural-tools-derive"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1521,6 +1532,7 @@ dependencies = [
 [[package]]
 name = "frame-system"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
@@ -1550,6 +1562,7 @@ dependencies = [
 [[package]]
 name = "frame-system-rpc-runtime-api"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
@@ -3704,6 +3717,7 @@ dependencies = [
 [[package]]
 name = "pallet-authority-discovery"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3719,6 +3733,7 @@ dependencies = [
 [[package]]
 name = "pallet-authorship"
 version = "2.0.0"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3733,6 +3748,7 @@ dependencies = [
 [[package]]
 name = "pallet-babe"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -3757,6 +3773,7 @@ dependencies = [
 [[package]]
 name = "pallet-balances"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -3793,6 +3810,7 @@ dependencies = [
 [[package]]
 name = "pallet-collective"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3807,6 +3825,7 @@ dependencies = [
 [[package]]
 name = "pallet-elections-phragmen"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3820,6 +3839,7 @@ dependencies = [
 [[package]]
 name = "pallet-finality-tracker"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3835,6 +3855,7 @@ dependencies = [
 [[package]]
 name = "pallet-grandpa"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -3856,6 +3877,7 @@ dependencies = [
 [[package]]
 name = "pallet-offences"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3870,6 +3892,7 @@ dependencies = [
 [[package]]
 name = "pallet-random-seed"
 version = "2.0.0"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3886,6 +3909,7 @@ dependencies = [
 [[package]]
 name = "pallet-randomness-collective-flip"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3898,6 +3922,7 @@ dependencies = [
 [[package]]
 name = "pallet-session"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3962,6 +3987,7 @@ dependencies = [
 [[package]]
 name = "pallet-sudo"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3989,6 +4015,7 @@ dependencies = [
 [[package]]
 name = "pallet-timestamp"
 version = "2.0.0"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -4007,6 +4034,7 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4023,6 +4051,7 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment-rpc"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -4040,6 +4069,7 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment-rpc-runtime-api"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -4052,6 +4082,7 @@ dependencies = [
 [[package]]
 name = "pallet-treasury"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4845,6 +4876,7 @@ dependencies = [
 [[package]]
 name = "random-seed-runtime-api"
 version = "2.0.0"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "pallet-random-seed",
  "sp-api",
@@ -5161,6 +5193,7 @@ dependencies = [
 [[package]]
 name = "sc-authority-discovery"
 version = "0.8.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "bytes 0.5.6",
  "derive_more",
@@ -5188,6 +5221,7 @@ dependencies = [
 [[package]]
 name = "sc-basic-authorship"
 version = "0.8.0"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "extrinsic-info-runtime-api",
  "futures 0.3.5",
@@ -5213,6 +5247,7 @@ dependencies = [
 [[package]]
 name = "sc-block-builder"
 version = "0.8.0"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "extrinsic-info-runtime-api",
  "extrinsic-shuffler",
@@ -5237,6 +5272,7 @@ dependencies = [
 [[package]]
 name = "sc-chain-spec"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec",
@@ -5253,6 +5289,7 @@ dependencies = [
 [[package]]
 name = "sc-chain-spec-derive"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -5263,6 +5300,7 @@ dependencies = [
 [[package]]
 name = "sc-cli"
 version = "0.8.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "ansi_term 0.12.1",
  "atty",
@@ -5311,6 +5349,7 @@ dependencies = [
 [[package]]
 name = "sc-client-api"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "derive_more",
  "fnv",
@@ -5346,6 +5385,7 @@ dependencies = [
 [[package]]
 name = "sc-client-db"
 version = "0.8.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "blake2-rfc",
  "hash-db",
@@ -5375,6 +5415,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus"
 version = "0.8.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "sc-client-api",
  "sp-blockchain",
@@ -5385,6 +5426,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-babe"
 version = "0.8.0"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "derive_more",
  "extrinsic-shuffler",
@@ -5432,6 +5474,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-epochs"
 version = "0.8.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "fork-tree",
  "parity-scale-codec",
@@ -5444,6 +5487,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-slots"
 version = "0.8.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "futures 0.3.5",
  "futures-timer 3.0.2",
@@ -5466,6 +5510,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-uncles"
 version = "0.8.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "log",
  "sc-client-api",
@@ -5479,6 +5524,7 @@ dependencies = [
 [[package]]
 name = "sc-executor"
 version = "0.8.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "derive_more",
  "lazy_static",
@@ -5506,6 +5552,7 @@ dependencies = [
 [[package]]
 name = "sc-executor-common"
 version = "0.8.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "derive_more",
  "log",
@@ -5522,6 +5569,7 @@ dependencies = [
 [[package]]
 name = "sc-executor-wasmi"
 version = "0.8.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "log",
  "parity-scale-codec",
@@ -5536,6 +5584,7 @@ dependencies = [
 [[package]]
 name = "sc-executor-wasmtime"
 version = "0.8.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "log",
  "parity-scale-codec",
@@ -5553,6 +5602,7 @@ dependencies = [
 [[package]]
 name = "sc-finality-grandpa"
 version = "0.8.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "derive_more",
  "finality-grandpa",
@@ -5589,6 +5639,7 @@ dependencies = [
 [[package]]
 name = "sc-informant"
 version = "0.8.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "ansi_term 0.12.1",
  "futures 0.3.5",
@@ -5606,6 +5657,7 @@ dependencies = [
 [[package]]
 name = "sc-keystore"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "derive_more",
  "hex",
@@ -5621,6 +5673,7 @@ dependencies = [
 [[package]]
 name = "sc-light"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "hash-db",
  "lazy_static",
@@ -5639,6 +5692,7 @@ dependencies = [
 [[package]]
 name = "sc-network"
 version = "0.8.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "async-std",
  "async-trait",
@@ -5692,6 +5746,7 @@ dependencies = [
 [[package]]
 name = "sc-network-gossip"
 version = "0.8.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "futures 0.3.5",
  "futures-timer 3.0.2",
@@ -5706,6 +5761,7 @@ dependencies = [
 [[package]]
 name = "sc-offchain"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "bytes 0.5.6",
  "fnv",
@@ -5732,6 +5788,7 @@ dependencies = [
 [[package]]
 name = "sc-peerset"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "futures 0.3.5",
  "libp2p",
@@ -5744,6 +5801,7 @@ dependencies = [
 [[package]]
 name = "sc-proposer-metrics"
 version = "0.8.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "log",
  "substrate-prometheus-endpoint",
@@ -5752,6 +5810,7 @@ dependencies = [
 [[package]]
 name = "sc-rpc"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "futures 0.3.5",
  "hash-db",
@@ -5783,6 +5842,7 @@ dependencies = [
 [[package]]
 name = "sc-rpc-api"
 version = "0.8.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "derive_more",
  "futures 0.3.5",
@@ -5806,6 +5866,7 @@ dependencies = [
 [[package]]
 name = "sc-rpc-server"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "futures 0.1.29",
  "jsonrpc-core",
@@ -5823,6 +5884,7 @@ dependencies = [
 [[package]]
 name = "sc-service"
 version = "0.8.0"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "derive_more",
  "directories",
@@ -5887,6 +5949,7 @@ dependencies = [
 [[package]]
 name = "sc-state-db"
 version = "0.8.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "log",
  "parity-scale-codec",
@@ -5900,6 +5963,7 @@ dependencies = [
 [[package]]
 name = "sc-telemetry"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "futures 0.3.5",
  "futures-timer 3.0.2",
@@ -5920,6 +5984,7 @@ dependencies = [
 [[package]]
 name = "sc-tracing"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "erased-serde",
  "log",
@@ -5938,6 +6003,7 @@ dependencies = [
 [[package]]
 name = "sc-transaction-graph"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "derive_more",
  "futures 0.3.5",
@@ -5958,6 +6024,7 @@ dependencies = [
 [[package]]
 name = "sc-transaction-pool"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "derive_more",
  "futures 0.3.5",
@@ -6362,6 +6429,7 @@ dependencies = [
 [[package]]
 name = "sp-allocator"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "derive_more",
  "log",
@@ -6373,6 +6441,7 @@ dependencies = [
 [[package]]
 name = "sp-api"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "hash-db",
  "parity-scale-codec",
@@ -6387,6 +6456,7 @@ dependencies = [
 [[package]]
 name = "sp-api-proc-macro"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "blake2-rfc",
  "proc-macro-crate",
@@ -6398,6 +6468,7 @@ dependencies = [
 [[package]]
 name = "sp-application-crypto"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "parity-scale-codec",
  "serde",
@@ -6409,6 +6480,7 @@ dependencies = [
 [[package]]
 name = "sp-arithmetic"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "integer-sqrt",
  "num-traits",
@@ -6421,6 +6493,7 @@ dependencies = [
 [[package]]
 name = "sp-authority-discovery"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
@@ -6432,6 +6505,7 @@ dependencies = [
 [[package]]
 name = "sp-authorship"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "parity-scale-codec",
  "sp-inherents",
@@ -6442,6 +6516,7 @@ dependencies = [
 [[package]]
 name = "sp-block-builder"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
@@ -6453,6 +6528,7 @@ dependencies = [
 [[package]]
 name = "sp-blockchain"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "derive_more",
  "log",
@@ -6469,6 +6545,7 @@ dependencies = [
 [[package]]
 name = "sp-chain-spec"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "serde",
  "serde_json",
@@ -6477,6 +6554,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus"
 version = "0.8.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "derive_more",
  "futures 0.3.5",
@@ -6502,6 +6580,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus-babe"
 version = "0.8.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "merlin",
  "parity-scale-codec",
@@ -6520,6 +6599,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus-slots"
 version = "0.8.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "parity-scale-codec",
  "sp-runtime",
@@ -6528,6 +6608,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus-vrf"
 version = "0.8.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "parity-scale-codec",
  "schnorrkel",
@@ -6539,6 +6620,7 @@ dependencies = [
 [[package]]
 name = "sp-core"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "base58",
  "blake2-rfc",
@@ -6582,6 +6664,7 @@ dependencies = [
 [[package]]
 name = "sp-database"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "kvdb",
  "parking_lot 0.10.2",
@@ -6590,6 +6673,7 @@ dependencies = [
 [[package]]
 name = "sp-debug-derive"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -6599,6 +6683,7 @@ dependencies = [
 [[package]]
 name = "sp-externalities"
 version = "0.8.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "environmental",
  "parity-scale-codec",
@@ -6609,6 +6694,7 @@ dependencies = [
 [[package]]
 name = "sp-finality-grandpa"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "finality-grandpa",
  "log",
@@ -6624,6 +6710,7 @@ dependencies = [
 [[package]]
 name = "sp-finality-tracker"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "parity-scale-codec",
  "sp-inherents",
@@ -6633,6 +6720,7 @@ dependencies = [
 [[package]]
 name = "sp-ignore-tx"
 version = "2.0.0"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "log",
  "parity-scale-codec",
@@ -6644,6 +6732,7 @@ dependencies = [
 [[package]]
 name = "sp-inherents"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "derive_more",
  "parity-scale-codec",
@@ -6655,6 +6744,7 @@ dependencies = [
 [[package]]
 name = "sp-io"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "futures 0.3.5",
  "hash-db",
@@ -6677,6 +6767,7 @@ dependencies = [
 [[package]]
 name = "sp-keyring"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "lazy_static",
  "sp-core",
@@ -6687,6 +6778,7 @@ dependencies = [
 [[package]]
 name = "sp-npos-elections"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "parity-scale-codec",
  "serde",
@@ -6698,6 +6790,7 @@ dependencies = [
 [[package]]
 name = "sp-npos-elections-compact"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -6708,6 +6801,7 @@ dependencies = [
 [[package]]
 name = "sp-offchain"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "sp-api",
  "sp-core",
@@ -6717,6 +6811,7 @@ dependencies = [
 [[package]]
 name = "sp-panic-handler"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "backtrace",
  "log",
@@ -6725,6 +6820,7 @@ dependencies = [
 [[package]]
 name = "sp-rpc"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "serde",
  "sp-core",
@@ -6733,6 +6829,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "either",
  "hash256-std-hasher",
@@ -6754,6 +6851,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime-interface"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "parity-scale-codec",
  "primitive-types",
@@ -6769,6 +6867,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime-interface-proc-macro"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "Inflector",
  "proc-macro-crate",
@@ -6780,6 +6879,7 @@ dependencies = [
 [[package]]
 name = "sp-serializer"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "serde",
  "serde_json",
@@ -6788,6 +6888,7 @@ dependencies = [
 [[package]]
 name = "sp-session"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
@@ -6800,6 +6901,7 @@ dependencies = [
 [[package]]
 name = "sp-staking"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "parity-scale-codec",
  "sp-runtime",
@@ -6809,6 +6911,7 @@ dependencies = [
 [[package]]
 name = "sp-state-machine"
 version = "0.8.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "hash-db",
  "log",
@@ -6829,10 +6932,12 @@ dependencies = [
 [[package]]
 name = "sp-std"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 
 [[package]]
 name = "sp-storage"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "impl-serde",
  "parity-scale-codec",
@@ -6845,6 +6950,7 @@ dependencies = [
 [[package]]
 name = "sp-timestamp"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec",
@@ -6858,6 +6964,7 @@ dependencies = [
 [[package]]
 name = "sp-tracing"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "log",
  "parity-scale-codec",
@@ -6870,6 +6977,7 @@ dependencies = [
 [[package]]
 name = "sp-transaction-pool"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "derive_more",
  "futures 0.3.5",
@@ -6884,6 +6992,7 @@ dependencies = [
 [[package]]
 name = "sp-trie"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "hash-db",
  "memory-db",
@@ -6897,6 +7006,7 @@ dependencies = [
 [[package]]
 name = "sp-utils"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "futures 0.3.5",
  "futures-core",
@@ -6908,6 +7018,7 @@ dependencies = [
 [[package]]
 name = "sp-version"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "impl-serde",
  "parity-scale-codec",
@@ -6919,6 +7030,7 @@ dependencies = [
 [[package]]
 name = "sp-wasm-interface"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec",
@@ -7081,6 +7193,7 @@ dependencies = [
 [[package]]
 name = "substrate-prometheus-endpoint"
 version = "0.8.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "async-std",
  "derive_more",
@@ -7094,6 +7207,7 @@ dependencies = [
 [[package]]
 name = "substrate-test-utils"
 version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "futures 0.3.5",
  "substrate-test-utils-derive",
@@ -7103,6 +7217,7 @@ dependencies = [
 [[package]]
 name = "substrate-test-utils-derive"
 version = "0.8.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
 dependencies = [
  "proc-macro-crate",
  "quote",
@@ -8408,23 +8523,3 @@ dependencies = [
  "itertools 0.9.0",
  "libc",
 ]
-
-[[patch.unused]]
-name = "pallet-staking"
-version = "2.0.1"
-
-[[patch.unused]]
-name = "pallet-staking-reward-curve"
-version = "2.0.1"
-
-[[patch.unused]]
-name = "substrate-build-script-utils"
-version = "2.0.1"
-
-[[patch.unused]]
-name = "substrate-frame-rpc-system"
-version = "2.0.1"
-
-[[patch.unused]]
-name = "substrate-wasm-builder-runner"
-version = "1.0.6"

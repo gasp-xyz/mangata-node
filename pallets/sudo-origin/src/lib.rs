@@ -90,14 +90,13 @@
 use sp_runtime::{traits::StaticLookup, DispatchResult};
 use sp_std::prelude::*;
 
-use frame_support::{decl_error, decl_event, decl_module, decl_storage, ensure, Parameter};
+use frame_support::traits::EnsureOrigin;
+use frame_support::{decl_error, decl_event, decl_module, Parameter};
 use frame_support::{
     dispatch::DispatchResultWithPostInfo,
     traits::UnfilteredDispatchable,
     weights::{GetDispatchInfo, Pays, Weight},
 };
-use frame_support::traits::EnsureOrigin;
-
 
 #[cfg(test)]
 mod mock;
@@ -111,8 +110,8 @@ pub trait Trait: frame_system::Trait {
     /// A sudo-able call.
     type Call: Parameter + UnfilteredDispatchable<Origin = Self::Origin> + GetDispatchInfo;
 
-	/// An origin 
-	type SudoOrigin: EnsureOrigin<Self::Origin>;
+    /// The Origin allowed to use sudo
+    type SudoOrigin: EnsureOrigin<Self::Origin>;
 }
 
 decl_module! {
@@ -134,7 +133,7 @@ decl_module! {
         /// # </weight>
         #[weight = (call.get_dispatch_info().weight + 10_000, call.get_dispatch_info().class)]
         fn sudo(origin, call: Box<<T as Trait>::Call>) -> DispatchResultWithPostInfo {
-            // This is a public call, so we ensure that the origin is some signed account.
+            // This is a public call, so we ensure that the origin is authorized.
             T::SudoOrigin::ensure_origin(origin)?;
 
             let res = call.dispatch_bypass_filter(frame_system::RawOrigin::Root.into());
@@ -155,7 +154,7 @@ decl_module! {
         /// # </weight>
         #[weight = (*_weight, call.get_dispatch_info().class)]
         fn sudo_unchecked_weight(origin, call: Box<<T as Trait>::Call>, _weight: Weight) -> DispatchResultWithPostInfo {
-            // This is a public call, so we ensure that the origin is some signed account.
+            // This is a public call, so we ensure that the origin is authorized.
             T::SudoOrigin::ensure_origin(origin)?;
 
             let res = call.dispatch_bypass_filter(frame_system::RawOrigin::Root.into());
@@ -181,7 +180,7 @@ decl_module! {
             who: <T::Lookup as StaticLookup>::Source,
             call: Box<<T as Trait>::Call>
         ) -> DispatchResultWithPostInfo {
-            // This is a public call, so we ensure that the origin is some signed account.
+            // This is a public call, so we ensure that the origin is authorized.
             T::SudoOrigin::ensure_origin(origin)?;
 
             let who = T::Lookup::lookup(who)?;
@@ -202,8 +201,7 @@ decl_module! {
 }
 
 decl_event!(
-    pub enum Event
-    {
+    pub enum Event {
         /// A sudo just took place. \[result\]
         SuOriginDid(DispatchResult),
         /// A sudo just took place. \[result\]

@@ -18,11 +18,14 @@
 //! Test utilities
 
 use super::*;
-use crate as sudo;
+use crate as sudo_origin;
 use frame_support::traits::Filter;
 use frame_support::{
-    impl_outer_dispatch, impl_outer_event, impl_outer_origin, parameter_types, weights::Weight,
+    decl_storage, impl_outer_dispatch, impl_outer_event, impl_outer_origin, parameter_types,
+    weights::Weight,
 };
+use frame_system::ensure_signed;
+use frame_system::EnsureRoot;
 use sp_core::H256;
 use sp_io;
 use sp_runtime::{
@@ -89,14 +92,14 @@ mod test_events {
 impl_outer_event! {
     pub enum TestEvent for Test {
         frame_system<T>,
-        sudo<T>,
+        sudo_origin,
         logger<T>,
     }
 }
 
 impl_outer_dispatch! {
     pub enum Call for Test where origin: Origin {
-        sudo::Sudo,
+        sudo_origin::SudoOrigin,
         logger::Logger,
     }
 }
@@ -158,24 +161,22 @@ impl logger::Trait for Test {
 impl Trait for Test {
     type Event = TestEvent;
     type Call = Call;
+    type SudoOrigin = EnsureRoot<Self::AccountId>;
 }
 
 // Assign back to type variables in order to make dispatched calls of these modules later.
-pub type Sudo = Module<Test>;
+pub type SudoOrigin = Module<Test>;
 pub type Logger = logger::Module<Test>;
 pub type System = frame_system::Module<Test>;
 
 // New types for dispatchable functions.
-pub type SudoCall = sudo::Call<Test>;
+pub type SudoOriginCall = sudo_origin::Call<Test>;
 pub type LoggerCall = logger::Call<Test>;
 
 // Build test environment by setting the root `key` for the Genesis.
-pub fn new_test_ext(root_key: u64) -> sp_io::TestExternalities {
-    let mut t = frame_system::GenesisConfig::default()
+pub fn new_test_ext() -> sp_io::TestExternalities {
+    let t = frame_system::GenesisConfig::default()
         .build_storage::<Test>()
-        .unwrap();
-    GenesisConfig::<Test> { key: root_key }
-        .assimilate_storage(&mut t)
         .unwrap();
     t.into()
 }

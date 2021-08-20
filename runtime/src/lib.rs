@@ -11,7 +11,11 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use sp_api::impl_runtime_apis;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata, u32_trait::{_1, _2}};
+use sp_core::{
+    crypto::KeyTypeId,
+    u32_trait::{_1, _2},
+    OpaqueMetadata,
+};
 use sp_runtime::curve::PiecewiseLinear;
 use sp_runtime::traits::{
     BlakeTwo256, Block as BlockT, Convert, IdentifyAccount, IdentityLookup, NumberFor, OpaqueKeys,
@@ -33,7 +37,7 @@ use sp_version::RuntimeVersion;
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
     construct_runtime, parameter_types,
-    traits::{KeyOwnerProofSystem, Randomness, LockIdentifier},
+    traits::{KeyOwnerProofSystem, LockIdentifier, Randomness},
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
         IdentityFee, Weight,
@@ -66,7 +70,6 @@ pub use bridged_asset;
 pub use erc20_app;
 pub use eth_app;
 pub use verifier;
-
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -574,59 +577,60 @@ impl orml_tokens::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const CouncilMotionDuration: BlockNumber = 21 * DAYS;
-	pub const CouncilMaxProposals: u32 = 100;
-	pub const CouncilMaxMembers: u32 = 15;
+    pub const CouncilMotionDuration: BlockNumber = 21 * DAYS;
+    pub const CouncilMaxProposals: u32 = 100;
+    pub const CouncilMaxMembers: u32 = 15;
 }
 
 type CouncilCollective = pallet_collective::Instance1;
 impl pallet_collective::Trait<CouncilCollective> for Runtime {
-	type Origin = Origin;
-	type Proposal = Call;
-	type Event = Event;
-	type MotionDuration = CouncilMotionDuration;
-	type MaxProposals = CouncilMaxProposals;
-	type MaxMembers = CouncilMaxMembers;
-	type DefaultVote = pallet_collective::PrimeDefaultVote;
-	type WeightInfo = weights::pallet_collective::WeightInfo;
+    type Origin = Origin;
+    type Proposal = Call;
+    type Event = Event;
+    type MotionDuration = CouncilMotionDuration;
+    type MaxProposals = CouncilMaxProposals;
+    type MaxMembers = CouncilMaxMembers;
+    type DefaultVote = pallet_collective::PrimeDefaultVote;
+    type WeightInfo = weights::pallet_collective::WeightInfo;
 }
 
 parameter_types! {
-	pub const CandidacyBond: Balance = 10 * currency::DOLLARS;
-	pub const VotingBond: Balance = 1 * currency::DOLLARS;
-	pub const TermDuration: BlockNumber = 120 * DAYS;
-	pub const DesiredMembers: u32 = 9;
-	pub const DesiredRunnersUp: u32 = 7;
-	pub const ElectionsPhragmenModuleId: LockIdentifier = *b"phrelect";
+    pub const CandidacyBond: Balance = 10 * currency::DOLLARS;
+    pub const VotingBond: Balance = 1 * currency::DOLLARS;
+    pub const TermDuration: BlockNumber = 120 * DAYS;
+    pub const DesiredMembers: u32 = 9;
+    pub const DesiredRunnersUp: u32 = 7;
+    pub const ElectionsPhragmenModuleId: LockIdentifier = *b"phrelect";
 }
 
 // Make sure that there are no more than `MaxMembers` members elected via elections-phragmen.
 const_assert!(DesiredMembers::get() <= CouncilMaxMembers::get());
 
 impl pallet_elections_phragmen::Trait for Runtime {
-	type Event = Event;
-	type ModuleId = ElectionsPhragmenModuleId;
-	type Currency = orml_tokens::CurrencyAdapter<Runtime, MGATokenID>;
-	type ChangeMembers = Council;
-	// NOTE: this implies that council's genesis members cannot be set directly and must come from
-	// this module.
-	type InitializeMembers = Council;
-	type CurrencyToVote = CurrencyToVoteHandler;
-	type CandidacyBond = CandidacyBond;
-	type VotingBond = VotingBond;
-	type LoserCandidate = (); // TODO Treasury
-	type BadReport = (); // TODO Treasury
-	type KickedMember = (); // TODO Treasury
-	type DesiredMembers = DesiredMembers;
-	type DesiredRunnersUp = DesiredRunnersUp;
-	type TermDuration = TermDuration;
-	type WeightInfo = weights::pallet_elections_phragmen::WeightInfo;
+    type Event = Event;
+    type ModuleId = ElectionsPhragmenModuleId;
+    type Currency = orml_tokens::CurrencyAdapter<Runtime, MGATokenID>;
+    type ChangeMembers = Council;
+    // NOTE: this implies that council's genesis members cannot be set directly and must come from
+    // this module.
+    type InitializeMembers = Council;
+    type CurrencyToVote = CurrencyToVoteHandler;
+    type CandidacyBond = CandidacyBond;
+    type VotingBond = VotingBond;
+    type LoserCandidate = Treasury;
+    type BadReport = Treasury;
+    type KickedMember = Treasury;
+    type DesiredMembers = DesiredMembers;
+    type DesiredRunnersUp = DesiredRunnersUp;
+    type TermDuration = TermDuration;
+    type WeightInfo = weights::pallet_elections_phragmen::WeightInfo;
 }
 
 impl pallet_sudo_origin::Trait for Runtime {
     type Event = Event;
     type Call = Call;
-    type SudoOrigin = pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
+    type SudoOrigin =
+        pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
 }
 
 impl pallet_random_seed::Trait for Runtime {}
@@ -662,7 +666,7 @@ construct_runtime!(
         Staking: pallet_staking::{Module, Call, Config<T>, Storage, Event<T>, ValidateUnsigned},
         Treasury: pallet_treasury::{Module, Call, Storage, Config, Event<T>},
         Council: pallet_collective::<Instance1>::{Module, Call, Storage, Origin<T>, Event<T>, Config<T>},
-		Elections: pallet_elections_phragmen::{Module, Call, Storage, Event<T>, Config<T>},
+        Elections: pallet_elections_phragmen::{Module, Call, Storage, Event<T>, Config<T>},
         SudoOrigin: pallet_sudo_origin::{Module, Call, Event},
     }
 );

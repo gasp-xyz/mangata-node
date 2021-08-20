@@ -2,10 +2,10 @@
 
 use hex_literal::hex;
 use mangata_runtime::{
-    AccountId, AssetsInfoConfig, BabeConfig, BridgeConfig, BridgedAssetConfig, GenesisConfig,
-    GrandpaConfig, RandomConfig, SessionConfig, SessionKeys, Signature, StakerStatus,
-    StakingConfig, SudoConfig, SystemConfig, TokensConfig, VerifierConfig, XykConfig, WASM_BINARY,
-    ElectionsConfig, CouncilConfig
+    AccountId, AssetsInfoConfig, BabeConfig, BridgeConfig, BridgedAssetConfig, CouncilConfig,
+    ElectionsConfig, GenesisConfig, GrandpaConfig, RandomConfig, SessionConfig, SessionKeys,
+    Signature, StakerStatus, StakingConfig, SudoConfig, SystemConfig, TokensConfig, VerifierConfig,
+    XykConfig, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sp_consensus_babe::AuthorityId as BabeId;
@@ -449,10 +449,11 @@ fn testnet_genesis(
         pallet_treasury: Some(Default::default()),
         pallet_collective_Instance1: Some(CouncilConfig::default()),
         pallet_elections_phragmen: Some(ElectionsConfig {
-			members: tokens_endowment.iter()
-						.cloned()
-						.map(|(_, _, member)| (member, 100 * 100_000_000_000_000))
-						.collect(),
-		}),
+            members: tokens_endowment
+                .iter()
+                .cloned()
+                .map(|(_, _, member)| (member, 100 * 100_000_000_000_000))
+                .collect(),
+        }),
     }
 }

@@ -1,0 +1,30 @@
+[package]
+name = "pallet-encrypted-tx"
+description = "Artemis Bridge Pallet"
+version = "0.1.0"
+edition = "2018"
+authors = [""]
+repository = "https://github.com/mangata-finance/mangata-node"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+frame-support = { default-features = false, version = '2.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+frame-system = { default-features = false, version = '2.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-runtime = { default-features = false, version = '2.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-core = { default-features = false, version = '2.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-std = { version = "2.0.0", default-features = false , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-arithmetic = { default-features = false, version = '2.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+codec = { default-features = false, features = ['derive'], package = 'parity-scale-codec', version = '1.3.4' }
+
+[features]
+default = ["std"]
+std = [
+    'codec/std',
+    "frame-support/std",
+    "frame-system/std",
+    "sp-core/std",
+    "sp-runtime/std",
+    "sp-std/std",
+]

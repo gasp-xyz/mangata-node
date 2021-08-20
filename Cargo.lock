@@ -3207,6 +3207,7 @@ dependencies = [
  "pallet-bridge",
  "pallet-collective",
  "pallet-elections-phragmen",
+ "pallet-encrypted-tx",
  "pallet-grandpa",
  "pallet-offences",
  "pallet-random-seed",
@@ -3832,6 +3833,19 @@ dependencies = [
  "parity-scale-codec",
  "serde",
  "sp-npos-elections",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-encrypted-tx"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "sp-arithmetic",
+ "sp-core",
  "sp-runtime",
  "sp-std",
 ]

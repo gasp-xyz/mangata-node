@@ -37,6 +37,7 @@ pallet-staking-reward-curve = { path = '../pallets/staking/reward-curve', defaul
 pallet-treasury = { default-features = false, version='2.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 mangata-primitives = { path = '../primitives/mangata', default-features = false, version = "0.1.0" }
 orml-tokens = {  default-features = false, version = "0.3.1", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
+pallet-sudo-origin = { path = '../pallets/sudo-origin', default-features = false, version = "2.0.0" }
 
 # Substrate dependencies
 frame-benchmarking = { default-features = false, optional = true, version = '2.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }

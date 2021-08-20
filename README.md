@@ -89,3 +89,15 @@ RUSTFLAGS="-g" cargo run -j12 --release -- --tmp --dev
 Go to VS code and attach the process!
 
 
+## How to run a built node in Github.
+1.- Download the attached zip artifact from the Action summary.
+2.- Unzip it
+3.- Load the docker image
+4.- Export `MANGATA_NODE_VERSION` environment varialbe with the name of the file. ( this number represents the commitId).
+5.- In E2E repo, there is a coker compose file, that read that environment variable and run the node.
+Example:
+```
+unzip 1150533182.zip ; docker load --input 1150533182.tar ; export MANGATA_NODE_VERSION=1150533182 ; docker-compose -f e2eRepoPathgoesHere/devops/dockerfiles/node-build/docker-compose.yml up -d 
+```
+
+

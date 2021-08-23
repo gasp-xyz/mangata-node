@@ -103,6 +103,7 @@ jobs:
     runs-on: ubuntu-latest
     env: 
       E2EBRANCH: 'main'
+      E2EBRANCHNAME: 'main'
     steps:
       - name: Get branch name
         id: branch-name

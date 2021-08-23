@@ -177,6 +177,7 @@ jobs:
       - name: Decide if main - branch or parameter
       # if we have something in e2eBranch - override E2EBranchName, else -> E2EBRANCHNAME , that
       # by default will be main. 
+      
         run: 
           echo "E2EBRANCHNAME=${{ github.event.inputs.e2eBranch || env.E2EBRANCHNAME }}" >> $GITHUB_ENV
       

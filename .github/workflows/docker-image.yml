@@ -47,6 +47,8 @@ jobs:
   clippy:
     name: Clippy check
     runs-on: ubuntu-latest
+    if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
+
     steps:
       - uses: actions/checkout@v2
       - name: Install latest nightly
@@ -65,6 +67,7 @@ jobs:
 
   unit-test:
     runs-on: ubuntu-latest
+    if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
     steps:
       -
         name: Checkout
@@ -98,7 +101,6 @@ jobs:
           path: ut-results.xml
           reporter: jest-junit
 
-
   build:
     runs-on: ubuntu-latest
 
@@ -129,7 +131,7 @@ jobs:
         with:
           name: ${{ github.run_id }}
           path: /tmp/${{ github.run_id }}.tar
-      
+
   e2e-test:
     needs: build
     runs-on: ubuntu-latest
@@ -177,7 +179,7 @@ jobs:
       - name: Decide if main - branch or parameter
       # if we have something in e2eBranch - override E2EBranchName, else -> E2EBRANCHNAME , that
       # by default will be main. 
-      
+
         run: 
           echo "E2EBRANCHNAME=${{ github.event.inputs.e2eBranch || env.E2EBRANCHNAME }}" >> $GITHUB_ENV
       

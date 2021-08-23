@@ -110,7 +110,7 @@ jobs:
         uses: tj-actions/branch-names@v4.9
       
       -name: Set default branch. 
-        run:
+        run: |
           # default by paramters
           echo "E2EBRANCHNAME=${{ github.event.inputs.e2eBranch || env.E2EBRANCH }}" >> $GITHUB_ENV
         

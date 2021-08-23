@@ -1,31 +1,25 @@
-# Sudo Module
-
-- [`sudo::Trait`](https://docs.rs/pallet-sudo/latest/pallet_sudo/trait.Trait.html)
-- [`Call`](https://docs.rs/pallet-sudo/latest/pallet_sudo/enum.Call.html)
+# SudoOrigin Module
 
 ## Overview
 
-The Sudo module allows for a single account (called the "sudo key")
-to execute dispatchable functions that require a `Root` call
-or designate a new account to replace them as the sudo key.
-Only one account can be the sudo key at a time.
+The SudoOrigin module allows for a origin
+to execute dispatchable functions that require a `Root` call.
 
 ## Interface
 
 ### Dispatchable Functions
 
-Only the sudo key can call the dispatchable functions from the Sudo module.
+Only the configured origin can call the dispatchable functions from the Sudo module.
 
 * `sudo` - Make a `Root` call to a dispatchable function.
-* `set_key` - Assign a new account to be the sudo key.
 
 ## Usage
 
 ### Executing Privileged Functions
 
-The Sudo module itself is not intended to be used within other modules.
+The SudoOrigin module itself is not intended to be used within other modules.
 Instead, you can build "privileged functions" (i.e. functions that require `Root` origin) in other modules.
-You can execute these privileged functions by calling `sudo` with the sudo key account.
+You can execute these privileged functions by calling `sudo` from the configured origin.
 Privileged functions cannot be directly executed via an extrinsic.
 
 Learn more about privileged functions and `Root` origin in the [`Origin`] type documentation.
@@ -54,10 +48,9 @@ decl_module! {
 }
 ```
 
-## Genesis Config
+## Runtime Config
 
-The Sudo module depends on the [`GenesisConfig`](https://docs.rs/pallet-sudo/latest/pallet_sudo/struct.GenesisConfig.html).
-You need to set an initial superuser account as the sudo `key`.
+The SudoOrigin module depends on the Runtime for its accepted Origin configuration.
 
 ## Related Modules
 
@@ -66,5 +59,3 @@ You need to set an initial superuser account as the sudo `key`.
 [`Call`]: ./enum.Call.html
 [`Trait`]: ./trait.Trait.html
 [`Origin`]: https://docs.substrate.dev/docs/substrate-types
-
-License: Apache-2.0

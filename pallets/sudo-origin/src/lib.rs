@@ -1,48 +1,27 @@
-// This file is part of Substrate.
+// Copyright (C) 2020 Mangata team
 
-// Copyright (C) 2017-2020 Parity Technologies (UK) Ltd.
-// SPDX-License-Identifier: Apache-2.0
-
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// 	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-//! # Sudo Module
-//!
-//! - [`sudo::Trait`](./trait.Trait.html)
-//! - [`Call`](./enum.Call.html)
+//! # SudoOrigin Module
 //!
 //! ## Overview
 //!
-//! The Sudo module allows for a single account (called the "sudo key")
-//! to execute dispatchable functions that require a `Root` call
-//! or designate a new account to replace them as the sudo key.
-//! Only one account can be the sudo key at a time.
+//! The SudoOrigin module allows for a origin
+//! to execute dispatchable functions that require a `Root` call.
 //!
 //! ## Interface
 //!
 //! ### Dispatchable Functions
 //!
-//! Only the sudo key can call the dispatchable functions from the Sudo module.
+//! Only the configured origin can call the dispatchable functions from the Sudo module.
 //!
 //! * `sudo` - Make a `Root` call to a dispatchable function.
-//! * `set_key` - Assign a new account to be the sudo key.
 //!
 //! ## Usage
 //!
 //! ### Executing Privileged Functions
 //!
-//! The Sudo module itself is not intended to be used within other modules.
+//! The SudoOrigin module itself is not intended to be used within other modules.
 //! Instead, you can build "privileged functions" (i.e. functions that require `Root` origin) in other modules.
-//! You can execute these privileged functions by calling `sudo` with the sudo key account.
+//! You can execute these privileged functions by calling `sudo` from the configured origin.
 //! Privileged functions cannot be directly executed via an extrinsic.
 //!
 //! Learn more about privileged functions and `Root` origin in the [`Origin`] type documentation.
@@ -72,10 +51,9 @@
 //! # fn main() {}
 //! ```
 //!
-//! ## Genesis Config
-//!
-//! The Sudo module depends on the [`GenesisConfig`](./struct.GenesisConfig.html).
-//! You need to set an initial superuser account as the sudo `key`.
+//! ## Runtime Config
+//! 
+//! The SudoOrigin module depends on the Runtime for its accepted Origin configuration.
 //!
 //! ## Related Modules
 //!

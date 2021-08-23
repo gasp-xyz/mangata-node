@@ -17,7 +17,7 @@ on:
         e2eBranch:
           description: 'Name of the e2e target branch'
           required: false
-          default: 'main'
+          default: ''
 
 
 jobs:
@@ -101,28 +101,8 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    env: 
-      E2EBRANCH: 'main'
-      E2EBRANCHNAME: 'default'
+
     steps:
-      - name: E2E- Get branch name
-        id: branch-name
-        uses: tj-actions/branch-names@v4.9
-      
-      - name: E2E- Set default branch. 
-        run: |
-          echo "E2EBRANCHNAME=${{ github.event.inputs.e2eBranch || env.E2EBRANCH }}" >> $GITHUB_ENV
- 
-      - name: E2E- Calculate if run e2e feature branch or main.
-        run: |
-          echo DEFAULT: E2E test will run with: $E2EBRANCHNAME
-          echo "Running on: ${{ steps.branch-name.outputs.current_branch }}"
-          if [ $(git ls-remote --heads https://github.com/mangata-finance/mangata-e2e.git "${{ steps.branch-name.outputs.current_branch }}" --force --quiet  | wc -l) -gt 0 ]; then echo "E2EBRANCHNAME=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_ENV; echo "MATCH - OK" ;  fi
-          
-      - name: E2E- Get target branch. 
-        run: |
-         echo "${{ env.E2EBRANCHNAME }}"
- 
       -
         name: Checkout
         uses: actions/checkout@v2
@@ -159,8 +139,7 @@ jobs:
       TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}
       TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
       MANGATA_NODE_VERSION: ${{ github.run_id }}
-      E2EBRANCH: 'main'
-      E2EBRANCHNAME: 'default'
+      E2EBRANCHNAME: 'main'
     steps:
     ####IDK, but this is neccesary for reports
       -
@@ -187,14 +166,20 @@ jobs:
       
       - name: E2E- Get target branch. 
         run: |
-          echo "Running on: ${{ steps.branch-name.outputs.current_branch }}"
+          echo "This job name branch is: ${{ steps.branch-name.outputs.current_branch }}"
       
       - name: E2E- Calculate if run e2e feature branch or main.
         run: |
           echo DEFAULT: E2E test will run with: $E2EBRANCHNAME
           echo "Running on: ${{ steps.branch-name.outputs.current_branch }}"
           if [ $(git ls-remote --heads https://github.com/mangata-finance/mangata-e2e.git "${{ steps.branch-name.outputs.current_branch }}" --force --quiet  | wc -l) -gt 0 ]; then echo "E2EBRANCHNAME=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_ENV; echo "MATCH - OK" ;  fi
-          
+      
+      - name: Decide if main - branch or parameter
+      # if we have something in e2eBranch - override E2EBranchName, else -> E2EBRANCHNAME , that
+      # by default will be main. 
+        run: 
+          echo "E2EBRANCHNAME=${{ github.event.inputs.e2eBranch || env.E2EBRANCHNAME }}" >> $GITHUB_ENV
+      
       - name: E2E- Get target branch. 
         run: |
          echo "${{ env.E2EBRANCHNAME }}"

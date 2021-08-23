@@ -104,8 +104,8 @@ jobs:
     steps:
       - uses: nelonoel/branch-name@v1.0.1
       - run: | 
-        echo ${BRANCH_NAME}
-        echo "NODEBRANCHNAME=${{ steps.extract_branch.outputs.branch }}" >> $GITHUB_ENV
+          echo ${BRANCH_NAME}
+          echo "NODEBRANCHNAME=${{ ${BRANCH_NAME} }}" >> $GITHUB_ENV
 #      - name: Extract branch name
 #        shell: bash
 #        run: |

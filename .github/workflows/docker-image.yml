@@ -111,9 +111,8 @@ jobs:
       
       -name: Set default branch. 
         run: |
-          # default by paramters
           echo "E2EBRANCHNAME=${{ github.event.inputs.e2eBranch || env.E2EBRANCH }}" >> $GITHUB_ENV
-        
+ 
       - name: Export branch name as Global ENV.
         run: |
           echo DEFAULT: E2E test will run with: $E2EBRANCHNAME

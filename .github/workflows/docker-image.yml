@@ -103,7 +103,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
         - uses: nelonoel/branch-name@v1.0.1
-          name: get Branch name
           - run: | 
             echo ${BRANCH_NAME}
             echo "NODEBRANCHNAME=${{ steps.extract_branch.outputs.branch }}" >> $GITHUB_ENV

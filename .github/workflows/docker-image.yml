@@ -102,6 +102,19 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+        - uses: nelonoel/branch-name@v1.0.1
+          name: get Branch name
+          - run: | 
+            echo ${BRANCH_NAME}
+            echo "NODEBRANCHNAME=${{ steps.extract_branch.outputs.branch }}" >> $GITHUB_ENV
+#      - name: Extract branch name
+#        shell: bash
+#        run: |
+#         echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+#         echo "NODEBRANCHNAME=${{ steps.extract_branch.outputs.branch }}" >> $GITHUB_ENV
+#
+        id: extract_branch
+  
       -
         name: Checkout
         uses: actions/checkout@v2

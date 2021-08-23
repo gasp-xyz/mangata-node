@@ -101,16 +101,22 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    env: 
+      E2EBRANCH: 'main'
     steps:
       - name: Get branch name
         id: branch-name
         uses: tj-actions/branch-names@v4.9
-      
+
       - name: Export branch name as Global ENV.
         run: |
+          # default by paramters
+          echo "E2EBRANCHNAME=${{ github.event.inputs.e2eBranch || env.E2EBRANCH }}" >> $GITHUB_ENV
           echo "Running on: ${{ steps.branch-name.outputs.current_branch }}"
           echo "NODEBRANCHNAME=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_ENV
-
+          if [ $(git ls-remote --heads git@github.com:mangata-finance/mangata-e2e.git "${env.NODEBRANCHNAME}" | wc -l) -gt 0 ]; then echo "E2EBRANCHNAME=${{ env.NODEBRANCHNAME }}" >> $GITHUB_ENV; fi
+          echo "E2E test will run with: env.E2EBRANCHNAME"
+      
       -
         name: Checkout
         uses: actions/checkout@v2
@@ -167,15 +173,13 @@ jobs:
         run: |
           docker load --input /tmp/${{ github.run_id }}.tar
           docker image ls -a
-      - name: Set branch variable
-        run:  |
-          echo "BRANCHNAME=${{ github.event.inputs.e2eBranch || env.E2EBRANCH }}" >> $GITHUB_ENV
+      
       - 
         name: Checkout tests
         uses: actions/checkout@v2
         with:
           repository: mangata-finance/mangata-e2e
-          ref: '${{ env.BRANCHNAME }}'
+          ref: '${{ env.E2EBRANCHNAME }}'
           path: 'e2eTests'
       
       - name: Start mangata-node node with local build

@@ -105,7 +105,6 @@ jobs:
       - name: Get branch name
         id: branch-name
         uses: tj-actions/branch-names@v4.9
-        id: extract_branch
       
       - name: Export branch name as Global ENV.
         run: |

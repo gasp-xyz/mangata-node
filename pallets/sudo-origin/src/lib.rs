@@ -52,7 +52,7 @@
 //! ```
 //!
 //! ## Runtime Config
-//! 
+//!
 //! The SudoOrigin module depends on the Runtime for its accepted Origin configuration.
 //!
 //! ## Related Modules

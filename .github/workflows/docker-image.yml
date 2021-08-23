@@ -121,7 +121,7 @@ jobs:
           
       - name: Get target branch. 
         run: |
-         echo "${{ env.E2EBRANCHNAME }}
+         echo "${{ env.E2EBRANCHNAME }}"
  
       -
         name: Checkout

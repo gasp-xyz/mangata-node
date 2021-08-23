@@ -113,11 +113,10 @@ jobs:
         run: |
           # default by paramters
           echo "E2EBRANCHNAME=${{ github.event.inputs.e2eBranch || env.E2EBRANCH }}" >> $GITHUB_ENV
-          echo DEFAULT: E2E test will run with: $NODEBRANCHNAME
+          echo DEFAULT: E2E test will run with: $E2EBRANCHNAME
           echo "Running on: ${{ steps.branch-name.outputs.current_branch }}"
-          echo "NODEBRANCHNAME=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_ENV
-          if [ $(git ls-remote --heads git@github.com:mangata-finance/mangata-e2e.git "${{env.NODEBRANCHNAME}}" --force --quiet  | wc -l) -gt 0 ]; then echo "E2EBRANCHNAME=${{env.NODEBRANCHNAME}}" >> $GITHUB_ENV; fi
-          echo INFO: E2E test will run with: $NODEBRANCHNAME
+          if [ $(git ls-remote --heads git@github.com:mangata-finance/mangata-e2e.git "${{ steps.branch-name.outputs.current_branch }}" --force --quiet  | wc -l) -gt 0 ]; then echo "E2EBRANCHNAME=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_ENV; fi
+          echo INFO: E2E test will run with: $E2EBRANCHNAME
       
       -
         name: Checkout

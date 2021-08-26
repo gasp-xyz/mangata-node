@@ -29,6 +29,7 @@ sp-blockchain = {version = "2.0.0", git = "https://github.com/mangata-finance/su
 sp-transaction-pool = {version = "2.0.0", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-block-builder = {version = "2.0.0", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sc-rpc-api = {version = "0.8.0", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+extrinsic-info-runtime-api = {  default-features = false, version = '2.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
 [dev-dependencies]
 #substrate-test-runtime-client = "2.0.0"

@@ -459,23 +459,41 @@ impl<T: Trait> Module<T> {
         name.extend_from_slice(LIQUIDITY_TOKEN_IDENTIFIER);
         name.extend_from_slice(HEX_INDICATOR);
         for bytes in liquidity_asset_id.to_be_bytes().iter() {
-            name.push(((bytes >> 4) as u8).saturating_add(48u8));
-            name.push(((bytes & 0b0000_1111) as u8).saturating_add(48u8));
+            match (bytes >> 4) as u8 {
+                x @ 0u8 ..=9u8 => name.push(x.saturating_add(48u8)),
+                x => name.push(x.saturating_add(55u8)),
+            }
+            match (bytes & 0b0000_1111) as u8 {
+                x @ 0u8 ..=9u8 => name.push(x.saturating_add(48u8)),
+                x => name.push(x.saturating_add(55u8)),
+            }
         }
 
         let mut symbol: Vec<u8> = Vec::<u8>::new();
         symbol.extend_from_slice(TOKEN_SYMBOL);
         symbol.extend_from_slice(HEX_INDICATOR);
         for bytes in first_asset_id.to_be_bytes().iter() {
-            symbol.push(((bytes >> 4) as u8).saturating_add(48u8));
-            symbol.push(((bytes & 0b0000_1111) as u8).saturating_add(48u8));
+            match (bytes >> 4) as u8 {
+                x @ 0u8 ..=9u8 => symbol.push(x.saturating_add(48u8)),
+                x => symbol.push(x.saturating_add(55u8)),
+            }
+            match (bytes & 0b0000_1111) as u8 {
+                x @ 0u8 ..=9u8 => symbol.push(x.saturating_add(48u8)),
+                x => symbol.push(x.saturating_add(55u8)),
+            }
         }
         symbol.extend_from_slice(TOKEN_SYMBOL_SEPARATOR);
         symbol.extend_from_slice(TOKEN_SYMBOL);
         symbol.extend_from_slice(HEX_INDICATOR);
         for bytes in second_asset_id.to_be_bytes().iter() {
-            symbol.push(((bytes >> 4) as u8).saturating_add(48u8));
-            symbol.push(((bytes & 0b0000_1111) as u8).saturating_add(48u8));
+            match (bytes >> 4) as u8 {
+                x @ 0u8 ..=9u8 => symbol.push(x.saturating_add(48u8)),
+                x => symbol.push(x.saturating_add(55u8)),
+            }
+            match (bytes & 0b0000_1111) as u8 {
+                x @ 0u8 ..=9u8 => symbol.push(x.saturating_add(48u8)),
+                x => symbol.push(x.saturating_add(55u8)),
+            }
         }
 
         let mut description: Vec<u8> = Vec::<u8>::new();

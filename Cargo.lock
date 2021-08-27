@@ -3115,7 +3115,7 @@ dependencies = [
 
 [[package]]
 name = "mangata-node"
-version = "2.0.0"
+version = "0.1.0"
 dependencies = [
  "artemis-core",
  "extrinsic-info-runtime-api",
@@ -3205,6 +3205,8 @@ dependencies = [
  "pallet-babe",
  "pallet-balances",
  "pallet-bridge",
+ "pallet-collective",
+ "pallet-elections-phragmen",
  "pallet-grandpa",
  "pallet-offences",
  "pallet-random-seed",
@@ -3213,6 +3215,7 @@ dependencies = [
  "pallet-staking",
  "pallet-staking-reward-curve",
  "pallet-sudo",
+ "pallet-sudo-origin",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
@@ -3233,6 +3236,7 @@ dependencies = [
  "sp-std",
  "sp-transaction-pool",
  "sp-version",
+ "static_assertions",
  "substrate-wasm-builder-runner",
  "xyk-runtime-api",
 ]
@@ -3804,6 +3808,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-collective"
+version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-elections-phragmen"
+version = "2.0.1"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "sp-npos-elections",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-finality-tracker"
 version = "2.0.1"
 source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5b0a05f075a92ffe941b6e4871303c5f2276496b"
@@ -3960,6 +3993,20 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-sudo-origin"
+version = "2.0.1"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std",

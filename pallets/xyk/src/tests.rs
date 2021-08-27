@@ -148,7 +148,7 @@ fn set_info_should_work_with_small_numbers() {
         const N: u32 = 12345u32;
 
         for _ in 0..N {
-        XykStorage::create_new_token(&acc_id, amount);
+            XykStorage::create_new_token(&acc_id, amount);
         }
 
         XykStorage::create_pool(
@@ -172,7 +172,6 @@ fn set_info_should_work_with_small_numbers() {
     });
 }
 
-
 #[test]
 #[ignore]
 fn set_info_should_work_with_large_numbers() {
@@ -183,7 +182,7 @@ fn set_info_should_work_with_large_numbers() {
         const N: u32 = 1524501234u32;
 
         for _ in 0..N {
-        XykStorage::create_new_token(&acc_id, amount);
+            XykStorage::create_new_token(&acc_id, amount);
         }
 
         XykStorage::create_pool(

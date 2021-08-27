@@ -460,11 +460,11 @@ impl<T: Trait> Module<T> {
         name.extend_from_slice(HEX_INDICATOR);
         for bytes in liquidity_asset_id.to_be_bytes().iter() {
             match (bytes >> 4) as u8 {
-                x @ 0u8 ..=9u8 => name.push(x.saturating_add(48u8)),
+                x @ 0u8..=9u8 => name.push(x.saturating_add(48u8)),
                 x => name.push(x.saturating_add(55u8)),
             }
             match (bytes & 0b0000_1111) as u8 {
-                x @ 0u8 ..=9u8 => name.push(x.saturating_add(48u8)),
+                x @ 0u8..=9u8 => name.push(x.saturating_add(48u8)),
                 x => name.push(x.saturating_add(55u8)),
             }
         }
@@ -474,11 +474,11 @@ impl<T: Trait> Module<T> {
         symbol.extend_from_slice(HEX_INDICATOR);
         for bytes in first_asset_id.to_be_bytes().iter() {
             match (bytes >> 4) as u8 {
-                x @ 0u8 ..=9u8 => symbol.push(x.saturating_add(48u8)),
+                x @ 0u8..=9u8 => symbol.push(x.saturating_add(48u8)),
                 x => symbol.push(x.saturating_add(55u8)),
             }
             match (bytes & 0b0000_1111) as u8 {
-                x @ 0u8 ..=9u8 => symbol.push(x.saturating_add(48u8)),
+                x @ 0u8..=9u8 => symbol.push(x.saturating_add(48u8)),
                 x => symbol.push(x.saturating_add(55u8)),
             }
         }
@@ -487,11 +487,11 @@ impl<T: Trait> Module<T> {
         symbol.extend_from_slice(HEX_INDICATOR);
         for bytes in second_asset_id.to_be_bytes().iter() {
             match (bytes >> 4) as u8 {
-                x @ 0u8 ..=9u8 => symbol.push(x.saturating_add(48u8)),
+                x @ 0u8..=9u8 => symbol.push(x.saturating_add(48u8)),
                 x => symbol.push(x.saturating_add(55u8)),
             }
             match (bytes & 0b0000_1111) as u8 {
-                x @ 0u8 ..=9u8 => symbol.push(x.saturating_add(48u8)),
+                x @ 0u8..=9u8 => symbol.push(x.saturating_add(48u8)),
                 x => symbol.push(x.saturating_add(55u8)),
             }
         }

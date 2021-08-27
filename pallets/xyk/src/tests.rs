@@ -333,8 +333,8 @@ fn multi() {
         assert_eq!(XykStorage::asset_pool((1, 0)), 500000000000000000000000); // amount of asset 1 in pool map
         assert_eq!(XykStorage::liquidity_asset((0, 1)), Some(2)); // liquidity assetId corresponding to newly created pool
         assert_eq!(XykStorage::liquidity_pool(2), Some((0, 1))); // liquidity assetId corresponding to newly created pool
-        assert_eq!(XykStorage::total_supply(2), 1500000000000000000000000); // total liquidity assets
-        assert_eq!(XykStorage::balance(2, 2), 1500000000000000000000000); // amount of liquidity assets owned by user by creating pool / initial minting
+        assert_eq!(XykStorage::total_supply(2), 750000000000000000000000); // total liquidity assets
+        assert_eq!(XykStorage::balance(2, 2), 750000000000000000000000); // amount of liquidity assets owned by user by creating pool / initial minting
         assert_eq!(XykStorage::balance(0, 2), 1000000000000000000000000); // amount of asset 0 in user acc after creating pool / initial minting
         assert_eq!(XykStorage::balance(1, 2), 1500000000000000000000000); // amount of asset 1 in user acc after creating pool / initial minting
         assert_eq!(
@@ -357,8 +357,8 @@ fn multi() {
 
         assert_eq!(XykStorage::asset_pool((0, 1)), 1500000000000000000000000); // amount of asset 0 in pool map
         assert_eq!(XykStorage::asset_pool((1, 0)), 750000000000000000000001); // amount of asset 1 in pool map
-        assert_eq!(XykStorage::total_supply(2), 2250000000000000000000000); // total liquidity assets
-        assert_eq!(XykStorage::balance(2, 2), 2250000000000000000000000); // amount of liquidity assets owned by user by creating pool / initial minting
+        assert_eq!(XykStorage::total_supply(2), 1125000000000000000000000); // total liquidity assets
+        assert_eq!(XykStorage::balance(2, 2), 1125000000000000000000000); // amount of liquidity assets owned by user by creating pool / initial minting
         assert_eq!(XykStorage::balance(0, 2), 500000000000000000000000); // amount of asset 0 in user acc after creating pool / initial minting
         assert_eq!(XykStorage::balance(1, 2), 1249999999999999999999999); // amount of asset 1 in user acc after creating pool / initial minting
         assert_eq!(
@@ -370,12 +370,12 @@ fn multi() {
             750000000000000000000001
         ); // amount of asset 1 in vault acc after creating pool
 
-        XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 450000000000000000000000).unwrap();
+        XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 225000000000000000000000).unwrap();
 
         assert_eq!(XykStorage::asset_pool((0, 1)), 1200000000000000000000000); // amount of asset 0 in pool map
         assert_eq!(XykStorage::asset_pool((1, 0)), 600000000000000000000001); // amount of asset 1 in pool map
-        assert_eq!(XykStorage::total_supply(2), 1800000000000000000000000); // total liquidity assets
-        assert_eq!(XykStorage::balance(2, 2), 1800000000000000000000000); // amount of liquidity assets owned by user by creating pool / initial minting
+        assert_eq!(XykStorage::total_supply(2), 900000000000000000000000); // total liquidity assets
+        assert_eq!(XykStorage::balance(2, 2), 900000000000000000000000); // amount of liquidity assets owned by user by creating pool / initial minting
         assert_eq!(XykStorage::balance(0, 2), 800000000000000000000000); // amount of asset 0 in user acc after creating pool / initial minting
         assert_eq!(XykStorage::balance(1, 2), 1399999999999999999999999); // amount of asset 1 in user acc after creating pool / initial minting
         assert_eq!(
@@ -387,12 +387,12 @@ fn multi() {
             600000000000000000000001
         ); // amount of asset 1 in vault acc after creating pool
 
-        XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 450000000000000000000000).unwrap();
+        XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 225000000000000000000000).unwrap();
 
         assert_eq!(XykStorage::asset_pool((0, 1)), 900000000000000000000000); // amount of asset 0 in pool map
         assert_eq!(XykStorage::asset_pool((1, 0)), 450000000000000000000001); // amount of asset 1 in pool map
-        assert_eq!(XykStorage::total_supply(2), 1350000000000000000000000); // total liquidity assets
-        assert_eq!(XykStorage::balance(2, 2), 1350000000000000000000000); // amount of liquidity assets owned by user by creating pool / initial minting
+        assert_eq!(XykStorage::total_supply(2), 675000000000000000000000); // total liquidity assets
+        assert_eq!(XykStorage::balance(2, 2), 675000000000000000000000); // amount of liquidity assets owned by user by creating pool / initial minting
         assert_eq!(XykStorage::balance(0, 2), 1100000000000000000000000); // amount of asset 0 in user acc after creating pool / initial minting
         assert_eq!(XykStorage::balance(1, 2), 1549999999999999999999999); // amount of asset 1 in user acc after creating pool / initial minting
         assert_eq!(
@@ -415,8 +415,8 @@ fn multi() {
 
         assert_eq!(XykStorage::asset_pool((0, 1)), 1900000000000000000000000); // amount of asset 0 in pool map
         assert_eq!(XykStorage::asset_pool((1, 0)), 950000000000000000000003); // amount of asset 1 in pool map
-        assert_eq!(XykStorage::total_supply(2), 2850000000000000000000000); // total liquidity assets
-        assert_eq!(XykStorage::balance(2, 2), 2850000000000000000000000); // amount of liquidity assets owned by user by creating pool / initial minting
+        assert_eq!(XykStorage::total_supply(2), 1425000000000000000000000); // total liquidity assets
+        assert_eq!(XykStorage::balance(2, 2), 1425000000000000000000000); // amount of liquidity assets owned by user by creating pool / initial minting
         assert_eq!(XykStorage::balance(0, 2), 100000000000000000000000); // amount of asset 0 in user acc after creating pool / initial minting
         assert_eq!(XykStorage::balance(1, 2), 1049999999999999999999997); // amount of asset 1 in user acc after creating pool / initial minting
         assert_eq!(
@@ -438,8 +438,8 @@ fn create_pool_W() {
         assert_eq!(XykStorage::asset_pool((1, 0)), 60000000000000000000); // amount of asset 1 in pool map
         assert_eq!(XykStorage::liquidity_asset((0, 1)), Some(2)); // liquidity assetId corresponding to newly created pool
         assert_eq!(XykStorage::liquidity_pool(2), Some((0, 1))); // liquidity assetId corresponding to newly created pool
-        assert_eq!(XykStorage::total_supply(2), 100000000000000000000); // total liquidity assets
-        assert_eq!(XykStorage::balance(2, 2), 100000000000000000000); // amount of liquidity assets owned by user by creating pool / initial minting
+        assert_eq!(XykStorage::total_supply(2), 50000000000000000000); // total liquidity assets
+        assert_eq!(XykStorage::balance(2, 2), 50000000000000000000); // amount of liquidity assets owned by user by creating pool / initial minting
         assert_eq!(XykStorage::balance(0, 2), 960000000000000000000); // amount of asset 0 in user acc after creating pool / initial minting
         assert_eq!(XykStorage::balance(1, 2), 940000000000000000000); // amount of asset 1 in user acc after creating pool / initial minting
         assert_eq!(
@@ -811,8 +811,8 @@ fn mint_W() {
         )
         .unwrap();
 
-        assert_eq!(XykStorage::total_supply(2), 150000000000000000000); // total liquidity assets
-        assert_eq!(XykStorage::balance(2, 2), 150000000000000000000); // amount of liquidity assets owned by user by creating pool and minting
+        assert_eq!(XykStorage::total_supply(2), 75000000000000000000); // total liquidity assets
+        assert_eq!(XykStorage::balance(2, 2), 75000000000000000000); // amount of liquidity assets owned by user by creating pool and minting
         assert_eq!(XykStorage::asset_pool((0, 1)), 60000000000000000000); // amount in pool map
         assert_eq!(XykStorage::asset_pool((1, 0)), 90000000000000000001); // amount in pool map
         assert_eq!(XykStorage::balance(0, 2), 940000000000000000000); // amount of asset 0 in user acc after minting
@@ -832,7 +832,7 @@ fn mint_W() {
             1,
             30000000000000000001,
             2,
-            50000000000000000000,
+            25000000000000000000,
         ));
 
         assert!(System::events()
@@ -855,8 +855,8 @@ fn mint_W_other_way() {
         )
         .unwrap();
 
-        assert_eq!(XykStorage::total_supply(2), 150000000000000000000); // total liquidity assets
-        assert_eq!(XykStorage::balance(2, 2), 150000000000000000000); // amount of liquidity assets owned by user by creating pool and minting
+        assert_eq!(XykStorage::total_supply(2), 75000000000000000000); // total liquidity assets
+        assert_eq!(XykStorage::balance(2, 2), 75000000000000000000); // amount of liquidity assets owned by user by creating pool and minting
         assert_eq!(XykStorage::asset_pool((0, 1)), 60000000000000000001); // amount in pool map
         assert_eq!(XykStorage::asset_pool((1, 0)), 90000000000000000000); // amount in pool map
         assert_eq!(XykStorage::balance(0, 2), 939999999999999999999); // amount of asset 0 in user acc after minting
@@ -944,9 +944,9 @@ fn burn_W() {
     new_test_ext().execute_with(|| {
         initialize();
 
-        XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 50000000000000000000).unwrap(); // burning 20000000000000000000 asset 0 of pool 0 1
+        XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 25000000000000000000).unwrap(); // burning 20000000000000000000 asset 0 of pool 0 1
 
-        assert_eq!(XykStorage::balance(2, 2), 50000000000000000000); // amount of liquidity assets owned by user by creating pool and burning
+        assert_eq!(XykStorage::balance(2, 2), 25000000000000000000); // amount of liquidity assets owned by user by creating pool and burning
         assert_eq!(XykStorage::asset_pool((0, 1)), 20000000000000000000); // amount in pool map
         assert_eq!(XykStorage::asset_pool((1, 0)), 30000000000000000000); // amount in pool map
         assert_eq!(XykStorage::balance(0, 2), 980000000000000000000); // amount of asset 0 in user acc after burning
@@ -967,7 +967,7 @@ fn burn_W() {
             1,
             30000000000000000000,
             2,
-            50000000000000000000,
+            25000000000000000000,
         ));
 
         assert!(System::events()
@@ -980,9 +980,9 @@ fn burn_W() {
 fn burn_W_other_way() {
     new_test_ext().execute_with(|| {
         initialize();
-        XykStorage::burn_liquidity(Origin::signed(2), 1, 0, 50000000000000000000).unwrap(); // burning 30000000000000000000 asset 1 of pool 0 1
+        XykStorage::burn_liquidity(Origin::signed(2), 1, 0, 25000000000000000000).unwrap(); // burning 30000000000000000000 asset 1 of pool 0 1
 
-        assert_eq!(XykStorage::balance(2, 2), 50000000000000000000); // amount of liquidity assets owned by user by creating pool and burning
+        assert_eq!(XykStorage::balance(2, 2), 25000000000000000000); // amount of liquidity assets owned by user by creating pool and burning
         assert_eq!(XykStorage::asset_pool((0, 1)), 20000000000000000000); // amount in pool map
         assert_eq!(XykStorage::asset_pool((1, 0)), 30000000000000000000); // amount in pool map
         assert_eq!(XykStorage::balance(0, 2), 980000000000000000000); // amount of asset 0 in user acc after burning

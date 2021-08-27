@@ -47,7 +47,7 @@
 //!    2000,
 //! )
 //! ```
-//! Account_id 1 created pool with tokens 0 and 1, with amounts 1000, 2000. Initial ratio is 1:2. Liquidity token with new id created in an amount of 3000 and transfered to user 1.
+//! Account_id 1 created pool with tokens 0 and 1, with amounts 1000, 2000. Initial ratio is 1:2. Liquidity token with new id created in an amount of 1500 and transfered to user 1.
 //!
 //! ### Errors
 //! `ZeroAmount` - creating pool with 0 amount of first or second token
@@ -955,9 +955,10 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         ensure!(first_asset_id != second_asset_id, Error::<T>::SameAsset,);
 
         // Liquidity token amount calculation
-        let initial_liquidity = first_asset_amount
-            .checked_add(second_asset_amount)
-            .ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+        let mut initial_liquidity = first_asset_amount / 2 + second_asset_amount / 2;
+        if initial_liquidity == 0 {
+            initial_liquidity = 1
+        }
 
         Pools::insert((first_asset_id, second_asset_id), first_asset_amount);
 

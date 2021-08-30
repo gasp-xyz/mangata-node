@@ -140,6 +140,73 @@ fn set_info_should_work() {
 }
 
 #[test]
+fn set_info_should_work_with_small_numbers() {
+    new_test_ext().execute_with(|| {
+        // creating asset with assetId 0 and minting to accountId 2
+        let acc_id: u64 = 2;
+        let amount: u128 = 1000000000000000000000;
+        const N: u32 = 12345u32;
+
+        for _ in 0..N {
+            XykStorage::create_new_token(&acc_id, amount);
+        }
+
+        XykStorage::create_pool(
+            Origin::signed(2),
+            15,
+            40000000000000000000,
+            12233,
+            60000000000000000000,
+        )
+        .unwrap();
+
+        assert_eq!(
+            <assets_info::Module<Test>>::get_info(N),
+            assets_info::AssetInfo {
+                name: Some(b"LiquidityPoolToken0x00003039".to_vec()),
+                symbol: Some(b"TKN0x0000000F-TKN0x00002FC9".to_vec()),
+                description: Some(b"Generated Info for Liquidity Pool Token".to_vec()),
+                decimals: Some(18u32),
+            }
+        );
+    });
+}
+
+#[test]
+#[ignore]
+fn set_info_should_work_with_large_numbers() {
+    new_test_ext().execute_with(|| {
+        // creating asset with assetId 0 and minting to accountId 2
+        let acc_id: u64 = 2;
+        let amount: u128 = 1000000000000000000000;
+        const N: u32 = 1524501234u32;
+
+        for _ in 0..N {
+            XykStorage::create_new_token(&acc_id, amount);
+        }
+
+        XykStorage::create_pool(
+            Origin::signed(2),
+            15000000,
+            40000000000000000000,
+            12233000,
+            60000000000000000000,
+        )
+        .unwrap();
+
+        assert_eq!(
+            <assets_info::Module<Test>>::get_info(1524501234u32),
+            assets_info::AssetInfo {
+                name: Some(b"LiquidityPoolToken0x5ADE0AF2".to_vec()),
+                symbol: Some(b"TKN0x00E4E1C0-TKN0x00BAA928".to_vec()),
+                description: Some(b"Generated Info for Liquidity Pool Token".to_vec()),
+                decimals: Some(18u32),
+            }
+        );
+    });
+}
+
+#[test]
 fn buy_and_burn_sell_mangata() {
     new_test_ext().execute_with(|| {
         initialize_buy_and_burn();

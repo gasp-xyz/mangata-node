@@ -104,9 +104,10 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    if: |
-        github.event_name == 'push' && 
-        github.event.pull_request.merged == true
+        if: |
+          github.event_name == 'push' && 
+          github.event.pull_request.merged == true &&
+          !contains(github.event.pull_request.labels.*.name, 'skip-publish')
     steps:
       -
         name: Load Docker image
@@ -239,7 +240,11 @@ jobs:
   publish:
     needs: [rustfmt-check, unit-test, e2e-test, clippy]
     runs-on: ubuntu-latest
-    if: "!contains(github.event.pull_request.labels.*.name, 'skip-publish') && ${{ github.event_name == 'push'}} && github.event.pull_request.merged == true"
+        if: |
+          github.event_name == 'push' && 
+          github.event.pull_request.merged == true &&
+          !contains(github.event.pull_request.labels.*.name, 'skip-publish')
+    #if: "!contains(github.event.pull_request.labels.*.name, 'skip-publish') && ${{ github.event_name == 'push'}} && github.event.pull_request.merged == true"
     #if: # its a push to develop.
     steps:
       -

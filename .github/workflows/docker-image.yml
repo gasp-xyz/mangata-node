@@ -107,7 +107,7 @@ jobs:
         if: |
           github.event_name == 'push' && 
           github.event.pull_request.merged == true &&
-          !contains(github.event.pull_request.labels.*.name, 'skip-publish')
+          "!contains(github.event.pull_request.labels.*.name, 'skip-publish')"
     steps:
       -
         name: Load Docker image

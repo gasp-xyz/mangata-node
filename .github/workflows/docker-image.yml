@@ -109,7 +109,6 @@ jobs:
       -
         name: Load Docker image
         run: |
-          echo !contains(github.event.pull_request.labels.*.name, 'skip-publish')
           echo ${{ github.event_name == 'push'}} 
           echo ${{ github.event.pull_request.merged }}
           echo ${{ github.event.pull_request.merged }} == true

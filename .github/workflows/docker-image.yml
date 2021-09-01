@@ -230,7 +230,7 @@ jobs:
   publish:
     needs: [rustfmt-check, unit-test, e2e-test, clippy]
     runs-on: ubuntu-latest
-    if: "!contains(github.event.pull_request.labels.*.name, 'skip-publish') && ${{ github.event_name == 'push'}}"
+    if: "!contains(github.event.pull_request.labels.*.name, 'skip-publish') && ${{ github.event_name == 'push'}} && github.ref == 'refs/heads/develop'"
     #if: # its a push to develop.
     steps:
       -

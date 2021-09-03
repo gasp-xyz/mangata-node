@@ -108,10 +108,8 @@ jobs:
       -
         name: Debug info about publishing.
         run: |
-          echo ${{ github.event_name == 'push'}} 
-          echo ${{ github.event.pull_request.merged }}
-          echo ${{ github.event.pull_request.merged }} == true
-
+          echo ${{ github.ref }} == 'refs/heads/develop'
+          echo ${{ github.ref }}
       -
         name: Checkout
         uses: actions/checkout@v2
@@ -237,8 +235,7 @@ jobs:
     needs: [rustfmt-check, unit-test, e2e-test, clippy]
     runs-on: ubuntu-latest
     if: |
-      github.event_name == 'push' && 
-      github.event.pull_request.merged == true &&
+      github.ref == 'refs/heads/develop' && 
       !contains(github.event.pull_request.labels.*.name, 'skip-publish')
     #if: "!contains(github.event.pull_request.labels.*.name, 'skip-publish') && ${{ github.event_name == 'push'}} && github.event.pull_request.merged == true"
     #if: # its a push to develop.

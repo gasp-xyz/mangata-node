@@ -104,8 +104,14 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-
     steps:
+      -
+        name: Debug info about publishing.
+        run: |
+          echo ${{ github.event_name == 'push'}} 
+          echo ${{ github.event.pull_request.merged }}
+          echo ${{ github.event.pull_request.merged }} == true
+
       -
         name: Checkout
         uses: actions/checkout@v2
@@ -230,7 +236,11 @@ jobs:
   publish:
     needs: [rustfmt-check, unit-test, e2e-test, clippy]
     runs-on: ubuntu-latest
-    if: "!contains(github.event.pull_request.labels.*.name, 'skip-publish') && ${{ github.event_name == 'push'}}"
+    if: |
+      github.event_name == 'push' && 
+      github.event.pull_request.merged == true &&
+      !contains(github.event.pull_request.labels.*.name, 'skip-publish')
+    #if: "!contains(github.event.pull_request.labels.*.name, 'skip-publish') && ${{ github.event_name == 'push'}} && github.event.pull_request.merged == true"
     #if: # its a push to develop.
     steps:
       -
@@ -279,4 +289,3 @@ jobs:
       #
       # - name: Verify deployment
       #   run: kubectl rollout status deployment/mangata-node
-      

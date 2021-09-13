@@ -3,9 +3,9 @@
 use hex_literal::hex;
 use mangata_runtime::{
     AccountId, AssetsInfoConfig, BabeConfig, BridgeConfig, BridgedAssetConfig, CouncilConfig,
-    ElectionsConfig, GenesisConfig, GrandpaConfig, RandomConfig, SessionConfig, SessionKeys,
-    Signature, StakerStatus, StakingConfig, SudoConfig, SystemConfig, TokensConfig, VerifierConfig,
-    XykConfig, WASM_BINARY,
+    ElectionsConfig, GenesisConfig, GrandpaConfig, SessionConfig, SessionKeys, Signature,
+    StakerStatus, StakingConfig, SudoConfig, SystemConfig, TokensConfig, VerifierConfig, XykConfig,
+    WASM_BINARY,
 };
 use sc_service::ChainType;
 use sp_consensus_babe::AuthorityId as BabeId;
@@ -159,7 +159,6 @@ pub fn development_config() -> Result<ChainSpec, String> {
                     10_000__000_000_000_000_000_000u128,
                 )],
                 true,
-                [0_u8; 32],
             )
         },
         // Bootnodes
@@ -277,7 +276,6 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                     10_000__000_000_000_000_000_000u128,
                 )],
                 true,
-                [0_u8; 32],
             )
         },
         // Bootnodes
@@ -306,7 +304,6 @@ fn testnet_genesis(
     tokens_endowment: Vec<(u32, u128, AccountId)>,
     staking_accounts: Vec<(AccountId, u32, u128, u32, u128, u32, u128)>,
     _enable_println: bool,
-    init_seed: [u8; 32],
 ) -> GenesisConfig {
     GenesisConfig {
         frame_system: Some(SystemConfig {
@@ -442,9 +439,6 @@ fn testnet_genesis(
                     )
                 })
                 .collect(),
-        }),
-        pallet_random_seed: Some(RandomConfig {
-            random_seed: init_seed,
         }),
         pallet_treasury: Some(Default::default()),
         pallet_collective_Instance1: Some(CouncilConfig::default()),

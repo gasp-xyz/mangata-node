@@ -1,4 +1,5 @@
 name: Docker Image CI
+
 # available flags: 
 ## skip-e2e-tests: skip running e2e tests
 ## skip-build : run the test with latest version.
@@ -103,8 +104,12 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-
     steps:
+      -
+        name: Debug info about publishing.
+        run: |
+          echo ${{ github.ref }} == 'refs/heads/develop'
+          echo ${{ github.ref }}
       -
         name: Checkout
         uses: actions/checkout@v2
@@ -229,7 +234,10 @@ jobs:
   publish:
     needs: [rustfmt-check, unit-test, e2e-test, clippy]
     runs-on: ubuntu-latest
-    if: "!contains(github.event.pull_request.labels.*.name, 'skip-publish') && ${{ github.event_name == 'push'}}"
+    if: |
+      github.ref == 'refs/heads/develop' && 
+      !contains(github.event.pull_request.labels.*.name, 'skip-publish')
+    #if: "!contains(github.event.pull_request.labels.*.name, 'skip-publish') && ${{ github.event_name == 'push'}} && github.event.pull_request.merged == true"
     #if: # its a push to develop.
     steps:
       -
@@ -278,4 +286,3 @@ jobs:
       #
       # - name: Verify deployment
       #   run: kubectl rollout status deployment/mangata-node
-      

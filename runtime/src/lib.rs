@@ -36,13 +36,15 @@ use sp_version::RuntimeVersion;
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
-    construct_runtime, parameter_types,
+    construct_runtime,
+    dispatch::Codec,
+    parameter_types,
     traits::{KeyOwnerProofSystem, LockIdentifier, Randomness},
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
         IdentityFee, Weight,
     },
-    StorageValue,
+    Parameter, StorageValue,
 };
 use frame_system::EnsureRoot;
 pub use pallet_timestamp::Call as TimestampCall;
@@ -545,6 +547,11 @@ impl pallet_treasury::Trait for Runtime {
     type WeightInfo = (); // default weights info
 }
 
+impl pallet_encrypted_tx::Trait for Runtime {
+    type Event = Event;
+    type Call = Call;
+}
+
 parameter_types! {
     pub const MinLengthName: usize = 1;
     pub const MaxLengthName: usize = 255;
@@ -668,6 +675,7 @@ construct_runtime!(
         Council: pallet_collective::<Instance1>::{Module, Call, Storage, Origin<T>, Event<T>, Config<T>},
         Elections: pallet_elections_phragmen::{Module, Call, Storage, Event<T>, Config<T>},
         SudoOrigin: pallet_sudo_origin::{Module, Call, Event},
+    Encrypted: pallet_encrypted_tx::{Module, Storage, Call, Event},
     }
 );
 
@@ -983,5 +991,19 @@ impl_runtime_apis! {
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use codec::{Decode, Encode};
+
+    #[test]
+    fn test_serialize_deserialize_call() {
+        let call: Call = Call::Xyk(pallet_xyk::Call::sell_asset(0, 0, 0, 0));
+        let call_bytes = call.encode();
+        let deserialized_call: Call = Decode::decode(&mut &call_bytes[..]).unwrap();
+        assert_eq!(call, deserialized_call);
     }
 }

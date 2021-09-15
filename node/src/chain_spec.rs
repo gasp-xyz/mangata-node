@@ -4,7 +4,7 @@ use hex_literal::hex;
 use mangata_runtime::{
     AccountId, AssetsInfoConfig, BabeConfig, BridgeConfig, BridgedAssetConfig, CouncilConfig,
     ElectionsConfig, GenesisConfig, GrandpaConfig, SessionConfig, SessionKeys, Signature,
-    StakerStatus, StakingConfig, SudoConfig, SystemConfig, TokensConfig, VerifierConfig, XykConfig, EncryptedTransactionsConfig
+    StakerStatus, StakingConfig, SudoConfig, SystemConfig, TokensConfig, VerifierConfig, XykConfig, EncryptedTransactionsConfig,
     WASM_BINARY,
 };
 use sc_service::ChainType;
@@ -43,7 +43,7 @@ where
 }
 
 /// Generate an Aura authority key.
-pub fn authority_keys_from_seed(s: &str) -> (BabeId, GrandpaId, AccountId) {
+pub fn authority_keys_from_seed(s: &str) -> (BabeId, GrandpaId, AccountId, pallet_encrypted_transactions::ecdsa::AuthorityId) {
     (
         // get_account_id_from_seed::<sr25519::Public>(&format!("{}//stash", s)),
         // get_account_id_from_seed::<sr25519::Public>(s),
@@ -297,7 +297,7 @@ type BridgedAssetsType = Vec<(Vec<u8>, Vec<u8>, Vec<u8>, u32, u32, H160, u128, A
 #[allow(clippy::too_many_arguments)]
 fn testnet_genesis(
     wasm_binary: &[u8],
-    initial_authorities: Vec<(BabeId, GrandpaId, AccountId)>,
+    initial_authorities: Vec<(BabeId, GrandpaId, AccountId, pallet_encrypted_transactions::ecdsa::AuthorityId)>,
     relay_key: AccountId,
     root_key: AccountId,
     bridged_app_ids: Vec<(App, AppId)>,

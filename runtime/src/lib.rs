@@ -642,9 +642,7 @@ impl pallet_sudo_origin::Trait for Runtime {
 }
 
 impl pallet_encrypted_transactions::Trait for Runtime{
-    type Event = Event;
     type AuthorityId = pallet_encrypted_transactions::ecdsa::AuthorityId;
-    type WeightInfo = ();
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -680,7 +678,7 @@ construct_runtime!(
         Elections: pallet_elections_phragmen::{Module, Call, Storage, Event<T>, Config<T>},
         SudoOrigin: pallet_sudo_origin::{Module, Call, Event},
         Encrypted: pallet_encrypted_tx::{Module, Storage, Call, Event},
-        EncryptedTransactions: pallet_encrypted_transactions::{Module, Storage, Event, Config<T>},
+        EncryptedTransactions: pallet_encrypted_transactions::{Module, Call, Storage, Config<T>},
     }
 );
 

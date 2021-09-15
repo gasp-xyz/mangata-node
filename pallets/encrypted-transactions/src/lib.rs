@@ -22,6 +22,7 @@ use sp_runtime::{
 		TransactionValidity, ValidTransaction, InvalidTransaction, TransactionSource,
 		TransactionPriority,
 	},
+    KeyTypeId,
 };
 use sp_staking::{
 	SessionIndex,
@@ -38,10 +39,12 @@ use frame_system::offchain::{
 	SubmitTransaction,
 };
 
+pub const xxtx_key_type_id: KeyTypeId = KeyTypeId(*b"xxtx");
+
 pub mod ecdsa {
 	mod app_ecdsa {
-		use sp_application_crypto::{app_crypto, KeyTypeId(b"xxtx"), ecdsa};
-		app_crypto!(ecdsa, IM_ONLINE);
+		use sp_application_crypto::{app_crypto, ecdsa};
+		app_crypto!(ecdsa, super::super::xxtx_key_type_id);
 	}
 
 	sp_application_crypto::with_pair! {
@@ -56,15 +59,10 @@ pub mod ecdsa {
 	pub type AuthorityId = app_ecdsa::Public;
 }
 
-pub trait Trait {
+pub trait Trait: frame_system::Trait {
 	/// The identifier type for an authority.
 	type AuthorityId: Member + Parameter + RuntimeAppPublic + Default + Ord;
 
-	/// The overarching event type.
-	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
-
-	/// Weight information for extrinsics in this pallet.
-	type WeightInfo: WeightInfo;
 }
 
 decl_storage! {
@@ -81,12 +79,17 @@ decl_storage! {
 }
 
 impl<T: Trait> Module<T> {
-    fn initialize_keys(keys: &[(T::AccountId, T::AuthorityId)]) {
+    fn initialize_keys(keys: &Vec<(T::AccountId, T::AuthorityId)>) {
 		if !keys.is_empty() {
 			assert!(Keys::<T>::get().is_empty(), "Keys are already initialized!");
 			Keys::<T>::put(keys);
 		}
 	}
+}
+
+decl_module! {
+    pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+    }
 }
 
 impl<T: Trait> sp_runtime::BoundToRuntimeAppPublic for Module<T> {
@@ -99,7 +102,7 @@ impl<T: Trait> pallet_session::OneSessionHandler<T::AccountId> for Module<T> {
 	fn on_genesis_session<'a, I: 'a>(validators: I)
 		where I: Iterator<Item=(&'a T::AccountId, T::AuthorityId)>
 	{
-		let keys = validators.collect::<Vec<_>>();
+		let keys = validators.map(|(x,y)| {(x.clone(),y)}).collect::<Vec<_>>();
 		Self::initialize_keys(&keys);
 	}
 

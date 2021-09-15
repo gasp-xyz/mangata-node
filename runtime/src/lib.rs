@@ -640,8 +640,6 @@ impl pallet_sudo_origin::Trait for Runtime {
         pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
 }
 
-impl pallet_random_seed::Trait for Runtime {}
-
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
     pub enum Runtime where
@@ -652,7 +650,6 @@ construct_runtime!(
         System: frame_system::{Module, Call, Config, Storage, Event<T>},
         RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
         Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
-        Random: pallet_random_seed::{Module, Call, Storage, Inherent, Config},
         Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
         Authorship: pallet_authorship::{Module, Call, Storage, Inherent},
         Babe: pallet_babe::{Module, Call, Storage, Config, Inherent, ValidateUnsigned},
@@ -946,12 +943,6 @@ impl_runtime_apis! {
                     second_asset_amount: 0u32.into()
                 },
             }
-        }
-    }
-
-    impl random_seed_runtime_api::RandomSeedApi<Block> for Runtime {
-        fn get_seed() -> pallet_random_seed::SeedType{
-            Random::seed()
         }
     }
 

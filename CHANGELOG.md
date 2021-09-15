@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.2.0](https://github.com/mangata-finance/mangata-node/compare/v0.1.0...v0.2.0) (2021-09-15)
+- extend block header with extra field seed
+- store shuffling seed inside header instead of storage
+- remove shuffling related inherent
+
 ### [0.1.1](https://github.com/mangata-finance/mangata-node/compare/v0.1.0...v0.1.1) (2021-09-09)
 - Fixing mutlinode setup
 - Passing already shuffled extrinsics instead of doing so at runtime (due to no easy way to inject shuffling seed without Header modifications)

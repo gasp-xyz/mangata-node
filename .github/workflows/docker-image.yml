@@ -129,7 +129,7 @@ jobs:
         uses: actions/upload-artifact@v2
         if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
         with:
-          name: ${{ github.run_id }}
+          name: ${{ github.sha }}
           path: /tmp/${{ github.sha }}.tar
 
   e2e-test:
@@ -159,7 +159,7 @@ jobs:
         name: Load Docker image
         if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
         run: |
-          docker load --input /tmp/${{ github.run_id }}.tar
+          docker load --input /tmp/${{ github.sha }}.tar
           docker image ls -a
       
       - name: E2E- Get branch name
@@ -249,7 +249,7 @@ jobs:
         name: Download artifact
         uses: actions/download-artifact@v2
         with:
-          name: ${{ github.run_id }}
+          name: ${{ github.sha }}
           path: /tmp
       
       -

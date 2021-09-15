@@ -4,7 +4,7 @@ use hex_literal::hex;
 use mangata_runtime::{
     AccountId, AssetsInfoConfig, BabeConfig, BridgeConfig, BridgedAssetConfig, CouncilConfig,
     ElectionsConfig, GenesisConfig, GrandpaConfig, SessionConfig, SessionKeys, Signature,
-    StakerStatus, StakingConfig, SudoConfig, SystemConfig, TokensConfig, VerifierConfig, XykConfig,
+    StakerStatus, StakingConfig, SudoConfig, SystemConfig, TokensConfig, VerifierConfig, XykConfig, EncryptedTransactionsConfig
     WASM_BINARY,
 };
 use sc_service::ChainType;
@@ -50,11 +50,12 @@ pub fn authority_keys_from_seed(s: &str) -> (BabeId, GrandpaId, AccountId) {
         get_from_seed::<BabeId>(s),
         get_from_seed::<GrandpaId>(s),
         get_account_id_from_seed::<sr25519::Public>(s),
+        get_from_seed::<pallet_encrypted_transactions::ecdsa::AuthorityId>(s),
     )
 }
 
-fn session_keys(grandpa: GrandpaId, babe: BabeId) -> SessionKeys {
-    SessionKeys { grandpa, babe }
+fn session_keys(grandpa: GrandpaId, babe: BabeId, xxtx: pallet_encrypted_transactions::ecdsa::AuthorityId ) -> SessionKeys {
+    SessionKeys { grandpa, babe, xxtx }
 }
 
 #[allow(clippy::inconsistent_digit_grouping)]
@@ -318,7 +319,7 @@ fn testnet_genesis(
                     (
                         x.2.clone(),
                         x.2.clone(),
-                        session_keys(x.1.clone(), x.0.clone()),
+                        session_keys(x.1.clone(), x.0.clone(), x.3.clone()),
                     )
                 })
                 .collect::<Vec<_>>(),
@@ -448,6 +449,17 @@ fn testnet_genesis(
                 .cloned()
                 .map(|(_, _, member)| (member, 100 * 100_000_000_000_000))
                 .collect(),
+        }),
+        pallet_encrypted_transactions: Some(EncryptedTransactionsConfig{
+            keys: initial_authorities
+                .iter()
+                .map(|x| {
+                    (
+                        x.2.clone(),
+                        x.3.clone()
+                    )
+                })
+                .collect::<Vec<_>>(),
         }),
     }
 }

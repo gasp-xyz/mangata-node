@@ -3114,7 +3114,7 @@ dependencies = [
 
 [[package]]
 name = "mangata-node"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "artemis-core",
  "extrinsic-info-runtime-api",
@@ -3206,6 +3206,7 @@ dependencies = [
  "pallet-bridge",
  "pallet-collective",
  "pallet-elections-phragmen",
+ "pallet-encrypted-transactions",
  "pallet-encrypted-tx",
  "pallet-grandpa",
  "pallet-offences",
@@ -3832,6 +3833,25 @@ dependencies = [
  "serde",
  "sp-npos-elections",
  "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-encrypted-transactions"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-authorship",
+ "pallet-session",
+ "parity-scale-codec",
+ "serde",
+ "sp-application-crypto",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-staking",
  "sp-std",
 ]
 

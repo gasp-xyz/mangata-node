@@ -124,6 +124,7 @@ impl_opaque_keys! {
     pub struct SessionKeys {
         pub grandpa: Grandpa,
         pub babe: Babe,
+        pub xxtx: EncryptedTransactions,
     }
 }
 
@@ -640,6 +641,12 @@ impl pallet_sudo_origin::Trait for Runtime {
         pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
 }
 
+impl pallet_encrypted_transactions::Trait for Runtime{
+    type Event = Event;
+    type AuthorityId = pallet_encrypted_transactions::ecdsa::AuthorityId;
+    type WeightInfo = ();
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
     pub enum Runtime where
@@ -672,7 +679,8 @@ construct_runtime!(
         Council: pallet_collective::<Instance1>::{Module, Call, Storage, Origin<T>, Event<T>, Config<T>},
         Elections: pallet_elections_phragmen::{Module, Call, Storage, Event<T>, Config<T>},
         SudoOrigin: pallet_sudo_origin::{Module, Call, Event},
-    Encrypted: pallet_encrypted_tx::{Module, Storage, Call, Event},
+        Encrypted: pallet_encrypted_tx::{Module, Storage, Call, Event},
+        EncryptedTransactions: pallet_encrypted_transactions::{Module, Storage, Event, Config<T>},
     }
 );
 

@@ -1,0 +1,41 @@
+[package]
+name = "pallet-encrypted-transactions"
+version = "0.1.0"
+authors = ['Mangata team']
+edition = "2018"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+sp-application-crypto = { version = "2.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+pallet-authorship = { version = "2.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+codec = { package = "parity-scale-codec", version = "1.3.4", default-features = false, features = ["derive"] }
+sp-core = { version = "2.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-std = { version = "2.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+serde = { version = "1.0.101", optional = true }
+pallet-session = { version = "2.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-io = { version = "2.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-runtime = { version = "2.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-staking = { version = "2.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+frame-support = { version = "2.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+frame-system = { version = "2.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+
+frame-benchmarking = { version = "2.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" , optional = true }
+
+[features]
+default = ["std", "pallet-session/historical"]
+std = [
+	"sp-application-crypto/std",
+	"pallet-authorship/std",
+	"codec/std",
+	"sp-core/std",
+	"sp-std/std",
+	"serde",
+	"pallet-session/std",
+	"sp-io/std",
+	"sp-runtime/std",
+	"sp-staking/std",
+	"frame-support/std",
+	"frame-system/std",
+]

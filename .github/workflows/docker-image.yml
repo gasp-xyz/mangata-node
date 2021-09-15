@@ -123,14 +123,14 @@ jobs:
           file: "devops/dockerfiles/node-and-runtime/Dockerfile"
           push: false
           tags: mangatasolutions/mangata-node:latest,mangatasolutions/mangata-node:${{ github.sha }}
-          outputs: type=docker,dest=/tmp/${{ github.run_id }}.tar
+          outputs: type=docker,dest=/tmp/${{ github.sha }}.tar
       -
         name: Upload artifact
         uses: actions/upload-artifact@v2
         if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
         with:
           name: ${{ github.run_id }}
-          path: /tmp/${{ github.run_id }}.tar
+          path: /tmp/${{ github.sha }}.tar
 
   e2e-test:
     needs: build
@@ -140,7 +140,7 @@ jobs:
       API_URL: 'ws://172.16.238.10:9944'
       TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}
       TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
-      MANGATA_NODE_VERSION: ${{ github.run_id }}
+      MANGATA_NODE_VERSION: ${{ github.sha }}
       E2EBRANCHNAME: 'main'
     steps:
     ####IDK, but this is neccesary for reports
@@ -153,7 +153,7 @@ jobs:
         if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
         uses: actions/download-artifact@v2
         with:
-          name: ${{ github.run_id }}
+          name: ${{ github.sha }}
           path: /tmp
       -
         name: Load Docker image
@@ -255,7 +255,7 @@ jobs:
       -
         name: Load Docker image
         run: |
-          docker load --input /tmp/${{ github.run_id }}.tar
+          docker load --input /tmp/${{ github.sha }}.tar
           docker image ls -a
 
       -

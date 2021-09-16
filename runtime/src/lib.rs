@@ -65,6 +65,7 @@ use xyk_runtime_api::{RpcAmountsResult, RpcResult};
 
 use frame_system::EnsureOneOf;
 pub use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
+use sp_encrypted_tx::ExtrinsicType;
 
 /// Bridge pallets
 pub use bridge;
@@ -985,10 +986,19 @@ impl_runtime_apis! {
     }
 
     impl sp_encrypted_tx::EncryptedTxApi<Block> for Runtime {
-        fn create_extrinsic(account: sp_runtime::AccountId32, proof: sp_core::H256) -> Option<<Block as BlockT>::Extrinsic>{
+        fn create_submit_encrypted_tx(account: sp_runtime::AccountId32, data: Vec<u8>, proof: sp_core::H256) -> Option<<Block as BlockT>::Extrinsic>{
             // TODO: update when FIFO pallet is ready
             Some(UncheckedExtrinsic::new_unsigned(
-                    Call::Encrypted(pallet_encrypted_tx::Call::submit_encrypted_tx(account, vec![1,2,3,4], proof))))
+                    Call::Encrypted(pallet_encrypted_tx::Call::submit_encrypted_tx(account, data, proof))))
+        }
+        fn get_extrinsic_info(extrinsic: <Block as BlockT>::Extrinsic) -> ExtrinsicType{
+
+            match extrinsic.function{
+                Call::Encrypted(pallet_encrypted_tx::Call::submit_encrypted_tx(account, data, proof)) => {
+                    ExtrinsicType::SubmitEncryptedTx{account: account, data: data, proof: proof}
+                },
+                _ => { ExtrinsicType::Other }
+            }
         }
     }
 }

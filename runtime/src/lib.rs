@@ -672,7 +672,7 @@ construct_runtime!(
         Council: pallet_collective::<Instance1>::{Module, Call, Storage, Origin<T>, Event<T>, Config<T>},
         Elections: pallet_elections_phragmen::{Module, Call, Storage, Event<T>, Config<T>},
         SudoOrigin: pallet_sudo_origin::{Module, Call, Event},
-    Encrypted: pallet_encrypted_tx::{Module, Storage, Call, Event},
+        Encrypted: pallet_encrypted_tx::{Module, Storage, Call, Event},
     }
 );
 
@@ -981,6 +981,14 @@ impl_runtime_apis! {
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)
+        }
+    }
+
+    impl sp_encrypted_tx::EncryptedTxApi<Block> for Runtime {
+        fn create_extrinsic(account: sp_runtime::AccountId32, proof: sp_core::H256) -> Option<<Block as BlockT>::Extrinsic>{
+            // TODO: update when FIFO pallet is ready
+            Some(UncheckedExtrinsic::new_unsigned(
+                    Call::Encrypted(pallet_encrypted_tx::Call::submit_encrypted_tx(account, vec![1,2,3,4], proof))))
         }
     }
 }

@@ -39,6 +39,7 @@ pallet-treasury = { default-features = false, version='2.0.0' , git = "https://g
 mangata-primitives = { path = '../primitives/mangata', default-features = false, version = "0.1.0" }
 orml-tokens = {  default-features = false, version = "0.3.1", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
 pallet-sudo-origin = { path = '../pallets/sudo-origin', default-features = false, version = "2.0.0" }
+sp-encrypted-tx = { default-features = false, version='2.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
 # Substrate dependencies
 frame-benchmarking = { default-features = false, optional = true, version = '2.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
@@ -138,5 +139,6 @@ std = [
     "pallet-collective/std",
     "pallet-elections-phragmen/std",
     "pallet-encrypted-tx/std",
+    "sp-encrypted-tx/std",
     "mangata-primitives/std",
 ]

@@ -451,15 +451,7 @@ fn testnet_genesis(
                 .collect(),
         }),
         pallet_encrypted_transactions: Some(EncryptedTransactionsConfig{
-            keys: initial_authorities
-                .iter()
-                .map(|x| {
-                    (
-                        x.2.clone(),
-                        x.3.clone()
-                    )
-                })
-                .collect::<Vec<_>>(),
+            keys: vec![],
         }),
     }
 }

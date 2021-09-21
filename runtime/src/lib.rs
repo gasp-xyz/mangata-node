@@ -641,8 +641,18 @@ impl pallet_sudo_origin::Trait for Runtime {
         pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
 }
 
+parameter_types! {
+    pub const EncryptedTxnsFee: Balance = 1 * currency::DOLLARS;
+}
+
 impl pallet_encrypted_transactions::Trait for Runtime{
-    type AuthorityId = pallet_encrypted_transactions::ecdsa::AuthorityId;
+    type Event= Event;
+    type Tokens= orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	/// The identifier type for an authority.
+	type AuthorityId= pallet_encrypted_transactions::ecdsa::AuthorityId;
+	type Fee= EncryptedTxnsFee;
+	type Treasury= pallet_treasury::MultiOnUnbalancedWrapper<Treasury>;
+	type Call= Call;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -678,7 +688,7 @@ construct_runtime!(
         Elections: pallet_elections_phragmen::{Module, Call, Storage, Event<T>, Config<T>},
         SudoOrigin: pallet_sudo_origin::{Module, Call, Event},
         Encrypted: pallet_encrypted_tx::{Module, Storage, Call, Event},
-        EncryptedTransactions: pallet_encrypted_transactions::{Module, Call, Storage, Config<T>},
+        EncryptedTransactions: pallet_encrypted_transactions::{Module, Call, Storage, Config<T>, Event<T>},
     }
 );
 

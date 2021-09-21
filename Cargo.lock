@@ -3989,6 +3989,8 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "mangata-primitives 0.1.0",
+ "orml-tokens",
  "pallet-authorship",
  "pallet-session",
  "parity-scale-codec",

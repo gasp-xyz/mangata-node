@@ -645,14 +645,14 @@ parameter_types! {
     pub const EncryptedTxnsFee: Balance = 1 * currency::DOLLARS;
 }
 
-impl pallet_encrypted_transactions::Trait for Runtime{
-    type Event= Event;
-    type Tokens= orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-	/// The identifier type for an authority.
-	type AuthorityId= pallet_encrypted_transactions::ecdsa::AuthorityId;
-	type Fee= EncryptedTxnsFee;
-	type Treasury= pallet_treasury::MultiOnUnbalancedWrapper<Treasury>;
-	type Call= Call;
+impl pallet_encrypted_transactions::Trait for Runtime {
+    type Event = Event;
+    type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+    /// The identifier type for an authority.
+    type AuthorityId = pallet_encrypted_transactions::ecdsa::AuthorityId;
+    type Fee = EncryptedTxnsFee;
+    type Treasury = pallet_treasury::MultiOnUnbalancedWrapper<Treasury>;
+    type Call = Call;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

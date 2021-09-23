@@ -182,8 +182,7 @@ pub fn new_full(config: Configuration) -> Result<TaskManager, ServiceError> {
         let proposer = sc_basic_authorship::ProposerFactory::new(
             client.clone(),
             transaction_pool,
-            prometheus_registry.as_ref(),
-            keystore.clone(),
+            prometheus_registry.as_ref()
         );
 
         let can_author_with =

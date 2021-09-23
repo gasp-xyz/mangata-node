@@ -4,70 +4,51 @@
 
 use sp_application_crypto::RuntimeAppPublic;
 use codec::{Encode, Decode};
-use sp_core::offchain::OpaqueNetworkState;
 use sp_std::prelude::*;
-use sp_std::convert::TryInto;
 use sp_std::collections::btree_map::BTreeMap;
-use pallet_session::historical::IdentificationTuple;
 use sp_runtime::{
-	offchain::storage::StorageValueRef,
-	RuntimeDebug,
-	traits::{Convert, Member, Saturating, AtLeast32BitUnsigned, Zero}, Perbill,
-	transaction_validity::{
-		TransactionValidity, ValidTransaction, InvalidTransaction, TransactionSource,
-		TransactionPriority,
-	},
+	traits::{Member, Zero},
     KeyTypeId,
-};
-use sp_staking::{
-	SessionIndex,
-	offence::{ReportOffence, Offence, Kind},
 };
 use frame_support::{
 	storage::generator::StorageMap,
-	decl_module, decl_event, decl_storage, Parameter, debug, decl_error,
+	decl_module, decl_event, decl_storage, Parameter, decl_error,
 	traits::{Get, WithdrawReasons, ExistenceRequirement, UnfilteredDispatchable},
 	weights::{Weight, Pays, GetDispatchInfo},
 	dispatch::{DispatchError, DispatchResult},
 };
 use frame_system::ensure_none;
-use frame_system::offchain::{
-	SendTransactionTypes,
-	SubmitTransaction,
-};
 use sp_core::storage::ChildInfo;
 use frame_support::storage::child;
-use mangata_primitives::{Balance, TokenId};
-// use sp_runtime::{DispatchResult};
+use mangata_primitives::{Balance};
 use frame_support::traits::OnUnbalanced;
-use orml_tokens::{MultiTokenCurrency, MultiTokenNegativeImbalance};
+use orml_tokens::{MultiTokenCurrency};
 use frame_system::{ensure_signed, ensure_root, RawOrigin};
 use sp_runtime::traits::Hash;
 
-pub const xxtx_key_type_id: KeyTypeId = KeyTypeId(*b"xxtx");
+pub const XXTX_KEY_TYPE_ID: KeyTypeId = KeyTypeId(*b"xxtx");
 
 pub mod ecdsa {
 	mod app_ecdsa {
 		use sp_application_crypto::{app_crypto, ecdsa};
-		app_crypto!(ecdsa, super::super::xxtx_key_type_id);
+		app_crypto!(ecdsa, super::super::XXTX_KEY_TYPE_ID);
 	}
 
 	sp_application_crypto::with_pair! {
-		/// An i'm online keypair using sr25519 as its crypto.
+		/// An xxtx keypair using sr25519 as its crypto.
 		pub type AuthorityPair = app_ecdsa::Pair;
 	}
 
-	/// An i'm online signature using sr25519 as its crypto.
+	/// An xxtx signature using sr25519 as its crypto.
 	pub type AuthoritySignature = app_ecdsa::Signature;
 
-	/// An i'm online identifier using sr25519 as its crypto.
+	/// An xxtx identifier using sr25519 as its crypto.
 	pub type AuthorityId = app_ecdsa::Public;
 }
 
 pub trait Trait: frame_system::Trait + pallet_session::Trait{
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
     type Tokens: MultiTokenCurrency<Self::AccountId>;
-	/// The identifier type for an authority.
 	type AuthorityId: Member + Parameter + RuntimeAppPublic + Default + Ord;
 	type Fee: Get<Balance>;
 	type Treasury: OnUnbalanced<<Self::Tokens as MultiTokenCurrency<Self::AccountId>>::NegativeImbalance>;
@@ -128,6 +109,8 @@ decl_event!(
     {
     	/// A called was called. \[result\]
 		Called(DispatchResult),
+		
+		/// A user has submitted a doubly encrypted transaction.
 		DoublyEncryptedTxnSubmitted(AccountId, Index),
 		
     }
@@ -135,14 +118,6 @@ decl_event!(
 
 decl_module! {
     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
-		// TOOD
-		// Remember Author Index
-
-		// with weight!!!!!!!!!!!!
-
-		// Actual call weight should match. Call should be executed as "user"
-
-		// Refund user
 
 		fn deposit_event() = default;
 
@@ -183,8 +158,8 @@ decl_module! {
 		#[weight = 10_000]
 		fn submit_decrypted_transaction(origin, identifier: T::Hash, decrypted_call: Vec<u8>, weight: Weight) -> DispatchResult{
 			ensure_none(origin)?;
-			let (doubly_encrypted_call, user, nonce, weight, builder, executor, singly_encrypted_call) = TxnRegistry::<T>::get(identifier);
-			SinglyEncryptedQueue::<T>::mutate(builder, |vec_hash| {vec_hash.retain(|x| *x!=identifier)});
+			let (_, user, nonce, weight, _, executor, _) = TxnRegistry::<T>::get(identifier);
+			SinglyEncryptedQueue::<T>::mutate(executor, |vec_hash| {vec_hash.retain(|x| *x!=identifier)});
 			ExecutedTxnRecord::<T>::mutate(T::Index::from(<pallet_session::Module<T>>::current_index()), &user, |vec_hash| {vec_hash.push(identifier)});
 
 			let calls: Vec<Box<<T as Trait>::Call>> = Decode::decode(&mut &decrypted_call[..]).map_err(|_| DispatchError::from(Error::<T>::CallDeserilizationFailed))?;
@@ -194,14 +169,14 @@ decl_module! {
 			Ok(())
 		}
 
-		#[weight = (*weight, Pays::No)]
+		#[weight = (weight.saturating_add(10_000), Pays::No)]
 		fn execute_calls(origin, calls: Vec<Box<<T as Trait>::Call>>, user_account: T::AccountId, nonce: T::Index, weight: Weight) -> DispatchResult{
 
 			ensure_root(origin)?;
 
-			let calls_weight: u128 = u128::zero();
+			let mut calls_weight: u128 = u128::zero();
 			for call in calls.iter() {
-				calls_weight.saturating_add(call.get_dispatch_info().weight.into());
+				calls_weight = calls_weight.saturating_add(call.get_dispatch_info().weight.into());
 			}
 			if calls_weight > weight.into(){
 				return Err(DispatchError::from(Error::<T>::IncorrectCallWeight));

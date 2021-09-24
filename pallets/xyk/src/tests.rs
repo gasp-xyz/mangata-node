@@ -60,7 +60,7 @@ use frame_support::assert_err;
 fn initialize() {
     // creating asset with assetId 0 and minting to accountId 2
     System::set_block_number(1);
-    let acc_id: u64 = 2;
+    let acc_id: u128 = 2;
     let amount: u128 = 1000000000000000000000;
     XykStorage::create_new_token(&acc_id, amount);
     XykStorage::create_new_token(&acc_id, amount);
@@ -90,7 +90,7 @@ fn initialize() {
 
 fn initialize_buy_and_burn() {
     // creating asset with assetId 0 and minting to accountId 2
-    let acc_id: u64 = 2;
+    let acc_id: u128 = 2;
     let amount: u128 = 1000000000000000;
 
     XykStorage::create_new_token(&acc_id, amount);
@@ -105,7 +105,7 @@ fn initialize_buy_and_burn() {
 fn set_info_should_work() {
     new_test_ext().execute_with(|| {
         // creating asset with assetId 0 and minting to accountId 2
-        let acc_id: u64 = 2;
+        let acc_id: u128 = 2;
         let amount: u128 = 1000000000000000000000;
         XykStorage::create_new_token(&acc_id, amount);
         XykStorage::create_new_token(&acc_id, amount);
@@ -135,7 +135,7 @@ fn set_info_should_work() {
 fn set_info_should_work_with_small_numbers() {
     new_test_ext().execute_with(|| {
         // creating asset with assetId 0 and minting to accountId 2
-        let acc_id: u64 = 2;
+        let acc_id: u128 = 2;
         let amount: u128 = 1000000000000000000000;
         const N: u32 = 12345u32;
 
@@ -169,7 +169,7 @@ fn set_info_should_work_with_small_numbers() {
 fn set_info_should_work_with_large_numbers() {
     new_test_ext().execute_with(|| {
         // creating asset with assetId 0 and minting to accountId 2
-        let acc_id: u64 = 2;
+        let acc_id: u128 = 2;
         let amount: u128 = 1000000000000000000000;
         const N: u32 = 1524501234u32;
 
@@ -212,16 +212,16 @@ fn buy_and_burn_sell_mangata() {
         assert_eq!(XykStorage::balance(1, 2), 833266599933266);
         assert_eq!(
             XykStorage::balance(0, XykStorage::account_id()),
-            149974999999999
+            149949999999998
         );
         assert_eq!(
             XykStorage::balance(1, XykStorage::account_id()),
             166733400066734
         );
-        assert_eq!(XykStorage::treasury(0), 25000000001);
-        assert_eq!(XykStorage::treasury(1), 0);
-        assert_eq!(XykStorage::treasury_burn(0), 0);
-        assert_eq!(XykStorage::treasury_burn(1), 0);
+        assert_eq!(XykStorage::balance(0, XykStorage::treasury_account_id()), 25000000001);
+        assert_eq!(XykStorage::balance(1, XykStorage::treasury_account_id()), 0);
+        assert_eq!(XykStorage::balance(0, XykStorage::bnb_treasury_account_id()), 0);
+        assert_eq!(XykStorage::balance(1, XykStorage::bnb_treasury_account_id()), 0);
     });
 }
 
@@ -243,7 +243,7 @@ fn buy_and_burn_sell_has_mangata_pair() {
         assert_eq!(XykStorage::balance(2, 2), 933266599933266); // user acc: regular trade result
         assert_eq!(
             XykStorage::balance(0, XykStorage::account_id()),
-            99975006248437
+            99950012496874
         );
         assert_eq!(
             XykStorage::balance(1, XykStorage::account_id()),
@@ -253,10 +253,10 @@ fn buy_and_burn_sell_has_mangata_pair() {
             XykStorage::balance(2, XykStorage::account_id()),
             66733400066734
         ); // vault: regular trade result
-        assert_eq!(XykStorage::treasury(0), 24993751563); // 24987506247 mangata in treasury
-        assert_eq!(XykStorage::treasury(1), 0);
-        assert_eq!(XykStorage::treasury_burn(0), 0);
-        assert_eq!(XykStorage::treasury_burn(1), 0);
+        assert_eq!(XykStorage::balance(0, XykStorage::treasury_account_id()), 24993751563); // 24987506247 mangata in treasury
+        assert_eq!(XykStorage::balance(1, XykStorage::treasury_account_id()), 0);
+        assert_eq!(XykStorage::balance(0, XykStorage::bnb_treasury_account_id()), 0);
+        assert_eq!(XykStorage::balance(1, XykStorage::bnb_treasury_account_id()), 0);
     });
 }
 
@@ -286,12 +286,12 @@ fn buy_and_burn_sell_none_have_mangata_pair() {
         );
         assert_eq!(
             XykStorage::balance(2, XykStorage::account_id()),
-            150000000000000
+            149949999999998
         ); // vault: regular trade result
-        assert_eq!(XykStorage::treasury(0), 0); // 24987506247 mangata in treasury
-        assert_eq!(XykStorage::treasury(2), 25000000001);
-        assert_eq!(XykStorage::treasury_burn(0), 0);
-        assert_eq!(XykStorage::treasury_burn(2), 25000000001);
+        assert_eq!(XykStorage::balance(0, XykStorage::treasury_account_id()), 0); // 24987506247 mangata in treasury
+        assert_eq!(XykStorage::balance(2, XykStorage::treasury_account_id()), 25000000001);
+        assert_eq!(XykStorage::balance(0, XykStorage::bnb_treasury_account_id()), 0);
+        assert_eq!(XykStorage::balance(2, XykStorage::bnb_treasury_account_id()), 25000000001);
     });
 }
 
@@ -310,16 +310,16 @@ fn buy_and_burn_buy_where_sold_is_mangata() {
 
         assert_eq!(
             XykStorage::balance(0, XykStorage::account_id()),
-            149974999999999
+            149949999999999
         );
         assert_eq!(
             XykStorage::balance(1, XykStorage::account_id()),
             166733400066734
         );
-        assert_eq!(XykStorage::treasury(0), 25000000000);
-        assert_eq!(XykStorage::treasury(1), 0);
-        assert_eq!(XykStorage::treasury_burn(0), 0);
-        assert_eq!(XykStorage::treasury_burn(1), 0);
+        assert_eq!(XykStorage::balance(0, XykStorage::treasury_account_id()), 25000000000);
+        assert_eq!(XykStorage::balance(1, XykStorage::treasury_account_id()), 0);
+        assert_eq!(XykStorage::balance(0, XykStorage::bnb_treasury_account_id()), 0);
+        assert_eq!(XykStorage::balance(1, XykStorage::bnb_treasury_account_id()), 0);
     });
 }
 
@@ -341,7 +341,7 @@ fn buy_and_burn_buy_where_sold_has_mangata_pair() {
         assert_eq!(XykStorage::balance(2, 2), 933266599933266); // user acc: regular trade result
         assert_eq!(
             XykStorage::balance(0, XykStorage::account_id()),
-            99975006248438
+            99950012496876
         );
         assert_eq!(
             XykStorage::balance(1, XykStorage::account_id()),
@@ -351,10 +351,10 @@ fn buy_and_burn_buy_where_sold_has_mangata_pair() {
             XykStorage::balance(2, XykStorage::account_id()),
             66733400066734
         ); // vault: regular trade result
-        assert_eq!(XykStorage::treasury(0), 24993751562); // 24987506247 mangata in treasury
-        assert_eq!(XykStorage::treasury(1), 0);
-        assert_eq!(XykStorage::treasury_burn(0), 0);
-        assert_eq!(XykStorage::treasury_burn(1), 0);
+        assert_eq!(XykStorage::balance(0, XykStorage::treasury_account_id()), 24993751562); // 24987506247 mangata in treasury
+        assert_eq!(XykStorage::balance(1, XykStorage::treasury_account_id()), 0);
+        assert_eq!(XykStorage::balance(0, XykStorage::bnb_treasury_account_id()), 0);
+        assert_eq!(XykStorage::balance(1, XykStorage::bnb_treasury_account_id()), 0);
     });
 }
 
@@ -384,19 +384,19 @@ fn buy_and_burn_buy_none_have_mangata_pair() {
         );
         assert_eq!(
             XykStorage::balance(2, XykStorage::account_id()),
-            149999999999999
+            149949999999999
         ); // vault: regular trade result
-        assert_eq!(XykStorage::treasury(0), 0); // 24987506247 mangata in treasury
-        assert_eq!(XykStorage::treasury(2), 25000000000);
-        assert_eq!(XykStorage::treasury_burn(0), 0);
-        assert_eq!(XykStorage::treasury_burn(2), 25000000000);
+        assert_eq!(XykStorage::balance(0, XykStorage::treasury_account_id()), 0); // 24987506247 mangata in treasury
+        assert_eq!(XykStorage::balance(2, XykStorage::treasury_account_id()), 25000000000);
+        assert_eq!(XykStorage::balance(0, XykStorage::bnb_treasury_account_id()), 0);
+        assert_eq!(XykStorage::balance(2, XykStorage::bnb_treasury_account_id()), 25000000000);
     });
 }
 
 #[test]
 fn multi() {
     new_test_ext().execute_with(|| {
-        let acc_id: u64 = 2;
+        let acc_id: u128 = 2;
         let amount: u128 = 2000000000000000000000000;
 
         XykStorage::create_new_token(&acc_id, amount);
@@ -574,7 +574,7 @@ fn create_pool_N_already_exists_other_way() {
 #[test]
 fn create_pool_N_not_enough_first_asset() {
     new_test_ext().execute_with(|| {
-        let acc_id: u64 = 2;
+        let acc_id: u128 = 2;
         let amount: u128 = 1000000;
         XykStorage::create_new_token(&acc_id, amount);
         XykStorage::create_new_token(&acc_id, amount);
@@ -589,7 +589,7 @@ fn create_pool_N_not_enough_first_asset() {
 #[test]
 fn create_pool_N_not_enough_second_asset() {
     new_test_ext().execute_with(|| {
-        let acc_id: u64 = 2;
+        let acc_id: u128 = 2;
         let amount: u128 = 1000000;
         XykStorage::create_new_token(&acc_id, amount);
         XykStorage::create_new_token(&acc_id, amount);
@@ -643,7 +643,7 @@ fn sell_W() {
         System::set_block_number(1);
         initialize();
         XykStorage::sell_asset(Origin::signed(2), 1, 2, 20000000000000000000, 0).unwrap(); // selling 20000000000000000000 assetId 0 of pool 0 1
-
+        
         assert_eq!(XykStorage::balance(1, 2), 940000000000000000000); // amount in user acc after selling
         assert_eq!(XykStorage::balance(2, 2), 959959959959959959959); // amount in user acc after buying
         assert_eq!(
@@ -655,7 +655,7 @@ fn sell_W() {
         assert_eq!(XykStorage::balance(2, 2), 959959959959959959959); // amount of asset 1 on account 2
         assert_eq!(
             XykStorage::balance(1, XykStorage::account_id()),
-            60000000000000000000
+            59979999999999999998
         ); // amount of asset 0 in vault acc after creating pool
         assert_eq!(
             XykStorage::balance(2, XykStorage::account_id()),
@@ -699,7 +699,7 @@ fn sell_W_other_way() {
         ); // amount of asset 0 in vault acc after creating pool
         assert_eq!(
             XykStorage::balance(2, XykStorage::account_id()),
-            90000000000000000000
+            89969999999999999998
         ); // amount of asset 1 in vault acc after creating pool
     });
 }
@@ -775,7 +775,7 @@ fn buy_W() {
         assert_eq!(XykStorage::balance(2, 2), 970000000000000000000); // amount of asset 1 on account 2
         assert_eq!(
             XykStorage::balance(1, XykStorage::account_id()),
-            80120361083249749248
+            80080240722166499498
         ); // amount of asset 0 in vault acc after creating pool
         assert_eq!(
             XykStorage::balance(2, XykStorage::account_id()),
@@ -815,7 +815,7 @@ fn buy_W_other_way() {
         ); // amount of asset 1 in vault acc after creating pool
         assert_eq!(
             XykStorage::balance(2, XykStorage::account_id()),
-            240541624874623871615
+            240361083249749247743
         ); // amount of asset 2 in vault acc after creating pool
         assert_eq!(XykStorage::balance(1, 2), 990000000000000000000); // amount in user acc after selling
         assert_eq!(XykStorage::balance(2, 2), 759458375125376128385); // amount in user acc after buying
@@ -831,7 +831,7 @@ fn buy_W_other_way() {
         ); // amount of asset 0 in vault acc after creating pool
         assert_eq!(
             XykStorage::balance(2, XykStorage::account_id()),
-            240541624874623871615
+            240361083249749247743
         ); // amount of asset 1 in vault acc after creating pool
     });
 }

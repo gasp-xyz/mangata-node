@@ -455,6 +455,8 @@ impl pallet_xyk::Trait for Runtime {
     type Event = Event;
     type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
     type NativeCurrencyId = NativeCurrencyId;
+    type TreasuryModuleId = TreasuryModuleId;
+    type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
 }
 
 // Snowfork traits
@@ -493,6 +495,7 @@ mod currency {
 
 parameter_types! {
     pub const TreasuryModuleId: sp_runtime::ModuleId = sp_runtime::ModuleId(*b"py/trsry");
+    pub const BnbTreasurySubAccDerive: [u8; 4] = *b"bnbt";
     pub const ProposalBond: sp_runtime::Permill = sp_runtime::Permill::from_percent(5);
     pub const ProposalBondMinimum: Balance = 1 * currency::DOLLARS;
     pub const SpendPeriod: BlockNumber = 1 * DAYS;

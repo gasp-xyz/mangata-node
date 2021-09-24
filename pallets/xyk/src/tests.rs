@@ -218,10 +218,19 @@ fn buy_and_burn_sell_mangata() {
             XykStorage::balance(1, XykStorage::account_id()),
             166733400066734
         );
-        assert_eq!(XykStorage::balance(0, XykStorage::treasury_account_id()), 25000000001);
+        assert_eq!(
+            XykStorage::balance(0, XykStorage::treasury_account_id()),
+            25000000001
+        );
         assert_eq!(XykStorage::balance(1, XykStorage::treasury_account_id()), 0);
-        assert_eq!(XykStorage::balance(0, XykStorage::bnb_treasury_account_id()), 0);
-        assert_eq!(XykStorage::balance(1, XykStorage::bnb_treasury_account_id()), 0);
+        assert_eq!(
+            XykStorage::balance(0, XykStorage::bnb_treasury_account_id()),
+            0
+        );
+        assert_eq!(
+            XykStorage::balance(1, XykStorage::bnb_treasury_account_id()),
+            0
+        );
     });
 }
 
@@ -253,10 +262,19 @@ fn buy_and_burn_sell_has_mangata_pair() {
             XykStorage::balance(2, XykStorage::account_id()),
             66733400066734
         ); // vault: regular trade result
-        assert_eq!(XykStorage::balance(0, XykStorage::treasury_account_id()), 24993751563); // 24987506247 mangata in treasury
+        assert_eq!(
+            XykStorage::balance(0, XykStorage::treasury_account_id()),
+            24993751563
+        ); // 24987506247 mangata in treasury
         assert_eq!(XykStorage::balance(1, XykStorage::treasury_account_id()), 0);
-        assert_eq!(XykStorage::balance(0, XykStorage::bnb_treasury_account_id()), 0);
-        assert_eq!(XykStorage::balance(1, XykStorage::bnb_treasury_account_id()), 0);
+        assert_eq!(
+            XykStorage::balance(0, XykStorage::bnb_treasury_account_id()),
+            0
+        );
+        assert_eq!(
+            XykStorage::balance(1, XykStorage::bnb_treasury_account_id()),
+            0
+        );
     });
 }
 
@@ -289,9 +307,18 @@ fn buy_and_burn_sell_none_have_mangata_pair() {
             149949999999998
         ); // vault: regular trade result
         assert_eq!(XykStorage::balance(0, XykStorage::treasury_account_id()), 0); // 24987506247 mangata in treasury
-        assert_eq!(XykStorage::balance(2, XykStorage::treasury_account_id()), 25000000001);
-        assert_eq!(XykStorage::balance(0, XykStorage::bnb_treasury_account_id()), 0);
-        assert_eq!(XykStorage::balance(2, XykStorage::bnb_treasury_account_id()), 25000000001);
+        assert_eq!(
+            XykStorage::balance(2, XykStorage::treasury_account_id()),
+            25000000001
+        );
+        assert_eq!(
+            XykStorage::balance(0, XykStorage::bnb_treasury_account_id()),
+            0
+        );
+        assert_eq!(
+            XykStorage::balance(2, XykStorage::bnb_treasury_account_id()),
+            25000000001
+        );
     });
 }
 
@@ -316,10 +343,19 @@ fn buy_and_burn_buy_where_sold_is_mangata() {
             XykStorage::balance(1, XykStorage::account_id()),
             166733400066734
         );
-        assert_eq!(XykStorage::balance(0, XykStorage::treasury_account_id()), 25000000000);
+        assert_eq!(
+            XykStorage::balance(0, XykStorage::treasury_account_id()),
+            25000000000
+        );
         assert_eq!(XykStorage::balance(1, XykStorage::treasury_account_id()), 0);
-        assert_eq!(XykStorage::balance(0, XykStorage::bnb_treasury_account_id()), 0);
-        assert_eq!(XykStorage::balance(1, XykStorage::bnb_treasury_account_id()), 0);
+        assert_eq!(
+            XykStorage::balance(0, XykStorage::bnb_treasury_account_id()),
+            0
+        );
+        assert_eq!(
+            XykStorage::balance(1, XykStorage::bnb_treasury_account_id()),
+            0
+        );
     });
 }
 
@@ -351,10 +387,19 @@ fn buy_and_burn_buy_where_sold_has_mangata_pair() {
             XykStorage::balance(2, XykStorage::account_id()),
             66733400066734
         ); // vault: regular trade result
-        assert_eq!(XykStorage::balance(0, XykStorage::treasury_account_id()), 24993751562); // 24987506247 mangata in treasury
+        assert_eq!(
+            XykStorage::balance(0, XykStorage::treasury_account_id()),
+            24993751562
+        ); // 24987506247 mangata in treasury
         assert_eq!(XykStorage::balance(1, XykStorage::treasury_account_id()), 0);
-        assert_eq!(XykStorage::balance(0, XykStorage::bnb_treasury_account_id()), 0);
-        assert_eq!(XykStorage::balance(1, XykStorage::bnb_treasury_account_id()), 0);
+        assert_eq!(
+            XykStorage::balance(0, XykStorage::bnb_treasury_account_id()),
+            0
+        );
+        assert_eq!(
+            XykStorage::balance(1, XykStorage::bnb_treasury_account_id()),
+            0
+        );
     });
 }
 
@@ -387,9 +432,18 @@ fn buy_and_burn_buy_none_have_mangata_pair() {
             149949999999999
         ); // vault: regular trade result
         assert_eq!(XykStorage::balance(0, XykStorage::treasury_account_id()), 0); // 24987506247 mangata in treasury
-        assert_eq!(XykStorage::balance(2, XykStorage::treasury_account_id()), 25000000000);
-        assert_eq!(XykStorage::balance(0, XykStorage::bnb_treasury_account_id()), 0);
-        assert_eq!(XykStorage::balance(2, XykStorage::bnb_treasury_account_id()), 25000000000);
+        assert_eq!(
+            XykStorage::balance(2, XykStorage::treasury_account_id()),
+            25000000000
+        );
+        assert_eq!(
+            XykStorage::balance(0, XykStorage::bnb_treasury_account_id()),
+            0
+        );
+        assert_eq!(
+            XykStorage::balance(2, XykStorage::bnb_treasury_account_id()),
+            25000000000
+        );
     });
 }
 
@@ -643,7 +697,7 @@ fn sell_W() {
         System::set_block_number(1);
         initialize();
         XykStorage::sell_asset(Origin::signed(2), 1, 2, 20000000000000000000, 0).unwrap(); // selling 20000000000000000000 assetId 0 of pool 0 1
-        
+
         assert_eq!(XykStorage::balance(1, 2), 940000000000000000000); // amount in user acc after selling
         assert_eq!(XykStorage::balance(2, 2), 959959959959959959959); // amount in user acc after buying
         assert_eq!(

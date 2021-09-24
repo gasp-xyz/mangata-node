@@ -237,8 +237,8 @@ use mangata_primitives::{Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 use pallet_assets_info as assets_info;
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
+use sp_runtime::traits::Zero;
 use sp_runtime::traits::{AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member};
-use sp_runtime::traits::{Zero};
 use sp_std::convert::TryFrom;
 use sp_std::fmt::Debug;
 
@@ -754,7 +754,11 @@ impl<T: Trait> Module<T> {
             // treasury_amount of MGA is already in treasury at this point
 
             // MGA burned from bnb_treasury_account
-            <T as Trait>::Currency::burn_and_settle(sold_asset_id.into(), &bnb_treasury_account, burn_amount.into())?;
+            <T as Trait>::Currency::burn_and_settle(
+                sold_asset_id.into(),
+                &bnb_treasury_account,
+                burn_amount.into(),
+            )?;
         }
         //If settling token is connected to mangata, token is swapped in corresponding pool to mangata without fee
         else if Pools::contains_key((sold_asset_id, mangata_id))
@@ -832,7 +836,6 @@ impl<T: Trait> Module<T> {
     fn bnb_treasury_account_id() -> T::AccountId {
         T::TreasuryModuleId::get().into_sub_account(T::BnbTreasurySubAccDerive::get())
     }
-
 }
 
 pub trait XykFunctionsTrait<AccountId> {

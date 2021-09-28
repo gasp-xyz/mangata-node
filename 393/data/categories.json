@@ -1,0 +1,134 @@
+{
+  "uid" : "4b4757e66a1912dae1a509f688f20b0f",
+  "children" : [ {
+    "name" : "Product defects",
+    "children" : [ {
+      "name" : "WebDriverError: unknown error: Chrome failed to start: exited abnormally.\n                  (unknown error: DevToolsActivePort file doesn't exist)\n                  (The process started from chrome location /usr/bin/google-chrome is no longer running, so ChromeDriver is assuming that Chrome has crashed.)\n                  (Driver info: chromedriver=92.0.4515.107 (87a818b10553a07434ea9e2b6dccf3cbe7895134-refs/branch-heads/4515@{#1634}),platform=Linux 5.8.0-1041-azure x86_64)",
+      "children" : [ {
+        "name" : "As a User I can deposit ETH from Meta extension",
+        "uid" : "ca9ebe55571eee4d",
+        "parentUid" : "c5f57ce3a380c5542241c194c9735e4c",
+        "status" : "failed",
+        "time" : {
+          "start" : 1632834812565,
+          "stop" : 1632834814958,
+          "duration" : 2393
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "As a User I can Withdraw ETH from Meta extension",
+        "uid" : "980ff0a1baee6df2",
+        "parentUid" : "c5f57ce3a380c5542241c194c9735e4c",
+        "status" : "failed",
+        "time" : {
+          "start" : 1632834814964,
+          "stop" : 1632834814966,
+          "duration" : 2
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "Validate that Mangata Frontend up and running",
+        "uid" : "2a91fb82371ef76f",
+        "parentUid" : "c5f57ce3a380c5542241c194c9735e4c",
+        "status" : "failed",
+        "time" : {
+          "start" : 1632834816995,
+          "stop" : 1632834817216,
+          "duration" : 221
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "Validate that Frontend retrieves AssetInfo data",
+        "uid" : "e2c65889262a0d99",
+        "parentUid" : "c5f57ce3a380c5542241c194c9735e4c",
+        "status" : "failed",
+        "time" : {
+          "start" : 1632834817216,
+          "stop" : 1632834817217,
+          "duration" : 1
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      } ],
+      "uid" : "c5f57ce3a380c5542241c194c9735e4c"
+    }, {
+      "name" : "Error: Expected: 0 \n                  Actual: 0 \n                 ",
+      "children" : [ {
+        "name" : "xyk-CI - validate pools created: Pool[4,5]",
+        "uid" : "bf3da44e1339b8f6",
+        "parentUid" : "fbe6e7e8b5e51a3184df723e0c154742",
+        "status" : "failed",
+        "time" : {
+          "start" : 1632834816526,
+          "stop" : 1632834816536,
+          "duration" : 10
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "xyk-CI - validate pools created: Pool[0,5]",
+        "uid" : "294b2844e49326d6",
+        "parentUid" : "fbe6e7e8b5e51a3184df723e0c154742",
+        "status" : "failed",
+        "time" : {
+          "start" : 1632834816536,
+          "stop" : 1632834816542,
+          "duration" : 6
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "xyk-CI - validate pools created: Pool[0,6]",
+        "uid" : "2ac2a8a227974558",
+        "parentUid" : "fbe6e7e8b5e51a3184df723e0c154742",
+        "status" : "failed",
+        "time" : {
+          "start" : 1632834816542,
+          "stop" : 1632834816547,
+          "duration" : 5
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "xyk-CI - validate pools created: Pool[4,6]",
+        "uid" : "a314250f22b01561",
+        "parentUid" : "fbe6e7e8b5e51a3184df723e0c154742",
+        "status" : "failed",
+        "time" : {
+          "start" : 1632834816547,
+          "stop" : 1632834816553,
+          "duration" : 6
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "xyk-CI - validate user got the right Assets",
+        "uid" : "ca00448eaf6bcc4b",
+        "parentUid" : "fbe6e7e8b5e51a3184df723e0c154742",
+        "status" : "failed",
+        "time" : {
+          "start" : 1632834816553,
+          "stop" : 1632834816589,
+          "duration" : 36
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      } ],
+      "uid" : "fbe6e7e8b5e51a3184df723e0c154742"
+    } ],
+    "uid" : "8fb3a91ba5aaf9de24cc8a92edc82b5d"
+  } ],
+  "name" : "categories"
+}

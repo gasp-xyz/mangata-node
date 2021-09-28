@@ -1,0 +1,46 @@
+{
+  "uid" : "2a047f529c8013e3",
+  "name" : "xyk-CI - Node is up and running",
+  "fullName" : "test/ci/xyk-ci.validate.node.test.ts.xyk-CI - Node is up and running",
+  "historyId" : "3cd1e9ba8c208d679717ed71612e25c9",
+  "time" : {
+    "start" : 1632834818630,
+    "stop" : 1632834822022,
+    "duration" : 3392
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "test/ci/xyk-ci.validate.node.test.ts"
+  }, {
+    "name" : "testClass",
+    "value" : "test/ci/xyk-ci.validate.node.test.ts"
+  }, {
+    "name" : "testMethod",
+    "value" : "xyk-CI - Node is up and running"
+  }, {
+    "name" : "package",
+    "value" : "test/ci/xyk-ci.validate.node.test.ts"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "2a047f529c8013e3.json",
+  "parameterValues" : [ ]
+}

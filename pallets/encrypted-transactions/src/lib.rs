@@ -6,9 +6,9 @@ use codec::{Decode, Encode};
 use frame_support::storage::child;
 use frame_support::traits::OnUnbalanced;
 use frame_support::{
-    ensure,
     decl_error, decl_event, decl_module, decl_storage,
     dispatch::{DispatchError, DispatchResult},
+    ensure,
     storage::generator::StorageMap,
     traits::{ExistenceRequirement, Get, UnfilteredDispatchable, WithdrawReasons},
     weights::{GetDispatchInfo, Pays, Weight},
@@ -22,9 +22,8 @@ use sp_application_crypto::RuntimeAppPublic;
 use sp_core::storage::ChildInfo;
 use sp_runtime::traits::Hash;
 use sp_runtime::{
-    RuntimeDebug,
     traits::{Member, Zero},
-    KeyTypeId,
+    KeyTypeId, RuntimeDebug,
 };
 use sp_std::collections::btree_map::BTreeMap;
 use sp_std::prelude::*;
@@ -57,13 +56,15 @@ pub trait Trait: frame_system::Trait + pallet_session::Trait {
     type Treasury: OnUnbalanced<
         <Self::Tokens as MultiTokenCurrency<Self::AccountId>>::NegativeImbalance,
     >;
-    type Call: Parameter + UnfilteredDispatchable<Origin = Self::Origin> + GetDispatchInfo + From<Call<Self>>;
+    type Call: Parameter
+        + UnfilteredDispatchable<Origin = Self::Origin>
+        + GetDispatchInfo
+        + From<Call<Self>>;
     type DoublyEncryptedCallMaxLength: Get<u32>;
-
 }
 
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug)]
-pub struct TxnRegistryDetails<AccountId, Index>{
+pub struct TxnRegistryDetails<AccountId, Index> {
     pub doubly_encrypted_call: Vec<u8>,
     pub user: AccountId,
     pub nonce: Index,
@@ -72,7 +73,6 @@ pub struct TxnRegistryDetails<AccountId, Index>{
     pub executor: AccountId,
     pub singly_encrypted_call: Option<Vec<u8>>,
 }
-
 
 decl_storage! {
     trait Store for Module<T: Trait> as EncryptedTransactions {
@@ -162,7 +162,7 @@ decl_module! {
             identifier_vec.extend_from_slice(&Encode::encode(&nonce)[..]);
 
             let identifier: T::Hash = T::Hashing::hash(&identifier_vec[..]);
-            
+
             let txn_registry_details = TxnRegistryDetails{
                 doubly_encrypted_call: doubly_encrypted_call,
                 user: user.clone(),
@@ -185,14 +185,14 @@ decl_module! {
             ensure_none(origin)?;
             TxnRegistry::<T>::try_mutate(identifier, |txn_registry_details_option| -> DispatchResult {
                 if let Some (ref mut txn_registry_details) = txn_registry_details_option{
-                    
+
                     DoublyEncryptedQueue::<T>::mutate(&txn_registry_details.builder, |vec_hash| {vec_hash.retain(|x| *x!=identifier)});
                     SinglyEncryptedQueue::<T>::mutate(&txn_registry_details.executor, |vec_hash| {vec_hash.push(identifier)});
                     txn_registry_details.singly_encrypted_call = Some(singly_encrypted_call);
                     Ok(())
 
                 }else{
-                    
+
                     Err(DispatchError::from(Error::<T>::TxnDoesNotExistsInRegistry))
                 }
             })
@@ -247,7 +247,7 @@ decl_module! {
                 let (fee_charged, already_refunded) = TxnRecord::<T>::get(previous_session_index, &user).get(&identifier).ok_or_else(|| DispatchError::from(Error::<T>::NoMarkedRefund))?.clone();
 
                 ensure!(!already_refunded, Error::<T>::NoMarkedRefund);
-                
+
                 // TODO
                 // Refund fee
                 TxnRecord::<T>::mutate(T::Index::from(<pallet_session::Module<T>>::current_index()), &user, |tree_record| tree_record.insert(identifier, (fee_charged, true)));

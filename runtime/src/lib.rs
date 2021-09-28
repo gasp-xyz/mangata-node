@@ -643,6 +643,7 @@ impl pallet_sudo_origin::Trait for Runtime {
 
 parameter_types! {
     pub const EncryptedTxnsFee: Balance = 1 * currency::DOLLARS;
+    pub const DoublyEncryptedCallMaxLength: u32 = 4096;
 }
 
 impl pallet_encrypted_transactions::Trait for Runtime {
@@ -653,6 +654,7 @@ impl pallet_encrypted_transactions::Trait for Runtime {
     type Fee = EncryptedTxnsFee;
     type Treasury = pallet_treasury::MultiOnUnbalancedWrapper<Treasury>;
     type Call = Call;
+    type DoublyEncryptedCallMaxLength = DoublyEncryptedCallMaxLength;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

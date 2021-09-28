@@ -1,0 +1,71 @@
+[ {
+  "uid" : "d11b25a7a00a3600",
+  "name" : "[BUG?] SDK- Nonce management - RPC Failure - Not enough balance",
+  "time" : {
+    "start" : 1632835531827,
+    "stop" : 1632835531827,
+    "duration" : 0
+  },
+  "status" : "skipped",
+  "severity" : "normal"
+}, {
+  "uid" : "ea19de0887892043",
+  "name" : "[BUG?] SDK- Nonce management - Transaction outdated",
+  "time" : {
+    "start" : 1632835531820,
+    "stop" : 1632835531820,
+    "duration" : 0
+  },
+  "status" : "skipped",
+  "severity" : "normal"
+}, {
+  "uid" : "4168aae60f09364f",
+  "name" : "SDK- Nonce management - user - parallel",
+  "time" : {
+    "start" : 1632835423538,
+    "stop" : 1632835440961,
+    "duration" : 17423
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "9e3812d125aa822",
+  "name" : "SDK- Nonce management - Extrinsic failed",
+  "time" : {
+    "start" : 1632835477020,
+    "stop" : 1632835495705,
+    "duration" : 18685
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "79b6c754ea3392e4",
+  "name" : "SDK- Nonce management - user - future Tx-",
+  "time" : {
+    "start" : 1632835440961,
+    "stop" : 1632835477020,
+    "duration" : 36059
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "45e892c11c27be64",
+  "name" : "SDK- Nonce management - user",
+  "time" : {
+    "start" : 1632835404832,
+    "stop" : 1632835423538,
+    "duration" : 18706
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "91e8f401bc99d3c1",
+  "name" : "SDK- Nonce management - Using custom nonce",
+  "time" : {
+    "start" : 1632835495705,
+    "stop" : 1632835531820,
+    "duration" : 36115
+  },
+  "status" : "passed",
+  "severity" : "normal"
+} ]

@@ -548,11 +548,6 @@ impl pallet_treasury::Trait for Runtime {
     type WeightInfo = (); // default weights info
 }
 
-impl pallet_encrypted_tx::Trait for Runtime {
-    type Event = Event;
-    type Call = Call;
-}
-
 parameter_types! {
     pub const MinLengthName: usize = 1;
     pub const MaxLengthName: usize = 255;
@@ -689,7 +684,6 @@ construct_runtime!(
         Council: pallet_collective::<Instance1>::{Module, Call, Storage, Origin<T>, Event<T>, Config<T>},
         Elections: pallet_elections_phragmen::{Module, Call, Storage, Event<T>, Config<T>},
         SudoOrigin: pallet_sudo_origin::{Module, Call, Event},
-        Encrypted: pallet_encrypted_tx::{Module, Storage, Call, Event},
         EncryptedTransactions: pallet_encrypted_transactions::{Module, Call, Storage, Config<T>, Event<T>},
     }
 );

@@ -3217,7 +3217,6 @@ dependencies = [
  "pallet-collective",
  "pallet-elections-phragmen",
  "pallet-encrypted-transactions",
- "pallet-encrypted-tx",
  "pallet-grandpa",
  "pallet-offences",
  "pallet-random-seed",
@@ -3850,7 +3849,6 @@ dependencies = [
 name = "pallet-encrypted-transactions"
 version = "0.1.0"
 dependencies = [
- "frame-benchmarking",
  "frame-support",
  "frame-system",
  "mangata-primitives 0.1.0",
@@ -3861,19 +3859,6 @@ dependencies = [
  "sp-application-crypto",
  "sp-core",
  "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-encrypted-tx"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "sp-arithmetic",
- "sp-core",
  "sp-runtime",
  "sp-std",
 ]

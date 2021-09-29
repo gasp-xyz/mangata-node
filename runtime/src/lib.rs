@@ -124,6 +124,7 @@ impl_opaque_keys! {
     pub struct SessionKeys {
         pub grandpa: Grandpa,
         pub babe: Babe,
+        pub xxtx: EncryptedTransactions,
     }
 }
 
@@ -547,11 +548,6 @@ impl pallet_treasury::Trait for Runtime {
     type WeightInfo = (); // default weights info
 }
 
-impl pallet_encrypted_tx::Trait for Runtime {
-    type Event = Event;
-    type Call = Call;
-}
-
 parameter_types! {
     pub const MinLengthName: usize = 1;
     pub const MaxLengthName: usize = 255;
@@ -640,6 +636,22 @@ impl pallet_sudo_origin::Trait for Runtime {
         pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
 }
 
+parameter_types! {
+    pub const EncryptedTxnsFee: Balance = 1 * currency::DOLLARS;
+    pub const DoublyEncryptedCallMaxLength: u32 = 4096;
+}
+
+impl pallet_encrypted_transactions::Trait for Runtime {
+    type Event = Event;
+    type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+    /// The identifier type for an authority.
+    type AuthorityId = pallet_encrypted_transactions::ecdsa::AuthorityId;
+    type Fee = EncryptedTxnsFee;
+    type Treasury = pallet_treasury::MultiOnUnbalancedWrapper<Treasury>;
+    type Call = Call;
+    type DoublyEncryptedCallMaxLength = DoublyEncryptedCallMaxLength;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
     pub enum Runtime where
@@ -672,7 +684,7 @@ construct_runtime!(
         Council: pallet_collective::<Instance1>::{Module, Call, Storage, Origin<T>, Event<T>, Config<T>},
         Elections: pallet_elections_phragmen::{Module, Call, Storage, Event<T>, Config<T>},
         SudoOrigin: pallet_sudo_origin::{Module, Call, Event},
-    Encrypted: pallet_encrypted_tx::{Module, Storage, Call, Event},
+        EncryptedTransactions: pallet_encrypted_transactions::{Module, Call, Storage, Config<T>, Event<T>},
     }
 );
 

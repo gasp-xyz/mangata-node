@@ -25,7 +25,6 @@ serde = { features = ['derive'], optional = true, version = '1.0.101' }
 static_assertions = "1.1.0"
 
 # local dependencies
-pallet-encrypted-tx = { path = '../pallets/encrypted-tx', default-features = false, version = '0.1.0' }
 pallet-xyk = { path = '../pallets/xyk', default-features = false, version = '0.1.0' }
 xyk-runtime-api = { path = '../pallets/xyk/runtime-api', default-features = false, version = '2.0.0' }
 extrinsic-info-runtime-api = {  default-features = false, version = '2.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
@@ -39,6 +38,7 @@ pallet-treasury = { default-features = false, version='2.0.0' , git = "https://g
 mangata-primitives = { path = '../primitives/mangata', default-features = false, version = "0.1.0" }
 orml-tokens = {  default-features = false, version = "0.3.1", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
 pallet-sudo-origin = { path = '../pallets/sudo-origin', default-features = false, version = "2.0.0" }
+pallet-encrypted-transactions = { path = '../pallets/encrypted-transactions', default-features = false, version = "0.1.0" }
 
 # Substrate dependencies
 frame-benchmarking = { default-features = false, optional = true, version = '2.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
@@ -137,6 +137,6 @@ std = [
     "pallet-sudo-origin/std",
     "pallet-collective/std",
     "pallet-elections-phragmen/std",
-    "pallet-encrypted-tx/std",
+    "pallet-encrypted-transactions/std",
     "mangata-primitives/std",
 ]

@@ -64,6 +64,7 @@ pallet-authority-discovery = { version = '2.0.0', git = "https://github.com/mang
 pallet-grandpa = { version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
 pallet-staking = {version='2.0.0', path="../pallets/staking"}
+pallet-encrypted-transactions = {version='0.1.0', path="../pallets/encrypted-transactions"}
 
 sc-executor = { features = ['wasmtime'], version = '0.8.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sc-finality-grandpa = { version = '0.8.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }

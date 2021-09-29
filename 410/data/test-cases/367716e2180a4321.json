@@ -1,0 +1,48 @@
+{
+  "uid" : "367716e2180a4321",
+  "name" : "[BUG]Not enough tokens to convert fee LINK[https://trello.com/c/p77t0atO]",
+  "fullName" : "xyk-pallet - treasury tests [Connected - Mangata]: Error cases.[BUG]Not enough tokens to convert fee LINK[https://trello.com/c/p77t0atO]",
+  "historyId" : "c573b80418b40b773de970f0aa46b9c",
+  "time" : {
+    "start" : 1632922489288,
+    "stop" : 1632922489288,
+    "duration" : 0
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "skipped",
+  "statusMessage" : "Temporarily disabled with xit",
+  "statusTrace" : "undefined",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - treasury tests [Connected - Mangata]: Error cases"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - treasury tests [Connected - Mangata]: Error cases"
+  }, {
+    "name" : "testMethod",
+    "value" : "[BUG]Not enough tokens to convert fee LINK[https://trello.com/c/p77t0atO]"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - treasury tests [Connected - Mangata]: Error cases"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "367716e2180a4321.json",
+  "parameterValues" : [ ]
+}

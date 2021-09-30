@@ -1,0 +1,46 @@
+{
+  "uid" : "e2bf265be9bfdf9d",
+  "name" : "be burn",
+  "fullName" : "xyk-pallet - Pool tests: a pool can:.be burn",
+  "historyId" : "9e7d2c40f2f6eb4832b7cb0365a3e39a",
+  "time" : {
+    "start" : 1633011787556,
+    "stop" : 1633011986044,
+    "duration" : 198488
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Pool tests: a pool can:"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Pool tests: a pool can:"
+  }, {
+    "name" : "testMethod",
+    "value" : "be burn"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Pool tests: a pool can:"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "e2bf265be9bfdf9d.json",
+  "parameterValues" : [ ]
+}

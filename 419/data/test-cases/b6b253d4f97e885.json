@@ -1,0 +1,46 @@
+{
+  "uid" : "b6b253d4f97e885",
+  "name" : "Burn someone else liquidities",
+  "fullName" : "xyk-pallet - Burn liquidity tests: BurnLiquidity Errors:.Burn someone else liquidities",
+  "historyId" : "3263a3972163b5571dc5f71358f8d836",
+  "time" : {
+    "start" : 1633012591094,
+    "stop" : 1633012776911,
+    "duration" : 185817
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Burn liquidity tests: BurnLiquidity Errors:"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Burn liquidity tests: BurnLiquidity Errors:"
+  }, {
+    "name" : "testMethod",
+    "value" : "Burn someone else liquidities"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Burn liquidity tests: BurnLiquidity Errors:"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "b6b253d4f97e885.json",
+  "parameterValues" : [ ]
+}

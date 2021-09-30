@@ -1,0 +1,46 @@
+{
+  "uid" : "3c6e6d086f6872e8",
+  "name" : "RPC big numbers : negative asset ids [amount->100000000]",
+  "fullName" : "test/parallel/xyk-rpc.errors.test.ts.RPC big numbers : negative asset ids [amount->100000000]",
+  "historyId" : "f0175d9f637cfe235a01731e16f5a312",
+  "time" : {
+    "start" : 1633012231360,
+    "stop" : 1633012231364,
+    "duration" : 4
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "test/parallel/xyk-rpc.errors.test.ts"
+  }, {
+    "name" : "testClass",
+    "value" : "test/parallel/xyk-rpc.errors.test.ts"
+  }, {
+    "name" : "testMethod",
+    "value" : "RPC big numbers : negative asset ids [amount->100000000]"
+  }, {
+    "name" : "package",
+    "value" : "test/parallel/xyk-rpc.errors.test.ts"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "3c6e6d086f6872e8.json",
+  "parameterValues" : [ ]
+}

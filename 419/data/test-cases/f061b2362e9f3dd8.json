@@ -1,0 +1,46 @@
+{
+  "uid" : "f061b2362e9f3dd8",
+  "name" : "xyk-pallet - Liqudity : Burn all the liquidity",
+  "fullName" : "test/parallel/xyk-pallet.liquidity.test.ts.xyk-pallet - Liqudity : Burn all the liquidity",
+  "historyId" : "428f08acf1d8168d209f5297642396fa",
+  "time" : {
+    "start" : 1633011535490,
+    "stop" : 1633011661556,
+    "duration" : 126066
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "test/parallel/xyk-pallet.liquidity.test.ts"
+  }, {
+    "name" : "testClass",
+    "value" : "test/parallel/xyk-pallet.liquidity.test.ts"
+  }, {
+    "name" : "testMethod",
+    "value" : "xyk-pallet - Liqudity : Burn all the liquidity"
+  }, {
+    "name" : "package",
+    "value" : "test/parallel/xyk-pallet.liquidity.test.ts"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "f061b2362e9f3dd8.json",
+  "parameterValues" : [ ]
+}

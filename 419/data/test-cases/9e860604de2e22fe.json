@@ -1,0 +1,46 @@
+{
+  "uid" : "9e860604de2e22fe",
+  "name" : "xyk-pallet - User Balance - mint liquidity requires paying fees",
+  "fullName" : "test/parallel/xyk-pallet.API.testMGArequired.test.ts.xyk-pallet - User Balance - mint liquidity requires paying fees",
+  "historyId" : "5966405679402f6625274bcb7721a4ed",
+  "time" : {
+    "start" : 1633012357114,
+    "stop" : 1633012447926,
+    "duration" : 90812
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "test/parallel/xyk-pallet.API.testMGArequired.test.ts"
+  }, {
+    "name" : "testClass",
+    "value" : "test/parallel/xyk-pallet.API.testMGArequired.test.ts"
+  }, {
+    "name" : "testMethod",
+    "value" : "xyk-pallet - User Balance - mint liquidity requires paying fees"
+  }, {
+    "name" : "package",
+    "value" : "test/parallel/xyk-pallet.API.testMGArequired.test.ts"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "9e860604de2e22fe.json",
+  "parameterValues" : [ ]
+}

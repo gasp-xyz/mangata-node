@@ -1,0 +1,46 @@
+{
+  "uid" : "1ac1a3c8184b49c7",
+  "name" : "validate parameters: negative asset ids [soldTokenId->-1,boughtTokenId->0,amount->0,expected->createType(TokenId):: u32: Negative number passed to unsigned type]",
+  "fullName" : "test/parallel/xyk-rpc.errors.test.ts.validate parameters: negative asset ids [soldTokenId->-1,boughtTokenId->0,amount->0,expected->createType(TokenId):: u32: Negative number passed to unsigned type]",
+  "historyId" : "d568f9bdd70a268b35e843884d9d7b73",
+  "time" : {
+    "start" : 1633012231316,
+    "stop" : 1633012231342,
+    "duration" : 26
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "test/parallel/xyk-rpc.errors.test.ts"
+  }, {
+    "name" : "testClass",
+    "value" : "test/parallel/xyk-rpc.errors.test.ts"
+  }, {
+    "name" : "testMethod",
+    "value" : "validate parameters: negative asset ids [soldTokenId->-1,boughtTokenId->0,amount->0,expected->createType(TokenId):: u32: Negative number passed to unsigned type]"
+  }, {
+    "name" : "package",
+    "value" : "test/parallel/xyk-rpc.errors.test.ts"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "1ac1a3c8184b49c7.json",
+  "parameterValues" : [ ]
+}

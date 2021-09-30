@@ -1,0 +1,46 @@
+{
+  "uid" : "7b951cec3190aee",
+  "name" : "Burning liquidities provides Burn and settle",
+  "fullName" : "xyk-pallet - Burn liquidity tests: when burning liquidity you can.Burning liquidities provides Burn and settle",
+  "historyId" : "59532f0e800cd0e6a512da785baeda0a",
+  "time" : {
+    "start" : 1633011810154,
+    "stop" : 1633011955249,
+    "duration" : 145095
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Burn liquidity tests: when burning liquidity you can"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Burn liquidity tests: when burning liquidity you can"
+  }, {
+    "name" : "testMethod",
+    "value" : "Burning liquidities provides Burn and settle"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Burn liquidity tests: when burning liquidity you can"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "7b951cec3190aee.json",
+  "parameterValues" : [ ]
+}

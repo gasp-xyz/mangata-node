@@ -1,0 +1,46 @@
+{
+  "uid" : "fd0a51b64aa2bba1",
+  "name" : "Minting x-y and y-x pool",
+  "fullName" : "xyk-pallet - Pool opeations: Simmetry.Minting x-y and y-x pool",
+  "historyId" : "923ba238fc3a684c7f84d27924b5865e",
+  "time" : {
+    "start" : 1633012105375,
+    "stop" : 1633012141547,
+    "duration" : 36172
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Pool opeations: Simmetry"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Pool opeations: Simmetry"
+  }, {
+    "name" : "testMethod",
+    "value" : "Minting x-y and y-x pool"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Pool opeations: Simmetry"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "fd0a51b64aa2bba1.json",
+  "parameterValues" : [ ]
+}

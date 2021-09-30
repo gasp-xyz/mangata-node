@@ -1,0 +1,48 @@
+{
+  "uid" : "d910699c9753011a",
+  "name" : "Buy a few assets to a wallet that is full  => overflow. NOT A BUG: https://trello.com/c/J3fzuwH5",
+  "fullName" : "xyk-pallet - Operate with a user account close to overflow.Buy a few assets to a wallet that is full  => overflow. NOT A BUG: https://trello.com/c/J3fzuwH5",
+  "historyId" : "4305c14f10bb44f2c09f17597146a856",
+  "time" : {
+    "start" : 1633011859965,
+    "stop" : 1633011859966,
+    "duration" : 1
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "skipped",
+  "statusMessage" : "Temporarily disabled with xit",
+  "statusTrace" : "undefined",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Operate with a user account close to overflow"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Operate with a user account close to overflow"
+  }, {
+    "name" : "testMethod",
+    "value" : "Buy a few assets to a wallet that is full  => overflow. NOT A BUG: https://trello.com/c/J3fzuwH5"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Operate with a user account close to overflow"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "d910699c9753011a.json",
+  "parameterValues" : [ ]
+}

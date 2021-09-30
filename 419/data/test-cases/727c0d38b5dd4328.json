@@ -1,0 +1,46 @@
+{
+  "uid" : "727c0d38b5dd4328",
+  "name" : "Buy all assets from the the pool",
+  "fullName" : "xyk-pallet - Buy assets tests: BuyAssets Errors:.Buy all assets from the the pool",
+  "historyId" : "6050aaf7611020722f7b4ed250987b21",
+  "time" : {
+    "start" : 1633011678957,
+    "stop" : 1633011804961,
+    "duration" : 126004
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Buy assets tests: BuyAssets Errors:"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Buy assets tests: BuyAssets Errors:"
+  }, {
+    "name" : "testMethod",
+    "value" : "Buy all assets from the the pool"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Buy assets tests: BuyAssets Errors:"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "727c0d38b5dd4328.json",
+  "parameterValues" : [ ]
+}

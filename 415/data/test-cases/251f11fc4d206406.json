@@ -1,0 +1,75 @@
+{
+  "uid" : "251f11fc4d206406",
+  "name" : "SDK- Nonce management - Using custom nonce",
+  "fullName" : "SDK test - Nonce tests - user.SDK- Nonce management - Using custom nonce",
+  "historyId" : "3fa022b6ec78032e42219aa0a1841e37",
+  "time" : {
+    "start" : 1633003693823,
+    "stop" : 1633003735285,
+    "duration" : 41462
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "SDK test - Nonce tests - user"
+  }, {
+    "name" : "testClass",
+    "value" : "SDK test - Nonce tests - user"
+  }, {
+    "name" : "testMethod",
+    "value" : "SDK- Nonce management - Using custom nonce"
+  }, {
+    "name" : "package",
+    "value" : "SDK test - Nonce tests - user"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 3,
+        "unknown" : 0,
+        "total" : 3
+      },
+      "items" : [ {
+        "uid" : "d58eb8123c6d4974",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/407//#testresult/d58eb8123c6d4974",
+        "status" : "passed",
+        "time" : {
+          "start" : 1632919567678,
+          "stop" : 1632919603738,
+          "duration" : 36060
+        }
+      }, {
+        "uid" : "91e8f401bc99d3c1",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/394//#testresult/91e8f401bc99d3c1",
+        "status" : "passed",
+        "time" : {
+          "start" : 1632835495705,
+          "stop" : 1632835531820,
+          "duration" : 36115
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "251f11fc4d206406.json",
+  "parameterValues" : [ ]
+}

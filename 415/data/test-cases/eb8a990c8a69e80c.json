@@ -1,0 +1,79 @@
+{
+  "uid" : "eb8a990c8a69e80c",
+  "name" : "[BUG?] SDK- Nonce management - Transaction outdated",
+  "fullName" : "SDK test - Nonce tests - user.[BUG?] SDK- Nonce management - Transaction outdated",
+  "historyId" : "37e5e6c48a224b8770b68342462e0858",
+  "time" : {
+    "start" : 1633003735285,
+    "stop" : 1633003735285,
+    "duration" : 0
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "skipped",
+  "statusMessage" : "Temporarily disabled with xit",
+  "statusTrace" : "undefined",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "SDK test - Nonce tests - user"
+  }, {
+    "name" : "testClass",
+    "value" : "SDK test - Nonce tests - user"
+  }, {
+    "name" : "testMethod",
+    "value" : "[BUG?] SDK- Nonce management - Transaction outdated"
+  }, {
+    "name" : "package",
+    "value" : "SDK test - Nonce tests - user"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 3,
+        "passed" : 0,
+        "unknown" : 0,
+        "total" : 3
+      },
+      "items" : [ {
+        "uid" : "936026eda40f577d",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/407//#testresult/936026eda40f577d",
+        "status" : "skipped",
+        "statusDetails" : "Temporarily disabled with xit",
+        "time" : {
+          "start" : 1632919603738,
+          "stop" : 1632919603738,
+          "duration" : 0
+        }
+      }, {
+        "uid" : "ea19de0887892043",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/394//#testresult/ea19de0887892043",
+        "status" : "skipped",
+        "statusDetails" : "Temporarily disabled with xit",
+        "time" : {
+          "start" : 1632835531820,
+          "stop" : 1632835531820,
+          "duration" : 0
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "eb8a990c8a69e80c.json",
+  "parameterValues" : [ ]
+}

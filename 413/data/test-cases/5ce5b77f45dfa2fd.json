@@ -1,0 +1,75 @@
+{
+  "uid" : "5ce5b77f45dfa2fd",
+  "name" : "xyk-pallet - MGA tokens are substracted as fee : TransferAll",
+  "fullName" : "test/sequential/xyk-pallet.API.fees.test.ts.xyk-pallet - MGA tokens are substracted as fee : TransferAll",
+  "historyId" : "8e8476ba63feab8d233525ca7b6579d2",
+  "time" : {
+    "start" : 1632994219718,
+    "stop" : 1632994261092,
+    "duration" : 41374
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "test/sequential/xyk-pallet.API.fees.test.ts"
+  }, {
+    "name" : "testClass",
+    "value" : "test/sequential/xyk-pallet.API.fees.test.ts"
+  }, {
+    "name" : "testMethod",
+    "value" : "xyk-pallet - MGA tokens are substracted as fee : TransferAll"
+  }, {
+    "name" : "package",
+    "value" : "test/sequential/xyk-pallet.API.fees.test.ts"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 3,
+        "unknown" : 0,
+        "total" : 3
+      },
+      "items" : [ {
+        "uid" : "2ec8cd782b7fcd86",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/412//#testresult/2ec8cd782b7fcd86",
+        "status" : "passed",
+        "time" : {
+          "start" : 1632985626799,
+          "stop" : 1632985662848,
+          "duration" : 36049
+        }
+      }, {
+        "uid" : "f74b2ec0d0edfe0a",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/410//#testresult/f74b2ec0d0edfe0a",
+        "status" : "passed",
+        "time" : {
+          "start" : 1632922764863,
+          "stop" : 1632922800908,
+          "duration" : 36045
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "5ce5b77f45dfa2fd.json",
+  "parameterValues" : [ ]
+}

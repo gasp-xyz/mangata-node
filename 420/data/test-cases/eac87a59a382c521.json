@@ -1,0 +1,130 @@
+{
+  "uid" : "eac87a59a382c521",
+  "name" : "assets won when assets are bought [Buying other in MGA pool]",
+  "fullName" : "xyk-pallet - treasury tests [Mangata]: on treasury we store.assets won when assets are bought [Buying other in MGA pool]",
+  "historyId" : "f417a1d75905b23a9c51e749a26502cd",
+  "time" : {
+    "start" : 1633012309969,
+    "stop" : 1633012416802,
+    "duration" : 106833
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - treasury tests [Mangata]: on treasury we store"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - treasury tests [Mangata]: on treasury we store"
+  }, {
+    "name" : "testMethod",
+    "value" : "assets won when assets are bought [Buying other in MGA pool]"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - treasury tests [Mangata]: on treasury we store"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 1,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 8,
+        "unknown" : 0,
+        "total" : 9
+      },
+      "items" : [ {
+        "uid" : "9b04396c900b201b",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/418//#testresult/9b04396c900b201b",
+        "status" : "passed",
+        "time" : {
+          "start" : 1633010707935,
+          "stop" : 1633010814849,
+          "duration" : 106914
+        }
+      }, {
+        "uid" : "f206c4df3132cae5",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/417//#testresult/f206c4df3132cae5",
+        "status" : "passed",
+        "time" : {
+          "start" : 1633004316813,
+          "stop" : 1633004425008,
+          "duration" : 108195
+        }
+      }, {
+        "uid" : "c41101deb91ee784",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/415//#testresult/c41101deb91ee784",
+        "status" : "passed",
+        "time" : {
+          "start" : 1633002751131,
+          "stop" : 1633002859437,
+          "duration" : 108306
+        }
+      }, {
+        "uid" : "63bb899f094b763d",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/416//#testresult/63bb899f094b763d",
+        "status" : "passed",
+        "time" : {
+          "start" : 1633003009003,
+          "stop" : 1633003117265,
+          "duration" : 108262
+        }
+      }, {
+        "uid" : "998a3dee420a7abb",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/414//#testresult/998a3dee420a7abb",
+        "status" : "passed",
+        "time" : {
+          "start" : 1633002739477,
+          "stop" : 1633002847800,
+          "duration" : 108323
+        }
+      }, {
+        "uid" : "c9464d6ba8989736",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/413//#testresult/c9464d6ba8989736",
+        "status" : "failed",
+        "statusDetails" : "Error: Expected: 3402083403 \n                  Actual: 3402083420 \n                 ",
+        "time" : {
+          "start" : 1632993187419,
+          "stop" : 1632993295582,
+          "duration" : 108163
+        }
+      }, {
+        "uid" : "a033bc059945d656",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/412//#testresult/a033bc059945d656",
+        "status" : "passed",
+        "time" : {
+          "start" : 1632984588933,
+          "stop" : 1632984697129,
+          "duration" : 108196
+        }
+      }, {
+        "uid" : "1dca43a083e4068",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/410//#testresult/1dca43a083e4068",
+        "status" : "passed",
+        "time" : {
+          "start" : 1632921726868,
+          "stop" : 1632921835270,
+          "duration" : 108402
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "eac87a59a382c521.json",
+  "parameterValues" : [ ]
+}

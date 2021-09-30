@@ -1,0 +1,94 @@
+{
+  "uid" : "30a523e0047b8333",
+  "name" : "assets won when assets are sold [Selling Mangata] - 5",
+  "fullName" : "xyk-pallet - treasury tests [Mangata]: on treasury we store.assets won when assets are sold [Selling Mangata] - 5",
+  "historyId" : "dd6031c39dad92c2f0d6040402ed7ebf",
+  "time" : {
+    "start" : 1633002688037,
+    "stop" : 1633002793629,
+    "duration" : 105592
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - treasury tests [Mangata]: on treasury we store"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - treasury tests [Mangata]: on treasury we store"
+  }, {
+    "name" : "testMethod",
+    "value" : "assets won when assets are sold [Selling Mangata] - 5"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - treasury tests [Mangata]: on treasury we store"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 1,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 4,
+        "unknown" : 0,
+        "total" : 5
+      },
+      "items" : [ {
+        "uid" : "57cee47b82686d53",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/414//#testresult/57cee47b82686d53",
+        "status" : "passed",
+        "time" : {
+          "start" : 1633002418372,
+          "stop" : 1633002522838,
+          "duration" : 104466
+        }
+      }, {
+        "uid" : "1d199d65b26ce22d",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/413//#testresult/1d199d65b26ce22d",
+        "status" : "failed",
+        "statusDetails" : "Error: Expected: 3027052975 \n                  Actual: 3027052981 \n                 ",
+        "time" : {
+          "start" : 1632992865574,
+          "stop" : 1632992971117,
+          "duration" : 105543
+        }
+      }, {
+        "uid" : "df3943cdaffac7ab",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/412//#testresult/df3943cdaffac7ab",
+        "status" : "passed",
+        "time" : {
+          "start" : 1632984268535,
+          "stop" : 1632984373832,
+          "duration" : 105297
+        }
+      }, {
+        "uid" : "72beea895bb9e60d",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/410//#testresult/72beea895bb9e60d",
+        "status" : "passed",
+        "time" : {
+          "start" : 1632921405594,
+          "stop" : 1632921511558,
+          "duration" : 105964
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "30a523e0047b8333.json",
+  "parameterValues" : [ ]
+}

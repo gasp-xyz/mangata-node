@@ -7,7 +7,9 @@
 
 use std::sync::Arc;
 
+use extrinsic_info_runtime_api::runtime_api::ExtrinsicInfoRuntimeApi;
 use mangata_runtime::{opaque::Block, AccountId, Balance, Index, TokenId};
+use sc_client_api::client::BlockBackend;
 pub use sc_rpc_api::DenyUnsafe;
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
@@ -34,6 +36,8 @@ where
     C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
     C::Api: xyk_rpc::XykRuntimeApi<Block, Balance, TokenId>,
     C::Api: BlockBuilder<Block>,
+    C::Api: ExtrinsicInfoRuntimeApi<Block>,
+    C: BlockBackend<Block>,
     P: TransactionPool + 'static,
 {
     use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};

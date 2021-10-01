@@ -11,7 +11,11 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use sp_api::impl_runtime_apis;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_core::{
+    crypto::KeyTypeId,
+    u32_trait::{_1, _2},
+    OpaqueMetadata,
+};
 use sp_runtime::curve::PiecewiseLinear;
 use sp_runtime::traits::{
     BlakeTwo256, Block as BlockT, Convert, IdentifyAccount, IdentityLookup, NumberFor, OpaqueKeys,
@@ -32,20 +36,22 @@ use sp_version::RuntimeVersion;
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
-    construct_runtime, parameter_types,
-    traits::{KeyOwnerProofSystem, Randomness},
+    construct_runtime,
+    dispatch::Codec,
+    parameter_types,
+    traits::{KeyOwnerProofSystem, LockIdentifier, Randomness},
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
         IdentityFee, Weight,
     },
-    StorageValue,
+    Parameter, StorageValue,
 };
 use frame_system::EnsureRoot;
-pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
+use static_assertions::const_assert;
 
 pub use mangata_primitives::{Amount, Balance, TokenId};
 pub use orml_tokens;
@@ -118,6 +124,7 @@ impl_opaque_keys! {
     pub struct SessionKeys {
         pub grandpa: Grandpa,
         pub babe: Babe,
+        pub xxtx: EncryptedTransactions,
     }
 }
 
@@ -226,7 +233,7 @@ impl frame_system::Trait for Runtime {
     /// What to do if an account is fully reaped from the system.
     type OnKilledAccount = ();
     /// The data to be stored in an account.
-    type AccountData = pallet_balances::AccountData<Balance>;
+    type AccountData = ();
     /// Weight information for the extrinsics of this pallet.
     type SystemWeightInfo = ();
 }
@@ -420,23 +427,6 @@ impl pallet_timestamp::Trait for Runtime {
 }
 
 parameter_types! {
-    pub const ExistentialDeposit: u128 = 500;
-    pub const MaxLocks: u32 = 50;
-}
-
-impl pallet_balances::Trait for Runtime {
-    type MaxLocks = MaxLocks;
-    /// The type for recording an account's balance.
-    type Balance = Balance;
-    /// The ubiquitous event type.
-    type Event = Event;
-    type DustRemoval = ();
-    type ExistentialDeposit = ExistentialDeposit;
-    type AccountStore = System;
-    type WeightInfo = ();
-}
-
-parameter_types! {
     pub const TransactionByteFee: Balance = 1;
     pub const MGATokenID: TokenId = 0;
     pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
@@ -466,6 +456,8 @@ impl pallet_xyk::Trait for Runtime {
     type Event = Event;
     type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
     type NativeCurrencyId = NativeCurrencyId;
+    type TreasuryModuleId = TreasuryModuleId;
+    type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
 }
 
 // Snowfork traits
@@ -504,6 +496,7 @@ mod currency {
 
 parameter_types! {
     pub const TreasuryModuleId: sp_runtime::ModuleId = sp_runtime::ModuleId(*b"py/trsry");
+    pub const BnbTreasurySubAccDerive: [u8; 4] = *b"bnbt";
     pub const ProposalBond: sp_runtime::Permill = sp_runtime::Permill::from_percent(5);
     pub const ProposalBondMinimum: Balance = 1 * currency::DOLLARS;
     pub const SpendPeriod: BlockNumber = 1 * DAYS;
@@ -589,7 +582,78 @@ impl orml_tokens::Trait for Runtime {
     type WeightInfo = ();
 }
 
-impl pallet_random_seed::Trait for Runtime {}
+parameter_types! {
+    pub const CouncilMotionDuration: BlockNumber = 21 * DAYS;
+    pub const CouncilMaxProposals: u32 = 100;
+    pub const CouncilMaxMembers: u32 = 15;
+}
+
+type CouncilCollective = pallet_collective::Instance1;
+impl pallet_collective::Trait<CouncilCollective> for Runtime {
+    type Origin = Origin;
+    type Proposal = Call;
+    type Event = Event;
+    type MotionDuration = CouncilMotionDuration;
+    type MaxProposals = CouncilMaxProposals;
+    type MaxMembers = CouncilMaxMembers;
+    type DefaultVote = pallet_collective::PrimeDefaultVote;
+    type WeightInfo = weights::pallet_collective::WeightInfo;
+}
+
+parameter_types! {
+    pub const CandidacyBond: Balance = 10 * currency::DOLLARS;
+    pub const VotingBond: Balance = 1 * currency::DOLLARS;
+    pub const TermDuration: BlockNumber = 120 * DAYS;
+    pub const DesiredMembers: u32 = 9;
+    pub const DesiredRunnersUp: u32 = 7;
+    pub const ElectionsPhragmenModuleId: LockIdentifier = *b"phrelect";
+}
+
+// Make sure that there are no more than `MaxMembers` members elected via elections-phragmen.
+const_assert!(DesiredMembers::get() <= CouncilMaxMembers::get());
+
+impl pallet_elections_phragmen::Trait for Runtime {
+    type Event = Event;
+    type ModuleId = ElectionsPhragmenModuleId;
+    type Currency = orml_tokens::CurrencyAdapter<Runtime, MGATokenID>;
+    type ChangeMembers = Council;
+    // NOTE: this implies that council's genesis members cannot be set directly and must come from
+    // this module.
+    type InitializeMembers = Council;
+    type CurrencyToVote = CurrencyToVoteHandler;
+    type CandidacyBond = CandidacyBond;
+    type VotingBond = VotingBond;
+    type LoserCandidate = Treasury;
+    type BadReport = Treasury;
+    type KickedMember = Treasury;
+    type DesiredMembers = DesiredMembers;
+    type DesiredRunnersUp = DesiredRunnersUp;
+    type TermDuration = TermDuration;
+    type WeightInfo = weights::pallet_elections_phragmen::WeightInfo;
+}
+
+impl pallet_sudo_origin::Trait for Runtime {
+    type Event = Event;
+    type Call = Call;
+    type SudoOrigin =
+        pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
+}
+
+parameter_types! {
+    pub const EncryptedTxnsFee: Balance = 1 * currency::DOLLARS;
+    pub const DoublyEncryptedCallMaxLength: u32 = 4096;
+}
+
+impl pallet_encrypted_transactions::Trait for Runtime {
+    type Event = Event;
+    type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+    /// The identifier type for an authority.
+    type AuthorityId = pallet_encrypted_transactions::ecdsa::AuthorityId;
+    type Fee = EncryptedTxnsFee;
+    type Treasury = pallet_treasury::MultiOnUnbalancedWrapper<Treasury>;
+    type Call = Call;
+    type DoublyEncryptedCallMaxLength = DoublyEncryptedCallMaxLength;
+}
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -601,13 +665,11 @@ construct_runtime!(
         System: frame_system::{Module, Call, Config, Storage, Event<T>},
         RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
         Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
-        Random: pallet_random_seed::{Module, Call, Storage, Inherent, Config},
         Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
         Authorship: pallet_authorship::{Module, Call, Storage, Inherent},
         Babe: pallet_babe::{Module, Call, Storage, Config, Inherent, ValidateUnsigned},
         Historical: pallet_session_historical::{Module},
         Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
-        Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
         TransactionPayment: pallet_transaction_payment::{Module, Storage},
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
         Offences: pallet_offences::{Module, Call, Storage, Event},
@@ -622,6 +684,10 @@ construct_runtime!(
         Xyk: pallet_xyk::{Module, Call, Storage, Event<T>, Config<T>},
         Staking: pallet_staking::{Module, Call, Config<T>, Storage, Event<T>, ValidateUnsigned},
         Treasury: pallet_treasury::{Module, Call, Storage, Config, Event<T>},
+        Council: pallet_collective::<Instance1>::{Module, Call, Storage, Origin<T>, Event<T>, Config<T>},
+        Elections: pallet_elections_phragmen::{Module, Call, Storage, Event<T>, Config<T>},
+        SudoOrigin: pallet_sudo_origin::{Module, Call, Event},
+        EncryptedTransactions: pallet_encrypted_transactions::{Module, Call, Storage, Config<T>, Event<T>},
     }
 );
 
@@ -721,9 +787,12 @@ impl_runtime_apis! {
             tx: <Block as BlockT>::Extrinsic,
         ) -> Option<extrinsic_info_runtime_api::ExtrinsicInfo> {
             tx.signature.clone().map(|sig|
-                extrinsic_info_runtime_api::ExtrinsicInfo{
-                    who: sig.0,
-                    nonce: 0,
+                {
+                    let nonce: frame_system::CheckNonce<_> = sig.2.4;
+                    extrinsic_info_runtime_api::ExtrinsicInfo{
+                        who: sig.0,
+                        nonce: nonce.0,
+                    }
                 }
             )
         }
@@ -892,12 +961,6 @@ impl_runtime_apis! {
         }
     }
 
-    impl random_seed_runtime_api::RandomSeedApi<Block> for Runtime {
-        fn get_seed() -> pallet_random_seed::SeedType{
-            Random::seed()
-        }
-    }
-
     #[cfg(feature = "runtime-benchmarks")]
     impl frame_benchmarking::Benchmark<Block> for Runtime {
         fn dispatch_benchmark(
@@ -926,7 +989,6 @@ impl_runtime_apis! {
             let params = (&config, &whitelist);
 
             add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
-            add_benchmark!(params, batches, pallet_balances, Balances);
             add_benchmark!(params, batches, pallet_timestamp, Timestamp);
             add_benchmark!(params, batches, bridge, Bridge);
             add_benchmark!(params, batches, pallet_staking, Staking);
@@ -935,5 +997,19 @@ impl_runtime_apis! {
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use codec::{Decode, Encode};
+
+    #[test]
+    fn test_serialize_deserialize_call() {
+        let call: Call = Call::Xyk(pallet_xyk::Call::sell_asset(0, 0, 0, 0));
+        let call_bytes = call.encode();
+        let deserialized_call: Call = Decode::decode(&mut &call_bytes[..]).unwrap();
+        assert_eq!(call, deserialized_call);
     }
 }

@@ -2,10 +2,10 @@
 
 use hex_literal::hex;
 use mangata_runtime::{
-    AccountId, AssetsInfoConfig, BabeConfig, BalancesConfig, BridgeConfig, BridgedAssetConfig,
-    GenesisConfig, GrandpaConfig, RandomConfig, SessionConfig, SessionKeys, Signature,
-    StakerStatus, StakingConfig, SudoConfig, SystemConfig, TokensConfig, VerifierConfig, XykConfig,
-    WASM_BINARY,
+    AccountId, AssetsInfoConfig, BabeConfig, BridgeConfig, BridgedAssetConfig, CouncilConfig,
+    ElectionsConfig, EncryptedTransactionsConfig, GenesisConfig, GrandpaConfig, SessionConfig,
+    SessionKeys, Signature, StakerStatus, StakingConfig, SudoConfig, SystemConfig, TokensConfig,
+    VerifierConfig, XykConfig, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sp_consensus_babe::AuthorityId as BabeId;
@@ -43,18 +43,34 @@ where
 }
 
 /// Generate an Aura authority key.
-pub fn authority_keys_from_seed(s: &str) -> (BabeId, GrandpaId, AccountId) {
+pub fn authority_keys_from_seed(
+    s: &str,
+) -> (
+    BabeId,
+    GrandpaId,
+    AccountId,
+    pallet_encrypted_transactions::ecdsa::AuthorityId,
+) {
     (
         // get_account_id_from_seed::<sr25519::Public>(&format!("{}//stash", s)),
         // get_account_id_from_seed::<sr25519::Public>(s),
         get_from_seed::<BabeId>(s),
         get_from_seed::<GrandpaId>(s),
         get_account_id_from_seed::<sr25519::Public>(s),
+        get_from_seed::<pallet_encrypted_transactions::ecdsa::AuthorityId>(s),
     )
 }
 
-fn session_keys(grandpa: GrandpaId, babe: BabeId) -> SessionKeys {
-    SessionKeys { grandpa, babe }
+fn session_keys(
+    grandpa: GrandpaId,
+    babe: BabeId,
+    xxtx: pallet_encrypted_transactions::ecdsa::AuthorityId,
+) -> SessionKeys {
+    SessionKeys {
+        grandpa,
+        babe,
+        xxtx,
+    }
 }
 
 #[allow(clippy::inconsistent_digit_grouping)]
@@ -140,17 +156,6 @@ pub fn development_config() -> Result<ChainSpec, String> {
                         get_account_id_from_seed::<sr25519::Public>("Charlie"),
                     ),
                 ],
-                // Pre-funded accounts
-                vec![
-                    get_account_id_from_seed::<sr25519::Public>("Alice"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob"),
-                    get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Relay"),
-                    "0xec00ad0ec6eeb271a9689888f644d9262016a26a25314ff4ff5d756404c44112"
-                        .parse()
-                        .unwrap(),
-                ],
                 // Config for Staking
                 // Make sure it works with initial-authorities as staking uses both
                 vec![(
@@ -170,7 +175,6 @@ pub fn development_config() -> Result<ChainSpec, String> {
                     10_000__000_000_000_000_000_000u128,
                 )],
                 true,
-                [0_u8; 32],
             )
         },
         // Bootnodes
@@ -269,25 +273,6 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                         get_account_id_from_seed::<sr25519::Public>("Charlie"),
                     ),
                 ],
-                // Pre-funded accounts
-                vec![
-                    get_account_id_from_seed::<sr25519::Public>("Alice"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob"),
-                    get_account_id_from_seed::<sr25519::Public>("Charlie"),
-                    get_account_id_from_seed::<sr25519::Public>("Dave"),
-                    get_account_id_from_seed::<sr25519::Public>("Eve"),
-                    get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-                    get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Relay"),
-                    "0xec00ad0ec6eeb271a9689888f644d9262016a26a25314ff4ff5d756404c44112"
-                        .parse()
-                        .unwrap(),
-                ],
                 // Config for Staking
                 // Make sure it works with initial-authorities as staking uses both
                 vec![(
@@ -307,7 +292,6 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                     10_000__000_000_000_000_000_000u128,
                 )],
                 true,
-                [0_u8; 32],
             )
         },
         // Bootnodes
@@ -328,30 +312,25 @@ type BridgedAssetsType = Vec<(Vec<u8>, Vec<u8>, Vec<u8>, u32, u32, H160, u128, A
 #[allow(clippy::too_many_arguments)]
 fn testnet_genesis(
     wasm_binary: &[u8],
-    initial_authorities: Vec<(BabeId, GrandpaId, AccountId)>,
+    initial_authorities: Vec<(
+        BabeId,
+        GrandpaId,
+        AccountId,
+        pallet_encrypted_transactions::ecdsa::AuthorityId,
+    )>,
     relay_key: AccountId,
     root_key: AccountId,
     bridged_app_ids: Vec<(App, AppId)>,
     bridged_assets: BridgedAssetsType,
     tokens_endowment: Vec<(u32, u128, AccountId)>,
-    endowed_accounts: Vec<AccountId>,
     staking_accounts: Vec<(AccountId, u32, u128, u32, u128, u32, u128)>,
     _enable_println: bool,
-    init_seed: [u8; 32],
 ) -> GenesisConfig {
     GenesisConfig {
         frame_system: Some(SystemConfig {
             // Add Wasm runtime to storage.
             code: wasm_binary.to_vec(),
             changes_trie_config: Default::default(),
-        }),
-        pallet_balances: Some(BalancesConfig {
-            // Configure endowed accounts with initial balance of 1 << 60.
-            balances: endowed_accounts
-                .iter()
-                .cloned()
-                .map(|k| (k, 1 << 60))
-                .collect(),
         }),
         pallet_session: Some(SessionConfig {
             keys: initial_authorities
@@ -360,7 +339,7 @@ fn testnet_genesis(
                     (
                         x.2.clone(),
                         x.2.clone(),
-                        session_keys(x.1.clone(), x.0.clone()),
+                        session_keys(x.1.clone(), x.0.clone(), x.3.clone()),
                     )
                 })
                 .collect::<Vec<_>>(),
@@ -431,7 +410,8 @@ fn testnet_genesis(
         }),
         orml_tokens: Some(TokensConfig {
             tokens_endowment: tokens_endowment
-                .into_iter()
+                .iter()
+                .cloned()
                 .map(|(token_id, amount, account)| (account, token_id, amount))
                 .collect(),
             created_tokens_for_staking: {
@@ -481,9 +461,15 @@ fn testnet_genesis(
                 })
                 .collect(),
         }),
-        pallet_random_seed: Some(RandomConfig {
-            random_seed: init_seed,
-        }),
         pallet_treasury: Some(Default::default()),
+        pallet_collective_Instance1: Some(CouncilConfig::default()),
+        pallet_elections_phragmen: Some(ElectionsConfig {
+            members: tokens_endowment
+                .iter()
+                .cloned()
+                .map(|(_, _, member)| (member, 100 * 100_000_000_000_000))
+                .collect(),
+        }),
+        pallet_encrypted_transactions: Some(EncryptedTransactionsConfig { keys: vec![] }),
     }
 }

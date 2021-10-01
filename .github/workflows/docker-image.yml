@@ -1,4 +1,5 @@
 name: Docker Image CI
+
 # available flags: 
 ## skip-e2e-tests: skip running e2e tests
 ## skip-build : run the test with latest version.
@@ -13,6 +14,11 @@ on:
 
   workflow_dispatch:
     # For manually trigger
+    inputs:
+        e2eBranch:
+          description: 'Name of the e2e target branch'
+          required: false
+          default: ''
 
 
 jobs:
@@ -42,6 +48,8 @@ jobs:
   clippy:
     name: Clippy check
     runs-on: ubuntu-latest
+    if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
+
     steps:
       - uses: actions/checkout@v2
       - name: Install latest nightly
@@ -60,6 +68,7 @@ jobs:
 
   unit-test:
     runs-on: ubuntu-latest
+    if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
     steps:
       -
         name: Checkout
@@ -93,10 +102,14 @@ jobs:
           path: ut-results.xml
           reporter: jest-junit
 
-
   build:
     runs-on: ubuntu-latest
     steps:
+      -
+        name: Debug info about publishing.
+        run: |
+          echo ${{ github.ref }} == 'refs/heads/develop'
+          echo ${{ github.ref }}
       -
         name: Checkout
         uses: actions/checkout@v2
@@ -114,16 +127,16 @@ jobs:
         with:
           file: "devops/dockerfiles/node-and-runtime/Dockerfile"
           push: false
-          tags: mangatasolutions/mangata-node:latest,mangatasolutions/mangata-node:${{ github.sha }},mangatasolutions/mangata-node:${{ github.run_id }}
-          outputs: type=docker,dest=/tmp/${{ github.run_id }}.tar
+          tags: mangatasolutions/mangata-node:latest,mangatasolutions/mangata-node:${{ github.sha }}
+          outputs: type=docker,dest=/tmp/${{ github.sha }}.tar
       -
         name: Upload artifact
         uses: actions/upload-artifact@v2
         if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
         with:
-          name: ${{ github.run_id }}
-          path: /tmp/${{ github.run_id }}.tar
-      
+          name: ${{ github.sha }}
+          path: /tmp/${{ github.sha }}.tar
+
   e2e-test:
     needs: build
     runs-on: ubuntu-latest
@@ -131,9 +144,12 @@ jobs:
     env:
       API_URL: 'ws://172.16.238.10:9944'
       TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}
+      E2E_TREASURY_PALLET_ADDRESS : ${{ secrets.E2E_TREASURY_PALLET_ADDRESS }}
+      E2E_XYK_PALLET_ADDRESS : ${{ secrets.E2E_XYK_PALLET_ADDRESS }} 
+      E2E_TREASURY_BURN_PALLET_ADDRESS : ${{ secrets.E2E_TREASURY_BURN_PALLET_ADDRESS }}
       TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
-      MANGATA_NODE_VERSION: ${{ github.run_id }}
-
+      MANGATA_NODE_VERSION: ${{ github.sha }}
+      E2EBRANCHNAME: 'main'
     steps:
     ####IDK, but this is neccesary for reports
       -
@@ -145,20 +161,46 @@ jobs:
         if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
         uses: actions/download-artifact@v2
         with:
-          name: ${{ github.run_id }}
+          name: ${{ github.sha }}
           path: /tmp
       -
         name: Load Docker image
         if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
         run: |
-          docker load --input /tmp/${{ github.run_id }}.tar
+          docker load --input /tmp/${{ github.sha }}.tar
           docker image ls -a
+      
+      - name: E2E- Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v4.9
+      
+      - name: E2E- Get target branch. 
+        run: |
+          echo "This job name branch is: ${{ steps.branch-name.outputs.current_branch }}"
+      
+      - name: E2E- Calculate if run e2e feature branch or main.
+        run: |
+          echo DEFAULT: E2E test will run with: $E2EBRANCHNAME
+          echo "Running on: ${{ steps.branch-name.outputs.current_branch }}"
+          if [ $(git ls-remote --heads https://github.com/mangata-finance/mangata-e2e.git "${{ steps.branch-name.outputs.current_branch }}" --force --quiet  | wc -l) -gt 0 ]; then echo "E2EBRANCHNAME=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_ENV; echo "MATCH - OK" ;  fi
+      
+      - name: Decide if main - branch or parameter
+      # if we have something in e2eBranch - override E2EBranchName, else -> E2EBRANCHNAME , that
+      # by default will be main. 
+
+        run: 
+          echo "E2EBRANCHNAME=${{ github.event.inputs.e2eBranch || env.E2EBRANCHNAME }}" >> $GITHUB_ENV
+      
+      - name: E2E- Get target branch. 
+        run: |
+         echo "${{ env.E2EBRANCHNAME }}"
+
       - 
         name: Checkout tests
         uses: actions/checkout@v2
         with:
           repository: mangata-finance/mangata-e2e
-          ref: 'main'
+          ref: '${{ env.E2EBRANCHNAME }}'
           path: 'e2eTests'
       
       - name: Start mangata-node node with local build
@@ -193,7 +235,10 @@ jobs:
   publish:
     needs: [rustfmt-check, unit-test, e2e-test, clippy]
     runs-on: ubuntu-latest
-    if: "!contains(github.event.pull_request.labels.*.name, 'skip-publish') && ${{ github.event_name == 'push'}}"
+    if: |
+      github.ref == 'refs/heads/develop' && 
+      !contains(github.event.pull_request.labels.*.name, 'skip-publish')
+    #if: "!contains(github.event.pull_request.labels.*.name, 'skip-publish') && ${{ github.event_name == 'push'}} && github.event.pull_request.merged == true"
     #if: # its a push to develop.
     steps:
       -
@@ -215,13 +260,13 @@ jobs:
         name: Download artifact
         uses: actions/download-artifact@v2
         with:
-          name: ${{ github.run_id }}
+          name: ${{ github.sha }}
           path: /tmp
       
       -
         name: Load Docker image
         run: |
-          docker load --input /tmp/${{ github.run_id }}.tar
+          docker load --input /tmp/${{ github.sha }}.tar
           docker image ls -a
 
       -
@@ -234,12 +279,11 @@ jobs:
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
         
-      - name: Save DigitalOcean kubeconfig with short-lived credentials
-        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 ${{ secrets.K8S_CLUSTER_ID }}
+      # - name: Save DigitalOcean kubeconfig with short-lived credentials
+      #   run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 ${{ secrets.K8S_CLUSTER_ID }}
       
       # - name: Deploy to DigitalOcean Kubernetes
       #   run: kubectl rollout restart deployment/mangata-node
       #
       # - name: Verify deployment
       #   run: kubectl rollout status deployment/mangata-node
-      

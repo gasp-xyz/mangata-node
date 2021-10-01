@@ -704,6 +704,34 @@ impl<T: Trait> Module<T> {
         let (first_asset_reserve, second_asset_reserve) =
             Module::<T>::get_reserves(first_asset_id, second_asset_id)?;
 
+        let (first_asset_amount, second_asset_amount) = Self::get_burn_amount_reserves(
+            first_asset_reserve,
+            second_asset_reserve,
+            liquidity_asset_id,
+            liquidity_asset_amount,
+        )?;
+
+        log!(
+            info,
+            "get_burn_amount: ({}, {}, {}) -> ({}, {})",
+            first_asset_id,
+            second_asset_id,
+            liquidity_asset_amount,
+            first_asset_amount,
+            second_asset_amount
+        );
+
+        Ok((first_asset_amount, second_asset_amount))
+    }
+
+    pub fn get_burn_amount_reserves(
+        first_asset_reserve: Balance,
+        second_asset_reserve: Balance,
+        liquidity_asset_id: TokenId,
+        liquidity_asset_amount: Balance,
+    ) -> Result<(Balance, Balance), DispatchError> {
+        // Get token reserves and liquidity asset id
+
         let total_liquidity_assets: Balance =
             <T as Trait>::Currency::total_issuance(liquidity_asset_id.into()).into();
 
@@ -724,16 +752,6 @@ impl<T: Trait> Module<T> {
             total_liquidity_assets,
         )
         .map_err(|_| Error::<T>::UnexpectedFailure)?;
-
-        log!(
-            info,
-            "get_burn_amount: ({}, {}, {}) -> ({}, {})",
-            first_asset_id,
-            second_asset_id,
-            liquidity_asset_amount,
-            first_asset_amount,
-            second_asset_amount
-        );
 
         Ok((first_asset_amount, second_asset_amount))
     }
@@ -1581,8 +1599,12 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         .or(Err(Error::<T>::NotEnoughAssets))?;
 
         // Calculate first and second token amounts depending on liquidity amount to burn
-        let (first_asset_amount, second_asset_amount) =
-            Module::<T>::get_burn_amount(first_asset_id, second_asset_id, liquidity_asset_amount)?;
+        let (first_asset_amount, second_asset_amount) = Module::<T>::get_burn_amount_reserves(
+            first_asset_reserve,
+            second_asset_reserve,
+            liquidity_asset_id,
+            liquidity_asset_amount,
+        )?;
 
         let total_liquidity_assets: Balance =
             <T as Trait>::Currency::total_issuance(liquidity_asset_id.into()).into();

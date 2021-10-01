@@ -1,0 +1,99 @@
+{
+  "uid" : "23bd4783f20e7475",
+  "name" : "[BUG?] SDK- Nonce management - RPC Failure - Not enough balance",
+  "fullName" : "SDK test - Nonce tests - Errors.[BUG?] SDK- Nonce management - RPC Failure - Not enough balance",
+  "historyId" : "29472f648e6e85d393fc0bb751e1aeba",
+  "time" : {
+    "start" : 1633070695558,
+    "stop" : 1633070695558,
+    "duration" : 0
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "skipped",
+  "statusMessage" : "Temporarily disabled with xit",
+  "statusTrace" : "undefined",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "SDK test - Nonce tests - Errors"
+  }, {
+    "name" : "testClass",
+    "value" : "SDK test - Nonce tests - Errors"
+  }, {
+    "name" : "testMethod",
+    "value" : "[BUG?] SDK- Nonce management - RPC Failure - Not enough balance"
+  }, {
+    "name" : "package",
+    "value" : "SDK test - Nonce tests - Errors"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 5,
+        "passed" : 0,
+        "unknown" : 0,
+        "total" : 5
+      },
+      "items" : [ {
+        "uid" : "8381225754f10f93",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/420//#testresult/8381225754f10f93",
+        "status" : "skipped",
+        "statusDetails" : "Temporarily disabled with xit",
+        "time" : {
+          "start" : 1633013292863,
+          "stop" : 1633013292863,
+          "duration" : 0
+        }
+      }, {
+        "uid" : "e0038a9a24014204",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/415//#testresult/e0038a9a24014204",
+        "status" : "skipped",
+        "statusDetails" : "Temporarily disabled with xit",
+        "time" : {
+          "start" : 1633003735293,
+          "stop" : 1633003735293,
+          "duration" : 0
+        }
+      }, {
+        "uid" : "fc02c22ab8a2b979",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/407//#testresult/fc02c22ab8a2b979",
+        "status" : "skipped",
+        "statusDetails" : "Temporarily disabled with xit",
+        "time" : {
+          "start" : 1632919603747,
+          "stop" : 1632919603747,
+          "duration" : 0
+        }
+      }, {
+        "uid" : "d11b25a7a00a3600",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/394//#testresult/d11b25a7a00a3600",
+        "status" : "skipped",
+        "statusDetails" : "Temporarily disabled with xit",
+        "time" : {
+          "start" : 1632835531827,
+          "stop" : 1632835531827,
+          "duration" : 0
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "23bd4783f20e7475.json",
+  "parameterValues" : [ ]
+}

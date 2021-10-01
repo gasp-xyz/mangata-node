@@ -1,0 +1,93 @@
+{
+  "uid" : "921185f36e3ec153",
+  "name" : "SDK- Nonce management - user - parallel",
+  "fullName" : "SDK test - Nonce tests - user.SDK- Nonce management - user - parallel",
+  "historyId" : "5ee20637ea357699703fbd887bb8d0d6",
+  "time" : {
+    "start" : 1633070582000,
+    "stop" : 1633070599392,
+    "duration" : 17392
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "SDK test - Nonce tests - user"
+  }, {
+    "name" : "testClass",
+    "value" : "SDK test - Nonce tests - user"
+  }, {
+    "name" : "testMethod",
+    "value" : "SDK- Nonce management - user - parallel"
+  }, {
+    "name" : "package",
+    "value" : "SDK test - Nonce tests - user"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 5,
+        "unknown" : 0,
+        "total" : 5
+      },
+      "items" : [ {
+        "uid" : "a2a9b311f17dfda9",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/420//#testresult/a2a9b311f17dfda9",
+        "status" : "passed",
+        "time" : {
+          "start" : 1633013179338,
+          "stop" : 1633013198075,
+          "duration" : 18737
+        }
+      }, {
+        "uid" : "1ed3ac0ed55c2476",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/415//#testresult/1ed3ac0ed55c2476",
+        "status" : "passed",
+        "time" : {
+          "start" : 1633003621619,
+          "stop" : 1633003639067,
+          "duration" : 17448
+        }
+      }, {
+        "uid" : "b2593fb5baeb750a",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/407//#testresult/b2593fb5baeb750a",
+        "status" : "passed",
+        "time" : {
+          "start" : 1632919495606,
+          "stop" : 1632919512978,
+          "duration" : 17372
+        }
+      }, {
+        "uid" : "4168aae60f09364f",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/394//#testresult/4168aae60f09364f",
+        "status" : "passed",
+        "time" : {
+          "start" : 1632835423538,
+          "stop" : 1632835440961,
+          "duration" : 17423
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "921185f36e3ec153.json",
+  "parameterValues" : [ ]
+}

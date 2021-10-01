@@ -1,0 +1,16 @@
+[ {
+  "values" : [ "" ],
+  "name" : "ENV"
+}, {
+  "values" : [ "test-sequential" ],
+  "name" : "TEST_SCRIPT"
+}, {
+  "values" : [ "latest" ],
+  "name" : "MANGATA_NODE_VERSION"
+}, {
+  "values" : [ "ws://172.16.238.10:9944" ],
+  "name" : "API_URL"
+}, {
+  "values" : [ "https://mangata-finance.github.io/mangata-node" ],
+  "name" : "URL"
+} ]

@@ -72,6 +72,11 @@ pub struct TxnRegistryDetails<AccountId, Index> {
     pub builder: AccountId,
     pub executor: AccountId,
     pub singly_encrypted_call: Option<Vec<u8>>,
+    pub decrypted_call: Option<Vec<u8>>,
+    // TODO
+    // Maybe length constriant encryption nonce to 16 bytes 
+    pub doubly_encrypted_nonce: Option<Vec<u8>>,
+    pub singly_encrypted_nonce: Option<Vec<u8>>,
 }
 
 decl_storage! {
@@ -90,7 +95,7 @@ decl_storage! {
         SinglyEncryptedQueue get(fn singly_encrypted_queue): map hasher(blake2_128_concat) T::AccountId => Vec<T::Hash>;
 
         /// All transactions indexed by session index and user with txn identifier and fee charged (derived from call weight)
-        TxnRecord get(fn txn_record): double_map hasher(blake2_128_concat) T::Index,  hasher(blake2_128_concat) T:: AccountId => BTreeMap<T::Hash, (Balance, bool)>;
+        TxnRecord get(fn txn_record): double_map hasher(blake2_128_concat) T::Index,  hasher(blake2_128_concat) T:: AccountId => BTreeMap<T::Hash, (T::Index, Balance, bool)>;
 
         /// Executed transactions indexed by session index and user with txn identifier
         ExecutedTxnRecord get(fn execd_txn_record): double_map hasher(blake2_128_concat) T::Index,  hasher(blake2_128_concat) T:: AccountId => Vec<T::Hash>;
@@ -115,7 +120,8 @@ impl<T: Trait> Module<T> {
 
 decl_error! {
     /// Errors
-    pub enum Error for Module<T: Trait> {
+    pub enum Error for Module<T: Trait>
+    {
         IncorrectCallWeight,
         NoMarkedRefund,
         CallDeserilizationFailed,
@@ -130,12 +136,25 @@ decl_event!(
     where
         AccountId = <T as frame_system::Trait>::AccountId,
         Index = <T as frame_system::Trait>::Index,
+        Hash = <T as frame_system::Trait>::Hash,
     {
         /// A called was called. \[result\]
-        Called(DispatchResult),
+        Called(DispatchResult, AccountId, Index, Hash),
+
+        /// Calls were executed
+        CallsExecuted(AccountId, Index, Hash),
 
         /// A user has submitted a doubly encrypted transaction.
-        DoublyEncryptedTxnSubmitted(AccountId, Index),
+        DoublyEncryptedTxnSubmitted(AccountId, Index, Hash),
+
+        /// A collator has submitted a singly encrypted transaction.
+        SinglyEncryptedTxnSubmitted(AccountId, Index, Hash),
+
+        /// A collator has submitted a decrypted transaction.
+        DecryptedTransactionSubmitted(AccountId, Index, Hash),
+
+        /// User refunded
+        UserRefunded(Index, AccountId, Index, Hash, Balance),
     }
 );
 
@@ -170,18 +189,21 @@ decl_module! {
                 weight: weight,
                 builder: builder.clone(),
                 executor: executor,
-                singly_encrypted_call: None
+                singly_encrypted_call: None,
+                decrypted_call: None,
+                doubly_encrypted_nonce: None,
+                singly_encrypted_nonce: None
             };
 
             TxnRegistry::<T>::insert(identifier, txn_registry_details);
             DoublyEncryptedQueue::<T>::mutate(&builder, |vec_hash| {vec_hash.push(identifier)});
-            TxnRecord::<T>::mutate(T::Index::from(<pallet_session::Module<T>>::current_index()), &user, |tree_record| tree_record.insert(identifier, (fee_charged, false)));
-            Self::deposit_event(RawEvent::DoublyEncryptedTxnSubmitted(user, nonce));
+            TxnRecord::<T>::mutate(T::Index::from(<pallet_session::Module<T>>::current_index()), &user, |tree_record| tree_record.insert(identifier, (nonce, fee_charged, false)));
+            Self::deposit_event(RawEvent::DoublyEncryptedTxnSubmitted(user, nonce, identifier));
             Ok(())
         }
 
         #[weight = 10_000]
-        fn submit_singly_encrypted_transaction(origin, identifier: T::Hash, singly_encrypted_call: Vec<u8>) -> DispatchResult{
+        fn submit_singly_encrypted_transaction(origin, identifier: T::Hash, singly_encrypted_call: Vec<u8>, doubly_encrypted_nonce: Vec<u8>) -> DispatchResult{
             ensure_none(origin)?;
             TxnRegistry::<T>::try_mutate(identifier, |txn_registry_details_option| -> DispatchResult {
                 if let Some (ref mut txn_registry_details) = txn_registry_details_option{
@@ -189,6 +211,10 @@ decl_module! {
                     DoublyEncryptedQueue::<T>::mutate(&txn_registry_details.builder, |vec_hash| {vec_hash.retain(|x| *x!=identifier)});
                     SinglyEncryptedQueue::<T>::mutate(&txn_registry_details.executor, |vec_hash| {vec_hash.push(identifier)});
                     txn_registry_details.singly_encrypted_call = Some(singly_encrypted_call);
+                    txn_registry_details.doubly_encrypted_nonce = Some(doubly_encrypted_nonce);
+
+                    Self::deposit_event(RawEvent::SinglyEncryptedTxnSubmitted(txn_registry_details.user.clone(), txn_registry_details.nonce, identifier));
+
                     Ok(())
 
                 }else{
@@ -199,21 +225,29 @@ decl_module! {
         }
 
         #[weight = 10_000]
-        fn submit_decrypted_transaction(origin, identifier: T::Hash, decrypted_call: Vec<u8>, weight: Weight) -> DispatchResult{
+        fn submit_decrypted_transaction(origin, identifier: T::Hash, decrypted_call: Vec<u8>, singly_encrypted_nonce: Vec<u8>, weight: Weight) -> DispatchResult{
             ensure_none(origin)?;
-            let txn_registry_details = TxnRegistry::<T>::get(identifier).ok_or_else(|| Error::<T>::TxnDoesNotExistsInRegistry)?;
-            SinglyEncryptedQueue::<T>::mutate(txn_registry_details.executor, |vec_hash| {vec_hash.retain(|x| *x!=identifier)});
+            
+            let mut txn_registry_details = TxnRegistry::<T>::get(identifier).ok_or_else(|| Error::<T>::TxnDoesNotExistsInRegistry)?;
+            SinglyEncryptedQueue::<T>::mutate(&txn_registry_details.executor, |vec_hash| {vec_hash.retain(|x| *x!=identifier)});
             ExecutedTxnRecord::<T>::mutate(T::Index::from(<pallet_session::Module<T>>::current_index()), &txn_registry_details.user, |vec_hash| {vec_hash.push(identifier)});
+
+            txn_registry_details.decrypted_call = Some(decrypted_call.clone());
+            txn_registry_details.singly_encrypted_nonce = Some(singly_encrypted_nonce);
+
+            TxnRegistry::<T>::insert(identifier, &txn_registry_details);            
+
+            Self::deposit_event(RawEvent::DecryptedTransactionSubmitted(txn_registry_details.user.clone(), txn_registry_details.nonce, identifier));
 
             let calls: Vec<Box<<T as Trait>::Call>> = Decode::decode(&mut &decrypted_call[..]).map_err(|_| DispatchError::from(Error::<T>::CallDeserilizationFailed))?;
 
-            Module::<T>::execute_calls(RawOrigin::Root.into(), calls, txn_registry_details.user, txn_registry_details.nonce, weight)?;
-
+            Module::<T>::execute_calls(RawOrigin::Root.into(), calls, txn_registry_details.user, identifier, txn_registry_details.nonce, weight)?;
+            
             Ok(())
         }
 
         #[weight = (weight.saturating_add(10_000), Pays::No)]
-        fn execute_calls(origin, calls: Vec<Box<<T as Trait>::Call>>, user_account: T::AccountId, nonce: T::Index, weight: Weight) -> DispatchResult{
+        fn execute_calls(origin, calls: Vec<Box<<T as Trait>::Call>>, user_account: T::AccountId, identifier: T::Hash, nonce: T::Index, weight: Weight) -> DispatchResult{
 
             ensure_root(origin)?;
 
@@ -227,8 +261,10 @@ decl_module! {
 
             for call in calls {
                 let res = call.dispatch_bypass_filter(frame_system::RawOrigin::Signed(user_account.clone()).into());
-                Self::deposit_event(RawEvent::Called(res.map(|_| ()).map_err(|e| e.error)));
+                Self::deposit_event(RawEvent::Called(res.map(|_| ()).map_err(|e| e.error), user_account.clone(), nonce, identifier));
             }
+
+            Self::deposit_event(RawEvent::CallsExecuted(user_account, nonce, identifier));
 
             Ok(())
 
@@ -244,13 +280,15 @@ decl_module! {
                 return Err(DispatchError::from(Error::<T>::NoMarkedRefund));
             }
             else {
-                let (fee_charged, already_refunded) = TxnRecord::<T>::get(previous_session_index, &user).get(&identifier).ok_or_else(|| DispatchError::from(Error::<T>::NoMarkedRefund))?.clone();
+                let (nonce, fee_charged, already_refunded) = TxnRecord::<T>::get(previous_session_index, &user).get(&identifier).ok_or_else(|| DispatchError::from(Error::<T>::NoMarkedRefund))?.clone();
 
                 ensure!(!already_refunded, Error::<T>::NoMarkedRefund);
 
                 // TODO
                 // Refund fee
-                TxnRecord::<T>::mutate(T::Index::from(<pallet_session::Module<T>>::current_index()), &user, |tree_record| tree_record.insert(identifier, (fee_charged, true)));
+                TxnRecord::<T>::mutate(T::Index::from(<pallet_session::Module<T>>::current_index()), &user, |tree_record| tree_record.insert(identifier, (nonce, fee_charged, true)));
+
+                Self::deposit_event(RawEvent::UserRefunded(previous_session_index, user, nonce, identifier, fee_charged));
             }
 
             Ok(())

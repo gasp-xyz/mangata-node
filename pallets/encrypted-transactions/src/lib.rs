@@ -74,7 +74,7 @@ pub struct TxnRegistryDetails<AccountId, Index> {
     pub singly_encrypted_call: Option<Vec<u8>>,
     pub decrypted_call: Option<Vec<u8>>,
     // TODO
-    // Maybe length constriant encryption nonce to 16 bytes 
+    // Maybe length constriant encryption nonce to 16 bytes
     pub doubly_encrypted_nonce: Option<Vec<u8>>,
     pub singly_encrypted_nonce: Option<Vec<u8>>,
 }
@@ -227,7 +227,7 @@ decl_module! {
         #[weight = 10_000]
         fn submit_decrypted_transaction(origin, identifier: T::Hash, decrypted_call: Vec<u8>, singly_encrypted_nonce: Vec<u8>, weight: Weight) -> DispatchResult{
             ensure_none(origin)?;
-            
+
             let mut txn_registry_details = TxnRegistry::<T>::get(identifier).ok_or_else(|| Error::<T>::TxnDoesNotExistsInRegistry)?;
             SinglyEncryptedQueue::<T>::mutate(&txn_registry_details.executor, |vec_hash| {vec_hash.retain(|x| *x!=identifier)});
             ExecutedTxnRecord::<T>::mutate(T::Index::from(<pallet_session::Module<T>>::current_index()), &txn_registry_details.user, |vec_hash| {vec_hash.push(identifier)});
@@ -235,14 +235,14 @@ decl_module! {
             txn_registry_details.decrypted_call = Some(decrypted_call.clone());
             txn_registry_details.singly_encrypted_nonce = Some(singly_encrypted_nonce);
 
-            TxnRegistry::<T>::insert(identifier, &txn_registry_details);            
+            TxnRegistry::<T>::insert(identifier, &txn_registry_details);
 
             Self::deposit_event(RawEvent::DecryptedTransactionSubmitted(txn_registry_details.user.clone(), txn_registry_details.nonce, identifier));
 
             let calls: Vec<Box<<T as Trait>::Call>> = Decode::decode(&mut &decrypted_call[..]).map_err(|_| DispatchError::from(Error::<T>::CallDeserilizationFailed))?;
 
             Module::<T>::execute_calls(RawOrigin::Root.into(), calls, txn_registry_details.user, identifier, txn_registry_details.nonce, weight)?;
-            
+
             Ok(())
         }
 

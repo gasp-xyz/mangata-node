@@ -1,0 +1,108 @@
+{
+  "uid" : "90838d888e04c324",
+  "name" : "SDK- Nonce management - Using custom nonce",
+  "fullName" : "SDK test - Nonce tests - user.SDK- Nonce management - Using custom nonce",
+  "historyId" : "3fa022b6ec78032e42219aa0a1841e37",
+  "time" : {
+    "start" : 1633361503778,
+    "stop" : 1633361521098,
+    "duration" : 17320
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "failed",
+  "statusMessage" : "Error: Invalid character",
+  "statusTrace" : "Error: Invalid character\n                    at assert (/home/runner/work/mangata-e2e/mangata-e2e/node_modules/bn.js/lib/bn.js:6:21)\n                    at parseBase (/home/runner/work/mangata-e2e/mangata-e2e/node_modules/bn.js/lib/bn.js:274:7)\n                    at BN._parseBase (/home/runner/work/mangata-e2e/mangata-e2e/node_modules/bn.js/lib/bn.js:310:14)\n                    at BN.init [as _init] (/home/runner/work/mangata-e2e/mangata-e2e/node_modules/bn.js/lib/bn.js:105:14)\n                    at new BN (/home/runner/work/mangata-e2e/mangata-e2e/node_modules/bn.js/lib/bn.js:39:12)\n                    at /home/runner/work/mangata-e2e/mangata-e2e/node_modules/mangata-sdk/src/services/Query.ts:31:10\n                    at Generator.next (<anonymous>)\n                    at fulfilled (/home/runner/work/mangata-e2e/mangata-e2e/node_modules/mangata-sdk/build/services/Query.js:5:58)\n                    at runMicrotasks (<anonymous>)\n                    at processTicksAndRejections (internal/process/task_queues.js:95:5)",
+  "flaky" : false,
+  "newFailed" : true,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "SDK test - Nonce tests - user"
+  }, {
+    "name" : "testClass",
+    "value" : "SDK test - Nonce tests - user"
+  }, {
+    "name" : "testMethod",
+    "value" : "SDK- Nonce management - Using custom nonce"
+  }, {
+    "name" : "package",
+    "value" : "SDK test - Nonce tests - user"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ {
+      "name" : "Product defects",
+      "matchedStatuses" : [ ],
+      "flaky" : false
+    } ],
+    "history" : {
+      "statistic" : {
+        "failed" : 1,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 5,
+        "unknown" : 0,
+        "total" : 6
+      },
+      "items" : [ {
+        "uid" : "f863d0380b1f674c",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/424//#testresult/f863d0380b1f674c",
+        "status" : "passed",
+        "time" : {
+          "start" : 1633070652806,
+          "stop" : 1633070695549,
+          "duration" : 42743
+        }
+      }, {
+        "uid" : "f8ecf3f8b0497ba6",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/420//#testresult/f8ecf3f8b0497ba6",
+        "status" : "passed",
+        "time" : {
+          "start" : 1633013251455,
+          "stop" : 1633013292856,
+          "duration" : 41401
+        }
+      }, {
+        "uid" : "251f11fc4d206406",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/415//#testresult/251f11fc4d206406",
+        "status" : "passed",
+        "time" : {
+          "start" : 1633003693823,
+          "stop" : 1633003735285,
+          "duration" : 41462
+        }
+      }, {
+        "uid" : "d58eb8123c6d4974",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/407//#testresult/d58eb8123c6d4974",
+        "status" : "passed",
+        "time" : {
+          "start" : 1632919567678,
+          "stop" : 1632919603738,
+          "duration" : 36060
+        }
+      }, {
+        "uid" : "91e8f401bc99d3c1",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/394//#testresult/91e8f401bc99d3c1",
+        "status" : "passed",
+        "time" : {
+          "start" : 1632835495705,
+          "stop" : 1632835531820,
+          "duration" : 36115
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "90838d888e04c324.json",
+  "parameterValues" : [ ]
+}

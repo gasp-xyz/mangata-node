@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.3.0](https://github.com/mangata-finance/mangata-node/compare/v0.2.0...v0.3.0) (2021-10-05)
+
 ## [0.2.0](https://github.com/mangata-finance/mangata-node/compare/v0.1.0...v0.2.0) (2021-09-15)
 - extend block header with extra field seed
 - store shuffling seed inside header instead of storage

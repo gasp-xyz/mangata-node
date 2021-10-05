@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.3.0](https://github.com/mangata-finance/mangata-node/compare/v0.2.0...v0.3.0) (2021-10-05)
+- Added encryption nonces for doubly and singly encrypted calls. This changes the TxnRegistryDetails type used in storage. And adds a field to the two unsigned extrinsics to be used by the collator.
+- Added events. Upgraded existing events to contain more info.
+
 ## [0.2.0](https://github.com/mangata-finance/mangata-node/compare/v0.1.0...v0.2.0) (2021-09-15)
 - extend block header with extra field seed
 - store shuffling seed inside header instead of storage

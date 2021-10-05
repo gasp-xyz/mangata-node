@@ -82,6 +82,7 @@ substrate-wasm-builder-runner = { path = "../substrate/utils/wasm-builder-runner
 substrate-test-utils-derive = { path = "../substrate/test-utils/derive" }
 substrate-test-utils = { path = "../substrate/test-utils" }
 sp-panic-handler = { path = "../substrate/primitives/panic-handler" }
+sp-encrypted-tx = { path = "../substrate/primitives/encrypted-tx" }
 sp-inherents = { path = "../substrate/primitives/inherents" }
 sp-authorship = { path = "../substrate/primitives/authorship" }
 sp-storage = { path = "../substrate/primitives/storage" }

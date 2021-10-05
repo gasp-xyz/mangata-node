@@ -5,6 +5,7 @@
 use codec::{Decode, Encode};
 use frame_support::storage::child;
 use frame_support::traits::OnUnbalanced;
+use sp_encrypted_tx::EncryptedTx;
 use frame_support::{
     decl_error, decl_event, decl_module, decl_storage,
     dispatch::{DispatchError, DispatchResult},
@@ -19,7 +20,7 @@ use frame_system::{ensure_root, ensure_signed, RawOrigin};
 use mangata_primitives::Balance;
 use orml_tokens::MultiTokenCurrency;
 use sp_application_crypto::RuntimeAppPublic;
-use sp_core::storage::ChildInfo;
+use sp_core::{H256, storage::ChildInfo};
 use sp_runtime::traits::Hash;
 use sp_runtime::{
     traits::{Member, Zero},
@@ -215,7 +216,7 @@ decl_module! {
         #[weight = (weight.saturating_add(10_000), Pays::No)]
         fn execute_calls(origin, calls: Vec<Box<<T as Trait>::Call>>, user_account: T::AccountId, nonce: T::Index, weight: Weight) -> DispatchResult{
 
-            ensure_root(origin)?;
+            // ensure_root(origin)?;
 
             let mut calls_weight: u128 = u128::zero();
             for call in calls.iter() {
@@ -257,6 +258,28 @@ decl_module! {
 
         }
 
+    }
+}
+
+impl<T: Trait> Module<T> {
+    pub fn get_double_encrypted_transactions(block_builder_id: T::AccountId) -> Vec<EncryptedTx>{
+        let txs = DoublyEncryptedQueue::<T>::get(block_builder_id);
+        txs.into_iter().map(|id|  {
+            EncryptedTx{
+                tx_id: H256::from_slice(id.as_ref()),
+                data: TxnRegistry::<T>::get(id).unwrap().doubly_encrypted_call
+            }
+        }).collect()
+    }
+
+    pub fn get_singly_encrypted_transactions(block_builder_id: T::AccountId) -> Vec<EncryptedTx>{
+        let txs = SinglyEncryptedQueue::<T>::get(block_builder_id);
+        txs.into_iter().map(|id|  {
+            EncryptedTx{
+                tx_id: H256::from_slice(id.as_ref()),
+                data: TxnRegistry::<T>::get(id).unwrap().singly_encrypted_call.unwrap()
+            }
+        }).collect()
     }
 }
 

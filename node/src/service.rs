@@ -183,6 +183,7 @@ pub fn new_full(config: Configuration) -> Result<TaskManager, ServiceError> {
             client.clone(),
             transaction_pool,
             prometheus_registry.as_ref(),
+            keystore.clone(),
         );
 
         let can_author_with =

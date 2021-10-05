@@ -66,6 +66,7 @@ use xyk_runtime_api::{RpcAmountsResult, RpcResult};
 use frame_system::EnsureOneOf;
 pub use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
 use sp_encrypted_tx::ExtrinsicType;
+use sp_core::crypto::Public;
 
 /// Bridge pallets
 pub use bridge;
@@ -998,19 +999,48 @@ impl_runtime_apis! {
     }
 
     impl sp_encrypted_tx::EncryptedTxApi<Block> for Runtime {
-        fn create_submit_encrypted_tx(account: sp_runtime::AccountId32, data: Vec<u8>, proof: sp_core::H256) -> Option<<Block as BlockT>::Extrinsic>{
-            // TODO: update when FIFO pallet is ready
-            Some(UncheckedExtrinsic::new_unsigned(
-                    Call::Encrypted(pallet_encrypted_tx::Call::submit_encrypted_tx(account, data, proof))))
+
+        fn create_submit_singly_encrypted_transaction(account: sp_core::H256, singly_encrypted_call: Vec<u8>) -> <Block as BlockT>::Extrinsic{
+            UncheckedExtrinsic::new_unsigned(
+                    Call::EncryptedTransactions(pallet_encrypted_transactions::Call::submit_singly_encrypted_transaction(account, singly_encrypted_call)))
         }
-        fn get_extrinsic_info(extrinsic: <Block as BlockT>::Extrinsic) -> ExtrinsicType{
+
+        fn create_submit_decrypted_transaction(account: sp_core::H256, decrypted_call: Vec<u8>, weight: Weight) -> <Block as BlockT>::Extrinsic{
+            UncheckedExtrinsic::new_unsigned(
+                    Call::EncryptedTransactions(pallet_encrypted_transactions::Call::submit_decrypted_transaction(account, decrypted_call, weight)))
+        }
+
+        fn get_type(extrinsic: <Block as BlockT>::Extrinsic) -> ExtrinsicType<<Block as BlockT>::Hash>{
 
             match extrinsic.function{
-                Call::Encrypted(pallet_encrypted_tx::Call::submit_encrypted_tx(account, data, proof)) => {
-                    ExtrinsicType::SubmitEncryptedTx{account: account, data: data, proof: proof}
+                Call::EncryptedTransactions(pallet_encrypted_transactions::Call::submit_singly_encrypted_transaction(identifier, singly_encrypted_call)) => {
+                    ExtrinsicType::SinglyEncryptedTx{identifier, singly_encrypted_call}
+                },
+
+                Call::EncryptedTransactions(pallet_encrypted_transactions::Call::submit_doubly_encrypted_transaction(doubly_encrypted_call, nonce, weight, builder, executor)) => {
+                    ExtrinsicType::DoublyEncryptedTx{doubly_encrypted_call, nonce, weight, builder, executor}
                 },
                 _ => { ExtrinsicType::Other }
             }
+        }
+
+		fn get_double_encrypted_transactions(block_builder_id: sp_runtime::AccountId32) -> Vec<sp_encrypted_tx::EncryptedTx>{
+            EncryptedTransactions::get_double_encrypted_transactions(block_builder_id)
+        }
+
+		fn get_singly_encrypted_transactions(block_builder_id: sp_runtime::AccountId32) -> Vec<sp_encrypted_tx::EncryptedTx>{
+            EncryptedTransactions::get_singly_encrypted_transactions(block_builder_id)
+        }
+
+		fn get_account_id(block_builder_id: u32) -> sp_runtime::AccountId32{
+            Session::validators()[block_builder_id as usize].clone()
+        }
+
+		fn get_authority_public_key(account_id: sp_runtime::AccountId32) -> sp_core::ecdsa::Public{
+            let keys = EncryptedTransactions::keys();
+            let ecdsa_pub_key = keys.get(&account_id).unwrap();
+            let slice = ecdsa_pub_key.as_ref();
+            sp_core::ecdsa::Public::from_slice(slice)
         }
     }
 }

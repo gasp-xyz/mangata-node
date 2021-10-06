@@ -1000,12 +1000,12 @@ impl_runtime_apis! {
 
     impl sp_encrypted_tx::EncryptedTxApi<Block> for Runtime {
 
-        fn create_submit_singly_encrypted_transaction(account: sp_core::H256, singly_encrypted_call: Vec<u8>) -> <Block as BlockT>::Extrinsic{
+        fn create_submit_singly_encrypted_transaction(account: <Block as BlockT>::Hash, singly_encrypted_call: Vec<u8>) -> <Block as BlockT>::Extrinsic{
             UncheckedExtrinsic::new_unsigned(
                     Call::EncryptedTransactions(pallet_encrypted_transactions::Call::submit_singly_encrypted_transaction(account, singly_encrypted_call)))
         }
 
-        fn create_submit_decrypted_transaction(account: sp_core::H256, decrypted_call: Vec<u8>, weight: Weight) -> <Block as BlockT>::Extrinsic{
+        fn create_submit_decrypted_transaction(account: <Block as BlockT>::Hash, decrypted_call: Vec<u8>, weight: Weight) -> <Block as BlockT>::Extrinsic{
             UncheckedExtrinsic::new_unsigned(
                     Call::EncryptedTransactions(pallet_encrypted_transactions::Call::submit_decrypted_transaction(account, decrypted_call, weight)))
         }
@@ -1024,11 +1024,11 @@ impl_runtime_apis! {
             }
         }
 
-		fn get_double_encrypted_transactions(block_builder_id: sp_runtime::AccountId32) -> Vec<sp_encrypted_tx::EncryptedTx>{
+		fn get_double_encrypted_transactions(block_builder_id: sp_runtime::AccountId32) -> Vec<sp_encrypted_tx::EncryptedTx< <Block as BlockT>::Hash >>{
             EncryptedTransactions::get_double_encrypted_transactions(block_builder_id)
         }
 
-		fn get_singly_encrypted_transactions(block_builder_id: sp_runtime::AccountId32) -> Vec<sp_encrypted_tx::EncryptedTx>{
+		fn get_singly_encrypted_transactions(block_builder_id: sp_runtime::AccountId32) -> Vec<sp_encrypted_tx::EncryptedTx< <Block as BlockT>::Hash >>{
             EncryptedTransactions::get_singly_encrypted_transactions(block_builder_id)
         }
 

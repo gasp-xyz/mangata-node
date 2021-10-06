@@ -23,7 +23,7 @@ use sp_application_crypto::RuntimeAppPublic;
 use sp_core::{H256, storage::ChildInfo};
 use sp_runtime::traits::Hash;
 use sp_runtime::{
-    traits::{Member, Zero},
+    traits::{Member, Zero, Block as BlockT},
     KeyTypeId, RuntimeDebug,
 };
 use sp_std::collections::btree_map::BTreeMap;
@@ -262,21 +262,21 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
-    pub fn get_double_encrypted_transactions(block_builder_id: T::AccountId) -> Vec<EncryptedTx>{
+    pub fn get_double_encrypted_transactions(block_builder_id: T::AccountId) -> Vec<EncryptedTx<T::Hash>>{
         let txs = DoublyEncryptedQueue::<T>::get(block_builder_id);
         txs.into_iter().map(|id|  {
             EncryptedTx{
-                tx_id: H256::from_slice(id.as_ref()),
+                tx_id: id,
                 data: TxnRegistry::<T>::get(id).unwrap().doubly_encrypted_call
             }
         }).collect()
     }
 
-    pub fn get_singly_encrypted_transactions(block_builder_id: T::AccountId) -> Vec<EncryptedTx>{
+    pub fn get_singly_encrypted_transactions(block_builder_id: T::AccountId) -> Vec<EncryptedTx<T::Hash>>{
         let txs = SinglyEncryptedQueue::<T>::get(block_builder_id);
         txs.into_iter().map(|id|  {
             EncryptedTx{
-                tx_id: H256::from_slice(id.as_ref()),
+                tx_id: id,
                 data: TxnRegistry::<T>::get(id).unwrap().singly_encrypted_call.unwrap()
             }
         }).collect()

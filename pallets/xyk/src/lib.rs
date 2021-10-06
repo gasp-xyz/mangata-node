@@ -1165,7 +1165,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         )?;
 
         // Ensure bought token amount is higher then requested minimal amount
-        if (bought_asset_amount >= min_amount_out) {
+        if bought_asset_amount >= min_amount_out {
             // Transfer the rest of sold token amount from user to vault and bought token amount from vault to user
             <T as Trait>::Currency::transfer(
                 sold_asset_id.into(),
@@ -1231,10 +1231,11 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         // Settle tokens which goes to treasury and for buy and burn purpose
         Module::<T>::settle_treasury_and_burn(sold_asset_id, buy_and_burn_amount, treasury_amount)?;
 
-        if (bought_asset_amount < min_amount_out) {
-            Error::<T>::InsufficientOutputAmount
+        if bought_asset_amount < min_amount_out {
+            return Err(DispatchError::from(Error::<T>::InsufficientOutputAmount));
+            
         }
-
+        
         Ok(())
     }
 
@@ -1341,7 +1342,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         )?;
 
         // Ensure paid amount is less then maximum allowed price
-        if (sold_asset_amount <= max_amount_in) {
+        if sold_asset_amount <= max_amount_in {
             // Transfer sold token amount from user to vault and bought token amount from vault to user
             <T as Trait>::Currency::transfer(
                 sold_asset_id.into(),
@@ -1405,9 +1406,9 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         // Settle tokens which goes to treasury and for buy and burn purpose
         Module::<T>::settle_treasury_and_burn(sold_asset_id, buy_and_burn_amount, treasury_amount)?;
 
-        if (sold_asset_amount <= max_amount_in) {
-            Error::<T>::InsufficientInputAmount
-        }
+        if sold_asset_amount > max_amount_in{
+            return Err(DispatchError::from(Error::<T>::InsufficientInputAmount))
+                    }
 
         Ok(())
     }

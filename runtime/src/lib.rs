@@ -1005,22 +1005,22 @@ impl_runtime_apis! {
 
         fn create_submit_singly_encrypted_transaction(account: <Block as BlockT>::Hash, singly_encrypted_call: Vec<u8>) -> <Block as BlockT>::Extrinsic{
             UncheckedExtrinsic::new_unsigned(
-                    Call::EncryptedTransactions(pallet_encrypted_transactions::Call::submit_singly_encrypted_transaction(account, singly_encrypted_call)))
+                    Call::EncryptedTransactions(pallet_encrypted_transactions::Call::submit_singly_encrypted_transaction(account, singly_encrypted_call, Default::default())))
         }
 
         fn create_submit_decrypted_transaction(account: <Block as BlockT>::Hash, decrypted_call: Vec<u8>, weight: Weight) -> <Block as BlockT>::Extrinsic{
             UncheckedExtrinsic::new_unsigned(
-                    Call::EncryptedTransactions(pallet_encrypted_transactions::Call::submit_decrypted_transaction(account, decrypted_call, weight)))
+                    Call::EncryptedTransactions(pallet_encrypted_transactions::Call::submit_decrypted_transaction(account, decrypted_call,  Default::default(), weight)))
         }
 
         fn get_type(extrinsic: <Block as BlockT>::Extrinsic) -> ExtrinsicType<<Block as BlockT>::Hash>{
 
             match extrinsic.function{
-                Call::EncryptedTransactions(pallet_encrypted_transactions::Call::submit_decrypted_transaction(identifier, decrypted_call, _weight)) => {
+                Call::EncryptedTransactions(pallet_encrypted_transactions::Call::submit_decrypted_transaction(identifier, decrypted_call, _weight, _nonce)) => {
                     ExtrinsicType::DecryptedTx{identifier, decrypted_call}
                 },
 
-                Call::EncryptedTransactions(pallet_encrypted_transactions::Call::submit_singly_encrypted_transaction(identifier, singly_encrypted_call)) => {
+                Call::EncryptedTransactions(pallet_encrypted_transactions::Call::submit_singly_encrypted_transaction(identifier, singly_encrypted_call, _nonce)) => {
                     ExtrinsicType::SinglyEncryptedTx{identifier, singly_encrypted_call}
                 },
 

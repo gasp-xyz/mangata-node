@@ -1164,74 +1164,76 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             output_reserve,
         )?;
 
+        // Ensure bought token amount is higher then requested minimal amount
+        if bought_asset_amount >= min_amount_out {
+            // Transfer the rest of sold token amount from user to vault and bought token amount from vault to user
+            <T as Trait>::Currency::transfer(
+                sold_asset_id.into(),
+                &sender,
+                &vault,
+                (sold_asset_amount - buy_and_burn_amount - treasury_amount - pool_fee_amount)
+                    .into(),
+                ExistenceRequirement::KeepAlive,
+            )?;
+            <T as Trait>::Currency::transfer(
+                bought_asset_id.into(),
+                &vault,
+                &sender,
+                bought_asset_amount.into(),
+                ExistenceRequirement::KeepAlive,
+            )?;
+
+            // Apply changes in token pools, adding sold amount and removing bought amount
+            // Neither should fall to zero let alone underflow, due to how pool destruction works
+            // Won't overflow due to earlier ensure
+            let input_reserve_updated = input_reserve
+                .saturating_add(sold_asset_amount - treasury_amount - buy_and_burn_amount);
+            let output_reserve_updated = output_reserve.saturating_sub(bought_asset_amount);
+
+            Module::<T>::set_reserves(
+                sold_asset_id,
+                input_reserve_updated,
+                bought_asset_id,
+                output_reserve_updated,
+            )?;
+
+            log!(
+                info,
+                "sell_asset: ({:?}, {}, {}, {}, {}) -> {}",
+                sender,
+                sold_asset_id,
+                bought_asset_id,
+                sold_asset_amount,
+                min_amount_out,
+                bought_asset_amount
+            );
+
+            log!(
+                info,
+                "pool-state: [({}, {}) -> {}, ({}, {}) -> {}]",
+                sold_asset_id,
+                bought_asset_id,
+                input_reserve_updated,
+                bought_asset_id,
+                sold_asset_id,
+                output_reserve_updated
+            );
+
+            Module::<T>::deposit_event(RawEvent::AssetsSwapped(
+                sender,
+                sold_asset_id,
+                sold_asset_amount,
+                bought_asset_id,
+                bought_asset_amount,
+            ));
+        }
+
         // Settle tokens which goes to treasury and for buy and burn purpose
         Module::<T>::settle_treasury_and_burn(sold_asset_id, buy_and_burn_amount, treasury_amount)?;
 
-        // Ensure bought token amount is higher then requested minimal amount
-        ensure!(
-            bought_asset_amount >= min_amount_out,
-            Error::<T>::InsufficientOutputAmount,
-        );
-
-        // Transfer the rest of sold token amount from user to vault and bought token amount from vault to user
-        <T as Trait>::Currency::transfer(
-            sold_asset_id.into(),
-            &sender,
-            &vault,
-            (sold_asset_amount - buy_and_burn_amount - treasury_amount - pool_fee_amount).into(),
-            ExistenceRequirement::KeepAlive,
-        )?;
-        <T as Trait>::Currency::transfer(
-            bought_asset_id.into(),
-            &vault,
-            &sender,
-            bought_asset_amount.into(),
-            ExistenceRequirement::KeepAlive,
-        )?;
-
-        // Apply changes in token pools, adding sold amount and removing bought amount
-        // Neither should fall to zero let alone underflow, due to how pool destruction works
-        // Won't overflow due to earlier ensure
-        let input_reserve_updated =
-            input_reserve.saturating_add(sold_asset_amount - treasury_amount - buy_and_burn_amount);
-        let output_reserve_updated = output_reserve.saturating_sub(bought_asset_amount);
-
-        Module::<T>::set_reserves(
-            sold_asset_id,
-            input_reserve_updated,
-            bought_asset_id,
-            output_reserve_updated,
-        )?;
-
-        log!(
-            info,
-            "sell_asset: ({:?}, {}, {}, {}, {}) -> {}",
-            sender,
-            sold_asset_id,
-            bought_asset_id,
-            sold_asset_amount,
-            min_amount_out,
-            bought_asset_amount
-        );
-
-        log!(
-            info,
-            "pool-state: [({}, {}) -> {}, ({}, {}) -> {}]",
-            sold_asset_id,
-            bought_asset_id,
-            input_reserve_updated,
-            bought_asset_id,
-            sold_asset_id,
-            output_reserve_updated
-        );
-
-        Module::<T>::deposit_event(RawEvent::AssetsSwapped(
-            sender,
-            sold_asset_id,
-            sold_asset_amount,
-            bought_asset_id,
-            bought_asset_amount,
-        ));
+        if bought_asset_amount < min_amount_out {
+            return Err(DispatchError::from(Error::<T>::InsufficientOutputAmount));
+        }
 
         Ok(())
     }
@@ -1338,73 +1340,74 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             output_reserve,
         )?;
 
+        // Ensure paid amount is less then maximum allowed price
+        if sold_asset_amount <= max_amount_in {
+            // Transfer sold token amount from user to vault and bought token amount from vault to user
+            <T as Trait>::Currency::transfer(
+                sold_asset_id.into(),
+                &sender,
+                &vault,
+                (sold_asset_amount - buy_and_burn_amount - treasury_amount - pool_fee_amount)
+                    .into(),
+                ExistenceRequirement::KeepAlive,
+            )?;
+            <T as Trait>::Currency::transfer(
+                bought_asset_id.into(),
+                &vault,
+                &sender,
+                bought_asset_amount.into(),
+                ExistenceRequirement::KeepAlive,
+            )?;
+
+            // Apply changes in token pools, adding sold amount and removing bought amount
+            // Neither should fall to zero let alone underflow, due to how pool destruction works
+            // Won't overflow due to earlier ensure
+            let input_reserve_updated = input_reserve
+                .saturating_add(sold_asset_amount - treasury_amount - buy_and_burn_amount);
+            let output_reserve_updated = output_reserve.saturating_sub(bought_asset_amount);
+            Module::<T>::set_reserves(
+                sold_asset_id,
+                input_reserve_updated,
+                bought_asset_id,
+                output_reserve_updated,
+            )?;
+
+            log!(
+                info,
+                "buy_asset: ({:?}, {}, {}, {}, {}) -> {}",
+                sender,
+                sold_asset_id,
+                bought_asset_id,
+                bought_asset_amount,
+                max_amount_in,
+                sold_asset_amount
+            );
+
+            log!(
+                info,
+                "pool-state: [({}, {}) -> {}, ({}, {}) -> {}]",
+                sold_asset_id,
+                bought_asset_id,
+                input_reserve_updated,
+                bought_asset_id,
+                sold_asset_id,
+                output_reserve_updated
+            );
+
+            Module::<T>::deposit_event(RawEvent::AssetsSwapped(
+                sender,
+                sold_asset_id,
+                sold_asset_amount,
+                bought_asset_id,
+                bought_asset_amount,
+            ));
+        }
         // Settle tokens which goes to treasury and for buy and burn purpose
         Module::<T>::settle_treasury_and_burn(sold_asset_id, buy_and_burn_amount, treasury_amount)?;
 
-        // Ensure paid amount is less then maximum allowed price
-        ensure!(
-            sold_asset_amount <= max_amount_in,
-            Error::<T>::InsufficientInputAmount,
-        );
-
-        // Transfer sold token amount from user to vault and bought token amount from vault to user
-        <T as Trait>::Currency::transfer(
-            sold_asset_id.into(),
-            &sender,
-            &vault,
-            (sold_asset_amount - buy_and_burn_amount - treasury_amount - pool_fee_amount).into(),
-            ExistenceRequirement::KeepAlive,
-        )?;
-        <T as Trait>::Currency::transfer(
-            bought_asset_id.into(),
-            &vault,
-            &sender,
-            bought_asset_amount.into(),
-            ExistenceRequirement::KeepAlive,
-        )?;
-
-        // Apply changes in token pools, adding sold amount and removing bought amount
-        // Neither should fall to zero let alone underflow, due to how pool destruction works
-        // Won't overflow due to earlier ensure
-        let input_reserve_updated =
-            input_reserve.saturating_add(sold_asset_amount - treasury_amount - buy_and_burn_amount);
-        let output_reserve_updated = output_reserve.saturating_sub(bought_asset_amount);
-        Module::<T>::set_reserves(
-            sold_asset_id,
-            input_reserve_updated,
-            bought_asset_id,
-            output_reserve_updated,
-        )?;
-
-        log!(
-            info,
-            "buy_asset: ({:?}, {}, {}, {}, {}) -> {}",
-            sender,
-            sold_asset_id,
-            bought_asset_id,
-            bought_asset_amount,
-            max_amount_in,
-            sold_asset_amount
-        );
-
-        log!(
-            info,
-            "pool-state: [({}, {}) -> {}, ({}, {}) -> {}]",
-            sold_asset_id,
-            bought_asset_id,
-            input_reserve_updated,
-            bought_asset_id,
-            sold_asset_id,
-            output_reserve_updated
-        );
-
-        Module::<T>::deposit_event(RawEvent::AssetsSwapped(
-            sender,
-            sold_asset_id,
-            sold_asset_amount,
-            bought_asset_id,
-            bought_asset_amount,
-        ));
+        if sold_asset_amount > max_amount_in {
+            return Err(DispatchError::from(Error::<T>::InsufficientInputAmount));
+        }
 
         Ok(())
     }

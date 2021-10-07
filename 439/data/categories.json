@@ -1,0 +1,60 @@
+{
+  "uid" : "4b4757e66a1912dae1a509f688f20b0f",
+  "children" : [ {
+    "name" : "Product defects",
+    "children" : [ {
+      "name" : "Error: Expected: 3402054596 \n                  Actual: 3402054594 \n                 ",
+      "children" : [ {
+        "name" : "assets won when assets are bought [Buying Mangata]",
+        "uid" : "a733bcf4be875309",
+        "parentUid" : "4b0bcef1751338c1bdcb343299f09922",
+        "status" : "failed",
+        "time" : {
+          "start" : 1633608619448,
+          "stop" : 1633608727680,
+          "duration" : 108232
+        },
+        "flaky" : true,
+        "newFailed" : true,
+        "parameters" : [ ]
+      } ],
+      "uid" : "4b0bcef1751338c1bdcb343299f09922"
+    }, {
+      "name" : "Error: Expected: 3527064759 \n                  Actual: 3527064744 \n                 ",
+      "children" : [ {
+        "name" : "assets won when assets are sold [Selling other in MGA pool] - 6",
+        "uid" : "38b377820298aa97",
+        "parentUid" : "ee642ae723317804357d035df607c32a",
+        "status" : "failed",
+        "time" : {
+          "start" : 1633608727681,
+          "stop" : 1633608835823,
+          "duration" : 108142
+        },
+        "flaky" : true,
+        "newFailed" : true,
+        "parameters" : [ ]
+      } ],
+      "uid" : "ee642ae723317804357d035df607c32a"
+    }, {
+      "name" : "Error: Expected: 4777166237 \n                  Actual: 4777166234 \n                 ",
+      "children" : [ {
+        "name" : "Not enough tokens to convert fee LINK[https://trello.com/c/p77t0atO]",
+        "uid" : "bd9089f255641fb3",
+        "parentUid" : "baebeb7432ce6ff02ad312b72d7b971a",
+        "status" : "failed",
+        "time" : {
+          "start" : 1633609597195,
+          "stop" : 1633609724083,
+          "duration" : 126888
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      } ],
+      "uid" : "baebeb7432ce6ff02ad312b72d7b971a"
+    } ],
+    "uid" : "8fb3a91ba5aaf9de24cc8a92edc82b5d"
+  } ],
+  "name" : "categories"
+}

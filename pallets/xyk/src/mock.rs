@@ -51,7 +51,7 @@ impl system::Trait for Test {
     type BlockNumber = u64;
     type Hash = H256;
     type Hashing = BlakeTwo256;
-    type AccountId = u64;
+    type AccountId = u128;
     type Lookup = IdentityLookup<Self::AccountId>;
     type Header = Header;
     type Event = TestEvent;
@@ -104,12 +104,16 @@ impl assets_info::Trait for Test {
 
 parameter_types! {
     pub const NativeCurrencyId: u32 = NATIVE_CURRENCY_ID;
+    pub const TreasuryModuleId: sp_runtime::ModuleId = sp_runtime::ModuleId(*b"py/trsry");
+    pub const BnbTreasurySubAccDerive: [u8; 4] = *b"bnbt";
 }
 
 impl Trait for Test {
     type Event = TestEvent;
     type Currency = MultiTokenCurrencyAdapter<Test>;
     type NativeCurrencyId = NativeCurrencyId;
+    type TreasuryModuleId = TreasuryModuleId;
+    type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
 }
 
 pub type XykStorage = Module<Test>;

@@ -262,7 +262,7 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
-    pub fn get_double_encrypted_transactions(block_builder_id: T::AccountId) -> Vec<EncryptedTx<T::Hash>>{
+    pub fn get_double_encrypted_transactions(block_builder_id: &T::AccountId) -> Vec<EncryptedTx<T::Hash>>{
         let txs = DoublyEncryptedQueue::<T>::get(block_builder_id);
         txs.into_iter().map(|id|  {
             EncryptedTx{
@@ -272,7 +272,7 @@ impl<T: Trait> Module<T> {
         }).collect()
     }
 
-    pub fn get_singly_encrypted_transactions(block_builder_id: T::AccountId) -> Vec<EncryptedTx<T::Hash>>{
+    pub fn get_singly_encrypted_transactions(block_builder_id: &T::AccountId) -> Vec<EncryptedTx<T::Hash>>{
         let txs = SinglyEncryptedQueue::<T>::get(block_builder_id);
         txs.into_iter().map(|id|  {
             EncryptedTx{

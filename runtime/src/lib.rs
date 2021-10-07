@@ -1013,6 +1013,10 @@ impl_runtime_apis! {
         fn get_type(extrinsic: <Block as BlockT>::Extrinsic) -> ExtrinsicType<<Block as BlockT>::Hash>{
 
             match extrinsic.function{
+                Call::EncryptedTransactions(pallet_encrypted_transactions::Call::submit_decrypted_transaction(identifier, decrypted_call, _weight)) => {
+                    ExtrinsicType::DecryptedTx{identifier, decrypted_call}
+                },
+
                 Call::EncryptedTransactions(pallet_encrypted_transactions::Call::submit_singly_encrypted_transaction(identifier, singly_encrypted_call)) => {
                     ExtrinsicType::SinglyEncryptedTx{identifier, singly_encrypted_call}
                 },
@@ -1024,11 +1028,11 @@ impl_runtime_apis! {
             }
         }
 
-		fn get_double_encrypted_transactions(block_builder_id: sp_runtime::AccountId32) -> Vec<sp_encrypted_tx::EncryptedTx< <Block as BlockT>::Hash >>{
+		fn get_double_encrypted_transactions(block_builder_id: &sp_runtime::AccountId32) -> Vec<sp_encrypted_tx::EncryptedTx< <Block as BlockT>::Hash >>{
             EncryptedTransactions::get_double_encrypted_transactions(block_builder_id)
         }
 
-		fn get_singly_encrypted_transactions(block_builder_id: sp_runtime::AccountId32) -> Vec<sp_encrypted_tx::EncryptedTx< <Block as BlockT>::Hash >>{
+		fn get_singly_encrypted_transactions(block_builder_id: &sp_runtime::AccountId32) -> Vec<sp_encrypted_tx::EncryptedTx< <Block as BlockT>::Hash >>{
             EncryptedTransactions::get_singly_encrypted_transactions(block_builder_id)
         }
 
@@ -1036,9 +1040,9 @@ impl_runtime_apis! {
             Session::validators()[block_builder_id as usize].clone()
         }
 
-		fn get_authority_public_key(account_id: sp_runtime::AccountId32) -> sp_core::ecdsa::Public{
+		fn get_authority_public_key(account_id: &sp_runtime::AccountId32) -> sp_core::ecdsa::Public{
             let keys = EncryptedTransactions::keys();
-            let ecdsa_pub_key = keys.get(&account_id).unwrap();
+            let ecdsa_pub_key = keys.get(account_id).unwrap();
             let slice = ecdsa_pub_key.as_ref();
             sp_core::ecdsa::Public::from_slice(slice)
         }

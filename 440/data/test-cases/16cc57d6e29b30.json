@@ -1,0 +1,77 @@
+{
+  "uid" : "16cc57d6e29b30",
+  "name" : "Not enough tokens to convert fee LINK[https://trello.com/c/p77t0atO]",
+  "fullName" : "xyk-pallet - treasury tests [Connected - Mangata]: Error cases.Not enough tokens to convert fee LINK[https://trello.com/c/p77t0atO]",
+  "historyId" : "8bcee4ce481ed060d31a7c246299047f",
+  "time" : {
+    "start" : 1633985767541,
+    "stop" : 1633985893043,
+    "duration" : 125502
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - treasury tests [Connected - Mangata]: Error cases"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - treasury tests [Connected - Mangata]: Error cases"
+  }, {
+    "name" : "testMethod",
+    "value" : "Not enough tokens to convert fee LINK[https://trello.com/c/p77t0atO]"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - treasury tests [Connected - Mangata]: Error cases"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 2,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 1,
+        "unknown" : 0,
+        "total" : 3
+      },
+      "items" : [ {
+        "uid" : "bd9089f255641fb3",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/439//#testresult/bd9089f255641fb3",
+        "status" : "failed",
+        "statusDetails" : "Error: Expected: 4777166237 \n                  Actual: 4777166234 \n                 ",
+        "time" : {
+          "start" : 1633609597195,
+          "stop" : 1633609724083,
+          "duration" : 126888
+        }
+      }, {
+        "uid" : "51f7d7fa2c1c884d",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/437//#testresult/51f7d7fa2c1c884d",
+        "status" : "failed",
+        "statusDetails" : "Error: Expected: 4777166237 \n                  Actual: 4777166234 \n                 ",
+        "time" : {
+          "start" : 1633522022091,
+          "stop" : 1633522147742,
+          "duration" : 125651
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "16cc57d6e29b30.json",
+  "parameterValues" : [ ]
+}

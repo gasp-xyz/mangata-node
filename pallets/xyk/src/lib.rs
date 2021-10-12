@@ -795,8 +795,7 @@ impl<T: Trait> Module<T> {
             let treasury_amount_in_mangata = settle_amount_in_mangata * TREASURY_PERCENTAGE
                 / (TREASURY_PERCENTAGE + BUYANDBURN_PERCENTAGE);
 
-            let burn_amount_in_mangata = settle_amount_in_mangata * BUYANDBURN_PERCENTAGE
-                / (TREASURY_PERCENTAGE + BUYANDBURN_PERCENTAGE);
+            let burn_amount_in_mangata = settle_amount_in_mangata - treasury_amount_in_mangata;
 
             // Apply changes in token pools, adding treasury and burn amounts of settling token, removing  treasury and burn amounts of mangata
 

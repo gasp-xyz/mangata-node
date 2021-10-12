@@ -13,44 +13,16 @@ use frame_support::{
 };
 use frame_system::ensure_root;
 use mangata_primitives::TokenId;
+use frame_support::pallet_prelude::*;
+use frame_system::pallet_prelude::*;
 
 use orml_tokens::MultiTokenCurrencyExtended;
-// use pallet_assets as assets;
 
 #[cfg(test)]
 mod mock;
 
 #[cfg(test)]
 mod tests;
-
-/// Configure the pallet by specifying the parameters and types on which it depends.
-pub trait Trait: frame_system::Trait {
-    /// Because this pallet emits events, it depends on the runtime's definition of an event.
-    type Event: From<Event> + Into<<Self as frame_system::Trait>::Event>;
-
-    /// The minimum length a name may be.
-    type MinLengthName: Get<usize>;
-
-    /// The maximum length a name may be.
-    type MaxLengthName: Get<usize>;
-
-    /// The minimum length a symbol may be.
-    type MinLengthSymbol: Get<usize>;
-
-    /// The maximum length a symbol may be.
-    type MaxLengthSymbol: Get<usize>;
-
-    /// The minimum length a description may be.
-    type MinLengthDescription: Get<usize>;
-
-    /// The maximum length a description may be.
-    type MaxLengthDescription: Get<usize>;
-
-    /// The maximum decimal points an asset may be.
-    type MaxDecimals: Get<u32>;
-
-    type Currency: MultiTokenCurrencyExtended<Self::AccountId>;
-}
 
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq)]
 pub struct AssetInfo {
@@ -60,17 +32,79 @@ pub struct AssetInfo {
     pub decimals: Option<u32>,
 }
 
-decl_storage! {
-    trait Store for Module<T: Trait> as AssetsInfoModule {
-        /// TWOX-NOTE: `AssetId` is trusted, so this is safe.
-        AssetsInfo get(fn get_info): map hasher(twox_64_concat) TokenId => AssetInfo;
+pub use pallet::*;
+
+#[frame_support::pallet]
+pub mod pallet {
+
+    use super::*;
+
+    #[pallet::pallet]
+    #[pallet::generate_store(pub(super) trait Store)]
+	pub struct Pallet<T>(PhantomData<T>);
+
+    #[pallet::hooks]
+	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
+
+    /// Configure the pallet by specifying the parameters and types on which it depends.
+    #[pallet::config]
+    pub trait Config: frame_system::Config {
+        /// Because this pallet emits events, it depends on the runtime's definition of an event.
+        type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+
+        /// The minimum length a name may be.
+        type MinLengthName: Get<usize>;
+
+        /// The maximum length a name may be.
+        type MaxLengthName: Get<usize>;
+
+        /// The minimum length a symbol may be.
+        type MinLengthSymbol: Get<usize>;
+
+        /// The maximum length a symbol may be.
+        type MaxLengthSymbol: Get<usize>;
+
+        /// The minimum length a description may be.
+        type MinLengthDescription: Get<usize>;
+
+        /// The maximum length a description may be.
+        type MaxLengthDescription: Get<usize>;
+
+        /// The maximum decimal points an asset may be.
+        type MaxDecimals: Get<u32>;
+
+        type Currency: MultiTokenCurrencyExtended<Self::AccountId>;
     }
-    add_extra_genesis {
-        #[allow(clippy::type_complexity)]
-        config(bridged_assets_info): Vec<(Option<Vec<u8>>, Option<Vec<u8>>, Option<Vec<u8>>, Option<u32>, TokenId)>;
-        build(|config: &GenesisConfig|{
-            for (name, token, description, decimals, asset_id) in config.bridged_assets_info.iter(){
-                AssetsInfo::insert(
+
+    #[pallet::storage]
+    #[pallet::getter(fn get_info)]
+	pub type AssetsInfo<T: Config> = StorageMap<
+		_,
+		Twox64Concat,
+		TokenId,
+		AssetInfo,
+		ValueQuery
+	>;
+
+    #[pallet::genesis_config]
+	pub struct GenesisConfig {
+		pub bridged_assets_info: Vec<(Option<Vec<u8>>, Option<Vec<u8>>, Option<Vec<u8>>, Option<u32>, TokenId)>,
+	}
+
+	#[cfg(feature = "std")]
+	impl Default for GenesisConfig {
+		fn default() -> Self {
+			Self {
+				bridged_assets_info: vec![],
+			}
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig {
+		fn build(&self) {
+			for (name, token, description, decimals, asset_id) in self.bridged_assets_info.iter(){
+                AssetsInfo::<T>::insert(
                     asset_id,
                     AssetInfo {
                         name: name.clone(),
@@ -80,23 +114,21 @@ decl_storage! {
                     }
                 );
             }
-        });
-    }
+		}
+	}
 
-}
-
-// Pallets use events to inform users when important changes are made.
-// https://substrate.dev/docs/en/knowledgebase/runtime/events
-decl_event!(
-    pub enum Event {
+    #[pallet::event]
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
+    // Pallets use events to inform users when important changes are made.
+    // https://substrate.dev/docs/en/knowledgebase/runtime/events
+    pub enum Event<T: Config> {
         /// Asset info stored. [assetId, info]
         InfoStored(TokenId, AssetInfo),
     }
-);
 
-// Errors inform users that something went wrong.
-decl_error! {
-    pub enum Error for Module<T: Trait> {
+    // Errors inform users that something went wrong.
+    #[pallet::error]
+    pub enum Error<T> {
         /// A name is too short.
         TooShortName,
         /// A name is too long.
@@ -114,29 +146,25 @@ decl_error! {
         /// Asset does not exist
         AssetNotExist,
     }
-}
 
-decl_module! {
-    pub struct Module<T: Trait> for enum Call where origin: T::Origin {
 
-        type Error = Error<T>;
+    #[pallet::call]
+	impl<T: Config> Pallet<T> {
 
-        fn deposit_event() = default;
-
-        #[weight = 10_000 + T::DbWeight::get().writes(1) + T::DbWeight::get().reads(1)]
-        pub fn set_info(origin, asset: TokenId, name: Option<Vec<u8>>, symbol: Option<Vec<u8>>, description: Option<Vec<u8>>, decimals: Option<u32>) -> dispatch::DispatchResult {
+        #[pallet::weight(10_000 + T::DbWeight::get().writes(1) + T::DbWeight::get().reads(1))]
+        pub fn set_info(origin: OriginFor<T>, asset: TokenId, name: Option<Vec<u8>>, symbol: Option<Vec<u8>>, description: Option<Vec<u8>>, decimals: Option<u32>) -> DispatchResultWithPostInfo {
             ensure_root(origin)?;
 
             let info = Self::set_asset_info(asset, name, symbol, description, decimals)?;
 
             Self::deposit_event(Event::InfoStored(asset, info));
 
-            Ok(())
+            Ok(().into())
         }
     }
 }
 
-impl<T: Trait> Module<T> {
+impl<T: Config> Pallet<T> {
     pub fn set_asset_info(
         asset: TokenId,
         name: Option<Vec<u8>>,
@@ -201,7 +229,7 @@ impl<T: Trait> Module<T> {
             );
         }
 
-        AssetsInfo::insert(asset, info.clone());
+        AssetsInfo::<T>::insert(asset, info.clone());
 
         Ok(info)
     }

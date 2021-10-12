@@ -224,7 +224,6 @@ use frame_support::{
     ensure,
     sp_runtime::ModuleId,
     weights::Pays,
-    StorageMap,
 };
 use frame_system::ensure_signed;
 use sp_core::U256;
@@ -241,6 +240,9 @@ use sp_runtime::traits::Zero;
 use sp_runtime::traits::{AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member};
 use sp_std::convert::TryFrom;
 use sp_std::fmt::Debug;
+
+use frame_support::pallet_prelude::*;
+use frame_system::pallet_prelude::*;
 
 #[cfg(test)]
 mod mock;
@@ -275,12 +277,24 @@ const TOKEN_SYMBOL_SEPARATOR: &[u8] = b"-";
 const LIQUIDITY_TOKEN_DESCRIPTION: &[u8] = b"Generated Info for Liquidity Pool Token";
 const DEFAULT_DECIMALS: u32 = 18u32;
 
+
+pub use pallet::*;
+
 #[frame_support::pallet]
 pub mod pallet {
 
+    use super::*;
+
+    #[pallet::pallet]
+    #[pallet::generate_store(pub(super) trait Store)]
+	pub struct Pallet<T>(PhantomData<T>);
+
+    #[pallet::hooks]
+	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
+
     #[pallet::config]
     pub trait Config: frame_system::Config + pallet_assets_info::Config {
-        type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
+        type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
         type Currency: MultiTokenCurrencyExtended<Self::AccountId>;
         type NativeCurrencyId: Get<TokenId>;
         type TreasuryModuleId: Get<ModuleId>;
@@ -343,7 +357,7 @@ pub mod pallet {
 	#[pallet::getter(fn asset_pool)]
 	pub type Pools<T: Config> = StorageMap<
 		_,
-		opaque_blake2_256,
+		Blake2_256,
 		(TokenId, TokenId),
 		(Balance, Balance),
 		ValueQuery
@@ -353,7 +367,7 @@ pub mod pallet {
 	#[pallet::getter(fn liquidity_asset)]
 	pub type LiquidityAssets<T: Config> = StorageMap<
 		_,
-		opaque_blake2_256,
+		Blake2_256,
 		(TokenId, TokenId),
 		Option<TokenId>,
 		ValueQuery
@@ -363,7 +377,7 @@ pub mod pallet {
 	#[pallet::getter(fn liquidity_pool)]
 	pub type LiquidityPools<T: Config> = StorageMap<
 		_,
-		opaque_blake2_256,
+		Blake2_256,
 		TokenId,
 		Option<(TokenId, TokenId)>,
 		ValueQuery
@@ -387,11 +401,11 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
 			self.created_pools_for_staking.iter().for_each(|(account_id, native_token_id, native_token_amount, pooled_token_id, pooled_token_amount, liquidity_token_id)| {
-                if <T as Trait>::Currency::exists({*liquidity_token_id}.into()){
+                if <T as Config>::Currency::exists({*liquidity_token_id}.into()){
                     assert!(<Module<T>>::mint_liquidity( T::Origin::from(Some(account_id.clone()).into()), *native_token_id, *pooled_token_id, *native_token_amount, *pooled_token_amount).is_ok(), "Pool mint failed");
                 }
                 else{
-                    let created_liquidity_token_id: TokenId = <T as Trait>::Currency::get_next_currency_id().into();
+                    let created_liquidity_token_id: TokenId = <T as Config>::Currency::get_next_currency_id().into();
                     assert!(created_liquidity_token_id == *liquidity_token_id, "Assets not initialized in the expected sequence");
                     assert!(<Module<T>>::create_pool( T::Origin::from(Some(account_id.clone()).into()), *native_token_id, *native_token_amount, *pooled_token_id, *pooled_token_amount).is_ok(), "Pool creation failed");
                 }
@@ -403,85 +417,90 @@ pub mod pallet {
     #[pallet::call]
     impl<T: Config> Pallet<T> {
 
-        #[pallet::weight = 10_000]
+        #[pallet::weight(10_000)]
         pub fn create_pool(
-            origin,
+            origin: OriginFor<T>,
             first_asset_id: TokenId,
             first_asset_amount: Balance,
             second_asset_id: TokenId,
             second_asset_amount: Balance
-        ) -> DispatchResult {
+        ) -> DispatchResultWithPostInfo {
 
             let sender = ensure_signed(origin)?;
 
-            <Self as XykFunctionsTrait<T::AccountId>>::create_pool(sender, first_asset_id, first_asset_amount, second_asset_id, second_asset_amount)
-
+            <Self as XykFunctionsTrait<T::AccountId>>::create_pool(sender, first_asset_id, first_asset_amount, second_asset_id, second_asset_amount)?;
+            
+            Ok(().into())
         }
 
         // you will sell your sold_asset_amount of sold_asset_id to get some amount of bought_asset_id
-        #[pallet::weight = (10_000, Pays::No)]
+        #[pallet::weight(10_000)]
         pub fn sell_asset (
-            origin,
+            origin: OriginFor<T>,
             sold_asset_id: TokenId,
             bought_asset_id: TokenId,
             sold_asset_amount: Balance,
             min_amount_out: Balance,
-        ) -> DispatchResult {
+        ) -> DispatchResultWithPostInfo {
 
             let sender = ensure_signed(origin)?;
 
-            <Self as XykFunctionsTrait<T::AccountId>>::sell_asset(sender, sold_asset_id, bought_asset_id, sold_asset_amount, min_amount_out)
+            <Self as XykFunctionsTrait<T::AccountId>>::sell_asset(sender, sold_asset_id, bought_asset_id, sold_asset_amount, min_amount_out)?;
 
+            Ok(Pays::No.into())
         }
 
-        #[pallet::weight = (10_000, Pays::No)]
+        #[pallet::weight(10_000)]
         pub fn buy_asset (
-            origin,
+            origin: OriginFor<T>,
             sold_asset_id: TokenId,
             bought_asset_id: TokenId,
             bought_asset_amount: Balance,
             max_amount_in: Balance,
-        ) -> DispatchResult {
+        ) -> DispatchResultWithPostInfo {
 
             let sender = ensure_signed(origin)?;
 
-            <Self as XykFunctionsTrait<T::AccountId>>::buy_asset(sender, sold_asset_id, bought_asset_id, bought_asset_amount, max_amount_in)
+            <Self as XykFunctionsTrait<T::AccountId>>::buy_asset(sender, sold_asset_id, bought_asset_id, bought_asset_amount, max_amount_in)?;
 
+            Ok(Pays::No.into())
         }
 
-        #[pallet::weight = 10_000]
+        #[pallet::weight(10_000)]
         pub fn mint_liquidity (
-            origin,
+            origin: OriginFor<T>,
             first_asset_id: TokenId,
             second_asset_id: TokenId,
             first_asset_amount: Balance,
             expected_second_asset_amount: Balance,
-        ) -> DispatchResult {
+        ) -> DispatchResultWithPostInfo {
 
             let sender = ensure_signed(origin)?;
 
-            <Self as XykFunctionsTrait<T::AccountId>>::mint_liquidity(sender, first_asset_id, second_asset_id, first_asset_amount, expected_second_asset_amount)
+            <Self as XykFunctionsTrait<T::AccountId>>::mint_liquidity(sender, first_asset_id, second_asset_id, first_asset_amount, expected_second_asset_amount)?;
 
+            Ok(().into())
         }
 
-        #[pallet::weight = 10_000]
+        #[pallet::weight(10_000)]
         pub fn burn_liquidity (
-            origin,
+            origin: OriginFor<T>,
             first_asset_id: TokenId,
             second_asset_id: TokenId,
             liquidity_asset_amount: Balance,
-        ) -> DispatchResult {
+        ) -> DispatchResultWithPostInfo {
 
             let sender = ensure_signed(origin)?;
 
-            <Self as XykFunctionsTrait<T::AccountId>>::burn_liquidity(sender, first_asset_id, second_asset_id, liquidity_asset_amount)
+            <Self as XykFunctionsTrait<T::AccountId>>::burn_liquidity(sender, first_asset_id, second_asset_id, liquidity_asset_amount)?;
 
+            Ok(().into())
         }
     }
 }
-}
 
-impl<T: Trait> Pallet<T> {
+
+impl<T: Config> Pallet<T> {
     // Sets the liquidity token's info
     // May fail if liquidity_asset_id does not exsist
     // Should not fail otherwise as the parameters for the max and min length in pallet_assets_info should be set appropriately
@@ -657,11 +676,11 @@ impl<T: Trait> Pallet<T> {
         first_asset_id: TokenId,
         second_asset_id: TokenId,
     ) -> Result<TokenId, DispatchError> {
-        if LiquidityAssets::contains_key((first_asset_id, second_asset_id)) {
-            LiquidityAssets::get((first_asset_id, second_asset_id))
+        if LiquidityAssets::<T>::contains_key((first_asset_id, second_asset_id)) {
+            LiquidityAssets::<T>::get((first_asset_id, second_asset_id))
                 .ok_or_else(|| Error::<T>::UnexpectedFailure.into())
         } else {
-            LiquidityAssets::get((second_asset_id, first_asset_id))
+            LiquidityAssets::<T>::get((second_asset_id, first_asset_id))
                 .ok_or_else(|| Error::<T>::NoSuchPool.into())
         }
     }
@@ -692,12 +711,12 @@ impl<T: Trait> Pallet<T> {
         first_asset_id: TokenId,
         second_asset_id: TokenId,
     ) -> Result<(Balance, Balance), DispatchError> {
-        let mut reserves = Pools::get((first_asset_id, second_asset_id));
+        let mut reserves = Pools::<T>::get((first_asset_id, second_asset_id));
 
-        if Pools::contains_key((first_asset_id, second_asset_id)) {
+        if Pools::<T>::contains_key((first_asset_id, second_asset_id)) {
             return Ok((reserves.0, reserves.1));
-        } else if Pools::contains_key((second_asset_id, first_asset_id)) {
-            reserves = Pools::get((second_asset_id, first_asset_id));
+        } else if Pools::<T>::contains_key((second_asset_id, first_asset_id)) {
+            reserves = Pools::<T>::get((second_asset_id, first_asset_id));
             return Ok((reserves.1, reserves.0));
         } else {
             return Err(DispatchError::from(Error::<T>::NoSuchPool));
@@ -710,13 +729,13 @@ impl<T: Trait> Pallet<T> {
         second_asset_id: TokenId,
         second_asset_amount: Balance,
     ) -> DispatchResult {
-        if Pools::contains_key((first_asset_id, second_asset_id)) {
-            Pools::insert(
+        if Pools::<T>::contains_key((first_asset_id, second_asset_id)) {
+            Pools::<T>::insert(
                 (first_asset_id, second_asset_id),
                 (first_asset_amount, second_asset_amount),
             );
-        } else if Pools::contains_key((second_asset_id, first_asset_id)) {
-            Pools::insert(
+        } else if Pools::<T>::contains_key((second_asset_id, first_asset_id)) {
+            Pools::<T>::insert(
                 (second_asset_id, first_asset_id),
                 (second_asset_amount, first_asset_amount),
             );
@@ -767,7 +786,7 @@ impl<T: Trait> Pallet<T> {
         // Get token reserves and liquidity asset id
 
         let total_liquidity_assets: Balance =
-            <T as Trait>::Currency::total_issuance(liquidity_asset_id.into()).into();
+            <T as Config>::Currency::total_issuance(liquidity_asset_id.into()).into();
 
         // Calculate first and second token amount to be withdrawn
         ensure!(
@@ -806,15 +825,15 @@ impl<T: Trait> Pallet<T> {
             // treasury_amount of MGA is already in treasury at this point
 
             // MGA burned from bnb_treasury_account
-            <T as Trait>::Currency::burn_and_settle(
+            <T as Config>::Currency::burn_and_settle(
                 sold_asset_id.into(),
                 &bnb_treasury_account,
                 burn_amount.into(),
             )?;
         }
         //If settling token is connected to mangata, token is swapped in corresponding pool to mangata without fee
-        else if Pools::contains_key((sold_asset_id, mangata_id))
-            || Pools::contains_key((mangata_id, sold_asset_id))
+        else if Pools::<T>::contains_key((sold_asset_id, mangata_id))
+            || Pools::<T>::contains_key((mangata_id, sold_asset_id))
         {
             // Getting token reserves
             let (input_reserve, output_reserve) =
@@ -839,7 +858,7 @@ impl<T: Trait> Pallet<T> {
                     .saturating_sub(burn_amount_in_mangata),
             )?;
 
-            <T as Trait>::Currency::transfer(
+            <T as Config>::Currency::transfer(
                 sold_asset_id.into(),
                 &treasury_account,
                 &vault,
@@ -847,7 +866,7 @@ impl<T: Trait> Pallet<T> {
                 ExistenceRequirement::KeepAlive,
             )?;
 
-            <T as Trait>::Currency::transfer(
+            <T as Config>::Currency::transfer(
                 mangata_id.into(),
                 &vault,
                 &treasury_account,
@@ -855,7 +874,7 @@ impl<T: Trait> Pallet<T> {
                 ExistenceRequirement::KeepAlive,
             )?;
 
-            <T as Trait>::Currency::transfer(
+            <T as Config>::Currency::transfer(
                 sold_asset_id.into(),
                 &bnb_treasury_account,
                 &vault,
@@ -864,7 +883,7 @@ impl<T: Trait> Pallet<T> {
             )?;
 
             // Mangata burned from pool
-            <T as Trait>::Currency::burn_and_settle(
+            <T as Config>::Currency::burn_and_settle(
                 mangata_id.into(),
                 &vault,
                 burn_amount_in_mangata.into(),
@@ -964,7 +983,7 @@ pub trait XykFunctionsTrait<AccountId> {
     >;
 }
 
-impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
+impl<T: Config> XykFunctionsTrait<T::AccountId> for Module<T> {
     type Balance = Balance;
 
     type CurrencyId = TokenId;
@@ -986,25 +1005,25 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
 
         // Ensure pool does not exists yet
         ensure!(
-            !Pools::contains_key((first_asset_id, second_asset_id)),
+            !Pools::<T>::contains_key((first_asset_id, second_asset_id)),
             Error::<T>::PoolAlreadyExists,
         );
 
         // Ensure pool does not exists yet
         ensure!(
-            !Pools::contains_key((second_asset_id, first_asset_id)),
+            !Pools::<T>::contains_key((second_asset_id, first_asset_id)),
             Error::<T>::PoolAlreadyExists,
         );
 
         // Getting users token balances
         let first_asset_free_balance: Self::Balance =
-            <T as Trait>::Currency::free_balance(first_asset_id.into(), &sender).into();
+            <T as Config>::Currency::free_balance(first_asset_id.into(), &sender).into();
         let second_asset_free_balance: Self::Balance =
-            <T as Trait>::Currency::free_balance(second_asset_id.into(), &sender).into();
+            <T as Config>::Currency::free_balance(second_asset_id.into(), &sender).into();
 
         // Ensure user has enough withdrawable tokens to create pool in amounts required
 
-        <T as Trait>::Currency::ensure_can_withdraw(
+        <T as Config>::Currency::ensure_can_withdraw(
             first_asset_id.into(),
             &sender,
             first_asset_amount.into(),
@@ -1014,7 +1033,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         )
         .or(Err(Error::<T>::NotEnoughAssets))?;
 
-        <T as Trait>::Currency::ensure_can_withdraw(
+        <T as Config>::Currency::ensure_can_withdraw(
             second_asset_id.into(),
             &sender,
             second_asset_amount.into(),
@@ -1033,7 +1052,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             initial_liquidity = 1
         }
 
-        Pools::insert(
+        Pools::<T>::insert(
             (first_asset_id, second_asset_id),
             (first_asset_amount, second_asset_amount),
         );
@@ -1041,7 +1060,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         // Pools::insert((second_asset_id, first_asset_id), second_asset_amount);
 
         // Moving tokens from user to vault
-        <T as Trait>::Currency::transfer(
+        <T as Config>::Currency::transfer(
             first_asset_id.into(),
             &sender,
             &vault,
@@ -1049,7 +1068,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             ExistenceRequirement::AllowDeath,
         )?;
 
-        <T as Trait>::Currency::transfer(
+        <T as Config>::Currency::transfer(
             second_asset_id.into(),
             &sender,
             &vault,
@@ -1059,11 +1078,11 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
 
         // Creating new liquidity token and transfering it to user
         let liquidity_asset_id: Self::CurrencyId =
-            <T as Trait>::Currency::create(&sender, initial_liquidity.into()).into();
+            <T as Config>::Currency::create(&sender, initial_liquidity.into()).into();
 
         // Adding info about liquidity asset
-        LiquidityAssets::insert((first_asset_id, second_asset_id), liquidity_asset_id);
-        LiquidityPools::insert(liquidity_asset_id, (first_asset_id, second_asset_id));
+        LiquidityAssets::<T>::insert((first_asset_id, second_asset_id), Some(liquidity_asset_id));
+        LiquidityPools::<T>::insert(liquidity_asset_id, Some((first_asset_id, second_asset_id)));
 
         log!(
             info,
@@ -1090,7 +1109,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         // This, will and should, never fail
         Pallet::<T>::set_liquidity_asset_info(liquidity_asset_id, first_asset_id, second_asset_id)?;
 
-        Pallet::<T>::deposit_event(RawEvent::PoolCreated(
+        Pallet::<T>::deposit_event(Event::PoolCreated(
             sender,
             first_asset_id,
             first_asset_amount,
@@ -1148,10 +1167,10 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
 
         // Getting users token balances
         let sold_asset_free_balance: Self::Balance =
-            <T as Trait>::Currency::free_balance(sold_asset_id.into(), &sender).into();
+            <T as Config>::Currency::free_balance(sold_asset_id.into(), &sender).into();
 
         // Ensure user has enough tokens to sell
-        <T as Trait>::Currency::ensure_can_withdraw(
+        <T as Config>::Currency::ensure_can_withdraw(
             sold_asset_id.into(),
             &sender,
             sold_asset_amount.into(),
@@ -1166,7 +1185,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         let bnb_treasury_account: T::AccountId = Self::bnb_treasury_account_id();
 
         // Transfer of fees, before tx can fail on min amount out
-        <T as Trait>::Currency::transfer(
+        <T as Config>::Currency::transfer(
             sold_asset_id.into(),
             &sender,
             &vault,
@@ -1174,7 +1193,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             ExistenceRequirement::KeepAlive,
         )?;
 
-        <T as Trait>::Currency::transfer(
+        <T as Config>::Currency::transfer(
             sold_asset_id.into(),
             &sender,
             &treasury_account,
@@ -1182,7 +1201,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             ExistenceRequirement::KeepAlive,
         )?;
 
-        <T as Trait>::Currency::transfer(
+        <T as Config>::Currency::transfer(
             sold_asset_id.into(),
             &sender,
             &bnb_treasury_account,
@@ -1201,7 +1220,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         // Ensure bought token amount is higher then requested minimal amount
         if bought_asset_amount >= min_amount_out {
             // Transfer the rest of sold token amount from user to vault and bought token amount from vault to user
-            <T as Trait>::Currency::transfer(
+            <T as Config>::Currency::transfer(
                 sold_asset_id.into(),
                 &sender,
                 &vault,
@@ -1209,7 +1228,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
                     .into(),
                 ExistenceRequirement::KeepAlive,
             )?;
-            <T as Trait>::Currency::transfer(
+            <T as Config>::Currency::transfer(
                 bought_asset_id.into(),
                 &vault,
                 &sender,
@@ -1253,7 +1272,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
                 output_reserve_updated
             );
 
-            Pallet::<T>::deposit_event(RawEvent::AssetsSwapped(
+            Pallet::<T>::deposit_event(Event::AssetsSwapped(
                 sender,
                 sold_asset_id,
                 sold_asset_amount,
@@ -1324,10 +1343,10 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
 
         // Getting users token balances
         let sold_asset_free_balance: Self::Balance =
-            <T as Trait>::Currency::free_balance(sold_asset_id.into(), &sender).into();
+            <T as Config>::Currency::free_balance(sold_asset_id.into(), &sender).into();
 
         // Ensure user has enough tokens to sell
-        <T as Trait>::Currency::ensure_can_withdraw(
+        <T as Config>::Currency::ensure_can_withdraw(
             sold_asset_id.into(),
             &sender,
             sold_asset_amount.into(),
@@ -1342,7 +1361,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         let bnb_treasury_account: T::AccountId = Self::bnb_treasury_account_id();
 
         // Transfer of fees, before tx can fail on min amount out
-        <T as Trait>::Currency::transfer(
+        <T as Config>::Currency::transfer(
             sold_asset_id.into(),
             &sender,
             &vault,
@@ -1350,7 +1369,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             ExistenceRequirement::KeepAlive,
         )?;
 
-        <T as Trait>::Currency::transfer(
+        <T as Config>::Currency::transfer(
             sold_asset_id.into(),
             &sender,
             &treasury_account,
@@ -1358,7 +1377,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             ExistenceRequirement::KeepAlive,
         )?;
 
-        <T as Trait>::Currency::transfer(
+        <T as Config>::Currency::transfer(
             sold_asset_id.into(),
             &sender,
             &bnb_treasury_account,
@@ -1377,7 +1396,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         // Ensure paid amount is less then maximum allowed price
         if sold_asset_amount <= max_amount_in {
             // Transfer sold token amount from user to vault and bought token amount from vault to user
-            <T as Trait>::Currency::transfer(
+            <T as Config>::Currency::transfer(
                 sold_asset_id.into(),
                 &sender,
                 &vault,
@@ -1385,7 +1404,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
                     .into(),
                 ExistenceRequirement::KeepAlive,
             )?;
-            <T as Trait>::Currency::transfer(
+            <T as Config>::Currency::transfer(
                 bought_asset_id.into(),
                 &vault,
                 &sender,
@@ -1428,7 +1447,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
                 output_reserve_updated
             );
 
-            Pallet::<T>::deposit_event(RawEvent::AssetsSwapped(
+            Pallet::<T>::deposit_event(Event::AssetsSwapped(
                 sender,
                 sold_asset_id,
                 sold_asset_amount,
@@ -1457,8 +1476,8 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
 
         // Ensure pool exists
         ensure!(
-            (LiquidityAssets::contains_key((first_asset_id, second_asset_id))
-                || LiquidityAssets::contains_key((second_asset_id, first_asset_id))),
+            (LiquidityAssets::<T>::contains_key((first_asset_id, second_asset_id))
+                || LiquidityAssets::<T>::contains_key((second_asset_id, first_asset_id))),
             Error::<T>::NoSuchPool,
         );
 
@@ -1470,7 +1489,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         let (first_asset_reserve, second_asset_reserve) =
             Pallet::<T>::get_reserves(first_asset_id, second_asset_id)?;
         let total_liquidity_assets: Self::Balance =
-            <T as Trait>::Currency::total_issuance(liquidity_asset_id.into()).into();
+            <T as Config>::Currency::total_issuance(liquidity_asset_id.into()).into();
 
         // Calculation of required second asset amount and received liquidity token amount
         ensure!(!first_asset_reserve.is_zero(), Error::<T>::DivisionByZero);
@@ -1502,13 +1521,13 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
 
         // Getting users token balances
         let first_asset_free_balance: Self::Balance =
-            <T as Trait>::Currency::free_balance(first_asset_id.into(), &sender).into();
+            <T as Config>::Currency::free_balance(first_asset_id.into(), &sender).into();
         let second_asset_free_balance: Self::Balance =
-            <T as Trait>::Currency::free_balance(second_asset_id.into(), &sender).into();
+            <T as Config>::Currency::free_balance(second_asset_id.into(), &sender).into();
 
         // Ensure user has enough withdrawable tokens to create pool in amounts required
 
-        <T as Trait>::Currency::ensure_can_withdraw(
+        <T as Config>::Currency::ensure_can_withdraw(
             first_asset_id.into(),
             &sender,
             first_asset_amount.into(),
@@ -1518,7 +1537,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         )
         .or(Err(Error::<T>::NotEnoughAssets))?;
 
-        <T as Trait>::Currency::ensure_can_withdraw(
+        <T as Config>::Currency::ensure_can_withdraw(
             second_asset_id.into(),
             &sender,
             second_asset_amount.into(),
@@ -1529,14 +1548,14 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         .or(Err(Error::<T>::NotEnoughAssets))?;
 
         // Transfer of token amounts from user to vault
-        <T as Trait>::Currency::transfer(
+        <T as Config>::Currency::transfer(
             first_asset_id.into(),
             &sender,
             &vault,
             first_asset_amount.into(),
             ExistenceRequirement::KeepAlive,
         )?;
-        <T as Trait>::Currency::transfer(
+        <T as Config>::Currency::transfer(
             second_asset_id.into(),
             &sender,
             &vault,
@@ -1545,7 +1564,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         )?;
 
         // Creating new liquidity tokens to user
-        <T as Trait>::Currency::mint(
+        <T as Config>::Currency::mint(
             liquidity_asset_id.into(),
             &sender,
             liquidity_assets_minted.into(),
@@ -1585,7 +1604,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             second_asset_reserve_updated
         );
 
-        Pallet::<T>::deposit_event(RawEvent::LiquidityMinted(
+        Pallet::<T>::deposit_event(Event::LiquidityMinted(
             sender,
             first_asset_id,
             first_asset_amount,
@@ -1613,7 +1632,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
 
         // Ensure user has enought liquidity tokens to burn
         ensure!(
-            <T as Trait>::Currency::can_slash(
+            <T as Config>::Currency::can_slash(
                 liquidity_asset_id.into(),
                 &sender,
                 liquidity_asset_amount.into()
@@ -1621,12 +1640,12 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             Error::<T>::NotEnoughAssets,
         );
         let new_balance: Self::Balance =
-            <T as Trait>::Currency::free_balance(liquidity_asset_id.into(), &sender)
+            <T as Config>::Currency::free_balance(liquidity_asset_id.into(), &sender)
                 .into()
                 .checked_sub(liquidity_asset_amount)
                 .ok_or_else(|| DispatchError::from(Error::<T>::NotEnoughAssets))?;
 
-        <T as Trait>::Currency::ensure_can_withdraw(
+        <T as Config>::Currency::ensure_can_withdraw(
             liquidity_asset_id.into(),
             &sender,
             liquidity_asset_amount.into(),
@@ -1644,7 +1663,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         )?;
 
         let total_liquidity_assets: Balance =
-            <T as Trait>::Currency::total_issuance(liquidity_asset_id.into()).into();
+            <T as Config>::Currency::total_issuance(liquidity_asset_id.into()).into();
 
         // If all liquidity assets are being burned then
         // both asset amounts must be equal to their reserve values
@@ -1672,14 +1691,14 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         );
 
         // Transfer withdrawn amounts from vault to user
-        <T as Trait>::Currency::transfer(
+        <T as Config>::Currency::transfer(
             first_asset_id.into(),
             &vault,
             &sender,
             first_asset_amount.into(),
             ExistenceRequirement::KeepAlive,
         )?;
-        <T as Trait>::Currency::transfer(
+        <T as Config>::Currency::transfer(
             second_asset_id.into(),
             &vault,
             &sender,
@@ -1707,11 +1726,11 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
                 second_asset_id,
                 first_asset_id,
             );
-            Pools::remove((first_asset_id, second_asset_id));
-            Pools::remove((second_asset_id, first_asset_id));
-            LiquidityAssets::remove((first_asset_id, second_asset_id));
-            LiquidityAssets::remove((second_asset_id, first_asset_id));
-            LiquidityPools::remove(liquidity_asset_id);
+            Pools::<T>::remove((first_asset_id, second_asset_id));
+            Pools::<T>::remove((second_asset_id, first_asset_id));
+            LiquidityAssets::<T>::remove((first_asset_id, second_asset_id));
+            LiquidityAssets::<T>::remove((second_asset_id, first_asset_id));
+            LiquidityPools::<T>::remove(liquidity_asset_id);
         } else {
             // Apply changes in token pools, removing withdrawn amounts
             // Cannot underflow due to earlier ensure
@@ -1740,13 +1759,13 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         }
 
         // Destroying burnt liquidity tokens
-        <T as Trait>::Currency::burn_and_settle(
+        <T as Config>::Currency::burn_and_settle(
             liquidity_asset_id.into(),
             &sender,
             liquidity_asset_amount.into(),
         )?;
 
-        Pallet::<T>::deposit_event(RawEvent::LiquidityBurned(
+        Pallet::<T>::deposit_event(Event::LiquidityBurned(
             sender,
             first_asset_id,
             first_asset_amount,
@@ -1773,11 +1792,11 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         DispatchError,
     > {
         let (first_asset_id, second_asset_id) =
-            LiquidityPools::get(liquidity_asset_id).ok_or(Error::<T>::NoSuchLiquidityAsset)?;
+            LiquidityPools::<T>::get(liquidity_asset_id).ok_or(Error::<T>::NoSuchLiquidityAsset)?;
         let (first_asset_reserve, second_asset_reserve) =
             Pallet::<T>::get_reserves(first_asset_id, second_asset_id)?;
         let total_liquidity_assets: Balance =
-            <T as Trait>::Currency::total_issuance(liquidity_asset_id.into()).into();
+            <T as Config>::Currency::total_issuance(liquidity_asset_id.into()).into();
 
         ensure!(
             !total_liquidity_assets.is_zero(),
@@ -1857,7 +1876,7 @@ pub trait Valuate {
     ) -> Self::Balance;
 }
 
-impl<T: Trait> Valuate for Module<T> {
+impl<T: Config> Valuate for Module<T> {
     type Balance = Balance;
 
     type CurrencyId = TokenId;
@@ -1866,7 +1885,7 @@ impl<T: Trait> Valuate for Module<T> {
         liquidity_token_id: Self::CurrencyId,
     ) -> Result<(Self::CurrencyId, Self::CurrencyId), DispatchError> {
         let (first_token_id, second_token_id) =
-            LiquidityPools::get(liquidity_token_id).ok_or(Error::<T>::NoSuchLiquidityAsset)?;
+            LiquidityPools::<T>::get(liquidity_token_id).ok_or(Error::<T>::NoSuchLiquidityAsset)?;
         let native_currency_id = T::NativeCurrencyId::get();
         match native_currency_id {
             _ if native_currency_id == first_token_id => Ok((first_token_id, second_token_id)),
@@ -1891,7 +1910,7 @@ impl<T: Trait> Valuate for Module<T> {
         };
 
         let liquidity_token_reserve: Balance =
-            <T as Trait>::Currency::total_issuance(liquidity_token_id.into()).into();
+            <T as Config>::Currency::total_issuance(liquidity_token_id.into()).into();
 
         if liquidity_token_reserve.is_zero() {
             return Default::default();

@@ -333,6 +333,28 @@ impl orml_tokens::Config for Runtime {
 	type OnDust = TransferDust<Runtime, TreasuryAccount>;
 }
 
+parameter_types! {
+    pub const MinLengthName: usize = 1;
+    pub const MaxLengthName: usize = 255;
+    pub const MinLengthSymbol: usize = 1;
+    pub const MaxLengthSymbol: usize = 255;
+    pub const MinLengthDescription: usize = 1;
+    pub const MaxLengthDescription: usize = 255;
+    pub const MaxDecimals: u32 = 255;
+}
+
+impl pallet_assets_info::Config for Runtime {
+    type Event = Event;
+    type MinLengthName = MinLengthName;
+    type MaxLengthName = MaxLengthName;
+    type MinLengthSymbol = MinLengthSymbol;
+    type MaxLengthSymbol = MaxLengthSymbol;
+    type MinLengthDescription = MinLengthDescription;
+    type MaxLengthDescription = MaxLengthDescription;
+    type MaxDecimals = MaxDecimals;
+    type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -347,6 +369,7 @@ construct_runtime!(
 		Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
 		TransactionPayment: pallet_transaction_payment::{Module, Storage},
 		Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
+		AssetsInfo: pallet_assets_info::{Module, Call, Config, Storage, Event},
 		Tokens: orml_tokens::{Module, Storage, Call, Event<T>, Config<T>},
 		Xyk: pallet_xyk::{Module, Call, Storage, Event<T>, Config<T>},
 		Treasury: pallet_treasury::{Module, Call, Storage, Config, Event<T>},

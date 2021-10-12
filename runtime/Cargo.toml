@@ -23,10 +23,10 @@ pallet-transaction-payment = { version = "3.0.0", default-features = false, git 
 frame-executive = { version = "3.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 serde = { version = "1.0.101", optional = true, features = ["derive"] }
 sp-api = { version = "3.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-block-builder = { path = "../../../primitives/block-builder", default-features = false, version = "3.0.0"}
+sp-block-builder = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev", default-features = false, version = "3.0.0"}
 sp-consensus-aura = { version = "0.9.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-core = { version = "3.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-inherents = { path = "../../../primitives/inherents", default-features = false, version = "3.0.0"}
+sp-inherents = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev", default-features = false, version = "3.0.0"}
 sp-offchain = { version = "3.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-runtime = { version = "3.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-session = { version = "3.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
@@ -40,17 +40,18 @@ frame-system-rpc-runtime-api = { version = "3.0.0", default-features = false, gi
 pallet-transaction-payment-rpc-runtime-api = { version = "3.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
 # Used for runtime benchmarking
-frame-benchmarking = { version = "3.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-frame-system-benchmarking = { version = "3.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+frame-benchmarking = { version = "3.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev", optional = true }
+frame-system-benchmarking = { version = "3.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev", optional = true }
 hex-literal = { version = "0.3.1", optional = true }
 
 # local dependencies
 pallet-xyk = { path = '../pallets/xyk', default-features = false, version = '0.1.0' }
 xyk-runtime-api = { path = '../pallets/xyk/runtime-api', default-features = false, version = '2.0.0' }
 mangata-primitives = { path = '../primitives/mangata', default-features = false, version = "0.1.0" }
+pallet-assets-info = { path = '../pallets/assets-info', default-features = false, version = '2.0.0' }
 
 # thrid party dependencies
-orml-tokens = {  default-features = false, version = "0.3.1", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
+orml-tokens = {  default-features = false, version = "0.4.0", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
 
 [build-dependencies]
 substrate-wasm-builder = { version = "4.0.0", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
@@ -82,6 +83,7 @@ std = [
 	"sp-version/std",
 	"frame-system/std",
 	"frame-system-rpc-runtime-api/std",
+	"pallet-assets-info/std",
 	'orml-tokens/std',
     "pallet-xyk/std",
     "xyk-runtime-api/std",

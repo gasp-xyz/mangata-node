@@ -24,7 +24,7 @@ sp-runtime = { version = '3.0.0', default-features = false, git = "https://githu
 
 # local packages
 
-xyk-runtime-api = { version = "3.0.0", path = "../runtime-api", default-features = false }
+xyk-runtime-api = { version = "2.0.0", path = "../runtime-api", default-features = false }
 
 [features]
 default = ["std"]

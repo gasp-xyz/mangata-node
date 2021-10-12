@@ -9,7 +9,7 @@ if [ -z "$LOCAL_SUBSTRATE_REPO_PATH" ]; then
 fi
 
 # remove local changes to the file
-git -C $REPO_ROOT checkout Cargo.toml > /dev/null
+# git -C $REPO_ROOT checkout Cargo.toml > /dev/null
 echo '[patch."https://github.com/mangata-finance/substrate"]' >> $MANIFEST_PATH
 
 ALL_DEPENDENCIES=`cargo tree --manifest-path $REPO_ROOT/Cargo.toml --prefix=none | cut -d " " -f 1 | sort | uniq`

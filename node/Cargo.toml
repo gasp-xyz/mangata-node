@@ -52,6 +52,7 @@ frame-benchmarking = { version = "3.0.0", git = "https://github.com/mangata-fina
 frame-benchmarking-cli = { version = "3.0.0", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
 mangata-runtime = { version = "2.0.0", path = "../runtime" }
+mangata-primitives = { default-features = false, version = '0.1.0' , path = '../primitives/mangata'}
 xyk-rpc = { default-features = false, version = '2.0.0', path = '../pallets/xyk/rpc' }
 xyk-runtime-api = { default-features = false, version = '2.0.0', path = '../pallets/xyk/runtime-api' }
 

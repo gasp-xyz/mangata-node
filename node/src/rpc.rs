@@ -7,7 +7,7 @@
 
 use std::sync::Arc;
 
-use mangata_runtime::{opaque::Block, AccountId, Balance, Index};
+use mangata_runtime::{opaque::Block, AccountId, Balance, Index, TokenId};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::{Error as BlockChainError, HeaderMetadata, HeaderBackend};
 use sp_block_builder::BlockBuilder;

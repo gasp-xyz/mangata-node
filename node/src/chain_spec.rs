@@ -1,12 +1,14 @@
 use sp_core::{Pair, Public, sr25519};
-use node_template_runtime::{
-	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig,
-	SudoConfig, SystemConfig, WASM_BINARY, Signature
+use mangata_runtime::{
+	AccountId, AuraConfig, GenesisConfig, GrandpaConfig,
+	SudoConfig, SystemConfig, WASM_BINARY, Signature, TokensConfig,
+	AssetsInfoConfig, TreasuryConfig, XykConfig
 };
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{Verify, IdentifyAccount};
 use sc_service::ChainType;
+use mangata_primitives::{Balance,TokenId};
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -139,9 +141,10 @@ fn testnet_genesis(
 			code: wasm_binary.to_vec(),
 			changes_trie_config: Default::default(),
 		}),
-		pallet_balances: Some(BalancesConfig {
+		orml_tokens: Some(TokensConfig {
 			// Configure endowed accounts with initial balance of 1 << 60.
-			balances: endowed_accounts.iter().cloned().map(|k|(k, 1 << 60)).collect(),
+			tokens_endowment: endowed_accounts.iter().cloned().map(|k|(k, 0, 10_000_000__000_000_000_000_000_000u128)).collect(),
+			created_tokens_for_staking: vec![],
 		}),
 		pallet_aura: Some(AuraConfig {
 			authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect(),
@@ -153,5 +156,14 @@ fn testnet_genesis(
 			// Assign network admin rights.
 			key: root_key,
 		}),
+		pallet_assets_info: Some(AssetsInfoConfig {
+			bridged_assets_info: vec![],
+		}),
+		pallet_treasury: Some(TreasuryConfig {
+		}),
+		pallet_xyk: Some(XykConfig {
+			created_pools_for_staking: vec![],
+		}),
+
 	}
 }

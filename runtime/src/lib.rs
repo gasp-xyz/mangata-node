@@ -10,11 +10,11 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use sp_std::prelude::*;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-use sp_runtime::{
+use sp_runtime::{ Percent, ModuleId,
 	ApplyExtrinsicResult, generic, create_runtime_str, impl_opaque_keys, MultiSignature,
 	transaction_validity::{TransactionValidity, TransactionSource},
 };
-use sp_runtime::traits::{
+use sp_runtime::traits::{AccountIdConversion,
 	BlakeTwo256, Block as BlockT, AccountIdLookup, Verify, IdentifyAccount, NumberFor,
 };
 use sp_api::impl_runtime_apis;
@@ -29,7 +29,6 @@ use sp_version::NativeVersion;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use pallet_timestamp::Call as TimestampCall;
-pub use pallet_balances::Call as BalancesCall;
 pub use sp_runtime::{Permill, Perbill};
 pub use frame_support::{
 	construct_runtime, parameter_types, StorageValue,
@@ -40,13 +39,17 @@ pub use frame_support::{
 	},
 };
 use pallet_transaction_payment::CurrencyAdapter;
+use frame_system::EnsureRoot;
 
 pub use mangata_primitives::{Amount, Balance, TokenId};
 pub use orml_tokens;
-use orml_tokens::MultiTokenCurrency;
+use orml_tokens::{MultiTokenCurrency, TransferDust};
+use orml_traits::parameter_type_with_key;
 
 pub use pallet_xyk;
 use xyk_runtime_api::{RpcAmountsResult, RpcResult};
+
+use codec::{Encode, Decode, FullCodec};
 
 pub const MGA_Token_ID: TokenId = 0;
 
@@ -97,6 +100,16 @@ pub mod opaque {
 	}
 }
 
+use currency::*;
+mod currency {
+
+	use super::Balance;
+	
+    pub const MILLICENTS: Balance = 1_000_000_000;
+    pub const CENTS: Balance = 1_000 * MILLICENTS; // assume this is worth about a cent.
+    pub const DOLLARS: Balance = 100 * CENTS;
+}
+
 pub const VERSION: RuntimeVersion = RuntimeVersion {
     spec_name: create_runtime_str!("mangata"),
     impl_name: create_runtime_str!("mangata"),
@@ -142,6 +155,10 @@ parameter_types! {
 	pub BlockLength: frame_system::limits::BlockLength = frame_system::limits::BlockLength
 		::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 	pub const SS58Prefix: u8 = 42;
+}
+
+parameter_types! {
+	pub const MgaTokenId: TokenId = MGA_Token_ID;
 }
 
 // Configure FRAME pallets to include in runtime.
@@ -231,28 +248,11 @@ impl pallet_timestamp::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ExistentialDeposit: u128 = 500;
-	pub const MaxLocks: u32 = 50;
-}
-
-impl pallet_balances::Config for Runtime {
-	type MaxLocks = MaxLocks;
-	/// The type for recording an account's balance.
-	type Balance = Balance;
-	/// The ubiquitous event type.
-	type Event = Event;
-	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
-	type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
-}
-
-parameter_types! {
 	pub const TransactionByteFee: Balance = 1;
 }
 
 impl pallet_transaction_payment::Config for Runtime {
-	type OnChargeTransaction = orml_tokens::CurrencyAdapter<Runtime, MGA_Token_ID>;
+	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>, Treasury>;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = IdentityFee<Balance>;
 	type FeeMultiplierUpdate = ();
@@ -284,7 +284,7 @@ parameter_types! {
 
 impl pallet_treasury::Config for Runtime {
 	type ModuleId = TreasuryModuleId;
-	type Currency = orml_tokens::CurrencyAdapter<Runtime, MGA_Token_ID>;
+	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>;
 	type ApproveOrigin =
 		EnsureRoot<AccountId>
 	;
@@ -298,20 +298,20 @@ impl pallet_treasury::Config for Runtime {
 	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
 	type BurnDestination = ();
-	type SpendFunds = Bounties;
+	type SpendFunds = ();
 	type WeightInfo = pallet_treasury::weights::SubstrateWeight<Runtime>;
 }
 
 impl pallet_xyk::Config for Runtime {
     type Event = Event;
     type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-    type NativeCurrencyId = MGA_Token_ID;
+    type NativeCurrencyId = MgaTokenId;
     type TreasuryModuleId = TreasuryModuleId;
     type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
 }
 
 parameter_type_with_key! {
-	pub ExistentialDeposits: |currency_id: CurrencyId| -> Balance {
+	pub ExistentialDeposits: |currency_id: TokenId| -> Balance {
 		match currency_id {
 			&MGA_Token_ID => 100,
 			_ => 0,
@@ -320,14 +320,14 @@ parameter_type_with_key! {
 }
 
 parameter_types! {
-	pub TreasuryAccount: AccountId = TreasuryModuleId.into_account();
+	pub TreasuryAccount: AccountId = TreasuryModuleId::get().into_account();
 }
 
 impl orml_tokens::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
 	type Amount = Amount;
-	type CurrencyId = CurrencyId;
+	type CurrencyId = TokenId;
 	type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = TransferDust<Runtime, TreasuryAccount>;
@@ -369,7 +369,7 @@ construct_runtime!(
 		Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
 		TransactionPayment: pallet_transaction_payment::{Module, Storage},
 		Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
-		AssetsInfo: pallet_assets_info::{Module, Call, Config, Storage, Event},
+		AssetsInfo: pallet_assets_info::{Module, Call, Config, Storage, Event<T>},
 		Tokens: orml_tokens::{Module, Storage, Call, Event<T>, Config<T>},
 		Xyk: pallet_xyk::{Module, Call, Storage, Event<T>, Config<T>},
 		Treasury: pallet_treasury::{Module, Call, Storage, Config, Event<T>},
@@ -626,7 +626,6 @@ impl_runtime_apis! {
 			let params = (&config, &whitelist);
 
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
-			add_benchmark!(params, batches, pallet_balances, Balances);
 			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }

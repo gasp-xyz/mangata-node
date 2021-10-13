@@ -129,3 +129,4 @@ substrate-wasm-builder = { path = "../substrate/utils/wasm-builder" }
 
 [patch."https://github.com/mangata-finance/open-runtime-module-library"]
 orml-tokens = { path = "../open-runtime-module-library/tokens" }
+orml-traits = { path = "../open-runtime-module-library/traits" }

@@ -52,6 +52,7 @@ pallet-assets-info = { path = '../pallets/assets-info', default-features = false
 
 # thrid party dependencies
 orml-tokens = {  default-features = false, version = "0.4.0", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
+orml-traits = {  default-features = false, version = "0.4.0", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
 
 [build-dependencies]
 substrate-wasm-builder = { version = "4.0.0", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
@@ -85,6 +86,7 @@ std = [
 	"frame-system-rpc-runtime-api/std",
 	"pallet-assets-info/std",
 	'orml-tokens/std',
+	'orml-traits/std',
     "pallet-xyk/std",
     "xyk-runtime-api/std",
 	"pallet-treasury/std",

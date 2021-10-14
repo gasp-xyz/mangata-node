@@ -242,7 +242,7 @@ fn buy_and_burn_sell_has_mangata_pair() {
 
         assert_eq!(
             XykStorage::asset_pool((0, 1)),
-            (99950024987506, 100050000000002)
+            (99950024987505, 100050000000002)
         );
         assert_eq!(
             XykStorage::asset_pool((1, 2)),
@@ -252,7 +252,7 @@ fn buy_and_burn_sell_has_mangata_pair() {
         assert_eq!(XykStorage::balance(2, 2), 933266599933266); // user acc: regular trade result
         assert_eq!(
             XykStorage::balance(0, XykStorage::account_id()),
-            99950024987506
+            99950024987505
         );
         assert_eq!(
             XykStorage::balance(1, XykStorage::account_id()),
@@ -367,7 +367,7 @@ fn buy_and_burn_buy_where_sold_has_mangata_pair() {
 
         assert_eq!(
             XykStorage::asset_pool((0, 1)),
-            (99950024987508, 100050000000000)
+            (99950024987507, 100050000000000)
         );
         assert_eq!(
             XykStorage::asset_pool((1, 2)),
@@ -377,7 +377,7 @@ fn buy_and_burn_buy_where_sold_has_mangata_pair() {
         assert_eq!(XykStorage::balance(2, 2), 933266599933266); // user acc: regular trade result
         assert_eq!(
             XykStorage::balance(0, XykStorage::account_id()),
-            99950024987508
+            99950024987507
         );
         assert_eq!(
             XykStorage::balance(1, XykStorage::account_id()),

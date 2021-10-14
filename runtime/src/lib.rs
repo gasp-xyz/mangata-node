@@ -9,7 +9,7 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use sp_std::prelude::*;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata, u32_trait::{_1, _2}};
 use sp_runtime::{ Percent, ModuleId,
 	ApplyExtrinsicResult, generic, create_runtime_str, impl_opaque_keys, MultiSignature,
 	transaction_validity::{TransactionValidity, TransactionSource},
@@ -32,7 +32,7 @@ pub use pallet_timestamp::Call as TimestampCall;
 pub use sp_runtime::{Permill, Perbill};
 pub use frame_support::{
 	construct_runtime, parameter_types, StorageValue,
-	traits::{KeyOwnerProofSystem, Randomness},
+	traits::{KeyOwnerProofSystem, Randomness, U128CurrencyToVote, LockIdentifier},
 	weights::{
 		Weight, IdentityFee,
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -50,6 +50,7 @@ pub use pallet_xyk;
 use xyk_runtime_api::{RpcAmountsResult, RpcResult};
 
 use codec::{Encode, Decode, FullCodec};
+use static_assertions::const_assert;
 
 pub const MGA_Token_ID: TokenId = 0;
 
@@ -108,6 +109,10 @@ mod currency {
     pub const MILLICENTS: Balance = 1_000_000_000;
     pub const CENTS: Balance = 1_000 * MILLICENTS; // assume this is worth about a cent.
     pub const DOLLARS: Balance = 100 * CENTS;
+
+	pub const fn deposit(items: u32, bytes: u32) -> Balance {
+		items as Balance * 15 * CENTS + (bytes as Balance) * 6 * CENTS
+	}
 }
 
 pub const VERSION: RuntimeVersion = RuntimeVersion {
@@ -355,6 +360,66 @@ impl pallet_assets_info::Config for Runtime {
     type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 }
 
+impl pallet_sudo_origin::Config for Runtime {
+    type Event = Event;
+    type Call = Call;
+    type SudoOrigin =
+        pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
+}
+
+parameter_types! {
+    pub const CouncilMotionDuration: BlockNumber = 21 * DAYS;
+    pub const CouncilMaxProposals: u32 = 100;
+    pub const CouncilMaxMembers: u32 = 15;
+}
+
+type CouncilCollective = pallet_collective::Instance1;
+impl pallet_collective::Config<CouncilCollective> for Runtime {
+    type Origin = Origin;
+    type Proposal = Call;
+    type Event = Event;
+    type MotionDuration = CouncilMotionDuration;
+    type MaxProposals = CouncilMaxProposals;
+    type MaxMembers = CouncilMaxMembers;
+    type DefaultVote = pallet_collective::PrimeDefaultVote;
+    type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
+}
+
+parameter_types! {
+    pub const CandidacyBond: Balance = 10 * currency::DOLLARS;
+	// 1 storage item created, key size is 32 bytes, value size is 16+16.
+	pub const VotingBondBase: Balance = deposit(1, 64);
+	// additional data per vote is 32 bytes (account id).
+	pub const VotingBondFactor: Balance = deposit(0, 32);
+    pub const TermDuration: BlockNumber = 120 * DAYS;
+    pub const DesiredMembers: u32 = 9;
+    pub const DesiredRunnersUp: u32 = 7;
+    pub const ElectionsPhragmenModuleId: LockIdentifier = *b"phrelect";
+}
+
+// Make sure that there are no more than `MaxMembers` members elected via elections-phragmen.
+const_assert!(DesiredMembers::get() <= CouncilMaxMembers::get());
+
+impl pallet_elections_phragmen::Config for Runtime {
+    type Event = Event;
+    type ModuleId = ElectionsPhragmenModuleId;
+    type Currency = orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>;
+    type ChangeMembers = Council;
+    // NOTE: this implies that council's genesis members cannot be set directly and must come from
+    // this module.
+    type InitializeMembers = Council;
+    type CurrencyToVote = U128CurrencyToVote;
+    type CandidacyBond = CandidacyBond;
+	type VotingBondBase = VotingBondBase;
+	type VotingBondFactor = VotingBondFactor;
+    type LoserCandidate = Treasury;
+    type KickedMember = Treasury;
+    type DesiredMembers = DesiredMembers;
+    type DesiredRunnersUp = DesiredRunnersUp;
+    type TermDuration = TermDuration;
+    type WeightInfo = pallet_elections_phragmen::weights::SubstrateWeight<Runtime>;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -373,6 +438,9 @@ construct_runtime!(
 		Tokens: orml_tokens::{Module, Storage, Call, Event<T>, Config<T>},
 		Xyk: pallet_xyk::{Module, Call, Storage, Event<T>, Config<T>},
 		Treasury: pallet_treasury::{Module, Call, Storage, Config, Event<T>},
+		SudoOrigin: pallet_sudo_origin::{Module, Call, Event},
+		Council: pallet_collective::<Instance1>::{Module, Call, Storage, Origin<T>, Event<T>, Config<T>},
+		Elections: pallet_elections_phragmen::{Module, Call, Storage, Event<T>, Config<T>},
 	}
 );
 

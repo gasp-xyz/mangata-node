@@ -2,7 +2,7 @@ use sp_core::{Pair, Public, sr25519};
 use mangata_runtime::{
 	AccountId, AuraConfig, GenesisConfig, GrandpaConfig,
 	SudoConfig, SystemConfig, WASM_BINARY, Signature, TokensConfig,
-	AssetsInfoConfig, TreasuryConfig, XykConfig
+	AssetsInfoConfig, TreasuryConfig, XykConfig, CouncilConfig, ElectionsConfig
 };
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_finality_grandpa::AuthorityId as GrandpaId;
@@ -164,6 +164,14 @@ fn testnet_genesis(
 		pallet_xyk: Some(XykConfig {
 			created_pools_for_staking: vec![],
 		}),
+        pallet_collective_Instance1: Some(CouncilConfig::default()),
+        pallet_elections_phragmen: Some(ElectionsConfig {
+            members: endowed_accounts
+                .iter()
+                .cloned()
+                .map(|(member)| (member, 100 * 100_000_000_000_000))
+                .collect(),
+        }),
 
 	}
 }

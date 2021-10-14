@@ -3265,9 +3265,12 @@ dependencies = [
  "orml-traits",
  "pallet-assets-info",
  "pallet-aura",
+ "pallet-collective",
+ "pallet-elections-phragmen",
  "pallet-grandpa",
  "pallet-randomness-collective-flip",
  "pallet-sudo",
+ "pallet-sudo-origin",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
@@ -3886,6 +3889,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-collective"
+version = "3.0.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-elections-phragmen"
+version = "3.0.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "sp-npos-elections",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-grandpa"
 version = "3.0.0"
 dependencies = [
@@ -3944,6 +3974,20 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-sudo-origin"
+version = "2.0.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -6655,6 +6699,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "sp-npos-elections"
+version = "3.0.0"
+dependencies = [
+ "parity-scale-codec",
+ "serde",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-npos-elections-compact",
+ "sp-std",
+]
+
+[[package]]
+name = "sp-npos-elections-compact"
+version = "3.0.0"
+dependencies = [
+ "proc-macro-crate 0.1.5",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "sp-offchain"
 version = "3.0.0"
 dependencies = [
@@ -8396,14 +8462,6 @@ name = "pallet-babe"
 version = "3.0.0"
 
 [[patch.unused]]
-name = "pallet-collective"
-version = "3.0.0"
-
-[[patch.unused]]
-name = "pallet-elections-phragmen"
-version = "3.0.0"
-
-[[patch.unused]]
 name = "pallet-offences"
 version = "3.0.0"
 
@@ -8421,14 +8479,6 @@ version = "0.9.0"
 
 [[patch.unused]]
 name = "sp-authority-discovery"
-version = "3.0.0"
-
-[[patch.unused]]
-name = "sp-npos-elections"
-version = "3.0.0"
-
-[[patch.unused]]
-name = "sp-npos-elections-compact"
 version = "3.0.0"
 
 [[patch.unused]]

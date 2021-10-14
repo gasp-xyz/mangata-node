@@ -34,6 +34,8 @@ sp-std = { version = "3.0.0", default-features = false, git = "https://github.co
 sp-transaction-pool = { version = "3.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-version = { version = "3.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 pallet-treasury = { default-features = false, version='3.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+pallet-elections-phragmen = { version = "3.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+pallet-collective = { version = "3.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
 # Used for the node's RPCs
 frame-system-rpc-runtime-api = { version = "3.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
@@ -49,6 +51,7 @@ pallet-xyk = { path = '../pallets/xyk', default-features = false, version = '0.1
 xyk-runtime-api = { path = '../pallets/xyk/runtime-api', default-features = false, version = '2.0.0' }
 mangata-primitives = { path = '../primitives/mangata', default-features = false, version = "0.1.0" }
 pallet-assets-info = { path = '../pallets/assets-info', default-features = false, version = '2.0.0' }
+pallet-sudo-origin = { path = '../pallets/sudo-origin', default-features = false, version = "2.0.0" }
 
 # thrid party dependencies
 orml-tokens = {  default-features = false, version = "0.4.0", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
@@ -91,6 +94,9 @@ std = [
     "xyk-runtime-api/std",
 	"pallet-treasury/std",
     "mangata-primitives/std",
+	"pallet-sudo-origin/std",
+	"pallet-collective/std",
+	"pallet-elections-phragmen/std",
 ]
 runtime-benchmarks = [
 	"sp-runtime/runtime-benchmarks",

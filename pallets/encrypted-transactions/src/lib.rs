@@ -2,6 +2,11 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
+
 use codec::{Decode, Encode};
 use frame_support::storage::child;
 use frame_support::traits::OnUnbalanced;
@@ -153,7 +158,6 @@ decl_event!(
         UserRefunded(Index, AccountId, Index, Hash, Balance),
     }
 );
-
 decl_module! {
     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
 

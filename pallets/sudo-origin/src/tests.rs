@@ -21,7 +21,7 @@ use super::*;
 use frame_support::{assert_noop, assert_ok, dispatch::DispatchError};
 use frame_system::RawOrigin;
 use mock::{
-    new_test_ext, Call, Logger, LoggerCall, Origin, SudoOrigin, SudoOriginCall, System, Event,
+    new_test_ext, Call, Logger, LoggerCall, Origin, SudoOrigin, SudoOriginCall, System,
 };
 
 #[test]

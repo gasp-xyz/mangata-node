@@ -38,21 +38,19 @@ pub use frame_support::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 	},
 };
-use pallet_transaction_payment::CurrencyAdapter;
 use frame_system::EnsureRoot;
 
 pub use mangata_primitives::{Amount, Balance, TokenId};
 pub use orml_tokens;
-use orml_tokens::{MultiTokenCurrency, TransferDust};
+use orml_tokens::TransferDust;
 use orml_traits::parameter_type_with_key;
 
 pub use pallet_xyk;
 use xyk_runtime_api::{RpcAmountsResult, RpcResult};
 
-use codec::{Encode, Decode, FullCodec};
 use static_assertions::const_assert;
 
-pub const MGA_Token_ID: TokenId = 0;
+pub const MGA_TOKEN_ID: TokenId = 0;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -163,7 +161,7 @@ parameter_types! {
 }
 
 parameter_types! {
-	pub const MgaTokenId: TokenId = MGA_Token_ID;
+	pub const MgaTokenId: TokenId = MGA_TOKEN_ID;
 }
 
 // Configure FRAME pallets to include in runtime.
@@ -318,7 +316,7 @@ impl pallet_xyk::Config for Runtime {
 parameter_type_with_key! {
 	pub ExistentialDeposits: |currency_id: TokenId| -> Balance {
 		match currency_id {
-			&MGA_Token_ID => 100,
+			&MGA_TOKEN_ID => 100,
 			_ => 0,
 		}
 	};

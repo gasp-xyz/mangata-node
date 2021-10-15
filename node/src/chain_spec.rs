@@ -8,7 +8,6 @@ use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{Verify, IdentifyAccount};
 use sc_service::ChainType;
-use mangata_primitives::{Balance,TokenId};
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -169,7 +168,7 @@ fn testnet_genesis(
             members: endowed_accounts
                 .iter()
                 .cloned()
-                .map(|(member)| (member, 100 * 100_000_000_000_000))
+                .map(|member| (member, 100 * 100_000_000_000_000))
                 .collect(),
         }),
 

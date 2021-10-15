@@ -1,21 +1,19 @@
 // Copyright (C) 2020 Mangata team
 
 use super::*;
-use crate::{Module, Config};
+
 use sp_core::H256;
 
 use sp_runtime::{
     testing::Header,
     traits::{BlakeTwo256, IdentityLookup},
-    Perbill,
 };
 
-use frame_support::{impl_outer_event, impl_outer_origin, parameter_types, weights::Weight};
 use frame_system as system;
 use mangata_primitives::{Amount, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
 use pallet_assets_info as assets_info;
-use frame_support::construct_runtime;
+use frame_support::{construct_runtime, parameter_types};
 use orml_traits::parameter_type_with_key;
 use crate as xyk;
 

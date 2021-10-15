@@ -1,7 +1,5 @@
 // Copyright (C) 2020 Mangata team
 
-use crate::{Module, Config};
-use frame_support::{impl_outer_event, impl_outer_origin, parameter_types, weights::Weight};
 use frame_system as system;
 use mangata_primitives::{Amount, Balance, TokenId};
 use orml_tokens as assets;
@@ -10,11 +8,9 @@ use sp_core::H256;
 use sp_runtime::{
     testing::Header,
     traits::{BlakeTwo256, IdentityLookup},
-    Perbill,
 };
-// use frame_support::traits::PalletInfo;
 use orml_traits::parameter_type_with_key;
-use frame_support::{construct_runtime, traits::GenesisBuild};
+use frame_support::{construct_runtime, parameter_types};
 
 use super::*;
 

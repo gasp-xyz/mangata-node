@@ -21,6 +21,9 @@ frame-system = { version = "2.0.0", default-features = false, git = "https://git
 mangata-primitives = { default-features = false, version = '0.1.0' , path = '../../primitives/mangata'}
 orml-tokens = {  default-features = false, version = '0.3.1' , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
 
+[dev-dependencies]
+sp-staking = { version = '2.0.1' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+
 [features]
 default = ["std"]
 std = [

@@ -1,0 +1,271 @@
+[ {
+  "uid" : "d98a2c7085c2f2a3",
+  "name" : "Bond operation locks some amount",
+  "time" : {
+    "start" : 1634302387211,
+    "stop" : 1634302405922,
+    "duration" : 18711
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "b80e8f0ca61f65ed",
+  "name" : "xyk-pallet - MGA tokens are substracted as fee : TransferAll",
+  "time" : {
+    "start" : 1634302129498,
+    "stop" : 1634302165504,
+    "duration" : 36006
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "f0785cd4fb48089d",
+  "name" : "SDK- Nonce management - Extrinsic failed",
+  "time" : {
+    "start" : 1634301804907,
+    "stop" : 1634301823632,
+    "duration" : 18725
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "f0a0aecfb05d3bee",
+  "name" : "xyk-pallet - MGA tokens are substracted as fee : BurnLiquidity",
+  "time" : {
+    "start" : 1634302093393,
+    "stop" : 1634302110756,
+    "duration" : 17363
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "b6f01d6de8656ccc",
+  "name" : "xyk-pallet: Liquidity sufficiency scenario",
+  "time" : {
+    "start" : 1634300114043,
+    "stop" : 1634300419879,
+    "duration" : 305836
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "165ad1d365e1827c",
+  "name" : "xyk-pallet - MGA tokens are substracted as fee : CreatePool",
+  "time" : {
+    "start" : 1634301985193,
+    "stop" : 1634302076038,
+    "duration" : 90845
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "c61538a6374777a5",
+  "name" : "assets won when assets are sold [Selling other in MGA pool] - 6",
+  "time" : {
+    "start" : 1634300641631,
+    "stop" : 1634300749813,
+    "duration" : 108182
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "7cc4e07e633345",
+  "name" : "assets won when assets are sold [Selling X connected to MGA pool] - 10",
+  "time" : {
+    "start" : 1634300857996,
+    "stop" : 1634301019563,
+    "duration" : 161567
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "9af78ec49c91da37",
+  "name" : "xyk-pallet - MGA tokens are substracted as fee : MintLiquidity",
+  "time" : {
+    "start" : 1634302076038,
+    "stop" : 1634302093393,
+    "duration" : 17355
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "f584ba31fdffab44",
+  "name" : "SDK- Nonce management - Using custom nonce",
+  "time" : {
+    "start" : 1634301823632,
+    "stop" : 1634301859696,
+    "duration" : 36064
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "49c88712e9cf5ff7",
+  "name" : "assets won when assets are sold [Selling Y - X connected toMGA pool] - 6",
+  "time" : {
+    "start" : 1634301187894,
+    "stop" : 1634301349460,
+    "duration" : 161566
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "67afa6628ceb6335",
+  "name" : "assets won when assets are bought [Buying X connected to MGA pool]",
+  "time" : {
+    "start" : 1634301019563,
+    "stop" : 1634301187894,
+    "duration" : 168331
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "61f26d5900a9afe1",
+  "name" : "assets won when assets are sold [Selling Mangata] - 5",
+  "time" : {
+    "start" : 1634300422192,
+    "stop" : 1634300533401,
+    "duration" : 111209
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "23049a9f6aa4ae80",
+  "name" : "SDK- Nonce management - user - future Tx-",
+  "time" : {
+    "start" : 1634301768882,
+    "stop" : 1634301804907,
+    "duration" : 36025
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "6cef8ab4434f53b7",
+  "name" : "xyk-pallet - MGA tokens are not substracted as fee : BuyAsset",
+  "time" : {
+    "start" : 1634302182919,
+    "stop" : 1634302201614,
+    "duration" : 18695
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "9cecd7795541ca14",
+  "name" : "SDK- Nonce management - user",
+  "time" : {
+    "start" : 1634301732772,
+    "stop" : 1634301751512,
+    "duration" : 18740
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "f1d469269879b36",
+  "name" : "[BUG?] SDK- Nonce management - RPC Failure - Not enough balance",
+  "time" : {
+    "start" : 1634301859703,
+    "stop" : 1634301859703,
+    "duration" : 0
+  },
+  "status" : "skipped",
+  "severity" : "normal"
+}, {
+  "uid" : "7e6c9ac1c4f8d089",
+  "name" : "assets won when assets are bought [Buying Mangata]",
+  "time" : {
+    "start" : 1634300533401,
+    "stop" : 1634300641631,
+    "duration" : 108230
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "9c2b8fd8506fb700",
+  "name" : "Not enough tokens to convert fee LINK[https://trello.com/c/p77t0atO]",
+  "time" : {
+    "start" : 1634301511074,
+    "stop" : 1634301638000,
+    "duration" : 126926
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "87740e1166884310",
+  "name" : "xyk-pallet - MGA tokens are substracted as fee : Transfer",
+  "time" : {
+    "start" : 1634302110756,
+    "stop" : 1634302129498,
+    "duration" : 18742
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "87b4ac9172397c59",
+  "name" : "assets won when assets are bought [Buying Y - X connected toMGA pool] - 6",
+  "time" : {
+    "start" : 1634301349460,
+    "stop" : 1634301511072,
+    "duration" : 161612
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "e4fd9d608a24e77e",
+  "name" : "SDK- Nonce management - user - parallel",
+  "time" : {
+    "start" : 1634301751512,
+    "stop" : 1634301768882,
+    "duration" : 17370
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "52746dad113e93e4",
+  "name" : "xyk-pallet - Assets substracted are incremented by 1 - MGA- SellAsset",
+  "time" : {
+    "start" : 1634302202601,
+    "stop" : 1634302333817,
+    "duration" : 131216
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "d3eae2eb5e71bacd",
+  "name" : "xyk-pallet: Happy case scenario",
+  "time" : {
+    "start" : 1634299917419,
+    "stop" : 1634300114043,
+    "duration" : 196624
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "d4f9b5cc84bc09fe",
+  "name" : "assets won when assets are bought [Buying other in MGA pool]",
+  "time" : {
+    "start" : 1634300749813,
+    "stop" : 1634300857990,
+    "duration" : 108177
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "86728a3ebd6587b4",
+  "name" : "[BUG?] SDK- Nonce management - Transaction outdated",
+  "time" : {
+    "start" : 1634301859696,
+    "stop" : 1634301859696,
+    "duration" : 0
+  },
+  "status" : "skipped",
+  "severity" : "normal"
+}, {
+  "uid" : "d9324e887f597fe5",
+  "name" : "xyk-pallet - MGA tokens are not substracted as fee : SellAsset",
+  "time" : {
+    "start" : 1634302165504,
+    "stop" : 1634302182919,
+    "duration" : 17415
+  },
+  "status" : "passed",
+  "severity" : "normal"
+} ]

@@ -1,0 +1,75 @@
+{
+  "uid" : "61f26d5900a9afe1",
+  "name" : "assets won when assets are sold [Selling Mangata] - 5",
+  "fullName" : "xyk-pallet - treasury tests [Mangata]: on treasury we store.assets won when assets are sold [Selling Mangata] - 5",
+  "historyId" : "dd6031c39dad92c2f0d6040402ed7ebf",
+  "time" : {
+    "start" : 1634300422192,
+    "stop" : 1634300533401,
+    "duration" : 111209
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - treasury tests [Mangata]: on treasury we store"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - treasury tests [Mangata]: on treasury we store"
+  }, {
+    "name" : "testMethod",
+    "value" : "assets won when assets are sold [Selling Mangata] - 5"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - treasury tests [Mangata]: on treasury we store"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 3,
+        "unknown" : 0,
+        "total" : 3
+      },
+      "items" : [ {
+        "uid" : "3f18841fb3899897",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/456//#testresult/3f18841fb3899897",
+        "status" : "passed",
+        "time" : {
+          "start" : 1634300343695,
+          "stop" : 1634300456056,
+          "duration" : 112361
+        }
+      }, {
+        "uid" : "9951bdb0ad889264",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/455//#testresult/9951bdb0ad889264",
+        "status" : "passed",
+        "time" : {
+          "start" : 1634298813805,
+          "stop" : 1634298919722,
+          "duration" : 105917
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "61f26d5900a9afe1.json",
+  "parameterValues" : [ ]
+}

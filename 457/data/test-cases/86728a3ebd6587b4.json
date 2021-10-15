@@ -1,0 +1,48 @@
+{
+  "uid" : "86728a3ebd6587b4",
+  "name" : "[BUG?] SDK- Nonce management - Transaction outdated",
+  "fullName" : "SDK test - Nonce tests - user.[BUG?] SDK- Nonce management - Transaction outdated",
+  "historyId" : "37e5e6c48a224b8770b68342462e0858",
+  "time" : {
+    "start" : 1634301859696,
+    "stop" : 1634301859696,
+    "duration" : 0
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "skipped",
+  "statusMessage" : "Temporarily disabled with xit",
+  "statusTrace" : "undefined",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "SDK test - Nonce tests - user"
+  }, {
+    "name" : "testClass",
+    "value" : "SDK test - Nonce tests - user"
+  }, {
+    "name" : "testMethod",
+    "value" : "[BUG?] SDK- Nonce management - Transaction outdated"
+  }, {
+    "name" : "package",
+    "value" : "SDK test - Nonce tests - user"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "86728a3ebd6587b4.json",
+  "parameterValues" : [ ]
+}

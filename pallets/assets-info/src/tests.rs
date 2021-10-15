@@ -26,7 +26,7 @@ fn set_info_and_retrieve_works_ok() {
         // Read pallet storage and assert an expected result.
         assert_eq!(AssetsInfoModule::get_info(ASSET_ID), info);
 
-        let info_stored_event = TestEvent::assets_info(Event::InfoStored(ASSET_ID, info));
+        let info_stored_event = crate::mock::Event::assets_info(Event::InfoStored(ASSET_ID, info));
 
         assert!(System::events()
             .iter()

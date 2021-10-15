@@ -75,7 +75,7 @@ fn initialize() {
     )
     .unwrap();
 
-    let pool_created_event = TestEvent::xyk(Event::<Test>::PoolCreated(
+    let pool_created_event = crate::mock::Event::xyk(crate::Event::<Test>::PoolCreated(
         acc_id,
         1,
         40000000000000000000,
@@ -716,7 +716,7 @@ fn sell_W() {
             40040040040040040041
         ); // amount of asset 1 in vault acc after creating pool
 
-        let assets_swapped_event = TestEvent::xyk(Event::<Test>::AssetsSwapped(
+        let assets_swapped_event = crate::mock::Event::xyk(crate::Event::<Test>::AssetsSwapped(
             2,
             1,
             20000000000000000000,
@@ -836,7 +836,7 @@ fn buy_W() {
             30000000000000000000
         ); // amount of asset 1 in vault acc after creating pool
 
-        let assets_swapped_event = TestEvent::xyk(Event::<Test>::AssetsSwapped(
+        let assets_swapped_event = crate::mock::Event::xyk(crate::Event::<Test>::AssetsSwapped(
             2,
             1,
             40120361083249749248,
@@ -995,7 +995,7 @@ fn mint_W() {
             XykStorage::balance(2, XykStorage::account_id()),
             90000000000000000001
         ); // amount of asset 1 in vault acc after creating pool
-        let liquidity_minted_event = TestEvent::xyk(Event::<Test>::LiquidityMinted(
+        let liquidity_minted_event = crate::mock::Event::xyk(crate::Event::<Test>::LiquidityMinted(
             2,
             1,
             20000000000000000000,
@@ -1134,7 +1134,7 @@ fn burn_W() {
             30000000000000000000
         ); // amount of asset 1 in vault acc after creating pool
 
-        let liquidity_burned = TestEvent::xyk(Event::<Test>::LiquidityBurned(
+        let liquidity_burned = crate::mock::Event::xyk(crate::Event::<Test>::LiquidityBurned(
             2,
             1,
             20000000000000000000,

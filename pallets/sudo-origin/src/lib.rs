@@ -34,10 +34,10 @@
 //! use frame_support::{decl_module, dispatch};
 //! use frame_system::ensure_root;
 //!
-//! pub trait Trait: frame_system::Trait {}
+//! pub trait Config: frame_system::Config {}
 //!
 //! decl_module! {
-//!     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+//!     pub struct Module<T: Config> for enum Call where origin: T::Origin {
 //! 		#[weight = 0]
 //!         pub fn privileged_function(origin) -> dispatch::DispatchResult {
 //!             ensure_root(origin)?;
@@ -60,7 +60,7 @@
 //! * [Democracy](../pallet_democracy/index.html)
 //!
 //! [`Call`]: ./enum.Call.html
-//! [`Trait`]: ./trait.Trait.html
+//! [`Config`]: ./trait.Config.html
 //! [`Origin`]: https://docs.substrate.dev/docs/substrate-types
 
 #![cfg_attr(not(feature = "std"), no_std)]

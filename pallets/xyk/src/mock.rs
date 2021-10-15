@@ -1,6 +1,7 @@
 // Copyright (C) 2020 Mangata team
 
-use crate::{Module, Trait};
+use super::*;
+use crate::{Module, Config};
 use sp_core::H256;
 
 use sp_runtime::{
@@ -14,39 +15,36 @@ use frame_system as system;
 use mangata_primitives::{Amount, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
 use pallet_assets_info as assets_info;
+use frame_support::construct_runtime;
+use orml_traits::parameter_type_with_key;
+use crate as xyk;
 
 pub const NATIVE_CURRENCY_ID: u32 = 0;
-mod xyk {
-    pub use crate::Event;
-}
 
-impl_outer_origin! {
-    pub enum Origin for Test {}
-}
 
-impl_outer_event! {
-    pub enum TestEvent for Test {
-        assets_info,
-        frame_system<T>,
-        xyk<T>,
-        orml_tokens<T>,
-    }
-}
-// For testing the pallet, we construct most of a mock runtime. This means
-// first constructing a configuration type (`Test`) which `impl`s each of the
-// configuration traits of pallets we want to use.
-#[derive(Clone, Eq, PartialEq)]
-pub struct Test;
+type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
+type Block = frame_system::mocking::MockBlock<Test>;
+
+construct_runtime!(
+	pub enum Test where
+		Block = Block,
+		NodeBlock = Block,
+		UncheckedExtrinsic = UncheckedExtrinsic,
+	{
+		System: frame_system::{Module, Call, Storage, Config, Event<T>},
+		Tokens: orml_tokens::{Module, Storage, Call, Event<T>, Config<T>},
+        AssetsInfoModule: assets_info::{Module, Call, Config, Storage, Event<T>},
+		XykStorage: xyk::{Module, Call, Storage, Event<T>, Config<T>},
+	}
+);
+
 parameter_types! {
     pub const BlockHashCount: u64 = 250;
-    pub const MaximumBlockWeight: Weight = 1024;
-    pub const MaximumBlockLength: u32 = 2 * 1024;
-    pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
 }
-impl system::Trait for Test {
+impl system::Config for Test {
     type BaseCallFilter = ();
     type Origin = Origin;
-    type Call = ();
+    type Call = Call;
     type Index = u64;
     type BlockNumber = u64;
     type Hash = H256;
@@ -54,30 +52,36 @@ impl system::Trait for Test {
     type AccountId = u128;
     type Lookup = IdentityLookup<Self::AccountId>;
     type Header = Header;
-    type Event = TestEvent;
+    type Event = Event;
     type BlockHashCount = BlockHashCount;
-    type MaximumBlockWeight = MaximumBlockWeight;
     type DbWeight = ();
-    type BlockExecutionWeight = ();
-    type ExtrinsicBaseWeight = ();
-    type MaximumExtrinsicWeight = MaximumBlockWeight;
-    type MaximumBlockLength = MaximumBlockLength;
-    type AvailableBlockRatio = AvailableBlockRatio;
     type Version = ();
-    type PalletInfo = ();
     type AccountData = ();
     type OnNewAccount = ();
     type OnKilledAccount = ();
     type SystemWeightInfo = ();
+	type PalletInfo = PalletInfo;
+	type BlockWeights = ();
+	type BlockLength = ();
+	type SS58Prefix = ();
 }
 
-impl orml_tokens::Trait for Test {
-    type Event = TestEvent;
+parameter_type_with_key! {
+	pub ExistentialDeposits: |currency_id: TokenId| -> Balance {
+		match currency_id {
+			_ => 0,
+		}
+	};
+}
+
+impl orml_tokens::Config for Test {
+    type Event = Event;
     type Balance = Balance;
     type Amount = Amount;
     type CurrencyId = TokenId;
-    type OnReceived = ();
     type WeightInfo = ();
+	type ExistentialDeposits = ExistentialDeposits;
+	type OnDust = ();
 }
 
 parameter_types! {
@@ -90,8 +94,8 @@ parameter_types! {
     pub const MaxDecimals: u32 = 255;
 }
 
-impl assets_info::Trait for Test {
-    type Event = TestEvent;
+impl assets_info::Config for Test {
+    type Event = Event;
     type MinLengthName = MinLengthName;
     type MaxLengthName = MaxLengthName;
     type MinLengthSymbol = MinLengthSymbol;
@@ -108,26 +112,23 @@ parameter_types! {
     pub const BnbTreasurySubAccDerive: [u8; 4] = *b"bnbt";
 }
 
-impl Trait for Test {
-    type Event = TestEvent;
+impl Config for Test {
+    type Event = Event;
     type Currency = MultiTokenCurrencyAdapter<Test>;
     type NativeCurrencyId = NativeCurrencyId;
     type TreasuryModuleId = TreasuryModuleId;
     type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
 }
 
-pub type XykStorage = Module<Test>;
-pub type System = system::Module<Test>;
-
-impl<T: Trait> Module<T> {
+impl<T: Config> Module<T> {
     pub fn balance(id: TokenId, who: T::AccountId) -> Balance {
-        <T as Trait>::Currency::free_balance(id.into(), &who).into()
+        <T as Config>::Currency::free_balance(id.into(), &who).into()
     }
     pub fn total_supply(id: TokenId) -> Balance {
-        <T as Trait>::Currency::total_issuance(id.into()).into()
+        <T as Config>::Currency::total_issuance(id.into()).into()
     }
     pub fn create_new_token(who: &T::AccountId, amount: Balance) -> TokenId {
-        <T as Trait>::Currency::create(who, amount.into()).into()
+        <T as Config>::Currency::create(who, amount.into()).into()
     }
 }
 

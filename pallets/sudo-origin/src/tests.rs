@@ -21,7 +21,7 @@ use super::*;
 use frame_support::{assert_noop, assert_ok, dispatch::DispatchError};
 use frame_system::RawOrigin;
 use mock::{
-    new_test_ext, Call, Logger, LoggerCall, Origin, SudoOrigin, SudoOriginCall, System, TestEvent,
+    new_test_ext, Call, Logger, LoggerCall, Origin, SudoOrigin, SudoOriginCall, System, Event,
 };
 
 #[test]
@@ -60,7 +60,7 @@ fn sudo_emits_events_correctly() {
         // Should emit event to indicate success when called with the root `key` and `call` is `Ok`.
         let call = Box::new(Call::Logger(LoggerCall::privileged_i32_log(42, 1)));
         assert_ok!(SudoOrigin::sudo(RawOrigin::Root.into(), call));
-        let expected_event = TestEvent::sudo_origin(Event::SuOriginDid(Ok(())));
+        let expected_event = crate::mock::Event::sudo_origin(crate::Event::SuOriginDid(Ok(())));
         assert!(System::events().iter().any(|a| a.event == expected_event));
     })
 }
@@ -107,7 +107,7 @@ fn sudo_unchecked_weight_emits_events_correctly() {
             call,
             1_000
         ));
-        let expected_event = TestEvent::sudo_origin(Event::SuOriginDid(Ok(())));
+        let expected_event = crate::mock::Event::sudo_origin(crate::Event::SuOriginDid(Ok(())));
         assert!(System::events().iter().any(|a| a.event == expected_event));
     })
 }
@@ -146,7 +146,7 @@ fn sudo_as_emits_events_correctly() {
         // A non-privileged function will work when passed to `sudo_as` with the root `key`.
         let call = Box::new(Call::Logger(LoggerCall::non_privileged_log(42, 1)));
         assert_ok!(SudoOrigin::sudo_as(RawOrigin::Root.into(), 2, call));
-        let expected_event = TestEvent::sudo_origin(Event::SuOriginDoAsDone(true));
+        let expected_event = crate::mock::Event::sudo_origin(crate::Event::SuOriginDoAsDone(true));
         assert!(System::events().iter().any(|a| a.event == expected_event));
     });
 }

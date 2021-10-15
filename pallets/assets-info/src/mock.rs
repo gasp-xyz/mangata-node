@@ -1,6 +1,6 @@
 // Copyright (C) 2020 Mangata team
 
-use crate::{Module, Trait};
+use crate::{Module, Config};
 use frame_support::{impl_outer_event, impl_outer_origin, parameter_types, weights::Weight};
 use frame_system as system;
 use mangata_primitives::{Amount, Balance, TokenId};
@@ -12,31 +12,33 @@ use sp_runtime::{
     traits::{BlakeTwo256, IdentityLookup},
     Perbill,
 };
-mod assets_info {
-    pub use crate::Event;
-}
+// use frame_support::traits::PalletInfo;
+use orml_traits::parameter_type_with_key;
+use frame_support::{construct_runtime, traits::GenesisBuild};
 
-impl_outer_origin! {
-    pub enum Origin for Test {}
-}
+use super::*;
 
-impl_outer_event! {
-    pub enum TestEvent for Test {
-        frame_system<T>,
-        assets<T>,
-        assets_info,
-    }
-}
+use crate as assets_info;
+
+type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
+type Block = frame_system::mocking::MockBlock<Test>;
+
+construct_runtime!(
+	pub enum Test where
+		Block = Block,
+		NodeBlock = Block,
+		UncheckedExtrinsic = UncheckedExtrinsic,
+	{
+		System: frame_system::{Module, Call, Storage, Config, Event<T>},
+		Tokens: assets::{Module, Storage, Call, Event<T>, Config<T>},
+        AssetsInfoModule: assets_info::{Module, Call, Config, Storage, Event<T>},
+	}
+);
 
 // Configure a mock runtime to test the pallet.
 
-#[derive(Clone, Eq, PartialEq)]
-pub struct Test;
 parameter_types! {
     pub const BlockHashCount: u64 = 250;
-    pub const MaximumBlockWeight: Weight = 1024;
-    pub const MaximumBlockLength: u32 = 2 * 1024;
-    pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
     pub const MinLengthName: usize = 1;
     pub const MaxLengthName: usize = 8;
     pub const MinLengthSymbol: usize = 1;
@@ -46,10 +48,10 @@ parameter_types! {
     pub const MaxDecimals: u32 = 10;
 }
 
-impl system::Trait for Test {
+impl system::Config for Test {
     type BaseCallFilter = ();
     type Origin = Origin;
-    type Call = ();
+    type Call = Call;
     type Index = u64;
     type BlockNumber = u64;
     type Hash = H256;
@@ -57,34 +59,40 @@ impl system::Trait for Test {
     type AccountId = u64;
     type Lookup = IdentityLookup<Self::AccountId>;
     type Header = Header;
-    type Event = TestEvent;
+    type Event = Event;
     type BlockHashCount = BlockHashCount;
-    type MaximumBlockWeight = MaximumBlockWeight;
     type DbWeight = ();
-    type BlockExecutionWeight = ();
-    type ExtrinsicBaseWeight = ();
-    type MaximumExtrinsicWeight = MaximumBlockWeight;
-    type MaximumBlockLength = MaximumBlockLength;
-    type AvailableBlockRatio = AvailableBlockRatio;
     type Version = ();
-    type PalletInfo = ();
     type AccountData = ();
     type OnNewAccount = ();
     type OnKilledAccount = ();
     type SystemWeightInfo = ();
+	type PalletInfo = PalletInfo;
+	type BlockWeights = ();
+	type BlockLength = ();
+	type SS58Prefix = ();
 }
 
-impl assets::Trait for Test {
-    type Event = TestEvent;
+parameter_type_with_key! {
+	pub ExistentialDeposits: |currency_id: TokenId| -> Balance {
+		match currency_id {
+			_ => 0,
+		}
+	};
+}
+
+impl assets::Config for Test {
+    type Event = Event;
     type Balance = Balance;
     type Amount = Amount;
     type CurrencyId = TokenId;
-    type OnReceived = ();
     type WeightInfo = ();
+	type ExistentialDeposits = ExistentialDeposits;
+	type OnDust = ();
 }
 
-impl Trait for Test {
-    type Event = TestEvent;
+impl Config for Test {
+    type Event = Event;
     type MinLengthName = MinLengthName;
     type MaxLengthName = MaxLengthName;
     type MinLengthSymbol = MinLengthSymbol;
@@ -94,9 +102,6 @@ impl Trait for Test {
     type MaxDecimals = MaxDecimals;
     type Currency = MultiTokenCurrencyAdapter<Test>;
 }
-
-pub type System = system::Module<Test>;
-pub type AssetsInfoModule = Module<Test>;
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {

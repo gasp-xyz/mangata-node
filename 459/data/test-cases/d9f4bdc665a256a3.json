@@ -1,0 +1,69 @@
+{
+  "uid" : "d9f4bdc665a256a3",
+  "name" : "[BUG?] SDK- Nonce management - RPC Failure - Not enough balance",
+  "fullName" : "SDK test - Nonce tests - Errors.[BUG?] SDK- Nonce management - RPC Failure - Not enough balance",
+  "historyId" : "29472f648e6e85d393fc0bb751e1aeba",
+  "time" : {
+    "start" : 1634539903309,
+    "stop" : 1634539903309,
+    "duration" : 0
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "skipped",
+  "statusMessage" : "Temporarily disabled with xit",
+  "statusTrace" : "undefined",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "SDK test - Nonce tests - Errors"
+  }, {
+    "name" : "testClass",
+    "value" : "SDK test - Nonce tests - Errors"
+  }, {
+    "name" : "testMethod",
+    "value" : "[BUG?] SDK- Nonce management - RPC Failure - Not enough balance"
+  }, {
+    "name" : "package",
+    "value" : "SDK test - Nonce tests - Errors"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 2,
+        "passed" : 0,
+        "unknown" : 0,
+        "total" : 2
+      },
+      "items" : [ {
+        "uid" : "f1d469269879b36",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/457//#testresult/f1d469269879b36",
+        "status" : "skipped",
+        "statusDetails" : "Temporarily disabled with xit",
+        "time" : {
+          "start" : 1634301859703,
+          "stop" : 1634301859703,
+          "duration" : 0
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "d9f4bdc665a256a3.json",
+  "parameterValues" : [ ]
+}

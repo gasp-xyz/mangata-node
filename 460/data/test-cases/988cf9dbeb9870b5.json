@@ -1,0 +1,46 @@
+{
+  "uid" : "988cf9dbeb9870b5",
+  "name" : "xyk-pallet - SecurityTests - Only sudo can perform actions [tokens.mint]",
+  "fullName" : "test/parallel/xyk-pallet.sudo.security.test.ts.xyk-pallet - SecurityTests - Only sudo can perform actions [tokens.mint]",
+  "historyId" : "ff2c8fd50e4e330bbf5c02bd1191019f",
+  "time" : {
+    "start" : 1634539164852,
+    "stop" : 1634539183591,
+    "duration" : 18739
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "test/parallel/xyk-pallet.sudo.security.test.ts"
+  }, {
+    "name" : "testClass",
+    "value" : "test/parallel/xyk-pallet.sudo.security.test.ts"
+  }, {
+    "name" : "testMethod",
+    "value" : "xyk-pallet - SecurityTests - Only sudo can perform actions [tokens.mint]"
+  }, {
+    "name" : "package",
+    "value" : "test/parallel/xyk-pallet.sudo.security.test.ts"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "988cf9dbeb9870b5.json",
+  "parameterValues" : [ ]
+}

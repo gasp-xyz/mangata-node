@@ -1,0 +1,46 @@
+{
+  "uid" : "2ad7cdc03fb53516",
+  "name" : "xyk-pallet - LiquidityOperation: mintLiquidity",
+  "fullName" : "test/parallel/xyk-pallet.liquidity.test.ts.xyk-pallet - LiquidityOperation: mintLiquidity",
+  "historyId" : "d50dea3e448451b6db0aa91b3ff58e96",
+  "time" : {
+    "start" : 1634538456839,
+    "stop" : 1634538582838,
+    "duration" : 125999
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "test/parallel/xyk-pallet.liquidity.test.ts"
+  }, {
+    "name" : "testClass",
+    "value" : "test/parallel/xyk-pallet.liquidity.test.ts"
+  }, {
+    "name" : "testMethod",
+    "value" : "xyk-pallet - LiquidityOperation: mintLiquidity"
+  }, {
+    "name" : "package",
+    "value" : "test/parallel/xyk-pallet.liquidity.test.ts"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "2ad7cdc03fb53516.json",
+  "parameterValues" : [ ]
+}

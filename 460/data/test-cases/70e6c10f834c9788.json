@@ -1,0 +1,46 @@
+{
+  "uid" : "70e6c10f834c9788",
+  "name" : "GetBalance x-y and y-x pool",
+  "fullName" : "xyk-pallet - Pool opeations: Simmetry.GetBalance x-y and y-x pool",
+  "historyId" : "1c46cd78ec36ce10b68c9d881f2454ab",
+  "time" : {
+    "start" : 1634538894827,
+    "stop" : 1634538894859,
+    "duration" : 32
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Pool opeations: Simmetry"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Pool opeations: Simmetry"
+  }, {
+    "name" : "testMethod",
+    "value" : "GetBalance x-y and y-x pool"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Pool opeations: Simmetry"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "70e6c10f834c9788.json",
+  "parameterValues" : [ ]
+}

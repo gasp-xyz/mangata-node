@@ -1,0 +1,46 @@
+{
+  "uid" : "718b8731a28223b",
+  "name" : "Mint liquidity more assets than I own",
+  "fullName" : "xyk-pallet - Mint liquidity tests: MintLiquidity Errors:.Mint liquidity more assets than I own",
+  "historyId" : "3428fa842c304e95eed2682f5bce7ff3",
+  "time" : {
+    "start" : 1634538674208,
+    "stop" : 1634538860077,
+    "duration" : 185869
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Mint liquidity tests: MintLiquidity Errors:"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Mint liquidity tests: MintLiquidity Errors:"
+  }, {
+    "name" : "testMethod",
+    "value" : "Mint liquidity more assets than I own"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Mint liquidity tests: MintLiquidity Errors:"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "718b8731a28223b.json",
+  "parameterValues" : [ ]
+}

@@ -1,0 +1,46 @@
+{
+  "uid" : "b8545cf1b15ed5ae",
+  "name" : "xyk-pallet - Liqudity : Burn part of the liquidity",
+  "fullName" : "test/parallel/xyk-pallet.liquidity.test.ts.xyk-pallet - Liqudity : Burn part of the liquidity",
+  "historyId" : "83f526f2d0082c3729a71752c9cf7948",
+  "time" : {
+    "start" : 1634538203807,
+    "stop" : 1634538332189,
+    "duration" : 128382
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "test/parallel/xyk-pallet.liquidity.test.ts"
+  }, {
+    "name" : "testClass",
+    "value" : "test/parallel/xyk-pallet.liquidity.test.ts"
+  }, {
+    "name" : "testMethod",
+    "value" : "xyk-pallet - Liqudity : Burn part of the liquidity"
+  }, {
+    "name" : "package",
+    "value" : "test/parallel/xyk-pallet.liquidity.test.ts"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "b8545cf1b15ed5ae.json",
+  "parameterValues" : [ ]
+}

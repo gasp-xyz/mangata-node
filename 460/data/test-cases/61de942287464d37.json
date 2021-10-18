@@ -1,0 +1,46 @@
+{
+  "uid" : "61de942287464d37",
+  "name" : "Transfer [MAX] assets to other user when that user has 1 asset. Max+1 => overflow.",
+  "fullName" : "xyk-pallet - Check operations are not executed because of overflow in asset token.Transfer [MAX] assets to other user when that user has 1 asset. Max+1 => overflow.",
+  "historyId" : "ce6131a3606abf8008ef7baac1af2ab3",
+  "time" : {
+    "start" : 1634538332148,
+    "stop" : 1634538456800,
+    "duration" : 124652
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Check operations are not executed because of overflow in asset token"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Check operations are not executed because of overflow in asset token"
+  }, {
+    "name" : "testMethod",
+    "value" : "Transfer [MAX] assets to other user when that user has 1 asset. Max+1 => overflow."
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Check operations are not executed because of overflow in asset token"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "61de942287464d37.json",
+  "parameterValues" : [ ]
+}

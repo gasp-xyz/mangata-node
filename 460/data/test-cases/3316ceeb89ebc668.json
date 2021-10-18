@@ -1,0 +1,46 @@
+{
+  "uid" : "3316ceeb89ebc668",
+  "name" : "Buy from a wallet I own into a wallet I do not own",
+  "fullName" : "xyk-pallet - Buy assets tests: Buying assets you can.Buy from a wallet I own into a wallet I do not own",
+  "historyId" : "385ad6aa68caa365708b3f1f14d99f4c",
+  "time" : {
+    "start" : 1634538894852,
+    "stop" : 1634539093952,
+    "duration" : 199100
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Buy assets tests: Buying assets you can"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Buy assets tests: Buying assets you can"
+  }, {
+    "name" : "testMethod",
+    "value" : "Buy from a wallet I own into a wallet I do not own"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Buy assets tests: Buying assets you can"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "3316ceeb89ebc668.json",
+  "parameterValues" : [ ]
+}

@@ -1,0 +1,46 @@
+{
+  "uid" : "89fe274bd9460aa3",
+  "name" : "validate get_burn_amount that matches with real burn operation",
+  "fullName" : "xyk-rpc - calculate get_burn amount: RPC result matches with burn amount.validate get_burn_amount that matches with real burn operation",
+  "historyId" : "60312bfde2d5e6b7027d81a22b65c70d",
+  "time" : {
+    "start" : 1634539147399,
+    "stop" : 1634539164855,
+    "duration" : 17456
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-rpc - calculate get_burn amount: RPC result matches with burn amount"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-rpc - calculate get_burn amount: RPC result matches with burn amount"
+  }, {
+    "name" : "testMethod",
+    "value" : "validate get_burn_amount that matches with real burn operation"
+  }, {
+    "name" : "package",
+    "value" : "xyk-rpc - calculate get_burn amount: RPC result matches with burn amount"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "89fe274bd9460aa3.json",
+  "parameterValues" : [ ]
+}

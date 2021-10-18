@@ -1,0 +1,46 @@
+{
+  "uid" : "627d515964a5c265",
+  "name" : "Buy more assets than exists in the pool",
+  "fullName" : "xyk-pallet - Buy assets tests: BuyAssets Errors:.Buy more assets than exists in the pool",
+  "historyId" : "d5e957604e7165b61395f601d4e7881f",
+  "time" : {
+    "start" : 1634538349602,
+    "stop" : 1634538475654,
+    "duration" : 126052
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Buy assets tests: BuyAssets Errors:"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Buy assets tests: BuyAssets Errors:"
+  }, {
+    "name" : "testMethod",
+    "value" : "Buy more assets than exists in the pool"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Buy assets tests: BuyAssets Errors:"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "627d515964a5c265.json",
+  "parameterValues" : [ ]
+}

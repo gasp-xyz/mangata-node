@@ -1,0 +1,46 @@
+{
+  "uid" : "4707239166fbbbec",
+  "name" : "xyk-rpc - calculate_sell_price and calculate_buy_price matches, 2000,1000",
+  "fullName" : "test/parallel/xyk-rpc.calculate.test.ts.xyk-rpc - calculate_sell_price and calculate_buy_price matches, 2000,1000",
+  "historyId" : "18ac1640c52c52c5e5aabc34be8c42d2",
+  "time" : {
+    "start" : 1634539164864,
+    "stop" : 1634539164893,
+    "duration" : 29
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "test/parallel/xyk-rpc.calculate.test.ts"
+  }, {
+    "name" : "testClass",
+    "value" : "test/parallel/xyk-rpc.calculate.test.ts"
+  }, {
+    "name" : "testMethod",
+    "value" : "xyk-rpc - calculate_sell_price and calculate_buy_price matches, 2000,1000"
+  }, {
+    "name" : "package",
+    "value" : "test/parallel/xyk-rpc.calculate.test.ts"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "4707239166fbbbec.json",
+  "parameterValues" : [ ]
+}

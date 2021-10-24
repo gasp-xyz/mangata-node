@@ -48,6 +48,12 @@ use orml_traits::parameter_type_with_key;
 pub use pallet_xyk;
 use xyk_runtime_api::{RpcAmountsResult, RpcResult};
 
+pub use pallet_bridge;
+pub use artemis_asset;
+pub use artemis_erc20_app;
+pub use artemis_eth_app;
+pub use pallet_verifier;
+
 use static_assertions::const_assert;
 
 pub const MGA_TOKEN_ID: TokenId = 0;
@@ -418,6 +424,30 @@ impl pallet_elections_phragmen::Config for Runtime {
     type WeightInfo = pallet_elections_phragmen::weights::SubstrateWeight<Runtime>;
 }
 
+impl pallet_bridge::Config for Runtime {
+    type Event = Event;
+    type Verifier = pallet_verifier::Module<Runtime>;
+    type AppETH = artemis_eth_app::Module<Runtime>;
+    type AppERC20 = artemis_erc20_app::Module<Runtime>;
+}
+
+impl pallet_verifier::Config for Runtime {
+    type Event = Event;
+}
+
+impl artemis_asset::Config for Runtime {
+    type Event = Event;
+    type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+}
+
+impl artemis_eth_app::Config for Runtime {
+    type Event = Event;
+}
+
+impl artemis_erc20_app::Config for Runtime {
+    type Event = Event;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -432,13 +462,18 @@ construct_runtime!(
 		Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
 		TransactionPayment: pallet_transaction_payment::{Module, Storage},
 		Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
+		Bridge: pallet_bridge::{Module, Call, Config, Storage, Event},
+        Verifier: pallet_verifier::{Module, Call, Storage, Event, Config<T>},
+        BridgedAsset: artemis_asset::{Module, Call, Config<T>, Storage, Event<T>},
+        ETH: artemis_eth_app::{Module, Call, Storage, Event<T>},
+        ERC20: artemis_erc20_app::{Module, Call, Storage, Event<T>},
 		AssetsInfo: pallet_assets_info::{Module, Call, Config, Storage, Event<T>},
 		Tokens: orml_tokens::{Module, Storage, Call, Event<T>, Config<T>},
 		Xyk: pallet_xyk::{Module, Call, Storage, Event<T>, Config<T>},
 		Treasury: pallet_treasury::{Module, Call, Storage, Config, Event<T>},
-		SudoOrigin: pallet_sudo_origin::{Module, Call, Event},
 		Council: pallet_collective::<Instance1>::{Module, Call, Storage, Origin<T>, Event<T>, Config<T>},
 		Elections: pallet_elections_phragmen::{Module, Call, Storage, Event<T>, Config<T>},
+		SudoOrigin: pallet_sudo_origin::{Module, Call, Event},
 	}
 );
 

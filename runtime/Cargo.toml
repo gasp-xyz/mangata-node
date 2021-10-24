@@ -57,6 +57,14 @@ pallet-sudo-origin = { path = '../pallets/sudo-origin', default-features = false
 orml-tokens = {  default-features = false, version = "0.4.0", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
 orml-traits = {  default-features = false, version = "0.4.0", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
 
+# bridge dependencies
+artemis-core = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
+pallet-verifier = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
+artemis-erc20-app = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
+artemis-eth-app = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
+artemis-asset = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
+pallet-bridge = {default-features = false, version = "0.1.1", path = "../pallets/bridge"}
+
 [build-dependencies]
 substrate-wasm-builder = { version = "4.0.0", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
@@ -97,6 +105,12 @@ std = [
 	"pallet-sudo-origin/std",
 	"pallet-collective/std",
 	"pallet-elections-phragmen/std",
+	"artemis-core/std",
+	"pallet-verifier/std",
+	"artemis-erc20-app/std",
+	"artemis-eth-app/std",
+	"artemis-asset/std",
+	"pallet-bridge/std",
 ]
 runtime-benchmarks = [
 	"sp-runtime/runtime-benchmarks",

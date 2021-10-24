@@ -17,6 +17,7 @@ name = "mangata-node"
 
 [dependencies]
 structopt = "0.3.8"
+hex-literal = { version = "0.3.1", default-features = false }
 
 sc-cli = { version = "0.9.0", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev", features = ["wasmtime"] }
 sp-core = { version = "3.0.0", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
@@ -55,6 +56,8 @@ mangata-runtime = { version = "2.0.0", path = "../runtime" }
 mangata-primitives = { default-features = false, version = '0.1.0' , path = '../primitives/mangata'}
 xyk-rpc = { default-features = false, version = '2.0.0', path = '../pallets/xyk/rpc' }
 xyk-runtime-api = { default-features = false, version = '2.0.0', path = '../pallets/xyk/runtime-api' }
+
+artemis-core = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
 
 [build-dependencies]
 substrate-build-script-utils = { version = "3.0.0", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }

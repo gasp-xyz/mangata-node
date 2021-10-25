@@ -1,0 +1,26 @@
+{
+  "uid" : "4b4757e66a1912dae1a509f688f20b0f",
+  "children" : [ {
+    "name" : "Product defects",
+    "children" : [ {
+      "name" : "Error: Expected: 50000 \n                  Actual: 49999 \n                 ",
+      "children" : [ {
+        "name" : "assets won when assets are sold [Selling X connected to MGA pool] - rounding",
+        "uid" : "3f641346279c84e1",
+        "parentUid" : "5aefa741739d721dbeae87106a3d0f66",
+        "status" : "failed",
+        "time" : {
+          "start" : 1635170420009,
+          "stop" : 1635170581736,
+          "duration" : 161727
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      } ],
+      "uid" : "5aefa741739d721dbeae87106a3d0f66"
+    } ],
+    "uid" : "8fb3a91ba5aaf9de24cc8a92edc82b5d"
+  } ],
+  "name" : "categories"
+}

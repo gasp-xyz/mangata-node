@@ -1,0 +1,181 @@
+[ {
+  "uid" : "f4d05170f136b4bd",
+  "name" : "Not enough tokens to convert fee LINK[https://trello.com/c/p77t0atO]",
+  "time" : {
+    "start" : 1635171073595,
+    "stop" : 1635171199305,
+    "duration" : 125710
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "3c435c835ef033fe",
+  "name" : "xyk-pallet - MGA tokens are substracted as fee : TransferAll",
+  "time" : {
+    "start" : 1635171475998,
+    "stop" : 1635171510741,
+    "duration" : 34743
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "6bd38b875c1c63c6",
+  "name" : "xyk-pallet - MGA tokens are substracted as fee : Transfer",
+  "time" : {
+    "start" : 1635171457282,
+    "stop" : 1635171475998,
+    "duration" : 18716
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "268dc39906b14e6b",
+  "name" : "assets won when assets are sold [Selling Y - X connected toMGA pool] - 6",
+  "time" : {
+    "start" : 1635170748811,
+    "stop" : 1635170911873,
+    "duration" : 163062
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "4d4498b159861131",
+  "name" : "assets won when assets are bought [Buying Mangata]",
+  "time" : {
+    "start" : 1635170095136,
+    "stop" : 1635170203426,
+    "duration" : 108290
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "8ef5c32d323b7085",
+  "name" : "assets won when assets are sold [Selling Mangata] - 5",
+  "time" : {
+    "start" : 1635169989622,
+    "stop" : 1635170095136,
+    "duration" : 105514
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "c6c49c9b53ead980",
+  "name" : "xyk-pallet - MGA tokens are not substracted as fee : SellAsset",
+  "time" : {
+    "start" : 1635171510741,
+    "stop" : 1635171529490,
+    "duration" : 18749
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "268eaf62649c68b5",
+  "name" : "assets won when assets are bought [Buying other in MGA pool]",
+  "time" : {
+    "start" : 1635170311714,
+    "stop" : 1635170420001,
+    "duration" : 108287
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "dc75c86fdbc75c7d",
+  "name" : "xyk-pallet - MGA tokens are substracted as fee : BurnLiquidity",
+  "time" : {
+    "start" : 1635171439902,
+    "stop" : 1635171457282,
+    "duration" : 17380
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "5068d58a12e65fc5",
+  "name" : "xyk-pallet - MGA tokens are substracted as fee : CreatePool",
+  "time" : {
+    "start" : 1635171331599,
+    "stop" : 1635171421189,
+    "duration" : 89590
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "61b0229cf8df3c90",
+  "name" : "xyk-pallet: Liquidity sufficiency scenario",
+  "time" : {
+    "start" : 1635169682095,
+    "stop" : 1635169986886,
+    "duration" : 304791
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "3974cf29b2ae850b",
+  "name" : "assets won when assets are bought [Buying Y - X connected toMGA pool] - 6",
+  "time" : {
+    "start" : 1635170911873,
+    "stop" : 1635171073593,
+    "duration" : 161720
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "b22b321291e41b8b",
+  "name" : "assets won when assets are sold [Selling other in MGA pool] - 6",
+  "time" : {
+    "start" : 1635170203426,
+    "stop" : 1635170311714,
+    "duration" : 108288
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "c0cd42383d47aa70",
+  "name" : "xyk-pallet: Happy case scenario",
+  "time" : {
+    "start" : 1635169484074,
+    "stop" : 1635169682095,
+    "duration" : 198021
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "927cdcfd02687040",
+  "name" : "xyk-pallet - MGA tokens are not substracted as fee : BuyAsset",
+  "time" : {
+    "start" : 1635171529490,
+    "stop" : 1635171546906,
+    "duration" : 17416
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "677d54d22c9eea4",
+  "name" : "xyk-pallet - MGA tokens are substracted as fee : MintLiquidity",
+  "time" : {
+    "start" : 1635171421189,
+    "stop" : 1635171439902,
+    "duration" : 18713
+  },
+  "status" : "passed",
+  "severity" : "normal"
+}, {
+  "uid" : "3f641346279c84e1",
+  "name" : "assets won when assets are sold [Selling X connected to MGA pool] - rounding",
+  "time" : {
+    "start" : 1635170420009,
+    "stop" : 1635170581736,
+    "duration" : 161727
+  },
+  "status" : "failed",
+  "severity" : "normal"
+}, {
+  "uid" : "6f5d8e990e8fd58d",
+  "name" : "assets won when assets are bought [Buying X connected to MGA pool]",
+  "time" : {
+    "start" : 1635170581737,
+    "stop" : 1635170748811,
+    "duration" : 167074
+  },
+  "status" : "passed",
+  "severity" : "normal"
+} ]

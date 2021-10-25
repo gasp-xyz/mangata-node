@@ -242,7 +242,7 @@ fn buy_and_burn_sell_has_mangata_pair() {
 
         assert_eq!(
             XykStorage::asset_pool((0, 1)),
-            (99950012496874, 100050000000002)
+            (99950024987505, 100050000000002)
         );
         assert_eq!(
             XykStorage::asset_pool((1, 2)),
@@ -252,7 +252,7 @@ fn buy_and_burn_sell_has_mangata_pair() {
         assert_eq!(XykStorage::balance(2, 2), 933266599933266); // user acc: regular trade result
         assert_eq!(
             XykStorage::balance(0, XykStorage::account_id()),
-            99950012496874
+            99950024987505
         );
         assert_eq!(
             XykStorage::balance(1, XykStorage::account_id()),
@@ -264,7 +264,7 @@ fn buy_and_burn_sell_has_mangata_pair() {
         ); // vault: regular trade result
         assert_eq!(
             XykStorage::balance(0, XykStorage::treasury_account_id()),
-            24993751563
+            24987506247
         ); // 24987506247 mangata in treasury
         assert_eq!(XykStorage::balance(1, XykStorage::treasury_account_id()), 0);
         assert_eq!(
@@ -367,7 +367,7 @@ fn buy_and_burn_buy_where_sold_has_mangata_pair() {
 
         assert_eq!(
             XykStorage::asset_pool((0, 1)),
-            (99950012496876, 100050000000000)
+            (99950024987507, 100050000000000)
         );
         assert_eq!(
             XykStorage::asset_pool((1, 2)),
@@ -377,7 +377,7 @@ fn buy_and_burn_buy_where_sold_has_mangata_pair() {
         assert_eq!(XykStorage::balance(2, 2), 933266599933266); // user acc: regular trade result
         assert_eq!(
             XykStorage::balance(0, XykStorage::account_id()),
-            99950012496876
+            99950024987507
         );
         assert_eq!(
             XykStorage::balance(1, XykStorage::account_id()),
@@ -389,7 +389,7 @@ fn buy_and_burn_buy_where_sold_has_mangata_pair() {
         ); // vault: regular trade result
         assert_eq!(
             XykStorage::balance(0, XykStorage::treasury_account_id()),
-            24993751562
+            24987506246
         ); // 24987506247 mangata in treasury
         assert_eq!(XykStorage::balance(1, XykStorage::treasury_account_id()), 0);
         assert_eq!(

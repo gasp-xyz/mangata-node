@@ -1,0 +1,66 @@
+{
+  "uid" : "95ee8e69bd049885",
+  "name" : "GetLiquidityAssetID x-y and y-x pool",
+  "fullName" : "xyk-pallet - Pool opeations: Simmetry.GetLiquidityAssetID x-y and y-x pool",
+  "historyId" : "dfa178f254928546284208302ffade25",
+  "time" : {
+    "start" : 1635234757901,
+    "stop" : 1635234757923,
+    "duration" : 22
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Pool opeations: Simmetry"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Pool opeations: Simmetry"
+  }, {
+    "name" : "testMethod",
+    "value" : "GetLiquidityAssetID x-y and y-x pool"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Pool opeations: Simmetry"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 2,
+        "unknown" : 0,
+        "total" : 2
+      },
+      "items" : [ {
+        "uid" : "a429d0c345f96193",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/460//#testresult/a429d0c345f96193",
+        "status" : "passed",
+        "time" : {
+          "start" : 1634538967053,
+          "stop" : 1634538967099,
+          "duration" : 46
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "95ee8e69bd049885.json",
+  "parameterValues" : [ ]
+}

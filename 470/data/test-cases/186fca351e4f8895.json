@@ -1,0 +1,66 @@
+{
+  "uid" : "186fca351e4f8895",
+  "name" : "xyk-pallet - AssetsOperation: buyAsset [maxAmountIn = 1M], buy asset",
+  "fullName" : "test/parallel/xyk-pallet.asset.buy.test.ts.xyk-pallet - AssetsOperation: buyAsset [maxAmountIn = 1M], buy asset",
+  "historyId" : "7e51b3c0cb058217af0a4d14751a0c42",
+  "time" : {
+    "start" : 1635234442115,
+    "stop" : 1635234566040,
+    "duration" : 123925
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "test/parallel/xyk-pallet.asset.buy.test.ts"
+  }, {
+    "name" : "testClass",
+    "value" : "test/parallel/xyk-pallet.asset.buy.test.ts"
+  }, {
+    "name" : "testMethod",
+    "value" : "xyk-pallet - AssetsOperation: buyAsset [maxAmountIn = 1M], buy asset"
+  }, {
+    "name" : "package",
+    "value" : "test/parallel/xyk-pallet.asset.buy.test.ts"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 2,
+        "unknown" : 0,
+        "total" : 2
+      },
+      "items" : [ {
+        "uid" : "b00c52690a6a155e",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/460//#testresult/b00c52690a6a155e",
+        "status" : "passed",
+        "time" : {
+          "start" : 1634538658196,
+          "stop" : 1634538780989,
+          "duration" : 122793
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "186fca351e4f8895.json",
+  "parameterValues" : [ ]
+}

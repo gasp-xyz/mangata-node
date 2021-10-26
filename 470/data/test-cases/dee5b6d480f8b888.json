@@ -1,0 +1,66 @@
+{
+  "uid" : "dee5b6d480f8b888",
+  "name" : "Sell assets from a wallet I own into a wallet I do not own: limit",
+  "fullName" : "xyk-pallet - Sell assets tests: Selling Assets you can.Sell assets from a wallet I own into a wallet I do not own: limit",
+  "historyId" : "7677dc7ca32ec73b71d691f5e0d1f5bb",
+  "time" : {
+    "start" : 1635234529749,
+    "stop" : 1635234739136,
+    "duration" : 209387
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Sell assets tests: Selling Assets you can"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Sell assets tests: Selling Assets you can"
+  }, {
+    "name" : "testMethod",
+    "value" : "Sell assets from a wallet I own into a wallet I do not own: limit"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Sell assets tests: Selling Assets you can"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 2,
+        "unknown" : 0,
+        "total" : 2
+      },
+      "items" : [ {
+        "uid" : "f775dab11f4e4d26",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/460//#testresult/f775dab11f4e4d26",
+        "status" : "passed",
+        "time" : {
+          "start" : 1634538744809,
+          "stop" : 1634538949665,
+          "duration" : 204856
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "dee5b6d480f8b888.json",
+  "parameterValues" : [ ]
+}

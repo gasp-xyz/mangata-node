@@ -1,0 +1,66 @@
+{
+  "uid" : "7d2d7a8310b85582",
+  "name" : "xyk-pallet - User Balance - Creating a pool requires paying fees",
+  "fullName" : "Wallets unmodified.xyk-pallet - User Balance - Creating a pool requires paying fees",
+  "historyId" : "94bf9d7a4083da5ac64c8e8a94879e2",
+  "time" : {
+    "start" : 1635234740276,
+    "stop" : 1635234829082,
+    "duration" : 88806
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "Wallets unmodified"
+  }, {
+    "name" : "testClass",
+    "value" : "Wallets unmodified"
+  }, {
+    "name" : "testMethod",
+    "value" : "xyk-pallet - User Balance - Creating a pool requires paying fees"
+  }, {
+    "name" : "package",
+    "value" : "Wallets unmodified"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 2,
+        "unknown" : 0,
+        "total" : 2
+      },
+      "items" : [ {
+        "uid" : "d3df9016e06951b9",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/460//#testresult/d3df9016e06951b9",
+        "status" : "passed",
+        "time" : {
+          "start" : 1634538951073,
+          "stop" : 1634539039366,
+          "duration" : 88293
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "7d2d7a8310b85582.json",
+  "parameterValues" : [ ]
+}

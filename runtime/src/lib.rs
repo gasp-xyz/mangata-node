@@ -22,6 +22,7 @@ use sp_runtime::traits::{
     Saturating, Verify,
 };
 use sp_runtime::{
+    AccountId32,
     create_runtime_str, generic, impl_opaque_keys,
     transaction_validity::{TransactionSource, TransactionValidity},
     ApplyExtrinsicResult, FixedPointNumber, MultiSignature, Perquintill,
@@ -65,7 +66,7 @@ use xyk_runtime_api::{RpcAmountsResult, RpcResult};
 
 use frame_system::EnsureOneOf;
 pub use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
-use sp_encrypted_tx::ExtrinsicType;
+use sp_encrypted_tx::{ExtrinsicType, EncryptedTx};
 
 /// Bridge pallets
 pub use bridge;
@@ -986,19 +987,60 @@ impl_runtime_apis! {
     }
 
     impl sp_encrypted_tx::EncryptedTxApi<Block> for Runtime {
-        fn create_submit_encrypted_tx(account: sp_runtime::AccountId32, data: Vec<u8>, proof: sp_core::H256) -> Option<<Block as BlockT>::Extrinsic>{
-            // TODO: update when FIFO pallet is ready
-            Some(UncheckedExtrinsic::new_unsigned(
-                    Call::Encrypted(pallet_encrypted_tx::Call::submit_encrypted_tx(account, data, proof))))
-        }
-        fn get_extrinsic_info(extrinsic: <Block as BlockT>::Extrinsic) -> ExtrinsicType{
+        // fn create_submit_encrypted_tx(account: sp_runtime::AccountId32, data: Vec<u8>, proof: sp_core::H256) -> Option<<Block as BlockT>::Extrinsic>{
+        //     // TODO: update when FIFO pallet is ready
+        //     Some(UncheckedExtrinsic::new_unsigned(
+        //             Call::Encrypted(pallet_encrypted_tx::Call::submit_encrypted_tx(account, data, proof))))
+        // }
+        //
+        // fn get_extrinsic_info(extrinsic: <Block as BlockT>::Extrinsic) -> ExtrinsicType<<Block as BlockT>::Hash>{
+        //
+        //     match extrinsic.function{
+        //         Call::Encrypted(pallet_encrypted_tx::Call::submit_encrypted_tx(account, data, proof)) => {
+        //             ExtrinsicType::<<Block as BlockT>::Hash>::SubmitEncryptedTx{account: account, data: data, proof: proof}
+        //         },
+        //         _ => { ExtrinsicType::<<Block as BlockT>::Hash>::Other }
+        //     }
+        // }
 
-            match extrinsic.function{
-                Call::Encrypted(pallet_encrypted_tx::Call::submit_encrypted_tx(account, data, proof)) => {
-                    ExtrinsicType::SubmitEncryptedTx{account: account, data: data, proof: proof}
-                },
-                _ => { ExtrinsicType::Other }
-            }
+		fn create_submit_singly_encrypted_transaction(identifier: <Block as BlockT>::Hash, singly_encrypted_call: Vec<u8>) -> <Block as BlockT>::Extrinsic{
+            unimplemented!();
+        }
+
+        // creates extrinsic that decrypts singly encrypted transaction
+        fn create_submit_decrypted_transaction(identifier: <Block as BlockT>::Hash, decrypted_call: Vec<u8>, weight: Weight) -> <Block as BlockT>::Extrinsic{
+            unimplemented!();
+        }
+
+		/// parses information about extrinsic
+		fn get_type(extrinsic: <Block as BlockT>::Extrinsic) -> ExtrinsicType<<Block as BlockT>::Hash>{
+            // match extrinsic.function{
+            //     Call::Encrypted(pallet_encrypted_tx::Call::submit_encrypted_tx(account, data, proof)) => {
+            //         ExtrinsicType::<<Block as BlockT>::Hash>::SubmitEncryptedTx{account: account, data: data, proof: proof}
+            //     },
+            //     _ => { ExtrinsicType::<<Block as BlockT>::Hash>::Other }
+            // }
+            unimplemented!();
+        }
+
+        // fetches double encrypted transactions from FIFO queue
+		fn get_double_encrypted_transactions(block_builder_id: &AccountId32) -> Vec<EncryptedTx<<Block as BlockT>::Hash>>{
+            unimplemented!();
+        }
+
+        // fetches singly encrypted transactions from FIFO queue
+		fn get_singly_encrypted_transactions(block_builder_id: &AccountId32) -> Vec<EncryptedTx<<Block as BlockT>::Hash>>{
+            unimplemented!();
+        }
+
+        // fetches address assigned to authority id
+		fn get_account_id(block_builder_id: u32) -> Option<AccountId32>{
+            unimplemented!();
+        }
+
+        // use autority id to identify public key (from encrypted transactions apllet)
+		fn get_authority_public_key(authority_id: &AccountId32) -> Option<sp_core::ecdsa::Public>{
+            unimplemented!();
         }
     }
 }

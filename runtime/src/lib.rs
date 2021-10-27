@@ -126,6 +126,7 @@ impl_opaque_keys! {
     pub struct SessionKeys {
         pub grandpa: Grandpa,
         pub babe: Babe,
+        pub xxtx: EncryptedTransactions,
     }
 }
 
@@ -457,6 +458,8 @@ impl pallet_xyk::Trait for Runtime {
     type Event = Event;
     type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
     type NativeCurrencyId = NativeCurrencyId;
+    type TreasuryModuleId = TreasuryModuleId;
+    type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
 }
 
 // Snowfork traits
@@ -495,6 +498,7 @@ mod currency {
 
 parameter_types! {
     pub const TreasuryModuleId: sp_runtime::ModuleId = sp_runtime::ModuleId(*b"py/trsry");
+    pub const BnbTreasurySubAccDerive: [u8; 4] = *b"bnbt";
     pub const ProposalBond: sp_runtime::Permill = sp_runtime::Permill::from_percent(5);
     pub const ProposalBondMinimum: Balance = 1 * currency::DOLLARS;
     pub const SpendPeriod: BlockNumber = 1 * DAYS;
@@ -547,11 +551,6 @@ impl pallet_treasury::Trait for Runtime {
     type MaximumReasonLength = MaximumReasonLength;
     type BurnDestination = ();
     type WeightInfo = (); // default weights info
-}
-
-impl pallet_encrypted_tx::Trait for Runtime {
-    type Event = Event;
-    type Call = Call;
 }
 
 parameter_types! {
@@ -642,6 +641,22 @@ impl pallet_sudo_origin::Trait for Runtime {
         pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
 }
 
+parameter_types! {
+    pub const EncryptedTxnsFee: Balance = 1 * currency::DOLLARS;
+    pub const DoublyEncryptedCallMaxLength: u32 = 4096;
+}
+
+impl pallet_encrypted_transactions::Trait for Runtime {
+    type Event = Event;
+    type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+    /// The identifier type for an authority.
+    type AuthorityId = pallet_encrypted_transactions::ecdsa::AuthorityId;
+    type Fee = EncryptedTxnsFee;
+    type Treasury = pallet_treasury::MultiOnUnbalancedWrapper<Treasury>;
+    type Call = Call;
+    type DoublyEncryptedCallMaxLength = DoublyEncryptedCallMaxLength;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
     pub enum Runtime where
@@ -674,7 +689,7 @@ construct_runtime!(
         Council: pallet_collective::<Instance1>::{Module, Call, Storage, Origin<T>, Event<T>, Config<T>},
         Elections: pallet_elections_phragmen::{Module, Call, Storage, Event<T>, Config<T>},
         SudoOrigin: pallet_sudo_origin::{Module, Call, Event},
-        Encrypted: pallet_encrypted_tx::{Module, Storage, Call, Event},
+        EncryptedTransactions: pallet_encrypted_transactions::{Module, Call, Storage, Config<T>, Event<T>},
     }
 );
 
@@ -987,60 +1002,70 @@ impl_runtime_apis! {
     }
 
     impl sp_encrypted_tx::EncryptedTxApi<Block> for Runtime {
-        // fn create_submit_encrypted_tx(account: sp_runtime::AccountId32, data: Vec<u8>, proof: sp_core::H256) -> Option<<Block as BlockT>::Extrinsic>{
-        //     // TODO: update when FIFO pallet is ready
-        //     Some(UncheckedExtrinsic::new_unsigned(
-        //             Call::Encrypted(pallet_encrypted_tx::Call::submit_encrypted_tx(account, data, proof))))
-        // }
-        //
-        // fn get_extrinsic_info(extrinsic: <Block as BlockT>::Extrinsic) -> ExtrinsicType<<Block as BlockT>::Hash>{
-        //
-        //     match extrinsic.function{
-        //         Call::Encrypted(pallet_encrypted_tx::Call::submit_encrypted_tx(account, data, proof)) => {
-        //             ExtrinsicType::<<Block as BlockT>::Hash>::SubmitEncryptedTx{account: account, data: data, proof: proof}
-        //         },
-        //         _ => { ExtrinsicType::<<Block as BlockT>::Hash>::Other }
-        //     }
-        // }
 
 		fn create_submit_singly_encrypted_transaction(identifier: <Block as BlockT>::Hash, singly_encrypted_call: Vec<u8>) -> <Block as BlockT>::Extrinsic{
-            unimplemented!();
+            UncheckedExtrinsic::new_unsigned(
+                    Call::EncryptedTransactions(pallet_encrypted_transactions::Call::submit_singly_encrypted_transaction(identifier, singly_encrypted_call)))
         }
 
-        // creates extrinsic that decrypts singly encrypted transaction
-        fn create_submit_decrypted_transaction(identifier: <Block as BlockT>::Hash, decrypted_call: Vec<u8>, weight: Weight) -> <Block as BlockT>::Extrinsic{
-            unimplemented!();
+        fn create_submit_decrypted_transaction(identifier: <Block as BlockT>::Hash, decrypted_call: Vec<u8>, _weight: Weight) -> <Block as BlockT>::Extrinsic{
+            UncheckedExtrinsic::new_unsigned(
+                    Call::EncryptedTransactions(pallet_encrypted_transactions::Call::submit_decrypted_transaction(identifier, decrypted_call, Default::default())))
         }
 
-		/// parses information about extrinsic
 		fn get_type(extrinsic: <Block as BlockT>::Extrinsic) -> ExtrinsicType<<Block as BlockT>::Hash>{
-            // match extrinsic.function{
-            //     Call::Encrypted(pallet_encrypted_tx::Call::submit_encrypted_tx(account, data, proof)) => {
-            //         ExtrinsicType::<<Block as BlockT>::Hash>::SubmitEncryptedTx{account: account, data: data, proof: proof}
-            //     },
-            //     _ => { ExtrinsicType::<<Block as BlockT>::Hash>::Other }
-            // }
-            unimplemented!();
+            match extrinsic.function{
+                Call::EncryptedTransactions(pallet_encrypted_transactions::Call::submit_singly_encrypted_transaction(identifier, singly_encrypted_call)) => {
+                    ExtrinsicType::<<Block as BlockT>::Hash>::SinglyEncryptedTx{identifier, singly_encrypted_call}
+                },
+                Call::EncryptedTransactions(pallet_encrypted_transactions::Call::submit_decrypted_transaction(identifier, decrypted_call, _)) => {
+                    ExtrinsicType::<<Block as BlockT>::Hash>::DecryptedTx{identifier, decrypted_call}
+                },
+                _ => { ExtrinsicType::<<Block as BlockT>::Hash>::Other }
+            }
         }
 
-        // fetches double encrypted transactions from FIFO queue
-		fn get_double_encrypted_transactions(block_builder_id: &AccountId32) -> Vec<EncryptedTx<<Block as BlockT>::Hash>>{
-            unimplemented!();
+        fn get_double_encrypted_transactions(block_builder_id: &AccountId32) -> Vec<EncryptedTx<<Block as BlockT>::Hash>>{
+            let transactions = EncryptedTransactions::doubly_encrypted_queue(block_builder_id);
+            transactions.into_iter().filter_map(|tx_hash|
+                EncryptedTransactions::txn_registry(tx_hash)
+                .map(|tx_details| 
+                    EncryptedTx{
+                        tx_id: tx_hash,
+                        data: tx_details.doubly_encrypted_call,
+                    }
+                )
+            ).collect()
         }
-
-        // fetches singly encrypted transactions from FIFO queue
-		fn get_singly_encrypted_transactions(block_builder_id: &AccountId32) -> Vec<EncryptedTx<<Block as BlockT>::Hash>>{
-            unimplemented!();
+                            
+        fn get_singly_encrypted_transactions(block_builder_id: &AccountId32) -> Vec<EncryptedTx<<Block as BlockT>::Hash>>{
+            let transactions = EncryptedTransactions::singly_encrypted_queue(block_builder_id);
+            transactions.into_iter().filter_map(|tx_hash|
+                match EncryptedTransactions::txn_registry(tx_hash){
+                    Some(pallet_encrypted_transactions::TxnRegistryDetails{singly_encrypted_call: Some(call), ..}) =>
+                        Some(EncryptedTx{
+                            tx_id: tx_hash,
+                            data: call
+                        }),
+                    _ => None
+                }
+            ).collect()
         }
 
         // fetches address assigned to authority id
-		fn get_account_id(block_builder_id: u32) -> Option<AccountId32>{
-            unimplemented!();
+		fn get_account_id(collator_id: u32) -> Option<AccountId32>{
+            Session::validators().get(collator_id as usize).map(|e| e.clone())
         }
 
         // use autority id to identify public key (from encrypted transactions apllet)
 		fn get_authority_public_key(authority_id: &AccountId32) -> Option<sp_core::ecdsa::Public>{
-            unimplemented!();
+            EncryptedTransactions::keys().get(authority_id).map(
+                |key| {
+                    let mut key_array = [0u8;33];
+                    key_array.copy_from_slice(key.as_ref());
+                    sp_core::ecdsa::Public::from_raw(key_array)
+                }
+            )
         }
     }
 }

@@ -1,12 +1,9 @@
 # Mangata node
-## The fair DEX
-The most reliable decentralized exchange (DEX) - capable of working across multiple blockchains using interoperability. The exchange is using an innovative consensus algorithm that solves frontrunning problems and makes all participants equal. 
+## AMM DEX blockchain without fee market, that incorporates MEV prevention
+Reliable decentralized exchange (DEX) blockchain - interoperable with other blockchains using Polkadot. The exchange is using a consensus algorithm that solves MEV/frontrunning problems and makes all participants' access to trading opportunities equal. 
 
-Our mission is to bring fair and equal rules for exchange participants, fix volatile fees of trading and reuse exchange assets to maximize gains. Our goal is to create the number one Go-To protocol for traders and liquidity providers of digital currencies online.
-
-The design of our blockchain guarantees low fixed-fees that provides greater predictability of trading costs.
+The design of the blockchain guarantees fixed-fees that provides greater control of trading costs and higher arbitrage opportunity.
 Assets on the exchange will serve multiple purposes- at the first iteration, they are the block producer’s stake and exchange liquidity at the same time, and more comes later.
-
 
 ## Local Development
 

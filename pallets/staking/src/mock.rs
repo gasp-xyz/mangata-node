@@ -360,6 +360,8 @@ impl assets_info::Trait for Test {
 parameter_types! {
     pub const NativeCurrencyId: u32 = NATIVE_CURRENCY_ID;
     pub const MinStakeAmount: Balance = 1;
+    pub const TreasuryModuleId: sp_runtime::ModuleId = sp_runtime::ModuleId(*b"py/trsry");
+    pub const BnbTreasurySubAccDerive: [u8; 4] = *b"bnbt";
 }
 
 impl Trait for Test {
@@ -395,6 +397,8 @@ impl pallet_xyk::Trait for Test {
     type Event = MetaEvent;
     type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
     type NativeCurrencyId = NativeCurrencyId;
+    type TreasuryModuleId = TreasuryModuleId;
+    type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
 }
 
 impl orml_tokens::Trait for Test {

@@ -3,9 +3,9 @@
 use hex_literal::hex;
 use mangata_runtime::{
     AccountId, AssetsInfoConfig, BabeConfig, BridgeConfig, BridgedAssetConfig, CouncilConfig,
-    ElectionsConfig, GenesisConfig, GrandpaConfig, SessionConfig, SessionKeys, Signature,
-    StakerStatus, StakingConfig, SudoConfig, SystemConfig, TokensConfig, VerifierConfig, XykConfig,
-    WASM_BINARY,
+    ElectionsConfig, EncryptedTransactionsConfig, GenesisConfig, GrandpaConfig, SessionConfig,
+    SessionKeys, Signature, StakerStatus, StakingConfig, SudoConfig, SystemConfig, TokensConfig,
+    VerifierConfig, XykConfig, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sp_consensus_babe::AuthorityId as BabeId;
@@ -43,18 +43,34 @@ where
 }
 
 /// Generate an Aura authority key.
-pub fn authority_keys_from_seed(s: &str) -> (BabeId, GrandpaId, AccountId) {
+pub fn authority_keys_from_seed(
+    s: &str,
+) -> (
+    BabeId,
+    GrandpaId,
+    AccountId,
+    pallet_encrypted_transactions::ecdsa::AuthorityId,
+) {
     (
         // get_account_id_from_seed::<sr25519::Public>(&format!("{}//stash", s)),
         // get_account_id_from_seed::<sr25519::Public>(s),
         get_from_seed::<BabeId>(s),
         get_from_seed::<GrandpaId>(s),
         get_account_id_from_seed::<sr25519::Public>(s),
+        get_from_seed::<pallet_encrypted_transactions::ecdsa::AuthorityId>(s),
     )
 }
 
-fn session_keys(grandpa: GrandpaId, babe: BabeId) -> SessionKeys {
-    SessionKeys { grandpa, babe }
+fn session_keys(
+    grandpa: GrandpaId,
+    babe: BabeId,
+    xxtx: pallet_encrypted_transactions::ecdsa::AuthorityId,
+) -> SessionKeys {
+    SessionKeys {
+        grandpa,
+        babe,
+        xxtx,
+    }
 }
 
 #[allow(clippy::inconsistent_digit_grouping)]
@@ -296,7 +312,12 @@ type BridgedAssetsType = Vec<(Vec<u8>, Vec<u8>, Vec<u8>, u32, u32, H160, u128, A
 #[allow(clippy::too_many_arguments)]
 fn testnet_genesis(
     wasm_binary: &[u8],
-    initial_authorities: Vec<(BabeId, GrandpaId, AccountId)>,
+    initial_authorities: Vec<(
+        BabeId,
+        GrandpaId,
+        AccountId,
+        pallet_encrypted_transactions::ecdsa::AuthorityId,
+    )>,
     relay_key: AccountId,
     root_key: AccountId,
     bridged_app_ids: Vec<(App, AppId)>,
@@ -318,7 +339,7 @@ fn testnet_genesis(
                     (
                         x.2.clone(),
                         x.2.clone(),
-                        session_keys(x.1.clone(), x.0.clone()),
+                        session_keys(x.1.clone(), x.0.clone(), x.3.clone()),
                     )
                 })
                 .collect::<Vec<_>>(),
@@ -449,5 +470,6 @@ fn testnet_genesis(
                 .map(|(_, _, member)| (member, 100 * 100_000_000_000_000))
                 .collect(),
         }),
+        pallet_encrypted_transactions: Some(EncryptedTransactionsConfig { keys: vec![] }),
     }
 }

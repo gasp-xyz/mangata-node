@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.4.0](https://github.com/mangata-finance/mangata-node/compare/v0.2.0...v0.4.0) (2021-10-27)
+- Support for encrypted transactions (VED solution)
+- Removed singly_encrypted_nonce & doubly_encrypted_nonce from pallet_encrypted_transactions
+- Implemented sp_encrypted_tx runtime interface (reuquired for VED solution)
+
 ## [0.3.0](https://github.com/mangata-finance/mangata-node/compare/v0.2.0...v0.3.0) (2021-10-05)
 - Added encryption nonces for doubly and singly encrypted calls. This changes the TxnRegistryDetails type used in storage. And adds a field to the two unsigned extrinsics to be used by the collator.
 - Added events. Upgraded existing events to contain more info.

@@ -73,6 +73,7 @@ eth-app = { default-features = false, package = "artemis-eth-app", version = "0.
 erc20-app = { default-features = false, package = "artemis-erc20-app", version = "0.1.1" , git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
 pallet-elections-phragmen = { version = "2.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 pallet-collective = { version = "2.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-encrypted-tx = { default-features = false, version='2.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
 # Snowmangata-dev pallets
 
@@ -138,5 +139,6 @@ std = [
     "pallet-collective/std",
     "pallet-elections-phragmen/std",
     "pallet-encrypted-transactions/std",
+    "sp-encrypted-tx/std",
     "mangata-primitives/std",
 ]

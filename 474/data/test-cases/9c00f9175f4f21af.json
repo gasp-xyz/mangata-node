@@ -1,0 +1,75 @@
+{
+  "uid" : "9c00f9175f4f21af",
+  "name" : "Burn liquidity assets that does not belong to any pool",
+  "fullName" : "xyk-pallet - Burn liquidity tests: BurnLiquidity Errors:.Burn liquidity assets that does not belong to any pool",
+  "historyId" : "d36e2113c2dff46ef1124d7c09e3c463",
+  "time" : {
+    "start" : 1635489844971,
+    "stop" : 1635489968040,
+    "duration" : 123069
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Burn liquidity tests: BurnLiquidity Errors:"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Burn liquidity tests: BurnLiquidity Errors:"
+  }, {
+    "name" : "testMethod",
+    "value" : "Burn liquidity assets that does not belong to any pool"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Burn liquidity tests: BurnLiquidity Errors:"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 3,
+        "unknown" : 0,
+        "total" : 3
+      },
+      "items" : [ {
+        "uid" : "d9f7e43981b133d6",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/470//#testresult/d9f7e43981b133d6",
+        "status" : "passed",
+        "time" : {
+          "start" : 1635234886279,
+          "stop" : 1635235010112,
+          "duration" : 123833
+        }
+      }, {
+        "uid" : "764b074335c06c08",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/460//#testresult/764b074335c06c08",
+        "status" : "passed",
+        "time" : {
+          "start" : 1634539096650,
+          "stop" : 1634539219749,
+          "duration" : 123099
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "9c00f9175f4f21af.json",
+  "parameterValues" : [ ]
+}

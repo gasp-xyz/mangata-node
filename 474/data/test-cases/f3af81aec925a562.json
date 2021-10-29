@@ -1,0 +1,75 @@
+{
+  "uid" : "f3af81aec925a562",
+  "name" : "xyk-pallet - Sudo tests: Sudo Issue an asset",
+  "fullName" : "test/parallel/xyk-pallet.sudo.test.ts.xyk-pallet - Sudo tests: Sudo Issue an asset",
+  "historyId" : "39d483eba644b503bbdd25ceef74419e",
+  "time" : {
+    "start" : 1635489915189,
+    "stop" : 1635489931873,
+    "duration" : 16684
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "test/parallel/xyk-pallet.sudo.test.ts"
+  }, {
+    "name" : "testClass",
+    "value" : "test/parallel/xyk-pallet.sudo.test.ts"
+  }, {
+    "name" : "testMethod",
+    "value" : "xyk-pallet - Sudo tests: Sudo Issue an asset"
+  }, {
+    "name" : "package",
+    "value" : "test/parallel/xyk-pallet.sudo.test.ts"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 3,
+        "unknown" : 0,
+        "total" : 3
+      },
+      "items" : [ {
+        "uid" : "7beef72604f1e62f",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/470//#testresult/7beef72604f1e62f",
+        "status" : "passed",
+        "time" : {
+          "start" : 1635234957310,
+          "stop" : 1635234973929,
+          "duration" : 16619
+        }
+      }, {
+        "uid" : "d2be37f1521d3bad",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/460//#testresult/d2be37f1521d3bad",
+        "status" : "passed",
+        "time" : {
+          "start" : 1634539166917,
+          "stop" : 1634539183591,
+          "duration" : 16674
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "f3af81aec925a562.json",
+  "parameterValues" : [ ]
+}

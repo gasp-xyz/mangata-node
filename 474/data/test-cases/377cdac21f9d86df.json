@@ -1,0 +1,75 @@
+{
+  "uid" : "377cdac21f9d86df",
+  "name" : "xyk-rpc - calculate_buy_price validates parameters - Zeroes [inputReserve->0,outputReserve->0,amount->1,expected->0]",
+  "fullName" : "test/parallel/xyk-rpc.errors.test.ts.xyk-rpc - calculate_buy_price validates parameters - Zeroes [inputReserve->0,outputReserve->0,amount->1,expected->0]",
+  "historyId" : "37c4818eef2b54662bd061edf06cd446",
+  "time" : {
+    "start" : 1635489719024,
+    "stop" : 1635489719028,
+    "duration" : 4
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "test/parallel/xyk-rpc.errors.test.ts"
+  }, {
+    "name" : "testClass",
+    "value" : "test/parallel/xyk-rpc.errors.test.ts"
+  }, {
+    "name" : "testMethod",
+    "value" : "xyk-rpc - calculate_buy_price validates parameters - Zeroes [inputReserve->0,outputReserve->0,amount->1,expected->0]"
+  }, {
+    "name" : "package",
+    "value" : "test/parallel/xyk-rpc.errors.test.ts"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 3,
+        "unknown" : 0,
+        "total" : 3
+      },
+      "items" : [ {
+        "uid" : "a219744e14b623a7",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/470//#testresult/a219744e14b623a7",
+        "status" : "passed",
+        "time" : {
+          "start" : 1635234760373,
+          "stop" : 1635234760376,
+          "duration" : 3
+        }
+      }, {
+        "uid" : "2be502389d5f0d1f",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/460//#testresult/2be502389d5f0d1f",
+        "status" : "passed",
+        "time" : {
+          "start" : 1634538970033,
+          "stop" : 1634538970037,
+          "duration" : 4
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "377cdac21f9d86df.json",
+  "parameterValues" : [ ]
+}

@@ -1,0 +1,75 @@
+{
+  "uid" : "2c4ab612aa1f086e",
+  "name" : "xyk-pallet - Liqudity : Burn part of the liquidity",
+  "fullName" : "test/parallel/xyk-pallet.liquidity.test.ts.xyk-pallet - Liqudity : Burn part of the liquidity",
+  "historyId" : "83f526f2d0082c3729a71752c9cf7948",
+  "time" : {
+    "start" : 1635488949850,
+    "stop" : 1635489073143,
+    "duration" : 123293
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "test/parallel/xyk-pallet.liquidity.test.ts"
+  }, {
+    "name" : "testClass",
+    "value" : "test/parallel/xyk-pallet.liquidity.test.ts"
+  }, {
+    "name" : "testMethod",
+    "value" : "xyk-pallet - Liqudity : Burn part of the liquidity"
+  }, {
+    "name" : "package",
+    "value" : "test/parallel/xyk-pallet.liquidity.test.ts"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 3,
+        "unknown" : 0,
+        "total" : 3
+      },
+      "items" : [ {
+        "uid" : "2e0cf0ef75536835",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/470//#testresult/2e0cf0ef75536835",
+        "status" : "passed",
+        "time" : {
+          "start" : 1635233988053,
+          "stop" : 1635234115313,
+          "duration" : 127260
+        }
+      }, {
+        "uid" : "b8545cf1b15ed5ae",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/460//#testresult/b8545cf1b15ed5ae",
+        "status" : "passed",
+        "time" : {
+          "start" : 1634538203807,
+          "stop" : 1634538332189,
+          "duration" : 128382
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "2c4ab612aa1f086e.json",
+  "parameterValues" : [ ]
+}

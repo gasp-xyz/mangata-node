@@ -1,0 +1,75 @@
+{
+  "uid" : "1268b7c1b023806a",
+  "name" : "xyk-pallet - SecurityTests - Only sudo can perform actions [tokens.create]",
+  "fullName" : "test/parallel/xyk-pallet.sudo.security.test.ts.xyk-pallet - SecurityTests - Only sudo can perform actions [tokens.create]",
+  "historyId" : "60ed4fbbc7e2552787061b58f2515823",
+  "time" : {
+    "start" : 1635489876943,
+    "stop" : 1635489895747,
+    "duration" : 18804
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "test/parallel/xyk-pallet.sudo.security.test.ts"
+  }, {
+    "name" : "testClass",
+    "value" : "test/parallel/xyk-pallet.sudo.security.test.ts"
+  }, {
+    "name" : "testMethod",
+    "value" : "xyk-pallet - SecurityTests - Only sudo can perform actions [tokens.create]"
+  }, {
+    "name" : "package",
+    "value" : "test/parallel/xyk-pallet.sudo.security.test.ts"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 3,
+        "unknown" : 0,
+        "total" : 3
+      },
+      "items" : [ {
+        "uid" : "847551e7390c02f2",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/470//#testresult/847551e7390c02f2",
+        "status" : "passed",
+        "time" : {
+          "start" : 1635234918898,
+          "stop" : 1635234937687,
+          "duration" : 18789
+        }
+      }, {
+        "uid" : "cf76fa1eddc8588d",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/460//#testresult/cf76fa1eddc8588d",
+        "status" : "passed",
+        "time" : {
+          "start" : 1634539130003,
+          "stop" : 1634539147412,
+          "duration" : 17409
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "1268b7c1b023806a.json",
+  "parameterValues" : [ ]
+}

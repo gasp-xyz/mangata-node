@@ -1,0 +1,75 @@
+{
+  "uid" : "a9d7139fb16222c0",
+  "name" : "be burn",
+  "fullName" : "xyk-pallet - Pool tests: a pool can:.be burn",
+  "historyId" : "9e7d2c40f2f6eb4832b7cb0365a3e39a",
+  "time" : {
+    "start" : 1635489325390,
+    "stop" : 1635489524045,
+    "duration" : 198655
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Pool tests: a pool can:"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Pool tests: a pool can:"
+  }, {
+    "name" : "testMethod",
+    "value" : "be burn"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Pool tests: a pool can:"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 3,
+        "unknown" : 0,
+        "total" : 3
+      },
+      "items" : [ {
+        "uid" : "3e925e9a0409ec9d",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/470//#testresult/3e925e9a0409ec9d",
+        "status" : "passed",
+        "time" : {
+          "start" : 1635234367440,
+          "stop" : 1635234566033,
+          "duration" : 198593
+        }
+      }, {
+        "uid" : "29e04a2f3f438ce",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/460//#testresult/29e04a2f3f438ce",
+        "status" : "passed",
+        "time" : {
+          "start" : 1634538582835,
+          "stop" : 1634538780979,
+          "duration" : 198144
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "a9d7139fb16222c0.json",
+  "parameterValues" : [ ]
+}

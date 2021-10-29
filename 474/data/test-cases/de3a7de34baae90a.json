@@ -1,0 +1,79 @@
+{
+  "uid" : "de3a7de34baae90a",
+  "name" : "Sell a few assets to a wallet that is full => overflow. NOT A BUG: https://trello.com/c/J3fzuwH5",
+  "fullName" : "xyk-pallet - Operate with a user account close to overflow.Sell a few assets to a wallet that is full => overflow. NOT A BUG: https://trello.com/c/J3fzuwH5",
+  "historyId" : "e8d3537740cf0bd6d150cfe81b9b655d",
+  "time" : {
+    "start" : 1635489397851,
+    "stop" : 1635489397851,
+    "duration" : 0
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "skipped",
+  "statusMessage" : "Temporarily disabled with xit",
+  "statusTrace" : "undefined",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Operate with a user account close to overflow"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Operate with a user account close to overflow"
+  }, {
+    "name" : "testMethod",
+    "value" : "Sell a few assets to a wallet that is full => overflow. NOT A BUG: https://trello.com/c/J3fzuwH5"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Operate with a user account close to overflow"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 3,
+        "passed" : 0,
+        "unknown" : 0,
+        "total" : 3
+      },
+      "items" : [ {
+        "uid" : "463f2c4ba73daa1",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/470//#testresult/463f2c4ba73daa1",
+        "status" : "skipped",
+        "statusDetails" : "Temporarily disabled with xit",
+        "time" : {
+          "start" : 1635234439855,
+          "stop" : 1635234439855,
+          "duration" : 0
+        }
+      }, {
+        "uid" : "3aa8a986d518e21f",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/460//#testresult/3aa8a986d518e21f",
+        "status" : "skipped",
+        "statusDetails" : "Temporarily disabled with xit",
+        "time" : {
+          "start" : 1634538655103,
+          "stop" : 1634538655103,
+          "duration" : 0
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "de3a7de34baae90a.json",
+  "parameterValues" : [ ]
+}

@@ -1,0 +1,84 @@
+{
+  "uid" : "1206e8ffe3532beb",
+  "name" : "SDK- Nonce management - user - future Tx-",
+  "fullName" : "SDK test - Nonce tests - user.SDK- Nonce management - user - future Tx-",
+  "historyId" : "51d1c4aefcefecab4aed95187930329e",
+  "time" : {
+    "start" : 1635490891573,
+    "stop" : 1635490927581,
+    "duration" : 36008
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "SDK test - Nonce tests - user"
+  }, {
+    "name" : "testClass",
+    "value" : "SDK test - Nonce tests - user"
+  }, {
+    "name" : "testMethod",
+    "value" : "SDK- Nonce management - user - future Tx-"
+  }, {
+    "name" : "package",
+    "value" : "SDK test - Nonce tests - user"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 4,
+        "unknown" : 0,
+        "total" : 4
+      },
+      "items" : [ {
+        "uid" : "7a04ed52930c6b18",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/471//#testresult/7a04ed52930c6b18",
+        "status" : "passed",
+        "time" : {
+          "start" : 1635235896920,
+          "stop" : 1635235932951,
+          "duration" : 36031
+        }
+      }, {
+        "uid" : "c400d30098901e89",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/459//#testresult/c400d30098901e89",
+        "status" : "passed",
+        "time" : {
+          "start" : 1634539813890,
+          "stop" : 1634539849903,
+          "duration" : 36013
+        }
+      }, {
+        "uid" : "23049a9f6aa4ae80",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/457//#testresult/23049a9f6aa4ae80",
+        "status" : "passed",
+        "time" : {
+          "start" : 1634301768882,
+          "stop" : 1634301804907,
+          "duration" : 36025
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "1206e8ffe3532beb.json",
+  "parameterValues" : [ ]
+}

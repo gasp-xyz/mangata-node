@@ -1,0 +1,84 @@
+{
+  "uid" : "746fafcd506862b",
+  "name" : "Bond operation locks some amount",
+  "fullName" : "xyk-pallet - Sell Asset: validate Errors:.Bond operation locks some amount",
+  "historyId" : "2c3dad72504039bdda0c53211c41ab65",
+  "time" : {
+    "start" : 1635491509617,
+    "stop" : 1635491526976,
+    "duration" : 17359
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Sell Asset: validate Errors:"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Sell Asset: validate Errors:"
+  }, {
+    "name" : "testMethod",
+    "value" : "Bond operation locks some amount"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Sell Asset: validate Errors:"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 4,
+        "unknown" : 0,
+        "total" : 4
+      },
+      "items" : [ {
+        "uid" : "1f4f8ec8d9bd401e",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/471//#testresult/1f4f8ec8d9bd401e",
+        "status" : "passed",
+        "time" : {
+          "start" : 1635236515256,
+          "stop" : 1635236533956,
+          "duration" : 18700
+        }
+      }, {
+        "uid" : "a76a015e6c60d4da",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/459//#testresult/a76a015e6c60d4da",
+        "status" : "passed",
+        "time" : {
+          "start" : 1634540430934,
+          "stop" : 1634540449634,
+          "duration" : 18700
+        }
+      }, {
+        "uid" : "d98a2c7085c2f2a3",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/457//#testresult/d98a2c7085c2f2a3",
+        "status" : "passed",
+        "time" : {
+          "start" : 1634302387211,
+          "stop" : 1634302405922,
+          "duration" : 18711
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "746fafcd506862b.json",
+  "parameterValues" : [ ]
+}

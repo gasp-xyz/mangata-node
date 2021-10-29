@@ -1,0 +1,89 @@
+{
+  "uid" : "78e3d180aca90eab",
+  "name" : "[BUG?] SDK- Nonce management - Transaction outdated",
+  "fullName" : "SDK test - Nonce tests - user.[BUG?] SDK- Nonce management - Transaction outdated",
+  "historyId" : "37e5e6c48a224b8770b68342462e0858",
+  "time" : {
+    "start" : 1635490981011,
+    "stop" : 1635490981011,
+    "duration" : 0
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "skipped",
+  "statusMessage" : "Temporarily disabled with xit",
+  "statusTrace" : "undefined",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "SDK test - Nonce tests - user"
+  }, {
+    "name" : "testClass",
+    "value" : "SDK test - Nonce tests - user"
+  }, {
+    "name" : "testMethod",
+    "value" : "[BUG?] SDK- Nonce management - Transaction outdated"
+  }, {
+    "name" : "package",
+    "value" : "SDK test - Nonce tests - user"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 4,
+        "passed" : 0,
+        "unknown" : 0,
+        "total" : 4
+      },
+      "items" : [ {
+        "uid" : "c49e8a28f1437ae3",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/471//#testresult/c49e8a28f1437ae3",
+        "status" : "skipped",
+        "statusDetails" : "Temporarily disabled with xit",
+        "time" : {
+          "start" : 1635235987694,
+          "stop" : 1635235987694,
+          "duration" : 0
+        }
+      }, {
+        "uid" : "b8260c47f7c10fcc",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/459//#testresult/b8260c47f7c10fcc",
+        "status" : "skipped",
+        "statusDetails" : "Temporarily disabled with xit",
+        "time" : {
+          "start" : 1634539903300,
+          "stop" : 1634539903300,
+          "duration" : 0
+        }
+      }, {
+        "uid" : "86728a3ebd6587b4",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/457//#testresult/86728a3ebd6587b4",
+        "status" : "skipped",
+        "statusDetails" : "Temporarily disabled with xit",
+        "time" : {
+          "start" : 1634301859696,
+          "stop" : 1634301859696,
+          "duration" : 0
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "78e3d180aca90eab.json",
+  "parameterValues" : [ ]
+}

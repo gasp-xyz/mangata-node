@@ -55,16 +55,18 @@ fn W_submit_double(){
             identifier_vec.extend_from_slice(&Encode::encode(&user)[..]);
             identifier_vec.extend_from_slice(&Encode::encode(&nonce)[..]);
 
-          let identifier = BlakeTwo256::hash_of(&identifier_vec[..]);
-          let identifier: T::Hash = Hashing::hash(&identifier_vec[..]);
-           TxnRegistry::<T>::insert(identifier, txn_registry_details);
-           DoublyEncryptedQueue::<T>::mutate(&builder, |vec_hash| {vec_hash.push(identifier)});
-           TxnRecord::<T>::mutate(T::Index::from(<pallet_session::Module<T>>::current_index()), &user, |tree_record| tree_record.insert(identifier, (nonce, fee_charged, false)));
-           Self::deposit_event(RawEvent::DoublyEncryptedTxnSubmitted(user, nonce, identifier));
+          let identifier = BlakeTwo256::hash_of(&identifier_vec);
+          // let identifier = Hashing::hash(&identifier_vec[..]);
+           // TxnRegistry::<T>::insert(identifier, txn_registry_details);
+           // DoublyEncryptedQueue::<T>::mutate(&builder, |vec_hash| {vec_hash.push(identifier)});
+           // TxnRecord::<T>::mutate(T::Index::from(<pallet_session::Module<T>>::current_index()), &user, |tree_record| tree_record.insert(identifier, (nonce, fee_charged, false)));
+           // Self::deposit_event(RawEvent::DoublyEncryptedTxnSubmitted(user, nonce, identifier));
 
 
         
-        EncryptedTX::submit_doubly_encrypted_transaction(Origin::signed(1),doubly_encrypted_call,1,1,2,3);
-        assert_eq!(EncryptedTX::doubly_encrypted_queue(&builder), 833266599933266);
+        EncryptedTX::submit_doubly_encrypted_transaction(Origin::signed(1),doubly_encrypted_call,1,1,2,3).unwrap();
+        let expected_number_of_tx_in_queue = 1;
+        assert_eq!(EncryptedTX::doubly_encrypted_queue(&builder).len(), expected_number_of_tx_in_queue);
+        assert_eq!(EncryptedTX::doubly_encrypted_queue(&builder)[0], identifier);
     });
 }    

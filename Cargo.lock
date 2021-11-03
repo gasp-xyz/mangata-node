@@ -1536,6 +1536,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "extrinsic-info-runtime-api"
+version = "3.0.0"
+dependencies = [
+ "derive_more",
+ "futures 0.3.17",
+ "log",
+ "parity-scale-codec 2.3.1",
+ "serde",
+ "sp-api",
+ "sp-blockchain",
+ "sp-runtime",
+]
+
+[[package]]
+name = "extrinsic-shuffler"
+version = "0.9.0"
+dependencies = [
+ "derive_more",
+ "extrinsic-info-runtime-api",
+ "log",
+ "sp-api",
+ "sp-block-builder",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+ "sp-ver",
+]
+
+[[package]]
 name = "failure"
 version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1711,6 +1740,7 @@ dependencies = [
 name = "frame-executive"
 version = "3.0.0"
 dependencies = [
+ "extrinsic-shuffler",
  "frame-support",
  "frame-system",
  "parity-scale-codec 2.3.1",
@@ -1720,6 +1750,7 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "sp-tracing",
+ "sp-ver",
 ]
 
 [[package]]
@@ -3457,6 +3488,7 @@ dependencies = [
  "artemis-core",
  "artemis-erc20-app",
  "artemis-eth-app",
+ "extrinsic-info-runtime-api",
  "frame-benchmarking",
  "frame-executive",
  "frame-support",
@@ -5483,6 +5515,7 @@ dependencies = [
 name = "sc-basic-authorship"
 version = "0.9.0"
 dependencies = [
+ "extrinsic-info-runtime-api",
  "futures 0.3.17",
  "futures-timer 3.0.2",
  "log",
@@ -5505,16 +5538,24 @@ dependencies = [
 name = "sc-block-builder"
 version = "0.9.0"
 dependencies = [
+ "extrinsic-info-runtime-api",
+ "extrinsic-shuffler",
+ "log",
  "parity-scale-codec 2.3.1",
+ "rand 0.7.3",
  "sc-client-api",
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
  "sp-consensus",
  "sp-core",
+ "sp-ignore-tx",
  "sp-inherents",
  "sp-runtime",
  "sp-state-machine",
+ "sp-std",
+ "sp-transaction-pool",
+ "sp-ver",
 ]
 
 [[package]]
@@ -5669,6 +5710,7 @@ dependencies = [
  "sc-block-builder",
  "sc-client-api",
  "sc-consensus-slots",
+ "sc-keystore",
  "sc-telemetry",
  "sp-api",
  "sp-application-crypto",
@@ -5762,10 +5804,13 @@ dependencies = [
  "sp-consensus",
  "sp-consensus-slots",
  "sp-core",
+ "sp-ignore-tx",
  "sp-inherents",
+ "sp-keystore",
  "sp-runtime",
  "sp-state-machine",
  "sp-trie",
+ "sp-ver",
  "thiserror",
 ]
 
@@ -6139,6 +6184,7 @@ version = "0.9.0"
 dependencies = [
  "directories",
  "exit-future",
+ "extrinsic-info-runtime-api",
  "futures 0.1.29",
  "futures 0.3.17",
  "futures-timer 3.0.2",
@@ -6836,7 +6882,9 @@ name = "sp-consensus-slots"
 version = "0.9.0"
 dependencies = [
  "parity-scale-codec 2.3.1",
+ "sp-application-crypto",
  "sp-arithmetic",
+ "sp-core",
  "sp-runtime",
 ]
 
@@ -6935,6 +6983,17 @@ dependencies = [
  "sp-keystore",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "sp-ignore-tx"
+version = "3.0.0"
+dependencies = [
+ "log",
+ "parity-scale-codec 2.3.1",
+ "serde",
+ "sp-inherents",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -7230,6 +7289,19 @@ dependencies = [
  "futures-timer 3.0.2",
  "lazy_static",
  "prometheus",
+]
+
+[[package]]
+name = "sp-ver"
+version = "0.9.0"
+dependencies = [
+ "log",
+ "parity-scale-codec 2.3.1",
+ "serde",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]

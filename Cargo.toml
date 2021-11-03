@@ -126,6 +126,7 @@ sp-consensus-aura = { path = "../substrate/primitives/consensus/aura" }
 frame-system-benchmarking = { path = "../substrate/frame/system/benchmarking" }
 pallet-aura = { path = "../substrate/frame/aura" }
 substrate-wasm-builder = { path = "../substrate/utils/wasm-builder" }
+extrinsic-info-runtime-api = {  path = "../substrate/primitives/extrinsic-info-runtime-api" }
 
 [patch."https://github.com/mangata-finance/open-runtime-module-library"]
 orml-tokens = { path = "../open-runtime-module-library/tokens" }

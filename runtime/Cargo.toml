@@ -36,6 +36,7 @@ sp-version = { version = "3.0.0", default-features = false, git = "https://githu
 pallet-treasury = { default-features = false, version='3.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 pallet-elections-phragmen = { version = "3.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 pallet-collective = { version = "3.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+extrinsic-info-runtime-api = {  default-features = false, version = '3.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
 # Used for the node's RPCs
 frame-system-rpc-runtime-api = { version = "3.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }

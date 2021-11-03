@@ -576,9 +576,22 @@ impl_runtime_apis! {
 			VERSION
 		}
 
-		fn execute_block(block: Block) {
-			Executive::execute_block(block)
-		}
+        fn execute_block(block: Block) {
+            let authors :Vec<_> = block.extrinsics().iter().map(
+                |tx| {
+                    if let Some(sig) = tx.signature.clone(){
+                        if let Address::Id(addr) = sig.0 {
+                            Some(addr)
+                        }else{
+                            None
+                        }
+                    }else{
+                        None
+                    }
+                }).collect();
+
+            Executive::execute_block(block, Default::default())
+        }
 
 		fn initialize_block(header: &<Block as BlockT>::Header) {
 			Executive::initialize_block(header)
@@ -699,6 +712,24 @@ impl_runtime_apis! {
 			TransactionPayment::query_fee_details(uxt, len)
 		}
 	}
+
+    impl extrinsic_info_runtime_api::runtime_api::ExtrinsicInfoRuntimeApi<Block> for Runtime {
+        fn get_info(
+            tx: <Block as BlockT>::Extrinsic,
+        ) -> Option<extrinsic_info_runtime_api::ExtrinsicInfo> {
+            if let Some(sig) = tx.signature.clone(){
+                if let Address::Id(addr) = sig.0 {
+                    Some(extrinsic_info_runtime_api::ExtrinsicInfo{
+                        who: addr,
+                    })
+                }else{
+                    None
+                }
+            }else{
+                None
+            }
+        }
+    }
 
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {

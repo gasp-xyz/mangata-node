@@ -5531,6 +5531,7 @@ dependencies = [
  "sp-inherents",
  "sp-runtime",
  "sp-transaction-pool",
+ "sp-ver",
  "substrate-prometheus-endpoint",
 ]
 

@@ -3469,11 +3469,16 @@ dependencies = [
  "orml-traits",
  "pallet-assets-info",
  "pallet-aura",
+ "pallet-authorship",
  "pallet-bridge",
  "pallet-collective",
  "pallet-elections-phragmen",
  "pallet-grandpa",
+ "pallet-offences",
  "pallet-randomness-collective-flip",
+ "pallet-session",
+ "pallet-staking",
+ "pallet-staking-reward-curve",
  "pallet-sudo",
  "pallet-sudo-origin",
  "pallet-timestamp",
@@ -3492,6 +3497,7 @@ dependencies = [
  "sp-offchain",
  "sp-runtime",
  "sp-session",
+ "sp-staking",
  "sp-std",
  "sp-transaction-pool",
  "sp-version",
@@ -4167,6 +4173,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-offences"
+version = "3.0.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec 2.3.1",
+ "serde",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-randomness-collective-flip"
 version = "3.0.0"
 dependencies = [
@@ -4195,6 +4215,35 @@ dependencies = [
  "sp-staking",
  "sp-std",
  "sp-trie",
+]
+
+[[package]]
+name = "pallet-staking"
+version = "3.0.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-authorship",
+ "pallet-session",
+ "parity-scale-codec 2.3.1",
+ "serde",
+ "sp-application-crypto",
+ "sp-io",
+ "sp-npos-elections",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
+ "static_assertions",
+]
+
+[[package]]
+name = "pallet-staking-reward-curve"
+version = "3.0.0"
+dependencies = [
+ "proc-macro-crate 0.1.5",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -8779,18 +8828,6 @@ version = "3.0.0"
 
 [[patch.unused]]
 name = "pallet-babe"
-version = "3.0.0"
-
-[[patch.unused]]
-name = "pallet-offences"
-version = "3.0.0"
-
-[[patch.unused]]
-name = "pallet-staking"
-version = "3.0.0"
-
-[[patch.unused]]
-name = "pallet-staking-reward-curve"
 version = "3.0.0"
 
 [[patch.unused]]

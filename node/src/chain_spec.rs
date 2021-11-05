@@ -1,13 +1,13 @@
 use sp_core::{Pair, Public, sr25519};
 use mangata_runtime::{
-	AccountId, AuraConfig, GenesisConfig, GrandpaConfig,
+	AccountId, AuraConfig, GenesisConfig, GrandpaConfig, SessionKeys,
 	SudoConfig, SystemConfig, WASM_BINARY, Signature, TokensConfig,
 	AssetsInfoConfig, TreasuryConfig, XykConfig, CouncilConfig, ElectionsConfig,
-	BridgeConfig, BridgedAssetConfig, VerifierConfig
+	BridgeConfig, BridgedAssetConfig, VerifierConfig, SessionConfig, StakingConfig, StakerStatus
 };
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_finality_grandpa::AuthorityId as GrandpaId;
-use sp_runtime::traits::{Verify, IdentifyAccount};
+use sp_runtime::{Perbill, traits::{Verify, IdentifyAccount}};
 use sc_service::ChainType;
 use hex_literal::hex;
 use artemis_core::{App, AppId};
@@ -36,11 +36,22 @@ pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId where
 }
 
 /// Generate an Aura authority key.
-pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
+pub fn authority_keys_from_seed(s: &str) -> (AccountId, AuraId, GrandpaId) {
 	(
+        get_account_id_from_seed::<sr25519::Public>(s),
 		get_from_seed::<AuraId>(s),
 		get_from_seed::<GrandpaId>(s),
 	)
+}
+
+fn session_keys(
+    aura: AuraId,
+    grandpa: GrandpaId
+) -> SessionKeys {
+    SessionKeys {
+        aura,
+        grandpa
+    }
 }
 
 pub fn development_config() -> Result<ChainSpec, String> {
@@ -278,7 +289,7 @@ type BridgedAssetsType = Vec<(Vec<u8>, Vec<u8>, Vec<u8>, u32, u32, H160, u128, A
 /// Configure initial storage state for FRAME modules.
 fn testnet_genesis(
 	wasm_binary: &[u8],
-	initial_authorities: Vec<(AuraId, GrandpaId)>,
+	initial_authorities: Vec<(AccountId, AuraId, GrandpaId)>,
 	relay_key: AccountId,
     root_key: AccountId,
     bridged_app_ids: Vec<(App, AppId)>,
@@ -323,10 +334,10 @@ fn testnet_genesis(
             },
         }),
 		pallet_aura: Some(AuraConfig {
-			authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect(),
+			authorities: vec![],
 		}),
 		pallet_grandpa: Some(GrandpaConfig {
-			authorities: initial_authorities.iter().map(|x| (x.1.clone(), 1)).collect(),
+			authorities: vec![],
 		}),
 		pallet_sudo: Some(SudoConfig {
 			// Assign network admin rights.
@@ -395,6 +406,36 @@ fn testnet_genesis(
 		pallet_bridge: Some(BridgeConfig {
             bridged_app_id_registry: bridged_app_ids,
         }),
-
+        pallet_staking: Some(StakingConfig {
+            validator_count: initial_authorities.len() as u32 * 2,
+            minimum_validator_count: initial_authorities.len() as u32,
+            stakers: staking_accounts
+                .iter()
+                .map(|x| {
+                    let (account_id, _, _, _, _, _liquidity_token_id, _liquidity_token_amount) = x;
+                    (
+                        account_id.clone(),
+                        account_id.clone(),
+                        1_000__000_000_000_000_000_000u128,
+                        StakerStatus::Validator,
+                    )
+                })
+                .collect(),
+            invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect(),
+            slash_reward_fraction: Perbill::from_percent(10),
+            ..Default::default()
+        }),
+        pallet_session: Some(SessionConfig {
+            keys: initial_authorities
+                .iter()
+                .map(|x| {
+                    (
+                        x.0.clone(),
+                        x.0.clone(),
+                        session_keys(x.1.clone(), x.2.clone()),
+                    )
+                })
+                .collect::<Vec<_>>(),
+        }),
 	}
 }

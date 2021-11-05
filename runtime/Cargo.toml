@@ -37,6 +37,13 @@ pallet-treasury = { default-features = false, version='3.0.0' , git = "https://g
 pallet-elections-phragmen = { version = "3.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 pallet-collective = { version = "3.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
+pallet-authorship = { version = "3.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+pallet-offences = { version = "3.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-staking = { version = "3.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+pallet-staking = { version = "3.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+pallet-staking-reward-curve = { version = "3.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+pallet-session = { version = "3.0.0", features = ["historical"], default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+
 # Used for the node's RPCs
 frame-system-rpc-runtime-api = { version = "3.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 pallet-transaction-payment-rpc-runtime-api = { version = "3.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
@@ -111,6 +118,11 @@ std = [
 	"artemis-eth-app/std",
 	"artemis-asset/std",
 	"pallet-bridge/std",
+	"pallet-authorship/std",
+	"pallet-offences/std",
+	"sp-staking/std",
+	"pallet-staking/std",
+	"pallet-session/std",
 ]
 runtime-benchmarks = [
 	"sp-runtime/runtime-benchmarks",

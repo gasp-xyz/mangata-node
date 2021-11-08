@@ -590,7 +590,7 @@ impl_runtime_apis! {
                     }
                 }).collect();
 
-            Executive::execute_block(block, Default::default())
+            Executive::execute_block(block, authors)
         }
 
 		fn initialize_block(header: &<Block as BlockT>::Header) {

@@ -9,6 +9,8 @@
     AMM DEX blockchain without fee market, that incorporates MEV prevention
 </p>
 
+![Themis](https://blog.mangata.finance/assets/posts/themis-cover.png)
+
 ![Issues](https://img.shields.io/github/issues/mangata-finance/mangata-node)
 ![Pull Request](https://img.shields.io/github/issues-pr/mangata-finance/mangata-node)
 ![GitHub last commit](https://img.shields.io/github/last-commit/mangata-finance/mangata-node)

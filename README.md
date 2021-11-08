@@ -1,5 +1,21 @@
-# Mangata node
-## AMM DEX blockchain without fee market, that incorporates MEV prevention
+<p align="center">
+    <a href="https://https://mangata.finance/">
+    <img width="132" height="101" src="https://mangata.finance/images/logo-without-text.svg" class="attachment-full size-full" alt="Mangata brand" loading="lazy" /></a>
+</p>
+
+<h2 align="center">Mangata Node</h2>
+
+<p align="center">
+    AMM DEX blockchain without fee market, that incorporates MEV prevention
+</p>
+
+![Issues](https://img.shields.io/github/issues/mangata-finance/mangata-node)
+![Pull Request](https://img.shields.io/github/issues-pr/mangata-finance/mangata-node)
+![GitHub last commit](https://img.shields.io/github/last-commit/mangata-finance/mangata-node)
+![Build Status](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Fmangata-finance%2Fmangata-node%2Fbadge%3Fref%3Ddevelop&style=flat)
+![Language](https://img.shields.io/github/languages/top/mangata-finance/mangata-node)
+
+## Description
 Reliable decentralized exchange (DEX) blockchain - interoperable with other blockchains using Polkadot. The exchange is using a consensus algorithm that solves MEV/frontrunning problems and makes all participants' access to trading opportunities equal. 
 
 The design of the blockchain guarantees fixed-fees that provides greater control of trading costs and higher arbitrage opportunity.

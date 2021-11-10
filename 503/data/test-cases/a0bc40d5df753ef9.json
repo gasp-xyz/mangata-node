@@ -1,0 +1,84 @@
+{
+  "uid" : "a0bc40d5df753ef9",
+  "name" : "xyk-pallet - Sudo tests: Sudo Issue two  different assets to the same account",
+  "fullName" : "test/parallel/xyk-pallet.sudo.test.ts.xyk-pallet - Sudo tests: Sudo Issue two  different assets to the same account",
+  "historyId" : "6eb0937e1b0c7f2b465d76b42adc78a6",
+  "time" : {
+    "start" : 1636536145665,
+    "stop" : 1636536181675,
+    "duration" : 36010
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "test/parallel/xyk-pallet.sudo.test.ts"
+  }, {
+    "name" : "testClass",
+    "value" : "test/parallel/xyk-pallet.sudo.test.ts"
+  }, {
+    "name" : "testMethod",
+    "value" : "xyk-pallet - Sudo tests: Sudo Issue two  different assets to the same account"
+  }, {
+    "name" : "package",
+    "value" : "test/parallel/xyk-pallet.sudo.test.ts"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 4,
+        "unknown" : 0,
+        "total" : 4
+      },
+      "items" : [ {
+        "uid" : "9a866725cb00e795",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/474//#testresult/9a866725cb00e795",
+        "status" : "passed",
+        "time" : {
+          "start" : 1635489931873,
+          "stop" : 1635489968052,
+          "duration" : 36179
+        }
+      }, {
+        "uid" : "a48bb7962278d22a",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/470//#testresult/a48bb7962278d22a",
+        "status" : "passed",
+        "time" : {
+          "start" : 1635234973929,
+          "stop" : 1635235010133,
+          "duration" : 36204
+        }
+      }, {
+        "uid" : "770b48aac9a02855",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/460//#testresult/770b48aac9a02855",
+        "status" : "passed",
+        "time" : {
+          "start" : 1634539183591,
+          "stop" : 1634539219788,
+          "duration" : 36197
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "a0bc40d5df753ef9.json",
+  "parameterValues" : [ ]
+}

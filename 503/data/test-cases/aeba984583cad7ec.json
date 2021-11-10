@@ -1,0 +1,84 @@
+{
+  "uid" : "aeba984583cad7ec",
+  "name" : "Not enough assets",
+  "fullName" : "xyk-pallet - Poll creation: Errors:.Not enough assets",
+  "historyId" : "276107f6850f2c5d26cdc338432ce5eb",
+  "time" : {
+    "start" : 1636535305974,
+    "stop" : 1636535359390,
+    "duration" : 53416
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Poll creation: Errors:"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Poll creation: Errors:"
+  }, {
+    "name" : "testMethod",
+    "value" : "Not enough assets"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Poll creation: Errors:"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 4,
+        "unknown" : 0,
+        "total" : 4
+      },
+      "items" : [ {
+        "uid" : "87ab1301371fc70d",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/474//#testresult/87ab1301371fc70d",
+        "status" : "passed",
+        "time" : {
+          "start" : 1635489091874,
+          "stop" : 1635489145506,
+          "duration" : 53632
+        }
+      }, {
+        "uid" : "f72cd60df0467f90",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/470//#testresult/f72cd60df0467f90",
+        "status" : "passed",
+        "time" : {
+          "start" : 1635234134050,
+          "stop" : 1635234187763,
+          "duration" : 53713
+        }
+      }, {
+        "uid" : "e5731ddcf8121153",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/460//#testresult/e5731ddcf8121153",
+        "status" : "passed",
+        "time" : {
+          "start" : 1634538349613,
+          "stop" : 1634538403235,
+          "duration" : 53622
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "aeba984583cad7ec.json",
+  "parameterValues" : [ ]
+}

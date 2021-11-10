@@ -1,0 +1,84 @@
+{
+  "uid" : "2d139699fe0daebe",
+  "name" : "Get affected after a transaction that devaluates X wallet & destroy the pool",
+  "fullName" : "xyk-pallet - Burn liquidity tests: when burning liquidity you can.Get affected after a transaction that devaluates X wallet & destroy the pool",
+  "historyId" : "4a3ab2a52b9704a4de5c8fc1c11def31",
+  "time" : {
+    "start" : 1636535380250,
+    "stop" : 1636535562058,
+    "duration" : 181808
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Burn liquidity tests: when burning liquidity you can"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Burn liquidity tests: when burning liquidity you can"
+  }, {
+    "name" : "testMethod",
+    "value" : "Get affected after a transaction that devaluates X wallet & destroy the pool"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Burn liquidity tests: when burning liquidity you can"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 4,
+        "unknown" : 0,
+        "total" : 4
+      },
+      "items" : [ {
+        "uid" : "9170b9e97c645cc0",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/474//#testresult/9170b9e97c645cc0",
+        "status" : "passed",
+        "time" : {
+          "start" : 1635489165883,
+          "stop" : 1635489348209,
+          "duration" : 182326
+        }
+      }, {
+        "uid" : "894b914ceed87d79",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/470//#testresult/894b914ceed87d79",
+        "status" : "passed",
+        "time" : {
+          "start" : 1635234207668,
+          "stop" : 1635234390087,
+          "duration" : 182419
+        }
+      }, {
+        "uid" : "c1827518db85d825",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/460//#testresult/c1827518db85d825",
+        "status" : "passed",
+        "time" : {
+          "start" : 1634538424442,
+          "stop" : 1634538606081,
+          "duration" : 181639
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "2d139699fe0daebe.json",
+  "parameterValues" : [ ]
+}

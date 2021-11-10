@@ -179,6 +179,9 @@ pub type EncryptedTX = Module<Test>;
 pub type System = system::Module<Test>;
 
 impl<T: Trait> Module<T> {
+    pub fn create_new_token(who: &T::AccountId, amount: Balance) -> TokenId {
+        <T as Trait>::Tokens::create(who, amount.into()).into()
+    }
     // can implement some handy methods here
     // pub fn create_new_token(who: &T::AccountId, amount: Balance) -> TokenId {
     //     <T as Trait>::Currency::create(who, amount.into()).into()

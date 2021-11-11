@@ -249,7 +249,9 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       github.ref == 'refs/heads/develop' && 
-      !contains(github.event.pull_request.labels.*.name, 'skip-publish')
+      !contains(github.event.pull_request.labels.*.name, 'skip-publish') &&
+      !contains(github.event.inputs.testingImage, 'true')
+    #skipping test-versions being buplished.
     #if: "!contains(github.event.pull_request.labels.*.name, 'skip-publish') && ${{ github.event_name == 'push'}} && github.event.pull_request.merged == true"
     #if: # its a push to develop.
     steps:

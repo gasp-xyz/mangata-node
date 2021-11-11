@@ -1,0 +1,17 @@
+diff --git a/runtime/src/lib.rs b/runtime/src/lib.rs
+index 84803fe3..30777b4b 100644
+--- a/runtime/src/lib.rs
++++ b/runtime/src/lib.rs
+@@ -604,9 +604,9 @@ impl pallet_collective::Trait<CouncilCollective> for Runtime {
+ parameter_types! {
+     pub const CandidacyBond: Balance = 10 * currency::DOLLARS;
+     pub const VotingBond: Balance = 1 * currency::DOLLARS;
+-    pub const TermDuration: BlockNumber = 120 * DAYS;
+-    pub const DesiredMembers: u32 = 9;
+-    pub const DesiredRunnersUp: u32 = 7;
++    pub const TermDuration: BlockNumber = 5 * MINUTES;
++    pub const DesiredMembers: u32 = 2;
++    pub const DesiredRunnersUp: u32 = 3;
+     pub const ElectionsPhragmenModuleId: LockIdentifier = *b"phrelect";
+ }
+ 

@@ -20,6 +20,11 @@ on:
           required: false
           default: ''
 
+        testingImage:
+          description: 'Apply diff with custom config changes for testing'
+          required: false
+          default: false
+
 
 jobs:
 
@@ -110,9 +115,16 @@ jobs:
         run: |
           echo ${{ github.ref }} == 'refs/heads/develop'
           echo ${{ github.ref }}
+          echo ${{ github.event.inputs.testingImage }} == true
       -
         name: Checkout
         uses: actions/checkout@v2
+      -
+        name: Apply .patch
+        if: ${{ github.event.inputs.testingImage }} == true
+        run: |
+          git apply devops/changeset_generate_testImage.patch
+
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v1

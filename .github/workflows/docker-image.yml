@@ -23,7 +23,7 @@ on:
         testingImage:
           description: 'Apply diff with custom config changes for testing'
           required: false
-          default: false
+          default: 'false'
 
 
 jobs:
@@ -121,9 +121,9 @@ jobs:
         uses: actions/checkout@v2
       -
         name: Apply .patch
-        if: ${{ github.event.inputs.testingImage }} == true
+        if: contains(github.event.inputs.testingImage, 'true')
         run: |
-          git apply devops/changeset_generate_testImage.patch
+          git apply devops/changeset_generate_testimage.patch
 
       -
         name: Set up QEMU

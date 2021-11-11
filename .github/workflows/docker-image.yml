@@ -124,7 +124,8 @@ jobs:
         if: contains(github.event.inputs.testingImage, 'true')
         run: |
           git apply devops/changeset_generate_testimage.patch
-
+          git status
+          grep "const TermDuration" runtime/src/lib.rs
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v1

@@ -43,10 +43,10 @@ parameter_types! {
 }
 
 frame_support::impl_outer_dispatch! {
-	pub enum Call for Test where origin: Origin {
+    pub enum Call for Test where origin: Origin {
         frame_system::System,
         encrypted::EncryptedTX,
-	}
+    }
 }
 
 impl system::Trait for Test {
@@ -105,16 +105,16 @@ parameter_types! {
     pub const DoublyEncryptedCallMaxLength: u32 = 4096;
 }
 
-use pallet_session::{SessionManager, SessionHandler};
+use pallet_session::{SessionHandler, SessionManager};
 use sp_staking::SessionIndex;
 
 pub struct TestSessionManager;
 impl SessionManager<u64> for TestSessionManager {
-	fn end_session(_: SessionIndex) {}
-	fn start_session(_: SessionIndex) {}
-	fn new_session(_: SessionIndex) -> Option<Vec<u64>> {
+    fn end_session(_: SessionIndex) {}
+    fn start_session(_: SessionIndex) {}
+    fn new_session(_: SessionIndex) -> Option<Vec<u64>> {
         None
-	}
+    }
 }
 
 use sp_runtime::testing::UintAuthorityId;
@@ -124,44 +124,41 @@ pub struct TestSessionHandler;
 use sp_runtime::RuntimeAppPublic;
 
 impl SessionHandler<u128> for TestSessionHandler {
-	const KEY_TYPE_IDS: &'static [sp_runtime::KeyTypeId] = &[UintAuthorityId::ID];
-	fn on_genesis_session<T: OpaqueKeys>(_validators: &[(u128, T)]) {}
-	fn on_new_session<T: OpaqueKeys>(
-		changed: bool,
-		validators: &[(u128, T)],
-		_queued_validators: &[(u128, T)],
-	) {
-	}
-	fn on_disabled(_validator_index: usize) {
-	}
-	fn on_before_session_ending() {
-	}
+    const KEY_TYPE_IDS: &'static [sp_runtime::KeyTypeId] = &[UintAuthorityId::ID];
+    fn on_genesis_session<T: OpaqueKeys>(_validators: &[(u128, T)]) {}
+    fn on_new_session<T: OpaqueKeys>(
+        changed: bool,
+        validators: &[(u128, T)],
+        _queued_validators: &[(u128, T)],
+    ) {
+    }
+    fn on_disabled(_validator_index: usize) {}
+    fn on_before_session_ending() {}
 }
 
 sp_runtime::impl_opaque_keys! {
-	pub struct MockSessionKeys {
-		pub dummy: UintAuthorityId,
-	}
+    pub struct MockSessionKeys {
+        pub dummy: UintAuthorityId,
+    }
 }
 
 impl From<UintAuthorityId> for MockSessionKeys {
-	fn from(dummy: UintAuthorityId) -> Self {
-		Self { dummy }
-	}
+    fn from(dummy: UintAuthorityId) -> Self {
+        Self { dummy }
+    }
 }
 
-
 impl pallet_session::Trait for Test {
-	type Event = TestEvent;
-	type ValidatorId = <Self as frame_system::Trait>::AccountId;
-	type ValidatorIdOf = sp_runtime::traits::ConvertInto;
-	type ShouldEndSession = pallet_session::PeriodicSessions<(), ()>;
-	type NextSessionRotation = ();
-	type SessionManager = ();
-	type SessionHandler = TestSessionHandler;
-	type Keys = MockSessionKeys;
-	type DisabledValidatorsThreshold = ();
-	type WeightInfo = ();
+    type Event = TestEvent;
+    type ValidatorId = <Self as frame_system::Trait>::AccountId;
+    type ValidatorIdOf = sp_runtime::traits::ConvertInto;
+    type ShouldEndSession = pallet_session::PeriodicSessions<(), ()>;
+    type NextSessionRotation = ();
+    type SessionManager = ();
+    type SessionHandler = TestSessionHandler;
+    type Keys = MockSessionKeys;
+    type DisabledValidatorsThreshold = ();
+    type WeightInfo = ();
 }
 
 impl Trait for Test {
@@ -169,7 +166,7 @@ impl Trait for Test {
     type Call = Call;
     type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
     type AuthorityId = crate::ecdsa::AuthorityId;
-    type Fee = EncryptedTxnsFee; 
+    type Fee = EncryptedTxnsFee;
     // TODO: figure out if we want to test treasury as well
     type Treasury = ();
     type DoublyEncryptedCallMaxLength = DoublyEncryptedCallMaxLength;
@@ -179,6 +176,12 @@ pub type EncryptedTX = Module<Test>;
 pub type System = system::Module<Test>;
 
 impl<T: Trait> Module<T> {
+    pub fn create_new_token(who: &T::AccountId, amount: Balance) -> TokenId {
+        <T as Trait>::Tokens::create(who, amount.into()).into()
+    }
+    pub fn balance(id: TokenId, who: T::AccountId) -> Balance {
+        <T as Trait>::Tokens::free_balance(id.into(), &who).into()
+    }
     // can implement some handy methods here
     // pub fn create_new_token(who: &T::AccountId, amount: Balance) -> TokenId {
     //     <T as Trait>::Currency::create(who, amount.into()).into()

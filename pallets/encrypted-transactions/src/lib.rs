@@ -22,7 +22,7 @@ use frame_support::{
 use frame_system::ensure_none;
 use frame_system::{ensure_root, ensure_signed, RawOrigin};
 use mangata_primitives::Balance;
-use orml_tokens::MultiTokenCurrency;
+use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 use sp_application_crypto::RuntimeAppPublic;
 use sp_core::storage::ChildInfo;
 use sp_runtime::traits::Hash;
@@ -55,7 +55,7 @@ pub mod ecdsa {
 
 pub trait Trait: frame_system::Trait + pallet_session::Trait {
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
-    type Tokens: MultiTokenCurrency<Self::AccountId>;
+    type Tokens: MultiTokenCurrencyExtended<Self::AccountId>;
     type AuthorityId: Member + Parameter + RuntimeAppPublic + Default + Ord;
     type Fee: Get<Balance>;
     type Treasury: OnUnbalanced<

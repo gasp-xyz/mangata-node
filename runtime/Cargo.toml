@@ -23,6 +23,7 @@ smallvec = "1.6.1"
 
 # Local Dependencies
 pallet-template = { path = "../pallets/template", default-features = false }
+mangata-primitives = { path = '../primitives/mangata', default-features = false, version = "0.1.0" }
 
 # Substrate Dependencies
 ## Substrate Primitive Dependencies
@@ -50,12 +51,16 @@ frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/substrate"
 ## Substrate Pallet Dependencies
 pallet-aura = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.12" }
 pallet-authorship = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.12" }
-pallet-balances = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.12" }
 pallet-session = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.12" }
 pallet-sudo = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.12" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.12" }
 pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.12" }
 pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.12" }
+pallet-treasury = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.12" }
+
+# Open-Runtime-Module-Library Dependencies
+orml-tokens = {  default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
+orml-traits = {  default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
 
 # Cumulus dependencies
 cumulus-pallet-aura-ext = { git = 'https://github.com/paritytech/cumulus', branch = 'polkadot-v0.9.12', default-features = false }
@@ -98,12 +103,15 @@ std = [
 	"sp-std/std",
 	"sp-transaction-pool/std",
 	"sp-version/std",
+	"mangata-primitives/std",
+	"orml-traits/std",
+	"orml-tokens/std",
+	"pallet-treasury/std",
 	"frame-executive/std",
 	"frame-support/std",
 	"frame-system/std",
 	"pallet-aura/std",
 	"pallet-authorship/std",
-	"pallet-balances/std",
 	"pallet-collator-selection/std",
 	"pallet-session/std",
 	"pallet-sudo/std",
@@ -134,7 +142,6 @@ runtime-benchmarks = [
 	"frame-system-benchmarking",
 	"frame-support/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
-	"pallet-balances/runtime-benchmarks",
 	"pallet-collator-selection/runtime-benchmarks",
 	"pallet-template/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",

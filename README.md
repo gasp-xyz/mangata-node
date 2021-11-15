@@ -85,6 +85,14 @@ Start a dev chain:
 cd ./devops
 docker-compose up
 ```
+
+### Two-Nodes Multi-Validator Dockerized Testnet
+
+```bash
+sh scripts/build-multi-validator-mangata-node-docker-image.sh
+docker-compose  -f devops/multi-validator-docker-compose.yml up
+```
+
 ## Debug Single Node
 
 ### VS code

@@ -103,10 +103,6 @@ std = [
 	"sp-std/std",
 	"sp-transaction-pool/std",
 	"sp-version/std",
-	"mangata-primitives/std",
-	"orml-traits/std",
-	"orml-tokens/std",
-	"pallet-treasury/std",
 	"frame-executive/std",
 	"frame-support/std",
 	"frame-system/std",
@@ -133,6 +129,11 @@ std = [
 	"xcm-builder/std",
 	"xcm-executor/std",
 	"xcm/std",
+	
+	"mangata-primitives/std",
+	"orml-traits/std",
+	"orml-tokens/std",
+	"pallet-treasury/std",
 ]
 
 runtime-benchmarks = [

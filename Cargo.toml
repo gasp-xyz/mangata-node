@@ -14,5 +14,4 @@ orml-traits = { path = "../open-runtime-module-library/traits" }
 
 
 [patch."https://github.com/mangata-finance/mangata-node"]
-mangata-primitives = {path = "../mangata-node-subs-v3/primitives/mangata"}
-# mangata-primitives = {git = "https://github.com/mangata-finance/mangata-node/primitives/mangata", branch = "mangata-dev"}
+mangata-primitives = {path = "./primitives/mangata"}

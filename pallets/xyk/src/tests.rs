@@ -75,7 +75,7 @@ fn initialize() {
     )
     .unwrap();
 
-    let pool_created_event = crate::mock::Event::xyk(crate::Event::<Test>::PoolCreated(
+    let pool_created_event = crate::mock::Event::XykStorage(crate::Event::<Test>::PoolCreated(
         acc_id,
         1,
         40000000000000000000,
@@ -120,7 +120,7 @@ fn set_info_should_work() {
         .unwrap();
 
         assert_eq!(
-            <assets_info::Module<Test>>::get_info(2u32),
+            <assets_info::Pallet<Test>>::get_info(2u32),
             assets_info::AssetInfo {
                 name: Some(b"LiquidityPoolToken0x00000002".to_vec()),
                 symbol: Some(b"TKN0x00000000-TKN0x00000001".to_vec()),
@@ -153,7 +153,7 @@ fn set_info_should_work_with_small_numbers() {
         .unwrap();
 
         assert_eq!(
-            <assets_info::Module<Test>>::get_info(N),
+            <assets_info::Pallet<Test>>::get_info(N),
             assets_info::AssetInfo {
                 name: Some(b"LiquidityPoolToken0x00003039".to_vec()),
                 symbol: Some(b"TKN0x0000000F-TKN0x00002FC9".to_vec()),
@@ -187,7 +187,7 @@ fn set_info_should_work_with_large_numbers() {
         .unwrap();
 
         assert_eq!(
-            <assets_info::Module<Test>>::get_info(1524501234u32),
+            <assets_info::Pallet<Test>>::get_info(1524501234u32),
             assets_info::AssetInfo {
                 name: Some(b"LiquidityPoolToken0x5ADE0AF2".to_vec()),
                 symbol: Some(b"TKN0x00E4E1C0-TKN0x00BAA928".to_vec()),
@@ -716,7 +716,7 @@ fn sell_W() {
             40040040040040040041
         ); // amount of asset 1 in vault acc after creating pool
 
-        let assets_swapped_event = crate::mock::Event::xyk(crate::Event::<Test>::AssetsSwapped(
+        let assets_swapped_event = crate::mock::Event::XykStorage(crate::Event::<Test>::AssetsSwapped(
             2,
             1,
             20000000000000000000,
@@ -836,7 +836,7 @@ fn buy_W() {
             30000000000000000000
         ); // amount of asset 1 in vault acc after creating pool
 
-        let assets_swapped_event = crate::mock::Event::xyk(crate::Event::<Test>::AssetsSwapped(
+        let assets_swapped_event = crate::mock::Event::XykStorage(crate::Event::<Test>::AssetsSwapped(
             2,
             1,
             40120361083249749248,
@@ -995,7 +995,7 @@ fn mint_W() {
             XykStorage::balance(2, XykStorage::account_id()),
             90000000000000000001
         ); // amount of asset 1 in vault acc after creating pool
-        let liquidity_minted_event = crate::mock::Event::xyk(crate::Event::<Test>::LiquidityMinted(
+        let liquidity_minted_event = crate::mock::Event::XykStorage(crate::Event::<Test>::LiquidityMinted(
             2,
             1,
             20000000000000000000,
@@ -1134,7 +1134,7 @@ fn burn_W() {
             30000000000000000000
         ); // amount of asset 1 in vault acc after creating pool
 
-        let liquidity_burned = crate::mock::Event::xyk(crate::Event::<Test>::LiquidityBurned(
+        let liquidity_burned = crate::mock::Event::XykStorage(crate::Event::<Test>::LiquidityBurned(
             2,
             1,
             20000000000000000000,

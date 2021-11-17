@@ -6,19 +6,20 @@ use sp_core::H256;
 
 use sp_runtime::{
     testing::Header,
-    traits::{BlakeTwo256, IdentityLookup},
+    traits::{BlakeTwo256, IdentityLookup, AccountIdConversion},
 };
 
 use frame_system as system;
 use mangata_primitives::{Amount, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
 use pallet_assets_info as assets_info;
-use frame_support::{construct_runtime, parameter_types};
+use frame_support::{PalletId, construct_runtime, parameter_types, traits::{Everything, Contains}};
 use orml_traits::parameter_type_with_key;
 use crate as xyk;
 
 pub const NATIVE_CURRENCY_ID: u32 = 0;
 
+pub(crate) type AccountId = u128;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -29,10 +30,10 @@ construct_runtime!(
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Module, Call, Storage, Config, Event<T>},
-		Tokens: orml_tokens::{Module, Storage, Call, Event<T>, Config<T>},
-        AssetsInfoModule: assets_info::{Module, Call, Config, Storage, Event<T>},
-		XykStorage: xyk::{Module, Call, Storage, Event<T>, Config<T>},
+		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
+		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>},
+        AssetsInfoModule: assets_info::{Pallet, Call, Config, Storage, Event<T>},
+		XykStorage: xyk::{Pallet, Call, Storage, Event<T>, Config<T>},
 	}
 );
 
@@ -40,14 +41,14 @@ parameter_types! {
     pub const BlockHashCount: u64 = 250;
 }
 impl system::Config for Test {
-    type BaseCallFilter = ();
+    type BaseCallFilter = Everything;
     type Origin = Origin;
     type Call = Call;
     type Index = u64;
     type BlockNumber = u64;
     type Hash = H256;
     type Hashing = BlakeTwo256;
-    type AccountId = u128;
+    type AccountId = AccountId;
     type Lookup = IdentityLookup<Self::AccountId>;
     type Header = Header;
     type Event = Event;
@@ -62,6 +63,7 @@ impl system::Config for Test {
 	type BlockWeights = ();
 	type BlockLength = ();
 	type SS58Prefix = ();
+	type OnSetCode = ();
 }
 
 parameter_type_with_key! {
@@ -72,6 +74,19 @@ parameter_type_with_key! {
 	};
 }
 
+
+pub struct DustRemovalWhitelist;
+impl Contains<AccountId> for DustRemovalWhitelist {
+	fn contains(a: &AccountId) -> bool {
+		*a == TreasuryAccount::get() 
+	}
+}
+
+parameter_types! {
+    pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account();
+	pub const MaxLocks: u32 = 50;
+}
+
 impl orml_tokens::Config for Test {
     type Event = Event;
     type Balance = Balance;
@@ -80,6 +95,8 @@ impl orml_tokens::Config for Test {
     type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = ();
+	type MaxLocks = MaxLocks;
+	type DustRemovalWhitelist = DustRemovalWhitelist;
 }
 
 parameter_types! {
@@ -106,7 +123,7 @@ impl assets_info::Config for Test {
 
 parameter_types! {
     pub const NativeCurrencyId: u32 = NATIVE_CURRENCY_ID;
-    pub const TreasuryModuleId: sp_runtime::ModuleId = sp_runtime::ModuleId(*b"py/trsry");
+    pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
     pub const BnbTreasurySubAccDerive: [u8; 4] = *b"bnbt";
 }
 
@@ -114,11 +131,11 @@ impl Config for Test {
     type Event = Event;
     type Currency = MultiTokenCurrencyAdapter<Test>;
     type NativeCurrencyId = NativeCurrencyId;
-    type TreasuryModuleId = TreasuryModuleId;
+    type TreasuryPalletId = TreasuryPalletId;
     type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
 }
 
-impl<T: Config> Module<T> {
+impl<T: Config> Pallet<T> {
     pub fn balance(id: TokenId, who: T::AccountId) -> Balance {
         <T as Config>::Currency::free_balance(id.into(), &who).into()
     }
@@ -126,7 +143,7 @@ impl<T: Config> Module<T> {
         <T as Config>::Currency::total_issuance(id.into()).into()
     }
     pub fn create_new_token(who: &T::AccountId, amount: Balance) -> TokenId {
-        <T as Config>::Currency::create(who, amount.into()).into()
+        <T as Config>::Currency::create(who, amount.into()).expect("Token creation failed").into()
     }
 }
 

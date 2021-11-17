@@ -7,14 +7,16 @@ use orml_tokens::MultiTokenCurrencyAdapter;
 use sp_core::H256;
 use sp_runtime::{
     testing::Header,
-    traits::{BlakeTwo256, IdentityLookup},
+    traits::{BlakeTwo256, IdentityLookup, AccountIdConversion},
 };
 use orml_traits::parameter_type_with_key;
-use frame_support::{construct_runtime, parameter_types};
+use frame_support::{PalletId, construct_runtime, parameter_types, traits::{Everything, Contains}};
 
 use super::*;
 
 use crate as assets_info;
+
+pub(crate) type AccountId = u64;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -25,9 +27,9 @@ construct_runtime!(
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Module, Call, Storage, Config, Event<T>},
-		Tokens: assets::{Module, Storage, Call, Event<T>, Config<T>},
-        AssetsInfoModule: assets_info::{Module, Call, Config, Storage, Event<T>},
+		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
+		Tokens: assets::{Pallet, Storage, Call, Event<T>, Config<T>},
+        AssetsInfoModule: assets_info::{Pallet, Call, Config, Storage, Event<T>},
 	}
 );
 
@@ -45,14 +47,14 @@ parameter_types! {
 }
 
 impl system::Config for Test {
-    type BaseCallFilter = ();
+    type BaseCallFilter = Everything;
     type Origin = Origin;
     type Call = Call;
     type Index = u64;
     type BlockNumber = u64;
     type Hash = H256;
     type Hashing = BlakeTwo256;
-    type AccountId = u64;
+    type AccountId = AccountId;
     type Lookup = IdentityLookup<Self::AccountId>;
     type Header = Header;
     type Event = Event;
@@ -67,6 +69,7 @@ impl system::Config for Test {
 	type BlockWeights = ();
 	type BlockLength = ();
 	type SS58Prefix = ();
+	type OnSetCode = ();
 }
 
 parameter_type_with_key! {
@@ -77,6 +80,19 @@ parameter_type_with_key! {
 	};
 }
 
+pub struct DustRemovalWhitelist;
+impl Contains<AccountId> for DustRemovalWhitelist {
+	fn contains(a: &AccountId) -> bool {
+		*a == TreasuryAccount::get() 
+	}
+}
+
+parameter_types! {
+    pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
+    pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account();
+	pub const MaxLocks: u32 = 50;
+}
+
 impl assets::Config for Test {
     type Event = Event;
     type Balance = Balance;
@@ -85,6 +101,8 @@ impl assets::Config for Test {
     type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = ();
+	type MaxLocks = MaxLocks;
+	type DustRemovalWhitelist = DustRemovalWhitelist;
 }
 
 impl Config for Test {

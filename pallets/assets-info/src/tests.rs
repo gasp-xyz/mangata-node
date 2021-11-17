@@ -1,6 +1,6 @@
 // Copyright (C) 2020 Mangata team
 
-use crate::{mock::*, AssetInfo, Error, Event};
+use crate::{mock::{AssetsInfoModule, *}, AssetInfo, Error, Event};
 use frame_support::{assert_noop, assert_ok};
 
 #[test]
@@ -26,7 +26,7 @@ fn set_info_and_retrieve_works_ok() {
         // Read pallet storage and assert an expected result.
         assert_eq!(AssetsInfoModule::get_info(ASSET_ID), info);
 
-        let info_stored_event = crate::mock::Event::assets_info(Event::InfoStored(ASSET_ID, info));
+        let info_stored_event = crate::mock::Event::AssetsInfoModule(Event::InfoStored(ASSET_ID, info));
 
         assert!(System::events()
             .iter()

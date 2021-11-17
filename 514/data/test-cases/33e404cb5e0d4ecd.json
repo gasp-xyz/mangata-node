@@ -1,0 +1,129 @@
+{
+  "uid" : "33e404cb5e0d4ecd",
+  "name" : "Not enough tokens to convert fee LINK[https://trello.com/c/p77t0atO]",
+  "fullName" : "xyk-pallet - treasury tests [Connected - Mangata]: Error cases.Not enough tokens to convert fee LINK[https://trello.com/c/p77t0atO]",
+  "historyId" : "8bcee4ce481ed060d31a7c246299047f",
+  "time" : {
+    "start" : 1637149578905,
+    "stop" : 1637149705806,
+    "duration" : 126901
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - treasury tests [Connected - Mangata]: Error cases"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - treasury tests [Connected - Mangata]: Error cases"
+  }, {
+    "name" : "testMethod",
+    "value" : "Not enough tokens to convert fee LINK[https://trello.com/c/p77t0atO]"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - treasury tests [Connected - Mangata]: Error cases"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 9,
+        "unknown" : 0,
+        "total" : 9
+      },
+      "items" : [ {
+        "uid" : "ee486301dd08f913",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/513//#testresult/ee486301dd08f913",
+        "status" : "passed",
+        "time" : {
+          "start" : 1637148582786,
+          "stop" : 1637148709704,
+          "duration" : 126918
+        }
+      }, {
+        "uid" : "81e5f4a9d08e19b2",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/512//#testresult/81e5f4a9d08e19b2",
+        "status" : "passed",
+        "time" : {
+          "start" : 1637139084952,
+          "stop" : 1637139211789,
+          "duration" : 126837
+        }
+      }, {
+        "uid" : "666bc9a911d7f505",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/511//#testresult/666bc9a911d7f505",
+        "status" : "passed",
+        "time" : {
+          "start" : 1637137393987,
+          "stop" : 1637137519531,
+          "duration" : 125544
+        }
+      }, {
+        "uid" : "dc0bcf122262dc89",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/510//#testresult/dc0bcf122262dc89",
+        "status" : "passed",
+        "time" : {
+          "start" : 1637137303217,
+          "stop" : 1637137428773,
+          "duration" : 125556
+        }
+      }, {
+        "uid" : "5cda81929b428eeb",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/509//#testresult/5cda81929b428eeb",
+        "status" : "passed",
+        "time" : {
+          "start" : 1637089590963,
+          "stop" : 1637089717866,
+          "duration" : 126903
+        }
+      }, {
+        "uid" : "cdedc214e7b24760",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/508//#testresult/cdedc214e7b24760",
+        "status" : "passed",
+        "time" : {
+          "start" : 1637049469873,
+          "stop" : 1637049595473,
+          "duration" : 125600
+        }
+      }, {
+        "uid" : "36116a6b0b841877",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/507//#testresult/36116a6b0b841877",
+        "status" : "passed",
+        "time" : {
+          "start" : 1637046649768,
+          "stop" : 1637046775339,
+          "duration" : 125571
+        }
+      }, {
+        "uid" : "cfa11721915bc88",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/506//#testresult/cfa11721915bc88",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636970040943,
+          "stop" : 1636970167803,
+          "duration" : 126860
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "33e404cb5e0d4ecd.json",
+  "parameterValues" : [ ]
+}

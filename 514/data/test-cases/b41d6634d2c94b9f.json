@@ -1,0 +1,129 @@
+{
+  "uid" : "b41d6634d2c94b9f",
+  "name" : "assets won when assets are sold [Selling Mangata] - 5",
+  "fullName" : "xyk-pallet - treasury tests [Mangata]: on treasury we store.assets won when assets are sold [Selling Mangata] - 5",
+  "historyId" : "dd6031c39dad92c2f0d6040402ed7ebf",
+  "time" : {
+    "start" : 1637148484011,
+    "stop" : 1637148601048,
+    "duration" : 117037
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - treasury tests [Mangata]: on treasury we store"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - treasury tests [Mangata]: on treasury we store"
+  }, {
+    "name" : "testMethod",
+    "value" : "assets won when assets are sold [Selling Mangata] - 5"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - treasury tests [Mangata]: on treasury we store"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 9,
+        "unknown" : 0,
+        "total" : 9
+      },
+      "items" : [ {
+        "uid" : "876815f9ff015b7d",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/513//#testresult/876815f9ff015b7d",
+        "status" : "passed",
+        "time" : {
+          "start" : 1637147493977,
+          "stop" : 1637147605233,
+          "duration" : 111256
+        }
+      }, {
+        "uid" : "1e4aed65365193e3",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/512//#testresult/1e4aed65365193e3",
+        "status" : "passed",
+        "time" : {
+          "start" : 1637138001297,
+          "stop" : 1637138107296,
+          "duration" : 105999
+        }
+      }, {
+        "uid" : "862086d8e46b01e6",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/511//#testresult/862086d8e46b01e6",
+        "status" : "passed",
+        "time" : {
+          "start" : 1637136309173,
+          "stop" : 1637136414957,
+          "duration" : 105784
+        }
+      }, {
+        "uid" : "e7161dfa7a79bb75",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/510//#testresult/e7161dfa7a79bb75",
+        "status" : "passed",
+        "time" : {
+          "start" : 1637136214252,
+          "stop" : 1637136325525,
+          "duration" : 111273
+        }
+      }, {
+        "uid" : "d074511d750b24ef",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/509//#testresult/d074511d750b24ef",
+        "status" : "passed",
+        "time" : {
+          "start" : 1637088507923,
+          "stop" : 1637088613165,
+          "duration" : 105242
+        }
+      }, {
+        "uid" : "e4dea7cb9e15f8b1",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/508//#testresult/e4dea7cb9e15f8b1",
+        "status" : "passed",
+        "time" : {
+          "start" : 1637048386391,
+          "stop" : 1637048490907,
+          "duration" : 104516
+        }
+      }, {
+        "uid" : "4d8bca36f46e7cf9",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/507//#testresult/4d8bca36f46e7cf9",
+        "status" : "passed",
+        "time" : {
+          "start" : 1637045566671,
+          "stop" : 1637045671835,
+          "duration" : 105164
+        }
+      }, {
+        "uid" : "7b663c26ffccc5d3",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/506//#testresult/7b663c26ffccc5d3",
+        "status" : "passed",
+        "time" : {
+          "start" : 1636968952237,
+          "stop" : 1636969063416,
+          "duration" : 111179
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "b41d6634d2c94b9f.json",
+  "parameterValues" : [ ]
+}

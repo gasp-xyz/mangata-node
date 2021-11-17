@@ -12,7 +12,7 @@ use sp_runtime::{
 use frame_support::{impl_outer_event, impl_outer_origin, parameter_types, weights::Weight};
 use frame_system as system;
 use mangata_primitives::{Amount, Balance, TokenId};
-use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
+use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 
 pub const NATIVE_CURRENCY_ID: u32 = 0;
 use crate as encrypted;
@@ -46,6 +46,7 @@ frame_support::impl_outer_dispatch! {
     pub enum Call for Test where origin: Origin {
         frame_system::System,
         encrypted::EncryptedTX,
+        orml_tokens::Tokens,
     }
 }
 
@@ -174,6 +175,7 @@ impl Trait for Test {
 
 pub type EncryptedTX = Module<Test>;
 pub type System = system::Module<Test>;
+pub type Tokens = orml_tokens::Module<Test>;
 
 impl<T: Trait> Module<T> {
     pub fn create_new_token(who: &T::AccountId, amount: Balance) -> TokenId {
@@ -182,14 +184,8 @@ impl<T: Trait> Module<T> {
     pub fn balance(id: TokenId, who: T::AccountId) -> Balance {
         <T as Trait>::Tokens::free_balance(id.into(), &who).into()
     }
-    // can implement some handy methods here
-    // pub fn create_new_token(who: &T::AccountId, amount: Balance) -> TokenId {
-    //     <T as Trait>::Currency::create(who, amount.into()).into()
-    // }
 }
 
-// This function basically just builds a genesis storage key/value store according to
-// our desired mockup.
 pub fn new_test_ext() -> sp_io::TestExternalities {
     system::GenesisConfig::default()
         .build_storage::<Test>()

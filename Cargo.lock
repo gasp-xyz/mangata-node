@@ -4025,7 +4025,6 @@ version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
- "log",
  "mangata-primitives 0.1.0",
  "orml-tokens",
  "pallet-session",

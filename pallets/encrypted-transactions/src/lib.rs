@@ -128,7 +128,9 @@ decl_error! {
         CallDeserilizationFailed,
         DoublyEncryptedCallMaxLengthExceeded,
         TxnDoesNotExistsInRegistry,
-        UnexpectedError
+        UnexpectedError,
+        BalanceTooLowForFee,
+        TransactionAlreadyInQueue,
     }
 }
 
@@ -171,7 +173,7 @@ decl_module! {
 
             let fee_charged = T::Fee::get();
 
-            T::Tokens::ensure_can_withdraw(0u8.into(), &user, fee_charged.into(), WithdrawReasons::all(), Default::default())?;
+            T::Tokens::ensure_can_withdraw(0u8.into(), &user, fee_charged.into(), WithdrawReasons::all(), Default::default()).map_err(|_| Error::<T>::BalanceTooLowForFee)?;
             let negative_imbalance = T::Tokens::withdraw(0u8.into(), &user, fee_charged.into(), WithdrawReasons::all(), ExistenceRequirement::AllowDeath)?;
             T::Treasury::on_unbalanced(negative_imbalance);
 

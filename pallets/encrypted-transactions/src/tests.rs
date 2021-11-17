@@ -5,36 +5,23 @@ use super::*;
 use crate::mock::*;
 use frame_support::assert_err;
 use sp_runtime::traits::BlakeTwo256;
-use log::info;
 
 #[test]
-fn mat_test() {
-    new_test_ext().execute_with(|| {});
-}
-
-
-
-//fn submit_doubly_encrypted_transaction(origin, doubly_encrypted_call: Vec<u8>, nonce: T::Index, weight: Weight, builder: T::AccountId, executor: T::AccountId) -> DispatchResult{
-#[test]
-fn W_submit_double() {
+fn W_submit_doubly() {
     new_test_ext().execute_with(|| {
-      
+        System::set_block_number(1);
         let builder: u128 = 2;
-        let doubly_encrypted_call = vec![1, 2, 3];
 
-        // let mut identifier_vec: Vec<u8> = Vec::<u8>::new();
-        // identifier_vec.extend_from_slice(&doubly_encrypted_call[..]);
-        // identifier_vec.extend_from_slice(&Encode::encode(&1)[..]);
-        // identifier_vec.extend_from_slice(&Encode::encode(&1)[..]);
-        // let identifier = BlakeTwo256::hash_of(&identifier_vec);
+        let call = vec![Box::new(<mock::Test as Trait>::Call::Tokens(
+            orml_tokens::Call::<Test>::transfer(1, 1, 1),
+        ))];
 
-      
+        let doubly_encrypted_call = call.encode();
         EncryptedTX::create_new_token(&1, 1000000000000000);
-        assert_eq!(EncryptedTX::balance(0, 1), 1000000000000000);
 
         EncryptedTX::submit_doubly_encrypted_transaction(
             Origin::signed(1),
-            doubly_encrypted_call,
+            doubly_encrypted_call.clone(),
             1,
             1,
             2,
@@ -47,46 +34,250 @@ fn W_submit_double() {
             expected_number_of_tx_in_queue
         );
 
-        let identifier = System::events();
-        for i in System::events().iter(){
-            println!("{:?}", i)
+        let identifier = EncryptedTX::doubly_encrypted_queue(&2)[0];
+
+        let txn_registry_details = TxnRegistryDetails {
+            doubly_encrypted_call: doubly_encrypted_call,
+            user: 1,
+            nonce: 1,
+            weight: 1,
+            builder: 2,
+            executor: 3,
+            singly_encrypted_call: None,
+            decrypted_call: None,
         };
-        println!("{:?}", identifier)
-        //assert_eq!(EncryptedTX::doubly_encrypted_queue(&builder)[0], identifier);
+
+        assert_eq!(
+            EncryptedTX::txn_registry(identifier),
+            Some(txn_registry_details)
+        );
+        let doubly_encrypted_event =
+            TestEvent::encrypted(Event::<Test>::DoublyEncryptedTxnSubmitted(1, 1, identifier));
+
+        assert!(System::events()
+            .iter()
+            .any(|record| record.event == doubly_encrypted_event));
     });
 }
 
 #[test]
-fn NW_submit_double_BalanceTooLow() {
+fn NW_submit_doubly_BalanceTooLow() {
     new_test_ext().execute_with(|| {
-      
-     
         let doubly_encrypted_call = vec![1, 2, 3];
-
-        
-       
-        // assert_err!(
-        //     EncryptedTX::submit_doubly_encrypted_transaction(
-        //         Origin::signed(1),
-        //         doubly_encrypted_call,
-        //         1,
-        //         1,
-        //         2,
-        //         3,
-        //     ),
-        //     Error::<Test>::BalanceTooLow,
-        // ); 
+        assert_err!(
+            EncryptedTX::submit_doubly_encrypted_transaction(
+                Origin::signed(1),
+                doubly_encrypted_call,
+                1,
+                1,
+                2,
+                3,
+            ),
+            Error::<Test>::BalanceTooLowForFee,
+        );
     });
 }
 
-// ensure!(doubly_encrypted_call.len() <= T::DoublyEncryptedCallMaxLength::get() as usize, Error::<T>::DoublyEncryptedCallMaxLengthExceeded);
-//WHERE is the max lenght??
+#[test]
+fn NW_submit_doubly_transaction_too_long() {
+    new_test_ext().execute_with(|| {
+        //let maxLength = EncryptedTX::DoublyEncryptedCallMaxLength::get();
+        let doubly_encrypted_call = vec![1; 4097];
 
-// T::Tokens::ensure_can_withdraw(0u8.into(), &user, fee_charged.into(), WithdrawReasons::all(), Default::default())?;
+        EncryptedTX::create_new_token(&1, 1000000000000000);
 
-// TxnRegistry::<T>::insert(identifier, txn_registry_details);
+        assert_err!(
+            EncryptedTX::submit_doubly_encrypted_transaction(
+                Origin::signed(1),
+                doubly_encrypted_call,
+                1,
+                1,
+                2,
+                3,
+            ),
+            Error::<Test>::DoublyEncryptedCallMaxLengthExceeded,
+        );
+    });
+}
 
-// DONE DoublyEncryptedQueue::<T>::mutate(&builder, |vec_hash| {vec_hash.push(identifier)});
+//#[test]
+fn NW_submit_doubly_same_transaction_twice() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(1);
+
+        let call = vec![Box::new(<mock::Test as Trait>::Call::Tokens(
+            orml_tokens::Call::<Test>::transfer(1, 1, 1),
+        ))];
+
+        let doubly_encrypted_call = call.encode();
+        EncryptedTX::create_new_token(&1, 1000000000000000);
+
+        EncryptedTX::submit_doubly_encrypted_transaction(
+            Origin::signed(1),
+            doubly_encrypted_call.clone(),
+            1,
+            1,
+            2,
+            3,
+        )
+        .unwrap();
+
+        assert_err!(
+            EncryptedTX::submit_doubly_encrypted_transaction(
+                Origin::signed(1),
+                doubly_encrypted_call,
+                1,
+                1,
+                2,
+                3,
+            ),
+            Error::<Test>::TransactionAlreadyInQueue,
+        );
+
+        let expected_number_of_tx_in_queue = 1;
+        assert_eq!(
+            EncryptedTX::doubly_encrypted_queue(&2).len(),
+            expected_number_of_tx_in_queue
+        );
+    });
+}
+
+#[test]
+fn W_submit_singly() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(1);
+
+        let call = vec![Box::new(<mock::Test as Trait>::Call::Tokens(
+            orml_tokens::Call::<Test>::transfer(1, 1, 1),
+        ))];
+
+        let doubly_encrypted_call = call.encode();
+        EncryptedTX::create_new_token(&1, 1000000000000000);
+
+        EncryptedTX::submit_doubly_encrypted_transaction(
+            Origin::signed(1),
+            doubly_encrypted_call.clone(),
+            1,
+            1,
+            2,
+            3,
+        )
+        .unwrap();
+
+        let identifier = EncryptedTX::doubly_encrypted_queue(&2)[0];
+
+        let singly_encrypted_call = call.encode();
+
+        let mut expected_number_of_tx_in_doubly_queue = 1;
+        assert_eq!(
+            EncryptedTX::doubly_encrypted_queue(&2).len(),
+            expected_number_of_tx_in_doubly_queue
+        );
+
+        EncryptedTX::submit_singly_encrypted_transaction(
+            Origin::signed(2),
+            identifier,
+            singly_encrypted_call.clone(),
+           
+        )
+        .unwrap();
+
+        expected_number_of_tx_in_doubly_queue = 0;
+        let expected_number_of_tx_in_singly_queue = 1;
+
+        assert_eq!(
+            EncryptedTX::doubly_encrypted_queue(&2).len(),
+            expected_number_of_tx_in_doubly_queue
+        );
+        assert_eq!(
+            EncryptedTX::singly_encrypted_queue(&2).len(),
+            expected_number_of_tx_in_singly_queue
+        );
+        assert_eq!(
+            EncryptedTX::singly_encrypted_queue(&2)[0],
+            identifier
+        );
+        let singly_encrypted_event =
+            TestEvent::encrypted(Event::<Test>::SinglyEncryptedTxnSubmitted(1, 1, identifier));
+
+        assert!(System::events()
+            .iter()
+            .any(|record| record.event == singly_encrypted_event));
+   
+            let txn_registry_details = TxnRegistryDetails {
+                doubly_encrypted_call: doubly_encrypted_call,
+                user: 1,
+                nonce: 1,
+                weight: 1,
+                builder: 2,
+                executor: 3,
+                singly_encrypted_call: Some(singly_encrypted_call),
+                decrypted_call: None,
+            };    
+            assert_eq!(
+                EncryptedTX::txn_registry(identifier),
+                Some(txn_registry_details)
+            );
+    });
+    
+}
+
+#[test]
+fn NW_submit_singly_TxnDoesNotExistsInRegistry() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(1);
+
+        let call = vec![Box::new(<mock::Test as Trait>::Call::Tokens(
+            orml_tokens::Call::<Test>::transfer(1, 1, 1),
+        ))];
+
+        let doubly_encrypted_call = call.encode();
+        EncryptedTX::create_new_token(&1, 1000000000000000);
+
+        EncryptedTX::submit_doubly_encrypted_transaction(
+            Origin::signed(1),
+            doubly_encrypted_call.clone(),
+            1,
+            1,
+            2,
+            3,
+        )
+        .unwrap();
+
+        let identifier = EncryptedTX::doubly_encrypted_queue(&2)[0];
+
+        let singly_encrypted_call = call.encode();
+
+        let mut expected_number_of_tx_in_doubly_queue = 1;
+        assert_eq!(
+            EncryptedTX::doubly_encrypted_queue(&2).len(),
+            expected_number_of_tx_in_doubly_queue
+        );
+
+        EncryptedTX::submit_singly_encrypted_transaction(
+            Origin::signed(2),
+            identifier,
+            singly_encrypted_call.clone(),
+           
+        )
+        .unwrap();
+        let invalid_identifier = BlakeTwo256::hash_of(&1);
+       
+        assert_err!(
+            EncryptedTX::submit_singly_encrypted_transaction(
+                Origin::signed(2),
+                invalid_identifier,
+                singly_encrypted_call, 
+            ),
+            Error::<Test>::TxnDoesNotExistsInRegistry,
+        );
+
+    });
+    
+}
+
+
+
 // ? TxnRecord::<T>::mutate(T::Index::from(<pallet_session::Module<T>>::current_index()), &user, |tree_record| tree_record.insert(identifier, (nonce, fee_charged, false)));
-// ? Self::deposit_event(RawEvent::DoublyEncryptedTxnSubmitted(user, nonce, identifier));
 
+//doubly with super small fee and and then the actual tx should fail, because the real fee is much higher

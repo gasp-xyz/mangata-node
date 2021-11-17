@@ -20,7 +20,6 @@ frame-support = { version = "2.0.0", default-features = false, git = "https://gi
 frame-system = { version = "2.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 mangata-primitives = { default-features = false, version = '0.1.0' , path = '../../primitives/mangata'}
 orml-tokens = {  default-features = false, version = '0.3.1' , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
-log = '0.4'
 
 [dev-dependencies]
 sp-staking = { version = '2.0.1' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }

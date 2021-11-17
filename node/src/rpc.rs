@@ -7,7 +7,7 @@
 
 use std::sync::Arc;
 
-use parachain_template_runtime::{opaque::Block, AccountId, Balance, Index as Nonce};
+use parachain_template_runtime::{opaque::Block, AccountId, Balance, Index as Nonce, TokenId};
 
 use sc_client_api::AuxStore;
 pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
@@ -41,17 +41,20 @@ where
 		+ 'static,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
+	C::Api: xyk_rpc::XykRuntimeApi<Block, Balance, TokenId>,
 	C::Api: BlockBuilder<Block>,
 	P: TransactionPool + Sync + Send + 'static,
 {
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
 	use substrate_frame_rpc_system::{FullSystem, SystemApi};
+	use xyk_rpc::{Xyk, XykApi};
 
 	let mut io = jsonrpc_core::IoHandler::default();
 	let FullDeps { client, pool, deny_unsafe } = deps;
 
 	io.extend_with(SystemApi::to_delegate(FullSystem::new(client.clone(), pool, deny_unsafe)));
-	io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(client)));
+	io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(client.clone())));
+	io.extend_with(XykApi::to_delegate(Xyk::new(client)));
 
 	io
 }

@@ -1,0 +1,38 @@
+[package]
+authors = ['Mangata team']
+name = "xyk-rpc"
+version = "2.0.0"
+edition = "2018"
+description = "RPC calls for xyk"
+license = "GPL-3.0-or-later"
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "2.0.0" }
+jsonrpc-core = "18.0.0"
+jsonrpc-core-client = "18.0.0"
+jsonrpc-derive = "18.0.0"
+serde = { version = "1.0.126", features = ["derive"], optional = true }
+
+# Substrate packages
+
+sp-api = { version = '4.0.0-dev', default-features = false , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-blockchain = { version = '4.0.0-dev', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-rpc = { version = '4.0.0-dev', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-core = { version = '4.0.0-dev', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-std = { version = '4.0.0-dev', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-runtime = { version = '4.0.0-dev', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+
+# local packages
+
+xyk-runtime-api = { version = "2.0.0", path = "../runtime-api", default-features = false }
+
+[features]
+default = ["std"]
+std = [
+    "serde",
+    "sp-api/std",
+    "sp-core/std",
+    "sp-std/std",
+    "sp-runtime/std",
+    "xyk-runtime-api/std"
+]

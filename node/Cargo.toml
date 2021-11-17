@@ -20,6 +20,11 @@ name = "parachain-collator"
 path = "src/main.rs"
 
 [features]
+default = ['std']
+std = [
+		"parachain-template-runtime/std",
+		"xyk-rpc/std",
+]
 runtime-benchmarks = ["parachain-template-runtime/runtime-benchmarks"]
 
 [dependencies]
@@ -94,6 +99,6 @@ polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch =
 polkadot-service = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.12" }
 polkadot-test-service = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.12" }
 
-# # Open-Runtime-Module-Library Dependencies
-# orml-tokens = {  default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
-# orml-traits = {  default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
+# Mangata dependencies
+xyk-rpc = { default-features = false, version = '2.0.0', path = '../pallets/xyk/rpc' }
+xyk-runtime-api = { default-features = false, version = '2.0.0', path = '../pallets/xyk/runtime-api' }

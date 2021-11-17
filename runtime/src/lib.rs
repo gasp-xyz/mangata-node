@@ -64,6 +64,9 @@ pub use orml_tokens;
 use orml_tokens::TransferDust;
 use orml_traits::parameter_type_with_key;
 
+pub use pallet_xyk;
+use xyk_runtime_api::{RpcAmountsResult, RpcResult};
+
 pub const MGA_TOKEN_ID: TokenId = 0;
 
 /// Import the template pallet.
@@ -422,6 +425,14 @@ impl orml_tokens::Config for Runtime {
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 }
 
+impl pallet_xyk::Config for Runtime {
+    type Event = Event;
+    type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+    type NativeCurrencyId = MgaTokenId;
+    type TreasuryPalletId = TreasuryPalletId;
+    type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
+}
+
 parameter_types! {
 	/// Relay Chain `TransactionByteFee` / 10
 	pub const TransactionByteFee: Balance = 10 * MICROUNIT;
@@ -663,6 +674,28 @@ impl pallet_template::Config for Runtime {
 	type Event = Event;
 }
 
+parameter_types! {
+    pub const MinLengthName: usize = 1;
+    pub const MaxLengthName: usize = 255;
+    pub const MinLengthSymbol: usize = 1;
+    pub const MaxLengthSymbol: usize = 255;
+    pub const MinLengthDescription: usize = 1;
+    pub const MaxLengthDescription: usize = 255;
+    pub const MaxDecimals: u32 = 255;
+}
+
+impl pallet_assets_info::Config for Runtime {
+    type Event = Event;
+    type MinLengthName = MinLengthName;
+    type MaxLengthName = MaxLengthName;
+    type MinLengthSymbol = MinLengthSymbol;
+    type MaxLengthSymbol = MaxLengthSymbol;
+    type MinLengthDescription = MinLengthDescription;
+    type MaxLengthDescription = MaxLengthDescription;
+    type MaxDecimals = MaxDecimals;
+    type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -700,10 +733,74 @@ construct_runtime!(
 
 		// Governance stuff
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 41,
+
+		// Xyk stuff
+		AssetsInfo: pallet_assets_info::{Pallet, Call, Config, Storage, Event<T>} = 42,
+		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>} = 43,
 	}
 );
 
 impl_runtime_apis! {
+
+	impl xyk_runtime_api::XykApi<Block, Balance, TokenId> for Runtime {
+        fn calculate_sell_price(
+            input_reserve: Balance,
+            output_reserve: Balance,
+            sell_amount: Balance
+        ) -> RpcResult<Balance> {
+            RpcResult {
+                price: Xyk::calculate_sell_price(input_reserve, output_reserve, sell_amount).unwrap_or_default()
+            }
+        }
+
+        fn calculate_buy_price(
+            input_reserve: Balance,
+            output_reserve: Balance,
+            buy_amount: Balance
+        ) -> RpcResult<Balance> {
+            RpcResult {
+                price: Xyk::calculate_buy_price(input_reserve, output_reserve, buy_amount).unwrap_or_default()
+            }
+        }
+
+        fn calculate_sell_price_id(
+            sold_token_id: TokenId,
+            bought_token_id: TokenId,
+            sell_amount: Balance
+        ) -> RpcResult<Balance> {
+            RpcResult {
+                price: Xyk::calculate_sell_price_id(sold_token_id, bought_token_id, sell_amount).unwrap_or_default()
+            }
+        }
+
+        fn calculate_buy_price_id(
+            sold_token_id: TokenId,
+            bought_token_id: TokenId,
+            buy_amount: Balance
+        ) -> RpcResult<Balance> {
+            RpcResult {
+                price: Xyk::calculate_buy_price_id(sold_token_id, bought_token_id, buy_amount).unwrap_or_default()
+            }
+        }
+
+        fn get_burn_amount(
+            first_asset_id: TokenId,
+            second_asset_id: TokenId,
+            liquidity_asset_amount: Balance
+        ) -> RpcAmountsResult<Balance> {
+            match Xyk::get_burn_amount(first_asset_id, second_asset_id, liquidity_asset_amount){
+                Ok((first_asset_amount, second_asset_amount)) => RpcAmountsResult{
+                                                                    first_asset_amount,
+                                                                    second_asset_amount
+                                                                },
+                Err(_) => RpcAmountsResult{
+                    first_asset_amount: 0u32.into(),
+                    second_asset_amount: 0u32.into()
+                },
+            }
+        }
+    }
+
 	impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
 		fn slot_duration() -> sp_consensus_aura::SlotDuration {
 			sp_consensus_aura::SlotDuration::from_millis(Aura::slot_duration())

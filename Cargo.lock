@@ -4466,6 +4466,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-assets-info"
+version = "2.0.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "mangata-primitives",
+ "orml-tokens",
+ "orml-traits",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-aura"
 version = "4.0.0-dev"
 dependencies = [
@@ -5121,6 +5139,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-xyk"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "log",
+ "mangata-primitives",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-assets-info",
+ "parity-scale-codec",
+ "rustc-hex",
+ "scale-info",
+ "serde",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "parachain-info"
 version = "0.1.0"
 source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.12#935bac869a72baef17e46d2ae1abc8c0c650cef5"
@@ -5192,6 +5233,8 @@ dependencies = [
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
  "substrate-prometheus-endpoint",
+ "xyk-rpc",
+ "xyk-runtime-api",
 ]
 
 [[package]]
@@ -5216,6 +5259,7 @@ dependencies = [
  "mangata-primitives",
  "orml-tokens",
  "orml-traits",
+ "pallet-assets-info",
  "pallet-aura",
  "pallet-authorship",
  "pallet-collator-selection",
@@ -5227,6 +5271,7 @@ dependencies = [
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
  "pallet-xcm",
+ "pallet-xyk",
  "parachain-info",
  "parity-scale-codec",
  "polkadot-parachain",
@@ -5250,6 +5295,7 @@ dependencies = [
  "xcm",
  "xcm-builder",
  "xcm-executor",
+ "xyk-runtime-api",
 ]
 
 [[package]]
@@ -10724,6 +10770,38 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "xyk-rpc"
+version = "2.0.0"
+dependencies = [
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "parity-scale-codec",
+ "serde",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-rpc",
+ "sp-runtime",
+ "sp-std",
+ "xyk-runtime-api",
+]
+
+[[package]]
+name = "xyk-runtime-api"
+version = "2.0.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "serde_json",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
 ]
 
 [[package]]

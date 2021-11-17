@@ -213,5 +213,7 @@ fn testnet_genesis(
 		aura: Default::default(),
 		aura_ext: Default::default(),
 		parachain_system: Default::default(),
+		assets_info: Default::default(),
+		xyk: Default::default(),
 	}
 }

@@ -240,7 +240,6 @@ use sp_runtime::traits::{AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member
 use sp_std::convert::TryFrom;
 use sp_std::fmt::Debug;
 use sp_std::prelude::*;
-use scale_info::TypeInfo;
 
 use frame_support::pallet_prelude::*;
 use frame_system::pallet_prelude::*;

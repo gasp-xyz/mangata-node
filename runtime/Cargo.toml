@@ -85,6 +85,14 @@ xcm = { git = "https://github.com/paritytech/polkadot", default-features = false
 xcm-builder = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.12" }
 xcm-executor = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.12" }
 
+# Snowbridge Dependencies
+artemis-core = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
+pallet-verifier = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
+artemis-erc20-app = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
+artemis-eth-app = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
+artemis-asset = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
+pallet-bridge = {default-features = false, version = "0.1.1", path = "../pallets/bridge"}
+
 [features]
 default = [
 	"std",
@@ -141,6 +149,14 @@ std = [
 	"pallet-assets-info/std",
 	"pallet-xyk/std",
     "xyk-runtime-api/std",
+
+	"artemis-core/std",
+	"pallet-verifier/std",
+	"artemis-erc20-app/std",
+	"artemis-eth-app/std",
+	"artemis-asset/std",
+	"pallet-bridge/std",
+
 ]
 
 runtime-benchmarks = [

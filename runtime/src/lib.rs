@@ -72,6 +72,14 @@ pub const MGA_TOKEN_ID: TokenId = 0;
 /// Import the template pallet.
 pub use pallet_template;
 
+pub use pallet_assets_info;
+
+pub use pallet_bridge;
+pub use artemis_asset;
+pub use artemis_erc20_app;
+pub use artemis_eth_app;
+pub use pallet_verifier;
+
 /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
 pub type Signature = MultiSignature;
 
@@ -696,6 +704,30 @@ impl pallet_assets_info::Config for Runtime {
     type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 }
 
+impl pallet_bridge::Config for Runtime {
+    type Event = Event;
+    type Verifier = pallet_verifier::Module<Runtime>;
+    type AppETH = artemis_eth_app::Module<Runtime>;
+    type AppERC20 = artemis_erc20_app::Module<Runtime>;
+}
+
+impl pallet_verifier::Config for Runtime {
+    type Event = Event;
+}
+
+impl artemis_asset::Config for Runtime {
+    type Event = Event;
+    type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+}
+
+impl artemis_eth_app::Config for Runtime {
+    type Event = Event;
+}
+
+impl artemis_erc20_app::Config for Runtime {
+    type Event = Event;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -737,6 +769,17 @@ construct_runtime!(
 		// Xyk stuff
 		AssetsInfo: pallet_assets_info::{Pallet, Call, Config, Storage, Event<T>} = 42,
 		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>} = 43,
+
+		// Snowbridge stuff
+		Bridge: pallet_bridge::{Pallet, Call, Config, Storage, Event} = 44,
+        Verifier: pallet_verifier::{Pallet, Call, Storage, Event, Config<T>} = 45,
+        BridgedAsset: artemis_asset::{Pallet, Call, Config<T>, Storage, Event<T>} = 46,
+        ETH: artemis_eth_app::{Pallet, Call, Storage, Event<T>} = 47,
+        ERC20: artemis_erc20_app::{Pallet, Call, Storage, Event<T>} = 48,
+
+		// Sudo
+		// Treasury + Council + Elections + SudoOrigin
+		// Staking + Offences + Historical
 	}
 );
 

@@ -215,5 +215,8 @@ fn testnet_genesis(
 		parachain_system: Default::default(),
 		assets_info: Default::default(),
 		xyk: Default::default(),
+		bridge: Default::default(),
+		bridged_asset: Default::default(),
+		verifier: Default::default(),
 	}
 }

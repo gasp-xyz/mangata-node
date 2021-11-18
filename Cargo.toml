@@ -317,3 +317,11 @@ pallet-grandpa = { path = "../substrate/frame/grandpa" }
 pallet-proxy = { path = "../substrate/frame/proxy" }
 pallet-balances = { path = "../substrate/frame/balances" }
 pallet-multisig = { path = "../substrate/frame/multisig" }
+
+[patch."https://github.com/mangata-finance/snowbridge"]
+artemis-core = { path = "../snowbridge/parachain/primitives/core"}
+artemis-ethereum = { path = "../snowbridge/parachain/primitives/ethereum"}
+pallet-verifier = { path = "../snowbridge/parachain/pallets/verifier"}
+artemis-erc20-app = { path = "../snowbridge/parachain/pallets/erc20-app"}
+artemis-eth-app = { path = "../snowbridge/parachain/pallets/eth-app"}
+artemis-asset = { path = "../snowbridge/parachain/pallets/asset"}

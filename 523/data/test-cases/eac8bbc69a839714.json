@@ -1,0 +1,75 @@
+{
+  "uid" : "eac8bbc69a839714",
+  "name" : "assets won when assets are bought [Buying other in MGA pool]",
+  "fullName" : "xyk-pallet - treasury tests [Mangata]: on treasury we store.assets won when assets are bought [Buying other in MGA pool]",
+  "historyId" : "f417a1d75905b23a9c51e749a26502cd",
+  "time" : {
+    "start" : 1637245855285,
+    "stop" : 1637245963533,
+    "duration" : 108248
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - treasury tests [Mangata]: on treasury we store"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - treasury tests [Mangata]: on treasury we store"
+  }, {
+    "name" : "testMethod",
+    "value" : "assets won when assets are bought [Buying other in MGA pool]"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - treasury tests [Mangata]: on treasury we store"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 3,
+        "unknown" : 0,
+        "total" : 3
+      },
+      "items" : [ {
+        "uid" : "56d55678e093000e",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/522//#testresult/56d55678e093000e",
+        "status" : "passed",
+        "time" : {
+          "start" : 1637231738081,
+          "stop" : 1637231844897,
+          "duration" : 106816
+        }
+      }, {
+        "uid" : "638800170435ece1",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/519//#testresult/638800170435ece1",
+        "status" : "passed",
+        "time" : {
+          "start" : 1637223019672,
+          "stop" : 1637223127876,
+          "duration" : 108204
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "eac8bbc69a839714.json",
+  "parameterValues" : [ ]
+}

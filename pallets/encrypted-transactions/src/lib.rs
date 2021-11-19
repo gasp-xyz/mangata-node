@@ -131,6 +131,7 @@ decl_error! {
         UnexpectedError,
         BalanceTooLowForFee,
         TransactionAlreadyInQueue,
+        TxAlreadySubmitted,
     }
 }
 
@@ -194,6 +195,11 @@ decl_module! {
                 singly_encrypted_call: None,
                 decrypted_call: None,
             };
+
+            ensure!(
+                !TxnRegistry::<T>::contains_key(identifier),
+                Error::<T>::TxAlreadySubmitted,
+            );
 
             TxnRegistry::<T>::insert(identifier, txn_registry_details);
             DoublyEncryptedQueue::<T>::mutate(&builder, |vec_hash| {vec_hash.push(identifier)});

@@ -20,6 +20,7 @@ log = { version = "0.4.14", default-features = false }
 scale-info = { version = "1.0.0", default-features = false, features = ["derive"] }
 serde = { version = "1.0.119", optional = true, features = ["derive"] }
 smallvec = "1.6.1"
+static_assertions = "1.1.0"
 
 # Local Dependencies
 pallet-template = { path = "../pallets/template", default-features = false }
@@ -27,6 +28,7 @@ mangata-primitives = { path = '../primitives/mangata', default-features = false,
 pallet-assets-info = { path = '../pallets/assets-info', default-features = false, version = "2.0.0" }
 pallet-xyk = { path = '../pallets/xyk', default-features = false, version = '0.1.0' }
 xyk-runtime-api = { path = '../pallets/xyk/runtime-api', default-features = false, version = '2.0.0' }
+pallet-sudo-origin = { path = '../pallets/sudo-origin', default-features = false}
 
 # Substrate Dependencies
 ## Substrate Primitive Dependencies
@@ -60,6 +62,8 @@ pallet-timestamp = { git = "https://github.com/paritytech/substrate", default-fe
 pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.12" }
 pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.12" }
 pallet-treasury = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.12" }
+pallet-elections-phragmen = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.12" }
+pallet-collective = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.12" }
 
 # Open-Runtime-Module-Library Dependencies
 orml-tokens = {  default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }

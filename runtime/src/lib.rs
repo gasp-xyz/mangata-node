@@ -8,7 +8,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use smallvec::smallvec;
 use sp_api::impl_runtime_apis;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata, u32_trait::{_1, _2}};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify, AccountIdConversion},
@@ -23,7 +23,10 @@ use sp_version::RuntimeVersion;
 
 use frame_support::{
 	construct_runtime, match_type, parameter_types,
-	traits::{Everything, Nothing, Contains},
+	traits::{
+		Everything, LockIdentifier,
+		Nothing, U128CurrencyToVote, Contains
+	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
 		DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
@@ -57,6 +60,7 @@ use xcm_builder::{
 };
 use xcm_executor::{Config, XcmExecutor};
 
+use static_assertions::const_assert;
 
 pub use mangata_primitives::{Amount, Balance, TokenId};
 
@@ -71,6 +75,10 @@ pub const MGA_TOKEN_ID: TokenId = 0;
 
 /// Import the template pallet.
 pub use pallet_template;
+
+pub use pallet_sudo;
+
+pub use pallet_sudo_origin;
 
 pub use pallet_assets_info;
 
@@ -728,6 +736,71 @@ impl artemis_erc20_app::Config for Runtime {
     type Event = Event;
 }
 
+impl pallet_sudo::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+}
+
+impl pallet_sudo_origin::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type SudoOrigin = pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
+}
+
+
+parameter_types! {
+	pub const CouncilMotionDuration: BlockNumber = 5 * DAYS;
+	pub const CouncilMaxProposals: u32 = 100;
+	pub const CouncilMaxMembers: u32 = 100;
+}
+
+type CouncilCollective = pallet_collective::Instance1;
+impl pallet_collective::Config<CouncilCollective> for Runtime {
+	type Origin = Origin;
+	type Proposal = Call;
+	type Event = Event;
+	type MotionDuration = CouncilMotionDuration;
+	type MaxProposals = CouncilMaxProposals;
+	type MaxMembers = CouncilMaxMembers;
+	type DefaultVote = pallet_collective::PrimeDefaultVote;
+	type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
+}
+
+parameter_types! {
+	pub const CandidacyBond: Balance = 10 * DOLLARS;
+	// 1 storage item created, key size is 32 bytes, value size is 16+16.
+	pub const VotingBondBase: Balance = deposit(1, 64);
+	// additional data per vote is 32 bytes (account id).
+	pub const VotingBondFactor: Balance = deposit(0, 32);
+	pub const TermDuration: BlockNumber = 120 * DAYS;
+	pub const DesiredMembers: u32 = 9;
+	pub const DesiredRunnersUp: u32 = 7;
+	pub const ElectionsPhragmenPalletId: LockIdentifier = *b"phrelect";
+}
+
+// Make sure that there are no more than `MaxMembers` members elected via elections-phragmen.
+const_assert!(DesiredMembers::get() <= CouncilMaxMembers::get());
+
+impl pallet_elections_phragmen::Config for Runtime {
+	type Event = Event;
+	type PalletId = ElectionsPhragmenPalletId;
+	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>;
+	type ChangeMembers = Council;
+	// NOTE: this implies that council's genesis members cannot be set directly and must come from
+	// this module.
+	type InitializeMembers = Council;
+	type CurrencyToVote = U128CurrencyToVote;
+	type CandidacyBond = CandidacyBond;
+	type VotingBondBase = VotingBondBase;
+	type VotingBondFactor = VotingBondFactor;
+	type LoserCandidate = Treasury;
+	type KickedMember = Treasury;
+	type DesiredMembers = DesiredMembers;
+	type DesiredRunnersUp = DesiredRunnersUp;
+	type TermDuration = TermDuration;
+	type WeightInfo = pallet_elections_phragmen::weights::SubstrateWeight<Runtime>;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -742,10 +815,21 @@ construct_runtime!(
 		} = 1,
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 2,
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 3,
+		
+		// Snowbridge stuff
+		Bridge: pallet_bridge::{Pallet, Call, Config, Storage, Event} = 4,
+        Verifier: pallet_verifier::{Pallet, Call, Storage, Event, Config<T>} = 5,
+        BridgedAsset: artemis_asset::{Pallet, Call, Config<T>, Storage, Event<T>} = 6,
+        ETH: artemis_eth_app::{Pallet, Call, Storage, Event<T>} = 7,
+        ERC20: artemis_erc20_app::{Pallet, Call, Storage, Event<T>} = 8,
 
 		// Monetary stuff.
 		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>} = 10,
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 11,
+
+		// Xyk stuff
+		AssetsInfo: pallet_assets_info::{Pallet, Call, Config, Storage, Event<T>} = 12,
+		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>} = 13,
 
 		// Collator support. The order of these 4 are important and shall not change.
 		Authorship: pallet_authorship::{Pallet, Call, Storage} = 20,
@@ -765,20 +849,12 @@ construct_runtime!(
 
 		// Governance stuff
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 41,
+		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 49,
+		SudoOrigin: pallet_sudo_origin::{Pallet, Call, Event<T>} = 50,
+		Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 51,
+		Elections: pallet_elections_phragmen::{Pallet, Call, Storage, Event<T>, Config<T>} = 52,
 
-		// Xyk stuff
-		AssetsInfo: pallet_assets_info::{Pallet, Call, Config, Storage, Event<T>} = 42,
-		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>} = 43,
-
-		// Snowbridge stuff
-		Bridge: pallet_bridge::{Pallet, Call, Config, Storage, Event} = 44,
-        Verifier: pallet_verifier::{Pallet, Call, Storage, Event, Config<T>} = 45,
-        BridgedAsset: artemis_asset::{Pallet, Call, Config<T>, Storage, Event<T>} = 46,
-        ETH: artemis_eth_app::{Pallet, Call, Storage, Event<T>} = 47,
-        ERC20: artemis_erc20_app::{Pallet, Call, Storage, Event<T>} = 48,
-
-		// Sudo
-		// Treasury + Council + Elections + SudoOrigin
+		// TODO
 		// Staking + Offences + Historical
 	}
 );

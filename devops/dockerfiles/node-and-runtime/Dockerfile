@@ -12,9 +12,10 @@ RUN rustup install nightly-2020-10-01
 RUN rustup default nightly-2020-10-01
 RUN rustup target add wasm32-unknown-unknown --toolchain nightly-2020-10-01
 RUN cargo install cargo2junit
-
 FROM env_builder as builder
+RUN grep "const TermDuration" runtime/src/lib.rs
 RUN cargo build --release
+
 
 FROM debian:stretch
 # LABEL description="mangata node"

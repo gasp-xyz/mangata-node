@@ -45,7 +45,6 @@ jobs:
           load: true
           tags: mangatasolutions/mangata-node-fmt-check:${{ github.sha }}
           target: env_builder
-          context: .
       -
         name: Check formatting
         run: |

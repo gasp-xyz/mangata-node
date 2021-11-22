@@ -1,5 +1,5 @@
 FROM liuchong/rustup:stable AS env_builder
-LABEL description="Compiles all workspace artifacts applying the .patch"
+LABEL description="Compiles all workspace artifacts applying  changeset_generate_testimage.patch"
 WORKDIR /mangata
 COPY . /mangata
 
@@ -8,7 +8,7 @@ ENV ERC20_APP_ID=0x00e392c04743359e39f00cd268a5390d27ef6b44
 RUN apt-get update && apt-get install -y cmake pkg-config libssl-dev git build-essential clang libclang-dev curl llvm git
 
 RUN grep "const TermDuration" runtime/src/lib.rs
-RUN git apply changeset_generate_testimage.patch
+RUN git apply devops/dockerfiles/node-and-runtime-QA/changeset_generate_testimage.patch
 RUN grep "const TermDuration" runtime/src/lib.rs
 
 RUN rustup install nightly-2020-10-01

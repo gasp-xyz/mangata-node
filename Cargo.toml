@@ -16,6 +16,7 @@ orml-traits = { path = "../open-runtime-module-library/traits" }
 [patch."https://github.com/mangata-finance/mangata-node"]
 mangata-primitives = {path = "./primitives/mangata"}
 
+#TODO patch orml tokens repo to use mangata-finance/substrate directly
 [patch."https://github.com/paritytech/substrate"]
 sp-debug-derive = { path = "../substrate/primitives/debug-derive" }
 sp-tasks = { path = "../substrate/primitives/tasks" }

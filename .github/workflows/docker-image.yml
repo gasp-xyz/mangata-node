@@ -133,7 +133,7 @@ jobs:
         with:
           file: "devops/dockerfiles/node-and-runtime-QA/Dockerfile"
           push: false
-          tags: mangatasolutions/mangata-node:QA,mangatasolutions/mangata-node:${{ github.sha }}-QA
+          tags: mangatasolutions/mangata-node:QA,mangatasolutions/mangata-node:${{ github.sha }}
           outputs: type=docker,dest=/tmp/${{ github.sha }}.tar
       -
         name: Build Node Image

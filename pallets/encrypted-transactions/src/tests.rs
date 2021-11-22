@@ -184,7 +184,6 @@ fn W_submit_singly() {
             Origin::none(),
             identifier,
             singly_encrypted_call.clone(),
-           
         )
         .unwrap();
 
@@ -199,33 +198,29 @@ fn W_submit_singly() {
             EncryptedTX::singly_encrypted_queue(&3).len(),
             expected_number_of_tx_in_singly_queue
         );
-        assert_eq!(
-            EncryptedTX::singly_encrypted_queue(&3)[0],
-            identifier
-        );
+        assert_eq!(EncryptedTX::singly_encrypted_queue(&3)[0], identifier);
         let singly_encrypted_event =
             TestEvent::encrypted(Event::<Test>::SinglyEncryptedTxnSubmitted(1, 1, identifier));
 
         assert!(System::events()
             .iter()
             .any(|record| record.event == singly_encrypted_event));
-   
-            let txn_registry_details = TxnRegistryDetails {
-                doubly_encrypted_call: doubly_encrypted_call,
-                user: 1,
-                nonce: 1,
-                weight: 1,
-                builder: 2,
-                executor: 3,
-                singly_encrypted_call: Some(singly_encrypted_call),
-                decrypted_call: None,
-            };    
-            assert_eq!(
-                EncryptedTX::txn_registry(identifier),
-                Some(txn_registry_details)
-            );
+
+        let txn_registry_details = TxnRegistryDetails {
+            doubly_encrypted_call: doubly_encrypted_call,
+            user: 1,
+            nonce: 1,
+            weight: 1,
+            builder: 2,
+            executor: 3,
+            singly_encrypted_call: Some(singly_encrypted_call),
+            decrypted_call: None,
+        };
+        assert_eq!(
+            EncryptedTX::txn_registry(identifier),
+            Some(txn_registry_details)
+        );
     });
-    
 }
 
 #[test]
@@ -253,18 +248,16 @@ fn NW_submit_singly_TxnDoesNotExistsInRegistry() {
         let singly_encrypted_call = call.encode();
 
         let invalid_identifier = BlakeTwo256::hash_of(&1);
-       
+
         assert_err!(
             EncryptedTX::submit_singly_encrypted_transaction(
                 Origin::none(),
                 invalid_identifier,
-                singly_encrypted_call, 
+                singly_encrypted_call,
             ),
             Error::<Test>::TxnDoesNotExistsInRegistry,
         );
-
     });
-    
 }
 
 #[test]
@@ -273,7 +266,88 @@ fn W_submit_decrypted() {
         System::set_block_number(1);
 
         let call = vec![Box::new(<mock::Test as Trait>::Call::Tokens(
-            orml_tokens::Call::<Test>::transfer(1, 1, 1),
+            orml_tokens::Call::<Test>::transfer(10, 0, 10),
+        ))];
+        let weight = call[0].get_dispatch_info().weight.into();
+        let doubly_encrypted_call = call.encode();
+        EncryptedTX::create_new_token(&1, 1000000000000000);
+
+        EncryptedTX::submit_doubly_encrypted_transaction(
+            Origin::signed(1),
+            doubly_encrypted_call.clone(),
+            1,
+            weight,
+            2,
+            3,
+        )
+        .unwrap();
+
+        let identifier = EncryptedTX::doubly_encrypted_queue(&2)[0];
+
+        let singly_encrypted_call = call.encode();
+
+        EncryptedTX::submit_singly_encrypted_transaction(
+            Origin::none(),
+            identifier,
+            singly_encrypted_call.clone(),
+        )
+        .unwrap();
+
+        EncryptedTX::submit_decrypted_transaction(
+            Origin::none(),
+            identifier,
+            singly_encrypted_call.clone(),
+            1,
+        )
+        .unwrap();
+
+        let expected_number_of_tx_in_singly_queue = 0;
+
+        assert_eq!(
+            EncryptedTX::singly_encrypted_queue(&3).len(),
+            expected_number_of_tx_in_singly_queue
+        );
+
+        let txn_registry_details = TxnRegistryDetails {
+            doubly_encrypted_call: doubly_encrypted_call,
+            user: 1,
+            nonce: 1,
+            weight: weight,
+            builder: 2,
+            executor: 3,
+            singly_encrypted_call: Some(singly_encrypted_call.clone()),
+            decrypted_call: Some(singly_encrypted_call),
+        };
+
+        assert_eq!(
+            EncryptedTX::txn_registry(identifier),
+            Some(txn_registry_details)
+        );
+
+        let decrypted_transaction_submitted_event = TestEvent::encrypted(
+            Event::<Test>::DecryptedTransactionSubmitted(1, 1, identifier),
+        );
+        let calls_executed_event =
+            TestEvent::encrypted(Event::<Test>::CallsExecuted(1, 1, identifier));
+
+        assert!(System::events()
+            .iter()
+            .any(|record| record.event == decrypted_transaction_submitted_event));
+        assert!(System::events()
+            .iter()
+            .any(|record| record.event == calls_executed_event));
+
+        assert_eq!(EncryptedTX::balance(0, 10), 10);
+    });
+}
+
+#[test]
+fn NW_submit_decrypted_incorrect_call_weight() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(1);
+
+        let call = vec![Box::new(<mock::Test as Trait>::Call::Tokens(
+            orml_tokens::Call::<Test>::transfer(10, 0, 10),
         ))];
 
         let doubly_encrypted_call = call.encode();
@@ -297,67 +371,20 @@ fn W_submit_decrypted() {
             Origin::none(),
             identifier,
             singly_encrypted_call.clone(),
-           
         )
         .unwrap();
-  
-            
-            // assert_eq!(
-            //     EncryptedTX::txn_registry(identifier),
-            //     Some(txn_registry_details)
-            // );
-            
+
+        assert_err!(
             EncryptedTX::submit_decrypted_transaction(
-                Origin::signed(3),
+                Origin::none(),
                 identifier,
                 singly_encrypted_call.clone(),
                 1
-               
-            )
-            .unwrap();        
-
-            let mut expected_number_of_tx_in_singly_queue = 0;
-
-            assert_eq!(
-                EncryptedTX::singly_encrypted_queue(&3).len(),
-                expected_number_of_tx_in_singly_queue
-            );
-            
-                let txn_registry_details = TxnRegistryDetails {
-                doubly_encrypted_call: doubly_encrypted_call,
-                user: 1,
-                nonce: 1,
-                weight: 1,
-                builder: 2,
-                executor: 3,
-                singly_encrypted_call: Some(singly_encrypted_call.clone()),
-                decrypted_call: Some(singly_encrypted_call),
-            };    
+            ),
+            Error::<Test>::IncorrectCallWeight,
+        );
     });
-    
 }
 
+//TODO TxnRecord
 
-// fn submit_decrypted_transaction(origin, identifier: T::Hash, decrypted_call: Vec<u8>, _weight: Weight) -> DispatchResult{
-//     ensure_none(origin)?;
-
-//     let mut txn_registry_details = TxnRegistry::<T>::get(identifier).ok_or_else(|| Error::<T>::TxnDoesNotExistsInRegistry)?;
-//     SinglyEncryptedQueue::<T>::mutate(&txn_registry_details.executor, |vec_hash| {vec_hash.retain(|x| *x!=identifier)});
-//     ExecutedTxnRecord::<T>::mutate(T::Index::from(<pallet_session::Module<T>>::current_index()), &txn_registry_details.user, |vec_hash| {vec_hash.push(identifier)});
-
-//     txn_registry_details.decrypted_call = Some(decrypted_call.clone());
-
-//     TxnRegistry::<T>::insert(identifier, &txn_registry_details);
-
-//     Self::deposit_event(RawEvent::DecryptedTransactionSubmitted(txn_registry_details.user.clone(), txn_registry_details.nonce, identifier));
-
-//     let calls: Vec<Box<<T as Trait>::Call>> = Decode::decode(&mut &decrypted_call[..]).map_err(|_| DispatchError::from(Error::<T>::CallDeserilizationFailed))?;
-
-//     Module::<T>::execute_calls(RawOrigin::Root.into(), calls, txn_registry_details.user, identifier, txn_registry_details.nonce, txn_registry_details.weight)?;
-
-//     Ok(())
-// }
-
-// ? TxnRecord::<T>::mutate(T::Index::from(<pallet_session::Module<T>>::current_index()), &user, |tree_record| tree_record.insert(identifier, (nonce, fee_charged, false)));
-
-//doubly with super small fee and and then the actual tx should fail, because the real fee is much higher

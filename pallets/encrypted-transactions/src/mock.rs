@@ -128,8 +128,8 @@ impl SessionHandler<u128> for TestSessionHandler {
     const KEY_TYPE_IDS: &'static [sp_runtime::KeyTypeId] = &[UintAuthorityId::ID];
     fn on_genesis_session<T: OpaqueKeys>(_validators: &[(u128, T)]) {}
     fn on_new_session<T: OpaqueKeys>(
-        changed: bool,
-        validators: &[(u128, T)],
+        _changed: bool,
+        _validators: &[(u128, T)],
         _queued_validators: &[(u128, T)],
     ) {
     }

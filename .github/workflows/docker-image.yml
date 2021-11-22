@@ -121,22 +121,24 @@ jobs:
         name: Checkout
         uses: actions/checkout@v2
       -
-        name: Apply .patch
-        if: contains(github.event.inputs.testingImage, 'true')
-        run: |
-          git apply devops/changeset_generate_testimage.patch
-          git status
-          grep "const TermDuration" runtime/src/lib.rs
-      -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v1
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
       -
-        name: Build Only
+        name: Build QA Image
+        if: contains(github.event.inputs.testingImage, 'true') && !contains(github.event.pull_request.labels.*.name, 'skip-build')
+        uses: docker/build-push-action@v2
+        with:
+          file: "devops/dockerfiles/node-and-runtime-QA/Dockerfile"
+          push: false
+          tags: mangatasolutions/mangata-node:QA,mangatasolutions/mangata-node:${{ github.sha }}-QA
+          outputs: type=docker,dest=/tmp/${{ github.sha }}.tar
+      -
+        name: Build Node Image
         id: docker_build
-        if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
+        if: "!contains(github.event.pull_request.labels.*.name, 'skip-build') && !contains(github.event.inputs.testingImage, 'true')"
         uses: docker/build-push-action@v2
         with:
           file: "devops/dockerfiles/node-and-runtime/Dockerfile"

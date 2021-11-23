@@ -1,0 +1,66 @@
+{
+  "uid" : "597d7020320c8ca0",
+  "name" : "Not enough tokens to convert fee LINK[https://trello.com/c/p77t0atO]",
+  "fullName" : "xyk-pallet - treasury tests [Connected - Mangata]: Error cases.Not enough tokens to convert fee LINK[https://trello.com/c/p77t0atO]",
+  "historyId" : "8bcee4ce481ed060d31a7c246299047f",
+  "time" : {
+    "start" : 1637676192749,
+    "stop" : 1637676319662,
+    "duration" : 126913
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - treasury tests [Connected - Mangata]: Error cases"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - treasury tests [Connected - Mangata]: Error cases"
+  }, {
+    "name" : "testMethod",
+    "value" : "Not enough tokens to convert fee LINK[https://trello.com/c/p77t0atO]"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - treasury tests [Connected - Mangata]: Error cases"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 2,
+        "unknown" : 0,
+        "total" : 2
+      },
+      "items" : [ {
+        "uid" : "1c1ba9e416867f7c",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/532//#testresult/1c1ba9e416867f7c",
+        "status" : "passed",
+        "time" : {
+          "start" : 1637662476830,
+          "stop" : 1637662603758,
+          "duration" : 126928
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "597d7020320c8ca0.json",
+  "parameterValues" : [ ]
+}

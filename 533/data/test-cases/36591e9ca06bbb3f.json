@@ -1,0 +1,66 @@
+{
+  "uid" : "36591e9ca06bbb3f",
+  "name" : "assets won when assets are sold [Selling Mangata] - 5",
+  "fullName" : "xyk-pallet - treasury tests [Mangata]: on treasury we store.assets won when assets are sold [Selling Mangata] - 5",
+  "historyId" : "dd6031c39dad92c2f0d6040402ed7ebf",
+  "time" : {
+    "start" : 1637675109240,
+    "stop" : 1637675215172,
+    "duration" : 105932
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - treasury tests [Mangata]: on treasury we store"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - treasury tests [Mangata]: on treasury we store"
+  }, {
+    "name" : "testMethod",
+    "value" : "assets won when assets are sold [Selling Mangata] - 5"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - treasury tests [Mangata]: on treasury we store"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 2,
+        "unknown" : 0,
+        "total" : 2
+      },
+      "items" : [ {
+        "uid" : "88e257123ca51319",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/532//#testresult/88e257123ca51319",
+        "status" : "passed",
+        "time" : {
+          "start" : 1637661394032,
+          "stop" : 1637661499177,
+          "duration" : 105145
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "36591e9ca06bbb3f.json",
+  "parameterValues" : [ ]
+}

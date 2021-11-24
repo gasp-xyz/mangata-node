@@ -97,6 +97,9 @@ artemis-eth-app = {default-features = false, version = "0.1.1", git = "https://g
 artemis-asset = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
 pallet-bridge = {default-features = false, version = "0.1.1", path = "../pallets/bridge"}
 
+# Staking dependencies
+parachain-staking = { default-features = false, path = "../../moonbeam/pallets/parachain-staking" }
+
 [features]
 default = [
 	"std",
@@ -160,6 +163,8 @@ std = [
 	"artemis-eth-app/std",
 	"artemis-asset/std",
 	"pallet-bridge/std",
+
+	"parachain-staking/std",
 
 ]
 

@@ -1,0 +1,46 @@
+{
+  "uid" : "8a5f0195cae29a95",
+  "name" : "Sell assets with a high expectation: limit - OK",
+  "fullName" : "xyk-pallet - Sell assets tests: Selling Assets you can.Sell assets with a high expectation: limit - OK",
+  "historyId" : "53e53d4a36482712a7f78c291593d6e8",
+  "time" : {
+    "start" : 1637750929095,
+    "stop" : 1637751055160,
+    "duration" : 126065
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Sell assets tests: Selling Assets you can"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Sell assets tests: Selling Assets you can"
+  }, {
+    "name" : "testMethod",
+    "value" : "Sell assets with a high expectation: limit - OK"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Sell assets tests: Selling Assets you can"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "8a5f0195cae29a95.json",
+  "parameterValues" : [ ]
+}

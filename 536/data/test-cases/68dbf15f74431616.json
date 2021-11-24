@@ -1,0 +1,46 @@
+{
+  "uid" : "68dbf15f74431616",
+  "name" : "validate parameters - get_burn from not created assets",
+  "fullName" : "xyk-rpc - calculate get_burn amount: Missing requirements.validate parameters - get_burn from not created assets",
+  "historyId" : "7f488ce0c557865c93ff24f167a92fbc",
+  "time" : {
+    "start" : 1637751367751,
+    "stop" : 1637751367759,
+    "duration" : 8
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-rpc - calculate get_burn amount: Missing requirements"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-rpc - calculate get_burn amount: Missing requirements"
+  }, {
+    "name" : "testMethod",
+    "value" : "validate parameters - get_burn from not created assets"
+  }, {
+    "name" : "package",
+    "value" : "xyk-rpc - calculate get_burn amount: Missing requirements"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "68dbf15f74431616.json",
+  "parameterValues" : [ ]
+}

@@ -1,0 +1,46 @@
+{
+  "uid" : "ab2f7f8bff2f596d",
+  "name" : "xyk-pallet - User Balance - mint liquidity requires paying fees",
+  "fullName" : "Wallets unmodified.xyk-pallet - User Balance - mint liquidity requires paying fees",
+  "historyId" : "3f4df0383a35907690e4acf1ebeb71d4",
+  "time" : {
+    "start" : 1637751349249,
+    "stop" : 1637751439110,
+    "duration" : 89861
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "Wallets unmodified"
+  }, {
+    "name" : "testClass",
+    "value" : "Wallets unmodified"
+  }, {
+    "name" : "testMethod",
+    "value" : "xyk-pallet - User Balance - mint liquidity requires paying fees"
+  }, {
+    "name" : "package",
+    "value" : "Wallets unmodified"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "ab2f7f8bff2f596d.json",
+  "parameterValues" : [ ]
+}

@@ -1,0 +1,46 @@
+{
+  "uid" : "99fb220321b3a835",
+  "name" : "validate parameters [soldTokenId->0,boughtTokenId->1,amount->0,expected->0]",
+  "fullName" : "xyk-rpc - calculate_buy_price_by_id:No pool assotiated with the assets.validate parameters [soldTokenId->0,boughtTokenId->1,amount->0,expected->0]",
+  "historyId" : "edc0552d1c8d1f2e6b76fbf5b398678a",
+  "time" : {
+    "start" : 1637751349170,
+    "stop" : 1637751349175,
+    "duration" : 5
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-rpc - calculate_buy_price_by_id:No pool assotiated with the assets"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-rpc - calculate_buy_price_by_id:No pool assotiated with the assets"
+  }, {
+    "name" : "testMethod",
+    "value" : "validate parameters [soldTokenId->0,boughtTokenId->1,amount->0,expected->0]"
+  }, {
+    "name" : "package",
+    "value" : "xyk-rpc - calculate_buy_price_by_id:No pool assotiated with the assets"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "99fb220321b3a835.json",
+  "parameterValues" : [ ]
+}

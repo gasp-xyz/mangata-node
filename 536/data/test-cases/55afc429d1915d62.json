@@ -1,0 +1,46 @@
+{
+  "uid" : "55afc429d1915d62",
+  "name" : "Create x-y and y-x pool",
+  "fullName" : "xyk-pallet - Poll creation: Errors:.Create x-y and y-x pool",
+  "historyId" : "236defb80e0e583c3d49d6838a62955a",
+  "time" : {
+    "start" : 1637750624308,
+    "stop" : 1637750641808,
+    "duration" : 17500
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Poll creation: Errors:"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Poll creation: Errors:"
+  }, {
+    "name" : "testMethod",
+    "value" : "Create x-y and y-x pool"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Poll creation: Errors:"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "55afc429d1915d62.json",
+  "parameterValues" : [ ]
+}

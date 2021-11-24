@@ -1,0 +1,62 @@
+{
+  "uid" : "286e73157d15bc72",
+  "name" : "xyk-rpc - calculate_sell_price validates parameters - Negative params",
+  "fullName" : "test/parallel/xyk-rpc.errors.test.ts.xyk-rpc - calculate_sell_price validates parameters - Negative params",
+  "historyId" : "2ee1280dc5ab69689978447d22d20b5",
+  "time" : {
+    "start" : 1637751280575,
+    "stop" : 1637751280597,
+    "duration" : 22
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "test/parallel/xyk-rpc.errors.test.ts"
+  }, {
+    "name" : "testClass",
+    "value" : "test/parallel/xyk-rpc.errors.test.ts"
+  }, {
+    "name" : "testMethod",
+    "value" : "xyk-rpc - calculate_sell_price validates parameters - Negative params"
+  }, {
+    "name" : "package",
+    "value" : "test/parallel/xyk-rpc.errors.test.ts"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ {
+      "uid" : "e9188ad6ce4ae8aa",
+      "status" : "passed",
+      "time" : {
+        "start" : 1637751280556,
+        "stop" : 1637751280574,
+        "duration" : 18
+      }
+    }, {
+      "uid" : "4cb3b8e570f92a1d",
+      "status" : "passed",
+      "time" : {
+        "start" : 1637751280492,
+        "stop" : 1637751280556,
+        "duration" : 64
+      }
+    } ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "286e73157d15bc72.json",
+  "parameterValues" : [ ]
+}

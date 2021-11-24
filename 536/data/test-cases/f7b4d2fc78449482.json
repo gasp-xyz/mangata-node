@@ -1,0 +1,46 @@
+{
+  "uid" : "f7b4d2fc78449482",
+  "name" : "Burning liquidities generates a Liquidity burned event",
+  "fullName" : "xyk-pallet - Burn liquidity tests: when burning liquidity you can.Burning liquidities generates a Liquidity burned event",
+  "historyId" : "4343dc61e08f87d0c997e8820122ea6",
+  "time" : {
+    "start" : 1637751061913,
+    "stop" : 1637751205674,
+    "duration" : 143761
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Burn liquidity tests: when burning liquidity you can"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Burn liquidity tests: when burning liquidity you can"
+  }, {
+    "name" : "testMethod",
+    "value" : "Burning liquidities generates a Liquidity burned event"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Burn liquidity tests: when burning liquidity you can"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "f7b4d2fc78449482.json",
+  "parameterValues" : [ ]
+}

@@ -1,0 +1,46 @@
+{
+  "uid" : "cb66584e0203ce9d",
+  "name" : "Mint liquidity assets that does not belong to any pool",
+  "fullName" : "xyk-pallet - Mint liquidity tests: MintLiquidity Errors:.Mint liquidity assets that does not belong to any pool",
+  "historyId" : "2a65cd99fcbd61b0ee021690ae6e92d8",
+  "time" : {
+    "start" : 1637750804247,
+    "stop" : 1637750984063,
+    "duration" : 179816
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Mint liquidity tests: MintLiquidity Errors:"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Mint liquidity tests: MintLiquidity Errors:"
+  }, {
+    "name" : "testMethod",
+    "value" : "Mint liquidity assets that does not belong to any pool"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Mint liquidity tests: MintLiquidity Errors:"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "cb66584e0203ce9d.json",
+  "parameterValues" : [ ]
+}

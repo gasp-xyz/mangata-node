@@ -12,6 +12,8 @@ members = [
 orml-tokens = { path = "../open-runtime-module-library/tokens" }
 orml-traits = { path = "../open-runtime-module-library/traits" }
 
+[patch."https://github.com/mangata-finance/moonbeam.git"]
+parachain-staking = { path = "../moonbeam/pallets/parachain-staking" }
 
 [patch."https://github.com/mangata-finance/mangata-node"]
 mangata-primitives = {path = "./primitives/mangata"}

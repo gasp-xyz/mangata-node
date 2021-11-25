@@ -1,10 +1,10 @@
 use cumulus_primitives_core::ParaId;
-use parachain_template_runtime::{AccountId, AuraId, Signature, EXISTENTIAL_DEPOSIT};
+use parachain_template_runtime::{AccountId, AuraId, Signature, EXISTENTIAL_DEPOSIT, DOLLARS, Balance, InflationInfo, Range};
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
-use sp_runtime::traits::{IdentifyAccount, Verify};
+use sp_runtime::{Perbill, traits::{IdentifyAccount, Verify}};
 use hex_literal::hex;
 use artemis_core::{App, AppId};
 use sp_core::H160;
@@ -59,6 +59,28 @@ where
 /// The input must be a tuple of individual keys (a single arg for now since we have just one key).
 pub fn template_session_keys(keys: AuraId) -> parachain_template_runtime::SessionKeys {
 	parachain_template_runtime::SessionKeys { aura: keys }
+}
+
+pub fn mangata_inflation_config() -> InflationInfo<Balance> {
+	InflationInfo {
+		expect: Range {
+			min: 100_000_000 * 1__000_000_000_000_000_000,
+			ideal: 200_000_000 * 1__000_000_000_000_000_000,
+			max: 500_000_000 * 1__000_000_000_000_000_000,
+		},
+		annual: Range {
+			min: Perbill::from_percent(4),
+			ideal: Perbill::from_percent(5),
+			max: Perbill::from_percent(5),
+		},
+		// 8760 hours in a year AND
+        // 4 hours in a round => 2190
+		round: Range {
+			min: Perbill::from_parts(Perbill::from_percent(4).deconstruct() / 2190),
+			ideal: Perbill::from_parts(Perbill::from_percent(5).deconstruct() / 2190),
+			max: Perbill::from_parts(Perbill::from_percent(5).deconstruct() / 2190),
+		},
+	}
 }
 
 pub fn development_config() -> ChainSpec {
@@ -368,10 +390,14 @@ fn testnet_genesis(
 			Default::default()
 		,
 		parachain_info: parachain_template_runtime::ParachainInfoConfig { parachain_id: id },
-		collator_selection: parachain_template_runtime::CollatorSelectionConfig {
-			invulnerables: initial_authorities.iter().cloned().map(|(acc, _)| acc).collect(),
-			candidacy_bond: EXISTENTIAL_DEPOSIT * 16,
-			..Default::default()
+        parachain_staking: parachain_template_runtime::ParachainStakingConfig {
+			candidates: initial_authorities
+				.iter()
+				.cloned()
+				.map(|(account, _)| (account, 20*DOLLARS))
+				.collect(),
+			delegations: vec![],
+			inflation_config: mangata_inflation_config(),
 		},
 		session: parachain_template_runtime::SessionConfig {
 			keys: initial_authorities

@@ -390,11 +390,6 @@ fn testnet_genesis(
 			Default::default()
 		,
 		parachain_info: parachain_template_runtime::ParachainInfoConfig { parachain_id: id },
-		// collator_selection: parachain_template_runtime::CollatorSelectionConfig {
-		// 	invulnerables: initial_authorities.iter().cloned().map(|(acc, _)| acc).collect(),
-		// 	candidacy_bond: EXISTENTIAL_DEPOSIT * 16,
-		// 	..Default::default()
-		// },
         parachain_staking: parachain_template_runtime::ParachainStakingConfig {
 			candidates: initial_authorities
 				.iter()

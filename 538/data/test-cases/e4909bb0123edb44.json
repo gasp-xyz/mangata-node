@@ -1,0 +1,75 @@
+{
+  "uid" : "e4909bb0123edb44",
+  "name" : "Not enough tokens to convert fee LINK[https://trello.com/c/p77t0atO]",
+  "fullName" : "xyk-pallet - treasury tests [Connected - Mangata]: Error cases.Not enough tokens to convert fee LINK[https://trello.com/c/p77t0atO]",
+  "historyId" : "8bcee4ce481ed060d31a7c246299047f",
+  "time" : {
+    "start" : 1637836729195,
+    "stop" : 1637836856077,
+    "duration" : 126882
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - treasury tests [Connected - Mangata]: Error cases"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - treasury tests [Connected - Mangata]: Error cases"
+  }, {
+    "name" : "testMethod",
+    "value" : "Not enough tokens to convert fee LINK[https://trello.com/c/p77t0atO]"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - treasury tests [Connected - Mangata]: Error cases"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 3,
+        "unknown" : 0,
+        "total" : 3
+      },
+      "items" : [ {
+        "uid" : "2d833482d610d7b2",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/537//#testresult/2d833482d610d7b2",
+        "status" : "passed",
+        "time" : {
+          "start" : 1637763613340,
+          "stop" : 1637763738929,
+          "duration" : 125589
+        }
+      }, {
+        "uid" : "270c0b987a6671e3",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/535//#testresult/270c0b987a6671e3",
+        "status" : "passed",
+        "time" : {
+          "start" : 1637751660805,
+          "stop" : 1637751787688,
+          "duration" : 126883
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "e4909bb0123edb44.json",
+  "parameterValues" : [ ]
+}

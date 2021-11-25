@@ -1,11 +1,8 @@
 [package]
-authors = ['Substrate DevHub <https://github.com/substrate-developer-hub>']
-description = 'FRAME pallet template for defining custom runtime logic.'
-edition = '2018'
-homepage = 'https://substrate.dev'
-license = 'Unlicense'
+authors = ["Mangata Team"]
+edition = "2018"
+license = "Unlicense"
 name = 'pallet-assets-info'
-repository = 'https://github.com/substrate-developer-hub/substrate-node-template/'
 version = '2.0.0'
 
 [package.metadata.docs.rs]

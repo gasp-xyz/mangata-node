@@ -1,4 +1,4 @@
-//! Substrate Parachain Node Template CLI
+//! Substrate Parachain Mangata Node CLI
 
 #![warn(missing_docs)]
 

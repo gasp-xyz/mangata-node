@@ -1,12 +1,9 @@
 [package]
-name = "parachain-template-runtime"
-version = "0.1.0"
-authors = ["Anonymous"]
-description = "A new Cumulus FRAME-based Substrate Runtime, ready for hacking together a parachain."
-license = "Unlicense"
-homepage = "https://substrate.io"
-repository = 'https://github.com/substrate-developer-hub/substrate-parachain-template'
+name = "mangata-runtime"
+version = "4.0.0"
+authors = ["Mangata Team"]
 edition = "2018"
+license = "Unlicense"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
@@ -23,7 +20,6 @@ smallvec = "1.6.1"
 static_assertions = "1.1.0"
 
 # Local Dependencies
-pallet-template = { path = "../pallets/template", default-features = false }
 mangata-primitives = { path = '../primitives/mangata', default-features = false, version = "0.1.0" }
 pallet-assets-info = { path = '../pallets/assets-info', default-features = false, version = "2.0.0" }
 pallet-xyk = { path = '../pallets/xyk', default-features = false, version = '0.1.0' }
@@ -97,7 +93,7 @@ artemis-asset = {default-features = false, version = "0.1.1", git = "https://git
 pallet-bridge = {default-features = false, version = "0.1.1", path = "../pallets/bridge"}
 
 # Staking dependencies
-parachain-staking = { default-features = false, git = "https://github.com/mangata-finance/moonbeam.git", branch = "mangata-dev" }
+parachain-staking = { default-features = false, git = "https://github.com/mangata-finance/moonbeam.git", branch = "mangata-dev-v4" }
 
 [features]
 default = [
@@ -127,7 +123,6 @@ std = [
 	"pallet-authorship/std",
 	"pallet-session/std",
 	"pallet-sudo/std",
-	"pallet-template/std",
 	"pallet-timestamp/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-transaction-payment/std",
@@ -173,7 +168,6 @@ runtime-benchmarks = [
 	"frame-system-benchmarking",
 	"frame-support/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
-	"pallet-template/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"pallet-xcm/runtime-benchmarks",
 ]

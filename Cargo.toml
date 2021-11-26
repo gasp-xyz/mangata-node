@@ -16,7 +16,7 @@ orml-traits = { path = "../open-runtime-module-library/traits" }
 [patch."https://github.com/mangata-finance/mangata-node"]
 mangata-primitives = {path = "./primitives/mangata"}
 
-#TODO patch orml tokens repo to use mangata-finance/substrate directly
+# #TODO patch orml tokens repo to use mangata-finance/substrate directly
 [patch."https://github.com/paritytech/substrate"]
 sp-debug-derive = { path = "../substrate/primitives/debug-derive" }
 sp-tasks = { path = "../substrate/primitives/tasks" }
@@ -244,8 +244,8 @@ beefy-gadget = { path = "../substrate/client/beefy" }
 beefy-gadget-rpc = { path = "../substrate/client/beefy/rpc" }
 sc-proposer-metrics = { path = "../substrate/client/proposer-metrics" }
 sc-consensus-slots = { path = "../substrate/client/consensus/slots" }
-sc-consensus-babe = { path = "../substrate/client/consensus/babe" }
-sc-consensus-babe-rpc = { path = "../substrate/client/consensus/babe/rpc" }
+# sc-consensus-babe = { path = "../substrate/client/consensus/babe" }
+# sc-consensus-babe-rpc = { path = "../substrate/client/consensus/babe/rpc" }
 sc-consensus-epochs = { path = "../substrate/client/consensus/epochs" }
 sc-consensus-uncles = { path = "../substrate/client/consensus/uncles" }
 sc-consensus-aura = { path = "../substrate/client/consensus/aura" }
@@ -326,3 +326,41 @@ pallet-verifier = { path = "../snowbridge/parachain/pallets/verifier"}
 artemis-erc20-app = { path = "../snowbridge/parachain/pallets/erc20-app"}
 artemis-eth-app = { path = "../snowbridge/parachain/pallets/eth-app"}
 artemis-asset = { path = "../snowbridge/parachain/pallets/asset"}
+
+# [patch.'https://github.com/mangata-finance/cumulus']
+# cumulus-primitives-core = { git = "file:///home/dev/cumulus" , branch = "mangata-dev-v4" }
+# parachain-info = { git = "file:///home/dev/cumulus" , branch = "mangata-dev-v4" }
+# cumulus-pallet-dmp-queue = { git = "file:///home/dev/cumulus" , branch = "mangata-dev-v4" }
+# cumulus-pallet-xcmp-queue = { git = "file:///home/dev/cumulus" , branch = "mangata-dev-v4" }
+# cumulus-pallet-xcm = { git = "file:///home/dev/cumulus" , branch = "mangata-dev-v4" }
+# cumulus-pallet-aura-ext = { git = "file:///home/dev/cumulus", branch = "mangata-dev-v4" }
+# cumulus-pallet-parachain-system-proc-macro = { git = "file:///home/dev/cumulus", branch = "mangata-dev-v4" }
+# cumulus-pallet-parachain-system = { git = "file:///home/dev/cumulus", branch = "mangata-dev-v4" }
+# cumulus-primitives-parachain-inherent = { git = "file:///home/dev/cumulus", branch = "mangata-dev-v4" }
+# cumulus-primitives-timestamp = { git = "file:///home/dev/cumulus", branch = "mangata-dev-v4" }
+# cumulus-primitives-utility = { git = "file:///home/dev/cumulus", branch = "mangata-dev-v4" }
+# cumulus-test-relay-sproof-builder = { git = "file:///home/dev/cumulus", branch = "mangata-dev-v4" }
+# pallet-collator-selection = { git = "file:///home/dev/cumulus", branch = "mangata-dev-v4" }
+#
+#
+# [patch.'https://github.com/mangata-finance/polkadot']
+# xcm = { path = "/home/dev/polkadot/xcm"}
+# xcm-executor = { path = "/home/dev/polkadot/xcm/xcm-executor"}
+# xcm-builder = { path = "/home/dev/polkadot/xcm/xcm-builder"}
+# pallet-xcm = { path = "/home/dev/polkadot/xcm/pallet-xcm"}
+# polkadot-core-primitives = { path = "/home/dev/polkadot/core-primitives"}
+# polkadot-runtime-parachains = { path = "/home/dev/polkadot/runtime/parachains"}
+# polkadot-parachain = { path = "/home/dev/polkadot/parachain"}
+# polkadot-primitives = { path = "/home/dev/polkadot/primitives"}
+# xcm-simulator = { path = "/home/dev/polkadot/xcm/xcm-simulator"}
+
+# xcm = { git = "file:///home/dev/polkadot", branch = "mangata-dev-v4" }
+# xcm-executor = { git = "file:///home/dev/polkadot", branch = "mangata-dev-v4" }
+# xcm-builder = { git = "file:///home/dev/polkadot", branch = "mangata-dev-v4" }
+# pallet-xcm = { git = "file:///home/dev/polkadot", branch = "mangata-dev-v4" }
+# polkadot-core-primitives = { git = "file:///home/dev/polkadot", branch = "mangata-dev-v4" }
+# polkadot-runtime-parachains = { git = "file:///home/dev/polkadot", branch = "mangata-dev-v4" }
+# polkadot-parachain = { git = "file:///home/dev/polkadot", branch = "mangata-dev-v4" }
+# polkadot-primitives = { git = "file:///home/dev/polkadot", branch = "mangata-dev-v4" }
+# xcm-simulator = { git = "file:///home/dev/polkadot", branch = "mangata-dev-v4" }
+#

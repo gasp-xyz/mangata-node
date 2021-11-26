@@ -1349,7 +1349,7 @@ dependencies = [
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
  "polkadot-overseer",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "sc-client-api",
  "sp-api",
  "sp-consensus",
@@ -1397,7 +1397,7 @@ dependencies = [
  "dyn-clone",
  "futures 0.3.17",
  "parity-scale-codec 2.3.1",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "sc-client-api",
  "sc-consensus",
  "sp-api",
@@ -1420,8 +1420,8 @@ dependencies = [
  "parking_lot 0.10.2",
  "polkadot-client",
  "polkadot-node-primitives",
- "polkadot-parachain",
- "polkadot-primitives",
+ "polkadot-parachain 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "sc-client-api",
  "sp-api",
  "sp-blockchain",
@@ -1443,7 +1443,7 @@ dependencies = [
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
  "polkadot-overseer",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "rand 0.8.4",
  "sc-client-api",
  "sc-consensus",
@@ -1466,7 +1466,7 @@ dependencies = [
  "parity-scale-codec 2.3.1",
  "parking_lot 0.10.2",
  "polkadot-overseer",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "polkadot-service",
  "sc-chain-spec",
  "sc-client-api",
@@ -1515,8 +1515,8 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "xcm",
- "xcm-executor",
+ "xcm 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+ "xcm-executor 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
 ]
 
 [[package]]
@@ -1533,7 +1533,7 @@ dependencies = [
  "log",
  "pallet-balances",
  "parity-scale-codec 2.3.1",
- "polkadot-parachain",
+ "polkadot-parachain 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "scale-info",
  "serde",
  "sp-core",
@@ -1545,7 +1545,7 @@ dependencies = [
  "sp-std",
  "sp-trie",
  "sp-version",
- "xcm",
+ "xcm 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
 ]
 
 [[package]]
@@ -1573,7 +1573,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "xcm",
+ "xcm 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
 ]
 
 [[package]]
@@ -1590,8 +1590,8 @@ dependencies = [
  "scale-info",
  "sp-runtime",
  "sp-std",
- "xcm",
- "xcm-executor",
+ "xcm 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+ "xcm-executor 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
 ]
 
 [[package]]
@@ -1602,9 +1602,9 @@ dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
  "parity-scale-codec 2.3.1",
- "polkadot-core-primitives",
- "polkadot-parachain",
- "polkadot-primitives",
+ "polkadot-core-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+ "polkadot-parachain 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "sp-api",
  "sp-runtime",
  "sp-std",
@@ -1652,13 +1652,13 @@ dependencies = [
  "cumulus-primitives-core",
  "frame-support",
  "parity-scale-codec 2.3.1",
- "polkadot-core-primitives",
- "polkadot-parachain",
- "polkadot-primitives",
+ "polkadot-core-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+ "polkadot-parachain 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "sp-runtime",
  "sp-std",
  "sp-trie",
- "xcm",
+ "xcm 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
 ]
 
 [[package]]
@@ -1668,7 +1668,7 @@ source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev-v4#9
 dependencies = [
  "cumulus-primitives-core",
  "parity-scale-codec 2.3.1",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "sp-runtime",
  "sp-state-machine",
  "sp-std",
@@ -2054,6 +2054,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "extrinsic-info-runtime-api"
+version = "4.0.0-dev"
+dependencies = [
+ "derive_more",
+ "futures 0.3.17",
+ "log",
+ "parity-scale-codec 2.3.1",
+ "serde",
+ "sp-api",
+ "sp-blockchain",
+ "sp-runtime",
+]
+
+[[package]]
+name = "extrinsic-shuffler"
+version = "4.0.0-dev"
+dependencies = [
+ "derive_more",
+ "extrinsic-info-runtime-api",
+ "log",
+ "sp-api",
+ "sp-block-builder",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+ "sp-ver",
+]
+
+[[package]]
 name = "fake-simd"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2236,12 +2265,15 @@ dependencies = [
 name = "frame-executive"
 version = "4.0.0-dev"
 dependencies = [
+ "extrinsic-shuffler",
  "frame-support",
  "frame-system",
  "parity-scale-codec 2.3.1",
  "scale-info",
+ "schnorrkel",
  "sp-core",
  "sp-io",
+ "sp-keystore",
  "sp-runtime",
  "sp-std",
  "sp-tracing",
@@ -4633,7 +4665,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "xcm",
+ "xcm 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
 ]
 
 [[package]]
@@ -5373,6 +5405,23 @@ dependencies = [
 [[package]]
 name = "pallet-xcm"
 version = "0.9.12"
+source = "git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4#5feed981cf0fe671447eabaa9c0d235a8dd0003e"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec 2.3.1",
+ "scale-info",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+ "xcm 0.9.12 (git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4)",
+ "xcm-executor 0.9.12 (git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4)",
+]
+
+[[package]]
+name = "pallet-xcm"
+version = "0.9.12"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.12#5feed981cf0fe671447eabaa9c0d235a8dd0003e"
 dependencies = [
  "frame-support",
@@ -5384,8 +5433,8 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std",
- "xcm",
- "xcm-executor",
+ "xcm 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+ "xcm-executor 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
 ]
 
 [[package]]
@@ -5447,8 +5496,8 @@ dependencies = [
  "parachain-template-runtime",
  "parity-scale-codec 2.3.1",
  "polkadot-cli",
- "polkadot-parachain",
- "polkadot-primitives",
+ "polkadot-parachain 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "polkadot-service",
  "polkadot-test-service",
  "sc-basic-authorship",
@@ -5530,12 +5579,12 @@ dependencies = [
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
  "pallet-verifier",
- "pallet-xcm",
+ "pallet-xcm 0.9.12 (git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4)",
  "pallet-xyk",
  "parachain-info",
  "parity-scale-codec 2.3.1",
- "polkadot-parachain",
- "polkadot-runtime-common",
+ "polkadot-parachain 0.9.12 (git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4)",
+ "polkadot-runtime-common 0.9.12 (git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4)",
  "scale-info",
  "serde",
  "smallvec",
@@ -5553,9 +5602,9 @@ dependencies = [
  "sp-version",
  "static_assertions",
  "substrate-wasm-builder",
- "xcm",
- "xcm-builder",
- "xcm-executor",
+ "xcm 0.9.12 (git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4)",
+ "xcm-builder 0.9.12 (git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4)",
+ "xcm-executor 0.9.12 (git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4)",
  "xyk-runtime-api",
 ]
 
@@ -5928,7 +5977,7 @@ dependencies = [
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "tracing",
 ]
 
@@ -5941,7 +5990,7 @@ dependencies = [
  "polkadot-node-network-protocol",
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "tracing",
 ]
 
@@ -5959,7 +6008,7 @@ dependencies = [
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "rand 0.8.4",
  "sp-core",
  "sp-keystore",
@@ -5980,7 +6029,7 @@ dependencies = [
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "rand 0.8.4",
  "sc-network",
  "thiserror",
@@ -6017,7 +6066,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "pallet-mmr-primitives",
  "pallet-transaction-payment-rpc-runtime-api",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "polkadot-runtime",
  "sc-client-api",
  "sc-consensus",
@@ -6050,12 +6099,25 @@ dependencies = [
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "sp-core",
  "sp-keystore",
  "sp-runtime",
  "thiserror",
  "tracing",
+]
+
+[[package]]
+name = "polkadot-core-primitives"
+version = "0.9.12"
+source = "git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4#5feed981cf0fe671447eabaa9c0d235a8dd0003e"
+dependencies = [
+ "parity-scale-codec 2.3.1",
+ "parity-util-mem",
+ "scale-info",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -6085,7 +6147,7 @@ dependencies = [
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "sc-network",
  "sp-application-crypto",
  "sp-keystore",
@@ -6100,7 +6162,7 @@ source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.12#5fee
 dependencies = [
  "parity-scale-codec 2.3.1",
  "polkadot-node-primitives",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "reed-solomon-novelpoly",
  "sp-core",
  "sp-trie",
@@ -6117,7 +6179,7 @@ dependencies = [
  "polkadot-node-network-protocol",
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "rand 0.8.4",
  "rand_chacha 0.3.1",
  "sc-network",
@@ -6140,7 +6202,7 @@ dependencies = [
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
  "polkadot-overseer",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "sc-network",
  "sp-consensus",
  "tracing",
@@ -6157,7 +6219,7 @@ dependencies = [
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "sp-core",
  "sp-maybe-compressed-blob",
  "thiserror",
@@ -6182,7 +6244,7 @@ dependencies = [
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
  "polkadot-overseer",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "sc-keystore",
  "schnorrkel",
  "sp-application-crypto",
@@ -6207,7 +6269,7 @@ dependencies = [
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
  "polkadot-overseer",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "thiserror",
  "tracing",
 ]
@@ -6223,7 +6285,7 @@ dependencies = [
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "polkadot-statement-table",
  "sp-keystore",
  "thiserror",
@@ -6238,7 +6300,7 @@ dependencies = [
  "futures 0.3.17",
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "sp-keystore",
  "thiserror",
  "tracing",
@@ -6257,8 +6319,8 @@ dependencies = [
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
- "polkadot-parachain",
- "polkadot-primitives",
+ "polkadot-parachain 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "sp-maybe-compressed-blob",
  "tracing",
 ]
@@ -6271,7 +6333,7 @@ dependencies = [
  "futures 0.3.17",
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "sc-client-api",
  "sc-consensus-babe",
  "sp-blockchain",
@@ -6290,7 +6352,7 @@ dependencies = [
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "thiserror",
  "tracing",
 ]
@@ -6308,7 +6370,7 @@ dependencies = [
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "sc-keystore",
  "thiserror",
  "tracing",
@@ -6322,7 +6384,7 @@ dependencies = [
  "futures 0.3.17",
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "thiserror",
  "tracing",
 ]
@@ -6336,7 +6398,7 @@ dependencies = [
  "futures 0.3.17",
  "futures-timer 3.0.2",
  "polkadot-node-subsystem",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "sp-blockchain",
  "sp-inherents",
  "sp-runtime",
@@ -6354,7 +6416,7 @@ dependencies = [
  "futures-timer 3.0.2",
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "thiserror",
  "tracing",
 ]
@@ -6373,9 +6435,9 @@ dependencies = [
  "libc",
  "parity-scale-codec 2.3.1",
  "pin-project 1.0.8",
- "polkadot-core-primitives",
+ "polkadot-core-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "polkadot-node-subsystem-util",
- "polkadot-parachain",
+ "polkadot-parachain 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "rand 0.8.4",
  "sc-executor",
  "sc-executor-common",
@@ -6400,7 +6462,7 @@ dependencies = [
  "parity-util-mem",
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "sp-api",
  "sp-authority-discovery",
  "sp-consensus-babe",
@@ -6420,7 +6482,7 @@ dependencies = [
  "parity-scale-codec 2.3.1",
  "parking_lot 0.11.2",
  "polkadot-node-primitives",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "sc-network",
  "sp-core",
  "thiserror",
@@ -6448,7 +6510,7 @@ dependencies = [
  "parity-scale-codec 2.3.1",
  "polkadot-node-jaeger",
  "polkadot-node-primitives",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "sc-authority-discovery",
  "sc-network",
  "strum 0.22.0",
@@ -6463,8 +6525,8 @@ dependencies = [
  "bounded-vec",
  "futures 0.3.17",
  "parity-scale-codec 2.3.1",
- "polkadot-parachain",
- "polkadot-primitives",
+ "polkadot-parachain 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "schnorrkel",
  "serde",
  "sp-application-crypto",
@@ -6498,7 +6560,7 @@ dependencies = [
  "polkadot-node-network-protocol",
  "polkadot-node-primitives",
  "polkadot-overseer-gen",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "polkadot-statement-table",
  "sc-network",
  "smallvec",
@@ -6524,7 +6586,7 @@ dependencies = [
  "polkadot-node-network-protocol",
  "polkadot-node-subsystem",
  "polkadot-overseer",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "rand 0.8.4",
  "sp-application-crypto",
  "sp-core",
@@ -6548,7 +6610,7 @@ dependencies = [
  "polkadot-node-primitives",
  "polkadot-node-subsystem-types",
  "polkadot-overseer-gen",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "sc-client-api",
  "sp-api",
  "tracing",
@@ -6585,18 +6647,65 @@ dependencies = [
 [[package]]
 name = "polkadot-parachain"
 version = "0.9.12"
+source = "git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4#5feed981cf0fe671447eabaa9c0d235a8dd0003e"
+dependencies = [
+ "derive_more",
+ "frame-support",
+ "parity-scale-codec 2.3.1",
+ "parity-util-mem",
+ "polkadot-core-primitives 0.9.12 (git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4)",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "polkadot-parachain"
+version = "0.9.12"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.12#5feed981cf0fe671447eabaa9c0d235a8dd0003e"
 dependencies = [
  "derive_more",
  "frame-support",
  "parity-scale-codec 2.3.1",
  "parity-util-mem",
- "polkadot-core-primitives",
+ "polkadot-core-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "scale-info",
  "serde",
  "sp-core",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "polkadot-primitives"
+version = "0.9.12"
+source = "git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4#5feed981cf0fe671447eabaa9c0d235a8dd0003e"
+dependencies = [
+ "bitvec 0.20.4",
+ "frame-system",
+ "hex-literal",
+ "parity-scale-codec 2.3.1",
+ "parity-util-mem",
+ "polkadot-core-primitives 0.9.12 (git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4)",
+ "polkadot-parachain 0.9.12 (git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4)",
+ "scale-info",
+ "serde",
+ "sp-api",
+ "sp-application-crypto",
+ "sp-arithmetic",
+ "sp-authority-discovery",
+ "sp-consensus-slots",
+ "sp-core",
+ "sp-inherents",
+ "sp-io",
+ "sp-keystore",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
+ "sp-trie",
+ "sp-version",
 ]
 
 [[package]]
@@ -6609,8 +6718,8 @@ dependencies = [
  "hex-literal",
  "parity-scale-codec 2.3.1",
  "parity-util-mem",
- "polkadot-core-primitives",
- "polkadot-parachain",
+ "polkadot-core-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+ "polkadot-parachain 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "scale-info",
  "serde",
  "sp-api",
@@ -6639,7 +6748,7 @@ dependencies = [
  "jsonrpc-core",
  "pallet-mmr-rpc",
  "pallet-transaction-payment-rpc",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "sc-chain-spec",
  "sc-client-api",
  "sc-consensus-babe",
@@ -6705,9 +6814,9 @@ dependencies = [
  "pallet-utility",
  "pallet-vesting",
  "parity-scale-codec 2.3.1",
- "polkadot-primitives",
- "polkadot-runtime-common",
- "polkadot-runtime-parachains",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+ "polkadot-runtime-common 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+ "polkadot-runtime-parachains 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "rustc-hex",
  "scale-info",
  "serde",
@@ -6735,6 +6844,51 @@ dependencies = [
 [[package]]
 name = "polkadot-runtime-common"
 version = "0.9.12"
+source = "git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4#5feed981cf0fe671447eabaa9c0d235a8dd0003e"
+dependencies = [
+ "beefy-primitives",
+ "bitvec 0.20.4",
+ "frame-election-provider-support",
+ "frame-support",
+ "frame-system",
+ "impl-trait-for-tuples",
+ "libsecp256k1 0.7.0",
+ "log",
+ "pallet-authorship",
+ "pallet-bags-list",
+ "pallet-balances",
+ "pallet-beefy-mmr",
+ "pallet-election-provider-multi-phase",
+ "pallet-session",
+ "pallet-staking",
+ "pallet-timestamp",
+ "pallet-transaction-payment",
+ "pallet-treasury",
+ "pallet-vesting",
+ "parity-scale-codec 2.3.1",
+ "polkadot-primitives 0.9.12 (git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4)",
+ "polkadot-runtime-parachains 0.9.12 (git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4)",
+ "rustc-hex",
+ "scale-info",
+ "serde",
+ "serde_derive",
+ "slot-range-helper 0.9.12 (git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4)",
+ "sp-api",
+ "sp-core",
+ "sp-inherents",
+ "sp-io",
+ "sp-npos-elections",
+ "sp-runtime",
+ "sp-session",
+ "sp-staking",
+ "sp-std",
+ "static_assertions",
+ "xcm 0.9.12 (git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4)",
+]
+
+[[package]]
+name = "polkadot-runtime-common"
+version = "0.9.12"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.12#5feed981cf0fe671447eabaa9c0d235a8dd0003e"
 dependencies = [
  "beefy-primitives",
@@ -6757,13 +6911,13 @@ dependencies = [
  "pallet-treasury",
  "pallet-vesting",
  "parity-scale-codec 2.3.1",
- "polkadot-primitives",
- "polkadot-runtime-parachains",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+ "polkadot-runtime-parachains 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "rustc-hex",
  "scale-info",
  "serde",
  "serde_derive",
- "slot-range-helper",
+ "slot-range-helper 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "sp-api",
  "sp-core",
  "sp-inherents",
@@ -6774,7 +6928,45 @@ dependencies = [
  "sp-staking",
  "sp-std",
  "static_assertions",
- "xcm",
+ "xcm 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+]
+
+[[package]]
+name = "polkadot-runtime-parachains"
+version = "0.9.12"
+source = "git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4#5feed981cf0fe671447eabaa9c0d235a8dd0003e"
+dependencies = [
+ "bitflags",
+ "bitvec 0.20.4",
+ "derive_more",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-authority-discovery",
+ "pallet-authorship",
+ "pallet-balances",
+ "pallet-session",
+ "pallet-staking",
+ "pallet-timestamp",
+ "pallet-vesting",
+ "parity-scale-codec 2.3.1",
+ "polkadot-primitives 0.9.12 (git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4)",
+ "rand 0.8.4",
+ "rand_chacha 0.3.1",
+ "rustc-hex",
+ "scale-info",
+ "serde",
+ "sp-api",
+ "sp-core",
+ "sp-inherents",
+ "sp-io",
+ "sp-keystore",
+ "sp-runtime",
+ "sp-session",
+ "sp-staking",
+ "sp-std",
+ "xcm 0.9.12 (git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4)",
+ "xcm-executor 0.9.12 (git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4)",
 ]
 
 [[package]]
@@ -6796,7 +6988,7 @@ dependencies = [
  "pallet-timestamp",
  "pallet-vesting",
  "parity-scale-codec 2.3.1",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "rand 0.8.4",
  "rand_chacha 0.3.1",
  "rustc-hex",
@@ -6811,8 +7003,8 @@ dependencies = [
  "sp-session",
  "sp-staking",
  "sp-std",
- "xcm",
- "xcm-executor",
+ "xcm 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+ "xcm-executor 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
 ]
 
 [[package]]
@@ -6861,11 +7053,11 @@ dependencies = [
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
  "polkadot-overseer",
- "polkadot-parachain",
- "polkadot-primitives",
+ "polkadot-parachain 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "polkadot-rpc",
  "polkadot-runtime",
- "polkadot-runtime-parachains",
+ "polkadot-runtime-parachains 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "polkadot-statement-distribution",
  "sc-authority-discovery",
  "sc-basic-authorship",
@@ -6924,7 +7116,7 @@ dependencies = [
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "sp-keystore",
  "sp-staking",
  "thiserror",
@@ -6937,7 +7129,7 @@ version = "0.9.12"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.12#5feed981cf0fe671447eabaa9c0d235a8dd0003e"
 dependencies = [
  "parity-scale-codec 2.3.1",
- "polkadot-primitives",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "sp-core",
 ]
 
@@ -6971,12 +7163,12 @@ dependencies = [
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-vesting",
- "pallet-xcm",
+ "pallet-xcm 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "parity-scale-codec 2.3.1",
- "polkadot-parachain",
- "polkadot-primitives",
- "polkadot-runtime-common",
- "polkadot-runtime-parachains",
+ "polkadot-parachain 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+ "polkadot-runtime-common 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+ "polkadot-runtime-parachains 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "rustc-hex",
  "scale-info",
  "serde",
@@ -6997,9 +7189,9 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
- "xcm",
- "xcm-builder",
- "xcm-executor",
+ "xcm 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+ "xcm-builder 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+ "xcm-executor 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
 ]
 
 [[package]]
@@ -7018,11 +7210,11 @@ dependencies = [
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
  "polkadot-overseer",
- "polkadot-parachain",
- "polkadot-primitives",
+ "polkadot-parachain 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+ "polkadot-primitives 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "polkadot-rpc",
- "polkadot-runtime-common",
- "polkadot-runtime-parachains",
+ "polkadot-runtime-common 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+ "polkadot-runtime-parachains 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "polkadot-service",
  "polkadot-test-runtime",
  "rand 0.8.4",
@@ -7810,6 +8002,7 @@ dependencies = [
 name = "sc-basic-authorship"
 version = "0.10.0-dev"
 dependencies = [
+ "extrinsic-info-runtime-api",
  "futures 0.3.17",
  "futures-timer 3.0.2",
  "log",
@@ -7825,6 +8018,7 @@ dependencies = [
  "sp-core",
  "sp-inherents",
  "sp-runtime",
+ "sp-ver",
  "substrate-prometheus-endpoint",
 ]
 
@@ -7832,6 +8026,9 @@ dependencies = [
 name = "sc-block-builder"
 version = "0.10.0-dev"
 dependencies = [
+ "extrinsic-info-runtime-api",
+ "extrinsic-shuffler",
+ "log",
  "parity-scale-codec 2.3.1",
  "sc-client-api",
  "sp-api",
@@ -7841,6 +8038,7 @@ dependencies = [
  "sp-inherents",
  "sp-runtime",
  "sp-state-machine",
+ "sp-ver",
 ]
 
 [[package]]
@@ -8097,15 +8295,18 @@ dependencies = [
  "sc-consensus",
  "sc-telemetry",
  "sp-api",
+ "sp-application-crypto",
  "sp-arithmetic",
  "sp-blockchain",
  "sp-consensus",
  "sp-consensus-slots",
  "sp-core",
  "sp-inherents",
+ "sp-keystore",
  "sp-runtime",
  "sp-state-machine",
  "sp-timestamp",
+ "sp-ver",
  "thiserror",
 ]
 
@@ -8487,6 +8688,7 @@ dependencies = [
  "async-trait",
  "directories",
  "exit-future",
+ "extrinsic-info-runtime-api",
  "futures 0.3.17",
  "futures-timer 3.0.2",
  "hash-db",
@@ -8975,6 +9177,18 @@ name = "slab"
 version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9def91fd1e018fe007022791f865d0ccc9b3a0d5001e01aabb8b40e46000afb5"
+
+[[package]]
+name = "slot-range-helper"
+version = "0.9.12"
+source = "git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4#5feed981cf0fe671447eabaa9c0d235a8dd0003e"
+dependencies = [
+ "enumn",
+ "parity-scale-codec 2.3.1",
+ "paste",
+ "sp-runtime",
+ "sp-std",
+]
 
 [[package]]
 name = "slot-range-helper"
@@ -9658,6 +9872,20 @@ dependencies = [
  "sp-std",
  "trie-db",
  "trie-root",
+]
+
+[[package]]
+name = "sp-ver"
+version = "4.0.0-dev"
+dependencies = [
+ "async-trait",
+ "log",
+ "parity-scale-codec 2.3.1",
+ "serde",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -11079,6 +11307,19 @@ dependencies = [
 [[package]]
 name = "xcm"
 version = "0.9.12"
+source = "git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4#5feed981cf0fe671447eabaa9c0d235a8dd0003e"
+dependencies = [
+ "derivative",
+ "impl-trait-for-tuples",
+ "log",
+ "parity-scale-codec 2.3.1",
+ "scale-info",
+ "xcm-procedural 0.1.0 (git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4)",
+]
+
+[[package]]
+name = "xcm"
+version = "0.9.12"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.12#5feed981cf0fe671447eabaa9c0d235a8dd0003e"
 dependencies = [
  "derivative",
@@ -11086,7 +11327,27 @@ dependencies = [
  "log",
  "parity-scale-codec 2.3.1",
  "scale-info",
- "xcm-procedural",
+ "xcm-procedural 0.1.0 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+]
+
+[[package]]
+name = "xcm-builder"
+version = "0.9.12"
+source = "git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4#5feed981cf0fe671447eabaa9c0d235a8dd0003e"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-transaction-payment",
+ "parity-scale-codec 2.3.1",
+ "polkadot-parachain 0.9.12 (git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4)",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "xcm 0.9.12 (git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4)",
+ "xcm-executor 0.9.12 (git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4)",
 ]
 
 [[package]]
@@ -11099,14 +11360,31 @@ dependencies = [
  "log",
  "pallet-transaction-payment",
  "parity-scale-codec 2.3.1",
- "polkadot-parachain",
+ "polkadot-parachain 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
  "scale-info",
  "sp-arithmetic",
  "sp-io",
  "sp-runtime",
  "sp-std",
- "xcm",
- "xcm-executor",
+ "xcm 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+ "xcm-executor 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+]
+
+[[package]]
+name = "xcm-executor"
+version = "0.9.12"
+source = "git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4#5feed981cf0fe671447eabaa9c0d235a8dd0003e"
+dependencies = [
+ "frame-support",
+ "impl-trait-for-tuples",
+ "log",
+ "parity-scale-codec 2.3.1",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "xcm 0.9.12 (git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4)",
 ]
 
 [[package]]
@@ -11123,7 +11401,17 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "xcm",
+ "xcm 0.9.12 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.12)",
+]
+
+[[package]]
+name = "xcm-procedural"
+version = "0.1.0"
+source = "git+https://github.com/mangata-finance/polkadot?branch=mangata-dev-v4#5feed981cf0fe671447eabaa9c0d235a8dd0003e"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

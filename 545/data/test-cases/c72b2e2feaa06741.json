@@ -1,0 +1,48 @@
+{
+  "uid" : "c72b2e2feaa06741",
+  "name" : "[BUG?] SDK- Nonce management - RPC Failure - Not enough balance",
+  "fullName" : "SDK test - Nonce tests - Errors.[BUG?] SDK- Nonce management - RPC Failure - Not enough balance",
+  "historyId" : "29472f648e6e85d393fc0bb751e1aeba",
+  "time" : {
+    "start" : 1638274616022,
+    "stop" : 1638274616022,
+    "duration" : 0
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "skipped",
+  "statusMessage" : "Temporarily disabled with xit",
+  "statusTrace" : "undefined",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "SDK test - Nonce tests - Errors"
+  }, {
+    "name" : "testClass",
+    "value" : "SDK test - Nonce tests - Errors"
+  }, {
+    "name" : "testMethod",
+    "value" : "[BUG?] SDK- Nonce management - RPC Failure - Not enough balance"
+  }, {
+    "name" : "package",
+    "value" : "SDK test - Nonce tests - Errors"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "c72b2e2feaa06741.json",
+  "parameterValues" : [ ]
+}

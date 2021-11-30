@@ -1,0 +1,46 @@
+{
+  "uid" : "789e1ab86af2ceca",
+  "name" : "SDK- Nonce management - Extrinsic failed",
+  "fullName" : "SDK test - Nonce tests - user.SDK- Nonce management - Extrinsic failed",
+  "historyId" : "9a4ffdb2cd157cc8fbcb23ba6b46e2e7",
+  "time" : {
+    "start" : 1638274561228,
+    "stop" : 1638274579956,
+    "duration" : 18728
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "SDK test - Nonce tests - user"
+  }, {
+    "name" : "testClass",
+    "value" : "SDK test - Nonce tests - user"
+  }, {
+    "name" : "testMethod",
+    "value" : "SDK- Nonce management - Extrinsic failed"
+  }, {
+    "name" : "package",
+    "value" : "SDK test - Nonce tests - user"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "789e1ab86af2ceca.json",
+  "parameterValues" : [ ]
+}

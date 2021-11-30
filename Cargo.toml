@@ -74,6 +74,7 @@ sc-executor-wasmi = { path = "../substrate/client/executor/wasmi" }
 sc-executor = { path = "../substrate/client/executor" }
 sc-executor-common = { path = "../substrate/client/executor/common" }
 sc-block-builder = { path = "../substrate/client/block-builder" }
+sc-block-builder-ver = { path = "../substrate/client/block-builder-ver" }
 sc-rpc-server = { path = "../substrate/client/rpc-servers" }
 sc-keystore = { path = "../substrate/client/keystore" }
 sc-telemetry = { path = "../substrate/client/telemetry" }
@@ -83,6 +84,7 @@ sc-service = { path = "../substrate/client/service" }
 sc-client-db = { path = "../substrate/client/db" }
 sc-rpc-api = { path = "../substrate/client/rpc-api" }
 sc-basic-authorship = { path = "../substrate/client/basic-authorship" }
+# sc-basic-authorship-ver = { path = "../substrate/client/basic-authorship" }
 sc-sync-state-rpc = { path = "../substrate/client/sync-state-rpc" }
 sc-tracing-proc-macro = { path = "../substrate/client/tracing/proc-macro" }
 sc-tracing = { path = "../substrate/client/tracing" }
@@ -169,6 +171,7 @@ pallet-grandpa = { path = "../substrate/frame/grandpa" }
 pallet-proxy = { path = "../substrate/frame/proxy" }
 pallet-balances = { path = "../substrate/frame/balances" }
 pallet-multisig = { path = "../substrate/frame/multisig" }
+extrinsic-info-runtime-api = { path = "../substrate/primitives/extrinsic-info-runtime-api" }
 
 [patch."https://github.com/mangata-finance/substrate"]
 sp-debug-derive = { path = "../substrate/primitives/debug-derive" }
@@ -225,6 +228,7 @@ sc-executor-wasmi = { path = "../substrate/client/executor/wasmi" }
 sc-executor = { path = "../substrate/client/executor" }
 sc-executor-common = { path = "../substrate/client/executor/common" }
 sc-block-builder = { path = "../substrate/client/block-builder" }
+sc-block-builder-ver = { path = "../substrate/client/block-builder-ver" }
 sc-rpc-server = { path = "../substrate/client/rpc-servers" }
 sc-keystore = { path = "../substrate/client/keystore" }
 sc-telemetry = { path = "../substrate/client/telemetry" }
@@ -234,6 +238,7 @@ sc-service = { path = "../substrate/client/service" }
 sc-client-db = { path = "../substrate/client/db" }
 sc-rpc-api = { path = "../substrate/client/rpc-api" }
 sc-basic-authorship = { path = "../substrate/client/basic-authorship" }
+sc-basic-authorship-ver = { path = "../substrate/client/basic-authorship-ver" }
 sc-sync-state-rpc = { path = "../substrate/client/sync-state-rpc" }
 sc-tracing-proc-macro = { path = "../substrate/client/tracing/proc-macro" }
 sc-tracing = { path = "../substrate/client/tracing" }
@@ -320,6 +325,9 @@ pallet-grandpa = { path = "../substrate/frame/grandpa" }
 pallet-proxy = { path = "../substrate/frame/proxy" }
 pallet-balances = { path = "../substrate/frame/balances" }
 pallet-multisig = { path = "../substrate/frame/multisig" }
+extrinsic-info-runtime-api = { path = "../substrate/primitives/extrinsic-info-runtime-api" }
+
+
 
 [patch."https://github.com/mangata-finance/snowbridge"]
 artemis-core = { path = "../snowbridge/parachain/primitives/core"}

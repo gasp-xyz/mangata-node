@@ -893,6 +893,23 @@ construct_runtime!(
 
 impl_runtime_apis! {
 
+    impl extrinsic_info_runtime_api::ExtrinsicInfoRuntimeApi<Block> for Runtime {
+        fn get_info(
+            tx: <Block as BlockT>::Extrinsic,
+        ) -> Option<extrinsic_info_runtime_api::ExtrinsicInfo> {
+            // tx.signature.clone().map(|sig|
+            //     {
+            //         let nonce: frame_system::CheckNonce<_> = sig.2.4;
+            //         extrinsic_info_runtime_api::ExtrinsicInfo{
+            //             who: sig.0,
+            //             nonce: nonce.0,
+            //         }
+            //     }
+            // )
+            None
+        }
+    }
+
 	impl xyk_runtime_api::XykApi<Block, Balance, TokenId> for Runtime {
         fn calculate_sell_price(
             input_reserve: Balance,
@@ -968,7 +985,19 @@ impl_runtime_apis! {
 		}
 
 		fn execute_block(block: Block) {
-			Executive::execute_block(block)
+            let authors :Vec<_> = block.extrinsics().iter().map(
+                |tx| {
+                    if let Some(sig) = tx.signature.clone(){
+                        if let Address::Id(addr) = sig.0 {
+                            Some(addr)
+                        }else{
+                            None
+                        }
+                    }else{
+                        None
+                    }
+                }).collect();
+			Executive::execute_block_with_authors(block, authors)
 		}
 
 		fn initialize_block(header: &<Block as BlockT>::Header) {

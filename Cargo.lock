@@ -2054,6 +2054,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "extrinsic-info-runtime-api"
+version = "4.0.0-dev"
+dependencies = [
+ "derive_more",
+ "futures 0.3.17",
+ "log",
+ "parity-scale-codec 2.3.1",
+ "serde",
+ "sp-api",
+ "sp-blockchain",
+ "sp-runtime",
+]
+
+[[package]]
+name = "extrinsic-shuffler"
+version = "4.0.0-dev"
+dependencies = [
+ "derive_more",
+ "extrinsic-info-runtime-api",
+ "log",
+ "sp-api",
+ "sp-block-builder",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+ "sp-ver",
+]
+
+[[package]]
 name = "fake-simd"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2236,12 +2265,15 @@ dependencies = [
 name = "frame-executive"
 version = "4.0.0-dev"
 dependencies = [
+ "extrinsic-shuffler",
  "frame-support",
  "frame-system",
  "parity-scale-codec 2.3.1",
  "scale-info",
+ "schnorrkel",
  "sp-core",
  "sp-io",
+ "sp-keystore",
  "sp-runtime",
  "sp-std",
  "sp-tracing",
@@ -4104,7 +4136,7 @@ dependencies = [
  "polkadot-primitives",
  "polkadot-service",
  "polkadot-test-service",
- "sc-basic-authorship",
+ "sc-basic-authorship-ver",
  "sc-chain-spec",
  "sc-cli",
  "sc-client-api",
@@ -4161,6 +4193,7 @@ dependencies = [
  "cumulus-primitives-core",
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
+ "extrinsic-info-runtime-api",
  "frame-benchmarking",
  "frame-executive",
  "frame-support",
@@ -7812,6 +7845,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "sc-basic-authorship-ver"
+version = "0.10.0-dev"
+dependencies = [
+ "extrinsic-info-runtime-api",
+ "futures 0.3.17",
+ "futures-timer 3.0.2",
+ "log",
+ "parity-scale-codec 2.3.1",
+ "sc-block-builder-ver",
+ "sc-client-api",
+ "sc-proposer-metrics",
+ "sc-telemetry",
+ "sc-transaction-pool-api",
+ "sp-api",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-ver",
+ "substrate-prometheus-endpoint",
+]
+
+[[package]]
 name = "sc-block-builder"
 version = "0.10.0-dev"
 dependencies = [
@@ -7824,6 +7881,25 @@ dependencies = [
  "sp-inherents",
  "sp-runtime",
  "sp-state-machine",
+]
+
+[[package]]
+name = "sc-block-builder-ver"
+version = "0.10.0-dev"
+dependencies = [
+ "extrinsic-info-runtime-api",
+ "extrinsic-shuffler",
+ "log",
+ "parity-scale-codec 2.3.1",
+ "sc-client-api",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-ver",
 ]
 
 [[package]]
@@ -8080,15 +8156,18 @@ dependencies = [
  "sc-consensus",
  "sc-telemetry",
  "sp-api",
+ "sp-application-crypto",
  "sp-arithmetic",
  "sp-blockchain",
  "sp-consensus",
  "sp-consensus-slots",
  "sp-core",
  "sp-inherents",
+ "sp-keystore",
  "sp-runtime",
  "sp-state-machine",
  "sp-timestamp",
+ "sp-ver",
  "thiserror",
 ]
 
@@ -8470,6 +8549,7 @@ dependencies = [
  "async-trait",
  "directories",
  "exit-future",
+ "extrinsic-info-runtime-api",
  "futures 0.3.17",
  "futures-timer 3.0.2",
  "hash-db",
@@ -8482,6 +8562,7 @@ dependencies = [
  "pin-project 1.0.8",
  "rand 0.7.3",
  "sc-block-builder",
+ "sc-block-builder-ver",
  "sc-chain-spec",
  "sc-client-api",
  "sc-client-db",
@@ -9644,6 +9725,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "sp-ver"
+version = "4.0.0-dev"
+dependencies = [
+ "async-trait",
+ "log",
+ "parity-scale-codec 2.3.1",
+ "serde",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "sp-version"
 version = "4.0.0-dev"
 dependencies = [
@@ -10389,7 +10484,7 @@ version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f559b464de2e2bdabcac6a210d12e9b5a5973c251e102c44c585c71d51bd78e"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "rand 0.8.4",
  "static_assertions",
 ]

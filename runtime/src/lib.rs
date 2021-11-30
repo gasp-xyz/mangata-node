@@ -997,7 +997,7 @@ impl_runtime_apis! {
                         None
                     }
                 }).collect();
-			Executive::execute_block_with_authors(block, authors)
+			Executive::execute_block_ver(block, authors)
 		}
 
 		fn initialize_block(header: &<Block as BlockT>::Header) {

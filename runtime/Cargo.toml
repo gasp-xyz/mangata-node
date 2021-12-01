@@ -147,7 +147,6 @@ std = [
 	"orml-traits/std",
 	"orml-tokens/std",
 	"pallet-treasury/std",
-
 	"pallet-assets-info/std",
 	"pallet-xyk/std",
     "xyk-runtime-api/std",

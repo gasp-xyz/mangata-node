@@ -1170,8 +1170,30 @@ impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
 	}
 }
 
-cumulus_pallet_parachain_system::register_validate_block! {
-	Runtime = Runtime,
-	BlockExecutor = cumulus_pallet_aura_ext::BlockExecutor::<Runtime, Executive>,
-	CheckInherents = CheckInherents,
+// cumulus_pallet_parachain_system::register_validate_block! {
+// 	Runtime = Runtime,
+// 	BlockExecutor = cumulus_pallet_aura_ext::BlockExecutor::<Runtime, Executive>,
+// 	CheckInherents = CheckInherents,
+// }
+
+// replace validate block function with its expanded version
+#[doc(hidden)]
+mod parachain_validate_block {
+    use super::*;
+    #[no_mangle]
+    #[cfg(not(feature = "std"))]
+    unsafe fn validate_block(arguments: *const u8, arguments_len: usize)
+     -> u64 {
+        let params =
+            cumulus_pallet_parachain_system::validate_block::polkadot_parachain::load_params(arguments,
+                                                                                             arguments_len);
+        let res =
+            cumulus_pallet_parachain_system::validate_block::implementation::validate_block::<<Runtime
+                                                                                              as
+                                                                                              cumulus_pallet_parachain_system::validate_block::GetRuntimeBlockType>::RuntimeBlock,
+                                                                                              cumulus_pallet_aura_ext::BlockExecutor<Runtime, Executive>,
+                                                                                              Runtime,
+                                                                                              CheckInherents>(params);
+        cumulus_pallet_parachain_system::validate_block::polkadot_parachain::write_result(&res)
+    }
 }

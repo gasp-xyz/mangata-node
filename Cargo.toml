@@ -328,8 +328,8 @@ pallet-multisig = { path = "../substrate/frame/multisig" }
 extrinsic-info-runtime-api = { path = "../substrate/primitives/extrinsic-info-runtime-api" }
 
 
-# [patch."https://github.com/mangata-finance/cumulus"]
-# cumulus-pallet-parachain-system-proc-macro = { path = "/home/dev/cumulus/pallets/parachain-system/proc-macro" }
+[patch."https://github.com/mangata-finance/cumulus"]
+cumulus-pallet-aura-ext = { path = "../cumulus/pallets/aura-ext" }
 
 [patch."https://github.com/mangata-finance/snowbridge"]
 artemis-core = { path = "../snowbridge/parachain/primitives/core"}

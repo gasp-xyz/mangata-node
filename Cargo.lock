@@ -1486,7 +1486,6 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-aura-ext"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev-v4#935bac869a72baef17e46d2ae1abc8c0c650cef5"
 dependencies = [
  "frame-executive",
  "frame-support",

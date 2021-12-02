@@ -985,19 +985,7 @@ impl_runtime_apis! {
 		}
 
 		fn execute_block(block: Block) {
-            let authors :Vec<_> = block.extrinsics().iter().map(
-                |tx| {
-                    if let Some(sig) = tx.signature.clone(){
-                        if let Address::Id(addr) = sig.0 {
-                            Some(addr)
-                        }else{
-                            None
-                        }
-                    }else{
-                        None
-                    }
-                }).collect();
-			Executive::execute_block_ver(block, authors)
+			Executive::execute_block_ver(block)
 		}
 
 		fn initialize_block(header: &<Block as BlockT>::Header) {
@@ -1191,7 +1179,7 @@ mod parachain_validate_block {
             cumulus_pallet_parachain_system::validate_block::implementation::validate_block::<<Runtime
                                                                                               as
                                                                                               cumulus_pallet_parachain_system::validate_block::GetRuntimeBlockType>::RuntimeBlock,
-                                                                                              cumulus_pallet_aura_ext::BlockExecutor<Runtime, Executive>,
+                                                                                              cumulus_pallet_aura_ext::BlockExecutorVer<Runtime, Executive>,
                                                                                               Runtime,
                                                                                               CheckInherents>(params);
         cumulus_pallet_parachain_system::validate_block::polkadot_parachain::write_result(&res)

@@ -1,0 +1,46 @@
+{
+  "uid" : "f1de12c896ce3640",
+  "name" : "be minted",
+  "fullName" : "xyk-pallet - Pool tests: a pool can:.be minted",
+  "historyId" : "6d03ac696f73bb946bbe4981468e8ab7",
+  "time" : {
+    "start" : 1638438452195,
+    "stop" : 1638438632024,
+    "duration" : 179829
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Pool tests: a pool can:"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Pool tests: a pool can:"
+  }, {
+    "name" : "testMethod",
+    "value" : "be minted"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Pool tests: a pool can:"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "f1de12c896ce3640.json",
+  "parameterValues" : [ ]
+}

@@ -1,0 +1,46 @@
+{
+  "uid" : "75c80be7b5710966",
+  "name" : "xyk-pallet - Pool tests: createPool",
+  "fullName" : "test/parallel/xyk-pallet.pool.test.ts.xyk-pallet - Pool tests: createPool",
+  "historyId" : "a2ca07f827d069e059d2d382883604cd",
+  "time" : {
+    "start" : 1638438362186,
+    "stop" : 1638438469412,
+    "duration" : 107226
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "test/parallel/xyk-pallet.pool.test.ts"
+  }, {
+    "name" : "testClass",
+    "value" : "test/parallel/xyk-pallet.pool.test.ts"
+  }, {
+    "name" : "testMethod",
+    "value" : "xyk-pallet - Pool tests: createPool"
+  }, {
+    "name" : "package",
+    "value" : "test/parallel/xyk-pallet.pool.test.ts"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "75c80be7b5710966.json",
+  "parameterValues" : [ ]
+}

@@ -1,0 +1,48 @@
+{
+  "uid" : "1021fc011d4be2b7",
+  "name" : "[BUG] Buy a few assets to a wallet linked to MGA  => overflow.",
+  "fullName" : "xyk-pallet - Operate with a highly unbalanced pool [mg - newAsset].[BUG] Buy a few assets to a wallet linked to MGA  => overflow.",
+  "historyId" : "3ba25a28865962e78c6e26d72d4cc1ba",
+  "time" : {
+    "start" : 1638438703141,
+    "stop" : 1638438703142,
+    "duration" : 1
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "skipped",
+  "statusMessage" : "",
+  "statusTrace" : "undefined",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Operate with a highly unbalanced pool [mg - newAsset]"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Operate with a highly unbalanced pool [mg - newAsset]"
+  }, {
+    "name" : "testMethod",
+    "value" : "[BUG] Buy a few assets to a wallet linked to MGA  => overflow."
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Operate with a highly unbalanced pool [mg - newAsset]"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "1021fc011d4be2b7.json",
+  "parameterValues" : [ ]
+}

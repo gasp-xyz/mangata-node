@@ -1,0 +1,46 @@
+{
+  "uid" : "fadcbf3cefebb30",
+  "name" : "Burning x-y and y-x pool",
+  "fullName" : "xyk-pallet - Pool opeations: Simmetry.Burning x-y and y-x pool",
+  "historyId" : "a72bb43a4d3706c43113c0d8a3e82cc4",
+  "time" : {
+    "start" : 1638438985117,
+    "stop" : 1638439021315,
+    "duration" : 36198
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Pool opeations: Simmetry"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Pool opeations: Simmetry"
+  }, {
+    "name" : "testMethod",
+    "value" : "Burning x-y and y-x pool"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Pool opeations: Simmetry"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "fadcbf3cefebb30.json",
+  "parameterValues" : [ ]
+}

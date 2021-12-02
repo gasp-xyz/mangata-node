@@ -1,0 +1,46 @@
+{
+  "uid" : "45b7026b6b99bacd",
+  "name" : "xyk-pallet - Sudo tests: Sudo Issue an asset",
+  "fullName" : "test/parallel/xyk-pallet.sudo.test.ts.xyk-pallet - Sudo tests: Sudo Issue an asset",
+  "historyId" : "39d483eba644b503bbdd25ceef74419e",
+  "time" : {
+    "start" : 1638439222178,
+    "stop" : 1638439237365,
+    "duration" : 15187
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "test/parallel/xyk-pallet.sudo.test.ts"
+  }, {
+    "name" : "testClass",
+    "value" : "test/parallel/xyk-pallet.sudo.test.ts"
+  }, {
+    "name" : "testMethod",
+    "value" : "xyk-pallet - Sudo tests: Sudo Issue an asset"
+  }, {
+    "name" : "package",
+    "value" : "test/parallel/xyk-pallet.sudo.test.ts"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "45b7026b6b99bacd.json",
+  "parameterValues" : [ ]
+}

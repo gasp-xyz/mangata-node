@@ -1,0 +1,44 @@
+{
+  "uid" : "a50ce41760565a73",
+  "name" : "xyk-rpc - calculate_sell_price validates parameters - Negative params",
+  "fullName" : "test/parallel/xyk-rpc.errors.test.ts.xyk-rpc - calculate_sell_price validates parameters - Negative params",
+  "historyId" : "2ee1280dc5ab69689978447d22d20b5",
+  "time" : {
+    "start" : 1638439023874,
+    "stop" : 1638439023934,
+    "duration" : 60
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "test/parallel/xyk-rpc.errors.test.ts"
+  }, {
+    "name" : "testClass",
+    "value" : "test/parallel/xyk-rpc.errors.test.ts"
+  }, {
+    "name" : "testMethod",
+    "value" : "xyk-rpc - calculate_sell_price validates parameters - Negative params"
+  }, {
+    "name" : "package",
+    "value" : "test/parallel/xyk-rpc.errors.test.ts"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : true,
+  "retry" : true,
+  "extra" : {
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "a50ce41760565a73.json",
+  "parameterValues" : [ ]
+}

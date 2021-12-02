@@ -1,0 +1,46 @@
+{
+  "uid" : "c872719453f93232",
+  "name" : "xyk-pallet - User Balance - Buying an asset does not require paying fees",
+  "fullName" : "test/parallel/xyk-pallet.API.testMGArequired.test.ts.xyk-pallet - User Balance - Buying an asset does not require paying fees",
+  "historyId" : "fdee160a228d32a63d435b68102e4894",
+  "time" : {
+    "start" : 1638439346002,
+    "stop" : 1638439513839,
+    "duration" : 167837
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "test/parallel/xyk-pallet.API.testMGArequired.test.ts"
+  }, {
+    "name" : "testClass",
+    "value" : "test/parallel/xyk-pallet.API.testMGArequired.test.ts"
+  }, {
+    "name" : "testMethod",
+    "value" : "xyk-pallet - User Balance - Buying an asset does not require paying fees"
+  }, {
+    "name" : "package",
+    "value" : "test/parallel/xyk-pallet.API.testMGArequired.test.ts"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "c872719453f93232.json",
+  "parameterValues" : [ ]
+}

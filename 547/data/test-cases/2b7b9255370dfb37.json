@@ -1,0 +1,46 @@
+{
+  "uid" : "2b7b9255370dfb37",
+  "name" : "Mint liquidity when not enough assetY for minting Xamount",
+  "fullName" : "xyk-pallet - Mint liquidity tests: MintLiquidity Errors:.Mint liquidity when not enough assetY for minting Xamount",
+  "historyId" : "b2d075f90e328573a39d1ca3480e7c9c",
+  "time" : {
+    "start" : 1638438256276,
+    "stop" : 1638438397163,
+    "duration" : 140887
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Mint liquidity tests: MintLiquidity Errors:"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Mint liquidity tests: MintLiquidity Errors:"
+  }, {
+    "name" : "testMethod",
+    "value" : "Mint liquidity when not enough assetY for minting Xamount"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Mint liquidity tests: MintLiquidity Errors:"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "2b7b9255370dfb37.json",
+  "parameterValues" : [ ]
+}

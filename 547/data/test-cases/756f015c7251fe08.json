@@ -1,0 +1,46 @@
+{
+  "uid" : "756f015c7251fe08",
+  "name" : "validate parameters - buy [soldTokenId->2,boughtTokenId->3,amount->1,expected->3]",
+  "fullName" : "xyk-rpc - calculate_buy_price_by_id, calculate_sell_price_by_id.validate parameters - buy [soldTokenId->2,boughtTokenId->3,amount->1,expected->3]",
+  "historyId" : "cf5fd6695dfa8fbd77688f3ff10cf4a6",
+  "time" : {
+    "start" : 1638439460353,
+    "stop" : 1638439460369,
+    "duration" : 16
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-rpc - calculate_buy_price_by_id, calculate_sell_price_by_id"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-rpc - calculate_buy_price_by_id, calculate_sell_price_by_id"
+  }, {
+    "name" : "testMethod",
+    "value" : "validate parameters - buy [soldTokenId->2,boughtTokenId->3,amount->1,expected->3]"
+  }, {
+    "name" : "package",
+    "value" : "xyk-rpc - calculate_buy_price_by_id, calculate_sell_price_by_id"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "756f015c7251fe08.json",
+  "parameterValues" : [ ]
+}

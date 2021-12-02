@@ -1,0 +1,46 @@
+{
+  "uid" : "3b51e35c1e62f2ad",
+  "name" : "Buy assets with a high expectation: maxInput -1",
+  "fullName" : "xyk-pallet - Buy assets tests: BuyAssets Errors:.Buy assets with a high expectation: maxInput -1",
+  "historyId" : "accc5974131ac463afb4d89efe686a24",
+  "time" : {
+    "start" : 1638438649418,
+    "stop" : 1638438793107,
+    "duration" : 143689
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Buy assets tests: BuyAssets Errors:"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Buy assets tests: BuyAssets Errors:"
+  }, {
+    "name" : "testMethod",
+    "value" : "Buy assets with a high expectation: maxInput -1"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Buy assets tests: BuyAssets Errors:"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "3b51e35c1e62f2ad.json",
+  "parameterValues" : [ ]
+}

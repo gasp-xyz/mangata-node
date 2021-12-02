@@ -1,0 +1,46 @@
+{
+  "uid" : "c3ce3e50b4661076",
+  "name" : "xyk-pallet - AssetsOperation: transferAll",
+  "fullName" : "test/parallel/xyk-pallet.asset.transfer.test.ts.xyk-pallet - AssetsOperation: transferAll",
+  "historyId" : "f547f9e83d398e582965f1ffa804cafd",
+  "time" : {
+    "start" : 1638439093890,
+    "stop" : 1638439201071,
+    "duration" : 107181
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "test/parallel/xyk-pallet.asset.transfer.test.ts"
+  }, {
+    "name" : "testClass",
+    "value" : "test/parallel/xyk-pallet.asset.transfer.test.ts"
+  }, {
+    "name" : "testMethod",
+    "value" : "xyk-pallet - AssetsOperation: transferAll"
+  }, {
+    "name" : "package",
+    "value" : "test/parallel/xyk-pallet.asset.transfer.test.ts"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "c3ce3e50b4661076.json",
+  "parameterValues" : [ ]
+}

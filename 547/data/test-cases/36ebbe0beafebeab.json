@@ -1,0 +1,46 @@
+{
+  "uid" : "36ebbe0beafebeab",
+  "name" : "validate parameters - burn from pool [firstIdx->0,secondIdx->1,amount->100000,expected->100.0000 nUnit]",
+  "fullName" : "xyk-rpc - calculate get_burn amount: OK.validate parameters - burn from pool [firstIdx->0,secondIdx->1,amount->100000,expected->100.0000 nUnit]",
+  "historyId" : "56fea8ca0a17d11675173ee5ec866034",
+  "time" : {
+    "start" : 1638439040159,
+    "stop" : 1638439040163,
+    "duration" : 4
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-rpc - calculate get_burn amount: OK"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-rpc - calculate get_burn amount: OK"
+  }, {
+    "name" : "testMethod",
+    "value" : "validate parameters - burn from pool [firstIdx->0,secondIdx->1,amount->100000,expected->100.0000 nUnit]"
+  }, {
+    "name" : "package",
+    "value" : "xyk-rpc - calculate get_burn amount: OK"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "36ebbe0beafebeab.json",
+  "parameterValues" : [ ]
+}

@@ -2276,6 +2276,7 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "sp-tracing",
+ "sp-ver",
 ]
 
 [[package]]

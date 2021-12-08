@@ -81,7 +81,7 @@ sp-transaction-pool = { git = "https://github.com/mangata-finance/substrate", br
 
 # Cumulus dependencies
 cumulus-client-cli = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v4' }
-cumulus-client-collator = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v4' }
+# cumulus-client-collator = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v4' }
 cumulus-client-consensus-aura = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v4' }
 cumulus-client-consensus-common = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v4' }
 cumulus-client-network = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v4' }

@@ -329,7 +329,22 @@ extrinsic-info-runtime-api = { path = "../substrate/primitives/extrinsic-info-ru
 
 
 [patch."https://github.com/mangata-finance/cumulus"]
+cumulus-client-cli = { path = "../cumulus/client/cli" }
+cumulus-client-collator = { path = "../cumulus/client/collator" }
+cumulus-client-consensus-aura = { path = "../cumulus/client/consensus/aura" }
+cumulus-client-consensus-common = { path = "../cumulus/client/consensus/common" }
+cumulus-client-network = { path = "../cumulus/client/network" }
+cumulus-client-service = { path = "../cumulus/client/service" }
 cumulus-pallet-aura-ext = { path = "../cumulus/pallets/aura-ext" }
+cumulus-pallet-dmp-queue = { path = "../cumulus/pallets/dmp-queue" }
+cumulus-pallet-parachain-system = { path = "../cumulus/pallets/parachain-system" }
+cumulus-pallet-xcm = { path = "../cumulus/pallets/xcm" }
+cumulus-pallet-xcmp-queue = { path = "../cumulus/pallets/xcmp-queue" }
+cumulus-primitives-core = { path = "../cumulus/primitives/core" }
+cumulus-primitives-parachain-inherent = { path = "../cumulus/primitives/parachain-inherent" }
+cumulus-primitives-timestamp = { path = "../cumulus/primitives/timestamp" }
+cumulus-primitives-utility = { path = "../cumulus/primitives/utility" }
+parachain-info = { path = "../cumulus/polkadot-parachains/pallets/parachain-info" }
 
 [patch."https://github.com/mangata-finance/snowbridge"]
 artemis-core = { path = "../snowbridge/parachain/primitives/core"}

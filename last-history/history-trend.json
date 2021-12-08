@@ -1,16 +1,4 @@
 [ {
-  "buildOrder" : 559,
-  "reportUrl" : "https://mangata-finance.github.io/mangata-node/559/",
-  "reportName" : "Allure Report with history",
-  "data" : {
-    "failed" : 0,
-    "broken" : 0,
-    "skipped" : 0,
-    "passed" : 18,
-    "unknown" : 0,
-    "total" : 18
-  }
-}, {
   "data" : {
     "failed" : 0,
     "broken" : 0,

@@ -897,16 +897,17 @@ impl_runtime_apis! {
         fn get_info(
             tx: <Block as BlockT>::Extrinsic,
         ) -> Option<extrinsic_info_runtime_api::ExtrinsicInfo> {
-            // tx.signature.clone().map(|sig|
-            //     {
-            //         let nonce: frame_system::CheckNonce<_> = sig.2.4;
-            //         extrinsic_info_runtime_api::ExtrinsicInfo{
-            //             who: sig.0,
-            //             nonce: nonce.0,
-            //         }
-            //     }
-            // )
-            None
+            if let Some(sig) = tx.signature.clone(){
+                if let Address::Id(addr) = sig.0 {
+                    Some(extrinsic_info_runtime_api::ExtrinsicInfo{
+                        who: addr,
+                    })
+                }else{
+                    panic!("unsupported address format");
+                }
+            }else{
+                None
+            }
         }
     }
 

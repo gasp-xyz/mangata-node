@@ -1,0 +1,84 @@
+{
+  "uid" : "3f6c992df1242731",
+  "name" : "xyk-pallet: Happy case scenario",
+  "fullName" : "test/sequential/xyk-pallet.test.ts.xyk-pallet: Happy case scenario",
+  "historyId" : "31b3a07db373fe04b185d770d93dc95d",
+  "time" : {
+    "start" : 1639056323179,
+    "stop" : 1639056523522,
+    "duration" : 200343
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "test/sequential/xyk-pallet.test.ts"
+  }, {
+    "name" : "testClass",
+    "value" : "test/sequential/xyk-pallet.test.ts"
+  }, {
+    "name" : "testMethod",
+    "value" : "xyk-pallet: Happy case scenario"
+  }, {
+    "name" : "package",
+    "value" : "test/sequential/xyk-pallet.test.ts"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 4,
+        "unknown" : 0,
+        "total" : 4
+      },
+      "items" : [ {
+        "uid" : "d280f2a85a806cdc",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/565//#testresult/d280f2a85a806cdc",
+        "status" : "passed",
+        "time" : {
+          "start" : 1639040251145,
+          "stop" : 1639040449415,
+          "duration" : 198270
+        }
+      }, {
+        "uid" : "11c0f3095d452d38",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/564//#testresult/11c0f3095d452d38",
+        "status" : "passed",
+        "time" : {
+          "start" : 1638990158630,
+          "stop" : 1638990354864,
+          "duration" : 196234
+        }
+      }, {
+        "uid" : "9de38ebfd79ec95c",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/563//#testresult/9de38ebfd79ec95c",
+        "status" : "passed",
+        "time" : {
+          "start" : 1638968081112,
+          "stop" : 1638968280789,
+          "duration" : 199677
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "3f6c992df1242731.json",
+  "parameterValues" : [ ]
+}

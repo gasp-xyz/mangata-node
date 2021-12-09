@@ -110,7 +110,7 @@ pub type Address = MultiAddress<AccountId, ()>;
 pub type Header = generic::HeaderVer<BlockNumber, BlakeTwo256>;
 
 /// Block type as expected by this runtime.
-pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+pub type Block = generic::BlockVer<Header, UncheckedExtrinsic>;
 
 /// A Block signed with a Justification
 pub type SignedBlock = generic::SignedBlock<Block>;
@@ -183,7 +183,7 @@ pub mod opaque {
 	/// Opaque block header type.
 	pub type Header = generic::HeaderVer<BlockNumber, BlakeTwo256>;
 	/// Opaque block type.
-	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+	pub type Block = generic::BlockVer<Header, UncheckedExtrinsic>;
 	/// Opaque block identifier type.
 	pub type BlockId = generic::BlockId<Block>;
 }

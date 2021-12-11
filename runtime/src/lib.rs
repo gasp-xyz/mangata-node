@@ -110,7 +110,7 @@ pub type Address = MultiAddress<AccountId, ()>;
 pub type Header = generic::HeaderVer<BlockNumber, BlakeTwo256>;
 
 /// Block type as expected by this runtime.
-pub type Block = generic::BlockVer<Header, UncheckedExtrinsic>;
+pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 
 /// A Block signed with a Justification
 pub type SignedBlock = generic::SignedBlock<Block>;
@@ -183,7 +183,7 @@ pub mod opaque {
 	/// Opaque block header type.
 	pub type Header = generic::HeaderVer<BlockNumber, BlakeTwo256>;
 	/// Opaque block type.
-	pub type Block = generic::BlockVer<Header, UncheckedExtrinsic>;
+	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 	/// Opaque block identifier type.
 	pub type BlockId = generic::BlockId<Block>;
 }
@@ -1143,9 +1143,11 @@ impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
 		block: &Block,
 		relay_state_proof: &cumulus_pallet_parachain_system::RelayChainStateProof,
 	) -> sp_inherents::CheckInherentsResult {
+        sp_runtime::print("START CHECK INHERNETS 0");
 		let relay_chain_slot = relay_state_proof
 			.read_slot()
 			.expect("Could not read the relay chain slot from the proof");
+        sp_runtime::print("START CHECK INHERNETS 1");
 
 		let inherent_data =
 			cumulus_primitives_timestamp::InherentDataProvider::from_relay_chain_slot_and_duration(
@@ -1155,34 +1157,36 @@ impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
 			.create_inherent_data()
 			.expect("Could not create the timestamp inherent data");
 
+        sp_runtime::print("START CHECK INHERNETS 2");
+
 		inherent_data.check_extrinsics(block)
 	}
 }
 
-cumulus_pallet_parachain_system::register_validate_block! {
-	Runtime = Runtime,
-	BlockExecutor = cumulus_pallet_aura_ext::BlockExecutorVer::<Runtime, Executive>,
-	CheckInherents = CheckInherents,
-}
-
-// // replace validate block function with its expanded version
-// #[doc(hidden)]
-// mod parachain_validate_block {
-//     use super::*;
-//     #[no_mangle]
-//     #[cfg(not(feature = "std"))]
-//     unsafe fn validate_block(arguments: *const u8, arguments_len: usize)
-//      -> u64 {
-//         let params =
-//             cumulus_pallet_parachain_system::validate_block::polkadot_parachain::load_params(arguments,
-//                                                                                              arguments_len);
-//         let res =
-//             cumulus_pallet_parachain_system::validate_block::implementation::validate_block::<<Runtime
-//                                                                                               as
-//                                                                                               cumulus_pallet_parachain_system::validate_block::GetRuntimeBlockType>::RuntimeBlock,
-//                                                                                               cumulus_pallet_aura_ext::BlockExecutorVer<Runtime, Executive>,
-//                                                                                               Runtime,
-//                                                                                               CheckInherents>(params);
-//         cumulus_pallet_parachain_system::validate_block::polkadot_parachain::write_result(&res)
-//     }
+// cumulus_pallet_parachain_system::register_validate_block! {
+// 	Runtime = Runtime,
+// 	BlockExecutor = cumulus_pallet_aura_ext::BlockExecutorVer::<Runtime, Executive>,
+// 	CheckInherents = CheckInherents,
 // }
+
+// replace validate block function with its expanded version
+#[doc(hidden)]
+mod parachain_validate_block {
+    use super::*;
+    #[no_mangle]
+    #[cfg(not(feature = "std"))]
+    unsafe fn validate_block(arguments: *const u8, arguments_len: usize)
+     -> u64 {
+        let params =
+            cumulus_pallet_parachain_system::validate_block::polkadot_parachain::load_params(arguments,
+                                                                                             arguments_len);
+        let res =
+            cumulus_pallet_parachain_system::validate_block::implementation::validate_block::<<Runtime
+                                                                                              as
+                                                                                              cumulus_pallet_parachain_system::validate_block::GetRuntimeBlockType>::RuntimeBlock,
+                                                                                              cumulus_pallet_aura_ext::BlockExecutorVer<Runtime, Executive>,
+                                                                                              Runtime,
+                                                                                              CheckInherents>(params);
+        cumulus_pallet_parachain_system::validate_block::polkadot_parachain::write_result(&res)
+    }
+}

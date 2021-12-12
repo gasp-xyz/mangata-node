@@ -1143,11 +1143,9 @@ impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
 		block: &Block,
 		relay_state_proof: &cumulus_pallet_parachain_system::RelayChainStateProof,
 	) -> sp_inherents::CheckInherentsResult {
-        sp_runtime::print("START CHECK INHERNETS 0");
 		let relay_chain_slot = relay_state_proof
 			.read_slot()
 			.expect("Could not read the relay chain slot from the proof");
-        sp_runtime::print("START CHECK INHERNETS 1");
 
 		let inherent_data =
 			cumulus_primitives_timestamp::InherentDataProvider::from_relay_chain_slot_and_duration(
@@ -1156,9 +1154,6 @@ impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
 			)
 			.create_inherent_data()
 			.expect("Could not create the timestamp inherent data");
-
-        sp_runtime::print("START CHECK INHERNETS 2");
-
 		inherent_data.check_extrinsics(block)
 	}
 }

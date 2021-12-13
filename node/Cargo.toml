@@ -90,11 +90,11 @@ cumulus-primitives-core = { git = 'https://github.com/mangata-finance/cumulus', 
 cumulus-primitives-parachain-inherent = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v4' }
 
 # Polkadot dependencies
-polkadot-cli = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.12" }
-polkadot-parachain = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.12" }
-polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.12" }
-polkadot-service = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.12" }
-polkadot-test-service = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.12" }
+polkadot-cli = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v4" }
+polkadot-parachain = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v4" }
+polkadot-primitives = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v4" }
+polkadot-service = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v4" }
+polkadot-test-service = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v4" }
 
 # Mangata dependencies
 xyk-rpc = { default-features = false, version = '2.0.0', path = '../pallets/xyk/rpc' }

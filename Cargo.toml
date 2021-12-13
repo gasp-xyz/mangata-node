@@ -500,11 +500,3 @@ cumulus-primitives-parachain-inherent = { path = "../cumulus/primitives/parachai
 cumulus-primitives-timestamp = { path = "../cumulus/primitives/timestamp" }
 cumulus-primitives-utility = { path = "../cumulus/primitives/utility" }
 parachain-info = { path = "../cumulus/polkadot-parachains/pallets/parachain-info" }
-
-[patch."https://github.com/mangata-finance/snowbridge"]
-artemis-core = { path = "../snowbridge/parachain/primitives/core"}
-artemis-ethereum = { path = "../snowbridge/parachain/primitives/ethereum"}
-pallet-verifier = { path = "../snowbridge/parachain/pallets/verifier"}
-artemis-erc20-app = { path = "../snowbridge/parachain/pallets/erc20-app"}
-artemis-eth-app = { path = "../snowbridge/parachain/pallets/eth-app"}
-artemis-asset = { path = "../snowbridge/parachain/pallets/asset"}

@@ -4,7 +4,7 @@
 use std::sync::Arc;
 
 // Local Runtime Types
-use parachain_template_runtime::{
+use mangata_runtime::{
 	opaque::Block, AccountId, Balance, Hash, Index as Nonce, RuntimeApi, TokenId
 };
 
@@ -32,17 +32,17 @@ use sp_runtime::traits::BlakeTwo256;
 use substrate_prometheus_endpoint::Registry;
 
 /// Native executor instance.
-pub struct TemplateRuntimeExecutor;
+pub struct MangataRuntimeExecutor;
 
-impl sc_executor::NativeExecutionDispatch for TemplateRuntimeExecutor {
+impl sc_executor::NativeExecutionDispatch for MangataRuntimeExecutor {
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		parachain_template_runtime::api::dispatch(method, data)
+		mangata_runtime::api::dispatch(method, data)
 	}
 
 	fn native_version() -> sc_executor::NativeVersion {
-		parachain_template_runtime::native_version()
+		mangata_runtime::native_version()
 	}
 }
 
@@ -354,14 +354,14 @@ where
 /// Build the import queue for the parachain runtime.
 #[allow(clippy::type_complexity)]
 pub fn parachain_build_import_queue(
-	client: Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<TemplateRuntimeExecutor>>>,
+	client: Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<MangataRuntimeExecutor>>>,
 	config: &Configuration,
 	telemetry: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
 ) -> Result<
 	sc_consensus::DefaultImportQueue<
 		Block,
-		TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<TemplateRuntimeExecutor>>,
+		TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<MangataRuntimeExecutor>>,
 	>,
 	sc_service::Error,
 > {
@@ -404,9 +404,9 @@ pub async fn start_parachain_node(
 	id: ParaId,
 ) -> sc_service::error::Result<(
 	TaskManager,
-	Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<TemplateRuntimeExecutor>>>,
+	Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<MangataRuntimeExecutor>>>,
 )> {
-	start_node_impl::<RuntimeApi, TemplateRuntimeExecutor, _, _, _>(
+	start_node_impl::<RuntimeApi, MangataRuntimeExecutor, _, _, _>(
 		parachain_config,
 		polkadot_config,
 		id,
@@ -423,7 +423,7 @@ pub async fn start_parachain_node(
 		 force_authoring| {
 			let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 
-			let proposer_factory = sc_basic_authorship::ProposerFactory::with_proof_recording(
+			let proposer_factory = sc_basic_authorship_ver::ProposerFactory::with_proof_recording(
 				task_manager.spawn_handle(),
 				client.clone(),
 				transaction_pool,

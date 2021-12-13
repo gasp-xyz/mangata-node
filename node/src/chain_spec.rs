@@ -1,17 +1,17 @@
 use cumulus_primitives_core::ParaId;
-use parachain_template_runtime::{AccountId, AuraId, Signature, EXISTENTIAL_DEPOSIT};
+use mangata_runtime::{AccountId, AuraId, Signature, EXISTENTIAL_DEPOSIT, DOLLARS, Balance, InflationInfo, Range};
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
-use sp_runtime::traits::{IdentifyAccount, Verify};
+use sp_runtime::{Perbill, traits::{IdentifyAccount, Verify}};
 use hex_literal::hex;
 use artemis_core::{App, AppId};
 use sp_core::H160;
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec =
-	sc_service::GenericChainSpec<parachain_template_runtime::GenesisConfig, Extensions>;
+	sc_service::GenericChainSpec<mangata_runtime::GenesisConfig, Extensions>;
 
 /// Helper function to generate a crypto pair from seed
 pub fn get_public_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
@@ -57,8 +57,30 @@ where
 /// Generate the session keys from individual elements.
 ///
 /// The input must be a tuple of individual keys (a single arg for now since we have just one key).
-pub fn template_session_keys(keys: AuraId) -> parachain_template_runtime::SessionKeys {
-	parachain_template_runtime::SessionKeys { aura: keys }
+pub fn mangata_session_keys(keys: AuraId) -> mangata_runtime::SessionKeys {
+	mangata_runtime::SessionKeys { aura: keys }
+}
+
+pub fn mangata_inflation_config() -> InflationInfo<Balance> {
+	InflationInfo {
+		expect: Range {
+			min: 100_000_000 * 1__000_000_000_000_000_000,
+			ideal: 200_000_000 * 1__000_000_000_000_000_000,
+			max: 500_000_000 * 1__000_000_000_000_000_000,
+		},
+		annual: Range {
+			min: Perbill::from_percent(4),
+			ideal: Perbill::from_percent(5),
+			max: Perbill::from_percent(5),
+		},
+		// 8760 hours in a year AND
+        // 4 hours in a round => 2190
+		round: Range {
+			min: Perbill::from_parts(Perbill::from_percent(4).deconstruct() / 2190),
+			ideal: Perbill::from_parts(Perbill::from_percent(5).deconstruct() / 2190),
+			max: Perbill::from_parts(Perbill::from_percent(5).deconstruct() / 2190),
+		},
+	}
 }
 
 pub fn development_config() -> ChainSpec {
@@ -305,7 +327,7 @@ pub fn local_testnet_config() -> ChainSpec {
 		// Telemetry
 		None,
 		// Protocol ID
-		Some("template-local"),
+		Some("mangata-local"),
 		// Properties
 		Some(properties),
 		// Extensions
@@ -327,15 +349,15 @@ fn testnet_genesis(
     tokens_endowment: Vec<(u32, u128, AccountId)>,
 	staking_accounts: Vec<(AccountId, u32, u128, u32, u128, u32, u128)>,
 	id: ParaId,
-) -> parachain_template_runtime::GenesisConfig {
-	parachain_template_runtime::GenesisConfig {
-		system: parachain_template_runtime::SystemConfig {
-			code: parachain_template_runtime::WASM_BINARY
+) -> mangata_runtime::GenesisConfig {
+	mangata_runtime::GenesisConfig {
+		system: mangata_runtime::SystemConfig {
+			code: mangata_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
 			changes_trie_config: Default::default(),
 		},
-		tokens: parachain_template_runtime::TokensConfig {
+		tokens: mangata_runtime::TokensConfig {
             tokens_endowment: tokens_endowment
                 .iter()
                 .cloned()
@@ -367,20 +389,24 @@ fn testnet_genesis(
 		treasury: 
 			Default::default()
 		,
-		parachain_info: parachain_template_runtime::ParachainInfoConfig { parachain_id: id },
-		collator_selection: parachain_template_runtime::CollatorSelectionConfig {
-			invulnerables: initial_authorities.iter().cloned().map(|(acc, _)| acc).collect(),
-			candidacy_bond: EXISTENTIAL_DEPOSIT * 16,
-			..Default::default()
+		parachain_info: mangata_runtime::ParachainInfoConfig { parachain_id: id },
+        parachain_staking: mangata_runtime::ParachainStakingConfig {
+			candidates: initial_authorities
+				.iter()
+				.cloned()
+				.map(|(account, _)| (account, 20*DOLLARS))
+				.collect(),
+			delegations: vec![],
+			inflation_config: mangata_inflation_config(),
 		},
-		session: parachain_template_runtime::SessionConfig {
+		session: mangata_runtime::SessionConfig {
 			keys: initial_authorities
 				.into_iter()
 				.map(|(acc, aura)| {
 					(
 						acc.clone(),                 // account id
 						acc,                         // validator id
-						template_session_keys(aura), // session keys
+						mangata_session_keys(aura), // session keys
 					)
 				})
 				.collect(),
@@ -390,7 +416,7 @@ fn testnet_genesis(
 		aura: Default::default(),
 		aura_ext: Default::default(),
 		parachain_system: Default::default(),
-		assets_info: parachain_template_runtime::AssetsInfoConfig{
+		assets_info: mangata_runtime::AssetsInfoConfig{
 			bridged_assets_info: bridged_assets
 				.iter()
 				.cloned()
@@ -406,7 +432,7 @@ fn testnet_genesis(
 				})
 				.collect(),
 		},
-		xyk: parachain_template_runtime::XykConfig {
+		xyk: mangata_runtime::XykConfig {
             created_pools_for_staking: staking_accounts
                 .iter()
                 .map(|x| {
@@ -430,10 +456,10 @@ fn testnet_genesis(
                 })
                 .collect(),
         },
-		bridge: parachain_template_runtime::BridgeConfig {
+		bridge: mangata_runtime::BridgeConfig {
             bridged_app_id_registry: bridged_app_ids,
         },
-		bridged_asset: parachain_template_runtime::BridgedAssetConfig {
+		bridged_asset: mangata_runtime::BridgedAssetConfig {
             bridged_assets_links: bridged_assets
                 .iter()
                 .cloned()
@@ -443,16 +469,16 @@ fn testnet_genesis(
                 })
                 .collect(),
         },
-		verifier: parachain_template_runtime::VerifierConfig { key: relay_key },
+		verifier: mangata_runtime::VerifierConfig { key: relay_key },
 		council: Default::default(),
-		elections: parachain_template_runtime::ElectionsConfig {
+		elections: mangata_runtime::ElectionsConfig {
             members: tokens_endowment
                 .iter()
                 .cloned()
                 .map(|(_, _, member)| (member, 100 * 100_000_000_000_000))
                 .collect(),
         },
-		sudo: parachain_template_runtime::SudoConfig {
+		sudo: mangata_runtime::SudoConfig {
 			// Assign network admin rights.
 			key: root_key,
 		},

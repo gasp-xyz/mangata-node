@@ -11,7 +11,7 @@ use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, u32_trait::{_1, _2}};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify, AccountIdConversion},
+	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify, AccountIdConversion, ConvertInto},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiSignature, Percent
 };
@@ -62,6 +62,8 @@ use xcm_executor::{Config, XcmExecutor};
 
 use static_assertions::const_assert;
 
+pub use parachain_staking::{InflationInfo, Range};
+
 pub use mangata_primitives::{Amount, Balance, TokenId};
 
 pub use orml_tokens;
@@ -72,9 +74,6 @@ pub use pallet_xyk;
 use xyk_runtime_api::{RpcAmountsResult, RpcResult};
 
 pub const MGA_TOKEN_ID: TokenId = 0;
-
-/// Import the template pallet.
-pub use pallet_template;
 
 pub use pallet_sudo;
 
@@ -108,7 +107,7 @@ pub type BlockNumber = u32;
 pub type Address = MultiAddress<AccountId, ()>;
 
 /// Block header type as expected by this runtime.
-pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
+pub type Header = generic::HeaderVer<BlockNumber, BlakeTwo256>;
 
 /// Block type as expected by this runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
@@ -160,7 +159,7 @@ impl WeightToFeePolynomial for WeightToFee {
 	type Balance = Balance;
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
 		// in Rococo, extrinsic base weight (smallest non-zero weight) is mapped to 1 MILLIUNIT:
-		// in our template, we map to 1/10 of that, or 1/10 MILLIUNIT
+		// in mangata, we map to 1/10 of that, or 1/10 MILLIUNIT
 		let p = MILLIUNIT / 10;
 		let q = 100 * Balance::from(ExtrinsicBaseWeight::get());
 		smallvec![WeightToFeeCoefficient {
@@ -182,7 +181,7 @@ pub mod opaque {
 
 	pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
 	/// Opaque block header type.
-	pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
+	pub type Header = generic::HeaderVer<BlockNumber, BlakeTwo256>;
 	/// Opaque block type.
 	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 	/// Opaque block identifier type.
@@ -197,8 +196,8 @@ impl_opaque_keys! {
 
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("template-parachain"),
-	impl_name: create_runtime_str!("template-parachain"),
+	spec_name: create_runtime_str!("mangata-parachain"),
+	impl_name: create_runtime_str!("mangata-parachain"),
 	authoring_version: 1,
 	spec_version: 1,
 	impl_version: 0,
@@ -206,7 +205,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	transaction_version: 1,
 };
 
-use currency::*;
+pub use currency::*;
 mod currency {
 
 	use super::Balance;
@@ -314,7 +313,7 @@ impl frame_system::Config for Runtime {
 	/// The hashing algorithm used.
 	type Hashing = BlakeTwo256;
 	/// The header type.
-	type Header = generic::Header<BlockNumber, BlakeTwo256>;
+	type Header = generic::HeaderVer<BlockNumber, BlakeTwo256>;
 	/// The ubiquitous event type.
 	type Event = Event;
 	/// The ubiquitous origin type.
@@ -367,7 +366,7 @@ impl pallet_authorship::Config for Runtime {
 	type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Aura>;
 	type UncleGenerations = UncleGenerations;
 	type FilterUncle = ();
-	type EventHandler = (CollatorSelection,);
+	type EventHandler = (ParachainStaking,);
 }
 
 
@@ -641,10 +640,10 @@ impl pallet_session::Config for Runtime {
 	type Event = Event;
 	type ValidatorId = <Self as frame_system::Config>::AccountId;
 	// we don't have stash and controller, thus we don't need the convert as well.
-	type ValidatorIdOf = pallet_collator_selection::IdentityCollator;
-	type ShouldEndSession = pallet_session::PeriodicSessions<Period, Offset>;
-	type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
-	type SessionManager = CollatorSelection;
+	type ValidatorIdOf = ConvertInto;
+	type ShouldEndSession = ParachainStaking;
+	type NextSessionRotation = ParachainStaking;
+	type SessionManager = ParachainStaking;
 	// Essentially just Aura, but lets be pedantic.
 	type SessionHandler = <SessionKeys as sp_runtime::traits::OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = SessionKeys;
@@ -664,30 +663,6 @@ parameter_types! {
 	pub const SessionLength: BlockNumber = 6 * HOURS;
 	pub const MaxInvulnerables: u32 = 100;
 	pub const ExecutiveBody: BodyId = BodyId::Executive;
-}
-
-// We allow root only to execute privileged collator selection operations.
-pub type CollatorSelectionUpdateOrigin = EnsureRoot<AccountId>;
-
-impl pallet_collator_selection::Config for Runtime {
-	type Event = Event;
-	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>;
-	type UpdateOrigin = CollatorSelectionUpdateOrigin;
-	type PotId = PotId;
-	type MaxCandidates = MaxCandidates;
-	type MinCandidates = MinCandidates;
-	type MaxInvulnerables = MaxInvulnerables;
-	// should be a multiple of session or things will get inconsistent
-	type KickThreshold = Period;
-	type ValidatorId = <Self as frame_system::Config>::AccountId;
-	type ValidatorIdOf = pallet_collator_selection::IdentityCollator;
-	type ValidatorRegistration = Session;
-	type WeightInfo = ();
-}
-
-/// Configure the pallet template in pallets/template.
-impl pallet_template::Config for Runtime {
-	type Event = Event;
 }
 
 parameter_types! {
@@ -801,6 +776,66 @@ impl pallet_elections_phragmen::Config for Runtime {
 	type WeightInfo = pallet_elections_phragmen::weights::SubstrateWeight<Runtime>;
 }
 
+parameter_types! {
+	/// Minimum round length is 2 minutes (10 * 12 second block times)
+	pub const MinBlocksPerRound: u32 = 10;
+	/// Default BlocksPerRound is every 4 hours (1200 * 12 second block times)
+	pub const DefaultBlocksPerRound: u32 = 4 * MINUTES;
+	/// Collator candidate exit delay (number of rounds)
+	pub const LeaveCandidatesDelay: u32 = 2;
+	/// Collator candidate bond increases/decreases delay (number of rounds)
+	pub const CandidateBondDelay: u32 = 2;
+	/// Delegator exit delay (number of rounds)
+	pub const LeaveDelegatorsDelay: u32 = 2;
+	/// Delegation revocations delay (number of rounds)
+	pub const RevokeDelegationDelay: u32 = 2;
+	/// Delegation bond increases/decreases delay (number of rounds)
+	pub const DelegationBondDelay: u32 = 2;
+	/// Reward payments delay (number of rounds)
+	pub const RewardPaymentDelay: u32 = 2;
+	/// Minimum collators selected per round, default at genesis and minimum forever after
+	pub const MinSelectedCandidates: u32 = 8;
+	/// Maximum delegators counted per candidate
+	pub const MaxDelegatorsPerCandidate: u32 = 100;
+	/// Maximum delegations per delegator
+	pub const MaxDelegationsPerDelegator: u32 = 100;
+	/// Default fixed percent a collator takes off the top of due rewards
+	pub const DefaultCollatorCommission: Perbill = Perbill::from_percent(20);
+	/// Default percent of inflation set aside for parachain bond every round
+	pub const DefaultParachainBondReservePercent: Percent = Percent::from_percent(30);
+	/// Minimum stake required to become a collator
+	pub const MinCollatorStk: u128 = 10 * DOLLARS;
+	// TODO: Restore to 100_000 for Phase 2 (remove the division by 10)
+	/// Minimum stake required to be reserved to be a candidate
+	pub const MinCandidateStk: u128 = 1 * DOLLARS;
+	/// Minimum stake required to be reserved to be a delegator
+	pub const MinDelegatorStk: u128 = 1 * CENTS;
+}
+
+impl parachain_staking::Config for Runtime {
+	type Event = Event;
+	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>;
+	type MonetaryGovernanceOrigin = EnsureRoot<AccountId>;
+	type MinBlocksPerRound = MinBlocksPerRound;
+	type DefaultBlocksPerRound = DefaultBlocksPerRound;
+	type LeaveCandidatesDelay = LeaveCandidatesDelay;
+	type CandidateBondDelay = CandidateBondDelay;
+	type LeaveDelegatorsDelay = LeaveDelegatorsDelay;
+	type RevokeDelegationDelay = RevokeDelegationDelay;
+	type DelegationBondDelay = DelegationBondDelay;
+	type RewardPaymentDelay = RewardPaymentDelay;
+	type MinSelectedCandidates = MinSelectedCandidates;
+	type MaxDelegatorsPerCandidate = MaxDelegatorsPerCandidate;
+	type MaxDelegationsPerDelegator = MaxDelegationsPerDelegator;
+	type DefaultCollatorCommission = DefaultCollatorCommission;
+	type DefaultParachainBondReservePercent = DefaultParachainBondReservePercent;
+	type MinCollatorStk = MinCollatorStk;
+	type MinCandidateStk = MinCandidateStk;
+	type MinDelegation = MinDelegatorStk;
+	type MinDelegatorStk = MinDelegatorStk;
+	type WeightInfo = parachain_staking::weights::SubstrateWeight<Runtime>;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -833,7 +868,7 @@ construct_runtime!(
 
 		// Collator support. The order of these 4 are important and shall not change.
 		Authorship: pallet_authorship::{Pallet, Call, Storage} = 20,
-		CollatorSelection: pallet_collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>} = 21,
+		ParachainStaking: parachain_staking::{Pallet, Call, Storage, Event<T>, Config<T>} = 21,
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 22,
 		Aura: pallet_aura::{Pallet, Storage, Config<T>} = 23,
 		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config} = 24,
@@ -843,9 +878,6 @@ construct_runtime!(
 		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 31,
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Event<T>, Origin} = 32,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 33,
-
-		// Template
-		TemplatePallet: pallet_template::{Pallet, Call, Storage, Event<T>}  = 40,
 
 		// Governance stuff
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 41,
@@ -860,6 +892,24 @@ construct_runtime!(
 );
 
 impl_runtime_apis! {
+
+    impl extrinsic_info_runtime_api::ExtrinsicInfoRuntimeApi<Block> for Runtime {
+        fn get_info(
+            tx: <Block as BlockT>::Extrinsic,
+        ) -> Option<extrinsic_info_runtime_api::ExtrinsicInfo> {
+            if let Some(sig) = tx.signature.clone(){
+                if let Address::Id(addr) = sig.0 {
+                    Some(extrinsic_info_runtime_api::ExtrinsicInfo{
+                        who: addr,
+                    })
+                }else{
+                    panic!("unsupported address format");
+                }
+            }else{
+                None
+            }
+        }
+    }
 
 	impl xyk_runtime_api::XykApi<Block, Balance, TokenId> for Runtime {
         fn calculate_sell_price(
@@ -936,7 +986,7 @@ impl_runtime_apis! {
 		}
 
 		fn execute_block(block: Block) {
-			Executive::execute_block(block)
+			Executive::execute_block_ver(block)
 		}
 
 		fn initialize_block(header: &<Block as BlockT>::Header) {
@@ -1042,7 +1092,6 @@ impl_runtime_apis! {
 
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_timestamp, Timestamp);
-			list_benchmark!(list, extra, pallet_collator_selection, CollatorSelection);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1079,7 +1128,6 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_session, SessionBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
-			add_benchmark!(params, batches, pallet_collator_selection, CollatorSelection);
 			add_benchmark!(params, batches, pallet_session, Session);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
@@ -1106,13 +1154,34 @@ impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
 			)
 			.create_inherent_data()
 			.expect("Could not create the timestamp inherent data");
-
 		inherent_data.check_extrinsics(block)
 	}
 }
 
-cumulus_pallet_parachain_system::register_validate_block! {
-	Runtime = Runtime,
-	BlockExecutor = cumulus_pallet_aura_ext::BlockExecutor::<Runtime, Executive>,
-	CheckInherents = CheckInherents,
+// cumulus_pallet_parachain_system::register_validate_block! {
+// 	Runtime = Runtime,
+// 	BlockExecutor = cumulus_pallet_aura_ext::BlockExecutorVer::<Runtime, Executive>,
+// 	CheckInherents = CheckInherents,
+// }
+
+// replace validate block function with its expanded version
+#[doc(hidden)]
+mod parachain_validate_block {
+    use super::*;
+    #[no_mangle]
+    #[cfg(not(feature = "std"))]
+    unsafe fn validate_block(arguments: *const u8, arguments_len: usize)
+     -> u64 {
+        let params =
+            cumulus_pallet_parachain_system::validate_block::polkadot_parachain::load_params(arguments,
+                                                                                             arguments_len);
+        let res =
+            cumulus_pallet_parachain_system::validate_block::implementation::validate_block::<<Runtime
+                                                                                              as
+                                                                                              cumulus_pallet_parachain_system::validate_block::GetRuntimeBlockType>::RuntimeBlock,
+                                                                                              cumulus_pallet_aura_ext::BlockExecutorVer<Runtime, Executive>,
+                                                                                              Runtime,
+                                                                                              CheckInherents>(params);
+        cumulus_pallet_parachain_system::validate_block::polkadot_parachain::write_result(&res)
+    }
 }

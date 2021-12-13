@@ -1,12 +1,9 @@
 [package]
-name = "parachain-template-node"
+name = "mangata-node"
 version = "0.1.0"
-authors = ["Anonymous"]
-description = "A new Cumulus FRAME-based Substrate Node, ready for hacking together a parachain."
-license = "Unlicense"
-homepage = "https://substrate.io"
-repository = 'https://github.com/substrate-developer-hub/substrate-parachain-template'
+authors = ["Mangata Team"]
 edition = "2018"
+license = "Unlicense"
 build = "build.rs"
 
 [package.metadata.docs.rs]
@@ -22,10 +19,10 @@ path = "src/main.rs"
 [features]
 default = ['std']
 std = [
-		"parachain-template-runtime/std",
+		"mangata-runtime/std",
 		"xyk-rpc/std",
 ]
-runtime-benchmarks = ["parachain-template-runtime/runtime-benchmarks"]
+runtime-benchmarks = ["mangata-runtime/runtime-benchmarks"]
 
 [dependencies]
 derive_more = "0.99.2"
@@ -39,7 +36,7 @@ hex-literal = "0.3.1"
 jsonrpc-core = "18.0.0"
 
 # Local Dependencies
-parachain-template-runtime = { path = "../runtime" }
+mangata-runtime = { path = "../runtime" }
 
 # Substrate Dependencies
 frame-benchmarking = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
@@ -51,7 +48,7 @@ substrate-frame-rpc-system = { git = "https://github.com/mangata-finance/substra
 substrate-prometheus-endpoint = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
 
 ## Substrate Client Dependencies
-sc-basic-authorship = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+sc-basic-authorship-ver = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
 sc-chain-spec = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
 sc-cli = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
 sc-client-api = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
@@ -84,7 +81,7 @@ sp-transaction-pool = { git = "https://github.com/mangata-finance/substrate", br
 
 # Cumulus dependencies
 cumulus-client-cli = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v4' }
-cumulus-client-collator = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v4' }
+# cumulus-client-collator = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v4' }
 cumulus-client-consensus-aura = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v4' }
 cumulus-client-consensus-common = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v4' }
 cumulus-client-network = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v4' }
@@ -93,16 +90,16 @@ cumulus-primitives-core = { git = 'https://github.com/mangata-finance/cumulus', 
 cumulus-primitives-parachain-inherent = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v4' }
 
 # Polkadot dependencies
-polkadot-cli = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.12" }
-polkadot-parachain = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.12" }
-polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.12" }
-polkadot-service = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.12" }
-polkadot-test-service = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.12" }
+polkadot-cli = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v4" }
+polkadot-parachain = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v4" }
+polkadot-primitives = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v4" }
+polkadot-service = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v4" }
+polkadot-test-service = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v4" }
 
 # Mangata dependencies
 xyk-rpc = { default-features = false, version = '2.0.0', path = '../pallets/xyk/rpc' }
 xyk-runtime-api = { default-features = false, version = '2.0.0', path = '../pallets/xyk/runtime-api' }
 
 # Snowbridge dependencies
-artemis-core = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
+artemis-core = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v4"}
 

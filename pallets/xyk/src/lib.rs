@@ -1874,6 +1874,8 @@ pub trait Valuate {
         liquidity_token_amount: Self::Balance,
         mga_token_amount: Self::Balance,
     ) -> Self::Balance;
+
+    fn get_pool_state(liquidity_token_id: Self::CurrencyId) -> Option<(Balance, Balance)>;
 }
 
 impl<T: Config> Valuate for Pallet<T> {
@@ -1935,5 +1937,27 @@ impl<T: Config> Valuate for Pallet<T> {
 
         multiply_by_rational(liquidity_token_amount, mga_token_amount, mga_valuation)
             .unwrap_or_else(|_| Balance::max_value())
+    }
+
+    fn get_pool_state(liquidity_token_id: Self::CurrencyId) -> Option<(Self::Balance, Self::Balance)> {
+        let (mga_token_id, other_token_id) =
+            match Self::get_liquidity_token_mga_pool(liquidity_token_id) {
+                Ok(pool) => pool,
+                Err(_) => return None,
+            };
+
+        let mga_token_reserve = match Pallet::<T>::get_reserves(mga_token_id, other_token_id) {
+            Ok(reserves) => reserves.0,
+            Err(_) => return None,
+        };
+
+        let liquidity_token_reserve: Balance =
+            <T as Config>::Currency::total_issuance(liquidity_token_id.into()).into();
+
+        if liquidity_token_reserve.is_zero() {
+            return None;
+        }
+
+        Some((mga_token_reserve, liquidity_token_reserve))
     }
 }

@@ -16,6 +16,7 @@ orml-traits = { path = "../open-runtime-module-library/traits" }
 parachain-staking = { path = "../moonbeam/pallets/parachain-staking" }
 
 [patch."https://github.com/mangata-finance/mangata-node"]
+pallet-xyk = { path = "../mangata-node/pallets/xyk" }
 mangata-primitives = {path = "./primitives/mangata"}
 
 #TODO patch orml tokens repo to use mangata-finance/substrate directly

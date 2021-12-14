@@ -193,6 +193,22 @@ pub fn development_config() -> ChainSpec {
                     3u32,
                     // How many liquidity tokens they stake,
                     10_000__000_000_000_000_000_000u128,
+                ),
+                (
+                    // Who gets to stake initially
+                    get_account_id_from_seed::<sr25519::Public>("Bob"),
+                    // Id of MGA token,
+                    0u32,
+                    // How much mangata they pool
+                    8_000__000_000_000_000_000_000u128,
+                    // Id of the dummy token,
+                    2u32,
+                    // How many dummy tokens they pool,
+                    20_000__000_000_000_000_000_000u128,
+                    // Id of the liquidity token that is generated
+                    3u32,
+                    // How many liquidity tokens they stake,
+                    5_000__000_000_000_000_000_000u128,
                 )],
 				2000.into(),
 			)
@@ -318,6 +334,22 @@ pub fn local_testnet_config() -> ChainSpec {
                     3u32,
                     // How many liquidity tokens they stake,
                     10_000__000_000_000_000_000_000u128,
+                ),
+                (
+                    // Who gets to stake initially
+                    get_account_id_from_seed::<sr25519::Public>("Bob"),
+                    // Id of MGA token,
+                    0u32,
+                    // How much mangata they pool
+                    8_000__000_000_000_000_000_000u128,
+                    // Id of the dummy token,
+                    2u32,
+                    // How many dummy tokens they pool,
+                    20_000__000_000_000_000_000_000u128,
+                    // Id of the liquidity token that is generated
+                    3u32,
+                    // How many liquidity tokens they stake,
+                    5_000__000_000_000_000_000_000u128,
                 )],
 				2000.into(),
 			)
@@ -391,11 +423,17 @@ fn testnet_genesis(
 		,
 		parachain_info: mangata_runtime::ParachainInfoConfig { parachain_id: id },
         parachain_staking: mangata_runtime::ParachainStakingConfig {
-			candidates: initial_authorities
-				.iter()
-				.cloned()
-				.map(|(account, _)| (account, 20*DOLLARS))
-				.collect(),
+			candidates: staking_accounts
+                .iter()
+                .map(|x| {
+                    let (account_id, _, _, _, _, liquidity_token_id, liquidity_token_amount) = x;
+                    (
+                        account_id.clone(),
+                        *liquidity_token_amount,
+                        *liquidity_token_id,
+                    )
+                })
+                .collect(),
 			delegations: vec![],
 			inflation_config: mangata_inflation_config(),
 		},

@@ -780,7 +780,7 @@ parameter_types! {
 	/// Minimum round length is 2 minutes (10 * 12 second block times)
 	pub const MinBlocksPerRound: u32 = 10;
 	/// Default BlocksPerRound is every 4 hours (1200 * 12 second block times)
-	pub const DefaultBlocksPerRound: u32 = 4 * MINUTES;
+	pub const DefaultBlocksPerRound: u32 = 4 * HOURS;
 	/// Collator candidate exit delay (number of rounds)
 	pub const LeaveCandidatesDelay: u32 = 2;
 	/// Collator candidate bond increases/decreases delay (number of rounds)
@@ -814,7 +814,7 @@ parameter_types! {
 
 impl parachain_staking::Config for Runtime {
 	type Event = Event;
-	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>;
+	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type MonetaryGovernanceOrigin = EnsureRoot<AccountId>;
 	type MinBlocksPerRound = MinBlocksPerRound;
 	type DefaultBlocksPerRound = DefaultBlocksPerRound;
@@ -828,11 +828,13 @@ impl parachain_staking::Config for Runtime {
 	type MaxDelegatorsPerCandidate = MaxDelegatorsPerCandidate;
 	type MaxDelegationsPerDelegator = MaxDelegationsPerDelegator;
 	type DefaultCollatorCommission = DefaultCollatorCommission;
+	type DefaultParachainBondReserveAccount = TreasuryAccount;
 	type DefaultParachainBondReservePercent = DefaultParachainBondReservePercent;
 	type MinCollatorStk = MinCollatorStk;
 	type MinCandidateStk = MinCandidateStk;
 	type MinDelegation = MinDelegatorStk;
-	type MinDelegatorStk = MinDelegatorStk;
+	type NativeTokenId = MgaTokenId;
+	type StakingLiquidityTokenValuator = Xyk;
 	type WeightInfo = parachain_staking::weights::SubstrateWeight<Runtime>;
 }
 

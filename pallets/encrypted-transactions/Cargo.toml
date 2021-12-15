@@ -25,7 +25,6 @@ mangata-primitives = { default-features = false, version = '0.1.0' , path = '../
 sp-arithmetic = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
 orml-tokens = {  default-features = false, version = '0.4.1-dev' , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v4" }
 
-pallet-assets-info = { path = '../assets-info', default-features = false, version = '2.0.0' }
 
 
 
@@ -41,6 +40,5 @@ std = [
 	'sp-core/std',
     'frame-support/std',
     'frame-system/std',
-    'pallet-assets-info/std',
     'pallet-session/std',
 ]

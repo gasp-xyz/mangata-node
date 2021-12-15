@@ -9,6 +9,7 @@ members = [
 ]
 
 [patch."https://github.com/mangata-finance/mangata-node"]
+pallet-xyk = { path = "./pallets/xyk" }
 mangata-primitives = {path = "./primitives/mangata"}
 
 # [patch."https://github.com/paritytech/substrate"]

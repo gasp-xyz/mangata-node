@@ -45,7 +45,7 @@ Find manual setup instructions at the
 
 ### Local target
 
-Recommended rustc version for the build is `nightly-2020-10-01`
+Recommended rustc version for the build is `nightly-2021-10-19`
 
 Environment variables for ethereum apps should be set up before the build:
 ```bash

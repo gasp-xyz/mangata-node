@@ -17,6 +17,8 @@ use orml_tokens::MultiTokenCurrency;
 use sp_runtime::RuntimeAppPublic;
 use frame_support::traits::UnfilteredDispatchable;
 use frame_support::weights::GetDispatchInfo;
+use sp_std::collections::btree_map::BTreeMap;
+use scale_info::TypeInfo;
 
 // #[cfg(test)]
 // mod mock;
@@ -37,7 +39,7 @@ macro_rules! log {
 }
 
 const PALLET_ID: PalletId = PalletId(*b"79b14c96");
-#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug)]
+#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub struct TxnRegistryDetails<AccountId, Index> {
     pub doubly_encrypted_call: Vec<u8>,
     pub user: AccountId,
@@ -110,6 +112,66 @@ pub mod pallet {
         /// User refunded
         UserRefunded(T::Index, T::AccountId, T::Index, T::Hash, Balance),
     }
+
+    #[pallet::storage]
+	#[pallet::getter(fn keys)]
+	pub type KeyMap<T: Config> = StorageValue<
+		_,
+		BTreeMap<T::AccountId, T::AuthorityId>,
+		ValueQuery
+	>;
+
+
+    #[pallet::storage]
+	#[pallet::getter(fn txn_registry)]
+	pub type TxnRegistry<T: Config> = StorageMap<
+		_,
+		Blake2_256,
+		T::Hash,
+		Option<TxnRegistryDetails<T::AccountId, T::Index>>,
+		ValueQuery
+	>;
+
+
+    #[pallet::storage]
+	#[pallet::getter(fn doubly_encrypted_queue)]
+	pub type DoublyEncryptedQueue<T: Config> = StorageMap<
+		_,
+		Blake2_256,
+		T::AccountId,
+		Vec<T::Hash>,
+		ValueQuery
+	>;
+
+    #[pallet::storage]
+	#[pallet::getter(fn singly_encrypted_queue)]
+	pub type SinglyEncryptedQueue<T: Config> = StorageMap<
+		_,
+		Blake2_256,
+		T::AccountId,
+		Vec<T::Hash>,
+		ValueQuery
+	>;
+
+    #[pallet::storage]
+	#[pallet::getter(fn txn_record)]
+	pub type TxnRecord<T: Config> = StorageMap<
+		_,
+		Blake2_256,
+		(T::Index, T::AccountId),
+		BTreeMap<T::Hash, (T::Index, Balance, bool)>,
+		ValueQuery
+	>;
+
+    #[pallet::storage]
+	#[pallet::getter(fn execd_txn_record)]
+	pub type ExecutedTxnRecord<T: Config> = StorageMap<
+		_,
+		Blake2_256,
+		(T::Index, T::AccountId),
+		Vec<T::Hash>,
+		ValueQuery
+	>;
 
 
 

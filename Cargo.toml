@@ -12,6 +12,13 @@ members = [
 pallet-xyk = { path = "./pallets/xyk" }
 mangata-primitives = {path = "./primitives/mangata"}
 
+# [patch."https://github.com/mangata-finance/moonbeam"]
+# parachain-staking = {path = "../moonbeam/pallets/parachain-staking"}
+
+# [patch."https://github.com/mangata-finance/open-runtime-module-library"]
+# orml-tokens = { path = "../open-runtime-module-library/tokens" }
+# orml-traits = { path = "../open-runtime-module-library/traits" }
+
 # [patch."https://github.com/paritytech/substrate"]
 # sp-debug-derive = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
 # sp-tasks = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }

@@ -13,7 +13,7 @@ use mangata_primitives::{Balance, TokenId};
 
 use frame_system::{RawOrigin};
 use frame_support::pallet_prelude::*;
-use frame_support::traits::{WithdrawReasons, ExistenceRequirement};
+use frame_support::traits::{WithdrawReasons, ExistenceRequirement, OneSessionHandler};
 use frame_system::pallet_prelude::*;
 use orml_tokens::MultiTokenCurrency;
 use sp_runtime::RuntimeAppPublic;
@@ -23,32 +23,35 @@ use frame_support::weights::GetDispatchInfo;
 use sp_std::collections::btree_map::BTreeMap;
 use scale_info::TypeInfo;
 use sp_runtime::traits::Zero;
+use sp_runtime::KeyTypeId;
+use sp_core::storage::ChildInfo;
+use frame_support::storage::child;
+use frame_support::storage::generator::StorageMap as GStorageMap;
 
 // #[cfg(test)]
 // mod mock;
 // #[cfg(test)]
 // mod tests;
 
-// pub const XXTX_KEY_TYPE_ID: KeyTypeId = KeyTypeId(*b"xxtx");
-//
-// pub mod ecdsa {
-//     mod app_ecdsa {
-//         use sp_application_crypto::{app_crypto, ecdsa};
-//         app_crypto!(ecdsa, super::super::XXTX_KEY_TYPE_ID);
-//     }
-//
-//     sp_application_crypto::with_pair! {
-//         /// An xxtx keypair using sr25519 as its crypto.
-//         pub type AuthorityPair = app_ecdsa::Pair;
-//     }
-//
-//     /// An xxtx signature using sr25519 as its crypto.
-//     pub type AuthoritySignature = app_ecdsa::Signature;
-//
-//     /// An xxtx identifier using sr25519 as its crypto.
-//     pub type AuthorityId = app_ecdsa::Public;
-// }
+pub const XXTX_KEY_TYPE_ID: KeyTypeId = KeyTypeId(*b"xxtx");
 
+pub mod ecdsa {
+    mod app_ecdsa {
+        use sp_application_crypto::{app_crypto, ecdsa};
+        app_crypto!(ecdsa, super::super::XXTX_KEY_TYPE_ID);
+    }
+
+    sp_application_crypto::with_pair! {
+        /// An xxtx keypair using sr25519 as its crypto.
+        pub type AuthorityPair = app_ecdsa::Pair;
+    }
+
+    /// An xxtx signature using sr25519 as its crypto.
+    pub type AuthoritySignature = app_ecdsa::Signature;
+
+    /// An xxtx identifier using sr25519 as its crypto.
+    pub type AuthorityId = app_ecdsa::Public;
+}
 
 // syntactic sugar for logging.
 #[macro_export]
@@ -149,7 +152,7 @@ pub mod pallet {
 	#[pallet::getter(fn txn_registry)]
 	pub type TxnRegistry<T: Config> = StorageMap<
 		_,
-		Blake2_256,
+		Blake2_128Concat,
 		T::Hash,
 		Option<TxnRegistryDetails<T::AccountId, T::Index>>,
 		ValueQuery
@@ -160,7 +163,7 @@ pub mod pallet {
 	#[pallet::getter(fn doubly_encrypted_queue)]
 	pub type DoublyEncryptedQueue<T: Config> = StorageMap<
 		_,
-		Blake2_256,
+		Blake2_128Concat,
 		T::AccountId,
 		Vec<T::Hash>,
 		ValueQuery
@@ -170,7 +173,7 @@ pub mod pallet {
 	#[pallet::getter(fn singly_encrypted_queue)]
 	pub type SinglyEncryptedQueue<T: Config> = StorageMap<
 		_,
-		Blake2_256,
+		Blake2_128Concat,
 		T::AccountId,
 		Vec<T::Hash>,
 		ValueQuery
@@ -178,20 +181,24 @@ pub mod pallet {
 
     #[pallet::storage]
 	#[pallet::getter(fn txn_record)]
-	pub type TxnRecord<T: Config> = StorageMap<
+	pub type TxnRecord<T: Config> = StorageDoubleMap<
 		_,
-		Blake2_256,
-		(T::Index, T::AccountId),
+		Blake2_128Concat,
+		T::Index,
+		Blake2_128Concat,
+		T::AccountId,
 		BTreeMap<T::Hash, (T::Index, Balance, bool)>,
 		ValueQuery
 	>;
 
     #[pallet::storage]
 	#[pallet::getter(fn execd_txn_record)]
-	pub type ExecutedTxnRecord<T: Config> = StorageMap<
+	pub type ExecutedTxnRecord<T: Config> = StorageDoubleMap<
 		_,
-		Blake2_256,
-		(T::Index, T::AccountId),
+		Blake2_128Concat,
+		T::Index,
+		Blake2_128Concat,
+		T::AccountId,
 		Vec<T::Hash>,
 		ValueQuery
 	>;
@@ -235,7 +242,7 @@ pub mod pallet {
             TxnRegistry::<T>::insert(identifier, Some(txn_registry_details));
             DoublyEncryptedQueue::<T>::mutate(&builder, |vec_hash| {vec_hash.push(identifier)});
             TxnRecord::<T>::mutate(
-                (T::Index::from(<pallet_session::Module<T>>::current_index()), &user),
+                (T::Index::from(<pallet_session::Pallet<T>>::current_index()), &user),
                 |tree_record| tree_record.insert(identifier, (nonce, fee_charged, false))
             );
             Self::deposit_event(Event::DoublyEncryptedTxnSubmitted(user, nonce, identifier));
@@ -272,7 +279,7 @@ pub mod pallet {
             let mut txn_registry_details = TxnRegistry::<T>::get(identifier).ok_or_else(|| Error::<T>::TxnDoesNotExistsInRegistry)?;
             SinglyEncryptedQueue::<T>::mutate(&txn_registry_details.executor, |vec_hash| {vec_hash.retain(|x| *x!=identifier)});
 
-            ExecutedTxnRecord::<T>::mutate((T::Index::from(<pallet_session::Module<T>>::current_index()), &txn_registry_details.user), |vec_hash| {vec_hash.push(identifier)});
+            ExecutedTxnRecord::<T>::mutate((T::Index::from(<pallet_session::Pallet<T>>::current_index()), &txn_registry_details.user), |vec_hash| {vec_hash.push(identifier)});
 
             txn_registry_details.decrypted_call = Some(decrypted_call.clone());
 
@@ -282,7 +289,7 @@ pub mod pallet {
 
             let calls: Vec<Box<<T as Config>::Call>> = Decode::decode(&mut &decrypted_call[..]).map_err(|_| DispatchError::from(Error::<T>::CallDeserilizationFailed))?;
 
-            Module::<T>::execute_calls(RawOrigin::Root.into(), calls, txn_registry_details.user, identifier, txn_registry_details.nonce, txn_registry_details.weight)?;
+            Pallet::<T>::execute_calls(RawOrigin::Root.into(), calls, txn_registry_details.user, identifier, txn_registry_details.nonce, txn_registry_details.weight)?;
 
             Ok(())
         }
@@ -316,7 +323,7 @@ pub mod pallet {
         #[pallet::weight(10_000)]
         pub fn refund_user(origin: OriginFor<T>, identifier: T::Hash) -> DispatchResult {
             let user = ensure_signed(origin)?;
-            let current_session_index = <pallet_session::Module<T>>::current_index();
+            let current_session_index = <pallet_session::Pallet<T>>::current_index();
             let previous_session_index: T::Index = current_session_index.checked_sub(1u8.into()).ok_or_else(|| DispatchError::from(Error::<T>::NoMarkedRefund))?.into();
 
             if ExecutedTxnRecord::<T>::get((previous_session_index, &user)).contains(&identifier){
@@ -329,7 +336,7 @@ pub mod pallet {
 
                 // TODO
                 // Refund fee
-                TxnRecord::<T>::mutate((T::Index::from(<pallet_session::Module<T>>::current_index()), &user), |tree_record| tree_record.insert(identifier, (nonce, fee_charged, true)));
+                TxnRecord::<T>::mutate((T::Index::from(<pallet_session::Pallet<T>>::current_index()), &user), |tree_record| tree_record.insert(identifier, (nonce, fee_charged, true)));
 
                 Self::deposit_event(Event::UserRefunded(previous_session_index, user, nonce, identifier, fee_charged));
             }
@@ -342,54 +349,54 @@ pub mod pallet {
 }
 
 
-//
-// impl<T: Trait> sp_runtime::BoundToRuntimeAppPublic for Module<T> {
-//     type Public = T::AuthorityId;
-// }
-//
-// impl<T: Trait> pallet_session::OneSessionHandler<T::AccountId> for Module<T> {
-//     type Key = T::AuthorityId;
-//
-//     fn on_genesis_session<'a, I: 'a>(validators: I)
-//     where
-//         I: Iterator<Item = (&'a T::AccountId, T::AuthorityId)>,
-//     {
-//         let keys = validators
-//             .map(|(x, y)| (x.clone(), y))
-//             .collect::<BTreeMap<_, _>>();
-//         Self::initialize_keys(&keys);
-//     }
-//
-//     fn on_new_session<'a, I: 'a>(_changed: bool, validators: I, _queued_validators: I)
-//     where
-//         I: Iterator<Item = (&'a T::AccountId, T::AuthorityId)>,
-//     {
-//         // Remember who the authorities are for the new session.
-//         KeyMap::<T>::put(validators.collect::<BTreeMap<_, _>>());
-//     }
-//
-//     fn on_before_session_ending() {
-//         KeyMap::<T>::kill();
-//
-//         child::kill_storage(&ChildInfo::new_default_from_vec(
-//             TxnRegistry::<T>::prefix_hash(),
-//         ));
-//         child::kill_storage(&ChildInfo::new_default_from_vec(
-//             DoublyEncryptedQueue::<T>::prefix_hash(),
-//         ));
-//         child::kill_storage(&ChildInfo::new_default_from_vec(
-//             SinglyEncryptedQueue::<T>::prefix_hash(),
-//         ));
-//
-//         let session_index = <pallet_session::Module<T>>::current_index();
-//
-//         if let Some(previous_session_index) = session_index.checked_sub(1u8.into()) {
-//             TxnRecord::<T>::remove_prefix(T::Index::from(previous_session_index));
-//             ExecutedTxnRecord::<T>::remove_prefix(T::Index::from(previous_session_index));
-//         }
-//     }
-//
-//     fn on_disabled(_i: usize) {
-//         // ignore
-//     }
-// }
+
+impl<T: Config> sp_runtime::BoundToRuntimeAppPublic for Pallet<T> {
+    type Public = T::AuthorityId;
+}
+
+impl<T: Config> OneSessionHandler<T::AccountId> for Pallet<T> {
+    type Key = T::AuthorityId;
+
+    fn on_genesis_session<'a, I: 'a>(validators: I)
+    where
+        I: Iterator<Item = (&'a T::AccountId, T::AuthorityId)>,
+    {
+        let keys = validators
+            .map(|(x, y)| (x.clone(), y))
+            .collect::<BTreeMap<_, _>>();
+        Self::initialize_keys(&keys);
+    }
+
+    fn on_new_session<'a, I: 'a>(_changed: bool, validators: I, _queued_validators: I)
+    where
+        I: Iterator<Item = (&'a T::AccountId, T::AuthorityId)>,
+    {
+        // Remember who the authorities are for the new session.
+        KeyMap::<T>::put(validators.collect::<BTreeMap<_, _>>());
+    }
+
+    fn on_before_session_ending() {
+        KeyMap::<T>::kill();
+
+        child::kill_storage(&ChildInfo::new_default_from_vec(
+            TxnRegistry::<T>::prefix_hash(),
+        ), None);
+        child::kill_storage(&ChildInfo::new_default_from_vec(
+            DoublyEncryptedQueue::<T>::prefix_hash(),
+        ), None);
+        child::kill_storage(&ChildInfo::new_default_from_vec(
+            SinglyEncryptedQueue::<T>::prefix_hash(),
+        ), None);
+
+        let session_index = <pallet_session::Pallet<T>>::current_index();
+
+        if let Some(previous_session_index) = session_index.checked_sub(1u8.into()) {
+            TxnRecord::<T>::remove_prefix(T::Index::from(previous_session_index));
+            ExecutedTxnRecord::<T>::remove_prefix(T::Index::from(previous_session_index));
+        }
+    }
+
+    fn on_disabled(_i: u32) {
+        // ignore
+    }
+}

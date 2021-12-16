@@ -191,6 +191,7 @@ pub mod opaque {
 impl_opaque_keys! {
 	pub struct SessionKeys {
 		pub aura: Aura,
+        pub xxtx: EncryptedTransactions,
 	}
 }
 

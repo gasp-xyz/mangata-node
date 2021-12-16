@@ -48,7 +48,7 @@ frame-support = { git = "https://github.com/mangata-finance/substrate", default-
 frame-system = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v4" }
 frame-system-benchmarking = { git = "https://github.com/mangata-finance/substrate", default-features = false, optional = true, branch = "mangata-dev-v4" }
 frame-system-rpc-runtime-api = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v4" }
-extrinsic-info-runtime-api = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v4" }
+ver-api = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v4" }
 
 ## Substrate Pallet Dependencies
 pallet-aura = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v4" }
@@ -141,7 +141,7 @@ std = [
 	"xcm-builder/std",
 	"xcm-executor/std",
 	"xcm/std",
-    "extrinsic-info-runtime-api/std",
+    "ver-api/std",
 	
 	"mangata-primitives/std",
 	"orml-traits/std",

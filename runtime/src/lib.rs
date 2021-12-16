@@ -17,7 +17,7 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto,
-		IdentifyAccount, Verify,
+		Header as HeaderT, IdentifyAccount, Verify,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiSignature, Percent,
@@ -27,6 +27,7 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
+use pallet_session::{PeriodicSessions, ShouldEndSession};
 
 use frame_support::{
 	construct_runtime, match_type, parameter_types,
@@ -907,23 +908,25 @@ construct_runtime!(
 
 impl_runtime_apis! {
 
-	impl extrinsic_info_runtime_api::ExtrinsicInfoRuntimeApi<Block> for Runtime {
-		fn get_info(
-			tx: <Block as BlockT>::Extrinsic,
-		) -> Option<extrinsic_info_runtime_api::ExtrinsicInfo> {
-			if let Some(sig) = tx.signature.clone(){
-				if let Address::Id(addr) = sig.0 {
-					Some(extrinsic_info_runtime_api::ExtrinsicInfo{
-						who: addr,
-					})
-				}else{
-					panic!("unsupported address format");
-				}
-			}else{
-				None
-			}
-		}
-	}
+    impl ver_api::VerApi<Block> for Runtime {
+        fn get_signer(
+            tx: <Block as BlockT>::Extrinsic,
+        ) -> Option<sp_runtime::AccountId32> {
+            if let Some(sig) = tx.signature.clone(){
+                if let Address::Id(addr) = sig.0 {
+                    Some(addr)
+                }else{
+                    panic!("unsupported address format");
+                }
+            }else{
+                None
+            }
+        }
+
+        fn is_new_session(number: <<Block as BlockT>::Header as HeaderT>::Number) -> bool{
+            <ParachainStaking as ShouldEndSession<_>>::should_end_session(number)
+        }
+    }
 
 	impl xyk_runtime_api::XykApi<Block, Balance, TokenId> for Runtime {
 		fn calculate_sell_price(

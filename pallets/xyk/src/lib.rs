@@ -1860,6 +1860,11 @@ pub trait Valuate {
         + From<TokenId>
         + Into<TokenId>;
 
+    fn get_liquidity_asset(
+        first_asset_id: Self::CurrencyId,
+        second_asset_id: Self::CurrencyId,
+    ) -> Result<TokenId, DispatchError>;
+
     fn get_liquidity_token_mga_pool(
         liquidity_token_id: Self::CurrencyId,
     ) -> Result<(Self::CurrencyId, Self::CurrencyId), DispatchError>;
@@ -1882,6 +1887,13 @@ impl<T: Config> Valuate for Pallet<T> {
     type Balance = Balance;
 
     type CurrencyId = TokenId;
+
+    fn get_liquidity_asset(
+        first_asset_id: Self::CurrencyId,
+        second_asset_id: Self::CurrencyId,
+    ) -> Result<TokenId, DispatchError> {
+        Pallet::<T>::get_liquidity_asset(first_asset_id, second_asset_id)
+    }
 
     fn get_liquidity_token_mga_pool(
         liquidity_token_id: Self::CurrencyId,

@@ -1,0 +1,129 @@
+{
+  "uid" : "1ea41ba572ce4769",
+  "name" : "assets won when assets are bought [Buying other in MGA pool]",
+  "fullName" : "xyk-pallet - treasury tests [Mangata]: on treasury we store.assets won when assets are bought [Buying other in MGA pool]",
+  "historyId" : "f417a1d75905b23a9c51e749a26502cd",
+  "time" : {
+    "start" : 1639678075311,
+    "stop" : 1639678183480,
+    "duration" : 108169
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - treasury tests [Mangata]: on treasury we store"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - treasury tests [Mangata]: on treasury we store"
+  }, {
+    "name" : "testMethod",
+    "value" : "assets won when assets are bought [Buying other in MGA pool]"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - treasury tests [Mangata]: on treasury we store"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 0,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 9,
+        "unknown" : 0,
+        "total" : 9
+      },
+      "items" : [ {
+        "uid" : "ef99576c78fd8dc8",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/575//#testresult/ef99576c78fd8dc8",
+        "status" : "passed",
+        "time" : {
+          "start" : 1639591308909,
+          "stop" : 1639591417175,
+          "duration" : 108266
+        }
+      }, {
+        "uid" : "20d3b1de6ccc0be4",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/574//#testresult/20d3b1de6ccc0be4",
+        "status" : "passed",
+        "time" : {
+          "start" : 1639412389272,
+          "stop" : 1639412497516,
+          "duration" : 108244
+        }
+      }, {
+        "uid" : "4b6d5593d9e35888",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/573//#testresult/4b6d5593d9e35888",
+        "status" : "passed",
+        "time" : {
+          "start" : 1639407955585,
+          "stop" : 1639408063721,
+          "duration" : 108136
+        }
+      }, {
+        "uid" : "56f80245d37bcbf8",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/572//#testresult/56f80245d37bcbf8",
+        "status" : "passed",
+        "time" : {
+          "start" : 1639389745764,
+          "stop" : 1639389854015,
+          "duration" : 108251
+        }
+      }, {
+        "uid" : "35e4804afa8cc061",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/571//#testresult/35e4804afa8cc061",
+        "status" : "passed",
+        "time" : {
+          "start" : 1639151365850,
+          "stop" : 1639151474025,
+          "duration" : 108175
+        }
+      }, {
+        "uid" : "2cc1830ddb0b4ac1",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/570//#testresult/2cc1830ddb0b4ac1",
+        "status" : "passed",
+        "time" : {
+          "start" : 1639138609287,
+          "stop" : 1639138717411,
+          "duration" : 108124
+        }
+      }, {
+        "uid" : "45b17721b053fa76",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/569//#testresult/45b17721b053fa76",
+        "status" : "passed",
+        "time" : {
+          "start" : 1639124047831,
+          "stop" : 1639124154749,
+          "duration" : 106918
+        }
+      }, {
+        "uid" : "b44370190465fcc",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/568//#testresult/b44370190465fcc",
+        "status" : "passed",
+        "time" : {
+          "start" : 1639121353316,
+          "stop" : 1639121461509,
+          "duration" : 108193
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "1ea41ba572ce4769.json",
+  "parameterValues" : [ ]
+}

@@ -242,7 +242,7 @@ pub mod pallet {
             TxnRegistry::<T>::insert(identifier, Some(txn_registry_details));
             DoublyEncryptedQueue::<T>::mutate(&builder, |vec_hash| {vec_hash.push(identifier)});
             TxnRecord::<T>::mutate(
-                (T::Index::from(<pallet_session::Pallet<T>>::current_index()), &user),
+                T::Index::from(<pallet_session::Pallet<T>>::current_index()), &user,
                 |tree_record| tree_record.insert(identifier, (nonce, fee_charged, false))
             );
             Self::deposit_event(Event::DoublyEncryptedTxnSubmitted(user, nonce, identifier));
@@ -279,7 +279,7 @@ pub mod pallet {
             let mut txn_registry_details = TxnRegistry::<T>::get(identifier).ok_or_else(|| Error::<T>::TxnDoesNotExistsInRegistry)?;
             SinglyEncryptedQueue::<T>::mutate(&txn_registry_details.executor, |vec_hash| {vec_hash.retain(|x| *x!=identifier)});
 
-            ExecutedTxnRecord::<T>::mutate((T::Index::from(<pallet_session::Pallet<T>>::current_index()), &txn_registry_details.user), |vec_hash| {vec_hash.push(identifier)});
+            ExecutedTxnRecord::<T>::mutate(T::Index::from(<pallet_session::Pallet<T>>::current_index()), &txn_registry_details.user, |vec_hash| {vec_hash.push(identifier)});
 
             txn_registry_details.decrypted_call = Some(decrypted_call.clone());
 
@@ -326,17 +326,17 @@ pub mod pallet {
             let current_session_index = <pallet_session::Pallet<T>>::current_index();
             let previous_session_index: T::Index = current_session_index.checked_sub(1u8.into()).ok_or_else(|| DispatchError::from(Error::<T>::NoMarkedRefund))?.into();
 
-            if ExecutedTxnRecord::<T>::get((previous_session_index, &user)).contains(&identifier){
+            if ExecutedTxnRecord::<T>::get(previous_session_index, &user).contains(&identifier){
                 return Err(DispatchError::from(Error::<T>::NoMarkedRefund));
             }
             else {
-                let (nonce, fee_charged, already_refunded) = TxnRecord::<T>::get((previous_session_index, &user)).get(&identifier).ok_or_else(|| DispatchError::from(Error::<T>::NoMarkedRefund))?.clone();
+                let (nonce, fee_charged, already_refunded) = TxnRecord::<T>::get(previous_session_index, &user).get(&identifier).ok_or_else(|| DispatchError::from(Error::<T>::NoMarkedRefund))?.clone();
 
                 ensure!(!already_refunded, Error::<T>::NoMarkedRefund);
 
                 // TODO
                 // Refund fee
-                TxnRecord::<T>::mutate((T::Index::from(<pallet_session::Pallet<T>>::current_index()), &user), |tree_record| tree_record.insert(identifier, (nonce, fee_charged, true)));
+                TxnRecord::<T>::mutate(T::Index::from(<pallet_session::Pallet<T>>::current_index()), &user, |tree_record| tree_record.insert(identifier, (nonce, fee_charged, true)));
 
                 Self::deposit_event(Event::UserRefunded(previous_session_index, user, nonce, identifier, fee_charged));
             }
@@ -348,7 +348,17 @@ pub mod pallet {
     }
 }
 
-
+impl<T: Config> Pallet<T> {
+    fn initialize_keys(keys: &BTreeMap<T::AccountId, T::AuthorityId>) {
+        if !keys.is_empty() {
+            assert!(
+                KeyMap::<T>::get().is_empty(),
+                "Keys are already initialized!"
+            );
+            KeyMap::<T>::put(keys);
+        }
+    }
+}
 
 impl<T: Config> sp_runtime::BoundToRuntimeAppPublic for Pallet<T> {
     type Public = T::AuthorityId;
@@ -391,8 +401,8 @@ impl<T: Config> OneSessionHandler<T::AccountId> for Pallet<T> {
         let session_index = <pallet_session::Pallet<T>>::current_index();
 
         if let Some(previous_session_index) = session_index.checked_sub(1u8.into()) {
-            TxnRecord::<T>::remove_prefix(T::Index::from(previous_session_index));
-            ExecutedTxnRecord::<T>::remove_prefix(T::Index::from(previous_session_index));
+            TxnRecord::<T>::remove_prefix(T::Index::from(previous_session_index), None);
+            ExecutedTxnRecord::<T>::remove_prefix(T::Index::from(previous_session_index), None);
         }
     }
 

@@ -1884,6 +1884,7 @@ dependencies = [
  "rustc-hex",
  "scale-info",
  "serde",
+ "sp-application-crypto",
  "sp-arithmetic",
  "sp-core",
  "sp-runtime",

@@ -1870,28 +1870,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
 
 [[package]]
-name = "encrypted-transactions"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "hex-literal",
- "log",
- "mangata-primitives",
- "orml-tokens",
- "pallet-session",
- "parity-scale-codec 2.3.1",
- "rustc-hex",
- "scale-info",
- "serde",
- "sp-application-crypto",
- "sp-arithmetic",
- "sp-core",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "enum-as-inner"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4241,6 +4219,7 @@ dependencies = [
  "pallet-bridge",
  "pallet-collective",
  "pallet-elections-phragmen",
+ "pallet-encrypted-transactions",
  "pallet-session",
  "pallet-sudo",
  "pallet-sudo-origin",
@@ -5132,6 +5111,28 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-npos-elections",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-encrypted-transactions"
+version = "0.2.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "log",
+ "mangata-primitives",
+ "orml-tokens",
+ "pallet-session",
+ "parity-scale-codec 2.3.1",
+ "rustc-hex",
+ "scale-info",
+ "serde",
+ "sp-application-crypto",
+ "sp-arithmetic",
+ "sp-core",
  "sp-runtime",
  "sp-std",
 ]

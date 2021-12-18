@@ -191,7 +191,7 @@ pub mod opaque {
 impl_opaque_keys! {
 	pub struct SessionKeys {
 		pub aura: Aura,
-        pub xxtx: EncryptedTransactions,
+        // pub xxtx: EncryptedTransactions,
 	}
 }
 
@@ -447,6 +447,22 @@ impl pallet_xyk::Config for Runtime {
     type NativeCurrencyId = MgaTokenId;
     type TreasuryPalletId = TreasuryPalletId;
     type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
+}
+
+parameter_types! {
+    pub const EncryptedTxnsFee: Balance = 1 * currency::DOLLARS;
+    pub const DoublyEncryptedCallMaxLength: u32 = 4096;
+}
+
+impl pallet_encrypted_transactions::Config for Runtime {
+    type Event = Event;
+    type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+    /// The identifier type for an authority.
+    type AuthorityId = pallet_encrypted_transactions::ecdsa::AuthorityId;
+    type Fee = EncryptedTxnsFee;
+    type Treasury = pallet_treasury::MultiOnUnbalancedWrapper<Treasury>;
+    type Call = Call;
+    type DoublyEncryptedCallMaxLength = DoublyEncryptedCallMaxLength;
 }
 
 parameter_types! {
@@ -868,6 +884,8 @@ construct_runtime!(
 		// Xyk stuff
 		AssetsInfo: pallet_assets_info::{Pallet, Call, Config, Storage, Event<T>} = 12,
 		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>} = 13,
+        // EncryptedTransactions: pallet_encrypted_transactions::{Pallet, Call, Storage, Config<T>, Event<T>} = 14,
+        EncryptedTransactions: pallet_encrypted_transactions::{Pallet, Call, Storage, Event<T>} = 14,
 
 		// Collator support. The order of these 4 are important and shall not change.
 		Authorship: pallet_authorship::{Pallet, Call, Storage} = 20,

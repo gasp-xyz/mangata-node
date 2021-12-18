@@ -24,6 +24,7 @@ mangata-primitives = { path = '../primitives/mangata', default-features = false,
 pallet-assets-info = { path = '../pallets/assets-info', default-features = false, version = "2.0.0" }
 pallet-xyk = { path = '../pallets/xyk', default-features = false, version = '0.1.0' }
 xyk-runtime-api = { path = '../pallets/xyk/runtime-api', default-features = false, version = '2.0.0' }
+pallet-encrypted-transactions = { path = '../pallets/encrypted-transactions', default-features = false, version = '0.2.0' }
 pallet-sudo-origin = { path = '../pallets/sudo-origin', default-features = false}
 
 # Substrate Dependencies
@@ -150,6 +151,7 @@ std = [
 	"pallet-assets-info/std",
 	"pallet-xyk/std",
     "xyk-runtime-api/std",
+    "pallet-encrypted-transactions/std",
 
 	"artemis-core/std",
 	"pallet-verifier/std",

@@ -411,12 +411,15 @@ impl pallet_treasury::Config for Runtime {
 	type MaxApprovals = MaxApprovals;
 }
 
+// TODO: discuiss existential deposit feature
+// https://trello.com/c/P5rYYQcS/424-discuiss-orml-tokens-existential-deposit
 parameter_type_with_key! {
 	pub ExistentialDeposits: |currency_id: TokenId| -> Balance {
-		match currency_id {
-			&MGA_TOKEN_ID => 100,
-			_ => 0,
-		}
+        0
+		// match currency_id {
+		// 	&MGA_TOKEN_ID => 100,
+		// 	_ => 0,
+		// }
 	};
 }
 

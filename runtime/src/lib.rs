@@ -17,12 +17,12 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto,
-		IdentifyAccount, Verify,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiSignature, Percent,
 };
 
+use pallet_session::ShouldEndSession;
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -411,12 +411,15 @@ impl pallet_treasury::Config for Runtime {
 	type MaxApprovals = MaxApprovals;
 }
 
+// TODO: discuiss existential deposit feature
+// https://trello.com/c/P5rYYQcS/424-discuiss-orml-tokens-existential-deposit
 parameter_type_with_key! {
-	pub ExistentialDeposits: |currency_id: TokenId| -> Balance {
-		match currency_id {
-			&MGA_TOKEN_ID => 100,
-			_ => 0,
-		}
+	pub ExistentialDeposits: |_currency_id: TokenId| -> Balance {
+		0
+		// match currency_id {
+		// 	&MGA_TOKEN_ID => 100,
+		// 	_ => 0,
+		// }
 	};
 }
 
@@ -896,7 +899,6 @@ construct_runtime!(
 		// Xyk stuff
 		AssetsInfo: pallet_assets_info::{Pallet, Call, Config, Storage, Event<T>} = 12,
 		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>} = 13,
-		// EncryptedTransactions: pallet_encrypted_transactions::{Pallet, Call, Storage, Config<T>, Event<T>} = 14,
 		EncryptedTransactions: pallet_encrypted_transactions::{Pallet, Call, Storage, Event<T>} = 14,
 
 		// Collator support. The order of these 4 are important and shall not change.
@@ -926,21 +928,23 @@ construct_runtime!(
 
 impl_runtime_apis! {
 
-	impl extrinsic_info_runtime_api::ExtrinsicInfoRuntimeApi<Block> for Runtime {
-		fn get_info(
+	impl ver_api::VerApi<Block> for Runtime {
+		fn get_signer(
 			tx: <Block as BlockT>::Extrinsic,
-		) -> Option<extrinsic_info_runtime_api::ExtrinsicInfo> {
+		) -> Option<sp_runtime::AccountId32> {
 			if let Some(sig) = tx.signature.clone(){
 				if let Address::Id(addr) = sig.0 {
-					Some(extrinsic_info_runtime_api::ExtrinsicInfo{
-						who: addr,
-					})
+					Some(addr)
 				}else{
 					panic!("unsupported address format");
 				}
 			}else{
 				None
 			}
+		}
+
+		fn is_new_session(number: <<Block as BlockT>::Header as HeaderT>::Number) -> bool{
+			<ParachainStaking as ShouldEndSession<_>>::should_end_session(number)
 		}
 	}
 

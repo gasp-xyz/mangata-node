@@ -21,7 +21,8 @@ use super::*;
 use frame_support::{assert_noop, assert_ok, dispatch::DispatchError};
 use frame_system::RawOrigin;
 use mock::{
-	new_test_ext, Call, Event as TestEvent, Logger, LoggerCall, Origin, SudoOrigin, SudoOriginCall, System
+	new_test_ext, Call, Event as TestEvent, Logger, LoggerCall, Origin, SudoOrigin, SudoOriginCall,
+	System,
 };
 
 #[test]
@@ -80,7 +81,8 @@ fn sudo_unchecked_weight_basics() {
 
 		// Controls the dispatched weight.
 		let call = Box::new(Call::Logger(LoggerCall::privileged_i32_log { i: 42, weight: 1 }));
-		let sudo_unchecked_weight_call = SudoOriginCall::sudo_unchecked_weight { call, weight: 1_000 };
+		let sudo_unchecked_weight_call =
+			SudoOriginCall::sudo_unchecked_weight { call, weight: 1_000 };
 		let info = sudo_unchecked_weight_call.get_dispatch_info();
 		assert_eq!(info.weight, 1_000);
 	});

@@ -1,0 +1,46 @@
+{
+  "uid" : "c4ef3949c5a339d1",
+  "name" : "Burn liquidity  for more assets than the liquidity pool has issued",
+  "fullName" : "xyk-pallet - Burn liquidity tests: BurnLiquidity Errors:.Burn liquidity  for more assets than the liquidity pool has issued",
+  "historyId" : "21fd00cd9da05e9b2a31319b3cd4156b",
+  "time" : {
+    "start" : 1640116387705,
+    "stop" : 1640116549276,
+    "duration" : 161571
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Burn liquidity tests: BurnLiquidity Errors:"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Burn liquidity tests: BurnLiquidity Errors:"
+  }, {
+    "name" : "testMethod",
+    "value" : "Burn liquidity  for more assets than the liquidity pool has issued"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Burn liquidity tests: BurnLiquidity Errors:"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "c4ef3949c5a339d1.json",
+  "parameterValues" : [ ]
+}

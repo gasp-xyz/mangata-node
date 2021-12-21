@@ -1,0 +1,46 @@
+{
+  "uid" : "7eee640d7913c09e",
+  "name" : "xyk-pallet - Assets substracted are incremented by 1 - SellAsset",
+  "fullName" : "test/parallel/xyk-pallet.API.accuracy.no.connected.MGA.fees.test.ts.xyk-pallet - Assets substracted are incremented by 1 - SellAsset",
+  "historyId" : "786443d3927e7dba9e40f321ff3cb64",
+  "time" : {
+    "start" : 1640116826926,
+    "stop" : 1640116957928,
+    "duration" : 131002
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "test/parallel/xyk-pallet.API.accuracy.no.connected.MGA.fees.test.ts"
+  }, {
+    "name" : "testClass",
+    "value" : "test/parallel/xyk-pallet.API.accuracy.no.connected.MGA.fees.test.ts"
+  }, {
+    "name" : "testMethod",
+    "value" : "xyk-pallet - Assets substracted are incremented by 1 - SellAsset"
+  }, {
+    "name" : "package",
+    "value" : "test/parallel/xyk-pallet.API.accuracy.no.connected.MGA.fees.test.ts"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "7eee640d7913c09e.json",
+  "parameterValues" : [ ]
+}

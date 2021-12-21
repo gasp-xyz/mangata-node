@@ -1,0 +1,46 @@
+{
+  "uid" : "13fd56aa6b0cdd38",
+  "name" : "Not enough assets",
+  "fullName" : "xyk-pallet - Poll creation: Errors:.Not enough assets",
+  "historyId" : "276107f6850f2c5d26cdc338432ce5eb",
+  "time" : {
+    "start" : 1640107921444,
+    "stop" : 1640107974846,
+    "duration" : 53402
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Poll creation: Errors:"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Poll creation: Errors:"
+  }, {
+    "name" : "testMethod",
+    "value" : "Not enough assets"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Poll creation: Errors:"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "13fd56aa6b0cdd38.json",
+  "parameterValues" : [ ]
+}

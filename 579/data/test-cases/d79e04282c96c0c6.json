@@ -1,0 +1,48 @@
+{
+  "uid" : "d79e04282c96c0c6",
+  "name" : "Mint liquidities [1000] assets to a wallet with Max-1000,1000 => overflow.",
+  "fullName" : "xyk-pallet - Operate with a pool close to overflow.Mint liquidities [1000] assets to a wallet with Max-1000,1000 => overflow.",
+  "historyId" : "775f6fc3f5ec7b26bd30a34f4e236328",
+  "time" : {
+    "start" : 1640108989505,
+    "stop" : 1640108989505,
+    "duration" : 0
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "skipped",
+  "statusMessage" : "Temporarily disabled with xit",
+  "statusTrace" : "undefined",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Operate with a pool close to overflow"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Operate with a pool close to overflow"
+  }, {
+    "name" : "testMethod",
+    "value" : "Mint liquidities [1000] assets to a wallet with Max-1000,1000 => overflow."
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Operate with a pool close to overflow"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "d79e04282c96c0c6.json",
+  "parameterValues" : [ ]
+}

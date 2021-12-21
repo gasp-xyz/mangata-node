@@ -1,0 +1,46 @@
+{
+  "uid" : "dffd61ac7e97af83",
+  "name" : "Mint liquidity when not enough assetX for minting Yamount",
+  "fullName" : "xyk-pallet - Mint liquidity tests: MintLiquidity Errors:.Mint liquidity when not enough assetX for minting Yamount",
+  "historyId" : "4f6601857c2632479387a288d3debb62",
+  "time" : {
+    "start" : 1640110765704,
+    "stop" : 1640110915228,
+    "duration" : 149524
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Mint liquidity tests: MintLiquidity Errors:"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Mint liquidity tests: MintLiquidity Errors:"
+  }, {
+    "name" : "testMethod",
+    "value" : "Mint liquidity when not enough assetX for minting Yamount"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Mint liquidity tests: MintLiquidity Errors:"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "dffd61ac7e97af83.json",
+  "parameterValues" : [ ]
+}

@@ -1,0 +1,46 @@
+{
+  "uid" : "c4077070ad800fd7",
+  "name" : "Create pool with zero",
+  "fullName" : "xyk-pallet - Poll creation: Errors:.Create pool with zero",
+  "historyId" : "8799d7ad365b8aa8ae7eaca5e02987b3",
+  "time" : {
+    "start" : 1640107904042,
+    "stop" : 1640107921444,
+    "duration" : 17402
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Poll creation: Errors:"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Poll creation: Errors:"
+  }, {
+    "name" : "testMethod",
+    "value" : "Create pool with zero"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Poll creation: Errors:"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "c4077070ad800fd7.json",
+  "parameterValues" : [ ]
+}

@@ -1,0 +1,46 @@
+{
+  "uid" : "7b1342f68f65289c",
+  "name" : "Buy assets that does not belong to any pool",
+  "fullName" : "xyk-pallet - Buy assets tests: BuyAssets Errors:.Buy assets that does not belong to any pool",
+  "historyId" : "56f36786b1be3b43986aeb7c27d894a0",
+  "time" : {
+    "start" : 1640109735339,
+    "stop" : 1640109877422,
+    "duration" : 142083
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Buy assets tests: BuyAssets Errors:"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Buy assets tests: BuyAssets Errors:"
+  }, {
+    "name" : "testMethod",
+    "value" : "Buy assets that does not belong to any pool"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Buy assets tests: BuyAssets Errors:"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "7b1342f68f65289c.json",
+  "parameterValues" : [ ]
+}

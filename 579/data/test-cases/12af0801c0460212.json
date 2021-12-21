@@ -1,0 +1,46 @@
+{
+  "uid" : "12af0801c0460212",
+  "name" : "GetLiquidityAssetID x-y and y-x pool",
+  "fullName" : "xyk-pallet - Pool opeations: Simmetry.GetLiquidityAssetID x-y and y-x pool",
+  "historyId" : "dfa178f254928546284208302ffade25",
+  "time" : {
+    "start" : 1640108532868,
+    "stop" : 1640108532881,
+    "duration" : 13
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Pool opeations: Simmetry"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Pool opeations: Simmetry"
+  }, {
+    "name" : "testMethod",
+    "value" : "GetLiquidityAssetID x-y and y-x pool"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Pool opeations: Simmetry"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "12af0801c0460212.json",
+  "parameterValues" : [ ]
+}

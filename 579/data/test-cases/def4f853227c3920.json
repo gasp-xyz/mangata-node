@@ -1,0 +1,46 @@
+{
+  "uid" : "def4f853227c3920",
+  "name" : "Expect an event when liquidirty is minted",
+  "fullName" : "xyk-pallet - Mint liquidity tests: with minting you can.Expect an event when liquidirty is minted",
+  "historyId" : "c548fe04beb3eff101e468e856d1a193",
+  "time" : {
+    "start" : 1640113627295,
+    "stop" : 1640113752862,
+    "duration" : 125567
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Mint liquidity tests: with minting you can"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Mint liquidity tests: with minting you can"
+  }, {
+    "name" : "testMethod",
+    "value" : "Expect an event when liquidirty is minted"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Mint liquidity tests: with minting you can"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "def4f853227c3920.json",
+  "parameterValues" : [ ]
+}

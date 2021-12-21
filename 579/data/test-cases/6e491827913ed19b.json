@@ -1,0 +1,46 @@
+{
+  "uid" : "6e491827913ed19b",
+  "name" : "Each user who minted onws the same % of tokens - one user gets extra token",
+  "fullName" : "Accuracy > Shared pool.Each user who minted onws the same % of tokens - one user gets extra token",
+  "historyId" : "6f4c9bc463b5493d046637f98395f0df",
+  "time" : {
+    "start" : 1640111859251,
+    "stop" : 1640112097036,
+    "duration" : 237785
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "Accuracy > Shared pool"
+  }, {
+    "name" : "testClass",
+    "value" : "Accuracy > Shared pool"
+  }, {
+    "name" : "testMethod",
+    "value" : "Each user who minted onws the same % of tokens - one user gets extra token"
+  }, {
+    "name" : "package",
+    "value" : "Accuracy > Shared pool"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "6e491827913ed19b.json",
+  "parameterValues" : [ ]
+}

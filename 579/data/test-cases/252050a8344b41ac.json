@@ -1,0 +1,46 @@
+{
+  "uid" : "252050a8344b41ac",
+  "name" : "Try sell more assets than owned",
+  "fullName" : "xyk-pallet - Sell assets tests: SellAsset Errors:.Try sell more assets than owned",
+  "historyId" : "99c0f651d169b6676edbc4b92b014cb2",
+  "time" : {
+    "start" : 1640109133753,
+    "stop" : 1640109277903,
+    "duration" : 144150
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Sell assets tests: SellAsset Errors:"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Sell assets tests: SellAsset Errors:"
+  }, {
+    "name" : "testMethod",
+    "value" : "Try sell more assets than owned"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Sell assets tests: SellAsset Errors:"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "252050a8344b41ac.json",
+  "parameterValues" : [ ]
+}

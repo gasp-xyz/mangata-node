@@ -1,0 +1,46 @@
+{
+  "uid" : "ce271c6bca9a4ff3",
+  "name" : "Sell [MAX -2] assets to a wallet with Max-1000,1000 => overflow.",
+  "fullName" : "xyk-pallet - Operate with a pool close to overflow.Sell [MAX -2] assets to a wallet with Max-1000,1000 => overflow.",
+  "historyId" : "853145b35d454f458048e8b25a1e7f57",
+  "time" : {
+    "start" : 1640108946826,
+    "stop" : 1640108965476,
+    "duration" : 18650
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - Operate with a pool close to overflow"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - Operate with a pool close to overflow"
+  }, {
+    "name" : "testMethod",
+    "value" : "Sell [MAX -2] assets to a wallet with Max-1000,1000 => overflow."
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - Operate with a pool close to overflow"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "ce271c6bca9a4ff3.json",
+  "parameterValues" : [ ]
+}

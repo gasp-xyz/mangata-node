@@ -23,7 +23,7 @@ use sp_runtime::{
 	ApplyExtrinsicResult, MultiSignature, Percent,
 };
 
-use pallet_session::{PeriodicSessions, ShouldEndSession};
+use pallet_session::ShouldEndSession;
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -414,7 +414,7 @@ impl pallet_treasury::Config for Runtime {
 // TODO: discuiss existential deposit feature
 // https://trello.com/c/P5rYYQcS/424-discuiss-orml-tokens-existential-deposit
 parameter_type_with_key! {
-	pub ExistentialDeposits: |currency_id: TokenId| -> Balance {
+	pub ExistentialDeposits: |_currency_id: TokenId| -> Balance {
 		0
 		// match currency_id {
 		// 	&MGA_TOKEN_ID => 100,

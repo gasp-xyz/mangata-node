@@ -2,7 +2,7 @@ use artemis_core::{App, AppId};
 use cumulus_primitives_core::ParaId;
 use hex_literal::hex;
 use mangata_runtime::{
-	AccountId, AuraId, Balance, InflationInfo, Range, Signature, DOLLARS, EXISTENTIAL_DEPOSIT,
+	AccountId, AuraId, Balance, InflationInfo, Range, Signature,
 };
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;

@@ -43,4 +43,10 @@ std = [
     'frame-support/std',
     'frame-system/std',
     'pallet-session/std',
+    'sp-runtime/std',
+    'sp-application-crypto/std',
+    'sp-std/std',
+    'mangata-primitives/std',
+    'sp-arithmetic/std',
+    'orml-tokens/std',
 ]

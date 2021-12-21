@@ -68,7 +68,7 @@ dependencies = [
  "cipher",
  "ctr",
  "ghash",
- "subtle",
+ "subtle 2.4.1",
 ]
 
 [[package]]
@@ -551,7 +551,7 @@ dependencies = [
 [[package]]
 name = "beefy-gadget"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "beefy-primitives",
  "fnv",
@@ -579,7 +579,7 @@ dependencies = [
 [[package]]
 name = "beefy-gadget-rpc"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "beefy-gadget",
  "beefy-primitives",
@@ -599,12 +599,12 @@ dependencies = [
 [[package]]
 name = "beefy-merkle-tree"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 
 [[package]]
 name = "beefy-primitives"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "parity-scale-codec 2.3.1",
  "scale-info",
@@ -1256,12 +1256,32 @@ checksum = "7a81dae078cea95a014a339291cec439d2f232ebe854a9d672b796c6afafa9b7"
 
 [[package]]
 name = "crypto-mac"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4434400df11d95d556bac068ddfedd482915eb18fe8bea89bc80b6e4b1c179e5"
+dependencies = [
+ "generic-array 0.12.4",
+ "subtle 1.0.0",
+]
+
+[[package]]
+name = "crypto-mac"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b584a330336237c1eecd3e94266efb216c56ed91225d634cb2991c5f3fd1aeab"
 dependencies = [
  "generic-array 0.14.4",
- "subtle",
+ "subtle 2.4.1",
+]
+
+[[package]]
+name = "crypto-mac"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bff07008ec701e8028e2ceb8f83f0e4274ee62bd2dbdc4fefff2e9a91824081a"
+dependencies = [
+ "generic-array 0.14.4",
+ "subtle 2.4.1",
 ]
 
 [[package]]
@@ -1271,7 +1291,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1d1a86f49236c215f271d40892d5fc950490551400b02ef360692c29815c714"
 dependencies = [
  "generic-array 0.14.4",
- "subtle",
+ "subtle 2.4.1",
 ]
 
 [[package]]
@@ -1437,7 +1457,7 @@ dependencies = [
  "sc-consensus",
  "sp-api",
  "sp-consensus",
- "sp-maybe-compressed-blob 4.0.0-dev (git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4)",
+ "sp-maybe-compressed-blob",
  "sp-runtime",
  "tracing",
 ]
@@ -1671,7 +1691,7 @@ dependencies = [
  "byteorder",
  "digest 0.8.1",
  "rand_core 0.5.1",
- "subtle",
+ "subtle 2.4.1",
  "zeroize",
 ]
 
@@ -1684,7 +1704,7 @@ dependencies = [
  "byteorder",
  "digest 0.9.0",
  "rand_core 0.5.1",
- "subtle",
+ "subtle 2.4.1",
  "zeroize",
 ]
 
@@ -1839,6 +1859,18 @@ name = "dyn-clone"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ee2626afccd7561a06cf1367e2950c4718ea04565e20fb5029b6c7d8ad09abcf"
+
+[[package]]
+name = "ecies"
+version = "0.2.1"
+source = "git+https://github.com/mangata-finance/ecies-rs?branch=mangata-dev#50e01c7c1de2cad14809f0791548c73a8a0396a0"
+dependencies = [
+ "hkdf",
+ "libsecp256k1 0.3.5",
+ "openssl",
+ "rand 0.7.3",
+ "sha2 0.9.8",
+]
 
 [[package]]
 name = "ed25519"
@@ -2044,7 +2076,7 @@ dependencies = [
 [[package]]
 name = "extrinsic-shuffler"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "derive_more",
  "log",
@@ -2163,9 +2195,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 
 [[package]]
+name = "foreign-types"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f6f339eb8adc052cd2ca78910fda869aefa38d22d5cb648e6485e4d3fc06f3b1"
+dependencies = [
+ "foreign-types-shared",
+]
+
+[[package]]
+name = "foreign-types-shared"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "00b0228411908ca8685dba7fc2cdd70ec9990a6e753e89b6ac91a84c40fbaf4b"
+
+[[package]]
 name = "fork-tree"
 version = "3.0.0"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "parity-scale-codec 2.3.1",
 ]
@@ -2183,7 +2230,7 @@ dependencies = [
 [[package]]
 name = "frame-benchmarking"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -2203,7 +2250,7 @@ dependencies = [
 [[package]]
 name = "frame-benchmarking-cli"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "Inflector",
  "chrono",
@@ -2229,7 +2276,7 @@ dependencies = [
 [[package]]
 name = "frame-election-provider-support"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -2243,7 +2290,7 @@ dependencies = [
 [[package]]
 name = "frame-executive"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "extrinsic-shuffler",
  "frame-support",
@@ -2276,7 +2323,7 @@ dependencies = [
 [[package]]
 name = "frame-support"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "bitflags",
  "frame-metadata",
@@ -2303,7 +2350,7 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "Inflector",
  "frame-support-procedural-tools",
@@ -2315,7 +2362,7 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural-tools"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-support-procedural-tools-derive",
  "proc-macro-crate 1.1.0",
@@ -2327,7 +2374,7 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural-tools-derive"
 version = "3.0.0"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2337,7 +2384,7 @@ dependencies = [
 [[package]]
 name = "frame-system"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-support",
  "log",
@@ -2369,7 +2416,7 @@ dependencies = [
 [[package]]
 name = "frame-system-rpc-runtime-api"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "parity-scale-codec 2.3.1",
  "sp-api",
@@ -2378,7 +2425,7 @@ dependencies = [
 [[package]]
 name = "frame-try-runtime"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-support",
  "sp-api",
@@ -2748,6 +2795,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b07f60793ff0a4d9cef0f18e63b5357e06209987153a64648c972c1e5aff336f"
 
 [[package]]
+name = "hkdf"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "51ab2f639c231793c5f6114bdb9bbe50a7dbbfcd7c7c6bd8475dec2d991e964f"
+dependencies = [
+ "digest 0.9.0",
+ "hmac 0.10.1",
+]
+
+[[package]]
+name = "hmac"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5dcb5e64cda4c23119ab41ba960d1e170a774c8e4b9d9e6a9bc18aabf5e59695"
+dependencies = [
+ "crypto-mac 0.7.0",
+ "digest 0.8.1",
+]
+
+[[package]]
 name = "hmac"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2759,12 +2826,33 @@ dependencies = [
 
 [[package]]
 name = "hmac"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c1441c6b1e930e2817404b5046f1f989899143a12bf92de603b69f4e0aee1e15"
+dependencies = [
+ "crypto-mac 0.10.1",
+ "digest 0.9.0",
+]
+
+[[package]]
+name = "hmac"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2a2a2320eb7ec0ebe8da8f744d7812d9fc4cb4d09344ac01898dbcb6a20ae69b"
 dependencies = [
  "crypto-mac 0.11.1",
  "digest 0.9.0",
+]
+
+[[package]]
+name = "hmac-drbg"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c6e570451493f10f6581b48cdd530413b63ea9e780f544bfd3bdcaa0d89d1a7b"
+dependencies = [
+ "digest 0.8.1",
+ "generic-array 0.12.4",
+ "hmac 0.7.1",
 ]
 
 [[package]]
@@ -3855,9 +3943,11 @@ dependencies = [
  "arrayref",
  "crunchy",
  "digest 0.8.1",
+ "hmac-drbg 0.2.0",
  "rand 0.7.3",
  "sha2 0.8.2",
- "subtle",
+ "subtle 2.4.1",
+ "typenum 1.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -3869,7 +3959,7 @@ dependencies = [
  "arrayref",
  "base64 0.12.3",
  "digest 0.9.0",
- "hmac-drbg",
+ "hmac-drbg 0.3.0",
  "libsecp256k1-core 0.2.2",
  "libsecp256k1-gen-ecmult 0.2.1",
  "libsecp256k1-gen-genmult 0.2.1",
@@ -3888,7 +3978,7 @@ dependencies = [
  "arrayref",
  "base64 0.12.3",
  "digest 0.9.0",
- "hmac-drbg",
+ "hmac-drbg 0.3.0",
  "libsecp256k1-core 0.2.2",
  "libsecp256k1-gen-ecmult 0.2.1",
  "libsecp256k1-gen-genmult 0.2.1",
@@ -3923,7 +4013,7 @@ checksum = "d0f6ab710cec28cef759c5f18671a27dae2a5f952cdaaee1d8e2908cb2478a80"
 dependencies = [
  "crunchy",
  "digest 0.9.0",
- "subtle",
+ "subtle 2.4.1",
 ]
 
 [[package]]
@@ -3934,7 +4024,7 @@ checksum = "5be9b9bb642d8522a44d533eab56c16c738301965504753b03ad1de3425d5451"
 dependencies = [
  "crunchy",
  "digest 0.9.0",
- "subtle",
+ "subtle 2.4.1",
 ]
 
 [[package]]
@@ -4192,6 +4282,7 @@ dependencies = [
  "pallet-bridge",
  "pallet-collective",
  "pallet-elections-phragmen",
+ "pallet-encrypted-transactions",
  "pallet-session",
  "pallet-sudo",
  "pallet-sudo-origin",
@@ -4214,6 +4305,7 @@ dependencies = [
  "sp-block-builder",
  "sp-consensus-aura",
  "sp-core",
+ "sp-encrypted-tx",
  "sp-inherents",
  "sp-io",
  "sp-offchain",
@@ -4223,7 +4315,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "static_assertions",
- "substrate-wasm-builder 5.0.0-dev (git+https://github.com/mangata-finance/substrate?branch=polkadot-v0.9.12)",
+ "substrate-wasm-builder",
  "ver-api",
  "xcm",
  "xcm-builder",
@@ -4745,10 +4837,37 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
+name = "openssl"
+version = "0.10.38"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0c7ae222234c30df141154f159066c5093ff73b63204dcda7121eb082fc56a95"
+dependencies = [
+ "bitflags",
+ "cfg-if 1.0.0",
+ "foreign-types",
+ "libc",
+ "once_cell",
+ "openssl-sys",
+]
+
+[[package]]
 name = "openssl-probe"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "28988d872ab76095a6e6ac88d99b54fd267702734fd7ffe610ca27f533ddb95a"
+
+[[package]]
+name = "openssl-sys"
+version = "0.9.72"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7e46109c383602735fa0a2e48dd2b7c892b048e1bf69e5c3b1d804b7d9c203cb"
+dependencies = [
+ "autocfg",
+ "cc",
+ "libc",
+ "pkg-config",
+ "vcpkg",
+]
 
 [[package]]
 name = "ordered-float"
@@ -4837,7 +4956,7 @@ dependencies = [
 [[package]]
 name = "pallet-aura"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4853,7 +4972,7 @@ dependencies = [
 [[package]]
 name = "pallet-authority-discovery"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4869,7 +4988,7 @@ dependencies = [
 [[package]]
 name = "pallet-authorship"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4884,7 +5003,7 @@ dependencies = [
 [[package]]
 name = "pallet-babe"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -4908,7 +5027,7 @@ dependencies = [
 [[package]]
 name = "pallet-bags-list"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-election-provider-support",
  "frame-support",
@@ -4923,7 +5042,7 @@ dependencies = [
 [[package]]
 name = "pallet-balances"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -4938,7 +5057,7 @@ dependencies = [
 [[package]]
 name = "pallet-beefy"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "beefy-primitives",
  "frame-support",
@@ -4954,7 +5073,7 @@ dependencies = [
 [[package]]
 name = "pallet-beefy-mmr"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "beefy-merkle-tree",
  "beefy-primitives",
@@ -4979,7 +5098,7 @@ dependencies = [
 [[package]]
 name = "pallet-bounties"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5021,7 +5140,7 @@ dependencies = [
 [[package]]
 name = "pallet-collective"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5038,7 +5157,7 @@ dependencies = [
 [[package]]
 name = "pallet-democracy"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5054,7 +5173,7 @@ dependencies = [
 [[package]]
 name = "pallet-election-provider-multi-phase"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-election-provider-support",
  "frame-support",
@@ -5074,7 +5193,7 @@ dependencies = [
 [[package]]
 name = "pallet-elections-phragmen"
 version = "5.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5089,9 +5208,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-encrypted-transactions"
+version = "0.2.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "log",
+ "mangata-primitives",
+ "orml-tokens",
+ "pallet-session",
+ "parity-scale-codec 2.3.1",
+ "rustc-hex",
+ "scale-info",
+ "serde",
+ "sp-application-crypto",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-grandpa"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5114,7 +5255,7 @@ dependencies = [
 [[package]]
 name = "pallet-identity"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "enumflags2",
  "frame-benchmarking",
@@ -5130,7 +5271,7 @@ dependencies = [
 [[package]]
 name = "pallet-im-online"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5149,7 +5290,7 @@ dependencies = [
 [[package]]
 name = "pallet-indices"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5165,7 +5306,7 @@ dependencies = [
 [[package]]
 name = "pallet-membership"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5182,7 +5323,7 @@ dependencies = [
 [[package]]
 name = "pallet-mmr"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "ckb-merkle-mountain-range",
  "frame-benchmarking",
@@ -5200,7 +5341,7 @@ dependencies = [
 [[package]]
 name = "pallet-mmr-primitives"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5216,7 +5357,7 @@ dependencies = [
 [[package]]
 name = "pallet-mmr-rpc"
 version = "3.0.0"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -5233,7 +5374,7 @@ dependencies = [
 [[package]]
 name = "pallet-multisig"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5247,7 +5388,7 @@ dependencies = [
 [[package]]
 name = "pallet-nicks"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5261,7 +5402,7 @@ dependencies = [
 [[package]]
 name = "pallet-offences"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5278,7 +5419,7 @@ dependencies = [
 [[package]]
 name = "pallet-proxy"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5292,7 +5433,7 @@ dependencies = [
 [[package]]
 name = "pallet-scheduler"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5308,7 +5449,7 @@ dependencies = [
 [[package]]
 name = "pallet-session"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5329,7 +5470,7 @@ dependencies = [
 [[package]]
 name = "pallet-staking"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-election-provider-support",
  "frame-support",
@@ -5350,7 +5491,7 @@ dependencies = [
 [[package]]
 name = "pallet-staking-reward-curve"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "proc-macro-crate 1.1.0",
  "proc-macro2",
@@ -5361,7 +5502,7 @@ dependencies = [
 [[package]]
 name = "pallet-sudo"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5389,7 +5530,7 @@ dependencies = [
 [[package]]
 name = "pallet-timestamp"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5407,7 +5548,7 @@ dependencies = [
 [[package]]
 name = "pallet-tips"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5425,7 +5566,7 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5442,7 +5583,7 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment-rpc"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -5459,7 +5600,7 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment-rpc-runtime-api"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "pallet-transaction-payment",
  "parity-scale-codec 2.3.1",
@@ -5470,7 +5611,7 @@ dependencies = [
 [[package]]
 name = "pallet-treasury"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5487,7 +5628,7 @@ dependencies = [
 [[package]]
 name = "pallet-utility"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5521,7 +5662,7 @@ dependencies = [
 [[package]]
 name = "pallet-vesting"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -6209,7 +6350,7 @@ dependencies = [
  "polkadot-node-subsystem-util",
  "polkadot-primitives",
  "sp-core",
- "sp-maybe-compressed-blob 4.0.0-dev (git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4)",
+ "sp-maybe-compressed-blob",
  "thiserror",
  "tracing",
 ]
@@ -6309,7 +6450,7 @@ dependencies = [
  "polkadot-node-subsystem-util",
  "polkadot-parachain",
  "polkadot-primitives",
- "sp-maybe-compressed-blob 4.0.0-dev (git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4)",
+ "sp-maybe-compressed-blob",
  "tracing",
 ]
 
@@ -6434,7 +6575,7 @@ dependencies = [
  "sp-core",
  "sp-externalities",
  "sp-io",
- "sp-maybe-compressed-blob 4.0.0-dev (git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4)",
+ "sp-maybe-compressed-blob",
  "sp-tracing",
  "sp-wasm-interface",
  "tracing",
@@ -6522,7 +6663,7 @@ dependencies = [
  "sp-consensus-vrf",
  "sp-core",
  "sp-keystore",
- "sp-maybe-compressed-blob 4.0.0-dev (git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4)",
+ "sp-maybe-compressed-blob",
  "thiserror",
  "zstd",
 ]
@@ -6779,7 +6920,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "static_assertions",
- "substrate-wasm-builder 5.0.0-dev (git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4)",
+ "substrate-wasm-builder",
 ]
 
 [[package]]
@@ -7046,7 +7187,7 @@ dependencies = [
  "sp-std",
  "sp-transaction-pool",
  "sp-version",
- "substrate-wasm-builder 5.0.0-dev (git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4)",
+ "substrate-wasm-builder",
  "xcm",
  "xcm-builder",
  "xcm-executor",
@@ -7596,7 +7737,7 @@ dependencies = [
 [[package]]
 name = "remote-externalities"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "env_logger 0.9.0",
  "jsonrpsee-proc-macros",
@@ -7789,7 +7930,7 @@ dependencies = [
 [[package]]
 name = "sc-allocator"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "log",
  "sp-core",
@@ -7800,7 +7941,7 @@ dependencies = [
 [[package]]
 name = "sc-authority-discovery"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "async-trait",
  "derive_more",
@@ -7827,7 +7968,7 @@ dependencies = [
 [[package]]
 name = "sc-basic-authorship"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "futures 0.3.18",
  "futures-timer 3.0.2",
@@ -7850,8 +7991,9 @@ dependencies = [
 [[package]]
 name = "sc-basic-authorship-ver"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
+ "ecies",
  "futures 0.3.18",
  "futures-timer 3.0.2",
  "log",
@@ -7864,8 +8006,11 @@ dependencies = [
  "sp-api",
  "sp-blockchain",
  "sp-consensus",
+ "sp-consensus-aura",
  "sp-core",
+ "sp-encrypted-tx",
  "sp-inherents",
+ "sp-keystore",
  "sp-runtime",
  "sp-ver",
  "substrate-prometheus-endpoint",
@@ -7875,7 +8020,7 @@ dependencies = [
 [[package]]
 name = "sc-block-builder"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "parity-scale-codec 2.3.1",
  "sc-client-api",
@@ -7891,7 +8036,7 @@ dependencies = [
 [[package]]
 name = "sc-block-builder-ver"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "extrinsic-shuffler",
  "log",
@@ -7911,7 +8056,7 @@ dependencies = [
 [[package]]
 name = "sc-chain-spec"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec 2.3.1",
@@ -7927,7 +8072,7 @@ dependencies = [
 [[package]]
 name = "sc-chain-spec-derive"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "proc-macro-crate 1.1.0",
  "proc-macro2",
@@ -7938,7 +8083,7 @@ dependencies = [
 [[package]]
 name = "sc-cli"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "chrono",
  "fdlimit",
@@ -7976,7 +8121,7 @@ dependencies = [
 [[package]]
 name = "sc-client-api"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "fnv",
  "futures 0.3.18",
@@ -8004,7 +8149,7 @@ dependencies = [
 [[package]]
 name = "sc-client-db"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "hash-db",
  "kvdb",
@@ -8029,7 +8174,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "async-trait",
  "futures 0.3.18",
@@ -8053,7 +8198,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-aura"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "async-trait",
  "derive_more",
@@ -8082,7 +8227,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-babe"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "async-trait",
  "derive_more",
@@ -8125,7 +8270,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-babe-rpc"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "derive_more",
  "futures 0.3.18",
@@ -8149,7 +8294,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-epochs"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "fork-tree",
  "parity-scale-codec 2.3.1",
@@ -8162,7 +8307,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-slots"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "async-trait",
  "futures 0.3.18",
@@ -8191,7 +8336,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-uncles"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "sc-client-api",
  "sp-authorship",
@@ -8202,7 +8347,7 @@ dependencies = [
 [[package]]
 name = "sc-executor"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "lazy_static",
  "libsecp256k1 0.6.0",
@@ -8228,7 +8373,7 @@ dependencies = [
 [[package]]
 name = "sc-executor-common"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "derive_more",
  "environmental",
@@ -8236,7 +8381,7 @@ dependencies = [
  "pwasm-utils",
  "sc-allocator",
  "sp-core",
- "sp-maybe-compressed-blob 4.0.0-dev (git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4)",
+ "sp-maybe-compressed-blob",
  "sp-serializer",
  "sp-wasm-interface",
  "thiserror",
@@ -8246,7 +8391,7 @@ dependencies = [
 [[package]]
 name = "sc-executor-wasmi"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "log",
  "parity-scale-codec 2.3.1",
@@ -8262,7 +8407,7 @@ dependencies = [
 [[package]]
 name = "sc-executor-wasmtime"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "cfg-if 1.0.0",
  "libc",
@@ -8280,7 +8425,7 @@ dependencies = [
 [[package]]
 name = "sc-finality-grandpa"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "async-trait",
  "derive_more",
@@ -8317,7 +8462,7 @@ dependencies = [
 [[package]]
 name = "sc-finality-grandpa-rpc"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "derive_more",
  "finality-grandpa",
@@ -8341,7 +8486,7 @@ dependencies = [
 [[package]]
 name = "sc-informant"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "ansi_term",
  "futures 0.3.18",
@@ -8358,7 +8503,7 @@ dependencies = [
 [[package]]
 name = "sc-keystore"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "async-trait",
  "derive_more",
@@ -8373,7 +8518,7 @@ dependencies = [
 [[package]]
 name = "sc-light"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "hash-db",
  "parity-scale-codec 2.3.1",
@@ -8391,7 +8536,7 @@ dependencies = [
 [[package]]
 name = "sc-network"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "async-std",
  "async-trait",
@@ -8442,7 +8587,7 @@ dependencies = [
 [[package]]
 name = "sc-network-gossip"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "futures 0.3.18",
  "futures-timer 3.0.2",
@@ -8458,7 +8603,7 @@ dependencies = [
 [[package]]
 name = "sc-offchain"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "bytes 1.1.0",
  "fnv",
@@ -8485,7 +8630,7 @@ dependencies = [
 [[package]]
 name = "sc-peerset"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "futures 0.3.18",
  "libp2p",
@@ -8498,7 +8643,7 @@ dependencies = [
 [[package]]
 name = "sc-proposer-metrics"
 version = "0.9.0"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "log",
  "substrate-prometheus-endpoint",
@@ -8507,7 +8652,7 @@ dependencies = [
 [[package]]
 name = "sc-rpc"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "futures 0.3.18",
  "hash-db",
@@ -8538,7 +8683,7 @@ dependencies = [
 [[package]]
 name = "sc-rpc-api"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "futures 0.3.18",
  "jsonrpc-core",
@@ -8563,7 +8708,7 @@ dependencies = [
 [[package]]
 name = "sc-rpc-server"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "futures 0.3.18",
  "jsonrpc-core",
@@ -8580,7 +8725,7 @@ dependencies = [
 [[package]]
 name = "sc-service"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "async-trait",
  "directories",
@@ -8647,7 +8792,7 @@ dependencies = [
 [[package]]
 name = "sc-state-db"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "log",
  "parity-scale-codec 2.3.1",
@@ -8661,7 +8806,7 @@ dependencies = [
 [[package]]
 name = "sc-sync-state-rpc"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -8683,7 +8828,7 @@ dependencies = [
 [[package]]
 name = "sc-telemetry"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "chrono",
  "futures 0.3.18",
@@ -8701,7 +8846,7 @@ dependencies = [
 [[package]]
 name = "sc-tracing"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "ansi_term",
  "atty",
@@ -8731,7 +8876,7 @@ dependencies = [
 [[package]]
 name = "sc-tracing-proc-macro"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "proc-macro-crate 1.1.0",
  "proc-macro2",
@@ -8742,7 +8887,7 @@ dependencies = [
 [[package]]
 name = "sc-transaction-pool"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "futures 0.3.18",
  "intervalier",
@@ -8769,7 +8914,7 @@ dependencies = [
 [[package]]
 name = "sc-transaction-pool-api"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "derive_more",
  "futures 0.3.18",
@@ -8783,7 +8928,7 @@ dependencies = [
 [[package]]
 name = "sc-utils"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "futures 0.3.18",
  "futures-timer 3.0.2",
@@ -8841,7 +8986,7 @@ dependencies = [
  "rand 0.7.3",
  "rand_core 0.5.1",
  "sha2 0.8.2",
- "subtle",
+ "subtle 2.4.1",
  "zeroize",
 ]
 
@@ -9137,7 +9282,7 @@ dependencies = [
  "ring",
  "rustc_version 0.3.3",
  "sha2 0.9.8",
- "subtle",
+ "subtle 2.4.1",
  "x25519-dalek",
 ]
 
@@ -9196,7 +9341,7 @@ dependencies = [
 [[package]]
 name = "sp-api"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "hash-db",
  "log",
@@ -9213,7 +9358,7 @@ dependencies = [
 [[package]]
 name = "sp-api-proc-macro"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "blake2-rfc",
  "proc-macro-crate 1.1.0",
@@ -9225,7 +9370,7 @@ dependencies = [
 [[package]]
 name = "sp-application-crypto"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "parity-scale-codec 2.3.1",
  "scale-info",
@@ -9238,7 +9383,7 @@ dependencies = [
 [[package]]
 name = "sp-arithmetic"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "integer-sqrt",
  "num-traits",
@@ -9253,7 +9398,7 @@ dependencies = [
 [[package]]
 name = "sp-authority-discovery"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "parity-scale-codec 2.3.1",
  "scale-info",
@@ -9266,7 +9411,7 @@ dependencies = [
 [[package]]
 name = "sp-authorship"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "async-trait",
  "parity-scale-codec 2.3.1",
@@ -9278,7 +9423,7 @@ dependencies = [
 [[package]]
 name = "sp-block-builder"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "parity-scale-codec 2.3.1",
  "sp-api",
@@ -9290,7 +9435,7 @@ dependencies = [
 [[package]]
 name = "sp-blockchain"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "futures 0.3.18",
  "log",
@@ -9300,6 +9445,7 @@ dependencies = [
  "sp-api",
  "sp-consensus",
  "sp-database",
+ "sp-encrypted-tx",
  "sp-runtime",
  "sp-state-machine",
  "thiserror",
@@ -9308,7 +9454,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "async-trait",
  "futures 0.3.18",
@@ -9327,7 +9473,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus-aura"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "async-trait",
  "parity-scale-codec 2.3.1",
@@ -9345,7 +9491,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus-babe"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "async-trait",
  "merlin",
@@ -9368,7 +9514,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus-slots"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "parity-scale-codec 2.3.1",
  "scale-info",
@@ -9379,7 +9525,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus-vrf"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "parity-scale-codec 2.3.1",
  "schnorrkel",
@@ -9391,7 +9537,7 @@ dependencies = [
 [[package]]
 name = "sp-core"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "base58",
  "blake2-rfc",
@@ -9437,7 +9583,7 @@ dependencies = [
 [[package]]
 name = "sp-database"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "kvdb",
  "parking_lot 0.11.2",
@@ -9446,7 +9592,7 @@ dependencies = [
 [[package]]
 name = "sp-debug-derive"
 version = "3.0.0"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -9454,9 +9600,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "sp-encrypted-tx"
+version = "4.0.0-dev"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
+dependencies = [
+ "frame-support",
+ "parity-scale-codec 2.3.1",
+ "serde",
+ "sp-api",
+ "sp-consensus-babe",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-std",
+ "thiserror",
+]
+
+[[package]]
 name = "sp-externalities"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "environmental",
  "parity-scale-codec 2.3.1",
@@ -9467,7 +9630,7 @@ dependencies = [
 [[package]]
 name = "sp-finality-grandpa"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "finality-grandpa",
  "log",
@@ -9485,7 +9648,7 @@ dependencies = [
 [[package]]
 name = "sp-inherents"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "async-trait",
  "impl-trait-for-tuples",
@@ -9499,7 +9662,7 @@ dependencies = [
 [[package]]
 name = "sp-io"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "futures 0.3.18",
  "hash-db",
@@ -9523,7 +9686,7 @@ dependencies = [
 [[package]]
 name = "sp-keyring"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "lazy_static",
  "sp-core",
@@ -9534,7 +9697,7 @@ dependencies = [
 [[package]]
 name = "sp-keystore"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "async-trait",
  "derive_more",
@@ -9551,15 +9714,7 @@ dependencies = [
 [[package]]
 name = "sp-maybe-compressed-blob"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
-dependencies = [
- "zstd",
-]
-
-[[package]]
-name = "sp-maybe-compressed-blob"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=polkadot-v0.9.12#d76f39995315ec36980908e4b99709bd14927044"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "zstd",
 ]
@@ -9567,7 +9722,7 @@ dependencies = [
 [[package]]
 name = "sp-npos-elections"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "parity-scale-codec 2.3.1",
  "scale-info",
@@ -9582,7 +9737,7 @@ dependencies = [
 [[package]]
 name = "sp-npos-elections-solution-type"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "proc-macro-crate 1.1.0",
  "proc-macro2",
@@ -9593,7 +9748,7 @@ dependencies = [
 [[package]]
 name = "sp-offchain"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "sp-api",
  "sp-core",
@@ -9603,7 +9758,7 @@ dependencies = [
 [[package]]
 name = "sp-panic-handler"
 version = "3.0.0"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "backtrace",
 ]
@@ -9611,7 +9766,7 @@ dependencies = [
 [[package]]
 name = "sp-rpc"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "rustc-hash",
  "serde",
@@ -9621,7 +9776,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "either",
  "hash256-std-hasher",
@@ -9643,7 +9798,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime-interface"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec 2.3.1",
@@ -9660,7 +9815,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime-interface-proc-macro"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "Inflector",
  "proc-macro-crate 1.1.0",
@@ -9672,7 +9827,7 @@ dependencies = [
 [[package]]
 name = "sp-serializer"
 version = "3.0.0"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "serde",
  "serde_json",
@@ -9681,7 +9836,7 @@ dependencies = [
 [[package]]
 name = "sp-session"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "parity-scale-codec 2.3.1",
  "scale-info",
@@ -9695,7 +9850,7 @@ dependencies = [
 [[package]]
 name = "sp-staking"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "parity-scale-codec 2.3.1",
  "scale-info",
@@ -9706,7 +9861,7 @@ dependencies = [
 [[package]]
 name = "sp-state-machine"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "hash-db",
  "log",
@@ -9729,12 +9884,12 @@ dependencies = [
 [[package]]
 name = "sp-std"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 
 [[package]]
 name = "sp-storage"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "impl-serde",
  "parity-scale-codec 2.3.1",
@@ -9747,7 +9902,7 @@ dependencies = [
 [[package]]
 name = "sp-tasks"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "log",
  "sp-core",
@@ -9760,7 +9915,7 @@ dependencies = [
 [[package]]
 name = "sp-timestamp"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "async-trait",
  "futures-timer 3.0.2",
@@ -9776,7 +9931,7 @@ dependencies = [
 [[package]]
 name = "sp-tracing"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "parity-scale-codec 2.3.1",
  "sp-std",
@@ -9788,7 +9943,7 @@ dependencies = [
 [[package]]
 name = "sp-transaction-pool"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "sp-api",
  "sp-runtime",
@@ -9797,7 +9952,7 @@ dependencies = [
 [[package]]
 name = "sp-transaction-storage-proof"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "async-trait",
  "log",
@@ -9813,7 +9968,7 @@ dependencies = [
 [[package]]
 name = "sp-trie"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "hash-db",
  "memory-db",
@@ -9828,7 +9983,7 @@ dependencies = [
 [[package]]
 name = "sp-ver"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "async-trait",
  "log",
@@ -9843,7 +9998,7 @@ dependencies = [
 [[package]]
 name = "sp-version"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "impl-serde",
  "parity-scale-codec 2.3.1",
@@ -9859,7 +10014,7 @@ dependencies = [
 [[package]]
 name = "sp-version-proc-macro"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "parity-scale-codec 2.3.1",
  "proc-macro2",
@@ -9870,7 +10025,7 @@ dependencies = [
 [[package]]
 name = "sp-wasm-interface"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec 2.3.1",
@@ -10036,7 +10191,7 @@ dependencies = [
 [[package]]
 name = "substrate-build-script-utils"
 version = "3.0.0"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "platforms",
 ]
@@ -10054,7 +10209,7 @@ dependencies = [
 [[package]]
 name = "substrate-frame-rpc-system"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "frame-system-rpc-runtime-api",
  "futures 0.3.18",
@@ -10076,7 +10231,7 @@ dependencies = [
 [[package]]
 name = "substrate-prometheus-endpoint"
 version = "0.9.0"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "async-std",
  "derive_more",
@@ -10090,7 +10245,7 @@ dependencies = [
 [[package]]
 name = "substrate-test-client"
 version = "2.0.1"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "async-trait",
  "futures 0.3.18",
@@ -10117,12 +10272,12 @@ dependencies = [
 [[package]]
 name = "substrate-wasm-builder"
 version = "5.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "ansi_term",
  "build-helper",
  "cargo_metadata",
- "sp-maybe-compressed-blob 4.0.0-dev (git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4)",
+ "sp-maybe-compressed-blob",
  "tempfile",
  "toml",
  "walkdir",
@@ -10130,19 +10285,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "substrate-wasm-builder"
-version = "5.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=polkadot-v0.9.12#d76f39995315ec36980908e4b99709bd14927044"
-dependencies = [
- "ansi_term",
- "build-helper",
- "cargo_metadata",
- "sp-maybe-compressed-blob 4.0.0-dev (git+https://github.com/mangata-finance/substrate?branch=polkadot-v0.9.12)",
- "tempfile",
- "toml",
- "walkdir",
- "wasm-gc-api",
-]
+name = "subtle"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2d67a5a62ba6e01cb2192ff309324cb4875d0c451d55fe2319433abe7a05a8ee"
 
 [[package]]
 name = "subtle"
@@ -10572,7 +10718,7 @@ checksum = "59547bce71d9c38b83d9c0e92b6066c4253371f15005def0c30d9657f50c7642"
 [[package]]
 name = "try-runtime-cli"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "jsonrpsee-ws-client",
  "log",
@@ -10697,7 +10843,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9f214e8f697e925001e66ec2c6e37a4ef93f0f78c2eed7814394e10c62025b05"
 dependencies = [
  "generic-array 0.14.4",
- "subtle",
+ "subtle 2.4.1",
 ]
 
 [[package]]
@@ -10784,7 +10930,7 @@ checksum = "f1bddf1187be692e79c5ffeab891132dfb0f236ed36a43c7ed39f1165ee20191"
 [[package]]
 name = "ver-api"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/pallet-encrypted-transactions-v4#6f68c5d5f3c522a8c2fb8acce592a17304ac15b6"
 dependencies = [
  "derive_more",
  "futures 0.3.18",

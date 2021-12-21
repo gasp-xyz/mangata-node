@@ -17,6 +17,7 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto,
+		Header as HeaderT, IdentifyAccount, Verify,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiSignature, Percent,
@@ -24,6 +25,9 @@ use sp_runtime::{
 
 use pallet_session::ShouldEndSession;
 use sp_std::prelude::*;
+
+use sp_std::boxed::Box;
+
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
@@ -43,7 +47,8 @@ use frame_system::{
 	EnsureRoot,
 };
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-pub use sp_runtime::{MultiAddress, Perbill, Permill};
+pub use sp_runtime::{AccountId32, MultiAddress, Perbill, Permill};
+use sp_encrypted_tx::{EncryptedTx, ExtrinsicType};
 
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -927,6 +932,74 @@ construct_runtime!(
 );
 
 impl_runtime_apis! {
+
+    impl sp_encrypted_tx::EncryptedTxApi<Block> for Runtime {
+
+        fn create_submit_singly_encrypted_transaction(identifier: <Block as BlockT>::Hash, singly_encrypted_call: Vec<u8>) -> <Block as BlockT>::Extrinsic{
+            UncheckedExtrinsic::new_unsigned(
+                    Call::EncryptedTransactions(pallet_encrypted_transactions::Call::submit_singly_encrypted_transaction{identifier, singly_encrypted_call}))
+        }
+
+        fn create_submit_decrypted_transaction(identifier: <Block as BlockT>::Hash, decrypted_call: Vec<u8>, _weight: Weight) -> <Block as BlockT>::Extrinsic{
+            UncheckedExtrinsic::new_unsigned(
+                    Call::EncryptedTransactions(pallet_encrypted_transactions::Call::submit_decrypted_transaction{identifier, decrypted_call, weight: Default::default()}))
+        }
+
+        fn get_type(extrinsic: <Block as BlockT>::Extrinsic) -> ExtrinsicType<<Block as BlockT>::Hash>{
+            match extrinsic.function{
+                Call::EncryptedTransactions(pallet_encrypted_transactions::Call::submit_singly_encrypted_transaction{identifier, singly_encrypted_call}) => {
+                    ExtrinsicType::<<Block as BlockT>::Hash>::SinglyEncryptedTx{identifier, singly_encrypted_call}
+                },
+                Call::EncryptedTransactions(pallet_encrypted_transactions::Call::submit_decrypted_transaction{identifier, decrypted_call, ..}) => {
+                    ExtrinsicType::<<Block as BlockT>::Hash>::DecryptedTx{identifier, decrypted_call}
+                },
+                _ => { ExtrinsicType::<<Block as BlockT>::Hash>::Other }
+            }
+        }
+
+        fn get_double_encrypted_transactions(block_builder_id: &AccountId32) -> Vec<EncryptedTx<<Block as BlockT>::Hash>>{
+            let transactions = EncryptedTransactions::doubly_encrypted_queue(block_builder_id);
+            transactions.into_iter().filter_map(|tx_hash|
+                EncryptedTransactions::txn_registry(tx_hash)
+                .map(|tx_details|
+                    EncryptedTx{
+                        tx_id: tx_hash,
+                        data: tx_details.doubly_encrypted_call,
+                    }
+                )
+            ).collect()
+        }
+
+        fn get_singly_encrypted_transactions(block_builder_id: &AccountId32) -> Vec<EncryptedTx<<Block as BlockT>::Hash>>{
+            let transactions = EncryptedTransactions::singly_encrypted_queue(block_builder_id);
+            transactions.into_iter().filter_map(|tx_hash|
+                match EncryptedTransactions::txn_registry(tx_hash){
+                    Some(pallet_encrypted_transactions::TxnRegistryDetails{singly_encrypted_call: Some(call), ..}) =>
+                        Some(EncryptedTx{
+                            tx_id: tx_hash,
+                            data: call
+                        }),
+                    _ => None
+                }
+            ).collect()
+        }
+
+        // fetches address assigned to authority id
+        fn get_account_id(collator_id: u64) -> Option<AccountId32>{
+            Session::validators().get(collator_id as usize).map(|e| e.clone())
+        }
+
+        // use autority id to identify public key (from encrypted transactions apllet)
+        fn get_authority_public_key(authority_id: &AccountId32) -> Option<sp_core::ecdsa::Public>{
+            EncryptedTransactions::keys().get(authority_id).map(
+                |key| {
+                    let mut key_array = [0u8;33];
+                    key_array.copy_from_slice(key.as_ref());
+                    sp_core::ecdsa::Public::from_raw(key_array)
+                }
+            )
+        }
+    }
 
 	impl ver_api::VerApi<Block> for Runtime {
 		fn get_signer(

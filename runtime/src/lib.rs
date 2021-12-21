@@ -23,11 +23,11 @@ use sp_runtime::{
 	ApplyExtrinsicResult, MultiSignature, Percent,
 };
 
+use pallet_session::{PeriodicSessions, ShouldEndSession};
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-use pallet_session::{PeriodicSessions, ShouldEndSession};
 
 use frame_support::{
 	construct_runtime, match_type, parameter_types,
@@ -415,7 +415,7 @@ impl pallet_treasury::Config for Runtime {
 // https://trello.com/c/P5rYYQcS/424-discuiss-orml-tokens-existential-deposit
 parameter_type_with_key! {
 	pub ExistentialDeposits: |currency_id: TokenId| -> Balance {
-        0
+		0
 		// match currency_id {
 		// 	&MGA_TOKEN_ID => 100,
 		// 	_ => 0,
@@ -911,25 +911,25 @@ construct_runtime!(
 
 impl_runtime_apis! {
 
-    impl ver_api::VerApi<Block> for Runtime {
-        fn get_signer(
-            tx: <Block as BlockT>::Extrinsic,
-        ) -> Option<sp_runtime::AccountId32> {
-            if let Some(sig) = tx.signature.clone(){
-                if let Address::Id(addr) = sig.0 {
-                    Some(addr)
-                }else{
-                    panic!("unsupported address format");
-                }
-            }else{
-                None
-            }
-        }
+	impl ver_api::VerApi<Block> for Runtime {
+		fn get_signer(
+			tx: <Block as BlockT>::Extrinsic,
+		) -> Option<sp_runtime::AccountId32> {
+			if let Some(sig) = tx.signature.clone(){
+				if let Address::Id(addr) = sig.0 {
+					Some(addr)
+				}else{
+					panic!("unsupported address format");
+				}
+			}else{
+				None
+			}
+		}
 
-        fn is_new_session(number: <<Block as BlockT>::Header as HeaderT>::Number) -> bool{
-            <ParachainStaking as ShouldEndSession<_>>::should_end_session(number)
-        }
-    }
+		fn is_new_session(number: <<Block as BlockT>::Header as HeaderT>::Number) -> bool{
+			<ParachainStaking as ShouldEndSession<_>>::should_end_session(number)
+		}
+	}
 
 	impl xyk_runtime_api::XykApi<Block, Balance, TokenId> for Runtime {
 		fn calculate_sell_price(

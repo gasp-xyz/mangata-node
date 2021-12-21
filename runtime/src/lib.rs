@@ -8,12 +8,19 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use smallvec::smallvec;
 use sp_api::impl_runtime_apis;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata, u32_trait::{_1, _2}};
+use sp_core::{
+	crypto::KeyTypeId,
+	u32_trait::{_1, _2},
+	OpaqueMetadata,
+};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify, AccountIdConversion, ConvertInto},
+	traits::{
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto,
+		IdentifyAccount, Verify,
+	},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, MultiSignature, Percent
+	ApplyExtrinsicResult, MultiSignature, Percent,
 };
 
 use sp_std::prelude::*;
@@ -23,10 +30,7 @@ use sp_version::RuntimeVersion;
 
 use frame_support::{
 	construct_runtime, match_type, parameter_types,
-	traits::{
-		Everything, LockIdentifier,
-		Nothing, U128CurrencyToVote, Contains
-	},
+	traits::{Contains, Everything, LockIdentifier, Nothing, U128CurrencyToVote},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
 		DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
@@ -81,10 +85,10 @@ pub use pallet_sudo_origin;
 
 pub use pallet_assets_info;
 
-pub use pallet_bridge;
 pub use artemis_asset;
 pub use artemis_erc20_app;
 pub use artemis_eth_app;
+pub use pallet_bridge;
 pub use pallet_verifier;
 
 /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
@@ -369,7 +373,6 @@ impl pallet_authorship::Config for Runtime {
 	type EventHandler = (ParachainStaking,);
 }
 
-
 parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub const ProposalBondMinimum: Balance = 1 * DOLLARS;
@@ -424,7 +427,7 @@ parameter_types! {
 pub struct DustRemovalWhitelist;
 impl Contains<AccountId> for DustRemovalWhitelist {
 	fn contains(a: &AccountId) -> bool {
-		*a == TreasuryAccount::get() 
+		*a == TreasuryAccount::get()
 	}
 }
 
@@ -441,11 +444,11 @@ impl orml_tokens::Config for Runtime {
 }
 
 impl pallet_xyk::Config for Runtime {
-    type Event = Event;
-    type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-    type NativeCurrencyId = MgaTokenId;
-    type TreasuryPalletId = TreasuryPalletId;
-    type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
+	type Event = Event;
+	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	type NativeCurrencyId = MgaTokenId;
+	type TreasuryPalletId = TreasuryPalletId;
+	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
 }
 
 parameter_types! {
@@ -455,7 +458,10 @@ parameter_types! {
 }
 
 impl pallet_transaction_payment::Config for Runtime {
-	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>, Treasury>;
+	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<
+		orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>,
+		Treasury,
+	>;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = WeightToFee;
 	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
@@ -568,7 +574,13 @@ impl Config for XcmConfig {
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
-	type Trader = UsingComponents<IdentityFee<Balance>, RelayLocation, AccountId, orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>, ()>;
+	type Trader = UsingComponents<
+		IdentityFee<Balance>,
+		RelayLocation,
+		AccountId,
+		orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>,
+		(),
+	>;
 	type ResponseHandler = PolkadotXcm;
 	type AssetTrap = PolkadotXcm;
 	type AssetClaims = PolkadotXcm;
@@ -666,49 +678,49 @@ parameter_types! {
 }
 
 parameter_types! {
-    pub const MinLengthName: usize = 1;
-    pub const MaxLengthName: usize = 255;
-    pub const MinLengthSymbol: usize = 1;
-    pub const MaxLengthSymbol: usize = 255;
-    pub const MinLengthDescription: usize = 1;
-    pub const MaxLengthDescription: usize = 255;
-    pub const MaxDecimals: u32 = 255;
+	pub const MinLengthName: usize = 1;
+	pub const MaxLengthName: usize = 255;
+	pub const MinLengthSymbol: usize = 1;
+	pub const MaxLengthSymbol: usize = 255;
+	pub const MinLengthDescription: usize = 1;
+	pub const MaxLengthDescription: usize = 255;
+	pub const MaxDecimals: u32 = 255;
 }
 
 impl pallet_assets_info::Config for Runtime {
-    type Event = Event;
-    type MinLengthName = MinLengthName;
-    type MaxLengthName = MaxLengthName;
-    type MinLengthSymbol = MinLengthSymbol;
-    type MaxLengthSymbol = MaxLengthSymbol;
-    type MinLengthDescription = MinLengthDescription;
-    type MaxLengthDescription = MaxLengthDescription;
-    type MaxDecimals = MaxDecimals;
-    type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	type Event = Event;
+	type MinLengthName = MinLengthName;
+	type MaxLengthName = MaxLengthName;
+	type MinLengthSymbol = MinLengthSymbol;
+	type MaxLengthSymbol = MaxLengthSymbol;
+	type MinLengthDescription = MinLengthDescription;
+	type MaxLengthDescription = MaxLengthDescription;
+	type MaxDecimals = MaxDecimals;
+	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 }
 
 impl pallet_bridge::Config for Runtime {
-    type Event = Event;
-    type Verifier = pallet_verifier::Module<Runtime>;
-    type AppETH = artemis_eth_app::Module<Runtime>;
-    type AppERC20 = artemis_erc20_app::Module<Runtime>;
+	type Event = Event;
+	type Verifier = pallet_verifier::Module<Runtime>;
+	type AppETH = artemis_eth_app::Module<Runtime>;
+	type AppERC20 = artemis_erc20_app::Module<Runtime>;
 }
 
 impl pallet_verifier::Config for Runtime {
-    type Event = Event;
+	type Event = Event;
 }
 
 impl artemis_asset::Config for Runtime {
-    type Event = Event;
-    type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	type Event = Event;
+	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 }
 
 impl artemis_eth_app::Config for Runtime {
-    type Event = Event;
+	type Event = Event;
 }
 
 impl artemis_erc20_app::Config for Runtime {
-    type Event = Event;
+	type Event = Event;
 }
 
 impl pallet_sudo::Config for Runtime {
@@ -719,9 +731,9 @@ impl pallet_sudo::Config for Runtime {
 impl pallet_sudo_origin::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
-	type SudoOrigin = pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
+	type SudoOrigin =
+		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
 }
-
 
 parameter_types! {
 	pub const CouncilMotionDuration: BlockNumber = 5 * DAYS;
@@ -852,13 +864,13 @@ construct_runtime!(
 		} = 1,
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 2,
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 3,
-		
+
 		// Snowbridge stuff
 		Bridge: pallet_bridge::{Pallet, Call, Config, Storage, Event} = 4,
-        Verifier: pallet_verifier::{Pallet, Call, Storage, Event, Config<T>} = 5,
-        BridgedAsset: artemis_asset::{Pallet, Call, Config<T>, Storage, Event<T>} = 6,
-        ETH: artemis_eth_app::{Pallet, Call, Storage, Event<T>} = 7,
-        ERC20: artemis_erc20_app::{Pallet, Call, Storage, Event<T>} = 8,
+		Verifier: pallet_verifier::{Pallet, Call, Storage, Event, Config<T>} = 5,
+		BridgedAsset: artemis_asset::{Pallet, Call, Config<T>, Storage, Event<T>} = 6,
+		ETH: artemis_eth_app::{Pallet, Call, Storage, Event<T>} = 7,
+		ERC20: artemis_erc20_app::{Pallet, Call, Storage, Event<T>} = 8,
 
 		// Monetary stuff.
 		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>} = 10,
@@ -895,82 +907,82 @@ construct_runtime!(
 
 impl_runtime_apis! {
 
-    impl extrinsic_info_runtime_api::ExtrinsicInfoRuntimeApi<Block> for Runtime {
-        fn get_info(
-            tx: <Block as BlockT>::Extrinsic,
-        ) -> Option<extrinsic_info_runtime_api::ExtrinsicInfo> {
-            if let Some(sig) = tx.signature.clone(){
-                if let Address::Id(addr) = sig.0 {
-                    Some(extrinsic_info_runtime_api::ExtrinsicInfo{
-                        who: addr,
-                    })
-                }else{
-                    panic!("unsupported address format");
-                }
-            }else{
-                None
-            }
-        }
-    }
+	impl extrinsic_info_runtime_api::ExtrinsicInfoRuntimeApi<Block> for Runtime {
+		fn get_info(
+			tx: <Block as BlockT>::Extrinsic,
+		) -> Option<extrinsic_info_runtime_api::ExtrinsicInfo> {
+			if let Some(sig) = tx.signature.clone(){
+				if let Address::Id(addr) = sig.0 {
+					Some(extrinsic_info_runtime_api::ExtrinsicInfo{
+						who: addr,
+					})
+				}else{
+					panic!("unsupported address format");
+				}
+			}else{
+				None
+			}
+		}
+	}
 
 	impl xyk_runtime_api::XykApi<Block, Balance, TokenId> for Runtime {
-        fn calculate_sell_price(
-            input_reserve: Balance,
-            output_reserve: Balance,
-            sell_amount: Balance
-        ) -> RpcResult<Balance> {
-            RpcResult {
-                price: Xyk::calculate_sell_price(input_reserve, output_reserve, sell_amount).unwrap_or_default()
-            }
-        }
+		fn calculate_sell_price(
+			input_reserve: Balance,
+			output_reserve: Balance,
+			sell_amount: Balance
+		) -> RpcResult<Balance> {
+			RpcResult {
+				price: Xyk::calculate_sell_price(input_reserve, output_reserve, sell_amount).unwrap_or_default()
+			}
+		}
 
-        fn calculate_buy_price(
-            input_reserve: Balance,
-            output_reserve: Balance,
-            buy_amount: Balance
-        ) -> RpcResult<Balance> {
-            RpcResult {
-                price: Xyk::calculate_buy_price(input_reserve, output_reserve, buy_amount).unwrap_or_default()
-            }
-        }
+		fn calculate_buy_price(
+			input_reserve: Balance,
+			output_reserve: Balance,
+			buy_amount: Balance
+		) -> RpcResult<Balance> {
+			RpcResult {
+				price: Xyk::calculate_buy_price(input_reserve, output_reserve, buy_amount).unwrap_or_default()
+			}
+		}
 
-        fn calculate_sell_price_id(
-            sold_token_id: TokenId,
-            bought_token_id: TokenId,
-            sell_amount: Balance
-        ) -> RpcResult<Balance> {
-            RpcResult {
-                price: Xyk::calculate_sell_price_id(sold_token_id, bought_token_id, sell_amount).unwrap_or_default()
-            }
-        }
+		fn calculate_sell_price_id(
+			sold_token_id: TokenId,
+			bought_token_id: TokenId,
+			sell_amount: Balance
+		) -> RpcResult<Balance> {
+			RpcResult {
+				price: Xyk::calculate_sell_price_id(sold_token_id, bought_token_id, sell_amount).unwrap_or_default()
+			}
+		}
 
-        fn calculate_buy_price_id(
-            sold_token_id: TokenId,
-            bought_token_id: TokenId,
-            buy_amount: Balance
-        ) -> RpcResult<Balance> {
-            RpcResult {
-                price: Xyk::calculate_buy_price_id(sold_token_id, bought_token_id, buy_amount).unwrap_or_default()
-            }
-        }
+		fn calculate_buy_price_id(
+			sold_token_id: TokenId,
+			bought_token_id: TokenId,
+			buy_amount: Balance
+		) -> RpcResult<Balance> {
+			RpcResult {
+				price: Xyk::calculate_buy_price_id(sold_token_id, bought_token_id, buy_amount).unwrap_or_default()
+			}
+		}
 
-        fn get_burn_amount(
-            first_asset_id: TokenId,
-            second_asset_id: TokenId,
-            liquidity_asset_amount: Balance
-        ) -> RpcAmountsResult<Balance> {
-            match Xyk::get_burn_amount(first_asset_id, second_asset_id, liquidity_asset_amount){
-                Ok((first_asset_amount, second_asset_amount)) => RpcAmountsResult{
-                                                                    first_asset_amount,
-                                                                    second_asset_amount
-                                                                },
-                Err(_) => RpcAmountsResult{
-                    first_asset_amount: 0u32.into(),
-                    second_asset_amount: 0u32.into()
-                },
-            }
-        }
-    }
+		fn get_burn_amount(
+			first_asset_id: TokenId,
+			second_asset_id: TokenId,
+			liquidity_asset_amount: Balance
+		) -> RpcAmountsResult<Balance> {
+			match Xyk::get_burn_amount(first_asset_id, second_asset_id, liquidity_asset_amount){
+				Ok((first_asset_amount, second_asset_amount)) => RpcAmountsResult{
+																	first_asset_amount,
+																	second_asset_amount
+																},
+				Err(_) => RpcAmountsResult{
+					first_asset_amount: 0u32.into(),
+					second_asset_amount: 0u32.into()
+				},
+			}
+		}
+	}
 
 	impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
 		fn slot_duration() -> sp_consensus_aura::SlotDuration {
@@ -1169,21 +1181,22 @@ impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
 // replace validate block function with its expanded version
 #[doc(hidden)]
 mod parachain_validate_block {
-    use super::*;
-    #[no_mangle]
-    #[cfg(not(feature = "std"))]
-    unsafe fn validate_block(arguments: *const u8, arguments_len: usize)
-     -> u64 {
-        let params =
-            cumulus_pallet_parachain_system::validate_block::polkadot_parachain::load_params(arguments,
-                                                                                             arguments_len);
-        let res =
+	use super::*;
+	#[no_mangle]
+	#[cfg(not(feature = "std"))]
+	unsafe fn validate_block(arguments: *const u8, arguments_len: usize) -> u64 {
+		let params =
+			cumulus_pallet_parachain_system::validate_block::polkadot_parachain::load_params(
+				arguments,
+				arguments_len,
+			);
+		let res =
             cumulus_pallet_parachain_system::validate_block::implementation::validate_block::<<Runtime
                                                                                               as
                                                                                               cumulus_pallet_parachain_system::validate_block::GetRuntimeBlockType>::RuntimeBlock,
                                                                                               cumulus_pallet_aura_ext::BlockExecutorVer<Runtime, Executive>,
                                                                                               Runtime,
                                                                                               CheckInherents>(params);
-        cumulus_pallet_parachain_system::validate_block::polkadot_parachain::write_result(&res)
-    }
+		cumulus_pallet_parachain_system::validate_block::polkadot_parachain::write_result(&res)
+	}
 }

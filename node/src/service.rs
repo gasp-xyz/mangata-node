@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 // Local Runtime Types
 use mangata_runtime::{
-	opaque::Block, AccountId, Balance, Hash, Index as Nonce, RuntimeApi, TokenId
+	opaque::Block, AccountId, Balance, Hash, Index as Nonce, RuntimeApi, TokenId,
 };
 
 // Cumulus Imports

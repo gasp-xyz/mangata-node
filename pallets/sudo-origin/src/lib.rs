@@ -50,7 +50,7 @@
 //! This is an example of a pallet that exposes a privileged function:
 //!
 //! ```
-//! 
+//!
 //! #[frame_support::pallet]
 //! pub mod logger {
 //! 	use frame_support::pallet_prelude::*;
@@ -215,14 +215,13 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-        /// A sudo just took place. \[result\]
-        SuOriginDid(DispatchResult),
-        /// A sudo just took place. \[result\]
-        SuOriginDoAsDone(DispatchResult),
+		/// A sudo just took place. \[result\]
+		SuOriginDid(DispatchResult),
+		/// A sudo just took place. \[result\]
+		SuOriginDoAsDone(DispatchResult),
 	}
 
 	#[pallet::error]
 	/// Error for the Sudo pallet
-	pub enum Error<T> {
-	}
+	pub enum Error<T> {}
 }

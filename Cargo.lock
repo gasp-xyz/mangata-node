@@ -2354,7 +2354,7 @@ dependencies = [
 [[package]]
 name = "frame-system-benchmarking"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#1bea8911587d95e3150d87f1c2ed527ae7df783a"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v4#88be3b1b98b8ead9d6783b0936e65658ef55b022"
 dependencies = [
  "frame-benchmarking",
  "frame-support",

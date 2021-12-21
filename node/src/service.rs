@@ -429,7 +429,7 @@ pub async fn start_parachain_node(
 				transaction_pool,
 				prometheus_registry,
 				telemetry.clone(),
-                keystore.clone(),
+				keystore.clone(),
 			);
 
 			let relay_chain_backend = relay_chain_node.backend.clone();

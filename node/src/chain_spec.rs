@@ -1,7 +1,7 @@
 use artemis_core::{App, AppId};
 use cumulus_primitives_core::ParaId;
 use hex_literal::hex;
-use mangata_runtime::{AccountId, AuraId, Balance, InflationInfo, Range, Signature};
+use mangata_runtime::{AccountId, AuraId, Balance, InflationInfo, Range, Signature, XxtxId};
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
@@ -47,6 +47,13 @@ pub fn get_collator_keys_from_seed(seed: &str) -> AuraId {
 	get_public_from_seed::<AuraId>(seed)
 }
 
+/// Generate collator keys from seed.
+///
+/// This function's return type must always match the session keys of the chain in tuple format.
+pub fn get_xxtx_keys_from_seed(seed: &str) -> XxtxId {
+	get_public_from_seed::<XxtxId>(seed)
+}
+
 /// Helper function to generate an account ID from seed
 pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
 where
@@ -58,8 +65,8 @@ where
 /// Generate the session keys from individual elements.
 ///
 /// The input must be a tuple of individual keys (a single arg for now since we have just one key).
-pub fn mangata_session_keys(keys: AuraId) -> mangata_runtime::SessionKeys {
-	mangata_runtime::SessionKeys { aura: keys }
+pub fn mangata_session_keys(aura: AuraId, xxtx: XxtxId) -> mangata_runtime::SessionKeys {
+	mangata_runtime::SessionKeys { aura, xxtx }
 }
 
 pub fn mangata_inflation_config() -> InflationInfo<Balance> {
@@ -104,10 +111,12 @@ pub fn development_config() -> ChainSpec {
 					(
 						get_account_id_from_seed::<sr25519::Public>("Alice"),
 						get_collator_keys_from_seed("Alice"),
+						get_xxtx_keys_from_seed("Alice"),
 					),
 					(
 						get_account_id_from_seed::<sr25519::Public>("Bob"),
 						get_collator_keys_from_seed("Bob"),
+						get_xxtx_keys_from_seed("Bob"),
 					),
 				],
 				// Initial relay account
@@ -247,10 +256,12 @@ pub fn local_testnet_config() -> ChainSpec {
 					(
 						get_account_id_from_seed::<sr25519::Public>("Alice"),
 						get_collator_keys_from_seed("Alice"),
+						get_xxtx_keys_from_seed("Bob"),
 					),
 					(
 						get_account_id_from_seed::<sr25519::Public>("Bob"),
 						get_collator_keys_from_seed("Bob"),
+						get_xxtx_keys_from_seed("Bob"),
 					),
 				],
 				// Initial relay account
@@ -378,7 +389,7 @@ pub fn local_testnet_config() -> ChainSpec {
 type BridgedAssetsType = Vec<(Vec<u8>, Vec<u8>, Vec<u8>, u32, u32, H160, u128, AccountId)>;
 
 fn testnet_genesis(
-	initial_authorities: Vec<(AccountId, AuraId)>,
+	initial_authorities: Vec<(AccountId, AuraId, XxtxId)>,
 	relay_key: AccountId,
 	root_key: AccountId,
 	bridged_app_ids: Vec<(App, AppId)>,
@@ -439,11 +450,11 @@ fn testnet_genesis(
 		session: mangata_runtime::SessionConfig {
 			keys: initial_authorities
 				.into_iter()
-				.map(|(acc, aura)| {
+				.map(|(acc, aura, xxtx)| {
 					(
-						acc.clone(),                // account id
-						acc,                        // validator id
-						mangata_session_keys(aura), // session keys
+						acc.clone(),                      // account id
+						acc,                              // validator id
+						mangata_session_keys(aura, xxtx), // session keys
 					)
 				})
 				.collect(),

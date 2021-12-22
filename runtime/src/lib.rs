@@ -47,6 +47,7 @@ use frame_system::{
 	EnsureRoot,
 };
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
+pub use pallet_encrypted_transactions::ecdsa::AuthorityId as XxtxId;
 use sp_encrypted_tx::{EncryptedTx, ExtrinsicType};
 pub use sp_runtime::{AccountId32, MultiAddress, Perbill, Permill};
 
@@ -200,7 +201,7 @@ pub mod opaque {
 impl_opaque_keys! {
 	pub struct SessionKeys {
 		pub aura: Aura,
-		// pub xxtx: EncryptedTransactions,
+		pub xxtx: EncryptedTransactions,
 	}
 }
 

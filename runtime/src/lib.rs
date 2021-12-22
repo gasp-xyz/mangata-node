@@ -46,8 +46,8 @@ use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
 };
-pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 pub use pallet_encrypted_transactions::ecdsa::AuthorityId as XxtxId;
+pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_encrypted_tx::{EncryptedTx, ExtrinsicType};
 pub use sp_runtime::{AccountId32, MultiAddress, Perbill, Permill};
 

@@ -290,13 +290,6 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		// //TODO: make use of _weight parameter, collator should precalculate weight of decrypted
 		// //transactions
-		pub fn foo(origin: OriginFor<T>) -> DispatchResult {
-			Ok(())
-		}
-
-		#[pallet::weight(10_000)]
-		// //TODO: make use of _weight parameter, collator should precalculate weight of decrypted
-		// //transactions
 		pub fn submit_decrypted_transaction(
 			origin: OriginFor<T>,
 			identifier: T::Hash,

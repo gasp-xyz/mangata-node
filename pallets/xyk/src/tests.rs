@@ -56,18 +56,29 @@ use frame_support::assert_err;
 
 // W - should work
 // N - should not work
+const DUMMY_USER_ID: u128 = 2;
+const MGA_ID: u32 = 0;
 
 fn initialize() {
 	// creating asset with assetId 0 and minting to accountId 2
 	System::set_block_number(1);
 	let acc_id: u128 = 2;
 	let amount: u128 = 1000000000000000000000;
-	XykStorage::create_new_token(&acc_id, amount);
-	XykStorage::create_new_token(&acc_id, amount);
-	XykStorage::create_new_token(&acc_id, amount);
+	// creates token with ID = 0;
+	XykStorage::create_new_token(&DUMMY_USER_ID, amount);
+	// creates token with ID = 1;
+	XykStorage::create_new_token(&DUMMY_USER_ID, amount);
+	// creates token with ID = 2;
+	XykStorage::create_new_token(&DUMMY_USER_ID, amount);
 
-	XykStorage::create_pool(Origin::signed(2), 1, 40000000000000000000, 2, 60000000000000000000)
-		.unwrap();
+	XykStorage::create_pool(
+		Origin::signed(DUMMY_USER_ID),
+		1,
+		40000000000000000000,
+		2,
+		60000000000000000000,
+	)
+	.unwrap();
 
 	let pool_created_event = crate::mock::Event::XykStorage(crate::Event::<Test>::PoolCreated(
 		acc_id,
@@ -951,5 +962,60 @@ fn burn_N_zero_amount() {
 			XykStorage::burn_liquidity(Origin::signed(2), 1, 2, 0,),
 			Error::<Test>::ZeroAmount,
 		); // burning pool 0 1 with 0 assetId 1
+	});
+}
+
+// TODO https://trello.com/c/rEygIR7t/428-fix-panic-in-xyksellasset
+#[test]
+#[ignore]
+fn buy_assets_with_small_expected_amount_does_not_cause_panic() {
+	new_test_ext().execute_with(|| {
+		initialize();
+		let first_token_balance = XykStorage::balance(1, DUMMY_USER_ID);
+		XykStorage::buy_asset(Origin::signed(2), 1, 2, 1, first_token_balance).unwrap();
+	});
+}
+
+#[test]
+fn successful_buy_assets_does_not_charge_fee() {
+	new_test_ext().execute_with(|| {
+		initialize();
+		let first_token_balance = XykStorage::balance(1, DUMMY_USER_ID);
+		let post_info =
+			XykStorage::buy_asset(Origin::signed(2), 1, 2, 1000, first_token_balance).unwrap();
+		assert_eq!(post_info.pays_fee, Pays::No);
+	});
+}
+
+#[test]
+fn unsuccessful_buy_assets_charges_fee() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		//try to sell non owned, non existing tokens
+		let post_info =
+			XykStorage::buy_asset(Origin::signed(2), 100, 200, 0, 0).unwrap_err().post_info;
+		assert_eq!(post_info.pays_fee, Pays::Yes);
+	});
+}
+
+#[test]
+fn successful_sell_assets_does_not_charge_fee() {
+	new_test_ext().execute_with(|| {
+		initialize();
+		let first_token_balance = XykStorage::balance(1, DUMMY_USER_ID);
+		let post_info =
+			XykStorage::sell_asset(Origin::signed(2), 1, 2, first_token_balance, 0).unwrap();
+		assert_eq!(post_info.pays_fee, Pays::No);
+	});
+}
+
+#[test]
+fn unsuccessful_sell_assets_charges_fee() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		//try to sell non owned, non existing tokens
+		let post_info =
+			XykStorage::sell_asset(Origin::signed(2), 100, 200, 0, 0).unwrap_err().post_info;
+		assert_eq!(post_info.pays_fee, Pays::Yes);
 	});
 }

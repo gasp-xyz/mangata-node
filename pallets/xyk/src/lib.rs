@@ -450,7 +450,6 @@ pub mod pallet {
 				sold_asset_amount,
 				min_amount_out,
 			)?;
-
 			Ok(Pays::No.into())
 		}
 
@@ -471,7 +470,6 @@ pub mod pallet {
 				bought_asset_amount,
 				max_amount_in,
 			)?;
-
 			Ok(Pays::No.into())
 		}
 

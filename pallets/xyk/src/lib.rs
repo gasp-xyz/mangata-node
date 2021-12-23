@@ -433,7 +433,7 @@ pub mod pallet {
 		}
 
 		// you will sell your sold_asset_amount of sold_asset_id to get some amount of bought_asset_id
-		#[pallet::weight(10_000)]
+		#[pallet::weight((10_000, Pays::No))]
 		pub fn sell_asset(
 			origin: OriginFor<T>,
 			sold_asset_id: TokenId,
@@ -454,7 +454,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
-		#[pallet::weight(10_000)]
+		#[pallet::weight((10_000, Pays::No))]
 		pub fn buy_asset(
 			origin: OriginFor<T>,
 			sold_asset_id: TokenId,

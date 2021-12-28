@@ -241,6 +241,7 @@ use sp_runtime::traits::Zero;
 use sp_runtime::traits::{AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member};
 use sp_std::convert::TryFrom;
 use sp_std::fmt::Debug;
+use sp_runtime::SaturatedConversion;
 
 #[cfg(test)]
 mod mock;
@@ -260,6 +261,7 @@ macro_rules! log {
 	};
 }
 
+type AccountIdOf<T> = <T as frame_system::Trait>::AccountId;
 pub trait Trait: frame_system::Trait + pallet_assets_info::Trait {
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
     type Currency: MultiTokenCurrencyExtended<Self::AccountId>;
@@ -344,6 +346,10 @@ decl_storage! {
 
         LiquidityAssets get(fn liquidity_asset): map hasher(opaque_blake2_256) (TokenId, TokenId) => Option<TokenId>;
         LiquidityPools get(fn liquidity_pool): map hasher(opaque_blake2_256) TokenId => Option<(TokenId, TokenId)>;
+
+        //(last checkpoint, total work until last checkpoint, missing actual at last checkpoint)
+        LiquidityMiningUser get(fn liquidity_mining_user): map hasher(opaque_blake2_256) (AccountIdOf<T>, TokenId) => Option<(u32, U256, U256, )>;                                                                            
+        LiquidityMiningPool get(fn liquidity_mining_pool): map hasher(opaque_blake2_256) TokenId => Option<(u32, U256, U256)>;
 
     }
     add_extra_genesis {
@@ -448,6 +454,236 @@ decl_module! {
 }
 
 impl<T: Trait> Module<T> {
+
+    pub fn calculate_rewards_amount(
+        user_work: U256,
+        pool_work: U256,
+        
+    ) -> Result<U256, DispatchError> {
+        Ok(U256::from(1))
+    }
+
+
+    pub fn calculate_work(
+        asymptote: Balance,
+        time: u32,
+        last_checkpoint: u32,
+        cummulative_work_in_last_checkpoint: U256,
+        missing_at_last_checkpoint: U256   
+    ) -> Result<U256, DispatchError> {
+       
+        // let (last_checkpoint,cummulative_work_in_last_checkpoint,missing_at_last_checkpoint,  )= UsersMinting::<T>::get((&user, &liquidity_asset_id)).unwrap();
+   
+        let time_passed = time - last_checkpoint;
+
+        let asymptote_u256 : U256 = asymptote.into();
+        let cummulative_work_new_max_possible: U256 = asymptote_u256.checked_mul(U256::from(time_passed)).ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+        let base = missing_at_last_checkpoint.checked_mul(U256::from(11)).ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+
+        log!(
+            info,
+            "XXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+           
+        );
+        log!(
+            info,
+            "XXXXXXX cummulative_work_new_max_possible: {}", cummulative_work_new_max_possible
+           
+        );
+        
+        let precision: u32 = 10000;
+        let q_pow: f64 = 1.1_f64.powf(time_passed.into()) * f64::from(precision).floor();
+
+        log!(
+            info,
+            "XXXXXXX q_pow: {}", q_pow
+           
+        );
+        let q_pow2: f64 = 1.1_f64.powf(time_passed.into());
+        log!(
+            info,
+            "q_pow2: {:?}", q_pow2
+        );
+        let cummulative_missing_new = base - base * U256::from(precision) / q_pow  as u128;
+        log!(
+            info,
+            "XXXXXXX cummulative_missing_new: {}", cummulative_missing_new
+           
+        );
+        let cummulative_work_new = cummulative_work_new_max_possible - cummulative_missing_new;
+        log!(
+            info,
+            "XXXXXXX cummulative_work_new: {}", cummulative_work_new
+           
+        );
+        let work_total = cummulative_work_in_last_checkpoint + cummulative_work_new;
+
+        log!(
+            info,
+            "calculate_work: {}, {}, {}, {}, {}, {} -> {}",
+            asymptote,
+            time,
+            last_checkpoint,
+            time_passed,
+            cummulative_work_in_last_checkpoint,
+            missing_at_last_checkpoint,
+            work_total
+        );
+        log!(
+            info,
+            "XXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+           
+        );
+        Ok(work_total)
+    }
+
+   
+
+   
+    //TODO MODIFY FOR POOL
+    pub fn calculate_work_pool(
+        liquidity_asset_id: TokenId,   
+        current_time: u32,     
+    ) -> Result<U256, DispatchError> {
+       
+        let liquidity_assets_amount: Balance = <T as Trait>::Currency::total_issuance(liquidity_asset_id.into()).into();
+        let (last_checkpoint, cummulative_work_in_last_checkpoint, missing_at_last_checkpoint) = Self::liquidity_mining_pool(&liquidity_asset_id).unwrap(); 
+       
+        let pool_work = Self::calculate_work(liquidity_assets_amount, current_time, last_checkpoint, cummulative_work_in_last_checkpoint, missing_at_last_checkpoint)?;
+        log!(
+            info,
+            "calculate_work_pool: {}, {}, {}, {} -> {}",
+            liquidity_asset_id,
+            current_time,
+            last_checkpoint,
+            liquidity_assets_amount,
+            pool_work,
+        );
+        Ok(pool_work)
+    }
+
+    pub fn calculate_work_user(
+        user: AccountIdOf<T>,
+        liquidity_asset_id: TokenId,
+        current_time: u32,       
+    ) -> Result<U256, DispatchError> {
+       
+        let liquidity_assets_amount: Balance = <T as Trait>::Currency::total_balance(liquidity_asset_id.into(), &user).into();
+        let (last_checkpoint, cummulative_work_in_last_checkpoint, missing_at_last_checkpoint) = Self::liquidity_mining_user((&user, &liquidity_asset_id)).unwrap(); 
+       
+        let user_work = Self::calculate_work(liquidity_assets_amount, current_time, last_checkpoint, cummulative_work_in_last_checkpoint, missing_at_last_checkpoint)?;
+        log!(
+            info,
+            "calculate_work_user: {}, {}, {}, {} -> {}",
+            liquidity_asset_id,
+            current_time,
+            last_checkpoint,
+            liquidity_assets_amount,
+            user_work,
+        ); 
+        Ok(user_work)
+    }
+
+    pub fn calculate_missing_at_checkpoint(
+        time_passed: u32,  
+        liquidity_assets_added: Balance,
+        user_missing_at_last_checkpoint: U256   
+    ) -> Result<U256, DispatchError> {
+        
+        let precision: u32 = 10000;
+        let q_pow: f64 = 1.1_f64.powf(time_passed.into()) * f64::from(precision).floor();
+        let liquidity_assets_added_u256 : U256 = liquidity_assets_added.into();
+
+        let missing_at_checkpoint: U256 = liquidity_assets_added_u256 + user_missing_at_last_checkpoint * U256::from(precision) / q_pow as u128;
+        log!(
+            info,
+            "calculate_missing_at_checkpoint: {}, {}, {} -> {}",
+            time_passed,
+            liquidity_assets_added,
+            user_missing_at_last_checkpoint,
+            missing_at_checkpoint,
+        ); 
+        
+        Ok(missing_at_checkpoint)
+    }
+
+    pub fn liquidity_mining_checkpoint(
+        user: AccountIdOf<T>,
+        liquidity_asset_id: TokenId, 
+        liquidity_assets_added: Balance     
+    ) -> DispatchResult {
+
+        let current_time: u32 = <frame_system::Module<T>>::block_number().saturated_into::<u32>() / 1000;
+
+        if LiquidityMiningUser::<T>::contains_key((&user, &liquidity_asset_id)){
+            let (user_last_checkpoint, user_cummulative_work_in_last_checkpoint, user_missing_at_last_checkpoint) = Self::liquidity_mining_user((&user, &liquidity_asset_id)).unwrap(); 
+            let user_time_passed = current_time - user_last_checkpoint;
+            let user_missing_at_checkpoint: U256 = Self::calculate_missing_at_checkpoint(user_time_passed, liquidity_assets_added, user_missing_at_last_checkpoint)?;
+            let user_work_total = Self::calculate_work_user(user.clone(), liquidity_asset_id, current_time)?;
+        
+            LiquidityMiningUser::<T>::insert(
+                (&user, &liquidity_asset_id),
+                (current_time, user_work_total, user_missing_at_checkpoint )
+            ); 
+            log!(
+                info,
+                "liquidity_mining_checkpoint_user: {}, {}, {} ",
+                current_time,
+                user_work_total,
+                user_missing_at_checkpoint,              
+            ); 
+        }
+        else{
+            LiquidityMiningUser::<T>::insert(
+                (&user, &liquidity_asset_id),
+                (current_time, U256::from(0), U256::from(liquidity_assets_added) )
+            ); 
+            log!(
+                info,
+                "liquidity_mining_checkpoint_user: {}, {}, {} ",
+                current_time,
+                0,
+                liquidity_assets_added,              
+            ); 
+        }
+        if LiquidityMiningPool::contains_key(&liquidity_asset_id){
+            let (pool_last_checkpoint, pool_cummulative_work_in_last_checkpoint, pool_missing_at_last_checkpoint) = Self::liquidity_mining_pool( &liquidity_asset_id).unwrap(); 
+            let pool_time_passed = current_time - pool_last_checkpoint;
+            let pool_missing_at_checkpoint: U256 = Self::calculate_missing_at_checkpoint(pool_time_passed, liquidity_assets_added, pool_missing_at_last_checkpoint)?;
+            let pool_work_total = Self::calculate_work_user(user.clone(), liquidity_asset_id, current_time)?;
+        
+            LiquidityMiningUser::<T>::insert(
+                (&user, &liquidity_asset_id),
+                (current_time, pool_work_total, pool_missing_at_checkpoint )
+            ); 
+            log!(
+                info,
+                "liquidity_mining_checkpoint_pool: {}, {}, {} ",
+                current_time,
+                pool_work_total,
+                pool_missing_at_checkpoint,              
+            ); 
+        }
+        else{
+            LiquidityMiningPool::insert(
+                &liquidity_asset_id,
+                (current_time, U256::from(0), U256::from(liquidity_assets_added) )
+            ); 
+            log!(
+                info,
+                "liquidity_mining_checkpoint_user: {}, {}, {} ",
+                current_time,
+                0,
+                liquidity_assets_added,              
+            ); 
+        }
+            Ok(())              
+    }
+
+  //  pub fn liquidity_burning_checkpoint
+  //  pub fn claim_rewards
+
+
     // Sets the liquidity token's info
     // May fail if liquidity_asset_id does not exsist
     // Should not fail otherwise as the parameters for the max and min length in pallet_assets_info should be set appropriately
@@ -1060,6 +1296,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
         );
         // This, will and should, never fail
         Module::<T>::set_liquidity_asset_info(liquidity_asset_id, first_asset_id, second_asset_id)?;
+        Module::<T>::liquidity_mining_checkpoint(sender.clone(), liquidity_asset_id, initial_liquidity);
 
         Module::<T>::deposit_event(RawEvent::PoolCreated(
             sender,
@@ -1532,7 +1769,7 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             second_asset_id,
             second_asset_reserve_updated,
         )?;
-
+        Module::<T>::liquidity_mining_checkpoint(sender.clone(), liquidity_asset_id, liquidity_assets_minted);
         log!(
             info,
             "mint_liquidity: ({:?}, {}, {}, {}) -> ({}, {}, {})",

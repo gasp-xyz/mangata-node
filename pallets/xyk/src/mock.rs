@@ -1,4 +1,3 @@
-// Copyright (C) 2020 Mangata team
 
 use crate::{Module, Trait};
 use sp_core::H256;
@@ -9,7 +8,8 @@ use sp_runtime::{
     Perbill,
 };
 
-use frame_support::{impl_outer_event, impl_outer_origin, parameter_types, weights::Weight};
+use frame_support::{impl_outer_event, impl_outer_origin, parameter_types, weights::Weight, dispatch::{DispatchResult},};
+use frame_support::traits::{ExistenceRequirement};
 use frame_system as system;
 use mangata_primitives::{Amount, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
@@ -123,6 +123,14 @@ impl<T: Trait> Module<T> {
     pub fn balance(id: TokenId, who: T::AccountId) -> Balance {
         <T as Trait>::Currency::free_balance(id.into(), &who).into()
     }
+    pub fn transfer(currency_id: TokenId,
+		source: T::AccountId,
+		dest: T::AccountId,
+		value: Balance
+		) -> DispatchResult {
+        <T as Trait>::Currency::transfer(currency_id.into(), &source, &dest, value.into(), ExistenceRequirement::KeepAlive).into()
+    }
+
     pub fn total_supply(id: TokenId) -> Balance {
         <T as Trait>::Currency::total_issuance(id.into()).into()
     }

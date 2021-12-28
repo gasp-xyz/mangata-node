@@ -30,6 +30,7 @@ use weights::WeightInfo;
 use weights::WeightInfoTrait;
 
 #[cfg(test)]
+
 mod mock;
 
 #[cfg(test)]

@@ -103,6 +103,10 @@ pub fn development_config() -> ChainSpec {
 				vec![(
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
 					get_collator_keys_from_seed("Alice"),
+				),
+				(
+					get_account_id_from_seed::<sr25519::Public>("Bob"),
+					get_collator_keys_from_seed("Bob"),
 				)],
 				// Initial relay account
 				get_account_id_from_seed::<sr25519::Public>("Relay"),
@@ -240,6 +244,10 @@ pub fn local_testnet_config() -> ChainSpec {
 				vec![(
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
 					get_collator_keys_from_seed("Alice"),
+				),
+				(
+					get_account_id_from_seed::<sr25519::Public>("Bob"),
+					get_collator_keys_from_seed("Bob"),
 				)],
 				// Initial relay account
 				get_account_id_from_seed::<sr25519::Public>("Relay"),

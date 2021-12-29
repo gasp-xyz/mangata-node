@@ -914,10 +914,11 @@ impl_runtime_apis! {
 	impl ver_api::VerApi<Block> for Runtime {
 		fn get_signer(
 			tx: <Block as BlockT>::Extrinsic,
-		) -> Option<sp_runtime::AccountId32> {
+		) -> Option<(sp_runtime::AccountId32, u32)> {
 			if let Some(sig) = tx.signature.clone(){
+				let nonce: frame_system::CheckNonce<_> = sig.2.4;
 				if let Address::Id(addr) = sig.0 {
-					Some(addr)
+					Some((addr, nonce.0))
 				}else{
 					panic!("unsupported address format");
 				}

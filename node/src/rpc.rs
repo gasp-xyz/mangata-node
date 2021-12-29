@@ -9,12 +9,13 @@ use std::sync::Arc;
 
 use mangata_runtime::{opaque::Block, AccountId, Balance, Index as Nonce, TokenId};
 
-use sc_client_api::AuxStore;
+use sc_client_api::{AuxStore, BlockBackend};
 pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
 use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
+use ver_api::VerApi;
 
 /// A type representing all RPC extensions.
 pub type RpcExtension = jsonrpc_core::IoHandler<sc_rpc::Metadata>;
@@ -34,6 +35,7 @@ pub fn create_full<C, P>(deps: FullDeps<C, P>) -> RpcExtension
 where
 	C: ProvideRuntimeApi<Block>
 		+ HeaderBackend<Block>
+		+ BlockBackend<Block>
 		+ AuxStore
 		+ HeaderMetadata<Block, Error = BlockChainError>
 		+ Send
@@ -43,6 +45,7 @@ where
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
 	C::Api: xyk_rpc::XykRuntimeApi<Block, Balance, TokenId>,
 	C::Api: BlockBuilder<Block>,
+	C::Api: VerApi<Block>,
 	P: TransactionPool + Sync + Send + 'static,
 {
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};

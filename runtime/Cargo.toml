@@ -25,6 +25,7 @@ pallet-assets-info = { path = '../pallets/assets-info', default-features = false
 pallet-xyk = { path = '../pallets/xyk', default-features = false, version = '0.1.0' }
 xyk-runtime-api = { path = '../pallets/xyk/runtime-api', default-features = false, version = '2.0.0' }
 pallet-sudo-origin = { path = '../pallets/sudo-origin', default-features = false}
+xcm-asset-registry = { path = '../pallets/asset-registry', default-features = false}
 
 # Substrate Dependencies
 ## Substrate Primitive Dependencies

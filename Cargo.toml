@@ -19,7 +19,7 @@ mangata-primitives = {path = "./primitives/mangata"}
 orml-tokens = { path = "../open-runtime-module-library/tokens" }
 orml-traits = { path = "../open-runtime-module-library/traits" }
 orml-xtokens = { path = "../open-runtime-module-library/xtokens" }
-orml-xcm-support = { path = "../open-runtime-module-library/xcm-spport" }
+orml-xcm-support = { path = "../open-runtime-module-library/xcm-support" }
 orml-unknown-tokens = { path = "../open-runtime-module-library/unknown-tokens" }
 orml-xcm = { path = "../open-runtime-module-library/xcm" }
 

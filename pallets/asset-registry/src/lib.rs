@@ -1,0 +1,227 @@
+// This file is part of Acala.
+
+// Copyright (C) 2020-2021 Acala Foundation.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+//! # Asset Registry Module
+//!
+//! foreign assets management. The foreign assets can be updated without runtime upgrade.
+
+#![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::unused_unit)]
+
+use frame_support::{
+	dispatch::DispatchResult,
+	ensure,
+	pallet_prelude::*,
+	traits::{Currency, EnsureOrigin},
+	transactional,
+	weights::constants::WEIGHT_PER_SECOND,
+	RuntimeDebug,
+};
+use frame_system::pallet_prelude::*;
+use mangata_primitives::{ Balance, TokenId };
+use scale_info::{prelude::format, TypeInfo};
+use sp_runtime::{traits::One, ArithmeticError, FixedPointNumber, FixedU128};
+use sp_std::{boxed::Box, vec::Vec};
+
+// NOTE:v1::MultiLocation is used in storages, we would need to do migration if upgrade the
+// MultiLocation in the future.
+use xcm::opaque::latest::{prelude::XcmError, Fungibility::Fungible, MultiAsset};
+use xcm::{v1::MultiLocation, VersionedMultiLocation};
+use xcm_builder::TakeRevenue;
+use xcm_executor::{traits::WeightTrader, Assets};
+
+use orml_tokens::{MultiTokenCurrencyExtended};
+
+// mod mock;
+// mod tests;
+mod weights;
+
+pub use module::*;
+pub use weights::WeightInfo;
+
+#[frame_support::pallet]
+pub mod module {
+	use super::*;
+
+	#[pallet::config]
+	pub trait Config: frame_system::Config {
+		/// The overarching event type.
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+
+		/// Currency type for withdraw and balance storage.
+		type Currency: MultiTokenCurrencyExtended<Self::AccountId>;
+
+		/// Required origin for registering asset.
+		type RegisterOrigin: EnsureOrigin<Self::Origin>;
+
+		/// Weight information for the extrinsics in this module.
+		type WeightInfo: WeightInfo;
+	}
+
+	#[pallet::error]
+	pub enum Error<T> {
+		/// The given location could not be used (e.g. because it cannot be expressed in the
+		/// desired version of XCM).
+		BadLocation,
+		/// MultiLocation existed
+		MultiLocationExisted,
+		/// AssetId not exists
+		AssetIdNotExists,
+		/// AssetId exists
+		AssetIdExisted,
+		/// Creating a token for the foreign asset failed
+		TokenCreationFailed,
+	}
+
+	#[pallet::event]
+	#[pallet::generate_deposit(fn deposit_event)]
+	pub enum Event<T: Config> {
+		/// The asset registered.
+		AssetRegistered {
+			asset_id: TokenId,
+			asset_address: MultiLocation,
+		},
+		/// The asset updated.
+		AssetUpdated {
+			asset_id: TokenId,
+			asset_address: MultiLocation,
+		},
+	}
+
+	/// The storages for MultiLocations.
+	///
+	/// AssetLocations: map TokenId => Option<MultiLocation>
+	#[pallet::storage]
+	#[pallet::getter(fn asset_locations)]
+	pub type AssetLocations<T: Config> = StorageMap<_, Twox64Concat, TokenId, MultiLocation, OptionQuery>;
+
+	/// The storages for CurrencyIds.
+	///
+	/// LocationToCurrencyIds: map MultiLocation => Option<TokenId>
+	#[pallet::storage]
+	#[pallet::getter(fn location_to_currency_ids)]
+	pub type LocationToCurrencyIds<T: Config> = StorageMap<_, Twox64Concat, MultiLocation, TokenId, OptionQuery>;
+
+	#[pallet::pallet]
+	pub struct Pallet<T>(_);
+
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {
+		#[pallet::weight(100_000)]
+		#[transactional]
+		pub fn register_asset(
+			origin: OriginFor<T>,
+			location: Box<VersionedMultiLocation>,
+		) -> DispatchResult {
+			T::RegisterOrigin::ensure_origin(origin)?;
+
+			let location: MultiLocation = (*location).try_into().map_err(|()| Error::<T>::BadLocation)?;
+			let asset_id = Self::do_register_asset(&location)?;
+
+			Self::deposit_event(Event::<T>::AssetRegistered {
+				asset_id: asset_id,
+				asset_address: location,
+			});
+			Ok(())
+		}
+
+		#[pallet::weight(100_000)]
+		#[transactional]
+		pub fn update_asset(
+			origin: OriginFor<T>,
+			asset_id: TokenId,
+			location: Box<VersionedMultiLocation>,
+		) -> DispatchResult {
+			T::RegisterOrigin::ensure_origin(origin)?;
+
+			let location: MultiLocation = (*location).try_into().map_err(|()| Error::<T>::BadLocation)?;
+			Self::do_update_asset(asset_id, &location)?;
+
+			Self::deposit_event(Event::<T>::AssetUpdated {
+				asset_id: asset_id,
+				asset_address: location,
+			});
+			Ok(())
+		}
+	}
+
+}
+
+impl<T: Config> Pallet<T> {
+
+	fn do_register_asset(
+		location: &MultiLocation,
+	) -> Result<TokenId, DispatchError> {
+		let asset_id: TokenId = T::Currency::create(&Default::default(), Default::default()).map_err(|_| DispatchError::from(Error::<T>::TokenCreationFailed))?.into();
+		LocationToCurrencyIds::<T>::try_mutate(location, |maybe_currency_ids| -> DispatchResult {
+			ensure!(maybe_currency_ids.is_none(), Error::<T>::MultiLocationExisted);
+			*maybe_currency_ids = Some(asset_id);
+
+			AssetLocations::<T>::try_mutate(asset_id, |maybe_location| -> DispatchResult {
+				ensure!(maybe_location.is_none(), Error::<T>::AssetIdExisted);
+				*maybe_location = Some(location.clone());
+				Ok(())
+			})
+		})?;
+
+		Ok(asset_id)
+	}
+
+	fn do_update_asset(
+		asset_id: TokenId,
+		location: &MultiLocation,
+	) -> DispatchResult {
+		AssetLocations::<T>::try_mutate(asset_id, |maybe_multi_locations| -> DispatchResult {
+			let old_multi_locations = maybe_multi_locations.as_mut().ok_or(Error::<T>::AssetIdNotExists)?;
+				// modify location
+				if location != old_multi_locations {
+					LocationToCurrencyIds::<T>::remove(old_multi_locations.clone());
+					LocationToCurrencyIds::<T>::try_mutate(location, |maybe_currency_ids| -> DispatchResult {
+						ensure!(maybe_currency_ids.is_none(), Error::<T>::MultiLocationExisted);
+						*maybe_currency_ids = Some(asset_id);
+						Ok(())
+					})?;
+				}
+				*old_multi_locations = location.clone();
+				Ok(())
+		})
+	}
+
+}
+
+/// A mapping between AssetId and Locations.
+pub trait AssetIdMapping<MultiLocation> {
+	/// Returns the MultiLocation associated with a given ForeignAssetId.
+	fn get_multi_location(token_id: TokenId) -> Option<MultiLocation>;
+	/// Returns the CurrencyId associated with a given MultiLocation.
+	fn get_currency_id(multi_location: MultiLocation) -> Option<TokenId>;
+}
+
+pub struct AssetIdMaps<T>(sp_std::marker::PhantomData<T>);
+
+impl<T: Config> AssetIdMapping<MultiLocation>
+	for AssetIdMaps<T>
+{
+	fn get_multi_location(token_id: TokenId) -> Option<MultiLocation> {
+		Pallet::<T>::asset_locations(token_id)
+	}
+
+	fn get_currency_id(multi_location: MultiLocation) -> Option<TokenId> {
+		Pallet::<T>::location_to_currency_ids(multi_location)
+	}
+}

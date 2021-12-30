@@ -64,6 +64,7 @@ use xcm_builder::{
 	UsingComponents,
 };
 use xcm_executor::{Config, XcmExecutor};
+use xcm_asset_registry::{AssetIdMaps, AssetIdMapping};
 
 use static_assertions::const_assert;
 
@@ -79,7 +80,7 @@ pub use pallet_xyk;
 use xyk_runtime_api::{RpcAmountsResult, RpcResult};
 
 pub const MGA_TOKEN_ID: TokenId = 0;
-pub const DOT_TOKEN_ID: TokenId = 3;
+pub const DOT_TOKEN_ID: TokenId = 4;
 
 pub use pallet_sudo;
 
@@ -967,6 +968,11 @@ where
 pub struct TokenIdConvert;
 impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
 	fn convert(id: TokenId) -> Option<MultiLocation> {
+
+		if id == DOT_TOKEN_ID {
+			return Some(MultiLocation::parent());
+		}
+
 		match AssetIdMaps::<Runtime>::get_multi_location(id){
 			Some(multi_location) => Some(multi_location),
 			None => MultiLocation::new(1, X2(Parachain(ParachainInfo::get().into()), GeneralKey(id.encode()))),
@@ -1037,6 +1043,13 @@ impl TakeRevenue for ToTreasury {
 	}
 }
 
+impl xcm_asset_registry::Config for Runtime {
+	type Event = Event;
+	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	type RegisterOrigin = EnsureRoot<AccountId>;
+	type WeightInfo = weights::module_asset_registry::WeightInfo<Runtime>;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -1084,6 +1097,7 @@ construct_runtime!(
 		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 35,
 		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 36,
 		OrmlXcm: orml_xcm::{Pallet, Call, Event<T>} = 37,
+		AssetRegistry: xcm_asset_registry::{Pallet, Call, Storage, Event<T>} = 38,
 
 		// Governance stuff
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 41,

@@ -55,8 +55,8 @@ pub trait WeightInfo {
 }
 
 /// Weights for module_asset_registry using the Acala node and recommended hardware.
-pub struct AcalaWeight<T>(PhantomData<T>);
-impl<T: frame_system::Config> WeightInfo for AcalaWeight<T> {
+pub struct SubstrateWeight<T>(PhantomData<T>);
+impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	fn register_foreign_asset() -> Weight {
 		(32_699_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))

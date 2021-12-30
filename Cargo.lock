@@ -4805,6 +4805,7 @@ dependencies = [
  "orml-xcm-support",
  "parity-scale-codec 2.3.1",
  "scale-info",
+ "serde",
  "sp-std",
  "xcm",
 ]
@@ -4859,6 +4860,7 @@ dependencies = [
  "orml-xcm-support",
  "parity-scale-codec 2.3.1",
  "scale-info",
+ "serde",
  "sp-io",
  "sp-runtime",
  "sp-std",

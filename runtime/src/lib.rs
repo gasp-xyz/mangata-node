@@ -17,13 +17,14 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto,
-		Header as HeaderT, IdentifyAccount, Verify,
+		Header as HeaderT, IdentifyAccount, Verify, Convert
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiSignature, Percent,
 };
 
 use pallet_session::ShouldEndSession;
+use sp_std::marker::PhantomData;
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -31,7 +32,7 @@ use sp_version::RuntimeVersion;
 
 use frame_support::{
 	construct_runtime, match_type, parameter_types,
-	traits::{Contains, Everything, LockIdentifier, Nothing, U128CurrencyToVote},
+	traits::{Contains, Everything, LockIdentifier, Nothing, U128CurrencyToVote, Get},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
 		DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
@@ -61,12 +62,16 @@ use xcm_builder::{
 	EnsureXcmOrigin, FixedWeightBounds, IsConcrete, LocationInverter, NativeAsset, ParentIsDefault,
 	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
 	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
-	UsingComponents,
+	UsingComponents, AllowKnownQueryResponses, AllowSubscriptionsFrom, FixedRateOfFungible,
+	TakeRevenue,
+
 };
-use xcm_executor::{Config, XcmExecutor};
+use xcm_executor::{Config, XcmExecutor, Assets, traits::{DropAssets}};
+use orml_xcm_support::{MultiCurrencyAdapter, IsNativeConcrete, MultiNativeAsset};
 use xcm_asset_registry::{AssetIdMaps, AssetIdMapping};
 
 use static_assertions::const_assert;
+use codec::{Encode, Decode};
 
 pub use parachain_staking::{InflationInfo, Range};
 
@@ -74,7 +79,7 @@ pub use mangata_primitives::{Amount, Balance, TokenId};
 
 pub use orml_tokens;
 use orml_tokens::TransferDust;
-use orml_traits::parameter_type_with_key;
+use orml_traits::{parameter_type_with_key, GetByKey, MultiCurrency};
 
 pub use pallet_xyk;
 use xyk_runtime_api::{RpcAmountsResult, RpcResult};
@@ -887,7 +892,7 @@ parameter_types! {
 	pub MgaPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
-			X2(Parachain(u32::from(ParachainInfo::get())), GeneralKey(MGA_TOKEN_ID)),
+			X2(Parachain(u32::from(ParachainInfo::get())), GeneralKey(MGA_TOKEN_ID.encode())),
 		).into(),
 		mga_per_second()
 	);
@@ -930,7 +935,7 @@ impl xcm_executor::Config for XcmConfig {
 /// - `NB`: the ExistentialDeposit amount of native currency_id.
 /// - `GK`: the ExistentialDeposit amount of tokens.
 pub struct MangataDropAssets<X, T, C, GK>(PhantomData<(X, T, C, GK)>);
-impl<X, T, C, GK> DropAssets for MangataDropAssets<X, T, C GK>
+impl<X, T, C, GK> DropAssets for MangataDropAssets<X, T, C, GK>
 where
 	X: DropAssets,
 	T: TakeRevenue,
@@ -975,7 +980,7 @@ impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
 
 		match AssetIdMaps::<Runtime>::get_multi_location(id){
 			Some(multi_location) => Some(multi_location),
-			None => MultiLocation::new(1, X2(Parachain(ParachainInfo::get().into()), GeneralKey(id.encode()))),
+			None => Some(MultiLocation::new(1, X2(Parachain(ParachainInfo::get().into()), GeneralKey(id.encode())))),
 		}
 	}
 }
@@ -1037,7 +1042,7 @@ impl TakeRevenue for ToTreasury {
 				// Ensure AcalaTreasuryAccount have ed requirement for native asset, but don't need
 				// ed requirement for cross-chain asset because it's one of whitelist accounts.
 				// Ignore the result.
-				let _ = Tokens::deposit(currency_id, &AcalaTreasuryAccount::get(), amount);
+				let _ = Tokens::deposit(currency_id, &TreasuryAccount::get(), amount);
 			}
 		}
 	}
@@ -1047,7 +1052,7 @@ impl xcm_asset_registry::Config for Runtime {
 	type Event = Event;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type RegisterOrigin = EnsureRoot<AccountId>;
-	type WeightInfo = weights::module_asset_registry::WeightInfo<Runtime>;
+	type WeightInfo = xcm_asset_registry::weights::SubstrateWeight<Runtime>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

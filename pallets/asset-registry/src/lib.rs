@@ -49,10 +49,10 @@ use orml_tokens::{MultiTokenCurrencyExtended};
 
 // mod mock;
 // mod tests;
-mod weights;
+pub mod weights;
 
 pub use module::*;
-pub use weights::WeightInfo;
+pub use weights::*;
 
 #[frame_support::pallet]
 pub mod module {

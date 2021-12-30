@@ -166,6 +166,13 @@ std = [
 
 	"parachain-staking/std",
 
+	"orml-xtokens/std",
+	"orml-xcm-support/std",
+	"orml-unknown-tokens/std",
+	"orml-xcm/std",
+
+	"xcm-asset-registry/std",
+
 ]
 
 runtime-benchmarks = [

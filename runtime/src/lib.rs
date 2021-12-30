@@ -987,7 +987,13 @@ impl_runtime_apis! {
 
 		// fetches address assigned to authority id
 		fn get_account_id(collator_id: u64) -> Option<AccountId32>{
-			Session::validators().get(collator_id as usize).map(|e| e.clone())
+			let collators = Session::validators();
+            if collators.is_empty() {
+                None
+            }else{
+                let idx = (collator_id as usize) % collators.len();
+                Some(collators.get(idx as usize).unwrap().clone())
+            }
 		}
 
 		// use autority id to identify public key (from encrypted transactions apllet)

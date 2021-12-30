@@ -256,7 +256,7 @@ pub fn local_testnet_config() -> ChainSpec {
 					(
 						get_account_id_from_seed::<sr25519::Public>("Alice"),
 						get_collator_keys_from_seed("Alice"),
-						get_xxtx_keys_from_seed("Bob"),
+						get_xxtx_keys_from_seed("Alice"),
 					),
 					(
 						get_account_id_from_seed::<sr25519::Public>("Bob"),

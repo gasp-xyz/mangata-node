@@ -1,4 +1,5 @@
 .git
+target
 **/target/
 **/*.txt
 **/*.md

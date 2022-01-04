@@ -90,15 +90,19 @@ fn mint_rewards_W() {
 
 
 
-
+    info!("USER WORK AT 10 ");
+    info!("USER WORK AT 10 ");
 let mut user_work = XykStorage::calculate_work_user(2,3, 10).unwrap();
-info!("USER WORK AT 11 {}", user_work);
+info!("USER WORK AT 10 {}", user_work);
+info!("USER WORK AT 10 {}", user_work);
 
 System::set_block_number(10001);
 
-
+info!("USER WORK AT 20 no mint {}", user_work);
+info!("USER WORK AT 20 no mint {}", user_work);
 user_work = XykStorage::calculate_work_user(2,3, 20).unwrap();
-info!("USER WORK AT 21 {}", user_work);
+info!("USER WORK AT 20 no mint {}", user_work);
+info!("USER WORK AT 20 no mint {}", user_work);
 
 info!("*******MINT************");
     XykStorage::mint_liquidity(
@@ -110,10 +114,38 @@ info!("*******MINT************");
     )
     .unwrap();
 
-    user_work = XykStorage::calculate_work_user(2,3, 20).unwrap();
-    info!("USER WORK AT 21 {}", user_work);
-    
+info!("USER WORK AT 20 after mint {}", user_work);
+info!("USER WORK AT 20 after mint {}", user_work);
+user_work = XykStorage::calculate_work_user(2,3, 20).unwrap();
 
+info!("USER WORK AT 20 after mint {}", user_work);
+info!("USER WORK AT 20 after mint {}", user_work);
+
+
+
+
+System::set_block_number(20001);
+info!("*******MINT USER 3************");
+    XykStorage::mint_liquidity(
+        Origin::signed(3),
+        0,
+        1,
+        500,
+        501,
+    )
+    .unwrap();
+
+    info!("");    
+    info!("USER WORK AT 30 after mint {}", user_work);
+    info!("USER WORK AT 30 after mint {}", user_work);    
+user_work = XykStorage::calculate_work_user(2,3, 30).unwrap();
+info!("USER 1 WORK AT 30 {}", user_work);
+let mut user_work2 = XykStorage::calculate_work_user(3,3, 30).unwrap();
+info!("USER 2 WORK AT 30 {}", user_work2);
+let mut pool_work = XykStorage::calculate_work_pool(3, 30).unwrap();
+info!("POOL  WORK AT 30 {}", pool_work);
+info!("USER WORK AT 30 after mint {}", user_work);
+info!("USER WORK AT 30 after mint {}", user_work);    
 });
 }
 

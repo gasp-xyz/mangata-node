@@ -305,6 +305,7 @@ decl_error! {
         NotMangataLiquidityAsset,
         SecondAssetAmountExceededExpectations,
         MathOverflow,
+        NotEligibleToClaimAmount,
     }
 }
 
@@ -350,7 +351,7 @@ decl_storage! {
         //(last checkpoint, total work until last checkpoint, missing actual at last checkpoint)
         LiquidityMiningUser get(fn liquidity_mining_user): map hasher(opaque_blake2_256) (AccountIdOf<T>, TokenId) => Option<(u32, U256, U256, )>;                                                                            
         LiquidityMiningPool get(fn liquidity_mining_pool): map hasher(opaque_blake2_256) TokenId => Option<(u32, U256, U256)>;
-
+        LiquidityMiningUserClaimed get(fn liquidity_mining_user_claimed): map hasher(opaque_blake2_256) (AccountIdOf<T>, TokenId) => Option<i128>;
     }
     add_extra_genesis {
         config(created_pools_for_staking): Vec<(T::AccountId, TokenId, Balance, TokenId, Balance, TokenId)>;
@@ -450,19 +451,52 @@ decl_module! {
             <Self as XykFunctionsTrait<T::AccountId>>::burn_liquidity(sender, first_asset_id, second_asset_id, liquidity_asset_amount)
 
         }
+
+        #[weight = (10_000, Pays::No)]
+        pub fn claim_rewards (
+            origin,
+            liquidity_token_id: TokenId,
+            amount: Balance,
+        ) -> DispatchResult {
+
+            let sender = ensure_signed(origin)?;
+
+            <Self as XykFunctionsTrait<T::AccountId>>::claim_rewards(sender, liquidity_token_id, amount)
+
+        }
     }
 }
 
 impl<T: Trait> Module<T> {
 
-    pub fn calculate_rewards_amount(
-        user_work: U256,
-        pool_work: U256,
+    pub fn calculate_rewards(
+        work_user: U256,
+        work_pool: U256,
+        block_number: u32
+    ) -> Result<Balance, DispatchError> {
         
-    ) -> Result<U256, DispatchError> {
-        Ok(U256::from(1))
+        //TODO, proper storage and calculation for total_mangata_rewards per pool, should be substracted by every claim and liq_burn (this reward should be calculated at this point, and removed from total pool, so it is no longer in consideration for any next calculation of user_work/total rewards pool)
+        let total_mangata_rewards: U256 = U256::from(block_number).checked_mul(U256::from(1000)).ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+        let user_rewards_amount = Balance::try_from(total_mangata_rewards.checked_mul(work_user).ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?.checked_div(work_pool).ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?)
+        .map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
+
+        Ok(user_rewards_amount)
     }
 
+    pub fn calculate_rewards_amount(
+        user: AccountIdOf<T>,
+        liquidity_asset_id: TokenId,
+        block_number: u32
+    ) -> Result<(Balance, i128), DispatchError> {
+        let current_time = block_number / 1000;
+        let work_user = Self::calculate_work_user(user.clone(), liquidity_asset_id, current_time)?;
+        let work_pool = Self::calculate_work_pool( liquidity_asset_id, current_time)?;
+       
+       
+        let already_claimed = Self::liquidity_mining_user_claimed((user, &liquidity_asset_id)).unwrap();
+        let user_rewards_amount = Self::calculate_rewards(work_user, work_pool, block_number)?;
+        Ok((user_rewards_amount, already_claimed))
+    }
 
     pub fn calculate_work(
         asymptote: Balance,
@@ -771,8 +805,8 @@ impl<T: Trait> Module<T> {
         let liquidity_assets_amount: Balance = <T as Trait>::Currency::total_balance(liquidity_asset_id.into(), &user).into();
        // let input_reserve_saturated: U256 = input_reserve.into();
         let liquidity_assets_burned_U265: U256 = liquidity_assets_burned.into();
-        let user_work_burned: U256 = liquidity_assets_burned_U265.checked_mul(user_work_total).ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?.checked_div(liquidity_assets_amount.into()).ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
-        let user_missing_burned: U256 = liquidity_assets_burned_U265.checked_mul(user_missing_at_checkpoint).ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?.checked_div(liquidity_assets_amount.into()).ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+        let user_work_burned: U256 = liquidity_assets_burned_U265.checked_mul(user_work_total).ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?.checked_div(liquidity_assets_amount.into()).ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
+        let user_missing_burned: U256 = liquidity_assets_burned_U265.checked_mul(user_missing_at_checkpoint).ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?.checked_div(liquidity_assets_amount.into()).ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
 
         log!(
             info,
@@ -800,20 +834,38 @@ impl<T: Trait> Module<T> {
             
         ); 
 
+        
+
+
+
         LiquidityMiningUser::<T>::insert(
-            (&user, &liquidity_asset_id),
+            (user.clone(), &liquidity_asset_id),
             (current_time, user_work_total - user_work_burned, user_missing_at_checkpoint - user_missing_burned )
         ); 
         LiquidityMiningPool::insert(
             &liquidity_asset_id,
             (current_time, pool_work_total - user_work_burned, pool_missing_at_checkpoint - user_missing_burned )
         ); 
+
+        let mut rewards_claimed: i128 = 0;
+
+        if LiquidityMiningUserClaimed::<T>::contains_key((user.clone(), &liquidity_asset_id)) {
+            rewards_claimed = Self::liquidity_mining_user_claimed((user.clone(), &liquidity_asset_id)).unwrap();
+        }
+        
+
+        let claimable_reward = Self::calculate_rewards(user_work_burned, pool_work_total,current_time * 1000)?;
+        let rewards_claimed_new = rewards_claimed - claimable_reward as i128;
+        LiquidityMiningUserClaimed::<T>::insert(
+            (&user, liquidity_asset_id),
+            rewards_claimed_new,
+        );
             Ok(())              
     }
 
   //  pub fn liquidity_burning_checkpoint
   //  pub fn claim_rewards
-
+    
 
     // Sets the liquidity token's info
     // May fail if liquidity_asset_id does not exsist
@@ -1285,6 +1337,12 @@ pub trait XykFunctionsTrait<AccountId> {
         sender: AccountId,
         first_asset_id: Self::CurrencyId,
         second_asset_id: Self::CurrencyId,
+        liquidity_asset_amount: Self::Balance,
+    ) -> DispatchResult;
+
+    fn claim_rewards(
+        sender: AccountId,
+        liquidity_asset_id: Self::CurrencyId,
         liquidity_asset_amount: Self::Balance,
     ) -> DispatchResult;
 
@@ -2097,6 +2155,45 @@ impl<T: Trait> XykFunctionsTrait<T::AccountId> for Module<T> {
             liquidity_asset_amount,
         ));
 
+        Ok(())
+    }
+
+    fn claim_rewards(
+        sender: T::AccountId,
+        liquidity_token_id: Self::CurrencyId,
+        amount: Self::Balance,
+    ) -> DispatchResult {
+        let vault = Self::account_id();
+        let mangata_id: TokenId = T::NativeCurrencyId::get();
+
+        let current_block_number = <frame_system::Module<T>>::block_number().saturated_into::<u32>();
+        let (rewards_total, rewards_claimed) = Module::<T>::calculate_rewards_amount(sender.clone(), liquidity_token_id, current_block_number)?;
+
+        let rewards_total_i128: i128 =  i128::try_from(rewards_total)
+        .map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
+        let eligible_to_claim: Balance = u128::try_from(rewards_total_i128 - rewards_claimed).map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
+        ensure!(
+            amount <= eligible_to_claim,
+            Error::<T>::NotEligibleToClaimAmount,
+        );
+
+        let rewards_claimed_new = rewards_claimed + i128::try_from(amount)
+        .map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
+
+        <T as Trait>::Currency::transfer(
+            mangata_id.into(),
+            &vault,
+            &sender,
+            amount.into(),
+            ExistenceRequirement::KeepAlive,
+        )?;
+
+        LiquidityMiningUserClaimed::<T>::insert(
+            (sender, liquidity_token_id),
+            rewards_claimed_new,
+        );
+
+        //TODO REMOVE CLAIMED MANGATA FROM TOTAL POOL
         Ok(())
     }
 

@@ -234,7 +234,7 @@ jobs:
           reporter: jest-junit        # Format of test results
 
   publish:
-    needs: [rustfmt-check, unit-test, e2e-test, clippy]
+    needs: [rustfmt-check, unit-test, clippy]
     runs-on: ubuntu-latest
     if: |
       github.ref == 'refs/heads/develop' && 

@@ -511,5 +511,8 @@ fn testnet_genesis(
 			// Assign network admin rights.
 			key: root_key,
 		},
+		polkadot_xcm: mangata_runtime::PolkadotXcmConfig {
+			safe_xcm_version: Some(2),
+		},
 	}
 }

@@ -135,9 +135,9 @@ info!("*******MINT USER 3************");
     )
     .unwrap();
 
-    info!("");    
-    info!("USER WORK AT 30 after mint {}", user_work);
-    info!("USER WORK AT 30 after mint {}", user_work);    
+info!("");    
+info!("USER WORK AT 30 after mint {}", user_work);
+info!("USER WORK AT 30 after mint {}", user_work);    
 user_work = XykStorage::calculate_work_user(2,3, 30).unwrap();
 info!("USER 1 WORK AT 30 {}", user_work);
 let mut user_work2 = XykStorage::calculate_work_user(3,3, 30).unwrap();
@@ -146,6 +146,28 @@ let mut pool_work = XykStorage::calculate_work_pool(3, 30).unwrap();
 info!("POOL  WORK AT 30 {}", pool_work);
 info!("USER WORK AT 30 after mint {}", user_work);
 info!("USER WORK AT 30 after mint {}", user_work);    
+
+System::set_block_number(30001);
+XykStorage::burn_liquidity(
+    Origin::signed(2),
+    0,
+    1,
+    500,
+)
+.unwrap();
+System::set_block_number(40001);
+
+info!("");    
+info!("USER WORK AT 40 after mint {}", user_work);
+info!("USER WORK AT 40 after mint {}", user_work);    
+user_work = XykStorage::calculate_work_user(2,3, 40).unwrap();
+info!("USER 1 WORK AT 40 {}", user_work);
+user_work2 = XykStorage::calculate_work_user(3,3, 40).unwrap();
+info!("USER 2 WORK AT 40 {}", user_work2);
+pool_work = XykStorage::calculate_work_pool(3, 40).unwrap();
+info!("POOL  WORK AT 40 {}", pool_work);
+info!("USER WORK AT 40 after mint {}", user_work);
+info!("USER WORK AT 40 after mint {}", user_work);    
 });
 }
 

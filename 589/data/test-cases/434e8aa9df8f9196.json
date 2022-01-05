@@ -1,0 +1,86 @@
+{
+  "uid" : "434e8aa9df8f9196",
+  "name" : "assets won when assets are bought [Buying other in MGA pool]",
+  "fullName" : "xyk-pallet - treasury tests [Mangata]: on treasury we store.assets won when assets are bought [Buying other in MGA pool]",
+  "historyId" : "f417a1d75905b23a9c51e749a26502cd",
+  "time" : {
+    "start" : 1641375709782,
+    "stop" : 1641375817911,
+    "duration" : 108129
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - treasury tests [Mangata]: on treasury we store"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - treasury tests [Mangata]: on treasury we store"
+  }, {
+    "name" : "testMethod",
+    "value" : "assets won when assets are bought [Buying other in MGA pool]"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - treasury tests [Mangata]: on treasury we store"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ ],
+    "history" : {
+      "statistic" : {
+        "failed" : 2,
+        "broken" : 0,
+        "skipped" : 0,
+        "passed" : 2,
+        "unknown" : 0,
+        "total" : 4
+      },
+      "items" : [ {
+        "uid" : "138b3fd325231ad4",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/588//#testresult/138b3fd325231ad4",
+        "status" : "passed",
+        "time" : {
+          "start" : 1641295633133,
+          "stop" : 1641295741279,
+          "duration" : 108146
+        }
+      }, {
+        "uid" : "42434717cfe76e8f",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/587//#testresult/42434717cfe76e8f",
+        "status" : "failed",
+        "statusDetails" : "Error: Unable to decode storage system.account:: createType(AccountInfo):: {\"nonce\":\"u32\",\"refcount\":\"u32\",\"data\":\"BalancesAccountData\"}:: Decoded input doesn't match input, received 0x0000000001000000 (8 bytes), created 0x0000000001000000000000000000000000000000000000000000000000000000…0000000000000000000000000000000000000000000000000000000000000000 (72 bytes)",
+        "time" : {
+          "start" : 1641293140888,
+          "stop" : 1641293140933,
+          "duration" : 45
+        }
+      }, {
+        "uid" : "fa2025cd946a3710",
+        "reportUrl" : "https://mangata-finance.github.io/mangata-node/586//#testresult/fa2025cd946a3710",
+        "status" : "failed",
+        "statusDetails" : "Error: Unable to decode storage system.account:: createType(AccountInfo):: {\"nonce\":\"u32\",\"refcount\":\"u32\",\"data\":\"BalancesAccountData\"}:: Decoded input doesn't match input, received 0x0000000001000000 (8 bytes), created 0x0000000001000000000000000000000000000000000000000000000000000000…0000000000000000000000000000000000000000000000000000000000000000 (72 bytes)",
+        "time" : {
+          "start" : 1641238906738,
+          "stop" : 1641238906783,
+          "duration" : 45
+        }
+      } ]
+    },
+    "tags" : [ ]
+  },
+  "source" : "434e8aa9df8f9196.json",
+  "parameterValues" : [ ]
+}

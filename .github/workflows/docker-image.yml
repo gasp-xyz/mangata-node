@@ -9,6 +9,7 @@ on:
   pull_request:
     branches:
       - develop
+      - mangata-dev-v4
   push:
     branches: [ develop ]
 
@@ -55,7 +56,7 @@ jobs:
       - name: Install latest nightly
         uses: actions-rs/toolchain@v1
         with:
-            toolchain: nightly-2020-10-01
+            toolchain: nightly-2021-10-19
             target: wasm32-unknown-unknown
             override: true
             components: clippy
@@ -233,7 +234,7 @@ jobs:
           reporter: jest-junit        # Format of test results
 
   publish:
-    needs: [rustfmt-check, unit-test, e2e-test, clippy]
+    needs: [rustfmt-check, unit-test, clippy, build]
     runs-on: ubuntu-latest
     if: |
       github.ref == 'refs/heads/develop' && 

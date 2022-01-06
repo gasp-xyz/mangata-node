@@ -1,7 +1,11 @@
 use artemis_core::{App, AppId};
+use codec::Encode;
 use cumulus_primitives_core::ParaId;
 use hex_literal::hex;
-use mangata_runtime::{AccountId, AuraId, Balance, InflationInfo, Range, Signature, VersionedMultiLocation, DOT_TOKEN_ID};
+use mangata_runtime::{
+	AccountId, AuraId, Balance, InflationInfo, Range, Signature, VersionedMultiLocation,
+	DOT_TOKEN_ID,
+};
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
@@ -10,7 +14,6 @@ use sp_runtime::{
 	traits::{IdentifyAccount, Verify},
 	Perbill,
 };
-use codec::Encode;
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec = sc_service::GenericChainSpec<mangata_runtime::GenesisConfig, Extensions>;
@@ -214,9 +217,7 @@ pub fn development_config() -> ChainSpec {
 						5_000__000_000_000_000_000_000u128,
 					),
 				],
-				vec![
-					(DOT_TOKEN_ID, None),
-				],
+				vec![(DOT_TOKEN_ID, None)],
 				2000.into(),
 			)
 		},
@@ -360,9 +361,7 @@ pub fn local_testnet_config() -> ChainSpec {
 						5_000__000_000_000_000_000_000u128,
 					),
 				],
-				vec![
-					(DOT_TOKEN_ID, None),
-				],
+				vec![(DOT_TOKEN_ID, None)],
 				2000.into(),
 			)
 		},
@@ -519,17 +518,19 @@ fn testnet_genesis(
 			// Assign network admin rights.
 			key: root_key,
 		},
-		polkadot_xcm: mangata_runtime::PolkadotXcmConfig {
-			safe_xcm_version: Some(2),
-		},
-		asset_registry: mangata_runtime::AssetRegistryConfig{
-			init_xcm_tokens: xcm_tokens.iter().cloned().map(|(x, maybe_y)| {
-				if let Some(y) = maybe_y {
-					(x, Some(VersionedMultiLocation::encode(&y)))
-				} else {
-					(x, None)
-				}
-			}).collect(),
+		polkadot_xcm: mangata_runtime::PolkadotXcmConfig { safe_xcm_version: Some(2) },
+		asset_registry: mangata_runtime::AssetRegistryConfig {
+			init_xcm_tokens: xcm_tokens
+				.iter()
+				.cloned()
+				.map(|(x, maybe_y)| {
+					if let Some(y) = maybe_y {
+						(x, Some(VersionedMultiLocation::encode(&y)))
+					} else {
+						(x, None)
+					}
+				})
+				.collect(),
 		},
 	}
 }

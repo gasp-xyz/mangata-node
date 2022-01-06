@@ -16,23 +16,22 @@ use sp_core::{
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto,
-		Header as HeaderT, IdentifyAccount, Verify, Convert
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, ConvertInto,
+		Header as HeaderT, IdentifyAccount, Verify,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiSignature, Percent,
 };
 
 use pallet_session::ShouldEndSession;
-use sp_std::marker::PhantomData;
-use sp_std::prelude::*;
+use sp_std::{marker::PhantomData, prelude::*};
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 use frame_support::{
 	construct_runtime, match_type, parameter_types,
-	traits::{Contains, Everything, LockIdentifier, Nothing, U128CurrencyToVote, Get},
+	traits::{Contains, Everything, Get, LockIdentifier, Nothing, U128CurrencyToVote},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
 		DispatchClass, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
@@ -56,23 +55,21 @@ use polkadot_parachain::primitives::Sibling;
 use polkadot_runtime_common::{BlockHashCount, RocksDbWeight, SlowAdjustingFeeUpdate};
 
 // XCM Imports
+use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
 use xcm::latest::prelude::*;
-use xcm_builder::{
-	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom,
-	EnsureXcmOrigin, FixedWeightBounds, LocationInverter, ParentIsDefault,
-	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
-	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
-	AllowKnownQueryResponses, AllowSubscriptionsFrom, FixedRateOfFungible,
-	TakeRevenue,
-
-};
-use xcm_executor::{XcmExecutor, Assets, traits::{DropAssets}};
-use orml_xcm_support::{MultiCurrencyAdapter, IsNativeConcrete, MultiNativeAsset};
-use xcm_asset_registry::{AssetIdMaps, AssetIdMapping};
 pub use xcm::VersionedMultiLocation;
+use xcm_asset_registry::{AssetIdMapping, AssetIdMaps};
+use xcm_builder::{
+	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
+	AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, EnsureXcmOrigin, FixedRateOfFungible,
+	FixedWeightBounds, LocationInverter, ParentIsDefault, RelayChainAsNative,
+	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
+	SignedToAccountId32, SovereignSignedViaLocation, TakeRevenue, TakeWeightCredit,
+};
+use xcm_executor::{traits::DropAssets, Assets, XcmExecutor};
 
+use codec::{Decode, Encode};
 use static_assertions::const_assert;
-use codec::{Encode, Decode};
 
 pub use parachain_staking::{InflationInfo, Range};
 
@@ -854,11 +851,7 @@ parameter_types! {
 pub struct AccountIdToMultiLocation;
 impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 	fn convert(account: AccountId) -> MultiLocation {
-		X1(AccountId32 {
-			network: NetworkId::Any,
-			id: account.into(),
-		})
-		.into()
+		X1(AccountId32 { network: NetworkId::Any, id: account.into() }).into()
 	}
 }
 
@@ -899,10 +892,8 @@ parameter_types! {
 	);
 }
 
-pub type Trader = (
-	FixedRateOfFungible<DotPerSecond, ToTreasury>,
-	FixedRateOfFungible<MgaPerSecond, ToTreasury>,
-);
+pub type Trader =
+	(FixedRateOfFungible<DotPerSecond, ToTreasury>, FixedRateOfFungible<MgaPerSecond, ToTreasury>);
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
@@ -919,12 +910,8 @@ impl xcm_executor::Config for XcmConfig {
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type Trader = Trader;
 	type ResponseHandler = PolkadotXcm;
-	type AssetTrap = MangataDropAssets<
-		PolkadotXcm,
-		ToTreasury,
-		TokenIdConvert,
-		ExistentialDeposits,
-	>;
+	type AssetTrap =
+		MangataDropAssets<PolkadotXcm, ToTreasury, TokenIdConvert, ExistentialDeposits>;
 	type AssetClaims = PolkadotXcm;
 	type SubscriptionService = PolkadotXcm;
 }
@@ -947,11 +934,7 @@ where
 		let multi_assets: Vec<MultiAsset> = assets.into();
 		let mut asset_traps: Vec<MultiAsset> = vec![];
 		for asset in multi_assets {
-			if let MultiAsset {
-				id: Concrete(location),
-				fun: Fungible(amount),
-			} = asset.clone()
-			{
+			if let MultiAsset { id: Concrete(location), fun: Fungible(amount) } = asset.clone() {
 				let currency_id = C::convert(location);
 				// burn asset(do nothing here) if convert result is None
 				if let Some(currency_id) = currency_id {
@@ -974,33 +957,33 @@ where
 pub struct TokenIdConvert;
 impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
 	fn convert(id: TokenId) -> Option<MultiLocation> {
-
 		if id == DOT_TOKEN_ID {
-			return Some(MultiLocation::parent());
+			return Some(MultiLocation::parent())
 		}
 
-		match AssetIdMaps::<Runtime>::get_multi_location(id){
+		match AssetIdMaps::<Runtime>::get_multi_location(id) {
 			Some(multi_location) => Some(multi_location),
-			None => Some(MultiLocation::new(1, X2(Parachain(ParachainInfo::get().into()), GeneralKey(id.encode())))),
+			None => Some(MultiLocation::new(
+				1,
+				X2(Parachain(ParachainInfo::get().into()), GeneralKey(id.encode())),
+			)),
 		}
 	}
 }
 impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 	fn convert(location: MultiLocation) -> Option<TokenId> {
-
 		if location == MultiLocation::parent() {
-			return Some(DOT_TOKEN_ID);
+			return Some(DOT_TOKEN_ID)
 		}
 
 		if let Some(token_id) = AssetIdMaps::<Runtime>::get_currency_id(location.clone()) {
-			return Some(token_id);
+			return Some(token_id)
 		}
 
 		match location {
-			MultiLocation {
-				parents,
-				interior: X2(Parachain(para_id), GeneralKey(key)),
-			} if parents == 1 => {
+			MultiLocation { parents, interior: X2(Parachain(para_id), GeneralKey(key)) }
+				if parents == 1 =>
+			{
 				match (para_id, &key[..]) {
 					(id, key) if id == u32::from(ParachainInfo::get()) => {
 						// Acala
@@ -1010,20 +993,17 @@ impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 							// invalid general key
 							None
 						}
-					}
+					},
 					_ => None,
 				}
-			}
+			},
 			_ => None,
 		}
 	}
 }
 impl Convert<MultiAsset, Option<TokenId>> for TokenIdConvert {
 	fn convert(asset: MultiAsset) -> Option<TokenId> {
-		if let MultiAsset {
-			id: Concrete(location), ..
-		} = asset
-		{
+		if let MultiAsset { id: Concrete(location), .. } = asset {
 			Self::convert(location)
 		} else {
 			None
@@ -1034,11 +1014,7 @@ impl Convert<MultiAsset, Option<TokenId>> for TokenIdConvert {
 pub struct ToTreasury;
 impl TakeRevenue for ToTreasury {
 	fn take_revenue(revenue: MultiAsset) {
-		if let MultiAsset {
-			id: Concrete(location),
-			fun: Fungible(amount),
-		} = revenue
-		{
+		if let MultiAsset { id: Concrete(location), fun: Fungible(amount) } = revenue {
 			if let Some(currency_id) = TokenIdConvert::convert(location) {
 				// Ensure AcalaTreasuryAccount have ed requirement for native asset, but don't need
 				// ed requirement for cross-chain asset because it's one of whitelist accounts.

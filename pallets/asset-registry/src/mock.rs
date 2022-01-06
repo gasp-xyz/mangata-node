@@ -24,12 +24,13 @@ use super::*;
 use crate as xcm_asset_registry;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{Everything, Contains}, PalletId,
+	traits::{Contains, Everything},
+	PalletId,
 };
 use frame_system::EnsureRoot;
+use mangata_primitives::{Amount, Balance, TokenId};
 use orml_traits::parameter_type_with_key;
 use sp_runtime::traits::AccountIdConversion;
-use mangata_primitives::{Amount, Balance, TokenId};
 
 pub(crate) type AccountId = u128;
 
@@ -122,5 +123,8 @@ construct_runtime!(
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap().into()
+	frame_system::GenesisConfig::default()
+		.build_storage::<Runtime>()
+		.unwrap()
+		.into()
 }

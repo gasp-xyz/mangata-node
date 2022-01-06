@@ -22,15 +22,15 @@
 
 use super::*;
 use frame_support::{assert_noop, assert_ok};
-use mock::{
-	AssetRegistry, new_test_ext, Origin, Runtime,
-};
+use mock::{new_test_ext, AssetRegistry, Origin, Runtime};
 
 #[test]
 fn versioned_multi_location_convert_work() {
 	new_test_ext().execute_with(|| {
 		// v0
-		let v0_location = VersionedMultiLocation::V0(xcm::v0::MultiLocation::X1(xcm::v0::Junction::Parachain(1000)));
+		let v0_location = VersionedMultiLocation::V0(xcm::v0::MultiLocation::X1(
+			xcm::v0::Junction::Parachain(1000),
+		));
 		let location: MultiLocation = v0_location.try_into().unwrap();
 		assert_eq!(
 			location,
@@ -64,12 +64,11 @@ fn versioned_multi_location_convert_work() {
 #[test]
 fn register_asset_work() {
 	new_test_ext().execute_with(|| {
-		let v0_location = VersionedMultiLocation::V0(xcm::v0::MultiLocation::X1(xcm::v0::Junction::Parachain(1000)));
-
-		assert_ok!(AssetRegistry::register_asset(
-			Origin::root(),
-			Box::new(v0_location.clone()),
+		let v0_location = VersionedMultiLocation::V0(xcm::v0::MultiLocation::X1(
+			xcm::v0::Junction::Parachain(1000),
 		));
+
+		assert_ok!(AssetRegistry::register_asset(Origin::root(), Box::new(v0_location.clone()),));
 
 		let location: MultiLocation = v0_location.try_into().unwrap();
 		// System::assert_last_event(Event::AssetRegistry(crate::Event::AssetRegistered {
@@ -78,27 +77,20 @@ fn register_asset_work() {
 		// }));
 
 		assert_eq!(AssetLocations::<Runtime>::get(0), Some(location.clone()));
-		assert_eq!(
-			LocationToCurrencyIds::<Runtime>::get(location),
-			Some(0)
-		);
+		assert_eq!(LocationToCurrencyIds::<Runtime>::get(location), Some(0));
 	});
 }
 
 #[test]
 fn register_asset_should_not_work() {
 	new_test_ext().execute_with(|| {
-		let v0_location = VersionedMultiLocation::V0(xcm::v0::MultiLocation::X1(xcm::v0::Junction::Parachain(1000)));
-		assert_ok!(AssetRegistry::register_asset(
-			Origin::root(),
-			Box::new(v0_location.clone()),
+		let v0_location = VersionedMultiLocation::V0(xcm::v0::MultiLocation::X1(
+			xcm::v0::Junction::Parachain(1000),
 		));
+		assert_ok!(AssetRegistry::register_asset(Origin::root(), Box::new(v0_location.clone()),));
 
 		assert_noop!(
-			AssetRegistry::register_asset(
-				Origin::root(),
-				Box::new(v0_location),
-			),
+			AssetRegistry::register_asset(Origin::root(), Box::new(v0_location),),
 			Error::<Runtime>::MultiLocationExisted
 		);
 	});
@@ -107,18 +99,13 @@ fn register_asset_should_not_work() {
 #[test]
 fn update_asset_work() {
 	new_test_ext().execute_with(|| {
-		let v0_location = VersionedMultiLocation::V0(xcm::v0::MultiLocation::X1(xcm::v0::Junction::Parachain(1000)));
-
-		assert_ok!(AssetRegistry::register_asset(
-			Origin::root(),
-			Box::new(v0_location.clone()),
+		let v0_location = VersionedMultiLocation::V0(xcm::v0::MultiLocation::X1(
+			xcm::v0::Junction::Parachain(1000),
 		));
 
-		assert_ok!(AssetRegistry::update_asset(
-			Origin::root(),
-			0,
-			Box::new(v0_location.clone()),
-		));
+		assert_ok!(AssetRegistry::register_asset(Origin::root(), Box::new(v0_location.clone()),));
+
+		assert_ok!(AssetRegistry::update_asset(Origin::root(), 0, Box::new(v0_location.clone()),));
 
 		let location: MultiLocation = v0_location.try_into().unwrap();
 		// System::assert_last_event(Event::AssetRegistry(crate::Event::ForeignAssetUpdated {
@@ -127,65 +114,43 @@ fn update_asset_work() {
 		// }));
 
 		assert_eq!(AssetLocations::<Runtime>::get(0), Some(location.clone()));
-		assert_eq!(
-			LocationToCurrencyIds::<Runtime>::get(location.clone()),
-			Some(0)
-		);
+		assert_eq!(LocationToCurrencyIds::<Runtime>::get(location.clone()), Some(0));
 
 		// modify location
-		let new_location = VersionedMultiLocation::V0(xcm::v0::MultiLocation::X1(xcm::v0::Junction::Parachain(2000)));
-		assert_ok!(AssetRegistry::update_asset(
-			Origin::root(),
-			0,
-			Box::new(new_location.clone()),
+		let new_location = VersionedMultiLocation::V0(xcm::v0::MultiLocation::X1(
+			xcm::v0::Junction::Parachain(2000),
 		));
+		assert_ok!(AssetRegistry::update_asset(Origin::root(), 0, Box::new(new_location.clone()),));
 		let new_location: MultiLocation = new_location.try_into().unwrap();
 		assert_eq!(AssetLocations::<Runtime>::get(0), Some(new_location.clone()));
 		assert_eq!(LocationToCurrencyIds::<Runtime>::get(location), None);
-		assert_eq!(
-			LocationToCurrencyIds::<Runtime>::get(new_location),
-			Some(0)
-		);
+		assert_eq!(LocationToCurrencyIds::<Runtime>::get(new_location), Some(0));
 	});
 }
 
 #[test]
 fn update_asset_should_not_work() {
 	new_test_ext().execute_with(|| {
-		let v0_location = VersionedMultiLocation::V0(xcm::v0::MultiLocation::X1(xcm::v0::Junction::Parachain(1000)));
+		let v0_location = VersionedMultiLocation::V0(xcm::v0::MultiLocation::X1(
+			xcm::v0::Junction::Parachain(1000),
+		));
 
 		assert_noop!(
-			AssetRegistry::update_asset(
-				Origin::root(),
-				0,
-				Box::new(v0_location.clone()),
-			),
+			AssetRegistry::update_asset(Origin::root(), 0, Box::new(v0_location.clone()),),
 			Error::<Runtime>::AssetIdNotExists
 		);
 
-		assert_ok!(AssetRegistry::register_asset(
-			Origin::root(),
-			Box::new(v0_location.clone()),
-		));
+		assert_ok!(AssetRegistry::register_asset(Origin::root(), Box::new(v0_location.clone()),));
 
-		assert_ok!(AssetRegistry::update_asset(
-			Origin::root(),
-			0,
-			Box::new(v0_location),
-		));
+		assert_ok!(AssetRegistry::update_asset(Origin::root(), 0, Box::new(v0_location),));
 
 		// existed location
-		let new_location = VersionedMultiLocation::V0(xcm::v0::MultiLocation::X1(xcm::v0::Junction::Parachain(2000)));
-		assert_ok!(AssetRegistry::register_asset(
-			Origin::root(),
-			Box::new(new_location.clone()),
+		let new_location = VersionedMultiLocation::V0(xcm::v0::MultiLocation::X1(
+			xcm::v0::Junction::Parachain(2000),
 		));
+		assert_ok!(AssetRegistry::register_asset(Origin::root(), Box::new(new_location.clone()),));
 		assert_noop!(
-			AssetRegistry::update_asset(
-				Origin::root(),
-				0,
-				Box::new(new_location),
-			),
+			AssetRegistry::update_asset(Origin::root(), 0, Box::new(new_location),),
 			Error::<Runtime>::MultiLocationExisted
 		);
 	});

@@ -24,21 +24,17 @@
 #![allow(clippy::unused_unit)]
 
 use frame_support::{
-	dispatch::DispatchResult,
-	ensure,
-	pallet_prelude::*,
-	traits::{EnsureOrigin},
-	transactional,
+	dispatch::DispatchResult, ensure, pallet_prelude::*, traits::EnsureOrigin, transactional,
 };
 use frame_system::pallet_prelude::*;
-use mangata_primitives::{ TokenId };
+use mangata_primitives::TokenId;
 use sp_std::{boxed::Box, vec::Vec};
 
 // NOTE:v1::MultiLocation is used in storages, we would need to do migration if upgrade the
 // MultiLocation in the future.
 pub use xcm::{v1::MultiLocation, VersionedMultiLocation};
 
-use orml_tokens::{MultiTokenCurrencyExtended};
+use orml_tokens::MultiTokenCurrencyExtended;
 
 mod mock;
 mod tests;
@@ -85,15 +81,9 @@ pub mod module {
 	#[pallet::generate_deposit(pub (super) fn deposit_event)]
 	pub enum Event {
 		/// The asset registered.
-		AssetRegistered {
-			asset_id: TokenId,
-			asset_address: MultiLocation,
-		},
+		AssetRegistered { asset_id: TokenId, asset_address: MultiLocation },
 		/// The asset updated.
-		AssetUpdated {
-			asset_id: TokenId,
-			asset_address: MultiLocation,
-		},
+		AssetUpdated { asset_id: TokenId, asset_address: MultiLocation },
 	}
 
 	/// The storages for MultiLocations.
@@ -101,19 +91,20 @@ pub mod module {
 	/// AssetLocations: map TokenId => Option<MultiLocation>
 	#[pallet::storage]
 	#[pallet::getter(fn asset_locations)]
-	pub type AssetLocations<T: Config> = StorageMap<_, Twox64Concat, TokenId, MultiLocation, OptionQuery>;
+	pub type AssetLocations<T: Config> =
+		StorageMap<_, Twox64Concat, TokenId, MultiLocation, OptionQuery>;
 
 	/// The storages for CurrencyIds.
 	///
 	/// LocationToCurrencyIds: map MultiLocation => Option<TokenId>
 	#[pallet::storage]
 	#[pallet::getter(fn location_to_currency_ids)]
-	pub type LocationToCurrencyIds<T: Config> = StorageMap<_, Twox64Concat, MultiLocation, TokenId, OptionQuery>;
+	pub type LocationToCurrencyIds<T: Config> =
+		StorageMap<_, Twox64Concat, MultiLocation, TokenId, OptionQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {
-		pub init_xcm_tokens:
-			Vec<(TokenId, Option<Vec<u8>>)>,
+		pub init_xcm_tokens: Vec<(TokenId, Option<Vec<u8>>)>,
 	}
 
 	#[cfg(feature = "std")]
@@ -127,20 +118,27 @@ pub mod module {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
 			self.init_xcm_tokens.iter().for_each(
-				|(
-					token_id,
-					maybe_versioned_asset_multilocation_encoded,
-				)| {
-					if let Some(versioned_asset_multilocation_encoded) = maybe_versioned_asset_multilocation_encoded {
-						let versioned_asset_multilocation = MultiLocation::decode(&mut &versioned_asset_multilocation_encoded[..]).expect("Error decoding multilocation");
-						let asset_multilocation: MultiLocation = versioned_asset_multilocation.try_into().expect("Error unable to unversion multilocation");
-						let created_token_id = Pallet::<T>::do_register_asset(&asset_multilocation).expect("Error registering xcm asset");
+				|(token_id, maybe_versioned_asset_multilocation_encoded)| {
+					if let Some(versioned_asset_multilocation_encoded) =
+						maybe_versioned_asset_multilocation_encoded
+					{
+						let versioned_asset_multilocation =
+							MultiLocation::decode(&mut &versioned_asset_multilocation_encoded[..])
+								.expect("Error decoding multilocation");
+						let asset_multilocation: MultiLocation = versioned_asset_multilocation
+							.try_into()
+							.expect("Error unable to unversion multilocation");
+						let created_token_id = Pallet::<T>::do_register_asset(&asset_multilocation)
+							.expect("Error registering xcm asset");
 						assert!(
 							created_token_id == *token_id,
 							"Assets not initialized in the expected sequence"
 						);
 					} else {
-						let created_token_id: TokenId = T::Currency::create(&Default::default(), Default::default()).expect("Error creating token for xcm asset").into();
+						let created_token_id: TokenId =
+							T::Currency::create(&Default::default(), Default::default())
+								.expect("Error creating token for xcm asset")
+								.into();
 						assert!(
 							created_token_id == *token_id,
 							"Assets not initialized in the expected sequence"
@@ -164,13 +162,11 @@ pub mod module {
 		) -> DispatchResult {
 			T::RegisterOrigin::ensure_origin(origin)?;
 
-			let location: MultiLocation = (*location).try_into().map_err(|()| Error::<T>::BadLocation)?;
+			let location: MultiLocation =
+				(*location).try_into().map_err(|()| Error::<T>::BadLocation)?;
 			let asset_id = Self::do_register_asset(&location)?;
 
-			Self::deposit_event(Event::AssetRegistered {
-				asset_id: asset_id,
-				asset_address: location,
-			});
+			Self::deposit_event(Event::AssetRegistered { asset_id, asset_address: location });
 			Ok(())
 		}
 
@@ -183,25 +179,21 @@ pub mod module {
 		) -> DispatchResult {
 			T::RegisterOrigin::ensure_origin(origin)?;
 
-			let location: MultiLocation = (*location).try_into().map_err(|()| Error::<T>::BadLocation)?;
+			let location: MultiLocation =
+				(*location).try_into().map_err(|()| Error::<T>::BadLocation)?;
 			Self::do_update_asset(asset_id, &location)?;
 
-			Self::deposit_event(Event::AssetUpdated {
-				asset_id: asset_id,
-				asset_address: location,
-			});
+			Self::deposit_event(Event::AssetUpdated { asset_id, asset_address: location });
 			Ok(())
 		}
 	}
-
 }
 
 impl<T: Config> Pallet<T> {
-
-	fn do_register_asset(
-		location: &MultiLocation,
-	) -> Result<TokenId, DispatchError> {
-		let asset_id: TokenId = T::Currency::create(&Default::default(), Default::default()).map_err(|_| DispatchError::from(Error::<T>::TokenCreationFailed))?.into();
+	fn do_register_asset(location: &MultiLocation) -> Result<TokenId, DispatchError> {
+		let asset_id: TokenId = T::Currency::create(&Default::default(), Default::default())
+			.map_err(|_| DispatchError::from(Error::<T>::TokenCreationFailed))?
+			.into();
 		LocationToCurrencyIds::<T>::try_mutate(location, |maybe_currency_ids| -> DispatchResult {
 			ensure!(maybe_currency_ids.is_none(), Error::<T>::MultiLocationExisted);
 			*maybe_currency_ids = Some(asset_id);
@@ -216,26 +208,26 @@ impl<T: Config> Pallet<T> {
 		Ok(asset_id)
 	}
 
-	fn do_update_asset(
-		asset_id: TokenId,
-		location: &MultiLocation,
-	) -> DispatchResult {
+	fn do_update_asset(asset_id: TokenId, location: &MultiLocation) -> DispatchResult {
 		AssetLocations::<T>::try_mutate(asset_id, |maybe_multi_locations| -> DispatchResult {
-			let old_multi_locations = maybe_multi_locations.as_mut().ok_or(Error::<T>::AssetIdNotExists)?;
-				// modify location
-				if location != old_multi_locations {
-					LocationToCurrencyIds::<T>::remove(old_multi_locations.clone());
-					LocationToCurrencyIds::<T>::try_mutate(location, |maybe_currency_ids| -> DispatchResult {
+			let old_multi_locations =
+				maybe_multi_locations.as_mut().ok_or(Error::<T>::AssetIdNotExists)?;
+			// modify location
+			if location != old_multi_locations {
+				LocationToCurrencyIds::<T>::remove(old_multi_locations.clone());
+				LocationToCurrencyIds::<T>::try_mutate(
+					location,
+					|maybe_currency_ids| -> DispatchResult {
 						ensure!(maybe_currency_ids.is_none(), Error::<T>::MultiLocationExisted);
 						*maybe_currency_ids = Some(asset_id);
 						Ok(())
-					})?;
-				}
-				*old_multi_locations = location.clone();
-				Ok(())
+					},
+				)?;
+			}
+			*old_multi_locations = location.clone();
+			Ok(())
 		})
 	}
-
 }
 
 /// A mapping between AssetId and Locations.
@@ -248,9 +240,7 @@ pub trait AssetIdMapping<MultiLocation> {
 
 pub struct AssetIdMaps<T>(sp_std::marker::PhantomData<T>);
 
-impl<T: Config> AssetIdMapping<MultiLocation>
-	for AssetIdMaps<T>
-{
+impl<T: Config> AssetIdMapping<MultiLocation> for AssetIdMaps<T> {
 	fn get_multi_location(token_id: TokenId) -> Option<MultiLocation> {
 		Pallet::<T>::asset_locations(token_id)
 	}

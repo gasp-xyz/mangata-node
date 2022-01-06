@@ -69,6 +69,7 @@ use xcm_builder::{
 use xcm_executor::{Config, XcmExecutor, Assets, traits::{DropAssets}};
 use orml_xcm_support::{MultiCurrencyAdapter, IsNativeConcrete, MultiNativeAsset};
 use xcm_asset_registry::{AssetIdMaps, AssetIdMapping};
+pub use xcm::VersionedMultiLocation;
 
 use static_assertions::const_assert;
 use codec::{Encode, Decode};
@@ -1102,7 +1103,7 @@ construct_runtime!(
 		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 35,
 		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 36,
 		OrmlXcm: orml_xcm::{Pallet, Call, Event<T>} = 37,
-		AssetRegistry: xcm_asset_registry::{Pallet, Call, Storage, Event<T>} = 38,
+		AssetRegistry: xcm_asset_registry::{Pallet, Call, Storage, Event<T>, Config} = 38,
 
 		// Governance stuff
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 41,

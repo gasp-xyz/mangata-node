@@ -41,7 +41,7 @@ use sp_std::{boxed::Box, vec::Vec};
 // NOTE:v1::MultiLocation is used in storages, we would need to do migration if upgrade the
 // MultiLocation in the future.
 use xcm::opaque::latest::{prelude::XcmError, Fungibility::Fungible, MultiAsset};
-use xcm::{v1::MultiLocation, VersionedMultiLocation};
+pub use xcm::{v1::MultiLocation, VersionedMultiLocation};
 use xcm_builder::TakeRevenue;
 use xcm_executor::{traits::WeightTrader, Assets};
 
@@ -116,6 +116,47 @@ pub mod module {
 	#[pallet::storage]
 	#[pallet::getter(fn location_to_currency_ids)]
 	pub type LocationToCurrencyIds<T: Config> = StorageMap<_, Twox64Concat, MultiLocation, TokenId, OptionQuery>;
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig {
+		pub init_xcm_tokens:
+			Vec<(TokenId, Option<Vec<u8>>)>,
+	}
+
+	#[cfg(feature = "std")]
+	impl Default for GenesisConfig {
+		fn default() -> Self {
+			GenesisConfig { init_xcm_tokens: vec![] }
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig {
+		fn build(&self) {
+			self.init_xcm_tokens.iter().for_each(
+				|(
+					token_id,
+					maybe_versioned_asset_multilocation_encoded,
+				)| {
+					if let Some(versioned_asset_multilocation_encoded) = maybe_versioned_asset_multilocation_encoded {
+						let versioned_asset_multilocation = MultiLocation::decode(&mut &versioned_asset_multilocation_encoded[..]).expect("Error decoding multilocation");
+						let asset_multilocation: MultiLocation = versioned_asset_multilocation.try_into().expect("Error unable to unversion multilocation");
+						let created_token_id = Pallet::<T>::do_register_asset(&asset_multilocation).expect("Error registering xcm asset");
+						assert!(
+							created_token_id == *token_id,
+							"Assets not initialized in the expected sequence"
+						);
+					} else {
+						let created_token_id: TokenId = T::Currency::create(&Default::default(), Default::default()).expect("Error creating token for xcm asset").into();
+						assert!(
+							created_token_id == *token_id,
+							"Assets not initialized in the expected sequence"
+						);
+					}
+				},
+			)
+		}
+	}
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);

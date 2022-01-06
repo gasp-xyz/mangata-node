@@ -1,0 +1,48 @@
+version: "3"
+services:
+  node_alice:
+    image: mangata/node
+    container_name: alice_m
+    entrypoint: ./node --chain=multivalidator-dev-chainspec-patched-updated.json --alice --validator --unsafe-ws-external --rpc-cors=all -lruntime=debug --node-key=0000000000000000000000000000000000000000000000000000000000000001
+    ports:
+      - "30333:30333"
+      - "9933:9933"
+      - "9944:9944"
+    networks:
+      testing_net:
+        ipv4_address: 172.28.1.1
+
+  node_bob:
+    image: mangata/node
+    container_name: bob_m
+    entrypoint: ./node --chain=multivalidator-dev-chainspec-patched-updated.json --bob --unsafe-ws-external --rpc-cors=all -lruntime=debug --bootnodes='/ip4/172.28.1.1/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp'
+    ports:
+      - "30335:30333"
+      - "9935:9933"
+      - "9945:9944"
+    links:
+      - "node_alice:alice_m"
+    networks:
+      testing_net:
+        ipv4_address: 172.28.1.2
+
+  node_charlie:
+    image: mangata/node
+    container_name: charlie_m
+    entrypoint: ./node --chain=multivalidator-dev-chainspec-patched-updated.json --charlie --unsafe-ws-external --rpc-cors=all -lruntime=debug --bootnodes='/ip4/172.28.1.1/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp'
+    ports:
+      - "30337:30333"
+      - "9937:9933"
+      - "9946:9944"
+    links:
+      - "node_alice:alice_m"
+    networks:
+      testing_net:
+        ipv4_address: 172.28.1.3
+
+networks:
+  testing_net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16

@@ -8,8 +8,8 @@ networks:
 
 services:
   relay_alice:
-    environment:
-      - RUST_LOG=debug,sync=info,afg=info,libp2p_swarm=info,multistream_select=info,libp2p_core=info,sub-libp2p=info,libp2p_tcp=info,wasm_overrides=info,wasm-heap=info,libp2p_ping=info,runtime=trace
+    # environment:
+    #   - RUST_LOG=debug,sync=info,afg=info,libp2p_swarm=info,multistream_select=info,libp2p_core=info,sub-libp2p=info,libp2p_tcp=info,wasm_overrides=info,wasm-heap=info,libp2p_ping=info,runtime=trace
     build:
       context: ../../
       dockerfile: ./devops/dockerfiles/node-and-runtime/relay.dockerfile
@@ -65,8 +65,8 @@ services:
           ipv4_address: 10.0.0.4
 
   para_alice:
-    environment:
-      - RUST_LOG=debug,sync=info,afg=info,libp2p_swarm=info,multistream_select=info,libp2p_core=info,sub-libp2p=info,libp2p_tcp=info,wasm_overrides=info,wasm-heap=info,libp2p_ping=info,runtime=debug
+    # environment:
+    #   - RUST_LOG=debug,sync=info,afg=info,libp2p_swarm=info,multistream_select=info,libp2p_core=info,sub-libp2p=info,libp2p_tcp=info,wasm_overrides=info,wasm-heap=info,libp2p_ping=info,runtime=debug
     image: dev
     command: >
       bash -c "

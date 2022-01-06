@@ -35,7 +35,7 @@ use frame_support::{
 	traits::{Contains, Everything, LockIdentifier, Nothing, U128CurrencyToVote, Get},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
-		DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
+		DispatchClass, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
 		WeightToFeePolynomial,
 	},
 	PalletId,
@@ -58,15 +58,15 @@ use polkadot_runtime_common::{BlockHashCount, RocksDbWeight, SlowAdjustingFeeUpd
 // XCM Imports
 use xcm::latest::prelude::*;
 use xcm_builder::{
-	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, CurrencyAdapter,
-	EnsureXcmOrigin, FixedWeightBounds, IsConcrete, LocationInverter, NativeAsset, ParentIsDefault,
+	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom,
+	EnsureXcmOrigin, FixedWeightBounds, LocationInverter, ParentIsDefault,
 	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
 	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
-	UsingComponents, AllowKnownQueryResponses, AllowSubscriptionsFrom, FixedRateOfFungible,
+	AllowKnownQueryResponses, AllowSubscriptionsFrom, FixedRateOfFungible,
 	TakeRevenue,
 
 };
-use xcm_executor::{Config, XcmExecutor, Assets, traits::{DropAssets}};
+use xcm_executor::{XcmExecutor, Assets, traits::{DropAssets}};
 use orml_xcm_support::{MultiCurrencyAdapter, IsNativeConcrete, MultiNativeAsset};
 use xcm_asset_registry::{AssetIdMaps, AssetIdMapping};
 pub use xcm::VersionedMultiLocation;
@@ -1103,7 +1103,7 @@ construct_runtime!(
 		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 35,
 		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 36,
 		OrmlXcm: orml_xcm::{Pallet, Call, Event<T>} = 37,
-		AssetRegistry: xcm_asset_registry::{Pallet, Call, Storage, Event<T>, Config} = 38,
+		AssetRegistry: xcm_asset_registry::{Pallet, Call, Storage, Event, Config} = 38,
 
 		// Governance stuff
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 41,

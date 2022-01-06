@@ -27,28 +27,21 @@ use frame_support::{
 	dispatch::DispatchResult,
 	ensure,
 	pallet_prelude::*,
-	traits::{Currency, EnsureOrigin},
+	traits::{EnsureOrigin},
 	transactional,
-	weights::constants::WEIGHT_PER_SECOND,
-	RuntimeDebug,
 };
 use frame_system::pallet_prelude::*;
-use mangata_primitives::{ Balance, TokenId };
-use scale_info::{prelude::format, TypeInfo};
-use sp_runtime::{traits::One, ArithmeticError, FixedPointNumber, FixedU128};
+use mangata_primitives::{ TokenId };
 use sp_std::{boxed::Box, vec::Vec};
 
 // NOTE:v1::MultiLocation is used in storages, we would need to do migration if upgrade the
 // MultiLocation in the future.
-use xcm::opaque::latest::{prelude::XcmError, Fungibility::Fungible, MultiAsset};
 pub use xcm::{v1::MultiLocation, VersionedMultiLocation};
-use xcm_builder::TakeRevenue;
-use xcm_executor::{traits::WeightTrader, Assets};
 
 use orml_tokens::{MultiTokenCurrencyExtended};
 
-// mod mock;
-// mod tests;
+mod mock;
+mod tests;
 pub mod weights;
 
 pub use module::*;
@@ -61,7 +54,7 @@ pub mod module {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// The overarching event type.
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type Event: From<Event> + IsType<<Self as frame_system::Config>::Event>;
 
 		/// Currency type for withdraw and balance storage.
 		type Currency: MultiTokenCurrencyExtended<Self::AccountId>;
@@ -89,8 +82,8 @@ pub mod module {
 	}
 
 	#[pallet::event]
-	#[pallet::generate_deposit(fn deposit_event)]
-	pub enum Event<T: Config> {
+	#[pallet::generate_deposit(pub (super) fn deposit_event)]
+	pub enum Event {
 		/// The asset registered.
 		AssetRegistered {
 			asset_id: TokenId,
@@ -174,7 +167,7 @@ pub mod module {
 			let location: MultiLocation = (*location).try_into().map_err(|()| Error::<T>::BadLocation)?;
 			let asset_id = Self::do_register_asset(&location)?;
 
-			Self::deposit_event(Event::<T>::AssetRegistered {
+			Self::deposit_event(Event::AssetRegistered {
 				asset_id: asset_id,
 				asset_address: location,
 			});
@@ -193,7 +186,7 @@ pub mod module {
 			let location: MultiLocation = (*location).try_into().map_err(|()| Error::<T>::BadLocation)?;
 			Self::do_update_asset(asset_id, &location)?;
 
-			Self::deposit_event(Event::<T>::AssetUpdated {
+			Self::deposit_event(Event::AssetUpdated {
 				asset_id: asset_id,
 				asset_address: location,
 			});

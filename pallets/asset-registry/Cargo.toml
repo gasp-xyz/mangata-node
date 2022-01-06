@@ -24,8 +24,8 @@ orml-tokens = {  default-features = false, version = "0.4.1-dev", git = "https:/
 [dev-dependencies]
 sp-core = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v4" }
 sp-io = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v4" }
-pallet-balances = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v4" }
-pallet-timestamp = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v4" }
+orml-traits = { default-features = false, version="0.4.1-dev" , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v4" }
+
 
 [features]
 default = ["std"]
@@ -42,5 +42,7 @@ std = [
 	"xcm/std",
 	"xcm-builder/std",
 	"xcm-executor/std",
+	"orml-tokens/std",
+	"orml-traits/std",
 ]
 try-runtime = ["frame-support/try-runtime"]

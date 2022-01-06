@@ -930,6 +930,11 @@ impl_runtime_apis! {
 		fn is_new_session(number: <<Block as BlockT>::Header as HeaderT>::Number) -> bool{
 			<ParachainStaking as ShouldEndSession<_>>::should_end_session(number)
 		}
+
+		fn store_seed(seed: sp_core::H256){
+            // initialize has been called already so we can fetch number from the storage
+			System::set_block_seed(&seed);
+		}
 	}
 
 	impl xyk_runtime_api::XykApi<Block, Balance, TokenId> for Runtime {
@@ -1007,7 +1012,8 @@ impl_runtime_apis! {
 		}
 
 		fn execute_block(block: Block) {
-			Executive::execute_block_ver(block)
+            let key = cumulus_pallet_aura_ext::get_block_signer_pub_key::<Runtime,Block>(&block);
+			Executive::execute_block_ver(block, key);
 		}
 
 		fn initialize_block(header: &<Block as BlockT>::Header) {

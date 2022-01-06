@@ -16,13 +16,13 @@ mangata-primitives = {path = "./primitives/mangata"}
 # [patch."https://github.com/mangata-finance/moonbeam"]
 # parachain-staking = {path = "../moonbeam/pallets/parachain-staking"}
 
-[patch."https://github.com/mangata-finance/open-runtime-module-library"]
-orml-tokens = { path = "../open-runtime-module-library/tokens" }
-orml-traits = { path = "../open-runtime-module-library/traits" }
-orml-xtokens = { path = "../open-runtime-module-library/xtokens" }
-orml-xcm-support = { path = "../open-runtime-module-library/xcm-support" }
-orml-unknown-tokens = { path = "../open-runtime-module-library/unknown-tokens" }
-orml-xcm = { path = "../open-runtime-module-library/xcm" }
+# [patch."https://github.com/mangata-finance/open-runtime-module-library"]
+# orml-tokens = { path = "../open-runtime-module-library/tokens" }
+# orml-traits = { path = "../open-runtime-module-library/traits" }
+# orml-xtokens = { path = "../open-runtime-module-library/xtokens" }
+# orml-xcm-support = { path = "../open-runtime-module-library/xcm-support" }
+# orml-unknown-tokens = { path = "../open-runtime-module-library/unknown-tokens" }
+# orml-xcm = { path = "../open-runtime-module-library/xcm" }
 
 # [patch."https://github.com/paritytech/substrate"]
 # sp-debug-derive = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }

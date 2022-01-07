@@ -52,6 +52,31 @@ pub struct RpcAmountsResult<Balance> {
     pub second_asset_amount: Balance,
 }
 
+pub struct RpcRewardsResult<Balance> {
+    #[cfg_attr(
+        feature = "std",
+        serde(bound(serialize = "Balance: std::fmt::Display"))
+    )]
+    #[cfg_attr(feature = "std", serde(serialize_with = "serialize_as_string"))]
+    #[cfg_attr(
+        feature = "std",
+        serde(bound(deserialize = "Balance: std::str::FromStr"))
+    )]
+    #[cfg_attr(feature = "std", serde(deserialize_with = "deserialize_from_string"))]
+    pub total_rewards: Balance,
+    #[cfg_attr(
+        feature = "std",
+        serde(bound(serialize = "Balance: std::fmt::Display"))
+    )]
+    #[cfg_attr(feature = "std", serde(serialize_with = "serialize_as_string"))]
+    #[cfg_attr(
+        feature = "std",
+        serde(bound(deserialize = "Balance: std::str::FromStr"))
+    )]
+    #[cfg_attr(feature = "std", serde(deserialize_with = "deserialize_from_string"))]
+    pub already_claimed: Balance,
+}
+
 #[cfg(feature = "std")]
 fn serialize_as_string<S: Serializer, T: std::fmt::Display>(
     t: &T,
@@ -98,5 +123,10 @@ sp_api::decl_runtime_apis! {
             second_asset_id: TokenId,
             liquidity_asset_amount: Balance,
         ) -> RpcAmountsResult<Balance>;
+        fn calculate_rewards_amount(
+            user: AccountIdOf<T>,
+            liquidity_asset_id: TokenId,
+            block_number: u32
+        ) -> RpcRewardsResult<Balance>;
     }
 }

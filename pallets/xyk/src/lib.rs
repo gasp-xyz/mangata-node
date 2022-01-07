@@ -707,7 +707,7 @@ impl<T: Trait> Module<T> {
         if LiquidityMiningUser::<T>::contains_key((&user, &liquidity_asset_id)){
             log!(
                 info,
-                "already minted something?: {}, {}, {:?} ",
+                "already minted something?: {:?}, {}, {:?} ",
                 user,
                 liquidity_asset_id,
                 LiquidityMiningUser::<T>::contains_key((&user, &liquidity_asset_id)),              

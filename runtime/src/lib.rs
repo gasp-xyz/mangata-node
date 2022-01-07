@@ -170,8 +170,8 @@ impl WeightToFeePolynomial for WeightToFee {
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
 		// in Rococo, extrinsic base weight (smallest non-zero weight) is mapped to 1 MILLIUNIT:
 		// in mangata, we map to 1/10 of that, or 1/10 MILLIUNIT
-		let p = base_tx_in_mga();
-		let q = Balance::from(ExtrinsicBaseWeight::get());
+		let p = 1_000_000_000/10;
+		let q = 100 * Balance::from(ExtrinsicBaseWeight::get());
 		smallvec![WeightToFeeCoefficient {
 			degree: 1,
 			negative: false,

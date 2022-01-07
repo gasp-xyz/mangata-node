@@ -440,7 +440,7 @@ pub mod pallet {
 			bought_asset_id: TokenId,
 			sold_asset_amount: Balance,
 			min_amount_out: Balance,
-		) -> DispatchResultWithPostInfo {
+		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
 			<Self as XykFunctionsTrait<T::AccountId>>::sell_asset(
@@ -450,7 +450,7 @@ pub mod pallet {
 				sold_asset_amount,
 				min_amount_out,
 			)?;
-			Ok(Pays::No.into())
+			Ok(())
 		}
 
 		#[pallet::weight((10_000, Pays::No))]
@@ -460,7 +460,7 @@ pub mod pallet {
 			bought_asset_id: TokenId,
 			bought_asset_amount: Balance,
 			max_amount_in: Balance,
-		) -> DispatchResultWithPostInfo {
+		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
 			<Self as XykFunctionsTrait<T::AccountId>>::buy_asset(
@@ -470,7 +470,7 @@ pub mod pallet {
 				bought_asset_amount,
 				max_amount_in,
 			)?;
-			Ok(Pays::No.into())
+			Ok(())
 		}
 
 		#[pallet::weight(10_000)]

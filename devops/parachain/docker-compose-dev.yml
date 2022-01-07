@@ -8,8 +8,8 @@ networks:
 
 services:
   relay_alice:
-    #environment:
-      #- RUST_LOG=debug,sync=info,afg=info,libp2p_swarm=info,multistream_select=info,libp2p_core=info,sub-libp2p=info,libp2p_tcp=info,wasm_overrides=info,wasm-heap=info,libp2p_ping=info,runtime=debug
+    # environment:
+    #   - RUST_LOG=debug,sync=info,afg=info,libp2p_swarm=info,multistream_select=info,libp2p_core=info,sub-libp2p=info,libp2p_tcp=info,wasm_overrides=info,wasm-heap=info,libp2p_ping=info,runtime=trace
     build:
       context: ../../
       dockerfile: ./devops/dockerfiles/node-and-runtime/relay.dockerfile
@@ -17,6 +17,8 @@ services:
     command: polkadot --alice --validator --tmp --chain /config/spec.json --port 30333  --unsafe-ws-external --rpc-port=40333 --unsafe-rpc-external --rpc-cors=all --ws-port 9944
     volumes:
       - ./config:/config
+    ports:
+      - 9944:9944
     networks:
         test_net:
           ipv4_address: 10.0.0.2
@@ -49,10 +51,13 @@ services:
 
 
   register:
+    environment:
+      - STATE_FILE=/config/genesis-state
+      - WASM_FILE=/config/genesis-wasm
     build:
       context: ../../
       dockerfile: devops/dockerfiles/node-and-runtime/para.dockerfile
-    command: node index.js
+    command: bash -c "sleep 5 && node index.js"
     volumes:
       - ./config:/config
     networks:
@@ -60,31 +65,42 @@ services:
           ipv4_address: 10.0.0.4
 
   para_alice:
-    image: mangatasolutions/mangata-node:latest
+    # environment:
+    #   - RUST_LOG=debug,sync=info,afg=info,libp2p_swarm=info,multistream_select=info,libp2p_core=info,sub-libp2p=info,libp2p_tcp=info,wasm_overrides=info,wasm-heap=info,libp2p_ping=info,runtime=debug
+    image: dev
     command: >
-      --alice --collator --force-authoring --tmp --port 30333
+      bash -c "
+      /code/target/release/mangata-node export-genesis-state > /config/genesis-state;
+      /code/target/release/mangata-node export-genesis-wasm > /config/genesis-wasm;
+      /code/target/release/mangata-node --alice --collator --force-authoring --tmp --port 30333
       --ws-port 9944 --unsafe-ws-external --unsafe-rpc-external
       --rpc-cors=all -- --execution wasm --chain /config/spec.json
       --port 30334 --ws-port 9945
+      "
     volumes:
       - ./config:/config
+      - ../../:/code
+    ports:
+      - 8844:9944
     networks:
         test_net:
           ipv4_address: 10.0.0.5
 
   para_bob:
-    image: mangatasolutions/mangata-node:latest
+    image: dev
     command: >
-      --bob --rpc-cors=all 
+      /code/target/release/mangata-node --bob --rpc-cors=all 
       --collator --unsafe-ws-external --unsafe-rpc-external  
       --force-authoring --tmp --port 30333 --ws-port 9944 -- 
       --execution wasm --chain /config/spec.json
       --port 30334
     volumes:
       - ./config:/config
+      - ../../:/code
     networks:
         test_net:
           ipv4_address: 10.0.0.6
+
 
   ui:
     build:

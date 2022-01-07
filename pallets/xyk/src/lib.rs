@@ -526,7 +526,7 @@ impl<T: Trait> Module<T> {
         );
         
         let precision: u32 = 10000;
-        let q_pow: f64 = (1.1_f64.powf(time_passed.into()) * f64::from(precision)).floor();
+        let q_pow: f64 = libm::floor(libm::pow(1.1, time_passed as f64) * precision as f64);
 
         log!(
             info,
@@ -647,7 +647,7 @@ impl<T: Trait> Module<T> {
     ) -> Result<U256, DispatchError> {
         
         let precision: u32 = 10000;
-        let q_pow: f64 = (1.1_f64.powf(time_passed.into()) * f64::from(precision)).floor();
+        let q_pow: f64 = libm::floor(libm::pow(1.1, time_passed as f64) * precision as f64);
         let liquidity_assets_added_u256 : U256 = liquidity_assets_added.into();
 
         
@@ -699,9 +699,9 @@ impl<T: Trait> Module<T> {
             "***********for user********************************************************"
             
         ); 
-        let mut user_work_total: U256 = U256::from(0);
+        let mut user_work_total: U256 = U256::from(0_u32);
         let mut user_missing_at_checkpoint: U256 = liquidity_assets_added.into();
-        let mut pool_work_total: U256 = U256::from(0);
+        let mut pool_work_total: U256 = U256::from(0_u32);
         let mut pool_missing_at_checkpoint: U256 = liquidity_assets_added.into();
 
         if LiquidityMiningUser::<T>::contains_key((&user, &liquidity_asset_id)){

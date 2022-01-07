@@ -225,14 +225,14 @@ fn buy_and_burn_sell_has_mangata_pair() {
 		initialize_buy_and_burn();
 		XykStorage::sell_asset(Origin::signed(2), 1, 2, 50000000000000, 0).unwrap();
 
-		assert_eq!(XykStorage::asset_pool((0, 1)), (99950012496874, 100050000000002));
+		assert_eq!(XykStorage::asset_pool((0, 1)), (99950024987505, 100050000000002));
 		assert_eq!(XykStorage::asset_pool((1, 2)), (149949999999998, 66733400066734));
 		assert_eq!(XykStorage::balance(1, 2), 750000000000000); // user acc: regular trade result
 		assert_eq!(XykStorage::balance(2, 2), 933266599933266); // user acc: regular trade result
-		assert_eq!(XykStorage::balance(0, XykStorage::account_id()), 99950012496874);
+		assert_eq!(XykStorage::balance(0, XykStorage::account_id()), 99950024987505);
 		assert_eq!(XykStorage::balance(1, XykStorage::account_id()), 250000000000000);
 		assert_eq!(XykStorage::balance(2, XykStorage::account_id()), 66733400066734); // vault: regular trade result
-		assert_eq!(XykStorage::balance(0, XykStorage::treasury_account_id()), 24993751563); // 24987506247 mangata in treasury
+		assert_eq!(XykStorage::balance(0, XykStorage::treasury_account_id()), 24987506247); // 24987506247 mangata in treasury
 		assert_eq!(XykStorage::balance(1, XykStorage::treasury_account_id()), 0);
 		assert_eq!(XykStorage::balance(0, XykStorage::bnb_treasury_account_id()), 0);
 		assert_eq!(XykStorage::balance(1, XykStorage::bnb_treasury_account_id()), 0);
@@ -284,14 +284,14 @@ fn buy_and_burn_buy_where_sold_has_mangata_pair() {
 		initialize_buy_and_burn();
 		XykStorage::buy_asset(Origin::signed(2), 1, 2, 33266599933266, 50000000000001).unwrap();
 
-		assert_eq!(XykStorage::asset_pool((0, 1)), (99950012496876, 100050000000000));
+		assert_eq!(XykStorage::asset_pool((0, 1)), (99950024987507, 100050000000000));
 		assert_eq!(XykStorage::asset_pool((1, 2)), (149949999999999, 66733400066734));
 		assert_eq!(XykStorage::balance(1, 2), 750000000000001); // user acc: regular trade result
 		assert_eq!(XykStorage::balance(2, 2), 933266599933266); // user acc: regular trade result
-		assert_eq!(XykStorage::balance(0, XykStorage::account_id()), 99950012496876);
+		assert_eq!(XykStorage::balance(0, XykStorage::account_id()), 99950024987507);
 		assert_eq!(XykStorage::balance(1, XykStorage::account_id()), 249999999999999);
 		assert_eq!(XykStorage::balance(2, XykStorage::account_id()), 66733400066734); // vault: regular trade result
-		assert_eq!(XykStorage::balance(0, XykStorage::treasury_account_id()), 24993751562); // 24987506247 mangata in treasury
+		assert_eq!(XykStorage::balance(0, XykStorage::treasury_account_id()), 24987506246); // 24987506247 mangata in treasury
 		assert_eq!(XykStorage::balance(1, XykStorage::treasury_account_id()), 0);
 		assert_eq!(XykStorage::balance(0, XykStorage::bnb_treasury_account_id()), 0);
 		assert_eq!(XykStorage::balance(1, XykStorage::bnb_treasury_account_id()), 0);

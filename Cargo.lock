@@ -2678,7 +2678,7 @@ checksum = "c7d73b3f436185384286bd8098d17ec07c9a7d2388a6599f824d8502b529702a"
 [[package]]
 name = "libm"
 version = "0.2.1"
-source = "git+https://github.com/rust-lang/libm#2f3fc968f43d345f9b449938d050a9ea46a04c83"
+source = "git+https://github.com/rust-lang/libm?rev=2f3fc968f43d345f9b449938d050a9ea46a04c83#2f3fc968f43d345f9b449938d050a9ea46a04c83"
 
 [[package]]
 name = "libp2p"
@@ -4326,7 +4326,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
- "libm 0.2.1 (git+https://github.com/rust-lang/libm)",
+ "libm 0.2.1 (git+https://github.com/rust-lang/libm?rev=2f3fc968f43d345f9b449938d050a9ea46a04c83)",
  "log",
  "mangata-primitives 0.1.0",
  "orml-tokens",

@@ -2676,6 +2676,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c7d73b3f436185384286bd8098d17ec07c9a7d2388a6599f824d8502b529702a"
 
 [[package]]
+name = "libm"
+version = "0.2.1"
+source = "git+https://github.com/rust-lang/libm#2f3fc968f43d345f9b449938d050a9ea46a04c83"
+
+[[package]]
 name = "libp2p"
 version = "0.28.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3749,7 +3754,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ac267bcc07f48ee5f8935ab0d24f316fb722d7a1292e2913f0cc196b29ffd611"
 dependencies = [
  "autocfg 1.0.0",
- "libm",
+ "libm 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -4321,6 +4326,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
+ "libm 0.2.1 (git+https://github.com/rust-lang/libm)",
  "log",
  "mangata-primitives 0.1.0",
  "orml-tokens",

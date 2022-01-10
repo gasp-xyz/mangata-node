@@ -143,7 +143,7 @@ jobs:
     runs-on: ubuntu-latest
     if: "!contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests')"
     env:
-      API_URL: 'ws://172.16.238.10:9944'
+      API_URL: 'ws://10.0.0.5:9944'
       TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}
       E2E_TREASURY_PALLET_ADDRESS : ${{ secrets.E2E_TREASURY_PALLET_ADDRESS }}
       E2E_XYK_PALLET_ADDRESS : ${{ secrets.E2E_XYK_PALLET_ADDRESS }} 

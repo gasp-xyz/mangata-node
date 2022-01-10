@@ -290,3 +290,4 @@ jobs:
       #
       # - name: Verify deployment
       #   run: kubectl rollout status deployment/mangata-node
+

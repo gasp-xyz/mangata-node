@@ -209,10 +209,9 @@ jobs:
         working-directory: e2eTests
         run: docker-compose -f devops/dockerfiles/node-build/docker-compose.yml up -d
       
-      - name: Start mangata-node node with latest
+      - name: Start mangata-node parachain node with latest
         if: "contains(github.event.pull_request.labels.*.name, 'skip-build')"
-        working-directory: e2eTests
-        run: docker-compose -f devops/dockerfiles/docker-compose.yml up -d
+        run: docker-compose -f devops/parachain/docker-compose.yml up -d
 
       - name: Install dependencies
         working-directory: e2eTests
@@ -220,6 +219,9 @@ jobs:
 
       - name: Docker ps
         run: docker ps
+
+      - name: Sleep for 2 minutes
+        run: sleep 120s #close buffers of videos.
 
       - name: Run e2e tests
         working-directory: e2eTests

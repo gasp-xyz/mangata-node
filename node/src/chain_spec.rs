@@ -1,7 +1,11 @@
 use artemis_core::{App, AppId};
+use codec::Encode;
 use cumulus_primitives_core::ParaId;
 use hex_literal::hex;
-use mangata_runtime::{AccountId, AuraId, Balance, InflationInfo, Range, Signature};
+use mangata_runtime::{
+	AccountId, AuraId, Balance, InflationInfo, Range, Signature, VersionedMultiLocation,
+	DOT_TOKEN_ID,
+};
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
@@ -213,6 +217,7 @@ pub fn development_config() -> ChainSpec {
 						5_000__000_000_000_000_000_000u128,
 					),
 				],
+				vec![(DOT_TOKEN_ID, None)],
 				2000.into(),
 			)
 		},
@@ -356,6 +361,7 @@ pub fn local_testnet_config() -> ChainSpec {
 						5_000__000_000_000_000_000_000u128,
 					),
 				],
+				vec![(DOT_TOKEN_ID, None)],
 				2000.into(),
 			)
 		},
@@ -385,6 +391,7 @@ fn testnet_genesis(
 	bridged_assets: BridgedAssetsType,
 	tokens_endowment: Vec<(u32, u128, AccountId)>,
 	staking_accounts: Vec<(AccountId, u32, u128, u32, u128, u32, u128)>,
+	xcm_tokens: Vec<(u32, Option<VersionedMultiLocation>)>,
 	id: ParaId,
 ) -> mangata_runtime::GenesisConfig {
 	mangata_runtime::GenesisConfig {
@@ -510,6 +517,20 @@ fn testnet_genesis(
 		sudo: mangata_runtime::SudoConfig {
 			// Assign network admin rights.
 			key: root_key,
+		},
+		polkadot_xcm: mangata_runtime::PolkadotXcmConfig { safe_xcm_version: Some(2) },
+		asset_registry: mangata_runtime::AssetRegistryConfig {
+			init_xcm_tokens: xcm_tokens
+				.iter()
+				.cloned()
+				.map(|(x, maybe_y)| {
+					if let Some(y) = maybe_y {
+						(x, Some(VersionedMultiLocation::encode(&y)))
+					} else {
+						(x, None)
+					}
+				})
+				.collect(),
 		},
 	}
 }

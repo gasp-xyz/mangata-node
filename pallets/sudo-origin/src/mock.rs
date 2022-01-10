@@ -1,6 +1,6 @@
 // This file is part of Substrate.
 
-// Copyright (C) 2020 Parity Technologies (UK) Ltd.
+// Copyright (C) 2020-2021 Parity Technologies (UK) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,155 +19,141 @@
 
 use super::*;
 use crate as sudo_origin;
-use frame_support::traits::Filter;
-use frame_support::{
-    decl_storage, impl_outer_dispatch, impl_outer_event, impl_outer_origin, parameter_types,
-    weights::Weight,
-};
-use frame_system::ensure_signed;
-use frame_system::EnsureRoot;
+use frame_support::{parameter_types, traits::Contains};
+use frame_system::{limits, EnsureRoot};
 use sp_core::H256;
 use sp_io;
 use sp_runtime::{
-    testing::Header,
-    traits::{BlakeTwo256, IdentityLookup},
-    Perbill,
+	testing::Header,
+	traits::{BlakeTwo256, IdentityLookup},
 };
 
 // Logger module to track execution.
+#[frame_support::pallet]
 pub mod logger {
-    use super::*;
-    use frame_system::ensure_root;
+	use super::*;
+	use frame_support::pallet_prelude::*;
+	use frame_system::pallet_prelude::*;
 
-    pub trait Trait: frame_system::Trait {
-        type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
-    }
+	#[pallet::config]
+	pub trait Config: frame_system::Config {
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+	}
 
-    decl_storage! {
-        trait Store for Module<T: Trait> as Logger {
-            AccountLog get(fn account_log): Vec<T::AccountId>;
-            I32Log get(fn i32_log): Vec<i32>;
-        }
-    }
+	#[pallet::pallet]
+	#[pallet::generate_store(pub(super) trait Store)]
+	pub struct Pallet<T>(PhantomData<T>);
 
-    decl_event! {
-        pub enum Event<T> where AccountId = <T as frame_system::Trait>::AccountId {
-            AppendI32(i32, Weight),
-            AppendI32AndAccount(AccountId, i32, Weight),
-        }
-    }
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {
+		#[pallet::weight(*weight)]
+		pub fn privileged_i32_log(
+			origin: OriginFor<T>,
+			i: i32,
+			weight: Weight,
+		) -> DispatchResultWithPostInfo {
+			// Ensure that the `origin` is `Root`.
+			ensure_root(origin)?;
+			<I32Log<T>>::append(i);
+			Self::deposit_event(Event::AppendI32(i, weight));
+			Ok(().into())
+		}
 
-    decl_module! {
-        pub struct Module<T: Trait> for enum Call where origin: <T as frame_system::Trait>::Origin {
-            fn deposit_event() = default;
+		#[pallet::weight(*weight)]
+		pub fn non_privileged_log(
+			origin: OriginFor<T>,
+			i: i32,
+			weight: Weight,
+		) -> DispatchResultWithPostInfo {
+			// Ensure that the `origin` is some signed account.
+			let sender = ensure_signed(origin)?;
+			<I32Log<T>>::append(i);
+			<AccountLog<T>>::append(sender.clone());
+			Self::deposit_event(Event::AppendI32AndAccount(sender, i, weight));
+			Ok(().into())
+		}
+	}
 
-            #[weight = *weight]
-            fn privileged_i32_log(origin, i: i32, weight: Weight){
-                // Ensure that the `origin` is `Root`.
-                ensure_root(origin)?;
-                <I32Log>::append(i);
-                Self::deposit_event(RawEvent::AppendI32(i, weight));
-            }
+	#[pallet::event]
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
+	pub enum Event<T: Config> {
+		AppendI32(i32, Weight),
+		AppendI32AndAccount(T::AccountId, i32, Weight),
+	}
 
-            #[weight = *weight]
-            fn non_privileged_log(origin, i: i32, weight: Weight){
-                // Ensure that the `origin` is some signed account.
-                let sender = ensure_signed(origin)?;
-                <I32Log>::append(i);
-                <AccountLog<T>>::append(sender.clone());
-                Self::deposit_event(RawEvent::AppendI32AndAccount(sender, i, weight));
-            }
-        }
-    }
+	#[pallet::storage]
+	#[pallet::getter(fn account_log)]
+	pub(super) type AccountLog<T: Config> = StorageValue<_, Vec<T::AccountId>, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn i32_log)]
+	pub(super) type I32Log<T> = StorageValue<_, Vec<i32>, ValueQuery>;
 }
 
-impl_outer_origin! {
-    pub enum Origin for Test where system = frame_system {}
-}
+type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
+type Block = frame_system::mocking::MockBlock<Test>;
 
-mod test_events {
-    pub use crate::Event;
-}
-
-impl_outer_event! {
-    pub enum TestEvent for Test {
-        frame_system<T>,
-        sudo_origin,
-        logger<T>,
-    }
-}
-
-impl_outer_dispatch! {
-    pub enum Call for Test where origin: Origin {
-        sudo_origin::SudoOrigin,
-        logger::Logger,
-    }
-}
-
-// For testing the pallet, we construct most of a mock runtime. This means
-// first constructing a configuration type (`Test`) which `impl`s each of the
-// configuration traits of pallets we want to use.
-#[derive(Clone, Eq, PartialEq)]
-pub struct Test;
+frame_support::construct_runtime!(
+	pub enum Test where
+		Block = Block,
+		NodeBlock = Block,
+		UncheckedExtrinsic = UncheckedExtrinsic,
+	{
+		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+		SudoOrigin: sudo_origin::{Pallet, Call, Event<T>},
+		Logger: logger::{Pallet, Call, Storage, Event<T>},
+	}
+);
 
 parameter_types! {
-    pub const BlockHashCount: u64 = 250;
-    pub const MaximumBlockWeight: Weight = 1024;
-    pub const MaximumBlockLength: u32 = 2 * 1024;
-    pub const AvailableBlockRatio: Perbill = Perbill::one();
+	pub const BlockHashCount: u64 = 250;
+	pub BlockWeights: limits::BlockWeights = limits::BlockWeights::simple_max(1024);
 }
 
 pub struct BlockEverything;
-impl Filter<Call> for BlockEverything {
-    fn filter(_: &Call) -> bool {
-        false
-    }
+impl Contains<Call> for BlockEverything {
+	fn contains(_: &Call) -> bool {
+		false
+	}
 }
 
-impl frame_system::Trait for Test {
-    type BaseCallFilter = BlockEverything;
-    type Origin = Origin;
-    type Call = Call;
-    type Index = u64;
-    type BlockNumber = u64;
-    type Hash = H256;
-    type Hashing = BlakeTwo256;
-    type AccountId = u64;
-    type Lookup = IdentityLookup<Self::AccountId>;
-    type Header = Header;
-    type Event = TestEvent;
-    type BlockHashCount = BlockHashCount;
-    type MaximumBlockWeight = MaximumBlockWeight;
-    type DbWeight = ();
-    type BlockExecutionWeight = ();
-    type ExtrinsicBaseWeight = ();
-    type MaximumExtrinsicWeight = MaximumBlockWeight;
-    type MaximumBlockLength = MaximumBlockLength;
-    type AvailableBlockRatio = AvailableBlockRatio;
-    type Version = ();
-    type PalletInfo = ();
-    type AccountData = ();
-    type OnNewAccount = ();
-    type OnKilledAccount = ();
-    type SystemWeightInfo = ();
+impl frame_system::Config for Test {
+	type BaseCallFilter = BlockEverything;
+	type BlockWeights = ();
+	type BlockLength = ();
+	type DbWeight = ();
+	type Origin = Origin;
+	type Call = Call;
+	type Index = u64;
+	type BlockNumber = u64;
+	type Hash = H256;
+	type Hashing = BlakeTwo256;
+	type AccountId = u64;
+	type Lookup = IdentityLookup<Self::AccountId>;
+	type Header = Header;
+	type Event = Event;
+	type BlockHashCount = BlockHashCount;
+	type Version = ();
+	type PalletInfo = PalletInfo;
+	type AccountData = ();
+	type OnNewAccount = ();
+	type OnKilledAccount = ();
+	type SystemWeightInfo = ();
+	type SS58Prefix = ();
+	type OnSetCode = ();
 }
 
-// Implement the logger module's `Trait` on the Test runtime.
-impl logger::Trait for Test {
-    type Event = TestEvent;
+// Implement the logger module's `Config` on the Test runtime.
+impl logger::Config for Test {
+	type Event = Event;
 }
 
-// Implement the sudo module's `Trait` on the Test runtime.
-impl Trait for Test {
-    type Event = TestEvent;
-    type Call = Call;
-    type SudoOrigin = EnsureRoot<Self::AccountId>;
+// Implement the sudo_origin module's `Config` on the Test runtime.
+impl Config for Test {
+	type Event = Event;
+	type Call = Call;
+	type SudoOrigin = EnsureRoot<Self::AccountId>;
 }
-
-// Assign back to type variables in order to make dispatched calls of these modules later.
-pub type SudoOrigin = Module<Test>;
-pub type Logger = logger::Module<Test>;
-pub type System = frame_system::Module<Test>;
 
 // New types for dispatchable functions.
 pub type SudoOriginCall = sudo_origin::Call<Test>;
@@ -175,8 +161,6 @@ pub type LoggerCall = logger::Call<Test>;
 
 // Build test environment by setting the root `key` for the Genesis.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-    let t = frame_system::GenesisConfig::default()
-        .build_storage::<Test>()
-        .unwrap();
-    t.into()
+	let t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	t.into()
 }

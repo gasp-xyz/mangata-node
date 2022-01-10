@@ -3,7 +3,351 @@ panic = 'unwind'
 
 [workspace]
 members = [
-    'node',
-    'pallets/xyk',
-    'runtime',
+	'node',
+	'pallets/*',
+	'rpc/nonce',
+	'runtime',
 ]
+
+[patch."https://github.com/mangata-finance/mangata-node"]
+pallet-xyk = { path = "./pallets/xyk" }
+mangata-primitives = {path = "./primitives/mangata"}
+
+# [patch."https://github.com/mangata-finance/moonbeam"]
+# parachain-staking = {path = "../moonbeam/pallets/parachain-staking"}
+
+# [patch."https://github.com/mangata-finance/open-runtime-module-library"]
+# orml-tokens = { path = "../open-runtime-module-library/tokens" }
+# orml-traits = { path = "../open-runtime-module-library/traits" }
+# orml-xtokens = { path = "../open-runtime-module-library/xtokens" }
+# orml-xcm-support = { path = "../open-runtime-module-library/xcm-support" }
+# orml-unknown-tokens = { path = "../open-runtime-module-library/unknown-tokens" }
+# orml-xcm = { path = "../open-runtime-module-library/xcm" }
+
+# [patch."https://github.com/paritytech/substrate"]
+# sp-debug-derive = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-tasks = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-authorship = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-storage = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-timestamp = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-trie = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-block-builder = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-keystore = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-panic-handler = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-database = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-transaction-storage-proof = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-npos-elections-solution-type = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-npos-elections = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-serializer = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-version-proc-macro = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-version = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-application-crypto = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-wasm-interface = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-maybe-compressed-blob = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-tracing = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-std = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-offchain = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-state-machine = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-keyring = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-externalities = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# beefy-primitives = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-session = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-runtime-interface-proc-macro = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-runtime-interface = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-core = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-arithmetic = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-inherents = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-runtime = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-consensus-slots = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-consensus-babe = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-consensus-aura = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-consensus-vrf = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-consensus = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-rpc = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-authority-discovery = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-transaction-pool = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-io = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-staking = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-finality-grandpa = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-api-proc-macro = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-api = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sp-blockchain = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-allocator = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-cli = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-executor-wasmtime = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-executor-wasmi = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-executor = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-executor-common = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-block-builder = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-block-builder-ver = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-rpc-server = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-keystore = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-telemetry = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-network-gossip = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-state-db = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-service = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-client-db = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-rpc-api = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-basic-authorship = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# # sc-basic-authorship-ver = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-sync-state-rpc = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-tracing-proc-macro = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-tracing = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-chain-spec = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-chain-spec-derive = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-light = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-offchain = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-utils = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# beefy-gadget = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# beefy-gadget-rpc = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-proposer-metrics = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-consensus-slots = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-consensus-babe = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-consensus-babe-rpc = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-consensus-epochs = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-consensus-uncles = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-consensus-aura = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-consensus = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-rpc = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-authority-discovery = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-informant = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-transaction-pool = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-transaction-pool-api = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-finality-grandpa = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-finality-grandpa-rpc = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-client-api = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-peerset = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# sc-network = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# substrate-test-client = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# substrate-wasm-builder = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# substrate-prometheus-endpoint = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# substrate-build-script-utils = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# fork-tree = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# frame-benchmarking-cli = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# remote-externalities = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# try-runtime-cli = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# substrate-frame-rpc-system = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-mmr-primitives = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-mmr = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-mmr-rpc = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-transaction-payment = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-transaction-payment-rpc = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-authorship = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-identity = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-timestamp = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-membership = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-babe = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-offences = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-nicks = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-im-online = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-utility = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-sudo = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-bags-list = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# frame-system = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# frame-system-rpc-runtime-api = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# frame-support-procedural = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# frame-support-procedural-tools = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# frame-support-procedural-tools-derive = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# frame-support = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-aura = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# beefy-merkle-tree = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-beefy-mmr = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-vesting = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# frame-benchmarking = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-democracy = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# frame-executive = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-treasury = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-indices = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-election-provider-multi-phase = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-tips = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# frame-try-runtime = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-beefy = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-collective = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-session = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-bounties = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-elections-phragmen = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-scheduler = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-authority-discovery = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# frame-election-provider-support = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-staking-reward-curve = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-staking = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-grandpa = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-proxy = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-balances = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# pallet-multisig = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+# extrinsic-info-runtime-api = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+
+# [patch."https://github.com/mangata-finance/cumulus"]
+# cumulus-client-cli = { path = "../cumulus/client/cli" }
+# cumulus-client-collator = { path = "../cumulus/client/collator" }
+# cumulus-client-consensus-aura = { path = "../cumulus/client/consensus/aura" }
+# cumulus-client-consensus-common = { path = "../cumulus/client/consensus/common" }
+# cumulus-client-network = { path = "../cumulus/client/network" }
+# cumulus-client-service = { path = "../cumulus/client/service" }
+# cumulus-pallet-aura-ext = { path = "../cumulus/pallets/aura-ext" }
+# cumulus-pallet-dmp-queue = { path = "../cumulus/pallets/dmp-queue" }
+# cumulus-pallet-parachain-system = { path = "../cumulus/pallets/parachain-system" }
+# cumulus-pallet-xcm = { path = "../cumulus/pallets/xcm" }
+# cumulus-pallet-xcmp-queue = { path = "../cumulus/pallets/xcmp-queue" }
+# cumulus-primitives-core = { path = "../cumulus/primitives/core" }
+# cumulus-primitives-parachain-inherent = { path = "../cumulus/primitives/parachain-inherent" }
+# cumulus-primitives-timestamp = { path = "../cumulus/primitives/timestamp" }
+# cumulus-primitives-utility = { path = "../cumulus/primitives/utility" }
+# parachain-info = { path = "../cumulus/polkadot-parachains/pallets/parachain-info" }
+
+# [patch."https://github.com/mangata-finance/substrate"]
+# pallet-authorship = {git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-bags-list = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-transaction-payment-rpc = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-transaction-payment = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# frame-try-runtime = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# frame-system-rpc-runtime-api = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# frame-system = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-beefy = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-membership = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# frame-benchmarking = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-identity = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-session = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-aura = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-bounties = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-balances = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-authority-discovery = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-tips = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-election-provider-multi-phase = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-beefy-mmr = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# beefy-merkle-tree = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-scheduler = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-multisig = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# frame-executive = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-im-online = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-treasury = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-utility = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-sudo = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-offences = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-democracy = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-grandpa = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# frame-election-provider-support = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-collective = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-mmr-rpc = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-mmr = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-mmr-primitives = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# frame-support = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# frame-support-procedural-tools-derive = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# frame-support-procedural-tools = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# frame-support-procedural = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-nicks = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-staking = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-staking-reward-curve = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-indices = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-babe = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-timestamp = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-elections-phragmen = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-proxy = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# pallet-vesting = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-informant = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-finality-grandpa-rpc = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-finality-grandpa = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# beefy-gadget-rpc = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# beefy-gadget = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-executor-wasmtime = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-executor-common = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-executor-wasmi = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-executor = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-network-gossip = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-transaction-pool-api = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-transaction-pool = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-tracing-proc-macro = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-tracing = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-client-db = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-sync-state-rpc = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-network = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-authority-discovery = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-utils = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-block-builder-ver = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-keystore = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-rpc-server = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-light = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-client-api = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-rpc = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-service = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-basic-authorship-ver = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-block-builder = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-rpc-api = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-chain-spec-derive = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-chain-spec = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-proposer-metrics = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-peerset = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-basic-authorship = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-offchain = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-state-db = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-allocator = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-consensus = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-consensus-aura = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-consensus-uncles = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-consensus-epochs = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-consensus-slots = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-consensus-babe-rpc = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-consensus-babe = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-cli = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sc-telemetry = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# fork-tree = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# substrate-wasm-builder = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# try-runtime-cli = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# frame-benchmarking-cli = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# substrate-frame-rpc-system = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# remote-externalities = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# substrate-build-script-utils = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# substrate-prometheus-endpoint = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# substrate-test-client = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-panic-handler = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-inherents = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-authorship = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-storage = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-std = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-finality-grandpa = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# beefy-primitives = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-version-proc-macro = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-version = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-transaction-pool = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-ver = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-tracing = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-database = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-debug-derive = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-session = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# extrinsic-shuffler = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# ver-api = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-core = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-keyring = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-authority-discovery = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-tasks = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-runtime-interface-proc-macro = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-runtime-interface = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-arithmetic = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-keystore = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-api-proc-macro = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-api = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-rpc = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-maybe-compressed-blob = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-transaction-storage-proof = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-state-machine = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-block-builder = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-wasm-interface = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-npos-elections = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-npos-elections-solution-type = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-application-crypto = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-serializer = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-offchain = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-staking = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-trie = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-blockchain = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-externalities = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-consensus = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-consensus-aura = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-consensus-slots = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-consensus-vrf = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-consensus-babe = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-timestamp = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-runtime = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}
+# sp-io = { git = "https://github.com/mangata-finance//substrate", branch = "feature/nonce-rpc-v4"}

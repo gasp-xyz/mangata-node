@@ -1,97 +1,106 @@
 [package]
-authors = ['Substrate DevHub <https://github.com/substrate-developer-hub>']
-build = 'build.rs'
-description = 'The fair DEX'
-edition = '2018'
-homepage = 'https://substrate.dev'
-license = 'Unlicense'
-name = 'mangata-node'
-version = '0.4.0'
-
-[[bin]]
-name = 'mangata-node'
+name = "mangata-node"
+version = "0.1.0"
+authors = ["Mangata Team"]
+edition = "2018"
+license = "Unlicense"
+build = "build.rs"
 
 [package.metadata.docs.rs]
-targets = ['x86_64-unknown-linux-gnu']
+targets = ["x86_64-unknown-linux-gnu"]
 
 [build-dependencies]
-substrate-build-script-utils = '2.0.0'
+substrate-build-script-utils = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
 
-[dependencies.artemis-core]
-default-features = false
-version = "0.1.1"
-git = "https://github.com/mangata-finance/snowbridge"
-branch = "mangata-dev" 
-
-[dependencies]
-jsonrpc-core = "15.0"
-jsonrpc-core-client = "15.0"
-jsonrpc-derive = "15.0"
-structopt = '0.3.8'
-
-# local dependencies
-mangata-runtime = { path = '../runtime', version = '2.0.0' }
-
-# Substrate dependencies
-frame-benchmarking = { version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-frame-benchmarking-cli = { version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-pallet-transaction-payment-rpc = { version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-pallet-transaction-payment = { version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sc-basic-authorship = { version = '0.8.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sc-cli = { features = ['wasmtime'], version = '0.8.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sc-client-api = { version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sc-consensus = { version = '0.8.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sc-consensus-babe = { version = '0.8.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-consensus-babe = { version = '0.8.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-authority-discovery = { version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-#grandpa-primitives = {package = 'sp-finality-grandpa', version = '2.0.0'}
-sp-timestamp = { version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-finality-tracker = { version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-keyring  = { version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-io  = { version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sc-chain-spec  = { version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sc-network  = { version = '0.8.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-#grandpa  = {package = 'sc-finality-grandpa', version = '0.8.0'}
-sc-client-db  = { version = '0.8.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sc-offchain  = { version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sc-tracing  = { version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sc-telemetry  = { version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sc-authority-discovery  = { version = '0.8.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-frame-system  = { version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-pallet-balances = { version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-frame-support = { version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-pallet-authority-discovery = { version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-pallet-grandpa = { version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-
-pallet-staking = {version='2.0.0', path="../pallets/staking"}
-pallet-encrypted-transactions = {version='0.1.0', path="../pallets/encrypted-transactions"}
-
-sc-executor = { features = ['wasmtime'], version = '0.8.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sc-finality-grandpa = { version = '0.8.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sc-rpc = { version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sc-rpc-api = { version = '0.8.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sc-service = { features = ['wasmtime'], version = '0.8.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sc-transaction-pool = {version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-api = { version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-block-builder = { version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-blockchain = { version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-consensus = { version = '0.8.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-core = { version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-finality-grandpa = { version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-inherents = { version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-runtime = { version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-transaction-pool = { version = '2.0.0', git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-substrate-frame-rpc-system = { version = '2.0.0', path = '../utils/frame/rpc/system'}
-xyk-rpc = { default-features = false, version = '2.0.0', path = '../pallets/xyk/rpc' }
-xyk-runtime-api = { default-features = false, version = '2.0.0', path = '../pallets/xyk/runtime-api' }
-extrinsic-info-runtime-api = {  default-features = false, version = '2.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-
-hex-literal = { version = "0.3.1", default-features = false }
+[[bin]]
+name = "mangata-node"
+path = "src/main.rs"
 
 [features]
 default = ['std']
-runtime-benchmarks = ['mangata-runtime/runtime-benchmarks']
 std = [
 		"mangata-runtime/std",
 		"xyk-rpc/std",
 ]
+runtime-benchmarks = ["mangata-runtime/runtime-benchmarks"]
+
+[dependencies]
+derive_more = "0.99.2"
+log = "0.4.14"
+codec = { package = "parity-scale-codec", version = "2.0.0" }
+structopt = "0.3.8"
+serde = { version = "1.0.119", features = ["derive"] }
+hex-literal = "0.3.1"
+
+# RPC related Dependencies
+jsonrpc-core = "18.0.0"
+
+# Local Dependencies
+mangata-runtime = { path = "../runtime" }
+
+# Substrate Dependencies
+frame-benchmarking = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+frame-benchmarking-cli = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+
+pallet-transaction-payment-rpc = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+
+substrate-frame-rpc-system = { package = "mangata-rpc-nonce", path = "../rpc/nonce" }
+substrate-prometheus-endpoint = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+
+## Substrate Client Dependencies
+sc-basic-authorship-ver = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+sc-chain-spec = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+sc-cli = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+sc-client-api = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+sc-consensus = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+sc-executor = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+sc-network = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+sc-keystore = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+sc-rpc = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+sc-rpc-api = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+sc-service = { git = "https://github.com/mangata-finance/substrate", features = ["wasmtime"], branch = "mangata-dev-v4" }
+sc-telemetry = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+sc-transaction-pool = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+sc-transaction-pool-api = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+sc-tracing = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+
+## Substrate Primitive Dependencies
+sp-api = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+sp-block-builder = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+sp-blockchain = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+sp-consensus = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+sp-consensus-aura = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+sp-core = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+sp-inherents = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+sp-keystore = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+sp-offchain = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+sp-runtime = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+sp-session = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+sp-timestamp = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+sp-transaction-pool = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+ver-api = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+
+# Cumulus dependencies
+cumulus-client-cli = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v4' }
+# cumulus-client-collator = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v4' }
+cumulus-client-consensus-aura = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v4' }
+cumulus-client-consensus-common = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v4' }
+cumulus-client-network = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v4' }
+cumulus-client-service = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v4' }
+cumulus-primitives-core = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v4' }
+cumulus-primitives-parachain-inherent = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v4' }
+
+# Polkadot dependencies
+polkadot-cli = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v4" }
+polkadot-parachain = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v4" }
+polkadot-primitives = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v4" }
+polkadot-service = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v4" }
+polkadot-test-service = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v4" }
+
+# Mangata dependencies
+xyk-rpc = { default-features = false, version = '2.0.0', path = '../pallets/xyk/rpc' }
+xyk-runtime-api = { default-features = false, version = '2.0.0', path = '../pallets/xyk/runtime-api' }
+
+# Snowbridge dependencies
+artemis-core = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v4"}
+

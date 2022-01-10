@@ -68,7 +68,7 @@ pub trait XykApi<BlockHash, Balance, TokenId, ResponseTypePrice, ResponseTypeAmo
         &self,
         user: AccountIdOf<T>,
         liquidity_asset_id: TokenId,
-        block_number: u32
+        block_number: u32,
         at: Option<BlockHash>,
     ) -> Result<ResponseTypeAmounts>;
 }

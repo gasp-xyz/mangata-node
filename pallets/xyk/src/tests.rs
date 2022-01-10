@@ -4,7 +4,7 @@
 use super::*;
 use crate::mock::*;
 use frame_support::assert_err;
-use log::{info};
+use log::info;
 
 //fn create_pool_W(): create_pool working assert (maps,acocounts values)  //DONE
 //fn create_pool_N_already_exists(): create_pool not working if pool already exists  //DONE
@@ -64,113 +64,77 @@ fn mint_rewards_W() {
 
     new_test_ext().execute_with(|| {
         System::set_block_number(1);
-    let acc_id: u128 = 2;
-    let amount: u128 = 2000000;
-    XykStorage::create_new_token(&acc_id, amount);
-    XykStorage::create_new_token(&acc_id, amount);
-    XykStorage::create_new_token(&acc_id, amount);
-    XykStorage::transfer(0,2,3,1000000).unwrap();
-    XykStorage::transfer(1,2,3,1000000).unwrap();
+        let acc_id: u128 = 2;
+        let amount: u128 = 2000000;
+        XykStorage::create_new_token(&acc_id, amount);
+        XykStorage::create_new_token(&acc_id, amount);
+        XykStorage::create_new_token(&acc_id, amount);
+        XykStorage::transfer(0, 2, 3, 1000000).unwrap();
+        XykStorage::transfer(1, 2, 3, 1000000).unwrap();
 
-    let k = XykStorage::balance(0,3);
-    info!("TOKEN0: {:?}", k);
-    let l = XykStorage::balance(1,3);
-    info!("TOKEN1: {:?}", l);
-    XykStorage::create_pool(
-        Origin::signed(2),
-        0,
-        500,
-        1,
-        500,
-    )
-    .unwrap();
+        let k = XykStorage::balance(0, 3);
+        info!("TOKEN0: {:?}", k);
+        let l = XykStorage::balance(1, 3);
+        info!("TOKEN1: {:?}", l);
+        XykStorage::create_pool(Origin::signed(2), 0, 500, 1, 500).unwrap();
 
+        info!("USER WORK AT 10 ");
+        info!("USER WORK AT 10 ");
+        let mut user_work = XykStorage::calculate_work_user(2, 3, 10).unwrap();
+        info!("USER WORK AT 10 {}", user_work);
+        info!("USER WORK AT 10 {}", user_work);
 
+        System::set_block_number(10001);
 
+        info!("USER WORK AT 20 no mint {}", user_work);
+        info!("USER WORK AT 20 no mint {}", user_work);
+        user_work = XykStorage::calculate_work_user(2, 3, 20).unwrap();
+        info!("USER WORK AT 20 no mint {}", user_work);
+        info!("USER WORK AT 20 no mint {}", user_work);
 
+        info!("*******MINT************");
+        XykStorage::mint_liquidity(Origin::signed(2), 0, 1, 500, 501).unwrap();
 
+        info!("USER WORK AT 20 after mint {}", user_work);
+        info!("USER WORK AT 20 after mint {}", user_work);
+        user_work = XykStorage::calculate_work_user(2, 3, 20).unwrap();
 
-    info!("USER WORK AT 10 ");
-    info!("USER WORK AT 10 ");
-let mut user_work = XykStorage::calculate_work_user(2,3, 10).unwrap();
-info!("USER WORK AT 10 {}", user_work);
-info!("USER WORK AT 10 {}", user_work);
+        info!("USER WORK AT 20 after mint {}", user_work);
+        info!("USER WORK AT 20 after mint {}", user_work);
 
-System::set_block_number(10001);
+        System::set_block_number(20001);
+        info!("*******MINT USER 3************");
+        XykStorage::mint_liquidity(Origin::signed(3), 0, 1, 500, 501).unwrap();
 
-info!("USER WORK AT 20 no mint {}", user_work);
-info!("USER WORK AT 20 no mint {}", user_work);
-user_work = XykStorage::calculate_work_user(2,3, 20).unwrap();
-info!("USER WORK AT 20 no mint {}", user_work);
-info!("USER WORK AT 20 no mint {}", user_work);
+        info!("");
+        info!("USER WORK AT 30 after mint {}", user_work);
+        info!("USER WORK AT 30 after mint {}", user_work);
+        user_work = XykStorage::calculate_work_user(2, 3, 30).unwrap();
+        info!("USER 1 WORK AT 30 {}", user_work);
+        let mut user_work2 = XykStorage::calculate_work_user(3, 3, 30).unwrap();
+        info!("USER 2 WORK AT 30 {}", user_work2);
+        let mut pool_work = XykStorage::calculate_work_pool(3, 30).unwrap();
+        info!("POOL  WORK AT 30 {}", pool_work);
+        info!("USER WORK AT 30 after mint {}", user_work);
+        info!("USER WORK AT 30 after mint {}", user_work);
 
-info!("*******MINT************");
-    XykStorage::mint_liquidity(
-        Origin::signed(2),
-        0,
-        1,
-        500,
-        501,
-    )
-    .unwrap();
+        System::set_block_number(30001);
+        XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 500).unwrap();
+        System::set_block_number(40001);
 
-info!("USER WORK AT 20 after mint {}", user_work);
-info!("USER WORK AT 20 after mint {}", user_work);
-user_work = XykStorage::calculate_work_user(2,3, 20).unwrap();
-
-info!("USER WORK AT 20 after mint {}", user_work);
-info!("USER WORK AT 20 after mint {}", user_work);
-
-
-
-
-System::set_block_number(20001);
-info!("*******MINT USER 3************");
-    XykStorage::mint_liquidity(
-        Origin::signed(3),
-        0,
-        1,
-        500,
-        501,
-    )
-    .unwrap();
-
-info!("");    
-info!("USER WORK AT 30 after mint {}", user_work);
-info!("USER WORK AT 30 after mint {}", user_work);    
-user_work = XykStorage::calculate_work_user(2,3, 30).unwrap();
-info!("USER 1 WORK AT 30 {}", user_work);
-let mut user_work2 = XykStorage::calculate_work_user(3,3, 30).unwrap();
-info!("USER 2 WORK AT 30 {}", user_work2);
-let mut pool_work = XykStorage::calculate_work_pool(3, 30).unwrap();
-info!("POOL  WORK AT 30 {}", pool_work);
-info!("USER WORK AT 30 after mint {}", user_work);
-info!("USER WORK AT 30 after mint {}", user_work);    
-
-System::set_block_number(30001);
-XykStorage::burn_liquidity(
-    Origin::signed(2),
-    0,
-    1,
-    500,
-)
-.unwrap();
-System::set_block_number(40001);
-
-info!("");    
-info!("USER WORK AT 40 after mint {}", user_work);
-info!("USER WORK AT 40 after mint {}", user_work);    
-user_work = XykStorage::calculate_work_user(2,3, 40).unwrap();
-info!("USER 1 WORK AT 40 {}", user_work);
-user_work2 = XykStorage::calculate_work_user(3,3, 40).unwrap();
-info!("USER 2 WORK AT 40 {}", user_work2);
-pool_work = XykStorage::calculate_work_pool(3, 40).unwrap();
-info!("POOL  WORK AT 40 {}", pool_work);
-info!("USER WORK AT 40 after mint {}", user_work);
-info!("USER WORK AT 40 after mint {}", user_work);    
-});
+        info!("");
+        info!("USER WORK AT 40 after mint {}", user_work);
+        info!("USER WORK AT 40 after mint {}", user_work);
+        user_work = XykStorage::calculate_work_user(2, 3, 40).unwrap();
+        info!("USER 1 WORK AT 40 {}", user_work);
+        user_work2 = XykStorage::calculate_work_user(3, 3, 40).unwrap();
+        info!("USER 2 WORK AT 40 {}", user_work2);
+        pool_work = XykStorage::calculate_work_pool(3, 40).unwrap();
+        info!("POOL  WORK AT 40 {}", pool_work);
+        info!("USER WORK AT 40 after mint {}", user_work);
+        info!("USER WORK AT 40 after mint {}", user_work);
+    });
 }
-
 
 // fn initialize() {
 //     // creating asset with assetId 0 and minting to accountId 2
@@ -215,8 +179,6 @@ info!("USER WORK AT 40 after mint {}", user_work);
 //     XykStorage::create_pool(Origin::signed(2), 0, 100000000000000, 1, 100000000000000).unwrap();
 //     XykStorage::create_pool(Origin::signed(2), 1, 100000000000000, 2, 100000000000000).unwrap();
 // }
-
-
 
 // #[test]
 // fn set_info_should_work() {

@@ -56,6 +56,7 @@ use frame_support::assert_err;
 
 // W - should work
 // N - should not work
+const DUMMY_USER_ID: u128 = 2;
 
 fn initialize() {
 	// creating asset with assetId 0 and minting to accountId 2

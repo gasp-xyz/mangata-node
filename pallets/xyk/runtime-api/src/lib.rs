@@ -34,29 +34,20 @@ pub struct RpcAmountsResult<Balance> {
 	pub second_asset_amount: Balance,
 }
 
+#[derive(Eq, PartialEq, Encode, Decode, Default)]
+#[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
+#[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
 pub struct RpcRewardsResult<Balance> {
-    #[cfg_attr(
-        feature = "std",
-        serde(bound(serialize = "Balance: std::fmt::Display"))
-    )]
-    #[cfg_attr(feature = "std", serde(serialize_with = "serialize_as_string"))]
-    #[cfg_attr(
-        feature = "std",
-        serde(bound(deserialize = "Balance: std::str::FromStr"))
-    )]
-    #[cfg_attr(feature = "std", serde(deserialize_with = "deserialize_from_string"))]
-    pub total_rewards: Balance,
-    #[cfg_attr(
-        feature = "std",
-        serde(bound(serialize = "Balance: std::fmt::Display"))
-    )]
-    #[cfg_attr(feature = "std", serde(serialize_with = "serialize_as_string"))]
-    #[cfg_attr(
-        feature = "std",
-        serde(bound(deserialize = "Balance: std::str::FromStr"))
-    )]
-    #[cfg_attr(feature = "std", serde(deserialize_with = "deserialize_from_string"))]
-    pub already_claimed: Balance,
+	#[cfg_attr(feature = "std", serde(bound(serialize = "Balance: std::fmt::Display")))]
+	#[cfg_attr(feature = "std", serde(serialize_with = "serialize_as_string"))]
+	#[cfg_attr(feature = "std", serde(bound(deserialize = "Balance: std::str::FromStr")))]
+	#[cfg_attr(feature = "std", serde(deserialize_with = "deserialize_from_string"))]
+	pub total_rewards: Balance,
+	#[cfg_attr(feature = "std", serde(bound(serialize = "Balance: std::fmt::Display")))]
+	#[cfg_attr(feature = "std", serde(serialize_with = "serialize_as_string"))]
+	#[cfg_attr(feature = "std", serde(bound(deserialize = "Balance: std::str::FromStr")))]
+	#[cfg_attr(feature = "std", serde(deserialize_with = "deserialize_from_string"))]
+	pub already_claimed: i128,
 }
 
 #[cfg(feature = "std")]
@@ -76,38 +67,39 @@ fn deserialize_from_string<'de, D: Deserializer<'de>, T: std::str::FromStr>(
 }
 
 sp_api::decl_runtime_apis! {
-    pub trait XykApi<Balance, TokenId> where
-        Balance: Codec + MaybeDisplay + MaybeFromStr,
-        TokenId: Codec + MaybeDisplay + MaybeFromStr,{
-        fn calculate_sell_price(
-            input_reserve: Balance,
-            output_reserve: Balance,
-            sell_amount: Balance
-        ) -> RpcResult<Balance>;
-        fn calculate_buy_price(
-            input_reserve: Balance,
-            output_reserve: Balance,
-            buy_amount: Balance
-        ) -> RpcResult<Balance>;
-        fn calculate_sell_price_id(
-            sold_token_id: TokenId,
-            bought_token_id: TokenId,
-            sell_amount: Balance
-        ) -> RpcResult<Balance>;
-        fn calculate_buy_price_id(
-            sold_token_id: TokenId,
-            bought_token_id: TokenId,
-            buy_amount: Balance
-        ) -> RpcResult<Balance>;
-        fn get_burn_amount(
-            first_asset_id: TokenId,
-            second_asset_id: TokenId,
-            liquidity_asset_amount: Balance,
-        ) -> RpcAmountsResult<Balance>;
-        fn calculate_rewards_amount(
-            user: AccountIdOf<T>,
-            liquidity_asset_id: TokenId,
-            block_number: u32
-        ) -> RpcRewardsResult<Balance>;
-    }
+	pub trait XykApi<Balance, TokenId, AccountId> where
+		Balance: Codec + MaybeDisplay + MaybeFromStr,
+		TokenId: Codec + MaybeDisplay + MaybeFromStr,
+		AccountId: Codec + MaybeDisplay + MaybeFromStr,{
+		fn calculate_sell_price(
+			input_reserve: Balance,
+			output_reserve: Balance,
+			sell_amount: Balance
+		) -> RpcResult<Balance>;
+		fn calculate_buy_price(
+			input_reserve: Balance,
+			output_reserve: Balance,
+			buy_amount: Balance
+		) -> RpcResult<Balance>;
+		fn calculate_sell_price_id(
+			sold_token_id: TokenId,
+			bought_token_id: TokenId,
+			sell_amount: Balance
+		) -> RpcResult<Balance>;
+		fn calculate_buy_price_id(
+			sold_token_id: TokenId,
+			bought_token_id: TokenId,
+			buy_amount: Balance
+		) -> RpcResult<Balance>;
+		fn get_burn_amount(
+			first_asset_id: TokenId,
+			second_asset_id: TokenId,
+			liquidity_asset_amount: Balance,
+		) -> RpcAmountsResult<Balance>;
+		fn calculate_rewards_amount(
+			user: AccountId,
+			liquidity_asset_id: TokenId,
+			block_number: u32
+		) -> RpcRewardsResult<Balance>;
+	}
 }

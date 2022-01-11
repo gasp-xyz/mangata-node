@@ -22,6 +22,7 @@ sp-core = { default-features = false, version = '4.0.0-dev' , git = "https://git
 sp-std = { version = "4.0.0-dev", default-features = false , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
 mangata-primitives = { default-features = false, version = '0.1.0' , path = '../../primitives/mangata'}
 sp-arithmetic = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v4" }
+libm = { default-features = false, git = "https://github.com/rust-lang/libm", rev="2f3fc968f43d345f9b449938d050a9ea46a04c83"}
 
 orml-tokens = {  default-features = false, version = '0.4.1-dev' , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v4" }
 

@@ -146,20 +146,20 @@ impl<T: Config> Pallet<T> {
 		<T as Config>::Currency::total_issuance(id.into()).into()
 	}
 	pub fn transfer(
-        currency_id: TokenId,
-        source: T::AccountId,
-        dest: T::AccountId,
-        value: Balance,
-    ) -> DispatchResult {
-        <T as Trait>::Currency::transfer(
-            currency_id.into(),
-            &source,
-            &dest,
-            value.into(),
-            ExistenceRequirement::KeepAlive,
-        )
-        .into()
-    }
+		currency_id: TokenId,
+		source: T::AccountId,
+		dest: T::AccountId,
+		value: Balance,
+	) -> DispatchResult {
+		<T as Trait>::Currency::transfer(
+			currency_id.into(),
+			&source,
+			&dest,
+			value.into(),
+			ExistenceRequirement::KeepAlive,
+		)
+		.into()
+	}
 	pub fn create_new_token(who: &T::AccountId, amount: Balance) -> TokenId {
 		<T as Config>::Currency::create(who, amount.into())
 			.expect("Token creation failed")

@@ -80,7 +80,7 @@ use orml_tokens::TransferDust;
 use orml_traits::{parameter_type_with_key, GetByKey, MultiCurrency};
 
 pub use pallet_xyk;
-use xyk_runtime_api::{RpcAmountsResult, RpcResult};
+use xyk_runtime_api::{RpcAmountsResult, RpcResult, RpcRewardsResult};
 
 pub const MGA_TOKEN_ID: TokenId = 0;
 pub const DOT_TOKEN_ID: TokenId = 4;
@@ -996,7 +996,7 @@ impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 					},
 					_ => None,
 				}
-			}
+			},
 			_ => None,
 		}
 	}
@@ -1114,7 +1114,7 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl xyk_runtime_api::XykApi<Block, Balance, TokenId> for Runtime {
+	impl xyk_runtime_api::XykApi<Block, Balance, TokenId, AccountId> for Runtime {
 		fn calculate_sell_price(
 			input_reserve: Balance,
 			output_reserve: Balance,
@@ -1168,6 +1168,23 @@ impl_runtime_apis! {
 				Err(_) => RpcAmountsResult{
 					first_asset_amount: 0u32.into(),
 					second_asset_amount: 0u32.into()
+				},
+			}
+		}
+
+		fn calculate_rewards_amount(
+			user: AccountId,
+			liquidity_asset_id: TokenId,
+			block_number: u32,
+		) -> RpcRewardsResult<Balance> {
+			match Xyk::calculate_rewards_amount(user, liquidity_asset_id, block_number){
+				Ok((total_rewards, already_claimed)) => RpcRewardsResult{
+																	total_rewards,
+																	already_claimed
+																},
+				Err(_) => RpcRewardsResult{
+					total_rewards: 0u32.into(),
+					already_claimed: 0u32.into()
 				},
 			}
 		}

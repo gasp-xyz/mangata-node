@@ -76,6 +76,7 @@ use orml_tokens::TransferDust;
 use orml_traits::parameter_type_with_key;
 
 pub use pallet_xyk;
+use pallet_xyk::{ChargeFeeInNonNativeCurrency, FeeCalculationResult};
 use xyk_runtime_api::{RpcAmountsResult, RpcResult};
 
 pub const MGA_TOKEN_ID: TokenId = 0;
@@ -131,6 +132,7 @@ pub type SignedExtra = (
 	frame_system::CheckEra<Runtime>,
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
+	pallet_xyk::CheckTokensBalance<Runtime>,
 	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 );
 
@@ -447,12 +449,42 @@ impl orml_tokens::Config for Runtime {
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 }
 
+pub struct IsXykSellOrBuy;
+
+impl ChargeFeeInNonNativeCurrency<Call> for IsXykSellOrBuy {
+	fn calculate_fee(call: &Call) -> FeeCalculationResult {
+		match call {
+			Call::Xyk(pallet_xyk::Call::sell_asset {
+				sold_asset_id, sold_asset_amount, ..
+			}) => Ok(Some((
+				*sold_asset_id,
+				Xyk::calculate_sell_price_fee_id(*sold_asset_id, *sold_asset_amount)?,
+			))),
+			Call::Xyk(pallet_xyk::Call::buy_asset {
+				sold_asset_id,
+				bought_asset_id,
+				bought_asset_amount,
+				..
+			}) => Ok(Some((
+				*sold_asset_id,
+				Xyk::calculate_buy_price_fee_id(
+					*sold_asset_id,
+					*bought_asset_id,
+					*bought_asset_amount,
+				)?,
+			))),
+			_ => Ok(None),
+		}
+	}
+}
+
 impl pallet_xyk::Config for Runtime {
 	type Event = Event;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type NativeCurrencyId = MgaTokenId;
 	type TreasuryPalletId = TreasuryPalletId;
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
+	type NonNativeCurrencyFeeChargeFilter = IsXykSellOrBuy;
 }
 
 parameter_types! {

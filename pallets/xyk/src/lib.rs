@@ -236,8 +236,13 @@ use frame_support::{
 use mangata_primitives::{Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 use pallet_assets_info as assets_info;
+use scale_info::TypeInfo;
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
-use sp_runtime::traits::{AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member, Zero};
+use sp_runtime::traits::{
+	AtLeast32BitUnsigned, DispatchInfoOf, Dispatchable, MaybeSerializeDeserialize, Member,
+	SignedExtension, Zero,
+};
+
 use sp_std::{convert::TryFrom, fmt::Debug, prelude::*};
 
 use frame_support::pallet_prelude::*;
@@ -278,6 +283,40 @@ const DEFAULT_DECIMALS: u32 = 18u32;
 
 pub use pallet::*;
 
+#[derive(Debug)]
+pub enum FeeCalculationError {
+	NonExistingPool,
+	MathOverflow,
+	DivisionByZero,
+	Other,
+}
+
+pub type FeeCalculationResult = Result<Option<(TokenId, Balance)>, FeeCalculationError>;
+
+impl<T: Config> From<Error<T>> for FeeCalculationError {
+	fn from(e: Error<T>) -> Self {
+		match e {
+			Error::<T>::MathOverflow => FeeCalculationError::MathOverflow,
+			Error::<T>::DivisionByZero => FeeCalculationError::DivisionByZero,
+			Error::<T>::NoSuchPool => FeeCalculationError::NonExistingPool,
+			_ => FeeCalculationError::Other,
+		}
+	}
+}
+
+/// Calculates fee that should be charged in custom currency
+pub trait ChargeFeeInNonNativeCurrency<T> {
+	/// returns fee that should be charged in custom currency
+	fn calculate_fee(t: &T) -> FeeCalculationResult;
+}
+
+/// A default [`ChargeFeeInNonNativeCurrency`] implementation for `()`
+impl<T> ChargeFeeInNonNativeCurrency<T> for () {
+	fn calculate_fee(_: &T) -> FeeCalculationResult {
+		Ok(None)
+	}
+}
+
 #[frame_support::pallet]
 pub mod pallet {
 
@@ -297,6 +336,7 @@ pub mod pallet {
 		type NativeCurrencyId: Get<TokenId>;
 		type TreasuryPalletId: Get<PalletId>;
 		type BnbTreasurySubAccDerive: Get<[u8; 4]>;
+		type NonNativeCurrencyFeeChargeFilter: ChargeFeeInNonNativeCurrency<Self::Call>;
 	}
 
 	#[pallet::error]
@@ -651,7 +691,7 @@ impl<T: Config> Pallet<T> {
 		input_reserve: Balance,
 		output_reserve: Balance,
 		buy_amount: Balance,
-	) -> Result<Balance, DispatchError> {
+	) -> Result<Balance, Error<T>> {
 		let after_fee_percentage: u128 = 10000 - FEE_PERCENTAGE;
 		let input_reserve_saturated: U256 = input_reserve.into();
 		let output_reserve_saturated: U256 = output_reserve.into();
@@ -660,22 +700,21 @@ impl<T: Config> Pallet<T> {
 		let numerator: U256 = input_reserve_saturated
 			.saturating_mul(buy_amount_saturated)
 			.checked_mul(10000.into())
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			.ok_or(Error::<T>::MathOverflow)?;
 
 		let denominator: U256 = output_reserve_saturated
 			.checked_sub(buy_amount_saturated)
-			.ok_or_else(|| DispatchError::from(Error::<T>::NotEnoughReserve))?
+			.ok_or_else(|| Error::<T>::NotEnoughReserve)?
 			.checked_mul(after_fee_percentage.into())
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			.ok_or(Error::<T>::MathOverflow)?;
 
 		let result_u256 = numerator
 			.checked_div(denominator)
-			.ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?
+			.ok_or(Error::<T>::DivisionByZero)?
 			.checked_add(1.into())
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			.ok_or(Error::<T>::MathOverflow)?;
 
-		let result = Balance::try_from(result_u256)
-			.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
+		let result = Balance::try_from(result_u256).map_err(|_| Error::<T>::MathOverflow)?;
 		log!(
 			info,
 			"calculate_buy_price: ({}, {}, {}) -> {}",
@@ -711,6 +750,32 @@ impl<T: Config> Pallet<T> {
 		Self::calculate_sell_price(input_reserve, output_reserve, sell_amount)
 	}
 
+	pub fn calculate_sell_price_fee_id(
+		_sold_token_id: TokenId,
+		sell_amount: Balance,
+	) -> Result<Balance, FeeCalculationError> {
+		multiply_by_rational(sell_amount, FEE_PERCENTAGE, 10000)
+			.map_err(|_| FeeCalculationError::MathOverflow)
+			.and_then(|s| s.checked_add(1).ok_or(FeeCalculationError::MathOverflow))
+	}
+
+	pub fn calculate_buy_price_fee_id(
+		sold_asset_id: TokenId,
+		bought_asset_id: TokenId,
+		bought_asset_amount: Balance,
+	) -> Result<Balance, FeeCalculationError> {
+		let (input_reserve, output_reserve) =
+			Pallet::<T>::get_reserves(sold_asset_id, bought_asset_id)
+				.map_err(|_| FeeCalculationError::NonExistingPool)?;
+
+		let sold_asset_amount =
+			Pallet::<T>::calculate_buy_price(input_reserve, output_reserve, bought_asset_amount)?;
+
+		multiply_by_rational(sold_asset_amount, FEE_PERCENTAGE, 10000)
+			.map_err(|_| FeeCalculationError::MathOverflow)
+			.and_then(|s| s.checked_add(1).ok_or(FeeCalculationError::MathOverflow))
+	}
+
 	pub fn calculate_buy_price_id(
 		sold_token_id: TokenId,
 		bought_token_id: TokenId,
@@ -720,6 +785,7 @@ impl<T: Config> Pallet<T> {
 			Pallet::<T>::get_reserves(sold_token_id, bought_token_id)?;
 
 		Self::calculate_buy_price(input_reserve, output_reserve, buy_amount)
+			.map_err(DispatchError::from)
 	}
 
 	pub fn get_reserves(
@@ -1942,5 +2008,62 @@ impl<T: Config> Valuate for Pallet<T> {
 		}
 
 		Some((mga_token_reserve, liquidity_token_reserve))
+	}
+}
+
+#[derive(Encode, Decode, Clone, Eq, PartialEq, TypeInfo)]
+#[scale_info(skip_type_params(T))]
+/// calculate fee fot txs that required to pay fee in non native currency
+/// like Xyk::sell_asset & Xyk::buy_asset
+pub struct CheckTokensBalance<T: Config + Send + Sync>(sp_std::marker::PhantomData<T>);
+
+impl<T: Config + Send + Sync> sp_std::fmt::Debug for CheckTokensBalance<T> {
+	// #[cfg(feature = "std")]
+	fn fmt(&self, f: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
+		write!(f, "CheckToknesBalance")
+	}
+}
+
+impl<T: Config<Call = Call> + Send + Sync, Call> SignedExtension for CheckTokensBalance<T>
+where
+	Call: Dispatchable + Debug,
+{
+	type AccountId = T::AccountId;
+	type Call = Call;
+	type AdditionalSigned = ();
+	type Pre = ();
+	const IDENTIFIER: &'static str = "CheckTokensBalance";
+
+	fn additional_signed(&self) -> sp_std::result::Result<(), TransactionValidityError> {
+		Ok(())
+	}
+
+	fn validate(
+		&self,
+		who: &Self::AccountId,
+		call: &Self::Call,
+		_info: &DispatchInfoOf<Self::Call>,
+		_len: usize,
+	) -> TransactionValidity {
+		match T::NonNativeCurrencyFeeChargeFilter::calculate_fee(call) {
+			Ok(Some((token_id, amount))) => {
+				if amount < <T as Config>::Currency::free_balance(token_id.into(), who).into() {
+					log::warn!(
+						target: Self::IDENTIFIER,
+						"not enought non native tokens to pay fee"
+					);
+					// fail when account doesnt have enought assets to pay transaction fee in non
+					// native currency (Xyk::buy_asset & Xyk::sell_asset)
+					return Err(TransactionValidityError::Invalid(InvalidTransaction::Payment))
+				} else {
+					Ok(ValidTransaction::default())
+				}
+			},
+			Ok(None) => Ok(ValidTransaction::default()),
+			Err(e) => {
+				log::warn!(target: Self::IDENTIFIER, "{:?}", e);
+				return Err(TransactionValidityError::Invalid(InvalidTransaction::Payment))
+			},
+		}
 	}
 }

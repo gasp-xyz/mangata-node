@@ -16,7 +16,7 @@ use sp_core::{
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto,
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, ConvertInto,
 		Header as HeaderT, IdentifyAccount, Verify,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
@@ -24,17 +24,17 @@ use sp_runtime::{
 };
 
 use pallet_session::ShouldEndSession;
-use sp_std::prelude::*;
+use sp_std::{marker::PhantomData, prelude::*};
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 use frame_support::{
 	construct_runtime, match_type, parameter_types,
-	traits::{Contains, Everything, LockIdentifier, Nothing, U128CurrencyToVote},
+	traits::{Contains, Everything, Get, LockIdentifier, Nothing, U128CurrencyToVote},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
-		DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
+		DispatchClass, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
 		WeightToFeePolynomial,
 	},
 	PalletId,
@@ -55,16 +55,20 @@ use polkadot_parachain::primitives::Sibling;
 use polkadot_runtime_common::{BlockHashCount, RocksDbWeight, SlowAdjustingFeeUpdate};
 
 // XCM Imports
+use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
 use xcm::latest::prelude::*;
+pub use xcm::VersionedMultiLocation;
+use xcm_asset_registry::{AssetIdMapping, AssetIdMaps};
 use xcm_builder::{
-	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, CurrencyAdapter,
-	EnsureXcmOrigin, FixedWeightBounds, IsConcrete, LocationInverter, NativeAsset, ParentIsDefault,
-	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
-	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
-	UsingComponents,
+	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
+	AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, EnsureXcmOrigin, FixedRateOfFungible,
+	FixedWeightBounds, LocationInverter, ParentIsDefault, RelayChainAsNative,
+	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
+	SignedToAccountId32, SovereignSignedViaLocation, TakeRevenue, TakeWeightCredit,
 };
-use xcm_executor::{Config, XcmExecutor};
+use xcm_executor::{traits::DropAssets, Assets, XcmExecutor};
 
+use codec::{Decode, Encode};
 use static_assertions::const_assert;
 
 pub use parachain_staking::{InflationInfo, Range};
@@ -73,13 +77,14 @@ pub use mangata_primitives::{Amount, Balance, TokenId};
 
 pub use orml_tokens;
 use orml_tokens::TransferDust;
-use orml_traits::parameter_type_with_key;
+use orml_traits::{parameter_type_with_key, GetByKey, MultiCurrency};
 
 pub use pallet_xyk;
 use pallet_xyk::{ChargeFeeInNonNativeCurrency, FeeCalculationResult};
 use xyk_runtime_api::{RpcAmountsResult, RpcResult};
 
 pub const MGA_TOKEN_ID: TokenId = 0;
+pub const DOT_TOKEN_ID: TokenId = 4;
 
 pub use pallet_sudo;
 
@@ -167,8 +172,8 @@ impl WeightToFeePolynomial for WeightToFee {
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
 		// in Rococo, extrinsic base weight (smallest non-zero weight) is mapped to 1 MILLIUNIT:
 		// in mangata, we map to 1/10 of that, or 1/10 MILLIUNIT
-		let p = MILLIUNIT / 10;
-		let q = 100 * Balance::from(ExtrinsicBaseWeight::get());
+		let p = base_tx_in_mga();
+		let q = Balance::from(ExtrinsicBaseWeight::get());
 		smallvec![WeightToFeeCoefficient {
 			degree: 1,
 			negative: false,
@@ -176,6 +181,20 @@ impl WeightToFeePolynomial for WeightToFee {
 			coeff_integer: p / q,
 		}]
 	}
+}
+
+pub fn base_tx_in_mga() -> Balance {
+	MILLIUNIT / 10
+}
+
+pub fn mga_per_second() -> u128 {
+	let base_weight = Balance::from(ExtrinsicBaseWeight::get());
+	let base_per_second = (WEIGHT_PER_SECOND as u128) / base_weight;
+	base_per_second * base_tx_in_mga()
+}
+
+pub fn dot_per_second() -> u128 {
+	mga_per_second() / 50 / 100_000_000
 }
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
@@ -217,9 +236,9 @@ mod currency {
 
 	use super::Balance;
 
-	pub const MILLICENTS: Balance = 1_000_000_000;
-	pub const CENTS: Balance = 1_000 * MILLICENTS; // assume this is worth about a cent.
-	pub const DOLLARS: Balance = 100 * CENTS;
+	pub const MILLICENTS: Balance = CENTS / 1000;
+	pub const CENTS: Balance = DOLLARS / 100; // assume this is worth about a cent.
+	pub const DOLLARS: Balance = super::UNIT;
 
 	pub const fn deposit(items: u32, bytes: u32) -> Balance {
 		items as Balance * 15 * CENTS + (bytes as Balance) * 6 * CENTS
@@ -244,9 +263,9 @@ pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
 
 // Unit = the base number of indivisible units for balance
-pub const UNIT: Balance = 1_000_000_000_000;
-pub const MILLIUNIT: Balance = 1_000_000_000;
-pub const MICROUNIT: Balance = 1_000_000;
+pub const UNIT: Balance = 1_000_000_000_000_000_000;
+pub const MILLIUNIT: Balance = 1_000_000_000_000_000;
+pub const MICROUNIT: Balance = 1_000_000_000_000;
 
 /// The existential deposit. Set to 1/10 of the Connected Relay Chain.
 pub const EXISTENTIAL_DEPOSIT: Balance = MILLIUNIT;
@@ -512,7 +531,7 @@ parameter_types! {
 impl cumulus_pallet_parachain_system::Config for Runtime {
 	type Event = Event;
 	type OnValidationData = ();
-	type SelfParaId = parachain_info::Pallet<Runtime>;
+	type SelfParaId = ParachainInfo;
 	type DmpMessageHandler = DmpQueue;
 	type ReservedDmpWeight = ReservedDmpWeight;
 	type OutboundXcmpMessageSource = XcmpQueue;
@@ -525,8 +544,8 @@ impl parachain_info::Config for Runtime {}
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 parameter_types! {
-	pub const RelayLocation: MultiLocation = MultiLocation::parent();
-	pub const RelayNetwork: NetworkId = NetworkId::Any;
+	pub DotLocation: MultiLocation = MultiLocation::parent();
+	pub const RelayNetwork: NetworkId = NetworkId::Polkadot;
 	pub RelayChainOrigin: Origin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
 }
@@ -543,24 +562,20 @@ pub type LocationToAccountId = (
 	AccountId32Aliases<RelayNetwork, AccountId>,
 );
 
-/// Means for transacting assets on this chain.
-pub type LocalAssetTransactor = CurrencyAdapter<
-	// Use this currency:
-	orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>,
-	// Use this currency when it is a fungible asset matching the given location or name:
-	IsConcrete<RelayLocation>,
-	// Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
-	LocationToAccountId,
-	// Our chain's account ID type (we can't get away without mentioning it explicitly):
+pub type LocalAssetTransactor = MultiCurrencyAdapter<
+	Tokens,
+	UnknownTokens,
+	IsNativeConcrete<TokenId, TokenIdConvert>,
 	AccountId,
-	// We don't track any teleports.
-	(),
+	LocationToAccountId,
+	TokenId,
+	TokenIdConvert,
 >;
 
 /// This is the type we use to convert an (incoming) XCM origin into a local `Origin` instance,
 /// ready for dispatching a transaction with Xcm's `Transact`. There is an `OriginKind` which can
 /// biases the kind of local `Origin` it will become.
-pub type XcmOriginToTransactDispatchOrigin = (
+pub type XcmOriginToCallOrigin = (
 	// Sovereign account converter; this attempts to derive an `AccountId` from the origin location
 	// using `LocationToAccountId` and then turn that into the usual `Signed` origin. Useful for
 	// foreign chains who want to have a local sovereign account on this chain which they control.
@@ -596,32 +611,11 @@ pub type Barrier = (
 	AllowTopLevelPaidExecutionFrom<Everything>,
 	AllowUnpaidExecutionFrom<ParentOrParentsExecutivePlurality>,
 	// ^^^ Parent and its exec plurality get free execution
+	// Expected responses are OK.
+	AllowKnownQueryResponses<PolkadotXcm>,
+	// Subscriptions for version tracking are OK.
+	AllowSubscriptionsFrom<Everything>,
 );
-
-pub struct XcmConfig;
-impl Config for XcmConfig {
-	type Call = Call;
-	type XcmSender = XcmRouter;
-	// How to withdraw and deposit an asset.
-	type AssetTransactor = LocalAssetTransactor;
-	type OriginConverter = XcmOriginToTransactDispatchOrigin;
-	type IsReserve = NativeAsset;
-	type IsTeleporter = (); // Teleporting is disabled.
-	type LocationInverter = LocationInverter<Ancestry>;
-	type Barrier = Barrier;
-	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
-	type Trader = UsingComponents<
-		IdentityFee<Balance>,
-		RelayLocation,
-		AccountId,
-		orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>,
-		(),
-	>;
-	type ResponseHandler = PolkadotXcm;
-	type AssetTrap = PolkadotXcm;
-	type AssetClaims = PolkadotXcm;
-	type SubscriptionService = PolkadotXcm;
-}
 
 parameter_types! {
 	pub const MaxDownwardMessageWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 10;
@@ -634,7 +628,7 @@ pub type LocalOriginToLocation = SignedToAccountId32<Origin, AccountId, RelayNet
 /// queues.
 pub type XcmRouter = (
 	// Two routers - use UMP to communicate with the relay chain:
-	cumulus_primitives_utility::ParentAsUmp<ParachainSystem, ()>,
+	cumulus_primitives_utility::ParentAsUmp<ParachainSystem, PolkadotXcm>,
 	// ..and XCMP to communicate with the sibling chains.
 	XcmpQueue,
 );
@@ -645,18 +639,14 @@ impl pallet_xcm::Config for Runtime {
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
 	type XcmExecuteFilter = Nothing;
-	// ^ Disable dispatchable execute on the XCM pallet.
-	// Needs to be `Everything` for local testing.
 	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type XcmTeleportFilter = Everything;
-	type XcmReserveTransferFilter = Nothing;
+	type XcmTeleportFilter = Nothing;
+	type XcmReserveTransferFilter = Everything;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Origin = Origin;
 	type Call = Call;
-
 	const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
-	// ^ Override for AdvertisedXcmVersion default
 	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
 }
 
@@ -886,6 +876,194 @@ impl parachain_staking::Config for Runtime {
 	type WeightInfo = parachain_staking::weights::SubstrateWeight<Runtime>;
 }
 
+parameter_types! {
+	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
+}
+
+pub struct AccountIdToMultiLocation;
+impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
+	fn convert(account: AccountId) -> MultiLocation {
+		X1(AccountId32 { network: NetworkId::Any, id: account.into() }).into()
+	}
+}
+
+parameter_types! {
+	pub const BaseXcmWeight: Weight = 100_000_000; // TODO: recheck this
+}
+
+impl orml_xtokens::Config for Runtime {
+	type Event = Event;
+	type Balance = Balance;
+	type CurrencyId = TokenId;
+	type CurrencyIdConvert = TokenIdConvert;
+	type AccountIdToMultiLocation = AccountIdToMultiLocation;
+	type SelfLocation = SelfLocation;
+	type XcmExecutor = XcmExecutor<XcmConfig>;
+	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
+	type BaseXcmWeight = BaseXcmWeight;
+	type LocationInverter = LocationInverter<Ancestry>;
+}
+
+impl orml_unknown_tokens::Config for Runtime {
+	type Event = Event;
+}
+
+impl orml_xcm::Config for Runtime {
+	type Event = Event;
+	type SovereignOrigin = EnsureRoot<AccountId>;
+}
+
+parameter_types! {
+	pub DotPerSecond: (AssetId, u128) = (MultiLocation::parent().into(), dot_per_second());
+	pub MgaPerSecond: (AssetId, u128) = (
+		MultiLocation::new(
+			1,
+			X2(Parachain(u32::from(ParachainInfo::get())), GeneralKey(MGA_TOKEN_ID.encode())),
+		).into(),
+		mga_per_second()
+	);
+}
+
+pub type Trader =
+	(FixedRateOfFungible<DotPerSecond, ToTreasury>, FixedRateOfFungible<MgaPerSecond, ToTreasury>);
+
+pub struct XcmConfig;
+impl xcm_executor::Config for XcmConfig {
+	type Call = Call;
+	type XcmSender = XcmRouter;
+	// How to withdraw and deposit an asset.
+	type AssetTransactor = LocalAssetTransactor;
+	type OriginConverter = XcmOriginToCallOrigin;
+	type IsReserve = MultiNativeAsset;
+	// Teleporting is disabled.
+	type IsTeleporter = ();
+	type LocationInverter = LocationInverter<Ancestry>;
+	type Barrier = Barrier;
+	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
+	type Trader = Trader;
+	type ResponseHandler = PolkadotXcm;
+	type AssetTrap =
+		MangataDropAssets<PolkadotXcm, ToTreasury, TokenIdConvert, ExistentialDeposits>;
+	type AssetClaims = PolkadotXcm;
+	type SubscriptionService = PolkadotXcm;
+}
+
+/// `DropAssets` implementation support asset amount lower thant ED handled by `TakeRevenue`.
+///
+/// parameters type:
+/// - `NC`: native currency_id type.
+/// - `NB`: the ExistentialDeposit amount of native currency_id.
+/// - `GK`: the ExistentialDeposit amount of tokens.
+pub struct MangataDropAssets<X, T, C, GK>(PhantomData<(X, T, C, GK)>);
+impl<X, T, C, GK> DropAssets for MangataDropAssets<X, T, C, GK>
+where
+	X: DropAssets,
+	T: TakeRevenue,
+	C: Convert<MultiLocation, Option<TokenId>>,
+	GK: GetByKey<TokenId, Balance>,
+{
+	fn drop_assets(origin: &MultiLocation, assets: Assets) -> Weight {
+		let multi_assets: Vec<MultiAsset> = assets.into();
+		let mut asset_traps: Vec<MultiAsset> = vec![];
+		for asset in multi_assets {
+			if let MultiAsset { id: Concrete(location), fun: Fungible(amount) } = asset.clone() {
+				let currency_id = C::convert(location);
+				// burn asset(do nothing here) if convert result is None
+				if let Some(currency_id) = currency_id {
+					let ed = GK::get(&currency_id);
+					if amount < ed {
+						T::take_revenue(asset);
+					} else {
+						asset_traps.push(asset);
+					}
+				}
+			}
+		}
+		if !asset_traps.is_empty() {
+			X::drop_assets(origin, asset_traps.into());
+		}
+		0
+	}
+}
+
+pub struct TokenIdConvert;
+impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
+	fn convert(id: TokenId) -> Option<MultiLocation> {
+		if id == DOT_TOKEN_ID {
+			return Some(MultiLocation::parent())
+		}
+
+		match AssetIdMaps::<Runtime>::get_multi_location(id) {
+			Some(multi_location) => Some(multi_location),
+			None => Some(MultiLocation::new(
+				1,
+				X2(Parachain(ParachainInfo::get().into()), GeneralKey(id.encode())),
+			)),
+		}
+	}
+}
+impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
+	fn convert(location: MultiLocation) -> Option<TokenId> {
+		if location == MultiLocation::parent() {
+			return Some(DOT_TOKEN_ID)
+		}
+
+		if let Some(token_id) = AssetIdMaps::<Runtime>::get_currency_id(location.clone()) {
+			return Some(token_id)
+		}
+
+		match location {
+			MultiLocation { parents, interior: X2(Parachain(para_id), GeneralKey(key)) }
+				if parents == 1 =>
+			{
+				match (para_id, &key[..]) {
+					(id, key) if id == u32::from(ParachainInfo::get()) => {
+						// Acala
+						if let Ok(token_id) = TokenId::decode(&mut &*key) {
+							Some(token_id)
+						} else {
+							// invalid general key
+							None
+						}
+					},
+					_ => None,
+				}
+			}
+			_ => None,
+		}
+	}
+}
+impl Convert<MultiAsset, Option<TokenId>> for TokenIdConvert {
+	fn convert(asset: MultiAsset) -> Option<TokenId> {
+		if let MultiAsset { id: Concrete(location), .. } = asset {
+			Self::convert(location)
+		} else {
+			None
+		}
+	}
+}
+
+pub struct ToTreasury;
+impl TakeRevenue for ToTreasury {
+	fn take_revenue(revenue: MultiAsset) {
+		if let MultiAsset { id: Concrete(location), fun: Fungible(amount) } = revenue {
+			if let Some(currency_id) = TokenIdConvert::convert(location) {
+				// Ensure AcalaTreasuryAccount have ed requirement for native asset, but don't need
+				// ed requirement for cross-chain asset because it's one of whitelist accounts.
+				// Ignore the result.
+				let _ = Tokens::deposit(currency_id, &TreasuryAccount::get(), amount);
+			}
+		}
+	}
+}
+
+impl xcm_asset_registry::Config for Runtime {
+	type Event = Event;
+	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	type RegisterOrigin = EnsureRoot<AccountId>;
+	type WeightInfo = xcm_asset_registry::weights::SubstrateWeight<Runtime>;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -925,9 +1103,15 @@ construct_runtime!(
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 30,
-		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 31,
+		PolkadotXcm: pallet_xcm::{Pallet, Storage, Call, Event<T>, Origin, Config} = 31,
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Event<T>, Origin} = 32,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 33,
+
+		// ORML XCM
+		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 35,
+		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 36,
+		OrmlXcm: orml_xcm::{Pallet, Call, Event<T>} = 37,
+		AssetRegistry: xcm_asset_registry::{Pallet, Call, Storage, Event, Config} = 38,
 
 		// Governance stuff
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 41,
@@ -936,8 +1120,6 @@ construct_runtime!(
 		Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 51,
 		Elections: pallet_elections_phragmen::{Pallet, Call, Storage, Event<T>, Config<T>} = 52,
 
-		// TODO
-		// Staking + Offences + Historical
 	}
 );
 

@@ -17,8 +17,6 @@ services:
     command: polkadot --alice --validator --tmp --chain /config/spec.json --port 30333  --unsafe-ws-external --rpc-port=40333 --unsafe-rpc-external --rpc-cors=all --ws-port 9944
     volumes:
       - ./config:/config
-    ports:
-      - 9944:9944
     networks:
         test_net:
           ipv4_address: 10.0.0.2
@@ -70,8 +68,6 @@ services:
       --port 30334 --ws-port 9945
     volumes:
       - ./config:/config
-    ports:
-      - 8844:9944
     networks:
         test_net:
           ipv4_address: 10.0.0.5
@@ -89,4 +85,15 @@ services:
     networks:
         test_net:
           ipv4_address: 10.0.0.6
+
+  ui:
+    build:
+      context: ../../
+      dockerfile: devops/dockerfiles/node-and-runtime/ui.dockerfile
+    ports:
+      - 3000:3000
+    networks:
+        test_net:
+          ipv4_address: 10.0.0.10
+
 

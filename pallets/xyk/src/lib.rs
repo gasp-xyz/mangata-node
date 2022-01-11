@@ -918,10 +918,15 @@ impl<T: Config> Pallet<T> {
 				Pallet::<T>::get_reserves(sold_asset_id, mangata_id)?;
 
 			// Calculating swapped mangata amount
-			let treasury_amount_in_mangata =
-				Self::calculate_sell_price_no_fee(input_reserve, output_reserve, treasury_amount)?;
-			let burn_amount_in_mangata =
-				Self::calculate_sell_price_no_fee(input_reserve, output_reserve, burn_amount)?;
+			let settle_amount_in_mangata = Self::calculate_sell_price_no_fee(
+				input_reserve,
+				output_reserve,
+				treasury_amount + burn_amount,
+			)?;
+			let treasury_amount_in_mangata = settle_amount_in_mangata * TREASURY_PERCENTAGE /
+				(TREASURY_PERCENTAGE + BUYANDBURN_PERCENTAGE);
+
+			let burn_amount_in_mangata = settle_amount_in_mangata - treasury_amount_in_mangata;
 
 			// Apply changes in token pools, adding treasury and burn amounts of settling token, removing  treasury and burn amounts of mangata
 

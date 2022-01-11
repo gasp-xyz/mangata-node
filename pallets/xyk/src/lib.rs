@@ -2066,7 +2066,7 @@ where
 			},
 			Ok(None) => Ok(ValidTransaction::default()),
 			Err(e) => {
-				log::warn!(target: Self::IDENTIFIER, "{:?}", e);
+				log::warn!(target: Self::IDENTIFIER, "Transaction invalid due to {:?}", e);
 				return Err(TransactionValidityError::Invalid(InvalidTransaction::Payment))
 			},
 		}

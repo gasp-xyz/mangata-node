@@ -1,0 +1,52 @@
+{
+  "uid" : "c936993f5ac9b95",
+  "name" : "Not enough tokens to convert fee LINK[https://trello.com/c/p77t0atO]",
+  "fullName" : "xyk-pallet - treasury tests [Connected - Mangata]: Error cases.Not enough tokens to convert fee LINK[https://trello.com/c/p77t0atO]",
+  "historyId" : "8bcee4ce481ed060d31a7c246299047f",
+  "time" : {
+    "start" : 1642029927101,
+    "stop" : 1642029936117,
+    "duration" : 9016
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "failed",
+  "statusMessage" : "TypeError: Cannot read properties of undefined (reading 'assetsInfo')",
+  "statusTrace" : "TypeError: Cannot read properties of undefined (reading 'assetsInfo')\n                    at getAssetId (/home/runner/work/mangata-e2e/mangata-e2e/utils/tx.ts:540:49)\n                    at Object.<anonymous> (/home/runner/work/mangata-e2e/mangata-e2e/test/sequential/xyk-pallet.API.treasury.connected.mangata.test.ts:577:24)\n                    at processTicksAndRejections (node:internal/process/task_queues:96:5)",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "xyk-pallet - treasury tests [Connected - Mangata]: Error cases"
+  }, {
+    "name" : "testClass",
+    "value" : "xyk-pallet - treasury tests [Connected - Mangata]: Error cases"
+  }, {
+    "name" : "testMethod",
+    "value" : "Not enough tokens to convert fee LINK[https://trello.com/c/p77t0atO]"
+  }, {
+    "name" : "package",
+    "value" : "xyk-pallet - treasury tests [Connected - Mangata]: Error cases"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ {
+      "name" : "Product defects",
+      "matchedStatuses" : [ ],
+      "flaky" : false
+    } ],
+    "tags" : [ ]
+  },
+  "source" : "c936993f5ac9b95.json",
+  "parameterValues" : [ ]
+}

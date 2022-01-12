@@ -1,0 +1,52 @@
+{
+  "uid" : "925d68fe879ace1c",
+  "name" : "xyk-pallet - MGA tokens are substracted as fee : MintLiquidity",
+  "fullName" : "test/sequential/xyk-pallet.API.fees.test.ts.xyk-pallet - MGA tokens are substracted as fee : MintLiquidity",
+  "historyId" : "d2a36064fa41c1bdad7eeeb28025a4",
+  "time" : {
+    "start" : 1642029938670,
+    "stop" : 1642029938677,
+    "duration" : 7
+  },
+  "description" : "",
+  "descriptionHtml" : "",
+  "status" : "failed",
+  "statusMessage" : "Error:   --- TX Mapping issue --- ",
+  "statusTrace" : "Error:   --- TX Mapping issue --- \n                    at getEventResultFromMangataTx (/home/runner/work/mangata-e2e/mangata-e2e/utils/txHandler.ts:160:11)\n                    at Function.issueAssetToUser (/home/runner/work/mangata-e2e/mangata-e2e/utils/Assets.ts:66:31)\n                    at processTicksAndRejections (node:internal/process/task_queues:96:5)\n                    at Function.setupUserWithCurrencies (/home/runner/work/mangata-e2e/mangata-e2e/utils/Assets.ts:43:26)\n                    at Object.<anonymous> (/home/runner/work/mangata-e2e/mangata-e2e/test/sequential/xyk-pallet.API.fees.test.ts:76:37)",
+  "flaky" : false,
+  "newFailed" : false,
+  "beforeStages" : [ ],
+  "afterStages" : [ ],
+  "labels" : [ {
+    "name" : "suite",
+    "value" : "test/sequential/xyk-pallet.API.fees.test.ts"
+  }, {
+    "name" : "testClass",
+    "value" : "test/sequential/xyk-pallet.API.fees.test.ts"
+  }, {
+    "name" : "testMethod",
+    "value" : "xyk-pallet - MGA tokens are substracted as fee : MintLiquidity"
+  }, {
+    "name" : "package",
+    "value" : "test/sequential/xyk-pallet.API.fees.test.ts"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure1"
+  } ],
+  "parameters" : [ ],
+  "links" : [ ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "normal",
+    "retries" : [ ],
+    "categories" : [ {
+      "name" : "Product defects",
+      "matchedStatuses" : [ ],
+      "flaky" : false
+    } ],
+    "tags" : [ ]
+  },
+  "source" : "925d68fe879ace1c.json",
+  "parameterValues" : [ ]
+}

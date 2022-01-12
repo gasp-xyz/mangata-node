@@ -151,7 +151,7 @@ impl<T: Config> Pallet<T> {
 		dest: T::AccountId,
 		value: Balance,
 	) -> DispatchResult {
-		<T as Trait>::Currency::transfer(
+		<T as Config>::Currency::transfer(
 			currency_id.into(),
 			&source,
 			&dest,

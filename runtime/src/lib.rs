@@ -17,7 +17,7 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, ConvertInto,
-		Header as HeaderT, IdentifyAccount, Verify,
+		Header as HeaderT, IdentifyAccount, Verify, StaticLookup
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiSignature, Percent,
@@ -1099,11 +1099,9 @@ impl_runtime_apis! {
 		) -> Option<(sp_runtime::AccountId32, u32)> {
 			if let Some(sig) = tx.signature.clone(){
 				let nonce: frame_system::CheckNonce<_> = sig.2.4;
-				if let Address::Id(addr) = sig.0 {
-					Some((addr, nonce.0))
-				}else{
-					panic!("unsupported address format");
-				}
+                <Runtime as frame_system::Config>::Lookup::lookup(sig.0)
+                    .ok()
+                    .map(|addr| (addr, nonce.0))
 			}else{
 				None
 			}

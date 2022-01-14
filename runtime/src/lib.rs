@@ -1188,7 +1188,7 @@ impl_runtime_apis! {
 		}
 
 		fn execute_block(block: Block) {
-			Executive::execute_block_ver(block)
+			Executive::execute_block_ver_impl(block)
 		}
 
 		fn initialize_block(header: &<Block as BlockT>::Header) {

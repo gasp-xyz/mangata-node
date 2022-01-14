@@ -17,7 +17,7 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, ConvertInto,
-		Header as HeaderT, IdentifyAccount, Verify, StaticLookup
+		Header as HeaderT, IdentifyAccount, IdentifyAccountWithLookup, Verify, StaticLookup
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiSignature, Percent,
@@ -1097,11 +1097,12 @@ impl_runtime_apis! {
 		fn get_signer(
 			tx: <Block as BlockT>::Extrinsic,
 		) -> Option<(sp_runtime::AccountId32, u32)> {
+
+            let addr = tx.clone().get_account_id(&frame_system::ChainContext::<Runtime>::default());
 			if let Some(sig) = tx.signature.clone(){
 				let nonce: frame_system::CheckNonce<_> = sig.2.4;
                 <Runtime as frame_system::Config>::Lookup::lookup(sig.0)
-                    .ok()
-                    .map(|addr| (addr, nonce.0))
+                    .map(|addr| Some((addr, nonce.0))).expect("unknown address for signed extrinsic")
 			}else{
 				None
 			}
@@ -1358,12 +1359,6 @@ impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
 		inherent_data.check_extrinsics(block)
 	}
 }
-
-// cumulus_pallet_parachain_system::register_validate_block! {
-// 	Runtime = Runtime,
-// 	BlockExecutor = cumulus_pallet_aura_ext::BlockExecutorVer::<Runtime, Executive>,
-// 	CheckInherents = CheckInherents,
-// }
 
 // replace validate block function with its expanded version
 #[doc(hidden)]

@@ -17,7 +17,16 @@ pub use xyk_runtime_api::XykApi as XykRuntimeApi;
 use xyk_runtime_api::{RpcAmountsResult, RpcResult, RpcRewardsResult};
 
 #[rpc]
-pub trait XykApi<BlockHash, Balance, TokenId, AccountId, ResponseTypePrice, ResponseTypeAmounts, ResponseTypeRewards> {
+pub trait XykApi<
+	BlockHash,
+	Balance,
+	TokenId,
+	AccountId,
+	ResponseTypePrice,
+	ResponseTypeAmounts,
+	ResponseTypeRewards,
+>
+{
 	#[rpc(name = "xyk_calculate_sell_price")]
 	fn calculate_sell_price(
 		&self,
@@ -255,12 +264,8 @@ where
             // If the block hash is not supplied assume the best block.
             self.client.info().best_hash));
 
-		let runtime_api_result = api.calculate_rewards_amount(
-			&at,
-			user,
-			liquidity_asset_id,
-			block_number,
-		);
+		let runtime_api_result =
+			api.calculate_rewards_amount(&at, user, liquidity_asset_id, block_number);
 		runtime_api_result.map_err(|e| RpcError {
 			code: ErrorCode::ServerError(1),
 			message: "Unable to serve the request".into(),

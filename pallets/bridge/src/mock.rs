@@ -1,137 +1,132 @@
 use super::*;
-use crate::{Module, Trait};
+use crate as bridge;
+
 use frame_support::{
-    impl_outer_dispatch, impl_outer_event, impl_outer_origin, parameter_types, weights::Weight,
+	construct_runtime, parameter_types,
+	traits::{Contains, Everything},
+	PalletId,
 };
 use mangata_primitives::{Amount, Balance, TokenId};
 use orml_tokens::MultiTokenCurrencyAdapter;
+use orml_traits::parameter_type_with_key;
 use sp_core::H256;
 use sp_runtime::{
-    testing::Header,
-    traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
-    MultiSignature, Perbill,
+	testing::Header,
+	traits::{AccountIdConversion, BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
+	MultiSignature,
 };
 use sp_std::convert::From;
 
-impl_outer_dispatch! {
-    pub enum Call for Test where origin: Origin {
-        frame_system::SystemModule,
-        bridge::BridgeModule,
-        pallet_verifier::VerifierModule,
-        artemis_eth_app::AppETHModule,
-        artemis_erc20_app::AppERC20Module,
-        artemis_asset::ArtemisAssetModule,
-        orml_tokens::TokensModule,
-    }
-}
+type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
+type Block = frame_system::mocking::MockBlock<Test>;
 
-impl_outer_origin! {
-    pub enum Origin for Test {
-    }
-}
-
-mod bridge_event {
-    pub use crate::Event;
-}
-
-impl_outer_event! {
-    pub enum Event for Test {
-        bridge_event,
-        frame_system<T>,
-        pallet_verifier,
-        artemis_eth_app<T>,
-        artemis_erc20_app<T>,
-        artemis_asset<T>,
-        orml_tokens<T>,
-    }
-}
-
-#[derive(Clone, Eq, PartialEq)]
-pub struct Test;
+construct_runtime!(
+	pub enum Test where
+		Block = Block,
+		NodeBlock = Block,
+		UncheckedExtrinsic = UncheckedExtrinsic,
+	{
+		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
+		BridgedAssets: artemis_asset::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>},
+		ERC20: artemis_erc20_app::{Pallet, Storage, Call, Event<T>},
+		ETH: artemis_eth_app::{Pallet, Storage, Call, Event<T>},
+		Verifier: pallet_verifier::{Pallet, Storage, Call, Event, Config<T>},
+		BridgeModule: bridge::{Pallet, Storage, Call, Event, Config},
+	}
+);
 
 parameter_types! {
-    pub const BlockHashCount: u64 = 250;
-    pub const MaximumBlockWeight: Weight = 1024;
-    pub const MaximumBlockLength: u32 = 2 * 1024;
-    pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
+	pub const BlockHashCount: u64 = 250;
 }
 
 pub type Signature = MultiSignature;
 
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 
-impl system::Trait for Test {
-    type BaseCallFilter = ();
-    type Origin = Origin;
-    type Call = Call;
-    type Index = u64;
-    type BlockNumber = u64;
-    type Hash = H256;
-    type Hashing = BlakeTwo256;
-    type AccountId = AccountId;
-    type Lookup = IdentityLookup<Self::AccountId>;
-    type Header = Header;
-    type Event = Event;
-    type BlockHashCount = BlockHashCount;
-    type MaximumBlockWeight = MaximumBlockWeight;
-    type DbWeight = ();
-    type BlockExecutionWeight = ();
-    type ExtrinsicBaseWeight = ();
-    type MaximumExtrinsicWeight = MaximumBlockWeight;
-    type MaximumBlockLength = MaximumBlockLength;
-    type AvailableBlockRatio = AvailableBlockRatio;
-    type Version = ();
-    type PalletInfo = ();
-    type AccountData = ();
-    type OnNewAccount = ();
-    type OnKilledAccount = ();
-    type SystemWeightInfo = ();
+impl system::Config for Test {
+	type BaseCallFilter = Everything;
+	type Origin = Origin;
+	type Call = Call;
+	type Index = u64;
+	type BlockNumber = u64;
+	type Hash = H256;
+	type Hashing = BlakeTwo256;
+	type AccountId = AccountId;
+	type Lookup = IdentityLookup<Self::AccountId>;
+	type Header = Header;
+	type Event = Event;
+	type BlockHashCount = BlockHashCount;
+	type DbWeight = ();
+	type Version = ();
+	type AccountData = ();
+	type OnNewAccount = ();
+	type OnKilledAccount = ();
+	type SystemWeightInfo = ();
+	type PalletInfo = PalletInfo;
+	type BlockWeights = ();
+	type BlockLength = ();
+	type SS58Prefix = ();
+	type OnSetCode = ();
 }
 
-impl pallet_verifier::Trait for Test {
-    type Event = Event;
+impl pallet_verifier::Config for Test {
+	type Event = Event;
 }
 
-impl artemis_eth_app::Trait for Test {
-    type Event = Event;
+impl artemis_eth_app::Config for Test {
+	type Event = Event;
 }
 
-impl artemis_erc20_app::Trait for Test {
-    type Event = Event;
+impl artemis_erc20_app::Config for Test {
+	type Event = Event;
 }
 
-impl artemis_asset::Trait for Test {
-    type Event = Event;
-    type Currency = MultiTokenCurrencyAdapter<Test>;
+impl artemis_asset::Config for Test {
+	type Event = Event;
+	type Currency = MultiTokenCurrencyAdapter<Test>;
 }
 
-impl orml_tokens::Trait for Test {
-    type Event = Event;
-    type Balance = Balance;
-    type Amount = Amount;
-    type CurrencyId = TokenId;
-    type OnReceived = ();
-    type WeightInfo = ();
+parameter_type_with_key! {
+	pub ExistentialDeposits: |currency_id: TokenId| -> Balance {
+		match currency_id {
+			_ => 0,
+		}
+	};
 }
 
-impl Trait for Test {
-    type Event = Event;
-    type Verifier = pallet_verifier::Module<Test>;
-    type AppETH = artemis_eth_app::Module<Test>;
-    type AppERC20 = artemis_erc20_app::Module<Test>;
+pub struct DustRemovalWhitelist;
+impl Contains<AccountId> for DustRemovalWhitelist {
+	fn contains(a: &AccountId) -> bool {
+		*a == TreasuryAccount::get()
+	}
 }
 
-pub type BridgeModule = Module<Test>;
-pub type SystemModule = frame_system::Module<Test>;
-pub type VerifierModule = pallet_verifier::Module<Test>;
-pub type AppETHModule = artemis_eth_app::Module<Test>;
-pub type AppERC20Module = artemis_erc20_app::Module<Test>;
-pub type ArtemisAssetModule = artemis_asset::Module<Test>;
-pub type TokensModule = orml_tokens::Module<Test>;
+parameter_types! {
+	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
+	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account();
+	pub const MaxLocks: u32 = 50;
+}
+
+impl orml_tokens::Config for Test {
+	type Event = Event;
+	type Balance = Balance;
+	type Amount = Amount;
+	type CurrencyId = TokenId;
+	type WeightInfo = ();
+	type ExistentialDeposits = ExistentialDeposits;
+	type OnDust = ();
+	type MaxLocks = MaxLocks;
+	type DustRemovalWhitelist = DustRemovalWhitelist;
+}
+
+impl Config for Test {
+	type Event = Event;
+	type Verifier = pallet_verifier::Module<Test>;
+	type AppETH = artemis_eth_app::Module<Test>;
+	type AppERC20 = artemis_erc20_app::Module<Test>;
+}
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-    frame_system::GenesisConfig::default()
-        .build_storage::<Test>()
-        .unwrap()
-        .into()
+	frame_system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
 }

@@ -95,5 +95,3 @@ services:
     networks:
         test_net:
           ipv4_address: 10.0.0.10
-
-

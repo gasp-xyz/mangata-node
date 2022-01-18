@@ -30,7 +30,7 @@ on:
 jobs:
 
   rustfmt-check:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       -
         name: Checkout
@@ -144,8 +144,8 @@ jobs:
           path: /tmp/${{ github.sha }}.tar
 
   e2e-test:
-    needs: build
-    runs-on: ubuntu-latest
+    # needs: build
+    runs-on: self-hosted
     if: "!contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests')"
     env:
       API_URL: 'ws://10.0.0.5:9944'
@@ -162,19 +162,19 @@ jobs:
         name: Checkout
         uses: actions/checkout@v2
 
-      -
-        name: Download artifact
-        if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
-        uses: actions/download-artifact@v2
-        with:
-          name: ${{ github.sha }}
-          path: /tmp
-      -
-        name: Load Docker image
-        if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
-        run: |
-          docker load --input /tmp/${{ github.sha }}.tar
-          docker image ls -a
+      # -
+      #   name: Download artifact
+      #   if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
+      #   uses: actions/download-artifact@v2
+      #   with:
+      #     name: ${{ github.sha }}
+      #     path: /tmp
+      # -
+      #   name: Load Docker image
+      #   if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
+      #   run: |
+      #     docker load --input /tmp/${{ github.sha }}.tar
+      #     docker image ls -a
       
       - name: E2E- Get branch name
         id: branch-name
@@ -209,13 +209,13 @@ jobs:
           ref: '${{ env.E2EBRANCHNAME }}'
           path: 'e2eTests'
       
-      - name: Start mangata-node node with local build
-        if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
-        working-directory: e2eTests
-        run: docker-compose -f devops/dockerfiles/node-build/docker-compose.yml up -d
+      # - name: Start mangata-node node with local build
+      #   if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
+      #   working-directory: e2eTests
+      #   run: docker-compose -f devops/dockerfiles/node-build/docker-compose.yml up -d
       
       - name: Start mangata-node parachain node with latest
-        if: "contains(github.event.pull_request.labels.*.name, 'skip-build')"
+        # if: "contains(github.event.pull_request.labels.*.name, 'skip-build')"
         run: docker-compose -f devops/parachain/docker-compose.yml up -d
 
       - name: Install dependencies

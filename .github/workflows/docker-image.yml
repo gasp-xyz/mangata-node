@@ -140,7 +140,7 @@ jobs:
 
   e2e-test:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     if: "!contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests')"
     env:
       API_URL: 'ws://10.0.0.5:9944'

@@ -20,6 +20,11 @@ on:
           description: 'Name of the e2e target branch'
           required: false
           default: ''
+          
+        scriptName:
+          description: 'Name of the script to run'
+          required: false
+          default: 'test-sequential-e2e'
 
 
 jobs:
@@ -225,7 +230,7 @@ jobs:
 
       - name: Run e2e tests
         working-directory: e2eTests
-        run: yarn test-sequential-e2e
+        run: yarn ${{ github.event.inputs.scriptName }}
      
       - name: Test Report
         uses: dorny/test-reporter@v1

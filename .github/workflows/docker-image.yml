@@ -157,19 +157,19 @@ jobs:
         name: Checkout
         uses: actions/checkout@v2
 
-      -
-        name: Download artifact
-        if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
-        uses: actions/download-artifact@v2
-        with:
-          name: ${{ github.sha }}
-          path: /tmp
-      -
-        name: Load Docker image
-        if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
-        run: |
-          docker load --input /tmp/${{ github.sha }}.tar
-          docker image ls -a
+      # -
+      #   name: Download artifact
+      #   if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
+      #   uses: actions/download-artifact@v2
+      #   with:
+      #     name: ${{ github.sha }}
+      #     path: /tmp
+      # -
+      #   name: Load Docker image
+      #   if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
+      #   run: |
+      #     docker load --input /tmp/${{ github.sha }}.tar
+      #     docker image ls -a
       
       - name: E2E- Get branch name
         id: branch-name

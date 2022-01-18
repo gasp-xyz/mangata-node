@@ -139,7 +139,7 @@ jobs:
           path: /tmp/${{ github.sha }}.tar
 
   e2e-test:
-    needs: build
+    # needs: build
     runs-on: self-hosted
     if: "!contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests')"
     env:
@@ -204,10 +204,10 @@ jobs:
           ref: '${{ env.E2EBRANCHNAME }}'
           path: 'e2eTests'
       
-      - name: Start mangata-node node with local build
-        if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
-        working-directory: e2eTests
-        run: docker-compose -f devops/dockerfiles/node-build/docker-compose.yml up -d
+      # - name: Start mangata-node node with local build
+      #   if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
+      #   working-directory: e2eTests
+      #   run: docker-compose -f devops/dockerfiles/node-build/docker-compose.yml up -d
       
       - name: Start mangata-node parachain node with latest
         if: "contains(github.event.pull_request.labels.*.name, 'skip-build')"

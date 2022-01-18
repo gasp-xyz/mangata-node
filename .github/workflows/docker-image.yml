@@ -210,7 +210,7 @@ jobs:
       #   run: docker-compose -f devops/dockerfiles/node-build/docker-compose.yml up -d
       
       - name: Start mangata-node parachain node with latest
-        if: "contains(github.event.pull_request.labels.*.name, 'skip-build')"
+        # if: "contains(github.event.pull_request.labels.*.name, 'skip-build')"
         run: docker-compose -f devops/parachain/docker-compose.yml up -d
 
       - name: Install dependencies

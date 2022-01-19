@@ -23,4 +23,4 @@ COPY --from=builder /mangata/target/release/mangata-node /mangata/node
 RUN /mangata/node --version
 COPY devops/dockerfiles/node/runner.sh /runner.sh
 
-ENTRYPOINT ["/runner.sh"]
+ENTRYPOINT ["/mangata/node"]

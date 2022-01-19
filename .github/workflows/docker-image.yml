@@ -140,7 +140,7 @@ jobs:
         with:
           file: "devops/dockerfiles/node/Dockerfile"
           push: false
-          tags: mangatasolutions/mangata-node:latest,mangatasolutions/mangata-node:${{ github.sha }},mangatasolutions/mangata-node:github_build
+          tags: mangatasolutions/mangata-node:latest,mangatasolutions/mangata-node:${{ github.sha }}
           outputs: type=docker,dest=/tmp/${{ github.sha }}.tar
       -
         name: Upload artifact
@@ -163,7 +163,7 @@ jobs:
       TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
       MANGATA_NODE_VERSION: ${{ github.sha }}
       E2EBRANCHNAME: 'main'
-      PARACHAIN_DOCKER_IMAGE: "${{ github.event.inputs.parachainDocker || 'mangatasolutions/mangata-node:github_build' }}"
+      PARACHAIN_DOCKER_IMAGE: "${{ github.event.inputs.parachainDocker || 'mangatasolutions/mangata-node:latest' }}"
     steps:
     ####IDK, but this is neccesary for reports
       -

@@ -21,7 +21,6 @@ on:
           required: false
           default: 'main'
 
-    inputs:
         parachin_docker:
           description: 'Name of the parachain docker reference'
           required: false

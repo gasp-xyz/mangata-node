@@ -135,7 +135,7 @@ jobs:
       -
         name: Build Only
         id: docker_build
-        if: "!contains(github.event.pull_request.labels.*.name, 'skip-build') && !${{ github.event.inputs.skipBuild }}"
+        if: !contains(github.event.pull_request.labels.*.name, 'skip-build') && ! ${{ github.event.inputs.skipBuild }}
         uses: docker/build-push-action@v2
         with:
           file: "devops/dockerfiles/node/Dockerfile"

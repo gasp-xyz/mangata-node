@@ -27,7 +27,7 @@ on:
           default: "mangatasolutions/mangata-node:github_build"
 
         skipBuild:
-          description: 'Name of the parachain docker reference'
+          description: "Skip build phase"
           type: boolean
           required: false
           default: false

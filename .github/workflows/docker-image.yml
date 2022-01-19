@@ -237,9 +237,13 @@ jobs:
       - name: Sleep for 2 minutes
         run: sleep 120s #close buffers of videos.
 
-      - name: Run e2e tests
+      - name: Run sequential e2e tests
         working-directory: e2eTests
         run: yarn test-sequential-e2e
+
+      - name: Run parallel e2e tests
+        working-directory: e2eTests
+        run: yarn test-parallel
 
       - name: Test Report
         uses: dorny/test-reporter@v1

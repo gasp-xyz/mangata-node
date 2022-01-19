@@ -28,6 +28,7 @@ on:
 
         skipBuild:
           description: 'Name of the parachain docker reference'
+          type: boolean
           required: false
           default: false
 

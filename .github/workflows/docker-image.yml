@@ -21,10 +21,15 @@ on:
           required: false
           default: 'main'
 
-        parachin_docker:
+        parachainDocker:
           description: 'Name of the parachain docker reference'
           required: false
           default: "mangatasolutions/mangata-node:github_build"
+
+        skipBuild:
+          description: 'Name of the parachain docker reference'
+          required: false
+          default: false
 
 
 jobs:
@@ -55,7 +60,7 @@ jobs:
   clippy:
     name: Clippy check
     runs-on: ubuntu-latest
-    if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
+    if: "!contains(github.event.pull_request.labels.*.name, 'skip-build') && !${{ github.event.inputs.e2eBranch }}"
 
     steps:
       - uses: actions/checkout@v2
@@ -75,7 +80,7 @@ jobs:
 
   unit-test:
     runs-on: ubuntu-latest
-    if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
+    if: "!contains(github.event.pull_request.labels.*.name, 'skip-build') && !${{ github.event.inputs.e2eBranch }}"
     steps:
       -
         name: Checkout
@@ -129,7 +134,7 @@ jobs:
       -
         name: Build Only
         id: docker_build
-        if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
+        if: "!contains(github.event.pull_request.labels.*.name, 'skip-build') && !${{ github.event.inputs.skipBuild }}"
         uses: docker/build-push-action@v2
         with:
           file: "devops/dockerfiles/node/Dockerfile"
@@ -139,7 +144,7 @@ jobs:
       -
         name: Upload artifact
         uses: actions/upload-artifact@v2
-        if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
+        if: "!contains(github.event.pull_request.labels.*.name, 'skip-build') && !${{ github.event.inputs.skipBuild }}"
         with:
           name: ${{ github.sha }}
           path: /tmp/${{ github.sha }}.tar
@@ -157,7 +162,7 @@ jobs:
       TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
       MANGATA_NODE_VERSION: ${{ github.sha }}
       E2EBRANCHNAME: 'main'
-      PARACHAIN_DOCKER_IMAGE: ${{ github.event.inputs.e2eBranch }}
+      PARACHAIN_DOCKER_IMAGE: ${{ github.event.inputs.parachainDocker }}
     steps:
     ####IDK, but this is neccesary for reports
       -
@@ -166,14 +171,14 @@ jobs:
 
       -
         name: Download artifact
-        if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
+        if: "!contains(github.event.pull_request.labels.*.name, 'skip-build') && !${{ github.event.inputs.skipBuild }}"
         uses: actions/download-artifact@v2
         with:
           name: ${{ github.sha }}
           path: /tmp
       -
         name: Load Docker image
-        if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
+        if: "!contains(github.event.pull_request.labels.*.name, 'skip-build') && !${{ github.event.inputs.skipBuild }}"
         run: |
           docker load --input /tmp/${{ github.sha }}.tar
           docker image ls -a

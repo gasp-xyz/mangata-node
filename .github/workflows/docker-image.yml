@@ -19,13 +19,19 @@ on:
         e2eBranch:
           description: 'Name of the e2e target branch'
           required: false
-          default: ''
+          default: 'main'
+
+    inputs:
+        parachin_docker:
+          description: 'Name of the parachain docker reference'
+          required: false
+          default: "mangatasolutions/mangata-node:${{ github.sha }}"
 
 
 jobs:
 
   rustfmt-check:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       -
         name: Checkout
@@ -139,7 +145,7 @@ jobs:
           path: /tmp/${{ github.sha }}.tar
 
   e2e-test:
-    # needs: build
+    needs: build
     runs-on: self-hosted
     if: "!contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests')"
     env:
@@ -151,25 +157,26 @@ jobs:
       TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
       MANGATA_NODE_VERSION: ${{ github.sha }}
       E2EBRANCHNAME: 'main'
+      PARACHAIN_DOCKER_IMAGE: ${{ github.event.inputs.e2eBranch }}
     steps:
     ####IDK, but this is neccesary for reports
       -
         name: Checkout
         uses: actions/checkout@v2
 
-      # -
-      #   name: Download artifact
-      #   if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
-      #   uses: actions/download-artifact@v2
-      #   with:
-      #     name: ${{ github.sha }}
-      #     path: /tmp
-      # -
-      #   name: Load Docker image
-      #   if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
-      #   run: |
-      #     docker load --input /tmp/${{ github.sha }}.tar
-      #     docker image ls -a
+      -
+        name: Download artifact
+        if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ github.sha }}
+          path: /tmp
+      -
+        name: Load Docker image
+        if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
+        run: |
+          docker load --input /tmp/${{ github.sha }}.tar
+          docker image ls -a
       
       - name: E2E- Get branch name
         id: branch-name
@@ -204,13 +211,11 @@ jobs:
           ref: '${{ env.E2EBRANCHNAME }}'
           path: 'e2eTests'
       
-      # - name: Start mangata-node node with local build
-      #   if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
-      #   working-directory: e2eTests
-      #   run: docker-compose -f devops/dockerfiles/node-build/docker-compose.yml up -d
+      - name: Print parachain docker image reference
+        run: |
+         echo "${{ env.PARACHAIN_DOCKER_IMAGE }}"
       
       - name: Start mangata-node parachain node with latest
-        # if: "contains(github.event.pull_request.labels.*.name, 'skip-build')"
         run: docker-compose -f devops/parachain/docker-compose.yml up -d
 
       - name: Install dependencies

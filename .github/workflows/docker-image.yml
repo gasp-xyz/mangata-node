@@ -24,7 +24,7 @@ on:
         parachin_docker:
           description: 'Name of the parachain docker reference'
           required: false
-          default: "mangatasolutions/mangata-node:latest"
+          default: "mangatasolutions/mangata-node:github_build"
 
 
 jobs:
@@ -133,7 +133,7 @@ jobs:
         with:
           file: "devops/dockerfiles/node/Dockerfile"
           push: false
-          tags: mangatasolutions/mangata-node:latest,mangatasolutions/mangata-node:${{ github.sha }}
+          tags: mangatasolutions/mangata-node:latest,mangatasolutions/mangata-node:${{ github.sha }},mangatasolutions/mangata-node:github_build
           outputs: type=docker,dest=/tmp/${{ github.sha }}.tar
       -
         name: Upload artifact

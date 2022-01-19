@@ -127,7 +127,7 @@ services:
   ui:
     build:
       context: ../../
-      dockerfile: devops/dockerfiles/node-and-runtime/ui.dockerfile
+      dockerfile: devops/dockerfiles/polkadot-ui/Dockerfile
     ports:
       - 3000:3000
     networks:

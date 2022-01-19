@@ -221,7 +221,10 @@ jobs:
         run: |
           echo ${{ env.PARACHAIN_DOCKER_IMAGE }}
 
-      - name: Start mangata-node parachain node with latest
+      - name: Stop previous parachain if running
+        run: docker-compose -f devops/parachain/docker-compose.yml down
+
+      - name: Start mangata-node parachain
         run: docker-compose -f devops/parachain/docker-compose.yml up -d
 
       - name: Install dependencies
@@ -245,6 +248,11 @@ jobs:
           name: JEST Tests            # Name of the check run which will be created
           path: e2eTests/reports/jest-*.xml    # Path to test results
           reporter: jest-junit        # Format of test results
+
+      - name: Stop mangata-node parachain
+        if: always()
+        run: docker-compose -f devops/parachain/docker-compose.yml down
+
 
   publish:
     needs: [rustfmt-check, unit-test, clippy, build]

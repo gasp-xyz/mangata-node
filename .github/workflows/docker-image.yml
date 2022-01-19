@@ -37,7 +37,7 @@ jobs:
         name: Build Docker Image
         uses: docker/build-push-action@v2
         with:
-          file: "devops/dockerfiles/node-and-runtime/Dockerfile"
+          file: "devops/dockerfiles/node/Dockerfile"
           load: true
           tags: mangatasolutions/mangata-node-fmt-check:${{ github.sha }}
           target: env_builder
@@ -78,7 +78,7 @@ jobs:
         name: Build Docker Image
         uses: docker/build-push-action@v2
         with:
-          file: "devops/dockerfiles/node-and-runtime/Dockerfile"
+          file: "devops/dockerfiles/node/Dockerfile"
           load: true
           tags: mangatasolutions/mangata-node-ut:${{ github.sha }}
           target: env_builder
@@ -126,7 +126,7 @@ jobs:
         if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
         uses: docker/build-push-action@v2
         with:
-          file: "devops/dockerfiles/node-and-runtime/Dockerfile"
+          file: "devops/dockerfiles/node/Dockerfile"
           push: false
           tags: mangatasolutions/mangata-node:latest,mangatasolutions/mangata-node:${{ github.sha }}
           outputs: type=docker,dest=/tmp/${{ github.sha }}.tar

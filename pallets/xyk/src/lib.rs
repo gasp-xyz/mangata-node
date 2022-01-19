@@ -566,8 +566,11 @@ impl<T: Config> Pallet<T> {
 				Self::liquidity_mining_pool_claimed(&liquidity_asset_id).unwrap();
 		};
 
-		let available_rewards_for_pool: Balance = u128::from(block_number)
-			.checked_mul(1000)
+		let time = block_number / 1000; // round to time metric, as other liq minting functions
+		let available_rewards_for_pool: Balance = u128::from(time)
+			.checked_mul(1000) // back to block number
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+			.checked_mul(1000) // mga minted per block
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
 			.checked_sub(already_claimed_pool)
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
@@ -582,6 +585,7 @@ impl<T: Config> Pallet<T> {
 		block_number: u32,
 	) -> Result<Balance, DispatchError> {
 		//TODO, proper storage and calculation for total_mangata_rewards per pool, should be substracted by every claim and liq_burn (this reward should be calculated at this point, and removed from total pool, so it is no longer in consideration for any next calculation of user_work/total rewards pool)
+		
 		let available_rewards_for_pool: U256 = U256::from(
 			Self::calculate_available_rewards_for_pool(liquidity_asset_id, block_number)?,
 		);
@@ -649,17 +653,13 @@ impl<T: Config> Pallet<T> {
 		);
 
 		let precision: u32 = 10000;
-		let q_pow: f64 = libm::floor(libm::pow(1.1, time_passed as f64) * precision as f64);
+		let q_pow = Self::calculate_q_pow(1.1,time_passed);
 
 		log!(info, "XXXXXXX base: {}", base);
 		log!(info, "XXXXXXX time_passed: {}", time_passed);
 		log!(info, "XXXXXXX q_pow: {}", q_pow);
-		// let q_pow2: f64 = 1.1_f64.powf(time_passed.into());
-		// log!(
-		//     info,
-		//     "q_pow2: {:?}", q_pow2
-		// );
-		let cummulative_missing_new = base - base * U256::from(precision) / q_pow as u128;
+
+		let cummulative_missing_new = base - base * U256::from(precision) / q_pow;
 		log!(
 			info,
 			" base * U256::from(precision) / q_pow as u128: {}",
@@ -747,17 +747,22 @@ impl<T: Config> Pallet<T> {
 		Ok(user_work)
 	}
 
+	pub fn calculate_q_pow(q:f64,pow:u32) -> u128 {
+		let precision: u32 = 10000;
+		libm::floor(libm::pow(q, pow as f64) * precision as f64) as u128
+	}
+
 	pub fn calculate_missing_at_checkpoint(
 		time_passed: u32,
 		liquidity_assets_added: Balance,
 		missing_at_last_checkpoint: U256,
 	) -> Result<U256, DispatchError> {
 		let precision: u32 = 10000;
-		let q_pow: f64 = libm::floor(libm::pow(1.1, time_passed as f64) * precision as f64);
+		let q_pow = Self::calculate_q_pow(1.1,time_passed);
 		let liquidity_assets_added_u256: U256 = liquidity_assets_added.into();
 
 		let missing_at_checkpoint: U256 = liquidity_assets_added_u256 +
-			missing_at_last_checkpoint * U256::from(precision) / q_pow as u128;
+			missing_at_last_checkpoint * U256::from(precision) / q_pow;
 		log!(info, "/////////////calculate_missing_at_checkpoint",);
 
 		log!(
@@ -824,19 +829,8 @@ impl<T: Config> Pallet<T> {
 				(&user, &liquidity_asset_id),
 				Some((current_time, user_work_total, user_missing_at_checkpoint)),
 			);
-			log!(
-				info,
-				"liquidity_mining_checkpoint_user: {:?}, {},{}, {} ",
-				user,
-				current_time,
-				user_work_total,
-				user_missing_at_checkpoint,
-			);
 		}
 
-		log!(info, "***********for user********************************************************");
-		log!(info, "");
-		log!(info, "***********for pool********************************************************");
 		if LiquidityMiningPool::<T>::contains_key(&liquidity_asset_id) {
 			let (
 				pool_last_checkpoint,

@@ -24,7 +24,7 @@ on:
         parachainDocker:
           description: 'Name of the parachain docker reference'
           required: false
-          default: "mangatasolutions/mangata-node:github_build"
+          default: "mangatasolutions/mangata-node:latest"
 
         skipBuild:
           description: "Skip build phase"
@@ -163,7 +163,7 @@ jobs:
       TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
       MANGATA_NODE_VERSION: ${{ github.sha }}
       E2EBRANCHNAME: 'main'
-      PARACHAIN_DOCKER_IMAGE: ${{ github.event.inputs.parachainDocker }}
+      PARACHAIN_DOCKER_IMAGE: ${{ github.event.inputs.parachainDocker || "mangatasolutions/mangata-node:github_build" }}
     steps:
     ####IDK, but this is neccesary for reports
       -

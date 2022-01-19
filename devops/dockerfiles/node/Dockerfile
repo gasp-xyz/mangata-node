@@ -17,18 +17,9 @@ FROM env_builder as builder
 RUN cargo build --release
 
 FROM debian:stretch
-# LABEL description="mangata node"
 WORKDIR /mangata
 COPY --from=builder /mangata/target/release/mangata-node /mangata/node
-# COPY --from=builder /mangata/target/release/wbuild/mangata-runtime/mangata_runtime.compact.wasm /mangata/runtime.compact.wasm
 
 RUN /mangata/node --version
 
-# RUN b2sum -l 256 /mangata/runtime.compact.wasm
-# RUN b2sum -l 512 /mangata/runtime.compact.wasm
-
-# EXPOSE 30333 9933 9944
-
-# VOLUME ["/data", "/keystore"]
-
-ENTRYPOINT ["/mangata/node"]
+ENTRYPOINT ["/runner.sh"]

@@ -145,7 +145,7 @@ jobs:
       -
         name: Upload artifact
         uses: actions/upload-artifact@v2
-        if: "!contains(github.event.pull_request.labels.*.name, 'skip-build') && !${{ github.event.inputs.skipBuild }}"
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && ! github.event.inputs.skipBuild }}
         with:
           name: ${{ github.sha }}
           path: /tmp/${{ github.sha }}.tar
@@ -172,14 +172,14 @@ jobs:
 
       -
         name: Download artifact
-        if: "!contains(github.event.pull_request.labels.*.name, 'skip-build') && !${{ github.event.inputs.skipBuild }}"
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && ! github.event.inputs.skipBuild }}
         uses: actions/download-artifact@v2
         with:
           name: ${{ github.sha }}
           path: /tmp
       -
         name: Load Docker image
-        if: "!contains(github.event.pull_request.labels.*.name, 'skip-build') && !${{ github.event.inputs.skipBuild }}"
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && ! github.event.inputs.skipBuild }}
         run: |
           docker load --input /tmp/${{ github.sha }}.tar
           docker image ls -a

@@ -30,6 +30,7 @@ on:
 jobs:
 
   rustfmt-check:
+    name: Formatting check
     runs-on: ubuntu-latest
     steps:
       -
@@ -143,154 +144,154 @@ jobs:
           name: ${{ github.sha }}
           path: /tmp/${{ github.sha }}.tar
 
-  # e2e-test:
-  #   needs: build
-  #   runs-on: self-hosted
-  #   if: "!contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests')"
-  #   env:
-  #     API_URL: 'ws://10.0.0.5:9944'
-  #     TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}
-  #     E2E_TREASURY_PALLET_ADDRESS : ${{ secrets.E2E_TREASURY_PALLET_ADDRESS }}
-  #     E2E_XYK_PALLET_ADDRESS : ${{ secrets.E2E_XYK_PALLET_ADDRESS }} 
-  #     E2E_TREASURY_BURN_PALLET_ADDRESS : ${{ secrets.E2E_TREASURY_BURN_PALLET_ADDRESS }}
-  #     TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
-  #     MANGATA_NODE_VERSION: ${{ github.sha }}
-  #     E2EBRANCHNAME: 'main'
-  #     PARACHAIN_DOCKER_IMAGE: ${{ github.event.inputs.e2eBranch }}
-  #   steps:
-  #   ####IDK, but this is neccesary for reports
-  #     -
-  #       name: Checkout
-  #       uses: actions/checkout@v2
-  #
-  #     -
-  #       name: Download artifact
-  #       if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
-  #       uses: actions/download-artifact@v2
-  #       with:
-  #         name: ${{ github.sha }}
-  #         path: /tmp
-  #     -
-  #       name: Load Docker image
-  #       if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
-  #       run: |
-  #         docker load --input /tmp/${{ github.sha }}.tar
-  #         docker image ls -a
-  #     
-  #     - name: E2E- Get branch name
-  #       id: branch-name
-  #       uses: tj-actions/branch-names@v4.9
-  #     
-  #     - name: E2E- Get target branch. 
-  #       run: |
-  #         echo "This job name branch is: ${{ steps.branch-name.outputs.current_branch }}"
-  #     
-  #     - name: E2E- Calculate if run e2e feature branch or main.
-  #       run: |
-  #         echo DEFAULT: E2E test will run with: $E2EBRANCHNAME
-  #         echo "Running on: ${{ steps.branch-name.outputs.current_branch }}"
-  #         if [ $(git ls-remote --heads https://github.com/mangata-finance/mangata-e2e.git "${{ steps.branch-name.outputs.current_branch }}" --force --quiet  | wc -l) -gt 0 ]; then echo "E2EBRANCHNAME=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_ENV; echo "MATCH - OK" ;  fi
-  #     
-  #     - name: Decide if main - branch or parameter
-  #     # if we have something in e2eBranch - override E2EBranchName, else -> E2EBRANCHNAME , that
-  #     # by default will be main. 
-  #
-  #       run: 
-  #         echo "E2EBRANCHNAME=${{ github.event.inputs.e2eBranch || env.E2EBRANCHNAME }}" >> $GITHUB_ENV
-  #     
-  #     - name: E2E- Get target branch. 
-  #       run: |
-  #        echo "${{ env.E2EBRANCHNAME }}"
-  #
-  #     - 
-  #       name: Checkout tests
-  #       uses: actions/checkout@v2
-  #       with:
-  #         repository: mangata-finance/mangata-e2e
-  #         ref: '${{ env.E2EBRANCHNAME }}'
-  #         path: 'e2eTests'
-  #     
-  #     - name: Print parachain docker image reference
-  #       run: |
-  #        echo "${{ env.PARACHAIN_DOCKER_IMAGE }}"
-  #     
-  #     - name: Start mangata-node parachain node with latest
-  #       run: docker-compose -f devops/parachain/docker-compose.yml up -d
-  #
-  #     - name: Install dependencies
-  #       working-directory: e2eTests
-  #       run: yarn
-  #
-  #     - name: Docker ps
-  #       run: docker ps
-  #
-  #     - name: Sleep for 2 minutes
-  #       run: sleep 120s #close buffers of videos.
-  #
-  #     - name: Run e2e tests
-  #       working-directory: e2eTests
-  #       run: yarn test-sequential-e2e
-  #    
-  #     - name: Test Report
-  #       uses: dorny/test-reporter@v1
-  #       if: success() || failure()    # run this step even if previous step failed
-  #       with:
-  #         name: JEST Tests            # Name of the check run which will be created
-  #         path: e2eTests/reports/jest-*.xml    # Path to test results
-  #         reporter: jest-junit        # Format of test results
-  #
-  # publish:
-  #   needs: [rustfmt-check, unit-test, clippy, build]
-  #   runs-on: ubuntu-latest
-  #   if: |
-  #     github.ref == 'refs/heads/develop' && 
-  #     !contains(github.event.pull_request.labels.*.name, 'skip-publish')
-  #   #if: "!contains(github.event.pull_request.labels.*.name, 'skip-publish') && ${{ github.event_name == 'push'}} && github.event.pull_request.merged == true"
-  #   #if: # its a push to develop.
-  #   steps:
-  #     -
-  #       name: Checkout
-  #       uses: actions/checkout@v2
-  #     -
-  #       name: Set up QEMU
-  #       uses: docker/setup-qemu-action@v1
-  #     -
-  #       name: Set up Docker Buildx
-  #       uses: docker/setup-buildx-action@v1
-  #     -
-  #       name: Login to Docker Hub
-  #       uses: docker/login-action@v1
-  #       with:
-  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
-  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
-  #     -
-  #       name: Download artifact
-  #       uses: actions/download-artifact@v2
-  #       with:
-  #         name: ${{ github.sha }}
-  #         path: /tmp
-  #     
-  #     -
-  #       name: Load Docker image
-  #       run: |
-  #         docker load --input /tmp/${{ github.sha }}.tar
-  #         docker image ls -a
-  #
-  #     -
-  #       name: Push previously generated Docker image
-  #       run: |
-  #         docker image push --all-tags mangatasolutions/mangata-node
-  #
-  #     - name: Install doctl
-  #       uses: digitalocean/action-doctl@v2
-  #       with:
-  #         token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-  #       
-  #     # - name: Save DigitalOcean kubeconfig with short-lived credentials
-  #     #   run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 ${{ secrets.K8S_CLUSTER_ID }}
-  #     
-  #     # - name: Deploy to DigitalOcean Kubernetes
-  #     #   run: kubectl rollout restart deployment/mangata-node
-  #     #
-  #     # - name: Verify deployment
-  #     #   run: kubectl rollout status deployment/mangata-node
+  e2e-test:
+    needs: build
+    runs-on: self-hosted
+    if: "!contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests')"
+    env:
+      API_URL: 'ws://10.0.0.5:9944'
+      TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}
+      E2E_TREASURY_PALLET_ADDRESS : ${{ secrets.E2E_TREASURY_PALLET_ADDRESS }}
+      E2E_XYK_PALLET_ADDRESS : ${{ secrets.E2E_XYK_PALLET_ADDRESS }} 
+      E2E_TREASURY_BURN_PALLET_ADDRESS : ${{ secrets.E2E_TREASURY_BURN_PALLET_ADDRESS }}
+      TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
+      MANGATA_NODE_VERSION: ${{ github.sha }}
+      E2EBRANCHNAME: 'main'
+      PARACHAIN_DOCKER_IMAGE: ${{ github.event.inputs.e2eBranch }}
+    steps:
+    ####IDK, but this is neccesary for reports
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+
+      -
+        name: Download artifact
+        if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ github.sha }}
+          path: /tmp
+      -
+        name: Load Docker image
+        if: "!contains(github.event.pull_request.labels.*.name, 'skip-build')"
+        run: |
+          docker load --input /tmp/${{ github.sha }}.tar
+          docker image ls -a
+
+      - name: E2E- Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v4.9
+
+      - name: E2E- Get target branch. 
+        run: |
+          echo "This job name branch is: ${{ steps.branch-name.outputs.current_branch }}"
+
+      - name: E2E- Calculate if run e2e feature branch or main.
+        run: |
+          echo DEFAULT: E2E test will run with: $E2EBRANCHNAME
+          echo "Running on: ${{ steps.branch-name.outputs.current_branch }}"
+          if [ $(git ls-remote --heads https://github.com/mangata-finance/mangata-e2e.git "${{ steps.branch-name.outputs.current_branch }}" --force --quiet  | wc -l) -gt 0 ]; then echo "E2EBRANCHNAME=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_ENV; echo "MATCH - OK" ;  fi
+
+      - name: Decide if main - branch or parameter
+      # if we have something in e2eBranch - override E2EBranchName, else -> E2EBRANCHNAME , that
+      # by default will be main. 
+
+        run: 
+          echo "E2EBRANCHNAME=${{ github.event.inputs.e2eBranch || env.E2EBRANCHNAME }}" >> $GITHUB_ENV
+
+      - name: E2E- Get target branch. 
+        run: |
+         echo "${{ env.E2EBRANCHNAME }}"
+
+      - 
+        name: Checkout tests
+        uses: actions/checkout@v2
+        with:
+          repository: mangata-finance/mangata-e2e
+          ref: '${{ env.E2EBRANCHNAME }}'
+          path: 'e2eTests'
+
+      - name: Print parachain docker image reference
+        run: |
+         echo "${{ env.PARACHAIN_DOCKER_IMAGE }}"
+
+      - name: Start mangata-node parachain node with latest
+        run: docker-compose -f devops/parachain/docker-compose.yml up -d
+
+      - name: Install dependencies
+        working-directory: e2eTests
+        run: yarn
+
+      - name: Docker ps
+        run: docker ps
+
+      - name: Sleep for 2 minutes
+        run: sleep 120s #close buffers of videos.
+
+      - name: Run e2e tests
+        working-directory: e2eTests
+        run: yarn test-sequential-e2e
+
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: success() || failure()    # run this step even if previous step failed
+        with:
+          name: JEST Tests            # Name of the check run which will be created
+          path: e2eTests/reports/jest-*.xml    # Path to test results
+          reporter: jest-junit        # Format of test results
+
+  publish:
+    needs: [rustfmt-check, unit-test, clippy, build]
+    runs-on: ubuntu-latest
+    if: |
+      github.ref == 'refs/heads/develop' && 
+      !contains(github.event.pull_request.labels.*.name, 'skip-publish')
+    #if: "!contains(github.event.pull_request.labels.*.name, 'skip-publish') && ${{ github.event_name == 'push'}} && github.event.pull_request.merged == true"
+    #if: # its a push to develop.
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      -
+        name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ github.sha }}
+          path: /tmp
+
+      -
+        name: Load Docker image
+        run: |
+          docker load --input /tmp/${{ github.sha }}.tar
+          docker image ls -a
+
+      -
+        name: Push previously generated Docker image
+        run: |
+          docker image push --all-tags mangatasolutions/mangata-node
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      # - name: Save DigitalOcean kubeconfig with short-lived credentials
+      #   run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 ${{ secrets.K8S_CLUSTER_ID }}
+
+      # - name: Deploy to DigitalOcean Kubernetes
+      #   run: kubectl rollout restart deployment/mangata-node
+      #
+      # - name: Verify deployment
+      #   run: kubectl rollout status deployment/mangata-node

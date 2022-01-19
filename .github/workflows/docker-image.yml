@@ -219,7 +219,7 @@ jobs:
 
       - name: Print parachain docker image reference
         run: |
-         echo "${{ env.PARACHAIN_DOCKER_IMAGE }}"
+          echo ${{ env.PARACHAIN_DOCKER_IMAGE }}
 
       - name: Start mangata-node parachain node with latest
         run: docker-compose -f devops/parachain/docker-compose.yml up -d

@@ -996,7 +996,7 @@ impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 					},
 					_ => None,
 				}
-			}
+			},
 			_ => None,
 		}
 	}
@@ -1114,7 +1114,7 @@ impl_runtime_apis! {
 		}
 
 		fn store_seed(seed: sp_core::H256){
-            // initialize has been called already so we can fetch number from the storage
+			// initialize has been called already so we can fetch number from the storage
 			System::set_block_seed(&seed);
 		}
 	}
@@ -1194,7 +1194,7 @@ impl_runtime_apis! {
 		}
 
 		fn execute_block(block: Block) {
-            let key = cumulus_pallet_aura_ext::get_block_signer_pub_key::<Runtime,Block>(&block);
+			let key = cumulus_pallet_aura_ext::get_block_signer_pub_key::<Runtime,Block>(&block);
 			Executive::execute_block_ver(block, key);
 		}
 

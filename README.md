@@ -54,6 +54,7 @@ ERC20_APP_ID=0x00e392c04743359e39f00cd268a5390d27ef6b44
 ```
 build node:
 ```bash
+rustup target add wasm32-unknown-unknown
 cargo build --release
 ```
 

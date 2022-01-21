@@ -126,7 +126,7 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 		"Mangata Kusama Mainnet",
 		// ID
 		"mangata_kusama_mainnet",
-		ChainType::Development,
+		ChainType::Live,
 		move || {
 			mangata_genesis(
 				// initial collators.
@@ -292,7 +292,7 @@ pub fn public_testnet_config() -> ChainSpec {
 		"Mangata Public Testnet",
 		// ID
 		"mangata_public_testnet",
-		ChainType::Development,
+		ChainType::Live,
 		move || {
 			mangata_genesis(
 				// initial collators.

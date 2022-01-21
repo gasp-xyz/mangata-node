@@ -72,7 +72,7 @@ pub trait XykApi<
 		at: Option<BlockHash>,
 	) -> Result<ResponseTypeAmounts>;
 
-	#[rpc(name = "calculate_rewards_amount")]
+	#[rpc(name = "xyk_calculate_rewards_amount")]
 	fn calculate_rewards_amount(
 		&self,
 		user: AccountId,

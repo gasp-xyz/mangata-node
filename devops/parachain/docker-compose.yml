@@ -57,7 +57,7 @@ services:
     environment:
       - STATE_FILE=/config/genesis-state
       - WASM_FILE=/config/genesis-wasm
-      - COLLATOR_ADDR=ws://10.0.0.2:9944
+      - COLLATOR_ADDR=ws://relay_alice:9944
     volumes:
       - ./config:/config
     networks:
@@ -133,3 +133,17 @@ services:
     networks:
         test_net:
           ipv4_address: 10.0.0.10
+
+  sidecar:
+    image: parity/substrate-api-sidecar:latest
+    container_name: para_alice_sidecar
+    depends_on:
+      - para_alice
+    ports:
+       - "8080:8080"
+    networks:
+        test_net:
+          ipv4_address: 10.0.0.11
+    environment:
+      SAS_SUBSTRATE_WS_URL: ws://para_alice:9944
+      SAS_EXPRESS_LOG_MODE: all

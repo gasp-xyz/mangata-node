@@ -31,7 +31,8 @@ use sp_version::RuntimeVersion;
 
 use frame_support::{
 	construct_runtime, match_type, parameter_types,
-	traits::{Contains, Everything, Get, LockIdentifier, Nothing, U128CurrencyToVote},
+	traits::{Contains, Everything, Get, LockIdentifier, Nothing, U128CurrencyToVote, OnUnbalanced,
+	Currency as PalletCurrency},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
 		DispatchClass, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
@@ -479,6 +480,15 @@ impl pallet_xyk::Config for Runtime {
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
 }
 
+type ORMLCurrencyAdapterNegativeImbalance = <orml_tokens::CurrencyAdapter::<Runtime, MgaTokenId> as PalletCurrency<AccountId>>::NegativeImbalance;
+
+pub struct ToAuthor;
+impl OnUnbalanced<ORMLCurrencyAdapterNegativeImbalance> for ToAuthor {
+	fn on_nonzero_unbalanced(amount: ORMLCurrencyAdapterNegativeImbalance) {
+		<orml_tokens::CurrencyAdapter::<Runtime, MgaTokenId> as PalletCurrency<AccountId>>::resolve_creating(&Authorship::author(), amount);
+	}
+}
+
 parameter_types! {
 	/// Relay Chain `TransactionByteFee` / 10
 	pub const TransactionByteFee: Balance = 10 * MICROUNIT;
@@ -488,7 +498,7 @@ parameter_types! {
 impl pallet_transaction_payment::Config for Runtime {
 	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<
 		orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>,
-		Treasury,
+		ToAuthor,
 	>;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = WeightToFee;

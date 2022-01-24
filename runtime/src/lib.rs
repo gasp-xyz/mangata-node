@@ -17,7 +17,7 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, ConvertInto,
-		Header as HeaderT, IdentifyAccount, IdentifyAccountWithLookup, Verify, StaticLookup
+		Header as HeaderT, IdentifyAccount, Verify, StaticLookup
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiSignature, Percent,
@@ -1097,8 +1097,6 @@ impl_runtime_apis! {
 		fn get_signer(
 			tx: <Block as BlockT>::Extrinsic,
 		) -> Option<(sp_runtime::AccountId32, u32)> {
-
-            let addr = tx.clone().get_account_id(&frame_system::ChainContext::<Runtime>::default());
 			if let Some(sig) = tx.signature.clone(){
 				let nonce: frame_system::CheckNonce<_> = sig.2.4;
                 <Runtime as frame_system::Config>::Lookup::lookup(sig.0)
@@ -1110,6 +1108,11 @@ impl_runtime_apis! {
 
 		fn is_new_session(number: <<Block as BlockT>::Header as HeaderT>::Number) -> bool{
 			<ParachainStaking as ShouldEndSession<_>>::should_end_session(number)
+		}
+
+		fn store_seed(seed: sp_core::H256){
+			// initialize has been called already so we can fetch number from the storage
+			System::set_block_seed(&seed);
 		}
 	}
 
@@ -1188,7 +1191,8 @@ impl_runtime_apis! {
 		}
 
 		fn execute_block(block: Block) {
-			Executive::execute_block_ver_impl(block)
+			let key = cumulus_pallet_aura_ext::get_block_signer_pub_key::<Runtime,Block>(&block);
+			Executive::execute_block_ver_impl(block, key)
 		}
 
 		fn initialize_block(header: &<Block as BlockT>::Header) {

@@ -1,0 +1,61 @@
+[ {
+  "uid" : "d6083036a118b864",
+  "name" : "assets won when assets are sold [Selling other in MGA pool] - 6",
+  "time" : {
+    "start" : 1643135405441,
+    "stop" : 1643136905471,
+    "duration" : 1500030
+  },
+  "status" : "failed",
+  "severity" : "normal"
+}, {
+  "uid" : "cf067593672968f5",
+  "name" : "xyk-pallet: Happy case scenario",
+  "time" : {
+    "start" : 1643127903863,
+    "stop" : 1643129403891,
+    "duration" : 1500028
+  },
+  "status" : "failed",
+  "severity" : "normal"
+}, {
+  "uid" : "db118932cf6f3b10",
+  "name" : "assets won when assets are sold [Selling Mangata] - 5",
+  "time" : {
+    "start" : 1643132405332,
+    "stop" : 1643133905411,
+    "duration" : 1500079
+  },
+  "status" : "failed",
+  "severity" : "normal"
+}, {
+  "uid" : "c8168e3af070bd87",
+  "name" : "assets won when assets are bought [Buying other in MGA pool]",
+  "time" : {
+    "start" : 1643136905472,
+    "stop" : 1643138405504,
+    "duration" : 1500032
+  },
+  "status" : "failed",
+  "severity" : "normal"
+}, {
+  "uid" : "77ff7ac14749460a",
+  "name" : "assets won when assets are bought [Buying Mangata]",
+  "time" : {
+    "start" : 1643133905411,
+    "stop" : 1643135405440,
+    "duration" : 1500029
+  },
+  "status" : "failed",
+  "severity" : "normal"
+}, {
+  "uid" : "b64361c8455ae4c3",
+  "name" : "xyk-pallet: Liquidity sufficiency scenario",
+  "time" : {
+    "start" : 1643129403892,
+    "stop" : 1643130903898,
+    "duration" : 1500006
+  },
+  "status" : "failed",
+  "severity" : "normal"
+} ]

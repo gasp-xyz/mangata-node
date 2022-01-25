@@ -283,36 +283,17 @@ const DEFAULT_DECIMALS: u32 = 18u32;
 
 pub use pallet::*;
 
-#[derive(Debug)]
-pub enum FeeCalculationError {
-	NonExistingPool,
-	MathOverflow,
-	DivisionByZero,
-	Other,
-}
-
-pub type FeeCalculationResult = Result<Option<(TokenId, Balance)>, FeeCalculationError>;
-
-impl<T: Config> From<Error<T>> for FeeCalculationError {
-	fn from(e: Error<T>) -> Self {
-		match e {
-			Error::<T>::MathOverflow => FeeCalculationError::MathOverflow,
-			Error::<T>::DivisionByZero => FeeCalculationError::DivisionByZero,
-			Error::<T>::NoSuchPool => FeeCalculationError::NonExistingPool,
-			_ => FeeCalculationError::Other,
-		}
-	}
-}
+pub type FeeCalculationResult<T> = Result<Option<(TokenId, Balance)>, Error<T>>;
 
 /// Calculates fee that should be charged in custom currency
-pub trait ChargeFeeInNonNativeCurrency<T> {
+pub trait ChargeFeeInNonNativeCurrency<T: Config> {
 	/// returns fee that should be charged in custom currency
-	fn calculate_fee(t: &T) -> FeeCalculationResult;
+	fn calculate_fee(t: &T::Call) -> FeeCalculationResult<T>;
 }
 
 /// A default [`ChargeFeeInNonNativeCurrency`] implementation for `()`
-impl<T> ChargeFeeInNonNativeCurrency<T> for () {
-	fn calculate_fee(_: &T) -> FeeCalculationResult {
+impl<T: Config> ChargeFeeInNonNativeCurrency<T> for () {
+	fn calculate_fee(_: &T::Call) -> FeeCalculationResult<T> {
 		Ok(None)
 	}
 }
@@ -336,7 +317,7 @@ pub mod pallet {
 		type NativeCurrencyId: Get<TokenId>;
 		type TreasuryPalletId: Get<PalletId>;
 		type BnbTreasurySubAccDerive: Get<[u8; 4]>;
-		type NonNativeCurrencyFeeChargeFilter: ChargeFeeInNonNativeCurrency<Self::Call>;
+		type NonNativeCurrencyFeeChargeFilter: ChargeFeeInNonNativeCurrency<Self>;
 	}
 
 	#[pallet::error]
@@ -753,27 +734,27 @@ impl<T: Config> Pallet<T> {
 	pub fn calculate_sell_price_fee_id(
 		_sold_token_id: TokenId,
 		sell_amount: Balance,
-	) -> Result<Balance, FeeCalculationError> {
+	) -> Result<Balance, Error<T>> {
 		multiply_by_rational(sell_amount, FEE_PERCENTAGE, 10000)
-			.map_err(|_| FeeCalculationError::MathOverflow)
-			.and_then(|s| s.checked_add(1).ok_or(FeeCalculationError::MathOverflow))
+			.map_err(|_| Error::<T>::MathOverflow)
+			.and_then(|s| s.checked_add(1).ok_or(Error::<T>::MathOverflow))
 	}
 
 	pub fn calculate_buy_price_fee_id(
 		sold_asset_id: TokenId,
 		bought_asset_id: TokenId,
 		bought_asset_amount: Balance,
-	) -> Result<Balance, FeeCalculationError> {
+	) -> Result<Balance, Error<T>> {
 		let (input_reserve, output_reserve) =
 			Pallet::<T>::get_reserves(sold_asset_id, bought_asset_id)
-				.map_err(|_| FeeCalculationError::NonExistingPool)?;
+				.map_err(|_| Error::<T>::NoSuchPool)?;
 
 		let sold_asset_amount =
 			Pallet::<T>::calculate_buy_price(input_reserve, output_reserve, bought_asset_amount)?;
 
 		multiply_by_rational(sold_asset_amount, FEE_PERCENTAGE, 10000)
-			.map_err(|_| FeeCalculationError::MathOverflow)
-			.and_then(|s| s.checked_add(1).ok_or(FeeCalculationError::MathOverflow))
+			.map_err(|_| Error::<T>::MathOverflow)
+			.and_then(|s| s.checked_add(1).ok_or(Error::<T>::MathOverflow))
 	}
 
 	pub fn calculate_buy_price_id(

@@ -470,8 +470,10 @@ impl orml_tokens::Config for Runtime {
 
 pub struct IsXykSellOrBuy;
 
-impl ChargeFeeInNonNativeCurrency<Call> for IsXykSellOrBuy {
-	fn calculate_fee(call: &Call) -> FeeCalculationResult {
+impl ChargeFeeInNonNativeCurrency<Runtime> for IsXykSellOrBuy {
+	fn calculate_fee(
+		call: &<Runtime as frame_system::Config>::Call,
+	) -> FeeCalculationResult<Runtime> {
 		match call {
 			Call::Xyk(pallet_xyk::Call::sell_asset {
 				sold_asset_id, sold_asset_amount, ..

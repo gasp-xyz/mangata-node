@@ -391,7 +391,7 @@ impl pallet_authorship::Config for Runtime {
 	type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Aura>;
 	type UncleGenerations = UncleGenerations;
 	type FilterUncle = ();
-	type EventHandler = (ParachainStaking,);
+	type EventHandler = ParachainStaking;
 }
 
 parameter_types! {

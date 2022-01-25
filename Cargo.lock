@@ -5472,6 +5472,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-issuance"
+version = "2.0.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "mangata-primitives",
+ "orml-tokens",
+ "orml-traits",
+ "parity-scale-codec 2.3.1",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-membership"
 version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#7e6a12655c5824ca7b8b17206f31a413898a8ea7"
@@ -5952,7 +5970,6 @@ dependencies = [
 [[package]]
 name = "parachain-staking"
 version = "3.0.0"
-source = "git+https://github.com/mangata-finance//moonbeam?branch=mangata-dev#2ca974e7743ddabe95d0a2943b762a2c26afe00f"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5961,6 +5978,7 @@ dependencies = [
  "mangata-primitives",
  "orml-tokens",
  "pallet-authorship",
+ "pallet-issuance",
  "pallet-session",
  "pallet-xyk",
  "parity-scale-codec 2.3.1",

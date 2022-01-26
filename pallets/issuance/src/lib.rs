@@ -42,7 +42,7 @@ use serde::{Deserialize, Serialize};
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq, TypeInfo)]
-pub struct IssuanceConfig {
+pub struct IssuanceConfigType {
 	// Max number of MGA to target
 	pub cap: Balance,
 	// MGA created at token generation event
@@ -118,7 +118,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_issuance_config)]
-	pub type IssuanceConfigStore<T: Config> = StorageValue<_, IssuanceConfig, ValueQuery>;
+	pub type IssuanceConfigStore<T: Config> = StorageValue<_, IssuanceConfigType, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_session_issuance)]
@@ -126,7 +126,7 @@ pub mod pallet {
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {
-		pub issuance_config: IssuanceConfig
+		pub issuance_config: IssuanceConfigType
 	}
 
 	#[cfg(feature = "std")]
@@ -139,10 +139,10 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
-			assert!(self.issuance_config.liquidity_mining_split.checked_add(&self.issuance_config.staking_split).unwrap()
-				.checked_add(&self.issuance_config.staking_split).unwrap() == Percent::from_percent(100));
+			assert_eq!(self.issuance_config.liquidity_mining_split.checked_add(&self.issuance_config.staking_split).unwrap()
+				.checked_add(&self.issuance_config.crowdloan_split).unwrap(), Percent::from_percent(100));
 			assert!(self.issuance_config.cap >= self.issuance_config.tge);
-			assert!(! self.issuance_config.linear_issuance_blocks == u32::zero());
+			assert_ne!(self.issuance_config.linear_issuance_blocks, u32::zero());
 			IssuanceConfigStore::<T>::put(self.issuance_config.clone());
 			Pallet::<T>::calculate_and_store_round_issuance(0u32);
 		}

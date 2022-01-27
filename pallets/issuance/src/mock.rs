@@ -179,6 +179,8 @@ pub(crate) fn roll_to_while_minting(n: u64, expected_amount_minted: Option<Balan
 
         orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(0u32.into(), &1u128, block_issuance);
 
+        // Compute issuance for the next session only after all issuance has been issued is current session
+        // To avoid overestimating the missing issuance and overshooting the cap
         if ( (System::block_number().saturated_into::<u32>() + 1u32) % BlocksPerRound::get() ) == 0 {
             <Issuance as ComputeIssuance>::compute_issuance(session_number + 1u32);
         }

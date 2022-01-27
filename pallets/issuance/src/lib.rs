@@ -27,6 +27,14 @@ use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 use serde::{Deserialize, Serialize};
 
 // TODO
+// Integration
+// Chainspec
+// Clean
+// Add README
+// Merge
+// Publish PR
+
+// TODO
 // Use primitives for round and linear_time types
 
 // TODO

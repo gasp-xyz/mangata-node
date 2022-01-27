@@ -30,7 +30,7 @@ on:
           description: "Skip build phase"
           type: boolean
           required: true
-          default: true
+          default: false
 
 
 jobs:

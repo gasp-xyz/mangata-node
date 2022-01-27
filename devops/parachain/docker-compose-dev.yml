@@ -10,13 +10,21 @@ services:
   relay_alice:
     # environment:
     #   - RUST_LOG=debug,sync=info,afg=info,libp2p_swarm=info,multistream_select=info,libp2p_core=info,sub-libp2p=info,libp2p_tcp=info,wasm_overrides=info,wasm-heap=info,libp2p_ping=info,runtime=trace
-    build:
-      context: ../../
-      dockerfile: ./devops/dockerfiles/node-and-runtime/relay.dockerfile
-    entrypoint: ""
-    command: polkadot --alice --validator --tmp --chain /config/spec.json --port 30333  --unsafe-ws-external --rpc-port=40333 --unsafe-rpc-external --rpc-cors=all --ws-port 9944
+    image: parity/polkadot:v0.9.12
+    command:
+      - "--alice"
+      - "--validator"
+      - "--tmp"
+      - "--port=30333"
+      - "--ws-port=9944"
+      - "--chain=/etc/mangata/spec.json"
+      - "--unsafe-ws-external"
+      - "--rpc-port=40333"
+      - "--unsafe-rpc-external"
+      - "--rpc-cors=all"
+      - "--node-key=0000000000000000000000000000000000000000000000000000000000000001"
     volumes:
-      - ./config:/config
+      - ./config:/etc/mangata
     ports:
       - 9944:9944
     networks:
@@ -24,40 +32,34 @@ services:
           ipv4_address: 10.0.0.2
 
   relay_bob:
-    build:
-      context: ../../
-      dockerfile: ./devops/dockerfiles/node-and-runtime/relay.dockerfile
-        #environment:
-        #- RUST_LOG=debug,sync=info,afg=info,libp2p_swarm=info,multistream_select=info,libp2p_core=info,sub-libp2p=info,libp2p_tcp=info,wasm_overrides=info,wasm-heap=info,libp2p_ping=info,runtime=debug
-    entrypoint: ""
-    tty: true
-    command: > 
-      bash -c "
-      HEADER='Content-Type:application/json';
-      PAYLOAD='{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"system_localPeerId\"}';
-      while ! curl --silent --connect-timeout 0.3 -H \"$$HEADER\" -d \"$$PAYLOAD\" http://relay_alice:40333 > /dev/null ; do
-        echo waiting for Alice relay node;
-        sleep 0.3;
-      done;
-      NODE_ID=$$(curl --connect-timeout 0.3 -H \"$$HEADER\" -d \"$$PAYLOAD\" http://relay_alice:40333 | jq -r '.result');
-      echo NODE ID: $$NODE_ID;
-      polkadot --bob --validator --tmp --chain /config/spec.json --port 30333  --ws-port 9944 --bootnodes /ip4/10.0.0.2/tcp/30333/p2p/$$NODE_ID --unsafe-ws-external --unsafe-rpc-external --rpc-cors=all;
-      "
+    image: parity/polkadot:v0.9.12
+    environment:
+      - ${RUST_LOG:-info}
+    command:
+      - "--bob" 
+      - "--validator" 
+      - "--tmp" 
+      - "--port=30333" 
+      - "--ws-port=9944" 
+      - "--chain=/etc/mangata/spec.json" 
+      - "--bootnodes=/dns/relay_alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp" 
+      - "--unsafe-ws-external" 
+      - "--unsafe-rpc-external" 
+      - "--rpc-cors=all"
+      - "--node-key=0000000000000000000000000000000000000000000000000000000000000002"
     volumes:
-      - ./config:/config
+      - ./config:/etc/mangata
     networks:
         test_net:
           ipv4_address: 10.0.0.3
 
-
   register:
+    image: matmangata/mat-registrator:alpha
+    command: bash -c "sleep 10s && node index.js"
     environment:
       - STATE_FILE=/config/genesis-state
       - WASM_FILE=/config/genesis-wasm
-    build:
-      context: ../../
-      dockerfile: devops/dockerfiles/node-and-runtime/para.dockerfile
-    command: bash -c "sleep 5 && node index.js"
+      - COLLATOR_ADDR=ws://relay_alice:9944
     volumes:
       - ./config:/config
     networks:
@@ -65,20 +67,31 @@ services:
           ipv4_address: 10.0.0.4
 
   para_alice:
-    # environment:
-    #   - RUST_LOG=debug,sync=info,afg=info,libp2p_swarm=info,multistream_select=info,libp2p_core=info,sub-libp2p=info,libp2p_tcp=info,wasm_overrides=info,wasm-heap=info,libp2p_ping=info,runtime=debug
+    environment:
+      - RUST_LOG=block_shuffler=debug
     image: dev
     command: >
-      bash -c "
-      /code/target/release/mangata-node export-genesis-state > /config/genesis-state;
-      /code/target/release/mangata-node export-genesis-wasm > /config/genesis-wasm;
-      /code/target/release/mangata-node --alice --collator --force-authoring --tmp --port 30333
-      --ws-port 9944 --unsafe-ws-external --unsafe-rpc-external
-      --rpc-cors=all -- --execution wasm --chain /config/spec.json
-      --port 30334 --ws-port 9945
-      "
+      bash -xc "
+      /code/target/release/mangata-node export-genesis-state > /etc/mangata/genesis-state;
+      /code/target/release/mangata-node export-genesis-wasm > /etc/mangata/genesis-wasm;
+      /code/target/release/mangata-node
+      --alice
+      --collator
+      --force-authoring
+      --tmp
+      --port=30333
+      --ws-port=9944
+      --unsafe-ws-external
+      --unsafe-rpc-external
+      --rpc-cors=all
+      --node-key=0000000000000000000000000000000000000000000000000000000000000003
+      --
+      --execution=wasm
+      --chain=/etc/mangata/spec.json
+      --bootnodes=/dns/relay_alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
+      " 
     volumes:
-      - ./config:/config
+      - ./config:/etc/mangata
       - ../../:/code
     ports:
       - 8844:9944
@@ -87,17 +100,41 @@ services:
           ipv4_address: 10.0.0.5
 
   para_bob:
+    environment:
+      - RUST_LOG=block_shuffler=debug
     image: dev
-    command: >
-      /code/target/release/mangata-node --bob --rpc-cors=all 
-      --collator --unsafe-ws-external --unsafe-rpc-external  
-      --force-authoring --tmp --port 30333 --ws-port 9944 -- 
-      --execution wasm --chain /config/spec.json
-      --port 30334
+    entrypoint: ""
+    command:
+      - "/code/target/release/mangata-node"
+      - "--bob"
+      - "--collator"
+      - "--force-authoring"
+      - "--tmp"
+      - "--port=30333"
+      - "--ws-port=9944"
+      - "--unsafe-ws-external"
+      - "--unsafe-rpc-external"
+      - "--rpc-cors=all"
+      - "--node-key=0000000000000000000000000000000000000000000000000000000000000004"
+      - "--bootnodes=/dns/para_alice/tcp/30333/p2p/12D3KooWKpDhPnax8CyJvVh77Z5T84a8EWZvY7c9Z7pZ1tk6sLBD"
+      - "--"
+      # relay
+      - "--execution=wasm"
+      - "--chain=/etc/mangata/spec.json"
+      - "--bootnodes=/dns/relay_alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp" 
     volumes:
-      - ./config:/config
+      - ./config:/etc/mangata
       - ../../:/code
     networks:
         test_net:
           ipv4_address: 10.0.0.6
 
+  ui:
+    build:
+      context: ../../
+      dockerfile: devops/dockerfiles/polkadot-ui/Dockerfile
+    ports:
+      - 3000:3000
+    networks:
+        test_net:
+          ipv4_address: 10.0.0.10

@@ -2033,10 +2033,12 @@ where
 	) -> TransactionValidity {
 		match T::NonNativeCurrencyFeeChargeFilter::calculate_fee(call) {
 			Ok(Some((token_id, amount))) => {
-				if amount < <T as Config>::Currency::free_balance(token_id.into(), who).into() {
+				let available = <T as Config>::Currency::free_balance(token_id.into(), who).into();
+				if amount > available {
 					log::warn!(
 						target: Self::IDENTIFIER,
-						"not enought non native tokens to pay fee"
+						"not enought non native tokens to pay fee, who:{:?} token_id:{} < {} vs free: {}",
+                        who, token_id, amount, available
 					);
 					// fail when account doesnt have enought assets to pay transaction fee in non
 					// native currency (Xyk::buy_asset & Xyk::sell_asset)

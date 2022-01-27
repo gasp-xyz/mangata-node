@@ -253,7 +253,7 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-pub(crate) const LOG_TARGET: &'static str = "xyk";
+pub(crate) const LOG_TARGET: &str = "xyk";
 
 // syntactic sugar for logging.
 #[macro_export]
@@ -685,7 +685,7 @@ impl<T: Config> Pallet<T> {
 
 		let denominator: U256 = output_reserve_saturated
 			.checked_sub(buy_amount_saturated)
-			.ok_or_else(|| Error::<T>::NotEnoughReserve)?
+			.ok_or(Error::<T>::NotEnoughReserve)?
 			.checked_mul(after_fee_percentage.into())
 			.ok_or(Error::<T>::MathOverflow)?;
 
@@ -776,12 +776,12 @@ impl<T: Config> Pallet<T> {
 		let mut reserves = Pools::<T>::get((first_asset_id, second_asset_id));
 
 		if Pools::<T>::contains_key((first_asset_id, second_asset_id)) {
-			return Ok((reserves.0, reserves.1))
+			Ok((reserves.0, reserves.1))
 		} else if Pools::<T>::contains_key((second_asset_id, first_asset_id)) {
 			reserves = Pools::<T>::get((second_asset_id, first_asset_id));
-			return Ok((reserves.1, reserves.0))
+			Ok((reserves.1, reserves.0))
 		} else {
-			return Err(DispatchError::from(Error::<T>::NoSuchPool))
+			Err(DispatchError::from(Error::<T>::NoSuchPool))
 		}
 	}
 
@@ -1031,6 +1031,7 @@ pub trait XykFunctionsTrait<AccountId> {
 		liquidity_asset_amount: Self::Balance,
 	) -> DispatchResult;
 
+	#[allow(clippy::type_complexity)]
 	fn get_tokens_required_for_minting(
 		liquidity_asset_id: Self::CurrencyId,
 		liquidity_token_amount: Self::Balance,
@@ -1820,6 +1821,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 	}
 
 	// This function has not been verified
+	#[allow(clippy::type_complexity)]
 	fn get_tokens_required_for_minting(
 		liquidity_asset_id: Self::CurrencyId,
 		liquidity_token_amount: Self::Balance,
@@ -2042,7 +2044,7 @@ where
 					);
 					// fail when account doesnt have enought assets to pay transaction fee in non
 					// native currency (Xyk::buy_asset & Xyk::sell_asset)
-					return Err(TransactionValidityError::Invalid(InvalidTransaction::Payment))
+					Err(TransactionValidityError::Invalid(InvalidTransaction::Payment))
 				} else {
 					Ok(ValidTransaction::default())
 				}
@@ -2050,7 +2052,7 @@ where
 			Ok(None) => Ok(ValidTransaction::default()),
 			Err(e) => {
 				log::warn!(target: Self::IDENTIFIER, "Transaction invalid due to {:?}", e);
-				return Err(TransactionValidityError::Invalid(InvalidTransaction::Payment))
+				Err(TransactionValidityError::Invalid(InvalidTransaction::Payment))
 			},
 		}
 	}

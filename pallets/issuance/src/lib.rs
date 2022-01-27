@@ -21,7 +21,7 @@ use sp_runtime::{
 use mangata_primitives::Balance;
 
 use sp_runtime::traits::CheckedAdd;
-use orml_tokens::{MultiTokenCurrency};
+use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -34,11 +34,11 @@ use serde::{Deserialize, Serialize};
 
 // use orml_tokens::MultiTokenCurrencyExtended;
 
-// #[cfg(test)]
-// mod mock;
+#[cfg(test)]
+mod mock;
 
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod tests;
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq, TypeInfo)]
@@ -104,7 +104,7 @@ pub mod pallet {
 		/// MGA currency to check total_issuance
 		type NativeCurrencyId: Get<TokenId>;
 		/// Tokens
-		type Tokens: MultiTokenCurrency<Self::AccountId>;
+		type Tokens: MultiTokenCurrencyExtended<Self::AccountId>;
 		/// Number of blocks per session/round
 		#[pallet::constant]
 		type BlocksPerRound: Get<u32>;
@@ -115,6 +115,9 @@ pub mod pallet {
 	
 	// TODO
 	// Add genesis for session 0 issuance
+
+	// TODO
+	// Add assert for historyLimit to be greater than staking rewardpaymentdelay 
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_issuance_config)]
@@ -203,17 +206,20 @@ impl<T: Config> Pallet<T> {
 		current_round: u32,
 	) -> DispatchResult {
 		let issuance_config = IssuanceConfigStore::<T>::get();
-		let yet_to_be_issued: Balance = issuance_config.cap - issuance_config.tge;
+		let to_be_issued: Balance = issuance_config.cap - issuance_config.tge;
 		let linear_issuance_sessions: u32 = issuance_config.linear_issuance_blocks / T::BlocksPerRound::get();
-		let legacy_issuance_per_session = yet_to_be_issued / linear_issuance_sessions as Balance;
+		let linear_issuance_per_session = to_be_issued / linear_issuance_sessions as Balance;
 
-		let mut current_round_issuance: Balance = Zero::zero(); 
-		if current_round <= linear_issuance_sessions {
-			current_round_issuance = legacy_issuance_per_session;
+		let mut current_round_issuance: Balance = Zero::zero();
+		// We do not want issuance to overshoot
+		// Sessions begin from 0 and linear_issuance_sessions is the total number of linear sessions incluuding 0
+		// So we stop before that
+		if current_round < linear_issuance_sessions {
+			current_round_issuance = linear_issuance_per_session;
 		} else {
 			let current_mga_total_issuance: Balance = T::Tokens::total_issuance(T::NativeCurrencyId::get().into()).into();
 			if issuance_config.cap > current_mga_total_issuance {
-				current_round_issuance = legacy_issuance_per_session.min(issuance_config.cap - current_mga_total_issuance)
+				current_round_issuance = linear_issuance_per_session.min(issuance_config.cap - current_mga_total_issuance)
 			} else {
 				current_round_issuance = Zero::zero();
 			}

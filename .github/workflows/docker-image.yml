@@ -135,7 +135,7 @@ jobs:
       -
         name: Build Only
         id: docker_build
-        if: ${{ github.event.inputs.skipBuild == 'false' }}
+        if: ${{ github.event.inputs.skipBuild != 'true' }}
         uses: docker/build-push-action@v2
         with:
           file: "devops/dockerfiles/node/Dockerfile"
@@ -145,7 +145,7 @@ jobs:
       -
         name: Upload artifact
         uses: actions/upload-artifact@v2
-        if: ${{ github.event.inputs.skipBuild == 'false' }}
+        if: ${{ github.event.inputs.skipBuild != 'true' }}
         with:
           name: ${{ github.sha }}
           path: /tmp/${{ github.sha }}.tar

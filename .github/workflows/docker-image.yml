@@ -29,7 +29,7 @@ on:
         skipBuild:
           description: "Skip build phase"
           type: boolean
-          required: false
+          required: true
           default: true
 
 

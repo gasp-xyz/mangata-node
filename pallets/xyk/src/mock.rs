@@ -136,6 +136,7 @@ impl Config for Test {
 	type NativeCurrencyId = NativeCurrencyId;
 	type TreasuryPalletId = TreasuryPalletId;
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
+	type NonNativeCurrencyFeeChargeFilter = ();
 }
 
 impl<T: Config> Pallet<T> {

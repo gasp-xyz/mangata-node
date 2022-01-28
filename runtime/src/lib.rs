@@ -1089,7 +1089,7 @@ construct_runtime!(
 		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>} = 13,
 
 		// Issuance
-		Issuance: pallet_issuance::{Pallet, Event<T>, Storage, Config},
+		Issuance: pallet_issuance::{Pallet, Event<T>, Storage, Config} = 19,
 
 		// Collator support. The order of these 4 are important and shall not change.
 		Authorship: pallet_authorship::{Pallet, Call, Storage} = 20,

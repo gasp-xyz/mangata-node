@@ -6,17 +6,14 @@ use frame_support::pallet_prelude::*;
 
 use frame_support::{
 	codec::{Decode, Encode},
-	ensure,
-	traits::{Get, Currency},
+	traits::{Get},
 };
-use frame_system::{ensure_root, pallet_prelude::*};
 use mangata_primitives::TokenId;
 use scale_info::TypeInfo;
 use sp_std::prelude::*;
 use sp_runtime::{
-	traits::{Saturating, Zero, One},
-	Perbill, Permill, Percent, RuntimeDebug,
-	helpers_128bit::multiply_by_rational,
+	traits::{Zero},
+	Percent, RuntimeDebug,
 };
 use mangata_primitives::Balance;
 
@@ -26,22 +23,6 @@ use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
-// TODO
-// Integration
-// Chainspec
-// Clean
-// Add README
-// Merge
-// Publish PR
-
-// TODO
-// Use primitives for round and linear_time types
-
-// TODO
-// Use assert to ensure blockperround is > 2
-
-// use orml_tokens::MultiTokenCurrencyExtended;
-
 #[cfg(test)]
 mod mock;
 
@@ -50,7 +31,7 @@ mod tests;
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq, TypeInfo)]
-pub struct IssuanceConfigType {
+pub struct IssuanceInfo {
 	// Max number of MGA to target
 	pub cap: Balance,
 	// MGA created at token generation event
@@ -65,9 +46,6 @@ pub struct IssuanceConfigType {
 	pub crowdloan_split: Percent,
 }
 
-// TODO
-// assert percents add up to 100
-
 pub use pallet::*;
 
 #[frame_support::pallet]
@@ -81,27 +59,6 @@ pub mod pallet {
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
-		// TODO
-		// Add hooks to calculate the issuance in an session.
-		// The issuance of a session needs to be decided before it starts.
-		// Perhaps do it as a part of the session pallet?
-
-		// TODO
-		// Discard states after history period expires
-
-		// TODO
-		// on_init must be before session and staking 
-
-		// fn on_initialize(n: T::BlockNumber) -> Weight {
-		// 	if T::ShouldEndSessionProvider::should_end_session(n) {
-		// 		let current_round = T::RoundInfoProvider::get_current_round();
-		// 		Pallet::<T>::calculate_and_store_round_issuance(current_round);
-		// 		Pallet::<T>::clear_round_issuance_history(current_round);
-		// 		// TODO
-		// 		// return weight
-		// 	}
-		// 	0.into()
-		// }
 	}
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
@@ -120,16 +77,10 @@ pub mod pallet {
 		#[pallet::constant]
 		type HistoryLimit: Get<u32>;
 	}
-	
-	// TODO
-	// Add genesis for session 0 issuance
-
-	// TODO
-	// Add assert for historyLimit to be greater than staking rewardpaymentdelay 
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_issuance_config)]
-	pub type IssuanceConfigStore<T: Config> = StorageValue<_, IssuanceConfigType, ValueQuery>;
+	pub type IssuanceConfigStore<T: Config> = StorageValue<_, IssuanceInfo, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_session_issuance)]
@@ -137,7 +88,7 @@ pub mod pallet {
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {
-		pub issuance_config: IssuanceConfigType
+		pub issuance_config: IssuanceInfo
 	}
 
 	#[cfg(feature = "std")]
@@ -154,8 +105,10 @@ pub mod pallet {
 				.checked_add(&self.issuance_config.crowdloan_split).unwrap(), Percent::from_percent(100));
 			assert!(self.issuance_config.cap >= self.issuance_config.tge);
 			assert_ne!(self.issuance_config.linear_issuance_blocks, u32::zero());
+			assert!(self.issuance_config.linear_issuance_blocks > T::BlocksPerRound::get());
+			assert_ne!(T::BlocksPerRound::get(), u32::zero());
 			IssuanceConfigStore::<T>::put(self.issuance_config.clone());
-			Pallet::<T>::calculate_and_store_round_issuance(0u32);
+			Pallet::<T>::calculate_and_store_round_issuance(0u32).expect("Set issuance is not expected to fail");
 		}
 	}
 
@@ -173,8 +126,8 @@ pub trait ComputeIssuance {
 
 impl<T: Config> ComputeIssuance for Pallet <T>{
 	fn compute_issuance(n: u32){
-		Pallet::<T>::calculate_and_store_round_issuance(n);
-		Pallet::<T>::clear_round_issuance_history(n);
+		let _ = Pallet::<T>::calculate_and_store_round_issuance(n);
+		let _ = Pallet::<T>::clear_round_issuance_history(n);
 	}
 }
 
@@ -218,9 +171,9 @@ impl<T: Config> Pallet<T> {
 		let linear_issuance_sessions: u32 = issuance_config.linear_issuance_blocks / T::BlocksPerRound::get();
 		let linear_issuance_per_session = to_be_issued / linear_issuance_sessions as Balance;
 
-		let mut current_round_issuance: Balance = Zero::zero();
+		let current_round_issuance: Balance;
 		// We do not want issuance to overshoot
-		// Sessions begin from 0 and linear_issuance_sessions is the total number of linear sessions incluuding 0
+		// Sessions begin from 0 and linear_issuance_sessions is the total number of linear sessions including 0
 		// So we stop before that
 		if current_round < linear_issuance_sessions {
 			current_round_issuance = linear_issuance_per_session;

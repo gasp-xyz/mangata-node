@@ -72,7 +72,7 @@ use xcm_executor::{traits::DropAssets, Assets, XcmExecutor};
 use codec::{Decode, Encode};
 use static_assertions::const_assert;
 
-pub use parachain_staking::{InflationInfo, Range};
+pub use pallet_issuance::IssuanceInfo;
 
 pub use mangata_primitives::{Amount, Balance, TokenId};
 
@@ -793,10 +793,8 @@ impl pallet_elections_phragmen::Config for Runtime {
 }
 
 parameter_types! {
-	/// Minimum round length is 2 minutes (10 * 12 second block times)
-	pub const MinBlocksPerRound: u32 = 10;
 	/// Default BlocksPerRound is every 4 hours (1200 * 12 second block times)
-	pub const DefaultBlocksPerRound: u32 = 4 * HOURS;
+	pub const BlocksPerRound: u32 = 4 * HOURS;
 	/// Collator candidate exit delay (number of rounds)
 	pub const LeaveCandidatesDelay: u32 = 2;
 	/// Collator candidate bond increases/decreases delay (number of rounds)
@@ -821,19 +819,21 @@ parameter_types! {
 	pub const DefaultParachainBondReservePercent: Percent = Percent::from_percent(30);
 	/// Minimum stake required to become a collator
 	pub const MinCollatorStk: u128 = 10 * DOLLARS;
-	// TODO: Restore to 100_000 for Phase 2 (remove the division by 10)
 	/// Minimum stake required to be reserved to be a candidate
 	pub const MinCandidateStk: u128 = 1 * DOLLARS;
 	/// Minimum stake required to be reserved to be a delegator
 	pub const MinDelegatorStk: u128 = 1 * CENTS;
 }
 
+// To ensure that BlocksPerRound is not zero, breaking issuance calculations
+// Also since 1 block is used for session change, atleast 1 block more needed for extrinsics to work
+const_assert!(BlocksPerRound::get() >= 2);
+
 impl parachain_staking::Config for Runtime {
 	type Event = Event;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type MonetaryGovernanceOrigin = EnsureRoot<AccountId>;
-	type MinBlocksPerRound = MinBlocksPerRound;
-	type DefaultBlocksPerRound = DefaultBlocksPerRound;
+	type BlocksPerRound = BlocksPerRound;
 	type LeaveCandidatesDelay = LeaveCandidatesDelay;
 	type CandidateBondDelay = CandidateBondDelay;
 	type LeaveDelegatorsDelay = LeaveDelegatorsDelay;
@@ -844,14 +844,28 @@ impl parachain_staking::Config for Runtime {
 	type MaxDelegatorsPerCandidate = MaxDelegatorsPerCandidate;
 	type MaxDelegationsPerDelegator = MaxDelegationsPerDelegator;
 	type DefaultCollatorCommission = DefaultCollatorCommission;
-	type DefaultParachainBondReserveAccount = TreasuryAccount;
-	type DefaultParachainBondReservePercent = DefaultParachainBondReservePercent;
 	type MinCollatorStk = MinCollatorStk;
 	type MinCandidateStk = MinCandidateStk;
 	type MinDelegation = MinDelegatorStk;
 	type NativeTokenId = MgaTokenId;
 	type StakingLiquidityTokenValuator = Xyk;
+	type Issuance = Issuance;
 	type WeightInfo = parachain_staking::weights::SubstrateWeight<Runtime>;
+}
+
+parameter_types! {
+	pub const HistoryLimit: u32 = 10u32;
+}
+
+// Issuance history must be kept for atleast the staking reward delay
+const_assert!(RewardPaymentDelay::get() <= HistoryLimit::get());
+
+impl pallet_issuance::Config for Runtime {
+	type Event = Event;
+	type NativeCurrencyId = MgaTokenId;
+	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	type BlocksPerRound = BlocksPerRound;
+	type HistoryLimit = HistoryLimit;
 }
 
 parameter_types! {
@@ -1071,6 +1085,9 @@ construct_runtime!(
 		// Xyk stuff
 		AssetsInfo: pallet_assets_info::{Pallet, Call, Config, Storage, Event<T>} = 12,
 		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>} = 13,
+
+		// Issuance
+		Issuance: pallet_issuance::{Pallet, Event<T>, Storage, Config},
 
 		// Collator support. The order of these 4 are important and shall not change.
 		Authorship: pallet_authorship::{Pallet, Call, Storage} = 20,

@@ -16,10 +16,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-//! Mocks for asset registry module.
-
-#![cfg(test)]
-
 use super::*;
 use crate as pallet_issuance;
 use frame_support::{
@@ -140,7 +136,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
     GenesisBuild::<Test>::assimilate_storage(
         &pallet_issuance::GenesisConfig {
-            issuance_config: IssuanceConfigType {
+            issuance_config: IssuanceInfo {
                 cap: 4_000_000_000u128,
                 tge: 2_000_000_000u128,
                 // Only blocks from [0, 22_219] will be considered as the linear period
@@ -162,9 +158,9 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 }
 
 pub(crate) fn roll_to_while_minting(n: u64, expected_amount_minted: Option<Balance>) {
-    let mut session_number: u32 = Default::default();
-    let mut session_issuance: (Balance, Balance, Balance) = Default::default();
-    let mut block_issuance: Balance = Default::default();
+    let mut session_number: u32;
+    let mut session_issuance: (Balance, Balance, Balance);
+    let mut block_issuance: Balance;
 	while System::block_number() < n {
 		System::on_finalize(System::block_number());
 		System::set_block_number(System::block_number() + 1);
@@ -177,7 +173,7 @@ pub(crate) fn roll_to_while_minting(n: u64, expected_amount_minted: Option<Balan
             assert_eq!(x, block_issuance);
         }
 
-        orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(0u32.into(), &1u128, block_issuance);
+        orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(0u32.into(), &1u128, block_issuance).unwrap();
 
         // Compute issuance for the next session only after all issuance has been issued is current session
         // To avoid overestimating the missing issuance and overshooting the cap

@@ -9,13 +9,13 @@ members = [
 	'runtime',
 ]
 
-[patch."https://github.com/mangata-finance/mangata-node"]
-pallet-xyk = { path = "./pallets/xyk" }
-mangata-primitives = {path = "./primitives/mangata"}
-pallet-issuance = { path = "./pallets/issuance" }
+# [patch."https://github.com/mangata-finance/mangata-node"]
+# pallet-xyk = { path = "./pallets/xyk" }
+# mangata-primitives = {path = "./primitives/mangata"}
+# pallet-issuance = { path = "./pallets/issuance" }
 
-[patch."https://github.com/mangata-finance/moonbeam"]
-parachain-staking = {path = "../moonbeam/pallets/parachain-staking"}
+# [patch."https://github.com/mangata-finance/moonbeam"]
+# parachain-staking = {path = "../moonbeam/pallets/parachain-staking"}
 
 # [patch."https://github.com/mangata-finance/open-runtime-module-library"]
 # orml-tokens = { path = "../open-runtime-module-library/tokens" }

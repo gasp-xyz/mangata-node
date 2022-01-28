@@ -3,8 +3,7 @@ use codec::Encode;
 use cumulus_primitives_core::ParaId;
 use hex_literal::hex;
 use mangata_runtime::{
-	AccountId, AuraId, IssuanceInfo, Signature, VersionedMultiLocation,
-	DOT_TOKEN_ID,
+	AccountId, AuraId, IssuanceInfo, Signature, VersionedMultiLocation, DOT_TOKEN_ID,
 };
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
@@ -12,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public, H160};
 use sp_runtime::{
 	traits::{IdentifyAccount, Verify},
-	Percent
+	Percent,
 };
 
 pub mod public_testnet_keys {
@@ -883,49 +882,64 @@ fn mangata_genesis(
 				})
 				.collect(),
 		},
-		issuance: mangata_runtime::IssuanceConfig{
+		issuance: mangata_runtime::IssuanceConfig {
 			issuance_config: {
 				let mut issuance_info = mangata_issuance_config();
 				let mut tge_tokens = tokens_endowment
 					.iter()
 					.cloned()
-					.filter_map(|(token_id, amount, _)| {
-						if token_id == 0u32 {
-						Some(amount)
-						}else{None}
-					})
+					.filter_map(
+						|(token_id, amount, _)| {
+							if token_id == 0u32 {
+								Some(amount)
+							} else {
+								None
+							}
+						},
+					)
 					.fold(0u128, |sum, val| sum + val);
 				tge_tokens = staking_accounts
 					.iter()
 					.cloned()
-					.filter_map(|(_, _, _, token_id, initial_amount, _, _)| {
-						if token_id == 0u32 {
-							Some(initial_amount)
-						}else{None}
-					})
+					.filter_map(
+						|(_, _, _, token_id, initial_amount, _, _)| {
+							if token_id == 0u32 {
+								Some(initial_amount)
+							} else {
+								None
+							}
+						},
+					)
 					.fold(tge_tokens, |sum, val| sum + val);
 				tge_tokens = staking_accounts
 					.iter()
 					.cloned()
-					.filter_map(|(_, token_id, initial_amount, _, _, _, _)| {
-						if token_id == 0u32 {
-							Some(initial_amount)
-						}else{None}
-					})
+					.filter_map(
+						|(_, token_id, initial_amount, _, _, _, _)| {
+							if token_id == 0u32 {
+								Some(initial_amount)
+							} else {
+								None
+							}
+						},
+					)
 					.fold(tge_tokens, |sum, val| sum + val);
 				tge_tokens = bridged_assets
 					.iter()
 					.cloned()
-					.filter_map(|(.., token_id, _, initial_supply, _)| {
-						if token_id == 0u32 {
-							Some(initial_supply)
-						}else{None}
-					})
+					.filter_map(
+						|(.., token_id, _, initial_supply, _)| {
+							if token_id == 0u32 {
+								Some(initial_supply)
+							} else {
+								None
+							}
+						},
+					)
 					.fold(tge_tokens, |sum, val| sum + val);
 				issuance_info.tge = tge_tokens;
 				issuance_info
-			}
-		}
-
+			},
+		},
 	}
 }

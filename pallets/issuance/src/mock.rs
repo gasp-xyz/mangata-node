@@ -25,8 +25,7 @@ use frame_support::{
 };
 use mangata_primitives::{Amount, Balance, TokenId};
 use orml_traits::parameter_type_with_key;
-use sp_runtime::traits::AccountIdConversion;
-use sp_runtime::SaturatedConversion;
+use sp_runtime::{traits::AccountIdConversion, SaturatedConversion};
 
 pub(crate) type AccountId = u128;
 
@@ -80,9 +79,9 @@ parameter_types! {
 	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
 	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account();
 	pub const MaxLocks: u32 = 50;
-    pub const MgaTokenId: TokenId = 0u32;
-    pub const BlocksPerRound: u32 = 5u32;
-    pub const HistoryLimit: u32 = 10u32;
+	pub const MgaTokenId: TokenId = 0u32;
+	pub const BlocksPerRound: u32 = 5u32;
+	pub const HistoryLimit: u32 = 10u32;
 }
 
 impl orml_tokens::Config for Test {
@@ -98,11 +97,11 @@ impl orml_tokens::Config for Test {
 }
 
 impl pallet_issuance::Config for Test {
-    type Event = Event;
-    type NativeCurrencyId = MgaTokenId;
-    type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
-    type BlocksPerRound = BlocksPerRound;
-    type HistoryLimit = HistoryLimit;
+	type Event = Event;
+	type NativeCurrencyId = MgaTokenId;
+	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
+	type BlocksPerRound = BlocksPerRound;
+	type HistoryLimit = HistoryLimit;
 }
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -123,63 +122,65 @@ construct_runtime!(
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-    let mut t = frame_system::GenesisConfig::default()
-        .build_storage::<Test>()
-        .expect("Frame system builds valid default genesis config");
+	let mut t = frame_system::GenesisConfig::default()
+		.build_storage::<Test>()
+		.expect("Frame system builds valid default genesis config");
 
-    orml_tokens::GenesisConfig::<Test> {
-        tokens_endowment: vec![(0u128, 0u32, 2_000_000_000)],
-        created_tokens_for_staking: Default::default(),
-    }
-    .assimilate_storage(&mut t)
-    .expect("Tokens storage can be assimilated");
+	orml_tokens::GenesisConfig::<Test> {
+		tokens_endowment: vec![(0u128, 0u32, 2_000_000_000)],
+		created_tokens_for_staking: Default::default(),
+	}
+	.assimilate_storage(&mut t)
+	.expect("Tokens storage can be assimilated");
 
-    GenesisBuild::<Test>::assimilate_storage(
-        &pallet_issuance::GenesisConfig {
-            issuance_config: IssuanceInfo {
-                cap: 4_000_000_000u128,
-                tge: 2_000_000_000u128,
-                // Only blocks from [0, 22_219] will be considered as the linear period
-                // The tokens missing at tge will be attempted to be distributed over this time period
-                // Missed opportunities for minting tokens such as at block 0 (genesis block) and or failure to claim will be counted as burned
-                linear_issuance_blocks: 22_222u32,
-                liquidity_mining_split: Percent::from_percent(50),
-                staking_split: Percent::from_percent(40),
-                crowdloan_split: Percent::from_percent(10),
-            }
-        },
-        &mut t,
-    )
-    .expect("pallet-issuance's storage can be assimilated");
+	GenesisBuild::<Test>::assimilate_storage(
+		&pallet_issuance::GenesisConfig {
+			issuance_config: IssuanceInfo {
+				cap: 4_000_000_000u128,
+				tge: 2_000_000_000u128,
+				// Only blocks from [0, 22_219] will be considered as the linear period
+				// The tokens missing at tge will be attempted to be distributed over this time period
+				// Missed opportunities for minting tokens such as at block 0 (genesis block) and or failure to claim will be counted as burned
+				linear_issuance_blocks: 22_222u32,
+				liquidity_mining_split: Percent::from_percent(50),
+				staking_split: Percent::from_percent(40),
+				crowdloan_split: Percent::from_percent(10),
+			},
+		},
+		&mut t,
+	)
+	.expect("pallet-issuance's storage can be assimilated");
 
-    let mut ext = sp_io::TestExternalities::new(t);
-    ext.execute_with(|| System::set_block_number(1));
-    ext
+	let mut ext = sp_io::TestExternalities::new(t);
+	ext.execute_with(|| System::set_block_number(1));
+	ext
 }
 
 pub(crate) fn roll_to_while_minting(n: u64, expected_amount_minted: Option<Balance>) {
-    let mut session_number: u32;
-    let mut session_issuance: (Balance, Balance, Balance);
-    let mut block_issuance: Balance;
+	let mut session_number: u32;
+	let mut session_issuance: (Balance, Balance, Balance);
+	let mut block_issuance: Balance;
 	while System::block_number() < n {
 		System::on_finalize(System::block_number());
 		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
-        session_number = System::block_number().saturated_into::<u32>() / BlocksPerRound::get();
-        session_issuance = <Issuance as GetIssuance>::get_all_issuance(session_number).expect("session issuance is always populated in advance");
-        block_issuance = (session_issuance.0 + session_issuance.1 + session_issuance.2 ) / (BlocksPerRound::get().saturated_into::<u128>());
+		session_number = System::block_number().saturated_into::<u32>() / BlocksPerRound::get();
+		session_issuance = <Issuance as GetIssuance>::get_all_issuance(session_number)
+			.expect("session issuance is always populated in advance");
+		block_issuance = (session_issuance.0 + session_issuance.1 + session_issuance.2) /
+			(BlocksPerRound::get().saturated_into::<u128>());
 
-        if let Some(x) = expected_amount_minted {
-            assert_eq!(x, block_issuance);
-        }
+		if let Some(x) = expected_amount_minted {
+			assert_eq!(x, block_issuance);
+		}
 
-        orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(0u32.into(), &1u128, block_issuance).unwrap();
+		orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(0u32.into(), &1u128, block_issuance)
+			.unwrap();
 
-        // Compute issuance for the next session only after all issuance has been issued is current session
-        // To avoid overestimating the missing issuance and overshooting the cap
-        if ( (System::block_number().saturated_into::<u32>() + 1u32) % BlocksPerRound::get() ) == 0 {
-            <Issuance as ComputeIssuance>::compute_issuance(session_number + 1u32);
-        }
-		
+		// Compute issuance for the next session only after all issuance has been issued is current session
+		// To avoid overestimating the missing issuance and overshooting the cap
+		if ((System::block_number().saturated_into::<u32>() + 1u32) % BlocksPerRound::get()) == 0 {
+			<Issuance as ComputeIssuance>::compute_issuance(session_number + 1u32);
+		}
 	}
 }

@@ -4,7 +4,7 @@ use cumulus_primitives_core::ParaId;
 use hex::FromHex;
 use hex_literal::hex;
 use mangata_runtime::{
-	AccountId, AuraId, Balance, InflationInfo, Range, Signature, VersionedMultiLocation,
+	AccountId, AuraId, IssuanceInfo, Signature, VersionedMultiLocation,
 	DOT_TOKEN_ID,
 };
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, ByteArray, Pair, Public, H160};
 use sp_runtime::{
 	traits::{IdentifyAccount, Verify},
-	Perbill,
+	Percent
 };
 
 pub mod public_testnet_keys {
@@ -93,25 +93,17 @@ pub fn mangata_session_keys(keys: AuraId) -> mangata_runtime::SessionKeys {
 	mangata_runtime::SessionKeys { aura: keys }
 }
 
-pub fn mangata_inflation_config() -> InflationInfo<Balance> {
-	InflationInfo {
-		expect: Range {
-			min: 100_000_000 * 1__000_000_000_000_000_000,
-			ideal: 200_000_000 * 1__000_000_000_000_000_000,
-			max: 500_000_000 * 1__000_000_000_000_000_000,
-		},
-		annual: Range {
-			min: Perbill::from_percent(4),
-			ideal: Perbill::from_percent(5),
-			max: Perbill::from_percent(5),
-		},
-		// 8760 hours in a year AND
-		// 4 hours in a round => 2190
-		round: Range {
-			min: Perbill::from_parts(Perbill::from_percent(4).deconstruct() / 2190),
-			ideal: Perbill::from_parts(Perbill::from_percent(5).deconstruct() / 2190),
-			max: Perbill::from_parts(Perbill::from_percent(5).deconstruct() / 2190),
-		},
+pub fn mangata_issuance_config() -> IssuanceInfo {
+	IssuanceInfo {
+		cap: 4_000_000_000__000_000_000_000_000_000u128,
+		// Is updated later based on the tokens config
+		tge: Default::default(),
+		// The tokens missing at tge will be attempted to be distributed over this time period
+		// Missed opportunities for minting tokens such as at block 0 (genesis block) and or failure to claim will be counted as burned
+		linear_issuance_blocks: 13_140_000u32,
+		liquidity_mining_split: Percent::from_percent(50),
+		staking_split: Percent::from_percent(40),
+		crowdloan_split: Percent::from_percent(10),
 	}
 }
 
@@ -179,8 +171,11 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 						18u32,
 						0u32,
 						H160::from_slice(&hex!["C7e3Bda797D2cEb740308eC40142ae235e08144A"][..]),
-						30_000_000__000_000_000_000_000_000u128,
-						kusama_mainnet_keys::ALICE_SR25519.parse::<AccountId>().unwrap().into(),
+						300_000_000__000_000_000_000_000_000u128,
+						kusama_mainnet_keys::ALICE_SR25519
+							.parse::<sr25519::Public>()
+							.unwrap()
+							.into(),
 					),
 					(
 						b"Ether".to_vec(),
@@ -197,23 +192,32 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 				vec![
 					(
 						0u32,
-						40_000_000__000_000_000_000_000_000u128,
-						kusama_mainnet_keys::SUDO_SR25519.parse::<AccountId>().unwrap().into(),
+						400_000_000__000_000_000_000_000_000u128,
+						kusama_mainnet_keys::SUDO_SR25519
+							.parse::<sr25519::Public>()
+							.unwrap()
+							.into(),
 					),
 					(
 						0u32,
-						10_000_000__000_000_000_000_000_000u128,
-						kusama_mainnet_keys::RELAY_SR25519.parse::<AccountId>().unwrap().into(),
+						100_000_000__000_000_000_000_000_000u128,
+						kusama_mainnet_keys::RELAY_SR25519
+							.parse::<sr25519::Public>()
+							.unwrap()
+							.into(),
 					),
 					(
 						0u32,
-						10_000_000__000_000_000_000_000_000u128,
-						kusama_mainnet_keys::BOB_SR25519.parse::<AccountId>().unwrap().into(),
+						100_000_000__000_000_000_000_000_000u128,
+						kusama_mainnet_keys::BOB_SR25519.parse::<sr25519::Public>().unwrap().into(),
 					),
 					(
 						0u32,
-						10_000_000__000_000_000_000_000_000u128,
-						kusama_mainnet_keys::CHARLIE_SR25519.parse::<AccountId>().unwrap().into(),
+						100_000_000__000_000_000_000_000_000u128,
+						kusama_mainnet_keys::CHARLIE_SR25519
+							.parse::<sr25519::Public>()
+							.unwrap()
+							.into(),
 					),
 				],
 				// Config for Staking
@@ -335,8 +339,11 @@ pub fn public_testnet_config() -> ChainSpec {
 						18u32,
 						0u32,
 						H160::from_slice(&hex!["C7e3Bda797D2cEb740308eC40142ae235e08144A"][..]),
-						30_000_000__000_000_000_000_000_000u128,
-						public_testnet_keys::ALICE_SR25519.parse::<AccountId>().unwrap().into(),
+						300_000_000__000_000_000_000_000_000u128,
+						public_testnet_keys::ALICE_SR25519
+							.parse::<sr25519::Public>()
+							.unwrap()
+							.into(),
 					),
 					(
 						b"Ether".to_vec(),
@@ -353,23 +360,32 @@ pub fn public_testnet_config() -> ChainSpec {
 				vec![
 					(
 						0u32,
-						40_000_000__000_000_000_000_000_000u128,
-						public_testnet_keys::SUDO_SR25519.parse::<AccountId>().unwrap().into(),
+						400_000_000__000_000_000_000_000_000u128,
+						public_testnet_keys::SUDO_SR25519
+							.parse::<sr25519::Public>()
+							.unwrap()
+							.into(),
 					),
 					(
 						0u32,
-						10_000_000__000_000_000_000_000_000u128,
-						public_testnet_keys::RELAY_SR25519.parse::<AccountId>().unwrap().into(),
+						100_000_000__000_000_000_000_000_000u128,
+						public_testnet_keys::RELAY_SR25519
+							.parse::<sr25519::Public>()
+							.unwrap()
+							.into(),
 					),
 					(
 						0u32,
-						10_000_000__000_000_000_000_000_000u128,
-						public_testnet_keys::BOB_SR25519.parse::<AccountId>().unwrap().into(),
+						100_000_000__000_000_000_000_000_000u128,
+						public_testnet_keys::BOB_SR25519.parse::<sr25519::Public>().unwrap().into(),
 					),
 					(
 						0u32,
-						10_000_000__000_000_000_000_000_000u128,
-						public_testnet_keys::CHARLIE_SR25519.parse::<AccountId>().unwrap().into(),
+						100_000_000__000_000_000_000_000_000u128,
+						public_testnet_keys::CHARLIE_SR25519
+							.parse::<sr25519::Public>()
+							.unwrap()
+							.into(),
 					),
 				],
 				// Config for Staking
@@ -481,7 +497,7 @@ pub fn development_config() -> ChainSpec {
 						18u32,
 						0u32,
 						H160::from_slice(&hex!["F8F7758FbcEfd546eAEff7dE24AFf666B6228e73"][..]),
-						30_000_000__000_000_000_000_000_000u128,
+						300_000_000__000_000_000_000_000_000u128,
 						get_account_id_from_seed::<sr25519::Public>("Alice"),
 					),
 					(
@@ -499,24 +515,24 @@ pub fn development_config() -> ChainSpec {
 				vec![
 					(
 						0u32,
-						40_000_000__000_000_000_000_000_000u128,
+						400_000_000__000_000_000_000_000_000u128,
 						"0xec00ad0ec6eeb271a9689888f644d9262016a26a25314ff4ff5d756404c44112"
 							.parse()
 							.unwrap(),
 					),
 					(
 						0u32,
-						10_000_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000u128,
 						get_account_id_from_seed::<sr25519::Public>("Relay"),
 					),
 					(
 						0u32,
-						10_000_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000u128,
 						get_account_id_from_seed::<sr25519::Public>("Bob"),
 					),
 					(
 						0u32,
-						10_000_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000u128,
 						get_account_id_from_seed::<sr25519::Public>("Charlie"),
 					),
 				],
@@ -629,7 +645,7 @@ pub fn local_config() -> ChainSpec {
 						18u32,
 						0u32,
 						H160::from_slice(&hex!["F8F7758FbcEfd546eAEff7dE24AFf666B6228e73"][..]),
-						30_000_000__000_000_000_000_000_000u128,
+						300_000_000__000_000_000_000_000_000u128,
 						get_account_id_from_seed::<sr25519::Public>("Alice"),
 					),
 					(
@@ -647,24 +663,24 @@ pub fn local_config() -> ChainSpec {
 				vec![
 					(
 						0u32,
-						40_000_000__000_000_000_000_000_000u128,
+						400_000_000__000_000_000_000_000_000u128,
 						"0xec00ad0ec6eeb271a9689888f644d9262016a26a25314ff4ff5d756404c44112"
 							.parse()
 							.unwrap(),
 					),
 					(
 						0u32,
-						10_000_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000u128,
 						get_account_id_from_seed::<sr25519::Public>("Relay"),
 					),
 					(
 						0u32,
-						10_000_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000u128,
 						get_account_id_from_seed::<sr25519::Public>("Bob"),
 					),
 					(
 						0u32,
-						10_000_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000u128,
 						get_account_id_from_seed::<sr25519::Public>("Charlie"),
 					),
 				],
@@ -785,7 +801,6 @@ fn mangata_genesis(
 				})
 				.collect(),
 			delegations: vec![],
-			inflation_config: mangata_inflation_config(),
 		},
 		session: mangata_runtime::SessionConfig {
 			keys: initial_authorities
@@ -876,5 +891,49 @@ fn mangata_genesis(
 				})
 				.collect(),
 		},
+		issuance: mangata_runtime::IssuanceConfig{
+			issuance_config: {
+				let mut issuance_info = mangata_issuance_config();
+				let mut tge_tokens = tokens_endowment
+					.iter()
+					.cloned()
+					.filter_map(|(token_id, amount, _)| {
+						if token_id == 0u32 {
+						Some(amount)
+						}else{None}
+					})
+					.fold(0u128, |sum, val| sum + val);
+				tge_tokens = staking_accounts
+					.iter()
+					.cloned()
+					.filter_map(|(_, _, _, token_id, initial_amount, _, _)| {
+						if token_id == 0u32 {
+							Some(initial_amount)
+						}else{None}
+					})
+					.fold(tge_tokens, |sum, val| sum + val);
+				tge_tokens = staking_accounts
+					.iter()
+					.cloned()
+					.filter_map(|(_, token_id, initial_amount, _, _, _, _)| {
+						if token_id == 0u32 {
+							Some(initial_amount)
+						}else{None}
+					})
+					.fold(tge_tokens, |sum, val| sum + val);
+				tge_tokens = bridged_assets
+					.iter()
+					.cloned()
+					.filter_map(|(.., token_id, _, initial_supply, _)| {
+						if token_id == 0u32 {
+							Some(initial_supply)
+						}else{None}
+					})
+					.fold(tge_tokens, |sum, val| sum + val);
+				issuance_info.tge = tge_tokens;
+				issuance_info
+			}
+		}
+
 	}
 }

@@ -4419,6 +4419,7 @@ dependencies = [
  "pallet-bridge",
  "pallet-collective",
  "pallet-elections-phragmen",
+ "pallet-issuance",
  "pallet-session",
  "pallet-sudo",
  "pallet-sudo-origin",

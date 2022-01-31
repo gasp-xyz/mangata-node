@@ -2044,7 +2044,7 @@ where
 					);
 					// fail when account doesnt have enought assets to pay transaction fee in non
 					// native currency (Xyk::buy_asset & Xyk::sell_asset)
-					Err(TransactionValidityError::Invalid(InvalidTransaction::Payment))
+					Err(TransactionValidityError::Invalid(InvalidTransaction::NonNativePayment))
 				} else {
 					Ok(ValidTransaction::default())
 				}
@@ -2052,7 +2052,7 @@ where
 			Ok(None) => Ok(ValidTransaction::default()),
 			Err(e) => {
 				log::warn!(target: Self::IDENTIFIER, "Transaction invalid due to {:?}", e);
-				Err(TransactionValidityError::Invalid(InvalidTransaction::Payment))
+				Err(TransactionValidityError::Invalid(InvalidTransaction::NonNativePaymentCalculation))
 			},
 		}
 	}

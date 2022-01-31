@@ -1,0 +1,95 @@
+{
+  "uid" : "4b4757e66a1912dae1a509f688f20b0f",
+  "children" : [ {
+    "name" : "Product defects",
+    "children" : [ {
+      "name" : ": Timeout - Async callback was not invoked within the 1500000 ms timeout specified by jest.setTimeout.",
+      "children" : [ {
+        "name" : "xyk-pallet: Happy case scenario",
+        "uid" : "bbc44941284bc445",
+        "parentUid" : "005fba869b175f4f57f6f31cce8a4512",
+        "status" : "failed",
+        "time" : {
+          "start" : 1643622080898,
+          "stop" : 1643623580931,
+          "duration" : 1500033
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "xyk-pallet: Liquidity sufficiency scenario",
+        "uid" : "9dd2c2973664c671",
+        "parentUid" : "005fba869b175f4f57f6f31cce8a4512",
+        "status" : "failed",
+        "time" : {
+          "start" : 1643623580933,
+          "stop" : 1643625080940,
+          "duration" : 1500007
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      } ],
+      "uid" : "005fba869b175f4f57f6f31cce8a4512"
+    }, {
+      "name" : "Error: Timeout - Async callback was not invoked within the 1500000 ms timeout specified by jest.setTimeout.",
+      "children" : [ {
+        "name" : "assets won when assets are sold [Selling Mangata] - 5",
+        "uid" : "3e59104170d0bd21",
+        "parentUid" : "6a98983f286e38418146d03d40833257",
+        "status" : "failed",
+        "time" : {
+          "start" : 1643626582711,
+          "stop" : 1643628082788,
+          "duration" : 1500077
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "assets won when assets are bought [Buying Mangata]",
+        "uid" : "865666d4233b76ad",
+        "parentUid" : "6a98983f286e38418146d03d40833257",
+        "status" : "failed",
+        "time" : {
+          "start" : 1643628082788,
+          "stop" : 1643629582818,
+          "duration" : 1500030
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "assets won when assets are sold [Selling other in MGA pool] - 6",
+        "uid" : "dc3e55b95c9e0640",
+        "parentUid" : "6a98983f286e38418146d03d40833257",
+        "status" : "failed",
+        "time" : {
+          "start" : 1643629582818,
+          "stop" : 1643631082846,
+          "duration" : 1500028
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "assets won when assets are bought [Buying other in MGA pool]",
+        "uid" : "a77475c145113b15",
+        "parentUid" : "6a98983f286e38418146d03d40833257",
+        "status" : "failed",
+        "time" : {
+          "start" : 1643631082847,
+          "stop" : 1643632582879,
+          "duration" : 1500032
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      } ],
+      "uid" : "6a98983f286e38418146d03d40833257"
+    } ],
+    "uid" : "8fb3a91ba5aaf9de24cc8a92edc82b5d"
+  } ],
+  "name" : "categories"
+}

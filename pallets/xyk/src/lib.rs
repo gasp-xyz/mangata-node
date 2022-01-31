@@ -2052,7 +2052,9 @@ where
 			Ok(None) => Ok(ValidTransaction::default()),
 			Err(e) => {
 				log::warn!(target: Self::IDENTIFIER, "Transaction invalid due to {:?}", e);
-				Err(TransactionValidityError::Invalid(InvalidTransaction::NonNativePaymentCalculation))
+				Err(TransactionValidityError::Invalid(
+					InvalidTransaction::NonNativePaymentCalculation,
+				))
 			},
 		}
 	}

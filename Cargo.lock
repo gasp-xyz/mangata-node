@@ -5706,6 +5706,7 @@ dependencies = [
 [[package]]
 name = "parachain-staking"
 version = "3.0.0"
+source = "git+https://github.com/mangata-finance//moonbeam.git?branch=feature/tokenomics-impl#20157089447d0e903343b241ad3a058170aa8656"
 dependencies = [
  "frame-benchmarking",
  "frame-support",

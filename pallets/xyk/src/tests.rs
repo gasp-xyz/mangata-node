@@ -109,25 +109,57 @@ fn initialize_liquidity_rewards() {
 	let amount: u128 = 1000000000000;
 	XykStorage::create_new_token(&acc_id, amount);
 	XykStorage::create_new_token(&acc_id, amount);
-	XykStorage::transfer(0, 2, XykStorage::account_id(), 100000000000).unwrap();
 	XykStorage::create_pool(Origin::signed(2), 0, 5000, 1, 5000).unwrap();
 }
 
 #[test]
 fn liquidity_rewards_single_user_work_W() {
 	new_test_ext().execute_with(|| {
-		initialize_liquidity_rewards();
+		let max = std::u128::MAX;
+		System::set_block_number(1);
+		let acc_id: u128 = 2;
+		let amount: u128 = max;
+		XykStorage::create_new_token(&acc_id, amount);
+		XykStorage::create_new_token(&acc_id, amount);
+		XykStorage::create_pool(Origin::signed(2), 0, max - 1, 1, max - 1).unwrap();
 
 		assert_eq!(XykStorage::calculate_work_user(2, 2, 1).unwrap(), U256::from(0));
-		assert_eq!(XykStorage::calculate_work_user(2, 2, 2).unwrap(), U256::from(454));
-		assert_eq!(XykStorage::calculate_work_user(2, 2, 3).unwrap(), U256::from(1322));
-		assert_eq!(XykStorage::calculate_work_user(2, 2, 4).unwrap(), U256::from(2565));
-		assert_eq!(XykStorage::calculate_work_user(2, 2, 5).unwrap(), U256::from(4150));
-		assert_eq!(XykStorage::calculate_work_user(2, 2, 10).unwrap(), U256::from(16205));
-		assert_eq!(XykStorage::calculate_work_user(2, 2, 100).unwrap(), U256::from(445003));
-		assert_eq!(XykStorage::calculate_work_user(2, 2, 1000).unwrap(), U256::from(4945000));
-		assert_eq!(XykStorage::calculate_work_user(2, 2, 10000).unwrap(), U256::from(49945000));
-		assert_eq!(XykStorage::calculate_work_user(2, 2, 100000).unwrap(), U256::from(499945000));
+		assert_eq!(
+			XykStorage::calculate_work_user(2, 2, 2).unwrap(),
+			U256::from_dec_str("30934760629176223951215873402888019223").unwrap()
+		);
+		assert_eq!(
+			XykStorage::calculate_work_user(2, 2, 3).unwrap(),
+			U256::from_dec_str("89992030921239924221718904444765146830").unwrap()
+		);
+		assert_eq!(
+			XykStorage::calculate_work_user(2, 2, 4).unwrap(),
+			U256::from_dec_str("174615219088655875691573896976632372970").unwrap()
+		);
+		assert_eq!(
+			XykStorage::calculate_work_user(2, 2, 5).unwrap(),
+			U256::from_dec_str("282494582162865399348358801699021483212").unwrap()
+		);
+		assert_eq!(
+			XykStorage::calculate_work_user(2, 2, 10).unwrap(),
+			U256::from_dec_str("1102870671645712690524025894457212906637").unwrap()
+		);
+		assert_eq!(
+			XykStorage::calculate_work_user(2, 2, 100).unwrap(),
+			U256::from_dec_str("30285402277133515115952785401804717437765").unwrap()
+		);
+		assert_eq!(
+			XykStorage::calculate_work_user(2, 2, 1000).unwrap(),
+			U256::from_dec_str("336539260884808140365277486750018761238005").unwrap()
+		);
+		assert_eq!(
+			XykStorage::calculate_work_user(2, 2, 10000).unwrap(),
+			U256::from_dec_str("3399080563173254311535648953635932664324005").unwrap()
+		);
+		assert_eq!(
+			XykStorage::calculate_work_user(2, 2, 100000).unwrap(),
+			U256::from_dec_str("34024493586057716023239363622495071695184005").unwrap()
+		);
 	});
 }
 
@@ -199,8 +231,8 @@ fn liquidity_rewards_burn_W() {
 
 		XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 2500).unwrap();
 
-		assert_eq!(XykStorage::liquidity_mining_user_claimed((2, 2)).unwrap(), -14999847);
-		assert_eq!(XykStorage::liquidity_mining_pool_claimed(2).unwrap(), 14999847);
+		assert_eq!(XykStorage::liquidity_mining_user_claimed((2, 2)), -14999847);
+		assert_eq!(XykStorage::liquidity_mining_pool_claimed(2), 14999847);
 
 		user2_work = XykStorage::calculate_work_user(2, 2, 30).unwrap();
 		pool_work = XykStorage::calculate_work_pool(2, 30).unwrap();

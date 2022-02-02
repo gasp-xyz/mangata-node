@@ -719,25 +719,25 @@ impl<T: Config> Pallet<T> {
 		let current_time: u32 =
 			<frame_system::Pallet<T>>::block_number().saturated_into::<u32>() / TIMEBLOCKRATIO;
 
-		let mut user_work_total: U256 = U256::from(0_u32);
-		let mut user_missing_at_checkpoint: U256 = liquidity_assets_added.into();
-		let mut pool_work_total: U256 = U256::from(0_u32);
-		let mut pool_missing_at_checkpoint: U256 = liquidity_assets_added.into();
+		// let mut user_work_total: U256 = U256::from(0_u32);
+		// let mut user_missing_at_checkpoint: U256 = liquidity_assets_added.into();
+		// let mut pool_work_total: U256 = U256::from(0_u32);
+		// let mut pool_missing_at_checkpoint: U256 = liquidity_assets_added.into();
 
 		let (
-			mut user_last_checkpoint,
-			mut _user_cummulative_work_in_last_checkpoint,
-			mut user_missing_at_last_checkpoint,
+			user_last_checkpoint,
+			_user_cummulative_work_in_last_checkpoint,
+			user_missing_at_last_checkpoint,
 		) = LiquidityMiningUser::<T>::try_get((&user, &liquidity_asset_id))
 			.unwrap_or_else(|_| (0, U256::from(0), U256::from(0)));
 
 		let user_time_passed = current_time - user_last_checkpoint;
-		user_missing_at_checkpoint = Self::calculate_missing_at_checkpoint(
+		let user_missing_at_checkpoint = Self::calculate_missing_at_checkpoint(
 			user_time_passed,
 			liquidity_assets_added,
 			user_missing_at_last_checkpoint,
 		)?;
-		user_work_total =
+		let user_work_total =
 			Self::calculate_work_user(user.clone(), liquidity_asset_id, current_time)?;
 
 		LiquidityMiningUser::<T>::insert(
@@ -746,18 +746,18 @@ impl<T: Config> Pallet<T> {
 		);
 
 		let (
-			mut pool_last_checkpoint,
-			mut _pool_cummulative_work_in_last_checkpoint,
-			mut pool_missing_at_last_checkpoint,
+			pool_last_checkpoint,
+			_pool_cummulative_work_in_last_checkpoint,
+			pool_missing_at_last_checkpoint,
 		) = LiquidityMiningPool::<T>::try_get(&liquidity_asset_id)
 			.unwrap_or_else(|_| (0, U256::from(0), U256::from(0)));
 		let pool_time_passed = current_time - pool_last_checkpoint;
-		pool_missing_at_checkpoint = Self::calculate_missing_at_checkpoint(
+		let pool_missing_at_checkpoint = Self::calculate_missing_at_checkpoint(
 			pool_time_passed,
 			liquidity_assets_added,
 			pool_missing_at_last_checkpoint,
 		)?;
-		pool_work_total = Self::calculate_work_pool(liquidity_asset_id, current_time)?;
+		let pool_work_total = Self::calculate_work_pool(liquidity_asset_id, current_time)?;
 
 		LiquidityMiningPool::<T>::insert(
 			&liquidity_asset_id,
@@ -2155,7 +2155,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		liquidity_token_id: Self::CurrencyId,
 		amount: Self::Balance,
 	) -> DispatchResult {
-		let vault = Self::account_id();
 		let mangata_id: TokenId = T::NativeCurrencyId::get();
 
 		let current_block_number =

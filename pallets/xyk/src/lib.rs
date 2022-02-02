@@ -588,14 +588,17 @@ impl<T: Config> Pallet<T> {
 			Self::calculate_available_rewards_for_pool(liquidity_asset_id, block_number)?,
 		);
 
-		let user_mangata_rewards_amount = Balance::try_from(
-			available_rewards_for_pool
-				.checked_mul(work_user)
-				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
-				.checked_div(work_pool)
-				.ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?,
-		)
-		.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
+		let mut user_mangata_rewards_amount = Balance::try_from(0).unwrap();
+		if work_user != U256::from(0) && work_pool != U256::from(0) {
+			user_mangata_rewards_amount = Balance::try_from(
+				available_rewards_for_pool
+					.checked_mul(work_user)
+					.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+					.checked_div(work_pool)
+					.ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?,
+			)
+			.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
+		}
 
 		Ok(user_mangata_rewards_amount)
 	}
@@ -716,20 +719,25 @@ impl<T: Config> Pallet<T> {
 		let current_time: u32 =
 			<frame_system::Pallet<T>>::block_number().saturated_into::<u32>() / TIMEBLOCKRATIO;
 
+		let mut user_work_total: U256 = U256::from(0_u32);
+		let mut user_missing_at_checkpoint: U256 = liquidity_assets_added.into();
+		let mut pool_work_total: U256 = U256::from(0_u32);
+		let mut pool_missing_at_checkpoint: U256 = liquidity_assets_added.into();
+
 		let (
-			user_last_checkpoint,
-			_user_cummulative_work_in_last_checkpoint,
-			user_missing_at_last_checkpoint,
+			mut user_last_checkpoint,
+			mut _user_cummulative_work_in_last_checkpoint,
+			mut user_missing_at_last_checkpoint,
 		) = LiquidityMiningUser::<T>::try_get((&user, &liquidity_asset_id))
 			.unwrap_or_else(|_| (0, U256::from(0), U256::from(0)));
 
 		let user_time_passed = current_time - user_last_checkpoint;
-		let user_missing_at_checkpoint = Self::calculate_missing_at_checkpoint(
+		user_missing_at_checkpoint = Self::calculate_missing_at_checkpoint(
 			user_time_passed,
 			liquidity_assets_added,
 			user_missing_at_last_checkpoint,
 		)?;
-		let user_work_total =
+		user_work_total =
 			Self::calculate_work_user(user.clone(), liquidity_asset_id, current_time)?;
 
 		LiquidityMiningUser::<T>::insert(
@@ -738,18 +746,18 @@ impl<T: Config> Pallet<T> {
 		);
 
 		let (
-			pool_last_checkpoint,
-			_pool_cummulative_work_in_last_checkpoint,
-			pool_missing_at_last_checkpoint,
+			mut pool_last_checkpoint,
+			mut _pool_cummulative_work_in_last_checkpoint,
+			mut pool_missing_at_last_checkpoint,
 		) = LiquidityMiningPool::<T>::try_get(&liquidity_asset_id)
 			.unwrap_or_else(|_| (0, U256::from(0), U256::from(0)));
 		let pool_time_passed = current_time - pool_last_checkpoint;
-		let pool_missing_at_checkpoint = Self::calculate_missing_at_checkpoint(
+		pool_missing_at_checkpoint = Self::calculate_missing_at_checkpoint(
 			pool_time_passed,
 			liquidity_assets_added,
 			pool_missing_at_last_checkpoint,
 		)?;
-		let pool_work_total = Self::calculate_work_pool(liquidity_asset_id, current_time)?;
+		pool_work_total = Self::calculate_work_pool(liquidity_asset_id, current_time)?;
 
 		LiquidityMiningPool::<T>::insert(
 			&liquidity_asset_id,
@@ -810,6 +818,7 @@ impl<T: Config> Pallet<T> {
 			<T as Config>::Currency::total_balance(liquidity_asset_id.into(), &user).into();
 		// let input_reserve_saturated: U256 = input_reserve.into();
 		let liquidity_assets_burned_u256: U256 = liquidity_assets_burned.into();
+
 		let user_work_burned: U256 = liquidity_assets_burned_u256
 			.checked_mul(user_work_total)
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
@@ -855,6 +864,7 @@ impl<T: Config> Pallet<T> {
 			liquidity_asset_id,
 			current_time * 1000,
 		)?;
+
 		let rewards_claimed_new = rewards_claimed - claimable_reward as i128;
 		rewards_claimed_pool = rewards_claimed_pool + claimable_reward;
 

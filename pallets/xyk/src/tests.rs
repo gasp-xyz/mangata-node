@@ -1049,7 +1049,7 @@ fn mint_N_second_asset_amount_exceeded_expectations() {
 fn burn_W() {
 	new_test_ext().execute_with(|| {
 		initialize();
-
+		env_logger::init();
 		XykStorage::burn_liquidity(Origin::signed(2), 1, 2, 25000000000000000000).unwrap(); // burning 20000000000000000000 asset 0 of pool 0 1
 
 		assert_eq!(XykStorage::balance(3, 2), 25000000000000000000); // amount of liquidity assets owned by user by creating pool and burning

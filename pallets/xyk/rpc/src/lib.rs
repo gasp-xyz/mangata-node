@@ -14,10 +14,19 @@ use sp_runtime::{
 use sp_std::convert::{TryFrom, TryInto};
 use std::sync::Arc;
 pub use xyk_runtime_api::XykApi as XykRuntimeApi;
-use xyk_runtime_api::{RpcAmountsResult, RpcResult};
+use xyk_runtime_api::{RpcAmountsResult, RpcResult, RpcRewardsResult};
 
 #[rpc]
-pub trait XykApi<BlockHash, Balance, TokenId, ResponseTypePrice, ResponseTypeAmounts> {
+pub trait XykApi<
+	BlockHash,
+	Balance,
+	TokenId,
+	AccountId,
+	ResponseTypePrice,
+	ResponseTypeAmounts,
+	ResponseTypeRewards,
+>
+{
 	#[rpc(name = "xyk_calculate_sell_price")]
 	fn calculate_sell_price(
 		&self,
@@ -62,6 +71,15 @@ pub trait XykApi<BlockHash, Balance, TokenId, ResponseTypePrice, ResponseTypeAmo
 		liquidity_asset_amount: Balance,
 		at: Option<BlockHash>,
 	) -> Result<ResponseTypeAmounts>;
+
+	#[rpc(name = "xyk_calculate_rewards_amount")]
+	fn calculate_rewards_amount(
+		&self,
+		user: AccountId,
+		liquidity_asset_id: TokenId,
+		block_number: u32,
+		at: Option<BlockHash>,
+	) -> Result<ResponseTypeRewards>;
 }
 
 pub struct Xyk<C, M> {
@@ -89,22 +107,25 @@ impl<T: TryFrom<U256>> TryIntoBalance<T> for NumberOrHex {
 	}
 }
 
-impl<C, Block, Balance, TokenId>
+impl<C, Block, Balance, TokenId, AccountId>
 	XykApi<
 		<Block as BlockT>::Hash,
 		NumberOrHex,
 		TokenId,
+		AccountId,
 		RpcResult<Balance>,
 		RpcAmountsResult<Balance>,
+		RpcRewardsResult<Balance>,
 	> for Xyk<C, Block>
 where
 	Block: BlockT,
 	C: Send + Sync + 'static,
 	C: ProvideRuntimeApi<Block>,
 	C: HeaderBackend<Block>,
-	C::Api: XykRuntimeApi<Block, Balance, TokenId>,
+	C::Api: XykRuntimeApi<Block, Balance, TokenId, AccountId>,
 	Balance: Codec + MaybeDisplay + MaybeFromStr + TryFrom<U256>,
 	TokenId: Codec + MaybeDisplay + MaybeFromStr,
+	AccountId: Codec + MaybeDisplay + MaybeFromStr,
 {
 	fn calculate_sell_price(
 		&self,
@@ -224,6 +245,27 @@ where
 			second_asset_id,
 			liquidity_asset_amount.try_into_balance()?,
 		);
+		runtime_api_result.map_err(|e| RpcError {
+			code: ErrorCode::ServerError(1),
+			message: "Unable to serve the request".into(),
+			data: Some(format!("{:?}", e).into()),
+		})
+	}
+
+	fn calculate_rewards_amount(
+		&self,
+		user: AccountId,
+		liquidity_asset_id: TokenId,
+		block_number: u32,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> Result<RpcRewardsResult<Balance>> {
+		let api = self.client.runtime_api();
+		let at = BlockId::<Block>::hash(at.unwrap_or_else(||
+            // If the block hash is not supplied assume the best block.
+            self.client.info().best_hash));
+
+		let runtime_api_result =
+			api.calculate_rewards_amount(&at, user, liquidity_asset_id, block_number);
 		runtime_api_result.map_err(|e| RpcError {
 			code: ErrorCode::ServerError(1),
 			message: "Unable to serve the request".into(),

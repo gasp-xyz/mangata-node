@@ -6,7 +6,7 @@ use frame_support::pallet_prelude::*;
 
 use frame_support::{
 	codec::{Decode, Encode},
-	traits::Get,
+	traits::{Get, Imbalance},
 };
 use mangata_primitives::{Balance, TokenId};
 use scale_info::TypeInfo;
@@ -71,6 +71,15 @@ pub mod pallet {
 		/// Number of sessions to store issuance history for
 		#[pallet::constant]
 		type HistoryLimit: Get<u32>;
+		#[pallet::constant]
+		/// The account id that holds the liquidity mining issuance
+		type LiquidityMiningIssuanceVault: Get<Self::AccountId>;
+		#[pallet::constant]
+		/// The account id that holds the liquidity mining issuance
+		type StakingIssuanceVault: Get<Self::AccountId>;
+		#[pallet::constant]
+		/// The account id that holds the liquidity mining issuance
+		type CrowdloanIssuanceVault: Get<Self::AccountId>;
 	}
 
 	#[pallet::storage]
@@ -119,6 +128,8 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
+		/// Issuance for upcoming session issued
+		SessionIssuanceIssued(u32, Balance, Balance, Balance),
 		/// Issuance for upcoming session calculated and recorded
 		SessionIssuanceRecorded(u32, Balance, Balance, Balance),
 	}
@@ -195,6 +206,30 @@ impl<T: Config> Pallet<T> {
 			issuance_config.liquidity_mining_split * current_round_issuance;
 		let staking_issuance = issuance_config.staking_split * current_round_issuance;
 		let crowdloan_issuance = issuance_config.crowdloan_split * current_round_issuance;
+
+		{
+			let liquidity_mining_issuance_issued = T::Tokens::deposit_creating(
+				T::NativeCurrencyId::get().into(),
+				&T::LiquidityMiningIssuanceVault::get(),
+				liquidity_mining_issuance.into(),
+			);
+			let staking_issuance_issued = T::Tokens::deposit_creating(
+				T::NativeCurrencyId::get().into(),
+				&T::StakingIssuanceVault::get(),
+				staking_issuance.into(),
+			);
+			let crowdloan_issuance_issued = T::Tokens::deposit_creating(
+				T::NativeCurrencyId::get().into(),
+				&T::CrowdloanIssuanceVault::get(),
+				crowdloan_issuance.into(),
+			);
+			Self::deposit_event(Event::SessionIssuanceIssued(
+				current_round,
+				liquidity_mining_issuance_issued.peek().into(),
+				staking_issuance_issued.peek().into(),
+				crowdloan_issuance_issued.peek().into(),
+			));
+		}
 
 		SessionIssuance::<T>::insert(
 			current_round,

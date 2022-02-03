@@ -859,11 +859,19 @@ impl parachain_staking::Config for Runtime {
 	type NativeTokenId = MgaTokenId;
 	type StakingLiquidityTokenValuator = Xyk;
 	type Issuance = Issuance;
+	type StakingIssuanceVault = StakingIssuanceVault;
 	type WeightInfo = parachain_staking::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
 	pub const HistoryLimit: u32 = 10u32;
+
+	pub const LiquidityMiningIssuanceVaultId: PalletId = PalletId(*b"py/lqmiv");
+	pub LiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account();
+	pub const StakingIssuanceVaultId: PalletId = PalletId(*b"py/stkiv");
+	pub StakingIssuanceVault: AccountId = StakingIssuanceVaultId::get().into_account();
+	pub const CrowdloanIssuanceVaultId: PalletId = PalletId(*b"py/crliv");
+	pub CrowdloanIssuanceVault: AccountId = CrowdloanIssuanceVaultId::get().into_account();
 }
 
 // Issuance history must be kept for atleast the staking reward delay
@@ -875,6 +883,9 @@ impl pallet_issuance::Config for Runtime {
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type BlocksPerRound = BlocksPerRound;
 	type HistoryLimit = HistoryLimit;
+	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
+	type StakingIssuanceVault = StakingIssuanceVault;
+	type CrowdloanIssuanceVault = CrowdloanIssuanceVault;
 }
 
 parameter_types! {

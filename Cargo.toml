@@ -15,4 +15,4 @@ mangata-primitives = {path = "./primitives/mangata"}
 pallet-issuance = { path = "./pallets/issuance" }
 
 [patch."https://github.com/mangata-finance/moonbeam"]
-parachain-staking =  { default-features = false, git = "https://github.com/mangata-finance//moonbeam.git", branch = "feature/tokenomics-impl" }
+parachain-staking =  { git = "https://github.com/mangata-finance//moonbeam.git", branch = "feature/tokenomics-impl" }

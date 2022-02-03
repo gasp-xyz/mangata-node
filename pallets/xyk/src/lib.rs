@@ -306,23 +306,39 @@ pub mod pallet {
 	#[pallet::error]
 	/// Errors
 	pub enum Error<T> {
-		VaultAlreadySet,
+		/// Pool already Exists
 		PoolAlreadyExists,
+		/// Not enought assets
 		NotEnoughAssets,
+		/// No such pool exists
 		NoSuchPool,
+		/// No such liquidity asset exists
 		NoSuchLiquidityAsset,
+		/// Not enought reserve
 		NotEnoughReserve,
+		/// Zero amount is not supported
 		ZeroAmount,
+		/// Insufficient input amount
 		InsufficientInputAmount,
+		/// Insufficient output amount
 		InsufficientOutputAmount,
+		/// Asset ids cannot be the same
 		SameAsset,
+		/// Asset already exists
 		AssetAlreadyExists,
+		/// Asset does not exists
 		AssetDoesNotExists,
+		/// Division by zero
 		DivisionByZero,
+		/// Unexpected failure
 		UnexpectedFailure,
+		/// Unexpected failure
 		NotMangataLiquidityAsset,
+		/// Second asset amount exceeded expectations
 		SecondAssetAmountExceededExpectations,
+		/// Math overflow
 		MathOverflow,
+		/// Liquidity token cretion failed
 		LiquidityTokenCreationFailed,
 		NotEnoughtRewardsEarned,
 	}

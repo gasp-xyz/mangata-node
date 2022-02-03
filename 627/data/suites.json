@@ -1,0 +1,91 @@
+{
+  "uid" : "98d3104e051c652961429bf95fa0b5d6",
+  "children" : [ {
+    "name" : "test/sequential/xyk-pallet.test.ts",
+    "children" : [ {
+      "name" : "xyk-pallet: Happy case scenario",
+      "uid" : "aee8b4003a2ef468",
+      "parentUid" : "7c932ff5fdb9624b56fc99866d13104d",
+      "status" : "failed",
+      "time" : {
+        "start" : 1643836006825,
+        "stop" : 1643837506855,
+        "duration" : 1500030
+      },
+      "flaky" : false,
+      "newFailed" : false,
+      "parameters" : [ ]
+    }, {
+      "name" : "xyk-pallet: Liquidity sufficiency scenario",
+      "uid" : "edc0fccaf4e5342e",
+      "parentUid" : "7c932ff5fdb9624b56fc99866d13104d",
+      "status" : "failed",
+      "time" : {
+        "start" : 1643837506856,
+        "stop" : 1643839006862,
+        "duration" : 1500006
+      },
+      "flaky" : false,
+      "newFailed" : false,
+      "parameters" : [ ]
+    } ],
+    "uid" : "7c932ff5fdb9624b56fc99866d13104d"
+  }, {
+    "name" : "xyk-pallet - treasury tests [Mangata]: on treasury we store",
+    "children" : [ {
+      "name" : "assets won when assets are sold [Selling Mangata] - 5",
+      "uid" : "70169689c83c3488",
+      "parentUid" : "dd0c8d27829bd9fa6c614b8009117e89",
+      "status" : "failed",
+      "time" : {
+        "start" : 1643840508350,
+        "stop" : 1643842008429,
+        "duration" : 1500079
+      },
+      "flaky" : false,
+      "newFailed" : false,
+      "parameters" : [ ]
+    }, {
+      "name" : "assets won when assets are bought [Buying Mangata]",
+      "uid" : "98f0b863a4fd70b6",
+      "parentUid" : "dd0c8d27829bd9fa6c614b8009117e89",
+      "status" : "failed",
+      "time" : {
+        "start" : 1643842008430,
+        "stop" : 1643843508454,
+        "duration" : 1500024
+      },
+      "flaky" : false,
+      "newFailed" : false,
+      "parameters" : [ ]
+    }, {
+      "name" : "assets won when assets are sold [Selling other in MGA pool] - 6",
+      "uid" : "df4e414a016e6852",
+      "parentUid" : "dd0c8d27829bd9fa6c614b8009117e89",
+      "status" : "failed",
+      "time" : {
+        "start" : 1643843508454,
+        "stop" : 1643845008478,
+        "duration" : 1500024
+      },
+      "flaky" : false,
+      "newFailed" : false,
+      "parameters" : [ ]
+    }, {
+      "name" : "assets won when assets are bought [Buying other in MGA pool]",
+      "uid" : "fe30dc528b87a6f8",
+      "parentUid" : "dd0c8d27829bd9fa6c614b8009117e89",
+      "status" : "failed",
+      "time" : {
+        "start" : 1643845008479,
+        "stop" : 1643846508502,
+        "duration" : 1500023
+      },
+      "flaky" : false,
+      "newFailed" : false,
+      "parameters" : [ ]
+    } ],
+    "uid" : "dd0c8d27829bd9fa6c614b8009117e89"
+  } ],
+  "name" : "suites"
+}

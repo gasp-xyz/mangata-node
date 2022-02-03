@@ -96,12 +96,24 @@ impl orml_tokens::Config for Test {
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 }
 
+parameter_types! {
+	pub const LiquidityMiningIssuanceVaultId: PalletId = PalletId(*b"py/lqmiv");
+	pub LiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account();
+	pub const StakingIssuanceVaultId: PalletId = PalletId(*b"py/stkiv");
+	pub StakingIssuanceVault: AccountId = StakingIssuanceVaultId::get().into_account();
+	pub const CrowdloanIssuanceVaultId: PalletId = PalletId(*b"py/crliv");
+	pub CrowdloanIssuanceVault: AccountId = CrowdloanIssuanceVaultId::get().into_account();
+}
+
 impl pallet_issuance::Config for Test {
 	type Event = Event;
 	type NativeCurrencyId = MgaTokenId;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type BlocksPerRound = BlocksPerRound;
 	type HistoryLimit = HistoryLimit;
+	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
+	type StakingIssuanceVault = StakingIssuanceVault;
+	type CrowdloanIssuanceVault = CrowdloanIssuanceVault;
 }
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -173,9 +185,6 @@ pub(crate) fn roll_to_while_minting(n: u64, expected_amount_minted: Option<Balan
 		if let Some(x) = expected_amount_minted {
 			assert_eq!(x, block_issuance);
 		}
-
-		orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(0u32.into(), &1u128, block_issuance)
-			.unwrap();
 
 		// Compute issuance for the next session only after all issuance has been issued is current session
 		// To avoid overestimating the missing issuance and overshooting the cap

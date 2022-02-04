@@ -63,6 +63,7 @@ pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/mangata
 pallet-treasury = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v4" }
 pallet-elections-phragmen = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v4" }
 pallet-collective = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v4" }
+pallet-vesting-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v4" }
 
 # Open-Runtime-Module-Library Dependencies
 orml-tokens = {  default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v4" }
@@ -174,6 +175,7 @@ std = [
 
 	"xcm-asset-registry/std",
 	"pallet-issuance/std",
+	"pallet-vesting-mangata/std",
 
 ]
 

@@ -882,6 +882,21 @@ impl pallet_issuance::Config for Runtime {
 }
 
 parameter_types! {
+	pub const MinVestedTransfer: Balance = 100 * DOLLARS;
+}
+
+impl pallet_vesting_mangata::Config for Runtime {
+	type Event = Event;
+	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>;
+	type BlockNumberToBalance = ConvertInto;
+	type MinVestedTransfer = MinVestedTransfer;
+	type WeightInfo = pallet_vesting_mangata::weights::SubstrateWeight<Runtime>;
+	// `VestingInfo` encode length is 36bytes. 28 schedules gets encoded as 1009 bytes, which is the
+	// highest number of schedules that encodes less than 2^10.
+	const MAX_VESTING_SCHEDULES: u32 = 28;
+}
+
+parameter_types! {
 	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
 }
 
@@ -1098,6 +1113,9 @@ construct_runtime!(
 		// Xyk stuff
 		AssetsInfo: pallet_assets_info::{Pallet, Call, Config, Storage, Event<T>} = 12,
 		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>} = 13,
+
+		// Vesting
+		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>, Config<T>},
 
 		// Issuance
 		Issuance: pallet_issuance::{Pallet, Event<T>, Storage, Config} = 19,

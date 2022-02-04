@@ -3,7 +3,7 @@ use codec::Encode;
 use cumulus_primitives_core::ParaId;
 use hex_literal::hex;
 use mangata_runtime::{
-	AccountId, AuraId, IssuanceInfo, Signature, VersionedMultiLocation, DOT_TOKEN_ID, BlockNumber
+	AccountId, AuraId, BlockNumber, IssuanceInfo, Signature, VersionedMultiLocation, DOT_TOKEN_ID,
 };
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
@@ -234,14 +234,14 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 							.into(),
 						mangata_vesting_start(),
 						mangata_vesting_period(),
-						200_000_000__000_000_000_000_000_000u128
+						200_000_000__000_000_000_000_000_000u128,
 					),
 					(
 						kusama_mainnet_keys::BOB_SR25519.parse::<sr25519::Public>().unwrap().into(),
 						mangata_vesting_start(),
 						mangata_vesting_period(),
-						100_000_000__000_000_000_000_000_000u128
-					)
+						100_000_000__000_000_000_000_000_000u128,
+					),
 				],
 				// Config for Staking
 				// Make sure it works with initial-authorities as staking uses both
@@ -418,14 +418,14 @@ pub fn public_testnet_config() -> ChainSpec {
 							.into(),
 						mangata_vesting_start(),
 						mangata_vesting_period(),
-						200_000_000__000_000_000_000_000_000u128
+						200_000_000__000_000_000_000_000_000u128,
 					),
 					(
 						public_testnet_keys::BOB_SR25519.parse::<sr25519::Public>().unwrap().into(),
 						mangata_vesting_start(),
 						mangata_vesting_period(),
-						100_000_000__000_000_000_000_000_000u128
-					)
+						100_000_000__000_000_000_000_000_000u128,
+					),
 				],
 				// Config for Staking
 				// Make sure it works with initial-authorities as staking uses both
@@ -582,14 +582,14 @@ pub fn development_config() -> ChainSpec {
 						get_account_id_from_seed::<sr25519::Public>("Alice"),
 						mangata_vesting_start(),
 						mangata_vesting_period(),
-						200_000_000__000_000_000_000_000_000u128
+						200_000_000__000_000_000_000_000_000u128,
 					),
 					(
 						get_account_id_from_seed::<sr25519::Public>("Bob"),
 						mangata_vesting_start(),
 						mangata_vesting_period(),
-						100_000_000__000_000_000_000_000_000u128
-					)
+						100_000_000__000_000_000_000_000_000u128,
+					),
 				],
 				// Config for Staking
 				// Make sure it works with initial-authorities as staking uses both
@@ -743,14 +743,14 @@ pub fn local_config() -> ChainSpec {
 						get_account_id_from_seed::<sr25519::Public>("Alice"),
 						mangata_vesting_start(),
 						mangata_vesting_period(),
-						200_000_000__000_000_000_000_000_000u128
+						200_000_000__000_000_000_000_000_000u128,
 					),
 					(
 						get_account_id_from_seed::<sr25519::Public>("Bob"),
 						mangata_vesting_start(),
 						mangata_vesting_period(),
-						100_000_000__000_000_000_000_000_000u128
-					)
+						100_000_000__000_000_000_000_000_000u128,
+					),
 				],
 				// Config for Staking
 				// Make sure it works with initial-authorities as staking uses both
@@ -863,9 +863,7 @@ fn mangata_genesis(
 				created_tokens_for_staking_token_1
 			},
 		},
-		vesting: mangata_runtime::VestingConfig{
-			vesting: vesting_tokens.clone()
-		},
+		vesting: mangata_runtime::VestingConfig { vesting: vesting_tokens.clone() },
 		treasury: Default::default(),
 		parachain_info: mangata_runtime::ParachainInfoConfig { parachain_id: id },
 		parachain_staking: mangata_runtime::ParachainStakingConfig {
@@ -1025,13 +1023,9 @@ fn mangata_genesis(
 				tge_tokens = vesting_tokens
 					.iter()
 					.cloned()
-					.map(
-						|(_, _, _, vesting_amount)| {
-							vesting_amount
-						},
-					)
+					.map(|(_, _, _, vesting_amount)| vesting_amount)
 					.fold(tge_tokens, |sum, val| sum + val);
-					
+
 				issuance_info.tge = tge_tokens;
 				issuance_info
 			},

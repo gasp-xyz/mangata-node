@@ -140,6 +140,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
 	orml_tokens::GenesisConfig::<Test> {
 		tokens_endowment: vec![(0u128, 0u32, 2_000_000_000)],
+		vesting_tokens: Default::default(),
 		created_tokens_for_staking: Default::default(),
 	}
 	.assimilate_storage(&mut t)

@@ -52,7 +52,7 @@ services:
           ipv4_address: 10.0.0.3
 
   register:
-    image: matmangata/mat-registrator:alpha
+    image: mangatasolutions/parachain-register:0.1
     command: bash -c "sleep 10s && node index.js"
     environment:
       - STATE_FILE=/config/genesis-state

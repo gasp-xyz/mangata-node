@@ -1,6 +1,7 @@
 use artemis_core::{App, AppId};
 use codec::Encode;
 use cumulus_primitives_core::ParaId;
+use hex::FromHex;
 use hex_literal::hex;
 use mangata_runtime::{
 	AccountId, AuraId, Balance, InflationInfo, Range, Signature, VersionedMultiLocation,
@@ -132,24 +133,28 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 				// initial collators.
 				vec![
 					(
-						kusama_mainnet_keys::ALICE_SR25519
-							.parse::<sr25519::Public>()
-							.unwrap()
-							.into(),
-						kusama_mainnet_keys::ALICE_SR25519
-							.parse::<sr25519::Public>()
-							.unwrap()
-							.into(),
+						kusama_mainnet_keys::ALICE_SR25519.parse::<AccountId>().unwrap().into(),
+						AuraId::from_slice(
+							&<[u8; 32]>::from_hex(
+								kusama_mainnet_keys::ALICE_SR25519.strip_prefix("0x").unwrap(),
+							)
+							.unwrap(),
+						),
 					),
 					(
-						kusama_mainnet_keys::BOB_SR25519.parse::<sr25519::Public>().unwrap().into(),
-						kusama_mainnet_keys::BOB_SR25519.parse::<sr25519::Public>().unwrap().into(),
+						kusama_mainnet_keys::BOB_SR25519.parse::<AccountId>().unwrap().into(),
+						AuraId::from_slice(
+							&<[u8; 32]>::from_hex(
+								kusama_mainnet_keys::BOB_SR25519.strip_prefix("0x").unwrap(),
+							)
+							.unwrap(),
+						),
 					),
 				],
 				// Initial relay account
-				kusama_mainnet_keys::RELAY_SR25519.parse::<sr25519::Public>().unwrap().into(),
+				kusama_mainnet_keys::RELAY_SR25519.parse::<AccountId>().unwrap().into(),
 				// Sudo account
-				kusama_mainnet_keys::SUDO_SR25519.parse::<sr25519::Public>().unwrap().into(),
+				kusama_mainnet_keys::SUDO_SR25519.parse::<AccountId>().unwrap().into(),
 				// Ethereum AppId for SnowBridged Assets
 				vec![
 					(
@@ -173,10 +178,7 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 						0u32,
 						H160::from_slice(&hex!["C7e3Bda797D2cEb740308eC40142ae235e08144A"][..]),
 						30_000_000__000_000_000_000_000_000u128,
-						kusama_mainnet_keys::ALICE_SR25519
-							.parse::<sr25519::Public>()
-							.unwrap()
-							.into(),
+						kusama_mainnet_keys::ALICE_SR25519.parse::<AccountId>().unwrap().into(),
 					),
 					(
 						b"Ether".to_vec(),
@@ -186,10 +188,7 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 						1u32,
 						H160::zero(),
 						0u128,
-						kusama_mainnet_keys::ALICE_SR25519
-							.parse::<sr25519::Public>()
-							.unwrap()
-							.into(),
+						kusama_mainnet_keys::ALICE_SR25519.parse::<AccountId>().unwrap().into(),
 					),
 				],
 				// Tokens endowment
@@ -197,31 +196,22 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 					(
 						0u32,
 						40_000_000__000_000_000_000_000_000u128,
-						kusama_mainnet_keys::SUDO_SR25519
-							.parse::<sr25519::Public>()
-							.unwrap()
-							.into(),
+						kusama_mainnet_keys::SUDO_SR25519.parse::<AccountId>().unwrap().into(),
 					),
 					(
 						0u32,
 						10_000_000__000_000_000_000_000_000u128,
-						kusama_mainnet_keys::RELAY_SR25519
-							.parse::<sr25519::Public>()
-							.unwrap()
-							.into(),
+						kusama_mainnet_keys::RELAY_SR25519.parse::<AccountId>().unwrap().into(),
 					),
 					(
 						0u32,
 						10_000_000__000_000_000_000_000_000u128,
-						kusama_mainnet_keys::BOB_SR25519.parse::<sr25519::Public>().unwrap().into(),
+						kusama_mainnet_keys::BOB_SR25519.parse::<AccountId>().unwrap().into(),
 					),
 					(
 						0u32,
 						10_000_000__000_000_000_000_000_000u128,
-						kusama_mainnet_keys::CHARLIE_SR25519
-							.parse::<sr25519::Public>()
-							.unwrap()
-							.into(),
+						kusama_mainnet_keys::CHARLIE_SR25519.parse::<AccountId>().unwrap().into(),
 					),
 				],
 				// Config for Staking
@@ -229,10 +219,7 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 				vec![
 					(
 						// Who gets to stake initially
-						kusama_mainnet_keys::ALICE_SR25519
-							.parse::<sr25519::Public>()
-							.unwrap()
-							.into(),
+						kusama_mainnet_keys::ALICE_SR25519.parse::<AccountId>().unwrap().into(),
 						// Id of MGA token,
 						0u32,
 						// How much mangata they pool
@@ -248,7 +235,7 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 					),
 					(
 						// Who gets to stake initially
-						kusama_mainnet_keys::BOB_SR25519.parse::<sr25519::Public>().unwrap().into(),
+						kusama_mainnet_keys::BOB_SR25519.parse::<AccountId>().unwrap().into(),
 						// Id of MGA token,
 						0u32,
 						// How much mangata they pool
@@ -298,24 +285,28 @@ pub fn public_testnet_config() -> ChainSpec {
 				// initial collators.
 				vec![
 					(
-						public_testnet_keys::ALICE_SR25519
-							.parse::<sr25519::Public>()
-							.unwrap()
-							.into(),
-						public_testnet_keys::ALICE_SR25519
-							.parse::<sr25519::Public>()
-							.unwrap()
-							.into(),
+						public_testnet_keys::ALICE_SR25519.parse::<AccountId>().unwrap().into(),
+						AuraId::from_slice(
+							&<[u8; 32]>::from_hex(
+								public_testnet_keys::ALICE_SR25519.strip_prefix("0x").unwrap(),
+							)
+							.unwrap(),
+						),
 					),
 					(
-						public_testnet_keys::BOB_SR25519.parse::<sr25519::Public>().unwrap().into(),
-						public_testnet_keys::BOB_SR25519.parse::<sr25519::Public>().unwrap().into(),
+						public_testnet_keys::BOB_SR25519.parse::<AccountId>().unwrap().into(),
+						AuraId::from_slice(
+							&<[u8; 32]>::from_hex(
+								public_testnet_keys::BOB_SR25519.strip_prefix("0x").unwrap(),
+							)
+							.unwrap(),
+						),
 					),
 				],
 				// Initial relay account
-				public_testnet_keys::RELAY_SR25519.parse::<sr25519::Public>().unwrap().into(),
+				public_testnet_keys::RELAY_SR25519.parse::<AccountId>().unwrap().into(),
 				// Sudo account
-				public_testnet_keys::SUDO_SR25519.parse::<sr25519::Public>().unwrap().into(),
+				public_testnet_keys::SUDO_SR25519.parse::<AccountId>().unwrap().into(),
 				// Ethereum AppId for SnowBridged Assets
 				vec![
 					(
@@ -339,10 +330,7 @@ pub fn public_testnet_config() -> ChainSpec {
 						0u32,
 						H160::from_slice(&hex!["C7e3Bda797D2cEb740308eC40142ae235e08144A"][..]),
 						30_000_000__000_000_000_000_000_000u128,
-						public_testnet_keys::ALICE_SR25519
-							.parse::<sr25519::Public>()
-							.unwrap()
-							.into(),
+						public_testnet_keys::ALICE_SR25519.parse::<AccountId>().unwrap().into(),
 					),
 					(
 						b"Ether".to_vec(),
@@ -352,10 +340,7 @@ pub fn public_testnet_config() -> ChainSpec {
 						1u32,
 						H160::zero(),
 						0u128,
-						public_testnet_keys::ALICE_SR25519
-							.parse::<sr25519::Public>()
-							.unwrap()
-							.into(),
+						public_testnet_keys::ALICE_SR25519.parse::<AccountId>().unwrap().into(),
 					),
 				],
 				// Tokens endowment
@@ -363,31 +348,22 @@ pub fn public_testnet_config() -> ChainSpec {
 					(
 						0u32,
 						40_000_000__000_000_000_000_000_000u128,
-						public_testnet_keys::SUDO_SR25519
-							.parse::<sr25519::Public>()
-							.unwrap()
-							.into(),
+						public_testnet_keys::SUDO_SR25519.parse::<AccountId>().unwrap().into(),
 					),
 					(
 						0u32,
 						10_000_000__000_000_000_000_000_000u128,
-						public_testnet_keys::RELAY_SR25519
-							.parse::<sr25519::Public>()
-							.unwrap()
-							.into(),
+						public_testnet_keys::RELAY_SR25519.parse::<AccountId>().unwrap().into(),
 					),
 					(
 						0u32,
 						10_000_000__000_000_000_000_000_000u128,
-						public_testnet_keys::BOB_SR25519.parse::<sr25519::Public>().unwrap().into(),
+						public_testnet_keys::BOB_SR25519.parse::<AccountId>().unwrap().into(),
 					),
 					(
 						0u32,
 						10_000_000__000_000_000_000_000_000u128,
-						public_testnet_keys::CHARLIE_SR25519
-							.parse::<sr25519::Public>()
-							.unwrap()
-							.into(),
+						public_testnet_keys::CHARLIE_SR25519.parse::<AccountId>().unwrap().into(),
 					),
 				],
 				// Config for Staking
@@ -395,10 +371,7 @@ pub fn public_testnet_config() -> ChainSpec {
 				vec![
 					(
 						// Who gets to stake initially
-						public_testnet_keys::ALICE_SR25519
-							.parse::<sr25519::Public>()
-							.unwrap()
-							.into(),
+						public_testnet_keys::ALICE_SR25519.parse::<AccountId>().unwrap().into(),
 						// Id of MGA token,
 						0u32,
 						// How much mangata they pool
@@ -414,7 +387,7 @@ pub fn public_testnet_config() -> ChainSpec {
 					),
 					(
 						// Who gets to stake initially
-						public_testnet_keys::BOB_SR25519.parse::<sr25519::Public>().unwrap().into(),
+						public_testnet_keys::BOB_SR25519.parse::<AccountId>().unwrap().into(),
 						// Id of MGA token,
 						0u32,
 						// How much mangata they pool

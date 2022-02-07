@@ -25,6 +25,10 @@ services:
       - "--node-key=0000000000000000000000000000000000000000000000000000000000000001"
     volumes:
       - ./config:/etc/mangata
+    ports:
+      - 9944:9944
+      - 9933:9933
+
     networks:
         test_net:
           ipv4_address: 10.0.0.2

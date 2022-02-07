@@ -4120,6 +4120,7 @@ dependencies = [
  "derive_more",
  "frame-benchmarking",
  "frame-benchmarking-cli",
+ "hex",
  "hex-literal",
  "jsonrpc-core",
  "log",

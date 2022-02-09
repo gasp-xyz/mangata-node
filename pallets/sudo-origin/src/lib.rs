@@ -100,7 +100,7 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-pub use pallet::*;
+// pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -122,7 +122,7 @@ pub mod pallet {
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
-	#[pallet::generate_storage_info]
+	// #[pallet::generate_storage_info]
 	pub struct Pallet<T>(PhantomData<T>);
 
 	#[pallet::call]

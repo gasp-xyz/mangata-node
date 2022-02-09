@@ -60,6 +60,9 @@ pub mod module {
 
 		/// Weight information for the extrinsics in this module.
 		type WeightInfo: WeightInfo;
+
+		#[pallet::constant]
+		type TreasuryAddress: Get<Self::AccountId>;
 	}
 
 	#[pallet::error]
@@ -136,7 +139,7 @@ pub mod module {
 						);
 					} else {
 						let created_token_id: TokenId =
-							T::Currency::create(&Default::default(), Default::default())
+							T::Currency::create(&T::TreasuryAddress::get(), Default::default())
 								.expect("Error creating token for xcm asset")
 								.into();
 						assert!(
@@ -191,7 +194,7 @@ pub mod module {
 
 impl<T: Config> Pallet<T> {
 	fn do_register_asset(location: &MultiLocation) -> Result<TokenId, DispatchError> {
-		let asset_id: TokenId = T::Currency::create(&Default::default(), Default::default())
+		let asset_id: TokenId = T::Currency::create(&T::TreasuryAddress::get(), Default::default())
 			.map_err(|_| DispatchError::from(Error::<T>::TokenCreationFailed))?
 			.into();
 		LocationToCurrencyIds::<T>::try_mutate(location, |maybe_currency_ids| -> DispatchResult {

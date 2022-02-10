@@ -965,6 +965,9 @@ fn mangata_genesis(
 				})
 				.collect(),
 		},
+		crowdloan: mangata_runtime::CrowdloanConfig {
+			crowdloan_allocation: mangata_issuance_config().crowdloan_allocation,
+		},
 		issuance: mangata_runtime::IssuanceConfig {
 			issuance_config: {
 				let mut issuance_info = mangata_issuance_config();

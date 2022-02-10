@@ -4225,6 +4225,7 @@ dependencies = [
  "pallet-authorship",
  "pallet-bridge",
  "pallet-collective",
+ "pallet-crowdloan-rewards",
  "pallet-elections-phragmen",
  "pallet-issuance",
  "pallet-session",
@@ -5129,6 +5130,28 @@ dependencies = [
  "log",
  "parity-scale-codec 2.3.1",
  "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-crowdloan-rewards"
+version = "0.6.0"
+source = "git+https://github.com/mangata-finance//crowdloan-rewards.git?branch=feature/issuance-vesting-crowdloan#19c5ddf137c301b594416ee9d05d3f83498a0677"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "mangata-primitives",
+ "orml-tokens",
+ "pallet-balances",
+ "pallet-utility",
+ "parity-scale-codec 2.3.1",
+ "scale-info",
+ "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",

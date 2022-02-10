@@ -897,6 +897,33 @@ impl pallet_vesting_mangata::Config for Runtime {
 }
 
 parameter_types! {
+	pub const Initialized: bool = false;
+	pub const InitializationPayment: Perbill = Perbill::from_percent(20);
+	pub const MaxInitContributorsBatchSizes: u32 = 500;
+	pub const MinimumReward: Balance = 0;
+	pub const RelaySignaturesThreshold: Perbill = Perbill::from_percent(100);
+	pub const SigantureNetworkIdentifier: &'static [u8] = b"mangata-";
+}
+
+impl pallet_crowdloan_rewards::Config for Runtime {
+	type Event = Event;
+	type Initialized = Initialized;
+	type InitializationPayment = InitializationPayment;
+	type MaxInitContributors = MaxInitContributorsBatchSizes;
+	type MinimumReward = MinimumReward;
+	type RewardAddressRelayVoteThreshold = RelaySignaturesThreshold;
+	type NativeTokenId = MgaTokenId;
+	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	type RelayChainAccountId = sp_runtime::AccountId32;
+	type RewardAddressChangeOrigin = EnsureRoot<AccountId>;
+	type SignatureNetworkIdentifier = SigantureNetworkIdentifier;
+	type RewardAddressAssociateOrigin = EnsureRoot<AccountId>;
+	type VestingBlockNumber = BlockNumber;
+	type VestingBlockProvider = System;
+	type WeightInfo = pallet_crowdloan_rewards::weights::SubstrateWeight<Runtime>;
+}
+
+parameter_types! {
 	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
 }
 
@@ -1115,7 +1142,10 @@ construct_runtime!(
 		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>} = 13,
 
 		// Vesting
-		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>, Config<T>},
+		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>, Config<T>} = 17,
+
+		// Crowdloan
+		Crowdloan: pallet_crowdloan_rewards::{Pallet, Call, Storage, Event<T>, Config} = 18,
 
 		// Issuance
 		Issuance: pallet_issuance::{Pallet, Event<T>, Storage, Config} = 19,

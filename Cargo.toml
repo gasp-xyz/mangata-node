@@ -17,6 +17,9 @@ pallet-issuance = { path = "./pallets/issuance" }
 [patch."https://github.com/mangata-finance/moonbeam"]
 parachain-staking =  { git = "https://github.com/mangata-finance//moonbeam.git", branch = "feature/issuance-vesting-crowdloan" }
 
+[patch."https://github.com/mangata-finance/crowdloan-rewards"]
+pallet-crowdloan-rewards = { git = "https://github.com/mangata-finance//crowdloan-rewards.git", branch = "feature/issuance-vesting-crowdloan" }
+
 [patch."https://github.com/mangata-finance/open-runtime-module-library"]
 orml-tokens = { git = "https://github.com/mangata-finance//open-runtime-module-library", branch = "feature/issuance-vesting-crowdloan" }
 orml-traits = { git = "https://github.com/mangata-finance//open-runtime-module-library", branch = "feature/issuance-vesting-crowdloan" }

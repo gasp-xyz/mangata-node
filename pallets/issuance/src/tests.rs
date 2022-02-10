@@ -19,7 +19,11 @@ fn linear_issuance_works() {
 		roll_to_while_minting(10000, Some(81008));
 
 		// Mint for crowdloan
-		let _ = orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(0u32.into(), &1u128, 200_000_000u128.into());
+		let _ = orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(
+			0u32.into(),
+			&1u128,
+			200_000_000u128.into(),
+		);
 
 		roll_to_while_minting(22218, Some(81008));
 
@@ -48,7 +52,11 @@ fn linear_issuance_doesnt_change_upon_burn() {
 		assert_eq!(3115525040, Tokens::total_issuance(0u32) as Balance);
 
 		// Mint for crowdloan
-		let _ = orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(0u32.into(), &1u128, 200_000_000u128.into());
+		let _ = orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(
+			0u32.into(),
+			&1u128,
+			200_000_000u128.into(),
+		);
 
 		roll_to_while_minting(22218, Some(81008));
 
@@ -69,7 +77,11 @@ fn issuance_stops_upon_reaching_cap() {
 		// on the basis of total_issuance
 
 		// Mint for crowdloan
-		let _ = orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(0u32.into(), &1u128, 200_000_000u128.into());
+		let _ = orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(
+			0u32.into(),
+			&1u128,
+			200_000_000u128.into(),
+		);
 
 		// At this point the entirety of the missing issuance will be allocated to the next session
 		roll_to_while_minting(22219, Some(81008));
@@ -91,9 +103,12 @@ fn issuance_stops_upon_reaching_cap() {
 #[test]
 fn issuance_does_not_stop_upon_burn() {
 	new_test_ext().execute_with(|| {
-
 		// Mint for crowdloan
-		let _ = orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(0u32.into(), &1u128, 200_000_000u128.into());
+		let _ = orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(
+			0u32.into(),
+			&1u128,
+			200_000_000u128.into(),
+		);
 
 		// This the point the next session's issuance will be calculated and minted
 		// on the basis of total_issuance
@@ -129,9 +144,12 @@ fn issuance_does_not_stop_upon_burn() {
 #[test]
 fn issuance_restarts_upon_burn() {
 	new_test_ext().execute_with(|| {
-
 		// Mint for crowdloan
-		let _ = orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(0u32.into(), &1u128, 200_000_000u128.into());
+		let _ = orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(
+			0u32.into(),
+			&1u128,
+			200_000_000u128.into(),
+		);
 
 		// This the point the next session's issuance will be calculated and minted
 		// on the basis of total_issuance
@@ -175,9 +193,12 @@ fn issuance_restarts_upon_burn() {
 #[test]
 fn issuance_after_linear_period_never_execeeds_linear() {
 	new_test_ext().execute_with(|| {
-
 		// Mint for crowdloan
-		let _ = orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(0u32.into(), &1u128, 200_000_000u128.into());
+		let _ = orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(
+			0u32.into(),
+			&1u128,
+			200_000_000u128.into(),
+		);
 
 		// This the point the next session's issuance will be calculated and minted
 		// on the basis of total_issuance

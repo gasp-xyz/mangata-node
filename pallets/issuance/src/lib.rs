@@ -113,7 +113,10 @@ pub mod pallet {
 					.unwrap(),
 				Perbill::from_percent(100)
 			);
-			assert!(self.issuance_config.cap >= self.issuance_config.tge + self.issuance_config.crowdloan_allocation);
+			assert!(
+				self.issuance_config.cap >=
+					self.issuance_config.tge + self.issuance_config.crowdloan_allocation
+			);
 			assert_ne!(self.issuance_config.linear_issuance_blocks, u32::zero());
 			assert!(self.issuance_config.linear_issuance_blocks > T::BlocksPerRound::get());
 			assert_ne!(T::BlocksPerRound::get(), u32::zero());
@@ -171,7 +174,8 @@ impl<T: Config> GetIssuance for Pallet<T> {
 impl<T: Config> Pallet<T> {
 	pub fn calculate_and_store_round_issuance(current_round: u32) -> DispatchResult {
 		let issuance_config = IssuanceConfigStore::<T>::get();
-		let to_be_issued: Balance = issuance_config.cap - issuance_config.tge - issuance_config.crowdloan_allocation;
+		let to_be_issued: Balance =
+			issuance_config.cap - issuance_config.tge - issuance_config.crowdloan_allocation;
 		let linear_issuance_sessions: u32 =
 			issuance_config.linear_issuance_blocks / T::BlocksPerRound::get();
 		let linear_issuance_per_session = to_be_issued / linear_issuance_sessions as Balance;

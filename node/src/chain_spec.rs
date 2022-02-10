@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public, H160};
 use sp_runtime::{
 	traits::{IdentifyAccount, Verify},
-	Percent,
+	Perbill,
 };
 
 pub mod public_testnet_keys {
@@ -99,9 +99,9 @@ pub fn mangata_issuance_config() -> IssuanceInfo {
 		// The tokens missing at tge will be attempted to be distributed over this time period
 		// Missed opportunities for minting tokens such as at block 0 (genesis block) and or failure to claim will be counted as burned
 		linear_issuance_blocks: 13_140_000u32,
-		liquidity_mining_split: Percent::from_percent(50),
-		staking_split: Percent::from_percent(40),
-		crowdloan_split: Percent::from_percent(10),
+		liquidity_mining_split: Perbill::from_parts(555555556),
+		staking_split: Perbill::from_parts(444444444),
+		crowdloan_allocation: 330_000_000__000_000_000_000_000_000u128,
 	}
 }
 

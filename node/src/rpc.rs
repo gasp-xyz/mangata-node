@@ -43,7 +43,7 @@ where
 		+ 'static,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
-	C::Api: xyk_rpc::XykRuntimeApi<Block, Balance, TokenId>,
+	C::Api: xyk_rpc::XykRuntimeApi<Block, Balance, TokenId, AccountId>,
 	C::Api: BlockBuilder<Block>,
 	C::Api: VerApi<Block>,
 	P: TransactionPool + Sync + Send + 'static,

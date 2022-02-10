@@ -269,7 +269,11 @@ const TREASURY_PERCENTAGE: u128 = 5;
 const BUYANDBURN_PERCENTAGE: u128 = 5;
 const FEE_PERCENTAGE: u128 = 30;
 const POOL_FEE_PERCENTAGE: u128 = FEE_PERCENTAGE - TREASURY_PERCENTAGE - BUYANDBURN_PERCENTAGE;
-const TIMEBLOCKRATIO: u32 = 1000;
+// Smallest granularity in which values for liquidity minting rewards change
+const TIMEBLOCKRATIO: u32 = 10000;
+// Quocient ratio in which liquidity minting curve is rising
+const Q:f64 = 1.06;
+const NUMOFPROMOTEDPOOLS: u32 = 10;
 
 // Keywords for asset_info
 const LIQUIDITY_TOKEN_IDENTIFIER: &[u8] = b"LiquidityPoolToken";
@@ -582,10 +586,9 @@ impl<T: Config> Pallet<T> {
 
 		let time = block_number / TIMEBLOCKRATIO; // round to time metric, as other liq minting functions
 		let available_rewards_for_pool: Balance = u128::from(time)
-			.checked_mul(1000) // back to block number
+			.checked_mul(1140000) // mga minted per TIMEBLOCKRATIO of blocks
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
-			.checked_mul(1000) // mga minted per block
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+			.div(NUMOFPROMOTEDPOOLS)
 			.checked_sub(already_claimed_pool)
 			.ok_or_else(|| DispatchError::from(Error::<T>::NotEnoughtRewardsEarned))?;
 
@@ -652,11 +655,12 @@ impl<T: Config> Pallet<T> {
 			.checked_mul(U256::from(time_passed))
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 		let base = missing_at_last_checkpoint
-			.checked_mul(U256::from(11))
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			.checked_mul(U256::from(106))
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+			.div(U256::from(6));
 
 		let precision: u32 = 10000;
-		let q_pow = Self::calculate_q_pow(1.1, time_passed);
+		let q_pow = Self::calculate_q_pow(Q, time_passed);
 
 		let cummulative_missing_new = base - base * U256::from(precision) / q_pow;
 		let cummulative_work_new = cummulative_work_new_max_possible - cummulative_missing_new;
@@ -718,7 +722,7 @@ impl<T: Config> Pallet<T> {
 		missing_at_last_checkpoint: U256,
 	) -> Result<U256, DispatchError> {
 		let precision: u32 = 10000;
-		let q_pow = Self::calculate_q_pow(1.1, time_passed);
+		let q_pow = Self::calculate_q_pow(Q, time_passed);
 		let liquidity_assets_added_u256: U256 = liquidity_assets_added.into();
 
 		let missing_at_checkpoint: U256 = liquidity_assets_added_u256 +

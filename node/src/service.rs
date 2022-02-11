@@ -10,7 +10,7 @@ use mangata_runtime::{
 
 // Cumulus Imports
 use cumulus_client_consensus_aura::{
-	build_aura_consensus, BuildAuraConsensusParams, SlotProportion,
+	BuildAuraConsensusParams, SlotProportion,
 };
 use cumulus_client_consensus_common::ParachainConsensus;
 use cumulus_client_network::build_block_announce_validator;

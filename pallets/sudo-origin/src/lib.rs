@@ -100,7 +100,7 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-// pub use pallet::*;
+pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {

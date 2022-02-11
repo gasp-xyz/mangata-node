@@ -227,6 +227,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
+	state_version: 1,
 };
 
 pub use currency::*;
@@ -317,6 +318,7 @@ parameter_types! {
 
 parameter_types! {
 	pub const MgaTokenId: TokenId = MGA_TOKEN_ID;
+	pub const MaxConsumers: usize = 16;
 }
 
 // Configure FRAME pallets to include in runtime.
@@ -368,6 +370,8 @@ impl frame_system::Config for Runtime {
 	type SS58Prefix = SS58Prefix;
 	/// The action to take on a Runtime Upgrade
 	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
+	/// The maximum number of consumers allowed on a single account.
+	type MaxConsumers = frame_support::traits::ConstU32<2>;
 }
 
 parameter_types! {
@@ -396,6 +400,7 @@ impl pallet_authorship::Config for Runtime {
 parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub const ProposalBondMinimum: Balance = 1 * DOLLARS;
+	pub const ProposalBondMaximum: Option<Balance> = None;
 	pub const SpendPeriod: BlockNumber = 1 * DAYS;
 	pub const Burn: Permill = Permill::from_percent(50);
 	pub const TipCountdown: BlockNumber = 1 * DAYS;
@@ -422,6 +427,7 @@ impl pallet_treasury::Config for Runtime {
 	type OnSlash = ();
 	type ProposalBond = ProposalBond;
 	type ProposalBondMinimum = ProposalBondMinimum;
+	type ProposalBondMaximum = ProposalBondMaximum;
 	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
 	type BurnDestination = ();
@@ -498,7 +504,7 @@ parameter_types! {
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
 	type Event = Event;
-	type OnValidationData = ();
+	type OnSystemEvent = ();
 	type SelfParaId = ParachainInfo;
 	type DmpMessageHandler = DmpQueue;
 	type ReservedDmpWeight = ReservedDmpWeight;
@@ -538,6 +544,7 @@ pub type LocalAssetTransactor = MultiCurrencyAdapter<
 	LocationToAccountId,
 	TokenId,
 	TokenIdConvert,
+	()
 >;
 
 /// This is the type we use to convert an (incoming) XCM origin into a local `Origin` instance,
@@ -628,6 +635,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type ChannelInfo = ParachainSystem;
 	type VersionWrapper = ();
+	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
 }
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {
@@ -695,7 +703,7 @@ impl pallet_assets_info::Config for Runtime {
 
 impl pallet_bridge::Config for Runtime {
 	type Event = Event;
-	type Verifier = pallet_verifier::Module<Runtime>;
+	type Verifier = pallet_verifier::Pallet<Runtime>;
 	type AppETH = artemis_eth_app::Module<Runtime>;
 	type AppERC20 = artemis_erc20_app::Module<Runtime>;
 }
@@ -857,6 +865,7 @@ impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 
 parameter_types! {
 	pub const BaseXcmWeight: Weight = 100_000_000; // TODO: recheck this
+	pub const MaxAssetsForTransfer:usize = 2;
 }
 
 impl orml_xtokens::Config for Runtime {
@@ -870,6 +879,7 @@ impl orml_xtokens::Config for Runtime {
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type BaseXcmWeight = BaseXcmWeight;
 	type LocationInverter = LocationInverter<Ancestry>;
+	type MaxAssetsForTransfer = MaxAssetsForTransfer;
 }
 
 impl orml_unknown_tokens::Config for Runtime {
@@ -1030,6 +1040,7 @@ impl xcm_asset_registry::Config for Runtime {
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type RegisterOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = xcm_asset_registry::weights::SubstrateWeight<Runtime>;
+	type TreasuryAddress = TreasuryAccount;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -1049,7 +1060,7 @@ construct_runtime!(
 
 		// Snowbridge stuff
 		Bridge: pallet_bridge::{Pallet, Call, Config, Storage, Event} = 4,
-		Verifier: pallet_verifier::{Pallet, Call, Storage, Event, Config<T>} = 5,
+		Verifier: pallet_verifier::{Pallet, Call, Storage, Event} = 5,
 		BridgedAsset: artemis_asset::{Pallet, Call, Config<T>, Storage, Event<T>} = 6,
 		ETH: artemis_eth_app::{Pallet, Call, Storage, Event<T>} = 7,
 		ERC20: artemis_erc20_app::{Pallet, Call, Storage, Event<T>} = 8,
@@ -1294,8 +1305,8 @@ impl_runtime_apis! {
 	}
 
 	impl cumulus_primitives_core::CollectCollationInfo<Block> for Runtime {
-		fn collect_collation_info() -> cumulus_primitives_core::CollationInfo {
-			ParachainSystem::collect_collation_info()
+		fn collect_collation_info(header: &<Block as BlockT>::Header) -> cumulus_primitives_core::CollationInfo {
+			ParachainSystem::collect_collation_info(header)
 		}
 	}
 

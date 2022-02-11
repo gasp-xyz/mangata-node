@@ -60,6 +60,8 @@ sc-keystore = { git = "https://github.com/mangata-finance/substrate", branch = "
 sc-rpc = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.16" }
 sc-rpc-api = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.16" }
 sc-service = { git = "https://github.com/mangata-finance/substrate", features = ["wasmtime"], branch = "mangata-dev-v0.9.16" }
+sc-consensus-aura = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.16" }
+sc-finality-grandpa = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.16" }
 sc-telemetry = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.16" }
 sc-transaction-pool = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.16" }
 sc-transaction-pool-api = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.16" }
@@ -90,6 +92,9 @@ cumulus-client-network = { git = 'https://github.com/mangata-finance/cumulus', b
 cumulus-client-service = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.16' }
 cumulus-primitives-core = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.16' }
 cumulus-primitives-parachain-inherent = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.16' }
+cumulus-relay-chain-interface = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.16' }
+cumulus-relay-chain-local = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.16' }
+
 
 # Polkadot dependencies
 polkadot-cli = { git = "https://github.com/mangata-finance/polkadot", branch = "release-v0.9.16" }

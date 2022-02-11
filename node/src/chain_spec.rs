@@ -10,7 +10,7 @@ use mangata_runtime::{
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
-use sp_core::{sr25519, Pair, Public, H160};
+use sp_core::{sr25519, Pair, Public, H160, ByteArray};
 use sp_runtime::{
 	traits::{IdentifyAccount, Verify},
 	Perbill,
@@ -139,7 +139,7 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 								kusama_mainnet_keys::ALICE_SR25519.strip_prefix("0x").unwrap(),
 							)
 							.unwrap(),
-						),
+						).unwrap(),
 					),
 					(
 						kusama_mainnet_keys::BOB_SR25519.parse::<AccountId>().unwrap().into(),
@@ -148,7 +148,7 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 								kusama_mainnet_keys::BOB_SR25519.strip_prefix("0x").unwrap(),
 							)
 							.unwrap(),
-						),
+						).unwrap(),
 					),
 				],
 				// Initial relay account
@@ -258,6 +258,8 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 		None,
 		// Protocol ID
 		Some("mangata-kusama-mainnet"),
+		// ForkId
+		None,
 		// Properties
 		Some(properties),
 		Extensions {
@@ -291,7 +293,7 @@ pub fn public_testnet_config() -> ChainSpec {
 								public_testnet_keys::ALICE_SR25519.strip_prefix("0x").unwrap(),
 							)
 							.unwrap(),
-						),
+						).unwrap(),
 					),
 					(
 						public_testnet_keys::BOB_SR25519.parse::<AccountId>().unwrap().into(),
@@ -300,7 +302,7 @@ pub fn public_testnet_config() -> ChainSpec {
 								public_testnet_keys::BOB_SR25519.strip_prefix("0x").unwrap(),
 							)
 							.unwrap(),
-						),
+						).unwrap(),
 					),
 				],
 				// Initial relay account
@@ -410,6 +412,8 @@ pub fn public_testnet_config() -> ChainSpec {
 		None,
 		// Protocol ID
 		Some("mangata-public-testnet"),
+		// ForkId
+		None,
 		// Properties
 		Some(properties),
 		Extensions {
@@ -556,6 +560,8 @@ pub fn development_config() -> ChainSpec {
 		None,
 		// Protocol ID
 		Some("mangata-dev"),
+		// ForkId
+		None,
 		// Properties
 		Some(properties),
 		Extensions {
@@ -704,6 +710,8 @@ pub fn local_config() -> ChainSpec {
 		None,
 		// Protocol ID
 		Some("mangata-local"),
+		// ForkId
+		None,
 		// Properties
 		Some(properties),
 		// Extensions
@@ -732,7 +740,6 @@ fn mangata_genesis(
 			code: mangata_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
-			changes_trie_config: Default::default(),
 		},
 		tokens: mangata_runtime::TokensConfig {
 			tokens_endowment: tokens_endowment
@@ -838,7 +845,7 @@ fn mangata_genesis(
 				})
 				.collect(),
 		},
-		verifier: mangata_runtime::VerifierConfig { key: relay_key },
+		verifier: mangata_runtime::VerifierConfig { key: Some(relay_key) },
 		council: Default::default(),
 		elections: mangata_runtime::ElectionsConfig {
 			members: tokens_endowment
@@ -849,7 +856,7 @@ fn mangata_genesis(
 		},
 		sudo: mangata_runtime::SudoConfig {
 			// Assign network admin rights.
-			key: root_key,
+			key: Some(root_key),
 		},
 		polkadot_xcm: mangata_runtime::PolkadotXcmConfig { safe_xcm_version: Some(2) },
 		asset_registry: mangata_runtime::AssetRegistryConfig {

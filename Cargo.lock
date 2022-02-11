@@ -1642,6 +1642,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "cumulus-relay-chain-local"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "cumulus-primitives-core",
+ "cumulus-relay-chain-interface",
+ "futures 0.3.19",
+ "futures-timer",
+ "parking_lot 0.11.2",
+ "polkadot-client",
+ "polkadot-service",
+ "sc-client-api",
+ "sc-consensus-babe",
+ "sc-network",
+ "sc-service",
+ "sc-telemetry",
+ "sc-tracing",
+ "sp-api",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core",
+ "sp-runtime",
+ "sp-state-machine",
+ "tracing",
+]
+
+[[package]]
 name = "cumulus-test-relay-sproof-builder"
 version = "0.1.0"
 dependencies = [
@@ -4227,6 +4254,8 @@ dependencies = [
  "cumulus-client-service",
  "cumulus-primitives-core",
  "cumulus-primitives-parachain-inherent",
+ "cumulus-relay-chain-interface",
+ "cumulus-relay-chain-local",
  "derive_more",
  "frame-benchmarking",
  "frame-benchmarking-cli",
@@ -4248,7 +4277,9 @@ dependencies = [
  "sc-cli",
  "sc-client-api",
  "sc-consensus",
+ "sc-consensus-aura",
  "sc-executor",
+ "sc-finality-grandpa",
  "sc-keystore",
  "sc-network",
  "sc-rpc",

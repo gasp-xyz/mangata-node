@@ -1060,7 +1060,7 @@ construct_runtime!(
 
 		// Snowbridge stuff
 		Bridge: pallet_bridge::{Pallet, Call, Config, Storage, Event} = 4,
-		Verifier: pallet_verifier::{Pallet, Call, Storage, Event} = 5,
+		Verifier: pallet_verifier::{Pallet, Call, Storage, Event, Config<T>} = 5,
 		BridgedAsset: artemis_asset::{Pallet, Call, Config<T>, Storage, Event<T>} = 6,
 		ETH: artemis_eth_app::{Pallet, Call, Storage, Event<T>} = 7,
 		ERC20: artemis_erc20_app::{Pallet, Call, Storage, Event<T>} = 8,

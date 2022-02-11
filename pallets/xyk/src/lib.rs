@@ -229,7 +229,6 @@ use sp_core::U256;
 // TODO documentation!
 use codec::FullCodec;
 use frame_support::{
-	sp_runtime::traits::AccountIdConversion,
 	traits::{ExistenceRequirement, Get, WithdrawReasons},
 	Parameter,
 };
@@ -237,8 +236,9 @@ use mangata_primitives::{Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 use pallet_assets_info as assets_info;
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
-use sp_runtime::traits::{
-	AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member, SaturatedConversion, Zero,
+use sp_runtime::{
+	traits::{AccountIdConversion, AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member, Zero},
+	Percent,
 };
 use sp_std::{convert::TryFrom, fmt::Debug, prelude::*};
 
@@ -298,6 +298,10 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
 
+	pub trait GetLiquidityMiningSplit {
+		fn get_liquidity_mining_split() -> Percent;
+	}
+
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_assets_info::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
@@ -305,6 +309,7 @@ pub mod pallet {
 		type NativeCurrencyId: Get<TokenId>;
 		type TreasuryPalletId: Get<PalletId>;
 		type BnbTreasurySubAccDerive: Get<[u8; 4]>;
+		type LiquidityMiningSplit: GetLiquidityMiningSplit;
 	}
 
 	#[pallet::error]

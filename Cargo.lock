@@ -4306,6 +4306,7 @@ dependencies = [
  "structopt",
  "substrate-build-script-utils",
  "substrate-prometheus-endpoint",
+ "try-runtime-cli",
  "ver-api",
  "xyk-rpc",
  "xyk-runtime-api",

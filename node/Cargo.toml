@@ -42,6 +42,7 @@ mangata-runtime = { path = "../runtime" }
 # Substrate Dependencies
 frame-benchmarking = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.16" }
 frame-benchmarking-cli = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.16" }
+try-runtime-cli = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.16" }
 
 pallet-transaction-payment-rpc = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.16" }
 

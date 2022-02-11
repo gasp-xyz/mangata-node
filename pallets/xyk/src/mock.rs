@@ -131,12 +131,22 @@ parameter_types! {
 	pub const BnbTreasurySubAccDerive: [u8; 4] = *b"bnbt";
 }
 
+pub struct FakeLiquidityMiningSplit;
+
+impl GetLiquidityMiningSplit for FakeLiquidityMiningSplit {
+	fn get_liquidity_mining_split() -> Percent {
+		//TODO you can inject some value for testing here
+		Default::default()
+	}
+}
+
 impl Config for Test {
 	type Event = Event;
 	type Currency = MultiTokenCurrencyAdapter<Test>;
 	type NativeCurrencyId = NativeCurrencyId;
 	type TreasuryPalletId = TreasuryPalletId;
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
+	type LiquidityMiningSplit = FakeLiquidityMiningSplit;
 }
 
 impl<T: Config> Pallet<T> {

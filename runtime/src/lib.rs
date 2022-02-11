@@ -469,12 +469,21 @@ impl orml_tokens::Config for Runtime {
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 }
 
+pub struct ProvideLiquidityMiningSplit;
+
+impl pallet_xyk::GetLiquidityMiningSplit for ProvideLiquidityMiningSplit {
+	fn get_liquidity_mining_split() -> Percent{
+		Issuance::get_issuance_config().liquidity_mining_split
+	}
+}
+
 impl pallet_xyk::Config for Runtime {
 	type Event = Event;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type NativeCurrencyId = MgaTokenId;
 	type TreasuryPalletId = TreasuryPalletId;
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
+	type LiquidityMiningSplit = ProvideLiquidityMiningSplit; 
 }
 
 type ORMLCurrencyAdapterNegativeImbalance = <orml_tokens::CurrencyAdapter::<Runtime, MgaTokenId> as PalletCurrency<AccountId>>::NegativeImbalance;

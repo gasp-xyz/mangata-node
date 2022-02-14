@@ -237,8 +237,11 @@ use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 use pallet_assets_info as assets_info;
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
 use sp_runtime::{
-	traits::{AccountIdConversion, AtLeast32BitUnsigned, MaybeSerializeDeserialize,SaturatedConversion, Member, Zero},
-	Percent,
+	traits::{
+		AccountIdConversion, AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member,
+		SaturatedConversion, Zero,
+	},
+	PerThing, Percent,
 };
 use sp_std::{convert::TryFrom, fmt::Debug, prelude::*};
 
@@ -272,8 +275,8 @@ const POOL_FEE_PERCENTAGE: u128 = FEE_PERCENTAGE - TREASURY_PERCENTAGE - BUYANDB
 // Smallest granularity in which values for liquidity minting rewards change
 const TIMEBLOCKRATIO: u32 = 10000;
 // Quocient ratio in which liquidity minting curve is rising
-const Q:f64 = 1.06;
-const NUMOFPROMOTEDPOOLS: u32 = 10;
+const Q: f64 = 1.06;
+const NUMOFPROMOTEDPOOLS: u128 = 10;
 
 // Keywords for asset_info
 const LIQUIDITY_TOKEN_IDENTIFIER: &[u8] = b"LiquidityPoolToken";
@@ -301,6 +304,9 @@ pub mod pallet {
 	pub trait GetLiquidityMiningSplit {
 		fn get_liquidity_mining_split() -> Percent;
 	}
+	pub trait GetLinearIssuanceBlocks {
+		fn get_linear_issuance_blocks() -> u32;
+	}
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_assets_info::Config {
@@ -310,6 +316,10 @@ pub mod pallet {
 		type TreasuryPalletId: Get<PalletId>;
 		type BnbTreasurySubAccDerive: Get<[u8; 4]>;
 		type LiquidityMiningSplit: GetLiquidityMiningSplit;
+		type LinearIssuanceBlocks: GetLinearIssuanceBlocks;
+		#[pallet::constant]
+		/// The account id that holds the liquidity mining issuance
+		type LiquidityMiningIssuanceVault: Get<Self::AccountId>;
 	}
 
 	#[pallet::error]
@@ -582,6 +592,14 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
+	pub fn get_liquidity_mining_split() -> Percent {
+		<T as Config>::LiquidityMiningSplit::get_liquidity_mining_split()
+	}
+
+	pub fn get_linear_issuance_blocks() -> u32 {
+		<T as Config>::LinearIssuanceBlocks::get_linear_issuance_blocks()
+	}
+
 	pub fn calculate_available_rewards_for_pool(
 		liquidity_asset_id: TokenId,
 		block_number: u32,
@@ -591,9 +609,14 @@ impl<T: Config> Pallet<T> {
 
 		let time = block_number / TIMEBLOCKRATIO; // round to time metric, as other liq minting functions
 		let available_rewards_for_pool: Balance = u128::from(time)
-			.checked_mul(1140000) // mga minted per TIMEBLOCKRATIO of blocks
+		.checked_mul(TIMEBLOCKRATIO.into()) // back to block number
+		.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+			.checked_mul(Pallet::<T>::get_linear_issuance_blocks().into()) // minted per session
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
-			.div(NUMOFPROMOTEDPOOLS)
+			.checked_mul(Pallet::<T>::get_liquidity_mining_split().deconstruct().into()).ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+			 / NUMOFPROMOTEDPOOLS // per pool
+			 / Balance::try_from(1200).unwrap() // blocks per session
+			 / Balance::try_from(100).unwrap() // get_liquidity_mining_split percentage division
 			.checked_sub(already_claimed_pool)
 			.ok_or_else(|| DispatchError::from(Error::<T>::NotEnoughtRewardsEarned))?;
 
@@ -661,8 +684,8 @@ impl<T: Config> Pallet<T> {
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 		let base = missing_at_last_checkpoint
 			.checked_mul(U256::from(106))
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
-			.div(U256::from(6));
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))? /
+			U256::from(6);
 
 		let precision: u32 = 10000;
 		let q_pow = Self::calculate_q_pow(Q, time_passed);
@@ -2205,6 +2228,14 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		let rewards_claimed_pool_new = rewards_claimed_pool + amount;
 
 		<T as Config>::Currency::mint(mangata_id.into(), &sender, amount.into())?;
+
+		<T as Config>::Currency::transfer(
+			mangata_id.into(),
+			&<T as Config>::LiquidityMiningIssuanceVault::get(),
+			&sender,
+			amount.into(),
+			ExistenceRequirement::KeepAlive,
+		)?;
 
 		LiquidityMiningUserClaimed::<T>::insert(
 			(sender, liquidity_token_id),

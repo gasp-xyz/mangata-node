@@ -4360,6 +4360,7 @@ dependencies = [
  "frame-system",
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
+ "frame-try-runtime",
  "log",
  "mangata-primitives",
  "orml-tokens",

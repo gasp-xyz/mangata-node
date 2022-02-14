@@ -45,6 +45,7 @@ sp-version = { git = "https://github.com/mangata-finance/substrate", default-fea
 ## Substrate FRAME Dependencies
 frame-benchmarking = { git = "https://github.com/mangata-finance/substrate", default-features = false, optional = true, branch = "mangata-dev-v0.9.16" }
 frame-executive = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.16" }
+frame-try-runtime = { git = "https://github.com/mangata-finance/substrate", default-features = false, optional = true , branch = "mangata-dev-v0.9.16" }
 frame-support = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.16" }
 frame-system = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.16" }
 frame-system-benchmarking = { git = "https://github.com/mangata-finance/substrate", default-features = false, optional = true, branch = "mangata-dev-v0.9.16" }
@@ -173,6 +174,11 @@ std = [
 
 	"xcm-asset-registry/std",
 
+]
+
+try-runtime = [
+	"frame-try-runtime",
+	"frame-executive/try-runtime",
 ]
 
 runtime-benchmarks = [

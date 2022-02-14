@@ -151,7 +151,7 @@ pub type Executive = frame_executive::Executive<
 	Block,
 	frame_system::ChainContext<Runtime>,
 	Runtime,
-	AllPallets,
+	AllPalletsWithSystem,
 >;
 
 /// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
@@ -227,7 +227,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
-	state_version: 1,
+	state_version: 0,
 };
 
 pub use currency::*;
@@ -318,7 +318,6 @@ parameter_types! {
 
 parameter_types! {
 	pub const MgaTokenId: TokenId = MGA_TOKEN_ID;
-	pub const MaxConsumers: usize = 16;
 }
 
 // Configure FRAME pallets to include in runtime.
@@ -371,7 +370,7 @@ impl frame_system::Config for Runtime {
 	/// The action to take on a Runtime Upgrade
 	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
 	/// The maximum number of consumers allowed on a single account.
-	type MaxConsumers = frame_support::traits::ConstU32<2>;
+	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 parameter_types! {
@@ -1310,6 +1309,18 @@ impl_runtime_apis! {
 		}
 	}
 
+	#[cfg(feature = "try-runtime")]
+	impl frame_try_runtime::TryRuntime<Block> for Runtime {
+		fn on_runtime_upgrade() -> (Weight, Weight) {
+			log::info!("try-runtime::on_runtime_upgrade parachain-template.");
+			let weight = Executive::try_runtime_upgrade().unwrap();
+			(weight, RuntimeBlockWeights::get().max_block)
+		}
+
+		fn execute_block_no_check(block: Block) -> Weight {
+			Executive::execute_block_no_check(block)
+		}
+	}
 
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {

@@ -147,14 +147,11 @@ impl GetLinearIssuanceBlocks for FakeLinearIssuanceBlocks {
 		13_140_000
 	}
 }
-pub struct FakeLiquidityMiningIssuanceVault;
 
-// impl LiquidityMiningIssuanceVault for FakeLiquidityMiningIssuanceVault {
-// 	fn get_liquidity_mining_issuance_vault() -> u32 {
-// 		//TODO you can inject some value for testing here
-// 		1
-// 	}
-// }
+parameter_types! {
+	pub const LiquidityMiningIssuanceVaultId: PalletId = PalletId(*b"py/lqmiv");
+	pub FakeLiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account();
+}
 
 impl Config for Test {
 	type Event = Event;
@@ -164,7 +161,7 @@ impl Config for Test {
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
 	type LiquidityMiningSplit = FakeLiquidityMiningSplit;
 	type LinearIssuanceBlocks = FakeLinearIssuanceBlocks;
-//	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
+	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
 }
 
 impl<T: Config> Pallet<T> {

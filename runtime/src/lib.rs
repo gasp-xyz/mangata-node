@@ -472,8 +472,15 @@ impl orml_tokens::Config for Runtime {
 pub struct ProvideLiquidityMiningSplit;
 
 impl pallet_xyk::GetLiquidityMiningSplit for ProvideLiquidityMiningSplit {
-	fn get_liquidity_mining_split() -> Percent{
+	fn get_liquidity_mining_split() -> Percent {
 		Issuance::get_issuance_config().liquidity_mining_split
+	}
+}
+pub struct ProvideLinearIssuanceBlocks;
+
+impl pallet_xyk::GetLinearIssuanceBlocks for ProvideLinearIssuanceBlocks {
+	fn get_linear_issuance_blocks() -> u32 {
+		Issuance::get_issuance_config().linear_issuance_blocks
 	}
 }
 
@@ -483,7 +490,9 @@ impl pallet_xyk::Config for Runtime {
 	type NativeCurrencyId = MgaTokenId;
 	type TreasuryPalletId = TreasuryPalletId;
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
-	type LiquidityMiningSplit = ProvideLiquidityMiningSplit; 
+	type LiquidityMiningSplit = ProvideLiquidityMiningSplit;
+	type LinearIssuanceBlocks = ProvideLinearIssuanceBlocks;
+	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
 }
 
 type ORMLCurrencyAdapterNegativeImbalance = <orml_tokens::CurrencyAdapter::<Runtime, MgaTokenId> as PalletCurrency<AccountId>>::NegativeImbalance;

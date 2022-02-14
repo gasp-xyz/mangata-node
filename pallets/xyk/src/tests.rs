@@ -118,9 +118,11 @@ fn liquidity_rewards_single_user_work_W() {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
 		let acc_id: u128 = 2;
+		//	let amount: u128 = max;
 		let amount: u128 = max;
 		XykStorage::create_new_token(&acc_id, amount);
 		XykStorage::create_new_token(&acc_id, amount);
+		//	XykStorage::create_pool(Origin::signed(2), 0, max - 1, 1, max - 1).unwrap();
 		XykStorage::create_pool(Origin::signed(2), 0, max - 1, 1, max - 1).unwrap();
 
 		assert_eq!(XykStorage::calculate_work_user(2, 2, 1).unwrap(), U256::from(0));

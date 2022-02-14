@@ -135,9 +135,26 @@ pub struct FakeLiquidityMiningSplit;
 impl GetLiquidityMiningSplit for FakeLiquidityMiningSplit {
 	fn get_liquidity_mining_split() -> Percent {
 		//TODO you can inject some value for testing here
-		Default::default()
+		Percent::from_percent(50)
 	}
 }
+
+pub struct FakeLinearIssuanceBlocks;
+
+impl GetLinearIssuanceBlocks for FakeLinearIssuanceBlocks {
+	fn get_linear_issuance_blocks() -> u32 {
+		//TODO you can inject some value for testing here
+		13_140_000
+	}
+}
+pub struct FakeLiquidityMiningIssuanceVault;
+
+// impl LiquidityMiningIssuanceVault for FakeLiquidityMiningIssuanceVault {
+// 	fn get_liquidity_mining_issuance_vault() -> u32 {
+// 		//TODO you can inject some value for testing here
+// 		1
+// 	}
+// }
 
 impl Config for Test {
 	type Event = Event;
@@ -146,6 +163,8 @@ impl Config for Test {
 	type TreasuryPalletId = TreasuryPalletId;
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
 	type LiquidityMiningSplit = FakeLiquidityMiningSplit;
+	type LinearIssuanceBlocks = FakeLinearIssuanceBlocks;
+//	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
 }
 
 impl<T: Config> Pallet<T> {

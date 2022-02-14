@@ -253,10 +253,26 @@ jobs:
           path: e2eTests/reports/junit-*.xml    # Path to test results
           reporter: jest-junit        # Format of test results
 
+      - name: Collect docker logs on failure
+        if: failure()
+        uses: jwalton/gh-docker-logs@v1
+        with:
+          dest: './logs'
+
+      - name: Tar logs
+        if: failure()
+        run: tar cvzf ./logs.tgz ./logs
+
+      - name: Upload logs to GitHub
+        if: failure()
+        uses: actions/upload-artifact@master
+        with:
+          name: logs.tgz
+          path: ./logs.tgz
+
       - name: Stop mangata-node parachain
         if: always()
         run: docker-compose -f devops/parachain/docker-compose.yml down
-
 
   publish:
     needs: [rustfmt-check, unit-test, clippy, build]

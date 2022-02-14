@@ -8,11 +8,10 @@ use frame_support::pallet_prelude::*;
 /// https://substrate.dev/docs/en/knowledgebase/runtime/frame
 use frame_support::{
 	codec::{Decode, Encode, MaxEncodedLen},
-	ensure,
+	ensure, parameter_types,
 	sp_runtime::RuntimeDebug,
 	traits::Get,
-	parameter_types,
-	BoundedVec
+	BoundedVec,
 };
 use frame_system::{ensure_root, pallet_prelude::*};
 use mangata_primitives::TokenId;
@@ -32,7 +31,6 @@ parameter_types! {
 	pub const SymbolMaxSize: u32 = 32;
 	pub const DescMaxSize: u32 = 256;
 }
-
 
 #[derive(Encode, Decode, Clone, Default, PartialEq, Eq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 pub struct AssetInfo {
@@ -112,7 +110,9 @@ pub mod pallet {
 					AssetInfo {
 						name: name.as_ref().map(|n| BoundedVec::try_from(n.clone()).unwrap()),
 						symbol: token.as_ref().map(|t| BoundedVec::try_from(t.clone()).unwrap()),
-						description: description.as_ref().map(|d| BoundedVec::try_from(d.clone()).unwrap()),
+						description: description
+							.as_ref()
+							.map(|d| BoundedVec::try_from(d.clone()).unwrap()),
 						decimals: decimals.to_owned().into(),
 					},
 				);
@@ -185,13 +185,19 @@ impl<T: Config> Pallet<T> {
 		{
 			ensure!(T::Currency::exists(asset.into()), Error::<T>::AssetNotExist);
 		}
-        //
+		//
 		let current: AssetInfo = Self::get_info(asset);
 
 		let info = AssetInfo {
 			name: name.as_ref().map(|n| BoundedVec::try_from(n.clone()).unwrap()).or(current.name),
-			symbol: symbol.as_ref().map(|t| BoundedVec::try_from(t.clone()).unwrap()).or(current.symbol),
-			description: description.as_ref().map(|d| BoundedVec::try_from(d.clone()).unwrap()).or(current.description),
+			symbol: symbol
+				.as_ref()
+				.map(|t| BoundedVec::try_from(t.clone()).unwrap())
+				.or(current.symbol),
+			description: description
+				.as_ref()
+				.map(|d| BoundedVec::try_from(d.clone()).unwrap())
+				.or(current.description),
 			decimals: decimals.or(current.decimals),
 		};
 		let to_check = info.clone();

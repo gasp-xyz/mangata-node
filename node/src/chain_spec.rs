@@ -10,7 +10,7 @@ use mangata_runtime::{
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
-use sp_core::{sr25519, Pair, Public, H160, ByteArray};
+use sp_core::{sr25519, ByteArray, Pair, Public, H160};
 use sp_runtime::{
 	traits::{IdentifyAccount, Verify},
 	Perbill,
@@ -139,7 +139,8 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 								kusama_mainnet_keys::ALICE_SR25519.strip_prefix("0x").unwrap(),
 							)
 							.unwrap(),
-						).unwrap(),
+						)
+						.unwrap(),
 					),
 					(
 						kusama_mainnet_keys::BOB_SR25519.parse::<AccountId>().unwrap().into(),
@@ -148,7 +149,8 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 								kusama_mainnet_keys::BOB_SR25519.strip_prefix("0x").unwrap(),
 							)
 							.unwrap(),
-						).unwrap(),
+						)
+						.unwrap(),
 					),
 				],
 				// Initial relay account
@@ -293,7 +295,8 @@ pub fn public_testnet_config() -> ChainSpec {
 								public_testnet_keys::ALICE_SR25519.strip_prefix("0x").unwrap(),
 							)
 							.unwrap(),
-						).unwrap(),
+						)
+						.unwrap(),
 					),
 					(
 						public_testnet_keys::BOB_SR25519.parse::<AccountId>().unwrap().into(),
@@ -302,7 +305,8 @@ pub fn public_testnet_config() -> ChainSpec {
 								public_testnet_keys::BOB_SR25519.strip_prefix("0x").unwrap(),
 							)
 							.unwrap(),
-						).unwrap(),
+						)
+						.unwrap(),
 					),
 				],
 				// Initial relay account

@@ -59,6 +59,16 @@ use frame_support::assert_err;
 const DUMMY_USER_ID: u128 = 2;
 const MGA_ID: u32 = 0;
 
+trait ToBoundedVec<T, K> {
+	fn to_bvec(&self) -> BoundedVec<T, K>;
+}
+
+impl<T: Clone, K: Get<u32>> ToBoundedVec<T, K> for [T] {
+	fn to_bvec(&self) -> BoundedVec<T, K> {
+		BoundedVec::<T, K>::try_from(self.to_vec()).unwrap()
+	}
+}
+
 fn initialize() {
 	// creating asset with assetId 0 and minting to accountId 2
 	System::set_block_number(1);
@@ -285,9 +295,9 @@ fn set_info_should_work() {
 		assert_eq!(
 			<assets_info::Pallet<Test>>::get_info(2u32),
 			assets_info::AssetInfo {
-				name: Some(b"LiquidityPoolToken0x00000002".to_vec()),
-				symbol: Some(b"TKN0x00000000-TKN0x00000001".to_vec()),
-				description: Some(b"Generated Info for Liquidity Pool Token".to_vec()),
+				name: Some(b"LiquidityPoolToken0x00000002".to_bvec()),
+				symbol: Some(b"TKN0x00000000-TKN0x00000001".to_bvec()),
+				description: Some(b"Generated Info for Liquidity Pool Token".to_bvec()),
 				decimals: Some(18u32),
 			}
 		);
@@ -318,9 +328,9 @@ fn set_info_should_work_with_small_numbers() {
 		assert_eq!(
 			<assets_info::Pallet<Test>>::get_info(N),
 			assets_info::AssetInfo {
-				name: Some(b"LiquidityPoolToken0x00003039".to_vec()),
-				symbol: Some(b"TKN0x0000000F-TKN0x00002FC9".to_vec()),
-				description: Some(b"Generated Info for Liquidity Pool Token".to_vec()),
+				name: Some(b"LiquidityPoolToken0x00003039".to_bvec()),
+				symbol: Some(b"TKN0x0000000F-TKN0x00002FC9".to_bvec()),
+				description: Some(b"Generated Info for Liquidity Pool Token".to_bvec()),
 				decimals: Some(18u32),
 			}
 		);
@@ -352,9 +362,9 @@ fn set_info_should_work_with_large_numbers() {
 		assert_eq!(
 			<assets_info::Pallet<Test>>::get_info(1524501234u32),
 			assets_info::AssetInfo {
-				name: Some(b"LiquidityPoolToken0x5ADE0AF2".to_vec()),
-				symbol: Some(b"TKN0x00E4E1C0-TKN0x00BAA928".to_vec()),
-				description: Some(b"Generated Info for Liquidity Pool Token".to_vec()),
+				name: Some(b"LiquidityPoolToken0x5ADE0AF2".to_bvec()),
+				symbol: Some(b"TKN0x00E4E1C0-TKN0x00BAA928".to_bvec()),
+				description: Some(b"Generated Info for Liquidity Pool Token".to_bvec()),
 				decimals: Some(18u32),
 			}
 		);

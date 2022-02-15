@@ -2,23 +2,20 @@
 
 use crate::{
 	mock::{AssetsInfoModule, *},
-	AssetInfo, Error, Event,
+	AssetInfo, Error, Event, SymbolMaxSize,
 };
-use frame_support::{assert_noop, assert_ok, BoundedVec, traits::Get};
+use frame_support::{assert_noop, assert_ok, traits::Get, BoundedVec};
 use sp_std::convert::TryFrom;
-use crate::SymbolMaxSize;
 
-trait ToBoundedVec<T,K> {
-	fn to_bvec(&self) -> BoundedVec<T,K>;
+trait ToBoundedVec<T, K> {
+	fn to_bvec(&self) -> BoundedVec<T, K>;
 }
 
-
-impl<T: Clone, K: Get<u32>> ToBoundedVec<T, K> for [T]{
-	fn to_bvec(&self) -> BoundedVec<T, K>{
+impl<T: Clone, K: Get<u32>> ToBoundedVec<T, K> for [T] {
+	fn to_bvec(&self) -> BoundedVec<T, K> {
 		BoundedVec::<T, K>::try_from(self.to_vec()).unwrap()
 	}
 }
-
 
 #[test]
 fn set_info_and_retrieve_works_ok() {
@@ -79,8 +76,12 @@ fn set_info_optional_and_retrieve_works_ok() {
 fn min_length_name_check() {
 	new_test_ext().execute_with(|| {
 		const ASSET_ID: u32 = 0;
-		let info =
-			AssetInfo { name: Some(Default::default()), symbol: None, description: None, decimals: None };
+		let info = AssetInfo {
+			name: Some(Default::default()),
+			symbol: None,
+			description: None,
+			decimals: None,
+		};
 		// Dispatch a signed extrinsic.
 
 		assert_noop!(
@@ -102,8 +103,12 @@ fn min_length_name_check() {
 fn min_length_symbol_check() {
 	new_test_ext().execute_with(|| {
 		const ASSET_ID: u32 = 0;
-		let info =
-			AssetInfo { name: None, symbol: Some(Default::default()), description: None, decimals: Some(8) };
+		let info = AssetInfo {
+			name: None,
+			symbol: Some(Default::default()),
+			description: None,
+			decimals: Some(8),
+		};
 		// Dispatch a signed extrinsic.
 		assert_noop!(
 			AssetsInfoModule::set_info(
@@ -124,8 +129,12 @@ fn min_length_symbol_check() {
 fn min_length_description_check() {
 	new_test_ext().execute_with(|| {
 		const ASSET_ID: u32 = 0;
-		let info =
-			AssetInfo { name: None, symbol: None, description: Some(Default::default()), decimals: Some(8) };
+		let info = AssetInfo {
+			name: None,
+			symbol: None,
+			description: Some(Default::default()),
+			decimals: Some(8),
+		};
 		// Dispatch a signed extrinsic.
 		assert_noop!(
 			AssetsInfoModule::set_info(

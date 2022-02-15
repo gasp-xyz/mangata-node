@@ -19,7 +19,11 @@
 
 use super::*;
 use crate as sudo_origin;
-use frame_support::{parameter_types, traits::Contains};
+use frame_support::{
+	parameter_types,
+	traits::{ConstU32, Contains},
+	BoundedVec,
+};
 use frame_system::{limits, EnsureRoot};
 use sp_core::H256;
 use sp_io;
@@ -54,7 +58,10 @@ pub mod logger {
 		) -> DispatchResultWithPostInfo {
 			// Ensure that the `origin` is `Root`.
 			ensure_root(origin)?;
-			<I32Log<T>>::append(i);
+			<I32Log<T>>::try_mutate(|val| -> Result<(), ()> {
+				val.try_push(i).unwrap();
+				Ok(())
+			});
 			Self::deposit_event(Event::AppendI32(i, weight));
 			Ok(().into())
 		}
@@ -67,8 +74,14 @@ pub mod logger {
 		) -> DispatchResultWithPostInfo {
 			// Ensure that the `origin` is some signed account.
 			let sender = ensure_signed(origin)?;
-			<I32Log<T>>::append(i);
-			<AccountLog<T>>::append(sender.clone());
+			<I32Log<T>>::try_mutate(|val| -> Result<(), ()> {
+				val.try_push(i).unwrap();
+				Ok(())
+			});
+			<AccountLog<T>>::try_mutate(|val| -> Result<(), ()> {
+				val.try_push(sender.clone()).unwrap();
+				Ok(())
+			});
 			Self::deposit_event(Event::AppendI32AndAccount(sender, i, weight));
 			Ok(().into())
 		}
@@ -83,11 +96,12 @@ pub mod logger {
 
 	#[pallet::storage]
 	#[pallet::getter(fn account_log)]
-	pub(super) type AccountLog<T: Config> = StorageValue<_, Vec<T::AccountId>, ValueQuery>;
+	pub(super) type AccountLog<T: Config> =
+		StorageValue<_, BoundedVec<T::AccountId, ConstU32<1024>>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn i32_log)]
-	pub(super) type I32Log<T> = StorageValue<_, Vec<i32>, ValueQuery>;
+	pub(super) type I32Log<T> = StorageValue<_, BoundedVec<i32, ConstU32<1024>>, ValueQuery>;
 }
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -141,6 +155,7 @@ impl frame_system::Config for Test {
 	type SystemWeightInfo = ();
 	type SS58Prefix = ();
 	type OnSetCode = ();
+	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 // Implement the logger module's `Config` on the Test runtime.

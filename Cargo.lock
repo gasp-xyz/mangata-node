@@ -142,7 +142,7 @@ checksum = "8da52d66c7071e2e3fa2a1e5c6d088fec47b593032b254f5e980de8ea54454d6"
 [[package]]
 name = "artemis-asset"
 version = "0.1.1"
-source = "git+https://github.com/mangata-finance//snowbridge?branch=mangata-dev-v0.9.16#197d9f698005a48cfecc9fd0335378334cdd4ffd"
+source = "git+https://github.com/mangata-finance//snowbridge?branch=mangata-dev-v0.9.16#bc703257c106d7f1fbaa16ebfb10ca6536730f36"
 dependencies = [
  "artemis-core",
  "artemis-ethereum",
@@ -163,7 +163,7 @@ dependencies = [
 [[package]]
 name = "artemis-core"
 version = "0.1.1"
-source = "git+https://github.com/mangata-finance//snowbridge?branch=mangata-dev-v0.9.16#197d9f698005a48cfecc9fd0335378334cdd4ffd"
+source = "git+https://github.com/mangata-finance//snowbridge?branch=mangata-dev-v0.9.16#bc703257c106d7f1fbaa16ebfb10ca6536730f36"
 dependencies = [
  "frame-support",
  "parity-scale-codec 2.3.1",
@@ -177,7 +177,7 @@ dependencies = [
 [[package]]
 name = "artemis-erc20-app"
 version = "0.1.1"
-source = "git+https://github.com/mangata-finance//snowbridge?branch=mangata-dev-v0.9.16#197d9f698005a48cfecc9fd0335378334cdd4ffd"
+source = "git+https://github.com/mangata-finance//snowbridge?branch=mangata-dev-v0.9.16#bc703257c106d7f1fbaa16ebfb10ca6536730f36"
 dependencies = [
  "artemis-asset",
  "artemis-core",
@@ -202,7 +202,7 @@ dependencies = [
 [[package]]
 name = "artemis-eth-app"
 version = "0.1.1"
-source = "git+https://github.com/mangata-finance//snowbridge?branch=mangata-dev-v0.9.16#197d9f698005a48cfecc9fd0335378334cdd4ffd"
+source = "git+https://github.com/mangata-finance//snowbridge?branch=mangata-dev-v0.9.16#bc703257c106d7f1fbaa16ebfb10ca6536730f36"
 dependencies = [
  "artemis-asset",
  "artemis-core",
@@ -227,7 +227,7 @@ dependencies = [
 [[package]]
 name = "artemis-ethereum"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//snowbridge?branch=mangata-dev-v0.9.16#197d9f698005a48cfecc9fd0335378334cdd4ffd"
+source = "git+https://github.com/mangata-finance//snowbridge?branch=mangata-dev-v0.9.16#bc703257c106d7f1fbaa16ebfb10ca6536730f36"
 dependencies = [
  "ethabi-decode",
  "ethereum-types 0.9.2",
@@ -5863,7 +5863,7 @@ dependencies = [
 [[package]]
 name = "pallet-verifier"
 version = "0.1.1"
-source = "git+https://github.com/mangata-finance//snowbridge?branch=mangata-dev-v0.9.16#197d9f698005a48cfecc9fd0335378334cdd4ffd"
+source = "git+https://github.com/mangata-finance//snowbridge?branch=mangata-dev-v0.9.16#bc703257c106d7f1fbaa16ebfb10ca6536730f36"
 dependencies = [
  "artemis-core",
  "artemis-ethereum",
@@ -5952,7 +5952,7 @@ dependencies = [
 [[package]]
 name = "parachain-staking"
 version = "3.0.0"
-source = "git+https://github.com/mangata-finance//moonbeam?branch=mangata-dev-v0.9.16#2020846ddb775b15ced53a8224c6902a99c43705"
+source = "git+https://github.com/mangata-finance//moonbeam?branch=mangata-dev-v0.9.16#3f145c8776136bbccad99047486ce30e4f5f27dc"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -11901,4 +11901,4 @@ dependencies = [
 [[patch.unused]]
 name = "pallet-bridge"
 version = "0.1.1"
-source = "git+https://github.com/mangata-finance//snowbridge?branch=mangata-dev-v0.9.16#197d9f698005a48cfecc9fd0335378334cdd4ffd"
+source = "git+https://github.com/mangata-finance//snowbridge?branch=mangata-dev-v0.9.16#bc703257c106d7f1fbaa16ebfb10ca6536730f36"

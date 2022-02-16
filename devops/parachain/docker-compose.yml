@@ -14,7 +14,7 @@ services:
     command:
       - "--alice"
       - "--validator"
-      - "--tmp"
+      - "--base-path=/tmp/relay_alice"
       - "--port=30333"
       - "--ws-port=9944"
       - "--chain=/etc/mangata/spec.json"
@@ -40,7 +40,7 @@ services:
     command:
       - "--bob" 
       - "--validator" 
-      - "--tmp" 
+      - "--base-path=/tmp/relay_bob" 
       - "--port=30333" 
       - "--ws-port=9944" 
       - "--chain=/etc/mangata/spec.json" 
@@ -81,7 +81,7 @@ services:
       --alice
       --collator
       --force-authoring
-      --tmp
+      --base-path=/tmp/para_alice
       --port=30333
       --ws-port=9944
       --unsafe-ws-external
@@ -109,7 +109,7 @@ services:
       - "--bob"
       - "--collator"
       - "--force-authoring"
-      - "--tmp"
+      - "--base-path=/tmp/para_bob"
       - "--port=30333"
       - "--ws-port=9944"
       - "--unsafe-ws-external"

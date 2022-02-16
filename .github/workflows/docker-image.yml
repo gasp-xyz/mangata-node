@@ -263,12 +263,23 @@ jobs:
         if: failure()
         run: tar cvzf ./logs.tgz ./logs
 
-      - name: Upload logs to GitHub
+      - name: Create images snapshots
+        if: failure()
+        run: |
+          docker commit  $(docker ps | grep mangata | grep bob | awk '{print $1}') mangata_testRun/mangata_bob_1
+          docker save  --output=/tmp/mangata_bob_1.tar
+          docker commit  $(docker ps | grep mangata | grep alice | awk '{print $1}') mangata_testRun/mangata_alice_1
+          docker save  --output=/tmp/mangata_alice_1.tar
+      
+      - name: Upload logs  and docker images to GitHub
         if: failure()
         uses: actions/upload-artifact@master
         with:
-          name: logs.tgz
-          path: ./logs.tgz
+          name: logsAndImages
+          path: |
+            ./logs.tgz
+            /tmp/mangata_bob_1.tar
+            /tmp/mangata_alice_1.tar
 
       - name: Stop mangata-node parachain
         if: always()

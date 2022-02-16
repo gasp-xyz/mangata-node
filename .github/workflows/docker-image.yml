@@ -269,7 +269,7 @@ jobs:
           docker commit  $(docker ps | grep mangata | grep bob | awk '{print $1}') mangata_test_run/mangata_bob_1
           docker save  --output=/tmp/mangata_bob_1.tar mangata_test_run/mangata_bob_1
           docker commit  $(docker ps | grep mangata | grep alice | awk '{print $1}') mangata_test_run/mangata_alice_1
-          docker save  --output=/tmp/mangata_alice_1.tar mangata_test_run/mangata_bob_1
+          docker save  --output=/tmp/mangata_alice_1.tar mangata_test_run/mangata_alice_1
       
       - name: Upload logs  and docker images to GitHub
         if: failure()

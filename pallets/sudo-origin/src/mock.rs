@@ -19,11 +19,7 @@
 
 use super::*;
 use crate as sudo_origin;
-use frame_support::{
-	parameter_types,
-	traits::{ConstU32, Contains},
-	BoundedVec,
-};
+use frame_support::{parameter_types, traits::Contains};
 use frame_system::{limits, EnsureRoot};
 use sp_core::H256;
 use sp_io;
@@ -46,6 +42,7 @@ pub mod logger {
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::without_storage_info]
 	pub struct Pallet<T>(PhantomData<T>);
 
 	#[pallet::call]
@@ -58,10 +55,7 @@ pub mod logger {
 		) -> DispatchResultWithPostInfo {
 			// Ensure that the `origin` is `Root`.
 			ensure_root(origin)?;
-			<I32Log<T>>::try_mutate(|val| -> Result<(), ()> {
-				val.try_push(i).unwrap();
-				Ok(())
-			});
+			<I32Log<T>>::append(i);
 			Self::deposit_event(Event::AppendI32(i, weight));
 			Ok(().into())
 		}
@@ -74,14 +68,8 @@ pub mod logger {
 		) -> DispatchResultWithPostInfo {
 			// Ensure that the `origin` is some signed account.
 			let sender = ensure_signed(origin)?;
-			<I32Log<T>>::try_mutate(|val| -> Result<(), ()> {
-				val.try_push(i).unwrap();
-				Ok(())
-			});
-			<AccountLog<T>>::try_mutate(|val| -> Result<(), ()> {
-				val.try_push(sender.clone()).unwrap();
-				Ok(())
-			});
+			<I32Log<T>>::append(i);
+			<AccountLog<T>>::append(sender.clone());
 			Self::deposit_event(Event::AppendI32AndAccount(sender, i, weight));
 			Ok(().into())
 		}
@@ -96,12 +84,11 @@ pub mod logger {
 
 	#[pallet::storage]
 	#[pallet::getter(fn account_log)]
-	pub(super) type AccountLog<T: Config> =
-		StorageValue<_, BoundedVec<T::AccountId, ConstU32<1024>>, ValueQuery>;
+	pub(super) type AccountLog<T: Config> = StorageValue<_, Vec<T::AccountId>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn i32_log)]
-	pub(super) type I32Log<T> = StorageValue<_, BoundedVec<i32, ConstU32<1024>>, ValueQuery>;
+	pub(super) type I32Log<T> = StorageValue<_, Vec<i32>, ValueQuery>;
 }
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;

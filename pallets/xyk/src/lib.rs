@@ -320,6 +320,9 @@ pub mod pallet {
 		#[pallet::constant]
 		/// The account id that holds the liquidity mining issuance
 		type LiquidityMiningIssuanceVault: Get<Self::AccountId>;
+		#[pallet::constant]
+		/// BlocksPerSession
+		type BlocksPerSession: Get<Self::u32>;
 	}
 
 	#[pallet::error]
@@ -615,7 +618,7 @@ impl<T: Config> Pallet<T> {
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
 			.checked_mul(Pallet::<T>::get_liquidity_mining_split().deconstruct().into()).ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
 			 / NUMOFPROMOTEDPOOLS // per pool
-			 / Balance::try_from(1200).unwrap() // blocks per session
+			 / Balance::try_from(&<T as Config>::BlocksPerSession::get(),).unwrap() // blocks per session
 			 / Balance::try_from(100).unwrap() // get_liquidity_mining_split percentage division
 			.checked_sub(already_claimed_pool)
 			.ok_or_else(|| DispatchError::from(Error::<T>::NotEnoughtRewardsEarned))?;
@@ -766,11 +769,6 @@ impl<T: Config> Pallet<T> {
 	) -> Result<(u32, U256, U256, U256, U256), DispatchError> {
 		let current_time: u32 =
 			<frame_system::Pallet<T>>::block_number().saturated_into::<u32>() / TIMEBLOCKRATIO;
-
-		// let mut user_work_total: U256 = U256::from(0_u32);
-		// let mut user_missing_at_checkpoint: U256 = liquidity_assets_added.into();
-		// let mut pool_work_total: U256 = U256::from(0_u32);
-		// let mut pool_missing_at_checkpoint: U256 = liquidity_assets_added.into();
 
 		let (
 			user_last_checkpoint,

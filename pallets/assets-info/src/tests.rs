@@ -2,20 +2,9 @@
 
 use crate::{
 	mock::{AssetsInfoModule, *},
-	AssetInfo, Error, Event, SymbolMaxSize,
+	AssetInfo, Error, Event,
 };
-use frame_support::{assert_noop, assert_ok, traits::Get, BoundedVec};
-use sp_std::convert::TryFrom;
-
-trait ToBoundedVec<T, K> {
-	fn to_bvec(&self) -> BoundedVec<T, K>;
-}
-
-impl<T: Clone, K: Get<u32>> ToBoundedVec<T, K> for [T] {
-	fn to_bvec(&self) -> BoundedVec<T, K> {
-		BoundedVec::<T, K>::try_from(self.to_vec()).unwrap()
-	}
-}
+use frame_support::{assert_noop, assert_ok};
 
 #[test]
 fn set_info_and_retrieve_works_ok() {
@@ -23,18 +12,18 @@ fn set_info_and_retrieve_works_ok() {
 		System::set_block_number(1);
 		const ASSET_ID: u32 = 0;
 		let info = AssetInfo {
-			name: Some(b"name".to_bvec()),
-			symbol: Some(b"SYM".to_bvec()),
-			description: Some(b"desc".to_bvec()),
+			name: Some(b"name".to_vec()),
+			symbol: Some(b"SYM".to_vec()),
+			description: Some(b"desc".to_vec()),
 			decimals: Some(8),
 		};
 		// Dispatch a signed extrinsic.
 		assert_ok!(AssetsInfoModule::set_info(
 			Origin::root(),
 			ASSET_ID,
-			info.name.clone().map(BoundedVec::into_inner),
-			info.symbol.clone().map(BoundedVec::into_inner),
-			info.description.clone().map(BoundedVec::into_inner),
+			info.name.clone(),
+			info.symbol.clone(),
+			info.description.clone(),
 			info.decimals,
 		));
 		// Read pallet storage and assert an expected result.
@@ -53,7 +42,7 @@ fn set_info_optional_and_retrieve_works_ok() {
 		const ASSET_ID: u32 = 0;
 		let info = AssetInfo {
 			name: None,
-			symbol: Some(b"SYM".to_bvec()),
+			symbol: Some(b"SYM".to_vec()),
 			description: None,
 			decimals: Some(8),
 		};
@@ -63,7 +52,7 @@ fn set_info_optional_and_retrieve_works_ok() {
 			ASSET_ID,
 			None,
 			// None,
-			info.symbol.clone().map(BoundedVec::into_inner),
+			info.symbol.clone(),
 			None,
 			info.decimals,
 		));
@@ -76,21 +65,17 @@ fn set_info_optional_and_retrieve_works_ok() {
 fn min_length_name_check() {
 	new_test_ext().execute_with(|| {
 		const ASSET_ID: u32 = 0;
-		let info = AssetInfo {
-			name: Some(Default::default()),
-			symbol: None,
-			description: None,
-			decimals: None,
-		};
+		let info =
+			AssetInfo { name: Some(vec![]), symbol: None, description: None, decimals: None };
 		// Dispatch a signed extrinsic.
 
 		assert_noop!(
 			AssetsInfoModule::set_info(
 				Origin::root(),
 				ASSET_ID,
-				info.name.clone().map(BoundedVec::into_inner),
-				info.symbol.clone().map(BoundedVec::into_inner),
-				info.description.clone().map(BoundedVec::into_inner),
+				info.name.clone(),
+				info.symbol.clone(),
+				info.description.clone(),
 				info.decimals,
 			),
 			Error::<Test>::TooShortName
@@ -103,20 +88,16 @@ fn min_length_name_check() {
 fn min_length_symbol_check() {
 	new_test_ext().execute_with(|| {
 		const ASSET_ID: u32 = 0;
-		let info = AssetInfo {
-			name: None,
-			symbol: Some(Default::default()),
-			description: None,
-			decimals: Some(8),
-		};
+		let info =
+			AssetInfo { name: None, symbol: Some(vec![]), description: None, decimals: Some(8) };
 		// Dispatch a signed extrinsic.
 		assert_noop!(
 			AssetsInfoModule::set_info(
 				Origin::root(),
 				ASSET_ID,
-				info.name.clone().map(BoundedVec::into_inner),
-				info.symbol.clone().map(BoundedVec::into_inner),
-				info.description.clone().map(BoundedVec::into_inner),
+				info.name.clone(),
+				info.symbol.clone(),
+				info.description.clone(),
 				info.decimals,
 			),
 			Error::<Test>::TooShortSymbol
@@ -129,20 +110,16 @@ fn min_length_symbol_check() {
 fn min_length_description_check() {
 	new_test_ext().execute_with(|| {
 		const ASSET_ID: u32 = 0;
-		let info = AssetInfo {
-			name: None,
-			symbol: None,
-			description: Some(Default::default()),
-			decimals: Some(8),
-		};
+		let info =
+			AssetInfo { name: None, symbol: None, description: Some(vec![]), decimals: Some(8) };
 		// Dispatch a signed extrinsic.
 		assert_noop!(
 			AssetsInfoModule::set_info(
 				Origin::root(),
 				ASSET_ID,
-				info.name.clone().map(BoundedVec::into_inner),
-				info.symbol.clone().map(BoundedVec::into_inner),
-				info.description.clone().map(BoundedVec::into_inner),
+				info.name.clone(),
+				info.symbol.clone(),
+				info.description.clone(),
 				info.decimals,
 			),
 			Error::<Test>::TooShortDescription
@@ -156,9 +133,9 @@ fn max_length_name_check() {
 	new_test_ext().execute_with(|| {
 		const ASSET_ID: u32 = 0;
 		let info = AssetInfo {
-			name: Some(b"veryLongName".to_bvec()),
-			symbol: Some(b"SYM".to_bvec()),
-			description: Some(b"desc".to_bvec()),
+			name: Some(b"veryLongName".to_vec()),
+			symbol: Some(b"SYM".to_vec()),
+			description: Some(b"desc".to_vec()),
 			decimals: Some(8),
 		};
 		// Dispatch a signed extrinsic.
@@ -166,9 +143,9 @@ fn max_length_name_check() {
 			AssetsInfoModule::set_info(
 				Origin::root(),
 				ASSET_ID,
-				info.name.clone().map(BoundedVec::into_inner),
-				info.symbol.clone().map(BoundedVec::into_inner),
-				info.description.clone().map(BoundedVec::into_inner),
+				info.name.clone(),
+				info.symbol.clone(),
+				info.description.clone(),
 				info.decimals,
 			),
 			Error::<Test>::TooLongName
@@ -182,9 +159,9 @@ fn max_length_symbol_check() {
 	new_test_ext().execute_with(|| {
 		const ASSET_ID: u32 = 0;
 		let info = AssetInfo {
-			name: Some(b"name".to_bvec()),
-			symbol: Some(b"veryLongSymbol".to_bvec()),
-			description: Some(b"desc".to_bvec()),
+			name: Some(b"name".to_vec()),
+			symbol: Some(b"veryLongSymbol".to_vec()),
+			description: Some(b"desc".to_vec()),
 			decimals: Some(8),
 		};
 		// Dispatch a signed extrinsic.
@@ -192,9 +169,9 @@ fn max_length_symbol_check() {
 			AssetsInfoModule::set_info(
 				Origin::root(),
 				ASSET_ID,
-				info.name.clone().map(BoundedVec::into_inner),
-				info.symbol.clone().map(BoundedVec::into_inner),
-				info.description.clone().map(BoundedVec::into_inner),
+				info.name.clone(),
+				info.symbol.clone(),
+				info.description.clone(),
 				info.decimals,
 			),
 			Error::<Test>::TooLongSymbol
@@ -208,9 +185,9 @@ fn max_length_description_check() {
 	new_test_ext().execute_with(|| {
 		const ASSET_ID: u32 = 0;
 		let info = AssetInfo {
-			name: Some(b"name".to_bvec()),
-			symbol: Some(b"SYM".to_bvec()),
-			description: Some(b"veryLongDescription".to_bvec()),
+			name: Some(b"name".to_vec()),
+			symbol: Some(b"SYM".to_vec()),
+			description: Some(b"veryLongDescription".to_vec()),
 			decimals: Some(8),
 		};
 		// Dispatch a signed extrinsic.
@@ -218,9 +195,9 @@ fn max_length_description_check() {
 			AssetsInfoModule::set_info(
 				Origin::root(),
 				ASSET_ID,
-				info.name.clone().map(BoundedVec::into_inner),
-				info.symbol.clone().map(BoundedVec::into_inner),
-				info.description.clone().map(BoundedVec::into_inner),
+				info.name.clone(),
+				info.symbol.clone(),
+				info.description.clone(),
 				info.decimals,
 			),
 			Error::<Test>::TooLongDescription
@@ -234,9 +211,9 @@ fn max_decimals_check() {
 	new_test_ext().execute_with(|| {
 		const ASSET_ID: u32 = 0;
 		let info = AssetInfo {
-			name: Some(b"name".to_bvec()),
-			symbol: Some(b"SYM".to_bvec()),
-			description: Some(b"desc".to_bvec()),
+			name: Some(b"name".to_vec()),
+			symbol: Some(b"SYM".to_vec()),
+			description: Some(b"desc".to_vec()),
 			decimals: Some(11),
 		};
 		// Dispatch a signed extrinsic.
@@ -244,9 +221,9 @@ fn max_decimals_check() {
 			AssetsInfoModule::set_info(
 				Origin::root(),
 				ASSET_ID,
-				info.name.clone().map(BoundedVec::into_inner),
-				info.symbol.clone().map(BoundedVec::into_inner),
-				info.description.clone().map(BoundedVec::into_inner),
+				info.name.clone(),
+				info.symbol.clone(),
+				info.description.clone(),
 				info.decimals,
 			),
 			Error::<Test>::DecimalsOutOfRange

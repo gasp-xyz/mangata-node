@@ -7,11 +7,10 @@ use frame_support::pallet_prelude::*;
 /// Learn more about FRAME and the core library of Substrate FRAME pallets:
 /// https://substrate.dev/docs/en/knowledgebase/runtime/frame
 use frame_support::{
-	codec::{Decode, Encode, MaxEncodedLen},
-	ensure, parameter_types,
+	codec::{Decode, Encode},
+	ensure,
 	sp_runtime::RuntimeDebug,
 	traits::Get,
-	BoundedVec,
 };
 use frame_system::{ensure_root, pallet_prelude::*};
 use mangata_primitives::TokenId;
@@ -26,17 +25,11 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-parameter_types! {
-	pub const NameMaxSize: u32 = 128;
-	pub const SymbolMaxSize: u32 = 32;
-	pub const DescMaxSize: u32 = 256;
-}
-
-#[derive(Encode, Decode, Clone, Default, PartialEq, Eq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+#[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq, TypeInfo)]
 pub struct AssetInfo {
-	pub name: Option<BoundedVec<u8, NameMaxSize>>,
-	pub symbol: Option<BoundedVec<u8, SymbolMaxSize>>,
-	pub description: Option<BoundedVec<u8, DescMaxSize>>,
+	pub name: Option<Vec<u8>>,
+	pub symbol: Option<Vec<u8>>,
+	pub description: Option<Vec<u8>>,
 	pub decimals: Option<u32>,
 }
 
@@ -49,6 +42,7 @@ pub mod pallet {
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::without_storage_info]
 	pub struct Pallet<T>(PhantomData<T>);
 
 	#[pallet::hooks]
@@ -97,7 +91,7 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	impl Default for GenesisConfig {
 		fn default() -> Self {
-			Self { bridged_assets_info: Default::default() }
+			Self { bridged_assets_info: vec![] }
 		}
 	}
 
@@ -108,12 +102,10 @@ pub mod pallet {
 				AssetsInfo::<T>::insert(
 					asset_id,
 					AssetInfo {
-						name: name.as_ref().map(|n| BoundedVec::try_from(n.clone()).unwrap()),
-						symbol: token.as_ref().map(|t| BoundedVec::try_from(t.clone()).unwrap()),
-						description: description
-							.as_ref()
-							.map(|d| BoundedVec::try_from(d.clone()).unwrap()),
-						decimals: decimals.to_owned().into(),
+						name: name.clone(),
+						symbol: token.clone(),
+						description: description.clone(),
+						decimals: decimals.to_owned(),
 					},
 				);
 			}
@@ -185,19 +177,13 @@ impl<T: Config> Pallet<T> {
 		{
 			ensure!(T::Currency::exists(asset.into()), Error::<T>::AssetNotExist);
 		}
-		//
+
 		let current: AssetInfo = Self::get_info(asset);
 
 		let info = AssetInfo {
-			name: name.as_ref().map(|n| BoundedVec::try_from(n.clone()).unwrap()).or(current.name),
-			symbol: symbol
-				.as_ref()
-				.map(|t| BoundedVec::try_from(t.clone()).unwrap())
-				.or(current.symbol),
-			description: description
-				.as_ref()
-				.map(|d| BoundedVec::try_from(d.clone()).unwrap())
-				.or(current.description),
+			name: name.or(current.name),
+			symbol: symbol.or(current.symbol),
+			description: description.or(current.description),
 			decimals: decimals.or(current.decimals),
 		};
 		let to_check = info.clone();

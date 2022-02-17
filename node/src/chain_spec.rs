@@ -849,7 +849,7 @@ fn mangata_genesis(
 				})
 				.collect(),
 		},
-		verifier: mangata_runtime::VerifierConfig { key: Some(relay_key) },
+		verifier: mangata_runtime::VerifierConfig { key: relay_key },
 		council: Default::default(),
 		elections: mangata_runtime::ElectionsConfig {
 			members: tokens_endowment

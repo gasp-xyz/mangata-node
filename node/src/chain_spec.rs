@@ -266,7 +266,7 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 		Some(properties),
 		Extensions {
 			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
-			para_id: 2000,
+			para_id: 2109,
 		},
 	)
 }

@@ -5952,7 +5952,7 @@ dependencies = [
 [[package]]
 name = "parachain-staking"
 version = "3.0.0"
-source = "git+https://github.com/mangata-finance//moonbeam?branch=mangata-dev-v0.9.16#d643a184195710b6d8db2edbfbf9b92af3f5a7c6"
+source = "git+https://github.com/mangata-finance//moonbeam?branch=mangata-dev#c3b61d8edd3c42ef51278fd447d4e49e4b9887c1"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -10931,7 +10931,7 @@ dependencies = [
  "chrono",
  "lazy_static",
  "matchers",
- "parking_lot 0.10.2",
+ "parking_lot 0.11.2",
  "regex",
  "serde",
  "serde_json",

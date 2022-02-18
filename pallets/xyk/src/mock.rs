@@ -163,7 +163,7 @@ impl Config for Test {
 	type LiquidityMiningSplit = FakeLiquidityMiningSplit;
 	type LinearIssuanceBlocks = FakeLinearIssuanceBlocks;
 	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
-	type BlocksPerSession = frame_support::traits::ConstU32<1200>;
+	//type BlocksPerSession = frame_support::traits::ConstU32<1200>;
 }
 
 impl<T: Config> Pallet<T> {

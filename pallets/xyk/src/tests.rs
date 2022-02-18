@@ -106,7 +106,7 @@ fn initialize_buy_and_burn() {
 fn initialize_liquidity_rewards() {
 	System::set_block_number(1);
 	let acc_id: u128 = 2;
-	let amount: u128 = 1000000000000;
+	let amount: u128 = std::u128::MAX;
 	XykStorage::create_new_token(&acc_id, amount);
 	XykStorage::create_new_token(&acc_id, amount);
 	XykStorage::create_pool(Origin::signed(2), 0, 5000, 1, 5000).unwrap();
@@ -123,7 +123,7 @@ fn initialize_liquidity_rewards() {
 // 		XykStorage::create_new_token(&acc_id, amount);
 // 		XykStorage::create_new_token(&acc_id, amount);
 // 		XykStorage::create_pool(Origin::signed(2), 0, max - 1, 1, max - 1).unwrap();
-		
+
 // 		assert_eq!(XykStorage::calculate_work_user(2, 2, 1).unwrap(), U256::from(0));
 // 		assert_eq!(
 // 			XykStorage::calculate_work_user(2, 2, 2).unwrap(),
@@ -161,14 +161,14 @@ fn initialize_liquidity_rewards() {
 // 			XykStorage::calculate_work_user(2, 2, 100000).unwrap(),
 // 			U256::from_dec_str("34022225036944909766816274458445526573840979").unwrap()
 // 		);
-		
+
 // 	});
 // }
 
 // #[test]
 // fn liquidity_rewards_two_users_minting_W() {
 // 	new_test_ext().execute_with(|| {
-// 		env_logger::init();
+//
 
 // 		initialize_liquidity_rewards();
 // 		XykStorage::transfer(0, 2, 3, 1000000).unwrap();
@@ -191,7 +191,7 @@ fn initialize_liquidity_rewards() {
 // 		let pool_rewards = XykStorage::calculate_available_rewards_for_pool(2, 300000).unwrap();
 // 		assert_eq!(user2_rewards, (150058137, 0));
 // 		assert_eq!(user3_rewards, (14187990, 0));
-// 		assert_eq!(pool_rewards, 164250000); 
+// 		assert_eq!(pool_rewards, 164250000);
 
 // 		assert!(pool_rewards >= user2_rewards.0 + user3_rewards.0);
 // 	});
@@ -201,7 +201,15 @@ fn initialize_liquidity_rewards() {
 fn liquidity_rewards_claim_W() {
 	new_test_ext().execute_with(|| {
 		initialize_liquidity_rewards();
-		System::set_block_number(30001);
+		env_logger::init();
+		XykStorage::transfer(
+			0,
+			2,
+			<Test as Config>::LiquidityMiningIssuanceVault::get(),
+			10000000000,
+		)
+		.unwrap();
+		System::set_block_number(300001);
 
 		let mut user2_work = XykStorage::calculate_work_user(2, 2, 30).unwrap();
 		let mut pool_work = XykStorage::calculate_work_pool(2, 30).unwrap();
@@ -211,15 +219,32 @@ fn liquidity_rewards_claim_W() {
 		let mut pool_rewards = XykStorage::calculate_available_rewards_for_pool(2, 300000).unwrap();
 		assert_eq!(user2_rewards, (164250000, 0));
 		assert_eq!(pool_rewards, 164250000);
-		XykStorage::claim_rewards(Origin::signed(2), 2, 100).unwrap();
+		XykStorage::claim_rewards(Origin::signed(2), 2, 82125000).unwrap();
 		user2_work = XykStorage::calculate_work_user(2, 2, 30).unwrap();
 		pool_work = XykStorage::calculate_work_pool(2, 30).unwrap();
-		assert_eq!(user2_work, U256::from(98151));
-		assert_eq!(pool_work, U256::from(98151));
-		user2_rewards = XykStorage::calculate_rewards_amount(2, 2, 30000).unwrap();
-		pool_rewards = XykStorage::calculate_available_rewards_for_pool(2, 30000).unwrap();
-		assert_eq!(user2_rewards, (20000000, 10000000));
-		assert_eq!(pool_rewards, 20000000);
+		assert_eq!(user2_work, U256::from(38523));
+		assert_eq!(pool_work, U256::from(38523));
+		user2_rewards = XykStorage::calculate_rewards_amount(2, 2, 300001).unwrap();
+		pool_rewards = XykStorage::calculate_available_rewards_for_pool(2, 300001).unwrap();
+		assert_eq!(user2_rewards, (82125000, 0));
+		assert_eq!(pool_rewards, 82125000);
+
+		user2_work = XykStorage::calculate_work_user(2, 2, 40).unwrap();
+		pool_work = XykStorage::calculate_work_pool(2, 40).unwrap();
+		assert_eq!(user2_work, U256::from(81735));
+		assert_eq!(pool_work, U256::from(81735));
+		user2_rewards = XykStorage::calculate_rewards_amount(2, 2, 400001).unwrap();
+		pool_rewards = XykStorage::calculate_available_rewards_for_pool(2, 400001).unwrap();
+		assert_eq!(user2_rewards, (136875000, 0));
+		assert_eq!(pool_rewards, 136875000);
+
+		System::set_block_number(400001);
+		XykStorage::claim_rewards(Origin::signed(2), 2, 136875000).unwrap();
+
+		user2_rewards = XykStorage::calculate_rewards_amount(2, 2, 400001).unwrap();
+		pool_rewards = XykStorage::calculate_available_rewards_for_pool(2, 400001).unwrap();
+		assert_eq!(user2_rewards, (0, 0));
+		assert_eq!(pool_rewards, 0);
 	});
 }
 

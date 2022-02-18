@@ -968,7 +968,10 @@ impl<T: Config> Pallet<T> {
 		let rewards_claimed_new = rewards_to_be_claimed + claimable_reward;
 		rewards_claimed_pool = rewards_claimed_pool + claimable_reward;
 
-		LiquidityMiningUserToBeClaimed::<T>::insert((&user, liquidity_asset_id), rewards_claimed_new);
+		LiquidityMiningUserToBeClaimed::<T>::insert(
+			(&user, liquidity_asset_id),
+			rewards_claimed_new,
+		);
 		LiquidityMiningPoolClaimed::<T>::insert(liquidity_asset_id, rewards_claimed_pool);
 		Ok(())
 	}
@@ -2290,12 +2293,13 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 		ensure!(mangata_amount <= eligible_to_claim, Error::<T>::NotEnoughtRewardsEarned,);
 
-		let rewards_to_be_claimed_user_new = rewards_to_be_claimed_user +
-			mangata_amount
-				;
+		let rewards_to_be_claimed_user_new = rewards_to_be_claimed_user + mangata_amount;
 		let rewards_claimed_pool_new = rewards_claimed_pool + mangata_amount;
 
-		LiquidityMiningUserToBeClaimed::<T>::insert((&user, liquidity_asset_id), rewards_to_be_claimed_user_new);
+		LiquidityMiningUserToBeClaimed::<T>::insert(
+			(&user, liquidity_asset_id),
+			rewards_to_be_claimed_user_new,
+		);
 		LiquidityMiningPoolClaimed::<T>::insert(liquidity_asset_id, rewards_claimed_pool_new);
 
 		LiquidityMiningUser::<T>::insert(

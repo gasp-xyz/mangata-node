@@ -5,6 +5,8 @@ target
 **/*.md
 /docker/
 !/target/release/polkadot-collator
+./cargo_wrapper.sh
+**/output/
 
 # dotfiles in the repo root
 /.*

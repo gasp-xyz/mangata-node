@@ -223,7 +223,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
 	authoring_version: 1,
-	spec_version: 1,
+	spec_version: 2, //Goncer_new version
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -1164,6 +1164,15 @@ impl_runtime_apis! {
 		) -> RpcResult<Balance> {
 			RpcResult {
 				price: Xyk::calculate_buy_price_id(sold_token_id, bought_token_id, buy_amount).unwrap_or_default()
+			}
+		}
+		fn calculate_buy_price_id_updated(
+			sold_token_id: TokenId,
+			bought_token_id: TokenId,
+			buy_amount: Balance
+		) -> RpcResult<Balance> {
+			RpcResult {
+				price: Xyk::calculate_buy_price_id_updated(sold_token_id, bought_token_id, buy_amount).unwrap_or_default()
 			}
 		}
 

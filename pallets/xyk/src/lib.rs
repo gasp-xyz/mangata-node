@@ -1094,6 +1094,16 @@ impl<T: Config> Pallet<T> {
 
 		Self::calculate_buy_price(input_reserve, output_reserve, buy_amount)
 	}
+	pub fn calculate_buy_price_id_updated(
+		sold_token_id: TokenId,
+		bought_token_id: TokenId,
+		buy_amount: Balance,
+	) -> Result<Balance, DispatchError> {
+		let (input_reserve, output_reserve) =
+			Pallet::<T>::get_reserves(sold_token_id, bought_token_id)?;
+
+		Self::calculate_buy_price(input_reserve, output_reserve, buy_amount)
+	}
 
 	pub fn get_reserves(
 		first_asset_id: TokenId,

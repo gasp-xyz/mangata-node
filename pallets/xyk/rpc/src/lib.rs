@@ -63,6 +63,15 @@ pub trait XykApi<
 		at: Option<BlockHash>,
 	) -> Result<ResponseTypePrice>;
 
+	#[rpc(name = "calculate_buy_price_id_updated")]
+	fn calculate_buy_price_id_updated(
+		&self,
+		sold_token_id: TokenId,
+		bought_token_id: TokenId,
+		buy_amount: Balance,
+		at: Option<BlockHash>,
+	) -> Result<ResponseTypePrice>;
+
 	#[rpc(name = "xyk_get_burn_amount")]
 	fn get_burn_amount(
 		&self,
@@ -203,6 +212,30 @@ where
 	}
 
 	fn calculate_buy_price_id(
+		&self,
+		sold_token_id: TokenId,
+		bought_token_id: TokenId,
+		buy_amount: NumberOrHex,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> Result<RpcResult<Balance>> {
+		let api = self.client.runtime_api();
+		let at = BlockId::<Block>::hash(at.unwrap_or_else(||
+            // If the block hash is not supplied assume the best block.
+            self.client.info().best_hash));
+
+		let runtime_api_result = api.calculate_buy_price_id(
+			&at,
+			sold_token_id,
+			bought_token_id,
+			buy_amount.try_into_balance()?,
+		);
+		runtime_api_result.map_err(|e| RpcError {
+			code: ErrorCode::ServerError(1),
+			message: "Unable to serve the request".into(),
+			data: Some(format!("{:?}", e).into()),
+		})
+	}
+	fn calculate_buy_price_id_updated(
 		&self,
 		sold_token_id: TokenId,
 		bought_token_id: TokenId,

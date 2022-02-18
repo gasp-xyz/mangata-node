@@ -91,6 +91,11 @@ sp_api::decl_runtime_apis! {
 			bought_token_id: TokenId,
 			buy_amount: Balance
 		) -> RpcResult<Balance>;
+		fn calculate_buy_price_id_updated(
+			sold_token_id: TokenId,
+			bought_token_id: TokenId,
+			buy_amount: Balance
+		) -> RpcResult<Balance>;
 		fn get_burn_amount(
 			first_asset_id: TokenId,
 			second_asset_id: TokenId,

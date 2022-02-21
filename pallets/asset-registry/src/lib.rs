@@ -157,6 +157,7 @@ pub mod module {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		// SBP M3 review: should use the benchmark-generated weights.
 		#[pallet::weight(100_000)]
 		#[transactional]
 		pub fn register_asset(
@@ -173,6 +174,7 @@ pub mod module {
 			Ok(())
 		}
 
+		// SBP M3 review: should use the benchmark-generated weights.
 		#[pallet::weight(100_000)]
 		#[transactional]
 		pub fn update_asset(

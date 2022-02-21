@@ -1,3 +1,5 @@
+# SBP M3 review: I couldn't get this (or the docker-compose-dev.yml) or the polkadot-launch/config.json to work ...
+# It would be great to have them updated / fixed so that devs investigating your stack get a playground to test your tech.
 version: "3.7"
 networks:
     test_net:

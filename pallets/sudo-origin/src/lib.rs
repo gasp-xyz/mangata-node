@@ -102,6 +102,8 @@ mod tests;
 
 pub use pallet::*;
 
+// SBP M3 review: what's the difference with FRAME's sudo pallet ?
+
 #[frame_support::pallet]
 pub mod pallet {
 	use super::{DispatchResult, *};

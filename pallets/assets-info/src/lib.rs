@@ -144,6 +144,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		// SBP M3 review: should use the benchmark-generated weights.
 		#[pallet::weight(10_000 + T::DbWeight::get().writes(1) + T::DbWeight::get().reads(1))]
 		pub fn set_info(
 			origin: OriginFor<T>,

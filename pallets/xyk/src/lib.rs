@@ -330,6 +330,8 @@ pub mod pallet {
 		AssetDoesNotExists,
 		/// Division by zero
 		DivisionByZero,
+		// SBP M3 review: I've counted 18 unexpected failures ...
+		// Could you maybe try to bring those cases to a minimum (or avoid/prevent them) ?
 		/// Unexpected failure
 		UnexpectedFailure,
 		/// Unexpected failure
@@ -451,6 +453,7 @@ pub mod pallet {
 	// XYK extrinsics.
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		// SBP M3 review: should use the benchmark-generated weights.
 		#[pallet::weight(10_000)]
 		pub fn create_pool(
 			origin: OriginFor<T>,
@@ -472,6 +475,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		// SBP M3 review: should use the benchmark-generated weights.
 		// you will sell your sold_asset_amount of sold_asset_id to get some amount of bought_asset_id
 		#[pallet::weight((10_000, Pays::No))]
 		pub fn sell_asset(
@@ -493,6 +497,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+		// SBP M3 review: should use the benchmark-generated weights.
 		#[pallet::weight((10_000, Pays::No))]
 		pub fn buy_asset(
 			origin: OriginFor<T>,
@@ -513,6 +518,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+		// SBP M3 review: should use the benchmark-generated weights.
 		#[pallet::weight(10_000)]
 		pub fn mint_liquidity(
 			origin: OriginFor<T>,
@@ -534,6 +540,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		// SBP M3 review: should use the benchmark-generated weights.
 		#[pallet::weight(10_000)]
 		pub fn burn_liquidity(
 			origin: OriginFor<T>,
@@ -553,6 +560,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		// SBP M3 review: should use the benchmark-generated weights.
 		#[pallet::weight(10_000)]
 		pub fn claim_rewards(
 			origin: OriginFor<T>,
@@ -1451,6 +1459,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			&sender,
 			&vault,
 			first_asset_amount.into(),
+			// SBP M3 review: are you sure ?
 			ExistenceRequirement::AllowDeath,
 		)?;
 
@@ -1459,6 +1468,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			&sender,
 			&vault,
 			second_asset_amount.into(),
+			// SBP M3 review: are you sure ?
 			ExistenceRequirement::AllowDeath,
 		)?;
 

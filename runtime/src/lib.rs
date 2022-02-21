@@ -316,6 +316,8 @@ parameter_types! {
 	pub const SS58Prefix: u16 = 42;
 }
 
+// SBP M3 review: you might want to have a separate runtime config for each of your network
+// (see Moonbeam / Acala as an example), and put common settings in a 'mangata-runtime-common' crate.
 parameter_types! {
 	pub const MgaTokenId: TokenId = MGA_TOKEN_ID;
 }
@@ -435,6 +437,7 @@ impl pallet_treasury::Config for Runtime {
 	type MaxApprovals = MaxApprovals;
 }
 
+// SBP M3 review: this could be defined in your network-specific runtime configuration.
 // TODO: discuiss existential deposit feature
 // https://trello.com/c/P5rYYQcS/424-discuiss-orml-tokens-existential-deposit
 parameter_type_with_key! {
@@ -517,11 +520,15 @@ impl parachain_info::Config for Runtime {}
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 parameter_types! {
+	// SBP M3 review: you could name this RelayLocation so that the config is generic for all your networks.
 	pub DotLocation: MultiLocation = MultiLocation::parent();
 	pub const RelayNetwork: NetworkId = NetworkId::Polkadot;
 	pub RelayChainOrigin: Origin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
 }
+
+// SBP M3 review: you could the XCM configuration to a separate module to avoid bloating
+// the core runtime configuration (it will be encouraged in that sense in the parachain template).
 
 /// Type for specifying how a `MultiLocation` can be converted into an `AccountId`. This is used
 /// when determining ownership of accounts for asset transacting and when attempting to use XCM

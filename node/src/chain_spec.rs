@@ -16,6 +16,8 @@ use sp_runtime::{
 	Perbill,
 };
 
+// SBP M3 review: you could split this in network-specific config modules for easier maintenance.
+
 pub mod public_testnet_keys {
 	pub const ALICE_SR25519: &str =
 		"0x76e810a1f116b779fea0962f4102e9acb3d22ba603999ecb08ad163582de192c";

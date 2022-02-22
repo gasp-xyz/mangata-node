@@ -5335,6 +5335,7 @@ dependencies = [
 [[package]]
 name = "pallet-crowdloan-rewards"
 version = "0.6.0"
+source = "git+https://github.com/mangata-finance//crowdloan-rewards?branch=feature/issuance-vesting-crowdloan#19c5ddf137c301b594416ee9d05d3f83498a0677"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6008,6 +6009,7 @@ dependencies = [
 [[package]]
 name = "parachain-staking"
 version = "3.0.0"
+source = "git+https://github.com/mangata-finance//moonbeam?branch=feature/issuance-vesting-crowdloan#13e2579c3b719c1baa67fd8e9005bcd7b03a0f8c"
 dependencies = [
  "frame-benchmarking",
  "frame-support",

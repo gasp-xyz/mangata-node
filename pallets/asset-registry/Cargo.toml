@@ -9,22 +9,22 @@ log = { version = "0.4.14", default-features = false }
 serde = { version = "1.0.124", optional = true }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 codec = { package = "parity-scale-codec", version = "2.3.1", default-features = false }
-sp-runtime = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v4" }
-sp-std = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v4" }
-frame-support = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v4" }
-frame-system = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v4" }
+sp-runtime = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+sp-std = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+frame-support = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+frame-system = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 mangata-primitives = { package = "mangata-primitives", path = "../../primitives/mangata", default-features = false }
 
-xcm = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "mangata-dev-v4" }
-xcm-builder = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "mangata-dev-v4" }
-xcm-executor = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "mangata-dev-v4" }
+xcm = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "release-v0.9.16" }
+xcm-builder = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "release-v0.9.16" }
+xcm-executor = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "release-v0.9.16" }
 
-orml-tokens = {  default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v4" }
+orml-tokens = {  default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
 
 [dev-dependencies]
-sp-core = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v4" }
-sp-io = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v4" }
-orml-traits = { default-features = false, version="0.4.1-dev" , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v4" }
+sp-core = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+sp-io = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+orml-traits = { default-features = false, version="0.4.1-dev" , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
 
 
 [features]

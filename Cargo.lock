@@ -5335,7 +5335,7 @@ dependencies = [
 [[package]]
 name = "pallet-crowdloan-rewards"
 version = "0.6.0"
-source = "git+https://github.com/mangata-finance//crowdloan-rewards?branch=feature/issuance-vesting-crowdloan#19c5ddf137c301b594416ee9d05d3f83498a0677"
+source = "git+https://github.com/mangata-finance//crowdloan-rewards?branch=feature/issuance-vesting-crowdloan#afbfc9c46cf9e8d234f63108af824c3c0ca4f6c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",

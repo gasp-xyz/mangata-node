@@ -134,9 +134,9 @@ parameter_types! {
 pub struct FakeLiquidityMiningSplit;
 
 impl GetLiquidityMiningSplit for FakeLiquidityMiningSplit {
-	fn get_liquidity_mining_split() -> Percent {
+	fn get_liquidity_mining_split() -> sp_runtime::Perbill {
 		//TODO you can inject some value for testing here
-		Percent::from_percent(50)
+		sp_runtime::Perbill::from_percent(50)
 	}
 }
 

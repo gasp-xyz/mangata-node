@@ -302,7 +302,7 @@ pub mod pallet {
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
 
 	pub trait GetLiquidityMiningSplit {
-		fn get_liquidity_mining_split() -> Percent;
+		fn get_liquidity_mining_split() -> sp_runtime::Perbill;
 	}
 	pub trait GetLinearIssuanceBlocks {
 		fn get_linear_issuance_blocks() -> u32;
@@ -592,7 +592,7 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-	pub fn get_liquidity_mining_split() -> Percent {
+	pub fn get_liquidity_mining_split() -> sp_runtime::Perbill {
 		<T as Config>::LiquidityMiningSplit::get_liquidity_mining_split()
 	}
 

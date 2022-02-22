@@ -477,7 +477,7 @@ impl orml_tokens::Config for Runtime {
 pub struct ProvideLiquidityMiningSplit;
 
 impl pallet_xyk::GetLiquidityMiningSplit for ProvideLiquidityMiningSplit {
-	fn get_liquidity_mining_split() -> Percent {
+	fn get_liquidity_mining_split() -> Perbill {
 		Issuance::get_issuance_config().liquidity_mining_split
 	}
 }
@@ -505,7 +505,7 @@ type ORMLCurrencyAdapterNegativeImbalance = <orml_tokens::CurrencyAdapter::<Runt
 pub struct ToAuthor;
 impl OnUnbalanced<ORMLCurrencyAdapterNegativeImbalance> for ToAuthor {
 	fn on_nonzero_unbalanced(amount: ORMLCurrencyAdapterNegativeImbalance) {
-		<orml_tokens::CurrencyAdapter::<Runtime, MgaTokenId> as PalletCurrency<AccountId>>::resolve_creating(&Authorship::author(), amount);
+		<orml_tokens::CurrencyAdapter::<Runtime, MgaTokenId> as PalletCurrency<AccountId>>::resolve_creating(&Authorship::author().unwrap(), amount);
 	}
 }
 
@@ -907,6 +907,48 @@ impl pallet_issuance::Config for Runtime {
 }
 
 parameter_types! {
+	pub const MinVestedTransfer: Balance = 100 * DOLLARS;
+}
+
+impl pallet_vesting_mangata::Config for Runtime {
+	type Event = Event;
+	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>;
+	type BlockNumberToBalance = ConvertInto;
+	type MinVestedTransfer = MinVestedTransfer;
+	type WeightInfo = pallet_vesting_mangata::weights::SubstrateWeight<Runtime>;
+	// `VestingInfo` encode length is 36bytes. 28 schedules gets encoded as 1009 bytes, which is the
+	// highest number of schedules that encodes less than 2^10.
+	const MAX_VESTING_SCHEDULES: u32 = 28;
+}
+
+parameter_types! {
+	pub const Initialized: bool = false;
+	pub const InitializationPayment: Perbill = Perbill::from_percent(20);
+	pub const MaxInitContributorsBatchSizes: u32 = 500;
+	pub const MinimumReward: Balance = 0;
+	pub const RelaySignaturesThreshold: Perbill = Perbill::from_percent(100);
+	pub const SigantureNetworkIdentifier: &'static [u8] = b"mangata-";
+}
+
+impl pallet_crowdloan_rewards::Config for Runtime {
+	type Event = Event;
+	type Initialized = Initialized;
+	type InitializationPayment = InitializationPayment;
+	type MaxInitContributors = MaxInitContributorsBatchSizes;
+	type MinimumReward = MinimumReward;
+	type RewardAddressRelayVoteThreshold = RelaySignaturesThreshold;
+	type NativeTokenId = MgaTokenId;
+	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	type RelayChainAccountId = sp_runtime::AccountId32;
+	type RewardAddressChangeOrigin = EnsureRoot<AccountId>;
+	type SignatureNetworkIdentifier = SigantureNetworkIdentifier;
+	type RewardAddressAssociateOrigin = EnsureRoot<AccountId>;
+	type VestingBlockNumber = BlockNumber;
+	type VestingBlockProvider = System;
+	type WeightInfo = pallet_crowdloan_rewards::weights::SubstrateWeight<Runtime>;
+}
+
+parameter_types! {
 	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
 }
 
@@ -1126,6 +1168,12 @@ construct_runtime!(
 		// Xyk stuff
 		AssetsInfo: pallet_assets_info::{Pallet, Call, Config, Storage, Event<T>} = 12,
 		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>} = 13,
+
+		// Vesting
+		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>, Config<T>} = 17,
+
+		// Crowdloan
+		Crowdloan: pallet_crowdloan_rewards::{Pallet, Call, Storage, Event<T>, Config} = 18,
 
 		// Issuance
 		Issuance: pallet_issuance::{Pallet, Event<T>, Storage, Config} = 19,

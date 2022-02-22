@@ -58,6 +58,7 @@ impl frame_system::Config for Test {
 	type SystemWeightInfo = ();
 	type SS58Prefix = ();
 	type OnSetCode = ();
+	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 parameter_type_with_key! {
@@ -140,6 +141,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
 	orml_tokens::GenesisConfig::<Test> {
 		tokens_endowment: vec![(0u128, 0u32, 2_000_000_000)],
+		vesting_tokens: Default::default(),
 		created_tokens_for_staking: Default::default(),
 	}
 	.assimilate_storage(&mut t)
@@ -154,9 +156,9 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 				// The tokens missing at tge will be attempted to be distributed over this time period
 				// Missed opportunities for minting tokens such as at block 0 (genesis block) and or failure to claim will be counted as burned
 				linear_issuance_blocks: 22_222u32,
-				liquidity_mining_split: Percent::from_percent(50),
-				staking_split: Percent::from_percent(40),
-				crowdloan_split: Percent::from_percent(10),
+				liquidity_mining_split: Perbill::from_parts(555555556),
+				staking_split: Perbill::from_parts(444444444),
+				crowdloan_allocation: 200_000_000u128,
 			},
 		},
 		&mut t,
@@ -170,7 +172,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
 pub(crate) fn roll_to_while_minting(n: u64, expected_amount_minted: Option<Balance>) {
 	let mut session_number: u32;
-	let mut session_issuance: (Balance, Balance, Balance);
+	let mut session_issuance: (Balance, Balance);
 	let mut block_issuance: Balance;
 	while System::block_number() < n {
 		System::on_finalize(System::block_number());
@@ -179,7 +181,7 @@ pub(crate) fn roll_to_while_minting(n: u64, expected_amount_minted: Option<Balan
 		session_number = System::block_number().saturated_into::<u32>() / BlocksPerRound::get();
 		session_issuance = <Issuance as GetIssuance>::get_all_issuance(session_number)
 			.expect("session issuance is always populated in advance");
-		block_issuance = (session_issuance.0 + session_issuance.1 + session_issuance.2) /
+		block_issuance = (session_issuance.0 + session_issuance.1) /
 			(BlocksPerRound::get().saturated_into::<u128>());
 
 		if let Some(x) = expected_amount_minted {

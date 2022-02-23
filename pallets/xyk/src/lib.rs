@@ -609,23 +609,30 @@ impl<T: Config> Pallet<T> {
 
 		let time = block_number / TIMEBLOCKRATIO; // round to time metric, as other liq minting functions
 
+		let to_be_issued: Balance =
+			issuance_config.cap - issuance_config.tge - issuance_config.crowdloan_allocation;
+		let linear_issuance_sessions: u32 =
+			issuance_config.linear_issuance_blocks / T::BlocksPerRound::get();
+		let linear_issuance_per_session = to_be_issued / linear_issuance_sessions as Balance;
+
 		let available_rewards_for_pool: Balance = u128::from(time)
 		.checked_mul(TIMEBLOCKRATIO.into()) // back to block number
 		.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
-			.checked_mul(Pallet::<T>::get_linear_issuance_blocks().into()) // minted per session
+			.checked_mul(linear_issuance_per_session) // minted per session
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+			//this is now Perbill::from_parts(555555556),
 			.checked_mul(Pallet::<T>::get_liquidity_mining_split().deconstruct().into()).ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
-			 / NUMOFPROMOTEDPOOLS // per pool
-			 / Balance::try_from(1200).unwrap() // blocks per session
-			 / Balance::try_from(100).unwrap() // get_liquidity_mining_split percentage division
+			/ Balance::try_from(100).unwrap() // get_liquidity_mining_split percentage division
+			/ NUMOFPROMOTEDPOOLS // per pool
+			/ Balance::try_from(T::BlocksPerRound::get()).unwrap() // blocks per session 
 			- already_claimed_pool;
 
 		log!(
 			info,
 			"POST//////////////////////////////////////////////////: ({}, {}, {}) -> {}",
+			Pallet::<T>::get_linear_issuance_blocks(),
 			available_rewards_for_pool,
-			available_rewards_for_pool,
-			NUMOFPROMOTEDPOOLS,
+			Pallet::<T>::get_liquidity_mining_split().deconstruct(),
 			NUMOFPROMOTEDPOOLS
 		);
 		Ok(available_rewards_for_pool)

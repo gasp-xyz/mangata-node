@@ -22,7 +22,7 @@ std = [
 		"mangata-runtime/std",
 		"xyk-rpc/std",
 ]
-runtime-benchmarks = ["mangata-runtime/runtime-benchmarks"]
+runtime-benchmarks = ["mangata-runtime/runtime-benchmarks", "polkadot-cli/runtime-benchmarks"]
 
 [dependencies]
 derive_more = "0.99.2"

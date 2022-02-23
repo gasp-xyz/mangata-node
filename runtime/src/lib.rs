@@ -1101,6 +1101,20 @@ construct_runtime!(
 	}
 );
 
+#[cfg(feature = "runtime-benchmarks")]
+#[macro_use]
+extern crate frame_benchmarking;
+
+#[cfg(feature = "runtime-benchmarks")]
+mod benches {
+	define_benchmarks!(
+		[frame_system, SystemBench::<Runtime>]
+		[pallet_session, SessionBench::<Runtime>]
+		[pallet_timestamp, Timestamp]
+		[orml_tokens, Tokens]
+	);
+}
+
 impl_runtime_apis! {
 
 	impl ver_api::VerApi<Block> for Runtime {
@@ -1335,8 +1349,11 @@ impl_runtime_apis! {
 
 			let mut list = Vec::<BenchmarkList>::new();
 
-			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
-			list_benchmark!(list, extra, pallet_timestamp, Timestamp);
+			// TODO remove?
+			// list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
+			// list_benchmark!(list, extra, pallet_timestamp, Timestamp);
+
+			list_benchmarks!(list, extra);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1370,10 +1387,13 @@ impl_runtime_apis! {
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
 
-			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
-			add_benchmark!(params, batches, pallet_session, SessionBench::<Runtime>);
-			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
-			add_benchmark!(params, batches, pallet_session, Session);
+			// TODO remove?
+			// add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
+			// add_benchmark!(params, batches, pallet_session, SessionBench::<Runtime>);
+			// add_benchmark!(params, batches, pallet_timestamp, Timestamp);
+			// add_benchmark!(params, batches, orml_tokens, Tokens);
+			
+			add_benchmarks!(params, batches);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

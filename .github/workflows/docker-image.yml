@@ -257,6 +257,7 @@ jobs:
         if: failure()
         uses: jwalton/gh-docker-logs@v1
         with:
+          images: 'mangata,polkadot'
           dest: './logs'
 
       - name: Tar logs

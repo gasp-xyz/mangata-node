@@ -53,7 +53,7 @@ lazy_static::lazy_static! {
 pub struct MockPromotedPoolApi;
 
 impl MockPromotedPoolApi {
-	fn instance() -> &'static Mutex<HashSet<TokenId>> {
+	pub fn instance() -> &'static Mutex<HashSet<TokenId>> {
 		&PROMOTED_POOLS
 	}
 }

@@ -60,6 +60,11 @@ const DUMMY_USER_ID: u128 = 2;
 const MGA_ID: u32 = 0;
 
 fn initialize() {
+	// TODO: example mock configuration
+	MockPromotedPoolApi::instance().lock().unwrap().clear();
+	MockPromotedPoolApi::instance().lock().unwrap().insert(2);
+	MockPromotedPoolApi::instance().lock().unwrap().contains(&2);
+
 	// creating asset with assetId 0 and minting to accountId 2
 	System::set_block_number(1);
 	let acc_id: u128 = 2;

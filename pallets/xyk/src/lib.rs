@@ -229,12 +229,15 @@ use sp_core::U256;
 // TODO documentation!
 use codec::FullCodec;
 use frame_support::{
+	pallet_prelude::*,
 	traits::{ExistenceRequirement, Get, WithdrawReasons},
 	Parameter,
 };
+use frame_system::pallet_prelude::*;
 use mangata_primitives::{Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 use pallet_assets_info as assets_info;
+use pallet_issuance::PoolPromoteApi;
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
 use sp_runtime::{
 	traits::{
@@ -244,9 +247,6 @@ use sp_runtime::{
 	PerThing, Percent,
 };
 use sp_std::{convert::TryFrom, fmt::Debug, prelude::*};
-
-use frame_support::pallet_prelude::*;
-use frame_system::pallet_prelude::*;
 
 #[cfg(test)]
 mod mock;
@@ -320,6 +320,7 @@ pub mod pallet {
 		#[pallet::constant]
 		/// The account id that holds the liquidity mining issuance
 		type LiquidityMiningIssuanceVault: Get<Self::AccountId>;
+		type PoolPromoteApi: PoolPromoteApi;
 	}
 
 	#[pallet::error]
@@ -365,11 +366,11 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		//TODO add trading events
 		PoolCreated(T::AccountId, TokenId, Balance, TokenId, Balance),
 		AssetsSwapped(T::AccountId, TokenId, Balance, TokenId, Balance),
 		LiquidityMinted(T::AccountId, TokenId, Balance, TokenId, Balance, TokenId, Balance),
 		LiquidityBurned(T::AccountId, TokenId, Balance, TokenId, Balance, TokenId, Balance),
+		PoolPromoted(TokenId),
 	}
 
 	#[pallet::storage]
@@ -407,11 +408,10 @@ pub mod pallet {
 	pub type LiquidityMiningPoolClaimed<T: Config> =
 		StorageMap<_, Blake2_256, TokenId, Balance, ValueQuery>;
 
-		#[pallet::storage]
-		#[pallet::getter(fn liquidity_mining_pool_claimed_total)]
-		pub type LiquidityMiningPoolClaimedTotal<T: Config> = U256;
-			
-		
+	#[pallet::storage]
+	#[pallet::getter(fn liquidity_mining_pool_claimed_total)]
+	pub type LiquidityMiningPoolClaimedTotal<T: Config> = StorageValue<_, U256, ValueQuery>;
+
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub created_pools_for_staking:
@@ -518,6 +518,23 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+		// you will sell your sold_asset_amount of sold_asset_id to get some amount of bought_asset_id
+		#[pallet::weight((10_000, Pays::No))]
+		pub fn promote_pool(
+			origin: OriginFor<T>,
+			liquidity_token_id: TokenId,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_root(origin)?;
+
+			ensure!(
+				<T as Config>::PoolPromoteApi::promote_pool(liquidity_token_id),
+				Error::<T>::PoolAlreadyExists,
+			);
+
+			Pallet::<T>::deposit_event(Event::PoolPromoted(liquidity_token_id));
+			Ok(().into())
+		}
+
 		#[pallet::weight((10_000, Pays::No))]
 		pub fn buy_asset(
 			origin: OriginFor<T>,
@@ -611,16 +628,20 @@ impl<T: Config> Pallet<T> {
 		block_number: u32,
 	) -> Result<Balance, DispatchError> {
 		let mangata_id: TokenId = T::NativeCurrencyId::get();
-		let total_rewards_in_pool:Balance = <T as Config>::Currency::free_balance(mangata_id, &<T as Config>::LiquidityMiningIssuanceVault::get()).into();
+		let total_rewards_in_pool: Balance = <T as Config>::Currency::free_balance(
+			mangata_id.into(),
+			&<T as Config>::LiquidityMiningIssuanceVault::get(),
+		)
+		.into();
 
 		let already_claimed_pool = LiquidityMiningPoolClaimed::<T>::try_get(&liquidity_asset_id)
 			.unwrap_or_else(|_| 0 as u128);
 
-		let already_claimed_total = 	LiquidityMiningPoolClaimedTotal::<T>::try_get().unwrap_or_else(|_| U256::from(0));
+		let already_claimed_total =
+			LiquidityMiningPoolClaimedTotal::<T>::try_get().unwrap_or_else(|_| U256::from(0));
 
-	
-		
-		Ok(available_rewards_for_pool)
+		// Ok(available_rewards_for_pool)
+		Ok(0)
 	}
 
 	pub fn calculate_rewards(

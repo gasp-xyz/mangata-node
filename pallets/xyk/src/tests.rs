@@ -219,7 +219,7 @@ fn liquidity_rewards_claim_W() {
 		let mut pool_rewards = XykStorage::calculate_available_rewards_for_pool(2, 300000).unwrap();
 		assert_eq!(pool_rewards, 164250000);
 		assert_eq!(user2_rewards, (164250000, 0));
-		
+
 		XykStorage::claim_rewards(Origin::signed(2), 2, 82125000).unwrap();
 		user2_work = XykStorage::calculate_work_user(2, 2, 30).unwrap();
 		pool_work = XykStorage::calculate_work_pool(2, 30).unwrap();

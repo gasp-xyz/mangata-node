@@ -20,6 +20,8 @@ use mangata_primitives::{Amount, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
 use orml_traits::parameter_type_with_key;
 use pallet_assets_info as assets_info;
+use pallet_issuance::PoolPromoteApi;
+use std::{collections::HashSet, sync::Mutex};
 
 pub const NATIVE_CURRENCY_ID: u32 = 0;
 
@@ -40,6 +42,37 @@ construct_runtime!(
 		XykStorage: xyk::{Pallet, Call, Storage, Event<T>, Config<T>},
 	}
 );
+
+lazy_static::lazy_static! {
+	static ref PROMOTED_POOLS: Mutex<HashSet<TokenId>> = {
+		let mut m = HashSet::new();
+		Mutex::new(m)
+	};
+}
+
+pub struct MockPromotedPoolApi;
+
+impl MockPromotedPoolApi {
+	fn instance() -> &'static Mutex<HashSet<TokenId>> {
+		&PROMOTED_POOLS
+	}
+}
+
+impl PoolPromoteApi for MockPromotedPoolApi {
+	fn promote_pool(liquidity_token_id: TokenId) -> bool {
+		let mut pools = PROMOTED_POOLS.lock().unwrap();
+		if pools.contains(&liquidity_token_id) {
+			false
+		} else {
+			pools.insert(liquidity_token_id);
+			true
+		}
+	}
+
+	fn len() -> usize {
+		PROMOTED_POOLS.lock().unwrap().len()
+	}
+}
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
@@ -163,6 +196,7 @@ impl Config for Test {
 	type LiquidityMiningSplit = FakeLiquidityMiningSplit;
 	type LinearIssuanceBlocks = FakeLinearIssuanceBlocks;
 	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
+	type PoolPromoteApi = MockPromotedPoolApi;
 	//type BlocksPerSession = frame_support::traits::ConstU32<1200>;
 }
 

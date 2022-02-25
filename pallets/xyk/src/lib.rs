@@ -406,6 +406,12 @@ pub mod pallet {
 	#[pallet::getter(fn liquidity_mining_pool_claimed)]
 	pub type LiquidityMiningPoolClaimed<T: Config> =
 		StorageMap<_, Blake2_256, TokenId, Balance, ValueQuery>;
+
+		#[pallet::storage]
+		#[pallet::getter(fn liquidity_mining_pool_claimed_total)]
+		pub type LiquidityMiningPoolClaimedTotal<T: Config> = U256;
+			
+		
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub created_pools_for_staking:
@@ -604,37 +610,16 @@ impl<T: Config> Pallet<T> {
 		liquidity_asset_id: TokenId,
 		block_number: u32,
 	) -> Result<Balance, DispatchError> {
+		let mangata_id: TokenId = T::NativeCurrencyId::get();
+		let total_rewards_in_pool:Balance = <T as Config>::Currency::free_balance(mangata_id, &<T as Config>::LiquidityMiningIssuanceVault::get()).into();
+
 		let already_claimed_pool = LiquidityMiningPoolClaimed::<T>::try_get(&liquidity_asset_id)
 			.unwrap_or_else(|_| 0 as u128);
 
-		let time = block_number / TIMEBLOCKRATIO; // round to time metric, as other liq minting functions
+		let already_claimed_total = 	LiquidityMiningPoolClaimedTotal::<T>::try_get().unwrap_or_else(|_| U256::from(0));
 
-		let to_be_issued: Balance =
-			issuance_config.cap - issuance_config.tge - issuance_config.crowdloan_allocation;
-		let linear_issuance_sessions: u32 =
-			issuance_config.linear_issuance_blocks / T::BlocksPerRound::get();
-		let linear_issuance_per_session = to_be_issued / linear_issuance_sessions as Balance;
-
-		let available_rewards_for_pool: Balance = u128::from(time)
-		.checked_mul(TIMEBLOCKRATIO.into()) // back to block number
-		.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
-			.checked_mul(linear_issuance_per_session) // minted per session
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
-			//this is now Perbill::from_parts(555555556),
-			.checked_mul(Pallet::<T>::get_liquidity_mining_split().deconstruct().into()).ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
-			/ Balance::try_from(100).unwrap() // get_liquidity_mining_split percentage division
-			/ NUMOFPROMOTEDPOOLS // per pool
-			/ Balance::try_from(T::BlocksPerRound::get()).unwrap() // blocks per session 
-			- already_claimed_pool;
-
-		log!(
-			info,
-			"POST//////////////////////////////////////////////////: ({}, {}, {}) -> {}",
-			Pallet::<T>::get_linear_issuance_blocks(),
-			available_rewards_for_pool,
-			Pallet::<T>::get_liquidity_mining_split().deconstruct(),
-			NUMOFPROMOTEDPOOLS
-		);
+	
+		
 		Ok(available_rewards_for_pool)
 	}
 

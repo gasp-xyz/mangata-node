@@ -42,6 +42,15 @@ pub struct IssuanceInfo {
 	pub crowdloan_allocation: Balance,
 }
 
+/// Api to interact with pools marked as promoted
+pub trait PoolPromoteApi {
+	/// Returns true if pool was promoted, false if it has been promoted already
+	fn promote_pool(liquidity_token_id: TokenId) -> bool;
+
+	/// Returns number of promoted pools
+	fn len() -> usize;
+}
+
 pub use pallet::*;
 
 #[frame_support::pallet]
@@ -91,6 +100,11 @@ pub mod pallet {
 	#[pallet::getter(fn get_session_issuance)]
 	pub type SessionIssuance<T: Config> =
 		StorageMap<_, Twox64Concat, u32, Option<(Balance, Balance)>, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn get_promoted_pools_rewards)]
+	pub type PromotedPoolsRewards<T: Config> =
+		StorageMap<_, Twox64Concat, TokenId, Balance, ValueQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {
@@ -145,6 +159,21 @@ impl<T: Config> ComputeIssuance for Pallet<T> {
 	fn compute_issuance(n: u32) {
 		let _ = Pallet::<T>::calculate_and_store_round_issuance(n);
 		let _ = Pallet::<T>::clear_round_issuance_history(n);
+	}
+}
+
+impl<T: Config> PoolPromoteApi for Pallet<T> {
+	fn promote_pool(liquidity_token_id: TokenId) -> bool {
+		if PromotedPoolsRewards::<T>::contains_key(liquidity_token_id) {
+			false
+		} else {
+			PromotedPoolsRewards::<T>::insert(liquidity_token_id, 0);
+			true
+		}
+	}
+
+	fn len() -> usize {
+		PromotedPoolsRewards::<T>::iter_keys().count()
 	}
 }
 
@@ -206,6 +235,16 @@ impl<T: Config> Pallet<T> {
 		let liquidity_mining_issuance =
 			issuance_config.liquidity_mining_split * current_round_issuance;
 		let staking_issuance = issuance_config.staking_split * current_round_issuance;
+
+		let promoted_pools_count = <Self as PoolPromoteApi>::len();
+
+		// TODO: what about roundings?
+		let liquidity_mining_issuance_per_pool =
+			liquidity_mining_issuance / promoted_pools_count as u128;
+
+		PromotedPoolsRewards::<T>::translate(|_, v: Balance| {
+			Some(v + liquidity_mining_issuance_per_pool)
+		});
 
 		{
 			let liquidity_mining_issuance_issued = T::Tokens::deposit_creating(

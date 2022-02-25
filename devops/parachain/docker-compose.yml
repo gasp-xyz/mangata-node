@@ -10,7 +10,7 @@ services:
   relay_alice:
     environment:
       - ${RUST_LOG:-info}
-    image: parity/polkadot:v0.9.12
+    image: parity/polkadot:v0.9.16
     command:
       - "--alice"
       - "--validator"
@@ -34,7 +34,7 @@ services:
           ipv4_address: 10.0.0.2
 
   relay_bob:
-    image: parity/polkadot:v0.9.12
+    image: parity/polkadot:v0.9.16
     environment:
       - ${RUST_LOG:-info}
     command:
@@ -72,6 +72,8 @@ services:
     image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangata-node:latest}
     environment:
       - ${RUST_LOG:-info}
+      - MEMORY_PROFILER_LOG=debug
+      - LD_PRELOAD=/mangata/libmemory_profiler.so
     entrypoint: ""
     command: >
       bash -xc "
@@ -103,6 +105,8 @@ services:
     image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangata-node:latest}
     environment:
       - ${RUST_LOG:-info}
+      - MEMORY_PROFILER_LOG=debug
+      - LD_PRELOAD=/mangata/libmemory_profiler.so
     entrypoint: ""
     command:
       - "/mangata/node"
@@ -127,6 +131,8 @@ services:
     networks:
         test_net:
           ipv4_address: 10.0.0.6
+    cap_add:
+      - SYS_ADMIN
 
   ui:
     build:

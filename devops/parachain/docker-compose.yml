@@ -73,7 +73,7 @@ services:
     environment:
       - ${RUST_LOG:-info}
       - MEMORY_PROFILER_LOG=debug
-      - LD_PRELOAD=/mangata/libmemory_profiler.so
+      - LD_PRELOAD=/mangata/libbytehound.so
     entrypoint: ""
     command: >
       bash -xc "
@@ -106,7 +106,7 @@ services:
     environment:
       - ${RUST_LOG:-info}
       - MEMORY_PROFILER_LOG=debug
-      - LD_PRELOAD=/mangata/libmemory_profiler.so
+      - LD_PRELOAD=/mangata/libbytehound.so
     entrypoint: ""
     command:
       - "/mangata/node"

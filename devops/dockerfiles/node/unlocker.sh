@@ -20,10 +20,12 @@ MAGIC=$(vault kv get -format=json ${SECRET_KEY} | jq ".data.data")
 echo "Unlocker: importing secrets"
 
 KEY_SEED="//xx"
-ED_SEED=$(echo $MAGIC | jq ".ED_SEED")
-ED_PUB_KEY=$(echo $MAGIC | jq ".ED_PUB_KEY")
-RPC_ENDPOINT=$(echo $MAGIC | jq ".RPC_ENDPOINT")
-KEY_TYPE=$(echo $MAGIC | jq ".KEY_TYPE")
+ED_SEED=$(echo $MAGIC | jq -r ".ED_SEED")
+ED_PUB_KEY=$(echo $MAGIC | jq -r ".ED_PUB_KEY")
+RPC_ENDPOINT=$(echo $MAGIC | jq -r ".RPC_ENDPOINT")
+KEY_TYPE=$(echo $MAGIC | jq -r ".KEY_TYPE")
+￼
+
 
 echo "Unlocker: Injecting keys"
 

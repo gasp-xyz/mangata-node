@@ -487,7 +487,9 @@ type ORMLCurrencyAdapterNegativeImbalance = <orml_tokens::CurrencyAdapter::<Runt
 pub struct ToAuthor;
 impl OnUnbalanced<ORMLCurrencyAdapterNegativeImbalance> for ToAuthor {
 	fn on_nonzero_unbalanced(amount: ORMLCurrencyAdapterNegativeImbalance) {
-		<orml_tokens::CurrencyAdapter::<Runtime, MgaTokenId> as PalletCurrency<AccountId>>::resolve_creating(&Authorship::author().unwrap(), amount);
+		if let Some(author) = Authorship::author() {
+			<orml_tokens::CurrencyAdapter::<Runtime, MgaTokenId> as PalletCurrency<AccountId>>::resolve_creating(&author, amount);
+		}
 	}
 }
 

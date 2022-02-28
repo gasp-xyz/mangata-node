@@ -4,8 +4,7 @@ use cumulus_primitives_core::ParaId;
 use hex::FromHex;
 use hex_literal::hex;
 use mangata_runtime::{
-	AccountId, AuraId, Balance, InflationInfo, Range, Signature, VersionedMultiLocation,
-	DOT_TOKEN_ID,
+	AccountId, AuraId, BlockNumber, IssuanceInfo, Signature, VersionedMultiLocation, DOT_TOKEN_ID,
 };
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
@@ -93,26 +92,28 @@ pub fn mangata_session_keys(keys: AuraId) -> mangata_runtime::SessionKeys {
 	mangata_runtime::SessionKeys { aura: keys }
 }
 
-pub fn mangata_inflation_config() -> InflationInfo<Balance> {
-	InflationInfo {
-		expect: Range {
-			min: 100_000_000 * 1__000_000_000_000_000_000,
-			ideal: 200_000_000 * 1__000_000_000_000_000_000,
-			max: 500_000_000 * 1__000_000_000_000_000_000,
-		},
-		annual: Range {
-			min: Perbill::from_percent(4),
-			ideal: Perbill::from_percent(5),
-			max: Perbill::from_percent(5),
-		},
-		// 8760 hours in a year AND
-		// 4 hours in a round => 2190
-		round: Range {
-			min: Perbill::from_parts(Perbill::from_percent(4).deconstruct() / 2190),
-			ideal: Perbill::from_parts(Perbill::from_percent(5).deconstruct() / 2190),
-			max: Perbill::from_parts(Perbill::from_percent(5).deconstruct() / 2190),
-		},
+pub fn mangata_issuance_config() -> IssuanceInfo {
+	IssuanceInfo {
+		cap: 4_000_000_000__000_000_000_000_000_000u128,
+		// Is updated later based on the tokens config
+		tge: Default::default(),
+		// The tokens missing at tge will be attempted to be distributed over this time period
+		// Missed opportunities for minting tokens such as at block 0 (genesis block) and or failure to claim will be counted as burned
+		linear_issuance_blocks: 13_140_000u32,
+		liquidity_mining_split: Perbill::from_parts(555555556),
+		staking_split: Perbill::from_parts(444444444),
+		crowdloan_allocation: 330_000_000__000_000_000_000_000_000u128,
 	}
+}
+
+pub fn mangata_vesting_period() -> u32 {
+	// 1 Year
+	2_628_000u32.into()
+}
+
+pub fn mangata_vesting_start() -> BlockNumber {
+	// 1 Year
+	0u32.into()
 }
 
 pub fn kusama_mainnet_config() -> ChainSpec {
@@ -179,7 +180,7 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 						18u32,
 						0u32,
 						H160::from_slice(&hex!["C7e3Bda797D2cEb740308eC40142ae235e08144A"][..]),
-						30_000_000__000_000_000_000_000_000u128,
+						300_000_000__000_000_000_000_000_000u128,
 						kusama_mainnet_keys::ALICE_SR25519.parse::<AccountId>().unwrap().into(),
 					),
 					(
@@ -197,23 +198,41 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 				vec![
 					(
 						0u32,
-						40_000_000__000_000_000_000_000_000u128,
+						400_000_000__000_000_000_000_000_000u128,
 						kusama_mainnet_keys::SUDO_SR25519.parse::<AccountId>().unwrap().into(),
 					),
 					(
 						0u32,
-						10_000_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000u128,
 						kusama_mainnet_keys::RELAY_SR25519.parse::<AccountId>().unwrap().into(),
 					),
 					(
 						0u32,
-						10_000_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000u128,
 						kusama_mainnet_keys::BOB_SR25519.parse::<AccountId>().unwrap().into(),
 					),
 					(
 						0u32,
-						10_000_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000u128,
 						kusama_mainnet_keys::CHARLIE_SR25519.parse::<AccountId>().unwrap().into(),
+					),
+				],
+				// Vesting Tokens
+				vec![
+					(
+						kusama_mainnet_keys::ALICE_SR25519
+							.parse::<sr25519::Public>()
+							.unwrap()
+							.into(),
+						mangata_vesting_start(),
+						mangata_vesting_period(),
+						200_000_000__000_000_000_000_000_000u128,
+					),
+					(
+						kusama_mainnet_keys::BOB_SR25519.parse::<sr25519::Public>().unwrap().into(),
+						mangata_vesting_start(),
+						mangata_vesting_period(),
+						100_000_000__000_000_000_000_000_000u128,
 					),
 				],
 				// Config for Staking
@@ -335,7 +354,7 @@ pub fn public_testnet_config() -> ChainSpec {
 						18u32,
 						0u32,
 						H160::from_slice(&hex!["C7e3Bda797D2cEb740308eC40142ae235e08144A"][..]),
-						30_000_000__000_000_000_000_000_000u128,
+						300_000_000__000_000_000_000_000_000u128,
 						public_testnet_keys::ALICE_SR25519.parse::<AccountId>().unwrap().into(),
 					),
 					(
@@ -353,23 +372,41 @@ pub fn public_testnet_config() -> ChainSpec {
 				vec![
 					(
 						0u32,
-						40_000_000__000_000_000_000_000_000u128,
+						400_000_000__000_000_000_000_000_000u128,
 						public_testnet_keys::SUDO_SR25519.parse::<AccountId>().unwrap().into(),
 					),
 					(
 						0u32,
-						10_000_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000u128,
 						public_testnet_keys::RELAY_SR25519.parse::<AccountId>().unwrap().into(),
 					),
 					(
 						0u32,
-						10_000_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000u128,
 						public_testnet_keys::BOB_SR25519.parse::<AccountId>().unwrap().into(),
 					),
 					(
 						0u32,
-						10_000_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000u128,
 						public_testnet_keys::CHARLIE_SR25519.parse::<AccountId>().unwrap().into(),
+					),
+				],
+				// Vesting Tokens
+				vec![
+					(
+						public_testnet_keys::ALICE_SR25519
+							.parse::<sr25519::Public>()
+							.unwrap()
+							.into(),
+						mangata_vesting_start(),
+						mangata_vesting_period(),
+						200_000_000__000_000_000_000_000_000u128,
+					),
+					(
+						public_testnet_keys::BOB_SR25519.parse::<sr25519::Public>().unwrap().into(),
+						mangata_vesting_start(),
+						mangata_vesting_period(),
+						100_000_000__000_000_000_000_000_000u128,
 					),
 				],
 				// Config for Staking
@@ -481,7 +518,7 @@ pub fn development_config() -> ChainSpec {
 						18u32,
 						0u32,
 						H160::from_slice(&hex!["F8F7758FbcEfd546eAEff7dE24AFf666B6228e73"][..]),
-						30_000_000__000_000_000_000_000_000u128,
+						300_000_000__000_000_000_000_000_000u128,
 						get_account_id_from_seed::<sr25519::Public>("Alice"),
 					),
 					(
@@ -499,25 +536,40 @@ pub fn development_config() -> ChainSpec {
 				vec![
 					(
 						0u32,
-						40_000_000__000_000_000_000_000_000u128,
+						400_000_000__000_000_000_000_000_000u128,
 						"0xec00ad0ec6eeb271a9689888f644d9262016a26a25314ff4ff5d756404c44112"
 							.parse()
 							.unwrap(),
 					),
 					(
 						0u32,
-						10_000_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000u128,
 						get_account_id_from_seed::<sr25519::Public>("Relay"),
 					),
 					(
 						0u32,
-						10_000_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000u128,
 						get_account_id_from_seed::<sr25519::Public>("Bob"),
 					),
 					(
 						0u32,
-						10_000_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000u128,
 						get_account_id_from_seed::<sr25519::Public>("Charlie"),
+					),
+				],
+				// Vesting Tokens
+				vec![
+					(
+						get_account_id_from_seed::<sr25519::Public>("Alice"),
+						mangata_vesting_start(),
+						mangata_vesting_period(),
+						200_000_000__000_000_000_000_000_000u128,
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Bob"),
+						mangata_vesting_start(),
+						mangata_vesting_period(),
+						100_000_000__000_000_000_000_000_000u128,
 					),
 				],
 				// Config for Staking
@@ -629,7 +681,7 @@ pub fn local_config() -> ChainSpec {
 						18u32,
 						0u32,
 						H160::from_slice(&hex!["F8F7758FbcEfd546eAEff7dE24AFf666B6228e73"][..]),
-						30_000_000__000_000_000_000_000_000u128,
+						300_000_000__000_000_000_000_000_000u128,
 						get_account_id_from_seed::<sr25519::Public>("Alice"),
 					),
 					(
@@ -647,25 +699,40 @@ pub fn local_config() -> ChainSpec {
 				vec![
 					(
 						0u32,
-						40_000_000__000_000_000_000_000_000u128,
+						400_000_000__000_000_000_000_000_000u128,
 						"0xec00ad0ec6eeb271a9689888f644d9262016a26a25314ff4ff5d756404c44112"
 							.parse()
 							.unwrap(),
 					),
 					(
 						0u32,
-						10_000_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000u128,
 						get_account_id_from_seed::<sr25519::Public>("Relay"),
 					),
 					(
 						0u32,
-						10_000_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000u128,
 						get_account_id_from_seed::<sr25519::Public>("Bob"),
 					),
 					(
 						0u32,
-						10_000_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000u128,
 						get_account_id_from_seed::<sr25519::Public>("Charlie"),
+					),
+				],
+				// Vesting Tokens
+				vec![
+					(
+						get_account_id_from_seed::<sr25519::Public>("Alice"),
+						mangata_vesting_start(),
+						mangata_vesting_period(),
+						200_000_000__000_000_000_000_000_000u128,
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Bob"),
+						mangata_vesting_start(),
+						mangata_vesting_period(),
+						100_000_000__000_000_000_000_000_000u128,
 					),
 				],
 				// Config for Staking
@@ -735,6 +802,7 @@ fn mangata_genesis(
 	bridged_app_ids: Vec<(App, AppId)>,
 	bridged_assets: BridgedAssetsType,
 	tokens_endowment: Vec<(u32, u128, AccountId)>,
+	vesting_tokens: Vec<(AccountId, BlockNumber, BlockNumber, u128)>,
 	staking_accounts: Vec<(AccountId, u32, u128, u32, u128, u32, u128)>,
 	xcm_tokens: Vec<(u32, Option<VersionedMultiLocation>)>,
 	id: ParaId,
@@ -750,6 +818,11 @@ fn mangata_genesis(
 				.iter()
 				.cloned()
 				.map(|(token_id, amount, account)| (account, token_id, amount))
+				.collect(),
+			vesting_tokens: vesting_tokens
+				.iter()
+				.cloned()
+				.map(|(account, _, _, amount)| (account, 0u32, amount))
 				.collect(),
 			created_tokens_for_staking: {
 				let mut created_tokens_for_staking_token_1: Vec<(AccountId, u32, u128)> =
@@ -774,6 +847,7 @@ fn mangata_genesis(
 				created_tokens_for_staking_token_1
 			},
 		},
+		vesting: mangata_runtime::VestingConfig { vesting: vesting_tokens.clone() },
 		treasury: Default::default(),
 		parachain_info: mangata_runtime::ParachainInfoConfig { parachain_id: id },
 		parachain_staking: mangata_runtime::ParachainStakingConfig {
@@ -785,7 +859,6 @@ fn mangata_genesis(
 				})
 				.collect(),
 			delegations: vec![],
-			inflation_config: mangata_inflation_config(),
 		},
 		session: mangata_runtime::SessionConfig {
 			keys: initial_authorities
@@ -875,6 +948,74 @@ fn mangata_genesis(
 					}
 				})
 				.collect(),
+		},
+		crowdloan: mangata_runtime::CrowdloanConfig {
+			crowdloan_allocation: mangata_issuance_config().crowdloan_allocation,
+		},
+		issuance: mangata_runtime::IssuanceConfig {
+			issuance_config: {
+				let mut issuance_info = mangata_issuance_config();
+				let mut tge_tokens = tokens_endowment
+					.iter()
+					.cloned()
+					.filter_map(
+						|(token_id, amount, _)| {
+							if token_id == 0u32 {
+								Some(amount)
+							} else {
+								None
+							}
+						},
+					)
+					.fold(0u128, |sum, val| sum + val);
+				tge_tokens = staking_accounts
+					.iter()
+					.cloned()
+					.filter_map(
+						|(_, _, _, token_id, initial_amount, _, _)| {
+							if token_id == 0u32 {
+								Some(initial_amount)
+							} else {
+								None
+							}
+						},
+					)
+					.fold(tge_tokens, |sum, val| sum + val);
+				tge_tokens = staking_accounts
+					.iter()
+					.cloned()
+					.filter_map(
+						|(_, token_id, initial_amount, _, _, _, _)| {
+							if token_id == 0u32 {
+								Some(initial_amount)
+							} else {
+								None
+							}
+						},
+					)
+					.fold(tge_tokens, |sum, val| sum + val);
+				tge_tokens = bridged_assets
+					.iter()
+					.cloned()
+					.filter_map(
+						|(.., token_id, _, initial_supply, _)| {
+							if token_id == 0u32 {
+								Some(initial_supply)
+							} else {
+								None
+							}
+						},
+					)
+					.fold(tge_tokens, |sum, val| sum + val);
+				tge_tokens = vesting_tokens
+					.iter()
+					.cloned()
+					.map(|(_, _, _, vesting_amount)| vesting_amount)
+					.fold(tge_tokens, |sum, val| sum + val);
+
+				issuance_info.tge = tge_tokens;
+				issuance_info
+			},
 		},
 	}
 }

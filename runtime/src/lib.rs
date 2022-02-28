@@ -31,7 +31,10 @@ use sp_version::RuntimeVersion;
 
 use frame_support::{
 	construct_runtime, match_type, parameter_types,
-	traits::{Contains, Everything, Get, LockIdentifier, Nothing, U128CurrencyToVote},
+	traits::{
+		Contains, Currency as PalletCurrency, Everything, Get, LockIdentifier, Nothing,
+		OnUnbalanced, U128CurrencyToVote,
+	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
 		DispatchClass, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
@@ -71,7 +74,7 @@ use xcm_executor::{traits::DropAssets, Assets, XcmExecutor};
 use codec::{Decode, Encode};
 use static_assertions::const_assert;
 
-pub use parachain_staking::{InflationInfo, Range};
+pub use pallet_issuance::IssuanceInfo;
 
 pub use mangata_primitives::{Amount, Balance, TokenId};
 
@@ -393,7 +396,7 @@ impl pallet_authorship::Config for Runtime {
 	type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Aura>;
 	type UncleGenerations = UncleGenerations;
 	type FilterUncle = ();
-	type EventHandler = (ParachainStaking,);
+	type EventHandler = ParachainStaking;
 }
 
 parameter_types! {
@@ -479,6 +482,17 @@ impl pallet_xyk::Config for Runtime {
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
 }
 
+type ORMLCurrencyAdapterNegativeImbalance = <orml_tokens::CurrencyAdapter::<Runtime, MgaTokenId> as PalletCurrency<AccountId>>::NegativeImbalance;
+
+pub struct ToAuthor;
+impl OnUnbalanced<ORMLCurrencyAdapterNegativeImbalance> for ToAuthor {
+	fn on_nonzero_unbalanced(amount: ORMLCurrencyAdapterNegativeImbalance) {
+		if let Some(author) = Authorship::author() {
+			<orml_tokens::CurrencyAdapter::<Runtime, MgaTokenId> as PalletCurrency<AccountId>>::resolve_creating(&author, amount);
+		}
+	}
+}
+
 parameter_types! {
 	/// Relay Chain `TransactionByteFee` / 10
 	pub const TransactionByteFee: Balance = 10 * MICROUNIT;
@@ -488,7 +502,7 @@ parameter_types! {
 impl pallet_transaction_payment::Config for Runtime {
 	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<
 		orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>,
-		Treasury,
+		ToAuthor,
 	>;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = WeightToFee;
@@ -790,10 +804,8 @@ impl pallet_elections_phragmen::Config for Runtime {
 }
 
 parameter_types! {
-	/// Minimum round length is 2 minutes (10 * 12 second block times)
-	pub const MinBlocksPerRound: u32 = 10;
 	/// Default BlocksPerRound is every 4 hours (1200 * 12 second block times)
-	pub const DefaultBlocksPerRound: u32 = 4 * HOURS;
+	pub const BlocksPerRound: u32 = 4 * HOURS;
 	/// Collator candidate exit delay (number of rounds)
 	pub const LeaveCandidatesDelay: u32 = 2;
 	/// Collator candidate bond increases/decreases delay (number of rounds)
@@ -818,19 +830,21 @@ parameter_types! {
 	pub const DefaultParachainBondReservePercent: Percent = Percent::from_percent(30);
 	/// Minimum stake required to become a collator
 	pub const MinCollatorStk: u128 = 10 * DOLLARS;
-	// TODO: Restore to 100_000 for Phase 2 (remove the division by 10)
 	/// Minimum stake required to be reserved to be a candidate
 	pub const MinCandidateStk: u128 = 1 * DOLLARS;
 	/// Minimum stake required to be reserved to be a delegator
 	pub const MinDelegatorStk: u128 = 1 * CENTS;
 }
 
+// To ensure that BlocksPerRound is not zero, breaking issuance calculations
+// Also since 1 block is used for session change, atleast 1 block more needed for extrinsics to work
+const_assert!(BlocksPerRound::get() >= 2);
+
 impl parachain_staking::Config for Runtime {
 	type Event = Event;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type MonetaryGovernanceOrigin = EnsureRoot<AccountId>;
-	type MinBlocksPerRound = MinBlocksPerRound;
-	type DefaultBlocksPerRound = DefaultBlocksPerRound;
+	type BlocksPerRound = BlocksPerRound;
 	type LeaveCandidatesDelay = LeaveCandidatesDelay;
 	type CandidateBondDelay = CandidateBondDelay;
 	type LeaveDelegatorsDelay = LeaveDelegatorsDelay;
@@ -841,14 +855,81 @@ impl parachain_staking::Config for Runtime {
 	type MaxDelegatorsPerCandidate = MaxDelegatorsPerCandidate;
 	type MaxDelegationsPerDelegator = MaxDelegationsPerDelegator;
 	type DefaultCollatorCommission = DefaultCollatorCommission;
-	type DefaultParachainBondReserveAccount = TreasuryAccount;
-	type DefaultParachainBondReservePercent = DefaultParachainBondReservePercent;
 	type MinCollatorStk = MinCollatorStk;
 	type MinCandidateStk = MinCandidateStk;
 	type MinDelegation = MinDelegatorStk;
 	type NativeTokenId = MgaTokenId;
 	type StakingLiquidityTokenValuator = Xyk;
+	type Issuance = Issuance;
+	type StakingIssuanceVault = StakingIssuanceVault;
 	type WeightInfo = parachain_staking::weights::SubstrateWeight<Runtime>;
+}
+
+parameter_types! {
+	pub const HistoryLimit: u32 = 10u32;
+
+	pub const LiquidityMiningIssuanceVaultId: PalletId = PalletId(*b"py/lqmiv");
+	pub LiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account();
+	pub const StakingIssuanceVaultId: PalletId = PalletId(*b"py/stkiv");
+	pub StakingIssuanceVault: AccountId = StakingIssuanceVaultId::get().into_account();
+	pub const CrowdloanIssuanceVaultId: PalletId = PalletId(*b"py/crliv");
+	pub CrowdloanIssuanceVault: AccountId = CrowdloanIssuanceVaultId::get().into_account();
+}
+
+// Issuance history must be kept for atleast the staking reward delay
+const_assert!(RewardPaymentDelay::get() <= HistoryLimit::get());
+
+impl pallet_issuance::Config for Runtime {
+	type Event = Event;
+	type NativeCurrencyId = MgaTokenId;
+	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	type BlocksPerRound = BlocksPerRound;
+	type HistoryLimit = HistoryLimit;
+	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
+	type StakingIssuanceVault = StakingIssuanceVault;
+	type CrowdloanIssuanceVault = CrowdloanIssuanceVault;
+}
+
+parameter_types! {
+	pub const MinVestedTransfer: Balance = 100 * DOLLARS;
+}
+
+impl pallet_vesting_mangata::Config for Runtime {
+	type Event = Event;
+	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>;
+	type BlockNumberToBalance = ConvertInto;
+	type MinVestedTransfer = MinVestedTransfer;
+	type WeightInfo = pallet_vesting_mangata::weights::SubstrateWeight<Runtime>;
+	// `VestingInfo` encode length is 36bytes. 28 schedules gets encoded as 1009 bytes, which is the
+	// highest number of schedules that encodes less than 2^10.
+	const MAX_VESTING_SCHEDULES: u32 = 28;
+}
+
+parameter_types! {
+	pub const Initialized: bool = false;
+	pub const InitializationPayment: Perbill = Perbill::from_percent(20);
+	pub const MaxInitContributorsBatchSizes: u32 = 500;
+	pub const MinimumReward: Balance = 0;
+	pub const RelaySignaturesThreshold: Perbill = Perbill::from_percent(100);
+	pub const SigantureNetworkIdentifier: &'static [u8] = b"mangata-";
+}
+
+impl pallet_crowdloan_rewards::Config for Runtime {
+	type Event = Event;
+	type Initialized = Initialized;
+	type InitializationPayment = InitializationPayment;
+	type MaxInitContributors = MaxInitContributorsBatchSizes;
+	type MinimumReward = MinimumReward;
+	type RewardAddressRelayVoteThreshold = RelaySignaturesThreshold;
+	type NativeTokenId = MgaTokenId;
+	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	type RelayChainAccountId = sp_runtime::AccountId32;
+	type RewardAddressChangeOrigin = EnsureRoot<AccountId>;
+	type SignatureNetworkIdentifier = SigantureNetworkIdentifier;
+	type RewardAddressAssociateOrigin = EnsureRoot<AccountId>;
+	type VestingBlockNumber = BlockNumber;
+	type VestingBlockProvider = System;
+	type WeightInfo = pallet_crowdloan_rewards::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -1071,6 +1152,15 @@ construct_runtime!(
 		// Xyk stuff
 		AssetsInfo: pallet_assets_info::{Pallet, Call, Config, Storage, Event<T>} = 12,
 		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>} = 13,
+
+		// Vesting
+		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>, Config<T>} = 17,
+
+		// Crowdloan
+		Crowdloan: pallet_crowdloan_rewards::{Pallet, Call, Storage, Event<T>, Config} = 18,
+
+		// Issuance
+		Issuance: pallet_issuance::{Pallet, Event<T>, Storage, Config} = 19,
 
 		// Collator support. The order of these 4 are important and shall not change.
 		Authorship: pallet_authorship::{Pallet, Call, Storage} = 20,

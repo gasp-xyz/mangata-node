@@ -72,8 +72,7 @@ services:
     image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangata-node:latest}
     environment:
       - ${RUST_LOG:-info}
-      - MEMORY_PROFILER_LOG=debug
-      - LD_PRELOAD=/mangata/libbytehound.so
+      - LD_PRELOAD=${LD_PRELOAD}
     entrypoint: ""
     command: >
       bash -xc "
@@ -105,8 +104,7 @@ services:
     image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangata-node:latest}
     environment:
       - ${RUST_LOG:-info}
-      - MEMORY_PROFILER_LOG=debug
-      - LD_PRELOAD=/mangata/libbytehound.so
+      - LD_PRELOAD=${LD_PRELOAD}
     entrypoint: ""
     command:
       - "/mangata/node"

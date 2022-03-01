@@ -36,4 +36,4 @@ COPY --from=builder /mangata/bytehound /mangata/bytehound
 RUN /mangata/node --version
 COPY devops/dockerfiles/node/runner.sh /runner.sh
 
-ENTRYPOINT ["LD_PRELOAD=/mangata/libbytehound.so /mangata/node"]
+ENTRYPOINT ["/mangata/node"]

@@ -862,6 +862,7 @@ impl parachain_staking::Config for Runtime {
 	type StakingLiquidityTokenValuator = Xyk;
 	type Issuance = Issuance;
 	type StakingIssuanceVault = StakingIssuanceVault;
+	type FallbackProvider = Council;
 	type WeightInfo = parachain_staking::weights::SubstrateWeight<Runtime>;
 }
 

@@ -6009,7 +6009,7 @@ dependencies = [
 [[package]]
 name = "parachain-staking"
 version = "3.0.0"
-source = "git+https://github.com/mangata-finance//moonbeam?branch=feature/council-as-staking-fallback#aed2032344df37d7f141ae31a8fa44f3d1bb7d52"
+source = "git+https://github.com/mangata-finance//moonbeam?branch=mangata-dev#9a1a31a2a2c3602529f0614b67f85cd2029fcd0b"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -10990,7 +10990,7 @@ dependencies = [
  "chrono",
  "lazy_static",
  "matchers",
- "parking_lot 0.11.2",
+ "parking_lot 0.10.2",
  "regex",
  "serde",
  "serde_json",

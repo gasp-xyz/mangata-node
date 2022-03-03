@@ -9,7 +9,7 @@ on:
   pull_request:
     branches:
       - develop
-      - mangata-dev-v4
+      - ci
   push:
     branches: [ develop ]
 

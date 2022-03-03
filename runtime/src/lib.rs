@@ -74,7 +74,7 @@ use xcm_executor::{traits::DropAssets, Assets, XcmExecutor};
 use codec::{Decode, Encode};
 use static_assertions::const_assert;
 
-pub use pallet_issuance::IssuanceInfo;
+pub use pallet_issuance::{IssuanceInfo, PoolPromoteApi};
 
 pub use mangata_primitives::{Amount, Balance, TokenId};
 
@@ -498,6 +498,7 @@ impl pallet_xyk::Config for Runtime {
 	type LiquidityMiningSplit = ProvideLiquidityMiningSplit;
 	type LinearIssuanceBlocks = ProvideLinearIssuanceBlocks;
 	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
+	type PoolPromoteApi = Issuance;
 }
 
 type ORMLCurrencyAdapterNegativeImbalance = <orml_tokens::CurrencyAdapter::<Runtime, MgaTokenId> as PalletCurrency<AccountId>>::NegativeImbalance;

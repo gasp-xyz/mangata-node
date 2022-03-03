@@ -43,10 +43,15 @@ pub struct IssuanceInfo {
 }
 
 /// Api to interact with pools marked as promoted
+///
+/// TODO add errors to functions
 pub trait PoolPromoteApi {
 	/// Returns true if pool was promoted, false if it has been promoted already
 	fn promote_pool(liquidity_token_id: TokenId) -> bool;
-
+	/// Returns available reward for pool
+	fn get_pool_rewards(liquidity_token_id: TokenId) -> Option<Balance>;
+	/// Returns available reward for pool
+	fn claim_pool_rewards(liquidity_token_id: TokenId, claimed_amount: Balance) -> bool;
 	/// Returns number of promoted pools
 	fn len() -> usize;
 }
@@ -170,6 +175,17 @@ impl<T: Config> PoolPromoteApi for Pallet<T> {
 			PromotedPoolsRewards::<T>::insert(liquidity_token_id, 0);
 			true
 		}
+	}
+
+	fn get_pool_rewards(liquidity_token_id: TokenId) -> Option<Balance> {
+		PromotedPoolsRewards::<T>::try_get(liquidity_token_id).ok()
+	}
+
+	fn claim_pool_rewards(liquidity_token_id: TokenId, claimed_amount: Balance) -> bool {
+		PromotedPoolsRewards::<T>::try_mutate(liquidity_token_id, |rewards| {
+			rewards.checked_sub(claimed_amount).ok_or(())
+		})
+		.is_ok()
 	}
 
 	fn len() -> usize {

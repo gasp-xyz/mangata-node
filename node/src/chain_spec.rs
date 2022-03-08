@@ -220,16 +220,13 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 				// Vesting Tokens
 				vec![
 					(
-						kusama_mainnet_keys::ALICE_SR25519
-							.parse::<sr25519::Public>()
-							.unwrap()
-							.into(),
+						kusama_mainnet_keys::ALICE_SR25519.parse::<AccountId>().unwrap().into(),
 						mangata_vesting_start(),
 						mangata_vesting_period(),
 						200_000_000__000_000_000_000_000_000u128,
 					),
 					(
-						kusama_mainnet_keys::BOB_SR25519.parse::<sr25519::Public>().unwrap().into(),
+						kusama_mainnet_keys::BOB_SR25519.parse::<AccountId>().unwrap().into(),
 						mangata_vesting_start(),
 						mangata_vesting_period(),
 						100_000_000__000_000_000_000_000_000u128,
@@ -394,16 +391,13 @@ pub fn public_testnet_config() -> ChainSpec {
 				// Vesting Tokens
 				vec![
 					(
-						public_testnet_keys::ALICE_SR25519
-							.parse::<sr25519::Public>()
-							.unwrap()
-							.into(),
+						public_testnet_keys::ALICE_SR25519.parse::<AccountId>().unwrap().into(),
 						mangata_vesting_start(),
 						mangata_vesting_period(),
 						200_000_000__000_000_000_000_000_000u128,
 					),
 					(
-						public_testnet_keys::BOB_SR25519.parse::<sr25519::Public>().unwrap().into(),
+						public_testnet_keys::BOB_SR25519.parse::<AccountId>().unwrap().into(),
 						mangata_vesting_start(),
 						mangata_vesting_period(),
 						100_000_000__000_000_000_000_000_000u128,

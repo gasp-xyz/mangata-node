@@ -17,10 +17,19 @@ FROM env_builder as builder
 RUN cargo build --release
 
 FROM debian:stretch
+ENV DOCKERIZE_VERSION v0.6.1
+ENV VAULT_VERSION 1.9.3
+RUN apt-get update && apt-get install -y curl netcat jq unzip
+RUN curl -L https://github.com/jwilder/dockerize/releases/download/${DOCKERIZE_VERSION}/dockerize-alpine-linux-amd64-${DOCKERIZE_VERSION}.tar.gz --output /tmp/dockerize.tar.gz
+RUN curl -L https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_amd64.zip --output /tmp/vault.zip
+RUN tar -C /usr/bin -xzvf /tmp/dockerize.tar.gz
+RUN unzip /tmp/vault.zip -d /usr/bin
 WORKDIR /mangata
-RUN apt-get update && apt-get install -y curl
 COPY --from=builder /mangata/target/release/mangata-node /mangata/node
 RUN /mangata/node --version
-COPY devops/dockerfiles/node/runner.sh /runner.sh
+COPY devops/dockerfiles/node/unlocker.sh /unlocker.sh
+COPY devops/dockerfiles/node/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+RUN chmod +x /unlocker.sh
 
-ENTRYPOINT ["/mangata/node"]
+ENTRYPOINT ["/entrypoint.sh"]

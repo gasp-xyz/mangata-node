@@ -21,7 +21,7 @@ use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter, MultiTokenCurre
 use orml_traits::parameter_type_with_key;
 use pallet_assets_info as assets_info;
 use pallet_issuance::PoolPromoteApi;
-use std::{collections::HashSet, sync::Mutex};
+use std::{collections::HashMap, sync::Mutex};
 
 pub const NATIVE_CURRENCY_ID: u32 = 0;
 
@@ -44,8 +44,8 @@ construct_runtime!(
 );
 
 lazy_static::lazy_static! {
-	static ref PROMOTED_POOLS: Mutex<HashSet<TokenId>> = {
-		let mut m = HashSet::new();
+	static ref PROMOTED_POOLS: Mutex<HashMap<TokenId, Balance>> = {
+		let mut m = HashMap::new();
 		Mutex::new(m)
 	};
 }
@@ -53,7 +53,7 @@ lazy_static::lazy_static! {
 pub struct MockPromotedPoolApi;
 
 impl MockPromotedPoolApi {
-	pub fn instance() -> &'static Mutex<HashSet<TokenId>> {
+	pub fn instance() -> &'static Mutex<HashMap<TokenId, Balance>> {
 		&PROMOTED_POOLS
 	}
 }
@@ -61,11 +61,28 @@ impl MockPromotedPoolApi {
 impl PoolPromoteApi for MockPromotedPoolApi {
 	fn promote_pool(liquidity_token_id: TokenId) -> bool {
 		let mut pools = PROMOTED_POOLS.lock().unwrap();
-		if pools.contains(&liquidity_token_id) {
+		if pools.contains_key(&liquidity_token_id) {
 			false
 		} else {
-			pools.insert(liquidity_token_id);
+			pools.insert(liquidity_token_id, 0);
 			true
+		}
+	}
+
+	fn get_pool_rewards(liquidity_token_id: TokenId) -> Option<Balance> {
+		let mut pools = PROMOTED_POOLS.lock().unwrap();
+
+		pools.get(&liquidity_token_id).map(|x| *x)
+	}
+
+	fn claim_pool_rewards(liquidity_token_id: TokenId, claimed_amount: Balance) -> bool {
+		let mut pools = PROMOTED_POOLS.lock().unwrap();
+
+		if let Some(reward) = pools.get_mut(&liquidity_token_id) {
+			*reward = *reward - claimed_amount;
+			true
+		} else {
+			false
 		}
 	}
 

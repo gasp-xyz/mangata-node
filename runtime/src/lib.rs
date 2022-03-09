@@ -851,6 +851,8 @@ impl parachain_staking::Config for Runtime {
 	type WeightInfo = parachain_staking::weights::SubstrateWeight<Runtime>;
 }
 
+impl parachain_staking::StakingBenchmarkConfig for Runtime {}
+
 parameter_types! {
 	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
 }
@@ -1112,6 +1114,7 @@ mod benches {
 		[pallet_session, SessionBench::<Runtime>]
 		[pallet_timestamp, Timestamp]
 		[orml_tokens, Tokens]
+		[parachain_staking, ParachainStaking]
 	);
 }
 

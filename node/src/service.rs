@@ -45,6 +45,9 @@ impl sc_executor::NativeExecutionDispatch for MangataRuntimeExecutor {
 	}
 }
 
+pub type FullClient =
+	sc_service::TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<MangataRuntimeExecutor>>;
+
 /// Starts a `ServiceBuilder` for a full service.
 ///
 /// Use this macro if you don't actually need the full service, but just the builder in order to

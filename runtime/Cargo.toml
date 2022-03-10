@@ -183,6 +183,10 @@ try-runtime = [
 	"frame-executive/try-runtime",
 ]
 
+disable-execution = [
+	"frame-executive/disable-execution",
+]
+
 runtime-benchmarks = [
 	"hex-literal",
 	"sp-runtime/runtime-benchmarks",

@@ -45,7 +45,7 @@ construct_runtime!(
 
 lazy_static::lazy_static! {
 	static ref PROMOTED_POOLS: Mutex<HashMap<TokenId, Balance>> = {
-		let mut m = HashMap::new();
+		let m = HashMap::new();
 		Mutex::new(m)
 	};
 }

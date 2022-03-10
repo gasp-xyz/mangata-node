@@ -98,6 +98,9 @@ pub use artemis_eth_app;
 pub use pallet_bridge;
 pub use pallet_verifier;
 
+#[cfg(any(feature = "std", test))]
+pub use frame_system::Call as SystemCall;
+
 /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
 pub type Signature = MultiSignature;
 
@@ -139,6 +142,8 @@ pub type SignedExtra = (
 	frame_system::CheckWeight<Runtime>,
 	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 );
+/// The payload being signed in transactions.
+pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
@@ -824,6 +829,9 @@ parameter_types! {
 	pub const MinCandidateStk: u128 = 1 * DOLLARS;
 	/// Minimum stake required to be reserved to be a delegator
 	pub const MinDelegatorStk: u128 = 1 * CENTS;
+}
+
+impl parachain_staking::StakingBenchmarkConfig for Runtime {
 }
 
 impl parachain_staking::Config for Runtime {

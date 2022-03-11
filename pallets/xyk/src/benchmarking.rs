@@ -31,6 +31,7 @@ use crate::Pallet as Xyk;
 const SEED: u32 = 0;
 // existential deposit multiplier
 const ED_MULTIPLIER: u32 = 10;
+const MILION: u32 = 1_000_000_000;
 
 benchmarks! {
 	// Benchmark `transfer` extrinsic with the worst possible conditions:
@@ -39,22 +40,33 @@ benchmarks! {
 	create_pool {
 		// let existential_deposit = T::ExistentialDeposit::get();
 		let caller: T::AccountId = whitelisted_caller();
-        //
-		// // Give some multiple of the existential deposit
-		// let balance = existential_deposit.saturating_mul(ED_MULTIPLIER.into());
-		// let _ = <Balances<T, I> as Currency<_>>::make_free_balance_be(&caller, balance);
-        //
-		// // Transfer `e - 1` existential deposits + 1 unit, which guarantees to create one account,
-		// // and reap this user.
-		// let recipient: T::AccountId = account("recipient", 0, SEED);
-		// let recipient_lookup: <T::Lookup as StaticLookup>::Source = T::Lookup::unlookup(recipient.clone());
-		// let transfer_amount = existential_deposit.saturating_mul((ED_MULTIPLIER - 1).into()) + 1u32.into();
-	}: create_pool(RawOrigin::Signed(caller.into()), 0, 0, 0, 0)
+		let first_asset_amount = MILION;
+		let second_asset_amount = MILION;
+		let first_asset_id = <T as Config>::Currency::create(&caller, first_asset_amount.into()).unwrap();
+		let second_asset_id = <T as Config>::Currency::create(&caller, second_asset_amount.into()).unwrap();
+		let liquidity_asset_id = second_asset_id.into() + 1;
+
+	}: create_pool(RawOrigin::Signed(caller.clone().into()), first_asset_id.into(), first_asset_amount.into(), second_asset_id.into(), second_asset_amount.into())
 	verify {
-		// assert_eq!(Xyk::<T, I>::free_balance(&caller), Zero::zero());
-		// assert_eq!(Xyk::<T, I>::free_balance(&recipient), transfer_amount);
+
+		assert_eq!(
+			Xyk::<T>::asset_pool((first_asset_id.into(), second_asset_id.into())),
+			(first_asset_amount as u128, second_asset_amount as u128)
+		);
+
+		assert!(
+			Xyk::<T>::liquidity_asset((first_asset_id.into(), second_asset_id.into())).is_some()
+		);
+
+		assert_eq!(
+			Xyk::<T>::liquidity_pool(liquidity_asset_id),
+			Some((first_asset_id.into(), second_asset_id.into()))
+		);
+
+		assert!(LiquidityMiningUser::<T>::try_get((caller.clone(), liquidity_asset_id)).is_ok());
+		assert!(LiquidityMiningPool::<T>::try_get(liquidity_asset_id).is_ok());
+
 	}
 
-
-    // impl_benchmark_test_suite!(Xyk, crate::mock::ExtBuilder::default().build(), crate::mock::Runtime)    
+    impl_benchmark_test_suite!(Xyk, crate::mock::new_test_ext(), crate::mock::Test)    
 }

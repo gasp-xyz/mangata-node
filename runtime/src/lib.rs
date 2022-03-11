@@ -831,8 +831,7 @@ parameter_types! {
 	pub const MinDelegatorStk: u128 = 1 * CENTS;
 }
 
-impl parachain_staking::StakingBenchmarkConfig for Runtime {
-}
+impl parachain_staking::StakingBenchmarkConfig for Runtime {}
 
 impl parachain_staking::Config for Runtime {
 	type Event = Event;
@@ -1395,6 +1394,7 @@ impl_runtime_apis! {
 
 			// TODO remove?
 			add_benchmark!(params, batches, pallet_xyk, Xyk);
+			
 			add_benchmarks!(params, batches);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }

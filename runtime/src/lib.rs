@@ -506,7 +506,9 @@ type ORMLCurrencyAdapterNegativeImbalance = <orml_tokens::CurrencyAdapter::<Runt
 pub struct ToAuthor;
 impl OnUnbalanced<ORMLCurrencyAdapterNegativeImbalance> for ToAuthor {
 	fn on_nonzero_unbalanced(amount: ORMLCurrencyAdapterNegativeImbalance) {
-		<orml_tokens::CurrencyAdapter::<Runtime, MgaTokenId> as PalletCurrency<AccountId>>::resolve_creating(&Authorship::author().unwrap(), amount);
+		if let Some(author) = Authorship::author() {
+			<orml_tokens::CurrencyAdapter::<Runtime, MgaTokenId> as PalletCurrency<AccountId>>::resolve_creating(&author, amount);
+		}
 	}
 }
 
@@ -879,6 +881,7 @@ impl parachain_staking::Config for Runtime {
 	type StakingLiquidityTokenValuator = Xyk;
 	type Issuance = Issuance;
 	type StakingIssuanceVault = StakingIssuanceVault;
+	type FallbackProvider = Council;
 	type WeightInfo = parachain_staking::weights::SubstrateWeight<Runtime>;
 }
 

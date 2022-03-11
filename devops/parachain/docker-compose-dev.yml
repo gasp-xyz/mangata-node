@@ -14,7 +14,7 @@ services:
       context: ../../
       dockerfile: ./devops/dockerfiles/node-and-runtime/relay.dockerfile
     entrypoint: ""
-    command: polkadot --alice --validator --tmp --chain /config/spec.json --port 30333  --unsafe-ws-external --rpc-port=40333 --unsafe-rpc-external --rpc-cors=all --ws-port 9944
+    command: polkadot --alice --validator --base-path /tmp/relay_alice  --chain /config/spec.json --port 30333  --unsafe-ws-external --rpc-port=40333 --unsafe-rpc-external --rpc-cors=all --ws-port 9944
     volumes:
       - ./config:/config
     ports:
@@ -41,7 +41,7 @@ services:
       done;
       NODE_ID=$$(curl --connect-timeout 0.3 -H \"$$HEADER\" -d \"$$PAYLOAD\" http://relay_alice:40333 | jq -r '.result');
       echo NODE ID: $$NODE_ID;
-      polkadot --bob --validator --tmp --chain /config/spec.json --port 30333  --ws-port 9944 --bootnodes /ip4/10.0.0.2/tcp/30333/p2p/$$NODE_ID --unsafe-ws-external --unsafe-rpc-external --rpc-cors=all;
+      polkadot --bob --validator --base-path /tmp/relay_bob --chain /config/spec.json --port 30333  --ws-port 9944 --bootnodes /ip4/10.0.0.2/tcp/30333/p2p/$$NODE_ID --unsafe-ws-external --unsafe-rpc-external --rpc-cors=all;
       "
     volumes:
       - ./config:/config
@@ -74,7 +74,7 @@ services:
       bash -c "
       /code/target/release/mangata-node export-genesis-state > /config/genesis-state;
       /code/target/release/mangata-node export-genesis-wasm > /config/genesis-wasm;
-      /code/target/release/mangata-node --alice --collator --force-authoring --tmp --port 30333
+      /code/target/release/mangata-node --alice --collator --force-authoring --base-path /tmp/para_alice --port 30333
       --ws-port 9944 --unsafe-ws-external --unsafe-rpc-external
       --rpc-cors=all -- --execution wasm --chain /config/spec.json
       --port 30334 --ws-port 9945
@@ -93,7 +93,7 @@ services:
     command: >
       /code/target/release/mangata-node --bob --rpc-cors=all 
       --collator --unsafe-ws-external --unsafe-rpc-external  
-      --force-authoring --tmp --port 30333 --ws-port 9944 -- 
+      --force-authoring --base-path /tmp/para_bob --port 30333 --ws-port 9944 -- 
       --execution wasm --chain /config/spec.json
       --port 30334
     volumes:

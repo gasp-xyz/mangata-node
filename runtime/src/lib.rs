@@ -53,6 +53,7 @@ pub use sp_runtime::BuildStorage;
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 use polkadot_runtime_common::{BlockHashCount, RocksDbWeight, SlowAdjustingFeeUpdate};
+use frame_benchmarking::BenchmarkList;
 
 // XCM Imports
 use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
@@ -1350,10 +1351,7 @@ impl_runtime_apis! {
 			let mut list = Vec::<BenchmarkList>::new();
 
 			// TODO remove?
-			// list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
-			// list_benchmark!(list, extra, pallet_timestamp, Timestamp);
-
-			list_benchmarks!(list, extra);
+			list_benchmark!(list, extra, pallet_xyk, Xyk);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1388,11 +1386,17 @@ impl_runtime_apis! {
 			let params = (&config, &whitelist);
 
 			// TODO remove?
+			// list_benchmark!(list, extra, pallet_xyk, pallet_xyk::Pallet::<Runtime>);
 			// add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
 			// add_benchmark!(params, batches, pallet_session, SessionBench::<Runtime>);
 			// add_benchmark!(params, batches, pallet_timestamp, Timestamp);
+<<<<<<< Updated upstream
 			// add_benchmark!(params, batches, orml_tokens, Tokens);
 			
+=======
+			add_benchmark!(params, batches, pallet_xyk, Xyk);
+
+>>>>>>> Stashed changes
 			add_benchmarks!(params, batches);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }

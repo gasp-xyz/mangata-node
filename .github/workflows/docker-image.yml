@@ -9,6 +9,7 @@ on:
   pull_request:
     branches:
       - develop
+      - feature/benchmarking-A
       - ci
   push:
     branches: [ develop ]

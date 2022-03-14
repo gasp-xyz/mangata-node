@@ -1120,6 +1120,7 @@ mod benches {
 		[pallet_session, SessionBench::<Runtime>]
 		[pallet_timestamp, Timestamp]
 		[orml_tokens, Tokens]
+		[pallet_xyk, Xyk]
 	);
 }
 

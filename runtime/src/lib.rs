@@ -1386,17 +1386,7 @@ impl_runtime_apis! {
 			let params = (&config, &whitelist);
 
 			// TODO remove?
-			// list_benchmark!(list, extra, pallet_xyk, pallet_xyk::Pallet::<Runtime>);
-			// add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
-			// add_benchmark!(params, batches, pallet_session, SessionBench::<Runtime>);
-			// add_benchmark!(params, batches, pallet_timestamp, Timestamp);
-<<<<<<< Updated upstream
-			// add_benchmark!(params, batches, orml_tokens, Tokens);
-
-=======
 			add_benchmark!(params, batches, pallet_xyk, Xyk);
-
->>>>>>> Stashed changes
 			add_benchmarks!(params, batches);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }

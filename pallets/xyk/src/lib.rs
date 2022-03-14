@@ -2231,21 +2231,14 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 	) -> DispatchResult {
 		let mangata_id: TokenId = T::NativeCurrencyId::get();
 
+
 		let (current_rewards, burned_not_claimed_rewards) =
 			Pallet::<T>::calculate_rewards_amount(user.clone(), liquidity_asset_id)?;
 
 		let total_claimable_rewards = current_rewards + burned_not_claimed_rewards;
 		ensure!(mangata_amount <= total_claimable_rewards, Error::<T>::NotEnoughtRewardsEarned);
 
-		//TODO ensure is promoted pool
-
-		let (
-			current_time,
-			user_work_total,
-			user_missing_at_checkpoint,
-			pool_work_total,
-			pool_missing_at_checkpoint,
-		) = Self::calculate_liquidity_checkpoint(user.clone(), liquidity_asset_id, 0 as u128)?;
+		
 
 		// user is taking out rewards from LP which was already removed from pool
 		if mangata_amount <= burned_not_claimed_rewards {
@@ -2257,9 +2250,19 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		}
 		// user is taking out more rewards then rewards from LP which was already removed from pool, additional work needs to be removed from pool and user
 		else {
+
+
 			LiquidityMiningUserToBeClaimed::<T>::insert((&user, liquidity_asset_id), 0 as u128);
 			// rewards to burn on top of rewards from LP which was already removed from pool
 			let rewards_to_burn = mangata_amount - burned_not_claimed_rewards;
+
+			let (
+				current_time,
+				user_work_total,
+				user_missing_at_checkpoint,
+				pool_work_total,
+				pool_missing_at_checkpoint,
+			) = Self::calculate_liquidity_checkpoint(user.clone(), liquidity_asset_id, 0 as u128)?;
 
 			let work_to_burn = multiply_by_rational(
 				Balance::try_from(user_work_total)?,

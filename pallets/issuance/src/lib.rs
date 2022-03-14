@@ -110,7 +110,7 @@ pub mod pallet {
 	#[pallet::getter(fn get_promoted_pools_rewards)]
 	pub type PromotedPoolsRewards<T: Config> =
 		StorageMap<_, Twox64Concat, TokenId, Balance, ValueQuery>;
-
+	
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {
 		pub issuance_config: IssuanceInfo,
@@ -254,9 +254,10 @@ impl<T: Config> Pallet<T> {
 
 		let promoted_pools_count = <Self as PoolPromoteApi>::len();
 
-		// TODO: what about roundings?
-		let liquidity_mining_issuance_per_pool =
-			liquidity_mining_issuance / promoted_pools_count as u128;
+		// TODO: what about roundings? transfer mod to next session?
+
+		let liquidity_mining_issuance_per_pool = if promoted_pools_count ==0{liquidity_mining_issuance} else{liquidity_mining_issuance / promoted_pools_count as u128};
+			
 
 		PromotedPoolsRewards::<T>::translate(|_, v: Balance| {
 			Some(v + liquidity_mining_issuance_per_pool)

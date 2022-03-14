@@ -1394,7 +1394,7 @@ impl_runtime_apis! {
 
 			// TODO remove?
 			add_benchmark!(params, batches, pallet_xyk, Xyk);
-			
+
 			add_benchmarks!(params, batches);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }

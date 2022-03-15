@@ -2231,14 +2231,11 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 	) -> DispatchResult {
 		let mangata_id: TokenId = T::NativeCurrencyId::get();
 
-
 		let (current_rewards, burned_not_claimed_rewards) =
 			Pallet::<T>::calculate_rewards_amount(user.clone(), liquidity_asset_id)?;
 
 		let total_claimable_rewards = current_rewards + burned_not_claimed_rewards;
 		ensure!(mangata_amount <= total_claimable_rewards, Error::<T>::NotEnoughtRewardsEarned);
-
-		
 
 		// user is taking out rewards from LP which was already removed from pool
 		if mangata_amount <= burned_not_claimed_rewards {
@@ -2250,8 +2247,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		}
 		// user is taking out more rewards then rewards from LP which was already removed from pool, additional work needs to be removed from pool and user
 		else {
-
-
 			LiquidityMiningUserToBeClaimed::<T>::insert((&user, liquidity_asset_id), 0 as u128);
 			// rewards to burn on top of rewards from LP which was already removed from pool
 			let rewards_to_burn = mangata_amount - burned_not_claimed_rewards;

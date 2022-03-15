@@ -814,13 +814,13 @@ parameter_types! {
 	/// Minimum collators selected per round, default at genesis and minimum forever after
 	pub const MinSelectedCandidates: u32 = 8;
 	/// Maximum collator candidates allowed
-	pub const MaxCollatorCandidates: u32 = 75;
+	pub const MaxCollatorCandidates: u32 = 50;
 	/// Maximum delegators allowed per candidate
-	pub const MaxTotalDelegatorsPerCandidate: u32 = 30;
+	pub const MaxTotalDelegatorsPerCandidate: u32 = 25;
 	/// Maximum delegators counted per candidate
-	pub const MaxDelegatorsPerCandidate: u32 = 20;
+	pub const MaxDelegatorsPerCandidate: u32 = 12;
 	/// Maximum delegations per delegator
-	pub const MaxDelegationsPerDelegator: u32 = 50;
+	pub const MaxDelegationsPerDelegator: u32 = 30;
 	/// Default fixed percent a collator takes off the top of due rewards
 	pub const DefaultCollatorCommission: Perbill = Perbill::from_percent(20);
 	/// Default percent of inflation set aside for parachain bond every round

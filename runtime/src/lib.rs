@@ -808,17 +808,20 @@ parameter_types! {
 	pub const RewardPaymentDelay: u32 = 2;
 	/// Minimum collators selected per round, default at genesis and minimum forever after
 	pub const MinSelectedCandidates: u32 = 8;
+	/// Maximum collator candidates allowed
+	pub const MaxCollatorCandidates: u32 = 75;
+	/// Maximum delegators allowed per candidate
+	pub const MaxTotalDelegatorsPerCandidate: u32 = 30;
 	/// Maximum delegators counted per candidate
-	pub const MaxDelegatorsPerCandidate: u32 = 100;
+	pub const MaxDelegatorsPerCandidate: u32 = 20;
 	/// Maximum delegations per delegator
-	pub const MaxDelegationsPerDelegator: u32 = 100;
+	pub const MaxDelegationsPerDelegator: u32 = 50;
 	/// Default fixed percent a collator takes off the top of due rewards
 	pub const DefaultCollatorCommission: Perbill = Perbill::from_percent(20);
 	/// Default percent of inflation set aside for parachain bond every round
 	pub const DefaultParachainBondReservePercent: Percent = Percent::from_percent(30);
 	/// Minimum stake required to become a collator
 	pub const MinCollatorStk: u128 = 10 * DOLLARS;
-	// TODO: Restore to 100_000 for Phase 2 (remove the division by 10)
 	/// Minimum stake required to be reserved to be a candidate
 	pub const MinCandidateStk: u128 = 1 * DOLLARS;
 	/// Minimum stake required to be reserved to be a delegator
@@ -838,6 +841,8 @@ impl parachain_staking::Config for Runtime {
 	type DelegationBondDelay = DelegationBondDelay;
 	type RewardPaymentDelay = RewardPaymentDelay;
 	type MinSelectedCandidates = MinSelectedCandidates;
+	type MaxCollatorCandidates = MaxCollatorCandidates;
+	type MaxTotalDelegatorsPerCandidate = MaxTotalDelegatorsPerCandidate;
 	type MaxDelegatorsPerCandidate = MaxDelegatorsPerCandidate;
 	type MaxDelegationsPerDelegator = MaxDelegationsPerDelegator;
 	type DefaultCollatorCommission = DefaultCollatorCommission;

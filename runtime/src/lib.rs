@@ -833,8 +833,6 @@ parameter_types! {
 	pub const MinDelegatorStk: u128 = 1 * CENTS;
 }
 
-impl parachain_staking::StakingBenchmarkConfig for Runtime {}
-
 impl parachain_staking::Config for Runtime {
 	type Event = Event;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;

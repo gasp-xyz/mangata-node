@@ -281,6 +281,8 @@ const DEFAULT_DECIMALS: u32 = 18u32;
 
 pub use pallet::*;
 
+mod benchmarking;
+
 type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 #[frame_support::pallet]
 pub mod pallet {

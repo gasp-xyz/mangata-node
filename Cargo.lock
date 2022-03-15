@@ -152,7 +152,7 @@ dependencies = [
  "orml-tokens",
  "parity-scale-codec 2.3.1",
  "rustc-hex",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-core",
  "sp-io",
@@ -168,7 +168,7 @@ dependencies = [
  "frame-support",
  "parity-scale-codec 2.3.1",
  "rustc-hex",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-core",
  "sp-std",
@@ -191,7 +191,7 @@ dependencies = [
  "parity-scale-codec 2.3.1",
  "rlp 0.4.6",
  "rustc-hex",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-core",
  "sp-io",
@@ -216,7 +216,7 @@ dependencies = [
  "parity-scale-codec 2.3.1",
  "rlp 0.4.6",
  "rustc-hex",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-core",
  "sp-io",
@@ -584,7 +584,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=feature/benchmarking-A#e52497db0eef89e6110e953cac6baf4bb6805182"
 dependencies = [
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-api",
  "sp-application-crypto",
  "sp-core",
@@ -789,7 +789,7 @@ dependencies = [
  "finality-grandpa",
  "frame-support",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-core",
  "sp-finality-grandpa",
@@ -805,7 +805,7 @@ dependencies = [
  "bp-runtime",
  "frame-support",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-std",
 ]
 
@@ -820,7 +820,7 @@ dependencies = [
  "frame-system",
  "impl-trait-for-tuples",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-std",
 ]
@@ -835,7 +835,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-api",
  "sp-core",
  "sp-runtime",
@@ -869,7 +869,7 @@ dependencies = [
  "hash-db",
  "num-traits",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -923,7 +923,7 @@ dependencies = [
  "pallet-bridge-messages",
  "pallet-transaction-payment",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-core",
  "sp-runtime",
  "sp-state-machine",
@@ -943,7 +943,10 @@ version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ba3569f383e8f1598449f1a423e72e99569137b47740b1da11ef19af3d5c3223"
 dependencies = [
+ "lazy_static",
  "memchr",
+ "regex-automata",
+ "serde",
 ]
 
 [[package]]
@@ -1036,6 +1039,15 @@ dependencies = [
  "semver 1.0.6",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "cast"
+version = "0.2.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4c24dab4283a142afa2fdca129b80ad2c6284e073930f964c3a1293c225ee39a"
+dependencies = [
+ "rustc_version 0.4.0",
 ]
 
 [[package]]
@@ -1339,6 +1351,44 @@ dependencies = [
 ]
 
 [[package]]
+name = "criterion"
+version = "0.3.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1604dafd25fba2fe2d5895a9da139f8dc9b319a5fe5354ca137cbbce4e178d10"
+dependencies = [
+ "atty",
+ "cast",
+ "clap",
+ "criterion-plot",
+ "csv",
+ "futures 0.3.21",
+ "itertools",
+ "lazy_static",
+ "num-traits",
+ "oorandom",
+ "plotters",
+ "rayon",
+ "regex",
+ "serde",
+ "serde_cbor",
+ "serde_derive",
+ "serde_json",
+ "tinytemplate",
+ "tokio",
+ "walkdir",
+]
+
+[[package]]
+name = "criterion-plot"
+version = "0.4.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d00996de9f2f7559f7f4dc286073197f83e92256a59ed395f9aac01fe717da57"
+dependencies = [
+ "cast",
+ "itertools",
+]
+
+[[package]]
 name = "crossbeam-channel"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1395,7 +1445,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "57952ca27b5e3606ff4dd79b0020231aaf9d6aa76dc05fd30137538c50bd3ce8"
 dependencies = [
  "generic-array 0.14.5",
- "typenum 1.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "typenum 1.15.0",
 ]
 
 [[package]]
@@ -1416,6 +1466,28 @@ checksum = "b1d1a86f49236c215f271d40892d5fc950490551400b02ef360692c29815c714"
 dependencies = [
  "generic-array 0.14.5",
  "subtle",
+]
+
+[[package]]
+name = "csv"
+version = "1.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "22813a6dc45b335f9bade10bf7271dc477e81113e89eb251a0bc2a8a81c536e1"
+dependencies = [
+ "bstr",
+ "csv-core",
+ "itoa 0.4.8",
+ "ryu",
+ "serde",
+]
+
+[[package]]
+name = "csv-core"
+version = "0.1.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b2466559f260f48ad25fe6317b3c8dac77b5bdb5763ac7d9d6103530663bc90"
+dependencies = [
+ "memchr",
 ]
 
 [[package]]
@@ -1460,7 +1532,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-cli"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/benchmarking-A#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
 dependencies = [
  "sc-cli",
  "sc-service",
@@ -1470,7 +1542,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-collator"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/benchmarking-A#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
 dependencies = [
  "cumulus-client-consensus-common",
  "cumulus-client-network",
@@ -1494,7 +1566,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-consensus-aura"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/benchmarking-A#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
 dependencies = [
  "async-trait",
  "cumulus-client-consensus-common",
@@ -1523,7 +1595,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-consensus-common"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/benchmarking-A#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
 dependencies = [
  "async-trait",
  "cumulus-relay-chain-interface",
@@ -1544,7 +1616,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-network"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/benchmarking-A#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
 dependencies = [
  "async-trait",
  "cumulus-relay-chain-interface",
@@ -1569,7 +1641,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-pov-recovery"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/benchmarking-A#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
 dependencies = [
  "cumulus-primitives-core",
  "cumulus-relay-chain-interface",
@@ -1593,7 +1665,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-service"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/benchmarking-A#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
 dependencies = [
  "cumulus-client-collator",
  "cumulus-client-consensus-common",
@@ -1622,14 +1694,14 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-aura-ext"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/benchmarking-A#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
 dependencies = [
  "frame-executive",
  "frame-support",
  "frame-system",
  "pallet-aura",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-application-crypto",
  "sp-consensus-aura",
@@ -1640,14 +1712,14 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-dmp-queue"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/benchmarking-A#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
  "frame-system",
  "log",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -1658,7 +1730,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-parachain-system"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/benchmarking-A#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
 dependencies = [
  "cumulus-pallet-parachain-system-proc-macro",
  "cumulus-primitives-core",
@@ -1671,7 +1743,7 @@ dependencies = [
  "pallet-balances",
  "parity-scale-codec 2.3.1",
  "polkadot-parachain",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-core",
  "sp-externalities",
@@ -1688,7 +1760,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-parachain-system-proc-macro"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/benchmarking-A#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
 dependencies = [
  "proc-macro-crate 1.1.3",
  "proc-macro2",
@@ -1713,13 +1785,13 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-xcm"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/benchmarking-A#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
  "frame-system",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-io",
  "sp-runtime",
@@ -1730,7 +1802,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-xcmp-queue"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/benchmarking-A#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -1738,7 +1810,7 @@ dependencies = [
  "log",
  "parity-scale-codec 2.3.1",
  "rand_chacha 0.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-runtime",
  "sp-std",
  "xcm",
@@ -1748,7 +1820,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-core"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/benchmarking-A#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
 dependencies = [
  "frame-support",
  "parity-scale-codec 2.3.1",
@@ -1764,7 +1836,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-parachain-inherent"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/benchmarking-A#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -1772,7 +1844,7 @@ dependencies = [
  "cumulus-test-relay-sproof-builder",
  "parity-scale-codec 2.3.1",
  "sc-client-api",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-api",
  "sp-core",
  "sp-inherents",
@@ -1787,7 +1859,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-timestamp"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/benchmarking-A#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
 dependencies = [
  "cumulus-primitives-core",
  "sp-inherents",
@@ -1798,7 +1870,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-utility"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/benchmarking-A#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -1815,7 +1887,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-interface"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/benchmarking-A#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -1836,7 +1908,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-local"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/benchmarking-A#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -1864,7 +1936,7 @@ dependencies = [
 [[package]]
 name = "cumulus-test-relay-sproof-builder"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/benchmarking-A#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
 dependencies = [
  "cumulus-primitives-core",
  "parity-scale-codec 2.3.1",
@@ -2325,7 +2397,7 @@ dependencies = [
  "num-traits",
  "parity-scale-codec 2.3.1",
  "parking_lot 0.11.2",
- "scale-info",
+ "scale-info 1.0.0",
 ]
 
 [[package]]
@@ -2406,7 +2478,7 @@ dependencies = [
  "log",
  "parity-scale-codec 2.3.1",
  "paste",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-api",
  "sp-application-crypto",
  "sp-io",
@@ -2450,7 +2522,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-arithmetic",
  "sp-npos-elections",
  "sp-std",
@@ -2466,7 +2538,7 @@ dependencies = [
  "frame-system",
  "merlin",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "schnorrkel",
  "sp-arithmetic",
  "sp-core",
@@ -2486,7 +2558,7 @@ checksum = "37ed5e5c346de62ca5c184b4325a6600d1eaca210666e4606fe4e449574978d0"
 dependencies = [
  "cfg-if 1.0.0",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
 ]
 
@@ -2503,7 +2575,7 @@ dependencies = [
  "once_cell",
  "parity-scale-codec 2.3.1",
  "paste",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "smallvec",
  "sp-arithmetic",
@@ -2561,7 +2633,7 @@ dependencies = [
  "frame-support",
  "log",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-core",
  "sp-io",
@@ -2573,13 +2645,13 @@ dependencies = [
 [[package]]
 name = "frame-system-benchmarking"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#7e6a12655c5824ca7b8b17206f31a413898a8ea7"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#ce77bef2ce01830a4dbba88d0706acd8abb35848"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-core",
  "sp-runtime",
  "sp-std",
@@ -2594,7 +2666,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-core",
  "sp-runtime",
  "sp-std",
@@ -2805,7 +2877,7 @@ version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ffdf9f34f1447443d37393cc6c2b8313aebddcd96906caf34e54c68d8e57d7bd"
 dependencies = [
- "typenum 1.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "typenum 1.15.0",
 ]
 
 [[package]]
@@ -2814,7 +2886,7 @@ version = "0.14.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fd48d33ec7f05fbfa152300fdad764757cbded343c1aa1cff2fbaf4134851803"
 dependencies = [
- "typenum 1.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "typenum 1.15.0",
  "version_check",
 ]
 
@@ -2912,6 +2984,12 @@ dependencies = [
  "tokio-util",
  "tracing",
 ]
+
+[[package]]
+name = "half"
+version = "1.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eabb4a44450da02c90444cf74558da904edde8fb4e9035a9a6a4e15445af0bd7"
 
 [[package]]
 name = "handlebars"
@@ -3638,7 +3716,7 @@ dependencies = [
  "polkadot-runtime-common",
  "polkadot-runtime-parachains",
  "rustc-hex",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "serde_derive",
  "smallvec",
@@ -4289,7 +4367,7 @@ dependencies = [
  "rand 0.8.5",
  "serde",
  "sha2 0.9.9",
- "typenum 1.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "typenum 1.15.0",
 ]
 
 [[package]]
@@ -4452,32 +4530,44 @@ name = "mangata-node"
 version = "0.1.0"
 dependencies = [
  "artemis-core",
+ "cfg-if 1.0.0",
+ "criterion",
  "cumulus-client-cli",
  "cumulus-client-consensus-aura",
  "cumulus-client-consensus-common",
  "cumulus-client-network",
  "cumulus-client-service",
+ "cumulus-pallet-parachain-system",
  "cumulus-primitives-core",
  "cumulus-primitives-parachain-inherent",
  "cumulus-relay-chain-interface",
  "cumulus-relay-chain-local",
+ "cumulus-test-relay-sproof-builder",
  "derive_more",
+ "extrinsic-shuffler",
  "frame-benchmarking",
  "frame-benchmarking-cli",
+ "frame-system",
+ "frame-system-rpc-runtime-api",
+ "futures 0.3.21",
  "hex",
  "hex-literal",
  "jsonrpc-core",
  "log",
  "mangata-rpc-nonce",
  "mangata-runtime",
+ "pallet-timestamp",
+ "pallet-transaction-payment",
  "pallet-transaction-payment-rpc",
  "parity-scale-codec 2.3.1",
  "polkadot-cli",
  "polkadot-parachain",
  "polkadot-primitives",
+ "polkadot-runtime-common",
  "polkadot-service",
  "polkadot-test-service",
  "sc-basic-authorship-ver",
+ "sc-block-builder-ver",
  "sc-chain-spec",
  "sc-cli",
  "sc-client-api",
@@ -4494,23 +4584,28 @@ dependencies = [
  "sc-tracing",
  "sc-transaction-pool",
  "sc-transaction-pool-api",
+ "schnorrkel",
  "serde",
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
  "sp-consensus",
  "sp-consensus-aura",
+ "sp-consensus-slots",
  "sp-core",
  "sp-inherents",
+ "sp-keyring",
  "sp-keystore",
  "sp-offchain",
  "sp-runtime",
  "sp-session",
  "sp-timestamp",
+ "sp-tracing",
  "sp-transaction-pool",
  "structopt",
  "substrate-build-script-utils",
  "substrate-prometheus-endpoint",
+ "tokio",
  "try-runtime-cli",
  "ver-api",
  "xyk-rpc",
@@ -4597,7 +4692,7 @@ dependencies = [
  "parity-scale-codec 2.3.1",
  "polkadot-parachain",
  "polkadot-runtime-common",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "smallvec",
  "sp-api",
@@ -4947,7 +5042,7 @@ dependencies = [
  "rand 0.8.5",
  "rand_distr",
  "simba",
- "typenum 1.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "typenum 1.15.0",
 ]
 
 [[package]]
@@ -5104,6 +5199,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "da32515d9f6e6e489d7bc9d84c71b060db7247dc035bbe44eac88cf87486d8d5"
 
 [[package]]
+name = "oorandom"
+version = "11.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0ab1bc2a289d34bd04a330323ac98a1b4bc82c9d9fcb1e66b63caa84da26b575"
+
+[[package]]
 name = "opaque-debug"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5156,7 +5257,7 @@ dependencies = [
 [[package]]
 name = "orml-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=feature/benchmarking-A#74e68b3dcebcadf2aa1161b68689be50e378e977"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library/?branch=feature/benchmarking-A#74e68b3dcebcadf2aa1161b68689be50e378e977"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5164,7 +5265,7 @@ dependencies = [
  "mangata-primitives",
  "orml-traits",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-runtime",
  "sp-std",
@@ -5173,14 +5274,14 @@ dependencies = [
 [[package]]
 name = "orml-traits"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=feature/benchmarking-A#74e68b3dcebcadf2aa1161b68689be50e378e977"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library/?branch=feature/benchmarking-A#74e68b3dcebcadf2aa1161b68689be50e378e977"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
  "num-traits",
  "orml-utilities",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-io",
  "sp-runtime",
@@ -5191,13 +5292,13 @@ dependencies = [
 [[package]]
 name = "orml-unknown-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=feature/benchmarking-A#74e68b3dcebcadf2aa1161b68689be50e378e977"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library/?branch=feature/benchmarking-A#74e68b3dcebcadf2aa1161b68689be50e378e977"
 dependencies = [
  "frame-support",
  "frame-system",
  "orml-xcm-support",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-std",
  "xcm",
@@ -5206,11 +5307,11 @@ dependencies = [
 [[package]]
 name = "orml-utilities"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=feature/benchmarking-A#74e68b3dcebcadf2aa1161b68689be50e378e977"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library/?branch=feature/benchmarking-A#74e68b3dcebcadf2aa1161b68689be50e378e977"
 dependencies = [
  "frame-support",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-io",
  "sp-runtime",
@@ -5220,13 +5321,13 @@ dependencies = [
 [[package]]
 name = "orml-xcm"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=feature/benchmarking-A#74e68b3dcebcadf2aa1161b68689be50e378e977"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library/?branch=feature/benchmarking-A#74e68b3dcebcadf2aa1161b68689be50e378e977"
 dependencies = [
  "frame-support",
  "frame-system",
  "pallet-xcm",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-std",
  "xcm",
 ]
@@ -5234,7 +5335,7 @@ dependencies = [
 [[package]]
 name = "orml-xcm-support"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=feature/benchmarking-A#74e68b3dcebcadf2aa1161b68689be50e378e977"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library/?branch=feature/benchmarking-A#74e68b3dcebcadf2aa1161b68689be50e378e977"
 dependencies = [
  "frame-support",
  "orml-traits",
@@ -5248,7 +5349,7 @@ dependencies = [
 [[package]]
 name = "orml-xtokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=feature/benchmarking-A#74e68b3dcebcadf2aa1161b68689be50e378e977"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library/?branch=feature/benchmarking-A#74e68b3dcebcadf2aa1161b68689be50e378e977"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -5256,7 +5357,7 @@ dependencies = [
  "orml-traits",
  "orml-xcm-support",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-io",
  "sp-runtime",
@@ -5284,7 +5385,7 @@ dependencies = [
  "orml-tokens",
  "orml-traits",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-core",
  "sp-io",
@@ -5301,7 +5402,7 @@ dependencies = [
  "frame-system",
  "pallet-timestamp",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-application-crypto",
  "sp-consensus-aura",
  "sp-runtime",
@@ -5317,7 +5418,7 @@ dependencies = [
  "frame-system",
  "pallet-session",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-application-crypto",
  "sp-authority-discovery",
  "sp-runtime",
@@ -5333,7 +5434,7 @@ dependencies = [
  "frame-system",
  "impl-trait-for-tuples",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-authorship",
  "sp-runtime",
  "sp-std",
@@ -5352,7 +5453,7 @@ dependencies = [
  "pallet-session",
  "pallet-timestamp",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-application-crypto",
  "sp-consensus-babe",
  "sp-consensus-vrf",
@@ -5375,7 +5476,7 @@ dependencies = [
  "log",
  "pallet-balances",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -5393,7 +5494,7 @@ dependencies = [
  "frame-system",
  "log",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-runtime",
  "sp-std",
 ]
@@ -5408,7 +5509,7 @@ dependencies = [
  "frame-system",
  "pallet-session",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-runtime",
  "sp-std",
@@ -5431,7 +5532,7 @@ dependencies = [
  "pallet-mmr-primitives",
  "pallet-session",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-core",
  "sp-io",
@@ -5450,7 +5551,7 @@ dependencies = [
  "log",
  "pallet-treasury",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -5474,7 +5575,7 @@ dependencies = [
  "orml-traits",
  "pallet-verifier",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-core",
  "sp-io",
@@ -5493,7 +5594,7 @@ dependencies = [
  "frame-system",
  "log",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-core",
  "sp-runtime",
  "sp-std",
@@ -5513,7 +5614,7 @@ dependencies = [
  "log",
  "num-traits",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-finality-grandpa",
  "sp-runtime",
@@ -5535,7 +5636,7 @@ dependencies = [
  "log",
  "num-traits",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-core",
  "sp-runtime",
@@ -5552,7 +5653,7 @@ dependencies = [
  "frame-system",
  "log",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -5568,7 +5669,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-io",
  "sp-runtime",
@@ -5587,7 +5688,7 @@ dependencies = [
  "log",
  "parity-scale-codec 2.3.1",
  "rand 0.7.3",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-arithmetic",
  "sp-core",
  "sp-io",
@@ -5609,7 +5710,7 @@ dependencies = [
  "frame-system",
  "log",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-core",
  "sp-io",
  "sp-npos-elections",
@@ -5626,7 +5727,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-arithmetic",
  "sp-runtime",
  "sp-std",
@@ -5644,7 +5745,7 @@ dependencies = [
  "pallet-authorship",
  "pallet-session",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-application-crypto",
  "sp-core",
  "sp-finality-grandpa",
@@ -5665,7 +5766,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -5682,7 +5783,7 @@ dependencies = [
  "log",
  "pallet-authorship",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-application-crypto",
  "sp-core",
  "sp-io",
@@ -5700,7 +5801,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-core",
  "sp-io",
  "sp-keyring",
@@ -5718,7 +5819,7 @@ dependencies = [
  "frame-system",
  "log",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -5736,7 +5837,7 @@ dependencies = [
  "frame-system",
  "pallet-mmr-primitives",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -5785,7 +5886,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -5799,7 +5900,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -5815,7 +5916,7 @@ dependencies = [
  "log",
  "pallet-balances",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-runtime",
  "sp-staking",
@@ -5839,7 +5940,7 @@ dependencies = [
  "pallet-session",
  "pallet-staking",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-runtime",
  "sp-staking",
  "sp-std",
@@ -5854,7 +5955,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -5870,7 +5971,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -5884,7 +5985,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -5900,7 +6001,7 @@ dependencies = [
  "frame-system",
  "log",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -5917,7 +6018,7 @@ dependencies = [
  "log",
  "pallet-timestamp",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -5952,7 +6053,7 @@ dependencies = [
  "frame-system",
  "parity-scale-codec 2.3.1",
  "rand_chacha 0.2.2",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-runtime",
  "sp-std",
 ]
@@ -5971,7 +6072,7 @@ dependencies = [
  "pallet-session",
  "parity-scale-codec 2.3.1",
  "rand_chacha 0.2.2",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-application-crypto",
  "sp-io",
@@ -6008,7 +6109,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -6021,7 +6122,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -6038,7 +6139,7 @@ dependencies = [
  "frame-system",
  "log",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-inherents",
  "sp-io",
  "sp-runtime",
@@ -6057,7 +6158,7 @@ dependencies = [
  "log",
  "pallet-treasury",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-core",
  "sp-io",
@@ -6073,7 +6174,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "smallvec",
  "sp-core",
@@ -6121,7 +6222,7 @@ dependencies = [
  "impl-trait-for-tuples",
  "pallet-balances",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-runtime",
  "sp-std",
@@ -6136,7 +6237,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -6154,7 +6255,7 @@ dependencies = [
  "frame-system",
  "parity-scale-codec 2.3.1",
  "rustc-hex",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-core",
  "sp-io",
@@ -6172,7 +6273,7 @@ dependencies = [
  "frame-system",
  "log",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-runtime",
  "sp-std",
 ]
@@ -6186,7 +6287,7 @@ dependencies = [
  "frame-system",
  "log",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-core",
  "sp-runtime",
@@ -6205,7 +6306,7 @@ dependencies = [
  "frame-system",
  "log",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-runtime",
  "sp-std",
  "xcm",
@@ -6228,7 +6329,7 @@ dependencies = [
  "pallet-assets-info",
  "parity-scale-codec 2.3.1",
  "rustc-hex",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-arithmetic",
  "sp-core",
@@ -6240,19 +6341,20 @@ dependencies = [
 [[package]]
 name = "parachain-info"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/benchmarking-A#cdb47043fbdd4ddf6a943503d921a8139a2e871d"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
  "frame-system",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
 ]
 
 [[package]]
 name = "parachain-staking"
 version = "3.0.0"
+source = "git+https://github.com/mangata-finance//moonbeam?branch=feature/benchmarking-A#e654772972494f6614120b430681b4e3e6f01d43"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6264,7 +6366,7 @@ dependencies = [
  "pallet-session",
  "pallet-xyk",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-runtime",
  "sp-staking",
@@ -6313,8 +6415,20 @@ dependencies = [
  "bitvec 0.20.4",
  "byte-slice-cast 1.2.0",
  "impl-trait-for-tuples",
- "parity-scale-codec-derive",
+ "parity-scale-codec-derive 2.3.1",
  "serde",
+]
+
+[[package]]
+name = "parity-scale-codec"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2a7f3fcf5e45fc28b84dcdab6b983e77f197ec01f325a33f404ba6855afd1070"
+dependencies = [
+ "arrayvec 0.7.2",
+ "byte-slice-cast 1.2.0",
+ "impl-trait-for-tuples",
+ "parity-scale-codec-derive 3.0.0",
 ]
 
 [[package]]
@@ -6322,6 +6436,18 @@ name = "parity-scale-codec-derive"
 version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1557010476e0595c9b568d16dcfb81b93cdeb157612726f5170d31aa707bed27"
+dependencies = [
+ "proc-macro-crate 1.1.3",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "parity-scale-codec-derive"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2c6e626dc84025ff56bf1476ed0e30d10c84d7f89a475ef46ebabee1095a8fba"
 dependencies = [
  "proc-macro-crate 1.1.3",
  "proc-macro2",
@@ -6632,6 +6758,34 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e8d0eef3571242013a0d5dc84861c3ae4a652e56e12adf8bdc26ff5f8cb34c94"
 
 [[package]]
+name = "plotters"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "32a3fd9ec30b9749ce28cd91f255d569591cdf937fe280c312143e3c4bad6f2a"
+dependencies = [
+ "num-traits",
+ "plotters-backend",
+ "plotters-svg",
+ "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
+name = "plotters-backend"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d88417318da0eaf0fdcdb51a0ee6c3bed624333bff8f946733049380be67ac1c"
+
+[[package]]
+name = "plotters-svg"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "521fa9638fa597e1dc53e9412a4f9cefb01187ee1f7413076f9e6749e2885ba9"
+dependencies = [
+ "plotters-backend",
+]
+
+[[package]]
 name = "polkadot-approval-distribution"
 version = "0.9.16"
 source = "git+https://github.com/mangata-finance//polkadot?branch=mangata-dev#ea984ce62a9b9fee49a14840f819467191ffed95"
@@ -6781,7 +6935,7 @@ source = "git+https://github.com/mangata-finance//polkadot?branch=mangata-dev#ea
 dependencies = [
  "parity-scale-codec 2.3.1",
  "parity-util-mem",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-core",
  "sp-runtime",
  "sp-std",
@@ -7320,7 +7474,7 @@ dependencies = [
  "parity-scale-codec 2.3.1",
  "parity-util-mem",
  "polkadot-core-primitives",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-core",
  "sp-runtime",
@@ -7354,7 +7508,7 @@ dependencies = [
  "parity-util-mem",
  "polkadot-core-primitives",
  "polkadot-parachain",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-api",
  "sp-application-crypto",
@@ -7461,7 +7615,7 @@ dependencies = [
  "polkadot-runtime-constants",
  "polkadot-runtime-parachains",
  "rustc-hex",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "serde_derive",
  "smallvec",
@@ -7517,7 +7671,7 @@ dependencies = [
  "polkadot-primitives",
  "polkadot-runtime-parachains",
  "rustc-hex",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "serde_derive",
  "slot-range-helper",
@@ -7584,7 +7738,7 @@ dependencies = [
  "rand 0.8.5",
  "rand_chacha 0.3.1",
  "rustc-hex",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-api",
  "sp-core",
@@ -7767,7 +7921,7 @@ dependencies = [
  "polkadot-runtime-common",
  "polkadot-runtime-parachains",
  "rustc-hex",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "serde_derive",
  "smallvec",
@@ -7910,7 +8064,7 @@ dependencies = [
  "impl-codec 0.5.1",
  "impl-rlp 0.3.0",
  "impl-serde",
- "scale-info",
+ "scale-info 1.0.0",
  "uint 0.9.3",
 ]
 
@@ -8452,7 +8606,7 @@ dependencies = [
  "polkadot-runtime-common",
  "polkadot-runtime-parachains",
  "rococo-runtime-constants",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "serde_derive",
  "smallvec",
@@ -9616,8 +9770,20 @@ dependencies = [
  "cfg-if 1.0.0",
  "derive_more",
  "parity-scale-codec 2.3.1",
- "scale-info-derive",
+ "scale-info-derive 1.0.0",
  "serde",
+]
+
+[[package]]
+name = "scale-info"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0563970d79bcbf3c537ce3ad36d859b30d36fc5b190efd227f1f7a84d7cf0d42"
+dependencies = [
+ "cfg-if 1.0.0",
+ "derive_more",
+ "parity-scale-codec 3.0.0",
+ "scale-info-derive 2.0.0",
 ]
 
 [[package]]
@@ -9625,6 +9791,18 @@ name = "scale-info-derive"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baeb2780690380592f86205aa4ee49815feb2acad8c2f59e6dd207148c3f1fcd"
+dependencies = [
+ "proc-macro-crate 1.1.3",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "scale-info-derive"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b7805950c36512db9e3251c970bb7ac425f326716941862205d612ab3b5e46e2"
 dependencies = [
  "proc-macro-crate 1.1.3",
  "proc-macro2",
@@ -9763,6 +9941,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ce31e24b01e1e524df96f1c2fdd054405f8d7376249a5110886fb4b658484789"
 dependencies = [
  "serde_derive",
+]
+
+[[package]]
+name = "serde_cbor"
+version = "0.11.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2bef2ebfde456fb76bbcf9f59315333decc4fda0b2b44b420243c11e0f5ec1f5"
+dependencies = [
+ "half",
+ "serde",
 ]
 
 [[package]]
@@ -10041,7 +10229,7 @@ version = "4.0.0"
 source = "git+https://github.com/mangata-finance//substrate?branch=feature/benchmarking-A#e52497db0eef89e6110e953cac6baf4bb6805182"
 dependencies = [
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-core",
  "sp-io",
@@ -10056,7 +10244,7 @@ dependencies = [
  "integer-sqrt",
  "num-traits",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-debug-derive",
  "sp-std",
@@ -10069,7 +10257,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=feature/benchmarking-A#e52497db0eef89e6110e953cac6baf4bb6805182"
 dependencies = [
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-api",
  "sp-application-crypto",
  "sp-runtime",
@@ -10144,7 +10332,7 @@ source = "git+https://github.com/mangata-finance//substrate?branch=feature/bench
 dependencies = [
  "async-trait",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-api",
  "sp-application-crypto",
  "sp-consensus",
@@ -10163,7 +10351,7 @@ dependencies = [
  "async-trait",
  "merlin",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-api",
  "sp-application-crypto",
@@ -10184,7 +10372,7 @@ version = "0.10.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=feature/benchmarking-A#e52497db0eef89e6110e953cac6baf4bb6805182"
 dependencies = [
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-arithmetic",
  "sp-runtime",
@@ -10229,7 +10417,7 @@ dependencies = [
  "primitive-types 0.10.1",
  "rand 0.7.3",
  "regex",
- "scale-info",
+ "scale-info 1.0.0",
  "schnorrkel",
  "secrecy",
  "serde",
@@ -10312,7 +10500,7 @@ dependencies = [
  "finality-grandpa",
  "log",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-api",
  "sp-application-crypto",
@@ -10402,7 +10590,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=feature/benchmarking-A#e52497db0eef89e6110e953cac6baf4bb6805182"
 dependencies = [
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-arithmetic",
  "sp-core",
@@ -10465,7 +10653,7 @@ dependencies = [
  "parity-util-mem",
  "paste",
  "rand 0.7.3",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-application-crypto",
  "sp-arithmetic",
@@ -10518,7 +10706,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=feature/benchmarking-A#e52497db0eef89e6110e953cac6baf4bb6805182"
 dependencies = [
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-api",
  "sp-core",
  "sp-runtime",
@@ -10532,7 +10720,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=feature/benchmarking-A#e52497db0eef89e6110e953cac6baf4bb6805182"
 dependencies = [
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-runtime",
  "sp-std",
 ]
@@ -10636,7 +10824,7 @@ dependencies = [
  "async-trait",
  "log",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-core",
  "sp-inherents",
  "sp-runtime",
@@ -10652,7 +10840,7 @@ dependencies = [
  "hash-db",
  "memory-db",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-core",
  "sp-std",
  "trie-db",
@@ -10682,7 +10870,7 @@ dependencies = [
  "impl-serde",
  "parity-scale-codec 2.3.1",
  "parity-wasm 0.42.2",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-core-hashing-proc-macro",
  "sp-runtime",
@@ -10881,12 +11069,12 @@ dependencies = [
 
 [[package]]
 name = "substrate-fixed"
-version = "0.5.8"
-source = "git+https://github.com/encointer/substrate-fixed#5984ba9b9433d5007597c7f03f65ea5bf6d08601"
+version = "0.5.9"
+source = "git+https://github.com/encointer/substrate-fixed#a4fb461aae6205ffc55bed51254a40c52be04e5d"
 dependencies = [
- "parity-scale-codec 2.3.1",
- "scale-info",
- "typenum 1.15.0 (git+https://github.com/encointer/typenum?tag=v1.15.0)",
+ "parity-scale-codec 3.0.0",
+ "scale-info 2.0.1",
+ "typenum 1.16.0",
 ]
 
 [[package]]
@@ -11148,6 +11336,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2c9d3793400a45f954c52e73d068316d76b6f4e36977e3fcebb13a2721e80237"
 dependencies = [
  "crunchy",
+]
+
+[[package]]
+name = "tinytemplate"
+version = "1.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "be4d6b5f19ff7664e8c98d03e2139cb510db9b0a60b55f8e8709b689d939b6bc"
+dependencies = [
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -11442,7 +11640,7 @@ version = "1.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4ee73e6e4924fe940354b8d4d98cad5231175d615cd855b758adc658c0aac6a0"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "rand 0.8.5",
  "static_assertions",
 ]
@@ -11455,11 +11653,11 @@ checksum = "dcf81ac59edc17cc8697ff311e8f5ef2d99fcbd9817b34cec66f90b6c3dfd987"
 
 [[package]]
 name = "typenum"
-version = "1.15.0"
-source = "git+https://github.com/encointer/typenum?tag=v1.15.0#14e21b6532ad2adf893fbe329b78deb7ae7dfad0"
+version = "1.16.0"
+source = "git+https://github.com/encointer/typenum?tag=v1.16.0#4c8dddaa8bdd13130149e43b4085ad14e960617f"
 dependencies = [
- "parity-scale-codec 2.3.1",
- "scale-info",
+ "parity-scale-codec 3.0.0",
+ "scale-info 2.0.1",
 ]
 
 [[package]]
@@ -12080,7 +12278,7 @@ dependencies = [
  "polkadot-runtime-common",
  "polkadot-runtime-parachains",
  "rustc-hex",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "serde_derive",
  "smallvec",
@@ -12223,7 +12421,7 @@ dependencies = [
  "impl-trait-for-tuples",
  "log",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "xcm-procedural",
 ]
 
@@ -12238,7 +12436,7 @@ dependencies = [
  "orml-tokens",
  "orml-traits",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "sp-core",
  "sp-io",
@@ -12260,7 +12458,7 @@ dependencies = [
  "pallet-transaction-payment",
  "parity-scale-codec 2.3.1",
  "polkadot-parachain",
- "scale-info",
+ "scale-info 1.0.0",
  "sp-arithmetic",
  "sp-io",
  "sp-runtime",

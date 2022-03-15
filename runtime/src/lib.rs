@@ -97,6 +97,9 @@ pub use artemis_eth_app;
 pub use pallet_bridge;
 pub use pallet_verifier;
 
+#[cfg(any(feature = "std", test))]
+pub use frame_system::Call as SystemCall;
+
 /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
 pub type Signature = MultiSignature;
 
@@ -138,6 +141,8 @@ pub type SignedExtra = (
 	frame_system::CheckWeight<Runtime>,
 	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 );
+/// The payload being signed in transactions.
+pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
@@ -828,6 +833,8 @@ parameter_types! {
 	pub const MinDelegatorStk: u128 = 1 * CENTS;
 }
 
+impl parachain_staking::StakingBenchmarkConfig for Runtime {}
+
 impl parachain_staking::Config for Runtime {
 	type Event = Event;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
@@ -1400,7 +1407,7 @@ impl_runtime_apis! {
 			// add_benchmark!(params, batches, pallet_session, SessionBench::<Runtime>);
 			// add_benchmark!(params, batches, pallet_timestamp, Timestamp);
 			// add_benchmark!(params, batches, orml_tokens, Tokens);
-			
+
 			add_benchmarks!(params, batches);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }

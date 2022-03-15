@@ -1125,6 +1125,7 @@ mod benches {
 		[pallet_timestamp, Timestamp]
 		[orml_tokens, Tokens]
 		[parachain_staking, ParachainStaking]
+		[pallet_xyk, Xyk]
 	);
 }
 
@@ -1363,10 +1364,7 @@ impl_runtime_apis! {
 			let mut list = Vec::<BenchmarkList>::new();
 
 			// TODO remove?
-			// list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
-			// list_benchmark!(list, extra, pallet_timestamp, Timestamp);
-
-			list_benchmarks!(list, extra);
+			list_benchmark!(list, extra, pallet_xyk, Xyk);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1401,10 +1399,7 @@ impl_runtime_apis! {
 			let params = (&config, &whitelist);
 
 			// TODO remove?
-			// add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
-			// add_benchmark!(params, batches, pallet_session, SessionBench::<Runtime>);
-			// add_benchmark!(params, batches, pallet_timestamp, Timestamp);
-			// add_benchmark!(params, batches, orml_tokens, Tokens);
+			add_benchmark!(params, batches, pallet_xyk, Xyk);
 
 			add_benchmarks!(params, batches);
 

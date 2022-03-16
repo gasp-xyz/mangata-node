@@ -341,6 +341,7 @@ pub mod pallet {
 		/// Liquidity token cretion failed
 		LiquidityTokenCreationFailed,
 		NotEnoughtRewardsEarned,
+		SoldAmountTooLow,
 	}
 
 	#[pallet::event]
@@ -1614,7 +1615,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				sold_asset_id.into(),
 				&sender,
 				&vault,
-				(sold_asset_amount - buy_and_burn_amount - treasury_amount - pool_fee_amount)
+				(sold_asset_amount.checked_sub(buy_and_burn_amount + treasury_amount + pool_fee_amount).ok_or_else(|| DispatchError::from(Error::<T>::SoldAmountTooLow))?)
 					.into(),
 				ExistenceRequirement::KeepAlive,
 			)?;
@@ -1784,7 +1785,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				sold_asset_id.into(),
 				&sender,
 				&vault,
-				(sold_asset_amount - buy_and_burn_amount - treasury_amount - pool_fee_amount)
+				(sold_asset_amount.checked_sub(buy_and_burn_amount + treasury_amount + pool_fee_amount).ok_or_else(|| DispatchError::from(Error::<T>::SoldAmountTooLow))?)
 					.into(),
 				ExistenceRequirement::KeepAlive,
 			)?;

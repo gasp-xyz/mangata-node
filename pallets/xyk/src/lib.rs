@@ -1623,8 +1623,10 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				sold_asset_id.into(),
 				&sender,
 				&vault,
-				(sold_asset_amount.checked_sub(buy_and_burn_amount + treasury_amount + pool_fee_amount).ok_or_else(|| DispatchError::from(Error::<T>::SoldAmountTooLow))?)
-					.into(),
+				(sold_asset_amount
+					.checked_sub(buy_and_burn_amount + treasury_amount + pool_fee_amount)
+					.ok_or_else(|| DispatchError::from(Error::<T>::SoldAmountTooLow))?)
+				.into(),
 				ExistenceRequirement::KeepAlive,
 			)?;
 			<T as Config>::Currency::transfer(
@@ -1793,8 +1795,10 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				sold_asset_id.into(),
 				&sender,
 				&vault,
-				(sold_asset_amount.checked_sub(buy_and_burn_amount + treasury_amount + pool_fee_amount).ok_or_else(|| DispatchError::from(Error::<T>::SoldAmountTooLow))?)
-					.into(),
+				(sold_asset_amount
+					.checked_sub(buy_and_burn_amount + treasury_amount + pool_fee_amount)
+					.ok_or_else(|| DispatchError::from(Error::<T>::SoldAmountTooLow))?)
+				.into(),
 				ExistenceRequirement::KeepAlive,
 			)?;
 			<T as Config>::Currency::transfer(

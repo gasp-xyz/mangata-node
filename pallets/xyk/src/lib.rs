@@ -1212,6 +1212,7 @@ impl<T: Config> Pallet<T> {
 			// treasury_amount of MGA is already in treasury at this point
 
 			// MGA burned from bnb_treasury_account
+			// 3R 1W
 			<T as Config>::Currency::burn_and_settle(
 				sold_asset_id.into(),
 				&bnb_treasury_account,
@@ -1328,6 +1329,8 @@ pub trait XykFunctionsTrait<AccountId> {
 		second_asset_amount: Self::Balance,
 	) -> DispatchResult;
 
+	/// R:
+	/// W:
 	fn sell_asset(
 		sender: AccountId,
 		sold_asset_id: Self::CurrencyId,
@@ -1548,6 +1551,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 		// Get token reserves
 
+		// MAX: 2R
 		let (input_reserve, output_reserve) =
 			Pallet::<T>::get_reserves(sold_asset_id, bought_asset_id)?;
 
@@ -1558,6 +1562,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			Pallet::<T>::calculate_sell_price(input_reserve, output_reserve, sold_asset_amount)?;
 
 		// Getting users token balances
+		// MAX: 1R
 		let sold_asset_free_balance: Self::Balance =
 			<T as Config>::Currency::free_balance(sold_asset_id.into(), &sender).into();
 
@@ -1602,6 +1607,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		)?;
 
 		// Add pool fee to pool
+		// 2R 1W
 		Pallet::<T>::set_reserves(
 			sold_asset_id,
 			input_reserve.saturating_add(pool_fee_amount),

@@ -25,6 +25,7 @@ use super::*;
 use frame_benchmarking::{account, benchmarks, benchmarks_instance_pallet, whitelisted_caller};
 use frame_system::RawOrigin;
 use sp_runtime::traits::Bounded;
+use orml_tokens::MultiTokenCurrencyExtended;
 
 use crate::Pallet as Xyk;
 
@@ -34,9 +35,6 @@ const ED_MULTIPLIER: u32 = 10;
 const MILION: u32 = 1_000_000_000;
 
 benchmarks! {
-	// Benchmark `transfer` extrinsic with the worst possible conditions:
-	// * Transfer will kill the sender account.
-	// * Transfer will create the recipient account.
 	create_pool {
 		// let existential_deposit = T::ExistentialDeposit::get();
 		let caller: T::AccountId = whitelisted_caller();
@@ -65,6 +63,47 @@ benchmarks! {
 
 		assert!(LiquidityMiningUser::<T>::try_get((caller.clone(), liquidity_asset_id)).is_ok());
 		assert!(LiquidityMiningPool::<T>::try_get(liquidity_asset_id).is_ok());
+
+	}
+
+	sell_asset {
+		let caller: T::AccountId = whitelisted_caller();
+		let first_asset_amount = MILION;
+		let second_asset_amount = MILION;
+		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
+		let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, (2*MILION).into()).unwrap().into();
+		let non_native_asset_id : TokenId= <T as Config>::Currency::create(&caller, (2*MILION).into()).unwrap().into();
+
+		// println!("{}", T as Currency
+		assert!( expected_native_asset_id == native_asset_id );
+		assert!( non_native_asset_id != native_asset_id );
+
+		println!("{:?}", <T as Config>::Currency::free_balance(native_asset_id.into(), &caller));
+		println!("{:?}", <T as Config>::Currency::free_balance(non_native_asset_id.into(), &caller));
+		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), native_asset_id.into(), MILION.into(), non_native_asset_id.into(), MILION.into()).unwrap();
+		// <T as Config>::Currency::mint(native_asset_id, &caller, MILION.into());
+		// <T as Config>::Currency::mint(non_native_asset_id, &caller, MILION.into());
+
+
+	}: sell_asset(RawOrigin::Signed(caller.clone().into()), native_asset_id.into(), non_native_asset_id.into(), first_asset_amount.into(), second_asset_amount.into())
+	verify {
+
+		// assert_eq!(
+		// 	Xyk::<T>::asset_pool((first_asset_id.into(), second_asset_id.into())),
+		// 	(first_asset_amount as u128, second_asset_amount as u128)
+		// );
+        //
+		// assert!(
+		// 	Xyk::<T>::liquidity_asset((first_asset_id.into(), second_asset_id.into())).is_some()
+		// );
+        //
+		// assert_eq!(
+		// 	Xyk::<T>::liquidity_pool(liquidity_asset_id),
+		// 	Some((first_asset_id.into(), second_asset_id.into()))
+		// );
+        //
+		// assert!(LiquidityMiningUser::<T>::try_get((caller.clone(), liquidity_asset_id)).is_ok());
+		// assert!(LiquidityMiningPool::<T>::try_get(liquidity_asset_id).is_ok());
 
 	}
 

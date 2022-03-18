@@ -641,6 +641,7 @@ impl<T: Config> Pallet<T> {
 		Ok((user_rewards_amount, already_claimed_user))
 	}
 
+	// MAX: 0R 0W
 	pub fn calculate_work(
 		asymptote: Balance,
 		time: u32,
@@ -669,6 +670,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	//TODO MODIFY FOR POOL
+	// MAX: 1R 0W
 	pub fn calculate_work_pool(
 		liquidity_asset_id: TokenId,
 		current_time: u32,
@@ -689,6 +691,7 @@ impl<T: Config> Pallet<T> {
 		)
 	}
 
+	/// 1R
 	pub fn calculate_work_user(
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
@@ -715,6 +718,7 @@ impl<T: Config> Pallet<T> {
 		libm::floor(libm::pow(q, pow as f64) * precision as f64) as u128
 	}
 
+	/// 0R 0W
 	pub fn calculate_missing_at_checkpoint(
 		time_passed: u32,
 		liquidity_assets_added: Balance,
@@ -730,6 +734,7 @@ impl<T: Config> Pallet<T> {
 		Ok(missing_at_checkpoint)
 	}
 
+	/// MAX 4R 2W
 	pub fn calculate_liquidity_checkpoint(
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
@@ -792,6 +797,8 @@ impl<T: Config> Pallet<T> {
 		))
 	}
 
+	/// MAX: 4R + 4W
+	/// 2W + calculate_liquidity_checkpoint(4R+2W)
 	pub fn set_liquidity_minting_checkpoint(
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
@@ -1063,6 +1070,7 @@ impl<T: Config> Pallet<T> {
 		Ok(result)
 	}
 
+	// MAX: 2R
 	pub fn get_liquidity_asset(
 		first_asset_id: TokenId,
 		second_asset_id: TokenId,
@@ -1114,6 +1122,8 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
+	/// worst case scenario
+	/// MAX: 2R 1W
 	pub fn set_reserves(
 		first_asset_id: TokenId,
 		first_asset_amount: Balance,
@@ -1213,7 +1223,7 @@ impl<T: Config> Pallet<T> {
 			// treasury_amount of MGA is already in treasury at this point
 
 			// MGA burned from bnb_treasury_account
-			// 3R 1W
+			// MAX: 3R 1W
 			<T as Config>::Currency::burn_and_settle(
 				sold_asset_id.into(),
 				&bnb_treasury_account,
@@ -1224,6 +1234,8 @@ impl<T: Config> Pallet<T> {
 		else if Pools::<T>::contains_key((sold_asset_id, mangata_id)) ||
 			Pools::<T>::contains_key((mangata_id, sold_asset_id))
 		{
+			// MAX: 2R (from if cond)
+			
 			// Getting token reserves
 			let (input_reserve, output_reserve) =
 				Pallet::<T>::get_reserves(sold_asset_id, mangata_id)?;
@@ -1241,6 +1253,7 @@ impl<T: Config> Pallet<T> {
 
 			// Apply changes in token pools, adding treasury and burn amounts of settling token, removing  treasury and burn amounts of mangata
 
+			// MAX: 2R 1W
 			Pallet::<T>::set_reserves(
 				sold_asset_id,
 				input_reserve.saturating_add(treasury_amount).saturating_add(burn_amount),
@@ -1330,8 +1343,6 @@ pub trait XykFunctionsTrait<AccountId> {
 		second_asset_amount: Self::Balance,
 	) -> DispatchResult;
 
-	/// R:
-	/// W:
 	fn sell_asset(
 		sender: AccountId,
 		sold_asset_id: Self::CurrencyId,
@@ -1644,6 +1655,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				.saturating_add(sold_asset_amount - treasury_amount - buy_and_burn_amount);
 			let output_reserve_updated = output_reserve.saturating_sub(bought_asset_amount);
 
+			// MAX 2R 1W
 			Pallet::<T>::set_reserves(
 				sold_asset_id,
 				input_reserve_updated,
@@ -2160,6 +2172,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		)?;
 
 		// Destroying burnt liquidity tokens
+		// MAX: 3R 1W
 		<T as Config>::Currency::burn_and_settle(
 			liquidity_asset_id.into(),
 			&sender,

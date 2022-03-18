@@ -622,6 +622,7 @@ impl<T: Config> Pallet<T> {
 		Ok(user_mangata_rewards_amount)
 	}
 
+	// MAX: 2R
 	pub fn calculate_rewards_amount(
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
@@ -2192,6 +2193,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		Ok(())
 	}
 
+	// MAX: 3R 2W
 	fn claim_rewards(
 		sender: T::AccountId,
 		liquidity_token_id: Self::CurrencyId,

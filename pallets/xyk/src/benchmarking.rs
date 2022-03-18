@@ -32,7 +32,7 @@ use crate::Pallet as Xyk;
 const SEED: u32 = 0;
 // existential deposit multiplier
 const ED_MULTIPLIER: u32 = 10;
-const MILION: u32 = 1_000_000_000;
+const MILION: u128 = 1_000__000_000__000_000;
 
 benchmarks! {
 	create_pool {
@@ -49,7 +49,7 @@ benchmarks! {
 
 		assert_eq!(
 			Xyk::<T>::asset_pool((first_asset_id.into(), second_asset_id.into())),
-			(first_asset_amount as u128, second_asset_amount as u128)
+			(first_asset_amount, second_asset_amount)
 		);
 
 		assert!(
@@ -67,22 +67,48 @@ benchmarks! {
 	}
 
 	sell_asset {
+		// NOTE: duplicates test case XYK::buy_and_burn_sell_none_have_mangata_pair
+		
 		let caller: T::AccountId = whitelisted_caller();
-		let sold_amount = MILION / 2;
+		let initial_amount:mangata_primitives::Balance = 1000000000000000;
 		let expected_amount = 0;
 		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
-		let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, (2*MILION).into()).unwrap().into();
-		let non_native_asset_id : TokenId= <T as Config>::Currency::create(&caller, (2*MILION).into()).unwrap().into();
+		let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+		let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+		let non_native_asset_id2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 
-		assert!( expected_native_asset_id == native_asset_id );
-		assert!( non_native_asset_id != native_asset_id );
-		// trade pair that contains MGA but MGA is not sold token to use
-		// the most time consuming scenario of settle_and_burn
-		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), native_asset_id.into(), MILION.into(), non_native_asset_id.into(), MILION.into()).unwrap();
+		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), native_asset_id.into(), 100000000000000, non_native_asset_id1.into(), 100000000000000).unwrap();
+		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), 100000000000000, non_native_asset_id2.into(), 100000000000000).unwrap();
 
-	}: sell_asset(RawOrigin::Signed(caller.clone().into()), non_native_asset_id.into(), native_asset_id.into(), sold_amount.into(), expected_amount)
+	}: sell_asset(RawOrigin::Signed(caller.clone().into()), non_native_asset_id1.into(), non_native_asset_id2.into(), 50000000000000, 0)
 	verify {
+		// verify only trading result as rest of the assertion is in unit test
+		assert_eq!(<T as Config>::Currency::free_balance(non_native_asset_id1.into(), &caller).into(), 750000000000000);
+		assert_eq!(<T as Config>::Currency::free_balance(non_native_asset_id2.into(), &caller).into(), 933266599933266);
+
 	}
+
+	buy_asset {
+		// NOTE: duplicates test case XYK::buy_and_burn_buy_where_sold_has_mangata_pair
+		
+		let caller: T::AccountId = whitelisted_caller();
+		let initial_amount:mangata_primitives::Balance = 1000000000000000;
+		let expected_amount = 0;
+		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
+		let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+		let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+		let non_native_asset_id2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+
+		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), native_asset_id.into(), 100000000000000, non_native_asset_id1.into(), 100000000000000).unwrap();
+		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), 100000000000000, non_native_asset_id2.into(), 100000000000000).unwrap();
+
+	}: buy_asset(RawOrigin::Signed(caller.clone().into()), non_native_asset_id2.into(), non_native_asset_id1.into(), 33266599933266, 50000000000001)
+	verify {
+		// verify only trading result as rest of the assertion is in unit test
+		assert_eq!(<T as Config>::Currency::free_balance(non_native_asset_id1.into(), &caller).into(), 833266599933266);
+		assert_eq!(<T as Config>::Currency::free_balance(non_native_asset_id2.into(), &caller).into(), 850000000000001);
+	}
+
 
 	impl_benchmark_test_suite!(Xyk, crate::mock::new_test_ext(), crate::mock::Test)
 }

@@ -21,6 +21,8 @@ xcm-executor = { git = "https://github.com/mangata-finance/polkadot", default-fe
 
 orml-tokens = {  default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
 
+frame-benchmarking = {  git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev", optional = true }
+
 [dev-dependencies]
 sp-core = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-io = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
@@ -45,3 +47,8 @@ std = [
 	"orml-tokens/std",
 ]
 try-runtime = ["frame-support/try-runtime"]
+runtime-benchmarks = [
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"frame-benchmarking/runtime-benchmarks",
+]

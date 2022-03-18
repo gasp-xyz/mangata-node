@@ -1126,6 +1126,7 @@ mod benches {
 		[orml_tokens, Tokens]
 		[parachain_staking, ParachainStaking]
 		[pallet_xyk, Xyk]
+		[xcm_asset_registry, AssetRegistry]
 	);
 }
 
@@ -1363,8 +1364,7 @@ impl_runtime_apis! {
 
 			let mut list = Vec::<BenchmarkList>::new();
 
-			// TODO remove?
-			list_benchmark!(list, extra, pallet_xyk, Xyk);
+			list_benchmarks!(list, extra);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1397,9 +1397,6 @@ impl_runtime_apis! {
 
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
-
-			// TODO remove?
-			add_benchmark!(params, batches, pallet_xyk, Xyk);
 
 			add_benchmarks!(params, batches);
 

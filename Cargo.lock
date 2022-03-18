@@ -12430,6 +12430,7 @@ dependencies = [
 name = "xcm-asset-registry"
 version = "2.1.1"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",

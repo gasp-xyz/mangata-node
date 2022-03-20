@@ -83,7 +83,7 @@ pub use pallet_xyk;
 use xyk_runtime_api::{RpcAmountsResult, RpcResult, RpcRewardsResult};
 
 pub const MGA_TOKEN_ID: TokenId = 0;
-pub const DOT_TOKEN_ID: TokenId = 4;
+pub const KSM_TOKEN_ID: TokenId = 4;
 
 pub use pallet_sudo;
 
@@ -196,7 +196,7 @@ pub fn mga_per_second() -> u128 {
 	base_per_second * base_tx_in_mga()
 }
 
-pub fn dot_per_second() -> u128 {
+pub fn ksm_per_second() -> u128 {
 	mga_per_second() / 50 / 100_000_000
 }
 
@@ -522,8 +522,8 @@ impl parachain_info::Config for Runtime {}
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 parameter_types! {
-	pub DotLocation: MultiLocation = MultiLocation::parent();
-	pub const RelayNetwork: NetworkId = NetworkId::Polkadot;
+	pub KsmLocation: MultiLocation = MultiLocation::parent();
+	pub const RelayNetwork: NetworkId = NetworkId::Kusama;
 	pub RelayChainOrigin: Origin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
 }
@@ -903,7 +903,7 @@ impl orml_xcm::Config for Runtime {
 }
 
 parameter_types! {
-	pub DotPerSecond: (AssetId, u128) = (MultiLocation::parent().into(), dot_per_second());
+	pub KsmPerSecond: (AssetId, u128) = (MultiLocation::parent().into(), ksm_per_second());
 	pub MgaPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
@@ -914,7 +914,7 @@ parameter_types! {
 }
 
 pub type Trader =
-	(FixedRateOfFungible<DotPerSecond, ToTreasury>, FixedRateOfFungible<MgaPerSecond, ToTreasury>);
+	(FixedRateOfFungible<KsmPerSecond, ToTreasury>, FixedRateOfFungible<MgaPerSecond, ToTreasury>);
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
@@ -978,7 +978,7 @@ where
 pub struct TokenIdConvert;
 impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
 	fn convert(id: TokenId) -> Option<MultiLocation> {
-		if id == DOT_TOKEN_ID {
+		if id == KSM_TOKEN_ID {
 			return Some(MultiLocation::parent())
 		}
 
@@ -994,7 +994,7 @@ impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
 impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 	fn convert(location: MultiLocation) -> Option<TokenId> {
 		if location == MultiLocation::parent() {
-			return Some(DOT_TOKEN_ID)
+			return Some(KSM_TOKEN_ID)
 		}
 
 		if let Some(token_id) = AssetIdMaps::<Runtime>::get_currency_id(location.clone()) {
@@ -1007,7 +1007,6 @@ impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 			{
 				match (para_id, &key[..]) {
 					(id, key) if id == u32::from(ParachainInfo::get()) => {
-						// Acala
 						if let Ok(token_id) = TokenId::decode(&mut &*key) {
 							Some(token_id)
 						} else {

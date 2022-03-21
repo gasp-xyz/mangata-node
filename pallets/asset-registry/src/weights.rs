@@ -44,81 +44,33 @@
 use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
-/// Weight functions needed for module_asset_registry.
-pub trait WeightInfo {
-	fn register_foreign_asset() -> Weight;
-	fn update_foreign_asset() -> Weight;
-	fn register_stable_asset() -> Weight;
-	fn update_stable_asset() -> Weight;
-	fn register_erc20_asset() -> Weight;
-	fn update_erc20_asset() -> Weight;
-}
+use super::WeightInfo;
 
 /// Weights for module_asset_registry using the Acala node and recommended hardware.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
-	fn register_foreign_asset() -> Weight {
+	fn register_asset() -> Weight {
 		(32_699_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
-	fn update_foreign_asset() -> Weight {
+	fn update_asset() -> Weight {
 		(28_739_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
-	}
-	fn register_stable_asset() -> Weight {
-		(23_399_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
-	}
-	fn update_stable_asset() -> Weight {
-		(21_479_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-	}
-	fn register_erc20_asset() -> Weight {
-		(23_399_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
-	}
-	fn update_erc20_asset() -> Weight {
-		(21_479_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 }
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
-	fn register_foreign_asset() -> Weight {
+	fn register_asset() -> Weight {
 		(32_699_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
-	fn update_foreign_asset() -> Weight {
+	fn update_asset() -> Weight {
 		(28_739_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
-	}
-	fn register_stable_asset() -> Weight {
-		(23_399_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
-	}
-	fn update_stable_asset() -> Weight {
-		(21_479_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
-	}
-	fn register_erc20_asset() -> Weight {
-		(23_399_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
-	}
-	fn update_erc20_asset() -> Weight {
-		(21_479_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 }

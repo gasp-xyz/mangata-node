@@ -63,7 +63,7 @@ benchmarks! {
 
 	sell_asset {
 		// NOTE: duplicates test case XYK::buy_and_burn_sell_none_have_mangata_pair
-		
+
 		let caller: T::AccountId = whitelisted_caller();
 		let initial_amount:mangata_primitives::Balance = 1000000000000000;
 		let expected_amount = 0;
@@ -85,7 +85,7 @@ benchmarks! {
 
 	buy_asset {
 		// NOTE: duplicates test case XYK::buy_and_burn_buy_where_sold_has_mangata_pair
-		
+
 		let caller: T::AccountId = whitelisted_caller();
 		let initial_amount:mangata_primitives::Balance = 1000000000000000;
 		let expected_amount = 0;
@@ -106,7 +106,7 @@ benchmarks! {
 
 	mint_liquidity {
 		// NOTE: duplicates test case XYK::mint_W
-		
+
 		let caller: T::AccountId = whitelisted_caller();
 		let initial_amount:mangata_primitives::Balance = 1000000000000000000000;
 		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
@@ -132,7 +132,7 @@ benchmarks! {
 	}
 
 	burn_liquidity {
-		
+
 		// NOTE: worst case scenario is when we want to burn whole liquidity because of the cleanup
 		// that happens there
 		let caller: T::AccountId = whitelisted_caller();
@@ -159,7 +159,7 @@ benchmarks! {
 	}
 
 	claim_rewards {
-		
+
 		// NOTE: that duplicates test XYK::liquidity_rewards_claim_W
 		let caller: T::AccountId = whitelisted_caller();
 		let initial_amount:mangata_primitives::Balance = 1000000000000;

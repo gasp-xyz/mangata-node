@@ -282,6 +282,8 @@ const DEFAULT_DECIMALS: u32 = 18u32;
 pub use pallet::*;
 
 mod benchmarking;
+pub mod weights;
+pub use weights::WeightInfo;
 
 type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 #[frame_support::pallet]
@@ -303,6 +305,7 @@ pub mod pallet {
 		type NativeCurrencyId: Get<TokenId>;
 		type TreasuryPalletId: Get<PalletId>;
 		type BnbTreasurySubAccDerive: Get<[u8; 4]>;
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::error]
@@ -454,7 +457,7 @@ pub mod pallet {
 	// XYK extrinsics.
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::create_pool())]
 		pub fn create_pool(
 			origin: OriginFor<T>,
 			first_asset_id: TokenId,
@@ -476,7 +479,7 @@ pub mod pallet {
 		}
 
 		// you will sell your sold_asset_amount of sold_asset_id to get some amount of bought_asset_id
-		#[pallet::weight((10_000, Pays::No))]
+		#[pallet::weight(T::WeightInfo::sell_asset())]
 		pub fn sell_asset(
 			origin: OriginFor<T>,
 			sold_asset_id: TokenId,
@@ -496,7 +499,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
-		#[pallet::weight((10_000, Pays::No))]
+		#[pallet::weight(T::WeightInfo::buy_asset())]
 		pub fn buy_asset(
 			origin: OriginFor<T>,
 			sold_asset_id: TokenId,
@@ -516,7 +519,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::mint_liquidity())]
 		pub fn mint_liquidity(
 			origin: OriginFor<T>,
 			first_asset_id: TokenId,
@@ -537,7 +540,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::burn_liquidity())]
 		pub fn burn_liquidity(
 			origin: OriginFor<T>,
 			first_asset_id: TokenId,
@@ -556,7 +559,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::claim_rewards())]
 		pub fn claim_rewards(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
@@ -1236,7 +1239,7 @@ impl<T: Config> Pallet<T> {
 			Pools::<T>::contains_key((mangata_id, sold_asset_id))
 		{
 			// MAX: 2R (from if cond)
-			
+
 			// Getting token reserves
 			let (input_reserve, output_reserve) =
 				Pallet::<T>::get_reserves(sold_asset_id, mangata_id)?;

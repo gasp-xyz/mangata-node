@@ -137,6 +137,7 @@ impl Config for Test {
 	type NativeCurrencyId = NativeCurrencyId;
 	type TreasuryPalletId = TreasuryPalletId;
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
+	type WeightInfo = ();
 }
 
 impl<T: Config> Pallet<T> {

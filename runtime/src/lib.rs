@@ -482,6 +482,7 @@ impl pallet_xyk::Config for Runtime {
 	type NativeCurrencyId = MgaTokenId;
 	type TreasuryPalletId = TreasuryPalletId;
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
+	type WeightInfo = pallet_xyk::weights::ModuleWeight<Runtime>;
 }
 
 parameter_types! {
@@ -1016,7 +1017,7 @@ impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 					},
 					_ => None,
 				}
-			}
+			},
 			_ => None,
 		}
 	}

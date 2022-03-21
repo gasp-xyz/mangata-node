@@ -202,5 +202,9 @@ runtime-benchmarks = [
 	"cumulus-pallet-session-benchmarking/runtime-benchmarks",
 	"pallet-xyk/runtime-benchmarks",
 	"parachain-staking/runtime-benchmarks",
-	"xcm-asset-registry/runtime-benchmarks"
+	"xcm-asset-registry/runtime-benchmarks",
+	"pallet-treasury/runtime-benchmarks",
+	"pallet-collective/runtime-benchmarks",
+	"pallet-elections-phragmen/runtime-benchmarks",
+
 ]

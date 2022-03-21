@@ -1121,11 +1121,14 @@ mod benches {
 	define_benchmarks!(
 		[frame_system, SystemBench::<Runtime>]
 		[pallet_session, SessionBench::<Runtime>]
-		[pallet_timestamp, Timestamp]
+		// [pallet_timestamp, Timestamp]
 		[orml_tokens, Tokens]
 		[parachain_staking, ParachainStaking]
 		[pallet_xyk, Xyk]
 		[xcm_asset_registry, AssetRegistry]
+		[pallet_treasury, Treasury]
+		[pallet_collective, Council]
+		[pallet_elections_phragmen, Elections]
 	);
 }
 

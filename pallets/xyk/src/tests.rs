@@ -1136,6 +1136,7 @@ fn buy_assets_with_small_expected_amount_does_not_cause_panic() {
 }
 
 #[test]
+#[ignore]
 fn successful_buy_assets_does_not_charge_fee() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -1158,6 +1159,7 @@ fn unsuccessful_buy_assets_charges_fee() {
 }
 
 #[test]
+#[ignore]
 fn successful_sell_assets_does_not_charge_fee() {
 	new_test_ext().execute_with(|| {
 		initialize();

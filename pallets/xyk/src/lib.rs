@@ -220,9 +220,7 @@
 
 use frame_support::{
 	dispatch::{DispatchError, DispatchResult},
-	ensure,
-	weights::Pays,
-	PalletId,
+	ensure, PalletId,
 };
 use frame_system::ensure_signed;
 use sp_core::U256;
@@ -496,7 +494,7 @@ pub mod pallet {
 				sold_asset_amount,
 				min_amount_out,
 			)?;
-			Ok(Pays::No.into())
+			Ok(().into())
 		}
 
 		#[pallet::weight(T::WeightInfo::buy_asset())]
@@ -516,7 +514,7 @@ pub mod pallet {
 				bought_asset_amount,
 				max_amount_in,
 			)?;
-			Ok(Pays::No.into())
+			Ok(().into())
 		}
 
 		#[pallet::weight(T::WeightInfo::mint_liquidity())]

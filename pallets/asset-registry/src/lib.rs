@@ -36,10 +36,10 @@ pub use xcm::{v1::MultiLocation, VersionedMultiLocation};
 
 use orml_tokens::MultiTokenCurrencyExtended;
 
+pub mod benchmarking;
 mod mock;
 mod tests;
 pub mod weights;
-pub mod benchmarking;
 
 pub use pallet::*;
 pub use weights::*;

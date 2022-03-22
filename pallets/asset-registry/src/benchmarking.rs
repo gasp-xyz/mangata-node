@@ -18,7 +18,7 @@
 #![cfg(feature = "runtime-benchmarks")]
 
 use crate::*;
-use frame_benchmarking::{benchmarks};
+use frame_benchmarking::benchmarks;
 use frame_system::RawOrigin;
 
 benchmarks! {
@@ -28,14 +28,14 @@ benchmarks! {
 			parents: 0,
 			interior: xcm::v1::Junctions::X1(xcm::v1::Junction::Parachain(1000)),
 		});
-        
-        let next_currency_id: TokenId = <T as pallet::Config>::Currency::get_next_currency_id().into();
+
+		let next_currency_id: TokenId = <T as pallet::Config>::Currency::get_next_currency_id().into();
 
 	}: _(RawOrigin::Root, Box::new(location.clone()))
-    verify {
-        assert_eq!(Pallet::<T>::asset_locations(next_currency_id), Some(location.clone().try_into().unwrap()));
+	verify {
+		assert_eq!(Pallet::<T>::asset_locations(next_currency_id), Some(location.clone().try_into().unwrap()));
 		assert_eq!(Pallet::<T>::location_to_currency_ids(MultiLocation::try_from(location).unwrap()), Some(next_currency_id));
-    }
+	}
 
 	update_asset {
 		let location = VersionedMultiLocation::V1(MultiLocation {
@@ -43,24 +43,24 @@ benchmarks! {
 			interior: xcm::v1::Junctions::X1(xcm::v1::Junction::Parachain(1000)),
 		});
 
-        let next_currency_id: TokenId =  <T as pallet::Config>::Currency::get_next_currency_id().into();
+		let next_currency_id: TokenId =  <T as pallet::Config>::Currency::get_next_currency_id().into();
 
 		Pallet::<T>::register_asset(RawOrigin::Root.into(), Box::new(location.clone()))?;
-        
-        assert_eq!(Pallet::<T>::asset_locations(next_currency_id), Some(location.clone().try_into().unwrap()));
+
+		assert_eq!(Pallet::<T>::asset_locations(next_currency_id), Some(location.clone().try_into().unwrap()));
 		assert_eq!(Pallet::<T>::location_to_currency_ids(MultiLocation::try_from(location).unwrap()), Some(next_currency_id));
 
-        let location = VersionedMultiLocation::V1(MultiLocation {
+		let location = VersionedMultiLocation::V1(MultiLocation {
 			parents: 0,
 			interior: xcm::v1::Junctions::X1(xcm::v1::Junction::Parachain(3000)),
 		});
 
 	}: _(RawOrigin::Root, next_currency_id, Box::new(location.clone()))
-    verify{
-        
-        assert_eq!(Pallet::<T>::asset_locations(next_currency_id), Some(location.clone().try_into().unwrap()));
+	verify{
+
+		assert_eq!(Pallet::<T>::asset_locations(next_currency_id), Some(location.clone().try_into().unwrap()));
 		assert_eq!(Pallet::<T>::location_to_currency_ids(MultiLocation::try_from(location).unwrap()), Some(next_currency_id));
-    }
+	}
 
 	impl_benchmark_test_suite!(Pallet, crate::tests::new_test_ext(), crate::tests::Test)
 }

@@ -1125,14 +1125,15 @@ fn burn_N_zero_amount() {
 	});
 }
 
-// TODO https://trello.com/c/rEygIR7t/428-fix-panic-in-xyksellasset
 #[test]
-#[ignore]
 fn buy_assets_with_small_expected_amount_does_not_cause_panic() {
 	new_test_ext().execute_with(|| {
 		initialize();
 		let first_token_balance = XykStorage::balance(1, DUMMY_USER_ID);
-		XykStorage::buy_asset(Origin::signed(2), 1, 2, 1, first_token_balance).unwrap();
+		assert_err!(
+			XykStorage::buy_asset(Origin::signed(2), 1, 2, 1, first_token_balance),
+			Error::<Test>::SoldAmountTooLow,
+		);
 	});
 }
 

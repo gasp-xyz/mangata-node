@@ -1,13 +1,21 @@
 #!/bin/bash
 REPO_ROOT=$(dirname $(readlink -f $0))/../
 
-${REPO_ROOT}/target/release/mangata-node benchmark \
-    --chain dev \
-    --execution wasm \
-    --wasm-execution compiled \
-    --pallet pallet_xyk \
-    --extrinsic '*' \
-    --steps 20 \
-    --repeat 10 \
-    --output ./pallets/xyk/src/weights.rs \
-    --template ./templates/module-weight-template.hbs
+mkdir ./benchmarks
+
+benchmarks=(
+    "frame_system"
+    "pallet_session"
+    "pallet_timestamp"
+    "orml_tokens"
+    "parachain_staking"
+    "pallet_xyk"
+    "xcm_asset_registry"
+    "pallet_treasury"
+    "pallet_collective"
+    "pallet_elections_phragmen"
+)
+
+for bench in ${benchmarks[@]}; do
+    ${REPO_ROOT}/scripts/run_benchmark.sh $bench
+done

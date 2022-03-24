@@ -9,4 +9,5 @@ ${REPO_ROOT}/target/release/mangata-node benchmark \
     --extrinsic '*' \
     --steps 20 \
     --repeat 10 \
-    --output ./benchmarking-output
+    --output ./pallets/xyk/src/weights.rs \
+    --template ./templates/module-weight-template.hbs

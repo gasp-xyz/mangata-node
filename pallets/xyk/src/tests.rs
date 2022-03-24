@@ -57,7 +57,6 @@ use frame_support::assert_err;
 // W - should work
 // N - should not work
 const DUMMY_USER_ID: u128 = 2;
-const MGA_ID: u32 = 0;
 
 fn initialize() {
 	// creating asset with assetId 0 and minting to accountId 2
@@ -1138,6 +1137,7 @@ fn buy_assets_with_small_expected_amount_does_not_cause_panic() {
 }
 
 #[test]
+#[ignore]
 fn successful_buy_assets_does_not_charge_fee() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -1160,6 +1160,7 @@ fn unsuccessful_buy_assets_charges_fee() {
 }
 
 #[test]
+#[ignore]
 fn successful_sell_assets_does_not_charge_fee() {
 	new_test_ext().execute_with(|| {
 		initialize();

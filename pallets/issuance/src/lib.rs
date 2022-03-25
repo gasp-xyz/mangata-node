@@ -257,7 +257,7 @@ impl<T: Config> Pallet<T> {
 			liquidity_mining_issuance
 		} else {
 			liquidity_mining_issuance / promoted_pools_count as u128
-		};	
+		};
 
 		PromotedPoolsRewards::<T>::translate(|_, v: Balance| {
 			Some(v + liquidity_mining_issuance_per_pool)

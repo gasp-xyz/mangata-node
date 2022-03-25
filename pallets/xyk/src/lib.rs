@@ -628,38 +628,34 @@ impl<T: Config> Pallet<T> {
 		let liquidity_assets_amount =
 			<T as Config>::Currency::total_balance(liquidity_asset_id.into(), &user).into();
 
-		// user already minted after pool promotion
-		if LiquidityMiningUser::<T>::contains_key((&user, &liquidity_asset_id)) {
-			Ok(LiquidityMiningUser::<T>::get((&user, &liquidity_asset_id)))
-		}
-		// users first mint
-		else if liquidity_assets_amount == Balance::try_from(0).unwrap() {
-			Ok((current_time, U256::from(0), U256::from(0)))
-		}
-		// user minted liquidity before pool promotion, need to calculate checkpoint from poolPromotionStart, till now, since there is no data stored
-		else {
-			let pool_promotion_start = PoolPromotionStart::<T>::get(liquidity_asset_id);
+		match LiquidityMiningUser::<T>::try_get((&user, &liquidity_asset_id)) {
+			Ok(result) => Ok(result),
+			Err(_) if liquidity_assets_amount == 0_u128 =>
+				Ok((current_time, U256::from(0), U256::from(0))),
+			Err(_) => {
+				let pool_promotion_start = PoolPromotionStart::<T>::get(liquidity_asset_id);
 
-			let user_work_total = Self::calculate_work(
-				liquidity_assets_amount,
-				current_time,
-				pool_promotion_start,
-				U256::from(0),
-				liquidity_assets_amount.into(),
-			)?;
-			let time_passed = current_time
-				.checked_sub(pool_promotion_start)
-				.ok_or_else(|| DispatchError::from(Error::<T>::PastTimeCalculation))?;
-			let user_missing_at_checkpoint = Self::calculate_missing_at_checkpoint(
-				time_passed,
-				Balance::try_from(0).unwrap(),
-				liquidity_assets_amount.into(),
-			)?;
+				let user_work_total = Self::calculate_work(
+					liquidity_assets_amount,
+					current_time,
+					pool_promotion_start,
+					U256::from(0),
+					liquidity_assets_amount.into(),
+				)?;
+				let time_passed = current_time
+					.checked_sub(pool_promotion_start)
+					.ok_or_else(|| DispatchError::from(Error::<T>::PastTimeCalculation))?;
+				let user_missing_at_checkpoint = Self::calculate_missing_at_checkpoint(
+					time_passed,
+					Balance::try_from(0).unwrap(),
+					liquidity_assets_amount.into(),
+				)?;
 
-			LiquidityMiningUser::<T>::try_get((&user, &liquidity_asset_id))
-				.unwrap_or_else(|_| (0, U256::from(0), U256::from(0)));
+				LiquidityMiningUser::<T>::try_get((&user, &liquidity_asset_id))
+					.unwrap_or_else(|_| (0, U256::from(0), U256::from(0)));
 
-			Ok((current_time, user_work_total, user_missing_at_checkpoint))
+				Ok((current_time, user_work_total, user_missing_at_checkpoint))
+			},
 		}
 	}
 
@@ -721,6 +717,8 @@ impl<T: Config> Pallet<T> {
 			.checked_sub(last_checkpoint)
 			.ok_or_else(|| DispatchError::from(Error::<T>::PastTimeCalculation))?;
 
+		// whole formula: 	missing_at_last_checkpoint*106 - missing_at_last_checkpoint*106/q_pow
+		// q_pow is multiplied by precision, thus there needs to be *precision in numenator as well
 		let asymptote_u256: U256 = asymptote.into();
 		let cummulative_work_new_max_possible: U256 = asymptote_u256
 			.checked_mul(U256::from(time_passed))
@@ -926,11 +924,8 @@ impl<T: Config> Pallet<T> {
 			),
 		);
 
-		let mut rewards_to_be_claimed: u128 = 0;
-		if LiquidityMiningUserToBeClaimed::<T>::contains_key((user.clone(), &liquidity_asset_id)) {
-			rewards_to_be_claimed =
-				Self::liquidity_mining_user_to_be_claimed((user.clone(), &liquidity_asset_id));
-		}
+		let rewards_to_be_claimed =
+			LiquidityMiningUserToBeClaimed::<T>::get((user.clone(), &liquidity_asset_id));
 
 		let rewards_amount =
 			Self::calculate_rewards(user_work_burned, pool_work_total, liquidity_asset_id)?;
@@ -2271,20 +2266,29 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				pool_missing_at_checkpoint,
 			) = Self::calculate_liquidity_checkpoint(user.clone(), liquidity_asset_id, 0 as u128)?;
 
-			let work_to_burn = multiply_by_rational(
-				Balance::try_from(user_work_total)?,
-				rewards_to_burn,
-				current_rewards,
-			)
-			.map_err(|_| Error::<T>::UnexpectedFailure)?;
+			let work_to_burn = U256::from(
+				multiply_by_rational(
+					Balance::try_from(user_work_total)?,
+					rewards_to_burn,
+					current_rewards,
+				)
+				.map_err(|_| Error::<T>::UnexpectedFailure)?,
+			);
+
+			let new_work_user = user_work_total
+				.checked_sub(work_to_burn)
+				.ok_or_else(|| DispatchError::from(Error::<T>::NotEnoughtRewardsEarned))?;
+			let new_work_pool = pool_work_total
+				.checked_sub(work_to_burn)
+				.ok_or_else(|| DispatchError::from(Error::<T>::NotEnoughtRewardsEarned))?;
 
 			LiquidityMiningUser::<T>::insert(
 				(&user, &liquidity_asset_id),
-				(current_time, user_work_total - work_to_burn, user_missing_at_checkpoint),
+				(current_time, new_work_user, user_missing_at_checkpoint),
 			);
 			LiquidityMiningPool::<T>::insert(
 				&liquidity_asset_id,
-				(current_time, pool_work_total - work_to_burn, pool_missing_at_checkpoint),
+				(current_time, new_work_pool, pool_missing_at_checkpoint),
 			);
 			<T as Config>::PoolPromoteApi::claim_pool_rewards(liquidity_asset_id, rewards_to_burn);
 		}

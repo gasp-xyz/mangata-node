@@ -180,10 +180,10 @@ impl<T: Config> PoolPromoteApi for Pallet<T> {
 
 	fn claim_pool_rewards(liquidity_token_id: TokenId, claimed_amount: Balance) -> bool {
 		PromotedPoolsRewards::<T>::try_mutate(liquidity_token_id, |rewards| {
-			if let Some(val) = rewards.checked_sub(claimed_amount){
+			if let Some(val) = rewards.checked_sub(claimed_amount) {
 				*rewards = val;
 				Ok(())
-			}else{
+			} else {
 				Err(())
 			}
 		})

@@ -42,9 +42,6 @@ pub struct IssuanceInfo {
 	pub crowdloan_allocation: Balance,
 }
 
-/// Api to interact with pools marked as promoted
-///
-/// TODO add errors to functions
 pub trait PoolPromoteApi {
 	/// Returns true if pool was promoted, false if it has been promoted already
 	fn promote_pool(liquidity_token_id: TokenId) -> bool;
@@ -260,7 +257,7 @@ impl<T: Config> Pallet<T> {
 			liquidity_mining_issuance
 		} else {
 			liquidity_mining_issuance / promoted_pools_count as u128
-		};
+		};	
 
 		PromotedPoolsRewards::<T>::translate(|_, v: Balance| {
 			Some(v + liquidity_mining_issuance_per_pool)

@@ -12,7 +12,7 @@ use sp_runtime::{
 use crate as xyk;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{Contains, Everything},
+	traits::{ConstU128, ConstU32, Contains, Everything},
 	PalletId,
 };
 use frame_system as system;
@@ -118,7 +118,7 @@ impl system::Config for Test {
 	type BlockLength = ();
 	type SS58Prefix = ();
 	type OnSetCode = ();
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type MaxConsumers = ConstU32<16>;
 }
 
 parameter_type_with_key! {
@@ -214,7 +214,10 @@ impl Config for Test {
 	type LinearIssuanceBlocks = FakeLinearIssuanceBlocks;
 	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
 	type PoolPromoteApi = MockPromotedPoolApi;
-	//type BlocksPerSession = frame_support::traits::ConstU32<1200>;
+	type PoolFeePercentage = ConstU128<20>;
+	type TreasuryFeePercentage = ConstU128<5>;
+	type BuyAndBurnFeePercentage = ConstU128<5>;
+	type RewardsDistributionPeriod = ConstU32<10000>;
 }
 
 impl<T: Config> Pallet<T> {

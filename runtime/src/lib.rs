@@ -499,6 +499,10 @@ impl pallet_xyk::Config for Runtime {
 	type LinearIssuanceBlocks = ProvideLinearIssuanceBlocks;
 	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
 	type PoolPromoteApi = Issuance;
+	type PoolFeePercentage = frame_support::traits::ConstU128<20>;
+	type TreasuryFeePercentage = frame_support::traits::ConstU128<5>;
+	type BuyAndBurnFeePercentage = frame_support::traits::ConstU128<5>;
+	type RewardsDistributionPeriod = frame_support::traits::ConstU32<10000>;
 }
 
 type ORMLCurrencyAdapterNegativeImbalance = <orml_tokens::CurrencyAdapter::<Runtime, MgaTokenId> as PalletCurrency<AccountId>>::NegativeImbalance;

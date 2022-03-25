@@ -264,13 +264,6 @@ macro_rules! log {
 }
 
 const PALLET_ID: PalletId = PalletId(*b"79b14c96");
-// 1/100 %
-const TREASURY_PERCENTAGE: u128 = 5;
-const BUYANDBURN_PERCENTAGE: u128 = 5;
-const FEE_PERCENTAGE: u128 = 30;
-const POOL_FEE_PERCENTAGE: u128 = FEE_PERCENTAGE - TREASURY_PERCENTAGE - BUYANDBURN_PERCENTAGE;
-// Smallest granularity in which values for liquidity minting rewards change
-const TIMEBLOCKRATIO: u32 = 10000;
 // Quocient ratio in which liquidity minting curve is rising
 const Q: f64 = 1.06;
 
@@ -313,10 +306,18 @@ pub mod pallet {
 		type BnbTreasurySubAccDerive: Get<[u8; 4]>;
 		type LiquidityMiningSplit: GetLiquidityMiningSplit;
 		type LinearIssuanceBlocks: GetLinearIssuanceBlocks;
+		type PoolPromoteApi: PoolPromoteApi;
 		#[pallet::constant]
 		/// The account id that holds the liquidity mining issuance
 		type LiquidityMiningIssuanceVault: Get<Self::AccountId>;
-		type PoolPromoteApi: PoolPromoteApi;
+		#[pallet::constant]
+		type PoolFeePercentage: Get<u128>;
+		#[pallet::constant]
+		type TreasuryFeePercentage: Get<u128>;
+		#[pallet::constant]
+		type BuyAndBurnFeePercentage: Get<u128>;
+		#[pallet::constant]
+		type RewardsDistributionPeriod: Get<u32>;
 	}
 
 	#[pallet::error]
@@ -605,6 +606,12 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
+	fn total_fee() -> u128 {
+		T::PoolFeePercentage::get() +
+			T::TreasuryFeePercentage::get() +
+			T::BuyAndBurnFeePercentage::get()
+	}
+
 	pub fn get_liquidity_mining_split() -> sp_runtime::Perbill {
 		<T as Config>::LiquidityMiningSplit::get_liquidity_mining_split()
 	}
@@ -664,8 +671,8 @@ impl<T: Config> Pallet<T> {
 			PoolPromotionStart::<T>::contains_key(liquidity_asset_id),
 			Error::<T>::NotAPromotedPool
 		);
-		let current_time: u32 =
-			<frame_system::Pallet<T>>::block_number().saturated_into::<u32>() / TIMEBLOCKRATIO;
+		let current_time: u32 = <frame_system::Pallet<T>>::block_number().saturated_into::<u32>() /
+			T::RewardsDistributionPeriod::get();
 		let work_user = Self::calculate_work_user(user.clone(), liquidity_asset_id, current_time)?;
 		let work_pool = Self::calculate_work_pool(liquidity_asset_id, current_time)?;
 
@@ -798,8 +805,8 @@ impl<T: Config> Pallet<T> {
 		liquidity_asset_id: TokenId,
 		liquidity_assets_added: Balance,
 	) -> Result<(u32, U256, U256, U256, U256), DispatchError> {
-		let current_time: u32 =
-			<frame_system::Pallet<T>>::block_number().saturated_into::<u32>() / TIMEBLOCKRATIO;
+		let current_time: u32 = <frame_system::Pallet<T>>::block_number().saturated_into::<u32>() /
+			T::RewardsDistributionPeriod::get();
 
 		let (
 			user_last_checkpoint,
@@ -1007,7 +1014,7 @@ impl<T: Config> Pallet<T> {
 		output_reserve: Balance,
 		sell_amount: Balance,
 	) -> Result<Balance, DispatchError> {
-		let after_fee_percentage: u128 = 10000 - FEE_PERCENTAGE;
+		let after_fee_percentage: u128 = 10000 - Self::total_fee();
 		let input_reserve_saturated: U256 = input_reserve.into();
 		let output_reserve_saturated: U256 = output_reserve.into();
 		let sell_amount_saturated: U256 = sell_amount.into();
@@ -1075,7 +1082,7 @@ impl<T: Config> Pallet<T> {
 		output_reserve: Balance,
 		buy_amount: Balance,
 	) -> Result<Balance, DispatchError> {
-		let after_fee_percentage: u128 = 10000 - FEE_PERCENTAGE;
+		let after_fee_percentage: u128 = 10000 - Self::total_fee();
 		let input_reserve_saturated: U256 = input_reserve.into();
 		let output_reserve_saturated: U256 = output_reserve.into();
 		let buy_amount_saturated: U256 = buy_amount.into();
@@ -1280,8 +1287,9 @@ impl<T: Config> Pallet<T> {
 				output_reserve,
 				treasury_amount + burn_amount,
 			)?;
-			let treasury_amount_in_mangata = settle_amount_in_mangata * TREASURY_PERCENTAGE /
-				(TREASURY_PERCENTAGE + BUYANDBURN_PERCENTAGE);
+			let treasury_amount_in_mangata = settle_amount_in_mangata *
+				T::TreasuryFeePercentage::get() /
+				(T::TreasuryFeePercentage::get() + T::BuyAndBurnFeePercentage::get());
 
 			let burn_amount_in_mangata = settle_amount_in_mangata - treasury_amount_in_mangata;
 
@@ -1571,23 +1579,25 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		ensure!(!sold_asset_amount.is_zero(), Error::<T>::ZeroAmount,);
 
 		let buy_and_burn_amount =
-			multiply_by_rational(sold_asset_amount, BUYANDBURN_PERCENTAGE, 10000)
+			multiply_by_rational(sold_asset_amount, T::BuyAndBurnFeePercentage::get(), 10000)
 				.map_err(|_| Error::<T>::UnexpectedFailure)? +
 				1;
 
-		let treasury_amount = multiply_by_rational(sold_asset_amount, TREASURY_PERCENTAGE, 10000)
-			.map_err(|_| Error::<T>::UnexpectedFailure)? +
-			1;
+		let treasury_amount =
+			multiply_by_rational(sold_asset_amount, T::TreasuryFeePercentage::get(), 10000)
+				.map_err(|_| Error::<T>::UnexpectedFailure)? +
+				1;
 
-		let pool_fee_amount = multiply_by_rational(sold_asset_amount, POOL_FEE_PERCENTAGE, 10000)
-			.map_err(|_| Error::<T>::UnexpectedFailure)? +
-			1;
+		let pool_fee_amount =
+			multiply_by_rational(sold_asset_amount, T::PoolFeePercentage::get(), 10000)
+				.map_err(|_| Error::<T>::UnexpectedFailure)? +
+				1;
 
 		// for future implementation of min fee if necessary
 		// let min_fee: u128 = 0;
 		// if buy_and_burn_amount + treasury_amount + pool_fee_amount < min_fee {
-		//     buy_and_burn_amount = min_fee * FEE_PERCENTAGE / BUYANDBURN_PERCENTAGE;
-		//     treasury_amount = min_fee * FEE_PERCENTAGE / TREASURY_PERCENTAGE;
+		//     buy_and_burn_amount = min_fee * Self::total_fee() / T::BuyAndBurnFeePercentage::get();
+		//     treasury_amount = min_fee * Self::total_fee() / T::TreasuryFeePercentage::get();
 		//     pool_fee_amount = min_fee - buy_and_burn_amount - treasury_amount;
 		// }
 
@@ -1750,23 +1760,25 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			Pallet::<T>::calculate_buy_price(input_reserve, output_reserve, bought_asset_amount)?;
 
 		let buy_and_burn_amount =
-			multiply_by_rational(sold_asset_amount, BUYANDBURN_PERCENTAGE, 10000)
+			multiply_by_rational(sold_asset_amount, T::BuyAndBurnFeePercentage::get(), 10000)
 				.map_err(|_| Error::<T>::UnexpectedFailure)? +
 				1;
 
-		let treasury_amount = multiply_by_rational(sold_asset_amount, TREASURY_PERCENTAGE, 10000)
-			.map_err(|_| Error::<T>::UnexpectedFailure)? +
-			1;
+		let treasury_amount =
+			multiply_by_rational(sold_asset_amount, T::TreasuryFeePercentage::get(), 10000)
+				.map_err(|_| Error::<T>::UnexpectedFailure)? +
+				1;
 
-		let pool_fee_amount = multiply_by_rational(sold_asset_amount, POOL_FEE_PERCENTAGE, 10000)
-			.map_err(|_| Error::<T>::UnexpectedFailure)? +
-			1;
+		let pool_fee_amount =
+			multiply_by_rational(sold_asset_amount, T::PoolFeePercentage::get(), 10000)
+				.map_err(|_| Error::<T>::UnexpectedFailure)? +
+				1;
 
 		// for future implementation of min fee if necessary
 		// let min_fee: u128 = 0;
 		// if buy_and_burn_amount + treasury_amount + pool_fee_amount < min_fee {
-		//     buy_and_burn_amount = min_fee * FEE_PERCENTAGE / BUYANDBURN_PERCENTAGE;
-		//     treasury_amount = min_fee * FEE_PERCENTAGE / TREASURY_PERCENTAGE;
+		//     buy_and_burn_amount = min_fee * Self::total_fee() / T::BuyAndBurnFeePercentage::get();
+		//     treasury_amount = min_fee * Self::total_fee() / T::TreasuryFeePercentage::get();
 		//     pool_fee_amount = min_fee - buy_and_burn_amount - treasury_amount;
 		// }
 
@@ -2293,8 +2305,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			!PoolPromotionStart::<T>::contains_key(liquidity_token_id),
 			Error::<T>::PoolAlreadyPromoted,
 		);
-		let current_time =
-			<frame_system::Pallet<T>>::block_number().saturated_into::<u32>() / TIMEBLOCKRATIO;
+		let current_time = <frame_system::Pallet<T>>::block_number().saturated_into::<u32>() /
+			T::RewardsDistributionPeriod::get();
 
 		PoolPromotionStart::<T>::insert(&liquidity_token_id, current_time);
 

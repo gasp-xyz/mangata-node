@@ -97,6 +97,8 @@ pub use artemis_eth_app;
 pub use pallet_bridge;
 pub use pallet_verifier;
 
+mod weights;
+
 #[cfg(any(feature = "std", test))]
 pub use frame_system::Call as SystemCall;
 
@@ -365,7 +367,7 @@ impl frame_system::Config for Runtime {
 	/// The basic call filter to use in dispatchable.
 	type BaseCallFilter = Everything;
 	/// Weight information for the extrinsics of this pallet.
-	type SystemWeightInfo = ();
+	type SystemWeightInfo = weights::frame_system_weights::ModuleWeight<Runtime>;
 	/// Block & extrinsics weights: base values and limits.
 	type BlockWeights = RuntimeBlockWeights;
 	/// The maximum length of a block (in bytes).
@@ -387,7 +389,7 @@ impl pallet_timestamp::Config for Runtime {
 	type Moment = u64;
 	type OnTimestampSet = ();
 	type MinimumPeriod = MinimumPeriod;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_timestamp_weights::ModuleWeight<Runtime>;
 }
 
 parameter_types! {
@@ -436,7 +438,7 @@ impl pallet_treasury::Config for Runtime {
 	type Burn = Burn;
 	type BurnDestination = ();
 	type SpendFunds = ();
-	type WeightInfo = pallet_treasury::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_treasury_weights::ModuleWeight<Runtime>;
 	type MaxApprovals = MaxApprovals;
 }
 
@@ -469,7 +471,7 @@ impl orml_tokens::Config for Runtime {
 	type Balance = Balance;
 	type Amount = Amount;
 	type CurrencyId = TokenId;
-	type WeightInfo = ();
+	type WeightInfo = weights::orml_tokens_weights::ModuleWeight<Runtime>;
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = TransferDust<Runtime, TreasuryAccount>;
 	type MaxLocks = MaxLocks;
@@ -482,7 +484,7 @@ impl pallet_xyk::Config for Runtime {
 	type NativeCurrencyId = MgaTokenId;
 	type TreasuryPalletId = TreasuryPalletId;
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
-	type WeightInfo = pallet_xyk::weights::ModuleWeight<Runtime>;
+	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
 }
 
 parameter_types! {
@@ -666,7 +668,7 @@ impl pallet_session::Config for Runtime {
 	// Essentially just Aura, but lets be pedantic.
 	type SessionHandler = <SessionKeys as sp_runtime::traits::OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = SessionKeys;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_session_weights::ModuleWeight<Runtime>;
 }
 
 impl pallet_aura::Config for Runtime {
@@ -757,7 +759,7 @@ impl pallet_collective::Config<CouncilCollective> for Runtime {
 	type MaxProposals = CouncilMaxProposals;
 	type MaxMembers = CouncilMaxMembers;
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
-	type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_collective_weights::ModuleWeight<Runtime>;
 }
 
 parameter_types! {
@@ -792,7 +794,7 @@ impl pallet_elections_phragmen::Config for Runtime {
 	type DesiredMembers = DesiredMembers;
 	type DesiredRunnersUp = DesiredRunnersUp;
 	type TermDuration = TermDuration;
-	type WeightInfo = pallet_elections_phragmen::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_elections_phragmen_weights::ModuleWeight<Runtime>;
 }
 
 parameter_types! {
@@ -859,7 +861,7 @@ impl parachain_staking::Config for Runtime {
 	type MinDelegation = MinDelegatorStk;
 	type NativeTokenId = MgaTokenId;
 	type StakingLiquidityTokenValuator = Xyk;
-	type WeightInfo = parachain_staking::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::parachain_staking_weights::ModuleWeight<Runtime>;
 }
 
 impl parachain_staking::StakingBenchmarkConfig for Runtime {}
@@ -1050,7 +1052,7 @@ impl xcm_asset_registry::Config for Runtime {
 	type Event = Event;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type RegisterOrigin = EnsureRoot<AccountId>;
-	type WeightInfo = xcm_asset_registry::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::xcm_asset_registry_weights::ModuleWeight<Runtime>;
 	type TreasuryAddress = TreasuryAccount;
 }
 

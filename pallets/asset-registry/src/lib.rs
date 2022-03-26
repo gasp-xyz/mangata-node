@@ -42,7 +42,6 @@ mod tests;
 pub mod weights;
 
 pub use pallet::*;
-pub use weights::*;
 
 /// Weight functions needed for module_asset_registry.
 pub trait WeightInfo {

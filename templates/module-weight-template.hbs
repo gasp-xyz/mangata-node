@@ -48,7 +48,7 @@ pub trait WeightInfo {
 
 /// Weights for {{pallet}} using the Mangata node and recommended hardware.
 pub struct ModuleWeight<T>(PhantomData<T>);
-impl<T: frame_system::Config> WeightInfo for ModuleWeight<T> {
+impl<T: frame_system::Config> {{pallet}}::WeightInfo for ModuleWeight<T> {
 	{{#each benchmarks as |benchmark|}}
 	{{#each benchmark.comments as |comment|}}
 	// {{comment}}

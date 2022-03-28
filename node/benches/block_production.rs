@@ -58,6 +58,8 @@ use sp_core::{ByteArray, ShufflingSeed};
 use sp_keystore::SyncCryptoStore;
 use std::convert::TryInto;
 
+const MINIMUM_PERIOD_FOR_BLOCKS: u64 = 6000;
+
 fn new_config(tokio_handle: Handle) -> Configuration {
 	let base_path = BasePath::new_temp_dir()
 		.expect("getting the base path of a temporary path doesn't fail; qed");
@@ -238,7 +240,6 @@ fn prepare_benchmark(
 	client: &FullClient,
 	digest: sp_runtime::generic::Digest,
 ) -> Vec<OpaqueExtrinsic> {
-	const MINIMUM_PERIOD_FOR_BLOCKS: u64 = 1500;
 	// let mut extrinsics = Vec::new();
 	let at = BlockId::Number(1);
 
@@ -348,7 +349,8 @@ fn block_production(criterion: &mut Criterion) {
 
 	// Buliding the very first block is around ~30x slower than any subsequent one,
 	// so let's make sure it's built and imported before we benchmark anything.
-	let block_builder = client.new_block(Default::default()).unwrap();
+	let mut block_builder = client.new_block(Default::default()).unwrap();
+	block_builder.push(extrinsic_set_time(1)).unwrap();
 	let genesis_block = block_builder.build_with_seed(Default::default()).unwrap();
 	let prev_seed = genesis_block.block.header().seed().seed;
 	import_block(c, genesis_block);
@@ -369,7 +371,7 @@ fn block_production(criterion: &mut Criterion) {
 	{
 		let mut block_builder =
 			client.new_block_at(&BlockId::Number(1), digests.clone(), false).unwrap();
-		block_builder.push(extrinsic_set_time(1)).unwrap();
+		block_builder.push(extrinsic_set_time(1 + MINIMUM_PERIOD_FOR_BLOCKS)).unwrap();
 		block_builder.push(extrinsic_set_validation_data().clone()).unwrap();
 		let (block, _, _) = block_builder.build_with_seed(seed.clone()).unwrap().into_inner();
 		group.bench_function("empty block", |b| {
@@ -386,7 +388,7 @@ fn block_production(criterion: &mut Criterion) {
 	cfg_if::cfg_if! {
 		if #[cfg(feature = "disable-execution")] {
 			let mut block_builder = client.new_block_at(&BlockId::Number(1), digests, false).unwrap();
-			block_builder.push(extrinsic_set_time(1)).unwrap();
+			block_builder.push(extrinsic_set_time(1 + MINIMUM_PERIOD_FOR_BLOCKS)).unwrap();
 			block_builder.push(extrinsic_set_validation_data().clone()).unwrap();
 			block_builder.record_valid_extrinsics_and_revert_changes(|_| txs.clone());
 			let (mut block, _, _) = block_builder.build_with_seed(seed.clone()).unwrap().into_inner();

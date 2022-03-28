@@ -33,7 +33,7 @@ use frame_support::{
 	construct_runtime, match_type, parameter_types,
 	traits::{Contains, Everything, Get, LockIdentifier, Nothing, U128CurrencyToVote},
 	weights::{
-		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
+		constants::{ExtrinsicBaseWeight, WEIGHT_PER_MILLIS, WEIGHT_PER_SECOND},
 		DispatchClass, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
 		WeightToFeePolynomial,
 	},
@@ -296,6 +296,18 @@ pub fn native_version() -> NativeVersion {
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 
+	// taken from dedicated benchmark (run on reference machine)
+	//
+	// $ cargo bench --features=disable-execution
+	// ...
+	// Block production/full block shuffling without executing extrinsics
+	//                         time:   [17.005 ms 17.010 ms 17.015 ms]
+	// Found 3 outliers among 100 measurements (3.00%)
+	//   2 (2.00%) high mild
+	//   1 (1.00%) high severe
+	//   ...
+	pub const MangataBlockExecutionWeight: Weight = 17 * WEIGHT_PER_MILLIS;
+
 	// This part is copied from Substrate's `bin/node/runtime/src/lib.rs`.
 	//  The `RuntimeBlockLength` and `RuntimeBlockWeights` exist here because the
 	// `DeletionWeightLimit` and `DeletionQueueDepth` depend on those to parameterize
@@ -303,7 +315,7 @@ parameter_types! {
 	pub RuntimeBlockLength: BlockLength =
 		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 	pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
-		.base_block(BlockExecutionWeight::get())
+		.base_block(MangataBlockExecutionWeight::get())
 		.for_class(DispatchClass::all(), |weights| {
 			weights.base_extrinsic = ExtrinsicBaseWeight::get();
 		})

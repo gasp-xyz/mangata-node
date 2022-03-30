@@ -57,7 +57,6 @@ use sp_consensus_aura::sr25519::AuthoritySignature;
 use sp_core::{ByteArray, ShufflingSeed};
 use sp_keystore::SyncCryptoStore;
 use std::convert::TryInto;
-use std::time::Duration;
 
 const MINIMUM_PERIOD_FOR_BLOCKS: u64 = 6000;
 
@@ -322,11 +321,6 @@ fn create_digest(slot: u64) -> sp_runtime::generic::Digest {
 	sp_runtime::generic::Digest { logs: vec![digest_item] }
 }
 
-fn create_account(keystore: &sp_keystore::testing::KeyStore) -> AccountId32 {
-	let pub_key = SyncCryptoStore::sr25519_generate_new(keystore, AURA, None).unwrap();
-	AccountId32::from(pub_key)
-}
-
 fn block_production(criterion: &mut Criterion) {
 	sp_tracing::try_init_simple();
 
@@ -353,68 +347,70 @@ fn block_production(criterion: &mut Criterion) {
 	let first_block = genesis_block.block.clone();
 	let prev_seed = genesis_block.block.header().seed().seed;
 	import_block(c, genesis_block);
-    //
-	// let digests = create_digest(SLOT_NUMBER);
-    //
-	// // we already have access to keystore_container but it uses LocalKeystore that in opposite
-	// // to sp_keystore::testing::KeyStore::new() does not allow for custom keys registration
-	// let keystore = create_keystore();
-	// let authorities = &c
-	// 	.runtime_api()
-	// 	.authorities(&BlockId::Number(c.chain_info().best_number))
-	// 	.unwrap();
-	// let seed = calculate_shuffling_seed(&keystore, &prev_seed, &authorities[SLOT_NUMBER as usize]);
-	// let txs = prepare_benchmark(&client, digests.clone());
-	let mut group = criterion.benchmark_group("Block production");
-    //
-	// {
-	// 	let mut block_builder =
-	// 		client.new_block_at(&BlockId::Number(1), digests.clone(), false).unwrap();
-	// 	block_builder.push(extrinsic_set_time(1 + MINIMUM_PERIOD_FOR_BLOCKS)).unwrap();
-	// 	block_builder.push(extrinsic_set_validation_data().clone()).unwrap();
-	// 	let (block, _, _) = block_builder.build_with_seed(seed.clone()).unwrap().into_inner();
-	// 	group.bench_function("empty block", |b| {
-	// 		b.iter_batched(
-	// 			|| block.clone(),
-	// 			|block| {
-	// 				c.runtime_api().execute_block(&BlockId::Number(1), block.clone()).unwrap();
-	// 			},
-	// 			BatchSize::SmallInput,
-	// 		)
-	// 	});
-	// }
-    //
-	// cfg_if::cfg_if! {
-	// 	if #[cfg(feature = "disable-execution")] {
-	// 		let mut block_builder = client.new_block_at(&BlockId::Number(1), digests, false).unwrap();
-	// 		block_builder.push(extrinsic_set_time(1 + MINIMUM_PERIOD_FOR_BLOCKS)).unwrap();
-	// 		block_builder.push(extrinsic_set_validation_data().clone()).unwrap();
-	// 		block_builder.record_valid_extrinsics_and_revert_changes(|_| txs.clone());
-	// 		let (mut block, _, _) = block_builder.build_with_seed(seed.clone()).unwrap().into_inner();
-	// 		// make all txs executed right away instead of delaying
-	// 		block.header.count = 2;
-	// 		group.bench_function("full block shuffling without executing extrinsics", |b| {
-	// 			b.iter_batched(
-	// 				|| block.clone(),
-	// 				|block| {
-	// 					c.runtime_api().execute_block(&BlockId::Number(1), block.clone()).unwrap();
-	// 				},
-	// 				BatchSize::SmallInput,
-	// 			)
-	// 		});
-	// 	}
-	// }
 
-	;
+	let digests = create_digest(SLOT_NUMBER);
+
+	// we already have access to keystore_container but it uses LocalKeystore that in opposite
+	// to sp_keystore::testing::KeyStore::new() does not allow for custom keys registration
+	let keystore = create_keystore();
+	let authorities = &c
+		.runtime_api()
+		.authorities(&BlockId::Number(c.chain_info().best_number))
+		.unwrap();
+	let seed = calculate_shuffling_seed(&keystore, &prev_seed, &authorities[SLOT_NUMBER as usize]);
+	let txs = prepare_benchmark(&client, digests.clone());
+	let mut group = criterion.benchmark_group("Block production");
+
 	{
-		let txs = (0..10000).map(|nonce|
-		create_extrinsic(
-			&client,
-			Sr25519Keyring::Alice.pair(),
-			SystemCall::remark { remark: vec![] },
-			Some(nonce),
-		).into()).collect::<Vec<OpaqueExtrinsic>>();
-		
+		let mut block_builder =
+			client.new_block_at(&BlockId::Number(1), digests.clone(), false).unwrap();
+		block_builder.push(extrinsic_set_time(1 + MINIMUM_PERIOD_FOR_BLOCKS)).unwrap();
+		block_builder.push(extrinsic_set_validation_data().clone()).unwrap();
+		let (block, _, _) = block_builder.build_with_seed(seed.clone()).unwrap().into_inner();
+		group.bench_function("empty block", |b| {
+			b.iter_batched(
+				|| block.clone(),
+				|block| {
+					c.runtime_api().execute_block(&BlockId::Number(1), block.clone()).unwrap();
+				},
+				BatchSize::SmallInput,
+			)
+		});
+	}
+
+	cfg_if::cfg_if! {
+		if #[cfg(feature = "disable-execution")] {
+			let mut block_builder = client.new_block_at(&BlockId::Number(1), digests, false).unwrap();
+			block_builder.push(extrinsic_set_time(1 + MINIMUM_PERIOD_FOR_BLOCKS)).unwrap();
+			block_builder.push(extrinsic_set_validation_data().clone()).unwrap();
+			block_builder.record_valid_extrinsics_and_revert_changes(|_| txs.clone());
+			let (mut block, _, _) = block_builder.build_with_seed(seed.clone()).unwrap().into_inner();
+			// make all txs executed right away instead of delaying
+			block.header.count = 2;
+			group.bench_function("full block shuffling without executing extrinsics", |b| {
+				b.iter_batched(
+					|| block.clone(),
+					|block| {
+						c.runtime_api().execute_block(&BlockId::Number(1), block.clone()).unwrap();
+					},
+					BatchSize::SmallInput,
+				)
+			});
+		}
+	};
+	{
+		let txs = (0..10000)
+			.map(|nonce| {
+				create_extrinsic(
+					&client,
+					Sr25519Keyring::Alice.pair(),
+					SystemCall::remark { remark: vec![] },
+					Some(nonce),
+				)
+				.into()
+			})
+			.collect::<Vec<OpaqueExtrinsic>>();
+
 		let header = mangata_runtime::Header::new(
 			2,
 			Default::default(),
@@ -424,29 +420,37 @@ fn block_production(criterion: &mut Criterion) {
 		);
 
 		assert_eq!(first_block.header.hash(), c.chain_info().best_hash);
-		let mut api = c.runtime_api();
+		let api = c.runtime_api();
 		let block_id = BlockId::Number(1);
-		api.initialize_block_with_context(&block_id, sp_core::ExecutionContext::BlockConstruction, &header).unwrap();
+		api.initialize_block_with_context(
+			&block_id,
+			sp_core::ExecutionContext::BlockConstruction,
+			&header,
+		)
+		.unwrap();
 
 		let mut cnt = 0;
 		let now = std::time::Instant::now();
 		for tx in txs {
 			if let Ok(Ok(Ok(_))) = api.apply_extrinsic_with_context(
-					&BlockId::Number(1),
-					sp_core::ExecutionContext::BlockConstruction,
-					tx.clone()
-			){
+				&BlockId::Number(1),
+				sp_core::ExecutionContext::BlockConstruction,
+				tx.clone(),
+			) {
 				cnt += 1;
-			}else{
-				break;
+			} else {
+				break
 			}
 		}
 		let elapsed_micros = now.elapsed().as_micros();
-		println!("avarege execution time of {} noop extrinsic : {} microseconds => {}", cnt, elapsed_micros, elapsed_micros/cnt);
-
+		println!(
+			"avarege execution time of {} noop extrinsic : {} microseconds => {}",
+			cnt,
+			elapsed_micros,
+			elapsed_micros / cnt
+		);
 	}
 }
-
 
 criterion_group!(benches, block_production);
 criterion_main!(benches);

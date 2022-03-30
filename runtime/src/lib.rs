@@ -33,7 +33,7 @@ use frame_support::{
 	construct_runtime, match_type, parameter_types,
 	traits::{Contains, Everything, Get, LockIdentifier, Nothing, U128CurrencyToVote},
 	weights::{
-		constants::{ExtrinsicBaseWeight, WEIGHT_PER_MILLIS, WEIGHT_PER_SECOND},
+		constants::{WEIGHT_PER_MICROS, WEIGHT_PER_MILLIS, WEIGHT_PER_SECOND},
 		DispatchClass, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
 		WeightToFeePolynomial,
 	},
@@ -178,7 +178,7 @@ impl WeightToFeePolynomial for WeightToFee {
 		// in Rococo, extrinsic base weight (smallest non-zero weight) is mapped to 1 MILLIUNIT:
 		// in mangata, we map to 1/10 of that, or 1/10 MILLIUNIT
 		let p = base_tx_in_mga();
-		let q = Balance::from(ExtrinsicBaseWeight::get());
+		let q = Balance::from(MangataExtrinsicBaseWeight::get());
 		smallvec![WeightToFeeCoefficient {
 			degree: 1,
 			negative: false,
@@ -193,7 +193,7 @@ pub fn base_tx_in_mga() -> Balance {
 }
 
 pub fn mga_per_second() -> u128 {
-	let base_weight = Balance::from(ExtrinsicBaseWeight::get());
+	let base_weight = Balance::from(MangataExtrinsicBaseWeight::get());
 	let base_per_second = (WEIGHT_PER_SECOND as u128) / base_weight;
 	base_per_second * base_tx_in_mga()
 }
@@ -301,12 +301,27 @@ parameter_types! {
 	// $ cargo bench --features=disable-execution
 	// ...
 	// Block production/full block shuffling without executing extrinsics
-	//                         time:   [17.005 ms 17.010 ms 17.015 ms]
-	// Found 3 outliers among 100 measurements (3.00%)
-	//   2 (2.00%) high mild
-	//   1 (1.00%) high severe
-	//   ...
-	pub const MangataBlockExecutionWeight: Weight = 17 * WEIGHT_PER_MILLIS;
+	//                         time:   [18.963 ms 18.967 ms 18.972 ms]
+	//                         change: [-0.6446% -0.5359% -0.4501%] (p = 0.00 < 0.05)
+	//                         Change within noise threshold.
+	//
+	// ...
+	pub const MangataBlockExecutionWeight: Weight = 19 * WEIGHT_PER_MILLIS;
+
+	// taken from dedicated benchmark (run on reference machine)
+	//
+	// $ cargo bench --features=disable-execution
+	// ...
+	//
+	// Block production/10000 system::remark
+	//                         time:   [739.45 ms 739.58 ms 739.72 ms]
+	//                         change: [-1.9220% -1.8957% -1.8700%] (p = 0.00 < 0.05)
+	//                         Performance has improved.
+	//
+	// ...
+	// 10 000 tx => 740 ms
+	// 1 tx => 0.74 ms => 74 micro seconds
+	pub const MangataExtrinsicBaseWeight: Weight = 74 * WEIGHT_PER_MICROS;
 
 	// This part is copied from Substrate's `bin/node/runtime/src/lib.rs`.
 	//  The `RuntimeBlockLength` and `RuntimeBlockWeights` exist here because the
@@ -317,7 +332,7 @@ parameter_types! {
 	pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
 		.base_block(MangataBlockExecutionWeight::get())
 		.for_class(DispatchClass::all(), |weights| {
-			weights.base_extrinsic = ExtrinsicBaseWeight::get();
+			weights.base_extrinsic = MangataExtrinsicBaseWeight::get();
 		})
 		.for_class(DispatchClass::Normal, |weights| {
 			weights.max_total = Some(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT);

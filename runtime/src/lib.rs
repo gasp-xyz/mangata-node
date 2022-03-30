@@ -312,16 +312,9 @@ parameter_types! {
 	//
 	// $ cargo bench --features=disable-execution
 	// ...
-	//
-	// Block production/10000 system::remark
-	//                         time:   [739.45 ms 739.58 ms 739.72 ms]
-	//                         change: [-1.9220% -1.8957% -1.8700%] (p = 0.00 < 0.05)
-	//                         Performance has improved.
-	//
+	// avarege execution time of 5067 noop extrinsic : 946200 microseconds => 186
 	// ...
-	// 10 000 tx => 740 ms
-	// 1 tx => 0.74 ms => 74 micro seconds
-	pub const MangataExtrinsicBaseWeight: Weight = 74 * WEIGHT_PER_MICROS;
+	pub const MangataExtrinsicBaseWeight: Weight = 186 * WEIGHT_PER_MICROS;
 
 	// This part is copied from Substrate's `bin/node/runtime/src/lib.rs`.
 	//  The `RuntimeBlockLength` and `RuntimeBlockWeights` exist here because the

@@ -321,11 +321,6 @@ fn create_digest(slot: u64) -> sp_runtime::generic::Digest {
 	sp_runtime::generic::Digest { logs: vec![digest_item] }
 }
 
-fn create_account(keystore: &sp_keystore::testing::KeyStore) -> AccountId32 {
-	let pub_key = SyncCryptoStore::sr25519_generate_new(keystore, AURA, None).unwrap();
-	AccountId32::from(pub_key)
-}
-
 fn block_production(criterion: &mut Criterion) {
 	sp_tracing::try_init_simple();
 
@@ -346,12 +341,10 @@ fn block_production(criterion: &mut Criterion) {
 	} = mangata_node::service::new_partial(&config, parachain_build_import_queue).unwrap();
 
 	let c = &*client;
-
-	// Buliding the very first block is around ~30x slower than any subsequent one,
-	// so let's make sure it's built and imported before we benchmark anything.
 	let mut block_builder = client.new_block(Default::default()).unwrap();
 	block_builder.push(extrinsic_set_time(1)).unwrap();
 	let genesis_block = block_builder.build_with_seed(Default::default()).unwrap();
+	let first_block = genesis_block.block.clone();
 	let prev_seed = genesis_block.block.header().seed().seed;
 	import_block(c, genesis_block);
 
@@ -404,6 +397,58 @@ fn block_production(criterion: &mut Criterion) {
 				)
 			});
 		}
+	};
+	{
+		let txs = (0..10000)
+			.map(|nonce| {
+				create_extrinsic(
+					&client,
+					Sr25519Keyring::Alice.pair(),
+					SystemCall::remark { remark: vec![] },
+					Some(nonce),
+				)
+				.into()
+			})
+			.collect::<Vec<OpaqueExtrinsic>>();
+
+		let header = mangata_runtime::Header::new(
+			2,
+			Default::default(),
+			Default::default(),
+			first_block.header.hash(),
+			Default::default(),
+		);
+
+		assert_eq!(first_block.header.hash(), c.chain_info().best_hash);
+		let api = c.runtime_api();
+		let block_id = BlockId::Number(1);
+		api.initialize_block_with_context(
+			&block_id,
+			sp_core::ExecutionContext::BlockConstruction,
+			&header,
+		)
+		.unwrap();
+
+		let mut cnt = 0;
+		let now = std::time::Instant::now();
+		for tx in txs {
+			if let Ok(Ok(Ok(_))) = api.apply_extrinsic_with_context(
+				&BlockId::Number(1),
+				sp_core::ExecutionContext::BlockConstruction,
+				tx.clone(),
+			) {
+				cnt += 1;
+			} else {
+				break
+			}
+		}
+		let elapsed_micros = now.elapsed().as_micros();
+		println!(
+			"avarege execution time of {} noop extrinsic : {} microseconds => {}",
+			cnt,
+			elapsed_micros,
+			elapsed_micros / cnt
+		);
 	}
 }
 

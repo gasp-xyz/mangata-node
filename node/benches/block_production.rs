@@ -405,6 +405,33 @@ fn block_production(criterion: &mut Criterion) {
 			});
 		}
 	}
+
+	;
+	{
+		let txs = (1..10000).map(|nonce|
+		create_extrinsic(
+			&client,
+			Sr25519Keyring::Alice.pair(),
+			SystemCall::remark { remark: vec![] },
+			Some(nonce),
+		).into()).collect::<Vec<OpaqueExtrinsic>>();
+
+		group.bench_function("10000 system::remark", |b| {
+			b.iter_batched(
+				|| txs.clone(),
+				|txs| {
+					for t in txs{
+					c.runtime_api().apply_extrinsic_with_context(
+						&BlockId::Number(1),
+						sp_core::ExecutionContext::BlockConstruction,
+						t.clone(),
+						).unwrap();
+					}
+				},
+				BatchSize::SmallInput,
+			)
+		});
+	}
 }
 
 criterion_group!(benches, block_production);

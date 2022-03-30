@@ -301,12 +301,11 @@ parameter_types! {
 	// $ cargo bench --features=disable-execution
 	// ...
 	// Block production/full block shuffling without executing extrinsics
-	//                         time:   [18.963 ms 18.967 ms 18.972 ms]
-	//                         change: [-0.6446% -0.5359% -0.4501%] (p = 0.00 < 0.05)
-	//                         Change within noise threshold.
+	//                         time:   [12.025 ms 12.029 ms 12.032 ms]
+	//                         change: [-59.043% -59.005% -58.974%] (p = 0.00 < 0.05)
 	//
 	// ...
-	pub const MangataBlockExecutionWeight: Weight = 19 * WEIGHT_PER_MILLIS;
+	pub const MangataBlockExecutionWeight: Weight = 12 * WEIGHT_PER_MILLIS;
 
 	// taken from dedicated benchmark (run on reference machine)
 	//

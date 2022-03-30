@@ -612,14 +612,6 @@ impl<T: Config> Pallet<T> {
 			T::BuyAndBurnFeePercentage::get()
 	}
 
-	pub fn get_liquidity_mining_split() -> sp_runtime::Perbill {
-		<T as Config>::LiquidityMiningSplit::get_liquidity_mining_split()
-	}
-
-	pub fn get_linear_issuance_blocks() -> u32 {
-		<T as Config>::LinearIssuanceBlocks::get_linear_issuance_blocks()
-	}
-
 	pub fn get_liquidity_minting_user(
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
@@ -651,8 +643,7 @@ impl<T: Config> Pallet<T> {
 					liquidity_assets_amount.into(),
 				)?;
 
-				LiquidityMiningUser::<T>::try_get((&user, &liquidity_asset_id))
-					.unwrap_or_else(|_| (0, U256::from(0), U256::from(0)));
+				LiquidityMiningUser::<T>::get((&user, &liquidity_asset_id));
 
 				Ok((current_time, user_work_total, user_missing_at_checkpoint))
 			},
@@ -673,8 +664,7 @@ impl<T: Config> Pallet<T> {
 		let work_pool = Self::calculate_work_pool(liquidity_asset_id, current_time)?;
 
 		let burned_not_claimed_rewards =
-			LiquidityMiningUserToBeClaimed::<T>::try_get((user, &liquidity_asset_id))
-				.unwrap_or_else(|_| 0 as u128);
+			LiquidityMiningUserToBeClaimed::<T>::get((user, &liquidity_asset_id));
 
 		let current_rewards = Self::calculate_rewards(work_user, work_pool, liquidity_asset_id)?;
 
@@ -827,8 +817,7 @@ impl<T: Config> Pallet<T> {
 			pool_last_checkpoint,
 			_pool_cummulative_work_in_last_checkpoint,
 			pool_missing_at_last_checkpoint,
-		) = LiquidityMiningPool::<T>::try_get(&liquidity_asset_id)
-			.unwrap_or_else(|_| (0, U256::from(0), U256::from(0)));
+		) = LiquidityMiningPool::<T>::get(&liquidity_asset_id);
 		let pool_time_passed = current_time
 			.checked_sub(pool_last_checkpoint)
 			.ok_or_else(|| DispatchError::from(Error::<T>::PastTimeCalculation))?;

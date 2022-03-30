@@ -42,12 +42,12 @@ pub struct RpcRewardsResult<Balance> {
 	#[cfg_attr(feature = "std", serde(serialize_with = "serialize_as_string"))]
 	#[cfg_attr(feature = "std", serde(bound(deserialize = "Balance: std::str::FromStr")))]
 	#[cfg_attr(feature = "std", serde(deserialize_with = "deserialize_from_string"))]
-	pub total_rewards: Balance,
+	pub not_yet_claimed: Balance,
 	#[cfg_attr(feature = "std", serde(bound(serialize = "Balance: std::fmt::Display")))]
 	#[cfg_attr(feature = "std", serde(serialize_with = "serialize_as_string"))]
 	#[cfg_attr(feature = "std", serde(bound(deserialize = "Balance: std::str::FromStr")))]
 	#[cfg_attr(feature = "std", serde(deserialize_with = "deserialize_from_string"))]
-	pub already_claimed: i128,
+	pub to_be_claimed: Balance,
 }
 
 #[cfg(feature = "std")]

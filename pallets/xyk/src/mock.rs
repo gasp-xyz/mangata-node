@@ -12,7 +12,7 @@ use sp_runtime::{
 use crate as xyk;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{Contains, Everything},
+	traits::{ConstU128, ConstU32, Contains, Everything},
 	PalletId,
 };
 use frame_system as system;
@@ -20,6 +20,8 @@ use mangata_primitives::{Amount, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
 use orml_traits::parameter_type_with_key;
 use pallet_assets_info as assets_info;
+use pallet_issuance::PoolPromoteApi;
+use std::{collections::HashMap, sync::Mutex};
 
 pub const NATIVE_CURRENCY_ID: u32 = 0;
 
@@ -40,6 +42,54 @@ construct_runtime!(
 		XykStorage: xyk::{Pallet, Call, Storage, Event<T>, Config<T>},
 	}
 );
+
+lazy_static::lazy_static! {
+	static ref PROMOTED_POOLS: Mutex<HashMap<TokenId, Balance>> = {
+		let m = HashMap::new();
+		Mutex::new(m)
+	};
+}
+
+pub struct MockPromotedPoolApi;
+
+impl MockPromotedPoolApi {
+	pub fn instance() -> &'static Mutex<HashMap<TokenId, Balance>> {
+		&PROMOTED_POOLS
+	}
+}
+
+impl PoolPromoteApi for MockPromotedPoolApi {
+	fn promote_pool(liquidity_token_id: TokenId) -> bool {
+		let mut pools = PROMOTED_POOLS.lock().unwrap();
+		if pools.contains_key(&liquidity_token_id) {
+			false
+		} else {
+			pools.insert(liquidity_token_id, 0);
+			true
+		}
+	}
+
+	fn get_pool_rewards(liquidity_token_id: TokenId) -> Option<Balance> {
+		let mut pools = PROMOTED_POOLS.lock().unwrap();
+
+		pools.get(&liquidity_token_id).map(|x| *x)
+	}
+
+	fn claim_pool_rewards(liquidity_token_id: TokenId, claimed_amount: Balance) -> bool {
+		let mut pools = PROMOTED_POOLS.lock().unwrap();
+
+		if let Some(reward) = pools.get_mut(&liquidity_token_id) {
+			*reward = *reward - claimed_amount;
+			true
+		} else {
+			false
+		}
+	}
+
+	fn len() -> usize {
+		PROMOTED_POOLS.lock().unwrap().len()
+	}
+}
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
@@ -68,7 +118,7 @@ impl system::Config for Test {
 	type BlockLength = ();
 	type SS58Prefix = ();
 	type OnSetCode = ();
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type MaxConsumers = ConstU32<16>;
 }
 
 parameter_type_with_key! {
@@ -131,12 +181,43 @@ parameter_types! {
 	pub const BnbTreasurySubAccDerive: [u8; 4] = *b"bnbt";
 }
 
+pub struct FakeLiquidityMiningSplit;
+
+impl GetLiquidityMiningSplit for FakeLiquidityMiningSplit {
+	fn get_liquidity_mining_split() -> sp_runtime::Perbill {
+		//TODO you can inject some value for testing here
+		sp_runtime::Perbill::from_percent(50)
+	}
+}
+
+pub struct FakeLinearIssuanceBlocks;
+
+impl GetLinearIssuanceBlocks for FakeLinearIssuanceBlocks {
+	fn get_linear_issuance_blocks() -> u32 {
+		//TODO you can inject some value for testing here
+		13_140_000
+	}
+}
+
+parameter_types! {
+	pub const LiquidityMiningIssuanceVaultId: PalletId = PalletId(*b"py/lqmiv");
+	pub FakeLiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account();
+}
+
 impl Config for Test {
 	type Event = Event;
 	type Currency = MultiTokenCurrencyAdapter<Test>;
 	type NativeCurrencyId = NativeCurrencyId;
 	type TreasuryPalletId = TreasuryPalletId;
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
+	type LiquidityMiningSplit = FakeLiquidityMiningSplit;
+	type LinearIssuanceBlocks = FakeLinearIssuanceBlocks;
+	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
+	type PoolPromoteApi = MockPromotedPoolApi;
+	type PoolFeePercentage = ConstU128<20>;
+	type TreasuryFeePercentage = ConstU128<5>;
+	type BuyAndBurnFeePercentage = ConstU128<5>;
+	type RewardsDistributionPeriod = ConstU32<10000>;
 }
 
 impl<T: Config> Pallet<T> {

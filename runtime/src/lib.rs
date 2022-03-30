@@ -74,7 +74,7 @@ use xcm_executor::{traits::DropAssets, Assets, XcmExecutor};
 use codec::{Decode, Encode};
 use static_assertions::const_assert;
 
-pub use pallet_issuance::IssuanceInfo;
+pub use pallet_issuance::{IssuanceInfo, PoolPromoteApi};
 
 pub use mangata_primitives::{Amount, Balance, TokenId};
 
@@ -474,12 +474,35 @@ impl orml_tokens::Config for Runtime {
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 }
 
+pub struct ProvideLiquidityMiningSplit;
+
+impl pallet_xyk::GetLiquidityMiningSplit for ProvideLiquidityMiningSplit {
+	fn get_liquidity_mining_split() -> Perbill {
+		Issuance::get_issuance_config().liquidity_mining_split
+	}
+}
+pub struct ProvideLinearIssuanceBlocks;
+
+impl pallet_xyk::GetLinearIssuanceBlocks for ProvideLinearIssuanceBlocks {
+	fn get_linear_issuance_blocks() -> u32 {
+		Issuance::get_issuance_config().linear_issuance_blocks
+	}
+}
+
 impl pallet_xyk::Config for Runtime {
 	type Event = Event;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type NativeCurrencyId = MgaTokenId;
 	type TreasuryPalletId = TreasuryPalletId;
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
+	type LiquidityMiningSplit = ProvideLiquidityMiningSplit;
+	type LinearIssuanceBlocks = ProvideLinearIssuanceBlocks;
+	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
+	type PoolPromoteApi = Issuance;
+	type PoolFeePercentage = frame_support::traits::ConstU128<20>;
+	type TreasuryFeePercentage = frame_support::traits::ConstU128<5>;
+	type BuyAndBurnFeePercentage = frame_support::traits::ConstU128<5>;
+	type RewardsDistributionPeriod = frame_support::traits::ConstU32<10000>;
 }
 
 type ORMLCurrencyAdapterNegativeImbalance = <orml_tokens::CurrencyAdapter::<Runtime, MgaTokenId> as PalletCurrency<AccountId>>::NegativeImbalance;
@@ -1280,14 +1303,14 @@ impl_runtime_apis! {
 			liquidity_asset_id: TokenId,
 			block_number: u32,
 		) -> RpcRewardsResult<Balance> {
-			match Xyk::calculate_rewards_amount(user, liquidity_asset_id, block_number){
-				Ok((total_rewards, already_claimed)) => RpcRewardsResult{
-																	total_rewards,
-																	already_claimed
+			match Xyk::calculate_rewards_amount(user, liquidity_asset_id){
+				Ok((not_yet_claimed, to_be_claimed)) => RpcRewardsResult{
+					not_yet_claimed,
+																	to_be_claimed
 																},
 				Err(_) => RpcRewardsResult{
-					total_rewards: 0u32.into(),
-					already_claimed: 0u32.into()
+					not_yet_claimed: 0u32.into(),
+					to_be_claimed: 0u32.into()
 				},
 			}
 		}

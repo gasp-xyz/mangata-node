@@ -1272,7 +1272,8 @@ impl_runtime_apis! {
 
 		fn execute_block(block: Block) {
 			let key = cumulus_pallet_aura_ext::get_block_signer_pub_key::<Runtime,Block>(&block);
-			Executive::execute_block_ver_impl(block, key)
+			let precedes_new_session = <ParachainStaking as ShouldEndSession<_>>::should_end_session(block.header.number + 1);
+			Executive::execute_block_ver_impl(block, key, precedes_new_session);
 		}
 
 		fn initialize_block(header: &<Block as BlockT>::Header) {
@@ -1468,7 +1469,7 @@ mod parachain_validate_block {
             cumulus_pallet_parachain_system::validate_block::implementation::validate_block::<<Runtime
                                                                                               as
                                                                                               cumulus_pallet_parachain_system::validate_block::GetRuntimeBlockType>::RuntimeBlock,
-                                                                                              cumulus_pallet_aura_ext::BlockExecutorVer<Runtime, Executive>,
+                                                                                              cumulus_pallet_aura_ext::BlockExecutorVer<Runtime, Executive, ParachainStaking>,
                                                                                               Runtime,
                                                                                               CheckInherents>(params);
 		cumulus_pallet_parachain_system::validate_block::polkadot_parachain::write_result(&res)

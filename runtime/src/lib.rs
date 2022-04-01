@@ -828,7 +828,7 @@ impl pallet_elections_phragmen::Config for Runtime {
 
 parameter_types! {
 	/// Default BlocksPerRound is every 4 hours (1200 * 12 second block times)
-	pub const BlocksPerRound: u32 = 4 * HOURS;
+	pub const BlocksPerRound: u32 = 1 * MINUTES;
 	/// Collator candidate exit delay (number of rounds)
 	pub const LeaveCandidatesDelay: u32 = 2;
 	/// Collator candidate bond increases/decreases delay (number of rounds)

@@ -77,7 +77,6 @@ pub trait XykApi<
 		&self,
 		user: AccountId,
 		liquidity_asset_id: TokenId,
-		block_number: u32,
 		at: Option<BlockHash>,
 	) -> Result<ResponseTypeRewards>;
 }
@@ -256,7 +255,6 @@ where
 		&self,
 		user: AccountId,
 		liquidity_asset_id: TokenId,
-		block_number: u32,
 		at: Option<<Block as BlockT>::Hash>,
 	) -> Result<RpcRewardsResult<Balance>> {
 		let api = self.client.runtime_api();
@@ -264,8 +262,7 @@ where
             // If the block hash is not supplied assume the best block.
             self.client.info().best_hash));
 
-		let runtime_api_result =
-			api.calculate_rewards_amount(&at, user, liquidity_asset_id, block_number);
+		let runtime_api_result = api.calculate_rewards_amount(&at, user, liquidity_asset_id);
 		runtime_api_result.map_err(|e| RpcError {
 			code: ErrorCode::ServerError(1),
 			message: "Unable to serve the request".into(),

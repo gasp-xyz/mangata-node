@@ -1301,7 +1301,6 @@ impl_runtime_apis! {
 		fn calculate_rewards_amount(
 			user: AccountId,
 			liquidity_asset_id: TokenId,
-			block_number: u32,
 		) -> RpcRewardsResult<Balance> {
 			match Xyk::calculate_rewards_amount(user, liquidity_asset_id){
 				Ok((not_yet_claimed, to_be_claimed)) => RpcRewardsResult{

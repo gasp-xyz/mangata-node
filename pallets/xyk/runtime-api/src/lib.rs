@@ -99,7 +99,6 @@ sp_api::decl_runtime_apis! {
 		fn calculate_rewards_amount(
 			user: AccountId,
 			liquidity_asset_id: TokenId,
-			block_number: u32
 		) -> RpcRewardsResult<Balance>;
 	}
 }

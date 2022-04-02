@@ -599,9 +599,7 @@ pub mod pallet {
 		pub fn promote_pool(origin: OriginFor<T>, liquidity_token_id: TokenId) -> DispatchResult {
 			ensure_root(origin)?;
 
-			<Self as XykFunctionsTrait<T::AccountId>>::promote_pool(liquidity_token_id)?;
-
-			Ok(().into())
+			<Self as XykFunctionsTrait<T::AccountId>>::promote_pool(liquidity_token_id)
 		}
 	}
 }

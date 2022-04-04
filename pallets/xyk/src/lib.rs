@@ -410,7 +410,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn pool_promotion_start)]
-	pub type PoolPromotionStart<T: Config> = StorageMap<_, Blake2_256, TokenId, u32, ValueQuery>;
+	pub type PoolPromotionStart<T: Config> = StorageMap<_, Twox64Concat, TokenId, u32, ValueQuery>;
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub created_pools_for_staking:
@@ -599,9 +599,7 @@ pub mod pallet {
 		pub fn promote_pool(origin: OriginFor<T>, liquidity_token_id: TokenId) -> DispatchResult {
 			ensure_root(origin)?;
 
-			<Self as XykFunctionsTrait<T::AccountId>>::promote_pool(liquidity_token_id)?;
-
-			Ok(().into())
+			<Self as XykFunctionsTrait<T::AccountId>>::promote_pool(liquidity_token_id)
 		}
 	}
 }

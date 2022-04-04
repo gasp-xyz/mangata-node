@@ -2310,7 +2310,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			<T as Config>::Currency::total_issuance(liquidity_token_id.into()).into();
 
 		<T as Config>::PoolPromoteApi::promote_pool(liquidity_token_id);
-		
+
 		LiquidityMiningPool::<T>::insert(
 			&liquidity_token_id,
 			(current_time, U256::from(0), U256::from(liquidity_assets_amount)),

@@ -253,7 +253,7 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 					),
 				],
 				vec![(DOT_TOKEN_ID, None)],
-				2000.into(),
+				2110.into(),
 			)
 		},
 		Vec::new(),
@@ -266,7 +266,7 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 		Some(properties),
 		Extensions {
 			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
-			para_id: 2109,
+			para_id: 2110,
 		},
 	)
 }

@@ -1,10 +1,10 @@
-version: "0.1"
+version: "3.7"
 networks:
-    test_net:
-      ipam:
-        driver: default
-        config:
-          - subnet: 10.0.0.0/24
+  test_net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.0.0.0/24
 
 services:
   relay_alice:
@@ -28,32 +28,34 @@ services:
     ports:
       - 9944:9944
       - 9933:9933
-
     networks:
-        test_net:
-          ipv4_address: 10.0.0.2
+      test_net:
+        ipv4_address: 10.0.0.2
 
   relay_bob:
     image: p1k1m4n/polkadot-fast-runtime:0.9.18
     environment:
       - ${RUST_LOG:-info}
     command:
-      - "--bob" 
-      - "--validator" 
-      - "--base-path=/tmp/relay_bob" 
-      - "--port=30333" 
-      - "--ws-port=9944" 
-      - "--chain=/etc/mangata/ksm_local_9.18.json" 
-      - "--bootnodes=/dns/relay_alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp" 
-      - "--unsafe-ws-external" 
-      - "--unsafe-rpc-external" 
+      - "--bob"
+      - "--validator"
+      - "--base-path=/tmp/relay_bob"
+      - "--port=30333"
+      - "--ws-port=9944"
+      - "--chain=/etc/mangata/ksm_local_9.18.json"
+      - "--bootnodes=/dns/relay_alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp"
+      - "--unsafe-ws-external"
+      - "--unsafe-rpc-external"
       - "--rpc-cors=all"
       - "--node-key=0000000000000000000000000000000000000000000000000000000000000002"
     volumes:
       - ./config:/etc/mangata
+    ports:
+      - 9999:9944
+      - 9911:9933
     networks:
-        test_net:
-          ipv4_address: 10.0.0.3
+      test_net:
+        ipv4_address: 10.0.0.3
 
   register:
     image: p1k1m4n/registrator-ksm:0.3
@@ -66,8 +68,8 @@ services:
     volumes:
       - ./config:/config
     networks:
-        test_net:
-          ipv4_address: 10.0.0.4
+      test_net:
+        ipv4_address: 10.0.0.4
 
   para_alice:
     image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangata-node:0.11.0}
@@ -94,12 +96,15 @@ services:
       --execution=wasm
       --chain=/etc/mangata/ksm_local_9.18.json
       --bootnodes=/dns/relay_alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
-      " 
+      "
     volumes:
       - ./config:/etc/mangata
+    ports:
+      - 9955:9944
+      - 9966:9933
     networks:
-        test_net:
-          ipv4_address: 10.0.0.5
+      test_net:
+        ipv4_address: 10.0.0.5
 
   para_bob:
     image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangatasolutions/mangata-node:0.11.0}
@@ -124,12 +129,15 @@ services:
       # relay
       - "--execution=wasm"
       - "--chain=/etc/mangata/ksm_local_9.18.json"
-      - "--bootnodes=/dns/relay_alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp" 
+      - "--bootnodes=/dns/relay_alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp"
     volumes:
       - ./config:/etc/mangata
+    ports:
+      - 9977:9944
+      - 9988:9933
     networks:
-        test_net:
-          ipv4_address: 10.0.0.6
+      test_net:
+        ipv4_address: 10.0.0.6
     cap_add:
       - SYS_ADMIN
 
@@ -140,5 +148,5 @@ services:
     ports:
       - 3000:3000
     networks:
-        test_net:
-          ipv4_address: 10.0.0.10
+      test_net:
+        ipv4_address: 10.0.0.10

@@ -346,6 +346,16 @@ parameter_types! {
 	pub const MgaTokenId: TokenId = MGA_TOKEN_ID;
 }
 
+pub struct MangataCallFilter;
+impl Contains<Call> for MangataCallFilter {
+	fn contains(call: &Call) -> bool {
+		match call {
+			Call::Xyk(_) => false,
+			_ => true,
+		}
+	}
+}
+
 // Configure FRAME pallets to include in runtime.
 
 impl frame_system::Config for Runtime {
@@ -384,7 +394,7 @@ impl frame_system::Config for Runtime {
 	/// The weight of database operations that the runtime can invoke.
 	type DbWeight = RocksDbWeight;
 	/// The basic call filter to use in dispatchable.
-	type BaseCallFilter = Everything;
+	type BaseCallFilter = MangataCallFilter;
 	/// Weight information for the extrinsics of this pallet.
 	type SystemWeightInfo = weights::frame_system_weights::ModuleWeight<Runtime>;
 	/// Block & extrinsics weights: base values and limits.

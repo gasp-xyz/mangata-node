@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "module",
   "dependencies": {
-    "@polkadot/api": "^6.5.3",
+    "@polkadot/api": "^7.15.1",
     "axios": "^0.24.0",
     "eciesjs": "^0.3.12"
   }

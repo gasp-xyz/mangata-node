@@ -45,7 +45,7 @@ Find manual setup instructions at the
 
 ### Local target
 
-Recommended rustc version for the build is `nightly-2020-10-01`
+Recommended rustc version for the build is `nightly-2021-10-19`
 
 Environment variables for ethereum apps should be set up before the build:
 ```bash
@@ -54,6 +54,7 @@ ERC20_APP_ID=0x00e392c04743359e39f00cd268a5390d27ef6b44
 ```
 build node:
 ```bash
+rustup target add wasm32-unknown-unknown
 cargo build --release
 ```
 
@@ -85,6 +86,14 @@ Start a dev chain:
 cd ./devops
 docker-compose up
 ```
+
+### Two-Nodes Multi-Validator Dockerized Testnet
+
+```bash
+sh scripts/build-multi-validator-mangata-node-docker-image.sh
+docker-compose  -f devops/multi-validator-docker-compose.yml up
+```
+
 ## Debug Single Node
 
 ### VS code
@@ -104,3 +113,4 @@ RUSTFLAGS="-g" cargo run -j12 --release -- --tmp --dev
 Go to VS code and attach the process!
 
 
+# Mangata Substrate Cumulus Parachain

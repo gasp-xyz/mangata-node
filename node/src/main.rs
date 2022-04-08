@@ -1,4 +1,5 @@
-//! Substrate Node Template CLI library.
+//! Substrate Parachain Mangata Node CLI
+
 #![warn(missing_docs)]
 
 mod chain_spec;
@@ -9,5 +10,5 @@ mod command;
 mod rpc;
 
 fn main() -> sc_cli::Result<()> {
-    command::run()
+	command::run()
 }

@@ -19,8 +19,8 @@ index dcd3d5155..22ebf6358 100644
 -	pub const DesiredMembers: u32 = 9;
 -	pub const DesiredRunnersUp: u32 = 7;
 +	pub const TermDuration: BlockNumber = 5 * MINUTES;
-+	pub const DesiredMembers: u32 = 2;
-+	pub const DesiredRunnersUp: u32 = 3;
++	pub const DesiredMembers: u32 = 9;
++	pub const DesiredRunnersUp: u32 = 7;
  	pub const ElectionsPhragmenPalletId: LockIdentifier = *b"phrelect";
  }
  

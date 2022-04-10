@@ -106,11 +106,21 @@ impl PoolCreateApi for PoolCreateApiStub {
     }
 }
 
+mockall::mock!{
+    pub PoolCreateApiMock {}
+
+	impl PoolCreateApi for PoolCreateApiMock {
+		fn pool_exists(first: TokenId, second: TokenId) -> bool;
+		fn create_pool(first: TokenId, second: TokenId);
+	}
+}
+
+
 impl pallet_ido::Config for Test {
 	type Event = Event;
 	type MGATokenId = MGAId;
 	type KSMTokenId = KSMId;
-	type PoolCreateApi = PoolCreateApiStub;
+	type PoolCreateApi = MockPoolCreateApiMock;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 }
 

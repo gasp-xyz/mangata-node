@@ -1,6 +1,7 @@
 use super::*;
 use mock::*;
 
+use serial_test::serial;
 use frame_support::assert_err;
 use sp_runtime::traits::BadOrigin;
 
@@ -8,7 +9,8 @@ const USER_ID: u128 = 0;
 const INITIAL_AMOUNT: u128 = 1_000_000;
 const DUMMY_ID: u32 = 2;
 
-fn set_up(){
+
+fn set_up() {
 	let mga_id = Ido::create_new_token(&USER_ID, INITIAL_AMOUNT);
 	let ksm_id = Ido::create_new_token(&USER_ID, INITIAL_AMOUNT);
 	let dummy_id = Ido::create_new_token(&USER_ID, INITIAL_AMOUNT);
@@ -17,9 +19,12 @@ fn set_up(){
 	assert_eq!(dummy_id, DUMMY_ID);
 	assert_eq!(INITIAL_AMOUNT, Ido::balance( KSMId::get(), USER_ID));
 	assert_eq!(INITIAL_AMOUNT, Ido::balance( MGAId::get(), USER_ID));
+
 }
 
 fn jump_to_whitelist_phase() {
+	let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+	pool_exists_mock.expect().return_const(false);
 	Ido::start_ido(
 		Origin::root(),
 		10_u32.into(),
@@ -33,6 +38,9 @@ fn jump_to_whitelist_phase() {
 }
 
 fn jump_to_public_phase() {
+	let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+	pool_exists_mock.expect().return_const(false);
+
 	Ido::start_ido(
 		Origin::root(),
 		10_u32.into(),
@@ -46,6 +54,7 @@ fn jump_to_public_phase() {
 }
 
 #[test]
+#[serial]
 fn do_not_allow_for_donation_in_unsupported_currency() {
 	new_test_ext().execute_with(|| {
 		set_up();
@@ -56,11 +65,12 @@ fn do_not_allow_for_donation_in_unsupported_currency() {
 	});
 }
 
+
 #[test]
+#[serial]
 fn test_first_donation_with_ksm_fails() {
 	new_test_ext().execute_with(|| {
 		set_up();
-
 		jump_to_public_phase();
 
 		assert_err!(
@@ -72,6 +82,7 @@ fn test_first_donation_with_ksm_fails() {
 }
 
 #[test]
+#[serial]
 fn test_dont_allow_for_ksm_donation_before_minimal_valuation_fro_mga_is_provided() {
 	new_test_ext().execute_with(|| {
 		set_up();
@@ -105,10 +116,10 @@ fn test_dont_allow_for_ksm_donation_before_minimal_valuation_fro_mga_is_provided
 }
 
 #[test]
+#[serial]
 fn test_donation_in_supported_tokens() {
 	new_test_ext().execute_with(|| {
 		set_up();
-
 		jump_to_public_phase();
 
 		Ido::donate(Origin::signed(USER_ID), MGAId::get(), 10000).unwrap();
@@ -127,6 +138,7 @@ fn test_donation_in_supported_tokens() {
 }
 
 #[test]
+#[serial]
 fn test_donation_with_more_tokens_than_available() {
 	new_test_ext().execute_with(|| {
 		set_up();
@@ -146,6 +158,7 @@ fn test_donation_with_more_tokens_than_available() {
 }
 
 #[test]
+#[serial]
 fn test_prevent_donations_in_before_start_phase() {
 	new_test_ext().execute_with(|| {
 		set_up();
@@ -161,6 +174,7 @@ fn test_prevent_donations_in_before_start_phase() {
 
 
 #[test]
+#[serial]
 fn test_prevent_donations_in_finished_phase() {
 	new_test_ext().execute_with(|| {
 		set_up();
@@ -173,6 +187,7 @@ fn test_prevent_donations_in_finished_phase() {
 }
 
 #[test]
+#[serial]
 fn test_whitliested_donation() {
 	new_test_ext().execute_with(|| {
 		set_up();
@@ -185,6 +200,7 @@ fn test_whitliested_donation() {
 }
 
 #[test]
+#[serial]
 fn test_non_root_user_can_not_start_ido() {
 	new_test_ext().execute_with(|| {
 		set_up();
@@ -203,6 +219,7 @@ fn test_non_root_user_can_not_start_ido() {
 }
 
 #[test]
+#[serial]
 fn test_non_root_user_can_not_whitelist_accounts() {
 	new_test_ext().execute_with(|| {
 		set_up();
@@ -217,6 +234,7 @@ fn test_non_root_user_can_not_whitelist_accounts() {
 }
 
 #[test]
+#[serial]
 fn test_only_root_can_whitelist_accounts() {
 	new_test_ext().execute_with(|| {
 		set_up();
@@ -228,6 +246,7 @@ fn test_only_root_can_whitelist_accounts() {
 }
 
 #[test]
+#[serial]
 fn test_ido_start_cannot_happen_in_the_past() {
 	new_test_ext().execute_with(|| {
 		set_up();
@@ -248,6 +267,7 @@ fn test_ido_start_cannot_happen_in_the_past() {
 }
 
 #[test]
+#[serial]
 fn test_cannot_start_ido_with_whitelist_phase_length_equal_zero() {
 	new_test_ext().execute_with(|| {
 		set_up();
@@ -266,6 +286,7 @@ fn test_cannot_start_ido_with_whitelist_phase_length_equal_zero() {
 }
 
 #[test]
+#[serial]
 fn test_cannot_start_ido_with_public_phase_length_equal_zero() {
 	new_test_ext().execute_with(|| {
 		set_up();
@@ -284,9 +305,13 @@ fn test_cannot_start_ido_with_public_phase_length_equal_zero() {
 }
 
 #[test]
+#[serial]
 fn test_bootstrap_can_be_modified_only_before_its_started() {
 	new_test_ext().execute_with(|| {
 		set_up();
+
+		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
 
 		Ido::start_ido(
 			Origin::root(),
@@ -314,6 +339,7 @@ fn test_bootstrap_can_be_modified_only_before_its_started() {
 }
 
 #[test]
+#[serial]
 fn test_bootstrap_state_transitions() {
 	new_test_ext().execute_with(|| {
 		set_up();
@@ -321,6 +347,9 @@ fn test_bootstrap_state_transitions() {
 		const BOOTSTRAP_WHITELIST_START: u64 = 100;
 		const BOOTSTRAP_PUBLIC_START: u64 = 110;
 		const BOOTSTRAP_FINISH: u64 = 130;
+
+		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
 
 		Ido::start_ido(
 			Origin::root(),
@@ -359,6 +388,7 @@ fn test_bootstrap_state_transitions() {
 }
 
 #[test]
+#[serial]
 fn test_bootstrap_state_transitions_when_on_initialized_is_not_called() {
 	new_test_ext().execute_with(|| {
 		set_up();
@@ -366,6 +396,8 @@ fn test_bootstrap_state_transitions_when_on_initialized_is_not_called() {
 		const BOOTSTRAP_WHITELIST_START: u64 = 100;
 		const BOOTSTRAP_PUBLIC_START: u64 = 110;
 		const BOOTSTRAP_FINISH: u64 = 130;
+		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
 
 		Ido::start_ido(
 			Origin::root(),
@@ -383,6 +415,7 @@ fn test_bootstrap_state_transitions_when_on_initialized_is_not_called() {
 }
 
 #[test]
+#[serial]
 fn test_bootstrap_schedule_overflow() {
 	new_test_ext().execute_with(|| {
 		set_up();

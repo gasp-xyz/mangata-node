@@ -65,6 +65,8 @@ impl frame_system::Config for Test {
 parameter_types!(
 	pub const MGAId: TokenId = 0;
 	pub const KSMId: TokenId = 1;
+	pub const KsmToMgaNominator: u128 = 1;
+	pub const KsmToMgaDenominator: u128 = 10_000;
 	pub const MaxLocks: u32 = 50;
 );
 
@@ -110,6 +112,8 @@ impl pallet_ido::Config for Test {
 	type KSMTokenId = KSMId;
 	type PoolCreateApi = MockPoolCreateApiMock;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
+	type KsmToMgaRatioNominator = KsmToMgaNominator;
+	type KsmToMgaRatioDenominator = KsmToMgaDenominator;
 }
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;

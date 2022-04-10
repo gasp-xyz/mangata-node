@@ -58,7 +58,7 @@ pub mod pallet {
 			if phase == IDOPhase::Finished {
 				return 0;
 			}
-			if let Some((start, whitelist_length, public_length, ..)) = BootstrapSchedule::<T>::get() {
+			if let Some((start, whitelist_length, public_length)) = BootstrapSchedule::<T>::get() {
 
 				/// arythmetics protected by invariant check in Bootstrap::start_ido
 				let whitelist_start = start;
@@ -95,6 +95,12 @@ pub mod pallet {
 
 		#[pallet::constant]
 		type KSMTokenId: Get<TokenId>;
+
+		#[pallet::constant]
+		type KsmToMgaRatioNominator: Get<u128>;
+
+		#[pallet::constant]
+		type KsmToMgaRatioDenominator: Get<u128>;
 	}
 
 
@@ -118,7 +124,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn config)]
-	pub type BootstrapSchedule<T: Config> = StorageValue<_, (T::BlockNumber, u32 ,u32, u128, u128), OptionQuery>;
+	pub type BootstrapSchedule<T: Config> = StorageValue<_, (T::BlockNumber, u32 ,u32), OptionQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {
@@ -158,9 +164,8 @@ pub mod pallet {
 				Error::<T>::UnsupportedTokenId
 			);
 
-			let (_, _, _, ratio_nominator, ratio_denominator) = BootstrapSchedule::<T>::get().ok_or(
-				Error::<T>::UnauthorizedForDonation
-			)?;
+			let ratio_nominator = T::KsmToMgaRatioNominator::get(); 
+			let ratio_denominator = T::KsmToMgaRatioDenominator::get();
 
 			ensure!(
 				Phase::<T>::get() == IDOPhase::Public || 
@@ -241,8 +246,6 @@ pub mod pallet {
 			ido_start: T::BlockNumber,
 			whitelist_phase_length: u32,
 			public_phase_lenght: u32,
-			ratio_nominator: u128,
-			ratio_denominator: u128,
 		) -> DispatchResult {
 			let sender = ensure_root(origin)?;
 
@@ -287,7 +290,7 @@ pub mod pallet {
 			);
 
 
-			BootstrapSchedule::<T>::put((ido_start, whitelist_phase_length, public_phase_lenght, ratio_nominator, ratio_denominator));
+			BootstrapSchedule::<T>::put((ido_start, whitelist_phase_length, public_phase_lenght));
 
 			Ok(().into())
 		}

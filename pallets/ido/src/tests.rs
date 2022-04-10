@@ -31,8 +31,6 @@ fn jump_to_whitelist_phase() {
 		10_u32.into(),
 		10,
 		10,
-		1_u128,
-		10000_u128,
 	).unwrap();
 	Ido::on_initialize(15_u32.into());
 	assert_eq!(IDOPhase::Whitelist, Phase::<Test>::get());
@@ -47,8 +45,6 @@ fn jump_to_public_phase() {
 		10_u32.into(),
 		10,
 		10,
-		1_u128,
-		10000_u128,
 	).unwrap();
 	Ido::on_initialize(25_u32.into());
 	assert_eq!(IDOPhase::Public, Phase::<Test>::get());
@@ -219,8 +215,6 @@ fn test_non_root_user_can_not_start_ido() {
 			0_u32.into(),
 			1,
 			1,
-			1_u128,
-			10000_u128,
 			),
 			BadOrigin
 		);
@@ -266,8 +260,6 @@ fn test_ido_start_cannot_happen_in_the_past() {
 				999_u32.into(),
 				1,
 				1,
-				1_u128,
-				10000_u128,
 			),
 			Error::<Test>::IDOStartInThePast
 		);
@@ -286,8 +278,6 @@ fn test_cannot_start_ido_with_whitelist_phase_length_equal_zero() {
 				100_u32.into(),
 				0,
 				1,
-				1_u128,
-				10000_u128,
 			),
 			Error::<Test>::PhaseLengthCannotBeZero
 		);
@@ -305,8 +295,6 @@ fn test_cannot_start_ido_with_public_phase_length_equal_zero() {
 				100_u32.into(),
 				1,
 				0,
-				1_u128,
-				10000_u128,
 			),
 			Error::<Test>::PhaseLengthCannotBeZero
 		);
@@ -327,8 +315,6 @@ fn test_bootstrap_can_be_modified_only_before_its_started() {
 			100_u32.into(),
 			10,
 			20,
-			1_u128,
-			10000_u128,
 		).unwrap();
 
 		Ido::on_initialize(100_u32.into());
@@ -339,8 +325,6 @@ fn test_bootstrap_can_be_modified_only_before_its_started() {
 				100_u32.into(),
 				10,
 				20,
-				1_u128,
-				10000_u128,
 			),
 			Error::<Test>::AlreadyStarted
 		);
@@ -368,8 +352,6 @@ fn test_bootstrap_state_transitions() {
 			BOOTSTRAP_WHITELIST_START.into(),
 			(BOOTSTRAP_PUBLIC_START - BOOTSTRAP_WHITELIST_START).try_into().unwrap(),
 			(BOOTSTRAP_FINISH - BOOTSTRAP_PUBLIC_START).try_into().unwrap(),
-			1_u128,
-			10000_u128,
 		).unwrap();
 
 		for i in 1..BOOTSTRAP_WHITELIST_START {
@@ -419,8 +401,6 @@ fn test_bootstrap_state_transitions_when_on_initialized_is_not_called() {
 			BOOTSTRAP_WHITELIST_START.into(),
 			(BOOTSTRAP_PUBLIC_START - BOOTSTRAP_WHITELIST_START).try_into().unwrap(),
 			(BOOTSTRAP_FINISH - BOOTSTRAP_PUBLIC_START).try_into().unwrap(),
-			1_u128,
-			10000_u128,
 		).unwrap();
 
 		assert_eq!(Ido::phase(), IDOPhase::BeforeStart);
@@ -441,8 +421,6 @@ fn test_bootstrap_schedule_overflow() {
 				u64::MAX.into(),
 				u32::MAX,
 				1_u32,
-				1_u128,
-				10000_u128,
 			),
 			Error::<Test>::MathOverflow
 		);
@@ -453,8 +431,6 @@ fn test_bootstrap_schedule_overflow() {
 				u64::MAX.into(),
 				1_u32,
 				u32::MAX,
-				1_u128,
-				10000_u128,
 			),
 			Error::<Test>::MathOverflow
 		);
@@ -465,8 +441,6 @@ fn test_bootstrap_schedule_overflow() {
 				u64::MAX.into(),
 				u32::MAX,
 				u32::MAX,
-				1_u128,
-				10000_u128,
 			),
 			Error::<Test>::MathOverflow
 		);
@@ -487,8 +461,6 @@ fn test_do_not_allow_for_creating_starting_bootstrap_for_existing_pool() {
 				100_u32.into(),
 				10,
 				10,
-				1_u128,
-				10000_u128,
 			),
 			Error::<Test>::PoolAlreadyExists
 		);
@@ -513,8 +485,6 @@ fn test_pool_is_created_after_bootstrap_finish() {
 			100_u32.into(),
 			10,
 			10,
-			1_u128,
-			10000_u128,
 		).unwrap();
 
 		Ido::on_initialize(110_u32.into());

@@ -6,6 +6,7 @@ use frame_support::assert_err;
 use sp_runtime::traits::BadOrigin;
 
 const USER_ID: u128 = 0;
+const ANOTHER_USER_ID: u128 = 100;
 const INITIAL_AMOUNT: u128 = 1_000_000;
 const DUMMY_ID: u32 = 2;
 
@@ -196,6 +197,14 @@ fn test_whitliested_donation() {
 
 		Ido::whitelist_accounts(Origin::root(), vec![USER_ID]).unwrap();
 		Ido::donate(Origin::signed(USER_ID), MGAId::get(), 1000).unwrap();
+
+		Ido::transfer(MGAId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 10_000).unwrap();
+		Ido::whitelist_accounts(Origin::root(), vec![ANOTHER_USER_ID]).unwrap();
+
+		Ido::donate(Origin::signed(USER_ID), MGAId::get(), 1000).unwrap();
+		Ido::donate(Origin::signed(ANOTHER_USER_ID), MGAId::get(), 1000).unwrap();
+		assert_ne!(USER_ID, ANOTHER_USER_ID);
+		
 	});
 }
 

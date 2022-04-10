@@ -37,7 +37,7 @@ const PALLET_ID: PalletId = PalletId(*b"12345678");
 
 pub trait PoolCreateApi{
 	fn pool_exists(first: TokenId, second: TokenId) -> bool;
-	fn create_pool(first: TokenId, second: TokenId);
+	fn pool_create(first: TokenId, second: TokenId) -> bool;
 }
 
 #[frame_support::pallet]
@@ -67,6 +67,7 @@ pub mod pallet {
 
 				if n >= finished {
 					Phase::<T>::put(IDOPhase::Finished);
+					T::PoolCreateApi::pool_create(T::KSMTokenId::get(), T::MGATokenId::get());
 				} else if n >= public_start {
 					Phase::<T>::put(IDOPhase::Public);
 				} else if n >= whitelist_start {

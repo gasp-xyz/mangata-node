@@ -359,6 +359,9 @@ fn test_bootstrap_state_transitions() {
 
 		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
+		
+		let pool_create_mock = MockPoolCreateApiMock::pool_create_context();
+		pool_create_mock.expect().times(1).return_const(true);
 
 		Ido::start_ido(
 			Origin::root(),
@@ -401,6 +404,9 @@ fn test_bootstrap_state_transitions() {
 fn test_bootstrap_state_transitions_when_on_initialized_is_not_called() {
 	new_test_ext().execute_with(|| {
 		set_up();
+
+		let pool_create_mock = MockPoolCreateApiMock::pool_create_context();
+		pool_create_mock.expect().times(1).return_const(true);
 
 		const BOOTSTRAP_WHITELIST_START: u64 = 100;
 		const BOOTSTRAP_PUBLIC_START: u64 = 110;
@@ -464,6 +470,57 @@ fn test_bootstrap_schedule_overflow() {
 			),
 			Error::<Test>::MathOverflow
 		);
+
+	});
+}
+#[serial]
+fn test_do_not_allow_for_creating_starting_bootstrap_for_existing_pool() {
+	new_test_ext().execute_with(|| {
+		set_up();
+
+		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+		pool_exists_mock.expect().return_const(true);
+
+		assert_err!(
+			Ido::start_ido(
+				Origin::root(),
+				100_u32.into(),
+				10,
+				10,
+				1_u128,
+				10000_u128,
+			),
+			Error::<Test>::PoolAlreadyExists
+		);
+
+	});
+}
+
+#[test]
+#[serial]
+fn test_pool_is_created_after_bootstrap_finish() {
+	new_test_ext().execute_with(|| {
+		set_up();
+
+		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		let pool_create_mock = MockPoolCreateApiMock::pool_create_context();
+		pool_create_mock.expect().times(1).return_const(true);
+
+		Ido::start_ido(
+			Origin::root(),
+			100_u32.into(),
+			10,
+			10,
+			1_u128,
+			10000_u128,
+		).unwrap();
+
+		Ido::on_initialize(110_u32.into());
+		Ido::donate(Origin::signed(USER_ID), MGAId::get(), 50_000).unwrap();
+		Ido::donate(Origin::signed(USER_ID), KSMId::get(), 5).unwrap();
+		Ido::on_initialize(120_u32.into());
 
 	});
 }

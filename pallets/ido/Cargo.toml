@@ -25,8 +25,7 @@ sp-core = { default-features = false, version = '4.1.0-dev' , git = "https://git
 sp-io = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 orml-traits = { default-features = false, version="0.4.1-dev" , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
 mockall = "0.11.0"
-lazy_static = "1.1.1"
-serial_test = { version = "0.6.0", default-features = false }
+serial_test = "0.6.0"
 
 [features]
 default = ['std']

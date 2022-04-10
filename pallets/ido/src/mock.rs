@@ -95,23 +95,11 @@ impl orml_tokens::Config for Test {
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 }
 
-pub struct PoolCreateApiStub;
-
-impl PoolCreateApi for PoolCreateApiStub {
-    fn pool_exists(first: TokenId, second: TokenId) -> bool {
-        false
-    }
-
-    fn create_pool(first: TokenId, second: TokenId){
-    }
-}
-
 mockall::mock!{
     pub PoolCreateApiMock {}
-
 	impl PoolCreateApi for PoolCreateApiMock {
 		fn pool_exists(first: TokenId, second: TokenId) -> bool;
-		fn create_pool(first: TokenId, second: TokenId);
+		fn pool_create(first: TokenId, second: TokenId) -> bool;
 	}
 }
 

@@ -6,22 +6,19 @@ use frame_support::pallet_prelude::*;
 
 use frame_support::{
 	codec::{Decode, Encode},
-	traits::{Get, Imbalance},
-	transactional
+	traits::{ExistenceRequirement, Get, Imbalance, WithdrawReasons},
+	transactional, PalletId,
 };
-use sp_core::U256;
+use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
 use mangata_primitives::{Balance, TokenId};
+use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 use scale_info::TypeInfo;
-use sp_runtime::{traits::Zero, RuntimeDebug};
+use sp_core::U256;
+use sp_runtime::{
+	traits::{AccountIdConversion, CheckedAdd, Zero},
+	RuntimeDebug,
+};
 use sp_std::prelude::*;
-use frame_support::PalletId;
-use frame_system::{ensure_signed, ensure_root};
-use frame_system::pallet_prelude::OriginFor;
-use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenCurrency};
-use frame_support::traits::{WithdrawReasons,ExistenceRequirement};
-use sp_runtime::traits::AccountIdConversion;
-use sp_runtime::traits::CheckedAdd;
-
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -35,7 +32,7 @@ mod tests;
 pub use pallet::*;
 const PALLET_ID: PalletId = PalletId(*b"12345678");
 
-pub trait PoolCreateApi{
+pub trait PoolCreateApi {
 	fn pool_exists(first: TokenId, second: TokenId) -> bool;
 	fn pool_create(first: TokenId, second: TokenId) -> bool;
 }
@@ -52,14 +49,12 @@ pub mod pallet {
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
-
 		fn on_initialize(n: T::BlockNumber) -> Weight {
 			let phase = Phase::<T>::get();
 			if phase == IDOPhase::Finished {
-				return 0;
+				return 0
 			}
 			if let Some((start, whitelist_length, public_length)) = BootstrapSchedule::<T>::get() {
-
 				/// arythmetics protected by invariant check in Bootstrap::start_ido
 				let whitelist_start = start;
 				let public_start = start + whitelist_length.into();
@@ -76,7 +71,6 @@ pub mod pallet {
 			}
 			0
 		}
-
 	}
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
@@ -103,7 +97,6 @@ pub mod pallet {
 		type KsmToMgaRatioDenominator: Get<u128>;
 	}
 
-
 	#[pallet::storage]
 	#[pallet::getter(fn donations)]
 	pub type Donations<T: Config> =
@@ -124,12 +117,11 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn config)]
-	pub type BootstrapSchedule<T: Config> = StorageValue<_, (T::BlockNumber, u32 ,u32), OptionQuery>;
+	pub type BootstrapSchedule<T: Config> =
+		StorageValue<_, (T::BlockNumber, u32, u32), OptionQuery>;
 
 	#[pallet::genesis_config]
-	pub struct GenesisConfig {
-
-	}
+	pub struct GenesisConfig {}
 
 	#[cfg(feature = "std")]
 	impl Default for GenesisConfig {
@@ -145,31 +137,24 @@ pub mod pallet {
 		}
 	}
 
-
-
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-
 		#[pallet::weight(10_000)]
 		#[transactional]
-		pub fn donate(
-			origin: OriginFor<T>,
-			token_id: TokenId,
-			amount: Balance,
-		) -> DispatchResult {
+		pub fn donate(origin: OriginFor<T>, token_id: TokenId, amount: Balance) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
 			ensure!(
-				token_id == T::KSMTokenId::get() || token_id == T::MGATokenId::get() ,
+				token_id == T::KSMTokenId::get() || token_id == T::MGATokenId::get(),
 				Error::<T>::UnsupportedTokenId
 			);
 
-			let ratio_nominator = T::KsmToMgaRatioNominator::get(); 
+			let ratio_nominator = T::KsmToMgaRatioNominator::get();
 			let ratio_denominator = T::KsmToMgaRatioDenominator::get();
 
 			ensure!(
-				Phase::<T>::get() == IDOPhase::Public || 
-				(Phase::<T>::get() == IDOPhase::Whitelist && Self::is_whitelisted(&sender)),
+				Phase::<T>::get() == IDOPhase::Public ||
+					(Phase::<T>::get() == IDOPhase::Whitelist && Self::is_whitelisted(&sender)),
 				Error::<T>::UnauthorizedForDonation
 			);
 
@@ -183,27 +168,26 @@ pub mod pallet {
 			.or(Err(Error::<T>::NotEnoughAssets))?;
 
 			ensure!(
-				Donations::<T>::try_mutate( sender, token_id, |donations|
-				if let Some(val) = donations.checked_add(amount) {
-					*donations = val;
-					Ok(())
-				} else {
-					Err(())
-				}
-				).is_ok(),
+				Donations::<T>::try_mutate(sender, token_id, |donations| {
+					if let Some(val) = donations.checked_add(amount) {
+						*donations = val;
+						Ok(())
+					} else {
+						Err(())
+					}
+				})
+				.is_ok(),
 				Error::<T>::MathOverflow
 			);
-
 
 			let (pre_mga_valuation, pre_ksm_valuation) = Valuations::<T>::get();
 			ensure!(
 				token_id != T::KSMTokenId::get() || pre_mga_valuation != 0,
 				Error::<T>::FirstDonationWrongToken
 			);
- 
+
 			ensure!(
-				Valuations::<T>::try_mutate( |(mga_valuation, ksm_valuation)| -> Result<(),()>
-				{
+				Valuations::<T>::try_mutate(|(mga_valuation, ksm_valuation)| -> Result<(), ()> {
 					if token_id == T::MGATokenId::get() {
 						*mga_valuation = mga_valuation.checked_add(amount).ok_or(())?;
 					}
@@ -211,8 +195,8 @@ pub mod pallet {
 						*ksm_valuation = ksm_valuation.checked_add(amount).ok_or(())?;
 					}
 					Ok(())
-				}
-				).is_ok(),
+				})
+				.is_ok(),
 				Error::<T>::MathOverflow
 			);
 
@@ -249,33 +233,23 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_root(origin)?;
 
-			ensure!(
-				Phase::<T>::get() == IDOPhase::BeforeStart,
-				Error::<T>::AlreadyStarted
-			);
+			ensure!(Phase::<T>::get() == IDOPhase::BeforeStart, Error::<T>::AlreadyStarted);
 
 			ensure!(
 				ido_start > frame_system::Pallet::<T>::block_number(),
 				Error::<T>::IDOStartInThePast
 			);
 
-			ensure!(
-				whitelist_phase_length > 0,
-				Error::<T>::PhaseLengthCannotBeZero
-			);
+			ensure!(whitelist_phase_length > 0, Error::<T>::PhaseLengthCannotBeZero);
 
-			ensure!(
-				public_phase_lenght > 0,
-				Error::<T>::PhaseLengthCannotBeZero
-			);
+			ensure!(public_phase_lenght > 0, Error::<T>::PhaseLengthCannotBeZero);
 
 			ensure!(
 				ido_start
-				.checked_add(&whitelist_phase_length.into())
-				.and_then(|whiteslist_start| 
-					whiteslist_start.checked_add(&public_phase_lenght.into())
-				).is_some()
-				,
+					.checked_add(&whitelist_phase_length.into())
+					.and_then(|whiteslist_start| whiteslist_start
+						.checked_add(&public_phase_lenght.into()))
+					.is_some(),
 				Error::<T>::MathOverflow
 			);
 
@@ -289,14 +263,11 @@ pub mod pallet {
 				Error::<T>::PoolAlreadyExists
 			);
 
-
 			BootstrapSchedule::<T>::put((ido_start, whitelist_phase_length, public_phase_lenght));
 
 			Ok(().into())
 		}
-
 	}
-
 
 	#[pallet::error]
 	/// Errors
@@ -320,26 +291,23 @@ pub mod pallet {
 		/// Issuance for upcoming session issued
 		FundsDonated(TokenId, Balance),
 	}
-
 }
 
 #[derive(Eq, PartialEq, Encode, Decode, TypeInfo, Debug)]
-pub enum IDOPhase{
+pub enum IDOPhase {
 	BeforeStart,
 	Whitelist,
 	Public,
-	Finished
+	Finished,
 }
 
-impl Default for IDOPhase{
-    fn default() -> Self {
-        IDOPhase::BeforeStart
-    }
+impl Default for IDOPhase {
+	fn default() -> Self {
+		IDOPhase::BeforeStart
+	}
 }
-
 
 impl<T: Config> Pallet<T> {
-
 	fn is_whitelisted(account: &T::AccountId) -> bool {
 		WhitelistedAccount::<T>::try_get(account).is_ok()
 	}
@@ -349,7 +317,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	///
-	/// assures that 
+	/// assures that
 	///
 	/// actual_nominator              expected_nominator
 	/// --------------------   <=     ------------------
@@ -358,12 +326,10 @@ impl<T: Config> Pallet<T> {
 	/// actual_nominator * expected_denominator     expected_nominator * actual_denominator
 	/// ---------------------------------------- <= ----------------------------------------
 	/// actual_denominator * expected_denominator    expected_denominator * actual_nominator
-	fn is_ratio_kept(ratio_nominator: u128, ratio_denominator: u128) -> bool{
+	fn is_ratio_kept(ratio_nominator: u128, ratio_denominator: u128) -> bool {
 		let (mga_valuation, ksm_valuation) = Valuations::<T>::get();
-		let left = U256::from(ksm_valuation) * U256::from(ratio_denominator);	
-		let right = U256::from(ratio_nominator) * U256::from(mga_valuation);	
+		let left = U256::from(ksm_valuation) * U256::from(ratio_denominator);
+		let right = U256::from(ratio_nominator) * U256::from(mga_valuation);
 		left <= right
 	}
-
 }
-

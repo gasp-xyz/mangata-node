@@ -24,9 +24,9 @@ use frame_support::{
 	PalletId,
 };
 use mangata_primitives::{Amount, Balance, TokenId};
+use orml_tokens::MultiTokenCurrency;
 use orml_traits::parameter_type_with_key;
 use sp_runtime::{traits::AccountIdConversion, SaturatedConversion};
-use orml_tokens::MultiTokenCurrency;
 
 pub(crate) type AccountId = u128;
 
@@ -97,14 +97,13 @@ impl orml_tokens::Config for Test {
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 }
 
-mockall::mock!{
-    pub PoolCreateApiMock {}
+mockall::mock! {
+	pub PoolCreateApiMock {}
 	impl PoolCreateApi for PoolCreateApiMock {
 		fn pool_exists(first: TokenId, second: TokenId) -> bool;
 		fn pool_create(first: TokenId, second: TokenId) -> bool;
 	}
 }
-
 
 impl pallet_ido::Config for Test {
 	type Event = Event;
@@ -166,16 +165,10 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		.build_storage::<Test>()
 		.expect("Frame system builds valid default genesis config");
 
-
-	GenesisBuild::<Test>::assimilate_storage(
-		&pallet_ido::GenesisConfig {
-		},
-		&mut t,
-	)
-	.expect("pallet-ido's storage can be assimilated");
+	GenesisBuild::<Test>::assimilate_storage(&pallet_ido::GenesisConfig {}, &mut t)
+		.expect("pallet-ido's storage can be assimilated");
 
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| System::set_block_number(1));
 	ext
 }
-

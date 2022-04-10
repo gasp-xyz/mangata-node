@@ -898,6 +898,14 @@ parameter_types! {
 	pub StakingIssuanceVault: AccountId = StakingIssuanceVaultId::get().into_account();
 	pub const CrowdloanIssuanceVaultId: PalletId = PalletId(*b"py/crliv");
 	pub CrowdloanIssuanceVault: AccountId = CrowdloanIssuanceVaultId::get().into_account();
+
+	pub const IssuanceCap: Balance = 4_000_000_000 * DOLLARS;
+	pub const LinearIssuanceBlocks: u32 = 13_140_000u32; // 5 years
+	pub const LiquidityMiningSplit = Perbill::from_parts(555555556);
+	pub const StakingSplit = Perbill::from_parts(444444444);
+	pub const ImmediateTGEReleasePercent = Percent::from(20);
+	pub const TGEReleasePeriod = 5_256_000u32; // 2 years
+	pub const TGEReleaseBegin = 100_800u32; // Two weeks into chain start
 }
 
 // Issuance history must be kept for atleast the staking reward delay
@@ -912,6 +920,14 @@ impl pallet_issuance::Config for Runtime {
 	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
 	type StakingIssuanceVault = StakingIssuanceVault;
 	type CrowdloanIssuanceVault = CrowdloanIssuanceVault;
+	type IssuanceCap = IssuanceCap;
+	type LinearIssuanceBlocks = LinearIssuanceBlocks;
+	type LiquidityMiningSplit = LiquidityMiningSplit;
+	type StakingSplit = StakingSplit;
+	type ImmediateTGEReleasePercent = ImmediateTGEReleasePercent;
+	type TGEReleasePeriod = TGEReleasePeriod;
+	type TGEReleaseBegin = TGEReleaseBegin;
+	type VestingProvider = Vesting;
 }
 
 parameter_types! {
@@ -926,7 +942,8 @@ impl pallet_vesting_mangata::Config for Runtime {
 	type WeightInfo = pallet_vesting_mangata::weights::SubstrateWeight<Runtime>;
 	// `VestingInfo` encode length is 36bytes. 28 schedules gets encoded as 1009 bytes, which is the
 	// highest number of schedules that encodes less than 2^10.
-	const MAX_VESTING_SCHEDULES: u32 = 28;
+	// Should be atleast twice the number of tge recipients  
+	const MAX_VESTING_SCHEDULES: u32 = 200;
 }
 
 parameter_types! {

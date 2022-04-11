@@ -474,20 +474,6 @@ impl orml_tokens::Config for Runtime {
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 }
 
-pub struct ProvideLiquidityMiningSplit;
-
-impl pallet_xyk::GetLiquidityMiningSplit for ProvideLiquidityMiningSplit {
-	fn get_liquidity_mining_split() -> Perbill {
-		Issuance::get_issuance_config().liquidity_mining_split
-	}
-}
-pub struct ProvideLinearIssuanceBlocks;
-
-impl pallet_xyk::GetLinearIssuanceBlocks for ProvideLinearIssuanceBlocks {
-	fn get_linear_issuance_blocks() -> u32 {
-		Issuance::get_issuance_config().linear_issuance_blocks
-	}
-}
 
 impl pallet_xyk::Config for Runtime {
 	type Event = Event;
@@ -495,8 +481,6 @@ impl pallet_xyk::Config for Runtime {
 	type NativeCurrencyId = MgaTokenId;
 	type TreasuryPalletId = TreasuryPalletId;
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
-	type LiquidityMiningSplit = ProvideLiquidityMiningSplit;
-	type LinearIssuanceBlocks = ProvideLinearIssuanceBlocks;
 	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
 	type PoolPromoteApi = Issuance;
 	type PoolFeePercentage = frame_support::traits::ConstU128<20>;
@@ -896,16 +880,15 @@ parameter_types! {
 	pub LiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account();
 	pub const StakingIssuanceVaultId: PalletId = PalletId(*b"py/stkiv");
 	pub StakingIssuanceVault: AccountId = StakingIssuanceVaultId::get().into_account();
-	pub const CrowdloanIssuanceVaultId: PalletId = PalletId(*b"py/crliv");
-	pub CrowdloanIssuanceVault: AccountId = CrowdloanIssuanceVaultId::get().into_account();
 
+	pub const TotalCrowdloanAllocation: Balance = 330_000_000 * DOLLARS;
 	pub const IssuanceCap: Balance = 4_000_000_000 * DOLLARS;
 	pub const LinearIssuanceBlocks: u32 = 13_140_000u32; // 5 years
-	pub const LiquidityMiningSplit = Perbill::from_parts(555555556);
-	pub const StakingSplit = Perbill::from_parts(444444444);
-	pub const ImmediateTGEReleasePercent = Percent::from(20);
-	pub const TGEReleasePeriod = 5_256_000u32; // 2 years
-	pub const TGEReleaseBegin = 100_800u32; // Two weeks into chain start
+	pub const LiquidityMiningSplit: Perbill = Perbill::from_parts(555555556);
+	pub const StakingSplit: Perbill = Perbill::from_parts(444444444);
+	pub const ImmediateTGEReleasePercent: Percent = Percent::from_percent(20);
+	pub const TGEReleasePeriod: u32 = 5_256_000u32; // 2 years
+	pub const TGEReleaseBegin: u32 = 100_800u32; // Two weeks into chain start
 }
 
 // Issuance history must be kept for atleast the staking reward delay
@@ -919,7 +902,7 @@ impl pallet_issuance::Config for Runtime {
 	type HistoryLimit = HistoryLimit;
 	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
 	type StakingIssuanceVault = StakingIssuanceVault;
-	type CrowdloanIssuanceVault = CrowdloanIssuanceVault;
+	type TotalCrowdloanAllocation = TotalCrowdloanAllocation;
 	type IssuanceCap = IssuanceCap;
 	type LinearIssuanceBlocks = LinearIssuanceBlocks;
 	type LiquidityMiningSplit = LiquidityMiningSplit;
@@ -927,6 +910,7 @@ impl pallet_issuance::Config for Runtime {
 	type ImmediateTGEReleasePercent = ImmediateTGEReleasePercent;
 	type TGEReleasePeriod = TGEReleasePeriod;
 	type TGEReleaseBegin = TGEReleaseBegin;
+	type NativeTokenAdapter = orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>;
 	type VestingProvider = Vesting;
 }
 
@@ -1195,13 +1179,13 @@ construct_runtime!(
 		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>} = 13,
 
 		// Vesting
-		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>, Config<T>} = 17,
+		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>} = 17,
 
 		// Crowdloan
-		Crowdloan: pallet_crowdloan_rewards::{Pallet, Call, Storage, Event<T>, Config} = 18,
+		Crowdloan: pallet_crowdloan_rewards::{Pallet, Call, Storage, Event<T>} = 18,
 
 		// Issuance
-		Issuance: pallet_issuance::{Pallet, Event<T>, Storage, Config} = 19,
+		Issuance: pallet_issuance::{Pallet, Event<T>, Storage, Call} = 19,
 
 		// Collator support. The order of these 4 are important and shall not change.
 		Authorship: pallet_authorship::{Pallet, Call, Storage} = 20,

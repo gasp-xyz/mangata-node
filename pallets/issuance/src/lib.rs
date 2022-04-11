@@ -3,18 +3,19 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_support::pallet_prelude::*;
+use frame_system::pallet_prelude::*;
 
 use frame_support::{
 	codec::{Decode, Encode},
-	traits::{Get, Imbalance},
+	traits::{Get, Imbalance, VestingSchedule, Currency, LockableCurrency},
 };
 use mangata_primitives::{Balance, TokenId};
 use scale_info::TypeInfo;
-use sp_runtime::{traits::Zero, Perbill, RuntimeDebug};
+use sp_runtime::{traits::Zero, Percent, Perbill, RuntimeDebug};
 use sp_std::prelude::*;
 
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
-use sp_runtime::traits::CheckedAdd;
+use sp_runtime::traits::{CheckedAdd, CheckedSub};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -39,14 +40,14 @@ pub struct IssuanceInfo {
 	pub liquidity_mining_split: Perbill,
 	// The split of issuance assgined to staking
 	pub staking_split: Perbill,
-	// The mga allocated to crowdloan rewards
-	pub crowdloan_allocation: Balance,
+	// The total mga allocated to crowdloan rewards
+	pub total_crowdloan_allocation: Balance,
 }
 
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq, TypeInfo)]
-pub struct TgeInfo {
+pub struct TgeInfo<A> {
 	// The tge target
-	pub who: Balance,
+	pub who: A,
 	// Amount distributed at tge
 	pub amount: Balance,
 }
@@ -96,11 +97,11 @@ pub mod pallet {
 		/// The account id that holds the liquidity mining issuance
 		type LiquidityMiningIssuanceVault: Get<Self::AccountId>;
 		#[pallet::constant]
-		/// The account id that holds the liquidity mining issuance
+		/// The account id that holds the staking issuance
 		type StakingIssuanceVault: Get<Self::AccountId>;
 		#[pallet::constant]
-		/// The account id that holds the liquidity mining issuance
-		type CrowdloanIssuanceVault: Get<Self::AccountId>;
+		/// The total mga allocated for crowdloans
+		type TotalCrowdloanAllocation: Get<u128>;
 		#[pallet::constant]
 		/// The maximum amount of Mangata tokens
 		type ImmediateTGEReleasePercent: Get<Percent>;
@@ -118,12 +119,14 @@ pub mod pallet {
 		type StakingSplit: Get<Perbill>;
 		#[pallet::constant]
 		/// The number of blocks the tge tokens vest for
-		type TGEReleasePeriod = Get<u32>;
+		type TGEReleasePeriod: Get<u32>;
 		#[pallet::constant]
 		/// The block at which the tge tokens begin to vest
-		type TGEReleaseBegin = Get<u32>;
+		type TGEReleaseBegin: Get<u32>;
+		/// Native token adapter for matching Balance types
+		type NativeTokenAdapter: Currency<Self::AccountId, Balance = Balance> + LockableCurrency<Self::AccountId>;
 		/// The vesting pallet
-		type VestingProvider = VestingSchedule<Self::AccountId>;
+		type VestingProvider: VestingSchedule<Self::AccountId, Currency = Self::NativeTokenAdapter, Moment = u32>;
 	}
 
 	#[pallet::storage]
@@ -136,7 +139,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn is_tge_finalized)]
-	pub type IsTGEFinalized<T: Config> = StorageValue<_, bool, ValueQuery, OnEmpty = false>;
+	pub type IsTGEFinalized<T: Config> = StorageValue<_, bool, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_session_issuance)]
@@ -153,36 +156,31 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// The issuance config has already been initialized
 		IssuanceConfigAlreadyInitialized,
+		/// The issuance config has not been initialized
+		IssuanceConfigNotInitialized,
 		/// TGE must be finalized before issuance config is inti
 		TGENotFinalized,
 		/// The TGE is already finalized
 		TGEIsAlreadyFinalized,
+		/// The issuance config is invalid
+		IssuanceConfigInvalid,
 		/// An underflow or an overflow has occured 
 		MathError,
-	}
-
-	#[pallet::event]
-	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {
-		IssuanceConfigInitialized(IssuanceInfo),
-		TGEFinalized,
-		TGEInstanceFailed(TgeInfo),
-		TGEInstanceSucceeded(TgeInfo),
 	}
 
 	// XYK extrinsics.
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 
-		#[pallet::weight(T::Weight::init_issuance_config())]
+		// #[pallet::weight(T::Weight::init_issuance_config())]
+		#[pallet::weight(100_000)]
 		pub fn init_issuance_config(
 			origin: OriginFor<T>,
-			crowdloan_allocation: Balance,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 
-			ensure!(IssuanceConfigStore::<T>::get().is_none(), Error::<T>::IssuanceConfigAlreadyInitialized)?;
-			ensure!(IsTGEFinalized::<T>::get(), Error::<T>::TGENotFinalized)?;
+			ensure!(IssuanceConfigStore::<T>::get().is_none(), Error::<T>::IssuanceConfigAlreadyInitialized);
+			ensure!(IsTGEFinalized::<T>::get(), Error::<T>::TGENotFinalized);
 
 			let issuance_config: IssuanceInfo = IssuanceInfo{
 				cap: T::IssuanceCap::get(),
@@ -190,25 +188,26 @@ pub mod pallet {
 				linear_issuance_blocks: T::LinearIssuanceBlocks::get(),
 				liquidity_mining_split: T::LiquidityMiningSplit::get(),
 				staking_split: T::StakingSplit::get(),
-				crowdloan_allocation: crowdloan_allocation,
+				total_crowdloan_allocation: T::TotalCrowdloanAllocation::get(),
 			};
 
-			Pallet::<T>::build_issuance_config(issuance_config)?;
+			Pallet::<T>::build_issuance_config(issuance_config.clone())?;
 
 			Pallet::<T>::deposit_event(Event::IssuanceConfigInitialized(
-				issuance_config,
+				issuance_config
 			));
 
 			Ok(().into())
 		}
 
-		#[pallet::weight(T::Weight::finalize_tge())]
+		// #[pallet::weight(T::Weight::finalize_tge())]
+		#[pallet::weight(100_000)]
 		pub fn finalize_tge(
 			origin: OriginFor<T>,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 
-			ensure!(!IsTGEFinalized::<T>::get(), Error::<T>::TGEIsAlreadyFinalized)?;
+			ensure!(!IsTGEFinalized::<T>::get(), Error::<T>::TGEIsAlreadyFinalized);
 
 			IsTGEFinalized::<T>::put(true);
 
@@ -217,25 +216,26 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(T::Weight::execute_tge(*tge_infos))]
+		// #[pallet::weight(T::Weight::execute_tge(*tge_infos))]
+		#[pallet::weight(100_000)]
 		pub fn execute_tge(
 			origin: OriginFor<T>,
-			tge_infos: Vec<TgeInfo>,
+			tge_infos: Vec<TgeInfo<T::AccountId>>,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 			
-			ensure!(!IsTGEFinalized::<T>::get(), Error::<T>::TGEIsAlreadyFinalized)?;
+			ensure!(!IsTGEFinalized::<T>::get(), Error::<T>::TGEIsAlreadyFinalized);
 
-			ensure!(!T::TGEReleasePeriod::get().is_zero(), Error::<T>::MathError)?;
+			ensure!(!T::TGEReleasePeriod::get().is_zero(), Error::<T>::MathError);
 
-			let lock_percent: Percent = Percent::from(100).checked_sub(T::ImmediateTGEReleasePercent::get()).ok_or(Error::<T>::MathError)?;
+			let lock_percent: Percent = Percent::from_percent(100).checked_sub(&T::ImmediateTGEReleasePercent::get()).ok_or(Error::<T>::MathError)?;
 
 			for tge_info in tge_infos{
 
-				let locked = tge_info.amount * lock_percent;
-				let per_block = locked / T::TGEReleasePeriod::get() as Balance;
+				let locked: Balance = lock_percent * tge_info.amount;
+				let per_block: Balance = locked / T::TGEReleasePeriod::get() as Balance;
 
-				if T::VestingProvider::can_add_vesting_schedule(&tge_info.who, locked, per_block, T::TGEReleaseBegin::get()).is_ok(){
+				if T::VestingProvider::can_add_vesting_schedule(&tge_info.who, locked.into(), per_block.into(), T::TGEReleaseBegin::get().into()).is_ok(){
 				
 					let imb = T::Tokens::deposit_creating(
 						T::NativeCurrencyId::get().into(),
@@ -246,7 +246,7 @@ pub mod pallet {
 					if !tge_info.amount.is_zero() && imb.peek().is_zero(){
 						Pallet::<T>::deposit_event(Event::TGEInstanceFailed(tge_info));
 					} else {
-						let _ = T::VestingProvider::add_vesting_schedule(&tge_info.who, locked, per_block, T::TGEReleaseBegin::get());
+						let _ = T::VestingProvider::add_vesting_schedule(&tge_info.who, locked.into(), per_block.into(), T::TGEReleaseBegin::get().into());
 						TGETotal::<T>::mutate(|v| *v = v.saturating_add(tge_info.amount));
 						Pallet::<T>::deposit_event(Event::TGEInstanceSucceeded(tge_info));
 					}
@@ -270,6 +270,14 @@ pub mod pallet {
 		SessionIssuanceIssued(u32, Balance, Balance),
 		/// Issuance for upcoming session calculated and recorded
 		SessionIssuanceRecorded(u32, Balance, Balance),
+		/// Issuance configuration has been finalized
+		IssuanceConfigInitialized(IssuanceInfo),
+		/// TGE has been finalized
+		TGEFinalized,
+		/// A TGE instance has failed
+		TGEInstanceFailed(TgeInfo<T::AccountId>),
+		/// A TGE instance has succeeded
+		TGEInstanceSucceeded(TgeInfo<T::AccountId>),
 	}
 }
 
@@ -310,19 +318,21 @@ impl<T: Config> PoolPromoteApi for Pallet<T> {
 		.is_ok()
 	}
 
+	// TODO
+	// Specifically account for this in benchmarking 
 	fn len() -> usize {
 		PromotedPoolsRewards::<T>::iter_keys().count()
 	}
 }
 
-pub trait ProvideCrowdloanRewardAllocation {
-	fn get_crowdloan_allocation(n: u32) -> Option<Balance>;
+pub trait ProvideTotalCrowdloanRewardAllocation {
+	fn get_total_crowdloan_allocation(n: u32) -> Option<Balance>;
 }
 
-impl<T: Config> GetIssuance for Pallet<T> {
-	fn get_crowdloan_allocation(n: u32) -> Option<Balance> {
+impl<T: Config> ProvideTotalCrowdloanRewardAllocation for Pallet<T> {
+	fn get_total_crowdloan_allocation(n: u32) -> Option<Balance> {
 		match IssuanceConfigStore::<T>::get() {
-			Some(issuance_config) => issuance_config.crowdloan_allocation,
+			Some(issuance_config) => Some(issuance_config.total_crowdloan_allocation),
 			None => None
 		}
 	}
@@ -364,7 +374,7 @@ impl<T: Config> Pallet<T> {
 		);
 		ensure!(
 			issuance_config.cap >=
-				issuance_config.issuance_at_init.checked_add(issuance_config.crowdloan_allocation).ok_or(Error::<T>::IssuanceConfigInvalid)?, Error::<T>::IssuanceConfigInvalid
+				issuance_config.issuance_at_init.checked_add(issuance_config.total_crowdloan_allocation).ok_or(Error::<T>::IssuanceConfigInvalid)?, Error::<T>::IssuanceConfigInvalid
 		);
 		ensure!(issuance_config.linear_issuance_blocks != u32::zero(), Error::<T>::IssuanceConfigInvalid);
 		ensure!(issuance_config.linear_issuance_blocks > T::BlocksPerRound::get(), Error::<T>::IssuanceConfigInvalid);
@@ -376,7 +386,7 @@ impl<T: Config> Pallet<T> {
 	pub fn calculate_and_store_round_issuance(current_round: u32) -> DispatchResult {
 		let issuance_config = IssuanceConfigStore::<T>::get().ok_or(Error::<T>::IssuanceConfigNotInitialized)?;
 		let to_be_issued: Balance =
-			issuance_config.cap.checked_sub(issuance_config.issuance_at_init).ok_or(Error::<T>::MathError)?.checked_sub(issuance_config.crowdloan_allocation).ok_or(Error::<T>::MathError)?;
+			issuance_config.cap.checked_sub(issuance_config.issuance_at_init).ok_or(Error::<T>::MathError)?.checked_sub(issuance_config.total_crowdloan_allocation).ok_or(Error::<T>::MathError)?;
 		let linear_issuance_sessions: u32 =
 			issuance_config.linear_issuance_blocks.checked_div(T::BlocksPerRound::get()).ok_or(Error::<T>::MathError)?;
 		let linear_issuance_per_session = to_be_issued.checked_div(linear_issuance_sessions as Balance).ok_or(Error::<T>::MathError)?;

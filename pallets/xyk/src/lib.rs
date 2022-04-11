@@ -290,13 +290,6 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
 
-	pub trait GetLiquidityMiningSplit {
-		fn get_liquidity_mining_split() -> sp_runtime::Perbill;
-	}
-	pub trait GetLinearIssuanceBlocks {
-		fn get_linear_issuance_blocks() -> u32;
-	}
-
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_assets_info::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
@@ -304,8 +297,6 @@ pub mod pallet {
 		type NativeCurrencyId: Get<TokenId>;
 		type TreasuryPalletId: Get<PalletId>;
 		type BnbTreasurySubAccDerive: Get<[u8; 4]>;
-		type LiquidityMiningSplit: GetLiquidityMiningSplit;
-		type LinearIssuanceBlocks: GetLinearIssuanceBlocks;
 		type PoolPromoteApi: PoolPromoteApi;
 		#[pallet::constant]
 		/// The account id that holds the liquidity mining issuance

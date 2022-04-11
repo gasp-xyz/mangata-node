@@ -4996,7 +4996,6 @@ dependencies = [
 [[package]]
 name = "orml-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#10b0682531d4701c20e47ca4d5983cb7abc9e3c6"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5012,7 +5011,6 @@ dependencies = [
 [[package]]
 name = "orml-traits"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#10b0682531d4701c20e47ca4d5983cb7abc9e3c6"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
@@ -5030,7 +5028,6 @@ dependencies = [
 [[package]]
 name = "orml-unknown-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#10b0682531d4701c20e47ca4d5983cb7abc9e3c6"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5045,7 +5042,6 @@ dependencies = [
 [[package]]
 name = "orml-utilities"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#10b0682531d4701c20e47ca4d5983cb7abc9e3c6"
 dependencies = [
  "frame-support",
  "parity-scale-codec 2.3.1",
@@ -5059,7 +5055,6 @@ dependencies = [
 [[package]]
 name = "orml-xcm"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#10b0682531d4701c20e47ca4d5983cb7abc9e3c6"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5073,7 +5068,6 @@ dependencies = [
 [[package]]
 name = "orml-xcm-support"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#10b0682531d4701c20e47ca4d5983cb7abc9e3c6"
 dependencies = [
  "frame-support",
  "orml-traits",
@@ -5087,7 +5081,6 @@ dependencies = [
 [[package]]
 name = "orml-xtokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#10b0682531d4701c20e47ca4d5983cb7abc9e3c6"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -5335,7 +5328,6 @@ dependencies = [
 [[package]]
 name = "pallet-crowdloan-rewards"
 version = "0.6.0"
-source = "git+https://github.com/mangata-finance//crowdloan-rewards?branch=mangata-dev#f6e907388abb849666c85ac5f034fc2e897bf0fe"
 dependencies = [
  "frame-benchmarking",
  "frame-support",

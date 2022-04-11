@@ -31,7 +31,9 @@ use sp_version::RuntimeVersion;
 
 use frame_support::{
 	construct_runtime, match_type, parameter_types,
-	traits::{Contains, Everything, Get, LockIdentifier, OnUnbalanced, Nothing, U128CurrencyToVote},
+	traits::{
+		Contains, Everything, Get, LockIdentifier, Nothing, OnUnbalanced, U128CurrencyToVote,
+	},
 	weights::{
 		constants::{WEIGHT_PER_MICROS, WEIGHT_PER_MILLIS, WEIGHT_PER_SECOND},
 		DispatchClass, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
@@ -516,13 +518,18 @@ impl pallet_xyk::Config for Runtime {
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
 }
 
-type ORMLCurrencyAdapterNegativeImbalance = <orml_tokens::MultiTokenCurrencyAdapter<Runtime> as orml_tokens::MultiTokenCurrency<AccountId>>::NegativeImbalance;
+type ORMLCurrencyAdapterNegativeImbalance =
+	<orml_tokens::MultiTokenCurrencyAdapter<Runtime> as orml_tokens::MultiTokenCurrency<
+		AccountId,
+	>>::NegativeImbalance;
 
 pub struct ToAuthor;
 impl OnUnbalanced<ORMLCurrencyAdapterNegativeImbalance> for ToAuthor {
 	fn on_nonzero_unbalanced(amount: ORMLCurrencyAdapterNegativeImbalance) {
 		if let Some(author) = Authorship::author() {
-			<orml_tokens::MultiTokenCurrencyAdapter<Runtime> as orml_tokens::MultiTokenCurrency<AccountId>>::resolve_creating(amount.0, &author, amount);
+			<orml_tokens::MultiTokenCurrencyAdapter<Runtime> as orml_tokens::MultiTokenCurrency<
+				AccountId,
+			>>::resolve_creating(amount.0, &author, amount);
 		}
 	}
 }
@@ -539,18 +546,15 @@ use scale_info::TypeInfo;
 pub struct TwoCurrencyAdapter<C, OU, T1, T2>(PhantomData<(C, OU, T1, T2)>);
 
 use sp_runtime::{
-	traits::{
-		DispatchInfoOf, PostDispatchInfoOf,
-		Saturating, Zero,
-	},
+	traits::{DispatchInfoOf, PostDispatchInfoOf, Saturating, Zero},
 	transaction_validity::InvalidTransaction,
 };
 
 use frame_support::{
+	traits::{ExistenceRequirement, Imbalance, WithdrawReasons},
 	unsigned::TransactionValidityError,
 };
 use orml_tokens::MultiTokenCurrency;
-use frame_support::traits::{ExistenceRequirement, Imbalance, WithdrawReasons};
 
 use pallet_transaction_payment::OnChargeTransaction;
 
@@ -564,7 +568,8 @@ type NegativeImbalanceOf<C, T> =
 impl<T, C, OU, T1, T2> OnChargeTransaction<T> for TwoCurrencyAdapter<C, OU, T1, T2>
 where
 	T: pallet_transaction_payment::Config,
-	T::TransactionByteFee: Get<<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance>,
+	T::TransactionByteFee:
+		Get<<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance>,
 	C: MultiTokenCurrency<<T as frame_system::Config>::AccountId>,
 	C::PositiveImbalance: Imbalance<
 		<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
@@ -575,7 +580,8 @@ where
 		Opposite = C::PositiveImbalance,
 	>,
 	OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
-	<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance: scale_info::TypeInfo,
+	<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance:
+		scale_info::TypeInfo,
 	T1: Get<u32>,
 	T2: Get<u32>,
 {
@@ -602,15 +608,26 @@ where
 			WithdrawReasons::TRANSACTION_PAYMENT | WithdrawReasons::TIP
 		};
 
-		match C::withdraw(T1::get().into(), who, fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
+		match C::withdraw(
+			T1::get().into(),
+			who,
+			fee,
+			withdraw_reason,
+			ExistenceRequirement::KeepAlive,
+		) {
 			Ok(imbalance) => Ok(Some((T1::get(), imbalance))),
-			Err(_) => match C::withdraw(T2::get().into(), who, fee, withdraw_reason, ExistenceRequirement::KeepAlive){
+			Err(_) => match C::withdraw(
+				T2::get().into(),
+				who,
+				fee,
+				withdraw_reason,
+				ExistenceRequirement::KeepAlive,
+			) {
 				Ok(imbalance) => Ok(Some((T2::get(), imbalance))),
 				Err(_) => Err(InvalidTransaction::Payment.into()),
-			}
+			},
 		}
 	}
-
 
 	/// Hand the fee and the tip over to the `[OnUnbalanced]` implementation.
 	/// Since the predicted fee might have been too high, parts of the fee may
@@ -631,7 +648,7 @@ where
 			// refund to the the account that paid the fees. If this fails, the
 			// account might have dropped below the existential balance. In
 			// that case we don't refund anything.
-			let refund_imbalance = C::deposit_into_existing(token_id.into() ,&who, refund_amount)
+			let refund_imbalance = C::deposit_into_existing(token_id.into(), &who, refund_amount)
 				.unwrap_or_else(|_| C::PositiveImbalance::zero());
 			// merge the imbalance caused by paying the fees and refunding parts of it again.
 			let adjusted_paid = paid
@@ -646,13 +663,12 @@ where
 	}
 }
 
-
 impl pallet_transaction_payment::Config for Runtime {
 	type OnChargeTransaction = TwoCurrencyAdapter<
 		orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
 		ToAuthor,
 		frame_support::traits::ConstU32<MGA_TOKEN_ID>,
-		frame_support::traits::ConstU32<KSM_TOKEN_ID>
+		frame_support::traits::ConstU32<KSM_TOKEN_ID>,
 	>;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = WeightToFee;

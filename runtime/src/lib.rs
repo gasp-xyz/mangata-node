@@ -561,6 +561,7 @@ use pallet_transaction_payment::OnChargeTransaction;
 type NegativeImbalanceOf<C, T> =
 	<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
 
+use orml_tokens::MultiTokenImbalanceWithZeroTrait;
 /// Default implementation for a Currency and an OnUnbalanced handler.
 ///
 /// The unbalance handler is given 2 unbalanceds in [`OnUnbalanced::on_unbalanceds`]: fee and
@@ -649,7 +650,7 @@ where
 			// account might have dropped below the existential balance. In
 			// that case we don't refund anything.
 			let refund_imbalance = C::deposit_into_existing(token_id.into(), &who, refund_amount)
-				.unwrap_or_else(|_| C::PositiveImbalance::zero());
+				.unwrap_or_else(|_| C::PositiveImbalance::from_zero(token_id.into()));
 			// merge the imbalance caused by paying the fees and refunding parts of it again.
 			let adjusted_paid = paid
 				.offset(refund_imbalance)

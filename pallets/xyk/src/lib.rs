@@ -409,8 +409,15 @@ pub mod pallet {
 		StorageMap<_, Blake2_256, (AccountIdOf<T>, TokenId), u128, ValueQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn pool_promotion_start)]
-	pub type PoolPromotionStart<T: Config> = StorageMap<_, Twox64Concat, TokenId, u32, ValueQuery>;
+	#[pallet::getter(fn Liquidity_mining_active_user)]
+	pub type LiquidityMiningActiveUser<T: Config> =
+		StorageMap<_, Blake2_256, (AccountIdOf<T>, TokenId), u128, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn Liquidity_mining_active_pool)]
+	pub type LiquidityMiningActivePool<T: Config> =
+		StorageMap<_, Blake2_256, TokenId, u128, ValueQuery>;
+
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub created_pools_for_staking:
@@ -601,6 +608,36 @@ pub mod pallet {
 
 			<Self as XykFunctionsTrait<T::AccountId>>::promote_pool(liquidity_token_id)
 		}
+
+		#[pallet::weight(10_000)]
+		pub fn activate_liquidity(
+			origin: OriginFor<T>,
+			liquidity_token_id: TokenId,
+			amount: Balance,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			<Self as XykFunctionsTrait<T::AccountId>>::activate_liquidity(
+				sender,
+				liquidity_token_id,
+				amount,
+			)
+		}
+
+		#[pallet::weight(10_000)]
+		pub fn deactivate_liquidity(
+			origin: OriginFor<T>,
+			liquidity_token_id: TokenId,
+			amount: Balance,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			<Self as XykFunctionsTrait<T::AccountId>>::activate_liquidity(
+				sender,
+				liquidity_token_id,
+				amount,
+			)
+		}
 	}
 }
 
@@ -727,7 +764,6 @@ impl<T: Config> Pallet<T> {
 		Ok(work_total)
 	}
 
-	//TODO MODIFY FOR POOL
 	pub fn calculate_work_pool(
 		liquidity_asset_id: TokenId,
 		current_time: u32,
@@ -1410,6 +1446,18 @@ pub trait XykFunctionsTrait<AccountId> {
 	) -> DispatchResult;
 
 	fn promote_pool(liquidity_token_id: TokenId) -> DispatchResult;
+
+	fn activate_liquidity(
+		sender: AccountId,
+		liquidity_token_id: Self::CurrencyId,
+		amount: Self::Balance,
+	) -> DispatchResult;
+
+	fn deactivate_liquidity(
+		sender: AccountId,
+		liquidity_token_id: Self::CurrencyId,
+		amount: Self::Balance,
+	) -> DispatchResult;
 }
 
 impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
@@ -2317,6 +2365,55 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		);
 		Pallet::<T>::deposit_event(Event::PoolPromoted(liquidity_token_id));
 
+		Ok(())
+	}
+
+	fn activate_liquidity(
+		user: T::AccountId,
+		liquidity_asset_id: Self::CurrencyId,
+		amount: Self::Balance,
+	) -> DispatchResult {
+		let already_activated_amount_user =
+			LiquidityMiningActiveUser::<T>::get((&user, &liquidity_asset_id));
+		let already_activated_amount_pool =
+			LiquidityMiningActiveUser::<T>::get(&liquidity_asset_id);
+
+		ensure!(
+			<T as Config>::Currency::free_balance(liquidity_asset_id.into(), &sender).into() >=
+				amount,
+			Error::<T>::NotEnoughAssets,
+		);
+
+		<T as Config>::Currency::reserve(liquidity_asset_id.into(), &user, amount.into())?;
+
+		let new_activated_amount_user = already_activated_amount_user + amount;
+		let new_activated_amount_pool = already_activated_amount_pool + amount;
+
+		LiquidityMiningActiveUser::<T>::insert((&user, &liquidity_token_id), new_activated_amount);
+		LiquidityMiningActivePool::<T>::insert(&liquidity_token_id, new_activated_amount);
+
+		Ok(())
+	}
+
+	fn deactivate_liquidity(
+		user: T::AccountId,
+		liquidity_asset_id: Self::CurrencyId,
+		mangata_amount: Self::Balance,
+	) -> DispatchResult {
+		let already_activated_amount_user =
+			LiquidityMiningActiveUser::<T>::get((&user, &liquidity_asset_id));
+		let already_activated_amount_pool =
+			LiquidityMiningActiveUser::<T>::get(&liquidity_asset_id);
+
+		ensure!(already_activated_amount_user >= amount, Error::<T>::NotEnoughAssets,);
+
+		<T as Config>::Currency::unreserve(liquidity_asset_id.into(), &user, amount.into())?;
+
+		let new_activated_amount_user = already_activated_amount_user - amount;
+		let new_activated_amount_pool = already_activated_amount_pool - amount;
+
+		LiquidityMiningActiveUser::<T>::insert((&user, &liquidity_token_id), new_activated_amount);
+		LiquidityMiningActivePool::<T>::insert(&liquidity_token_id, new_activated_amount);
 		Ok(())
 	}
 

@@ -505,13 +505,44 @@ impl pallet_xyk::Config for Runtime {
 	type RewardsDistributionPeriod = frame_support::traits::ConstU32<10000>;
 }
 
-type ORMLCurrencyAdapterNegativeImbalance = <orml_tokens::CurrencyAdapter::<Runtime, MgaTokenId> as PalletCurrency<AccountId>>::NegativeImbalance;
+type ORMLCurrencyAdapterNegativeImbalance =
+	<orml_tokens::MultiTokenCurrencyAdapter<Runtime> as orml_tokens::MultiTokenCurrency<
+		AccountId,
+	>>::NegativeImbalance;
+
+pub trait OnMultiTokenUnbalanced<
+	Imbalance: frame_support::traits::TryDrop + MultiTokenImbalanceWithZeroTrait<TokenId>,
+>
+{
+	/// Handler for some imbalances. The different imbalances might have different origins or
+	/// meanings, dependent on the context. Will default to simply calling on_unbalanced for all
+	/// of them. Infallible.
+	fn on_unbalanceds<B>(token_id: TokenId, amounts: impl Iterator<Item = Imbalance>)
+	where
+		Imbalance: frame_support::traits::Imbalance<B>,
+	{
+		Self::on_unbalanced(amounts.fold(Imbalance::from_zero(token_id), |i, x| x.merge(i)))
+	}
+
+	/// Handler for some imbalance. Infallible.
+	fn on_unbalanced(amount: Imbalance) {
+		amount.try_drop().unwrap_or_else(Self::on_nonzero_unbalanced)
+	}
+
+	/// Actually handle a non-zero imbalance. You probably want to implement this rather than
+	/// `on_unbalanced`.
+	fn on_nonzero_unbalanced(amount: Imbalance) {
+		drop(amount);
+	}
+}
 
 pub struct ToAuthor;
-impl OnUnbalanced<ORMLCurrencyAdapterNegativeImbalance> for ToAuthor {
+impl OnMultiTokenUnbalanced<ORMLCurrencyAdapterNegativeImbalance> for ToAuthor {
 	fn on_nonzero_unbalanced(amount: ORMLCurrencyAdapterNegativeImbalance) {
 		if let Some(author) = Authorship::author() {
-			<orml_tokens::CurrencyAdapter::<Runtime, MgaTokenId> as PalletCurrency<AccountId>>::resolve_creating(&author, amount);
+			<orml_tokens::MultiTokenCurrencyAdapter<Runtime> as orml_tokens::MultiTokenCurrency<
+				AccountId,
+			>>::resolve_creating(amount.0, &author, amount);
 		}
 	}
 }
@@ -522,10 +553,137 @@ parameter_types! {
 	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
+use scale_info::TypeInfo;
+
+#[derive(Encode, Decode, Clone, TypeInfo)]
+pub struct TwoCurrencyAdapter<C, OU, T1, T2>(PhantomData<(C, OU, T1, T2)>);
+
+use sp_runtime::{
+	traits::{DispatchInfoOf, PostDispatchInfoOf, Saturating, Zero},
+	transaction_validity::InvalidTransaction,
+};
+
+use frame_support::{
+	traits::{ExistenceRequirement, Imbalance, WithdrawReasons},
+	unsigned::TransactionValidityError,
+};
+use orml_tokens::MultiTokenCurrency;
+
+use pallet_transaction_payment::OnChargeTransaction;
+
+type NegativeImbalanceOf<C, T> =
+	<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
+
+use orml_tokens::MultiTokenImbalanceWithZeroTrait;
+/// Default implementation for a Currency and an OnUnbalanced handler.
+///
+/// The unbalance handler is given 2 unbalanceds in [`OnUnbalanced::on_unbalanceds`]: fee and
+/// then tip.
+impl<T, C, OU, T1, T2> OnChargeTransaction<T> for TwoCurrencyAdapter<C, OU, T1, T2>
+where
+	T: pallet_transaction_payment::Config,
+	T::TransactionByteFee:
+		Get<<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance>,
+	C: MultiTokenCurrency<<T as frame_system::Config>::AccountId>,
+	C::PositiveImbalance: Imbalance<
+		<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
+		Opposite = C::NegativeImbalance,
+	>,
+	C::NegativeImbalance: Imbalance<
+		<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
+		Opposite = C::PositiveImbalance,
+	>,
+	OU: OnMultiTokenUnbalanced<NegativeImbalanceOf<C, T>>,
+	NegativeImbalanceOf<C, T>: MultiTokenImbalanceWithZeroTrait<TokenId>,
+	<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance:
+		scale_info::TypeInfo,
+	T1: Get<u32>,
+	T2: Get<u32>,
+{
+	type LiquidityInfo = Option<(TokenId, NegativeImbalanceOf<C, T>)>;
+	type Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance;
+
+	/// Withdraw the predicted fee from the transaction origin.
+	///
+	/// Note: The `fee` already includes the `tip`.
+	fn withdraw_fee(
+		who: &T::AccountId,
+		_call: &T::Call,
+		_info: &DispatchInfoOf<T::Call>,
+		fee: Self::Balance,
+		tip: Self::Balance,
+	) -> Result<Self::LiquidityInfo, TransactionValidityError> {
+		if fee.is_zero() {
+			return Ok(None)
+		}
+
+		let withdraw_reason = if tip.is_zero() {
+			WithdrawReasons::TRANSACTION_PAYMENT
+		} else {
+			WithdrawReasons::TRANSACTION_PAYMENT | WithdrawReasons::TIP
+		};
+
+		match C::withdraw(
+			T1::get().into(),
+			who,
+			fee,
+			withdraw_reason,
+			ExistenceRequirement::KeepAlive,
+		) {
+			Ok(imbalance) => Ok(Some((T1::get(), imbalance))),
+			Err(_) => match C::withdraw(
+				T2::get().into(),
+				who,
+				fee,
+				withdraw_reason,
+				ExistenceRequirement::KeepAlive,
+			) {
+				Ok(imbalance) => Ok(Some((T2::get(), imbalance))),
+				Err(_) => Err(InvalidTransaction::Payment.into()),
+			},
+		}
+	}
+
+	/// Hand the fee and the tip over to the `[OnUnbalanced]` implementation.
+	/// Since the predicted fee might have been too high, parts of the fee may
+	/// be refunded.
+	///
+	/// Note: The `corrected_fee` already includes the `tip`.
+	fn correct_and_deposit_fee(
+		who: &T::AccountId,
+		_dispatch_info: &DispatchInfoOf<T::Call>,
+		_post_info: &PostDispatchInfoOf<T::Call>,
+		corrected_fee: Self::Balance,
+		tip: Self::Balance,
+		already_withdrawn: Self::LiquidityInfo,
+	) -> Result<(), TransactionValidityError> {
+		if let Some((token_id, paid)) = already_withdrawn {
+			// Calculate how much refund we should return
+			let refund_amount = paid.peek().saturating_sub(corrected_fee);
+			// refund to the the account that paid the fees. If this fails, the
+			// account might have dropped below the existential balance. In
+			// that case we don't refund anything.
+			let refund_imbalance = C::deposit_into_existing(token_id.into(), &who, refund_amount)
+				.unwrap_or_else(|_| C::PositiveImbalance::from_zero(token_id.into()));
+			// merge the imbalance caused by paying the fees and refunding parts of it again.
+			let adjusted_paid = paid
+				.offset(refund_imbalance)
+				.same()
+				.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Payment))?;
+			// Call someone else to handle the imbalance (fee and tip separately)
+			let (tip, fee) = adjusted_paid.split(tip);
+			OU::on_unbalanceds(token_id, Some(fee).into_iter().chain(Some(tip)));
+		}
+		Ok(())
+	}
+}
+
 impl pallet_transaction_payment::Config for Runtime {
-	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<
-		orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>,
+	type OnChargeTransaction = TwoCurrencyAdapter<
+		orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
 		ToAuthor,
+		frame_support::traits::ConstU32<MGA_TOKEN_ID>,
+		frame_support::traits::ConstU32<DOT_TOKEN_ID>,
 	>;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = WeightToFee;

@@ -267,6 +267,15 @@ pub mod pallet {
 
 			Ok(().into())
 		}
+
+		#[pallet::weight(10_000)]
+		#[transactional]
+		pub fn claim_rewards(
+			origin: OriginFor<T>,
+		) -> DispatchResult {
+			let sender = ensure_root(origin)?;
+			Ok(().into())
+		}
 	}
 
 	#[pallet::error]

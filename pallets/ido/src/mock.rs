@@ -124,7 +124,7 @@ construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>},
-		Ido: pallet_ido::{Pallet, Call, Storage, Config, Event<T>},
+		Bootstrap: pallet_ido::{Pallet, Call, Storage, Config, Event<T>},
 	}
 );
 

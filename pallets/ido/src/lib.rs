@@ -48,7 +48,7 @@ pub mod pallet {
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_initialize(n: T::BlockNumber) -> Weight {
 			let phase = Phase::<T>::get();
-			if phase == IDOPhase::Finished {
+			if phase == BootstrapPhase::Finished {
 				return 0
 			}
 			if let Some((start, whitelist_length, public_length)) = BootstrapSchedule::<T>::get() {
@@ -58,7 +58,7 @@ pub mod pallet {
 				let finished = start + whitelist_length.into() + public_length.into();
 
 				if n >= finished {
-					Phase::<T>::put(IDOPhase::Finished);
+					Phase::<T>::put(BootstrapPhase::Finished);
 					let (mga_valuation, ksm_valuation) = Valuations::<T>::get();
 					if let Some((liq_asset_id, issuance)) = T::PoolCreateApi::pool_create(
 						T::KSMTokenId::get(),
@@ -70,9 +70,9 @@ pub mod pallet {
 					}
 
 				} else if n >= public_start {
-					Phase::<T>::put(IDOPhase::Public);
+					Phase::<T>::put(BootstrapPhase::Public);
 				} else if n >= whitelist_start {
-					Phase::<T>::put(IDOPhase::Whitelist);
+					Phase::<T>::put(BootstrapPhase::Whitelist);
 				}
 			}
 			0
@@ -104,8 +104,8 @@ pub mod pallet {
 	}
 
 	#[pallet::storage]
-	#[pallet::getter(fn donations)]
-	pub type Donations<T: Config> =
+	#[pallet::getter(fn provisions)]
+	pub type Provisions<T: Config> =
 		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, TokenId, Balance, ValueQuery>;
 
 	#[pallet::storage]
@@ -115,7 +115,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn phase)]
-	pub type Phase<T: Config> = StorageValue<_, IDOPhase, ValueQuery>;
+	pub type Phase<T: Config> = StorageValue<_, BootstrapPhase, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn valuations)]
@@ -147,7 +147,7 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
-			Phase::<T>::put(IDOPhase::BeforeStart);
+			Phase::<T>::put(BootstrapPhase::BeforeStart);
 		}
 	}
 
@@ -155,7 +155,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(10_000)]
 		#[transactional]
-		pub fn donate(origin: OriginFor<T>, token_id: TokenId, amount: Balance) -> DispatchResult {
+		pub fn provision(origin: OriginFor<T>, token_id: TokenId, amount: Balance) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
 			ensure!(
@@ -168,9 +168,9 @@ pub mod pallet {
 
 			ensure!(
 				token_id == T::MGATokenId::get() ||
-				Phase::<T>::get() == IDOPhase::Public ||
-					(Phase::<T>::get() == IDOPhase::Whitelist && Self::is_whitelisted(&sender)),
-				Error::<T>::UnauthorizedForDonation
+				Phase::<T>::get() == BootstrapPhase::Public ||
+					(Phase::<T>::get() == BootstrapPhase::Whitelist && Self::is_whitelisted(&sender)),
+				Error::<T>::Unauthorized
 			);
 
 			<T as Config>::Currency::transfer(
@@ -183,9 +183,9 @@ pub mod pallet {
 			.or(Err(Error::<T>::NotEnoughAssets))?;
 
 			ensure!(
-				Donations::<T>::try_mutate(sender, token_id, |donations| {
-					if let Some(val) = donations.checked_add(amount) {
-						*donations = val;
+				Provisions::<T>::try_mutate(sender, token_id, |provision| {
+					if let Some(val) = provision.checked_add(amount) {
+						*provision = val;
 						Ok(())
 					} else {
 						Err(())
@@ -198,7 +198,7 @@ pub mod pallet {
 			let (pre_mga_valuation, _) = Valuations::<T>::get();
 			ensure!(
 				token_id != T::KSMTokenId::get() || pre_mga_valuation != 0,
-				Error::<T>::FirstDonationWrongToken
+				Error::<T>::FirstProvisionInMga
 			);
 
 			ensure!(
@@ -249,11 +249,11 @@ pub mod pallet {
 		) -> DispatchResult {
 			ensure_root(origin)?;
 
-			ensure!(Phase::<T>::get() == IDOPhase::BeforeStart, Error::<T>::AlreadyStarted);
+			ensure!(Phase::<T>::get() == BootstrapPhase::BeforeStart, Error::<T>::AlreadyStarted);
 
 			ensure!(
 				ido_start > frame_system::Pallet::<T>::block_number(),
-				Error::<T>::IDOStartInThePast
+				Error::<T>::BootstrapStartInThePast
 			);
 
 			ensure!(whitelist_phase_length > 0, Error::<T>::PhaseLengthCannotBeZero);
@@ -292,12 +292,12 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 
 			ensure!(
-				Self::phase() == IDOPhase::Finished,
+				Self::phase() == BootstrapPhase::Finished,
 				Error::<T>::NotFinishedYet
 			);
 			
-			let user_ksm_provision = Self::donations(&sender, T::KSMTokenId::get());
-			let user_mga_provision = Self::donations(&sender, T::MGATokenId::get());
+			let user_ksm_provision = Self::provisions(&sender, T::KSMTokenId::get());
+			let user_mga_provision = Self::provisions(&sender, T::MGATokenId::get());
 
 			let (liq_token_id, liquidity) = Self::minted_liquidity();
 			let (total_mga_provision, total_ksm_provision) = Self::valuations();
@@ -338,18 +338,29 @@ pub mod pallet {
 	#[pallet::error]
 	/// Errors
 	pub enum Error<T> {
-		/// Only MGA & KSM can be used for donation
+		/// Only MGA & KSM can be used for provisions
 		UnsupportedTokenId,
+		/// Not enought funds for provisio
 		NotEnoughAssets,
+		/// Math problem
 		MathOverflow,
-		UnauthorizedForDonation,
-		IDOStartInThePast,
+		/// User cannot participate at this moment
+		Unauthorized,
+		/// Bootstrap cant be scheduled in past
+		BootstrapStartInThePast,
+		/// Bootstarap phases cannot lasts 0 blocks
 		PhaseLengthCannotBeZero,
+		/// Bootstrate event already started
 		AlreadyStarted,
+		/// Valuation ratio exceeded
 		ValuationRatio,
-		FirstDonationWrongToken,
+		/// First provision must be in MGA/MGX
+		FirstProvisionInMga,
+		/// Bootstraped pool already exists
 		PoolAlreadyExists,
+		/// Cannot claim rewards before bootstrap finish
 		NotFinishedYet,
+		/// no rewards to claim
 		NothingToClaim,
 	}
 
@@ -364,16 +375,16 @@ pub mod pallet {
 }
 
 #[derive(Eq, PartialEq, Encode, Decode, TypeInfo, Debug)]
-pub enum IDOPhase {
+pub enum BootstrapPhase {
 	BeforeStart,
 	Whitelist,
 	Public,
 	Finished,
 }
 
-impl Default for IDOPhase {
+impl Default for BootstrapPhase {
 	fn default() -> Self {
-		IDOPhase::BeforeStart
+		BootstrapPhase::BeforeStart
 	}
 }
 

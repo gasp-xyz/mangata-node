@@ -11,7 +11,7 @@ const INITIAL_AMOUNT: u128 = 1_000_000;
 const DUMMY_ID: u32 = 2;
 const LIQ_TOKEN_ID: TokenId = 10_u32;
 const LIQ_TOKEN_AMOUNT: Balance = 1_000_000_u128;
-const POOL_CREATE_RETURN_VALUE: Option<(TokenId, Balance)> = Some((LIQ_TOKEN_ID, LIQ_TOKEN_AMOUNT));
+const POOL_CREATE_DUMMY_RETURN_VALUE: Option<(TokenId, Balance)> = Some((LIQ_TOKEN_ID, LIQ_TOKEN_AMOUNT));
 
 fn set_up() {
 	let mga_id = Ido::create_new_token(&USER_ID, INITIAL_AMOUNT);
@@ -64,6 +64,24 @@ fn test_first_donation_with_ksm_fails() {
 			Ido::donate(Origin::signed(USER_ID), KSMId::get(), 1),
 			Error::<Test>::FirstDonationWrongToken
 		);
+	});
+}
+
+#[test]
+#[serial]
+fn test_event_is_published_after_successful_provision() {
+	new_test_ext().execute_with(|| {
+		set_up();
+		jump_to_public_phase();
+		Ido::donate(Origin::signed(USER_ID), MGAId::get(), 1).unwrap();
+
+		let event =
+			crate::mock::Event::Ido(crate::Event::<Test>::Provisioned(
+				MGAId::get(),
+				1,
+			));
+
+		assert!(System::events().iter().any(|record| record.event == event));
 	});
 }
 
@@ -285,7 +303,7 @@ fn test_bootstrap_state_transitions() {
 		pool_exists_mock.expect().return_const(false);
 
 		let pool_create_mock = MockPoolCreateApiMock::pool_create_context();
-		pool_create_mock.expect().times(1).return_const(POOL_CREATE_RETURN_VALUE);
+		pool_create_mock.expect().times(1).return_const(POOL_CREATE_DUMMY_RETURN_VALUE);
 
 		Ido::start_ido(
 			Origin::root(),
@@ -328,7 +346,7 @@ fn test_bootstrap_state_transitions_when_on_initialized_is_not_called() {
 		set_up();
 
 		let pool_create_mock = MockPoolCreateApiMock::pool_create_context();
-		pool_create_mock.expect().times(1).return_const(POOL_CREATE_RETURN_VALUE);
+		pool_create_mock.expect().times(1).return_const(POOL_CREATE_DUMMY_RETURN_VALUE);
 
 		const BOOTSTRAP_WHITELIST_START: u64 = 100;
 		const BOOTSTRAP_PUBLIC_START: u64 = 110;
@@ -408,7 +426,7 @@ fn test_crate_pool_is_called_with_proper_arguments_after_bootstrap_finish() {
 				eq(MGAId::get()),
 				eq(MGA_PROVISON),
 			)
-			.times(1).return_const(POOL_CREATE_RETURN_VALUE);
+			.times(1).return_const(POOL_CREATE_DUMMY_RETURN_VALUE);
 
 		Ido::start_ido(Origin::root(), 100_u32.into(), 10, 10).unwrap();
 
@@ -526,6 +544,20 @@ fn test_rewards_are_distributed_properly_with_multiple_user() {
 		use std::sync::{Arc, Mutex};
 		set_up();
 
+		let provisioned_ev = |id, amount| {
+			crate::mock::Event::Ido(crate::Event::<Test>::Provisioned(
+				id,
+				amount
+			))
+		};
+
+		let rewards_claimed_ev = |id, amount| {
+			crate::mock::Event::Ido(crate::Event::<Test>::RewardsClaimed(
+				id,
+				amount
+			))
+		};
+
 		const USER_KSM_PROVISON: Balance = 15;
 		const USER_MGA_PROVISON: Balance = 400_000;
 		const ANOTHER_USER_KSM_PROVISON: Balance = 20;
@@ -562,6 +594,11 @@ fn test_rewards_are_distributed_properly_with_multiple_user() {
 
 		Ido::donate(Origin::signed(USER_ID), KSMId::get(), USER_KSM_PROVISON).unwrap();
 		Ido::donate(Origin::signed(ANOTHER_USER_ID), KSMId::get(), ANOTHER_USER_KSM_PROVISON).unwrap();
+
+		assert!(System::events().iter().any(|record| record.event == provisioned_ev(MGAId::get(), USER_MGA_PROVISON)));
+		assert!(System::events().iter().any(|record| record.event == provisioned_ev(KSMId::get(), USER_KSM_PROVISON)));
+		assert!(System::events().iter().any(|record| record.event == provisioned_ev(MGAId::get(), ANOTHER_USER_MGA_PROVISON)));
+		assert!(System::events().iter().any(|record| record.event == provisioned_ev(KSMId::get(), ANOTHER_USER_KSM_PROVISON)));
 
 		Ido::on_initialize(120_u32.into());
 		assert_eq!(IDOPhase::Finished, Phase::<Test>::get());
@@ -608,8 +645,15 @@ fn test_rewards_are_distributed_properly_with_multiple_user() {
 
 		assert_eq!( Ido::balance(liquidity_token_id, USER_ID), user_expected_liq_amount);
 		assert_eq!( Ido::balance(liquidity_token_id, ANOTHER_USER_ID), user2_expected_liq_amount);
+
+
+		assert!(System::events().iter().any(|record| record.event == rewards_claimed_ev(liquidity_token_id, user_expected_liq_amount)));
+		assert!(System::events().iter().any(|record| record.event == rewards_claimed_ev(liquidity_token_id, user2_expected_liq_amount)));
+
 	});
+
 }
+
 
 
 // TODO: events deposit

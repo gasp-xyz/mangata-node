@@ -225,6 +225,7 @@ pub mod pallet {
 				);
 			}
 
+			Self::deposit_event(Event::Provisioned(token_id, amount));
 			Ok(().into())
 		}
 
@@ -318,6 +319,8 @@ pub mod pallet {
 				Error::<T>::NothingToClaim
 			);
 
+			let mut total_rewards_claimed = 0;
+
 			if ksm_rewards > ksm_claimed_rewards {
 				let ksm_to_bo_claimed = ksm_rewards - ksm_claimed_rewards;
 				T::Currency::transfer(token_id.into(), &Self::vault_address(), &sender, ksm_to_bo_claimed.into(), ExistenceRequirement::KeepAlive)?;
@@ -333,6 +336,7 @@ pub mod pallet {
 					.is_ok(),
 					Error::<T>::MathOverflow
 				);
+				total_rewards_claimed += ksm_to_bo_claimed;
 			}
 
 			if mga_rewards > mga_claimed_rewards {
@@ -350,7 +354,10 @@ pub mod pallet {
 					.is_ok(),
 					Error::<T>::MathOverflow
 				);
+				total_rewards_claimed += mga_to_bo_claimed;
 			}
+
+			Self::deposit_event(Event::RewardsClaimed(token_id, total_rewards_claimed));
 
 			Ok(().into())
 		}
@@ -377,8 +384,10 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// Issuance for upcoming session issued
-		FundsDonated(TokenId, Balance),
+		/// Funds provisioned
+		Provisioned(TokenId, Balance),
+		/// Rewards claimed
+		RewardsClaimed(TokenId, Balance),
 	}
 }
 

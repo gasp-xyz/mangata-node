@@ -5334,6 +5334,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-bootstrap"
+version = "2.0.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "mangata-primitives",
+ "mockall",
+ "orml-tokens",
+ "orml-traits",
+ "parity-scale-codec 2.3.1",
+ "scale-info",
+ "serde",
+ "serial_test",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-bounties"
 version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#1d7e073f9507cd612d082fdcef37505914a9a9ff"
@@ -5516,27 +5537,6 @@ dependencies = [
  "frame-system",
  "parity-scale-codec 2.3.1",
  "scale-info",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-ido"
-version = "2.0.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "mangata-primitives",
- "mockall",
- "orml-tokens",
- "orml-traits",
- "parity-scale-codec 2.3.1",
- "scale-info",
- "serde",
- "serial_test",
- "sp-arithmetic",
- "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std",

@@ -2,7 +2,7 @@
 authors = ["Mangata Team"]
 edition = "2018"
 license = "Unlicense"
-name = 'pallet-ido'
+name = 'pallet-bootstrap'
 version = '2.0.0'
 
 [package.metadata.docs.rs]

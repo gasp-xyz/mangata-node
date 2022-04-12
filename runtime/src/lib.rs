@@ -31,9 +31,7 @@ use sp_version::RuntimeVersion;
 
 use frame_support::{
 	construct_runtime, match_type, parameter_types,
-	traits::{
-		Contains, Everything, Get, LockIdentifier, Nothing, OnUnbalanced, U128CurrencyToVote,
-	},
+	traits::{Contains, Everything, Get, LockIdentifier, Nothing, U128CurrencyToVote},
 	weights::{
 		constants::{WEIGHT_PER_MICROS, WEIGHT_PER_MILLIS, WEIGHT_PER_SECOND},
 		DispatchClass, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
@@ -523,8 +521,34 @@ type ORMLCurrencyAdapterNegativeImbalance =
 		AccountId,
 	>>::NegativeImbalance;
 
+pub trait OnMultiTokenUnbalanced<
+	Imbalance: frame_support::traits::TryDrop + MultiTokenImbalanceWithZeroTrait<TokenId>,
+>
+{
+	/// Handler for some imbalances. The different imbalances might have different origins or
+	/// meanings, dependent on the context. Will default to simply calling on_unbalanced for all
+	/// of them. Infallible.
+	fn on_unbalanceds<B>(token_id: TokenId, amounts: impl Iterator<Item = Imbalance>)
+	where
+		Imbalance: frame_support::traits::Imbalance<B>,
+	{
+		Self::on_unbalanced(amounts.fold(Imbalance::from_zero(token_id), |i, x| x.merge(i)))
+	}
+
+	/// Handler for some imbalance. Infallible.
+	fn on_unbalanced(amount: Imbalance) {
+		amount.try_drop().unwrap_or_else(Self::on_nonzero_unbalanced)
+	}
+
+	/// Actually handle a non-zero imbalance. You probably want to implement this rather than
+	/// `on_unbalanced`.
+	fn on_nonzero_unbalanced(amount: Imbalance) {
+		drop(amount);
+	}
+}
+
 pub struct ToAuthor;
-impl OnUnbalanced<ORMLCurrencyAdapterNegativeImbalance> for ToAuthor {
+impl OnMultiTokenUnbalanced<ORMLCurrencyAdapterNegativeImbalance> for ToAuthor {
 	fn on_nonzero_unbalanced(amount: ORMLCurrencyAdapterNegativeImbalance) {
 		if let Some(author) = Authorship::author() {
 			<orml_tokens::MultiTokenCurrencyAdapter<Runtime> as orml_tokens::MultiTokenCurrency<
@@ -580,7 +604,8 @@ where
 		<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
 		Opposite = C::PositiveImbalance,
 	>,
-	OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
+	OU: OnMultiTokenUnbalanced<NegativeImbalanceOf<C, T>>,
+	NegativeImbalanceOf<C, T>: MultiTokenImbalanceWithZeroTrait<TokenId>,
 	<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance:
 		scale_info::TypeInfo,
 	T1: Get<u32>,
@@ -658,7 +683,7 @@ where
 				.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Payment))?;
 			// Call someone else to handle the imbalance (fee and tip separately)
 			let (tip, fee) = adjusted_paid.split(tip);
-			OU::on_unbalanceds(Some(fee).into_iter().chain(Some(tip)));
+			OU::on_unbalanceds(token_id, Some(fee).into_iter().chain(Some(tip)));
 		}
 		Ok(())
 	}

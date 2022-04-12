@@ -394,20 +394,27 @@ fn test_crate_pool_is_called_with_proper_arguments_after_bootstrap_finish() {
 		set_up();
 
 		use mockall::predicate::eq;
+		const KSM_PROVISON: Balance = 30;
+		const MGA_PROVISON: Balance = 500_000;
 
 		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
 		let pool_create_mock = MockPoolCreateApiMock::pool_create_context();
 		pool_create_mock.expect()
-			.with(eq(KSMId::get()), eq(MGAId::get()))
+			.with(
+				eq(KSMId::get()),
+				eq(KSM_PROVISON),
+				eq(MGAId::get()),
+				eq(MGA_PROVISON),
+			)
 			.times(1).return_const(POOL_CREATE_RETURN_VALUE);
 
 		Ido::start_ido(Origin::root(), 100_u32.into(), 10, 10).unwrap();
 
 		Ido::on_initialize(110_u32.into());
-		Ido::donate(Origin::signed(USER_ID), MGAId::get(), 50_000).unwrap();
-		Ido::donate(Origin::signed(USER_ID), KSMId::get(), 5).unwrap();
+		Ido::donate(Origin::signed(USER_ID), MGAId::get(), MGA_PROVISON).unwrap();
+		Ido::donate(Origin::signed(USER_ID), KSMId::get(), KSM_PROVISON).unwrap();
 		Ido::on_initialize(120_u32.into());
 	});
 }
@@ -417,6 +424,7 @@ fn test_crate_pool_is_called_with_proper_arguments_after_bootstrap_finish() {
 fn test_cannot_claim_rewards_when_bootstrap_is_not_finished() {
 	new_test_ext().execute_with(|| {
 		set_up();
+		use mockall::predicate::eq;
 
 		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
@@ -441,18 +449,26 @@ fn test_cannot_claim_rewards_when_bootstrap_is_not_finished() {
 #[serial]
 fn test_rewards_are_distributed_properly() {
 	new_test_ext().execute_with(|| {
+		use std::rc::Rc;
+		use std::sync::{Arc, Mutex};
 		set_up();
+
+		const KSM_PROVISON: Balance = 10;
+		const MGA_PROVISON: Balance = 100_000;
+		let liq_token_id: Arc<Mutex<TokenId>> = Arc::new(Mutex::new(0_u32.into()));
+		let ref_liq_token_id = liq_token_id.clone();
 
 		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
 		let pool_create_mock = MockPoolCreateApiMock::pool_create_context();
 		pool_create_mock.expect()
-			.with(mockall::predicate::eq(KSMId::get()), mockall::predicate::eq(MGAId::get()))
-			.times(1).returning(|_,_| {
-			let hardcoded_issuance = 1_000_000;
-			let id = Ido::create_new_token(&Ido::vault_address(), hardcoded_issuance);
-			Some((id, hardcoded_issuance))
+			.times(1).returning(move |_, ksm_amount, _, mga_amount| {
+			let issuance = (ksm_amount + mga_amount) / 2;
+			println!("hello world");
+			let id = Ido::create_new_token(&Ido::vault_address(), issuance);
+			*(ref_liq_token_id.lock().unwrap()) = id;
+			Some((id, issuance))
 		});
 
 		Ido::start_ido(Origin::root(), 100_u32.into(), 10, 10).unwrap();
@@ -463,14 +479,43 @@ fn test_rewards_are_distributed_properly() {
 		Ido::on_initialize(110_u32.into());
 		assert_eq!(IDOPhase::Public, Phase::<Test>::get());
 
-		Ido::donate(Origin::signed(USER_ID), MGAId::get(), 100_000).unwrap();
-		Ido::donate(Origin::signed(USER_ID), MGAId::get(), 10).unwrap();
+		Ido::donate(Origin::signed(USER_ID), MGAId::get(), MGA_PROVISON).unwrap();
+		Ido::donate(Origin::signed(USER_ID), KSMId::get(), KSM_PROVISON).unwrap();
 
 		Ido::on_initialize(120_u32.into());
 		assert_eq!(IDOPhase::Finished, Phase::<Test>::get());
 
+
+		let (mga_valuation, ksm_valuation) = Ido::valuations();
+		let liquidity_token_id = *(liq_token_id.lock().unwrap());
+		let liquidity_token_amount = (mga_valuation + ksm_valuation)/ 2;
+
+		assert_eq!(
+			Ido::balance( liquidity_token_id, Ido::vault_address()),
+			liquidity_token_amount
+		);
+		assert_eq!(
+			Ido::minted_liquidity(),
+			(liquidity_token_id, liquidity_token_amount)
+		);
+
 		Ido::claim_rewards(Origin::signed(USER_ID)).unwrap();
 
+		assert_eq!(
+			Ido::claimed_rewards(USER_ID, MGAId::get()),
+			liquidity_token_amount / 2
+		);
+
+		assert_eq!(
+			Ido::claimed_rewards(USER_ID, KSMId::get()),
+			liquidity_token_amount / 2
+		);
+
+		assert_eq!(
+			Ido::balance(liquidity_token_id, USER_ID),
+			// KSM rewards                  MGA rewards
+			(liquidity_token_amount / 2) + (liquidity_token_amount / 2)
+		);
 	});
 }
 

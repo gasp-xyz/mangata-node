@@ -101,7 +101,7 @@ mockall::mock! {
 	pub PoolCreateApiMock {}
 	impl PoolCreateApi for PoolCreateApiMock {
 		fn pool_exists(first: TokenId, second: TokenId) -> bool;
-		fn pool_create(first: TokenId, second: TokenId) -> Option<(TokenId, Balance)>;
+		fn pool_create(first: TokenId, first_amount: Balance, second: TokenId, second_amount: Balance) -> Option<(TokenId, Balance)>;
 	}
 }
 

@@ -35,7 +35,7 @@ const PALLET_ID: PalletId = PalletId(*b"12345678");
 
 pub trait PoolCreateApi {
 	fn pool_exists(first: TokenId, second: TokenId) -> bool;
-	fn pool_create(first: TokenId, second: TokenId) -> Option<(TokenId, Balance)>;
+	fn pool_create(first: TokenId, first_amount: Balance, second: TokenId, second_amount: Balance) -> Option<(TokenId, Balance)>;
 }
 
 #[frame_support::pallet]
@@ -63,7 +63,13 @@ pub mod pallet {
 
 				if n >= finished {
 					Phase::<T>::put(IDOPhase::Finished);
-					if let Some((liq_asset_id, issuance)) = T::PoolCreateApi::pool_create(T::KSMTokenId::get(), T::MGATokenId::get()){
+					let (mga_valuation, ksm_valuation) = Valuations::<T>::get();
+					if let Some((liq_asset_id, issuance)) = T::PoolCreateApi::pool_create(
+						T::KSMTokenId::get(),
+						ksm_valuation,
+						T::MGATokenId::get(),
+						mga_valuation,
+						){
 						MintedLiquidity::<T>::put((liq_asset_id, issuance));
 					}
 
@@ -310,7 +316,7 @@ pub mod pallet {
 
 			if ksm_rewards > ksm_claimed_rewards {
 				let ksm_to_bo_claimed = ksm_rewards - ksm_claimed_rewards;
-				T::Currency::transfer(T::KSMTokenId::get().into(), &Self::vault_address(), &sender, ksm_to_bo_claimed.into(), ExistenceRequirement::KeepAlive)?;
+				T::Currency::transfer(token_id.into(), &Self::vault_address(), &sender, ksm_to_bo_claimed.into(), ExistenceRequirement::KeepAlive)?;
 				ensure!(
 					ClaimedRewards::<T>::try_mutate(&sender, T::KSMTokenId::get(), |rewards| {
 						if let Some(val) = rewards.checked_add(ksm_to_bo_claimed) {
@@ -325,9 +331,9 @@ pub mod pallet {
 				);
 			}
 
-			if ksm_rewards > ksm_claimed_rewards {
+			if mga_rewards > mga_claimed_rewards {
 				let mga_to_bo_claimed = mga_rewards - mga_claimed_rewards;
-				T::Currency::transfer(T::MGATokenId::get().into(), &Self::vault_address(), &sender, mga_to_bo_claimed.into(), ExistenceRequirement::KeepAlive)?;
+				T::Currency::transfer(token_id.into(), &Self::vault_address(), &sender, mga_to_bo_claimed.into(), ExistenceRequirement::KeepAlive)?;
 				ensure!(
 					ClaimedRewards::<T>::try_mutate(sender, T::MGATokenId::get(), |rewards| {
 						if let Some(val) = rewards.checked_add(mga_to_bo_claimed.into()) {

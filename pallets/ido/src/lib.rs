@@ -35,7 +35,7 @@ const PALLET_ID: PalletId = PalletId(*b"12345678");
 
 pub trait PoolCreateApi {
 	fn pool_exists(first: TokenId, second: TokenId) -> bool;
-	fn pool_create(first: TokenId, second: TokenId) -> Option<TokenId>;
+	fn pool_create(first: TokenId, second: TokenId) -> Option<(TokenId, Balance)>;
 }
 
 #[frame_support::pallet]
@@ -63,9 +63,8 @@ pub mod pallet {
 
 				if n >= finished {
 					Phase::<T>::put(IDOPhase::Finished);
-					if let Some(liq_asset_id) = T::PoolCreateApi::pool_create(T::KSMTokenId::get(), T::MGATokenId::get()){
-						let issuance = <T as Config>::Currency::total_issuance(liq_asset_id.into());
-						MintedLiquidity::<T>::put((liq_asset_id, issuance.into()));
+					if let Some((liq_asset_id, issuance)) = T::PoolCreateApi::pool_create(T::KSMTokenId::get(), T::MGATokenId::get()){
+						MintedLiquidity::<T>::put((liq_asset_id, issuance));
 					}
 
 				} else if n >= public_start {
@@ -287,6 +286,11 @@ pub mod pallet {
 			origin: OriginFor<T>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
+
+			ensure!(
+				Self::phase() == IDOPhase::Finished,
+				Error::<T>::NotFinishedYet
+			);
 			
 			let user_ksm_provision = Self::donations(&sender, T::KSMTokenId::get());
 			let user_mga_provision = Self::donations(&sender, T::MGATokenId::get());
@@ -356,6 +360,7 @@ pub mod pallet {
 		ValuationRatio,
 		FirstDonationWrongToken,
 		PoolAlreadyExists,
+		NotFinishedYet,
 	}
 
 	#[pallet::event]

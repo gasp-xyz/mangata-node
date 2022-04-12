@@ -9,6 +9,9 @@ const USER_ID: u128 = 0;
 const ANOTHER_USER_ID: u128 = 100;
 const INITIAL_AMOUNT: u128 = 1_000_000;
 const DUMMY_ID: u32 = 2;
+const LIQ_TOKEN_ID: TokenId = 10_u32;
+const LIQ_TOKEN_AMOUNT: Balance = 1_000_000_u128;
+const POOL_CREATE_RETURN_VALUE: Option<(TokenId, Balance)> = Some((LIQ_TOKEN_ID, LIQ_TOKEN_AMOUNT));
 
 fn set_up() {
 	let mga_id = Ido::create_new_token(&USER_ID, INITIAL_AMOUNT);
@@ -282,7 +285,7 @@ fn test_bootstrap_state_transitions() {
 		pool_exists_mock.expect().return_const(false);
 
 		let pool_create_mock = MockPoolCreateApiMock::pool_create_context();
-		pool_create_mock.expect().times(1).return_const(true);
+		pool_create_mock.expect().times(1).return_const(POOL_CREATE_RETURN_VALUE);
 
 		Ido::start_ido(
 			Origin::root(),
@@ -325,7 +328,7 @@ fn test_bootstrap_state_transitions_when_on_initialized_is_not_called() {
 		set_up();
 
 		let pool_create_mock = MockPoolCreateApiMock::pool_create_context();
-		pool_create_mock.expect().times(1).return_const(true);
+		pool_create_mock.expect().times(1).return_const(POOL_CREATE_RETURN_VALUE);
 
 		const BOOTSTRAP_WHITELIST_START: u64 = 100;
 		const BOOTSTRAP_PUBLIC_START: u64 = 110;
@@ -386,15 +389,19 @@ fn test_do_not_allow_for_creating_starting_bootstrap_for_existing_pool() {
 
 #[test]
 #[serial]
-fn test_pool_is_created_after_bootstrap_finish() {
+fn test_crate_pool_is_called_with_proper_arguments_after_bootstrap_finish() {
 	new_test_ext().execute_with(|| {
 		set_up();
+
+		use mockall::predicate::eq;
 
 		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
 		let pool_create_mock = MockPoolCreateApiMock::pool_create_context();
-		pool_create_mock.expect().times(1).return_const(true);
+		pool_create_mock.expect()
+			.with(eq(KSMId::get()), eq(MGAId::get()))
+			.times(1).return_const(POOL_CREATE_RETURN_VALUE);
 
 		Ido::start_ido(Origin::root(), 100_u32.into(), 10, 10).unwrap();
 
@@ -404,3 +411,68 @@ fn test_pool_is_created_after_bootstrap_finish() {
 		Ido::on_initialize(120_u32.into());
 	});
 }
+
+#[test]
+#[serial]
+fn test_cannot_claim_rewards_when_bootstrap_is_not_finished() {
+	new_test_ext().execute_with(|| {
+		set_up();
+
+		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		Ido::start_ido(Origin::root(), 100_u32.into(), 10, 10).unwrap();
+
+		Ido::on_initialize(100_u32.into());
+		assert_eq!(IDOPhase::Whitelist, Phase::<Test>::get());
+
+		Ido::on_initialize(110_u32.into());
+		assert_eq!(IDOPhase::Public, Phase::<Test>::get());
+
+		assert_err!(
+			Ido::claim_rewards(Origin::signed(USER_ID)),
+			Error::<Test>::NotFinishedYet
+		);
+	});
+}
+
+
+#[test]
+#[serial]
+fn test_rewards_are_distributed_properly() {
+	new_test_ext().execute_with(|| {
+		set_up();
+
+		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		let pool_create_mock = MockPoolCreateApiMock::pool_create_context();
+		pool_create_mock.expect()
+			.with(mockall::predicate::eq(KSMId::get()), mockall::predicate::eq(MGAId::get()))
+			.times(1).returning(|_,_| {
+			let hardcoded_issuance = 1_000_000;
+			let id = Ido::create_new_token(&Ido::vault_address(), hardcoded_issuance);
+			Some((id, hardcoded_issuance))
+		});
+
+		Ido::start_ido(Origin::root(), 100_u32.into(), 10, 10).unwrap();
+
+		Ido::on_initialize(100_u32.into());
+		assert_eq!(IDOPhase::Whitelist, Phase::<Test>::get());
+
+		Ido::on_initialize(110_u32.into());
+		assert_eq!(IDOPhase::Public, Phase::<Test>::get());
+
+		Ido::donate(Origin::signed(USER_ID), MGAId::get(), 100_000).unwrap();
+		Ido::donate(Origin::signed(USER_ID), MGAId::get(), 10).unwrap();
+
+		Ido::on_initialize(120_u32.into());
+		assert_eq!(IDOPhase::Finished, Phase::<Test>::get());
+
+		Ido::claim_rewards(Origin::signed(USER_ID)).unwrap();
+
+	});
+}
+
+
+// TODO: events deposit

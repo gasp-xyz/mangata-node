@@ -302,8 +302,7 @@ pub mod pallet {
 			let user_mga_provision = Self::donations(&sender, T::MGATokenId::get());
 
 			let (token_id, liquidity) = Self::minted_liquidity();
-			let total_ksm_provision = Self::donations(&sender, T::KSMTokenId::get());
-			let total_mga_provision = Self::donations(&sender, T::MGATokenId::get());	
+			let (total_mga_provision, total_ksm_provision) = Self::valuations();
 
 			let ksm_rewards = multiply_by_rational(user_ksm_provision, liquidity / 2, total_ksm_provision)
 					.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
@@ -313,6 +312,11 @@ pub mod pallet {
 
 			let ksm_claimed_rewards = ClaimedRewards::<T>::get(&sender, T::KSMTokenId::get());
 			let mga_claimed_rewards = ClaimedRewards::<T>::get(&sender, T::MGATokenId::get());
+
+			ensure!(
+				ksm_rewards > ksm_claimed_rewards || mga_rewards > mga_claimed_rewards,
+				Error::<T>::NothingToClaim
+			);
 
 			if ksm_rewards > ksm_claimed_rewards {
 				let ksm_to_bo_claimed = ksm_rewards - ksm_claimed_rewards;
@@ -367,6 +371,7 @@ pub mod pallet {
 		FirstDonationWrongToken,
 		PoolAlreadyExists,
 		NotFinishedYet,
+		NothingToClaim,
 	}
 
 	#[pallet::event]

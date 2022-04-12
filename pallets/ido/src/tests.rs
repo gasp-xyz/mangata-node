@@ -444,10 +444,9 @@ fn test_cannot_claim_rewards_when_bootstrap_is_not_finished() {
 	});
 }
 
-
 #[test]
 #[serial]
-fn test_rewards_are_distributed_properly() {
+fn test_rewards_are_distributed_properly_with_single_user() {
 	new_test_ext().execute_with(|| {
 		use std::rc::Rc;
 		use std::sync::{Arc, Mutex};
@@ -519,5 +518,101 @@ fn test_rewards_are_distributed_properly() {
 	});
 }
 
+#[test]
+#[serial]
+fn test_rewards_are_distributed_properly_with_multiple_user() {
+	new_test_ext().execute_with(|| {
+		use std::rc::Rc;
+		use std::sync::{Arc, Mutex};
+		set_up();
+
+		const USER_KSM_PROVISON: Balance = 15;
+		const USER_MGA_PROVISON: Balance = 400_000;
+		const ANOTHER_USER_KSM_PROVISON: Balance = 20;
+		const ANOTHER_USER_MGA_PROVISON: Balance = 100_000;
+		let liq_token_id: Arc<Mutex<TokenId>> = Arc::new(Mutex::new(0_u32.into()));
+		let ref_liq_token_id = liq_token_id.clone();
+
+		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		let pool_create_mock = MockPoolCreateApiMock::pool_create_context();
+		pool_create_mock.expect()
+			.times(1).returning(move |_, ksm_amount, _, mga_amount| {
+			let issuance = (ksm_amount + mga_amount) / 2;
+			println!("hello world");
+			let id = Ido::create_new_token(&Ido::vault_address(), issuance);
+			*(ref_liq_token_id.lock().unwrap()) = id;
+			Some((id, issuance))
+		});
+
+		Ido::start_ido(Origin::root(), 100_u32.into(), 10, 10).unwrap();
+
+		Ido::on_initialize(100_u32.into());
+		assert_eq!(IDOPhase::Whitelist, Phase::<Test>::get());
+
+		Ido::on_initialize(110_u32.into());
+		assert_eq!(IDOPhase::Public, Phase::<Test>::get());
+
+		Ido::transfer(MGAId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 500_000).unwrap();
+		Ido::transfer(KSMId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 500_000).unwrap();
+
+		Ido::donate(Origin::signed(USER_ID), MGAId::get(), USER_MGA_PROVISON).unwrap();
+		Ido::donate(Origin::signed(ANOTHER_USER_ID), MGAId::get(), ANOTHER_USER_MGA_PROVISON).unwrap();
+
+		Ido::donate(Origin::signed(USER_ID), KSMId::get(), USER_KSM_PROVISON).unwrap();
+		Ido::donate(Origin::signed(ANOTHER_USER_ID), KSMId::get(), ANOTHER_USER_KSM_PROVISON).unwrap();
+
+		Ido::on_initialize(120_u32.into());
+		assert_eq!(IDOPhase::Finished, Phase::<Test>::get());
+
+
+		let (mga_valuation, ksm_valuation) = Ido::valuations();
+		assert_eq!(mga_valuation, 500_000);
+		assert_eq!(ksm_valuation, 35);
+		let liquidity_token_id = *(liq_token_id.lock().unwrap());
+		let liquidity_token_amount = (mga_valuation + ksm_valuation)/ 2;
+
+		assert_eq!(
+			Ido::balance( liquidity_token_id, Ido::vault_address()),
+			liquidity_token_amount
+		);
+		assert_eq!(
+			Ido::minted_liquidity(),
+			(liquidity_token_id, liquidity_token_amount)
+		);
+
+		assert_eq!( Ido::claimed_rewards(ANOTHER_USER_ID, MGAId::get()), 0);
+		assert_eq!( Ido::claimed_rewards(ANOTHER_USER_ID, KSMId::get()), 0);
+		assert_eq!( Ido::claimed_rewards(USER_ID, MGAId::get()), 0);
+		assert_eq!( Ido::claimed_rewards(USER_ID, KSMId::get()), 0);
+
+		let user_expected_ksm_rewards = liquidity_token_amount / 2 * USER_KSM_PROVISON / ksm_valuation;
+		let user_expected_mga_rewards = liquidity_token_amount / 2 * USER_MGA_PROVISON / mga_valuation;
+		let user_expected_liq_amount = user_expected_ksm_rewards + user_expected_mga_rewards;
+
+		let user2_expected_ksm_rewards = liquidity_token_amount / 2 * ANOTHER_USER_KSM_PROVISON / ksm_valuation;
+		let user2_expected_mga_rewards = liquidity_token_amount / 2 * ANOTHER_USER_MGA_PROVISON / mga_valuation;
+		let user2_expected_liq_amount = user2_expected_ksm_rewards + user2_expected_mga_rewards;
+
+		Ido::claim_rewards(Origin::signed(USER_ID)).unwrap();
+		Ido::claim_rewards(Origin::signed(ANOTHER_USER_ID)).unwrap();
+
+		assert_eq!( Ido::claimed_rewards(USER_ID, MGAId::get()), user_expected_mga_rewards);
+		assert_eq!( Ido::claimed_rewards(USER_ID, KSMId::get()), user_expected_ksm_rewards	);
+		assert_eq!( Ido::claimed_rewards(ANOTHER_USER_ID, MGAId::get()), user2_expected_mga_rewards);
+		assert_eq!( Ido::claimed_rewards(ANOTHER_USER_ID, KSMId::get()), user2_expected_ksm_rewards);
+
+		assert_err!( Ido::claim_rewards(Origin::signed(USER_ID)), Error::<Test>::NothingToClaim);
+		assert_err!( Ido::claim_rewards(Origin::signed(ANOTHER_USER_ID)), Error::<Test>::NothingToClaim);
+
+		assert_eq!( Ido::balance(liquidity_token_id, USER_ID), user_expected_liq_amount);
+		assert_eq!( Ido::balance(liquidity_token_id, ANOTHER_USER_ID), user2_expected_liq_amount);
+	});
+}
+
 
 // TODO: events deposit
+// TODO: dont limit MGA provision
+// TODO: refactor -> claim
+// TODO: rename

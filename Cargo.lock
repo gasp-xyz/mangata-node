@@ -5535,6 +5535,7 @@ dependencies = [
  "scale-info",
  "serde",
  "serial_test",
+ "sp-arithmetic",
  "sp-core",
  "sp-io",
  "sp-runtime",

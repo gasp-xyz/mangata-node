@@ -6,7 +6,7 @@ use frame_support::pallet_prelude::*;
 
 use frame_support::{
 	codec::{Decode, Encode},
-	traits::{ExistenceRequirement, Get, Imbalance, WithdrawReasons},
+	traits::{ExistenceRequirement, Get},
 	transactional, PalletId,
 };
 use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
@@ -15,14 +15,10 @@ use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 use scale_info::TypeInfo;
 use sp_core::U256;
 use sp_runtime::{
-	traits::{AccountIdConversion, CheckedAdd, Zero},
-	RuntimeDebug,
+	traits::{AccountIdConversion, CheckedAdd},
 };
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
 use sp_std::prelude::*;
-
-#[cfg(feature = "std")]
-use serde::{Deserialize, Serialize};
 
 #[cfg(test)]
 mod mock;
@@ -56,7 +52,7 @@ pub mod pallet {
 				return 0
 			}
 			if let Some((start, whitelist_length, public_length)) = BootstrapSchedule::<T>::get() {
-				/// arythmetics protected by invariant check in Bootstrap::start_ido
+				// NOTE: arythmetics protected by invariant check in Bootstrap::start_ido
 				let whitelist_start = start;
 				let public_start = start + whitelist_length.into();
 				let finished = start + whitelist_length.into() + public_length.into();
@@ -199,7 +195,7 @@ pub mod pallet {
 				Error::<T>::MathOverflow
 			);
 
-			let (pre_mga_valuation, pre_ksm_valuation) = Valuations::<T>::get();
+			let (pre_mga_valuation, _) = Valuations::<T>::get();
 			ensure!(
 				token_id != T::KSMTokenId::get() || pre_mga_valuation != 0,
 				Error::<T>::FirstDonationWrongToken
@@ -236,7 +232,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			accounts: Vec<T::AccountId>,
 		) -> DispatchResult {
-			let sender = ensure_root(origin)?;
+			ensure_root(origin)?;
 			for account in accounts {
 				WhitelistedAccount::<T>::insert(&account, ());
 			}
@@ -251,7 +247,7 @@ pub mod pallet {
 			whitelist_phase_length: u32,
 			public_phase_lenght: u32,
 		) -> DispatchResult {
-			let sender = ensure_root(origin)?;
+			ensure_root(origin)?;
 
 			ensure!(Phase::<T>::get() == IDOPhase::BeforeStart, Error::<T>::AlreadyStarted);
 
@@ -303,14 +299,13 @@ pub mod pallet {
 			let user_ksm_provision = Self::donations(&sender, T::KSMTokenId::get());
 			let user_mga_provision = Self::donations(&sender, T::MGATokenId::get());
 
-			let (token_id, liquidity) = Self::minted_liquidity();
+			let (liq_token_id, liquidity) = Self::minted_liquidity();
 			let (total_mga_provision, total_ksm_provision) = Self::valuations();
 
 			let ksm_rewards = multiply_by_rational(user_ksm_provision, liquidity / 2, total_ksm_provision)
 					.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
 			let mga_rewards = multiply_by_rational(user_mga_provision, liquidity / 2, total_mga_provision)
 					.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
-
 
 			let ksm_claimed_rewards = ClaimedRewards::<T>::get(&sender, T::KSMTokenId::get());
 			let mga_claimed_rewards = ClaimedRewards::<T>::get(&sender, T::MGATokenId::get());
@@ -324,41 +319,17 @@ pub mod pallet {
 
 			if ksm_rewards > ksm_claimed_rewards {
 				let ksm_to_bo_claimed = ksm_rewards - ksm_claimed_rewards;
-				T::Currency::transfer(token_id.into(), &Self::vault_address(), &sender, ksm_to_bo_claimed.into(), ExistenceRequirement::KeepAlive)?;
-				ensure!(
-					ClaimedRewards::<T>::try_mutate(&sender, T::KSMTokenId::get(), |rewards| {
-						if let Some(val) = rewards.checked_add(ksm_to_bo_claimed) {
-							*rewards = val;
-							Ok(())
-						} else {
-							Err(())
-						}
-					})
-					.is_ok(),
-					Error::<T>::MathOverflow
-				);
+				Self::claim_rewards_from_single_currency(&sender, liq_token_id, T::KSMTokenId::get(), ksm_to_bo_claimed)?;
 				total_rewards_claimed += ksm_to_bo_claimed;
 			}
 
 			if mga_rewards > mga_claimed_rewards {
 				let mga_to_bo_claimed = mga_rewards - mga_claimed_rewards;
-				T::Currency::transfer(token_id.into(), &Self::vault_address(), &sender, mga_to_bo_claimed.into(), ExistenceRequirement::KeepAlive)?;
-				ensure!(
-					ClaimedRewards::<T>::try_mutate(sender, T::MGATokenId::get(), |rewards| {
-						if let Some(val) = rewards.checked_add(mga_to_bo_claimed.into()) {
-							*rewards = val;
-							Ok(())
-						} else {
-							Err(())
-						}
-					})
-					.is_ok(),
-					Error::<T>::MathOverflow
-				);
+				Self::claim_rewards_from_single_currency(&sender, liq_token_id, T::MGATokenId::get(), mga_to_bo_claimed)?;
 				total_rewards_claimed += mga_to_bo_claimed;
 			}
 
-			Self::deposit_event(Event::RewardsClaimed(token_id, total_rewards_claimed));
+			Self::deposit_event(Event::RewardsClaimed(liq_token_id, total_rewards_claimed));
 
 			Ok(().into())
 		}
@@ -413,6 +384,23 @@ impl<T: Config> Pallet<T> {
 
 	fn vault_address() -> T::AccountId {
 		PALLET_ID.into_account()
+	}
+
+	fn claim_rewards_from_single_currency(who: &T::AccountId, liq_token_id: TokenId, provision_token_id: TokenId, to_be_claimed: Balance) -> DispatchResult {
+		T::Currency::transfer(liq_token_id.into(), &Self::vault_address(), who, to_be_claimed.into(), ExistenceRequirement::KeepAlive)?;
+		ensure!(
+			ClaimedRewards::<T>::try_mutate(who, provision_token_id, |rewards| {
+				if let Some(val) = rewards.checked_add(to_be_claimed) {
+					*rewards = val;
+					Ok(())
+				} else {
+					Err(())
+				}
+			})
+			.is_ok(),
+			Error::<T>::MathOverflow
+		);
+		Ok(()).into()
 	}
 
 	///

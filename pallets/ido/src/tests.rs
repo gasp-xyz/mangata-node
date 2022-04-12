@@ -211,7 +211,7 @@ fn test_allow_non_whitelited_account_to_provision_in_whitelisted_phase_with_mga(
 		jump_to_whitelist_phase();
 
 		assert!(!Ido::is_whitelisted(&USER_ID));
-		Ido::donate(Origin::signed(USER_ID), MGAId::get(), 1000);
+		Ido::donate(Origin::signed(USER_ID), MGAId::get(), 1000).unwrap();
 
 	});
 }
@@ -473,7 +473,6 @@ fn test_crate_pool_is_called_with_proper_arguments_after_bootstrap_finish() {
 fn test_cannot_claim_rewards_when_bootstrap_is_not_finished() {
 	new_test_ext().execute_with(|| {
 		set_up();
-		use mockall::predicate::eq;
 
 		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
@@ -497,7 +496,6 @@ fn test_cannot_claim_rewards_when_bootstrap_is_not_finished() {
 #[serial]
 fn test_rewards_are_distributed_properly_with_single_user() {
 	new_test_ext().execute_with(|| {
-		use std::rc::Rc;
 		use std::sync::{Arc, Mutex};
 		set_up();
 
@@ -571,7 +569,6 @@ fn test_rewards_are_distributed_properly_with_single_user() {
 #[serial]
 fn test_rewards_are_distributed_properly_with_multiple_user() {
 	new_test_ext().execute_with(|| {
-		use std::rc::Rc;
 		use std::sync::{Arc, Mutex};
 		set_up();
 

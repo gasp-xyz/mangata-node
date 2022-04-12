@@ -21,12 +21,10 @@ use crate as pallet_ido;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{Contains, Everything},
-	PalletId,
 };
 use mangata_primitives::{Amount, Balance, TokenId};
 use orml_tokens::MultiTokenCurrency;
 use orml_traits::parameter_type_with_key;
-use sp_runtime::{traits::AccountIdConversion, SaturatedConversion};
 
 pub(crate) type AccountId = u128;
 
@@ -72,7 +70,7 @@ parameter_types!(
 
 pub struct DustRemovalWhitelist;
 impl Contains<AccountId> for DustRemovalWhitelist {
-	fn contains(a: &AccountId) -> bool {
+	fn contains(_a: &AccountId) -> bool {
 		true
 	}
 }

@@ -171,6 +171,7 @@ pub mod pallet {
 			let ratio_denominator = T::KsmToMgaRatioDenominator::get();
 
 			ensure!(
+				token_id == T::MGATokenId::get() ||
 				Phase::<T>::get() == IDOPhase::Public ||
 					(Phase::<T>::get() == IDOPhase::Whitelist && Self::is_whitelisted(&sender)),
 				Error::<T>::UnauthorizedForDonation

@@ -187,7 +187,38 @@ fn test_prevent_donations_in_finished_phase() {
 
 #[test]
 #[serial]
-fn test_whitliested_donation() {
+fn test_prevent_non_whitelited_account_to_provision_in_whitelisted_phase() {
+	new_test_ext().execute_with(|| {
+		set_up();
+
+		jump_to_whitelist_phase();
+
+		assert!(!Ido::is_whitelisted(&USER_ID));
+		assert_err!(
+			Ido::donate(Origin::signed(USER_ID), KSMId::get(), 1000),
+			Error::<Test>::UnauthorizedForDonation
+		);
+
+	});
+}
+
+#[test]
+#[serial]
+fn test_allow_non_whitelited_account_to_provision_in_whitelisted_phase_with_mga() {
+	new_test_ext().execute_with(|| {
+		set_up();
+
+		jump_to_whitelist_phase();
+
+		assert!(!Ido::is_whitelisted(&USER_ID));
+		Ido::donate(Origin::signed(USER_ID), MGAId::get(), 1000);
+
+	});
+}
+
+#[test]
+#[serial]
+fn test_incremental_whitliested_donation() {
 	new_test_ext().execute_with(|| {
 		set_up();
 
@@ -656,7 +687,5 @@ fn test_rewards_are_distributed_properly_with_multiple_user() {
 
 
 
-// TODO: events deposit
-// TODO: dont limit MGA provision
 // TODO: refactor -> claim
 // TODO: rename

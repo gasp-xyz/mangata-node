@@ -127,7 +127,7 @@ construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>},
-		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Config, Event<T>},
+		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -162,12 +162,9 @@ impl<T: Config> Pallet<T> {
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut t = frame_system::GenesisConfig::default()
+	let t = frame_system::GenesisConfig::default()
 		.build_storage::<Test>()
 		.expect("Frame system builds valid default genesis config");
-
-	GenesisBuild::<Test>::assimilate_storage(&pallet_bootstrap::GenesisConfig {}, &mut t)
-		.expect("pallet-ido's storage can be assimilated");
 
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| System::set_block_number(1));

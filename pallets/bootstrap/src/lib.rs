@@ -30,9 +30,14 @@ const PALLET_ID: PalletId = PalletId(*b"12345678");
 use core::fmt::Debug;
 use sp_runtime::traits::MaybeDisplay;
 
-pub trait PoolCreateApi
-{
-	type AccountId: Parameter + Member + MaybeSerializeDeserialize + Debug + MaybeDisplay + Ord + MaxEncodedLen;
+pub trait PoolCreateApi {
+	type AccountId: Parameter
+		+ Member
+		+ MaybeSerializeDeserialize
+		+ Debug
+		+ MaybeDisplay
+		+ Ord
+		+ MaxEncodedLen;
 
 	fn pool_exists(first: TokenId, second: TokenId) -> bool;
 
@@ -99,7 +104,7 @@ pub mod pallet {
 		/// tokens
 		type Currency: MultiTokenCurrencyExtended<Self::AccountId>;
 
-		type PoolCreateApi: PoolCreateApi<AccountId=Self::AccountId>;
+		type PoolCreateApi: PoolCreateApi<AccountId = Self::AccountId>;
 
 		#[pallet::constant]
 		type MGATokenId: Get<TokenId>;

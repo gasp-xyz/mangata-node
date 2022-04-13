@@ -95,12 +95,6 @@ impl orml_tokens::Config for Test {
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 }
 
-// pub PoolCreateApiMock {}
-// impl<T> PoolCreateApi<T> for PoolCreateApiMock {
-// 	fn pool_exists(first: TokenId, second: TokenId) -> bool;
-// 	fn pool_create(account: T, first: TokenId, first_amount: Balance, second: TokenId, second_amount: Balance) -> Option<(TokenId, Balance)>;
-// }
-
 mockall::mock! {
 	pub PoolCreateApiMock{}
 

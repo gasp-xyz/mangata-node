@@ -516,6 +516,13 @@ impl pallet_bootstrap::Config for Runtime {
 	type KsmToMgaRatioDenominator = frame_support::traits::ConstU128<10000>;
 }
 
+impl pallet_utility::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type PalletsOrigin = OriginCaller;
+	type WeightInfo = pallet_utility::weights::SubstrateWeight<Runtime>;
+}
+
 type ORMLCurrencyAdapterNegativeImbalance = <orml_tokens::CurrencyAdapter::<Runtime, MgaTokenId> as PalletCurrency<AccountId>>::NegativeImbalance;
 
 pub struct ToAuthor;
@@ -1225,7 +1232,7 @@ construct_runtime!(
 
 		// Bootstrap
 		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>} = 53,
-
+		Utility: pallet_utility::{Pallet, Call, Event} = 54,
 	}
 );
 

@@ -95,11 +95,17 @@ impl orml_tokens::Config for Test {
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 }
 
+// pub PoolCreateApiMock {}
+// impl<T> PoolCreateApi<T> for PoolCreateApiMock {
+// 	fn pool_exists(first: TokenId, second: TokenId) -> bool;
+// 	fn pool_create(account: T, first: TokenId, first_amount: Balance, second: TokenId, second_amount: Balance) -> Option<(TokenId, Balance)>;
+// }
+
 mockall::mock! {
-	pub PoolCreateApiMock {}
-	impl PoolCreateApi for PoolCreateApiMock {
+	pub PoolCreateApiMock<T: Parameter + Member + MaybeSerializeDeserialize + Debug + MaybeDisplay + Ord + MaxEncodedLen>{}
+	impl<T: Parameter + Member + MaybeSerializeDeserialize + Debug + MaybeDisplay + Ord + MaxEncodedLen> PoolCreateApi<T> for PoolCreateApiMock<T> {
 		fn pool_exists(first: TokenId, second: TokenId) -> bool;
-		fn pool_create(first: TokenId, first_amount: Balance, second: TokenId, second_amount: Balance) -> Option<(TokenId, Balance)>;
+		fn pool_create(account: T, first: TokenId, first_amount: Balance, second: TokenId, second_amount: Balance) -> Option<(TokenId, Balance)>;
 	}
 }
 
@@ -107,7 +113,7 @@ impl pallet_ido::Config for Test {
 	type Event = Event;
 	type MGATokenId = MGAId;
 	type KSMTokenId = KSMId;
-	type PoolCreateApi = MockPoolCreateApiMock;
+	type PoolCreateApi = MockPoolCreateApiMock<Self::AccountId>;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type KsmToMgaRatioNominator = KsmToMgaNominator;
 	type KsmToMgaRatioDenominator = KsmToMgaDenominator;

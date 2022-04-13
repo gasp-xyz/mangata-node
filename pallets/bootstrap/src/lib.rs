@@ -13,11 +13,9 @@ use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
 use mangata_primitives::{Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 use scale_info::TypeInfo;
-use sp_core::U256;
-use sp_runtime::{
-	traits::{AccountIdConversion, CheckedAdd},
-};
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
+use sp_core::U256;
+use sp_runtime::traits::{AccountIdConversion, CheckedAdd};
 use sp_std::prelude::*;
 
 #[cfg(test)]
@@ -29,9 +27,21 @@ mod tests;
 pub use pallet::*;
 const PALLET_ID: PalletId = PalletId(*b"12345678");
 
-pub trait PoolCreateApi {
+use core::fmt::Debug;
+use sp_runtime::traits::MaybeDisplay;
+
+pub trait PoolCreateApi<
+	T: Parameter + Member + MaybeSerializeDeserialize + Debug + MaybeDisplay + Ord + MaxEncodedLen,
+>
+{
 	fn pool_exists(first: TokenId, second: TokenId) -> bool;
-	fn pool_create(first: TokenId, first_amount: Balance, second: TokenId, second_amount: Balance) -> Option<(TokenId, Balance)>;
+	fn pool_create(
+		account: T,
+		first: TokenId,
+		first_amount: Balance,
+		second: TokenId,
+		second_amount: Balance,
+	) -> Option<(TokenId, Balance)>;
 }
 
 #[frame_support::pallet]
@@ -61,14 +71,14 @@ pub mod pallet {
 					Phase::<T>::put(BootstrapPhase::Finished);
 					let (mga_valuation, ksm_valuation) = Valuations::<T>::get();
 					if let Some((liq_asset_id, issuance)) = T::PoolCreateApi::pool_create(
+						Self::vault_address(),
 						T::KSMTokenId::get(),
 						ksm_valuation,
 						T::MGATokenId::get(),
 						mga_valuation,
-						){
+					) {
 						MintedLiquidity::<T>::put((liq_asset_id, issuance));
 					}
-
 				} else if n >= public_start {
 					Phase::<T>::put(BootstrapPhase::Public);
 				} else if n >= whitelist_start {
@@ -88,7 +98,7 @@ pub mod pallet {
 		/// tokens
 		type Currency: MultiTokenCurrencyExtended<Self::AccountId>;
 
-		type PoolCreateApi: PoolCreateApi;
+		type PoolCreateApi: PoolCreateApi<Self::AccountId>;
 
 		#[pallet::constant]
 		type MGATokenId: Get<TokenId>;
@@ -132,7 +142,8 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn claimed_rewards)]
-	pub type ClaimedRewards<T: Config> = StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, TokenId, Balance, ValueQuery>;
+	pub type ClaimedRewards<T: Config> =
+		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, TokenId, Balance, ValueQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {}
@@ -155,7 +166,11 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(10_000)]
 		#[transactional]
-		pub fn provision(origin: OriginFor<T>, token_id: TokenId, amount: Balance) -> DispatchResult {
+		pub fn provision(
+			origin: OriginFor<T>,
+			token_id: TokenId,
+			amount: Balance,
+		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
 			ensure!(
@@ -168,8 +183,9 @@ pub mod pallet {
 
 			ensure!(
 				token_id == T::MGATokenId::get() ||
-				Phase::<T>::get() == BootstrapPhase::Public ||
-					(Phase::<T>::get() == BootstrapPhase::Whitelist && Self::is_whitelisted(&sender)),
+					Phase::<T>::get() == BootstrapPhase::Public ||
+					(Phase::<T>::get() == BootstrapPhase::Whitelist &&
+						Self::is_whitelisted(&sender)),
 				Error::<T>::Unauthorized
 			);
 
@@ -286,25 +302,22 @@ pub mod pallet {
 
 		#[pallet::weight(10_000)]
 		#[transactional]
-		pub fn claim_rewards(
-			origin: OriginFor<T>,
-		) -> DispatchResult {
+		pub fn claim_rewards(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			ensure!(
-				Self::phase() == BootstrapPhase::Finished,
-				Error::<T>::NotFinishedYet
-			);
-			
+			ensure!(Self::phase() == BootstrapPhase::Finished, Error::<T>::NotFinishedYet);
+
 			let user_ksm_provision = Self::provisions(&sender, T::KSMTokenId::get());
 			let user_mga_provision = Self::provisions(&sender, T::MGATokenId::get());
 
 			let (liq_token_id, liquidity) = Self::minted_liquidity();
 			let (total_mga_provision, total_ksm_provision) = Self::valuations();
 
-			let ksm_rewards = multiply_by_rational(user_ksm_provision, liquidity / 2, total_ksm_provision)
+			let ksm_rewards =
+				multiply_by_rational(user_ksm_provision, liquidity / 2, total_ksm_provision)
 					.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
-			let mga_rewards = multiply_by_rational(user_mga_provision, liquidity / 2, total_mga_provision)
+			let mga_rewards =
+				multiply_by_rational(user_mga_provision, liquidity / 2, total_mga_provision)
 					.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
 
 			let ksm_claimed_rewards = ClaimedRewards::<T>::get(&sender, T::KSMTokenId::get());
@@ -319,13 +332,23 @@ pub mod pallet {
 
 			if ksm_rewards > ksm_claimed_rewards {
 				let ksm_to_bo_claimed = ksm_rewards - ksm_claimed_rewards;
-				Self::claim_rewards_from_single_currency(&sender, liq_token_id, T::KSMTokenId::get(), ksm_to_bo_claimed)?;
+				Self::claim_rewards_from_single_currency(
+					&sender,
+					liq_token_id,
+					T::KSMTokenId::get(),
+					ksm_to_bo_claimed,
+				)?;
 				total_rewards_claimed += ksm_to_bo_claimed;
 			}
 
 			if mga_rewards > mga_claimed_rewards {
 				let mga_to_bo_claimed = mga_rewards - mga_claimed_rewards;
-				Self::claim_rewards_from_single_currency(&sender, liq_token_id, T::MGATokenId::get(), mga_to_bo_claimed)?;
+				Self::claim_rewards_from_single_currency(
+					&sender,
+					liq_token_id,
+					T::MGATokenId::get(),
+					mga_to_bo_claimed,
+				)?;
 				total_rewards_claimed += mga_to_bo_claimed;
 			}
 
@@ -397,8 +420,19 @@ impl<T: Config> Pallet<T> {
 		PALLET_ID.into_account()
 	}
 
-	fn claim_rewards_from_single_currency(who: &T::AccountId, liq_token_id: TokenId, provision_token_id: TokenId, to_be_claimed: Balance) -> DispatchResult {
-		T::Currency::transfer(liq_token_id.into(), &Self::vault_address(), who, to_be_claimed.into(), ExistenceRequirement::KeepAlive)?;
+	fn claim_rewards_from_single_currency(
+		who: &T::AccountId,
+		liq_token_id: TokenId,
+		provision_token_id: TokenId,
+		to_be_claimed: Balance,
+	) -> DispatchResult {
+		T::Currency::transfer(
+			liq_token_id.into(),
+			&Self::vault_address(),
+			who,
+			to_be_claimed.into(),
+			ExistenceRequirement::KeepAlive,
+		)?;
 		ensure!(
 			ClaimedRewards::<T>::try_mutate(who, provision_token_id, |rewards| {
 				if let Some(val) = rewards.checked_add(to_be_claimed) {

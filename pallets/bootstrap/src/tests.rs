@@ -11,7 +11,10 @@ const INITIAL_AMOUNT: u128 = 1_000_000;
 const DUMMY_ID: u32 = 2;
 const LIQ_TOKEN_ID: TokenId = 10_u32;
 const LIQ_TOKEN_AMOUNT: Balance = 1_000_000_u128;
-const POOL_CREATE_DUMMY_RETURN_VALUE: Option<(TokenId, Balance)> = Some((LIQ_TOKEN_ID, LIQ_TOKEN_AMOUNT));
+const POOL_CREATE_DUMMY_RETURN_VALUE: Option<(TokenId, Balance)> =
+	Some((LIQ_TOKEN_ID, LIQ_TOKEN_AMOUNT));
+
+type Account<T> = <T as frame_system::Config>::AccountId;
 
 fn set_up() {
 	let mga_id = Bootstrap::create_new_token(&USER_ID, INITIAL_AMOUNT);
@@ -25,7 +28,7 @@ fn set_up() {
 }
 
 fn jump_to_whitelist_phase() {
-	let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+	let pool_exists_mock = MockPoolCreateApiMock::<Account<Test>>::pool_exists_context();
 	pool_exists_mock.expect().return_const(false);
 	Bootstrap::start_ido(Origin::root(), 10_u32.into(), 10, 10).unwrap();
 	Bootstrap::on_initialize(15_u32.into());
@@ -33,7 +36,7 @@ fn jump_to_whitelist_phase() {
 }
 
 fn jump_to_public_phase() {
-	let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+	let pool_exists_mock = MockPoolCreateApiMock::<Account<Test>>::pool_exists_context();
 	pool_exists_mock.expect().return_const(false);
 
 	Bootstrap::start_ido(Origin::root(), 10_u32.into(), 10, 10).unwrap();
@@ -76,10 +79,7 @@ fn test_event_is_published_after_successful_provision() {
 		Bootstrap::provision(Origin::signed(USER_ID), MGAId::get(), 1).unwrap();
 
 		let event =
-			crate::mock::Event::Bootstrap(crate::Event::<Test>::Provisioned(
-				MGAId::get(),
-				1,
-			));
+			crate::mock::Event::Bootstrap(crate::Event::<Test>::Provisioned(MGAId::get(), 1));
 
 		assert!(System::events().iter().any(|record| record.event == event));
 	});
@@ -198,7 +198,6 @@ fn test_prevent_non_whitelited_account_to_provision_in_whitelisted_phase() {
 			Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), 1000),
 			Error::<Test>::Unauthorized
 		);
-
 	});
 }
 
@@ -212,7 +211,6 @@ fn test_allow_non_whitelited_account_to_provision_in_whitelisted_phase_with_mga(
 
 		assert!(!Bootstrap::is_whitelisted(&USER_ID));
 		Bootstrap::provision(Origin::signed(USER_ID), MGAId::get(), 1000).unwrap();
-
 	});
 }
 
@@ -306,7 +304,7 @@ fn test_bootstrap_can_be_modified_only_before_its_started() {
 	new_test_ext().execute_with(|| {
 		set_up();
 
-		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+		let pool_exists_mock = MockPoolCreateApiMock::<Account<Test>>::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
 		Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 20).unwrap();
@@ -330,10 +328,10 @@ fn test_bootstrap_state_transitions() {
 		const BOOTSTRAP_PUBLIC_START: u64 = 110;
 		const BOOTSTRAP_FINISH: u64 = 130;
 
-		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+		let pool_exists_mock = MockPoolCreateApiMock::<Account<Test>>::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
-		let pool_create_mock = MockPoolCreateApiMock::pool_create_context();
+		let pool_create_mock = MockPoolCreateApiMock::<Account<Test>>::pool_create_context();
 		pool_create_mock.expect().times(1).return_const(POOL_CREATE_DUMMY_RETURN_VALUE);
 
 		Bootstrap::start_ido(
@@ -376,13 +374,13 @@ fn test_bootstrap_state_transitions_when_on_initialized_is_not_called() {
 	new_test_ext().execute_with(|| {
 		set_up();
 
-		let pool_create_mock = MockPoolCreateApiMock::pool_create_context();
+		let pool_create_mock = MockPoolCreateApiMock::<Account<Test>>::pool_create_context();
 		pool_create_mock.expect().times(1).return_const(POOL_CREATE_DUMMY_RETURN_VALUE);
 
 		const BOOTSTRAP_WHITELIST_START: u64 = 100;
 		const BOOTSTRAP_PUBLIC_START: u64 = 110;
 		const BOOTSTRAP_FINISH: u64 = 130;
-		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+		let pool_exists_mock = MockPoolCreateApiMock::<Account<Test>>::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
 		Bootstrap::start_ido(
@@ -426,7 +424,7 @@ fn test_do_not_allow_for_creating_starting_bootstrap_for_existing_pool() {
 	new_test_ext().execute_with(|| {
 		set_up();
 
-		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+		let pool_exists_mock = MockPoolCreateApiMock::<Account<Test>>::pool_exists_context();
 		pool_exists_mock.expect().return_const(true);
 
 		assert_err!(
@@ -446,18 +444,21 @@ fn test_crate_pool_is_called_with_proper_arguments_after_bootstrap_finish() {
 		const KSM_PROVISON: Balance = 30;
 		const MGA_PROVISON: Balance = 500_000;
 
-		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+		let pool_exists_mock = MockPoolCreateApiMock::<Account<Test>>::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
-		let pool_create_mock = MockPoolCreateApiMock::pool_create_context();
-		pool_create_mock.expect()
+		let pool_create_mock = MockPoolCreateApiMock::<Account<Test>>::pool_create_context();
+		pool_create_mock
+			.expect()
 			.with(
+				eq(Bootstrap::vault_address()),
 				eq(KSMId::get()),
 				eq(KSM_PROVISON),
 				eq(MGAId::get()),
 				eq(MGA_PROVISON),
 			)
-			.times(1).return_const(POOL_CREATE_DUMMY_RETURN_VALUE);
+			.times(1)
+			.return_const(POOL_CREATE_DUMMY_RETURN_VALUE);
 
 		Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 10).unwrap();
 
@@ -474,7 +475,7 @@ fn test_cannot_claim_rewards_when_bootstrap_is_not_finished() {
 	new_test_ext().execute_with(|| {
 		set_up();
 
-		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+		let pool_exists_mock = MockPoolCreateApiMock::<Account<Test>>::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
 		Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 10).unwrap();
@@ -504,18 +505,20 @@ fn test_rewards_are_distributed_properly_with_single_user() {
 		let liq_token_id: Arc<Mutex<TokenId>> = Arc::new(Mutex::new(0_u32.into()));
 		let ref_liq_token_id = liq_token_id.clone();
 
-		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+		let pool_exists_mock = MockPoolCreateApiMock::<Account<Test>>::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
-		let pool_create_mock = MockPoolCreateApiMock::pool_create_context();
-		pool_create_mock.expect()
-			.times(1).returning(move |_, ksm_amount, _, mga_amount| {
-			let issuance = (ksm_amount + mga_amount) / 2;
-			println!("hello world");
-			let id = Bootstrap::create_new_token(&Bootstrap::vault_address(), issuance);
-			*(ref_liq_token_id.lock().unwrap()) = id;
-			Some((id, issuance))
-		});
+		let pool_create_mock = MockPoolCreateApiMock::<Account<Test>>::pool_create_context();
+		pool_create_mock
+			.expect()
+			.times(1)
+			.returning(move |addr, _, ksm_amount, _, mga_amount| {
+				let issuance = (ksm_amount + mga_amount) / 2;
+				println!("hello world");
+				let id = Bootstrap::create_new_token(&addr, issuance);
+				*(ref_liq_token_id.lock().unwrap()) = id;
+				Some((id, issuance))
+			});
 
 		Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 10).unwrap();
 
@@ -531,31 +534,21 @@ fn test_rewards_are_distributed_properly_with_single_user() {
 		Bootstrap::on_initialize(120_u32.into());
 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
 
-
 		let (mga_valuation, ksm_valuation) = Bootstrap::valuations();
 		let liquidity_token_id = *(liq_token_id.lock().unwrap());
-		let liquidity_token_amount = (mga_valuation + ksm_valuation)/ 2;
+		let liquidity_token_amount = (mga_valuation + ksm_valuation) / 2;
 
 		assert_eq!(
-			Bootstrap::balance( liquidity_token_id, Bootstrap::vault_address()),
+			Bootstrap::balance(liquidity_token_id, Bootstrap::vault_address()),
 			liquidity_token_amount
 		);
-		assert_eq!(
-			Bootstrap::minted_liquidity(),
-			(liquidity_token_id, liquidity_token_amount)
-		);
+		assert_eq!(Bootstrap::minted_liquidity(), (liquidity_token_id, liquidity_token_amount));
 
 		Bootstrap::claim_rewards(Origin::signed(USER_ID)).unwrap();
 
-		assert_eq!(
-			Bootstrap::claimed_rewards(USER_ID, MGAId::get()),
-			liquidity_token_amount / 2
-		);
+		assert_eq!(Bootstrap::claimed_rewards(USER_ID, MGAId::get()), liquidity_token_amount / 2);
 
-		assert_eq!(
-			Bootstrap::claimed_rewards(USER_ID, KSMId::get()),
-			liquidity_token_amount / 2
-		);
+		assert_eq!(Bootstrap::claimed_rewards(USER_ID, KSMId::get()), liquidity_token_amount / 2);
 
 		assert_eq!(
 			Bootstrap::balance(liquidity_token_id, USER_ID),
@@ -573,17 +566,11 @@ fn test_rewards_are_distributed_properly_with_multiple_user() {
 		set_up();
 
 		let provisioned_ev = |id, amount| {
-			crate::mock::Event::Bootstrap(crate::Event::<Test>::Provisioned(
-				id,
-				amount
-			))
+			crate::mock::Event::Bootstrap(crate::Event::<Test>::Provisioned(id, amount))
 		};
 
 		let rewards_claimed_ev = |id, amount| {
-			crate::mock::Event::Bootstrap(crate::Event::<Test>::RewardsClaimed(
-				id,
-				amount
-			))
+			crate::mock::Event::Bootstrap(crate::Event::<Test>::RewardsClaimed(id, amount))
 		};
 
 		const USER_KSM_PROVISON: Balance = 15;
@@ -593,18 +580,20 @@ fn test_rewards_are_distributed_properly_with_multiple_user() {
 		let liq_token_id: Arc<Mutex<TokenId>> = Arc::new(Mutex::new(0_u32.into()));
 		let ref_liq_token_id = liq_token_id.clone();
 
-		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+		let pool_exists_mock = MockPoolCreateApiMock::<Account<Test>>::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
-		let pool_create_mock = MockPoolCreateApiMock::pool_create_context();
-		pool_create_mock.expect()
-			.times(1).returning(move |_, ksm_amount, _, mga_amount| {
-			let issuance = (ksm_amount + mga_amount) / 2;
-			println!("hello world");
-			let id = Bootstrap::create_new_token(&Bootstrap::vault_address(), issuance);
-			*(ref_liq_token_id.lock().unwrap()) = id;
-			Some((id, issuance))
-		});
+		let pool_create_mock = MockPoolCreateApiMock::<Account<Test>>::pool_create_context();
+		pool_create_mock
+			.expect()
+			.times(1)
+			.returning(move |addr, _, ksm_amount, _, mga_amount| {
+				let issuance = (ksm_amount + mga_amount) / 2;
+				println!("hello world");
+				let id = Bootstrap::create_new_token(&addr, issuance);
+				*(ref_liq_token_id.lock().unwrap()) = id;
+				Some((id, issuance))
+			});
 
 		Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 10).unwrap();
 
@@ -618,66 +607,98 @@ fn test_rewards_are_distributed_properly_with_multiple_user() {
 		Bootstrap::transfer(KSMId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 500_000).unwrap();
 
 		Bootstrap::provision(Origin::signed(USER_ID), MGAId::get(), USER_MGA_PROVISON).unwrap();
-		Bootstrap::provision(Origin::signed(ANOTHER_USER_ID), MGAId::get(), ANOTHER_USER_MGA_PROVISON).unwrap();
+		Bootstrap::provision(
+			Origin::signed(ANOTHER_USER_ID),
+			MGAId::get(),
+			ANOTHER_USER_MGA_PROVISON,
+		)
+		.unwrap();
 
 		Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), USER_KSM_PROVISON).unwrap();
-		Bootstrap::provision(Origin::signed(ANOTHER_USER_ID), KSMId::get(), ANOTHER_USER_KSM_PROVISON).unwrap();
+		Bootstrap::provision(
+			Origin::signed(ANOTHER_USER_ID),
+			KSMId::get(),
+			ANOTHER_USER_KSM_PROVISON,
+		)
+		.unwrap();
 
-		assert!(System::events().iter().any(|record| record.event == provisioned_ev(MGAId::get(), USER_MGA_PROVISON)));
-		assert!(System::events().iter().any(|record| record.event == provisioned_ev(KSMId::get(), USER_KSM_PROVISON)));
-		assert!(System::events().iter().any(|record| record.event == provisioned_ev(MGAId::get(), ANOTHER_USER_MGA_PROVISON)));
-		assert!(System::events().iter().any(|record| record.event == provisioned_ev(KSMId::get(), ANOTHER_USER_KSM_PROVISON)));
+		assert!(System::events()
+			.iter()
+			.any(|record| record.event == provisioned_ev(MGAId::get(), USER_MGA_PROVISON)));
+		assert!(System::events()
+			.iter()
+			.any(|record| record.event == provisioned_ev(KSMId::get(), USER_KSM_PROVISON)));
+		assert!(System::events()
+			.iter()
+			.any(|record| record.event == provisioned_ev(MGAId::get(), ANOTHER_USER_MGA_PROVISON)));
+		assert!(System::events()
+			.iter()
+			.any(|record| record.event == provisioned_ev(KSMId::get(), ANOTHER_USER_KSM_PROVISON)));
 
 		Bootstrap::on_initialize(120_u32.into());
 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
-
 
 		let (mga_valuation, ksm_valuation) = Bootstrap::valuations();
 		assert_eq!(mga_valuation, 500_000);
 		assert_eq!(ksm_valuation, 35);
 		let liquidity_token_id = *(liq_token_id.lock().unwrap());
-		let liquidity_token_amount = (mga_valuation + ksm_valuation)/ 2;
+		let liquidity_token_amount = (mga_valuation + ksm_valuation) / 2;
 
 		assert_eq!(
-			Bootstrap::balance( liquidity_token_id, Bootstrap::vault_address()),
+			Bootstrap::balance(liquidity_token_id, Bootstrap::vault_address()),
 			liquidity_token_amount
 		);
-		assert_eq!(
-			Bootstrap::minted_liquidity(),
-			(liquidity_token_id, liquidity_token_amount)
-		);
+		assert_eq!(Bootstrap::minted_liquidity(), (liquidity_token_id, liquidity_token_amount));
 
-		assert_eq!( Bootstrap::claimed_rewards(ANOTHER_USER_ID, MGAId::get()), 0);
-		assert_eq!( Bootstrap::claimed_rewards(ANOTHER_USER_ID, KSMId::get()), 0);
-		assert_eq!( Bootstrap::claimed_rewards(USER_ID, MGAId::get()), 0);
-		assert_eq!( Bootstrap::claimed_rewards(USER_ID, KSMId::get()), 0);
+		assert_eq!(Bootstrap::claimed_rewards(ANOTHER_USER_ID, MGAId::get()), 0);
+		assert_eq!(Bootstrap::claimed_rewards(ANOTHER_USER_ID, KSMId::get()), 0);
+		assert_eq!(Bootstrap::claimed_rewards(USER_ID, MGAId::get()), 0);
+		assert_eq!(Bootstrap::claimed_rewards(USER_ID, KSMId::get()), 0);
 
-		let user_expected_ksm_rewards = liquidity_token_amount / 2 * USER_KSM_PROVISON / ksm_valuation;
-		let user_expected_mga_rewards = liquidity_token_amount / 2 * USER_MGA_PROVISON / mga_valuation;
+		let user_expected_ksm_rewards =
+			liquidity_token_amount / 2 * USER_KSM_PROVISON / ksm_valuation;
+		let user_expected_mga_rewards =
+			liquidity_token_amount / 2 * USER_MGA_PROVISON / mga_valuation;
 		let user_expected_liq_amount = user_expected_ksm_rewards + user_expected_mga_rewards;
 
-		let user2_expected_ksm_rewards = liquidity_token_amount / 2 * ANOTHER_USER_KSM_PROVISON / ksm_valuation;
-		let user2_expected_mga_rewards = liquidity_token_amount / 2 * ANOTHER_USER_MGA_PROVISON / mga_valuation;
+		let user2_expected_ksm_rewards =
+			liquidity_token_amount / 2 * ANOTHER_USER_KSM_PROVISON / ksm_valuation;
+		let user2_expected_mga_rewards =
+			liquidity_token_amount / 2 * ANOTHER_USER_MGA_PROVISON / mga_valuation;
 		let user2_expected_liq_amount = user2_expected_ksm_rewards + user2_expected_mga_rewards;
 
 		Bootstrap::claim_rewards(Origin::signed(USER_ID)).unwrap();
 		Bootstrap::claim_rewards(Origin::signed(ANOTHER_USER_ID)).unwrap();
 
-		assert_eq!( Bootstrap::claimed_rewards(USER_ID, MGAId::get()), user_expected_mga_rewards);
-		assert_eq!( Bootstrap::claimed_rewards(USER_ID, KSMId::get()), user_expected_ksm_rewards	);
-		assert_eq!( Bootstrap::claimed_rewards(ANOTHER_USER_ID, MGAId::get()), user2_expected_mga_rewards);
-		assert_eq!( Bootstrap::claimed_rewards(ANOTHER_USER_ID, KSMId::get()), user2_expected_ksm_rewards);
+		assert_eq!(Bootstrap::claimed_rewards(USER_ID, MGAId::get()), user_expected_mga_rewards);
+		assert_eq!(Bootstrap::claimed_rewards(USER_ID, KSMId::get()), user_expected_ksm_rewards);
+		assert_eq!(
+			Bootstrap::claimed_rewards(ANOTHER_USER_ID, MGAId::get()),
+			user2_expected_mga_rewards
+		);
+		assert_eq!(
+			Bootstrap::claimed_rewards(ANOTHER_USER_ID, KSMId::get()),
+			user2_expected_ksm_rewards
+		);
 
-		assert_err!( Bootstrap::claim_rewards(Origin::signed(USER_ID)), Error::<Test>::NothingToClaim);
-		assert_err!( Bootstrap::claim_rewards(Origin::signed(ANOTHER_USER_ID)), Error::<Test>::NothingToClaim);
+		assert_err!(
+			Bootstrap::claim_rewards(Origin::signed(USER_ID)),
+			Error::<Test>::NothingToClaim
+		);
+		assert_err!(
+			Bootstrap::claim_rewards(Origin::signed(ANOTHER_USER_ID)),
+			Error::<Test>::NothingToClaim
+		);
 
-		assert_eq!( Bootstrap::balance(liquidity_token_id, USER_ID), user_expected_liq_amount);
-		assert_eq!( Bootstrap::balance(liquidity_token_id, ANOTHER_USER_ID), user2_expected_liq_amount);
+		assert_eq!(Bootstrap::balance(liquidity_token_id, USER_ID), user_expected_liq_amount);
+		assert_eq!(
+			Bootstrap::balance(liquidity_token_id, ANOTHER_USER_ID),
+			user2_expected_liq_amount
+		);
 
-
-		assert!(System::events().iter().any(|record| record.event == rewards_claimed_ev(liquidity_token_id, user_expected_liq_amount)));
-		assert!(System::events().iter().any(|record| record.event == rewards_claimed_ev(liquidity_token_id, user2_expected_liq_amount)));
-
+		assert!(System::events().iter().any(|record| record.event ==
+			rewards_claimed_ev(liquidity_token_id, user_expected_liq_amount)));
+		assert!(System::events().iter().any(|record| record.event ==
+			rewards_claimed_ev(liquidity_token_id, user2_expected_liq_amount)));
 	});
-
 }

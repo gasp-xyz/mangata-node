@@ -744,32 +744,13 @@ impl<T: Config> Pallet<T> {
 		let q_pow = Self::calculate_q_pow(Q, time_passed);
 
 		let cummulative_missing_new = base - base * U256::from(precision) / q_pow;
-		// let cummulative_missing_new = U256::from(10);
-		// let cummulative_work_new_max_possible = U256::from(20);
-		log!(
-			info,
-			"ERROR:calc work {},{},{},{},{}",
-			asymptote,
-			base,
-			q_pow,
-			cummulative_work_new_max_possible,
-			cummulative_missing_new
-		);
 
 		let cummulative_work_new = cummulative_work_new_max_possible
 			.checked_sub(cummulative_missing_new)
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 
 		let work_total = cummulative_work_in_last_checkpoint + cummulative_work_new;
-		
-		log!(
-			info,
-			"ERROR:calc work2 {},{},{},{}",
-			base,
-			work_total,
-			q_pow,
-			cummulative_missing_new,
-		);
+
 		Ok(work_total)
 	}
 
@@ -804,15 +785,6 @@ impl<T: Config> Pallet<T> {
 	) -> Result<U256, DispatchError> {
 		let liquidity_assets_amount: Balance =
 			LiquidityMiningActiveUser::<T>::get((&user, &liquidity_asset_id));
-			log!(
-				info,
-				"calculate_work_user liquidity_assets_amount:1 {}, {}, {}, {},{}",
-				current_time,
-				last_checkpoint,
-				cummulative_work_in_last_checkpoint,
-				missing_at_last_checkpoint,
-				liquidity_assets_amount
-			);
 
 		Self::calculate_work(
 			liquidity_assets_amount,
@@ -860,15 +832,6 @@ impl<T: Config> Pallet<T> {
 		) = LiquidityMiningUser::<T>::try_get((&user, &liquidity_asset_id))
 			.unwrap_or_else(|_| (current_time, U256::from(0), U256::from(0)));
 
-		log!(
-			info,
-			"calculate_liquidity_checkpoint:1 {},{},{},{}",
-			user_last_checkpoint,
-			user_cummulative_work_in_last_checkpoint,
-			user_missing_at_last_checkpoint,
-			user_missing_at_last_checkpoint
-		);
-
 		let user_time_passed = current_time
 			.checked_sub(user_last_checkpoint)
 			.ok_or_else(|| DispatchError::from(Error::<T>::PastTimeCalculation))?;
@@ -877,15 +840,6 @@ impl<T: Config> Pallet<T> {
 			liquidity_assets_added,
 			user_missing_at_last_checkpoint,
 		)?;
-
-		log!(
-			info,
-			"calculate_liquidity_checkpoint:1 {},{},{},{}",
-			user_missing_at_checkpoint,
-			user_missing_at_checkpoint,
-			user_missing_at_checkpoint,
-			user_missing_at_checkpoint
-		);
 
 		let user_work_total = Self::calculate_work_user(
 			user.clone(),
@@ -896,14 +850,6 @@ impl<T: Config> Pallet<T> {
 			user_missing_at_last_checkpoint,
 		)?;
 
-		log!(
-			info,
-			"user_work_total:1 {},{},{},{}",
-			user_work_total,
-			user_work_total,
-			user_work_total,
-			user_work_total
-		);
 		let (
 			pool_last_checkpoint,
 			pool_cummulative_work_in_last_checkpoint,
@@ -944,7 +890,6 @@ impl<T: Config> Pallet<T> {
 		liquidity_asset_id: TokenId,
 		liquidity_assets_added: Balance,
 	) -> DispatchResult {
-		log!(info, "ERROR:1 {}", liquidity_assets_added);
 		let (
 			current_time,
 			user_work_total,
@@ -957,7 +902,6 @@ impl<T: Config> Pallet<T> {
 			liquidity_assets_added,
 		)?;
 
-		log!(info, "ERROR:2 ",);
 		LiquidityMiningUser::<T>::insert(
 			(&user, &liquidity_asset_id),
 			(current_time, user_work_total, user_missing_at_checkpoint),
@@ -966,16 +910,30 @@ impl<T: Config> Pallet<T> {
 			&liquidity_asset_id,
 			(current_time, pool_work_total, pool_missing_at_checkpoint),
 		);
-		log!(info, "ERROR:3 ",);
-		LiquidityMiningActiveUser::<T>::translate(|_, v: Balance| Some(v + liquidity_assets_added));
-		LiquidityMiningActivePool::<T>::translate(|_, v: Balance| Some(v + liquidity_assets_added));
-		log!(info, "ERROR:4 ",);
+
+		LiquidityMiningActiveUser::<T>::try_mutate((&user, liquidity_asset_id), |active_amount| {
+			if let Some(val) = active_amount.checked_add(liquidity_assets_added) {
+				*active_amount = val;
+				Ok(())
+			} else {
+				Err(())
+			}
+		});
+		LiquidityMiningActivePool::<T>::try_mutate(liquidity_asset_id, |active_amount| {
+			if let Some(val) = active_amount.checked_add(liquidity_assets_added) {
+				*active_amount = val;
+				Ok(())
+			} else {
+				Err(())
+			}
+		});
+
 		<T as Config>::Currency::reserve(
 			liquidity_asset_id.into(),
 			&user,
 			liquidity_assets_added.into(),
 		);
-		log!(info, "ERROR:5 ",);
+
 		Ok(())
 	}
 
@@ -1024,11 +982,22 @@ impl<T: Config> Pallet<T> {
 				pool_missing_at_checkpoint - user_missing_burned,
 			),
 		);
-		LiquidityMiningActiveUser::<T>::translate(|_, v: Balance| {
-			Some(v - liquidity_assets_burned)
+		LiquidityMiningActiveUser::<T>::try_mutate((&user, liquidity_asset_id), |active_amount| {
+			if let Some(val) = active_amount.checked_sub(liquidity_assets_burned) {
+				*active_amount = val;
+				Ok(())
+			} else {
+				Err(())
+			}
 		});
-		LiquidityMiningActivePool::<T>::translate(|_, v: Balance| {
-			Some(v - liquidity_assets_burned)
+
+		LiquidityMiningActivePool::<T>::try_mutate(liquidity_asset_id, |active_amount| {
+			if let Some(val) = active_amount.checked_sub(liquidity_assets_burned) {
+				*active_amount = val;
+				Ok(())
+			} else {
+				Err(())
+			}
 		});
 		let rewards_to_be_claimed =
 			LiquidityMiningUserToBeClaimed::<T>::get((user.clone(), &liquidity_asset_id));
@@ -2466,7 +2435,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		liquidity_asset_id: Self::CurrencyId,
 		amount: Self::Balance,
 	) -> DispatchResult {
-		log!(info, "ERROR: activate_liquidity ",);
 		ensure!(
 			<T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some(),
 			Error::<T>::NotAPromotedPool

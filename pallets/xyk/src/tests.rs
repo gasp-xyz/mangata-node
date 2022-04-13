@@ -114,6 +114,7 @@ fn initialize_liquidity_rewards() {
 	XykStorage::create_new_token(&acc_id, amount);
 	XykStorage::create_pool(Origin::signed(2), 0, 5000, 1, 5000).unwrap();
 	XykStorage::promote_pool(Origin::root(), 2).unwrap();
+	XykStorage::activate_liquidity(Origin::signed(2), 2, 5000).unwrap();
 }
 
 #[test]
@@ -134,7 +135,7 @@ fn liquidity_rewards_single_user_work_W() {
 		XykStorage::promote_pool(Origin::root(), 2).unwrap();
 		XykStorage::activate_liquidity(Origin::signed(2), 2, max - 10000).unwrap();
 
-	 	MockPromotedPoolApi::instance().lock().unwrap().insert(2, 1000000000);
+		MockPromotedPoolApi::instance().lock().unwrap().insert(2, 1000000000);
 
 		assert_eq!(
 			XykStorage::liquidity_mining_user((2, 2)),
@@ -164,212 +165,206 @@ fn liquidity_rewards_single_user_work_W() {
 			.unwrap(),
 			U256::from(0)
 		);
-	// 	assert_eq!(
-	// 		XykStorage::calculate_work_user(
-	// 			2,
-	// 			2,
-	// 			2,
-	// 			user_last_checkpoint,
-	// 			user_cummulative_work_in_last_checkpoint,
-	// 			user_missing_at_last_checkpoint
-	// 		)
-	// 		.unwrap(),
-	// 		U256::from_dec_str("19261266052128592271511770231986879893").unwrap()
-	// 	);
-	// 	assert_eq!(
-	// 		XykStorage::calculate_work_user(
-	// 			2,
-	// 			2,
-	// 			3,
-	// 			user_last_checkpoint,
-	// 			user_cummulative_work_in_last_checkpoint,
-	// 			user_missing_at_last_checkpoint
-	// 		)
-	// 		.unwrap(),
-	// 		U256::from_dec_str("56761346399350496564279671432783054583").unwrap()
-	// 	);
-	// 	assert_eq!(
-	// 		XykStorage::calculate_work_user(
-	// 			2,
-	// 			2,
-	// 			4,
-	// 			user_last_checkpoint,
-	// 			user_cummulative_work_in_last_checkpoint,
-	// 			user_missing_at_last_checkpoint
-	// 		)
-	// 		.unwrap(),
-	// 		U256::from_dec_str("111558562201372305723522896226046528132").unwrap()
-	// 	);
-	// 	assert_eq!(
-	// 		XykStorage::calculate_work_user(
-	// 			2,
-	// 			2,
-	// 			5,
-	// 			user_last_checkpoint,
-	// 			user_cummulative_work_in_last_checkpoint,
-	// 			user_missing_at_last_checkpoint
-	// 		)
-	// 		.unwrap(),
-	// 		U256::from_dec_str("182100990657336769517439846212925528194").unwrap()
-	// 	);
-	// 	assert_eq!(
-	// 		XykStorage::calculate_work_user(
-	// 			2,
-	// 			2,
-	// 			10,
-	// 			user_last_checkpoint,
-	// 			user_cummulative_work_in_last_checkpoint,
-	// 			user_missing_at_last_checkpoint
-	// 		)
-	// 		.unwrap(),
-	// 		U256::from_dec_str("748134763815679538947955385515053496837").unwrap()
-	// 	);
-	// 	assert_eq!(
-	// 		XykStorage::calculate_work_user(
-	// 			2,
-	// 			2,
-	// 			100,
-	// 			user_last_checkpoint,
-	// 			user_cummulative_work_in_last_checkpoint,
-	// 			user_missing_at_last_checkpoint
-	// 		)
-	// 		.unwrap(),
-	// 		U256::from_dec_str("28034299255251320439692753381692314106460").unwrap()
-	// 	);
-	// 	assert_eq!(
-	// 		XykStorage::calculate_work_user(
-	// 			2,
-	// 			2,
-	// 			1000,
-	// 			user_last_checkpoint,
-	// 			user_cummulative_work_in_last_checkpoint,
-	// 			user_missing_at_last_checkpoint
-	// 		)
-	// 		.unwrap(),
-	// 		U256::from_dec_str("334270711772001883942188322997728384187725").unwrap()
-	// 	);
-	// 	assert_eq!(
-	// 		XykStorage::calculate_work_user(
-	// 			2,
-	// 			2,
-	// 			10000,
-	// 			user_last_checkpoint,
-	// 			user_cummulative_work_in_last_checkpoint,
-	// 			user_missing_at_last_checkpoint
-	// 		)
-	// 		.unwrap(),
-	// 		U256::from_dec_str("3396812014060448055112559789586387542980979").unwrap()
-	// 	);
-	// 	assert_eq!(
-	// 		XykStorage::calculate_work_user(
-	// 			2,
-	// 			2,
-	// 			100000,
-	// 			user_last_checkpoint,
-	// 			user_cummulative_work_in_last_checkpoint,
-	// 			user_missing_at_last_checkpoint
-	// 		)
-	// 		.unwrap(),
-	// 		U256::from_dec_str("34022225036944909766816274458445526573840979").unwrap()
-	// 	);
-	 });
+			assert_eq!(
+				XykStorage::calculate_work_user(
+					2,
+					2,
+					2,
+					user_last_checkpoint,
+					user_cummulative_work_in_last_checkpoint,
+					user_missing_at_last_checkpoint
+				)
+				.unwrap(),
+				U256::from_dec_str("19261266052128592271511770231986879893").unwrap()
+			);
+			assert_eq!(
+				XykStorage::calculate_work_user(
+					2,
+					2,
+					3,
+					user_last_checkpoint,
+					user_cummulative_work_in_last_checkpoint,
+					user_missing_at_last_checkpoint
+				)
+				.unwrap(),
+				U256::from_dec_str("56761346399350496564279671432783054583").unwrap()
+			);
+			assert_eq!(
+				XykStorage::calculate_work_user(
+					2,
+					2,
+					4,
+					user_last_checkpoint,
+					user_cummulative_work_in_last_checkpoint,
+					user_missing_at_last_checkpoint
+				)
+				.unwrap(),
+				U256::from_dec_str("111558562201372305723522896226046528132").unwrap()
+			);
+			assert_eq!(
+				XykStorage::calculate_work_user(
+					2,
+					2,
+					5,
+					user_last_checkpoint,
+					user_cummulative_work_in_last_checkpoint,
+					user_missing_at_last_checkpoint
+				)
+				.unwrap(),
+				U256::from_dec_str("182100990657336769517439846212925528194").unwrap()
+			);
+			assert_eq!(
+				XykStorage::calculate_work_user(
+					2,
+					2,
+					10,
+					user_last_checkpoint,
+					user_cummulative_work_in_last_checkpoint,
+					user_missing_at_last_checkpoint
+				)
+				.unwrap(),
+				U256::from_dec_str("748134763815679538947955385515053496837").unwrap()
+			);
+			assert_eq!(
+				XykStorage::calculate_work_user(
+					2,
+					2,
+					100,
+					user_last_checkpoint,
+					user_cummulative_work_in_last_checkpoint,
+					user_missing_at_last_checkpoint
+				)
+				.unwrap(),
+				U256::from_dec_str("28034299255251320439692753381692314106460").unwrap()
+			);
+			assert_eq!(
+				XykStorage::calculate_work_user(
+					2,
+					2,
+					1000,
+					user_last_checkpoint,
+					user_cummulative_work_in_last_checkpoint,
+					user_missing_at_last_checkpoint
+				)
+				.unwrap(),
+				U256::from_dec_str("334270711772001883942188322997728384187725").unwrap()
+			);
+			assert_eq!(
+				XykStorage::calculate_work_user(
+					2,
+					2,
+					10000,
+					user_last_checkpoint,
+					user_cummulative_work_in_last_checkpoint,
+					user_missing_at_last_checkpoint
+				)
+				.unwrap(),
+				U256::from_dec_str("3396812014060448055112559789586387542980979").unwrap()
+			);
+			assert_eq!(
+				XykStorage::calculate_work_user(
+					2,
+					2,
+					100000,
+					user_last_checkpoint,
+					user_cummulative_work_in_last_checkpoint,
+					user_missing_at_last_checkpoint
+				)
+				.unwrap(),
+				U256::from_dec_str("34022225036944909766816274458445526573840979").unwrap()
+			);
+	});
 }
 
-// #[test]
-// #[serial]
-// fn liquidity_rewards_pool_promoted_later_W() {
-// 	new_test_ext().execute_with(|| {
-// 		MockPromotedPoolApi::instance().lock().unwrap().clear();
-// 		let max = std::u128::MAX;
-// 		System::set_block_number(1);
-// 		let acc_id: u128 = 2;
-// 		let amount: u128 = max;
-// 		XykStorage::create_new_token(&acc_id, amount);
-// 		XykStorage::create_new_token(&acc_id, amount);
-// 		XykStorage::create_pool(Origin::signed(2), 0, 5000, 1, 5000).unwrap();
 
-// 		System::set_block_number(100000);
-// 		XykStorage::promote_pool(Origin::root(), 2).unwrap();
+#[test]
+#[serial]
+fn liquidity_rewards_promote_pool_W() {
+	new_test_ext().execute_with(|| {
+		MockPromotedPoolApi::instance().lock().unwrap().clear();
+		let max = std::u128::MAX;
+		System::set_block_number(1);
+		let acc_id: u128 = 2;
+		let amount: u128 = max;
+		XykStorage::create_new_token(&acc_id, amount);
+		XykStorage::create_new_token(&acc_id, amount);
+		XykStorage::create_pool(Origin::signed(2), 0, 5000, 1, 5000).unwrap();
 
-// 		MockPromotedPoolApi::instance().lock().unwrap().insert(2, 1000000000);
+		XykStorage::promote_pool(Origin::root(), 2).unwrap();
 
-// 		assert_eq!(XykStorage::calculate_work_user(2, 2, 30).unwrap(), U256::from(39209));
-// 	});
-// }
+	});
+}
 
-// #[test]
-// #[serial]
-// fn liquidity_rewards_promote_pool_W() {
-// 	new_test_ext().execute_with(|| {
-// 		MockPromotedPoolApi::instance().lock().unwrap().clear();
-// 		let max = std::u128::MAX;
-// 		System::set_block_number(1);
-// 		let acc_id: u128 = 2;
-// 		let amount: u128 = max;
-// 		XykStorage::create_new_token(&acc_id, amount);
-// 		XykStorage::create_new_token(&acc_id, amount);
-// 		XykStorage::create_pool(Origin::signed(2), 0, 5000, 1, 5000).unwrap();
+#[test]
+#[serial]
+fn liquidity_rewards_promote_pool_already_promoted_NW() {
+	new_test_ext().execute_with(|| {
+		MockPromotedPoolApi::instance().lock().unwrap().clear();
+		let max = std::u128::MAX;
+		System::set_block_number(1);
+		let acc_id: u128 = 2;
+		let amount: u128 = max;
+		XykStorage::create_new_token(&acc_id, amount);
+		XykStorage::create_new_token(&acc_id, amount);
+		XykStorage::create_pool(Origin::signed(2), 0, 5000, 1, 5000).unwrap();
+		XykStorage::promote_pool(Origin::root(), 2).unwrap();
 
-// 		XykStorage::promote_pool(Origin::root(), 2).unwrap();
+		assert_err!(
+			XykStorage::promote_pool(Origin::root(), 2),
+			Error::<Test>::PoolAlreadyPromoted
+		);
+	});
+}
 
-// 	});
-// }
+#[test]
+#[serial]
+fn liquidity_rewards_two_users_minting_W() {
+	new_test_ext().execute_with(|| {
+		initialize_liquidity_rewards();
 
-// #[test]
-// #[serial]
-// fn liquidity_rewards_promote_pool_already_promoted_NW() {
-// 	new_test_ext().execute_with(|| {
-// 		MockPromotedPoolApi::instance().lock().unwrap().clear();
-// 		let max = std::u128::MAX;
-// 		System::set_block_number(1);
-// 		let acc_id: u128 = 2;
-// 		let amount: u128 = max;
-// 		XykStorage::create_new_token(&acc_id, amount);
-// 		XykStorage::create_new_token(&acc_id, amount);
-// 		XykStorage::create_pool(Origin::signed(2), 0, 5000, 1, 5000).unwrap();
-// 		XykStorage::promote_pool(Origin::root(), 2).unwrap();
+		XykStorage::transfer(0, 2, 3, 1000000).unwrap();
+		XykStorage::transfer(1, 2, 3, 1000000).unwrap();
 
-// 		assert_err!(
-// 			XykStorage::promote_pool(Origin::root(), 2),
-// 			Error::<Test>::PoolAlreadyPromoted
-// 		);
-// 	});
-// }
+		System::set_block_number(100001);
 
-// #[test]
-// #[serial]
-// fn liquidity_rewards_two_users_minting_W() {
-// 	new_test_ext().execute_with(|| {
-// 		initialize_liquidity_rewards();
+		XykStorage::mint_liquidity(Origin::signed(2), 0, 1, 5000, 5001).unwrap();
+		System::set_block_number(200001);
+		XykStorage::mint_liquidity(Origin::signed(3), 0, 1, 5000, 5001).unwrap();
+		let (
+			user2_last_checkpoint,
+			user2_cummulative_work_in_last_checkpoint,
+			user2_missing_at_last_checkpoint,
+		) = XykStorage::liquidity_mining_user((2, 2));
+		let (
+			user3_last_checkpoint,
+			user3_cummulative_work_in_last_checkpoint,
+			user3_missing_at_last_checkpoint,
+		) = XykStorage::liquidity_mining_user((3, 2));
+		let (
+			pool_last_checkpoint,
+			pool_cummulative_work_in_last_checkpoint,
+			pool_missing_at_last_checkpoint,
+		) = XykStorage::liquidity_mining_pool(2);
 
-// 		XykStorage::transfer(0, 2, 3, 1000000).unwrap();
-// 		XykStorage::transfer(1, 2, 3, 1000000).unwrap();
+		let user2_work = XykStorage::calculate_work_user(2, 2, 30,user2_last_checkpoint,user2_cummulative_work_in_last_checkpoint,user2_missing_at_last_checkpoint ).unwrap();
+		let user3_work = XykStorage::calculate_work_user(3, 2, 30,user3_last_checkpoint,user3_cummulative_work_in_last_checkpoint,user3_missing_at_last_checkpoint ).unwrap();
+		let pool_work = XykStorage::calculate_work_pool(2, 30, pool_last_checkpoint, pool_cummulative_work_in_last_checkpoint, pool_missing_at_last_checkpoint).unwrap();
 
-// 		System::set_block_number(100001);
+		assert_eq!(user2_work, U256::from(116256));
+		assert_eq!(user3_work, U256::from(10992));
+		assert_eq!(pool_work, U256::from(127251));
+		System::set_block_number(300001);
+		assert!(pool_work >= user2_work + user3_work);
+		let user2_rewards = XykStorage::calculate_rewards_amount(2, 2).unwrap();
+		let user3_rewards = XykStorage::calculate_rewards_amount(3, 2).unwrap();
+		let pool_rewards = *MockPromotedPoolApi::instance().lock().unwrap().get(&2).unwrap();
+		assert_eq!(user2_rewards, (913595963, 0));
+		assert_eq!(user3_rewards, (86380460, 0));
+		assert_eq!(pool_rewards, 1000000000);
 
-// 		XykStorage::mint_liquidity(Origin::signed(2), 0, 1, 5000, 5001).unwrap();
-// 		System::set_block_number(200001);
-// 		XykStorage::mint_liquidity(Origin::signed(3), 0, 1, 5000, 5001).unwrap();
-
-// 		let user2_work = XykStorage::calculate_work_user(2, 2, 30).unwrap();
-// 		let user3_work = XykStorage::calculate_work_user(3, 2, 30).unwrap();
-// 		let pool_work = XykStorage::calculate_work_pool(2, 30).unwrap();
-
-// 		assert_eq!(user2_work, U256::from(116256));
-// 		assert_eq!(user3_work, U256::from(10992));
-// 		assert_eq!(pool_work, U256::from(127251));
-// 		System::set_block_number(300001);
-// 		assert!(pool_work >= user2_work + user3_work);
-// 		let user2_rewards = XykStorage::calculate_rewards_amount(2, 2).unwrap();
-// 		let user3_rewards = XykStorage::calculate_rewards_amount(3, 2).unwrap();
-// 		let pool_rewards = *MockPromotedPoolApi::instance().lock().unwrap().get(&2).unwrap();
-// 		assert_eq!(user2_rewards, (913595963, 0));
-// 		assert_eq!(user3_rewards, (86380460, 0));
-// 		assert_eq!(pool_rewards, 1000000000);
-
-// 		assert!(pool_rewards >= user2_rewards.0 + user3_rewards.0);
-// 	});
-// }
+		assert!(pool_rewards >= user2_rewards.0 + user3_rewards.0);
+	});
+}
 
 // #[test]
 // #[serial]

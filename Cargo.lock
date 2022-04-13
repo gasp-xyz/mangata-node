@@ -6064,6 +6064,7 @@ dependencies = [
  "orml-tokens",
  "orml-traits",
  "pallet-assets-info",
+ "pallet-bootstrap",
  "pallet-issuance",
  "parity-scale-codec 2.3.1",
  "rustc-hex",

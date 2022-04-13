@@ -244,6 +244,7 @@ use sp_runtime::traits::{
 	SaturatedConversion, Zero,
 };
 use sp_std::{convert::TryFrom, fmt::Debug, prelude::*};
+use pallet_bootstrap::PoolCreateApi;
 
 #[cfg(test)]
 mod mock;
@@ -2497,3 +2498,92 @@ impl<T: Config> Valuate for Pallet<T> {
 		Some((mga_token_reserve, liquidity_token_reserve))
 	}
 }
+
+// impl<T: Config> PoolCreateApi for Pallet<T> {
+// 	type Balance = Balance;
+//
+// 	type CurrencyId = TokenId;
+//
+// 	fn get_liquidity_asset(
+// 		first_asset_id: Self::CurrencyId,
+// 		second_asset_id: Self::CurrencyId,
+// 	) -> Result<TokenId, DispatchError> {
+// 		Pallet::<T>::get_liquidity_asset(first_asset_id, second_asset_id)
+// 	}
+//
+// 	fn get_liquidity_token_mga_pool(
+// 		liquidity_token_id: Self::CurrencyId,
+// 	) -> Result<(Self::CurrencyId, Self::CurrencyId), DispatchError> {
+// 		let (first_token_id, second_token_id) =
+// 			LiquidityPools::<T>::get(liquidity_token_id).ok_or(Error::<T>::NoSuchLiquidityAsset)?;
+// 		let native_currency_id = T::NativeCurrencyId::get();
+// 		match native_currency_id {
+// 			_ if native_currency_id == first_token_id => Ok((first_token_id, second_token_id)),
+// 			_ if native_currency_id == second_token_id => Ok((second_token_id, first_token_id)),
+// 			_ => Err(Error::<T>::NotMangataLiquidityAsset.into()),
+// 		}
+// 	}
+//
+// 	fn valuate_liquidity_token(
+// 		liquidity_token_id: Self::CurrencyId,
+// 		liquidity_token_amount: Self::Balance,
+// 	) -> Self::Balance {
+// 		let (mga_token_id, other_token_id) =
+// 			match Self::get_liquidity_token_mga_pool(liquidity_token_id) {
+// 				Ok(pool) => pool,
+// 				Err(_) => return Default::default(),
+// 			};
+//
+// 		let mga_token_reserve = match Pallet::<T>::get_reserves(mga_token_id, other_token_id) {
+// 			Ok(reserves) => reserves.0,
+// 			Err(_) => return Default::default(),
+// 		};
+//
+// 		let liquidity_token_reserve: Balance =
+// 			<T as Config>::Currency::total_issuance(liquidity_token_id.into()).into();
+//
+// 		if liquidity_token_reserve.is_zero() {
+// 			return Default::default()
+// 		}
+//
+// 		multiply_by_rational(mga_token_reserve, liquidity_token_amount, liquidity_token_reserve)
+// 			.unwrap_or_else(|_| Balance::max_value())
+// 	}
+//
+// 	fn scale_liquidity_by_mga_valuation(
+// 		mga_valuation: Self::Balance,
+// 		liquidity_token_amount: Self::Balance,
+// 		mga_token_amount: Self::Balance,
+// 	) -> Self::Balance {
+// 		if mga_valuation.is_zero() {
+// 			return Default::default()
+// 		}
+//
+// 		multiply_by_rational(liquidity_token_amount, mga_token_amount, mga_valuation)
+// 			.unwrap_or_else(|_| Balance::max_value())
+// 	}
+//
+// 	fn get_pool_state(
+// 		liquidity_token_id: Self::CurrencyId,
+// 	) -> Option<(Self::Balance, Self::Balance)> {
+// 		let (mga_token_id, other_token_id) =
+// 			match Self::get_liquidity_token_mga_pool(liquidity_token_id) {
+// 				Ok(pool) => pool,
+// 				Err(_) => return None,
+// 			};
+//
+// 		let mga_token_reserve = match Pallet::<T>::get_reserves(mga_token_id, other_token_id) {
+// 			Ok(reserves) => reserves.0,
+// 			Err(_) => return None,
+// 		};
+//
+// 		let liquidity_token_reserve: Balance =
+// 			<T as Config>::Currency::total_issuance(liquidity_token_id.into()).into();
+//
+// 		if liquidity_token_reserve.is_zero() {
+// 			return None
+// 		}
+//
+// 		Some((mga_token_reserve, liquidity_token_reserve))
+// 	}
+// }

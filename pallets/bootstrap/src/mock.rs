@@ -102,10 +102,13 @@ impl orml_tokens::Config for Test {
 // }
 
 mockall::mock! {
-	pub PoolCreateApiMock<T: Parameter + Member + MaybeSerializeDeserialize + Debug + MaybeDisplay + Ord + MaxEncodedLen>{}
-	impl<T: Parameter + Member + MaybeSerializeDeserialize + Debug + MaybeDisplay + Ord + MaxEncodedLen> PoolCreateApi<T> for PoolCreateApiMock<T> {
+	pub PoolCreateApiMock{}
+
+	impl PoolCreateApi for PoolCreateApiMock {
+		type AccountId = u128;
+
 		fn pool_exists(first: TokenId, second: TokenId) -> bool;
-		fn pool_create(account: T, first: TokenId, first_amount: Balance, second: TokenId, second_amount: Balance) -> Option<(TokenId, Balance)>;
+		fn pool_create(account: u128, first: TokenId, first_amount: Balance, second: TokenId, second_amount: Balance) -> Option<(TokenId, Balance)>;
 	}
 }
 
@@ -113,7 +116,7 @@ impl pallet_ido::Config for Test {
 	type Event = Event;
 	type MGATokenId = MGAId;
 	type KSMTokenId = KSMId;
-	type PoolCreateApi = MockPoolCreateApiMock<Self::AccountId>;
+	type PoolCreateApi = MockPoolCreateApiMock;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type KsmToMgaRatioNominator = KsmToMgaNominator;
 	type KsmToMgaRatioDenominator = KsmToMgaDenominator;

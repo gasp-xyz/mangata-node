@@ -75,8 +75,9 @@ pub mod pallet {
 		fn on_initialize(n: T::BlockNumber) -> Weight {
 			let phase = Phase::<T>::get();
 			if phase == BootstrapPhase::Finished {
-				return 0
+				return T::DbWeight::get().reads(1)
 			}
+
 			if let Some((start, whitelist_length, public_length)) = BootstrapSchedule::<T>::get() {
 				// NOTE: arythmetics protected by invariant check in Bootstrap::start_ido
 				let whitelist_start = start;
@@ -98,15 +99,22 @@ pub mod pallet {
 					} else {
 						log!(error, "cannot create pool!");
 					}
+					// TODO: include cost of pool_create call
+					T::DbWeight::get().reads_writes(3, 2)
 				} else if n >= public_start {
 					Phase::<T>::put(BootstrapPhase::Public);
 					log!(info, "starting public phase");
+					T::DbWeight::get().reads_writes(2, 1)
 				} else if n >= whitelist_start {
 					log!(info, "starting whitelist phase");
 					Phase::<T>::put(BootstrapPhase::Whitelist);
+					T::DbWeight::get().reads_writes(2, 1)
+				} else {
+					T::DbWeight::get().reads(2)
 				}
+			} else {
+				T::DbWeight::get().reads(2)
 			}
-			0
 		}
 	}
 

@@ -321,6 +321,7 @@ parameter_types! {
 
 parameter_types! {
 	pub const MgaTokenId: TokenId = MGA_TOKEN_ID;
+	pub const DotTokenId: TokenId = DOT_TOKEN_ID;
 }
 
 // Configure FRAME pallets to include in runtime.
@@ -503,6 +504,16 @@ impl pallet_xyk::Config for Runtime {
 	type TreasuryFeePercentage = frame_support::traits::ConstU128<5>;
 	type BuyAndBurnFeePercentage = frame_support::traits::ConstU128<5>;
 	type RewardsDistributionPeriod = frame_support::traits::ConstU32<10000>;
+}
+
+impl pallet_bootstrap::Config for Runtime {
+	type Event = Event;
+	type MGATokenId = MgaTokenId;
+	type KSMTokenId = DotTokenId;
+	type PoolCreateApi = Xyk;
+	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	type KsmToMgaRatioNominator = frame_support::traits::ConstU128<1>;
+	type KsmToMgaRatioDenominator = frame_support::traits::ConstU128<10000>;
 }
 
 type ORMLCurrencyAdapterNegativeImbalance = <orml_tokens::CurrencyAdapter::<Runtime, MgaTokenId> as PalletCurrency<AccountId>>::NegativeImbalance;
@@ -1211,6 +1222,9 @@ construct_runtime!(
 		SudoOrigin: pallet_sudo_origin::{Pallet, Call, Event<T>} = 50,
 		Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 51,
 		Elections: pallet_elections_phragmen::{Pallet, Call, Storage, Event<T>, Config<T>} = 52,
+
+		// Bootstrap
+		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>} = 53,
 
 	}
 );

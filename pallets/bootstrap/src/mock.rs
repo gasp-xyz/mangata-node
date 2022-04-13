@@ -17,7 +17,7 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use super::*;
-use crate as pallet_ido;
+use crate as pallet_bootstrap;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{Contains, Everything},
@@ -106,7 +106,7 @@ mockall::mock! {
 	}
 }
 
-impl pallet_ido::Config for Test {
+impl pallet_bootstrap::Config for Test {
 	type Event = Event;
 	type MGATokenId = MGAId;
 	type KSMTokenId = KSMId;
@@ -127,7 +127,7 @@ construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>},
-		Bootstrap: pallet_ido::{Pallet, Call, Storage, Config, Event<T>},
+		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Config, Event<T>},
 	}
 );
 
@@ -166,7 +166,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		.build_storage::<Test>()
 		.expect("Frame system builds valid default genesis config");
 
-	GenesisBuild::<Test>::assimilate_storage(&pallet_ido::GenesisConfig {}, &mut t)
+	GenesisBuild::<Test>::assimilate_storage(&pallet_bootstrap::GenesisConfig {}, &mut t)
 		.expect("pallet-ido's storage can be assimilated");
 
 	let mut ext = sp_io::TestExternalities::new(t);

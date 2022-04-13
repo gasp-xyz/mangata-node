@@ -4443,6 +4443,7 @@ dependencies = [
  "pallet-assets-info",
  "pallet-aura",
  "pallet-authorship",
+ "pallet-bootstrap",
  "pallet-bridge",
  "pallet-collective",
  "pallet-crowdloan-rewards",
@@ -5335,7 +5336,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-bootstrap"
-version = "2.0.0"
+version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",

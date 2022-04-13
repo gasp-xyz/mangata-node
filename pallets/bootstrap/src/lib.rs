@@ -30,6 +30,16 @@ const PALLET_ID: PalletId = PalletId(*b"12345678");
 use core::fmt::Debug;
 use sp_runtime::traits::MaybeDisplay;
 
+#[macro_export]
+macro_rules! log {
+	($level:tt, $patter:expr $(, $values:expr)* $(,)?) => {
+		log::$level!(
+			target: "bootstrap",
+			concat!("[{:?}] 💸 ", $patter), <frame_system::Pallet<T>>::block_number() $(, $values)*
+		)
+	};
+}
+
 pub trait PoolCreateApi {
 	type AccountId: Parameter
 		+ Member
@@ -75,6 +85,7 @@ pub mod pallet {
 
 				if n >= finished {
 					Phase::<T>::put(BootstrapPhase::Finished);
+					log!(info, "bootstrap event finished");
 					let (mga_valuation, ksm_valuation) = Valuations::<T>::get();
 					if let Some((liq_asset_id, issuance)) = T::PoolCreateApi::pool_create(
 						Self::vault_address(),
@@ -84,10 +95,14 @@ pub mod pallet {
 						mga_valuation,
 					) {
 						MintedLiquidity::<T>::put((liq_asset_id, issuance));
+					} else {
+						log!(error, "cannot create pool!");
 					}
 				} else if n >= public_start {
 					Phase::<T>::put(BootstrapPhase::Public);
+					log!(info, "starting public phase");
 				} else if n >= whitelist_start {
+					log!(info, "starting whitelist phase");
 					Phase::<T>::put(BootstrapPhase::Whitelist);
 				}
 			}
@@ -205,7 +220,7 @@ pub mod pallet {
 			.or(Err(Error::<T>::NotEnoughAssets))?;
 
 			ensure!(
-				Provisions::<T>::try_mutate(sender, token_id, |provision| {
+				Provisions::<T>::try_mutate(sender.clone(), token_id, |provision| {
 					if let Some(val) = provision.checked_add(amount) {
 						*provision = val;
 						Ok(())
@@ -244,6 +259,14 @@ pub mod pallet {
 				);
 			}
 
+			log!(
+				debug,
+				"account={} successfully provisioned token={} amount={}",
+				&sender,
+				token_id,
+				amount
+			);
+
 			Self::deposit_event(Event::Provisioned(token_id, amount));
 			Ok(().into())
 		}
@@ -258,6 +281,7 @@ pub mod pallet {
 			for account in accounts {
 				WhitelistedAccount::<T>::insert(&account, ());
 			}
+			Self::deposit_event(Event::AccountsWhitelisted);
 			Ok(().into())
 		}
 
@@ -344,6 +368,7 @@ pub mod pallet {
 					T::KSMTokenId::get(),
 					ksm_to_bo_claimed,
 				)?;
+				log!(debug, "Rewards from KSM provision: {}", ksm_to_bo_claimed);
 				total_rewards_claimed += ksm_to_bo_claimed;
 			}
 
@@ -355,9 +380,11 @@ pub mod pallet {
 					T::MGATokenId::get(),
 					mga_to_bo_claimed,
 				)?;
+				log!(debug, "Rewards from MGA provision {}", mga_to_bo_claimed);
 				total_rewards_claimed += mga_to_bo_claimed;
 			}
 
+			log!(debug, "Rewards claimed token={} amount={}", liq_token_id, total_rewards_claimed);
 			Self::deposit_event(Event::RewardsClaimed(liq_token_id, total_rewards_claimed));
 
 			Ok(().into())
@@ -400,6 +427,8 @@ pub mod pallet {
 		Provisioned(TokenId, Balance),
 		/// Rewards claimed
 		RewardsClaimed(TokenId, Balance),
+		/// account whitelisted
+		AccountsWhitelisted,
 	}
 }
 

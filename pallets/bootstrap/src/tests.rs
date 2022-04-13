@@ -214,6 +214,18 @@ fn test_allow_non_whitelited_account_to_provision_in_whitelisted_phase_with_mga(
 
 #[test]
 #[serial]
+fn test_whitelist_account_deposit_event() {
+	new_test_ext().execute_with(|| {
+		set_up();
+		Bootstrap::whitelist_accounts(Origin::root(), vec![USER_ID]).unwrap();
+
+		assert!(System::events().iter().any(|record| record.event ==
+			crate::mock::Event::Bootstrap(crate::Event::<Test>::AccountsWhitelisted)));
+	});
+}
+
+#[test]
+#[serial]
 fn test_incremental_whitliested_donation() {
 	new_test_ext().execute_with(|| {
 		set_up();

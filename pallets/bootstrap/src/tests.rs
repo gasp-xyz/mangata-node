@@ -26,7 +26,7 @@ fn set_up() {
 }
 
 fn jump_to_whitelist_phase() {
-	let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+	let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 	pool_exists_mock.expect().return_const(false);
 	Bootstrap::start_ido(Origin::root(), 10_u32.into(), 10, 10).unwrap();
 	Bootstrap::on_initialize(15_u32.into());
@@ -34,7 +34,7 @@ fn jump_to_whitelist_phase() {
 }
 
 fn jump_to_public_phase() {
-	let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+	let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 	pool_exists_mock.expect().return_const(false);
 
 	Bootstrap::start_ido(Origin::root(), 10_u32.into(), 10, 10).unwrap();
@@ -302,7 +302,7 @@ fn test_bootstrap_can_be_modified_only_before_its_started() {
 	new_test_ext().execute_with(|| {
 		set_up();
 
-		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
 		Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 20).unwrap();
@@ -326,10 +326,10 @@ fn test_bootstrap_state_transitions() {
 		const BOOTSTRAP_PUBLIC_START: u64 = 110;
 		const BOOTSTRAP_FINISH: u64 = 130;
 
-		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
-		let pool_create_mock = MockPoolCreateApiMock::pool_create_context();
+		let pool_create_mock = MockPoolCreateApi::pool_create_context();
 		pool_create_mock.expect().times(1).return_const(POOL_CREATE_DUMMY_RETURN_VALUE);
 
 		Bootstrap::start_ido(
@@ -372,13 +372,13 @@ fn test_bootstrap_state_transitions_when_on_initialized_is_not_called() {
 	new_test_ext().execute_with(|| {
 		set_up();
 
-		let pool_create_mock = MockPoolCreateApiMock::pool_create_context();
+		let pool_create_mock = MockPoolCreateApi::pool_create_context();
 		pool_create_mock.expect().times(1).return_const(POOL_CREATE_DUMMY_RETURN_VALUE);
 
 		const BOOTSTRAP_WHITELIST_START: u64 = 100;
 		const BOOTSTRAP_PUBLIC_START: u64 = 110;
 		const BOOTSTRAP_FINISH: u64 = 130;
-		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
 		Bootstrap::start_ido(
@@ -422,7 +422,7 @@ fn test_do_not_allow_for_creating_starting_bootstrap_for_existing_pool() {
 	new_test_ext().execute_with(|| {
 		set_up();
 
-		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 		pool_exists_mock.expect().return_const(true);
 
 		assert_err!(
@@ -442,10 +442,10 @@ fn test_crate_pool_is_called_with_proper_arguments_after_bootstrap_finish() {
 		const KSM_PROVISON: Balance = 30;
 		const MGA_PROVISON: Balance = 500_000;
 
-		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
-		let pool_create_mock = MockPoolCreateApiMock::pool_create_context();
+		let pool_create_mock = MockPoolCreateApi::pool_create_context();
 		pool_create_mock
 			.expect()
 			.with(
@@ -473,7 +473,7 @@ fn test_cannot_claim_rewards_when_bootstrap_is_not_finished() {
 	new_test_ext().execute_with(|| {
 		set_up();
 
-		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
 		Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 10).unwrap();
@@ -503,10 +503,10 @@ fn test_rewards_are_distributed_properly_with_single_user() {
 		let liq_token_id: Arc<Mutex<TokenId>> = Arc::new(Mutex::new(0_u32.into()));
 		let ref_liq_token_id = liq_token_id.clone();
 
-		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
-		let pool_create_mock = MockPoolCreateApiMock::pool_create_context();
+		let pool_create_mock = MockPoolCreateApi::pool_create_context();
 		pool_create_mock
 			.expect()
 			.times(1)
@@ -578,10 +578,10 @@ fn test_rewards_are_distributed_properly_with_multiple_user() {
 		let liq_token_id: Arc<Mutex<TokenId>> = Arc::new(Mutex::new(0_u32.into()));
 		let ref_liq_token_id = liq_token_id.clone();
 
-		let pool_exists_mock = MockPoolCreateApiMock::pool_exists_context();
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
-		let pool_create_mock = MockPoolCreateApiMock::pool_create_context();
+		let pool_create_mock = MockPoolCreateApi::pool_create_context();
 		pool_create_mock
 			.expect()
 			.times(1)

@@ -96,9 +96,9 @@ impl orml_tokens::Config for Test {
 }
 
 mockall::mock! {
-	pub PoolCreateApiMock{}
+	pub PoolCreateApi {}
 
-	impl PoolCreateApi for PoolCreateApiMock {
+	impl PoolCreateApi for PoolCreateApi {
 		type AccountId = u128;
 
 		fn pool_exists(first: TokenId, second: TokenId) -> bool;
@@ -110,7 +110,7 @@ impl pallet_ido::Config for Test {
 	type Event = Event;
 	type MGATokenId = MGAId;
 	type KSMTokenId = KSMId;
-	type PoolCreateApi = MockPoolCreateApiMock;
+	type PoolCreateApi = MockPoolCreateApi;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type KsmToMgaRatioNominator = KsmToMgaNominator;
 	type KsmToMgaRatioDenominator = KsmToMgaDenominator;

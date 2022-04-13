@@ -136,7 +136,7 @@ pub mod pallet {
 		type KSMTokenId: Get<TokenId>;
 
 		#[pallet::constant]
-		type KsmToMgaRatioNominator: Get<u128>;
+		type KsmToMgaRatioNumerator: Get<u128>;
 
 		#[pallet::constant]
 		type KsmToMgaRatioDenominator: Get<u128>;
@@ -207,7 +207,7 @@ pub mod pallet {
 				Error::<T>::UnsupportedTokenId
 			);
 
-			let ratio_nominator = T::KsmToMgaRatioNominator::get();
+			let ratio_nominator = T::KsmToMgaRatioNumerator::get();
 			let ratio_denominator = T::KsmToMgaRatioDenominator::get();
 
 			ensure!(
@@ -269,7 +269,7 @@ pub mod pallet {
 
 			log!(
 				debug,
-				"account={} successfully provisioned token={} amount={}",
+				"account={:?} successfully provisioned token={} amount={}",
 				&sender,
 				token_id,
 				amount

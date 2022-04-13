@@ -512,7 +512,7 @@ impl pallet_bootstrap::Config for Runtime {
 	type KSMTokenId = DotTokenId;
 	type PoolCreateApi = Xyk;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-	type KsmToMgaRatioNominator = frame_support::traits::ConstU128<1>;
+	type KsmToMgaRatioNumerator = frame_support::traits::ConstU128<1>;
 	type KsmToMgaRatioDenominator = frame_support::traits::ConstU128<10000>;
 }
 

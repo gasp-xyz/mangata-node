@@ -4,7 +4,7 @@ use cumulus_primitives_core::ParaId;
 use hex::FromHex;
 use hex_literal::hex;
 use mangata_runtime::{
-	AccountId, AuraId, BlockNumber, IssuanceInfo, Signature, VersionedMultiLocation, DOT_TOKEN_ID,
+	AccountId, AuraId, BlockNumber, IssuanceInfo, Signature, VersionedMultiLocation, KSM_TOKEN_ID,
 };
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
@@ -268,7 +268,7 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 						5_000__000_000_000_000_000_000u128,
 					),
 				],
-				vec![(DOT_TOKEN_ID, None)],
+				vec![(KSM_TOKEN_ID, None)],
 				2000.into(),
 			)
 		},
@@ -439,7 +439,7 @@ pub fn public_testnet_config() -> ChainSpec {
 						5_000__000_000_000_000_000_000u128,
 					),
 				],
-				vec![(DOT_TOKEN_ID, None)],
+				vec![(KSM_TOKEN_ID, None)],
 				2000.into(),
 			)
 		},
@@ -602,7 +602,7 @@ pub fn development_config() -> ChainSpec {
 						5_000__000_000_000_000_000_000u128,
 					),
 				],
-				vec![(DOT_TOKEN_ID, None)],
+				vec![(KSM_TOKEN_ID, None)],
 				2000.into(),
 			)
 		},
@@ -765,7 +765,7 @@ pub fn local_config() -> ChainSpec {
 						5_000__000_000_000_000_000_000u128,
 					),
 				],
-				vec![(DOT_TOKEN_ID, None)],
+				vec![(KSM_TOKEN_ID, None)],
 				2000.into(),
 			)
 		},

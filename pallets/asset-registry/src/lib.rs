@@ -36,15 +36,21 @@ pub use xcm::{v1::MultiLocation, VersionedMultiLocation};
 
 use orml_tokens::MultiTokenCurrencyExtended;
 
+pub mod benchmarking;
 mod mock;
 mod tests;
 pub mod weights;
 
-pub use module::*;
-pub use weights::*;
+pub use pallet::*;
+
+/// Weight functions needed for module_asset_registry.
+pub trait WeightInfo {
+	fn register_asset() -> Weight;
+	fn update_asset() -> Weight;
+}
 
 #[frame_support::pallet]
-pub mod module {
+pub mod pallet {
 	use super::*;
 
 	#[pallet::config]
@@ -157,7 +163,7 @@ pub mod module {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(100_000)]
+		#[pallet::weight(T::WeightInfo::register_asset())]
 		#[transactional]
 		pub fn register_asset(
 			origin: OriginFor<T>,
@@ -173,7 +179,7 @@ pub mod module {
 			Ok(())
 		}
 
-		#[pallet::weight(100_000)]
+		#[pallet::weight(T::WeightInfo::update_asset())]
 		#[transactional]
 		pub fn update_asset(
 			origin: OriginFor<T>,

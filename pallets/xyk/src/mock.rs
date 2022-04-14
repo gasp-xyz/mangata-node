@@ -218,6 +218,7 @@ impl Config for Test {
 	type TreasuryFeePercentage = ConstU128<5>;
 	type BuyAndBurnFeePercentage = ConstU128<5>;
 	type RewardsDistributionPeriod = ConstU32<10000>;
+	type WeightInfo = ();
 }
 
 impl<T: Config> Pallet<T> {

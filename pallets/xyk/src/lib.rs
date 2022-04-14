@@ -688,26 +688,6 @@ impl<T: Config> Pallet<T> {
 		Ok(user_mangata_rewards_amount)
 	}
 
-	// MAX: 2R
-	pub fn calculate_rewards_amount(
-		user: AccountIdOf<T>,
-		liquidity_asset_id: TokenId,
-		block_number: u32,
-	) -> Result<(Balance, i128), DispatchError> {
-		let current_time = block_number / TIMEBLOCKRATIO;
-		let work_user = Self::calculate_work_user(user.clone(), liquidity_asset_id, current_time)?;
-		let work_pool = Self::calculate_work_pool(liquidity_asset_id, current_time)?;
-
-		let already_claimed_user =
-			LiquidityMiningUserClaimed::<T>::try_get((user, &liquidity_asset_id))
-				.unwrap_or_else(|_| 0 as i128);
-
-		let user_rewards_amount =
-			Self::calculate_rewards(work_user, work_pool, liquidity_asset_id, block_number)?;
-
-		Ok((user_rewards_amount, already_claimed_user))
-	}
-
 	// MAX: 0R 0W
 	pub fn calculate_work(
 		asymptote: Balance,

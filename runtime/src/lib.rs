@@ -913,7 +913,6 @@ impl parachain_staking::Config for Runtime {
 	type Issuance = Issuance;
 	type StakingIssuanceVault = StakingIssuanceVault;
 	type FallbackProvider = Council;
-	type WeightInfo = parachain_staking::weights::SubstrateWeight<Runtime>;
 	type WeightInfo = weights::parachain_staking_weights::ModuleWeight<Runtime>;
 }
 

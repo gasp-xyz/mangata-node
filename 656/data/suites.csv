@@ -1,0 +1,3 @@
+"Status","Start Time","Stop Time","Duration in ms","Parent Suite","Suite","Sub Suite","Test Class","Test Method","Name","Description"
+"failed","Mon Apr 18 08:08:20 GMT 2022","Mon Apr 18 08:33:20 GMT 2022","1500028","","test/sequential/xyk-pallet.test.ts","","test/sequential/xyk-pallet.test.ts","xyk-pallet: Happy case scenario","xyk-pallet: Happy case scenario",""
+"failed","Mon Apr 18 08:33:20 GMT 2022","Mon Apr 18 08:58:20 GMT 2022","1500005","","test/sequential/xyk-pallet.test.ts","","test/sequential/xyk-pallet.test.ts","xyk-pallet: Liquidity sufficiency scenario","xyk-pallet: Liquidity sufficiency scenario",""

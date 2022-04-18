@@ -1,0 +1,39 @@
+{
+  "uid" : "4b4757e66a1912dae1a509f688f20b0f",
+  "children" : [ {
+    "name" : "Product defects",
+    "children" : [ {
+      "name" : ": Timeout - Async callback was not invoked within the 1500000 ms timeout specified by jest.setTimeout.",
+      "children" : [ {
+        "name" : "xyk-pallet: Happy case scenario",
+        "uid" : "b0c76bf5a4c16a6c",
+        "parentUid" : "005fba869b175f4f57f6f31cce8a4512",
+        "status" : "failed",
+        "time" : {
+          "start" : 1650269300119,
+          "stop" : 1650270800147,
+          "duration" : 1500028
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "xyk-pallet: Liquidity sufficiency scenario",
+        "uid" : "f3530bc0f9c1d1f8",
+        "parentUid" : "005fba869b175f4f57f6f31cce8a4512",
+        "status" : "failed",
+        "time" : {
+          "start" : 1650270800148,
+          "stop" : 1650272300153,
+          "duration" : 1500005
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "parameters" : [ ]
+      } ],
+      "uid" : "005fba869b175f4f57f6f31cce8a4512"
+    } ],
+    "uid" : "8fb3a91ba5aaf9de24cc8a92edc82b5d"
+  } ],
+  "name" : "categories"
+}

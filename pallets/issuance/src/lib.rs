@@ -126,7 +126,7 @@ pub mod pallet {
 		/// Native token adapter for matching Balance types
 		type NativeTokenAdapter: Currency<Self::AccountId, Balance = Balance> + LockableCurrency<Self::AccountId>;
 		/// The vesting pallet
-		type VestingProvider: VestingSchedule<Self::AccountId, Currency = Self::NativeTokenAdapter, Moment = u32>;
+		type VestingProvider: VestingSchedule<Self::AccountId, Currency = Self::NativeTokenAdapter, Moment = Self::BlockNumber>;
 	}
 
 	#[pallet::storage]
@@ -326,11 +326,11 @@ impl<T: Config> PoolPromoteApi for Pallet<T> {
 }
 
 pub trait ProvideTotalCrowdloanRewardAllocation {
-	fn get_total_crowdloan_allocation(n: u32) -> Option<Balance>;
+	fn get_total_crowdloan_allocation() -> Option<Balance>;
 }
 
 impl<T: Config> ProvideTotalCrowdloanRewardAllocation for Pallet<T> {
-	fn get_total_crowdloan_allocation(n: u32) -> Option<Balance> {
+	fn get_total_crowdloan_allocation() -> Option<Balance> {
 		match IssuanceConfigStore::<T>::get() {
 			Some(issuance_config) => Some(issuance_config.total_crowdloan_allocation),
 			None => None

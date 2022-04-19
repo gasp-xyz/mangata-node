@@ -113,7 +113,7 @@ fn initialize_liquidity_rewards() {
 	XykStorage::create_new_token(&acc_id, amount);
 	XykStorage::create_new_token(&acc_id, amount);
 	XykStorage::create_pool(Origin::signed(2), 0, 5000, 1, 5000).unwrap();
-	XykStorage::promote_pool(Origin::root(), 2).unwrap();
+//	XykStorage::promote_pool(Origin::root(), 2).unwrap();
 	XykStorage::activate_liquidity(Origin::signed(2), 2, 5000).unwrap();
 }
 
@@ -133,7 +133,8 @@ fn liquidity_rewards_single_user_work_W() {
 		XykStorage::create_new_token(&acc_id, amount);
 		XykStorage::create_pool(Origin::signed(2), 0, max - 1, 1, max - 1).unwrap();
 		XykStorage::promote_pool(Origin::root(), 2).unwrap();
-		XykStorage::activate_liquidity(Origin::signed(2), 2, max - 10000).unwrap();
+		let liquidity_tokens_owned = XykStorage::balance(2, 2);
+		XykStorage::activate_liquidity(Origin::signed(2), 2, liquidity_tokens_owned).unwrap();
 
 		MockPromotedPoolApi::instance().lock().unwrap().insert(2, 1000000000);
 
@@ -142,7 +143,7 @@ fn liquidity_rewards_single_user_work_W() {
 			(
 				0,
 				U256::from_dec_str("0").unwrap(),
-				U256::from_dec_str("340282366920938463463374607431768201455").unwrap()
+				U256::from_dec_str("340282366920938463463374607431768211454").unwrap()
 			)
 		);
 
@@ -366,136 +367,223 @@ fn liquidity_rewards_two_users_minting_W() {
 	});
 }
 
-// #[test]
-// #[serial]
-// fn liquidity_rewards_claim_W() {
-// 	new_test_ext().execute_with(|| {
-// 		initialize_liquidity_rewards();
-// 		XykStorage::transfer(
-// 			0,
-// 			2,
-// 			<Test as Config>::LiquidityMiningIssuanceVault::get(),
-// 			10000000000,
-// 		)
-// 		.unwrap();
-// 		System::set_block_number(300001);
-// 		assert_eq!(XykStorage::calculate_work_user(2, 2, 30).unwrap(), U256::from(77046));
-// 		assert_eq!(XykStorage::calculate_work_pool(2, 30).unwrap(), U256::from(77046));
-// 		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (1000000000, 0));
-// 		assert_eq!(*MockPromotedPoolApi::instance().lock().unwrap().get(&2).unwrap(), 1000000000);
-// 		assert_eq!(XykStorage::balance(0, 2), 340282366920938463463374607421768206455);
+#[test]
+#[serial]
+fn liquidity_rewards_claim_W() {
+	new_test_ext().execute_with(|| {
+		initialize_liquidity_rewards();
+		XykStorage::transfer(
+			0,
+			2,
+			<Test as Config>::LiquidityMiningIssuanceVault::get(),
+			10000000000,
+		)
+		.unwrap();
+		System::set_block_number(300001);
 
-// 		XykStorage::claim_rewards(Origin::signed(2), 2, 500000000).unwrap();
+		let (
+			user2_last_checkpoint,
+			user2_cummulative_work_in_last_checkpoint,
+			user2_missing_at_last_checkpoint,
+		) = XykStorage::liquidity_mining_user((2, 2));
+		let (
+			pool_last_checkpoint,
+			pool_cummulative_work_in_last_checkpoint,
+			pool_missing_at_last_checkpoint,
+		) = XykStorage::liquidity_mining_pool(2);
 
-// 		assert_eq!(XykStorage::balance(0, 2), 340282366920938463463374607422268206455);
-// 		assert_eq!(XykStorage::calculate_work_user(2, 2, 30).unwrap(), U256::from(38523));
-// 		assert_eq!(XykStorage::calculate_work_pool(2, 30).unwrap(), U256::from(38523));
-// 		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (500000000, 0));
-// 		assert_eq!(*MockPromotedPoolApi::instance().lock().unwrap().get(&2).unwrap(), 500000000);
+		assert_eq!(XykStorage::calculate_work_user(2, 2, 30,user2_last_checkpoint,
+			user2_cummulative_work_in_last_checkpoint,
+			user2_missing_at_last_checkpoint).unwrap(), U256::from(77046));
+		assert_eq!(XykStorage::calculate_work_pool(2, 30,pool_last_checkpoint,
+			pool_cummulative_work_in_last_checkpoint,
+			pool_missing_at_last_checkpoint).unwrap(), U256::from(77046));
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (1000000000, 0));
+		assert_eq!(*MockPromotedPoolApi::instance().lock().unwrap().get(&2).unwrap(), 1000000000);
+		assert_eq!(XykStorage::balance(0, 2), 340282366920938463463374607421768206455);
 
-// 		System::set_block_number(400001);
-// 		XykStorage::claim_rewards(Origin::signed(2), 2, 500000000).unwrap();
+		XykStorage::claim_rewards(Origin::signed(2), 2, 500000000).unwrap();
 
-// 		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (0, 0));
-// 		assert_eq!(*MockPromotedPoolApi::instance().lock().unwrap().get(&2).unwrap(), 0);
-// 	});
-// }
+		assert_eq!(XykStorage::balance(0, 2), 340282366920938463463374607422268206455);
 
-// #[test]
-// #[serial]
-// fn liquidity_rewards_claim_more_NW() {
-// 	new_test_ext().execute_with(|| {
-// 		initialize_liquidity_rewards();
-// 		System::set_block_number(300001);
+		let (
+			user2_last_checkpoint,
+			user2_cummulative_work_in_last_checkpoint,
+			user2_missing_at_last_checkpoint,
+		) = XykStorage::liquidity_mining_user((2, 2));
+		let (
+			pool_last_checkpoint,
+			pool_cummulative_work_in_last_checkpoint,
+			pool_missing_at_last_checkpoint,
+		) = XykStorage::liquidity_mining_pool(2);
 
-// 		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (1000000000, 0));
-// 		assert_eq!(*MockPromotedPoolApi::instance().lock().unwrap().get(&2).unwrap(), 1000000000);
+		assert_eq!(XykStorage::calculate_work_user(2, 2, 30,user2_last_checkpoint,
+			user2_cummulative_work_in_last_checkpoint,
+			user2_missing_at_last_checkpoint).unwrap(), U256::from(38523));
+		assert_eq!(XykStorage::calculate_work_pool(2, 30,pool_last_checkpoint,
+			pool_cummulative_work_in_last_checkpoint,
+			pool_missing_at_last_checkpoint).unwrap(), U256::from(38523));
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (500000000, 0));
+		assert_eq!(*MockPromotedPoolApi::instance().lock().unwrap().get(&2).unwrap(), 500000000);
 
-// 		assert_err!(
-// 			XykStorage::claim_rewards(Origin::signed(2), 2, 5000000000),
-// 			Error::<Test>::NotEnoughtRewardsEarned,
-// 		);
-// 	});
-// }
+		System::set_block_number(400001);
+		XykStorage::claim_rewards(Origin::signed(2), 2, 500000000).unwrap();
 
-// #[test]
-// #[serial]
-// fn liquidity_rewards_burn_W() {
-// 	new_test_ext().execute_with(|| {
-// 		initialize_liquidity_rewards();
-// 		System::set_block_number(300001);
-// 		XykStorage::transfer(
-// 			0,
-// 			2,
-// 			<Test as Config>::LiquidityMiningIssuanceVault::get(),
-// 			10000000000,
-// 		)
-// 		.unwrap();
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (0, 0));
+		assert_eq!(*MockPromotedPoolApi::instance().lock().unwrap().get(&2).unwrap(), 0);
+	});
+}
 
-// 		XykStorage::transfer(0, 2, 3, 1000000).unwrap();
-// 		XykStorage::transfer(1, 2, 3, 1000000).unwrap();
+#[test]
+#[serial]
+fn liquidity_rewards_claim_more_NW() {
+	new_test_ext().execute_with(|| {
+		initialize_liquidity_rewards();
+		System::set_block_number(300001);
 
-// 		assert_eq!(XykStorage::calculate_work_user(2, 2, 30).unwrap(), U256::from(77046));
-// 		assert_eq!(XykStorage::calculate_work_pool(2, 30).unwrap(), U256::from(77046));
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (1000000000, 0));
+		assert_eq!(*MockPromotedPoolApi::instance().lock().unwrap().get(&2).unwrap(), 1000000000);
 
-// 		XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 2500).unwrap();
+		assert_err!(
+			XykStorage::claim_rewards(Origin::signed(2), 2, 5000000000),
+			Error::<Test>::NotEnoughtRewardsEarned,
+		);
+	});
+}
 
-// 		assert_eq!(
-// 			XykStorage::liquidity_mining_user((2, 2)),
-// 			(30, U256::from(38523), U256::from(435))
-// 		);
-// 		assert_eq!(XykStorage::calculate_work_user(2, 2, 30).unwrap(), U256::from(38523));
-// 		assert_eq!(XykStorage::calculate_work_pool(2, 30).unwrap(), U256::from(38523));
-// 		assert_eq!(XykStorage::liquidity_mining_user_to_be_claimed((2, 2)), 500000000);
-// 		assert_eq!(*MockPromotedPoolApi::instance().lock().unwrap().get(&2).unwrap(), 500000000);
-// 		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (500000000, 500000000));
+#[test]
+#[serial]
+fn liquidity_rewards_burn_W() {
+	new_test_ext().execute_with(|| {
+		initialize_liquidity_rewards();
+		System::set_block_number(300001);
+		XykStorage::transfer(
+			0,
+			2,
+			<Test as Config>::LiquidityMiningIssuanceVault::get(),
+			10000000000,
+		)
+		.unwrap();
 
-// 		XykStorage::claim_rewards(Origin::signed(2), 2, 750000000).unwrap();
+		XykStorage::transfer(0, 2, 3, 1000000).unwrap();
+		XykStorage::transfer(1, 2, 3, 1000000).unwrap();
 
-// 		assert_eq!(
-// 			XykStorage::liquidity_mining_user((2, 2)),
-// 			(30, U256::from(19262), U256::from(435))
-// 		);
-// 		assert_eq!(XykStorage::calculate_work_user(2, 2, 30).unwrap(), U256::from(19262));
-// 		assert_eq!(XykStorage::calculate_work_pool(2, 30).unwrap(), U256::from(19262));
-// 		assert_eq!(XykStorage::liquidity_mining_user_to_be_claimed((2, 2)), 0);
-// 		assert_eq!(*MockPromotedPoolApi::instance().lock().unwrap().get(&2).unwrap(), 250000000);
-// 		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (250000000, 0));
+		let (
+			user2_last_checkpoint,
+			user2_cummulative_work_in_last_checkpoint,
+			user2_missing_at_last_checkpoint,
+		) = XykStorage::liquidity_mining_user((2, 2));
+		let (
+			pool_last_checkpoint,
+			pool_cummulative_work_in_last_checkpoint,
+			pool_missing_at_last_checkpoint,
+		) = XykStorage::liquidity_mining_pool(2);
 
-// 		XykStorage::claim_rewards(Origin::signed(2), 2, 250000000).unwrap();
-// 		assert_eq!(XykStorage::liquidity_mining_user((2, 2)), (30, U256::from(0), U256::from(435)));
+		assert_eq!(XykStorage::calculate_work_user(2, 2, 30,user2_last_checkpoint,
+			user2_cummulative_work_in_last_checkpoint,
+			user2_missing_at_last_checkpoint).unwrap(), U256::from(77046));
+		assert_eq!(XykStorage::calculate_work_pool(2, 30,pool_last_checkpoint,
+			pool_cummulative_work_in_last_checkpoint,
+			pool_missing_at_last_checkpoint).unwrap(), U256::from(77046));
 
-// 		XykStorage::mint_liquidity(Origin::signed(3), 0, 1, 5000, 5002).unwrap();
-// 		XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 2500).unwrap();
-// 		assert_eq!(XykStorage::liquidity_mining_user((2, 2)), (0, U256::from(0), U256::from(0)));
+		XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 2500).unwrap();
 
-// 		XykStorage::mint_liquidity(Origin::signed(2), 0, 1, 5000, 5003).unwrap();
-// 		assert_eq!(XykStorage::calculate_work_user(2, 2, 40).unwrap(), U256::from(10992));
-// 	});
-// }
+		let (
+			user2_last_checkpoint,
+			user2_cummulative_work_in_last_checkpoint,
+			user2_missing_at_last_checkpoint,
+		) = XykStorage::liquidity_mining_user((2, 2));
+		let (
+			pool_last_checkpoint,
+			pool_cummulative_work_in_last_checkpoint,
+			pool_missing_at_last_checkpoint,
+		) = XykStorage::liquidity_mining_pool(2);
 
-// #[test]
-// #[serial]
-// fn liquidity_rewards_calculate_rewards_pool_not_promoted() {
-// 	new_test_ext().execute_with(|| {
-// 		initialize_liquidity_rewards();
+		assert_eq!(
+			XykStorage::liquidity_mining_user((2, 2)),
+			(30, U256::from(38523), U256::from(435))
+		);
+		assert_eq!(XykStorage::calculate_work_user(2, 2, 30,user2_last_checkpoint,
+			user2_cummulative_work_in_last_checkpoint,
+			user2_missing_at_last_checkpoint).unwrap(), U256::from(38523));
+		assert_eq!(XykStorage::calculate_work_pool(2, 30,pool_last_checkpoint,
+			pool_cummulative_work_in_last_checkpoint,
+			pool_missing_at_last_checkpoint).unwrap(), U256::from(38523));
+		assert_eq!(XykStorage::liquidity_mining_user_to_be_claimed((2, 2)), 500000000);
+		assert_eq!(*MockPromotedPoolApi::instance().lock().unwrap().get(&2).unwrap(), 500000000);
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (500000000, 500000000));
 
-// 		assert_err!(XykStorage::calculate_rewards_amount(2, 3), Error::<Test>::NotAPromotedPool,);
-// 	});
-// }
+		XykStorage::claim_rewards(Origin::signed(2), 2, 750000000).unwrap();
 
-// #[test]
-// #[serial]
-// fn liquidity_rewards_claim_pool_not_promoted() {
-// 	new_test_ext().execute_with(|| {
-// 		initialize_liquidity_rewards();
+		assert_eq!(
+			XykStorage::liquidity_mining_user((2, 2)),
+			(30, U256::from(19262), U256::from(435))
+		);
 
-// 		assert_err!(
-// 			XykStorage::claim_rewards(Origin::signed(2), 3, 5000000000),
-// 			Error::<Test>::NotAPromotedPool,
-// 		);
-// 	});
-// }
+		let (
+			user2_last_checkpoint,
+			user2_cummulative_work_in_last_checkpoint,
+			user2_missing_at_last_checkpoint,
+		) = XykStorage::liquidity_mining_user((2, 2));
+		let (
+			pool_last_checkpoint,
+			pool_cummulative_work_in_last_checkpoint,
+			pool_missing_at_last_checkpoint,
+		) = XykStorage::liquidity_mining_pool(2);
+
+		assert_eq!(XykStorage::calculate_work_user(2, 2, 30,user2_last_checkpoint,
+			user2_cummulative_work_in_last_checkpoint,
+			user2_missing_at_last_checkpoint,).unwrap(), U256::from(19262));
+		assert_eq!(XykStorage::calculate_work_pool(2, 30,pool_last_checkpoint,
+			pool_cummulative_work_in_last_checkpoint,
+			pool_missing_at_last_checkpoint,).unwrap(), U256::from(19262));
+		assert_eq!(XykStorage::liquidity_mining_user_to_be_claimed((2, 2)), 0);
+		assert_eq!(*MockPromotedPoolApi::instance().lock().unwrap().get(&2).unwrap(), 250000000);
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (250000000, 0));
+
+		XykStorage::claim_rewards(Origin::signed(2), 2, 250000000).unwrap();
+		assert_eq!(XykStorage::liquidity_mining_user((2, 2)), (30, U256::from(0), U256::from(435)));
+
+		XykStorage::mint_liquidity(Origin::signed(3), 0, 1, 5000, 5002).unwrap();
+		XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 2500).unwrap();
+		assert_eq!(XykStorage::liquidity_mining_user((2, 2)), (0, U256::from(0), U256::from(0)));
+
+		XykStorage::mint_liquidity(Origin::signed(2), 0, 1, 5000, 5003).unwrap();
+
+		let (
+			user2_last_checkpoint,
+			user2_cummulative_work_in_last_checkpoint,
+			user2_missing_at_last_checkpoint,
+		) = XykStorage::liquidity_mining_user((2, 2));
+
+		assert_eq!(XykStorage::calculate_work_user(2, 2, 40,user2_last_checkpoint,
+			user2_cummulative_work_in_last_checkpoint,
+			user2_missing_at_last_checkpoint).unwrap(), U256::from(10992));
+	});
+}
+
+#[test]
+#[serial]
+fn liquidity_rewards_calculate_rewards_pool_not_promoted() {
+	new_test_ext().execute_with(|| {
+		initialize_liquidity_rewards();
+
+		assert_err!(XykStorage::calculate_rewards_amount(2, 3), Error::<Test>::NotAPromotedPool,);
+	});
+}
+
+#[test]
+#[serial]
+fn liquidity_rewards_claim_pool_not_promoted() {
+	new_test_ext().execute_with(|| {
+		initialize_liquidity_rewards();
+
+		assert_err!(
+			XykStorage::claim_rewards(Origin::signed(2), 3, 5000000000),
+			Error::<Test>::NotAPromotedPool,
+		);
+	});
+}
 
 // #[test]
 // fn set_info_should_work() {

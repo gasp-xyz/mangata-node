@@ -1,5 +1,8 @@
 use super::*;
-use mock::{new_test_ext, new_test_ext_wihtout_issuance_config, roll_to_while_minting, Origin, Vesting, BlocksPerRound, Issuance, System, Test, Tokens, MGA_TOKEN_ID, StakeCurrency};
+use mock::{
+	new_test_ext, new_test_ext_wihtout_issuance_config, roll_to_while_minting, BlocksPerRound,
+	Issuance, Origin, StakeCurrency, System, Test, Tokens, Vesting, MGA_TOKEN_ID,
+};
 use sp_runtime::SaturatedConversion;
 
 use frame_support::{assert_noop, assert_ok};
@@ -9,31 +12,32 @@ fn init_issuance_config_works() {
 	new_test_ext_wihtout_issuance_config().execute_with(|| {
 		let current_issuance = StakeCurrency::total_issuance(MGA_TOKEN_ID);
 
-
 		assert_eq!(Issuance::is_tge_finalized(), false);
 		assert_ok!(Issuance::finalize_tge(Origin::root()));
 		assert_eq!(Issuance::is_tge_finalized(), true);
 
 		assert_ok!(Issuance::init_issuance_config(Origin::root()));
-		assert_eq!(Issuance::get_issuance_config(), Some(IssuanceInfo{
-			cap: 4_000_000_000u128,
-			issuance_at_init: current_issuance,
-			linear_issuance_blocks: 22_222u32,
-			liquidity_mining_split: Perbill::from_parts(555555556),
-			staking_split: Perbill::from_parts(444444444),
-			total_crowdloan_allocation: 200_000_000u128,
-		}));
+		assert_eq!(
+			Issuance::get_issuance_config(),
+			Some(IssuanceInfo {
+				cap: 4_000_000_000u128,
+				issuance_at_init: current_issuance,
+				linear_issuance_blocks: 22_222u32,
+				liquidity_mining_split: Perbill::from_parts(555555556),
+				staking_split: Perbill::from_parts(444444444),
+				total_crowdloan_allocation: 200_000_000u128,
+			})
+		);
 	});
 }
 
 #[test]
 fn cannot_finalize_tge_when_already_finalized() {
 	new_test_ext_wihtout_issuance_config().execute_with(|| {
-
 		assert_eq!(Issuance::is_tge_finalized(), false);
 		assert_ok!(Issuance::finalize_tge(Origin::root()));
 		assert_eq!(Issuance::is_tge_finalized(), true);
-		
+
 		assert_noop!(Issuance::finalize_tge(Origin::root()), Error::<Test>::TGEIsAlreadyFinalized);
 	});
 }
@@ -41,10 +45,12 @@ fn cannot_finalize_tge_when_already_finalized() {
 #[test]
 fn cannot_init_issuance_config_when_tge_is_not_finalized() {
 	new_test_ext_wihtout_issuance_config().execute_with(|| {
-
 		assert_eq!(Issuance::is_tge_finalized(), false);
 
-		assert_noop!(Issuance::init_issuance_config(Origin::root()), Error::<Test>::TGENotFinalized);
+		assert_noop!(
+			Issuance::init_issuance_config(Origin::root()),
+			Error::<Test>::TGENotFinalized
+		);
 	});
 }
 
@@ -58,31 +64,37 @@ fn cannot_init_issuance_config_when_already_init() {
 		assert_eq!(Issuance::is_tge_finalized(), true);
 
 		assert_ok!(Issuance::init_issuance_config(Origin::root()));
-		assert_eq!(Issuance::get_issuance_config(), Some(IssuanceInfo{
-			cap: 4_000_000_000u128,
-			issuance_at_init: current_issuance,
-			linear_issuance_blocks: 22_222u32,
-			liquidity_mining_split: Perbill::from_parts(555555556),
-			staking_split: Perbill::from_parts(444444444),
-			total_crowdloan_allocation: 200_000_000u128,
-		}));
-		assert_noop!(Issuance::init_issuance_config(Origin::root()), Error::<Test>::IssuanceConfigAlreadyInitialized);
+		assert_eq!(
+			Issuance::get_issuance_config(),
+			Some(IssuanceInfo {
+				cap: 4_000_000_000u128,
+				issuance_at_init: current_issuance,
+				linear_issuance_blocks: 22_222u32,
+				liquidity_mining_split: Perbill::from_parts(555555556),
+				staking_split: Perbill::from_parts(444444444),
+				total_crowdloan_allocation: 200_000_000u128,
+			})
+		);
+		assert_noop!(
+			Issuance::init_issuance_config(Origin::root()),
+			Error::<Test>::IssuanceConfigAlreadyInitialized
+		);
 	});
 }
 
 #[test]
 fn execute_tge_works() {
 	new_test_ext_wihtout_issuance_config().execute_with(|| {
-
 		assert_eq!(Issuance::is_tge_finalized(), false);
 
-		assert_ok!(Issuance::execute_tge(Origin::root(), 
-		vec![
-			TgeInfo{who: 1, amount: 1000u128},
-			TgeInfo{who: 2, amount: 2000u128},
-			TgeInfo{who: 3, amount: 3000u128},
-			TgeInfo{who: 4, amount: 4000u128}
-		]
+		assert_ok!(Issuance::execute_tge(
+			Origin::root(),
+			vec![
+				TgeInfo { who: 1, amount: 1000u128 },
+				TgeInfo { who: 2, amount: 2000u128 },
+				TgeInfo { who: 3, amount: 3000u128 },
+				TgeInfo { who: 4, amount: 4000u128 }
+			]
 		));
 		assert_eq!(Issuance::get_tge_total(), 10_000u128);
 
@@ -106,9 +118,6 @@ fn execute_tge_works() {
 		assert_eq!(Vesting::vesting(&3).unwrap()[0].per_block(), 24u128);
 		assert_eq!(Vesting::vesting(&4).unwrap()[0].per_block(), 32u128);
 
-
-		
-		
 		assert_ok!(Issuance::finalize_tge(Origin::root()));
 		assert_eq!(Issuance::is_tge_finalized(), true);
 	});
@@ -117,12 +126,14 @@ fn execute_tge_works() {
 #[test]
 fn cannot_execute_tge_if_already_finalized() {
 	new_test_ext_wihtout_issuance_config().execute_with(|| {
-
 		assert_eq!(Issuance::is_tge_finalized(), false);
 		assert_ok!(Issuance::finalize_tge(Origin::root()));
 		assert_eq!(Issuance::is_tge_finalized(), true);
 
-		assert_noop!(Issuance::execute_tge(Origin::root(), vec![]), Error::<Test>::TGEIsAlreadyFinalized);
+		assert_noop!(
+			Issuance::execute_tge(Origin::root(), vec![]),
+			Error::<Test>::TGEIsAlreadyFinalized
+		);
 	});
 }
 

@@ -510,7 +510,6 @@ impl orml_tokens::Config for Runtime {
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 }
 
-
 impl pallet_xyk::Config for Runtime {
 	type Event = Event;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
@@ -971,7 +970,7 @@ impl pallet_vesting_mangata::Config for Runtime {
 	type WeightInfo = pallet_vesting_mangata::weights::SubstrateWeight<Runtime>;
 	// `VestingInfo` encode length is 36bytes. 28 schedules gets encoded as 1009 bytes, which is the
 	// highest number of schedules that encodes less than 2^10.
-	// Should be atleast twice the number of tge recipients  
+	// Should be atleast twice the number of tge recipients
 	const MAX_VESTING_SCHEDULES: u32 = 200;
 }
 

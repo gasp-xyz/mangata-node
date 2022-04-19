@@ -195,6 +195,8 @@ disable-execution = [
 	"frame-executive/disable-execution",
 ]
 
+enable-trading = []
+
 runtime-benchmarks = [
 	"hex-literal",
 	"sp-runtime/runtime-benchmarks",

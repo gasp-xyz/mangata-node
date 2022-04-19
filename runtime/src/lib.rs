@@ -350,12 +350,21 @@ parameter_types! {
 }
 
 pub struct MangataCallFilter;
+
+#[cfg(not(feature = "enable-trading"))]
 impl Contains<Call> for MangataCallFilter {
 	fn contains(call: &Call) -> bool {
 		match call {
 			Call::Xyk(_) => false,
 			_ => true,
 		}
+	}
+}
+
+#[cfg(feature = "enable-trading")]
+impl Contains<Call> for MangataCallFilter {
+	fn contains(_call: &Call) -> bool {
+		true
 	}
 }
 

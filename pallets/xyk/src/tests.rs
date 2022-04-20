@@ -556,7 +556,7 @@ fn liquidity_rewards_burn_W() {
 			U256::from(77046)
 		);
 
-		let liquidity_tokens_activated = XykStorage::Liquidity_mining_active_user((2, 2));
+		let liquidity_tokens_activated = XykStorage::liquidity_mining_active_user((2, 2));
 		assert_eq!(liquidity_tokens_activated, 5000);
 
 		XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 2500).unwrap();
@@ -653,7 +653,7 @@ fn liquidity_rewards_burn_W() {
 
 		XykStorage::mint_liquidity(Origin::signed(3), 0, 1, 5000, 5002).unwrap();
 
-		let liquidity_tokens_activated = XykStorage::Liquidity_mining_active_user((2, 2));
+		let liquidity_tokens_activated = XykStorage::liquidity_mining_active_user((2, 2));
 		assert_eq!(liquidity_tokens_activated, 2500);
 
 		XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 2500).unwrap();
@@ -723,22 +723,22 @@ fn liquidity_rewards_transfer_working_after_deactivate() {
 		env_logger::init();
 		initialize_liquidity_rewards();
 
-		assert_eq!(XykStorage::Liquidity_mining_active_user((2, 2)), 5000);
+		assert_eq!(XykStorage::liquidity_mining_active_user((2, 2)), 5000);
 		assert_eq!(XykStorage::balance(2, 2), 0);
 
 		XykStorage::deactivate_liquidity(Origin::signed(2), 2, 2500).unwrap();
-		assert_eq!(XykStorage::Liquidity_mining_active_user((2, 2)), 2500);
+		assert_eq!(XykStorage::liquidity_mining_active_user((2, 2)), 2500);
 		assert_eq!(XykStorage::balance(2, 2), 2500);
 
 		XykStorage::transfer(2, 2, 3, 2500).unwrap();
-		assert_eq!(XykStorage::Liquidity_mining_active_user((3, 2)), 0);
+		assert_eq!(XykStorage::liquidity_mining_active_user((3, 2)), 0);
 		assert_eq!(XykStorage::balance(2, 3), 2500);
 
 		XykStorage::activate_liquidity(Origin::signed(3), 2, 2500).unwrap();
 
-		assert_eq!(XykStorage::Liquidity_mining_active_user((2, 2)), 2500);
+		assert_eq!(XykStorage::liquidity_mining_active_user((2, 2)), 2500);
 		assert_eq!(XykStorage::balance(2, 2), 0);
-		assert_eq!(XykStorage::Liquidity_mining_active_user((3, 2)), 2500);
+		assert_eq!(XykStorage::liquidity_mining_active_user((3, 2)), 2500);
 		assert_eq!(XykStorage::balance(2, 3), 0);
 
 		let (
@@ -1667,6 +1667,7 @@ fn buy_assets_with_small_expected_amount_does_not_cause_panic() {
 }
 
 #[test]
+#[ignore]
 fn successful_buy_assets_does_not_charge_fee() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -1678,6 +1679,7 @@ fn successful_buy_assets_does_not_charge_fee() {
 }
 
 #[test]
+#[ignore]
 fn unsuccessful_buy_assets_charges_fee() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1689,6 +1691,7 @@ fn unsuccessful_buy_assets_charges_fee() {
 }
 
 #[test]
+#[ignore]
 fn successful_sell_assets_does_not_charge_fee() {
 	new_test_ext().execute_with(|| {
 		initialize();

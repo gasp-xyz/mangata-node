@@ -360,6 +360,7 @@ pub mod pallet {
 		PastTimeCalculation,
 		/// Pool already promoted
 		PoolAlreadyPromoted,
+		/// Sold Amount too low
 		SoldAmountTooLow,
 	}
 
@@ -371,6 +372,9 @@ pub mod pallet {
 		LiquidityMinted(T::AccountId, TokenId, Balance, TokenId, Balance, TokenId, Balance),
 		LiquidityBurned(T::AccountId, TokenId, Balance, TokenId, Balance, TokenId, Balance),
 		PoolPromoted(TokenId),
+		LiquidityActivated(T::AccountId, TokenId, Balance),
+		LiquidityDeactivated(T::AccountId, TokenId, Balance),
+		RewardsClaimed(T::AccountId, TokenId, Balance),
 	}
 
 	#[pallet::storage]
@@ -404,12 +408,12 @@ pub mod pallet {
 		StorageMap<_, Blake2_256, (AccountIdOf<T>, TokenId), u128, ValueQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn Liquidity_mining_active_user)]
+	#[pallet::getter(fn liquidity_mining_active_user)]
 	pub type LiquidityMiningActiveUser<T: Config> =
 		StorageMap<_, Twox64Concat, (AccountIdOf<T>, TokenId), u128, ValueQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn Liquidity_mining_active_pool)]
+	#[pallet::getter(fn liquidity_mining_active_pool)]
 	pub type LiquidityMiningActivePool<T: Config> =
 		StorageMap<_, Twox64Concat, TokenId, u128, ValueQuery>;
 
@@ -626,7 +630,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			<Self as XykFunctionsTrait<T::AccountId>>::activate_liquidity(
+			<Self as XykFunctionsTrait<T::AccountId>>::deactivate_liquidity(
 				sender,
 				liquidity_token_id,
 				amount,
@@ -999,6 +1003,7 @@ impl<T: Config> Pallet<T> {
 				Err(())
 			}
 		});
+
 		let rewards_to_be_claimed =
 			LiquidityMiningUserToBeClaimed::<T>::get((user.clone(), &liquidity_asset_id));
 
@@ -2181,28 +2186,17 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		let liquidity_asset_id = Pallet::<T>::get_liquidity_asset(first_asset_id, second_asset_id)?;
 
 		// Ensure user has enought liquidity tokens to burn
+		let liquidity_token_free_balance =
+			<T as Config>::Currency::free_balance(liquidity_asset_id.into(), &sender).into();
+		let liquidity_token_activated_balance =
+			LiquidityMiningActiveUser::<T>::get((&sender, &liquidity_asset_id));
+		let total_liquidity_tokens_user_owned =
+			liquidity_token_free_balance + liquidity_token_activated_balance;
+
 		ensure!(
-			<T as Config>::Currency::can_slash(
-				liquidity_asset_id.into(),
-				&sender,
-				liquidity_asset_amount.into()
-			),
+			total_liquidity_tokens_user_owned >= liquidity_asset_amount,
 			Error::<T>::NotEnoughAssets,
 		);
-		let new_balance: Self::Balance =
-			<T as Config>::Currency::free_balance(liquidity_asset_id.into(), &sender)
-				.into()
-				.checked_sub(liquidity_asset_amount)
-				.ok_or_else(|| DispatchError::from(Error::<T>::NotEnoughAssets))?;
-
-		<T as Config>::Currency::ensure_can_withdraw(
-			liquidity_asset_id.into(),
-			&sender,
-			liquidity_asset_amount.into(),
-			WithdrawReasons::all(),
-			new_balance.into(),
-		)
-		.or(Err(Error::<T>::NotEnoughAssets))?;
 
 		// Calculate first and second token amounts depending on liquidity amount to burn
 		let (first_asset_amount, second_asset_amount) = Pallet::<T>::get_burn_amount_reserves(
@@ -2268,15 +2262,25 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		);
 
 		if <T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some() {
-			if <T as Config>::Currency::free_balance(liquidity_asset_id.into(), &sender).into() ==
-				liquidity_asset_amount
-			{
+			let promoted_liquidity_asset_amount_to_settle =
+				if liquidity_token_free_balance >= liquidity_asset_amount {
+					0
+				} else {
+					liquidity_asset_amount - liquidity_token_free_balance
+				};
+
+			if liquidity_token_activated_balance == promoted_liquidity_asset_amount_to_settle {
+				Pallet::<T>::set_liquidity_burning_checkpoint(
+					sender.clone(),
+					liquidity_asset_id,
+					promoted_liquidity_asset_amount_to_settle,
+				)?;
 				LiquidityMiningUser::<T>::remove((sender.clone(), liquidity_asset_id));
 			} else {
 				Pallet::<T>::set_liquidity_burning_checkpoint(
 					sender.clone(),
 					liquidity_asset_id,
-					liquidity_asset_amount,
+					promoted_liquidity_asset_amount_to_settle,
 				)?;
 			}
 		}
@@ -2414,6 +2418,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			ExistenceRequirement::KeepAlive,
 		)?;
 
+		Pallet::<T>::deposit_event(Event::RewardsClaimed(user, liquidity_asset_id, mangata_amount));
+
 		Ok(())
 	}
 
@@ -2447,6 +2453,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 		Pallet::<T>::set_liquidity_minting_checkpoint(user.clone(), liquidity_asset_id, amount)?;
 
+		Pallet::<T>::deposit_event(Event::LiquidityActivated(user, liquidity_asset_id, amount));
+
 		Ok(())
 	}
 
@@ -2461,10 +2469,12 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		);
 		ensure!(
 			LiquidityMiningActiveUser::<T>::get((user.clone(), liquidity_asset_id)) >= amount,
-			Error::<T>::NotEnoughAssets
+			Error::<T>::NotAPromotedPool
 		);
 
-		Pallet::<T>::set_liquidity_burning_checkpoint(user, liquidity_asset_id, amount)?;
+		Pallet::<T>::set_liquidity_burning_checkpoint(user.clone(), liquidity_asset_id, amount)?;
+
+		Pallet::<T>::deposit_event(Event::LiquidityDeactivated(user, liquidity_asset_id, amount));
 
 		Ok(())
 	}

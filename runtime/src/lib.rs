@@ -1163,7 +1163,7 @@ impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 					},
 					_ => None,
 				}
-			},
+			}
 			_ => None,
 		}
 	}

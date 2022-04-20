@@ -34,8 +34,8 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-#[cfg(feature = "runtime-benchmarks")]
-mod benchmarking;
+// #[cfg(feature = "runtime-benchmarks")]
+// mod benchmarking;
 
 pub trait Config: system::Config {
 	type Event: From<Event> + Into<<Self as system::Config>::Event>;

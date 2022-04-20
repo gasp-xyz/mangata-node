@@ -6,6 +6,7 @@ RUN apt-get install -y nodejs
 RUN apt-get install -y npm
 COPY ./devops/dockerfiles/parachain-registrator/src/index.js /code
 COPY ./devops/dockerfiles/parachain-registrator/src/index_ksm.js /code
+COPY ./devops/dockerfiles/parachain-registrator/src/index_acala.js /code
 COPY ./devops/dockerfiles/parachain-registrator/src/package.json /code
 RUN npm install
 ENTRYPOINT []

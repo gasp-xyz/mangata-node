@@ -9,6 +9,7 @@ import { exit } from 'process';
 const state_file = process.env.STATE_FILE ? process.env.STATE_FILE : "/code/genesis-state";
 const wasm_file = process.env.WASM_FILE ? process.env.WASM_FILE : "/code/genesis-wasm";
 const address = process.env.COLLATOR_ADDR ? process.env.COLLATOR_ADDR : "ws://10.0.0.2:9944";
+const paraID = process.env.PARA_ID ? process.env.PARA_ID: 2000;
 
 async function wait_for_new_block(api){
     let wait = new Promise(async (resolve, _) => {
@@ -57,10 +58,10 @@ async function main () {
     
     await wait_for_new_block(api);
       console.info(`get para id 3 ${nextParaIdBefore}`);
-      if ( !nextParaIdBefore.eqn(2000) ){
-            console.info("Registering parachain slot 2000");
+      if ( !nextParaIdBefore.eqn(paraID) ){
+            console.info("Registering parachain slot "+ paraID);
             await api.tx.registrar.reserve().signAndSend(alice);
-            console.info("Parachain slot 2000 registered");
+            console.info(`Parachain slot ${paraID} registered`);
       }
   await wait_for_new_block(api);
   await wait_for_new_block(api);
@@ -74,7 +75,7 @@ async function main () {
    const wasm = fs.readFileSync(wasm_file).toString();
    console.info("get para id 5");
    const scheduleParaInit = api.tx.registrar.register(
-     new BN(2000),
+     new BN(paraID),
      genesis,
      wasm,
    );
@@ -86,7 +87,7 @@ async function main () {
      setTimeout(resolve, 240 *1000);
    });
    
-   const councilProposal2 = api.tx.council.propose( 1 , api.tx.slots.forceLease(2000, alice.address , stakeAmount , 0 , 999), 64);
+   const councilProposal2 = api.tx.council.propose( 1 , api.tx.slots.forceLease(paraID, alice.address , stakeAmount , 0 , 999), 64);
    await councilProposal2.signAndSend(alice)
 
 

@@ -74,7 +74,7 @@ services:
         ipv4_address: 10.0.0.4
 
   para_alice:
-    image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangata-node:0.11.1}
+    image: ${PARACHAIN_DOCKER_IMAGE:-p1k1m4n/mangata-qa:fastAndparaId2001}
     environment:
       - ${RUST_LOG:-info}
       - LD_PRELOAD=${LD_PRELOAD}
@@ -147,7 +147,7 @@ services:
 
 
   para_bob:
-    image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangatasolutions/mangata-node:0.11.1}
+    image: ${PARACHAIN_DOCKER_IMAGE:-p1k1m4n/mangata-qa:fastAndparaId2001}
     environment:
       - ${RUST_LOG:-info}
       - LD_PRELOAD=${LD_PRELOAD}

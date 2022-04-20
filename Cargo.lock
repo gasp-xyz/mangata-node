@@ -5618,7 +5618,7 @@ dependencies = [
  "orml-tokens",
  "orml-traits",
  "parity-scale-codec 2.3.1",
- "scale-info",
+ "scale-info 1.0.0",
  "serde",
  "serial_test",
  "sp-arithmetic",

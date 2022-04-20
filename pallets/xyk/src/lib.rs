@@ -758,7 +758,6 @@ impl<T: Config> Pallet<T> {
 		Ok(work_total)
 	}
 
-	// MAX: 1R 0W
 	pub fn calculate_work_pool(
 		liquidity_asset_id: TokenId,
 		current_time: u32,

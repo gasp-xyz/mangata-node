@@ -19,14 +19,18 @@
 use super::*;
 use crate as pallet_issuance;
 use frame_support::{
-	construct_runtime, parameter_types,
+	assert_ok, construct_runtime, parameter_types,
 	traits::{Contains, Everything},
 	PalletId,
 };
 use mangata_primitives::{Amount, Balance, TokenId};
 use orml_traits::parameter_type_with_key;
-use sp_runtime::{traits::AccountIdConversion, SaturatedConversion};
+use sp_runtime::{
+	traits::{AccountIdConversion, ConvertInto},
+	SaturatedConversion,
+};
 
+pub const MGA_TOKEN_ID: TokenId = 0;
 pub(crate) type AccountId = u128;
 
 parameter_types!(
@@ -102,8 +106,17 @@ parameter_types! {
 	pub LiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account();
 	pub const StakingIssuanceVaultId: PalletId = PalletId(*b"py/stkiv");
 	pub StakingIssuanceVault: AccountId = StakingIssuanceVaultId::get().into_account();
-	pub const CrowdloanIssuanceVaultId: PalletId = PalletId(*b"py/crliv");
-	pub CrowdloanIssuanceVault: AccountId = CrowdloanIssuanceVaultId::get().into_account();
+
+
+	pub const TotalCrowdloanAllocation: Balance = 200_000_000;
+	pub const IssuanceCap: Balance = 4_000_000_000;
+	pub const LinearIssuanceBlocks: u32 = 22_222u32;
+	pub const LiquidityMiningSplit: Perbill = Perbill::from_parts(555555556);
+	pub const StakingSplit: Perbill = Perbill::from_parts(444444444);
+	pub const ImmediateTGEReleasePercent: Percent = Percent::from_percent(20);
+	pub const TGEReleasePeriod: u32 = 100u32; // 2 years
+	pub const TGEReleaseBegin: u32 = 10u32; // Two weeks into chain start
+
 }
 
 impl pallet_issuance::Config for Test {
@@ -114,7 +127,32 @@ impl pallet_issuance::Config for Test {
 	type HistoryLimit = HistoryLimit;
 	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
 	type StakingIssuanceVault = StakingIssuanceVault;
-	type CrowdloanIssuanceVault = CrowdloanIssuanceVault;
+	type TotalCrowdloanAllocation = TotalCrowdloanAllocation;
+	type IssuanceCap = IssuanceCap;
+	type LinearIssuanceBlocks = LinearIssuanceBlocks;
+	type LiquidityMiningSplit = LiquidityMiningSplit;
+	type StakingSplit = StakingSplit;
+	type ImmediateTGEReleasePercent = ImmediateTGEReleasePercent;
+	type TGEReleasePeriod = TGEReleasePeriod;
+	type TGEReleaseBegin = TGEReleaseBegin;
+	type NativeTokenAdapter = orml_tokens::CurrencyAdapter<Test, MgaTokenId>;
+	type VestingProvider = Vesting;
+}
+
+parameter_types! {
+	pub const MinVestedTransfer: Balance = 100u128;
+}
+
+impl pallet_vesting_mangata::Config for Test {
+	type Event = Event;
+	type Currency = orml_tokens::CurrencyAdapter<Test, MgaTokenId>;
+	type BlockNumberToBalance = ConvertInto;
+	type MinVestedTransfer = MinVestedTransfer;
+	type WeightInfo = pallet_vesting_mangata::weights::SubstrateWeight<Test>;
+	// `VestingInfo` encode length is 36bytes. 28 schedules gets encoded as 1009 bytes, which is the
+	// highest number of schedules that encodes less than 2^10.
+	// Should be atleast twice the number of tge recipients
+	const MAX_VESTING_SCHEDULES: u32 = 200;
 }
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -128,9 +166,35 @@ construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>},
-		Issuance: pallet_issuance::{Pallet, Event<T>, Storage, Config},
+		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>},
+		Issuance: pallet_issuance::{Pallet, Event<T>, Storage},
 	}
 );
+
+// This function basically just builds a genesis storage key/value store according to
+// our desired mockup.
+pub fn new_test_ext_wihtout_issuance_config() -> sp_io::TestExternalities {
+	let mut t = frame_system::GenesisConfig::default()
+		.build_storage::<Test>()
+		.expect("Frame system builds valid default genesis config");
+
+	orml_tokens::GenesisConfig::<Test> {
+		tokens_endowment: vec![(0u128, 0u32, 2_000_000_000)],
+		created_tokens_for_staking: Default::default(),
+	}
+	.assimilate_storage(&mut t)
+	.expect("Tokens storage can be assimilated");
+
+	let mut ext = sp_io::TestExternalities::new(t);
+	ext.execute_with(|| {
+		System::set_block_number(1);
+
+		if !StakeCurrency::exists(MGA_TOKEN_ID) {
+			assert_ok!(StakeCurrency::create(&99999, 100));
+		}
+	});
+	ext
+}
 
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup.
@@ -141,34 +205,33 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
 	orml_tokens::GenesisConfig::<Test> {
 		tokens_endowment: vec![(0u128, 0u32, 2_000_000_000)],
-		vesting_tokens: Default::default(),
 		created_tokens_for_staking: Default::default(),
 	}
 	.assimilate_storage(&mut t)
 	.expect("Tokens storage can be assimilated");
 
-	GenesisBuild::<Test>::assimilate_storage(
-		&pallet_issuance::GenesisConfig {
-			issuance_config: IssuanceInfo {
-				cap: 4_000_000_000u128,
-				tge: 2_000_000_000u128,
-				// Only blocks from [0, 22_219] will be considered as the linear period
-				// The tokens missing at tge will be attempted to be distributed over this time period
-				// Missed opportunities for minting tokens such as at block 0 (genesis block) and or failure to claim will be counted as burned
-				linear_issuance_blocks: 22_222u32,
-				liquidity_mining_split: Perbill::from_parts(555555556),
-				staking_split: Perbill::from_parts(444444444),
-				crowdloan_allocation: 200_000_000u128,
-			},
-		},
-		&mut t,
-	)
-	.expect("pallet-issuance's storage can be assimilated");
-
 	let mut ext = sp_io::TestExternalities::new(t);
-	ext.execute_with(|| System::set_block_number(1));
+	ext.execute_with(|| {
+		System::set_block_number(1);
+
+		if !StakeCurrency::exists(MGA_TOKEN_ID) {
+			assert_ok!(StakeCurrency::create(&99999, 100));
+		}
+
+		let current_issuance = StakeCurrency::total_issuance(MGA_TOKEN_ID);
+		let target_tge = 2_000_000_000u128;
+		assert!(current_issuance <= target_tge);
+
+		assert_ok!(StakeCurrency::mint(MGA_TOKEN_ID, &99999, target_tge - current_issuance));
+
+		assert_ok!(Issuance::finalize_tge(Origin::root()));
+		assert_ok!(Issuance::init_issuance_config(Origin::root()));
+		assert_ok!(Issuance::calculate_and_store_round_issuance(0u32));
+	});
 	ext
 }
+
+pub type StakeCurrency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 
 pub(crate) fn roll_to_while_minting(n: u64, expected_amount_minted: Option<Balance>) {
 	let mut session_number: u32;

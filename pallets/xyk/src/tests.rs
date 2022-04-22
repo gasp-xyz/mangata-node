@@ -1712,3 +1712,56 @@ fn unsuccessful_sell_assets_charges_fee() {
 		assert_eq!(post_info.pays_fee, Pays::Yes);
 	});
 }
+
+#[test]
+fn PoolCreateApi_test_pool_exists_return_false_for_non_existing_pool() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		assert!(!<XykStorage as PoolCreateApi>::pool_exists(1_u32.into(), 2_u32.into()));
+	});
+}
+
+#[test]
+fn PoolCreateApi_pool_exists_return_true_for_existing_pool() {
+	new_test_ext().execute_with(|| {
+		initialize();
+
+		XykStorage::create_pool(Origin::signed(2), 0, 500000, 1, 10000).unwrap();
+		assert!(<XykStorage as PoolCreateApi>::pool_exists(0_u32.into(), 1_u32.into()));
+	});
+}
+
+#[test]
+fn PoolCreateApi_pool_create_creates_a_pool() {
+	new_test_ext().execute_with(|| {
+		initialize();
+
+		let first_asset_id = 0_u32;
+		let first_asset_amount = 10_000_u128;
+		let second_asset_id = 1_u32;
+		let second_asset_amount = 5_000_u128;
+		assert!(!<XykStorage as PoolCreateApi>::pool_exists(
+			first_asset_id.into(),
+			second_asset_id.into()
+		));
+
+		let liq_token_id = Tokens::next_asset_id();
+		let liq_token_amount = (first_asset_amount + second_asset_amount) / 2;
+
+		assert_eq!(
+			<XykStorage as PoolCreateApi>::pool_create(
+				DUMMY_USER_ID.into(),
+				first_asset_id.into(),
+				first_asset_amount,
+				second_asset_id.into(),
+				second_asset_amount
+			),
+			Some((liq_token_id, liq_token_amount))
+		);
+
+		assert_ne!(liq_token_id, Tokens::next_asset_id());
+		assert_eq!(liq_token_amount, XykStorage::balance(liq_token_id, DUMMY_USER_ID.into()));
+
+		assert!(<XykStorage as PoolCreateApi>::pool_exists(0_u32.into(), 1_u32.into()));
+	});
+}

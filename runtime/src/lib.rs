@@ -343,7 +343,7 @@ parameter_types! {
 
 parameter_types! {
 	pub const MgaTokenId: TokenId = MGA_TOKEN_ID;
-	pub const KsmTokenId: TokenId = DOT_TOKEN_ID;
+	pub const KsmTokenId: TokenId = KSM_TOKEN_ID;
 }
 
 pub struct MangataCallFilter;

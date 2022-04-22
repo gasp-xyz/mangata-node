@@ -12,6 +12,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 substrate-wasm-builder = { git = "https://github.com/mangata-finance/substrate", branch = "polkadot-v0.9.12" }
 
 [dependencies]
+hex-literal = { version = '0.3.1', optional = true }
 codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"]}
 log = { version = "0.4.14", default-features = false }
 scale-info = { version = "1.0.0", default-features = false, features = ["derive"] }
@@ -85,6 +86,7 @@ cumulus-primitives-core = { git = 'https://github.com/mangata-finance/cumulus', 
 cumulus-primitives-timestamp = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev', default-features = false }
 cumulus-primitives-utility = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev', default-features = false }
 parachain-info = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev', default-features = false }
+cumulus-pallet-session-benchmarking = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev', default-features = false }
 
 # Polkadot Dependencies
 pallet-xcm = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "release-v0.9.16" }
@@ -106,7 +108,7 @@ pallet-bridge = {default-features = false, version = "0.1.1", path = "../pallets
 parachain-staking = { default-features = false, git = "https://github.com/mangata-finance/moonbeam.git", branch = "mangata-dev" }
 
 # Crowdloan dependencies
-pallet-crowdloan-rewards = { default-features = false, git = "https://github.com/mangata-finance/crowdloan-rewards", branch = "feature/issuance-vesting-crowdloan" }
+pallet-crowdloan-rewards = { default-features = false, git = "https://github.com/mangata-finance/crowdloan-rewards", branch = "mangata-dev" }
 
 [features]
 default = [
@@ -189,13 +191,30 @@ try-runtime = [
 	"frame-executive/try-runtime",
 ]
 
+disable-execution = [
+	"frame-executive/disable-execution",
+]
+
+enable-trading = []
+
 runtime-benchmarks = [
+	"hex-literal",
 	"sp-runtime/runtime-benchmarks",
 	"xcm-builder/runtime-benchmarks",
-	"frame-benchmarking",
+	"frame-benchmarking/runtime-benchmarks",
 	"frame-system-benchmarking",
 	"frame-support/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"pallet-xcm/runtime-benchmarks",
+	"pallet-collective/runtime-benchmarks",
+	"orml-tokens/runtime-benchmarks",
+	"cumulus-pallet-session-benchmarking/runtime-benchmarks",
+	"pallet-xyk/runtime-benchmarks",
+	"parachain-staking/runtime-benchmarks",
+	"xcm-asset-registry/runtime-benchmarks",
+	"pallet-treasury/runtime-benchmarks",
+	"pallet-collective/runtime-benchmarks",
+	"pallet-elections-phragmen/runtime-benchmarks",
+
 ]

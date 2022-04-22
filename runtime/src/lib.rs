@@ -533,6 +533,23 @@ impl pallet_xyk::Config for Runtime {
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
 }
 
+impl pallet_bootstrap::Config for Runtime {
+	type Event = Event;
+	type MGATokenId = MgaTokenId;
+	type KSMTokenId = KsmTokenId;
+	type PoolCreateApi = Xyk;
+	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	type KsmToMgaRatioNumerator = frame_support::traits::ConstU128<1>;
+	type KsmToMgaRatioDenominator = frame_support::traits::ConstU128<10000>;
+}
+
+impl pallet_utility::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type PalletsOrigin = OriginCaller;
+	type WeightInfo = pallet_utility::weights::SubstrateWeight<Runtime>;
+}
+
 type ORMLCurrencyAdapterNegativeImbalance =
 	<orml_tokens::MultiTokenCurrencyAdapter<Runtime> as orml_tokens::MultiTokenCurrency<
 		AccountId,
@@ -1430,6 +1447,9 @@ construct_runtime!(
 		Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 51,
 		Elections: pallet_elections_phragmen::{Pallet, Call, Storage, Event<T>, Config<T>} = 52,
 
+		// Bootstrap
+		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>} = 53,
+		Utility: pallet_utility::{Pallet, Call, Event} = 54,
 	}
 );
 

@@ -84,6 +84,8 @@ use xyk_runtime_api::{RpcAmountsResult, RpcResult, RpcRewardsResult};
 pub const MGA_TOKEN_ID: TokenId = 0;
 pub const KSM_TOKEN_ID: TokenId = 4;
 
+pub const KSM_MGA_SCALE_FACTOR: u32 = 100_000_000u32; // 100 as KSM/MGA, with 6 decimals accounted for (12 - KSM, 18 - MGA)
+
 pub use pallet_sudo;
 
 pub use pallet_sudo_origin;
@@ -198,7 +200,7 @@ pub fn mga_per_second() -> u128 {
 }
 
 pub fn ksm_per_second() -> u128 {
-	mga_per_second() / 50 / 100_000_000
+	mga_per_second() / KSM_MGA_SCALE_FACTOR as u128
 }
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
@@ -658,6 +660,7 @@ where
 			ExistenceRequirement::KeepAlive,
 		) {
 			Ok(imbalance) => Ok(Some((T1::get(), imbalance))),
+			// TODO make sure atleast 1 planck KSM is charged
 			Err(_) => match C::withdraw(
 				T2::get().into(),
 				who,
@@ -716,7 +719,7 @@ impl pallet_transaction_payment::Config for Runtime {
 		ToAuthor,
 		MgaTokenId,
 		KsmTokenId,
-		frame_support::traits::ConstU32<100_u32>,
+		frame_support::traits::ConstU32<KSM_MGA_SCALE_FACTOR>,
 	>;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = WeightToFee;

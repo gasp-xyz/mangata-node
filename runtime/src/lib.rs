@@ -23,7 +23,6 @@ use sp_runtime::{
 	ApplyExtrinsicResult, MultiSignature, Percent,
 };
 
-use pallet_session::ShouldEndSession;
 use sp_std::{marker::PhantomData, prelude::*};
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -31,12 +30,9 @@ use sp_version::RuntimeVersion;
 
 use frame_support::{
 	construct_runtime, match_type, parameter_types,
-	traits::{
-		Contains, Currency as PalletCurrency, Everything, Get, LockIdentifier, Nothing,
-		OnUnbalanced, U128CurrencyToVote,
-	},
+	traits::{Contains, Everything, Get, LockIdentifier, Nothing, U128CurrencyToVote},
 	weights::{
-		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
+		constants::{WEIGHT_PER_MICROS, WEIGHT_PER_MILLIS, WEIGHT_PER_SECOND},
 		DispatchClass, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
 		WeightToFeePolynomial,
 	},
@@ -86,7 +82,9 @@ pub use pallet_xyk;
 use xyk_runtime_api::{RpcAmountsResult, RpcResult, RpcRewardsResult};
 
 pub const MGA_TOKEN_ID: TokenId = 0;
-pub const DOT_TOKEN_ID: TokenId = 4;
+pub const KSM_TOKEN_ID: TokenId = 4;
+
+pub const KSM_MGA_SCALE_FACTOR: u32 = 100_000_000u32; // 100 as KSM/MGA, with 6 decimals accounted for (12 - KSM, 18 - MGA)
 
 pub use pallet_sudo;
 
@@ -99,6 +97,11 @@ pub use artemis_erc20_app;
 pub use artemis_eth_app;
 pub use pallet_bridge;
 pub use pallet_verifier;
+
+mod weights;
+
+#[cfg(any(feature = "std", test))]
+pub use frame_system::Call as SystemCall;
 
 /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
 pub type Signature = MultiSignature;
@@ -141,6 +144,8 @@ pub type SignedExtra = (
 	frame_system::CheckWeight<Runtime>,
 	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 );
+/// The payload being signed in transactions.
+pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
@@ -174,7 +179,7 @@ impl WeightToFeePolynomial for WeightToFee {
 		// in Rococo, extrinsic base weight (smallest non-zero weight) is mapped to 1 MILLIUNIT:
 		// in mangata, we map to 1/10 of that, or 1/10 MILLIUNIT
 		let p = base_tx_in_mga();
-		let q = Balance::from(ExtrinsicBaseWeight::get());
+		let q = Balance::from(MangataExtrinsicBaseWeight::get());
 		smallvec![WeightToFeeCoefficient {
 			degree: 1,
 			negative: false,
@@ -189,13 +194,13 @@ pub fn base_tx_in_mga() -> Balance {
 }
 
 pub fn mga_per_second() -> u128 {
-	let base_weight = Balance::from(ExtrinsicBaseWeight::get());
+	let base_weight = Balance::from(MangataExtrinsicBaseWeight::get());
 	let base_per_second = (WEIGHT_PER_SECOND as u128) / base_weight;
 	base_per_second * base_tx_in_mga()
 }
 
-pub fn dot_per_second() -> u128 {
-	mga_per_second() / 50 / 100_000_000
+pub fn ksm_per_second() -> u128 {
+	mga_per_second() / KSM_MGA_SCALE_FACTOR as u128
 }
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
@@ -225,11 +230,11 @@ impl_opaque_keys! {
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
-	authoring_version: 1,
-	spec_version: 1,
+	authoring_version: 2,
+	spec_version: 2,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 1,
+	transaction_version: 2,
 	state_version: 0,
 };
 
@@ -292,6 +297,25 @@ pub fn native_version() -> NativeVersion {
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 
+	// taken from dedicated benchmark (run on reference machine)
+	//
+	// $ cargo bench --features=disable-execution
+	// ...
+	// Block production/full block shuffling without executing extrinsics
+	//                         time:   [12.025 ms 12.029 ms 12.032 ms]
+	//                         change: [-59.043% -59.005% -58.974%] (p = 0.00 < 0.05)
+	//
+	// ...
+	pub const MangataBlockExecutionWeight: Weight = 12 * WEIGHT_PER_MILLIS;
+
+	// taken from dedicated benchmark (run on reference machine)
+	//
+	// $ cargo bench --features=disable-execution
+	// ...
+	// avarege execution time of 5067 noop extrinsic : 946200 microseconds => 186
+	// ...
+	pub const MangataExtrinsicBaseWeight: Weight = 186 * WEIGHT_PER_MICROS;
+
 	// This part is copied from Substrate's `bin/node/runtime/src/lib.rs`.
 	//  The `RuntimeBlockLength` and `RuntimeBlockWeights` exist here because the
 	// `DeletionWeightLimit` and `DeletionQueueDepth` depend on those to parameterize
@@ -299,9 +323,9 @@ parameter_types! {
 	pub RuntimeBlockLength: BlockLength =
 		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 	pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
-		.base_block(BlockExecutionWeight::get())
+		.base_block(MangataBlockExecutionWeight::get())
 		.for_class(DispatchClass::all(), |weights| {
-			weights.base_extrinsic = ExtrinsicBaseWeight::get();
+			weights.base_extrinsic = MangataExtrinsicBaseWeight::get();
 		})
 		.for_class(DispatchClass::Normal, |weights| {
 			weights.max_total = Some(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT);
@@ -321,6 +345,26 @@ parameter_types! {
 
 parameter_types! {
 	pub const MgaTokenId: TokenId = MGA_TOKEN_ID;
+	pub const KsmTokenId: TokenId = KSM_TOKEN_ID;
+}
+
+pub struct MangataCallFilter;
+
+#[cfg(not(feature = "enable-trading"))]
+impl Contains<Call> for MangataCallFilter {
+	fn contains(call: &Call) -> bool {
+		match call {
+			Call::Xyk(_) => false,
+			_ => true,
+		}
+	}
+}
+
+#[cfg(feature = "enable-trading")]
+impl Contains<Call> for MangataCallFilter {
+	fn contains(_call: &Call) -> bool {
+		true
+	}
 }
 
 // Configure FRAME pallets to include in runtime.
@@ -361,9 +405,9 @@ impl frame_system::Config for Runtime {
 	/// The weight of database operations that the runtime can invoke.
 	type DbWeight = RocksDbWeight;
 	/// The basic call filter to use in dispatchable.
-	type BaseCallFilter = Everything;
+	type BaseCallFilter = MangataCallFilter;
 	/// Weight information for the extrinsics of this pallet.
-	type SystemWeightInfo = ();
+	type SystemWeightInfo = weights::frame_system_weights::ModuleWeight<Runtime>;
 	/// Block & extrinsics weights: base values and limits.
 	type BlockWeights = RuntimeBlockWeights;
 	/// The maximum length of a block (in bytes).
@@ -385,7 +429,7 @@ impl pallet_timestamp::Config for Runtime {
 	type Moment = u64;
 	type OnTimestampSet = ();
 	type MinimumPeriod = MinimumPeriod;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_timestamp_weights::ModuleWeight<Runtime>;
 }
 
 parameter_types! {
@@ -434,7 +478,7 @@ impl pallet_treasury::Config for Runtime {
 	type Burn = Burn;
 	type BurnDestination = ();
 	type SpendFunds = ();
-	type WeightInfo = pallet_treasury::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_treasury_weights::ModuleWeight<Runtime>;
 	type MaxApprovals = MaxApprovals;
 }
 
@@ -467,26 +511,11 @@ impl orml_tokens::Config for Runtime {
 	type Balance = Balance;
 	type Amount = Amount;
 	type CurrencyId = TokenId;
-	type WeightInfo = ();
+	type WeightInfo = weights::orml_tokens_weights::ModuleWeight<Runtime>;
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = TransferDust<Runtime, TreasuryAccount>;
 	type MaxLocks = MaxLocks;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
-}
-
-pub struct ProvideLiquidityMiningSplit;
-
-impl pallet_xyk::GetLiquidityMiningSplit for ProvideLiquidityMiningSplit {
-	fn get_liquidity_mining_split() -> Perbill {
-		Issuance::get_issuance_config().liquidity_mining_split
-	}
-}
-pub struct ProvideLinearIssuanceBlocks;
-
-impl pallet_xyk::GetLinearIssuanceBlocks for ProvideLinearIssuanceBlocks {
-	fn get_linear_issuance_blocks() -> u32 {
-		Issuance::get_issuance_config().linear_issuance_blocks
-	}
 }
 
 impl pallet_xyk::Config for Runtime {
@@ -495,23 +524,70 @@ impl pallet_xyk::Config for Runtime {
 	type NativeCurrencyId = MgaTokenId;
 	type TreasuryPalletId = TreasuryPalletId;
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
-	type LiquidityMiningSplit = ProvideLiquidityMiningSplit;
-	type LinearIssuanceBlocks = ProvideLinearIssuanceBlocks;
 	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
 	type PoolPromoteApi = Issuance;
 	type PoolFeePercentage = frame_support::traits::ConstU128<20>;
 	type TreasuryFeePercentage = frame_support::traits::ConstU128<5>;
 	type BuyAndBurnFeePercentage = frame_support::traits::ConstU128<5>;
 	type RewardsDistributionPeriod = frame_support::traits::ConstU32<10000>;
+	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
 }
 
-type ORMLCurrencyAdapterNegativeImbalance = <orml_tokens::CurrencyAdapter::<Runtime, MgaTokenId> as PalletCurrency<AccountId>>::NegativeImbalance;
+impl pallet_bootstrap::Config for Runtime {
+	type Event = Event;
+	type MGATokenId = MgaTokenId;
+	type KSMTokenId = KsmTokenId;
+	type PoolCreateApi = Xyk;
+	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	type KsmToMgaRatioNumerator = frame_support::traits::ConstU128<1>;
+	type KsmToMgaRatioDenominator = frame_support::traits::ConstU128<10000>;
+}
+
+impl pallet_utility::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type PalletsOrigin = OriginCaller;
+	type WeightInfo = pallet_utility::weights::SubstrateWeight<Runtime>;
+}
+
+type ORMLCurrencyAdapterNegativeImbalance =
+	<orml_tokens::MultiTokenCurrencyAdapter<Runtime> as orml_tokens::MultiTokenCurrency<
+		AccountId,
+	>>::NegativeImbalance;
+
+pub trait OnMultiTokenUnbalanced<
+	Imbalance: frame_support::traits::TryDrop + MultiTokenImbalanceWithZeroTrait<TokenId>,
+>
+{
+	/// Handler for some imbalances. The different imbalances might have different origins or
+	/// meanings, dependent on the context. Will default to simply calling on_unbalanced for all
+	/// of them. Infallible.
+	fn on_unbalanceds<B>(token_id: TokenId, amounts: impl Iterator<Item = Imbalance>)
+	where
+		Imbalance: frame_support::traits::Imbalance<B>,
+	{
+		Self::on_unbalanced(amounts.fold(Imbalance::from_zero(token_id), |i, x| x.merge(i)))
+	}
+
+	/// Handler for some imbalance. Infallible.
+	fn on_unbalanced(amount: Imbalance) {
+		amount.try_drop().unwrap_or_else(Self::on_nonzero_unbalanced)
+	}
+
+	/// Actually handle a non-zero imbalance. You probably want to implement this rather than
+	/// `on_unbalanced`.
+	fn on_nonzero_unbalanced(amount: Imbalance) {
+		drop(amount);
+	}
+}
 
 pub struct ToAuthor;
-impl OnUnbalanced<ORMLCurrencyAdapterNegativeImbalance> for ToAuthor {
+impl OnMultiTokenUnbalanced<ORMLCurrencyAdapterNegativeImbalance> for ToAuthor {
 	fn on_nonzero_unbalanced(amount: ORMLCurrencyAdapterNegativeImbalance) {
 		if let Some(author) = Authorship::author() {
-			<orml_tokens::CurrencyAdapter::<Runtime, MgaTokenId> as PalletCurrency<AccountId>>::resolve_creating(&author, amount);
+			<orml_tokens::MultiTokenCurrencyAdapter<Runtime> as orml_tokens::MultiTokenCurrency<
+				AccountId,
+			>>::resolve_creating(amount.0, &author, amount);
 		}
 	}
 }
@@ -522,10 +598,145 @@ parameter_types! {
 	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
+use scale_info::TypeInfo;
+
+#[derive(Encode, Decode, Clone, TypeInfo)]
+pub struct TwoCurrencyAdapter<C, OU, T1, T2, SF>(PhantomData<(C, OU, T1, T2, SF)>);
+
+use sp_runtime::{
+	traits::{DispatchInfoOf, PostDispatchInfoOf, Saturating, Zero},
+	transaction_validity::InvalidTransaction,
+};
+
+use frame_support::{
+	traits::{ExistenceRequirement, Imbalance, WithdrawReasons},
+	unsigned::TransactionValidityError,
+};
+use orml_tokens::MultiTokenCurrency;
+
+use pallet_transaction_payment::OnChargeTransaction;
+
+type NegativeImbalanceOf<C, T> =
+	<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
+
+use orml_tokens::MultiTokenImbalanceWithZeroTrait;
+/// Default implementation for a Currency and an OnUnbalanced handler.
+///
+/// The unbalance handler is given 2 unbalanceds in [`OnUnbalanced::on_unbalanceds`]: fee and
+/// then tip.
+impl<T, C, OU, T1, T2, SF> OnChargeTransaction<T> for TwoCurrencyAdapter<C, OU, T1, T2, SF>
+where
+	T: pallet_transaction_payment::Config,
+	T::TransactionByteFee:
+		Get<<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance>,
+	C: MultiTokenCurrency<<T as frame_system::Config>::AccountId>,
+	C::PositiveImbalance: Imbalance<
+		<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
+		Opposite = C::NegativeImbalance,
+	>,
+	C::NegativeImbalance: Imbalance<
+		<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
+		Opposite = C::PositiveImbalance,
+	>,
+	OU: OnMultiTokenUnbalanced<NegativeImbalanceOf<C, T>>,
+	NegativeImbalanceOf<C, T>: MultiTokenImbalanceWithZeroTrait<TokenId>,
+	<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance:
+		scale_info::TypeInfo,
+	T1: Get<TokenId>,
+	T2: Get<TokenId>,
+	SF: Get<u32>,
+{
+	type LiquidityInfo = Option<(TokenId, NegativeImbalanceOf<C, T>)>;
+	type Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance;
+
+	/// Withdraw the predicted fee from the transaction origin.
+	///
+	/// Note: The `fee` already includes the `tip`.
+	fn withdraw_fee(
+		who: &T::AccountId,
+		_call: &T::Call,
+		_info: &DispatchInfoOf<T::Call>,
+		fee: Self::Balance,
+		tip: Self::Balance,
+	) -> Result<Self::LiquidityInfo, TransactionValidityError> {
+		if fee.is_zero() {
+			return Ok(None)
+		}
+
+		let withdraw_reason = if tip.is_zero() {
+			WithdrawReasons::TRANSACTION_PAYMENT
+		} else {
+			WithdrawReasons::TRANSACTION_PAYMENT | WithdrawReasons::TIP
+		};
+
+		match C::withdraw(
+			T1::get().into(),
+			who,
+			fee,
+			withdraw_reason,
+			ExistenceRequirement::KeepAlive,
+		) {
+			Ok(imbalance) => Ok(Some((T1::get(), imbalance))),
+			// TODO make sure atleast 1 planck KSM is charged
+			Err(_) => match C::withdraw(
+				T2::get().into(),
+				who,
+				fee / SF::get().into(),
+				withdraw_reason,
+				ExistenceRequirement::KeepAlive,
+			) {
+				Ok(imbalance) => Ok(Some((T2::get(), imbalance))),
+				Err(_) => Err(InvalidTransaction::Payment.into()),
+			},
+		}
+	}
+
+	/// Hand the fee and the tip over to the `[OnUnbalanced]` implementation.
+	/// Since the predicted fee might have been too high, parts of the fee may
+	/// be refunded.
+	///
+	/// Note: The `corrected_fee` already includes the `tip`.
+	fn correct_and_deposit_fee(
+		who: &T::AccountId,
+		_dispatch_info: &DispatchInfoOf<T::Call>,
+		_post_info: &PostDispatchInfoOf<T::Call>,
+		corrected_fee: Self::Balance,
+		tip: Self::Balance,
+		already_withdrawn: Self::LiquidityInfo,
+	) -> Result<(), TransactionValidityError> {
+		if let Some((token_id, paid)) = already_withdrawn {
+			let (corrected_fee, tip) = if token_id == T2::get() {
+				(corrected_fee / SF::get().into(), tip / SF::get().into())
+			} else {
+				(corrected_fee, tip)
+			};
+			// Calculate how much refund we should return
+			let refund_amount = paid.peek().saturating_sub(corrected_fee);
+			// refund to the the account that paid the fees. If this fails, the
+			// account might have dropped below the existential balance. In
+			// that case we don't refund anything.
+			let refund_imbalance = C::deposit_into_existing(token_id.into(), &who, refund_amount)
+				.unwrap_or_else(|_| C::PositiveImbalance::from_zero(token_id.into()));
+			// merge the imbalance caused by paying the fees and refunding parts of it again.
+			let adjusted_paid = paid
+				.offset(refund_imbalance)
+				.same()
+				.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Payment))?;
+			// Call someone else to handle the imbalance (fee and tip separately)
+			let (tip, fee) = adjusted_paid.split(tip);
+			OU::on_unbalanceds(token_id, Some(fee).into_iter().chain(Some(tip)));
+		}
+		Ok(())
+	}
+}
+
 impl pallet_transaction_payment::Config for Runtime {
-	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<
-		orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>,
+	type OnChargeTransaction = TwoCurrencyAdapter<
+		orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
 		ToAuthor,
+		MgaTokenId,
+		KsmTokenId,
+		frame_support::traits::ConstU32<KSM_MGA_SCALE_FACTOR>,
 	>;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = WeightToFee;
@@ -554,8 +765,8 @@ impl parachain_info::Config for Runtime {}
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 parameter_types! {
-	pub DotLocation: MultiLocation = MultiLocation::parent();
-	pub const RelayNetwork: NetworkId = NetworkId::Polkadot;
+	pub KsmLocation: MultiLocation = MultiLocation::parent();
+	pub const RelayNetwork: NetworkId = NetworkId::Kusama;
 	pub RelayChainOrigin: Origin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
 }
@@ -697,7 +908,7 @@ impl pallet_session::Config for Runtime {
 	// Essentially just Aura, but lets be pedantic.
 	type SessionHandler = <SessionKeys as sp_runtime::traits::OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = SessionKeys;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_session_weights::ModuleWeight<Runtime>;
 }
 
 impl pallet_aura::Config for Runtime {
@@ -788,7 +999,7 @@ impl pallet_collective::Config<CouncilCollective> for Runtime {
 	type MaxProposals = CouncilMaxProposals;
 	type MaxMembers = CouncilMaxMembers;
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
-	type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_collective_weights::ModuleWeight<Runtime>;
 }
 
 parameter_types! {
@@ -823,7 +1034,7 @@ impl pallet_elections_phragmen::Config for Runtime {
 	type DesiredMembers = DesiredMembers;
 	type DesiredRunnersUp = DesiredRunnersUp;
 	type TermDuration = TermDuration;
-	type WeightInfo = pallet_elections_phragmen::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_elections_phragmen_weights::ModuleWeight<Runtime>;
 }
 
 parameter_types! {
@@ -843,10 +1054,14 @@ parameter_types! {
 	pub const RewardPaymentDelay: u32 = 2;
 	/// Minimum collators selected per round, default at genesis and minimum forever after
 	pub const MinSelectedCandidates: u32 = 8;
+	/// Maximum collator candidates allowed
+	pub const MaxCollatorCandidates: u32 = 50;
+	/// Maximum delegators allowed per candidate
+	pub const MaxTotalDelegatorsPerCandidate: u32 = 25;
 	/// Maximum delegators counted per candidate
-	pub const MaxDelegatorsPerCandidate: u32 = 100;
+	pub const MaxDelegatorsPerCandidate: u32 = 12;
 	/// Maximum delegations per delegator
-	pub const MaxDelegationsPerDelegator: u32 = 100;
+	pub const MaxDelegationsPerDelegator: u32 = 30;
 	/// Default fixed percent a collator takes off the top of due rewards
 	pub const DefaultCollatorCommission: Perbill = Perbill::from_percent(20);
 	/// Default percent of inflation set aside for parachain bond every round
@@ -875,6 +1090,8 @@ impl parachain_staking::Config for Runtime {
 	type DelegationBondDelay = DelegationBondDelay;
 	type RewardPaymentDelay = RewardPaymentDelay;
 	type MinSelectedCandidates = MinSelectedCandidates;
+	type MaxCollatorCandidates = MaxCollatorCandidates;
+	type MaxTotalDelegatorsPerCandidate = MaxTotalDelegatorsPerCandidate;
 	type MaxDelegatorsPerCandidate = MaxDelegatorsPerCandidate;
 	type MaxDelegationsPerDelegator = MaxDelegationsPerDelegator;
 	type DefaultCollatorCommission = DefaultCollatorCommission;
@@ -886,8 +1103,10 @@ impl parachain_staking::Config for Runtime {
 	type Issuance = Issuance;
 	type StakingIssuanceVault = StakingIssuanceVault;
 	type FallbackProvider = Council;
-	type WeightInfo = parachain_staking::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::parachain_staking_weights::ModuleWeight<Runtime>;
 }
+
+impl parachain_staking::StakingBenchmarkConfig for Runtime {}
 
 parameter_types! {
 	pub const HistoryLimit: u32 = 10u32;
@@ -896,8 +1115,15 @@ parameter_types! {
 	pub LiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account();
 	pub const StakingIssuanceVaultId: PalletId = PalletId(*b"py/stkiv");
 	pub StakingIssuanceVault: AccountId = StakingIssuanceVaultId::get().into_account();
-	pub const CrowdloanIssuanceVaultId: PalletId = PalletId(*b"py/crliv");
-	pub CrowdloanIssuanceVault: AccountId = CrowdloanIssuanceVaultId::get().into_account();
+
+	pub const TotalCrowdloanAllocation: Balance = 330_000_000 * DOLLARS;
+	pub const IssuanceCap: Balance = 4_000_000_000 * DOLLARS;
+	pub const LinearIssuanceBlocks: u32 = 13_140_000u32; // 5 years
+	pub const LiquidityMiningSplit: Perbill = Perbill::from_parts(555555556);
+	pub const StakingSplit: Perbill = Perbill::from_parts(444444444);
+	pub const ImmediateTGEReleasePercent: Percent = Percent::from_percent(20);
+	pub const TGEReleasePeriod: u32 = 5_256_000u32; // 2 years
+	pub const TGEReleaseBegin: u32 = 100_800u32; // Two weeks into chain start
 }
 
 // Issuance history must be kept for atleast the staking reward delay
@@ -911,7 +1137,16 @@ impl pallet_issuance::Config for Runtime {
 	type HistoryLimit = HistoryLimit;
 	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
 	type StakingIssuanceVault = StakingIssuanceVault;
-	type CrowdloanIssuanceVault = CrowdloanIssuanceVault;
+	type TotalCrowdloanAllocation = TotalCrowdloanAllocation;
+	type IssuanceCap = IssuanceCap;
+	type LinearIssuanceBlocks = LinearIssuanceBlocks;
+	type LiquidityMiningSplit = LiquidityMiningSplit;
+	type StakingSplit = StakingSplit;
+	type ImmediateTGEReleasePercent = ImmediateTGEReleasePercent;
+	type TGEReleasePeriod = TGEReleasePeriod;
+	type TGEReleaseBegin = TGEReleaseBegin;
+	type NativeTokenAdapter = orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>;
+	type VestingProvider = Vesting;
 }
 
 parameter_types! {
@@ -926,7 +1161,8 @@ impl pallet_vesting_mangata::Config for Runtime {
 	type WeightInfo = pallet_vesting_mangata::weights::SubstrateWeight<Runtime>;
 	// `VestingInfo` encode length is 36bytes. 28 schedules gets encoded as 1009 bytes, which is the
 	// highest number of schedules that encodes less than 2^10.
-	const MAX_VESTING_SCHEDULES: u32 = 28;
+	// Should be atleast twice the number of tge recipients
+	const MAX_VESTING_SCHEDULES: u32 = 200;
 }
 
 parameter_types! {
@@ -996,7 +1232,7 @@ impl orml_xcm::Config for Runtime {
 }
 
 parameter_types! {
-	pub DotPerSecond: (AssetId, u128) = (MultiLocation::parent().into(), dot_per_second());
+	pub KsmPerSecond: (AssetId, u128) = (MultiLocation::parent().into(), ksm_per_second());
 	pub MgaPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
@@ -1007,7 +1243,7 @@ parameter_types! {
 }
 
 pub type Trader =
-	(FixedRateOfFungible<DotPerSecond, ToTreasury>, FixedRateOfFungible<MgaPerSecond, ToTreasury>);
+	(FixedRateOfFungible<KsmPerSecond, ToTreasury>, FixedRateOfFungible<MgaPerSecond, ToTreasury>);
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
@@ -1071,7 +1307,7 @@ where
 pub struct TokenIdConvert;
 impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
 	fn convert(id: TokenId) -> Option<MultiLocation> {
-		if id == DOT_TOKEN_ID {
+		if id == KSM_TOKEN_ID {
 			return Some(MultiLocation::parent())
 		}
 
@@ -1087,7 +1323,7 @@ impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
 impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 	fn convert(location: MultiLocation) -> Option<TokenId> {
 		if location == MultiLocation::parent() {
-			return Some(DOT_TOKEN_ID)
+			return Some(KSM_TOKEN_ID)
 		}
 
 		if let Some(token_id) = AssetIdMaps::<Runtime>::get_currency_id(location.clone()) {
@@ -1100,7 +1336,6 @@ impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 			{
 				match (para_id, &key[..]) {
 					(id, key) if id == u32::from(ParachainInfo::get()) => {
-						// Acala
 						if let Ok(token_id) = TokenId::decode(&mut &*key) {
 							Some(token_id)
 						} else {
@@ -1143,7 +1378,7 @@ impl xcm_asset_registry::Config for Runtime {
 	type Event = Event;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type RegisterOrigin = EnsureRoot<AccountId>;
-	type WeightInfo = xcm_asset_registry::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::xcm_asset_registry_weights::ModuleWeight<Runtime>;
 	type TreasuryAddress = TreasuryAccount;
 }
 
@@ -1178,13 +1413,13 @@ construct_runtime!(
 		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>} = 13,
 
 		// Vesting
-		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>, Config<T>} = 17,
+		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>} = 17,
 
 		// Crowdloan
-		Crowdloan: pallet_crowdloan_rewards::{Pallet, Call, Storage, Event<T>, Config} = 18,
+		Crowdloan: pallet_crowdloan_rewards::{Pallet, Call, Storage, Event<T>} = 18,
 
 		// Issuance
-		Issuance: pallet_issuance::{Pallet, Event<T>, Storage, Config} = 19,
+		Issuance: pallet_issuance::{Pallet, Event<T>, Storage, Call} = 19,
 
 		// Collator support. The order of these 4 are important and shall not change.
 		Authorship: pallet_authorship::{Pallet, Call, Storage} = 20,
@@ -1212,8 +1447,31 @@ construct_runtime!(
 		Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 51,
 		Elections: pallet_elections_phragmen::{Pallet, Call, Storage, Event<T>, Config<T>} = 52,
 
+		// Bootstrap
+		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>} = 53,
+		Utility: pallet_utility::{Pallet, Call, Event} = 54,
 	}
 );
+
+#[cfg(feature = "runtime-benchmarks")]
+#[macro_use]
+extern crate frame_benchmarking;
+
+#[cfg(feature = "runtime-benchmarks")]
+mod benches {
+	define_benchmarks!(
+		[frame_system, SystemBench::<Runtime>]
+		[pallet_session, SessionBench::<Runtime>]
+		[pallet_timestamp, Timestamp]
+		[orml_tokens, Tokens]
+		[parachain_staking, ParachainStaking]
+		[pallet_xyk, Xyk]
+		[xcm_asset_registry, AssetRegistry]
+		[pallet_treasury, Treasury]
+		[pallet_collective, Council]
+		[pallet_elections_phragmen, Elections]
+	);
+}
 
 impl_runtime_apis! {
 
@@ -1230,8 +1488,10 @@ impl_runtime_apis! {
 			}
 		}
 
-		fn is_new_session(number: <<Block as BlockT>::Header as HeaderT>::Number) -> bool{
-			<ParachainStaking as ShouldEndSession<_>>::should_end_session(number)
+		fn is_storage_migration_scheduled() -> bool{
+			let last = frame_system::LastRuntimeUpgrade::<Runtime>::get();
+			let current = <<Runtime as frame_system::Config>::Version as frame_support::traits::Get<_>>::get();
+			last.map(|v| v.was_upgraded(&current)).unwrap_or(true)
 		}
 
 		fn store_seed(seed: sp_core::H256){
@@ -1332,7 +1592,7 @@ impl_runtime_apis! {
 
 		fn execute_block(block: Block) {
 			let key = cumulus_pallet_aura_ext::get_block_signer_pub_key::<Runtime,Block>(&block);
-			Executive::execute_block_ver_impl(block, key)
+			Executive::execute_block_ver_impl(block, key);
 		}
 
 		fn initialize_block(header: &<Block as BlockT>::Header) {
@@ -1448,8 +1708,7 @@ impl_runtime_apis! {
 
 			let mut list = Vec::<BenchmarkList>::new();
 
-			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
-			list_benchmark!(list, extra, pallet_timestamp, Timestamp);
+			list_benchmarks!(list, extra);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1483,10 +1742,7 @@ impl_runtime_apis! {
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
 
-			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
-			add_benchmark!(params, batches, pallet_session, SessionBench::<Runtime>);
-			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
-			add_benchmark!(params, batches, pallet_session, Session);
+			add_benchmarks!(params, batches);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

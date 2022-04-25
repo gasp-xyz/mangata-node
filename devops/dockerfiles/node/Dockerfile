@@ -8,6 +8,7 @@ ENV MEMORY_PROFILER_OUTPUT=profiling_%e_%t.dat
 ENV MEMORY_PROFILER_CULL_TEMPORARY_ALLOCATIONS=1
 ENV MEMORY_PROFILER_LOG=info
 ENV MEMORY_PROFILER_LOGFILE=profiling_%e_%t.log 
+ARG CARGO_FEATURES=""
 
 
 ENV ETH_APP_ID=0xdd514baa317bf095ddba2c0a847765feb389c6a0
@@ -29,7 +30,7 @@ RUN cp /mangata/memory_profiler/memory-profiler/target/release/libbytehound.so /
 RUN cp /mangata/memory_profiler/memory-profiler/target/release/bytehound /mangata/
 
 
-RUN cargo build --release
+RUN cargo build --release --features=${CARGO_FEATURES}
 
 FROM debian:stretch
 ENV DOCKERIZE_VERSION v0.6.1

@@ -23,9 +23,9 @@ RUN npm --version
 RUN mkdir -p /mangata-e2e
 RUN cd /mangata-e2e 
 RUN git clone https://github.com/mangata-finance/mangata-e2e.git 
-RUN cd mangata-e2e  
-RUN git checkout feature/add-regular-checks 
-RUN git pull && yarn install
+RUN cd mangata-e2e && ls   
+RUN cd mangata-e2e && ls && git checkout feature/add-regular-checks 
+RUN cd mangata-e2e && ls && git pull && yarn install
 
 RUN cd /mangata/
 

@@ -22,14 +22,13 @@ RUN npm --version
 RUN npm install --global yarn
 
 RUN mkdir -p /mangata-e2e
-RUN cd /mangata-e2e 
+WORKDIR /mangata-e2e
 RUN git clone https://github.com/mangata-finance/mangata-e2e.git 
-RUN cd mangata-e2e  
-RUN cd mangata-e2e && git checkout feature/add-regular-checks 
-RUN cd mangata-e2e && git pull && yarn install
-
+WORKDIR /mangata-e2e/mangata-e2e/
+RUN git checkout feature/add-regular-checks 
+RUN git pull && yarn install
 RUN cd /mangata/
-
+WORKDIR /mangata
 RUN rustup install nightly-2021-10-19
 RUN rustup default nightly-2021-10-19
 RUN rustup target add wasm32-unknown-unknown --toolchain nightly-2021-10-19
@@ -37,11 +36,11 @@ RUN cargo install cargo2junit
 
 FROM env_builder as builder
 RUN cargo build --release
-
+COPY /mangata-e2e/mangata-e2e/ /mangata-e2e/
 FROM debian:stretch
 WORKDIR /mangata
 RUN apt-get update && apt-get install -y curl
-COPY --from=builder /mangata-e2e/mangata-e2e/ /mangata-e2e/
+
 COPY --from=builder /mangata/target/release/mangata-node /mangata/node
 RUN /mangata/node --version
 COPY devops/dockerfiles/node/runner.sh /runner.sh

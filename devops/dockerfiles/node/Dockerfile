@@ -24,7 +24,7 @@ RUN mkdir -p /mangata-e2e
 RUN cd /mangata-e2e 
 RUN git clone https://github.com/mangata-finance/mangata-e2e.git 
 RUN cd mangata-e2e  && git checkout feature/add-regular-checks 
-RUN cd mangata-e2e && git pull && yarn 
+RUN cd mangata-e2e && git pull && yarn install
 
 RUN cd /mangata/
 

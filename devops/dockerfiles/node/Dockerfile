@@ -7,7 +7,7 @@ COPY . /mangata
 
 ENV ETH_APP_ID=0xdd514baa317bf095ddba2c0a847765feb389c6a0
 ENV ERC20_APP_ID=0x00e392c04743359e39f00cd268a5390d27ef6b44
-
+RUN apt update  && apt install -y python3
 RUN apt-get update && apt-get install -y cmake pkg-config libssl-dev git build-essential clang libclang-dev curl llvm
 
 RUN apt install -y curl 

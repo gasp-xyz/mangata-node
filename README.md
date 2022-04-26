@@ -5,6 +5,7 @@
 
 <h2 align="center">Mangata Node</h2>
 
+
 <p align="center">
     Application-specific blockchain for decentralized exchange, a parachain in Polkadot ecosystem. Implementation includes <a href="https://blog.mangata.finance/blog/2021-10-10-themis-protocol/" target="_blank" rel="noopener noreferrer">MEV solution</a>, Proof of Liquidity and no gas economy.
 </p>

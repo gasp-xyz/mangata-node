@@ -41,6 +41,7 @@ RUN cargo build --release
 FROM debian:stretch
 WORKDIR /mangata
 RUN apt-get update && apt-get install -y curl
+COPY --from=builder /mangata-e2e/mangata-e2e/ /mangata-e2e/
 COPY --from=builder /mangata/target/release/mangata-node /mangata/node
 RUN /mangata/node --version
 COPY devops/dockerfiles/node/runner.sh /runner.sh

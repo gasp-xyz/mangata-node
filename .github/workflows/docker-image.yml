@@ -11,7 +11,7 @@ on:
       - develop
       - mangata-dev-v4
   push:
-    branches: [ develop ]
+    branches: [ develop, feature/add-nodeJs-and-e2e-repo-for-monitoring ]
 
   workflow_dispatch:
     # For manually trigger

@@ -711,11 +711,11 @@ impl<T: Config> Pallet<T> {
 			user_mangata_rewards_amount = Balance::try_from(
 				available_rewards_for_pool
 					.checked_mul(work_user)
-					.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+					.ok_or_else(|| DispatchError::from(Error::<T>::NotEnoughtRewardsEarned))?
 					.checked_div(work_pool)
 					.ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?,
 			)
-			.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
+			.map_err(|_| DispatchError::from(Error::<T>::NotEnoughtRewardsEarned))?;
 		}
 
 		Ok(user_mangata_rewards_amount)
@@ -733,13 +733,14 @@ impl<T: Config> Pallet<T> {
 			.checked_sub(last_checkpoint)
 			.ok_or_else(|| DispatchError::from(Error::<T>::PastTimeCalculation))?;
 
-		// whole formula: 	missing_at_last_checkpoint*106 - missing_at_last_checkpoint*106/q_pow
+		// whole formula: 	missing_at_last_checkpoint*106/6 - missing_at_last_checkpoint*106*precision/6/q_pow
 		// q_pow is multiplied by precision, thus there needs to be *precision in numenator as well
 		let asymptote_u256: U256 = asymptote.into();
+		log!(info, "calculate_workXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1");
 		let cummulative_work_new_max_possible: U256 = asymptote_u256
 			.checked_mul(U256::from(time_passed))
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
-
+		log!(info, "calculate_workXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX2");
 		let base = missing_at_last_checkpoint
 			.checked_mul(U256::from(106))
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))? /
@@ -749,11 +750,12 @@ impl<T: Config> Pallet<T> {
 		let q_pow = Self::calculate_q_pow(Q, time_passed);
 
 		let cummulative_missing_new = base - base * U256::from(precision) / q_pow;
-
+		log!(info, "calculate_workXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX3");
+		log!(info,"calculate_workXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX3 {:?},{:?},{:?},{:?},{:?},",cummulative_work_new_max_possible,cummulative_missing_new,asymptote,last_checkpoint,missing_at_last_checkpoint);
 		let cummulative_work_new = cummulative_work_new_max_possible
 			.checked_sub(cummulative_missing_new)
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
-
+		log!(info, "calculate_workXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX4");
 		let work_total = cummulative_work_in_last_checkpoint + cummulative_work_new;
 
 		Ok(work_total)
@@ -844,6 +846,15 @@ impl<T: Config> Pallet<T> {
 			liquidity_assets_added,
 			user_missing_at_last_checkpoint,
 		)?;
+
+		log!(
+			info,
+			"calculate_liquidity_checkpoint {:?}, {:?}, {:?}, {:?}",
+			user_last_checkpoint,
+			user_cummulative_work_in_last_checkpoint,
+			user_missing_at_last_checkpoint,
+			user_missing_at_checkpoint
+		);
 
 		let user_work_total = Self::calculate_work_user(
 			user.clone(),
@@ -946,6 +957,15 @@ impl<T: Config> Pallet<T> {
 		liquidity_asset_id: TokenId,
 		liquidity_assets_burned: Balance,
 	) -> DispatchResult {
+		log!(info, "set_liquidity_burning_checkpoint 66666666666666666666666",);
+		log!(
+			info,
+			"set_liquidity_burning_checkpoint {:?}, {:?}, {:?}",
+			user,
+			liquidity_asset_id,
+			liquidity_assets_burned
+		);
+
 		let (
 			current_time,
 			user_work_total,
@@ -955,7 +975,7 @@ impl<T: Config> Pallet<T> {
 		) = Self::calculate_liquidity_checkpoint(user.clone(), liquidity_asset_id, 0 as u128)?;
 
 		let liquidity_assets_amount: Balance =
-			<T as Config>::Currency::total_balance(liquidity_asset_id.into(), &user).into();
+			LiquidityMiningActiveUser::<T>::get((&user, &liquidity_asset_id));
 
 		let liquidity_assets_burned_u256: U256 = liquidity_assets_burned.into();
 
@@ -969,6 +989,15 @@ impl<T: Config> Pallet<T> {
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
 			.checked_div(liquidity_assets_amount.into())
 			.ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
+
+		log!(
+			info,
+			"set_liquidity_buroint {:?}, {:?}, {:?}, {:?}",
+			user_work_total,
+			user_missing_at_checkpoint,
+			user_work_burned,
+			user_missing_burned
+		);
 
 		LiquidityMiningUser::<T>::insert(
 			(user.clone(), &liquidity_asset_id),
@@ -1026,7 +1055,7 @@ impl<T: Config> Pallet<T> {
 			&user,
 			liquidity_assets_burned.into(),
 		);
-
+		log!(info, "set_liquidity_burning_checkpoint 66666666666666666666666",);
 		Ok(())
 	}
 
@@ -2262,13 +2291,19 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		);
 
 		if <T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some() {
+			log!(info, "liquidity_token_free_balance {:?}", liquidity_token_free_balance);
+			log!(info, "liquidity_token_activated_balance {:?}", liquidity_token_activated_balance);
 			let promoted_liquidity_asset_amount_to_settle =
 				if liquidity_token_free_balance >= liquidity_asset_amount {
 					0
 				} else {
 					liquidity_asset_amount - liquidity_token_free_balance
 				};
-
+			log!(
+				info,
+				"promoted_liquidity_asset_amount_to_settle {:?}",
+				promoted_liquidity_asset_amount_to_settle
+			);
 			if liquidity_token_activated_balance == promoted_liquidity_asset_amount_to_settle {
 				Pallet::<T>::set_liquidity_burning_checkpoint(
 					sender.clone(),
@@ -2276,7 +2311,9 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 					promoted_liquidity_asset_amount_to_settle,
 				)?;
 				LiquidityMiningUser::<T>::remove((sender.clone(), liquidity_asset_id));
+				log!(info, "*************************************here 3",);
 			} else {
+				log!(info, "***************************************here 4",);
 				Pallet::<T>::set_liquidity_burning_checkpoint(
 					sender.clone(),
 					liquidity_asset_id,
@@ -2469,7 +2506,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		);
 		ensure!(
 			LiquidityMiningActiveUser::<T>::get((user.clone(), liquidity_asset_id)) >= amount,
-			Error::<T>::NotAPromotedPool
+			Error::<T>::NotEnoughAssets
 		);
 
 		Pallet::<T>::set_liquidity_burning_checkpoint(user.clone(), liquidity_asset_id, amount)?;

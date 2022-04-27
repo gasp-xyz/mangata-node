@@ -36,7 +36,7 @@ RUN cargo install cargo2junit
 
 FROM env_builder as builder
 RUN cargo build --release
-COPY /mangata-e2e/mangata-e2e/ /mangata-e2e/
+
 FROM debian:stretch
 WORKDIR /mangata
 RUN apt-get update && apt-get install -y curl

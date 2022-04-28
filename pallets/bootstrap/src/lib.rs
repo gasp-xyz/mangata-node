@@ -17,6 +17,7 @@ use sp_arithmetic::helpers_128bit::multiply_by_rational;
 use sp_core::U256;
 use sp_runtime::traits::{AccountIdConversion, CheckedAdd};
 use sp_std::prelude::*;
+use sp_bootstrap::PoolCreateApi;
 
 #[cfg(test)]
 mod mock;
@@ -40,26 +41,6 @@ macro_rules! log {
 			concat!("[{:?}] 💸 ", $patter), <frame_system::Pallet<T>>::block_number() $(, $values)*
 		)
 	};
-}
-
-pub trait PoolCreateApi {
-	type AccountId: Parameter
-		+ Member
-		+ MaybeSerializeDeserialize
-		+ Debug
-		+ MaybeDisplay
-		+ Ord
-		+ MaxEncodedLen;
-
-	fn pool_exists(first: TokenId, second: TokenId) -> bool;
-
-	fn pool_create(
-		account: Self::AccountId,
-		first: TokenId,
-		first_amount: Balance,
-		second: TokenId,
-		second_amount: Balance,
-	) -> Option<(TokenId, Balance)>;
 }
 
 #[frame_support::pallet]

@@ -156,6 +156,7 @@ mockall::mock! {
 }
 
 #[cfg(not(feature = "runtime-benchmarks"))]
+// NOTE: use PoolCreateApi mock for unit testing purposes
 impl pallet_bootstrap::Config for Test {
 	type Event = Event;
 	type MGATokenId = MGAId;
@@ -167,6 +168,7 @@ impl pallet_bootstrap::Config for Test {
 }
 
 #[cfg(feature = "runtime-benchmarks")]
+// NOTE: use Xyk as PoolCreateApi for benchmarking purposes
 impl pallet_bootstrap::Config for Test {
 	type Event = Event;
 	type MGATokenId = MGAId;
@@ -211,9 +213,9 @@ construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>},
-		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>},
 		AssetsInfoModule: pallet_assets_info::{Pallet, Call, Config, Storage, Event<T>},
 		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>},
+		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>},
 	}
 );
 

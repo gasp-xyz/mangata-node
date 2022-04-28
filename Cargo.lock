@@ -5626,6 +5626,7 @@ dependencies = [
  "serde",
  "serial_test",
  "sp-arithmetic",
+ "sp-bootstrap",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -6484,6 +6485,7 @@ dependencies = [
  "serde",
  "serial_test",
  "sp-arithmetic",
+ "sp-bootstrap",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -10512,6 +10514,16 @@ dependencies = [
  "sp-runtime",
  "sp-state-machine",
  "thiserror",
+]
+
+[[package]]
+name = "sp-bootstrap"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "mangata-primitives",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]

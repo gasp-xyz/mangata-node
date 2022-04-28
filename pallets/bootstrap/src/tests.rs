@@ -1,9 +1,12 @@
+#![cfg(not(feature = "runtime-benchmarks"))]
 use super::*;
 use mock::*;
 
 use frame_support::assert_err;
+use pallet_xyk::Valuate;
 use serial_test::serial;
 use sp_runtime::traits::BadOrigin;
+use crate::PoolCreateApi;
 
 const USER_ID: u128 = 0;
 const ANOTHER_USER_ID: u128 = 100;

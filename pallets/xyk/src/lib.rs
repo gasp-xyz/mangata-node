@@ -235,7 +235,7 @@ use frame_system::pallet_prelude::*;
 use mangata_primitives::{Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 use pallet_assets_info as assets_info;
-use pallet_bootstrap::PoolCreateApi;
+use sp_bootstrap::PoolCreateApi;
 use pallet_issuance::PoolPromoteApi;
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
 use sp_runtime::traits::{
@@ -243,6 +243,7 @@ use sp_runtime::traits::{
 	SaturatedConversion, Zero,
 };
 use sp_std::{convert::TryFrom, fmt::Debug, prelude::*};
+use sp_bootstrap::FooApi;
 
 #[cfg(test)]
 mod mock;
@@ -2512,11 +2513,12 @@ impl<T: Config> Valuate for Pallet<T> {
 	}
 }
 
-impl<T: Config> PoolCreateApi for Pallet<T> {
-	type AccountId = T::AccountId;
+impl<T> PoolCreateApi for Pallet<T> {
+	type AccountId = u128;
 
 	fn pool_exists(first: TokenId, second: TokenId) -> bool {
-		Pools::<T>::contains_key((first, second)) || Pools::<T>::contains_key((second, first))
+		false
+		// Pools::<T>::contains_key((first, second)) || Pools::<T>::contains_key((second, first))
 	}
 	fn pool_create(
 		account: Self::AccountId,
@@ -2525,18 +2527,51 @@ impl<T: Config> PoolCreateApi for Pallet<T> {
 		second: TokenId,
 		second_amount: Balance,
 	) -> Option<(TokenId, Balance)> {
-		if let Ok(_) = <Self as XykFunctionsTrait<Self::AccountId>>::create_pool(
-			account,
-			first,
-			first_amount,
-			second,
-			second_amount,
-		) {
-			LiquidityAssets::<T>::get((first, second)).map(|asset_id| {
-				(asset_id, <T as Config>::Currency::total_issuance(asset_id.into()).into())
-			})
-		} else {
-			None
-		}
+		None
 	}
 }
+
+pub trait FooApi2 {
+	fn foo() -> bool;
+}
+
+impl<T> FooApi for Pallet<T> {
+	fn foo() -> bool {
+		false
+	}
+}
+
+impl<T> FooApi2 for Pallet<T> {
+	fn foo() -> bool {
+		false
+	}
+}
+
+// impl<T: Config> PoolCreateApi for Pallet<T> {
+// 	type AccountId = T::AccountId;
+//
+// 	fn pool_exists(first: TokenId, second: TokenId) -> bool {
+// 		Pools::<T>::contains_key((first, second)) || Pools::<T>::contains_key((second, first))
+// 	}
+// 	fn pool_create(
+// 		account: Self::AccountId,
+// 		first: TokenId,
+// 		first_amount: Balance,
+// 		second: TokenId,
+// 		second_amount: Balance,
+// 	) -> Option<(TokenId, Balance)> {
+// 		if let Ok(_) = <Self as XykFunctionsTrait<Self::AccountId>>::create_pool(
+// 			account,
+// 			first,
+// 			first_amount,
+// 			second,
+// 			second_amount,
+// 		) {
+// 			LiquidityAssets::<T>::get((first, second)).map(|asset_id| {
+// 				(asset_id, <T as Config>::Currency::total_issuance(asset_id.into()).into())
+// 			})
+// 		} else {
+// 			None
+// 		}
+// 	}
+// }

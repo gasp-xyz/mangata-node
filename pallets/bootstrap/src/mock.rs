@@ -127,6 +127,21 @@ impl PoolPromoteApi for MockPromotedPoolApi {
 	}
 }
 
+parameter_types! {
+	pub const MinVestedTransfer: Balance = 0;
+}
+
+impl pallet_vesting_mangata::Config for Test {
+	type Event = Event;
+	type Tokens = MultiTokenCurrencyAdapter<Test>;
+	type BlockNumberToBalance = sp_runtime::traits::ConvertInto;
+	type MinVestedTransfer = MinVestedTransfer;
+	type WeightInfo = pallet_vesting_mangata::weights::SubstrateWeight<Test>;
+	// `VestingInfo` encode length is 36bytes. 28 schedules gets encoded as 1009 bytes, which is the
+	// highest number of schedules that encodes less than 2^10.
+	const MAX_VESTING_SCHEDULES: u32 = 28;
+}
+
 impl pallet_xyk::Config for Test {
 	type Event = Event;
 	type Currency = MultiTokenCurrencyAdapter<Test>;
@@ -163,6 +178,7 @@ impl pallet_bootstrap::Config for Test {
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type KsmToMgaRatioNumerator = KsmToMgaNumerator;
 	type KsmToMgaRatioDenominator = KsmToMgaDenominator;
+	type VestingProvider = Vesting;
 }
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -213,6 +229,7 @@ construct_runtime!(
 		AssetsInfoModule: pallet_assets_info::{Pallet, Call, Config, Storage, Event<T>},
 		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>},
 		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>},
+		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>},
 	}
 );
 

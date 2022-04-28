@@ -5,10 +5,6 @@ use mangata_primitives::{Balance, TokenId};
 use sp_runtime::traits::MaybeDisplay;
 use sp_std::fmt::Debug;
 
-pub trait FooApi {
-	fn foo() -> bool;
-}
-
 pub trait PoolCreateApi {
 	type AccountId: Parameter
 		+ Member

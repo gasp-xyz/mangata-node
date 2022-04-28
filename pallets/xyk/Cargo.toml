@@ -48,6 +48,7 @@ std = [
     'codec/std',
     'sp-std/std',
 	'sp-core/std',
+	'sp-bootstrap/std',
     'frame-support/std',
     'frame-system/std',
 	'orml-tokens/std',

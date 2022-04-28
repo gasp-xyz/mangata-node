@@ -1471,6 +1471,7 @@ mod benches {
 		[pallet_treasury, Treasury]
 		[pallet_collective, Council]
 		[pallet_elections_phragmen, Elections]
+		[pallet_bootstrap, Bootstrap]
 	);
 }
 

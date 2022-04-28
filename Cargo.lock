@@ -5610,6 +5610,7 @@ dependencies = [
 name = "pallet-bootstrap"
 version = "0.1.0"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
@@ -5617,6 +5618,9 @@ dependencies = [
  "mockall",
  "orml-tokens",
  "orml-traits",
+ "pallet-assets-info",
+ "pallet-issuance",
+ "pallet-xyk",
  "parity-scale-codec 2.3.1",
  "scale-info 1.0.0",
  "serde",

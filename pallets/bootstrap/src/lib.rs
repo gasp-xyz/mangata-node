@@ -21,6 +21,8 @@ use sp_std::prelude::*;
 #[cfg(test)]
 mod mock;
 
+mod benchmarking;
+
 #[cfg(test)]
 mod tests;
 

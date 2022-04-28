@@ -14,10 +14,10 @@ use mangata_primitives::{Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 use scale_info::TypeInfo;
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
+use sp_bootstrap::PoolCreateApi;
 use sp_core::U256;
 use sp_runtime::traits::{AccountIdConversion, CheckedAdd};
 use sp_std::prelude::*;
-use sp_bootstrap::PoolCreateApi;
 
 #[cfg(test)]
 mod mock;
@@ -31,7 +31,6 @@ pub use pallet::*;
 const PALLET_ID: PalletId = PalletId(*b"12345678");
 
 use core::fmt::Debug;
-use sp_runtime::traits::MaybeDisplay;
 
 #[macro_export]
 macro_rules! log {
@@ -168,19 +167,19 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			ensure!(
-				token_id == T::KSMTokenId::get() || token_id == T::MGATokenId::get(),
-				Error::<T>::UnsupportedTokenId
-			);
+			let is_ksm = token_id == T::KSMTokenId::get();
+			let is_mga = token_id == T::MGATokenId::get();
+			let is_public_phase = Phase::<T>::get() == BootstrapPhase::Public;
+			let is_whitelist_phase = Phase::<T>::get() == BootstrapPhase::Whitelist;
+			let am_i_whitelisted = Self::is_whitelisted(&sender);
+
+			ensure!(is_ksm || is_mga, Error::<T>::UnsupportedTokenId);
 
 			let ratio_nominator = T::KsmToMgaRatioNumerator::get();
 			let ratio_denominator = T::KsmToMgaRatioDenominator::get();
 
 			ensure!(
-				token_id == T::MGATokenId::get() ||
-					Phase::<T>::get() == BootstrapPhase::Public ||
-					(Phase::<T>::get() == BootstrapPhase::Whitelist &&
-						Self::is_whitelisted(&sender)),
+				is_public_phase || (is_whitelist_phase && (am_i_whitelisted || is_mga)),
 				Error::<T>::Unauthorized
 			);
 
@@ -245,7 +244,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(0)]
+		#[pallet::weight(T::DbWeight::get().writes(1) * (accounts.len() as u64))]
 		#[transactional]
 		pub fn whitelist_accounts(
 			origin: OriginFor<T>,

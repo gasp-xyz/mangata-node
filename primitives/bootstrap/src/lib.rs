@@ -1,7 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_support::pallet_prelude::*;
-use mangata_primitives::{TokenId, Balance};
+use mangata_primitives::{Balance, TokenId};
 use sp_runtime::traits::MaybeDisplay;
 use sp_std::fmt::Debug;
 
@@ -28,5 +28,3 @@ pub trait PoolCreateApi {
 		second_amount: Balance,
 	) -> Option<(TokenId, Balance)>;
 }
-
-

@@ -20,12 +20,11 @@ use super::*;
 use crate as pallet_bootstrap;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{Contains, Everything},
+	traits::{ConstU128, ConstU32, Contains, Everything},
 };
 use mangata_primitives::{Amount, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter};
 use orml_traits::parameter_type_with_key;
-use frame_support::traits::{ConstU32, ConstU128};
 use pallet_issuance::PoolPromoteApi;
 // use pallet_xyk::Pallet;
 
@@ -108,19 +107,18 @@ parameter_types! {
 
 pub struct MockPromotedPoolApi;
 
-impl MockPromotedPoolApi {
-}
+impl MockPromotedPoolApi {}
 
 impl PoolPromoteApi for MockPromotedPoolApi {
-	fn promote_pool(liquidity_token_id: TokenId) -> bool {
+	fn promote_pool(_liquidity_token_id: TokenId) -> bool {
 		false
 	}
 
-	fn get_pool_rewards(liquidity_token_id: TokenId) -> Option<Balance> {
+	fn get_pool_rewards(_liquidity_token_id: TokenId) -> Option<Balance> {
 		None
 	}
 
-	fn claim_pool_rewards(liquidity_token_id: TokenId, claimed_amount: Balance) -> bool {
+	fn claim_pool_rewards(_liquidity_token_id: TokenId, _claimed_amount: Balance) -> bool {
 		false
 	}
 
@@ -200,7 +198,6 @@ impl pallet_assets_info::Config for Test {
 	type MaxDecimals = MaxDecimals;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 }
-
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;

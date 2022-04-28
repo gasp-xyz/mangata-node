@@ -25,50 +25,63 @@ use frame_benchmarking::{benchmarks, whitelisted_caller};
 use frame_system::RawOrigin;
 use orml_tokens::MultiTokenCurrencyExtended;
 
-use crate::Pallet as Bootstrap;
+use crate::Pallet as BootstrapPallet;
 
 const MILION: u128 = 1_000__000_000__000_000;
 
 benchmarks! {
 
-	provision {
-
-		// // NOTE: that duplicates test XYK::liquidity_rewards_claim_W
-		let caller: T::AccountId = whitelisted_caller();
-		// let initial_amount:mangata_primitives::Balance = 1000000000000;
-        //
-		// let asset_id_1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-		// let asset_id_2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-		// let liquidity_asset_id = asset_id_2 + 1;
-        //
-		// Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), asset_id_1.into(), 5000, asset_id_2.into(), 5000).unwrap();
-        //
-		// frame_system::Pallet::<T>::set_block_number(30001_u32.into());
-        //
-		// let rewards_to_claim = 30000;
-		// let (rewards_total_user, rewards_claimed_user) = Xyk::<T>::calculate_rewards_amount(caller.clone(), liquidity_asset_id, rewards_to_claim).unwrap();
-		// let pool_rewards = Xyk::<T>::calculate_available_rewards_for_pool(liquidity_asset_id, rewards_to_claim).unwrap();
-        //
-		// assert_eq!(pool_rewards, 30000000);
-		// assert_eq!(rewards_total_user, 30000000);
-		// assert_eq!(rewards_claimed_user, 0);
-		// assert!(LiquidityMiningUserClaimed::<T>::try_get((caller.clone(), liquidity_asset_id)).is_err());
-		// assert!(LiquidityMiningPoolClaimed::<T>::try_get(liquidity_asset_id).is_err());
-
-	}: provision(RawOrigin::Signed(caller.clone().into()), 0_u32, 0_u128)
-
+	start_ido {
+		assert!(crate::BootstrapSchedule::<T>::get().is_none());
+	}: start_ido(RawOrigin::Root, 123_456_789_u32.into(), 100_000_u32, 100_000_u32)
 	verify {
-		// assert_eq!(
-		// 	Xyk::<T>::liquidity_mining_user_claimed((caller.clone(), liquidity_asset_id)),
-		// 	(rewards_claimed_user as i128) + ( rewards_to_claim as i128 )
-		// );
-        //
-		// assert_eq!(
-		// 	Xyk::<T>::liquidity_mining_pool_claimed(liquidity_asset_id),
-		// 	rewards_to_claim as u128
-		// );
-
+		assert!(crate::BootstrapSchedule::<T>::get().is_some());
 	}
 
-	impl_benchmark_test_suite!(Bootstrap, crate::mock::new_test_ext(), crate::mock::Test)
+	provision {
+		let caller: T::AccountId = whitelisted_caller();
+		let mut token_id = 0;
+		while token_id < <T as Config>::MGATokenId::get() ||
+		token_id < <T as Config>::KSMTokenId::get() {
+			token_id = <T as Config>::Currency::create(&caller, MILION.into()).expect("Token creation failed").into();
+		}
+		let ksm_provision_amount = 100_000_u128;
+		let mga_provision_amount = ksm_provision_amount * T::KsmToMgaRatioDenominator::get() / T::KsmToMgaRatioNumerator::get();
+
+		BootstrapPallet::<T>::start_ido(RawOrigin::Root.into(), 10_u32.into(), 10_u32, 10_u32).unwrap();
+		// jump to public phase
+		BootstrapPallet::<T>::on_initialize(20_u32.into());
+		BootstrapPallet::<T>::provision(RawOrigin::Signed(caller.clone().into()).into(), <T as Config>::MGATokenId::get(), mga_provision_amount).unwrap();
+
+	}: provision(RawOrigin::Signed(caller.clone().into()), <T as Config>::KSMTokenId::get(), ksm_provision_amount)
+	verify {
+		assert_eq!(BootstrapPallet::<T>::provisions(caller, <T as Config>::KSMTokenId::get()), ksm_provision_amount);
+	}
+
+	claim_rewards {
+		let caller: T::AccountId = whitelisted_caller();
+		let mut token_id = 0;
+		while token_id < <T as Config>::MGATokenId::get() ||
+		token_id < <T as Config>::KSMTokenId::get() {
+			token_id = <T as Config>::Currency::create(&caller, MILION.into()).expect("Token creation failed").into();
+		}
+		let ksm_provision_amount = 100_000_u128;
+		let mga_provision_amount = ksm_provision_amount * T::KsmToMgaRatioDenominator::get() / T::KsmToMgaRatioNumerator::get();
+
+		BootstrapPallet::<T>::start_ido(RawOrigin::Root.into(), 10_u32.into(), 10_u32, 10_u32).unwrap();
+		BootstrapPallet::<T>::on_initialize(20_u32.into());
+		BootstrapPallet::<T>::provision(RawOrigin::Signed(caller.clone().into()).into(), <T as Config>::MGATokenId::get(), mga_provision_amount).unwrap();
+		BootstrapPallet::<T>::provision(RawOrigin::Signed(caller.clone().into()).into(), <T as Config>::KSMTokenId::get(), ksm_provision_amount).unwrap();
+		BootstrapPallet::<T>::on_initialize(30_u32.into());
+
+		assert_eq!(BootstrapPallet::<T>::claimed_rewards(caller.clone(), <T as Config>::KSMTokenId::get()), 0_u128);
+		assert_eq!(BootstrapPallet::<T>::claimed_rewards(caller.clone(), <T as Config>::MGATokenId::get()), 0_u128);
+
+	}: claim_rewards(RawOrigin::Signed(caller.clone().into()))
+	verify {
+		assert_ne!(BootstrapPallet::<T>::claimed_rewards(caller.clone(), <T as Config>::KSMTokenId::get()), 0_u128);
+		assert_ne!(BootstrapPallet::<T>::claimed_rewards(caller.clone(), <T as Config>::MGATokenId::get()), 0_u128);
+	}
+
+	impl_benchmark_test_suite!(BootstrapPallet, crate::mock::new_test_ext(), crate::mock::Test)
 }

@@ -72,6 +72,7 @@ services:
     image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangata-node:latest}
     environment:
       - ${RUST_LOG:-info}
+      - RUST_BACKTRACE=1
       - LD_PRELOAD=${LD_PRELOAD}
     entrypoint: ""
     command: >

@@ -685,6 +685,156 @@ fn liquidity_rewards_burn_W() {
 
 #[test]
 #[serial]
+fn liquidity_rewards_deactivate_W() {
+	new_test_ext().execute_with(|| {
+		initialize_liquidity_rewards();
+		System::set_block_number(300001);
+		XykStorage::transfer(
+			0,
+			2,
+			<Test as Config>::LiquidityMiningIssuanceVault::get(),
+			10000000000,
+		)
+		.unwrap();
+
+		XykStorage::transfer(0, 2, 3, 1000000).unwrap();
+		XykStorage::transfer(1, 2, 3, 1000000).unwrap();
+
+		let (
+			user2_last_checkpoint,
+			user2_cummulative_work_in_last_checkpoint,
+			user2_missing_at_last_checkpoint,
+		) = XykStorage::liquidity_mining_user((2, 2));
+		let (
+			pool_last_checkpoint,
+			pool_cummulative_work_in_last_checkpoint,
+			pool_missing_at_last_checkpoint,
+		) = XykStorage::liquidity_mining_pool(2);
+
+		assert_eq!(
+			XykStorage::calculate_work_user(
+				2,
+				2,
+				30,
+				user2_last_checkpoint,
+				user2_cummulative_work_in_last_checkpoint,
+				user2_missing_at_last_checkpoint
+			)
+			.unwrap(),
+			U256::from(77046)
+		);
+		assert_eq!(
+			XykStorage::calculate_work_pool(
+				2,
+				30,
+				pool_last_checkpoint,
+				pool_cummulative_work_in_last_checkpoint,
+				pool_missing_at_last_checkpoint
+			)
+			.unwrap(),
+			U256::from(77046)
+		);
+
+		assert_eq!(XykStorage::liquidity_mining_active_user((2, 2)), 5000);
+		XykStorage::deactivate_liquidity(Origin::signed(2), 2, 2500).unwrap();
+		assert_eq!(XykStorage::liquidity_mining_active_user((2, 2)), 2500);
+
+		let (
+			user2_last_checkpoint,
+			user2_cummulative_work_in_last_checkpoint,
+			user2_missing_at_last_checkpoint,
+		) = XykStorage::liquidity_mining_user((2, 2));
+		let (
+			pool_last_checkpoint,
+			pool_cummulative_work_in_last_checkpoint,
+			pool_missing_at_last_checkpoint,
+		) = XykStorage::liquidity_mining_pool(2);
+
+		assert_eq!(
+			XykStorage::liquidity_mining_user((2, 2)),
+			(30, U256::from(38523), U256::from(435))
+		);
+		assert_eq!(
+			XykStorage::calculate_work_user(
+				2,
+				2,
+				30,
+				user2_last_checkpoint,
+				user2_cummulative_work_in_last_checkpoint,
+				user2_missing_at_last_checkpoint
+			)
+			.unwrap(),
+			U256::from(38523)
+		);
+		assert_eq!(
+			XykStorage::calculate_work_pool(
+				2,
+				30,
+				pool_last_checkpoint,
+				pool_cummulative_work_in_last_checkpoint,
+				pool_missing_at_last_checkpoint
+			)
+			.unwrap(),
+			U256::from(38523)
+		);
+		assert_eq!(XykStorage::liquidity_mining_user_to_be_claimed((2, 2)), 500000000);
+		assert_eq!(*MockPromotedPoolApi::instance().lock().unwrap().get(&2).unwrap(), 500000000);
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (500000000, 500000000));
+
+		System::set_block_number(3000001);
+		assert_eq!(XykStorage::balance(2, 2), 2500);
+		assert_eq!(XykStorage::liquidity_mining_active_user((2, 2)), 2500);
+
+		XykStorage::deactivate_liquidity(Origin::signed(2), 2, 2500).unwrap();
+
+		assert_eq!(XykStorage::liquidity_mining_active_user((2, 2)), 0);
+		assert_eq!(XykStorage::liquidity_mining_user((2, 2)), (300, U256::from(0), U256::from(0)));
+		assert_eq!(XykStorage::balance(2, 2), 5000);
+
+		let (
+			user2_last_checkpoint,
+			user2_cummulative_work_in_last_checkpoint,
+			user2_missing_at_last_checkpoint,
+		) = XykStorage::liquidity_mining_user((2, 2));
+		let (
+			pool_last_checkpoint,
+			pool_cummulative_work_in_last_checkpoint,
+			pool_missing_at_last_checkpoint,
+		) = XykStorage::liquidity_mining_pool(2);
+
+		assert_eq!(
+			XykStorage::calculate_work_user(
+				2,
+				2,
+				3000005,
+				user2_last_checkpoint,
+				user2_cummulative_work_in_last_checkpoint,
+				user2_missing_at_last_checkpoint
+			)
+			.unwrap(),
+			U256::from(0)
+		);
+
+		System::set_block_number(4000001);
+		assert_eq!(
+			XykStorage::calculate_work_user(
+				2,
+				2,
+				400,
+				user2_last_checkpoint,
+				user2_cummulative_work_in_last_checkpoint,
+				user2_missing_at_last_checkpoint
+			)
+			.unwrap(),
+			U256::from(0)
+		);
+		assert_eq!(XykStorage::liquidity_mining_user_to_be_claimed((2, 2)), 1000000000);
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (0, 1000000000));
+	});
+}
+
+#[test]
+#[serial]
 fn liquidity_rewards_calculate_rewards_pool_not_promoted() {
 	new_test_ext().execute_with(|| {
 		initialize_liquidity_rewards();
@@ -720,7 +870,6 @@ fn liquidity_rewards_transfer_not_working() {
 #[serial]
 fn liquidity_rewards_transfer_working_after_deactivate() {
 	new_test_ext().execute_with(|| {
-		env_logger::init();
 		initialize_liquidity_rewards();
 
 		assert_eq!(XykStorage::liquidity_mining_active_user((2, 2)), 5000);
@@ -1710,5 +1859,58 @@ fn unsuccessful_sell_assets_charges_fee() {
 		let post_info =
 			XykStorage::sell_asset(Origin::signed(2), 100, 200, 0, 0).unwrap_err().post_info;
 		assert_eq!(post_info.pays_fee, Pays::Yes);
+	});
+}
+
+#[test]
+fn PoolCreateApi_test_pool_exists_return_false_for_non_existing_pool() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		assert!(!<XykStorage as PoolCreateApi>::pool_exists(1_u32.into(), 2_u32.into()));
+	});
+}
+
+#[test]
+fn PoolCreateApi_pool_exists_return_true_for_existing_pool() {
+	new_test_ext().execute_with(|| {
+		initialize();
+
+		XykStorage::create_pool(Origin::signed(2), 0, 500000, 1, 10000).unwrap();
+		assert!(<XykStorage as PoolCreateApi>::pool_exists(0_u32.into(), 1_u32.into()));
+	});
+}
+
+#[test]
+fn PoolCreateApi_pool_create_creates_a_pool() {
+	new_test_ext().execute_with(|| {
+		initialize();
+
+		let first_asset_id = 0_u32;
+		let first_asset_amount = 10_000_u128;
+		let second_asset_id = 1_u32;
+		let second_asset_amount = 5_000_u128;
+		assert!(!<XykStorage as PoolCreateApi>::pool_exists(
+			first_asset_id.into(),
+			second_asset_id.into()
+		));
+
+		let liq_token_id = Tokens::next_asset_id();
+		let liq_token_amount = (first_asset_amount + second_asset_amount) / 2;
+
+		assert_eq!(
+			<XykStorage as PoolCreateApi>::pool_create(
+				DUMMY_USER_ID.into(),
+				first_asset_id.into(),
+				first_asset_amount,
+				second_asset_id.into(),
+				second_asset_amount
+			),
+			Some((liq_token_id, liq_token_amount))
+		);
+
+		assert_ne!(liq_token_id, Tokens::next_asset_id());
+		assert_eq!(liq_token_amount, XykStorage::balance(liq_token_id, DUMMY_USER_ID.into()));
+
+		assert!(<XykStorage as PoolCreateApi>::pool_exists(0_u32.into(), 1_u32.into()));
 	});
 }

@@ -24,6 +24,7 @@ static_assertions = "1.1.0"
 mangata-primitives = { path = '../primitives/mangata', default-features = false, version = "0.1.0" }
 pallet-assets-info = { path = '../pallets/assets-info', default-features = false, version = "2.0.0" }
 pallet-xyk = { path = '../pallets/xyk', default-features = false, version = '0.1.0' }
+pallet-bootstrap = { path = '../pallets/bootstrap', default-features = false, version = '0.1.0' }
 xyk-runtime-api = { path = '../pallets/xyk/runtime-api', default-features = false, version = '2.0.0' }
 pallet-sudo-origin = { path = '../pallets/sudo-origin', default-features = false}
 xcm-asset-registry = { path = '../pallets/asset-registry', default-features = false}
@@ -42,6 +43,7 @@ sp-runtime = { git = "https://github.com/mangata-finance/substrate", default-fea
 sp-session = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 sp-std = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 sp-transaction-pool = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+pallet-utility = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 sp-version = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 
 ## Substrate FRAME Dependencies

@@ -531,6 +531,7 @@ impl pallet_xyk::Config for Runtime {
 	type TreasuryFeePercentage = frame_support::traits::ConstU128<5>;
 	type BuyAndBurnFeePercentage = frame_support::traits::ConstU128<5>;
 	type RewardsDistributionPeriod = frame_support::traits::ConstU32<10000>;
+	type VestingProvider = Vesting;
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
 }
 
@@ -1146,7 +1147,6 @@ impl pallet_issuance::Config for Runtime {
 	type ImmediateTGEReleasePercent = ImmediateTGEReleasePercent;
 	type TGEReleasePeriod = TGEReleasePeriod;
 	type TGEReleaseBegin = TGEReleaseBegin;
-	type NativeTokenAdapter = orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>;
 	type VestingProvider = Vesting;
 }
 
@@ -1156,7 +1156,7 @@ parameter_types! {
 
 impl pallet_vesting_mangata::Config for Runtime {
 	type Event = Event;
-	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>;
+	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type BlockNumberToBalance = ConvertInto;
 	type MinVestedTransfer = MinVestedTransfer;
 	type WeightInfo = pallet_vesting_mangata::weights::SubstrateWeight<Runtime>;

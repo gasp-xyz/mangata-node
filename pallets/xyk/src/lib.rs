@@ -229,7 +229,7 @@ use codec::FullCodec;
 use frame_support::{
 	pallet_prelude::*,
 	traits::{ExistenceRequirement, Get, WithdrawReasons},
-	Parameter,
+	transactional, Parameter,
 };
 use frame_system::pallet_prelude::*;
 use mangata_primitives::{Balance, TokenId};
@@ -608,6 +608,7 @@ pub mod pallet {
 			<Self as XykFunctionsTrait<T::AccountId>>::promote_pool(liquidity_token_id)
 		}
 
+		#[transactional]
 		#[pallet::weight(10_000)]
 		pub fn activate_liquidity(
 			origin: OriginFor<T>,
@@ -623,6 +624,7 @@ pub mod pallet {
 			)
 		}
 
+		#[transactional]
 		#[pallet::weight(10_000)]
 		pub fn deactivate_liquidity(
 			origin: OriginFor<T>,
@@ -736,11 +738,9 @@ impl<T: Config> Pallet<T> {
 		// whole formula: 	missing_at_last_checkpoint*106/6 - missing_at_last_checkpoint*106*precision/6/q_pow
 		// q_pow is multiplied by precision, thus there needs to be *precision in numenator as well
 		let asymptote_u256: U256 = asymptote.into();
-		log!(info, "calculate_workXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1");
 		let cummulative_work_new_max_possible: U256 = asymptote_u256
 			.checked_mul(U256::from(time_passed))
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
-		log!(info, "calculate_workXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX2");
 		let base = missing_at_last_checkpoint
 			.checked_mul(U256::from(106))
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))? /
@@ -750,12 +750,9 @@ impl<T: Config> Pallet<T> {
 		let q_pow = Self::calculate_q_pow(Q, time_passed);
 
 		let cummulative_missing_new = base - base * U256::from(precision) / q_pow;
-		log!(info, "calculate_workXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX3");
-		log!(info,"calculate_workXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX3 {:?},{:?},{:?},{:?},{:?},",cummulative_work_new_max_possible,cummulative_missing_new,asymptote,last_checkpoint,missing_at_last_checkpoint);
 		let cummulative_work_new = cummulative_work_new_max_possible
 			.checked_sub(cummulative_missing_new)
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
-		log!(info, "calculate_workXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX4");
 		let work_total = cummulative_work_in_last_checkpoint + cummulative_work_new;
 
 		Ok(work_total)
@@ -847,15 +844,6 @@ impl<T: Config> Pallet<T> {
 			user_missing_at_last_checkpoint,
 		)?;
 
-		log!(
-			info,
-			"calculate_liquidity_checkpoint {:?}, {:?}, {:?}, {:?}",
-			user_last_checkpoint,
-			user_cummulative_work_in_last_checkpoint,
-			user_missing_at_last_checkpoint,
-			user_missing_at_checkpoint
-		);
-
 		let user_work_total = Self::calculate_work_user(
 			user.clone(),
 			liquidity_asset_id,
@@ -933,7 +921,9 @@ impl<T: Config> Pallet<T> {
 			} else {
 				Err(())
 			}
-		});
+		})
+		.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
+
 		LiquidityMiningActivePool::<T>::try_mutate(liquidity_asset_id, |active_amount| {
 			if let Some(val) = active_amount.checked_add(liquidity_assets_added) {
 				*active_amount = val;
@@ -941,13 +931,14 @@ impl<T: Config> Pallet<T> {
 			} else {
 				Err(())
 			}
-		});
+		})
+		.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
 
 		<T as Config>::Currency::reserve(
 			liquidity_asset_id.into(),
 			&user,
 			liquidity_assets_added.into(),
-		);
+		)?;
 
 		Ok(())
 	}
@@ -957,15 +948,6 @@ impl<T: Config> Pallet<T> {
 		liquidity_asset_id: TokenId,
 		liquidity_assets_burned: Balance,
 	) -> DispatchResult {
-		log!(info, "set_liquidity_burning_checkpoint 66666666666666666666666",);
-		log!(
-			info,
-			"set_liquidity_burning_checkpoint {:?}, {:?}, {:?}",
-			user,
-			liquidity_asset_id,
-			liquidity_assets_burned
-		);
-
 		let (
 			current_time,
 			user_work_total,
@@ -990,15 +972,6 @@ impl<T: Config> Pallet<T> {
 			.checked_div(liquidity_assets_amount.into())
 			.ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
 
-		log!(
-			info,
-			"set_liquidity_buroint {:?}, {:?}, {:?}, {:?}",
-			user_work_total,
-			user_missing_at_checkpoint,
-			user_work_burned,
-			user_missing_burned
-		);
-
 		LiquidityMiningUser::<T>::insert(
 			(user.clone(), &liquidity_asset_id),
 			(
@@ -1015,6 +988,7 @@ impl<T: Config> Pallet<T> {
 				pool_missing_at_checkpoint - user_missing_burned,
 			),
 		);
+
 		LiquidityMiningActiveUser::<T>::try_mutate((&user, liquidity_asset_id), |active_amount| {
 			if let Some(val) = active_amount.checked_sub(liquidity_assets_burned) {
 				*active_amount = val;
@@ -1022,7 +996,8 @@ impl<T: Config> Pallet<T> {
 			} else {
 				Err(())
 			}
-		});
+		})
+		.map_err(|_| DispatchError::from(Error::<T>::NotEnoughAssets))?;
 
 		LiquidityMiningActivePool::<T>::try_mutate(liquidity_asset_id, |active_amount| {
 			if let Some(val) = active_amount.checked_sub(liquidity_assets_burned) {
@@ -1031,7 +1006,8 @@ impl<T: Config> Pallet<T> {
 			} else {
 				Err(())
 			}
-		});
+		})
+		.map_err(|_| DispatchError::from(Error::<T>::NotEnoughAssets))?;
 
 		let rewards_to_be_claimed =
 			LiquidityMiningUserToBeClaimed::<T>::get((user.clone(), &liquidity_asset_id));
@@ -1055,7 +1031,7 @@ impl<T: Config> Pallet<T> {
 			&user,
 			liquidity_assets_burned.into(),
 		);
-		log!(info, "set_liquidity_burning_checkpoint 66666666666666666666666",);
+
 		Ok(())
 	}
 
@@ -2139,6 +2115,14 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			second_asset_amount.into(),
 			ExistenceRequirement::KeepAlive,
 		)?;
+
+		// Creating new liquidity tokens to user
+		<T as Config>::Currency::mint(
+			liquidity_asset_id.into(),
+			&sender,
+			liquidity_assets_minted.into(),
+		)?;
+
 		// Liquidity minting functions not triggered on not promoted pool
 		if <T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some() {
 			Pallet::<T>::set_liquidity_minting_checkpoint(
@@ -2147,12 +2131,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				liquidity_assets_minted,
 			)?;
 		}
-		// Creating new liquidity tokens to user
-		<T as Config>::Currency::mint(
-			liquidity_asset_id.into(),
-			&sender,
-			liquidity_assets_minted.into(),
-		)?;
 
 		// Apply changes in token pools, adding minted amounts
 		// Won't overflow due earlier ensure
@@ -2219,8 +2197,9 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			<T as Config>::Currency::free_balance(liquidity_asset_id.into(), &sender).into();
 		let liquidity_token_activated_balance =
 			LiquidityMiningActiveUser::<T>::get((&sender, &liquidity_asset_id));
-		let total_liquidity_tokens_user_owned =
-			liquidity_token_free_balance + liquidity_token_activated_balance;
+		let total_liquidity_tokens_user_owned = liquidity_token_free_balance
+			.checked_add(liquidity_token_activated_balance)
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 
 		ensure!(
 			total_liquidity_tokens_user_owned >= liquidity_asset_amount,
@@ -2291,19 +2270,13 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		);
 
 		if <T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some() {
-			log!(info, "liquidity_token_free_balance {:?}", liquidity_token_free_balance);
-			log!(info, "liquidity_token_activated_balance {:?}", liquidity_token_activated_balance);
 			let promoted_liquidity_asset_amount_to_settle =
 				if liquidity_token_free_balance >= liquidity_asset_amount {
 					0
 				} else {
 					liquidity_asset_amount - liquidity_token_free_balance
 				};
-			log!(
-				info,
-				"promoted_liquidity_asset_amount_to_settle {:?}",
-				promoted_liquidity_asset_amount_to_settle
-			);
+
 			if liquidity_token_activated_balance == promoted_liquidity_asset_amount_to_settle {
 				Pallet::<T>::set_liquidity_burning_checkpoint(
 					sender.clone(),
@@ -2311,9 +2284,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 					promoted_liquidity_asset_amount_to_settle,
 				)?;
 				LiquidityMiningUser::<T>::remove((sender.clone(), liquidity_asset_id));
-				log!(info, "*************************************here 3",);
 			} else {
-				log!(info, "***************************************here 4",);
 				Pallet::<T>::set_liquidity_burning_checkpoint(
 					sender.clone(),
 					liquidity_asset_id,

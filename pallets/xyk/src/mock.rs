@@ -205,6 +205,9 @@ impl<T: Config> Pallet<T> {
 	pub fn balance(id: TokenId, who: T::AccountId) -> Balance {
 		<T as Config>::Currency::free_balance(id.into(), &who).into()
 	}
+	pub fn reserved(id: TokenId, who: T::AccountId) -> Balance {
+		<T as Config>::Currency::reserved_balance(id.into(), &who).into()
+	}
 	pub fn total_supply(id: TokenId) -> Balance {
 		<T as Config>::Currency::total_issuance(id.into()).into()
 	}

@@ -835,6 +835,41 @@ fn liquidity_rewards_deactivate_W() {
 
 #[test]
 #[serial]
+fn liquidity_rewards_tokens_frozen_after_mint_W() {
+	new_test_ext().execute_with(|| {
+		MockPromotedPoolApi::instance().lock().unwrap().clear();
+		let max = std::u128::MAX;
+		System::set_block_number(1);
+		let acc_id: u128 = 2;
+		//	let amount: u128 = max;
+		let amount: u128 = max;
+		XykStorage::create_new_token(&acc_id, amount);
+		XykStorage::create_new_token(&acc_id, amount);
+		XykStorage::create_pool(Origin::signed(2), 0, 10000, 1, 10000).unwrap();
+		XykStorage::promote_pool(Origin::root(), 2).unwrap();
+		let liquidity_tokens_owned = XykStorage::balance(2, 2);
+		XykStorage::activate_liquidity(Origin::signed(2), 2, liquidity_tokens_owned).unwrap();
+		MockPromotedPoolApi::instance().lock().unwrap().insert(2, 1000000000);
+
+		XykStorage::transfer(0, 2, 3, 1000000).unwrap();
+		XykStorage::transfer(1, 2, 3, 1000000).unwrap();
+
+		assert_eq!(XykStorage::reserved(2, 2), 10000);
+		assert_eq!(XykStorage::liquidity_mining_active_user((2, 2)), 10000);
+
+		XykStorage::mint_liquidity(Origin::signed(2), 0, 1, 10000, 10001).unwrap();
+		XykStorage::mint_liquidity(Origin::signed(3), 0, 1, 10000, 10001).unwrap();
+
+		assert_eq!(XykStorage::reserved(2, 2), 20000);
+		assert_eq!(XykStorage::liquidity_mining_active_user((2, 2)), 20000);
+
+		assert_eq!(XykStorage::reserved(2, 3), 10000);
+		assert_eq!(XykStorage::liquidity_mining_active_user((3, 2)), 10000);
+	});
+}
+
+#[test]
+#[serial]
 fn liquidity_rewards_calculate_rewards_pool_not_promoted() {
 	new_test_ext().execute_with(|| {
 		initialize_liquidity_rewards();
@@ -940,6 +975,77 @@ fn liquidity_rewards_transfer_working_after_deactivate() {
 			)
 			.unwrap(),
 			U256::from(77046)
+		);
+	});
+}
+
+#[test]
+#[serial]
+fn liquidity_rewards_rewards_not_gaining_after_burn() {
+	new_test_ext().execute_with(|| {
+		env_logger::init();
+		initialize_liquidity_rewards();
+
+		XykStorage::transfer(0, 2, 3, 1000000).unwrap();
+		XykStorage::transfer(1, 2, 3, 1000000).unwrap();
+		XykStorage::mint_liquidity(Origin::signed(3), 0, 1, 5000, 5001);
+
+		assert_eq!(XykStorage::reserved(2, 2), 5000);
+		assert_eq!(XykStorage::liquidity_mining_active_user((2, 2)), 5000);
+		assert_eq!(XykStorage::balance(2, 2), 0);
+
+		assert_eq!(XykStorage::reserved(2, 3), 5000);
+		assert_eq!(XykStorage::liquidity_mining_active_user((3, 2)), 5000);
+		assert_eq!(XykStorage::balance(2, 3), 0);
+
+		System::set_block_number(100000);
+
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (499977257, 0));
+		assert_eq!(XykStorage::calculate_rewards_amount(3, 2).unwrap(), (499977257, 0));
+
+		XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 5000);
+		assert_eq!(XykStorage::reserved(2, 2), 0);
+		assert_eq!(XykStorage::liquidity_mining_active_user((2, 2)), 0);
+		assert_eq!(XykStorage::balance(2, 2), 0);
+
+		let (
+			user2_last_checkpoint,
+			user2_cummulative_work_in_last_checkpoint,
+			user2_missing_at_last_checkpoint,
+		) = XykStorage::liquidity_mining_user((2, 2));
+
+		System::set_block_number(100000);
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (0, 499977257));
+		assert_eq!(XykStorage::calculate_rewards_amount(3, 2).unwrap(), (499977257, 0));
+
+		System::set_block_number(200000);
+
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (0, 499977257));
+		assert_eq!(XykStorage::calculate_rewards_amount(3, 2).unwrap(), (499997238, 0));
+
+		let pool_rewards = *MockPromotedPoolApi::instance().lock().unwrap().get(&2).unwrap();
+		let new_pool_rewards = pool_rewards + 1000000000;
+
+		MockPromotedPoolApi::instance().lock().unwrap().clear();
+		MockPromotedPoolApi::instance().lock().unwrap().insert(2, new_pool_rewards);
+
+		assert_eq!(*MockPromotedPoolApi::instance().lock().unwrap().get(&2).unwrap(), 1500022743);
+
+		System::set_block_number(300000);
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (0, 499977257));
+		assert_eq!(XykStorage::calculate_rewards_amount(3, 2).unwrap(), (1500003274, 0));
+
+		assert_eq!(
+			XykStorage::calculate_work_user(
+				2,
+				2,
+				30,
+				user2_last_checkpoint,
+				user2_cummulative_work_in_last_checkpoint,
+				user2_missing_at_last_checkpoint,
+			)
+			.unwrap(),
+			U256::from(0)
 		);
 	});
 }

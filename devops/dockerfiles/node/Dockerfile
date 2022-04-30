@@ -1,7 +1,39 @@
-FROM liuchong/rustup:stable AS env_builder
+#
+# RUST_CONTAINTER - base rust tooling, based on https://github.com/liuchong/docker-rustup
+#
+FROM debian:buster as rustup
+WORKDIR /root
+
+# common packages
+RUN apt-get update && \
+    apt-get install --no-install-recommends -y \
+    ca-certificates curl file \
+    build-essential \
+    autoconf automake autotools-dev libtool xutils-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV SSL_VERSION=1.0.2u
+
+RUN curl https://www.openssl.org/source/openssl-$SSL_VERSION.tar.gz -O && \
+    tar -xzf openssl-$SSL_VERSION.tar.gz && \
+    cd openssl-$SSL_VERSION && ./config && make depend && make install && \
+    cd .. && rm -rf openssl-$SSL_VERSION*
+
+ENV OPENSSL_LIB_DIR=/usr/local/ssl/lib \
+    OPENSSL_INCLUDE_DIR=/usr/local/ssl/include \
+    OPENSSL_STATIC=1
+
+# install toolchain
+RUN curl https://sh.rustup.rs -sSf | \
+    sh -s -- --default-toolchain stable -y
+
+ENV PATH=/root/.cargo/bin:$PATH
+
+#
+# BUILDER - mangata tooling required for building mangata-node
+#
+FROM rustup AS builder
 LABEL description="Compiles all workspace artifacts"
-WORKDIR /mangata
-COPY . /mangata
 
 #Export memory Profile env. variables.
 ENV MEMORY_PROFILER_OUTPUT=profiling_%e_%t.dat 
@@ -25,29 +57,28 @@ RUN rustup target add wasm32-unknown-unknown --toolchain nightly-2021-10-19
 RUN cargo install cargo2junit
 
 FROM env_builder as builder
-RUN mkdir memory_profiler && cd memory_profiler && git clone https://github.com/koute/memory-profiler && cd memory-profiler && git checkout  0.8.0  &&  cargo build --release -p bytehound-preload && cargo build --release -p bytehound-cli
-RUN cp /mangata/memory_profiler/memory-profiler/target/release/libbytehound.so /mangata/
-RUN cp /mangata/memory_profiler/memory-profiler/target/release/bytehound /mangata/
+RUN git clone --depth 1 --branch 0.8.0 https://github.com/koute/memory-profiler /tmp/profiler
+RUN cargo build --manifest-path /tmp/profiler/Cargo.toml --release -p bytehound-preload -p bytehound-cli
+# RUN cp /profiler/target/release/libbytehound.so /mangata/
+# RUN cp /profiler/target/release/bytehound /mangata/
+# CMD cargo build --release --features=${CARGO_FEATURES}
 
-
-RUN cargo build --release --features=${CARGO_FEATURES}
-
-FROM debian:stretch
-ENV DOCKERIZE_VERSION v0.6.1
-ENV VAULT_VERSION 1.9.3
-RUN apt-get update && apt-get install -y curl netcat jq unzip
-RUN curl -L https://github.com/jwilder/dockerize/releases/download/${DOCKERIZE_VERSION}/dockerize-alpine-linux-amd64-${DOCKERIZE_VERSION}.tar.gz --output /tmp/dockerize.tar.gz
-RUN curl -L https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_amd64.zip --output /tmp/vault.zip
-RUN tar -C /usr/bin -xzvf /tmp/dockerize.tar.gz
-RUN unzip /tmp/vault.zip -d /usr/bin
-WORKDIR /mangata
-COPY --from=builder /mangata/target/release/mangata-node /mangata/node
-COPY --from=builder /mangata/libbytehound.so /mangata/libbytehound.so
-COPY --from=builder /mangata/bytehound /mangata/bytehound
-RUN /mangata/node --version
-COPY devops/dockerfiles/node/unlocker.sh /unlocker.sh
-COPY devops/dockerfiles/node/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-RUN chmod +x /unlocker.sh
-
-ENTRYPOINT ["/entrypoint.sh"]
+# FROM debian:buster
+# ENV DOCKERIZE_VERSION v0.6.1
+# ENV VAULT_VERSION 1.9.3
+# RUN apt-get update && apt-get install -y curl netcat jq unzip
+# RUN curl -L https://github.com/jwilder/dockerize/releases/download/${DOCKERIZE_VERSION}/dockerize-alpine-linux-amd64-${DOCKERIZE_VERSION}.tar.gz --output /tmp/dockerize.tar.gz
+# RUN curl -L https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_amd64.zip --output /tmp/vault.zip
+# RUN tar -C /usr/bin -xzvf /tmp/dockerize.tar.gz
+# RUN unzip /tmp/vault.zip -d /usr/bin
+# WORKDIR /mangata
+# COPY --from=builder /mangata/target/release/mangata-node /mangata/node
+# COPY --from=builder /mangata/libbytehound.so /mangata/libbytehound.so
+# COPY --from=builder /mangata/bytehound /mangata/bytehound
+# RUN /mangata/node --version
+# COPY devops/dockerfiles/node/unlocker.sh /unlocker.sh
+# COPY devops/dockerfiles/node/entrypoint.sh /entrypoint.sh
+# RUN chmod +x /entrypoint.sh
+# RUN chmod +x /unlocker.sh
+#
+# ENTRYPOINT ["/entrypoint.sh"]

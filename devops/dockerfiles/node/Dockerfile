@@ -40,8 +40,6 @@ ENV MEMORY_PROFILER_OUTPUT=profiling_%e_%t.dat
 ENV MEMORY_PROFILER_CULL_TEMPORARY_ALLOCATIONS=1
 ENV MEMORY_PROFILER_LOG=info
 ENV MEMORY_PROFILER_LOGFILE=profiling_%e_%t.log 
-ARG CARGO_FEATURES=""
-
 
 ENV ETH_APP_ID=0xdd514baa317bf095ddba2c0a847765feb389c6a0
 ENV ERC20_APP_ID=0x00e392c04743359e39f00cd268a5390d27ef6b44
@@ -55,10 +53,24 @@ RUN rustup target add wasm32-unknown-unknown --toolchain nightly-2021-10-19
 #Get Mem profiler binaries
 
 RUN cargo install cargo2junit
+RUN chmod 755 /root/
+RUN chmod 755 -R /root/.cargo/
+RUN chmod 755 -R /root/.rustup/
+ENV CARGO_HOME=/cache
+ENV CARGO_TARGET_DIR=/output
+ENV CARGO_FEATURES=""
+ENV RUSTUP_HOME=/root/.rustup
+ENTRYPOINT ["/root/.cargo/bin/cargo"]
 
-FROM env_builder as builder
-RUN git clone --depth 1 --branch 0.8.0 https://github.com/koute/memory-profiler /tmp/profiler
-RUN cargo build --manifest-path /tmp/profiler/Cargo.toml --release -p bytehound-preload -p bytehound-cli
+# FROM env_builder as builder
+# RUN git clone --depth 1 --branch 0.8.0 https://github.com/koute/memory-profiler /tmp/profiler
+# RUN cargo build --manifest-path /tmp/profiler/Cargo.toml --release -p bytehound-preload -p bytehound-cli
+#
+# ENV CARGO_HOME=/cache
+# ENV CARGO_TARGET_DIR=/output
+# ENV CARGO_FEATURES=""
+# ENTRYPOINT /root/.cargo/bin/cargo
+
 # RUN cp /profiler/target/release/libbytehound.so /mangata/
 # RUN cp /profiler/target/release/bytehound /mangata/
 # CMD cargo build --release --features=${CARGO_FEATURES}

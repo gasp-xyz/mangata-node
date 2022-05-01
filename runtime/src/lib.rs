@@ -500,6 +500,12 @@ parameter_types! {
 	pub const MaxLocks: u32 = 50;
 }
 
+// The MaxLocks (on a who-token_id pair) that is allowed by orml_tokens
+// must exceed the total possible locks that can be applied to it, ALL pallets considered
+// This is because orml_tokens uses BoundedVec for Locks storage item and does not inform on failure
+// Balances uses WeakBoundedVec and so does not fail
+const_assert!(MaxLocks::get() >= MAX_VESTING_SCHEDULES);
+
 pub struct DustRemovalWhitelist;
 impl Contains<AccountId> for DustRemovalWhitelist {
 	fn contains(a: &AccountId) -> bool {
@@ -1162,8 +1168,7 @@ impl pallet_vesting_mangata::Config for Runtime {
 	type WeightInfo = pallet_vesting_mangata::weights::SubstrateWeight<Runtime>;
 	// `VestingInfo` encode length is 36bytes. 28 schedules gets encoded as 1009 bytes, which is the
 	// highest number of schedules that encodes less than 2^10.
-	// Should be atleast twice the number of tge recipients
-	const MAX_VESTING_SCHEDULES: u32 = 200;
+	const MAX_VESTING_SCHEDULES: u32 = 50;
 }
 
 parameter_types! {

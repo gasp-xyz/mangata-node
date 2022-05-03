@@ -248,6 +248,162 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 	)
 }
 
+pub fn moonbeam_testnet_config() -> ChainSpec {
+	// Give your base currency a unit name and decimal places
+	let mut properties = sc_chain_spec::Properties::new();
+	properties.insert("tokenSymbol".into(), "MGAT".into());
+	properties.insert("tokenDecimals".into(), 18.into());
+	properties.insert("ss58Format".into(), 42.into());
+
+	ChainSpec::from_genesis(
+		// Name
+		"Mangata Moonbeam Testnet",
+		// ID
+		"mangata_moonbeam_testnet",
+		ChainType::Live,
+		move || {
+			mangata_genesis(
+				// initial collators.
+				vec![
+					(
+						public_testnet_keys::ALICE_SR25519.parse::<AccountId>().unwrap().into(),
+						AuraId::from_slice(
+							&<[u8; 32]>::from_hex(
+								public_testnet_keys::ALICE_SR25519.strip_prefix("0x").unwrap(),
+							)
+							.unwrap(),
+						)
+						.unwrap(),
+					),
+					(
+						public_testnet_keys::BOB_SR25519.parse::<AccountId>().unwrap().into(),
+						AuraId::from_slice(
+							&<[u8; 32]>::from_hex(
+								public_testnet_keys::BOB_SR25519.strip_prefix("0x").unwrap(),
+							)
+							.unwrap(),
+						)
+						.unwrap(),
+					),
+				],
+				// Initial relay account
+				public_testnet_keys::RELAY_SR25519.parse::<AccountId>().unwrap().into(),
+				// Sudo account
+				public_testnet_keys::SUDO_SR25519.parse::<AccountId>().unwrap().into(),
+				// Ethereum AppId for SnowBridged Assets
+				vec![
+					(
+						App::ETH,
+						H160::from_slice(&hex!["6aA07B0e455B393164414380A8A314d7c860CEC8"][..])
+							.into(),
+					),
+					(
+						App::ERC20,
+						H160::from_slice(&hex!["244691D3822e13e61968322f8d82Dee3B31e0D4a"][..])
+							.into(),
+					),
+				],
+				// SnowBridged Assets
+				vec![
+					(
+						b"Mangata".to_vec(),
+						b"MGA".to_vec(),
+						b"Mangata Asset".to_vec(),
+						18u32,
+						0u32,
+						H160::from_slice(&hex!["C7e3Bda797D2cEb740308eC40142ae235e08144A"][..]),
+						300_000_000__000_000_000_000_000_000u128,
+						public_testnet_keys::ALICE_SR25519.parse::<AccountId>().unwrap().into(),
+					),
+					(
+						b"Ether".to_vec(),
+						b"ETH".to_vec(),
+						b"Ethereum Ether".to_vec(),
+						18u32,
+						1u32,
+						H160::zero(),
+						0u128,
+						public_testnet_keys::ALICE_SR25519.parse::<AccountId>().unwrap().into(),
+					),
+				],
+				// Tokens endowment
+				vec![
+					(
+						0u32,
+						400_000_000__000_000_000_000_000_000u128,
+						public_testnet_keys::SUDO_SR25519.parse::<AccountId>().unwrap().into(),
+					),
+					(
+						0u32,
+						100_000_000__000_000_000_000_000_000u128,
+						public_testnet_keys::RELAY_SR25519.parse::<AccountId>().unwrap().into(),
+					),
+					(
+						0u32,
+						100_000_000__000_000_000_000_000_000u128,
+						public_testnet_keys::BOB_SR25519.parse::<AccountId>().unwrap().into(),
+					),
+					(
+						0u32,
+						100_000_000__000_000_000_000_000_000u128,
+						public_testnet_keys::CHARLIE_SR25519.parse::<AccountId>().unwrap().into(),
+					),
+				],
+				// Config for Staking
+				// Make sure it works with initial-authorities as staking uses both
+				vec![
+					(
+						// Who gets to stake initially
+						public_testnet_keys::ALICE_SR25519.parse::<AccountId>().unwrap().into(),
+						// Id of MGA token,
+						0u32,
+						// How much mangata they pool
+						10_000__000_000_000_000_000_000u128,
+						// Id of the dummy token,
+						2u32,
+						// How many dummy tokens they pool,
+						20_000__000_000_000_000_000_000u128,
+						// Id of the liquidity token that is generated
+						3u32,
+						// How many liquidity tokens they stake,
+						10_000__000_000_000_000_000_000u128,
+					),
+					(
+						// Who gets to stake initially
+						public_testnet_keys::BOB_SR25519.parse::<AccountId>().unwrap().into(),
+						// Id of MGA token,
+						0u32,
+						// How much mangata they pool
+						8_000__000_000_000_000_000_000u128,
+						// Id of the dummy token,
+						2u32,
+						// How many dummy tokens they pool,
+						20_000__000_000_000_000_000_000u128,
+						// Id of the liquidity token that is generated
+						3u32,
+						// How many liquidity tokens they stake,
+						5_000__000_000_000_000_000_000u128,
+					),
+				],
+				vec![(KSM_TOKEN_ID, None)],
+				2110.into(),
+			)
+		},
+		Vec::new(),
+		None,
+		// Protocol ID
+		Some("mangata-moonbeam-testnet"),
+		// ForkId
+		None,
+		// Properties
+		Some(properties),
+		Extensions {
+			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
+			para_id: 2110,
+		},
+	)
+}
+
 pub fn public_testnet_config() -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();

@@ -27,6 +27,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 		"" | "local" => Box::new(chain_spec::local_config()),
 		"public-testnet" => Box::new(chain_spec::public_testnet_config()),
 		"kusama-mainnet" => Box::new(chain_spec::kusama_mainnet_config()),
+		"moonbeam-testnet" => Box::new(chain_spec::moonbeam_testnet_config()),
 		path => Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),
 	})
 }

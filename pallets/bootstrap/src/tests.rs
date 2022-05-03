@@ -754,6 +754,42 @@ fn fail_vested_token_provision_if_user_doesnt_have_vested_tokens() {
 
 #[test]
 #[serial]
+fn successful_vested_provision_using_vested_tokens_only_when_user_has_both_vested_and_non_vested_tokens(
+) {
+	new_test_ext().execute_with(|| {
+		set_up();
+		jump_to_public_phase();
+
+		let provision_amount = 10_000;
+		let lock: u128 = 150;
+
+		<Test as Config>::VestingProvider::lock_tokens(
+			&USER_ID,
+			MGAId::get(),
+			provision_amount,
+			lock.into(),
+		)
+		.unwrap();
+
+		let non_vested_initial_amount = Bootstrap::balance(MGAId::get(), USER_ID);
+		let vested_initial_amount = Bootstrap::locked_balance(MGAId::get(), USER_ID);
+
+		Bootstrap::provision_vested(Origin::signed(USER_ID), MGAId::get(), provision_amount)
+			.unwrap();
+
+		assert_eq!(non_vested_initial_amount, Bootstrap::balance(MGAId::get(), USER_ID));
+
+		assert_eq!(0, Bootstrap::locked_balance(MGAId::get(), USER_ID));
+
+		assert_eq!(
+			(provision_amount, lock + 1),
+			Bootstrap::vested_provisions(USER_ID, MGAId::get())
+		);
+	});
+}
+
+#[test]
+#[serial]
 fn successful_vested_provision_is_stored_properly_in_storage() {
 	new_test_ext().execute_with(|| {
 		set_up();

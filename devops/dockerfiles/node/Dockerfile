@@ -56,11 +56,6 @@ RUN cargo build --manifest-path /tmp/profiler/Cargo.toml --release -p bytehound-
 RUN chmod 755 /root/
 RUN chmod 755 -R /root/.cargo/
 RUN chmod 755 -R /root/.rustup/
-ENV CARGO_HOME=/cache
-ENV CARGO_TARGET_DIR=/output
-ENV CARGO_FEATURES=""
-ENV RUSTUP_HOME=/root/.rustup
-ENTRYPOINT ["/root/.cargo/bin/cargo"]
 
 
 FROM debian:buster
@@ -77,4 +72,3 @@ RUN tar -C /usr/bin -xzvf /tmp/dockerize.tar.gz
 RUN unzip /tmp/vault.zip -d /usr/bin
 COPY devops/dockerfiles/node/unlocker.sh /unlocker.sh
 COPY devops/dockerfiles/node/entrypoint.sh /entrypoint.sh
-# ENTRYPOINT ["/entrypoint.sh"]

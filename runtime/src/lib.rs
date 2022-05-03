@@ -23,7 +23,6 @@ use sp_runtime::{
 	ApplyExtrinsicResult, MultiSignature, Percent,
 };
 
-use pallet_session::ShouldEndSession;
 use sp_std::{marker::PhantomData, prelude::*};
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -1490,8 +1489,10 @@ impl_runtime_apis! {
 			}
 		}
 
-		fn is_new_session(number: <<Block as BlockT>::Header as HeaderT>::Number) -> bool{
-			<ParachainStaking as ShouldEndSession<_>>::should_end_session(number)
+		fn is_storage_migration_scheduled() -> bool{
+			let last = frame_system::LastRuntimeUpgrade::<Runtime>::get();
+			let current = <<Runtime as frame_system::Config>::Version as frame_support::traits::Get<_>>::get();
+			last.map(|v| v.was_upgraded(&current)).unwrap_or(true)
 		}
 
 		fn store_seed(seed: sp_core::H256){
@@ -1592,8 +1593,7 @@ impl_runtime_apis! {
 
 		fn execute_block(block: Block) {
 			let key = cumulus_pallet_aura_ext::get_block_signer_pub_key::<Runtime,Block>(&block);
-			let precedes_new_session = <ParachainStaking as ShouldEndSession<_>>::should_end_session(block.header.number + 1);
-			Executive::execute_block_ver_impl(block, key, precedes_new_session);
+			Executive::execute_block_ver_impl(block, key);
 		}
 
 		fn initialize_block(header: &<Block as BlockT>::Header) {
@@ -1789,7 +1789,7 @@ mod parachain_validate_block {
             cumulus_pallet_parachain_system::validate_block::implementation::validate_block::<<Runtime
                                                                                               as
                                                                                               cumulus_pallet_parachain_system::validate_block::GetRuntimeBlockType>::RuntimeBlock,
-                                                                                              cumulus_pallet_aura_ext::BlockExecutorVer<Runtime, Executive, ParachainStaking>,
+                                                                                              cumulus_pallet_aura_ext::BlockExecutorVer<Runtime, Executive>,
                                                                                               Runtime,
                                                                                               CheckInherents>(params);
 		cumulus_pallet_parachain_system::validate_block::polkadot_parachain::write_result(&res)

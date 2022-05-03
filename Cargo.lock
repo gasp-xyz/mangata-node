@@ -5632,6 +5632,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "test-case",
 ]
 
 [[package]]
@@ -10170,7 +10171,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e5bcc41d18f7a1d50525d080fd3e953be87c4f9f1a974f3c21798ca00d54ec15"
 dependencies = [
  "lazy_static",
- "parking_lot 0.10.2",
+ "parking_lot 0.11.2",
  "serial_test_derive",
 ]
 
@@ -11447,6 +11448,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "507e9898683b6c43a9aa55b64259b721b52ba226e0f3779137e50ad114a4c90b"
 
 [[package]]
+name = "test-case"
+version = "2.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6344589a99d3971d6fa4e8314dbcbeca2df6273a6b642e46906971779159af1f"
+dependencies = [
+ "cfg-if 1.0.0",
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "test-runtime-constants"
 version = "0.9.16"
 source = "git+https://github.com/mangata-finance//polkadot?branch=mangata-dev#ea984ce62a9b9fee49a14840f819467191ffed95"
@@ -11747,7 +11761,7 @@ dependencies = [
  "chrono",
  "lazy_static",
  "matchers",
- "parking_lot 0.10.2",
+ "parking_lot 0.11.2",
  "regex",
  "serde",
  "serde_json",

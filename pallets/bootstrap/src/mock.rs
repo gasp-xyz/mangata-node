@@ -233,10 +233,20 @@ construct_runtime!(
 	}
 );
 
-impl<T: Config> Pallet<T> {
+impl<T: Config> Pallet<T>
+where
+	u128: From<<T as frame_system::Config>::AccountId>,
+{
 	pub fn balance(id: TokenId, who: T::AccountId) -> Balance {
-		<T as Config>::Currency::free_balance(id.into(), &who).into()
+		Tokens::accounts(Into::<u128>::into(who.clone()), Into::<u32>::into(id.clone())).free -
+			Tokens::accounts(Into::<u128>::into(who.clone()), Into::<u32>::into(id.clone()))
+				.frozen
 	}
+
+	pub fn locked_balance(id: TokenId, who: <T as frame_system::Config>::AccountId) -> Balance {
+		Tokens::accounts(Into::<u128>::into(who), Into::<u32>::into(id)).frozen
+	}
+
 	pub fn total_supply(id: TokenId) -> Balance {
 		<T as Config>::Currency::total_issuance(id.into()).into()
 	}

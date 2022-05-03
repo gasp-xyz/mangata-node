@@ -5,8 +5,11 @@ use mock::*;
 use frame_support::assert_err;
 use serial_test::serial;
 use sp_runtime::traits::BadOrigin;
+use test_case::test_case;
 
 const USER_ID: u128 = 0;
+const PROVISION_USER1_ID: u128 = 200;
+const PROVISION_USER2_ID: u128 = 201;
 const ANOTHER_USER_ID: u128 = 100;
 const INITIAL_AMOUNT: u128 = 1_000_000;
 const DUMMY_ID: u32 = 2;
@@ -816,6 +819,47 @@ fn successful_merged_vested_provision_is_stored_properly_in_storage() {
 	});
 }
 
+#[macro_export]
+macro_rules! init_mocks {
+	() => {
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		let pool_create_mock = MockPoolCreateApi::pool_create_context();
+		pool_create_mock
+			.expect()
+			.times(1)
+			.returning(move |addr, _, ksm_amount, _, mga_amount| {
+				let issuance = (ksm_amount + mga_amount) / 2;
+				let id = Bootstrap::create_new_token(&addr, issuance);
+				Some((id, issuance))
+			});
+	};
+}
+
+fn provisions(
+	provisions: Vec<(<Test as frame_system::Config>::AccountId, TokenId, Balance, ProvisionKind)>,
+) {
+	for (user_id, token_id, amount, lock) in provisions {
+		<Test as Config>::Currency::transfer(
+			token_id.into(),
+			&USER_ID,
+			&user_id,
+			amount.into(),
+			frame_support::traits::ExistenceRequirement::KeepAlive,
+		)
+		.unwrap();
+
+		if let ProvisionKind::Vested(nr) = lock {
+			<Test as Config>::VestingProvider::lock_tokens(&user_id, token_id, amount, nr.into())
+				.unwrap();
+			Bootstrap::provision_vested(Origin::signed(user_id), token_id, amount).unwrap();
+		} else {
+			Bootstrap::provision(Origin::signed(user_id), token_id, amount).unwrap();
+		}
+	}
+}
+
 #[test]
 #[serial]
 fn vested_provision_included_in_valuation() {
@@ -825,57 +869,147 @@ fn vested_provision_included_in_valuation() {
 		// ARRANGE - USER provides vested MGA tokens, ANOTHER_USER provides KSM tokens
 		set_up();
 		jump_to_public_phase();
-
-		let mga_amount = Bootstrap::balance(MGAId::get(), USER_ID);
-		let ksm_amount = 100_u128;
-		let lock: u128 = 150;
-
-		Bootstrap::transfer(KSMId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 10_000).unwrap();
-
-		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
-		pool_exists_mock.expect().return_const(false);
-		let liq_token_id: Arc<Mutex<TokenId>> = Arc::new(Mutex::new(0_u32.into()));
-		let ref_liq_token_id = liq_token_id.clone();
-
-		let pool_create_mock = MockPoolCreateApi::pool_create_context();
-		pool_create_mock
-			.expect()
-			.times(1)
-			.returning(move |addr, _, ksm_amount, _, mga_amount| {
-				let issuance = (ksm_amount + mga_amount) / 2;
-				let id = Bootstrap::create_new_token(&addr, issuance);
-				*(ref_liq_token_id.lock().unwrap()) = id;
-				Some((id, issuance))
-			});
-
-		<Test as Config>::VestingProvider::lock_tokens(
-			&USER_ID,
-			MGAId::get(),
-			mga_amount,
-			lock.into(),
-		)
-		.unwrap();
+		init_mocks!();
+		let liq_token_id = Tokens::next_asset_id();
 
 		// ACT
-		Bootstrap::provision_vested(Origin::signed(USER_ID), MGAId::get(), mga_amount).unwrap();
-		Bootstrap::provision(Origin::signed(ANOTHER_USER_ID), KSMId::get(), ksm_amount).unwrap();
-
-		// ASSERT
+		provisions(vec![
+			(PROVISION_USER1_ID, MGAId::get(), 1_000_000, ProvisionKind::Vested(150)),
+			(PROVISION_USER2_ID, KSMId::get(), 100, ProvisionKind::Regular),
+		]);
 		let (mga_valuation, ksm_valuation) = Bootstrap::valuations();
-		assert_eq!(mga_valuation, mga_amount);
-		assert_eq!(ksm_valuation, ksm_amount);
+		let liq_token_minted = (mga_valuation + ksm_valuation) / 2;
+		assert_eq!(mga_valuation, 1_000_000);
+		assert_eq!(ksm_valuation, 100);
 
 		Bootstrap::on_initialize(100_u32.into());
 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
+		Bootstrap::claim_rewards(Origin::signed(PROVISION_USER1_ID)).unwrap();
+		Bootstrap::claim_rewards(Origin::signed(PROVISION_USER2_ID)).unwrap();
 
-		let liq_token_id = *(liq_token_id.lock().unwrap());
+		// ASSERT
+		assert_eq!(
+			liq_token_minted / 2,
+			Bootstrap::locked_balance(liq_token_id, PROVISION_USER1_ID)
+		);
+		assert_eq!(0, Bootstrap::balance(liq_token_id, PROVISION_USER1_ID));
 
-		Bootstrap::claim_rewards(Origin::signed(USER_ID)).unwrap();
+		assert_eq!(liq_token_minted / 2, Bootstrap::balance(liq_token_id, PROVISION_USER2_ID));
+		assert_eq!(0, Bootstrap::locked_balance(liq_token_id, PROVISION_USER2_ID));
+	});
+}
 
-		// received liquidity tokens are vested, so user cannot transfer them
-		assert_err!(
-			Bootstrap::transfer(liq_token_id, USER_ID.into(), ANOTHER_USER_ID.into(), 1),
-			orml_tokens::Error::<Test>::LiquidityRestrictions
+#[test]
+#[serial]
+fn multi_provisions() {
+	new_test_ext().execute_with(|| {
+		use std::sync::{Arc, Mutex};
+
+		// ARRANGE - USER provides vested MGA tokens, ANOTHER_USER provides KSM tokens
+		set_up();
+		jump_to_public_phase();
+		init_mocks!();
+		let liq_token_id = Tokens::next_asset_id();
+
+		// ACT
+		provisions(vec![
+			(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Vested(150)),
+			(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Regular),
+			(PROVISION_USER2_ID, MGAId::get(), 300_000, ProvisionKind::Vested(150)),
+			(PROVISION_USER2_ID, KSMId::get(), 30, ProvisionKind::Regular),
+		]);
+		let (mga_valuation, ksm_valuation) = Bootstrap::valuations();
+		let liq_token_minted = (mga_valuation + ksm_valuation) / 2;
+		assert_eq!(mga_valuation, 400_000);
+		assert_eq!(ksm_valuation, 40);
+
+		Bootstrap::on_initialize(100_u32.into());
+		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
+		Bootstrap::claim_rewards(Origin::signed(PROVISION_USER1_ID)).unwrap();
+		Bootstrap::claim_rewards(Origin::signed(PROVISION_USER2_ID)).unwrap();
+
+		// ASSERT
+		assert_eq!(
+			liq_token_minted / 2 * 10 / ksm_valuation,
+			Bootstrap::locked_balance(liq_token_id, PROVISION_USER1_ID)
+		);
+		assert_eq!(
+			liq_token_minted / 2 * 100_000 / mga_valuation,
+			Bootstrap::balance(liq_token_id, PROVISION_USER1_ID)
+		);
+
+		assert_eq!(
+			liq_token_minted / 2 * 30 / ksm_valuation,
+			Bootstrap::locked_balance(liq_token_id, PROVISION_USER2_ID)
+		);
+		assert_eq!(
+			liq_token_minted / 2 * 300_000 / mga_valuation,
+			Bootstrap::balance(liq_token_id, PROVISION_USER2_ID)
 		);
 	});
+}
+
+// formula KSM/MGA for provision calculation
+// (KSM valuation + MGA valuation)   User KSM/MGA token provision
+// ------------------------------- * ---------------------------- = liquidity tokens rewards
+//                2                      KSM/MGA valuation
+//  EX:
+
+#[test_case(
+			vec![
+				(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Vested(150)),
+				(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Regular),
+				(PROVISION_USER2_ID, MGAId::get(), 300_000, ProvisionKind::Vested(150)),
+				(PROVISION_USER2_ID, KSMId::get(), 30, ProvisionKind::Regular),
+			],
+			(25002, 25002),
+			(75007, 75007);
+			"two users provision both vested and non vested tokens")
+]
+#[test_case(
+			vec![
+				(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Regular),
+				(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Regular),
+			],
+			(50_004, 0),
+			(0, 0);
+			"non vested provisions from single user")
+]
+#[serial]
+fn test_multi_provisions(
+	provisions_list: Vec<(
+		<Test as frame_system::Config>::AccountId,
+		TokenId,
+		Balance,
+		ProvisionKind,
+	)>,
+	user1_rewards: (Balance, Balance),
+	user2_rewards: (Balance, Balance),
+) {
+	new_test_ext().execute_with(|| {
+		use std::sync::{Arc, Mutex};
+
+		// ARRANGE - USER provides vested MGA tokens, ANOTHER_USER provides KSM tokens
+		set_up();
+		jump_to_public_phase();
+		init_mocks!();
+		let liq_token_id = Tokens::next_asset_id();
+
+		// ACT
+		provisions(provisions_list);
+		let (mga_valuation, ksm_valuation) = Bootstrap::valuations();
+		let liq_token_minted = (mga_valuation + ksm_valuation) / 2;
+
+		Bootstrap::on_initialize(100_u32.into());
+		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
+		Bootstrap::claim_rewards(Origin::signed(PROVISION_USER1_ID)).unwrap();
+		Bootstrap::claim_rewards(Origin::signed(PROVISION_USER2_ID)).unwrap();
+
+		// ASSERT
+		assert_eq!(user1_rewards.0, Bootstrap::balance(liq_token_id, PROVISION_USER1_ID));
+		assert_eq!(user1_rewards.1, Bootstrap::locked_balance(liq_token_id, PROVISION_USER1_ID));
+
+		assert_eq!(user2_rewards.0, Bootstrap::balance(liq_token_id, PROVISION_USER2_ID));
+		assert_eq!(user2_rewards.1, Bootstrap::locked_balance(liq_token_id, PROVISION_USER2_ID));
+	})
 }

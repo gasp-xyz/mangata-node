@@ -975,6 +975,49 @@ fn multi_provisions() {
 			(0, 0);
 			"non vested provisions from single user")
 ]
+#[test_case(
+			vec![
+				(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Vested(150)),
+				(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Vested(150)),
+			],
+			(0, 50_004),
+			(0, 0);
+			"vested provisions from single user")
+]
+#[test_case(
+			vec![
+				(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Vested(150)),
+				(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Vested(150)),
+				(PROVISION_USER2_ID, MGAId::get(), 300_000, ProvisionKind::Regular),
+				(PROVISION_USER2_ID, KSMId::get(), 30, ProvisionKind::Regular),
+			],
+			(0, 50_004), // 400040 / 2 / 2 * 1 / 4
+			(150014, 0); // 400040 / 2 / 2 * 3 / 4
+			"vested provisions from single user & non vested form second one")
+]
+#[test_case(
+			vec![
+				(PROVISION_USER1_ID, MGAId::get(), 10_000, ProvisionKind::Vested(150)),
+				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
+				(PROVISION_USER1_ID, MGAId::get(), 20_000, ProvisionKind::Regular),
+				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
+				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
+				(PROVISION_USER1_ID, MGAId::get(), 30_000, ProvisionKind::Vested(150)),
+				(PROVISION_USER1_ID, KSMId::get(), 1, ProvisionKind::Vested(150)),
+				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
+				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
+				(PROVISION_USER1_ID, MGAId::get(), 40_000, ProvisionKind::Vested(150)),
+				(PROVISION_USER2_ID, MGAId::get(), 200_000, ProvisionKind::Regular),
+				(PROVISION_USER2_ID, MGAId::get(), 100_000, ProvisionKind::Vested(150)),
+				(PROVISION_USER2_ID, KSMId::get(), 10, ProvisionKind::Regular),
+				(PROVISION_USER2_ID, KSMId::get(), 15, ProvisionKind::Regular),
+				(PROVISION_USER1_ID, KSMId::get(), 4, ProvisionKind::Vested(150)),
+				(PROVISION_USER1_ID, KSMId::get(), 5, ProvisionKind::Vested(150)),
+			],
+			(5_000, 45_004),
+			(125012, 25_002);
+			"multiple provisions from multiple accounts mixed")
+]
 #[serial]
 fn test_multi_provisions(
 	provisions_list: Vec<(

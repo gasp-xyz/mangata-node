@@ -53,6 +53,8 @@ pub enum ProvisionKind {
 #[frame_support::pallet]
 pub mod pallet {
 
+	use frame_benchmarking::Zero;
+
 	use super::*;
 
 	#[pallet::pallet]
@@ -281,80 +283,60 @@ pub mod pallet {
 
 			ensure!(Self::phase() == BootstrapPhase::Finished, Error::<T>::NotFinishedYet);
 
-			let user_ksm_provision = Self::provisions(&sender, T::KSMTokenId::get());
-			let user_mga_provision = Self::provisions(&sender, T::MGATokenId::get());
-			let (user_ksm_vested_provision, ksm_lock) =
-				Self::vested_provisions(&sender, T::KSMTokenId::get());
-			let (user_mga_vested_provision, mga_lock) =
-				Self::vested_provisions(&sender, T::MGATokenId::get());
+			let (liq_token_id, _) = Self::minted_liquidity();
 
-			let (liq_token_id, liquidity) = Self::minted_liquidity();
-			let (total_mga_provision, total_ksm_provision) = Self::valuations();
+			ensure!(
+				ClaimedRewards::<T>::get(&sender, T::KSMTokenId::get()) == 0 &&
+					ClaimedRewards::<T>::get(&sender, T::MGATokenId::get()) == 0,
+				Error::<T>::NothingToClaim
+			);
 
-			let ksm_rewards =
-				multiply_by_rational(user_ksm_provision, liquidity / 2, total_ksm_provision)
-					.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
-			let ksm_rewards_vested =
-				multiply_by_rational(user_ksm_vested_provision, liquidity / 2, total_ksm_provision)
-					.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
+			let (ksm_rewards, ksm_rewards_vested, ksm_lock) =
+				Self::calculate_rewards(&sender, &T::KSMTokenId::get())?;
+			let (mga_rewards, mga_rewards_vested, mga_lock) =
+				Self::calculate_rewards(&sender, &T::MGATokenId::get())?;
 
-			let mga_rewards =
-				multiply_by_rational(user_mga_provision, liquidity / 2, total_mga_provision)
-					.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
-			let mga_rewards_vested =
-				multiply_by_rational(user_mga_vested_provision, liquidity / 2, total_mga_provision)
-					.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
+			let total_rewards_claimed = mga_rewards
+				.checked_add(mga_rewards_vested)
+				.ok_or(Error::<T>::MathOverflow)?
+				.checked_add(ksm_rewards)
+				.ok_or(Error::<T>::MathOverflow)?
+				.checked_add(ksm_rewards_vested)
+				.ok_or(Error::<T>::MathOverflow)?;
 
-			let total_ksm_rewards = ksm_rewards + ksm_rewards_vested;
-			let total_mga_rewards = mga_rewards + mga_rewards_vested;
-
-			let ksm_claimed_rewards = ClaimedRewards::<T>::get(&sender, T::KSMTokenId::get());
-			let mga_claimed_rewards = ClaimedRewards::<T>::get(&sender, T::MGATokenId::get());
-			let rewards_already_claimed = ksm_claimed_rewards > 0 || mga_claimed_rewards > 0;
-
-			ensure!(!rewards_already_claimed, Error::<T>::NothingToClaim);
-
-			let mut total_rewards_claimed = 0;
-
-			if total_ksm_rewards > 0 {
-				Self::claim_rewards_from_single_currency(
-					&sender,
-					liq_token_id,
-					T::KSMTokenId::get(),
-					total_ksm_rewards,
-				)?;
-				log!(debug, "Rewards from KSM provision: {}", total_ksm_rewards);
-				if ksm_rewards_vested > 0 {
-					T::VestingProvider::lock_tokens(
-						&sender,
-						liq_token_id.into(),
-						ksm_rewards_vested.into(),
-						ksm_lock.into(),
-					)?;
-				}
-				total_rewards_claimed += total_ksm_rewards;
+			if total_rewards_claimed.is_zero() {
+				return Err(Error::<T>::NothingToClaim.into())
 			}
 
-			if total_mga_rewards > 0 {
-				Self::claim_rewards_from_single_currency(
-					&sender,
-					liq_token_id,
-					T::MGATokenId::get(),
-					total_mga_rewards,
-				)?;
-				log!(debug, "Rewards from MGA provision {}", total_mga_rewards);
-				if mga_rewards_vested > 0 {
-					T::VestingProvider::lock_tokens(
-						&sender,
-						liq_token_id.into(),
-						mga_rewards_vested.into(),
-						mga_lock.into(),
-					)?;
-				}
-				total_rewards_claimed += total_mga_rewards;
-			}
+			Self::claim_rewards_from_single_currency(
+				&sender,
+				&T::MGATokenId::get(),
+				mga_rewards,
+				mga_rewards_vested,
+				mga_lock,
+			)?;
+			log!(
+				info,
+				"MGA rewards (non-vested, vested, total) = ({}, {}, {})",
+				mga_rewards,
+				mga_rewards_vested,
+				mga_rewards + mga_rewards_vested
+			);
 
-			log!(debug, "Rewards claimed token={} amount={}", liq_token_id, total_rewards_claimed);
+			Self::claim_rewards_from_single_currency(
+				&sender,
+				&T::KSMTokenId::get(),
+				ksm_rewards,
+				ksm_rewards_vested,
+				ksm_lock,
+			)?;
+			log!(
+				info,
+				"KSM rewards (non-vested, vested, total) = ({}, {}, {})",
+				ksm_rewards,
+				ksm_rewards_vested,
+				ksm_rewards + ksm_rewards_vested
+			);
 
 			Self::deposit_event(Event::RewardsClaimed(liq_token_id, total_rewards_claimed));
 
@@ -432,30 +414,44 @@ impl<T: Config> Pallet<T> {
 
 	fn claim_rewards_from_single_currency(
 		who: &T::AccountId,
-		liq_token_id: TokenId,
-		provision_token_id: TokenId,
-		to_be_claimed: Balance,
+		provision_token_id: &TokenId,
+		rewards: Balance,
+		rewards_vested: Balance,
+		lock: BlockNrAsBalance,
 	) -> DispatchResult {
+		let (liq_token_id, _) = Self::minted_liquidity();
+		let total_rewards = rewards.checked_add(rewards_vested).ok_or(Error::<T>::MathOverflow)?;
+		if total_rewards == 0 {
+			return Ok(().into())
+		}
+
 		T::Currency::transfer(
 			liq_token_id.into(),
 			&Self::vault_address(),
 			who,
-			to_be_claimed.into(),
+			total_rewards.into(),
 			ExistenceRequirement::KeepAlive,
 		)?;
-		ensure!(
-			ClaimedRewards::<T>::try_mutate(who, provision_token_id, |rewards| {
-				if let Some(val) = rewards.checked_add(to_be_claimed) {
-					*rewards = val;
-					Ok(())
-				} else {
-					Err(())
-				}
-			})
-			.is_ok(),
-			Error::<T>::MathOverflow
-		);
-		Ok(()).into()
+
+		ClaimedRewards::<T>::try_mutate(who, provision_token_id, |rewards| {
+			if let Some(val) = rewards.checked_add(total_rewards) {
+				*rewards = val;
+				Ok(())
+			} else {
+				Err(Error::<T>::MathOverflow)
+			}
+		})?;
+
+		if rewards_vested > 0 {
+			T::VestingProvider::lock_tokens(
+				&who,
+				liq_token_id.into(),
+				rewards_vested.into(),
+				lock.into(),
+			)?;
+		}
+
+		Ok(().into())
 	}
 
 	///
@@ -569,5 +565,30 @@ impl<T: Config> Pallet<T> {
 			);
 		}
 		Ok(().into())
+	}
+
+	fn get_valuation(token_id: &TokenId) -> Balance {
+		if *token_id == T::KSMTokenId::get() {
+			Self::valuations().1
+		} else if *token_id == T::MGATokenId::get() {
+			Self::valuations().0
+		} else {
+			0
+		}
+	}
+
+	fn calculate_rewards(
+		who: &T::AccountId,
+		token_id: &TokenId,
+	) -> Result<(Balance, Balance, BlockNrAsBalance), Error<T>> {
+		let valuation = Self::get_valuation(token_id);
+		let provision = Self::provisions(who, token_id);
+		let (vested_provision, lock) = Self::vested_provisions(who, token_id);
+		let (_, liquidity) = Self::minted_liquidity();
+		let rewards = multiply_by_rational(liquidity / 2, provision, valuation)
+			.map_err(|_| Error::<T>::MathOverflow)?;
+		let vested_rewards = multiply_by_rational(liquidity / 2, vested_provision, valuation)
+			.map_err(|_| Error::<T>::MathOverflow)?;
+		Ok((rewards, vested_rewards, lock))
 	}
 }

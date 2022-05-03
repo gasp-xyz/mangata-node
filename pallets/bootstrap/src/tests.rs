@@ -864,8 +864,6 @@ fn provisions(
 #[serial]
 fn vested_provision_included_in_valuation() {
 	new_test_ext().execute_with(|| {
-		use std::sync::{Arc, Mutex};
-
 		// ARRANGE - USER provides vested MGA tokens, ANOTHER_USER provides KSM tokens
 		set_up();
 		jump_to_public_phase();
@@ -903,8 +901,6 @@ fn vested_provision_included_in_valuation() {
 #[serial]
 fn multi_provisions() {
 	new_test_ext().execute_with(|| {
-		use std::sync::{Arc, Mutex};
-
 		// ARRANGE - USER provides vested MGA tokens, ANOTHER_USER provides KSM tokens
 		set_up();
 		jump_to_public_phase();
@@ -1030,25 +1026,59 @@ fn test_multi_provisions(
 	user2_rewards: (Balance, Balance),
 ) {
 	new_test_ext().execute_with(|| {
-		use std::sync::{Arc, Mutex};
-
 		// ARRANGE - USER provides vested MGA tokens, ANOTHER_USER provides KSM tokens
 		set_up();
 		jump_to_public_phase();
 		init_mocks!();
 		let liq_token_id = Tokens::next_asset_id();
+		let user1_has_provisions =
+			provisions_list.iter().any(|(who, _, _, _)| *who == PROVISION_USER1_ID);
+		let user2_has_provisions =
+			provisions_list.iter().any(|(who, _, _, _)| *who == PROVISION_USER2_ID);
+		let total_ksm_provision: u128 = provisions_list
+			.iter()
+			.filter_map(
+				|(_, token_id, amount, _)| {
+					if *token_id == KSMId::get() {
+						Some(amount)
+					} else {
+						None
+					}
+				},
+			)
+			.sum();
+		let total_mga_provision: u128 = provisions_list
+			.iter()
+			.filter_map(
+				|(_, token_id, amount, _)| {
+					if *token_id == MGAId::get() {
+						Some(amount)
+					} else {
+						None
+					}
+				},
+			)
+			.sum();
 
 		// ACT
 		provisions(provisions_list);
-		let (mga_valuation, ksm_valuation) = Bootstrap::valuations();
-		let liq_token_minted = (mga_valuation + ksm_valuation) / 2;
 
 		Bootstrap::on_initialize(100_u32.into());
 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
-		Bootstrap::claim_rewards(Origin::signed(PROVISION_USER1_ID)).unwrap();
-		Bootstrap::claim_rewards(Origin::signed(PROVISION_USER2_ID)).unwrap();
+
+		if user1_has_provisions {
+			Bootstrap::claim_rewards(Origin::signed(PROVISION_USER1_ID)).unwrap();
+		}
+
+		if user2_has_provisions {
+			Bootstrap::claim_rewards(Origin::signed(PROVISION_USER2_ID)).unwrap();
+		}
 
 		// ASSERT
+		let (mga_valuation, ksm_valuation) = Bootstrap::valuations();
+		assert_eq!(total_ksm_provision, ksm_valuation);
+		assert_eq!(total_mga_provision, mga_valuation);
+
 		assert_eq!(user1_rewards.0, Bootstrap::balance(liq_token_id, PROVISION_USER1_ID));
 		assert_eq!(user1_rewards.1, Bootstrap::locked_balance(liq_token_id, PROVISION_USER1_ID));
 

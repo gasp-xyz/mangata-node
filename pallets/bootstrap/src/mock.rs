@@ -191,6 +191,7 @@ impl pallet_bootstrap::Config for Test {
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type KsmToMgaRatioNumerator = KsmToMgaNumerator;
 	type KsmToMgaRatioDenominator = KsmToMgaDenominator;
+	type VestingProvider = Vesting;
 }
 
 parameter_types! {

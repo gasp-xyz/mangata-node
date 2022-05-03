@@ -58,7 +58,7 @@ benchmarks! {
 		assert_eq!(BootstrapPallet::<T>::provisions(caller, <T as Config>::KSMTokenId::get()), ksm_provision_amount);
 	}
 
-	claim_rewards {
+	provision_vested {
 		let caller: T::AccountId = whitelisted_caller();
 		let mut token_id = 0;
 		while token_id < <T as Config>::MGATokenId::get() ||
@@ -67,20 +67,66 @@ benchmarks! {
 		}
 		let ksm_provision_amount = 100_000_u128;
 		let mga_provision_amount = ksm_provision_amount * T::KsmToMgaRatioDenominator::get() / T::KsmToMgaRatioNumerator::get();
+		let lock = 100_u128;
+
+		<T as Config>::VestingProvider::lock_tokens(&caller, <T as Config>::KSMTokenId::get().into(), ksm_provision_amount.into(), lock.into()).unwrap();
+
+		BootstrapPallet::<T>::start_ido(RawOrigin::Root.into(), 10_u32.into(), 10_u32, 10_u32).unwrap();
+		// jump to public phase
+		BootstrapPallet::<T>::on_initialize(20_u32.into());
+		BootstrapPallet::<T>::provision(RawOrigin::Signed(caller.clone().into()).into(), <T as Config>::MGATokenId::get(), mga_provision_amount).unwrap();
+
+	}: provision_vested(RawOrigin::Signed(caller.clone().into()), <T as Config>::KSMTokenId::get(), ksm_provision_amount)
+	verify {
+		assert_eq!(BootstrapPallet::<T>::vested_provisions(caller, <T as Config>::KSMTokenId::get()), (ksm_provision_amount, lock + 1));
+	}
+
+	claim_rewards {
+		let caller: T::AccountId = whitelisted_caller();
+		let mut token_id = 0;
+		while token_id < <T as Config>::MGATokenId::get() ||
+		token_id < <T as Config>::KSMTokenId::get() {
+			token_id = <T as Config>::Currency::create(&caller, MILION.into()).expect("Token creation failed").into();
+		}
+		let ksm_provision_amount = 100_000_u128;
+		let ksm_vested_provision_amount = 300_000_u128;
+		let mga_provision_amount = ksm_provision_amount * T::KsmToMgaRatioDenominator::get() / T::KsmToMgaRatioNumerator::get();
+		let mga_vested_provision_amount = ksm_vested_provision_amount * T::KsmToMgaRatioDenominator::get() / T::KsmToMgaRatioNumerator::get();
+		let total_ksm_provision = ksm_provision_amount + ksm_vested_provision_amount;
+		let total_mga_provision = mga_provision_amount + mga_vested_provision_amount;
+		let total_provision = total_ksm_provision + total_mga_provision;
+		let lock = 150_u128;
+
+		<T as Config>::VestingProvider::lock_tokens(&caller, <T as Config>::KSMTokenId::get().into(), ksm_vested_provision_amount.into(), lock.into()).unwrap();
+		<T as Config>::VestingProvider::lock_tokens(&caller, <T as Config>::MGATokenId::get().into(), mga_vested_provision_amount.into(), lock.into()).unwrap();
 
 		BootstrapPallet::<T>::start_ido(RawOrigin::Root.into(), 10_u32.into(), 10_u32, 10_u32).unwrap();
 		BootstrapPallet::<T>::on_initialize(20_u32.into());
 		BootstrapPallet::<T>::provision(RawOrigin::Signed(caller.clone().into()).into(), <T as Config>::MGATokenId::get(), mga_provision_amount).unwrap();
 		BootstrapPallet::<T>::provision(RawOrigin::Signed(caller.clone().into()).into(), <T as Config>::KSMTokenId::get(), ksm_provision_amount).unwrap();
+		BootstrapPallet::<T>::provision_vested(RawOrigin::Signed(caller.clone().into()).into(), <T as Config>::MGATokenId::get(), mga_vested_provision_amount).unwrap();
+		BootstrapPallet::<T>::provision_vested(RawOrigin::Signed(caller.clone().into()).into(), <T as Config>::KSMTokenId::get(), ksm_vested_provision_amount).unwrap();
 		BootstrapPallet::<T>::on_initialize(30_u32.into());
 
+		assert_eq!(BootstrapPallet::<T>::phase(), BootstrapPhase::Finished);
 		assert_eq!(BootstrapPallet::<T>::claimed_rewards(caller.clone(), <T as Config>::KSMTokenId::get()), 0_u128);
 		assert_eq!(BootstrapPallet::<T>::claimed_rewards(caller.clone(), <T as Config>::MGATokenId::get()), 0_u128);
+		assert_eq!(BootstrapPallet::<T>::valuations(), (total_mga_provision, total_ksm_provision));
+		assert_eq!(BootstrapPallet::<T>::provisions(caller.clone(), <T as Config>::KSMTokenId::get()), (ksm_provision_amount));
+		assert_eq!(BootstrapPallet::<T>::provisions(caller.clone(), <T as Config>::MGATokenId::get()), (mga_provision_amount));
+		assert_eq!(BootstrapPallet::<T>::vested_provisions(caller.clone(), <T as Config>::KSMTokenId::get()), (ksm_vested_provision_amount, lock + 1));
+		assert_eq!(BootstrapPallet::<T>::vested_provisions(caller.clone(), <T as Config>::MGATokenId::get()), (mga_vested_provision_amount, lock + 1));
 
 	}: claim_rewards(RawOrigin::Signed(caller.clone().into()))
 	verify {
-		assert_ne!(BootstrapPallet::<T>::claimed_rewards(caller.clone(), <T as Config>::KSMTokenId::get()), 0_u128);
-		assert_ne!(BootstrapPallet::<T>::claimed_rewards(caller.clone(), <T as Config>::MGATokenId::get()), 0_u128);
+		let (total_mga_provision, total_ksm_provision) = BootstrapPallet::<T>::valuations();
+		let ksm_non_vested_rewards = total_provision / 2 / 2 * ksm_provision_amount / total_ksm_provision;
+		let ksm_vested_rewards = total_provision / 2 / 2 * ksm_vested_provision_amount / total_ksm_provision;
+		let mga_non_vested_rewards = total_provision / 2 / 2 * mga_provision_amount / total_mga_provision;
+		let mga_vested_rewards = total_provision / 2 / 2 * mga_vested_provision_amount / total_mga_provision;
+
+		assert_eq!(BootstrapPallet::<T>::claimed_rewards(caller.clone(), <T as Config>::KSMTokenId::get()), ksm_vested_rewards + ksm_non_vested_rewards);
+		assert_eq!(BootstrapPallet::<T>::claimed_rewards(caller.clone(), <T as Config>::MGATokenId::get()), mga_vested_rewards + mga_non_vested_rewards);
 	}
 
 	impl_benchmark_test_suite!(BootstrapPallet, crate::mock::new_test_ext(), crate::mock::Test)

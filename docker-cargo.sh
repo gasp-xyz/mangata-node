@@ -3,7 +3,10 @@ REPO_ROOT=$(readlink -f $(dirname $(readlink -f $0)))
 ARTIFACTS_DIR=$REPO_ROOT/docker-artifacts
 BUILD_CACHE_DIR=docker-build/cache
 BUILD_OUTPUT_DIR=docker-build/
-DOCKER_BUILDER_IMAGE=${DOCKER_BUILDER_IMAGE:-mangatasolutions/node-builder:1.0}
+CARGO_HOME=${CARGO_HOME:-$HOME/.cargo}
+
+
+DOCKER_BUILDER_IMAGE=${DOCKER_BUILDER_IMAGE:-mangatasolutions/node-builder:0.1}
 DOCKER_USER="$(id -u):$(id -g)"
 DOCKER_JOB_NAME=cargo-wrapper
 CARGO_COMMAND=$1
@@ -41,14 +44,21 @@ fi
 #
 # trap signal_handler SIGKILL SIGINT SIGTERM
 
+	# -e CARGO_HOME="/code/${BUILD_CACHE_DIR}" \
+
+if [ -e ${CARGO_HOME} ]; then
+    echo "using local cargo caches from ${CARGO_HOME}"
+    MOUNT_LOCAL_CACHE="-v ${CARGO_HOME}/git:/opt/cargo/git -v ${CARGO_HOME}/registry:/opt/cargo/registry"
+else
+    echo "cache not available"
+fi
 
 docker run \
 	--rm \
 	--name=${DOCKER_JOB_NAME} \
 	--user $DOCKER_USER \
 	-v ${REPO_ROOT}:/code \
-	-e CARGO_HOME="/code/${BUILD_CACHE_DIR}" \
+        ${MOUNT_LOCAL_CACHE} \
 	-e CARGO_TARGET_DIR="/code/${BUILD_OUTPUT_DIR}" \
-	-e RUSTUP_HOME=/root/.rustup \
 	-it ${DOCKER_BUILDER_IMAGE} \
-	/root/.cargo/bin/cargo ${CARGO_COMMAND} --manifest-path=/code/Cargo.toml ${CARGO_ARGS}
+	cargo ${CARGO_COMMAND} --manifest-path=/code/Cargo.toml ${CARGO_ARGS}

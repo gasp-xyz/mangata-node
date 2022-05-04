@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 REPO_ROOT=$(readlink -f $(dirname $(dirname $(readlink -f $0))))
 ${REPO_ROOT}/docker-cargo.sh build --release
 BUILD_DIR=docker-build/release
@@ -12,7 +12,7 @@ else
     DOCKER_LABEL=${GIT_REV}-dirty
 fi
 
-DOCKER_IMAGE_TAG=${1:-local}
+DOCKER_IMAGE_TAG=mangatasolutions/mangata-node:${1:-local}
 
 if [ ! -e ${NODE_BINARY} ]; then
     echo "${NODE_BINARY} not found" >&2
@@ -24,10 +24,12 @@ if [ ! -e ${WASM} ]; then
     exit -1
 fi
 
+echo "building docker image ${DOCKER_IMAGE_TAG}"
+
 docker build \
     --build-arg WASM=${WASM} \
     --build-arg NODE_BINARY=${NODE_BINARY} \
     --label "git_rev=${DOCKER_LABEL}" \
-    -t mangatasolutions/mangata-node:${DOCKER_IMAGE_TAG} \
+    -t ${DOCKER_IMAGE_TAG} \
     -f ${REPO_ROOT}/devops/dockerfiles/node/Dockerfile \
     ${REPO_ROOT}

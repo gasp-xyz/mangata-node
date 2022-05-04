@@ -1,7 +1,7 @@
 #!/bin/bash
 REPO_ROOT=$(readlink -f $(dirname $(dirname $(readlink -f $0))))
 ${REPO_ROOT}/docker-cargo.sh build --release
-BUILD_DIR=${REPO_ROOT}/docker-build/release
+BUILD_DIR=docker-build/release
 NODE_BINARY=${BUILD_DIR}/mangata-node
 WASM=${BUILD_DIR}/wbuild/mangata-runtime/mangata_runtime.compact.compressed.wasm
 GIT_REV=$(git -C ${REPO_ROOT} rev-parse HEAD)
@@ -25,9 +25,9 @@ if [ ! -e ${WASM} ]; then
 fi
 
 docker build \
-    -f ${REPO_ROOT}/devops/dockerfiles/node/Dockerfile
-    -arg WASM=${WASM} \
-    -arg NODE_BINARY=${NODE_BINARY} \
-    --label "git_rev=${DOCKER_LABEL}"
-    -t mangatasolutions:mangata-node:${DOCKER_IMAGE_TAG} \
+    --build-arg WASM=${WASM} \
+    --build-arg NODE_BINARY=${NODE_BINARY} \
+    --label "git_rev=${DOCKER_LABEL}" \
+    -t mangatasolutions/mangata-node:${DOCKER_IMAGE_TAG} \
+    -f ${REPO_ROOT}/devops/dockerfiles/node/Dockerfile \
     ${REPO_ROOT}

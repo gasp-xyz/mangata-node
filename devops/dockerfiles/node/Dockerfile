@@ -58,13 +58,10 @@ RUN chmod 755 -R /root/.cargo/
 RUN chmod 755 -R /root/.rustup/
 
 
-FROM debian:buster as runner
+FROM debian:buster as runner_core
 COPY --from=builder /tmp/profiler/target/release/bytehound /usr/bin/bytehound
 COPY --from=builder /tmp/profiler/target/release/libbytehound.so /usr/lib/libbytehound.so
-
 ENV DOCKERIZE_VERSION v0.6.1
-ARG NODE_BINARY
-ARG WASM
 ENV VAULT_VERSION 1.9.3
 RUN apt-get update && apt-get install -y curl netcat jq unzip
 RUN curl -L https://github.com/jwilder/dockerize/releases/download/${DOCKERIZE_VERSION}/dockerize-alpine-linux-amd64-${DOCKERIZE_VERSION}.tar.gz --output /tmp/dockerize.tar.gz
@@ -74,6 +71,10 @@ RUN unzip /tmp/vault.zip -d /usr/bin
 COPY devops/dockerfiles/node/unlocker.sh /unlocker.sh
 COPY devops/dockerfiles/node/entrypoint.sh /entrypoint.sh
 RUN mkdir /mangata
+
+FROM runner_core as runner
+ARG NODE_BINARY
+ARG WASM
 COPY $NODE_BINARY /mangata/node
 COPY $WASM /mangata/
 ENTRYPOINT /entrypoint.sh

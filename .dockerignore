@@ -6,6 +6,8 @@ target
 /docker/
 ./docker-build
 !/target/release/polkadot-collator
+!/docker-build/release/wbuild/mangata-runtime/mangata_runtime.compact.compressed.wasm
+!/docker-build/release/mangata-node
 
 # dotfiles in the repo root
 /.*

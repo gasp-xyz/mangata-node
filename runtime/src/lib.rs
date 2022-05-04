@@ -503,7 +503,9 @@ parameter_types! {
 // must exceed the total possible locks that can be applied to it, ALL pallets considered
 // This is because orml_tokens uses BoundedVec for Locks storage item and does not inform on failure
 // Balances uses WeakBoundedVec and so does not fail
-const_assert!(MaxLocks::get() >= MAX_VESTING_SCHEDULES);
+const_assert!(
+	MaxLocks::get() >= <Runtime as pallet_vesting_mangata::Config>::MAX_VESTING_SCHEDULES
+);
 
 pub struct DustRemovalWhitelist;
 impl Contains<AccountId> for DustRemovalWhitelist {
@@ -548,6 +550,7 @@ impl pallet_bootstrap::Config for Runtime {
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type KsmToMgaRatioNumerator = frame_support::traits::ConstU128<1>;
 	type KsmToMgaRatioDenominator = frame_support::traits::ConstU128<10000>;
+	type VestingProvider = Vesting;
 }
 
 impl pallet_utility::Config for Runtime {

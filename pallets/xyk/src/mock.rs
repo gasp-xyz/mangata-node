@@ -40,6 +40,7 @@ construct_runtime!(
 		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>},
 		AssetsInfoModule: assets_info::{Pallet, Call, Config, Storage, Event<T>},
 		XykStorage: xyk::{Pallet, Call, Storage, Event<T>, Config<T>},
+		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -182,6 +183,21 @@ parameter_types! {
 }
 
 parameter_types! {
+	pub const MinVestedTransfer: Balance = 0;
+}
+
+impl pallet_vesting_mangata::Config for Test {
+	type Event = Event;
+	type Tokens = MultiTokenCurrencyAdapter<Test>;
+	type BlockNumberToBalance = sp_runtime::traits::ConvertInto;
+	type MinVestedTransfer = MinVestedTransfer;
+	type WeightInfo = pallet_vesting_mangata::weights::SubstrateWeight<Test>;
+	// `VestingInfo` encode length is 36bytes. 28 schedules gets encoded as 1009 bytes, which is the
+	// highest number of schedules that encodes less than 2^10.
+	const MAX_VESTING_SCHEDULES: u32 = 28;
+}
+
+parameter_types! {
 	pub const LiquidityMiningIssuanceVaultId: PalletId = PalletId(*b"py/lqmiv");
 	pub FakeLiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account();
 }
@@ -199,6 +215,7 @@ impl Config for Test {
 	type BuyAndBurnFeePercentage = ConstU128<5>;
 	type RewardsDistributionPeriod = ConstU32<10000>;
 	type WeightInfo = ();
+	type VestingProvider = Vesting;
 }
 
 impl<T: Config> Pallet<T> {

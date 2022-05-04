@@ -529,7 +529,7 @@ impl pallet_xyk::Config for Runtime {
 	type PoolFeePercentage = frame_support::traits::ConstU128<20>;
 	type TreasuryFeePercentage = frame_support::traits::ConstU128<5>;
 	type BuyAndBurnFeePercentage = frame_support::traits::ConstU128<5>;
-	type RewardsDistributionPeriod = frame_support::traits::ConstU32<10000>;
+	type RewardsDistributionPeriod = frame_support::traits::ConstU32<5>;
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
 }
 
@@ -921,7 +921,7 @@ parameter_types! {
 	pub const PotId: PalletId = PalletId(*b"PotStake");
 	pub const MaxCandidates: u32 = 1000;
 	pub const MinCandidates: u32 = 5;
-	pub const SessionLength: BlockNumber = 6 * HOURS;
+	pub const SessionLength: BlockNumber = 1 * MINUTES;
 	pub const MaxInvulnerables: u32 = 100;
 	pub const ExecutiveBody: BodyId = BodyId::Executive;
 }
@@ -1559,7 +1559,7 @@ impl_runtime_apis! {
 		}
 
 		fn calculate_rewards_amount(
-			user: AccountId,
+			user: AccountId,f
 			liquidity_asset_id: TokenId,
 		) -> RpcRewardsResult<Balance> {
 			match Xyk::calculate_rewards_amount(user, liquidity_asset_id){

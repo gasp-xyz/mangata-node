@@ -961,6 +961,15 @@ impl<T: Config> Pallet<T> {
 
 		let liquidity_assets_burned_u256: U256 = liquidity_assets_burned.into();
 
+		log!(
+			info,
+			"set_liquidity_burning_checkpoint: ({}, {}, {}) -> {}",
+			liquidity_asset_id,
+			liquidity_assets_burned,
+			liquidity_assets_amount,
+			liquidity_assets_amount
+		);
+
 		let user_work_burned: U256 = liquidity_assets_burned_u256
 			.checked_mul(user_work_total)
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
@@ -2270,27 +2279,27 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		);
 
 		if <T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some() {
-			let promoted_liquidity_asset_amount_to_settle =
+			
 				if liquidity_token_free_balance >= liquidity_asset_amount {
-					0
+				
 				} else {
-					liquidity_asset_amount - liquidity_token_free_balance
-				};
+					let promoted_liquidity_asset_amount_to_settle = liquidity_asset_amount - liquidity_token_free_balance;
 
-			if liquidity_token_activated_balance == promoted_liquidity_asset_amount_to_settle {
-				Pallet::<T>::set_liquidity_burning_checkpoint(
-					sender.clone(),
-					liquidity_asset_id,
-					promoted_liquidity_asset_amount_to_settle,
-				)?;
-				LiquidityMiningUser::<T>::remove((sender.clone(), liquidity_asset_id));
-			} else {
-				Pallet::<T>::set_liquidity_burning_checkpoint(
-					sender.clone(),
-					liquidity_asset_id,
-					promoted_liquidity_asset_amount_to_settle,
-				)?;
-			}
+					if liquidity_token_activated_balance == promoted_liquidity_asset_amount_to_settle {
+						Pallet::<T>::set_liquidity_burning_checkpoint(
+							sender.clone(),
+							liquidity_asset_id,
+							promoted_liquidity_asset_amount_to_settle,
+						)?;
+						LiquidityMiningUser::<T>::remove((sender.clone(), liquidity_asset_id));
+					} else {
+						Pallet::<T>::set_liquidity_burning_checkpoint(
+							sender.clone(),
+							liquidity_asset_id,
+							promoted_liquidity_asset_amount_to_settle,
+						)?;
+					}
+				};			
 		}
 
 		if liquidity_asset_amount == total_liquidity_assets {

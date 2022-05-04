@@ -1559,7 +1559,7 @@ impl_runtime_apis! {
 		}
 
 		fn calculate_rewards_amount(
-			user: AccountId,f
+			user: AccountId,
 			liquidity_asset_id: TokenId,
 		) -> RpcRewardsResult<Balance> {
 			match Xyk::calculate_rewards_amount(user, liquidity_asset_id){

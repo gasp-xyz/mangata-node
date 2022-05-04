@@ -18,3 +18,4 @@
 .vscode
 node_modules
 output/
+docker-build

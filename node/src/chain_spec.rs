@@ -306,9 +306,9 @@ pub fn moonbeam_testnet_config() -> ChainSpec {
 				// SnowBridged Assets
 				vec![
 					(
-						b"Mangata".to_vec(),
-						b"MGA".to_vec(),
-						b"Mangata Asset".to_vec(),
+						b"MangataMoonbeamTestnet".to_vec(),
+						b"MGAT".to_vec(),
+						b"Mangata Moonbeam Test Asset".to_vec(),
 						18u32,
 						0u32,
 						H160::from_slice(&hex!["C7e3Bda797D2cEb740308eC40142ae235e08144A"][..]),

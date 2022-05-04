@@ -7,7 +7,7 @@ use frame_system::pallet_prelude::*;
 
 use frame_support::{
 	codec::{Decode, Encode},
-	traits::{Currency, Get, Imbalance, LockableCurrency, VestingSchedule},
+	traits::{Currency, Get, Imbalance, LockableCurrency},
 };
 use mangata_primitives::{Balance, TokenId};
 use scale_info::TypeInfo;
@@ -16,6 +16,7 @@ use sp_std::prelude::*;
 
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 use sp_runtime::traits::{CheckedAdd, CheckedSub};
+use pallet_vesting_mangata::MultiTokenVestingSchedule;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -123,13 +124,10 @@ pub mod pallet {
 		#[pallet::constant]
 		/// The block at which the tge tokens begin to vest
 		type TGEReleaseBegin: Get<u32>;
-		/// Native token adapter for matching Balance types
-		type NativeTokenAdapter: Currency<Self::AccountId, Balance = Balance>
-			+ LockableCurrency<Self::AccountId>;
 		/// The vesting pallet
-		type VestingProvider: VestingSchedule<
+		type VestingProvider: MultiTokenVestingSchedule<
 			Self::AccountId,
-			Currency = Self::NativeTokenAdapter,
+			Currency = Self::Tokens,
 			Moment = Self::BlockNumber,
 		>;
 	}
@@ -243,6 +241,7 @@ pub mod pallet {
 					locked.into(),
 					per_block.into(),
 					T::TGEReleaseBegin::get().into(),
+					T::NativeCurrencyId::get().into()
 				)
 				.is_ok()
 				{
@@ -260,6 +259,7 @@ pub mod pallet {
 							locked.into(),
 							per_block.into(),
 							T::TGEReleaseBegin::get().into(),
+							T::NativeCurrencyId::get().into()
 						);
 						TGETotal::<T>::mutate(|v| *v = v.saturating_add(tge_info.amount));
 						Pallet::<T>::deposit_event(Event::TGEInstanceSucceeded(tge_info));

@@ -5322,7 +5322,7 @@ dependencies = [
 [[package]]
 name = "orml-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#cee5c4fd0aa9f6fe5ae5d33734874cd5f4fb1059"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#85cdfe18378625fdc64b522248119d8495c3b405"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5339,7 +5339,7 @@ dependencies = [
 [[package]]
 name = "orml-traits"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#cee5c4fd0aa9f6fe5ae5d33734874cd5f4fb1059"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#85cdfe18378625fdc64b522248119d8495c3b405"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
@@ -5357,7 +5357,7 @@ dependencies = [
 [[package]]
 name = "orml-unknown-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#cee5c4fd0aa9f6fe5ae5d33734874cd5f4fb1059"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#85cdfe18378625fdc64b522248119d8495c3b405"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5372,7 +5372,7 @@ dependencies = [
 [[package]]
 name = "orml-utilities"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#cee5c4fd0aa9f6fe5ae5d33734874cd5f4fb1059"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#85cdfe18378625fdc64b522248119d8495c3b405"
 dependencies = [
  "frame-support",
  "parity-scale-codec 2.3.1",
@@ -5386,7 +5386,7 @@ dependencies = [
 [[package]]
 name = "orml-xcm"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#cee5c4fd0aa9f6fe5ae5d33734874cd5f4fb1059"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#85cdfe18378625fdc64b522248119d8495c3b405"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5400,7 +5400,7 @@ dependencies = [
 [[package]]
 name = "orml-xcm-support"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#cee5c4fd0aa9f6fe5ae5d33734874cd5f4fb1059"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#85cdfe18378625fdc64b522248119d8495c3b405"
 dependencies = [
  "frame-support",
  "orml-traits",
@@ -5414,7 +5414,7 @@ dependencies = [
 [[package]]
 name = "orml-xtokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#cee5c4fd0aa9f6fe5ae5d33734874cd5f4fb1059"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#85cdfe18378625fdc64b522248119d8495c3b405"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -5609,6 +5609,7 @@ dependencies = [
 name = "pallet-bootstrap"
 version = "0.1.0"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
@@ -5616,15 +5617,21 @@ dependencies = [
  "mockall",
  "orml-tokens",
  "orml-traits",
+ "pallet-assets-info",
+ "pallet-issuance",
+ "pallet-vesting-mangata",
+ "pallet-xyk",
  "parity-scale-codec 2.3.1",
  "scale-info 1.0.0",
  "serde",
  "serial_test",
  "sp-arithmetic",
+ "sp-bootstrap",
  "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "test-case",
 ]
 
 [[package]]
@@ -6479,6 +6486,7 @@ dependencies = [
  "serde",
  "serial_test",
  "sp-arithmetic",
+ "sp-bootstrap",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -10510,6 +10518,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "sp-bootstrap"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "mangata-primitives",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "sp-consensus"
 version = "0.10.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#343a022d278770383f48be4289f846b8a00dea62"
@@ -11426,6 +11444,19 @@ name = "termtree"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "507e9898683b6c43a9aa55b64259b721b52ba226e0f3779137e50ad114a4c90b"
+
+[[package]]
+name = "test-case"
+version = "2.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6344589a99d3971d6fa4e8314dbcbeca2df6273a6b642e46906971779159af1f"
+dependencies = [
+ "cfg-if 1.0.0",
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "test-runtime-constants"

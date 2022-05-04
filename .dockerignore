@@ -4,7 +4,7 @@ target
 **/*.txt
 **/*.md
 /docker/
-docker-build
+./docker-build
 !/target/release/polkadot-collator
 
 # dotfiles in the repo root

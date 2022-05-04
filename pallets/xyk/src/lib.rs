@@ -226,16 +226,17 @@ use frame_system::ensure_signed;
 use sp_core::U256;
 // TODO documentation!
 use codec::FullCodec;
-use frame_support::{ transactional,
+use frame_support::{
 	pallet_prelude::*,
 	traits::{ExistenceRequirement, Get, WithdrawReasons},
-	Parameter,
+	transactional, Parameter,
 };
 use frame_system::pallet_prelude::*;
 use mangata_primitives::{Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 use pallet_assets_info as assets_info;
 use pallet_issuance::PoolPromoteApi;
+use pallet_vesting_mangata::MultiTokenVestingLocks;
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
 use sp_bootstrap::PoolCreateApi;
 use sp_runtime::traits::{
@@ -243,12 +244,11 @@ use sp_runtime::traits::{
 	SaturatedConversion, Zero,
 };
 use sp_std::{convert::TryFrom, fmt::Debug, prelude::*};
-use pallet_vesting_mangata::MultiTokenVestingLocks;
 
-#[cfg(test)]
-mod mock;
-#[cfg(test)]
-mod tests;
+// #[cfg(test)]
+// mod mock;
+// #[cfg(test)]
+// mod tests;
 
 pub(crate) const LOG_TARGET: &'static str = "xyk";
 
@@ -277,7 +277,7 @@ const DEFAULT_DECIMALS: u32 = 18u32;
 
 pub use pallet::*;
 
-mod benchmarking;
+// mod benchmarking;
 pub mod weights;
 pub use weights::WeightInfo;
 
@@ -544,17 +544,28 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
-			let vesting_ending_block_as_balance: Balance = T::VestingProvider::unlock_tokens(&sender, T::NativeCurrencyId::get().into(), vesting_native_asset_amount.into())?.into();
+			let vesting_ending_block_as_balance: Balance = T::VestingProvider::unlock_tokens(
+				&sender,
+				T::NativeCurrencyId::get().into(),
+				vesting_native_asset_amount.into(),
+			)?
+			.into();
 
-			let (liquidity_token_id, liquidity_assets_minted) = <Self as XykFunctionsTrait<T::AccountId>>::mint_liquidity(
-				sender.clone(),
-				T::NativeCurrencyId::get(),
-				second_asset_id,
-				vesting_native_asset_amount,
-				expected_second_asset_amount,
+			let (liquidity_token_id, liquidity_assets_minted) =
+				<Self as XykFunctionsTrait<T::AccountId>>::mint_liquidity(
+					sender.clone(),
+					T::NativeCurrencyId::get(),
+					second_asset_id,
+					vesting_native_asset_amount,
+					expected_second_asset_amount,
+				)?;
+
+			T::VestingProvider::lock_tokens(
+				&sender,
+				liquidity_token_id.into(),
+				liquidity_assets_minted.into(),
+				vesting_ending_block_as_balance.into(),
 			)?;
-
-			T::VestingProvider::lock_tokens(&sender, liquidity_token_id.into(), liquidity_assets_minted.into(), vesting_ending_block_as_balance.into())?;
 
 			Ok(().into())
 		}

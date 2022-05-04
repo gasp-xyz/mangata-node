@@ -15,17 +15,17 @@ use sp_runtime::{traits::Zero, Perbill, Percent, RuntimeDebug};
 use sp_std::prelude::*;
 
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
-use sp_runtime::traits::{CheckedAdd, CheckedSub};
 use pallet_vesting_mangata::MultiTokenVestingSchedule;
+use sp_runtime::traits::{CheckedAdd, CheckedSub};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
-#[cfg(test)]
-mod mock;
-
-#[cfg(test)]
-mod tests;
+// #[cfg(test)]
+// mod mock;
+//
+// #[cfg(test)]
+// mod tests;
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq, TypeInfo)]
@@ -241,7 +241,7 @@ pub mod pallet {
 					locked.into(),
 					per_block.into(),
 					T::TGEReleaseBegin::get().into(),
-					T::NativeCurrencyId::get().into()
+					T::NativeCurrencyId::get().into(),
 				)
 				.is_ok()
 				{
@@ -259,7 +259,7 @@ pub mod pallet {
 							locked.into(),
 							per_block.into(),
 							T::TGEReleaseBegin::get().into(),
-							T::NativeCurrencyId::get().into()
+							T::NativeCurrencyId::get().into(),
 						);
 						TGETotal::<T>::mutate(|v| *v = v.saturating_add(tge_info.amount));
 						Pallet::<T>::deposit_event(Event::TGEInstanceSucceeded(tge_info));

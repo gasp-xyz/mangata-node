@@ -31,7 +31,6 @@ const MILION: u128 = 1_000__000_000__000_000;
 
 benchmarks! {
 	create_pool {
-		// let existential_deposit = T::ExistentialDeposit::get();
 		let caller: T::AccountId = whitelisted_caller();
 		let first_asset_amount = MILION;
 		let second_asset_amount = MILION;
@@ -50,14 +49,6 @@ benchmarks! {
 		assert!(
 			Xyk::<T>::liquidity_asset((first_asset_id.into(), second_asset_id.into())).is_some()
 		);
-
-		assert_eq!(
-			Xyk::<T>::liquidity_pool(liquidity_asset_id),
-			Some((first_asset_id.into(), second_asset_id.into()))
-		);
-
-		assert!(LiquidityMiningUser::<T>::try_get((caller.clone(), liquidity_asset_id)).is_ok());
-		assert!(LiquidityMiningPool::<T>::try_get(liquidity_asset_id).is_ok());
 
 	}
 
@@ -117,6 +108,8 @@ benchmarks! {
 		let initial_liquidity_amount = 40000000000000000000_u128 / 2_u128 + 60000000000000000000_u128 / 2_u128;
 
 		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), 40000000000000000000, non_native_asset_id2.into(), 60000000000000000000).unwrap();
+		Xyk::<T>::promote_pool(RawOrigin::Root.into(), liquidity_asset_id).unwrap();
+
 
 		assert_eq!(
 			<T as Config>::Currency::total_issuance(liquidity_asset_id.into()),
@@ -145,6 +138,7 @@ benchmarks! {
 		let initial_liquidity_amount = 40000000000000000000_u128 / 2_u128 + 60000000000000000000_u128 / 2_u128;
 
 		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), 40000000000000000000, non_native_asset_id2.into(), 60000000000000000000).unwrap();
+		Xyk::<T>::promote_pool(RawOrigin::Root.into(), liquidity_asset_id).unwrap();
 
 		assert_eq!(
 			<T as Config>::Currency::total_issuance(liquidity_asset_id.into()),
@@ -158,7 +152,46 @@ benchmarks! {
 		assert!(Xyk::<T>::liquidity_pool(liquidity_asset_id).is_none());
 	}
 
-	claim_rewards {
+	// claim_rewards {
+	//
+	// 	// NOTE: that duplicates test XYK::liquidity_rewards_claim_W
+	// 	let caller: T::AccountId = whitelisted_caller();
+	// 	let initial_amount:mangata_primitives::Balance = 1000000000000;
+	//
+	// 	let asset_id_1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+	// 	let asset_id_2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+	// 	let liquidity_asset_id = asset_id_2 + 1;
+	//
+	// 	Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), asset_id_1.into(), 5000, asset_id_2.into(), 5000).unwrap();
+	//
+	// 	frame_system::Pallet::<T>::set_block_number(30001_u32.into());
+	//
+	// 	let rewards_to_claim = 30000;
+	// 	let (rewards_total_user, rewards_claimed_user) = Xyk::<T>::calculate_rewards_amount(caller.clone(), liquidity_asset_id, rewards_to_claim).unwrap();
+	// 	let pool_rewards = Xyk::<T>::calculate_available_rewards_for_pool(liquidity_asset_id, rewards_to_claim).unwrap();
+	//
+	// 	assert_eq!(pool_rewards, 30000000);
+	// 	assert_eq!(rewards_total_user, 30000000);
+	// 	assert_eq!(rewards_claimed_user, 0);
+	// 	assert!(LiquidityMiningUserClaimed::<T>::try_get((caller.clone(), liquidity_asset_id)).is_err());
+	// 	assert!(LiquidityMiningPoolClaimed::<T>::try_get(liquidity_asset_id).is_err());
+	//
+	// }: claim_rewards(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id, rewards_to_claim as u128 )
+	//
+	// verify {
+	// 	assert_eq!(
+	// 		Xyk::<T>::liquidity_mining_user_claimed((caller.clone(), liquidity_asset_id)),
+	// 		(rewards_claimed_user as i128) + ( rewards_to_claim as i128 )
+	// 	);
+	//
+	// 	assert_eq!(
+	// 		Xyk::<T>::liquidity_mining_pool_claimed(liquidity_asset_id),
+	// 		rewards_to_claim as u128
+	// 	);
+	//
+	// }
+
+	promote_pool {
 
 		// NOTE: that duplicates test XYK::liquidity_rewards_claim_W
 		let caller: T::AccountId = whitelisted_caller();
@@ -172,27 +205,12 @@ benchmarks! {
 
 		frame_system::Pallet::<T>::set_block_number(30001_u32.into());
 
-		let rewards_to_claim = 30000;
-		let (rewards_total_user, rewards_claimed_user) = Xyk::<T>::calculate_rewards_amount(caller.clone(), liquidity_asset_id, rewards_to_claim).unwrap();
-		let pool_rewards = Xyk::<T>::calculate_available_rewards_for_pool(liquidity_asset_id, rewards_to_claim).unwrap();
-
-		assert_eq!(pool_rewards, 30000000);
-		assert_eq!(rewards_total_user, 30000000);
-		assert_eq!(rewards_claimed_user, 0);
-		assert!(LiquidityMiningUserClaimed::<T>::try_get((caller.clone(), liquidity_asset_id)).is_err());
-		assert!(LiquidityMiningPoolClaimed::<T>::try_get(liquidity_asset_id).is_err());
-
-	}: claim_rewards(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id, rewards_to_claim as u128 )
+	}: promote_pool(RawOrigin::Root, liquidity_asset_id)
 
 	verify {
-		assert_eq!(
-			Xyk::<T>::liquidity_mining_user_claimed((caller.clone(), liquidity_asset_id)),
-			(rewards_claimed_user as i128) + ( rewards_to_claim as i128 )
-		);
-
-		assert_eq!(
-			Xyk::<T>::liquidity_mining_pool_claimed(liquidity_asset_id),
-			rewards_to_claim as u128
+		assert_ne!(
+			Xyk::<T>::pool_promotion_start(liquidity_asset_id),
+			0
 		);
 
 	}

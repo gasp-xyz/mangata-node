@@ -245,10 +245,10 @@ use sp_runtime::traits::{
 };
 use sp_std::{convert::TryFrom, fmt::Debug, prelude::*};
 
-// #[cfg(test)]
-// mod mock;
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
 
 pub(crate) const LOG_TARGET: &'static str = "xyk";
 
@@ -277,7 +277,7 @@ const DEFAULT_DECIMALS: u32 = 18u32;
 
 pub use pallet::*;
 
-// mod benchmarking;
+mod benchmarking;
 pub mod weights;
 pub use weights::WeightInfo;
 

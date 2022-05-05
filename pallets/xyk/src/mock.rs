@@ -21,8 +21,8 @@ use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter, MultiTokenCurre
 use orml_traits::parameter_type_with_key;
 use pallet_assets_info as assets_info;
 use pallet_issuance::PoolPromoteApi;
+use sp_runtime::{Perbill, Percent};
 use std::{collections::HashMap, sync::Mutex};
-use sp_runtime::{Percent, Perbill};
 
 pub const NATIVE_CURRENCY_ID: u32 = 0;
 

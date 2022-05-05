@@ -135,7 +135,6 @@ impl pallet_issuance::Config for Test {
 	type ImmediateTGEReleasePercent = ImmediateTGEReleasePercent;
 	type TGEReleasePeriod = TGEReleasePeriod;
 	type TGEReleaseBegin = TGEReleaseBegin;
-	type NativeTokenAdapter = orml_tokens::CurrencyAdapter<Test, MgaTokenId>;
 	type VestingProvider = Vesting;
 }
 
@@ -145,7 +144,7 @@ parameter_types! {
 
 impl pallet_vesting_mangata::Config for Test {
 	type Event = Event;
-	type Currency = orml_tokens::CurrencyAdapter<Test, MgaTokenId>;
+	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type BlockNumberToBalance = ConvertInto;
 	type MinVestedTransfer = MinVestedTransfer;
 	type WeightInfo = pallet_vesting_mangata::weights::SubstrateWeight<Test>;

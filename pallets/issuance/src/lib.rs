@@ -21,11 +21,11 @@ use sp_runtime::traits::{CheckedAdd, CheckedSub};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
-// #[cfg(test)]
-// mod mock;
-//
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod mock;
+
+#[cfg(test)]
+mod tests;
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq, TypeInfo)]

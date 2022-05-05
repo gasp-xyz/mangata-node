@@ -22,6 +22,7 @@ use orml_traits::parameter_type_with_key;
 use pallet_assets_info as assets_info;
 use pallet_issuance::PoolPromoteApi;
 use std::{collections::HashMap, sync::Mutex};
+use sp_runtime::{Percent, Perbill};
 
 pub const NATIVE_CURRENCY_ID: u32 = 0;
 
@@ -41,6 +42,7 @@ construct_runtime!(
 		AssetsInfoModule: assets_info::{Pallet, Call, Config, Storage, Event<T>},
 		XykStorage: xyk::{Pallet, Call, Storage, Event<T>, Config<T>},
 		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>},
+		Issuance: pallet_issuance::{Pallet, Event<T>, Storage},
 	}
 );
 
@@ -195,6 +197,44 @@ impl pallet_vesting_mangata::Config for Test {
 	// `VestingInfo` encode length is 36bytes. 28 schedules gets encoded as 1009 bytes, which is the
 	// highest number of schedules that encodes less than 2^10.
 	const MAX_VESTING_SCHEDULES: u32 = 28;
+}
+
+parameter_types! {
+	pub LiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account();
+	pub const StakingIssuanceVaultId: PalletId = PalletId(*b"py/stkiv");
+	pub StakingIssuanceVault: AccountId = StakingIssuanceVaultId::get().into_account();
+	pub const MgaTokenId: TokenId = 0u32;
+
+
+	pub const TotalCrowdloanAllocation: Balance = 200_000_000;
+	pub const IssuanceCap: Balance = 4_000_000_000;
+	pub const LinearIssuanceBlocks: u32 = 22_222u32;
+	pub const LiquidityMiningSplit: Perbill = Perbill::from_parts(555555556);
+	pub const StakingSplit: Perbill = Perbill::from_parts(444444444);
+	pub const ImmediateTGEReleasePercent: Percent = Percent::from_percent(20);
+	pub const TGEReleasePeriod: u32 = 100u32; // 2 years
+	pub const TGEReleaseBegin: u32 = 10u32; // Two weeks into chain start
+	pub const BlocksPerRound: u32 = 5u32;
+	pub const HistoryLimit: u32 = 10u32;
+}
+
+impl pallet_issuance::Config for Test {
+	type Event = Event;
+	type NativeCurrencyId = MgaTokenId;
+	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
+	type BlocksPerRound = BlocksPerRound;
+	type HistoryLimit = HistoryLimit;
+	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
+	type StakingIssuanceVault = StakingIssuanceVault;
+	type TotalCrowdloanAllocation = TotalCrowdloanAllocation;
+	type IssuanceCap = IssuanceCap;
+	type LinearIssuanceBlocks = LinearIssuanceBlocks;
+	type LiquidityMiningSplit = LiquidityMiningSplit;
+	type StakingSplit = StakingSplit;
+	type ImmediateTGEReleasePercent = ImmediateTGEReleasePercent;
+	type TGEReleasePeriod = TGEReleasePeriod;
+	type TGEReleaseBegin = TGEReleaseBegin;
+	type VestingProvider = Vesting;
 }
 
 parameter_types! {

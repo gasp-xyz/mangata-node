@@ -108,15 +108,15 @@ fn execute_tge_works() {
 		assert_eq!(Tokens::locks(&3, MGA_TOKEN_ID)[0].amount, 2400u128);
 		assert_eq!(Tokens::locks(&4, MGA_TOKEN_ID)[0].amount, 3200u128);
 
-		assert_eq!(Vesting::vesting(&1).unwrap()[0].locked(), 800u128);
-		assert_eq!(Vesting::vesting(&2).unwrap()[0].locked(), 1600u128);
-		assert_eq!(Vesting::vesting(&3).unwrap()[0].locked(), 2400u128);
-		assert_eq!(Vesting::vesting(&4).unwrap()[0].locked(), 3200u128);
+		assert_eq!(Vesting::vesting(&1, MGA_TOKEN_ID).unwrap()[0].locked(), 800u128);
+		assert_eq!(Vesting::vesting(&2, MGA_TOKEN_ID).unwrap()[0].locked(), 1600u128);
+		assert_eq!(Vesting::vesting(&3, MGA_TOKEN_ID).unwrap()[0].locked(), 2400u128);
+		assert_eq!(Vesting::vesting(&4, MGA_TOKEN_ID).unwrap()[0].locked(), 3200u128);
 
-		assert_eq!(Vesting::vesting(&1).unwrap()[0].per_block(), 8u128);
-		assert_eq!(Vesting::vesting(&2).unwrap()[0].per_block(), 16u128);
-		assert_eq!(Vesting::vesting(&3).unwrap()[0].per_block(), 24u128);
-		assert_eq!(Vesting::vesting(&4).unwrap()[0].per_block(), 32u128);
+		assert_eq!(Vesting::vesting(&1, MGA_TOKEN_ID).unwrap()[0].per_block(), 8u128);
+		assert_eq!(Vesting::vesting(&2, MGA_TOKEN_ID).unwrap()[0].per_block(), 16u128);
+		assert_eq!(Vesting::vesting(&3, MGA_TOKEN_ID).unwrap()[0].per_block(), 24u128);
+		assert_eq!(Vesting::vesting(&4, MGA_TOKEN_ID).unwrap()[0].per_block(), 32u128);
 
 		assert_ok!(Issuance::finalize_tge(Origin::root()));
 		assert_eq!(Issuance::is_tge_finalized(), true);

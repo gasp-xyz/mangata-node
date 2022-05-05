@@ -1,8 +1,7 @@
 #!/bin/bash
 REPO_ROOT=$(readlink -f $(dirname $(readlink -f $0)))
 ARTIFACTS_DIR=$REPO_ROOT/docker-artifacts
-BUILD_CACHE_DIR=docker-build/cache
-BUILD_OUTPUT_DIR=docker-build/
+OUTPUT_DIR=docker-build/
 CARGO_HOME=${CARGO_HOME:-$HOME/.cargo}
 
 
@@ -17,13 +16,6 @@ if [ "$CARGO_COMMAND" == "kill" ]; then
     exit 0
 fi
 
-if [ "$CARGO_COMMAND" == "clean" ]; then
-	rm -rf  ${REPO_ROOT}/${BUILD_CACHE_DIR}
-	rm -rf  ${REPO_ROOT}/${BUILD_OUTPUT_DIR}
-	mkdir -p ${REPO_ROOT}/${BUILD_OUTPUT_DIR}
-	mkdir -p ${REPO_ROOT}/${BUILD_CACHE_DIR}
-fi
-
 if ! which docker > /dev/null; then
 	echo "docker not installed" >&2
 	exit -1
@@ -36,21 +28,18 @@ else
 	exit -1
 fi
 
-# signal_handler () 
-# {
-#   docker kill ${DOCKER_JOB_NAME}
-#   exit 0
-# }
-#
-# trap signal_handler SIGKILL SIGINT SIGTERM
-
-	# -e CARGO_HOME="/code/${BUILD_CACHE_DIR}" \
-
 if [ -e ${CARGO_HOME} ]; then
-    echo "using local cargo caches from ${CARGO_HOME}"
-    MOUNT_LOCAL_CACHE="-v ${CARGO_HOME}/git:/opt/cargo/git -v ${CARGO_HOME}/registry:/opt/cargo/registry"
+    CARGO_CACHE_GIT=${CARGO_HOME}/git
+    CARGO_CACHE_REGISTRY=${CARGO_HOME}/registry
 else
-    echo "cache not available"
+    CARGO_CACHE_GIT=${REPO_ROOT}/${OUTPUT_DIR}/cargo_cache_git
+    CARGO_CACHE_REGISTRY=${REPO_ROOT}/${OUTPUT_DIR}/cargo_cache_registry
+    if [ ! -e ${CARGO_CACHE_REGISTRY} ]; then
+        mkdir -p ${CARGO_CACHE_REGISTRY}
+    fi
+    if [ ! -e ${CARGO_CACHE_GIT} ]; then
+        mkdir -p ${CARGO_CACHE_GIT}
+    fi
 fi
 
 docker run \
@@ -58,7 +47,8 @@ docker run \
 	--name=${DOCKER_JOB_NAME} \
 	--user $DOCKER_USER \
 	-v ${REPO_ROOT}:/code \
-        ${MOUNT_LOCAL_CACHE} \
+        -v ${CARGO_CACHE_GIT}:/opt/cargo/git \
+        -v ${CARGO_CACHE_REGISTRY}:/opt/cargo/registry \
 	-e CARGO_TARGET_DIR="/code/${BUILD_OUTPUT_DIR}" \
 	-it ${DOCKER_BUILDER_IMAGE} \
 	cargo ${CARGO_COMMAND} --manifest-path=/code/Cargo.toml ${CARGO_ARGS}

@@ -26,6 +26,7 @@ use mangata_primitives::{Amount, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter};
 use orml_traits::parameter_type_with_key;
 use pallet_issuance::PoolPromoteApi;
+use sp_runtime::{Perbill, Percent};
 // use pallet_xyk::Pallet;
 
 pub(crate) type AccountId = u128;
@@ -105,28 +106,6 @@ parameter_types! {
 	pub FakeLiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account();
 }
 
-pub struct MockPromotedPoolApi;
-
-impl MockPromotedPoolApi {}
-
-impl PoolPromoteApi for MockPromotedPoolApi {
-	fn promote_pool(_liquidity_token_id: TokenId) -> bool {
-		false
-	}
-
-	fn get_pool_rewards(_liquidity_token_id: TokenId) -> Option<Balance> {
-		None
-	}
-
-	fn claim_pool_rewards(_liquidity_token_id: TokenId, _claimed_amount: Balance) -> bool {
-		false
-	}
-
-	fn len() -> usize {
-		0
-	}
-}
-
 parameter_types! {
 	pub const MinVestedTransfer: Balance = 0;
 }
@@ -149,12 +128,50 @@ impl pallet_xyk::Config for Test {
 	type TreasuryPalletId = TreasuryPalletId;
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
 	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
-	type PoolPromoteApi = MockPromotedPoolApi;
+	type PoolPromoteApi = Issuance;
 	type PoolFeePercentage = ConstU128<20>;
 	type TreasuryFeePercentage = ConstU128<5>;
 	type BuyAndBurnFeePercentage = ConstU128<5>;
 	type RewardsDistributionPeriod = ConstU32<10000>;
 	type WeightInfo = ();
+	type VestingProvider = Vesting;
+}
+
+parameter_types! {
+	pub LiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account();
+	pub const StakingIssuanceVaultId: PalletId = PalletId(*b"py/stkiv");
+	pub StakingIssuanceVault: AccountId = StakingIssuanceVaultId::get().into_account();
+	pub const MgaTokenId: TokenId = 0u32;
+
+
+	pub const TotalCrowdloanAllocation: Balance = 200_000_000;
+	pub const IssuanceCap: Balance = 4_000_000_000;
+	pub const LinearIssuanceBlocks: u32 = 22_222u32;
+	pub const LiquidityMiningSplit: Perbill = Perbill::from_parts(555555556);
+	pub const StakingSplit: Perbill = Perbill::from_parts(444444444);
+	pub const ImmediateTGEReleasePercent: Percent = Percent::from_percent(20);
+	pub const TGEReleasePeriod: u32 = 100u32; // 2 years
+	pub const TGEReleaseBegin: u32 = 10u32; // Two weeks into chain start
+	pub const BlocksPerRound: u32 = 5u32;
+	pub const HistoryLimit: u32 = 10u32;
+}
+
+impl pallet_issuance::Config for Test {
+	type Event = Event;
+	type NativeCurrencyId = MgaTokenId;
+	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
+	type BlocksPerRound = BlocksPerRound;
+	type HistoryLimit = HistoryLimit;
+	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
+	type StakingIssuanceVault = StakingIssuanceVault;
+	type TotalCrowdloanAllocation = TotalCrowdloanAllocation;
+	type IssuanceCap = IssuanceCap;
+	type LinearIssuanceBlocks = LinearIssuanceBlocks;
+	type LiquidityMiningSplit = LiquidityMiningSplit;
+	type StakingSplit = StakingSplit;
+	type ImmediateTGEReleasePercent = ImmediateTGEReleasePercent;
+	type TGEReleasePeriod = TGEReleasePeriod;
+	type TGEReleaseBegin = TGEReleaseBegin;
 	type VestingProvider = Vesting;
 }
 
@@ -232,6 +249,7 @@ construct_runtime!(
 		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>},
 		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>},
 		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>},
+		Issuance: pallet_issuance::{Pallet, Event<T>, Storage},
 	}
 );
 

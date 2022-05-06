@@ -5,15 +5,16 @@ mkdir ./benchmarks
 
 benchmarks=(
     "frame_system"
-    "pallet_session"
-    "pallet_timestamp"
     "orml_tokens"
-    "parachain_staking"
-    "pallet_xyk"
-    "xcm_asset_registry"
-    "pallet_treasury"
+    "pallet_bootstrap"
     "pallet_collective"
     "pallet_elections_phragmen"
+    "pallet_session"
+    "pallet_timestamp"
+    "pallet_treasury"
+    "pallet_xyk"
+    "parachain_staking"
+    "xcm_asset_registry"
 )
 
 for bench in ${benchmarks[@]}; do

@@ -363,6 +363,9 @@ pub mod pallet {
 		PoolAlreadyPromoted,
 		/// Sold Amount too low
 		SoldAmountTooLow,
+		CalcWorkMathOverflow1,
+		CalcWorkMathOverflow2,
+		CalcWorkMathOverflow3,
 	}
 
 	#[pallet::event]
@@ -695,6 +698,21 @@ impl<T: Config> Pallet<T> {
 
 		let current_rewards = Self::calculate_rewards(work_user, work_pool, liquidity_asset_id)?;
 
+		log!(
+			info,
+			"calculate_rewards_amount: ({}, {}, {}, {}, {}, {}, {}, {}, {}, {}",
+			user_last_checkpoint,
+			user_cummulative_work_in_last_checkpoint,
+			user_missing_at_last_checkpoint,
+			pool_last_checkpoint,
+			pool_cummulative_work_in_last_checkpoint,
+			pool_missing_at_last_checkpoint,
+			work_user,
+			work_pool,
+			current_rewards,
+			burned_not_claimed_rewards,
+		);
+
 		Ok((current_rewards, burned_not_claimed_rewards))
 	}
 
@@ -719,7 +737,14 @@ impl<T: Config> Pallet<T> {
 			)
 			.map_err(|_| DispatchError::from(Error::<T>::NotEnoughtRewardsEarned))?;
 		}
-
+		
+		log!(
+			info,
+			"calculate_rewards: ({}, {}, {}",
+			available_rewards_for_pool,
+			work_user,
+			work_pool,
+		);
 		Ok(user_mangata_rewards_amount)
 	}
 
@@ -740,10 +765,10 @@ impl<T: Config> Pallet<T> {
 		let asymptote_u256: U256 = asymptote.into();
 		let cummulative_work_new_max_possible: U256 = asymptote_u256
 			.checked_mul(U256::from(time_passed))
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::CalcWorkMathOverflow1))?;
 		let base = missing_at_last_checkpoint
 			.checked_mul(U256::from(106))
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))? /
+			.ok_or_else(|| DispatchError::from(Error::<T>::CalcWorkMathOverflow2))? /
 			U256::from(6);
 
 		let precision: u32 = 10000;
@@ -752,7 +777,7 @@ impl<T: Config> Pallet<T> {
 		let cummulative_missing_new = base - base * U256::from(precision) / q_pow;
 		let cummulative_work_new = cummulative_work_new_max_possible
 			.checked_sub(cummulative_missing_new)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::CalcWorkMathOverflow3))?;
 		let work_total = cummulative_work_in_last_checkpoint + cummulative_work_new;
 
 		Ok(work_total)
@@ -961,14 +986,7 @@ impl<T: Config> Pallet<T> {
 
 		let liquidity_assets_burned_u256: U256 = liquidity_assets_burned.into();
 
-		log!(
-			info,
-			"set_liquidity_burning_checkpoint: ({}, {}, {}) -> {}",
-			liquidity_asset_id,
-			liquidity_assets_burned,
-			liquidity_assets_amount,
-			liquidity_assets_amount
-		);
+		
 
 		let user_work_burned: U256 = liquidity_assets_burned_u256
 			.checked_mul(user_work_total)
@@ -999,10 +1017,10 @@ impl<T: Config> Pallet<T> {
 		);
 
 		LiquidityMiningActiveUser::<T>::try_mutate((&user, liquidity_asset_id), |active_amount| {
-			if let Some(val) = active_amount.checked_sub(liquidity_assets_burned) {
+			if let Some(val) = active_amount.checked_sub(liquidity_assets_burned) {				
 				*active_amount = val;
 				Ok(())
-			} else {
+			} else {				
 				Err(())
 			}
 		})
@@ -1041,6 +1059,18 @@ impl<T: Config> Pallet<T> {
 			liquidity_assets_burned.into(),
 		);
 
+		log!(
+			info,
+			"set_liquidity_burning_checkpoint: ({}, {}, {}, {}, {}, {}, {}, {}",
+			liquidity_asset_id,
+			liquidity_assets_amount,
+			liquidity_assets_burned,
+			LiquidityMiningActiveUser::<T>::get((&user, &liquidity_asset_id)),
+			LiquidityMiningActivePool::<T>::get( &liquidity_asset_id),
+			rewards_to_be_claimed,
+			rewards_amount,
+			rewards_claimed_new,
+		);
 		Ok(())
 	}
 

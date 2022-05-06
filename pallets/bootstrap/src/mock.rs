@@ -20,11 +20,13 @@ use super::*;
 use crate as pallet_bootstrap;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{Contains, Everything},
+	traits::{ConstU128, ConstU32, Contains, Everything},
 };
 use mangata_primitives::{Amount, Balance, TokenId};
-use orml_tokens::MultiTokenCurrency;
+use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter};
 use orml_traits::parameter_type_with_key;
+use pallet_issuance::PoolPromoteApi;
+// use pallet_xyk::Pallet;
 
 pub(crate) type AccountId = u128;
 
@@ -95,6 +97,67 @@ impl orml_tokens::Config for Test {
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 }
 
+parameter_types! {
+	pub const NativeCurrencyId: u32 = 0;
+	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
+	pub const BnbTreasurySubAccDerive: [u8; 4] = *b"bnbt";
+	pub const LiquidityMiningIssuanceVaultId: PalletId = PalletId(*b"py/lqmiv");
+	pub FakeLiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account();
+}
+
+pub struct MockPromotedPoolApi;
+
+impl MockPromotedPoolApi {}
+
+impl PoolPromoteApi for MockPromotedPoolApi {
+	fn promote_pool(_liquidity_token_id: TokenId) -> bool {
+		false
+	}
+
+	fn get_pool_rewards(_liquidity_token_id: TokenId) -> Option<Balance> {
+		None
+	}
+
+	fn claim_pool_rewards(_liquidity_token_id: TokenId, _claimed_amount: Balance) -> bool {
+		false
+	}
+
+	fn len() -> usize {
+		0
+	}
+}
+
+parameter_types! {
+	pub const MinVestedTransfer: Balance = 0;
+}
+
+impl pallet_vesting_mangata::Config for Test {
+	type Event = Event;
+	type Tokens = MultiTokenCurrencyAdapter<Test>;
+	type BlockNumberToBalance = sp_runtime::traits::ConvertInto;
+	type MinVestedTransfer = MinVestedTransfer;
+	type WeightInfo = pallet_vesting_mangata::weights::SubstrateWeight<Test>;
+	// `VestingInfo` encode length is 36bytes. 28 schedules gets encoded as 1009 bytes, which is the
+	// highest number of schedules that encodes less than 2^10.
+	const MAX_VESTING_SCHEDULES: u32 = 28;
+}
+
+impl pallet_xyk::Config for Test {
+	type Event = Event;
+	type Currency = MultiTokenCurrencyAdapter<Test>;
+	type NativeCurrencyId = NativeCurrencyId;
+	type TreasuryPalletId = TreasuryPalletId;
+	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
+	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
+	type PoolPromoteApi = MockPromotedPoolApi;
+	type PoolFeePercentage = ConstU128<20>;
+	type TreasuryFeePercentage = ConstU128<5>;
+	type BuyAndBurnFeePercentage = ConstU128<5>;
+	type RewardsDistributionPeriod = ConstU32<10000>;
+	type WeightInfo = ();
+	type VestingProvider = Vesting;
+}
+
 mockall::mock! {
 	pub PoolCreateApi {}
 
@@ -106,6 +169,8 @@ mockall::mock! {
 	}
 }
 
+#[cfg(not(feature = "runtime-benchmarks"))]
+// NOTE: use PoolCreateApi mock for unit testing purposes
 impl pallet_bootstrap::Config for Test {
 	type Event = Event;
 	type MGATokenId = MGAId;
@@ -114,6 +179,42 @@ impl pallet_bootstrap::Config for Test {
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type KsmToMgaRatioNumerator = KsmToMgaNumerator;
 	type KsmToMgaRatioDenominator = KsmToMgaDenominator;
+	type VestingProvider = Vesting;
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+// NOTE: use Xyk as PoolCreateApi for benchmarking purposes
+impl pallet_bootstrap::Config for Test {
+	type Event = Event;
+	type MGATokenId = MGAId;
+	type KSMTokenId = KSMId;
+	type PoolCreateApi = Xyk;
+	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
+	type KsmToMgaRatioNumerator = KsmToMgaNumerator;
+	type KsmToMgaRatioDenominator = KsmToMgaDenominator;
+	type VestingProvider = Vesting;
+}
+
+parameter_types! {
+	pub const MinLengthName: usize = 1;
+	pub const MaxLengthName: usize = 255;
+	pub const MinLengthSymbol: usize = 1;
+	pub const MaxLengthSymbol: usize = 255;
+	pub const MinLengthDescription: usize = 1;
+	pub const MaxLengthDescription: usize = 255;
+	pub const MaxDecimals: u32 = 255;
+}
+
+impl pallet_assets_info::Config for Test {
+	type Event = Event;
+	type MinLengthName = MinLengthName;
+	type MaxLengthName = MaxLengthName;
+	type MinLengthSymbol = MinLengthSymbol;
+	type MaxLengthSymbol = MaxLengthSymbol;
+	type MinLengthDescription = MinLengthDescription;
+	type MaxLengthDescription = MaxLengthDescription;
+	type MaxDecimals = MaxDecimals;
+	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 }
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -127,14 +228,27 @@ construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>},
+		AssetsInfoModule: pallet_assets_info::{Pallet, Call, Config, Storage, Event<T>},
+		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>},
 		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>},
+		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
-impl<T: Config> Pallet<T> {
+impl<T: Config> Pallet<T>
+where
+	u128: From<<T as frame_system::Config>::AccountId>,
+{
 	pub fn balance(id: TokenId, who: T::AccountId) -> Balance {
-		<T as Config>::Currency::free_balance(id.into(), &who).into()
+		Tokens::accounts(Into::<u128>::into(who.clone()), Into::<u32>::into(id.clone())).free -
+			Tokens::accounts(Into::<u128>::into(who.clone()), Into::<u32>::into(id.clone()))
+				.frozen
 	}
+
+	pub fn locked_balance(id: TokenId, who: <T as frame_system::Config>::AccountId) -> Balance {
+		Tokens::accounts(Into::<u128>::into(who), Into::<u32>::into(id)).frozen
+	}
+
 	pub fn total_supply(id: TokenId) -> Balance {
 		<T as Config>::Currency::total_issuance(id.into()).into()
 	}

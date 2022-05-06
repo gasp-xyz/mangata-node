@@ -499,6 +499,14 @@ parameter_types! {
 	pub const MaxLocks: u32 = 50;
 }
 
+// The MaxLocks (on a who-token_id pair) that is allowed by orml_tokens
+// must exceed the total possible locks that can be applied to it, ALL pallets considered
+// This is because orml_tokens uses BoundedVec for Locks storage item and does not inform on failure
+// Balances uses WeakBoundedVec and so does not fail
+const_assert!(
+	MaxLocks::get() >= <Runtime as pallet_vesting_mangata::Config>::MAX_VESTING_SCHEDULES
+);
+
 pub struct DustRemovalWhitelist;
 impl Contains<AccountId> for DustRemovalWhitelist {
 	fn contains(a: &AccountId) -> bool {
@@ -530,6 +538,7 @@ impl pallet_xyk::Config for Runtime {
 	type TreasuryFeePercentage = frame_support::traits::ConstU128<5>;
 	type BuyAndBurnFeePercentage = frame_support::traits::ConstU128<5>;
 	type RewardsDistributionPeriod = frame_support::traits::ConstU32<10000>;
+	type VestingProvider = Vesting;
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
 }
 
@@ -541,6 +550,7 @@ impl pallet_bootstrap::Config for Runtime {
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type KsmToMgaRatioNumerator = frame_support::traits::ConstU128<1>;
 	type KsmToMgaRatioDenominator = frame_support::traits::ConstU128<10000>;
+	type VestingProvider = Vesting;
 }
 
 impl pallet_utility::Config for Runtime {
@@ -1145,7 +1155,6 @@ impl pallet_issuance::Config for Runtime {
 	type ImmediateTGEReleasePercent = ImmediateTGEReleasePercent;
 	type TGEReleasePeriod = TGEReleasePeriod;
 	type TGEReleaseBegin = TGEReleaseBegin;
-	type NativeTokenAdapter = orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>;
 	type VestingProvider = Vesting;
 }
 
@@ -1155,14 +1164,13 @@ parameter_types! {
 
 impl pallet_vesting_mangata::Config for Runtime {
 	type Event = Event;
-	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>;
+	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type BlockNumberToBalance = ConvertInto;
 	type MinVestedTransfer = MinVestedTransfer;
 	type WeightInfo = pallet_vesting_mangata::weights::SubstrateWeight<Runtime>;
 	// `VestingInfo` encode length is 36bytes. 28 schedules gets encoded as 1009 bytes, which is the
 	// highest number of schedules that encodes less than 2^10.
-	// Should be atleast twice the number of tge recipients
-	const MAX_VESTING_SCHEDULES: u32 = 200;
+	const MAX_VESTING_SCHEDULES: u32 = 50;
 }
 
 parameter_types! {
@@ -1470,6 +1478,7 @@ mod benches {
 		[pallet_treasury, Treasury]
 		[pallet_collective, Council]
 		[pallet_elections_phragmen, Elections]
+		[pallet_bootstrap, Bootstrap]
 	);
 }
 

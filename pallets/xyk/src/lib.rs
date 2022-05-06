@@ -363,6 +363,9 @@ pub mod pallet {
 		PoolAlreadyPromoted,
 		/// Sold Amount too low
 		SoldAmountTooLow,
+		CalcWorkMathOverflow1,
+		CalcWorkMathOverflow2,
+		CalcWorkMathOverflow3,
 	}
 
 	#[pallet::event]
@@ -740,10 +743,10 @@ impl<T: Config> Pallet<T> {
 		let asymptote_u256: U256 = asymptote.into();
 		let cummulative_work_new_max_possible: U256 = asymptote_u256
 			.checked_mul(U256::from(time_passed))
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::CalcWorkMathOverflow1))?;
 		let base = missing_at_last_checkpoint
 			.checked_mul(U256::from(106))
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))? /
+			.ok_or_else(|| DispatchError::from(Error::<T>::CalcWorkMathOverflow2))? /
 			U256::from(6);
 
 		let precision: u32 = 10000;
@@ -752,7 +755,7 @@ impl<T: Config> Pallet<T> {
 		let cummulative_missing_new = base - base * U256::from(precision) / q_pow;
 		let cummulative_work_new = cummulative_work_new_max_possible
 			.checked_sub(cummulative_missing_new)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::CalcWorkMathOverflow3))?;
 		let work_total = cummulative_work_in_last_checkpoint + cummulative_work_new;
 
 		Ok(work_total)
@@ -2270,28 +2273,28 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		);
 
 		if <T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some() {
-			let promoted_liquidity_asset_amount_to_settle =
-				if liquidity_token_free_balance >= liquidity_asset_amount {
-					0
-				} else {
-					liquidity_asset_amount - liquidity_token_free_balance
-				};
-
-			if liquidity_token_activated_balance == promoted_liquidity_asset_amount_to_settle {
-				Pallet::<T>::set_liquidity_burning_checkpoint(
-					sender.clone(),
-					liquidity_asset_id,
-					promoted_liquidity_asset_amount_to_settle,
-				)?;
-				LiquidityMiningUser::<T>::remove((sender.clone(), liquidity_asset_id));
+			
+			if liquidity_token_free_balance >= liquidity_asset_amount {
+			
 			} else {
-				Pallet::<T>::set_liquidity_burning_checkpoint(
-					sender.clone(),
-					liquidity_asset_id,
-					promoted_liquidity_asset_amount_to_settle,
-				)?;
-			}
-		}
+				let promoted_liquidity_asset_amount_to_settle = liquidity_asset_amount - liquidity_token_free_balance;
+
+				if liquidity_token_activated_balance == promoted_liquidity_asset_amount_to_settle {
+					Pallet::<T>::set_liquidity_burning_checkpoint(
+						sender.clone(),
+						liquidity_asset_id,
+						promoted_liquidity_asset_amount_to_settle,
+					)?;
+					LiquidityMiningUser::<T>::remove((sender.clone(), liquidity_asset_id));
+				} else {
+					Pallet::<T>::set_liquidity_burning_checkpoint(
+						sender.clone(),
+						liquidity_asset_id,
+						promoted_liquidity_asset_amount_to_settle,
+					)?;
+				}
+			};			
+	}
 
 		if liquidity_asset_amount == total_liquidity_assets {
 			log!(

@@ -1,4 +1,5 @@
 // Copyright (C) 2020 Mangata team
+#![cfg(not(feature = "runtime-benchmarks"))]
 #![allow(non_snake_case)]
 
 use super::*;

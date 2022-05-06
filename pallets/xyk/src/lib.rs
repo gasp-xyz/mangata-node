@@ -716,6 +716,7 @@ impl<T: Config> Pallet<T> {
 			.unwrap_or_else(|_| (current_time, U256::from(0), U256::from(0)));
 
 		let work_user = Self::calculate_work_user(
+			//EASY
 			user.clone(),
 			liquidity_asset_id,
 			current_time,
@@ -724,6 +725,7 @@ impl<T: Config> Pallet<T> {
 			user_missing_at_last_checkpoint,
 		)?;
 		let work_pool = Self::calculate_work_pool(
+			// EASY
 			liquidity_asset_id,
 			current_time,
 			pool_last_checkpoint,
@@ -751,6 +753,7 @@ impl<T: Config> Pallet<T> {
 
 		let mut user_mangata_rewards_amount = Balance::try_from(0).unwrap();
 		if work_user != U256::from(0) && work_pool != U256::from(0) {
+			//HARD
 			user_mangata_rewards_amount = Balance::try_from(
 				available_rewards_for_pool
 					.checked_mul(work_user)
@@ -766,6 +769,7 @@ impl<T: Config> Pallet<T> {
 
 	// MAX: 0R 0W
 	pub fn calculate_work(
+		// EASY
 		asymptote: Balance,
 		time: u32,
 		last_checkpoint: u32,
@@ -800,6 +804,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn calculate_work_pool(
+		//EASY
 		liquidity_asset_id: TokenId,
 		current_time: u32,
 		last_checkpoint: u32,
@@ -810,6 +815,7 @@ impl<T: Config> Pallet<T> {
 			LiquidityMiningActivePool::<T>::get(&liquidity_asset_id);
 
 		Self::calculate_work(
+			// EASY
 			liquidity_assets_amount,
 			current_time,
 			last_checkpoint,
@@ -820,6 +826,7 @@ impl<T: Config> Pallet<T> {
 
 	/// 1R
 	pub fn calculate_work_user(
+		// EASY
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
 		current_time: u32,
@@ -831,6 +838,7 @@ impl<T: Config> Pallet<T> {
 			LiquidityMiningActiveUser::<T>::get((&user, &liquidity_asset_id));
 
 		Self::calculate_work(
+			// EASY
 			liquidity_assets_amount,
 			current_time,
 			last_checkpoint,
@@ -846,6 +854,7 @@ impl<T: Config> Pallet<T> {
 
 	/// 0R 0W
 	pub fn calculate_missing_at_checkpoint(
+		// EASY
 		time_passed: u32,
 		liquidity_assets_added: Balance,
 		missing_at_last_checkpoint: U256,
@@ -862,6 +871,7 @@ impl<T: Config> Pallet<T> {
 
 	/// MAX 4R 2W
 	pub fn calculate_liquidity_checkpoint(
+		// EASY
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
 		liquidity_assets_added: Balance,
@@ -880,12 +890,14 @@ impl<T: Config> Pallet<T> {
 			.checked_sub(user_last_checkpoint)
 			.ok_or_else(|| DispatchError::from(Error::<T>::PastTimeCalculation))?;
 		let user_missing_at_checkpoint = Self::calculate_missing_at_checkpoint(
+			// EASY
 			user_time_passed,
 			liquidity_assets_added,
 			user_missing_at_last_checkpoint,
 		)?;
 
 		let user_work_total = Self::calculate_work_user(
+			// EASY
 			user.clone(),
 			liquidity_asset_id,
 			current_time,
@@ -906,11 +918,13 @@ impl<T: Config> Pallet<T> {
 			.ok_or_else(|| DispatchError::from(Error::<T>::PastTimeCalculation))?;
 
 		let pool_missing_at_checkpoint = Self::calculate_missing_at_checkpoint(
+			// EASY
 			pool_time_passed,
 			liquidity_assets_added,
 			pool_missing_at_last_checkpoint,
 		)?;
 		let pool_work_total = Self::calculate_work_pool(
+			// EASY
 			liquidity_asset_id,
 			current_time,
 			pool_last_checkpoint,
@@ -941,6 +955,7 @@ impl<T: Config> Pallet<T> {
 			pool_work_total,
 			pool_missing_at_checkpoint,
 		) = Self::calculate_liquidity_checkpoint(
+			// HARD NO BRANCHES
 			user.clone(),
 			liquidity_asset_id,
 			liquidity_assets_added,
@@ -985,6 +1000,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn set_liquidity_burning_checkpoint(
+		// HARD ??
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
 		liquidity_assets_burned: Balance,
@@ -2167,6 +2183,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		// Liquidity minting functions not triggered on not promoted pool
 		if <T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some() {
 			Pallet::<T>::set_liquidity_minting_checkpoint(
+				// HARD
 				sender.clone(),
 				liquidity_asset_id,
 				liquidity_assets_minted,
@@ -2311,30 +2328,27 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		);
 
 		if <T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some() {
-			
-			if liquidity_token_free_balance >= liquidity_asset_amount {
-			
-			} else {
-				let promoted_liquidity_asset_amount_to_settle = liquidity_asset_amount - liquidity_token_free_balance;
+			// HARD
+			if liquidity_token_free_balance < liquidity_asset_amount {
+				let promoted_liquidity_asset_amount_to_settle =
+					liquidity_asset_amount - liquidity_token_free_balance;
+
+				Pallet::<T>::set_liquidity_burning_checkpoint(
+					// EASY
+					sender.clone(),
+					liquidity_asset_id,
+					promoted_liquidity_asset_amount_to_settle,
+				)?;
 
 				if liquidity_token_activated_balance == promoted_liquidity_asset_amount_to_settle {
-					Pallet::<T>::set_liquidity_burning_checkpoint(
-						sender.clone(),
-						liquidity_asset_id,
-						promoted_liquidity_asset_amount_to_settle,
-					)?;
+					// HARD !!!!
 					LiquidityMiningUser::<T>::remove((sender.clone(), liquidity_asset_id));
-				} else {
-					Pallet::<T>::set_liquidity_burning_checkpoint(
-						sender.clone(),
-						liquidity_asset_id,
-						promoted_liquidity_asset_amount_to_settle,
-					)?;
 				}
-			};			
-	}
+			};
+		}
 
 		if liquidity_asset_amount == total_liquidity_assets {
+			// SUPEPR HARDS
 			log!(
 				info,
 				"pool-state: [({}, {}) -> Removed, ({}, {}) -> Removed]",
@@ -2405,7 +2419,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		let mangata_id: TokenId = T::NativeCurrencyId::get();
 
 		let (current_rewards, burned_not_claimed_rewards) =
-			Pallet::<T>::calculate_rewards_amount(user.clone(), liquidity_asset_id)?;
+			Pallet::<T>::calculate_rewards_amount(user.clone(), liquidity_asset_id)?; //EASY
 
 		let total_claimable_rewards = current_rewards + burned_not_claimed_rewards;
 		ensure!(mangata_amount <= total_claimable_rewards, Error::<T>::NotEnoughtRewardsEarned);
@@ -2420,6 +2434,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		}
 		// user is taking out more rewards then rewards from LP which was already removed from pool, additional work needs to be removed from pool and user
 		else {
+			// HARD
 			LiquidityMiningUserToBeClaimed::<T>::insert((&user, liquidity_asset_id), 0 as u128);
 			// rewards to burn on top of rewards from LP which was already removed from pool
 			let rewards_to_burn = mangata_amount - burned_not_claimed_rewards;
@@ -2430,7 +2445,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				user_missing_at_checkpoint,
 				pool_work_total,
 				pool_missing_at_checkpoint,
-			) = Self::calculate_liquidity_checkpoint(user.clone(), liquidity_asset_id, 0 as u128)?;
+			) = Self::calculate_liquidity_checkpoint(user.clone(), liquidity_asset_id, 0 as u128)?; // EASY
 
 			let work_to_burn = U256::from(
 				multiply_by_rational(
@@ -2457,6 +2472,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				(current_time, new_work_pool, pool_missing_at_checkpoint),
 			);
 			<T as Config>::PoolPromoteApi::claim_pool_rewards(liquidity_asset_id, rewards_to_burn);
+			//EASY
 		}
 
 		<T as Config>::Currency::transfer(

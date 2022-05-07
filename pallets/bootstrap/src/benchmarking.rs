@@ -60,30 +60,34 @@ benchmarks! {
 		assert_eq!(BootstrapPallet::<T>::provisions(caller, <T as Config>::KSMTokenId::get()), ksm_provision_amount);
 	}
 
-	// provision_vested {
-	// 	let caller: T::AccountId = whitelisted_caller();
-	// 	let mut token_id = 0;
-	// 	while token_id < <T as Config>::MGATokenId::get() ||
-	// 	token_id < <T as Config>::KSMTokenId::get() {
-	// 		token_id = <T as Config>::Currency::create(&caller, MILION.into()).expect("Token creation failed").into();
-	// 	}
-	// 	<T as Config>::Currency::mint(<T as Config>::MGATokenId::get().into(), &caller, MILION.into()).expect("Token creation failed");
-	// 	<T as Config>::Currency::mint(<T as Config>::KSMTokenId::get().into(), &caller, MILION.into()).expect("Token creation failed");
-	// 	let ksm_provision_amount = 100_000_u128;
-	// 	let mga_provision_amount = ksm_provision_amount * T::KsmToMgaRatioDenominator::get() / T::KsmToMgaRatioNumerator::get();
-	// 	let lock = 100_000_u128;
-	//
-	// 	<T as Config>::VestingProvider::lock_tokens(&caller, <T as Config>::KSMTokenId::get().into(), ksm_provision_amount.into(), lock.into()).unwrap();
-	//
-	// 	BootstrapPallet::<T>::start_ido(RawOrigin::Root.into(), 10_u32.into(), 10_u32, 10_u32).unwrap();
-	// 	// jump to public phase
-	// 	BootstrapPallet::<T>::on_initialize(20_u32.into());
-	// 	BootstrapPallet::<T>::provision(RawOrigin::Signed(caller.clone().into()).into(), <T as Config>::MGATokenId::get(), mga_provision_amount).unwrap();
-	//
-	// }: provision_vested(RawOrigin::Signed(caller.clone().into()), <T as Config>::KSMTokenId::get(), ksm_provision_amount)
-	// verify {
-	// 	assert_eq!(BootstrapPallet::<T>::vested_provisions(caller, <T as Config>::KSMTokenId::get()), (ksm_provision_amount, lock + 1));
-	// }
+
+	provision_vested {
+		let caller: T::AccountId = whitelisted_caller();
+		let mut token_id = 0;
+		while token_id < <T as Config>::MGATokenId::get() ||
+		token_id < <T as Config>::KSMTokenId::get() {
+			token_id = <T as Config>::Currency::create(&caller, MILION.into()).expect("Token creation failed").into();
+		}
+		<T as Config>::Currency::mint(<T as Config>::MGATokenId::get().into(), &caller, MILION.into()).expect("Token creation failed");
+		<T as Config>::Currency::mint(<T as Config>::KSMTokenId::get().into(), &caller, MILION.into()).expect("Token creation failed");
+		let ksm_provision_amount = 100_000_u128;
+		let mga_provision_amount = ksm_provision_amount * T::KsmToMgaRatioDenominator::get() / T::KsmToMgaRatioNumerator::get();
+
+		let lock = 100_000_000_u128;
+
+		frame_system::Pallet::<T>::set_block_number(1_u32.into());
+		<T as Config>::VestingProvider::lock_tokens(&caller, <T as Config>::KSMTokenId::get().into(), (ksm_provision_amount*2).into(), lock.into()).unwrap();
+		frame_system::Pallet::<T>::set_block_number(2_u32.into());
+
+		BootstrapPallet::<T>::start_ido(RawOrigin::Root.into(), 10_u32.into(), 10_u32, 10_u32).unwrap();
+		// jump to public phase
+		BootstrapPallet::<T>::on_initialize(20_u32.into());
+		BootstrapPallet::<T>::provision(RawOrigin::Signed(caller.clone().into()).into(), <T as Config>::MGATokenId::get(), mga_provision_amount).unwrap();
+
+	}: provision_vested(RawOrigin::Signed(caller.clone().into()), <T as Config>::KSMTokenId::get(), ksm_provision_amount)
+	verify {
+		assert_eq!(BootstrapPallet::<T>::vested_provisions(caller, <T as Config>::KSMTokenId::get()).0, (ksm_provision_amount));
+	}
 
 	claim_rewards {
 		let caller: T::AccountId = whitelisted_caller();

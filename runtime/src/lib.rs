@@ -1159,7 +1159,7 @@ impl pallet_issuance::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MinVestedTransfer: Balance = 100 * DOLLARS;
+	pub const MinVestedTransfer: Balance = 0 * DOLLARS;
 }
 
 impl pallet_vesting_mangata::Config for Runtime {

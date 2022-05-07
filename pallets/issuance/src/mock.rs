@@ -136,6 +136,7 @@ impl pallet_issuance::Config for Test {
 	type TGEReleasePeriod = TGEReleasePeriod;
 	type TGEReleaseBegin = TGEReleaseBegin;
 	type VestingProvider = Vesting;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -172,7 +173,7 @@ construct_runtime!(
 
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup.
-pub fn new_test_ext_wihtout_issuance_config() -> sp_io::TestExternalities {
+pub fn new_test_ext_without_issuance_config() -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default()
 		.build_storage::<Test>()
 		.expect("Frame system builds valid default genesis config");

@@ -235,7 +235,7 @@ use frame_system::pallet_prelude::*;
 use mangata_primitives::{Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_assets_info as assets_info;
-use pallet_issuance::PoolPromoteApi;
+use pallet_issuance::{ComputeIssuance, PoolPromoteApi};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
 use sp_bootstrap::PoolCreateApi;
@@ -302,7 +302,7 @@ pub mod pallet {
 		type NativeCurrencyId: Get<TokenId>;
 		type TreasuryPalletId: Get<PalletId>;
 		type BnbTreasurySubAccDerive: Get<[u8; 4]>;
-		type PoolPromoteApi: PoolPromoteApi;
+		type PoolPromoteApi: ComputeIssuance + PoolPromoteApi;
 		#[pallet::constant]
 		/// The account id that holds the liquidity mining issuance
 		type LiquidityMiningIssuanceVault: Get<Self::AccountId>;

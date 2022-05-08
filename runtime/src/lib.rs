@@ -557,7 +557,7 @@ impl pallet_utility::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 	type PalletsOrigin = OriginCaller;
-	type WeightInfo = pallet_utility::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_utility_weights::ModuleWeight<Runtime>;
 }
 
 type ORMLCurrencyAdapterNegativeImbalance =
@@ -1156,6 +1156,7 @@ impl pallet_issuance::Config for Runtime {
 	type TGEReleasePeriod = TGEReleasePeriod;
 	type TGEReleaseBegin = TGEReleaseBegin;
 	type VestingProvider = Vesting;
+	type WeightInfo = weights::pallet_issuance_weights::ModuleWeight<Runtime>;
 }
 
 parameter_types! {
@@ -1167,7 +1168,7 @@ impl pallet_vesting_mangata::Config for Runtime {
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type BlockNumberToBalance = ConvertInto;
 	type MinVestedTransfer = MinVestedTransfer;
-	type WeightInfo = pallet_vesting_mangata::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_vesting_mangata_weights::ModuleWeight<Runtime>;
 	// `VestingInfo` encode length is 36bytes. 28 schedules gets encoded as 1009 bytes, which is the
 	// highest number of schedules that encodes less than 2^10.
 	const MAX_VESTING_SCHEDULES: u32 = 50;
@@ -1197,7 +1198,7 @@ impl pallet_crowdloan_rewards::Config for Runtime {
 	type RewardAddressAssociateOrigin = EnsureRoot<AccountId>;
 	type VestingBlockNumber = BlockNumber;
 	type VestingBlockProvider = System;
-	type WeightInfo = pallet_crowdloan_rewards::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_crowdloan_rewards_weights::ModuleWeight<Runtime>;
 }
 
 parameter_types! {

@@ -52,6 +52,7 @@ std = [
 	'sp-bootstrap/std',
     'frame-support/std',
     'frame-system/std',
+	"frame-benchmarking/std",
 	'orml-tokens/std',
     'pallet-assets-info/std',
 	"frame-benchmarking/std",

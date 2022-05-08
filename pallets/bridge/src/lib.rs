@@ -135,7 +135,7 @@ decl_module! {
 
 
 		/// Submit `message` for dispatch to a target application identified by `app_id`.
-		#[weight = 0]
+		#[weight = 1_000_000_000]
 		pub fn submit(origin, app_id: AppId, message: Message) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			let app = AppRegistry::get(&app_id).ok_or(Error::<T>::AppNotFound)?;

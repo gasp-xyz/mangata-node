@@ -19,6 +19,7 @@ mangata-primitives = { default-features = false, version = '0.1.0' , path = '../
 sp-std = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-runtime = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-vesting-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+frame-benchmarking = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev", optional = true, default-features = false }
 
 [dev-dependencies]
 sp-core = { default-features = false, version = '4.1.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
@@ -34,6 +35,12 @@ std = [
     'sp-runtime/std',
     'frame-support/std',
     'frame-system/std',
+	  "frame-benchmarking/std",
     'orml-tokens/std',
     'pallet-vesting-mangata/std',
+]
+runtime-benchmarks = [
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"frame-benchmarking/runtime-benchmarks",
 ]

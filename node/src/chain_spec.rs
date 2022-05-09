@@ -4,7 +4,7 @@ use cumulus_primitives_core::ParaId;
 use hex::FromHex;
 use hex_literal::hex;
 use mangata_runtime::{
-	AccountId, AuraId, BlockNumber, IssuanceInfo, Signature, VersionedMultiLocation, KSM_TOKEN_ID,
+	AccountId, AuraId, Signature, VersionedMultiLocation, KSM_TOKEN_ID,
 };
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
@@ -12,7 +12,6 @@ use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, ByteArray, Pair, Public, H160};
 use sp_runtime::{
 	traits::{IdentifyAccount, Verify},
-	Perbill,
 };
 
 pub mod public_testnet_keys {

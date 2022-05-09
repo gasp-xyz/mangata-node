@@ -17,7 +17,7 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, ConvertInto,
-		Header as HeaderT, IdentifyAccount, StaticLookup, Verify,
+		IdentifyAccount, StaticLookup, Verify,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiSignature, Percent,
@@ -551,6 +551,7 @@ impl pallet_bootstrap::Config for Runtime {
 	type KsmToMgaRatioNumerator = frame_support::traits::ConstU128<1>;
 	type KsmToMgaRatioDenominator = frame_support::traits::ConstU128<10000>;
 	type VestingProvider = Vesting;
+	type WeightInfo = weights::pallet_bootstrap_weights::ModuleWeight<Runtime>;
 }
 
 impl pallet_utility::Config for Runtime {

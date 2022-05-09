@@ -28,8 +28,11 @@ mod benchmarking;
 #[cfg(test)]
 mod tests;
 
+pub mod weights;
+pub use weights::WeightInfo;
+
 pub use pallet::*;
-const PALLET_ID: PalletId = PalletId(*b"12345678");
+const PALLET_ID: PalletId = PalletId(*b"bootstrp");
 
 use core::fmt::Debug;
 
@@ -134,6 +137,8 @@ pub mod pallet {
 		type KsmToMgaRatioDenominator: Get<u128>;
 
 		type VestingProvider: MultiTokenVestingLocks<Self::AccountId>;
+
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::storage]

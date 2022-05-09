@@ -549,7 +549,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::mint_liquidity_using_vesting_native_tokens())]
 		#[transactional]
 		pub fn mint_liquidity_using_vesting_native_tokens(
 			origin: OriginFor<T>,
@@ -642,7 +642,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::promote_pool())]
 		pub fn promote_pool(origin: OriginFor<T>, liquidity_token_id: TokenId) -> DispatchResult {
 			ensure_root(origin)?;
 
@@ -666,7 +666,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::deactivate_liquidity())]
 		pub fn deactivate_liquidity(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,

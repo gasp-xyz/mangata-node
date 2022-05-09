@@ -5933,6 +5933,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "log",
  "mangata-primitives",
  "orml-tokens",
  "orml-traits",

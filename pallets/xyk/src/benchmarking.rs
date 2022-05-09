@@ -227,30 +227,29 @@ benchmarks! {
 		let asset_id_1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 		let asset_id_2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 		let liquidity_asset_id = asset_id_2 + 1;
+		<<T as Config>::PoolPromoteApi as ComputeIssuance>::initialize();
 
 		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), asset_id_1.into(), 5000, asset_id_2.into(), 5000).unwrap();
-
 		Xyk::<T>::promote_pool(RawOrigin::Root.into(), liquidity_asset_id).unwrap();
+
+		frame_system::Pallet::<T>::set_block_number(100_000u32.into());
+		<<T as Config>::PoolPromoteApi as ComputeIssuance>::compute_issuance(1);
 
 		// activate liquidity by minting
 		Xyk::<T>::mint_liquidity(RawOrigin::Signed(caller.clone().into()).into(), asset_id_1.into(), asset_id_2.into(), 200000000000000, 300000000000000).unwrap();
+		frame_system::Pallet::<T>::set_block_number(200_000_u32.into());
 
 		Xyk::<T>::burn_liquidity(RawOrigin::Signed(caller.clone().into()).into(), asset_id_1.into(), asset_id_2.into(), 150000000000000).unwrap();
 
+		frame_system::Pallet::<T>::set_block_number(300_000_u32.into());
+		<<T as Config>::PoolPromoteApi as ComputeIssuance>::compute_issuance(2);
 
 		let (rewards_total_user, rewards_claimed_user) = Xyk::<T>::calculate_rewards_amount(caller.clone(), liquidity_asset_id).unwrap();
 		let rewards_to_claim = rewards_total_user + rewards_claimed_user;
 
-		let pre_claim_tokens_asset1_amount = <T as Config>::Currency::free_balance(asset_id_1.into(), &caller).into();
-		let pre_claim_tokens_asset2_amount = <T as Config>::Currency::free_balance(asset_id_2.into(), &caller).into();
+		let pre_claim_native_tokens_amount = <T as Config>::Currency::free_balance(<T as Config>::NativeCurrencyId::get().into(), &caller).into();
 
-		frame_system::Pallet::<T>::set_block_number(100_000_000u32.into());
-		for i in 1..100_000_u32 {
-			frame_system::Pallet::<T>::set_block_number(i.into());
-			if i % 100 == 0 {
-				<<T as Config>::PoolPromoteApi as ComputeIssuance>::compute_issuance(i);
-			}
-		}
+		// frame_system::Pallet::<T>::set_block_number(100_000_000u32.into());
 
 	}: claim_rewards(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id, rewards_to_claim as u128 )
 
@@ -260,11 +259,9 @@ benchmarks! {
 			Xyk::<T>::calculate_rewards_amount(caller.clone(), liquidity_asset_id).unwrap(),
 			(0_u128,0_u128)
 		);
-		let post_claim_tokens_asset1_amount = <T as Config>::Currency::free_balance(asset_id_1.into(), &caller).into();
-		let post_claim_tokens_asset2_amount = <T as Config>::Currency::free_balance(asset_id_2.into(), &caller).into();
+		let post_claim_native_tokens_amount = <T as Config>::Currency::free_balance(<T as Config>::NativeCurrencyId::get().into(), &caller).into();
 
-		assert!( post_claim_tokens_asset1_amount > pre_claim_tokens_asset1_amount);
-		assert!( post_claim_tokens_asset2_amount > pre_claim_tokens_asset2_amount);
+		assert!( pre_claim_native_tokens_amount < post_claim_native_tokens_amount);
 
 	}
 

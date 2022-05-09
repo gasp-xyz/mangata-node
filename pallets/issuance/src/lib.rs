@@ -29,6 +29,17 @@ mod tests;
 
 mod benchmarking;
 
+pub(crate) const LOG_TARGET: &'static str = "issuance";
+#[macro_export]
+macro_rules! log {
+	($level:tt, $patter:expr $(, $values:expr)* $(,)?) => {
+		log::$level!(
+			target: crate::LOG_TARGET,
+			concat!("[{:?}] 💸 ", $patter), <frame_system::Pallet<T>>::block_number() $(, $values)*
+		)
+	};
+}
+
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq, TypeInfo)]
 pub struct IssuanceInfo {
@@ -209,28 +220,7 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::init_issuance_config())]
 		pub fn init_issuance_config(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
-
-			ensure!(
-				IssuanceConfigStore::<T>::get().is_none(),
-				Error::<T>::IssuanceConfigAlreadyInitialized
-			);
-			ensure!(IsTGEFinalized::<T>::get(), Error::<T>::TGENotFinalized);
-
-			let issuance_config: IssuanceInfo = IssuanceInfo {
-				cap: T::IssuanceCap::get(),
-				issuance_at_init: T::Tokens::total_issuance(T::NativeCurrencyId::get().into())
-					.into(),
-				linear_issuance_blocks: T::LinearIssuanceBlocks::get(),
-				liquidity_mining_split: T::LiquidityMiningSplit::get(),
-				staking_split: T::StakingSplit::get(),
-				total_crowdloan_allocation: T::TotalCrowdloanAllocation::get(),
-			};
-
-			Pallet::<T>::build_issuance_config(issuance_config.clone())?;
-
-			Pallet::<T>::deposit_event(Event::IssuanceConfigInitialized(issuance_config));
-
-			Ok(().into())
+			Self::do_init_issuance_config()
 		}
 
 		#[pallet::weight(T::WeightInfo::finalize_tge())]
@@ -322,11 +312,20 @@ pub mod pallet {
 }
 
 pub trait ComputeIssuance {
+	fn initialize(){}
 	fn compute_issuance(n: u32);
 }
 
 impl<T: Config> ComputeIssuance for Pallet<T> {
+
+	fn initialize() {
+		log!(trace, "ComputeIssuance::initialize");
+		IsTGEFinalized::<T>::put(true);
+		Self::do_init_issuance_config().unwrap();
+	}
+
 	fn compute_issuance(n: u32) {
+		log!(trace, "ComputeIssuance::compute_issuance");
 		let _ = Pallet::<T>::calculate_and_store_round_issuance(n);
 		let _ = Pallet::<T>::clear_round_issuance_history(n);
 	}
@@ -343,11 +342,14 @@ impl<T: Config> PoolPromoteApi for Pallet<T> {
 	}
 
 	fn get_pool_rewards(liquidity_token_id: TokenId) -> Option<Balance> {
-		PromotedPoolsRewards::<T>::try_get(liquidity_token_id).ok()
+		let val = PromotedPoolsRewards::<T>::try_get(liquidity_token_id).ok();
+		log!(trace, "PromotedPoolsRewards::get_pool_rewards({}) = {:?}", liquidity_token_id, val);
+		val
 	}
 
 	fn claim_pool_rewards(liquidity_token_id: TokenId, claimed_amount: Balance) -> bool {
 		PromotedPoolsRewards::<T>::try_mutate(liquidity_token_id, |rewards| {
+			log!(trace, "PromotedPoolsRewards::claim_pool_rewards(id:{}, amount:{}), available = {:?}", liquidity_token_id, claimed_amount, rewards);
 			if let Some(val) = rewards.checked_sub(claimed_amount) {
 				*rewards = val;
 				Ok(())
@@ -403,6 +405,36 @@ impl<T: Config> GetIssuance for Pallet<T> {
 }
 
 impl<T: Config> Pallet<T> {
+	pub fn do_init_issuance_config() -> DispatchResultWithPostInfo {
+
+		log!(trace, "BLAH1");
+		ensure!(
+			IssuanceConfigStore::<T>::get().is_none(),
+			Error::<T>::IssuanceConfigAlreadyInitialized
+		);
+		log!(trace, "BLAH2");
+		ensure!(IsTGEFinalized::<T>::get(), Error::<T>::TGENotFinalized);
+
+		log!(trace, "BLAH3");
+		let issuance_config: IssuanceInfo = IssuanceInfo {
+			cap: T::IssuanceCap::get(),
+			issuance_at_init: T::Tokens::total_issuance(T::NativeCurrencyId::get().into())
+				.into(),
+			linear_issuance_blocks: T::LinearIssuanceBlocks::get(),
+			liquidity_mining_split: T::LiquidityMiningSplit::get(),
+			staking_split: T::StakingSplit::get(),
+			total_crowdloan_allocation: T::TotalCrowdloanAllocation::get(),
+		};
+
+		log!(trace, "BLAH4");
+		Pallet::<T>::build_issuance_config(issuance_config.clone())?;
+
+		log!(trace, "BLAH5");
+		Pallet::<T>::deposit_event(Event::IssuanceConfigInitialized(issuance_config));
+
+		Ok(().into())
+	}
+
 	pub fn build_issuance_config(issuance_config: IssuanceInfo) -> DispatchResult {
 		ensure!(
 			issuance_config
@@ -434,21 +466,27 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn calculate_and_store_round_issuance(current_round: u32) -> DispatchResult {
+		log!(trace, "Issuance::calculate_and_store_round_issuance");
 		let issuance_config =
 			IssuanceConfigStore::<T>::get().ok_or(Error::<T>::IssuanceConfigNotInitialized)?;
+		log!(info, "config exists");
 		let to_be_issued: Balance = issuance_config
 			.cap
 			.checked_sub(issuance_config.issuance_at_init)
 			.ok_or(Error::<T>::MathError)?
 			.checked_sub(issuance_config.total_crowdloan_allocation)
 			.ok_or(Error::<T>::MathError)?;
+		log!(info, "to_be_issued {}", to_be_issued);
 		let linear_issuance_sessions: u32 = issuance_config
 			.linear_issuance_blocks
 			.checked_div(T::BlocksPerRound::get())
 			.ok_or(Error::<T>::MathError)?;
+		log!(info, "linear_issuance_sessions {}", linear_issuance_sessions);
 		let linear_issuance_per_session = to_be_issued
 			.checked_div(linear_issuance_sessions as Balance)
 			.ok_or(Error::<T>::MathError)?;
+
+		log!(info, "linear_issuance_per_session {}", linear_issuance_per_session);
 
 		let current_round_issuance: Balance;
 		// We do not want issuance to overshoot
@@ -478,6 +516,7 @@ impl<T: Config> Pallet<T> {
 
 		let liquidity_mining_issuance =
 			issuance_config.liquidity_mining_split * current_round_issuance;
+		log!(info, "liquidity_mining_issuance: {}", liquidity_mining_issuance);
 		let staking_issuance = issuance_config.staking_split * current_round_issuance;
 
 		let promoted_pools_count = <Self as PoolPromoteApi>::len();
@@ -490,6 +529,7 @@ impl<T: Config> Pallet<T> {
 			liquidity_mining_issuance / promoted_pools_count as u128
 		};
 
+		log!(info, "liquidity_mining_issuance_per_pool: {}", liquidity_mining_issuance_per_pool);
 		PromotedPoolsRewards::<T>::translate(|_, v: Balance| {
 			Some(v + liquidity_mining_issuance_per_pool)
 		});
@@ -522,6 +562,7 @@ impl<T: Config> Pallet<T> {
 			liquidity_mining_issuance,
 			staking_issuance,
 		));
+		log!(trace, "calculate_and_store_round_issuance FINISHED");
 
 		Ok(())
 	}

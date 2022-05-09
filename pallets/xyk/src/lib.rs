@@ -2420,12 +2420,15 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 		let (current_rewards, burned_not_claimed_rewards) =
 			Pallet::<T>::calculate_rewards_amount(user.clone(), liquidity_asset_id)?; //EASY
+		log!(info, "current_rewards={} burned_not_claimed_rewards={}", current_rewards, burned_not_claimed_rewards);
 
 		let total_claimable_rewards = current_rewards + burned_not_claimed_rewards;
 		ensure!(mangata_amount <= total_claimable_rewards, Error::<T>::NotEnoughtRewardsEarned);
 
+		log!(info, "WRONG SCENAIRO");
 		// user is taking out rewards from LP which was already removed from pool
 		if mangata_amount <= burned_not_claimed_rewards {
+			log!(info, "WRONG SCENAIRO mangata_amount({}) <= burned_not_claimed_rewards({})", mangata_amount, burned_not_claimed_rewards);
 			let burned_not_claimed_rewards_new = burned_not_claimed_rewards - mangata_amount;
 			LiquidityMiningUserToBeClaimed::<T>::insert(
 				(&user, liquidity_asset_id),
@@ -2434,6 +2437,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		}
 		// user is taking out more rewards then rewards from LP which was already removed from pool, additional work needs to be removed from pool and user
 		else {
+			log!(info, "GOOD SCENAIRO");
 			// HARD
 			LiquidityMiningUserToBeClaimed::<T>::insert((&user, liquidity_asset_id), 0 as u128);
 			// rewards to burn on top of rewards from LP which was already removed from pool

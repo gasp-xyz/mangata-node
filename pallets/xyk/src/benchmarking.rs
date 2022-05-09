@@ -177,9 +177,9 @@ benchmarks! {
 
 	burn_liquidity {
 
-		/// worse case scenario:
-		/// burning whole liquidity that belongs to single user, where part of it is activated (as a result of mint_liquidity call)
-		/// and the other part is not  activated (as a result of create_pool call (by default)
+		// worse case scenario:
+		// burning whole liquidity that belongs to single user, where part of it is activated (as a result of mint_liquidity call)
+		// and the other part is not  activated (as a result of create_pool call (by default)
 
 		// NOTE: worst case scenario is when we want to burn whole liquidity because of the cleanup
 		// that happens there

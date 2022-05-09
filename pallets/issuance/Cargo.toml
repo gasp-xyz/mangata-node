@@ -21,6 +21,7 @@ sp-std = { default-features = false, version = '4.0.0-dev' , git = "https://gith
 sp-runtime = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-vesting-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 frame-benchmarking = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev", optional = true, default-features = false }
+cfg-if = "1.0.0"
 
 [dev-dependencies]
 sp-core = { default-features = false, version = '4.1.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }

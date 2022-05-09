@@ -7,7 +7,7 @@ use frame_system::pallet_prelude::*;
 
 use frame_support::{
 	codec::{Decode, Encode},
-	traits::{Currency, Get, Imbalance, LockableCurrency},
+	traits::{Get, Imbalance},
 };
 use mangata_primitives::{Balance, TokenId};
 use scale_info::TypeInfo;

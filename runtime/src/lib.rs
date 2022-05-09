@@ -1470,16 +1470,20 @@ extern crate frame_benchmarking;
 mod benches {
 	define_benchmarks!(
 		[frame_system, SystemBench::<Runtime>]
-		[orml_tokens, Tokens]
-		[pallet_bootstrap, Bootstrap]
-		[pallet_collective, Council]
-		[pallet_elections_phragmen, Elections]
 		[pallet_session, SessionBench::<Runtime>]
 		[pallet_timestamp, Timestamp]
-		[pallet_treasury, Treasury]
+		[orml_tokens, Tokens]
+		[parachain_staking, ParachainStaking]
 		[pallet_xyk, Xyk]
-		// [parachain_staking, ParachainStaking]
 		[xcm_asset_registry, AssetRegistry]
+		[pallet_treasury, Treasury]
+		[pallet_collective, Council]
+		[pallet_elections_phragmen, Elections]
+		[pallet_bootstrap, Bootstrap]
+		[pallet_crowdloan_rewards, Crowdloan]
+		[pallet_utility, Utility]
+		[pallet_vesting_mangata, Vesting]
+		[pallet_issuance, Issuance]
 	);
 }
 

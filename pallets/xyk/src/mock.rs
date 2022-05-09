@@ -63,9 +63,9 @@ impl MockPromotedPoolApi {
 }
 
 impl pallet_issuance::ComputeIssuance for MockPromotedPoolApi {
-    fn compute_issuance(_n: u32) {
-        todo!()
-    }
+	fn compute_issuance(_n: u32) {
+		todo!()
+	}
 }
 
 impl PoolPromoteApi for MockPromotedPoolApi {

@@ -7,7 +7,7 @@ use frame_system::pallet_prelude::*;
 
 use frame_support::{
 	codec::{Decode, Encode},
-	traits::{Currency, Get, Imbalance, LockableCurrency, VestingSchedule},
+	traits::{Currency, Get, Imbalance, LockableCurrency},
 };
 use mangata_primitives::{Balance, TokenId};
 use scale_info::TypeInfo;
@@ -15,7 +15,8 @@ use sp_runtime::{traits::Zero, Perbill, Percent, RuntimeDebug};
 use sp_std::prelude::*;
 
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
-use sp_runtime::traits::{CheckedAdd, CheckedSub};
+use pallet_vesting_mangata::MultiTokenVestingSchedule;
+use sp_runtime::traits::{CheckedAdd, CheckedSub, One};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -25,6 +26,8 @@ mod mock;
 
 #[cfg(test)]
 mod tests;
+
+mod benchmarking;
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq, TypeInfo)]
@@ -61,6 +64,35 @@ pub trait PoolPromoteApi {
 	fn claim_pool_rewards(liquidity_token_id: TokenId, claimed_amount: Balance) -> bool;
 	/// Returns number of promoted pools
 	fn len() -> usize;
+}
+
+/// Weight functions needed for pallet_xyk.
+pub trait WeightInfo {
+	fn init_issuance_config() -> Weight;
+	fn finalize_tge() -> Weight;
+	fn execute_tge(x: u32) -> Weight;
+}
+
+// For backwards compatibility and tests
+impl WeightInfo for () {
+	// Storage: Vesting Vesting (r:1 w:1)
+	// Storage: Balances Locks (r:1 w:1)
+	fn init_issuance_config() -> Weight {
+		50_642_000 as Weight
+	}
+	// Storage: Vesting Vesting (r:1 w:1)
+	// Storage: Balances Locks (r:1 w:1)
+	fn finalize_tge() -> Weight {
+		50_830_000 as Weight
+	}
+	// Storage: Vesting Vesting (r:1 w:1)
+	// Storage: Balances Locks (r:1 w:1)
+	// Storage: System Account (r:1 w:1)
+	fn execute_tge(l: u32) -> Weight {
+		(52_151_000 as Weight)
+			// Standard Error: 1_000
+			.saturating_add((130_000 as Weight).saturating_mul(l as Weight))
+	}
 }
 
 pub use pallet::*;
@@ -123,15 +155,13 @@ pub mod pallet {
 		#[pallet::constant]
 		/// The block at which the tge tokens begin to vest
 		type TGEReleaseBegin: Get<u32>;
-		/// Native token adapter for matching Balance types
-		type NativeTokenAdapter: Currency<Self::AccountId, Balance = Balance>
-			+ LockableCurrency<Self::AccountId>;
 		/// The vesting pallet
-		type VestingProvider: VestingSchedule<
+		type VestingProvider: MultiTokenVestingSchedule<
 			Self::AccountId,
-			Currency = Self::NativeTokenAdapter,
+			Currency = Self::Tokens,
 			Moment = Self::BlockNumber,
 		>;
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::storage]
@@ -176,8 +206,7 @@ pub mod pallet {
 	// XYK extrinsics.
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		// #[pallet::weight(T::Weight::init_issuance_config())]
-		#[pallet::weight(100_000)]
+		#[pallet::weight(T::WeightInfo::init_issuance_config())]
 		pub fn init_issuance_config(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 
@@ -204,8 +233,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		// #[pallet::weight(T::Weight::finalize_tge())]
-		#[pallet::weight(100_000)]
+		#[pallet::weight(T::WeightInfo::finalize_tge())]
 		pub fn finalize_tge(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 
@@ -218,8 +246,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		// #[pallet::weight(T::Weight::execute_tge(*tge_infos))]
-		#[pallet::weight(100_000)]
+		#[pallet::weight(T::WeightInfo::execute_tge(tge_infos.len() as u32))]
 		pub fn execute_tge(
 			origin: OriginFor<T>,
 			tge_infos: Vec<TgeInfo<T::AccountId>>,
@@ -235,14 +262,16 @@ pub mod pallet {
 				.ok_or(Error::<T>::MathError)?;
 
 			for tge_info in tge_infos {
-				let locked: Balance = lock_percent * tge_info.amount;
-				let per_block: Balance = locked / T::TGEReleasePeriod::get() as Balance;
+				let locked: Balance = (lock_percent * tge_info.amount).max(One::one());
+				let per_block: Balance =
+					(locked / T::TGEReleasePeriod::get() as Balance).max(One::one());
 
 				if T::VestingProvider::can_add_vesting_schedule(
 					&tge_info.who,
 					locked.into(),
 					per_block.into(),
 					T::TGEReleaseBegin::get().into(),
+					T::NativeCurrencyId::get().into(),
 				)
 				.is_ok()
 				{
@@ -260,6 +289,7 @@ pub mod pallet {
 							locked.into(),
 							per_block.into(),
 							T::TGEReleaseBegin::get().into(),
+							T::NativeCurrencyId::get().into(),
 						);
 						TGETotal::<T>::mutate(|v| *v = v.saturating_add(tge_info.amount));
 						Pallet::<T>::deposit_event(Event::TGEInstanceSucceeded(tge_info));

@@ -135,8 +135,8 @@ impl pallet_issuance::Config for Test {
 	type ImmediateTGEReleasePercent = ImmediateTGEReleasePercent;
 	type TGEReleasePeriod = TGEReleasePeriod;
 	type TGEReleaseBegin = TGEReleaseBegin;
-	type NativeTokenAdapter = orml_tokens::CurrencyAdapter<Test, MgaTokenId>;
 	type VestingProvider = Vesting;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -145,7 +145,7 @@ parameter_types! {
 
 impl pallet_vesting_mangata::Config for Test {
 	type Event = Event;
-	type Currency = orml_tokens::CurrencyAdapter<Test, MgaTokenId>;
+	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type BlockNumberToBalance = ConvertInto;
 	type MinVestedTransfer = MinVestedTransfer;
 	type WeightInfo = pallet_vesting_mangata::weights::SubstrateWeight<Test>;
@@ -173,7 +173,7 @@ construct_runtime!(
 
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup.
-pub fn new_test_ext_wihtout_issuance_config() -> sp_io::TestExternalities {
+pub fn new_test_ext_without_issuance_config() -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default()
 		.build_storage::<Test>()
 		.expect("Frame system builds valid default genesis config");

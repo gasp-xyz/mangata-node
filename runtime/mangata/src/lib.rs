@@ -23,7 +23,6 @@ use sp_runtime::{
 	ApplyExtrinsicResult, MultiSignature, Percent,
 };
 
-use pallet_session::ShouldEndSession;
 use sp_std::{marker::PhantomData, prelude::*};
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -231,11 +230,11 @@ impl_opaque_keys! {
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
-	authoring_version: 2,
-	spec_version: 2,
+	authoring_version: 3,
+	spec_version: 3,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 2,
+	transaction_version: 3,
 	state_version: 0,
 };
 
@@ -500,6 +499,14 @@ parameter_types! {
 	pub const MaxLocks: u32 = 50;
 }
 
+// The MaxLocks (on a who-token_id pair) that is allowed by orml_tokens
+// must exceed the total possible locks that can be applied to it, ALL pallets considered
+// This is because orml_tokens uses BoundedVec for Locks storage item and does not inform on failure
+// Balances uses WeakBoundedVec and so does not fail
+const_assert!(
+	MaxLocks::get() >= <Runtime as pallet_vesting_mangata::Config>::MAX_VESTING_SCHEDULES
+);
+
 pub struct DustRemovalWhitelist;
 impl Contains<AccountId> for DustRemovalWhitelist {
 	fn contains(a: &AccountId) -> bool {
@@ -531,6 +538,7 @@ impl pallet_xyk::Config for Runtime {
 	type TreasuryFeePercentage = frame_support::traits::ConstU128<5>;
 	type BuyAndBurnFeePercentage = frame_support::traits::ConstU128<5>;
 	type RewardsDistributionPeriod = frame_support::traits::ConstU32<10000>;
+	type VestingProvider = Vesting;
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
 }
 
@@ -542,13 +550,14 @@ impl pallet_bootstrap::Config for Runtime {
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type KsmToMgaRatioNumerator = frame_support::traits::ConstU128<1>;
 	type KsmToMgaRatioDenominator = frame_support::traits::ConstU128<10000>;
+	type VestingProvider = Vesting;
 }
 
 impl pallet_utility::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 	type PalletsOrigin = OriginCaller;
-	type WeightInfo = pallet_utility::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_utility_weights::ModuleWeight<Runtime>;
 }
 
 type ORMLCurrencyAdapterNegativeImbalance =
@@ -1146,8 +1155,8 @@ impl pallet_issuance::Config for Runtime {
 	type ImmediateTGEReleasePercent = ImmediateTGEReleasePercent;
 	type TGEReleasePeriod = TGEReleasePeriod;
 	type TGEReleaseBegin = TGEReleaseBegin;
-	type NativeTokenAdapter = orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>;
 	type VestingProvider = Vesting;
+	type WeightInfo = weights::pallet_issuance_weights::ModuleWeight<Runtime>;
 }
 
 parameter_types! {
@@ -1156,14 +1165,13 @@ parameter_types! {
 
 impl pallet_vesting_mangata::Config for Runtime {
 	type Event = Event;
-	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>;
+	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type BlockNumberToBalance = ConvertInto;
 	type MinVestedTransfer = MinVestedTransfer;
-	type WeightInfo = pallet_vesting_mangata::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_vesting_mangata_weights::ModuleWeight<Runtime>;
 	// `VestingInfo` encode length is 36bytes. 28 schedules gets encoded as 1009 bytes, which is the
 	// highest number of schedules that encodes less than 2^10.
-	// Should be atleast twice the number of tge recipients
-	const MAX_VESTING_SCHEDULES: u32 = 200;
+	const MAX_VESTING_SCHEDULES: u32 = 50;
 }
 
 parameter_types! {
@@ -1190,7 +1198,7 @@ impl pallet_crowdloan_rewards::Config for Runtime {
 	type RewardAddressAssociateOrigin = EnsureRoot<AccountId>;
 	type VestingBlockNumber = BlockNumber;
 	type VestingBlockProvider = System;
-	type WeightInfo = pallet_crowdloan_rewards::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_crowdloan_rewards_weights::ModuleWeight<Runtime>;
 }
 
 parameter_types! {
@@ -1471,6 +1479,11 @@ mod benches {
 		[pallet_treasury, Treasury]
 		[pallet_collective, Council]
 		[pallet_elections_phragmen, Elections]
+		// [pallet_bootstrap, Bootstrap]
+		[pallet_crowdloan_rewards, Crowdloan]
+		[pallet_utility, Utility]
+		[pallet_vesting_mangata, Vesting]
+		[pallet_issuance, Issuance]
 	);
 }
 
@@ -1489,8 +1502,10 @@ impl_runtime_apis! {
 			}
 		}
 
-		fn is_new_session(number: <<Block as BlockT>::Header as HeaderT>::Number) -> bool{
-			<ParachainStaking as ShouldEndSession<_>>::should_end_session(number)
+		fn is_storage_migration_scheduled() -> bool{
+			let last = frame_system::LastRuntimeUpgrade::<Runtime>::get();
+			let current = <<Runtime as frame_system::Config>::Version as frame_support::traits::Get<_>>::get();
+			last.map(|v| v.was_upgraded(&current)).unwrap_or(true)
 		}
 
 		fn store_seed(seed: sp_core::H256){
@@ -1591,8 +1606,7 @@ impl_runtime_apis! {
 
 		fn execute_block(block: Block) {
 			let key = cumulus_pallet_aura_ext::get_block_signer_pub_key::<Runtime,Block>(&block);
-			let precedes_new_session = <ParachainStaking as ShouldEndSession<_>>::should_end_session(block.header.number + 1);
-			Executive::execute_block_ver_impl(block, key, precedes_new_session);
+			Executive::execute_block_ver_impl(block, key);
 		}
 
 		fn initialize_block(header: &<Block as BlockT>::Header) {
@@ -1788,7 +1802,7 @@ mod parachain_validate_block {
             cumulus_pallet_parachain_system::validate_block::implementation::validate_block::<<Runtime
                                                                                               as
                                                                                               cumulus_pallet_parachain_system::validate_block::GetRuntimeBlockType>::RuntimeBlock,
-                                                                                              cumulus_pallet_aura_ext::BlockExecutorVer<Runtime, Executive, ParachainStaking>,
+                                                                                              cumulus_pallet_aura_ext::BlockExecutorVer<Runtime, Executive>,
                                                                                               Runtime,
                                                                                               CheckInherents>(params);
 		cumulus_pallet_parachain_system::validate_block::polkadot_parachain::write_result(&res)

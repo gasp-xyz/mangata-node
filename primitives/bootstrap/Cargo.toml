@@ -1,0 +1,20 @@
+[package]
+name = "sp-bootstrap"
+version = "0.1.0"
+authors = ['Mangata team']
+edition = "2018"
+
+[dependencies]
+sp-std = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-runtime = { default-features = false, version = '4.1.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+frame-support = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+mangata-primitives = { path = "../mangata" , default-features= false}
+
+[features]
+default = ["std"]
+std = [
+    'sp-std/std',
+    'sp-runtime/std',
+    'frame-support/std',
+    'mangata-primitives/std',
+]

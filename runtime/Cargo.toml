@@ -165,6 +165,7 @@ std = [
 	"pallet-treasury/std",
 	"pallet-assets-info/std",
 	"pallet-xyk/std",
+	"pallet-bootstrap/std",
     "xyk-runtime-api/std",
 
 	"artemis-core/std",
@@ -218,5 +219,9 @@ runtime-benchmarks = [
 	"pallet-treasury/runtime-benchmarks",
 	"pallet-collective/runtime-benchmarks",
 	"pallet-elections-phragmen/runtime-benchmarks",
-
+	"pallet-crowdloan-rewards/runtime-benchmarks",
+	"pallet-utility/runtime-benchmarks",
+	"pallet-vesting-mangata/runtime-benchmarks",
+	"pallet-issuance/runtime-benchmarks",
+	# "pallet-bootstrap/runtime-benchmarks",
 ]

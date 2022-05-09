@@ -14,6 +14,11 @@ benchmarks=(
     "pallet_treasury"
     "pallet_collective"
     "pallet_elections_phragmen"
+    "pallet_crowdloan_rewards"
+    "pallet_utility"
+    "pallet_vesting_mangata"
+    "pallet_issuance"
+    # "pallet_bootstrap"
 )
 
 for bench in ${benchmarks[@]}; do

@@ -1,6 +1,6 @@
 use super::*;
 use mock::{
-	new_test_ext, new_test_ext_wihtout_issuance_config, roll_to_while_minting, BlocksPerRound,
+	new_test_ext, new_test_ext_without_issuance_config, roll_to_while_minting, BlocksPerRound,
 	Issuance, Origin, StakeCurrency, System, Test, Tokens, Vesting, MGA_TOKEN_ID,
 };
 use sp_runtime::SaturatedConversion;
@@ -9,7 +9,7 @@ use frame_support::{assert_noop, assert_ok};
 
 #[test]
 fn init_issuance_config_works() {
-	new_test_ext_wihtout_issuance_config().execute_with(|| {
+	new_test_ext_without_issuance_config().execute_with(|| {
 		let current_issuance = StakeCurrency::total_issuance(MGA_TOKEN_ID);
 
 		assert_eq!(Issuance::is_tge_finalized(), false);
@@ -33,7 +33,7 @@ fn init_issuance_config_works() {
 
 #[test]
 fn cannot_finalize_tge_when_already_finalized() {
-	new_test_ext_wihtout_issuance_config().execute_with(|| {
+	new_test_ext_without_issuance_config().execute_with(|| {
 		assert_eq!(Issuance::is_tge_finalized(), false);
 		assert_ok!(Issuance::finalize_tge(Origin::root()));
 		assert_eq!(Issuance::is_tge_finalized(), true);
@@ -44,7 +44,7 @@ fn cannot_finalize_tge_when_already_finalized() {
 
 #[test]
 fn cannot_init_issuance_config_when_tge_is_not_finalized() {
-	new_test_ext_wihtout_issuance_config().execute_with(|| {
+	new_test_ext_without_issuance_config().execute_with(|| {
 		assert_eq!(Issuance::is_tge_finalized(), false);
 
 		assert_noop!(
@@ -56,7 +56,7 @@ fn cannot_init_issuance_config_when_tge_is_not_finalized() {
 
 #[test]
 fn cannot_init_issuance_config_when_already_init() {
-	new_test_ext_wihtout_issuance_config().execute_with(|| {
+	new_test_ext_without_issuance_config().execute_with(|| {
 		let current_issuance = StakeCurrency::total_issuance(MGA_TOKEN_ID);
 
 		assert_eq!(Issuance::is_tge_finalized(), false);
@@ -84,7 +84,7 @@ fn cannot_init_issuance_config_when_already_init() {
 
 #[test]
 fn execute_tge_works() {
-	new_test_ext_wihtout_issuance_config().execute_with(|| {
+	new_test_ext_without_issuance_config().execute_with(|| {
 		assert_eq!(Issuance::is_tge_finalized(), false);
 
 		assert_ok!(Issuance::execute_tge(
@@ -108,15 +108,15 @@ fn execute_tge_works() {
 		assert_eq!(Tokens::locks(&3, MGA_TOKEN_ID)[0].amount, 2400u128);
 		assert_eq!(Tokens::locks(&4, MGA_TOKEN_ID)[0].amount, 3200u128);
 
-		assert_eq!(Vesting::vesting(&1).unwrap()[0].locked(), 800u128);
-		assert_eq!(Vesting::vesting(&2).unwrap()[0].locked(), 1600u128);
-		assert_eq!(Vesting::vesting(&3).unwrap()[0].locked(), 2400u128);
-		assert_eq!(Vesting::vesting(&4).unwrap()[0].locked(), 3200u128);
+		assert_eq!(Vesting::vesting(&1, MGA_TOKEN_ID).unwrap()[0].locked(), 800u128);
+		assert_eq!(Vesting::vesting(&2, MGA_TOKEN_ID).unwrap()[0].locked(), 1600u128);
+		assert_eq!(Vesting::vesting(&3, MGA_TOKEN_ID).unwrap()[0].locked(), 2400u128);
+		assert_eq!(Vesting::vesting(&4, MGA_TOKEN_ID).unwrap()[0].locked(), 3200u128);
 
-		assert_eq!(Vesting::vesting(&1).unwrap()[0].per_block(), 8u128);
-		assert_eq!(Vesting::vesting(&2).unwrap()[0].per_block(), 16u128);
-		assert_eq!(Vesting::vesting(&3).unwrap()[0].per_block(), 24u128);
-		assert_eq!(Vesting::vesting(&4).unwrap()[0].per_block(), 32u128);
+		assert_eq!(Vesting::vesting(&1, MGA_TOKEN_ID).unwrap()[0].per_block(), 8u128);
+		assert_eq!(Vesting::vesting(&2, MGA_TOKEN_ID).unwrap()[0].per_block(), 16u128);
+		assert_eq!(Vesting::vesting(&3, MGA_TOKEN_ID).unwrap()[0].per_block(), 24u128);
+		assert_eq!(Vesting::vesting(&4, MGA_TOKEN_ID).unwrap()[0].per_block(), 32u128);
 
 		assert_ok!(Issuance::finalize_tge(Origin::root()));
 		assert_eq!(Issuance::is_tge_finalized(), true);
@@ -125,7 +125,7 @@ fn execute_tge_works() {
 
 #[test]
 fn cannot_execute_tge_if_already_finalized() {
-	new_test_ext_wihtout_issuance_config().execute_with(|| {
+	new_test_ext_without_issuance_config().execute_with(|| {
 		assert_eq!(Issuance::is_tge_finalized(), false);
 		assert_ok!(Issuance::finalize_tge(Origin::root()));
 		assert_eq!(Issuance::is_tge_finalized(), true);

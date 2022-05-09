@@ -235,9 +235,10 @@ use frame_system::pallet_prelude::*;
 use mangata_primitives::{Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_assets_info as assets_info;
-use pallet_bootstrap::PoolCreateApi;
 use pallet_issuance::PoolPromoteApi;
+use pallet_vesting_mangata::MultiTokenVestingLocks;
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
+use sp_bootstrap::PoolCreateApi;
 use sp_runtime::traits::{
 	AccountIdConversion, AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member,
 	SaturatedConversion, Zero,
@@ -313,6 +314,7 @@ pub mod pallet {
 		type BuyAndBurnFeePercentage: Get<u128>;
 		#[pallet::constant]
 		type RewardsDistributionPeriod: Get<u32>;
+		type VestingProvider: MultiTokenVestingLocks<Self::AccountId>;
 		type WeightInfo: WeightInfo;
 	}
 
@@ -544,6 +546,42 @@ pub mod pallet {
 				bought_asset_amount,
 				max_amount_in,
 			)?;
+			Ok(().into())
+		}
+
+		#[pallet::weight(10_000)]
+		#[transactional]
+		pub fn mint_liquidity_using_vesting_native_tokens(
+			origin: OriginFor<T>,
+			vesting_native_asset_amount: Balance,
+			second_asset_id: TokenId,
+			expected_second_asset_amount: Balance,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+
+			let vesting_ending_block_as_balance: Balance = T::VestingProvider::unlock_tokens(
+				&sender,
+				T::NativeCurrencyId::get().into(),
+				vesting_native_asset_amount.into(),
+			)?
+			.into();
+
+			let (liquidity_token_id, liquidity_assets_minted) =
+				<Self as XykFunctionsTrait<T::AccountId>>::mint_liquidity(
+					sender.clone(),
+					T::NativeCurrencyId::get(),
+					second_asset_id,
+					vesting_native_asset_amount,
+					expected_second_asset_amount,
+				)?;
+
+			T::VestingProvider::lock_tokens(
+				&sender,
+				liquidity_token_id.into(),
+				liquidity_assets_minted.into(),
+				vesting_ending_block_as_balance.into(),
+			)?;
+
 			Ok(().into())
 		}
 
@@ -1506,7 +1544,7 @@ pub trait XykFunctionsTrait<AccountId> {
 		second_asset_id: Self::CurrencyId,
 		first_asset_amount: Self::Balance,
 		expected_second_asset_amount: Self::Balance,
-	) -> DispatchResult;
+	) -> Result<(Self::CurrencyId, Self::Balance), DispatchError>;
 
 	fn burn_liquidity(
 		sender: AccountId,
@@ -2034,7 +2072,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		second_asset_id: Self::CurrencyId,
 		first_asset_amount: Self::Balance,
 		expected_second_asset_amount: Self::Balance,
-	) -> DispatchResult {
+	) -> Result<(Self::CurrencyId, Self::Balance), DispatchError> {
 		let vault = Pallet::<T>::account_id();
 
 		// Ensure pool exists
@@ -2180,7 +2218,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			liquidity_assets_minted,
 		));
 
-		Ok(())
+		Ok((liquidity_asset_id, liquidity_assets_minted))
 	}
 
 	fn burn_liquidity(

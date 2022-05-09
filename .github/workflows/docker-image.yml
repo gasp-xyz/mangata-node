@@ -60,8 +60,8 @@ jobs:
       -
         name: Check formatting
         run: |
-          docker pull ${{ github.event.inputs.parachainDocker }}
-          docker run --user $(id -u):$(id -g) -v $(pwd):/code  ${{ github.event.inputs.parachainDocker }} cargo fmt -- --check
+          docker pull mangatasolutions/node-builder:0.1
+          docker run --user $(id -u):$(id -g) -v $(pwd):/code  mangatasolutions/node-builder:0.1 cargo fmt -- --check
 
   # clippy:
   #   name: Clippy check

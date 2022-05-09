@@ -173,6 +173,7 @@ impl pallet_issuance::Config for Test {
 	type TGEReleasePeriod = TGEReleasePeriod;
 	type TGEReleaseBegin = TGEReleaseBegin;
 	type VestingProvider = Vesting;
+	type WeightInfo = ();
 }
 
 mockall::mock! {
@@ -197,6 +198,7 @@ impl pallet_bootstrap::Config for Test {
 	type KsmToMgaRatioNumerator = KsmToMgaNumerator;
 	type KsmToMgaRatioDenominator = KsmToMgaDenominator;
 	type VestingProvider = Vesting;
+	type WeightInfo = ();
 }
 
 #[cfg(feature = "runtime-benchmarks")]

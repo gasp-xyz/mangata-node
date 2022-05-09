@@ -55,10 +55,17 @@ lazy_static::lazy_static! {
 
 pub struct MockPromotedPoolApi;
 
+#[cfg(test)]
 impl MockPromotedPoolApi {
 	pub fn instance() -> &'static Mutex<HashMap<TokenId, Balance>> {
 		&PROMOTED_POOLS
 	}
+}
+
+impl pallet_issuance::ComputeIssuance for MockPromotedPoolApi {
+    fn compute_issuance(_n: u32) {
+        todo!()
+    }
 }
 
 impl PoolPromoteApi for MockPromotedPoolApi {
@@ -73,8 +80,7 @@ impl PoolPromoteApi for MockPromotedPoolApi {
 	}
 
 	fn get_pool_rewards(liquidity_token_id: TokenId) -> Option<Balance> {
-		let mut pools = PROMOTED_POOLS.lock().unwrap();
-
+		let pools = PROMOTED_POOLS.lock().unwrap();
 		pools.get(&liquidity_token_id).map(|x| *x)
 	}
 

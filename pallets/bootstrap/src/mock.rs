@@ -25,7 +25,6 @@ use frame_support::{
 use mangata_primitives::{Amount, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter};
 use orml_traits::parameter_type_with_key;
-use pallet_issuance::PoolPromoteApi;
 use sp_runtime::{Perbill, Percent};
 // use pallet_xyk::Pallet;
 
@@ -198,7 +197,6 @@ impl pallet_bootstrap::Config for Test {
 	type KsmToMgaRatioNumerator = KsmToMgaNumerator;
 	type KsmToMgaRatioDenominator = KsmToMgaDenominator;
 	type VestingProvider = Vesting;
-	type WeightInfo = ();
 }
 
 #[cfg(feature = "runtime-benchmarks")]

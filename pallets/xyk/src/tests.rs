@@ -5,7 +5,6 @@
 use super::*;
 use crate::mock::*;
 use frame_support::assert_err;
-use log::info;
 use serial_test::serial;
 
 //fn create_pool_W(): create_pool working assert (maps,acocounts values)  //DONE
@@ -798,9 +797,9 @@ fn liquidity_rewards_deactivate_W() {
 			user2_missing_at_last_checkpoint,
 		) = XykStorage::liquidity_mining_user((2, 2));
 		let (
-			pool_last_checkpoint,
-			pool_cummulative_work_in_last_checkpoint,
-			pool_missing_at_last_checkpoint,
+			_pool_last_checkpoint,
+			_pool_cummulative_work_in_last_checkpoint,
+			_pool_missing_at_last_checkpoint,
 		) = XykStorage::liquidity_mining_pool(2);
 
 		assert_eq!(
@@ -989,7 +988,7 @@ fn liquidity_rewards_rewards_not_gaining_after_burn() {
 
 		XykStorage::transfer(0, 2, 3, 1000000).unwrap();
 		XykStorage::transfer(1, 2, 3, 1000000).unwrap();
-		XykStorage::mint_liquidity(Origin::signed(3), 0, 1, 5000, 5001);
+		XykStorage::mint_liquidity(Origin::signed(3), 0, 1, 5000, 5001).unwrap();
 
 		assert_eq!(XykStorage::reserved(2, 2), 5000);
 		assert_eq!(XykStorage::liquidity_mining_active_user((2, 2)), 5000);
@@ -1004,7 +1003,7 @@ fn liquidity_rewards_rewards_not_gaining_after_burn() {
 		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (499977257, 0));
 		assert_eq!(XykStorage::calculate_rewards_amount(3, 2).unwrap(), (499977257, 0));
 
-		XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 5000);
+		XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 5000).unwrap();
 		assert_eq!(XykStorage::reserved(2, 2), 0);
 		assert_eq!(XykStorage::liquidity_mining_active_user((2, 2)), 0);
 		assert_eq!(XykStorage::balance(2, 2), 0);

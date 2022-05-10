@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 REPO_ROOT=$(readlink -f $(dirname $(readlink -f $0)))
 ARTIFACTS_DIR=$REPO_ROOT/docker-artifacts
 OUTPUT_DIR=docker-build/

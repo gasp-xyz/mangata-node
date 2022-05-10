@@ -50,5 +50,5 @@ docker run \
         -v ${CARGO_CACHE_GIT}:/opt/cargo/git \
         -v ${CARGO_CACHE_REGISTRY}:/opt/cargo/registry \
 	-e CARGO_TARGET_DIR="/code/${BUILD_OUTPUT_DIR}" \
-	-it ${DOCKER_BUILDER_IMAGE} \
+	-i ${DOCKER_BUILDER_IMAGE} \
 	cargo ${CARGO_COMMAND} --manifest-path=/code/Cargo.toml ${CARGO_ARGS}

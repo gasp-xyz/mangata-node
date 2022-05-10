@@ -62,7 +62,7 @@ jobs:
         name: Check formatting
         run: |
           docker pull mangatasolutions/node-builder:0.1
-          ./docker-cargo.sh fmt --all -- --check
+          DISABLE_CARGO_CACHE=1 ./docker-cargo.sh fmt --all -- --check
 
   # clippy:
   #   name: Clippy check

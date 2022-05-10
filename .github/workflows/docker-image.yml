@@ -49,19 +49,20 @@ jobs:
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-      # -
-      #   name: Build Docker Image
-      #   uses: docker/build-push-action@v2
-      #   with:
-      #     file: "devops/dockerfiles/node/Dockerfile"
-      #     load: true
-      #     tags: mangatasolutions/mangata-node-fmt-check:${{ github.sha }}
-      #     target: env_builder
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Pull builder image
+        run: |
+          docker pull mangatasolutions/node-builder:0.1
       -
         name: Check formatting
         run: |
           docker pull mangatasolutions/node-builder:0.1
-          docker run --user $(id -u):$(id -g) -v $(pwd):/code  mangatasolutions/node-builder:0.1 cargo fmt -- --check
+          ./docker-cargo.sh fmt --check --all
 
   # clippy:
   #   name: Clippy check

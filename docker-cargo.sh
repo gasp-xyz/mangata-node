@@ -28,7 +28,7 @@ else
 	exit -1
 fi
 
-if [ -e ${CARGO_HOME} ] && [ -n "${DISABLE_CARGO_CACHE}" ]; then
+if [ -e ${CARGO_HOME} ] && [ -z "${DISABLE_CARGO_CACHE}" ]; then
     CARGO_CACHE_GIT=${CARGO_HOME}/git
     CARGO_CACHE_REGISTRY=${CARGO_HOME}/registry
 else

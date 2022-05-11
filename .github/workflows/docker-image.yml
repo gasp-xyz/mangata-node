@@ -58,7 +58,7 @@ jobs:
       -
         name: Check formatting
         run: |
-          DISABLE_CARGO_CACHE=1 bash -x './docker-cargo.sh fmt --all -- --check'
+          DISABLE_CARGO_CACHE=1 /bin/bash -x '/docker-cargo.sh fmt --all -- --check'
 
   clippy-check:
     name: Clippy check
@@ -83,7 +83,7 @@ jobs:
         name: Run clippy
         run: |
           docker pull mangatasolutions/node-builder:0.1
-          DISABLE_CARGO_CACHE=1 bash -x './docker-cargo.sh clippy -p pallet-xyk -p pallet-assets-info -p pallet-bridge'
+          DISABLE_CARGO_CACHE=1 /bin/bash -x './docker-cargo.sh clippy -p pallet-xyk -p pallet-assets-info -p pallet-bridge'
 
   # unit-tests:
   #   name: Unit Tests

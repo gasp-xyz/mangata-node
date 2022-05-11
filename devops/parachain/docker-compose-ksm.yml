@@ -74,7 +74,7 @@ services:
   para_alice:
     image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangata-node:0.11.1}
     environment:
-      - ${RUST_LOG:-info}
+      - RUST_LOG=info,xyk=trace,rpc=trace
       - LD_PRELOAD=${LD_PRELOAD}
     entrypoint: ""
     command: >
@@ -109,7 +109,7 @@ services:
   para_bob:
     image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangatasolutions/mangata-node:0.11.1}
     environment:
-      - ${RUST_LOG:-info}
+      - RUST_LOG=info,xyk=trace,rpc=trace
       - LD_PRELOAD=${LD_PRELOAD}
     entrypoint: ""
     command:

@@ -6,6 +6,8 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+pub(crate) const LOG_TARGET: &'static str = "xyk";
+
 use smallvec::smallvec;
 use sp_api::impl_runtime_apis;
 use sp_core::{
@@ -1582,9 +1584,12 @@ impl_runtime_apis! {
 					not_yet_claimed,
 																	to_be_claimed
 																},
-				Err(_) => RpcRewardsResult{
+				Err(e) => {
+					log::info!(target: "xyk" ,"{:?}", e);
+					RpcRewardsResult{
 					not_yet_claimed: 0u32.into(),
 					to_be_claimed: 0u32.into()
+					}
 				},
 			}
 		}

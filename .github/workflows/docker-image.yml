@@ -122,79 +122,59 @@ jobs:
           reporter: jest-junit
 
 
-  # unit-test:
-  #   runs-on: ubuntu-latest
-  #   if: "!contains(github.event.pull_request.labels.*.name, 'skip-build') && !${{ github.event.inputs.e2eBranch }}"
-  #   steps:
-  #     -
-  #       name: Checkout
-  #       uses: actions/checkout@v2
-  #     -
-  #       name: Build Docker Image
-  #       uses: docker/build-push-action@v2
-  #       with:
-  #         file: "devops/dockerfiles/node/Dockerfile"
-  #         load: true
-  #         tags: mangatasolutions/mangata-node-ut:${{ github.sha }}
-  #         target: env_builder
-  #     -
-  #       name: Run Tests
-  #       run: |
-  #         pwd
-  #         ls -la
-  #         docker run mangatasolutions/mangata-node-ut:${{ github.sha }} /bin/bash -c \
-  #           'cargo test -p pallet-xyk --no-run'
-  #         docker run mangatasolutions/mangata-node-ut:${{ github.sha }} /bin/bash -c \
-  #           'cargo test -- -Z unstable-options --format json --report-time |cargo2junit' | tee ut-results.xml
-  #         # remove empty tests suites
-  #         sed -i '/<testsuite.*\/>$/d' ut-results.xml
-  #         sed -i 's/<testsuites>/<testsuites time="0">/g' ut-results.xml
-  #         cat ut-results.xml
-  #     - name: Test Report
-  #       uses: dorny/test-reporter@v1
-  #       if: success() || failure()
-  #       with:
-  #         name: Unit Tests
-  #         path: ut-results.xml
-  #         reporter: jest-junit
-  #
-  # build:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     -
-  #       name: Debug info about publishing.
-  #       run: |
-  #         echo ${{ github.ref }} == 'refs/heads/develop'
-  #         echo ${{ github.ref }}
-  #     -
-  #       name: Checkout
-  #       uses: actions/checkout@v2
-  #     -
-  #       name: Set up QEMU
-  #       uses: docker/setup-qemu-action@v1
-  #     -
-  #       name: Set up Docker Buildx
-  #       uses: docker/setup-buildx-action@v1
-  #     -
-  #       name: Build Only
-  #       id: docker_build
-  #       if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
-  #       uses: docker/build-push-action@v2
-  #       with:
-  #         file: "devops/dockerfiles/node/Dockerfile"
-  #         build-args: |
-  #           CARGO_FEATURES=enable-trading
-  #         push: false
-  #         tags: mangatasolutions/mangata-node:latest,mangatasolutions/mangata-node:${{ github.sha }}
-  #         outputs: type=docker,dest=/tmp/${{ github.sha }}.tar
-  #     -
-  #       name: Upload artifact
-  #       uses: actions/upload-artifact@v2
-  #       if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
-  #       with:
-  #         name: ${{ github.sha }}
-  #         path: /tmp/${{ github.sha }}.tar
-  #
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Debug info about publishing.
+        run: |
+          echo ${{ github.ref }} == 'refs/heads/develop'
+          echo ${{ github.ref }}
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Pull builder image
+        run: |
+          docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
+      -
+        name: Build node binary
+        run: |
+          DISABLE_CARGO_CACHE=1 ./docker-cargo.sh build --release --features=enable-trading
+
+      -
+        name: Build node image
+        id: docker_build
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
+        uses: docker/build-push-action@v2
+        with:
+          file: "devops/dockerfiles/node/Dockerfile"
+          build-args: |
+            WASM=./docker-artifacts/release/wbuild/mangata-runtime/mangata_runtime.compact.compressed.wasm
+            NODE_BINARY=./docker-artifacts/release/mangata-node
+          push: false
+          tags: mangatasolutions/mangata-node:latest,mangatasolutions/mangata-node:${{ github.sha }}
+          outputs: type=docker,dest=/tmp/${{ github.sha }}.tar
+      -
+        name: Upload artifact
+        uses: actions/upload-artifact@v2
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
+        with:
+          name: ${{ github.sha }}
+          path: /tmp/${{ github.sha }}.tar
+
   # e2e-test:
   #   needs: build
   #   runs-on: self-hosted

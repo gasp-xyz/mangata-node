@@ -108,10 +108,11 @@ jobs:
         name: Run unit tests
         run: |
           docker pull mangatasolutions/node-builder:0.1
-          DISABLE_CARGO_CACHE=1 ./docker-cargo.sh test -- -Z unstable-options --format json --report-time |cargo2junit | tee ut-results.xml
-          sed -i '/<testsuite.*\/>$/d' ut-results.xml
-          sed -i 's/<testsuites>/<testsuites time="0">/g' ut-results.xml
-          cat ut-results.xml
+          DISABLE_CARGO_CACHE=1 ./docker-cargo.sh test -- -Z unstable-options --format json --report-time 
+          # |cargo2junit | tee ut-results.xml
+          # sed -i '/<testsuite.*\/>$/d' ut-results.xml
+          # sed -i 's/<testsuites>/<testsuites time="0">/g' ut-results.xml
+          # cat ut-results.xml
       - name: Test Report
         uses: dorny/test-reporter@v1
         if: success() || failure()

@@ -54,7 +54,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Pull builder image
         run: |
-          docker pull ${{ DOCKER_BUILDER_IMAGE }}
+          docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
       -
         name: Check formatting
         run: |

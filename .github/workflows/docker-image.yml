@@ -31,6 +31,8 @@ on:
           required: true
           default: false
 
+env:
+  DOCKER_BUILDER_IMAGE: mangatasolutions/node-builder:0.1
 
 jobs:
 

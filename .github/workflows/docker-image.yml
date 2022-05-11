@@ -15,11 +15,6 @@ on:
   workflow_dispatch:
     # For manually trigger
     inputs:
-        dockerBuilderImage:
-          description: 'docker image with rust environment'
-          required: true
-          default: "mangatasolutions/node-builder:0.1"
-
         e2eBranch:
           description: 'Name of the e2e target branch'
           required: false
@@ -37,7 +32,7 @@ on:
           default: false
 
 env:
-  DOCKER_BUILDER_IMAGE="${{ github.event.inputs.dockerBuilderImage }}"
+  DOCKER_BUILDER_IMAGE="mangatasolutions/node-builder:0.1"
 
 jobs:
 

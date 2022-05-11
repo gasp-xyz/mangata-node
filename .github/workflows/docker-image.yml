@@ -39,8 +39,6 @@ jobs:
   rustfmt-check:
     name: Formatting check
     runs-on: ubuntu-latest
-    env:
-      DOCKER_BUILDER_IMAGE: mangatasolutions/node-builder:0.1
     steps:
       -
         name: Checkout

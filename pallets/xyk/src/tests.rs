@@ -509,6 +509,7 @@ fn liquidity_rewards_claim_more_NW() {
 fn liquidity_rewards_burn_W() {
 	new_test_ext().execute_with(|| {
 		initialize_liquidity_rewards();
+	//	env_logger::init();
 		System::set_block_number(300001);
 		XykStorage::transfer(
 			0,
@@ -983,7 +984,7 @@ fn liquidity_rewards_transfer_working_after_deactivate() {
 #[serial]
 fn liquidity_rewards_rewards_not_gaining_after_burn() {
 	new_test_ext().execute_with(|| {
-		env_logger::init();
+		
 		initialize_liquidity_rewards();
 
 		XykStorage::transfer(0, 2, 3, 1000000).unwrap();

@@ -105,7 +105,7 @@ jobs:
         run: |
           docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
       -
-        name: Run clippy
+        name: Run unit tests
         run: |
           docker pull mangatasolutions/node-builder:0.1
           DISABLE_CARGO_CACHE=1 ./docker-cargo.sh test

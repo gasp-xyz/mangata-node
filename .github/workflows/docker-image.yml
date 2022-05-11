@@ -17,7 +17,7 @@ on:
     inputs:
         dockerBuilderImage:
           description: 'docker image with rust environment'
-          required: false
+          required: true
           default: "mangatasolutions/node-builder:0.1"
 
         e2eBranch:
@@ -36,6 +36,8 @@ on:
           required: true
           default: false
 
+env:
+  DOCKER_BUILDER_IMAGE="${{ github.event.inputs.dockerBuilderImage }}"
 
 jobs:
 
@@ -57,59 +59,62 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Pull builder image
         run: |
-          docker pull mangatasolutions/node-builder:0.1
+          docker pull ${{ DOCKER_BUILDER_IMAGE }}
       -
         name: Check formatting
         run: |
-          docker pull mangatasolutions/node-builder:0.1
           DISABLE_CARGO_CACHE=1 ./docker-cargo.sh fmt --all -- --check
 
-  clippy-check:
-    name: Clippy check
-    runs-on: ubuntu-latest
-    steps:
-      -
-        name: Checkout
-        uses: actions/checkout@v2
-      -
-        name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-      -
-        name: Login to Docker Hub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Pull builder image
-        run: |
-          docker pull mangatasolutions/node-builder:0.1
-      -
-        name: Run clippy
-        run: |
-          docker pull mangatasolutions/node-builder:0.1
-          DISABLE_CARGO_CACHE=1 ./docker-cargo.sh clippy -p pallet-xyk -p pallet-assets-info -p pallet-bridge
-
-  # clippy:
+  # clippy-check:
   #   name: Clippy check
   #   runs-on: ubuntu-latest
-  #   if: "!contains(github.event.pull_request.labels.*.name, 'skip-build') && !${{ github.event.inputs.e2eBranch }}"
-  #
   #   steps:
-  #     - uses: actions/checkout@v2
-  #     - name: Install latest nightly
-  #       uses: actions-rs/toolchain@v1
+  #     -
+  #       name: Checkout
+  #       uses: actions/checkout@v2
+  #     -
+  #       name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v1
+  #     -
+  #       name: Login to Docker Hub
+  #       uses: docker/login-action@v1
   #       with:
-  #           toolchain: nightly-2021-10-19
-  #           target: wasm32-unknown-unknown
-  #           override: true
-  #           components: clippy
-  #
-  #     - name: Run cargo check
-  #       uses: actions-rs/cargo@v1
+  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
+  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
+  #     - name: Pull builder image
+  #       run: |
+  #         docker pull mangatasolutions/node-builder:0.1
+  #     -
+  #       name: Run clippy
+  #       run: |
+  #         docker pull mangatasolutions/node-builder:0.1
+  #         DISABLE_CARGO_CACHE=1 ./docker-cargo.sh clippy -p pallet-xyk -p pallet-assets-info -p pallet-bridge
+
+  # unit-tests:
+  #   name: Unit Tests
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     -
+  #       name: Checkout
+  #       uses: actions/checkout@v2
+  #     -
+  #       name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v1
+  #     -
+  #       name: Login to Docker Hub
+  #       uses: docker/login-action@v1
   #       with:
-  #         command: clippy
-  #         args: -p pallet-xyk -p pallet-assets-info -p pallet-bridge
-  #
+  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
+  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
+  #     - name: Pull builder image
+  #       run: |
+  #         docker pull mangatasolutions/node-builder:0.1
+  #     -
+  #       name: Run clippy
+  #       run: |
+  #         docker pull mangatasolutions/node-builder:0.1
+  #         DISABLE_CARGO_CACHE=1 ./docker-cargo.sh clippy -p pallet-xyk -p pallet-assets-info -p pallet-bridge
+
   # unit-test:
   #   runs-on: ubuntu-latest
   #   if: "!contains(github.event.pull_request.labels.*.name, 'skip-build') && !${{ github.event.inputs.e2eBranch }}"

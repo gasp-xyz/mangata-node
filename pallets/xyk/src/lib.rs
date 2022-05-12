@@ -1000,6 +1000,8 @@ impl<T: Config> Pallet<T> {
 
 		let liquidity_assets_amount: Balance =
 			LiquidityMiningActiveUser::<T>::get((&user, &liquidity_asset_id));
+		let activated_liquidity_pool: Balance =
+			LiquidityMiningActivePool::<T>::get(&liquidity_asset_id);
 
 		let liquidity_assets_burned_u256: U256 = liquidity_assets_burned.into();
 
@@ -1014,21 +1016,32 @@ impl<T: Config> Pallet<T> {
 			.checked_div(liquidity_assets_amount.into())
 			.ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
 
+		let user_work_new = user_work_total
+			.checked_sub(user_work_burned)
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+		let user_missing_new = user_missing_at_checkpoint
+			.checked_sub(user_missing_burned)
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+
+		let mut pool_work_new = U256::from(0);
+		let mut pool_missing_new = U256::from(0);
+
+		if activated_liquidity_pool != liquidity_assets_burned {
+			pool_work_new = pool_work_total
+				.checked_sub(user_work_burned)
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			pool_missing_new = pool_missing_at_checkpoint
+				.checked_sub(user_missing_burned)
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+		}
+
 		LiquidityMiningUser::<T>::insert(
 			(user.clone(), &liquidity_asset_id),
-			(
-				current_time,
-				user_work_total - user_work_burned,
-				user_missing_at_checkpoint - user_missing_burned,
-			),
+			(current_time, user_work_new, user_missing_new),
 		);
 		LiquidityMiningPool::<T>::insert(
 			&liquidity_asset_id,
-			(
-				current_time,
-				pool_work_total - user_work_burned,
-				pool_missing_at_checkpoint - user_missing_burned,
-			),
+			(current_time, pool_work_new, pool_missing_new),
 		);
 
 		LiquidityMiningActiveUser::<T>::try_mutate((&user, liquidity_asset_id), |active_amount| {

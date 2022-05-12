@@ -720,11 +720,7 @@ impl<T: Config> Pallet<T> {
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
 	) -> Result<(Balance, Balance), DispatchError> {
-		log!(
-			info,
-			"calculate_rewards_amount start: ",
-			
-		);
+		log!(info, "calculate_rewards_amount start: ",);
 
 		ensure!(
 			<T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some(),
@@ -782,11 +778,7 @@ impl<T: Config> Pallet<T> {
 			current_rewards,
 			burned_not_claimed_rewards,
 		);
-		log!(
-			info,
-			"calculate_rewards_amount end: ",
-			
-		);
+		log!(info, "calculate_rewards_amount end: ",);
 		Ok((current_rewards, burned_not_claimed_rewards))
 	}
 
@@ -811,7 +803,7 @@ impl<T: Config> Pallet<T> {
 			)
 			.map_err(|_| DispatchError::from(Error::<T>::NotEnoughtRewardsEarned))?;
 		}
-		
+
 		log!(
 			info,
 			"calculate_rewards: ({}, {}, {}",
@@ -1138,7 +1130,7 @@ impl<T: Config> Pallet<T> {
 			liquidity_assets_amount,
 			liquidity_assets_burned,
 			LiquidityMiningActiveUser::<T>::get((&user, &liquidity_asset_id)),
-			LiquidityMiningActivePool::<T>::get( &liquidity_asset_id),
+			LiquidityMiningActivePool::<T>::get(&liquidity_asset_id),
 			rewards_to_be_claimed,
 			rewards_amount,
 			rewards_claimed_new,
@@ -2576,11 +2568,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		liquidity_asset_id: Self::CurrencyId,
 		amount: Self::Balance,
 	) -> DispatchResult {
-		log!(
-			
-			info, "deactivate_liquidity start******************** "
-			
-		);
+		log!(info, "deactivate_liquidity start******************** ");
 		ensure!(
 			<T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some(),
 			Error::<T>::NotAPromotedPool
@@ -2593,11 +2581,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		Pallet::<T>::set_liquidity_burning_checkpoint(user.clone(), liquidity_asset_id, amount)?;
 
 		Pallet::<T>::deposit_event(Event::LiquidityDeactivated(user, liquidity_asset_id, amount));
-		log!(
-			
-			info, "deactivate_liquidity start end*********************** "
-			
-		);
+		log!(info, "deactivate_liquidity start end*********************** ");
 		Ok(())
 	}
 

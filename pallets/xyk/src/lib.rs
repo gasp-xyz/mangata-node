@@ -352,7 +352,7 @@ pub mod pallet {
 		/// Second asset amount exceeded expectations
 		SecondAssetAmountExceededExpectations,
 		/// Math overflow
-		MathOverflow,
+		// MathOverflow,
 		/// Liquidity token creation failed
 		LiquidityTokenCreationFailed,
 		/// Not enought rewards earned
@@ -368,6 +368,32 @@ pub mod pallet {
 		CalcWorkMathOverflow1,
 		CalcWorkMathOverflow2,
 		CalcWorkMathOverflow3,
+		MathOverflow1,
+		MathOverflow2,
+		MathOverflow3,
+		MathOverflow4,
+		MathOverflow5,
+		MathOverflow6,
+		MathOverflow7,
+		MathOverflow8,
+		MathOverflow9,
+		MathOverflow10,
+		MathOverflow11,
+		MathOverflow12,
+		MathOverflow13,
+		MathOverflow14,
+		MathOverflow15,
+		MathOverflow16,
+		MathOverflow17,
+		MathOverflow18,
+		MathOverflow19,
+		MathOverflow20,
+		MathOverflow21,
+		MathOverflow22,
+		MathOverflow23,
+		MathOverflow24,
+		MathOverflow25,
+		MathOverflow26,
 	}
 
 	#[pallet::event]
@@ -781,10 +807,10 @@ impl<T: Config> Pallet<T> {
 		let asymptote_u256: U256 = asymptote.into();
 		let cummulative_work_new_max_possible: U256 = asymptote_u256
 			.checked_mul(U256::from(time_passed))
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow1))?;
 		let base = missing_at_last_checkpoint
 			.checked_mul(U256::from(106))
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))? /
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow2))? /
 			U256::from(6);
 
 		let precision: u32 = 10000;
@@ -793,7 +819,7 @@ impl<T: Config> Pallet<T> {
 		let cummulative_missing_new = base - base * U256::from(precision) / q_pow;
 		let cummulative_work_new = cummulative_work_new_max_possible
 			.checked_sub(cummulative_missing_new)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow3))?;
 		let work_total = cummulative_work_in_last_checkpoint + cummulative_work_new;
 
 		Ok(work_total)
@@ -963,7 +989,7 @@ impl<T: Config> Pallet<T> {
 				Err(())
 			}
 		})
-		.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
+		.map_err(|_| DispatchError::from(Error::<T>::MathOverflow4))?;
 
 		LiquidityMiningActivePool::<T>::try_mutate(liquidity_asset_id, |active_amount| {
 			if let Some(val) = active_amount.checked_add(liquidity_assets_added) {
@@ -973,7 +999,7 @@ impl<T: Config> Pallet<T> {
 				Err(())
 			}
 		})
-		.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
+		.map_err(|_| DispatchError::from(Error::<T>::MathOverflow5))?;
 
 		<T as Config>::Currency::reserve(
 			liquidity_asset_id.into(),
@@ -1004,12 +1030,12 @@ impl<T: Config> Pallet<T> {
 
 		let user_work_burned: U256 = liquidity_assets_burned_u256
 			.checked_mul(user_work_total)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow6))?
 			.checked_div(liquidity_assets_amount.into())
 			.ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
 		let user_missing_burned: U256 = liquidity_assets_burned_u256
 			.checked_mul(user_missing_at_checkpoint)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow7))?
 			.checked_div(liquidity_assets_amount.into())
 			.ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
 
@@ -1154,19 +1180,19 @@ impl<T: Config> Pallet<T> {
 
 		let numerator: U256 = input_amount_with_fee
 			.checked_mul(output_reserve_saturated)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow8))?;
 
 		let denominator: U256 = input_reserve_saturated
 			.saturating_mul(10000.into())
 			.checked_add(input_amount_with_fee)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow9))?;
 
 		let result_u256 = numerator
 			.checked_div(denominator)
 			.ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
 
 		let result = Balance::try_from(result_u256)
-			.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
+			.map_err(|_| DispatchError::from(Error::<T>::MathOverflow10))?;
 		log!(
 			info,
 			"calculate_sell_price: ({}, {}, {}) -> {}",
@@ -1194,7 +1220,7 @@ impl<T: Config> Pallet<T> {
 			.checked_div(denominator)
 			.ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
 		let result = Balance::try_from(result_u256)
-			.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
+			.map_err(|_| DispatchError::from(Error::<T>::MathOverflow11))?;
 		log!(
 			info,
 			"calculate_sell_price_no_fee: ({}, {}, {}) -> {}",
@@ -1756,7 +1782,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		let (input_reserve, output_reserve) =
 			Pallet::<T>::get_reserves(sold_asset_id, bought_asset_id)?;
 
-		ensure!(input_reserve.checked_add(sold_asset_amount).is_some(), Error::<T>::MathOverflow);
+		ensure!(input_reserve.checked_add(sold_asset_amount).is_some(), Error::<T>::MathOverflow12);
 
 		// Calculate bought asset amount to be received by paying sold asset amount
 		let bought_asset_amount =
@@ -1937,7 +1963,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		//     pool_fee_amount = min_fee - buy_and_burn_amount - treasury_amount;
 		// }
 
-		ensure!(input_reserve.checked_add(sold_asset_amount).is_some(), Error::<T>::MathOverflow);
+		ensure!(input_reserve.checked_add(sold_asset_amount).is_some(), Error::<T>::MathOverflow13);
 
 		// Getting users token balances
 		let sold_asset_free_balance: Self::Balance =
@@ -2097,7 +2123,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			multiply_by_rational(first_asset_amount, second_asset_reserve, first_asset_reserve)
 				.map_err(|_| Error::<T>::UnexpectedFailure)?
 				.checked_add(1)
-				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow14))?;
 		let liquidity_assets_minted =
 			multiply_by_rational(first_asset_amount, total_liquidity_assets, first_asset_reserve)
 				.map_err(|_| Error::<T>::UnexpectedFailure)?;
@@ -2240,7 +2266,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			LiquidityMiningActiveUser::<T>::get((&sender, &liquidity_asset_id));
 		let total_liquidity_tokens_user_owned = liquidity_token_free_balance
 			.checked_add(liquidity_token_activated_balance)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow15))?;
 
 		ensure!(
 			total_liquidity_tokens_user_owned >= liquidity_asset_amount,
@@ -2542,7 +2568,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		)
 		.map_err(|_| Error::<T>::UnexpectedFailure)?
 		.checked_add(1)
-		.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+		.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow16))?;
 		let first_asset_amount = multiply_by_rational(
 			liquidity_token_amount,
 			first_asset_reserve,
@@ -2550,7 +2576,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		)
 		.map_err(|_| Error::<T>::UnexpectedFailure)?
 		.checked_add(1)
-		.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+		.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow17))?;
 
 		log!(
 			info,

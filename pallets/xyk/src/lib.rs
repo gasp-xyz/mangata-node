@@ -720,6 +720,12 @@ impl<T: Config> Pallet<T> {
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
 	) -> Result<(Balance, Balance), DispatchError> {
+		log!(
+			info,
+			"calculate_rewards_amount start: ",
+			
+		);
+
 		ensure!(
 			<T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some(),
 			Error::<T>::NotAPromotedPool
@@ -762,6 +768,25 @@ impl<T: Config> Pallet<T> {
 
 		let current_rewards = Self::calculate_rewards(work_user, work_pool, liquidity_asset_id)?;
 
+		log!(
+			info,
+			"calculate_rewards_amount: ({}, {}, {}, {}, {}, {}, {}, {}, {}, {}",
+			user_last_checkpoint,
+			user_cummulative_work_in_last_checkpoint,
+			user_missing_at_last_checkpoint,
+			pool_last_checkpoint,
+			pool_cummulative_work_in_last_checkpoint,
+			pool_missing_at_last_checkpoint,
+			work_user,
+			work_pool,
+			current_rewards,
+			burned_not_claimed_rewards,
+		);
+		log!(
+			info,
+			"calculate_rewards_amount end: ",
+			
+		);
 		Ok((current_rewards, burned_not_claimed_rewards))
 	}
 
@@ -786,7 +811,14 @@ impl<T: Config> Pallet<T> {
 			)
 			.map_err(|_| DispatchError::from(Error::<T>::NotEnoughtRewardsEarned))?;
 		}
-
+		
+		log!(
+			info,
+			"calculate_rewards: ({}, {}, {}",
+			available_rewards_for_pool,
+			work_user,
+			work_pool,
+		);
 		Ok(user_mangata_rewards_amount)
 	}
 
@@ -1099,6 +1131,18 @@ impl<T: Config> Pallet<T> {
 			liquidity_assets_burned.into(),
 		);
 
+		log!(
+			info,
+			"set_liquidity_burning_checkpoint: ({}, {}, {}, {}, {}, {}, {}, {}",
+			liquidity_asset_id,
+			liquidity_assets_amount,
+			liquidity_assets_burned,
+			LiquidityMiningActiveUser::<T>::get((&user, &liquidity_asset_id)),
+			LiquidityMiningActivePool::<T>::get( &liquidity_asset_id),
+			rewards_to_be_claimed,
+			rewards_amount,
+			rewards_claimed_new,
+		);
 		Ok(())
 	}
 
@@ -2532,6 +2576,11 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		liquidity_asset_id: Self::CurrencyId,
 		amount: Self::Balance,
 	) -> DispatchResult {
+		log!(
+			
+			info, "deactivate_liquidity start******************** "
+			
+		);
 		ensure!(
 			<T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some(),
 			Error::<T>::NotAPromotedPool
@@ -2544,7 +2593,11 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		Pallet::<T>::set_liquidity_burning_checkpoint(user.clone(), liquidity_asset_id, amount)?;
 
 		Pallet::<T>::deposit_event(Event::LiquidityDeactivated(user, liquidity_asset_id, amount));
-
+		log!(
+			
+			info, "deactivate_liquidity start end*********************** "
+			
+		);
 		Ok(())
 	}
 

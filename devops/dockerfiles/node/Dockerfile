@@ -1,4 +1,4 @@
-FROM mangatasolutions/node-runner:1.0
+FROM mangatasolutions/node-runner:0.1
 ARG NODE_BINARY
 ARG WASM
 COPY $NODE_BINARY /mangata/node

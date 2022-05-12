@@ -1019,7 +1019,7 @@ fn bug2() {
 				pool_missing_at_last_checkpoint
 			)
 			.unwrap(),
-			U256::from(154094)
+			U256::from(154093)
 		);
 	});
 }

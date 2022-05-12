@@ -822,6 +822,16 @@ impl<T: Config> Pallet<T> {
 		cummulative_work_in_last_checkpoint: U256,
 		missing_at_last_checkpoint: U256,
 	) -> Result<U256, DispatchError> {
+		log!(
+			info,
+			"calculate_work: asymptote={}, time={}, last_checkpoint={}, cummulative_work_in_last_checkpoint={}, missing_at_last_checkpoint{}",
+			asymptote,
+			time,
+			last_checkpoint,
+			cummulative_work_in_last_checkpoint,
+			missing_at_last_checkpoint,
+		);
+
 		let time_passed = time
 			.checked_sub(last_checkpoint)
 			.ok_or_else(|| DispatchError::from(Error::<T>::PastTimeCalculation))?;
@@ -838,9 +848,17 @@ impl<T: Config> Pallet<T> {
 			U256::from(6);
 
 		let precision: u32 = 10000;
+		log!(info, "calculate_work::q_pow input Q={} time_passed={}", Q, time_passed,);
 		let q_pow = Self::calculate_q_pow(Q, time_passed);
+		log!(info, "calculate_work::q_pow output = {}", q_pow,);
 
 		let cummulative_missing_new = base - base * U256::from(precision) / q_pow;
+		log!(
+			info,
+			"cummulative_work_new_max_possible = {}, cummulative_missing_new = {}",
+			cummulative_work_new_max_possible,
+			cummulative_missing_new
+		);
 		let cummulative_work_new = cummulative_work_new_max_possible
 			.checked_sub(cummulative_missing_new)
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow3))?;

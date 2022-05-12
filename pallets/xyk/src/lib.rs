@@ -698,21 +698,6 @@ impl<T: Config> Pallet<T> {
 
 		let current_rewards = Self::calculate_rewards(work_user, work_pool, liquidity_asset_id)?;
 
-		log!(
-			info,
-			"calculate_rewards_amount: ({}, {}, {}, {}, {}, {}, {}, {}, {}, {}",
-			user_last_checkpoint,
-			user_cummulative_work_in_last_checkpoint,
-			user_missing_at_last_checkpoint,
-			pool_last_checkpoint,
-			pool_cummulative_work_in_last_checkpoint,
-			pool_missing_at_last_checkpoint,
-			work_user,
-			work_pool,
-			current_rewards,
-			burned_not_claimed_rewards,
-		);
-
 		Ok((current_rewards, burned_not_claimed_rewards))
 	}
 
@@ -737,14 +722,7 @@ impl<T: Config> Pallet<T> {
 			)
 			.map_err(|_| DispatchError::from(Error::<T>::NotEnoughtRewardsEarned))?;
 		}
-		
-		log!(
-			info,
-			"calculate_rewards: ({}, {}, {}",
-			available_rewards_for_pool,
-			work_user,
-			work_pool,
-		);
+
 		Ok(user_mangata_rewards_amount)
 	}
 
@@ -775,6 +753,7 @@ impl<T: Config> Pallet<T> {
 		let q_pow = Self::calculate_q_pow(Q, time_passed);
 
 		let cummulative_missing_new = base - base * U256::from(precision) / q_pow;
+
 		let cummulative_work_new = cummulative_work_new_max_possible
 			.checked_sub(cummulative_missing_new)
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalcWorkMathOverflow3))?;
@@ -984,9 +963,10 @@ impl<T: Config> Pallet<T> {
 		let liquidity_assets_amount: Balance =
 			LiquidityMiningActiveUser::<T>::get((&user, &liquidity_asset_id));
 
-		let liquidity_assets_burned_u256: U256 = liquidity_assets_burned.into();
+		let activated_liquidity_pool: Balance =
+			LiquidityMiningActivePool::<T>::get(&liquidity_asset_id);
 
-		
+		let liquidity_assets_burned_u256: U256 = liquidity_assets_burned.into();
 
 		let user_work_burned: U256 = liquidity_assets_burned_u256
 			.checked_mul(user_work_total)
@@ -999,33 +979,43 @@ impl<T: Config> Pallet<T> {
 			.checked_div(liquidity_assets_amount.into())
 			.ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
 
+		let user_work_new = user_work_total
+			.checked_sub(user_work_burned)
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+		let user_missing_new = user_missing_at_checkpoint
+			.checked_sub(user_missing_burned)
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+
+		let mut pool_work_new = U256::from(0);
+		let mut pool_missing_new = U256::from(0);
+
+		if activated_liquidity_pool != liquidity_assets_burned {
+			pool_work_new = pool_work_total
+				.checked_sub(user_work_burned)
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			pool_missing_new = pool_missing_at_checkpoint
+				.checked_sub(user_missing_burned)
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+		}
+
 		LiquidityMiningUser::<T>::insert(
 			(user.clone(), &liquidity_asset_id),
-			(
-				current_time,
-				user_work_total - user_work_burned,
-				user_missing_at_checkpoint - user_missing_burned,
-			),
+			(current_time, user_work_new, user_missing_new),
 		);
 		LiquidityMiningPool::<T>::insert(
 			&liquidity_asset_id,
-			(
-				current_time,
-				pool_work_total - user_work_burned,
-				pool_missing_at_checkpoint - user_missing_burned,
-			),
+			(current_time, pool_work_new, pool_missing_new),
 		);
 
 		LiquidityMiningActiveUser::<T>::try_mutate((&user, liquidity_asset_id), |active_amount| {
-			if let Some(val) = active_amount.checked_sub(liquidity_assets_burned) {				
+			if let Some(val) = active_amount.checked_sub(liquidity_assets_burned) {
 				*active_amount = val;
 				Ok(())
-			} else {				
+			} else {
 				Err(())
 			}
 		})
 		.map_err(|_| DispatchError::from(Error::<T>::NotEnoughAssets))?;
-
 		LiquidityMiningActivePool::<T>::try_mutate(liquidity_asset_id, |active_amount| {
 			if let Some(val) = active_amount.checked_sub(liquidity_assets_burned) {
 				*active_amount = val;
@@ -1038,10 +1028,8 @@ impl<T: Config> Pallet<T> {
 
 		let rewards_to_be_claimed =
 			LiquidityMiningUserToBeClaimed::<T>::get((user.clone(), &liquidity_asset_id));
-
 		let rewards_amount =
 			Self::calculate_rewards(user_work_burned, pool_work_total, liquidity_asset_id)?;
-
 		let rewards_claimed_new = rewards_to_be_claimed + rewards_amount;
 
 		<T as Config>::PoolPromoteApi::claim_pool_rewards(
@@ -1059,18 +1047,6 @@ impl<T: Config> Pallet<T> {
 			liquidity_assets_burned.into(),
 		);
 
-		log!(
-			info,
-			"set_liquidity_burning_checkpoint: ({}, {}, {}, {}, {}, {}, {}, {}",
-			liquidity_asset_id,
-			liquidity_assets_amount,
-			liquidity_assets_burned,
-			LiquidityMiningActiveUser::<T>::get((&user, &liquidity_asset_id)),
-			LiquidityMiningActivePool::<T>::get( &liquidity_asset_id),
-			rewards_to_be_claimed,
-			rewards_amount,
-			rewards_claimed_new,
-		);
 		Ok(())
 	}
 
@@ -2309,27 +2285,26 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		);
 
 		if <T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some() {
-			
-				if liquidity_token_free_balance >= liquidity_asset_amount {
-				
-				} else {
-					let promoted_liquidity_asset_amount_to_settle = liquidity_asset_amount - liquidity_token_free_balance;
+			if liquidity_token_free_balance >= liquidity_asset_amount {
+			} else {
+				let promoted_liquidity_asset_amount_to_settle =
+					liquidity_asset_amount - liquidity_token_free_balance;
 
-					if liquidity_token_activated_balance == promoted_liquidity_asset_amount_to_settle {
-						Pallet::<T>::set_liquidity_burning_checkpoint(
-							sender.clone(),
-							liquidity_asset_id,
-							promoted_liquidity_asset_amount_to_settle,
-						)?;
-						LiquidityMiningUser::<T>::remove((sender.clone(), liquidity_asset_id));
-					} else {
-						Pallet::<T>::set_liquidity_burning_checkpoint(
-							sender.clone(),
-							liquidity_asset_id,
-							promoted_liquidity_asset_amount_to_settle,
-						)?;
-					}
-				};			
+				if liquidity_token_activated_balance == promoted_liquidity_asset_amount_to_settle {
+					Pallet::<T>::set_liquidity_burning_checkpoint(
+						sender.clone(),
+						liquidity_asset_id,
+						promoted_liquidity_asset_amount_to_settle,
+					)?;
+					LiquidityMiningUser::<T>::remove((sender.clone(), liquidity_asset_id));
+				} else {
+					Pallet::<T>::set_liquidity_burning_checkpoint(
+						sender.clone(),
+						liquidity_asset_id,
+						promoted_liquidity_asset_amount_to_settle,
+					)?;
+				}
+			};
 		}
 
 		if liquidity_asset_amount == total_liquidity_assets {

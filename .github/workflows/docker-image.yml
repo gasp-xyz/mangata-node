@@ -154,10 +154,7 @@ jobs:
       -
         name: Build node binary
         run: >
-          pwd &&
-          mkdir -p docker-build/release/wbuild/mangata-runtime/ &&
-          touch docker-build/release/mangata-node &&
-          touch docker-build/release/wbuild/mangata-runtime/mangata_runtime.compact.compressed.wasm
+          DISABLE_CARGO_CACHE=1 ./docker-cargo.sh build --release --features=enable-trading
       -
         name: Build node img
         env:

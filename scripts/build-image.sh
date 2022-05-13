@@ -1,6 +1,10 @@
 #!/bin/bash -xe
 REPO_ROOT=$(readlink -f $(dirname $(dirname $(readlink -f $0))))
-${REPO_ROOT}/docker-cargo.sh build --release
+if [ -z "${SKIP_BUILD}" ]; then 
+    ${REPO_ROOT}/docker-cargo.sh build --release
+else
+    echo "build skipped because SKIP_BUILD flag is set"
+fi
 BUILD_DIR=docker-build/release
 NODE_BINARY=${BUILD_DIR}/mangata-node
 WASM=${BUILD_DIR}/wbuild/mangata-runtime/mangata_runtime.compact.compressed.wasm

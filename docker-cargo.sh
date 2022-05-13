@@ -8,7 +8,14 @@ CARGO_HOME=${CARGO_HOME:-$HOME/.cargo}
 DOCKER_BUILDER_IMAGE=${DOCKER_BUILDER_IMAGE:-mangatasolutions/node-builder:0.1}
 DOCKER_USER="$(id -u):$(id -g)"
 DOCKER_JOB_NAME=cargo-wrapper
+if [ -n "${DISABLE_TTY}" ]; then
+    ALLOCATE_TTY_OR_NOT="-i"
+else
+    ALLOCATE_TTY_OR_NOT="-it"
+fi
+
 CARGO_COMMAND=$1
+
 CARGO_ARGS=${@:2}
 
 if [ "$CARGO_COMMAND" == "kill" ]; then
@@ -42,6 +49,8 @@ else
     fi
 fi
 
+
+
 docker run \
 	--rm \
 	--name=${DOCKER_JOB_NAME} \
@@ -50,5 +59,5 @@ docker run \
         -v ${CARGO_CACHE_GIT}:/opt/cargo/git \
         -v ${CARGO_CACHE_REGISTRY}:/opt/cargo/registry \
 	-e CARGO_TARGET_DIR="/code/${BUILD_OUTPUT_DIR}" \
-	-i ${DOCKER_BUILDER_IMAGE} \
+	${ALLOCATE_TTY_OR_NOT} ${DOCKER_BUILDER_IMAGE} \
 	cargo ${CARGO_COMMAND} --manifest-path=/code/Cargo.toml ${CARGO_ARGS}

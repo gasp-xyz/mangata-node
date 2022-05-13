@@ -154,12 +154,14 @@ jobs:
       -
         name: Build node binary
         run: >
+          find . && 
           DISABLE_CARGO_CACHE=1 ./docker-cargo.sh build --release --features=enable-trading
       -
         name: Build node img
         env:
           DOCKER_IMG_TAG: "mangatasolutions/mangata-node:${{ github.sha }}"
         run: >
+          find . &&
           SKIP_BUILD=1 ./scripts/build-image.sh ${DOCKER_IMG_TAG} &&
           docker save ${DOCKER_IMG_TAG} -o ${{ github.sha }}
 

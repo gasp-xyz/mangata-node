@@ -365,6 +365,9 @@ pub mod pallet {
 		PoolAlreadyPromoted,
 		/// Sold Amount too low
 		SoldAmountTooLow,
+		CalcWorkMathOverflow1,
+		CalcWorkMathOverflow2,
+		CalcWorkMathOverflow3,
 		MathOverflow1,
 		MathOverflow2,
 		MathOverflow3,
@@ -1083,10 +1086,10 @@ impl<T: Config> Pallet<T> {
 
 		let user_work_new = user_work_total
 			.checked_sub(user_work_burned)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow7))?;
 		let user_missing_new = user_missing_at_checkpoint
 			.checked_sub(user_missing_burned)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow7))?;
 
 		let mut pool_work_new = U256::from(0);
 		let mut pool_missing_new = U256::from(0);
@@ -1094,10 +1097,10 @@ impl<T: Config> Pallet<T> {
 		if activated_liquidity_pool != liquidity_assets_burned {
 			pool_work_new = pool_work_total
 				.checked_sub(user_work_burned)
-				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow7))?;
 			pool_missing_new = pool_missing_at_checkpoint
 				.checked_sub(user_missing_burned)
-				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow7))?;
 		}
 
 		LiquidityMiningUser::<T>::insert(

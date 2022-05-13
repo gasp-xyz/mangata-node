@@ -153,7 +153,7 @@ jobs:
         name: Build node binary
         run: |
           pwd
-          # DISABLE_CARGO_CACHE=1 ./docker-cargo.sh build --release --features=enable-trading
+          DISABLE_CARGO_CACHE=1 ./docker-cargo.sh build --release --features=enable-trading
 
       -
         name: Build node image
@@ -163,8 +163,8 @@ jobs:
         with:
           file: "devops/dockerfiles/node/Dockerfile"
           build-args: |
-            WASM=../../home/runner/work/docker-artifacts/release/wbuild/mangata-runtime/mangata_runtime.compact.compressed.wasm
-            NODE_BINARY=../../home/runner/work/docker-artifacts/release/mangata-node
+            WASM=../../home/runner/work/mangata-node/mangata-node/docker-artifacts/release/wbuild/mangata-runtime/mangata_runtime.compact.compressed.wasm
+            NODE_BINARY=../../home/runner/work/mangata-node/mangata-node/docker-artifacts/release/mangata-node
           push: false
           tags: mangatasolutions/mangata-node:latest,mangatasolutions/mangata-node:${{ github.sha }}
           outputs: type=docker,dest=/tmp/${{ github.sha }}.tar

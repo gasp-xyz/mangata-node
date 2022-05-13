@@ -68,21 +68,26 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_initialize(n: T::BlockNumber) -> Weight {
-			let phase = Phase::<T>::get();
+			let phase = Phase::<T>::get(); // R:1
 			if phase == BootstrapPhase::Finished {
 				return T::DbWeight::get().reads(1)
 			}
 
 			if let Some((start, whitelist_length, public_length)) = BootstrapSchedule::<T>::get() {
+				// R:1
 				// NOTE: arythmetics protected by invariant check in Bootstrap::start_ido
 				let whitelist_start = start;
 				let public_start = start + whitelist_length.into();
 				let finished = start + whitelist_length.into() + public_length.into();
 
 				if n >= finished {
-					Phase::<T>::put(BootstrapPhase::Finished);
+					Phase::<T>::put(BootstrapPhase::Finished); // 1 WRINTE
 					log!(info, "bootstrap event finished");
 					let (mga_valuation, ksm_valuation) = Valuations::<T>::get();
+					// XykFunctionsTrait R: 11 W:12
+					// PoolCreateApi::pool_create R:2  +
+					// ---------------------------------
+					// R: 13 W 12
 					if let Some((liq_asset_id, issuance)) = T::PoolCreateApi::pool_create(
 						Self::vault_address(),
 						T::KSMTokenId::get(),
@@ -90,12 +95,12 @@ pub mod pallet {
 						T::MGATokenId::get(),
 						mga_valuation,
 					) {
-						MintedLiquidity::<T>::put((liq_asset_id, issuance));
+						MintedLiquidity::<T>::put((liq_asset_id, issuance)); // W:1
 					} else {
 						log!(error, "cannot create pool!");
 					}
 					// TODO: include cost of pool_create call
-					T::DbWeight::get().reads_writes(3, 2)
+					T::DbWeight::get().reads_writes(15, 13)
 				} else if n >= public_start {
 					Phase::<T>::put(BootstrapPhase::Public);
 					log!(info, "starting public phase");

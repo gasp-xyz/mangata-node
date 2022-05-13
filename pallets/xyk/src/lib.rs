@@ -365,9 +365,6 @@ pub mod pallet {
 		PoolAlreadyPromoted,
 		/// Sold Amount too low
 		SoldAmountTooLow,
-		CalcWorkMathOverflow1,
-		CalcWorkMathOverflow2,
-		CalcWorkMathOverflow3,
 		MathOverflow1,
 		MathOverflow2,
 		MathOverflow3,
@@ -1068,6 +1065,9 @@ impl<T: Config> Pallet<T> {
 		let liquidity_assets_amount: Balance =
 			LiquidityMiningActiveUser::<T>::get((&user, &liquidity_asset_id));
 
+		let activated_liquidity_pool: Balance =
+			LiquidityMiningActivePool::<T>::get(&liquidity_asset_id);
+
 		let liquidity_assets_burned_u256: U256 = liquidity_assets_burned.into();
 
 		let user_work_burned: U256 = liquidity_assets_burned_u256
@@ -1081,21 +1081,32 @@ impl<T: Config> Pallet<T> {
 			.checked_div(liquidity_assets_amount.into())
 			.ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
 
+		let user_work_new = user_work_total
+			.checked_sub(user_work_burned)
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+		let user_missing_new = user_missing_at_checkpoint
+			.checked_sub(user_missing_burned)
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+
+		let mut pool_work_new = U256::from(0);
+		let mut pool_missing_new = U256::from(0);
+
+		if activated_liquidity_pool != liquidity_assets_burned {
+			pool_work_new = pool_work_total
+				.checked_sub(user_work_burned)
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			pool_missing_new = pool_missing_at_checkpoint
+				.checked_sub(user_missing_burned)
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+		}
+
 		LiquidityMiningUser::<T>::insert(
 			(user.clone(), &liquidity_asset_id),
-			(
-				current_time,
-				user_work_total - user_work_burned,
-				user_missing_at_checkpoint - user_missing_burned,
-			),
+			(current_time, user_work_new, user_missing_new),
 		);
 		LiquidityMiningPool::<T>::insert(
 			&liquidity_asset_id,
-			(
-				current_time,
-				pool_work_total - user_work_burned,
-				pool_missing_at_checkpoint - user_missing_burned,
-			),
+			(current_time, pool_work_new, pool_missing_new),
 		);
 
 		LiquidityMiningActiveUser::<T>::try_mutate((&user, liquidity_asset_id), |active_amount| {
@@ -1107,7 +1118,6 @@ impl<T: Config> Pallet<T> {
 			}
 		})
 		.map_err(|_| DispatchError::from(Error::<T>::NotEnoughAssets))?;
-
 		LiquidityMiningActivePool::<T>::try_mutate(liquidity_asset_id, |active_amount| {
 			if let Some(val) = active_amount.checked_sub(liquidity_assets_burned) {
 				*active_amount = val;
@@ -1120,10 +1130,8 @@ impl<T: Config> Pallet<T> {
 
 		let rewards_to_be_claimed =
 			LiquidityMiningUserToBeClaimed::<T>::get((user.clone(), &liquidity_asset_id));
-
 		let rewards_amount =
 			Self::calculate_rewards(user_work_burned, pool_work_total, liquidity_asset_id)?;
-
 		let rewards_claimed_new = rewards_to_be_claimed + rewards_amount;
 
 		<T as Config>::PoolPromoteApi::claim_pool_rewards(

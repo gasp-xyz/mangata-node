@@ -158,8 +158,6 @@ jobs:
       -
         name: Build node img
         env:
-          WASM: 'docker-artifacts/release/wbuild/mangata-runtime/mangata_runtime.compact.compressed.wasm'
-          NODE_BINARY: 'docker-artifacts/release/mangata-node'
           DOCKER_IMG_TAG: "mangatasolutions/mangata-node:${{ github.sha }}"
         run: >
           SKIP_BUILD=1 ./scripts/build-image.sh ${DOCKER_IMG_TAG} &&

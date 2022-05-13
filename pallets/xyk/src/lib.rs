@@ -235,7 +235,7 @@ use frame_system::pallet_prelude::*;
 use mangata_primitives::{Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_assets_info as assets_info;
-use pallet_issuance::PoolPromoteApi;
+use pallet_issuance::{ComputeIssuance, PoolPromoteApi};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
 use sp_bootstrap::PoolCreateApi;
@@ -302,7 +302,7 @@ pub mod pallet {
 		type NativeCurrencyId: Get<TokenId>;
 		type TreasuryPalletId: Get<PalletId>;
 		type BnbTreasurySubAccDerive: Get<[u8; 4]>;
-		type PoolPromoteApi: PoolPromoteApi;
+		type PoolPromoteApi: ComputeIssuance + PoolPromoteApi;
 		#[pallet::constant]
 		/// The account id that holds the liquidity mining issuance
 		type LiquidityMiningIssuanceVault: Get<Self::AccountId>;
@@ -365,9 +365,6 @@ pub mod pallet {
 		PoolAlreadyPromoted,
 		/// Sold Amount too low
 		SoldAmountTooLow,
-		CalcWorkMathOverflow1,
-		CalcWorkMathOverflow2,
-		CalcWorkMathOverflow3,
 	}
 
 	#[pallet::event]
@@ -549,7 +546,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::mint_liquidity_using_vesting_native_tokens())]
 		#[transactional]
 		pub fn mint_liquidity_using_vesting_native_tokens(
 			origin: OriginFor<T>,
@@ -643,7 +640,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::promote_pool())]
 		pub fn promote_pool(origin: OriginFor<T>, liquidity_token_id: TokenId) -> DispatchResult {
 			ensure_root(origin)?;
 
@@ -667,7 +664,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::deactivate_liquidity())]
 		pub fn deactivate_liquidity(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
@@ -782,19 +779,20 @@ impl<T: Config> Pallet<T> {
 		let asymptote_u256: U256 = asymptote.into();
 		let cummulative_work_new_max_possible: U256 = asymptote_u256
 			.checked_mul(U256::from(time_passed))
-			.ok_or_else(|| DispatchError::from(Error::<T>::CalcWorkMathOverflow1))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 		let base = missing_at_last_checkpoint
 			.checked_mul(U256::from(106))
-			.ok_or_else(|| DispatchError::from(Error::<T>::CalcWorkMathOverflow2))? /
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))? /
 			U256::from(6);
 
 		let precision: u32 = 10000;
 		let q_pow = Self::calculate_q_pow(Q, time_passed);
 
 		let cummulative_missing_new = base - base * U256::from(precision) / q_pow;
+
 		let cummulative_work_new = cummulative_work_new_max_possible
 			.checked_sub(cummulative_missing_new)
-			.ok_or_else(|| DispatchError::from(Error::<T>::CalcWorkMathOverflow3))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 		let work_total = cummulative_work_in_last_checkpoint + cummulative_work_new;
 
 		Ok(work_total)
@@ -1003,6 +1001,9 @@ impl<T: Config> Pallet<T> {
 		let activated_liquidity_pool: Balance =
 			LiquidityMiningActivePool::<T>::get(&liquidity_asset_id);
 
+		let activated_liquidity_pool: Balance =
+			LiquidityMiningActivePool::<T>::get(&liquidity_asset_id);
+
 		let liquidity_assets_burned_u256: U256 = liquidity_assets_burned.into();
 
 		let user_work_burned: U256 = liquidity_assets_burned_u256
@@ -1053,7 +1054,6 @@ impl<T: Config> Pallet<T> {
 			}
 		})
 		.map_err(|_| DispatchError::from(Error::<T>::NotEnoughAssets))?;
-
 		LiquidityMiningActivePool::<T>::try_mutate(liquidity_asset_id, |active_amount| {
 			if let Some(val) = active_amount.checked_sub(liquidity_assets_burned) {
 				*active_amount = val;
@@ -1066,10 +1066,8 @@ impl<T: Config> Pallet<T> {
 
 		let rewards_to_be_claimed =
 			LiquidityMiningUserToBeClaimed::<T>::get((user.clone(), &liquidity_asset_id));
-
 		let rewards_amount =
 			Self::calculate_rewards(user_work_burned, pool_work_total, liquidity_asset_id)?;
-
 		let rewards_claimed_new = rewards_to_be_claimed + rewards_amount;
 
 		<T as Config>::PoolPromoteApi::claim_pool_rewards(

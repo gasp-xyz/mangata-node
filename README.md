@@ -18,7 +18,8 @@
 ![Language](https://img.shields.io/github/languages/top/mangata-finance/mangata-node)
 
 ## Description
-Reliable decentralized exchange (DEX) blockchain - interoperable with other blockchains using Polkadot. The exchange is using a consensus algorithm that solves MEV/frontrunning problems and makes all participants' access to trading opportunities equal. 
+
+Reliable decentralized exchange (DEX) blockchain - interoperable with other blockchains using Polkadot. The exchange is using a consensus algorithm that solves MEV/frontrunning problems and makes all participants' access to trading opportunities equal.
 
 The design of the blockchain guarantees fixed-fees that provides greater control of trading costs and higher arbitrage opportunity.
 Assets on the exchange will serve multiple purposes- at the first iteration, they are the block producer’s stake and exchange liquidity at the same time, and more comes later.
@@ -48,11 +49,14 @@ Find manual setup instructions at the
 Recommended rustc version for the build is `nightly-2021-10-19`
 
 Environment variables for ethereum apps should be set up before the build:
+
 ```bash
 ETH_APP_ID=0xdd514baa317bf095ddba2c0a847765feb389c6a0
 ERC20_APP_ID=0x00e392c04743359e39f00cd268a5390d27ef6b44
 ```
+
 build node:
+
 ```bash
 rustup target add wasm32-unknown-unknown
 cargo build --release
@@ -99,18 +103,23 @@ docker-compose  -f devops/multi-validator-docker-compose.yml up
 ### VS code
 
 Export RUSTFLAGS
+
 ```bash
 export RUSTFLAGS="-g"
 ```
+
 Build node:
+
 ```bash
 cargo build --release
 ```
+
 Run node:
+
 ```bash
 RUSTFLAGS="-g" cargo run -j12 --release -- --tmp --dev
 ```
-Go to VS code and attach the process!
 
+Go to VS code and attach the process!
 
 # Mangata Substrate Cumulus Parachain

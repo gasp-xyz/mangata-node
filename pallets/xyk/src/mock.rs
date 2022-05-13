@@ -55,9 +55,16 @@ lazy_static::lazy_static! {
 
 pub struct MockPromotedPoolApi;
 
+#[cfg(test)]
 impl MockPromotedPoolApi {
 	pub fn instance() -> &'static Mutex<HashMap<TokenId, Balance>> {
 		&PROMOTED_POOLS
+	}
+}
+
+impl pallet_issuance::ComputeIssuance for MockPromotedPoolApi {
+	fn compute_issuance(_n: u32) {
+		todo!()
 	}
 }
 
@@ -73,8 +80,7 @@ impl PoolPromoteApi for MockPromotedPoolApi {
 	}
 
 	fn get_pool_rewards(liquidity_token_id: TokenId) -> Option<Balance> {
-		let mut pools = PROMOTED_POOLS.lock().unwrap();
-
+		let pools = PROMOTED_POOLS.lock().unwrap();
 		pools.get(&liquidity_token_id).map(|x| *x)
 	}
 
@@ -207,7 +213,7 @@ parameter_types! {
 
 
 	pub const TotalCrowdloanAllocation: Balance = 200_000_000;
-	pub const IssuanceCap: Balance = 4_000_000_000;
+	pub const IssuanceCap: Balance = 100_000__000_000__000_000;
 	pub const LinearIssuanceBlocks: u32 = 22_222u32;
 	pub const LiquidityMiningSplit: Perbill = Perbill::from_parts(555555556);
 	pub const StakingSplit: Perbill = Perbill::from_parts(444444444);
@@ -243,6 +249,7 @@ parameter_types! {
 	pub FakeLiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account();
 }
 
+#[cfg(not(feature = "runtime-benchmarks"))]
 impl Config for Test {
 	type Event = Event;
 	type Currency = MultiTokenCurrencyAdapter<Test>;
@@ -251,6 +258,23 @@ impl Config for Test {
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
 	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
 	type PoolPromoteApi = MockPromotedPoolApi;
+	type PoolFeePercentage = ConstU128<20>;
+	type TreasuryFeePercentage = ConstU128<5>;
+	type BuyAndBurnFeePercentage = ConstU128<5>;
+	type RewardsDistributionPeriod = ConstU32<10000>;
+	type WeightInfo = ();
+	type VestingProvider = Vesting;
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+impl Config for Test {
+	type Event = Event;
+	type Currency = MultiTokenCurrencyAdapter<Test>;
+	type NativeCurrencyId = NativeCurrencyId;
+	type TreasuryPalletId = TreasuryPalletId;
+	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
+	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
+	type PoolPromoteApi = Issuance;
 	type PoolFeePercentage = ConstU128<20>;
 	type TreasuryFeePercentage = ConstU128<5>;
 	type BuyAndBurnFeePercentage = ConstU128<5>;

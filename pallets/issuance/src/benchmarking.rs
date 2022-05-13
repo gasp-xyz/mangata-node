@@ -19,10 +19,10 @@
 
 use super::*;
 
-use frame_benchmarking::{account, benchmarks, whitelisted_caller};
+use frame_benchmarking::{account, benchmarks};
 use frame_support::assert_ok;
 use frame_system::RawOrigin;
-use mangata_primitives::{Balance, TokenId};
+use mangata_primitives::Balance;
 use orml_tokens::MultiTokenCurrencyExtended;
 
 use crate::{Pallet as Issuance, TgeInfo};

@@ -166,8 +166,8 @@ jobs:
         with:
           file: "devops/dockerfiles/node/Dockerfile"
           build-args: |
-            WASM=../../home/runner/work/mangata-node/mangata-node/docker-artifacts/release/wbuild/mangata-runtime/mangata_runtime.compact.compressed.wasm
-            NODE_BINARY=../../home/runner/work/mangata-node/mangata-node/docker-artifacts/release/mangata-node
+            WASM=../../../../home/runner/work/mangata-node/mangata-node/docker-artifacts/release/wbuild/mangata-runtime/mangata_runtime.compact.compressed.wasm
+            NODE_BINARY=../../../../home/runner/work/mangata-node/mangata-node/docker-artifacts/release/mangata-node
           push: false
           tags: mangatasolutions/mangata-node:latest,mangatasolutions/mangata-node:${{ github.sha }}
           outputs: type=docker,dest=/tmp/${{ github.sha }}.tar

@@ -33,6 +33,8 @@ on:
 
 env:
   DOCKER_BUILDER_IMAGE: mangatasolutions/node-builder:0.1
+  DISABLE_CARGO_CACHE=1
+  DISABLE_TTY=1
 
 jobs:
 
@@ -58,7 +60,7 @@ jobs:
       -
         name: Check formatting
         run: |
-          DISABLE_CARGO_CACHE=1 ./docker-cargo.sh fmt --all -- --check
+           ./docker-cargo.sh fmt --all -- --check
 
   clippy-check:
     name: Clippy check
@@ -83,7 +85,7 @@ jobs:
         name: Run clippy
         run: |
           docker pull mangatasolutions/node-builder:0.1
-          DISABLE_CARGO_CACHE=1 ./docker-cargo.sh clippy -p pallet-xyk -p pallet-assets-info -p pallet-bridge
+          ./docker-cargo.sh clippy -p pallet-xyk -p pallet-assets-info -p pallet-bridge
 
   unit-test:
     name: Unit test
@@ -108,7 +110,7 @@ jobs:
         name: Run unit tests
         run: |
           docker pull mangatasolutions/node-builder:0.1
-          DISABLE_CARGO_CACHE=1 ./docker-cargo.sh test -- -Z unstable-options --format json --report-time 
+          ./docker-cargo.sh test -- -Z unstable-options --format json --report-time 
           # |cargo2junit | tee ut-results.xml
           # sed -i '/<testsuite.*\/>$/d' ut-results.xml
           # sed -i 's/<testsuites>/<testsuites time="0">/g' ut-results.xml

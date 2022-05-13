@@ -164,8 +164,6 @@ jobs:
           WASM: 'docker-build/release/wbuild/mangata-runtime/mangata_runtime.compact.compressed.wasm'
           NODE_BINARY: 'docker-build/release/mangata-node'
         run: >
-          pwd && 
-          find . && 
           SKIP_BUILD=1 ./scripts/build-image.sh ${{ github.sha }}
 
       # -

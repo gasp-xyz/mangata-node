@@ -152,7 +152,8 @@ jobs:
       -
         name: Build node binary
         run: |
-          DISABLE_CARGO_CACHE=1 ./docker-cargo.sh build --release --features=enable-trading
+          pwd
+          # DISABLE_CARGO_CACHE=1 ./docker-cargo.sh build --release --features=enable-trading
 
       -
         name: Build node image

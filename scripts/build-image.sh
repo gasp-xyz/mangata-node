@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash -xe
 REPO_ROOT=$(readlink -f $(dirname $(dirname $(readlink -f $0))))
 ${REPO_ROOT}/docker-cargo.sh build --release
 BUILD_DIR=docker-build/release

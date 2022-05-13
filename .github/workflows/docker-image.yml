@@ -157,20 +157,28 @@ jobs:
           touch docker-artifacts/release/mangata-node
           touch docker-artifacts/release/wbuild/mangata-runtime/mangata_runtime.compact.compressed.wasm
           # DISABLE_CARGO_CACHE=1 ./docker-cargo.sh build --release --features=enable-trading
-
+          #
       -
-        name: Build node image
-        id: docker_build
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
-        uses: docker/build-push-action@v2
-        with:
-          file: "devops/dockerfiles/node/Dockerfile"
-          build-args: |
-            WASM=docker-artifacts/release/wbuild/mangata-runtime/mangata_runtime.compact.compressed.wasm
-            NODE_BINARY=docker-artifacts/release/mangata-node
-          push: false
-          tags: mangatasolutions/mangata-node:latest,mangatasolutions/mangata-node:${{ github.sha }}
-          outputs: type=docker,dest=/tmp/${{ github.sha }}.tar
+        name: Build node img
+        env:
+          WASM: 'docker-artifacts/release/wbuild/mangata-runtime/mangata_runtime.compact.compressed.wasm'
+          NODE_BINARY: 'docker-artifacts/release/mangata-node'
+        run: |
+          ./scripts/build-image ${{ github.sha }}
+
+      # -
+      #   name: Build node image
+      #   id: docker_build
+      #   if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
+      #   uses: docker/build-push-action@v2
+      #   with:
+      #     file: "devops/dockerfiles/node/Dockerfile"
+      #     build-args: |
+      #       WASM=docker-artifacts/release/wbuild/mangata-runtime/mangata_runtime.compact.compressed.wasm
+      #       NODE_BINARY=docker-artifacts/release/mangata-node
+      #     push: false
+      #     tags: mangatasolutions/mangata-node:latest,mangatasolutions/mangata-node:${{ github.sha }}
+      #     outputs: type=docker,dest=/tmp/${{ github.sha }}.tar
       -
         name: Upload artifact
         uses: actions/upload-artifact@v2

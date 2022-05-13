@@ -16,7 +16,7 @@ else
     DOCKER_LABEL=${GIT_REV}-dirty
 fi
 
-DOCKER_IMAGE_TAG=mangatasolutions/mangata-node:${1:-local}
+DOCKER_IMAGE_TAG=${1:-mangatasolutions/mangata-node:local}
 
 if [ ! -e ${NODE_BINARY} ]; then
     echo "${NODE_BINARY} not found" >&2

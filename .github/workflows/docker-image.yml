@@ -163,8 +163,10 @@ jobs:
         env:
           WASM: 'docker-build/release/wbuild/mangata-runtime/mangata_runtime.compact.compressed.wasm'
           NODE_BINARY: 'docker-build/release/mangata-node'
+          DOCKER_IMG_TAG: "mangatasolutions/mangata-node:${{ github.sha }}"
         run: >
-          SKIP_BUILD=1 ./scripts/build-image.sh ${{ github.sha }}
+          SKIP_BUILD=1 ./scripts/build-image.sh ${DOCKER_IMG_TAG} &&
+          docker save ${DOCKER_IMG_TAG} -o ${{ github.sha }}
 
       # -
       #   name: Build node image
@@ -185,7 +187,7 @@ jobs:
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         with:
           name: ${{ github.sha }}
-          path: /tmp/${{ github.sha }}.tar
+          path: ${{ github.sha }}.tar
 
   # e2e-test:
   #   needs: build

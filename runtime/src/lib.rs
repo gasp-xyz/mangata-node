@@ -190,7 +190,7 @@ impl WeightToFeePolynomial for WeightToFee {
 }
 
 pub fn base_tx_in_mga() -> Balance {
-	MILLIUNIT / 10
+	UNIT
 }
 
 pub fn mga_per_second() -> u128 {
@@ -448,7 +448,7 @@ parameter_types! {
 	pub const ProposalBondMinimum: Balance = 1 * DOLLARS;
 	pub const ProposalBondMaximum: Option<Balance> = None;
 	pub const SpendPeriod: BlockNumber = 1 * DAYS;
-	pub const Burn: Permill = Permill::from_percent(50);
+	pub const Burn: Permill = Permill::from_percent(0);
 	pub const TipCountdown: BlockNumber = 1 * DAYS;
 	pub const TipFindersFee: Percent = Percent::from_percent(20);
 	pub const TipReportDepositBase: Balance = 1 * DOLLARS;
@@ -604,8 +604,7 @@ impl OnMultiTokenUnbalanced<ORMLCurrencyAdapterNegativeImbalance> for ToAuthor {
 }
 
 parameter_types! {
-	/// Relay Chain `TransactionByteFee` / 10
-	pub const TransactionByteFee: Balance = 10 * MICROUNIT;
+	pub const TransactionByteFee: Balance = 100 * MILLIUNIT;
 	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
@@ -1064,9 +1063,9 @@ parameter_types! {
 	/// Reward payments delay (number of rounds)
 	pub const RewardPaymentDelay: u32 = 2;
 	/// Minimum collators selected per round, default at genesis and minimum forever after
-	pub const MinSelectedCandidates: u32 = 8;
+	pub const MinSelectedCandidates: u32 = 25;
 	/// Maximum collator candidates allowed
-	pub const MaxCollatorCandidates: u32 = 50;
+	pub const MaxCollatorCandidates: u32 = 35;
 	/// Maximum delegators allowed per candidate
 	pub const MaxTotalDelegatorsPerCandidate: u32 = 25;
 	/// Maximum delegators counted per candidate
@@ -1075,8 +1074,6 @@ parameter_types! {
 	pub const MaxDelegationsPerDelegator: u32 = 30;
 	/// Default fixed percent a collator takes off the top of due rewards
 	pub const DefaultCollatorCommission: Perbill = Perbill::from_percent(20);
-	/// Default percent of inflation set aside for parachain bond every round
-	pub const DefaultParachainBondReservePercent: Percent = Percent::from_percent(30);
 	/// Minimum stake required to become a collator
 	pub const MinCollatorStk: u128 = 10 * DOLLARS;
 	/// Minimum stake required to be reserved to be a candidate
@@ -1177,8 +1174,8 @@ impl pallet_vesting_mangata::Config for Runtime {
 
 parameter_types! {
 	pub const Initialized: bool = false;
-	pub const InitializationPayment: Perbill = Perbill::from_percent(20);
-	pub const MaxInitContributorsBatchSizes: u32 = 500;
+	pub const InitializationPayment: Perbill = Perbill::from_parts(214285700);
+	pub const MaxInitContributorsBatchSizes: u32 = 100;
 	pub const MinimumReward: Balance = 0;
 	pub const RelaySignaturesThreshold: Perbill = Perbill::from_percent(100);
 	pub const SigantureNetworkIdentifier: &'static [u8] = b"mangata-";

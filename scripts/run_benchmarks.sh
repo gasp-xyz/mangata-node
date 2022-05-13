@@ -18,7 +18,7 @@ benchmarks=(
     "pallet_utility"
     "pallet_vesting_mangata"
     "pallet_issuance"
-    # "pallet_bootstrap"
+    "pallet_bootstrap"
 )
 
 for bench in ${benchmarks[@]}; do

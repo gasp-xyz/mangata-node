@@ -7,7 +7,7 @@ use frame_system::pallet_prelude::*;
 
 use frame_support::{
 	codec::{Decode, Encode},
-	traits::{Currency, Get, Imbalance, LockableCurrency},
+	traits::{Get, Imbalance},
 };
 use mangata_primitives::{Balance, TokenId};
 use scale_info::TypeInfo;
@@ -209,28 +209,7 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::init_issuance_config())]
 		pub fn init_issuance_config(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
-
-			ensure!(
-				IssuanceConfigStore::<T>::get().is_none(),
-				Error::<T>::IssuanceConfigAlreadyInitialized
-			);
-			ensure!(IsTGEFinalized::<T>::get(), Error::<T>::TGENotFinalized);
-
-			let issuance_config: IssuanceInfo = IssuanceInfo {
-				cap: T::IssuanceCap::get(),
-				issuance_at_init: T::Tokens::total_issuance(T::NativeCurrencyId::get().into())
-					.into(),
-				linear_issuance_blocks: T::LinearIssuanceBlocks::get(),
-				liquidity_mining_split: T::LiquidityMiningSplit::get(),
-				staking_split: T::StakingSplit::get(),
-				total_crowdloan_allocation: T::TotalCrowdloanAllocation::get(),
-			};
-
-			Pallet::<T>::build_issuance_config(issuance_config.clone())?;
-
-			Pallet::<T>::deposit_event(Event::IssuanceConfigInitialized(issuance_config));
-
-			Ok(().into())
+			Self::do_init_issuance_config()
 		}
 
 		#[pallet::weight(T::WeightInfo::finalize_tge())]
@@ -322,10 +301,18 @@ pub mod pallet {
 }
 
 pub trait ComputeIssuance {
+	/// should be only used for testing purposes
+	fn initialize() {}
 	fn compute_issuance(n: u32);
 }
 
 impl<T: Config> ComputeIssuance for Pallet<T> {
+	/// should be only used for testing purposes
+	fn initialize() {
+		IsTGEFinalized::<T>::put(true);
+		Self::do_init_issuance_config().unwrap();
+	}
+
 	fn compute_issuance(n: u32) {
 		let _ = Pallet::<T>::calculate_and_store_round_issuance(n);
 		let _ = Pallet::<T>::clear_round_issuance_history(n);
@@ -403,6 +390,29 @@ impl<T: Config> GetIssuance for Pallet<T> {
 }
 
 impl<T: Config> Pallet<T> {
+	pub fn do_init_issuance_config() -> DispatchResultWithPostInfo {
+		ensure!(
+			IssuanceConfigStore::<T>::get().is_none(),
+			Error::<T>::IssuanceConfigAlreadyInitialized
+		);
+		ensure!(IsTGEFinalized::<T>::get(), Error::<T>::TGENotFinalized);
+
+		let issuance_config: IssuanceInfo = IssuanceInfo {
+			cap: T::IssuanceCap::get(),
+			issuance_at_init: T::Tokens::total_issuance(T::NativeCurrencyId::get().into()).into(),
+			linear_issuance_blocks: T::LinearIssuanceBlocks::get(),
+			liquidity_mining_split: T::LiquidityMiningSplit::get(),
+			staking_split: T::StakingSplit::get(),
+			total_crowdloan_allocation: T::TotalCrowdloanAllocation::get(),
+		};
+
+		Pallet::<T>::build_issuance_config(issuance_config.clone())?;
+
+		Pallet::<T>::deposit_event(Event::IssuanceConfigInitialized(issuance_config));
+
+		Ok(().into())
+	}
+
 	pub fn build_issuance_config(issuance_config: IssuanceInfo) -> DispatchResult {
 		ensure!(
 			issuance_config

@@ -365,9 +365,6 @@ pub mod pallet {
 		PoolAlreadyPromoted,
 		/// Sold Amount too low
 		SoldAmountTooLow,
-		CalcWorkMathOverflow1,
-		CalcWorkMathOverflow2,
-		CalcWorkMathOverflow3,
 	}
 
 	#[pallet::event]
@@ -781,10 +778,10 @@ impl<T: Config> Pallet<T> {
 		let asymptote_u256: U256 = asymptote.into();
 		let cummulative_work_new_max_possible: U256 = asymptote_u256
 			.checked_mul(U256::from(time_passed))
-			.ok_or_else(|| DispatchError::from(Error::<T>::CalcWorkMathOverflow1))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 		let base = missing_at_last_checkpoint
 			.checked_mul(U256::from(106))
-			.ok_or_else(|| DispatchError::from(Error::<T>::CalcWorkMathOverflow2))? /
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))? /
 			U256::from(6);
 
 		let precision: u32 = 10000;
@@ -794,7 +791,7 @@ impl<T: Config> Pallet<T> {
 
 		let cummulative_work_new = cummulative_work_new_max_possible
 			.checked_sub(cummulative_missing_new)
-			.ok_or_else(|| DispatchError::from(Error::<T>::CalcWorkMathOverflow3))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 		let work_total = cummulative_work_in_last_checkpoint + cummulative_work_new;
 
 		Ok(work_total)

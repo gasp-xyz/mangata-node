@@ -702,7 +702,8 @@ fn bug3() {
 			2,
 			<Test as Config>::LiquidityMiningIssuanceVault::get(),
 			10000000000,
-		);
+		)
+		.unwrap();
 
 		XykStorage::create_pool(Origin::signed(2), 2, 10000000, 3, 10000000).unwrap();
 		//XykStorage::activate_liquidity(Origin::signed(2), 4, 5000).unwrap();
@@ -790,7 +791,6 @@ fn bug3() {
 
 		let leftRewardsInPool = *MockPromotedPoolApi::instance().lock().unwrap().get(&4).unwrap();
 		assert_eq!(leftRewardsInPool, 1000000000);
-		info!("ooooooooooooooooooooooooooo");
 		System::set_block_number(100000);
 		XykStorage::deactivate_liquidity(
 			Origin::signed(3),
@@ -887,7 +887,8 @@ fn bug2() {
 			2,
 			<Test as Config>::LiquidityMiningIssuanceVault::get(),
 			10000000000,
-		);
+		)
+		.unwrap();
 
 		XykStorage::create_pool(Origin::signed(2), 2, 5000, 3, 5000).unwrap();
 		//XykStorage::activate_liquidity(Origin::signed(2), 4, 5000).unwrap();

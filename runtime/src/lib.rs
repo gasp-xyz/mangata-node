@@ -1522,7 +1522,13 @@ impl_runtime_apis! {
 			sell_amount: Balance
 		) -> RpcResult<Balance> {
 			RpcResult {
-				price: Xyk::calculate_sell_price(input_reserve, output_reserve, sell_amount).unwrap_or_default()
+				price: Xyk::calculate_sell_price(input_reserve, output_reserve, sell_amount)
+					.map_err(|e|
+						{
+							log::warn!(target:"xyk", "rpc 'XYK::calculate_sell_price' error: '{:?}', returning default value instead", e);
+							e
+						}
+					).unwrap_or_default()
 			}
 		}
 
@@ -1532,7 +1538,14 @@ impl_runtime_apis! {
 			buy_amount: Balance
 		) -> RpcResult<Balance> {
 			RpcResult {
-				price: Xyk::calculate_buy_price(input_reserve, output_reserve, buy_amount).unwrap_or_default()
+				price: Xyk::calculate_buy_price(input_reserve, output_reserve, buy_amount)
+					.map_err(|e|
+						{
+							log::warn!(target:"xyk", "rpc 'XYK::calculate_buy_price' error: '{:?}', returning default value instead", e);
+							e
+						}
+					).unwrap_or_default()
+
 			}
 		}
 
@@ -1542,7 +1555,13 @@ impl_runtime_apis! {
 			sell_amount: Balance
 		) -> RpcResult<Balance> {
 			RpcResult {
-				price: Xyk::calculate_sell_price_id(sold_token_id, bought_token_id, sell_amount).unwrap_or_default()
+				price: Xyk::calculate_sell_price_id(sold_token_id, bought_token_id, sell_amount)
+					.map_err(|e|
+						{
+							log::warn!(target:"xyk", "rpc 'XYK::calculate_sell_price_id' error: '{:?}', returning default value instead", e);
+							e
+						}
+					).unwrap_or_default()
 			}
 		}
 
@@ -1552,7 +1571,13 @@ impl_runtime_apis! {
 			buy_amount: Balance
 		) -> RpcResult<Balance> {
 			RpcResult {
-				price: Xyk::calculate_buy_price_id(sold_token_id, bought_token_id, buy_amount).unwrap_or_default()
+				price: Xyk::calculate_buy_price_id(sold_token_id, bought_token_id, buy_amount)
+					.map_err(|e|
+						{
+							log::warn!(target:"xyk", "rpc 'XYK::calculate_buy_price_id' error: '{:?}', returning default value instead", e);
+							e
+						}
+					).unwrap_or_default()
 			}
 		}
 
@@ -1566,9 +1591,9 @@ impl_runtime_apis! {
 																	first_asset_amount,
 																	second_asset_amount
 																},
-				Err(_) => RpcAmountsResult{
-					first_asset_amount: 0u32.into(),
-					second_asset_amount: 0u32.into()
+				Err(e) => {
+					log::warn!(target:"xyk", "rpc 'XYK::get_burn_amount' error: '{:?}', returning default value instead", e);
+					Default::default()
 				},
 			}
 		}
@@ -1580,11 +1605,11 @@ impl_runtime_apis! {
 			match Xyk::calculate_rewards_amount(user, liquidity_asset_id){
 				Ok((not_yet_claimed, to_be_claimed)) => RpcRewardsResult{
 					not_yet_claimed,
-																	to_be_claimed
-																},
-				Err(_) => RpcRewardsResult{
-					not_yet_claimed: 0u32.into(),
-					to_be_claimed: 0u32.into()
+					to_be_claimed
+				},
+				Err(e) => {
+						log::warn!(target:"xyk", "rpc 'XYK::calculate_rewards_amount' error: '{:?}', returning default value instead", e);
+						Default::default()
 				},
 			}
 		}

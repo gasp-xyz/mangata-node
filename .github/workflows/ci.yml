@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Continous Integration
 
 # available flags: 
 ## skip-e2e-tests: skip running e2e tests

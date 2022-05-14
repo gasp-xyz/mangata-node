@@ -5,7 +5,7 @@ if [ -z "${SKIP_BUILD}" ]; then
 else
     echo "build skipped because SKIP_BUILD flag is set"
 fi
-BUILD_DIR=docker-build/release
+BUILD_DIR=docker-cargo/release
 NODE_BINARY=${BUILD_DIR}/mangata-node
 WASM=${BUILD_DIR}/wbuild/mangata-runtime/mangata_runtime.compact.compressed.wasm
 GIT_REV=$(git -C ${REPO_ROOT} rev-parse HEAD)

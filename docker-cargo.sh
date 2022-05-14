@@ -1,6 +1,6 @@
 #!/bin/bash -x
 REPO_ROOT=$(readlink -f $(dirname $(readlink -f $0)))
-OUTPUT_DIR=docker-build/
+OUTPUT_DIR=docker-cargo/
 CARGO_HOME=${CARGO_HOME:-$HOME/.cargo}
 
 

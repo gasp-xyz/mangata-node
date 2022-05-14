@@ -161,7 +161,7 @@ jobs:
           DOCKER_IMG_TAG: "mangatasolutions/mangata-node:${{ github.sha }}"
         run: >
           SKIP_BUILD=1 ./scripts/build-image.sh ${DOCKER_IMG_TAG} &&
-          docker save ${DOCKER_IMG_TAG} -o ${{ github.sha }}
+          docker save ${DOCKER_IMG_TAG} -o ${{ github.sha }}.tar
       -
         name: Upload artifact
         uses: actions/upload-artifact@v2

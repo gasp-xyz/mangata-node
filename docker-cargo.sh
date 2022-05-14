@@ -1,6 +1,5 @@
 #!/bin/bash -x
 REPO_ROOT=$(readlink -f $(dirname $(readlink -f $0)))
-ARTIFACTS_DIR=$REPO_ROOT/docker-artifacts
 OUTPUT_DIR=docker-build/
 CARGO_HOME=${CARGO_HOME:-$HOME/.cargo}
 
@@ -58,6 +57,6 @@ docker run \
 	-v ${REPO_ROOT}:/code \
         -v ${CARGO_CACHE_GIT}:/opt/cargo/git \
         -v ${CARGO_CACHE_REGISTRY}:/opt/cargo/registry \
-	-e CARGO_TARGET_DIR="/code/${BUILD_OUTPUT_DIR}" \
+	-e CARGO_TARGET_DIR="/code/${OUTPUT_DIR}" \
 	${ALLOCATE_TTY_OR_NOT} ${DOCKER_BUILDER_IMAGE} \
 	cargo ${CARGO_COMMAND} --manifest-path=/code/Cargo.toml ${CARGO_ARGS}

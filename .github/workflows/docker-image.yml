@@ -309,7 +309,7 @@ jobs:
         run: docker-compose -f devops/parachain/docker-compose.yml down
 
   publish:
-    needs: [rustfmt-check, unit-test, clippy, build]
+    needs: [rustfmt-check, unit-test, clippy-check, build]
     runs-on: ubuntu-latest
     if: |
       github.ref == 'refs/heads/develop' && 

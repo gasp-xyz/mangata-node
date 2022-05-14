@@ -65,5 +65,5 @@ RUN cargo install cargo2junit \
 	&& rm -rf ${CARGO_HOME}/git \
 	&& rm -rf ${CARGO_HOME}/registry
 
-RUN chmod 755 /opt/
-RUN chmod 755 /opt/cargo/
+RUN chmod 777 /opt/
+RUN chmod 777 /opt/cargo/

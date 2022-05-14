@@ -34,7 +34,7 @@ else
 	exit -1
 fi
 
-if [ -e ${CARGO_HOME} ] && [ -z "${DISABLE_CARGO_CACHE}" ]; then
+if [ -e ${CARGO_HOME} ] ; then
     CARGO_CACHE_GIT=${CARGO_HOME}/git
     CARGO_CACHE_REGISTRY=${CARGO_HOME}/registry
 else
@@ -48,6 +48,12 @@ else
     fi
 fi
 
+if [ -n "${DISABLE_CARGO_CACHE}" ]; then
+    DOCKER_MOUNT_CACHE_VOLUMES=""
+else
+    DOCKER_MOUNT_CACHE_VOLUMES="-v ${CARGO_CACHE_GIT}:/opt/cargo/git -v ${CARGO_CACHE_REGISTRY}:/opt/cargo/registry"
+fi
+
 
 
 docker run \
@@ -55,8 +61,7 @@ docker run \
 	--name=${DOCKER_JOB_NAME} \
 	--user $DOCKER_USER \
 	-v ${REPO_ROOT}:/code \
-        -v ${CARGO_CACHE_GIT}:/opt/cargo/git \
-        -v ${CARGO_CACHE_REGISTRY}:/opt/cargo/registry \
+        ${DOCKER_MOUNT_CACHE_VOLUMES} \
 	-e CARGO_TARGET_DIR="/code/${OUTPUT_DIR}" \
 	${ALLOCATE_TTY_OR_NOT} ${DOCKER_BUILDER_IMAGE} \
 	cargo ${CARGO_COMMAND} --manifest-path=/code/Cargo.toml ${CARGO_ARGS}

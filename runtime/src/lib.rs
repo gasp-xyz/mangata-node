@@ -13,7 +13,7 @@ use sp_core::{
 	u32_trait::{_1, _2},
 	OpaqueMetadata,
 };
-use sp_runtime::{
+use sp_runtime::{Perquintill, FixedPointNumber,
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, ConvertInto,
@@ -22,6 +22,7 @@ use sp_runtime::{
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiSignature, Percent,
 };
+use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
 
 use sp_std::{marker::PhantomData, prelude::*};
 #[cfg(feature = "std")]
@@ -51,7 +52,7 @@ pub use sp_runtime::BuildStorage;
 // Polkadot Imports
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use polkadot_runtime_common::{BlockHashCount, RocksDbWeight, SlowAdjustingFeeUpdate};
+use polkadot_runtime_common::{BlockHashCount, RocksDbWeight};
 
 // XCM Imports
 use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
@@ -604,7 +605,7 @@ impl OnMultiTokenUnbalanced<ORMLCurrencyAdapterNegativeImbalance> for ToAuthor {
 }
 
 parameter_types! {
-	pub const TransactionByteFee: Balance = 100 * MILLIUNIT;
+	pub const TransactionByteFee: Balance = 5 * MILLIUNIT;
 	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
@@ -740,6 +741,13 @@ where
 	}
 }
 
+parameter_types! {
+	// We want no variability, the other parameters are superfluous
+	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
+	pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(0, 100_000);
+	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1);
+}
+
 impl pallet_transaction_payment::Config for Runtime {
 	type OnChargeTransaction = TwoCurrencyAdapter<
 		orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
@@ -750,7 +758,7 @@ impl pallet_transaction_payment::Config for Runtime {
 	>;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = WeightToFee;
-	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
+	type FeeMultiplierUpdate = TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 }
 

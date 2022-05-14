@@ -535,7 +535,7 @@ pub fn development_config() -> ChainSpec {
 		Vec::new(),
 		None,
 		// Protocol ID
-		Some("mangata-dev"),
+		Some("mangata-dev-v0.9.17"),
 		// ForkId
 		None,
 		// Properties

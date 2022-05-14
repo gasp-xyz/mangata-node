@@ -164,7 +164,7 @@ jobs:
           find . &&
           SKIP_BUILD=1 ./scripts/build-image.sh ${DOCKER_IMG_TAG} &&
           docker save ${DOCKER_IMG_TAG} -o ${{ github.sha }}
-
+      -
         name: Upload artifact
         uses: actions/upload-artifact@v2
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}

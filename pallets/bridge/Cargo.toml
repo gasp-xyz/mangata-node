@@ -23,13 +23,13 @@ sp-std = { version = "4.0.0-dev", default-features = false , git = "https://gith
 sp-io = { default-features = false, version = '5.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.17" }
 frame-benchmarking = { version = "4.0.0-dev", default-features = false, optional = true , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.17" }
 
-artemis-core = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
+artemis-core = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v0.9.17"}
 
 [dev-dependencies]
-pallet-verifier = {version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
-artemis-erc20-app = {version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
-artemis-eth-app = {version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
-artemis-asset = {version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
+pallet-verifier = {version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v0.9.17"}
+artemis-erc20-app = {version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v0.9.17"}
+artemis-eth-app = {version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v0.9.17"}
+artemis-asset = {version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v0.9.17"}
 orml-tokens = {version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v0.9.17"}
 orml-traits = { default-features = false, version="0.4.1-dev" , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v0.9.17" }
 mangata-primitives = { path = '../../primitives/mangata', default-features = false, version = '0.1.0' }

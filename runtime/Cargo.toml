@@ -79,31 +79,31 @@ orml-xcm = {  default-features = false, version = "0.4.1-dev", git = "https://gi
 
 
 # Cumulus dependencies
-cumulus-pallet-aura-ext = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev', default-features = false }
-cumulus-pallet-dmp-queue = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev', default-features = false }
-cumulus-pallet-parachain-system = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev', default-features = false }
-cumulus-pallet-xcm = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev', default-features = false }
-cumulus-pallet-xcmp-queue = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev', default-features = false }
-cumulus-primitives-core = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev', default-features = false }
-cumulus-primitives-timestamp = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev', default-features = false }
-cumulus-primitives-utility = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev', default-features = false }
-parachain-info = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev', default-features = false }
-cumulus-pallet-session-benchmarking = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev', default-features = false }
+cumulus-pallet-aura-ext = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.17', default-features = false }
+cumulus-pallet-dmp-queue = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.17', default-features = false }
+cumulus-pallet-parachain-system = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.17', default-features = false }
+cumulus-pallet-xcm = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.17', default-features = false }
+cumulus-pallet-xcmp-queue = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.17', default-features = false }
+cumulus-primitives-core = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.17', default-features = false }
+cumulus-primitives-timestamp = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.17', default-features = false }
+cumulus-primitives-utility = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.17', default-features = false }
+parachain-info = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.17', default-features = false }
+cumulus-pallet-session-benchmarking = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.17', default-features = false }
 
 # Polkadot Dependencies
-pallet-xcm = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "release-v0.9.16" }
-polkadot-parachain = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "release-v0.9.16" }
-polkadot-runtime-common = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "release-v0.9.16" }
-xcm = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "release-v0.9.16" }
-xcm-builder = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "release-v0.9.16" }
-xcm-executor = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "release-v0.9.16" }
+pallet-xcm = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "release-v0.9.17" }
+polkadot-parachain = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "release-v0.9.17" }
+polkadot-runtime-common = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "release-v0.9.17" }
+xcm = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "release-v0.9.17" }
+xcm-builder = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "release-v0.9.17" }
+xcm-executor = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "release-v0.9.17" }
 
 # Snowbridge Dependencies
-artemis-core = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
-pallet-verifier = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
-artemis-erc20-app = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
-artemis-eth-app = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
-artemis-asset = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
+artemis-core = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v0.9.17"}
+pallet-verifier = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v0.9.17"}
+artemis-erc20-app = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v0.9.17"}
+artemis-eth-app = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v0.9.17"}
+artemis-asset = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v0.9.17"}
 pallet-bridge = {default-features = false, version = "0.1.1", path = "../pallets/bridge"}
 
 # Staking dependencies

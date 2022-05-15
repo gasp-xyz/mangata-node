@@ -37,6 +37,14 @@ fi
 if [ -e ${CARGO_HOME} ] ; then
     CARGO_CACHE_GIT=${CARGO_HOME}/git
     CARGO_CACHE_REGISTRY=${CARGO_HOME}/registry
+
+    if [ ! -e ${CARGO_CACHE_GIT} ]; then
+        mkdir -p ${CARGO_CACHE_GIT}
+    fi
+
+    if [ ! -e ${CARGO_CACHE_REGISTRY} ]; then
+        mkdir -p ${CARGO_CACHE_REGISTRY}
+    fi
 else
     CARGO_CACHE_GIT=${REPO_ROOT}/${OUTPUT_DIR}/cargo_cache_git
     CARGO_CACHE_REGISTRY=${REPO_ROOT}/${OUTPUT_DIR}/cargo_cache_registry

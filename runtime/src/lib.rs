@@ -550,7 +550,7 @@ impl pallet_bootstrap::Config for Runtime {
 	type PoolCreateApi = Xyk;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type KsmToMgaRatioNumerator = frame_support::traits::ConstU128<1>;
-	type KsmToMgaRatioDenominator = frame_support::traits::ConstU128<10000>;
+	type KsmToMgaRatioDenominator = frame_support::traits::ConstU128<KSM_MGA_SCALE_FACTOR>;
 	type VestingProvider = Vesting;
 	type WeightInfo = weights::pallet_bootstrap_weights::ModuleWeight<Runtime>;
 }

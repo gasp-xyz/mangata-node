@@ -1375,7 +1375,7 @@ impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 							// invalid general key
 							None
 						}
-					},
+					}
 					_ => None,
 				}
 			},

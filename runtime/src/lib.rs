@@ -85,7 +85,7 @@ use xyk_runtime_api::{RpcAmountsResult, RpcResult, RpcRewardsResult};
 pub const MGA_TOKEN_ID: TokenId = 0;
 pub const KSM_TOKEN_ID: TokenId = 4;
 
-pub const KSM_MGA_SCALE_FACTOR: u32 = 10_000_000_000u32; // 100 as KSM/MGA, with 6 decimals accounted for (12 - KSM, 18 - MGA)
+pub const KSM_MGA_SCALE_FACTOR: u128 = 10_000_000_000u128; // 100 as KSM/MGA, with 6 decimals accounted for (12 - KSM, 18 - MGA)
 
 pub use pallet_sudo;
 
@@ -655,7 +655,7 @@ where
 		scale_info::TypeInfo,
 	T1: Get<TokenId>,
 	T2: Get<TokenId>,
-	SF: Get<u32>,
+	SF: Get<u128>,
 {
 	type LiquidityInfo = Option<(TokenId, NegativeImbalanceOf<C, T>)>;
 	type Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -754,7 +754,7 @@ impl pallet_transaction_payment::Config for Runtime {
 		ToAuthor,
 		MgaTokenId,
 		KsmTokenId,
-		frame_support::traits::ConstU32<KSM_MGA_SCALE_FACTOR>,
+		frame_support::traits::ConstU128<KSM_MGA_SCALE_FACTOR>,
 	>;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = WeightToFee;

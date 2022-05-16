@@ -110,7 +110,7 @@ jobs:
         name: Run unit tests
         run: |
           docker pull mangatasolutions/node-builder:0.1
-          ./docker-cargo.sh test -- -Z unstable-options --format json --report-time 
+          ./docker-cargo.sh test -j1 -- -Z unstable-options --format json --report-time 
           # |cargo2junit | tee ut-results.xml
           # sed -i '/<testsuite.*\/>$/d' ut-results.xml
           # sed -i 's/<testsuites>/<testsuites time="0">/g' ut-results.xml
@@ -154,7 +154,7 @@ jobs:
       -
         name: Build node binary
         run: >
-          DISABLE_CARGO_CACHE=1 ./docker-cargo.sh build --release --features=enable-trading
+          DISABLE_CARGO_CACHE=1 ./docker-cargo.sh build -j1 --release --features=enable-trading
       -
         name: Build node img
         env:

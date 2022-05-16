@@ -1,6 +1,6 @@
 use crate::chain_spec;
-use std::path::PathBuf;
 use clap::Parser;
+use std::path::PathBuf;
 
 /// Sub-commands supported by the collator.
 #[derive(Debug, clap::Subcommand)]
@@ -76,9 +76,9 @@ pub struct ExportGenesisWasmCommand {
 
 #[derive(Debug, Parser)]
 #[clap(
-		propagate_version = true,
-		args_conflicts_with_subcommands = true,
-		subcommand_negates_reqs = true
+	propagate_version = true,
+	args_conflicts_with_subcommands = true,
+	subcommand_negates_reqs = true
 )]
 pub struct Cli {
 	#[clap(subcommand)]

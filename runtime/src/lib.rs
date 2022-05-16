@@ -965,6 +965,7 @@ impl pallet_assets_info::Config for Runtime {
 	type MaxLengthDescription = MaxLengthDescription;
 	type MaxDecimals = MaxDecimals;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	type RelayNativeTokensValueScaleFactor = frame_support::traits::ConstU128<KSM_MGA_SCALE_FACTOR>;
 }
 
 impl pallet_bridge::Config for Runtime {

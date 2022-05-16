@@ -85,7 +85,7 @@ use xyk_runtime_api::{RpcAmountsResult, RpcResult, RpcRewardsResult};
 pub const MGA_TOKEN_ID: TokenId = 0;
 pub const KSM_TOKEN_ID: TokenId = 4;
 
-pub const KSM_MGA_SCALE_FACTOR: u128 = 10_000_000_000u128; // 100 as KSM/MGA, with 6 decimals accounted for (12 - KSM, 18 - MGA)
+pub const KSM_MGA_SCALE_FACTOR: u128 = 1000_000_000u128; // 1000 as KSM/MGA, with 6 decimals accounted for (12 - KSM, 18 - MGA)
 
 pub use pallet_sudo;
 

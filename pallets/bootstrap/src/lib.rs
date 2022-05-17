@@ -73,7 +73,7 @@ pub mod pallet {
 				return T::DbWeight::get().reads(1)
 			}
 
-			if let Some((start, whitelist_length, public_length)) = BootstrapSchedule::<T>::get() {
+			if let Some((start, whitelist_length, public_length, _)) = BootstrapSchedule::<T>::get() {
 				// R:1
 				// NOTE: arythmetics protected by invariant check in Bootstrap::start_ido
 				let whitelist_start = start;
@@ -179,7 +179,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn config)]
 	pub type BootstrapSchedule<T: Config> =
-		StorageValue<_, (T::BlockNumber, u32, u32), OptionQuery>;
+		StorageValue<_, (T::BlockNumber, u32, u32, (u128, u128)), OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn minted_liquidity)]
@@ -248,6 +248,7 @@ pub mod pallet {
 			ido_start: T::BlockNumber,
 			whitelist_phase_length: u32,
 			public_phase_lenght: u32,
+			ratio: (u128,u128),
 		) -> DispatchResult {
 			ensure_root(origin)?;
 
@@ -281,7 +282,7 @@ pub mod pallet {
 				Error::<T>::PoolAlreadyExists
 			);
 
-			BootstrapSchedule::<T>::put((ido_start, whitelist_phase_length, public_phase_lenght));
+			BootstrapSchedule::<T>::put((ido_start, whitelist_phase_length, public_phase_lenght, ratio));
 
 			Ok(().into())
 		}
@@ -495,13 +496,17 @@ impl<T: Config> Pallet<T> {
 
 		ensure!(is_ksm || is_mga, Error::<T>::UnsupportedTokenId);
 
-		let ratio_nominator = T::KsmToMgaRatioNumerator::get();
-		let ratio_denominator = T::KsmToMgaRatioDenominator::get();
-
 		ensure!(
 			is_public_phase || (is_whitelist_phase && (am_i_whitelisted || is_mga)),
 			Error::<T>::Unauthorized
 		);
+
+		let schedule = BootstrapSchedule::<T>::get();
+		ensure!(
+			schedule.is_some(),
+			Error::<T>::Unauthorized
+		);
+		let (_,_,_,(ratio_nominator, ratio_denominator)) = schedule.unwrap();
 
 		<T as Config>::Currency::transfer(
 			token_id.into(),

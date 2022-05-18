@@ -254,7 +254,10 @@ fn test_incremental_whitliested_donation() {
 fn test_non_root_user_can_not_start_ido() {
 	new_test_ext().execute_with(|| {
 		set_up();
-		assert_err!(Bootstrap::start_ido(Origin::signed(USER_ID), 0_u32.into(), 1, 1, DEFAULT_RATIO), BadOrigin);
+		assert_err!(
+			Bootstrap::start_ido(Origin::signed(USER_ID), 0_u32.into(), 1, 1, DEFAULT_RATIO),
+			BadOrigin
+		);
 	});
 }
 
@@ -285,6 +288,23 @@ fn test_ido_start_cannot_happen_in_the_past() {
 		assert_err!(
 			Bootstrap::start_ido(Origin::root(), 999_u32.into(), 1, 1, DEFAULT_RATIO),
 			Error::<Test>::BootstrapStartInThePast
+		);
+	});
+}
+
+#[test]
+#[serial]
+fn test_ido_start_can_not_be_initialize_with_0_ratio() {
+	new_test_ext().execute_with(|| {
+		set_up();
+		System::set_block_number(10);
+		assert_err!(
+			Bootstrap::start_ido(Origin::root(), 999_u32.into(), 1, 1, (1, 0)),
+			Error::<Test>::WrongRatio
+		);
+		assert_err!(
+			Bootstrap::start_ido(Origin::root(), 999_u32.into(), 1, 1, (0, 1)),
+			Error::<Test>::WrongRatio
 		);
 	});
 }
@@ -322,6 +342,8 @@ fn test_bootstrap_can_be_modified_only_before_its_started() {
 		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
+		Bootstrap::start_ido(Origin::root(), 50_u32.into(), 10, 20, DEFAULT_RATIO).unwrap();
+
 		Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 20, DEFAULT_RATIO).unwrap();
 
 		Bootstrap::on_initialize(100_u32.into());
@@ -330,6 +352,8 @@ fn test_bootstrap_can_be_modified_only_before_its_started() {
 			Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 20, DEFAULT_RATIO),
 			Error::<Test>::AlreadyStarted
 		);
+
+		assert_eq!(Some((100_u32.into(), 10_u32, 20_u32, DEFAULT_RATIO)), Bootstrap::config());
 	});
 }
 
@@ -431,7 +455,13 @@ fn test_bootstrap_schedule_overflow() {
 		);
 
 		assert_err!(
-			Bootstrap::start_ido(Origin::root(), u64::MAX.into(), u32::MAX, u32::MAX, DEFAULT_RATIO),
+			Bootstrap::start_ido(
+				Origin::root(),
+				u64::MAX.into(),
+				u32::MAX,
+				u32::MAX,
+				DEFAULT_RATIO
+			),
 			Error::<Test>::MathOverflow
 		);
 	});

@@ -647,7 +647,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::activate_liquidity())]
 		pub fn activate_liquidity(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,

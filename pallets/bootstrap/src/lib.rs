@@ -188,7 +188,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// provisions vested/locked tokens into the boostrstrap
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::provision_vested())]
 		#[transactional]
 		pub fn provision_vested(
 			origin: OriginFor<T>,
@@ -211,7 +211,7 @@ pub mod pallet {
 		}
 
 		/// provisions non-vested/non-locked tokens into the boostrstrap
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::provision())]
 		#[transactional]
 		pub fn provision(
 			origin: OriginFor<T>,
@@ -253,7 +253,7 @@ pub mod pallet {
 		/// - BeforeStart - blocks 0..ido_start
 		/// - WhitelistPhase - blocks ido_start..(ido_start + whitelist_phase_length)
 		/// - PublicPhase - blocks (ido_start + whitelist_phase_length)..(ido_start + whitelist_phase_length  + public_phase_lenght)
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::start_ido())]
 		#[transactional]
 		pub fn start_ido(
 			origin: OriginFor<T>,
@@ -309,7 +309,7 @@ pub mod pallet {
 		}
 
 		/// claim liquidity tokens from pool created as a result of bootstrap event finish
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::claim_rewards())]
 		#[transactional]
 		pub fn claim_rewards(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;

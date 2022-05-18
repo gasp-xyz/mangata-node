@@ -4,7 +4,7 @@
 use std::{sync::Arc, time::Duration};
 
 // Local Runtime Types
-use mangata_runtime::{opaque::Block, AccountId, Balance, Hash, Index as Nonce, RuntimeApi};
+use mangata_primitives::{AccountId, Balance, Block, Hash, Index as Nonce, TokenId};
 
 // Cumulus Imports
 use cumulus_client_consensus_aura::{AuraConsensus, BuildAuraConsensusParams, SlotProportion};
@@ -16,12 +16,12 @@ use cumulus_client_service::{
 use cumulus_primitives_core::ParaId;
 use cumulus_relay_chain_interface::RelayChainInterface;
 use cumulus_relay_chain_local::build_relay_chain_interface;
-use mangata_runtime::TokenId;
 
 // Substrate Imports
 use sc_client_api::ExecutorProvider;
 use sc_executor::NativeElseWasmExecutor;
 use sc_network::NetworkService;
+pub use sc_service::ChainSpec;
 use sc_service::{Configuration, PartialComponents, Role, TFullBackend, TFullClient, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use sp_api::ConstructRuntimeApi;
@@ -30,23 +30,52 @@ use sp_keystore::SyncCryptoStorePtr;
 use sp_runtime::traits::BlakeTwo256;
 use substrate_prometheus_endpoint::Registry;
 
-/// Native executor instance.
-pub struct MangataRuntimeExecutor;
+pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 
-impl sc_executor::NativeExecutionDispatch for MangataRuntimeExecutor {
+#[cfg(feature = "mangata-kusama")]
+pub use mangata_kusama_runtime;
+#[cfg(feature = "mangata-rococo")]
+pub use mangata_rococo_runtime;
+
+pub const MANGATA_KUSAMA_RUNTIME_NOT_AVAILABLE: &str =
+	"Mangata Kusama runtime is not available. Please compile the node with `--features mangata-kusama` to enable it.";
+pub const MANGATA_ROCOCO_RUNTIME_NOT_AVAILABLE: &str =
+	"Mangata Rococo runtime is not available. Please compile the node with `--features mangata-rococo` to enable it.";
+
+#[cfg(feature = "mangata-kusama")]
+/// Native executor instance.
+pub struct MangataKusamaRuntimeExecutor;
+#[cfg(feature = "mangata-kusama")]
+impl sc_executor::NativeExecutionDispatch for MangataKusamaRuntimeExecutor {
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		mangata_runtime::api::dispatch(method, data)
+		mangata_kusama_runtime::api::dispatch(method, data)
 	}
 
 	fn native_version() -> sc_executor::NativeVersion {
-		mangata_runtime::native_version()
+		mangata_kusama_runtime::native_version()
 	}
 }
 
-pub type FullClient =
-	sc_service::TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<MangataRuntimeExecutor>>;
+#[cfg(feature = "mangata-rococo")]
+/// Native executor instance.
+pub struct MangataRococoRuntimeExecutor;
+#[cfg(feature = "mangata-rococo")]
+impl sc_executor::NativeExecutionDispatch for MangataRococoRuntimeExecutor {
+	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+
+	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
+		mangata_rococo_runtime::api::dispatch(method, data)
+	}
+
+	fn native_version() -> sc_executor::NativeVersion {
+		mangata_rococo_runtime::native_version()
+	}
+}
+
+pub type FullClient<RuntimeApi, Executor> =
+	sc_service::TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>;
 
 /// Starts a `ServiceBuilder` for a full service.
 ///
@@ -358,18 +387,39 @@ where
 
 /// Build the import queue for the parachain runtime.
 #[allow(clippy::type_complexity)]
-pub fn parachain_build_import_queue(
-	client: Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<MangataRuntimeExecutor>>>,
+pub fn parachain_build_import_queue<RuntimeApi, Executor>(
+	client: Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>>,
 	config: &Configuration,
 	telemetry: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
 ) -> Result<
 	sc_consensus::DefaultImportQueue<
 		Block,
-		TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<MangataRuntimeExecutor>>,
+		TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>,
 	>,
 	sc_service::Error,
-> {
+>
+where
+	Executor: sc_executor::NativeExecutionDispatch + 'static,
+	RuntimeApi: ConstructRuntimeApi<Block, TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>>
+		+ Send
+		+ Sync
+		+ 'static,
+	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
+		+ sp_api::Metadata<Block>
+		+ sp_session::SessionKeys<Block>
+		+ sp_api::ApiExt<
+			Block,
+			StateBackend = sc_client_api::StateBackendFor<TFullBackend<Block>, Block>,
+		> + sp_offchain::OffchainWorkerApi<Block>
+		+ sp_block_builder::BlockBuilder<Block>
+		+ cumulus_primitives_core::CollectCollationInfo<Block>
+		+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
+		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
+		+ ver_api::VerApi<Block>
+		+ xyk_rpc::XykRuntimeApi<Block, Balance, TokenId, AccountId>
+		+ sp_consensus_aura::AuraApi<Block, AuraId>,
+{
 	let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 
 	cumulus_client_consensus_aura::import_queue::<
@@ -403,15 +453,36 @@ pub fn parachain_build_import_queue(
 }
 
 /// Start a parachain node.
-pub async fn start_parachain_node(
+pub async fn start_parachain_node<RuntimeApi, Executor>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
 	id: ParaId,
 ) -> sc_service::error::Result<(
 	TaskManager,
-	Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<MangataRuntimeExecutor>>>,
-)> {
-	start_node_impl::<RuntimeApi, MangataRuntimeExecutor, _, _, _>(
+	Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>>,
+)>
+where
+	Executor: sc_executor::NativeExecutionDispatch + 'static,
+	RuntimeApi: ConstructRuntimeApi<Block, TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>>
+		+ Send
+		+ Sync
+		+ 'static,
+	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
+		+ sp_api::Metadata<Block>
+		+ sp_session::SessionKeys<Block>
+		+ sp_api::ApiExt<
+			Block,
+			StateBackend = sc_client_api::StateBackendFor<TFullBackend<Block>, Block>,
+		> + sp_offchain::OffchainWorkerApi<Block>
+		+ sp_block_builder::BlockBuilder<Block>
+		+ cumulus_primitives_core::CollectCollationInfo<Block>
+		+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
+		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
+		+ ver_api::VerApi<Block>
+		+ xyk_rpc::XykRuntimeApi<Block, Balance, TokenId, AccountId>
+		+ sp_consensus_aura::AuraApi<Block, AuraId>,
+{
+	start_node_impl::<RuntimeApi, Executor, _, _, _>(
 		parachain_config,
 		polkadot_config,
 		id,

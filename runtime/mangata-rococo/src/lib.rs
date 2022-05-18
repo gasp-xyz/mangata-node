@@ -73,7 +73,9 @@ use static_assertions::const_assert;
 
 pub use pallet_issuance::{IssuanceInfo, PoolPromoteApi};
 
-pub use mangata_primitives::{Amount, Balance, TokenId};
+pub use mangata_primitives::{
+	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
+};
 
 pub use orml_tokens;
 use orml_tokens::TransferDust;
@@ -82,10 +84,10 @@ use orml_traits::{parameter_type_with_key, GetByKey, MultiCurrency};
 pub use pallet_xyk;
 use xyk_runtime_api::{RpcAmountsResult, RpcResult, RpcRewardsResult};
 
-pub const MGA_TOKEN_ID: TokenId = 0;
-pub const KSM_TOKEN_ID: TokenId = 4;
+pub const MGR_TOKEN_ID: TokenId = 0;
+pub const ROC_TOKEN_ID: TokenId = 4;
 
-pub const KSM_MGA_SCALE_FACTOR: u128 = 1000_000_000u128; // 1000 as KSM/MGA, with 6 decimals accounted for (12 - KSM, 18 - MGA)
+pub const ROC_MGR_SCALE_FACTOR: u128 = 1000_000_000u128; // 1000 as KSM/MGA, with 6 decimals accounted for (12 - KSM, 18 - MGA)
 
 pub use pallet_sudo;
 
@@ -104,37 +106,14 @@ mod weights;
 #[cfg(any(feature = "std", test))]
 pub use frame_system::Call as SystemCall;
 
-/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
-pub type Signature = MultiSignature;
-
-/// Some way of identifying an account on the chain. We intentionally make it equivalent
-/// to the public key of our transaction signing scheme.
-pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-
-/// Index of a transaction in the chain.
-pub type Index = u32;
-
-/// A hash of some data used by the chain.
-pub type Hash = sp_core::H256;
-
-/// An index to a block.
-pub type BlockNumber = u32;
-
-/// The address format for describing accounts.
-pub type Address = MultiAddress<AccountId, ()>;
-
 /// Block header type as expected by this runtime.
 pub type Header = generic::HeaderVer<BlockNumber, BlakeTwo256>;
-
 /// Block type as expected by this runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-
 /// A Block signed with a Justification
 pub type SignedBlock = generic::SignedBlock<Block>;
-
 /// BlockId type as expected by this runtime.
 pub type BlockId = generic::BlockId<Block>;
-
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
 	frame_system::CheckSpecVersion<Runtime>,
@@ -200,8 +179,8 @@ pub fn mga_per_second() -> u128 {
 	base_per_second * base_tx_in_mga()
 }
 
-pub fn ksm_per_second() -> u128 {
-	mga_per_second() / KSM_MGA_SCALE_FACTOR as u128
+pub fn roc_per_second() -> u128 {
+	mga_per_second() / ROC_MGR_SCALE_FACTOR as u128
 }
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
@@ -345,8 +324,8 @@ parameter_types! {
 }
 
 parameter_types! {
-	pub const MgaTokenId: TokenId = MGA_TOKEN_ID;
-	pub const KsmTokenId: TokenId = KSM_TOKEN_ID;
+	pub const MgaTokenId: TokenId = MGR_TOKEN_ID;
+	pub const RocTokenId: TokenId = ROC_TOKEN_ID;
 }
 
 pub struct MangataCallFilter;
@@ -489,7 +468,7 @@ parameter_type_with_key! {
 	pub ExistentialDeposits: |_currency_id: TokenId| -> Balance {
 		0
 		// match currency_id {
-		// 	&MGA_TOKEN_ID => 100,
+		// 	&MGR_TOKEN_ID => 100,
 		// 	_ => 0,
 		// }
 	};
@@ -546,11 +525,11 @@ impl pallet_xyk::Config for Runtime {
 impl pallet_bootstrap::Config for Runtime {
 	type Event = Event;
 	type MGATokenId = MgaTokenId;
-	type KSMTokenId = KsmTokenId;
+	type KSMTokenId = RocTokenId;
 	type PoolCreateApi = Xyk;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type KsmToMgaRatioNumerator = frame_support::traits::ConstU128<1>;
-	type KsmToMgaRatioDenominator = frame_support::traits::ConstU128<KSM_MGA_SCALE_FACTOR>;
+	type KsmToMgaRatioDenominator = frame_support::traits::ConstU128<ROC_MGR_SCALE_FACTOR>;
 	type VestingProvider = Vesting;
 	type WeightInfo = weights::pallet_bootstrap_weights::ModuleWeight<Runtime>;
 }
@@ -753,8 +732,8 @@ impl pallet_transaction_payment::Config for Runtime {
 		orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
 		ToAuthor,
 		MgaTokenId,
-		KsmTokenId,
-		frame_support::traits::ConstU128<KSM_MGA_SCALE_FACTOR>,
+		RocTokenId,
+		frame_support::traits::ConstU128<ROC_MGR_SCALE_FACTOR>,
 	>;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = WeightToFee;
@@ -784,8 +763,8 @@ impl parachain_info::Config for Runtime {}
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 parameter_types! {
-	pub KsmLocation: MultiLocation = MultiLocation::parent();
-	pub const RelayNetwork: NetworkId = NetworkId::Kusama;
+	pub RocLocation: MultiLocation = MultiLocation::parent();
+	pub const RelayNetwork: NetworkId = NetworkId::Polkadot;
 	pub RelayChainOrigin: Origin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
 }
@@ -965,7 +944,7 @@ impl pallet_assets_info::Config for Runtime {
 	type MaxLengthDescription = MaxLengthDescription;
 	type MaxDecimals = MaxDecimals;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-	type RelayNativeTokensValueScaleFactor = frame_support::traits::ConstU128<KSM_MGA_SCALE_FACTOR>;
+	type RelayNativeTokensValueScaleFactor = frame_support::traits::ConstU128<ROC_MGR_SCALE_FACTOR>;
 }
 
 impl pallet_bridge::Config for Runtime {
@@ -1249,18 +1228,18 @@ impl orml_xcm::Config for Runtime {
 }
 
 parameter_types! {
-	pub KsmPerSecond: (AssetId, u128) = (MultiLocation::parent().into(), ksm_per_second());
+	pub RocPerSecond: (AssetId, u128) = (MultiLocation::parent().into(), roc_per_second());
 	pub MgaPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
-			X2(Parachain(u32::from(ParachainInfo::get())), GeneralKey(MGA_TOKEN_ID.encode())),
+			X2(Parachain(u32::from(ParachainInfo::get())), GeneralKey(MGR_TOKEN_ID.encode())),
 		).into(),
 		mga_per_second()
 	);
 }
 
 pub type Trader =
-	(FixedRateOfFungible<KsmPerSecond, ToTreasury>, FixedRateOfFungible<MgaPerSecond, ToTreasury>);
+	(FixedRateOfFungible<RocPerSecond, ToTreasury>, FixedRateOfFungible<MgaPerSecond, ToTreasury>);
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
@@ -1324,7 +1303,7 @@ where
 pub struct TokenIdConvert;
 impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
 	fn convert(id: TokenId) -> Option<MultiLocation> {
-		if id == KSM_TOKEN_ID {
+		if id == ROC_TOKEN_ID {
 			return Some(MultiLocation::parent())
 		}
 
@@ -1340,7 +1319,7 @@ impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
 impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 	fn convert(location: MultiLocation) -> Option<TokenId> {
 		if location == MultiLocation::parent() {
-			return Some(KSM_TOKEN_ID)
+			return Some(ROC_TOKEN_ID)
 		}
 
 		if let Some(token_id) = AssetIdMaps::<Runtime>::get_currency_id(location.clone()) {

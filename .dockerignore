@@ -4,10 +4,10 @@ target
 **/*.txt
 **/*.md
 /docker/
-./docker-build
+./docker-cargo
 !/target/release/polkadot-collator
-!/docker-build/release/wbuild/mangata-runtime/mangata_runtime.compact.compressed.wasm
-!/docker-build/release/mangata-node
+!/docker-cargo/release/wbuild/mangata-runtime/mangata_runtime.compact.compressed.wasm
+!/docker-cargo/release/mangata-node
 
 # dotfiles in the repo root
 /.*

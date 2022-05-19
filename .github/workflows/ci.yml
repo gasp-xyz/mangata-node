@@ -155,12 +155,8 @@ jobs:
           docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
       -
         name: Build node binary
-        run: >
-          ./docker-cargo.sh fetch ||
-          ./docker-cargo.sh fetch ||
-          ./docker-cargo.sh fetch ||
-          ./docker-cargo.sh fetch ||
-          ./docker-cargo.sh fetch ||
+        run: |
+          ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
           ./docker-cargo.sh build -j4 --release --features=enable-trading
       -
         name: Build node img

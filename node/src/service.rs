@@ -18,6 +18,10 @@ use cumulus_relay_chain_interface::RelayChainInterface;
 use cumulus_relay_chain_local::build_relay_chain_interface;
 
 // Substrate Imports
+use crate::{
+	client::{Client, RuntimeApiCollection},
+	command::IdentifyVariant,
+};
 use sc_client_api::ExecutorProvider;
 use sc_executor::NativeElseWasmExecutor;
 use sc_network::NetworkService;
@@ -28,10 +32,8 @@ use sp_api::ConstructRuntimeApi;
 use sp_consensus::SlotData;
 use sp_keystore::SyncCryptoStorePtr;
 use sp_runtime::traits::BlakeTwo256;
-use substrate_prometheus_endpoint::Registry;
-use crate::client::{Client, RuntimeApiCollection};
 use sp_trie::PrefixedMemoryDB;
-use crate::command::IdentifyVariant;
+use substrate_prometheus_endpoint::Registry;
 
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 
@@ -96,13 +98,15 @@ pub fn new_chain_ops(
 > {
 	match &config.chain_spec {
 		#[cfg(feature = "mangata-kusama")]
-		spec if spec.is_mangata_kusama() => {
-			new_chain_ops_inner::<mangata_kusama_runtime::RuntimeApi, MangataKusamaRuntimeExecutor>(config)
-		}
+		spec if spec.is_mangata_kusama() => new_chain_ops_inner::<
+			mangata_kusama_runtime::RuntimeApi,
+			MangataKusamaRuntimeExecutor,
+		>(config),
 		#[cfg(feature = "mangata-rococo")]
-		spec if spec.is_mangata_rococo() => {
-			new_chain_ops_inner::<mangata_rococo_runtime::RuntimeApi, MangataRococoRuntimeExecutor>(config)
-		}
+		spec if spec.is_mangata_rococo() => new_chain_ops_inner::<
+			mangata_rococo_runtime::RuntimeApi,
+			MangataRococoRuntimeExecutor,
+		>(config),
 		_ => panic!("invalid chain spec"),
 	}
 }
@@ -127,19 +131,9 @@ where
 		RuntimeApiCollection<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
 	Executor: sc_executor::NativeExecutionDispatch + 'static,
 {
-	let PartialComponents {
-		client,
-		backend,
-		import_queue,
-		task_manager,
-		..
-	} = new_partial::<RuntimeApi, Executor>(config)?;
-	Ok((
-		Arc::new(Client::from(client)),
-		backend,
-		import_queue,
-		task_manager,
-	))
+	let PartialComponents { client, backend, import_queue, task_manager, .. } =
+		new_partial::<RuntimeApi, Executor>(config)?;
+	Ok((Arc::new(Client::from(client)), backend, import_queue, task_manager))
 }
 
 /// Starts a `ServiceBuilder` for a full service.
@@ -226,32 +220,32 @@ where
 
 	let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 	let import_queue = cumulus_client_consensus_aura::import_queue::<
-			sp_consensus_aura::sr25519::AuthorityPair,
-			_,
-			_,
-			_,
-			_,
-			_,
-			_,
-		>(cumulus_client_consensus_aura::ImportQueueParams {
-			block_import: client.clone(),
-			client: client.clone(),
-			create_inherent_data_providers: move |_, _| async move {
-				let time = sp_timestamp::InherentDataProvider::from_system_time();
+		sp_consensus_aura::sr25519::AuthorityPair,
+		_,
+		_,
+		_,
+		_,
+		_,
+		_,
+	>(cumulus_client_consensus_aura::ImportQueueParams {
+		block_import: client.clone(),
+		client: client.clone(),
+		create_inherent_data_providers: move |_, _| async move {
+			let time = sp_timestamp::InherentDataProvider::from_system_time();
 
-				let slot =
-					sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_duration(
-						*time,
-						slot_duration.slot_duration(),
-					);
+			let slot =
+				sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_duration(
+					*time,
+					slot_duration.slot_duration(),
+				);
 
-				Ok((time, slot))
-			},
-			registry: config.prometheus_registry(),
-			can_author_with: sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone()),
-			spawner: &task_manager.spawn_essential_handle(),
-			telemetry: telemetry.as_ref().map(|telemetry| telemetry.handle()),
-		})?;
+			Ok((time, slot))
+		},
+		registry: config.prometheus_registry(),
+		can_author_with: sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone()),
+		spawner: &task_manager.spawn_essential_handle(),
+		telemetry: telemetry.as_ref().map(|telemetry| telemetry.handle()),
+	})?;
 
 	let params = PartialComponents {
 		backend,

@@ -13,7 +13,10 @@
 
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
-pub use mangata_primitives::{AccountId, Balance, TokenId, Block, BlockNumber, Hash, Header, Index as Nonce};
+use crate::service::AuraId;
+pub use mangata_primitives::{
+	AccountId, Balance, Block, BlockNumber, Hash, Header, Index as Nonce, TokenId,
+};
 use sc_client_api::{Backend as BackendT, BlockchainEvents, KeyIterator};
 use sp_api::{CallApiAt, NumberFor, ProvideRuntimeApi};
 use sp_blockchain::HeaderBackend;
@@ -25,7 +28,6 @@ use sp_runtime::{
 };
 use sp_storage::{ChildInfo, StorageData, StorageKey};
 use std::sync::Arc;
-use crate::service::AuraId;
 
 /// A set of APIs that polkadot-like runtimes must implement.
 ///
@@ -145,28 +147,66 @@ pub trait ClientHandle {
 #[derive(Clone)]
 pub enum Client {
 	#[cfg(feature = "mangata-kusama")]
-	MangataKusama(Arc<crate::service::FullClient<crate::service::mangata_kusama_runtime::RuntimeApi, crate::service::MangataKusamaRuntimeExecutor>>),
+	MangataKusama(
+		Arc<
+			crate::service::FullClient<
+				crate::service::mangata_kusama_runtime::RuntimeApi,
+				crate::service::MangataKusamaRuntimeExecutor,
+			>,
+		>,
+	),
 	#[cfg(feature = "mangata-rococo")]
-	MangataRococo(Arc<crate::service::FullClient<crate::service::mangata_rococo_runtime::RuntimeApi, crate::service::MangataRococoRuntimeExecutor>>),
+	MangataRococo(
+		Arc<
+			crate::service::FullClient<
+				crate::service::mangata_rococo_runtime::RuntimeApi,
+				crate::service::MangataRococoRuntimeExecutor,
+			>,
+		>,
+	),
 }
 
 #[cfg(feature = "mangata-kusama")]
-impl From<Arc<crate::service::FullClient<crate::service::mangata_kusama_runtime::RuntimeApi, crate::service::MangataKusamaRuntimeExecutor>>>
-	for Client
+impl
+	From<
+		Arc<
+			crate::service::FullClient<
+				crate::service::mangata_kusama_runtime::RuntimeApi,
+				crate::service::MangataKusamaRuntimeExecutor,
+			>,
+		>,
+	> for Client
 {
 	fn from(
-		client: Arc<crate::service::FullClient<mangata_kusama_runtime::RuntimeApi, crate::service::MangataKusamaRuntimeExecutor>>,
+		client: Arc<
+			crate::service::FullClient<
+				mangata_kusama_runtime::RuntimeApi,
+				crate::service::MangataKusamaRuntimeExecutor,
+			>,
+		>,
 	) -> Self {
 		Self::MangataKusama(client)
 	}
 }
 
 #[cfg(feature = "mangata-rococo")]
-impl From<Arc<crate::service::FullClient<crate::service::mangata_rococo_runtime::RuntimeApi, crate::service::MangataRococoRuntimeExecutor>>>
-	for Client
+impl
+	From<
+		Arc<
+			crate::service::FullClient<
+				crate::service::mangata_rococo_runtime::RuntimeApi,
+				crate::service::MangataRococoRuntimeExecutor,
+			>,
+		>,
+	> for Client
 {
 	fn from(
-		client: Arc<crate::service::FullClient<mangata_rococo_runtime::RuntimeApi, crate::service::MangataRococoRuntimeExecutor>>,
+		client: Arc<
+			crate::service::FullClient<
+				mangata_rococo_runtime::RuntimeApi,
+				crate::service::MangataRococoRuntimeExecutor,
+			>,
+		>,
 	) -> Self {
 		Self::MangataRococo(client)
 	}
@@ -176,9 +216,11 @@ impl ClientHandle for Client {
 	fn execute_with<T: ExecuteWithClient>(&self, t: T) -> T::Output {
 		match self {
 			#[cfg(feature = "mangata-kusama")]
-			Self::MangataKusama(client) => T::execute_with_client::<_, _, crate::service::FullBackend>(t, client.clone()),
+			Self::MangataKusama(client) =>
+				T::execute_with_client::<_, _, crate::service::FullBackend>(t, client.clone()),
 			#[cfg(feature = "mangata-rococo")]
-			Self::MangataRococo(client) => T::execute_with_client::<_, _, crate::service::FullBackend>(t, client.clone()),
+			Self::MangataRococo(client) =>
+				T::execute_with_client::<_, _, crate::service::FullBackend>(t, client.clone()),
 		}
 	}
 }
@@ -288,7 +330,11 @@ impl sc_client_api::StorageProvider<Block, crate::service::FullBackend> for Clie
 		prefix: Option<&'a StorageKey>,
 		start_key: Option<&StorageKey>,
 	) -> sp_blockchain::Result<
-		KeyIterator<'a, <crate::service::FullBackend as sc_client_api::Backend<Block>>::State, Block>,
+		KeyIterator<
+			'a,
+			<crate::service::FullBackend as sc_client_api::Backend<Block>>::State,
+			Block,
+		>,
 	> {
 		match_client!(self, storage_keys_iter(id, prefix, start_key))
 	}
@@ -318,12 +364,13 @@ impl sc_client_api::StorageProvider<Block, crate::service::FullBackend> for Clie
 		prefix: Option<&'a StorageKey>,
 		start_key: Option<&StorageKey>,
 	) -> sp_blockchain::Result<
-		KeyIterator<'a, <crate::service::FullBackend as sc_client_api::Backend<Block>>::State, Block>,
+		KeyIterator<
+			'a,
+			<crate::service::FullBackend as sc_client_api::Backend<Block>>::State,
+			Block,
+		>,
 	> {
-		match_client!(
-			self,
-			child_storage_keys_iter(id, child_info, prefix, start_key)
-		)
+		match_client!(self, child_storage_keys_iter(id, child_info, prefix, start_key))
 	}
 
 	fn child_storage_hash(

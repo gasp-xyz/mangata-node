@@ -182,6 +182,7 @@ impl assets_info::Config for Test {
 	type MaxLengthDescription = MaxLengthDescription;
 	type MaxDecimals = MaxDecimals;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
+	type RelayNativeTokensValueScaleFactor = ();
 }
 
 parameter_types! {

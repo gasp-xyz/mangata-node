@@ -33,7 +33,6 @@ on:
 
 env:
   DOCKER_BUILDER_IMAGE: mangatasolutions/node-builder:0.1
-  DISABLE_CARGO_CACHE: 1
   DISABLE_TTY: 1
 
 jobs:
@@ -60,7 +59,8 @@ jobs:
       -
         name: Check formatting
         run: |
-           ./docker-cargo.sh fmt --all -- --check
+          ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
+          ./docker-cargo.sh fmt --all -- --check
 
   clippy-check:
     name: Clippy check
@@ -85,6 +85,7 @@ jobs:
         name: Run clippy
         run: |
           docker pull mangatasolutions/node-builder:0.1
+          ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
           ./docker-cargo.sh clippy -p pallet-xyk -p pallet-assets-info -p pallet-bridge
 
   unit-test:
@@ -109,6 +110,7 @@ jobs:
       -
         name: Run unit tests
         run: |
+          ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
           docker pull mangatasolutions/node-builder:0.1
           ./docker-cargo.sh test -j4 -- -Z unstable-options --format json --report-time 
           # |cargo2junit | tee ut-results.xml
@@ -154,7 +156,12 @@ jobs:
       -
         name: Build node binary
         run: >
-          DISABLE_CARGO_CACHE=1 ./docker-cargo.sh build -j4 --release --features=enable-trading
+          ./docker-cargo.sh fetch ||
+          ./docker-cargo.sh fetch ||
+          ./docker-cargo.sh fetch ||
+          ./docker-cargo.sh fetch ||
+          ./docker-cargo.sh fetch ||
+          ./docker-cargo.sh build -j4 --release --features=enable-trading
       -
         name: Build node img
         env:

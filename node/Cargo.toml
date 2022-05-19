@@ -90,6 +90,8 @@ sp-session = { git = "https://github.com/mangata-finance/substrate", branch = "m
 sp-timestamp = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-transaction-pool = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 ver-api = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-storage = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-trie = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
 # Cumulus dependencies
 cumulus-client-cli = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev' }

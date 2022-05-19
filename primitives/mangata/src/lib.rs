@@ -2,7 +2,7 @@
 pub use sp_runtime::{
 	generic,
 	traits::{BlakeTwo256, IdentifyAccount, Verify},
-	MultiAddress, MultiSignature, OpaqueExtrinsic as UncheckedExtrinsic,
+	MultiAddress, MultiSignature, OpaqueExtrinsic,
 };
 
 pub type TokenId = u32;
@@ -32,7 +32,7 @@ pub type Address = MultiAddress<AccountId, ()>;
 pub type Header = generic::HeaderVer<BlockNumber, BlakeTwo256>;
 
 /// Block type as expected by this runtime.
-pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+pub type Block = generic::Block<Header, OpaqueExtrinsic>;
 
 /// A Block signed with a Justification
 pub type SignedBlock = generic::SignedBlock<Block>;

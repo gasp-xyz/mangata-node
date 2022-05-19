@@ -6,3 +6,4 @@ pub mod service;
 pub mod cli;
 pub mod command;
 pub mod rpc;
+pub mod client;

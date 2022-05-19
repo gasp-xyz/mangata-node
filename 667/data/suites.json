@@ -1,0 +1,35 @@
+{
+  "uid" : "98d3104e051c652961429bf95fa0b5d6",
+  "children" : [ {
+    "name" : "test/sequential/xyk-pallet.test.ts",
+    "children" : [ {
+      "name" : "xyk-pallet: Happy case scenario",
+      "uid" : "91b81f6cd3848322",
+      "parentUid" : "7c932ff5fdb9624b56fc99866d13104d",
+      "status" : "failed",
+      "time" : {
+        "start" : 1652965540396,
+        "stop" : 1652967040422,
+        "duration" : 1500026
+      },
+      "flaky" : false,
+      "newFailed" : false,
+      "parameters" : [ ]
+    }, {
+      "name" : "xyk-pallet: Liquidity sufficiency scenario",
+      "uid" : "dc12831d698c9ca",
+      "parentUid" : "7c932ff5fdb9624b56fc99866d13104d",
+      "status" : "failed",
+      "time" : {
+        "start" : 1652967040423,
+        "stop" : 1652968540428,
+        "duration" : 1500005
+      },
+      "flaky" : false,
+      "newFailed" : false,
+      "parameters" : [ ]
+    } ],
+    "uid" : "7c932ff5fdb9624b56fc99866d13104d"
+  } ],
+  "name" : "suites"
+}

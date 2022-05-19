@@ -1,0 +1,21 @@
+[ {
+  "uid" : "dc12831d698c9ca",
+  "name" : "xyk-pallet: Liquidity sufficiency scenario",
+  "time" : {
+    "start" : 1652967040423,
+    "stop" : 1652968540428,
+    "duration" : 1500005
+  },
+  "status" : "failed",
+  "severity" : "normal"
+}, {
+  "uid" : "91b81f6cd3848322",
+  "name" : "xyk-pallet: Happy case scenario",
+  "time" : {
+    "start" : 1652965540396,
+    "stop" : 1652967040422,
+    "duration" : 1500026
+  },
+  "status" : "failed",
+  "severity" : "normal"
+} ]

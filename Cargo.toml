@@ -6,7 +6,7 @@ members = [
 	'node',
 	'pallets/*',
 	'rpc/nonce',
-	'runtime',
+	'runtime/*',
 ]
 
 [patch."https://github.com/mangata-finance/mangata-node"]

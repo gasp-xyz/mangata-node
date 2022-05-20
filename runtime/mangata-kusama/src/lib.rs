@@ -73,7 +73,9 @@ use static_assertions::const_assert;
 
 pub use pallet_issuance::{IssuanceInfo, PoolPromoteApi};
 
-pub use mangata_primitives::{Amount, Balance, TokenId};
+pub use mangata_primitives::{
+	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
+};
 
 pub use orml_tokens;
 use orml_tokens::TransferDust;
@@ -104,37 +106,14 @@ mod weights;
 #[cfg(any(feature = "std", test))]
 pub use frame_system::Call as SystemCall;
 
-/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
-pub type Signature = MultiSignature;
-
-/// Some way of identifying an account on the chain. We intentionally make it equivalent
-/// to the public key of our transaction signing scheme.
-pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-
-/// Index of a transaction in the chain.
-pub type Index = u32;
-
-/// A hash of some data used by the chain.
-pub type Hash = sp_core::H256;
-
-/// An index to a block.
-pub type BlockNumber = u32;
-
-/// The address format for describing accounts.
-pub type Address = MultiAddress<AccountId, ()>;
-
 /// Block header type as expected by this runtime.
 pub type Header = generic::HeaderVer<BlockNumber, BlakeTwo256>;
-
 /// Block type as expected by this runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-
 /// A Block signed with a Justification
 pub type SignedBlock = generic::SignedBlock<Block>;
-
 /// BlockId type as expected by this runtime.
 pub type BlockId = generic::BlockId<Block>;
-
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
 	frame_system::CheckSpecVersion<Runtime>,

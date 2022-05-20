@@ -26,7 +26,6 @@ use mangata_primitives::{Amount, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter};
 use orml_traits::parameter_type_with_key;
 use sp_runtime::{Perbill, Percent};
-// use pallet_xyk::Pallet;
 
 pub(crate) type AccountId = u128;
 
@@ -65,8 +64,6 @@ impl frame_system::Config for Test {
 parameter_types!(
 	pub const MGAId: TokenId = 0;
 	pub const KSMId: TokenId = 1;
-	pub const KsmToMgaNumerator: u128 = 1;
-	pub const KsmToMgaDenominator: u128 = 10_000;
 	pub const MaxLocks: u32 = 50;
 );
 
@@ -194,8 +191,6 @@ impl pallet_bootstrap::Config for Test {
 	type KSMTokenId = KSMId;
 	type PoolCreateApi = MockPoolCreateApi;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
-	type KsmToMgaRatioNumerator = KsmToMgaNumerator;
-	type KsmToMgaRatioDenominator = KsmToMgaDenominator;
 	type VestingProvider = Vesting;
 	type WeightInfo = ();
 }
@@ -208,9 +203,8 @@ impl pallet_bootstrap::Config for Test {
 	type KSMTokenId = KSMId;
 	type PoolCreateApi = Xyk;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
-	type KsmToMgaRatioNumerator = KsmToMgaNumerator;
-	type KsmToMgaRatioDenominator = KsmToMgaDenominator;
 	type VestingProvider = Vesting;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -233,6 +227,7 @@ impl pallet_assets_info::Config for Test {
 	type MaxLengthDescription = MaxLengthDescription;
 	type MaxDecimals = MaxDecimals;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
+	type RelayNativeTokensValueScaleFactor = ();
 }
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;

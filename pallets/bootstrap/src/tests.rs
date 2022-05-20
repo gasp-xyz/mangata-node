@@ -15,6 +15,7 @@ const INITIAL_AMOUNT: u128 = 1_000_000;
 const DUMMY_ID: u32 = 2;
 const LIQ_TOKEN_ID: TokenId = 10_u32;
 const LIQ_TOKEN_AMOUNT: Balance = 1_000_000_u128;
+const DEFAULT_RATIO: (u128, u128) = (1_u128, 10_000_u128);
 const POOL_CREATE_DUMMY_RETURN_VALUE: Option<(TokenId, Balance)> =
 	Some((LIQ_TOKEN_ID, LIQ_TOKEN_AMOUNT));
 
@@ -32,7 +33,7 @@ fn set_up() {
 fn jump_to_whitelist_phase() {
 	let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 	pool_exists_mock.expect().return_const(false);
-	Bootstrap::start_ido(Origin::root(), 10_u32.into(), 10, 10).unwrap();
+	Bootstrap::start_ido(Origin::root(), 10_u32.into(), 10, 10, DEFAULT_RATIO).unwrap();
 	Bootstrap::on_initialize(15_u32.into());
 	assert_eq!(BootstrapPhase::Whitelist, Phase::<Test>::get());
 }
@@ -41,7 +42,7 @@ fn jump_to_public_phase() {
 	let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 	pool_exists_mock.expect().return_const(false);
 
-	Bootstrap::start_ido(Origin::root(), 10_u32.into(), 10, 10).unwrap();
+	Bootstrap::start_ido(Origin::root(), 10_u32.into(), 10, 10, DEFAULT_RATIO).unwrap();
 	Bootstrap::on_initialize(25_u32.into());
 	assert_eq!(BootstrapPhase::Public, Phase::<Test>::get());
 }
@@ -253,7 +254,10 @@ fn test_incremental_whitliested_donation() {
 fn test_non_root_user_can_not_start_ido() {
 	new_test_ext().execute_with(|| {
 		set_up();
-		assert_err!(Bootstrap::start_ido(Origin::signed(USER_ID), 0_u32.into(), 1, 1,), BadOrigin);
+		assert_err!(
+			Bootstrap::start_ido(Origin::signed(USER_ID), 0_u32.into(), 1, 1, DEFAULT_RATIO),
+			BadOrigin
+		);
 	});
 }
 
@@ -282,8 +286,25 @@ fn test_ido_start_cannot_happen_in_the_past() {
 		set_up();
 		System::set_block_number(1000);
 		assert_err!(
-			Bootstrap::start_ido(Origin::root(), 999_u32.into(), 1, 1,),
+			Bootstrap::start_ido(Origin::root(), 999_u32.into(), 1, 1, DEFAULT_RATIO),
 			Error::<Test>::BootstrapStartInThePast
+		);
+	});
+}
+
+#[test]
+#[serial]
+fn test_ido_start_can_not_be_initialize_with_0_ratio() {
+	new_test_ext().execute_with(|| {
+		set_up();
+		System::set_block_number(10);
+		assert_err!(
+			Bootstrap::start_ido(Origin::root(), 999_u32.into(), 1, 1, (1, 0)),
+			Error::<Test>::WrongRatio
+		);
+		assert_err!(
+			Bootstrap::start_ido(Origin::root(), 999_u32.into(), 1, 1, (0, 1)),
+			Error::<Test>::WrongRatio
 		);
 	});
 }
@@ -294,7 +315,7 @@ fn test_cannot_start_ido_with_whitelist_phase_length_equal_zero() {
 	new_test_ext().execute_with(|| {
 		set_up();
 		assert_err!(
-			Bootstrap::start_ido(Origin::root(), 100_u32.into(), 0, 1,),
+			Bootstrap::start_ido(Origin::root(), 100_u32.into(), 0, 1, DEFAULT_RATIO),
 			Error::<Test>::PhaseLengthCannotBeZero
 		);
 	});
@@ -306,7 +327,7 @@ fn test_cannot_start_ido_with_public_phase_length_equal_zero() {
 	new_test_ext().execute_with(|| {
 		set_up();
 		assert_err!(
-			Bootstrap::start_ido(Origin::root(), 100_u32.into(), 1, 0,),
+			Bootstrap::start_ido(Origin::root(), 100_u32.into(), 1, 0, DEFAULT_RATIO),
 			Error::<Test>::PhaseLengthCannotBeZero
 		);
 	});
@@ -321,14 +342,18 @@ fn test_bootstrap_can_be_modified_only_before_its_started() {
 		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
-		Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 20).unwrap();
+		Bootstrap::start_ido(Origin::root(), 50_u32.into(), 10, 20, DEFAULT_RATIO).unwrap();
+
+		Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 20, DEFAULT_RATIO).unwrap();
 
 		Bootstrap::on_initialize(100_u32.into());
 
 		assert_err!(
-			Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 20,),
+			Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 20, DEFAULT_RATIO),
 			Error::<Test>::AlreadyStarted
 		);
+
+		assert_eq!(Some((100_u32.into(), 10_u32, 20_u32, DEFAULT_RATIO)), Bootstrap::config());
 	});
 }
 
@@ -353,6 +378,7 @@ fn test_bootstrap_state_transitions() {
 			BOOTSTRAP_WHITELIST_START.into(),
 			(BOOTSTRAP_PUBLIC_START - BOOTSTRAP_WHITELIST_START).try_into().unwrap(),
 			(BOOTSTRAP_FINISH - BOOTSTRAP_PUBLIC_START).try_into().unwrap(),
+			DEFAULT_RATIO,
 		)
 		.unwrap();
 
@@ -402,6 +428,7 @@ fn test_bootstrap_state_transitions_when_on_initialized_is_not_called() {
 			BOOTSTRAP_WHITELIST_START.into(),
 			(BOOTSTRAP_PUBLIC_START - BOOTSTRAP_WHITELIST_START).try_into().unwrap(),
 			(BOOTSTRAP_FINISH - BOOTSTRAP_PUBLIC_START).try_into().unwrap(),
+			DEFAULT_RATIO,
 		)
 		.unwrap();
 
@@ -418,17 +445,23 @@ fn test_bootstrap_schedule_overflow() {
 		set_up();
 
 		assert_err!(
-			Bootstrap::start_ido(Origin::root(), u64::MAX.into(), u32::MAX, 1_u32,),
+			Bootstrap::start_ido(Origin::root(), u64::MAX.into(), u32::MAX, 1_u32, DEFAULT_RATIO),
 			Error::<Test>::MathOverflow
 		);
 
 		assert_err!(
-			Bootstrap::start_ido(Origin::root(), u64::MAX.into(), 1_u32, u32::MAX,),
+			Bootstrap::start_ido(Origin::root(), u64::MAX.into(), 1_u32, u32::MAX, DEFAULT_RATIO),
 			Error::<Test>::MathOverflow
 		);
 
 		assert_err!(
-			Bootstrap::start_ido(Origin::root(), u64::MAX.into(), u32::MAX, u32::MAX,),
+			Bootstrap::start_ido(
+				Origin::root(),
+				u64::MAX.into(),
+				u32::MAX,
+				u32::MAX,
+				DEFAULT_RATIO
+			),
 			Error::<Test>::MathOverflow
 		);
 	});
@@ -442,7 +475,7 @@ fn test_do_not_allow_for_creating_starting_bootstrap_for_existing_pool() {
 		pool_exists_mock.expect().return_const(true);
 
 		assert_err!(
-			Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 10,),
+			Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 10, DEFAULT_RATIO),
 			Error::<Test>::PoolAlreadyExists
 		);
 	});
@@ -474,7 +507,7 @@ fn test_crate_pool_is_called_with_proper_arguments_after_bootstrap_finish() {
 			.times(1)
 			.return_const(POOL_CREATE_DUMMY_RETURN_VALUE);
 
-		Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 10).unwrap();
+		Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 10, DEFAULT_RATIO).unwrap();
 
 		Bootstrap::on_initialize(110_u32.into());
 		Bootstrap::provision(Origin::signed(USER_ID), MGAId::get(), MGA_PROVISON).unwrap();
@@ -492,7 +525,7 @@ fn test_cannot_claim_rewards_when_bootstrap_is_not_finished() {
 		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
-		Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 10).unwrap();
+		Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 10, DEFAULT_RATIO).unwrap();
 
 		Bootstrap::on_initialize(100_u32.into());
 		assert_eq!(BootstrapPhase::Whitelist, Phase::<Test>::get());
@@ -533,7 +566,7 @@ fn test_rewards_are_distributed_properly_with_single_user() {
 				Some((id, issuance))
 			});
 
-		Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 10).unwrap();
+		Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 10, DEFAULT_RATIO).unwrap();
 
 		Bootstrap::on_initialize(100_u32.into());
 		assert_eq!(BootstrapPhase::Whitelist, Phase::<Test>::get());
@@ -607,7 +640,7 @@ fn test_rewards_are_distributed_properly_with_multiple_user() {
 				Some((id, issuance))
 			});
 
-		Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 10).unwrap();
+		Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 10, DEFAULT_RATIO).unwrap();
 
 		Bootstrap::on_initialize(100_u32.into());
 		assert_eq!(BootstrapPhase::Whitelist, Phase::<Test>::get());

@@ -1317,7 +1317,8 @@ fn liquidity_rewards_calculate_work_after_deactivate() {
 			2,
 			<Test as Config>::LiquidityMiningIssuanceVault::get(),
 			10000000000,
-		).unwrap();
+		)
+		.unwrap();
 
 		XykStorage::create_pool(Origin::signed(2), 2, 10000000, 3, 10000000).unwrap();
 		//XykStorage::activate_liquidity(Origin::signed(2), 4, 5000).unwrap();

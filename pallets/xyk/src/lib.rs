@@ -998,8 +998,6 @@ impl<T: Config> Pallet<T> {
 
 		let liquidity_assets_amount: Balance =
 			LiquidityMiningActiveUser::<T>::get((&user, &liquidity_asset_id));
-		let activated_liquidity_pool: Balance =
-			LiquidityMiningActivePool::<T>::get(&liquidity_asset_id);
 
 		let activated_liquidity_pool: Balance =
 			LiquidityMiningActivePool::<T>::get(&liquidity_asset_id);

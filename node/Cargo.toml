@@ -17,13 +17,17 @@ name = "mangata-node"
 path = "bin/main.rs"
 
 [features]
-default = ['std']
-disable-execution = ['mangata-runtime/disable-execution']
-std = [
-		"mangata-runtime/std",
+default = ['mangata-kusama']
+mangata-kusama = [
+		"mangata-kusama-runtime/std",
 		"xyk-rpc/std",
 ]
-runtime-benchmarks = ["mangata-runtime/runtime-benchmarks", "polkadot-cli/runtime-benchmarks"]
+mangata-rococo = [
+		"mangata-rococo-runtime/std",
+		"xyk-rpc/std",
+]
+disable-execution = ['mangata-kusama-runtime/disable-execution']
+runtime-benchmarks = ["mangata-kusama-runtime/runtime-benchmarks", "polkadot-cli/runtime-benchmarks"]
 
 [dependencies]
 derive_more = "0.99.2"
@@ -38,7 +42,9 @@ hex = "0.4.0"
 jsonrpc-core = "18.0.0"
 
 # Local Dependencies
-mangata-runtime = { path = "../runtime" }
+mangata-kusama-runtime = { path = "../runtime/mangata-kusama/", optional = true }
+mangata-rococo-runtime = { path = "../runtime/mangata-rococo/", optional = true }
+mangata-primitives = { path = "../primitives/mangata/"}
 
 # Substrate Dependencies
 frame-benchmarking = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
@@ -84,6 +90,8 @@ sp-session = { git = "https://github.com/mangata-finance/substrate", branch = "m
 sp-timestamp = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-transaction-pool = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 ver-api = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-storage = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-trie = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
 # Cumulus dependencies
 cumulus-client-cli = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev' }

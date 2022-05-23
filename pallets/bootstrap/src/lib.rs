@@ -73,7 +73,8 @@ pub mod pallet {
 				return T::DbWeight::get().reads(1)
 			}
 
-			if let Some((start, whitelist_length, public_length)) = BootstrapSchedule::<T>::get() {
+			if let Some((start, whitelist_length, public_length, _)) = BootstrapSchedule::<T>::get()
+			{
 				// R:1
 				// NOTE: arythmetics protected by invariant check in Bootstrap::start_ido
 				let whitelist_start = start;
@@ -135,12 +136,6 @@ pub mod pallet {
 		#[pallet::constant]
 		type KSMTokenId: Get<TokenId>;
 
-		#[pallet::constant]
-		type KsmToMgaRatioNumerator: Get<u128>;
-
-		#[pallet::constant]
-		type KsmToMgaRatioDenominator: Get<u128>;
-
 		type VestingProvider: MultiTokenVestingLocks<Self::AccountId>;
 
 		type WeightInfo: WeightInfo;
@@ -179,7 +174,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn config)]
 	pub type BootstrapSchedule<T: Config> =
-		StorageValue<_, (T::BlockNumber, u32, u32), OptionQuery>;
+		StorageValue<_, (T::BlockNumber, u32, u32, (u128, u128)), OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn minted_liquidity)]
@@ -192,7 +187,8 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(10_000)]
+		/// provisions vested/locked tokens into the boostrstrap
+		#[pallet::weight(T::WeightInfo::provision_vested())]
 		#[transactional]
 		pub fn provision_vested(
 			origin: OriginFor<T>,
@@ -214,7 +210,8 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000)]
+		/// provisions non-vested/non-locked tokens into the boostrstrap
+		#[pallet::weight(T::WeightInfo::provision())]
 		#[transactional]
 		pub fn provision(
 			origin: OriginFor<T>,
@@ -227,6 +224,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		/// provides a list of whitelisted accounts, list is extended with every call
 		#[pallet::weight(T::DbWeight::get().writes(1) * (accounts.len() as u64))]
 		#[transactional]
 		pub fn whitelist_accounts(
@@ -241,13 +239,28 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000)]
+		/// schedules start of an bootstrap event where
+		/// - ido_start - number of block when bootstrap event should be started
+		/// - whitelist_phase_length - length of whitelist phase in blocks.
+		/// - public_phase_length - length of public phase in blocks
+		/// - max_ksm_to_mgx_ratio - maximum tokens ratio that is held by the pallet during bootstrap event
+		///
+		/// max_ksm_to_mgx_ratio[0]       KSM VALUATION
+		/// ----------------------- < ---------------------
+		/// max_ksm_to_mgx_ratio[1]       MGX VALUATION
+		///
+		/// bootstrap phases:
+		/// - BeforeStart - blocks 0..ido_start
+		/// - WhitelistPhase - blocks ido_start..(ido_start + whitelist_phase_length)
+		/// - PublicPhase - blocks (ido_start + whitelist_phase_length)..(ido_start + whitelist_phase_length  + public_phase_lenght)
+		#[pallet::weight(T::WeightInfo::start_ido())]
 		#[transactional]
 		pub fn start_ido(
 			origin: OriginFor<T>,
 			ido_start: T::BlockNumber,
 			whitelist_phase_length: u32,
 			public_phase_lenght: u32,
+			max_ksm_to_mgx_ratio: (u128, u128),
 		) -> DispatchResult {
 			ensure_root(origin)?;
 
@@ -257,6 +270,10 @@ pub mod pallet {
 				ido_start > frame_system::Pallet::<T>::block_number(),
 				Error::<T>::BootstrapStartInThePast
 			);
+
+			ensure!(max_ksm_to_mgx_ratio.0 != 0, Error::<T>::WrongRatio);
+
+			ensure!(max_ksm_to_mgx_ratio.1 != 0, Error::<T>::WrongRatio);
 
 			ensure!(whitelist_phase_length > 0, Error::<T>::PhaseLengthCannotBeZero);
 
@@ -281,12 +298,18 @@ pub mod pallet {
 				Error::<T>::PoolAlreadyExists
 			);
 
-			BootstrapSchedule::<T>::put((ido_start, whitelist_phase_length, public_phase_lenght));
+			BootstrapSchedule::<T>::put((
+				ido_start,
+				whitelist_phase_length,
+				public_phase_lenght,
+				max_ksm_to_mgx_ratio,
+			));
 
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000)]
+		/// claim liquidity tokens from pool created as a result of bootstrap event finish
+		#[pallet::weight(T::WeightInfo::claim_rewards())]
 		#[transactional]
 		pub fn claim_rewards(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
@@ -383,6 +406,8 @@ pub mod pallet {
 		NotFinishedYet,
 		/// no rewards to claim
 		NothingToClaim,
+		/// no rewards to claim
+		WrongRatio,
 	}
 
 	#[pallet::event]
@@ -495,13 +520,14 @@ impl<T: Config> Pallet<T> {
 
 		ensure!(is_ksm || is_mga, Error::<T>::UnsupportedTokenId);
 
-		let ratio_nominator = T::KsmToMgaRatioNumerator::get();
-		let ratio_denominator = T::KsmToMgaRatioDenominator::get();
-
 		ensure!(
 			is_public_phase || (is_whitelist_phase && (am_i_whitelisted || is_mga)),
 			Error::<T>::Unauthorized
 		);
+
+		let schedule = BootstrapSchedule::<T>::get();
+		ensure!(schedule.is_some(), Error::<T>::Unauthorized);
+		let (_, _, _, (ratio_nominator, ratio_denominator)) = schedule.unwrap();
 
 		<T as Config>::Currency::transfer(
 			token_id.into(),

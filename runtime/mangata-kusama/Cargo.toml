@@ -1,5 +1,5 @@
 [package]
-name = "mangata-runtime"
+name = "mangata-kusama-runtime"
 version = "4.0.0"
 authors = ["Mangata Team"]
 edition = "2018"
@@ -21,14 +21,14 @@ smallvec = "1.6.1"
 static_assertions = "1.1.0"
 
 # Local Dependencies
-mangata-primitives = { path = '../primitives/mangata', default-features = false, version = "0.1.0" }
-pallet-assets-info = { path = '../pallets/assets-info', default-features = false, version = "2.0.0" }
-pallet-xyk = { path = '../pallets/xyk', default-features = false, version = '0.1.0' }
-pallet-bootstrap = { path = '../pallets/bootstrap', default-features = false, version = '0.1.0' }
-xyk-runtime-api = { path = '../pallets/xyk/runtime-api', default-features = false, version = '2.0.0' }
-pallet-sudo-origin = { path = '../pallets/sudo-origin', default-features = false}
-xcm-asset-registry = { path = '../pallets/asset-registry', default-features = false}
-pallet-issuance = { path = '../pallets/issuance', default-features = false}
+mangata-primitives = { path = '../../primitives/mangata', default-features = false, version = "0.1.0" }
+pallet-assets-info = { path = '../../pallets/assets-info', default-features = false, version = "2.0.0" }
+pallet-xyk = { path = '../../pallets/xyk', default-features = false, version = '0.1.0' }
+pallet-bootstrap = { path = '../../pallets/bootstrap', default-features = false, version = '0.1.0' }
+xyk-runtime-api = { path = '../../pallets/xyk/runtime-api', default-features = false, version = '2.0.0' }
+pallet-sudo-origin = { path = '../../pallets/sudo-origin', default-features = false}
+xcm-asset-registry = { path = '../../pallets/asset-registry', default-features = false}
+pallet-issuance = { path = '../../pallets/issuance', default-features = false}
 
 # Substrate Dependencies
 ## Substrate Primitive Dependencies
@@ -104,7 +104,7 @@ pallet-verifier = {default-features = false, version = "0.1.1", git = "https://g
 artemis-erc20-app = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
 artemis-eth-app = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
 artemis-asset = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
-pallet-bridge = {default-features = false, version = "0.1.1", path = "../pallets/bridge"}
+pallet-bridge = {default-features = false, version = "0.1.1", path = "../../pallets/bridge"}
 
 # Staking dependencies
 parachain-staking = { default-features = false, git = "https://github.com/mangata-finance/moonbeam.git", branch = "mangata-dev" }

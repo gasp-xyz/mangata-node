@@ -1,9 +1,10 @@
+use crate::chain_spec::Extensions;
 use artemis_core::{App, AppId};
 use codec::Encode;
 use cumulus_primitives_core::ParaId;
 use hex::FromHex;
 use hex_literal::hex;
-use mangata_runtime::{AccountId, AuraId, Signature, VersionedMultiLocation, KSM_TOKEN_ID};
+use mangata_kusama_runtime::{AccountId, AuraId, Signature, VersionedMultiLocation, KSM_TOKEN_ID};
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
@@ -37,30 +38,14 @@ pub mod kusama_mainnet_keys {
 }
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
-pub type ChainSpec = sc_service::GenericChainSpec<mangata_runtime::GenesisConfig, Extensions>;
+pub type ChainSpec =
+	sc_service::GenericChainSpec<mangata_kusama_runtime::GenesisConfig, Extensions>;
 
 /// Helper function to generate a crypto pair from seed
 pub fn get_public_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
 	TPublic::Pair::from_string(&format!("//{}", seed), None)
 		.expect("static values are valid; qed")
 		.public()
-}
-
-/// The extensions for the [`ChainSpec`].
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ChainSpecGroup, ChainSpecExtension)]
-#[serde(deny_unknown_fields)]
-pub struct Extensions {
-	/// The relay chain of the Parachain.
-	pub relay_chain: String,
-	/// The id of the Parachain.
-	pub para_id: u32,
-}
-
-impl Extensions {
-	/// Try to get the extension from the given `ChainSpec`.
-	pub fn try_get(chain_spec: &dyn sc_service::ChainSpec) -> Option<&Self> {
-		sc_chain_spec::get_extension(chain_spec.extensions())
-	}
 }
 
 type AccountPublic = <Signature as Verify>::Signer;
@@ -83,8 +68,8 @@ where
 /// Generate the session keys from individual elements.
 ///
 /// The input must be a tuple of individual keys (a single arg for now since we have just one key).
-pub fn mangata_session_keys(keys: AuraId) -> mangata_runtime::SessionKeys {
-	mangata_runtime::SessionKeys { aura: keys }
+pub fn mangata_session_keys(keys: AuraId) -> mangata_kusama_runtime::SessionKeys {
+	mangata_kusama_runtime::SessionKeys { aura: keys }
 }
 
 pub fn kusama_mainnet_config() -> ChainSpec {
@@ -239,162 +224,6 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 		Extensions {
 			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
 			para_id: 2109,
-		},
-	)
-}
-
-pub fn public_testnet_config() -> ChainSpec {
-	// Give your base currency a unit name and decimal places
-	let mut properties = sc_chain_spec::Properties::new();
-	properties.insert("tokenSymbol".into(), "MGAT".into());
-	properties.insert("tokenDecimals".into(), 18.into());
-	properties.insert("ss58Format".into(), 42.into());
-
-	ChainSpec::from_genesis(
-		// Name
-		"Mangata Public Testnet",
-		// ID
-		"mangata_public_testnet",
-		ChainType::Live,
-		move || {
-			mangata_genesis(
-				// initial collators.
-				vec![
-					(
-						public_testnet_keys::ALICE_SR25519.parse::<AccountId>().unwrap().into(),
-						AuraId::from_slice(
-							&<[u8; 32]>::from_hex(
-								public_testnet_keys::ALICE_SR25519.strip_prefix("0x").unwrap(),
-							)
-							.unwrap(),
-						)
-						.unwrap(),
-					),
-					(
-						public_testnet_keys::BOB_SR25519.parse::<AccountId>().unwrap().into(),
-						AuraId::from_slice(
-							&<[u8; 32]>::from_hex(
-								public_testnet_keys::BOB_SR25519.strip_prefix("0x").unwrap(),
-							)
-							.unwrap(),
-						)
-						.unwrap(),
-					),
-				],
-				// Initial relay account
-				public_testnet_keys::RELAY_SR25519.parse::<AccountId>().unwrap().into(),
-				// Sudo account
-				public_testnet_keys::SUDO_SR25519.parse::<AccountId>().unwrap().into(),
-				// Ethereum AppId for SnowBridged Assets
-				vec![
-					(
-						App::ETH,
-						H160::from_slice(&hex!["6aA07B0e455B393164414380A8A314d7c860CEC8"][..])
-							.into(),
-					),
-					(
-						App::ERC20,
-						H160::from_slice(&hex!["244691D3822e13e61968322f8d82Dee3B31e0D4a"][..])
-							.into(),
-					),
-				],
-				// SnowBridged Assets
-				vec![
-					(
-						b"Mangata".to_vec(),
-						b"MGA".to_vec(),
-						b"Mangata Asset".to_vec(),
-						18u32,
-						0u32,
-						H160::from_slice(&hex!["C7e3Bda797D2cEb740308eC40142ae235e08144A"][..]),
-						300_000_000__000_000_000_000_000_000u128,
-						public_testnet_keys::ALICE_SR25519.parse::<AccountId>().unwrap().into(),
-					),
-					(
-						b"Ether".to_vec(),
-						b"ETH".to_vec(),
-						b"Ethereum Ether".to_vec(),
-						18u32,
-						1u32,
-						H160::zero(),
-						0u128,
-						public_testnet_keys::ALICE_SR25519.parse::<AccountId>().unwrap().into(),
-					),
-				],
-				// Tokens endowment
-				vec![
-					(
-						0u32,
-						400_000_000__000_000_000_000_000_000u128,
-						public_testnet_keys::SUDO_SR25519.parse::<AccountId>().unwrap().into(),
-					),
-					(
-						0u32,
-						100_000_000__000_000_000_000_000_000u128,
-						public_testnet_keys::RELAY_SR25519.parse::<AccountId>().unwrap().into(),
-					),
-					(
-						0u32,
-						100_000_000__000_000_000_000_000_000u128,
-						public_testnet_keys::BOB_SR25519.parse::<AccountId>().unwrap().into(),
-					),
-					(
-						0u32,
-						100_000_000__000_000_000_000_000_000u128,
-						public_testnet_keys::CHARLIE_SR25519.parse::<AccountId>().unwrap().into(),
-					),
-				],
-				// Config for Staking
-				// Make sure it works with initial-authorities as staking uses both
-				vec![
-					(
-						// Who gets to stake initially
-						public_testnet_keys::ALICE_SR25519.parse::<AccountId>().unwrap().into(),
-						// Id of MGA token,
-						0u32,
-						// How much mangata they pool
-						10_000__000_000_000_000_000_000u128,
-						// Id of the dummy token,
-						2u32,
-						// How many dummy tokens they pool,
-						20_000__000_000_000_000_000_000u128,
-						// Id of the liquidity token that is generated
-						3u32,
-						// How many liquidity tokens they stake,
-						10_000__000_000_000_000_000_000u128,
-					),
-					(
-						// Who gets to stake initially
-						public_testnet_keys::BOB_SR25519.parse::<AccountId>().unwrap().into(),
-						// Id of MGA token,
-						0u32,
-						// How much mangata they pool
-						8_000__000_000_000_000_000_000u128,
-						// Id of the dummy token,
-						2u32,
-						// How many dummy tokens they pool,
-						20_000__000_000_000_000_000_000u128,
-						// Id of the liquidity token that is generated
-						3u32,
-						// How many liquidity tokens they stake,
-						5_000__000_000_000_000_000_000u128,
-					),
-				],
-				vec![(KSM_TOKEN_ID, None)],
-				2000.into(),
-			)
-		},
-		Vec::new(),
-		None,
-		// Protocol ID
-		Some("mangata-public-testnet"),
-		// ForkId
-		None,
-		// Properties
-		Some(properties),
-		Extensions {
-			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
-			para_id: 2000,
 		},
 	)
 }
@@ -710,14 +539,14 @@ fn mangata_genesis(
 	staking_accounts: Vec<(AccountId, u32, u128, u32, u128, u32, u128)>,
 	xcm_tokens: Vec<(u32, Option<VersionedMultiLocation>)>,
 	id: ParaId,
-) -> mangata_runtime::GenesisConfig {
-	mangata_runtime::GenesisConfig {
-		system: mangata_runtime::SystemConfig {
-			code: mangata_runtime::WASM_BINARY
+) -> mangata_kusama_runtime::GenesisConfig {
+	mangata_kusama_runtime::GenesisConfig {
+		system: mangata_kusama_runtime::SystemConfig {
+			code: mangata_kusama_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
 		},
-		tokens: mangata_runtime::TokensConfig {
+		tokens: mangata_kusama_runtime::TokensConfig {
 			tokens_endowment: tokens_endowment
 				.iter()
 				.cloned()
@@ -747,8 +576,8 @@ fn mangata_genesis(
 			},
 		},
 		treasury: Default::default(),
-		parachain_info: mangata_runtime::ParachainInfoConfig { parachain_id: id },
-		parachain_staking: mangata_runtime::ParachainStakingConfig {
+		parachain_info: mangata_kusama_runtime::ParachainInfoConfig { parachain_id: id },
+		parachain_staking: mangata_kusama_runtime::ParachainStakingConfig {
 			candidates: staking_accounts
 				.iter()
 				.map(|x| {
@@ -758,7 +587,7 @@ fn mangata_genesis(
 				.collect(),
 			delegations: vec![],
 		},
-		session: mangata_runtime::SessionConfig {
+		session: mangata_kusama_runtime::SessionConfig {
 			keys: initial_authorities
 				.into_iter()
 				.map(|(acc, aura)| {
@@ -775,7 +604,7 @@ fn mangata_genesis(
 		aura: Default::default(),
 		aura_ext: Default::default(),
 		parachain_system: Default::default(),
-		assets_info: mangata_runtime::AssetsInfoConfig {
+		assets_info: mangata_kusama_runtime::AssetsInfoConfig {
 			bridged_assets_info: bridged_assets
 				.iter()
 				.cloned()
@@ -785,7 +614,7 @@ fn mangata_genesis(
 				})
 				.collect(),
 		},
-		xyk: mangata_runtime::XykConfig {
+		xyk: mangata_kusama_runtime::XykConfig {
 			created_pools_for_staking: staking_accounts
 				.iter()
 				.map(|x| {
@@ -809,8 +638,8 @@ fn mangata_genesis(
 				})
 				.collect(),
 		},
-		bridge: mangata_runtime::BridgeConfig { bridged_app_id_registry: bridged_app_ids },
-		bridged_asset: mangata_runtime::BridgedAssetConfig {
+		bridge: mangata_kusama_runtime::BridgeConfig { bridged_app_id_registry: bridged_app_ids },
+		bridged_asset: mangata_kusama_runtime::BridgedAssetConfig {
 			bridged_assets_links: bridged_assets
 				.iter()
 				.cloned()
@@ -820,21 +649,21 @@ fn mangata_genesis(
 				})
 				.collect(),
 		},
-		verifier: mangata_runtime::VerifierConfig { key: relay_key },
+		verifier: mangata_kusama_runtime::VerifierConfig { key: relay_key },
 		council: Default::default(),
-		elections: mangata_runtime::ElectionsConfig {
+		elections: mangata_kusama_runtime::ElectionsConfig {
 			members: tokens_endowment
 				.iter()
 				.cloned()
 				.map(|(_, _, member)| (member, 100 * 100_000_000_000_000))
 				.collect(),
 		},
-		sudo: mangata_runtime::SudoConfig {
+		sudo: mangata_kusama_runtime::SudoConfig {
 			// Assign network admin rights.
 			key: Some(root_key),
 		},
-		polkadot_xcm: mangata_runtime::PolkadotXcmConfig { safe_xcm_version: Some(2) },
-		asset_registry: mangata_runtime::AssetRegistryConfig {
+		polkadot_xcm: mangata_kusama_runtime::PolkadotXcmConfig { safe_xcm_version: Some(2) },
+		asset_registry: mangata_kusama_runtime::AssetRegistryConfig {
 			init_xcm_tokens: xcm_tokens
 				.iter()
 				.cloned()

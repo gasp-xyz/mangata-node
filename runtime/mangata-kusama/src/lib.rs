@@ -6,6 +6,7 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
 use smallvec::smallvec;
 use sp_api::impl_runtime_apis;
 use sp_core::{
@@ -20,7 +21,7 @@ use sp_runtime::{
 		IdentifyAccount, StaticLookup, Verify,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, MultiSignature, Percent,
+	ApplyExtrinsicResult, FixedPointNumber, MultiSignature, Percent, Perquintill,
 };
 
 use sp_std::{marker::PhantomData, prelude::*};
@@ -51,7 +52,7 @@ pub use sp_runtime::BuildStorage;
 // Polkadot Imports
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use polkadot_runtime_common::{BlockHashCount, RocksDbWeight, SlowAdjustingFeeUpdate};
+use polkadot_runtime_common::{BlockHashCount, RocksDbWeight};
 
 // XCM Imports
 use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
@@ -72,7 +73,9 @@ use static_assertions::const_assert;
 
 pub use pallet_issuance::{IssuanceInfo, PoolPromoteApi};
 
-pub use mangata_primitives::{Amount, Balance, TokenId};
+pub use mangata_primitives::{
+	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
+};
 
 pub use orml_tokens;
 use orml_tokens::TransferDust;
@@ -84,7 +87,7 @@ use xyk_runtime_api::{RpcAmountsResult, RpcResult, RpcRewardsResult};
 pub const MGA_TOKEN_ID: TokenId = 0;
 pub const KSM_TOKEN_ID: TokenId = 4;
 
-pub const KSM_MGA_SCALE_FACTOR: u32 = 100_000_000u32; // 100 as KSM/MGA, with 6 decimals accounted for (12 - KSM, 18 - MGA)
+pub const KSM_MGA_SCALE_FACTOR: u128 = 1000_000_000u128; // 1000 as KSM/MGA, with 6 decimals accounted for (12 - KSM, 18 - MGA)
 
 pub use pallet_sudo;
 
@@ -103,37 +106,14 @@ mod weights;
 #[cfg(any(feature = "std", test))]
 pub use frame_system::Call as SystemCall;
 
-/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
-pub type Signature = MultiSignature;
-
-/// Some way of identifying an account on the chain. We intentionally make it equivalent
-/// to the public key of our transaction signing scheme.
-pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-
-/// Index of a transaction in the chain.
-pub type Index = u32;
-
-/// A hash of some data used by the chain.
-pub type Hash = sp_core::H256;
-
-/// An index to a block.
-pub type BlockNumber = u32;
-
-/// The address format for describing accounts.
-pub type Address = MultiAddress<AccountId, ()>;
-
 /// Block header type as expected by this runtime.
 pub type Header = generic::HeaderVer<BlockNumber, BlakeTwo256>;
-
 /// Block type as expected by this runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-
 /// A Block signed with a Justification
 pub type SignedBlock = generic::SignedBlock<Block>;
-
 /// BlockId type as expected by this runtime.
 pub type BlockId = generic::BlockId<Block>;
-
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
 	frame_system::CheckSpecVersion<Runtime>,
@@ -190,7 +170,7 @@ impl WeightToFeePolynomial for WeightToFee {
 }
 
 pub fn base_tx_in_mga() -> Balance {
-	MILLIUNIT / 10
+	UNIT
 }
 
 pub fn mga_per_second() -> u128 {
@@ -448,7 +428,7 @@ parameter_types! {
 	pub const ProposalBondMinimum: Balance = 1 * DOLLARS;
 	pub const ProposalBondMaximum: Option<Balance> = None;
 	pub const SpendPeriod: BlockNumber = 1 * DAYS;
-	pub const Burn: Permill = Permill::from_percent(50);
+	pub const Burn: Permill = Permill::from_percent(0);
 	pub const TipCountdown: BlockNumber = 1 * DAYS;
 	pub const TipFindersFee: Percent = Percent::from_percent(20);
 	pub const TipReportDepositBase: Balance = 1 * DOLLARS;
@@ -548,8 +528,6 @@ impl pallet_bootstrap::Config for Runtime {
 	type KSMTokenId = KsmTokenId;
 	type PoolCreateApi = Xyk;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-	type KsmToMgaRatioNumerator = frame_support::traits::ConstU128<1>;
-	type KsmToMgaRatioDenominator = frame_support::traits::ConstU128<10000>;
 	type VestingProvider = Vesting;
 	type WeightInfo = weights::pallet_bootstrap_weights::ModuleWeight<Runtime>;
 }
@@ -604,8 +582,7 @@ impl OnMultiTokenUnbalanced<ORMLCurrencyAdapterNegativeImbalance> for ToAuthor {
 }
 
 parameter_types! {
-	/// Relay Chain `TransactionByteFee` / 10
-	pub const TransactionByteFee: Balance = 10 * MICROUNIT;
+	pub const TransactionByteFee: Balance = 5 * MILLIUNIT;
 	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
@@ -655,7 +632,7 @@ where
 		scale_info::TypeInfo,
 	T1: Get<TokenId>,
 	T2: Get<TokenId>,
-	SF: Get<u32>,
+	SF: Get<u128>,
 {
 	type LiquidityInfo = Option<(TokenId, NegativeImbalanceOf<C, T>)>;
 	type Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -741,17 +718,25 @@ where
 	}
 }
 
+parameter_types! {
+	// We want no variability, the other parameters are superfluous
+	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
+	pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(0, 100_000);
+	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1);
+}
+
 impl pallet_transaction_payment::Config for Runtime {
 	type OnChargeTransaction = TwoCurrencyAdapter<
 		orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
 		ToAuthor,
 		MgaTokenId,
 		KsmTokenId,
-		frame_support::traits::ConstU32<KSM_MGA_SCALE_FACTOR>,
+		frame_support::traits::ConstU128<KSM_MGA_SCALE_FACTOR>,
 	>;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = WeightToFee;
-	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
+	type FeeMultiplierUpdate =
+		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 }
 
@@ -957,6 +942,7 @@ impl pallet_assets_info::Config for Runtime {
 	type MaxLengthDescription = MaxLengthDescription;
 	type MaxDecimals = MaxDecimals;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	type RelayNativeTokensValueScaleFactor = frame_support::traits::ConstU128<KSM_MGA_SCALE_FACTOR>;
 }
 
 impl pallet_bridge::Config for Runtime {
@@ -1064,9 +1050,9 @@ parameter_types! {
 	/// Reward payments delay (number of rounds)
 	pub const RewardPaymentDelay: u32 = 2;
 	/// Minimum collators selected per round, default at genesis and minimum forever after
-	pub const MinSelectedCandidates: u32 = 8;
+	pub const MinSelectedCandidates: u32 = 25;
 	/// Maximum collator candidates allowed
-	pub const MaxCollatorCandidates: u32 = 50;
+	pub const MaxCollatorCandidates: u32 = 35;
 	/// Maximum delegators allowed per candidate
 	pub const MaxTotalDelegatorsPerCandidate: u32 = 25;
 	/// Maximum delegators counted per candidate
@@ -1075,8 +1061,6 @@ parameter_types! {
 	pub const MaxDelegationsPerDelegator: u32 = 30;
 	/// Default fixed percent a collator takes off the top of due rewards
 	pub const DefaultCollatorCommission: Perbill = Perbill::from_percent(20);
-	/// Default percent of inflation set aside for parachain bond every round
-	pub const DefaultParachainBondReservePercent: Percent = Percent::from_percent(30);
 	/// Minimum stake required to become a collator
 	pub const MinCollatorStk: u128 = 10 * DOLLARS;
 	/// Minimum stake required to be reserved to be a candidate
@@ -1177,8 +1161,8 @@ impl pallet_vesting_mangata::Config for Runtime {
 
 parameter_types! {
 	pub const Initialized: bool = false;
-	pub const InitializationPayment: Perbill = Perbill::from_percent(20);
-	pub const MaxInitContributorsBatchSizes: u32 = 500;
+	pub const InitializationPayment: Perbill = Perbill::from_parts(214285700);
+	pub const MaxInitContributorsBatchSizes: u32 = 100;
 	pub const MinimumReward: Balance = 0;
 	pub const RelaySignaturesThreshold: Perbill = Perbill::from_percent(100);
 	pub const SigantureNetworkIdentifier: &'static [u8] = b"mangata-";

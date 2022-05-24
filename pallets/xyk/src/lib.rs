@@ -622,6 +622,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		#[transactional]
 		#[pallet::weight(T::WeightInfo::claim_rewards())]
 		pub fn claim_rewards(
 			origin: OriginFor<T>,
@@ -2245,14 +2246,21 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		// Ensure user has enought liquidity tokens to burn
 		let liquidity_token_free_balance =
 			<T as Config>::Currency::free_balance(liquidity_asset_id.into(), &sender).into();
+		let liquidity_token_locked_balance =
+			<T as Config>::Currency::locked_balance(liquidity_asset_id.into(), &sender).into();
 		let liquidity_token_activated_balance =
 			LiquidityMiningActiveUser::<T>::get((&sender, &liquidity_asset_id));
-		let total_liquidity_tokens_user_owned = liquidity_token_free_balance
+
+		let liquidity_token_not_locked_balance = liquidity_token_free_balance
+			.checked_sub(liquidity_token_locked_balance)
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+
+		let total_disposable_liquidity_tokens = liquidity_token_not_locked_balance
 			.checked_add(liquidity_token_activated_balance)
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 
 		ensure!(
-			total_liquidity_tokens_user_owned >= liquidity_asset_amount,
+			total_disposable_liquidity_tokens >= liquidity_asset_amount,
 			Error::<T>::NotEnoughAssets,
 		);
 
@@ -2320,10 +2328,9 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		);
 
 		if <T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some() {
-			// HARD
-			if liquidity_token_free_balance < liquidity_asset_amount {
+			if liquidity_token_not_locked_balance < liquidity_asset_amount {
 				let promoted_liquidity_asset_amount_to_settle =
-					liquidity_asset_amount - liquidity_token_free_balance;
+					liquidity_asset_amount - liquidity_token_not_locked_balance;
 
 				Pallet::<T>::set_liquidity_burning_checkpoint(
 					sender.clone(),

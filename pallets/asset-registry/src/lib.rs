@@ -28,7 +28,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use mangata_primitives::TokenId;
-use sp_std::{boxed::Box, vec::Vec};
+use sp_std::boxed::Box;
 
 // NOTE:v1::MultiLocation is used in storages, we would need to do migration if upgrade the
 // MultiLocation in the future.

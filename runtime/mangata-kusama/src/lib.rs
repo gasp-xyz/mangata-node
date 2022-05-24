@@ -18,10 +18,10 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, ConvertInto,
-		IdentifyAccount, StaticLookup, Verify,
+		StaticLookup,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, FixedPointNumber, MultiSignature, Percent, Perquintill,
+	ApplyExtrinsicResult, FixedPointNumber, Percent, Perquintill,
 };
 
 use sp_std::{marker::PhantomData, prelude::*};
@@ -73,7 +73,9 @@ use static_assertions::const_assert;
 
 pub use pallet_issuance::{IssuanceInfo, PoolPromoteApi};
 
-pub use mangata_primitives::{Amount, Balance, TokenId};
+pub use mangata_primitives::{
+	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
+};
 
 pub use orml_tokens;
 use orml_tokens::TransferDust;
@@ -104,37 +106,14 @@ mod weights;
 #[cfg(any(feature = "std", test))]
 pub use frame_system::Call as SystemCall;
 
-/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
-pub type Signature = MultiSignature;
-
-/// Some way of identifying an account on the chain. We intentionally make it equivalent
-/// to the public key of our transaction signing scheme.
-pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-
-/// Index of a transaction in the chain.
-pub type Index = u32;
-
-/// A hash of some data used by the chain.
-pub type Hash = sp_core::H256;
-
-/// An index to a block.
-pub type BlockNumber = u32;
-
-/// The address format for describing accounts.
-pub type Address = MultiAddress<AccountId, ()>;
-
 /// Block header type as expected by this runtime.
 pub type Header = generic::HeaderVer<BlockNumber, BlakeTwo256>;
-
 /// Block type as expected by this runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-
 /// A Block signed with a Justification
 pub type SignedBlock = generic::SignedBlock<Block>;
-
 /// BlockId type as expected by this runtime.
 pub type BlockId = generic::BlockId<Block>;
-
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
 	frame_system::CheckSpecVersion<Runtime>,
@@ -287,7 +266,9 @@ const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(5);
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
-const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
+/// NOTE: reduced by half comparing to origin impl as we want to fill block only up to 50%
+/// so there is room for new extrinsics in the next block
+const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 4;
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
@@ -1383,7 +1364,7 @@ impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 					},
 					_ => None,
 				}
-			}
+			},
 			_ => None,
 		}
 	}

@@ -365,6 +365,7 @@ pub mod pallet {
 		PoolAlreadyPromoted,
 		/// Sold Amount too low
 		SoldAmountTooLow,
+		FunctionNotAvailableForThisToken,
 	}
 
 	#[pallet::event]
@@ -555,6 +556,14 @@ pub mod pallet {
 			expected_second_asset_amount: Balance,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
+
+			let liquidity_asset_id =
+				Pallet::<T>::get_liquidity_asset(T::NativeCurrencyId::get(), second_asset_id)?;
+
+			ensure!(
+				<T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some(),
+				Error::<T>::NotAPromotedPool
+			);
 
 			let vesting_ending_block_as_balance: Balance = T::VestingProvider::unlock_tokens(
 				&sender,
@@ -1602,6 +1611,16 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 	) -> DispatchResult {
 		let vault: T::AccountId = Pallet::<T>::account_id();
 
+		ensure!(
+			first_asset_id < 2 as u32 || first_asset_id > 3 as u32,
+			Error::<T>::FunctionNotAvailableForThisToken
+		);
+
+		ensure!(
+			second_asset_id < 2 as u32 || second_asset_id > 3 as u32,
+			Error::<T>::FunctionNotAvailableForThisToken
+		);
+
 		// Ensure pool is not created with zero amount
 		ensure!(
 			!first_asset_amount.is_zero() && !second_asset_amount.is_zero(),
@@ -1736,6 +1755,16 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 	) -> DispatchResult {
 		// Ensure not selling zero amount
 		ensure!(!sold_asset_amount.is_zero(), Error::<T>::ZeroAmount,);
+
+		ensure!(
+			sold_asset_id < 2 as u32 || sold_asset_id > 3 as u32,
+			Error::<T>::FunctionNotAvailableForThisToken
+		);
+
+		ensure!(
+			bought_asset_id < 2 as u32 || bought_asset_id > 3 as u32,
+			Error::<T>::FunctionNotAvailableForThisToken
+		);
 
 		let buy_and_burn_amount =
 			multiply_by_rational(sold_asset_amount, T::BuyAndBurnFeePercentage::get(), 10000)
@@ -1910,6 +1939,16 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		bought_asset_amount: Self::Balance,
 		max_amount_in: Self::Balance,
 	) -> DispatchResult {
+		ensure!(
+			sold_asset_id < 2 as u32 || sold_asset_id > 3 as u32,
+			Error::<T>::FunctionNotAvailableForThisToken
+		);
+
+		ensure!(
+			bought_asset_id < 2 as u32 || bought_asset_id > 3 as u32,
+			Error::<T>::FunctionNotAvailableForThisToken
+		);
+
 		// Get token reserves
 		let (input_reserve, output_reserve) =
 			Pallet::<T>::get_reserves(sold_asset_id, bought_asset_id)?;
@@ -2084,6 +2123,16 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 	) -> Result<(Self::CurrencyId, Self::Balance), DispatchError> {
 		let vault = Pallet::<T>::account_id();
 
+		ensure!(
+			first_asset_id < 2 as u32 || first_asset_id > 3 as u32,
+			Error::<T>::FunctionNotAvailableForThisToken
+		);
+
+		ensure!(
+			second_asset_id < 2 as u32 || second_asset_id > 3 as u32,
+			Error::<T>::FunctionNotAvailableForThisToken
+		);
+
 		// Ensure pool exists
 		ensure!(
 			(LiquidityAssets::<T>::contains_key((first_asset_id, second_asset_id)) ||
@@ -2237,6 +2286,16 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		liquidity_asset_amount: Self::Balance,
 	) -> DispatchResult {
 		let vault = Pallet::<T>::account_id();
+
+		ensure!(
+			first_asset_id < 2 as u32 || first_asset_id > 3 as u32,
+			Error::<T>::FunctionNotAvailableForThisToken
+		);
+
+		ensure!(
+			second_asset_id < 2 as u32 || second_asset_id > 3 as u32,
+			Error::<T>::FunctionNotAvailableForThisToken
+		);
 
 		// Get token reserves and liquidity asset id
 		let (first_asset_reserve, second_asset_reserve) =

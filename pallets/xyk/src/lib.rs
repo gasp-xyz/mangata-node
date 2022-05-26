@@ -281,6 +281,16 @@ mod benchmarking;
 pub mod weights;
 pub use weights::WeightInfo;
 
+#[cfg(not(feature = "enable-trading"))]
+fn is_asset_enabled(asset_id: &TokenId) -> bool {
+	asset_id < &(2 as u32) || asset_id > &(3 as u32)
+}
+
+#[cfg(feature = "enable-trading")]
+fn is_asset_enabled(_asset_id: &TokenId) -> bool {
+	true
+}
+
 type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 #[frame_support::pallet]
 pub mod pallet {
@@ -365,6 +375,7 @@ pub mod pallet {
 		PoolAlreadyPromoted,
 		/// Sold Amount too low
 		SoldAmountTooLow,
+		/// Asset id is blacklisted
 		FunctionNotAvailableForThisToken,
 	}
 
@@ -1612,12 +1623,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		let vault: T::AccountId = Pallet::<T>::account_id();
 
 		ensure!(
-			first_asset_id < 2 as u32 || first_asset_id > 3 as u32,
-			Error::<T>::FunctionNotAvailableForThisToken
-		);
-
-		ensure!(
-			second_asset_id < 2 as u32 || second_asset_id > 3 as u32,
+			is_asset_enabled(&first_asset_id) && is_asset_enabled(&second_asset_id),
 			Error::<T>::FunctionNotAvailableForThisToken
 		);
 
@@ -1757,12 +1763,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		ensure!(!sold_asset_amount.is_zero(), Error::<T>::ZeroAmount,);
 
 		ensure!(
-			sold_asset_id < 2 as u32 || sold_asset_id > 3 as u32,
-			Error::<T>::FunctionNotAvailableForThisToken
-		);
-
-		ensure!(
-			bought_asset_id < 2 as u32 || bought_asset_id > 3 as u32,
+			is_asset_enabled(&sold_asset_id) && is_asset_enabled(&bought_asset_id),
 			Error::<T>::FunctionNotAvailableForThisToken
 		);
 
@@ -1940,12 +1941,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		max_amount_in: Self::Balance,
 	) -> DispatchResult {
 		ensure!(
-			sold_asset_id < 2 as u32 || sold_asset_id > 3 as u32,
-			Error::<T>::FunctionNotAvailableForThisToken
-		);
-
-		ensure!(
-			bought_asset_id < 2 as u32 || bought_asset_id > 3 as u32,
+			is_asset_enabled(&sold_asset_id) && is_asset_enabled(&bought_asset_id),
 			Error::<T>::FunctionNotAvailableForThisToken
 		);
 
@@ -2124,12 +2120,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		let vault = Pallet::<T>::account_id();
 
 		ensure!(
-			first_asset_id < 2 as u32 || first_asset_id > 3 as u32,
-			Error::<T>::FunctionNotAvailableForThisToken
-		);
-
-		ensure!(
-			second_asset_id < 2 as u32 || second_asset_id > 3 as u32,
+			is_asset_enabled(&first_asset_id) && is_asset_enabled(&second_asset_id),
 			Error::<T>::FunctionNotAvailableForThisToken
 		);
 
@@ -2288,12 +2279,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		let vault = Pallet::<T>::account_id();
 
 		ensure!(
-			first_asset_id < 2 as u32 || first_asset_id > 3 as u32,
-			Error::<T>::FunctionNotAvailableForThisToken
-		);
-
-		ensure!(
-			second_asset_id < 2 as u32 || second_asset_id > 3 as u32,
+			is_asset_enabled(&first_asset_id) && is_asset_enabled(&second_asset_id),
 			Error::<T>::FunctionNotAvailableForThisToken
 		);
 

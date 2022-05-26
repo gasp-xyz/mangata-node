@@ -198,7 +198,9 @@ disable-execution = [
 	"frame-executive/disable-execution",
 ]
 
-enable-trading = []
+enable-trading = [
+	"pallet-xyk/enable-trading"
+]
 
 runtime-benchmarks = [
 	"hex-literal",

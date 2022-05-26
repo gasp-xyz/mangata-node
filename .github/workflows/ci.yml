@@ -161,7 +161,7 @@ jobs:
       -
         name: archive mangata rococo checksums
         run: >
-          export RUNTIME_DIR=./docker-cargo/wbuild/mangata-runtime-rococo;
+          export RUNTIME_DIR=./docker-cargo/release/wbuild/mangata-runtime-rococo;
           md5sum ${RUNTIME_DIR}/mangata_runtime_rococo.compact.compressed.wasm > ${RUNTIME_DIR}/mangata_runtime_rococo.compact.compressed.wasm.md5;
           md5sum ${RUNTIME_DIR}/mangata_runtime_rococo.compact.wasm > ${RUNTIME_DIR}/mangata_runtime_rococo.compact.wasm.md5;
           md5sum ${RUNTIME_DIR}/mangata_runtime_rococo.wasm > ${RUNTIME_DIR}/mangata_runtime_rococo.wasm.md5;
@@ -229,7 +229,7 @@ jobs:
       -
         name: archive mangata kusama checksums
         run: >
-          export RUNTIME_DIR=./docker-cargo/wbuild/mangata-runtime-kusama;
+          export RUNTIME_DIR=./docker-cargo/release/wbuild/mangata-runtime-kusama;
           md5sum ${RUNTIME_DIR}/mangata_runtime_kusama.compact.compressed.wasm > ${RUNTIME_DIR}/mangata_runtime_kusama.compact.compressed.wasm.md5;
           md5sum ${RUNTIME_DIR}/mangata_runtime_kusama.compact.wasm > ${RUNTIME_DIR}/mangata_runtime_kusama.compact.wasm.md5;
           md5sum ${RUNTIME_DIR}/mangata_runtime_kusama.wasm > ${RUNTIME_DIR}/mangata_runtime_kusama.wasm.md5;

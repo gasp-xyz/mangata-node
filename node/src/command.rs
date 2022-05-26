@@ -33,7 +33,8 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 		"public-testnet" => Box::new(chain_spec::mangata_rococo::public_testnet_config()),
 
 		#[cfg(feature = "mangata-rococo")]
-		"mangata-rococo-local-testnet" => Box::new(chain_spec::mangata_rococo::mangata_rococo_local_config()),
+		"mangata-rococo-local-testnet" =>
+			Box::new(chain_spec::mangata_rococo::mangata_rococo_local_config()),
 
 		path => {
 			let path = std::path::PathBuf::from(path);
@@ -168,13 +169,13 @@ pub trait IdentifyVariant {
 
 impl IdentifyVariant for Box<dyn ChainSpec> {
 	fn is_mangata_kusama(&self) -> bool {
-		!(self.id().starts_with("mangata_public_testnet")
-		|| self.id().starts_with("mangata_rococo_local"))
+		!(self.id().starts_with("mangata_public_testnet") ||
+			self.id().starts_with("mangata_rococo_local"))
 	}
 
 	fn is_mangata_rococo(&self) -> bool {
-		self.id().starts_with("mangata_public_testnet")
-		|| self.id().starts_with("mangata_rococo_local")
+		self.id().starts_with("mangata_public_testnet") ||
+			self.id().starts_with("mangata_rococo_local")
 	}
 }
 

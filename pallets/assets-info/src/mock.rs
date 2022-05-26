@@ -120,6 +120,7 @@ impl Config for Test {
 	type MaxLengthDescription = MaxLengthDescription;
 	type MaxDecimals = MaxDecimals;
 	type Currency = MultiTokenCurrencyAdapter<Test>;
+	type RelayNativeTokensValueScaleFactor = ();
 }
 
 // Build genesis storage according to the mock runtime.

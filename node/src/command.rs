@@ -258,7 +258,7 @@ pub fn run() -> Result<()> {
 					output_buf
 				},
 				#[cfg(feature = "mangata-rococo")]
-				spec if spec.is_mangata_kusama() => {
+				spec if spec.is_mangata_rococo() => {
 					let state_version = Cli::native_runtime_version(&spec).state_version();
 					let block: service::mangata_rococo_runtime::Block =
 						generate_genesis_block(&spec, state_version)?;

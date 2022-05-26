@@ -126,7 +126,7 @@ jobs:
       #     reporter: jest-junit
 
 
-  build:
+  build-rococo:
     runs-on: ubuntu-latest
     steps:
       -
@@ -157,7 +157,21 @@ jobs:
         name: Build node binary
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh build -j4 --release --features=enable-trading
+          ./docker-cargo.sh build -j4 --release --features=enable-trading,mangata-rococo
+      -
+        name: archive mangata rococo checksums
+        run: >
+          export RUNTIME_DIR=./docker-cargo/wbuild/mangata-runtime-rococo;
+          md5sum ${RUNTIME_DIR}/mangata_runtime_rococo.compact.compressed.wasm > ${RUNTIME_DIR}/mangata_runtime_rococo.compact.compressed.wasm.md5;
+          md5sum ${RUNTIME_DIR}/mangata_runtime_rococo.compact.wasm > ${RUNTIME_DIR}/mangata_runtime_rococo.compact.wasm.md5;
+          md5sum ${RUNTIME_DIR}/mangata_runtime_rococo.wasm > ${RUNTIME_DIR}/mangata_runtime_rococo.wasm.md5;
+          tar cvf mangata-runtime-rococo-wasm.tar
+          ${RUNTIME_DIR}/mangata_runtime_rococo.compact.compressed.wasm 
+          ${RUNTIME_DIR}/mangata_runtime_rococo.compact.compressed.wasm.md5
+          ${RUNTIME_DIR}/mangata_runtime_rococo.compact.wasm 
+          ${RUNTIME_DIR}/mangata_runtime_rococo.compact.wasm.md5
+          ${RUNTIME_DIR}/mangata_runtime_rococo.wasm 
+          ${RUNTIME_DIR}/mangata_runtime_rococo.wasm.md5
       -
         name: Build node img
         env:
@@ -166,12 +180,87 @@ jobs:
           SKIP_BUILD=1 ./scripts/build-image.sh ${DOCKER_IMG_TAG} &&
           docker save ${DOCKER_IMG_TAG} -o ${{ github.sha }}.tar
       -
-        name: Upload artifact
+        name: Upload docker img artifact
         uses: actions/upload-artifact@v2
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         with:
-          name: ${{ github.sha }}
+          name: rococo-docker-${{ github.sha }}
           path: ${{ github.sha }}.tar
+      -
+        name: Upload wasm artifact
+        uses: actions/upload-artifact@v2
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
+        with:
+          name: rococo-wasm-${{ github.sha }}
+          path: wasm.tar
+
+  build-kusama:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Debug info about publishing.
+        run: |
+          echo ${{ github.ref }} == 'refs/heads/develop'
+          echo ${{ github.ref }}
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Pull builder image
+        run: |
+          docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
+      -
+        name: Build node binary
+        run: |
+          ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
+          ./docker-cargo.sh build -j4 --release --features=enable-trading,mangata-kusama
+      -
+        name: archive mangata kusama checksums
+        run: >
+          export RUNTIME_DIR=./docker-cargo/wbuild/mangata-runtime-kusama;
+          md5sum ${RUNTIME_DIR}/mangata_runtime_kusama.compact.compressed.wasm > ${RUNTIME_DIR}/mangata_runtime_kusama.compact.compressed.wasm.md5;
+          md5sum ${RUNTIME_DIR}/mangata_runtime_kusama.compact.wasm > ${RUNTIME_DIR}/mangata_runtime_kusama.compact.wasm.md5;
+          md5sum ${RUNTIME_DIR}/mangata_runtime_kusama.wasm > ${RUNTIME_DIR}/mangata_runtime_kusama.wasm.md5;
+          tar cvf mangata-runtime-kusama-wasm.tar
+          ${RUNTIME_DIR}/mangata_runtime_kusama.compact.compressed.wasm 
+          ${RUNTIME_DIR}/mangata_runtime_kusama.compact.compressed.wasm.md5
+          ${RUNTIME_DIR}/mangata_runtime_kusama.compact.wasm 
+          ${RUNTIME_DIR}/mangata_runtime_kusama.compact.wasm.md5
+          ${RUNTIME_DIR}/mangata_runtime_kusama.wasm 
+          ${RUNTIME_DIR}/mangata_runtime_kusama.wasm.md5
+      -
+        name: Build node img
+        env:
+          DOCKER_IMG_TAG: "mangatasolutions/mangata-node:${{ github.sha }}"
+        run: >
+          SKIP_BUILD=1 ./scripts/build-image.sh ${DOCKER_IMG_TAG} &&
+          docker save ${DOCKER_IMG_TAG} -o ${{ github.sha }}.tar
+      -
+        name: Upload docker img artifact
+        uses: actions/upload-artifact@v2
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
+        with:
+          name: kusama-docker-${{ github.sha }}
+          path: ${{ github.sha }}.tar
+      -
+        name: Upload wasm artifact
+        uses: actions/upload-artifact@v2
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
+        with:
+          name: kusama-wasm-${{ github.sha }}
+          path: wasm.tar
 
   e2e-test:
     needs: build

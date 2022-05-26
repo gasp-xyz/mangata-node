@@ -10,7 +10,8 @@ services:
   relay_alice:
     environment:
       - ${RUST_LOG:-info}
-    image: p1k1m4n/polkadot-fast-runtime:0.9.18
+    # image: p1k1m4n/polkadot-fast-runtime:0.9.18
+    image: parity/polkadot:v0.9.16
     command: >
       --alice 
       --validator 
@@ -34,7 +35,8 @@ services:
         ipv4_address: 10.0.0.2
 
   relay_bob:
-    image: p1k1m4n/polkadot-fast-runtime:0.9.18
+    # image: p1k1m4n/polkadot-fast-runtime:0.9.18
+    image: parity/polkadot:v0.9.16
     environment:
       - ${RUST_LOG:-info}
     command: >
@@ -42,7 +44,7 @@ services:
       --validator 
       --base-path /tmp/node
       --chain /etc/mangata/rococo-local.json 
-      --bootnodes /dns/relay_alice/tcp/30333/p2p/12D3KooWLLuwx329jiPHfFgbiB2cfymTGtGpu6wBoqDTekxJYRqR
+      --bootnodes=/dns/relay_alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
       --port 30333
       --ws-port 9944
       --node-key=0000000000000000000000000000000000000000000000000000000000000002
@@ -59,8 +61,8 @@ services:
     image: mangatasolutions/parachain-register:0.1
     command: bash -c "sleep 10s && node index.js"
     environment:
-      - STATE_FILE=/config/genesis-state
-      - WASM_FILE=/config/genesis-wasm
+      - STATE_FILE=/config/mangata-rococo-local-testnet-state
+      - WASM_FILE=/config/mangata-rococo-local-testnet-wasm
       - COLLATOR_ADDR=ws://relay_alice:9944
     volumes:
       - ./config:/config
@@ -69,7 +71,7 @@ services:
         ipv4_address: 10.0.0.4
 
   para_alice:
-    image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangata-node:latest}
+    image: dev
     environment:
       - ${RUST_LOG:-info}
       - RUST_BACKTRACE=1
@@ -77,13 +79,13 @@ services:
     entrypoint: ""
     command: >
       bash -xc "
-      /mangata/node export-genesis-state > /etc/mangata/genesis-state;
-      /mangata/node export-genesis-wasm > /etc/mangata/genesis-wasm;
+      /mangata/node export-genesis-state --chain=mangata-rococo-local-testnet > /etc/mangata/mangata-rococo-local-testnet-state;
+      /mangata/node export-genesis-wasm --chain=mangata-rococo-local-testnet > /etc/mangata/mangata-rococo-local-testnet-wasm;
       /mangata/node
       --alice 
       --collator 
       --force-authoring 
-      --chain=local
+      --chain=/etc/mangata/mangata-rococo-local-testnet.json
       --base-path /tmp/node
       --port 30333 
       --ws-port 9944 
@@ -100,6 +102,7 @@ services:
       "
     volumes:
       - ./config:/etc/mangata
+      - /home/dev/stano/target/release:/mangata
       # - ./para_alice:/tmp/node
     ports:
       - 9955:9944
@@ -109,23 +112,24 @@ services:
         ipv4_address: 10.0.0.5
 
   para_bob:
-    image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangata-node:latest}
+    image: dev
     environment:
       - ${RUST_LOG:-info}
       - LD_PRELOAD=${LD_PRELOAD}
     command: >
+      /mangata/node
       --bob 
       --collator 
       --force-authoring 
-      --chain=local
+      --chain=/etc/mangata/mangata-rococo-local-testnet.json
       --base-path /tmp/node
       --port=30333 
       --ws-port=9944 
       --unsafe-ws-external
       --unsafe-rpc-external
       --rpc-cors=all
-      --node-key=0000000000000000000000000000000000000000000000000000000000000003
-      --bootnodes=/dns/para_alice/tcp/30333/p2p/12D3KooWKpDhPnax8CyJvVh77Z5T84a8EWZvY7c9Z7pZ1tk6sLBD
+      --node-key=0000000000000000000000000000000000000000000000000000000000000004
+      --bootnodes=/dns/para_alice/tcp/30333/p2p/12D3KooWSCufgHzV4fCwRijfH2k3abrpAJxTKxEvN1FDuRXA2U9x
       -- 
       --execution wasm 
       --chain /etc/mangata/rococo-local.json 
@@ -134,6 +138,7 @@ services:
       --bootnodes=/dns/relay_alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
     volumes:
       - ./config:/etc/mangata
+      - /home/dev/stano/target/release:/mangata
         # - ./para_bob:/tmp/node
     networks:
       test_net:

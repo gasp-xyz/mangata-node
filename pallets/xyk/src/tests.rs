@@ -378,11 +378,11 @@ fn liquidity_rewards_two_users_minting_W() {
 		let user2_rewards = XykStorage::calculate_rewards_amount(2, 2).unwrap();
 		let user3_rewards = XykStorage::calculate_rewards_amount(3, 2).unwrap();
 		let pool_rewards = *MockPromotedPoolApi::instance().lock().unwrap().get(&2).unwrap();
-		assert_eq!(user2_rewards, (913595963, 0));
-		assert_eq!(user3_rewards, (86380460, 0));
+		assert_eq!(user2_rewards, (913595963));
+		assert_eq!(user3_rewards, (86380460));
 		assert_eq!(pool_rewards, 1000000000);
 
-		assert!(pool_rewards >= user2_rewards.0 + user3_rewards.0);
+		assert!(pool_rewards >= user2_rewards + user3_rewards);
 	});
 }
 
@@ -434,7 +434,7 @@ fn liquidity_rewards_claim_W() {
 			.unwrap(),
 			U256::from(77046)
 		);
-		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (1000000000, 0));
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (1000000000));
 		assert_eq!(*MockPromotedPoolApi::instance().lock().unwrap().get(&2).unwrap(), 1000000000);
 		assert_eq!(XykStorage::balance(0, 2), 340282366920938463463374607421768206455);
 
@@ -463,7 +463,7 @@ fn liquidity_rewards_claim_W() {
 				user2_missing_at_last_checkpoint
 			)
 			.unwrap(),
-			U256::from(38523)
+			U256::from(77046)
 		);
 		assert_eq!(
 			XykStorage::calculate_work_pool(
@@ -474,15 +474,15 @@ fn liquidity_rewards_claim_W() {
 				pool_missing_at_last_checkpoint
 			)
 			.unwrap(),
-			U256::from(38523)
+			U256::from(77046)
 		);
-		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (500000000, 0));
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (500000000));
 		assert_eq!(*MockPromotedPoolApi::instance().lock().unwrap().get(&2).unwrap(), 500000000);
 
 		System::set_block_number(400001);
 		XykStorage::claim_rewards(Origin::signed(2), 2, 500000000).unwrap();
 
-		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (0, 0));
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (0));
 		assert_eq!(*MockPromotedPoolApi::instance().lock().unwrap().get(&2).unwrap(), 0);
 	});
 }
@@ -494,7 +494,7 @@ fn liquidity_rewards_claim_more_NW() {
 		initialize_liquidity_rewards();
 		System::set_block_number(300001);
 
-		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (1000000000, 0));
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (1000000000));
 		assert_eq!(*MockPromotedPoolApi::instance().lock().unwrap().get(&2).unwrap(), 1000000000);
 
 		assert_err!(
@@ -602,13 +602,13 @@ fn liquidity_rewards_burn_W() {
 		);
 		assert_eq!(XykStorage::liquidity_mining_user_to_be_claimed((2, 2)), 500000000);
 		assert_eq!(*MockPromotedPoolApi::instance().lock().unwrap().get(&2).unwrap(), 500000000);
-		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (500000000, 500000000));
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (1000000000));
 
 		XykStorage::claim_rewards(Origin::signed(2), 2, 750000000).unwrap();
 
 		assert_eq!(
 			XykStorage::liquidity_mining_user((2, 2)),
-			(30, U256::from(19262), U256::from(435))
+			(30, U256::from(38523), U256::from(435))
 		);
 
 		let (
@@ -632,7 +632,7 @@ fn liquidity_rewards_burn_W() {
 				user2_missing_at_last_checkpoint,
 			)
 			.unwrap(),
-			U256::from(19262)
+			U256::from(38523)
 		);
 		assert_eq!(
 			XykStorage::calculate_work_pool(
@@ -643,11 +643,11 @@ fn liquidity_rewards_burn_W() {
 				pool_missing_at_last_checkpoint,
 			)
 			.unwrap(),
-			U256::from(19262)
+			U256::from(38523)
 		);
 		assert_eq!(XykStorage::liquidity_mining_user_to_be_claimed((2, 2)), 0);
-		assert_eq!(*MockPromotedPoolApi::instance().lock().unwrap().get(&2).unwrap(), 250000000);
-		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (250000000, 0));
+		assert_eq!(*MockPromotedPoolApi::instance().lock().unwrap().get(&2).unwrap(), 500000000);
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (250000000));
 
 		XykStorage::claim_rewards(Origin::signed(2), 2, 250000000).unwrap();
 		assert_eq!(XykStorage::liquidity_mining_user((2, 2)), (30, U256::from(0), U256::from(435)));
@@ -784,11 +784,11 @@ fn bug3() {
 
 		System::set_block_number(100000);
 
-		assert_eq!(XykStorage::calculate_rewards_amount(2, 4).unwrap(), (0, 0));
-		assert_eq!(XykStorage::calculate_rewards_amount(3, 4).unwrap(), (250000000, 0));
-		assert_eq!(XykStorage::calculate_rewards_amount(4, 4).unwrap(), (250000000, 0));
-		assert_eq!(XykStorage::calculate_rewards_amount(5, 4).unwrap(), (250000000, 0));
-		assert_eq!(XykStorage::calculate_rewards_amount(6, 4).unwrap(), (250000000, 0));
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 4).unwrap(), (0));
+		assert_eq!(XykStorage::calculate_rewards_amount(3, 4).unwrap(), (250000000));
+		assert_eq!(XykStorage::calculate_rewards_amount(4, 4).unwrap(), (250000000));
+		assert_eq!(XykStorage::calculate_rewards_amount(5, 4).unwrap(), (250000000));
+		assert_eq!(XykStorage::calculate_rewards_amount(6, 4).unwrap(), (250000000));
 
 		let leftRewardsInPool = *MockPromotedPoolApi::instance().lock().unwrap().get(&4).unwrap();
 		assert_eq!(leftRewardsInPool, 1000000000);
@@ -837,11 +837,11 @@ fn bug3() {
 		let leftRewardsInPool = *MockPromotedPoolApi::instance().lock().unwrap().get(&4).unwrap();
 		assert_eq!(leftRewardsInPool, 0);
 		System::set_block_number(100000);
-		assert_eq!(XykStorage::calculate_rewards_amount(2, 4).unwrap(), (0, 0));
-		assert_eq!(XykStorage::calculate_rewards_amount(3, 4).unwrap(), (0, 250000000));
-		assert_eq!(XykStorage::calculate_rewards_amount(4, 4).unwrap(), (0, 250000000));
-		assert_eq!(XykStorage::calculate_rewards_amount(5, 4).unwrap(), (0, 250000000));
-		assert_eq!(XykStorage::calculate_rewards_amount(6, 4).unwrap(), (0, 250000000));
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 4).unwrap(), (0));
+		assert_eq!(XykStorage::calculate_rewards_amount(3, 4).unwrap(), (250000000));
+		assert_eq!(XykStorage::calculate_rewards_amount(4, 4).unwrap(), (250000000));
+		assert_eq!(XykStorage::calculate_rewards_amount(5, 4).unwrap(), (250000000));
+		assert_eq!(XykStorage::calculate_rewards_amount(6, 4).unwrap(), (250000000));
 
 		let mut n: u64 = 100000;
 		while n < 150000 {
@@ -854,17 +854,17 @@ fn bug3() {
 					.insert(4, u128::from(n) * 1000000000);
 			}
 
-			assert_eq!(XykStorage::calculate_rewards_amount(3, 4).unwrap(), (0, 250000000));
+			assert_eq!(XykStorage::calculate_rewards_amount(3, 4).unwrap(), (250000000));
 			n = n + 1000;
 		}
 
 		System::set_block_number(200010);
 
-		assert_eq!(XykStorage::calculate_rewards_amount(2, 4).unwrap(), (0, 0));
-		assert_eq!(XykStorage::calculate_rewards_amount(3, 4).unwrap(), (0, 250000000));
-		assert_eq!(XykStorage::calculate_rewards_amount(4, 4).unwrap(), (0, 250000000));
-		assert_eq!(XykStorage::calculate_rewards_amount(5, 4).unwrap(), (0, 250000000));
-		assert_eq!(XykStorage::calculate_rewards_amount(6, 4).unwrap(), (0, 250000000));
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 4).unwrap(), (0));
+		assert_eq!(XykStorage::calculate_rewards_amount(3, 4).unwrap(), (250000000));
+		assert_eq!(XykStorage::calculate_rewards_amount(4, 4).unwrap(), (250000000));
+		assert_eq!(XykStorage::calculate_rewards_amount(5, 4).unwrap(), (250000000));
+		assert_eq!(XykStorage::calculate_rewards_amount(6, 4).unwrap(), (250000000));
 	});
 }
 
@@ -912,9 +912,9 @@ fn bug2() {
 
 		System::set_block_number(100000);
 
-		assert_eq!(XykStorage::calculate_rewards_amount(2, 4).unwrap(), (0, 0));
-		assert_eq!(XykStorage::calculate_rewards_amount(3, 4).unwrap(), (499977257, 0));
-		assert_eq!(XykStorage::calculate_rewards_amount(4, 4).unwrap(), (499977257, 0));
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 4).unwrap(), (0));
+		assert_eq!(XykStorage::calculate_rewards_amount(3, 4).unwrap(), (499977257));
+		assert_eq!(XykStorage::calculate_rewards_amount(4, 4).unwrap(), (499977257));
 
 		MockPromotedPoolApi::instance().lock().unwrap().insert(4, 1000000000);
 		assert_eq!(*MockPromotedPoolApi::instance().lock().unwrap().get(&4).unwrap(), 1000000000);
@@ -932,9 +932,9 @@ fn bug2() {
 
 		System::set_block_number(200000);
 
-		assert_eq!(XykStorage::calculate_rewards_amount(2, 4).unwrap(), (0, 0));
-		assert_eq!(XykStorage::calculate_rewards_amount(3, 4).unwrap(), (0, 499977257));
-		assert_eq!(XykStorage::calculate_rewards_amount(4, 4).unwrap(), (0, 499977257));
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 4).unwrap(), (0));
+		assert_eq!(XykStorage::calculate_rewards_amount(3, 4).unwrap(), (499977257));
+		assert_eq!(XykStorage::calculate_rewards_amount(4, 4).unwrap(), (499977257));
 
 		MockPromotedPoolApi::instance().lock().unwrap().insert(4, 1000000000);
 
@@ -951,9 +951,9 @@ fn bug2() {
 
 		System::set_block_number(300000);
 
-		assert_eq!(XykStorage::calculate_rewards_amount(2, 4).unwrap(), (0, 0));
-		assert_eq!(XykStorage::calculate_rewards_amount(3, 4).unwrap(), (499977257, 499977257));
-		assert_eq!(XykStorage::calculate_rewards_amount(4, 4).unwrap(), (499977257, 499977257));
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 4).unwrap(), (0));
+		assert_eq!(XykStorage::calculate_rewards_amount(3, 4).unwrap(), (999954514));
+		assert_eq!(XykStorage::calculate_rewards_amount(4, 4).unwrap(), (999954514));
 
 		let (
 			user2_last_checkpoint,
@@ -1127,9 +1127,9 @@ fn bug1() {
 
 		System::set_block_number(300000);
 
-		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (333331891, 0));
-		assert_eq!(XykStorage::calculate_rewards_amount(3, 2).unwrap(), (333331891, 0));
-		assert_eq!(XykStorage::calculate_rewards_amount(4, 2).unwrap(), (333331891, 0));
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (333331891));
+		assert_eq!(XykStorage::calculate_rewards_amount(3, 2).unwrap(), (333331891));
+		assert_eq!(XykStorage::calculate_rewards_amount(4, 2).unwrap(), (333331891));
 		assert_eq!(XykStorage::balance(2, 2), 0);
 		assert_eq!(XykStorage::balance(3, 2), 0);
 		assert_eq!(XykStorage::balance(4, 2), 0);
@@ -1137,31 +1137,31 @@ fn bug1() {
 
 		XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 5000).unwrap();
 
-		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (0, 333332409));
-		assert_eq!(XykStorage::calculate_rewards_amount(3, 2).unwrap(), (333332409, 0));
-		assert_eq!(XykStorage::calculate_rewards_amount(4, 2).unwrap(), (333332409, 0));
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (333332409));
+		assert_eq!(XykStorage::calculate_rewards_amount(3, 2).unwrap(), (333332409));
+		assert_eq!(XykStorage::calculate_rewards_amount(4, 2).unwrap(), (333332409));
 
 		System::set_block_number(500000);
 
 		XykStorage::mint_liquidity(Origin::signed(2), 0, 1, 5000, 5002).unwrap();
 		System::set_block_number(600000);
 
-		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (16666310, 333332409));
-		assert_eq!(XykStorage::calculate_rewards_amount(3, 2).unwrap(), (324993059, 0));
-		assert_eq!(XykStorage::calculate_rewards_amount(4, 2).unwrap(), (324993059, 0));
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (349998719));
+		assert_eq!(XykStorage::calculate_rewards_amount(3, 2).unwrap(), (324993059));
+		assert_eq!(XykStorage::calculate_rewards_amount(4, 2).unwrap(), (324993059));
 
 		XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 5000).unwrap();
 		XykStorage::burn_liquidity(Origin::signed(3), 0, 1, 5000).unwrap();
 		XykStorage::burn_liquidity(Origin::signed(4), 0, 1, 5000).unwrap();
 
-		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (0, 349998719));
-		assert_eq!(XykStorage::calculate_rewards_amount(3, 2).unwrap(), (0, 324993059));
-		assert_eq!(XykStorage::calculate_rewards_amount(4, 2).unwrap(), (0, 324993059));
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (349998719));
+		assert_eq!(XykStorage::calculate_rewards_amount(3, 2).unwrap(), (324993059));
+		assert_eq!(XykStorage::calculate_rewards_amount(4, 2).unwrap(), (324993059));
 
 		System::set_block_number(700000);
-		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (0, 349998719));
-		assert_eq!(XykStorage::calculate_rewards_amount(3, 2).unwrap(), (0, 324993059));
-		assert_eq!(XykStorage::calculate_rewards_amount(4, 2).unwrap(), (0, 324993059));
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (349998719));
+		assert_eq!(XykStorage::calculate_rewards_amount(3, 2).unwrap(), (324993059));
+		assert_eq!(XykStorage::calculate_rewards_amount(4, 2).unwrap(), (324993059));
 	});
 }
 
@@ -1261,7 +1261,7 @@ fn liquidity_rewards_deactivate_W() {
 		);
 		assert_eq!(XykStorage::liquidity_mining_user_to_be_claimed((2, 2)), 500000000);
 		assert_eq!(*MockPromotedPoolApi::instance().lock().unwrap().get(&2).unwrap(), 500000000);
-		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (500000000, 500000000));
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (1000000000));
 
 		System::set_block_number(3000001);
 		assert_eq!(XykStorage::balance(2, 2), 2500);
@@ -1311,7 +1311,7 @@ fn liquidity_rewards_deactivate_W() {
 			U256::from(0)
 		);
 		assert_eq!(XykStorage::liquidity_mining_user_to_be_claimed((2, 2)), 1000000000);
-		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (0, 1000000000));
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (1000000000));
 	});
 }
 
@@ -1334,7 +1334,7 @@ fn liquidity_rewards_calculate_work_after_deactivate() {
 			2,
 			<Test as Config>::LiquidityMiningIssuanceVault::get(),
 			10000000000,
-		);
+		).unwrap();
 
 		XykStorage::create_pool(Origin::signed(2), 2, 10000000, 3, 10000000).unwrap();
 		//XykStorage::activate_liquidity(Origin::signed(2), 4, 5000).unwrap();
@@ -1414,11 +1414,11 @@ fn liquidity_rewards_calculate_work_after_deactivate() {
 
 		System::set_block_number(100000);
 
-		assert_eq!(XykStorage::calculate_rewards_amount(2, 4).unwrap(), (0, 0));
-		assert_eq!(XykStorage::calculate_rewards_amount(3, 4).unwrap(), (250000000, 0));
-		assert_eq!(XykStorage::calculate_rewards_amount(4, 4).unwrap(), (250000000, 0));
-		assert_eq!(XykStorage::calculate_rewards_amount(5, 4).unwrap(), (250000000, 0));
-		assert_eq!(XykStorage::calculate_rewards_amount(6, 4).unwrap(), (250000000, 0));
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 4).unwrap(), (0));
+		assert_eq!(XykStorage::calculate_rewards_amount(3, 4).unwrap(), (250000000));
+		assert_eq!(XykStorage::calculate_rewards_amount(4, 4).unwrap(), (250000000));
+		assert_eq!(XykStorage::calculate_rewards_amount(5, 4).unwrap(), (250000000));
+		assert_eq!(XykStorage::calculate_rewards_amount(6, 4).unwrap(), (250000000));
 
 		let leftRewardsInPool = *MockPromotedPoolApi::instance().lock().unwrap().get(&4).unwrap();
 		assert_eq!(leftRewardsInPool, 1000000000);
@@ -1467,17 +1467,17 @@ fn liquidity_rewards_calculate_work_after_deactivate() {
 		let leftRewardsInPool = *MockPromotedPoolApi::instance().lock().unwrap().get(&4).unwrap();
 		assert_eq!(leftRewardsInPool, 0);
 		System::set_block_number(100000);
-		assert_eq!(XykStorage::calculate_rewards_amount(2, 4).unwrap(), (0, 0));
-		assert_eq!(XykStorage::calculate_rewards_amount(3, 4).unwrap(), (0, 250000000));
-		assert_eq!(XykStorage::calculate_rewards_amount(4, 4).unwrap(), (0, 250000000));
-		assert_eq!(XykStorage::calculate_rewards_amount(5, 4).unwrap(), (0, 250000000));
-		assert_eq!(XykStorage::calculate_rewards_amount(6, 4).unwrap(), (0, 250000000));
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 4).unwrap(), (0));
+		assert_eq!(XykStorage::calculate_rewards_amount(3, 4).unwrap(), (250000000));
+		assert_eq!(XykStorage::calculate_rewards_amount(4, 4).unwrap(), (250000000));
+		assert_eq!(XykStorage::calculate_rewards_amount(5, 4).unwrap(), (250000000));
+		assert_eq!(XykStorage::calculate_rewards_amount(6, 4).unwrap(), (250000000));
 
 		let mut n: u64 = 100000;
 		while n < 150000 {
 			System::set_block_number(n.into());
 
-			assert_eq!(XykStorage::calculate_rewards_amount(3, 4).unwrap(), (0, 250000000));
+			assert_eq!(XykStorage::calculate_rewards_amount(3, 4).unwrap(), (250000000));
 			n = n + 1000;
 		}
 	});
@@ -1650,8 +1650,8 @@ fn liquidity_rewards_rewards_not_gaining_after_burn() {
 
 		System::set_block_number(100000);
 
-		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (499977257, 0));
-		assert_eq!(XykStorage::calculate_rewards_amount(3, 2).unwrap(), (499977257, 0));
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (499977257));
+		assert_eq!(XykStorage::calculate_rewards_amount(3, 2).unwrap(), (499977257));
 
 		XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 5000).unwrap();
 		assert_eq!(XykStorage::reserved(2, 2), 0);
@@ -1665,13 +1665,13 @@ fn liquidity_rewards_rewards_not_gaining_after_burn() {
 		) = XykStorage::liquidity_mining_user((2, 2));
 
 		System::set_block_number(100000);
-		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (0, 499977257));
-		assert_eq!(XykStorage::calculate_rewards_amount(3, 2).unwrap(), (499977257, 0));
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (499977257));
+		assert_eq!(XykStorage::calculate_rewards_amount(3, 2).unwrap(), (499977257));
 
 		System::set_block_number(200000);
 
-		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (0, 499977257));
-		assert_eq!(XykStorage::calculate_rewards_amount(3, 2).unwrap(), (499997238, 0));
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (499977257));
+		assert_eq!(XykStorage::calculate_rewards_amount(3, 2).unwrap(), (499997238));
 
 		let pool_rewards = *MockPromotedPoolApi::instance().lock().unwrap().get(&2).unwrap();
 		let new_pool_rewards = pool_rewards + 1000000000;
@@ -1682,8 +1682,8 @@ fn liquidity_rewards_rewards_not_gaining_after_burn() {
 		assert_eq!(*MockPromotedPoolApi::instance().lock().unwrap().get(&2).unwrap(), 1500022743);
 
 		System::set_block_number(300000);
-		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (0, 499977257));
-		assert_eq!(XykStorage::calculate_rewards_amount(3, 2).unwrap(), (1500003274, 0));
+		assert_eq!(XykStorage::calculate_rewards_amount(2, 2).unwrap(), (499977257));
+		assert_eq!(XykStorage::calculate_rewards_amount(3, 2).unwrap(), (1500003274));
 
 		assert_eq!(
 			XykStorage::calculate_work_user(

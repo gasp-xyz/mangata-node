@@ -459,8 +459,8 @@ pub mod pallet {
 				)| {
 					if <T as Config>::Currency::exists({ *liquidity_token_id }.into()) {
 						assert!(
-							<Pallet<T>>::mint_liquidity(
-								T::Origin::from(Some(account_id.clone()).into()),
+							<Pallet<T> as XykFunctionsTrait<T::AccountId>>::mint_liquidity(
+								account_id.clone(),
 								*native_token_id,
 								*pooled_token_id,
 								*native_token_amount,
@@ -477,8 +477,8 @@ pub mod pallet {
 							"Assets not initialized in the expected sequence"
 						);
 						assert!(
-							<Pallet<T>>::create_pool(
-								T::Origin::from(Some(account_id.clone()).into()),
+							<Pallet<T> as XykFunctionsTrait<T::AccountId>>::create_pool(
+								account_id.clone(),
 								*native_token_id,
 								*native_token_amount,
 								*pooled_token_id,
@@ -505,6 +505,11 @@ pub mod pallet {
 			second_asset_amount: Balance,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
+
+			ensure!(
+				is_asset_enabled(&first_asset_id) && is_asset_enabled(&second_asset_id),
+				Error::<T>::FunctionNotAvailableForThisToken
+			);
 
 			<Self as XykFunctionsTrait<T::AccountId>>::create_pool(
 				sender,
@@ -611,6 +616,11 @@ pub mod pallet {
 			expected_second_asset_amount: Balance,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
+
+			ensure!(
+				is_asset_enabled(&first_asset_id) && is_asset_enabled(&second_asset_id),
+				Error::<T>::FunctionNotAvailableForThisToken
+			);
 
 			<Self as XykFunctionsTrait<T::AccountId>>::mint_liquidity(
 				sender,
@@ -1622,11 +1632,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 	) -> DispatchResult {
 		let vault: T::AccountId = Pallet::<T>::account_id();
 
-		ensure!(
-			is_asset_enabled(&first_asset_id) && is_asset_enabled(&second_asset_id),
-			Error::<T>::FunctionNotAvailableForThisToken
-		);
-
 		// Ensure pool is not created with zero amount
 		ensure!(
 			!first_asset_amount.is_zero() && !second_asset_amount.is_zero(),
@@ -2118,11 +2123,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		expected_second_asset_amount: Self::Balance,
 	) -> Result<(Self::CurrencyId, Self::Balance), DispatchError> {
 		let vault = Pallet::<T>::account_id();
-
-		ensure!(
-			is_asset_enabled(&first_asset_id) && is_asset_enabled(&second_asset_id),
-			Error::<T>::FunctionNotAvailableForThisToken
-		);
 
 		// Ensure pool exists
 		ensure!(

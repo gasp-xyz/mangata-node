@@ -263,7 +263,7 @@ jobs:
           path: wasm.tar
 
   e2e-test:
-    needs: build
+    needs: build-kusama
     runs-on: self-hosted
     if: "!contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests')"
     env:
@@ -399,7 +399,7 @@ jobs:
         run: docker-compose -f devops/parachain/docker-compose.yml down
 
   publish:
-    needs: [rustfmt-check, unit-test, clippy-check, build]
+    needs: [rustfmt-check, unit-test, clippy-check, build-rococo, build-kusama]
     runs-on: ubuntu-latest
     if: |
       github.ref == 'refs/heads/develop' && 

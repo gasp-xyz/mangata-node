@@ -10,7 +10,6 @@ services:
   relay_alice:
     environment:
       - ${RUST_LOG:-info}
-    # image: p1k1m4n/polkadot-fast-runtime:0.9.18
     image: parity/polkadot:v0.9.16
     command: >
       --alice 
@@ -35,7 +34,6 @@ services:
         ipv4_address: 10.0.0.2
 
   relay_bob:
-    # image: p1k1m4n/polkadot-fast-runtime:0.9.18
     image: parity/polkadot:v0.9.16
     environment:
       - ${RUST_LOG:-info}
@@ -61,8 +59,8 @@ services:
     image: mangatasolutions/parachain-register:0.1
     command: bash -c "sleep 10s && node index.js"
     environment:
-      - STATE_FILE=/config/mangata-rococo-local-testnet-state
-      - WASM_FILE=/config/mangata-rococo-local-testnet-wasm
+      - STATE_FILE=/config/state
+      - WASM_FILE=/config/wasm
       - COLLATOR_ADDR=ws://relay_alice:9944
     volumes:
       - ./config:/config
@@ -78,14 +76,11 @@ services:
       - LD_PRELOAD=${LD_PRELOAD}
     entrypoint: ""
     command: >
-      bash -xc "
-      /mangata/node export-genesis-state --chain=mangata-rococo-local-testnet > /etc/mangata/mangata-rococo-local-testnet-state;
-      /mangata/node export-genesis-wasm --chain=mangata-rococo-local-testnet > /etc/mangata/mangata-rococo-local-testnet-wasm;
       /mangata/node
       --alice 
       --collator 
       --force-authoring 
-      --chain=/etc/mangata/mangata-rococo-local-testnet.json
+      --chain /etc/mangata/mangata-rococo-local-testnet.json 
       --base-path /tmp/node
       --port 30333 
       --ws-port 9944 
@@ -99,7 +94,6 @@ services:
       --port 30334
       --ws-port 8844
       --bootnodes=/dns/relay_alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
-      "
     volumes:
       - ./config:/etc/mangata
       - /home/dev/stano/target/release:/mangata
@@ -116,12 +110,13 @@ services:
     environment:
       - ${RUST_LOG:-info}
       - LD_PRELOAD=${LD_PRELOAD}
+    entrypoint: ""
     command: >
       /mangata/node
       --bob 
       --collator 
       --force-authoring 
-      --chain=/etc/mangata/mangata-rococo-local-testnet.json
+      --chain /etc/mangata/mangata-rococo-local-testnet.json 
       --base-path /tmp/node
       --port=30333 
       --ws-port=9944 

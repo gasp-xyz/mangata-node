@@ -69,13 +69,16 @@ services:
         ipv4_address: 10.0.0.4
 
   para_alice:
-    image: dev
+    image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangata-node:latest}
     environment:
       - ${RUST_LOG:-info}
       - RUST_BACKTRACE=1
       - LD_PRELOAD=${LD_PRELOAD}
     entrypoint: ""
     command: >
+      bash -xc "
+      /mangata/node --chain=mangata-rococo-local-testnet export-genesis-state > /etc/mangata/state;
+      /mangata/node --chain=mangata-rococo-local-testnet export-genesis-wasm > /etc/mangata/wasm;
       /mangata/node
       --alice 
       --collator 
@@ -93,11 +96,9 @@ services:
       --chain /etc/mangata/rococo-local.json 
       --port 30334
       --ws-port 8844
-      --bootnodes=/dns/relay_alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
+      --bootnodes=/dns/relay_alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp"
     volumes:
       - ./config:/etc/mangata
-      - /home/dev/stano/target/release:/mangata
-      # - ./para_alice:/tmp/node
     ports:
       - 9955:9944
       - 9966:9933
@@ -106,7 +107,7 @@ services:
         ipv4_address: 10.0.0.5
 
   para_bob:
-    image: dev
+    image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangata-node:latest}
     environment:
       - ${RUST_LOG:-info}
       - LD_PRELOAD=${LD_PRELOAD}
@@ -133,8 +134,6 @@ services:
       --bootnodes=/dns/relay_alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
     volumes:
       - ./config:/etc/mangata
-      - /home/dev/stano/target/release:/mangata
-        # - ./para_bob:/tmp/node
     networks:
       test_net:
         ipv4_address: 10.0.0.6

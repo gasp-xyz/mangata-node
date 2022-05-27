@@ -11,11 +11,12 @@ services:
     environment:
       - ${RUST_LOG:-info}
     image: parity/polkadot:v0.9.16
+    user: root
     command: >
       --alice 
       --validator 
-      --base-path /tmp/node
-      --chain /etc/mangata/rococo-local.json 
+      --base-path /tmp/relay_alice
+      --chain /etc/mangata/relay-spec.json
       --port 30333 
       --ws-port 9944
       --unsafe-ws-external
@@ -25,6 +26,7 @@ services:
       --node-key=0000000000000000000000000000000000000000000000000000000000000001
     volumes:
       - ./config:/etc/mangata
+      - ./data:/tmp/
     ports:
       - 9944:9944
       - 9933:9933
@@ -35,13 +37,14 @@ services:
 
   relay_bob:
     image: parity/polkadot:v0.9.16
+    user: root
     environment:
       - ${RUST_LOG:-info}
     command: >
       --bob 
       --validator 
-      --base-path /tmp/node
-      --chain /etc/mangata/rococo-local.json 
+      --base-path /tmp/relay_bob
+      --chain /etc/mangata/relay-spec.json
       --bootnodes=/dns/relay_alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
       --port 30333
       --ws-port 9944
@@ -51,6 +54,7 @@ services:
       --rpc-cors=all
     volumes:
       - ./config:/etc/mangata
+      - ./data:/tmp/
     networks:
       test_net:
         ipv4_address: 10.0.0.3
@@ -76,15 +80,12 @@ services:
       - LD_PRELOAD=${LD_PRELOAD}
     entrypoint: ""
     command: >
-      bash -xc "
-      /mangata/node export-genesis-state --chain=mangata-rococo-local-testnet > /etc/mangata/state;
-      /mangata/node export-genesis-wasm --chain=mangata-rococo-local-testnet > /etc/mangata/wasm;
       /mangata/node
       --alice 
       --collator 
       --force-authoring 
-      --chain /etc/mangata/mangata-rococo-local-testnet.json 
-      --base-path /tmp/node
+      --chain /etc/mangata/para-spec.json
+      --base-path /tmp/para_alice
       --port 30333 
       --ws-port 9944 
       --unsafe-ws-external
@@ -93,12 +94,13 @@ services:
       --node-key=0000000000000000000000000000000000000000000000000000000000000003
       -- 
       --execution wasm 
-      --chain /etc/mangata/rococo-local.json 
+      --chain /etc/mangata/relay-spec.json 
       --port 30334
       --ws-port 8844
-      --bootnodes=/dns/relay_alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp"
+      --bootnodes=/dns/relay_alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
     volumes:
       - ./config:/etc/mangata
+      - ./data:/tmp/
     ports:
       - 9955:9944
       - 9966:9933
@@ -117,8 +119,8 @@ services:
       --bob 
       --collator 
       --force-authoring 
-      --chain /etc/mangata/mangata-rococo-local-testnet.json 
-      --base-path /tmp/node
+      --chain /etc/mangata/para-spec.json
+      --base-path /tmp/para_bob
       --port=30333 
       --ws-port=9944 
       --unsafe-ws-external
@@ -128,12 +130,13 @@ services:
       --bootnodes=/dns/para_alice/tcp/30333/p2p/12D3KooWSCufgHzV4fCwRijfH2k3abrpAJxTKxEvN1FDuRXA2U9x
       -- 
       --execution wasm 
-      --chain /etc/mangata/rococo-local.json 
+      --chain /etc/mangata/relay-spec.json
       --port 30334
       --ws-port 8844
       --bootnodes=/dns/relay_alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
     volumes:
       - ./config:/etc/mangata
+      - ./data:/tmp/
     networks:
       test_net:
         ipv4_address: 10.0.0.6

@@ -77,8 +77,8 @@ services:
     entrypoint: ""
     command: >
       bash -xc "
-      /mangata/node --chain=mangata-rococo-local-testnet export-genesis-state > /etc/mangata/state;
-      /mangata/node --chain=mangata-rococo-local-testnet export-genesis-wasm > /etc/mangata/wasm;
+      /mangata/node export-genesis-state --chain=mangata-rococo-local-testnet > /etc/mangata/state;
+      /mangata/node export-genesis-wasm --chain=mangata-rococo-local-testnet > /etc/mangata/wasm;
       /mangata/node
       --alice 
       --collator 

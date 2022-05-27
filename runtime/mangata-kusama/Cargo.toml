@@ -188,6 +188,9 @@ std = [
 	"pallet-crowdloan-rewards/std",
 	"pallet-elections-phragmen/std",
 	"pallet-collective/std",
+	"frame-system-rpc-runtime-api/std",
+	"pallet-elections-phragmen/std",
+	"pallet-collective/std",
 	"frame-system-rpc-runtime-api/std"
 ]
 

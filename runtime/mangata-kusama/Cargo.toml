@@ -187,11 +187,7 @@ std = [
 	"pallet-vesting-mangata/std",
 	"pallet-crowdloan-rewards/std",
 	"pallet-elections-phragmen/std",
-	"pallet-collective/std",
-	"frame-system-rpc-runtime-api/std",
-	"pallet-elections-phragmen/std",
-	"pallet-collective/std",
-	"frame-system-rpc-runtime-api/std"
+
 ]
 
 try-runtime = [
@@ -203,7 +199,9 @@ disable-execution = [
 	"frame-executive/disable-execution",
 ]
 
-enable-trading = []
+enable-trading = [
+	"pallet-xyk/enable-trading"
+]
 
 runtime-benchmarks = [
 	"hex-literal",

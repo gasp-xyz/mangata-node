@@ -195,7 +195,7 @@ jobs:
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         with:
           name: rococo-wasm-${{ github.sha }}
-          path: wasm.tar
+          path: mangata-runtime-rococo-wasm.tar
 
   build-kusama:
     runs-on: ubuntu-latest
@@ -266,7 +266,7 @@ jobs:
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         with:
           name: kusama-wasm-${{ github.sha }}
-          path: wasm.tar
+          path: mangata-runtime-kusama-wasm.tar
 
   e2e-test:
     needs: build-kusama

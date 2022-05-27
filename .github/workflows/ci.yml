@@ -161,10 +161,10 @@ jobs:
       -
         name: archive mangata rococo checksums
         run: >
-          export RUNTIME_DIR=./docker-cargo/release/wbuild/mangata-rococo-runtime;
-          md5sum ${RUNTIME_DIR}/mangata_rococo_runtime.compact.compressed.wasm > ${RUNTIME_DIR}/mangata_rococo_runtime.compact.compressed.wasm.md5;
-          md5sum ${RUNTIME_DIR}/mangata_rococo_runtime.compact.wasm > ${RUNTIME_DIR}/mangata_rococo_runtime.compact.wasm.md5;
-          md5sum ${RUNTIME_DIR}/mangata_rococo_runtime.wasm > ${RUNTIME_DIR}/mangata_rococo_runtime.wasm.md5;
+          export RUNTIME_DIR=./docker-cargo/release/wbuild/mangata-rococo-runtime &&
+          md5sum ${RUNTIME_DIR}/mangata_rococo_runtime.compact.compressed.wasm > ${RUNTIME_DIR}/mangata_rococo_runtime.compact.compressed.wasm.md5 &&
+          md5sum ${RUNTIME_DIR}/mangata_rococo_runtime.compact.wasm > ${RUNTIME_DIR}/mangata_rococo_runtime.compact.wasm.md5 &&
+          md5sum ${RUNTIME_DIR}/mangata_rococo_runtime.wasm > ${RUNTIME_DIR}/mangata_rococo_runtime.wasm.md5 &&
           tar cvf mangata-runtime-rococo-wasm.tar
           ${RUNTIME_DIR}/mangata_rococo_runtime.compact.compressed.wasm
           ${RUNTIME_DIR}/mangata_rococo_runtime.compact.compressed.wasm.md5
@@ -176,8 +176,11 @@ jobs:
         name: Build node img
         env:
           DOCKER_IMG_TAG: "mangatasolutions/mangata-node:${{ github.sha }}"
+          SKIP_BUILD: 1
+          NODE_BINARY: "docker-cargo/release/mangata-node"
+          WASM: "docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm"
         run: >
-          SKIP_BUILD=1 ./scripts/build-image.sh ${DOCKER_IMG_TAG} &&
+          ./scripts/build-image.sh ${DOCKER_IMG_TAG} &&
           docker save ${DOCKER_IMG_TAG} -o ${{ github.sha }}.tar
       -
         name: Upload docker img artifact
@@ -229,10 +232,10 @@ jobs:
       -
         name: archive mangata kusama checksums
         run: >
-          export RUNTIME_DIR=./docker-cargo/release/wbuild/mangata-kusama-runtime;
-          md5sum ${RUNTIME_DIR}/mangata_kusama_runtime.compact.compressed.wasm > ${RUNTIME_DIR}/mangata_kusama_runtime.compact.compressed.wasm.md5;
-          md5sum ${RUNTIME_DIR}/mangata_kusama_runtime.compact.wasm > ${RUNTIME_DIR}/mangata_kusama_runtime.compact.wasm.md5;
-          md5sum ${RUNTIME_DIR}/mangata_kusama_runtime.wasm > ${RUNTIME_DIR}/mangata_kusama_runtime.wasm.md5;
+          export RUNTIME_DIR=./docker-cargo/release/wbuild/mangata-kusama-runtime &&
+          md5sum ${RUNTIME_DIR}/mangata_kusama_runtime.compact.compressed.wasm > ${RUNTIME_DIR}/mangata_kusama_runtime.compact.compressed.wasm.md5 &&
+          md5sum ${RUNTIME_DIR}/mangata_kusama_runtime.compact.wasm > ${RUNTIME_DIR}/mangata_kusama_runtime.compact.wasm.md5 &&
+          md5sum ${RUNTIME_DIR}/mangata_kusama_runtime.wasm > ${RUNTIME_DIR}/mangata_kusama_runtime.wasm.md5 &&
           tar cvf mangata-runtime-kusama-wasm.tar
           ${RUNTIME_DIR}/mangata_kusama_runtime.compact.compressed.wasm
           ${RUNTIME_DIR}/mangata_kusama_runtime.compact.compressed.wasm.md5
@@ -244,8 +247,11 @@ jobs:
         name: Build node img
         env:
           DOCKER_IMG_TAG: "mangatasolutions/mangata-node:${{ github.sha }}"
+          SKIP_BUILD: 1
+          NODE_BINARY: "docker-cargo/release/mangata-node"
+          WASM: "docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm"
         run: >
-          SKIP_BUILD=1 ./scripts/build-image.sh ${DOCKER_IMG_TAG} &&
+          ./scripts/build-image.sh ${DOCKER_IMG_TAG} &&
           docker save ${DOCKER_IMG_TAG} -o ${{ github.sha }}.tar
       -
         name: Upload docker img artifact

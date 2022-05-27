@@ -543,14 +543,6 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		// you will sell your sold_asset_amount of sold_asset_id to get some amount of bought_asset_id
-		#[pallet::weight(T::WeightInfo::sell_asset())]
-		pub fn foo(
-			origin: OriginFor<T>,
-		) -> DispatchResultWithPostInfo {
-			Ok(().into())
-		}
-
 		#[pallet::weight(T::WeightInfo::buy_asset())]
 		pub fn buy_asset(
 			origin: OriginFor<T>,

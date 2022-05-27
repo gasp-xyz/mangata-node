@@ -185,6 +185,7 @@ jobs:
       -
         name: Extract wasm
         run: >
+          docker load -i /tmp/rococo-${{ github.sha }}.tar &&
           docker run
           --entrypoint=""
           -i mangatasolutions/mangata-node:rococo-latest

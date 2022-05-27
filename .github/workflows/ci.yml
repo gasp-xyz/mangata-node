@@ -197,6 +197,7 @@ jobs:
           name: rococo-wasm-${{ github.sha }}
           path: mangata-runtime-rococo-wasm.tar
 
+
   build-kusama:
     runs-on: ubuntu-latest
     steps:

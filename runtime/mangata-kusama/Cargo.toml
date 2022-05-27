@@ -186,6 +186,7 @@ std = [
 	"pallet-issuance/std",
 	"pallet-vesting-mangata/std",
 	"pallet-crowdloan-rewards/std",
+	"pallet-elections-phragmen/std",
 
 ]
 

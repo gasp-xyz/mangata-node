@@ -181,11 +181,11 @@ jobs:
             CARGO_FEATURES=mangata-rococo
           push: false
           tags: mangatasolutions/mangata-node:rococo-latest,mangatasolutions/mangata-node:rococo-${{ github.sha }}
-          outputs: type=docker,dest=/tmp/rococo-${{ github.sha }}.tar
+          outputs: type=docker,dest=/tmp/rococo-docker-${{ github.sha }}.tar
       -
         name: Extract wasm
         run: >
-          docker load -i /tmp/rococo-${{ github.sha }}.tar &&
+          docker load -i /tmp/rococo-docker-${{ github.sha }}.tar &&
           docker run
           --entrypoint=""
           -i mangatasolutions/mangata-node:rococo-latest
@@ -196,14 +196,14 @@ jobs:
         uses: actions/upload-artifact@v2
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         with:
-          name: rococo-${{ github.sha }}
-          path: /tmp/rococo-${{ github.sha }}.tar
+          name: rococo-docker-${{ github.sha }}
+          path: /tmp/rococo-docker-${{ github.sha }}.tar
       -
         name: Upload wasm artifact
         uses: actions/upload-artifact@v2
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         with:
-          name: mangata_rococo_runtime.compact.compressed.wasm-${{ github.sha }}
+          name: rococo-wasm-${{ github.sha }}
           path: /tmp/mangata_rococo_runtime.compact.compressed.wasm-${{ github.sha }}
 
 
@@ -235,7 +235,7 @@ jobs:
             CARGO_FEATURES=mangata-kusama
           push: false
           tags: mangatasolutions/mangata-node:kusama-latest,mangatasolutions/mangata-node:kusama-${{ github.sha }}
-          outputs: type=docker,dest=/tmp/kusama-${{ github.sha }}.tar
+          outputs: type=docker,dest=/tmp/kusama-docker-${{ github.sha }}.tar
       -
         name: Extract wasm
         run: >
@@ -249,14 +249,14 @@ jobs:
         uses: actions/upload-artifact@v2
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         with:
-          name: rococo-${{ github.sha }}
-          path: /tmp/rococo-${{ github.sha }}.tar
+          name: kusama-docker-${{ github.sha }}
+          path: /tmp/kusama-docker-${{ github.sha }}.tar
       -
         name: Upload wasm artifact
         uses: actions/upload-artifact@v2
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         with:
-          name: mangata_kusama_runtime.compact.compressed.wasm-${{ github.sha }}
+          name: kusama-wasm-${{ github.sha }}
           path: /tmp/mangata_kusama_runtime.compact.compressed.wasm-${{ github.sha }}
 
 

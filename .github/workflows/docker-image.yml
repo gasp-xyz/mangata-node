@@ -241,7 +241,7 @@ jobs:
         run: >
           docker run
           --entrypoint=""
-          -i mangatasolutions/mangata-node:kusma-latest
+          -i mangatasolutions/mangata-node:kusama-latest
           cat /mangata/mangata_kusama_runtime.compact.compressed.wasm
           > /tmp/mangata_kusama_runtime.compact.compressed.wasm-${{ github.sha }}
       -

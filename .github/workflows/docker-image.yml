@@ -141,7 +141,7 @@ jobs:
         with:
           file: "devops/dockerfiles/node/Dockerfile"
           build-args: |
-            CARGO_FEATURES=enable-trading
+            CARGO_FEATURES=enable-trading,mangata-kusama
           push: false
           tags: mangatasolutions/mangata-node:latest,mangatasolutions/mangata-node:${{ github.sha }}
           outputs: type=docker,dest=/tmp/${{ github.sha }}.tar

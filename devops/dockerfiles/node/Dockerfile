@@ -30,7 +30,7 @@ RUN cp /mangata/memory_profiler/memory-profiler/target/release/libbytehound.so /
 RUN cp /mangata/memory_profiler/memory-profiler/target/release/bytehound /mangata/
 
 
-RUN cargo build --release --features=${CARGO_FEATURES}
+RUN cargo build --release --features=${CARGO_FEATURES} --no-default-features
 
 FROM debian:stretch
 ENV DOCKERIZE_VERSION v0.6.1

@@ -239,6 +239,7 @@ jobs:
       -
         name: Extract wasm
         run: >
+          docker load -i /tmp/kusama-docker-${{ github.sha }}.tar &&
           docker run
           --entrypoint=""
           -i mangatasolutions/mangata-node:kusama-latest

@@ -15,9 +15,9 @@ frame-support = { git = "https://github.com/mangata-finance/substrate", default-
 frame-system = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.17" }
 mangata-primitives = { package = "mangata-primitives", path = "../../primitives/mangata", default-features = false }
 
-xcm = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "release-v0.9.17" }
-xcm-builder = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "release-v0.9.17" }
-xcm-executor = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "release-v0.9.17" }
+xcm = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "mangata-dev-v0.9.17" }
+xcm-builder = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "mangata-dev-v0.9.17" }
+xcm-executor = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "mangata-dev-v0.9.17" }
 
 orml-tokens = {  default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v0.9.17" }
 

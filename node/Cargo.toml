@@ -108,11 +108,11 @@ cumulus-relay-chain-local = { git = 'https://github.com/mangata-finance/cumulus'
 
 
 # Polkadot dependencies
-polkadot-cli = { git = "https://github.com/mangata-finance/polkadot", branch = "release-v0.9.17" }
-polkadot-parachain = { git = "https://github.com/mangata-finance/polkadot", branch = "release-v0.9.17" }
-polkadot-primitives = { git = "https://github.com/mangata-finance/polkadot", branch = "release-v0.9.17" }
-polkadot-service = { git = "https://github.com/mangata-finance/polkadot", branch = "release-v0.9.17" }
-polkadot-test-service = { git = "https://github.com/mangata-finance/polkadot", branch = "release-v0.9.17" }
+polkadot-cli = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v0.9.17" }
+polkadot-parachain = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v0.9.17" }
+polkadot-primitives = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v0.9.17" }
+polkadot-service = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v0.9.17" }
+polkadot-test-service = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v0.9.17" }
 
 
 # Mangata dependencies
@@ -135,7 +135,7 @@ pallet-transaction-payment = { git = "https://github.com/mangata-finance/substra
 frame-system-rpc-runtime-api = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.17" }
 cumulus-pallet-parachain-system = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.17'}
 cumulus-test-relay-sproof-builder = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.17'}
-polkadot-runtime-common = { git = "https://github.com/mangata-finance/polkadot", branch = "release-v0.9.17" }
+polkadot-runtime-common = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v0.9.17" }
 sp-consensus-slots = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.17" }
 futures = "0.3.16"
 schnorrkel = { version = "0.9.1", features = ["preaudit_deprecated", "u64_backend"], default-features = false}

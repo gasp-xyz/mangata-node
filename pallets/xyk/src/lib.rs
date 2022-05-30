@@ -420,17 +420,12 @@ pub mod pallet {
 	pub type LiquidityMiningActivePool<T: Config> =
 		StorageMap<_, Twox64Concat, TokenId, u128, ValueQuery>;
 
-		// stores user claimed work, for future calculation of rewards
-		#[pallet::storage]
-		#[pallet::getter(fn liquidity_mining_user_claimed)]
-		pub type LiquidityMiningUserClaimed<T: Config> =
-			StorageMap<_, Twox64Concat, (AccountIdOf<T>, TokenId), u128, ValueQuery>;
+	// stores user claimed work, for future calculation of rewards
+	#[pallet::storage]
+	#[pallet::getter(fn liquidity_mining_user_claimed)]
+	pub type LiquidityMiningUserClaimed<T: Config> =
+		StorageMap<_, Twox64Concat, (AccountIdOf<T>, TokenId), u128, ValueQuery>;
 	
-		// // stores pools claimed work, for future calculation of rewards
-		// #[pallet::storage]
-		// #[pallet::getter(fn liquidity_mining_pool_claimed)]
-		// pub type LiquidityMiningPoolClaimed<T: Config> =
-		// 	StorageMap<_, Twox64Concat, TokenId, U256, ValueQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {

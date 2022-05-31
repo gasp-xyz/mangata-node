@@ -13,7 +13,7 @@ substrate-wasm-builder = { git = "https://github.com/mangata-finance/substrate",
 
 [dependencies]
 hex-literal = { version = '0.3.1', optional = true }
-codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"]}
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"]}
 log = { version = "0.4.14", default-features = false }
 scale-info = { version = "1.0.0", default-features = false, features = ["derive"] }
 serde = { version = "1.0.119", optional = true, features = ["derive"] }
@@ -99,18 +99,18 @@ xcm-builder = { git = "https://github.com/mangata-finance/polkadot", default-fea
 xcm-executor = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "mangata-dev-v0.9.18" }
 
 # Snowbridge Dependencies
-artemis-core = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v0.9.17"}
-pallet-verifier = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v0.9.17"}
-artemis-erc20-app = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v0.9.17"}
-artemis-eth-app = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v0.9.17"}
-artemis-asset = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v0.9.17"}
+artemis-core = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v0.9.18"}
+pallet-verifier = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v0.9.18"}
+artemis-erc20-app = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v0.9.18"}
+artemis-eth-app = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v0.9.18"}
+artemis-asset = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v0.9.18"}
 pallet-bridge = {default-features = false, version = "0.1.1", path = "../../pallets/bridge"}
 
 # Staking dependencies
-parachain-staking = { default-features = false, git = "https://github.com/mangata-finance/moonbeam.git", branch = "mangata-dev-v0.9.17" }
+parachain-staking = { default-features = false, git = "https://github.com/mangata-finance/moonbeam.git", branch = "mangata-dev-v0.9.18" }
 
 # Crowdloan dependencies
-pallet-crowdloan-rewards = { default-features = false, git = "https://github.com/mangata-finance/crowdloan-rewards", branch = "mangata-dev-v0.9.17" }
+pallet-crowdloan-rewards = { default-features = false, git = "https://github.com/mangata-finance/crowdloan-rewards", branch = "mangata-dev-v0.9.18" }
 
 [features]
 default = [

@@ -14,16 +14,16 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 sc-client-api = { version = "4.0.0-dev", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.18" }
-codec = { package = "parity-scale-codec", version = "2.0.0" }
+codec = { package = "parity-scale-codec", version = "3.0.0" }
 futures = "0.3.16"
 jsonrpc-core = "18.0.0"
 jsonrpc-core-client = "18.0.0"
 jsonrpc-derive = "18.0.0"
 log = "0.4.8"
-sp-runtime = { version = "5.0.0", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.18" }
+sp-runtime = { version = "6.0.0", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.18" }
 sp-api = { version = "4.0.0-dev", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.18" }
 frame-system-rpc-runtime-api ={ version = "4.0.0-dev", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.18" }
-sp-core ={ version = "5.0.0", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.18" }
+sp-core ={ version = "6.0.0", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.18" }
 sp-blockchain ={ version = "4.0.0-dev", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.18" }
 ver-api ={ version = "4.0.0-dev", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.18" }
 sc-transaction-pool-api ={ version = "4.0.0-dev", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.18" }

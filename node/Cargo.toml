@@ -32,7 +32,7 @@ runtime-benchmarks = ["mangata-kusama-runtime/runtime-benchmarks", "polkadot-cli
 [dependencies]
 derive_more = "0.99.2"
 log = "0.4.14"
-codec = { package = "parity-scale-codec", version = "2.0.0" }
+codec = { package = "parity-scale-codec", version = "3.0.0" }
 clap = { version = "3.1", features = ["derive"] }
 serde = { version = "1.0.119", features = ["derive"] }
 hex-literal = "0.3.4"
@@ -120,7 +120,7 @@ xyk-rpc = { default-features = false, version = '2.0.0', path = '../pallets/xyk/
 xyk-runtime-api = { default-features = false, version = '2.0.0', path = '../pallets/xyk/runtime-api' }
 
 # Snowbridge dependencies
-artemis-core = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v0.9.17"}
+artemis-core = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v0.9.18"}
 
 
 [dev-dependencies]

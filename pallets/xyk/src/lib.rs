@@ -281,6 +281,16 @@ mod benchmarking;
 pub mod weights;
 pub use weights::WeightInfo;
 
+#[cfg(not(feature = "enable-trading"))]
+fn is_asset_enabled(asset_id: &TokenId) -> bool {
+	asset_id < &(2 as u32) || asset_id > &(3 as u32)
+}
+
+#[cfg(feature = "enable-trading")]
+fn is_asset_enabled(_asset_id: &TokenId) -> bool {
+	true
+}
+
 type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 #[frame_support::pallet]
 pub mod pallet {
@@ -365,6 +375,8 @@ pub mod pallet {
 		PoolAlreadyPromoted,
 		/// Sold Amount too low
 		SoldAmountTooLow,
+		/// Asset id is blacklisted
+		FunctionNotAvailableForThisToken,
 	}
 
 	#[pallet::event]
@@ -454,8 +466,8 @@ pub mod pallet {
 				)| {
 					if <T as Config>::Currency::exists({ *liquidity_token_id }.into()) {
 						assert!(
-							<Pallet<T>>::mint_liquidity(
-								T::Origin::from(Some(account_id.clone()).into()),
+							<Pallet<T> as XykFunctionsTrait<T::AccountId>>::mint_liquidity(
+								account_id.clone(),
 								*native_token_id,
 								*pooled_token_id,
 								*native_token_amount,
@@ -472,8 +484,8 @@ pub mod pallet {
 							"Assets not initialized in the expected sequence"
 						);
 						assert!(
-							<Pallet<T>>::create_pool(
-								T::Origin::from(Some(account_id.clone()).into()),
+							<Pallet<T> as XykFunctionsTrait<T::AccountId>>::create_pool(
+								account_id.clone(),
 								*native_token_id,
 								*native_token_amount,
 								*pooled_token_id,
@@ -500,6 +512,11 @@ pub mod pallet {
 			second_asset_amount: Balance,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
+
+			ensure!(
+				is_asset_enabled(&first_asset_id) && is_asset_enabled(&second_asset_id),
+				Error::<T>::FunctionNotAvailableForThisToken
+			);
 
 			<Self as XykFunctionsTrait<T::AccountId>>::create_pool(
 				sender,
@@ -563,6 +580,14 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
+			let liquidity_asset_id =
+				Pallet::<T>::get_liquidity_asset(T::NativeCurrencyId::get(), second_asset_id)?;
+
+			ensure!(
+				<T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some(),
+				Error::<T>::NotAPromotedPool
+			);
+
 			let vesting_ending_block_as_balance: Balance = T::VestingProvider::unlock_tokens(
 				&sender,
 				T::NativeCurrencyId::get().into(),
@@ -598,6 +623,11 @@ pub mod pallet {
 			expected_second_asset_amount: Balance,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
+
+			ensure!(
+				is_asset_enabled(&first_asset_id) && is_asset_enabled(&second_asset_id),
+				Error::<T>::FunctionNotAvailableForThisToken
+			);
 
 			<Self as XykFunctionsTrait<T::AccountId>>::mint_liquidity(
 				sender,
@@ -655,7 +685,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::activate_liquidity())]
 		pub fn activate_liquidity(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
@@ -1009,8 +1039,6 @@ impl<T: Config> Pallet<T> {
 
 		let liquidity_assets_amount: Balance =
 			LiquidityMiningActiveUser::<T>::get((&user, &liquidity_asset_id));
-		let activated_liquidity_pool: Balance =
-			LiquidityMiningActivePool::<T>::get(&liquidity_asset_id);
 
 		let liquidity_assets_burned_u256: U256 = liquidity_assets_burned.into();
 
@@ -1760,6 +1788,11 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		// Ensure not selling zero amount
 		ensure!(!sold_asset_amount.is_zero(), Error::<T>::ZeroAmount,);
 
+		ensure!(
+			is_asset_enabled(&sold_asset_id) && is_asset_enabled(&bought_asset_id),
+			Error::<T>::FunctionNotAvailableForThisToken
+		);
+
 		let buy_and_burn_amount =
 			multiply_by_rational(sold_asset_amount, T::BuyAndBurnFeePercentage::get(), 10000)
 				.map_err(|_| Error::<T>::UnexpectedFailure)? +
@@ -1933,6 +1966,11 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		bought_asset_amount: Self::Balance,
 		max_amount_in: Self::Balance,
 	) -> DispatchResult {
+		ensure!(
+			is_asset_enabled(&sold_asset_id) && is_asset_enabled(&bought_asset_id),
+			Error::<T>::FunctionNotAvailableForThisToken
+		);
+
 		// Get token reserves
 		let (input_reserve, output_reserve) =
 			Pallet::<T>::get_reserves(sold_asset_id, bought_asset_id)?;
@@ -2260,6 +2298,11 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		liquidity_asset_amount: Self::Balance,
 	) -> DispatchResult {
 		let vault = Pallet::<T>::account_id();
+
+		ensure!(
+			is_asset_enabled(&first_asset_id) && is_asset_enabled(&second_asset_id),
+			Error::<T>::FunctionNotAvailableForThisToken
+		);
 
 		// Get token reserves and liquidity asset id
 		let (first_asset_reserve, second_asset_reserve) =

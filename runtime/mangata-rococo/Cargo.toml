@@ -1,0 +1,231 @@
+[package]
+name = "mangata-rococo-runtime"
+version = "4.0.0"
+authors = ["Mangata Team"]
+edition = "2018"
+license = "Unlicense"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[build-dependencies]
+substrate-wasm-builder = { git = "https://github.com/mangata-finance/substrate", branch = "polkadot-v0.9.12" }
+
+[dependencies]
+hex-literal = { version = '0.3.1', optional = true }
+codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"]}
+log = { version = "0.4.14", default-features = false }
+scale-info = { version = "1.0.0", default-features = false, features = ["derive"] }
+serde = { version = "1.0.119", optional = true, features = ["derive"] }
+smallvec = "1.6.1"
+static_assertions = "1.1.0"
+
+# Local Dependencies
+mangata-primitives = { path = '../../primitives/mangata', default-features = false, version = "0.1.0" }
+pallet-assets-info = { path = '../../pallets/assets-info', default-features = false, version = "2.0.0" }
+pallet-xyk = { path = '../../pallets/xyk', default-features = false, version = '0.1.0' }
+pallet-bootstrap = { path = '../../pallets/bootstrap', default-features = false, version = '0.1.0' }
+xyk-runtime-api = { path = '../../pallets/xyk/runtime-api', default-features = false, version = '2.0.0' }
+pallet-sudo-origin = { path = '../../pallets/sudo-origin', default-features = false}
+xcm-asset-registry = { path = '../../pallets/asset-registry', default-features = false}
+pallet-issuance = { path = '../../pallets/issuance', default-features = false}
+
+# Substrate Dependencies
+## Substrate Primitive Dependencies
+sp-api = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+sp-block-builder = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+sp-consensus-aura = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+sp-core = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+sp-inherents = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+sp-io = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+sp-offchain = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+sp-runtime = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+sp-session = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+sp-std = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+sp-transaction-pool = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+pallet-utility = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+sp-version = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+
+## Substrate FRAME Dependencies
+frame-benchmarking = { git = "https://github.com/mangata-finance/substrate", default-features = false, optional = true, branch = "mangata-dev" }
+frame-executive = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+frame-try-runtime = { git = "https://github.com/mangata-finance/substrate", default-features = false, optional = true , branch = "mangata-dev" }
+frame-support = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+frame-system = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+frame-system-benchmarking = { git = "https://github.com/mangata-finance/substrate", default-features = false, optional = true, branch = "mangata-dev" }
+frame-system-rpc-runtime-api = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+ver-api = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+
+## Substrate Pallet Dependencies
+pallet-aura = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+pallet-authorship = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+pallet-session = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+pallet-sudo = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+pallet-timestamp = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+pallet-transaction-payment = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+pallet-treasury = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+pallet-elections-phragmen = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+pallet-collective = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+pallet-vesting-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+
+# Open-Runtime-Module-Library Dependencies
+orml-tokens = {  default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
+orml-traits = {  default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
+orml-xtokens = {  default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
+orml-xcm-support = {  default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
+orml-unknown-tokens = {  default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
+orml-xcm = {  default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
+
+
+# Cumulus dependencies
+cumulus-pallet-aura-ext = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev', default-features = false }
+cumulus-pallet-dmp-queue = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev', default-features = false }
+cumulus-pallet-parachain-system = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev', default-features = false }
+cumulus-pallet-xcm = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev', default-features = false }
+cumulus-pallet-xcmp-queue = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev', default-features = false }
+cumulus-primitives-core = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev', default-features = false }
+cumulus-primitives-timestamp = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev', default-features = false }
+cumulus-primitives-utility = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev', default-features = false }
+parachain-info = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev', default-features = false }
+cumulus-pallet-session-benchmarking = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev', default-features = false }
+
+# Polkadot Dependencies
+pallet-xcm = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "release-v0.9.16" }
+polkadot-parachain = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "release-v0.9.16" }
+polkadot-runtime-common = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "release-v0.9.16" }
+xcm = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "release-v0.9.16" }
+xcm-builder = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "release-v0.9.16" }
+xcm-executor = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "release-v0.9.16" }
+
+# Snowbridge Dependencies
+artemis-core = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
+pallet-verifier = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
+artemis-erc20-app = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
+artemis-eth-app = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
+artemis-asset = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
+pallet-bridge = {default-features = false, version = "0.1.1", path = "../../pallets/bridge"}
+
+# Staking dependencies
+parachain-staking = { default-features = false, git = "https://github.com/mangata-finance/moonbeam.git", branch = "mangata-dev" }
+
+# Crowdloan dependencies
+pallet-crowdloan-rewards = { default-features = false, git = "https://github.com/mangata-finance/crowdloan-rewards", branch = "mangata-dev" }
+
+[features]
+default = [
+	"std",
+]
+std = [
+	"codec/std",
+	"serde",
+	"scale-info/std",
+	"log/std",
+	"sp-api/std",
+	"sp-block-builder/std",
+	"sp-consensus-aura/std",
+	"sp-core/std",
+	"sp-inherents/std",
+	"sp-io/std",
+	"sp-offchain/std",
+	"sp-runtime/std",
+	"sp-session/std",
+	"sp-std/std",
+	"sp-transaction-pool/std",
+	"sp-version/std",
+	"frame-executive/std",
+	"frame-support/std",
+	"frame-system/std",
+	"pallet-aura/std",
+	"pallet-authorship/std",
+	"pallet-session/std",
+	"pallet-sudo/std",
+	"pallet-timestamp/std",
+	"pallet-transaction-payment-rpc-runtime-api/std",
+	"pallet-transaction-payment/std",
+	"cumulus-pallet-aura-ext/std",
+	"cumulus-pallet-parachain-system/std",
+	"cumulus-pallet-xcm/std",
+	"cumulus-pallet-xcmp-queue/std",
+	"cumulus-primitives-core/std",
+	"cumulus-primitives-timestamp/std",
+	"cumulus-primitives-utility/std",
+	"cumulus-pallet-dmp-queue/std",
+	"parachain-info/std",
+	"polkadot-parachain/std",
+	"polkadot-runtime-common/std",
+	"xcm-builder/std",
+	"xcm-executor/std",
+	"xcm/std",
+    "ver-api/std",
+	
+	"mangata-primitives/std",
+	"orml-traits/std",
+	"orml-tokens/std",
+	"pallet-treasury/std",
+	"pallet-assets-info/std",
+	"pallet-xyk/std",
+	"pallet-bootstrap/std",
+    "xyk-runtime-api/std",
+
+	"artemis-core/std",
+	"pallet-verifier/std",
+	"artemis-erc20-app/std",
+	"artemis-eth-app/std",
+	"artemis-asset/std",
+	"pallet-bridge/std",
+
+	"parachain-staking/std",
+
+	"orml-xtokens/std",
+	"orml-xcm-support/std",
+	"orml-unknown-tokens/std",
+	"orml-xcm/std",
+
+	"xcm-asset-registry/std",
+	"pallet-issuance/std",
+	"pallet-vesting-mangata/std",
+	"pallet-crowdloan-rewards/std",
+	"pallet-elections-phragmen/std",
+	"frame-system-rpc-runtime-api/std",
+	"pallet-collective/std",
+
+]
+
+try-runtime = [
+	"frame-try-runtime",
+	"frame-executive/try-runtime",
+]
+
+disable-execution = [
+	"frame-executive/disable-execution",
+]
+
+enable-trading = [
+	"pallet-xyk/enable-trading"
+]
+
+runtime-benchmarks = [
+	"hex-literal",
+	"sp-runtime/runtime-benchmarks",
+	"xcm-builder/runtime-benchmarks",
+	"frame-benchmarking/runtime-benchmarks",
+	"frame-system-benchmarking",
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"pallet-timestamp/runtime-benchmarks",
+	"pallet-xcm/runtime-benchmarks",
+	"orml-tokens/runtime-benchmarks",
+	"cumulus-pallet-session-benchmarking/runtime-benchmarks",
+	"pallet-xyk/runtime-benchmarks",
+	"parachain-staking/runtime-benchmarks",
+	"xcm-asset-registry/runtime-benchmarks",
+	"pallet-treasury/runtime-benchmarks",
+	"pallet-collective/runtime-benchmarks",
+	"pallet-elections-phragmen/runtime-benchmarks",
+	"pallet-crowdloan-rewards/runtime-benchmarks",
+	"pallet-utility/runtime-benchmarks",
+	"pallet-vesting-mangata/runtime-benchmarks",
+	"pallet-issuance/runtime-benchmarks",
+	"pallet-bootstrap/runtime-benchmarks",
+]

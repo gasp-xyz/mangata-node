@@ -1,13 +1,12 @@
 use crate::{
 	chain_spec,
 	cli::{Cli, RelayChainCli, Subcommand},
-	service::{new_partial, MangataRuntimeExecutor},
+	service,
 };
 use codec::Encode;
 use cumulus_client_service::genesis::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
 use log::info;
-use mangata_runtime::{Block, RuntimeApi};
 use polkadot_parachain::primitives::AccountIdConversion;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
@@ -23,11 +22,46 @@ use std::{io::Write, net::SocketAddr};
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
-		"dev" => Box::new(chain_spec::development_config()),
-		"" | "local" => Box::new(chain_spec::local_config()),
-		"public-testnet" => Box::new(chain_spec::public_testnet_config()),
-		"kusama-mainnet" => Box::new(chain_spec::kusama_mainnet_config()),
-		path => Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),
+		#[cfg(feature = "mangata-kusama")]
+		"dev" => Box::new(chain_spec::mangata_kusama::development_config()),
+		#[cfg(feature = "mangata-kusama")]
+		"" | "local" => Box::new(chain_spec::mangata_kusama::local_config()),
+		#[cfg(feature = "mangata-kusama")]
+		"kusama-mainnet" => Box::new(chain_spec::mangata_kusama::kusama_mainnet_config()),
+
+		#[cfg(feature = "mangata-rococo")]
+		"public-testnet" => Box::new(chain_spec::mangata_rococo::public_testnet_config()),
+
+		#[cfg(feature = "mangata-rococo")]
+		"mangata-rococo-local-testnet" =>
+			Box::new(chain_spec::mangata_rococo::mangata_rococo_local_config()),
+
+		path => {
+			let path = std::path::PathBuf::from(path);
+
+			let chain_spec =
+				Box::new(crate::chain_spec::DummyChainSpec::from_json_file(path.clone())?)
+					as Box<dyn service::ChainSpec>;
+
+			if chain_spec.is_mangata_kusama() {
+				#[cfg(feature = "mangata-kusama")]
+				{
+					Box::new(chain_spec::mangata_kusama::ChainSpec::from_json_file(path)?)
+				}
+
+				#[cfg(not(feature = "mangata-kusama"))]
+				return Err(service::MANGATA_KUSAMA_RUNTIME_NOT_AVAILABLE.into())
+			} else if chain_spec.is_mangata_rococo() {
+				#[cfg(feature = "mangata-rococo")]
+				{
+					Box::new(chain_spec::mangata_rococo::ChainSpec::from_json_file(path)?)
+				}
+				#[cfg(not(feature = "mangata-rococo"))]
+				return Err(service::MANGATA_ROCOCO_RUNTIME_NOT_AVAILABLE.into())
+			} else {
+				return Err("The id of the chainspec does not match the enabled feature".into())
+			}
+		},
 	})
 }
 
@@ -64,8 +98,14 @@ impl SubstrateCli for Cli {
 		load_spec(id)
 	}
 
-	fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		&mangata_runtime::VERSION
+	fn native_runtime_version(spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
+		match spec {
+			#[cfg(feature = "mangata-kusama")]
+			spec if spec.is_mangata_kusama() => return &service::mangata_kusama_runtime::VERSION,
+			#[cfg(feature = "mangata-rococo")]
+			spec if spec.is_mangata_rococo() => return &service::mangata_rococo_runtime::VERSION,
+			_ => panic!("invalid chain spec"),
+		}
 	}
 }
 
@@ -117,22 +157,26 @@ fn extract_genesis_wasm(chain_spec: &Box<dyn sc_service::ChainSpec>) -> Result<V
 		.ok_or_else(|| "Could not find wasm file in genesis state!".into())
 }
 
-macro_rules! construct_async_run {
-	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
-		let runner = $cli.create_runner($cmd)?;
-		runner.async_run(|$config| {
-			let $components = new_partial::<
-				RuntimeApi,
-				MangataRuntimeExecutor,
-				_
-			>(
-				&$config,
-				crate::service::parachain_build_import_queue,
-			)?;
-			let task_manager = $components.task_manager;
-			{ $( $code )* }.map(|v| (v, task_manager))
-		})
-	}}
+/// Can be called for a `Configuration` to check if it is a configuration for
+/// the `Mangata` network.
+pub trait IdentifyVariant {
+	/// Returns `true` if this is a configuration for the `Moonbase` network.
+	fn is_mangata_kusama(&self) -> bool;
+
+	/// Returns `true` if this is a configuration for the `Moonbeam` network.
+	fn is_mangata_rococo(&self) -> bool;
+}
+
+impl IdentifyVariant for Box<dyn ChainSpec> {
+	fn is_mangata_kusama(&self) -> bool {
+		!(self.id().starts_with("mangata_public_testnet") ||
+			self.id().starts_with("mangata_rococo_local"))
+	}
+
+	fn is_mangata_rococo(&self) -> bool {
+		self.id().starts_with("mangata_public_testnet") ||
+			self.id().starts_with("mangata_rococo_local")
+	}
 }
 
 /// Parse command line arguments into service configuration.
@@ -145,23 +189,31 @@ pub fn run() -> Result<()> {
 			runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
 		},
 		Some(Subcommand::CheckBlock(cmd)) => {
-			construct_async_run!(|components, cli, cmd, config| {
-				Ok(cmd.run(components.client, components.import_queue))
+			let runner = cli.create_runner(cmd)?;
+			runner.async_run(|mut config| {
+				let (client, _, import_queue, task_manager) = service::new_chain_ops(&mut config)?;
+				Ok((cmd.run(client, import_queue), task_manager))
 			})
 		},
 		Some(Subcommand::ExportBlocks(cmd)) => {
-			construct_async_run!(|components, cli, cmd, config| {
-				Ok(cmd.run(components.client, config.database))
+			let runner = cli.create_runner(cmd)?;
+			runner.async_run(|mut config| {
+				let (client, _, _, task_manager) = service::new_chain_ops(&mut config)?;
+				Ok((cmd.run(client, config.database), task_manager))
 			})
 		},
 		Some(Subcommand::ExportState(cmd)) => {
-			construct_async_run!(|components, cli, cmd, config| {
-				Ok(cmd.run(components.client, config.chain_spec))
+			let runner = cli.create_runner(cmd)?;
+			runner.async_run(|mut config| {
+				let (client, _, _, task_manager) = service::new_chain_ops(&mut config)?;
+				Ok((cmd.run(client, config.chain_spec), task_manager))
 			})
 		},
 		Some(Subcommand::ImportBlocks(cmd)) => {
-			construct_async_run!(|components, cli, cmd, config| {
-				Ok(cmd.run(components.client, components.import_queue))
+			let runner = cli.create_runner(cmd)?;
+			runner.async_run(|mut config| {
+				let (client, _, import_queue, task_manager) = service::new_chain_ops(&mut config)?;
+				Ok((cmd.run(client, import_queue), task_manager))
 			})
 		},
 		Some(Subcommand::PurgeChain(cmd)) => {
@@ -184,8 +236,10 @@ pub fn run() -> Result<()> {
 			})
 		},
 		Some(Subcommand::Revert(cmd)) => {
-			construct_async_run!(|components, cli, cmd, config| {
-				Ok(cmd.run(components.client, components.backend))
+			let runner = cli.create_runner(cmd)?;
+			runner.async_run(|mut config| {
+				let (client, backend, _, task_manager) = service::new_chain_ops(&mut config)?;
+				Ok((cmd.run(client, backend), task_manager))
 			})
 		},
 		Some(Subcommand::ExportGenesisState(params)) => {
@@ -194,13 +248,35 @@ pub fn run() -> Result<()> {
 			let _ = builder.init();
 
 			let spec = load_spec(&params.chain.clone().unwrap_or_default())?;
-			let state_version = Cli::native_runtime_version(&spec).state_version();
-			let block: Block = generate_genesis_block(&spec, state_version)?;
-			let raw_header = block.header().encode();
-			let output_buf = if params.raw {
-				raw_header
-			} else {
-				format!("0x{:?}", HexDisplay::from(&block.header().encode())).into_bytes()
+
+			let output_buf = match spec {
+				#[cfg(feature = "mangata-kusama")]
+				spec if spec.is_mangata_kusama() => {
+					let state_version = Cli::native_runtime_version(&spec).state_version();
+					let block: service::mangata_kusama_runtime::Block =
+						generate_genesis_block(&spec, state_version)?;
+					let raw_header = block.header().encode();
+					let output_buf = if params.raw {
+						raw_header
+					} else {
+						format!("0x{:?}", HexDisplay::from(&block.header().encode())).into_bytes()
+					};
+					output_buf
+				},
+				#[cfg(feature = "mangata-rococo")]
+				spec if spec.is_mangata_rococo() => {
+					let state_version = Cli::native_runtime_version(&spec).state_version();
+					let block: service::mangata_rococo_runtime::Block =
+						generate_genesis_block(&spec, state_version)?;
+					let raw_header = block.header().encode();
+					let output_buf = if params.raw {
+						raw_header
+					} else {
+						format!("0x{:?}", HexDisplay::from(&block.header().encode())).into_bytes()
+					};
+					output_buf
+				},
+				_ => panic!("invalid chain spec"),
 			};
 
 			if let Some(output) = &params.output {
@@ -235,30 +311,71 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::Benchmark(cmd)) =>
 			if cfg!(feature = "runtime-benchmarks") {
 				let runner = cli.create_runner(cmd)?;
+				let chain_spec = &runner.config().chain_spec;
 
-				runner.sync_run(|config| cmd.run::<Block, MangataRuntimeExecutor>(config))
+				match chain_spec {
+					#[cfg(feature = "mangata-kusama")]
+					spec if spec.is_mangata_kusama() =>
+						return runner.sync_run(|config| {
+							cmd.run::<service::mangata_kusama_runtime::Block, service::MangataKusamaRuntimeExecutor>(
+								config,
+							)
+						}),
+					#[cfg(feature = "mangata-rococo")]
+					spec if spec.is_mangata_rococo() =>
+						return runner.sync_run(|config| {
+							cmd.run::<service::mangata_rococo_runtime::Block, service::MangataRococoRuntimeExecutor>(
+								config,
+							)
+						}),
+					_ => panic!("invalid chain spec"),
+				}
 			} else {
 				Err("Benchmarking wasn't enabled when building the node. \
 				You can enable it with `--features runtime-benchmarks`."
 					.into())
 			},
-		Some(Subcommand::TryRuntime(cmd)) => {
+		Some(Subcommand::TryRuntime(cmd)) =>
 			if cfg!(feature = "try-runtime") {
 				let runner = cli.create_runner(cmd)?;
+				let chain_spec = &runner.config().chain_spec;
 
-				// grab the task manager.
-				let registry = &runner.config().prometheus_config.as_ref().map(|cfg| &cfg.registry);
-				let task_manager =
-					TaskManager::new(runner.config().tokio_handle.clone(), *registry)
-						.map_err(|e| format!("Error: {:?}", e))?;
+				match chain_spec {
+					#[cfg(feature = "mangata-kusama")]
+					spec if spec.is_mangata_kusama() => runner.async_run(|config| {
+						let registry = config.prometheus_config.as_ref().map(|cfg| &cfg.registry);
+						let task_manager =
+							sc_service::TaskManager::new(config.tokio_handle.clone(), registry)
+								.map_err(|e| {
+									sc_cli::Error::Service(sc_service::Error::Prometheus(e))
+								})?;
 
-				runner.async_run(|config| {
-					Ok((cmd.run::<Block, MangataRuntimeExecutor>(config), task_manager))
-				})
+						Ok((
+								cmd.run::<service::mangata_kusama_runtime::Block, service::MangataKusamaRuntimeExecutor>(config),
+								task_manager,
+							))
+					}),
+					#[cfg(feature = "mangata-rococo")]
+					spec if spec.is_mangata_rococo() => runner.async_run(|config| {
+						let registry = config.prometheus_config.as_ref().map(|cfg| &cfg.registry);
+						let task_manager =
+							sc_service::TaskManager::new(config.tokio_handle.clone(), registry)
+								.map_err(|e| {
+									sc_cli::Error::Service(sc_service::Error::Prometheus(e))
+								})?;
+
+						Ok((
+								cmd.run::<service::mangata_rococo_runtime::Block, service::MangataRococoRuntimeExecutor>(
+									config,
+								),
+								task_manager,
+							))
+					}),
+					_ => panic!("invalid chain spec"),
+				}
 			} else {
 				Err("Try-runtime must be enabled by `--features try-runtime`.".into())
-			}
-		},
+			},
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 
@@ -277,11 +394,27 @@ pub fn run() -> Result<()> {
 				let parachain_account =
 					AccountIdConversion::<polkadot_primitives::v0::AccountId>::into_account(&id);
 
-				let state_version =
-					RelayChainCli::native_runtime_version(&config.chain_spec).state_version();
-				let block: Block = generate_genesis_block(&config.chain_spec, state_version)
-					.map_err(|e| format!("{:?}", e))?;
-				let genesis_state = format!("0x{:?}", HexDisplay::from(&block.header().encode()));
+				let genesis_state = match &config.chain_spec {
+					#[cfg(feature = "mangata-kusama")]
+					spec if spec.is_mangata_kusama() => {
+						let state_version =
+							RelayChainCli::native_runtime_version(&spec).state_version();
+						let block: service::mangata_kusama_runtime::Block =
+							generate_genesis_block(&spec, state_version)
+								.map_err(|e| format!("{:?}", e))?;
+						format!("0x{:?}", HexDisplay::from(&block.header().encode()))
+					},
+					#[cfg(feature = "mangata-rococo")]
+					spec if spec.is_mangata_rococo() => {
+						let state_version =
+							RelayChainCli::native_runtime_version(&spec).state_version();
+						let block: service::mangata_rococo_runtime::Block =
+							generate_genesis_block(&spec, state_version)
+								.map_err(|e| format!("{:?}", e))?;
+						format!("0x{:?}", HexDisplay::from(&block.header().encode()))
+					},
+					_ => panic!("invalid chain spec"),
+				};
 
 				let tokio_handle = config.tokio_handle.clone();
 				let polkadot_config =
@@ -293,10 +426,25 @@ pub fn run() -> Result<()> {
 				info!("Parachain genesis state: {}", genesis_state);
 				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
 
-				crate::service::start_parachain_node(config, polkadot_config, id)
+				match &config.chain_spec {
+					#[cfg(feature = "mangata-kusama")]
+					spec if spec.is_mangata_kusama() => crate::service::start_parachain_node::<
+						service::mangata_kusama_runtime::RuntimeApi,
+						service::MangataKusamaRuntimeExecutor,
+					>(config, polkadot_config, id)
 					.await
 					.map(|r| r.0)
-					.map_err(Into::into)
+					.map_err(Into::into),
+					#[cfg(feature = "mangata-rococo")]
+					spec if spec.is_mangata_rococo() => crate::service::start_parachain_node::<
+						service::mangata_rococo_runtime::RuntimeApi,
+						service::MangataRococoRuntimeExecutor,
+					>(config, polkadot_config, id)
+					.await
+					.map(|r| r.0)
+					.map_err(Into::into),
+					_ => panic!("invalid chain spec"),
+				}
 			})
 		},
 	}

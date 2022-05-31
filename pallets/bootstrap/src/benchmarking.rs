@@ -28,12 +28,13 @@ use orml_tokens::MultiTokenCurrencyExtended;
 use crate::Pallet as BootstrapPallet;
 
 const MILION: u128 = 1_000__000_000__000_000;
+const DEFAULT_RATIO: (u128, u128) = (1_u128, 10_000_u128);
 
 benchmarks! {
 
 	start_ido {
 		assert!(crate::BootstrapSchedule::<T>::get().is_none());
-	}: start_ido(RawOrigin::Root, 123_456_789_u32.into(), 100_000_u32, 100_000_u32)
+	}: start_ido(RawOrigin::Root, 123_456_789_u32.into(), 100_000_u32, 100_000_u32, DEFAULT_RATIO)
 	verify {
 		assert!(crate::BootstrapSchedule::<T>::get().is_some());
 	}
@@ -46,11 +47,11 @@ benchmarks! {
 			token_id = <T as Config>::Currency::create(&caller, MILION.into()).expect("Token creation failed").into();
 		}
 		let ksm_provision_amount = 100_000_u128;
-		let mga_provision_amount = ksm_provision_amount * T::KsmToMgaRatioDenominator::get() / T::KsmToMgaRatioNumerator::get();
+		let mga_provision_amount = ksm_provision_amount * DEFAULT_RATIO.1 / DEFAULT_RATIO.0;
 		<T as Config>::Currency::mint(<T as Config>::MGATokenId::get().into(), &caller, MILION.into()).expect("Token creation failed");
 		<T as Config>::Currency::mint(<T as Config>::KSMTokenId::get().into(), &caller, MILION.into()).expect("Token creation failed");
 
-		BootstrapPallet::<T>::start_ido(RawOrigin::Root.into(), 10_u32.into(), 10_u32, 10_u32).unwrap();
+		BootstrapPallet::<T>::start_ido(RawOrigin::Root.into(), 10_u32.into(), 10_u32, 10_u32, DEFAULT_RATIO).unwrap();
 		// jump to public phase
 		BootstrapPallet::<T>::on_initialize(20_u32.into());
 		BootstrapPallet::<T>::provision(RawOrigin::Signed(caller.clone().into()).into(), <T as Config>::MGATokenId::get(), mga_provision_amount).unwrap();
@@ -71,7 +72,7 @@ benchmarks! {
 		<T as Config>::Currency::mint(<T as Config>::MGATokenId::get().into(), &caller, MILION.into()).expect("Token creation failed");
 		<T as Config>::Currency::mint(<T as Config>::KSMTokenId::get().into(), &caller, MILION.into()).expect("Token creation failed");
 		let ksm_provision_amount = 100_000_u128;
-		let mga_provision_amount = ksm_provision_amount * T::KsmToMgaRatioDenominator::get() / T::KsmToMgaRatioNumerator::get();
+		let mga_provision_amount = ksm_provision_amount * DEFAULT_RATIO.1 / DEFAULT_RATIO.0;
 
 		let lock = 100_000_000_u128;
 
@@ -79,7 +80,7 @@ benchmarks! {
 		<T as Config>::VestingProvider::lock_tokens(&caller, <T as Config>::KSMTokenId::get().into(), (ksm_provision_amount*2).into(), lock.into()).unwrap();
 		frame_system::Pallet::<T>::set_block_number(2_u32.into());
 
-		BootstrapPallet::<T>::start_ido(RawOrigin::Root.into(), 10_u32.into(), 10_u32, 10_u32).unwrap();
+		BootstrapPallet::<T>::start_ido(RawOrigin::Root.into(), 10_u32.into(), 10_u32, 10_u32, DEFAULT_RATIO).unwrap();
 		// jump to public phase
 		BootstrapPallet::<T>::on_initialize(20_u32.into());
 		BootstrapPallet::<T>::provision(RawOrigin::Signed(caller.clone().into()).into(), <T as Config>::MGATokenId::get(), mga_provision_amount).unwrap();
@@ -100,8 +101,8 @@ benchmarks! {
 		<T as Config>::Currency::mint(<T as Config>::KSMTokenId::get().into(), &caller, MILION.into()).expect("Token creation failed");
 		let ksm_provision_amount = 100_000_u128;
 		let ksm_vested_provision_amount = 300_000_u128;
-		let mga_provision_amount = ksm_provision_amount * T::KsmToMgaRatioDenominator::get() / T::KsmToMgaRatioNumerator::get();
-		let mga_vested_provision_amount = ksm_vested_provision_amount * T::KsmToMgaRatioDenominator::get() / T::KsmToMgaRatioNumerator::get();
+		let mga_provision_amount = ksm_provision_amount * DEFAULT_RATIO.1 / DEFAULT_RATIO.0;
+		let mga_vested_provision_amount = ksm_vested_provision_amount * DEFAULT_RATIO.1 / DEFAULT_RATIO.0;
 		let total_ksm_provision = ksm_provision_amount + ksm_vested_provision_amount;
 		let total_mga_provision = mga_provision_amount + mga_vested_provision_amount;
 		let total_provision = total_ksm_provision + total_mga_provision;
@@ -110,7 +111,7 @@ benchmarks! {
 		<T as Config>::VestingProvider::lock_tokens(&caller, <T as Config>::KSMTokenId::get().into(), (ksm_provision_amount + ksm_vested_provision_amount).into(), lock.into()).unwrap();
 		<T as Config>::VestingProvider::lock_tokens(&caller, <T as Config>::MGATokenId::get().into(), (mga_provision_amount + mga_vested_provision_amount).into(), lock.into()).unwrap();
 
-		BootstrapPallet::<T>::start_ido(RawOrigin::Root.into(), 10_u32.into(), 10_u32, 10_u32).unwrap();
+		BootstrapPallet::<T>::start_ido(RawOrigin::Root.into(), 10_u32.into(), 10_u32, 10_u32, DEFAULT_RATIO).unwrap();
 		BootstrapPallet::<T>::on_initialize(20_u32.into());
 		BootstrapPallet::<T>::provision(RawOrigin::Signed(caller.clone().into()).into(), <T as Config>::MGATokenId::get(), mga_provision_amount).unwrap();
 		BootstrapPallet::<T>::provision(RawOrigin::Signed(caller.clone().into()).into(), <T as Config>::KSMTokenId::get(), ksm_provision_amount).unwrap();

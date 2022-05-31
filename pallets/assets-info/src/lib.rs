@@ -76,6 +76,9 @@ pub mod pallet {
 		type MaxDecimals: Get<u32>;
 
 		type Currency: MultiTokenCurrencyExtended<Self::AccountId>;
+
+		#[pallet::constant]
+		type RelayNativeTokensValueScaleFactor: Get<u128>;
 	}
 
 	#[pallet::storage]

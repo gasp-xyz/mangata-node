@@ -432,12 +432,11 @@ pub mod pallet {
 	pub type LiquidityMiningActivePool<T: Config> =
 		StorageMap<_, Twox64Concat, TokenId, u128, ValueQuery>;
 
-	// stores user claimed work, for future calculation of rewards
+	// stores user claimed rewards, for future calculation of rewards
 	#[pallet::storage]
 	#[pallet::getter(fn liquidity_mining_user_claimed)]
 	pub type LiquidityMiningUserClaimed<T: Config> =
 		StorageMap<_, Twox64Concat, (AccountIdOf<T>, TokenId), u128, ValueQuery>;
-	
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
@@ -769,11 +768,14 @@ impl<T: Config> Pallet<T> {
 		let burned_not_claimed_rewards =
 			LiquidityMiningUserToBeClaimed::<T>::get((user.clone(), &liquidity_asset_id));
 		let current_rewards = Self::calculate_rewards(work_user, work_pool, liquidity_asset_id)?;
-		let already_claimed_rewards = LiquidityMiningUserClaimed::<T>::get((user, &liquidity_asset_id));
+		let already_claimed_rewards =
+			LiquidityMiningUserClaimed::<T>::get((user, &liquidity_asset_id));
 
-		let total_available_rewards = current_rewards.checked_add(burned_not_claimed_rewards)
-		.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?.checked_sub(already_claimed_rewards)
-		.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+		let total_available_rewards = current_rewards
+			.checked_add(burned_not_claimed_rewards)
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+			.checked_sub(already_claimed_rewards)
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 
 		Ok(total_available_rewards)
 	}
@@ -1039,6 +1041,8 @@ impl<T: Config> Pallet<T> {
 
 		let liquidity_assets_amount: Balance =
 			LiquidityMiningActiveUser::<T>::get((&user, &liquidity_asset_id));
+		let activated_liquidity_pool: Balance =
+			LiquidityMiningActivePool::<T>::get(&liquidity_asset_id);
 
 		let liquidity_assets_burned_u256: U256 = liquidity_assets_burned.into();
 
@@ -1104,24 +1108,25 @@ impl<T: Config> Pallet<T> {
 			LiquidityMiningUserToBeClaimed::<T>::get((user.clone(), &liquidity_asset_id));
 		let rewards_to_burn =
 			Self::calculate_rewards(user_work_burned, pool_work_total, liquidity_asset_id)?;
-		let rewards_already_claimed = 	LiquidityMiningUserClaimed::<T>::get((user.clone(), &liquidity_asset_id));
-
+		let rewards_already_claimed =
+			LiquidityMiningUserClaimed::<T>::get((user.clone(), &liquidity_asset_id));
 
 		if rewards_to_burn >= rewards_already_claimed {
 			LiquidityMiningUserClaimed::<T>::remove((user.clone(), &liquidity_asset_id));
-	
-			let rewards_claimed_new = rewards_burned_not_claimed + rewards_to_burn - rewards_already_claimed;
+
+			let rewards_claimed_new =
+				rewards_burned_not_claimed + rewards_to_burn - rewards_already_claimed;
 
 			LiquidityMiningUserToBeClaimed::<T>::insert(
 				(&user, liquidity_asset_id),
 				rewards_claimed_new,
 			);
+		} else {
+			LiquidityMiningUserClaimed::<T>::insert(
+				(user.clone(), &liquidity_asset_id),
+				rewards_already_claimed - rewards_to_burn,
+			);
 		}
-		else {
-			LiquidityMiningUserClaimed::<T>::insert((user.clone(), &liquidity_asset_id), rewards_already_claimed - rewards_to_burn);
-		}
-		
-		
 
 		<T as Config>::PoolPromoteApi::claim_pool_rewards(
 			liquidity_asset_id.into(),
@@ -2482,9 +2487,11 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 		let current_rewards =
 			Pallet::<T>::calculate_rewards_amount(user.clone(), liquidity_asset_id)?;
-		let already_claimed_rewards = LiquidityMiningUserClaimed::<T>::get((&user, liquidity_asset_id));	
-		let burned_not_claimed_rewards = LiquidityMiningUserToBeClaimed::<T>::get((&user, liquidity_asset_id));
-	
+		let already_claimed_rewards =
+			LiquidityMiningUserClaimed::<T>::get((&user, liquidity_asset_id));
+		let burned_not_claimed_rewards =
+			LiquidityMiningUserToBeClaimed::<T>::get((&user, liquidity_asset_id));
+
 		ensure!(mangata_amount <= current_rewards, Error::<T>::NotEnoughtRewardsEarned);
 
 		// user is taking out rewards from LP which was already removed from pool
@@ -2500,10 +2507,14 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			LiquidityMiningUserToBeClaimed::<T>::insert((&user, liquidity_asset_id), 0 as u128);
 			// rewards to claim on top of rewards from LP which was already removed from pool
 			let rewards_to_claim = mangata_amount - burned_not_claimed_rewards;
-			let new_rewards_claimed = already_claimed_rewards.checked_add(rewards_to_claim)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
-			
-			LiquidityMiningUserClaimed::<T>::insert((&user, liquidity_asset_id), new_rewards_claimed);
+			let new_rewards_claimed = already_claimed_rewards
+				.checked_add(rewards_to_claim)
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+
+			LiquidityMiningUserClaimed::<T>::insert(
+				(&user, liquidity_asset_id),
+				new_rewards_claimed,
+			);
 		}
 
 		<T as Config>::Currency::transfer(

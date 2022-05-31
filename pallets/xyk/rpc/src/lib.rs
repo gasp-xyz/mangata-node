@@ -17,15 +17,7 @@ pub use xyk_runtime_api::XykApi as XykRuntimeApi;
 use xyk_runtime_api::{RpcAmountsResult, RpcResult};
 
 #[rpc]
-pub trait XykApi<
-	BlockHash,
-	Balance,
-	TokenId,
-	AccountId,
-	ResponseTypePrice,
-	ResponseTypeAmounts,
->
-{
+pub trait XykApi<BlockHash, Balance, TokenId, AccountId, ResponseTypePrice, ResponseTypeAmounts> {
 	#[rpc(name = "xyk_calculate_sell_price")]
 	fn calculate_sell_price(
 		&self,

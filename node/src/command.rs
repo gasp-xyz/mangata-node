@@ -29,6 +29,10 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 		#[cfg(feature = "mangata-rococo")]
 		"public-testnet" => Box::new(chain_spec::mangata_rococo::public_testnet_config()),
 
+		#[cfg(feature = "mangata-rococo")]
+		"mangata-rococo-local-testnet" =>
+			Box::new(chain_spec::mangata_rococo::mangata_rococo_local_config()),
+
 		path => {
 			let path = std::path::PathBuf::from(path);
 
@@ -162,11 +166,13 @@ pub trait IdentifyVariant {
 
 impl IdentifyVariant for Box<dyn ChainSpec> {
 	fn is_mangata_kusama(&self) -> bool {
-		!self.id().starts_with("mangata_public_testnet")
+		!(self.id().starts_with("mangata_public_testnet") ||
+			self.id().starts_with("mangata_rococo_local"))
 	}
 
 	fn is_mangata_rococo(&self) -> bool {
-		self.id().starts_with("mangata_public_testnet")
+		self.id().starts_with("mangata_public_testnet") ||
+			self.id().starts_with("mangata_rococo_local")
 	}
 }
 
@@ -255,7 +261,7 @@ pub fn run() -> Result<()> {
 					output_buf
 				},
 				#[cfg(feature = "mangata-rococo")]
-				spec if spec.is_mangata_kusama() => {
+				spec if spec.is_mangata_rococo() => {
 					let state_version = Cli::native_runtime_version(&spec).state_version();
 					let block: service::mangata_rococo_runtime::Block =
 						generate_genesis_block(&spec, state_version)?;

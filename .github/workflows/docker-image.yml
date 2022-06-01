@@ -153,6 +153,115 @@ jobs:
           name: ${{ github.sha }}
           path: /tmp/${{ github.sha }}.tar
 
+  build-rococo:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Debug info about publishing.
+        run: |
+          echo ${{ github.ref }} == 'refs/heads/develop'
+          echo ${{ github.ref }}
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      -
+        name: Build Only
+        id: docker_build
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
+        uses: docker/build-push-action@v2
+        with:
+          file: "devops/dockerfiles/node/Dockerfile"
+          build-args: |
+            CARGO_FEATURES=mangata-rococo
+          push: false
+          tags: mangatasolutions/mangata-node:rococo-latest,mangatasolutions/mangata-node:rococo-${{ github.sha }}
+          outputs: type=docker,dest=/tmp/rococo-docker-${{ github.sha }}.tar
+      -
+        name: Extract wasm
+        run: >
+          docker load -i /tmp/rococo-docker-${{ github.sha }}.tar &&
+          docker run
+          --entrypoint=""
+          -i mangatasolutions/mangata-node:rococo-latest
+          cat /mangata/mangata_rococo_runtime.compact.compressed.wasm
+          > /tmp/mangata_rococo_runtime.compact.compressed.wasm-${{ github.sha }}
+      -
+        name: Upload docker artifact
+        uses: actions/upload-artifact@v2
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
+        with:
+          name: rococo-docker-${{ github.sha }}
+          path: /tmp/rococo-docker-${{ github.sha }}.tar
+      -
+        name: Upload wasm artifact
+        uses: actions/upload-artifact@v2
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
+        with:
+          name: rococo-wasm-${{ github.sha }}
+          path: /tmp/mangata_rococo_runtime.compact.compressed.wasm-${{ github.sha }}
+
+
+  build-kusama:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Debug info about publishing.
+        run: |
+          echo ${{ github.ref }} == 'refs/heads/develop'
+          echo ${{ github.ref }}
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      -
+        name: Build Only
+        id: docker_build
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
+        uses: docker/build-push-action@v2
+        with:
+          file: "devops/dockerfiles/node/Dockerfile"
+          build-args: |
+            CARGO_FEATURES=mangata-kusama
+          push: false
+          tags: mangatasolutions/mangata-node:kusama-latest,mangatasolutions/mangata-node:kusama-${{ github.sha }}
+          outputs: type=docker,dest=/tmp/kusama-docker-${{ github.sha }}.tar
+      -
+        name: Extract wasm
+        run: >
+          docker load -i /tmp/kusama-docker-${{ github.sha }}.tar &&
+          docker run
+          --entrypoint=""
+          -i mangatasolutions/mangata-node:kusama-latest
+          cat /mangata/mangata_kusama_runtime.compact.compressed.wasm
+          > /tmp/mangata_kusama_runtime.compact.compressed.wasm-${{ github.sha }}
+      -
+        name: Upload docker artifact
+        uses: actions/upload-artifact@v2
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
+        with:
+          name: kusama-docker-${{ github.sha }}
+          path: /tmp/kusama-docker-${{ github.sha }}.tar
+      -
+        name: Upload wasm artifact
+        uses: actions/upload-artifact@v2
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
+        with:
+          name: kusama-wasm-${{ github.sha }}
+          path: /tmp/mangata_kusama_runtime.compact.compressed.wasm-${{ github.sha }}
+
+
+
   e2e-test:
     needs: build
     runs-on: self-hosted

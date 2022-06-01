@@ -24,19 +24,6 @@ pub mod public_testnet_keys {
 		"0x7481b06f37b3500bb6ec8d569d2cede4ffcb151daee75f7de20c5bda2e22bb13";
 }
 
-pub mod kusama_mainnet_keys {
-	pub const ALICE_SR25519: &str =
-		"0x02d3074216e37c4e96c3a35be89fa27b6022fe08f02051989ed5b94768e69652";
-	pub const BOB_SR25519: &str =
-		"0xac1d5ec7cf53260c5ea1bb6be0d4fd8b23c50c088fad593de7cb60f76de4fe21";
-	pub const CHARLIE_SR25519: &str =
-		"0x708dbfb26bdf220b53443ff823da3e28845ddbd0d0aab1babd6074ac99b7b254";
-	pub const SUDO_SR25519: &str =
-		"0x8080dc038d21840c3139140f0fa982b3882c67fc3e558eae7dec4f5f63d11237";
-	pub const RELAY_SR25519: &str =
-		"0x2ac2b810caa998b14207a8fc6414a94c833974dc482f11a25a2264508c9dff40";
-}
-
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec =
 	sc_service::GenericChainSpec<mangata_rococo_runtime::GenesisConfig, Extensions>;
@@ -221,6 +208,157 @@ pub fn public_testnet_config() -> ChainSpec {
 		None,
 		// Properties
 		Some(properties),
+		Extensions {
+			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
+			para_id: 2000,
+		},
+	)
+}
+
+pub fn mangata_rococo_local_config() -> ChainSpec {
+	// Give your base currency a unit name and decimal places
+	let mut properties = sc_chain_spec::Properties::new();
+	properties.insert("tokenSymbol".into(), "MGRL".into());
+	properties.insert("tokenDecimals".into(), 18.into());
+	properties.insert("ss58Format".into(), 42.into());
+
+	ChainSpec::from_genesis(
+		// Name
+		"Mangata Rococo Local",
+		// ID
+		"mangata_rococo_local",
+		ChainType::Local,
+		move || {
+			mangata_genesis(
+				// initial collators.
+				vec![
+					(
+						get_account_id_from_seed::<sr25519::Public>("Alice"),
+						get_collator_keys_from_seed("Alice"),
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Bob"),
+						get_collator_keys_from_seed("Bob"),
+					),
+				],
+				// Initial relay account
+				get_account_id_from_seed::<sr25519::Public>("Relay"),
+				// Sudo account
+				"0xec00ad0ec6eeb271a9689888f644d9262016a26a25314ff4ff5d756404c44112"
+					.parse()
+					.unwrap(),
+				// Ethereum AppId for SnowBridged Assets
+				vec![
+					(
+						App::ETH,
+						H160::from_slice(&hex!["Fc97A6197dc90bef6bbEFD672742Ed75E9768553"][..])
+							.into(),
+					),
+					(
+						App::ERC20,
+						H160::from_slice(&hex!["EDa338E4dC46038493b885327842fD3E301CaB39"][..])
+							.into(),
+					),
+				],
+				// SnowBridged Assets
+				vec![
+					(
+						b"Mangata".to_vec(),
+						b"MGA".to_vec(),
+						b"Mangata Asset".to_vec(),
+						18u32,
+						0u32,
+						H160::from_slice(&hex!["F8F7758FbcEfd546eAEff7dE24AFf666B6228e73"][..]),
+						300_000_000__000_000_000_000_000_000u128,
+						get_account_id_from_seed::<sr25519::Public>("Alice"),
+					),
+					(
+						b"Ether".to_vec(),
+						b"ETH".to_vec(),
+						b"Ethereum Ether".to_vec(),
+						18u32,
+						1u32,
+						H160::zero(),
+						0u128,
+						get_account_id_from_seed::<sr25519::Public>("Alice"),
+					),
+				],
+				// Tokens endowment
+				vec![
+					(
+						0u32,
+						400_000_000__000_000_000_000_000_000u128,
+						"0xec00ad0ec6eeb271a9689888f644d9262016a26a25314ff4ff5d756404c44112"
+							.parse()
+							.unwrap(),
+					),
+					(
+						0u32,
+						100_000_000__000_000_000_000_000_000u128,
+						get_account_id_from_seed::<sr25519::Public>("Relay"),
+					),
+					(
+						0u32,
+						100_000_000__000_000_000_000_000_000u128,
+						get_account_id_from_seed::<sr25519::Public>("Bob"),
+					),
+					(
+						0u32,
+						100_000_000__000_000_000_000_000_000u128,
+						get_account_id_from_seed::<sr25519::Public>("Charlie"),
+					),
+				],
+				// Config for Staking
+				// Make sure it works with initial-authorities as staking uses both
+				vec![
+					(
+						// Who gets to stake initially
+						get_account_id_from_seed::<sr25519::Public>("Alice"),
+						// Id of MGA token,
+						0u32,
+						// How much mangata they pool
+						10_000__000_000_000_000_000_000u128,
+						// Id of the dummy token,
+						2u32,
+						// How many dummy tokens they pool,
+						20_000__000_000_000_000_000_000u128,
+						// Id of the liquidity token that is generated
+						3u32,
+						// How many liquidity tokens they stake,
+						10_000__000_000_000_000_000_000u128,
+					),
+					(
+						// Who gets to stake initially
+						get_account_id_from_seed::<sr25519::Public>("Bob"),
+						// Id of MGA token,
+						0u32,
+						// How much mangata they pool
+						8_000__000_000_000_000_000_000u128,
+						// Id of the dummy token,
+						2u32,
+						// How many dummy tokens they pool,
+						20_000__000_000_000_000_000_000u128,
+						// Id of the liquidity token that is generated
+						3u32,
+						// How many liquidity tokens they stake,
+						5_000__000_000_000_000_000_000u128,
+					),
+				],
+				vec![(ROC_TOKEN_ID, None)],
+				2000.into(),
+			)
+		},
+		// Bootnodes
+		Vec::new(),
+		// Telemetry
+		None,
+		// Protocol ID
+		Some("mangata-rococo-local"),
+		// ForkId
+		None,
+		// Properties
+		Some(properties),
+		// Extensions
 		Extensions {
 			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
 			para_id: 2000,

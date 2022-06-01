@@ -42,6 +42,8 @@ RUN tar -C /usr/bin -xzvf /tmp/dockerize.tar.gz
 RUN unzip /tmp/vault.zip -d /usr/bin
 WORKDIR /mangata
 COPY --from=builder /mangata/target/release/mangata-node /mangata/node
+COPY --from=builder /mangata/target/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm /mangata/mangata_rococo_runtime.compact.compressed.wasm
+COPY --from=builder /mangata/target/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm /mangata/mangata_kusama_runtime.compact.compressed.wasm
 COPY --from=builder /mangata/libbytehound.so /mangata/libbytehound.so
 COPY --from=builder /mangata/bytehound /mangata/bytehound
 RUN /mangata/node --version

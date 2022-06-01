@@ -186,6 +186,7 @@ std = [
 	"pallet-issuance/std",
 	"pallet-vesting-mangata/std",
 	"pallet-crowdloan-rewards/std",
+	"pallet-elections-phragmen/std",
 
 ]
 
@@ -198,7 +199,9 @@ disable-execution = [
 	"frame-executive/disable-execution",
 ]
 
-enable-trading = []
+enable-trading = [
+	"pallet-xyk/enable-trading"
+]
 
 runtime-benchmarks = [
 	"hex-literal",

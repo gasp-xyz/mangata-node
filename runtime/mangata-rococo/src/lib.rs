@@ -82,7 +82,7 @@ use orml_tokens::TransferDust;
 use orml_traits::{parameter_type_with_key, GetByKey, MultiCurrency};
 
 pub use pallet_xyk;
-use xyk_runtime_api::{RpcAmountsResult, RpcResult, RpcRewardsResult};
+use xyk_runtime_api::{RpcAmountsResult, RpcResult};
 
 pub const MGR_TOKEN_ID: TokenId = 0;
 pub const ROC_TOKEN_ID: TokenId = 4;
@@ -1587,11 +1587,10 @@ impl_runtime_apis! {
 		fn calculate_rewards_amount(
 			user: AccountId,
 			liquidity_asset_id: TokenId,
-		) -> RpcRewardsResult<Balance> {
+		) -> RpcResult<Balance> {
 			match Xyk::calculate_rewards_amount(user, liquidity_asset_id){
-				Ok((not_yet_claimed, to_be_claimed)) => RpcRewardsResult{
-					not_yet_claimed,
-					to_be_claimed
+				Ok(claimable_rewards) => RpcResult{
+					price:claimable_rewards
 				},
 				Err(e) => {
 						log::warn!(target:"xyk", "rpc 'XYK::calculate_rewards_amount' error: '{:?}', returning default value instead", e);

@@ -400,9 +400,9 @@ checksum = "30696a84d817107fc028e049980e09d5e140e8da8f1caeb17e8e950658a3cea9"
 
 [[package]]
 name = "async-trait"
-version = "0.1.53"
+version = "0.1.56"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed6aa3524a2dfcf9fe180c51eae2b58738348d819517ceadf95789c51fff7600"
+checksum = "96cf8829f67d2eab0b2dfa42c5d0ef737e0724e4a82b01b3e292456202b19716"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -998,9 +998,9 @@ dependencies = [
 
 [[package]]
 name = "bumpalo"
-version = "3.9.1"
+version = "3.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4a45a46ab1f2412e53d3a0ade76ffad2025804294569aae387231a0cd6e0899"
+checksum = "37ccbd214614c6783386c1af30caf03192f17891059cecc394b4fb119e363de3"
 
 [[package]]
 name = "byte-slice-cast"
@@ -1626,7 +1626,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-cli"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#d0f1ee3a3b8d0e8645c81736739b6897590f6777"
+source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#4b3db5ae4c7afc9d698cbebf8fef99dcca8488ba"
 dependencies = [
  "clap 3.1.18",
  "sc-cli",
@@ -1637,7 +1637,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-collator"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#d0f1ee3a3b8d0e8645c81736739b6897590f6777"
+source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#4b3db5ae4c7afc9d698cbebf8fef99dcca8488ba"
 dependencies = [
  "cumulus-client-consensus-common",
  "cumulus-client-network",
@@ -1661,7 +1661,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-consensus-aura"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#d0f1ee3a3b8d0e8645c81736739b6897590f6777"
+source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#4b3db5ae4c7afc9d698cbebf8fef99dcca8488ba"
 dependencies = [
  "async-trait",
  "cumulus-client-consensus-common",
@@ -1690,7 +1690,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-consensus-common"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#d0f1ee3a3b8d0e8645c81736739b6897590f6777"
+source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#4b3db5ae4c7afc9d698cbebf8fef99dcca8488ba"
 dependencies = [
  "async-trait",
  "cumulus-relay-chain-interface",
@@ -1711,7 +1711,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-network"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#d0f1ee3a3b8d0e8645c81736739b6897590f6777"
+source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#4b3db5ae4c7afc9d698cbebf8fef99dcca8488ba"
 dependencies = [
  "async-trait",
  "cumulus-relay-chain-interface",
@@ -1736,7 +1736,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-pov-recovery"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#d0f1ee3a3b8d0e8645c81736739b6897590f6777"
+source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#4b3db5ae4c7afc9d698cbebf8fef99dcca8488ba"
 dependencies = [
  "cumulus-primitives-core",
  "cumulus-relay-chain-interface",
@@ -1760,7 +1760,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-service"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#d0f1ee3a3b8d0e8645c81736739b6897590f6777"
+source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#4b3db5ae4c7afc9d698cbebf8fef99dcca8488ba"
 dependencies = [
  "cumulus-client-cli",
  "cumulus-client-collator",
@@ -1790,7 +1790,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-aura-ext"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#d0f1ee3a3b8d0e8645c81736739b6897590f6777"
+source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#4b3db5ae4c7afc9d698cbebf8fef99dcca8488ba"
 dependencies = [
  "frame-executive",
  "frame-support",
@@ -1808,7 +1808,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-dmp-queue"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#d0f1ee3a3b8d0e8645c81736739b6897590f6777"
+source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#4b3db5ae4c7afc9d698cbebf8fef99dcca8488ba"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -1826,7 +1826,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-parachain-system"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#d0f1ee3a3b8d0e8645c81736739b6897590f6777"
+source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#4b3db5ae4c7afc9d698cbebf8fef99dcca8488ba"
 dependencies = [
  "cumulus-pallet-parachain-system-proc-macro",
  "cumulus-primitives-core",
@@ -1856,7 +1856,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-parachain-system-proc-macro"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#d0f1ee3a3b8d0e8645c81736739b6897590f6777"
+source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#4b3db5ae4c7afc9d698cbebf8fef99dcca8488ba"
 dependencies = [
  "proc-macro-crate 1.1.3",
  "proc-macro2",
@@ -1895,7 +1895,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-xcm"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#d0f1ee3a3b8d0e8645c81736739b6897590f6777"
+source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#4b3db5ae4c7afc9d698cbebf8fef99dcca8488ba"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -1912,7 +1912,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-xcmp-queue"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#d0f1ee3a3b8d0e8645c81736739b6897590f6777"
+source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#4b3db5ae4c7afc9d698cbebf8fef99dcca8488ba"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -1930,7 +1930,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-core"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#d0f1ee3a3b8d0e8645c81736739b6897590f6777"
+source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#4b3db5ae4c7afc9d698cbebf8fef99dcca8488ba"
 dependencies = [
  "frame-support",
  "parity-scale-codec 3.1.2",
@@ -1946,7 +1946,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-parachain-inherent"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#d0f1ee3a3b8d0e8645c81736739b6897590f6777"
+source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#4b3db5ae4c7afc9d698cbebf8fef99dcca8488ba"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -1969,7 +1969,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-timestamp"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#d0f1ee3a3b8d0e8645c81736739b6897590f6777"
+source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#4b3db5ae4c7afc9d698cbebf8fef99dcca8488ba"
 dependencies = [
  "cumulus-primitives-core",
  "futures 0.3.21",
@@ -1982,7 +1982,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-utility"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#d0f1ee3a3b8d0e8645c81736739b6897590f6777"
+source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#4b3db5ae4c7afc9d698cbebf8fef99dcca8488ba"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -2027,7 +2027,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-interface"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#d0f1ee3a3b8d0e8645c81736739b6897590f6777"
+source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#4b3db5ae4c7afc9d698cbebf8fef99dcca8488ba"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -2077,7 +2077,7 @@ dependencies = [
 [[package]]
 name = "cumulus-test-relay-sproof-builder"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#d0f1ee3a3b8d0e8645c81736739b6897590f6777"
+source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#4b3db5ae4c7afc9d698cbebf8fef99dcca8488ba"
 dependencies = [
  "cumulus-primitives-core",
  "parity-scale-codec 3.1.2",
@@ -2447,7 +2447,7 @@ dependencies = [
 [[package]]
 name = "ethabi-decode"
 version = "1.3.3"
-source = "git+https://github.com/Snowfork/ethabi-decode#b62bb27928b8516399493f178f7a6bbd3942b12c"
+source = "git+https://github.com/Snowfork/ethabi-decode#322dea9cae55bd0299456d00441d82370ce622bb"
 dependencies = [
  "ethereum-types 0.13.1",
  "tiny-keccak 1.5.0",
@@ -3274,7 +3274,7 @@ dependencies = [
  "indexmap",
  "slab",
  "tokio",
- "tokio-util 0.7.2",
+ "tokio-util 0.7.3",
  "tracing",
 ]
 
@@ -3417,9 +3417,9 @@ dependencies = [
 
 [[package]]
 name = "http"
-version = "0.2.7"
+version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ff8670570af52249509a86f5e3e18a08c60b177071826898fde8997cf5f6bfbb"
+checksum = "75f43d41e26995c17e71ee126451dd3941010b0514a81a9d11f3b341debc2399"
 dependencies = [
  "bytes 1.1.0",
  "fnv",
@@ -5360,9 +5360,9 @@ dependencies = [
 
 [[package]]
 name = "memmap2"
-version = "0.5.3"
+version = "0.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "057a3db23999c867821a7a59feb06a578fcb03685e983dff90daf9e7d24ac08f"
+checksum = "d5172b50c23043ff43dd53e51392f36519d9b35a8f3a410d30ece5d1aedd58ae"
 dependencies = [
  "libc",
 ]
@@ -7064,7 +7064,7 @@ dependencies = [
 [[package]]
 name = "parachain-info"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#d0f1ee3a3b8d0e8645c81736739b6897590f6777"
+source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#4b3db5ae4c7afc9d698cbebf8fef99dcca8488ba"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -7077,7 +7077,7 @@ dependencies = [
 [[package]]
 name = "parachain-staking"
 version = "3.0.0"
-source = "git+https://github.com/mangata-finance//moonbeam?branch=mangata-dev-v0.9.18#aa21cba44c90043cf715e1579e185db0b9d2905f"
+source = "git+https://github.com/mangata-finance//moonbeam?branch=mangata-dev-v0.9.18#569016e57aa5e576eb25966988c2fdf020bd5cdd"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9667,7 +9667,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.18#8cec9dc119a28a85c077faad85ee7b39caa416f5"
 dependencies = [
  "impl-trait-for-tuples",
- "memmap2 0.5.3",
+ "memmap2 0.5.4",
  "parity-scale-codec 3.1.2",
  "sc-chain-spec-derive",
  "sc-network",
@@ -11767,9 +11767,9 @@ dependencies = [
 
 [[package]]
 name = "ss58-registry"
-version = "1.20.0"
+version = "1.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e1e7c268f5610088463d23188fc9e764cda491784360e5e4ea3a8ce1e0e2ac9"
+checksum = "5d804c8d48aeab838be31570866fce1130d275b563d49af08b4927a0bd561e7c"
 dependencies = [
  "Inflector",
  "num-format",
@@ -11986,9 +11986,9 @@ checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 
 [[package]]
 name = "syn"
-version = "1.0.95"
+version = "1.0.96"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fbaf6116ab8924f39d52792136fb74fd60a80194cf1b1c6ffa6453eef1c3f942"
+checksum = "0748dd251e24453cb8717f0354206b91557e4ec8703673a4b30208f2abaf1ebf"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -12234,9 +12234,9 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "tokio"
-version = "1.18.2"
+version = "1.19.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4903bf0427cf68dddd5aa6a93220756f8be0c34fcfa9f5e6191e103e15a31395"
+checksum = "c51a52ed6686dd62c320f9b89299e9dfb46f730c7a48e635c19f21d116cb1439"
 dependencies = [
  "bytes 1.1.0",
  "libc",
@@ -12254,9 +12254,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-macros"
-version = "1.7.0"
+version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b557f72f448c511a979e2564e55d74e6c4432fc96ff4f6241bc6bded342643b7"
+checksum = "9724f9a975fb987ef7a3cd9be0350edcbe130698af5b8f7a631e23d42d052484"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -12287,9 +12287,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-stream"
-version = "0.1.8"
+version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50145484efff8818b5ccd256697f36863f587da82cf8b409c53adf1e840798e3"
+checksum = "df54d54117d6fdc4e4fea40fe1e4e566b3505700e148a6827e59b34b0d2600d9"
 dependencies = [
  "futures-core",
  "pin-project-lite 0.2.9",
@@ -12313,9 +12313,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-util"
-version = "0.7.2"
+version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f988a1a1adc2fb21f9c12aa96441da33a1728193ae0b95d2be22dbd17fcb4e5c"
+checksum = "cc463cd8deddc3770d20f9852143d50bf6094e640b485cb2e189a2099085ff45"
 dependencies = [
  "bytes 1.1.0",
  "futures-core",
@@ -12535,7 +12535,7 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 0.1.10",
+ "cfg-if 1.0.0",
  "digest 0.10.3",
  "rand 0.8.5",
  "static_assertions",

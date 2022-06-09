@@ -239,7 +239,6 @@ jobs:
         with:
           name: rococo-docker-e2e-${{ github.sha }}
           path: rococo-docker-e2e-${{ github.sha }}.tar
-      -
 
   build-kusama:
     runs-on: ubuntu-latest

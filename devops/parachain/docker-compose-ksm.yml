@@ -10,7 +10,7 @@ services:
   relay_alice:
     environment:
       - ${RUST_LOG:-info}
-    image: p1k1m4n/polkadot-fast-runtime:0.9.18
+    image: p1k1m4n/polkadot-fast-runtime:0.9.19
     command:
       - "--alice"
       - "--validator"
@@ -33,7 +33,7 @@ services:
         ipv4_address: 10.0.0.2
 
   relay_bob:
-    image: p1k1m4n/polkadot-fast-runtime:0.9.18
+    image: p1k1m4n/polkadot-fast-runtime:0.9.19
     environment:
       - ${RUST_LOG:-info}
     command:

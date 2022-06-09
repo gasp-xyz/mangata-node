@@ -1,14 +1,14 @@
 services:
   relay_alice:
-    image: ${RELAYCHAIN_DOCKER_IMAGE:-parity/polkadot:v0.9.16}
+    image: ${RELAYCHAIN_DOCKER_IMAGE:-parity/polkadot:v0.9.19}
     user: root
     command: >
-      --alice 
-      --validator 
+      --alice
+      --validator
       --base-path /tmp/relay_alice
       --chain ${RELAY_CHAIN:-rococo-local}
       --public-addr=/ip4/127.0.0.1/tcp/30333
-      --port 30333 
+      --port 30333
       --ws-port 9944
       --unsafe-ws-external
       --rpc-port=40333
@@ -22,11 +22,11 @@ services:
       - 30333:30333
 
   relay_bob:
-    image: ${RELAYCHAIN_DOCKER_IMAGE:-parity/polkadot:v0.9.16}
+    image: ${RELAYCHAIN_DOCKER_IMAGE:-parity/polkadot:v0.9.19}
     user: root
     command: >
-      --bob 
-      --validator 
+      --bob
+      --validator
       --base-path /tmp/relay_bob
       --chain ${RELAY_CHAIN:-rococo-local}
       --public-addr=/ip4/127.0.0.1/tcp/30334

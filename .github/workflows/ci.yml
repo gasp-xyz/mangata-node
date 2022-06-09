@@ -306,7 +306,7 @@ jobs:
             ./docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm.md5
 
   e2e-test:
-    needs: build-e2e
+    needs: build-rococo-e2e
     runs-on: self-hosted
     if: "!contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests')"
     env:
@@ -330,13 +330,13 @@ jobs:
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         uses: actions/download-artifact@v2
         with:
-          name: kusama-docker-${{ github.sha }}
+          name: rococo-docker-e2e-${{ github.sha }}
           path: /tmp
       -
         name: Load Docker image
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         run: |
-          docker load --input /tmp/kusama-docker-${{ github.sha }}.tar
+          docker load --input /tmp/rococo-docker-e2e-${{ github.sha }}.tar
           docker image ls -a
 
       - name: E2E- Get branch name
@@ -483,8 +483,8 @@ jobs:
       -
         name: Load Docker image
         run: |
-          docker load --input /tmp/rococo-docker-e2e-${{ github.sha }}.tar
-          docker load --input /tmp/kusama-docker-e2e-${{ github.sha }}.tar
+          docker load --input /tmp/rococo-docker-${{ github.sha }}.tar
+          docker load --input /tmp/kusama-docker-${{ github.sha }}.tar
           docker image ls -a
 
       -

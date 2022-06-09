@@ -112,7 +112,7 @@ jobs:
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
           docker pull mangatasolutions/node-builder:0.1
-          ./docker-cargo.sh test -j4 -- -Z unstable-options --format json --report-time 
+          ./docker-cargo.sh test -- -Z unstable-options --format json --report-time
           # |cargo2junit | tee ut-results.xml
           # sed -i '/<testsuite.*\/>$/d' ut-results.xml
           # sed -i 's/<testsuites>/<testsuites time="0">/g' ut-results.xml
@@ -156,7 +156,7 @@ jobs:
         name: Build node binary
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh build -j4 --release --features=enable-trading,mangata-rococo
+          ./docker-cargo.sh build --release --features=enable-trading,mangata-rococo
       -
         name: Calculate wasm checksum
         run: >
@@ -191,6 +191,56 @@ jobs:
             ./docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm
             ./docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm.md5
 
+  build-rococo-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Debug info about publishing.
+        run: |
+          echo ${{ github.ref }} == 'refs/heads/develop'
+          echo ${{ github.ref }}
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Pull builder image
+        run: |
+          docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
+      -
+        name: Build node binary
+        run: |
+          ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
+          ./docker-cargo.sh build --release --features=enable-trading,mangata-rococo
+      -
+        name: Build node img
+        env:
+          DOCKER_IMG_TAG: "mangatasolutions/mangata-node:${{ github.sha }}"
+          SKIP_BUILD: 1
+          NODE_BINARY: "docker-cargo/release/mangata-node"
+          WASM: "docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm"
+        run: >
+          ./scripts/build-image.sh ${DOCKER_IMG_TAG} &&
+          docker save ${DOCKER_IMG_TAG} -o rococo-docker-e2e-${{ github.sha }}.tar
+      -
+        name: Upload docker img artifact
+        uses: actions/upload-artifact@v2
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
+        with:
+          name: rococo-docker-e2e-${{ github.sha }}
+          path: rococo-docker-e2e-${{ github.sha }}.tar
+      -
+
   build-kusama:
     runs-on: ubuntu-latest
     steps:
@@ -221,7 +271,7 @@ jobs:
         name: Build node binary
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh build -j4 --release --features=enable-trading,mangata-kusama
+          ./docker-cargo.sh build --release --features=enable-trading,mangata-kusama
       -
         name: Calculate wasm checksum
         run: >
@@ -257,7 +307,7 @@ jobs:
             ./docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm.md5
 
   e2e-test:
-    needs: build-kusama
+    needs: build-e2e
     runs-on: self-hosted
     if: "!contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests')"
     env:
@@ -393,7 +443,7 @@ jobs:
         run: docker-compose -f devops/parachain/docker-compose.yml down
 
   publish:
-    needs: [rustfmt-check, unit-test, clippy-check, build-rococo, build-kusama]
+    needs: [rustfmt-check, unit-test, clippy-check, build-rococo, build-kusama, e2e-test]
     runs-on: ubuntu-latest
     if: |
       github.ref == 'refs/heads/develop' && 
@@ -425,9 +475,17 @@ jobs:
           path: /tmp
 
       -
+        name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: rococo-docker-${{ github.sha }}
+          path: /tmp
+
+      -
         name: Load Docker image
         run: |
-          docker load --input /tmp/${{ github.sha }}.tar
+          docker load --input /tmp/rococo-docker-e2e-${{ github.sha }}.tar
+          docker load --input /tmp/kusama-docker-e2e-${{ github.sha }}.tar
           docker image ls -a
 
       -
@@ -435,10 +493,10 @@ jobs:
         run: |
           docker image push --all-tags mangatasolutions/mangata-node
 
-      - name: Install doctl
-        uses: digitalocean/action-doctl@v2
-        with:
-          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      # - name: Install doctl
+      #   uses: digitalocean/action-doctl@v2
+      #   with:
+      #     token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       # - name: Save DigitalOcean kubeconfig with short-lived credentials
       #   run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 ${{ secrets.K8S_CLUSTER_ID }}

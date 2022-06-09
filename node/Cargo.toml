@@ -122,25 +122,6 @@ xyk-runtime-api = { default-features = false, version = '2.0.0', path = '../pall
 artemis-core = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
 
 
-[dev-dependencies]
-criterion = { version = "0.3.5", features = [ "async_tokio", "html_reports" ] }
-sc-block-builder = { package="sc-block-builder-ver", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-keyring = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-tokio = { version = "1.15", features = ["macros", "time"] }
-pallet-timestamp = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
-sp-tracing = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-frame-system = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-pallet-transaction-payment = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-frame-system-rpc-runtime-api = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" } 
-cumulus-pallet-parachain-system = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev'}
-cumulus-test-relay-sproof-builder = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev'}
-polkadot-runtime-common = { git = "https://github.com/mangata-finance/polkadot", branch = "release-v0.9.16" }
-sp-consensus-slots = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-futures = "0.3.16"
-schnorrkel = { version = "0.9.1", features = ["preaudit_deprecated", "u64_backend"], default-features = false}
-sp-core = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev", features = ["full_crypto"]}
-extrinsic-shuffler = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev"}
-cfg-if = "1.0.0"
 
 [[bench]]
 name = "block_production"

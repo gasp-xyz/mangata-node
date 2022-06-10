@@ -330,25 +330,6 @@ parameter_types! {
 	pub const KsmTokenId: TokenId = KSM_TOKEN_ID;
 }
 
-pub struct MangataCallFilter;
-
-#[cfg(not(feature = "enable-trading"))]
-impl Contains<Call> for MangataCallFilter {
-	fn contains(call: &Call) -> bool {
-		match call {
-			Call::Xyk(_) => false,
-			_ => true,
-		}
-	}
-}
-
-#[cfg(feature = "enable-trading")]
-impl Contains<Call> for MangataCallFilter {
-	fn contains(_call: &Call) -> bool {
-		true
-	}
-}
-
 // Configure FRAME pallets to include in runtime.
 
 impl frame_system::Config for Runtime {
@@ -387,7 +368,7 @@ impl frame_system::Config for Runtime {
 	/// The weight of database operations that the runtime can invoke.
 	type DbWeight = RocksDbWeight;
 	/// The basic call filter to use in dispatchable.
-	type BaseCallFilter = MangataCallFilter;
+	type BaseCallFilter = Everything;
 	/// Weight information for the extrinsics of this pallet.
 	type SystemWeightInfo = weights::frame_system_weights::ModuleWeight<Runtime>;
 	/// Block & extrinsics weights: base values and limits.

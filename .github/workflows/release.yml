@@ -34,10 +34,19 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
+        name: Pull kusama image
+        run: |
+          docker pull mangatasolutions/mangata-node:kusama-${{ github.sha }}
+          docker tag mangatasolutions/mangata-node:kusama-${{ github.sha }} mangatasolutions/mangata-node:kusama-${{ steps.meta.outputs.tags }}
+      -
+        name: Pull rococo image
+        run: |
+          docker pull mangatasolutions/mangata-node:rococo${{ github.sha }}
+          docker tag mangatasolutions/mangata-node:rococo${{ github.sha }} mangatasolutions/mangata-node:rococo-${{ steps.meta.outputs.tags }}
+      -
         name: Build and push
         id: docker_build
         uses: docker/build-push-action@v2
         with:
-          file: "devops/dockerfiles/node/Dockerfile"
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: [mangatasolutions/mangata-node:rococo-${{ steps.meta.outputs.tags }}, mangatasolutions/mangata-node:kusama-${{ steps.meta.outputs.tags }}]

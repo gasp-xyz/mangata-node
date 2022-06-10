@@ -12,11 +12,9 @@
 
 # The cache for docker container dependency
 /.cargo/config
-docker-cargo
 
 .DS_Store
 .idea
 .vscode
 node_modules
 output/
-docker-build

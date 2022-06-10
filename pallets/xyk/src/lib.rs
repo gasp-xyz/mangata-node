@@ -2506,7 +2506,9 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		else {
 			LiquidityMiningUserToBeClaimed::<T>::insert((&user, liquidity_asset_id), 0 as u128);
 			// rewards to claim on top of rewards from LP which was already removed from pool
-			let rewards_to_claim = mangata_amount - burned_not_claimed_rewards;
+			let rewards_to_claim = mangata_amount
+				.checked_sub(burned_not_claimed_rewards)
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 			let new_rewards_claimed = already_claimed_rewards
 				.checked_add(rewards_to_claim)
 				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;

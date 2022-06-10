@@ -4,22 +4,7 @@ target
 **/*.txt
 **/*.md
 /docker/
-./docker-cargo
 !/target/release/polkadot-collator
-!/docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm
-!/docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm.md5
-!/docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.wasm
-!/docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.wasm.md5
-!/docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.wasm
-!/docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.wasm.md5
-!/docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm
-!/docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm.md5
-!/docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.wasm
-!/docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.wasm.md5
-!/docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.wasm
-!/docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.wasm.md5
-
-!/docker-cargo/release/mangata-node
 
 # dotfiles in the repo root
 /.*

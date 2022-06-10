@@ -27,7 +27,6 @@ cfg-if = "1.0.0"
 sp-core = { default-features = false, version = '4.1.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-io = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 orml-traits = { default-features = false, version="0.4.1-dev" , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
-pallet-vesting-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 
 [features]
 default = ['std']

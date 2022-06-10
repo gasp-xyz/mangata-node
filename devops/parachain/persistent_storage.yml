@@ -1,0 +1,6 @@
+services:
+  para_alice:
+    volumes:
+      - ./data:/tmp/
+  para_bob:
+      - ./data:/tmp/

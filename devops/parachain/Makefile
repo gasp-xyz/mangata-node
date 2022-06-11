@@ -4,7 +4,7 @@ start-para:
 	docker-compose --env-file env/rococo -f parachain.yml up -d
 
 start-relay:
-	docker-compose -f relaychain.yml up -d
+	docker-compose --env-file env/rococo -f relaychain.yml up -d
 
 stop:
 	docker-compose -f parachain.yml down || true

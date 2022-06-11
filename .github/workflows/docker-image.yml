@@ -4,6 +4,7 @@ name: Docker Image CI
 ## skip-e2e-tests: skip running e2e tests
 ## skip-build : run the test with latest version.
 ## skip-publish: skip publish 
+## force-publish: force publish
 
 on: 
   pull_request:
@@ -399,12 +400,13 @@ jobs:
         run: docker-compose -f devops/parachain/docker-compose.yml down
 
   publish:
-    needs: [rustfmt-check, unit-test, clippy, build]
+    needs: [rustfmt-check, unit-test, clippy, build-rococo, build-kusama, e2e-test]
     runs-on: ubuntu-latest
     if: |
-      github.ref == 'refs/heads/develop' && 
+      contains(github.event.pull_request.labels.*.name, 'force-publish') ||
+      ( github.ref == 'refs/heads/develop' &&
       !contains(github.event.pull_request.labels.*.name, 'skip-publish') &&
-      !github.event.inputs.skipBuild
+      !github.event.inputs.skipBuild )
     #if: "!contains(github.event.pull_request.labels.*.name, 'skip-publish') && ${{ github.event_name == 'push'}} && github.event.pull_request.merged == true"
     #if: # its a push to develop.
     steps:
@@ -424,16 +426,23 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
-        name: Download artifact
+        name: Download rococo docker artifact
         uses: actions/download-artifact@v2
         with:
-          name: ${{ github.sha }}
+          name: rococo-docker-${{ github.sha }}
+          path: /tmp
+      -
+        name: Download kusama docker artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: kusama-docker-${{ github.sha }}
           path: /tmp
 
       -
         name: Load Docker image
         run: |
-          docker load --input /tmp/${{ github.sha }}.tar
+          docker load --input /tmp/rococo-docker-${{ github.sha }}.tar
+          docker load --input /tmp/kusama-docker-${{ github.sha }}.tar
           docker image ls -a
 
       -
@@ -441,10 +450,10 @@ jobs:
         run: |
           docker image push --all-tags mangatasolutions/mangata-node
 
-      - name: Install doctl
-        uses: digitalocean/action-doctl@v2
-        with:
-          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      # - name: Install doctl
+      #   uses: digitalocean/action-doctl@v2
+      #   with:
+      #     token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       # - name: Save DigitalOcean kubeconfig with short-lived credentials
       #   run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 ${{ secrets.K8S_CLUSTER_ID }}

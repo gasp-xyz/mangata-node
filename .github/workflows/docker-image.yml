@@ -4,6 +4,7 @@ name: Docker Image CI
 ## skip-e2e-tests: skip running e2e tests
 ## skip-build : run the test with latest version.
 ## skip-publish: skip publish 
+## force-publish: force publish
 
 on: 
   pull_request:
@@ -399,12 +400,13 @@ jobs:
         run: docker-compose -f devops/parachain/docker-compose.yml down
 
   publish:
-    needs: [rustfmt-check, unit-test, clippy, build]
+    needs: [rustfmt-check, unit-test, clippy, build-rococo, build-kusama, e2e-test]
     runs-on: ubuntu-latest
     if: |
-      github.ref == 'refs/heads/develop' && 
+      contains(github.event.pull_request.labels.*.name, 'force-publish') ||
+      ( github.ref == 'refs/heads/develop' &&
       !contains(github.event.pull_request.labels.*.name, 'skip-publish') &&
-      !github.event.inputs.skipBuild
+      !github.event.inputs.skipBuild )
     #if: "!contains(github.event.pull_request.labels.*.name, 'skip-publish') && ${{ github.event_name == 'push'}} && github.event.pull_request.merged == true"
     #if: # its a push to develop.
     steps:

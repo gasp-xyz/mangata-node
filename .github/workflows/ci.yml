@@ -392,6 +392,10 @@ jobs:
       - name: Sleep for 2 minutes
         run: sleep 120s #close buffers of videos.
 
+      - name: Patch sdk
+        working-directory: e2eTests
+        run: cp sdk.js node_modules/mangata-sdk/index.js
+
       - name: Run sequential e2e tests
         working-directory: e2eTests
         run: yarn test-sequential-e2e

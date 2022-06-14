@@ -19,7 +19,7 @@ use sp_bootstrap::PoolCreateApi;
 use sp_core::U256;
 use sp_runtime::traits::{AccountIdConversion, CheckedAdd};
 use sp_std::prelude::*;
-use sp_std::convert::TryInto
+use sp_std::convert::TryInto;
 
 #[cfg(test)]
 mod mock;

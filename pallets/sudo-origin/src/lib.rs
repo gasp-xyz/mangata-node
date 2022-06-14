@@ -92,7 +92,7 @@
 
 use sp_runtime::{traits::StaticLookup, DispatchResult};
 use sp_std::prelude::*;
-
+use sp_std::convert::TryInto;
 use frame_support::{traits::UnfilteredDispatchable, weights::GetDispatchInfo};
 
 #[cfg(test)]

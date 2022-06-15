@@ -369,7 +369,7 @@ jobs:
       TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
       MANGATA_NODE_VERSION: ${{ github.sha }}
       E2EBRANCHNAME: 'main'
-      PARACHAIN_DOCKER_IMAGE: "${{ github.event.inputs.parachainDocker || 'mangatasolutions/mangata-node:rococo-e2e-${{ github.sha }}"
+      PARACHAIN_DOCKER_IMAGE: "${{ github.event.inputs.parachainDocker || 'mangatasolutions/mangata-node:rococo-e2e-${{ github.sha }} }}"
     steps:
     ####IDK, but this is neccesary for reports
       -
@@ -499,7 +499,7 @@ jobs:
         run: make -C devops/parachain stop
 
   publish:
-    needs: [rustfmt-check, unit-test, clippy-check, build-rococo, build-kusama, e2e-test]
+    needs: [rustfmt-check, unit-test, clippy-check, build-rococo, build-kusama, e2e-test, build-runtime-benchmarks, run-benchmark-tests]
     runs-on: ubuntu-latest
     if: |
       github.ref == 'refs/heads/develop' && 

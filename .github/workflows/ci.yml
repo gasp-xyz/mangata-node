@@ -1,17 +1,14 @@
-name: Docker Image CI
+name: Continous Integration
 
 # available flags: 
 ## skip-e2e-tests: skip running e2e tests
 ## skip-build : run the test with latest version.
 ## skip-publish: skip publish 
-## force-publish: force publish
 
 on: 
   pull_request:
     branches:
       - develop
-      - feature/benchmarking-A
-      - ci
   push:
     branches: [ develop ]
 
@@ -34,6 +31,9 @@ on:
           required: true
           default: false
 
+env:
+  DOCKER_BUILDER_IMAGE: mangatasolutions/node-builder:0.1
+  DISABLE_TTY: 1
 
 jobs:
 
@@ -48,111 +48,83 @@ jobs:
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
       -
-        name: Build Docker Image
-        uses: docker/build-push-action@v2
+        name: Login to Docker Hub
+        uses: docker/login-action@v1
         with:
-          file: "devops/dockerfiles/node/Dockerfile"
-          load: true
-          tags: mangatasolutions/mangata-node-fmt-check:${{ github.sha }}
-          target: env_builder
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Pull builder image
+        run: |
+          docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
       -
         name: Check formatting
         run: |
-          docker run --entrypoint /root/.cargo/bin/cargo mangatasolutions/mangata-node-fmt-check:${{ github.sha }} fmt -- --check
+          ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
+          ./docker-cargo.sh fmt --all -- --check
 
-  clippy:
+  clippy-check:
     name: Clippy check
     runs-on: ubuntu-latest
-    if: "!contains(github.event.pull_request.labels.*.name, 'skip-build') && !${{ github.event.inputs.e2eBranch }}"
-
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install latest nightly
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: nightly-2021-10-19
-            target: wasm32-unknown-unknown
-            override: true
-            components: clippy
-
-      - name: Run cargo check
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: -p pallet-xyk -p pallet-assets-info -p pallet-bridge
-
-  unit-test:
-    runs-on: ubuntu-latest
-    if: "!contains(github.event.pull_request.labels.*.name, 'skip-build') && !${{ github.event.inputs.e2eBranch }}"
     steps:
       -
         name: Checkout
         uses: actions/checkout@v2
-      -
-        name: Build Docker Image
-        uses: docker/build-push-action@v2
-        with:
-          file: "devops/dockerfiles/node/Dockerfile"
-          load: true
-          tags: mangatasolutions/mangata-node-ut:${{ github.sha }}
-          target: env_builder
-      -
-        name: Run Tests
-        run: |
-          pwd
-          ls -la
-          docker run mangatasolutions/mangata-node-ut:${{ github.sha }} /bin/bash -c \
-            'cargo test -p pallet-xyk --no-run'
-          docker run mangatasolutions/mangata-node-ut:${{ github.sha }} /bin/bash -c \
-            'cargo test -- -Z unstable-options --format json --report-time |cargo2junit' | tee ut-results.xml
-          # remove empty tests suites
-          sed -i '/<testsuite.*\/>$/d' ut-results.xml
-          sed -i 's/<testsuites>/<testsuites time="0">/g' ut-results.xml
-          cat ut-results.xml
-      - name: Test Report
-        uses: dorny/test-reporter@v1
-        if: success() || failure()
-        with:
-          name: Unit Tests
-          path: ut-results.xml
-          reporter: jest-junit
-
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      -
-        name: Debug info about publishing.
-        run: |
-          echo ${{ github.ref }} == 'refs/heads/develop'
-          echo ${{ github.ref }}
-      -
-        name: Checkout
-        uses: actions/checkout@v2
-      -
-        name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
       -
-        name: Build Only
-        id: docker_build
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
-        uses: docker/build-push-action@v2
+        name: Login to Docker Hub
+        uses: docker/login-action@v1
         with:
-          file: "devops/dockerfiles/node/Dockerfile"
-          build-args: |
-            CARGO_FEATURES=enable-trading
-          push: false
-          tags: mangatasolutions/mangata-node:latest,mangatasolutions/mangata-node:${{ github.sha }}
-          outputs: type=docker,dest=/tmp/${{ github.sha }}.tar
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Pull builder image
+        run: |
+          docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
       -
-        name: Upload artifact
-        uses: actions/upload-artifact@v2
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
+        name: Run clippy
+        run: |
+          docker pull mangatasolutions/node-builder:0.1
+          ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
+          ./docker-cargo.sh clippy -p pallet-xyk -p pallet-assets-info -p pallet-bridge
+
+  unit-test:
+    name: Unit test
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@v1
         with:
-          name: ${{ github.sha }}
-          path: /tmp/${{ github.sha }}.tar
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Pull builder image
+        run: |
+          docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
+      -
+        name: Run unit tests
+        run: |
+          ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
+          docker pull mangatasolutions/node-builder:0.1
+          ./docker-cargo.sh test -- -Z unstable-options --format json --report-time
+          # |cargo2junit | tee ut-results.xml
+          # sed -i '/<testsuite.*\/>$/d' ut-results.xml
+          # sed -i 's/<testsuites>/<testsuites time="0">/g' ut-results.xml
+          # cat ut-results.xml
+      # - name: Test Report
+      #   uses: dorny/test-reporter@v1
+      #   if: success() || failure()
+      #   with:
+      #     name: Unit Tests
+      #     path: ut-results.xml
+      #     reporter: jest-junit
+
 
   build-rococo:
     runs-on: ubuntu-latest
@@ -172,41 +144,101 @@ jobs:
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
       -
-        name: Build Only
-        id: docker_build
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
-        uses: docker/build-push-action@v2
+        name: Login to Docker Hub
+        uses: docker/login-action@v1
         with:
-          file: "devops/dockerfiles/node/Dockerfile"
-          build-args: |
-            CARGO_FEATURES=mangata-rococo
-          push: false
-          tags: mangatasolutions/mangata-node:rococo-latest,mangatasolutions/mangata-node:rococo-${{ github.sha }}
-          outputs: type=docker,dest=/tmp/rococo-docker-${{ github.sha }}.tar
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Pull builder image
+        run: |
+          docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
       -
-        name: Extract wasm
+        name: Build node binary
+        run: |
+          ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
+          ./docker-cargo.sh build --release --features=enable-trading,mangata-rococo
+      -
+        name: Calculate wasm checksum
         run: >
-          docker load -i /tmp/rococo-docker-${{ github.sha }}.tar &&
-          docker run
-          --entrypoint=""
-          -i mangatasolutions/mangata-node:rococo-latest
-          cat /mangata/mangata_rococo_runtime.compact.compressed.wasm
-          > /tmp/mangata_rococo_runtime.compact.compressed.wasm-${{ github.sha }}
+          md5sum
+          ./docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm
+          >
+          ./docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm.md5
       -
-        name: Upload docker artifact
+        name: Build node img
+        env:
+          DOCKER_IMAGE_TAG: "mangatasolutions/mangata-node:rococo-${{ github.sha }}"
+          SKIP_BUILD: 1
+          NODE_BINARY: "docker-cargo/release/mangata-node"
+          WASM: "docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm"
+        run: >
+          ./scripts/build-image.sh ${DOCKER_IMAGE_TAG} &&
+          docker save ${DOCKER_IMAGE_TAG} -o rococo-docker-${{ github.sha }}.tar
+      -
+        name: Upload docker img artifact
         uses: actions/upload-artifact@v2
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         with:
           name: rococo-docker-${{ github.sha }}
-          path: /tmp/rococo-docker-${{ github.sha }}.tar
+          path: rococo-docker-${{ github.sha }}.tar
       -
         name: Upload wasm artifact
         uses: actions/upload-artifact@v2
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         with:
           name: rococo-wasm-${{ github.sha }}
-          path: /tmp/mangata_rococo_runtime.compact.compressed.wasm-${{ github.sha }}
+          path: |
+            ./docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm
+            ./docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm.md5
 
+  build-rococo-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Debug info about publishing.
+        run: |
+          echo ${{ github.ref }} == 'refs/heads/develop'
+          echo ${{ github.ref }}
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Pull builder image
+        run: |
+          docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
+      -
+        name: Build node binary
+        run: |
+          ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
+          ./docker-cargo.sh build --release --features=enable-trading,mangata-rococo
+      -
+        name: Build node img
+        env:
+          DOCKER_IMAGE_TAG: "mangatasolutions/mangata-node:rococo-e2e-${{ github.sha }}"
+          SKIP_BUILD: 1
+          NODE_BINARY: "docker-cargo/release/mangata-node"
+          WASM: "docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm"
+        run: >
+          ./scripts/build-image.sh ${DOCKER_IMAGE_TAG} &&
+          docker save ${DOCKER_IMAGE_TAG} -o rococo-docker-e2e-${{ github.sha }}.tar
+      -
+        name: Upload docker img artifact
+        uses: actions/upload-artifact@v2
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
+        with:
+          name: rococo-docker-e2e-${{ github.sha }}
+          path: rococo-docker-e2e-${{ github.sha }}.tar
 
   build-kusama:
     runs-on: ubuntu-latest
@@ -226,49 +258,59 @@ jobs:
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
       -
-        name: Build Only
-        id: docker_build
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
-        uses: docker/build-push-action@v2
+        name: Login to Docker Hub
+        uses: docker/login-action@v1
         with:
-          file: "devops/dockerfiles/node/Dockerfile"
-          build-args: |
-            CARGO_FEATURES=mangata-kusama
-          push: false
-          tags: mangatasolutions/mangata-node:kusama-latest,mangatasolutions/mangata-node:kusama-${{ github.sha }}
-          outputs: type=docker,dest=/tmp/kusama-docker-${{ github.sha }}.tar
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Pull builder image
+        run: |
+          docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
       -
-        name: Extract wasm
+        name: Build node binary
+        run: |
+          ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
+          ./docker-cargo.sh build --release --features=enable-trading,mangata-kusama
+      -
+        name: Calculate wasm checksum
         run: >
-          docker load -i /tmp/kusama-docker-${{ github.sha }}.tar &&
-          docker run
-          --entrypoint=""
-          -i mangatasolutions/mangata-node:kusama-latest
-          cat /mangata/mangata_kusama_runtime.compact.compressed.wasm
-          > /tmp/mangata_kusama_runtime.compact.compressed.wasm-${{ github.sha }}
+          md5sum
+          ./docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm 
+          >
+          ./docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm.md5
       -
-        name: Upload docker artifact
+        name: Build node img
+        env:
+          DOCKER_IMAGE_TAG: "mangatasolutions/mangata-node:kusama-${{ github.sha }}"
+          SKIP_BUILD: 1
+          NODE_BINARY: "docker-cargo/release/mangata-node"
+          WASM: "docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm"
+        run: >
+          ./scripts/build-image.sh ${DOCKER_IMAGE_TAG} &&
+          docker save ${DOCKER_IMAGE_TAG} -o kusama-docker-${{ github.sha }}.tar
+      -
+        name: Upload docker img artifact
         uses: actions/upload-artifact@v2
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         with:
           name: kusama-docker-${{ github.sha }}
-          path: /tmp/kusama-docker-${{ github.sha }}.tar
+          path: kusama-docker-${{ github.sha }}.tar
       -
         name: Upload wasm artifact
         uses: actions/upload-artifact@v2
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         with:
           name: kusama-wasm-${{ github.sha }}
-          path: /tmp/mangata_kusama_runtime.compact.compressed.wasm-${{ github.sha }}
-
-
+          path: |
+            ./docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm
+            ./docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm.md5
 
   e2e-test:
-    needs: build
+    needs: build-rococo-e2e
     runs-on: self-hosted
     if: "!contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests')"
     env:
-      API_URL: 'ws://10.0.0.5:9944'
+      API_URL: 'ws://127.0.0.1:8844'
       TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}
       E2E_TREASURY_PALLET_ADDRESS : ${{ secrets.E2E_TREASURY_PALLET_ADDRESS }}
       E2E_XYK_PALLET_ADDRESS : ${{ secrets.E2E_XYK_PALLET_ADDRESS }} 
@@ -288,13 +330,13 @@ jobs:
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         uses: actions/download-artifact@v2
         with:
-          name: ${{ github.sha }}
+          name: rococo-docker-e2e-${{ github.sha }}
           path: /tmp
       -
         name: Load Docker image
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         run: |
-          docker load --input /tmp/${{ github.sha }}.tar
+          docker load --input /tmp/rococo-docker-e2e-${{ github.sha }}.tar
           docker image ls -a
 
       - name: E2E- Get branch name
@@ -335,10 +377,10 @@ jobs:
           echo ${{ env.PARACHAIN_DOCKER_IMAGE }}
 
       - name: Stop previous parachain if running
-        run: docker-compose -f devops/parachain/docker-compose.yml down
+        run: make -C devops/parachain stop
 
       - name: Start mangata-node parachain
-        run: docker-compose -f devops/parachain/docker-compose.yml up -d
+        run: ENV=rococo PARACHAIN_DOCKER_IMAGE=mangatasolutions/mangata-node:rococo-e2e-${{ github.sha }} make -C devops/parachain start 
 
       - name: Install dependencies
         working-directory: e2eTests
@@ -349,6 +391,10 @@ jobs:
 
       - name: Sleep for 2 minutes
         run: sleep 120s #close buffers of videos.
+
+      - name: Patch sdk
+        working-directory: e2eTests
+        run: cp sdk.js node_modules/mangata-sdk/index.js
 
       - name: Run sequential e2e tests
         working-directory: e2eTests
@@ -384,7 +430,7 @@ jobs:
           docker save  --output=/tmp/mangata_bob_1.tar mangata_test_run/mangata_bob_1
           docker commit  $(docker ps | grep mangata | grep alice | awk '{print $1}') mangata_test_run/mangata_alice_1
           docker save  --output=/tmp/mangata_alice_1.tar mangata_test_run/mangata_alice_1
-      
+
       - name: Upload logs  and docker images to GitHub
         if: failure()
         uses: actions/upload-artifact@master
@@ -397,16 +443,15 @@ jobs:
 
       - name: Stop mangata-node parachain
         if: always()
-        run: docker-compose -f devops/parachain/docker-compose.yml down
+        run: make -C devops/parachain stop
 
   publish:
-    needs: [rustfmt-check, unit-test, clippy, build-rococo, build-kusama, e2e-test]
+    needs: [rustfmt-check, unit-test, clippy-check, build-rococo, build-kusama, e2e-test]
     runs-on: ubuntu-latest
     if: |
-      contains(github.event.pull_request.labels.*.name, 'force-publish') ||
-      ( github.ref == 'refs/heads/develop' &&
+      github.ref == 'refs/heads/develop' && 
       !contains(github.event.pull_request.labels.*.name, 'skip-publish') &&
-      !github.event.inputs.skipBuild )
+      !github.event.inputs.skipBuild
     #if: "!contains(github.event.pull_request.labels.*.name, 'skip-publish') && ${{ github.event_name == 'push'}} && github.event.pull_request.merged == true"
     #if: # its a push to develop.
     steps:
@@ -426,16 +471,17 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
-        name: Download rococo docker artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: rococo-docker-${{ github.sha }}
-          path: /tmp
-      -
-        name: Download kusama docker artifact
+        name: Download artifact
         uses: actions/download-artifact@v2
         with:
           name: kusama-docker-${{ github.sha }}
+          path: /tmp
+
+      -
+        name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: rococo-docker-${{ github.sha }}
           path: /tmp
 
       -

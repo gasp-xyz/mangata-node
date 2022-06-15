@@ -124,7 +124,7 @@ jobs:
       #     reporter: jest-junit
 
   run-benchmark-tests:
-    name: Unit test
+    name: Run benchmark tests
     runs-on: ubuntu-latest
     steps:
       -
@@ -143,14 +143,14 @@ jobs:
         run: |
           docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
       -
-        name: Run unit tests
+        name: Run benchamrks
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
           ./docker-cargo.sh test --features=runtime-benchmarks,enable-trading
           ./docker-cargo/release/mangata-node benchmark --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-xyk' --template ./templates/module-weight-template.hbs
 
   build-runtime-benchmarks:
-    name: Unit test
+    name: Build runtime benchmarks
     runs-on: ubuntu-latest
     steps:
       -
@@ -169,7 +169,7 @@ jobs:
         run: |
           docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
       -
-        name: Run unit tests
+        name: Build benchmarks
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
           ./docker-cargo.sh build --release --features=runtime-benchmarks,enable-trading

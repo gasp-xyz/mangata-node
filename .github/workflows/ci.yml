@@ -147,7 +147,7 @@ jobs:
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
           ./docker-cargo.sh test --features=runtime-benchmarks,enable-trading
-          ./docker-cargo/release/mangata-node benchmark --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-xyk' --template ./templates/module-weight-template.hbs
+          ./docker-cargo.sh benchmark --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-xyk' --template ./templates/module-weight-template.hbs
 
   build-runtime-benchmarks:
     name: Build runtime benchmarks

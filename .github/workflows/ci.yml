@@ -369,7 +369,7 @@ jobs:
       TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
       MANGATA_NODE_VERSION: ${{ github.sha }}
       E2EBRANCHNAME: 'main'
-      PARACHAIN_DOCKER_IMAGE: "${{ github.event.inputs.parachainDocker || 'mangatasolutions/mangata-node:latest' }}"
+      PARACHAIN_DOCKER_IMAGE: "${{ github.event.inputs.parachainDocker || 'mangatasolutions/mangata-node:rococo-e2e-${{ github.sha }}"
     steps:
     ####IDK, but this is neccesary for reports
       -
@@ -431,7 +431,9 @@ jobs:
         run: make -C devops/parachain stop
 
       - name: Start mangata-node parachain
-        run: ENV=rococo PARACHAIN_DOCKER_IMAGE=mangatasolutions/mangata-node:rococo-e2e-${{ github.sha }} make -C devops/parachain start 
+        env:
+          ENV: rococo
+        run: make -C devops/parachain start
 
       - name: Install dependencies
         working-directory: e2eTests

@@ -84,7 +84,6 @@ jobs:
       -
         name: Run clippy
         run: |
-          docker pull mangatasolutions/node-builder:0.1
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
           ./docker-cargo.sh clippy -p pallet-xyk -p pallet-assets-info -p pallet-bridge
 
@@ -111,7 +110,6 @@ jobs:
         name: Run unit tests
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          docker pull mangatasolutions/node-builder:0.1
           ./docker-cargo.sh test -- -Z unstable-options --format json --report-time
           # |cargo2junit | tee ut-results.xml
           # sed -i '/<testsuite.*\/>$/d' ut-results.xml

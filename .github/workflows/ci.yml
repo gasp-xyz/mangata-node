@@ -282,7 +282,7 @@ jobs:
           WASM: "docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm"
         run: >
           ./scripts/build-image.sh ${DOCKER_IMAGE_GIT_SHA_TAG} ${DOCKER_IMAGE_LATEST_TAG} &&
-          docker save ${DOCKER_IMAGE_GIT_SHA_TAG} -o rococo-docker-e2e-${{ github.sha }}.tar
+          docker save ${DOCKER_IMAGE_LATEST_TAG} -o rococo-docker-e2e-${{ github.sha }}.tar
       -
         name: Upload docker img artifact
         uses: actions/upload-artifact@v2

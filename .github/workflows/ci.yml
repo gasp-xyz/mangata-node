@@ -149,7 +149,7 @@ jobs:
           ./docker-cargo.sh test --features=runtime-benchmarks,enable-trading
 
   run-benchmarks:
-    name: Build runtime benchmarks
+    name: Run runtime benchmarks
     runs-on: ubuntu-latest
     steps:
       -

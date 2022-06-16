@@ -147,9 +147,8 @@ jobs:
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
           ./docker-cargo.sh test --features=runtime-benchmarks,enable-trading
-          ./docker-cargo.sh benchmark --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-xyk' --template ./templates/module-weight-template.hbs
 
-  build-runtime-benchmarks:
+  run-benchmarks:
     name: Build runtime benchmarks
     runs-on: ubuntu-latest
     steps:
@@ -173,7 +172,7 @@ jobs:
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
           ./docker-cargo.sh build --release --features=runtime-benchmarks,enable-trading
-
+          ./docker-cargo/release/mangata-node benchmark --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-xyk' --template ./templates/module-weight-template.hbs
 
   build-rococo:
     runs-on: ubuntu-latest

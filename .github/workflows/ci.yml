@@ -123,7 +123,7 @@ jobs:
       #     path: ut-results.xml
       #     reporter: jest-junit
 
-  run-benchmark-tests:
+  run-benchmarks-tests:
     name: Run benchmark tests
     runs-on: ubuntu-latest
     steps:
@@ -495,7 +495,7 @@ jobs:
         run: make -C devops/parachain stop
 
   publish:
-    needs: [rustfmt-check, unit-test, clippy-check, build-rococo, build-kusama, e2e-test, build-runtime-benchmarks, run-benchmark-tests]
+    needs: [rustfmt-check, unit-test, clippy-check, build-rococo, build-kusama, e2e-test, run-benchmarks, run-benchmarks-tests]
     runs-on: ubuntu-latest
     if: |
       github.ref == 'refs/heads/develop' && 

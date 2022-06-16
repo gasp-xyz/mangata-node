@@ -30,8 +30,8 @@ fi
 if docker inspect ${DOCKER_BUILDER_IMAGE} > /dev/null; then
 	echo "building using docker image ${DOCKER_BUILDER_IMAGE}"
 else
-	echo "docker image ${DOCKER_BUILDER_IMAGE} not found" >&2
-	exit -1
+	echo "docker image ${DOCKER_BUILDER_IMAGE} not found - pulling" >&2
+	docker pull ${DOCKER_BUILDER_IMAGE}
 fi
 
 if [ -e ${CARGO_HOME} ] ; then

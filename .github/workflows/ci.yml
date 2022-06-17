@@ -110,7 +110,7 @@ jobs:
         name: Run unit tests
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh test -- -Z unstable-options --format json --report-time
+          ./docker-cargo.sh -j2 test -- -Z unstable-options --format json --report-time
           # |cargo2junit | tee ut-results.xml
           # sed -i '/<testsuite.*\/>$/d' ut-results.xml
           # sed -i 's/<testsuites>/<testsuites time="0">/g' ut-results.xml
@@ -146,7 +146,7 @@ jobs:
         name: Run benchamrks
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh test --features=runtime-benchmarks,enable-trading
+          ./docker-cargo.sh -j2 test --features=runtime-benchmarks,enable-trading
 
   run-benchmarks:
     name: Run runtime benchmarks
@@ -171,7 +171,7 @@ jobs:
         name: Build benchmarks
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh build --release --features=runtime-benchmarks,enable-trading
+          ./docker-cargo.sh build -j2 --release --features=runtime-benchmarks,enable-trading
           ./docker-cargo/release/mangata-node benchmark --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-xyk' --template ./templates/module-weight-template.hbs
 
   build-rococo:
@@ -204,7 +204,7 @@ jobs:
         name: Build node binary
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh build --release --features=enable-trading,mangata-rococo
+          ./docker-cargo.sh build -j2 --release --features=enable-trading,mangata-rococo
       -
         name: Calculate wasm checksum
         run: >
@@ -270,7 +270,7 @@ jobs:
         name: Build node binary
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh build --release --features=enable-trading,mangata-rococo
+          ./docker-cargo.sh build -j2 --release --features=enable-trading,mangata-rococo
       -
         name: Build node img
         env:
@@ -320,7 +320,7 @@ jobs:
         name: Build node binary
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh build --release --features=enable-trading,mangata-kusama
+          ./docker-cargo.sh build -j2 --release --features=enable-trading,mangata-kusama
       -
         name: Calculate wasm checksum
         run: >

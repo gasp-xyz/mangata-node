@@ -84,7 +84,6 @@ jobs:
       -
         name: Run clippy
         run: |
-          docker pull mangatasolutions/node-builder:0.1
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
           ./docker-cargo.sh clippy -p pallet-xyk -p pallet-assets-info -p pallet-bridge
 
@@ -111,8 +110,7 @@ jobs:
         name: Run unit tests
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          docker pull mangatasolutions/node-builder:0.1
-          ./docker-cargo.sh test -- -Z unstable-options --format json --report-time
+          ./docker-cargo.sh test -j2 -- -Z unstable-options --format json --report-time
           # |cargo2junit | tee ut-results.xml
           # sed -i '/<testsuite.*\/>$/d' ut-results.xml
           # sed -i 's/<testsuites>/<testsuites time="0">/g' ut-results.xml
@@ -125,6 +123,56 @@ jobs:
       #     path: ut-results.xml
       #     reporter: jest-junit
 
+  run-benchmarks-tests:
+    name: Run benchmark tests
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Pull builder image
+        run: |
+          docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
+      -
+        name: Run benchamrks
+        run: |
+          ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
+          ./docker-cargo.sh test -j2 --features=runtime-benchmarks,enable-trading
+
+  run-benchmarks:
+    name: Run runtime benchmarks
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Pull builder image
+        run: |
+          docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
+      -
+        name: Build benchmarks
+        run: |
+          ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
+          ./docker-cargo.sh build -j2 --release --features=runtime-benchmarks,enable-trading
+          ./docker-cargo/release/mangata-node benchmark --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-xyk' --template ./templates/module-weight-template.hbs
 
   build-rococo:
     runs-on: ubuntu-latest
@@ -156,7 +204,7 @@ jobs:
         name: Build node binary
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh build --release --features=enable-trading,mangata-rococo
+          ./docker-cargo.sh build -j2 --release --features=enable-trading,mangata-rococo
       -
         name: Calculate wasm checksum
         run: >
@@ -167,13 +215,14 @@ jobs:
       -
         name: Build node img
         env:
-          DOCKER_IMAGE_TAG: "mangatasolutions/mangata-node:rococo-${{ github.sha }}"
+          DOCKER_IMAGE_GIT_SHA_TAG: "mangatasolutions/mangata-node:rococo-${{ github.sha }}"
+          DOCKER_IMAGE_LATEST_TAG: "mangatasolutions/mangata-node:rococo-${{ github.sha }}"
           SKIP_BUILD: 1
           NODE_BINARY: "docker-cargo/release/mangata-node"
           WASM: "docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm"
         run: >
-          ./scripts/build-image.sh ${DOCKER_IMAGE_TAG} &&
-          docker save ${DOCKER_IMAGE_TAG} -o rococo-docker-${{ github.sha }}.tar
+          ./scripts/build-image.sh ${{ env.DOCKER_IMAGE_GIT_SHA_TAG }} ${{ env.DOCKER_IMAGE_LATEST_TAG }} &&
+          docker save ${DOCKER_IMAGE_GIT_SHA_TAG} -o rococo-docker-${{ github.sha }}.tar
       -
         name: Upload docker img artifact
         uses: actions/upload-artifact@v2
@@ -221,17 +270,18 @@ jobs:
         name: Build node binary
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh build --release --features=enable-trading,mangata-rococo
+          ./docker-cargo.sh build -j2 --release --features=enable-trading,mangata-rococo
       -
         name: Build node img
         env:
-          DOCKER_IMAGE_TAG: "mangatasolutions/mangata-node:rococo-e2e-${{ github.sha }}"
+          DOCKER_IMAGE_GIT_SHA_TAG: "mangatasolutions/mangata-node:rococo-e2e-${{ github.sha }}"
+          DOCKER_IMAGE_LATEST_TAG: "mangatasolutions/mangata-node:rococo-e2e-latest"
           SKIP_BUILD: 1
           NODE_BINARY: "docker-cargo/release/mangata-node"
           WASM: "docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm"
         run: >
-          ./scripts/build-image.sh ${DOCKER_IMAGE_TAG} &&
-          docker save ${DOCKER_IMAGE_TAG} -o rococo-docker-e2e-${{ github.sha }}.tar
+          ./scripts/build-image.sh ${DOCKER_IMAGE_GIT_SHA_TAG} ${DOCKER_IMAGE_LATEST_TAG} &&
+          docker save ${DOCKER_IMAGE_LATEST_TAG} -o rococo-docker-e2e-${{ github.sha }}.tar
       -
         name: Upload docker img artifact
         uses: actions/upload-artifact@v2
@@ -270,7 +320,7 @@ jobs:
         name: Build node binary
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh build --release --features=enable-trading,mangata-kusama
+          ./docker-cargo.sh build -j2 --release --features=enable-trading,mangata-kusama
       -
         name: Calculate wasm checksum
         run: >
@@ -281,13 +331,14 @@ jobs:
       -
         name: Build node img
         env:
-          DOCKER_IMAGE_TAG: "mangatasolutions/mangata-node:kusama-${{ github.sha }}"
+          DOCKER_IMAGE_GIT_SHA_TAG: "mangatasolutions/mangata-node:kusama-${{ github.sha }}"
+          DOCKER_IMAGE_LATEST_TAG: "mangatasolutions/mangata-node:kusama-${{ github.sha }}"
           SKIP_BUILD: 1
           NODE_BINARY: "docker-cargo/release/mangata-node"
           WASM: "docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm"
         run: >
-          ./scripts/build-image.sh ${DOCKER_IMAGE_TAG} &&
-          docker save ${DOCKER_IMAGE_TAG} -o kusama-docker-${{ github.sha }}.tar
+          ./scripts/build-image.sh ${{ env.DOCKER_IMAGE_GIT_SHA_TAG }} ${{ env.DOCKER_IMAGE_LATEST_TAG }} &&
+          docker save ${DOCKER_IMAGE_GIT_SHA_TAG} -o kusama-docker-${{ github.sha }}.tar
       -
         name: Upload docker img artifact
         uses: actions/upload-artifact@v2
@@ -318,7 +369,7 @@ jobs:
       TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
       MANGATA_NODE_VERSION: ${{ github.sha }}
       E2EBRANCHNAME: 'main'
-      PARACHAIN_DOCKER_IMAGE: "${{ github.event.inputs.parachainDocker || 'mangatasolutions/mangata-node:latest' }}"
+      PARACHAIN_DOCKER_IMAGE: "${{ github.event.inputs.parachainDocker || 'mangatasolutions/mangata-node:rococo-e2e-latest' }}"
     steps:
     ####IDK, but this is neccesary for reports
       -
@@ -380,7 +431,9 @@ jobs:
         run: make -C devops/parachain stop
 
       - name: Start mangata-node parachain
-        run: ENV=rococo PARACHAIN_DOCKER_IMAGE=mangatasolutions/mangata-node:rococo-e2e-${{ github.sha }} make -C devops/parachain start 
+        env:
+          ENV: rococo
+        run: make -C devops/parachain start
 
       - name: Install dependencies
         working-directory: e2eTests
@@ -442,7 +495,7 @@ jobs:
         run: make -C devops/parachain stop
 
   publish:
-    needs: [rustfmt-check, unit-test, clippy-check, build-rococo, build-kusama, e2e-test]
+    needs: [rustfmt-check, unit-test, clippy-check, build-rococo, build-kusama, e2e-test, run-benchmarks, run-benchmarks-tests]
     runs-on: ubuntu-latest
     if: |
       github.ref == 'refs/heads/develop' && 

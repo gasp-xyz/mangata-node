@@ -10,13 +10,13 @@ use frame_support::{
 	traits::{Get, Imbalance},
 };
 use mangata_primitives::{Balance, TokenId};
-use scale_info::TypeInfo;
-use sp_runtime::{traits::Zero, Perbill, Percent, RuntimeDebug};
-use sp_std::prelude::*;
-use sp_std::convert::TryInto;
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 use pallet_vesting_mangata::MultiTokenVestingSchedule;
+use scale_info::TypeInfo;
 use sp_runtime::traits::{CheckedAdd, CheckedSub, One};
+use sp_runtime::{traits::Zero, Perbill, Percent, RuntimeDebug};
+use sp_std::convert::TryInto;
+use sp_std::prelude::*;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -418,13 +418,13 @@ impl<T: Config> Pallet<T> {
 			issuance_config
 				.liquidity_mining_split
 				.checked_add(&issuance_config.staking_split)
-				.ok_or(Error::<T>::IssuanceConfigInvalid)? ==
-				Perbill::from_percent(100),
+				.ok_or(Error::<T>::IssuanceConfigInvalid)?
+				== Perbill::from_percent(100),
 			Error::<T>::IssuanceConfigInvalid
 		);
 		ensure!(
-			issuance_config.cap >=
-				issuance_config
+			issuance_config.cap
+				>= issuance_config
 					.issuance_at_init
 					.checked_add(issuance_config.total_crowdloan_allocation)
 					.ok_or(Error::<T>::IssuanceConfigInvalid)?,

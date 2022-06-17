@@ -32,7 +32,7 @@ use sp_std::boxed::Box;
 
 // NOTE:v1::MultiLocation is used in storages, we would need to do migration if upgrade the
 // MultiLocation in the future.
-pub use xcm::{v1::MultiLocation, VersionedMultiLocation};
+pub use xcm::{v2::MultiLocation, VersionedMultiLocation};
 
 use orml_tokens::MultiTokenCurrencyExtended;
 
@@ -159,6 +159,7 @@ pub mod pallet {
 	}
 
 	#[pallet::pallet]
+	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
 	#[pallet::call]

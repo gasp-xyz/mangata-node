@@ -90,10 +90,10 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use sp_runtime::{traits::StaticLookup, DispatchResult};
-use sp_std::prelude::*;
-use sp_std::convert::TryInto;
 use frame_support::{traits::UnfilteredDispatchable, weights::GetDispatchInfo};
+use sp_runtime::{traits::StaticLookup, DispatchResult};
+use sp_std::convert::TryInto;
+use sp_std::prelude::*;
 
 #[cfg(test)]
 mod mock;

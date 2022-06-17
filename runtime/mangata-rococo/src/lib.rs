@@ -9,10 +9,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
 use smallvec::smallvec;
 use sp_api::impl_runtime_apis;
-use sp_core::{
-	crypto::KeyTypeId,
-	OpaqueMetadata,
-};
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
@@ -23,16 +20,11 @@ use sp_runtime::{
 	ApplyExtrinsicResult, FixedPointNumber, Percent, Perquintill,
 };
 
-use sp_std::{marker::PhantomData, prelude::*};
-#[cfg(feature = "std")]
-use sp_version::NativeVersion;
-use sp_version::RuntimeVersion;
-
 use frame_support::{
-	construct_runtime, match_type, parameter_types,
+	construct_runtime, match_types, parameter_types,
 	traits::{Contains, Everything, Get, LockIdentifier, Nothing, U128CurrencyToVote},
 	weights::{
-		constants::{WEIGHT_PER_MICROS, WEIGHT_PER_MILLIS, WEIGHT_PER_SECOND},
+		constants::{RocksDbWeight, WEIGHT_PER_MICROS, WEIGHT_PER_MILLIS, WEIGHT_PER_SECOND},
 		DispatchClass, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
 		WeightToFeePolynomial,
 	},
@@ -44,6 +36,12 @@ use frame_system::{
 };
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
+use sp_std::convert::TryFrom;
+use sp_std::convert::TryInto;
+use sp_std::{marker::PhantomData, prelude::*};
+#[cfg(feature = "std")]
+use sp_version::NativeVersion;
+use sp_version::RuntimeVersion;
 
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -51,7 +49,7 @@ pub use sp_runtime::BuildStorage;
 // Polkadot Imports
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use polkadot_runtime_common::{BlockHashCount, RocksDbWeight};
+use polkadot_runtime_common::BlockHashCount;
 
 // XCM Imports
 use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
@@ -597,6 +595,7 @@ use sp_runtime::{
 	transaction_validity::InvalidTransaction,
 };
 
+use frame_support::weights::ConstantMultiplier;
 use frame_support::{
 	traits::{ExistenceRequirement, Imbalance, WithdrawReasons},
 	unsigned::TransactionValidityError,
@@ -609,6 +608,8 @@ type NegativeImbalanceOf<C, T> =
 	<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
 
 use orml_tokens::MultiTokenImbalanceWithZeroTrait;
+use orml_traits::location::AbsoluteReserveProvider;
+
 /// Default implementation for a Currency and an OnUnbalanced handler.
 ///
 /// The unbalance handler is given 2 unbalanceds in [`OnUnbalanced::on_unbalanceds`]: fee and
@@ -616,8 +617,9 @@ use orml_tokens::MultiTokenImbalanceWithZeroTrait;
 impl<T, C, OU, T1, T2, SF> OnChargeTransaction<T> for TwoCurrencyAdapter<C, OU, T1, T2, SF>
 where
 	T: pallet_transaction_payment::Config,
-	T::TransactionByteFee:
-		Get<<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance>,
+	T::LengthToFee: WeightToFeePolynomial<
+		Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
+	>,
 	C: MultiTokenCurrency<<T as frame_system::Config>::AccountId>,
 	C::PositiveImbalance: Imbalance<
 		<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
@@ -649,7 +651,7 @@ where
 		tip: Self::Balance,
 	) -> Result<Self::LiquidityInfo, TransactionValidityError> {
 		if fee.is_zero() {
-			return Ok(None)
+			return Ok(None);
 		}
 
 		let withdraw_reason = if tip.is_zero() {
@@ -734,7 +736,7 @@ impl pallet_transaction_payment::Config for Runtime {
 		RocTokenId,
 		frame_support::traits::ConstU128<ROC_MGR_SCALE_FACTOR>,
 	>;
-	type TransactionByteFee = TransactionByteFee;
+	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type WeightToFee = WeightToFee;
 	type FeeMultiplierUpdate =
 		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
@@ -818,7 +820,7 @@ parameter_types! {
 	pub const MaxInstructions: u32 = 100;
 }
 
-match_type! {
+match_types! {
 	pub type ParentOrParentsExecutivePlurality: impl Contains<MultiLocation> = {
 		MultiLocation { parents: 1, interior: Here } |
 		MultiLocation { parents: 1, interior: X1(Plurality { id: BodyId::Executive, .. }) }
@@ -1003,7 +1005,7 @@ impl pallet_sudo_origin::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 	type SudoOrigin =
-	pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>;
+		pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>;
 }
 
 parameter_types! {
@@ -1227,6 +1229,12 @@ parameter_types! {
 	pub const MaxAssetsForTransfer:usize = 2;
 }
 
+parameter_type_with_key! {
+	pub ParachainMinFee: |_location: MultiLocation| -> u128 {
+		u128::MAX
+	};
+}
+
 impl orml_xtokens::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
@@ -1234,11 +1242,14 @@ impl orml_xtokens::Config for Runtime {
 	type CurrencyIdConvert = TokenIdConvert;
 	type AccountIdToMultiLocation = AccountIdToMultiLocation;
 	type SelfLocation = SelfLocation;
+	type MinXcmFee = ParachainMinFee;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
+	type MultiLocationsFilter = Everything;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type BaseXcmWeight = BaseXcmWeight;
 	type LocationInverter = LocationInverter<Ancestry>;
 	type MaxAssetsForTransfer = MaxAssetsForTransfer;
+	type ReserveProvider = AbsoluteReserveProvider;
 }
 
 impl orml_unknown_tokens::Config for Runtime {
@@ -1271,7 +1282,7 @@ impl xcm_executor::Config for XcmConfig {
 	// How to withdraw and deposit an asset.
 	type AssetTransactor = LocalAssetTransactor;
 	type OriginConverter = XcmOriginToCallOrigin;
-	type IsReserve = MultiNativeAsset;
+	type IsReserve = MultiNativeAsset<AbsoluteReserveProvider>;
 	// Teleporting is disabled.
 	type IsTeleporter = ();
 	type LocationInverter = LocationInverter<Ancestry>;
@@ -1327,7 +1338,7 @@ pub struct TokenIdConvert;
 impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
 	fn convert(id: TokenId) -> Option<MultiLocation> {
 		if id == ROC_TOKEN_ID {
-			return Some(MultiLocation::parent())
+			return Some(MultiLocation::parent());
 		}
 
 		match AssetIdMaps::<Runtime>::get_multi_location(id) {
@@ -1342,11 +1353,11 @@ impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
 impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 	fn convert(location: MultiLocation) -> Option<TokenId> {
 		if location == MultiLocation::parent() {
-			return Some(ROC_TOKEN_ID)
+			return Some(ROC_TOKEN_ID);
 		}
 
 		if let Some(token_id) = AssetIdMaps::<Runtime>::get_currency_id(location.clone()) {
-			return Some(token_id)
+			return Some(token_id);
 		}
 
 		match location {
@@ -1364,7 +1375,7 @@ impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 					},
 					_ => None,
 				}
-			}
+			},
 			_ => None,
 		}
 	}

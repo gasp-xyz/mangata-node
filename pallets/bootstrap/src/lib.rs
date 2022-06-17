@@ -18,8 +18,8 @@ use sp_arithmetic::helpers_128bit::multiply_by_rational;
 use sp_bootstrap::PoolCreateApi;
 use sp_core::U256;
 use sp_runtime::traits::{AccountIdConversion, CheckedAdd};
-use sp_std::prelude::*;
 use sp_std::convert::TryInto;
+use sp_std::prelude::*;
 
 #[cfg(test)]
 mod mock;
@@ -71,7 +71,7 @@ pub mod pallet {
 		fn on_initialize(n: T::BlockNumber) -> Weight {
 			let phase = Phase::<T>::get(); // R:1
 			if phase == BootstrapPhase::Finished {
-				return T::DbWeight::get().reads(1)
+				return T::DbWeight::get().reads(1);
 			}
 
 			if let Some((start, whitelist_length, public_length, _)) = BootstrapSchedule::<T>::get()
@@ -320,8 +320,8 @@ pub mod pallet {
 			let (liq_token_id, _) = Self::minted_liquidity();
 
 			ensure!(
-				ClaimedRewards::<T>::get(&sender, T::KSMTokenId::get()) == 0 &&
-					ClaimedRewards::<T>::get(&sender, T::MGATokenId::get()) == 0,
+				ClaimedRewards::<T>::get(&sender, T::KSMTokenId::get()) == 0
+					&& ClaimedRewards::<T>::get(&sender, T::MGATokenId::get()) == 0,
 				Error::<T>::NothingToClaim
 			);
 
@@ -339,7 +339,7 @@ pub mod pallet {
 				.ok_or(Error::<T>::MathOverflow)?;
 
 			if total_rewards_claimed.is_zero() {
-				return Err(Error::<T>::NothingToClaim.into())
+				return Err(Error::<T>::NothingToClaim.into());
 			}
 
 			Self::claim_rewards_from_single_currency(
@@ -458,7 +458,7 @@ impl<T: Config> Pallet<T> {
 		let (liq_token_id, _) = Self::minted_liquidity();
 		let total_rewards = rewards.checked_add(rewards_vested).ok_or(Error::<T>::MathOverflow)?;
 		if total_rewards == 0 {
-			return Ok(().into())
+			return Ok(().into());
 		}
 
 		T::Currency::transfer(

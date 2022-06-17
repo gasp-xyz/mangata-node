@@ -140,7 +140,7 @@ where
 		at: Option<<Block as traits::Block>::Hash>,
 	) -> FutureResult<Bytes> {
 		if let Err(err) = self.deny_unsafe.check_if_safe() {
-			return async move { Err(err.into()) }.boxed()
+			return async move { Err(err.into()) }.boxed();
 		}
 
 		let dry_run = || {

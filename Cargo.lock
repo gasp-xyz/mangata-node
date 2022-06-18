@@ -2314,9 +2314,9 @@ dependencies = [
 
 [[package]]
 name = "dyn-clone"
-version = "1.0.5"
+version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "21e50f3adc76d6a43f5ed73b698a87d0760ca74617f60f7c3b879003536fdd28"
+checksum = "140206b78fb2bc3edbcfc9b5ccbd0b30699cfe8d348b8b31b330e47df5291a5a"
 
 [[package]]
 name = "ecdsa"
@@ -5073,6 +5073,7 @@ dependencies = [
  "sp-tracing",
  "sp-transaction-pool",
  "sp-trie",
+ "sub-tokens",
  "substrate-build-script-utils",
  "substrate-prometheus-endpoint",
  "tokio",
@@ -5621,9 +5622,9 @@ dependencies = [
 
 [[package]]
 name = "num-complex"
-version = "0.4.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97fbc387afefefd5e9e39493299f3069e14a140dd34dc19b4c1c1a8fddb6a790"
+checksum = "7ae39348c8bc5fbd7f40c727a9925f03517afd2ab27d46702108b6a7e5414c19"
 dependencies = [
  "num-traits",
 ]
@@ -10643,6 +10644,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "separator"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f97841a747eef040fcd2e7b3b9a220a7205926e60488e673d9e4926d27772ce5"
+
+[[package]]
 name = "serde"
 version = "1.0.137"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -11790,6 +11797,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "sub-tokens"
+version = "0.1.0"
+source = "git+https://github.com/paritytech/substrate-debug-kit?branch=master#e12503ab781e913735dc389865a3b8b4a6c6399d"
+dependencies = [
+ "separator",
+]
+
+[[package]]
 name = "substrate-bip39"
 version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -12274,9 +12289,9 @@ dependencies = [
 
 [[package]]
 name = "tower-service"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "360dfd1d6d30e05fda32ace2c8c70e9c0a9da713275777f5a4dbb8a1893930c6"
+checksum = "b6bc1c9ce2b5135ac7f93c72918fc37feb872bdc6a5533a8b85eb4b86bfdae52"
 
 [[package]]
 name = "tracing"

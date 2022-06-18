@@ -14,19 +14,10 @@ use sp_runtime::{
 use sp_std::convert::{TryFrom, TryInto};
 use std::sync::Arc;
 pub use xyk_runtime_api::XykApi as XykRuntimeApi;
-use xyk_runtime_api::{RpcAmountsResult, RpcResult, RpcRewardsResult};
+use xyk_runtime_api::{RpcAmountsResult, RpcResult};
 
 #[rpc]
-pub trait XykApi<
-	BlockHash,
-	Balance,
-	TokenId,
-	AccountId,
-	ResponseTypePrice,
-	ResponseTypeAmounts,
-	ResponseTypeRewards,
->
-{
+pub trait XykApi<BlockHash, Balance, TokenId, AccountId, ResponseTypePrice, ResponseTypeAmounts> {
 	#[rpc(name = "xyk_calculate_sell_price")]
 	fn calculate_sell_price(
 		&self,
@@ -78,7 +69,7 @@ pub trait XykApi<
 		user: AccountId,
 		liquidity_asset_id: TokenId,
 		at: Option<BlockHash>,
-	) -> Result<ResponseTypeRewards>;
+	) -> Result<ResponseTypePrice>;
 }
 
 pub struct Xyk<C, M> {
@@ -114,7 +105,6 @@ impl<C, Block, Balance, TokenId, AccountId>
 		AccountId,
 		RpcResult<Balance>,
 		RpcAmountsResult<Balance>,
-		RpcRewardsResult<Balance>,
 	> for Xyk<C, Block>
 where
 	Block: BlockT,
@@ -256,7 +246,7 @@ where
 		user: AccountId,
 		liquidity_asset_id: TokenId,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> Result<RpcRewardsResult<Balance>> {
+	) -> Result<RpcResult<Balance>> {
 		let api = self.client.runtime_api();
 		let at = BlockId::<Block>::hash(at.unwrap_or_else(||
             // If the block hash is not supplied assume the best block.

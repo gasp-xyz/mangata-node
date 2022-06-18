@@ -68,7 +68,7 @@ version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fcb51a0695d8f838b1ee009b3fbf66bda078cd64590202a864a8f3e8c4315c47"
 dependencies = [
- "getrandom 0.2.6",
+ "getrandom 0.2.7",
  "once_cell",
  "version_check",
 ]
@@ -150,7 +150,7 @@ dependencies = [
  "frame-system",
  "mangata-primitives",
  "orml-tokens",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "rustc-hex",
  "scale-info",
  "serde",
@@ -166,7 +166,7 @@ version = "0.1.1"
 source = "git+https://github.com/mangata-finance//snowbridge?branch=mangata-dev-v0.9.18#aac327efad6ae7599560e2d62bb95186d59e0595"
 dependencies = [
  "frame-support",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "rustc-hex",
  "scale-info",
  "serde",
@@ -188,7 +188,7 @@ dependencies = [
  "hex-literal",
  "mangata-primitives",
  "orml-tokens",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "rlp",
  "rustc-hex",
  "scale-info",
@@ -213,7 +213,7 @@ dependencies = [
  "hex-literal",
  "mangata-primitives",
  "orml-tokens",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "rlp",
  "rustc-hex",
  "scale-info",
@@ -233,7 +233,7 @@ dependencies = [
  "ethereum-types 0.9.2",
  "hex-literal",
  "libsecp256k1 0.3.5",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "rlp",
  "rustc-hex",
  "serde",
@@ -474,7 +474,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b62ddb9cb1ec0a098ad4bbf9344d0713fa193ae1a80af55febcff2627b6a00c1"
 dependencies = [
  "futures-core",
- "getrandom 0.2.6",
+ "getrandom 0.2.7",
  "instant",
  "pin-project-lite 0.2.9",
  "rand 0.8.5",
@@ -545,7 +545,7 @@ dependencies = [
  "futures 0.3.21",
  "hex",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parking_lot 0.12.1",
  "sc-chain-spec",
  "sc-client-api",
@@ -578,7 +578,7 @@ dependencies = [
  "jsonrpc-derive",
  "jsonrpc-pubsub",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parking_lot 0.12.1",
  "sc-rpc",
  "sc-utils",
@@ -598,7 +598,7 @@ name = "beefy-primitives"
 version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.18#8cec9dc119a28a85c077faad85ee7b39caa416f5"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-api",
  "sp-application-crypto",
@@ -826,7 +826,7 @@ source = "git+https://github.com/mangata-finance//polkadot?branch=mangata-dev-v0
 dependencies = [
  "finality-grandpa",
  "frame-support",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-core",
@@ -842,7 +842,7 @@ source = "git+https://github.com/mangata-finance//polkadot?branch=mangata-dev-v0
 dependencies = [
  "bp-runtime",
  "frame-support",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-std",
 ]
@@ -857,7 +857,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "impl-trait-for-tuples",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-std",
@@ -872,7 +872,7 @@ dependencies = [
  "bp-runtime",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-api",
  "sp-core",
@@ -890,7 +890,7 @@ dependencies = [
  "bp-polkadot-core",
  "bp-runtime",
  "frame-support",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "smallvec",
  "sp-api",
  "sp-runtime",
@@ -906,7 +906,7 @@ dependencies = [
  "frame-support",
  "hash-db",
  "num-traits",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-core",
  "sp-io",
@@ -924,7 +924,7 @@ dependencies = [
  "bp-header-chain",
  "ed25519-dalek",
  "finality-grandpa",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sp-application-crypto",
  "sp-finality-grandpa",
  "sp-runtime",
@@ -940,7 +940,7 @@ dependencies = [
  "bp-polkadot-core",
  "bp-rococo",
  "bp-runtime",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sp-api",
  "sp-runtime",
  "sp-std",
@@ -960,7 +960,7 @@ dependencies = [
  "pallet-bridge-grandpa",
  "pallet-bridge-messages",
  "pallet-transaction-payment",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-core",
  "sp-runtime",
@@ -1085,7 +1085,7 @@ checksum = "4acbb09d9ee8e23699b9634375c72795d095bf268439da88562cf9b501f181fa"
 dependencies = [
  "camino",
  "cargo-platform",
- "semver 1.0.9",
+ "semver 1.0.10",
  "serde",
  "serde_json",
 ]
@@ -1226,16 +1226,16 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "3.1.18"
+version = "3.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d2dbdf4bdacb33466e854ce889eee8dfd5729abf7ccd7664d0a2d60cd384440b"
+checksum = "d53da17d37dba964b9b3ecb5c5a1f193a2762c700e6829201e645b9381c99dc7"
 dependencies = [
  "atty",
  "bitflags",
  "clap_derive",
  "clap_lex",
  "indexmap",
- "lazy_static",
+ "once_cell",
  "strsim",
  "termcolor",
  "textwrap 0.15.0",
@@ -1243,9 +1243,9 @@ dependencies = [
 
 [[package]]
 name = "clap_derive"
-version = "3.1.18"
+version = "3.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "25320346e922cffe59c0bbc5410c8d8784509efb321488971081313cb1e1a33c"
+checksum = "c11d40217d16aee8508cc8e5fde8b4ff24639758608e5374e731b53f85749fb9"
 dependencies = [
  "heck 0.4.0",
  "proc-macro-error",
@@ -1256,9 +1256,9 @@ dependencies = [
 
 [[package]]
 name = "clap_lex"
-version = "0.2.0"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a37c35f1112dad5e6e0b1adaff798507497a18fceeb30cceb3bae7d1427b9213"
+checksum = "5538cd660450ebeb4234cfecf8f2284b844ffc4c50531e66d584ad5b91293613"
 dependencies = [
  "os_str_bytes",
 ]
@@ -1471,9 +1471,9 @@ dependencies = [
 
 [[package]]
 name = "crossbeam-channel"
-version = "0.5.4"
+version = "0.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5aaa7bd5fb665c6864b5f963dd9097905c54125909c7aa94c9e18507cdbe6c53"
+checksum = "4c02a4d71819009c192cf4872265391563fd6a84c81ff2c0f2a7026ca4c1d85c"
 dependencies = [
  "cfg-if 1.0.0",
  "crossbeam-utils",
@@ -1492,26 +1492,26 @@ dependencies = [
 
 [[package]]
 name = "crossbeam-epoch"
-version = "0.9.8"
+version = "0.9.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1145cf131a2c6ba0615079ab6a638f7e1973ac9c2634fcbeaaad6114246efe8c"
+checksum = "07db9d94cbd326813772c968ccd25999e5f8ae22f4f8d1b11effa37ef6ce281d"
 dependencies = [
  "autocfg",
  "cfg-if 1.0.0",
  "crossbeam-utils",
- "lazy_static",
  "memoffset",
+ "once_cell",
  "scopeguard",
 ]
 
 [[package]]
 name = "crossbeam-utils"
-version = "0.8.8"
+version = "0.8.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0bf124c720b7686e3c2663cf54062ab0f68a88af2fb6a030e87e30bf721fcb38"
+checksum = "8ff1f980957787286a554052d03c7aee98d99cc32e09f6d45f0a814133c87978"
 dependencies = [
  "cfg-if 1.0.0",
- "lazy_static",
+ "once_cell",
 ]
 
 [[package]]
@@ -1628,7 +1628,7 @@ name = "cumulus-client-cli"
 version = "0.1.0"
 source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#4b3db5ae4c7afc9d698cbebf8fef99dcca8488ba"
 dependencies = [
- "clap 3.1.18",
+ "clap 3.2.5",
  "sc-cli",
  "sc-service",
  "url 2.2.2",
@@ -1644,7 +1644,7 @@ dependencies = [
  "cumulus-primitives-core",
  "cumulus-relay-chain-interface",
  "futures 0.3.21",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parking_lot 0.12.1",
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
@@ -1667,7 +1667,7 @@ dependencies = [
  "cumulus-client-consensus-common",
  "cumulus-primitives-core",
  "futures 0.3.21",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sc-client-api",
  "sc-consensus",
  "sc-consensus-aura",
@@ -1696,7 +1696,7 @@ dependencies = [
  "cumulus-relay-chain-interface",
  "dyn-clone",
  "futures 0.3.21",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "polkadot-primitives",
  "sc-client-api",
  "sc-consensus",
@@ -1718,7 +1718,7 @@ dependencies = [
  "derive_more",
  "futures 0.3.21",
  "futures-timer",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parking_lot 0.12.1",
  "polkadot-node-primitives",
  "polkadot-parachain",
@@ -1742,7 +1742,7 @@ dependencies = [
  "cumulus-relay-chain-interface",
  "futures 0.3.21",
  "futures-timer",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
  "polkadot-overseer",
@@ -1768,7 +1768,7 @@ dependencies = [
  "cumulus-client-pov-recovery",
  "cumulus-primitives-core",
  "cumulus-relay-chain-interface",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parking_lot 0.12.1",
  "polkadot-overseer",
  "polkadot-primitives",
@@ -1796,7 +1796,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-aura",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-application-crypto",
@@ -1814,7 +1814,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-io",
  "sp-runtime",
@@ -1837,7 +1837,7 @@ dependencies = [
  "impl-trait-for-tuples",
  "log",
  "pallet-balances",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "polkadot-parachain",
  "scale-info",
  "serde",
@@ -1867,27 +1867,13 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-session-benchmarking"
 version = "3.0.0"
-source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev#c0303aae6881f33e8ac1e6b7609dd1de048c6ae5"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "pallet-session",
- "parity-scale-codec 2.3.1",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "cumulus-pallet-session-benchmarking"
-version = "3.0.0"
 source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev-v0.9.18#4b3db5ae4c7afc9d698cbebf8fef99dcca8488ba"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
  "pallet-session",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sp-runtime",
  "sp-std",
 ]
@@ -1900,7 +1886,7 @@ dependencies = [
  "cumulus-primitives-core",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-io",
@@ -1918,7 +1904,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "rand_chacha 0.3.1",
  "scale-info",
  "sp-runtime",
@@ -1933,7 +1919,7 @@ version = "0.1.0"
 source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#4b3db5ae4c7afc9d698cbebf8fef99dcca8488ba"
 dependencies = [
  "frame-support",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "polkadot-core-primitives",
  "polkadot-parachain",
  "polkadot-primitives",
@@ -1952,7 +1938,7 @@ dependencies = [
  "cumulus-primitives-core",
  "cumulus-relay-chain-interface",
  "cumulus-test-relay-sproof-builder",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sc-client-api",
  "scale-info",
  "sp-api",
@@ -1973,7 +1959,7 @@ source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.
 dependencies = [
  "cumulus-primitives-core",
  "futures 0.3.21",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sp-inherents",
  "sp-std",
  "sp-timestamp",
@@ -1986,7 +1972,7 @@ source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "polkadot-core-primitives",
  "polkadot-parachain",
  "polkadot-primitives",
@@ -2034,7 +2020,7 @@ dependencies = [
  "derive_more",
  "futures 0.3.21",
  "jsonrpsee-core 0.9.0",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parking_lot 0.12.1",
  "polkadot-overseer",
  "polkadot-service",
@@ -2060,7 +2046,7 @@ dependencies = [
  "futures 0.3.21",
  "futures-timer",
  "jsonrpsee 0.9.0",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parking_lot 0.12.1",
  "polkadot-service",
  "sc-client-api",
@@ -2080,7 +2066,7 @@ version = "0.1.0"
 source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.18#4b3db5ae4c7afc9d698cbebf8fef99dcca8488ba"
 dependencies = [
  "cumulus-primitives-core",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "polkadot-primitives",
  "sp-runtime",
  "sp-state-machine",
@@ -2299,9 +2285,9 @@ dependencies = [
 
 [[package]]
 name = "dyn-clone"
-version = "1.0.5"
+version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "21e50f3adc76d6a43f5ed73b698a87d0760ca74617f60f7c3b879003536fdd28"
+checksum = "140206b78fb2bc3edbcfc9b5ccbd0b30699cfe8d348b8b31b330e47df5291a5a"
 
 [[package]]
 name = "ecdsa"
@@ -2642,7 +2628,7 @@ dependencies = [
  "futures-timer",
  "log",
  "num-traits",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parking_lot 0.11.2",
  "scale-info",
 ]
@@ -2708,7 +2694,7 @@ name = "fork-tree"
 version = "3.0.0"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.18#8cec9dc119a28a85c077faad85ee7b39caa416f5"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
 ]
 
 [[package]]
@@ -2723,9 +2709,9 @@ dependencies = [
 
 [[package]]
 name = "fragile"
-version = "1.2.0"
+version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e9d758e60b45e8d749c89c1b389ad8aee550f86aa12e2b9298b546dda7a82ab1"
+checksum = "85dcb89d2b10c5f6133de2efd8c11959ce9dbb46a2f7a4cab208c4eeda6ce1ab"
 
 [[package]]
 name = "frame-benchmarking"
@@ -2736,7 +2722,7 @@ dependencies = [
  "frame-system",
  "linregress",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "paste",
  "scale-info",
  "serde",
@@ -2756,7 +2742,7 @@ source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v
 dependencies = [
  "Inflector",
  "chrono",
- "clap 3.1.18",
+ "clap 3.2.5",
  "frame-benchmarking",
  "frame-support",
  "handlebars",
@@ -2767,7 +2753,7 @@ dependencies = [
  "linked-hash-map",
  "log",
  "memory-db",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "rand 0.8.5",
  "sc-cli",
  "sc-client-api",
@@ -2797,7 +2783,7 @@ source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v
 dependencies = [
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-arithmetic",
  "sp-npos-elections",
@@ -2813,7 +2799,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "merlin",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "schnorrkel",
  "sp-arithmetic",
@@ -2833,7 +2819,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "df6bb8542ef006ef0de09a5c4420787d79823c0ed7924225822362fd2bf2ff2d"
 dependencies = [
  "cfg-if 1.0.0",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
 ]
@@ -2849,7 +2835,7 @@ dependencies = [
  "impl-trait-for-tuples",
  "log",
  "once_cell",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "paste",
  "scale-info",
  "serde",
@@ -2908,7 +2894,7 @@ source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v
 dependencies = [
  "frame-support",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-core",
@@ -2926,7 +2912,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-core",
  "sp-runtime",
@@ -2941,7 +2927,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-core",
  "sp-runtime",
@@ -2953,7 +2939,7 @@ name = "frame-system-rpc-runtime-api"
 version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.18#8cec9dc119a28a85c077faad85ee7b39caa416f5"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sp-api",
 ]
 
@@ -3187,13 +3173,13 @@ dependencies = [
 
 [[package]]
 name = "getrandom"
-version = "0.2.6"
+version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9be70c98951c83b8d2f8f60d7065fa6d5146873094452a1008da8c2f1e4205ad"
+checksum = "4eb1a864a501629691edf6c15a593b7a51eebaa1e8468e9ddc623de7c9b58ec6"
 dependencies = [
  "cfg-if 1.0.0",
  "libc",
- "wasi 0.10.0+wasi-snapshot-preview1",
+ "wasi 0.11.0+wasi-snapshot-preview1",
 ]
 
 [[package]]
@@ -3225,9 +3211,9 @@ checksum = "9b919933a397b79c37e33b77bb2aa3dc8eb6e165ad809e58ff75bc7db2e34574"
 
 [[package]]
 name = "globset"
-version = "0.4.8"
+version = "0.4.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "10463d9ff00a2a068db14231982f5132edebad0d7660cd956a1c30292dbcbfbd"
+checksum = "0a1e17342619edbc21a964c2afbeb6c820c6a2560032872f397bb97ea127bd0a"
 dependencies = [
  "aho-corasick",
  "bstr",
@@ -3286,9 +3272,9 @@ checksum = "eabb4a44450da02c90444cf74558da904edde8fb4e9035a9a6a4e15445af0bd7"
 
 [[package]]
 name = "handlebars"
-version = "4.3.0"
+version = "4.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d113a9853e5accd30f43003560b5563ffbb007e3f325e8b103fa0d0029c6e6df"
+checksum = "b66d0c1b6e3abfd1e72818798925e16e02ed77e1b47f6c25a95a23b377ee4299"
 dependencies = [
  "log",
  "pest",
@@ -3586,7 +3572,7 @@ version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ba6a270039626615617f3f36d15fc827041df3b78c439da2cadfa47455a77f2f"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
 ]
 
 [[package]]
@@ -3620,12 +3606,12 @@ dependencies = [
 
 [[package]]
 name = "indexmap"
-version = "1.8.2"
+version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e6012d540c5baa3589337a98ce73408de9b5a25ec9fc2c6fd6be8f0d39e0ca5a"
+checksum = "6c6392766afd7964e2531940894cffe4bd8d7d17dbc3c1c4857040fd4b33bdb3"
 dependencies = [
  "autocfg",
- "hashbrown 0.11.2",
+ "hashbrown 0.12.1",
  "serde",
 ]
 
@@ -3727,9 +3713,9 @@ dependencies = [
 
 [[package]]
 name = "js-sys"
-version = "0.3.57"
+version = "0.3.58"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "671a26f820db17c2a2750743f1dd03bafd15b98c9f30c7c2628c024c05d73397"
+checksum = "c3fac17f7123a73ca62df411b1bf727ccc805daa070338fda671c86dac1bdc27"
 dependencies = [
  "wasm-bindgen",
 ]
@@ -4208,7 +4194,7 @@ dependencies = [
  "pallet-utility",
  "pallet-vesting",
  "pallet-xcm",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "polkadot-primitives",
  "polkadot-runtime-common",
  "polkadot-runtime-parachains",
@@ -4715,7 +4701,7 @@ dependencies = [
  "libp2p-core",
  "libp2p-swarm",
  "log",
- "lru 0.7.6",
+ "lru 0.7.7",
  "rand 0.7.3",
  "smallvec",
  "unsigned-varint 0.7.1",
@@ -4972,9 +4958,9 @@ dependencies = [
 
 [[package]]
 name = "lru"
-version = "0.7.6"
+version = "0.7.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8015d95cb7b2ddd3c0d32ca38283ceb1eea09b4713ee380bceb942d85a244228"
+checksum = "c84e6fe5655adc6ce00787cf7dcaf8dc4f998a0565d23eafc207a8b08ca3349a"
 dependencies = [
  "hashbrown 0.11.2",
 ]
@@ -5028,7 +5014,7 @@ dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
- "cumulus-pallet-session-benchmarking 3.0.0 (git+https://github.com/mangata-finance/cumulus?branch=mangata-dev-v0.9.18)",
+ "cumulus-pallet-session-benchmarking",
  "cumulus-pallet-xcm",
  "cumulus-pallet-xcmp-queue",
  "cumulus-primitives-core",
@@ -5073,7 +5059,7 @@ dependencies = [
  "pallet-xyk",
  "parachain-info",
  "parachain-staking",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "polkadot-parachain",
  "polkadot-runtime-common",
  "scale-info",
@@ -5107,7 +5093,7 @@ version = "0.1.0"
 dependencies = [
  "artemis-core",
  "cfg-if 1.0.0",
- "clap 3.1.18",
+ "clap 3.2.5",
  "criterion",
  "cumulus-client-cli",
  "cumulus-client-consensus-aura",
@@ -5139,7 +5125,7 @@ dependencies = [
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "polkadot-cli",
  "polkadot-parachain",
  "polkadot-primitives",
@@ -5184,6 +5170,7 @@ dependencies = [
  "sp-tracing",
  "sp-transaction-pool",
  "sp-trie",
+ "sub-tokens",
  "substrate-build-script-utils",
  "substrate-prometheus-endpoint",
  "tokio",
@@ -5212,7 +5199,7 @@ dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
- "cumulus-pallet-session-benchmarking 3.0.0 (git+https://github.com/mangata-finance/cumulus?branch=mangata-dev)",
+ "cumulus-pallet-session-benchmarking",
  "cumulus-pallet-xcm",
  "cumulus-pallet-xcmp-queue",
  "cumulus-primitives-core",
@@ -5257,7 +5244,7 @@ dependencies = [
  "pallet-xyk",
  "parachain-info",
  "parachain-staking",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "polkadot-parachain",
  "polkadot-runtime-common",
  "scale-info",
@@ -5295,7 +5282,7 @@ dependencies = [
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sc-client-api",
  "sc-rpc-api",
  "sc-transaction-pool-api",
@@ -5723,9 +5710,9 @@ dependencies = [
 
 [[package]]
 name = "num-complex"
-version = "0.4.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97fbc387afefefd5e9e39493299f3069e14a140dd34dc19b4c1c1a8fddb6a790"
+checksum = "7ae39348c8bc5fbd7f40c727a9925f03517afd2ab27d46702108b6a7e5414c19"
 dependencies = [
  "num-traits",
 ]
@@ -5885,7 +5872,7 @@ dependencies = [
  "frame-system",
  "mangata-primitives",
  "orml-traits",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-runtime",
@@ -5901,7 +5888,7 @@ dependencies = [
  "impl-trait-for-tuples",
  "num-traits",
  "orml-utilities",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-io",
@@ -5918,7 +5905,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "orml-xcm-support",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-std",
@@ -5931,7 +5918,7 @@ version = "0.4.1-dev"
 source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.18#bfcc0dc56febf9a3a68f9e9632516771f3b039a4"
 dependencies = [
  "frame-support",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-io",
@@ -5947,7 +5934,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-xcm",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-std",
  "xcm",
@@ -5960,7 +5947,7 @@ source = "git+https://github.com/mangata-finance//open-runtime-module-library?br
 dependencies = [
  "frame-support",
  "orml-traits",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sp-runtime",
  "sp-std",
  "xcm",
@@ -5977,7 +5964,7 @@ dependencies = [
  "frame-system",
  "orml-traits",
  "orml-xcm-support",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-io",
@@ -6011,7 +5998,7 @@ dependencies = [
  "mangata-primitives",
  "orml-tokens",
  "orml-traits",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-core",
@@ -6028,7 +6015,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-timestamp",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-application-crypto",
  "sp-consensus-aura",
@@ -6044,7 +6031,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-session",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-application-crypto",
  "sp-authority-discovery",
@@ -6060,7 +6047,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "impl-trait-for-tuples",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-authorship",
  "sp-runtime",
@@ -6079,7 +6066,7 @@ dependencies = [
  "pallet-authorship",
  "pallet-session",
  "pallet-timestamp",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-application-crypto",
  "sp-consensus-babe",
@@ -6102,7 +6089,7 @@ dependencies = [
  "frame-system",
  "log",
  "pallet-balances",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-core",
  "sp-io",
@@ -6120,7 +6107,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-runtime",
  "sp-std",
@@ -6135,7 +6122,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-session",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-runtime",
@@ -6158,7 +6145,7 @@ dependencies = [
  "pallet-mmr",
  "pallet-mmr-primitives",
  "pallet-session",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-core",
@@ -6183,7 +6170,7 @@ dependencies = [
  "pallet-issuance",
  "pallet-vesting-mangata",
  "pallet-xyk",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "serial_test",
@@ -6206,7 +6193,7 @@ dependencies = [
  "frame-system",
  "log",
  "pallet-treasury",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-core",
  "sp-io",
@@ -6230,7 +6217,7 @@ dependencies = [
  "orml-tokens",
  "orml-traits",
  "pallet-verifier",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-core",
@@ -6249,7 +6236,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-core",
  "sp-runtime",
@@ -6269,7 +6256,7 @@ dependencies = [
  "frame-system",
  "log",
  "num-traits",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-finality-grandpa",
@@ -6291,7 +6278,7 @@ dependencies = [
  "frame-system",
  "log",
  "num-traits",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-core",
@@ -6308,7 +6295,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-core",
  "sp-io",
@@ -6329,7 +6316,7 @@ dependencies = [
  "mangata-primitives",
  "orml-tokens",
  "pallet-utility",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-core",
@@ -6347,7 +6334,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-io",
@@ -6365,7 +6352,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "rand 0.7.3",
  "scale-info",
  "sp-arithmetic",
@@ -6387,7 +6374,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-core",
  "sp-io",
@@ -6404,7 +6391,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-arithmetic",
  "sp-runtime",
@@ -6422,7 +6409,7 @@ dependencies = [
  "log",
  "pallet-authorship",
  "pallet-session",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-application-crypto",
  "sp-core",
@@ -6443,7 +6430,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-io",
  "sp-runtime",
@@ -6460,7 +6447,7 @@ dependencies = [
  "frame-system",
  "log",
  "pallet-authorship",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-application-crypto",
  "sp-core",
@@ -6478,7 +6465,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-core",
  "sp-io",
@@ -6500,7 +6487,7 @@ dependencies = [
  "orml-tokens",
  "orml-traits",
  "pallet-vesting-mangata",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-core",
@@ -6518,7 +6505,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-core",
  "sp-io",
@@ -6536,7 +6523,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-mmr-primitives",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-core",
  "sp-io",
@@ -6552,7 +6539,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "serde",
  "sp-api",
  "sp-core",
@@ -6569,7 +6556,7 @@ dependencies = [
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "pallet-mmr-primitives",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "serde",
  "sp-api",
  "sp-blockchain",
@@ -6585,7 +6572,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-io",
  "sp-runtime",
@@ -6599,7 +6586,7 @@ source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v
 dependencies = [
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-io",
  "sp-runtime",
@@ -6615,7 +6602,7 @@ dependencies = [
  "frame-system",
  "log",
  "pallet-balances",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-runtime",
@@ -6639,7 +6626,7 @@ dependencies = [
  "pallet-offences",
  "pallet-session",
  "pallet-staking",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-runtime",
  "sp-staking",
@@ -6654,7 +6641,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-core",
  "sp-io",
@@ -6670,7 +6657,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-io",
  "sp-runtime",
@@ -6684,7 +6671,7 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.18#fc
 dependencies = [
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-io",
  "sp-runtime",
@@ -6700,7 +6687,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-io",
  "sp-runtime",
@@ -6717,7 +6704,7 @@ dependencies = [
  "impl-trait-for-tuples",
  "log",
  "pallet-timestamp",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-core",
  "sp-io",
@@ -6751,7 +6738,7 @@ source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v
 dependencies = [
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "rand_chacha 0.2.2",
  "scale-info",
  "sp-runtime",
@@ -6770,7 +6757,7 @@ dependencies = [
  "log",
  "pallet-authorship",
  "pallet-session",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "rand_chacha 0.2.2",
  "scale-info",
  "serde",
@@ -6808,7 +6795,7 @@ source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v
 dependencies = [
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-io",
  "sp-runtime",
@@ -6821,7 +6808,7 @@ version = "4.0.0-dev"
 dependencies = [
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-core",
  "sp-io",
@@ -6838,7 +6825,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-inherents",
  "sp-io",
@@ -6857,7 +6844,7 @@ dependencies = [
  "frame-system",
  "log",
  "pallet-treasury",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-core",
@@ -6873,7 +6860,7 @@ source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v
 dependencies = [
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "smallvec",
@@ -6892,7 +6879,7 @@ dependencies = [
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "pallet-transaction-payment-rpc-runtime-api",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sp-api",
  "sp-blockchain",
  "sp-core",
@@ -6906,7 +6893,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.18#8cec9dc119a28a85c077faad85ee7b39caa416f5"
 dependencies = [
  "pallet-transaction-payment",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sp-api",
  "sp-runtime",
 ]
@@ -6921,7 +6908,7 @@ dependencies = [
  "frame-system",
  "impl-trait-for-tuples",
  "pallet-balances",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-runtime",
@@ -6936,7 +6923,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-core",
  "sp-io",
@@ -6953,7 +6940,7 @@ dependencies = [
  "artemis-ethereum",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "rustc-hex",
  "scale-info",
  "serde",
@@ -6972,7 +6959,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-runtime",
  "sp-std",
@@ -6988,7 +6975,7 @@ dependencies = [
  "frame-system",
  "log",
  "orml-tokens",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-runtime",
  "sp-std",
@@ -7002,7 +6989,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-core",
@@ -7021,7 +7008,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-runtime",
  "sp-std",
@@ -7048,7 +7035,7 @@ dependencies = [
  "pallet-bootstrap",
  "pallet-issuance",
  "pallet-vesting-mangata",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "rustc-hex",
  "scale-info",
  "serde",
@@ -7069,7 +7056,7 @@ dependencies = [
  "cumulus-primitives-core",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
 ]
@@ -7090,7 +7077,7 @@ dependencies = [
  "pallet-issuance",
  "pallet-session",
  "pallet-xyk",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-runtime",
@@ -7131,20 +7118,9 @@ dependencies = [
 
 [[package]]
 name = "parity-scale-codec"
-version = "2.3.1"
+version = "3.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "373b1a4c1338d9cd3d1fa53b3a11bdab5ab6bd80a20f7f7becd76953ae2be909"
-dependencies = [
- "arrayvec 0.7.2",
- "byte-slice-cast 1.2.1",
- "impl-trait-for-tuples",
-]
-
-[[package]]
-name = "parity-scale-codec"
-version = "3.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8b44461635bbb1a0300f100a841e571e7d919c81c73075ef5d152ffdb521066"
+checksum = "9182e4a71cae089267ab03e67c99368db7cd877baf50f931e5d6d4b71e195ac0"
 dependencies = [
  "arrayvec 0.7.2",
  "bitvec 1.0.0",
@@ -7156,9 +7132,9 @@ dependencies = [
 
 [[package]]
 name = "parity-scale-codec-derive"
-version = "3.1.2"
+version = "3.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c45ed1f39709f5a89338fab50e59816b2e8815f5bb58276e7ddf9afd495f73f8"
+checksum = "9299338969a3d2f491d65f140b00ddec470858402f888af98e8642fb5e8965cd"
 dependencies = [
  "proc-macro-crate 1.1.3",
  "proc-macro2",
@@ -7539,8 +7515,8 @@ dependencies = [
  "derive_more",
  "fatality",
  "futures 0.3.21",
- "lru 0.7.6",
- "parity-scale-codec 3.1.2",
+ "lru 0.7.7",
+ "parity-scale-codec 3.1.5",
  "polkadot-erasure-coding",
  "polkadot-node-network-protocol",
  "polkadot-node-primitives",
@@ -7561,8 +7537,8 @@ source = "git+https://github.com/mangata-finance//polkadot?branch=mangata-dev-v0
 dependencies = [
  "fatality",
  "futures 0.3.21",
- "lru 0.7.6",
- "parity-scale-codec 3.1.2",
+ "lru 0.7.7",
+ "parity-scale-codec 3.1.5",
  "polkadot-erasure-coding",
  "polkadot-node-network-protocol",
  "polkadot-node-primitives",
@@ -7580,7 +7556,7 @@ name = "polkadot-cli"
 version = "0.9.18"
 source = "git+https://github.com/mangata-finance//polkadot?branch=mangata-dev-v0.9.18#25ebf7fb059c7f1f9c17ea5b7e0fef1c5dff8e31"
 dependencies = [
- "clap 3.1.18",
+ "clap 3.2.5",
  "frame-benchmarking-cli",
  "futures 0.3.21",
  "log",
@@ -7654,7 +7630,7 @@ name = "polkadot-core-primitives"
 version = "0.9.18"
 source = "git+https://github.com/mangata-finance//polkadot?branch=mangata-dev-v0.9.18#25ebf7fb059c7f1f9c17ea5b7e0fef1c5dff8e31"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parity-util-mem",
  "scale-info",
  "sp-core",
@@ -7670,8 +7646,8 @@ dependencies = [
  "derive_more",
  "fatality",
  "futures 0.3.21",
- "lru 0.7.6",
- "parity-scale-codec 3.1.2",
+ "lru 0.7.7",
+ "parity-scale-codec 3.1.5",
  "polkadot-erasure-coding",
  "polkadot-node-network-protocol",
  "polkadot-node-primitives",
@@ -7690,7 +7666,7 @@ name = "polkadot-erasure-coding"
 version = "0.9.18"
 source = "git+https://github.com/mangata-finance//polkadot?branch=mangata-dev-v0.9.18#25ebf7fb059c7f1f9c17ea5b7e0fef1c5dff8e31"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "polkadot-node-primitives",
  "polkadot-primitives",
  "reed-solomon-novelpoly",
@@ -7726,7 +7702,7 @@ source = "git+https://github.com/mangata-finance//polkadot?branch=mangata-dev-v0
 dependencies = [
  "async-trait",
  "futures 0.3.21",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parking_lot 0.12.1",
  "polkadot-node-network-protocol",
  "polkadot-node-subsystem",
@@ -7744,7 +7720,7 @@ version = "0.9.18"
 source = "git+https://github.com/mangata-finance//polkadot?branch=mangata-dev-v0.9.18#25ebf7fb059c7f1f9c17ea5b7e0fef1c5dff8e31"
 dependencies = [
  "futures 0.3.21",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "polkadot-erasure-coding",
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
@@ -7766,9 +7742,9 @@ dependencies = [
  "futures 0.3.21",
  "futures-timer",
  "kvdb",
- "lru 0.7.6",
+ "lru 0.7.7",
  "merlin",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "polkadot-node-jaeger",
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
@@ -7793,7 +7769,7 @@ dependencies = [
  "futures 0.3.21",
  "futures-timer",
  "kvdb",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "polkadot-erasure-coding",
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
@@ -7844,7 +7820,7 @@ source = "git+https://github.com/mangata-finance//polkadot?branch=mangata-dev-v0
 dependencies = [
  "async-trait",
  "futures 0.3.21",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "polkadot-node-core-pvf",
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
@@ -7878,7 +7854,7 @@ dependencies = [
  "futures 0.3.21",
  "futures-timer",
  "kvdb",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
@@ -7895,8 +7871,8 @@ dependencies = [
  "fatality",
  "futures 0.3.21",
  "kvdb",
- "lru 0.7.6",
- "parity-scale-codec 3.1.2",
+ "lru 0.7.7",
+ "parity-scale-codec 3.1.5",
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
@@ -7951,7 +7927,7 @@ dependencies = [
  "async-std",
  "futures 0.3.21",
  "futures-timer",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "pin-project 1.0.10",
  "polkadot-core-primitives",
  "polkadot-node-subsystem-util",
@@ -8013,7 +7989,7 @@ dependencies = [
  "lazy_static",
  "log",
  "mick-jaeger",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parking_lot 0.12.1",
  "polkadot-node-primitives",
  "polkadot-primitives",
@@ -8032,7 +8008,7 @@ dependencies = [
  "futures-timer",
  "log",
  "metered-channel",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "polkadot-primitives",
  "sc-cli",
  "sc-service",
@@ -8049,13 +8025,13 @@ dependencies = [
  "async-trait",
  "fatality",
  "futures 0.3.21",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "polkadot-node-jaeger",
  "polkadot-node-primitives",
  "polkadot-primitives",
  "sc-authority-discovery",
  "sc-network",
- "strum 0.24.0",
+ "strum 0.24.1",
  "thiserror",
 ]
 
@@ -8066,7 +8042,7 @@ source = "git+https://github.com/mangata-finance//polkadot?branch=mangata-dev-v0
 dependencies = [
  "bounded-vec",
  "futures 0.3.21",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "polkadot-parachain",
  "polkadot-primitives",
  "schnorrkel",
@@ -8121,10 +8097,10 @@ dependencies = [
  "futures 0.3.21",
  "itertools",
  "kvdb",
- "lru 0.7.6",
+ "lru 0.7.7",
  "metered-channel",
  "parity-db",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parity-util-mem",
  "parking_lot 0.11.2",
  "pin-project 1.0.10",
@@ -8150,7 +8126,7 @@ source = "git+https://github.com/mangata-finance//polkadot?branch=mangata-dev-v0
 dependencies = [
  "futures 0.3.21",
  "futures-timer",
- "lru 0.7.6",
+ "lru 0.7.7",
  "parity-util-mem",
  "parking_lot 0.12.1",
  "polkadot-node-metrics",
@@ -8200,7 +8176,7 @@ source = "git+https://github.com/mangata-finance//polkadot?branch=mangata-dev-v0
 dependencies = [
  "derive_more",
  "frame-support",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parity-util-mem",
  "polkadot-core-primitives",
  "scale-info",
@@ -8233,7 +8209,7 @@ dependencies = [
  "bitvec 1.0.0",
  "frame-system",
  "hex-literal",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parity-util-mem",
  "polkadot-core-primitives",
  "polkadot-parachain",
@@ -8338,7 +8314,7 @@ dependencies = [
  "pallet-utility",
  "pallet-vesting",
  "pallet-xcm",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "polkadot-primitives",
  "polkadot-runtime-common",
  "polkadot-runtime-constants",
@@ -8396,7 +8372,7 @@ dependencies = [
  "pallet-transaction-payment",
  "pallet-treasury",
  "pallet-vesting",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "polkadot-primitives",
  "polkadot-runtime-parachains",
  "rustc-hex",
@@ -8435,7 +8411,7 @@ version = "0.9.18"
 source = "git+https://github.com/mangata-finance//polkadot?branch=mangata-dev-v0.9.18#25ebf7fb059c7f1f9c17ea5b7e0fef1c5dff8e31"
 dependencies = [
  "bs58",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "polkadot-primitives",
  "sp-std",
  "sp-tracing",
@@ -8461,7 +8437,7 @@ dependencies = [
  "pallet-staking",
  "pallet-timestamp",
  "pallet-vesting",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "polkadot-primitives",
  "polkadot-runtime-metrics",
  "rand 0.8.5",
@@ -8497,7 +8473,7 @@ dependencies = [
  "kusama-runtime",
  "kvdb",
  "kvdb-rocksdb",
- "lru 0.7.6",
+ "lru 0.7.7",
  "pallet-babe",
  "pallet-im-online",
  "pallet-mmr-primitives",
@@ -8593,7 +8569,7 @@ dependencies = [
  "fatality",
  "futures 0.3.21",
  "indexmap",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "polkadot-node-network-protocol",
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
@@ -8610,7 +8586,7 @@ name = "polkadot-statement-table"
 version = "0.9.18"
 source = "git+https://github.com/mangata-finance//polkadot?branch=mangata-dev-v0.9.18#25ebf7fb059c7f1f9c17ea5b7e0fef1c5dff8e31"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "polkadot-primitives",
  "sp-core",
 ]
@@ -8646,7 +8622,7 @@ dependencies = [
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-vesting",
  "pallet-xcm",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-runtime-common",
@@ -9054,7 +9030,7 @@ version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d34f1408f55294453790c48b2f1ebbb1c5b4b7563eb1f418bcfcfdbb06ebb4e7"
 dependencies = [
- "getrandom 0.2.6",
+ "getrandom 0.2.7",
 ]
 
 [[package]]
@@ -9130,7 +9106,7 @@ version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b033d837a7cf162d7993aded9304e30a83213c648b6e389db233191f891e5c2b"
 dependencies = [
- "getrandom 0.2.6",
+ "getrandom 0.2.7",
  "redox_syscall",
  "thiserror",
 ]
@@ -9225,7 +9201,7 @@ dependencies = [
  "env_logger",
  "jsonrpsee 0.8.0",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "serde",
  "serde_json",
  "sp-core",
@@ -9338,7 +9314,7 @@ dependencies = [
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-utility",
  "pallet-xcm",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-runtime-common",
@@ -9423,7 +9399,7 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bfa0f585226d2e68097d4f95d113b15b83a82e819ab25717ec0590d9584ef366"
 dependencies = [
- "semver 1.0.9",
+ "semver 1.0.10",
 ]
 
 [[package]]
@@ -9561,7 +9537,7 @@ dependencies = [
  "ip_network",
  "libp2p",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "prost",
  "prost-build",
  "rand 0.7.3",
@@ -9585,7 +9561,7 @@ dependencies = [
  "futures 0.3.21",
  "futures-timer",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sc-block-builder",
  "sc-client-api",
  "sc-proposer-metrics",
@@ -9608,7 +9584,7 @@ dependencies = [
  "futures 0.3.21",
  "futures-timer",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sc-block-builder-ver",
  "sc-client-api",
  "sc-proposer-metrics",
@@ -9630,7 +9606,7 @@ name = "sc-block-builder"
 version = "0.10.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.18#8cec9dc119a28a85c077faad85ee7b39caa416f5"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sc-client-api",
  "sp-api",
  "sp-block-builder",
@@ -9648,7 +9624,7 @@ source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v
 dependencies = [
  "extrinsic-shuffler",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sc-client-api",
  "sp-api",
  "sp-block-builder",
@@ -9668,7 +9644,7 @@ source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v
 dependencies = [
  "impl-trait-for-tuples",
  "memmap2 0.5.4",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sc-chain-spec-derive",
  "sc-network",
  "sc-telemetry",
@@ -9695,14 +9671,14 @@ version = "0.10.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.18#8cec9dc119a28a85c077faad85ee7b39caa416f5"
 dependencies = [
  "chrono",
- "clap 3.1.18",
+ "clap 3.2.5",
  "fdlimit",
  "futures 0.3.21",
  "hex",
  "libp2p",
  "log",
  "names",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "rand 0.7.3",
  "regex",
  "rpassword",
@@ -9736,7 +9712,7 @@ dependencies = [
  "futures 0.3.21",
  "hash-db",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parking_lot 0.12.1",
  "sc-executor",
  "sc-transaction-pool-api",
@@ -9767,7 +9743,7 @@ dependencies = [
  "linked-hash-map",
  "log",
  "parity-db",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parking_lot 0.12.1",
  "sc-client-api",
  "sc-state-db",
@@ -9812,7 +9788,7 @@ dependencies = [
  "async-trait",
  "futures 0.3.21",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sc-block-builder",
  "sc-client-api",
  "sc-consensus",
@@ -9846,7 +9822,7 @@ dependencies = [
  "num-bigint",
  "num-rational 0.2.4",
  "num-traits",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parking_lot 0.12.1",
  "rand 0.7.3",
  "retain_mut",
@@ -9906,7 +9882,7 @@ version = "0.10.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.18#8cec9dc119a28a85c077faad85ee7b39caa416f5"
 dependencies = [
  "fork-tree",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sc-client-api",
  "sc-consensus",
  "sp-blockchain",
@@ -9922,7 +9898,7 @@ dependencies = [
  "futures 0.3.21",
  "futures-timer",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sc-client-api",
  "sc-consensus",
  "sc-telemetry",
@@ -9959,7 +9935,7 @@ source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v
 dependencies = [
  "lazy_static",
  "lru 0.6.6",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parking_lot 0.12.1",
  "sc-executor-common",
  "sc-executor-wasmi",
@@ -9985,7 +9961,7 @@ version = "0.10.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.18#8cec9dc119a28a85c077faad85ee7b39caa416f5"
 dependencies = [
  "environmental",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sc-allocator",
  "sp-core",
  "sp-maybe-compressed-blob",
@@ -10002,7 +9978,7 @@ version = "0.10.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.18#8cec9dc119a28a85c077faad85ee7b39caa416f5"
 dependencies = [
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sc-allocator",
  "sc-executor-common",
  "scoped-tls",
@@ -10020,7 +9996,7 @@ dependencies = [
  "cfg-if 1.0.0",
  "libc",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parity-wasm 0.42.2",
  "sc-allocator",
  "sc-executor-common",
@@ -10044,7 +10020,7 @@ dependencies = [
  "futures-timer",
  "hex",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parking_lot 0.12.1",
  "rand 0.8.5",
  "sc-block-builder",
@@ -10082,7 +10058,7 @@ dependencies = [
  "jsonrpc-derive",
  "jsonrpc-pubsub",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sc-client-api",
  "sc-finality-grandpa",
  "sc-rpc",
@@ -10147,8 +10123,8 @@ dependencies = [
  "linked-hash-map",
  "linked_hash_set",
  "log",
- "lru 0.7.6",
- "parity-scale-codec 3.1.2",
+ "lru 0.7.7",
+ "parity-scale-codec 3.1.5",
  "parking_lot 0.12.1",
  "pin-project 1.0.10",
  "prost",
@@ -10185,7 +10161,7 @@ dependencies = [
  "futures-timer",
  "libp2p",
  "log",
- "lru 0.7.6",
+ "lru 0.7.7",
  "sc-network",
  "sp-runtime",
  "substrate-prometheus-endpoint",
@@ -10206,7 +10182,7 @@ dependencies = [
  "hyper-rustls 0.22.1",
  "num_cpus",
  "once_cell",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parking_lot 0.12.1",
  "rand 0.7.3",
  "sc-client-api",
@@ -10252,7 +10228,7 @@ dependencies = [
  "jsonrpc-core",
  "jsonrpc-pubsub",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parking_lot 0.12.1",
  "sc-block-builder",
  "sc-chain-spec",
@@ -10284,7 +10260,7 @@ dependencies = [
  "jsonrpc-derive",
  "jsonrpc-pubsub",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parking_lot 0.12.1",
  "sc-chain-spec",
  "sc-transaction-pool-api",
@@ -10329,7 +10305,7 @@ dependencies = [
  "jsonrpc-core",
  "jsonrpc-pubsub",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parity-util-mem",
  "parking_lot 0.12.1",
  "pin-project 1.0.10",
@@ -10387,7 +10363,7 @@ version = "0.10.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.18#8cec9dc119a28a85c077faad85ee7b39caa416f5"
 dependencies = [
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parity-util-mem",
  "parity-util-mem-derive",
  "parking_lot 0.12.1",
@@ -10403,7 +10379,7 @@ dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
  "jsonrpc-derive",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sc-chain-spec",
  "sc-client-api",
  "sc-consensus-babe",
@@ -10485,7 +10461,7 @@ dependencies = [
  "futures-timer",
  "linked-hash-map",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parity-util-mem",
  "parking_lot 0.12.1",
  "retain_mut",
@@ -10538,7 +10514,7 @@ dependencies = [
  "bitvec 1.0.0",
  "cfg-if 1.0.0",
  "derive_more",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info-derive",
  "serde",
 ]
@@ -10698,9 +10674,9 @@ dependencies = [
 
 [[package]]
 name = "semver"
-version = "1.0.9"
+version = "1.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8cb243bdfdb5936c8dc3c45762a19d12ab4550cdc753bc247637d4ec35a040fd"
+checksum = "a41d061efea015927ac527063765e73601444cdc344ba855bc7bd44578b25e1c"
 dependencies = [
  "serde",
 ]
@@ -10719,6 +10695,12 @@ checksum = "00b0bef5b7f9e0df16536d3961cfb6e84331c065b4066afb39768d0e319411f7"
 dependencies = [
  "pest",
 ]
+
+[[package]]
+name = "separator"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f97841a747eef040fcd2e7b3b9a220a7205926e60488e673d9e4926d27772ce5"
 
 [[package]]
 name = "serde"
@@ -10944,7 +10926,7 @@ version = "0.9.18"
 source = "git+https://github.com/mangata-finance//polkadot?branch=mangata-dev-v0.9.18#25ebf7fb059c7f1f9c17ea5b7e0fef1c5dff8e31"
 dependencies = [
  "enumn",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "paste",
  "sp-runtime",
  "sp-std",
@@ -11033,7 +11015,7 @@ source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v
 dependencies = [
  "hash-db",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sp-api-proc-macro",
  "sp-core",
  "sp-runtime",
@@ -11060,7 +11042,7 @@ name = "sp-application-crypto"
 version = "6.0.0"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.18#8cec9dc119a28a85c077faad85ee7b39caa416f5"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-core",
@@ -11075,7 +11057,7 @@ source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v
 dependencies = [
  "integer-sqrt",
  "num-traits",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-debug-derive",
@@ -11088,7 +11070,7 @@ name = "sp-authority-discovery"
 version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.18#8cec9dc119a28a85c077faad85ee7b39caa416f5"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-api",
  "sp-application-crypto",
@@ -11102,7 +11084,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.18#8cec9dc119a28a85c077faad85ee7b39caa416f5"
 dependencies = [
  "async-trait",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sp-inherents",
  "sp-runtime",
  "sp-std",
@@ -11113,7 +11095,7 @@ name = "sp-block-builder"
 version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.18#8cec9dc119a28a85c077faad85ee7b39caa416f5"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sp-api",
  "sp-inherents",
  "sp-runtime",
@@ -11127,8 +11109,8 @@ source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v
 dependencies = [
  "futures 0.3.21",
  "log",
- "lru 0.7.6",
- "parity-scale-codec 3.1.2",
+ "lru 0.7.7",
+ "parity-scale-codec 3.1.5",
  "parking_lot 0.12.1",
  "sp-api",
  "sp-consensus",
@@ -11157,7 +11139,7 @@ dependencies = [
  "futures 0.3.21",
  "futures-timer",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sp-core",
  "sp-inherents",
  "sp-runtime",
@@ -11173,7 +11155,7 @@ version = "0.10.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.18#8cec9dc119a28a85c077faad85ee7b39caa416f5"
 dependencies = [
  "async-trait",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-api",
  "sp-application-crypto",
@@ -11192,7 +11174,7 @@ source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v
 dependencies = [
  "async-trait",
  "merlin",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-api",
@@ -11213,7 +11195,7 @@ name = "sp-consensus-slots"
 version = "0.10.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.18#8cec9dc119a28a85c077faad85ee7b39caa416f5"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-arithmetic",
@@ -11227,7 +11209,7 @@ name = "sp-consensus-vrf"
 version = "0.10.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.18#8cec9dc119a28a85c077faad85ee7b39caa416f5"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "schnorrkel",
  "sp-core",
  "sp-runtime",
@@ -11255,7 +11237,7 @@ dependencies = [
  "log",
  "merlin",
  "num-traits",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parity-util-mem",
  "parking_lot 0.12.1",
  "primitive-types 0.11.1",
@@ -11330,7 +11312,7 @@ version = "0.12.0"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.18#8cec9dc119a28a85c077faad85ee7b39caa416f5"
 dependencies = [
  "environmental",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sp-std",
  "sp-storage",
 ]
@@ -11342,7 +11324,7 @@ source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v
 dependencies = [
  "finality-grandpa",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-api",
@@ -11360,7 +11342,7 @@ source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v
 dependencies = [
  "async-trait",
  "impl-trait-for-tuples",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sp-core",
  "sp-runtime",
  "sp-std",
@@ -11376,7 +11358,7 @@ dependencies = [
  "hash-db",
  "libsecp256k1 0.7.0",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parking_lot 0.12.1",
  "secp256k1",
  "sp-core",
@@ -11411,7 +11393,7 @@ dependencies = [
  "async-trait",
  "futures 0.3.21",
  "merlin",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parking_lot 0.12.1",
  "schnorrkel",
  "serde",
@@ -11434,7 +11416,7 @@ name = "sp-npos-elections"
 version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.18#8cec9dc119a28a85c077faad85ee7b39caa416f5"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-arithmetic",
@@ -11494,7 +11476,7 @@ dependencies = [
  "hash256-std-hasher",
  "impl-trait-for-tuples",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parity-util-mem",
  "paste",
  "rand 0.7.3",
@@ -11513,7 +11495,7 @@ version = "6.0.0"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.18#8cec9dc119a28a85c077faad85ee7b39caa416f5"
 dependencies = [
  "impl-trait-for-tuples",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "primitive-types 0.11.1",
  "sp-externalities",
  "sp-runtime-interface-proc-macro",
@@ -11550,7 +11532,7 @@ name = "sp-session"
 version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.18#8cec9dc119a28a85c077faad85ee7b39caa416f5"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-api",
  "sp-core",
@@ -11564,7 +11546,7 @@ name = "sp-staking"
 version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.18#8cec9dc119a28a85c077faad85ee7b39caa416f5"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-runtime",
  "sp-std",
@@ -11578,7 +11560,7 @@ dependencies = [
  "hash-db",
  "log",
  "num-traits",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parking_lot 0.12.1",
  "rand 0.7.3",
  "smallvec",
@@ -11604,7 +11586,7 @@ version = "6.0.0"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.18#8cec9dc119a28a85c077faad85ee7b39caa416f5"
 dependencies = [
  "impl-serde",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "ref-cast",
  "serde",
  "sp-debug-derive",
@@ -11632,7 +11614,7 @@ dependencies = [
  "async-trait",
  "futures-timer",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sp-api",
  "sp-inherents",
  "sp-runtime",
@@ -11645,7 +11627,7 @@ name = "sp-tracing"
 version = "5.0.0"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.18#8cec9dc119a28a85c077faad85ee7b39caa416f5"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sp-std",
  "tracing",
  "tracing-core",
@@ -11668,7 +11650,7 @@ source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v
 dependencies = [
  "async-trait",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-core",
  "sp-inherents",
@@ -11684,7 +11666,7 @@ source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v
 dependencies = [
  "hash-db",
  "memory-db",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-core",
  "sp-std",
@@ -11700,7 +11682,7 @@ source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v
 dependencies = [
  "async-trait",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "serde",
  "sp-core",
  "sp-inherents",
@@ -11714,7 +11696,7 @@ version = "5.0.0"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.18#8cec9dc119a28a85c077faad85ee7b39caa416f5"
 dependencies = [
  "impl-serde",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "parity-wasm 0.42.2",
  "scale-info",
  "serde",
@@ -11730,7 +11712,7 @@ name = "sp-version-proc-macro"
 version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.18#8cec9dc119a28a85c077faad85ee7b39caa416f5"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "proc-macro2",
  "quote",
  "syn",
@@ -11743,7 +11725,7 @@ source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v
 dependencies = [
  "impl-trait-for-tuples",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sp-std",
  "wasmi",
  "wasmtime",
@@ -11847,9 +11829,9 @@ dependencies = [
 
 [[package]]
 name = "strum"
-version = "0.24.0"
+version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e96acfc1b70604b8b2f1ffa4c57e59176c7dbb05d556c71ecd2f5498a1dee7f8"
+checksum = "063e6045c0e62079840579a7e47a355ae92f60eb74daaf156fb1e84ba164e63f"
 dependencies = [
  "strum_macros 0.24.0",
 ]
@@ -11878,6 +11860,14 @@ dependencies = [
  "quote",
  "rustversion",
  "syn",
+]
+
+[[package]]
+name = "sub-tokens"
+version = "0.1.0"
+source = "git+https://github.com/paritytech/substrate-debug-kit?branch=master#e12503ab781e913735dc389865a3b8b4a6c6399d"
+dependencies = [
+ "separator",
 ]
 
 [[package]]
@@ -11912,7 +11902,7 @@ dependencies = [
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sc-client-api",
  "sc-rpc-api",
  "sc-transaction-pool-api",
@@ -11944,7 +11934,7 @@ dependencies = [
  "async-trait",
  "futures 0.3.21",
  "hex",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sc-client-api",
  "sc-client-db",
  "sc-consensus",
@@ -12336,15 +12326,15 @@ dependencies = [
 
 [[package]]
 name = "tower-service"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "360dfd1d6d30e05fda32ace2c8c70e9c0a9da713275777f5a4dbb8a1893930c6"
+checksum = "b6bc1c9ce2b5135ac7f93c72918fc37feb872bdc6a5533a8b85eb4b86bfdae52"
 
 [[package]]
 name = "tracing"
-version = "0.1.34"
+version = "0.1.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5d0ecdcb44a79f0fe9844f0c4f33a342cbcbb5117de8001e6ba0dc2351327d09"
+checksum = "a400e31aa60b9d44a52a8ee0343b5b18566b03a8321e0d321f695cf56e940160"
 dependencies = [
  "cfg-if 1.0.0",
  "pin-project-lite 0.2.9",
@@ -12365,11 +12355,11 @@ dependencies = [
 
 [[package]]
 name = "tracing-core"
-version = "0.1.26"
+version = "0.1.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f54c8ca710e81886d498c2fd3331b56c93aa248d49de2222ad2742247c60072f"
+checksum = "7709595b8878a4965ce5e87ebf880a7d39c9afc6837721b21a5a816a8117d921"
 dependencies = [
- "lazy_static",
+ "once_cell",
  "valuable",
 ]
 
@@ -12503,10 +12493,10 @@ name = "try-runtime-cli"
 version = "0.10.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.18#8cec9dc119a28a85c077faad85ee7b39caa416f5"
 dependencies = [
- "clap 3.1.18",
+ "clap 3.2.5",
  "jsonrpsee 0.4.1",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "remote-externalities",
  "sc-chain-spec",
  "sc-cli",
@@ -12594,9 +12584,9 @@ checksum = "099b7128301d285f79ddd55b9a83d5e6b9e97c92e0ea0daebee7263e932de992"
 
 [[package]]
 name = "unicode-ident"
-version = "1.0.0"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d22af068fba1eb5edcb4aea19d382b2a3deb4c8f9d475c589b6ada9e0fd493ee"
+checksum = "5bd2fe26506023ed7b5e1e315add59d6f584c621d037f9368fea9cfb988f368c"
 
 [[package]]
 name = "unicode-normalization"
@@ -12724,7 +12714,7 @@ dependencies = [
  "derive_more",
  "futures 0.3.21",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "serde",
  "sp-api",
  "sp-blockchain",
@@ -12791,9 +12781,9 @@ checksum = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423"
 
 [[package]]
 name = "wasm-bindgen"
-version = "0.2.80"
+version = "0.2.81"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "27370197c907c55e3f1a9fbe26f44e937fe6451368324e009cba39e139dc08ad"
+checksum = "7c53b543413a17a202f4be280a7e5c62a1c69345f5de525ee64f8cfdbc954994"
 dependencies = [
  "cfg-if 1.0.0",
  "wasm-bindgen-macro",
@@ -12801,9 +12791,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-backend"
-version = "0.2.80"
+version = "0.2.81"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53e04185bfa3a779273da532f5025e33398409573f348985af9a1cbf3774d3f4"
+checksum = "5491a68ab4500fa6b4d726bd67408630c3dbe9c4fe7bda16d5c82a1fd8c7340a"
 dependencies = [
  "bumpalo",
  "lazy_static",
@@ -12816,9 +12806,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-futures"
-version = "0.4.30"
+version = "0.4.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f741de44b75e14c35df886aff5f1eb73aa114fa5d4d00dcd37b5e01259bf3b2"
+checksum = "de9a9cec1733468a8c657e57fa2413d2ae2c0129b95e87c5b72b8ace4d13f31f"
 dependencies = [
  "cfg-if 1.0.0",
  "js-sys",
@@ -12828,9 +12818,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-macro"
-version = "0.2.80"
+version = "0.2.81"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "17cae7ff784d7e83a2fe7611cfe766ecf034111b49deb850a3dc7699c08251f5"
+checksum = "c441e177922bc58f1e12c022624b6216378e5febc2f0533e41ba443d505b80aa"
 dependencies = [
  "quote",
  "wasm-bindgen-macro-support",
@@ -12838,9 +12828,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-macro-support"
-version = "0.2.80"
+version = "0.2.81"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "99ec0dc7a4756fffc231aab1b9f2f578d23cd391390ab27f952ae0c9b3ece20b"
+checksum = "7d94ac45fcf608c1f45ef53e748d35660f168490c10b23704c7779ab8f5c3048"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -12851,9 +12841,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-shared"
-version = "0.2.80"
+version = "0.2.81"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d554b7f530dee5964d9a9468d95c1f8b8acae4f282807e7d27d4b03099a46744"
+checksum = "6a89911bd99e5f3659ec4acf9c4d93b0a90fe4a2a11f15328472058edc5261be"
 
 [[package]]
 name = "wasm-gc-api"
@@ -13075,9 +13065,9 @@ dependencies = [
 
 [[package]]
 name = "web-sys"
-version = "0.3.57"
+version = "0.3.58"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b17e741662c70c8bd24ac5c5b18de314a2c26c32bf8346ee1e6f53de919c283"
+checksum = "2fed94beee57daf8dd7d51f2b15dc2bcde92d7a72304cdf662a4371008b71b90"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
@@ -13184,7 +13174,7 @@ dependencies = [
  "pallet-vesting",
  "pallet-xcm",
  "pallet-xcm-benchmarks",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-runtime-common",
@@ -13378,7 +13368,7 @@ dependencies = [
  "derivative",
  "impl-trait-for-tuples",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "xcm-procedural",
 ]
@@ -13394,7 +13384,7 @@ dependencies = [
  "mangata-primitives",
  "orml-tokens",
  "orml-traits",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
  "sp-core",
@@ -13415,7 +13405,7 @@ dependencies = [
  "frame-system",
  "log",
  "pallet-transaction-payment",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "polkadot-parachain",
  "scale-info",
  "sp-arithmetic",
@@ -13435,7 +13425,7 @@ dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
  "log",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "sp-arithmetic",
  "sp-core",
  "sp-io",
@@ -13462,7 +13452,7 @@ dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
  "jsonrpc-derive",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "serde",
  "sp-api",
  "sp-blockchain",
@@ -13479,7 +13469,7 @@ version = "2.0.0"
 dependencies = [
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec 3.1.5",
  "serde",
  "serde_json",
  "sp-api",

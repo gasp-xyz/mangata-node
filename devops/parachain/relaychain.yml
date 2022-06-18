@@ -1,12 +1,15 @@
 services:
   relay_alice:
-    image: ${RELAYCHAIN_DOCKER_IMAGE:-parity/polkadot:v0.9.19}
+    environment:
+      - ${RUST_LOG:-info}
+    image: ${RELAYCHAIN_DOCKER_IMAGE:-parity/polkadot:v0.9.23}
     user: root
     command: >
       --alice
       --validator
       --base-path /tmp/relay_alice
       --chain ${RELAY_CHAIN:-rococo-local}
+      --bootnodes=/dns/relay_bob/tcp/30333/p2p/12D3KooWHdiAxVd8uMQR1hGWXccidmfCwLqcMpGwR6QcTP6QRMuD
       --public-addr=/ip4/127.0.0.1/tcp/30333
       --port 30333
       --ws-port 9944
@@ -22,15 +25,17 @@ services:
       - 30333:30333
 
   relay_bob:
-    image: ${RELAYCHAIN_DOCKER_IMAGE:-parity/polkadot:v0.9.19}
+    image: ${RELAYCHAIN_DOCKER_IMAGE:-parity/polkadot:v0.9.23}
     user: root
+    environment:
+      - ${RUST_LOG:-info}
     command: >
       --bob
       --validator
       --base-path /tmp/relay_bob
       --chain ${RELAY_CHAIN:-rococo-local}
+      --bootnodes=/dns/relay_alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
       --public-addr=/ip4/127.0.0.1/tcp/30334
-      --bootnodes=/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
       --port 30333
       --ws-port 9944
       --node-key=0000000000000000000000000000000000000000000000000000000000000002
@@ -44,7 +49,7 @@ services:
       - 30334:30333
 
   gen-wasm-and-state:
-    image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangata-node:latest}
+    image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangata-node:rococo-latest}
     environment:
       - ${RUST_LOG:-info}
     entrypoint: ""

@@ -79,7 +79,7 @@ use orml_tokens::TransferDust;
 use orml_traits::{parameter_type_with_key, GetByKey, MultiCurrency};
 
 pub use pallet_xyk;
-use xyk_runtime_api::{RpcAmountsResult, RpcResult, RpcRewardsResult};
+use xyk_runtime_api::{RpcAmountsResult, RpcResult};
 
 pub const MGA_TOKEN_ID: TokenId = 0;
 pub const KSM_TOKEN_ID: TokenId = 4;
@@ -327,25 +327,6 @@ parameter_types! {
 	pub const KsmTokenId: TokenId = KSM_TOKEN_ID;
 }
 
-pub struct MangataCallFilter;
-
-#[cfg(not(feature = "enable-trading"))]
-impl Contains<Call> for MangataCallFilter {
-	fn contains(call: &Call) -> bool {
-		match call {
-			Call::Xyk(_) => false,
-			_ => true,
-		}
-	}
-}
-
-#[cfg(feature = "enable-trading")]
-impl Contains<Call> for MangataCallFilter {
-	fn contains(_call: &Call) -> bool {
-		true
-	}
-}
-
 // Configure FRAME pallets to include in runtime.
 
 impl frame_system::Config for Runtime {
@@ -384,7 +365,7 @@ impl frame_system::Config for Runtime {
 	/// The weight of database operations that the runtime can invoke.
 	type DbWeight = RocksDbWeight;
 	/// The basic call filter to use in dispatchable.
-	type BaseCallFilter = MangataCallFilter;
+	type BaseCallFilter = Everything;
 	/// Weight information for the extrinsics of this pallet.
 	type SystemWeightInfo = weights::frame_system_weights::ModuleWeight<Runtime>;
 	/// Block & extrinsics weights: base values and limits.
@@ -1621,11 +1602,10 @@ impl_runtime_apis! {
 		fn calculate_rewards_amount(
 			user: AccountId,
 			liquidity_asset_id: TokenId,
-		) -> RpcRewardsResult<Balance> {
+		) -> RpcResult<Balance> {
 			match Xyk::calculate_rewards_amount(user, liquidity_asset_id){
-				Ok((not_yet_claimed, to_be_claimed)) => RpcRewardsResult{
-					not_yet_claimed,
-					to_be_claimed
+				Ok(claimable_rewards) => RpcResult{
+					price:claimable_rewards
 				},
 				Err(e) => {
 						log::warn!(target:"xyk", "rpc 'XYK::calculate_rewards_amount' error: '{:?}', returning default value instead", e);

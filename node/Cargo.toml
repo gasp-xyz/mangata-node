@@ -124,6 +124,7 @@ artemis-core = {default-features = false, version = "0.1.1", git = "https://gith
 
 
 [dev-dependencies]
+sub-tokens = { git = "https://github.com/paritytech/substrate-debug-kit", branch = "master" }
 criterion = { version = "0.3.5", features = [ "async_tokio", "html_reports" ] }
 sc-block-builder = { package="sc-block-builder-ver", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.17" }
 sp-keyring = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.17" }

@@ -243,8 +243,7 @@ benchmarks! {
 		frame_system::Pallet::<T>::set_block_number(300_000_u32.into());
 		<<T as Config>::PoolPromoteApi as ComputeIssuance>::compute_issuance(2);
 
-		let (rewards_total_user, rewards_claimed_user) = Xyk::<T>::calculate_rewards_amount(caller.clone(), liquidity_asset_id).unwrap();
-		let rewards_to_claim = rewards_total_user + rewards_claimed_user;
+		let rewards_to_claim = Xyk::<T>::calculate_rewards_amount(caller.clone(), liquidity_asset_id).unwrap();
 
 		let pre_claim_native_tokens_amount = <T as Config>::Currency::free_balance(<T as Config>::NativeCurrencyId::get().into(), &caller).into();
 
@@ -256,7 +255,7 @@ benchmarks! {
 
 		assert_eq!(
 			Xyk::<T>::calculate_rewards_amount(caller.clone(), liquidity_asset_id).unwrap(),
-			(0_u128,0_u128)
+			(0_u128)
 		);
 		let post_claim_native_tokens_amount = <T as Config>::Currency::free_balance(<T as Config>::NativeCurrencyId::get().into(), &caller).into();
 

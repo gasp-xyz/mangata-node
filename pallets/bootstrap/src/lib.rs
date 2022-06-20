@@ -15,7 +15,7 @@ use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
 use scale_info::TypeInfo;
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
-use sp_bootstrap::PoolCreateApi;
+use mp_bootstrap::PoolCreateApi;
 use sp_core::U256;
 use sp_runtime::traits::{AccountIdConversion, CheckedAdd};
 use sp_std::prelude::*;

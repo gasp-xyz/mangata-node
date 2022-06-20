@@ -29,6 +29,9 @@ xyk-runtime-api = { path = '../../pallets/xyk/runtime-api', default-features = f
 pallet-sudo-origin = { path = '../../pallets/sudo-origin', default-features = false}
 xcm-asset-registry = { path = '../../pallets/asset-registry', default-features = false}
 pallet-issuance = { path = '../../pallets/issuance', default-features = false}
+pallet-multipurpose-liquidity = { path = '../../pallets/multipurpose-liquidity', default-features = false}
+mp-multipurpose-liquidity = { path = '../../primitives/multipurpose-liquidity', default-features = false}
+mp-traits = { path = '../../primitives/traits', default-features = false}
 
 # Substrate Dependencies
 ## Substrate Primitive Dependencies
@@ -187,6 +190,10 @@ std = [
 	"pallet-vesting-mangata/std",
 	"pallet-crowdloan-rewards/std",
 	"pallet-elections-phragmen/std",
+
+	"pallet-multipurpose-liquidity/std",
+    "mp-multipurpose-liquidity/std",
+    "mp-traits/std"
 
 ]
 

@@ -805,7 +805,6 @@ fn successful_vested_provision_using_vested_tokens_only_when_user_has_both_veste
 		.unwrap();
 
 		let non_vested_initial_amount = Bootstrap::balance(MGAId::get(), USER_ID);
-		let vested_initial_amount = Bootstrap::locked_balance(MGAId::get(), USER_ID);
 
 		Bootstrap::provision_vested(Origin::signed(USER_ID), MGAId::get(), provision_amount)
 			.unwrap();
@@ -1160,16 +1159,7 @@ fn test_multi_provisions(
 #[serial]
 fn test_restart_rewards() {
 	new_test_ext().execute_with(|| {
-		use std::sync::{Arc, Mutex};
 		set_up();
-
-		let provisioned_ev = |id, amount| {
-			crate::mock::Event::Bootstrap(crate::Event::<Test>::Provisioned(id, amount))
-		};
-
-		let rewards_claimed_ev = |id, amount| {
-			crate::mock::Event::Bootstrap(crate::Event::<Test>::RewardsClaimed(id, amount))
-		};
 
 		const USER_KSM_PROVISON: Balance = 15;
 		const USER_MGA_PROVISON: Balance = 400_000;

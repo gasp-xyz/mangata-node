@@ -14,7 +14,6 @@ use frame_support::{
 	transactional, PalletId,
 };
 use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
-use itertools::Itertools;
 use mangata_primitives::{Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
@@ -36,7 +35,6 @@ mod tests;
 pub mod weights;
 use sp_core::storage::ChildInfo;
 pub use weights::WeightInfo;
-// use frame_support::storage::generator::StorageMap;
 
 pub use pallet::*;
 const PALLET_ID: PalletId = PalletId(*b"bootstrp");
@@ -193,6 +191,11 @@ pub mod pallet {
 	pub type ClaimedRewards<T: Config> =
 		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, TokenId, Balance, ValueQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn provision_accounts)]
+	pub type ProvisionAccounts<T: Config> =
+		StorageMap<_, Twox64Concat, T::AccountId, (), OptionQuery>;
+
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// provisions vested/locked tokens into the boostrstrap
@@ -209,11 +212,12 @@ pub mod pallet {
 					.map_err(|_| Error::<T>::NotEnoughVestedAssets)?
 					.into();
 			Self::do_provision(
-				sender,
+				&sender,
 				token_id,
 				amount,
 				ProvisionKind::Vested(vesting_ending_block_as_balance),
 			)?;
+			ProvisionAccounts::<T>::insert(&sender, ());
 			Self::deposit_event(Event::Provisioned(token_id, amount));
 			Ok(().into())
 		}
@@ -227,7 +231,8 @@ pub mod pallet {
 			amount: Balance,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_provision(sender, token_id, amount, ProvisionKind::Regular)?;
+			Self::do_provision(&sender, token_id, amount, ProvisionKind::Regular)?;
+			ProvisionAccounts::<T>::insert(&sender, ());
 			Self::deposit_event(Event::Provisioned(token_id, amount));
 			Ok(().into())
 		}
@@ -327,23 +332,14 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::claim_rewards())]
 		#[transactional]
 		pub fn finalize(origin: OriginFor<T>) -> DispatchResult {
-			let sender = ensure_root(origin)?;
+			ensure_root(origin)?;
+
 			ensure!(Self::phase() == BootstrapPhase::Finished, Error::<T>::NotFinishedYet);
-			let (liq_token_id, _) = MintedLiquidity::<T>::get();
 
-			let unique_provisions = Provisions::<T>::iter_keys()
-				.map(|(account, _)| account.encode())
-				.chain(VestedProvisions::<T>::iter_keys().map(|(account, _)| account.encode()))
-				.into_iter()
-				.unique()
-				.count();
-
-			let unique_claims = ClaimedRewards::<T>::iter_keys()
-				.map(|(account, _)| account.encode())
-				.unique()
-				.count();
-
-			ensure!(unique_provisions == unique_claims, Error::<T>::BootstrapNotReadyToBeFinished);
+			ensure!(
+				ProvisionAccounts::<T>::iter_keys().next().is_none(),
+				Error::<T>::BootstrapNotReadyToBeFinished
+			);
 
 			child::kill_storage(
 				&ChildInfo::new_default_from_vec(Provisions::<T>::prefix_hash()),
@@ -515,7 +511,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn do_provision(
-		sender: T::AccountId,
+		sender: &T::AccountId,
 		token_id: TokenId,
 		amount: Balance,
 		is_vested: ProvisionKind,
@@ -524,7 +520,7 @@ impl<T: Config> Pallet<T> {
 		let is_mga = token_id == T::MGATokenId::get();
 		let is_public_phase = Phase::<T>::get() == BootstrapPhase::Public;
 		let is_whitelist_phase = Phase::<T>::get() == BootstrapPhase::Whitelist;
-		let am_i_whitelisted = Self::is_whitelisted(&sender);
+		let am_i_whitelisted = Self::is_whitelisted(sender);
 
 		ensure!(is_ksm || is_mga, Error::<T>::UnsupportedTokenId);
 
@@ -539,7 +535,7 @@ impl<T: Config> Pallet<T> {
 
 		<T as Config>::Currency::transfer(
 			token_id.into(),
-			&sender,
+			sender,
 			&Self::vault_address(),
 			amount.into(),
 			ExistenceRequirement::KeepAlive,
@@ -549,7 +545,7 @@ impl<T: Config> Pallet<T> {
 		match is_vested {
 			ProvisionKind::Regular => {
 				ensure!(
-					Provisions::<T>::try_mutate(sender.clone(), token_id, |provision| {
+					Provisions::<T>::try_mutate(sender, token_id, |provision| {
 						if let Some(val) = provision.checked_add(amount) {
 							*provision = val;
 							Ok(())
@@ -563,19 +559,15 @@ impl<T: Config> Pallet<T> {
 			},
 			ProvisionKind::Vested(nr) => {
 				ensure!(
-					VestedProvisions::<T>::try_mutate(
-						sender.clone(),
-						token_id,
-						|(provision, block_nr)| {
-							if let Some(val) = provision.checked_add(amount) {
-								*provision = val;
-								*block_nr = (*block_nr).max(nr);
-								Ok(())
-							} else {
-								Err(())
-							}
+					VestedProvisions::<T>::try_mutate(sender, token_id, |(provision, block_nr)| {
+						if let Some(val) = provision.checked_add(amount) {
+							*provision = val;
+							*block_nr = (*block_nr).max(nr);
+							Ok(())
+						} else {
+							Err(())
 						}
-					)
+					})
 					.is_ok(),
 					Error::<T>::MathOverflow
 				);
@@ -641,11 +633,7 @@ impl<T: Config> Pallet<T> {
 
 		let (liq_token_id, _) = Self::minted_liquidity();
 
-		ensure!(
-			ClaimedRewards::<T>::get(&who, T::KSMTokenId::get()) == 0 &&
-				ClaimedRewards::<T>::get(&who, T::MGATokenId::get()) == 0,
-			Error::<T>::NothingToClaim
-		);
+		ensure!(ProvisionAccounts::<T>::get(who).is_some(), Error::<T>::NothingToClaim);
 
 		let (ksm_rewards, ksm_rewards_vested, ksm_lock) =
 			Self::calculate_rewards(&who, &T::KSMTokenId::get())?;
@@ -694,6 +682,7 @@ impl<T: Config> Pallet<T> {
 			ksm_rewards + ksm_rewards_vested
 		);
 
+		ProvisionAccounts::<T>::remove(who);
 		Self::deposit_event(Event::RewardsClaimed(liq_token_id, total_rewards_claimed));
 
 		Ok(().into())

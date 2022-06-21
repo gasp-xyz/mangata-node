@@ -1225,3 +1225,60 @@ fn test_restart_rewards() {
 		Bootstrap::start_ido(Origin::root(), 200_u32.into(), 10, 10, DEFAULT_RATIO).unwrap();
 	});
 }
+
+#[test]
+#[serial]
+fn claim_rewards_even_if_sum_of_rewards_is_zero_because_of_small_provision() {
+	new_test_ext().execute_with(|| {
+		Bootstrap::create_new_token(&USER_ID, u128::MAX);
+		Bootstrap::create_new_token(&USER_ID, u128::MAX);
+		let liq_token_id = Tokens::next_asset_id();
+
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		let pool_create_mock = MockPoolCreateApi::pool_create_context();
+		pool_create_mock
+			.expect()
+			.times(1)
+			.returning(move |addr, _, ksm_amount, _, mga_amount| {
+				let issuance = (ksm_amount + mga_amount) / 2;
+				let id = Bootstrap::create_new_token(&addr, issuance);
+				assert_eq!(id, liq_token_id);
+				Some((id, issuance))
+			});
+
+		Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 10, DEFAULT_RATIO).unwrap();
+		Bootstrap::on_initialize(110_u32.into());
+		Bootstrap::transfer(MGAId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 1).unwrap();
+		Bootstrap::transfer(KSMId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 1).unwrap();
+
+		Bootstrap::provision(
+			Origin::signed(USER_ID),
+			MGAId::get(),
+			1_000_000_000_000_000_000_000_000_000_000_000_u128,
+		)
+		.unwrap();
+		Bootstrap::provision(Origin::signed(ANOTHER_USER_ID), MGAId::get(), 1).unwrap();
+
+		Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), 1_000_000_u128).unwrap();
+
+		Bootstrap::on_initialize(120_u32.into());
+
+		assert_eq!(0, Bootstrap::balance(liq_token_id, USER_ID));
+		assert_eq!(0, Bootstrap::balance(liq_token_id, ANOTHER_USER_ID));
+
+		Bootstrap::claim_rewards(Origin::signed(USER_ID)).unwrap();
+		Bootstrap::claim_rewards(Origin::signed(ANOTHER_USER_ID)).unwrap();
+
+		assert_err!(
+			Bootstrap::claim_rewards(Origin::signed(USER_ID)),
+			Error::<Test>::NothingToClaim
+		);
+
+		assert_err!(
+			Bootstrap::claim_rewards(Origin::signed(ANOTHER_USER_ID)),
+			Error::<Test>::NothingToClaim
+		);
+	});
+}

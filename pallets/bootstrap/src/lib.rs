@@ -21,7 +21,7 @@ use scale_info::TypeInfo;
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
 use sp_bootstrap::PoolCreateApi;
 use sp_core::U256;
-use sp_runtime::traits::{AccountIdConversion, CheckedAdd, Zero};
+use sp_runtime::traits::{AccountIdConversion, CheckedAdd};
 use sp_std::prelude::*;
 
 #[cfg(test)]
@@ -647,10 +647,6 @@ impl<T: Config> Pallet<T> {
 			.ok_or(Error::<T>::MathOverflow)?
 			.checked_add(ksm_rewards_vested)
 			.ok_or(Error::<T>::MathOverflow)?;
-
-		if total_rewards_claimed.is_zero() {
-			return Err(Error::<T>::NothingToClaim.into())
-		}
 
 		Self::claim_rewards_from_single_currency(
 			&who,

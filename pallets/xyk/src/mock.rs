@@ -262,7 +262,7 @@ impl Config for Test {
 	type PoolFeePercentage = ConstU128<20>;
 	type TreasuryFeePercentage = ConstU128<5>;
 	type BuyAndBurnFeePercentage = ConstU128<5>;
-	type RewardsDistributionPeriod = ConstU32<10000>;
+	type RewardsDistributionPeriod = ConstU32<5>;
 	type WeightInfo = ();
 	type VestingProvider = Vesting;
 }
@@ -279,7 +279,7 @@ impl Config for Test {
 	type PoolFeePercentage = ConstU128<20>;
 	type TreasuryFeePercentage = ConstU128<5>;
 	type BuyAndBurnFeePercentage = ConstU128<5>;
-	type RewardsDistributionPeriod = ConstU32<10000>;
+	type RewardsDistributionPeriod = ConstU32<5>;
 	type WeightInfo = ();
 	type VestingProvider = Vesting;
 }

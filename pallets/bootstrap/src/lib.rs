@@ -6,10 +6,15 @@ use frame_support::pallet_prelude::*;
 
 use frame_support::{
 	codec::{Decode, Encode},
+	storage::{
+		child,
+		generator::{StorageDoubleMap as GStorageDoubleMap, StorageMap as GStorageMap},
+	},
 	traits::{ExistenceRequirement, Get},
 	transactional, PalletId,
 };
 use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
+use itertools::Itertools;
 use mangata_primitives::{Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
@@ -29,7 +34,9 @@ mod benchmarking;
 mod tests;
 
 pub mod weights;
+use sp_core::storage::ChildInfo;
 pub use weights::WeightInfo;
+// use frame_support::storage::generator::StorageMap;
 
 pub use pallet::*;
 const PALLET_ID: PalletId = PalletId(*b"bootstrp");
@@ -319,20 +326,49 @@ pub mod pallet {
 
 		#[pallet::weight(T::WeightInfo::claim_rewards())]
 		#[transactional]
-		pub fn finalize(origin: OriginFor<T>) -> DispatchResult{
+		pub fn finalize(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_root(origin)?;
-			let (liq_token_id, _) =  MintedLiquidity::<T>::take();
+			ensure!(Self::phase() == BootstrapPhase::Finished, Error::<T>::NotFinishedYet);
+			let (liq_token_id, _) = MintedLiquidity::<T>::get();
 
-			
-			// T::Currency::transfer_all(liq_token_id, T::TreasuryPalletId::get().into_account())?;
+			let unique_provisions = Provisions::<T>::iter_keys()
+				.map(|(account, _)| account.encode())
+				.chain(VestedProvisions::<T>::iter_keys().map(|(account, _)| account.encode()))
+				.into_iter()
+				.unique()
+				.count();
 
-			// Provisions::<T>::kill();
-			// VestedProvisions::<T>::kill();
-			// WhitelistedAccount::<T>::kill();
+			let unique_claims = ClaimedRewards::<T>::iter_keys()
+				.map(|(account, _)| account.encode())
+				.unique()
+				.count();
+
+			ensure!(unique_provisions == unique_claims, Error::<T>::BootstrapNotReadyToBeFinished);
+
+			child::kill_storage(
+				&ChildInfo::new_default_from_vec(Provisions::<T>::prefix_hash()),
+				None,
+			);
+
+			child::kill_storage(
+				&ChildInfo::new_default_from_vec(VestedProvisions::<T>::prefix_hash()),
+				None,
+			);
+
+			child::kill_storage(
+				&ChildInfo::new_default_from_vec(WhitelistedAccount::<T>::prefix_hash()),
+				None,
+			);
+
+			child::kill_storage(
+				&ChildInfo::new_default_from_vec(ClaimedRewards::<T>::prefix_hash()),
+				None,
+			);
+
 			Phase::<T>::put(BootstrapPhase::BeforeStart);
+			MintedLiquidity::<T>::kill();
 			Valuations::<T>::kill();
 			BootstrapSchedule::<T>::kill();
-			// ClaimedRewards::<T>::kill();
 			Ok(().into())
 		}
 

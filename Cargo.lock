@@ -5705,6 +5705,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "itertools",
  "log",
  "mangata-primitives",
  "mockall",

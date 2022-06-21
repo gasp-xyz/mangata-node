@@ -1155,3 +1155,83 @@ fn test_multi_provisions(
 		assert_eq!(user2_rewards.1, Bootstrap::locked_balance(liq_token_id, PROVISION_USER2_ID));
 	})
 }
+
+#[test]
+#[serial]
+fn test_restart_rewards() {
+	new_test_ext().execute_with(|| {
+		use std::sync::{Arc, Mutex};
+		set_up();
+
+		let provisioned_ev = |id, amount| {
+			crate::mock::Event::Bootstrap(crate::Event::<Test>::Provisioned(id, amount))
+		};
+
+		let rewards_claimed_ev = |id, amount| {
+			crate::mock::Event::Bootstrap(crate::Event::<Test>::RewardsClaimed(id, amount))
+		};
+
+		const USER_KSM_PROVISON: Balance = 15;
+		const USER_MGA_PROVISON: Balance = 400_000;
+		const ANOTHER_USER_KSM_PROVISON: Balance = 20;
+		const ANOTHER_USER_MGA_PROVISON: Balance = 100_000;
+		let liq_token_id = Tokens::next_asset_id();
+
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		let pool_create_mock = MockPoolCreateApi::pool_create_context();
+		pool_create_mock
+			.expect()
+			.times(1)
+			.returning(move |addr, _, ksm_amount, _, mga_amount| {
+				let issuance = (ksm_amount + mga_amount) / 2;
+				let id = Bootstrap::create_new_token(&addr, issuance);
+				assert_eq!(id, liq_token_id);
+				Some((id, issuance))
+			});
+
+		Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 10, DEFAULT_RATIO).unwrap();
+		Bootstrap::on_initialize(110_u32.into());
+		Bootstrap::transfer(MGAId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 500_000).unwrap();
+		Bootstrap::transfer(KSMId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 500_000).unwrap();
+		Bootstrap::provision(Origin::signed(USER_ID), MGAId::get(), USER_MGA_PROVISON).unwrap();
+		Bootstrap::provision(
+			Origin::signed(ANOTHER_USER_ID),
+			MGAId::get(),
+			ANOTHER_USER_MGA_PROVISON,
+		)
+		.unwrap();
+
+		Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), USER_KSM_PROVISON).unwrap();
+		Bootstrap::provision(
+			Origin::signed(ANOTHER_USER_ID),
+			KSMId::get(),
+			ANOTHER_USER_KSM_PROVISON,
+		)
+		.unwrap();
+
+		assert_err!(Bootstrap::finalize(Origin::root()), Error::<Test>::NotFinishedYet);
+
+		Bootstrap::on_initialize(120_u32.into());
+
+		assert_eq!(0, Bootstrap::balance(liq_token_id, USER_ID));
+		assert_eq!(0, Bootstrap::balance(liq_token_id, ANOTHER_USER_ID));
+
+		Bootstrap::claim_rewards(Origin::signed(USER_ID)).unwrap();
+
+		// not all rewards claimed
+		assert_err!(
+			Bootstrap::finalize(Origin::root()),
+			Error::<Test>::BootstrapNotReadyToBeFinished
+		);
+
+		Bootstrap::claim_rewards_for_account(Origin::signed(USER_ID), ANOTHER_USER_ID).unwrap();
+
+		assert_ne!(0, Bootstrap::balance(liq_token_id, USER_ID));
+		assert_ne!(0, Bootstrap::balance(liq_token_id, ANOTHER_USER_ID));
+
+		Bootstrap::finalize(Origin::root()).unwrap();
+		Bootstrap::start_ido(Origin::root(), 200_u32.into(), 10, 10, DEFAULT_RATIO).unwrap();
+	});
+}

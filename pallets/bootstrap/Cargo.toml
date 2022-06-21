@@ -24,6 +24,7 @@ sp-arithmetic= { git = "https://github.com/mangata-finance/substrate", default-f
 frame-benchmarking = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-bootstrap = { path = "../../primitives/bootstrap", default-features=false }
 pallet-vesting-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+itertools = { version="0.10.3", default-features=false }
 
 [dev-dependencies]
 test-case = "2.0.2"

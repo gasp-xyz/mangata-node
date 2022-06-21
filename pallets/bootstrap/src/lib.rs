@@ -134,6 +134,9 @@ pub mod pallet {
 		#[pallet::constant]
 		type KSMTokenId: Get<TokenId>;
 
+		#[pallet::constant]
+		type TreasuryPalletId: Get<PalletId>;
+
 		type VestingProvider: MultiTokenVestingLocks<Self::AccountId>;
 
 		type WeightInfo: WeightInfo;
@@ -316,6 +319,25 @@ pub mod pallet {
 
 		#[pallet::weight(T::WeightInfo::claim_rewards())]
 		#[transactional]
+		pub fn finalize(origin: OriginFor<T>) -> DispatchResult{
+			let sender = ensure_root(origin)?;
+			let (liq_token_id, _) =  MintedLiquidity::<T>::take();
+
+			
+			// T::Currency::transfer_all(liq_token_id, T::TreasuryPalletId::get().into_account())?;
+
+			// Provisions::<T>::kill();
+			// VestedProvisions::<T>::kill();
+			// WhitelistedAccount::<T>::kill();
+			Phase::<T>::put(BootstrapPhase::BeforeStart);
+			Valuations::<T>::kill();
+			BootstrapSchedule::<T>::kill();
+			// ClaimedRewards::<T>::kill();
+			Ok(().into())
+		}
+
+		#[pallet::weight(T::WeightInfo::claim_rewards())]
+		#[transactional]
 		pub fn claim_rewards_for_account(
 			origin: OriginFor<T>,
 			account: T::AccountId,
@@ -356,6 +378,8 @@ pub mod pallet {
 		NothingToClaim,
 		/// no rewards to claim
 		WrongRatio,
+		/// no rewards to claim
+		BootstrapNotReadyToBeFinished,
 	}
 
 	#[pallet::event]

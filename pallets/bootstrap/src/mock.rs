@@ -190,6 +190,7 @@ impl pallet_bootstrap::Config for Test {
 	type MGATokenId = MGAId;
 	type KSMTokenId = KSMId;
 	type PoolCreateApi = MockPoolCreateApi;
+	type TreasuryPalletId = TreasuryPalletId;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type VestingProvider = Vesting;
 	type WeightInfo = ();

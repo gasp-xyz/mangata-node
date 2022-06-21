@@ -339,6 +339,7 @@ pub fn run() -> Result<()> {
 							cmd.run(config, partials.client.clone(), db, storage)
 						}),
 						BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
+						BenchmarkCmd::Machine(cmd) => runner.sync_run(|config| cmd.run(&config)),
 					},
 				#[cfg(feature = "mangata-rococo")]
 				spec if spec.is_mangata_rococo() =>

@@ -17,7 +17,7 @@ use scale_info::TypeInfo;
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
 use sp_bootstrap::PoolCreateApi;
 use sp_core::U256;
-use sp_runtime::traits::{AccountIdConversion, CheckedAdd};
+use sp_runtime::traits::{AccountIdConversion, CheckedAdd, Zero};
 use sp_std::prelude::*;
 
 #[cfg(test)]
@@ -55,8 +55,6 @@ pub enum ProvisionKind {
 
 #[frame_support::pallet]
 pub mod pallet {
-
-	use frame_benchmarking::Zero;
 
 	use super::*;
 
@@ -313,67 +311,17 @@ pub mod pallet {
 		#[transactional]
 		pub fn claim_rewards(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
+			Self::do_claim_rewards(&sender)
+		}
 
-			ensure!(Self::phase() == BootstrapPhase::Finished, Error::<T>::NotFinishedYet);
-
-			let (liq_token_id, _) = Self::minted_liquidity();
-
-			ensure!(
-				ClaimedRewards::<T>::get(&sender, T::KSMTokenId::get()) == 0 &&
-					ClaimedRewards::<T>::get(&sender, T::MGATokenId::get()) == 0,
-				Error::<T>::NothingToClaim
-			);
-
-			let (ksm_rewards, ksm_rewards_vested, ksm_lock) =
-				Self::calculate_rewards(&sender, &T::KSMTokenId::get())?;
-			let (mga_rewards, mga_rewards_vested, mga_lock) =
-				Self::calculate_rewards(&sender, &T::MGATokenId::get())?;
-
-			let total_rewards_claimed = mga_rewards
-				.checked_add(mga_rewards_vested)
-				.ok_or(Error::<T>::MathOverflow)?
-				.checked_add(ksm_rewards)
-				.ok_or(Error::<T>::MathOverflow)?
-				.checked_add(ksm_rewards_vested)
-				.ok_or(Error::<T>::MathOverflow)?;
-
-			if total_rewards_claimed.is_zero() {
-				return Err(Error::<T>::NothingToClaim.into())
-			}
-
-			Self::claim_rewards_from_single_currency(
-				&sender,
-				&T::MGATokenId::get(),
-				mga_rewards,
-				mga_rewards_vested,
-				mga_lock,
-			)?;
-			log!(
-				info,
-				"MGA rewards (non-vested, vested, total) = ({}, {}, {})",
-				mga_rewards,
-				mga_rewards_vested,
-				mga_rewards + mga_rewards_vested
-			);
-
-			Self::claim_rewards_from_single_currency(
-				&sender,
-				&T::KSMTokenId::get(),
-				ksm_rewards,
-				ksm_rewards_vested,
-				ksm_lock,
-			)?;
-			log!(
-				info,
-				"KSM rewards (non-vested, vested, total) = ({}, {}, {})",
-				ksm_rewards,
-				ksm_rewards_vested,
-				ksm_rewards + ksm_rewards_vested
-			);
-
-			Self::deposit_event(Event::RewardsClaimed(liq_token_id, total_rewards_claimed));
-
-			Ok(().into())
+		#[pallet::weight(T::WeightInfo::claim_rewards())]
+		#[transactional]
+		pub fn claim_rewards_for_account(
+			origin: OriginFor<T>,
+			account: T::AccountId,
+		) -> DispatchResult {
+			let _ = ensure_signed(origin)?;
+			Self::do_claim_rewards(&account)
 		}
 	}
 
@@ -626,5 +574,68 @@ impl<T: Config> Pallet<T> {
 		let vested_rewards = multiply_by_rational(liquidity / 2, vested_provision, valuation)
 			.map_err(|_| Error::<T>::MathOverflow)?;
 		Ok((rewards, vested_rewards, lock))
+	}
+
+	fn do_claim_rewards(who: &T::AccountId) -> DispatchResult {
+		ensure!(Self::phase() == BootstrapPhase::Finished, Error::<T>::NotFinishedYet);
+
+		let (liq_token_id, _) = Self::minted_liquidity();
+
+		ensure!(
+			ClaimedRewards::<T>::get(&who, T::KSMTokenId::get()) == 0 &&
+				ClaimedRewards::<T>::get(&who, T::MGATokenId::get()) == 0,
+			Error::<T>::NothingToClaim
+		);
+
+		let (ksm_rewards, ksm_rewards_vested, ksm_lock) =
+			Self::calculate_rewards(&who, &T::KSMTokenId::get())?;
+		let (mga_rewards, mga_rewards_vested, mga_lock) =
+			Self::calculate_rewards(&who, &T::MGATokenId::get())?;
+
+		let total_rewards_claimed = mga_rewards
+			.checked_add(mga_rewards_vested)
+			.ok_or(Error::<T>::MathOverflow)?
+			.checked_add(ksm_rewards)
+			.ok_or(Error::<T>::MathOverflow)?
+			.checked_add(ksm_rewards_vested)
+			.ok_or(Error::<T>::MathOverflow)?;
+
+		if total_rewards_claimed.is_zero() {
+			return Err(Error::<T>::NothingToClaim.into())
+		}
+
+		Self::claim_rewards_from_single_currency(
+			&who,
+			&T::MGATokenId::get(),
+			mga_rewards,
+			mga_rewards_vested,
+			mga_lock,
+		)?;
+		log!(
+			info,
+			"MGA rewards (non-vested, vested, total) = ({}, {}, {})",
+			mga_rewards,
+			mga_rewards_vested,
+			mga_rewards + mga_rewards_vested
+		);
+
+		Self::claim_rewards_from_single_currency(
+			&who,
+			&T::KSMTokenId::get(),
+			ksm_rewards,
+			ksm_rewards_vested,
+			ksm_lock,
+		)?;
+		log!(
+			info,
+			"KSM rewards (non-vested, vested, total) = ({}, {}, {})",
+			ksm_rewards,
+			ksm_rewards_vested,
+			ksm_rewards + ksm_rewards_vested
+		);
+
+		Self::deposit_event(Event::RewardsClaimed(liq_token_id, total_rewards_claimed));
+
+		Ok(().into())
 	}
 }

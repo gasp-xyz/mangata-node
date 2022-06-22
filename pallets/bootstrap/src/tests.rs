@@ -86,7 +86,7 @@ fn test_first_provision_with_ksm_fails() {
 
 		assert_err!(
 			Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), 1),
-			Error::<Test>::FirstProvisionInMga
+			Error::<Test>::FirstProvisionInSecondTokenId
 		);
 	});
 }

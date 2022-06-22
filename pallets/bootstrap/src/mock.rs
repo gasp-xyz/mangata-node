@@ -187,8 +187,6 @@ mockall::mock! {
 // NOTE: use PoolCreateApi mock for unit testing purposes
 impl pallet_bootstrap::Config for Test {
 	type Event = Event;
-	type MGATokenId = MGAId;
-	type KSMTokenId = KSMId;
 	type PoolCreateApi = MockPoolCreateApi;
 	type TreasuryPalletId = TreasuryPalletId;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
@@ -200,8 +198,6 @@ impl pallet_bootstrap::Config for Test {
 // NOTE: use Xyk as PoolCreateApi for benchmarking purposes
 impl pallet_bootstrap::Config for Test {
 	type Event = Event;
-	type MGATokenId = MGAId;
-	type KSMTokenId = KSMId;
 	type PoolCreateApi = Xyk;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type VestingProvider = Vesting;

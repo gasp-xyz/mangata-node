@@ -507,8 +507,6 @@ impl pallet_xyk::Config for Runtime {
 
 impl pallet_bootstrap::Config for Runtime {
 	type Event = Event;
-	type MGATokenId = MgaTokenId;
-	type KSMTokenId = RocTokenId;
 	type PoolCreateApi = Xyk;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type VestingProvider = Vesting;

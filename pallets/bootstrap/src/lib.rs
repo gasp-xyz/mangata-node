@@ -134,12 +134,6 @@ pub mod pallet {
 		type PoolCreateApi: PoolCreateApi<AccountId = Self::AccountId>;
 
 		#[pallet::constant]
-		type MGATokenId: Get<TokenId>;
-
-		#[pallet::constant]
-		type KSMTokenId: Get<TokenId>;
-
-		#[pallet::constant]
 		type TreasuryPalletId: Get<PalletId>;
 
 		type VestingProvider: MultiTokenVestingLocks<Self::AccountId>;

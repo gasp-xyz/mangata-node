@@ -94,9 +94,9 @@ pub mod pallet {
 					// R: 13 W 12
 					if let Some((liq_asset_id, issuance)) = T::PoolCreateApi::pool_create(
 						Self::vault_address(),
-						T::KSMTokenId::get(),
+						Self::first_token_id(),
 						ksm_valuation,
-						T::MGATokenId::get(),
+						Self::second_token_id(),
 						mga_valuation,
 					) {
 						MintedLiquidity::<T>::put((liq_asset_id, issuance)); // W:1
@@ -523,8 +523,8 @@ impl<T: Config> Pallet<T> {
 		amount: Balance,
 		is_vested: ProvisionKind,
 	) -> DispatchResult {
-		let is_ksm = token_id == T::KSMTokenId::get();
-		let is_mga = token_id == T::MGATokenId::get();
+		let is_ksm = token_id == Self::first_token_id();
+		let is_mga = token_id == Self::second_token_id();
 		let is_public_phase = Phase::<T>::get() == BootstrapPhase::Public;
 		let is_whitelist_phase = Phase::<T>::get() == BootstrapPhase::Whitelist;
 		let am_i_whitelisted = Self::is_whitelisted(sender);
@@ -583,16 +583,16 @@ impl<T: Config> Pallet<T> {
 
 		let (pre_mga_valuation, _) = Valuations::<T>::get();
 		ensure!(
-			token_id != T::KSMTokenId::get() || pre_mga_valuation != 0,
+			token_id != Self::first_token_id() || pre_mga_valuation != 0,
 			Error::<T>::FirstProvisionInMga
 		);
 
 		ensure!(
 			Valuations::<T>::try_mutate(|(mga_valuation, ksm_valuation)| -> Result<(), ()> {
-				if token_id == T::MGATokenId::get() {
+				if token_id == Self::second_token_id() {
 					*mga_valuation = mga_valuation.checked_add(amount).ok_or(())?;
 				}
-				if token_id == T::KSMTokenId::get() {
+				if token_id == Self::first_token_id() {
 					*ksm_valuation = ksm_valuation.checked_add(amount).ok_or(())?;
 				}
 				Ok(())
@@ -601,7 +601,7 @@ impl<T: Config> Pallet<T> {
 			Error::<T>::MathOverflow
 		);
 
-		if token_id == T::KSMTokenId::get() {
+		if token_id == Self::first_token_id() {
 			ensure!(
 				Self::is_ratio_kept(ratio_nominator, ratio_denominator),
 				Error::<T>::ValuationRatio
@@ -611,9 +611,9 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn get_valuation(token_id: &TokenId) -> Balance {
-		if *token_id == T::KSMTokenId::get() {
+		if *token_id == Self::first_token_id() {
 			Self::valuations().1
-		} else if *token_id == T::MGATokenId::get() {
+		} else if *token_id == Self::second_token_id() {
 			Self::valuations().0
 		} else {
 			0
@@ -643,9 +643,9 @@ impl<T: Config> Pallet<T> {
 		ensure!(ProvisionAccounts::<T>::get(who).is_some(), Error::<T>::NothingToClaim);
 
 		let (ksm_rewards, ksm_rewards_vested, ksm_lock) =
-			Self::calculate_rewards(&who, &T::KSMTokenId::get())?;
+			Self::calculate_rewards(&who, &Self::first_token_id())?;
 		let (mga_rewards, mga_rewards_vested, mga_lock) =
-			Self::calculate_rewards(&who, &T::MGATokenId::get())?;
+			Self::calculate_rewards(&who, &Self::second_token_id())?;
 
 		let total_rewards_claimed = mga_rewards
 			.checked_add(mga_rewards_vested)
@@ -657,7 +657,7 @@ impl<T: Config> Pallet<T> {
 
 		Self::claim_rewards_from_single_currency(
 			&who,
-			&T::MGATokenId::get(),
+			&Self::second_token_id(),
 			mga_rewards,
 			mga_rewards_vested,
 			mga_lock,
@@ -672,7 +672,7 @@ impl<T: Config> Pallet<T> {
 
 		Self::claim_rewards_from_single_currency(
 			&who,
-			&T::KSMTokenId::get(),
+			&Self::first_token_id(),
 			ksm_rewards,
 			ksm_rewards_vested,
 			ksm_lock,

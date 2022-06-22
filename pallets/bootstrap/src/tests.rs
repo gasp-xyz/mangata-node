@@ -184,7 +184,20 @@ fn test_donation_with_more_tokens_than_available() {
 fn test_prevent_provisions_in_before_start_phase() {
 	new_test_ext().execute_with(|| {
 		set_up();
-		Phase::<Test>::put(BootstrapPhase::BeforeStart);
+
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			10,
+			20,
+			DEFAULT_RATIO,
+		)
+		.unwrap();
 
 		assert_err!(
 			Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), INITIAL_AMOUNT * 2),
@@ -198,7 +211,23 @@ fn test_prevent_provisions_in_before_start_phase() {
 fn test_prevent_provisions_in_finished_phase() {
 	new_test_ext().execute_with(|| {
 		set_up();
+
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			10,
+			20,
+			DEFAULT_RATIO,
+		)
+		.unwrap();
+
 		Phase::<Test>::put(BootstrapPhase::Finished);
+
 		assert_err!(
 			Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), INITIAL_AMOUNT * 2),
 			Error::<Test>::Unauthorized

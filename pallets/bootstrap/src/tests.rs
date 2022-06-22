@@ -521,8 +521,10 @@ fn test_bootstrap_state_transitions() {
 		Bootstrap::on_initialize(BOOTSTRAP_PUBLIC_START);
 		assert_eq!(Bootstrap::phase(), BootstrapPhase::Public);
 
+		println!("{:?}", Bootstrap::phase());
 		for i in BOOTSTRAP_PUBLIC_START..BOOTSTRAP_FINISH {
 			Bootstrap::on_initialize(i);
+			println!("{:?}", Bootstrap::phase());
 			assert_eq!(Bootstrap::phase(), BootstrapPhase::Public);
 		}
 
@@ -1397,7 +1399,7 @@ fn test_restart_rewards() {
 		)
 		.unwrap();
 
-		assert_err!(Bootstrap::finalize(Origin::root()), Error::<Test>::NotFinishedYet);
+		assert_err!(Bootstrap::finalize(Origin::root(), None), Error::<Test>::NotFinishedYet);
 
 		Bootstrap::on_initialize(120_u32.into());
 
@@ -1408,7 +1410,7 @@ fn test_restart_rewards() {
 
 		// not all rewards claimed
 		assert_err!(
-			Bootstrap::finalize(Origin::root()),
+			Bootstrap::finalize(Origin::root(), None),
 			Error::<Test>::BootstrapNotReadyToBeFinished
 		);
 
@@ -1417,7 +1419,7 @@ fn test_restart_rewards() {
 		assert_ne!(0, Bootstrap::balance(liq_token_id, USER_ID));
 		assert_ne!(0, Bootstrap::balance(liq_token_id, ANOTHER_USER_ID));
 
-		Bootstrap::finalize(Origin::root()).unwrap();
+		Bootstrap::finalize(Origin::root(), None).unwrap();
 		Bootstrap::schedule_bootstrap(
 			Origin::root(),
 			KSMId::get(),
@@ -1551,7 +1553,7 @@ fn transfer_dust_to_treasury() {
 			<mock::Test as Config>::TreasuryPalletId::get().into_account(),
 		);
 
-		Bootstrap::finalize(Origin::root()).unwrap();
+		Bootstrap::finalize(Origin::root(), None).unwrap();
 
 		let after_finalize = Bootstrap::balance(
 			liq_token_id,
@@ -1567,7 +1569,6 @@ fn archive_previous_bootstrap_schedules() {
 	new_test_ext().execute_with(|| {
 		Bootstrap::create_new_token(&USER_ID, u128::MAX);
 		Bootstrap::create_new_token(&USER_ID, u128::MAX);
-		let liq_token_id = Tokens::next_asset_id();
 
 		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
@@ -1598,7 +1599,7 @@ fn archive_previous_bootstrap_schedules() {
 		Bootstrap::on_initialize(120_u32.into());
 		Bootstrap::claim_rewards(Origin::signed(USER_ID)).unwrap();
 		assert_eq!(0, Bootstrap::archived().len());
-		Bootstrap::finalize(Origin::root()).unwrap();
+		Bootstrap::finalize(Origin::root(), None).unwrap();
 
 		assert_eq!(1, Bootstrap::archived().len());
 	})

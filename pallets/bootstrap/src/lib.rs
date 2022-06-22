@@ -346,7 +346,7 @@ pub mod pallet {
 
 		#[pallet::weight(T::WeightInfo::claim_rewards())]
 		#[transactional]
-		pub fn finalize(origin: OriginFor<T>) -> DispatchResult {
+		pub fn finalize(origin: OriginFor<T>, limit: Option<u32>) -> DispatchResult {
 			ensure_root(origin)?;
 
 			ensure!(Self::phase() == BootstrapPhase::Finished, Error::<T>::NotFinishedYet);
@@ -356,25 +356,25 @@ pub mod pallet {
 				Error::<T>::BootstrapNotReadyToBeFinished
 			);
 
-			child::kill_storage(
-				&ChildInfo::new_default_from_vec(Provisions::<T>::prefix_hash()),
-				None,
-			);
+			let mut remove_counter = 0;
 
-			child::kill_storage(
-				&ChildInfo::new_default_from_vec(VestedProvisions::<T>::prefix_hash()),
-				None,
-			);
-
-			child::kill_storage(
-				&ChildInfo::new_default_from_vec(WhitelistedAccount::<T>::prefix_hash()),
-				None,
-			);
-
-			child::kill_storage(
-				&ChildInfo::new_default_from_vec(ClaimedRewards::<T>::prefix_hash()),
-				None,
-			);
+			for prefix in [
+				Provisions::<T>::prefix_hash(),
+				VestedProvisions::<T>::prefix_hash(),
+				WhitelistedAccount::<T>::prefix_hash(),
+				ClaimedRewards::<T>::prefix_hash(),
+			] {
+				if let Some(l) = limit {
+					if remove_counter >= l {
+						Self::deposit_event(Event::BootstrapParitallyFinalized);
+						return Ok(().into())
+					}
+				}
+				match child::kill_storage(&ChildInfo::new_default_from_vec(prefix), limit) {
+					KillStorageResult::AllRemoved(num_removed) => remove_counter += num_removed,
+					KillStorageResult::SomeRemaining(num_removed) => remove_counter += num_removed,
+				};
+			}
 
 			Phase::<T>::put(BootstrapPhase::BeforeStart);
 			let (liq_token_id, _) = MintedLiquidity::<T>::take();
@@ -395,6 +395,8 @@ pub mod pallet {
 					v.push(bootstrap);
 				});
 			}
+
+			Self::deposit_event(Event::BootstrapFinalized);
 
 			Ok(().into())
 		}
@@ -439,7 +441,7 @@ pub mod pallet {
 		NotFinishedYet,
 		/// no rewards to claim
 		NothingToClaim,
-		/// no rewards to claim
+		/// wrong ratio
 		WrongRatio,
 		/// no rewards to claim
 		BootstrapNotReadyToBeFinished,
@@ -456,6 +458,10 @@ pub mod pallet {
 		RewardsClaimed(TokenId, Balance),
 		/// account whitelisted
 		AccountsWhitelisted,
+		/// finalization process tarted
+		BootstrapParitallyFinalized,
+		/// finalization process finished
+		BootstrapFinalized,
 	}
 }
 

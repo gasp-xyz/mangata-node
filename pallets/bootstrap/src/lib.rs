@@ -10,7 +10,7 @@ use frame_support::{
 		child,
 		generator::{StorageDoubleMap as GStorageDoubleMap, StorageMap as GStorageMap},
 	},
-	traits::{ExistenceRequirement, Get},
+	traits::{Contains, ExistenceRequirement, Get},
 	transactional, PalletId,
 };
 use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
@@ -695,5 +695,12 @@ impl<T: Config> Pallet<T> {
 
 	fn second_token_id() -> TokenId {
 		ActivePair::<T>::get().map(|(_, second)| second).unwrap_or(0_u32)
+	}
+}
+
+impl<T: Config> Contains<(TokenId, TokenId)> for Pallet<T> {
+	fn contains(pair: &(TokenId, TokenId)) -> bool {
+		pair == &(Self::first_token_id(), Self::second_token_id()) ||
+			pair == &(Self::second_token_id(), Self::first_token_id())
 	}
 }

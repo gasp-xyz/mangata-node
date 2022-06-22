@@ -1496,3 +1496,5 @@ fn claim_rewards_even_if_sum_of_rewards_is_zero_because_of_small_provision() {
 		);
 	});
 }
+
+// TODO: test dust is sent to reasury

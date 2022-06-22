@@ -130,6 +130,7 @@ impl pallet_xyk::Config for Test {
 	type BuyAndBurnFeePercentage = ConstU128<5>;
 	type RewardsDistributionPeriod = ConstU32<10000>;
 	type WeightInfo = ();
+	type DisallowedPools = Bootstrap;
 	type VestingProvider = Vesting;
 }
 

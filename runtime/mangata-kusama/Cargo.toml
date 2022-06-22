@@ -186,7 +186,9 @@ std = [
 	"pallet-issuance/std",
 	"pallet-vesting-mangata/std",
 	"pallet-crowdloan-rewards/std",
+	"pallet-collective/std",
 	"pallet-elections-phragmen/std",
+	"frame-system-rpc-runtime-api/std",
 
 ]
 
@@ -220,7 +222,6 @@ runtime-benchmarks = [
 	"parachain-staking/runtime-benchmarks",
 	"xcm-asset-registry/runtime-benchmarks",
 	"pallet-treasury/runtime-benchmarks",
-	"pallet-collective/runtime-benchmarks",
 	"pallet-elections-phragmen/runtime-benchmarks",
 	"pallet-crowdloan-rewards/runtime-benchmarks",
 	"pallet-utility/runtime-benchmarks",

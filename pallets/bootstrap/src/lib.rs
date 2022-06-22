@@ -363,7 +363,17 @@ pub mod pallet {
 			);
 
 			Phase::<T>::put(BootstrapPhase::BeforeStart);
-			MintedLiquidity::<T>::kill();
+			let (liq_token_id, _) = MintedLiquidity::<T>::take();
+			let balance = T::Currency::free_balance(liq_token_id.into(), &Self::vault_address());
+			if balance > 0_u128.into() {
+				T::Currency::transfer(
+					liq_token_id.into(),
+					&Self::vault_address(),
+					&T::TreasuryPalletId::get().into_account(),
+					balance,
+					ExistenceRequirement::AllowDeath,
+				)?;
+			}
 			Valuations::<T>::kill();
 			BootstrapSchedule::<T>::kill();
 			Ok(().into())

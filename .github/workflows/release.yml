@@ -42,7 +42,7 @@ jobs:
         name: Tag and push images
         run: |
           docker tag mangatasolutions/mangata-node:kusama-${{ github.sha }} ${{ steps.meta.outputs.tags }}
-          docker push mangatasolutions/mangata-node:kusama-${{ steps.meta.outputs.tags }}
+          docker ${{ steps.meta.outputs.tags }}
 
   publish-rococo:
 

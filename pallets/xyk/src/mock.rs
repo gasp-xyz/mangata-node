@@ -12,12 +12,9 @@ use sp_runtime::{
 use crate as xyk;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{ConstU128, ConstU32, Contains, Everything},
+	traits::{ConstU128, ConstU32, Contains, Everything, Nothing},
 	PalletId,
 };
-
-#[cfg(feature = "runtime-benchmarks")]
-use frame_support::traits::Nothing;
 
 use frame_system as system;
 use mangata_primitives::{Amount, Balance, TokenId};
@@ -278,6 +275,7 @@ impl Config for Test {
 	type WeightInfo = ();
 	type VestingProvider = Vesting;
 	type DisallowedPools = DummyBlacklistedPool;
+	type DisabledTokens = Nothing;
 }
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -296,6 +294,7 @@ impl Config for Test {
 	type WeightInfo = ();
 	type VestingProvider = Vesting;
 	type DisallowedPools = Nothing;
+	type DisabledTokens = Nothing;
 }
 
 impl<T: Config> Pallet<T> {

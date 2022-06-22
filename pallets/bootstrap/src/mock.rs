@@ -20,7 +20,7 @@ use super::*;
 use crate as pallet_bootstrap;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{ConstU128, ConstU32, Contains, Everything},
+	traits::{ConstU128, ConstU32, Contains, Everything, Nothing},
 };
 use mangata_primitives::{Amount, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter};
@@ -131,6 +131,7 @@ impl pallet_xyk::Config for Test {
 	type RewardsDistributionPeriod = ConstU32<10000>;
 	type WeightInfo = ();
 	type DisallowedPools = Bootstrap;
+	type DisabledTokens = Nothing;
 	type VestingProvider = Vesting;
 }
 

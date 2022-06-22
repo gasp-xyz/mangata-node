@@ -283,16 +283,6 @@ mod benchmarking;
 pub mod weights;
 pub use weights::WeightInfo;
 
-#[cfg(not(feature = "enable-trading"))]
-fn is_asset_enabled(asset_id: &TokenId) -> bool {
-	asset_id < &(2 as u32) || asset_id > &(3 as u32)
-}
-
-#[cfg(feature = "enable-trading")]
-fn is_asset_enabled(_asset_id: &TokenId) -> bool {
-	true
-}
-
 type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 #[frame_support::pallet]
 pub mod pallet {
@@ -327,6 +317,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type RewardsDistributionPeriod: Get<u32>;
 		type DisallowedPools: Contains<(TokenId, TokenId)>;
+		type DisabledTokens: Contains<TokenId>;
 		type VestingProvider: MultiTokenVestingLocks<Self::AccountId>;
 		type WeightInfo: WeightInfo;
 	}
@@ -518,7 +509,8 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 
 			ensure!(
-				is_asset_enabled(&first_asset_id) && is_asset_enabled(&second_asset_id),
+				!T::DisabledTokens::contains(&first_asset_id) &&
+					!T::DisabledTokens::contains(&second_asset_id),
 				Error::<T>::FunctionNotAvailableForThisToken
 			);
 
@@ -629,7 +621,8 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 
 			ensure!(
-				is_asset_enabled(&first_asset_id) && is_asset_enabled(&second_asset_id),
+				!T::DisabledTokens::contains(&first_asset_id) &&
+					!T::DisabledTokens::contains(&second_asset_id),
 				Error::<T>::FunctionNotAvailableForThisToken
 			);
 
@@ -1804,7 +1797,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		ensure!(!sold_asset_amount.is_zero(), Error::<T>::ZeroAmount,);
 
 		ensure!(
-			is_asset_enabled(&sold_asset_id) && is_asset_enabled(&bought_asset_id),
+			!T::DisabledTokens::contains(&sold_asset_id) &&
+				!T::DisabledTokens::contains(&bought_asset_id),
 			Error::<T>::FunctionNotAvailableForThisToken
 		);
 
@@ -1982,7 +1976,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		max_amount_in: Self::Balance,
 	) -> DispatchResult {
 		ensure!(
-			is_asset_enabled(&sold_asset_id) && is_asset_enabled(&bought_asset_id),
+			!T::DisabledTokens::contains(&sold_asset_id) &&
+				!T::DisabledTokens::contains(&bought_asset_id),
 			Error::<T>::FunctionNotAvailableForThisToken
 		);
 
@@ -2315,7 +2310,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		let vault = Pallet::<T>::account_id();
 
 		ensure!(
-			is_asset_enabled(&first_asset_id) && is_asset_enabled(&second_asset_id),
+			!T::DisabledTokens::contains(&first_asset_id) &&
+				!T::DisabledTokens::contains(&second_asset_id),
 			Error::<T>::FunctionNotAvailableForThisToken
 		);
 

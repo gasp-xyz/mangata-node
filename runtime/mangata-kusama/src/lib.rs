@@ -489,6 +489,15 @@ impl orml_tokens::Config for Runtime {
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 }
 
+pub struct TestTokensFilter;
+impl Contains<TokenId> for TestTokensFilter {
+	fn contains(token_id: &TokenId) -> bool {
+		// we dont want to allow doing anything with dummy assets previously
+		// used for testing
+		*token_id == 2 || *token_id == 3
+	}
+}
+
 impl pallet_xyk::Config for Runtime {
 	type Event = Event;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
@@ -503,6 +512,7 @@ impl pallet_xyk::Config for Runtime {
 	type RewardsDistributionPeriod = frame_support::traits::ConstU32<10000>;
 	type VestingProvider = Vesting;
 	type DisallowedPools = Bootstrap;
+	type DisabledTokens = TestTokensFilter;
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
 }
 

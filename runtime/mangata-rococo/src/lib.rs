@@ -503,6 +503,7 @@ impl pallet_xyk::Config for Runtime {
 	type RewardsDistributionPeriod = frame_support::traits::ConstU32<10000>;
 	type VestingProvider = Vesting;
 	type DisallowedPools = Bootstrap;
+	type DisabledTokens = Nothing;
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
 }
 

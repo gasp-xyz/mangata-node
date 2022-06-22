@@ -220,7 +220,9 @@
 
 use frame_support::{
 	dispatch::{DispatchError, DispatchResult},
-	ensure, PalletId,
+	ensure,
+	traits::Contains,
+	PalletId,
 };
 use frame_system::ensure_signed;
 use sp_core::U256;
@@ -324,6 +326,7 @@ pub mod pallet {
 		type BuyAndBurnFeePercentage: Get<u128>;
 		#[pallet::constant]
 		type RewardsDistributionPeriod: Get<u32>;
+		type DisallowedPools: Contains<(TokenId, TokenId)>;
 		type VestingProvider: MultiTokenVestingLocks<Self::AccountId>;
 		type WeightInfo: WeightInfo;
 	}
@@ -377,6 +380,8 @@ pub mod pallet {
 		SoldAmountTooLow,
 		/// Asset id is blacklisted
 		FunctionNotAvailableForThisToken,
+		/// Pool considting of passed tokens id is blacklisted
+		DisallowedPool,
 	}
 
 	#[pallet::event]
@@ -1657,6 +1662,11 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		second_asset_amount: Self::Balance,
 	) -> DispatchResult {
 		let vault: T::AccountId = Pallet::<T>::account_id();
+
+		ensure!(
+			!T::DisallowedPools::contains(&(first_asset_id, second_asset_id)),
+			Error::<T>::DisallowedPool,
+		);
 
 		// Ensure pool is not created with zero amount
 		ensure!(

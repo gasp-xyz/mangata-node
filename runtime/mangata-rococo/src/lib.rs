@@ -502,6 +502,7 @@ impl pallet_xyk::Config for Runtime {
 	type BuyAndBurnFeePercentage = frame_support::traits::ConstU128<5>;
 	type RewardsDistributionPeriod = frame_support::traits::ConstU32<10000>;
 	type VestingProvider = Vesting;
+	type DisallowedPools = Nothing;
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
 }
 

@@ -15,6 +15,10 @@ use frame_support::{
 	traits::{ConstU128, ConstU32, Contains, Everything},
 	PalletId,
 };
+
+#[cfg(feature = "runtime-benchmarks")]
+use frame_support::traits::Nothing;
+
 use frame_system as system;
 use mangata_primitives::{Amount, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
@@ -250,6 +254,14 @@ parameter_types! {
 	pub FakeLiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account();
 }
 
+pub struct DummyBlacklistedPool;
+
+impl Contains<(TokenId, TokenId)> for DummyBlacklistedPool {
+	fn contains(pair: &(TokenId, TokenId)) -> bool {
+		pair == &(1_u32, 9_u32) || pair == &(9_u32, 1_u32)
+	}
+}
+
 #[cfg(not(feature = "runtime-benchmarks"))]
 impl Config for Test {
 	type Event = Event;
@@ -265,6 +277,7 @@ impl Config for Test {
 	type RewardsDistributionPeriod = ConstU32<10000>;
 	type WeightInfo = ();
 	type VestingProvider = Vesting;
+	type DisallowedPools = DummyBlacklistedPool;
 }
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -282,6 +295,7 @@ impl Config for Test {
 	type RewardsDistributionPeriod = ConstU32<10000>;
 	type WeightInfo = ();
 	type VestingProvider = Vesting;
+	type DisallowedPools = Nothing;
 }
 
 impl<T: Config> Pallet<T> {

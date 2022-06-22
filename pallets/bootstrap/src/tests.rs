@@ -33,7 +33,16 @@ fn set_up() {
 fn jump_to_whitelist_phase() {
 	let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 	pool_exists_mock.expect().return_const(false);
-	Bootstrap::schedule_bootstrap(Origin::root(), 10_u32.into(), 10, 10, DEFAULT_RATIO).unwrap();
+	Bootstrap::schedule_bootstrap(
+		Origin::root(),
+		KSMId::get(),
+		MGAId::get(),
+		10_u32.into(),
+		10,
+		10,
+		DEFAULT_RATIO,
+	)
+	.unwrap();
 	Bootstrap::on_initialize(15_u32.into());
 	assert_eq!(BootstrapPhase::Whitelist, Phase::<Test>::get());
 }
@@ -42,7 +51,16 @@ fn jump_to_public_phase() {
 	let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 	pool_exists_mock.expect().return_const(false);
 
-	Bootstrap::schedule_bootstrap(Origin::root(), 10_u32.into(), 10, 10, DEFAULT_RATIO).unwrap();
+	Bootstrap::schedule_bootstrap(
+		Origin::root(),
+		KSMId::get(),
+		MGAId::get(),
+		10_u32.into(),
+		10,
+		10,
+		DEFAULT_RATIO,
+	)
+	.unwrap();
 	Bootstrap::on_initialize(25_u32.into());
 	assert_eq!(BootstrapPhase::Public, Phase::<Test>::get());
 }
@@ -257,6 +275,8 @@ fn test_non_root_user_can_not_schedule_bootstrap() {
 		assert_err!(
 			Bootstrap::schedule_bootstrap(
 				Origin::signed(USER_ID),
+				KSMId::get(),
+				MGAId::get(),
 				0_u32.into(),
 				1,
 				1,
@@ -292,7 +312,15 @@ fn test_ido_start_cannot_happen_in_the_past() {
 		set_up();
 		System::set_block_number(1000);
 		assert_err!(
-			Bootstrap::schedule_bootstrap(Origin::root(), 999_u32.into(), 1, 1, DEFAULT_RATIO),
+			Bootstrap::schedule_bootstrap(
+				Origin::root(),
+				KSMId::get(),
+				MGAId::get(),
+				999_u32.into(),
+				1,
+				1,
+				DEFAULT_RATIO
+			),
 			Error::<Test>::BootstrapStartInThePast
 		);
 	});
@@ -305,11 +333,27 @@ fn test_ido_start_can_not_be_initialize_with_0_ratio() {
 		set_up();
 		System::set_block_number(10);
 		assert_err!(
-			Bootstrap::schedule_bootstrap(Origin::root(), 999_u32.into(), 1, 1, (1, 0)),
+			Bootstrap::schedule_bootstrap(
+				Origin::root(),
+				KSMId::get(),
+				MGAId::get(),
+				999_u32.into(),
+				1,
+				1,
+				(1, 0)
+			),
 			Error::<Test>::WrongRatio
 		);
 		assert_err!(
-			Bootstrap::schedule_bootstrap(Origin::root(), 999_u32.into(), 1, 1, (0, 1)),
+			Bootstrap::schedule_bootstrap(
+				Origin::root(),
+				KSMId::get(),
+				MGAId::get(),
+				999_u32.into(),
+				1,
+				1,
+				(0, 1)
+			),
 			Error::<Test>::WrongRatio
 		);
 	});
@@ -321,7 +365,15 @@ fn test_cannot_schedule_bootstrap_with_whitelist_phase_length_equal_zero() {
 	new_test_ext().execute_with(|| {
 		set_up();
 		assert_err!(
-			Bootstrap::schedule_bootstrap(Origin::root(), 100_u32.into(), 0, 1, DEFAULT_RATIO),
+			Bootstrap::schedule_bootstrap(
+				Origin::root(),
+				KSMId::get(),
+				MGAId::get(),
+				100_u32.into(),
+				0,
+				1,
+				DEFAULT_RATIO
+			),
 			Error::<Test>::PhaseLengthCannotBeZero
 		);
 	});
@@ -333,7 +385,15 @@ fn test_cannot_schedule_bootstrap_with_public_phase_length_equal_zero() {
 	new_test_ext().execute_with(|| {
 		set_up();
 		assert_err!(
-			Bootstrap::schedule_bootstrap(Origin::root(), 100_u32.into(), 1, 0, DEFAULT_RATIO),
+			Bootstrap::schedule_bootstrap(
+				Origin::root(),
+				KSMId::get(),
+				MGAId::get(),
+				100_u32.into(),
+				1,
+				0,
+				DEFAULT_RATIO
+			),
 			Error::<Test>::PhaseLengthCannotBeZero
 		);
 	});
@@ -348,16 +408,40 @@ fn test_bootstrap_can_be_modified_only_before_its_started() {
 		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
-		Bootstrap::schedule_bootstrap(Origin::root(), 50_u32.into(), 10, 20, DEFAULT_RATIO)
-			.unwrap();
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			50_u32.into(),
+			10,
+			20,
+			DEFAULT_RATIO,
+		)
+		.unwrap();
 
-		Bootstrap::schedule_bootstrap(Origin::root(), 100_u32.into(), 10, 20, DEFAULT_RATIO)
-			.unwrap();
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			10,
+			20,
+			DEFAULT_RATIO,
+		)
+		.unwrap();
 
 		Bootstrap::on_initialize(100_u32.into());
 
 		assert_err!(
-			Bootstrap::schedule_bootstrap(Origin::root(), 100_u32.into(), 10, 20, DEFAULT_RATIO),
+			Bootstrap::schedule_bootstrap(
+				Origin::root(),
+				KSMId::get(),
+				MGAId::get(),
+				100_u32.into(),
+				10,
+				20,
+				DEFAULT_RATIO
+			),
 			Error::<Test>::AlreadyStarted
 		);
 
@@ -383,6 +467,8 @@ fn test_bootstrap_state_transitions() {
 
 		Bootstrap::schedule_bootstrap(
 			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
 			BOOTSTRAP_WHITELIST_START.into(),
 			(BOOTSTRAP_PUBLIC_START - BOOTSTRAP_WHITELIST_START).try_into().unwrap(),
 			(BOOTSTRAP_FINISH - BOOTSTRAP_PUBLIC_START).try_into().unwrap(),
@@ -433,6 +519,8 @@ fn test_bootstrap_state_transitions_when_on_initialized_is_not_called() {
 
 		Bootstrap::schedule_bootstrap(
 			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
 			BOOTSTRAP_WHITELIST_START.into(),
 			(BOOTSTRAP_PUBLIC_START - BOOTSTRAP_WHITELIST_START).try_into().unwrap(),
 			(BOOTSTRAP_FINISH - BOOTSTRAP_PUBLIC_START).try_into().unwrap(),
@@ -455,6 +543,8 @@ fn test_bootstrap_schedule_overflow() {
 		assert_err!(
 			Bootstrap::schedule_bootstrap(
 				Origin::root(),
+				KSMId::get(),
+				MGAId::get(),
 				u64::MAX.into(),
 				u32::MAX,
 				1_u32,
@@ -466,6 +556,8 @@ fn test_bootstrap_schedule_overflow() {
 		assert_err!(
 			Bootstrap::schedule_bootstrap(
 				Origin::root(),
+				KSMId::get(),
+				MGAId::get(),
 				u64::MAX.into(),
 				1_u32,
 				u32::MAX,
@@ -477,6 +569,8 @@ fn test_bootstrap_schedule_overflow() {
 		assert_err!(
 			Bootstrap::schedule_bootstrap(
 				Origin::root(),
+				KSMId::get(),
+				MGAId::get(),
 				u64::MAX.into(),
 				u32::MAX,
 				u32::MAX,
@@ -495,7 +589,15 @@ fn test_do_not_allow_for_creating_starting_bootstrap_for_existing_pool() {
 		pool_exists_mock.expect().return_const(true);
 
 		assert_err!(
-			Bootstrap::schedule_bootstrap(Origin::root(), 100_u32.into(), 10, 10, DEFAULT_RATIO),
+			Bootstrap::schedule_bootstrap(
+				Origin::root(),
+				KSMId::get(),
+				MGAId::get(),
+				100_u32.into(),
+				10,
+				10,
+				DEFAULT_RATIO
+			),
 			Error::<Test>::PoolAlreadyExists
 		);
 	});
@@ -527,8 +629,16 @@ fn test_crate_pool_is_called_with_proper_arguments_after_bootstrap_finish() {
 			.times(1)
 			.return_const(POOL_CREATE_DUMMY_RETURN_VALUE);
 
-		Bootstrap::schedule_bootstrap(Origin::root(), 100_u32.into(), 10, 10, DEFAULT_RATIO)
-			.unwrap();
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			10,
+			10,
+			DEFAULT_RATIO,
+		)
+		.unwrap();
 
 		Bootstrap::on_initialize(110_u32.into());
 		Bootstrap::provision(Origin::signed(USER_ID), MGAId::get(), MGA_PROVISON).unwrap();
@@ -546,8 +656,16 @@ fn test_cannot_claim_rewards_when_bootstrap_is_not_finished() {
 		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
-		Bootstrap::schedule_bootstrap(Origin::root(), 100_u32.into(), 10, 10, DEFAULT_RATIO)
-			.unwrap();
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			10,
+			10,
+			DEFAULT_RATIO,
+		)
+		.unwrap();
 
 		Bootstrap::on_initialize(100_u32.into());
 		assert_eq!(BootstrapPhase::Whitelist, Phase::<Test>::get());
@@ -588,8 +706,16 @@ fn test_rewards_are_distributed_properly_with_single_user() {
 				Some((id, issuance))
 			});
 
-		Bootstrap::schedule_bootstrap(Origin::root(), 100_u32.into(), 10, 10, DEFAULT_RATIO)
-			.unwrap();
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			10,
+			10,
+			DEFAULT_RATIO,
+		)
+		.unwrap();
 
 		Bootstrap::on_initialize(100_u32.into());
 		assert_eq!(BootstrapPhase::Whitelist, Phase::<Test>::get());
@@ -663,8 +789,16 @@ fn test_rewards_are_distributed_properly_with_multiple_user() {
 				Some((id, issuance))
 			});
 
-		Bootstrap::schedule_bootstrap(Origin::root(), 100_u32.into(), 10, 10, DEFAULT_RATIO)
-			.unwrap();
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			10,
+			10,
+			DEFAULT_RATIO,
+		)
+		.unwrap();
 
 		Bootstrap::on_initialize(100_u32.into());
 		assert_eq!(BootstrapPhase::Whitelist, Phase::<Test>::get());
@@ -1205,8 +1339,16 @@ fn test_restart_rewards() {
 				Some((id, issuance))
 			});
 
-		Bootstrap::schedule_bootstrap(Origin::root(), 100_u32.into(), 10, 10, DEFAULT_RATIO)
-			.unwrap();
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			10,
+			10,
+			DEFAULT_RATIO,
+		)
+		.unwrap();
 		Bootstrap::on_initialize(110_u32.into());
 		Bootstrap::transfer(MGAId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 500_000).unwrap();
 		Bootstrap::transfer(KSMId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 500_000).unwrap();
@@ -1247,8 +1389,16 @@ fn test_restart_rewards() {
 		assert_ne!(0, Bootstrap::balance(liq_token_id, ANOTHER_USER_ID));
 
 		Bootstrap::finalize(Origin::root()).unwrap();
-		Bootstrap::schedule_bootstrap(Origin::root(), 200_u32.into(), 10, 10, DEFAULT_RATIO)
-			.unwrap();
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			200_u32.into(),
+			10,
+			10,
+			DEFAULT_RATIO,
+		)
+		.unwrap();
 	});
 }
 
@@ -1274,8 +1424,16 @@ fn claim_rewards_even_if_sum_of_rewards_is_zero_because_of_small_provision() {
 				Some((id, issuance))
 			});
 
-		Bootstrap::schedule_bootstrap(Origin::root(), 100_u32.into(), 10, 10, DEFAULT_RATIO)
-			.unwrap();
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			10,
+			10,
+			DEFAULT_RATIO,
+		)
+		.unwrap();
 		Bootstrap::on_initialize(110_u32.into());
 		Bootstrap::transfer(MGAId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 1).unwrap();
 		Bootstrap::transfer(KSMId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 1).unwrap();

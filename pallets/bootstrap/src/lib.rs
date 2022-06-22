@@ -196,6 +196,10 @@ pub mod pallet {
 	pub type ProvisionAccounts<T: Config> =
 		StorageMap<_, Twox64Concat, T::AccountId, (), OptionQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn pair)]
+	pub type ActivePair<T: Config> = StorageValue<_, (TokenId, TokenId), OptionQuery>;
+
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// provisions vested/locked tokens into the boostrstrap
@@ -270,10 +274,12 @@ pub mod pallet {
 		#[transactional]
 		pub fn schedule_bootstrap(
 			origin: OriginFor<T>,
+			first_token_id: TokenId,
+			second_token_id: TokenId,
 			ido_start: T::BlockNumber,
 			whitelist_phase_length: u32,
 			public_phase_lenght: u32,
-			max_ksm_to_mgx_ratio: (u128, u128),
+			max_first_to_second_ratio: (u128, u128),
 		) -> DispatchResult {
 			ensure_root(origin)?;
 
@@ -284,9 +290,9 @@ pub mod pallet {
 				Error::<T>::BootstrapStartInThePast
 			);
 
-			ensure!(max_ksm_to_mgx_ratio.0 != 0, Error::<T>::WrongRatio);
+			ensure!(max_first_to_second_ratio.0 != 0, Error::<T>::WrongRatio);
 
-			ensure!(max_ksm_to_mgx_ratio.1 != 0, Error::<T>::WrongRatio);
+			ensure!(max_first_to_second_ratio.1 != 0, Error::<T>::WrongRatio);
 
 			ensure!(whitelist_phase_length > 0, Error::<T>::PhaseLengthCannotBeZero);
 
@@ -307,15 +313,16 @@ pub mod pallet {
 			);
 
 			ensure!(
-				!T::PoolCreateApi::pool_exists(T::KSMTokenId::get(), T::MGATokenId::get()),
+				!T::PoolCreateApi::pool_exists(first_token_id, second_token_id),
 				Error::<T>::PoolAlreadyExists
 			);
 
+			ActivePair::<T>::put((first_token_id, second_token_id));
 			BootstrapSchedule::<T>::put((
 				ido_start,
 				whitelist_phase_length,
 				public_phase_lenght,
-				max_ksm_to_mgx_ratio,
+				max_first_to_second_ratio,
 			));
 
 			Ok(().into())
@@ -682,5 +689,13 @@ impl<T: Config> Pallet<T> {
 		Self::deposit_event(Event::RewardsClaimed(liq_token_id, total_rewards_claimed));
 
 		Ok(().into())
+	}
+
+	fn first_token_id() -> TokenId {
+		ActivePair::<T>::get().map(|(first, _)| first).unwrap_or(4_u32)
+	}
+
+	fn second_token_id() -> TokenId {
+		ActivePair::<T>::get().map(|(_, second)| second).unwrap_or(0_u32)
 	}
 }

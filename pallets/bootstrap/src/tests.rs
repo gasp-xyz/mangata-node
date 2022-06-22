@@ -1550,13 +1550,58 @@ fn transfer_dust_to_treasury() {
 			liq_token_id,
 			<mock::Test as Config>::TreasuryPalletId::get().into_account(),
 		);
+
 		Bootstrap::finalize(Origin::root()).unwrap();
+
 		let after_finalize = Bootstrap::balance(
 			liq_token_id,
 			<mock::Test as Config>::TreasuryPalletId::get().into_account(),
 		);
 		assert!(after_finalize > before_finalize);
 	});
+}
+
+#[test]
+#[serial]
+fn archive_previous_bootstrap_schedules() {
+	new_test_ext().execute_with(|| {
+		Bootstrap::create_new_token(&USER_ID, u128::MAX);
+		Bootstrap::create_new_token(&USER_ID, u128::MAX);
+		let liq_token_id = Tokens::next_asset_id();
+
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		let pool_create_mock = MockPoolCreateApi::pool_create_context();
+		pool_create_mock
+			.expect()
+			.times(1)
+			.returning(move |addr, _, ksm_amount, _, mga_amount| {
+				let issuance = (ksm_amount + mga_amount) / 2;
+				let id = Bootstrap::create_new_token(&addr, issuance);
+				Some((id, issuance))
+			});
+
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			10,
+			10,
+			DEFAULT_RATIO,
+		)
+		.unwrap();
+		Bootstrap::on_initialize(110_u32.into());
+		Bootstrap::provision(Origin::signed(USER_ID), MGAId::get(), 1_000_000_000_u128).unwrap();
+		Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), 100_u128).unwrap();
+		Bootstrap::on_initialize(120_u32.into());
+		Bootstrap::claim_rewards(Origin::signed(USER_ID)).unwrap();
+		assert_eq!(0, Bootstrap::archived().len());
+		Bootstrap::finalize(Origin::root()).unwrap();
+
+		assert_eq!(1, Bootstrap::archived().len());
+	})
 }
 
 // TODO: test xyk blocking

@@ -21,6 +21,7 @@ use scale_info::TypeInfo;
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
 use sp_bootstrap::PoolCreateApi;
 use sp_core::U256;
+use sp_io::KillStorageResult;
 use sp_runtime::traits::{AccountIdConversion, CheckedAdd};
 use sp_std::prelude::*;
 
@@ -193,6 +194,11 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn pair)]
 	pub type ActivePair<T: Config> = StorageValue<_, (TokenId, TokenId), OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn archived)]
+	pub type ArchivedBootstrap<T: Config> =
+		StorageValue<_, Vec<(T::BlockNumber, u32, u32, (u128, u128))>, ValueQuery>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -375,7 +381,13 @@ pub mod pallet {
 				)?;
 			}
 			Valuations::<T>::kill();
-			BootstrapSchedule::<T>::kill();
+
+			if let Some(bootstrap) = BootstrapSchedule::<T>::take() {
+				ArchivedBootstrap::<T>::mutate(|v| {
+					v.push(bootstrap);
+				});
+			}
+
 			Ok(().into())
 		}
 

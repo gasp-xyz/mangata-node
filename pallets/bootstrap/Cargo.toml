@@ -20,6 +20,7 @@ mangata-primitives = { default-features = false, version = '0.1.0' , path = '../
 sp-core = { default-features = false, version = '4.1.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-std = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-runtime = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+sp-io = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 sp-arithmetic= { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 frame-benchmarking = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-bootstrap = { path = "../../primitives/bootstrap", default-features=false }
@@ -44,6 +45,7 @@ std = [
 	'codec/std',
 	'sp-std/std',
 	'sp-runtime/std',
+	'sp-io/std',
 	'sp-bootstrap/std',
 	'frame-support/std',
 	'frame-system/std',

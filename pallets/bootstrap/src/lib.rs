@@ -107,13 +107,21 @@ pub mod pallet {
 					// TODO: include cost of pool_create call
 					T::DbWeight::get().reads_writes(15, 13)
 				} else if n >= public_start {
-					Phase::<T>::put(BootstrapPhase::Public);
-					log!(info, "starting public phase");
-					T::DbWeight::get().reads_writes(2, 1)
+					if phase != BootstrapPhase::Public {
+						Phase::<T>::put(BootstrapPhase::Public);
+						log!(info, "starting public phase");
+						T::DbWeight::get().reads_writes(2, 1)
+					} else {
+						T::DbWeight::get().reads(2)
+					}
 				} else if n >= whitelist_start {
-					log!(info, "starting whitelist phase");
-					Phase::<T>::put(BootstrapPhase::Whitelist);
-					T::DbWeight::get().reads_writes(2, 1)
+					if phase != BootstrapPhase::Whitelist {
+						log!(info, "starting whitelist phase");
+						Phase::<T>::put(BootstrapPhase::Whitelist);
+						T::DbWeight::get().reads_writes(2, 1)
+					} else {
+						T::DbWeight::get().reads(2)
+					}
 				} else {
 					T::DbWeight::get().reads(2)
 				}

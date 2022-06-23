@@ -6,11 +6,7 @@ use frame_support::pallet_prelude::*;
 
 use frame_support::{
 	codec::{Decode, Encode},
-	storage::{
-		child,
-		generator::{StorageDoubleMap as GStorageDoubleMap, StorageMap as GStorageMap},
-	},
-	traits::{Contains, ExistenceRequirement, Get},
+	traits::{Contains, ExistenceRequirement, Get, StorageVersion},
 	transactional, PalletId,
 };
 use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
@@ -24,6 +20,8 @@ use sp_core::U256;
 use sp_io::KillStorageResult;
 use sp_runtime::traits::{AccountIdConversion, CheckedAdd};
 use sp_std::prelude::*;
+
+pub mod migrations;
 
 #[cfg(test)]
 mod mock;
@@ -64,9 +62,12 @@ pub mod pallet {
 
 	use super::*;
 
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	#[pallet::without_storage_info]
+	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(PhantomData<T>);
 
 	#[pallet::hooks]
@@ -346,7 +347,7 @@ pub mod pallet {
 
 		#[pallet::weight(T::WeightInfo::claim_rewards())]
 		#[transactional]
-		pub fn finalize(origin: OriginFor<T>, limit: Option<u32>) -> DispatchResult {
+		pub fn finalize(origin: OriginFor<T>, mut limit: Option<u32>) -> DispatchResult {
 			ensure_root(origin)?;
 
 			ensure!(Self::phase() == BootstrapPhase::Finished, Error::<T>::NotFinishedYet);
@@ -356,23 +357,27 @@ pub mod pallet {
 				Error::<T>::BootstrapNotReadyToBeFinished
 			);
 
-			let mut remove_counter = 0;
-
-			for prefix in [
-				Provisions::<T>::prefix_hash(),
-				VestedProvisions::<T>::prefix_hash(),
-				WhitelistedAccount::<T>::prefix_hash(),
-				ClaimedRewards::<T>::prefix_hash(),
+			for result in [
+				VestedProvisions::<T>::remove_all(limit),
+				WhitelistedAccount::<T>::remove_all(limit),
+				ClaimedRewards::<T>::remove_all(limit),
+				Provisions::<T>::remove_all(limit),
 			] {
-				if let Some(l) = limit {
-					if remove_counter >= l {
+				match (result, limit.as_mut()) {
+					(KillStorageResult::AllRemoved(num_removed), Some(l)) |
+					(KillStorageResult::SomeRemaining(num_removed), Some(l))
+						if *l > num_removed =>
+					{
+						*l -= num_removed;
+					}
+					(KillStorageResult::AllRemoved(num_removed), Some(l)) |
+					(KillStorageResult::SomeRemaining(num_removed), Some(l))
+						if *l <= num_removed =>
+					{
 						Self::deposit_event(Event::BootstrapParitallyFinalized);
 						return Ok(().into())
 					}
-				}
-				match child::kill_storage(&ChildInfo::new_default_from_vec(prefix), limit) {
-					KillStorageResult::AllRemoved(num_removed) => remove_counter += num_removed,
-					KillStorageResult::SomeRemaining(num_removed) => remove_counter += num_removed,
+					_ => {},
 				};
 			}
 
@@ -389,6 +394,7 @@ pub mod pallet {
 				)?;
 			}
 			Valuations::<T>::kill();
+			ActivePair::<T>::kill();
 
 			if let Some(bootstrap) = BootstrapSchedule::<T>::take() {
 				ArchivedBootstrap::<T>::mutate(|v| {
@@ -674,7 +680,10 @@ impl<T: Config> Pallet<T> {
 
 		let (liq_token_id, _) = Self::minted_liquidity();
 
-		ensure!(ProvisionAccounts::<T>::get(who).is_some(), Error::<T>::NothingToClaim);
+		// for backward compatibility
+		if Self::archived().len() > 0 {
+			ensure!(ProvisionAccounts::<T>::get(who).is_some(), Error::<T>::NothingToClaim);
+		}
 
 		let (first_token_rewards, first_token_rewards_vested, first_token_lock) =
 			Self::calculate_rewards(&who, &Self::first_token_id())?;

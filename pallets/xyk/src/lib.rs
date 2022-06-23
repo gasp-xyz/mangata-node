@@ -514,6 +514,11 @@ pub mod pallet {
 				Error::<T>::FunctionNotAvailableForThisToken
 			);
 
+			ensure!(
+				!T::DisallowedPools::contains(&(first_asset_id, second_asset_id)),
+				Error::<T>::DisallowedPool,
+			);
+
 			<Self as XykFunctionsTrait<T::AccountId>>::create_pool(
 				sender,
 				first_asset_id,
@@ -1656,11 +1661,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 	) -> DispatchResult {
 		let vault: T::AccountId = Pallet::<T>::account_id();
 
-		ensure!(
-			!T::DisallowedPools::contains(&(first_asset_id, second_asset_id)),
-			Error::<T>::DisallowedPool,
-		);
-
 		// Ensure pool is not created with zero amount
 		ensure!(
 			!first_asset_amount.is_zero() && !second_asset_amount.is_zero(),
@@ -2785,18 +2785,20 @@ impl<T: Config> PoolCreateApi for Pallet<T> {
 		second: TokenId,
 		second_amount: Balance,
 	) -> Option<(TokenId, Balance)> {
-		if let Ok(_) = <Self as XykFunctionsTrait<Self::AccountId>>::create_pool(
+		match <Self as XykFunctionsTrait<Self::AccountId>>::create_pool(
 			account,
 			first,
 			first_amount,
 			second,
 			second_amount,
 		) {
-			LiquidityAssets::<T>::get((first, second)).map(|asset_id| {
+			Ok(_) => LiquidityAssets::<T>::get((first, second)).map(|asset_id| {
 				(asset_id, <T as Config>::Currency::total_issuance(asset_id.into()).into())
-			})
-		} else {
-			None
+			}),
+			Err(e) => {
+				log!(error, "cannot create pool {:?}!", e);
+				None
+			},
 		}
 	}
 }

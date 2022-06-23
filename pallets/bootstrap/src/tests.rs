@@ -20,6 +20,10 @@ const POOL_CREATE_DUMMY_RETURN_VALUE: Option<(TokenId, Balance)> =
 	Some((LIQ_TOKEN_ID, LIQ_TOKEN_AMOUNT));
 
 fn set_up() {
+	// for backwards compatibility
+	ArchivedBootstrap::<mock::Test>::mutate(|v| {
+		v.push(Default::default());
+	});
 	let mga_id = Bootstrap::create_new_token(&USER_ID, INITIAL_AMOUNT);
 	let ksm_id = Bootstrap::create_new_token(&USER_ID, INITIAL_AMOUNT);
 	let dummy_id = Bootstrap::create_new_token(&USER_ID, INITIAL_AMOUNT);
@@ -1437,6 +1441,10 @@ fn test_restart_rewards() {
 #[serial]
 fn claim_rewards_even_if_sum_of_rewards_is_zero_because_of_small_provision() {
 	new_test_ext().execute_with(|| {
+		ArchivedBootstrap::<mock::Test>::mutate(|v| {
+			v.push(Default::default());
+		});
+
 		Bootstrap::create_new_token(&USER_ID, u128::MAX);
 		Bootstrap::create_new_token(&USER_ID, u128::MAX);
 		let liq_token_id = Tokens::next_asset_id();
@@ -1599,7 +1607,8 @@ fn archive_previous_bootstrap_schedules() {
 		Bootstrap::on_initialize(120_u32.into());
 		Bootstrap::claim_rewards(Origin::signed(USER_ID)).unwrap();
 		assert_eq!(0, Bootstrap::archived().len());
-		Bootstrap::finalize(Origin::root(), None).unwrap();
+		Bootstrap::finalize(Origin::root(), Some(1)).unwrap();
+		assert_eq!(0, Bootstrap::provisions(USER_ID, KSMId::get()));
 
 		assert_eq!(1, Bootstrap::archived().len());
 	})

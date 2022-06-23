@@ -2148,7 +2148,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				sender.clone(),
 				liquidity_asset_id,
 				liquidity_assets_minted,
-				Some(ActivateKind::FreeBalance)
+				Some(ActivateKind::AvailableBalance)
 			)?;
 		}
 

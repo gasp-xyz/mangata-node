@@ -24,6 +24,7 @@ use sp_runtime::traits::{
 use sp_std::{convert::TryFrom, fmt::Debug, prelude::*};
 use mp_multipurpose_liquidity::{ActivateKind, BondKind};
 use mp_traits::{StakingReservesProviderTrait, ActivationReservesProviderTrait, XykFunctionsTrait};
+use frame_support::traits::StorageVersion;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -32,6 +33,8 @@ use serde::{Deserialize, Serialize};
 mod mock;
 #[cfg(test)]
 mod tests;
+
+pub mod migration;
 
 pub(crate) const LOG_TARGET: &'static str = "mpl";
 
@@ -54,12 +57,19 @@ pub mod pallet {
 
 	use super::*;
 
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(PhantomData<T>);
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
+	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
+		fn on_runtime_upgrade() -> frame_support::weights::Weight {
+			migration::migrate_to_v1::<T, Pallet<T>>()
+		}
+	}
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config{
@@ -132,7 +142,7 @@ pub mod pallet {
 	#[pallet::getter(fn get_relock_status)]
 	pub type RelockStatus<T: Config> =
 		StorageDoubleMap<_, Blake2_256, T::AccountId, Twox64Concat, TokenId, BoundedVec<RelockStatusInfo, T::MaxRelocks>, ValueQuery>;
-
+		
 	// XYK extrinsics.
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -242,10 +252,10 @@ impl<T: Config> StakingReservesProviderTrait for Pallet<T>{
 	-> bool {
 		let reserve_status = Pallet::<T>::get_reserve_status(account_id, token_id);
 
-		let use_balance_from = use_balance_from.unwrap_or(BondKind::FreeBalance);
+		let use_balance_from = use_balance_from.unwrap_or(BondKind::AvailableBalance);
 
 		match use_balance_from {
-			BondKind::FreeBalance => T::Tokens::ensure_can_withdraw(token_id.into(), &account_id, amount.into(), WithdrawReasons::all(), Default::default()).is_ok()
+			BondKind::AvailableBalance => T::Tokens::ensure_can_withdraw(token_id.into(), &account_id, amount.into(), WithdrawReasons::all(), Default::default()).is_ok()
 				&& reserve_status.staked_unactivated_reserves.checked_add(amount).is_some(),
 			BondKind::ActivatedUnstakedLiquidty => reserve_status.activated_unstaked_reserves.checked_sub(amount).is_some()
 				&& reserve_status.staked_and_activated_reserves.checked_add(amount).is_some(),
@@ -258,10 +268,10 @@ impl<T: Config> StakingReservesProviderTrait for Pallet<T>{
 	-> DispatchResult {
 		let mut reserve_status = Pallet::<T>::get_reserve_status(account_id, token_id);
 
-		let use_balance_from = use_balance_from.unwrap_or(BondKind::FreeBalance);
+		let use_balance_from = use_balance_from.unwrap_or(BondKind::AvailableBalance);
 
 		match use_balance_from {
-			BondKind::FreeBalance => {
+			BondKind::AvailableBalance => {
 				reserve_status.staked_unactivated_reserves = reserve_status.staked_unactivated_reserves.checked_add(amount)
 				.ok_or(Error::<T>::MathError)?;
 				T::Tokens::reserve(token_id.into(), &account_id, amount.into())?;
@@ -365,10 +375,10 @@ impl<T: Config> ActivationReservesProviderTrait for Pallet<T>{
 	-> bool {
 		let reserve_status = Pallet::<T>::get_reserve_status(account_id, token_id);
 
-		let use_balance_from = use_balance_from.unwrap_or(ActivateKind::FreeBalance);
+		let use_balance_from = use_balance_from.unwrap_or(ActivateKind::AvailableBalance);
 
 		match use_balance_from {
-			ActivateKind::FreeBalance => T::Tokens::ensure_can_withdraw(token_id.into(), &account_id, amount.into(), WithdrawReasons::all(), Default::default()).is_ok()
+			ActivateKind::AvailableBalance => T::Tokens::ensure_can_withdraw(token_id.into(), &account_id, amount.into(), WithdrawReasons::all(), Default::default()).is_ok()
 			&& reserve_status.activated_unstaked_reserves.checked_add(amount).is_some(),
 			ActivateKind::StakedUnactivatedLiquidty => reserve_status.staked_unactivated_reserves.checked_sub(amount).is_some()
 			&& reserve_status.staked_and_activated_reserves.checked_add(amount).is_some(),
@@ -381,10 +391,10 @@ impl<T: Config> ActivationReservesProviderTrait for Pallet<T>{
 	-> DispatchResult {
 		let mut reserve_status = Pallet::<T>::get_reserve_status(account_id, token_id);
 
-		let use_balance_from = use_balance_from.unwrap_or(ActivateKind::FreeBalance);
+		let use_balance_from = use_balance_from.unwrap_or(ActivateKind::AvailableBalance);
 
 		match use_balance_from {
-			ActivateKind::FreeBalance => {
+			ActivateKind::AvailableBalance => {
 				reserve_status.activated_unstaked_reserves = reserve_status.activated_unstaked_reserves.checked_add(amount)
 				.ok_or(Error::<T>::MathError)?;
 				T::Tokens::reserve(token_id.into(), &account_id, amount.into())?;

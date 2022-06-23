@@ -27,6 +27,7 @@ orml-tokens = {  default-features = false, version = '0.4.1-dev' , git = "https:
 pallet-vesting-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 mp-multipurpose-liquidity = { path = '../../primitives/multipurpose-liquidity', default-features = false}
 mp-traits = { path = '../../primitives/traits', default-features = false}
+parachain-staking = { default-features = false, git = "https://github.com/mangata-finance/moonbeam.git", branch = "mangata-dev" }
 
 [dev-dependencies]
 orml-traits = { default-features = false, version="0.4.1-dev" , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
@@ -53,6 +54,7 @@ std = [
     'pallet-vesting-mangata/std',
     "mp-multipurpose-liquidity/std",
     "mp-traits/std",
+    "parachain-staking/std",
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]

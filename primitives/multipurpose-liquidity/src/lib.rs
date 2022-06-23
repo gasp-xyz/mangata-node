@@ -5,14 +5,14 @@ use scale_info::TypeInfo;
 
 #[derive(Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 	pub enum ActivateKind {
-		FreeBalance,
+		AvailableBalance,
 		StakedUnactivatedLiquidty,
 		UnspentReserves,
 	}
 
 #[derive(Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 	pub enum BondKind {
-		FreeBalance,
+		AvailableBalance,
 		ActivatedUnstakedLiquidty,
 		UnspentReserves,
 	}

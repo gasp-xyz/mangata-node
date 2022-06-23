@@ -491,7 +491,7 @@ impl orml_tokens::Config for Runtime {
 
 impl pallet_xyk::Config for Runtime {
 	type Event = Event;
-	type ActivationReservesProvider = MPL;
+	type ActivationReservesProvider = MultiPurposeLiquidity;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type NativeCurrencyId = MgaTokenId;
 	type TreasuryPalletId = TreasuryPalletId;
@@ -1059,7 +1059,7 @@ const_assert!(BlocksPerRound::get() >= 2);
 
 impl parachain_staking::Config for Runtime {
 	type Event = Event;
-	type StakingReservesProvider = MPL;
+	type StakingReservesProvider = MultiPurposeLiquidity;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type MonetaryGovernanceOrigin = EnsureRoot<AccountId>;
 	type BlocksPerRound = BlocksPerRound;
@@ -1417,8 +1417,8 @@ construct_runtime!(
 		Aura: pallet_aura::{Pallet, Storage, Config<T>} = 23,
 		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config} = 24,
 		
-		// MPL
-		MPL: pallet_multipurpose_liquidity::{Pallet, Call, Storage, Event<T>} = 25,
+		// MultiPurposeLiquidity
+		MultiPurposeLiquidity: pallet_multipurpose_liquidity::{Pallet, Call, Storage, Event<T>} = 25,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 30,

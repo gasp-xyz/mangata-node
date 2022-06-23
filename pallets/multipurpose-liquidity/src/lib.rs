@@ -66,8 +66,17 @@ pub mod pallet {
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
+
+		#[cfg(feature = "try-runtime")]
+		fn pre_upgrade() -> Result<(), &'static str> {
+			migration::migrate_from_v0_pre_runtime_upgrade::<T, Pallet<T>>()
+		}
 		fn on_runtime_upgrade() -> frame_support::weights::Weight {
-			migration::migrate_to_v1::<T, Pallet<T>>()
+			migration::migrate_from_v0::<T, Pallet<T>>()
+		}
+		#[cfg(feature = "try-runtime")]
+		fn post_upgrade() -> Result<(), &'static str> {
+			migration::migrate_from_v0_post_runtime_upgrade::<T, Pallet<T>>()
 		}
 	}
 

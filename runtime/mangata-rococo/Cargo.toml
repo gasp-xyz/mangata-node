@@ -202,6 +202,7 @@ std = [
 try-runtime = [
 	"frame-try-runtime",
 	"frame-executive/try-runtime",
+	"pallet-multipurpose-liquidity/try-runtime",
 ]
 
 disable-execution = [

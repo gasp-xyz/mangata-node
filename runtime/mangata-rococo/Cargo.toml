@@ -197,9 +197,9 @@ try-runtime = [
 	"frame-executive/try-runtime",
 ]
 
-disable-execution = [
-	"frame-executive/disable-execution",
-]
+#disable-execution = [
+#	"frame-executive/disable-execution",
+#]
 
 enable-trading = [
 	"pallet-xyk/enable-trading"

@@ -445,7 +445,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn vault_address() -> T::AccountId {
-		PALLET_ID.into_account()
+		PALLET_ID.into_account_truncating()
 	}
 
 	fn claim_rewards_from_single_currency(

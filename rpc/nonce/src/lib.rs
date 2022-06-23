@@ -20,9 +20,11 @@
 use std::sync::Arc;
 
 use codec::{Codec, Decode, Encode};
-use futures::FutureExt;
-use jsonrpc_core::{Error as RpcError, ErrorCode};
-use jsonrpc_derive::rpc;
+use jsonrpsee::{
+	core::{async_trait, RpcResult},
+	proc_macros::rpc,
+	types::error::{CallError, ErrorObject},
+};
 use sc_rpc_api::DenyUnsafe;
 use sc_transaction_pool_api::{InPoolTransaction, TransactionPool};
 use sp_api::ApiExt;
@@ -37,30 +39,26 @@ use sp_runtime::{
 };
 use std::convert::TryInto;
 
-pub use self::gen_client::Client as SystemClient;
 pub use frame_system_rpc_runtime_api::AccountNonceApi;
 use sc_client_api::BlockBackend;
 use sp_api::ProvideRuntimeApi;
 use sp_runtime::TransactionOutcome;
 use ver_api::VerApi;
 
-/// Future that resolves to account nonce.
-type FutureResult<T> = jsonrpc_core::BoxFuture<Result<T, RpcError>>;
-
 /// System RPC methods.
-#[rpc]
+#[rpc(client, server)]
 pub trait SystemApi<BlockHash, AccountId, Index> {
 	/// Returns the next valid index (aka nonce) for given account.
 	///
 	/// This method takes into consideration all pending transactions
 	/// currently in the pool and if no transactions are found in the pool
 	/// it fallbacks to query the index from the runtime (aka. state nonce).
-	#[rpc(name = "system_accountNextIndex", alias("account_nextIndex"))]
-	fn nonce(&self, account: AccountId) -> FutureResult<Index>;
+	#[method(name = "system_accountNextIndex", aliases = ["account_nextIndex"])]
+	async fn nonce(&self, account: AccountId) -> RpcResult<Index>;
 
 	/// Dry run an extrinsic at a given block. Return SCALE encoded ApplyExtrinsicResult.
-	#[rpc(name = "system_dryRun", alias("system_dryRunAt"))]
-	fn dry_run(&self, extrinsic: Bytes, at: Option<BlockHash>) -> FutureResult<Bytes>;
+	#[method(name = "system_dryRun", aliases = ["system_dryRunAt"])]
+	async fn dry_run(&self, extrinsic: Bytes, at: Option<BlockHash>) -> RpcResult<Bytes>;
 }
 
 /// Error type of this RPC api.
@@ -71,8 +69,8 @@ pub enum Error {
 	RuntimeError,
 }
 
-impl From<Error> for i64 {
-	fn from(e: Error) -> i64 {
+impl From<Error> for i32 {
+	fn from(e: Error) -> i32 {
 		match e {
 			Error::RuntimeError => 1,
 			Error::DecodeError => 2,
@@ -81,22 +79,23 @@ impl From<Error> for i64 {
 }
 
 /// An implementation of System-specific RPC methods on full client.
-pub struct FullSystem<P: TransactionPool, C, B> {
+pub struct System<P: TransactionPool, C, B> {
 	client: Arc<C>,
 	pool: Arc<P>,
 	deny_unsafe: DenyUnsafe,
 	_marker: std::marker::PhantomData<B>,
 }
 
-impl<P: TransactionPool, C, B> FullSystem<P, C, B> {
+impl<P: TransactionPool, C, B> System<P, C, B> {
 	/// Create new `FullSystem` given client and transaction pool.
 	pub fn new(client: Arc<C>, pool: Arc<P>, deny_unsafe: DenyUnsafe) -> Self {
-		FullSystem { client, pool, deny_unsafe, _marker: Default::default() }
+		Self { client, pool, deny_unsafe, _marker: Default::default() }
 	}
 }
 
-impl<P, C, Block, AccountId, Index> SystemApi<<Block as traits::Block>::Hash, AccountId, Index>
-	for FullSystem<P, C, Block>
+#[async_trait]
+impl<P, C, Block, AccountId, Index>
+SystemApiServer<<Block as traits::Block>::Hash, AccountId, Index> for System<P, C, Block>
 where
 	C: sp_api::ProvideRuntimeApi<Block>,
 	C: HeaderBackend<Block>,
@@ -108,19 +107,20 @@ where
 	C::Api: VerApi<Block>,
 	P: TransactionPool + 'static,
 	Block: traits::Block,
-	AccountId: Clone + std::fmt::Display + Codec + std::cmp::PartialEq,
+	AccountId: Clone + std::fmt::Display + Codec + Send + 'static + std::cmp::PartialEq,
 	Index: Clone + std::fmt::Display + Codec + Send + traits::AtLeast32Bit + 'static,
 {
-	fn nonce(&self, account: AccountId) -> FutureResult<Index> {
-		let get_nonce = || {
+	async fn nonce(&self, account: AccountId) -> RpcResult<Index> {
 			let api = self.client.runtime_api();
 			let best = self.client.info().best_hash;
 			let at = BlockId::hash(best);
 
-			let mut nonce = api.account_nonce(&at, account.clone()).map_err(|e| RpcError {
-				code: ErrorCode::ServerError(Error::RuntimeError.into()),
-				message: "Unable to query nonce.".into(),
-				data: Some(format!("{:?}", e).into()),
+			let mut nonce = api.account_nonce(&at, account.clone()).map_err(|e| {
+				CallError::Custom(ErrorObject::owned(
+					Error::RuntimeError.into(),
+					"Unable to query nonce.",
+					Some(e.to_string()),
+				))
 			})?;
 
 			for _ in 0..number_of_delayed_txs(self.client.clone(), account.clone()) {
@@ -128,46 +128,37 @@ where
 			}
 
 			Ok(adjust_nonce(&*self.pool, account, nonce))
-		};
-
-		let res = get_nonce();
-		async move { res }.boxed()
 	}
 
-	fn dry_run(
+	async fn dry_run(
 		&self,
 		extrinsic: Bytes,
 		at: Option<<Block as traits::Block>::Hash>,
-	) -> FutureResult<Bytes> {
-		if let Err(err) = self.deny_unsafe.check_if_safe() {
-			return async move { Err(err.into()) }.boxed();
-		}
+	) -> RpcResult<Bytes> {
+		self.deny_unsafe.check_if_safe()?;
+		let api = self.client.runtime_api();
+		let at = BlockId::<Block>::hash(at.unwrap_or_else(||
+			// If the block hash is not supplied assume the best block.
+			self.client.info().best_hash));
 
-		let dry_run = || {
-			let api = self.client.runtime_api();
-			let at = BlockId::<Block>::hash(at.unwrap_or_else(||
-				// If the block hash is not supplied assume the best block.
-				self.client.info().best_hash));
-
-			let uxt: <Block as traits::Block>::Extrinsic = Decode::decode(&mut &*extrinsic)
-				.map_err(|e| RpcError {
-					code: ErrorCode::ServerError(Error::DecodeError.into()),
-					message: "Unable to dry run extrinsic.".into(),
-					data: Some(format!("{:?}", e).into()),
-				})?;
-
-			let result = api.apply_extrinsic(&at, uxt).map_err(|e| RpcError {
-				code: ErrorCode::ServerError(Error::RuntimeError.into()),
-				message: "Unable to dry run extrinsic.".into(),
-				data: Some(format!("{:?}", e).into()),
+		let uxt: <Block as traits::Block>::Extrinsic =
+			Decode::decode(&mut &*extrinsic).map_err(|e| {
+				CallError::Custom(ErrorObject::owned(
+					Error::DecodeError.into(),
+					"Unable to dry run extrinsic",
+					Some(e.to_string()),
+				))
 			})?;
 
-			Ok(Encode::encode(&result).into())
-		};
+		let result = api.apply_extrinsic(&at, uxt).map_err(|e| {
+			CallError::Custom(ErrorObject::owned(
+				Error::RuntimeError.into(),
+				"Unable to dry run extrinsic.",
+				Some(e.to_string()),
+			))
+		})?;
 
-		let res = dry_run();
-
-		async move { res }.boxed()
+		Ok(Encode::encode(&result).into())
 	}
 }
 
@@ -226,10 +217,12 @@ where
 
 	let best_block_extrinsics: Vec<Block::Extrinsic> = client
 		.block_body(&at)
-		.map_err(|e| RpcError {
-			code: ErrorCode::ServerError(Error::RuntimeError.into()),
-			message: "Failed to get parent blocks extrinsics.".into(),
-			data: Some(format!("{:?}", e).into()),
+		.map_err(|e| {
+			CallError::Custom(ErrorObject::owned(
+				Error::RuntimeError.into(),
+				"UFailed to get parent blocks extrinsics.",
+				Some(e.to_string()),
+			))
 		})
 		.unwrap()
 		.unwrap_or_default();

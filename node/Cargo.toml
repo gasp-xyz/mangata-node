@@ -26,12 +26,12 @@ mangata-rococo = [
 		"mangata-rococo-runtime/std",
 		"xyk-rpc/std",
 ]
-disable-execution = ['mangata-kusama-runtime/disable-execution']
+#disable-execution = ['mangata-kusama-runtime/disable-execution']
 runtime-benchmarks = ["mangata-kusama-runtime/runtime-benchmarks", "polkadot-cli/runtime-benchmarks"]
 
 [dependencies]
 derive_more = "0.99.2"
-log = "0.4.14"
+log = "0.4.17"
 codec = { package = "parity-scale-codec", version = "3.0.0" }
 clap = { version = "3.1", features = ["derive"] }
 serde = { version = "1.0.119", features = ["derive"] }
@@ -139,7 +139,7 @@ cumulus-pallet-parachain-system = { git = 'https://github.com/mangata-finance/cu
 cumulus-test-relay-sproof-builder = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.24'}
 polkadot-runtime-common = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v0.9.24" }
 sp-consensus-slots = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
-futures = "0.3.16"
+futures = "0.3.21"
 schnorrkel = { version = "0.9.1", features = ["preaudit_deprecated", "u64_backend"], default-features = false}
 sp-core = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24", features = ["full_crypto"]}
 extrinsic-shuffler = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24"}

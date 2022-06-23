@@ -1547,15 +1547,15 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn account_id() -> T::AccountId {
-		PALLET_ID.into_account()
+		PALLET_ID.into_account_truncating()
 	}
 
 	fn treasury_account_id() -> T::AccountId {
-		T::TreasuryPalletId::get().into_account()
+		T::TreasuryPalletId::get().into_account_truncating()
 	}
 
 	fn bnb_treasury_account_id() -> T::AccountId {
-		T::TreasuryPalletId::get().into_sub_account(T::BnbTreasurySubAccDerive::get())
+		T::TreasuryPalletId::get().into_sub_account_truncating(T::BnbTreasurySubAccDerive::get())
 	}
 }
 

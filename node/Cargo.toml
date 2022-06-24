@@ -34,12 +34,12 @@ derive_more = "0.99.2"
 log = "0.4.17"
 codec = { package = "parity-scale-codec", version = "3.0.0" }
 clap = { version = "3.1", features = ["derive"] }
-serde = { version = "1.0.119", features = ["derive"] }
+serde = { version = "1.0.137", features = ["derive"] }
 hex-literal = "0.3.4"
 hex = "0.4.0"
 
 # RPC related Dependencies
-jsonrpc-core = "18.0.0"
+jsonrpsee = { version = "0.13.1", features = ["server"] }
 
 # Local Dependencies
 mangata-kusama-runtime = { path = "../runtime/mangata-kusama/", optional = true }
@@ -68,6 +68,7 @@ sc-keystore = { git = "https://github.com/mangata-finance/substrate", branch = "
 sc-rpc = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
 sc-rpc-api = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
 sc-service = { git = "https://github.com/mangata-finance/substrate", features = ["wasmtime"], branch = "mangata-dev-v0.9.24" }
+sc-sysinfo = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
 sc-consensus-aura = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
 sc-finality-grandpa = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
 sc-telemetry = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }

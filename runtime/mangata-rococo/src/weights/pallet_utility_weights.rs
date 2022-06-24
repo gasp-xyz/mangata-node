@@ -58,6 +58,7 @@ pub trait WeightInfo {
 	fn as_derivative() -> Weight;
 	fn batch_all(c: u32, ) -> Weight;
 	fn dispatch_as() -> Weight;
+	fn force_batch(c: u32, ) -> Weight;
 }
 
 /// Weights for pallet_utility using the Mangata node and recommended hardware.
@@ -79,6 +80,12 @@ impl<T: frame_system::Config> pallet_utility::WeightInfo for ModuleWeight<T> {
 	fn dispatch_as() -> Weight {
 		(13_403_000 as Weight)
 	}
+	/// The range of component `c` is `[0, 1000]`.
+	fn force_batch(c: u32, ) -> Weight {
+		(19_136_000 as Weight)
+			// Standard Error: 2_000
+			.saturating_add((2_697_000 as Weight).saturating_mul(c as Weight))
+	}
 }
 
 // For backwards compatibility and tests
@@ -98,5 +105,11 @@ impl WeightInfo for () {
 	}
 	fn dispatch_as() -> Weight {
 		(13_403_000 as Weight)
+	}
+	/// The range of component `c` is `[0, 1000]`.
+	fn force_batch(c: u32, ) -> Weight {
+		(19_136_000 as Weight)
+			// Standard Error: 2_000
+			.saturating_add((2_697_000 as Weight).saturating_mul(c as Weight))
 	}
 }

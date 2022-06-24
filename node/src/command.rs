@@ -7,16 +7,15 @@ use crate::service::new_partial;
 use codec::Encode;
 use cumulus_client_service::genesis::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
-use frame_benchmarking_cli::BenchmarkCmd;
+use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 use log::info;
-use polkadot_parachain::primitives::AccountIdConversion;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
 	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
 };
 use sc_service::config::{BasePath, PrometheusConfig};
 use sp_core::hexdisplay::HexDisplay;
-use sp_runtime::traits::Block as BlockT;
+use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
 use std::{io::Write, net::SocketAddr};
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
@@ -339,7 +338,8 @@ pub fn run() -> Result<()> {
 							cmd.run(config, partials.client.clone(), db, storage)
 						}),
 						BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
-						BenchmarkCmd::Machine(cmd) => runner.sync_run(|config| cmd.run(&config)),
+						BenchmarkCmd::Machine(cmd) =>
+							runner.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone())),
 					},
 				#[cfg(feature = "mangata-rococo")]
 				spec if spec.is_mangata_rococo() =>
@@ -418,6 +418,14 @@ pub fn run() -> Result<()> {
 			let collator_options = cli.run.collator_options();
 
 			runner.run_node_until_exit(|config| async move {
+				let hwbench = if !cli.no_hardware_benchmarks {
+					config.database.path().map(|database_path| {
+						let _ = std::fs::create_dir_all(&database_path);
+						sc_sysinfo::gather_hwbench(Some(database_path))
+					})
+				} else {
+					None
+				};
 				let para_id = chain_spec::Extensions::try_get(&*config.chain_spec)
 					.map(|e| e.para_id)
 					.ok_or_else(|| "Could not find parachain ID in chain-spec.")?;
@@ -430,13 +438,13 @@ pub fn run() -> Result<()> {
 				let id = ParaId::from(para_id);
 
 				let parachain_account =
-					AccountIdConversion::<polkadot_primitives::v2::AccountId>::into_account(&id);
+					AccountIdConversion::<polkadot_primitives::v2::AccountId>::into_account_truncating(&id);
 
 				let genesis_state = match &config.chain_spec {
 					#[cfg(feature = "mangata-kusama")]
 					spec if spec.is_mangata_kusama() => {
 						let state_version =
-							RelayChainCli::native_runtime_version(&spec).state_version();
+							Cli::native_runtime_version(&config.chain_spec).state_version();
 						let block: service::mangata_kusama_runtime::Block =
 							generate_genesis_block(&spec, state_version)
 								.map_err(|e| format!("{:?}", e))?;
@@ -445,7 +453,7 @@ pub fn run() -> Result<()> {
 					#[cfg(feature = "mangata-rococo")]
 					spec if spec.is_mangata_rococo() => {
 						let state_version =
-							RelayChainCli::native_runtime_version(&spec).state_version();
+							Cli::native_runtime_version(&config.chain_spec).state_version();
 						let block: service::mangata_rococo_runtime::Block =
 							generate_genesis_block(&spec, state_version)
 								.map_err(|e| format!("{:?}", e))?;
@@ -469,7 +477,7 @@ pub fn run() -> Result<()> {
 					spec if spec.is_mangata_kusama() => crate::service::start_parachain_node::<
 						service::mangata_kusama_runtime::RuntimeApi,
 						service::MangataKusamaRuntimeExecutor,
-					>(config, polkadot_config, collator_options, id)
+					>(config, polkadot_config, collator_options, id, hwbench,)
 					.await
 					.map(|r| r.0)
 					.map_err(Into::into),
@@ -477,7 +485,7 @@ pub fn run() -> Result<()> {
 					spec if spec.is_mangata_rococo() => crate::service::start_parachain_node::<
 						service::mangata_rococo_runtime::RuntimeApi,
 						service::MangataRococoRuntimeExecutor,
-					>(config, polkadot_config, collator_options, id)
+					>(config, polkadot_config, collator_options, id, hwbench,)
 					.await
 					.map(|r| r.0)
 					.map_err(Into::into),

@@ -269,6 +269,7 @@ sc-rpc-server = { git = "https://github.com/mangata-finance//substrate", branch 
 sc-client-api = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.24" }
 sc-rpc = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.24" }
 sc-service = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.24" }
+sc-sysinfo = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.24" }
 sc-basic-authorship-ver = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.24" }
 sc-block-builder = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.24" }
 sc-rpc-api = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.24" }
@@ -429,6 +430,7 @@ sc-rpc-server = { git = "https://github.com/mangata-finance//substrate", branch 
 sc-client-api = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.24" }
 sc-rpc = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.24" }
 sc-service = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.24" }
+sc-sysinfo = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.24" }
 sc-basic-authorship-ver = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.24" }
 sc-block-builder = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.24" }
 sc-rpc-api = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.24" }
@@ -590,6 +592,7 @@ sc-rpc-server = { git = "https://github.com/mangata-finance//substrate", branch 
 sc-client-api = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.24" }
 sc-rpc = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.24" }
 sc-service = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.24" }
+sc-sysinfo = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.24" }
 sc-basic-authorship-ver = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.24" }
 sc-block-builder = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.24" }
 sc-rpc-api = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.24" }

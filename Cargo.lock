@@ -1493,9 +1493,9 @@ dependencies = [
 
 [[package]]
 name = "crossbeam-utils"
-version = "0.8.9"
+version = "0.8.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ff1f980957787286a554052d03c7aee98d99cc32e09f6d45f0a814133c87978"
+checksum = "7d82ee10ce34d7bc12c2122495e7593a9c41347ecdd64185af4ecf72cb1a7f83"
 dependencies = [
  "cfg-if 1.0.0",
  "once_cell",
@@ -1609,7 +1609,7 @@ dependencies = [
  "clap 3.2.6",
  "sc-cli",
  "sc-service",
- "url 2.2.2",
+ "url",
 ]
 
 [[package]]
@@ -1836,7 +1836,7 @@ name = "cumulus-pallet-parachain-system-proc-macro"
 version = "0.1.0"
 source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.24#cfc443ca330276571f49766e7c2efe401abca0a6"
 dependencies = [
- "proc-macro-crate 1.1.3",
+ "proc-macro-crate",
  "proc-macro2",
  "quote",
  "syn",
@@ -1979,7 +1979,7 @@ dependencies = [
  "sc-consensus-babe",
  "sc-network",
  "sc-service",
- "sc-sysinfo 6.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+ "sc-sysinfo",
  "sc-telemetry",
  "sc-tracing",
  "sp-api",
@@ -2038,7 +2038,7 @@ dependencies = [
  "sp-state-machine",
  "sp-storage",
  "tracing",
- "url 2.2.2",
+ "url",
 ]
 
 [[package]]
@@ -2577,7 +2577,7 @@ checksum = "f5aa1e3ae159e592ad222dc90c5acbad632b527779ba88486abe92782ab268bd"
 dependencies = [
  "expander 0.0.4",
  "indexmap",
- "proc-macro-crate 1.1.3",
+ "proc-macro-crate",
  "proc-macro2",
  "quote",
  "syn",
@@ -2700,7 +2700,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5fc25a87fa4fd2094bffb06925852034d90a17f0d1e05197d4956d3555752191"
 dependencies = [
  "matches",
- "percent-encoding 2.1.0",
+ "percent-encoding",
 ]
 
 [[package]]
@@ -2761,7 +2761,7 @@ dependencies = [
  "sc-client-db",
  "sc-executor",
  "sc-service",
- "sc-sysinfo 6.0.0-dev (git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.24)",
+ "sc-sysinfo",
  "serde",
  "serde_json",
  "serde_nanos",
@@ -2786,7 +2786,7 @@ name = "frame-election-provider-solution-type"
 version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.24#e88da3b51e6da869ea1750908f0a98fb5fb93b5d"
 dependencies = [
- "proc-macro-crate 1.1.3",
+ "proc-macro-crate",
  "proc-macro2",
  "quote",
  "syn",
@@ -2887,7 +2887,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.24#e88da3b51e6da869ea1750908f0a98fb5fb93b5d"
 dependencies = [
  "frame-support-procedural-tools-derive",
- "proc-macro-crate 1.1.3",
+ "proc-macro-crate",
  "proc-macro2",
  "quote",
  "syn",
@@ -3482,17 +3482,6 @@ dependencies = [
 
 [[package]]
 name = "idna"
-version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38f09e0f0b1fb55fdee1f17470ad800da77af5186a1a76c026b679358b7e844e"
-dependencies = [
- "matches",
- "unicode-bidi",
- "unicode-normalization",
-]
-
-[[package]]
-name = "idna"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "418a0a6fab821475f634efe3ccc45c013f742efe03d853e8d3355d5cb850ecf8"
@@ -3514,9 +3503,9 @@ dependencies = [
 
 [[package]]
 name = "if-watch"
-version = "1.1.0"
+version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "774d59367a3d26965d21ac70a86fcb697d83405d1c4312d1d8a6855296af0cf7"
+checksum = "015a7df1eb6dda30df37f34b63ada9b7b352984b0e84de2a20ed526345000791"
 dependencies = [
  "async-io",
  "core-foundation",
@@ -3682,74 +3671,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "jsonrpc-client-transports"
-version = "18.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d2b99d4207e2a04fb4581746903c2bb7eb376f88de9c699d0f3e10feeac0cd3a"
-dependencies = [
- "derive_more",
- "futures 0.3.21",
- "jsonrpc-core",
- "jsonrpc-pubsub",
- "log",
- "serde",
- "serde_json",
- "url 1.7.2",
-]
-
-[[package]]
-name = "jsonrpc-core"
-version = "18.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14f7f76aef2d054868398427f6c54943cf3d1caa9a7ec7d0c38d69df97a965eb"
-dependencies = [
- "futures 0.3.21",
- "futures-executor",
- "futures-util",
- "log",
- "serde",
- "serde_derive",
- "serde_json",
-]
-
-[[package]]
-name = "jsonrpc-core-client"
-version = "18.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b51da17abecbdab3e3d4f26b01c5ec075e88d3abe3ab3b05dc9aa69392764ec0"
-dependencies = [
- "futures 0.3.21",
- "jsonrpc-client-transports",
-]
-
-[[package]]
-name = "jsonrpc-derive"
-version = "18.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b939a78fa820cdfcb7ee7484466746a7377760970f6f9c6fe19f9edcc8a38d2"
-dependencies = [
- "proc-macro-crate 0.1.5",
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "jsonrpc-pubsub"
-version = "18.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "240f87695e6c6f62fb37f05c02c04953cf68d6408b8c1c89de85c7a0125b1011"
-dependencies = [
- "futures 0.3.21",
- "jsonrpc-core",
- "lazy_static",
- "log",
- "parking_lot 0.11.2",
- "rand 0.7.3",
- "serde",
-]
-
-[[package]]
 name = "jsonrpsee"
 version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3837,7 +3758,7 @@ version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8b8d7f449cab3b747f12c3efc27f5cad537f3b597c6a3838b0fac628f4bf730a"
 dependencies = [
- "proc-macro-crate 1.1.3",
+ "proc-macro-crate",
  "proc-macro2",
  "quote",
  "syn",
@@ -4637,7 +4558,7 @@ dependencies = [
  "quicksink",
  "rw-stream-sink 0.3.0",
  "soketto",
- "url 2.2.2",
+ "url",
  "webpki-roots",
 ]
 
@@ -4962,7 +4883,7 @@ dependencies = [
  "futures 0.3.21",
  "hex",
  "hex-literal",
- "jsonrpc-core",
+ "jsonrpsee",
  "log",
  "mangata-kusama-runtime",
  "mangata-primitives",
@@ -4992,6 +4913,7 @@ dependencies = [
  "sc-rpc",
  "sc-rpc-api",
  "sc-service",
+ "sc-sysinfo",
  "sc-telemetry",
  "sc-tracing",
  "sc-transaction-pool",
@@ -5336,11 +5258,11 @@ dependencies = [
  "byteorder",
  "data-encoding",
  "multihash",
- "percent-encoding 2.1.0",
+ "percent-encoding",
  "serde",
  "static_assertions",
  "unsigned-varint",
- "url 2.2.2",
+ "url",
 ]
 
 [[package]]
@@ -5377,7 +5299,7 @@ version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc076939022111618a5026d3be019fd8b366e76314538ff9a1b59ffbcbf98bcd"
 dependencies = [
- "proc-macro-crate 1.1.3",
+ "proc-macro-crate",
  "proc-macro-error",
  "proc-macro2",
  "quote",
@@ -5415,7 +5337,7 @@ dependencies = [
  "matrixmultiply",
  "nalgebra-macros",
  "num-complex",
- "num-rational 0.4.0",
+ "num-rational 0.4.1",
  "num-traits",
  "rand 0.8.5",
  "rand_distr",
@@ -5463,9 +5385,9 @@ dependencies = [
 
 [[package]]
 name = "netlink-packet-route"
-version = "0.11.0"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "733ea73609acfd7fa7ddadfb7bf709b0471668c456ad9513685af543a06342b2"
+checksum = "d9ea4302b9759a7a88242299225ea3688e63c85ea136371bb6cf94fd674efaab"
 dependencies = [
  "anyhow",
  "bitflags",
@@ -5489,23 +5411,24 @@ dependencies = [
 
 [[package]]
 name = "netlink-proto"
-version = "0.9.2"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ef8785b8141e8432aa45fceb922a7e876d7da3fad37fa7e7ec702ace3aa0826b"
+checksum = "65b4b14489ab424703c092062176d52ba55485a89c076b4f9db05092b7223aa6"
 dependencies = [
  "bytes",
  "futures 0.3.21",
  "log",
  "netlink-packet-core",
  "netlink-sys",
+ "thiserror",
  "tokio",
 ]
 
 [[package]]
 name = "netlink-sys"
-version = "0.8.2"
+version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e4c9f9547a08241bee7b6558b9b98e1f290d187de8b7cfca2bbb4937bcaa8f8"
+checksum = "92b654097027250401127914afb37cb1f311df6610a9891ff07a757e94199027"
 dependencies = [
  "async-io",
  "bytes",
@@ -5516,15 +5439,13 @@ dependencies = [
 
 [[package]]
 name = "nix"
-version = "0.22.3"
+version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4916f159ed8e5de0082076562152a76b7a1f64a01fd9d1e0fea002c37624faf"
+checksum = "8f17df307904acd05aa8e32e97bb20f2a0df1728bbc2d771ae8f9a90463441e9"
 dependencies = [
  "bitflags",
- "cc",
  "cfg-if 1.0.0",
  "libc",
- "memoffset",
 ]
 
 [[package]]
@@ -5609,9 +5530,9 @@ dependencies = [
 
 [[package]]
 name = "num-rational"
-version = "0.4.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d41702bd167c2df5520b384281bc111a4b5efcf7fbc4c9c222c815b07e0a6a6a"
+checksum = "0638a1c9d0a3c0914158145bc76cff373a75a627e6ecbfb71cbe6f453a5a19b0"
 dependencies = [
  "autocfg",
  "num-integer",
@@ -5711,7 +5632,7 @@ source = "git+https://github.com/mangata-finance//polkadot?branch=mangata-dev-v0
 dependencies = [
  "expander 0.0.6",
  "petgraph",
- "proc-macro-crate 1.1.3",
+ "proc-macro-crate",
  "proc-macro2",
  "quote",
  "syn",
@@ -6686,7 +6607,7 @@ name = "pallet-staking-reward-curve"
 version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.24#e88da3b51e6da869ea1750908f0a98fb5fb93b5d"
 dependencies = [
- "proc-macro-crate 1.1.3",
+ "proc-macro-crate",
  "proc-macro2",
  "quote",
  "syn",
@@ -7046,7 +6967,7 @@ version = "3.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9299338969a3d2f491d65f140b00ddec470858402f888af98e8642fb5e8965cd"
 dependencies = [
- "proc-macro-crate 1.1.3",
+ "proc-macro-crate",
  "proc-macro2",
  "quote",
  "syn",
@@ -7183,12 +7104,6 @@ name = "peeking_take_while"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "19b17cddbe7ec3f8bc800887bab5e717348c95ea2ca0b1bf0837fb964dc67099"
-
-[[package]]
-name = "percent-encoding"
-version = "1.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "31010dd2e1ac33d5b46a5b413495239882813e0369f8ed8a5e266f173602f831"
 
 [[package]]
 name = "percent-encoding"
@@ -7436,7 +7351,7 @@ dependencies = [
  "polkadot-service",
  "sc-cli",
  "sc-service",
- "sc-sysinfo 6.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+ "sc-sysinfo",
  "sc-tracing",
  "sp-core",
  "sp-trie",
@@ -8397,7 +8312,7 @@ dependencies = [
  "sc-offchain",
  "sc-service",
  "sc-sync-state-rpc",
- "sc-sysinfo 6.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+ "sc-sysinfo",
  "sc-telemetry",
  "sc-transaction-pool",
  "serde",
@@ -8684,15 +8599,6 @@ dependencies = [
  "nanorand",
  "thiserror",
  "tracing",
-]
-
-[[package]]
-name = "proc-macro-crate"
-version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d6ea3c4595b96363c13943497db34af4460fb474a95c43f4446ad341b8c9785"
-dependencies = [
- "toml",
 ]
 
 [[package]]
@@ -9363,9 +9269,9 @@ dependencies = [
 
 [[package]]
 name = "rtnetlink"
-version = "0.9.1"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f54290e54521dac3de4149d83ddf9f62a359b3cc93bcb494a794a41e6f4744b"
+checksum = "322c53fd76a18698f1c27381d58091de3a043d356aa5bd0d510608b565f469a0"
 dependencies = [
  "async-global-executor",
  "futures 0.3.21",
@@ -9646,7 +9552,7 @@ name = "sc-chain-spec-derive"
 version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.24#e88da3b51e6da869ea1750908f0a98fb5fb93b5d"
 dependencies = [
- "proc-macro-crate 1.1.3",
+ "proc-macro-crate",
  "proc-macro2",
  "quote",
  "syn",
@@ -10362,7 +10268,7 @@ dependencies = [
  "sc-offchain",
  "sc-rpc",
  "sc-rpc-server",
- "sc-sysinfo 6.0.0-dev (git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.24)",
+ "sc-sysinfo",
  "sc-telemetry",
  "sc-tracing",
  "sc-transaction-pool",
@@ -10450,25 +10356,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sc-sysinfo"
-version = "6.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24#814752f60ab8cce7e2ece3ce0c1b10799b4eab28"
-dependencies = [
- "futures 0.3.21",
- "libc",
- "log",
- "rand 0.7.3",
- "rand_pcg 0.2.1",
- "regex",
- "sc-telemetry",
- "serde",
- "serde_json",
- "sp-core",
- "sp-io",
- "sp-std",
-]
-
-[[package]]
 name = "sc-telemetry"
 version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.24#e88da3b51e6da869ea1750908f0a98fb5fb93b5d"
@@ -10522,7 +10409,7 @@ name = "sc-tracing-proc-macro"
 version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.24#e88da3b51e6da869ea1750908f0a98fb5fb93b5d"
 dependencies = [
- "proc-macro-crate 1.1.3",
+ "proc-macro-crate",
  "proc-macro2",
  "quote",
  "syn",
@@ -10601,7 +10488,7 @@ version = "2.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "50e334bb10a245e28e5fd755cabcafd96cfcd167c99ae63a46924ca8d8703a3c"
 dependencies = [
- "proc-macro-crate 1.1.3",
+ "proc-macro-crate",
  "proc-macro2",
  "quote",
  "syn",
@@ -11061,7 +10948,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.24#e88da3b51e6da869ea1750908f0a98fb5fb93b5d"
 dependencies = [
  "blake2",
- "proc-macro-crate 1.1.3",
+ "proc-macro-crate",
  "proc-macro2",
  "quote",
  "syn",
@@ -11546,7 +11433,7 @@ version = "5.0.0"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.24#e88da3b51e6da869ea1750908f0a98fb5fb93b5d"
 dependencies = [
  "Inflector",
- "proc-macro-crate 1.1.3",
+ "proc-macro-crate",
  "proc-macro2",
  "quote",
  "syn",
@@ -12403,9 +12290,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-core"
-version = "0.1.27"
+version = "0.1.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7709595b8878a4965ce5e87ebf880a7d39c9afc6837721b21a5a816a8117d921"
+checksum = "7b7358be39f2f274f322d2aaed611acc57f382e8eb1e5b48cb9ae30933495ce7"
 dependencies = [
  "once_cell",
  "valuable",
@@ -12438,7 +12325,7 @@ version = "0.9.24"
 source = "git+https://github.com/mangata-finance//polkadot?branch=mangata-dev-v0.9.24#221e92dad377731be57817a0c414c511e7e055c6"
 dependencies = [
  "expander 0.0.6",
- "proc-macro-crate 1.1.3",
+ "proc-macro-crate",
  "proc-macro2",
  "quote",
  "syn",
@@ -12525,7 +12412,7 @@ dependencies = [
  "futures-channel",
  "futures-io",
  "futures-util",
- "idna 0.2.3",
+ "idna",
  "ipnet",
  "lazy_static",
  "log",
@@ -12533,7 +12420,7 @@ dependencies = [
  "smallvec",
  "thiserror",
  "tinyvec",
- "url 2.2.2",
+ "url",
 ]
 
 [[package]]
@@ -12718,25 +12605,14 @@ checksum = "a156c684c91ea7d62626509bce3cb4e1d9ed5c4d978f7b4352658f96a4c26b4a"
 
 [[package]]
 name = "url"
-version = "1.7.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd4e7c0d531266369519a4aa4f399d748bd37043b00bde1e4ff1f60a120b355a"
-dependencies = [
- "idna 0.1.5",
- "matches",
- "percent-encoding 1.0.1",
-]
-
-[[package]]
-name = "url"
 version = "2.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a507c383b2d33b5fc35d1861e77e6b383d158b2da5e14fe51b83dfedf6fd578c"
 dependencies = [
  "form_urlencoded",
- "idna 0.2.3",
+ "idna",
  "matches",
- "percent-encoding 2.1.0",
+ "percent-encoding",
 ]
 
 [[package]]
@@ -13525,9 +13401,7 @@ dependencies = [
 name = "xyk-rpc"
 version = "2.0.0"
 dependencies = [
- "jsonrpc-core",
- "jsonrpc-core-client",
- "jsonrpc-derive",
+ "jsonrpsee",
  "parity-scale-codec 3.1.5",
  "serde",
  "sp-api",

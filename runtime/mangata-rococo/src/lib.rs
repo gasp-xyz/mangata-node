@@ -79,7 +79,7 @@ use orml_tokens::TransferDust;
 use orml_traits::{parameter_type_with_key, GetByKey, MultiCurrency};
 
 pub use pallet_xyk;
-use xyk_runtime_api::{RpcAmountsResult, RpcResult};
+use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
 
 pub const MGR_TOKEN_ID: TokenId = 0;
 pub const ROC_TOKEN_ID: TokenId = 4;
@@ -455,7 +455,7 @@ parameter_type_with_key! {
 }
 
 parameter_types! {
-	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account();
+	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 	pub const MaxLocks: u32 = 50;
 }
 
@@ -598,7 +598,7 @@ use orml_traits::location::AbsoluteReserveProvider;
 impl<T, C, OU, T1, T2, SF> OnChargeTransaction<T> for TwoCurrencyAdapter<C, OU, T1, T2, SF>
 where
 	T: pallet_transaction_payment::Config,
-	T::LengthToFee: WeightToFeePolynomial<
+	T::LengthToFee: frame_support::weights::WeightToFee<
 		Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
 	>,
 	C: MultiTokenCurrency<<T as frame_system::Config>::AccountId>,
@@ -1115,9 +1115,9 @@ parameter_types! {
 	pub const HistoryLimit: u32 = 10u32;
 
 	pub const LiquidityMiningIssuanceVaultId: PalletId = PalletId(*b"py/lqmiv");
-	pub LiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account();
+	pub LiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account_truncating();
 	pub const StakingIssuanceVaultId: PalletId = PalletId(*b"py/stkiv");
-	pub StakingIssuanceVault: AccountId = StakingIssuanceVaultId::get().into_account();
+	pub StakingIssuanceVault: AccountId = StakingIssuanceVaultId::get().into_account_truncating();
 
 	pub const TotalCrowdloanAllocation: Balance = 330_000_000 * DOLLARS;
 	pub const IssuanceCap: Balance = 4_000_000_000 * DOLLARS;
@@ -1211,8 +1211,8 @@ parameter_types! {
 }
 
 parameter_type_with_key! {
-	pub ParachainMinFee: |_location: MultiLocation| -> u128 {
-		u128::MAX
+	pub ParachainMinFee: |_location: MultiLocation| -> Option<u128> {
+		None
 	};
 }
 
@@ -1521,8 +1521,8 @@ impl_runtime_apis! {
 			input_reserve: Balance,
 			output_reserve: Balance,
 			sell_amount: Balance
-		) -> RpcResult<Balance> {
-			RpcResult {
+		) -> XYKRpcResult<Balance> {
+			XYKRpcResult {
 				price: Xyk::calculate_sell_price(input_reserve, output_reserve, sell_amount)
 					.map_err(|e|
 						{
@@ -1537,8 +1537,8 @@ impl_runtime_apis! {
 			input_reserve: Balance,
 			output_reserve: Balance,
 			buy_amount: Balance
-		) -> RpcResult<Balance> {
-			RpcResult {
+		) -> XYKRpcResult<Balance> {
+			XYKRpcResult {
 				price: Xyk::calculate_buy_price(input_reserve, output_reserve, buy_amount)
 					.map_err(|e|
 						{
@@ -1554,8 +1554,8 @@ impl_runtime_apis! {
 			sold_token_id: TokenId,
 			bought_token_id: TokenId,
 			sell_amount: Balance
-		) -> RpcResult<Balance> {
-			RpcResult {
+		) -> XYKRpcResult<Balance> {
+			XYKRpcResult {
 				price: Xyk::calculate_sell_price_id(sold_token_id, bought_token_id, sell_amount)
 					.map_err(|e|
 						{
@@ -1570,8 +1570,8 @@ impl_runtime_apis! {
 			sold_token_id: TokenId,
 			bought_token_id: TokenId,
 			buy_amount: Balance
-		) -> RpcResult<Balance> {
-			RpcResult {
+		) -> XYKRpcResult<Balance> {
+			XYKRpcResult {
 				price: Xyk::calculate_buy_price_id(sold_token_id, bought_token_id, buy_amount)
 					.map_err(|e|
 						{
@@ -1602,9 +1602,9 @@ impl_runtime_apis! {
 		fn calculate_rewards_amount(
 			user: AccountId,
 			liquidity_asset_id: TokenId,
-		) -> RpcResult<Balance> {
+		) -> XYKRpcResult<Balance> {
 			match Xyk::calculate_rewards_amount(user, liquidity_asset_id){
-				Ok(claimable_rewards) => RpcResult{
+				Ok(claimable_rewards) => XYKRpcResult{
 					price:claimable_rewards
 				},
 				Err(e) => {

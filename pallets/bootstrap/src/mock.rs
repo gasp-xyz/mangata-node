@@ -201,6 +201,7 @@ impl pallet_bootstrap::Config for Test {
 impl pallet_bootstrap::Config for Test {
 	type Event = Event;
 	type PoolCreateApi = Xyk;
+	type TreasuryPalletId = TreasuryPalletId;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type VestingProvider = Vesting;
 	type WeightInfo = ();

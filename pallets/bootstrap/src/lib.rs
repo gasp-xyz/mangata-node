@@ -18,7 +18,7 @@ use sp_arithmetic::helpers_128bit::multiply_by_rational;
 use sp_bootstrap::PoolCreateApi;
 use sp_core::U256;
 use sp_io::KillStorageResult;
-use sp_runtime::traits::{AccountIdConversion, CheckedAdd};
+use sp_runtime::traits::{AccountIdConversion, CheckedAdd, Zero};
 use sp_std::prelude::*;
 
 pub mod migrations;
@@ -32,7 +32,6 @@ mod benchmarking;
 mod tests;
 
 pub mod weights;
-use sp_core::storage::ChildInfo;
 pub use weights::WeightInfo;
 
 pub use pallet::*;
@@ -293,6 +292,10 @@ pub mod pallet {
 			ensure_root(origin)?;
 
 			ensure!(Phase::<T>::get() == BootstrapPhase::BeforeStart, Error::<T>::AlreadyStarted);
+			ensure!(first_token_id != second_token_id, Error::<T>::SameToken);
+
+			ensure!(!T::Currency::total_issuance(first_token_id.into()).is_zero(), Error::<T>::TokenIdDoesNotExists);
+			ensure!(!T::Currency::total_issuance(second_token_id.into()).is_zero(), Error::<T>::TokenIdDoesNotExists);
 
 			ensure!(
 				ido_start > frame_system::Pallet::<T>::block_number(),
@@ -451,6 +454,10 @@ pub mod pallet {
 		WrongRatio,
 		/// no rewards to claim
 		BootstrapNotReadyToBeFinished,
+		/// Tokens used in bootstrap cannot be the same
+		SameToken,
+		/// Token does not exists
+		TokenIdDoesNotExists,
 	}
 
 	#[pallet::event]

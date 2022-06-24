@@ -212,6 +212,54 @@ fn test_prevent_provisions_in_before_start_phase() {
 
 #[test]
 #[serial]
+fn test_fail_scheudle_bootstrap_with_same_token() {
+	new_test_ext().execute_with(|| {
+		set_up();
+
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		assert_err!(
+			Bootstrap::schedule_bootstrap(
+				Origin::root(),
+				100,
+				100,
+				100_u32.into(),
+				10,
+				20,
+				DEFAULT_RATIO,
+			),
+			Error::<Test>::SameToken
+		);
+	});
+}
+
+#[test]
+#[serial]
+fn test_prevent_schedule_bootstrap_with_pair_that_does_not_exists() {
+	new_test_ext().execute_with(|| {
+		set_up();
+
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		assert_err!(
+			Bootstrap::schedule_bootstrap(
+				Origin::root(),
+				100,
+				101,
+				100_u32.into(),
+				10,
+				20,
+				DEFAULT_RATIO,
+			),
+			Error::<Test>::TokenIdDoesNotExists
+		);
+	});
+}
+
+#[test]
+#[serial]
 fn test_prevent_provisions_in_finished_phase() {
 	new_test_ext().execute_with(|| {
 		set_up();

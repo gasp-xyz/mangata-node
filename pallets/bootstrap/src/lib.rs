@@ -294,8 +294,14 @@ pub mod pallet {
 			ensure!(Phase::<T>::get() == BootstrapPhase::BeforeStart, Error::<T>::AlreadyStarted);
 			ensure!(first_token_id != second_token_id, Error::<T>::SameToken);
 
-			ensure!(!T::Currency::total_issuance(first_token_id.into()).is_zero(), Error::<T>::TokenIdDoesNotExists);
-			ensure!(!T::Currency::total_issuance(second_token_id.into()).is_zero(), Error::<T>::TokenIdDoesNotExists);
+			ensure!(
+				!T::Currency::total_issuance(first_token_id.into()).is_zero(),
+				Error::<T>::TokenIdDoesNotExists
+			);
+			ensure!(
+				!T::Currency::total_issuance(second_token_id.into()).is_zero(),
+				Error::<T>::TokenIdDoesNotExists
+			);
 
 			ensure!(
 				ido_start > frame_system::Pallet::<T>::block_number(),
@@ -348,7 +354,7 @@ pub mod pallet {
 			Self::do_claim_rewards(&sender)
 		}
 
-		#[pallet::weight(T::WeightInfo::claim_rewards())]
+		#[pallet::weight(T::WeightInfo::finalize().saturating_add(T::DbWeight::get().reads_writes(1, 1) * Into::<u64>::into(limit.unwrap_or_default())))]
 		#[transactional]
 		pub fn finalize(origin: OriginFor<T>, mut limit: Option<u32>) -> DispatchResult {
 			ensure_root(origin)?;

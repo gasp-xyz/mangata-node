@@ -1477,10 +1477,10 @@ fn test_restart_bootstrap() {
 		assert!(WhitelistedAccount::<Test>::iter_keys().next().is_none());
 		assert!(ClaimedRewards::<Test>::iter_keys().next().is_none());
 		assert!(ProvisionAccounts::<Test>::iter_keys().next().is_none());
-		assert_eq!(Valuations::<Test>::get(), (0,0));
+		assert_eq!(Valuations::<Test>::get(), (0, 0));
 		assert_eq!(Phase::<Test>::get(), BootstrapPhase::BeforeStart);
 		assert_eq!(BootstrapSchedule::<Test>::get(), None);
-		assert_eq!(MintedLiquidity::<Test>::get(), (0,0));
+		assert_eq!(MintedLiquidity::<Test>::get(), (0, 0));
 		assert_eq!(ActivePair::<Test>::get(), None);
 
 		Bootstrap::schedule_bootstrap(

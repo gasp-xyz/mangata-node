@@ -12,10 +12,11 @@ pub trait WeightInfo {
 	fn provision() -> Weight;
 	fn provision_vested() -> Weight;
 	fn claim_rewards() -> Weight;
+	fn finalize() -> Weight;
 }
 
 
-// For backwards compatibility and tests
+// Dummy values For backwards compatibility and tests
 impl WeightInfo for () {
 	fn start_ido() -> Weight {
 		(23_396_000 as Weight)
@@ -33,6 +34,11 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
 	}
 	fn claim_rewards() -> Weight {
+		(273_011_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(13 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
+	}
+	fn finalize() -> Weight {
 		(273_011_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(13 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(6 as Weight))

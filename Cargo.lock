@@ -5740,6 +5740,8 @@ dependencies = [
  "mangata-primitives",
  "mockall",
  "mp-bootstrap",
+ "mp-multipurpose-liquidity",
+ "mp-traits",
  "orml-tokens",
  "orml-traits",
  "pallet-assets-info",

@@ -11,7 +11,7 @@ use frame_support::{
 };
 use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
 use mangata_primitives::{Balance, TokenId};
-use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
+use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
 use scale_info::TypeInfo;
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
@@ -126,7 +126,7 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		/// tokens
-		type Currency: MultiTokenCurrencyExtended<Self::AccountId>;
+		type Currency: MultiTokenCurrencyExtended<Self::AccountId> + MultiTokenReservableCurrency<Self::AccountId>;
 
 		type PoolCreateApi: PoolCreateApi<AccountId = Self::AccountId>;
 

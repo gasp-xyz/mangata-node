@@ -29,10 +29,10 @@ use frame_support::traits::StorageVersion;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
-#[cfg(test)]
-mod mock;
-#[cfg(test)]
-mod tests;
+// #[cfg(test)]
+// mod mock;
+// #[cfg(test)]
+// mod tests;
 
 pub mod migration;
 

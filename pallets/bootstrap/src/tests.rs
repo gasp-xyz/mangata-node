@@ -1398,7 +1398,7 @@ fn test_multi_provisions(
 
 #[test]
 #[serial]
-fn test_restart_rewards() {
+fn test_restart_bootstrap() {
 	new_test_ext().execute_with(|| {
 		set_up();
 
@@ -1472,6 +1472,17 @@ fn test_restart_rewards() {
 		assert_ne!(0, Bootstrap::balance(liq_token_id, ANOTHER_USER_ID));
 
 		Bootstrap::finalize(Origin::root(), None).unwrap();
+		assert!(Provisions::<Test>::iter_keys().next().is_none());
+		assert!(VestedProvisions::<Test>::iter_keys().next().is_none());
+		assert!(WhitelistedAccount::<Test>::iter_keys().next().is_none());
+		assert!(ClaimedRewards::<Test>::iter_keys().next().is_none());
+		assert!(ProvisionAccounts::<Test>::iter_keys().next().is_none());
+		assert_eq!(Valuations::<Test>::get(), (0,0));
+		assert_eq!(Phase::<Test>::get(), BootstrapPhase::BeforeStart);
+		assert_eq!(BootstrapSchedule::<Test>::get(), None);
+		assert_eq!(MintedLiquidity::<Test>::get(), (0,0));
+		assert_eq!(ActivePair::<Test>::get(), None);
+
 		Bootstrap::schedule_bootstrap(
 			Origin::root(),
 			KSMId::get(),

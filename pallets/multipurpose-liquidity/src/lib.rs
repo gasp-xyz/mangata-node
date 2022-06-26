@@ -34,7 +34,11 @@ use serde::{Deserialize, Serialize};
 // #[cfg(test)]
 // mod tests;
 
+mod benchmarking;
 pub mod migration;
+
+pub mod weights;
+pub use weights::WeightInfo;
 
 pub(crate) const LOG_TARGET: &'static str = "mpl";
 
@@ -89,7 +93,7 @@ pub mod pallet {
 		type NativeCurrencyId: Get<TokenId>;
 		type VestingProvider: MultiTokenVestingLocks<Self::AccountId>;
 		type Xyk: XykFunctionsTrait<Self::AccountId>;
-		type WeightInfo;
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::error]
@@ -138,8 +142,8 @@ pub mod pallet {
 	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 	#[derive(Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo, Default)]
     pub struct RelockStatusInfo {
-        amount: Balance,
-        ending_block_as_balance: Balance,
+        pub amount: Balance,
+        pub ending_block_as_balance: Balance,
     }
 
 	#[pallet::storage]

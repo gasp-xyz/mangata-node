@@ -210,11 +210,11 @@ impl_opaque_keys! {
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
-	authoring_version: 4,
-	spec_version: 4,
+	authoring_version: 5,
+	spec_version: 5,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 4,
+	transaction_version: 5,
 	state_version: 0,
 };
 
@@ -1178,7 +1178,7 @@ impl pallet_multipurpose_liquidity::Config for Runtime{
 	type NativeCurrencyId = MgaTokenId;
 	type VestingProvider = Vesting;
 	type Xyk = Xyk;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_multipurpose_liquidity_weights::ModuleWeight<Runtime>;
 }
 
 parameter_types! {
@@ -1467,6 +1467,7 @@ mod benches {
 		[pallet_utility, Utility]
 		[pallet_vesting_mangata, Vesting]
 		[pallet_issuance, Issuance]
+		[pallet_multipurpose_liquidity, MultiPurposeLiquidity]
 	);
 }
 

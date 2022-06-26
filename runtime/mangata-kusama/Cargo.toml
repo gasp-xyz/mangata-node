@@ -200,6 +200,7 @@ std = [
 try-runtime = [
 	"frame-try-runtime",
 	"frame-executive/try-runtime",
+	"pallet-multipurpose-liquidity/try-runtime",
 ]
 
 disable-execution = [
@@ -234,4 +235,5 @@ runtime-benchmarks = [
 	"pallet-vesting-mangata/runtime-benchmarks",
 	"pallet-issuance/runtime-benchmarks",
 	"pallet-bootstrap/runtime-benchmarks",
+	"pallet-multipurpose-liquidity/runtime-benchmarks",
 ]

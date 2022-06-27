@@ -22,10 +22,9 @@
 use super::*;
 
 use frame_benchmarking::{benchmarks, whitelisted_caller};
-use frame_support::assert_err;
+use frame_support::{assert_err, assert_ok};
 use frame_system::RawOrigin;
 use orml_tokens::MultiTokenCurrencyExtended;
-use frame_support::{assert_ok};
 
 use crate::Pallet as MultiPurposeLiquidity;
 
@@ -96,7 +95,7 @@ benchmarks! {
 		assert_eq!(<T as Config>::Tokens::reserved_balance(asset_id.into(), &caller).into(), 200000);
 		assert_eq!(MultiPurposeLiquidity::<T>::get_reserve_status(caller.clone(), asset_id).relock_amount, reserve_amount);
 		assert_eq!(MultiPurposeLiquidity::<T>::get_relock_status(caller.clone(), asset_id)[0], RelockStatusInfo{amount: reserve_amount, ending_block_as_balance: lock_ending_block_as_balance});
-	
+
 	}: {assert_ok!(MultiPurposeLiquidity::<T>::unreserve_and_relock_instance(RawOrigin::Signed(caller.clone().into()).into(), asset_id, 0u32));}
 	verify{
 		assert_eq!(<T as Config>::Tokens::locked_balance(asset_id.into(), &caller).into(), 542900);

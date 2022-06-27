@@ -1171,7 +1171,7 @@ impl pallet_crowdloan_rewards::Config for Runtime {
 	type WeightInfo = weights::pallet_crowdloan_rewards_weights::ModuleWeight<Runtime>;
 }
 
-impl pallet_multipurpose_liquidity::Config for Runtime{
+impl pallet_multipurpose_liquidity::Config for Runtime {
 	type Event = Event;
 	type MaxRelocks = MaxLocks;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;

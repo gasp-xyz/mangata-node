@@ -1171,7 +1171,7 @@ impl pallet_crowdloan_rewards::Config for Runtime {
 	type WeightInfo = weights::pallet_crowdloan_rewards_weights::ModuleWeight<Runtime>;
 }
 
-impl pallet_multipurpose_liquidity::Config for Runtime{
+impl pallet_multipurpose_liquidity::Config for Runtime {
 	type Event = Event;
 	type MaxRelocks = MaxLocks;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
@@ -1416,7 +1416,7 @@ construct_runtime!(
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 22,
 		Aura: pallet_aura::{Pallet, Storage, Config<T>} = 23,
 		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config} = 24,
-		
+
 		// MultiPurposeLiquidity
 		MultiPurposeLiquidity: pallet_multipurpose_liquidity::{Pallet, Call, Storage, Event<T>} = 25,
 

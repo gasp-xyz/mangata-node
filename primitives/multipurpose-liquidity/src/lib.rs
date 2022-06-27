@@ -1,18 +1,18 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 use codec::{Decode, Encode};
-use sp_runtime::RuntimeDebug;
 use scale_info::TypeInfo;
+use sp_runtime::RuntimeDebug;
 
 #[derive(Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
-	pub enum ActivateKind {
-		AvailableBalance,
-		StakedUnactivatedLiquidity,
-		UnspentReserves,
-	}
+pub enum ActivateKind {
+	AvailableBalance,
+	StakedUnactivatedLiquidity,
+	UnspentReserves,
+}
 
 #[derive(Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
-	pub enum BondKind {
-		AvailableBalance,
-		ActivatedUnstakedLiquidity,
-		UnspentReserves,
-	}
+pub enum BondKind {
+	AvailableBalance,
+	ActivatedUnstakedLiquidity,
+	UnspentReserves,
+}

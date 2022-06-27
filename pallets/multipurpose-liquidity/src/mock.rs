@@ -36,10 +36,9 @@ construct_runtime!(
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>},
 		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>},
-        MultiPurposeLiquidity: pallet_multipurpose_liquidity::{Pallet, Call, Storage, Event<T>},
+		MultiPurposeLiquidity: pallet_multipurpose_liquidity::{Pallet, Call, Storage, Event<T>},
 	}
 );
-
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
@@ -124,111 +123,110 @@ impl pallet_vesting_mangata::Config for Test {
 	const MAX_VESTING_SCHEDULES: u32 = 50;
 }
 
-impl Config for Test{
-    type Event = Event;
-    type MaxRelocks = MaxLocks;
-    type Tokens = MultiTokenCurrencyAdapter<Test>;
-    type NativeCurrencyId = NativeCurrencyId;
-    type VestingProvider = Vesting;
-    type Xyk = MockXyk<Test>;
-    type WeightInfo = ();
+impl Config for Test {
+	type Event = Event;
+	type MaxRelocks = MaxLocks;
+	type Tokens = MultiTokenCurrencyAdapter<Test>;
+	type NativeCurrencyId = NativeCurrencyId;
+	type VestingProvider = Vesting;
+	type Xyk = MockXyk<Test>;
+	type WeightInfo = ();
 }
 
 pub struct MockXyk<T>(PhantomData<T>);
-impl<T: Config> XykFunctionsTrait<T::AccountId> for MockXyk<T>{
-    type Balance = Balance;
+impl<T: Config> XykFunctionsTrait<T::AccountId> for MockXyk<T> {
+	type Balance = Balance;
 
-    type CurrencyId = TokenId;
+	type CurrencyId = TokenId;
 
-    fn create_pool(
-        sender: T::AccountId,
-        first_asset_id: Self::CurrencyId,
-        first_asset_amount: Self::Balance,
-        second_asset_id: Self::CurrencyId,
-        second_asset_amount: Self::Balance,
-    ) -> DispatchResult{
-        unimplemented!()
-    }
+	fn create_pool(
+		sender: T::AccountId,
+		first_asset_id: Self::CurrencyId,
+		first_asset_amount: Self::Balance,
+		second_asset_id: Self::CurrencyId,
+		second_asset_amount: Self::Balance,
+	) -> DispatchResult {
+		unimplemented!()
+	}
 
-    fn sell_asset(
-        sender: T::AccountId,
-        sold_asset_id: Self::CurrencyId,
-        bought_asset_id: Self::CurrencyId,
-        sold_asset_amount: Self::Balance,
-        min_amount_out: Self::Balance,
-    ) -> DispatchResult{
-        unimplemented!()
-    }
+	fn sell_asset(
+		sender: T::AccountId,
+		sold_asset_id: Self::CurrencyId,
+		bought_asset_id: Self::CurrencyId,
+		sold_asset_amount: Self::Balance,
+		min_amount_out: Self::Balance,
+	) -> DispatchResult {
+		unimplemented!()
+	}
 
-    fn buy_asset(
-        sender: T::AccountId,
-        sold_asset_id: Self::CurrencyId,
-        bought_asset_id: Self::CurrencyId,
-        bought_asset_amount: Self::Balance,
-        max_amount_in: Self::Balance,
-    ) -> DispatchResult{
-        unimplemented!()
-    }
+	fn buy_asset(
+		sender: T::AccountId,
+		sold_asset_id: Self::CurrencyId,
+		bought_asset_id: Self::CurrencyId,
+		bought_asset_amount: Self::Balance,
+		max_amount_in: Self::Balance,
+	) -> DispatchResult {
+		unimplemented!()
+	}
 
-    fn mint_liquidity(
-        sender: T::AccountId,
-        first_asset_id: Self::CurrencyId,
-        second_asset_id: Self::CurrencyId,
-        first_asset_amount: Self::Balance,
-        expected_second_asset_amount: Self::Balance,
-    ) -> Result<(Self::CurrencyId, Self::Balance), DispatchError>{
-        unimplemented!()
-    }
+	fn mint_liquidity(
+		sender: T::AccountId,
+		first_asset_id: Self::CurrencyId,
+		second_asset_id: Self::CurrencyId,
+		first_asset_amount: Self::Balance,
+		expected_second_asset_amount: Self::Balance,
+	) -> Result<(Self::CurrencyId, Self::Balance), DispatchError> {
+		unimplemented!()
+	}
 
-    fn burn_liquidity(
-        sender: T::AccountId,
-        first_asset_id: Self::CurrencyId,
-        second_asset_id: Self::CurrencyId,
-        liquidity_asset_amount: Self::Balance,
-    ) -> DispatchResult{
-        unimplemented!()
-    }
+	fn burn_liquidity(
+		sender: T::AccountId,
+		first_asset_id: Self::CurrencyId,
+		second_asset_id: Self::CurrencyId,
+		liquidity_asset_amount: Self::Balance,
+	) -> DispatchResult {
+		unimplemented!()
+	}
 
-    fn get_tokens_required_for_minting(
-        liquidity_asset_id: Self::CurrencyId,
-        liquidity_token_amount: Self::Balance,
-    ) -> Result<(Self::CurrencyId, Self::Balance, Self::CurrencyId, Self::Balance), DispatchError>{
-        unimplemented!()
-    }
+	fn get_tokens_required_for_minting(
+		liquidity_asset_id: Self::CurrencyId,
+		liquidity_token_amount: Self::Balance,
+	) -> Result<(Self::CurrencyId, Self::Balance, Self::CurrencyId, Self::Balance), DispatchError> {
+		unimplemented!()
+	}
 
-    fn claim_rewards(
-        sender: T::AccountId,
-        liquidity_token_id: Self::CurrencyId,
-        amount: Self::Balance,
-    ) -> DispatchResult{
-        unimplemented!()
-    }
+	fn claim_rewards(
+		sender: T::AccountId,
+		liquidity_token_id: Self::CurrencyId,
+		amount: Self::Balance,
+	) -> DispatchResult {
+		unimplemented!()
+	}
 
-    fn promote_pool(liquidity_token_id: TokenId) -> DispatchResult{
-        unimplemented!()
-    }
+	fn promote_pool(liquidity_token_id: TokenId) -> DispatchResult {
+		unimplemented!()
+	}
 
-    fn activate_liquidity(
-        sender: T::AccountId,
-        liquidity_token_id: Self::CurrencyId,
-        amount: Self::Balance,
-        use_balance_from: Option<ActivateKind>
-    ) -> DispatchResult{
-        unimplemented!()
-    }
+	fn activate_liquidity(
+		sender: T::AccountId,
+		liquidity_token_id: Self::CurrencyId,
+		amount: Self::Balance,
+		use_balance_from: Option<ActivateKind>,
+	) -> DispatchResult {
+		unimplemented!()
+	}
 
-    fn deactivate_liquidity(
-        sender: T::AccountId,
-        liquidity_token_id: Self::CurrencyId,
-        amount: Self::Balance,
-    ) -> DispatchResult{
-        unimplemented!()
-    }
-    
-    fn is_liquidity_token(liquidity_asset_id: TokenId) -> bool{
-        true
-    }
+	fn deactivate_liquidity(
+		sender: T::AccountId,
+		liquidity_token_id: Self::CurrencyId,
+		amount: Self::Balance,
+	) -> DispatchResult {
+		unimplemented!()
+	}
 
+	fn is_liquidity_token(liquidity_asset_id: TokenId) -> bool {
+		true
+	}
 }
 
 // This function basically just builds a genesis storage key/value store according to

@@ -18,17 +18,17 @@
 
 use super::*;
 use crate as pallet_bootstrap;
+use codec::EncodeLike;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{ConstU128, ConstU32, Contains, Everything},
 };
 use mangata_primitives::{Amount, Balance, TokenId};
+use mp_multipurpose_liquidity::ActivateKind;
+use mp_traits::ActivationReservesProviderTrait;
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter};
 use orml_traits::parameter_type_with_key;
 use sp_runtime::{Perbill, Percent};
-use mp_traits::ActivationReservesProviderTrait;
-use mp_multipurpose_liquidity::ActivateKind;
-use codec::EncodeLike;
 
 pub(crate) type AccountId = u128;
 
@@ -139,26 +139,39 @@ impl pallet_xyk::Config for Test {
 
 pub struct TokensActivationPassthrough<T: Config>(PhantomData<T>);
 impl<T: Config> ActivationReservesProviderTrait for TokensActivationPassthrough<T>
-	where <T as frame_system::Config>::AccountId: EncodeLike<AccountId>	{
+where
+	<T as frame_system::Config>::AccountId: EncodeLike<AccountId>,
+{
 	type AccountId = T::AccountId;
 
-	fn get_max_instant_unreserve_amount(token_id: TokenId, account_id: &Self::AccountId)
-	-> Balance where <T as frame_system::Config>::AccountId: EncodeLike<AccountId>{
+	fn get_max_instant_unreserve_amount(token_id: TokenId, account_id: &Self::AccountId) -> Balance
+	where
+		<T as frame_system::Config>::AccountId: EncodeLike<AccountId>,
+	{
 		Xyk::liquidity_mining_active_user((account_id.clone(), token_id))
 	}
 
-    fn can_activate(token_id: TokenId, account_id: &Self::AccountId, amount: Balance, _use_balance_from: Option<ActivateKind>)
-	-> bool{
+	fn can_activate(
+		token_id: TokenId,
+		account_id: &Self::AccountId,
+		amount: Balance,
+		_use_balance_from: Option<ActivateKind>,
+	) -> bool {
 		<T as pallet::Config>::Currency::can_reserve(token_id.into(), account_id, amount.into())
 	}
 
-	fn activate(token_id: TokenId, account_id: &Self::AccountId, amount: Balance, _use_balance_from: Option<ActivateKind>)
-	-> DispatchResult{
+	fn activate(
+		token_id: TokenId,
+		account_id: &Self::AccountId,
+		amount: Balance,
+		_use_balance_from: Option<ActivateKind>,
+	) -> DispatchResult {
 		<T as pallet::Config>::Currency::reserve(token_id.into(), account_id, amount.into())
 	}
 
-	fn deactivate(token_id: TokenId, account_id: &Self::AccountId, amount: Balance) -> Balance{
-		<T as pallet::Config>::Currency::unreserve(token_id.into(), account_id, amount.into()).into()
+	fn deactivate(token_id: TokenId, account_id: &Self::AccountId, amount: Balance) -> Balance {
+		<T as pallet::Config>::Currency::unreserve(token_id.into(), account_id, amount.into())
+			.into()
 	}
 }
 

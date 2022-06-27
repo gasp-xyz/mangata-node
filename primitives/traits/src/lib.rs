@@ -1,13 +1,12 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+use codec::FullCodec;
 use frame_support::pallet_prelude::*;
 use mangata_primitives::{Balance, TokenId};
-use sp_runtime::traits::{MaybeDisplay,AtLeast32BitUnsigned};
+use mp_multipurpose_liquidity::{ActivateKind, BondKind};
+use sp_runtime::traits::{AtLeast32BitUnsigned, MaybeDisplay};
 use sp_std::fmt::Debug;
-use mp_multipurpose_liquidity::{BondKind, ActivateKind};
-use codec::FullCodec;
 
-pub trait StakingReservesProviderTrait{
-
+pub trait StakingReservesProviderTrait {
 	type AccountId: Parameter
 		+ Member
 		+ MaybeSerializeDeserialize
@@ -16,17 +15,24 @@ pub trait StakingReservesProviderTrait{
 		+ Ord
 		+ MaxEncodedLen;
 
-	fn can_bond(token_id: TokenId, account_id: &Self::AccountId, amount: Balance, use_balance_from: Option<BondKind>)
-	-> bool;
+	fn can_bond(
+		token_id: TokenId,
+		account_id: &Self::AccountId,
+		amount: Balance,
+		use_balance_from: Option<BondKind>,
+	) -> bool;
 
-	fn bond(token_id: TokenId, account_id: &Self::AccountId, amount: Balance, use_balance_from: Option<BondKind>)
-	-> DispatchResult;
+	fn bond(
+		token_id: TokenId,
+		account_id: &Self::AccountId,
+		amount: Balance,
+		use_balance_from: Option<BondKind>,
+	) -> DispatchResult;
 
 	fn unbond(token_id: TokenId, account_id: &Self::AccountId, amount: Balance) -> Balance;
 }
 
-pub trait ActivationReservesProviderTrait{
-
+pub trait ActivationReservesProviderTrait {
 	type AccountId: Parameter
 		+ Member
 		+ MaybeSerializeDeserialize
@@ -36,13 +42,21 @@ pub trait ActivationReservesProviderTrait{
 		+ MaxEncodedLen;
 
 	fn get_max_instant_unreserve_amount(token_id: TokenId, account_id: &Self::AccountId)
-	-> Balance;
+		-> Balance;
 
-    fn can_activate(token_id: TokenId, account_id: &Self::AccountId, amount: Balance, use_balance_from: Option<ActivateKind>)
-	-> bool;
+	fn can_activate(
+		token_id: TokenId,
+		account_id: &Self::AccountId,
+		amount: Balance,
+		use_balance_from: Option<ActivateKind>,
+	) -> bool;
 
-	fn activate(token_id: TokenId, account_id: &Self::AccountId, amount: Balance, use_balance_from: Option<ActivateKind>)
-	-> DispatchResult;
+	fn activate(
+		token_id: TokenId,
+		account_id: &Self::AccountId,
+		amount: Balance,
+		use_balance_from: Option<ActivateKind>,
+	) -> DispatchResult;
 
 	fn deactivate(token_id: TokenId, account_id: &Self::AccountId, amount: Balance) -> Balance;
 }
@@ -124,7 +138,7 @@ pub trait XykFunctionsTrait<AccountId> {
 		sender: AccountId,
 		liquidity_token_id: Self::CurrencyId,
 		amount: Self::Balance,
-		use_balance_from: Option<ActivateKind>
+		use_balance_from: Option<ActivateKind>,
 	) -> DispatchResult;
 
 	fn deactivate_liquidity(

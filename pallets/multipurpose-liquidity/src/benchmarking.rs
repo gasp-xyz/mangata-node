@@ -25,6 +25,7 @@ use frame_benchmarking::{benchmarks, whitelisted_caller};
 use frame_support::assert_err;
 use frame_system::RawOrigin;
 use orml_tokens::MultiTokenCurrencyExtended;
+use frame_support::{assert_ok};
 
 use crate::Pallet as MultiPurposeLiquidity;
 
@@ -56,7 +57,7 @@ benchmarks! {
 		}
 		<T as Config>::VestingProvider::lock_tokens(&caller, asset_id.into(), locked_amount.into(), lock_ending_block_as_balance.into()).unwrap();
 
-	}: _(RawOrigin::Signed(caller.clone().into()), asset_id, reserve_amount)
+	}: {assert_ok!(MultiPurposeLiquidity::<T>::reserve_vesting_liquidity_tokens(RawOrigin::Signed(caller.clone().into()).into(), asset_id, reserve_amount));}
 	verify{
 		assert_eq!(<T as Config>::Tokens::locked_balance(asset_id.into(), &caller).into(), 343600);
 		assert_eq!(<T as Config>::Tokens::reserved_balance(asset_id.into(), &caller).into(), 200000);
@@ -90,13 +91,13 @@ benchmarks! {
 		}
 		<T as Config>::VestingProvider::lock_tokens(&caller, asset_id.into(), locked_amount.into(), lock_ending_block_as_balance.into()).unwrap();
 
-		MultiPurposeLiquidity::<T>::reserve_vesting_liquidity_tokens(RawOrigin::Signed(caller.clone().into()).into(), asset_id, reserve_amount);
+		MultiPurposeLiquidity::<T>::reserve_vesting_liquidity_tokens(RawOrigin::Signed(caller.clone().into()).into(), asset_id, reserve_amount).unwrap();
 		assert_eq!(<T as Config>::Tokens::locked_balance(asset_id.into(), &caller).into(), 348000);
 		assert_eq!(<T as Config>::Tokens::reserved_balance(asset_id.into(), &caller).into(), 200000);
 		assert_eq!(MultiPurposeLiquidity::<T>::get_reserve_status(caller.clone(), asset_id).relock_amount, reserve_amount);
 		assert_eq!(MultiPurposeLiquidity::<T>::get_relock_status(caller.clone(), asset_id)[0], RelockStatusInfo{amount: reserve_amount, ending_block_as_balance: lock_ending_block_as_balance});
 	
-	}: _(RawOrigin::Signed(caller.clone().into()), asset_id, 0u32)
+	}: {assert_ok!(MultiPurposeLiquidity::<T>::unreserve_and_relock_instance(RawOrigin::Signed(caller.clone().into()).into(), asset_id, 0u32));}
 	verify{
 		assert_eq!(<T as Config>::Tokens::locked_balance(asset_id.into(), &caller).into(), 542900);
 		assert_eq!(<T as Config>::Tokens::reserved_balance(asset_id.into(), &caller).into(), 0);

@@ -29,10 +29,10 @@ use frame_support::traits::StorageVersion;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
-// #[cfg(test)]
-// mod mock;
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
 
 mod benchmarking;
 pub mod migration;
@@ -156,7 +156,7 @@ pub mod pallet {
 	pub type RelockStatus<T: Config> =
 		StorageDoubleMap<_, Blake2_256, T::AccountId, Twox64Concat, TokenId, BoundedVec<RelockStatusInfo, T::MaxRelocks>, ValueQuery>;
 		
-	// XYK extrinsics.
+	// MPL extrinsics.
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[transactional]
@@ -270,7 +270,7 @@ impl<T: Config> StakingReservesProviderTrait for Pallet<T>{
 		match use_balance_from {
 			BondKind::AvailableBalance => T::Tokens::ensure_can_withdraw(token_id.into(), &account_id, amount.into(), WithdrawReasons::all(), Default::default()).is_ok()
 				&& reserve_status.staked_unactivated_reserves.checked_add(amount).is_some(),
-			BondKind::ActivatedUnstakedLiquidty => reserve_status.activated_unstaked_reserves.checked_sub(amount).is_some()
+			BondKind::ActivatedUnstakedLiquidity => reserve_status.activated_unstaked_reserves.checked_sub(amount).is_some()
 				&& reserve_status.staked_and_activated_reserves.checked_add(amount).is_some(),
 			BondKind::UnspentReserves => reserve_status.unspent_reserves.checked_sub(amount).is_some()
 				&& reserve_status.staked_unactivated_reserves.checked_add(amount).is_some(),
@@ -289,7 +289,7 @@ impl<T: Config> StakingReservesProviderTrait for Pallet<T>{
 				.ok_or(Error::<T>::MathError)?;
 				T::Tokens::reserve(token_id.into(), &account_id, amount.into())?;
 			},
-			BondKind::ActivatedUnstakedLiquidty =>{
+			BondKind::ActivatedUnstakedLiquidity =>{
 				reserve_status.activated_unstaked_reserves = reserve_status.activated_unstaked_reserves.checked_sub(amount)
 				.ok_or(Error::<T>::NotEnoughTokens)?;
 				reserve_status.staked_and_activated_reserves = reserve_status.staked_and_activated_reserves.checked_add(amount)
@@ -393,7 +393,7 @@ impl<T: Config> ActivationReservesProviderTrait for Pallet<T>{
 		match use_balance_from {
 			ActivateKind::AvailableBalance => T::Tokens::ensure_can_withdraw(token_id.into(), &account_id, amount.into(), WithdrawReasons::all(), Default::default()).is_ok()
 			&& reserve_status.activated_unstaked_reserves.checked_add(amount).is_some(),
-			ActivateKind::StakedUnactivatedLiquidty => reserve_status.staked_unactivated_reserves.checked_sub(amount).is_some()
+			ActivateKind::StakedUnactivatedLiquidity => reserve_status.staked_unactivated_reserves.checked_sub(amount).is_some()
 			&& reserve_status.staked_and_activated_reserves.checked_add(amount).is_some(),
 			ActivateKind::UnspentReserves => reserve_status.unspent_reserves.checked_sub(amount).is_some()
 			&& reserve_status.activated_unstaked_reserves.checked_add(amount).is_some(),
@@ -412,7 +412,7 @@ impl<T: Config> ActivationReservesProviderTrait for Pallet<T>{
 				.ok_or(Error::<T>::MathError)?;
 				T::Tokens::reserve(token_id.into(), &account_id, amount.into())?;
 			},
-			ActivateKind::StakedUnactivatedLiquidty =>{
+			ActivateKind::StakedUnactivatedLiquidity =>{
 				reserve_status.staked_unactivated_reserves = reserve_status.staked_unactivated_reserves.checked_sub(amount)
 				.ok_or(Error::<T>::NotEnoughTokens)?;
 				reserve_status.staked_and_activated_reserves = reserve_status.staked_and_activated_reserves.checked_add(amount)

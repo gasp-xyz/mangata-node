@@ -140,7 +140,29 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
+	MangataMigrations,
 >;
+
+use frame_support::traits::OnRuntimeUpgrade;
+pub struct MangataMigrations;
+
+impl OnRuntimeUpgrade for MangataMigrations {
+	fn on_runtime_upgrade() -> frame_support::weights::Weight {
+		pallet_bootstrap::migrations::v1::MigrateToV1::<Runtime>::on_runtime_upgrade()
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn pre_upgrade() -> Result<(), &'static str> {
+		pallet_bootstrap::migrations::v1::MigrateToV1::<Runtime>::pre_upgrade();
+		Ok(())
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn post_upgrade() -> Result<(), &'static str> {
+		pallet_bootstrap::migrations::v1::MigrateToV1::<Runtime>::post_upgrade();
+		Ok(())
+	}
+}
 
 /// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
 /// node's balance type.

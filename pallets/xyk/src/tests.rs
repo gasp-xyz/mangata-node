@@ -2671,3 +2671,33 @@ fn PoolCreateApi_pool_create_creates_a_pool() {
 		assert!(<XykStorage as PoolCreateApi>::pool_exists(0_u32.into(), 1_u32.into()));
 	});
 }
+
+#[test]
+fn test_create_blacklisted_pool() {
+	new_test_ext().execute_with(|| {
+		let blaclisted_first_asset_id = 1;
+		let blaclisted_second_asset_id = 9;
+
+		assert_err!(
+			XykStorage::create_pool(
+				Origin::signed(2),
+				blaclisted_first_asset_id,
+				100000000000000,
+				blaclisted_second_asset_id,
+				100000000000000
+			),
+			Error::<Test>::DisallowedPool
+		);
+
+		assert_err!(
+			XykStorage::create_pool(
+				Origin::signed(2),
+				blaclisted_second_asset_id,
+				100000000000000,
+				blaclisted_first_asset_id,
+				100000000000000
+			),
+			Error::<Test>::DisallowedPool
+		);
+	});
+}

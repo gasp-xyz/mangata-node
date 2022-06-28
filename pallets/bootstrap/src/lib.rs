@@ -6,7 +6,7 @@ use frame_support::pallet_prelude::*;
 
 use frame_support::{
 	codec::{Decode, Encode},
-	traits::{ExistenceRequirement, Get},
+	traits::{Contains, ExistenceRequirement, Get, StorageVersion},
 	transactional, PalletId,
 };
 use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
@@ -17,8 +17,11 @@ use scale_info::TypeInfo;
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
 use sp_bootstrap::PoolCreateApi;
 use sp_core::U256;
-use sp_runtime::traits::{AccountIdConversion, CheckedAdd};
+use sp_io::KillStorageResult;
+use sp_runtime::traits::{AccountIdConversion, CheckedAdd, Zero};
 use sp_std::prelude::*;
+
+pub mod migrations;
 
 #[cfg(test)]
 mod mock;
@@ -56,13 +59,14 @@ pub enum ProvisionKind {
 #[frame_support::pallet]
 pub mod pallet {
 
-	use frame_benchmarking::Zero;
-
 	use super::*;
+
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	#[pallet::without_storage_info]
+	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(PhantomData<T>);
 
 	#[pallet::hooks]
@@ -84,17 +88,17 @@ pub mod pallet {
 				if n >= finished {
 					Phase::<T>::put(BootstrapPhase::Finished); // 1 WRINTE
 					log!(info, "bootstrap event finished");
-					let (mga_valuation, ksm_valuation) = Valuations::<T>::get();
+					let (second_token_valuation, first_token_valuation) = Valuations::<T>::get();
 					// XykFunctionsTrait R: 11 W:12
 					// PoolCreateApi::pool_create R:2  +
 					// ---------------------------------
 					// R: 13 W 12
 					if let Some((liq_asset_id, issuance)) = T::PoolCreateApi::pool_create(
 						Self::vault_address(),
-						T::KSMTokenId::get(),
-						ksm_valuation,
-						T::MGATokenId::get(),
-						mga_valuation,
+						Self::first_token_id(),
+						first_token_valuation,
+						Self::second_token_id(),
+						second_token_valuation,
 					) {
 						MintedLiquidity::<T>::put((liq_asset_id, issuance)); // W:1
 					} else {
@@ -103,13 +107,21 @@ pub mod pallet {
 					// TODO: include cost of pool_create call
 					T::DbWeight::get().reads_writes(15, 13)
 				} else if n >= public_start {
-					Phase::<T>::put(BootstrapPhase::Public);
-					log!(info, "starting public phase");
-					T::DbWeight::get().reads_writes(2, 1)
+					if phase != BootstrapPhase::Public {
+						Phase::<T>::put(BootstrapPhase::Public);
+						log!(info, "starting public phase");
+						T::DbWeight::get().reads_writes(2, 1)
+					} else {
+						T::DbWeight::get().reads(2)
+					}
 				} else if n >= whitelist_start {
-					log!(info, "starting whitelist phase");
-					Phase::<T>::put(BootstrapPhase::Whitelist);
-					T::DbWeight::get().reads_writes(2, 1)
+					if phase != BootstrapPhase::Whitelist {
+						log!(info, "starting whitelist phase");
+						Phase::<T>::put(BootstrapPhase::Whitelist);
+						T::DbWeight::get().reads_writes(2, 1)
+					} else {
+						T::DbWeight::get().reads(2)
+					}
 				} else {
 					T::DbWeight::get().reads(2)
 				}
@@ -131,10 +143,7 @@ pub mod pallet {
 		type PoolCreateApi: PoolCreateApi<AccountId = Self::AccountId>;
 
 		#[pallet::constant]
-		type MGATokenId: Get<TokenId>;
-
-		#[pallet::constant]
-		type KSMTokenId: Get<TokenId>;
+		type TreasuryPalletId: Get<PalletId>;
 
 		type VestingProvider: MultiTokenVestingLocks<Self::AccountId>;
 
@@ -185,6 +194,20 @@ pub mod pallet {
 	pub type ClaimedRewards<T: Config> =
 		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, TokenId, Balance, ValueQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn provision_accounts)]
+	pub type ProvisionAccounts<T: Config> =
+		StorageMap<_, Twox64Concat, T::AccountId, (), OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn pair)]
+	pub type ActivePair<T: Config> = StorageValue<_, (TokenId, TokenId), OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn archived)]
+	pub type ArchivedBootstrap<T: Config> =
+		StorageValue<_, Vec<(T::BlockNumber, u32, u32, (u128, u128))>, ValueQuery>;
+
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// provisions vested/locked tokens into the boostrstrap
@@ -201,11 +224,12 @@ pub mod pallet {
 					.map_err(|_| Error::<T>::NotEnoughVestedAssets)?
 					.into();
 			Self::do_provision(
-				sender,
+				&sender,
 				token_id,
 				amount,
 				ProvisionKind::Vested(vesting_ending_block_as_balance),
 			)?;
+			ProvisionAccounts::<T>::insert(&sender, ());
 			Self::deposit_event(Event::Provisioned(token_id, amount));
 			Ok(().into())
 		}
@@ -219,7 +243,8 @@ pub mod pallet {
 			amount: Balance,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_provision(sender, token_id, amount, ProvisionKind::Regular)?;
+			Self::do_provision(&sender, token_id, amount, ProvisionKind::Regular)?;
+			ProvisionAccounts::<T>::insert(&sender, ());
 			Self::deposit_event(Event::Provisioned(token_id, amount));
 			Ok(().into())
 		}
@@ -243,11 +268,11 @@ pub mod pallet {
 		/// - ido_start - number of block when bootstrap event should be started
 		/// - whitelist_phase_length - length of whitelist phase in blocks.
 		/// - public_phase_length - length of public phase in blocks
-		/// - max_ksm_to_mgx_ratio - maximum tokens ratio that is held by the pallet during bootstrap event
+		/// - max_first_token_to_mgx_ratio - maximum tokens ratio that is held by the pallet during bootstrap event
 		///
-		/// max_ksm_to_mgx_ratio[0]       KSM VALUATION
-		/// ----------------------- < ---------------------
-		/// max_ksm_to_mgx_ratio[1]       MGX VALUATION
+		/// max_first_token_to_mgx_ratio[0]       KSM VALUATION
+		/// --------------------------------- < ---------------------
+		/// max_first_token_to_mgx_ratio[1]       MGX VALUATION
 		///
 		/// bootstrap phases:
 		/// - BeforeStart - blocks 0..ido_start
@@ -255,25 +280,37 @@ pub mod pallet {
 		/// - PublicPhase - blocks (ido_start + whitelist_phase_length)..(ido_start + whitelist_phase_length  + public_phase_lenght)
 		#[pallet::weight(T::WeightInfo::start_ido())]
 		#[transactional]
-		pub fn start_ido(
+		pub fn schedule_bootstrap(
 			origin: OriginFor<T>,
+			first_token_id: TokenId,
+			second_token_id: TokenId,
 			ido_start: T::BlockNumber,
 			whitelist_phase_length: u32,
 			public_phase_lenght: u32,
-			max_ksm_to_mgx_ratio: (u128, u128),
+			max_first_to_second_ratio: (u128, u128),
 		) -> DispatchResult {
 			ensure_root(origin)?;
 
 			ensure!(Phase::<T>::get() == BootstrapPhase::BeforeStart, Error::<T>::AlreadyStarted);
+			ensure!(first_token_id != second_token_id, Error::<T>::SameToken);
+
+			ensure!(
+				!T::Currency::total_issuance(first_token_id.into()).is_zero(),
+				Error::<T>::TokenIdDoesNotExists
+			);
+			ensure!(
+				!T::Currency::total_issuance(second_token_id.into()).is_zero(),
+				Error::<T>::TokenIdDoesNotExists
+			);
 
 			ensure!(
 				ido_start > frame_system::Pallet::<T>::block_number(),
 				Error::<T>::BootstrapStartInThePast
 			);
 
-			ensure!(max_ksm_to_mgx_ratio.0 != 0, Error::<T>::WrongRatio);
+			ensure!(max_first_to_second_ratio.0 != 0, Error::<T>::WrongRatio);
 
-			ensure!(max_ksm_to_mgx_ratio.1 != 0, Error::<T>::WrongRatio);
+			ensure!(max_first_to_second_ratio.1 != 0, Error::<T>::WrongRatio);
 
 			ensure!(whitelist_phase_length > 0, Error::<T>::PhaseLengthCannotBeZero);
 
@@ -294,15 +331,16 @@ pub mod pallet {
 			);
 
 			ensure!(
-				!T::PoolCreateApi::pool_exists(T::KSMTokenId::get(), T::MGATokenId::get()),
+				!T::PoolCreateApi::pool_exists(first_token_id, second_token_id),
 				Error::<T>::PoolAlreadyExists
 			);
 
+			ActivePair::<T>::put((first_token_id, second_token_id));
 			BootstrapSchedule::<T>::put((
 				ido_start,
 				whitelist_phase_length,
 				public_phase_lenght,
-				max_ksm_to_mgx_ratio,
+				max_first_to_second_ratio,
 			));
 
 			Ok(().into())
@@ -313,74 +351,86 @@ pub mod pallet {
 		#[transactional]
 		pub fn claim_rewards(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
+			Self::do_claim_rewards(&sender)
+		}
+
+		#[pallet::weight(T::WeightInfo::finalize().saturating_add(T::DbWeight::get().reads_writes(1, 1) * Into::<u64>::into(limit.unwrap_or_default())))]
+		#[transactional]
+		pub fn finalize(origin: OriginFor<T>, mut limit: Option<u32>) -> DispatchResult {
+			ensure_root(origin)?;
 
 			ensure!(Self::phase() == BootstrapPhase::Finished, Error::<T>::NotFinishedYet);
 
-			let (liq_token_id, _) = Self::minted_liquidity();
-
 			ensure!(
-				ClaimedRewards::<T>::get(&sender, T::KSMTokenId::get()) == 0 &&
-					ClaimedRewards::<T>::get(&sender, T::MGATokenId::get()) == 0,
-				Error::<T>::NothingToClaim
+				ProvisionAccounts::<T>::iter_keys().next().is_none(),
+				Error::<T>::BootstrapNotReadyToBeFinished
 			);
 
-			let (ksm_rewards, ksm_rewards_vested, ksm_lock) =
-				Self::calculate_rewards(&sender, &T::KSMTokenId::get())?;
-			let (mga_rewards, mga_rewards_vested, mga_lock) =
-				Self::calculate_rewards(&sender, &T::MGATokenId::get())?;
-
-			let total_rewards_claimed = mga_rewards
-				.checked_add(mga_rewards_vested)
-				.ok_or(Error::<T>::MathOverflow)?
-				.checked_add(ksm_rewards)
-				.ok_or(Error::<T>::MathOverflow)?
-				.checked_add(ksm_rewards_vested)
-				.ok_or(Error::<T>::MathOverflow)?;
-
-			if total_rewards_claimed.is_zero() {
-				return Err(Error::<T>::NothingToClaim.into())
+			for result in [
+				VestedProvisions::<T>::remove_all(limit),
+				WhitelistedAccount::<T>::remove_all(limit),
+				ClaimedRewards::<T>::remove_all(limit),
+				Provisions::<T>::remove_all(limit),
+			] {
+				match (result, limit.as_mut()) {
+					(KillStorageResult::AllRemoved(num_removed), Some(l)) |
+					(KillStorageResult::SomeRemaining(num_removed), Some(l))
+						if *l > num_removed =>
+					{
+						*l -= num_removed;
+					}
+					(KillStorageResult::AllRemoved(num_removed), Some(l)) |
+					(KillStorageResult::SomeRemaining(num_removed), Some(l))
+						if *l <= num_removed =>
+					{
+						Self::deposit_event(Event::BootstrapParitallyFinalized);
+						return Ok(().into())
+					}
+					_ => {},
+				};
 			}
 
-			Self::claim_rewards_from_single_currency(
-				&sender,
-				&T::MGATokenId::get(),
-				mga_rewards,
-				mga_rewards_vested,
-				mga_lock,
-			)?;
-			log!(
-				info,
-				"MGA rewards (non-vested, vested, total) = ({}, {}, {})",
-				mga_rewards,
-				mga_rewards_vested,
-				mga_rewards + mga_rewards_vested
-			);
+			Phase::<T>::put(BootstrapPhase::BeforeStart);
+			let (liq_token_id, _) = MintedLiquidity::<T>::take();
+			let balance = T::Currency::free_balance(liq_token_id.into(), &Self::vault_address());
+			if balance > 0_u128.into() {
+				T::Currency::transfer(
+					liq_token_id.into(),
+					&Self::vault_address(),
+					&T::TreasuryPalletId::get().into_account(),
+					balance,
+					ExistenceRequirement::AllowDeath,
+				)?;
+			}
+			Valuations::<T>::kill();
+			ActivePair::<T>::kill();
 
-			Self::claim_rewards_from_single_currency(
-				&sender,
-				&T::KSMTokenId::get(),
-				ksm_rewards,
-				ksm_rewards_vested,
-				ksm_lock,
-			)?;
-			log!(
-				info,
-				"KSM rewards (non-vested, vested, total) = ({}, {}, {})",
-				ksm_rewards,
-				ksm_rewards_vested,
-				ksm_rewards + ksm_rewards_vested
-			);
+			if let Some(bootstrap) = BootstrapSchedule::<T>::take() {
+				ArchivedBootstrap::<T>::mutate(|v| {
+					v.push(bootstrap);
+				});
+			}
 
-			Self::deposit_event(Event::RewardsClaimed(liq_token_id, total_rewards_claimed));
+			Self::deposit_event(Event::BootstrapFinalized);
 
 			Ok(().into())
+		}
+
+		#[pallet::weight(T::WeightInfo::claim_rewards())]
+		#[transactional]
+		pub fn claim_rewards_for_account(
+			origin: OriginFor<T>,
+			account: T::AccountId,
+		) -> DispatchResult {
+			let _ = ensure_signed(origin)?;
+			Self::do_claim_rewards(&account)
 		}
 	}
 
 	#[pallet::error]
 	/// Errors
 	pub enum Error<T> {
-		/// Only MGA & KSM can be used for provisions
+		/// Only scheduled token pair can be used for provisions
 		UnsupportedTokenId,
 		/// Not enought funds for provisio
 		NotEnoughAssets,
@@ -398,16 +448,22 @@ pub mod pallet {
 		AlreadyStarted,
 		/// Valuation ratio exceeded
 		ValuationRatio,
-		/// First provision must be in MGA/MGX
-		FirstProvisionInMga,
+		/// First provision must be in non restricted token
+		FirstProvisionInSecondTokenId,
 		/// Bootstraped pool already exists
 		PoolAlreadyExists,
 		/// Cannot claim rewards before bootstrap finish
 		NotFinishedYet,
 		/// no rewards to claim
 		NothingToClaim,
-		/// no rewards to claim
+		/// wrong ratio
 		WrongRatio,
+		/// no rewards to claim
+		BootstrapNotReadyToBeFinished,
+		/// Tokens used in bootstrap cannot be the same
+		SameToken,
+		/// Token does not exists
+		TokenIdDoesNotExists,
 	}
 
 	#[pallet::event]
@@ -421,6 +477,10 @@ pub mod pallet {
 		RewardsClaimed(TokenId, Balance),
 		/// account whitelisted
 		AccountsWhitelisted,
+		/// finalization process tarted
+		BootstrapParitallyFinalized,
+		/// finalization process finished
+		BootstrapFinalized,
 	}
 }
 
@@ -500,28 +560,28 @@ impl<T: Config> Pallet<T> {
 	/// ---------------------------------------- <= ----------------------------------------
 	/// actual_denominator * expected_denominator    expected_denominator * actual_nominator
 	fn is_ratio_kept(ratio_nominator: u128, ratio_denominator: u128) -> bool {
-		let (mga_valuation, ksm_valuation) = Valuations::<T>::get();
-		let left = U256::from(ksm_valuation) * U256::from(ratio_denominator);
-		let right = U256::from(ratio_nominator) * U256::from(mga_valuation);
+		let (second_token_valuation, first_token_valuation) = Valuations::<T>::get();
+		let left = U256::from(first_token_valuation) * U256::from(ratio_denominator);
+		let right = U256::from(ratio_nominator) * U256::from(second_token_valuation);
 		left <= right
 	}
 
 	pub fn do_provision(
-		sender: T::AccountId,
+		sender: &T::AccountId,
 		token_id: TokenId,
 		amount: Balance,
 		is_vested: ProvisionKind,
 	) -> DispatchResult {
-		let is_ksm = token_id == T::KSMTokenId::get();
-		let is_mga = token_id == T::MGATokenId::get();
+		let is_first_token = token_id == Self::first_token_id();
+		let is_second_token = token_id == Self::second_token_id();
 		let is_public_phase = Phase::<T>::get() == BootstrapPhase::Public;
 		let is_whitelist_phase = Phase::<T>::get() == BootstrapPhase::Whitelist;
-		let am_i_whitelisted = Self::is_whitelisted(&sender);
+		let am_i_whitelisted = Self::is_whitelisted(sender);
 
-		ensure!(is_ksm || is_mga, Error::<T>::UnsupportedTokenId);
+		ensure!(is_first_token || is_second_token, Error::<T>::UnsupportedTokenId);
 
 		ensure!(
-			is_public_phase || (is_whitelist_phase && (am_i_whitelisted || is_mga)),
+			is_public_phase || (is_whitelist_phase && (am_i_whitelisted || is_second_token)),
 			Error::<T>::Unauthorized
 		);
 
@@ -531,7 +591,7 @@ impl<T: Config> Pallet<T> {
 
 		<T as Config>::Currency::transfer(
 			token_id.into(),
-			&sender,
+			sender,
 			&Self::vault_address(),
 			amount.into(),
 			ExistenceRequirement::KeepAlive,
@@ -541,7 +601,7 @@ impl<T: Config> Pallet<T> {
 		match is_vested {
 			ProvisionKind::Regular => {
 				ensure!(
-					Provisions::<T>::try_mutate(sender.clone(), token_id, |provision| {
+					Provisions::<T>::try_mutate(sender, token_id, |provision| {
 						if let Some(val) = provision.checked_add(amount) {
 							*provision = val;
 							Ok(())
@@ -555,46 +615,46 @@ impl<T: Config> Pallet<T> {
 			},
 			ProvisionKind::Vested(nr) => {
 				ensure!(
-					VestedProvisions::<T>::try_mutate(
-						sender.clone(),
-						token_id,
-						|(provision, block_nr)| {
-							if let Some(val) = provision.checked_add(amount) {
-								*provision = val;
-								*block_nr = (*block_nr).max(nr);
-								Ok(())
-							} else {
-								Err(())
-							}
+					VestedProvisions::<T>::try_mutate(sender, token_id, |(provision, block_nr)| {
+						if let Some(val) = provision.checked_add(amount) {
+							*provision = val;
+							*block_nr = (*block_nr).max(nr);
+							Ok(())
+						} else {
+							Err(())
 						}
-					)
+					})
 					.is_ok(),
 					Error::<T>::MathOverflow
 				);
 			},
 		}
 
-		let (pre_mga_valuation, _) = Valuations::<T>::get();
+		let (pre_second_token_valuation, _) = Valuations::<T>::get();
 		ensure!(
-			token_id != T::KSMTokenId::get() || pre_mga_valuation != 0,
-			Error::<T>::FirstProvisionInMga
+			token_id != Self::first_token_id() || pre_second_token_valuation != 0,
+			Error::<T>::FirstProvisionInSecondTokenId
 		);
 
 		ensure!(
-			Valuations::<T>::try_mutate(|(mga_valuation, ksm_valuation)| -> Result<(), ()> {
-				if token_id == T::MGATokenId::get() {
-					*mga_valuation = mga_valuation.checked_add(amount).ok_or(())?;
+			Valuations::<T>::try_mutate(
+				|(second_token_valuation, first_token_valuation)| -> Result<(), ()> {
+					if token_id == Self::second_token_id() {
+						*second_token_valuation =
+							second_token_valuation.checked_add(amount).ok_or(())?;
+					}
+					if token_id == Self::first_token_id() {
+						*first_token_valuation =
+							first_token_valuation.checked_add(amount).ok_or(())?;
+					}
+					Ok(())
 				}
-				if token_id == T::KSMTokenId::get() {
-					*ksm_valuation = ksm_valuation.checked_add(amount).ok_or(())?;
-				}
-				Ok(())
-			})
+			)
 			.is_ok(),
 			Error::<T>::MathOverflow
 		);
 
-		if token_id == T::KSMTokenId::get() {
+		if token_id == Self::first_token_id() {
 			ensure!(
 				Self::is_ratio_kept(ratio_nominator, ratio_denominator),
 				Error::<T>::ValuationRatio
@@ -604,9 +664,9 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn get_valuation(token_id: &TokenId) -> Balance {
-		if *token_id == T::KSMTokenId::get() {
+		if *token_id == Self::first_token_id() {
 			Self::valuations().1
-		} else if *token_id == T::MGATokenId::get() {
+		} else if *token_id == Self::second_token_id() {
 			Self::valuations().0
 		} else {
 			0
@@ -626,5 +686,79 @@ impl<T: Config> Pallet<T> {
 		let vested_rewards = multiply_by_rational(liquidity / 2, vested_provision, valuation)
 			.map_err(|_| Error::<T>::MathOverflow)?;
 		Ok((rewards, vested_rewards, lock))
+	}
+
+	fn do_claim_rewards(who: &T::AccountId) -> DispatchResult {
+		ensure!(Self::phase() == BootstrapPhase::Finished, Error::<T>::NotFinishedYet);
+
+		let (liq_token_id, _) = Self::minted_liquidity();
+
+		// for backward compatibility
+		if Self::archived().len() > 0 {
+			ensure!(ProvisionAccounts::<T>::get(who).is_some(), Error::<T>::NothingToClaim);
+		}
+
+		let (first_token_rewards, first_token_rewards_vested, first_token_lock) =
+			Self::calculate_rewards(&who, &Self::first_token_id())?;
+		let (second_token_rewards, second_token_rewards_vested, second_token_lock) =
+			Self::calculate_rewards(&who, &Self::second_token_id())?;
+
+		let total_rewards_claimed = second_token_rewards
+			.checked_add(second_token_rewards_vested)
+			.ok_or(Error::<T>::MathOverflow)?
+			.checked_add(first_token_rewards)
+			.ok_or(Error::<T>::MathOverflow)?
+			.checked_add(first_token_rewards_vested)
+			.ok_or(Error::<T>::MathOverflow)?;
+
+		Self::claim_rewards_from_single_currency(
+			&who,
+			&Self::second_token_id(),
+			second_token_rewards,
+			second_token_rewards_vested,
+			second_token_lock,
+		)?;
+		log!(
+			info,
+			"Second token rewards (non-vested, vested, total) = ({}, {}, {})",
+			second_token_rewards,
+			second_token_rewards_vested,
+			second_token_rewards + second_token_rewards_vested
+		);
+
+		Self::claim_rewards_from_single_currency(
+			&who,
+			&Self::first_token_id(),
+			first_token_rewards,
+			first_token_rewards_vested,
+			first_token_lock,
+		)?;
+		log!(
+			info,
+			"First token rewards (non-vested, vested, total) = ({}, {}, {})",
+			first_token_rewards,
+			first_token_rewards_vested,
+			first_token_rewards + first_token_rewards_vested
+		);
+
+		ProvisionAccounts::<T>::remove(who);
+		Self::deposit_event(Event::RewardsClaimed(liq_token_id, total_rewards_claimed));
+
+		Ok(().into())
+	}
+
+	fn first_token_id() -> TokenId {
+		ActivePair::<T>::get().map(|(first, _)| first).unwrap_or(4_u32)
+	}
+
+	fn second_token_id() -> TokenId {
+		ActivePair::<T>::get().map(|(_, second)| second).unwrap_or(0_u32)
+	}
+}
+
+impl<T: Config> Contains<(TokenId, TokenId)> for Pallet<T> {
+	fn contains(pair: &(TokenId, TokenId)) -> bool {
+		pair == &(Self::first_token_id(), Self::second_token_id()) ||
+			pair == &(Self::second_token_id(), Self::first_token_id())
 	}
 }

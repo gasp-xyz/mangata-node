@@ -232,11 +232,11 @@ impl_opaque_keys! {
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
-	authoring_version: 4,
-	spec_version: 4,
+	authoring_version: 5,
+	spec_version: 5,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 4,
+	transaction_version: 5,
 	state_version: 0,
 };
 
@@ -522,6 +522,7 @@ impl Contains<TokenId> for TestTokensFilter {
 
 impl pallet_xyk::Config for Runtime {
 	type Event = Event;
+	type ActivationReservesProvider = MultiPurposeLiquidity;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type NativeCurrencyId = MgaTokenId;
 	type TreasuryPalletId = TreasuryPalletId;
@@ -1090,6 +1091,7 @@ const_assert!(BlocksPerRound::get() >= 2);
 
 impl parachain_staking::Config for Runtime {
 	type Event = Event;
+	type StakingReservesProvider = MultiPurposeLiquidity;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type MonetaryGovernanceOrigin = EnsureRoot<AccountId>;
 	type BlocksPerRound = BlocksPerRound;
@@ -1199,6 +1201,16 @@ impl pallet_crowdloan_rewards::Config for Runtime {
 	type VestingBlockNumber = BlockNumber;
 	type VestingBlockProvider = System;
 	type WeightInfo = weights::pallet_crowdloan_rewards_weights::ModuleWeight<Runtime>;
+}
+
+impl pallet_multipurpose_liquidity::Config for Runtime {
+	type Event = Event;
+	type MaxRelocks = MaxLocks;
+	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	type NativeCurrencyId = MgaTokenId;
+	type VestingProvider = Vesting;
+	type Xyk = Xyk;
+	type WeightInfo = weights::pallet_multipurpose_liquidity_weights::ModuleWeight<Runtime>;
 }
 
 parameter_types! {
@@ -1437,6 +1449,9 @@ construct_runtime!(
 		Aura: pallet_aura::{Pallet, Storage, Config<T>} = 23,
 		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config} = 24,
 
+		// MultiPurposeLiquidity
+		MultiPurposeLiquidity: pallet_multipurpose_liquidity::{Pallet, Call, Storage, Event<T>} = 25,
+
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 30,
 		PolkadotXcm: pallet_xcm::{Pallet, Storage, Call, Event<T>, Origin, Config} = 31,
@@ -1484,6 +1499,7 @@ mod benches {
 		[pallet_utility, Utility]
 		[pallet_vesting_mangata, Vesting]
 		[pallet_issuance, Issuance]
+		[pallet_multipurpose_liquidity, MultiPurposeLiquidity]
 	);
 }
 

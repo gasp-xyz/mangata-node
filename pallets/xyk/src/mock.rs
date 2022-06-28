@@ -262,6 +262,7 @@ impl Contains<(TokenId, TokenId)> for DummyBlacklistedPool {
 #[cfg(not(feature = "runtime-benchmarks"))]
 impl Config for Test {
 	type Event = Event;
+	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
 	type Currency = MultiTokenCurrencyAdapter<Test>;
 	type NativeCurrencyId = NativeCurrencyId;
 	type TreasuryPalletId = TreasuryPalletId;
@@ -281,6 +282,7 @@ impl Config for Test {
 #[cfg(feature = "runtime-benchmarks")]
 impl Config for Test {
 	type Event = Event;
+	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
 	type Currency = MultiTokenCurrencyAdapter<Test>;
 	type NativeCurrencyId = NativeCurrencyId;
 	type TreasuryPalletId = TreasuryPalletId;
@@ -295,6 +297,41 @@ impl Config for Test {
 	type VestingProvider = Vesting;
 	type DisallowedPools = Nothing;
 	type DisabledTokens = Nothing;
+}
+
+pub struct TokensActivationPassthrough<T: Config>(PhantomData<T>);
+impl<T: Config> ActivationReservesProviderTrait for TokensActivationPassthrough<T> {
+	type AccountId = T::AccountId;
+
+	fn get_max_instant_unreserve_amount(
+		token_id: TokenId,
+		account_id: &Self::AccountId,
+	) -> Balance {
+		Pallet::<T>::liquidity_mining_active_user((account_id, token_id))
+	}
+
+	fn can_activate(
+		token_id: TokenId,
+		account_id: &Self::AccountId,
+		amount: Balance,
+		_use_balance_from: Option<ActivateKind>,
+	) -> bool {
+		<T as pallet::Config>::Currency::can_reserve(token_id.into(), account_id, amount.into())
+	}
+
+	fn activate(
+		token_id: TokenId,
+		account_id: &Self::AccountId,
+		amount: Balance,
+		_use_balance_from: Option<ActivateKind>,
+	) -> DispatchResult {
+		<T as pallet::Config>::Currency::reserve(token_id.into(), account_id, amount.into())
+	}
+
+	fn deactivate(token_id: TokenId, account_id: &Self::AccountId, amount: Balance) -> Balance {
+		<T as pallet::Config>::Currency::unreserve(token_id.into(), account_id, amount.into())
+			.into()
+	}
 }
 
 impl<T: Config> Pallet<T> {

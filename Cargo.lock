@@ -4721,6 +4721,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-trie",
  "structopt",
+ "sub-tokens",
  "substrate-build-script-utils",
  "substrate-prometheus-endpoint",
  "tokio",
@@ -10238,6 +10239,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "separator"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f97841a747eef040fcd2e7b3b9a220a7205926e60488e673d9e4926d27772ce5"
+
+[[package]]
 name = "serde"
 version = "1.0.136"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -11371,6 +11378,14 @@ dependencies = [
  "quote",
  "rustversion",
  "syn",
+]
+
+[[package]]
+name = "sub-tokens"
+version = "0.1.0"
+source = "git+https://github.com/paritytech/substrate-debug-kit?branch=master#e12503ab781e913735dc389865a3b8b4a6c6399d"
+dependencies = [
+ "separator",
 ]
 
 [[package]]

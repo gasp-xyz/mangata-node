@@ -1,6 +1,6 @@
 services:
   para_alice:
-    image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangata-node:latest}
+    image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangata-node:rococo-latest}
     environment:
       - ${RUST_LOG:-info}
       - RUST_BACKTRACE=1
@@ -12,6 +12,7 @@ services:
       --collator 
       --force-authoring 
       --chain ${PARA_CHAIN:-mangata-rococo-local-testnet}
+      --bootnodes=/dns/para_bob/tcp/30333/p2p/12D3KooWSsChzF81YDUKpe9Uk5AHV5oqAaXAcWNSPYgoLauUk4st
       --base-path /tmp/para_alice
       --port 30333 
       --ws-port 9944 
@@ -22,18 +23,17 @@ services:
       -- 
       --execution wasm 
       --chain ${RELAY_CHAIN:-rococo-local}
+      --bootnodes=/dns/relay_alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
       --port 30334
       --ws-port 8844
-      --bootnodes=/dns/relay_alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
     volumes:
       - ./config:/etc/mangata
-      - ./data:/tmp/
     ports:
       - 8844:9944
       - 40444:30333
 
   para_bob:
-    image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangata-node:latest}
+    image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangata-node:rococo-latest}
     environment:
       - ${RUST_LOG:-info}
       - LD_PRELOAD=${LD_PRELOAD}
@@ -44,6 +44,7 @@ services:
       --collator 
       --force-authoring 
       --chain ${PARA_CHAIN:-mangata-rococo-local-testnet}
+      --bootnodes=/dns/para_alice/tcp/30333/p2p/12D3KooWKpDhPnax8CyJvVh77Z5T84a8EWZvY7c9Z7pZ1tk6sLBD
       --base-path /tmp/para_bob
       --port=30333 
       --ws-port=9944 
@@ -51,13 +52,11 @@ services:
       --unsafe-rpc-external
       --rpc-cors=all
       --node-key=0000000000000000000000000000000000000000000000000000000000000004
-      --bootnodes=/dns/para_alice/tcp/30333/p2p/12D3KooWSCufgHzV4fCwRijfH2k3abrpAJxTKxEvN1FDuRXA2U9x
       -- 
       --execution wasm 
       --chain ${RELAY_CHAIN:-rococo-local}
+      --bootnodes=/dns/relay_alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
       --port 30334
       --ws-port 8844
-      --bootnodes=/dns/relay_alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
     volumes:
       - ./config:/etc/mangata
-      - ./data:/tmp/

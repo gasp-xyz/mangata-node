@@ -12,9 +12,10 @@ use sp_runtime::{
 use crate as xyk;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{ConstU128, ConstU32, Contains, Everything},
+	traits::{ConstU128, ConstU32, Contains, Everything, Nothing},
 	PalletId,
 };
+
 use frame_system as system;
 use mangata_primitives::{Amount, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
@@ -250,6 +251,14 @@ parameter_types! {
 	pub FakeLiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account();
 }
 
+pub struct DummyBlacklistedPool;
+
+impl Contains<(TokenId, TokenId)> for DummyBlacklistedPool {
+	fn contains(pair: &(TokenId, TokenId)) -> bool {
+		pair == &(1_u32, 9_u32) || pair == &(9_u32, 1_u32)
+	}
+}
+
 #[cfg(not(feature = "runtime-benchmarks"))]
 impl Config for Test {
 	type Event = Event;
@@ -266,6 +275,8 @@ impl Config for Test {
 	type RewardsDistributionPeriod = ConstU32<10000>;
 	type WeightInfo = ();
 	type VestingProvider = Vesting;
+	type DisallowedPools = DummyBlacklistedPool;
+	type DisabledTokens = Nothing;
 }
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -284,6 +295,8 @@ impl Config for Test {
 	type RewardsDistributionPeriod = ConstU32<10000>;
 	type WeightInfo = ();
 	type VestingProvider = Vesting;
+	type DisallowedPools = Nothing;
+	type DisabledTokens = Nothing;
 }
 
 pub struct TokensActivationPassthrough<T: Config>(PhantomData<T>);

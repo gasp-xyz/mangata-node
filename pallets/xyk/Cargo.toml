@@ -43,7 +43,6 @@ serial_test = { version = "0.6.0", default-features = false }
 
 [features]
 default = ['std']
-enable-trading = []
 std = [
     'hex/std',
 	'serde',

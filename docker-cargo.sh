@@ -69,6 +69,7 @@ docker run \
 	--name=${DOCKER_JOB_NAME} \
 	--user $DOCKER_USER \
 	-v ${REPO_ROOT}:/code \
+	-v /home/dev/substrate:/substrate \
         ${DOCKER_MOUNT_CACHE_VOLUMES} \
 	-e CARGO_TARGET_DIR="/code/${OUTPUT_DIR}" \
 	${ALLOCATE_TTY_OR_NOT} ${DOCKER_BUILDER_IMAGE} \

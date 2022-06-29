@@ -69,8 +69,8 @@ docker run \
 	--name=${DOCKER_JOB_NAME} \
 	--user $DOCKER_USER \
 	-v ${REPO_ROOT}:/code \
-	-v /home/dev/substrate:/substrate \
         ${DOCKER_MOUNT_CACHE_VOLUMES} \
+        ${DOCKER_RUN_EXTRA_ARGS} \
 	-e CARGO_TARGET_DIR="/code/${OUTPUT_DIR}" \
 	${ALLOCATE_TTY_OR_NOT} ${DOCKER_BUILDER_IMAGE} \
 	cargo ${CARGO_COMMAND} --manifest-path=/code/Cargo.toml ${CARGO_ARGS}

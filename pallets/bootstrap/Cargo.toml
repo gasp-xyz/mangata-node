@@ -36,8 +36,8 @@ pallet-issuance = { path = "../issuance", default-features = false}
 pallet-assets-info = { path = "../assets-info", default-features = false}
 mockall = "0.11.0"
 serial_test = "0.6.0"
-mp-traits = { path = "../../primitives/traits", default-features=false }
-mp-multipurpose-liquidity = { path = "../../primitives/multipurpose-liquidity", default-features=false }
+mp-traits = { path = "../../primitives/traits" }
+mp-multipurpose-liquidity = { path = "../../primitives/multipurpose-liquidity" }
 
 
 [features]
@@ -55,6 +55,4 @@ std = [
 	'orml-tokens/std',
 	"frame-benchmarking/std",
 	'pallet-vesting-mangata/std',
-	"mp-traits/std",
-	"mp-multipurpose-liquidity/std",
 ]

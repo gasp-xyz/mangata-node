@@ -11,7 +11,7 @@ start-para:
 	docker-compose --env-file env/${ENV} -f parachain.yml up -d
 
 start-para-persist:
-	docker-compose --env-file env/${ENV} -f parachain.yml -f persist.yml up -d
+	docker-compose --env-file env/${ENV} -f parachain.yml -f ./persistent_storage.yml up -d
 
 start-relay:
 	docker-compose --env-file env/${ENV} -f relaychain.yml up -d

@@ -18,7 +18,7 @@ use scale_info::TypeInfo;
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
 use sp_core::U256;
 use sp_io::KillStorageResult;
-use sp_runtime::traits::{AccountIdConversion, CheckedAdd, Zero};
+use sp_runtime::traits::{AccountIdConversion, CheckedAdd};
 use sp_std::prelude::*;
 
 pub mod migrations;

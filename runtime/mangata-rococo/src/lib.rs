@@ -1510,18 +1510,11 @@ impl_runtime_apis! {
 		}
 
 		fn is_storage_migration_scheduled() -> bool{
-			// OLD NOT WORKING IN HOST CODE
-			// let last = frame_system::LastRuntimeUpgrade::<Runtime>::get();
-			// let current = <<Runtime as frame_system::Config>::Version as frame_support::traits::Get<_>>::get();
-			// last.map(|v| v.was_upgraded(&current)).unwrap_or(true)
-			
-
 			System::read_events_no_consensus()
 				.iter()
-				.any(|record| 
-					matches!(record.event, 
+				.any(|record|
+					matches!(record.event,
 						Event::ParachainSystem( cumulus_pallet_parachain_system::Event::<Runtime>::ValidationFunctionApplied(_))))
-
 		}
 
 		fn store_seed(seed: sp_core::H256){

@@ -18,7 +18,7 @@ use scale_info::TypeInfo;
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
 use sp_core::U256;
 use sp_io::KillStorageResult;
-use sp_runtime::traits::{AccountIdConversion, CheckedAdd, Zero};
+use sp_runtime::traits::{AccountIdConversion, CheckedAdd};
 use sp_std::prelude::*;
 
 pub mod migrations;
@@ -295,14 +295,8 @@ pub mod pallet {
 			ensure!(Phase::<T>::get() == BootstrapPhase::BeforeStart, Error::<T>::AlreadyStarted);
 			ensure!(first_token_id != second_token_id, Error::<T>::SameToken);
 
-			ensure!(
-				!T::Currency::total_issuance(first_token_id.into()).is_zero(),
-				Error::<T>::TokenIdDoesNotExists
-			);
-			ensure!(
-				!T::Currency::total_issuance(second_token_id.into()).is_zero(),
-				Error::<T>::TokenIdDoesNotExists
-			);
+			ensure!(T::Currency::exists(first_token_id.into()), Error::<T>::TokenIdDoesNotExists);
+			ensure!(T::Currency::exists(second_token_id.into()), Error::<T>::TokenIdDoesNotExists);
 
 			ensure!(
 				ido_start > frame_system::Pallet::<T>::block_number(),

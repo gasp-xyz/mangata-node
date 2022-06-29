@@ -155,8 +155,7 @@ benchmarks! {
 		BootstrapPallet::<T>::provision_vested(RawOrigin::Signed(caller.clone().into()).into(), first_token_id, ksm_vested_provision_amount).unwrap();
 		BootstrapPallet::<T>::on_initialize(30_u32.into());
 
-		BootstrapPallet::<T>::claim_rewards(RawOrigin::Signed(caller.clone().into()).into());
-		BootstrapPallet::<T>::claim_rewards(RawOrigin::Signed(caller.clone().into()).into());
+		BootstrapPallet::<T>::claim_rewards(RawOrigin::Signed(caller.clone().into()).into()).unwrap();
 		assert_eq!(BootstrapPallet::<T>::phase(), BootstrapPhase::Finished);
 
 	}: finalize(RawOrigin::Root, None)

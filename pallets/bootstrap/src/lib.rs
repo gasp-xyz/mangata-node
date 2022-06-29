@@ -296,11 +296,11 @@ pub mod pallet {
 			ensure!(first_token_id != second_token_id, Error::<T>::SameToken);
 
 			ensure!(
-				!T::Currency::total_issuance(first_token_id.into()).is_zero(),
+				!T::Currency::exists(first_token_id.into()),
 				Error::<T>::TokenIdDoesNotExists
 			);
 			ensure!(
-				!T::Currency::total_issuance(second_token_id.into()).is_zero(),
+				!T::Currency::exists(second_token_id.into()),
 				Error::<T>::TokenIdDoesNotExists
 			);
 

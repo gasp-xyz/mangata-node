@@ -513,6 +513,7 @@ impl orml_tokens::Config for Runtime {
 
 impl pallet_xyk::Config for Runtime {
 	type Event = Event;
+	type ActivationReservesProvider = MultiPurposeLiquidity;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type NativeCurrencyId = MgaTokenId;
 	type TreasuryPalletId = TreasuryPalletId;
@@ -1081,6 +1082,7 @@ const_assert!(BlocksPerRound::get() >= 2);
 
 impl parachain_staking::Config for Runtime {
 	type Event = Event;
+	type StakingReservesProvider = MultiPurposeLiquidity;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type MonetaryGovernanceOrigin = EnsureRoot<AccountId>;
 	type BlocksPerRound = BlocksPerRound;
@@ -1190,6 +1192,16 @@ impl pallet_crowdloan_rewards::Config for Runtime {
 	type VestingBlockNumber = BlockNumber;
 	type VestingBlockProvider = System;
 	type WeightInfo = weights::pallet_crowdloan_rewards_weights::ModuleWeight<Runtime>;
+}
+
+impl pallet_multipurpose_liquidity::Config for Runtime {
+	type Event = Event;
+	type MaxRelocks = MaxLocks;
+	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	type NativeCurrencyId = MgaTokenId;
+	type VestingProvider = Vesting;
+	type Xyk = Xyk;
+	type WeightInfo = weights::pallet_multipurpose_liquidity_weights::ModuleWeight<Runtime>;
 }
 
 parameter_types! {
@@ -1428,6 +1440,9 @@ construct_runtime!(
 		Aura: pallet_aura::{Pallet, Storage, Config<T>} = 23,
 		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config} = 24,
 
+		// MultiPurposeLiquidity
+		MultiPurposeLiquidity: pallet_multipurpose_liquidity::{Pallet, Call, Storage, Event<T>} = 25,
+
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 30,
 		PolkadotXcm: pallet_xcm::{Pallet, Storage, Call, Event<T>, Origin, Config} = 31,
@@ -1475,6 +1490,7 @@ mod benches {
 		[pallet_utility, Utility]
 		[pallet_vesting_mangata, Vesting]
 		[pallet_issuance, Issuance]
+		[pallet_multipurpose_liquidity, MultiPurposeLiquidity]
 	);
 }
 
@@ -1494,9 +1510,11 @@ impl_runtime_apis! {
 		}
 
 		fn is_storage_migration_scheduled() -> bool{
-			let last = frame_system::LastRuntimeUpgrade::<Runtime>::get();
-			let current = <<Runtime as frame_system::Config>::Version as frame_support::traits::Get<_>>::get();
-			last.map(|v| v.was_upgraded(&current)).unwrap_or(true)
+			System::read_events_no_consensus()
+				.iter()
+				.any(|record|
+					matches!(record.event,
+						Event::ParachainSystem( cumulus_pallet_parachain_system::Event::<Runtime>::ValidationFunctionApplied(_))))
 		}
 
 		fn store_seed(seed: sp_core::H256){

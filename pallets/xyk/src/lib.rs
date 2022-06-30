@@ -235,12 +235,14 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use mangata_primitives::{Balance, TokenId};
+use mp_bootstrap::PoolCreateApi;
+use mp_multipurpose_liquidity::ActivateKind;
+use mp_traits::{ActivationReservesProviderTrait, XykFunctionsTrait};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_assets_info as assets_info;
 use pallet_issuance::{ComputeIssuance, PoolPromoteApi};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
-use sp_bootstrap::PoolCreateApi;
 use sp_runtime::traits::{
 	AccountIdConversion, AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member,
 	SaturatedConversion, Zero,
@@ -299,6 +301,9 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_assets_info::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type ActivationReservesProvider: ActivationReservesProviderTrait<
+			AccountId = Self::AccountId,
+		>;
 		type Currency: MultiTokenCurrencyExtended<Self::AccountId>
 			+ MultiTokenReservableCurrency<Self::AccountId>;
 		type NativeCurrencyId: Get<TokenId>;
@@ -692,6 +697,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
 			amount: Balance,
+			use_balance_from: Option<ActivateKind>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
@@ -699,6 +705,7 @@ pub mod pallet {
 				sender,
 				liquidity_token_id,
 				amount,
+				use_balance_from,
 			)
 		}
 
@@ -978,6 +985,7 @@ impl<T: Config> Pallet<T> {
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
 		liquidity_assets_added: Balance,
+		use_balance_from: Option<ActivateKind>,
 	) -> DispatchResult {
 		let (
 			current_time,
@@ -1020,10 +1028,12 @@ impl<T: Config> Pallet<T> {
 		})
 		.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
 
-		<T as Config>::Currency::reserve(
+		// This must not fail due storage edits above
+		<T as Config>::ActivationReservesProvider::activate(
 			liquidity_asset_id.into(),
 			&user,
 			liquidity_assets_added.into(),
+			use_balance_from,
 		)?;
 
 		Ok(())
@@ -1136,7 +1146,7 @@ impl<T: Config> Pallet<T> {
 			rewards_to_burn,
 		);
 
-		<T as Config>::Currency::unreserve(
+		<T as Config>::ActivationReservesProvider::deactivate(
 			liquidity_asset_id.into(),
 			&user,
 			liquidity_assets_burned.into(),
@@ -1561,92 +1571,6 @@ impl<T: Config> Pallet<T> {
 	}
 }
 
-pub trait XykFunctionsTrait<AccountId> {
-	type Balance: AtLeast32BitUnsigned
-		+ FullCodec
-		+ Copy
-		+ MaybeSerializeDeserialize
-		+ Debug
-		+ Default
-		+ From<Balance>
-		+ Into<Balance>;
-
-	type CurrencyId: Parameter
-		+ Member
-		+ Copy
-		+ MaybeSerializeDeserialize
-		+ Ord
-		+ Default
-		+ AtLeast32BitUnsigned
-		+ FullCodec
-		+ From<TokenId>
-		+ Into<TokenId>;
-
-	fn create_pool(
-		sender: AccountId,
-		first_asset_id: Self::CurrencyId,
-		first_asset_amount: Self::Balance,
-		second_asset_id: Self::CurrencyId,
-		second_asset_amount: Self::Balance,
-	) -> DispatchResult;
-
-	fn sell_asset(
-		sender: AccountId,
-		sold_asset_id: Self::CurrencyId,
-		bought_asset_id: Self::CurrencyId,
-		sold_asset_amount: Self::Balance,
-		min_amount_out: Self::Balance,
-	) -> DispatchResult;
-
-	fn buy_asset(
-		sender: AccountId,
-		sold_asset_id: Self::CurrencyId,
-		bought_asset_id: Self::CurrencyId,
-		bought_asset_amount: Self::Balance,
-		max_amount_in: Self::Balance,
-	) -> DispatchResult;
-
-	fn mint_liquidity(
-		sender: AccountId,
-		first_asset_id: Self::CurrencyId,
-		second_asset_id: Self::CurrencyId,
-		first_asset_amount: Self::Balance,
-		expected_second_asset_amount: Self::Balance,
-	) -> Result<(Self::CurrencyId, Self::Balance), DispatchError>;
-
-	fn burn_liquidity(
-		sender: AccountId,
-		first_asset_id: Self::CurrencyId,
-		second_asset_id: Self::CurrencyId,
-		liquidity_asset_amount: Self::Balance,
-	) -> DispatchResult;
-
-	fn get_tokens_required_for_minting(
-		liquidity_asset_id: Self::CurrencyId,
-		liquidity_token_amount: Self::Balance,
-	) -> Result<(Self::CurrencyId, Self::Balance, Self::CurrencyId, Self::Balance), DispatchError>;
-
-	fn claim_rewards(
-		sender: AccountId,
-		liquidity_token_id: Self::CurrencyId,
-		amount: Self::Balance,
-	) -> DispatchResult;
-
-	fn promote_pool(liquidity_token_id: TokenId) -> DispatchResult;
-
-	fn activate_liquidity(
-		sender: AccountId,
-		liquidity_token_id: Self::CurrencyId,
-		amount: Self::Balance,
-	) -> DispatchResult;
-
-	fn deactivate_liquidity(
-		sender: AccountId,
-		liquidity_token_id: Self::CurrencyId,
-		amount: Self::Balance,
-	) -> DispatchResult;
-}
-
 impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 	type Balance = Balance;
 
@@ -1679,12 +1603,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			Error::<T>::PoolAlreadyExists,
 		);
 
-		// Getting users token balances
-		let first_asset_free_balance: Self::Balance =
-			<T as Config>::Currency::free_balance(first_asset_id.into(), &sender).into();
-		let second_asset_free_balance: Self::Balance =
-			<T as Config>::Currency::free_balance(second_asset_id.into(), &sender).into();
-
 		// Ensure user has enough withdrawable tokens to create pool in amounts required
 
 		<T as Config>::Currency::ensure_can_withdraw(
@@ -1693,7 +1611,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			first_asset_amount.into(),
 			WithdrawReasons::all(),
 			// Does not fail due to earlier ensure
-			{ first_asset_free_balance.saturating_sub(first_asset_amount) }.into(),
+			Default::default(),
 		)
 		.or(Err(Error::<T>::NotEnoughAssets))?;
 
@@ -1703,7 +1621,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			second_asset_amount.into(),
 			WithdrawReasons::all(),
 			// Does not fail due to earlier ensure
-			{ second_asset_free_balance.saturating_sub(second_asset_amount) }.into(),
+			Default::default(),
 		)
 		.or(Err(Error::<T>::NotEnoughAssets))?;
 
@@ -1837,11 +1755,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		let bought_asset_amount =
 			Pallet::<T>::calculate_sell_price(input_reserve, output_reserve, sold_asset_amount)?;
 
-		// Getting users token balances
-		// MAX: 1R
-		let sold_asset_free_balance: Self::Balance =
-			<T as Config>::Currency::free_balance(sold_asset_id.into(), &sender).into();
-
 		// Ensure user has enough tokens to sell
 		<T as Config>::Currency::ensure_can_withdraw(
 			sold_asset_id.into(),
@@ -1849,7 +1762,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			sold_asset_amount.into(),
 			WithdrawReasons::all(),
 			// Does not fail due to earlier ensure
-			{ sold_asset_free_balance.saturating_sub(sold_asset_amount) }.into(),
+			Default::default(),
 		)
 		.or(Err(Error::<T>::NotEnoughAssets))?;
 
@@ -2020,10 +1933,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 		ensure!(input_reserve.checked_add(sold_asset_amount).is_some(), Error::<T>::MathOverflow);
 
-		// Getting users token balances
-		let sold_asset_free_balance: Self::Balance =
-			<T as Config>::Currency::free_balance(sold_asset_id.into(), &sender).into();
-
 		// Ensure user has enough tokens to sell
 		<T as Config>::Currency::ensure_can_withdraw(
 			sold_asset_id.into(),
@@ -2031,7 +1940,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			sold_asset_amount.into(),
 			WithdrawReasons::all(),
 			// Does not fail due to earlier ensure
-			{ sold_asset_free_balance.saturating_sub(sold_asset_amount) }.into(),
+			Default::default(),
 		)
 		.or(Err(Error::<T>::NotEnoughAssets))?;
 
@@ -2194,12 +2103,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			Error::<T>::ZeroAmount,
 		);
 
-		// Getting users token balances
-		let first_asset_free_balance: Self::Balance =
-			<T as Config>::Currency::free_balance(first_asset_id.into(), &sender).into();
-		let second_asset_free_balance: Self::Balance =
-			<T as Config>::Currency::free_balance(second_asset_id.into(), &sender).into();
-
 		// Ensure user has enough withdrawable tokens to create pool in amounts required
 
 		<T as Config>::Currency::ensure_can_withdraw(
@@ -2208,7 +2111,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			first_asset_amount.into(),
 			WithdrawReasons::all(),
 			// Does not fail due to earlier ensure
-			{ first_asset_free_balance.saturating_sub(first_asset_amount) }.into(),
+			Default::default(),
 		)
 		.or(Err(Error::<T>::NotEnoughAssets))?;
 
@@ -2218,7 +2121,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			second_asset_amount.into(),
 			WithdrawReasons::all(),
 			// Does not fail due to earlier ensure
-			{ second_asset_free_balance.saturating_sub(second_asset_amount) }.into(),
+			Default::default(),
 		)
 		.or(Err(Error::<T>::NotEnoughAssets))?;
 
@@ -2247,10 +2150,12 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 		// Liquidity minting functions not triggered on not promoted pool
 		if <T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some() {
+			// The reserve from free_balance will not fail the asset were just minted into free_balance
 			Pallet::<T>::set_liquidity_minting_checkpoint(
 				sender.clone(),
 				liquidity_asset_id,
 				liquidity_assets_minted,
+				Some(ActivateKind::AvailableBalance),
 			)?;
 		}
 
@@ -2315,31 +2220,61 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			Error::<T>::FunctionNotAvailableForThisToken
 		);
 
+		let liquidity_asset_id = Pallet::<T>::get_liquidity_asset(first_asset_id, second_asset_id)?;
+
+		// First let's check how much we can actually burn
+
+		let mut max_instant_unreserve_amount = Balance::zero();
+
+		if <T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some() {
+			max_instant_unreserve_amount =
+				T::ActivationReservesProvider::get_max_instant_unreserve_amount(
+					liquidity_asset_id,
+					&sender,
+				);
+		} else {
+			max_instant_unreserve_amount = Balance::zero();
+		}
+
 		// Get token reserves and liquidity asset id
 		let (first_asset_reserve, second_asset_reserve) =
 			Pallet::<T>::get_reserves(first_asset_id, second_asset_id)?;
-		let liquidity_asset_id = Pallet::<T>::get_liquidity_asset(first_asset_id, second_asset_id)?;
 
 		// Ensure user has enought liquidity tokens to burn
-		let liquidity_token_free_balance =
-			<T as Config>::Currency::free_balance(liquidity_asset_id.into(), &sender).into();
-		let liquidity_token_locked_balance =
-			<T as Config>::Currency::locked_balance(liquidity_asset_id.into(), &sender).into();
+		let liquidity_token_available_balance =
+			<T as Config>::Currency::available_balance(liquidity_asset_id.into(), &sender).into();
+
 		let liquidity_token_activated_balance =
 			LiquidityMiningActiveUser::<T>::get((&sender, &liquidity_asset_id));
 
-		let liquidity_token_not_locked_balance = liquidity_token_free_balance
-			.checked_sub(liquidity_token_locked_balance)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
-
-		let total_disposable_liquidity_tokens = liquidity_token_not_locked_balance
-			.checked_add(liquidity_token_activated_balance)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
-
 		ensure!(
-			total_disposable_liquidity_tokens >= liquidity_asset_amount,
+			liquidity_token_available_balance
+				.checked_add(max_instant_unreserve_amount)
+				.ok_or(Error::<T>::MathOverflow)? >=
+				liquidity_asset_amount,
 			Error::<T>::NotEnoughAssets,
 		);
+
+		// Given the above ensure passes we only need to know how much to deactivate before burning
+		// Because once deactivated we will be burning the entire liquidity_asset_amount from available balance
+		// to_be_deactivated will ofcourse then also be greater than max_instant_unreserve_amount
+		// If pool is not promoted max_instant_unreserve_amount is 0, so liquidity_token_available_balance >= liquidity_asset_amount
+		// which would mean to_be_deactivated is 0, skipping deactivation
+		let to_be_deactivated =
+			liquidity_asset_amount.saturating_sub(liquidity_token_available_balance);
+
+		// deactivate liquidity
+		if !to_be_deactivated.is_zero() {
+			Pallet::<T>::set_liquidity_burning_checkpoint(
+				sender.clone(),
+				liquidity_asset_id,
+				to_be_deactivated,
+			)?;
+
+			if liquidity_token_activated_balance == to_be_deactivated {
+				LiquidityMiningUser::<T>::remove((sender.clone(), liquidity_asset_id));
+			}
+		}
 
 		// Calculate first and second token amounts depending on liquidity amount to burn
 		let (first_asset_amount, second_asset_amount) = Pallet::<T>::get_burn_amount_reserves(
@@ -2403,23 +2338,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			first_asset_amount,
 			second_asset_amount
 		);
-
-		if <T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some() {
-			if liquidity_token_not_locked_balance < liquidity_asset_amount {
-				let promoted_liquidity_asset_amount_to_settle =
-					liquidity_asset_amount - liquidity_token_not_locked_balance;
-
-				Pallet::<T>::set_liquidity_burning_checkpoint(
-					sender.clone(),
-					liquidity_asset_id,
-					promoted_liquidity_asset_amount_to_settle,
-				)?;
-
-				if liquidity_token_activated_balance == promoted_liquidity_asset_amount_to_settle {
-					LiquidityMiningUser::<T>::remove((sender.clone(), liquidity_asset_id));
-				}
-			};
-		}
 
 		if liquidity_asset_amount == total_liquidity_assets {
 			log!(
@@ -2555,18 +2473,28 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		user: T::AccountId,
 		liquidity_asset_id: Self::CurrencyId,
 		amount: Self::Balance,
+		use_balance_from: Option<ActivateKind>,
 	) -> DispatchResult {
 		ensure!(
 			<T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some(),
 			Error::<T>::NotAPromotedPool
 		);
 		ensure!(
-			<T as Config>::Currency::free_balance(liquidity_asset_id.into(), &user).into() >=
+			<T as Config>::ActivationReservesProvider::can_activate(
+				liquidity_asset_id.into(),
+				&user,
 				amount,
+				use_balance_from.clone()
+			),
 			Error::<T>::NotEnoughAssets
 		);
 
-		Pallet::<T>::set_liquidity_minting_checkpoint(user.clone(), liquidity_asset_id, amount)?;
+		Pallet::<T>::set_liquidity_minting_checkpoint(
+			user.clone(),
+			liquidity_asset_id,
+			amount,
+			use_balance_from,
+		)?;
 
 		Pallet::<T>::deposit_event(Event::LiquidityActivated(user, liquidity_asset_id, amount));
 
@@ -2636,6 +2564,10 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		);
 
 		Ok((first_asset_id, first_asset_amount, second_asset_id, second_asset_amount))
+	}
+
+	fn is_liquidity_token(liquidity_asset_id: TokenId) -> bool {
+		LiquidityPools::<T>::get(liquidity_asset_id).is_some()
 	}
 }
 

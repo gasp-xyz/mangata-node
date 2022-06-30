@@ -315,11 +315,11 @@ benchmarks! {
 
 		frame_system::Pallet::<T>::set_block_number(100_000_u32.into());
 
-	}: activate_liquidity(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), initial_liquidity_amount)
+	}: activate_liquidity(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), initial_liquidity_amount, None)
 	verify {
 
 		assert_err!(
-			Xyk::<T>::activate_liquidity(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id, 1_u32.into()),
+			Xyk::<T>::activate_liquidity(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id, 1_u32.into(), None),
 			Error::<T>::NotEnoughAssets
 		)
 	}

@@ -61,8 +61,7 @@ pub trait PoolPromoteApi {
 	fn unpromote_pool(liquidity_token_id: TokenId) -> bool;
 	/// Returns available reward for pool
 	fn get_pool_rewards(liquidity_token_id: TokenId) -> Option<Balance>;
-	/// Returns available reward for pool
-	fn unpromote_pool(liquidity_token_id: TokenId) -> bool;
+
 	fn len() -> usize;
 }
 

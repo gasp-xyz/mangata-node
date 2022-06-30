@@ -80,25 +80,25 @@ impl PoolPromoteApi for MockPromotedPoolApi {
 		}
 	}
 
+	fn unpromote_pool(liquidity_token_id: TokenId) -> bool {
+		let mut pools = PROMOTED_POOLS.lock().unwrap();
+		if pools.contains_key(&liquidity_token_id) {
+			false
+		} else {
+			pools.insert(liquidity_token_id, 0);
+			true
+		}
+	}
+
 	fn get_pool_rewards(liquidity_token_id: TokenId) -> Option<Balance> {
 		let pools = PROMOTED_POOLS.lock().unwrap();
 		pools.get(&liquidity_token_id).map(|x| *x)
 	}
 
-	fn claim_pool_rewards(liquidity_token_id: TokenId, claimed_amount: Balance) -> bool {
-		let mut pools = PROMOTED_POOLS.lock().unwrap();
-
-		if let Some(reward) = pools.get_mut(&liquidity_token_id) {
-			*reward = *reward - claimed_amount;
-			true
-		} else {
-			false
-		}
-	}
-
 	fn len() -> usize {
 		PROMOTED_POOLS.lock().unwrap().len()
 	}
+	
 }
 
 parameter_types! {

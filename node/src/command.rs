@@ -336,45 +336,44 @@ pub fn run() -> Result<()> {
 					.into())
 			},
 		#[cfg(feature = "try-runtime")]
-		Some(Subcommand::TryRuntime(cmd)) =>
-			{
-				let runner = cli.create_runner(cmd)?;
-				let chain_spec = &runner.config().chain_spec;
+		Some(Subcommand::TryRuntime(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			let chain_spec = &runner.config().chain_spec;
 
-				match chain_spec {
-					#[cfg(feature = "mangata-kusama")]
-					spec if spec.is_mangata_kusama() => runner.async_run(|config| {
-						let registry = config.prometheus_config.as_ref().map(|cfg| &cfg.registry);
-						let task_manager =
-							sc_service::TaskManager::new(config.tokio_handle.clone(), registry)
-								.map_err(|e| {
-									sc_cli::Error::Service(sc_service::Error::Prometheus(e))
-								})?;
+			match chain_spec {
+				#[cfg(feature = "mangata-kusama")]
+				spec if spec.is_mangata_kusama() => runner.async_run(|config| {
+					let registry = config.prometheus_config.as_ref().map(|cfg| &cfg.registry);
+					let task_manager =
+						sc_service::TaskManager::new(config.tokio_handle.clone(), registry)
+							.map_err(|e| {
+								sc_cli::Error::Service(sc_service::Error::Prometheus(e))
+							})?;
 
-						Ok((
-							cmd.run::<service::mangata_kusama_runtime::Block, service::MangataKusamaRuntimeExecutor>(config),
-							task_manager,
-						))
-					}),
-					#[cfg(feature = "mangata-rococo")]
-					spec if spec.is_mangata_rococo() => runner.async_run(|config| {
-						let registry = config.prometheus_config.as_ref().map(|cfg| &cfg.registry);
-						let task_manager =
-							sc_service::TaskManager::new(config.tokio_handle.clone(), registry)
-								.map_err(|e| {
-									sc_cli::Error::Service(sc_service::Error::Prometheus(e))
-								})?;
+					Ok((
+						cmd.run::<service::mangata_kusama_runtime::Block, service::MangataKusamaRuntimeExecutor>(config),
+						task_manager,
+					))
+				}),
+				#[cfg(feature = "mangata-rococo")]
+				spec if spec.is_mangata_rococo() => runner.async_run(|config| {
+					let registry = config.prometheus_config.as_ref().map(|cfg| &cfg.registry);
+					let task_manager =
+						sc_service::TaskManager::new(config.tokio_handle.clone(), registry)
+							.map_err(|e| {
+								sc_cli::Error::Service(sc_service::Error::Prometheus(e))
+							})?;
 
-						Ok((
-							cmd.run::<service::mangata_rococo_runtime::Block, service::MangataRococoRuntimeExecutor>(
-								config,
-							),
-							task_manager,
-						))
-					}),
-					_ => panic!("invalid chain spec"),
-				}
+					Ok((
+						cmd.run::<service::mangata_rococo_runtime::Block, service::MangataRococoRuntimeExecutor>(
+							config,
+						),
+						task_manager,
+					))
+				}),
+				_ => panic!("invalid chain spec"),
 			}
+		}
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 

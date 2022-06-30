@@ -58,11 +58,11 @@ pub struct TgeInfo<A> {
 pub trait PoolPromoteApi {
 	/// Returns true if pool was promoted, false if it has been promoted already
 	fn promote_pool(liquidity_token_id: TokenId) -> bool;
+	fn unpromote_pool(liquidity_token_id: TokenId) -> bool;
 	/// Returns available reward for pool
 	fn get_pool_rewards(liquidity_token_id: TokenId) -> Option<Balance>;
 	/// Returns available reward for pool
-	fn claim_pool_rewards(liquidity_token_id: TokenId, claimed_amount: Balance) -> bool;
-	/// Returns number of promoted pools
+	fn unpromote_pool(liquidity_token_id: TokenId) -> bool;
 	fn len() -> usize;
 }
 
@@ -333,16 +333,13 @@ impl<T: Config> PoolPromoteApi for Pallet<T> {
 		PromotedPoolsRewards::<T>::try_get(liquidity_token_id).ok()
 	}
 
-	fn claim_pool_rewards(liquidity_token_id: TokenId, claimed_amount: Balance) -> bool {
-		PromotedPoolsRewards::<T>::try_mutate(liquidity_token_id, |rewards| {
-			if let Some(val) = rewards.checked_sub(claimed_amount) {
-				*rewards = val;
-				Ok(())
-			} else {
-				Err(())
-			}
-		})
-		.is_ok()
+	fn unpromote_pool(liquidity_token_id: TokenId) -> bool {
+		if PromotedPoolsRewards::<T>::contains_key(liquidity_token_id) {
+			true
+		} else {
+			PromotedPoolsRewards::<T>::remove(liquidity_token_id);
+			false
+		}
 	}
 
 	// TODO

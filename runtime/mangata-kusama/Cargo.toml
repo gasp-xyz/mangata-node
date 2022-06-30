@@ -53,6 +53,7 @@ sp-version = { git = "https://github.com/mangata-finance/substrate", default-fea
 frame-benchmarking = { git = "https://github.com/mangata-finance/substrate", default-features = false, optional = true, branch = "mangata-dev" }
 frame-executive = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 frame-try-runtime = { git = "https://github.com/mangata-finance/substrate", default-features = false, optional = true , branch = "mangata-dev" }
+try-runtime-cli = { git = "https://github.com/mangata-finance/substrate", default-features = false, optional = true , branch = "mangata-dev" }
 frame-support = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 frame-system = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 frame-system-benchmarking = { git = "https://github.com/mangata-finance/substrate", default-features = false, optional = true, branch = "mangata-dev" }
@@ -161,7 +162,7 @@ std = [
 	"xcm-executor/std",
 	"xcm/std",
     "ver-api/std",
-	
+
 	"mangata-primitives/std",
 	"orml-traits/std",
 	"orml-tokens/std",
@@ -195,7 +196,8 @@ std = [
 
 	"pallet-multipurpose-liquidity/std",
     "mp-multipurpose-liquidity/std",
-    "mp-traits/std"
+    "mp-traits/std",
+	"frame-try-runtime/std",
 
 ]
 
@@ -203,6 +205,7 @@ try-runtime = [
 	"frame-try-runtime",
 	"frame-executive/try-runtime",
 	"pallet-multipurpose-liquidity/try-runtime",
+	"frame-system/try-runtime",
 ]
 
 disable-execution = [

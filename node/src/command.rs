@@ -335,8 +335,9 @@ pub fn run() -> Result<()> {
 				You can enable it with `--features runtime-benchmarks`."
 					.into())
 			},
+		#[cfg(feature = "try-runtime")]
 		Some(Subcommand::TryRuntime(cmd)) =>
-			if cfg!(feature = "try-runtime") {
+			{
 				let runner = cli.create_runner(cmd)?;
 				let chain_spec = &runner.config().chain_spec;
 
@@ -351,9 +352,9 @@ pub fn run() -> Result<()> {
 								})?;
 
 						Ok((
-								cmd.run::<service::mangata_kusama_runtime::Block, service::MangataKusamaRuntimeExecutor>(config),
-								task_manager,
-							))
+							cmd.run::<service::mangata_kusama_runtime::Block, service::MangataKusamaRuntimeExecutor>(config),
+							task_manager,
+						))
 					}),
 					#[cfg(feature = "mangata-rococo")]
 					spec if spec.is_mangata_rococo() => runner.async_run(|config| {
@@ -365,17 +366,15 @@ pub fn run() -> Result<()> {
 								})?;
 
 						Ok((
-								cmd.run::<service::mangata_rococo_runtime::Block, service::MangataRococoRuntimeExecutor>(
-									config,
-								),
-								task_manager,
-							))
+							cmd.run::<service::mangata_rococo_runtime::Block, service::MangataRococoRuntimeExecutor>(
+								config,
+							),
+							task_manager,
+						))
 					}),
 					_ => panic!("invalid chain spec"),
 				}
-			} else {
-				Err("Try-runtime must be enabled by `--features try-runtime`.".into())
-			},
+			}
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 

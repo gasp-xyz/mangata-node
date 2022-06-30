@@ -53,7 +53,6 @@ sp-version = { git = "https://github.com/mangata-finance/substrate", default-fea
 frame-benchmarking = { git = "https://github.com/mangata-finance/substrate", default-features = false, optional = true, branch = "mangata-dev" }
 frame-executive = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 frame-try-runtime = { git = "https://github.com/mangata-finance/substrate", default-features = false, optional = true , branch = "mangata-dev" }
-try-runtime-cli = { git = "https://github.com/mangata-finance/substrate", default-features = false, optional = true , branch = "mangata-dev" }
 frame-support = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 frame-system = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 frame-system-benchmarking = { git = "https://github.com/mangata-finance/substrate", default-features = false, optional = true, branch = "mangata-dev" }

@@ -28,7 +28,7 @@ mangata-rococo = [
 ]
 disable-execution = ['mangata-kusama-runtime/disable-execution']
 runtime-benchmarks = ["mangata-kusama-runtime/runtime-benchmarks", "polkadot-cli/runtime-benchmarks"]
-try-runtime = ["mangata-kusama-runtime/try-runtime", "mangata-rococo-runtime/try-runtime"]
+try-runtime = ["mangata-kusama-runtime/try-runtime", "mangata-rococo-runtime/try-runtime", "try-runtime-cli"]
 
 [dependencies]
 derive_more = "0.99.2"
@@ -50,7 +50,7 @@ mangata-primitives = { path = "../primitives/mangata/"}
 # Substrate Dependencies
 frame-benchmarking = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 frame-benchmarking-cli = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-try-runtime-cli = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+try-runtime-cli = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev", optional = true }
 
 pallet-transaction-payment-rpc = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
@@ -133,7 +133,7 @@ pallet-timestamp = { git = "https://github.com/mangata-finance/substrate", defau
 sp-tracing = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 frame-system = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 pallet-transaction-payment = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-frame-system-rpc-runtime-api = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" } 
+frame-system-rpc-runtime-api = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 cumulus-pallet-parachain-system = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev'}
 cumulus-test-relay-sproof-builder = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev'}
 polkadot-runtime-common = { git = "https://github.com/mangata-finance/polkadot", branch = "release-v0.9.16" }

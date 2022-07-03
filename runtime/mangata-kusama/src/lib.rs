@@ -356,7 +356,7 @@ parameter_types! {
 parameter_types! {
 	pub const MgxTokenId: TokenId = MGX_TOKEN_ID;
 	pub const KsmTokenId: TokenId = KSM_TOKEN_ID;
-	pub const KarTokenId: TokenId = KSM_TOKEN_ID;
+	pub const KarTokenId: TokenId = KAR_TOKEN_ID;
 }
 
 // Configure FRAME pallets to include in runtime.

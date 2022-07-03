@@ -612,7 +612,9 @@ parameter_types! {
 use scale_info::TypeInfo;
 
 #[derive(Encode, Decode, Clone, TypeInfo)]
-pub struct ThreeCurrencyOnChargeAdapter<C, OU, T1, T2, T3, SF2, SF3>(PhantomData<(C, OU, T1, T2, T3, SF2, SF3)>);
+pub struct ThreeCurrencyOnChargeAdapter<C, OU, T1, T2, T3, SF2, SF3>(
+	PhantomData<(C, OU, T1, T2, T3, SF2, SF3)>,
+);
 
 use sp_runtime::{
 	traits::{DispatchInfoOf, PostDispatchInfoOf, Saturating, Zero},
@@ -635,7 +637,8 @@ use orml_tokens::MultiTokenImbalanceWithZeroTrait;
 ///
 /// The unbalance handler is given 2 unbalanceds in [`OnUnbalanced::on_unbalanceds`]: fee and
 /// then tip.
-impl<T, C, OU, T1, T2, T3, SF2, SF3> OnChargeTransaction<T> for ThreeCurrencyOnChargeAdapter<C, OU, T1, T2, T3, SF2, SF3>
+impl<T, C, OU, T1, T2, T3, SF2, SF3> OnChargeTransaction<T>
+	for ThreeCurrencyOnChargeAdapter<C, OU, T1, T2, T3, SF2, SF3>
 where
 	T: pallet_transaction_payment::Config,
 	T::TransactionByteFee:
@@ -727,14 +730,13 @@ where
 		already_withdrawn: Self::LiquidityInfo,
 	) -> Result<(), TransactionValidityError> {
 		if let Some((token_id, paid)) = already_withdrawn {
-			let (corrected_fee, tip) =
-				if token_id == T3::get() {
-					(corrected_fee / SF3::get().into(), tip / SF3::get().into())
-				} else if token_id == T2::get() {
-					(corrected_fee / SF2::get().into(), tip / SF2::get().into())
-				} else {
-					(corrected_fee, tip)
-				};
+			let (corrected_fee, tip) = if token_id == T3::get() {
+				(corrected_fee / SF3::get().into(), tip / SF3::get().into())
+			} else if token_id == T2::get() {
+				(corrected_fee / SF2::get().into(), tip / SF2::get().into())
+			} else {
+				(corrected_fee, tip)
+			};
 			// Calculate how much refund we should return
 			let refund_amount = paid.peek().saturating_sub(corrected_fee);
 			// refund to the the account that paid the fees. If this fails, the
@@ -1293,9 +1295,11 @@ parameter_types! {
 	);
 }
 
-pub type Trader =
-	(FixedRateOfFungible<KsmPerSecond, ToTreasury>, FixedRateOfFungible<MgxPerSecond, ToTreasury>,
-		FixedRateOfFungible<KarPerSecond, ToTreasury>);
+pub type Trader = (
+	FixedRateOfFungible<KsmPerSecond, ToTreasury>,
+	FixedRateOfFungible<MgxPerSecond, ToTreasury>,
+	FixedRateOfFungible<KarPerSecond, ToTreasury>,
+);
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {

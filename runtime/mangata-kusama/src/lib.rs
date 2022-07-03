@@ -356,6 +356,7 @@ parameter_types! {
 parameter_types! {
 	pub const MgxTokenId: TokenId = MGX_TOKEN_ID;
 	pub const KsmTokenId: TokenId = KSM_TOKEN_ID;
+	pub const KarTokenId: TokenId = KSM_TOKEN_ID;
 }
 
 // Configure FRAME pallets to include in runtime.
@@ -611,7 +612,7 @@ parameter_types! {
 use scale_info::TypeInfo;
 
 #[derive(Encode, Decode, Clone, TypeInfo)]
-pub struct TwoCurrencyAdapter<C, OU, T1, T2, SF>(PhantomData<(C, OU, T1, T2, SF)>);
+pub struct ThreeCurrencyOnChargeAdapter<C, OU, T1, T2, T3, SF2, SF3>(PhantomData<(C, OU, T1, T2, T3, SF2, SF3)>);
 
 use sp_runtime::{
 	traits::{DispatchInfoOf, PostDispatchInfoOf, Saturating, Zero},
@@ -634,7 +635,7 @@ use orml_tokens::MultiTokenImbalanceWithZeroTrait;
 ///
 /// The unbalance handler is given 2 unbalanceds in [`OnUnbalanced::on_unbalanceds`]: fee and
 /// then tip.
-impl<T, C, OU, T1, T2, SF> OnChargeTransaction<T> for TwoCurrencyAdapter<C, OU, T1, T2, SF>
+impl<T, C, OU, T1, T2, T3, SF2, SF3> OnChargeTransaction<T> for ThreeCurrencyOnChargeAdapter<C, OU, T1, T2, T3, SF2, SF3>
 where
 	T: pallet_transaction_payment::Config,
 	T::TransactionByteFee:
@@ -654,7 +655,9 @@ where
 		scale_info::TypeInfo,
 	T1: Get<TokenId>,
 	T2: Get<TokenId>,
-	SF: Get<u128>,
+	T3: Get<TokenId>,
+	SF2: Get<u128>,
+	SF3: Get<u128>,
 {
 	type LiquidityInfo = Option<(TokenId, NegativeImbalanceOf<C, T>)>;
 	type Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -691,12 +694,21 @@ where
 			Err(_) => match C::withdraw(
 				T2::get().into(),
 				who,
-				fee / SF::get().into(),
+				fee / SF2::get().into(),
 				withdraw_reason,
 				ExistenceRequirement::KeepAlive,
 			) {
 				Ok(imbalance) => Ok(Some((T2::get(), imbalance))),
-				Err(_) => Err(InvalidTransaction::Payment.into()),
+				Err(_) => match C::withdraw(
+					T3::get().into(),
+					who,
+					fee / SF3::get().into(),
+					withdraw_reason,
+					ExistenceRequirement::KeepAlive,
+				) {
+					Ok(imbalance) => Ok(Some((T3::get(), imbalance))),
+					Err(_) => Err(InvalidTransaction::Payment.into()),
+				},
 			},
 		}
 	}
@@ -715,11 +727,14 @@ where
 		already_withdrawn: Self::LiquidityInfo,
 	) -> Result<(), TransactionValidityError> {
 		if let Some((token_id, paid)) = already_withdrawn {
-			let (corrected_fee, tip) = if token_id == T2::get() {
-				(corrected_fee / SF::get().into(), tip / SF::get().into())
-			} else {
-				(corrected_fee, tip)
-			};
+			let (corrected_fee, tip) =
+				if token_id == T3::get() {
+					(corrected_fee / SF3::get().into(), tip / SF3::get().into())
+				} else if token_id == T2::get() {
+					(corrected_fee / SF2::get().into(), tip / SF2::get().into())
+				} else {
+					(corrected_fee, tip)
+				};
 			// Calculate how much refund we should return
 			let refund_amount = paid.peek().saturating_sub(corrected_fee);
 			// refund to the the account that paid the fees. If this fails, the
@@ -748,12 +763,14 @@ parameter_types! {
 }
 
 impl pallet_transaction_payment::Config for Runtime {
-	type OnChargeTransaction = TwoCurrencyAdapter<
+	type OnChargeTransaction = ThreeCurrencyOnChargeAdapter<
 		orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
 		ToAuthor,
 		MgxTokenId,
 		KsmTokenId,
+		KarTokenId,
 		frame_support::traits::ConstU128<KSM_MGX_SCALE_FACTOR>,
+		frame_support::traits::ConstU128<KAR_MGX_SCALE_FACTOR>,
 	>;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = WeightToFee;

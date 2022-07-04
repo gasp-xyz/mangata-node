@@ -98,7 +98,6 @@ impl PoolPromoteApi for MockPromotedPoolApi {
 	fn len() -> usize {
 		PROMOTED_POOLS.lock().unwrap().len()
 	}
-	
 }
 
 parameter_types! {

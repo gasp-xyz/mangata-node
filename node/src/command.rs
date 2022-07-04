@@ -373,7 +373,7 @@ pub fn run() -> Result<()> {
 				}),
 				_ => panic!("invalid chain spec"),
 			}
-		}
+		},
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 

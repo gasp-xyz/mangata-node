@@ -80,6 +80,7 @@ pub use mangata_primitives::{
 pub use orml_tokens;
 use orml_tokens::TransferDust;
 use orml_traits::{parameter_type_with_key, GetByKey, MultiCurrency};
+use hex_literal;
 
 pub use pallet_xyk;
 use xyk_runtime_api::{RpcAmountsResult, RpcResult};
@@ -1280,7 +1281,7 @@ parameter_types! {
 	pub KarPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
-			X2(Parachain(2000u32), GeneralKey(128u16.encode())),
+			X2(Parachain(2000u32), GeneralKey(<[u8; 2]>::from(hex_literal::hex!("0080")).to_vec())),
 		).into(),
 		kar_per_second()
 	);

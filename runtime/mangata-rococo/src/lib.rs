@@ -1287,7 +1287,7 @@ parameter_types! {
 }
 
 pub type Trader =
-	(FixedRateOfFungible<RocPerSecond, ToTreasury>, FixedRateOfFungible<MgrPerSecond, ToTreasury>);
+	(FixedRateOfFungible<RocPerSecond, ToTreasury>, FixedRateOfFungible<MgrPerSecond, ToTreasury>, FixedRateOfFungible<KarPerSecond, ToTreasury>);
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {

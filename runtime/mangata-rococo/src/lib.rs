@@ -77,10 +77,10 @@ pub use mangata_primitives::{
 	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
 };
 
+use hex_literal;
 pub use orml_tokens;
 use orml_tokens::TransferDust;
 use orml_traits::{parameter_type_with_key, GetByKey, MultiCurrency};
-use hex_literal;
 
 pub use pallet_xyk;
 use xyk_runtime_api::{RpcAmountsResult, RpcResult};
@@ -1287,8 +1287,11 @@ parameter_types! {
 	);
 }
 
-pub type Trader =
-	(FixedRateOfFungible<RocPerSecond, ToTreasury>, FixedRateOfFungible<MgrPerSecond, ToTreasury>, FixedRateOfFungible<KarPerSecond, ToTreasury>);
+pub type Trader = (
+	FixedRateOfFungible<RocPerSecond, ToTreasury>,
+	FixedRateOfFungible<MgrPerSecond, ToTreasury>,
+	FixedRateOfFungible<KarPerSecond, ToTreasury>,
+);
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {

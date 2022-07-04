@@ -3,7 +3,7 @@
     <img width="132" height="101" src="https://mangata.finance/images/logo-without-text.svg" class="attachment-full size-full" alt="Mangata brand" loading="lazy" /></a>
 </p>
 
-<h3 align="center">Mangata Node</h3>
+<h4 align="center">Mangata Node</h4>
 
 <p align="center">
     Application-specific blockchain for decentralized exchange, a parachain in Polkadot ecosystem. Implementation includes <a href="https://blog.mangata.finance/blog/2021-10-10-themis-protocol/" target="_blank" rel="noopener noreferrer">MEV solution</a>, Proof of Liquidity and no gas economy.

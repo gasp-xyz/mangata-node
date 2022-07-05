@@ -2,7 +2,7 @@ services:
   para_alice:
     image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangata-node:rococo-latest}
     environment:
-      - ${RUST_LOG:-info}
+      - RUST_LOG=${RUST_LOG:-info}
       - RUST_BACKTRACE=1
       - LD_PRELOAD=${LD_PRELOAD}
     entrypoint: ""
@@ -35,7 +35,8 @@ services:
   para_bob:
     image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangata-node:rococo-latest}
     environment:
-      - ${RUST_LOG:-info}
+      - RUST_LOG=${RUST_LOG:-info}
+      - RUST_BACKTRACE=1
       - LD_PRELOAD=${LD_PRELOAD}
     entrypoint: ""
     command: >

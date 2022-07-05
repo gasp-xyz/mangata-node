@@ -20,6 +20,10 @@ const POOL_CREATE_DUMMY_RETURN_VALUE: Option<(TokenId, Balance)> =
 	Some((LIQ_TOKEN_ID, LIQ_TOKEN_AMOUNT));
 
 fn set_up() {
+	// for backwards compatibility
+	ArchivedBootstrap::<mock::Test>::mutate(|v| {
+		v.push(Default::default());
+	});
 	let mga_id = Bootstrap::create_new_token(&USER_ID, INITIAL_AMOUNT);
 	let ksm_id = Bootstrap::create_new_token(&USER_ID, INITIAL_AMOUNT);
 	let dummy_id = Bootstrap::create_new_token(&USER_ID, INITIAL_AMOUNT);
@@ -33,7 +37,16 @@ fn set_up() {
 fn jump_to_whitelist_phase() {
 	let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 	pool_exists_mock.expect().return_const(false);
-	Bootstrap::start_ido(Origin::root(), 10_u32.into(), 10, 10, DEFAULT_RATIO).unwrap();
+	Bootstrap::schedule_bootstrap(
+		Origin::root(),
+		KSMId::get(),
+		MGAId::get(),
+		10_u32.into(),
+		10,
+		10,
+		DEFAULT_RATIO,
+	)
+	.unwrap();
 	Bootstrap::on_initialize(15_u32.into());
 	assert_eq!(BootstrapPhase::Whitelist, Phase::<Test>::get());
 }
@@ -42,7 +55,16 @@ fn jump_to_public_phase() {
 	let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 	pool_exists_mock.expect().return_const(false);
 
-	Bootstrap::start_ido(Origin::root(), 10_u32.into(), 10, 10, DEFAULT_RATIO).unwrap();
+	Bootstrap::schedule_bootstrap(
+		Origin::root(),
+		KSMId::get(),
+		MGAId::get(),
+		10_u32.into(),
+		10,
+		10,
+		DEFAULT_RATIO,
+	)
+	.unwrap();
 	Bootstrap::on_initialize(25_u32.into());
 	assert_eq!(BootstrapPhase::Public, Phase::<Test>::get());
 }
@@ -68,7 +90,7 @@ fn test_first_provision_with_ksm_fails() {
 
 		assert_err!(
 			Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), 1),
-			Error::<Test>::FirstProvisionInMga
+			Error::<Test>::FirstProvisionInSecondTokenId
 		);
 	});
 }
@@ -166,7 +188,20 @@ fn test_donation_with_more_tokens_than_available() {
 fn test_prevent_provisions_in_before_start_phase() {
 	new_test_ext().execute_with(|| {
 		set_up();
-		Phase::<Test>::put(BootstrapPhase::BeforeStart);
+
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			10,
+			20,
+			DEFAULT_RATIO,
+		)
+		.unwrap();
 
 		assert_err!(
 			Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), INITIAL_AMOUNT * 2),
@@ -177,10 +212,74 @@ fn test_prevent_provisions_in_before_start_phase() {
 
 #[test]
 #[serial]
+fn test_fail_scheudle_bootstrap_with_same_token() {
+	new_test_ext().execute_with(|| {
+		set_up();
+
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		assert_err!(
+			Bootstrap::schedule_bootstrap(
+				Origin::root(),
+				100,
+				100,
+				100_u32.into(),
+				10,
+				20,
+				DEFAULT_RATIO,
+			),
+			Error::<Test>::SameToken
+		);
+	});
+}
+
+#[test]
+#[serial]
+fn test_prevent_schedule_bootstrap_with_pair_that_does_not_exists() {
+	new_test_ext().execute_with(|| {
+		set_up();
+
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		assert_err!(
+			Bootstrap::schedule_bootstrap(
+				Origin::root(),
+				100,
+				101,
+				100_u32.into(),
+				10,
+				20,
+				DEFAULT_RATIO,
+			),
+			Error::<Test>::TokenIdDoesNotExists
+		);
+	});
+}
+
+#[test]
+#[serial]
 fn test_prevent_provisions_in_finished_phase() {
 	new_test_ext().execute_with(|| {
 		set_up();
+
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			10,
+			20,
+			DEFAULT_RATIO,
+		)
+		.unwrap();
+
 		Phase::<Test>::put(BootstrapPhase::Finished);
+
 		assert_err!(
 			Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), INITIAL_AMOUNT * 2),
 			Error::<Test>::Unauthorized
@@ -251,11 +350,19 @@ fn test_incremental_whitliested_donation() {
 
 #[test]
 #[serial]
-fn test_non_root_user_can_not_start_ido() {
+fn test_non_root_user_can_not_schedule_bootstrap() {
 	new_test_ext().execute_with(|| {
 		set_up();
 		assert_err!(
-			Bootstrap::start_ido(Origin::signed(USER_ID), 0_u32.into(), 1, 1, DEFAULT_RATIO),
+			Bootstrap::schedule_bootstrap(
+				Origin::signed(USER_ID),
+				KSMId::get(),
+				MGAId::get(),
+				0_u32.into(),
+				1,
+				1,
+				DEFAULT_RATIO
+			),
 			BadOrigin
 		);
 	});
@@ -286,7 +393,15 @@ fn test_ido_start_cannot_happen_in_the_past() {
 		set_up();
 		System::set_block_number(1000);
 		assert_err!(
-			Bootstrap::start_ido(Origin::root(), 999_u32.into(), 1, 1, DEFAULT_RATIO),
+			Bootstrap::schedule_bootstrap(
+				Origin::root(),
+				KSMId::get(),
+				MGAId::get(),
+				999_u32.into(),
+				1,
+				1,
+				DEFAULT_RATIO
+			),
 			Error::<Test>::BootstrapStartInThePast
 		);
 	});
@@ -299,11 +414,27 @@ fn test_ido_start_can_not_be_initialize_with_0_ratio() {
 		set_up();
 		System::set_block_number(10);
 		assert_err!(
-			Bootstrap::start_ido(Origin::root(), 999_u32.into(), 1, 1, (1, 0)),
+			Bootstrap::schedule_bootstrap(
+				Origin::root(),
+				KSMId::get(),
+				MGAId::get(),
+				999_u32.into(),
+				1,
+				1,
+				(1, 0)
+			),
 			Error::<Test>::WrongRatio
 		);
 		assert_err!(
-			Bootstrap::start_ido(Origin::root(), 999_u32.into(), 1, 1, (0, 1)),
+			Bootstrap::schedule_bootstrap(
+				Origin::root(),
+				KSMId::get(),
+				MGAId::get(),
+				999_u32.into(),
+				1,
+				1,
+				(0, 1)
+			),
 			Error::<Test>::WrongRatio
 		);
 	});
@@ -311,11 +442,19 @@ fn test_ido_start_can_not_be_initialize_with_0_ratio() {
 
 #[test]
 #[serial]
-fn test_cannot_start_ido_with_whitelist_phase_length_equal_zero() {
+fn test_cannot_schedule_bootstrap_with_whitelist_phase_length_equal_zero() {
 	new_test_ext().execute_with(|| {
 		set_up();
 		assert_err!(
-			Bootstrap::start_ido(Origin::root(), 100_u32.into(), 0, 1, DEFAULT_RATIO),
+			Bootstrap::schedule_bootstrap(
+				Origin::root(),
+				KSMId::get(),
+				MGAId::get(),
+				100_u32.into(),
+				0,
+				1,
+				DEFAULT_RATIO
+			),
 			Error::<Test>::PhaseLengthCannotBeZero
 		);
 	});
@@ -323,11 +462,19 @@ fn test_cannot_start_ido_with_whitelist_phase_length_equal_zero() {
 
 #[test]
 #[serial]
-fn test_cannot_start_ido_with_public_phase_length_equal_zero() {
+fn test_cannot_schedule_bootstrap_with_public_phase_length_equal_zero() {
 	new_test_ext().execute_with(|| {
 		set_up();
 		assert_err!(
-			Bootstrap::start_ido(Origin::root(), 100_u32.into(), 1, 0, DEFAULT_RATIO),
+			Bootstrap::schedule_bootstrap(
+				Origin::root(),
+				KSMId::get(),
+				MGAId::get(),
+				100_u32.into(),
+				1,
+				0,
+				DEFAULT_RATIO
+			),
 			Error::<Test>::PhaseLengthCannotBeZero
 		);
 	});
@@ -342,14 +489,40 @@ fn test_bootstrap_can_be_modified_only_before_its_started() {
 		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
-		Bootstrap::start_ido(Origin::root(), 50_u32.into(), 10, 20, DEFAULT_RATIO).unwrap();
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			50_u32.into(),
+			10,
+			20,
+			DEFAULT_RATIO,
+		)
+		.unwrap();
 
-		Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 20, DEFAULT_RATIO).unwrap();
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			10,
+			20,
+			DEFAULT_RATIO,
+		)
+		.unwrap();
 
 		Bootstrap::on_initialize(100_u32.into());
 
 		assert_err!(
-			Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 20, DEFAULT_RATIO),
+			Bootstrap::schedule_bootstrap(
+				Origin::root(),
+				KSMId::get(),
+				MGAId::get(),
+				100_u32.into(),
+				10,
+				20,
+				DEFAULT_RATIO
+			),
 			Error::<Test>::AlreadyStarted
 		);
 
@@ -373,8 +546,10 @@ fn test_bootstrap_state_transitions() {
 		let pool_create_mock = MockPoolCreateApi::pool_create_context();
 		pool_create_mock.expect().times(1).return_const(POOL_CREATE_DUMMY_RETURN_VALUE);
 
-		Bootstrap::start_ido(
+		Bootstrap::schedule_bootstrap(
 			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
 			BOOTSTRAP_WHITELIST_START.into(),
 			(BOOTSTRAP_PUBLIC_START - BOOTSTRAP_WHITELIST_START).try_into().unwrap(),
 			(BOOTSTRAP_FINISH - BOOTSTRAP_PUBLIC_START).try_into().unwrap(),
@@ -398,8 +573,10 @@ fn test_bootstrap_state_transitions() {
 		Bootstrap::on_initialize(BOOTSTRAP_PUBLIC_START);
 		assert_eq!(Bootstrap::phase(), BootstrapPhase::Public);
 
+		println!("{:?}", Bootstrap::phase());
 		for i in BOOTSTRAP_PUBLIC_START..BOOTSTRAP_FINISH {
 			Bootstrap::on_initialize(i);
+			println!("{:?}", Bootstrap::phase());
 			assert_eq!(Bootstrap::phase(), BootstrapPhase::Public);
 		}
 
@@ -423,8 +600,10 @@ fn test_bootstrap_state_transitions_when_on_initialized_is_not_called() {
 		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
-		Bootstrap::start_ido(
+		Bootstrap::schedule_bootstrap(
 			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
 			BOOTSTRAP_WHITELIST_START.into(),
 			(BOOTSTRAP_PUBLIC_START - BOOTSTRAP_WHITELIST_START).try_into().unwrap(),
 			(BOOTSTRAP_FINISH - BOOTSTRAP_PUBLIC_START).try_into().unwrap(),
@@ -445,18 +624,36 @@ fn test_bootstrap_schedule_overflow() {
 		set_up();
 
 		assert_err!(
-			Bootstrap::start_ido(Origin::root(), u64::MAX.into(), u32::MAX, 1_u32, DEFAULT_RATIO),
-			Error::<Test>::MathOverflow
-		);
-
-		assert_err!(
-			Bootstrap::start_ido(Origin::root(), u64::MAX.into(), 1_u32, u32::MAX, DEFAULT_RATIO),
-			Error::<Test>::MathOverflow
-		);
-
-		assert_err!(
-			Bootstrap::start_ido(
+			Bootstrap::schedule_bootstrap(
 				Origin::root(),
+				KSMId::get(),
+				MGAId::get(),
+				u64::MAX.into(),
+				u32::MAX,
+				1_u32,
+				DEFAULT_RATIO
+			),
+			Error::<Test>::MathOverflow
+		);
+
+		assert_err!(
+			Bootstrap::schedule_bootstrap(
+				Origin::root(),
+				KSMId::get(),
+				MGAId::get(),
+				u64::MAX.into(),
+				1_u32,
+				u32::MAX,
+				DEFAULT_RATIO
+			),
+			Error::<Test>::MathOverflow
+		);
+
+		assert_err!(
+			Bootstrap::schedule_bootstrap(
+				Origin::root(),
+				KSMId::get(),
+				MGAId::get(),
 				u64::MAX.into(),
 				u32::MAX,
 				u32::MAX,
@@ -475,7 +672,15 @@ fn test_do_not_allow_for_creating_starting_bootstrap_for_existing_pool() {
 		pool_exists_mock.expect().return_const(true);
 
 		assert_err!(
-			Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 10, DEFAULT_RATIO),
+			Bootstrap::schedule_bootstrap(
+				Origin::root(),
+				KSMId::get(),
+				MGAId::get(),
+				100_u32.into(),
+				10,
+				10,
+				DEFAULT_RATIO
+			),
 			Error::<Test>::PoolAlreadyExists
 		);
 	});
@@ -507,7 +712,16 @@ fn test_crate_pool_is_called_with_proper_arguments_after_bootstrap_finish() {
 			.times(1)
 			.return_const(POOL_CREATE_DUMMY_RETURN_VALUE);
 
-		Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 10, DEFAULT_RATIO).unwrap();
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			10,
+			10,
+			DEFAULT_RATIO,
+		)
+		.unwrap();
 
 		Bootstrap::on_initialize(110_u32.into());
 		Bootstrap::provision(Origin::signed(USER_ID), MGAId::get(), MGA_PROVISON).unwrap();
@@ -525,7 +739,16 @@ fn test_cannot_claim_rewards_when_bootstrap_is_not_finished() {
 		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
-		Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 10, DEFAULT_RATIO).unwrap();
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			10,
+			10,
+			DEFAULT_RATIO,
+		)
+		.unwrap();
 
 		Bootstrap::on_initialize(100_u32.into());
 		assert_eq!(BootstrapPhase::Whitelist, Phase::<Test>::get());
@@ -566,7 +789,16 @@ fn test_rewards_are_distributed_properly_with_single_user() {
 				Some((id, issuance))
 			});
 
-		Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 10, DEFAULT_RATIO).unwrap();
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			10,
+			10,
+			DEFAULT_RATIO,
+		)
+		.unwrap();
 
 		Bootstrap::on_initialize(100_u32.into());
 		assert_eq!(BootstrapPhase::Whitelist, Phase::<Test>::get());
@@ -640,7 +872,16 @@ fn test_rewards_are_distributed_properly_with_multiple_user() {
 				Some((id, issuance))
 			});
 
-		Bootstrap::start_ido(Origin::root(), 100_u32.into(), 10, 10, DEFAULT_RATIO).unwrap();
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			10,
+			10,
+			DEFAULT_RATIO,
+		)
+		.unwrap();
 
 		Bootstrap::on_initialize(100_u32.into());
 		assert_eq!(BootstrapPhase::Whitelist, Phase::<Test>::get());
@@ -805,7 +1046,6 @@ fn successful_vested_provision_using_vested_tokens_only_when_user_has_both_veste
 		.unwrap();
 
 		let non_vested_initial_amount = Bootstrap::balance(MGAId::get(), USER_ID);
-		let vested_initial_amount = Bootstrap::locked_balance(MGAId::get(), USER_ID);
 
 		Bootstrap::provision_vested(Origin::signed(USER_ID), MGAId::get(), provision_amount)
 			.unwrap();
@@ -1155,3 +1395,282 @@ fn test_multi_provisions(
 		assert_eq!(user2_rewards.1, Bootstrap::locked_balance(liq_token_id, PROVISION_USER2_ID));
 	})
 }
+
+#[test]
+#[serial]
+fn test_restart_bootstrap() {
+	new_test_ext().execute_with(|| {
+		set_up();
+
+		const USER_KSM_PROVISON: Balance = 15;
+		const USER_MGA_PROVISON: Balance = 400_000;
+		const ANOTHER_USER_KSM_PROVISON: Balance = 20;
+		const ANOTHER_USER_MGA_PROVISON: Balance = 100_000;
+		let liq_token_id = Tokens::next_asset_id();
+
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		let pool_create_mock = MockPoolCreateApi::pool_create_context();
+		pool_create_mock
+			.expect()
+			.times(1)
+			.returning(move |addr, _, ksm_amount, _, mga_amount| {
+				let issuance = (ksm_amount + mga_amount) / 2;
+				let id = Bootstrap::create_new_token(&addr, issuance);
+				assert_eq!(id, liq_token_id);
+				Some((id, issuance))
+			});
+
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			10,
+			10,
+			DEFAULT_RATIO,
+		)
+		.unwrap();
+		Bootstrap::on_initialize(110_u32.into());
+		Bootstrap::transfer(MGAId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 500_000).unwrap();
+		Bootstrap::transfer(KSMId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 500_000).unwrap();
+		Bootstrap::provision(Origin::signed(USER_ID), MGAId::get(), USER_MGA_PROVISON).unwrap();
+		Bootstrap::provision(
+			Origin::signed(ANOTHER_USER_ID),
+			MGAId::get(),
+			ANOTHER_USER_MGA_PROVISON,
+		)
+		.unwrap();
+
+		Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), USER_KSM_PROVISON).unwrap();
+		Bootstrap::provision(
+			Origin::signed(ANOTHER_USER_ID),
+			KSMId::get(),
+			ANOTHER_USER_KSM_PROVISON,
+		)
+		.unwrap();
+
+		assert_err!(Bootstrap::finalize(Origin::root(), None), Error::<Test>::NotFinishedYet);
+
+		Bootstrap::on_initialize(120_u32.into());
+
+		assert_eq!(0, Bootstrap::balance(liq_token_id, USER_ID));
+		assert_eq!(0, Bootstrap::balance(liq_token_id, ANOTHER_USER_ID));
+
+		Bootstrap::claim_rewards(Origin::signed(USER_ID)).unwrap();
+
+		// not all rewards claimed
+		assert_err!(
+			Bootstrap::finalize(Origin::root(), None),
+			Error::<Test>::BootstrapNotReadyToBeFinished
+		);
+
+		Bootstrap::claim_rewards_for_account(Origin::signed(USER_ID), ANOTHER_USER_ID).unwrap();
+
+		assert_ne!(0, Bootstrap::balance(liq_token_id, USER_ID));
+		assert_ne!(0, Bootstrap::balance(liq_token_id, ANOTHER_USER_ID));
+
+		Bootstrap::finalize(Origin::root(), None).unwrap();
+		assert!(Provisions::<Test>::iter_keys().next().is_none());
+		assert!(VestedProvisions::<Test>::iter_keys().next().is_none());
+		assert!(WhitelistedAccount::<Test>::iter_keys().next().is_none());
+		assert!(ClaimedRewards::<Test>::iter_keys().next().is_none());
+		assert!(ProvisionAccounts::<Test>::iter_keys().next().is_none());
+		assert_eq!(Valuations::<Test>::get(), (0, 0));
+		assert_eq!(Phase::<Test>::get(), BootstrapPhase::BeforeStart);
+		assert_eq!(BootstrapSchedule::<Test>::get(), None);
+		assert_eq!(MintedLiquidity::<Test>::get(), (0, 0));
+		assert_eq!(ActivePair::<Test>::get(), None);
+
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			200_u32.into(),
+			10,
+			10,
+			DEFAULT_RATIO,
+		)
+		.unwrap();
+	});
+}
+
+#[test]
+#[serial]
+fn claim_rewards_even_if_sum_of_rewards_is_zero_because_of_small_provision() {
+	new_test_ext().execute_with(|| {
+		ArchivedBootstrap::<mock::Test>::mutate(|v| {
+			v.push(Default::default());
+		});
+
+		Bootstrap::create_new_token(&USER_ID, u128::MAX);
+		Bootstrap::create_new_token(&USER_ID, u128::MAX);
+		let liq_token_id = Tokens::next_asset_id();
+
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		let pool_create_mock = MockPoolCreateApi::pool_create_context();
+		pool_create_mock
+			.expect()
+			.times(1)
+			.returning(move |addr, _, ksm_amount, _, mga_amount| {
+				let issuance = (ksm_amount + mga_amount) / 2;
+				let id = Bootstrap::create_new_token(&addr, issuance);
+				assert_eq!(id, liq_token_id);
+				Some((id, issuance))
+			});
+
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			10,
+			10,
+			DEFAULT_RATIO,
+		)
+		.unwrap();
+		Bootstrap::on_initialize(110_u32.into());
+		Bootstrap::transfer(MGAId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 1).unwrap();
+		Bootstrap::transfer(KSMId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 1).unwrap();
+
+		Bootstrap::provision(
+			Origin::signed(USER_ID),
+			MGAId::get(),
+			1_000_000_000_000_000_000_000_000_000_000_000_u128,
+		)
+		.unwrap();
+		Bootstrap::provision(Origin::signed(ANOTHER_USER_ID), MGAId::get(), 1).unwrap();
+
+		Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), 1_000_000_u128).unwrap();
+
+		Bootstrap::on_initialize(120_u32.into());
+
+		assert_eq!(0, Bootstrap::balance(liq_token_id, USER_ID));
+		assert_eq!(0, Bootstrap::balance(liq_token_id, ANOTHER_USER_ID));
+
+		Bootstrap::claim_rewards(Origin::signed(USER_ID)).unwrap();
+		Bootstrap::claim_rewards(Origin::signed(ANOTHER_USER_ID)).unwrap();
+
+		assert_err!(
+			Bootstrap::claim_rewards(Origin::signed(USER_ID)),
+			Error::<Test>::NothingToClaim
+		);
+
+		assert_err!(
+			Bootstrap::claim_rewards(Origin::signed(ANOTHER_USER_ID)),
+			Error::<Test>::NothingToClaim
+		);
+	});
+}
+
+#[test]
+#[serial]
+fn transfer_dust_to_treasury() {
+	new_test_ext().execute_with(|| {
+		Bootstrap::create_new_token(&USER_ID, u128::MAX);
+		Bootstrap::create_new_token(&USER_ID, u128::MAX);
+		let liq_token_id = Tokens::next_asset_id();
+
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		let pool_create_mock = MockPoolCreateApi::pool_create_context();
+		pool_create_mock
+			.expect()
+			.times(1)
+			.returning(move |addr, _, ksm_amount, _, mga_amount| {
+				let issuance = (ksm_amount + mga_amount) / 2;
+				let id = Bootstrap::create_new_token(&addr, issuance);
+				assert_eq!(id, liq_token_id);
+				Some((id, issuance))
+			});
+
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			10,
+			10,
+			DEFAULT_RATIO,
+		)
+		.unwrap();
+		Bootstrap::on_initialize(110_u32.into());
+		Bootstrap::transfer(MGAId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 1).unwrap();
+		Bootstrap::transfer(KSMId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 1).unwrap();
+
+		Bootstrap::provision(Origin::signed(USER_ID), MGAId::get(), 1_000_000_000_u128).unwrap();
+		Bootstrap::provision(Origin::signed(ANOTHER_USER_ID), MGAId::get(), 1).unwrap();
+
+		Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), 100_u128).unwrap();
+
+		Bootstrap::on_initialize(120_u32.into());
+
+		assert_eq!(0, Bootstrap::balance(liq_token_id, USER_ID));
+		assert_eq!(0, Bootstrap::balance(liq_token_id, ANOTHER_USER_ID));
+
+		Bootstrap::claim_rewards(Origin::signed(USER_ID)).unwrap();
+		Bootstrap::claim_rewards(Origin::signed(ANOTHER_USER_ID)).unwrap();
+
+		let before_finalize = Bootstrap::balance(
+			liq_token_id,
+			<mock::Test as Config>::TreasuryPalletId::get().into_account(),
+		);
+
+		Bootstrap::finalize(Origin::root(), None).unwrap();
+
+		let after_finalize = Bootstrap::balance(
+			liq_token_id,
+			<mock::Test as Config>::TreasuryPalletId::get().into_account(),
+		);
+		assert!(after_finalize > before_finalize);
+	});
+}
+
+#[test]
+#[serial]
+fn archive_previous_bootstrap_schedules() {
+	new_test_ext().execute_with(|| {
+		Bootstrap::create_new_token(&USER_ID, u128::MAX);
+		Bootstrap::create_new_token(&USER_ID, u128::MAX);
+
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		let pool_create_mock = MockPoolCreateApi::pool_create_context();
+		pool_create_mock
+			.expect()
+			.times(1)
+			.returning(move |addr, _, ksm_amount, _, mga_amount| {
+				let issuance = (ksm_amount + mga_amount) / 2;
+				let id = Bootstrap::create_new_token(&addr, issuance);
+				Some((id, issuance))
+			});
+
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			10,
+			10,
+			DEFAULT_RATIO,
+		)
+		.unwrap();
+		Bootstrap::on_initialize(110_u32.into());
+		Bootstrap::provision(Origin::signed(USER_ID), MGAId::get(), 1_000_000_000_u128).unwrap();
+		Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), 100_u128).unwrap();
+		Bootstrap::on_initialize(120_u32.into());
+		Bootstrap::claim_rewards(Origin::signed(USER_ID)).unwrap();
+		assert_eq!(0, Bootstrap::archived().len());
+		Bootstrap::finalize(Origin::root(), Some(1)).unwrap();
+		assert_eq!(0, Bootstrap::provisions(USER_ID, KSMId::get()));
+
+		assert_eq!(1, Bootstrap::archived().len());
+	})
+}
+
+// TODO: test xyk blocking

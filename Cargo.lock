@@ -99,9 +99,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.57"
+version = "1.0.58"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "08f9b8508dccb7687a1d6c4ce66b2b0ecef467c94667de27d8d7fe1f8d2a9cdc"
+checksum = "bb07d2053ccdbe10e2af2995a2f116c1330396493dc1269f6a91d0ae82e19704"
 
 [[package]]
 name = "approx"
@@ -292,9 +292,9 @@ dependencies = [
 
 [[package]]
 name = "async-global-executor"
-version = "2.1.0"
+version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd8b508d585e01084059b60f06ade4cb7415cd2e4084b71dd1cb44e7d3fb9880"
+checksum = "5262ed948da60dd8956c6c5aca4d4163593dddb7b32d73267c93dab7b2e98940"
 dependencies = [
  "async-channel",
  "async-executor",
@@ -302,6 +302,7 @@ dependencies = [
  "async-lock",
  "blocking",
  "futures-lite",
+ "num_cpus",
  "once_cell",
 ]
 
@@ -352,9 +353,9 @@ dependencies = [
 
 [[package]]
 name = "async-std"
-version = "1.11.0"
+version = "1.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52580991739c5cdb36cde8b2a516371c0a3b70dda36d916cc08b82372916808c"
+checksum = "62565bb4402e926b29953c785397c6dc0391b7b446e45008b0049eb43cec6f5d"
 dependencies = [
  "async-attributes",
  "async-channel",
@@ -371,7 +372,6 @@ dependencies = [
  "kv-log-macro",
  "log",
  "memchr",
- "num_cpus",
  "once_cell",
  "pin-project-lite 0.2.9",
  "pin-utils",
@@ -485,9 +485,9 @@ dependencies = [
 
 [[package]]
 name = "base-x"
-version = "0.2.10"
+version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc19a4937b4fbd3fe3379793130e42060d10627a360f2127802b10b87e7baf74"
+checksum = "4cbbc9d0964165b47557570cce6c952866c2678457aca742aafc9fb771d30270"
 
 [[package]]
 name = "base58"
@@ -1037,7 +1037,7 @@ checksum = "4acbb09d9ee8e23699b9634375c72795d095bf268439da88562cf9b501f181fa"
 dependencies = [
  "camino",
  "cargo-platform",
- "semver 1.0.10",
+ "semver 1.0.12",
  "serde",
  "serde_json",
 ]
@@ -1178,9 +1178,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "3.2.5"
+version = "3.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d53da17d37dba964b9b3ecb5c5a1f193a2762c700e6829201e645b9381c99dc7"
+checksum = "190814073e85d238f31ff738fcb0bf6910cedeb73376c87cd69291028966fd83"
 dependencies = [
  "atty",
  "bitflags",
@@ -1195,9 +1195,9 @@ dependencies = [
 
 [[package]]
 name = "clap_derive"
-version = "3.2.5"
+version = "3.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c11d40217d16aee8508cc8e5fde8b4ff24639758608e5374e731b53f85749fb9"
+checksum = "759bf187376e1afa7b85b959e6a664a3e7a95203415dba952ad19139e798f902"
 dependencies = [
  "heck 0.4.0",
  "proc-macro-error",
@@ -1208,9 +1208,9 @@ dependencies = [
 
 [[package]]
 name = "clap_lex"
-version = "0.2.2"
+version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5538cd660450ebeb4234cfecf8f2284b844ffc4c50531e66d584ad5b91293613"
+checksum = "2850f2f5a82cbf437dd5af4d49848fbdfc27c157c3d010345776f952765261c5"
 dependencies = [
  "os_str_bytes",
 ]
@@ -1461,9 +1461,9 @@ dependencies = [
 
 [[package]]
 name = "crossbeam-utils"
-version = "0.8.9"
+version = "0.8.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ff1f980957787286a554052d03c7aee98d99cc32e09f6d45f0a814133c87978"
+checksum = "7d82ee10ce34d7bc12c2122495e7593a9c41347ecdd64185af4ecf72cb1a7f83"
 dependencies = [
  "cfg-if 1.0.0",
  "once_cell",
@@ -1477,9 +1477,9 @@ checksum = "7a81dae078cea95a014a339291cec439d2f232ebe854a9d672b796c6afafa9b7"
 
 [[package]]
 name = "crypto-common"
-version = "0.1.3"
+version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57952ca27b5e3606ff4dd79b0020231aaf9d6aa76dc05fd30137538c50bd3ce8"
+checksum = "5999502d32b9c48d492abe66392408144895020ec4709e549e840799f3bb74c0"
 dependencies = [
  "generic-array 0.14.5",
  "typenum",
@@ -1571,7 +1571,7 @@ name = "cumulus-client-cli"
 version = "0.1.0"
 source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev-v0.9.17#2e3ed70e593f668b056ae89a1bd484f40dc99d42"
 dependencies = [
- "clap 3.2.5",
+ "clap 3.2.8",
  "sc-cli",
  "sc-service",
 ]
@@ -2214,9 +2214,9 @@ dependencies = [
 
 [[package]]
 name = "either"
-version = "1.6.1"
+version = "1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
+checksum = "3f107b87b6afc2a64fd13cac55fe06d6c8859f12d4b14cbcdd2c67d0976781be"
 
 [[package]]
 name = "enum-as-inner"
@@ -2471,9 +2471,9 @@ dependencies = [
 
 [[package]]
 name = "fixedbitset"
-version = "0.4.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "279fb028e20b3c4c320317955b77c5e0c9701f05a1d309905d6fc702cdc5053e"
+checksum = "0ce7134b9999ecaf8bcd65542e436736ef32ddca1b3e06094cb6ec5755203b80"
 
 [[package]]
 name = "flate2"
@@ -2554,7 +2554,7 @@ source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v
 dependencies = [
  "Inflector",
  "chrono",
- "clap 3.2.5",
+ "clap 3.2.8",
  "frame-benchmarking",
  "frame-support",
  "handlebars",
@@ -3386,9 +3386,9 @@ dependencies = [
 
 [[package]]
 name = "indexmap"
-version = "1.9.0"
+version = "1.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c6392766afd7964e2531940894cffe4bd8d7d17dbc3c1c4857040fd4b33bdb3"
+checksum = "10a35a97730320ffe8e2d410b5d3b69279b98d2c14bdb8b70ea89ecf7888d41e"
 dependencies = [
  "autocfg",
  "hashbrown 0.12.1",
@@ -3406,9 +3406,9 @@ dependencies = [
 
 [[package]]
 name = "integer-encoding"
-version = "3.0.3"
+version = "3.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e85a1509a128c855368e135cffcde7eac17d8e1083f41e2b98c58bc1a5074be"
+checksum = "8bb03732005da905c88227371639bf1ad885cc712789c011c31c5fb3ab3ccf02"
 
 [[package]]
 name = "integer-sqrt"
@@ -3665,7 +3665,7 @@ dependencies = [
  "http",
  "jsonrpsee-core",
  "jsonrpsee-types 0.8.0",
- "pin-project 1.0.10",
+ "pin-project 1.0.11",
  "rustls-native-certs 0.6.2",
  "soketto",
  "thiserror",
@@ -3768,7 +3768,7 @@ dependencies = [
  "http",
  "jsonrpsee-types 0.4.1",
  "log",
- "pin-project 1.0.10",
+ "pin-project 1.0.11",
  "rustls-native-certs 0.5.0",
  "serde",
  "serde_json",
@@ -4039,7 +4039,7 @@ dependencies = [
  "libp2p-yamux",
  "multiaddr",
  "parking_lot 0.11.2",
- "pin-project 1.0.10",
+ "pin-project 1.0.11",
  "smallvec",
  "wasm-timer",
 ]
@@ -4065,7 +4065,7 @@ dependencies = [
  "multihash 0.14.0",
  "multistream-select",
  "parking_lot 0.11.2",
- "pin-project 1.0.10",
+ "pin-project 1.0.11",
  "prost",
  "prost-build",
  "rand 0.8.5",
@@ -4306,7 +4306,7 @@ checksum = "0f1a458bbda880107b5b36fcb9b5a1ef0c329685da0e203ed692a8ebe64cc92c"
 dependencies = [
  "futures 0.3.21",
  "log",
- "pin-project 1.0.10",
+ "pin-project 1.0.11",
  "rand 0.7.3",
  "salsa20",
  "sha3",
@@ -4325,7 +4325,7 @@ dependencies = [
  "libp2p-core",
  "libp2p-swarm",
  "log",
- "pin-project 1.0.10",
+ "pin-project 1.0.11",
  "prost",
  "prost-build",
  "rand 0.7.3",
@@ -4563,9 +4563,9 @@ dependencies = [
 
 [[package]]
 name = "linked-hash-map"
-version = "0.5.4"
+version = "0.5.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7fb9b38af92608140b86b693604b9ffcc5824240a484d1ecd4795bacb2fe88f3"
+checksum = "0717cef1bc8b636c6e1c1bbdefc09e6322da8a9321966e8928ef80d20f7f770f"
 
 [[package]]
 name = "linked_hash_set"
@@ -4704,6 +4704,8 @@ dependencies = [
  "hex-literal",
  "log",
  "mangata-primitives",
+ "mp-multipurpose-liquidity",
+ "mp-traits",
  "orml-tokens",
  "orml-traits",
  "orml-unknown-tokens",
@@ -4719,6 +4721,7 @@ dependencies = [
  "pallet-crowdloan-rewards",
  "pallet-elections-phragmen",
  "pallet-issuance",
+ "pallet-multipurpose-liquidity",
  "pallet-session",
  "pallet-sudo",
  "pallet-sudo-origin",
@@ -4767,7 +4770,7 @@ version = "0.1.0"
 dependencies = [
  "artemis-core",
  "cfg-if 1.0.0",
- "clap 3.2.5",
+ "clap 3.2.8",
  "criterion",
  "cumulus-client-cli",
  "cumulus-client-consensus-aura",
@@ -4888,6 +4891,8 @@ dependencies = [
  "hex-literal",
  "log",
  "mangata-primitives",
+ "mp-multipurpose-liquidity",
+ "mp-traits",
  "orml-tokens",
  "orml-traits",
  "orml-unknown-tokens",
@@ -4903,6 +4908,7 @@ dependencies = [
  "pallet-crowdloan-rewards",
  "pallet-elections-phragmen",
  "pallet-issuance",
+ "pallet-multipurpose-liquidity",
  "pallet-session",
  "pallet-sudo",
  "pallet-sudo-origin",
@@ -5133,9 +5139,9 @@ dependencies = [
 
 [[package]]
 name = "mio"
-version = "0.8.3"
+version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "713d550d9b44d89174e066b7a6217ae06234c10cb47819a88290d2b353c31799"
+checksum = "57ee1c23c7c63b0c9250c339ffdc69255f110b298b901b9f6c82547b7b87caaf"
 dependencies = [
  "libc",
  "log",
@@ -5199,6 +5205,39 @@ name = "more-asserts"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7843ec2de400bcbc6a6328c958dc38e5359da6e93e72e37bc5246bf1ae776389"
+
+[[package]]
+name = "mp-bootstrap"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "mangata-primitives",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "mp-multipurpose-liquidity"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "parity-scale-codec 2.3.1",
+ "scale-info",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "mp-traits"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "mangata-primitives",
+ "mp-multipurpose-liquidity",
+ "parity-scale-codec 2.3.1",
+ "sp-runtime",
+ "sp-std",
+]
 
 [[package]]
 name = "multiaddr"
@@ -5288,7 +5327,7 @@ dependencies = [
  "bytes 1.1.0",
  "futures 0.3.21",
  "log",
- "pin-project 1.0.10",
+ "pin-project 1.0.11",
  "smallvec",
  "unsigned-varint 0.7.1",
 ]
@@ -5303,7 +5342,7 @@ dependencies = [
  "matrixmultiply",
  "nalgebra-macros",
  "num-complex",
- "num-rational 0.4.0",
+ "num-rational 0.4.1",
  "num-traits",
  "rand 0.8.5",
  "rand_distr",
@@ -5424,9 +5463,9 @@ dependencies = [
 
 [[package]]
 name = "num-rational"
-version = "0.4.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d41702bd167c2df5520b384281bc111a4b5efcf7fbc4c9c222c815b07e0a6a6a"
+checksum = "0638a1c9d0a3c0914158145bc76cff373a75a627e6ecbfb71cbe6f453a5a19b0"
 dependencies = [
  "autocfg",
  "num-integer",
@@ -5475,9 +5514,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.12.0"
+version = "1.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7709cef83f0c1f58f666e746a08b21e0085f7440fa6a29cc194d68aac97a4225"
+checksum = "18a6dbe30758c9f83eb00cbea4ac95966305f5a7772f3f42ebfc7fc7eddbd8e1"
 
 [[package]]
 name = "oorandom"
@@ -5538,7 +5577,7 @@ dependencies = [
 [[package]]
 name = "orml-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.17#9b4dfd472b1dc40100a46b3f99902e194f7d279b"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.17#2a3afac5e58ae5fc648d3b300c8899ee0ba56aa1"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5555,7 +5594,7 @@ dependencies = [
 [[package]]
 name = "orml-traits"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.17#9b4dfd472b1dc40100a46b3f99902e194f7d279b"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.17#2a3afac5e58ae5fc648d3b300c8899ee0ba56aa1"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
@@ -5573,7 +5612,7 @@ dependencies = [
 [[package]]
 name = "orml-unknown-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.17#9b4dfd472b1dc40100a46b3f99902e194f7d279b"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.17#2a3afac5e58ae5fc648d3b300c8899ee0ba56aa1"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5588,7 +5627,7 @@ dependencies = [
 [[package]]
 name = "orml-utilities"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.17#9b4dfd472b1dc40100a46b3f99902e194f7d279b"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.17#2a3afac5e58ae5fc648d3b300c8899ee0ba56aa1"
 dependencies = [
  "frame-support",
  "parity-scale-codec 2.3.1",
@@ -5602,7 +5641,7 @@ dependencies = [
 [[package]]
 name = "orml-xcm"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.17#9b4dfd472b1dc40100a46b3f99902e194f7d279b"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.17#2a3afac5e58ae5fc648d3b300c8899ee0ba56aa1"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5616,7 +5655,7 @@ dependencies = [
 [[package]]
 name = "orml-xcm-support"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.17#9b4dfd472b1dc40100a46b3f99902e194f7d279b"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.17#2a3afac5e58ae5fc648d3b300c8899ee0ba56aa1"
 dependencies = [
  "frame-support",
  "orml-traits",
@@ -5630,7 +5669,7 @@ dependencies = [
 [[package]]
 name = "orml-xtokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.17#9b4dfd472b1dc40100a46b3f99902e194f7d279b"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.17#2a3afac5e58ae5fc648d3b300c8899ee0ba56aa1"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -5837,6 +5876,9 @@ dependencies = [
  "log",
  "mangata-primitives",
  "mockall",
+ "mp-bootstrap",
+ "mp-multipurpose-liquidity",
+ "mp-traits",
  "orml-tokens",
  "orml-traits",
  "pallet-assets-info",
@@ -5848,7 +5890,6 @@ dependencies = [
  "serde",
  "serial_test",
  "sp-arithmetic",
- "sp-bootstrap",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -6235,6 +6276,35 @@ dependencies = [
  "sp-blockchain",
  "sp-core",
  "sp-runtime",
+]
+
+[[package]]
+name = "pallet-multipurpose-liquidity"
+version = "0.1.0"
+dependencies = [
+ "env_logger",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "lazy_static",
+ "log",
+ "mangata-primitives",
+ "mp-multipurpose-liquidity",
+ "mp-traits",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-vesting-mangata",
+ "parachain-staking",
+ "parity-scale-codec 2.3.1",
+ "rustc-hex",
+ "scale-info",
+ "serde",
+ "serial_test",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -6702,6 +6772,9 @@ dependencies = [
  "libm 0.2.1",
  "log",
  "mangata-primitives",
+ "mp-bootstrap",
+ "mp-multipurpose-liquidity",
+ "mp-traits",
  "orml-tokens",
  "orml-traits",
  "pallet-assets-info",
@@ -6714,7 +6787,6 @@ dependencies = [
  "serde",
  "serial_test",
  "sp-arithmetic",
- "sp-bootstrap",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -6737,13 +6809,15 @@ dependencies = [
 [[package]]
 name = "parachain-staking"
 version = "3.0.0"
-source = "git+https://github.com/mangata-finance//moonbeam?branch=mangata-dev-v0.9.17#0c8262ca2d766bfe85926427668acd8873a62e99"
+source = "git+https://github.com/mangata-finance//moonbeam?branch=mangata-dev-v0.9.17#aba0622cff76fab184e8d97d6ecfe6a877ba741a"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
  "mangata-primitives",
+ "mp-multipurpose-liquidity",
+ "mp-traits",
  "orml-tokens",
  "pallet-authorship",
  "pallet-collective",
@@ -6760,9 +6834,9 @@ dependencies = [
 
 [[package]]
 name = "parity-db"
-version = "0.3.13"
+version = "0.3.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "55a7901b85874402471e131de3332dde0e51f38432c69a3853627c8e25433048"
+checksum = "966eb23bd3a09758b8dac09f82b9d417c00f14e5d46171bf04cffdd9cb2e1eb1"
 dependencies = [
  "blake2-rfc",
  "crc32fast",
@@ -7096,27 +7170,27 @@ dependencies = [
 
 [[package]]
 name = "pin-project"
-version = "0.4.29"
+version = "0.4.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9615c18d31137579e9ff063499264ddc1278e7b1982757ebc111028c4d1dc909"
+checksum = "3ef0f924a5ee7ea9cbcea77529dba45f8a9ba9f622419fe3386ca581a3ae9d5a"
 dependencies = [
- "pin-project-internal 0.4.29",
+ "pin-project-internal 0.4.30",
 ]
 
 [[package]]
 name = "pin-project"
-version = "1.0.10"
+version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "58ad3879ad3baf4e44784bc6a718a8698867bb991f8ce24d1bcbe2cfb4c3a75e"
+checksum = "78203e83c48cffbe01e4a2d35d566ca4de445d79a85372fc64e378bfc812a260"
 dependencies = [
- "pin-project-internal 1.0.10",
+ "pin-project-internal 1.0.11",
 ]
 
 [[package]]
 name = "pin-project-internal"
-version = "0.4.29"
+version = "0.4.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "044964427019eed9d49d9d5bbce6047ef18f37100ea400912a9fa4a3523ab12a"
+checksum = "851c8d0ce9bebe43790dedfc86614c23494ac9f423dd618d3a61fc693eafe61e"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -7125,9 +7199,9 @@ dependencies = [
 
 [[package]]
 name = "pin-project-internal"
-version = "1.0.10"
+version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "744b6f092ba29c3650faf274db506afd39944f48420f6c86b17cfe0ee1cb36bb"
+checksum = "710faf75e1b33345361201d36d04e98ac1ed8909151a017ed384700836104c74"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -7266,7 +7340,7 @@ name = "polkadot-cli"
 version = "0.9.17"
 source = "git+https://github.com/mangata-finance//polkadot?branch=mangata-dev-v0.9.17#2f9e5cb31bf55a7c4e0b1c0967a7c29ac66faa15"
 dependencies = [
- "clap 3.2.5",
+ "clap 3.2.8",
  "frame-benchmarking-cli",
  "futures 0.3.21",
  "log",
@@ -7636,7 +7710,7 @@ dependencies = [
  "futures 0.3.21",
  "futures-timer",
  "parity-scale-codec 2.3.1",
- "pin-project 1.0.10",
+ "pin-project 1.0.11",
  "polkadot-core-primitives",
  "polkadot-node-subsystem-util",
  "polkadot-parachain",
@@ -7806,7 +7880,7 @@ dependencies = [
  "lru 0.7.7",
  "metered-channel",
  "parity-scale-codec 2.3.1",
- "pin-project 1.0.10",
+ "pin-project 1.0.11",
  "polkadot-node-jaeger",
  "polkadot-node-metrics",
  "polkadot-node-network-protocol",
@@ -7852,7 +7926,7 @@ dependencies = [
  "futures 0.3.21",
  "futures-timer",
  "metered-channel",
- "pin-project 1.0.10",
+ "pin-project 1.0.11",
  "polkadot-node-network-protocol",
  "polkadot-node-primitives",
  "polkadot-overseer-gen-proc-macro",
@@ -8561,9 +8635,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.39"
+version = "1.0.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c54b25569025b7fc9651de43004ae593a75ad88543b17178aa5e1b9c4f15f56f"
+checksum = "dd96a1e8ed2596c337f8eae5f24924ec83f5ad5ab21ea8e455d3566c69fbcaf7"
 dependencies = [
  "unicode-ident",
 ]
@@ -8637,9 +8711,9 @@ dependencies = [
 
 [[package]]
 name = "psm"
-version = "0.1.18"
+version = "0.1.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "871372391786ccec00d3c5d3d6608905b3d4db263639cfe075d3b60a736d115a"
+checksum = "accd89aa18fbf9533a581355a22438101fe9c2ed8c9e2f0dcf520552a3afddf2"
 dependencies = [
  "cc",
 ]
@@ -8663,9 +8737,9 @@ dependencies = [
 
 [[package]]
 name = "quote"
-version = "1.0.18"
+version = "1.0.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1feb54ed693b93a84e14094943b84b7c4eae204c512b7ccb95ab0c66d278ad1"
+checksum = "3bcdf212e9776fbcb2d23ab029360416bb1706b1aea2d1a5ba002727cbcab804"
 dependencies = [
  "proc-macro2",
 ]
@@ -9123,7 +9197,7 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bfa0f585226d2e68097d4f95d113b15b83a82e819ab25717ec0590d9584ef366"
 dependencies = [
- "semver 1.0.10",
+ "semver 1.0.12",
 ]
 
 [[package]]
@@ -9200,9 +9274,9 @@ dependencies = [
 
 [[package]]
 name = "rustversion"
-version = "1.0.6"
+version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2cc38e8fa666e2de3c4aba7edeb5ffc5246c1c2ed0e3d17e560aeeba736b23f"
+checksum = "a0a5f7c728f5d284929a1cccb5bc19884422bfe6ef4d6c409da2c41838983fcf"
 
 [[package]]
 name = "rw-stream-sink"
@@ -9211,7 +9285,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4da5fcb054c46f5a5dff833b129285a93d3f0179531735e6c866e8cc307d2020"
 dependencies = [
  "futures 0.3.21",
- "pin-project 0.4.29",
+ "pin-project 0.4.30",
  "static_assertions",
 ]
 
@@ -9395,7 +9469,7 @@ version = "0.10.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.17#7078de15600b54daf395e24c768c584ae5c2ae10"
 dependencies = [
  "chrono",
- "clap 3.2.5",
+ "clap 3.2.8",
  "fdlimit",
  "futures 0.3.21",
  "hex",
@@ -9850,7 +9924,7 @@ dependencies = [
  "lru 0.7.7",
  "parity-scale-codec 2.3.1",
  "parking_lot 0.11.2",
- "pin-project 1.0.10",
+ "pin-project 1.0.11",
  "prost",
  "prost-build",
  "rand 0.7.3",
@@ -10031,7 +10105,7 @@ dependencies = [
  "parity-scale-codec 2.3.1",
  "parity-util-mem",
  "parking_lot 0.11.2",
- "pin-project 1.0.10",
+ "pin-project 1.0.11",
  "rand 0.7.3",
  "sc-block-builder",
  "sc-block-builder-ver",
@@ -10126,7 +10200,7 @@ dependencies = [
  "libp2p",
  "log",
  "parking_lot 0.11.2",
- "pin-project 1.0.10",
+ "pin-project 1.0.11",
  "rand 0.7.3",
  "serde",
  "serde_json",
@@ -10366,9 +10440,9 @@ dependencies = [
 
 [[package]]
 name = "semver"
-version = "1.0.10"
+version = "1.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a41d061efea015927ac527063765e73601444cdc344ba855bc7bd44578b25e1c"
+checksum = "a2333e6df6d6598f2b1974829f853c2b4c5f4a6e503c10af918081aa6f8564e1"
 dependencies = [
  "serde",
 ]
@@ -10396,9 +10470,9 @@ checksum = "f97841a747eef040fcd2e7b3b9a220a7205926e60488e673d9e4926d27772ce5"
 
 [[package]]
 name = "serde"
-version = "1.0.137"
+version = "1.0.138"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "61ea8d54c77f8315140a05f4c7237403bf38b72704d031543aa1d16abbf517d1"
+checksum = "1578c6245786b9d168c5447eeacfb96856573ca56c9d68fdcf394be134882a47"
 dependencies = [
  "serde_derive",
 ]
@@ -10415,9 +10489,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.137"
+version = "1.0.138"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f26faba0c3959972377d3b2d306ee9f71faee9714294e41bb777f83f88578be"
+checksum = "023e9b1467aef8a10fb88f25611870ada9800ef7e22afce356bb0d2387b6f27c"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -10426,9 +10500,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.81"
+version = "1.0.82"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b7ce2b32a1aed03c558dc61a5cd328f15aff2dbc17daad8fb8af04d2100e15c"
+checksum = "82c2c1fdcd807d1098552c5b9a36e425e42e9fbd7c6a37a8425f390f781f7fa7"
 dependencies = [
  "itoa 1.0.2",
  "ryu",
@@ -10613,9 +10687,9 @@ dependencies = [
 
 [[package]]
 name = "smallvec"
-version = "1.8.0"
+version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2dd574626839106c320a323308629dcb1acfc96e32a8cba364ddc61ac23ee83"
+checksum = "2fd0db749597d91ff862fd1d55ea87f7855a744a8425a64695b6fca237d1dad1"
 
 [[package]]
 name = "snap"
@@ -10788,16 +10862,6 @@ dependencies = [
  "sp-runtime",
  "sp-state-machine",
  "thiserror",
-]
-
-[[package]]
-name = "sp-bootstrap"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "mangata-primitives",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -11406,9 +11470,9 @@ checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
 
 [[package]]
 name = "ss58-registry"
-version = "1.22.0"
+version = "1.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5d804c8d48aeab838be31570866fce1130d275b563d49af08b4927a0bd561e7c"
+checksum = "77ef98aedad3dc52e10995e7ed15f1279e11d4da35795f5dac7305742d0feb66"
 dependencies = [
  "Inflector",
  "num-format",
@@ -11612,9 +11676,9 @@ checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 
 [[package]]
 name = "syn"
-version = "1.0.96"
+version = "1.0.97"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0748dd251e24453cb8717f0354206b91557e4ec8703673a4b30208f2abaf1ebf"
+checksum = "233d6785e2e6b8442eb26736eaef8c8f0ce0e575c1457d06c3f2812f9cb4c8a0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -11856,7 +11920,7 @@ dependencies = [
  "bytes 1.1.0",
  "libc",
  "memchr",
- "mio 0.8.3",
+ "mio 0.8.4",
  "num_cpus",
  "once_cell",
  "pin-project-lite 0.2.9",
@@ -11968,9 +12032,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-attributes"
-version = "0.1.21"
+version = "0.1.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cc6b8ad3567499f98a1db7a752b07a7c8c7c7c34c332ec00effb2b0027974b7c"
+checksum = "11c75893af559bc8e10716548bdef5cb2b983f8e637db9d0e15126b61b484ee2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -11979,9 +12043,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-core"
-version = "0.1.27"
+version = "0.1.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7709595b8878a4965ce5e87ebf880a7d39c9afc6837721b21a5a816a8117d921"
+checksum = "7b7358be39f2f274f322d2aaed611acc57f382e8eb1e5b48cb9ae30933495ce7"
 dependencies = [
  "once_cell",
  "valuable",
@@ -11993,7 +12057,7 @@ version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97d095ae15e245a057c8e8451bab9b3ee1e1f68e9ba2b4fbc18d0ac5237835f2"
 dependencies = [
- "pin-project 1.0.10",
+ "pin-project 1.0.11",
  "tracing",
 ]
 
@@ -12117,7 +12181,7 @@ name = "try-runtime-cli"
 version = "0.10.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.17#7078de15600b54daf395e24c768c584ae5c2ae10"
 dependencies = [
- "clap 3.2.5",
+ "clap 3.2.8",
  "jsonrpsee 0.4.1",
  "log",
  "parity-scale-codec 2.3.1",
@@ -12213,9 +12277,9 @@ checksum = "5bd2fe26506023ed7b5e1e315add59d6f584c621d037f9368fea9cfb988f368c"
 
 [[package]]
 name = "unicode-normalization"
-version = "0.1.19"
+version = "0.1.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d54590932941a9e9266f0832deed84ebe1bf2e4c9e4a3554d393d18f5e854bf9"
+checksum = "854cbdc4f7bc6ae19c820d44abdc3277ac3e1b2b93db20a636825d9322fb60e6"
 dependencies = [
  "tinyvec",
 ]
@@ -13122,9 +13186,9 @@ dependencies = [
 
 [[package]]
 name = "zeroize"
-version = "1.5.5"
+version = "1.5.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "94693807d016b2f2d2e14420eb3bfcca689311ff775dcf113d74ea624b7cdf07"
+checksum = "20b578acffd8516a6c3f2a1bdefc1ec37e547bb4e0fb8b6b01a4cafc886b4442"
 dependencies = [
  "zeroize_derive",
 ]

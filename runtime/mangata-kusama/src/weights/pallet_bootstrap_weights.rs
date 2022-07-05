@@ -58,6 +58,7 @@ pub trait WeightInfo {
 	fn provision() -> Weight;
 	fn provision_vested() -> Weight;
 	fn claim_rewards() -> Weight;
+	fn finalize() -> Weight;
 }
 
 /// Weights for pallet_bootstrap using the Mangata node and recommended hardware.
@@ -111,6 +112,11 @@ impl<T: frame_system::Config> pallet_bootstrap::WeightInfo for ModuleWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(13 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
+	fn finalize() -> Weight {
+		(157_076_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(13 as Weight))
+			.saturating_add(T::DbWeight::get().writes(6 as Weight))
+	}
 }
 
 // For backwards compatibility and tests
@@ -131,6 +137,11 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
 	}
 	fn claim_rewards() -> Weight {
+		(157_076_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(13 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
+	}
+	fn finalize() -> Weight {
 		(157_076_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(13 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(6 as Weight))

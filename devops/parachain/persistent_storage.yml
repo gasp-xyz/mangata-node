@@ -3,4 +3,5 @@ services:
     volumes:
       - ./data:/tmp/
   para_bob:
+    volumes:
       - ./data:/tmp/

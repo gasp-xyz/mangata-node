@@ -140,7 +140,29 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
+	MangataMigrations,
 >;
+
+use frame_support::traits::OnRuntimeUpgrade;
+pub struct MangataMigrations;
+
+impl OnRuntimeUpgrade for MangataMigrations {
+	fn on_runtime_upgrade() -> frame_support::weights::Weight {
+		pallet_bootstrap::migrations::v1::MigrateToV1::<Runtime>::on_runtime_upgrade()
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn pre_upgrade() -> Result<(), &'static str> {
+		pallet_bootstrap::migrations::v1::MigrateToV1::<Runtime>::pre_upgrade();
+		Ok(())
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn post_upgrade() -> Result<(), &'static str> {
+		pallet_bootstrap::migrations::v1::MigrateToV1::<Runtime>::post_upgrade();
+		Ok(())
+	}
+}
 
 /// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
 /// node's balance type.
@@ -210,11 +232,11 @@ impl_opaque_keys! {
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
-	authoring_version: 5,
-	spec_version: 5,
+	authoring_version: 6,
+	spec_version: 6,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 5,
+	transaction_version: 6,
 	state_version: 0,
 };
 
@@ -489,8 +511,18 @@ impl orml_tokens::Config for Runtime {
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 }
 
+pub struct TestTokensFilter;
+impl Contains<TokenId> for TestTokensFilter {
+	fn contains(token_id: &TokenId) -> bool {
+		// we dont want to allow doing anything with dummy assets previously
+		// used for testing
+		*token_id == 2 || *token_id == 3
+	}
+}
+
 impl pallet_xyk::Config for Runtime {
 	type Event = Event;
+	type ActivationReservesProvider = MultiPurposeLiquidity;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type NativeCurrencyId = MgaTokenId;
 	type TreasuryPalletId = TreasuryPalletId;
@@ -502,16 +534,17 @@ impl pallet_xyk::Config for Runtime {
 	type BuyAndBurnFeePercentage = frame_support::traits::ConstU128<5>;
 	type RewardsDistributionPeriod = frame_support::traits::ConstU32<10000>;
 	type VestingProvider = Vesting;
+	type DisallowedPools = Bootstrap;
+	type DisabledTokens = TestTokensFilter;
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
 }
 
 impl pallet_bootstrap::Config for Runtime {
 	type Event = Event;
-	type MGATokenId = MgaTokenId;
-	type KSMTokenId = KsmTokenId;
 	type PoolCreateApi = Xyk;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type VestingProvider = Vesting;
+	type TreasuryPalletId = TreasuryPalletId;
 	type WeightInfo = weights::pallet_bootstrap_weights::ModuleWeight<Runtime>;
 }
 
@@ -1081,6 +1114,7 @@ const_assert!(BlocksPerRound::get() >= 2);
 
 impl parachain_staking::Config for Runtime {
 	type Event = Event;
+	type StakingReservesProvider = MultiPurposeLiquidity;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type MonetaryGovernanceOrigin = EnsureRoot<AccountId>;
 	type BlocksPerRound = BlocksPerRound;
@@ -1190,6 +1224,16 @@ impl pallet_crowdloan_rewards::Config for Runtime {
 	type VestingBlockNumber = BlockNumber;
 	type VestingBlockProvider = System;
 	type WeightInfo = weights::pallet_crowdloan_rewards_weights::ModuleWeight<Runtime>;
+}
+
+impl pallet_multipurpose_liquidity::Config for Runtime {
+	type Event = Event;
+	type MaxRelocks = MaxLocks;
+	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	type NativeCurrencyId = MgaTokenId;
+	type VestingProvider = Vesting;
+	type Xyk = Xyk;
+	type WeightInfo = weights::pallet_multipurpose_liquidity_weights::ModuleWeight<Runtime>;
 }
 
 parameter_types! {
@@ -1428,6 +1472,9 @@ construct_runtime!(
 		Aura: pallet_aura::{Pallet, Storage, Config<T>} = 23,
 		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config} = 24,
 
+		// MultiPurposeLiquidity
+		MultiPurposeLiquidity: pallet_multipurpose_liquidity::{Pallet, Call, Storage, Event<T>} = 25,
+
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 30,
 		PolkadotXcm: pallet_xcm::{Pallet, Storage, Call, Event<T>, Origin, Config} = 31,
@@ -1475,6 +1522,7 @@ mod benches {
 		[pallet_utility, Utility]
 		[pallet_vesting_mangata, Vesting]
 		[pallet_issuance, Issuance]
+		[pallet_multipurpose_liquidity, MultiPurposeLiquidity]
 	);
 }
 
@@ -1494,9 +1542,11 @@ impl_runtime_apis! {
 		}
 
 		fn is_storage_migration_scheduled() -> bool{
-			let last = frame_system::LastRuntimeUpgrade::<Runtime>::get();
-			let current = <<Runtime as frame_system::Config>::Version as frame_support::traits::Get<_>>::get();
-			last.map(|v| v.was_upgraded(&current)).unwrap_or(true)
+			System::read_events_no_consensus()
+				.iter()
+				.any(|record|
+					matches!(record.event,
+						Event::ParachainSystem( cumulus_pallet_parachain_system::Event::<Runtime>::ValidationFunctionApplied(_))))
 		}
 
 		fn store_seed(seed: sp_core::H256){

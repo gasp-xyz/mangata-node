@@ -492,7 +492,9 @@ jobs:
 
       - name: Stop mangata-node parachain
         if: always()
-        run: make -C devops/parachain stop
+        run: |
+          make -C devops/parachain stop
+          docker system prune -a -f
 
   publish:
     needs: [rustfmt-check, unit-test, clippy-check, build-rococo, build-kusama, e2e-test, run-benchmarks, run-benchmarks-tests]

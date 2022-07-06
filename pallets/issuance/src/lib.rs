@@ -94,6 +94,12 @@ impl WeightInfo for () {
 	}
 }
 
+pub trait ActivedPoolQueryApi{
+	fn get_pool_activate_amount(
+		liquidity_token_id: TokenId,
+	) -> Option<Balance>;
+}
+
 pub use pallet::*;
 
 #[frame_support::pallet]
@@ -161,6 +167,8 @@ pub mod pallet {
 			Moment = Self::BlockNumber,
 		>;
 		type WeightInfo: WeightInfo;
+
+		type ActivedPoolQueryApiType: ActivedPoolQueryApi;
 	}
 
 	#[pallet::storage]
@@ -220,6 +228,9 @@ pub mod pallet {
 			IsTGEFinalized::<T>::put(true);
 
 			Pallet::<T>::deposit_event(Event::TGEFinalized);
+
+			// TODO remove later
+			let _ = T::ActivedPoolQueryApiType::get_pool_activate_amount(1u32.into());
 
 			Ok(().into())
 		}

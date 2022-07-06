@@ -240,7 +240,7 @@ use mp_multipurpose_liquidity::ActivateKind;
 use mp_traits::{ActivationReservesProviderTrait, XykFunctionsTrait};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_assets_info as assets_info;
-use pallet_issuance::{ComputeIssuance, PoolPromoteApi};
+use pallet_issuance::{ComputeIssuance, PoolPromoteApi, ActivedPoolQueryApi};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
 use sp_runtime::traits::{
@@ -2842,8 +2842,6 @@ pub trait Valuate {
 	) -> Self::Balance;
 
 	fn get_pool_state(liquidity_token_id: Self::CurrencyId) -> Option<(Balance, Balance)>;
-
-	fn get_pool_activate_amount(liquidity_token_id: Self::CurrencyId) -> Result<Self::Balance>;
 }
 
 impl<T: Config> Valuate for Pallet<T> {
@@ -2933,12 +2931,6 @@ impl<T: Config> Valuate for Pallet<T> {
 
 		Some((mga_token_reserve, liquidity_token_reserve))
 	}
-
-	fn get_pool_activate_amount(
-		liquidity_token_id: Self::CurrencyId,
-	) -> Result<Self::Balance, DispatchError> {
-		LiquidityMiningActivePool::<T>::get(liquidity_token_id)
-	}
 }
 
 impl<T: Config> PoolCreateApi for Pallet<T> {
@@ -2970,4 +2962,12 @@ impl<T: Config> PoolCreateApi for Pallet<T> {
 			},
 		}
 	}
+}
+
+impl<T: Config> ActivedPoolQueryApi for Pallet<T> {
+    fn get_pool_activate_amount(
+		liquidity_token_id: TokenId,
+	) -> Option<Balance> {
+		LiquidityMiningActivePool::<T>::try_get(liquidity_token_id).ok()
+    }
 }

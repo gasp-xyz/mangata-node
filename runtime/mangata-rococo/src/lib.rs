@@ -1150,6 +1150,7 @@ impl pallet_issuance::Config for Runtime {
 	type TGEReleaseBegin = TGEReleaseBegin;
 	type VestingProvider = Vesting;
 	type WeightInfo = weights::pallet_issuance_weights::ModuleWeight<Runtime>;
+	type ActivedPoolQueryApiType = Xyk;
 }
 
 parameter_types! {

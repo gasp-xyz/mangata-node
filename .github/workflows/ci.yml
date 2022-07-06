@@ -23,7 +23,7 @@ on:
         parachainDocker:
           description: 'Name of the parachain docker reference'
           required: false
-          default: "mangatasolutions/mangata-node:latest"
+          default: "mangatasolutions/mangata-node:rococo-latest"
 
         skipBuild:
           description: "Skip build phase"
@@ -176,6 +176,7 @@ jobs:
 
   build-rococo:
     runs-on: ubuntu-latest
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'skip-build') || github.event.inputs.skipBuild == 'true' }}
     steps:
       -
         name: Debug info about publishing.
@@ -242,6 +243,7 @@ jobs:
 
   build-kusama:
     runs-on: ubuntu-latest
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'skip-build') || github.event.inputs.skipBuild == 'true' }}
     steps:
       -
         name: Debug info about publishing.

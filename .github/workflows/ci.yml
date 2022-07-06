@@ -176,7 +176,6 @@ jobs:
 
   build-rococo:
     runs-on: ubuntu-latest
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
     steps:
       -
         name: Debug info about publishing.
@@ -199,15 +198,18 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Pull builder image
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         run: |
           docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
       -
         name: Build node binary
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
           ./docker-cargo.sh build -j2 --release --features=mangata-rococo
       -
         name: Calculate wasm checksum
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         run: >
           md5sum
           ./docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm
@@ -215,6 +217,7 @@ jobs:
           ./docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm.md5
       -
         name: Build node img
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         env:
           DOCKER_IMAGE_GIT_SHA_TAG: "mangatasolutions/mangata-node:rococo-${{ github.sha }}"
           DOCKER_IMAGE_LATEST_TAG: "mangatasolutions/mangata-node:rococo-${{ github.sha }}"
@@ -243,7 +246,6 @@ jobs:
 
   build-kusama:
     runs-on: ubuntu-latest
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
     steps:
       -
         name: Debug info about publishing.
@@ -266,15 +268,18 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Pull builder image
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         run: |
           docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
       -
         name: Build node binary
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
           ./docker-cargo.sh build -j2 --release --features=mangata-kusama
       -
         name: Calculate wasm checksum
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         run: >
           md5sum
           ./docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm 
@@ -282,6 +287,7 @@ jobs:
           ./docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm.md5
       -
         name: Build node img
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         env:
           DOCKER_IMAGE_GIT_SHA_TAG: "mangatasolutions/mangata-node:kusama-${{ github.sha }}"
           DOCKER_IMAGE_LATEST_TAG: "mangatasolutions/mangata-node:kusama-${{ github.sha }}"

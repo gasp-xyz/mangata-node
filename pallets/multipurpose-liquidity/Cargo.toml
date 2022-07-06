@@ -1,7 +1,7 @@
 [package]
 authors = ['Mangata team']
 edition = '2018'
-name = 'pallet-xyk'
+name = 'pallet-multipurpose-liquidity'
 version = '0.1.0'
 
 [package.metadata.docs.rs]
@@ -12,8 +12,8 @@ log = { version = "0.4.14", default-features = false }
 hex = { package = "rustc-hex", version = "2.1.0", default-features = false }
 hex-literal = { version = "0.3.3", default-features = false }
 serde = { version = "1.0.126", optional = true }
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
-scale-info = { version = "2.0.0", default-features = false, features = ["derive"] }
+codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false }
+scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 
 frame-support = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
 frame-benchmarking = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
@@ -22,17 +22,12 @@ sp-runtime = { default-features = false, version = '6.0.0' , git = "https://gith
 sp-core = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
 sp-std = { version = "4.0.0-dev", default-features = false , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
 mangata-primitives = { default-features = false, version = '0.1.0' , path = '../../primitives/mangata'}
-pallet-issuance = { default-features = false, path = "../issuance" }
-pallet-bootstrap = { default-features = false, path = "../bootstrap" }
-sp-arithmetic = { default-features = false, version = '5.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
-libm = { default-features = false, git = "https://github.com/rust-lang/libm", rev="2f3fc968f43d345f9b449938d050a9ea46a04c83"}
-mp-bootstrap = { path = "../../primitives/bootstrap", default-features=false }
 orml-tokens = {  default-features = false, version = '0.4.1-dev' , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v0.9.24" }
 
-pallet-assets-info = { path = '../assets-info', default-features = false, version = '2.0.0' }
 pallet-vesting-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.24" }
 mp-multipurpose-liquidity = { path = '../../primitives/multipurpose-liquidity', default-features = false}
 mp-traits = { path = '../../primitives/traits', default-features = false}
+parachain-staking = { default-features = false, git = "https://github.com/mangata-finance/moonbeam.git", branch = "mangata-dev-v0.9.24" }
 
 [dev-dependencies]
 orml-traits = { default-features = false, version="0.4.1-dev" , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v0.9.24" }
@@ -43,22 +38,25 @@ serial_test = { version = "0.6.0", default-features = false }
 
 [features]
 default = ['std']
+enable-trading = []
 std = [
     'hex/std',
 	'serde',
     'codec/std',
     'sp-std/std',
 	'sp-core/std',
-	'mp-bootstrap/std',
+    "sp-runtime/std",
     'frame-support/std',
     'frame-system/std',
 	"frame-benchmarking/std",
 	'orml-tokens/std',
-    'pallet-assets-info/std',
 	"frame-benchmarking/std",
     'pallet-vesting-mangata/std',
     "mp-multipurpose-liquidity/std",
-    "mp-traits/std"
+    "mp-traits/std",
+    "parachain-staking/std",
 ]
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
+
+try-runtime = [ "frame-support/try-runtime" ]

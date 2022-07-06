@@ -1,5 +1,5 @@
 [package]
-name = "mp-bootstrap"
+name = "mp-multipurpose-liquidity"
 version = "0.1.0"
 authors = ['Mangata team']
 edition = "2018"
@@ -8,7 +8,9 @@ edition = "2018"
 sp-std = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
 sp-runtime = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
 frame-support = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
-mangata-primitives = { path = "../mangata" , default-features= false}
+
+codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false }
+scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 
 [features]
 default = ["std"]
@@ -16,5 +18,5 @@ std = [
     'sp-std/std',
     'sp-runtime/std',
     'frame-support/std',
-    'mangata-primitives/std',
+    'codec/std',
 ]

@@ -29,6 +29,9 @@ xyk-runtime-api = { path = '../../pallets/xyk/runtime-api', default-features = f
 pallet-sudo-origin = { path = '../../pallets/sudo-origin', default-features = false}
 xcm-asset-registry = { path = '../../pallets/asset-registry', default-features = false}
 pallet-issuance = { path = '../../pallets/issuance', default-features = false}
+pallet-multipurpose-liquidity = { path = '../../pallets/multipurpose-liquidity', default-features = false}
+mp-multipurpose-liquidity = { path = '../../primitives/multipurpose-liquidity', default-features = false}
+mp-traits = { path = '../../primitives/traits', default-features = false}
 
 # Substrate Dependencies
 ## Substrate Primitive Dependencies
@@ -186,22 +189,25 @@ std = [
 	"pallet-issuance/std",
 	"pallet-vesting-mangata/std",
 	"pallet-crowdloan-rewards/std",
+	"pallet-collective/std",
 	"pallet-elections-phragmen/std",
+	"frame-system-rpc-runtime-api/std",
+
+	"pallet-multipurpose-liquidity/std",
+    "mp-multipurpose-liquidity/std",
+    "mp-traits/std"
 
 ]
 
 try-runtime = [
 	"frame-try-runtime",
 	"frame-executive/try-runtime",
+	"pallet-multipurpose-liquidity/try-runtime",
 ]
 
 #disable-execution = [
 #	"frame-executive/disable-execution",
 #]
-
-enable-trading = [
-	"pallet-xyk/enable-trading"
-]
 
 runtime-benchmarks = [
 	"hex-literal",
@@ -220,11 +226,11 @@ runtime-benchmarks = [
 	"parachain-staking/runtime-benchmarks",
 	"xcm-asset-registry/runtime-benchmarks",
 	"pallet-treasury/runtime-benchmarks",
-	"pallet-collective/runtime-benchmarks",
 	"pallet-elections-phragmen/runtime-benchmarks",
 	"pallet-crowdloan-rewards/runtime-benchmarks",
 	"pallet-utility/runtime-benchmarks",
 	"pallet-vesting-mangata/runtime-benchmarks",
 	"pallet-issuance/runtime-benchmarks",
 	"pallet-bootstrap/runtime-benchmarks",
+	"pallet-multipurpose-liquidity/runtime-benchmarks",
 ]

@@ -123,7 +123,7 @@ fn initialize_liquidity_rewards() {
 	XykStorage::create_new_token(&acc_id, amount);
 
 	XykStorage::create_pool(Origin::signed(2), 0, 5000, 1, 5000).unwrap();
-	XykStorage::activate_liquidity(Origin::signed(2), 4, 5000).unwrap();
+	XykStorage::activate_liquidity(Origin::signed(2), 4, 5000, None).unwrap();
 }
 
 #[test]
@@ -143,7 +143,7 @@ fn liquidity_rewards_single_user_work_W() {
 		XykStorage::create_pool(Origin::signed(2), 0, max - 1, 1, max - 1).unwrap();
 		XykStorage::promote_pool(Origin::root(), 4).unwrap();
 		let liquidity_tokens_owned = XykStorage::balance(4, 2);
-		XykStorage::activate_liquidity(Origin::signed(2), 4, liquidity_tokens_owned).unwrap();
+		XykStorage::activate_liquidity(Origin::signed(2), 4, liquidity_tokens_owned, None).unwrap();
 
 		MockPromotedPoolApi::instance().lock().unwrap().insert(4, 1000000000);
 
@@ -1498,7 +1498,7 @@ fn liquidity_rewards_tokens_reserved_after_mint_W() {
 		XykStorage::promote_pool(Origin::root(), 4).unwrap();
 
 		let liquidity_tokens_owned = XykStorage::balance(4, 2);
-		XykStorage::activate_liquidity(Origin::signed(2), 4, liquidity_tokens_owned).unwrap();
+		XykStorage::activate_liquidity(Origin::signed(2), 4, liquidity_tokens_owned, None).unwrap();
 		MockPromotedPoolApi::instance().lock().unwrap().insert(4, 1000000000);
 
 		XykStorage::transfer(0, 2, 3, 1000000).unwrap();
@@ -1568,7 +1568,7 @@ fn liquidity_rewards_transfer_working_after_deactivate() {
 		assert_eq!(XykStorage::liquidity_mining_active_user((3, 4)), 0);
 		assert_eq!(XykStorage::balance(4, 3), 2500);
 
-		XykStorage::activate_liquidity(Origin::signed(3), 4, 2500).unwrap();
+		XykStorage::activate_liquidity(Origin::signed(3), 4, 2500, None).unwrap();
 
 		assert_eq!(XykStorage::liquidity_mining_active_user((2, 4)), 2500);
 		assert_eq!(XykStorage::balance(4, 2), 0);
@@ -2669,5 +2669,35 @@ fn PoolCreateApi_pool_create_creates_a_pool() {
 		assert_eq!(liq_token_amount, XykStorage::balance(liq_token_id, DUMMY_USER_ID.into()));
 
 		assert!(<XykStorage as PoolCreateApi>::pool_exists(0_u32.into(), 1_u32.into()));
+	});
+}
+
+#[test]
+fn test_create_blacklisted_pool() {
+	new_test_ext().execute_with(|| {
+		let blaclisted_first_asset_id = 1;
+		let blaclisted_second_asset_id = 9;
+
+		assert_err!(
+			XykStorage::create_pool(
+				Origin::signed(2),
+				blaclisted_first_asset_id,
+				100000000000000,
+				blaclisted_second_asset_id,
+				100000000000000
+			),
+			Error::<Test>::DisallowedPool
+		);
+
+		assert_err!(
+			XykStorage::create_pool(
+				Origin::signed(2),
+				blaclisted_second_asset_id,
+				100000000000000,
+				blaclisted_first_asset_id,
+				100000000000000
+			),
+			Error::<Test>::DisallowedPool
+		);
 	});
 }

@@ -18,11 +18,14 @@
 
 use super::*;
 use crate as pallet_bootstrap;
+use codec::EncodeLike;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{ConstU128, ConstU32, Contains, Everything},
+	traits::{ConstU128, ConstU32, Contains, Everything, Nothing},
 };
 use mangata_primitives::{Amount, Balance, TokenId};
+use mp_multipurpose_liquidity::ActivateKind;
+use mp_traits::ActivationReservesProviderTrait;
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter};
 use orml_traits::parameter_type_with_key;
 use sp_runtime::{Perbill, Percent};
@@ -119,6 +122,7 @@ impl pallet_vesting_mangata::Config for Test {
 
 impl pallet_xyk::Config for Test {
 	type Event = Event;
+	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
 	type Currency = MultiTokenCurrencyAdapter<Test>;
 	type NativeCurrencyId = NativeCurrencyId;
 	type TreasuryPalletId = TreasuryPalletId;
@@ -130,7 +134,47 @@ impl pallet_xyk::Config for Test {
 	type BuyAndBurnFeePercentage = ConstU128<5>;
 	type RewardsDistributionPeriod = ConstU32<10000>;
 	type WeightInfo = ();
+	type DisallowedPools = Bootstrap;
+	type DisabledTokens = Nothing;
 	type VestingProvider = Vesting;
+}
+
+pub struct TokensActivationPassthrough<T: Config>(PhantomData<T>);
+impl<T: Config> ActivationReservesProviderTrait for TokensActivationPassthrough<T>
+where
+	<T as frame_system::Config>::AccountId: EncodeLike<AccountId>,
+{
+	type AccountId = T::AccountId;
+
+	fn get_max_instant_unreserve_amount(token_id: TokenId, account_id: &Self::AccountId) -> Balance
+	where
+		<T as frame_system::Config>::AccountId: EncodeLike<AccountId>,
+	{
+		Xyk::liquidity_mining_active_user((account_id.clone(), token_id))
+	}
+
+	fn can_activate(
+		token_id: TokenId,
+		account_id: &Self::AccountId,
+		amount: Balance,
+		_use_balance_from: Option<ActivateKind>,
+	) -> bool {
+		<T as pallet::Config>::Currency::can_reserve(token_id.into(), account_id, amount.into())
+	}
+
+	fn activate(
+		token_id: TokenId,
+		account_id: &Self::AccountId,
+		amount: Balance,
+		_use_balance_from: Option<ActivateKind>,
+	) -> DispatchResult {
+		<T as pallet::Config>::Currency::reserve(token_id.into(), account_id, amount.into())
+	}
+
+	fn deactivate(token_id: TokenId, account_id: &Self::AccountId, amount: Balance) -> Balance {
+		<T as pallet::Config>::Currency::unreserve(token_id.into(), account_id, amount.into())
+			.into()
+	}
 }
 
 parameter_types! {
@@ -187,9 +231,8 @@ mockall::mock! {
 // NOTE: use PoolCreateApi mock for unit testing purposes
 impl pallet_bootstrap::Config for Test {
 	type Event = Event;
-	type MGATokenId = MGAId;
-	type KSMTokenId = KSMId;
 	type PoolCreateApi = MockPoolCreateApi;
+	type TreasuryPalletId = TreasuryPalletId;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type VestingProvider = Vesting;
 	type WeightInfo = ();
@@ -199,9 +242,8 @@ impl pallet_bootstrap::Config for Test {
 // NOTE: use Xyk as PoolCreateApi for benchmarking purposes
 impl pallet_bootstrap::Config for Test {
 	type Event = Event;
-	type MGATokenId = MGAId;
-	type KSMTokenId = KSMId;
 	type PoolCreateApi = Xyk;
+	type TreasuryPalletId = TreasuryPalletId;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type VestingProvider = Vesting;
 	type WeightInfo = ();

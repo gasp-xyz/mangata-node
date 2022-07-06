@@ -2842,6 +2842,8 @@ pub trait Valuate {
 	) -> Self::Balance;
 
 	fn get_pool_state(liquidity_token_id: Self::CurrencyId) -> Option<(Balance, Balance)>;
+
+	fn get_pool_activate_amount(liquidity_token_id: Self::CurrencyId) -> Result<Self::Balance>;
 }
 
 impl<T: Config> Valuate for Pallet<T> {
@@ -2930,6 +2932,12 @@ impl<T: Config> Valuate for Pallet<T> {
 		}
 
 		Some((mga_token_reserve, liquidity_token_reserve))
+	}
+
+	fn get_pool_activate_amount(
+		liquidity_token_id: Self::CurrencyId,
+	) -> Result<Self::Balance, DispatchError> {
+		LiquidityMiningActivePool::<T>::get(liquidity_token_id)
 	}
 }
 

@@ -409,11 +409,10 @@ jobs:
 
       - name: Test Report
         uses: dorny/test-reporter@v1
-        working-directory: e2eTests
         if: success() || failure()    # run this step even if previous step failed
         with:
           name: JEST Tests            # Name of the check run which will be created
-          path: reports/junit-*.xml   # Path to test results
+          path: e2eTests/reports/junit-*.xml    # Path to test results
           reporter: jest-junit        # Format of test results
 
       - name: Collect docker logs on failure
@@ -547,11 +546,10 @@ jobs:
 
       - name: Test Report
         uses: dorny/test-reporter@v1
-        working-directory: e2eTests
         if: success() || failure()    # run this step even if previous step failed
         with:
           name: JEST Tests            # Name of the check run which will be created
-          path: reports/junit-*.xml   # Path to test results
+          path: e2eTests/reports/junit-*.xml    # Path to test results
           reporter: jest-junit        # Format of test results
 
       - name: Collect docker logs on failure

@@ -2628,7 +2628,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		}
 
 
-<T as Config>::Currency::transfer(
+		<T as Config>::Currency::transfer(
 			mangata_id.into(),
 			&<T as Config>::LiquidityMiningIssuanceVault::get(),
 			&user,
@@ -2638,49 +2638,31 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 		Pallet::<T>::deposit_event(Event::RewardsClaimed(user, liquidity_asset_id, mangata_amount));
 
-		// let current_rewards =
-		// 	Pallet::<T>::calculate_rewards_amount(user.clone(), liquidity_asset_id)?;
-		// let already_claimed_rewards =
-		// 	LiquidityMiningUserAlreadyClaimed::<T>::get((&user, liquidity_asset_id));
-		// let burned_not_claimed_rewards =
-		// 	LiquidityMiningUserNotYetClaimed::<T>::get((&user, liquidity_asset_id));
+		Ok(())
+	}
 
-		// ensure!(mangata_amount <= current_rewards, Error::<T>::NotEnoughtRewardsEarned);
+	fn claim_rewards_all(
+		user: T::AccountId,
+		liquidity_asset_id: Self::CurrencyId,
+	) -> DispatchResult {
+		let mangata_id: TokenId = T::NativeCurrencyId::get();
 
-		// // user is taking out rewards from LP which was already removed from pool
-		// if mangata_amount <= burned_not_claimed_rewards {
-		// 	let burned_not_claimed_rewards_new = burned_not_claimed_rewards - mangata_amount;
-		// 	LiquidityMiningUserNotYetClaimed::<T>::insert(
-		// 		(&user, liquidity_asset_id),
-		// 		burned_not_claimed_rewards_new,
-		// 	);
-		// }
-		// // user is taking out more rewards then rewards from LP which was already removed from pool, additional work needs to be removed from pool and user
-		// else {
-		// 	LiquidityMiningUserNotYetClaimed::<T>::insert((&user, liquidity_asset_id), 0 as u128);
-		// 	// rewards to claim on top of rewards from LP which was already removed from pool
-		// 	let rewards_to_claim = mangata_amount
-		// 		.checked_sub(burned_not_claimed_rewards)
-		// 		.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
-		// 	let new_rewards_claimed = already_claimed_rewards
-		// 		.checked_add(rewards_to_claim)
-		// 		.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+		let claimable_rewards = Pallet::<T>::calculate_rewards_amount(user.clone(), liquidity_asset_id)?;
+		
+		LiquidityMiningUserNotYetClaimed::<T>::insert(
+			(user.clone(), liquidity_asset_id),
+			0 as u128,
+		);
+				
+		<T as Config>::Currency::transfer(
+			mangata_id.into(),
+			&<T as Config>::LiquidityMiningIssuanceVault::get(),
+			&user,
+			claimable_rewards.into(),
+			ExistenceRequirement::KeepAlive,
+		)?;
 
-		// 	LiquidityMiningUserAlreadyClaimed::<T>::insert(
-		// 		(&user, liquidity_asset_id),
-		// 		new_rewards_claimed,
-		// 	);
-		// }
-
-		// <T as Config>::Currency::transfer(
-		// 	mangata_id.into(),
-		// 	&<T as Config>::LiquidityMiningIssuanceVault::get(),
-		// 	&user,
-		// 	mangata_amount.into(),
-		// 	ExistenceRequirement::KeepAlive,
-		// )?;
-
-		// Pallet::<T>::deposit_event(Event::RewardsClaimed(user, liquidity_asset_id, mangata_amount));
+		Pallet::<T>::deposit_event(Event::RewardsClaimed(user, liquidity_asset_id, claimable_rewards));
 
 		Ok(())
 	}

@@ -229,9 +229,6 @@ pub mod pallet {
 
 			Pallet::<T>::deposit_event(Event::TGEFinalized);
 
-			// TODO remove later
-			let _ = T::ActivedPoolQueryApiType::get_pool_activate_amount(1u32.into());
-
 			Ok(().into())
 		}
 
@@ -507,8 +504,12 @@ impl<T: Config> Pallet<T> {
 			liquidity_mining_issuance / promoted_pools_count as u128
 		};
 
-		PromotedPoolsRewards::<T>::translate(|_, v: Balance| {
-			Some(v + liquidity_mining_issuance_per_pool)
+		// TODO remove later
+	
+		PromotedPoolsRewards::<T>::translate(|liquidity_token_id, v: Balance| {
+			let activated_amount =  T::ActivedPoolQueryApiType::get_pool_activate_amount(liquidity_token_id)?;
+			let rewards_per_liquidity = liquidity_mining_issuance_per_pool.checked_mul(10000).ok_or_else(|| DispatchError::from(Error::<T>::MathError)).checked_div(activated_amount).ok_or_else(|| DispatchError::from(Error::<T>::MathError));
+			Some(v + rewards_per_liquidity)
 		});
 
 		{

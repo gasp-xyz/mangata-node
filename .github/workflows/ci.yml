@@ -314,7 +314,7 @@ jobs:
             ./docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm
             ./docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm.md5
 
-  e2e-test-parallel.self-hosted:
+  e2e-test-parallel-self-hosted:
     needs: build-rococo
     runs-on: self-hosted
     if: "!contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests')"
@@ -451,7 +451,7 @@ jobs:
           docker system prune -a -f
 
 
-  e2e-test-sequential.self-hosted:
+  e2e-test-sequential-self-hosted:
     needs: build-rococo
     runs-on: self-hosted
     if: "!contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests')"
@@ -588,7 +588,7 @@ jobs:
           docker system prune -a -f
 
   publish:
-    needs: [rustfmt-check, unit-test, clippy-check, build-rococo, build-kusama, e2e-test-sequential, e2e-test-parallel, run-benchmarks, run-benchmarks-tests]
+    needs: [rustfmt-check, unit-test, clippy-check, build-rococo, build-kusama, e2e-test-sequential-self-hosted, e2e-test-parallel-self-hosted, run-benchmarks, run-benchmarks-tests]
     runs-on: ubuntu-latest
     if: |
       github.ref == 'refs/heads/develop' && 

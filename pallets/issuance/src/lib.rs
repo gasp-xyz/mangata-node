@@ -507,9 +507,10 @@ impl<T: Config> Pallet<T> {
 		// TODO remove later
 	
 		PromotedPoolsRewards::<T>::translate(|liquidity_token_id, v: Balance| {
-			let activated_amount =  T::ActivedPoolQueryApiType::get_pool_activate_amount(liquidity_token_id)?;
-			let rewards_per_liquidity = liquidity_mining_issuance_per_pool.checked_mul(10000).ok_or_else(|| DispatchError::from(Error::<T>::MathError)).checked_div(activated_amount).ok_or_else(|| DispatchError::from(Error::<T>::MathError));
-			Some(v + rewards_per_liquidity)
+			// let activated_amount =  T::ActivedPoolQueryApiType::get_pool_activate_amount(liquidity_token_id)?;
+			// let rewards_per_liquidity = liquidity_mining_issuance_per_pool.checked_mul(10000)?.ok_or_else(|| DispatchError::from(Error::<T>::MathError))?.checked_div(activated_amount).ok_or_else(|| DispatchError::from(Error::<T>::MathError));
+			// Some(v + rewards_per_liquidity)
+			Some(v + 5 as u128)
 		});
 
 		{

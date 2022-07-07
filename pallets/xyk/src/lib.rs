@@ -269,7 +269,7 @@ macro_rules! log {
 
 const PALLET_ID: PalletId = PalletId(*b"79b14c96");
 // Quocient ratio in which liquidity minting curve is rising
-const Q: f64 = 1.06;
+const Q: f64 = 1.03;
 // Precision used in rewards calculation rounding
 const REWARDS_PRECISION: u32 = 10000;
 
@@ -429,28 +429,28 @@ pub mod pallet {
 		StorageMap<_, Blake2_256, TokenId, Option<(TokenId, TokenId)>, ValueQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn liquidity_mining_user)]
-	pub type LiquidityMiningUser<T: Config> =
+	#[pallet::getter(fn liquidity_mining_user_v2)]
+	pub type LiquidityMiningUserV2<T: Config> =
 		StorageMap<_, Blake2_256, (AccountIdOf<T>, TokenId), (u32, u128, U256), ValueQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn liquidity_mining_user_not_yet_claimed)]
-	pub type LiquidityMiningUserNotYetClaimed<T: Config> =
+	#[pallet::getter(fn liquidity_mining_user_not_yet_claimed_v2)]
+	pub type LiquidityMiningUserNotYetClaimedV2<T: Config> =
 		StorageMap<_, Blake2_256, (AccountIdOf<T>, TokenId), u128, ValueQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn liquidity_mining_user_already_claimed)]
-	pub type LiquidityMiningUserAlreadyClaimed<T: Config> =
+	#[pallet::getter(fn liquidity_mining_user_already_claimed_v2)]
+	pub type LiquidityMiningUserAlreadyClaimedV2<T: Config> =
 		StorageMap<_, Twox64Concat, (AccountIdOf<T>, TokenId), u128, ValueQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn liquidity_mining_active_user)]
-	pub type LiquidityMiningActiveUser<T: Config> =
+	#[pallet::getter(fn liquidity_mining_active_user_v2)]
+	pub type LiquidityMiningActiveUserV2<T: Config> =
 		StorageMap<_, Twox64Concat, (AccountIdOf<T>, TokenId), u128, ValueQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn liquidity_mining_active_pool)]
-	pub type LiquidityMiningActivePool<T: Config> =
+	#[pallet::getter(fn liquidity_mining_active_pool_v2)]
+	pub type LiquidityMiningActivePoolV2<T: Config> =
 		StorageMap<_, Twox64Concat, TokenId, u128, ValueQuery>;
 
 	// stores user claimed rewards, for future calculation of rewards
@@ -768,7 +768,7 @@ impl<T: Config> Pallet<T> {
 				<T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).unwrap();
 
 			let (user_last_checkpoint, user_cumulative_rewards_ratio, user_missing_at_checkpoint) =
-				LiquidityMiningUser::<T>::get((&user, &liquidity_asset_id));
+				LiquidityMiningUserV2::<T>::get((&user, &liquidity_asset_id));
 
 			rewards = Self::calculate_rewards(
 				user.clone(),
@@ -839,10 +839,10 @@ impl<T: Config> Pallet<T> {
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError5))?;
 
 		let not_yet_claimed_rewards =
-			LiquidityMiningUserNotYetClaimed::<T>::get((user.clone(), &liquidity_asset_id));
+			LiquidityMiningUserNotYetClaimedV2::<T>::get((user.clone(), &liquidity_asset_id));
 
 		let already_claimed_rewards =
-			LiquidityMiningUserAlreadyClaimed::<T>::get((user, &liquidity_asset_id));
+			LiquidityMiningUserAlreadyClaimedV2::<T>::get((user, &liquidity_asset_id));
 
 		let total_available_rewards = current_rewards
 			.checked_add(not_yet_claimed_rewards)
@@ -1025,7 +1025,7 @@ impl<T: Config> Pallet<T> {
 	// 		user_last_checkpoint,
 	// 		user_cumulative_rewards_ratio,
 	// 		user_missing_at_checkpoint,
-	// 	) = LiquidityMiningUser::<T>::try_get((&user, &liquidity_asset_id))
+	// 	) = LiquidityMiningUserV2::<T>::try_get((&user, &liquidity_asset_id))
 	// 		.unwrap_or_else(|_| (current_time, U256::from(0), U256::from(0)));
 
 	// 	let user_time_passed = current_time
@@ -1062,7 +1062,7 @@ impl<T: Config> Pallet<T> {
 		log!(info, "----------set_liquidity_minting_checkpoint: 1 ",);
 
 		let (user_last_checkpoint, user_cumulative_rewards_ratio, user_missing_at_checkpoint) =
-			LiquidityMiningUser::<T>::try_get((&user, &liquidity_asset_id)).unwrap_or_else(|_| {
+			LiquidityMiningUserV2::<T>::try_get((&user, &liquidity_asset_id)).unwrap_or_else(|_| {
 				(current_time, cumulative_rewards_ratio_current, U256::from(liquidity_assets_added))
 			});
 
@@ -1099,12 +1099,12 @@ impl<T: Config> Pallet<T> {
 		};
 
 		log!(info, "----------set_liquidity_minting_checkpoint: 4 ",);
-		LiquidityMiningUserNotYetClaimed::<T>::insert(
+		LiquidityMiningUserNotYetClaimedV2::<T>::insert(
 			(&user, liquidity_asset_id),
 			user_current_rewards,
 		);
 
-		LiquidityMiningUser::<T>::insert(
+		LiquidityMiningUserV2::<T>::insert(
 			(&user, &liquidity_asset_id),
 			(current_time, cumulative_rewards_ratio_current, missing_at_checkpoint_new),
 		);
@@ -1165,7 +1165,7 @@ impl<T: Config> Pallet<T> {
 			<T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).unwrap();
 
 		let (user_last_checkpoint, user_cumulative_rewards_ratio, user_missing_at_checkpoint) =
-			LiquidityMiningUser::<T>::get((&user, &liquidity_asset_id));
+			LiquidityMiningUserV2::<T>::get((&user, &liquidity_asset_id));
 
 		let liquidity_assets_amount: Balance =
 			LiquidityMiningActiveUser::<T>::get((&user, &liquidity_asset_id));
@@ -1197,12 +1197,12 @@ impl<T: Config> Pallet<T> {
 			.checked_div(liquidity_assets_amount.into())
 			.ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
 
-		LiquidityMiningUserNotYetClaimed::<T>::insert(
+		LiquidityMiningUserNotYetClaimedV2::<T>::insert(
 			(&user, liquidity_asset_id),
 			user_current_rewards,
 		);
 
-		LiquidityMiningUser::<T>::insert(
+		LiquidityMiningUserV2::<T>::insert(
 			(&user, &liquidity_asset_id),
 			(current_time, cumulative_rewards_ratio_current, missing_at_checkpoint_after_burn),
 		);
@@ -1232,109 +1232,6 @@ impl<T: Config> Pallet<T> {
 			&user,
 			liquidity_assets_burned.into(),
 		);
-
-		// let (
-		// 	current_time,
-		// 	user_work_total,
-		// 	user_missing_at_checkpoint,
-		// 	pool_work_total,
-		// 	pool_missing_at_checkpoint,
-		// ) = Self::calculate_liquidity_checkpoint(user.clone(), liquidity_asset_id, 0 as u128)?;
-
-		// let liquidity_assets_amount: Balance =
-		// 	LiquidityMiningActiveUser::<T>::get((&user, &liquidity_asset_id));
-		// let activated_liquidity_pool: Balance =
-		// 	LiquidityMiningActivePool::<T>::get(&liquidity_asset_id);
-
-		// let liquidity_assets_burned_u256: U256 = liquidity_assets_burned.into();
-
-		// let user_work_burned: U256 = liquidity_assets_burned_u256
-		// 	.checked_mul(user_work_total)
-		// 	.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
-		// 	.checked_div(liquidity_assets_amount.into())
-		// 	.ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
-
-		// let user_work_new = user_work_total
-		// 	.checked_sub(user_work_burned)
-		// 	.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
-		// let user_missing_new = user_missing_at_checkpoint
-		// 	.checked_sub(user_missing_burned)
-		// 	.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
-
-		// let mut pool_work_new = U256::from(0);
-		// let mut pool_missing_new = U256::from(0);
-
-		// if activated_liquidity_pool != liquidity_assets_burned {
-		// 	pool_work_new = pool_work_total
-		// 		.checked_sub(user_work_burned)
-		// 		.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
-		// 	pool_missing_new = pool_missing_at_checkpoint
-		// 		.checked_sub(user_missing_burned)
-		// 		.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
-		// }
-
-		// LiquidityMiningUser::<T>::insert(
-		// 	(user.clone(), &liquidity_asset_id),
-		// 	(current_time, user_work_new, user_missing_new),
-		// );
-		// LiquidityMiningPool::<T>::insert(
-		// 	&liquidity_asset_id,
-		// 	(current_time, pool_work_new, pool_missing_new),
-		// );
-
-		// LiquidityMiningActiveUser::<T>::try_mutate((&user, liquidity_asset_id), |active_amount| {
-		// 	if let Some(val) = active_amount.checked_sub(liquidity_assets_burned) {
-		// 		*active_amount = val;
-		// 		Ok(())
-		// 	} else {
-		// 		Err(())
-		// 	}
-		// })
-		// .map_err(|_| DispatchError::from(Error::<T>::NotEnoughAssets))?;
-		// LiquidityMiningActivePool::<T>::try_mutate(liquidity_asset_id, |active_amount| {
-		// 	if let Some(val) = active_amount.checked_sub(liquidity_assets_burned) {
-		// 		*active_amount = val;
-		// 		Ok(())
-		// 	} else {
-		// 		Err(())
-		// 	}
-		// })
-		// .map_err(|_| DispatchError::from(Error::<T>::NotEnoughAssets))?;
-
-		// let rewards_burned_not_claimed =PoolPromoteApitry_from
-		// 	LiquidityMiningUserNotYetClaimed::<T>::get((user.clone(), &liquidity_asset_id));
-		// let rewards_to_burn =
-		// 	Self::calculate_rewards(user_work_burned, pool_work_total, liquidity_asset_id)?;
-		// let rewards_already_claimed =
-		// 	LiquidityMiningUserAlreadyClaimed::<T>::get((user.clone(), &liquidity_asset_id));
-
-		// if rewards_to_burn >= rewards_already_claimed {
-		// 	LiquidityMiningUserAlreadyClaimed::<T>::remove((user.clone(), &liquidity_asset_id));
-
-		// 	let rewards_claimed_new =
-		// 		rewards_burned_not_claimed + rewards_to_burn - rewards_already_claimed;
-
-		// 	LiquidityMiningUserNotYetClaimed::<T>::insert(
-		// 		(&user, liquidity_asset_id),
-		// 		rewards_claimed_new,
-		// 	);
-		// } else {
-		// 	LiquidityMiningUserAlreadyClaimed::<T>::insert(
-		// 		(user.clone(), &liquidity_asset_id),
-		// 		rewards_already_claimed - rewards_to_burn,
-		// 	);
-		// }
-
-		// <T as Config>::PoolPromoteApi::claim_pool_rewards(
-		// 	liquidity_asset_id.into(),
-		// 	rewards_to_burn,
-		// );
-
-		// <T as Config>::ActivationReservesProvider::deactivate(
-		// 	liquidity_asset_id.into(),
-		// 	&user,
-		// 	liquidity_assets_burned.into(),
-		// );
 
 		Ok(())
 	}
@@ -2456,7 +2353,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			)?;
 
 			if liquidity_token_activated_balance == to_be_deactivated {
-				LiquidityMiningUser::<T>::remove((sender.clone(), liquidity_asset_id));
+				LiquidityMiningUserV2::<T>::remove((sender.clone(), liquidity_asset_id));
 			}
 		}
 
@@ -2598,21 +2495,21 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		ensure!(mangata_amount <= claimable_rewards, Error::<T>::NotEnoughtRewardsEarned);
 
 		let not_yet_claimed_rewards =
-		LiquidityMiningUserNotYetClaimed::<T>::get((user.clone(), &liquidity_asset_id));
+		LiquidityMiningUserNotYetClaimedV2::<T>::get((user.clone(), &liquidity_asset_id));
 
 		let already_claimed_rewards =
-		LiquidityMiningUserAlreadyClaimed::<T>::get((user.clone(), &liquidity_asset_id));
+		LiquidityMiningUserAlreadyClaimedV2::<T>::get((user.clone(), &liquidity_asset_id));
 
 		if mangata_amount <= not_yet_claimed_rewards {
 			let not_yet_claimed_rewards_new = not_yet_claimed_rewards - mangata_amount;
-			LiquidityMiningUserNotYetClaimed::<T>::insert(
+			LiquidityMiningUserNotYetClaimedV2::<T>::insert(
 				(user.clone(), liquidity_asset_id),
 				not_yet_claimed_rewards_new,
 			);
 		}
 		// user is taking out more rewards then rewards from LP which was already removed from pool, additional work needs to be removed from pool and user
 		else {
-			LiquidityMiningUserNotYetClaimed::<T>::insert((&user, liquidity_asset_id), 0 as u128);
+			LiquidityMiningUserNotYetClaimedV2::<T>::insert((&user, liquidity_asset_id), 0 as u128);
 			// rewards to claim on top of rewards from LP which was already removed from pool
 			let rewards_to_claim = mangata_amount
 				.checked_sub(not_yet_claimed_rewards)
@@ -2621,7 +2518,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				.checked_add(rewards_to_claim)
 				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 
-			LiquidityMiningUserAlreadyClaimed::<T>::insert(
+			LiquidityMiningUserAlreadyClaimedV2::<T>::insert(
 				(&user, liquidity_asset_id),
 				new_rewards_claimed,
 			);
@@ -2649,7 +2546,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 		let claimable_rewards = Pallet::<T>::calculate_rewards_amount(user.clone(), liquidity_asset_id)?;
 		
-		LiquidityMiningUserNotYetClaimed::<T>::insert(
+		LiquidityMiningUserNotYetClaimedV2::<T>::insert(
 			(user.clone(), liquidity_asset_id),
 			0 as u128,
 		);

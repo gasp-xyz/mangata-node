@@ -318,6 +318,7 @@ fn liquidity_rewards_single_user_mint_W() {
 		MockPromotedPoolApi::instance().lock().unwrap().insert(4, 0);
 		assert_eq!(XykStorage::calculate_rewards_amount(2, 4).unwrap(), 0);
 		System::set_block_number(10000);
+
 		MockPromotedPoolApi::instance().lock().unwrap().insert(4, 10000);
 		assert_eq!(XykStorage::calculate_rewards_amount(2, 4).unwrap(), 566);
 		System::set_block_number(20000);
@@ -506,24 +507,24 @@ fn liquidity_rewards_claim_W() {
 }
 
 
-// #[test]
-// #[serial]
-// fn liquidity_rewards_promote_pool_W() {
-// 	new_test_ext().execute_with(|| {
-// 		MockPromotedPoolApi::instance().lock().unwrap().clear();
-// 		let max = std::u128::MAX;
-// 		System::set_block_number(1);
-// 		let acc_id: u128 = 2;
-// 		let amount: u128 = max;
-// 		XykStorage::create_new_token(&acc_id, amount);
-// 		XykStorage::create_new_token(&acc_id, amount);
-// 		XykStorage::create_new_token(&acc_id, amount);
-// 		XykStorage::create_new_token(&acc_id, amount);
-// 		XykStorage::create_pool(Origin::signed(2), 0, 5000, 1, 5000).unwrap();
+#[test]
+#[serial]
+fn liquidity_rewards_promote_pool_W() {
+	new_test_ext().execute_with(|| {
+		MockPromotedPoolApi::instance().lock().unwrap().clear();
+		let max = std::u128::MAX;
+		System::set_block_number(1);
+		let acc_id: u128 = 2;
+		let amount: u128 = max;
+		XykStorage::create_new_token(&acc_id, amount);
+		XykStorage::create_new_token(&acc_id, amount);
+		XykStorage::create_new_token(&acc_id, amount);
+		XykStorage::create_new_token(&acc_id, amount);
+		XykStorage::create_pool(Origin::signed(2), 0, 5000, 1, 5000).unwrap();
 
-// 		XykStorage::promote_pool(Origin::root(), 4).unwrap();
-// 	});
-// }
+		XykStorage::promote_pool(Origin::root(), 4).unwrap();
+	});
+}
 
 // #[test]
 // #[serial]

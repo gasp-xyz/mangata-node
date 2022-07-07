@@ -208,6 +208,8 @@ pub mod pallet {
 		IssuanceConfigInvalid,
 		/// An underflow or an overflow has occured
 		MathError,
+		/// unknown pool
+		UnknownPool,
 	}
 
 	// XYK extrinsics.
@@ -506,11 +508,20 @@ impl<T: Config> Pallet<T> {
 
 		// TODO remove later
 	
-		PromotedPoolsRewards::<T>::translate(|liquidity_token_id, v: Balance| {
-			let activated_amount =  T::ActivedPoolQueryApiType::get_pool_activate_amount(liquidity_token_id)?;
-			let rewards_per_liquidity = liquidity_mining_issuance_per_pool.checked_mul(10000).ok_or_else(|| DispatchError::from(Error::<T>::MathError)).checked_div(activated_amount).ok_or_else(|| DispatchError::from(Error::<T>::MathError));
-			Some(v + rewards_per_liquidity)
-		});
+		for (liquidity_token_id, v) in PromotedPoolsRewards::<T>::iter() {
+			let activated_amount =  T::ActivedPoolQueryApiType::get_pool_activate_amount(liquidity_token_id)
+			.ok_or_else(|| DispatchError::from(Error::<T>::UnknownPool))?;
+
+			let rewards_per_liquidity = liquidity_mining_issuance_per_pool
+				.checked_mul(10000)
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathError))?
+				.checked_div(activated_amount)
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathError))?
+				.checked_add(v)
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathError))?;
+
+			PromotedPoolsRewards::<T>::insert(liquidity_token_id, rewards_per_liquidity);
+		}
 
 		{
 			let liquidity_mining_issuance_issued = T::Tokens::deposit_creating(

@@ -10,6 +10,7 @@ on:
   pull_request:
     branches:
       - develop
+      - maintanence/v0.17
       - feature/benchmarking-A
       - ci
   push:

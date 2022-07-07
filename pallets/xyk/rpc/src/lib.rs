@@ -4,7 +4,7 @@ use codec::Codec;
 use jsonrpsee::{
 	core::{async_trait, Error as JsonRpseeError, RpcResult},
 	proc_macros::rpc,
-	types::error::{CallError, ErrorCode, ErrorObject},
+	types::error::{CallError, ErrorObject},
 };
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;

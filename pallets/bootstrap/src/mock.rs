@@ -102,7 +102,7 @@ parameter_types! {
 	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
 	pub const BnbTreasurySubAccDerive: [u8; 4] = *b"bnbt";
 	pub const LiquidityMiningIssuanceVaultId: PalletId = PalletId(*b"py/lqmiv");
-	pub FakeLiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account();
+	pub FakeLiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account_truncating();
 }
 
 parameter_types! {
@@ -178,9 +178,9 @@ where
 }
 
 parameter_types! {
-	pub LiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account();
+	pub LiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account_truncating();
 	pub const StakingIssuanceVaultId: PalletId = PalletId(*b"py/stkiv");
-	pub StakingIssuanceVault: AccountId = StakingIssuanceVaultId::get().into_account();
+	pub StakingIssuanceVault: AccountId = StakingIssuanceVaultId::get().into_account_truncating();
 	pub const MgaTokenId: TokenId = 0u32;
 
 

@@ -49,7 +49,7 @@ pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
 where
 	AccountPublic: From<<TPublic::Pair as Pair>::Public>,
 {
-	AccountPublic::from(get_public_from_seed::<TPublic>(seed)).into_account()
+	AccountPublic::from(get_public_from_seed::<TPublic>(seed)).into_account_truncating()
 }
 
 /// Generate the session keys from individual elements.

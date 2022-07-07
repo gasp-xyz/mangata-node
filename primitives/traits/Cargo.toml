@@ -10,7 +10,7 @@ sp-runtime = { default-features = false, version = '6.0.0' , git = "https://gith
 frame-support = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
 mangata-primitives = { path = "../mangata" , default-features= false}
 mp-multipurpose-liquidity = { path = "../../primitives/multipurpose-liquidity" , default-features= false}
-codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false }
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
 
 [features]
 default = ["std"]

@@ -82,7 +82,7 @@ impl Contains<AccountId> for DustRemovalWhitelist {
 
 parameter_types! {
 	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
-	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account();
+	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 	pub const MaxLocks: u32 = 50;
 	pub const MgaTokenId: TokenId = 0u32;
 	pub const BlocksPerRound: u32 = 5u32;
@@ -103,9 +103,9 @@ impl orml_tokens::Config for Test {
 
 parameter_types! {
 	pub const LiquidityMiningIssuanceVaultId: PalletId = PalletId(*b"py/lqmiv");
-	pub LiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account();
+	pub LiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account_truncating();
 	pub const StakingIssuanceVaultId: PalletId = PalletId(*b"py/stkiv");
-	pub StakingIssuanceVault: AccountId = StakingIssuanceVaultId::get().into_account();
+	pub StakingIssuanceVault: AccountId = StakingIssuanceVaultId::get().into_account_truncating();
 
 
 	pub const TotalCrowdloanAllocation: Balance = 200_000_000;

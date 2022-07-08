@@ -46,6 +46,23 @@ use frame_system::{
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
 
+pub struct MangataCallFilter;
+
+impl Contains<Call> for MangataCallFilter {
+	fn contains(call: &Call) -> bool {
+		match call {
+			Call::XTokens(orml_xtokens::Call::transfer { currency_id, .. }) |
+			Call::XTokens(orml_xtokens::Call::transfer_with_fee { currency_id, .. })
+				if *currency_id == KSM_TOKEN_ID =>
+				true,
+			Call::XTokens(orml_xtokens::Call::transfer_multicurrencies { currencies, .. })
+				if currencies.iter().all(|(currency_id, _)| *currency_id == KSM_TOKEN_ID) =>
+				true,
+			_ => false,
+		}
+	}
+}
+
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 
@@ -368,7 +385,7 @@ impl frame_system::Config for Runtime {
 	/// The weight of database operations that the runtime can invoke.
 	type DbWeight = RocksDbWeight;
 	/// The basic call filter to use in dispatchable.
-	type BaseCallFilter = Everything;
+	type BaseCallFilter = MangataCallFilter;
 	/// Weight information for the extrinsics of this pallet.
 	type SystemWeightInfo = weights::frame_system_weights::ModuleWeight<Runtime>;
 	/// Block & extrinsics weights: base values and limits.

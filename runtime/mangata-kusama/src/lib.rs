@@ -58,7 +58,8 @@ impl Contains<Call> for MangataCallFilter {
 			Call::XTokens(orml_xtokens::Call::transfer_multicurrencies { currencies, .. })
 				if currencies.iter().all(|(currency_id, _)| *currency_id == KSM_TOKEN_ID) =>
 				true,
-			_ => false,
+			Call::XTokens(_) => false,
+			_ => true,
 		}
 	}
 }

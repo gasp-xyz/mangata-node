@@ -23,7 +23,7 @@ use sp_runtime::traits::{
 	AccountIdConversion, AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member,
 	SaturatedConversion, Zero,
 };
-use sp_std::{convert::TryFrom, fmt::Debug, prelude::*};
+use sp_std::{convert::TryFrom, convert::TryInto, fmt::Debug, prelude::*};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};

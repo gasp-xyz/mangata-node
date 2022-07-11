@@ -373,7 +373,7 @@ pub mod pallet {
 						if *l > num_removed =>
 					{
 						*l -= num_removed;
-					},
+					}
 					(KillStorageResult::AllRemoved(num_removed), Some(l)) |
 					(KillStorageResult::SomeRemaining(num_removed), Some(l))
 						if *l <= num_removed =>

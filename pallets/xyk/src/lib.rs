@@ -249,7 +249,8 @@ use sp_runtime::traits::{
 };
 use sp_std::{
 	convert::{TryFrom, TryInto},
-	fmt::Debug, prelude::*
+	fmt::Debug,
+	prelude::*,
 };
 
 #[cfg(test)]
@@ -1400,7 +1401,7 @@ impl<T: Config> Pallet<T> {
 				(second_asset_amount, first_asset_amount),
 			);
 		} else {
-			return Err(DispatchError::from(Error::<T>::NoSuchPool));
+			return Err(DispatchError::from(Error::<T>::NoSuchPool))
 		}
 
 		Ok(())

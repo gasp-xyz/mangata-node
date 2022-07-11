@@ -482,11 +482,11 @@ impl<T: Config> ActivationReservesProviderTrait for Pallet<T> {
 				)
 				.is_ok() && reserve_status.activated_unstaked_reserves.checked_add(amount).is_some(),
 			ActivateKind::StakedUnactivatedLiquidity =>
-				reserve_status.staked_unactivated_reserves.checked_sub(amount).is_some()
-					&& reserve_status.staked_and_activated_reserves.checked_add(amount).is_some(),
+				reserve_status.staked_unactivated_reserves.checked_sub(amount).is_some() &&
+					reserve_status.staked_and_activated_reserves.checked_add(amount).is_some(),
 			ActivateKind::UnspentReserves =>
-				reserve_status.unspent_reserves.checked_sub(amount).is_some()
-					&& reserve_status.activated_unstaked_reserves.checked_add(amount).is_some(),
+				reserve_status.unspent_reserves.checked_sub(amount).is_some() &&
+					reserve_status.activated_unstaked_reserves.checked_add(amount).is_some(),
 		}
 	}
 

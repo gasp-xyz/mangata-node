@@ -52,7 +52,7 @@ where
 {
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
 	use substrate_frame_rpc_system::{System, SystemApiServer};
-	use xyk_rpc::{Xyk, XykApiServer	};
+	use xyk_rpc::{Xyk, XykApiServer};
 
 	let mut module = RpcExtension::new(());
 	let FullDeps { client, pool, deny_unsafe } = deps;

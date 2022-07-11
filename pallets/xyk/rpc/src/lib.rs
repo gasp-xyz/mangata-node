@@ -92,11 +92,13 @@ trait TryIntoBalance<Balance> {
 
 impl<T: TryFrom<U256>> TryIntoBalance<T> for NumberOrHex {
 	fn try_into_balance(self) -> RpcResult<T> {
-		self.into_u256().try_into().or(Err(JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
-			1,
-			"Unable to serve the request",
-			Some(String::from("input parameter doesnt fit into u128")),
-		)))))
+		self.into_u256().try_into().or(Err(JsonRpseeError::Call(CallError::Custom(
+			ErrorObject::owned(
+				1,
+				"Unable to serve the request",
+				Some(String::from("input parameter doesnt fit into u128")),
+			),
+		))))
 	}
 }
 
@@ -138,11 +140,13 @@ where
 			output_reserve.try_into_balance()?,
 			sell_amount.try_into_balance()?,
 		);
-		runtime_api_result.map_err(|e| JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
-			1,
-			"Unable to serve the request",
-			Some(format!("{:?}", e)),
-		))))
+		runtime_api_result.map_err(|e| {
+			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+				1,
+				"Unable to serve the request",
+				Some(format!("{:?}", e)),
+			)))
+		})
 	}
 
 	fn calculate_buy_price(
@@ -163,11 +167,13 @@ where
 			output_reserve.try_into_balance()?,
 			buy_amount.try_into_balance()?,
 		);
-		runtime_api_result.map_err(|e| JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
-			1,
-			"Unable to serve the request",
-			Some(format!("{:?}", e)),
-		))))
+		runtime_api_result.map_err(|e| {
+			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+				1,
+				"Unable to serve the request",
+				Some(format!("{:?}", e)),
+			)))
+		})
 	}
 
 	fn calculate_sell_price_id(
@@ -188,11 +194,13 @@ where
 			bought_token_id,
 			sell_amount.try_into_balance()?,
 		);
-		runtime_api_result.map_err(|e| JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
-			1,
-			"Unable to serve the request",
-			Some(format!("{:?}", e)),
-		))))
+		runtime_api_result.map_err(|e| {
+			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+				1,
+				"Unable to serve the request",
+				Some(format!("{:?}", e)),
+			)))
+		})
 	}
 
 	fn calculate_buy_price_id(
@@ -213,11 +221,13 @@ where
 			bought_token_id,
 			buy_amount.try_into_balance()?,
 		);
-		runtime_api_result.map_err(|e| JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
-			1,
-			"Unable to serve the request",
-			Some(format!("{:?}", e)),
-		))))
+		runtime_api_result.map_err(|e| {
+			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+				1,
+				"Unable to serve the request",
+				Some(format!("{:?}", e)),
+			)))
+		})
 	}
 
 	fn get_burn_amount(
@@ -238,11 +248,13 @@ where
 			second_asset_id,
 			liquidity_asset_amount.try_into_balance()?,
 		);
-		runtime_api_result.map_err(|e| JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
-			1,
-			"Unable to serve the request",
-			Some(format!("{:?}", e)),
-		))))
+		runtime_api_result.map_err(|e| {
+			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+				1,
+				"Unable to serve the request",
+				Some(format!("{:?}", e)),
+			)))
+		})
 	}
 
 	fn calculate_rewards_amount(
@@ -257,10 +269,12 @@ where
             self.client.info().best_hash));
 
 		let runtime_api_result = api.calculate_rewards_amount(&at, user, liquidity_asset_id);
-		runtime_api_result.map_err(|e| JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
-			1,
-			"Unable to serve the request",
-			Some(format!("{:?}", e)),
-		))))
+		runtime_api_result.map_err(|e| {
+			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+				1,
+				"Unable to serve the request",
+				Some(format!("{:?}", e)),
+			)))
+		})
 	}
 }

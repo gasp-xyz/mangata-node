@@ -95,7 +95,7 @@ impl<P: TransactionPool, C, B> System<P, C, B> {
 
 #[async_trait]
 impl<P, C, Block, AccountId, Index>
-SystemApiServer<<Block as traits::Block>::Hash, AccountId, Index> for System<P, C, Block>
+	SystemApiServer<<Block as traits::Block>::Hash, AccountId, Index> for System<P, C, Block>
 where
 	C: sp_api::ProvideRuntimeApi<Block>,
 	C: HeaderBackend<Block>,
@@ -111,23 +111,23 @@ where
 	Index: Clone + std::fmt::Display + Codec + Send + traits::AtLeast32Bit + 'static,
 {
 	async fn nonce(&self, account: AccountId) -> RpcResult<Index> {
-			let api = self.client.runtime_api();
-			let best = self.client.info().best_hash;
-			let at = BlockId::hash(best);
+		let api = self.client.runtime_api();
+		let best = self.client.info().best_hash;
+		let at = BlockId::hash(best);
 
-			let mut nonce = api.account_nonce(&at, account.clone()).map_err(|e| {
-				CallError::Custom(ErrorObject::owned(
-					Error::RuntimeError.into(),
-					"Unable to query nonce.",
-					Some(e.to_string()),
-				))
-			})?;
+		let mut nonce = api.account_nonce(&at, account.clone()).map_err(|e| {
+			CallError::Custom(ErrorObject::owned(
+				Error::RuntimeError.into(),
+				"Unable to query nonce.",
+				Some(e.to_string()),
+			))
+		})?;
 
-			for _ in 0..number_of_delayed_txs(self.client.clone(), account.clone()) {
-				nonce += traits::One::one();
-			}
+		for _ in 0..number_of_delayed_txs(self.client.clone(), account.clone()) {
+			nonce += traits::One::one();
+		}
 
-			Ok(adjust_nonce(&*self.pool, account, nonce))
+		Ok(adjust_nonce(&*self.pool, account, nonce))
 	}
 
 	async fn dry_run(

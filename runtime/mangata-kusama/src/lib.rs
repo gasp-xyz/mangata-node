@@ -21,10 +21,9 @@ use sp_runtime::{
 };
 
 use sp_std::{
-	convert::{
-		TryFrom, TryInto
-	},
-	marker::PhantomData, prelude::*,
+	convert::{TryFrom, TryInto},
+	marker::PhantomData,
+	prelude::*,
 };
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -608,16 +607,16 @@ use scale_info::TypeInfo;
 #[derive(Encode, Decode, Clone, TypeInfo)]
 pub struct TwoCurrencyAdapter<C, OU, T1, T2, SF>(PhantomData<(C, OU, T1, T2, SF)>);
 
-use sp_runtime::{
-	traits::{DispatchInfoOf, PostDispatchInfoOf, Saturating, Zero},
-	transaction_validity::InvalidTransaction,
-};
 use frame_support::weights::ConstantMultiplier;
 use frame_support::{
 	traits::{ExistenceRequirement, Imbalance, WithdrawReasons},
 	unsigned::TransactionValidityError,
 };
 use orml_tokens::MultiTokenCurrency;
+use sp_runtime::{
+	traits::{DispatchInfoOf, PostDispatchInfoOf, Saturating, Zero},
+	transaction_validity::InvalidTransaction,
+};
 
 use pallet_transaction_payment::OnChargeTransaction;
 
@@ -667,7 +666,7 @@ where
 		tip: Self::Balance,
 	) -> Result<Self::LiquidityInfo, TransactionValidityError> {
 		if fee.is_zero() {
-			return Ok(None)
+			return Ok(None);
 		}
 
 		let withdraw_reason = if tip.is_zero() {
@@ -1364,7 +1363,7 @@ pub struct TokenIdConvert;
 impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
 	fn convert(id: TokenId) -> Option<MultiLocation> {
 		if id == KSM_TOKEN_ID {
-			return Some(MultiLocation::parent())
+			return Some(MultiLocation::parent());
 		}
 
 		match AssetIdMaps::<Runtime>::get_multi_location(id) {
@@ -1379,11 +1378,11 @@ impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
 impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 	fn convert(location: MultiLocation) -> Option<TokenId> {
 		if location == MultiLocation::parent() {
-			return Some(KSM_TOKEN_ID)
+			return Some(KSM_TOKEN_ID);
 		}
 
 		if let Some(token_id) = AssetIdMaps::<Runtime>::get_currency_id(location.clone()) {
-			return Some(token_id)
+			return Some(token_id);
 		}
 
 		match location {
@@ -1401,7 +1400,7 @@ impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 					},
 					_ => None,
 				}
-			}
+			},
 			_ => None,
 		}
 	}

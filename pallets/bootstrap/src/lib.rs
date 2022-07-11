@@ -74,7 +74,7 @@ pub mod pallet {
 		fn on_initialize(n: T::BlockNumber) -> Weight {
 			let phase = Phase::<T>::get(); // R:1
 			if phase == BootstrapPhase::Finished {
-				return T::DbWeight::get().reads(1);
+				return T::DbWeight::get().reads(1)
 			}
 
 			if let Some((start, whitelist_length, public_length, _)) = BootstrapSchedule::<T>::get()
@@ -368,19 +368,19 @@ pub mod pallet {
 				Provisions::<T>::remove_all(limit),
 			] {
 				match (result, limit.as_mut()) {
-					(KillStorageResult::AllRemoved(num_removed), Some(l))
-					| (KillStorageResult::SomeRemaining(num_removed), Some(l))
+					(KillStorageResult::AllRemoved(num_removed), Some(l)) |
+					(KillStorageResult::SomeRemaining(num_removed), Some(l))
 						if *l > num_removed =>
 					{
 						*l -= num_removed;
 					},
-					(KillStorageResult::AllRemoved(num_removed), Some(l))
-					| (KillStorageResult::SomeRemaining(num_removed), Some(l))
+					(KillStorageResult::AllRemoved(num_removed), Some(l)) |
+					(KillStorageResult::SomeRemaining(num_removed), Some(l))
 						if *l <= num_removed =>
 					{
 						Self::deposit_event(Event::BootstrapParitallyFinalized);
-						return Ok(().into());
-					},
+						return Ok(().into())
+					}
 					_ => {},
 				};
 			}
@@ -512,7 +512,7 @@ impl<T: Config> Pallet<T> {
 		let (liq_token_id, _) = Self::minted_liquidity();
 		let total_rewards = rewards.checked_add(rewards_vested).ok_or(Error::<T>::MathOverflow)?;
 		if total_rewards == 0 {
-			return Ok(().into());
+			return Ok(().into())
 		}
 
 		T::Currency::transfer(
@@ -753,7 +753,7 @@ impl<T: Config> Pallet<T> {
 
 impl<T: Config> Contains<(TokenId, TokenId)> for Pallet<T> {
 	fn contains(pair: &(TokenId, TokenId)) -> bool {
-		pair == &(Self::first_token_id(), Self::second_token_id())
-			|| pair == &(Self::second_token_id(), Self::first_token_id())
+		pair == &(Self::first_token_id(), Self::second_token_id()) ||
+			pair == &(Self::second_token_id(), Self::first_token_id())
 	}
 }

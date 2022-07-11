@@ -22,8 +22,7 @@ use frame_support::{
 use frame_system::{self as system, ensure_root, ensure_signed};
 
 use artemis_core::{App, AppId, Application, Message, Verifier};
-use sp_std::convert::TryInto;
-use sp_std::prelude::*;
+use sp_std::{convert::TryInto, prelude::*};
 
 mod weights;
 use weights::{WeightInfo, WeightInfoTrait};

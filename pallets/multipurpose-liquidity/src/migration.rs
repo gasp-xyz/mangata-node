@@ -121,7 +121,7 @@ pub fn migrate_from_v0<T: Config, P: GetStorageVersion + PalletInfoAccess>(
 			"Attempted to apply xyk-staking-mpl consistency migration to mpl but failed because storage version is {:?}, and not 0",
 			on_chain_storage_version,
 		);
-		return T::DbWeight::get().reads(1);
+		return T::DbWeight::get().reads(1)
 	}
 
 	// Apply storage migration from StorageVersion 0 to 1

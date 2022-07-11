@@ -15,8 +15,7 @@ use frame_support::{
 use frame_system::{ensure_root, pallet_prelude::*};
 use mangata_primitives::TokenId;
 use scale_info::TypeInfo;
-use sp_std::convert::TryInto;
-use sp_std::prelude::*;
+use sp_std::{convert::TryInto, prelude::*};
 
 use orml_tokens::MultiTokenCurrencyExtended;
 

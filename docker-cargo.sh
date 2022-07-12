@@ -64,7 +64,6 @@ fi
 
 docker run \
 	--rm \
-	-- apt install -y cmake \
 	--name=${DOCKER_JOB_NAME} \
 	--user $DOCKER_USER \
 	-v ${REPO_ROOT}:/code \
@@ -72,4 +71,4 @@ docker run \
         ${DOCKER_RUN_EXTRA_ARGS} \
 	-e CARGO_TARGET_DIR="/code/${OUTPUT_DIR}" \
 	${ALLOCATE_TTY_OR_NOT} ${DOCKER_BUILDER_IMAGE} \
-	cargo ${CARGO_COMMAND} --manifest-path=/code/Cargo.toml ${CARGO_ARGS}
+	apt install -y cmake && cargo ${CARGO_COMMAND} --manifest-path=/code/Cargo.toml ${CARGO_ARGS}

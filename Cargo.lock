@@ -5414,7 +5414,7 @@ dependencies = [
 [[package]]
 name = "orml-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=maintenance-0.17/xtokens-transfer-fixed-weight#81a0340bcf108b73ed3e4a15d91a1f87069fb742"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=maintenance-0.17/xtokens-transfer-fixed-weight#6d1dde76e4c98f0f7b4af84f86789380ba3ecb57"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5431,7 +5431,7 @@ dependencies = [
 [[package]]
 name = "orml-traits"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=maintenance-0.17/xtokens-transfer-fixed-weight#81a0340bcf108b73ed3e4a15d91a1f87069fb742"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=maintenance-0.17/xtokens-transfer-fixed-weight#6d1dde76e4c98f0f7b4af84f86789380ba3ecb57"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
@@ -5449,7 +5449,7 @@ dependencies = [
 [[package]]
 name = "orml-unknown-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=maintenance-0.17/xtokens-transfer-fixed-weight#81a0340bcf108b73ed3e4a15d91a1f87069fb742"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=maintenance-0.17/xtokens-transfer-fixed-weight#6d1dde76e4c98f0f7b4af84f86789380ba3ecb57"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5464,7 +5464,7 @@ dependencies = [
 [[package]]
 name = "orml-utilities"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=maintenance-0.17/xtokens-transfer-fixed-weight#81a0340bcf108b73ed3e4a15d91a1f87069fb742"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=maintenance-0.17/xtokens-transfer-fixed-weight#6d1dde76e4c98f0f7b4af84f86789380ba3ecb57"
 dependencies = [
  "frame-support",
  "parity-scale-codec 2.3.1",
@@ -5478,7 +5478,7 @@ dependencies = [
 [[package]]
 name = "orml-xcm"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=maintenance-0.17/xtokens-transfer-fixed-weight#81a0340bcf108b73ed3e4a15d91a1f87069fb742"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=maintenance-0.17/xtokens-transfer-fixed-weight#6d1dde76e4c98f0f7b4af84f86789380ba3ecb57"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5492,7 +5492,7 @@ dependencies = [
 [[package]]
 name = "orml-xcm-support"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=maintenance-0.17/xtokens-transfer-fixed-weight#81a0340bcf108b73ed3e4a15d91a1f87069fb742"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=maintenance-0.17/xtokens-transfer-fixed-weight#6d1dde76e4c98f0f7b4af84f86789380ba3ecb57"
 dependencies = [
  "frame-support",
  "orml-traits",
@@ -5506,7 +5506,7 @@ dependencies = [
 [[package]]
 name = "orml-xtokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=maintenance-0.17/xtokens-transfer-fixed-weight#81a0340bcf108b73ed3e4a15d91a1f87069fb742"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=maintenance-0.17/xtokens-transfer-fixed-weight#6d1dde76e4c98f0f7b4af84f86789380ba3ecb57"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",

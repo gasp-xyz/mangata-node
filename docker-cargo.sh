@@ -71,4 +71,4 @@ docker run \
         ${DOCKER_RUN_EXTRA_ARGS} \
 	-e CARGO_TARGET_DIR="/code/${OUTPUT_DIR}" \
 	${ALLOCATE_TTY_OR_NOT} ${DOCKER_BUILDER_IMAGE} \
-	apt install -y cmake && cargo ${CARGO_COMMAND} --manifest-path=/code/Cargo.toml ${CARGO_ARGS}
+	sudo apt install -y cmake && cargo ${CARGO_COMMAND} --manifest-path=/code/Cargo.toml ${CARGO_ARGS}

@@ -1,11 +1,11 @@
 name: Continous Integration
 
-# available flags: 
+# available flags:
 ## skip-e2e-tests: skip running e2e tests
 ## skip-build : run the test with latest version.
-## skip-publish: skip publish 
+## skip-publish: skip publish
 
-on: 
+on:
   pull_request:
     branches:
       - develop
@@ -109,6 +109,7 @@ jobs:
       -
         name: Run unit tests
         run: |
+          sudo apt install --assume-yes git clang curl libssl-dev llvm libudev-dev make protobuf-compiler
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
           ./docker-cargo.sh test -j2 -- -Z unstable-options --format json --report-time
           # |cargo2junit | tee ut-results.xml
@@ -325,7 +326,7 @@ jobs:
         name: Calculate wasm checksum
         run: >
           md5sum
-          ./docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm 
+          ./docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm
           >
           ./docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm.md5
       -
@@ -364,7 +365,7 @@ jobs:
       API_URL: 'ws://127.0.0.1:8844'
       TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}
       E2E_TREASURY_PALLET_ADDRESS : ${{ secrets.E2E_TREASURY_PALLET_ADDRESS }}
-      E2E_XYK_PALLET_ADDRESS : ${{ secrets.E2E_XYK_PALLET_ADDRESS }} 
+      E2E_XYK_PALLET_ADDRESS : ${{ secrets.E2E_XYK_PALLET_ADDRESS }}
       E2E_TREASURY_BURN_PALLET_ADDRESS : ${{ secrets.E2E_TREASURY_BURN_PALLET_ADDRESS }}
       TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
       MANGATA_NODE_VERSION: ${{ github.sha }}
@@ -394,7 +395,7 @@ jobs:
         id: branch-name
         uses: tj-actions/branch-names@v4.9
 
-      - name: E2E- Get target branch. 
+      - name: E2E- Get target branch.
         run: |
           echo "This job name branch is: ${{ steps.branch-name.outputs.current_branch }}"
 
@@ -406,16 +407,16 @@ jobs:
 
       - name: Decide if main - branch or parameter
       # if we have something in e2eBranch - override E2EBranchName, else -> E2EBRANCHNAME , that
-      # by default will be main. 
+      # by default will be main.
 
-        run: 
+        run:
           echo "E2EBRANCHNAME=${{ github.event.inputs.e2eBranch || env.E2EBRANCHNAME }}" >> $GITHUB_ENV
 
-      - name: E2E- Get target branch. 
+      - name: E2E- Get target branch.
         run: |
          echo "${{ env.E2EBRANCHNAME }}"
 
-      - 
+      -
         name: Checkout tests
         uses: actions/checkout@v2
         with:
@@ -498,7 +499,7 @@ jobs:
     needs: [rustfmt-check, unit-test, clippy-check, build-rococo, build-kusama, e2e-test, run-benchmarks, run-benchmarks-tests]
     runs-on: ubuntu-latest
     if: |
-      github.ref == 'refs/heads/develop' && 
+      github.ref == 'refs/heads/develop' &&
       !contains(github.event.pull_request.labels.*.name, 'skip-publish') &&
       !github.event.inputs.skipBuild
     #if: "!contains(github.event.pull_request.labels.*.name, 'skip-publish') && ${{ github.event_name == 'push'}} && github.event.pull_request.merged == true"

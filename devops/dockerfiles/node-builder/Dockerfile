@@ -37,16 +37,16 @@ RUN rustup target add wasm32-unknown-unknown --toolchain ${RUST_TOOLCHAIN}
 FROM rustup AS builder_core
 LABEL description="Compiles all workspace artifacts"
 #Export memory Profile env. variables.
-ENV MEMORY_PROFILER_OUTPUT=profiling_%e_%t.dat 
+ENV MEMORY_PROFILER_OUTPUT=profiling_%e_%t.dat
 ENV MEMORY_PROFILER_CULL_TEMPORARY_ALLOCATIONS=1
 ENV MEMORY_PROFILER_LOG=info
-ENV MEMORY_PROFILER_LOGFILE=profiling_%e_%t.log 
+ENV MEMORY_PROFILER_LOGFILE=profiling_%e_%t.log
 ENV ETH_APP_ID=0xdd514baa317bf095ddba2c0a847765feb389c6a0
 ENV ERC20_APP_ID=0x00e392c04743359e39f00cd268a5390d27ef6b44
 
 RUN apt-get update \
 	&& apt-get install -y \
-	# cmake \
+	cmake \
 	pkg-config \
 	# libssl-dev \
 	git \

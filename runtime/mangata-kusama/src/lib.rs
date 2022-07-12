@@ -537,7 +537,7 @@ impl pallet_xyk::Config for Runtime {
 	type DisallowedPools = Bootstrap;
 	type DisabledTokens = TestTokensFilter;
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
-	type ActivedPoolQueryApiType = Xyk;
+	type ActivedPoolQueryApi = Xyk;
 }
 
 impl pallet_bootstrap::Config for Runtime {
@@ -1160,6 +1160,7 @@ impl pallet_issuance::Config for Runtime {
 	type TGEReleaseBegin = TGEReleaseBegin;
 	type VestingProvider = Vesting;
 	type WeightInfo = weights::pallet_issuance_weights::ModuleWeight<Runtime>;
+	type ActivedPoolQueryApiType = Xyk;
 }
 
 parameter_types! {

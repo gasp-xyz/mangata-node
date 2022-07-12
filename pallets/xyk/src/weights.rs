@@ -16,6 +16,9 @@ pub trait WeightInfo {
 	fn promote_pool() -> Weight;
 	fn activate_liquidity() -> Weight;
 	fn deactivate_liquidity() -> Weight;
+	fn claim_rewards_v2() -> Weight;
+	fn activate_liquidity_v2() -> Weight;
+	fn deactivate_liquidity_v2() -> Weight;
 }
 
 // For backwards compatibility and tests
@@ -66,6 +69,24 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
 	}
 	fn deactivate_liquidity() -> Weight {
+		(133_607_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(7 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
+	}
+	//TODO retest
+	fn claim_rewards_v2() -> Weight {
+		(156_724_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(8 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
+	}
+	//TODO retest
+	fn activate_liquidity_v2() -> Weight {
+		(119_779_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
+	}
+	//TODO retest
+	fn deactivate_liquidity_v2() -> Weight {
 		(133_607_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(7 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(7 as Weight))

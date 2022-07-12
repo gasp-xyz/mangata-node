@@ -528,6 +528,7 @@ impl pallet_xyk::Config for Runtime {
 	type DisallowedPools = Bootstrap;
 	type DisabledTokens = Nothing;
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
+	type ActivedPoolQueryApi = Xyk;
 }
 
 impl pallet_bootstrap::Config for Runtime {

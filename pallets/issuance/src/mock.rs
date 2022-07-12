@@ -121,12 +121,10 @@ parameter_types! {
 
 struct ActivedPoolQueryApiStub;
 
-impl ActivedPoolQueryApi for ActivedPoolQueryApiStub{
-    fn get_pool_activate_amount(
-		liquidity_token_id: TokenId,
-	) -> Option<Balance> {
-        None
-    }
+impl ActivedPoolQueryApi for ActivedPoolQueryApiStub {
+	fn get_pool_activate_amount(liquidity_token_id: TokenId) -> Option<Balance> {
+		None
+	}
 }
 
 impl pallet_issuance::Config for Test {
@@ -150,7 +148,6 @@ impl pallet_issuance::Config for Test {
 	// TODO implement unit tests using mock
 	type ActivedPoolQueryApiType = ActivedPoolQueryApiStub;
 }
-
 
 parameter_types! {
 	pub const MinVestedTransfer: Balance = 100u128;

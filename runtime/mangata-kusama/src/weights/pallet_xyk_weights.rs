@@ -64,6 +64,9 @@ pub trait WeightInfo {
 	fn promote_pool() -> Weight;
 	fn activate_liquidity() -> Weight;
 	fn deactivate_liquidity() -> Weight;
+	fn claim_rewards_v2() -> Weight;
+	fn activate_liquidity_v2() -> Weight;
+	fn deactivate_liquidity_v2() -> Weight;
 }
 
 /// Weights for pallet_xyk using the Mangata node and recommended hardware.
@@ -190,6 +193,47 @@ impl<T: frame_system::Config> pallet_xyk::WeightInfo for ModuleWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(8 as Weight))
 			.saturating_add(T::DbWeight::get().writes(8 as Weight))
 	}
+
+	// Storage: Issuance PromotedPoolsRewards (r:1 w:0)
+	// Storage: Xyk LiquidityMiningUser (r:1 w:0)
+	// Storage: Xyk LiquidityMiningPool (r:1 w:0)
+	// Storage: Xyk LiquidityMiningActiveUser (r:1 w:0)
+	// Storage: Xyk LiquidityMiningActivePool (r:1 w:0)
+	// Storage: Xyk LiquidityMiningUserToBeClaimed (r:1 w:1)
+	// Storage: Xyk LiquidityMiningUserClaimed (r:1 w:1)
+	// Storage: Tokens Accounts (r:2 w:2)
+	fn claim_rewards_v2() -> Weight {
+		(86_814_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(9 as Weight))
+			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+	}
+
+	// Storage: Issuance PromotedPoolsRewards (r:1 w:0)
+	// Storage: Tokens Accounts (r:1 w:1)
+	// Storage: Xyk LiquidityMiningUser (r:1 w:1)
+	// Storage: Xyk LiquidityMiningActiveUser (r:1 w:1)
+	// Storage: Xyk LiquidityMiningPool (r:1 w:1)
+	// Storage: Xyk LiquidityMiningActivePool (r:1 w:1)
+	fn activate_liquidity_v2() -> Weight {
+		(70_204_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(6 as Weight))
+			.saturating_add(T::DbWeight::get().writes(5 as Weight))
+	}
+	// Storage: Issuance PromotedPoolsRewards (r:1 w:1)
+	// Storage: Xyk LiquidityMiningActiveUser (r:1 w:1)
+	// Storage: Xyk LiquidityMiningUser (r:1 w:1)
+	// Storage: Xyk LiquidityMiningPool (r:1 w:1)
+	// Storage: Xyk LiquidityMiningActivePool (r:1 w:1)
+	// Storage: Xyk LiquidityMiningUserToBeClaimed (r:1 w:1)
+	// Storage: Xyk LiquidityMiningUserClaimed (r:1 w:1)
+	// Storage: Tokens Accounts (r:1 w:1)
+	fn deactivate_liquidity_v2() -> Weight {
+		(84_598_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(8 as Weight))
+			.saturating_add(T::DbWeight::get().writes(8 as Weight))
+	}
+
+	
 }
 
 // For backwards compatibility and tests
@@ -243,5 +287,23 @@ impl WeightInfo for () {
 		(84_598_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(8 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(8 as Weight))
+	}
+	//TODO retest
+	fn claim_rewards_v2() -> Weight {
+		(156_724_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(8 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
+	}
+	//TODO retest
+	fn activate_liquidity_v2() -> Weight {
+		(119_779_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
+	}
+	//TODO retest
+	fn deactivate_liquidity_v2() -> Weight {
+		(133_607_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(7 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
 	}
 }

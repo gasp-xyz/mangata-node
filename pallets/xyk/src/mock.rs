@@ -21,7 +21,7 @@ use mangata_primitives::{Amount, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
 use orml_traits::parameter_type_with_key;
 use pallet_assets_info as assets_info;
-use pallet_issuance::PoolPromoteApi;
+use pallet_issuance::{ActivedPoolQueryApi, PoolPromoteApi};
 use sp_runtime::{Perbill, Percent};
 use std::{collections::HashMap, sync::Mutex};
 
@@ -55,6 +55,7 @@ lazy_static::lazy_static! {
 }
 
 pub struct MockPromotedPoolApi;
+pub struct MockActivedPoolQueryApi;
 
 #[cfg(test)]
 impl MockPromotedPoolApi {
@@ -63,9 +64,21 @@ impl MockPromotedPoolApi {
 	}
 }
 
+impl MockActivedPoolQueryApi {
+	pub fn instance() -> &'static Mutex<HashMap<TokenId, Balance>> {
+		&PROMOTED_POOLS
+	}
+}
+
 impl pallet_issuance::ComputeIssuance for MockPromotedPoolApi {
 	fn compute_issuance(_n: u32) {
 		todo!()
+	}
+}
+
+impl ActivedPoolQueryApi for MockActivedPoolQueryApi {
+	fn get_pool_activate_amount(liquidity_token_id: TokenId) -> Option<u128> {
+		return Some(1 as u128)
 	}
 }
 
@@ -243,6 +256,7 @@ impl pallet_issuance::Config for Test {
 	type TGEReleaseBegin = TGEReleaseBegin;
 	type VestingProvider = Vesting;
 	type WeightInfo = ();
+	type ActivedPoolQueryApiType = MockActivedPoolQueryApi;
 }
 
 parameter_types! {
@@ -268,6 +282,7 @@ impl Config for Test {
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
 	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
 	type PoolPromoteApi = MockPromotedPoolApi;
+	//	type ActivedPoolQueryApi = MockActivedPoolQueryApi;
 	type PoolFeePercentage = ConstU128<20>;
 	type TreasuryFeePercentage = ConstU128<5>;
 	type BuyAndBurnFeePercentage = ConstU128<5>;
@@ -306,7 +321,7 @@ impl<T: Config> ActivationReservesProviderTrait for TokensActivationPassthrough<
 		token_id: TokenId,
 		account_id: &Self::AccountId,
 	) -> Balance {
-		Pallet::<T>::liquidity_mining_active_user((account_id, token_id))
+		Pallet::<T>::liquidity_mining_active_user_v2((account_id, token_id))
 	}
 
 	fn can_activate(

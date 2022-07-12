@@ -132,6 +132,17 @@ pub trait XykFunctionsTrait<AccountId> {
 		amount: Self::Balance,
 	) -> DispatchResult;
 
+	fn claim_rewards_v2(
+		sender: AccountId,
+		liquidity_token_id: Self::CurrencyId,
+		amount: Self::Balance,
+	) -> DispatchResult;
+
+	// fn claim_rewards_all(
+	// 	sender: AccountId,
+	// 	liquidity_token_id: Self::CurrencyId,
+	// ) -> DispatchResult;
+
 	fn promote_pool(liquidity_token_id: TokenId) -> DispatchResult;
 
 	fn activate_liquidity(
@@ -142,6 +153,19 @@ pub trait XykFunctionsTrait<AccountId> {
 	) -> DispatchResult;
 
 	fn deactivate_liquidity(
+		sender: AccountId,
+		liquidity_token_id: Self::CurrencyId,
+		amount: Self::Balance,
+	) -> DispatchResult;
+
+	fn activate_liquidity_v2(
+		sender: AccountId,
+		liquidity_token_id: Self::CurrencyId,
+		amount: Self::Balance,
+		use_balance_from: Option<ActivateKind>,
+	) -> DispatchResult;
+
+	fn deactivate_liquidity_v2(
 		sender: AccountId,
 		liquidity_token_id: Self::CurrencyId,
 		amount: Self::Balance,

@@ -109,7 +109,7 @@ jobs:
       -
         name: Run unit tests
         run: |
-          sudo apt install --assume-yes git clang curl libssl-dev llvm libudev-dev make protobuf-compiler
+          sudo apt install -y cmake
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
           ./docker-cargo.sh test -j2 -- -Z unstable-options --format json --report-time
           # |cargo2junit | tee ut-results.xml

@@ -62,10 +62,9 @@ else
     DOCKER_MOUNT_CACHE_VOLUMES="-v ${CARGO_CACHE_GIT}:/opt/cargo/git -v ${CARGO_CACHE_REGISTRY}:/opt/cargo/registry"
 fi
 
-docker run apt install -y cmake
-
 docker run \
 	--rm \
+	-- apt install -y cmake \
 	--name=${DOCKER_JOB_NAME} \
 	--user $DOCKER_USER \
 	-v ${REPO_ROOT}:/code \

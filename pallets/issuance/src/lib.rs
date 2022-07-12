@@ -59,7 +59,13 @@ pub trait PoolPromoteApi {
 	/// Returns true if pool was promoted, false if it has been promoted already
 	fn promote_pool(liquidity_token_id: TokenId) -> bool;
 	fn unpromote_pool(liquidity_token_id: TokenId) -> bool;
+
 	/// Returns available reward for pool
+	fn get_pool_rewards_v2(liquidity_token_id: TokenId) -> Option<Balance>;
+
+	//REWARDS V1 to be removed
+	fn claim_pool_rewards(liquidity_token_id: TokenId, claimed_amount: Balance) -> bool;
+	//REWARDS V1 to be removed
 	fn get_pool_rewards(liquidity_token_id: TokenId) -> Option<Balance>;
 
 	fn len() -> usize;
@@ -94,10 +100,8 @@ impl WeightInfo for () {
 	}
 }
 
-pub trait ActivedPoolQueryApi{
-	fn get_pool_activate_amount(
-		liquidity_token_id: TokenId,
-	) -> Option<Balance>;
+pub trait ActivedPoolQueryApi {
+	fn get_pool_activate_amount(liquidity_token_id: TokenId) -> Option<Balance>;
 }
 
 pub use pallet::*;
@@ -188,9 +192,15 @@ pub mod pallet {
 	pub type SessionIssuance<T: Config> =
 		StorageMap<_, Twox64Concat, u32, Option<(Balance, Balance)>, ValueQuery>;
 
+	//to be removed
 	#[pallet::storage]
 	#[pallet::getter(fn get_promoted_pools_rewards)]
 	pub type PromotedPoolsRewards<T: Config> =
+		StorageMap<_, Twox64Concat, TokenId, Balance, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn get_promoted_pools_rewards_v2)]
+	pub type PromotedPoolsRewardsV2<T: Config> =
 		StorageMap<_, Twox64Concat, TokenId, Balance, ValueQuery>;
 
 	#[pallet::error]
@@ -208,6 +218,8 @@ pub mod pallet {
 		IssuanceConfigInvalid,
 		/// An underflow or an overflow has occured
 		MathError,
+		/// unknown pool
+		UnknownPool,
 	}
 
 	// XYK extrinsics.
@@ -328,23 +340,23 @@ impl<T: Config> ComputeIssuance for Pallet<T> {
 
 impl<T: Config> PoolPromoteApi for Pallet<T> {
 	fn promote_pool(liquidity_token_id: TokenId) -> bool {
-		if PromotedPoolsRewards::<T>::contains_key(liquidity_token_id) {
+		if PromotedPoolsRewardsV2::<T>::contains_key(liquidity_token_id) {
 			false
 		} else {
-			PromotedPoolsRewards::<T>::insert(liquidity_token_id, 0);
+			PromotedPoolsRewardsV2::<T>::insert(liquidity_token_id, 0);
 			true
 		}
 	}
 
-	fn get_pool_rewards(liquidity_token_id: TokenId) -> Option<Balance> {
-		PromotedPoolsRewards::<T>::try_get(liquidity_token_id).ok()
+	fn get_pool_rewards_v2(liquidity_token_id: TokenId) -> Option<Balance> {
+		PromotedPoolsRewardsV2::<T>::try_get(liquidity_token_id).ok()
 	}
 
 	fn unpromote_pool(liquidity_token_id: TokenId) -> bool {
-		if PromotedPoolsRewards::<T>::contains_key(liquidity_token_id) {
+		if PromotedPoolsRewardsV2::<T>::contains_key(liquidity_token_id) {
 			true
 		} else {
-			PromotedPoolsRewards::<T>::remove(liquidity_token_id);
+			PromotedPoolsRewardsV2::<T>::remove(liquidity_token_id);
 			false
 		}
 	}
@@ -353,6 +365,24 @@ impl<T: Config> PoolPromoteApi for Pallet<T> {
 	// Specifically account for this in benchmarking
 	fn len() -> usize {
 		PromotedPoolsRewards::<T>::iter_keys().count()
+	}
+
+	//REWARDS V1 to be removed
+	fn get_pool_rewards(liquidity_token_id: TokenId) -> Option<Balance> {
+		PromotedPoolsRewards::<T>::try_get(liquidity_token_id).ok()
+	}
+
+	//REWARDS V1 to be removed
+	fn claim_pool_rewards(liquidity_token_id: TokenId, claimed_amount: Balance) -> bool {
+		PromotedPoolsRewards::<T>::try_mutate(liquidity_token_id, |rewards| {
+			if let Some(val) = rewards.checked_sub(claimed_amount) {
+				*rewards = val;
+				Ok(())
+			} else {
+				Err(())
+			}
+		})
+		.is_ok()
 	}
 }
 
@@ -492,11 +522,10 @@ impl<T: Config> Pallet<T> {
 
 		let liquidity_mining_issuance =
 			issuance_config.liquidity_mining_split * current_round_issuance;
+
 		let staking_issuance = issuance_config.staking_split * current_round_issuance;
 
 		let promoted_pools_count = <Self as PoolPromoteApi>::len();
-
-		// TODO: what about roundings? transfer mod to next session?
 
 		let liquidity_mining_issuance_per_pool = if promoted_pools_count == 0 {
 			liquidity_mining_issuance
@@ -505,12 +534,26 @@ impl<T: Config> Pallet<T> {
 		};
 
 		// TODO remove later
-	
-		PromotedPoolsRewards::<T>::translate(|liquidity_token_id, v: Balance| {
-			// let activated_amount =  T::ActivedPoolQueryApiType::get_pool_activate_amount(liquidity_token_id)?;
-			// let rewards_per_liquidity = liquidity_mining_issuance_per_pool.checked_mul(10000)?.ok_or_else(|| DispatchError::from(Error::<T>::MathError))?.checked_div(activated_amount).ok_or_else(|| DispatchError::from(Error::<T>::MathError));
-			// Some(v + rewards_per_liquidity)
-			Some(v + 5 as u128)
+
+		for (liquidity_token_id, v) in PromotedPoolsRewardsV2::<T>::iter() {
+			let activated_amount =
+				T::ActivedPoolQueryApiType::get_pool_activate_amount(liquidity_token_id)
+					.ok_or_else(|| DispatchError::from(Error::<T>::UnknownPool))?;
+
+			let rewards_per_liquidity = liquidity_mining_issuance_per_pool
+				.checked_mul(10000)
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathError))?
+				.checked_div(activated_amount)
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathError))?
+				.checked_add(v)
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathError))?;
+
+			PromotedPoolsRewardsV2::<T>::insert(liquidity_token_id, rewards_per_liquidity);
+		}
+
+		//REWARDS V1 to be removed
+		PromotedPoolsRewards::<T>::translate(|_, v: Balance| {
+			Some(v + liquidity_mining_issuance_per_pool)
 		});
 
 		{

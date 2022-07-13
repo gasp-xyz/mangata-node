@@ -15,7 +15,7 @@ use sp_runtime::{
 	traits::{AccountIdConversion, BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
 	MultiSignature,
 };
-use sp_std::convert::From;
+use sp_std::convert::{From, TryFrom};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;

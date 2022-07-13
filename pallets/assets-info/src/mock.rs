@@ -19,6 +19,7 @@ use sp_runtime::{
 use super::*;
 
 use crate as assets_info;
+use sp_std::convert::TryFrom;
 
 pub(crate) type AccountId = u64;
 

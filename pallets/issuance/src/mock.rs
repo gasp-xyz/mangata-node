@@ -29,6 +29,7 @@ use sp_runtime::{
 	traits::{AccountIdConversion, ConvertInto},
 	SaturatedConversion,
 };
+use sp_std::convert::TryFrom;
 
 pub const MGA_TOKEN_ID: TokenId = 0;
 pub(crate) type AccountId = u128;

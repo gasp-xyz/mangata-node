@@ -29,6 +29,7 @@ use mp_traits::ActivationReservesProviderTrait;
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter};
 use orml_traits::parameter_type_with_key;
 use sp_runtime::{Perbill, Percent};
+use sp_std::convert::TryFrom;
 
 pub(crate) type AccountId = u128;
 

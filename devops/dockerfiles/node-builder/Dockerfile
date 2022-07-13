@@ -59,9 +59,12 @@ RUN apt-get update \
 	npm \
 	&& rm -rf /var/lib/apt/lists/*
 
-RUN apt install -y libprotobuf-dev protobuf-compiler
-
-RUN apt-get update && apt-get -y install cmake protobuf-compiler
+#install latest cmake
+ADD https://cmake.org/files/v3.23/cmake-3.23.2-linux-x86_64.sh /cmake-3.23.2-linux-x86_64.sh
+RUN mkdir /opt/cmake
+RUN sh /cmake-3.23.2-linux-x86_64.sh --prefix=/opt/cmake --skip-license
+RUN ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake
+RUN cmake --version
 
 RUN npm install --global yarn
 

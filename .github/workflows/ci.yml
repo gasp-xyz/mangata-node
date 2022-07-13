@@ -105,7 +105,6 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Pull builder image
         run: |
-          docker build -f ./devops/dockerfiles/node-builder/Dockerfile -t mangatasolutions/node-builder:0.1 . && \
           docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
       -
         name: Run unit tests

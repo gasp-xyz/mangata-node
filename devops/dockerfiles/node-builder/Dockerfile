@@ -46,7 +46,7 @@ ENV ERC20_APP_ID=0x00e392c04743359e39f00cd268a5390d27ef6b44
 
 RUN apt-get update \
 	&& apt-get install -y \
-	cmake \
+	# cmake \
 	pkg-config \
 	# libssl-dev \
 	git \
@@ -58,6 +58,10 @@ RUN apt-get update \
 	nodejs \
 	npm \
 	&& rm -rf /var/lib/apt/lists/*
+
+RUN apt install -y libprotobuf-dev protobuf-compiler
+
+RUN apt-get update && apt-get -y install cmake protobuf-compiler
 
 RUN npm install --global yarn
 

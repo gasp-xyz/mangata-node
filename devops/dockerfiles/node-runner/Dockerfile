@@ -1,4 +1,4 @@
-FROM mangatasolutions/node-builder-local:latest as bytehound
+FROM mangatasolutions/node-builder:0.1 as bytehound
 RUN git clone --depth 1 --branch 0.8.0 https://github.com/koute/memory-profiler /tmp/profiler
 RUN cargo build --manifest-path /tmp/profiler/Cargo.toml --release -p bytehound-preload -p bytehound-cli
 

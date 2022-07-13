@@ -32,7 +32,7 @@ on:
           default: false
 
 env:
-  DOCKER_BUILDER_IMAGE: mangatasolutions/node-builder-local:latest
+  DOCKER_BUILDER_IMAGE: mangatasolutions/node-builder:0.1
   DISABLE_TTY: 1
 
 jobs:
@@ -105,7 +105,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Pull builder image
         run: |
-          docker build -f ./devops/dockerfiles/node-builder/Dockerfile -t mangatasolutions/node-builder-local . && \
+          docker build -f ./devops/dockerfiles/node-builder/Dockerfile -t mangatasolutions/node-builder:0.1 . && \
           docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
       -
         name: Run unit tests

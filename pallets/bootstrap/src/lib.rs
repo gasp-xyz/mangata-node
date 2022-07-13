@@ -279,7 +279,7 @@ pub mod pallet {
 		/// - BeforeStart - blocks 0..ido_start
 		/// - WhitelistPhase - blocks ido_start..(ido_start + whitelist_phase_length)
 		/// - PublicPhase - blocks (ido_start + whitelist_phase_length)..(ido_start + whitelist_phase_length  + public_phase_lenght)
-		#[pallet::weight(T::WeightInfo::start_ido())]
+		#[pallet::weight(T::WeightInfo::schedule_bootstrap())]
 		#[transactional]
 		pub fn schedule_bootstrap(
 			origin: OriginFor<T>,

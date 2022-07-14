@@ -126,7 +126,71 @@ parameter_types! {
 			X2(Parachain(parachains::karura::ID), GeneralKey(parachains::karura::KAR_KEY.to_vec())),
 		).into(),
 		// KAR:KSM 100:1
-		roc_per_second() / 100
+		roc_per_second() * 100
+	);
+	pub KusdPerSecond: (AssetId, u128) = (
+		MultiLocation::new(
+			1,
+			X2(Parachain(parachains::karura::ID), GeneralKey(parachains::karura::KUSD_KEY.to_vec())),
+		).into(),
+		// KUSD:KSM 50:1
+		roc_per_second() * 50
+	);
+	pub LksmPerSecond: (AssetId, u128) = (
+		MultiLocation::new(
+			1,
+			X2(Parachain(parachains::karura::ID), GeneralKey(parachains::karura::LKSM_KEY.to_vec())),
+		).into(),
+		// LKSM:KSM 10:1
+		roc_per_second() * 10
+	);
+	pub TurPerSecond: (AssetId, u128) = (
+		MultiLocation::new(
+			1,
+			X1(Parachain(parachains::turing::ID)),
+		).into(),
+		// TUR:KSM 100:1
+		roc_per_second() * 100
+	);
+	pub ImbuPerSecond: (AssetId, u128) = (
+		MultiLocation::new(
+			1,
+			X2(Parachain(parachains::imbue::ID), GeneralKey(parachains::imbue::IMBU_KEY.to_vec())),
+		).into(),
+		// IMBU:KSM 50:1
+		roc_per_second() * 50
+	);
+	pub PhaPerSecond: (AssetId, u128) = (
+		MultiLocation::new(
+			1,
+			X1(Parachain(parachains::phala::ID)),
+		).into(),
+		// PHA:KSM = 400:1
+		roc_per_second() * 400
+	);
+	pub BncPerSecond: (AssetId, u128) = (
+		MultiLocation::new(
+			1,
+			X2(Parachain(parachains::bifrost::ID), GeneralKey(parachains::bifrost::BNC_KEY.to_vec())),
+		).into(),
+		// BNC:KSM = 80:1
+		roc_per_second() * 80
+	);
+	pub VsksmPerSecond: (AssetId, u128) = (
+		MultiLocation::new(
+			1,
+			X2(Parachain(parachains::bifrost::ID), GeneralKey(parachains::bifrost::VSKSM_KEY.to_vec())),
+		).into(),
+		// VSKSM:KSM = 1:1
+		roc_per_second()
+	);
+	pub VksmPerSecond: (AssetId, u128) = (
+		MultiLocation::new(
+			1,
+			X2(Parachain(parachains::bifrost::ID), GeneralKey(parachains::bifrost::VKSM_KEY.to_vec())),
+		).into(),
+		// VKSM:KSM = 1:1
+		roc_per_second()
 	);
 }
 
@@ -134,6 +198,8 @@ pub type Trader = (
 	FixedRateOfFungible<RocPerSecond, ToTreasury>,
 	FixedRateOfFungible<MgrPerSecond, ToTreasury>,
 	FixedRateOfFungible<KarPerSecond, ToTreasury>,
+	FixedRateOfFungible<KusdPerSecond, ToTreasury>,
+	FixedRateOfFungible<TurPerSecond, ToTreasury>,
 );
 
 pub struct XcmConfig;

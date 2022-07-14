@@ -66,7 +66,7 @@ pub use mangata_primitives::{
 
 pub use orml_tokens;
 use orml_tokens::TransferDust;
-use orml_traits::{parameter_type_with_key};
+use orml_traits::parameter_type_with_key;
 
 pub use pallet_xyk;
 use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
@@ -792,8 +792,7 @@ impl pallet_assets_info::Config for Runtime {
 	type MaxLengthDescription = MaxLengthDescription;
 	type MaxDecimals = MaxDecimals;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-	type RelayNativeTokensValueScaleFactor =
-		frame_support::traits::ConstU128<ROC_MGR_SCALE_FACTOR>;
+	type RelayNativeTokensValueScaleFactor = frame_support::traits::ConstU128<ROC_MGR_SCALE_FACTOR>;
 }
 
 impl pallet_bridge::Config for Runtime {

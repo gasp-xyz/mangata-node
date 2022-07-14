@@ -61,7 +61,7 @@ pub mod parachains {
 		pub const LKSM_KEY: &[u8] = &[0, 131];
 	}
 	pub mod turing {
-		pub const ID: i32 = 2114;
+		pub const ID: u32 = 2114;
 	}
 	pub mod bifrost {
 		pub const ID: u32 = 2001;
@@ -71,9 +71,9 @@ pub mod parachains {
 	}
 	pub mod imbue {
 		pub const ID: u32 = 2121;
-		pub const IMBU: u8 = 0;
+		pub const IMBU_KEY: &[u8] = &[0];
 	}
-	pub mod khala {
-		pub const ID: u32 = 2001;
+	pub mod phala {
+		pub const ID: u32 = 2004;
 	}
 }

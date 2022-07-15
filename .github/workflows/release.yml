@@ -22,7 +22,7 @@ jobs:
       -
         name: Docker meta
         id: meta
-        uses: docker/metadata-action@v3
+        uses: docker/metadata-action@v4.0.1
         with:
           images: mangatasolutions/mangata-node
           tags: |
@@ -61,7 +61,7 @@ jobs:
       -
         name: Docker meta
         id: meta
-        uses: docker/metadata-action@v3
+        uses: docker/metadata-action@v4.0.1
         with:
           images: mangatasolutions/mangata-node
           tags: |

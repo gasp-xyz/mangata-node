@@ -691,6 +691,15 @@ impl<T: Config> Pallet<T> {
 		// for backward compatibility
 		if Self::archived().len() > 0 {
 			ensure!(ProvisionAccounts::<T>::get(who).is_some(), Error::<T>::NothingToClaim);
+		} else {
+			ensure!(
+				!ClaimedRewards::<T>::contains_key(&who, &Self::first_token_id()),
+				Error::<T>::NothingToClaim
+			);
+			ensure!(
+				!ClaimedRewards::<T>::contains_key(&who, &Self::second_token_id()),
+				Error::<T>::NothingToClaim
+			);
 		}
 
 		let (first_token_rewards, first_token_rewards_vested, first_token_lock) =

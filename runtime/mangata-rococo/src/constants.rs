@@ -8,6 +8,9 @@ pub mod fee {
 	use smallvec::smallvec;
 	use sp_runtime::Perbill;
 
+	pub const ROC_MGR_SCALE_FACTOR_UNADJUSTED: u128 = 10_000_000_000u128; // 10_000 as KSM/MGX, with 6 decimals accounted for (12 - KSM, 18 - MGR)
+
+	// on-chain fees are 10x more expensive then ~real rate
 	pub const ROC_MGR_SCALE_FACTOR: u128 = 1000_000_000u128; // 1000 as KSM/MGR, with 6 decimals accounted for (12 - KSM, 18 - MGR)
 	pub const KAR_MGR_SCALE_FACTOR: u128 = 10_000_000u128; // 10 as KAR/MGR, with 6 decimals accounted for (12 - KAR, 18 - MGR)
 
@@ -49,7 +52,7 @@ pub mod fee {
 	}
 
 	pub fn roc_per_second() -> u128 {
-		mgr_per_second() / ROC_MGR_SCALE_FACTOR as u128
+		mgr_per_second() / ROC_MGR_SCALE_FACTOR_UNADJUSTED as u128
 	}
 }
 

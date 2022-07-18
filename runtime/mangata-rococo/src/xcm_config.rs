@@ -108,8 +108,8 @@ impl TakeRevenue for ToTreasury {
 }
 
 parameter_types! {
-		// One XCM operation is 1_000_000_000 weight - almost certainly a conservative estimate.
-	pub UnitWeightCost: Weight = 1_000_000_000;
+	// regular transfer is ~400M weight, xcm transfer weight is ~4*UnitWeightCost
+	pub UnitWeightCost: Weight = 150_000_000;
 	pub const MaxInstructions: u32 = 100;
 
 	pub RocPerSecond: (AssetId, u128) = (MultiLocation::parent().into(), roc_per_second());
@@ -149,8 +149,8 @@ parameter_types! {
 			1,
 			X1(Parachain(parachains::turing::ID)),
 		).into(),
-		// TUR:KSM 100:1
-		roc_per_second() * 100
+		// TUR:KSM 100:1 & 10:12 decimals
+		roc_per_second()
 	);
 	pub ImbuPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
@@ -422,6 +422,8 @@ impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 					_ => None,
 				}
 			},
+			MultiLocation { parents: 0, interior: X1(GeneralKey(key)) } =>
+				TokenId::decode(&mut &*key).ok(),
 			_ => None,
 		}
 	}

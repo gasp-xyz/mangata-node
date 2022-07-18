@@ -131,9 +131,10 @@ pub mod pallet {
 					if let Some(versioned_asset_multilocation_encoded) =
 						maybe_versioned_asset_multilocation_encoded
 					{
-						let versioned_asset_multilocation =
-							MultiLocation::decode(&mut &versioned_asset_multilocation_encoded[..])
-								.expect("Error decoding multilocation");
+						let versioned_asset_multilocation = VersionedMultiLocation::decode(
+							&mut &versioned_asset_multilocation_encoded[..],
+						)
+						.expect("Error decoding multilocation");
 						let asset_multilocation: MultiLocation = versioned_asset_multilocation
 							.try_into()
 							.expect("Error unable to unversion multilocation");

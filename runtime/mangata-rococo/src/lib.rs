@@ -51,8 +51,7 @@ pub use sp_runtime::BuildStorage;
 use polkadot_runtime_common::BlockHashCount;
 
 // XCM Imports
-use xcm::latest::prelude::*;
-pub use xcm::VersionedMultiLocation;
+pub use xcm::{latest::prelude::*, VersionedMultiLocation};
 use xcm_asset_registry::{AssetIdMapping, AssetIdMaps};
 
 use codec::{Decode, Encode};
@@ -87,7 +86,7 @@ pub use artemis_eth_app;
 pub use pallet_bridge;
 pub use pallet_verifier;
 
-pub use constants::fee::*;
+pub use constants::{fee::*, parachains::*};
 
 pub mod constants;
 mod weights;

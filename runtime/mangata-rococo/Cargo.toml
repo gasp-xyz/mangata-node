@@ -210,7 +210,6 @@ try-runtime = [
 #]
 
 runtime-benchmarks = [
-	"hex-literal",
 	"sp-runtime/runtime-benchmarks",
 	"xcm-builder/runtime-benchmarks",
 	"frame-benchmarking/runtime-benchmarks",

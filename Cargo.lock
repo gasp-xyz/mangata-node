@@ -5694,7 +5694,7 @@ dependencies = [
 [[package]]
 name = "orml-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.24#58daed54c53addf29b7b8d0ee016251593597c56"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.24#7606f0f18458a7e2db1f657031f75401199fdebc"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5711,7 +5711,7 @@ dependencies = [
 [[package]]
 name = "orml-traits"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.24#58daed54c53addf29b7b8d0ee016251593597c56"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.24#7606f0f18458a7e2db1f657031f75401199fdebc"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
@@ -5729,7 +5729,7 @@ dependencies = [
 [[package]]
 name = "orml-unknown-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.24#58daed54c53addf29b7b8d0ee016251593597c56"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.24#7606f0f18458a7e2db1f657031f75401199fdebc"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5744,7 +5744,7 @@ dependencies = [
 [[package]]
 name = "orml-utilities"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.24#58daed54c53addf29b7b8d0ee016251593597c56"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.24#7606f0f18458a7e2db1f657031f75401199fdebc"
 dependencies = [
  "frame-support",
  "parity-scale-codec 3.1.5",
@@ -5758,7 +5758,7 @@ dependencies = [
 [[package]]
 name = "orml-xcm"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.24#58daed54c53addf29b7b8d0ee016251593597c56"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.24#7606f0f18458a7e2db1f657031f75401199fdebc"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5772,7 +5772,7 @@ dependencies = [
 [[package]]
 name = "orml-xcm-support"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.24#58daed54c53addf29b7b8d0ee016251593597c56"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.24#7606f0f18458a7e2db1f657031f75401199fdebc"
 dependencies = [
  "frame-support",
  "orml-traits",
@@ -5786,7 +5786,7 @@ dependencies = [
 [[package]]
 name = "orml-xtokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.24#58daed54c53addf29b7b8d0ee016251593597c56"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.24#7606f0f18458a7e2db1f657031f75401199fdebc"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -7449,6 +7449,7 @@ dependencies = [
  "frame-benchmarking-cli",
  "frame-system",
  "frame-system-rpc-runtime-api",
+ "kusama-runtime",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "polkadot-core-primitives",
@@ -7456,6 +7457,7 @@ dependencies = [
  "polkadot-primitives",
  "polkadot-runtime",
  "polkadot-runtime-common",
+ "rococo-runtime",
  "sc-client-api",
  "sc-consensus",
  "sc-executor",
@@ -10768,7 +10770,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e5bcc41d18f7a1d50525d080fd3e953be87c4f9f1a974f3c21798ca00d54ec15"
 dependencies = [
  "lazy_static",
- "parking_lot 0.10.2",
+ "parking_lot 0.11.2",
  "serial_test_derive",
 ]
 
@@ -12435,7 +12437,7 @@ dependencies = [
  "chrono",
  "lazy_static",
  "matchers",
- "parking_lot 0.10.2",
+ "parking_lot 0.11.2",
  "regex",
  "serde",
  "serde_json",
@@ -12556,7 +12558,7 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "digest 0.10.3",
  "rand 0.8.5",
  "static_assertions",

@@ -407,21 +407,12 @@ impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 		}
 
 		match location {
-			MultiLocation { parents, interior: X2(Parachain(para_id), GeneralKey(key)) }
-				if parents == 1 =>
-			{
+			MultiLocation { parents: 1, interior: X2(Parachain(para_id), GeneralKey(key)) } =>
 				match (para_id, &key[..]) {
-					(id, key) if id == u32::from(ParachainInfo::get()) => {
-						if let Ok(token_id) = TokenId::decode(&mut &*key) {
-							Some(token_id)
-						} else {
-							// invalid general key
-							None
-						}
-					},
+					(id, key) if id == u32::from(ParachainInfo::get()) =>
+						TokenId::decode(&mut &*key).ok(),
 					_ => None,
-				}
-			},
+				},
 			MultiLocation { parents: 0, interior: X1(GeneralKey(key)) } =>
 				TokenId::decode(&mut &*key).ok(),
 			_ => None,

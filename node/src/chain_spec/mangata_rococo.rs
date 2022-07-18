@@ -4,10 +4,9 @@ use codec::Encode;
 use cumulus_primitives_core::ParaId;
 use hex::FromHex;
 use hex_literal::hex;
-use mangata_kusama_runtime::KAR_TOKEN_ID;
 use mangata_rococo_runtime::{
 	constants::parachains, AccountId, AuraId, GeneralKey, Junction, MultiLocation, Parachain,
-	Signature, VersionedMultiLocation, ROC_TOKEN_ID, X2,
+	Signature, VersionedMultiLocation, KAR_TOKEN_ID, ROC_TOKEN_ID, X2,
 };
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;

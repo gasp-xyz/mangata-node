@@ -22,7 +22,7 @@ RUN curl https://www.openssl.org/source/openssl-$SSL_VERSION.tar.gz -O && \
 ENV OPENSSL_LIB_DIR=/usr/local/ssl/lib \
     OPENSSL_INCLUDE_DIR=/usr/local/ssl/include \
     OPENSSL_STATIC=1
-ENV RUST_TOOLCHAIN=nightly-2021-10-19
+ENV RUST_TOOLCHAIN=nightly
 
 ENV RUSTUP_HOME=/opt/rust
 ENV CARGO_HOME=/opt/cargo
@@ -46,15 +46,15 @@ ENV ERC20_APP_ID=0x00e392c04743359e39f00cd268a5390d27ef6b44
 
 RUN apt-get update \
 	&& apt-get install -y \
-	# cmake \
+	cmake \
 	pkg-config \
-	# libssl-dev \
+	libssl-dev \
 	git \
-	# build-essential \
+	build-essential \
 	clang \
 	libclang-dev \
-	# curl \
-	# llvm \
+	curl \
+	llvm \
 	nodejs \
 	npm \
 	&& rm -rf /var/lib/apt/lists/*

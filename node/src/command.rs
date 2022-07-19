@@ -452,7 +452,7 @@ pub fn run() -> Result<()> {
 					#[cfg(feature = "mangata-kusama")]
 					spec if spec.is_mangata_kusama() => {
 						let state_version =
-							Cli::native_runtime_version(&config.chain_spec).state_version();
+							Cli::native_runtime_version(&spec).state_version();
 						let block: service::mangata_kusama_runtime::Block =
 							generate_genesis_block(&spec, state_version)
 								.map_err(|e| format!("{:?}", e))?;
@@ -461,7 +461,7 @@ pub fn run() -> Result<()> {
 					#[cfg(feature = "mangata-rococo")]
 					spec if spec.is_mangata_rococo() => {
 						let state_version =
-							Cli::native_runtime_version(&config.chain_spec).state_version();
+							Cli::native_runtime_version(&spec).state_version();
 						let block: service::mangata_rococo_runtime::Block =
 							generate_genesis_block(&spec, state_version)
 								.map_err(|e| format!("{:?}", e))?;

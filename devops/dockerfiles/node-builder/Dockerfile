@@ -57,9 +57,9 @@ RUN apt-get update \
 	llvm \
 	nodejs \
 	npm \
+	cmake \
+	protobuf-compiler \
 	&& rm -rf /var/lib/apt/lists/*
-
-RUN apt-get update && apt-get -y install cmake protobuf-compiler
 
 RUN npm install --global yarn
 

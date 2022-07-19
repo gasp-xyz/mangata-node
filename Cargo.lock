@@ -5454,7 +5454,7 @@ dependencies = [
 [[package]]
 name = "orml-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#ae65f7ed2690a6d6187d4a14d88078508e70e862"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#84b726eebeea9918ed432e8f62008fa4c54fcc28"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5471,7 +5471,7 @@ dependencies = [
 [[package]]
 name = "orml-traits"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#ae65f7ed2690a6d6187d4a14d88078508e70e862"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#84b726eebeea9918ed432e8f62008fa4c54fcc28"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
@@ -5489,7 +5489,7 @@ dependencies = [
 [[package]]
 name = "orml-unknown-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#ae65f7ed2690a6d6187d4a14d88078508e70e862"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#84b726eebeea9918ed432e8f62008fa4c54fcc28"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5504,7 +5504,7 @@ dependencies = [
 [[package]]
 name = "orml-utilities"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#ae65f7ed2690a6d6187d4a14d88078508e70e862"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#84b726eebeea9918ed432e8f62008fa4c54fcc28"
 dependencies = [
  "frame-support",
  "parity-scale-codec 2.3.1",
@@ -5518,7 +5518,7 @@ dependencies = [
 [[package]]
 name = "orml-xcm"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#ae65f7ed2690a6d6187d4a14d88078508e70e862"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#84b726eebeea9918ed432e8f62008fa4c54fcc28"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5532,7 +5532,7 @@ dependencies = [
 [[package]]
 name = "orml-xcm-support"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#ae65f7ed2690a6d6187d4a14d88078508e70e862"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#84b726eebeea9918ed432e8f62008fa4c54fcc28"
 dependencies = [
  "frame-support",
  "orml-traits",
@@ -5546,7 +5546,7 @@ dependencies = [
 [[package]]
 name = "orml-xtokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#ae65f7ed2690a6d6187d4a14d88078508e70e862"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev#84b726eebeea9918ed432e8f62008fa4c54fcc28"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -6681,7 +6681,7 @@ dependencies = [
 [[package]]
 name = "parachain-staking"
 version = "3.0.0"
-source = "git+https://github.com/mangata-finance//moonbeam?branch=mangata-dev#5d4096f1a92377e64169d3405bfa18c3bb4acb51"
+source = "git+https://github.com/mangata-finance//moonbeam?branch=mangata-dev#3c3f953c4e660a264eda93ac91cc9f0d752265e2"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7191,10 +7191,12 @@ dependencies = [
  "beefy-primitives",
  "frame-benchmarking",
  "frame-system-rpc-runtime-api",
+ "kusama-runtime",
  "pallet-mmr-primitives",
  "pallet-transaction-payment-rpc-runtime-api",
  "polkadot-primitives",
  "polkadot-runtime",
+ "rococo-runtime",
  "sc-client-api",
  "sc-consensus",
  "sc-executor",
@@ -8071,6 +8073,7 @@ dependencies = [
  "futures 0.3.21",
  "hex-literal",
  "kusama-runtime",
+ "kusama-runtime-constants",
  "kvdb",
  "kvdb-rocksdb",
  "lru 0.7.2",
@@ -8114,6 +8117,7 @@ dependencies = [
  "polkadot-runtime-parachains",
  "polkadot-statement-distribution",
  "rococo-runtime",
+ "rococo-runtime-constants",
  "sc-authority-discovery",
  "sc-basic-authorship",
  "sc-block-builder",
@@ -10300,7 +10304,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e5bcc41d18f7a1d50525d080fd3e953be87c4f9f1a974f3c21798ca00d54ec15"
 dependencies = [
  "lazy_static",
- "parking_lot 0.11.2",
+ "parking_lot 0.10.2",
  "serial_test_derive",
 ]
 
@@ -11878,7 +11882,7 @@ dependencies = [
  "chrono",
  "lazy_static",
  "matchers",
- "parking_lot 0.11.2",
+ "parking_lot 0.10.2",
  "regex",
  "serde",
  "serde_json",
@@ -11999,7 +12003,7 @@ version = "1.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4ee73e6e4924fe940354b8d4d98cad5231175d615cd855b758adc658c0aac6a0"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "rand 0.8.5",
  "static_assertions",
 ]

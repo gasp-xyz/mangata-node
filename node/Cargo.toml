@@ -21,10 +21,12 @@ default = ['mangata-kusama']
 mangata-kusama = [
 		"mangata-kusama-runtime/std",
 		"xyk-rpc/std",
+		"polkadot-cli/kusama-native",
 ]
 mangata-rococo = [
 		"mangata-rococo-runtime/std",
 		"xyk-rpc/std",
+		"polkadot-cli/rococo-native",
 ]
 disable-execution = ['mangata-kusama-runtime/disable-execution']
 runtime-benchmarks = ["mangata-kusama-runtime/runtime-benchmarks", "polkadot-cli/runtime-benchmarks"]

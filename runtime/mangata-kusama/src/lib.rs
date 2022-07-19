@@ -77,6 +77,7 @@ pub use mangata_primitives::{
 	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
 };
 
+use hex_literal;
 pub use orml_tokens;
 use orml_tokens::TransferDust;
 use orml_traits::{parameter_type_with_key, GetByKey, MultiCurrency};
@@ -84,10 +85,12 @@ use orml_traits::{parameter_type_with_key, GetByKey, MultiCurrency};
 pub use pallet_xyk;
 use xyk_runtime_api::{RpcAmountsResult, RpcResult};
 
-pub const MGA_TOKEN_ID: TokenId = 0;
+pub const MGX_TOKEN_ID: TokenId = 0;
 pub const KSM_TOKEN_ID: TokenId = 4;
+pub const KAR_TOKEN_ID: TokenId = 6;
 
-pub const KSM_MGA_SCALE_FACTOR: u128 = 1000_000_000u128; // 1000 as KSM/MGA, with 6 decimals accounted for (12 - KSM, 18 - MGA)
+pub const KSM_MGX_SCALE_FACTOR: u128 = 1000_000_000u128; // 1000 as KSM/MGX, with 6 decimals accounted for (12 - KSM, 18 - MGX)
+pub const KAR_MGX_SCALE_FACTOR: u128 = 10_000_000u128; // 10 as KAR/MGX, with 6 decimals accounted for (12 - KAR, 18 - MGX)
 
 pub use pallet_sudo;
 
@@ -180,7 +183,7 @@ impl WeightToFeePolynomial for WeightToFee {
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
 		// in Rococo, extrinsic base weight (smallest non-zero weight) is mapped to 1 MILLIUNIT:
 		// in mangata, we map to 1/10 of that, or 1/10 MILLIUNIT
-		let p = base_tx_in_mga();
+		let p = base_tx_in_mgx();
 		let q = Balance::from(MangataExtrinsicBaseWeight::get());
 		smallvec![WeightToFeeCoefficient {
 			degree: 1,
@@ -191,18 +194,22 @@ impl WeightToFeePolynomial for WeightToFee {
 	}
 }
 
-pub fn base_tx_in_mga() -> Balance {
+pub fn base_tx_in_mgx() -> Balance {
 	UNIT
 }
 
-pub fn mga_per_second() -> u128 {
+pub fn mgx_per_second() -> u128 {
 	let base_weight = Balance::from(MangataExtrinsicBaseWeight::get());
 	let base_per_second = (WEIGHT_PER_SECOND as u128) / base_weight;
-	base_per_second * base_tx_in_mga()
+	base_per_second * base_tx_in_mgx()
 }
 
 pub fn ksm_per_second() -> u128 {
-	mga_per_second() / KSM_MGA_SCALE_FACTOR as u128
+	mgx_per_second() / KSM_MGX_SCALE_FACTOR as u128
+}
+
+pub fn kar_per_second() -> u128 {
+	mgx_per_second() / KAR_MGX_SCALE_FACTOR as u128
 }
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
@@ -232,11 +239,11 @@ impl_opaque_keys! {
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
-	authoring_version: 5,
-	spec_version: 5,
+	authoring_version: 6,
+	spec_version: 6,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 5,
+	transaction_version: 6,
 	state_version: 0,
 };
 
@@ -348,8 +355,9 @@ parameter_types! {
 }
 
 parameter_types! {
-	pub const MgaTokenId: TokenId = MGA_TOKEN_ID;
+	pub const MgxTokenId: TokenId = MGX_TOKEN_ID;
 	pub const KsmTokenId: TokenId = KSM_TOKEN_ID;
+	pub const KarTokenId: TokenId = KAR_TOKEN_ID;
 }
 
 // Configure FRAME pallets to include in runtime.
@@ -451,7 +459,7 @@ parameter_types! {
 
 impl pallet_treasury::Config for Runtime {
 	type PalletId = TreasuryPalletId;
-	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>;
+	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgxTokenId>;
 	type ApproveOrigin = EnsureRoot<AccountId>;
 	type RejectOrigin = EnsureRoot<AccountId>;
 	type Event = Event;
@@ -473,7 +481,7 @@ parameter_type_with_key! {
 	pub ExistentialDeposits: |_currency_id: TokenId| -> Balance {
 		0
 		// match currency_id {
-		// 	&MGA_TOKEN_ID => 100,
+		// 	&MGX_TOKEN_ID => 100,
 		// 	_ => 0,
 		// }
 	};
@@ -524,7 +532,7 @@ impl pallet_xyk::Config for Runtime {
 	type Event = Event;
 	type ActivationReservesProvider = MultiPurposeLiquidity;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-	type NativeCurrencyId = MgaTokenId;
+	type NativeCurrencyId = MgxTokenId;
 	type TreasuryPalletId = TreasuryPalletId;
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
 	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
@@ -605,7 +613,9 @@ parameter_types! {
 use scale_info::TypeInfo;
 
 #[derive(Encode, Decode, Clone, TypeInfo)]
-pub struct TwoCurrencyAdapter<C, OU, T1, T2, SF>(PhantomData<(C, OU, T1, T2, SF)>);
+pub struct ThreeCurrencyOnChargeAdapter<C, OU, T1, T2, T3, SF2, SF3>(
+	PhantomData<(C, OU, T1, T2, T3, SF2, SF3)>,
+);
 
 use sp_runtime::{
 	traits::{DispatchInfoOf, PostDispatchInfoOf, Saturating, Zero},
@@ -628,7 +638,8 @@ use orml_tokens::MultiTokenImbalanceWithZeroTrait;
 ///
 /// The unbalance handler is given 2 unbalanceds in [`OnUnbalanced::on_unbalanceds`]: fee and
 /// then tip.
-impl<T, C, OU, T1, T2, SF> OnChargeTransaction<T> for TwoCurrencyAdapter<C, OU, T1, T2, SF>
+impl<T, C, OU, T1, T2, T3, SF2, SF3> OnChargeTransaction<T>
+	for ThreeCurrencyOnChargeAdapter<C, OU, T1, T2, T3, SF2, SF3>
 where
 	T: pallet_transaction_payment::Config,
 	T::TransactionByteFee:
@@ -648,7 +659,9 @@ where
 		scale_info::TypeInfo,
 	T1: Get<TokenId>,
 	T2: Get<TokenId>,
-	SF: Get<u128>,
+	T3: Get<TokenId>,
+	SF2: Get<u128>,
+	SF3: Get<u128>,
 {
 	type LiquidityInfo = Option<(TokenId, NegativeImbalanceOf<C, T>)>;
 	type Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -685,12 +698,21 @@ where
 			Err(_) => match C::withdraw(
 				T2::get().into(),
 				who,
-				fee / SF::get().into(),
+				fee / SF2::get().into(),
 				withdraw_reason,
 				ExistenceRequirement::KeepAlive,
 			) {
 				Ok(imbalance) => Ok(Some((T2::get(), imbalance))),
-				Err(_) => Err(InvalidTransaction::Payment.into()),
+				Err(_) => match C::withdraw(
+					T3::get().into(),
+					who,
+					fee / SF3::get().into(),
+					withdraw_reason,
+					ExistenceRequirement::KeepAlive,
+				) {
+					Ok(imbalance) => Ok(Some((T3::get(), imbalance))),
+					Err(_) => Err(InvalidTransaction::Payment.into()),
+				},
 			},
 		}
 	}
@@ -709,8 +731,10 @@ where
 		already_withdrawn: Self::LiquidityInfo,
 	) -> Result<(), TransactionValidityError> {
 		if let Some((token_id, paid)) = already_withdrawn {
-			let (corrected_fee, tip) = if token_id == T2::get() {
-				(corrected_fee / SF::get().into(), tip / SF::get().into())
+			let (corrected_fee, tip) = if token_id == T3::get() {
+				(corrected_fee / SF3::get().into(), tip / SF3::get().into())
+			} else if token_id == T2::get() {
+				(corrected_fee / SF2::get().into(), tip / SF2::get().into())
 			} else {
 				(corrected_fee, tip)
 			};
@@ -742,12 +766,14 @@ parameter_types! {
 }
 
 impl pallet_transaction_payment::Config for Runtime {
-	type OnChargeTransaction = TwoCurrencyAdapter<
+	type OnChargeTransaction = ThreeCurrencyOnChargeAdapter<
 		orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
 		ToAuthor,
-		MgaTokenId,
+		MgxTokenId,
 		KsmTokenId,
-		frame_support::traits::ConstU128<KSM_MGA_SCALE_FACTOR>,
+		KarTokenId,
+		frame_support::traits::ConstU128<KSM_MGX_SCALE_FACTOR>,
+		frame_support::traits::ConstU128<KAR_MGX_SCALE_FACTOR>,
 	>;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = WeightToFee;
@@ -958,7 +984,7 @@ impl pallet_assets_info::Config for Runtime {
 	type MaxLengthDescription = MaxLengthDescription;
 	type MaxDecimals = MaxDecimals;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-	type RelayNativeTokensValueScaleFactor = frame_support::traits::ConstU128<KSM_MGA_SCALE_FACTOR>;
+	type RelayNativeTokensValueScaleFactor = frame_support::traits::ConstU128<KSM_MGX_SCALE_FACTOR>;
 }
 
 impl pallet_bridge::Config for Runtime {
@@ -1033,7 +1059,7 @@ const_assert!(DesiredMembers::get() <= CouncilMaxMembers::get());
 impl pallet_elections_phragmen::Config for Runtime {
 	type Event = Event;
 	type PalletId = ElectionsPhragmenPalletId;
-	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>;
+	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgxTokenId>;
 	type ChangeMembers = Council;
 	// NOTE: this implies that council's genesis members cannot be set directly and must come from
 	// this module.
@@ -1110,7 +1136,7 @@ impl parachain_staking::Config for Runtime {
 	type MinCollatorStk = MinCollatorStk;
 	type MinCandidateStk = MinCandidateStk;
 	type MinDelegation = MinDelegatorStk;
-	type NativeTokenId = MgaTokenId;
+	type NativeTokenId = MgxTokenId;
 	type StakingLiquidityTokenValuator = Xyk;
 	type Issuance = Issuance;
 	type StakingIssuanceVault = StakingIssuanceVault;
@@ -1143,7 +1169,7 @@ const_assert!(RewardPaymentDelay::get() <= HistoryLimit::get());
 
 impl pallet_issuance::Config for Runtime {
 	type Event = Event;
-	type NativeCurrencyId = MgaTokenId;
+	type NativeCurrencyId = MgxTokenId;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type BlocksPerRound = BlocksPerRound;
 	type HistoryLimit = HistoryLimit;
@@ -1192,7 +1218,7 @@ impl pallet_crowdloan_rewards::Config for Runtime {
 	type MaxInitContributors = MaxInitContributorsBatchSizes;
 	type MinimumReward = MinimumReward;
 	type RewardAddressRelayVoteThreshold = RelaySignaturesThreshold;
-	type NativeTokenId = MgaTokenId;
+	type NativeTokenId = MgxTokenId;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type RelayChainAccountId = sp_runtime::AccountId32;
 	type RewardAddressChangeOrigin = EnsureRoot<AccountId>;
@@ -1207,7 +1233,7 @@ impl pallet_multipurpose_liquidity::Config for Runtime {
 	type Event = Event;
 	type MaxRelocks = MaxLocks;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-	type NativeCurrencyId = MgaTokenId;
+	type NativeCurrencyId = MgxTokenId;
 	type VestingProvider = Vesting;
 	type Xyk = Xyk;
 	type WeightInfo = weights::pallet_multipurpose_liquidity_weights::ModuleWeight<Runtime>;
@@ -1254,17 +1280,27 @@ impl orml_xcm::Config for Runtime {
 
 parameter_types! {
 	pub KsmPerSecond: (AssetId, u128) = (MultiLocation::parent().into(), ksm_per_second());
-	pub MgaPerSecond: (AssetId, u128) = (
+	pub MgxPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
-			X2(Parachain(u32::from(ParachainInfo::get())), GeneralKey(MGA_TOKEN_ID.encode())),
+			X2(Parachain(u32::from(ParachainInfo::get())), GeneralKey(MGX_TOKEN_ID.encode())),
 		).into(),
-		mga_per_second()
+		mgx_per_second()
+	);
+	pub KarPerSecond: (AssetId, u128) = (
+		MultiLocation::new(
+			1,
+			X2(Parachain(2000u32), GeneralKey(<[u8; 2]>::from(hex_literal::hex!("0080")).to_vec())),
+		).into(),
+		kar_per_second()
 	);
 }
 
-pub type Trader =
-	(FixedRateOfFungible<KsmPerSecond, ToTreasury>, FixedRateOfFungible<MgaPerSecond, ToTreasury>);
+pub type Trader = (
+	FixedRateOfFungible<KsmPerSecond, ToTreasury>,
+	FixedRateOfFungible<MgxPerSecond, ToTreasury>,
+	FixedRateOfFungible<KarPerSecond, ToTreasury>,
+);
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {

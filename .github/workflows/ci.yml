@@ -110,7 +110,6 @@ jobs:
         name: Run unit tests
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          sudo apt-get update && sudo apt-get -y install cmake protobuf-compiler
           ./docker-cargo.sh test -j2 -- -Z unstable-options --format json --report-time
           # |cargo2junit | tee ut-results.xml
           # sed -i '/<testsuite.*\/>$/d' ut-results.xml

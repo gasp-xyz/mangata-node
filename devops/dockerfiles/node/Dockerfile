@@ -3,4 +3,4 @@ ARG NODE_BINARY
 ARG WASM
 COPY $NODE_BINARY /mangata/node
 COPY $WASM /mangata/
-ENTRYPOINT /mangata/node
+ENTRYPOINT ["/mangata/node"]

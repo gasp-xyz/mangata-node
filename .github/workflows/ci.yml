@@ -216,7 +216,7 @@ jobs:
         name: Build node img
         env:
           DOCKER_IMAGE_GIT_SHA_TAG: "mangatasolutions/mangata-node:rococo-${{ github.sha }}"
-          DOCKER_IMAGE_LATEST_TAG: "mangatasolutions/mangata-node:rococo-${{ github.sha }}"
+          DOCKER_IMAGE_LATEST_TAG: "mangatasolutions/mangata-node:rococo-latest"
           SKIP_BUILD: 1
           NODE_BINARY: "docker-cargo/release/mangata-node"
           WASM: "docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm"
@@ -332,7 +332,7 @@ jobs:
         name: Build node img
         env:
           DOCKER_IMAGE_GIT_SHA_TAG: "mangatasolutions/mangata-node:kusama-${{ github.sha }}"
-          DOCKER_IMAGE_LATEST_TAG: "mangatasolutions/mangata-node:kusama-${{ github.sha }}"
+          DOCKER_IMAGE_LATEST_TAG: "mangatasolutions/mangata-node:kusama-latest"
           SKIP_BUILD: 1
           NODE_BINARY: "docker-cargo/release/mangata-node"
           WASM: "docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm"

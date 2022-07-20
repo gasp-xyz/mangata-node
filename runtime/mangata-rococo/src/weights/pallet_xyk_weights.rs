@@ -65,6 +65,7 @@ pub trait WeightInfo {
 	fn activate_liquidity() -> Weight;
 	fn deactivate_liquidity() -> Weight;
 	fn claim_rewards_v2() -> Weight;
+	fn claim_rewards_all_v2() -> Weight;
 	fn activate_liquidity_v2() -> Weight;
 	fn deactivate_liquidity_v2() -> Weight;
 }
@@ -208,6 +209,12 @@ impl<T: frame_system::Config> pallet_xyk::WeightInfo for ModuleWeight<T> {
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
 
+	fn claim_rewards_all_v2() -> Weight {
+		(86_814_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(9 as Weight))
+			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+	}
+
 	// Storage: Issuance PromotedPoolsRewards (r:1 w:0)
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: Xyk LiquidityMiningUser (r:1 w:1)
@@ -287,6 +294,11 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().writes(8 as Weight))
 	}
 	fn claim_rewards_v2() -> Weight {
+		(86_814_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(9 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+	}
+	fn claim_rewards_all_v2() -> Weight {
 		(86_814_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(9 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))

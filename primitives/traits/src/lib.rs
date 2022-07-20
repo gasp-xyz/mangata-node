@@ -138,10 +138,10 @@ pub trait XykFunctionsTrait<AccountId> {
 		amount: Self::Balance,
 	) -> DispatchResult;
 
-	// fn claim_rewards_all(
-	// 	sender: AccountId,
-	// 	liquidity_token_id: Self::CurrencyId,
-	// ) -> DispatchResult;
+	fn claim_rewards_all_v2(
+		sender: AccountId,
+		liquidity_token_id: Self::CurrencyId,
+	) -> DispatchResult;
 
 	fn promote_pool(liquidity_token_id: TokenId) -> DispatchResult;
 

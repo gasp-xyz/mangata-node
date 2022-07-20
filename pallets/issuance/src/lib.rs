@@ -535,6 +535,7 @@ impl<T: Config> Pallet<T> {
 
 		// TODO remove later
 
+		// benchmark with max of X prom pools
 		for (liquidity_token_id, v) in PromotedPoolsRewardsV2::<T>::iter() {
 			let activated_amount =
 				T::ActivedPoolQueryApiType::get_pool_activate_amount(liquidity_token_id)

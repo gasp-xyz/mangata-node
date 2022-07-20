@@ -108,6 +108,15 @@ impl PoolPromoteApi for MockPromotedPoolApi {
 		pools.get(&liquidity_token_id).map(|x| *x)
 	}
 
+	fn claim_pool_rewards(liquidity_token_id: TokenId, amount: Balance) -> bool {
+		true
+	}
+
+	fn get_pool_rewards_v2(liquidity_token_id: TokenId) -> Option<Balance> {
+		let pools = PROMOTED_POOLS.lock().unwrap();
+		pools.get(&liquidity_token_id).map(|x| *x)
+	}
+
 	fn len() -> usize {
 		PROMOTED_POOLS.lock().unwrap().len()
 	}
@@ -282,7 +291,7 @@ impl Config for Test {
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
 	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
 	type PoolPromoteApi = MockPromotedPoolApi;
-	//	type ActivedPoolQueryApi = MockActivedPoolQueryApi;
+	type ActivedPoolQueryApi = MockActivedPoolQueryApi;
 	type PoolFeePercentage = ConstU128<20>;
 	type TreasuryFeePercentage = ConstU128<5>;
 	type BuyAndBurnFeePercentage = ConstU128<5>;

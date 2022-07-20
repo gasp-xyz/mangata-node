@@ -730,6 +730,22 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		#[transactional]
+		#[pallet::weight(T::WeightInfo::claim_rewards_v2())]
+		pub fn claim_rewards_all_v2(
+			origin: OriginFor<T>,
+			liquidity_token_id: TokenId,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			<Self as XykFunctionsTrait<T::AccountId>>::claim_rewards_all_v2(
+				sender,
+				liquidity_token_id,
+			)?;
+
+			Ok(().into())
+		}
+
 		#[pallet::weight(T::WeightInfo::promote_pool())]
 		pub fn promote_pool(origin: OriginFor<T>, liquidity_token_id: TokenId) -> DispatchResult {
 			ensure_root(origin)?;
@@ -747,7 +763,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			<Self as XykFunctionsTrait<T::AccountId>>::activate_liquidity(
+			<Self as XykFunctionsTrait<T::AccountId>>::activate_liquidity_v2(
 				sender,
 				liquidity_token_id,
 				amount,
@@ -764,7 +780,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			<Self as XykFunctionsTrait<T::AccountId>>::deactivate_liquidity(
+			<Self as XykFunctionsTrait<T::AccountId>>::deactivate_liquidity_v2(
 				sender,
 				liquidity_token_id,
 				amount,
@@ -784,6 +800,11 @@ impl<T: Config> Pallet<T> {
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
 	) -> Result<Balance, DispatchError> {
+		log!(
+			info,
+			"*********************calculate_rewards_amount_v2:",
+		
+		);
 		let liquidity_assets_amount: Balance =
 			LiquidityMiningActiveUserV2::<T>::get((&user, &liquidity_asset_id));
 
@@ -804,6 +825,15 @@ impl<T: Config> Pallet<T> {
 				user_missing_at_checkpoint,
 				cumulative_rewards_ratio_current,
 			)?;
+			log!(
+				info,
+				"*********************calculate_rewards_amount_v2: ({}, {}, {}) -> {},{}",
+				cumulative_rewards_ratio_current,
+				user_last_checkpoint,
+				user_cumulative_rewards_ratio,
+				user_missing_at_checkpoint,
+				current_rewards
+			);
 		}
 
 		let not_yet_claimed_rewards =
@@ -817,7 +847,14 @@ impl<T: Config> Pallet<T> {
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError6))?
 			.checked_sub(already_claimed_rewards)
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError7))?;
-
+			log!(
+				info,
+				"*****************calculate_rewards_amount_v2: ({}, {}, {}) -> {}",
+				liquidity_assets_amount,
+				not_yet_claimed_rewards,
+				already_claimed_rewards,
+				total_available_rewards
+			);
 		Ok(total_available_rewards)
 	}
 
@@ -2851,31 +2888,31 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		Ok(())
 	}
 
-	// fn claim_rewards_all(
-	// 	user: T::AccountId,
-	// 	liquidity_asset_id: Self::CurrencyId,
-	// ) -> DispatchResult {
-	// 	let mangata_id: TokenId = T::NativeCurrencyId::get();
+	fn claim_rewards_all_v2(
+		user: T::AccountId,
+		liquidity_asset_id: Self::CurrencyId,
+	) -> DispatchResult {
+		let mangata_id: TokenId = T::NativeCurrencyId::get();
 
-	// 	let claimable_rewards = Pallet::<T>::calculate_rewards_amount(user.clone(), liquidity_asset_id)?;
+		let claimable_rewards = Pallet::<T>::calculate_rewards_amount_v2(user.clone(), liquidity_asset_id)?;
 
-	// 	LiquidityMiningUserNotYetClaimedV2::<T>::insert(
-	// 		(user.clone(), liquidity_asset_id),
-	// 		0 as u128,
-	// 	);
+		LiquidityMiningUserNotYetClaimedV2::<T>::insert(
+			(user.clone(), liquidity_asset_id),
+			0 as u128,
+		);
 
-	// 	<T as Config>::Currency::transfer(
-	// 		mangata_id.into(),
-	// 		&<T as Config>::LiquidityMiningIssuanceVault::get(),
-	// 		&user,
-	// 		claimable_rewards.into(),
-	// 		ExistenceRequirement::KeepAlive,
-	// 	)?;
+		<T as Config>::Currency::transfer(
+			mangata_id.into(),
+			&<T as Config>::LiquidityMiningIssuanceVault::get(),
+			&user,
+			claimable_rewards.into(),
+			ExistenceRequirement::KeepAlive,
+		)?;
 
-	// 	Pallet::<T>::deposit_event(Event::RewardsClaimed(user, liquidity_asset_id, claimable_rewards));
+		Pallet::<T>::deposit_event(Event::RewardsClaimed(user, liquidity_asset_id, claimable_rewards));
 
-	// 	Ok(())
-	// }
+		Ok(())
+	}
 
 	fn promote_pool(liquidity_token_id: TokenId) -> DispatchResult {
 		ensure!(

@@ -110,7 +110,8 @@ jobs:
         name: Run unit tests
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh test -j2 -- -Z unstable-options --format json --report-time
+          ./docker-cargo.sh test -j2 -p pallet-bootstrap -p xyk-rpc -p pallet-xyk -p xyk-runtime-api -p pallet-bridge -p pallet-assets-info -p pallet-issuance -p pallet-multipurpose-liquidity -p xcm-asset-registry -p pallet-sudo-origin
+
           # |cargo2junit | tee ut-results.xml
           # sed -i '/<testsuite.*\/>$/d' ut-results.xml
           # sed -i 's/<testsuites>/<testsuites time="0">/g' ut-results.xml

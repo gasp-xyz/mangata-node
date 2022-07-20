@@ -32,7 +32,7 @@ on:
           default: false
 
 env:
-  DOCKER_BUILDER_IMAGE: mangatasolutions/node-builder:0.1
+  DOCKER_BUILDER_IMAGE: mangatasolutions/node-builder:0.2
   DISABLE_TTY: 1
 
 jobs:

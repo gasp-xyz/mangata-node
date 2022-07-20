@@ -73,7 +73,7 @@ pallet-collective = { git = "https://github.com/mangata-finance/substrate", defa
 pallet-vesting-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.24" }
 
 # Open-Runtime-Module-Library Dependencies
-orml-tokens = {  default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v0.9.24" , features=["frame-benchmarking"] }
+orml-tokens = {  default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v0.9.24" }
 orml-traits = {  default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v0.9.24" }
 orml-xtokens = {  default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v0.9.24" }
 orml-xcm-support = {  default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v0.9.24" }
@@ -232,4 +232,5 @@ runtime-benchmarks = [
 	"pallet-issuance/runtime-benchmarks",
 	"pallet-bootstrap/runtime-benchmarks",
 	"pallet-multipurpose-liquidity/runtime-benchmarks",
+	"orml-tokens/frame-benchmarking",
 ]

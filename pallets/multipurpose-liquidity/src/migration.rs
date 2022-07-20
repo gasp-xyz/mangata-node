@@ -13,6 +13,17 @@ use frame_support::traits::OnRuntimeUpgradeHelpersExt;
 #[cfg(feature = "try-runtime")]
 pub fn migrate_from_v0_pre_runtime_upgrade<T: Config, P: GetStorageVersion + PalletInfoAccess>(
 ) -> Result<(), &'static str> {
+
+	let on_chain_storage_version = <P as GetStorageVersion>::on_chain_storage_version();
+	if on_chain_storage_version != 0 {
+		log::info!(
+			target: "mpl",
+			"Attempted to apply xyk-staking-mpl consistency pre-migration to mpl but failed because storage version is {:?}, and not 0",
+			on_chain_storage_version,
+		);
+		return Ok(())
+	}
+
 	// Check consistency of xyk storage, staking storage and orml reserves
 	// Ensure reserve and relock status is zero
 
@@ -245,6 +256,17 @@ pub fn migrate_from_v0<T: Config, P: GetStorageVersion + PalletInfoAccess>(
 #[cfg(feature = "try-runtime")]
 pub fn migrate_from_v0_post_runtime_upgrade<T: Config, P: GetStorageVersion + PalletInfoAccess>(
 ) -> Result<(), &'static str> {
+
+	let on_chain_storage_version = <P as GetStorageVersion>::on_chain_storage_version();
+	if on_chain_storage_version != 0 {
+		log::info!(
+			target: "mpl",
+			"Attempted to apply xyk-staking-mpl consistency post-migration to mpl but failed because storage version is {:?}, and not 0",
+			on_chain_storage_version,
+		);
+		return Ok(())
+	}
+
 	// Check consistency of xyk storage, staking storage and orml reserves
 
 	let user_reserve_info: BTreeMap<(T::AccountId, TokenId), (Balance, Balance, Balance)> =

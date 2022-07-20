@@ -2,13 +2,13 @@ services:
   relay_alice:
     environment:
       - ${RUST_LOG:-info}
-    image: ${RELAYCHAIN_DOCKER_IMAGE:-parity/polkadot:v0.9.23}
+    image: ${RELAYCHAIN_DOCKER_IMAGE:-parity/polkadot:v0.9.24}
     user: root
     command: >
       --alice
       --validator
       --base-path /tmp/relay_alice
-      --chain ${RELAY_CHAIN:-rococo-local}
+      --chain ${RELAY_CHAIN:-/etc/mangata/rococo-local-0.9.24.json}
       --bootnodes=/dns/relay_bob/tcp/30333/p2p/12D3KooWHdiAxVd8uMQR1hGWXccidmfCwLqcMpGwR6QcTP6QRMuD
       --public-addr=/ip4/127.0.0.1/tcp/30333
       --port 30333
@@ -25,7 +25,7 @@ services:
       - 30333:30333
 
   relay_bob:
-    image: ${RELAYCHAIN_DOCKER_IMAGE:-parity/polkadot:v0.9.23}
+    image: ${RELAYCHAIN_DOCKER_IMAGE:-parity/polkadot:v0.9.24}
     user: root
     environment:
       - ${RUST_LOG:-info}
@@ -33,7 +33,7 @@ services:
       --bob
       --validator
       --base-path /tmp/relay_bob
-      --chain ${RELAY_CHAIN:-rococo-local}
+      --chain ${RELAY_CHAIN:-/etc/mangata/rococo-local-0.9.24.json}
       --bootnodes=/dns/relay_alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
       --public-addr=/ip4/127.0.0.1/tcp/30334
       --port 30333

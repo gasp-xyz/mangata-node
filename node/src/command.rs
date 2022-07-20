@@ -31,8 +31,9 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 		"public-testnet" => Box::new(chain_spec::mangata_rococo::public_testnet_config()),
 
 		#[cfg(feature = "mangata-rococo")]
-		"mangata-rococo-local-testnet" =>
-			Box::new(chain_spec::mangata_rococo::mangata_rococo_local_config()),
+		"mangata-rococo-local-testnet" => {
+			Box::new(chain_spec::mangata_rococo::mangata_rococo_local_config())
+		},
 
 		path => {
 			let path = std::path::PathBuf::from(path);
@@ -48,16 +49,16 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 				}
 
 				#[cfg(not(feature = "mangata-kusama"))]
-				return Err(service::MANGATA_KUSAMA_RUNTIME_NOT_AVAILABLE.into())
+				return Err(service::MANGATA_KUSAMA_RUNTIME_NOT_AVAILABLE.into());
 			} else if chain_spec.is_mangata_rococo() {
 				#[cfg(feature = "mangata-rococo")]
 				{
 					Box::new(chain_spec::mangata_rococo::ChainSpec::from_json_file(path)?)
 				}
 				#[cfg(not(feature = "mangata-rococo"))]
-				return Err(service::MANGATA_ROCOCO_RUNTIME_NOT_AVAILABLE.into())
+				return Err(service::MANGATA_ROCOCO_RUNTIME_NOT_AVAILABLE.into());
 			} else {
-				return Err("The id of the chainspec does not match the enabled feature".into())
+				return Err("The id of the chainspec does not match the enabled feature".into());
 			}
 		},
 	})
@@ -167,13 +168,13 @@ pub trait IdentifyVariant {
 
 impl IdentifyVariant for Box<dyn ChainSpec> {
 	fn is_mangata_kusama(&self) -> bool {
-		!(self.id().starts_with("mangata_public_testnet") ||
-			self.id().starts_with("mangata_rococo_local"))
+		!(self.id().starts_with("mangata_public_testnet")
+			|| self.id().starts_with("mangata_rococo_local"))
 	}
 
 	fn is_mangata_rococo(&self) -> bool {
-		self.id().starts_with("mangata_public_testnet") ||
-			self.id().starts_with("mangata_rococo_local")
+		self.id().starts_with("mangata_public_testnet")
+			|| self.id().starts_with("mangata_rococo_local")
 	}
 }
 
@@ -306,81 +307,83 @@ pub fn run() -> Result<()> {
 
 			Ok(())
 		},
+		// Some(Subcommand::Benchmark(cmd)) => {
 		Some(Subcommand::Benchmark(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			let chain_spec = &runner.config().chain_spec;
 
 			match chain_spec {
 				#[cfg(feature = "mangata-kusama")]
-				spec if spec.is_mangata_kusama() => match cmd {
-					BenchmarkCmd::Pallet(cmd) =>
-						if cfg!(feature = "runtime-benchmarks") {
-							runner.sync_run(|config| {
-								cmd.run::<service::mangata_kusama_runtime::Block, service::MangataKusamaRuntimeExecutor>(config)
-							})
-						} else {
-							Err("Benchmarking wasn't enabled when building the node. \
+				// spec if spec.is_mangata_kusama() => match cmd {
+				spec if spec.is_mangata_kusama() => {
+					// BenchmarkCmd::Pallet(cmd) =>
+					if cfg!(feature = "runtime-benchmarks") {
+						runner.sync_run(|config| {
+							cmd.run::<service::mangata_kusama_runtime::Block, service::MangataKusamaRuntimeExecutor>(config)
+						})
+					} else {
+						Err("Benchmarking wasn't enabled when building the node. \
 						You can enable it with `--features runtime-benchmarks`."
-								.into())
-						},
-					BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
-						let partials = new_partial::<
-							service::mangata_kusama_runtime::RuntimeApi,
-							service::MangataKusamaRuntimeExecutor,
-						>(&config)?;
-						cmd.run(partials.client)
-					}),
-					BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
-						let partials = new_partial::<
-							service::mangata_kusama_runtime::RuntimeApi,
-							service::MangataKusamaRuntimeExecutor,
-						>(&config)?;
-						let db = partials.backend.expose_db();
-						let storage = partials.backend.expose_storage();
-
-						cmd.run(config, partials.client.clone(), db, storage)
-					}),
-					BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
-					BenchmarkCmd::Machine(cmd) => runner
-						.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone())),
+							.into())
+					}
+					// BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
+					// 	let partials = new_partial::<
+					// 		service::mangata_kusama_runtime::RuntimeApi,
+					// 		service::MangataKusamaRuntimeExecutor,
+					// 	>(&config)?;
+					// 	cmd.run(partials.client)
+					// }),
+					// BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
+					// 	let partials = new_partial::<
+					// 		service::mangata_kusama_runtime::RuntimeApi,
+					// 		service::MangataKusamaRuntimeExecutor,
+					// 	>(&config)?;
+					// 	let db = partials.backend.expose_db();
+					// 	let storage = partials.backend.expose_storage();
+					//
+					// 	cmd.run(config, partials.client.clone(), db, storage)
+					// }),
+					// BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
+					// BenchmarkCmd::Machine(cmd) => runner
+					// 	.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone())),
 				},
-				#[cfg(feature = "mangata-rococo")]
-				spec if spec.is_mangata_rococo() => match cmd {
-					BenchmarkCmd::Pallet(cmd) =>
-						if cfg!(feature = "runtime-benchmarks") {
-							runner.sync_run(|config| {
-								cmd.run::<service::mangata_rococo_runtime::Block, service::MangataRococoRuntimeExecutor>(config)
-							})
-						} else {
-							Err("Benchmarking wasn't enabled when building the node. \
-						You can enable it with `--features runtime-benchmarks`."
-								.into())
-						},
-					BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
-						let partials = new_partial::<
-							service::mangata_rococo_runtime::RuntimeApi,
-							service::MangataRococoRuntimeExecutor,
-						>(&config)?;
-						cmd.run(partials.client)
-					}),
-					BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
-						let partials = new_partial::<
-							service::mangata_rococo_runtime::RuntimeApi,
-							service::MangataRococoRuntimeExecutor,
-						>(&config)?;
-						let db = partials.backend.expose_db();
-						let storage = partials.backend.expose_storage();
-
-						cmd.run(config, partials.client.clone(), db, storage)
-					}),
-					BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
-					BenchmarkCmd::Machine(cmd) => runner
-						.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone())),
-				},
+				// #[cfg(feature = "mangata-rococo")]
+				// spec if spec.is_mangata_rococo() => match cmd {
+				// 	BenchmarkCmd::Pallet(cmd) =>
+				// 		if cfg!(feature = "runtime-benchmarks") {
+				// 			runner.sync_run(|config| {
+				// 				cmd.run::<service::mangata_rococo_runtime::Block, service::MangataRococoRuntimeExecutor>(config)
+				// 			})
+				// 		} else {
+				// 			Err("Benchmarking wasn't enabled when building the node. \
+				// 		You can enable it with `--features runtime-benchmarks`."
+				// 				.into())
+				// 		},
+				// 	BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
+				// 		let partials = new_partial::<
+				// 			service::mangata_rococo_runtime::RuntimeApi,
+				// 			service::MangataRococoRuntimeExecutor,
+				// 		>(&config)?;
+				// 		cmd.run(partials.client)
+				// 	}),
+				// 	BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
+				// 		let partials = new_partial::<
+				// 			service::mangata_rococo_runtime::RuntimeApi,
+				// 			service::MangataRococoRuntimeExecutor,
+				// 		>(&config)?;
+				// 		let db = partials.backend.expose_db();
+				// 		let storage = partials.backend.expose_storage();
+				//
+				// 		cmd.run(config, partials.client.clone(), db, storage)
+				// 	}),
+				// 	BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
+				// 	BenchmarkCmd::Machine(cmd) => runner
+				// 		.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone())),
+				// },
 				_ => panic!("invalid chain spec"),
 			}
 		},
-		Some(Subcommand::TryRuntime(cmd)) =>
+		Some(Subcommand::TryRuntime(cmd)) => {
 			if cfg!(feature = "try-runtime") {
 				let runner = cli.create_runner(cmd)?;
 				let chain_spec = &runner.config().chain_spec;
@@ -420,7 +423,8 @@ pub fn run() -> Result<()> {
 				}
 			} else {
 				Err("Try-runtime must be enabled by `--features try-runtime`.".into())
-			},
+			}
+		},
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 			let collator_options = cli.run.collator_options();

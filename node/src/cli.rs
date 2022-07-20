@@ -36,8 +36,9 @@ pub enum Subcommand {
 
 	/// Sub-commands concerned with benchmarking.
 	/// The pallet benchmarking moved to the `pallet` sub-command.
-	#[clap(subcommand)]
-	Benchmark(frame_benchmarking_cli::BenchmarkCmd),
+	// #[clap(subcommand)]
+	#[clap(name = "benchmark", about = "Benchmark runtime pallets.")]
+	Benchmark(frame_benchmarking_cli::PalletCmd),
 
 	/// Try some testing command against a specified runtime state.
 	TryRuntime(try_runtime_cli::TryRuntimeCmd),
@@ -78,7 +79,7 @@ pub struct ExportGenesisWasmCommand {
 #[derive(Debug, Parser)]
 #[clap(
 	propagate_version = true,
-	args_conflicts_with_subcommands = true,
+	args_conflicts_with_subcommands = false,
 	subcommand_negates_reqs = true
 )]
 pub struct Cli {

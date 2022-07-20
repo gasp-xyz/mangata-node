@@ -36,9 +36,12 @@ pub enum Subcommand {
 
 	/// Sub-commands concerned with benchmarking.
 	/// The pallet benchmarking moved to the `pallet` sub-command.
-	// #[clap(subcommand)]
-	#[clap(name = "benchmark", about = "Benchmark runtime pallets.")]
-	Benchmark(frame_benchmarking_cli::PalletCmd),
+	#[clap(subcommand)]
+	Benchmark(frame_benchmarking_cli::BenchmarkCmd),
+
+	/// backward compatible benchmark command that supports --chain parameter
+	#[clap(name = "benchmark-deprecated", about = "Benchmark runtime pallets.")]
+	BenchmarkDeprecated(frame_benchmarking_cli::PalletCmd),
 
 	/// Try some testing command against a specified runtime state.
 	TryRuntime(try_runtime_cli::TryRuntimeCmd),

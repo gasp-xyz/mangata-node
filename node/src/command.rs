@@ -307,16 +307,89 @@ pub fn run() -> Result<()> {
 
 			Ok(())
 		},
-		// Some(Subcommand::Benchmark(cmd)) => {
 		Some(Subcommand::Benchmark(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			let chain_spec = &runner.config().chain_spec;
 
 			match chain_spec {
 				#[cfg(feature = "mangata-kusama")]
-				// spec if spec.is_mangata_kusama() => match cmd {
+				spec if spec.is_mangata_kusama() => match cmd {
+					BenchmarkCmd::Pallet(cmd) => {
+						if cfg!(feature = "runtime-benchmarks") {
+							runner.sync_run(|config| {
+								cmd.run::<service::mangata_kusama_runtime::Block, service::MangataKusamaRuntimeExecutor>(config)
+							})
+						} else {
+							Err("Benchmarking wasn't enabled when building the node. \
+						You can enable it with `--features runtime-benchmarks`."
+								.into())
+						}
+					},
+					BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
+						let partials = new_partial::<
+							service::mangata_kusama_runtime::RuntimeApi,
+							service::MangataKusamaRuntimeExecutor,
+						>(&config)?;
+						cmd.run(partials.client)
+					}),
+					BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
+						let partials = new_partial::<
+							service::mangata_kusama_runtime::RuntimeApi,
+							service::MangataKusamaRuntimeExecutor,
+						>(&config)?;
+						let db = partials.backend.expose_db();
+						let storage = partials.backend.expose_storage();
+
+						cmd.run(config, partials.client.clone(), db, storage)
+					}),
+					BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
+					BenchmarkCmd::Machine(cmd) => runner
+						.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone())),
+				},
+				#[cfg(feature = "mangata-rococo")]
+				spec if spec.is_mangata_rococo() => match cmd {
+					BenchmarkCmd::Pallet(cmd) => {
+						if cfg!(feature = "runtime-benchmarks") {
+							runner.sync_run(|config| {
+								cmd.run::<service::mangata_rococo_runtime::Block, service::MangataRococoRuntimeExecutor>(config)
+							})
+						} else {
+							Err("Benchmarking wasn't enabled when building the node. \
+						You can enable it with `--features runtime-benchmarks`."
+								.into())
+						}
+					},
+					BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
+						let partials = new_partial::<
+							service::mangata_rococo_runtime::RuntimeApi,
+							service::MangataRococoRuntimeExecutor,
+						>(&config)?;
+						cmd.run(partials.client)
+					}),
+					BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
+						let partials = new_partial::<
+							service::mangata_rococo_runtime::RuntimeApi,
+							service::MangataRococoRuntimeExecutor,
+						>(&config)?;
+						let db = partials.backend.expose_db();
+						let storage = partials.backend.expose_storage();
+
+						cmd.run(config, partials.client.clone(), db, storage)
+					}),
+					BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
+					BenchmarkCmd::Machine(cmd) => runner
+						.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone())),
+				},
+				_ => panic!("invalid chain spec"),
+			}
+		},
+		Some(Subcommand::BenchmarkDeprecated(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			let chain_spec = &runner.config().chain_spec;
+
+			match chain_spec {
+				#[cfg(feature = "mangata-kusama")]
 				spec if spec.is_mangata_kusama() => {
-					// BenchmarkCmd::Pallet(cmd) =>
 					if cfg!(feature = "runtime-benchmarks") {
 						runner.sync_run(|config| {
 							cmd.run::<service::mangata_kusama_runtime::Block, service::MangataKusamaRuntimeExecutor>(config)
@@ -326,60 +399,19 @@ pub fn run() -> Result<()> {
 						You can enable it with `--features runtime-benchmarks`."
 							.into())
 					}
-					// BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
-					// 	let partials = new_partial::<
-					// 		service::mangata_kusama_runtime::RuntimeApi,
-					// 		service::MangataKusamaRuntimeExecutor,
-					// 	>(&config)?;
-					// 	cmd.run(partials.client)
-					// }),
-					// BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
-					// 	let partials = new_partial::<
-					// 		service::mangata_kusama_runtime::RuntimeApi,
-					// 		service::MangataKusamaRuntimeExecutor,
-					// 	>(&config)?;
-					// 	let db = partials.backend.expose_db();
-					// 	let storage = partials.backend.expose_storage();
-					//
-					// 	cmd.run(config, partials.client.clone(), db, storage)
-					// }),
-					// BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
-					// BenchmarkCmd::Machine(cmd) => runner
-					// 	.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone())),
 				},
-				// #[cfg(feature = "mangata-rococo")]
-				// spec if spec.is_mangata_rococo() => match cmd {
-				// 	BenchmarkCmd::Pallet(cmd) =>
-				// 		if cfg!(feature = "runtime-benchmarks") {
-				// 			runner.sync_run(|config| {
-				// 				cmd.run::<service::mangata_rococo_runtime::Block, service::MangataRococoRuntimeExecutor>(config)
-				// 			})
-				// 		} else {
-				// 			Err("Benchmarking wasn't enabled when building the node. \
-				// 		You can enable it with `--features runtime-benchmarks`."
-				// 				.into())
-				// 		},
-				// 	BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
-				// 		let partials = new_partial::<
-				// 			service::mangata_rococo_runtime::RuntimeApi,
-				// 			service::MangataRococoRuntimeExecutor,
-				// 		>(&config)?;
-				// 		cmd.run(partials.client)
-				// 	}),
-				// 	BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
-				// 		let partials = new_partial::<
-				// 			service::mangata_rococo_runtime::RuntimeApi,
-				// 			service::MangataRococoRuntimeExecutor,
-				// 		>(&config)?;
-				// 		let db = partials.backend.expose_db();
-				// 		let storage = partials.backend.expose_storage();
-				//
-				// 		cmd.run(config, partials.client.clone(), db, storage)
-				// 	}),
-				// 	BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
-				// 	BenchmarkCmd::Machine(cmd) => runner
-				// 		.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone())),
-				// },
+				#[cfg(feature = "mangata-rococo")]
+				spec if spec.is_mangata_kusama() => {
+					if cfg!(feature = "runtime-benchmarks") {
+						runner.sync_run(|config| {
+							cmd.run::<service::mangata_rococo_runtime::Block, service::MangataRococoRuntimeExecutor>(config)
+						})
+					} else {
+						Err("Benchmarking wasn't enabled when building the node. \
+					You can enable it with `--features runtime-benchmarks`."
+							.into())
+					}
+				},
 				_ => panic!("invalid chain spec"),
 			}
 		},

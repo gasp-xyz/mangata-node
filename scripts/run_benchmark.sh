@@ -3,7 +3,7 @@ REPO_ROOT=$(dirname $(readlink -f $0))/../
 
 mkdir ./benchmarks
 
-${REPO_ROOT}/target/release/mangata-node benchmark \
+${REPO_ROOT}/target/release/mangata-node benchmark-deprecated \
     --chain dev \
     --execution wasm \
     --wasm-execution compiled \

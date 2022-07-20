@@ -147,7 +147,7 @@ jobs:
         name: Run benchamrks
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh test -j2 --features=runtime-benchmarks -p pallet-bootstrap -p xyk-rpc -p pallet-xyk -p xyk-runtime-api -p pallet-bridge -p pallet-assets-info -p pallet-issuance -p pallet-multipurpose-liquidity -p xcm-asset-registry -p pallet-sudo-origin
+          ./docker-cargo.sh test -j2 --features=runtime-benchmarks -p pallet-bootstrap -p pallet-xyk -p xyk-runtime-api -p pallet-bridge -p pallet-assets-info -p pallet-issuance
 
   run-benchmarks:
     name: Run runtime benchmarks

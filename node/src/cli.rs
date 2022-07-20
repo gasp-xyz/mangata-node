@@ -39,6 +39,10 @@ pub enum Subcommand {
 	#[clap(subcommand)]
 	Benchmark(frame_benchmarking_cli::BenchmarkCmd),
 
+	/// backward compatible benchmark command that supports --chain parameter
+	#[clap(name = "benchmark-deprecated", about = "Benchmark runtime pallets.")]
+	BenchmarkDeprecated(frame_benchmarking_cli::PalletCmd),
+
 	/// Try some testing command against a specified runtime state.
 	TryRuntime(try_runtime_cli::TryRuntimeCmd),
 }
@@ -78,7 +82,7 @@ pub struct ExportGenesisWasmCommand {
 #[derive(Debug, Parser)]
 #[clap(
 	propagate_version = true,
-	args_conflicts_with_subcommands = true,
+	args_conflicts_with_subcommands = false,
 	subcommand_negates_reqs = true
 )]
 pub struct Cli {

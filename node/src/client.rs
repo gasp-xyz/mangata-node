@@ -216,11 +216,13 @@ impl ClientHandle for Client {
 	fn execute_with<T: ExecuteWithClient>(&self, t: T) -> T::Output {
 		match self {
 			#[cfg(feature = "mangata-kusama")]
-			Self::MangataKusama(client) =>
-				T::execute_with_client::<_, _, crate::service::FullBackend>(t, client.clone()),
+			Self::MangataKusama(client) => {
+				T::execute_with_client::<_, _, crate::service::FullBackend>(t, client.clone())
+			},
 			#[cfg(feature = "mangata-rococo")]
-			Self::MangataRococo(client) =>
-				T::execute_with_client::<_, _, crate::service::FullBackend>(t, client.clone()),
+			Self::MangataRococo(client) => {
+				T::execute_with_client::<_, _, crate::service::FullBackend>(t, client.clone())
+			},
 		}
 	}
 }

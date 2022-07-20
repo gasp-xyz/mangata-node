@@ -110,7 +110,8 @@ jobs:
         name: Run unit tests
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh test -j2 -- -Z unstable-options --format json --report-time
+          ./docker-cargo.sh test -j2 -p pallet-bootstrap -p xyk-rpc -p pallet-xyk -p xyk-runtime-api -p pallet-bridge -p pallet-assets-info -p pallet-issuance -p pallet-multipurpose-liquidity -p xcm-asset-registry -p pallet-sudo-origin
+
           # |cargo2junit | tee ut-results.xml
           # sed -i '/<testsuite.*\/>$/d' ut-results.xml
           # sed -i 's/<testsuites>/<testsuites time="0">/g' ut-results.xml
@@ -146,7 +147,7 @@ jobs:
         name: Run benchamrks
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh test -j2 --features=runtime-benchmarks
+          ./docker-cargo.sh test -j2 --features=runtime-benchmarks -p pallet-bootstrap -p pallet-xyk -p xyk-runtime-api -p pallet-bridge -p pallet-assets-info -p pallet-issuance
 
   run-benchmarks:
     name: Run runtime benchmarks
@@ -172,7 +173,7 @@ jobs:
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
           ./docker-cargo.sh build -j2 --release --features=runtime-benchmarks
-          ./docker-cargo/release/mangata-node benchmark --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-xyk' --template ./templates/module-weight-template.hbs
+          ./docker-cargo/release/mangata-node benchmark-deprecated --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-xyk' --template ./templates/module-weight-template.hbs
 
   build-rococo:
     runs-on: ubuntu-latest
@@ -216,13 +217,13 @@ jobs:
         name: Build node img
         env:
           DOCKER_IMAGE_GIT_SHA_TAG: "mangatasolutions/mangata-node:rococo-${{ github.sha }}"
-          DOCKER_IMAGE_LATEST_TAG: "mangatasolutions/mangata-node:rococo-${{ github.sha }}"
+          DOCKER_IMAGE_LATEST_TAG: "mangatasolutions/mangata-node:rococo-latest"
           SKIP_BUILD: 1
           NODE_BINARY: "docker-cargo/release/mangata-node"
           WASM: "docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm"
         run: >
           ./scripts/build-image.sh ${{ env.DOCKER_IMAGE_GIT_SHA_TAG }} ${{ env.DOCKER_IMAGE_LATEST_TAG }} &&
-          docker save ${DOCKER_IMAGE_GIT_SHA_TAG} -o rococo-docker-${{ github.sha }}.tar
+          docker save -o rococo-docker-${{ github.sha }}.tar ${DOCKER_IMAGE_GIT_SHA_TAG} ${{ env.DOCKER_IMAGE_LATEST_TAG }}
       -
         name: Upload docker img artifact
         uses: actions/upload-artifact@v2
@@ -281,7 +282,7 @@ jobs:
           WASM: "docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm"
         run: >
           ./scripts/build-image.sh ${DOCKER_IMAGE_GIT_SHA_TAG} ${DOCKER_IMAGE_LATEST_TAG} &&
-          docker save ${DOCKER_IMAGE_LATEST_TAG} -o rococo-docker-e2e-${{ github.sha }}.tar
+          docker save -o rococo-docker-e2e-${{ github.sha }}.tar ${DOCKER_IMAGE_GIT_SHA_TAG} ${{ env.DOCKER_IMAGE_LATEST_TAG }}
       -
         name: Upload docker img artifact
         uses: actions/upload-artifact@v2
@@ -332,13 +333,13 @@ jobs:
         name: Build node img
         env:
           DOCKER_IMAGE_GIT_SHA_TAG: "mangatasolutions/mangata-node:kusama-${{ github.sha }}"
-          DOCKER_IMAGE_LATEST_TAG: "mangatasolutions/mangata-node:kusama-${{ github.sha }}"
+          DOCKER_IMAGE_LATEST_TAG: "mangatasolutions/mangata-node:kusama-latest"
           SKIP_BUILD: 1
           NODE_BINARY: "docker-cargo/release/mangata-node"
           WASM: "docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm"
         run: >
           ./scripts/build-image.sh ${{ env.DOCKER_IMAGE_GIT_SHA_TAG }} ${{ env.DOCKER_IMAGE_LATEST_TAG }} &&
-          docker save ${DOCKER_IMAGE_GIT_SHA_TAG} -o kusama-docker-${{ github.sha }}.tar
+          docker save -o kusama-docker-${{ github.sha }}.tar ${DOCKER_IMAGE_GIT_SHA_TAG} ${{ env.DOCKER_IMAGE_LATEST_TAG }}
       -
         name: Upload docker img artifact
         uses: actions/upload-artifact@v2

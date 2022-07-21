@@ -380,36 +380,6 @@ pub fn run() -> Result<()> {
 				_ => panic!("invalid chain spec"),
 			}
 		},
-		Some(Subcommand::BenchmarkDeprecated(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			let chain_spec = &runner.config().chain_spec;
-
-			match chain_spec {
-				#[cfg(feature = "mangata-kusama")]
-				spec if spec.is_mangata_kusama() =>
-					if cfg!(feature = "runtime-benchmarks") {
-						runner.sync_run(|config| {
-							cmd.run::<service::mangata_kusama_runtime::Block, service::MangataKusamaRuntimeExecutor>(config)
-						})
-					} else {
-						Err("Benchmarking wasn't enabled when building the node. \
-						You can enable it with `--features runtime-benchmarks`."
-							.into())
-					},
-				#[cfg(feature = "mangata-rococo")]
-				spec if spec.is_mangata_kusama() =>
-					if cfg!(feature = "runtime-benchmarks") {
-						runner.sync_run(|config| {
-							cmd.run::<service::mangata_rococo_runtime::Block, service::MangataRococoRuntimeExecutor>(config)
-						})
-					} else {
-						Err("Benchmarking wasn't enabled when building the node. \
-					You can enable it with `--features runtime-benchmarks`."
-							.into())
-					},
-				_ => panic!("invalid chain spec"),
-			}
-		},
 		Some(Subcommand::TryRuntime(cmd)) =>
 			if cfg!(feature = "try-runtime") {
 				let runner = cli.create_runner(cmd)?;

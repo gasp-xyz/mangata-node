@@ -1631,6 +1631,21 @@ impl_runtime_apis! {
 				},
 			}
 		}
+
+		fn calculate_rewards_amount_v2(
+			user: AccountId,
+			liquidity_asset_id: TokenId,
+		) -> RpcResult<Balance> {
+			match Xyk::calculate_rewards_amount_v2(user, liquidity_asset_id){
+				Ok(claimable_rewards) => RpcResult{
+					price:claimable_rewards
+				},
+				Err(e) => {
+						log::warn!(target:"xyk", "rpc 'XYK::calculate_rewards_amount' error: '{:?}', returning default value instead", e);
+						Default::default()
+				},
+			}
+		}
 	}
 
 	impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {

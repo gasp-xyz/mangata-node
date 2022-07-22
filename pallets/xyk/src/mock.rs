@@ -330,7 +330,8 @@ impl<T: Config> ActivationReservesProviderTrait for TokensActivationPassthrough<
 		token_id: TokenId,
 		account_id: &Self::AccountId,
 	) -> Balance {
-		Pallet::<T>::liquidity_mining_active_user_v2((account_id, token_id))
+		let rewards_info = XykStorage::get_rewards_info((2, 4));
+		rewards_info.activated_amount
 	}
 
 	fn can_activate(

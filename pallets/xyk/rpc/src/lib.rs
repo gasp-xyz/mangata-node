@@ -70,6 +70,14 @@ pub trait XykApi<BlockHash, Balance, TokenId, AccountId, ResponseTypePrice, Resp
 		liquidity_asset_id: TokenId,
 		at: Option<BlockHash>,
 	) -> Result<ResponseTypePrice>;
+
+	#[rpc(name = "xyk_calculate_rewards_amount_v2")]
+	fn calculate_rewards_amount_v2(
+		&self,
+		user: AccountId,
+		liquidity_asset_id: TokenId,
+		at: Option<BlockHash>,
+	) -> Result<ResponseTypePrice>;
 }
 
 pub struct Xyk<C, M> {
@@ -253,6 +261,25 @@ where
             self.client.info().best_hash));
 
 		let runtime_api_result = api.calculate_rewards_amount(&at, user, liquidity_asset_id);
+		runtime_api_result.map_err(|e| RpcError {
+			code: ErrorCode::ServerError(1),
+			message: "Unable to serve the request".into(),
+			data: Some(format!("{:?}", e).into()),
+		})
+	}
+
+	fn calculate_rewards_amount_v2(
+		&self,
+		user: AccountId,
+		liquidity_asset_id: TokenId,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> Result<RpcResult<Balance>> {
+		let api = self.client.runtime_api();
+		let at = BlockId::<Block>::hash(at.unwrap_or_else(||
+            // If the block hash is not supplied assume the best block.
+            self.client.info().best_hash));
+
+		let runtime_api_result = api.calculate_rewards_amount_v2(&at, user, liquidity_asset_id);
 		runtime_api_result.map_err(|e| RpcError {
 			code: ErrorCode::ServerError(1),
 			message: "Unable to serve the request".into(),

@@ -84,5 +84,9 @@ sp_api::decl_runtime_apis! {
 			user: AccountId,
 			liquidity_asset_id: TokenId,
 		) -> RpcResult<Balance>;
+		fn calculate_rewards_amount_v2(
+			user: AccountId,
+			liquidity_asset_id: TokenId,
+		) -> RpcResult<Balance>;
 	}
 }

@@ -360,6 +360,7 @@ jobs:
   e2e-test:
     needs: build-rococo-e2e
     runs-on: self-hosted
+    timeout-minutes: 1440
     if: "!contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests')"
     env:
       API_URL: 'ws://127.0.0.1:8844'

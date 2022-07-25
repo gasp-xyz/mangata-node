@@ -1,11 +1,11 @@
 name: Continous Integration
 
-# available flags: 
+# available flags:
 ## skip-e2e-tests: skip running e2e tests
 ## skip-build : run the test with latest version.
-## skip-publish: skip publish 
+## skip-publish: skip publish
 
-on: 
+on:
   pull_request:
     branches:
       - develop
@@ -32,7 +32,7 @@ on:
           default: false
 
 env:
-  DOCKER_BUILDER_IMAGE: mangatasolutions/node-builder:0.1
+  DOCKER_BUILDER_IMAGE: mangatasolutions/node-builder:0.2
   DISABLE_TTY: 1
 
 jobs:
@@ -110,7 +110,8 @@ jobs:
         name: Run unit tests
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh test -j2 -- -Z unstable-options --format json --report-time
+          ./docker-cargo.sh test -j2 -p pallet-bootstrap -p xyk-rpc -p pallet-xyk -p xyk-runtime-api -p pallet-bridge -p pallet-assets-info -p pallet-issuance -p pallet-multipurpose-liquidity -p xcm-asset-registry -p pallet-sudo-origin
+
           # |cargo2junit | tee ut-results.xml
           # sed -i '/<testsuite.*\/>$/d' ut-results.xml
           # sed -i 's/<testsuites>/<testsuites time="0">/g' ut-results.xml
@@ -146,7 +147,7 @@ jobs:
         name: Run benchamrks
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh test -j2 --features=runtime-benchmarks
+          ./docker-cargo.sh test -j2 --features=runtime-benchmarks -p pallet-bootstrap -p pallet-xyk -p xyk-runtime-api -p pallet-bridge -p pallet-assets-info -p pallet-issuance
 
   run-benchmarks:
     name: Run runtime benchmarks
@@ -172,7 +173,7 @@ jobs:
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
           ./docker-cargo.sh build -j2 --release --features=runtime-benchmarks
-          ./docker-cargo/release/mangata-node benchmark --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-xyk' --template ./templates/module-weight-template.hbs
+          ./docker-cargo/release/mangata-node benchmark pallet --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-xyk' --template ./templates/module-weight-template.hbs
 
   build-rococo:
     runs-on: ubuntu-latest
@@ -325,7 +326,7 @@ jobs:
         name: Calculate wasm checksum
         run: >
           md5sum
-          ./docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm 
+          ./docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm
           >
           ./docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm.md5
       -
@@ -359,12 +360,13 @@ jobs:
   e2e-test:
     needs: build-rococo-e2e
     runs-on: self-hosted
+    timeout-minutes: 1440
     if: "!contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests')"
     env:
       API_URL: 'ws://127.0.0.1:8844'
       TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}
       E2E_TREASURY_PALLET_ADDRESS : ${{ secrets.E2E_TREASURY_PALLET_ADDRESS }}
-      E2E_XYK_PALLET_ADDRESS : ${{ secrets.E2E_XYK_PALLET_ADDRESS }} 
+      E2E_XYK_PALLET_ADDRESS : ${{ secrets.E2E_XYK_PALLET_ADDRESS }}
       E2E_TREASURY_BURN_PALLET_ADDRESS : ${{ secrets.E2E_TREASURY_BURN_PALLET_ADDRESS }}
       TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
       MANGATA_NODE_VERSION: ${{ github.sha }}
@@ -394,7 +396,7 @@ jobs:
         id: branch-name
         uses: tj-actions/branch-names@v4.9
 
-      - name: E2E- Get target branch. 
+      - name: E2E- Get target branch.
         run: |
           echo "This job name branch is: ${{ steps.branch-name.outputs.current_branch }}"
 
@@ -406,16 +408,16 @@ jobs:
 
       - name: Decide if main - branch or parameter
       # if we have something in e2eBranch - override E2EBranchName, else -> E2EBRANCHNAME , that
-      # by default will be main. 
+      # by default will be main.
 
-        run: 
+        run:
           echo "E2EBRANCHNAME=${{ github.event.inputs.e2eBranch || env.E2EBRANCHNAME }}" >> $GITHUB_ENV
 
-      - name: E2E- Get target branch. 
+      - name: E2E- Get target branch.
         run: |
          echo "${{ env.E2EBRANCHNAME }}"
 
-      - 
+      -
         name: Checkout tests
         uses: actions/checkout@v2
         with:
@@ -498,7 +500,7 @@ jobs:
     needs: [rustfmt-check, unit-test, clippy-check, build-rococo, build-kusama, e2e-test, run-benchmarks, run-benchmarks-tests]
     runs-on: ubuntu-latest
     if: |
-      github.ref == 'refs/heads/develop' && 
+      github.ref == 'refs/heads/develop' &&
       !contains(github.event.pull_request.labels.*.name, 'skip-publish') &&
       !github.event.inputs.skipBuild
     #if: "!contains(github.event.pull_request.labels.*.name, 'skip-publish') && ${{ github.event_name == 'push'}} && github.event.pull_request.merged == true"

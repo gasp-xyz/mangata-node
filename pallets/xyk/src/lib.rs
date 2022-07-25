@@ -161,7 +161,7 @@
 //! `NoSuchPool` - pool first_token_id - second_token_id does not exist
 //!
 //! `NotEnoughTokens` -  minting with more tokens then user owns, either first_token_id or second_token_id
-//!     
+//!
 //! # fn burn_liquidity
 //! -Removes tokens from liquidity pool and transfers them to user, by burning user owned liquidity tokens
 //! -Amount of tokens is determined by their ratio in pool and amount of liq tokens burned
@@ -247,7 +247,11 @@ use sp_runtime::traits::{
 	AccountIdConversion, AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member,
 	SaturatedConversion, Zero,
 };
-use sp_std::{convert::TryFrom, fmt::Debug, prelude::*};
+use sp_std::{
+	convert::{TryFrom, TryInto},
+	fmt::Debug,
+	prelude::*,
+};
 
 #[cfg(test)]
 mod mock;
@@ -1559,15 +1563,15 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn account_id() -> T::AccountId {
-		PALLET_ID.into_account()
+		PALLET_ID.into_account_truncating()
 	}
 
 	fn treasury_account_id() -> T::AccountId {
-		T::TreasuryPalletId::get().into_account()
+		T::TreasuryPalletId::get().into_account_truncating()
 	}
 
 	fn bnb_treasury_account_id() -> T::AccountId {
-		T::TreasuryPalletId::get().into_sub_account(T::BnbTreasurySubAccDerive::get())
+		T::TreasuryPalletId::get().into_sub_account_truncating(T::BnbTreasurySubAccDerive::get())
 	}
 }
 

@@ -15,7 +15,7 @@ use sp_runtime::{
 	traits::{AccountIdConversion, BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
 	MultiSignature,
 };
-use sp_std::convert::From;
+use sp_std::convert::{From, TryFrom};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -105,7 +105,7 @@ impl Contains<AccountId> for DustRemovalWhitelist {
 
 parameter_types! {
 	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
-	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account();
+	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 	pub const MaxLocks: u32 = 50;
 }
 

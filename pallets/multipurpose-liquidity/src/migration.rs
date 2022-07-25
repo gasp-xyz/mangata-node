@@ -23,6 +23,12 @@ pub fn migrate_from_v0_pre_runtime_upgrade<T: Config, P: GetStorageVersion + Pal
 		return Ok(())
 	}
 
+	log::info!(
+		target: "mpl",
+		"Running xyk-staking-mpl consistency pre-migration to mpl with storage version {:?}",
+		on_chain_storage_version,
+	);
+
 	// Check consistency of xyk storage, staking storage and orml reserves
 	// Ensure reserve and relock status is zero
 
@@ -117,6 +123,12 @@ pub fn migrate_from_v0_pre_runtime_upgrade<T: Config, P: GetStorageVersion + Pal
 
 	Pallet::<T>::set_temp_storage(user_reserve_info, "user_reserve_info");
 
+	log::info!(
+		target: "mpl",
+		"xyk-staking-mpl consistency pre-migration to mpl with storage version {:?} completed successfully",
+		on_chain_storage_version,
+	);
+
 	Ok(())
 }
 
@@ -133,6 +145,12 @@ pub fn migrate_from_v0<T: Config, P: GetStorageVersion + PalletInfoAccess>(
 		);
 		return T::DbWeight::get().reads(1)
 	}
+
+	log::info!(
+		target: "mpl",
+		"Running xyk-staking-mpl consistency migration to mpl with storage version {:?}",
+		on_chain_storage_version,
+	);
 
 	// Apply storage migration from StorageVersion 0 to 1
 
@@ -235,6 +253,12 @@ pub fn migrate_from_v0<T: Config, P: GetStorageVersion + PalletInfoAccess>(
 
 	StorageVersion::new(1).put::<P>();
 
+	log::info!(
+		target: "mpl",
+		"xyk-staking-mpl consistency migration to mpl completed successfully, storage version is now {:?}",
+		<P as GetStorageVersion>::on_chain_storage_version(),
+	);
+
 	let reads_to_collect_info = collator_storage
 		.len()
 		.saturating_add(delegator_storage.len())
@@ -256,14 +280,21 @@ pub fn migrate_from_v0<T: Config, P: GetStorageVersion + PalletInfoAccess>(
 pub fn migrate_from_v0_post_runtime_upgrade<T: Config, P: GetStorageVersion + PalletInfoAccess>(
 ) -> Result<(), &'static str> {
 	let on_chain_storage_version = <P as GetStorageVersion>::on_chain_storage_version();
-	if on_chain_storage_version != 0 {
+
+	// If on chain version is still 0 then the migration failed
+	if on_chain_storage_version == 0 {
 		log::info!(
 			target: "mpl",
-			"Attempted to apply xyk-staking-mpl consistency post-migration to mpl but failed because storage version is {:?}, and not 0",
-			on_chain_storage_version,
+			"Attempted to apply xyk-staking-mpl consistency post-migration to mpl but failed because storage version is still 0"
 		);
 		return Ok(())
 	}
+
+	log::info!(
+		target: "mpl",
+		"Running xyk-staking-mpl consistency post-migration to mpl with storage version {:?}",
+		on_chain_storage_version,
+	);
 
 	// Check consistency of xyk storage, staking storage and orml reserves
 
@@ -286,6 +317,12 @@ pub fn migrate_from_v0_post_runtime_upgrade<T: Config, P: GetStorageVersion + Pa
 		assert!(reserve_status.relock_amount.is_zero());
 		assert!(Pallet::<T>::get_relock_status(account, liquidity_token).is_empty());
 	}
+
+	log::info!(
+		target: "mpl",
+		"xyk-staking-mpl consistency post-migration to mpl with storage version {:?} completed successfully",
+		on_chain_storage_version,
+	);
 
 	Ok(())
 }

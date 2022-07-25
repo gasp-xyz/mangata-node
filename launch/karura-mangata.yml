@@ -26,7 +26,7 @@ relaychain:
     - name: bob
 
 parachains:
-- image: acala/karura-node:2.7.0
+- image: acala/karura-node:2.8.0
   chain:
     base: karura-dev
     collators:

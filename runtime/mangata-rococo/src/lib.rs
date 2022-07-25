@@ -16,7 +16,7 @@ use sp_runtime::{
 		StaticLookup,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, FixedPointNumber, Percent, Perquintill,
+	ApplyExtrinsicResult, DispatchError, FixedPointNumber, Percent, Perquintill,
 };
 
 use sp_std::{
@@ -30,7 +30,9 @@ use sp_version::RuntimeVersion;
 
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{Contains, Everything, Get, LockIdentifier, Nothing, U128CurrencyToVote},
+	traits::{
+		Contains, EnsureOrigin, Everything, Get, LockIdentifier, Nothing, U128CurrencyToVote,
+	},
 	weights::{
 		constants::{RocksDbWeight, WEIGHT_PER_MICROS, WEIGHT_PER_MILLIS, WEIGHT_PER_SECOND},
 		DispatchClass, Weight,
@@ -52,7 +54,6 @@ use polkadot_runtime_common::BlockHashCount;
 
 // XCM Imports
 pub use xcm::{latest::prelude::*, VersionedMultiLocation};
-use xcm_asset_registry::{AssetIdMapping, AssetIdMaps};
 
 use codec::{Decode, Encode};
 use static_assertions::const_assert;
@@ -64,7 +65,7 @@ pub use mangata_primitives::{
 };
 
 pub use orml_tokens;
-use orml_tokens::TransferDust;
+use orml_tokens::{MultiTokenCurrencyExtended, TransferDust};
 use orml_traits::parameter_type_with_key;
 
 use pallet_vesting_mangata_rpc_runtime_api::VestingInfosWithLockedAt;
@@ -133,7 +134,7 @@ pub type Executive = frame_executive::Executive<
 	AllPalletsWithSystem,
 >;
 
-use frame_support::traits::OnRuntimeUpgrade;
+use frame_support::traits::EnsureOriginWithArg;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -539,6 +540,7 @@ use frame_support::{
 	unsigned::TransactionValidityError,
 	weights::ConstantMultiplier,
 };
+use orml_asset_registry::Config;
 use orml_tokens::MultiTokenCurrency;
 use sp_runtime::{
 	traits::{DispatchInfoOf, PostDispatchInfoOf, Saturating, Zero},
@@ -551,6 +553,8 @@ type NegativeImbalanceOf<C, T> =
 	<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
 
 use orml_tokens::MultiTokenImbalanceWithZeroTrait;
+use orml_traits::asset_registry::AssetProcessor;
+use pallet_bootstrap::log;
 
 /// Default implementation for a Currency and an OnUnbalanced handler.
 ///
@@ -1040,12 +1044,58 @@ impl orml_xcm::Config for Runtime {
 	type SovereignOrigin = EnsureRoot<AccountId>;
 }
 
-impl xcm_asset_registry::Config for Runtime {
+pub type AssetMetadataOf = orml_traits::asset_registry::AssetMetadata<Balance, EmptyCustomMetadata>;
+type CurrencyAdapter = orml_tokens::MultiTokenCurrencyAdapter::<Runtime>;
+pub struct SequentialIdWithCreation<T>(PhantomData<T>);
+
+impl<T: Config> AssetProcessor<TokenId, AssetMetadataOf> for SequentialIdWithCreation<T> {
+	fn pre_register(
+		id: Option<TokenId>,
+		asset_metadata: AssetMetadataOf,
+	) -> Result<(TokenId, AssetMetadataOf), DispatchError> {
+		let next_id = CurrencyAdapter::get_next_currency_id();
+		fn create_asset(
+			id: TokenId,
+			meta: AssetMetadataOf,
+		) -> Result<(TokenId, AssetMetadataOf), DispatchError> {
+			CurrencyAdapter::create(&TreasuryAccount::get(),Default::default())
+			.and_then(|_| Ok((id, meta)))
+		}
+
+		match id {
+			None => create_asset(next_id, asset_metadata),
+			Some(asset_id) if asset_id == next_id => create_asset(asset_id, asset_metadata),
+			Some(asset_id) if asset_id < next_id => Ok((asset_id, asset_metadata)),
+			_ => Err(orml_asset_registry::Error::<T>::InvalidAssetId.into()),
+		}
+	}
+}
+
+pub struct AssetAuthority;
+impl EnsureOriginWithArg<Origin, Option<u32>> for AssetAuthority {
+	type Success = ();
+
+	fn try_origin(origin: Origin, _asset_id: &Option<u32>) -> Result<Self::Success, Origin> {
+		EnsureRoot::try_origin(origin)
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn successful_origin(_asset_id: &Option<u32>) -> Origin {
+		EnsureRoot::successful_origin()
+	}
+}
+
+#[derive(scale_info::TypeInfo, Encode, Decode, Clone, Eq, PartialEq, Debug)]
+pub struct EmptyCustomMetadata;
+
+impl orml_asset_registry::Config for Runtime {
 	type Event = Event;
-	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-	type RegisterOrigin = EnsureRoot<AccountId>;
-	type WeightInfo = weights::xcm_asset_registry_weights::ModuleWeight<Runtime>;
-	type TreasuryAddress = TreasuryAccount;
+	type CustomMetadata = EmptyCustomMetadata;
+	type AssetId = TokenId;
+	type AuthorityOrigin = AssetAuthority;
+	type AssetProcessor = SequentialIdWithCreation<Runtime>;
+	type Balance = Balance;
+	type WeightInfo = weights::xcm_asset_registry_weights::ModuleWeight<Runtime>; // ??
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -1107,7 +1157,7 @@ construct_runtime!(
 		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 35,
 		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 36,
 		OrmlXcm: orml_xcm::{Pallet, Call, Event<T>} = 37,
-		AssetRegistry: xcm_asset_registry::{Pallet, Call, Storage, Event, Config} = 38,
+		AssetRegistry: orml_asset_registry::{Pallet, Call, Storage, Event<T>, Config<T>} = 38,
 
 		// Governance stuff
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 41,
@@ -1135,7 +1185,6 @@ mod benches {
 		[orml_tokens, Tokens]
 		[parachain_staking, ParachainStaking]
 		[pallet_xyk, Xyk]
-		[xcm_asset_registry, AssetRegistry]
 		[pallet_treasury, Treasury]
 		[pallet_collective, Council]
 		[pallet_elections_phragmen, Elections]

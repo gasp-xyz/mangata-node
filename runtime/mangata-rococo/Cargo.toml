@@ -27,7 +27,6 @@ pallet-xyk = { path = '../../pallets/xyk', default-features = false, version = '
 pallet-bootstrap = { path = '../../pallets/bootstrap', default-features = false, version = '0.1.0' }
 xyk-runtime-api = { path = '../../pallets/xyk/runtime-api', default-features = false, version = '2.0.0' }
 pallet-sudo-origin = { path = '../../pallets/sudo-origin', default-features = false}
-xcm-asset-registry = { path = '../../pallets/asset-registry', default-features = false}
 pallet-issuance = { path = '../../pallets/issuance', default-features = false}
 pallet-multipurpose-liquidity = { path = '../../pallets/multipurpose-liquidity', default-features = false}
 mp-multipurpose-liquidity = { path = '../../primitives/multipurpose-liquidity', default-features = false}
@@ -79,7 +78,7 @@ orml-xtokens = {  default-features = false, version = "0.4.1-dev", git = "https:
 orml-xcm-support = {  default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v0.9.24" }
 orml-unknown-tokens = {  default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v0.9.24" }
 orml-xcm = {  default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v0.9.24" }
-
+orml-asset-registry = {  default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "feature/asset-register-genesis" }
 
 # Cumulus dependencies
 cumulus-pallet-aura-ext = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.24', default-features = false }
@@ -187,8 +186,8 @@ std = [
 	"orml-xcm-support/std",
 	"orml-unknown-tokens/std",
 	"orml-xcm/std",
+	"orml-asset-registry/std",
 
-	"xcm-asset-registry/std",
 	"pallet-issuance/std",
 	"pallet-vesting-mangata/std",
 	"pallet-crowdloan-rewards/std",
@@ -227,7 +226,6 @@ runtime-benchmarks = [
 	"cumulus-pallet-session-benchmarking/runtime-benchmarks",
 	"pallet-xyk/runtime-benchmarks",
 	"parachain-staking/runtime-benchmarks",
-	"xcm-asset-registry/runtime-benchmarks",
 	"pallet-treasury/runtime-benchmarks",
 	"pallet-collective/runtime-benchmarks",
 	"pallet-elections-phragmen/runtime-benchmarks",

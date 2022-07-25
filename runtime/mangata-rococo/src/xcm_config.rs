@@ -8,24 +8,29 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use super::{
 	constants::{fee::*, parachains},
-	AccountId, AssetIdMapping, AssetIdMaps, Balance, Call, Convert, Event, ExistentialDeposits,
-	Origin, ParachainInfo, ParachainSystem, PolkadotXcm, Runtime, TokenId, Tokens, TreasuryAccount,
-	UnknownTokens, XcmpQueue, MGR_TOKEN_ID, ROC_TOKEN_ID,
+	AccountId, Balance, Call, Convert, Event, ExistentialDeposits, Origin, ParachainInfo,
+	ParachainSystem, PolkadotXcm, Runtime, TokenId, Tokens, TreasuryAccount, UnknownTokens,
+	XcmpQueue, MGR_TOKEN_ID, ROC_TOKEN_ID,
 };
+use crate::{constants::fee, AssetMetadataOf};
 use codec::{Decode, Encode};
+use cumulus_primitives_core::ParaId;
 use frame_support::{
 	match_types, parameter_types,
 	traits::{Everything, Get, Nothing},
-	weights::Weight,
+	weights::{constants::WEIGHT_PER_SECOND, Weight},
 };
 use frame_system::EnsureRoot;
+use orml_asset_registry::{AssetRegistryTrader, FixedRateAssetRegistryTrader};
 use orml_traits::{
-	location::AbsoluteReserveProvider, parameter_type_with_key, GetByKey, MultiCurrency,
+	asset_registry::AssetMetadata, location::AbsoluteReserveProvider, parameter_type_with_key,
+	FixedConversionRateProvider, GetByKey, MultiCurrency, WeightToFeeConverter,
 };
 use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use sp_std::{marker::PhantomData, prelude::*};
+use sp_runtime::{traits::AtLeast32BitUnsigned, FixedPointNumber, FixedU128};
+use sp_std::{fmt::Debug, marker::PhantomData, prelude::*};
 use xcm::latest::prelude::*;
 use xcm_builder::{
 	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
@@ -193,9 +198,44 @@ parameter_types! {
 		// VKSM:KSM = 1:1
 		roc_per_second()
 	);
+
+	pub BaseRate: u128 = mgr_per_second();
+}
+
+type AssetRegistryOf<T> = orml_asset_registry::Pallet<T>;
+
+pub struct ConversionRateProvider<T, FixedRate>(sp_std::marker::PhantomData<(T, FixedRate)>);
+impl<T, FixedRate> FixedConversionRateProvider for ConversionRateProvider<T, FixedRate>
+where
+	T: orml_asset_registry::Config,
+	T::Balance: Into<u128>,
+	FixedRate: Get<u128>,
+{
+	fn get_fee_per_second(location: &MultiLocation) -> Option<u128> {
+		if let Some(asset_id) = AssetRegistryOf::<T>::location_to_asset_id(location) {
+			let metadata =
+				AssetRegistryOf::<T>::metadata(asset_id).expect("registered asset has metadata");
+			let existential_deposit = metadata.existential_deposit.into();
+			let rate = FixedU128::saturating_from_rational(
+				existential_deposit,
+				MGX_BASE_EXISTENTIAL_DEPOSIT,
+			);
+			let fee_per_second = rate.saturating_mul_int(FixedRate::get());
+			log::debug!(
+				target: "xcm::weight", "fee_per_second: asset: {:?}, rate: {:?}, fps:{:?}",
+				asset_id, rate, fee_per_second
+			);
+			return Some(fee_per_second)
+		}
+		return None
+	}
 }
 
 pub type Trader = (
+	AssetRegistryTrader<
+		FixedRateAssetRegistryTrader<ConversionRateProvider<Runtime, BaseRate>>,
+		ToTreasury,
+	>,
 	FixedRateOfFungible<RocPerSecond, ToTreasury>,
 	FixedRateOfFungible<MgrPerSecond, ToTreasury>,
 	FixedRateOfFungible<KarPerSecond, ToTreasury>,
@@ -389,9 +429,9 @@ impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
 			return Some(MultiLocation::parent())
 		}
 
-		match AssetIdMaps::<Runtime>::get_multi_location(id) {
-			Some(multi_location) => Some(multi_location),
-			None => Some(MultiLocation::new(
+		match AssetRegistryOf::<Runtime>::multilocation(&id) {
+			Ok(Some(multi_location)) => Some(multi_location),
+			_ => Some(MultiLocation::new(
 				1,
 				X2(Parachain(ParachainInfo::get().into()), GeneralKey(id.encode())),
 			)),
@@ -404,20 +444,15 @@ impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 			return Some(ROC_TOKEN_ID)
 		}
 
-		if let Some(token_id) = AssetIdMaps::<Runtime>::get_currency_id(location.clone()) {
-			return Some(token_id)
-		}
-
 		match location {
-			MultiLocation { parents: 1, interior: X2(Parachain(para_id), GeneralKey(key)) } =>
-				match (para_id, &key[..]) {
-					(id, key) if id == u32::from(ParachainInfo::get()) =>
-						TokenId::decode(&mut &*key).ok(),
-					_ => None,
-				},
+			MultiLocation { parents: 1, interior: X2(Parachain(para_id), GeneralKey(key)) }
+				if ParaId::from(para_id) == ParachainInfo::get() =>
+				TokenId::decode(&mut &*key).ok(),
+
 			MultiLocation { parents: 0, interior: X1(GeneralKey(key)) } =>
 				TokenId::decode(&mut &*key).ok(),
-			_ => None,
+
+			_ => AssetRegistryOf::<Runtime>::location_to_asset_id(location.clone()),
 		}
 	}
 }

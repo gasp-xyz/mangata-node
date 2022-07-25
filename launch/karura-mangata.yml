@@ -20,7 +20,7 @@ relaychain:
   flags:
     - --rpc-methods=unsafe
     - --wasm-execution=compiled
-    - --execution=wasm
+    - --execution=native
   nodes:
     - name: alice
     - name: bob
@@ -39,10 +39,10 @@ parachains:
     - --rpc-methods=unsafe
     - --force-authoring
     - --wasm-execution=compiled
-    - --execution=wasm
+    - --execution=native
   relaychainFlags:
     - --wasm-execution=compiled
-    - --execution=wasm
+    - --execution=native
   env:
     RUST_LOG: x_tokens=trace,xcm=trace,xcmp_queue=trace,runtime=trace
   volumePath: /acala/data
@@ -67,10 +67,10 @@ parachains:
     - --rpc-methods=unsafe
     - --force-authoring
     - --wasm-execution=compiled
-    - --execution=wasm
+    - --execution=native
   relaychainFlags:
     - --wasm-execution=compiled
-    - --execution=wasm
+    - --execution=native
   env:
     RUST_LOG: x_tokens=trace,xcm=trace,xcmp_queue=trace,runtime=trace
   volumePath: /mangata/data

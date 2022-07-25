@@ -2,35 +2,24 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
-// Make the WASM binary available.
-#[cfg(feature = "std")]
-include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
-
-use super::{
-	constants::{fee::*, parachains},
-	AccountId, Balance, Call, Convert, Event, ExistentialDeposits, Origin, ParachainInfo,
-	ParachainSystem, PolkadotXcm, Runtime, TokenId, Tokens, TreasuryAccount, UnknownTokens,
-	XcmpQueue, MGR_TOKEN_ID, ROC_TOKEN_ID,
-};
-use crate::{constants::fee, AssetMetadataOf};
 use codec::{Decode, Encode};
 use cumulus_primitives_core::ParaId;
 use frame_support::{
 	match_types, parameter_types,
 	traits::{Everything, Get, Nothing},
-	weights::{constants::WEIGHT_PER_SECOND, Weight},
+	weights::Weight,
 };
 use frame_system::EnsureRoot;
 use orml_asset_registry::{AssetRegistryTrader, FixedRateAssetRegistryTrader};
 use orml_traits::{
-	asset_registry::AssetMetadata, location::AbsoluteReserveProvider, parameter_type_with_key,
-	FixedConversionRateProvider, GetByKey, MultiCurrency, WeightToFeeConverter,
+	location::AbsoluteReserveProvider, parameter_type_with_key, FixedConversionRateProvider,
+	GetByKey, MultiCurrency,
 };
 use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use sp_runtime::{traits::AtLeast32BitUnsigned, FixedPointNumber, FixedU128};
-use sp_std::{fmt::Debug, marker::PhantomData, prelude::*};
+use sp_runtime::{FixedPointNumber, FixedU128};
+use sp_std::{marker::PhantomData, prelude::*};
 use xcm::latest::prelude::*;
 use xcm_builder::{
 	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
@@ -40,6 +29,17 @@ use xcm_builder::{
 	SignedToAccountId32, SovereignSignedViaLocation, TakeRevenue, TakeWeightCredit,
 };
 use xcm_executor::{traits::DropAssets, Assets, XcmExecutor};
+
+use super::{
+	constants::{fee::*, parachains},
+	AccountId, Balance, Call, Convert, Event, ExistentialDeposits, Origin, ParachainInfo,
+	ParachainSystem, PolkadotXcm, Runtime, TokenId, Tokens, TreasuryAccount, UnknownTokens,
+	XcmpQueue, MGR_TOKEN_ID, ROC_TOKEN_ID,
+};
+
+// Make the WASM binary available.
+#[cfg(feature = "std")]
+include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 parameter_types! {
 	pub RocLocation: MultiLocation = MultiLocation::parent();

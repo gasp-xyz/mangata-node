@@ -4955,6 +4955,8 @@ dependencies = [
 name = "mangata-primitives"
 version = "0.1.0"
 dependencies = [
+ "parity-scale-codec 3.1.5",
+ "scale-info",
  "sp-core",
  "sp-runtime",
 ]
@@ -4995,7 +4997,6 @@ dependencies = [
  "orml-xcm",
  "orml-xcm-support",
  "orml-xtokens",
- "pallet-assets-info",
  "pallet-aura",
  "pallet-authorship",
  "pallet-bootstrap",
@@ -6985,7 +6986,6 @@ dependencies = [
  "mp-traits",
  "orml-tokens",
  "orml-traits",
- "pallet-assets-info",
  "pallet-bootstrap",
  "pallet-issuance",
  "pallet-vesting-mangata",

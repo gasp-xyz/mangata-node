@@ -499,7 +499,6 @@ fn mangata_genesis(
 		aura: Default::default(),
 		aura_ext: Default::default(),
 		parachain_system: Default::default(),
-		assets_info: Default::default(),
 		xyk: mangata_rococo_runtime::XykConfig {
 			created_pools_for_staking: staking_accounts
 				.iter()

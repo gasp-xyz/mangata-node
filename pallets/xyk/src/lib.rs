@@ -237,9 +237,8 @@ use frame_system::pallet_prelude::*;
 use mangata_primitives::{Balance, TokenId};
 use mp_bootstrap::PoolCreateApi;
 use mp_multipurpose_liquidity::ActivateKind;
-use mp_traits::{ActivationReservesProviderTrait, XykFunctionsTrait};
+use mp_traits::{ActivationReservesProviderTrait, XykFunctionsTrait, AssetMetadataMutationTrait};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
-use pallet_assets_info as assets_info;
 use pallet_issuance::{ComputeIssuance, PoolPromoteApi};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
@@ -303,7 +302,7 @@ pub mod pallet {
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_assets_info::Config {
+	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type ActivationReservesProvider: ActivationReservesProviderTrait<
 			AccountId = Self::AccountId,
@@ -328,6 +327,7 @@ pub mod pallet {
 		type DisallowedPools: Contains<(TokenId, TokenId)>;
 		type DisabledTokens: Contains<TokenId>;
 		type VestingProvider: MultiTokenVestingLocks<Self::AccountId, Self::BlockNumber>;
+		type AssetMetadataMutation: AssetMetadataMutationTrait;
 		type WeightInfo: WeightInfo;
 	}
 
@@ -1281,7 +1281,7 @@ impl<T: Config> Pallet<T> {
 		let mut description: Vec<u8> = Vec::<u8>::new();
 		description.extend_from_slice(LIQUIDITY_TOKEN_DESCRIPTION);
 
-		<assets_info::Pallet<T>>::set_asset_info(
+		T::AssetMetadataMutation::set_asset_info(
 			liquidity_asset_id,
 			Some(name),
 			Some(symbol.to_vec()),

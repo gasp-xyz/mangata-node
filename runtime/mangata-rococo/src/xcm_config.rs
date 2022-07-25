@@ -19,8 +19,9 @@ use frame_support::{
 	weights::Weight,
 };
 use frame_system::EnsureRoot;
-use orml_traits::{parameter_type_with_key, GetByKey, MultiCurrency};
-use orml_traits::location::AbsoluteReserveProvider;
+use orml_traits::{
+	location::AbsoluteReserveProvider, parameter_type_with_key, GetByKey, MultiCurrency,
+};
 use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;

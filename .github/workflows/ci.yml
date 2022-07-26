@@ -317,6 +317,7 @@ jobs:
   e2e-test-parallel-self-hosted:
     needs: build-rococo
     runs-on: self-hosted
+    timeout-minutes: 1440
     if: "!contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests')"
     env:
       API_URL: 'ws://127.0.0.1:8844'
@@ -411,7 +412,7 @@ jobs:
         uses: dorny/test-reporter@v1
         if: success() || failure()    # run this step even if previous step failed
         with:
-          name: JEST Tests        # Name of the check run which will be created
+          name: JEST Tests Parallel        # Name of the check run which will be created
           path: e2eTests/reports/junit-*.xml    # Path to test results
           reporter: jest-junit        # Format of test results
 

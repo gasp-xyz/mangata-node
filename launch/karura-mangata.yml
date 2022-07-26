@@ -51,7 +51,7 @@ parachains:
     - --alice
   - flags:
     - --bob
-- image: mangatasolutions/mangata-node:dev
+- image: mangatasolutions/mangata-node:upgrade
   chain:
     base: mangata-rococo-local-testnet
     collators:

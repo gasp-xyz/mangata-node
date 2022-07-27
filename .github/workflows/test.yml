@@ -77,8 +77,6 @@ jobs:
   e2e-test:
     runs-on: ubuntu-latest
     timeout-minutes: 1440
-    with:
-      github.event.inputs.skipBuild: true
     if: " false && !contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests')"
     env:
       API_URL: 'ws://127.0.0.1:8844'

@@ -459,11 +459,11 @@ jobs:
 
       - name: Run sequential e2e tests
         working-directory: e2eTests
-        run: yarn test-sequential-e2e
+        run: yarn test-foo
 
       - name: Run parallel e2e tests
         working-directory: e2eTests
-        run: yarn test-parallel
+        run: yarn test-foo #test-parallel
 
       - name: Test Report
         uses: dorny/test-reporter@v1

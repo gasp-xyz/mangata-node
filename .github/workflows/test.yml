@@ -57,7 +57,8 @@ jobs:
         working-directory: e2eTests
         run: |
          echo " $(jo -a test/parallel/*| jq -r '[_nwise(length / 5)]' | tail -c +2 | head -c -2 > file.txt  && sed -i 's/",/ /g'   file.txt && sed -i 's/"/ /g'   file.txt   &&   sed -i 's/\[/\"/g' file.txt && sed -i 's/\]/\"/g' file.txt  && cat file.txt)"
-         echo "::set-output name=version_matrix::[$(cat file.txt)]"
+         echo "::set-output name=version_matrix::[" test/parallel/xTokens-API-transfer.test.ts  test/parallel/xyk-pallet.API.accuracy.no.connected.MGA.fees.test.ts  test/parallel/xyk-pallet.API.accuracy.shared.pool.test.ts  test/parallel/xyk-pallet.API.accuracy.tx.fees.test.ts  test/parallel/xyk-pallet.API.burnLiquidity.error.test.ts "," test/parallel/xyk-pallet.API.burnLiquidity.test.ts  test/parallel/xyk-pallet.API.buyAsset.test.ts  test/parallel/xyk-pallet.API.mintLiquidity.error.test.ts  test/parallel/xyk-pallet.API.mintLiquidity.test.ts  test/parallel/xyk-pallet.API.overflow.test.ts "," test/parallel/xyk-pallet.API.pool.test.ts  test/parallel/xyk-pallet.API.sellAsset.test.ts  test/parallel/xyk-pallet.API.testMGArequired.test.ts  test/parallel/xyk-pallet.API.treasury.no.connected.mangata.test.ts  test/parallel/xyk-pallet.asset.buy.test.ts "," test/parallel/xyk-pallet.asset.sell.test.ts  test/parallel/xyk-pallet.asset.transfer.test.ts  test/parallel/xyk-pallet.liquidity.test.ts  test/parallel/xyk-pallet.pool.test.ts  test/parallel/xyk-pallet.sudo.security.test.ts "," test/parallel/xyk-pallet.sudo.test.ts  test/parallel/xyk-rpc.calculate.burnAmount.test.ts  test/parallel/xyk-rpc.calculate.by.id.test.ts  test/parallel/xyk-rpc.calculate.test.ts  test/parallel/xyk-rpc.errors.test.ts "]"
+#         echo "::set-output name=version_matrix::[$(cat file.txt)]"
 #         echo '::set-output name=version_matrix::[" a b ", "c d"]'
       - id: printM
         working-directory: e2eTests

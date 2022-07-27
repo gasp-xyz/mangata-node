@@ -293,7 +293,6 @@ jobs:
           docker save -o rococo-docker-e2e-${{ github.sha }}.tar ${DOCKER_IMAGE_GIT_SHA_TAG} ${{ env.DOCKER_IMAGE_LATEST_TAG }}
       -
         name: Upload docker img artifact
-        if: ${{ github.event.inputs.skipBuild != 'true' }}
         uses: actions/upload-artifact@v2
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         with:

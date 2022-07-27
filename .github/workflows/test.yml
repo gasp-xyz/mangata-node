@@ -62,10 +62,10 @@ jobs:
       - id: printM
         working-directory: e2eTests
         run: |
-          echo " variable value:  ${{ fromJson(steps.set-matrix.outputs.version_matrix) }}  "
+          echo ' variable value:  ${{ fromJson(steps.set-matrix.outputs.version_matrix) }}  '
      
     outputs:
-      version_matrix: ${{ fromJson(steps.set-matrix.outputs.version_matrix) }}
+      version_matrix: ${{ steps.set-matrix.outputs.version_matrix }}
   
   ci:
     needs: build-matrix

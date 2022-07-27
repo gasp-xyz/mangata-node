@@ -58,6 +58,7 @@ jobs:
          echo " $(jo -a test/parallel/*| jq -r '[_nwise(length / 5)]' > file.txt  && sed -i 's/",/ /g'   file.txt && sed -i 's/"/ /g'   file.txt) "
          echo "::debug::$(cat file.txt)"
          echo "::set-output name=version_matrix::$(cat file.txt)"
+         echo '::set-output name=version_matrix::[" a b ", "c d"]'
     outputs:
       version_matrix: ${{ steps.set-matrix.outputs.version_matrix }}
   

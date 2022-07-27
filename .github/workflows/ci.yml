@@ -39,6 +39,7 @@ jobs:
 
   rustfmt-check:
     name: Formatting check
+    if: !github.event.inputs.skipBuild != true
     runs-on: ubuntu-latest
     steps:
       -
@@ -65,6 +66,7 @@ jobs:
   clippy-check:
     name: Clippy check
     runs-on: ubuntu-latest
+    if: !github.event.inputs.skipBuild != true
     steps:
       -
         name: Checkout
@@ -90,6 +92,7 @@ jobs:
   unit-test:
     name: Unit test
     runs-on: ubuntu-latest
+    if: !github.event.inputs.skipBuild != true
     steps:
       -
         name: Checkout
@@ -127,6 +130,7 @@ jobs:
   run-benchmarks-tests:
     name: Run benchmark tests
     runs-on: ubuntu-latest
+    if: !github.event.inputs.skipBuild != true
     steps:
       -
         name: Checkout
@@ -152,6 +156,7 @@ jobs:
   run-benchmarks:
     name: Run runtime benchmarks
     runs-on: ubuntu-latest
+    if: !github.event.inputs.skipBuild != true
     steps:
       -
         name: Checkout
@@ -177,6 +182,7 @@ jobs:
 
   build-rococo:
     runs-on: ubuntu-latest
+    if: !github.event.inputs.skipBuild != true
     steps:
       -
         name: Debug info about publishing.
@@ -243,6 +249,7 @@ jobs:
 
   build-rococo-e2e:
     runs-on: ubuntu-latest
+    if: !github.event.inputs.skipBuild != true
     steps:
       -
         name: Debug info about publishing.
@@ -293,6 +300,7 @@ jobs:
 
   build-kusama:
     runs-on: ubuntu-latest
+    if: !github.event.inputs.skipBuild != true
     steps:
       -
         name: Debug info about publishing.

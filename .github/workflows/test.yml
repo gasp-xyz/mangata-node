@@ -1,0 +1,150 @@
+name: Bla
+
+# available flags:
+## skip-e2e-tests: skip running e2e tests
+## skip-build : run the test with latest version.
+## skip-publish: skip publish
+
+on:
+  pull_request:
+    branches:
+      - develop
+  push:
+    branches: [ develop ]
+
+  workflow_dispatch:
+    # For manually trigger
+    inputs:
+        e2eBranch:
+          description: 'Name of the e2e target branch'
+          required: false
+          default: 'main'
+
+        parachainDocker:
+          description: 'Name of the parachain docker reference'
+          required: false
+          default: "mangatasolutions/mangata-node:rococo-latest"
+
+        skipBuild:
+          description: "Skip build phase"
+          type: boolean
+          required: true
+          default: false
+
+env:
+  DOCKER_BUILDER_IMAGE: mangatasolutions/node-builder:0.2
+  DISABLE_TTY: 1
+
+jobs:
+
+  build-matrix:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout tests
+        uses: actions/checkout@v2
+        with:
+          repository: mangata-finance/mangata-e2e
+          ref: 'main'
+          path: 'e2eTests'
+      - id: print
+        working-directory: e2eTests
+        run: |
+         echo "::warn::Ls directoriy is:  $(jo -a test/parallel/*) "
+
+      - id: set-matrix
+        working-directory: e2eTests
+        run: |
+         echo "::debug::$(jo -a test/parallel/*| jq '[_nwise(length / 5 | ceil)]')"
+         echo "::set-output name=version_matrix::$(jo -a test/parallel/*| jq '[_nwise(length / 5 | ceil)]')"
+    outputs:
+      version_matrix: ${{ steps.set-matrix.outputs.version_matrix }}
+  
+  ci:
+    needs: build-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        version: ${{ fromJson(needs.build-matrix.outputs.version_matrix) }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.version }}
+      - run: |
+         echo "::debug::MatrixValue is:, ${{ matrix.version }} "
+
+  e2e-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 1440
+    with:
+      github.event.inputs.skipBuild: true
+    if: " false && !contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests')"
+    env:
+      API_URL: 'ws://127.0.0.1:8844'
+      TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}
+      E2E_TREASURY_PALLET_ADDRESS : ${{ secrets.E2E_TREASURY_PALLET_ADDRESS }}
+      E2E_XYK_PALLET_ADDRESS : ${{ secrets.E2E_XYK_PALLET_ADDRESS }}
+      E2E_TREASURY_BURN_PALLET_ADDRESS : ${{ secrets.E2E_TREASURY_BURN_PALLET_ADDRESS }}
+      TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
+      MANGATA_NODE_VERSION: ${{ github.sha }}
+      E2EBRANCHNAME: 'main'
+      PARACHAIN_DOCKER_IMAGE: "${{ github.event.inputs.parachainDocker || 'mangatasolutions/mangata-node:rococo-e2e-latest' }}"
+    steps:
+    ####IDK, but this is neccesary for reports
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+
+      -
+        name: Download artifact
+        if:  ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
+        uses: actions/download-artifact@v2
+        with:
+          name: rococo-docker-e2e-${{ github.sha }}
+          path: /tmp
+      -
+        name: Load Docker image
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
+        run: |
+          docker load --input /tmp/rococo-docker-e2e-${{ github.sha }}.tar
+          docker image ls -a
+
+      - name: E2E- Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v4.9
+
+      - name: E2E- Get target branch.
+        run: |
+          echo "This job name branch is: ${{ steps.branch-name.outputs.current_branch }}"
+
+      - name: E2E- Calculate if run e2e feature branch or main.
+        run: |
+          echo DEFAULT: E2E test will run with: $E2EBRANCHNAME
+          echo "Running on: ${{ steps.branch-name.outputs.current_branch }}"
+          if [ -n "$(git ls-remote --heads https://github.com/mangata-finance/mangata-e2e.git ${{ steps.branch-name.outputs.current_branch }} --force --quiet)" ]; then echo "E2EBRANCHNAME=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_ENV; echo "MATCH - OK" ; elif [ -n "$(git ls-remote --heads https://github.com/mangata-finance/mangata-e2e.git ${{ github.base_ref }} --force --quiet)" ]; then echo "E2EBRANCHNAME=${{ github.base_ref }}" >> $GITHUB_ENV; echo "MATCH - OK" ;  fi
+
+      - name: Decide if main - branch or parameter
+      # if we have something in e2eBranch - override E2EBranchName, else -> E2EBRANCHNAME , that
+      # by default will be main.
+
+        run:
+          echo "E2EBRANCHNAME=${{ github.event.inputs.e2eBranch || env.E2EBRANCHNAME }}" >> $GITHUB_ENV
+
+      - name: E2E- Get target branch.
+        run: |
+         echo "${{ env.E2EBRANCHNAME }}"
+
+      -
+        name: Checkout tests
+        uses: actions/checkout@v2
+        with:
+          repository: mangata-finance/mangata-e2e
+          ref: '${{ env.E2EBRANCHNAME }}'
+          path: 'e2eTests'
+
+      - name: Print parachain docker image reference
+        run: |
+          echo ${{ env.PARACHAIN_DOCKER_IMAGE }}
+
+

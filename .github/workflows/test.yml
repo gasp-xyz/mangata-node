@@ -51,7 +51,6 @@ jobs:
         working-directory: e2eTests
         run: |
          echo "::warn::Ls directoriy is:  $(jo -a test/parallel/*) "
-
       - id: set-matrix
         working-directory: e2eTests
         run: |

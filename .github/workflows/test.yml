@@ -55,8 +55,8 @@ jobs:
       - id: set-matrix
         working-directory: e2eTests
         run: |
-         echo "::debug::$(jo -a test/parallel/*| jq '[_nwise(length / 5 | ceil)]')"
-         echo "::set-output name=version_matrix::$(jo -a test/parallel/*| jq '[_nwise(length / 5 | ceil)]')"
+         echo "::debug::$(jo -a test/parallel/*| jq '[_nwise(length / 5)]')"
+         echo "::set-output name=version_matrix::$(jo -a test/parallel/*| jq '[_nwise(length / 5)]')"
     outputs:
       version_matrix: ${{ steps.set-matrix.outputs.version_matrix }}
   

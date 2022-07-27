@@ -458,7 +458,7 @@ jobs:
 
       - name: Run sequential e2e tests
         working-directory: e2eTests
-        run: yarn test-sequential
+        run: yarn test-sequential-e2e
 
       - name: Run parallel e2e tests
         working-directory: e2eTests

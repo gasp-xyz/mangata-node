@@ -64,7 +64,6 @@ jobs:
         working-directory: e2eTests
         run: |
           echo ' variable value:  ${{ steps.set-matrix.outputs.version_matrix }}  '
-          echo ' variable value as json: ${{ fromJson(  ${{ steps.set-matrix.outputs.version_matrix }} )  }} '
      
     outputs:
       version_matrix: ${{ steps.set-matrix.outputs.version_matrix }}

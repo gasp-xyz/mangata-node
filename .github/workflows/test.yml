@@ -154,9 +154,7 @@ jobs:
           path: 'e2eTests'
 
       - name: print jarn execution
-        with:
-          test-files: ${{ matrix.testFiles }}
         run: |
-          echo jarn run-tests-from-files ${{ test-files }}
+          echo "yarn run-tests-from-files ${{ matrix.testFiles }}"
 
 

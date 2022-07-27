@@ -57,7 +57,7 @@ jobs:
         working-directory: e2eTests
         run: |
          echo "[ $(jo -a test/parallel/*| jq -rc '[_nwise(length / 5)]' | tail -c +2 | head -c -2 > file.txt  && sed -i 's/",/ /g'   file.txt && sed -i 's/"/ /g'   file.txt   &&   sed -i 's/\[/\"/g' file.txt && sed -i 's/\]/\"/g' file.txt  && cat file.txt) ]"
-         echo "::set-output name=version_matrix::[ $(jo -a test/parallel/*| jq -rc '[_nwise(length / 5)]' | tail -c +2 | head -c -2 > file.txt  && sed -i 's/",/ /g'   file.txt && sed -i 's/"/ /g'   file.txt   &&   sed -i 's/\[/\"/g' file.txt && sed -i 's/\]/\"/g' file.txt  && cat file.txt) ]"
+         echo "::set-output name=testFiles_matrix::[ $(jo -a test/parallel/*| jq -rc '[_nwise(length / 5)]' | tail -c +2 | head -c -2 > file.txt  && sed -i 's/",/ /g'   file.txt && sed -i 's/"/ /g'   file.txt   &&   sed -i 's/\[/\"/g' file.txt && sed -i 's/\]/\"/g' file.txt  && cat file.txt) ]"
 #         echo '::set-output name=version_matrix::[" a b ", "c d"]
 
       - id: printM
@@ -66,24 +66,28 @@ jobs:
           echo ' variable value:  ${{ steps.set-matrix.outputs.version_matrix }}  '
      
     outputs:
-      version_matrix: ${{ steps.set-matrix.outputs.version_matrix }}
+      testFiles_matrix: ${{ steps.set-matrix.outputs.testFiles_matrix }}
   
   ci:
     needs: build-matrix
     runs-on: self-hosted
     strategy:
       matrix:
-        version: ${{ fromJson(needs.build-matrix.outputs.version_matrix) }}
+        testFiles: ${{ fromJson(needs.build-matrix.outputs.testFiles_matrix) }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
-          node-version: ${{ matrix.version }}
+          test-files: ${{ matrix.testFiles }}
       - run: |
          echo "::debug::MatrixValue is:, ${{ matrix.version }} "
 
   e2e-test:
     runs-on: self-hosted
+    needs: build-matrix
+    strategy:
+      matrix:
+        testFiles: ${{ fromJson(needs.build-matrix.outputs.testFiles_matrix) }}
     timeout-minutes: 1440
     if: " false && !contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests')"
     env:
@@ -149,8 +153,10 @@ jobs:
           ref: '${{ env.E2EBRANCHNAME }}'
           path: 'e2eTests'
 
-      - name: Print parachain docker image reference
+      - name: print jarn execution
+        with:
+          test-files: ${{ matrix.testFiles }}
         run: |
-          echo ${{ env.PARACHAIN_DOCKER_IMAGE }}
+          echo jarn run-tests-from-files ${{ test-files }}
 
 

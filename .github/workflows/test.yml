@@ -38,7 +38,7 @@ env:
 jobs:
 
   build-matrix:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       -
         name: Checkout tests
@@ -62,7 +62,7 @@ jobs:
   
   ci:
     needs: build-matrix
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     strategy:
       matrix:
         version: ${{ fromJson(needs.build-matrix.outputs.version_matrix) }}
@@ -75,7 +75,7 @@ jobs:
          echo "::debug::MatrixValue is:, ${{ matrix.version }} "
 
   e2e-test:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 1440
     if: " false && !contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests')"
     env:

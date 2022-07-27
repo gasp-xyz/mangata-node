@@ -56,16 +56,16 @@ jobs:
       - id: set-matrix
         working-directory: e2eTests
         run: |
-         echo " $(jo -a test/parallel/*| jq -rc '[_nwise(length / 5)]' | tail -c +2 | head -c -2 > file.txt  && sed -i 's/",/ /g'   file.txt && sed -i 's/"/ /g'   file.txt   &&   sed -i 's/\[/\"/g' file.txt && sed -i 's/\]/\"/g' file.txt  && cat file.txt)"
-         echo '::set-output name=version_matrix::[$(cat file.txt)]'
+         echo "[ $(jo -a test/parallel/*| jq -rc '[_nwise(length / 5)]' | tail -c +2 | head -c -2 > file.txt  && sed -i 's/",/ /g'   file.txt && sed -i 's/"/ /g'   file.txt   &&   sed -i 's/\[/\"/g' file.txt && sed -i 's/\]/\"/g' file.txt  && cat file.txt) ]"
+         echo '::set-output name=version_matrix::$(cat file.txt)'
 #         echo '::set-output name=version_matrix::[" a b ", "c d"]'
       - id: printM
         working-directory: e2eTests
         run: |
-          echo "  ${{ steps.set-matrix.outputs.version_matrix }}  "
+          echo " variable value:  ${{ fromJson(steps.set-matrix.outputs.version_matrix }})  "
      
     outputs:
-      version_matrix: ${{ steps.set-matrix.outputs.version_matrix }}
+      version_matrix: ${{ fromJson(steps.set-matrix.outputs.version_matrix }})
   
   ci:
     needs: build-matrix

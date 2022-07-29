@@ -4,7 +4,10 @@ use codec::Encode;
 use cumulus_primitives_core::ParaId;
 use hex::FromHex;
 use hex_literal::hex;
-use mangata_rococo_runtime::{AccountId, AuraId, Signature, VersionedMultiLocation, ROC_TOKEN_ID};
+use mangata_rococo_runtime::{
+	constants::parachains, AccountId, AuraId, GeneralKey, Junction, MultiLocation, Parachain,
+	Signature, VersionedMultiLocation, KAR_TOKEN_ID, ROC_TOKEN_ID, X2,
+};
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
@@ -344,7 +347,23 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 						5_000__000_000_000_000_000_000u128,
 					),
 				],
-				vec![(ROC_TOKEN_ID, None)],
+				vec![
+					(ROC_TOKEN_ID, None),
+					(5, None),
+					(
+						KAR_TOKEN_ID,
+						Some(
+							MultiLocation::new(
+								1,
+								X2(
+									Parachain(parachains::karura::ID),
+									GeneralKey(parachains::karura::KAR_KEY.to_vec()),
+								),
+							)
+							.into(),
+						),
+					),
+				],
 				2000.into(),
 			)
 		},

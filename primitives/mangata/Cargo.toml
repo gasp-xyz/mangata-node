@@ -5,10 +5,12 @@ authors = ['Mangata team']
 edition = "2018"
 
 [dependencies]
-sp-core = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
-sp-runtime = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+sp-core = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.24",  version = "6.0.0" }
+sp-runtime = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.24",  version = "6.0.0" }
 
 [features]
 default = ["std"]
 std = [
+	'sp-core/std',
+	'sp-runtime/std',
 ]

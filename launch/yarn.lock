@@ -719,7 +719,7 @@ pako@^2.0.4:
 
 parachain-launch@mangata-finance/parachain-launch#mangata:
   version "1.2.0"
-  resolved "git+ssh://git@github.com/mangata-finance/parachain-launch.git#c02ead90ca484485ee64c9b5cfe6aff47b2cf41b"
+  resolved "git+https://git@github.com/mangata-finance/parachain-launch.git#c02ead90ca484485ee64c9b5cfe6aff47b2cf41b"
   dependencies:
     "@polkadot/api" "^7.15.1"
     "@polkadot/keyring" "^8.4.1"

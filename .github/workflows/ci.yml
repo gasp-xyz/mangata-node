@@ -375,7 +375,7 @@ jobs:
             ./docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm.md5
 
   build-matrix:
-  needs: build-rococo
+    needs: build-rococo
     runs-on: self-hosted
     timeout-minutes: 1440
     if: "!contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests')"

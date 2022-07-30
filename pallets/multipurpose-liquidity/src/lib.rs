@@ -173,6 +173,63 @@ pub mod pallet {
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::reserve_vesting_liquidity_tokens())]
 		// This extrinsic has to be transactional
+		pub fn reserve_vesting_liquidity_tokens_by_vesting_index(
+			origin: OriginFor<T>,
+			liquidity_token_id: TokenId,
+			liquidity_token_vesting_index: u32,
+			liquidity_token_unlock_some_amount_or_all: Option<Balance>,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+
+			ensure!(T::Xyk::is_liquidity_token(liquidity_token_id), Error::<T>::NotALiquidityToken);
+
+			let unlock_info = T::VestingProvider::unlock_tokens_by_vesting_index(
+				&sender,
+				liquidity_token_id.into(),
+				liquidity_token_vesting_index,
+				liquidity_token_unlock_some_amount_or_all.map(Into::into),
+			)?;
+
+			let unlocked_amount: Balance = unlock_info.0.into();
+			let vesting_ending_block_as_balance: Balance = unlock_info.1.into();
+
+			let mut reserve_status = Pallet::<T>::get_reserve_status(&sender, liquidity_token_id);
+
+			reserve_status.relock_amount = reserve_status
+				.relock_amount
+				.checked_add(unlocked_amount)
+				.ok_or(Error::<T>::MathError)?;
+			reserve_status.unspent_reserves = reserve_status
+				.unspent_reserves
+				.checked_add(unlocked_amount)
+				.ok_or(Error::<T>::MathError)?;
+
+			ReserveStatus::<T>::insert(&sender, liquidity_token_id, reserve_status);
+
+			RelockStatus::<T>::try_append(
+				&sender,
+				liquidity_token_id,
+				RelockStatusInfo {
+					amount: unlocked_amount,
+					ending_block_as_balance: vesting_ending_block_as_balance,
+				},
+			)
+			.map_err(|_| Error::<T>::RelockCountLimitExceeded)?;
+
+			T::Tokens::reserve(liquidity_token_id.into(), &sender, unlocked_amount.into())?;
+
+			Pallet::<T>::deposit_event(Event::VestingTokensReserved(
+				sender,
+				liquidity_token_id,
+				unlocked_amount,
+			));
+
+			Ok(().into())
+		}
+
+		#[transactional]
+		#[pallet::weight(T::WeightInfo::reserve_vesting_liquidity_tokens())]
+		// This extrinsic has to be transactional
 		pub fn reserve_vesting_liquidity_tokens(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,

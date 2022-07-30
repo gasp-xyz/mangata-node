@@ -613,7 +613,7 @@ pub mod pallet {
 					second_asset_id,
 					vesting_native_asset_amount,
 					expected_second_asset_amount,
-					false
+					false,
 				)?;
 
 			T::VestingProvider::lock_tokens(
@@ -2157,8 +2157,9 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		)?;
 
 		// Liquidity minting functions not triggered on not promoted pool
-		if <T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some()
-		 && activate_minted_liquidity {
+		if <T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some() &&
+			activate_minted_liquidity
+		{
 			// The reserve from free_balance will not fail the asset were just minted into free_balance
 			Pallet::<T>::set_liquidity_minting_checkpoint(
 				sender.clone(),

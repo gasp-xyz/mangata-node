@@ -475,7 +475,8 @@ pub mod pallet {
 								*native_token_id,
 								*pooled_token_id,
 								*native_token_amount,
-								*pooled_token_amount
+								*pooled_token_amount,
+								true,
 							)
 							.is_ok(),
 							"Pool mint failed"
@@ -612,6 +613,7 @@ pub mod pallet {
 					second_asset_id,
 					vesting_native_asset_amount,
 					expected_second_asset_amount,
+					false
 				)?;
 
 			T::VestingProvider::lock_tokens(
@@ -646,6 +648,7 @@ pub mod pallet {
 				second_asset_id,
 				first_asset_amount,
 				expected_second_asset_amount,
+				true,
 			)?;
 
 			Ok(().into())
@@ -2065,6 +2068,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		second_asset_id: Self::CurrencyId,
 		first_asset_amount: Self::Balance,
 		expected_second_asset_amount: Self::Balance,
+		activate_minted_liquidity: bool,
 	) -> Result<(Self::CurrencyId, Self::Balance), DispatchError> {
 		let vault = Pallet::<T>::account_id();
 
@@ -2153,7 +2157,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		)?;
 
 		// Liquidity minting functions not triggered on not promoted pool
-		if <T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some() {
+		if <T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some()
+		 && activate_minted_liquidity {
 			// The reserve from free_balance will not fail the asset were just minted into free_balance
 			Pallet::<T>::set_liquidity_minting_checkpoint(
 				sender.clone(),

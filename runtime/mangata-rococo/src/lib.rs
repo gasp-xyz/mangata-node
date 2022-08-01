@@ -69,6 +69,7 @@ use orml_traits::parameter_type_with_key;
 
 pub use pallet_xyk;
 use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
+use pallet_vesting_mangata_rpc_runtime_api::{VestingInfosWithLockedAt};
 
 pub const MGR_TOKEN_ID: TokenId = 0;
 pub const ROC_TOKEN_ID: TokenId = 4;
@@ -1298,6 +1299,21 @@ impl_runtime_apis! {
 
 		fn authorities() -> Vec<AuraId> {
 			Aura::authorities().into_inner()
+		}
+	}
+
+	impl pallet_vesting_mangata_rpc_runtime_api::VestingMangataApi<Block, AccountId, TokenId, Balance, BlockNumber> for Runtime {
+		fn get_vesting_locked_at(who: AccountId, token_id: TokenId, at_block_number: Option<BlockNumber>) -> VestingInfosWithLockedAt<Balance, BlockNumber>
+		{
+			match Vesting::get_vesting_locked_at(&who, token_id, at_block_number){
+				Ok(vesting_infos_with_locked_at) => VestingInfosWithLockedAt{
+					vesting_infos_with_locked_at: vesting_infos_with_locked_at
+				},
+				Err(e) => {
+						log::warn!(target:"vesting", "rpc 'Vesting::get_vesting_locked_at' error: '{:?}', returning default value instead", e);
+						Default::default()
+				},
+			}
 		}
 	}
 

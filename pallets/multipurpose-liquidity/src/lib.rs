@@ -183,15 +183,12 @@ pub mod pallet {
 
 			ensure!(T::Xyk::is_liquidity_token(liquidity_token_id), Error::<T>::NotALiquidityToken);
 
-			let unlock_info = T::VestingProvider::unlock_tokens_by_vesting_index(
+			let (unlocked_amount, vesting_ending_block_as_balance): (Balance, Balance) = T::VestingProvider::unlock_tokens_by_vesting_index(
 				&sender,
 				liquidity_token_id.into(),
 				liquidity_token_vesting_index,
 				liquidity_token_unlock_some_amount_or_all.map(Into::into),
-			)?;
-
-			let unlocked_amount: Balance = unlock_info.0.into();
-			let vesting_ending_block_as_balance: Balance = unlock_info.1.into();
+			).map(|x| (x.0.into(), x.1.into()))?;
 
 			let mut reserve_status = Pallet::<T>::get_reserve_status(&sender, liquidity_token_id);
 

@@ -600,15 +600,12 @@ pub mod pallet {
 				Error::<T>::NotAPromotedPool
 			);
 
-			let unlock_info = T::VestingProvider::unlock_tokens_by_vesting_index(
+			let (unlocked_amount, vesting_ending_block_as_balance): (Balance, Balance)  = T::VestingProvider::unlock_tokens_by_vesting_index(
 				&sender,
 				T::NativeCurrencyId::get().into(),
 				native_asset_vesting_index,
 				vesting_native_asset_unlock_some_amount_or_all.map(Into::into),
-			)?;
-
-			let unlocked_amount: Balance = unlock_info.0.into();
-			let vesting_ending_block_as_balance: Balance = unlock_info.1.into();
+			).map(|x| (x.0.into(), x.1.into()))?;
 
 			let (liquidity_token_id, liquidity_assets_minted) =
 				<Self as XykFunctionsTrait<T::AccountId>>::mint_liquidity(

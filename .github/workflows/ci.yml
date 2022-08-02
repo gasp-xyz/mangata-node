@@ -251,58 +251,6 @@ jobs:
             ./docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm
             ./docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm.md5
 
-  build-rococo-e2e:
-    runs-on: ubuntu-latest
-    steps:
-      -
-        name: Debug info about publishing.
-        run: |
-          echo ${{ github.ref }} == 'refs/heads/develop'
-          echo ${{ github.ref }}
-      -
-        name: Checkout
-        uses: actions/checkout@v2
-      -
-        name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
-      -
-        name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-      -
-        name: Login to Docker Hub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Pull builder image
-        run: |
-          docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
-      -
-        name: Build node binary
-        if: ${{ github.event.inputs.skipBuild != 'true' }}
-        run: |
-          ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh build -j2 --release --features=mangata-rococo
-      -
-        name: Build node img
-        if: ${{ github.event.inputs.skipBuild != 'true' }}
-        env:
-          DOCKER_IMAGE_GIT_SHA_TAG: "mangatasolutions/mangata-node:rococo-e2e-${{ github.sha }}"
-          DOCKER_IMAGE_LATEST_TAG: "mangatasolutions/mangata-node:rococo-e2e-latest"
-          SKIP_BUILD: 1
-          NODE_BINARY: "docker-cargo/release/mangata-node"
-          WASM: "docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm"
-        run: >
-          ./scripts/build-image.sh ${DOCKER_IMAGE_GIT_SHA_TAG} ${DOCKER_IMAGE_LATEST_TAG} &&
-          docker save -o rococo-docker-e2e-${{ github.sha }}.tar ${DOCKER_IMAGE_GIT_SHA_TAG} ${{ env.DOCKER_IMAGE_LATEST_TAG }}
-      -
-        name: Upload docker img artifact
-        uses: actions/upload-artifact@v2
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
-        with:
-          name: rococo-docker-e2e-${{ github.sha }}
-          path: rococo-docker-e2e-${{ github.sha }}.tar
-
   build-kusama:
     runs-on: ubuntu-latest
     if: ${{ github.event.inputs.skipBuild != 'true' }}

@@ -1617,14 +1617,14 @@ fn transfer_dust_to_treasury() {
 
 		let before_finalize = Bootstrap::balance(
 			liq_token_id,
-			<mock::Test as Config>::TreasuryPalletId::get().into_account(),
+			<mock::Test as Config>::TreasuryPalletId::get().into_account_truncating(),
 		);
 
 		Bootstrap::finalize(Origin::root(), None).unwrap();
 
 		let after_finalize = Bootstrap::balance(
 			liq_token_id,
-			<mock::Test as Config>::TreasuryPalletId::get().into_account(),
+			<mock::Test as Config>::TreasuryPalletId::get().into_account_truncating(),
 		);
 		assert!(after_finalize > before_finalize);
 	});

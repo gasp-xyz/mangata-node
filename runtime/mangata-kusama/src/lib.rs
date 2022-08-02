@@ -9,31 +9,31 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
 use smallvec::smallvec;
 use sp_api::impl_runtime_apis;
-use sp_core::{
-	crypto::KeyTypeId,
-	u32_trait::{_1, _2},
-	OpaqueMetadata,
-};
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, ConvertInto,
-		IdentifyAccount, StaticLookup, Verify,
+		StaticLookup,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, FixedPointNumber, MultiSignature, Percent, Perquintill,
+	ApplyExtrinsicResult, FixedPointNumber, Percent, Perquintill,
 };
 
-use sp_std::{marker::PhantomData, prelude::*};
+use sp_std::{
+	convert::{TryFrom, TryInto},
+	marker::PhantomData,
+	prelude::*,
+};
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 use frame_support::{
-	construct_runtime, match_type, parameter_types,
+	construct_runtime, match_types, parameter_types,
 	traits::{Contains, Everything, Get, LockIdentifier, Nothing, U128CurrencyToVote},
 	weights::{
-		constants::{WEIGHT_PER_MICROS, WEIGHT_PER_MILLIS, WEIGHT_PER_SECOND},
+		constants::{RocksDbWeight, WEIGHT_PER_MICROS, WEIGHT_PER_MILLIS, WEIGHT_PER_SECOND},
 		DispatchClass, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
 		WeightToFeePolynomial,
 	},
@@ -52,7 +52,7 @@ pub use sp_runtime::BuildStorage;
 // Polkadot Imports
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use polkadot_runtime_common::{BlockHashCount, RocksDbWeight};
+use polkadot_runtime_common::BlockHashCount;
 
 // XCM Imports
 use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
@@ -62,7 +62,7 @@ use xcm_asset_registry::{AssetIdMapping, AssetIdMaps};
 use xcm_builder::{
 	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
 	AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, EnsureXcmOrigin, FixedRateOfFungible,
-	FixedWeightBounds, LocationInverter, ParentIsDefault, RelayChainAsNative,
+	FixedWeightBounds, LocationInverter, ParentIsPreset, RelayChainAsNative,
 	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
 	SignedToAccountId32, SovereignSignedViaLocation, TakeRevenue, TakeWeightCredit,
 };
@@ -77,17 +77,20 @@ pub use mangata_primitives::{
 	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
 };
 
+use hex_literal;
 pub use orml_tokens;
 use orml_tokens::TransferDust;
 use orml_traits::{parameter_type_with_key, GetByKey, MultiCurrency};
 
 pub use pallet_xyk;
-use xyk_runtime_api::{RpcAmountsResult, RpcResult};
+use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
 
-pub const MGA_TOKEN_ID: TokenId = 0;
+pub const MGX_TOKEN_ID: TokenId = 0;
 pub const KSM_TOKEN_ID: TokenId = 4;
+pub const KAR_TOKEN_ID: TokenId = 6;
 
-pub const KSM_MGA_SCALE_FACTOR: u128 = 1000_000_000u128; // 1000 as KSM/MGA, with 6 decimals accounted for (12 - KSM, 18 - MGA)
+pub const KSM_MGX_SCALE_FACTOR: u128 = 1000_000_000u128; // 1000 as KSM/MGX, with 6 decimals accounted for (12 - KSM, 18 - MGX)
+pub const KAR_MGX_SCALE_FACTOR: u128 = 10_000_000u128; // 10 as KAR/MGX, with 6 decimals accounted for (12 - KAR, 18 - MGX)
 
 pub use pallet_sudo;
 
@@ -180,7 +183,7 @@ impl WeightToFeePolynomial for WeightToFee {
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
 		// in Rococo, extrinsic base weight (smallest non-zero weight) is mapped to 1 MILLIUNIT:
 		// in mangata, we map to 1/10 of that, or 1/10 MILLIUNIT
-		let p = base_tx_in_mga();
+		let p = base_tx_in_mgx();
 		let q = Balance::from(MangataExtrinsicBaseWeight::get());
 		smallvec![WeightToFeeCoefficient {
 			degree: 1,
@@ -191,18 +194,22 @@ impl WeightToFeePolynomial for WeightToFee {
 	}
 }
 
-pub fn base_tx_in_mga() -> Balance {
+pub fn base_tx_in_mgx() -> Balance {
 	UNIT
 }
 
-pub fn mga_per_second() -> u128 {
+pub fn mgx_per_second() -> u128 {
 	let base_weight = Balance::from(MangataExtrinsicBaseWeight::get());
 	let base_per_second = (WEIGHT_PER_SECOND as u128) / base_weight;
-	base_per_second * base_tx_in_mga()
+	base_per_second * base_tx_in_mgx()
 }
 
 pub fn ksm_per_second() -> u128 {
-	mga_per_second() / KSM_MGA_SCALE_FACTOR as u128
+	mgx_per_second() / KSM_MGX_SCALE_FACTOR as u128
+}
+
+pub fn kar_per_second() -> u128 {
+	mgx_per_second() / KAR_MGX_SCALE_FACTOR as u128
 }
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
@@ -232,11 +239,11 @@ impl_opaque_keys! {
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
-	authoring_version: 5,
-	spec_version: 5,
+	authoring_version: 7,
+	spec_version: 7,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 5,
+	transaction_version: 7,
 	state_version: 0,
 };
 
@@ -348,8 +355,9 @@ parameter_types! {
 }
 
 parameter_types! {
-	pub const MgaTokenId: TokenId = MGA_TOKEN_ID;
+	pub const MgxTokenId: TokenId = MGX_TOKEN_ID;
 	pub const KsmTokenId: TokenId = KSM_TOKEN_ID;
+	pub const KarTokenId: TokenId = KAR_TOKEN_ID;
 }
 
 // Configure FRAME pallets to include in runtime.
@@ -451,7 +459,7 @@ parameter_types! {
 
 impl pallet_treasury::Config for Runtime {
 	type PalletId = TreasuryPalletId;
-	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>;
+	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgxTokenId>;
 	type ApproveOrigin = EnsureRoot<AccountId>;
 	type RejectOrigin = EnsureRoot<AccountId>;
 	type Event = Event;
@@ -473,14 +481,14 @@ parameter_type_with_key! {
 	pub ExistentialDeposits: |_currency_id: TokenId| -> Balance {
 		0
 		// match currency_id {
-		// 	&MGA_TOKEN_ID => 100,
+		// 	&MGX_TOKEN_ID => 100,
 		// 	_ => 0,
 		// }
 	};
 }
 
 parameter_types! {
-	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account();
+	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 	pub const MaxLocks: u32 = 50;
 }
 
@@ -524,7 +532,7 @@ impl pallet_xyk::Config for Runtime {
 	type Event = Event;
 	type ActivationReservesProvider = MultiPurposeLiquidity;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-	type NativeCurrencyId = MgaTokenId;
+	type NativeCurrencyId = MgxTokenId;
 	type TreasuryPalletId = TreasuryPalletId;
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
 	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
@@ -605,18 +613,20 @@ parameter_types! {
 use scale_info::TypeInfo;
 
 #[derive(Encode, Decode, Clone, TypeInfo)]
-pub struct TwoCurrencyAdapter<C, OU, T1, T2, SF>(PhantomData<(C, OU, T1, T2, SF)>);
-
-use sp_runtime::{
-	traits::{DispatchInfoOf, PostDispatchInfoOf, Saturating, Zero},
-	transaction_validity::InvalidTransaction,
-};
+pub struct ThreeCurrencyOnChargeAdapter<C, OU, T1, T2, T3, SF2, SF3>(
+	PhantomData<(C, OU, T1, T2, T3, SF2, SF3)>,
+);
 
 use frame_support::{
 	traits::{ExistenceRequirement, Imbalance, WithdrawReasons},
 	unsigned::TransactionValidityError,
+	weights::ConstantMultiplier,
 };
 use orml_tokens::MultiTokenCurrency;
+use sp_runtime::{
+	traits::{DispatchInfoOf, PostDispatchInfoOf, Saturating, Zero},
+	transaction_validity::InvalidTransaction,
+};
 
 use pallet_transaction_payment::OnChargeTransaction;
 
@@ -624,15 +634,18 @@ type NegativeImbalanceOf<C, T> =
 	<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
 
 use orml_tokens::MultiTokenImbalanceWithZeroTrait;
+use orml_traits::location::AbsoluteReserveProvider;
 /// Default implementation for a Currency and an OnUnbalanced handler.
 ///
 /// The unbalance handler is given 2 unbalanceds in [`OnUnbalanced::on_unbalanceds`]: fee and
 /// then tip.
-impl<T, C, OU, T1, T2, SF> OnChargeTransaction<T> for TwoCurrencyAdapter<C, OU, T1, T2, SF>
+impl<T, C, OU, T1, T2, T3, SF2, SF3> OnChargeTransaction<T>
+	for ThreeCurrencyOnChargeAdapter<C, OU, T1, T2, T3, SF2, SF3>
 where
 	T: pallet_transaction_payment::Config,
-	T::TransactionByteFee:
-		Get<<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance>,
+	T::LengthToFee: frame_support::weights::WeightToFee<
+		Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
+	>,
 	C: MultiTokenCurrency<<T as frame_system::Config>::AccountId>,
 	C::PositiveImbalance: Imbalance<
 		<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
@@ -648,7 +661,9 @@ where
 		scale_info::TypeInfo,
 	T1: Get<TokenId>,
 	T2: Get<TokenId>,
-	SF: Get<u128>,
+	T3: Get<TokenId>,
+	SF2: Get<u128>,
+	SF3: Get<u128>,
 {
 	type LiquidityInfo = Option<(TokenId, NegativeImbalanceOf<C, T>)>;
 	type Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -685,12 +700,21 @@ where
 			Err(_) => match C::withdraw(
 				T2::get().into(),
 				who,
-				fee / SF::get().into(),
+				fee / SF2::get().into(),
 				withdraw_reason,
 				ExistenceRequirement::KeepAlive,
 			) {
 				Ok(imbalance) => Ok(Some((T2::get(), imbalance))),
-				Err(_) => Err(InvalidTransaction::Payment.into()),
+				Err(_) => match C::withdraw(
+					T3::get().into(),
+					who,
+					fee / SF3::get().into(),
+					withdraw_reason,
+					ExistenceRequirement::KeepAlive,
+				) {
+					Ok(imbalance) => Ok(Some((T3::get(), imbalance))),
+					Err(_) => Err(InvalidTransaction::Payment.into()),
+				},
 			},
 		}
 	}
@@ -709,8 +733,10 @@ where
 		already_withdrawn: Self::LiquidityInfo,
 	) -> Result<(), TransactionValidityError> {
 		if let Some((token_id, paid)) = already_withdrawn {
-			let (corrected_fee, tip) = if token_id == T2::get() {
-				(corrected_fee / SF::get().into(), tip / SF::get().into())
+			let (corrected_fee, tip) = if token_id == T3::get() {
+				(corrected_fee / SF3::get().into(), tip / SF3::get().into())
+			} else if token_id == T2::get() {
+				(corrected_fee / SF2::get().into(), tip / SF2::get().into())
 			} else {
 				(corrected_fee, tip)
 			};
@@ -742,14 +768,16 @@ parameter_types! {
 }
 
 impl pallet_transaction_payment::Config for Runtime {
-	type OnChargeTransaction = TwoCurrencyAdapter<
+	type OnChargeTransaction = ThreeCurrencyOnChargeAdapter<
 		orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
 		ToAuthor,
-		MgaTokenId,
+		MgxTokenId,
 		KsmTokenId,
-		frame_support::traits::ConstU128<KSM_MGA_SCALE_FACTOR>,
+		KarTokenId,
+		frame_support::traits::ConstU128<KSM_MGX_SCALE_FACTOR>,
+		frame_support::traits::ConstU128<KAR_MGX_SCALE_FACTOR>,
 	>;
-	type TransactionByteFee = TransactionByteFee;
+	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type WeightToFee = WeightToFee;
 	type FeeMultiplierUpdate =
 		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
@@ -788,7 +816,7 @@ parameter_types! {
 /// `Transact` in order to determine the dispatch Origin.
 pub type LocationToAccountId = (
 	// The parent (Relay-chain) origin converts to the default `AccountId`.
-	ParentIsDefault<AccountId>,
+	ParentIsPreset<AccountId>,
 	// Sibling parachain origins convert to AccountId via the `ParaId::into`.
 	SiblingParachainConvertsVia<Sibling, AccountId>,
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
@@ -833,7 +861,7 @@ parameter_types! {
 	pub const MaxInstructions: u32 = 100;
 }
 
-match_type! {
+match_types! {
 	pub type ParentOrParentsExecutivePlurality: impl Contains<MultiLocation> = {
 		MultiLocation { parents: 1, interior: Here } |
 		MultiLocation { parents: 1, interior: X1(Plurality { id: BodyId::Executive, .. }) }
@@ -888,6 +916,26 @@ impl cumulus_pallet_xcm::Config for Runtime {
 	type Event = Event;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 }
+/// This is the type we use to convert an (incoming) XCM origin into a local `Origin` instance,
+/// ready for dispatching a transaction with Xcm's `Transact`. There is an `OriginKind` which can
+/// biases the kind of local `Origin` it will become.
+pub type XcmOriginToTransactDispatchOrigin = (
+	// Sovereign account converter; this attempts to derive an `AccountId` from the origin location
+	// using `LocationToAccountId` and then turn that into the usual `Signed` origin. Useful for
+	// foreign chains who want to have a local sovereign account on this chain which they control.
+	SovereignSignedViaLocation<LocationToAccountId, Origin>,
+	// Native converter for Relay-chain (Parent) location; will converts to a `Relay` origin when
+	// recognized.
+	RelayChainAsNative<RelayChainOrigin, Origin>,
+	// Native converter for sibling Parachains; will convert to a `SiblingPara` origin when
+	// recognized.
+	SiblingParachainAsNative<cumulus_pallet_xcm::Origin, Origin>,
+	// Native signed account converter; this just converts an `AccountId32` origin into a normal
+	// `Origin::Signed` origin of the same 32-byte value.
+	SignedAccountId32AsNative<RelayNetwork, Origin>,
+	// Xcm origins can be represented natively under the Xcm pallet's Xcm origin.
+	XcmPassthrough<Origin>,
+);
 
 impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type Event = Event;
@@ -895,6 +943,9 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type ChannelInfo = ParachainSystem;
 	type VersionWrapper = ();
 	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
+	type ControllerOrigin = EnsureRoot<AccountId>;
+	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
+	type WeightInfo = ();
 }
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {
@@ -958,7 +1009,7 @@ impl pallet_assets_info::Config for Runtime {
 	type MaxLengthDescription = MaxLengthDescription;
 	type MaxDecimals = MaxDecimals;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-	type RelayNativeTokensValueScaleFactor = frame_support::traits::ConstU128<KSM_MGA_SCALE_FACTOR>;
+	type RelayNativeTokensValueScaleFactor = frame_support::traits::ConstU128<KSM_MGX_SCALE_FACTOR>;
 }
 
 impl pallet_bridge::Config for Runtime {
@@ -994,7 +1045,7 @@ impl pallet_sudo_origin::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 	type SudoOrigin =
-		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
+		pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>;
 }
 
 parameter_types! {
@@ -1033,7 +1084,7 @@ const_assert!(DesiredMembers::get() <= CouncilMaxMembers::get());
 impl pallet_elections_phragmen::Config for Runtime {
 	type Event = Event;
 	type PalletId = ElectionsPhragmenPalletId;
-	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgaTokenId>;
+	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgxTokenId>;
 	type ChangeMembers = Council;
 	// NOTE: this implies that council's genesis members cannot be set directly and must come from
 	// this module.
@@ -1110,7 +1161,7 @@ impl parachain_staking::Config for Runtime {
 	type MinCollatorStk = MinCollatorStk;
 	type MinCandidateStk = MinCandidateStk;
 	type MinDelegation = MinDelegatorStk;
-	type NativeTokenId = MgaTokenId;
+	type NativeTokenId = MgxTokenId;
 	type StakingLiquidityTokenValuator = Xyk;
 	type Issuance = Issuance;
 	type StakingIssuanceVault = StakingIssuanceVault;
@@ -1124,9 +1175,9 @@ parameter_types! {
 	pub const HistoryLimit: u32 = 10u32;
 
 	pub const LiquidityMiningIssuanceVaultId: PalletId = PalletId(*b"py/lqmiv");
-	pub LiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account();
+	pub LiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account_truncating();
 	pub const StakingIssuanceVaultId: PalletId = PalletId(*b"py/stkiv");
-	pub StakingIssuanceVault: AccountId = StakingIssuanceVaultId::get().into_account();
+	pub StakingIssuanceVault: AccountId = StakingIssuanceVaultId::get().into_account_truncating();
 
 	pub const TotalCrowdloanAllocation: Balance = 330_000_000 * DOLLARS;
 	pub const IssuanceCap: Balance = 4_000_000_000 * DOLLARS;
@@ -1143,7 +1194,7 @@ const_assert!(RewardPaymentDelay::get() <= HistoryLimit::get());
 
 impl pallet_issuance::Config for Runtime {
 	type Event = Event;
-	type NativeCurrencyId = MgaTokenId;
+	type NativeCurrencyId = MgxTokenId;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type BlocksPerRound = BlocksPerRound;
 	type HistoryLimit = HistoryLimit;
@@ -1192,7 +1243,7 @@ impl pallet_crowdloan_rewards::Config for Runtime {
 	type MaxInitContributors = MaxInitContributorsBatchSizes;
 	type MinimumReward = MinimumReward;
 	type RewardAddressRelayVoteThreshold = RelaySignaturesThreshold;
-	type NativeTokenId = MgaTokenId;
+	type NativeTokenId = MgxTokenId;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type RelayChainAccountId = sp_runtime::AccountId32;
 	type RewardAddressChangeOrigin = EnsureRoot<AccountId>;
@@ -1207,7 +1258,7 @@ impl pallet_multipurpose_liquidity::Config for Runtime {
 	type Event = Event;
 	type MaxRelocks = MaxLocks;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-	type NativeCurrencyId = MgaTokenId;
+	type NativeCurrencyId = MgxTokenId;
 	type VestingProvider = Vesting;
 	type Xyk = Xyk;
 	type WeightInfo = weights::pallet_multipurpose_liquidity_weights::ModuleWeight<Runtime>;
@@ -1229,6 +1280,12 @@ parameter_types! {
 	pub const MaxAssetsForTransfer:usize = 2;
 }
 
+parameter_type_with_key! {
+	pub ParachainMinFee: |_location: MultiLocation| -> Option<u128> {
+		None
+	};
+}
+
 impl orml_xtokens::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
@@ -1236,11 +1293,14 @@ impl orml_xtokens::Config for Runtime {
 	type CurrencyIdConvert = TokenIdConvert;
 	type AccountIdToMultiLocation = AccountIdToMultiLocation;
 	type SelfLocation = SelfLocation;
+	type MinXcmFee = ParachainMinFee;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
+	type MultiLocationsFilter = Everything;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type BaseXcmWeight = BaseXcmWeight;
 	type LocationInverter = LocationInverter<Ancestry>;
 	type MaxAssetsForTransfer = MaxAssetsForTransfer;
+	type ReserveProvider = AbsoluteReserveProvider;
 }
 
 impl orml_unknown_tokens::Config for Runtime {
@@ -1254,17 +1314,27 @@ impl orml_xcm::Config for Runtime {
 
 parameter_types! {
 	pub KsmPerSecond: (AssetId, u128) = (MultiLocation::parent().into(), ksm_per_second());
-	pub MgaPerSecond: (AssetId, u128) = (
+	pub MgxPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
-			X2(Parachain(u32::from(ParachainInfo::get())), GeneralKey(MGA_TOKEN_ID.encode())),
+			X2(Parachain(u32::from(ParachainInfo::get())), GeneralKey(MGX_TOKEN_ID.encode())),
 		).into(),
-		mga_per_second()
+		mgx_per_second()
+	);
+	pub KarPerSecond: (AssetId, u128) = (
+		MultiLocation::new(
+			1,
+			X2(Parachain(2000u32), GeneralKey(<[u8; 2]>::from(hex_literal::hex!("0080")).to_vec())),
+		).into(),
+		kar_per_second()
 	);
 }
 
-pub type Trader =
-	(FixedRateOfFungible<KsmPerSecond, ToTreasury>, FixedRateOfFungible<MgaPerSecond, ToTreasury>);
+pub type Trader = (
+	FixedRateOfFungible<KsmPerSecond, ToTreasury>,
+	FixedRateOfFungible<MgxPerSecond, ToTreasury>,
+	FixedRateOfFungible<KarPerSecond, ToTreasury>,
+);
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
@@ -1273,7 +1343,7 @@ impl xcm_executor::Config for XcmConfig {
 	// How to withdraw and deposit an asset.
 	type AssetTransactor = LocalAssetTransactor;
 	type OriginConverter = XcmOriginToCallOrigin;
-	type IsReserve = MultiNativeAsset;
+	type IsReserve = MultiNativeAsset<AbsoluteReserveProvider>;
 	// Teleporting is disabled.
 	type IsTeleporter = ();
 	type LocationInverter = LocationInverter<Ancestry>;
@@ -1366,7 +1436,7 @@ impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 					},
 					_ => None,
 				}
-			}
+			},
 			_ => None,
 		}
 	}
@@ -1523,7 +1593,7 @@ impl_runtime_apis! {
 				.iter()
 				.any(|record|
 					matches!(record.event,
-						Event::ParachainSystem( cumulus_pallet_parachain_system::Event::<Runtime>::ValidationFunctionApplied(_))))
+						Event::ParachainSystem( cumulus_pallet_parachain_system::Event::<Runtime>::ValidationFunctionApplied{relay_chain_block_num: _})))
 		}
 
 		fn store_seed(seed: sp_core::H256){
@@ -1537,8 +1607,8 @@ impl_runtime_apis! {
 			input_reserve: Balance,
 			output_reserve: Balance,
 			sell_amount: Balance
-		) -> RpcResult<Balance> {
-			RpcResult {
+		) -> XYKRpcResult<Balance> {
+			XYKRpcResult {
 				price: Xyk::calculate_sell_price(input_reserve, output_reserve, sell_amount)
 					.map_err(|e|
 						{
@@ -1553,8 +1623,8 @@ impl_runtime_apis! {
 			input_reserve: Balance,
 			output_reserve: Balance,
 			buy_amount: Balance
-		) -> RpcResult<Balance> {
-			RpcResult {
+		) -> XYKRpcResult<Balance> {
+			XYKRpcResult {
 				price: Xyk::calculate_buy_price(input_reserve, output_reserve, buy_amount)
 					.map_err(|e|
 						{
@@ -1570,8 +1640,8 @@ impl_runtime_apis! {
 			sold_token_id: TokenId,
 			bought_token_id: TokenId,
 			sell_amount: Balance
-		) -> RpcResult<Balance> {
-			RpcResult {
+		) -> XYKRpcResult<Balance> {
+			XYKRpcResult {
 				price: Xyk::calculate_sell_price_id(sold_token_id, bought_token_id, sell_amount)
 					.map_err(|e|
 						{
@@ -1586,8 +1656,8 @@ impl_runtime_apis! {
 			sold_token_id: TokenId,
 			bought_token_id: TokenId,
 			buy_amount: Balance
-		) -> RpcResult<Balance> {
-			RpcResult {
+		) -> XYKRpcResult<Balance> {
+			XYKRpcResult {
 				price: Xyk::calculate_buy_price_id(sold_token_id, bought_token_id, buy_amount)
 					.map_err(|e|
 						{
@@ -1618,9 +1688,9 @@ impl_runtime_apis! {
 		fn calculate_rewards_amount(
 			user: AccountId,
 			liquidity_asset_id: TokenId,
-		) -> RpcResult<Balance> {
+		) -> XYKRpcResult<Balance> {
 			match Xyk::calculate_rewards_amount(user, liquidity_asset_id){
-				Ok(claimable_rewards) => RpcResult{
+				Ok(claimable_rewards) => XYKRpcResult{
 					price:claimable_rewards
 				},
 				Err(e) => {

@@ -1,0 +1,16 @@
+{
+  "name": "mangata-launch",
+  "version": "1.0.1",
+  "main": "",
+  "license": "GPL-3.0",
+  "scripts": {
+    "rm": "rm -Rf output",
+    "gen": "yarn rm && parachain-launch generate",
+    "gen-karura": "yarn rm -Rf output && parachain-launch generate --config=karura-mangata.yml",
+    "up": "docker-compose -f output/docker-compose.yml up -d --build",
+    "down": "docker-compose -f output/docker-compose.yml down -v"
+  },
+  "dependencies": {
+    "parachain-launch": "mangata-finance/parachain-launch#mangata"
+  }
+}

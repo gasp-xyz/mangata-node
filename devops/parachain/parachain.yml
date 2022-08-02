@@ -22,7 +22,7 @@ services:
       --node-key=0000000000000000000000000000000000000000000000000000000000000003
       -- 
       --execution wasm 
-      --chain ${RELAY_CHAIN:-rococo-local}
+      --chain ${RELAY_CHAIN:-/etc/mangata/rococo-local-0.9.24.json}
       --bootnodes=/dns/relay_alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
       --port 30334
       --ws-port 8844
@@ -55,7 +55,7 @@ services:
       --node-key=0000000000000000000000000000000000000000000000000000000000000004
       -- 
       --execution wasm 
-      --chain ${RELAY_CHAIN:-rococo-local}
+      --chain ${RELAY_CHAIN:-/etc/mangata/rococo-local-0.9.24.json}
       --bootnodes=/dns/relay_alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
       --port 30334
       --ws-port 8844

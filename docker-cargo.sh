@@ -4,7 +4,7 @@ OUTPUT_DIR=docker-cargo/
 CARGO_HOME=${CARGO_HOME:-$HOME/.cargo}
 
 
-DOCKER_BUILDER_IMAGE=${DOCKER_BUILDER_IMAGE:-mangatasolutions/node-builder:0.1}
+DOCKER_BUILDER_IMAGE=${DOCKER_BUILDER_IMAGE:-mangatasolutions/node-builder:0.2}
 DOCKER_USER="$(id -u):$(id -g)"
 DOCKER_JOB_NAME=cargo-wrapper
 if [ -n "${DISABLE_TTY}" ]; then
@@ -61,8 +61,6 @@ if [ -n "${DISABLE_CARGO_CACHE}" ]; then
 else
     DOCKER_MOUNT_CACHE_VOLUMES="-v ${CARGO_CACHE_GIT}:/opt/cargo/git -v ${CARGO_CACHE_REGISTRY}:/opt/cargo/registry"
 fi
-
-
 
 docker run \
 	--rm \

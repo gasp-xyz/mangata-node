@@ -19,7 +19,7 @@ use sp_arithmetic::helpers_128bit::multiply_by_rational;
 use sp_core::U256;
 use sp_io::KillStorageResult;
 use sp_runtime::traits::{AccountIdConversion, CheckedAdd};
-use sp_std::prelude::*;
+use sp_std::{convert::TryInto, prelude::*};
 
 pub mod migrations;
 
@@ -279,7 +279,7 @@ pub mod pallet {
 		/// - BeforeStart - blocks 0..ido_start
 		/// - WhitelistPhase - blocks ido_start..(ido_start + whitelist_phase_length)
 		/// - PublicPhase - blocks (ido_start + whitelist_phase_length)..(ido_start + whitelist_phase_length  + public_phase_lenght)
-		#[pallet::weight(T::WeightInfo::start_ido())]
+		#[pallet::weight(T::WeightInfo::schedule_bootstrap())]
 		#[transactional]
 		pub fn schedule_bootstrap(
 			origin: OriginFor<T>,
@@ -373,14 +373,14 @@ pub mod pallet {
 						if *l > num_removed =>
 					{
 						*l -= num_removed;
-					}
+					},
 					(KillStorageResult::AllRemoved(num_removed), Some(l)) |
 					(KillStorageResult::SomeRemaining(num_removed), Some(l))
 						if *l <= num_removed =>
 					{
 						Self::deposit_event(Event::BootstrapParitallyFinalized);
 						return Ok(().into())
-					}
+					},
 					_ => {},
 				};
 			}
@@ -392,7 +392,7 @@ pub mod pallet {
 				T::Currency::transfer(
 					liq_token_id.into(),
 					&Self::vault_address(),
-					&T::TreasuryPalletId::get().into_account(),
+					&T::TreasuryPalletId::get().into_account_truncating(),
 					balance,
 					ExistenceRequirement::AllowDeath,
 				)?;
@@ -499,7 +499,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn vault_address() -> T::AccountId {
-		PALLET_ID.into_account()
+		PALLET_ID.into_account_truncating()
 	}
 
 	fn claim_rewards_from_single_currency(
@@ -691,6 +691,15 @@ impl<T: Config> Pallet<T> {
 		// for backward compatibility
 		if Self::archived().len() > 0 {
 			ensure!(ProvisionAccounts::<T>::get(who).is_some(), Error::<T>::NothingToClaim);
+		} else {
+			ensure!(
+				!ClaimedRewards::<T>::contains_key(&who, &Self::first_token_id()),
+				Error::<T>::NothingToClaim
+			);
+			ensure!(
+				!ClaimedRewards::<T>::contains_key(&who, &Self::second_token_id()),
+				Error::<T>::NothingToClaim
+			);
 		}
 
 		let (first_token_rewards, first_token_rewards_vested, first_token_lock) =

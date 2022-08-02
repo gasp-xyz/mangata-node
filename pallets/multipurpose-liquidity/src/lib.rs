@@ -23,7 +23,11 @@ use sp_runtime::traits::{
 	AccountIdConversion, AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member,
 	SaturatedConversion, Zero,
 };
-use sp_std::{convert::TryFrom, fmt::Debug, prelude::*};
+use sp_std::{
+	convert::{TryFrom, TryInto},
+	fmt::Debug,
+	prelude::*,
+};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -167,7 +171,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[transactional]
-		#[pallet::weight(4_000_000_000u64)]
+		#[pallet::weight(T::WeightInfo::reserve_vesting_liquidity_tokens())]
 		// This extrinsic has to be transactional
 		pub fn reserve_vesting_liquidity_tokens(
 			origin: OriginFor<T>,
@@ -220,7 +224,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		#[pallet::weight(4_000_000_000u64)]
+		#[pallet::weight(T::WeightInfo::unreserve_and_relock_instance())]
 		// This extrinsic has to be transactional
 		pub fn unreserve_and_relock_instance(
 			origin: OriginFor<T>,

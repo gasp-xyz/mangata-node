@@ -2852,8 +2852,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			missing_at_last_checkpoint: rewards_info.missing_at_last_checkpoint,
 		};
 
-		RewardsInfo::<T>::insert(user.clone(), liquidity_asset_id, rewards_info_new);
-
 		<T as Config>::Currency::transfer(
 			mangata_id.into(),
 			&<T as Config>::LiquidityMiningIssuanceVault::get(),
@@ -2861,6 +2859,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			mangata_amount.into(),
 			ExistenceRequirement::KeepAlive,
 		)?;
+
+		RewardsInfo::<T>::insert(user.clone(), liquidity_asset_id, rewards_info_new);
 
 		Pallet::<T>::deposit_event(Event::RewardsClaimed(user, liquidity_asset_id, mangata_amount));
 
@@ -2905,7 +2905,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			missing_at_last_checkpoint: rewards_info.missing_at_last_checkpoint,
 		};
 
-		RewardsInfo::<T>::insert(user.clone(), liquidity_asset_id, rewards_info_new);
+		
 
 		<T as Config>::Currency::transfer(
 			mangata_id.into(),
@@ -2914,6 +2914,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			total_available_rewards.into(),
 			ExistenceRequirement::KeepAlive,
 		)?;
+
+		RewardsInfo::<T>::insert(user.clone(), liquidity_asset_id, rewards_info_new);
 
 		Pallet::<T>::deposit_event(Event::RewardsClaimed(
 			user,

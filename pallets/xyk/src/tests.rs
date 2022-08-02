@@ -156,7 +156,7 @@ fn liquidity_rewards_single_user_mint_W() {
 		// 	(0, 0, U256::from_dec_str("10000").unwrap())
 		// );
 
-		let rewards_info = XykStorage::get_rewards_info((2, 4));
+		let rewards_info = XykStorage::get_rewards_info(2, 4);
 
 		assert_eq!(rewards_info.activated_amount, 10000);
 		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
@@ -228,7 +228,7 @@ fn liquidity_rewards_three_users_mint_W() {
 		XykStorage::activate_liquidity_v2(Origin::signed(2), 4, liquidity_tokens_owned, None)
 			.unwrap();
 
-		let rewards_info = XykStorage::get_rewards_info((2, 4));
+		let rewards_info = XykStorage::get_rewards_info(2, 4);
 		assert_eq!(rewards_info.activated_amount, 10000);
 		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
 		assert_eq!(rewards_info.rewards_already_claimed, 0);
@@ -281,7 +281,7 @@ fn liquidity_rewards_three_users_burn_W() {
 		XykStorage::transfer(0, 2, 4, 1000000).unwrap();
 		XykStorage::transfer(1, 2, 4, 1000000).unwrap();
 
-		let rewards_info = XykStorage::get_rewards_info((2, 4));
+		let rewards_info = XykStorage::get_rewards_info(2, 4);
 		let liquidity_tokens_owned = XykStorage::balance(4, 2);
 		XykStorage::activate_liquidity_v2(Origin::signed(2), 4, liquidity_tokens_owned, None)
 			.unwrap();
@@ -1761,7 +1761,7 @@ fn liquidity_rewards_not_yet_claimed_already_claimed_W() {
 		assert_eq!(XykStorage::calculate_rewards_amount_v2(2, 4).unwrap(), 291);
 		XykStorage::deactivate_liquidity_v2(Origin::signed(2), 4, liquidity_tokens_owned).unwrap();
 
-		let rewards_info = XykStorage::get_rewards_info((2, 4));
+		let rewards_info = XykStorage::get_rewards_info(2, 4);
 		assert_eq!(rewards_info.rewards_not_yet_claimed, 291);
 
 		XykStorage::activate_liquidity_v2(Origin::signed(2), 4, liquidity_tokens_owned, None)
@@ -1772,7 +1772,7 @@ fn liquidity_rewards_not_yet_claimed_already_claimed_W() {
 		assert_eq!(XykStorage::calculate_rewards_amount_v2(2, 4).unwrap(), 1349);
 		XykStorage::claim_rewards_v2(Origin::signed(2), 4, 1349).unwrap();
 
-		let rewards_info = XykStorage::get_rewards_info((2, 4));
+		let rewards_info = XykStorage::get_rewards_info(2, 4);
 		assert_eq!(rewards_info.rewards_already_claimed, 1349);
 	});
 }

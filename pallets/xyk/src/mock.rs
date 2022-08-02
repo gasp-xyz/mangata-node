@@ -120,6 +120,10 @@ impl PoolPromoteApi for MockPromotedPoolApi {
 	fn len() -> usize {
 		PROMOTED_POOLS.lock().unwrap().len()
 	}
+
+	fn len_v2() -> usize {
+		PROMOTED_POOLS.lock().unwrap().len()
+	}
 }
 
 parameter_types! {
@@ -330,7 +334,7 @@ impl<T: Config> ActivationReservesProviderTrait for TokensActivationPassthrough<
 		token_id: TokenId,
 		account_id: &Self::AccountId,
 	) -> Balance {
-		let rewards_info = XykStorage::get_rewards_info((2, 4));
+		let rewards_info = XykStorage::get_rewards_info(2, 4);
 		rewards_info.activated_amount
 	}
 

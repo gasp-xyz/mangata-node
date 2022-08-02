@@ -63,11 +63,13 @@ pub trait PoolPromoteApi {
 	/// Returns available reward for pool
 	fn get_pool_rewards_v2(liquidity_token_id: TokenId) -> Option<Balance>;
 
+	fn len_v2() -> usize;
+	
 	//REWARDS V1 to be removed
 	fn claim_pool_rewards(liquidity_token_id: TokenId, claimed_amount: Balance) -> bool;
 	//REWARDS V1 to be removed
 	fn get_pool_rewards(liquidity_token_id: TokenId) -> Option<Balance>;
-
+	//REWARDS V1 to be removed
 	fn len() -> usize;
 }
 
@@ -367,6 +369,10 @@ impl<T: Config> PoolPromoteApi for Pallet<T> {
 		PromotedPoolsRewards::<T>::iter_keys().count()
 	}
 
+	fn len_v2() -> usize {
+		PromotedPoolsRewardsV2::<T>::iter_keys().count()
+	}
+
 	//REWARDS V1 to be removed
 	fn get_pool_rewards(liquidity_token_id: TokenId) -> Option<Balance> {
 		PromotedPoolsRewards::<T>::try_get(liquidity_token_id).ok()
@@ -525,7 +531,7 @@ impl<T: Config> Pallet<T> {
 
 		let staking_issuance = issuance_config.staking_split * current_round_issuance;
 
-		let promoted_pools_count = <Self as PoolPromoteApi>::len();
+		let promoted_pools_count = <Self as PoolPromoteApi>::len_v2();
 
 		let liquidity_mining_issuance_per_pool = if promoted_pools_count == 0 {
 			liquidity_mining_issuance
@@ -551,11 +557,6 @@ impl<T: Config> Pallet<T> {
 
 			PromotedPoolsRewardsV2::<T>::insert(liquidity_token_id, rewards_per_liquidity);
 		}
-
-		//REWARDS V1 to be removed
-		PromotedPoolsRewards::<T>::translate(|_, v: Balance| {
-			Some(v + liquidity_mining_issuance_per_pool)
-		});
 
 		{
 			let liquidity_mining_issuance_issued = T::Tokens::deposit_creating(

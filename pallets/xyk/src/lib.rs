@@ -409,6 +409,8 @@ pub mod pallet {
 		CalculateCumulativeWorkMaxRatioMathError5,
 		CalculateCumulativeWorkMaxRatioMathError6,
 		CalculateCumulativeWorkMaxRatioMathError7,
+		CalculateRewardsAllMathError1,
+		CalculateRewardsAllMathError2,
 	}
 
 	#[pallet::event]
@@ -442,7 +444,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn get_rewards_info)]
 	pub type RewardsInfo<T: Config> =
-		StorageMap<_, Twox64Concat, (AccountIdOf<T>, TokenId), RewardInfo, ValueQuery>;
+	StorageDoubleMap<_, Twox64Concat, AccountIdOf<T>, Twox64Concat, TokenId, RewardInfo, ValueQuery>; 
 
 	#[pallet::storage]
 	#[pallet::getter(fn liquidity_mining_active_pool_v2)]
@@ -795,7 +797,7 @@ impl<T: Config> Pallet<T> {
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
 	) -> Result<Balance, DispatchError> {
-		let rewards_info: RewardInfo = Self::get_rewards_info((user, liquidity_asset_id));
+		let rewards_info: RewardInfo = Self::get_rewards_info(user, liquidity_asset_id);
 
 		let liquidity_assets_amount: Balance = rewards_info.activated_amount;
 
@@ -972,7 +974,7 @@ impl<T: Config> Pallet<T> {
 			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).unwrap();
 
 		//	LiquidityMiningActivePool::<T>::get(&liquidity_asset_id);
-		let rewards_info = RewardsInfo::<T>::try_get((user.clone(), liquidity_asset_id))
+		let rewards_info = RewardsInfo::<T>::try_get(user.clone(), liquidity_asset_id)
 			.unwrap_or_else(|_| RewardInfo {
 				activated_amount: 0 as u128,
 				rewards_not_yet_claimed: 0 as u128,
@@ -1025,7 +1027,7 @@ impl<T: Config> Pallet<T> {
 			missing_at_last_checkpoint: missing_at_checkpoint_new,
 		};
 
-		RewardsInfo::<T>::insert((user.clone(), liquidity_asset_id), rewards_info_new);
+		RewardsInfo::<T>::insert(user.clone(), liquidity_asset_id, rewards_info_new);
 
 		LiquidityMiningActivePoolV2::<T>::try_mutate(liquidity_asset_id, |active_amount| {
 			if let Some(val) = active_amount.checked_add(liquidity_assets_added) {
@@ -1059,7 +1061,7 @@ impl<T: Config> Pallet<T> {
 		let pool_ratio_current =
 			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).unwrap();
 
-		let rewards_info: RewardInfo = Self::get_rewards_info((user.clone(), liquidity_asset_id));
+		let rewards_info: RewardInfo = Self::get_rewards_info(user.clone(), liquidity_asset_id);
 
 		let last_checkpoint = rewards_info.last_checkpoint;
 		let pool_ratio_at_last_checkpoint = rewards_info.pool_ratio_at_last_checkpoint;
@@ -1103,7 +1105,7 @@ impl<T: Config> Pallet<T> {
 			missing_at_last_checkpoint: missing_at_checkpoint_after_burn,
 		};
 
-		RewardsInfo::<T>::insert((user.clone(), liquidity_asset_id), rewards_info_new);
+		RewardsInfo::<T>::insert(user.clone(), liquidity_asset_id, rewards_info_new);
 
 		LiquidityMiningActivePoolV2::<T>::try_mutate(liquidity_asset_id, |active_amount| {
 			if let Some(val) = active_amount.checked_sub(liquidity_assets_burned) {
@@ -2638,7 +2640,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		let liquidity_token_available_balance =
 			<T as Config>::Currency::available_balance(liquidity_asset_id.into(), &sender).into();
 
-		let rewards_info: RewardInfo = Self::get_rewards_info((&sender, &liquidity_asset_id));
+		let rewards_info: RewardInfo = Self::get_rewards_info(&sender, &liquidity_asset_id);
 
 		let liquidity_token_activated_balance = rewards_info.activated_amount;
 
@@ -2804,7 +2806,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 		ensure!(mangata_amount <= claimable_rewards, Error::<T>::NotEnoughtRewardsEarned);
 
-		let rewards_info: RewardInfo = Self::get_rewards_info((user.clone(), liquidity_asset_id));
+		let rewards_info: RewardInfo = Self::get_rewards_info(user.clone(), liquidity_asset_id);
 
 		let mut not_yet_claimed_rewards = rewards_info.rewards_not_yet_claimed;
 		let mut already_claimed_rewards = rewards_info.rewards_already_claimed;
@@ -2833,7 +2835,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			missing_at_last_checkpoint: rewards_info.missing_at_last_checkpoint,
 		};
 
-		RewardsInfo::<T>::insert((user.clone(), liquidity_asset_id), rewards_info_new);
+		RewardsInfo::<T>::insert(user.clone(), liquidity_asset_id, rewards_info_new);
 
 		<T as Config>::Currency::transfer(
 			mangata_id.into(),
@@ -2854,34 +2856,52 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 	) -> DispatchResult {
 		let mangata_id: TokenId = T::NativeCurrencyId::get();
 
-		let claimable_rewards =
-			Pallet::<T>::calculate_rewards_amount_v2(user.clone(), liquidity_asset_id)?;
+		let rewards_info: RewardInfo = Self::get_rewards_info(user.clone(), liquidity_asset_id);
 
-		let rewards_info: RewardInfo = Self::get_rewards_info((user.clone(), liquidity_asset_id));
+		let pool_rewards_ratio_current =
+		<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).unwrap();
+
+		let	current_rewards =Pallet::<T>::calculate_rewards_v2(
+				rewards_info.activated_amount,
+				liquidity_asset_id,
+				rewards_info.last_checkpoint,
+				rewards_info.pool_ratio_at_last_checkpoint,
+				rewards_info.missing_at_last_checkpoint,
+				pool_rewards_ratio_current,
+			)?;
+		
+		let rewards_not_yet_claimed = rewards_info.rewards_not_yet_claimed;
+		let rewards_already_claimed = rewards_info.rewards_already_claimed;
+	
+		let total_available_rewards = current_rewards
+			.checked_add(rewards_not_yet_claimed)
+			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsAllMathError1))?
+			.checked_sub(rewards_already_claimed)
+			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsAllMathError2))?;
 
 		let rewards_info_new: RewardInfo = RewardInfo {
 			activated_amount: rewards_info.activated_amount,
 			rewards_not_yet_claimed: 0 as u128,
-			rewards_already_claimed: rewards_info.rewards_already_claimed,
+			rewards_already_claimed: current_rewards,
 			last_checkpoint: rewards_info.last_checkpoint,
 			pool_ratio_at_last_checkpoint: rewards_info.pool_ratio_at_last_checkpoint,
 			missing_at_last_checkpoint: rewards_info.missing_at_last_checkpoint,
 		};
 
-		RewardsInfo::<T>::insert((user.clone(), liquidity_asset_id), rewards_info_new);
+		RewardsInfo::<T>::insert(user.clone(), liquidity_asset_id, rewards_info_new);
 
 		<T as Config>::Currency::transfer(
 			mangata_id.into(),
 			&<T as Config>::LiquidityMiningIssuanceVault::get(),
 			&user,
-			claimable_rewards.into(),
+			total_available_rewards.into(),
 			ExistenceRequirement::KeepAlive,
 		)?;
 
 		Pallet::<T>::deposit_event(Event::RewardsClaimed(
 			user,
 			liquidity_asset_id,
-			claimable_rewards,
+			total_available_rewards,
 		));
 
 		Ok(())
@@ -2942,7 +2962,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			Error::<T>::NotAPromotedPool
 		);
 
-		let rewards_info: RewardInfo = Self::get_rewards_info((user.clone(), liquidity_asset_id));
+		let rewards_info: RewardInfo = Self::get_rewards_info(user.clone(), liquidity_asset_id);
 
 		ensure!(rewards_info.activated_amount >= amount, Error::<T>::NotEnoughAssets);
 

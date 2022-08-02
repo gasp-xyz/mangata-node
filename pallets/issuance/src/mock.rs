@@ -119,7 +119,7 @@ parameter_types! {
 
 }
 
-struct ActivedPoolQueryApiStub;
+pub struct ActivedPoolQueryApiStub;
 
 impl ActivedPoolQueryApi for ActivedPoolQueryApiStub {
 	fn get_pool_activate_amount(liquidity_token_id: TokenId) -> Option<Balance> {

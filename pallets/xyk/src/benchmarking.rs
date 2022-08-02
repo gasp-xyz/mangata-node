@@ -55,48 +55,49 @@ benchmarks! {
 
 	}
 
-	sell_asset {
-		// NOTE: duplicates test case XYK::buy_and_burn_sell_none_have_mangata_pair
-
-		let caller: T::AccountId = whitelisted_caller();
-		let initial_amount:mangata_primitives::Balance = 1000000000000000;
-		let expected_amount = 0;
-		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
-		let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-		let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-		let non_native_asset_id2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-
-		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), native_asset_id.into(), 100000000000000, non_native_asset_id1.into(), 100000000000000).unwrap();
-		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), 100000000000000, non_native_asset_id2.into(), 100000000000000).unwrap();
-
-	}: sell_asset(RawOrigin::Signed(caller.clone().into()), non_native_asset_id1.into(), non_native_asset_id2.into(), 50000000000000, 0)
-	verify {
-		// verify only trading result as rest of the assertion is in unit test
-		assert_eq!(<T as Config>::Currency::free_balance(non_native_asset_id1.into(), &caller).into(), 750000000000000);
-		assert_eq!(<T as Config>::Currency::free_balance(non_native_asset_id2.into(), &caller).into(), 933266599933266);
-
-	}
-
-	buy_asset {
-		// NOTE: duplicates test case XYK::buy_and_burn_buy_where_sold_has_mangata_pair
-
-		let caller: T::AccountId = whitelisted_caller();
-		let initial_amount:mangata_primitives::Balance = 1000000000000000;
-		let expected_amount = 0;
-		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
-		let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-		let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-		let non_native_asset_id2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-
-		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), native_asset_id.into(), 100000000000000, non_native_asset_id1.into(), 100000000000000).unwrap();
-		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), 100000000000000, non_native_asset_id2.into(), 100000000000000).unwrap();
-
-	}: buy_asset(RawOrigin::Signed(caller.clone().into()), non_native_asset_id2.into(), non_native_asset_id1.into(), 33266599933266, 50000000000001)
-	verify {
-		// verify only trading result as rest of the assertion is in unit test
-		assert_eq!(<T as Config>::Currency::free_balance(non_native_asset_id1.into(), &caller).into(), 833266599933266);
-		assert_eq!(<T as Config>::Currency::free_balance(non_native_asset_id2.into(), &caller).into(), 850000000000001);
-	}
+	// sell_asset {
+	// 	// NOTE: duplicates test case XYK::buy_and_burn_sell_none_have_mangata_pair
+	//
+	// 	let caller: T::AccountId = whitelisted_caller();
+	// 	let initial_amount:mangata_primitives::Balance = 1000000000000000;
+	// 	let expected_amount = 0;
+	// 	let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
+	// 	let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+	// 	let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+	// 	let non_native_asset_id2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+	//
+	// 	Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), native_asset_id.into(), 100000000000000, non_native_asset_id1.into(), 100000000000000).unwrap();
+	// 	Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), 100000000000000, non_native_asset_id2.into(), 100000000000000).unwrap();
+	//
+	// }: sell_asset(RawOrigin::Signed(caller.clone().into()), non_native_asset_id1.into(), non_native_asset_id2.into(), 50000000000000, 0)
+	// verify {
+	// 	// verify only trading result as rest of the assertion is in unit test
+	// 	assert_eq!(<T as Config>::Currency::free_balance(non_native_asset_id1.into(), &caller).into(), 750000000000000);
+	// 	assert_eq!(<T as Config>::Currency::free_balance(non_native_asset_id2.into(), &caller).into(), 933266599933266);
+	//
+	// }
+	//
+	// buy_asset {
+	// 	// NOTE: duplicates test case XYK::buy_and_burn_buy_where_sold_has_mangata_pair
+	//
+	// 	let caller: T::AccountId = whitelisted_caller();
+	// 	let initial_amount:mangata_primitives::Balance = 1000000000000000;
+	// 	let expected_amount = 0;
+	// 	let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
+	// 	let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+	// 	let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+	// 	let non_native_asset_id2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+	//
+	// 	Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), native_asset_id.into(), 100000000000000, non_native_asset_id1.into(), 100000000000000).unwrap();
+	// 	Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), 100000000000000, non_native_asset_id2.into(), 100000000000000).unwrap();
+	//
+	// }: buy_asset(RawOrigin::Signed(caller.clone().into()), non_native_asset_id2.into(), non_native_asset_id1.into(), 33266599933266, 50000000000001)
+	// verify {
+	// 	// verify only trading result as rest of the assertion is in unit test
+	// 	assert_eq!(<T as Config>::Currency::free_balance(non_native_asset_id1.into(), &caller).into(), 833266599933266);
+	// 	assert_eq!(<T as Config>::Currency::free_balance(non_native_asset_id2.into(), &caller).into(), 850000000000001);
+	// }
+	//
 
 	mint_liquidity {
 		// NOTE: duplicates test case XYK::mint_W
@@ -121,7 +122,8 @@ benchmarks! {
 
 		Xyk::<T>::mint_liquidity(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), non_native_asset_id2.into(), 20000000000000000000, 30000000000000000001).unwrap();
 
-		frame_system::Pallet::<T>::set_block_number(100_000_u32.into());
+		// pallet_issuance::Pallet::<T>::compute_issuance(1u32);
+		// crate::mock::Issuance::compute_issuance(1u32);
 
 	}: mint_liquidity(RawOrigin::Signed(caller.clone().into()), non_native_asset_id1.into(), non_native_asset_id2.into(), 20000000000000000000, 30000000000000000001)
 	verify {
@@ -175,194 +177,194 @@ benchmarks! {
 		);
 	}
 
-	burn_liquidity {
-		// worse case scenario:
-		// burning whole liquidity that belongs to single user, where part of it is activated (as a result of mint_liquidity call)
-		// and the other part is not  activated (as a result of create_pool call (by default)
-
-		// NOTE: worst case scenario is when we want to burn whole liquidity because of the cleanup
-		// that happens there
-		let caller: T::AccountId = whitelisted_caller();
-		let initial_amount:mangata_primitives::Balance = 1000000000000000000000;
-		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
-		let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-		let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-		let non_native_asset_id2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-		let liquidity_asset_id = non_native_asset_id2 + 1;
-		let initial_liquidity_amount = 40000000000000000000_u128 / 2_u128 + 60000000000000000000_u128 / 2_u128;
-
-		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), 40000000000000000000, non_native_asset_id2.into(), 60000000000000000000).unwrap();
-		Xyk::<T>::promote_pool(RawOrigin::Root.into(), liquidity_asset_id).unwrap();
-
-		assert_eq!(
-			<T as Config>::Currency::total_issuance(liquidity_asset_id.into()),
-			initial_liquidity_amount.into()
-		);
-		assert!(Xyk::<T>::liquidity_pool(liquidity_asset_id).is_some());
-
-		Xyk::<T>::mint_liquidity(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), non_native_asset_id2.into(), 20000000000000000000, 30000000000000000001).unwrap();
-
-		assert_ne!(
-			<T as Config>::Currency::total_issuance(liquidity_asset_id.into()),
-			initial_liquidity_amount.into()
-		);
-
-		let total_liquidity_after_minting: u128 = <T as Config>::Currency::total_issuance(liquidity_asset_id.into()).into();
-
-	}: burn_liquidity(RawOrigin::Signed(caller.clone().into()), non_native_asset_id1.into(), non_native_asset_id2.into(), total_liquidity_after_minting)
-	verify {
-		assert!(Xyk::<T>::liquidity_pool(liquidity_asset_id).is_none());
-	}
-
-	// mint_liquidity_using_vesting_native_tokens
-	// mess up
-	claim_rewards {
-
-		// NOTE: need to use actual issuance pallet and call its hooks properly
-		// NOTE: that duplicates test XYK::liquidity_rewards_claim_W
-		let caller: T::AccountId = whitelisted_caller();
-		let initial_amount:mangata_primitives::Balance = 1000000000000000;
-
-		let asset_id_1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-		let asset_id_2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-		let liquidity_asset_id = asset_id_2 + 1;
-		<<T as Config>::PoolPromoteApi as ComputeIssuance>::initialize();
-
-		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), asset_id_1.into(), 5000, asset_id_2.into(), 5000).unwrap();
-		Xyk::<T>::promote_pool(RawOrigin::Root.into(), liquidity_asset_id).unwrap();
-
-		frame_system::Pallet::<T>::set_block_number(100_000u32.into());
-		<<T as Config>::PoolPromoteApi as ComputeIssuance>::compute_issuance(1);
-
-		// activate liquidity by minting
-		Xyk::<T>::mint_liquidity(RawOrigin::Signed(caller.clone().into()).into(), asset_id_1.into(), asset_id_2.into(), 200000000000000, 300000000000000).unwrap();
-		frame_system::Pallet::<T>::set_block_number(200_000_u32.into());
-
-		Xyk::<T>::burn_liquidity(RawOrigin::Signed(caller.clone().into()).into(), asset_id_1.into(), asset_id_2.into(), 150000000000000).unwrap();
-
-		frame_system::Pallet::<T>::set_block_number(300_000_u32.into());
-		<<T as Config>::PoolPromoteApi as ComputeIssuance>::compute_issuance(2);
-
-		let rewards_to_claim = Xyk::<T>::calculate_rewards_amount(caller.clone(), liquidity_asset_id).unwrap();
-
-		let pre_claim_native_tokens_amount = <T as Config>::Currency::free_balance(<T as Config>::NativeCurrencyId::get().into(), &caller).into();
-
-		// frame_system::Pallet::<T>::set_block_number(100_000_000u32.into());
-
-	}: claim_rewards(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id, rewards_to_claim as u128 )
-
-	verify {
-
-		assert_eq!(
-			Xyk::<T>::calculate_rewards_amount(caller.clone(), liquidity_asset_id).unwrap(),
-			(0_u128)
-		);
-		let post_claim_native_tokens_amount = <T as Config>::Currency::free_balance(<T as Config>::NativeCurrencyId::get().into(), &caller).into();
-
-		assert!( pre_claim_native_tokens_amount < post_claim_native_tokens_amount);
-
-	}
-
-
-	promote_pool {
-		// NOTE: that duplicates test XYK::liquidity_rewards_claim_W
-		let caller: T::AccountId = whitelisted_caller();
-		let initial_amount:mangata_primitives::Balance = 1000000000000;
-
-		let asset_id_1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-		let asset_id_2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-		let liquidity_asset_id = asset_id_2 + 1;
-
-		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), asset_id_1.into(), 5000, asset_id_2.into(), 5000).unwrap();
-
-		frame_system::Pallet::<T>::set_block_number(30001_u32.into());
-
-	}: promote_pool(RawOrigin::Root, liquidity_asset_id)
-
-	verify {
-		assert_err!(
-			Xyk::<T>::promote_pool(RawOrigin::Root.into(), liquidity_asset_id),
-			Error::<T>::PoolAlreadyPromoted
-		);
-	}
-
-	activate_liquidity {
-		// activate :
-		// 1 crate pool
-		// 2 promote pool
-		// 3 mint some tokens
-		// 3 activate whole amount from which pool was created (with liquidity tokens)
-
-		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
-		let initial_amount:mangata_primitives::Balance = 1000000000000000000000;
-		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
-		let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-		let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-		let non_native_asset_id2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-		let liquidity_asset_id = non_native_asset_id2 + 1;
-		let initial_liquidity_amount = 40000000000000000000_u128 / 2_u128 + 60000000000000000000_u128 / 2_u128;
-
-		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), 40000000000000000000, non_native_asset_id2.into(), 60000000000000000000).unwrap();
-		Xyk::<T>::promote_pool(RawOrigin::Root.into(), liquidity_asset_id).unwrap();
-
-		assert_eq!(
-			<T as Config>::Currency::total_issuance(liquidity_asset_id.into()),
-			initial_liquidity_amount.into()
-		);
-
-		Xyk::<T>::mint_liquidity(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), non_native_asset_id2.into(), 20000000000000000000, 30000000000000000001).unwrap();
-
-
-		frame_system::Pallet::<T>::set_block_number(100_000_u32.into());
-
-	}: activate_liquidity(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), initial_liquidity_amount, None)
-	verify {
-
-		assert_err!(
-			Xyk::<T>::activate_liquidity(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id, 1_u32.into(), None),
-			Error::<T>::NotEnoughAssets
-		)
-	}
-
-	deactivate_liquidity {
-		// deactivate
-		// 1 crate pool
-		// 2 promote pool
-		// 3 mint some tokens
-		// deactivate some tokens (all or some - to be checked)
-
-		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
-		let initial_amount:mangata_primitives::Balance = 1000000000000000000000;
-		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
-		let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-		let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-		let non_native_asset_id2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-		let liquidity_asset_id = non_native_asset_id2 + 1;
-		let initial_liquidity_amount = 40000000000000000000_u128 / 2_u128 + 60000000000000000000_u128 / 2_u128;
-
-		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), 40000000000000000000, non_native_asset_id2.into(), 60000000000000000000).unwrap();
-		Xyk::<T>::promote_pool(RawOrigin::Root.into(), liquidity_asset_id).unwrap();
-
-		assert_eq!(
-			<T as Config>::Currency::total_issuance(liquidity_asset_id.into()),
-			initial_liquidity_amount.into()
-		);
-
-		Xyk::<T>::mint_liquidity(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), non_native_asset_id2.into(), 20000000000000000000, 30000000000000000001).unwrap();
-
-
-		frame_system::Pallet::<T>::set_block_number(100_000_u32.into());
-
-	}: deactivate_liquidity(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), 25000000000000000000_u128.into())
-	verify {
-		assert_err!(
-			Xyk::<T>::deactivate_liquidity(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id, 1_u32.into()),
-			Error::<T>::NotEnoughAssets
-		)
-	}
-
-
+	// burn_liquidity {
+	// 	// worse case scenario:
+	// 	// burning whole liquidity that belongs to single user, where part of it is activated (as a result of mint_liquidity call)
+	// 	// and the other part is not  activated (as a result of create_pool call (by default)
+	//
+	// 	// NOTE: worst case scenario is when we want to burn whole liquidity because of the cleanup
+	// 	// that happens there
+	// 	let caller: T::AccountId = whitelisted_caller();
+	// 	let initial_amount:mangata_primitives::Balance = 1000000000000000000000;
+	// 	let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
+	// 	let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+	// 	let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+	// 	let non_native_asset_id2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+	// 	let liquidity_asset_id = non_native_asset_id2 + 1;
+	// 	let initial_liquidity_amount = 40000000000000000000_u128 / 2_u128 + 60000000000000000000_u128 / 2_u128;
+	//
+	// 	Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), 40000000000000000000, non_native_asset_id2.into(), 60000000000000000000).unwrap();
+	// 	Xyk::<T>::promote_pool(RawOrigin::Root.into(), liquidity_asset_id).unwrap();
+	//
+	// 	assert_eq!(
+	// 		<T as Config>::Currency::total_issuance(liquidity_asset_id.into()),
+	// 		initial_liquidity_amount.into()
+	// 	);
+	// 	assert!(Xyk::<T>::liquidity_pool(liquidity_asset_id).is_some());
+	//
+	// 	Xyk::<T>::mint_liquidity(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), non_native_asset_id2.into(), 20000000000000000000, 30000000000000000001).unwrap();
+	//
+	// 	assert_ne!(
+	// 		<T as Config>::Currency::total_issuance(liquidity_asset_id.into()),
+	// 		initial_liquidity_amount.into()
+	// 	);
+	//
+	// 	let total_liquidity_after_minting: u128 = <T as Config>::Currency::total_issuance(liquidity_asset_id.into()).into();
+	//
+	// }: burn_liquidity(RawOrigin::Signed(caller.clone().into()), non_native_asset_id1.into(), non_native_asset_id2.into(), total_liquidity_after_minting)
+	// verify {
+	// 	assert!(Xyk::<T>::liquidity_pool(liquidity_asset_id).is_none());
+	// }
+	//
+	// // mint_liquidity_using_vesting_native_tokens
+	// // mess up
+	// claim_rewards_v2 {
+	//
+	// 	// NOTE: need to use actual issuance pallet and call its hooks properly
+	// 	// NOTE: that duplicates test XYK::liquidity_rewards_claim_W
+	// 	let caller: T::AccountId = whitelisted_caller();
+	// 	let initial_amount:mangata_primitives::Balance = 1000000000000000;
+	//
+	// 	let asset_id_1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+	// 	let asset_id_2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+	// 	let liquidity_asset_id = asset_id_2 + 1;
+	// 	<<T as Config>::PoolPromoteApi as ComputeIssuance>::initialize();
+	//
+	// 	Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), asset_id_1.into(), 5000, asset_id_2.into(), 5000).unwrap();
+	// 	Xyk::<T>::promote_pool(RawOrigin::Root.into(), liquidity_asset_id).unwrap();
+	//
+	// 	frame_system::Pallet::<T>::set_block_number(100_000u32.into());
+	// 	<<T as Config>::PoolPromoteApi as ComputeIssuance>::compute_issuance(1);
+	//
+	// 	// activate liquidity by minting
+	// 	Xyk::<T>::mint_liquidity(RawOrigin::Signed(caller.clone().into()).into(), asset_id_1.into(), asset_id_2.into(), 200000000000000, 300000000000000).unwrap();
+	// 	frame_system::Pallet::<T>::set_block_number(200_000_u32.into());
+	//
+	// 	Xyk::<T>::burn_liquidity(RawOrigin::Signed(caller.clone().into()).into(), asset_id_1.into(), asset_id_2.into(), 150000000000000).unwrap();
+	//
+	// 	frame_system::Pallet::<T>::set_block_number(300_000_u32.into());
+	// 	<<T as Config>::PoolPromoteApi as ComputeIssuance>::compute_issuance(2);
+	//
+	// 	let rewards_to_claim = Xyk::<T>::calculate_rewards_amount(caller.clone(), liquidity_asset_id).unwrap();
+	//
+	// 	let pre_claim_native_tokens_amount = <T as Config>::Currency::free_balance(<T as Config>::NativeCurrencyId::get().into(), &caller).into();
+	//
+	// 	// frame_system::Pallet::<T>::set_block_number(100_000_000u32.into());
+	//
+	// }: claim_rewards_v2(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id, rewards_to_claim as u128 )
+	//
+	// verify {
+	//
+	// 	assert_eq!(
+	// 		Xyk::<T>::calculate_rewards_amount(caller.clone(), liquidity_asset_id).unwrap(),
+	// 		(0_u128)
+	// 	);
+	// 	let post_claim_native_tokens_amount = <T as Config>::Currency::free_balance(<T as Config>::NativeCurrencyId::get().into(), &caller).into();
+	//
+	// 	assert!( pre_claim_native_tokens_amount < post_claim_native_tokens_amount);
+	//
+	// }
+	//
+	//
+	// promote_pool {
+	// 	// NOTE: that duplicates test XYK::liquidity_rewards_claim_W
+	// 	let caller: T::AccountId = whitelisted_caller();
+	// 	let initial_amount:mangata_primitives::Balance = 1000000000000;
+	//
+	// 	let asset_id_1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+	// 	let asset_id_2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+	// 	let liquidity_asset_id = asset_id_2 + 1;
+	//
+	// 	Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), asset_id_1.into(), 5000, asset_id_2.into(), 5000).unwrap();
+	//
+	// 	frame_system::Pallet::<T>::set_block_number(30001_u32.into());
+	//
+	// }: promote_pool(RawOrigin::Root, liquidity_asset_id)
+	//
+	// verify {
+	// 	assert_err!(
+	// 		Xyk::<T>::promote_pool(RawOrigin::Root.into(), liquidity_asset_id),
+	// 		Error::<T>::PoolAlreadyPromoted
+	// 	);
+	// }
+	//
+	// // activate_liquidity {
+	// // 	// activate :
+	// // 	// 1 crate pool
+	// // 	// 2 promote pool
+	// // 	// 3 mint some tokens
+	// // 	// 3 activate whole amount from which pool was created (with liquidity tokens)
+	// //
+	// // 	let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
+	// // 	let initial_amount:mangata_primitives::Balance = 1000000000000000000000;
+	// // 	let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
+	// // 	let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+	// // 	let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+	// // 	let non_native_asset_id2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+	// // 	let liquidity_asset_id = non_native_asset_id2 + 1;
+	// // 	let initial_liquidity_amount = 40000000000000000000_u128 / 2_u128 + 60000000000000000000_u128 / 2_u128;
+	// //
+	// // 	Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), 40000000000000000000, non_native_asset_id2.into(), 60000000000000000000).unwrap();
+	// // 	Xyk::<T>::promote_pool(RawOrigin::Root.into(), liquidity_asset_id).unwrap();
+	// //
+	// // 	assert_eq!(
+	// // 		<T as Config>::Currency::total_issuance(liquidity_asset_id.into()),
+	// // 		initial_liquidity_amount.into()
+	// // 	);
+	// //
+	// // 	Xyk::<T>::mint_liquidity(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), non_native_asset_id2.into(), 20000000000000000000, 30000000000000000001).unwrap();
+	// //
+	// //
+	// // 	frame_system::Pallet::<T>::set_block_number(100_000_u32.into());
+	// //
+	// // }: activate_liquidity(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), initial_liquidity_amount, None)
+	// // verify {
+	// //
+	// // 	assert_err!(
+	// // 		Xyk::<T>::activate_liquidity(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id, 1_u32.into(), None),
+	// // 		Error::<T>::NotEnoughAssets
+	// // 	)
+	// // }
+	//
+	// deactivate_liquidity {
+	// 	// deactivate
+	// 	// 1 crate pool
+	// 	// 2 promote pool
+	// 	// 3 mint some tokens
+	// 	// deactivate some tokens (all or some - to be checked)
+	//
+	// 	let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
+	// 	let initial_amount:mangata_primitives::Balance = 1000000000000000000000;
+	// 	let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
+	// 	let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+	// 	let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+	// 	let non_native_asset_id2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+	// 	let liquidity_asset_id = non_native_asset_id2 + 1;
+	// 	let initial_liquidity_amount = 40000000000000000000_u128 / 2_u128 + 60000000000000000000_u128 / 2_u128;
+	//
+	// 	Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), 40000000000000000000, non_native_asset_id2.into(), 60000000000000000000).unwrap();
+	// 	Xyk::<T>::promote_pool(RawOrigin::Root.into(), liquidity_asset_id).unwrap();
+	//
+	// 	assert_eq!(
+	// 		<T as Config>::Currency::total_issuance(liquidity_asset_id.into()),
+	// 		initial_liquidity_amount.into()
+	// 	);
+	//
+	// 	Xyk::<T>::mint_liquidity(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), non_native_asset_id2.into(), 20000000000000000000, 30000000000000000001).unwrap();
+	//
+	//
+	// 	frame_system::Pallet::<T>::set_block_number(100_000_u32.into());
+	//
+	// }: deactivate_liquidity(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), 25000000000000000000_u128.into())
+	// verify {
+	// 	assert_err!(
+	// 		Xyk::<T>::deactivate_liquidity(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id, 1_u32.into()),
+	// 		Error::<T>::NotEnoughAssets
+	// 	)
+	// }
 
 
-	impl_benchmark_test_suite!(Xyk, crate::mock::new_test_ext(), crate::mock::Test)
+
+
+	impl_benchmark_test_suite!(Xyk, crate::mock::new_benchmark_ext(), crate::mock::Test)
 }

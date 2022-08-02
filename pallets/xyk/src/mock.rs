@@ -295,7 +295,6 @@ impl Config for Test {
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
 	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
 	type PoolPromoteApi = MockPromotedPoolApi;
-	type ActivedPoolQueryApi = MockActivedPoolQueryApi;
 	type PoolFeePercentage = ConstU128<20>;
 	type TreasuryFeePercentage = ConstU128<5>;
 	type BuyAndBurnFeePercentage = ConstU128<5>;
@@ -397,5 +396,16 @@ impl<T: Config> Pallet<T> {
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+	let mut ext: sp_io::TestExternalities =
+		system::GenesisConfig::default().build_storage::<Test>().unwrap().into();
+	ext.execute_with(|| System::set_block_number(1));
+	ext
+}
+
+pub fn new_benchmark_ext() -> sp_io::TestExternalities {
+	let mut ext: sp_io::TestExternalities =
+		system::GenesisConfig::default().build_storage::<Test>().unwrap().into();
+	ext.execute_with(|| System::set_block_number(1));
+	ext.execute_with(|| Issuance::compute_issuance(1));
+	ext
 }

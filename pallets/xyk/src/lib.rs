@@ -251,6 +251,7 @@ use sp_std::{convert::TryFrom, fmt::Debug, prelude::*};
 
 #[cfg(test)]
 mod mock;
+
 #[cfg(test)]
 mod tests;
 
@@ -321,7 +322,7 @@ pub mod pallet {
 		type NativeCurrencyId: Get<TokenId>;
 		type TreasuryPalletId: Get<PalletId>;
 		type BnbTreasurySubAccDerive: Get<[u8; 4]>;
-		type ActivedPoolQueryApi: ActivedPoolQueryApi;
+		// type ActivedPoolQueryApi: ActivedPoolQueryApi;
 		type PoolPromoteApi: ComputeIssuance + PoolPromoteApi;
 		#[pallet::constant]
 		/// The account id that holds the liquidity mining issuance
@@ -765,6 +766,22 @@ pub mod pallet {
 				liquidity_token_id,
 				amount,
 				use_balance_from,
+			)
+		}
+
+		#[transactional]
+		#[pallet::weight(T::WeightInfo::activate_liquidity())]
+		pub fn deactivate_liquidity(
+			origin: OriginFor<T>,
+			liquidity_token_id: TokenId,
+			amount: Balance,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			<Self as XykFunctionsTrait<T::AccountId>>::deactivate_liquidity(
+				sender,
+				liquidity_token_id,
+				amount,
 			)
 		}
 

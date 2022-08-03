@@ -71,7 +71,7 @@ impl MockActivedPoolQueryApi {
 }
 
 impl pallet_issuance::ComputeIssuance for MockPromotedPoolApi {
-	fn compute_issuance(_n: u32) {
+	fn compute_issuance(_n: u32) -> DispatchResult {
 		todo!()
 	}
 }
@@ -406,6 +406,6 @@ pub fn new_benchmark_ext() -> sp_io::TestExternalities {
 	let mut ext: sp_io::TestExternalities =
 		system::GenesisConfig::default().build_storage::<Test>().unwrap().into();
 	ext.execute_with(|| System::set_block_number(1));
-	ext.execute_with(|| Issuance::compute_issuance(1));
+	ext.execute_with(|| Issuance::initialize());
 	ext
 }

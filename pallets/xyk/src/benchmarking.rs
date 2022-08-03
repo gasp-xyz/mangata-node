@@ -99,6 +99,12 @@ benchmarks! {
 	// }
 	//
 
+	// 1. create,
+	// 2. promote,
+	// 3. mint/activate_v2,
+	// 4. wait some,
+	// 5. mint – second mint is prob harder then 1st, as there are some data in
+
 	mint_liquidity {
 		// NOTE: duplicates test case XYK::mint_W
 
@@ -122,8 +128,8 @@ benchmarks! {
 
 		Xyk::<T>::mint_liquidity(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), non_native_asset_id2.into(), 20000000000000000000, 30000000000000000001).unwrap();
 
-		// pallet_issuance::Pallet::<T>::compute_issuance(1u32);
-		// crate::mock::Issuance::compute_issuance(1u32);
+		T::PoolPromoteApi::compute_issuance(1_u32).unwrap();
+		T::PoolPromoteApi::compute_issuance(2_u32).unwrap();
 
 	}: mint_liquidity(RawOrigin::Signed(caller.clone().into()), non_native_asset_id1.into(), non_native_asset_id2.into(), 20000000000000000000, 30000000000000000001)
 	verify {

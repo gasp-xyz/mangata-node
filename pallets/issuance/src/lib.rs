@@ -64,7 +64,7 @@ pub trait PoolPromoteApi {
 	fn get_pool_rewards_v2(liquidity_token_id: TokenId) -> Option<Balance>;
 
 	fn len_v2() -> usize;
-	
+
 	//REWARDS V1 to be removed
 	fn claim_pool_rewards(liquidity_token_id: TokenId, claimed_amount: Balance) -> bool;
 	//REWARDS V1 to be removed
@@ -322,21 +322,19 @@ pub mod pallet {
 }
 
 pub trait ComputeIssuance {
-	/// should be only used for testing purposes
 	fn initialize() {}
-	fn compute_issuance(n: u32);
+	fn compute_issuance(n: u32) -> DispatchResult;
 }
 
 impl<T: Config> ComputeIssuance for Pallet<T> {
-	/// should be only used for testing purposes
 	fn initialize() {
 		IsTGEFinalized::<T>::put(true);
 		Self::do_init_issuance_config().unwrap();
 	}
 
-	fn compute_issuance(n: u32) {
-		let _ = Pallet::<T>::calculate_and_store_round_issuance(n);
-		let _ = Pallet::<T>::clear_round_issuance_history(n);
+	fn compute_issuance(n: u32) -> DispatchResult {
+		Pallet::<T>::calculate_and_store_round_issuance(n)?;
+		Pallet::<T>::clear_round_issuance_history(n)
 	}
 }
 

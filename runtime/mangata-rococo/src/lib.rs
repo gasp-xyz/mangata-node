@@ -67,9 +67,9 @@ pub use orml_tokens;
 use orml_tokens::TransferDust;
 use orml_traits::parameter_type_with_key;
 
+use pallet_vesting_mangata_rpc_runtime_api::VestingInfosWithLockedAt;
 pub use pallet_xyk;
 use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
-use pallet_vesting_mangata_rpc_runtime_api::{VestingInfosWithLockedAt};
 
 pub const MGR_TOKEN_ID: TokenId = 0;
 pub const ROC_TOKEN_ID: TokenId = 4;
@@ -1290,7 +1290,7 @@ impl_runtime_apis! {
 				},
 			}
 		}
-		
+
 		fn get_max_instant_burn_amount(
 			user: AccountId,
 			liquidity_asset_id: TokenId,

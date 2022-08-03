@@ -20,7 +20,16 @@ pub use xyk_runtime_api::XykApi as XykRuntimeApi;
 use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
 
 #[rpc(client, server)]
-pub trait XykApi<BlockHash, Balance, TokenId, AccountId, ResponseTypePrice, ResponseTypeAmounts, BalanceOutput> {
+pub trait XykApi<
+	BlockHash,
+	Balance,
+	TokenId,
+	AccountId,
+	ResponseTypePrice,
+	ResponseTypeAmounts,
+	BalanceOutput,
+>
+{
 	#[method(name = "xyk_calculate_sell_price")]
 	fn calculate_sell_price(
 		&self,
@@ -127,7 +136,7 @@ impl<C, Block, Balance, TokenId, AccountId>
 		AccountId,
 		XYKRpcResult<Balance>,
 		RpcAmountsResult<Balance>,
-		Balance
+		Balance,
 	> for Xyk<C, Block>
 where
 	Block: BlockT,
@@ -306,14 +315,13 @@ where
             // If the block hash is not supplied assume the best block.
             self.client.info().best_hash));
 
-		api.get_max_instant_burn_amount(&at, user, liquidity_asset_id)
-			.map_err(|e| {
-				JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
-					1,
-					"Unable to serve the request",
-					Some(format!("{:?}", e)),
-				)))
-			})
+		api.get_max_instant_burn_amount(&at, user, liquidity_asset_id).map_err(|e| {
+			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+				1,
+				"Unable to serve the request",
+				Some(format!("{:?}", e)),
+			)))
+		})
 	}
 
 	fn get_max_instant_unreserve_amount(

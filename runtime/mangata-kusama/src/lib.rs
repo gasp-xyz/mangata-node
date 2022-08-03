@@ -82,9 +82,9 @@ pub use orml_tokens;
 use orml_tokens::TransferDust;
 use orml_traits::{parameter_type_with_key, GetByKey, MultiCurrency};
 
+use pallet_vesting_mangata_rpc_runtime_api::VestingInfosWithLockedAt;
 pub use pallet_xyk;
 use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
-use pallet_vesting_mangata_rpc_runtime_api::{VestingInfosWithLockedAt};
 
 pub const MGX_TOKEN_ID: TokenId = 0;
 pub const KSM_TOKEN_ID: TokenId = 4;

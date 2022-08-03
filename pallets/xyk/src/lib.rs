@@ -600,12 +600,14 @@ pub mod pallet {
 				Error::<T>::NotAPromotedPool
 			);
 
-			let (unlocked_amount, vesting_ending_block_as_balance): (Balance, Balance)  = T::VestingProvider::unlock_tokens_by_vesting_index(
-				&sender,
-				T::NativeCurrencyId::get().into(),
-				native_asset_vesting_index,
-				vesting_native_asset_unlock_some_amount_or_all.map(Into::into),
-			).map(|x| (x.0.into(), x.1.into()))?;
+			let (unlocked_amount, vesting_ending_block_as_balance): (Balance, Balance) =
+				T::VestingProvider::unlock_tokens_by_vesting_index(
+					&sender,
+					T::NativeCurrencyId::get().into(),
+					native_asset_vesting_index,
+					vesting_native_asset_unlock_some_amount_or_all.map(Into::into),
+				)
+				.map(|x| (x.0.into(), x.1.into()))?;
 
 			let (liquidity_token_id, liquidity_assets_minted) =
 				<Self as XykFunctionsTrait<T::AccountId>>::mint_liquidity(
@@ -787,22 +789,20 @@ impl<T: Config> Pallet<T> {
 			T::BuyAndBurnFeePercentage::get()
 	}
 
-	pub fn get_max_instant_burn_amount(user: &AccountIdOf<T>, liquidity_asset_id: TokenId) -> Balance {
-		Self::get_max_instant_unreserve_amount(
-			user,
-			liquidity_asset_id,
-		)
-		.saturating_add(
-			<T as Config>::Currency::available_balance(liquidity_asset_id.into(), user)
-			.into()
+	pub fn get_max_instant_burn_amount(
+		user: &AccountIdOf<T>,
+		liquidity_asset_id: TokenId,
+	) -> Balance {
+		Self::get_max_instant_unreserve_amount(user, liquidity_asset_id).saturating_add(
+			<T as Config>::Currency::available_balance(liquidity_asset_id.into(), user).into(),
 		)
 	}
 
-	pub fn get_max_instant_unreserve_amount(user: &AccountIdOf<T>, liquidity_asset_id: TokenId) -> Balance {
-		T::ActivationReservesProvider::get_max_instant_unreserve_amount(
-			liquidity_asset_id,
-			user,
-		)
+	pub fn get_max_instant_unreserve_amount(
+		user: &AccountIdOf<T>,
+		liquidity_asset_id: TokenId,
+	) -> Balance {
+		T::ActivationReservesProvider::get_max_instant_unreserve_amount(liquidity_asset_id, user)
 	}
 
 	pub fn calculate_rewards_amount(

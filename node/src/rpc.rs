@@ -7,7 +7,7 @@
 
 use std::sync::Arc;
 
-use mangata_primitives::{AccountId, Balance, Block, Index as Nonce, TokenId};
+use mangata_primitives::{AccountId, Balance, Block, Index as Nonce, TokenId, BlockNumber};
 
 use sc_client_api::{AuxStore, BlockBackend};
 pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
@@ -46,6 +46,7 @@ where
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
 	C::Api: xyk_rpc::XykRuntimeApi<Block, Balance, TokenId, AccountId>,
+	C::Api: pallet_vesting_mangata_rpc::VestingMangataRuntimeApi<Block, AccountId, TokenId, Balance, BlockNumber>,
 	C::Api: BlockBuilder<Block>,
 	C::Api: VerApi<Block>,
 	P: TransactionPool + Sync + Send + 'static,
@@ -53,6 +54,7 @@ where
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
 	use substrate_frame_rpc_system::{System, SystemApiServer};
 	use xyk_rpc::{Xyk, XykApiServer};
+	use pallet_vesting_mangata_rpc::{VestingMangata, VestingMangataApiServer};
 
 	let mut module = RpcExtension::new(());
 	let FullDeps { client, pool, deny_unsafe } = deps;
@@ -60,6 +62,7 @@ where
 	module.merge(System::new(client.clone(), pool.clone(), deny_unsafe).into_rpc())?;
 	module.merge(TransactionPayment::new(client.clone()).into_rpc())?;
 	module.merge(Xyk::new(client.clone()).into_rpc())?;
+	module.merge(VestingMangata::new(client.clone()).into_rpc())?;
 
 	Ok(module)
 }

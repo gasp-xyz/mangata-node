@@ -1290,6 +1290,21 @@ impl_runtime_apis! {
 				},
 			}
 		}
+		
+		fn get_max_instant_burn_amount(
+			user: AccountId,
+			liquidity_asset_id: TokenId,
+		) -> Balance {
+			Xyk::get_max_instant_burn_amount(&user, liquidity_asset_id)
+		}
+
+		fn get_max_instant_unreserve_amount(
+			user: AccountId,
+			liquidity_asset_id: TokenId,
+		) -> Balance {
+			Xyk::get_max_instant_unreserve_amount(&user, liquidity_asset_id)
+		}
+
 	}
 
 	impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {

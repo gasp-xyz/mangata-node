@@ -8,7 +8,7 @@ use jsonrpsee::RpcModule;
 
 use cumulus_client_cli::CollatorOptions;
 // Local Runtime Types
-use mangata_primitives::{AccountId, Balance, Block, Hash, Index as Nonce, TokenId};
+use mangata_primitives::{AccountId, Balance, Block, Hash, Index as Nonce, TokenId, BlockNumber};
 
 // Cumulus Imports
 use cumulus_client_consensus_aura::{AuraConsensus, BuildAuraConsensusParams, SlotProportion};
@@ -322,6 +322,7 @@ where
 		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
 		+ ver_api::VerApi<Block>
 		+ xyk_rpc::XykRuntimeApi<Block, Balance, TokenId, AccountId>
+		+ pallet_vesting_mangata_rpc::VestingMangataRuntimeApi<Block, AccountId, TokenId, Balance, BlockNumber>
 		+ sp_consensus_aura::AuraApi<Block, AuraId>,
 	sc_client_api::StateBackendFor<TFullBackend<Block>, Block>: sp_api::StateBackend<BlakeTwo256>,
 	Executor: sc_executor::NativeExecutionDispatch + 'static,
@@ -522,6 +523,7 @@ where
 		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
 		+ ver_api::VerApi<Block>
 		+ xyk_rpc::XykRuntimeApi<Block, Balance, TokenId, AccountId>
+		+ pallet_vesting_mangata_rpc::VestingMangataRuntimeApi<Block, AccountId, TokenId, Balance, BlockNumber>
 		+ sp_consensus_aura::AuraApi<Block, AuraId>,
 {
 	start_node_impl::<RuntimeApi, Executor, _, _>(

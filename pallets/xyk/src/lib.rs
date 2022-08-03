@@ -787,6 +787,24 @@ impl<T: Config> Pallet<T> {
 			T::BuyAndBurnFeePercentage::get()
 	}
 
+	pub fn get_max_instant_burn_amount(user: &AccountIdOf<T>, liquidity_asset_id: TokenId) -> Balance {
+		Self::get_max_instant_unreserve_amount(
+			user,
+			liquidity_asset_id,
+		)
+		.saturating_add(
+			<T as Config>::Currency::available_balance(liquidity_asset_id.into(), user)
+			.into()
+		)
+	}
+
+	pub fn get_max_instant_unreserve_amount(user: &AccountIdOf<T>, liquidity_asset_id: TokenId) -> Balance {
+		T::ActivationReservesProvider::get_max_instant_unreserve_amount(
+			liquidity_asset_id,
+			user,
+		)
+	}
+
 	pub fn calculate_rewards_amount(
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,

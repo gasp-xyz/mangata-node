@@ -360,7 +360,7 @@ benchmarks! {
 		)
 	}
 
-	deactivate_liquidity {
+	deactivate_liquidity_v2 {
 		// deactivate
 		// 1 crate pool
 		// 2 promote pool

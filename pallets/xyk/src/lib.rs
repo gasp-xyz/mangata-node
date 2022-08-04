@@ -600,14 +600,17 @@ pub mod pallet {
 				Error::<T>::NotAPromotedPool
 			);
 
-			let (unlocked_amount, vesting_starting_block, vesting_ending_block_as_balance): (Balance, T::BlockNumber, Balance) =
-				T::VestingProvider::unlock_tokens_by_vesting_index(
-					&sender,
-					T::NativeCurrencyId::get().into(),
-					native_asset_vesting_index,
-					vesting_native_asset_unlock_some_amount_or_all.map(Into::into),
-				)
-				.map(|x| (x.0.into(), x.1.into(), x.2.into()))?;
+			let (unlocked_amount, vesting_starting_block, vesting_ending_block_as_balance): (
+				Balance,
+				T::BlockNumber,
+				Balance,
+			) = T::VestingProvider::unlock_tokens_by_vesting_index(
+				&sender,
+				T::NativeCurrencyId::get().into(),
+				native_asset_vesting_index,
+				vesting_native_asset_unlock_some_amount_or_all.map(Into::into),
+			)
+			.map(|x| (x.0.into(), x.1.into(), x.2.into()))?;
 
 			let (liquidity_token_id, liquidity_assets_minted) =
 				<Self as XykFunctionsTrait<T::AccountId>>::mint_liquidity(
@@ -648,7 +651,10 @@ pub mod pallet {
 				Error::<T>::NotAPromotedPool
 			);
 
-			let (vesting_starting_block, vesting_ending_block_as_balance): (T::BlockNumber, Balance) = T::VestingProvider::unlock_tokens(
+			let (vesting_starting_block, vesting_ending_block_as_balance): (
+				T::BlockNumber,
+				Balance,
+			) = T::VestingProvider::unlock_tokens(
 				&sender,
 				T::NativeCurrencyId::get().into(),
 				vesting_native_asset_amount.into(),

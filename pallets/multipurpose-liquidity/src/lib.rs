@@ -14,7 +14,7 @@ use frame_support::{
 	transactional, Parameter,
 };
 use frame_system::pallet_prelude::*;
-use mangata_primitives::{Balance, TokenId, BlockNumber};
+use mangata_primitives::{Balance, BlockNumber, TokenId};
 use mp_multipurpose_liquidity::{ActivateKind, BondKind};
 use mp_traits::{ActivationReservesProviderTrait, StakingReservesProviderTrait, XykFunctionsTrait};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
@@ -184,14 +184,17 @@ pub mod pallet {
 
 			ensure!(T::Xyk::is_liquidity_token(liquidity_token_id), Error::<T>::NotALiquidityToken);
 
-			let (unlocked_amount, vesting_starting_block, vesting_ending_block_as_balance): (Balance, BlockNumber, Balance) =
-				T::VestingProvider::unlock_tokens_by_vesting_index(
-					&sender,
-					liquidity_token_id.into(),
-					liquidity_token_vesting_index,
-					liquidity_token_unlock_some_amount_or_all.map(Into::into),
-				)
-				.map(|x| (x.0.into(), x.1.saturated_into(), x.2.into()))?;
+			let (unlocked_amount, vesting_starting_block, vesting_ending_block_as_balance): (
+				Balance,
+				BlockNumber,
+				Balance,
+			) = T::VestingProvider::unlock_tokens_by_vesting_index(
+				&sender,
+				liquidity_token_id.into(),
+				liquidity_token_vesting_index,
+				liquidity_token_unlock_some_amount_or_all.map(Into::into),
+			)
+			.map(|x| (x.0.into(), x.1.saturated_into(), x.2.into()))?;
 
 			let mut reserve_status = Pallet::<T>::get_reserve_status(&sender, liquidity_token_id);
 
@@ -240,12 +243,13 @@ pub mod pallet {
 
 			ensure!(T::Xyk::is_liquidity_token(liquidity_token_id), Error::<T>::NotALiquidityToken);
 
-			let (vesting_starting_block, vesting_ending_block_as_balance): (BlockNumber, Balance) = T::VestingProvider::unlock_tokens(
-				&sender,
-				liquidity_token_id.into(),
-				liquidity_token_amount.into(),
-			)
-			.map(|x| (x.0.saturated_into(), x.1.into()))?;
+			let (vesting_starting_block, vesting_ending_block_as_balance): (BlockNumber, Balance) =
+				T::VestingProvider::unlock_tokens(
+					&sender,
+					liquidity_token_id.into(),
+					liquidity_token_amount.into(),
+				)
+				.map(|x| (x.0.saturated_into(), x.1.into()))?;
 
 			let mut reserve_status = Pallet::<T>::get_reserve_status(&sender, liquidity_token_id);
 

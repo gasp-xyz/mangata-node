@@ -1165,8 +1165,14 @@ fn provisions(
 		.unwrap();
 
 		if let ProvisionKind::Vested(nr) = lock {
-			<Test as Config>::VestingProvider::lock_tokens(&user_id, token_id, amount, None, nr.into())
-				.unwrap();
+			<Test as Config>::VestingProvider::lock_tokens(
+				&user_id,
+				token_id,
+				amount,
+				None,
+				nr.into(),
+			)
+			.unwrap();
 			Bootstrap::provision_vested(Origin::signed(user_id), token_id, amount).unwrap();
 		} else {
 			Bootstrap::provision(Origin::signed(user_id), token_id, amount).unwrap();

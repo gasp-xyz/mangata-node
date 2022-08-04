@@ -10,7 +10,7 @@ use sp_runtime::traits::{MaybeDisplay, MaybeFromStr};
 #[derive(Eq, PartialEq, Encode, Decode, Default)]
 #[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
-pub struct RpcResult<Balance> {
+pub struct XYKRpcResult<Balance> {
 	#[cfg_attr(feature = "std", serde(bound(serialize = "Balance: std::fmt::Display")))]
 	#[cfg_attr(feature = "std", serde(serialize_with = "serialize_as_string"))]
 	#[cfg_attr(feature = "std", serde(bound(deserialize = "Balance: std::str::FromStr")))]
@@ -59,22 +59,22 @@ sp_api::decl_runtime_apis! {
 			input_reserve: Balance,
 			output_reserve: Balance,
 			sell_amount: Balance
-		) -> RpcResult<Balance>;
+		) -> XYKRpcResult<Balance>;
 		fn calculate_buy_price(
 			input_reserve: Balance,
 			output_reserve: Balance,
 			buy_amount: Balance
-		) -> RpcResult<Balance>;
+		) -> XYKRpcResult<Balance>;
 		fn calculate_sell_price_id(
 			sold_token_id: TokenId,
 			bought_token_id: TokenId,
 			sell_amount: Balance
-		) -> RpcResult<Balance>;
+		) -> XYKRpcResult<Balance>;
 		fn calculate_buy_price_id(
 			sold_token_id: TokenId,
 			bought_token_id: TokenId,
 			buy_amount: Balance
-		) -> RpcResult<Balance>;
+		) -> XYKRpcResult<Balance>;
 		fn get_burn_amount(
 			first_asset_id: TokenId,
 			second_asset_id: TokenId,
@@ -83,10 +83,10 @@ sp_api::decl_runtime_apis! {
 		fn calculate_rewards_amount(
 			user: AccountId,
 			liquidity_asset_id: TokenId,
-		) -> RpcResult<Balance>;
+		) -> XYKRpcResult<Balance>;
 		fn calculate_rewards_amount_v2(
 			user: AccountId,
 			liquidity_asset_id: TokenId,
-		) -> RpcResult<Balance>;
+		) -> XYKRpcResult<Balance>;
 	}
 }

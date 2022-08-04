@@ -19,6 +19,7 @@ use sp_runtime::{
 use super::*;
 
 use crate as assets_info;
+use sp_std::convert::TryFrom;
 
 pub(crate) type AccountId = u64;
 
@@ -94,7 +95,7 @@ impl Contains<AccountId> for DustRemovalWhitelist {
 
 parameter_types! {
 	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
-	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account();
+	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 	pub const MaxLocks: u32 = 50;
 }
 

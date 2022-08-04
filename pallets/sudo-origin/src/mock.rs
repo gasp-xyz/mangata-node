@@ -27,11 +27,11 @@ use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 };
+use sp_std::convert::TryFrom;
 
 // Logger module to track execution.
 #[frame_support::pallet]
 pub mod logger {
-	use super::*;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 

@@ -475,7 +475,8 @@ pub mod pallet {
 								*native_token_id,
 								*pooled_token_id,
 								*native_token_amount,
-								*pooled_token_amount
+								*pooled_token_amount,
+								true,
 							)
 							.is_ok(),
 							"Pool mint failed"
@@ -582,6 +583,54 @@ pub mod pallet {
 
 		#[pallet::weight(T::WeightInfo::mint_liquidity_using_vesting_native_tokens())]
 		#[transactional]
+		pub fn mint_liquidity_using_vesting_native_tokens_by_vesting_index(
+			origin: OriginFor<T>,
+			native_asset_vesting_index: u32,
+			vesting_native_asset_unlock_some_amount_or_all: Option<Balance>,
+			second_asset_id: TokenId,
+			expected_second_asset_amount: Balance,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+
+			let liquidity_asset_id =
+				Pallet::<T>::get_liquidity_asset(T::NativeCurrencyId::get(), second_asset_id)?;
+
+			ensure!(
+				<T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some(),
+				Error::<T>::NotAPromotedPool
+			);
+
+			let (unlocked_amount, vesting_ending_block_as_balance): (Balance, Balance) =
+				T::VestingProvider::unlock_tokens_by_vesting_index(
+					&sender,
+					T::NativeCurrencyId::get().into(),
+					native_asset_vesting_index,
+					vesting_native_asset_unlock_some_amount_or_all.map(Into::into),
+				)
+				.map(|x| (x.0.into(), x.1.into()))?;
+
+			let (liquidity_token_id, liquidity_assets_minted) =
+				<Self as XykFunctionsTrait<T::AccountId>>::mint_liquidity(
+					sender.clone(),
+					T::NativeCurrencyId::get(),
+					second_asset_id,
+					unlocked_amount,
+					expected_second_asset_amount,
+					false,
+				)?;
+
+			T::VestingProvider::lock_tokens(
+				&sender,
+				liquidity_token_id.into(),
+				liquidity_assets_minted.into(),
+				vesting_ending_block_as_balance.into(),
+			)?;
+
+			Ok(().into())
+		}
+
+		#[pallet::weight(T::WeightInfo::mint_liquidity_using_vesting_native_tokens())]
+		#[transactional]
 		pub fn mint_liquidity_using_vesting_native_tokens(
 			origin: OriginFor<T>,
 			vesting_native_asset_amount: Balance,
@@ -612,6 +661,7 @@ pub mod pallet {
 					second_asset_id,
 					vesting_native_asset_amount,
 					expected_second_asset_amount,
+					false,
 				)?;
 
 			T::VestingProvider::lock_tokens(
@@ -646,6 +696,7 @@ pub mod pallet {
 				second_asset_id,
 				first_asset_amount,
 				expected_second_asset_amount,
+				true,
 			)?;
 
 			Ok(().into())
@@ -736,6 +787,22 @@ impl<T: Config> Pallet<T> {
 		T::PoolFeePercentage::get() +
 			T::TreasuryFeePercentage::get() +
 			T::BuyAndBurnFeePercentage::get()
+	}
+
+	pub fn get_max_instant_burn_amount(
+		user: &AccountIdOf<T>,
+		liquidity_asset_id: TokenId,
+	) -> Balance {
+		Self::get_max_instant_unreserve_amount(user, liquidity_asset_id).saturating_add(
+			<T as Config>::Currency::available_balance(liquidity_asset_id.into(), user).into(),
+		)
+	}
+
+	pub fn get_max_instant_unreserve_amount(
+		user: &AccountIdOf<T>,
+		liquidity_asset_id: TokenId,
+	) -> Balance {
+		T::ActivationReservesProvider::get_max_instant_unreserve_amount(liquidity_asset_id, user)
 	}
 
 	pub fn calculate_rewards_amount(
@@ -2065,6 +2132,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		second_asset_id: Self::CurrencyId,
 		first_asset_amount: Self::Balance,
 		expected_second_asset_amount: Self::Balance,
+		activate_minted_liquidity: bool,
 	) -> Result<(Self::CurrencyId, Self::Balance), DispatchError> {
 		let vault = Pallet::<T>::account_id();
 
@@ -2153,7 +2221,9 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		)?;
 
 		// Liquidity minting functions not triggered on not promoted pool
-		if <T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some() {
+		if <T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some() &&
+			activate_minted_liquidity
+		{
 			// The reserve from free_balance will not fail the asset were just minted into free_balance
 			Pallet::<T>::set_liquidity_minting_checkpoint(
 				sender.clone(),

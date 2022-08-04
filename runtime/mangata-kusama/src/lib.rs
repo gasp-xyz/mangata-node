@@ -82,6 +82,7 @@ pub use orml_tokens;
 use orml_tokens::TransferDust;
 use orml_traits::{parameter_type_with_key, GetByKey, MultiCurrency};
 
+use pallet_vesting_mangata_rpc_runtime_api::VestingInfosWithLockedAt;
 pub use pallet_xyk;
 use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
 
@@ -1699,6 +1700,20 @@ impl_runtime_apis! {
 				},
 			}
 		}
+
+		fn get_max_instant_burn_amount(
+			user: AccountId,
+			liquidity_asset_id: TokenId,
+		) -> Balance {
+			Xyk::get_max_instant_burn_amount(&user, liquidity_asset_id)
+		}
+
+		fn get_max_instant_unreserve_amount(
+			user: AccountId,
+			liquidity_asset_id: TokenId,
+		) -> Balance {
+			Xyk::get_max_instant_unreserve_amount(&user, liquidity_asset_id)
+		}
 	}
 
 	impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
@@ -1708,6 +1723,21 @@ impl_runtime_apis! {
 
 		fn authorities() -> Vec<AuraId> {
 			Aura::authorities().into_inner()
+		}
+	}
+
+	impl pallet_vesting_mangata_rpc_runtime_api::VestingMangataApi<Block, AccountId, TokenId, Balance, BlockNumber> for Runtime {
+		fn get_vesting_locked_at(who: AccountId, token_id: TokenId, at_block_number: Option<BlockNumber>) -> VestingInfosWithLockedAt<Balance, BlockNumber>
+		{
+			match Vesting::get_vesting_locked_at(&who, token_id, at_block_number){
+				Ok(vesting_infos_with_locked_at) => VestingInfosWithLockedAt{
+					vesting_infos_with_locked_at: vesting_infos_with_locked_at
+				},
+				Err(e) => {
+						log::warn!(target:"vesting", "rpc 'Vesting::get_vesting_locked_at' error: '{:?}', returning default value instead", e);
+						Default::default()
+				},
+			}
 		}
 	}
 

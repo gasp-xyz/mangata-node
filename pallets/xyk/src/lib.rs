@@ -277,7 +277,7 @@ macro_rules! log {
 	($level:tt, $patter:expr $(, $values:expr)* $(,)?) => {
 		log::$level!(
 			target: crate::LOG_TARGET,
-			concat!("[{:?}] 💸 ", $patter), <frame_system::Pallet<T>>::block_number() $(, $values)*
+			concat!("[{:?}] � ", $patter), <frame_system::Pallet<T>>::block_number() $(, $values)*
 		)
 	};
 }
@@ -1153,6 +1153,23 @@ impl<T: Config> Pallet<T> {
 
 		Ok(())
 	}
+	
+	pub fn get_max_instant_burn_amount(
+		user: &AccountIdOf<T>,
+		liquidity_asset_id: TokenId,
+	) -> Balance {
+		Self::get_max_instant_unreserve_amount(user, liquidity_asset_id).saturating_add(
+			<T as Config>::Currency::available_balance(liquidity_asset_id.into(), user).into(),
+		)
+	}
+
+	pub fn get_max_instant_unreserve_amount(
+		user: &AccountIdOf<T>,
+		liquidity_asset_id: TokenId,
+	) -> Balance {
+		T::ActivationReservesProvider::get_max_instant_unreserve_amount(liquidity_asset_id, user)
+	}
+
 
 	// REWARDS V1 to be removed
 	pub fn calculate_rewards_amount(

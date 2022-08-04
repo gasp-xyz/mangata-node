@@ -21,11 +21,13 @@ default = ['mangata-kusama']
 mangata-kusama = [
 		"mangata-kusama-runtime/std",
 		"xyk-rpc/std",
+		"pallet-vesting-mangata-rpc/std",
 		"polkadot-cli/kusama-native",
 ]
 mangata-rococo = [
 		"mangata-rococo-runtime/std",
 		"xyk-rpc/std",
+		"pallet-vesting-mangata-rpc/std",
 		"polkadot-cli/rococo-native",
 ]
 #disable-execution = ['mangata-kusama-runtime/disable-execution']
@@ -123,6 +125,9 @@ polkadot-test-service = { git = "https://github.com/mangata-finance/polkadot", b
 # Mangata dependencies
 xyk-rpc = { default-features = false, version = '2.0.0', path = '../pallets/xyk/rpc' }
 xyk-runtime-api = { default-features = false, version = '2.0.0', path = '../pallets/xyk/runtime-api' }
+
+pallet-vesting-mangata-rpc = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+pallet-vesting-mangata-rpc-runtime-api = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 
 # Snowbridge dependencies
 artemis-core = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v0.9.24"}

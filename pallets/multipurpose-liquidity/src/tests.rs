@@ -40,7 +40,8 @@ fn reserve_vesting_liquidity_tokens_works() {
 			lock_ending_block_as_balance.into(),
 		)
 		.unwrap();
-
+		
+		let now: BlockNumber = <frame_system::Pallet<Test>>::block_number().saturated_into();
 		assert_ok!(MultiPurposeLiquidity::reserve_vesting_liquidity_tokens(
 			RawOrigin::Signed(caller.clone().into()).into(),
 			asset_id,
@@ -76,6 +77,7 @@ fn reserve_vesting_liquidity_tokens_works() {
 			MultiPurposeLiquidity::get_relock_status(caller, asset_id)[0],
 			RelockStatusInfo {
 				amount: reserve_amount,
+				starting_block: now,
 				ending_block_as_balance: lock_ending_block_as_balance
 			}
 		);
@@ -120,6 +122,7 @@ fn unreserve_and_relock_instance_works() {
 		)
 		.unwrap();
 
+		let now: BlockNumber = <frame_system::Pallet<Test>>::block_number().saturated_into();
 		assert_ok!(MultiPurposeLiquidity::reserve_vesting_liquidity_tokens(
 			RawOrigin::Signed(caller.clone().into()).into(),
 			asset_id,
@@ -155,6 +158,7 @@ fn unreserve_and_relock_instance_works() {
 			MultiPurposeLiquidity::get_relock_status(caller, asset_id)[0],
 			RelockStatusInfo {
 				amount: reserve_amount,
+				starting_block: now,
 				ending_block_as_balance: lock_ending_block_as_balance
 			}
 		);

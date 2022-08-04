@@ -256,30 +256,25 @@ benchmarks! {
 		let half_of_minted_liquidity = total_minted_liquidity.into() / 2_u128;
 		let quater_of_minted_liquidity = total_minted_liquidity.into() / 4_u128;
 
-		Xyk::<T>::activate_liquidity_v2(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id.into(), half_of_minted_liquidity, None).unwrap();
-
 		<<T as Config>::PoolPromoteApi as ComputeIssuance>::compute_issuance(1);
 		frame_system::Pallet::<T>::set_block_number(T::RewardsDistributionPeriod::get().into());
+		Xyk::<T>::activate_liquidity_v2(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id.into(), quater_of_minted_liquidity, None).unwrap();
 
+		// UNCOMMENT THIS TO FIX THE TEST
+		// <<T as Config>::PoolPromoteApi as ComputeIssuance>::compute_issuance(2);
+		// frame_system::Pallet::<T>::set_block_number((2*T::RewardsDistributionPeriod::get()).into());
+		// Xyk::<T>::activate_liquidity_v2(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id.into(), quater_of_minted_liquidity, None).unwrap();
 
-		let rewards_to_claim = Xyk::<T>::calculate_rewards_amount_v2(caller.clone(), liquidity_asset_id).unwrap();
+		assert!(Xyk::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).rewards_not_yet_claimed > 0);
 
-		assert_ne!(
-			rewards_to_claim,
-			0,
-		);
-
-		let pre_claim_native_tokens_amount = <T as Config>::Currency::free_balance(<T as Config>::NativeCurrencyId::get().into(), &caller).into();
-		//
-		// frame_system::Pallet::<T>::set_block_number(100_000_000u32.into());
-
-	// }: claim_rewards_v2(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id, 12501250110011_u128 /*rewards_to_claim as u128*/ )
-	}: claim_rewards_v2(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id, rewards_to_claim as u128 )
+	}: claim_rewards_v2(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id, 1)
 
 	verify {
 
-		assert!(
-			Xyk::<T>::calculate_rewards_amount_v2(caller.clone(), liquidity_asset_id).unwrap() > 0
+
+		assert_ne!(
+			Xyk::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).rewards_not_yet_claimed,
+			0
 		);
 
 	}

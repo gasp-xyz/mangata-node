@@ -209,18 +209,20 @@ benchmarks! {
 		);
 		assert!(Xyk::<T>::liquidity_pool(liquidity_asset_id).is_some());
 
+		let total_issuance :u128 = <T as Config>::Currency::total_issuance(liquidity_asset_id.into()).into();
+
 		Xyk::<T>::mint_liquidity(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), non_native_asset_id2.into(), 20000000000000000000, 30000000000000000001).unwrap();
 
+		let total_issuance :u128 = <T as Config>::Currency::total_issuance(liquidity_asset_id.into()).into();
 		assert_ne!(
 			<T as Config>::Currency::total_issuance(liquidity_asset_id.into()),
 			initial_liquidity_amount.into()
 		);
 
 		let total_liquidity_after_minting: u128 = <T as Config>::Currency::total_issuance(liquidity_asset_id.into()).into();
-		let total_user_liquidity: u128 = <T as Config>::Currency::free_balance(liquidity_asset_id.into(), &caller).into();
-		assert_eq!(total_user_liquidity, total_liquidity_after_minting);
 
 		T::PoolPromoteApi::compute_issuance(1_u32).unwrap();
+		frame_system::Pallet::<T>::set_block_number(100_000u32.into());
 
 	}: burn_liquidity(RawOrigin::Signed(caller.clone().into()), non_native_asset_id1.into(), non_native_asset_id2.into(), total_liquidity_after_minting)
 	verify {

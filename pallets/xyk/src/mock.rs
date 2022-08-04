@@ -326,15 +326,20 @@ impl Config for Test {
 }
 
 pub struct TokensActivationPassthrough<T: Config>(PhantomData<T>);
-impl<T: Config> ActivationReservesProviderTrait for TokensActivationPassthrough<T> {
+
+impl<T: Config> ActivationReservesProviderTrait for TokensActivationPassthrough<T>
+where
+	AccountId: From<<T as frame_system::Config>::AccountId>,
+{
 	type AccountId = T::AccountId;
 
 	fn get_max_instant_unreserve_amount(
 		token_id: TokenId,
 		account_id: &Self::AccountId,
 	) -> Balance {
-		let rewards_info = XykStorage::get_rewards_info(2, 4);
-		rewards_info.activated_amount
+		let account_id: u128 = (account_id.clone()).into();
+		let token_id: u32 = token_id.into();
+		XykStorage::get_rewards_info(account_id, token_id).activated_amount
 	}
 
 	fn can_activate(

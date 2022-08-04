@@ -128,7 +128,7 @@ benchmarks! {
 		Xyk::<T>::mint_liquidity(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), non_native_asset_id2.into(), 20000000000000000000, 30000000000000000001).unwrap();
 
 		T::PoolPromoteApi::compute_issuance(1_u32).unwrap();
-		frame_system::Pallet::<T>::set_block_number(101_000u32.into());
+		frame_system::Pallet::<T>::set_block_number(T::RewardsDistributionPeriod::get().into());
 
 
 	}: mint_liquidity(RawOrigin::Signed(caller.clone().into()), non_native_asset_id1.into(), non_native_asset_id2.into(), 20000000000000000000, 30000000000000000001)
@@ -221,7 +221,7 @@ benchmarks! {
 		let total_liquidity_after_minting: u128 = <T as Config>::Currency::total_issuance(liquidity_asset_id.into()).into();
 
 		T::PoolPromoteApi::compute_issuance(1_u32).unwrap();
-		frame_system::Pallet::<T>::set_block_number(100_000u32.into());
+		frame_system::Pallet::<T>::set_block_number(T::RewardsDistributionPeriod::get().into());
 
 	}: burn_liquidity(RawOrigin::Signed(caller.clone().into()), non_native_asset_id1.into(), non_native_asset_id2.into(), total_liquidity_after_minting)
 	verify {
@@ -259,7 +259,7 @@ benchmarks! {
 		Xyk::<T>::activate_liquidity_v2(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id.into(), half_of_minted_liquidity, None).unwrap();
 
 		<<T as Config>::PoolPromoteApi as ComputeIssuance>::compute_issuance(1);
-		frame_system::Pallet::<T>::set_block_number(100_000u32.into());
+		frame_system::Pallet::<T>::set_block_number(T::RewardsDistributionPeriod::get().into());
 
 
 		let rewards_to_claim = Xyk::<T>::calculate_rewards_amount_v2(caller.clone(), liquidity_asset_id).unwrap();
@@ -336,7 +336,7 @@ benchmarks! {
 		Xyk::<T>::activate_liquidity_v2(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id.into(), quater_of_minted_liquidity, None).unwrap();
 
 		T::PoolPromoteApi::compute_issuance(1_u32).unwrap();
-		frame_system::Pallet::<T>::set_block_number(101_000u32.into());
+		frame_system::Pallet::<T>::set_block_number(T::RewardsDistributionPeriod::get().into());
 
 		assert!(
 			<T as Config>::Currency::free_balance(liquidity_asset_id.into(), &caller).into() > 0u128
@@ -386,7 +386,7 @@ benchmarks! {
 		Xyk::<T>::activate_liquidity_v2(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id.into(), half_of_minted_liquidity, None).unwrap();
 
 		T::PoolPromoteApi::compute_issuance(1_u32).unwrap();
-		frame_system::Pallet::<T>::set_block_number(101_000u32.into());
+		frame_system::Pallet::<T>::set_block_number(T::RewardsDistributionPeriod::get().into());
 
 		assert!(
 			<T as Config>::Currency::free_balance(liquidity_asset_id.into(), &caller).into() > 0u128

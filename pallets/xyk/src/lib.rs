@@ -2709,6 +2709,11 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				liquidity_asset_id,
 				to_be_deactivated,
 			)?;
+
+			// is this still applicable with new rewards
+			if liquidity_token_activated_balance == to_be_deactivated {
+				LiquidityMiningUser::<T>::remove((sender.clone(), liquidity_asset_id));
+			}
 		}
 
 		// Calculate first and second token amounts depending on liquidity amount to burn

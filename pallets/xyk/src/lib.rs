@@ -448,8 +448,15 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_rewards_info)]
-	pub type RewardsInfo<T: Config> =
-	StorageDoubleMap<_, Twox64Concat, AccountIdOf<T>, Twox64Concat, TokenId, RewardInfo, ValueQuery>; 
+	pub type RewardsInfo<T: Config> = StorageDoubleMap<
+		_,
+		Twox64Concat,
+		AccountIdOf<T>,
+		Twox64Concat,
+		TokenId,
+		RewardInfo,
+		ValueQuery,
+	>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn liquidity_mining_active_pool_v2)]
@@ -2880,20 +2887,20 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		let rewards_info: RewardInfo = Self::get_rewards_info(user.clone(), liquidity_asset_id);
 
 		let pool_rewards_ratio_current =
-		<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).unwrap();
+			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).unwrap();
 
-		let	current_rewards =Pallet::<T>::calculate_rewards_v2(
-				rewards_info.activated_amount,
-				liquidity_asset_id,
-				rewards_info.last_checkpoint,
-				rewards_info.pool_ratio_at_last_checkpoint,
-				rewards_info.missing_at_last_checkpoint,
-				pool_rewards_ratio_current,
-			)?;
-		
+		let current_rewards = Pallet::<T>::calculate_rewards_v2(
+			rewards_info.activated_amount,
+			liquidity_asset_id,
+			rewards_info.last_checkpoint,
+			rewards_info.pool_ratio_at_last_checkpoint,
+			rewards_info.missing_at_last_checkpoint,
+			pool_rewards_ratio_current,
+		)?;
+
 		let rewards_not_yet_claimed = rewards_info.rewards_not_yet_claimed;
 		let rewards_already_claimed = rewards_info.rewards_already_claimed;
-	
+
 		let total_available_rewards = current_rewards
 			.checked_add(rewards_not_yet_claimed)
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsAllMathError1))?
@@ -2908,8 +2915,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			pool_ratio_at_last_checkpoint: rewards_info.pool_ratio_at_last_checkpoint,
 			missing_at_last_checkpoint: rewards_info.missing_at_last_checkpoint,
 		};
-
-		
 
 		<T as Config>::Currency::transfer(
 			mangata_id.into(),

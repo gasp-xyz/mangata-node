@@ -298,8 +298,7 @@ where
             self.client.info().best_hash));
 
 		let runtime_api_result = api.calculate_rewards_amount_v2(&at, user, liquidity_asset_id);
-		
-		
+
 		runtime_api_result.map_err(|e| {
 			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
 				1,
@@ -307,6 +306,5 @@ where
 				Some(format!("{:?}", e)),
 			)))
 		})
-
 	}
 }

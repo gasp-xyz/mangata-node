@@ -65,7 +65,7 @@ pub trait PoolPromoteApi {
 	fn get_pool_rewards_v2(liquidity_token_id: TokenId) -> Option<Balance>;
 
 	fn len_v2() -> usize;
-	
+
 	//REWARDS V1 to be removed
 	fn claim_pool_rewards(liquidity_token_id: TokenId, claimed_amount: Balance) -> bool;
 	//REWARDS V1 to be removed

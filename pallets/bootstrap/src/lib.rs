@@ -146,7 +146,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type TreasuryPalletId: Get<PalletId>;
 
-		type VestingProvider: MultiTokenVestingLocks<Self::AccountId>;
+		type VestingProvider: MultiTokenVestingLocks<Self::AccountId, Self::BlockNumber>;
 
 		type WeightInfo: WeightInfo;
 	}
@@ -222,8 +222,9 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			let vesting_ending_block_as_balance: Balance =
 				T::VestingProvider::unlock_tokens(&sender, token_id.into(), amount.into())
-					.map_err(|_| Error::<T>::NotEnoughVestedAssets)?
-					.into();
+					.map_err(|_| Error::<T>::NotEnoughVestedAssets)
+					// ignore the first field of the return tuple which is the starting block
+					.map(|(_, x)| x.into())?;
 			Self::do_provision(
 				&sender,
 				token_id,
@@ -537,6 +538,7 @@ impl<T: Config> Pallet<T> {
 				&who,
 				liq_token_id.into(),
 				rewards_vested.into(),
+				None,
 				lock.into(),
 			)?;
 		}

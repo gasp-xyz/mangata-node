@@ -1001,6 +1001,7 @@ fn dont_allow_for_provision_in_vested_tokens_without_dedicated_extrinsic() {
 			&USER_ID,
 			MGAId::get(),
 			mga_amount,
+			None,
 			100_u32.into(),
 		)
 		.unwrap();
@@ -1041,6 +1042,7 @@ fn successful_vested_provision_using_vested_tokens_only_when_user_has_both_veste
 			&USER_ID,
 			MGAId::get(),
 			provision_amount,
+			None,
 			lock.into(),
 		)
 		.unwrap();
@@ -1075,6 +1077,7 @@ fn successful_vested_provision_is_stored_properly_in_storage() {
 			&USER_ID,
 			MGAId::get(),
 			mga_amount,
+			None,
 			lock.into(),
 		)
 		.unwrap();
@@ -1101,6 +1104,7 @@ fn successful_merged_vested_provision_is_stored_properly_in_storage() {
 			&USER_ID,
 			MGAId::get(),
 			first_lock_amount,
+			None,
 			first_lock.into(),
 		)
 		.unwrap();
@@ -1108,6 +1112,7 @@ fn successful_merged_vested_provision_is_stored_properly_in_storage() {
 			&USER_ID,
 			MGAId::get(),
 			second_lock_amount,
+			None,
 			second_lock.into(),
 		)
 		.unwrap();
@@ -1160,7 +1165,7 @@ fn provisions(
 		.unwrap();
 
 		if let ProvisionKind::Vested(nr) = lock {
-			<Test as Config>::VestingProvider::lock_tokens(&user_id, token_id, amount, nr.into())
+			<Test as Config>::VestingProvider::lock_tokens(&user_id, token_id, amount, None, nr.into())
 				.unwrap();
 			Bootstrap::provision_vested(Origin::signed(user_id), token_id, amount).unwrap();
 		} else {

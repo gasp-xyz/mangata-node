@@ -27,6 +27,7 @@ fn reserve_vesting_liquidity_tokens_works() {
 				&caller,
 				asset_id.into(),
 				dummy_lock_amount.into(),
+				None,
 				dummy_end_block.into(),
 			)
 			.unwrap();
@@ -35,6 +36,7 @@ fn reserve_vesting_liquidity_tokens_works() {
 			&caller,
 			asset_id.into(),
 			locked_amount.into(),
+			None,
 			lock_ending_block_as_balance.into(),
 		)
 		.unwrap();
@@ -104,6 +106,7 @@ fn unreserve_and_relock_instance_works() {
 				&caller,
 				asset_id.into(),
 				dummy_lock_amount.into(),
+				None,
 				dummy_end_block.into(),
 			)
 			.unwrap();
@@ -112,6 +115,7 @@ fn unreserve_and_relock_instance_works() {
 			&caller,
 			asset_id.into(),
 			locked_amount.into(),
+			None,
 			lock_ending_block_as_balance.into(),
 		)
 		.unwrap();

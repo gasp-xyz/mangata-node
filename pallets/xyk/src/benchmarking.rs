@@ -160,7 +160,7 @@ benchmarks! {
 		);
 
 		frame_system::Pallet::<T>::set_block_number(1_u32.into());
-		<T as Config>::VestingProvider::lock_tokens(&caller, native_asset_id.into(), (initial_amount - pool_creation_asset_1_amount).into(), lock.into()).unwrap();
+		<T as Config>::VestingProvider::lock_tokens(&caller, native_asset_id.into(), (initial_amount - pool_creation_asset_1_amount).into(), None, lock.into()).unwrap();
 		frame_system::Pallet::<T>::set_block_number(2_u32.into());
 
 		Xyk::<T>::mint_liquidity_using_vesting_native_tokens(RawOrigin::Signed(caller.clone().into()).into(), 10000000000000000000, non_native_asset_id2.into(), 20000000000000000000).unwrap();

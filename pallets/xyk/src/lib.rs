@@ -2642,18 +2642,11 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		let liquidity_asset_id = Pallet::<T>::get_liquidity_asset(first_asset_id, second_asset_id)?;
 
 		// First let's check how much we can actually burn
-
-		let mut max_instant_unreserve_amount = Balance::zero();
-
-		if <T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).is_some() {
-			max_instant_unreserve_amount =
-				T::ActivationReservesProvider::get_max_instant_unreserve_amount(
-					liquidity_asset_id,
-					&sender,
-				);
-		} else {
-			max_instant_unreserve_amount = Balance::zero();
-		}
+		let max_instant_unreserve_amount =
+			T::ActivationReservesProvider::get_max_instant_unreserve_amount(
+				liquidity_asset_id,
+				&sender,
+			);
 
 		// Get token reserves and liquidity asset id
 		let (first_asset_reserve, second_asset_reserve) =

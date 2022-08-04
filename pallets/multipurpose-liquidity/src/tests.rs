@@ -40,7 +40,7 @@ fn reserve_vesting_liquidity_tokens_works() {
 			lock_ending_block_as_balance.into(),
 		)
 		.unwrap();
-		
+
 		let now: BlockNumber = <frame_system::Pallet<Test>>::block_number().saturated_into();
 		assert_ok!(MultiPurposeLiquidity::reserve_vesting_liquidity_tokens(
 			RawOrigin::Signed(caller.clone().into()).into(),

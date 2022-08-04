@@ -546,7 +546,6 @@ impl pallet_xyk::Config for Runtime {
 	type DisallowedPools = Bootstrap;
 	type DisabledTokens = TestTokensFilter;
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
-	type ActivedPoolQueryApi = Xyk;
 }
 
 impl pallet_bootstrap::Config for Runtime {
@@ -1716,14 +1715,14 @@ impl_runtime_apis! {
 		) -> Balance {
 			Xyk::get_max_instant_unreserve_amount(&user, liquidity_asset_id)
 		}
-		
-		
+
+
 		fn calculate_rewards_amount_v2(
 			user: AccountId,
 			liquidity_asset_id: TokenId,
-		) -> RpcResult<Balance> {
+		) -> XYKRpcResult<Balance> {
 			match Xyk::calculate_rewards_amount_v2(user, liquidity_asset_id){
-				Ok(claimable_rewards) => RpcResult{
+				Ok(claimable_rewards) => XYKRpcResult{
 					price:claimable_rewards
 				},
 				Err(e) => {

@@ -98,7 +98,7 @@ pub trait XykApi<
 		liquidity_asset_id: TokenId,
 		at: Option<BlockHash>,
 	) -> RpcResult<BalanceOutput>;
-	
+
 	#[method(name = "xyk_calculate_rewards_amount_v2")]
 	fn calculate_rewards_amount_v2(
 		&self,
@@ -352,13 +352,13 @@ where
 				)))
 			})
 	}
-	
+
 	fn calculate_rewards_amount_v2(
 		&self,
 		user: AccountId,
 		liquidity_asset_id: TokenId,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> Result<RpcResult<Balance>> {
+	) -> RpcResult<XYKRpcResult<Balance>> {
 		let api = self.client.runtime_api();
 		let at = BlockId::<Block>::hash(at.unwrap_or_else(||
             // If the block hash is not supplied assume the best block.

@@ -175,6 +175,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for MockXyk<T> {
 		second_asset_id: Self::CurrencyId,
 		first_asset_amount: Self::Balance,
 		expected_second_asset_amount: Self::Balance,
+		activate_minted_liquidity: bool,
 	) -> Result<(Self::CurrencyId, Self::Balance), DispatchError> {
 		unimplemented!()
 	}

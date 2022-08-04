@@ -45,7 +45,13 @@ pub trait RuntimeApiCollection:
 	+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
 	+ ver_api::VerApi<Block>
 	+ xyk_rpc::XykRuntimeApi<Block, Balance, TokenId, AccountId>
-	+ sp_consensus_aura::AuraApi<Block, AuraId>
+	+ pallet_vesting_mangata_rpc::VestingMangataRuntimeApi<
+		Block,
+		AccountId,
+		TokenId,
+		Balance,
+		BlockNumber,
+	> + sp_consensus_aura::AuraApi<Block, AuraId>
 where
 	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
 {
@@ -64,7 +70,13 @@ where
 		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
 		+ ver_api::VerApi<Block>
 		+ xyk_rpc::XykRuntimeApi<Block, Balance, TokenId, AccountId>
-		+ sp_consensus_aura::AuraApi<Block, AuraId>,
+		+ pallet_vesting_mangata_rpc::VestingMangataRuntimeApi<
+			Block,
+			AccountId,
+			TokenId,
+			Balance,
+			BlockNumber,
+		> + sp_consensus_aura::AuraApi<Block, AuraId>,
 	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
 {
 }

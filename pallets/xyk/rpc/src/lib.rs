@@ -20,7 +20,16 @@ pub use xyk_runtime_api::XykApi as XykRuntimeApi;
 use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
 
 #[rpc(client, server)]
-pub trait XykApi<BlockHash, Balance, TokenId, AccountId, ResponseTypePrice, ResponseTypeAmounts> {
+pub trait XykApi<
+	BlockHash,
+	Balance,
+	TokenId,
+	AccountId,
+	ResponseTypePrice,
+	ResponseTypeAmounts,
+	BalanceOutput,
+>
+{
 	#[method(name = "xyk_calculate_sell_price")]
 	fn calculate_sell_price(
 		&self,
@@ -74,6 +83,22 @@ pub trait XykApi<BlockHash, Balance, TokenId, AccountId, ResponseTypePrice, Resp
 		at: Option<BlockHash>,
 	) -> RpcResult<ResponseTypePrice>;
 
+	#[method(name = "xyk_get_max_instant_burn_amount")]
+	fn get_max_instant_burn_amount(
+		&self,
+		user: AccountId,
+		liquidity_asset_id: TokenId,
+		at: Option<BlockHash>,
+	) -> RpcResult<BalanceOutput>;
+
+	#[method(name = "xyk_get_max_instant_unreserve_amount")]
+	fn get_max_instant_unreserve_amount(
+		&self,
+		user: AccountId,
+		liquidity_asset_id: TokenId,
+		at: Option<BlockHash>,
+	) -> RpcResult<BalanceOutput>;
+
 	#[method(name = "xyk_calculate_rewards_amount_v2")]
 	fn calculate_rewards_amount_v2(
 		&self,
@@ -119,6 +144,7 @@ impl<C, Block, Balance, TokenId, AccountId>
 		AccountId,
 		XYKRpcResult<Balance>,
 		RpcAmountsResult<Balance>,
+		Balance,
 	> for Xyk<C, Block>
 where
 	Block: BlockT,
@@ -286,20 +312,60 @@ where
 		})
 	}
 
+	fn get_max_instant_burn_amount(
+		&self,
+		user: AccountId,
+		liquidity_asset_id: TokenId,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> RpcResult<Balance> {
+		let api = self.client.runtime_api();
+		let at = BlockId::<Block>::hash(at.unwrap_or_else(||
+            // If the block hash is not supplied assume the best block.
+            self.client.info().best_hash));
+
+		api.get_max_instant_burn_amount(&at, user, liquidity_asset_id).map_err(|e| {
+			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+				1,
+				"Unable to serve the request",
+				Some(format!("{:?}", e)),
+			)))
+		})
+	}
+
+	fn get_max_instant_unreserve_amount(
+		&self,
+		user: AccountId,
+		liquidity_asset_id: TokenId,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> RpcResult<Balance> {
+		let api = self.client.runtime_api();
+		let at = BlockId::<Block>::hash(at.unwrap_or_else(||
+            // If the block hash is not supplied assume the best block.
+            self.client.info().best_hash));
+
+		api.get_max_instant_unreserve_amount(&at, user, liquidity_asset_id)
+			.map_err(|e| {
+				JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+					1,
+					"Unable to serve the request",
+					Some(format!("{:?}", e)),
+				)))
+			})
+	}
+
 	fn calculate_rewards_amount_v2(
 		&self,
 		user: AccountId,
 		liquidity_asset_id: TokenId,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> Result<RpcResult<Balance>> {
+	) -> RpcResult<XYKRpcResult<Balance>> {
 		let api = self.client.runtime_api();
 		let at = BlockId::<Block>::hash(at.unwrap_or_else(||
             // If the block hash is not supplied assume the best block.
             self.client.info().best_hash));
 
 		let runtime_api_result = api.calculate_rewards_amount_v2(&at, user, liquidity_asset_id);
-		
-		
+
 		runtime_api_result.map_err(|e| {
 			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
 				1,
@@ -307,6 +373,5 @@ where
 				Some(format!("{:?}", e)),
 			)))
 		})
-
 	}
 }

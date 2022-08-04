@@ -10,13 +10,14 @@ use frame_support::{
 	traits::{Get, Imbalance},
 };
 use mangata_primitives::{Balance, TokenId};
-use scale_info::TypeInfo;
-use sp_runtime::{traits::Zero, Perbill, Percent, RuntimeDebug};
-use sp_std::prelude::*;
-
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 use pallet_vesting_mangata::MultiTokenVestingSchedule;
-use sp_runtime::traits::{CheckedAdd, CheckedSub, One};
+use scale_info::TypeInfo;
+use sp_runtime::{
+	traits::{CheckedAdd, CheckedSub, One, Zero},
+	Perbill, Percent, RuntimeDebug,
+};
+use sp_std::{convert::TryInto, prelude::*};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};

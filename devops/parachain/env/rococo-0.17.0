@@ -1,4 +1,1 @@
-PARA_CHAIN=mangata-rococo-local-testnet
-RELAY_CHAIN=/etc/mangata/rococo-local-0.9.23.json
-PARACHAIN_DOCKER_IMAGE=mangatasolutions/mangata-node:rococo-0.17.0
-RELAYCHAIN_DOCKER_IMAGE=parity/polkadot:v0.9.23
+rococo-0.17.0

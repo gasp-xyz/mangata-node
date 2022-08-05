@@ -304,9 +304,9 @@ benchmarks! {
 
 		Xyk::<T>::activate_liquidity_v2(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id.into(), quater_of_minted_liquidity, None).unwrap();
 
+		forward_to_next_session!();
+
 		// UNCOMMENT THIS TO FIX THE TEST
-		// <<T as Config>::PoolPromoteApi as ComputeIssuance>::compute_issuance(2);
-		// frame_system::Pallet::<T>::set_block_number((2*T::RewardsDistributionPeriod::get()).into());
 		// Xyk::<T>::activate_liquidity_v2(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id.into(), quater_of_minted_liquidity, None).unwrap();
 
 		let available_rewards_before = Xyk::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).rewards_not_yet_claimed;

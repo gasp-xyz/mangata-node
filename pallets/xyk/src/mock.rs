@@ -58,6 +58,7 @@ pub struct MockPromotedPoolApi;
 pub struct MockActivedPoolQueryApi;
 
 #[cfg(test)]
+#[cfg(not(feature = "runtime-benchmarks"))]
 impl MockPromotedPoolApi {
 	pub fn instance() -> &'static Mutex<HashMap<TokenId, Balance>> {
 		&PROMOTED_POOLS
@@ -77,7 +78,7 @@ impl pallet_issuance::ComputeIssuance for MockPromotedPoolApi {
 }
 
 impl ActivedPoolQueryApi for MockActivedPoolQueryApi {
-	fn get_pool_activate_amount(liquidity_token_id: TokenId) -> Option<u128> {
+	fn get_pool_activate_amount(_liquidity_token_id: TokenId) -> Option<u128> {
 		return Some(1 as u128)
 	}
 }
@@ -108,7 +109,7 @@ impl PoolPromoteApi for MockPromotedPoolApi {
 		pools.get(&liquidity_token_id).map(|x| *x)
 	}
 
-	fn claim_pool_rewards(liquidity_token_id: TokenId, amount: Balance) -> bool {
+	fn claim_pool_rewards(_liquidity_token_id: TokenId, _amount: Balance) -> bool {
 		true
 	}
 
@@ -400,6 +401,7 @@ impl<T: Config> Pallet<T> {
 
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup.
+#[cfg(not(feature = "runtime-benchmarks"))]
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut ext: sp_io::TestExternalities =
 		system::GenesisConfig::default().build_storage::<Test>().unwrap().into();
@@ -407,6 +409,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	ext
 }
 
+#[cfg(feature = "runtime-benchmarks")]
 pub fn new_benchmark_ext() -> sp_io::TestExternalities {
 	let mut ext: sp_io::TestExternalities =
 		system::GenesisConfig::default().build_storage::<Test>().unwrap().into();

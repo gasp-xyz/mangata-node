@@ -5,9 +5,9 @@ use cumulus_primitives_core::ParaId;
 use hex::FromHex;
 use hex_literal::hex;
 use mangata_rococo_runtime::{
-	constants::{fee, parachains},
-	AccountId, AssetMetadataOf, AuraId, EmptyCustomMetadata, GeneralKey, MultiLocation, Parachain,
-	Signature, KAR_TOKEN_ID, ROC_TOKEN_ID, X2,
+	constants::{parachains},
+	AccountId, AssetMetadataOf, AuraId, CustomMetadata, GeneralKey, MultiLocation, Parachain,
+	Signature, XcmMetadata, KAR_TOKEN_ID, ROC_TOKEN_ID, X2,
 };
 use sc_service::ChainType;
 use sp_core::{sr25519, ByteArray, Pair, Public, H160};
@@ -340,9 +340,9 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 						AssetMetadataOf {
 							decimals: 18,
 							name: b"Mangata".to_vec(),
-							symbol: b"MGA".to_vec(),
-							additional: EmptyCustomMetadata,
-							existential_deposit: fee::MGX_BASE_EXISTENTIAL_DEPOSIT,
+							symbol: b"MGR".to_vec(),
+							additional: Default::default(),
+							existential_deposit: Default::default(),
 							location: None,
 						},
 					),
@@ -352,8 +352,8 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 							decimals: 18,
 							name: b"Ether".to_vec(),
 							symbol: b"ETH".to_vec(),
-							additional: EmptyCustomMetadata,
-							existential_deposit: 0,
+							additional: Default::default(),
+							existential_deposit: Default::default(),
 							location: None,
 						},
 					),
@@ -363,8 +363,13 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 							decimals: 12,
 							name: b"Rococo Native".to_vec(),
 							symbol: b"ROC".to_vec(),
-							additional: EmptyCustomMetadata,
-							existential_deposit: 1_000_000_000,
+							additional: CustomMetadata {
+								// 10_000:1 MGR:ROC
+								xcm: XcmMetadata {
+									proportional_amount_in_native_asset: 100_000_000,
+								},
+							},
+							existential_deposit: Default::default(),
 							location: None,
 						},
 					),
@@ -373,10 +378,10 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 						5,
 						AssetMetadataOf {
 							decimals: 18,
-							name: b"LP for KSM-MGX".to_vec(),
-							symbol: b"KSM-MGX".to_vec(),
-							additional: EmptyCustomMetadata,
-							existential_deposit: 0,
+							name: b"LP for ROC-MGR".to_vec(),
+							symbol: b"ROC-MGR".to_vec(),
+							additional: Default::default(),
+							existential_deposit: Default::default(),
 							location: None,
 						},
 					),
@@ -386,8 +391,13 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 							decimals: 12,
 							name: b"Karura".to_vec(),
 							symbol: b"KAR".to_vec(),
-							additional: EmptyCustomMetadata,
-							existential_deposit: 100_000_000_000,
+							additional: CustomMetadata {
+								// 100:1 MGR:KAR
+								xcm: XcmMetadata {
+									proportional_amount_in_native_asset: 10_000_000_000,
+								},
+							},
+							existential_deposit: Default::default(),
 							location: Some(
 								MultiLocation::new(
 									1,
@@ -525,7 +535,7 @@ fn mangata_genesis(
 		},
 		bridge: mangata_rococo_runtime::BridgeConfig { bridged_app_id_registry: bridged_app_ids },
 		bridged_asset: mangata_rococo_runtime::BridgedAssetConfig {
-			bridged_assets_links: bridged_assets
+			bridged_assets_links: bridged_assets,
 		},
 		verifier: mangata_rococo_runtime::VerifierConfig { key: relay_key },
 		council: Default::default(),

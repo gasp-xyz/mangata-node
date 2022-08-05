@@ -71,8 +71,8 @@ pub use xcm::{latest::prelude::*, VersionedMultiLocation};
 pub use constants::{fee::*, parachains::*};
 pub use currency::*;
 pub use mangata_primitives::{
-	assets::EmptyCustomMetadata, AccountId, Address, Amount, Balance, BlockNumber, Hash, Index,
-	Signature, TokenId,
+	assets::{CustomMetadata, XcmMetadata},
+	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
 };
 use mp_traits::AssetMetadataMutationTrait;
 pub use pallet_bridge;
@@ -475,7 +475,7 @@ impl AssetMetadataMutationTrait for AssetMetadataMutation {
 			symbol: symbol.unwrap_or_default(),
 			decimals: decimals.unwrap_or_default(),
 			existential_deposit: Default::default(),
-			additional: EmptyCustomMetadata,
+			additional: Default::default(),
 			location: None,
 		};
 		orml_asset_registry::Pallet::<Runtime>::do_register_asset_without_asset_processor(
@@ -1054,7 +1054,7 @@ impl orml_xcm::Config for Runtime {
 	type SovereignOrigin = EnsureRoot<AccountId>;
 }
 
-pub type AssetMetadataOf = AssetMetadata<Balance, EmptyCustomMetadata>;
+pub type AssetMetadataOf = AssetMetadata<Balance, CustomMetadata>;
 type CurrencyAdapter = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 
 pub struct SequentialIdWithCreation<T>(PhantomData<T>);
@@ -1099,7 +1099,7 @@ impl EnsureOriginWithArg<Origin, Option<u32>> for AssetAuthority {
 
 impl orml_asset_registry::Config for Runtime {
 	type Event = Event;
-	type CustomMetadata = EmptyCustomMetadata;
+	type CustomMetadata = CustomMetadata;
 	type AssetId = TokenId;
 	type AuthorityOrigin = AssetAuthority;
 	type AssetProcessor = SequentialIdWithCreation<Runtime>;

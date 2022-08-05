@@ -20,7 +20,7 @@ relaychain:
   flags:
     - --rpc-methods=unsafe
     - --wasm-execution=compiled
-    - --execution=native
+    - --execution=wasm
   nodes:
     - name: alice
     - name: bob
@@ -39,10 +39,10 @@ parachains:
     - --rpc-methods=unsafe
     - --force-authoring
     - --wasm-execution=compiled
-    - --execution=native
+    - --execution=wasm
   relaychainFlags:
     - --wasm-execution=compiled
-    - --execution=native
+    - --execution=wasm
   env:
     RUST_LOG: x_tokens=trace,xcm=trace,xcmp_queue=trace,runtime=trace
   volumePath: /acala/data
@@ -51,7 +51,7 @@ parachains:
     - --alice
   - flags:
     - --bob
-- image: mangatasolutions/mangata-node:upgrade
+- image: mangatasolutions/mangata-node:dev
   chain:
     base: mangata-rococo-local-testnet
     collators:
@@ -67,10 +67,10 @@ parachains:
     - --rpc-methods=unsafe
     - --force-authoring
     - --wasm-execution=compiled
-    - --execution=native
+    - --execution=wasm
   relaychainFlags:
     - --wasm-execution=compiled
-    - --execution=native
+    - --execution=wasm
   env:
     RUST_LOG: x_tokens=trace,xcm=trace,xcmp_queue=trace,runtime=trace
   volumePath: /mangata/data

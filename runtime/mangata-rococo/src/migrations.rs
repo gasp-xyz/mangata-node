@@ -15,12 +15,9 @@ mod deprecated {
 
 pub mod asset_registry {
 	use super::*;
-	use crate::constants::fee;
 	use frame_support::{
-		migration::storage_key_iter,
-		storage::{storage_prefix, unhashed::kill_prefix},
+		storage::unhashed::kill_prefix,
 		traits::OnRuntimeUpgrade,
-		Twox64Concat,
 	};
 	use sp_io::{hashing::twox_128, KillStorageResult};
 
@@ -47,8 +44,8 @@ pub mod asset_registry {
 						decimals: 18,
 						name: b"Mangata".to_vec(),
 						symbol: b"MGA".to_vec(),
-						additional: EmptyCustomMetadata,
-						existential_deposit: MGX_BASE_EXISTENTIAL_DEPOSIT,
+						additional: Default::default(),
+						existential_deposit: Default::default(),
 						location: None,
 					},
 				),
@@ -58,8 +55,8 @@ pub mod asset_registry {
 						decimals: 18,
 						name: b"Ether".to_vec(),
 						symbol: b"ETH".to_vec(),
-						additional: EmptyCustomMetadata,
-						existential_deposit: 0,
+						additional: Default::default(),
+						existential_deposit: Default::default(),
 						location: None,
 					},
 				),
@@ -69,20 +66,23 @@ pub mod asset_registry {
 						decimals: 12,
 						name: b"Rococo Native".to_vec(),
 						symbol: b"ROC".to_vec(),
-						additional: EmptyCustomMetadata,
-						existential_deposit: 1_000_000_000,
+						additional: CustomMetadata {
+							// 10_000:1 MGR:ROC
+							xcm: XcmMetadata { proportional_amount_in_native_asset: 100_000_000 },
+						},
+						existential_deposit: Default::default(),
 						location: None,
 					},
 				),
-				// LP KSM-MGX
+				// LP ROC-MGR
 				(
 					5,
 					AssetMetadataOf {
 						decimals: 18,
-						name: b"LP for KSM-MGX".to_vec(),
-						symbol: b"KSM-MGX".to_vec(),
-						additional: EmptyCustomMetadata,
-						existential_deposit: 0,
+						name: b"LP for ROC-MGR".to_vec(),
+						symbol: b"ROC-MGR".to_vec(),
+						additional: Default::default(),
+						existential_deposit: Default::default(),
 						location: None,
 					},
 				),
@@ -92,8 +92,11 @@ pub mod asset_registry {
 						decimals: 12,
 						name: b"Karura".to_vec(),
 						symbol: b"KAR".to_vec(),
-						additional: EmptyCustomMetadata,
-						existential_deposit: 100_000_000_000,
+						additional: CustomMetadata {
+							// 100:1 MGR:KAR
+							xcm: XcmMetadata { proportional_amount_in_native_asset: 10_000_000_000 },
+						},
+						existential_deposit: Default::default(),
 						location: Some(
 							MultiLocation::new(
 								1,

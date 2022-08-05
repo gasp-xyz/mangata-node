@@ -8,7 +8,6 @@ pub mod fee {
 	use smallvec::smallvec;
 	use sp_runtime::Perbill;
 
-	pub const MGX_BASE_EXISTENTIAL_DEPOSIT: u128 = 10_000_000_000_000_000_000;
 	pub const ROC_MGR_SCALE_FACTOR_UNADJUSTED: u128 = 10_000_000_000u128; // 10_000 as KSM/MGX, with 6 decimals accounted for (12 - KSM, 18 - MGR)
 
 	// on-chain fees are 10x more expensive then ~real rate

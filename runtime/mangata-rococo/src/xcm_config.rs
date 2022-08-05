@@ -1,7 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-// `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
-#![recursion_limit = "256"]
 
+use crate::{AssetMetadataOf, UNIT};
 use codec::{Decode, Encode};
 use cumulus_primitives_core::ParaId;
 use frame_support::{
@@ -204,22 +203,15 @@ parameter_types! {
 
 type AssetRegistryOf<T> = orml_asset_registry::Pallet<T>;
 
-pub struct ConversionRateProvider<T, FixedRate>(sp_std::marker::PhantomData<(T, FixedRate)>);
-impl<T, FixedRate> FixedConversionRateProvider for ConversionRateProvider<T, FixedRate>
-where
-	T: orml_asset_registry::Config,
-	T::Balance: Into<u128>,
-	FixedRate: Get<u128>,
-{
+pub struct ConversionRateProvider<FixedRate>(sp_std::marker::PhantomData<(FixedRate)>);
+impl<FixedRate: Get<u128>> FixedConversionRateProvider for ConversionRateProvider<FixedRate> {
 	fn get_fee_per_second(location: &MultiLocation) -> Option<u128> {
-		if let Some(asset_id) = AssetRegistryOf::<T>::location_to_asset_id(location) {
-			let metadata =
-				AssetRegistryOf::<T>::metadata(asset_id).expect("registered asset has metadata");
-			let existential_deposit = metadata.existential_deposit.into();
-			let rate = FixedU128::saturating_from_rational(
-				existential_deposit,
-				MGX_BASE_EXISTENTIAL_DEPOSIT,
-			);
+		if let Some(asset_id) = AssetRegistryOf::<Runtime>::location_to_asset_id(location) {
+			let metadata: AssetMetadataOf = AssetRegistryOf::<Runtime>::metadata(asset_id)
+				.expect("registered asset has metadata");
+			let proportional_amount: Balance =
+				metadata.additional.xcm.proportional_amount_in_native_asset;
+			let rate = FixedU128::saturating_from_rational(proportional_amount, UNIT);
 			let fee_per_second = rate.saturating_mul_int(FixedRate::get());
 			log::debug!(
 				target: "xcm::weight", "fee_per_second: asset: {:?}, rate: {:?}, fps:{:?}",
@@ -233,7 +225,7 @@ where
 
 pub type Trader = (
 	AssetRegistryTrader<
-		FixedRateAssetRegistryTrader<ConversionRateProvider<Runtime, BaseRate>>,
+		FixedRateAssetRegistryTrader<ConversionRateProvider<BaseRate>>,
 		ToTreasury,
 	>,
 	FixedRateOfFungible<RocPerSecond, ToTreasury>,

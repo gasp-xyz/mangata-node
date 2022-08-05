@@ -279,6 +279,52 @@ benchmarks! {
 
 	}
 
+	claim_rewards_all_v2 {
+		// 1. create
+		// 2. promote
+		// 3. mint
+		// 4. wait some
+		// 5. claim some
+
+
+		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
+		let initial_amount:mangata_primitives::Balance = 1000000000000000000000;
+		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
+		let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+		let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+		let non_native_asset_id2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+		let liquidity_asset_id = non_native_asset_id2 + 1;
+
+		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), 40000000000000000000, non_native_asset_id2.into(), 60000000000000000000).unwrap();
+		Xyk::<T>::promote_pool(RawOrigin::Root.into(), liquidity_asset_id).unwrap();
+
+		assert_eq!(
+			<T as Config>::Currency::total_issuance(liquidity_asset_id.into()),
+			<T as Config>::Currency::free_balance(liquidity_asset_id.into(), &caller),
+		);
+
+		let total_minted_liquidity = <T as Config>::Currency::total_issuance(liquidity_asset_id.into());
+		let half_of_minted_liquidity = total_minted_liquidity.into() / 2_u128;
+		let quater_of_minted_liquidity = total_minted_liquidity.into() / 4_u128;
+
+		<<T as Config>::PoolPromoteApi as ComputeIssuance>::compute_issuance(1);
+		frame_system::Pallet::<T>::set_block_number(T::RewardsDistributionPeriod::get().into());
+		Xyk::<T>::activate_liquidity_v2(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id.into(), quater_of_minted_liquidity, None).unwrap();
+
+		assert!(Xyk::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).rewards_not_yet_claimed > 0);
+
+	}: claim_rewards_all_v2(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id)
+
+	verify {
+
+
+		assert_ne!(
+			Xyk::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).rewards_not_yet_claimed,
+			0
+		);
+
+	}
+
 
 	promote_pool {
 		// NOTE: that duplicates test XYK::liquidity_rewards_claim_W
@@ -326,9 +372,15 @@ benchmarks! {
 		);
 
 		let total_minted_liquidity = <T as Config>::Currency::total_issuance(liquidity_asset_id.into());
+		let half_of_minted_liquidity = total_minted_liquidity.into() / 2_u128;
 		let quater_of_minted_liquidity = total_minted_liquidity.into() / 4_u128;
 
 		Xyk::<T>::activate_liquidity_v2(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id.into(), quater_of_minted_liquidity, None).unwrap();
+
+		assert_eq!(
+			Xyk::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).activated_amount,
+			quater_of_minted_liquidity
+		);
 
 		T::PoolPromoteApi::compute_issuance(1_u32).unwrap();
 		frame_system::Pallet::<T>::set_block_number(T::RewardsDistributionPeriod::get().into());
@@ -344,11 +396,16 @@ benchmarks! {
 	}: activate_liquidity_v2(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), quater_of_minted_liquidity, None)
 	verify {
 
-		Xyk::<T>::activate_liquidity_v2(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id.into(), 2_u128*quater_of_minted_liquidity, None).unwrap();
-		assert_err!(
-			Xyk::<T>::activate_liquidity_v2(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id, 1_u32.into(), None),
-			Error::<T>::NotEnoughAssets
+		assert_eq!(
+			Xyk::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).activated_amount,
+			half_of_minted_liquidity
 		)
+
+		// Xyk::<T>::activate_liquidity_v2(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id.into(), 2_u128*quater_of_minted_liquidity, None).unwrap();
+		// assert_err!(
+		// 	Xyk::<T>::activate_liquidity_v2(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id, 1_u32.into(), None),
+		// 	Error::<T>::NotEnoughAssets
+		// )
 	}
 
 	deactivate_liquidity_v2 {
@@ -395,9 +452,6 @@ benchmarks! {
 	}: deactivate_liquidity_v2(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), quater_of_minted_liquidity.into())
 	verify {
 	}
-
-
-
 
 	impl_benchmark_test_suite!(Xyk, crate::mock::new_benchmark_ext(), crate::mock::Test)
 }

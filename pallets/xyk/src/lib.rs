@@ -785,6 +785,24 @@ pub mod pallet {
 
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::activate_liquidity())]
+		pub fn activate_liquidity(
+			origin: OriginFor<T>,
+			liquidity_token_id: TokenId,
+			amount: Balance,
+			use_balance_from: Option<ActivateKind>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			<Self as XykFunctionsTrait<T::AccountId>>::activate_liquidity(
+				sender,
+				liquidity_token_id,
+				amount,
+				use_balance_from,
+			)
+		}
+
+		#[transactional]
+		#[pallet::weight(T::WeightInfo::activate_liquidity())]
 		pub fn deactivate_liquidity(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,

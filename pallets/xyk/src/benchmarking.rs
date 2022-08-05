@@ -114,18 +114,36 @@ benchmarks! {
 		let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 		let non_native_asset_id2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 		let liquidity_asset_id = non_native_asset_id2 + 1;
-		let initial_liquidity_amount = 40000000000000000000_u128 / 2_u128 + 60000000000000000000_u128 / 2_u128;
+		let pool_create_first_token_amount = 40000000000000000000_u128;
+		let pool_create_second_token_amount = 60000000000000000000_u128;
+		let pool_mint_first_token_amount = 20000000000000000000_u128;
+		let pool_mint_second_token_amount = 30000000000000000001_u128;
 
-		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), 40000000000000000000, non_native_asset_id2.into(), 60000000000000000000).unwrap();
+
+		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(),
+			non_native_asset_id1.into(),
+			pool_create_first_token_amount,
+			non_native_asset_id2.into(),
+			pool_create_second_token_amount
+		).unwrap();
+		let initial_liquidity_amount = <T as Config>::Currency::total_issuance(liquidity_asset_id.into());
+
+
 		Xyk::<T>::promote_pool(RawOrigin::Root.into(), liquidity_asset_id).unwrap();
 
+		Xyk::<T>::mint_liquidity(
+			RawOrigin::Signed(caller.clone().into()).into(),
+			non_native_asset_id1.into(),
+			non_native_asset_id2.into(),
+			pool_mint_first_token_amount,
+			pool_mint_second_token_amount,
+		).unwrap();
 
-		assert_eq!(
-			<T as Config>::Currency::total_issuance(liquidity_asset_id.into()),
-			initial_liquidity_amount.into()
+		let liquidity_amount_after_first_mint = <T as Config>::Currency::total_issuance(liquidity_asset_id.into());
+
+		assert!(
+			liquidity_amount_after_first_mint > initial_liquidity_amount
 		);
-
-		Xyk::<T>::mint_liquidity(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), non_native_asset_id2.into(), 20000000000000000000, 30000000000000000001).unwrap();
 
 		T::PoolPromoteApi::compute_issuance(1_u32).unwrap();
 		frame_system::Pallet::<T>::set_block_number(T::RewardsDistributionPeriod::get().into());
@@ -133,10 +151,11 @@ benchmarks! {
 
 	}: mint_liquidity(RawOrigin::Signed(caller.clone().into()), non_native_asset_id1.into(), non_native_asset_id2.into(), 20000000000000000000, 30000000000000000001)
 	verify {
-		assert_eq!(
-			<T as Config>::Currency::total_issuance(liquidity_asset_id.into()),
-			100000000000000000000_u128.into()
-		);
+		let liquidity_amount_after_second_mint = <T as Config>::Currency::total_issuance(liquidity_asset_id.into());
+
+		assert!(
+			liquidity_amount_after_second_mint > liquidity_amount_after_first_mint
+		)
 	}
 
 	// mint_liquidity_using_vesting_native_tokens {

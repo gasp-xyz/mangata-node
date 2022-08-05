@@ -52,16 +52,17 @@ benchmarks! {
 		let dummy_end_block = 10_u128;
 
 		for _ in 0..n{
-			<T as Config>::VestingProvider::lock_tokens(&caller, asset_id.into(), dummy_lock_amount.into(), dummy_end_block.into()).unwrap();
+			<T as Config>::VestingProvider::lock_tokens(&caller, asset_id.into(), dummy_lock_amount.into(), None, dummy_end_block.into()).unwrap();
 		}
-		<T as Config>::VestingProvider::lock_tokens(&caller, asset_id.into(), locked_amount.into(), lock_ending_block_as_balance.into()).unwrap();
+		<T as Config>::VestingProvider::lock_tokens(&caller, asset_id.into(), locked_amount.into(), None, lock_ending_block_as_balance.into()).unwrap();
+		let now: BlockNumber = <frame_system::Pallet<T>>::block_number().saturated_into();
 
 	}: {assert_ok!(MultiPurposeLiquidity::<T>::reserve_vesting_liquidity_tokens(RawOrigin::Signed(caller.clone().into()).into(), asset_id, reserve_amount));}
 	verify{
 		assert_eq!(<T as Config>::Tokens::locked_balance(asset_id.into(), &caller).into(), 343600);
 		assert_eq!(<T as Config>::Tokens::reserved_balance(asset_id.into(), &caller).into(), 200000);
 		assert_eq!(MultiPurposeLiquidity::<T>::get_reserve_status(caller.clone(), asset_id).relock_amount, reserve_amount);
-		assert_eq!(MultiPurposeLiquidity::<T>::get_relock_status(caller, asset_id)[0], RelockStatusInfo{amount: reserve_amount, ending_block_as_balance: lock_ending_block_as_balance});
+		assert_eq!(MultiPurposeLiquidity::<T>::get_relock_status(caller, asset_id)[0], RelockStatusInfo{amount: reserve_amount, starting_block: now + 1, ending_block_as_balance: lock_ending_block_as_balance});
 	}
 
 	unreserve_and_relock_instance{
@@ -86,19 +87,21 @@ benchmarks! {
 		let dummy_end_block = 10_u128;
 
 		for _ in 0..n{
-			<T as Config>::VestingProvider::lock_tokens(&caller, asset_id.into(), dummy_lock_amount.into(), dummy_end_block.into()).unwrap();
+			<T as Config>::VestingProvider::lock_tokens(&caller, asset_id.into(), dummy_lock_amount.into(), None, dummy_end_block.into()).unwrap();
 		}
-		<T as Config>::VestingProvider::lock_tokens(&caller, asset_id.into(), locked_amount.into(), lock_ending_block_as_balance.into()).unwrap();
+		<T as Config>::VestingProvider::lock_tokens(&caller, asset_id.into(), locked_amount.into(), None, lock_ending_block_as_balance.into()).unwrap();
+
+		let now: BlockNumber = <frame_system::Pallet<T>>::block_number().saturated_into();
 
 		MultiPurposeLiquidity::<T>::reserve_vesting_liquidity_tokens(RawOrigin::Signed(caller.clone().into()).into(), asset_id, reserve_amount).unwrap();
 		assert_eq!(<T as Config>::Tokens::locked_balance(asset_id.into(), &caller).into(), 348000);
 		assert_eq!(<T as Config>::Tokens::reserved_balance(asset_id.into(), &caller).into(), 200000);
 		assert_eq!(MultiPurposeLiquidity::<T>::get_reserve_status(caller.clone(), asset_id).relock_amount, reserve_amount);
-		assert_eq!(MultiPurposeLiquidity::<T>::get_relock_status(caller.clone(), asset_id)[0], RelockStatusInfo{amount: reserve_amount, ending_block_as_balance: lock_ending_block_as_balance});
+		assert_eq!(MultiPurposeLiquidity::<T>::get_relock_status(caller.clone(), asset_id)[0], RelockStatusInfo{amount: reserve_amount, starting_block: now, ending_block_as_balance: lock_ending_block_as_balance});
 
 	}: {assert_ok!(MultiPurposeLiquidity::<T>::unreserve_and_relock_instance(RawOrigin::Signed(caller.clone().into()).into(), asset_id, 0u32));}
 	verify{
-		assert_eq!(<T as Config>::Tokens::locked_balance(asset_id.into(), &caller).into(), 542900);
+		assert_eq!(<T as Config>::Tokens::locked_balance(asset_id.into(), &caller).into(), 542700);
 		assert_eq!(<T as Config>::Tokens::reserved_balance(asset_id.into(), &caller).into(), 0);
 		assert_eq!(MultiPurposeLiquidity::<T>::get_reserve_status(caller.clone(), asset_id).relock_amount, Balance::zero());
 		assert_eq!(MultiPurposeLiquidity::<T>::get_relock_status(caller, asset_id), vec![]);

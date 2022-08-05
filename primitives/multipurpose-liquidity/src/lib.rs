@@ -6,13 +6,13 @@ use sp_runtime::RuntimeDebug;
 #[derive(Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum ActivateKind {
 	AvailableBalance,
-	StakedUnactivatedLiquidity,
+	StakedUnactivatedReserves,
 	UnspentReserves,
 }
 
 #[derive(Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum BondKind {
 	AvailableBalance,
-	ActivatedUnstakedLiquidity,
+	ActivatedUnstakedReserves,
 	UnspentReserves,
 }

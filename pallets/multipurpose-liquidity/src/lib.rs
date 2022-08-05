@@ -387,7 +387,7 @@ impl<T: Config> StakingReservesProviderTrait for Pallet<T> {
 					Default::default(),
 				)
 				.is_ok() && reserve_status.staked_unactivated_reserves.checked_add(amount).is_some(),
-			BondKind::ActivatedUnstakedLiquidity =>
+			BondKind::ActivatedUnstakedReserves =>
 				reserve_status.activated_unstaked_reserves.checked_sub(amount).is_some() &&
 					reserve_status.staked_and_activated_reserves.checked_add(amount).is_some(),
 			BondKind::UnspentReserves =>
@@ -414,7 +414,7 @@ impl<T: Config> StakingReservesProviderTrait for Pallet<T> {
 					.ok_or(Error::<T>::MathError)?;
 				T::Tokens::reserve(token_id.into(), &account_id, amount.into())?;
 			},
-			BondKind::ActivatedUnstakedLiquidity => {
+			BondKind::ActivatedUnstakedReserves => {
 				reserve_status.activated_unstaked_reserves = reserve_status
 					.activated_unstaked_reserves
 					.checked_sub(amount)
@@ -545,7 +545,7 @@ impl<T: Config> ActivationReservesProviderTrait for Pallet<T> {
 					Default::default(),
 				)
 				.is_ok() && reserve_status.activated_unstaked_reserves.checked_add(amount).is_some(),
-			ActivateKind::StakedUnactivatedLiquidity =>
+			ActivateKind::StakedUnactivatedReserves =>
 				reserve_status.staked_unactivated_reserves.checked_sub(amount).is_some() &&
 					reserve_status.staked_and_activated_reserves.checked_add(amount).is_some(),
 			ActivateKind::UnspentReserves =>
@@ -572,7 +572,7 @@ impl<T: Config> ActivationReservesProviderTrait for Pallet<T> {
 					.ok_or(Error::<T>::MathError)?;
 				T::Tokens::reserve(token_id.into(), &account_id, amount.into())?;
 			},
-			ActivateKind::StakedUnactivatedLiquidity => {
+			ActivateKind::StakedUnactivatedReserves => {
 				reserve_status.staked_unactivated_reserves = reserve_status
 					.staked_unactivated_reserves
 					.checked_sub(amount)
@@ -599,7 +599,7 @@ impl<T: Config> ActivationReservesProviderTrait for Pallet<T> {
 	}
 
 	fn deactivate(token_id: TokenId, account_id: &Self::AccountId, amount: Balance) -> Balance {
-		// From ActivatedUnstakedLiquidity goes to either free balance or unspent reserves depending on relock_amount
+		// From ActivatedUnstakedReserves goes to either free balance or unspent reserves depending on relock_amount
 		// From staked_and_activated_reserves goes to staked always.
 
 		let mut reserve_status = Pallet::<T>::get_reserve_status(account_id, token_id);

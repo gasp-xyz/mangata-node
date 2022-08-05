@@ -306,7 +306,7 @@ fn bond_from_activated_unstaked_liquidity_works() {
 			asset_id,
 			&caller,
 			bond_amount,
-			Some(BondKind::ActivatedUnstakedLiquidity)
+			Some(BondKind::ActivatedUnstakedReserves)
 		));
 
 		let reserve_status = Pallet::<Test>::get_reserve_status(caller.clone(), asset_id);
@@ -514,7 +514,7 @@ fn activate_from_staked_unactivated_liquidity_works() {
 			asset_id,
 			&caller,
 			activate_amount,
-			Some(ActivateKind::StakedUnactivatedLiquidity)
+			Some(ActivateKind::StakedUnactivatedReserves)
 		));
 
 		let reserve_status = Pallet::<Test>::get_reserve_status(caller.clone(), asset_id);

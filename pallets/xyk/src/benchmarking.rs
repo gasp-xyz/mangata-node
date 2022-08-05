@@ -250,30 +250,22 @@ benchmarks! {
 		let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 		let non_native_asset_id2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 		let liquidity_asset_id = non_native_asset_id2 + 1;
-		let initial_liquidity_amount = 40000000000000000000_u128 / 2_u128 + 60000000000000000000_u128 / 2_u128;
+		let pool_create_first_token_amount = 40000000000000000000_u128;
+		let pool_create_second_token_amount = 60000000000000000000_u128;
+		let pool_mint_first_token_amount = 20000000000000000000_u128;
+		let pool_mint_second_token_amount = 30000000000000000001_u128;
 
-		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), 40000000000000000000, non_native_asset_id2.into(), 60000000000000000000).unwrap();
+		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), pool_create_first_token_amount, non_native_asset_id2.into(), pool_create_second_token_amount).unwrap();
 		Xyk::<T>::promote_pool(RawOrigin::Root.into(), liquidity_asset_id).unwrap();
 
-		assert_eq!(
-			<T as Config>::Currency::total_issuance(liquidity_asset_id.into()),
-			initial_liquidity_amount.into()
-		);
+
 		assert!(Xyk::<T>::liquidity_pool(liquidity_asset_id).is_some());
 
-		let total_issuance :u128 = <T as Config>::Currency::total_issuance(liquidity_asset_id.into()).into();
-
-		Xyk::<T>::mint_liquidity(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), non_native_asset_id2.into(), 20000000000000000000, 30000000000000000001).unwrap();
-
-		let total_issuance :u128 = <T as Config>::Currency::total_issuance(liquidity_asset_id.into()).into();
-		assert_ne!(
-			<T as Config>::Currency::total_issuance(liquidity_asset_id.into()),
-			initial_liquidity_amount.into()
-		);
-
-		let total_liquidity_after_minting: u128 = <T as Config>::Currency::total_issuance(liquidity_asset_id.into()).into();
+		Xyk::<T>::mint_liquidity(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), non_native_asset_id2.into(), pool_mint_first_token_amount, pool_mint_second_token_amount).unwrap();
 
 		forward_to_next_session!();
+		let total_liquidity_after_minting = <T as Config>::Currency::total_issuance(liquidity_asset_id.into()).into();
+
 
 	}: burn_liquidity(RawOrigin::Signed(caller.clone().into()), non_native_asset_id1.into(), non_native_asset_id2.into(), total_liquidity_after_minting)
 	verify {
@@ -317,17 +309,23 @@ benchmarks! {
 		// frame_system::Pallet::<T>::set_block_number((2*T::RewardsDistributionPeriod::get()).into());
 		// Xyk::<T>::activate_liquidity_v2(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id.into(), quater_of_minted_liquidity, None).unwrap();
 
-		assert!(Xyk::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).rewards_not_yet_claimed > 0);
+		let available_rewards_before = Xyk::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).rewards_not_yet_claimed;
+
+		assert!(available_rewards_before > 0);
 
 	}: claim_rewards_v2(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id, 1)
 
 	verify {
 
+		let available_rewards_now = Xyk::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).rewards_not_yet_claimed;
 
-		assert_ne!(
-			Xyk::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).rewards_not_yet_claimed,
-			0
+		// some rewards has been claimed
+		assert!(
+			available_rewards_now < available_rewards_before
 		);
+
+		// some rewards still waits to be claimed
+		assert!( available_rewards_now > 0);
 
 	}
 
@@ -370,7 +368,7 @@ benchmarks! {
 	verify {
 
 
-		assert_ne!(
+		assert_eq!(
 			Xyk::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).rewards_not_yet_claimed,
 			0
 		);
@@ -403,7 +401,7 @@ benchmarks! {
 		// activate :
 		// 1 crate pool
 		// 2 promote pool
-		// 3 mint some tokens
+		// 3 activate some
 		// 4 wait some time
 		// 5 mint some
 
@@ -423,9 +421,9 @@ benchmarks! {
 			<T as Config>::Currency::free_balance(liquidity_asset_id.into(), &caller),
 		);
 
-		let total_minted_liquidity = <T as Config>::Currency::total_issuance(liquidity_asset_id.into());
-		let half_of_minted_liquidity = total_minted_liquidity.into() / 2_u128;
-		let quater_of_minted_liquidity = total_minted_liquidity.into() / 4_u128;
+		let total_minted_liquidity: u128 = <T as Config>::Currency::total_issuance(liquidity_asset_id.into()).into();
+		let half_of_minted_liquidity = total_minted_liquidity / 2_u128;
+		let quater_of_minted_liquidity = total_minted_liquidity / 4_u128;
 
 		Xyk::<T>::activate_liquidity_v2(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id.into(), quater_of_minted_liquidity, None).unwrap();
 
@@ -436,14 +434,6 @@ benchmarks! {
 
 		forward_to_next_session!();
 
-		assert!(
-			<T as Config>::Currency::free_balance(liquidity_asset_id.into(), &caller).into() > 0u128
-		);
-
-		assert!(
-			<T as Config>::Currency::free_balance(liquidity_asset_id.into(), &caller) < total_minted_liquidity
-		);
-
 	}: activate_liquidity_v2(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), quater_of_minted_liquidity, None)
 	verify {
 
@@ -451,12 +441,6 @@ benchmarks! {
 			Xyk::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).activated_amount,
 			half_of_minted_liquidity
 		)
-
-		// Xyk::<T>::activate_liquidity_v2(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id.into(), 2_u128*quater_of_minted_liquidity, None).unwrap();
-		// assert_err!(
-		// 	Xyk::<T>::activate_liquidity_v2(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id, 1_u32.into(), None),
-		// 	Error::<T>::NotEnoughAssets
-		// )
 	}
 
 	deactivate_liquidity_v2 {
@@ -487,20 +471,19 @@ benchmarks! {
 		let quater_of_minted_liquidity = total_minted_liquidity.into() / 4_u128;
 
 		Xyk::<T>::activate_liquidity_v2(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id.into(), half_of_minted_liquidity, None).unwrap();
+		assert_eq!(
+			Xyk::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).activated_amount,
+			half_of_minted_liquidity
+		);
 
 		forward_to_next_session!();
 
-		assert!(
-			<T as Config>::Currency::free_balance(liquidity_asset_id.into(), &caller).into() > 0u128
-		);
-
-		assert!(
-			<T as Config>::Currency::free_balance(liquidity_asset_id.into(), &caller) < total_minted_liquidity
-		);
-
-
 	}: deactivate_liquidity_v2(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), quater_of_minted_liquidity.into())
 	verify {
+		assert_eq!(
+			Xyk::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).activated_amount,
+			quater_of_minted_liquidity
+		);
 	}
 
 	impl_benchmark_test_suite!(Xyk, crate::mock::new_benchmark_ext(), crate::mock::Test)

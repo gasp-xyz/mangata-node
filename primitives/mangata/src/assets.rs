@@ -18,8 +18,8 @@ use crate::Balance;
 	MaxEncodedLen,
 )]
 pub struct CustomMetadata {
-	/// XCM-related metadata.
-	pub xcm: XcmMetadata,
+	/// XCM-related metadata, optional.
+	pub xcm: Option<XcmMetadata>,
 }
 
 #[derive(
@@ -37,7 +37,6 @@ pub struct CustomMetadata {
 	MaxEncodedLen,
 )]
 pub struct XcmMetadata {
-	/// defines amount equivalent to 1 Unit of native asset,
-	/// used to compute the fee charged for every second that an XCM message takes to execute.
-	pub proportional_amount_in_native_asset: Balance,
+	/// The fee charged for every second that an XCM message takes to execute.
+	pub fee_per_second: u128,
 }

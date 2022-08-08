@@ -67,8 +67,7 @@ pub mod asset_registry {
 						name: b"Rococo Native".to_vec(),
 						symbol: b"ROC".to_vec(),
 						additional: CustomMetadata {
-							// 10_000:1 MGR:ROC
-							xcm: XcmMetadata { proportional_amount_in_native_asset: 100_000_000 },
+							xcm: Some(XcmMetadata { fee_per_second: roc_per_second() }),
 						},
 						existential_deposit: Default::default(),
 						location: None,
@@ -93,8 +92,8 @@ pub mod asset_registry {
 						name: b"Karura".to_vec(),
 						symbol: b"KAR".to_vec(),
 						additional: CustomMetadata {
-							// 100:1 MGR:KAR
-							xcm: XcmMetadata { proportional_amount_in_native_asset: 10_000_000_000 },
+							// 100:1 KAR:ROC
+							xcm: Some(XcmMetadata { fee_per_second: roc_per_second() * 100 }),
 						},
 						existential_deposit: Default::default(),
 						location: Some(

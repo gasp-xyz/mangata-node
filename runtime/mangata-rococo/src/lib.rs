@@ -38,6 +38,7 @@ use orml_traits::{
 pub use pallet_sudo;
 use pallet_transaction_payment::{Multiplier, OnChargeTransaction, TargetedFeeAdjustment};
 pub use pallet_verifier;
+use pallet_vesting_mangata_rpc_runtime_api::VestingInfosWithLockedAt;
 // Polkadot Imports
 use polkadot_runtime_common::BlockHashCount;
 use scale_info::TypeInfo;

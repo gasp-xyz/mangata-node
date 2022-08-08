@@ -1,6 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use crate::{AssetMetadataOf, UNIT};
 use codec::{Decode, Encode};
 use cumulus_primitives_core::ParaId;
 use frame_support::{
@@ -17,7 +16,6 @@ use orml_traits::{
 use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use sp_runtime::{FixedPointNumber, FixedU128};
 use sp_std::{marker::PhantomData, prelude::*};
 use xcm::latest::prelude::*;
 use xcm_builder::{
@@ -31,9 +29,9 @@ use xcm_executor::{traits::DropAssets, Assets, XcmExecutor};
 
 use super::{
 	constants::{fee::*, parachains},
-	AccountId, Balance, Call, Convert, Event, ExistentialDeposits, Origin, ParachainInfo,
-	ParachainSystem, PolkadotXcm, Runtime, TokenId, Tokens, TreasuryAccount, UnknownTokens,
-	XcmpQueue, MGR_TOKEN_ID, ROC_TOKEN_ID,
+	AccountId, AssetMetadataOf, Balance, Call, Convert, Event, ExistentialDeposits, Origin,
+	ParachainInfo, ParachainSystem, PolkadotXcm, Runtime, TokenId, Tokens, TreasuryAccount,
+	UnknownTokens, XcmpQueue, MGR_TOKEN_ID, ROC_TOKEN_ID,
 };
 
 // Make the WASM binary available.
@@ -203,31 +201,27 @@ parameter_types! {
 
 type AssetRegistryOf<T> = orml_asset_registry::Pallet<T>;
 
-pub struct ConversionRateProvider<FixedRate>(sp_std::marker::PhantomData<(FixedRate)>);
-impl<FixedRate: Get<u128>> FixedConversionRateProvider for ConversionRateProvider<FixedRate> {
+pub struct FeePerSecondProvider;
+impl FixedConversionRateProvider for FeePerSecondProvider {
 	fn get_fee_per_second(location: &MultiLocation) -> Option<u128> {
 		if let Some(asset_id) = AssetRegistryOf::<Runtime>::location_to_asset_id(location) {
 			let metadata: AssetMetadataOf = AssetRegistryOf::<Runtime>::metadata(asset_id)
 				.expect("registered asset has metadata");
-			let proportional_amount: Balance =
-				metadata.additional.xcm.proportional_amount_in_native_asset;
-			let rate = FixedU128::saturating_from_rational(proportional_amount, UNIT);
-			let fee_per_second = rate.saturating_mul_int(FixedRate::get());
-			log::debug!(
-				target: "xcm::weight", "fee_per_second: asset: {:?}, rate: {:?}, fps:{:?}",
-				asset_id, rate, fee_per_second
-			);
-			return Some(fee_per_second)
+			if let Some(xcm_meta) = metadata.additional.xcm {
+				let fee_per_second: u128 = xcm_meta.fee_per_second;
+				log::debug!(
+					target: "xcm::weight", "fee_per_second: asset: {:?}, fps:{:?}",
+					asset_id, fee_per_second
+				);
+				return Some(fee_per_second)
+			}
 		}
 		return None
 	}
 }
 
 pub type Trader = (
-	AssetRegistryTrader<
-		FixedRateAssetRegistryTrader<ConversionRateProvider<BaseRate>>,
-		ToTreasury,
-	>,
+	AssetRegistryTrader<FixedRateAssetRegistryTrader<FeePerSecondProvider>, ToTreasury>,
 	FixedRateOfFungible<RocPerSecond, ToTreasury>,
 	FixedRateOfFungible<MgrPerSecond, ToTreasury>,
 	FixedRateOfFungible<KarPerSecond, ToTreasury>,

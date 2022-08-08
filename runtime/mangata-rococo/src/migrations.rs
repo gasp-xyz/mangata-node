@@ -15,10 +15,7 @@ mod deprecated {
 
 pub mod asset_registry {
 	use super::*;
-	use frame_support::{
-		storage::unhashed::kill_prefix,
-		traits::OnRuntimeUpgrade,
-	};
+	use frame_support::{storage::unhashed::kill_prefix, traits::OnRuntimeUpgrade};
 	use sp_io::{hashing::twox_128, KillStorageResult};
 
 	pub struct AssetRegistryMigration;

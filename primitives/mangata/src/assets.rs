@@ -1,6 +1,5 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
-use crate::Balance;
 
 /// A type describing our custom additional metadata stored in the orml-asset-registry.
 #[derive(

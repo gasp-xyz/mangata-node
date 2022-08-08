@@ -531,7 +531,7 @@ impl<T: Config> Pallet<T> {
 
 		let staking_issuance = issuance_config.staking_split * current_round_issuance;
 
-		let promoted_pools_count = <Self as PoolPromoteApi>::len_v2();
+		let promoted_pools_count = T::ActivedPoolQueryApiType::get_pool_activate_length();
 
 		let liquidity_mining_issuance_per_pool = if promoted_pools_count == 0 {
 			liquidity_mining_issuance
@@ -543,7 +543,8 @@ impl<T: Config> Pallet<T> {
 
 		// benchmark with max of X prom pools
 		for (liquidity_token_id, v) in PromotedPoolsRewardsV2::<T>::iter() {
-			let activated_amount =
+			if T::ActivedPoolQueryApiType::get_pool_activate_amount(liquidity_token_id).is_some(){
+				let activated_amount =
 				T::ActivedPoolQueryApiType::get_pool_activate_amount(liquidity_token_id)
 					.ok_or_else(|| DispatchError::from(Error::<T>::UnknownPool))?;
 
@@ -556,6 +557,8 @@ impl<T: Config> Pallet<T> {
 				.ok_or_else(|| DispatchError::from(Error::<T>::MathError))?;
 
 			PromotedPoolsRewardsV2::<T>::insert(liquidity_token_id, rewards_per_liquidity);
+			}
+			
 		}
 
 		{

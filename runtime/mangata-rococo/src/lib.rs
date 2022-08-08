@@ -1165,6 +1165,8 @@ mod benches {
 	);
 }
 
+impl pallet_xyk::XykBenchmarkingConfig for Runtime {}
+
 impl_runtime_apis! {
 
 	impl ver_api::VerApi<Block> for Runtime {

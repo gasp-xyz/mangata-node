@@ -296,7 +296,7 @@ impl pallet_issuance::Config for Test {
 	type ActivedPoolQueryApiType = XykStorage;
 }
 
-impl crate::XykBenchmarkingConfig for Test {}
+impl XykBenchmarkingConfig for Test {}
 
 parameter_types! {
 	pub const LiquidityMiningIssuanceVaultId: PalletId = PalletId(*b"py/lqmiv");
@@ -426,19 +426,9 @@ impl<T: Config> Pallet<T> {
 
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup.
-#[cfg(not(feature = "runtime-benchmarks"))]
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut ext: sp_io::TestExternalities =
 		system::GenesisConfig::default().build_storage::<Test>().unwrap().into();
 	ext.execute_with(|| System::set_block_number(1));
-	ext
-}
-
-#[cfg(feature = "runtime-benchmarks")]
-pub fn new_benchmark_ext() -> sp_io::TestExternalities {
-	let mut ext: sp_io::TestExternalities =
-		system::GenesisConfig::default().build_storage::<Test>().unwrap().into();
-	ext.execute_with(|| System::set_block_number(1));
-	ext.execute_with(|| Issuance::initialize());
 	ext
 }

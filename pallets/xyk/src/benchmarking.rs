@@ -32,6 +32,14 @@ use crate::Pallet as Xyk;
 const MILION: u128 = 1_000__000_000__000_000;
 
 #[macro_export]
+macro_rules! init {
+	() => {
+		frame_system::Pallet::<T>::set_block_number(1_u32.into());
+		pallet_issuance::Pallet::<T>::initialize();
+	};
+}
+
+#[macro_export]
 macro_rules! forward_to_next_session {
 	() => {
 		let current_block: u32 = frame_system::Pallet::<T>::block_number().saturated_into::<u32>();
@@ -58,6 +66,7 @@ macro_rules! forward_to_next_session {
 benchmarks! {
 
 	create_pool {
+		init!();
 		let caller: T::AccountId = whitelisted_caller();
 		let first_asset_amount = MILION;
 		let second_asset_amount = MILION;
@@ -82,6 +91,7 @@ benchmarks! {
 	sell_asset {
 		// NOTE: duplicates test case XYK::buy_and_burn_sell_none_have_mangata_pair
 
+		init!();
 		let caller: T::AccountId = whitelisted_caller();
 		let initial_amount:mangata_primitives::Balance = 1000000000000000;
 		let expected_amount = 0;
@@ -104,6 +114,7 @@ benchmarks! {
 	buy_asset {
 		// NOTE: duplicates test case XYK::buy_and_burn_buy_where_sold_has_mangata_pair
 
+		init!();
 		let caller: T::AccountId = whitelisted_caller();
 		let initial_amount:mangata_primitives::Balance = 1000000000000000;
 		let expected_amount = 0;
@@ -131,6 +142,7 @@ benchmarks! {
 		// 4. wait some,
 		// 5. mint – second mint is prob harder then 1st, as there are some data in
 
+		init!();
 		let caller: T::AccountId = whitelisted_caller();
 		let initial_amount:mangata_primitives::Balance = 1000000000000000000000;
 		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
@@ -181,6 +193,7 @@ benchmarks! {
 	mint_liquidity_using_vesting_native_tokens {
 		// NOTE: duplicates test case XYK::mint_W
 
+		init!();
 		let caller: T::AccountId = whitelisted_caller();
 		let initial_amount:mangata_primitives::Balance = 1000000000000000000000;
 		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
@@ -243,6 +256,7 @@ benchmarks! {
 		// 4. wait some,
 		// 5. burn all ( automatically unreserves )
 
+		init!();
 		let caller: T::AccountId = whitelisted_caller();
 		let initial_amount:mangata_primitives::Balance = 1000000000000000000000;
 		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
@@ -280,6 +294,7 @@ benchmarks! {
 		// 5. claim some
 
 
+		init!();
 		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
 		let initial_amount:mangata_primitives::Balance = 1000000000000000000000;
 		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
@@ -328,6 +343,7 @@ benchmarks! {
 		// 5. claim all
 
 
+		init!();
 		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
 		let initial_amount:mangata_primitives::Balance = 1000000000000000000000;
 		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
@@ -370,6 +386,8 @@ benchmarks! {
 
 	promote_pool {
 		// NOTE: that duplicates test XYK::liquidity_rewards_claim_W
+		//
+		init!();
 		let caller: T::AccountId = whitelisted_caller();
 		let initial_amount:mangata_primitives::Balance = 1000000000000;
 
@@ -397,6 +415,7 @@ benchmarks! {
 		// 4 wait some time
 		// 5 mint some
 
+		init!();
 		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
 		let initial_amount:mangata_primitives::Balance = 1000000000000000000000;
 		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
@@ -442,6 +461,7 @@ benchmarks! {
 		// 3 mint some tokens
 		// deactivate some tokens (all or some - to be checked)
 
+		init!();
 		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
 		let initial_amount:mangata_primitives::Balance = 1000000000000000000000;
 		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
@@ -478,5 +498,5 @@ benchmarks! {
 		);
 	}
 
-	impl_benchmark_test_suite!(Xyk, crate::mock::new_benchmark_ext(), crate::mock::Test)
+	impl_benchmark_test_suite!(Xyk, crate::mock::new_test_ext(), crate::mock::Test)
 }

@@ -1172,6 +1172,8 @@ impl parachain_staking::Config for Runtime {
 
 impl parachain_staking::StakingBenchmarkConfig for Runtime {}
 
+impl pallet_xyk::XykBenchmarkingConfig for Runtime {}
+
 parameter_types! {
 	pub const HistoryLimit: u32 = 10u32;
 

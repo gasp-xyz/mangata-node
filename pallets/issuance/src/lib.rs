@@ -531,34 +531,27 @@ impl<T: Config> Pallet<T> {
 
 		let staking_issuance = issuance_config.staking_split * current_round_issuance;
 
-		let promoted_pools_count = T::ActivedPoolQueryApiType::get_pool_activate_length();
-
-		let liquidity_mining_issuance_per_pool = if promoted_pools_count == 0 {
-			liquidity_mining_issuance
-		} else {
-			liquidity_mining_issuance / promoted_pools_count as u128
-		};
-
-		// TODO remove later
-
 		// benchmark with max of X prom pools
-		for (liquidity_token_id, v) in PromotedPoolsRewardsV2::<T>::iter() {
-			if T::ActivedPoolQueryApiType::get_pool_activate_amount(liquidity_token_id).is_some(){
-				let activated_amount =
-				T::ActivedPoolQueryApiType::get_pool_activate_amount(liquidity_token_id)
-					.ok_or_else(|| DispatchError::from(Error::<T>::UnknownPool))?;
+		let activated_pools: Vec<_> = PromotedPoolsRewardsV2::<T>::iter()
+			.filter_map(|(token_id, rewards)| {
+				T::ActivedPoolQueryApiType::get_pool_activate_amount(token_id)
+					.map(|activated_amount| (token_id, rewards, activated_amount))
+			})
+			.collect();
+		let mut liquidity_mining_issuance_per_pool = liquidity_mining_issuance;
 
+		if activated_pools.len() > 0 {
+			liquidity_mining_issuance_per_pool /= activated_pools.len() as u128;
+		}
+
+		for (token_id, rewards, activated_amount) in activated_pools {
 			let rewards_per_liquidity = liquidity_mining_issuance_per_pool
 				.checked_mul(10000)
-				.ok_or_else(|| DispatchError::from(Error::<T>::MathError))?
-				.checked_div(activated_amount)
-				.ok_or_else(|| DispatchError::from(Error::<T>::MathError))?
-				.checked_add(v)
+				.and_then(|x| x.checked_div(activated_amount))
+				.and_then(|x| x.checked_add(rewards))
 				.ok_or_else(|| DispatchError::from(Error::<T>::MathError))?;
 
-			PromotedPoolsRewardsV2::<T>::insert(liquidity_token_id, rewards_per_liquidity);
-			}
-			
+			PromotedPoolsRewardsV2::<T>::insert(token_id, rewards_per_liquidity);
 		}
 
 		{

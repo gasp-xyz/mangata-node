@@ -3376,7 +3376,7 @@ impl<T: Config> ActivedPoolQueryApi for Pallet<T> {
 	fn get_pool_activate_amount(liquidity_token_id: TokenId) -> Option<Balance> {
 		LiquidityMiningActivePoolV2::<T>::try_get(liquidity_token_id).ok()
 	}
-	fn get_pool_activate_length(liquidity_token_id: TokenId) -> usize {
+	fn get_pool_activate_length() -> usize {
 		LiquidityMiningActivePoolV2::<T>::iter_keys().count()
 	}
 }

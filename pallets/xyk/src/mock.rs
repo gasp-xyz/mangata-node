@@ -79,7 +79,10 @@ impl pallet_issuance::ComputeIssuance for MockPromotedPoolApi {
 
 impl ActivedPoolQueryApi for MockActivedPoolQueryApi {
 	fn get_pool_activate_amount(_liquidity_token_id: TokenId) -> Option<u128> {
-		return Some(1 as u128)
+		Some(1 as u128)
+	}
+	fn get_pool_activate_length() -> usize {
+		1_usize
 	}
 }
 

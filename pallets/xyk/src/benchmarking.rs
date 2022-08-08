@@ -275,7 +275,7 @@ benchmarks! {
 	claim_rewards_v2 {
 		// 1. create
 		// 2. promote
-		// 3. mint
+		// 3. activate
 		// 4. wait some
 		// 5. claim some
 
@@ -291,13 +291,12 @@ benchmarks! {
 		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), 40000000000000000000, non_native_asset_id2.into(), 60000000000000000000).unwrap();
 		Xyk::<T>::promote_pool(RawOrigin::Root.into(), liquidity_asset_id).unwrap();
 
-		assert_eq!(
-			<T as Config>::Currency::total_issuance(liquidity_asset_id.into()),
+		assert_eq!(			<T as Config>::Currency::total_issuance(liquidity_asset_id.into()),
 			<T as Config>::Currency::free_balance(liquidity_asset_id.into(), &caller),
 		);
 
 		let total_minted_liquidity = <T as Config>::Currency::total_issuance(liquidity_asset_id.into());
-		let half_of_minted_liquidity = total_minted_liquidity.into() / 2_u128;
+
 		let quater_of_minted_liquidity = total_minted_liquidity.into() / 4_u128;
 
 		forward_to_next_session!();
@@ -306,26 +305,18 @@ benchmarks! {
 
 		forward_to_next_session!();
 
-		// UNCOMMENT THIS TO FIX THE TEST
-		// Xyk::<T>::activate_liquidity_v2(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id.into(), quater_of_minted_liquidity, None).unwrap();
+		let available_rewards = Xyk::<T>::calculate_rewards_amount_v2(caller.clone(), liquidity_asset_id).unwrap();
 
-		let available_rewards_before = Xyk::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).rewards_not_yet_claimed;
-
-		assert!(available_rewards_before > 0);
+		assert!(available_rewards > 0);
 
 	}: claim_rewards_v2(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id, 1)
 
 	verify {
 
-		let available_rewards_now = Xyk::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).rewards_not_yet_claimed;
-
-		// some rewards has been claimed
-		assert!(
-			available_rewards_now < available_rewards_before
+		assert_eq!(
+			available_rewards - 1,
+			Xyk::<T>::calculate_rewards_amount_v2(caller.clone(), liquidity_asset_id).unwrap()
 		);
-
-		// some rewards still waits to be claimed
-		assert!( available_rewards_now > 0);
 
 	}
 
@@ -334,7 +325,7 @@ benchmarks! {
 		// 2. promote
 		// 3. mint
 		// 4. wait some
-		// 5. claim some
+		// 5. claim all
 
 
 		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
@@ -361,16 +352,23 @@ benchmarks! {
 
 		Xyk::<T>::activate_liquidity_v2(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id.into(), quater_of_minted_liquidity, None).unwrap();
 
-		assert!(Xyk::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).rewards_not_yet_claimed > 0);
+		forward_to_next_session!();
+
+		assert!(Xyk::<T>::calculate_rewards_amount_v2(caller.clone(), liquidity_asset_id).unwrap() > 0);
+
+		println!(
+			"REWARDS TO CLAIM {}",
+			Xyk::<T>::calculate_rewards_amount_v2(caller.clone(), liquidity_asset_id).unwrap()
+		);
+
 
 	}: claim_rewards_all_v2(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id)
 
 	verify {
 
-
 		assert_eq!(
-			Xyk::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).rewards_not_yet_claimed,
-			0
+			0,
+			Xyk::<T>::calculate_rewards_amount_v2(caller.clone(), liquidity_asset_id).unwrap()
 		);
 
 	}

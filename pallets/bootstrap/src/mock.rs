@@ -25,7 +25,7 @@ use frame_support::{
 };
 use mangata_primitives::{Amount, Balance, TokenId};
 use mp_multipurpose_liquidity::ActivateKind;
-use mp_traits::ActivationReservesProviderTrait;
+use mp_traits::{ActivationReservesProviderTrait, AssetMetadataMutationTrait};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter};
 use orml_traits::parameter_type_with_key;
 use sp_runtime::{Perbill, Percent};
@@ -121,6 +121,19 @@ impl pallet_vesting_mangata::Config for Test {
 	const MAX_VESTING_SCHEDULES: u32 = 28;
 }
 
+pub struct AssetMetadataMutation;
+impl AssetMetadataMutationTrait for AssetMetadataMutation {
+	fn set_asset_info(
+		_asset: TokenId,
+		_name: Option<Vec<u8>>,
+		_symbol: Option<Vec<u8>>,
+		_description: Option<Vec<u8>>,
+		_decimals: Option<u32>,
+	) -> DispatchResult {
+		Ok(())
+	}
+}
+
 impl pallet_xyk::Config for Test {
 	type Event = Event;
 	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
@@ -138,6 +151,7 @@ impl pallet_xyk::Config for Test {
 	type DisallowedPools = Bootstrap;
 	type DisabledTokens = Nothing;
 	type VestingProvider = Vesting;
+	type AssetMetadataMutation = AssetMetadataMutation;
 }
 
 impl BootstrapBenchmarkingConfig for Test {}

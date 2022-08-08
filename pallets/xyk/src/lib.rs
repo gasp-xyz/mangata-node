@@ -315,8 +315,16 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
 
+	#[cfg(feature = "runtime-benchmarks")]
+	pub trait XykBenchmarkingConfig: pallet_issuance::Config {}
+
+	#[cfg(not(feature = "runtime-benchmarks"))]
+	pub trait XykBenchmarkingConfig {}
+
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_assets_info::Config {
+	pub trait Config:
+		frame_system::Config + pallet_assets_info::Config + XykBenchmarkingConfig
+	{
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type ActivationReservesProvider: ActivationReservesProviderTrait<
 			AccountId = Self::AccountId,
@@ -559,7 +567,7 @@ pub mod pallet {
 	// XYK extrinsics.
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(T::WeightInfo::create_pool())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::create_pool())]
 		pub fn create_pool(
 			origin: OriginFor<T>,
 			first_asset_id: TokenId,
@@ -592,7 +600,7 @@ pub mod pallet {
 		}
 
 		// you will sell your sold_asset_amount of sold_asset_id to get some amount of bought_asset_id
-		#[pallet::weight(T::WeightInfo::sell_asset())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::sell_asset())]
 		pub fn sell_asset(
 			origin: OriginFor<T>,
 			sold_asset_id: TokenId,
@@ -612,7 +620,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(T::WeightInfo::buy_asset())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::buy_asset())]
 		pub fn buy_asset(
 			origin: OriginFor<T>,
 			sold_asset_id: TokenId,
@@ -632,7 +640,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(T::WeightInfo::mint_liquidity_using_vesting_native_tokens())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::mint_liquidity_using_vesting_native_tokens())]
 		#[transactional]
 		pub fn mint_liquidity_using_vesting_native_tokens(
 			origin: OriginFor<T>,
@@ -643,31 +651,32 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 
 			let liquidity_asset_id =
-				Pallet::<T>::get_liquidity_asset(T::NativeCurrencyId::get(), second_asset_id)?;
+				Pallet::<T>::get_liquidity_asset(Self::native_token_id(), second_asset_id)?;
 
 			ensure!(
 				<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).is_some(),
 				Error::<T>::NotAPromotedPool
 			);
 
-			let vesting_ending_block_as_balance: Balance = T::VestingProvider::unlock_tokens(
-				&sender,
-				T::NativeCurrencyId::get().into(),
-				vesting_native_asset_amount.into(),
-			)?
-			.into();
+			let vesting_ending_block_as_balance: Balance =
+				<<T as Config>::VestingProvider>::unlock_tokens(
+					&sender,
+					Self::native_token_id().into(),
+					vesting_native_asset_amount.into(),
+				)?
+				.into();
 
 			let (liquidity_token_id, liquidity_assets_minted) =
 				<Self as XykFunctionsTrait<T::AccountId>>::mint_liquidity(
 					sender.clone(),
-					T::NativeCurrencyId::get(),
+					Self::native_token_id(),
 					second_asset_id,
 					vesting_native_asset_amount,
 					expected_second_asset_amount,
 					false,
 				)?;
 
-			T::VestingProvider::lock_tokens(
+			<<T as Config>::VestingProvider>::lock_tokens(
 				&sender,
 				liquidity_token_id.into(),
 				liquidity_assets_minted.into(),
@@ -677,7 +686,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(T::WeightInfo::mint_liquidity())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::mint_liquidity())]
 		pub fn mint_liquidity(
 			origin: OriginFor<T>,
 			first_asset_id: TokenId,
@@ -705,7 +714,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(T::WeightInfo::burn_liquidity())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::burn_liquidity())]
 		pub fn burn_liquidity(
 			origin: OriginFor<T>,
 			first_asset_id: TokenId,
@@ -725,7 +734,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		#[pallet::weight(T::WeightInfo::claim_rewards_v2())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::claim_rewards_v2())]
 		pub fn claim_rewards_v2(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
@@ -743,7 +752,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		#[pallet::weight(T::WeightInfo::claim_rewards_v2())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::claim_rewards_v2())]
 		pub fn claim_rewards_all_v2(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
@@ -758,7 +767,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(T::WeightInfo::promote_pool())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::promote_pool())]
 		pub fn promote_pool(origin: OriginFor<T>, liquidity_token_id: TokenId) -> DispatchResult {
 			ensure_root(origin)?;
 
@@ -766,7 +775,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		#[pallet::weight(T::WeightInfo::activate_liquidity())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::activate_liquidity())]
 		pub fn activate_liquidity_v2(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
@@ -784,7 +793,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		#[pallet::weight(T::WeightInfo::activate_liquidity())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::activate_liquidity())]
 		pub fn activate_liquidity(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
@@ -802,7 +811,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		#[pallet::weight(T::WeightInfo::activate_liquidity())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::deactivate_liquidity())]
 		pub fn deactivate_liquidity(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
@@ -818,7 +827,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		#[pallet::weight(T::WeightInfo::deactivate_liquidity())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::deactivate_liquidity())]
 		pub fn deactivate_liquidity_v2(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
@@ -1930,7 +1939,7 @@ impl<T: Config> Pallet<T> {
 		treasury_amount: Balance,
 	) -> DispatchResult {
 		let vault = Self::account_id();
-		let mangata_id: TokenId = T::NativeCurrencyId::get();
+		let mangata_id: TokenId = Self::native_token_id();
 		let treasury_account: T::AccountId = Self::treasury_account_id();
 		let bnb_treasury_account: T::AccountId = Self::bnb_treasury_account_id();
 
@@ -2028,6 +2037,10 @@ impl<T: Config> Pallet<T> {
 
 	fn bnb_treasury_account_id() -> T::AccountId {
 		T::TreasuryPalletId::get().into_sub_account_truncating(T::BnbTreasurySubAccDerive::get())
+	}
+
+	fn native_token_id() -> TokenId {
+		<T as Config>::NativeCurrencyId::get()
 	}
 }
 
@@ -2865,7 +2878,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		liquidity_asset_id: Self::CurrencyId,
 		mangata_amount: Self::Balance,
 	) -> DispatchResult {
-		let mangata_id: TokenId = T::NativeCurrencyId::get();
+		let mangata_id: TokenId = Self::native_token_id();
 		let claimable_rewards =
 			Pallet::<T>::calculate_rewards_amount_v2(user.clone(), liquidity_asset_id)?;
 
@@ -2919,7 +2932,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		user: T::AccountId,
 		liquidity_asset_id: Self::CurrencyId,
 	) -> DispatchResult {
-		let mangata_id: TokenId = T::NativeCurrencyId::get();
+		let mangata_id: TokenId = Self::native_token_id();
 
 		let rewards_info: RewardInfo = Self::get_rewards_info(user.clone(), liquidity_asset_id);
 
@@ -3092,7 +3105,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		liquidity_asset_id: Self::CurrencyId,
 		mangata_amount: Self::Balance,
 	) -> DispatchResult {
-		let mangata_id: TokenId = T::NativeCurrencyId::get();
+		let mangata_id: TokenId = Self::native_token_id();
 
 		let current_rewards =
 			Pallet::<T>::calculate_rewards_amount(user.clone(), liquidity_asset_id)?;
@@ -3256,7 +3269,7 @@ impl<T: Config> Valuate for Pallet<T> {
 	) -> Result<(Self::CurrencyId, Self::CurrencyId), DispatchError> {
 		let (first_token_id, second_token_id) =
 			LiquidityPools::<T>::get(liquidity_token_id).ok_or(Error::<T>::NoSuchLiquidityAsset)?;
-		let native_currency_id = T::NativeCurrencyId::get();
+		let native_currency_id = Self::native_token_id();
 		match native_currency_id {
 			_ if native_currency_id == first_token_id => Ok((first_token_id, second_token_id)),
 			_ if native_currency_id == second_token_id => Ok((second_token_id, first_token_id)),

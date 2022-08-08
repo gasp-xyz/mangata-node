@@ -296,6 +296,8 @@ impl pallet_issuance::Config for Test {
 	type ActivedPoolQueryApiType = XykStorage;
 }
 
+impl crate::XykBenchmarkingConfig for Test {}
+
 parameter_types! {
 	pub const LiquidityMiningIssuanceVaultId: PalletId = PalletId(*b"py/lqmiv");
 	pub FakeLiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account_truncating();

@@ -105,6 +105,7 @@ impl WeightInfo for () {
 
 pub trait ActivedPoolQueryApi {
 	fn get_pool_activate_amount(liquidity_token_id: TokenId) -> Option<Balance>;
+	fn get_pool_activate_length(liquidity_token_id: TokenId) -> usize;
 }
 
 pub use pallet::*;

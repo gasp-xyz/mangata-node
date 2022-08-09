@@ -89,9 +89,12 @@ use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
 pub const MGX_TOKEN_ID: TokenId = 0;
 pub const KSM_TOKEN_ID: TokenId = 4;
 pub const KAR_TOKEN_ID: TokenId = 6;
+pub const TUR_TOKEN_ID: TokenId = 7;
 
+// on-chain fees are 10x more expensive then ~real rate
 pub const KSM_MGX_SCALE_FACTOR: u128 = 1000_000_000u128; // 1000 as KSM/MGX, with 6 decimals accounted for (12 - KSM, 18 - MGX)
-pub const KAR_MGX_SCALE_FACTOR: u128 = 10_000_000u128; // 10 as KAR/MGX, with 6 decimals accounted for (12 - KAR, 18 - MGX)
+pub const KAR_MGX_SCALE_FACTOR: u128 = KSM_MGX_SCALE_FACTOR / 100; // 100 as KAR/KSM
+pub const TUR_MGX_SCALE_FACTOR: u128 = KSM_MGX_SCALE_FACTOR; // 100 as TUR/KSM, with 2 decimals accounted for (10 - TUR, 12 - KSM)
 
 pub use pallet_sudo;
 
@@ -358,7 +361,7 @@ parameter_types! {
 parameter_types! {
 	pub const MgxTokenId: TokenId = MGX_TOKEN_ID;
 	pub const KsmTokenId: TokenId = KSM_TOKEN_ID;
-	pub const KarTokenId: TokenId = KAR_TOKEN_ID;
+	pub const TurTokenId: TokenId = TUR_TOKEN_ID;
 }
 
 // Configure FRAME pallets to include in runtime.
@@ -774,9 +777,9 @@ impl pallet_transaction_payment::Config for Runtime {
 		ToAuthor,
 		MgxTokenId,
 		KsmTokenId,
-		KarTokenId,
+		TurTokenId,
 		frame_support::traits::ConstU128<KSM_MGX_SCALE_FACTOR>,
-		frame_support::traits::ConstU128<KAR_MGX_SCALE_FACTOR>,
+		frame_support::traits::ConstU128<TUR_MGX_SCALE_FACTOR>,
 	>;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type WeightToFee = WeightToFee;

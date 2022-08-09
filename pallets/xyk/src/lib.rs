@@ -265,7 +265,7 @@ pub struct RewardInfo {
 	pub rewards_not_yet_claimed: u128,
 	pub rewards_already_claimed: u128,
 	pub last_checkpoint: u32,
-	pub pool_ratio_at_last_checkpoint: u128,
+	pub pool_ratio_at_last_checkpoint: U256,
 	pub missing_at_last_checkpoint: U256,
 }
 
@@ -896,9 +896,9 @@ impl<T: Config> Pallet<T> {
 		liquidity_assets_amount: u128,
 		liquidity_asset_id: TokenId,
 		last_checkpoint: u32,
-		pool_rewards_ratio: u128,
+		pool_rewards_ratio: U256,
 		missing_at_last_checkpoint: U256,
-		pool_rewards_ratio_current: u128,
+		pool_rewards_ratio_current: U256,
 	) -> Result<Balance, DispatchError> {
 		ensure!(
 			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).is_some(),
@@ -916,11 +916,13 @@ impl<T: Config> Pallet<T> {
 			.checked_sub(pool_rewards_ratio)
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError1))?;
 
-		let user_rewards_base = liquidity_assets_amount
-			.checked_mul(pool_rewards_ratio_new)
+		let user_rewards_base: u128 = U256::from(liquidity_assets_amount)
+			.checked_mul(pool_rewards_ratio_new.into()) // TODO: please add UT and link it in this comment
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError2))?
-			.checked_div(REWARDS_PRECISION as u128)
-			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError3))?;
+			.checked_div(U256::from(u128::MAX)) // always fit into u128
+			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError3))?
+			.try_into()
+			.map_err(|_| DispatchError::from(Error::<T>::CalculateRewardsMathError3))?;
 
 		let cumulative_work_max_ratio = Self::calculate_cumulative_work_max_ratio(
 			liquidity_assets_amount,

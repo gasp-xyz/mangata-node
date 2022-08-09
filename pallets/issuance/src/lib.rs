@@ -13,6 +13,7 @@ use mangata_primitives::{Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 use pallet_vesting_mangata::MultiTokenVestingSchedule;
 use scale_info::TypeInfo;
+use sp_core::U256;
 use sp_runtime::{
 	traits::{CheckedAdd, CheckedSub, One, Zero},
 	Perbill, Percent, RuntimeDebug,
@@ -62,7 +63,7 @@ pub trait PoolPromoteApi {
 	fn unpromote_pool(liquidity_token_id: TokenId) -> bool;
 
 	/// Returns available reward for pool
-	fn get_pool_rewards_v2(liquidity_token_id: TokenId) -> Option<Balance>;
+	fn get_pool_rewards_v2(liquidity_token_id: TokenId) -> Option<U256>;
 
 	fn len_v2() -> usize;
 
@@ -205,7 +206,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn get_promoted_pools_rewards_v2)]
 	pub type PromotedPoolsRewardsV2<T: Config> =
-		StorageMap<_, Twox64Concat, TokenId, Balance, ValueQuery>;
+		StorageMap<_, Twox64Concat, TokenId, U256, ValueQuery>;
 
 	#[pallet::error]
 	/// Errors
@@ -345,12 +346,12 @@ impl<T: Config> PoolPromoteApi for Pallet<T> {
 		if PromotedPoolsRewardsV2::<T>::contains_key(liquidity_token_id) {
 			false
 		} else {
-			PromotedPoolsRewardsV2::<T>::insert(liquidity_token_id, 0);
+			PromotedPoolsRewardsV2::<T>::insert(liquidity_token_id, U256::from(0_u128));
 			true
 		}
 	}
 
-	fn get_pool_rewards_v2(liquidity_token_id: TokenId) -> Option<Balance> {
+	fn get_pool_rewards_v2(liquidity_token_id: TokenId) -> Option<U256> {
 		PromotedPoolsRewardsV2::<T>::try_get(liquidity_token_id).ok()
 	}
 
@@ -545,10 +546,10 @@ impl<T: Config> Pallet<T> {
 		}
 
 		for (token_id, rewards, activated_amount) in activated_pools {
-			let rewards_per_liquidity = liquidity_mining_issuance_per_pool
-				.checked_mul(10000)
-				.and_then(|x| x.checked_div(activated_amount))
-				.and_then(|x| x.checked_add(rewards))
+			let rewards_per_liquidity: U256 = U256::from(liquidity_mining_issuance_per_pool)
+				.checked_mul(U256::from(u128::MAX))
+				.and_then(|x| x.checked_div(activated_amount.into()))
+				.and_then(|x| x.checked_add(rewards.into()))
 				.ok_or_else(|| DispatchError::from(Error::<T>::MathError))?;
 
 			PromotedPoolsRewardsV2::<T>::insert(token_id, rewards_per_liquidity);

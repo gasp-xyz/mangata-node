@@ -48,7 +48,7 @@ construct_runtime!(
 );
 
 lazy_static::lazy_static! {
-	static ref PROMOTED_POOLS: Mutex<HashMap<TokenId, Balance>> = {
+	static ref PROMOTED_POOLS: Mutex<HashMap<TokenId, U256>> = {
 		let m = HashMap::new();
 		Mutex::new(m)
 	};
@@ -60,13 +60,13 @@ pub struct MockActivedPoolQueryApi;
 #[cfg(test)]
 #[cfg(not(feature = "runtime-benchmarks"))]
 impl MockPromotedPoolApi {
-	pub fn instance() -> &'static Mutex<HashMap<TokenId, Balance>> {
+	pub fn instance() -> &'static Mutex<HashMap<TokenId, U256>> {
 		&PROMOTED_POOLS
 	}
 }
 
 impl MockActivedPoolQueryApi {
-	pub fn instance() -> &'static Mutex<HashMap<TokenId, Balance>> {
+	pub fn instance() -> &'static Mutex<HashMap<TokenId, U256>> {
 		&PROMOTED_POOLS
 	}
 }
@@ -92,7 +92,7 @@ impl PoolPromoteApi for MockPromotedPoolApi {
 		if pools.contains_key(&liquidity_token_id) {
 			false
 		} else {
-			pools.insert(liquidity_token_id, 0);
+			pools.insert(liquidity_token_id, 0_u128.into());
 			true
 		}
 	}
@@ -102,21 +102,21 @@ impl PoolPromoteApi for MockPromotedPoolApi {
 		if pools.contains_key(&liquidity_token_id) {
 			false
 		} else {
-			pools.insert(liquidity_token_id, 0);
+			pools.insert(liquidity_token_id, 0_u128.into());
 			true
 		}
 	}
 
 	fn get_pool_rewards(liquidity_token_id: TokenId) -> Option<Balance> {
 		let pools = PROMOTED_POOLS.lock().unwrap();
-		pools.get(&liquidity_token_id).map(|x| *x)
+		pools.get(&liquidity_token_id).map(|x| (*x).try_into().unwrap())
 	}
 
 	fn claim_pool_rewards(_liquidity_token_id: TokenId, _amount: Balance) -> bool {
 		true
 	}
 
-	fn get_pool_rewards_v2(liquidity_token_id: TokenId) -> Option<Balance> {
+	fn get_pool_rewards_v2(liquidity_token_id: TokenId) -> Option<sp_core::U256> {
 		let pools = PROMOTED_POOLS.lock().unwrap();
 		pools.get(&liquidity_token_id).map(|x| *x)
 	}

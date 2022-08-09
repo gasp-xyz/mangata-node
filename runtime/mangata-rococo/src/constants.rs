@@ -12,7 +12,8 @@ pub mod fee {
 
 	// on-chain fees are 10x more expensive then ~real rate
 	pub const ROC_MGR_SCALE_FACTOR: u128 = 1000_000_000u128; // 1000 as KSM/MGR, with 6 decimals accounted for (12 - KSM, 18 - MGR)
-	pub const KAR_MGR_SCALE_FACTOR: u128 = 10_000_000u128; // 10 as KAR/MGR, with 6 decimals accounted for (12 - KAR, 18 - MGR)
+	pub const KAR_MGR_SCALE_FACTOR: u128 = ROC_MGR_SCALE_FACTOR / 100; // 100 as KAR/ROC
+	pub const TUR_MGR_SCALE_FACTOR: u128 = ROC_MGR_SCALE_FACTOR; // 100 as TUR/ROC, with 2 decimals accounted for (10 - TUR, 12 - ROC)
 
 	/// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
 	/// node's balance type.

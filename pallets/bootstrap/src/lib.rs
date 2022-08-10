@@ -18,7 +18,7 @@ use scale_info::TypeInfo;
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
 use sp_core::U256;
 use sp_io::KillStorageResult;
-use sp_runtime::traits::{AccountIdConversion, CheckedAdd};
+use sp_runtime::traits::{AccountIdConversion, CheckedAdd, SaturatedConversion};
 use sp_std::{convert::TryInto, prelude::*};
 
 pub mod migrations;
@@ -53,7 +53,7 @@ pub type BlockNrAsBalance = Balance;
 
 pub enum ProvisionKind {
 	Regular,
-	Vested(BlockNrAsBalance),
+	Vested(BlockNrAsBalance, BlockNrAsBalance),
 }
 
 #[frame_support::pallet]
@@ -164,7 +164,7 @@ pub mod pallet {
 		T::AccountId,
 		Twox64Concat,
 		TokenId,
-		(Balance, BlockNrAsBalance),
+		(Balance, BlockNrAsBalance, BlockNrAsBalance),
 		ValueQuery,
 	>;
 
@@ -220,16 +220,17 @@ pub mod pallet {
 			amount: Balance,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			let vesting_ending_block_as_balance: Balance =
+			let (vesting_starting_block, vesting_ending_block_as_balance) =
 				T::VestingProvider::unlock_tokens(&sender, token_id.into(), amount.into())
-					.map_err(|_| Error::<T>::NotEnoughVestedAssets)
-					// ignore the first field of the return tuple which is the starting block
-					.map(|(_, x)| x.into())?;
+					.map_err(|_| Error::<T>::NotEnoughVestedAssets)?;
 			Self::do_provision(
 				&sender,
 				token_id,
 				amount,
-				ProvisionKind::Vested(vesting_ending_block_as_balance),
+				ProvisionKind::Vested(
+					vesting_starting_block.saturated_into::<BlockNrAsBalance>(),
+					vesting_ending_block_as_balance.into(),
+				),
 			)?;
 			ProvisionAccounts::<T>::insert(&sender, ());
 			Self::deposit_event(Event::Provisioned(token_id, amount));
@@ -508,7 +509,7 @@ impl<T: Config> Pallet<T> {
 		provision_token_id: &TokenId,
 		rewards: Balance,
 		rewards_vested: Balance,
-		lock: BlockNrAsBalance,
+		lock: (BlockNrAsBalance, BlockNrAsBalance),
 	) -> DispatchResult {
 		let (liq_token_id, _) = Self::minted_liquidity();
 		let total_rewards = rewards.checked_add(rewards_vested).ok_or(Error::<T>::MathOverflow)?;
@@ -538,8 +539,8 @@ impl<T: Config> Pallet<T> {
 				&who,
 				liq_token_id.into(),
 				rewards_vested.into(),
-				None,
-				lock.into(),
+				Some(lock.0.saturated_into()),
+				lock.1.into(),
 			)?;
 		}
 
@@ -610,17 +611,22 @@ impl<T: Config> Pallet<T> {
 					Error::<T>::MathOverflow
 				);
 			},
-			ProvisionKind::Vested(nr) => {
+			ProvisionKind::Vested(provision_start_block, provision_end_block) => {
 				ensure!(
-					VestedProvisions::<T>::try_mutate(sender, token_id, |(provision, block_nr)| {
-						if let Some(val) = provision.checked_add(amount) {
-							*provision = val;
-							*block_nr = (*block_nr).max(nr);
-							Ok(())
-						} else {
-							Err(())
+					VestedProvisions::<T>::try_mutate(
+						sender,
+						token_id,
+						|(provision, start_block, end_block)| {
+							if let Some(val) = provision.checked_add(amount) {
+								*provision = val;
+								*start_block = (*start_block).max(provision_start_block);
+								*end_block = (*end_block).max(provision_end_block);
+								Ok(())
+							} else {
+								Err(())
+							}
 						}
-					})
+					)
 					.is_ok(),
 					Error::<T>::MathOverflow
 				);
@@ -673,16 +679,16 @@ impl<T: Config> Pallet<T> {
 	fn calculate_rewards(
 		who: &T::AccountId,
 		token_id: &TokenId,
-	) -> Result<(Balance, Balance, BlockNrAsBalance), Error<T>> {
+	) -> Result<(Balance, Balance, (BlockNrAsBalance, BlockNrAsBalance)), Error<T>> {
 		let valuation = Self::get_valuation(token_id);
 		let provision = Self::provisions(who, token_id);
-		let (vested_provision, lock) = Self::vested_provisions(who, token_id);
+		let (vested_provision, lock_start, lock_end) = Self::vested_provisions(who, token_id);
 		let (_, liquidity) = Self::minted_liquidity();
 		let rewards = multiply_by_rational(liquidity / 2, provision, valuation)
 			.map_err(|_| Error::<T>::MathOverflow)?;
 		let vested_rewards = multiply_by_rational(liquidity / 2, vested_provision, valuation)
 			.map_err(|_| Error::<T>::MathOverflow)?;
-		Ok((rewards, vested_rewards, lock))
+		Ok((rewards, vested_rewards, (lock_start, lock_end)))
 	}
 
 	fn do_claim_rewards(who: &T::AccountId) -> DispatchResult {

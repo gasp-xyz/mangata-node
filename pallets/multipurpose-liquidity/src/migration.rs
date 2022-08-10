@@ -281,7 +281,6 @@ pub fn migrate_from_v0<T: Config, P: GetStorageVersion + PalletInfoAccess>(
 #[cfg(feature = "try-runtime")]
 pub fn migrate_from_v0_post_runtime_upgrade<T: Config, P: GetStorageVersion + PalletInfoAccess>(
 ) -> Result<(), &'static str> {
-	
 	match Pallet::<T>::get_temp_storage("is_pre_migration") {
 		None | Some(false) => {
 			log::info!(
@@ -290,7 +289,7 @@ pub fn migrate_from_v0_post_runtime_upgrade<T: Config, P: GetStorageVersion + Pa
 			);
 			return Ok(())
 		},
-		Some(true) => {}
+		Some(true) => {},
 	};
 
 	let on_chain_storage_version = <P as GetStorageVersion>::on_chain_storage_version();

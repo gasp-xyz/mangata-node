@@ -62,6 +62,7 @@ pub use pallet_issuance::{IssuanceInfo, PoolPromoteApi};
 pub use mangata_primitives::{
 	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
 };
+use mp_traits::AssetMetadataMutationTrait;
 
 pub use orml_tokens;
 use orml_tokens::TransferDust;
@@ -581,7 +582,6 @@ use pallet_transaction_payment::OnChargeTransaction;
 type NegativeImbalanceOf<C, T> =
 	<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
 
-use mp_traits::AssetMetadataMutationTrait;
 use orml_tokens::MultiTokenImbalanceWithZeroTrait;
 
 /// Default implementation for a Currency and an OnUnbalanced handler.

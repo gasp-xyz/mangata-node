@@ -5,9 +5,9 @@
 use super::*;
 use crate::mock::*;
 use frame_support::assert_err;
+use mangata_primitives::assets::CustomMetadata;
 use orml_traits::asset_registry::AssetMetadata;
 use serial_test::serial;
-use mangata_primitives::assets::CustomMetadata;
 
 //fn create_pool_W(): create_pool working assert (maps,acocounts values)  //DONE
 //fn create_pool_N_already_exists(): create_pool not working if pool already exists  //DONE

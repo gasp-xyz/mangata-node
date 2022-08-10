@@ -6,7 +6,8 @@ use hex::FromHex;
 use hex_literal::hex;
 use mangata_rococo_runtime::{
 	constants::parachains, roc_per_second, AccountId, AssetMetadataOf, AuraId, CustomMetadata,
-	GeneralKey, MultiLocation, Parachain, Signature, XcmMetadata, KAR_TOKEN_ID, ROC_TOKEN_ID, X2,
+	GeneralKey, MultiLocation, Parachain, Signature, XcmMetadata, KAR_TOKEN_ID, ROC_TOKEN_ID,
+	TUR_TOKEN_ID, X1, X2,
 };
 use sc_service::ChainType;
 use sp_core::{sr25519, ByteArray, Pair, Public, H160};
@@ -370,13 +371,13 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 							location: None,
 						},
 					),
-					// LP KSM-MGX
+					// empty placeholder to issueToken & increment nextAssetId
 					(
 						5,
 						AssetMetadataOf {
-							decimals: 18,
-							name: b"LP for ROC-MGR".to_vec(),
-							symbol: b"ROC-MGR".to_vec(),
+							decimals: 0,
+							name: vec![],
+							symbol: vec![],
 							additional: Default::default(),
 							existential_deposit: Default::default(),
 							location: None,
@@ -402,6 +403,22 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 									),
 								)
 								.into(),
+							),
+						},
+					),
+					(
+						TUR_TOKEN_ID,
+						AssetMetadataOf {
+							decimals: 10,
+							name: b"Turing native token".to_vec(),
+							symbol: b"TUR".to_vec(),
+							additional: CustomMetadata {
+								// 100:1 TUR:ROC, 10/12 decimals
+								xcm: Some(XcmMetadata { fee_per_second: roc_per_second() }),
+							},
+							existential_deposit: Default::default(),
+							location: Some(
+								MultiLocation::new(1, X1(Parachain(parachains::turing::ID))).into(),
 							),
 						},
 					),

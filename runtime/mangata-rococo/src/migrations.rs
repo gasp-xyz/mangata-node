@@ -102,6 +102,20 @@ pub mod asset_registry {
 						),
 					},
 				),
+				(
+					TUR_TOKEN_ID,
+					AssetMetadataOf {
+						decimals: 10,
+						name: b"Turing native token".to_vec(),
+						symbol: b"TUR".to_vec(),
+						additional: CustomMetadata {
+							// 100:1 TUR:ROC, 10/12 decimals
+							xcm: Some(XcmMetadata { fee_per_second: roc_per_second() }),
+						},
+						existential_deposit: Default::default(),
+						location: Some(MultiLocation::new(1, X1(Parachain(turing::ID))).into()),
+					},
+				),
 			];
 
 			// kill storage first

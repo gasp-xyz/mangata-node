@@ -29,6 +29,8 @@ pub fn migrate_from_v0_pre_runtime_upgrade<T: Config, P: GetStorageVersion + Pal
 		on_chain_storage_version,
 	);
 
+	Pallet::<T>::set_temp_storage(true, "is_pre_migration");
+
 	// Check consistency of xyk storage, staking storage and orml reserves
 	// Ensure reserve and relock status is zero
 
@@ -279,6 +281,18 @@ pub fn migrate_from_v0<T: Config, P: GetStorageVersion + PalletInfoAccess>(
 #[cfg(feature = "try-runtime")]
 pub fn migrate_from_v0_post_runtime_upgrade<T: Config, P: GetStorageVersion + PalletInfoAccess>(
 ) -> Result<(), &'static str> {
+	
+	match Pallet::<T>::get_temp_storage("is_pre_migration") {
+		None | Some(false) => {
+			log::info!(
+				target: "mpl",
+				"Attempted to apply xyk-staking-mpl consistency post-migration to mpl but failed because pre-migration failed to run"
+			);
+			return Ok(())
+		},
+		Some(true) => {}
+	};
+
 	let on_chain_storage_version = <P as GetStorageVersion>::on_chain_storage_version();
 
 	// If on chain version is still 0 then the migration failed

@@ -33,12 +33,12 @@ pub mod v1 {
 
 			log!(
 				info,
-				"Running migration with current storage version {:?} / onchain {:?}",
+				"Running V1 migration with current storage version {:?} / onchain {:?}",
 				current,
 				onchain
 			);
 
-			if current == 1 && onchain == 0 {
+			if current == 2 && onchain == 0 {
 				// this is safe to execute on any runtime that has a bounded number of pools.
 
 				if Phase::<T>::get() == BootstrapPhase::Finished && ActivePair::<T>::get().is_none()
@@ -47,6 +47,7 @@ pub mod v1 {
 					log!(info, "Filled ActivePair with default value");
 					T::DbWeight::get().reads_writes(3, 1)
 				} else {
+					log!(info, "No extra actions needed");
 					T::DbWeight::get().reads_writes(3, 0)
 				}
 			} else {
@@ -85,7 +86,7 @@ pub mod v2 {
 
 			log!(
 				info,
-				"Running migration with current storage version {:?} / onchain {:?}",
+				"Running V2 migration with current storage version {:?} / onchain {:?}",
 				current,
 				onchain
 			);
@@ -95,6 +96,7 @@ pub mod v2 {
 					BootstrapSchedule::<T>::get()
 				{
 					let start_block: u32 = start.unique_saturated_into();
+					log!(info, "migrating vested provisions storage");
 					VestedProvisions::<T>::translate::<(Balance, BlockNrAsBalance), _>(
 						|_: T::AccountId,
 						 _: TokenId,
@@ -124,14 +126,14 @@ pub mod v2 {
 		#[cfg(feature = "try-runtime")]
 		fn pre_upgrade() -> Result<(), &'static str> {
 			log!(info, "Bootstrap::pre_upgrade");
-			assert_eq!(Pallet::<T>::on_chain_storage_version(), 1);
+			assert_eq!(Pallet::<T>::on_chain_storage_version(), 2);
 			Ok(())
 		}
 
 		#[cfg(feature = "try-runtime")]
 		fn post_upgrade() -> Result<(), &'static str> {
 			log!(info, "Bootstrap::post_upgrade");
-			assert_eq!(Pallet::<T>::on_chain_storage_version(), 1);
+			assert_eq!(Pallet::<T>::on_chain_storage_version(), 2);
 			Ok(())
 		}
 	}

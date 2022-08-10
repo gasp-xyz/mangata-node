@@ -145,15 +145,15 @@ impl OnRuntimeUpgrade for MangataMigrations {
 
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
-		pallet_bootstrap::migrations::v1::MigrateToV1::<Runtime>::pre_upgrade();
-		pallet_bootstrap::migrations::v2::MigrateToV2::<Runtime>::pre_upgrade();
+		pallet_bootstrap::migrations::v1::MigrateToV1::<Runtime>::pre_upgrade().unwrap();
+		pallet_bootstrap::migrations::v2::MigrateToV2::<Runtime>::pre_upgrade().unwrap();
 		Ok(())
 	}
 
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade() -> Result<(), &'static str> {
-		pallet_bootstrap::migrations::v1::MigrateToV1::<Runtime>::post_upgrade();
-		pallet_bootstrap::migrations::v2::MigrateToV2::<Runtime>::post_upgarde();
+		pallet_bootstrap::migrations::v1::MigrateToV1::<Runtime>::post_upgrade().unwrap();
+		pallet_bootstrap::migrations::v2::MigrateToV2::<Runtime>::post_upgrade().unwrap();
 		Ok(())
 	}
 }

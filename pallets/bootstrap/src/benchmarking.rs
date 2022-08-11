@@ -78,7 +78,7 @@ benchmarks! {
 		BootstrapPallet::<T>::on_initialize(20_u32.into());
 		BootstrapPallet::<T>::provision(RawOrigin::Signed(caller.clone().into()).into(), second_token_id, mga_provision_amount).unwrap();
 
-		assert_eq!(BootstrapPallet::<T>::vested_provisions(caller.clone(), first_token_id), (0, 0));
+		assert_eq!(BootstrapPallet::<T>::vested_provisions(caller.clone(), first_token_id), (0, 0, 0));
 	}: provision_vested(RawOrigin::Signed(caller.clone().into()), first_token_id, ksm_provision_amount)
 	verify {
 		assert_eq!(BootstrapPallet::<T>::vested_provisions(caller, first_token_id).0, ksm_provision_amount);
@@ -115,8 +115,8 @@ benchmarks! {
 		assert_eq!(BootstrapPallet::<T>::valuations(), (total_mga_provision, total_ksm_provision));
 		assert_eq!(BootstrapPallet::<T>::provisions(caller.clone(), first_token_id), (ksm_provision_amount));
 		assert_eq!(BootstrapPallet::<T>::provisions(caller.clone(), second_token_id), (mga_provision_amount));
-		assert_eq!(BootstrapPallet::<T>::vested_provisions(caller.clone(), first_token_id), (ksm_vested_provision_amount, lock + 1));
-		assert_eq!(BootstrapPallet::<T>::vested_provisions(caller.clone(), second_token_id), (mga_vested_provision_amount, lock + 1));
+		assert_eq!(BootstrapPallet::<T>::vested_provisions(caller.clone(), first_token_id), (ksm_vested_provision_amount, 1, lock + 1));
+		assert_eq!(BootstrapPallet::<T>::vested_provisions(caller.clone(), second_token_id), (mga_vested_provision_amount, 1, lock + 1));
 
 	}: claim_rewards(RawOrigin::Signed(caller.clone().into()))
 	verify {

@@ -393,21 +393,22 @@ fn issuance_after_linear_period_never_execeeds_linear() {
 fn promote_pool_api_works() {
 	new_test_ext().execute_with(|| {
 		Issuance::promote_pool(1);
+		
 
 		roll_to_while_minting(4, None);
-		assert_eq!(225022, Issuance::get_pool_rewards(1).unwrap());
+		assert_eq!(U256::from(225022), Issuance::get_pool_rewards_v2(1).unwrap());
 		roll_to_while_minting(9, None);
-		assert_eq!(450044, Issuance::get_pool_rewards(1).unwrap());
+		assert_eq!(U256::from(225022), Issuance::get_pool_rewards_v2(1).unwrap());
 
 		Issuance::promote_pool(2);
 		assert_eq!(2, Issuance::len());
 		roll_to_while_minting(14, None);
-		assert_eq!(562555, Issuance::get_pool_rewards(1).unwrap());
-		assert_eq!(112511, Issuance::get_pool_rewards(2).unwrap());
+		assert_eq!(U256::from(225022), Issuance::get_pool_rewards_v2(1).unwrap());
+		assert_eq!(U256::from(225022), Issuance::get_pool_rewards_v2(2).unwrap());
 
-		assert!(Issuance::claim_pool_rewards(1, 100000));
-		assert_eq!(462555, Issuance::get_pool_rewards(1).unwrap());
-		assert_eq!(112511, Issuance::get_pool_rewards(2).unwrap());
+		
+		assert_eq!(U256::from(225022), Issuance::get_pool_rewards_v2(1).unwrap());
+		assert_eq!(U256::from(225022), Issuance::get_pool_rewards_v2(2).unwrap());
 	});
 }
 

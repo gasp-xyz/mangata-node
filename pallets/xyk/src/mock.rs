@@ -65,11 +65,7 @@ impl MockPromotedPoolApi {
 	}
 }
 
-impl MockActivedPoolQueryApi {
-	pub fn instance() -> &'static Mutex<HashMap<TokenId, U256>> {
-		&PROMOTED_POOLS
-	}
-}
+
 
 impl pallet_issuance::ComputeIssuance for MockPromotedPoolApi {
 	fn compute_issuance(_n: u32) -> DispatchResult {
@@ -77,12 +73,15 @@ impl pallet_issuance::ComputeIssuance for MockPromotedPoolApi {
 	}
 }
 
+impl MockActivedPoolQueryApi {
+	pub fn instance() -> &'static Mutex<HashMap<TokenId, U256>> {
+		&PROMOTED_POOLS
+	}
+}
+
 impl ActivedPoolQueryApi for MockActivedPoolQueryApi {
 	fn get_pool_activate_amount(_liquidity_token_id: TokenId) -> Option<u128> {
 		Some(1 as u128)
-	}
-	fn get_pool_activate_length() -> usize {
-		1_usize
 	}
 }
 

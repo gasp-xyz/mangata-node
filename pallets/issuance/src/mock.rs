@@ -31,6 +31,7 @@ use sp_runtime::{
 };
 use sp_std::convert::TryFrom;
 
+use sp_std::sync::Mutex;
 pub const MGA_TOKEN_ID: TokenId = 0;
 pub(crate) type AccountId = u128;
 
@@ -120,11 +121,20 @@ parameter_types! {
 
 }
 
-pub struct ActivedPoolQueryApiStub;
+lazy_static::lazy_static! {
+	static ref REWARDS: Mutex<Option<Balance>> = None;
+}
+
+#[cfg(test)]
+impl MockActivedPoolQueryApi {
+	pub fn instance() -> &'static Mutex<Option<Balance>> {
+		&REWARDS
+	}
+}
 
 impl ActivedPoolQueryApi for ActivedPoolQueryApiStub {
 	fn get_pool_activate_amount(liquidity_token_id: TokenId) -> Option<Balance> {
-		None
+		REWARDS.lock().unwrap().clone()
 	}
 }
 

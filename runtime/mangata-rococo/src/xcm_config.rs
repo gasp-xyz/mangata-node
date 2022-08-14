@@ -221,9 +221,9 @@ impl FixedConversionRateProvider for FeePerSecondProvider {
 }
 
 pub type Trader = (
+	FixedRateOfFungible<MgrPerSecond, ToTreasury>,
 	AssetRegistryTrader<FixedRateAssetRegistryTrader<FeePerSecondProvider>, ToTreasury>,
 	FixedRateOfFungible<RocPerSecond, ToTreasury>,
-	FixedRateOfFungible<MgrPerSecond, ToTreasury>,
 	FixedRateOfFungible<KarPerSecond, ToTreasury>,
 	FixedRateOfFungible<KusdPerSecond, ToTreasury>,
 	FixedRateOfFungible<TurPerSecond, ToTreasury>,

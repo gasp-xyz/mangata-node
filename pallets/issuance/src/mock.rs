@@ -122,8 +122,9 @@ parameter_types! {
 }
 
 lazy_static::lazy_static! {
-	static ref REWARDS: Mutex<Option<Balance>> = None;
+	static ref REWARDS: Mutex<Option<Balance>> = Mutex::new(None);
 }
+pub struct MockActivedPoolQueryApi;
 
 #[cfg(test)]
 impl MockActivedPoolQueryApi {
@@ -132,7 +133,7 @@ impl MockActivedPoolQueryApi {
 	}
 }
 
-impl ActivedPoolQueryApi for ActivedPoolQueryApiStub {
+impl ActivedPoolQueryApi for MockActivedPoolQueryApi {
 	fn get_pool_activate_amount(liquidity_token_id: TokenId) -> Option<Balance> {
 		REWARDS.lock().unwrap().clone()
 	}
@@ -157,7 +158,7 @@ impl pallet_issuance::Config for Test {
 	type VestingProvider = Vesting;
 	type WeightInfo = ();
 	// TODO implement unit tests using mock
-	type ActivedPoolQueryApiType = ActivedPoolQueryApiStub;
+	type ActivedPoolQueryApiType = MockActivedPoolQueryApi;
 }
 
 parameter_types! {

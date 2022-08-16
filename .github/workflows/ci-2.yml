@@ -31,6 +31,12 @@ on:
           required: true
           default: false
 
+        skipPublish:
+          description: "Skip publish phase"
+          type: boolean
+          required: true
+          default: true
+
 env:
   DOCKER_BUILDER_IMAGE: mangatasolutions/node-builder:0.2
   DISABLE_TTY: 1
@@ -332,7 +338,7 @@ jobs:
     timeout-minutes: 1440
     if: "!contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests')"
     env:
-      API_URL: 'ws://127.0.0.1:9948'
+      API_URL: 'ws://127.0.0.1:9946'
       TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}
       E2E_TREASURY_PALLET_ADDRESS : ${{ secrets.E2E_TREASURY_PALLET_ADDRESS }}
       E2E_XYK_PALLET_ADDRESS : ${{ secrets.E2E_XYK_PALLET_ADDRESS }}
@@ -430,9 +436,10 @@ jobs:
 
       - name: Run parallel e2e tests
         working-directory: e2eTests
-        run: |
-          yarn test-parallel --shard=${{ matrix.shard }}
-          sed -i 's/<testsuites>/<testsuites time="0">/g' reports/junit-all.xml
+        run: yarn test-parallel --shard=${{ matrix.shard }}  
+
+      - name: Fix test report file
+        run: sed -i 's/<testsuites>/<testsuites time="0">/g' reports/junit-all.xml
 
       - name: Test Report
         uses: dorny/test-reporter@v1
@@ -483,7 +490,7 @@ jobs:
     runs-on: self-hosted
     if: "!contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests')"
     env:
-      API_URL: 'ws://127.0.0.1:9948'
+      API_URL: 'ws://127.0.0.1:9946'
       TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}
       E2E_TREASURY_PALLET_ADDRESS : ${{ secrets.E2E_TREASURY_PALLET_ADDRESS }}
       E2E_XYK_PALLET_ADDRESS : ${{ secrets.E2E_XYK_PALLET_ADDRESS }}
@@ -582,9 +589,10 @@ jobs:
 
       - name: Run sequential e2e tests
         working-directory: e2eTests
-        run:  |
-          yarn test-sequential-e2e
-          sed -i 's/<testsuites>/<testsuites time="0">/g' reports/junit-all.xml
+        run: yarn test-sequential-e2e
+
+      - name: Fix test report file
+        run: sed -i 's/<testsuites>/<testsuites time="0">/g' reports/junit-all.xml
 
       - name: Test Report
         uses: dorny/test-reporter@v1

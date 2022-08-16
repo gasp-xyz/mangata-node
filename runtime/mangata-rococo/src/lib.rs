@@ -16,7 +16,7 @@ use sp_runtime::{
 		StaticLookup,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, FixedPointNumber, Percent, Perquintill,
+	ApplyExtrinsicResult, FixedPointNumber, Percent, Perquintill, RuntimeDebug,
 };
 
 use sp_std::{
@@ -30,7 +30,9 @@ use sp_version::RuntimeVersion;
 
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{Contains, Everything, Get, LockIdentifier, Nothing, U128CurrencyToVote},
+	traits::{
+		Contains, Everything, Get, InstanceFilter, LockIdentifier, Nothing, U128CurrencyToVote,
+	},
 	weights::{
 		constants::{RocksDbWeight, WEIGHT_PER_MICROS, WEIGHT_PER_MILLIS, WEIGHT_PER_SECOND},
 		DispatchClass, Weight,
@@ -54,7 +56,7 @@ use polkadot_runtime_common::BlockHashCount;
 pub use xcm::{latest::prelude::*, VersionedMultiLocation};
 use xcm_asset_registry::{AssetIdMapping, AssetIdMaps};
 
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 use static_assertions::const_assert;
 
 pub use pallet_issuance::{IssuanceInfo, PoolPromoteApi};
@@ -1068,6 +1070,63 @@ impl xcm_asset_registry::Config for Runtime {
 	type TreasuryAddress = TreasuryAccount;
 }
 
+// Proxy Pallet
+parameter_types! {
+	pub const ProxyDepositBase: Balance = 0;
+	pub const ProxyDepositFactor: Balance = 0;
+	pub const AnnouncementDepositBase: Balance = 0;
+	pub const AnnouncementDepositFactor: Balance = 0;
+}
+
+#[derive(
+	Copy,
+	Clone,
+	Eq,
+	PartialEq,
+	Ord,
+	PartialOrd,
+	Encode,
+	Decode,
+	RuntimeDebug,
+	MaxEncodedLen,
+	scale_info::TypeInfo,
+)]
+pub enum ProxyType {
+	Any = 0,
+}
+
+impl Default for ProxyType {
+	fn default() -> Self {
+		Self::Any
+	}
+}
+
+impl InstanceFilter<Call> for ProxyType {
+	fn filter(&self, _c: &Call) -> bool {
+		match self {
+			ProxyType::Any => true,
+		}
+	}
+	fn is_superset(&self, _o: &Self) -> bool {
+		true
+	}
+}
+
+impl pallet_proxy::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgrTokenId>;
+	type ProxyType = ProxyType;
+	type ProxyDepositBase = ProxyDepositBase;
+	type ProxyDepositFactor = ProxyDepositFactor;
+	type MaxProxies = frame_support::traits::ConstU32<32>;
+	type WeightInfo = pallet_proxy::weights::SubstrateWeight<Runtime>;
+	type MaxPending = frame_support::traits::ConstU32<32>;
+	type CallHasher = BlakeTwo256;
+	type AnnouncementDepositBase = AnnouncementDepositBase;
+	type AnnouncementDepositFactor = AnnouncementDepositFactor;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -1139,6 +1198,8 @@ construct_runtime!(
 		// Bootstrap
 		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>} = 53,
 		Utility: pallet_utility::{Pallet, Call, Event} = 54,
+
+		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 55,
 	}
 );
 

@@ -430,13 +430,15 @@ jobs:
 
       - name: Run parallel e2e tests
         working-directory: e2eTests
-        run: yarn test-parallel --shard=${{ matrix.shard }}
+        run: |
+          yarn test-parallel --shard=${{ matrix.shard }}
+          sed -i 's/<testsuites>/<testsuites time="0">/g' reports/junit-all.xml
 
       - name: Test Report
         uses: dorny/test-reporter@v1
         if: success() || failure()    # run this step even if previous step failed
         with:
-          name: JEST Tests Parallel        # Name of the check run which will be created
+          name: E2E Tests Parallel        # Name of the check run which will be created
           path: e2eTests/reports/junit-*.xml    # Path to test results
           reporter: jest-junit        # Format of test results
 
@@ -580,13 +582,15 @@ jobs:
 
       - name: Run sequential e2e tests
         working-directory: e2eTests
-        run: yarn test-sequential-e2e
+        run:  |
+          yarn test-sequential-e2e
+          sed -i 's/<testsuites>/<testsuites time="0">/g' reports/junit-all.xml
 
       - name: Test Report
         uses: dorny/test-reporter@v1
         if: success() || failure()    # run this step even if previous step failed
         with:
-          name: JEST Tests           # Name of the check run which will be created
+          name: E2E Tests           # Name of the check run which will be created
           path: e2eTests/reports/junit-*.xml    # Path to test results
           reporter: jest-junit        # Format of test results
 

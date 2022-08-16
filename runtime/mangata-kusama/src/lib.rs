@@ -2,7 +2,7 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
 	construct_runtime,
 	dispatch::DispatchResult,
@@ -10,7 +10,8 @@ use frame_support::{
 	traits::{
 		tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
 		Contains, EnsureOrigin, EnsureOriginWithArg, Everything, ExistenceRequirement, Get,
-		Imbalance, LockIdentifier, OnRuntimeUpgrade, U128CurrencyToVote, WithdrawReasons,
+		Imbalance, InstanceFilter, LockIdentifier, OnRuntimeUpgrade, U128CurrencyToVote,
+		WithdrawReasons,
 	},
 	unsigned::TransactionValidityError,
 	weights::{
@@ -49,7 +50,7 @@ use sp_runtime::{
 		DispatchInfoOf, PostDispatchInfoOf, Saturating, StaticLookup, Zero,
 	},
 	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, DispatchError, FixedPointNumber, Percent, Perquintill,
+	ApplyExtrinsicResult, DispatchError, FixedPointNumber, Percent, Perquintill, RuntimeDebug,
 };
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
 use sp_std::{
@@ -1110,6 +1111,63 @@ impl orml_asset_registry::Config for Runtime {
 	type WeightInfo = weights::orml_asset_registry_weights::ModuleWeight<Runtime>;
 }
 
+// Proxy Pallet
+parameter_types! {
+	pub const ProxyDepositBase: Balance = 0;
+	pub const ProxyDepositFactor: Balance = 0;
+	pub const AnnouncementDepositBase: Balance = 0;
+	pub const AnnouncementDepositFactor: Balance = 0;
+}
+
+#[derive(
+	Copy,
+	Clone,
+	Eq,
+	PartialEq,
+	Ord,
+	PartialOrd,
+	Encode,
+	Decode,
+	RuntimeDebug,
+	MaxEncodedLen,
+	scale_info::TypeInfo,
+)]
+pub enum ProxyType {
+	Any = 0,
+}
+
+impl Default for ProxyType {
+	fn default() -> Self {
+		Self::Any
+	}
+}
+
+impl InstanceFilter<Call> for ProxyType {
+	fn filter(&self, _c: &Call) -> bool {
+		match self {
+			ProxyType::Any => true,
+		}
+	}
+	fn is_superset(&self, _o: &Self) -> bool {
+		true
+	}
+}
+
+impl pallet_proxy::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgxTokenId>;
+	type ProxyType = ProxyType;
+	type ProxyDepositBase = ProxyDepositBase;
+	type ProxyDepositFactor = ProxyDepositFactor;
+	type MaxProxies = frame_support::traits::ConstU32<32>;
+	type WeightInfo = pallet_proxy::weights::SubstrateWeight<Runtime>;
+	type MaxPending = frame_support::traits::ConstU32<32>;
+	type CallHasher = BlakeTwo256;
+	type AnnouncementDepositBase = AnnouncementDepositBase;
+	type AnnouncementDepositFactor = AnnouncementDepositFactor;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -1172,6 +1230,8 @@ construct_runtime!(
 		// Bootstrap
 		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>} = 53,
 		Utility: pallet_utility::{Pallet, Call, Event} = 54,
+
+		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 55,
 	}
 );
 

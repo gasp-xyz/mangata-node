@@ -69,6 +69,7 @@ pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/mangata
 pallet-treasury = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-collective = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-vesting-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+pallet-proxy = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 
 # Open-Runtime-Module-Library Dependencies
 orml-tokens = {  default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
@@ -134,6 +135,7 @@ std = [
 	"frame-system/std",
 	"pallet-aura/std",
 	"pallet-authorship/std",
+	"pallet-proxy/std",
 	"pallet-session/std",
 	"pallet-sudo/std",
 	"pallet-timestamp/std",
@@ -246,4 +248,5 @@ runtime-benchmarks = [
 	"pallet-bootstrap/runtime-benchmarks",
 	"pallet-multipurpose-liquidity/runtime-benchmarks",
 	"orml-tokens/frame-benchmarking",
+	"pallet-proxy/runtime-benchmarks",
 ]

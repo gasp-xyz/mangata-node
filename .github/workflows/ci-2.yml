@@ -336,7 +336,7 @@ jobs:
         shard: [1/3, 2/3, 3/3]
 
     timeout-minutes: 1440
-    if: "!contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests')"
+    if: ${{ (success() || github.event.inputs.skipBuild == 'true') && !contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests') }}
     env:
       API_URL: 'ws://127.0.0.1:9946'
       TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}
@@ -488,7 +488,7 @@ jobs:
   e2e-test-sequential-self-hosted:
     needs: build-rococo
     runs-on: self-hosted
-    if: "!contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests')"
+    if: ${{ (success() || github.event.inputs.skipBuild == 'true') && !contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests') }}
     env:
       API_URL: 'ws://127.0.0.1:9946'
       TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}

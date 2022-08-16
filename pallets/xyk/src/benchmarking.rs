@@ -426,6 +426,7 @@ benchmarks! {
 
 		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), 40000000000000000000, non_native_asset_id2.into(), 60000000000000000000).unwrap();
 
+		// this activates pool
 		pallet_issuance::PromotedPoolsRewards::<T>::insert(liquidity_asset_id, 0_u128);
 
 		assert_eq!(
@@ -460,6 +461,7 @@ benchmarks! {
 		let initial_liquidity_amount = 40000000000000000000_u128 / 2_u128 + 60000000000000000000_u128 / 2_u128;
 
 		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), 40000000000000000000, non_native_asset_id2.into(), 60000000000000000000).unwrap();
+		// this activates pool
 		pallet_issuance::PromotedPoolsRewards::<T>::insert(liquidity_asset_id, 0_u128);
 
 		assert_eq!(

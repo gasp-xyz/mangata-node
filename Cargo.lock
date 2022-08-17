@@ -6340,6 +6340,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "lazy_static",
  "log",
  "mangata-primitives",
  "orml-tokens",

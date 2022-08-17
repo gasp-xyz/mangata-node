@@ -20,6 +20,10 @@ pub trait WeightInfo {
 	fn claim_rewards_all_v2() -> Weight;
 	fn activate_liquidity_v2() -> Weight;
 	fn deactivate_liquidity_v2() -> Weight;
+	fn deactivate_liquidity_for_account() -> Weight;
+	fn activate_liquidity_v2_for_account() -> Weight;
+	fn claim_rewards_for_account() -> Weight;
+	fn activate_liquidity_for_account() -> Weight;
 }
 
 // For backwards compatibility and tests
@@ -80,6 +84,7 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(8 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
 	}
+
 	//TODO retest
 	fn claim_rewards_all_v2() -> Weight {
 		(156_724_000 as Weight)
@@ -92,10 +97,37 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
 	}
+	
 	//TODO retest
 	fn deactivate_liquidity_v2() -> Weight {
 		(133_607_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(7 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
+	}
+
+	//TODO retest new
+	fn activate_liquidity_v2_for_account() -> Weight {
+		(119_779_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
+	}
+
+	//TODO retest new
+	fn claim_rewards_for_account() -> Weight {
+		(156_724_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(8 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
+	}
+	//TODO retest new
+	fn deactivate_liquidity_for_account() -> Weight {
+		(133_607_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(7 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
+	}
+	//TODO retest new
+	fn activate_liquidity_for_account() -> Weight {
+		(119_779_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
 	}
 }

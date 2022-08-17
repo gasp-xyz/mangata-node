@@ -351,6 +351,8 @@ pub mod pallet {
 		type DisabledTokens: Contains<TokenId>;
 		type VestingProvider: MultiTokenVestingLocks<Self::AccountId>;
 		type WeightInfo: WeightInfo;
+		#[pallet::constant]
+		type RewardsForAllAccount: Get<Self::AccountId>;
 	}
 
 	#[pallet::error]
@@ -424,6 +426,7 @@ pub mod pallet {
 		CalculateCumulativeWorkMaxRatioMathError7,
 		CalculateRewardsAllMathError1,
 		CalculateRewardsAllMathError2,
+		NoRights,
 	}
 
 	#[pallet::event]
@@ -783,7 +786,7 @@ pub mod pallet {
 			use_balance_from: Option<ActivateKind>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-
+		
 			<Self as XykFunctionsTrait<T::AccountId>>::activate_liquidity_v2(
 				sender,
 				liquidity_token_id,
@@ -793,36 +796,22 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		#[pallet::weight(<<T as Config>::WeightInfo>::activate_liquidity())]
-		pub fn activate_liquidity(
+		#[pallet::weight(T::WeightInfo::activate_liquidity_v2_for_account())]
+		pub fn activate_liquidity_v2_for_account(
 			origin: OriginFor<T>,
+			account: T::AccountId,
 			liquidity_token_id: TokenId,
 			amount: Balance,
 			use_balance_from: Option<ActivateKind>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
+			ensure!(sender == T::RewardsForAllAccount::get(), Error::<T>::NoRights);
 
-			<Self as XykFunctionsTrait<T::AccountId>>::activate_liquidity(
-				sender,
+			<Self as XykFunctionsTrait<T::AccountId>>::activate_liquidity_v2(
+				account,
 				liquidity_token_id,
 				amount,
 				use_balance_from,
-			)
-		}
-
-		#[transactional]
-		#[pallet::weight(<<T as Config>::WeightInfo>::deactivate_liquidity())]
-		pub fn deactivate_liquidity(
-			origin: OriginFor<T>,
-			liquidity_token_id: TokenId,
-			amount: Balance,
-		) -> DispatchResult {
-			let sender = ensure_signed(origin)?;
-
-			<Self as XykFunctionsTrait<T::AccountId>>::deactivate_liquidity(
-				sender,
-				liquidity_token_id,
-				amount,
 			)
 		}
 
@@ -841,6 +830,105 @@ pub mod pallet {
 				amount,
 			)
 		}
+
+		#[transactional]
+		#[pallet::weight(<<T as Config>::WeightInfo>::claim_rewards_for_account())]
+		pub fn claim_rewards_for_account(
+			origin: OriginFor<T>,
+			account: T::AccountId,
+			liquidity_token_id: TokenId,
+			amount: Balance,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			ensure!(sender == T::RewardsForAllAccount::get(), Error::<T>::NoRights);
+
+			<Self as XykFunctionsTrait<T::AccountId>>::claim_rewards(
+				account,
+				liquidity_token_id,
+				amount,
+			)?;
+
+			Ok(().into())
+		}
+
+		// Rew V1 to be removed
+		#[transactional]
+		#[pallet::weight(<<T as Config>::WeightInfo>::activate_liquidity())]
+		pub fn activate_liquidity(
+			origin: OriginFor<T>,
+			liquidity_token_id: TokenId,
+			amount: Balance,
+			use_balance_from: Option<ActivateKind>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			<Self as XykFunctionsTrait<T::AccountId>>::activate_liquidity(
+				sender,
+				liquidity_token_id,
+				amount,
+				use_balance_from,
+			)
+		}
+
+		// Rew V1 to be removed
+		#[transactional]
+		#[pallet::weight(<<T as Config>::WeightInfo>::activate_liquidity_for_account())]
+		pub fn activate_liquidity_for_account(
+			origin: OriginFor<T>,
+			account: T::AccountId,
+			liquidity_token_id: TokenId,
+			amount: Balance,
+			use_balance_from: Option<ActivateKind>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			ensure!(sender == T::RewardsForAllAccount::get(), Error::<T>::NoRights);
+
+			<Self as XykFunctionsTrait<T::AccountId>>::activate_liquidity(
+				account,
+				liquidity_token_id,
+				amount,
+				use_balance_from,
+			)
+		}
+
+		// Rew V1 to be removed
+		#[transactional]
+		#[pallet::weight(<<T as Config>::WeightInfo>::deactivate_liquidity())]
+		pub fn deactivate_liquidity(
+			origin: OriginFor<T>,
+			liquidity_token_id: TokenId,
+			amount: Balance,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			<Self as XykFunctionsTrait<T::AccountId>>::deactivate_liquidity(
+				sender,
+				liquidity_token_id,
+				amount,
+			)
+		}
+
+		// Rew V1 to be removed
+		#[transactional]
+		#[pallet::weight(<<T as Config>::WeightInfo>::deactivate_liquidity_for_account())]
+		pub fn deactivate_liquidity_for_account(
+			origin: OriginFor<T>,
+			account: T::AccountId,
+			liquidity_token_id: TokenId,
+			amount: Balance,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			ensure!(sender == T::RewardsForAllAccount::get(), Error::<T>::NoRights);
+
+			<Self as XykFunctionsTrait<T::AccountId>>::deactivate_liquidity(
+				account,
+				liquidity_token_id,
+				amount,
+			)
+		}
+
+
+		
 	}
 }
 
@@ -860,6 +948,13 @@ impl<T: Config> Pallet<T> {
 		let liquidity_assets_amount: Balance = rewards_info.activated_amount;
 
 		let mut current_rewards = 0;
+		log!(
+			info,
+			"calculate_rewards_amount v2: {}, ",
+			liquidity_assets_amount,
+		
+			
+		);
 
 		if liquidity_assets_amount != 0 {
 			let pool_rewards_ratio_current =
@@ -877,6 +972,18 @@ impl<T: Config> Pallet<T> {
 				missing_at_checkpoint,
 				pool_rewards_ratio_current,
 			)?;
+
+			
+		log!(
+			info,
+			"calculate_rewards_amount v2: {}, {},{}, {},{}, ",
+			liquidity_assets_amount,
+			last_checkpoint,
+			pool_ratio_at_last_checkpoint,
+				missing_at_checkpoint,
+				pool_rewards_ratio_current,
+			
+		);
 		}
 
 		let not_yet_claimed_rewards = rewards_info.rewards_not_yet_claimed;
@@ -916,6 +1023,14 @@ impl<T: Config> Pallet<T> {
 			.checked_sub(pool_rewards_ratio)
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError1))?;
 
+			log!(
+				info,
+				"calculate_rewards_v2: {}, {},",
+				liquidity_assets_amount,
+				pool_rewards_ratio_new,
+				
+			);
+			
 		let user_rewards_base: u128 = U256::from(liquidity_assets_amount)
 			.checked_mul(pool_rewards_ratio_new.into()) // TODO: please add UT and link it in this comment
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError2))?

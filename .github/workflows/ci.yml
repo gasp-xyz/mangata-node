@@ -428,11 +428,6 @@ jobs:
         working-directory: e2eTests
         run: yarn test-parallel-v2 --shard=${{ matrix.shard }}
 
-      - name: Fix test report file
-        working-directory: e2eTests
-        if: success() || failure()    # run this step even if previous step failed
-        run: sed -i 's/<testsuites>/<testsuites time="0">/g' reports/junit-all.xml
-
       - name: Test Report
         uses: dorny/test-reporter@v1
         if: success() || failure()    # run this step even if previous step failed
@@ -580,12 +575,7 @@ jobs:
 
       - name: Run sequential e2e tests
         working-directory: e2eTests
-        run: yarn test-sequential-e2e-v2
-
-      - name: Fix test report file
-        if: success() || failure()    # run this step even if previous step failed
-        working-directory: e2eTests
-        run: sed -i 's/<testsuites>/<testsuites time="0">/g' reports/junit-all.xml
+        run: yarn test-sequential-e2e
 
       - name: Test Report
         uses: dorny/test-reporter@v1

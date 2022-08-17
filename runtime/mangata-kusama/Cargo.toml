@@ -65,8 +65,8 @@ pallet-authorship = { git = "https://github.com/mangata-finance/substrate", defa
 pallet-session = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.24" }
 pallet-sudo = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.24" }
 pallet-timestamp = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.24" }
-pallet-transaction-payment = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.24" }
-pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.24" }
+pallet-transaction-payment-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.24" }
+pallet-transaction-payment-rpc-runtime-api-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.24" }
 pallet-treasury = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.24" }
 pallet-elections-phragmen = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.24" }
 pallet-collective = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.24" }
@@ -147,8 +147,8 @@ std = [
 	"pallet-session/std",
 	"pallet-sudo/std",
 	"pallet-timestamp/std",
-	"pallet-transaction-payment-rpc-runtime-api/std",
-	"pallet-transaction-payment/std",
+	"pallet-transaction-payment-rpc-runtime-api-mangata/std",
+	"pallet-transaction-payment-mangata/std",
 	"cumulus-pallet-aura-ext/std",
 	"cumulus-pallet-parachain-system/std",
 	"cumulus-pallet-xcm/std",

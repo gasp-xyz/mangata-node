@@ -6,7 +6,7 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
+use pallet_transaction_payment_mangata::{Multiplier, TargetedFeeAdjustment};
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
@@ -113,7 +113,7 @@ pub type SignedExtra = (
 	frame_system::CheckEra<Runtime>,
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
-	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
+	pallet_transaction_payment_mangata::ChargeTransactionPayment<Runtime>,
 );
 /// The payload being signed in transactions.
 pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
@@ -565,7 +565,7 @@ use sp_runtime::{
 	transaction_validity::InvalidTransaction,
 };
 
-use pallet_transaction_payment::OnChargeTransaction;
+use pallet_transaction_payment_mangata::OnChargeTransaction;
 
 type NegativeImbalanceOf<C, T> =
 	<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
@@ -579,7 +579,7 @@ use orml_tokens::MultiTokenImbalanceWithZeroTrait;
 impl<T, C, OU, T1, T2, T3, SF2, SF3> OnChargeTransaction<T>
 	for ThreeCurrencyOnChargeAdapter<C, OU, T1, T2, T3, SF2, SF3>
 where
-	T: pallet_transaction_payment::Config,
+	T: pallet_transaction_payment_mangata::Config,
 	T::LengthToFee: frame_support::weights::WeightToFee<
 		Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
 	>,
@@ -704,7 +704,7 @@ parameter_types! {
 	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1);
 }
 
-impl pallet_transaction_payment::Config for Runtime {
+impl pallet_transaction_payment_mangata::Config for Runtime {
 	type OnChargeTransaction = ThreeCurrencyOnChargeAdapter<
 		orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
 		ToAuthor,
@@ -1092,7 +1092,7 @@ construct_runtime!(
 
 		// Monetary stuff.
 		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>} = 10,
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 11,
+		TransactionPayment: pallet_transaction_payment_mangata::{Pallet, Storage} = 11,
 
 		// Xyk stuff
 		AssetsInfo: pallet_assets_info::{Pallet, Call, Config, Storage, Event<T>} = 12,
@@ -1412,17 +1412,17 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance> for Runtime {
+	impl pallet_transaction_payment_rpc_runtime_api_mangata::TransactionPaymentApi<Block, Balance> for Runtime {
 		fn query_info(
 			uxt: <Block as BlockT>::Extrinsic,
 			len: u32,
-		) -> pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo<Balance> {
+		) -> pallet_transaction_payment_rpc_runtime_api_mangata::RuntimeDispatchInfo<Balance> {
 			TransactionPayment::query_info(uxt, len)
 		}
 		fn query_fee_details(
 			uxt: <Block as BlockT>::Extrinsic,
 			len: u32,
-		) -> pallet_transaction_payment::FeeDetails<Balance> {
+		) -> pallet_transaction_payment_mangata::FeeDetails<Balance> {
 			TransactionPayment::query_fee_details(uxt, len)
 		}
 	}

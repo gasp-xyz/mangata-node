@@ -56,7 +56,7 @@ frame-benchmarking = { git = "https://github.com/mangata-finance/substrate", bra
 frame-benchmarking-cli = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
 try-runtime-cli = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
 
-pallet-transaction-payment-rpc = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
+pallet-transaction-payment-rpc-mangata = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
 
 substrate-frame-rpc-system = { package = "mangata-rpc-nonce", path = "../rpc/nonce" }
 substrate-prometheus-endpoint = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
@@ -142,7 +142,7 @@ tokio = { version = "1.15", features = ["macros", "time"] }
 pallet-timestamp = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.24" }
 sp-tracing = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
 frame-system = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
-pallet-transaction-payment = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
+pallet-transaction-payment-mangata = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
 frame-system-rpc-runtime-api = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
 cumulus-pallet-parachain-system = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.24'}
 cumulus-test-relay-sproof-builder = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.24'}

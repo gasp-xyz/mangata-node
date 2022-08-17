@@ -25,6 +25,7 @@ frame-benchmarking = { git = "https://github.com/mangata-finance/substrate", bra
 cfg-if = "1.0.0"
 
 [dev-dependencies]
+lazy_static = "1.1.1"
 sp-core = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
 sp-io = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
 orml-traits = { default-features = false, version="0.4.1-dev" , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v0.9.24" }

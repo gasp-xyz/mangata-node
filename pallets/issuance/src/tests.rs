@@ -393,7 +393,6 @@ fn issuance_after_linear_period_never_execeeds_linear() {
 fn promote_pool_api_works() {
 	new_test_ext().execute_with(|| {
 		Issuance::promote_pool(1);
-		
 
 		roll_to_while_minting(4, None);
 		assert_eq!(U256::from_dec_str("76571018769283414925455480913511346478027010").unwrap(), Issuance::get_pool_rewards_v2(1).unwrap());
@@ -410,6 +409,17 @@ fn promote_pool_api_works() {
 		assert_eq!(U256::from_dec_str("229713056307850244776366442740534039434081030").unwrap(), Issuance::get_pool_rewards_v2(1).unwrap());
 		assert_eq!(U256::from_dec_str("76571018769283414925455480913511346478027010").unwrap(), Issuance::get_pool_rewards_v2(2).unwrap());
 		
+	});
+}
+
+#[test]
+fn mock_use_demo() {
+	new_test_ext().execute_with(|| {
+		// sets to some value
+		mock::MockActivedPoolQueryApi::instance().lock().unwrap().replace(1_u128);
+
+		// sets to none
+		mock::MockActivedPoolQueryApi::instance().lock().unwrap().take();
 	});
 }
 

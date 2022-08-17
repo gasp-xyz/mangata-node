@@ -129,6 +129,7 @@ lazy_static::lazy_static! {
 		Mutex::new(m)
 	};
 }
+pub struct MockActivedPoolQueryApi;
 
 pub struct MockPromotedPoolApi;
 pub struct MockActivedPoolQueryApi;

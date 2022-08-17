@@ -6414,7 +6414,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
- "lazy_static",
  "log",
  "mangata-primitives",
  "mp-multipurpose-liquidity",

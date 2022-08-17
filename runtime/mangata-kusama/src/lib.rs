@@ -1112,13 +1112,7 @@ impl orml_asset_registry::Config for Runtime {
 }
 
 // Proxy Pallet
-parameter_types! {
-	pub const ProxyDepositBase: Balance = 0;
-	pub const ProxyDepositFactor: Balance = 0;
-	pub const AnnouncementDepositBase: Balance = 0;
-	pub const AnnouncementDepositFactor: Balance = 0;
-}
-
+/// The type used to represent the kinds of proxying allowed.
 #[derive(
 	Copy,
 	Clone,
@@ -1130,10 +1124,12 @@ parameter_types! {
 	Decode,
 	RuntimeDebug,
 	MaxEncodedLen,
-	scale_info::TypeInfo,
+	TypeInfo,
 )]
 pub enum ProxyType {
-	Any = 0,
+	Any,
+	CancelProxy,
+	AutoCompound,
 }
 
 impl Default for ProxyType {
@@ -1142,14 +1138,37 @@ impl Default for ProxyType {
 	}
 }
 
+parameter_types! {
+	pub const ProxyDepositBase: Balance = deposit(1, 16);
+	pub const ProxyDepositFactor: Balance = deposit(0, 33);
+	pub const AnnouncementDepositBase: Balance = deposit(1, 16);
+	pub const AnnouncementDepositFactor: Balance = deposit(0, 68);
+}
+
 impl InstanceFilter<Call> for ProxyType {
-	fn filter(&self, _c: &Call) -> bool {
+	fn filter(&self, c: &Call) -> bool {
 		match self {
+			_ if matches!(c, Call::Utility(..)) => true,
 			ProxyType::Any => true,
+			ProxyType::CancelProxy =>
+				matches!(c, Call::Proxy(pallet_proxy::Call::reject_announcement { .. })),
+			ProxyType::AutoCompound => {
+				matches!(
+					c,
+					Call::Xyk(pallet_xyk::Call::mint_liquidity { .. }) |
+						// Call::Xyk(pallet_xyk::Call::claim_rewards_all { .. })
+						Call::Xyk(pallet_xyk::Call::claim_rewards { .. })
+				)
+			},
 		}
 	}
-	fn is_superset(&self, _o: &Self) -> bool {
-		true
+	fn is_superset(&self, o: &Self) -> bool {
+		match (self, o) {
+			(x, y) if x == y => true,
+			(ProxyType::Any, _) => true,
+			(_, ProxyType::Any) => false,
+			_ => false,
+		}
 	}
 }
 

@@ -325,8 +325,8 @@ jobs:
   e2e-test-parallel-self-hosted:
     needs: build-rococo
     runs-on: self-hosted
-    timeout-minutes: 1440
-    if: ${{ (success() || github.event.inputs.skipBuild == 'true') && !contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests') }}
+    timeout-minutes: 180
+    if: ${{ (!cancelled() && (success() || github.event.inputs.skipBuild == 'true')) && !contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests') }}
     env:
       API_URL: 'ws://127.0.0.1:9946'
       TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}
@@ -421,9 +421,6 @@ jobs:
       - name: Docker ps
         run: docker ps
 
-      - name: Sleep for 2 minutes
-        run: sleep 120s #close buffers of videos.
-
       - name: Run parallel e2e tests
         working-directory: e2eTests
         run: yarn test-parallel-v2 --shard=${{ matrix.shard }}
@@ -474,7 +471,8 @@ jobs:
   e2e-test-sequential-self-hosted:
     needs: build-rococo
     runs-on: self-hosted
-    if: ${{ (success() || github.event.inputs.skipBuild == 'true') && !contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests') }}
+    if: ${{ (!cancelled() && (success() || github.event.inputs.skipBuild == 'true')) && !contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests') }}
+    timeout-minutes: 180
     env:
       API_URL: 'ws://127.0.0.1:9946'
       TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}
@@ -569,9 +567,6 @@ jobs:
 
       - name: Docker ps
         run: docker ps
-
-      - name: Sleep for 2 minutes
-        run: sleep 120s #close buffers of videos.
 
       - name: Run sequential e2e tests
         working-directory: e2eTests

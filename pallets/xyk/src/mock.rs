@@ -311,6 +311,19 @@ impl Contains<(TokenId, TokenId)> for DummyBlacklistedPool {
 	}
 }
 
+pub struct RewardsForAllAccountProvider<T: frame_system::Config>(PhantomData<T>);
+
+impl<T: frame_system::Config> Get<T::AccountId> for RewardsForAllAccountProvider<T> {
+	fn get() -> T::AccountId {
+		let account32: sp_runtime::AccountId32 =
+			hex_literal::hex!["d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"]
+				.into();
+		let mut init_account32 = sp_runtime::AccountId32::as_ref(&account32);
+		let init_account = T::AccountId::decode(&mut init_account32).unwrap();
+		init_account
+	}
+}
+
 #[cfg(not(feature = "runtime-benchmarks"))]
 impl Config for Test {
 	type Event = Event;
@@ -329,6 +342,7 @@ impl Config for Test {
 	type VestingProvider = Vesting;
 	type DisallowedPools = DummyBlacklistedPool;
 	type DisabledTokens = Nothing;
+	type RewardsForAllAccount = RewardsForAllAccountProvider<Self>;
 }
 
 #[cfg(feature = "runtime-benchmarks")]

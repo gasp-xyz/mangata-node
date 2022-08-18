@@ -786,7 +786,7 @@ pub mod pallet {
 			use_balance_from: Option<ActivateKind>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-		
+
 			<Self as XykFunctionsTrait<T::AccountId>>::activate_liquidity_v2(
 				sender,
 				liquidity_token_id,
@@ -926,9 +926,6 @@ pub mod pallet {
 				amount,
 			)
 		}
-
-
-		
 	}
 }
 
@@ -948,13 +945,7 @@ impl<T: Config> Pallet<T> {
 		let liquidity_assets_amount: Balance = rewards_info.activated_amount;
 
 		let mut current_rewards = 0;
-		log!(
-			info,
-			"calculate_rewards_amount v2: {}, ",
-			liquidity_assets_amount,
-		
-			
-		);
+		log!(info, "calculate_rewards_amount v2: {}, ", liquidity_assets_amount,);
 
 		if liquidity_assets_amount != 0 {
 			let pool_rewards_ratio_current =
@@ -973,17 +964,15 @@ impl<T: Config> Pallet<T> {
 				pool_rewards_ratio_current,
 			)?;
 
-			
-		log!(
-			info,
-			"calculate_rewards_amount v2: {}, {},{}, {},{}, ",
-			liquidity_assets_amount,
-			last_checkpoint,
-			pool_ratio_at_last_checkpoint,
+			log!(
+				info,
+				"calculate_rewards_amount v2: {}, {},{}, {},{}, ",
+				liquidity_assets_amount,
+				last_checkpoint,
+				pool_ratio_at_last_checkpoint,
 				missing_at_checkpoint,
 				pool_rewards_ratio_current,
-			
-		);
+			);
 		}
 
 		let not_yet_claimed_rewards = rewards_info.rewards_not_yet_claimed;
@@ -1023,14 +1012,13 @@ impl<T: Config> Pallet<T> {
 			.checked_sub(pool_rewards_ratio)
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError1))?;
 
-			log!(
-				info,
-				"calculate_rewards_v2: {}, {},",
-				liquidity_assets_amount,
-				pool_rewards_ratio_new,
-				
-			);
-			
+		log!(
+			info,
+			"calculate_rewards_v2: {}, {},",
+			liquidity_assets_amount,
+			pool_rewards_ratio_new,
+		);
+
 		let user_rewards_base: u128 = U256::from(liquidity_assets_amount)
 			.checked_mul(pool_rewards_ratio_new.into()) // TODO: please add UT and link it in this comment
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError2))?

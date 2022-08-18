@@ -1798,20 +1798,18 @@ fn extreme_case_pool_ratio() {
 		XykStorage::create_new_token(&acc_id, amount);
 		XykStorage::create_new_token(&acc_id, amount);
 
-
-
 		XykStorage::create_pool(Origin::signed(2), 0, max, 1, max).unwrap();
 		XykStorage::promote_pool(Origin::root(), 4).unwrap();
 
-		
-
 		let liquidity_tokens_owned = XykStorage::balance(4, 2);
-		XykStorage::activate_liquidity_v2(Origin::signed(2), 4, 1, None)
-			.unwrap();
+		XykStorage::activate_liquidity_v2(Origin::signed(2), 4, 1, None).unwrap();
 
 		System::set_block_number(10000);
 
-		MockPromotedPoolApi::instance().lock().unwrap().insert(4,  U256::from(u128::MAX)*U256::from(u128::MAX));
+		MockPromotedPoolApi::instance()
+			.lock()
+			.unwrap()
+			.insert(4, U256::from(u128::MAX) * U256::from(u128::MAX));
 
 		assert_eq!(XykStorage::calculate_rewards_amount_v2(2, 4).unwrap(), 291);
 		// XykStorage::deactivate_liquidity_v2(Origin::signed(2), 4, liquidity_tokens_owned).unwrap();

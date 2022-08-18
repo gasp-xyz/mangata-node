@@ -74,8 +74,6 @@ pub trait WeightInfo {
 	fn claim_rewards_for_account() -> Weight;
 	fn activate_liquidity_for_account() -> Weight;
 }
-}
-
 
 /// Weights for pallet_xyk using the Mangata node and recommended hardware.
 pub struct ModuleWeight<T>(PhantomData<T>);

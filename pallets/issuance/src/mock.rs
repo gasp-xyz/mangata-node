@@ -122,7 +122,6 @@ parameter_types! {
 
 }
 
-
 lazy_static::lazy_static! {
 	static ref ACTIVATED_POOL: Mutex<HashMap<TokenId, U256>> = {
 		let m = HashMap::new();

@@ -12,6 +12,8 @@ use frame_support::{
 use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
 use mangata_primitives::{Balance, TokenId};
 use mp_bootstrap::PoolCreateApi;
+use mp_multipurpose_liquidity::ActivateKind;
+use mp_traits::ActivationReservesProviderTrait;
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
 use scale_info::TypeInfo;
@@ -149,6 +151,10 @@ pub mod pallet {
 		type VestingProvider: MultiTokenVestingLocks<Self::AccountId, Self::BlockNumber>;
 
 		type WeightInfo: WeightInfo;
+
+		type ActivationReservesProvider: ActivationReservesProviderTrait<
+			AccountId = Self::AccountId,
+		>;
 	}
 
 	#[pallet::storage]
@@ -348,7 +354,14 @@ pub mod pallet {
 		#[transactional]
 		pub fn claim_rewards(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_claim_rewards(&sender)
+			Self::do_claim_rewards(&sender, false)
+		}
+
+		#[pallet::weight(T::WeightInfo::claim_rewards())]
+		#[transactional]
+		pub fn claim_and_activate_rewards(origin: OriginFor<T>) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_claim_rewards(&sender, true)
 		}
 
 		#[pallet::weight(T::WeightInfo::finalize().saturating_add(T::DbWeight::get().reads_writes(1, 1) * Into::<u64>::into(limit.unwrap_or_default())))]
@@ -418,9 +431,10 @@ pub mod pallet {
 		pub fn claim_rewards_for_account(
 			origin: OriginFor<T>,
 			account: T::AccountId,
+			activate_rewards: bool,
 		) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
-			Self::do_claim_rewards(&account)
+			Self::do_claim_rewards(&account, activate_rewards)
 		}
 	}
 
@@ -691,7 +705,7 @@ impl<T: Config> Pallet<T> {
 		Ok((rewards, vested_rewards, (lock_start, lock_end)))
 	}
 
-	fn do_claim_rewards(who: &T::AccountId) -> DispatchResult {
+	fn do_claim_rewards(who: &T::AccountId, activate_rewards: bool) -> DispatchResult {
 		ensure!(Self::phase() == BootstrapPhase::Finished, Error::<T>::NotFinishedYet);
 
 		let (liq_token_id, _) = Self::minted_liquidity();
@@ -754,6 +768,30 @@ impl<T: Config> Pallet<T> {
 		);
 
 		ProvisionAccounts::<T>::remove(who);
+
+		if activate_rewards {
+			let non_vested_rewards = second_token_rewards
+				.checked_add(first_token_rewards)
+				.ok_or(Error::<T>::MathOverflow)?;
+
+			ensure!(
+				<T as Config>::ActivationReservesProvider::can_activate(
+					liq_token_id.into(),
+					&who,
+					non_vested_rewards,
+					Some(ActivateKind::AvailableBalance),
+				),
+				Error::<T>::NotEnoughAssets
+			);
+
+			<T as Config>::ActivationReservesProvider::activate(
+				liq_token_id.into(),
+				&who,
+				non_vested_rewards,
+				Some(ActivateKind::AvailableBalance),
+			)?;
+		}
+
 		Self::deposit_event(Event::RewardsClaimed(liq_token_id, total_rewards_claimed));
 
 		Ok(().into())

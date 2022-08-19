@@ -25,6 +25,8 @@ sp-arithmetic= { git = "https://github.com/mangata-finance/substrate", default-f
 frame-benchmarking = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
 mp-bootstrap = { path = "../../primitives/bootstrap", default-features=false }
 pallet-vesting-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.24" }
+mp-traits = { path = '../../primitives/traits', default-features = false}
+mp-multipurpose-liquidity = { path = '../../primitives/multipurpose-liquidity', default-features = false}
 
 [dev-dependencies]
 test-case = "2.0.2"
@@ -55,4 +57,6 @@ std = [
 	'orml-tokens/std',
 	"frame-benchmarking/std",
 	'pallet-vesting-mangata/std',
+	'mp-traits/std',
+	'mp-multipurpose-liquidity/std',
 ]

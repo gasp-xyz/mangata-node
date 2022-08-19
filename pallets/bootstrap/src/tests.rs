@@ -1484,7 +1484,8 @@ fn test_restart_bootstrap() {
 			Error::<Test>::BootstrapNotReadyToBeFinished
 		);
 
-		Bootstrap::claim_rewards_for_account(Origin::signed(USER_ID), ANOTHER_USER_ID).unwrap();
+		Bootstrap::claim_rewards_for_account(Origin::signed(USER_ID), ANOTHER_USER_ID, false)
+			.unwrap();
 
 		assert_ne!(0, Bootstrap::balance(liq_token_id, USER_ID));
 		assert_ne!(0, Bootstrap::balance(liq_token_id, ANOTHER_USER_ID));

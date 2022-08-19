@@ -357,7 +357,7 @@ pub mod pallet {
 			Self::do_claim_rewards(&sender, false)
 		}
 
-		#[pallet::weight(T::WeightInfo::claim_rewards())]
+		#[pallet::weight(T::WeightInfo::claim_and_activate_rewards())]
 		#[transactional]
 		pub fn claim_and_activate_rewards(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;

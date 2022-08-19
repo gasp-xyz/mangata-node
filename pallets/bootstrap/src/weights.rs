@@ -12,6 +12,7 @@ pub trait WeightInfo {
 	fn provision() -> Weight;
 	fn provision_vested() -> Weight;
 	fn claim_rewards() -> Weight;
+	fn claim_and_activate_rewards() -> Weight;
 	fn finalize() -> Weight;
 }
 
@@ -34,6 +35,11 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().writes(8 as Weight))
 	}
 	fn claim_rewards() -> Weight {
+		(163_272_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(15 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
+	}
+	fn claim_and_activate_rewards() -> Weight {
 		(163_272_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(15 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(7 as Weight))

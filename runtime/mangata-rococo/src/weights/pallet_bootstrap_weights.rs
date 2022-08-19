@@ -59,6 +59,7 @@ pub trait WeightInfo {
 	fn provision() -> Weight;
 	fn provision_vested() -> Weight;
 	fn claim_rewards() -> Weight;
+	fn claim_and_activate_rewards() -> Weight;
 	fn finalize() -> Weight;
 }
 
@@ -122,6 +123,12 @@ impl<T: frame_system::Config> pallet_bootstrap::WeightInfo for ModuleWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(15 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}
+
+	fn claim_and_activate_rewards() -> Weight {
+		(173_997_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(15 as Weight))
+			.saturating_add(T::DbWeight::get().writes(7 as Weight))
+	}
 	// Storage: Bootstrap Phase (r:1 w:1)
 	// Storage: Bootstrap ProvisionAccounts (r:1 w:0)
 	// Storage: Bootstrap MintedLiquidity (r:1 w:1)
@@ -158,6 +165,11 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().writes(8 as Weight))
 	}
 	fn claim_rewards() -> Weight {
+		(173_997_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(15 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
+	}
+	fn claim_and_activate_rewards() -> Weight {
 		(173_997_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(15 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(7 as Weight))

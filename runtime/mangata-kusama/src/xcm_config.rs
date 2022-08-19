@@ -10,7 +10,7 @@ use super::{
 	constants::{fee::*, parachains},
 	AccountId, AssetIdMapping, AssetIdMaps, Balance, Call, Convert, Event, ExistentialDeposits,
 	Origin, ParachainInfo, ParachainSystem, PolkadotXcm, Runtime, TokenId, Tokens, TreasuryAccount,
-	UnknownTokens, XcmpQueue, MGR_TOKEN_ID, ROC_TOKEN_ID,
+	UnknownTokens, XcmpQueue, KSM_TOKEN_ID, MGX_TOKEN_ID,
 };
 use codec::{Decode, Encode};
 use frame_support::{
@@ -37,7 +37,7 @@ use xcm_builder::{
 use xcm_executor::{traits::DropAssets, Assets, XcmExecutor};
 
 parameter_types! {
-	pub RocLocation: MultiLocation = MultiLocation::parent();
+	pub KsmLocation: MultiLocation = MultiLocation::parent();
 	pub const RelayNetwork: NetworkId = NetworkId::Polkadot;
 	pub RelayChainOrigin: Origin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
@@ -113,13 +113,13 @@ parameter_types! {
 	pub UnitWeightCost: Weight = 150_000_000;
 	pub const MaxInstructions: u32 = 100;
 
-	pub RocPerSecond: (AssetId, u128) = (MultiLocation::parent().into(), roc_per_second());
-	pub MgrPerSecond: (AssetId, u128) = (
+	pub KsmPerSecond: (AssetId, u128) = (MultiLocation::parent().into(), ksm_per_second());
+	pub MgxPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			0,
-			X1(GeneralKey(MGR_TOKEN_ID.encode())),
+			X1(GeneralKey(MGX_TOKEN_ID.encode())),
 		).into(),
-		mgr_per_second()
+		mgx_per_second()
 	);
 	pub KarPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
@@ -127,7 +127,7 @@ parameter_types! {
 			X2(Parachain(parachains::karura::ID), GeneralKey(parachains::karura::KAR_KEY.to_vec())),
 		).into(),
 		// KAR:KSM 100:1
-		roc_per_second() * 100
+		ksm_per_second() * 100
 	);
 	pub KusdPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
@@ -135,7 +135,7 @@ parameter_types! {
 			X2(Parachain(parachains::karura::ID), GeneralKey(parachains::karura::KUSD_KEY.to_vec())),
 		).into(),
 		// KUSD:KSM 50:1
-		roc_per_second() * 50
+		ksm_per_second() * 50
 	);
 	pub LksmPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
@@ -143,7 +143,7 @@ parameter_types! {
 			X2(Parachain(parachains::karura::ID), GeneralKey(parachains::karura::LKSM_KEY.to_vec())),
 		).into(),
 		// LKSM:KSM 10:1
-		roc_per_second() * 10
+		ksm_per_second() * 10
 	);
 	pub TurPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
@@ -151,7 +151,7 @@ parameter_types! {
 			X1(Parachain(parachains::turing::ID)),
 		).into(),
 		// TUR:KSM 100:1 & 10:12 decimals
-		roc_per_second()
+		ksm_per_second()
 	);
 	pub ImbuPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
@@ -159,7 +159,7 @@ parameter_types! {
 			X2(Parachain(parachains::imbue::ID), GeneralKey(parachains::imbue::IMBU_KEY.to_vec())),
 		).into(),
 		// IMBU:KSM 50:1
-		roc_per_second() * 50
+		ksm_per_second() * 50
 	);
 	pub PhaPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
@@ -167,7 +167,7 @@ parameter_types! {
 			X1(Parachain(parachains::phala::ID)),
 		).into(),
 		// PHA:KSM = 400:1
-		roc_per_second() * 400
+		ksm_per_second() * 400
 	);
 	pub BncPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
@@ -175,7 +175,7 @@ parameter_types! {
 			X2(Parachain(parachains::bifrost::ID), GeneralKey(parachains::bifrost::BNC_KEY.to_vec())),
 		).into(),
 		// BNC:KSM = 80:1
-		roc_per_second() * 80
+		ksm_per_second() * 80
 	);
 	pub VsksmPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
@@ -183,7 +183,7 @@ parameter_types! {
 			X2(Parachain(parachains::bifrost::ID), GeneralKey(parachains::bifrost::VSKSM_KEY.to_vec())),
 		).into(),
 		// VSKSM:KSM = 1:1
-		roc_per_second()
+		ksm_per_second()
 	);
 	pub VksmPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
@@ -191,13 +191,13 @@ parameter_types! {
 			X2(Parachain(parachains::bifrost::ID), GeneralKey(parachains::bifrost::VKSM_KEY.to_vec())),
 		).into(),
 		// VKSM:KSM = 1:1
-		roc_per_second()
+		ksm_per_second()
 	);
 }
 
 pub type Trader = (
-	FixedRateOfFungible<RocPerSecond, ToTreasury>,
-	FixedRateOfFungible<MgrPerSecond, ToTreasury>,
+	FixedRateOfFungible<KsmPerSecond, ToTreasury>,
+	FixedRateOfFungible<MgxPerSecond, ToTreasury>,
 	FixedRateOfFungible<KarPerSecond, ToTreasury>,
 	FixedRateOfFungible<KusdPerSecond, ToTreasury>,
 	FixedRateOfFungible<TurPerSecond, ToTreasury>,
@@ -385,7 +385,7 @@ where
 pub struct TokenIdConvert;
 impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
 	fn convert(id: TokenId) -> Option<MultiLocation> {
-		if id == ROC_TOKEN_ID {
+		if id == KSM_TOKEN_ID {
 			return Some(MultiLocation::parent())
 		}
 
@@ -401,7 +401,7 @@ impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
 impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 	fn convert(location: MultiLocation) -> Option<TokenId> {
 		if location == MultiLocation::parent() {
-			return Some(ROC_TOKEN_ID)
+			return Some(KSM_TOKEN_ID)
 		}
 
 		if let Some(token_id) = AssetIdMaps::<Runtime>::get_currency_id(location.clone()) {

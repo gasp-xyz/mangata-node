@@ -8,12 +8,12 @@ pub mod fee {
 	use smallvec::smallvec;
 	use sp_runtime::Perbill;
 
-	pub const ROC_MGR_SCALE_FACTOR_UNADJUSTED: u128 = 10_000_000_000u128; // 10_000 as KSM/MGX, with 6 decimals accounted for (12 - KSM, 18 - MGR)
+	pub const KSM_MGX_SCALE_FACTOR_UNADJUSTED: u128 = 10_000_000_000u128; // 10_000 as KSM/MGX, with 6 decimals accounted for (12 - KSM, 18 - MGX)
 
 	// on-chain fees are 10x more expensive then ~real rate
-	pub const ROC_MGR_SCALE_FACTOR: u128 = 1000_000_000u128; // 1000 as KSM/MGR, with 6 decimals accounted for (12 - KSM, 18 - MGR)
-	pub const KAR_MGR_SCALE_FACTOR: u128 = ROC_MGR_SCALE_FACTOR / 100; // 100 as KAR/ROC
-	pub const TUR_MGR_SCALE_FACTOR: u128 = ROC_MGR_SCALE_FACTOR; // 100 as TUR/ROC, with 2 decimals accounted for (10 - TUR, 12 - ROC)
+	pub const KSM_MGX_SCALE_FACTOR: u128 = 1000_000_000u128; // 1000 as KSM/MGX, with 6 decimals accounted for (12 - KSM, 18 - MGX)
+	pub const KAR_MGX_SCALE_FACTOR: u128 = KSM_MGX_SCALE_FACTOR / 100; // 100 as KAR/KSM
+	pub const TUR_MGX_SCALE_FACTOR: u128 = KSM_MGX_SCALE_FACTOR; // 100 as TUR/KSM, with 2 decimals accounted for (10 - TUR, 12 - KSM)
 
 	/// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
 	/// node's balance type.
@@ -31,7 +31,7 @@ pub mod fee {
 		fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
 			// in Rococo, extrinsic base weight (smallest non-zero weight) is mapped to 1 MILLIUNIT:
 			// in mangata, we map to 1/10 of that, or 1/10 MILLIUNIT
-			let p = base_tx_in_mgr();
+			let p = base_tx_in_mgx();
 			let q = Balance::from(MangataExtrinsicBaseWeight::get());
 			smallvec![WeightToFeeCoefficient {
 				degree: 1,
@@ -42,18 +42,18 @@ pub mod fee {
 		}
 	}
 
-	pub fn base_tx_in_mgr() -> Balance {
+	pub fn base_tx_in_mgx() -> Balance {
 		UNIT
 	}
 
-	pub fn mgr_per_second() -> u128 {
+	pub fn mgx_per_second() -> u128 {
 		let base_weight = Balance::from(MangataExtrinsicBaseWeight::get());
 		let base_per_second = (WEIGHT_PER_SECOND as u128) / base_weight;
-		base_per_second * base_tx_in_mgr()
+		base_per_second * base_tx_in_mgx()
 	}
 
-	pub fn roc_per_second() -> u128 {
-		mgr_per_second() / ROC_MGR_SCALE_FACTOR_UNADJUSTED as u128
+	pub fn ksm_per_second() -> u128 {
+		mgx_per_second() / KSM_MGX_SCALE_FACTOR_UNADJUSTED as u128
 	}
 }
 

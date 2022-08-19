@@ -363,6 +363,7 @@ impl Config for Test {
 	type VestingProvider = Vesting;
 	type DisallowedPools = Nothing;
 	type DisabledTokens = Nothing;
+	type RewardsForAllAccount = RewardsForAllAccountProvider<Self>;
 }
 
 pub struct TokensActivationPassthrough<T: Config>(PhantomData<T>);

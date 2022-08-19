@@ -945,7 +945,6 @@ impl<T: Config> Pallet<T> {
 		let liquidity_assets_amount: Balance = rewards_info.activated_amount;
 
 		let mut current_rewards = 0;
-		log!(info, "calculate_rewards_amount v2: {}, ", liquidity_assets_amount,);
 
 		if liquidity_assets_amount != 0 {
 			let pool_rewards_ratio_current =
@@ -964,15 +963,6 @@ impl<T: Config> Pallet<T> {
 				pool_rewards_ratio_current,
 			)?;
 
-			log!(
-				info,
-				"calculate_rewards_amount v2: {}, {},{}, {},{}, ",
-				liquidity_assets_amount,
-				last_checkpoint,
-				pool_ratio_at_last_checkpoint,
-				missing_at_checkpoint,
-				pool_rewards_ratio_current,
-			);
 		}
 
 		let not_yet_claimed_rewards = rewards_info.rewards_not_yet_claimed;
@@ -1012,20 +1002,13 @@ impl<T: Config> Pallet<T> {
 			.checked_sub(pool_rewards_ratio)
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError1))?;
 
-		log!(
-			info,
-			"calculate_rewards_v2: {}, {},",
-			liquidity_assets_amount,
-			pool_rewards_ratio_new,
-		);
-
-		let user_rewards_base: u128 = U256::from(liquidity_assets_amount)
+		let user_rewards_base: U256 = U256::from(liquidity_assets_amount)
 			.checked_mul(pool_rewards_ratio_new.into()) // TODO: please add UT and link it in this comment
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError2))?
 			.checked_div(U256::from(u128::MAX)) // always fit into u128
-			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError3))?
-			.try_into()
-			.map_err(|_| DispatchError::from(Error::<T>::CalculateRewardsMathError3))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError3))?;
+			// .try_into()
+			// .map_err(|_| DispatchError::from(Error::<T>::CalculateRewardsMathError3))?;
 
 		let cumulative_work_max_ratio = Self::calculate_cumulative_work_max_ratio(
 			liquidity_assets_amount,
@@ -1034,10 +1017,12 @@ impl<T: Config> Pallet<T> {
 		)?;
 
 		let current_rewards = user_rewards_base
-			.checked_mul(cumulative_work_max_ratio)
+			.checked_mul(U256::from(cumulative_work_max_ratio))
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError4))?
-			.checked_div(REWARDS_PRECISION as u128)
-			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError5))?;
+			.checked_div(U256::from(REWARDS_PRECISION))
+			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError5))?
+ 			.try_into()
+			.map_err(|_| DispatchError::from(Error::<T>::CalculateRewardsMathError3))?;
 
 		Ok(current_rewards)
 	}

@@ -732,7 +732,7 @@ fn test_crate_pool_is_called_with_proper_arguments_after_bootstrap_finish() {
 
 #[test]
 #[serial]
-fn test_cannot_claim_rewards_when_bootstrap_is_not_finished() {
+fn test_cannot_claim_liquidity_tokens_when_bootstrap_is_not_finished() {
 	new_test_ext().execute_with(|| {
 		set_up();
 
@@ -757,7 +757,7 @@ fn test_cannot_claim_rewards_when_bootstrap_is_not_finished() {
 		assert_eq!(BootstrapPhase::Public, Phase::<Test>::get());
 
 		assert_err!(
-			Bootstrap::claim_rewards(Origin::signed(USER_ID)),
+			Bootstrap::claim_liquidity_tokens(Origin::signed(USER_ID)),
 			Error::<Test>::NotFinishedYet
 		);
 	});
@@ -822,7 +822,7 @@ fn test_rewards_are_distributed_properly_with_single_user() {
 		);
 		assert_eq!(Bootstrap::minted_liquidity(), (liquidity_token_id, liquidity_token_amount));
 
-		Bootstrap::claim_rewards(Origin::signed(USER_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(Origin::signed(USER_ID)).unwrap();
 
 		assert_eq!(Bootstrap::claimed_rewards(USER_ID, MGAId::get()), liquidity_token_amount / 2);
 
@@ -953,8 +953,8 @@ fn test_rewards_are_distributed_properly_with_multiple_user() {
 			liquidity_token_amount / 2 * ANOTHER_USER_MGA_PROVISON / mga_valuation;
 		let user2_expected_liq_amount = user2_expected_ksm_rewards + user2_expected_mga_rewards;
 
-		Bootstrap::claim_rewards(Origin::signed(USER_ID)).unwrap();
-		Bootstrap::claim_rewards(Origin::signed(ANOTHER_USER_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(Origin::signed(USER_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(Origin::signed(ANOTHER_USER_ID)).unwrap();
 
 		assert_eq!(Bootstrap::claimed_rewards(USER_ID, MGAId::get()), user_expected_mga_rewards);
 		assert_eq!(Bootstrap::claimed_rewards(USER_ID, KSMId::get()), user_expected_ksm_rewards);
@@ -968,11 +968,11 @@ fn test_rewards_are_distributed_properly_with_multiple_user() {
 		);
 
 		assert_err!(
-			Bootstrap::claim_rewards(Origin::signed(USER_ID)),
+			Bootstrap::claim_liquidity_tokens(Origin::signed(USER_ID)),
 			Error::<Test>::NothingToClaim
 		);
 		assert_err!(
-			Bootstrap::claim_rewards(Origin::signed(ANOTHER_USER_ID)),
+			Bootstrap::claim_liquidity_tokens(Origin::signed(ANOTHER_USER_ID)),
 			Error::<Test>::NothingToClaim
 		);
 
@@ -1209,8 +1209,8 @@ fn vested_provision_included_in_valuation() {
 
 		Bootstrap::on_initialize(100_u32.into());
 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
-		Bootstrap::claim_rewards(Origin::signed(PROVISION_USER1_ID)).unwrap();
-		Bootstrap::claim_rewards(Origin::signed(PROVISION_USER2_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER1_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER2_ID)).unwrap();
 
 		// ASSERT
 		assert_eq!(
@@ -1248,8 +1248,8 @@ fn multi_provisions() {
 
 		Bootstrap::on_initialize(100_u32.into());
 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
-		Bootstrap::claim_rewards(Origin::signed(PROVISION_USER1_ID)).unwrap();
-		Bootstrap::claim_rewards(Origin::signed(PROVISION_USER2_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER1_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER2_ID)).unwrap();
 
 		// ASSERT
 		assert_eq!(
@@ -1394,11 +1394,11 @@ fn test_multi_provisions(
 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
 
 		if user1_has_provisions {
-			Bootstrap::claim_rewards(Origin::signed(PROVISION_USER1_ID)).unwrap();
+			Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER1_ID)).unwrap();
 		}
 
 		if user2_has_provisions {
-			Bootstrap::claim_rewards(Origin::signed(PROVISION_USER2_ID)).unwrap();
+			Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER2_ID)).unwrap();
 		}
 
 		// ASSERT
@@ -1476,7 +1476,7 @@ fn test_restart_bootstrap() {
 		assert_eq!(0, Bootstrap::balance(liq_token_id, USER_ID));
 		assert_eq!(0, Bootstrap::balance(liq_token_id, ANOTHER_USER_ID));
 
-		Bootstrap::claim_rewards(Origin::signed(USER_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(Origin::signed(USER_ID)).unwrap();
 
 		// not all rewards claimed
 		assert_err!(
@@ -1484,8 +1484,12 @@ fn test_restart_bootstrap() {
 			Error::<Test>::BootstrapNotReadyToBeFinished
 		);
 
-		Bootstrap::claim_rewards_for_account(Origin::signed(USER_ID), ANOTHER_USER_ID, false)
-			.unwrap();
+		Bootstrap::claim_liquidity_tokens_for_account(
+			Origin::signed(USER_ID),
+			ANOTHER_USER_ID,
+			false,
+		)
+		.unwrap();
 
 		assert_ne!(0, Bootstrap::balance(liq_token_id, USER_ID));
 		assert_ne!(0, Bootstrap::balance(liq_token_id, ANOTHER_USER_ID));
@@ -1517,7 +1521,7 @@ fn test_restart_bootstrap() {
 
 #[test]
 #[serial]
-fn claim_rewards_even_if_sum_of_rewards_is_zero_because_of_small_provision() {
+fn claim_liquidity_tokens_even_if_sum_of_rewards_is_zero_because_of_small_provision() {
 	new_test_ext().execute_with(|| {
 		ArchivedBootstrap::<mock::Test>::mutate(|v| {
 			v.push(Default::default());
@@ -1570,16 +1574,16 @@ fn claim_rewards_even_if_sum_of_rewards_is_zero_because_of_small_provision() {
 		assert_eq!(0, Bootstrap::balance(liq_token_id, USER_ID));
 		assert_eq!(0, Bootstrap::balance(liq_token_id, ANOTHER_USER_ID));
 
-		Bootstrap::claim_rewards(Origin::signed(USER_ID)).unwrap();
-		Bootstrap::claim_rewards(Origin::signed(ANOTHER_USER_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(Origin::signed(USER_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(Origin::signed(ANOTHER_USER_ID)).unwrap();
 
 		assert_err!(
-			Bootstrap::claim_rewards(Origin::signed(USER_ID)),
+			Bootstrap::claim_liquidity_tokens(Origin::signed(USER_ID)),
 			Error::<Test>::NothingToClaim
 		);
 
 		assert_err!(
-			Bootstrap::claim_rewards(Origin::signed(ANOTHER_USER_ID)),
+			Bootstrap::claim_liquidity_tokens(Origin::signed(ANOTHER_USER_ID)),
 			Error::<Test>::NothingToClaim
 		);
 	});
@@ -1631,8 +1635,8 @@ fn transfer_dust_to_treasury() {
 		assert_eq!(0, Bootstrap::balance(liq_token_id, USER_ID));
 		assert_eq!(0, Bootstrap::balance(liq_token_id, ANOTHER_USER_ID));
 
-		Bootstrap::claim_rewards(Origin::signed(USER_ID)).unwrap();
-		Bootstrap::claim_rewards(Origin::signed(ANOTHER_USER_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(Origin::signed(USER_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(Origin::signed(ANOTHER_USER_ID)).unwrap();
 
 		let before_finalize = Bootstrap::balance(
 			liq_token_id,
@@ -1683,7 +1687,7 @@ fn archive_previous_bootstrap_schedules() {
 		Bootstrap::provision(Origin::signed(USER_ID), MGAId::get(), 1_000_000_000_u128).unwrap();
 		Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), 100_u128).unwrap();
 		Bootstrap::on_initialize(120_u32.into());
-		Bootstrap::claim_rewards(Origin::signed(USER_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(Origin::signed(USER_ID)).unwrap();
 		assert_eq!(0, Bootstrap::archived().len());
 		Bootstrap::finalize(Origin::root(), Some(1)).unwrap();
 		assert_eq!(0, Bootstrap::provisions(USER_ID, KSMId::get()));

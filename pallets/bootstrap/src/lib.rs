@@ -350,18 +350,18 @@ pub mod pallet {
 		}
 
 		/// claim liquidity tokens from pool created as a result of bootstrap event finish
-		#[pallet::weight(T::WeightInfo::claim_rewards())]
+		#[pallet::weight(T::WeightInfo::claim_liquidity_tokens())]
 		#[transactional]
-		pub fn claim_rewards(origin: OriginFor<T>) -> DispatchResult {
+		pub fn claim_liquidity_tokens(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_claim_rewards(&sender, false)
+			Self::do_claim_liquidity_tokens(&sender, false)
 		}
 
-		#[pallet::weight(T::WeightInfo::claim_and_activate_rewards())]
+		#[pallet::weight(T::WeightInfo::claim_and_activate_liquidity_tokens())]
 		#[transactional]
-		pub fn claim_and_activate_rewards(origin: OriginFor<T>) -> DispatchResult {
+		pub fn claim_and_activate_liquidity_tokens(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_claim_rewards(&sender, true)
+			Self::do_claim_liquidity_tokens(&sender, true)
 		}
 
 		#[pallet::weight(T::WeightInfo::finalize().saturating_add(T::DbWeight::get().reads_writes(1, 1) * Into::<u64>::into(limit.unwrap_or_default())))]
@@ -426,15 +426,15 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(T::WeightInfo::claim_rewards())]
+		#[pallet::weight(T::WeightInfo::claim_liquidity_tokens())]
 		#[transactional]
-		pub fn claim_rewards_for_account(
+		pub fn claim_liquidity_tokens_for_account(
 			origin: OriginFor<T>,
 			account: T::AccountId,
 			activate_rewards: bool,
 		) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
-			Self::do_claim_rewards(&account, activate_rewards)
+			Self::do_claim_liquidity_tokens(&account, activate_rewards)
 		}
 	}
 
@@ -518,7 +518,7 @@ impl<T: Config> Pallet<T> {
 		PALLET_ID.into_account_truncating()
 	}
 
-	fn claim_rewards_from_single_currency(
+	fn claim_liquidity_tokens_from_single_currency(
 		who: &T::AccountId,
 		provision_token_id: &TokenId,
 		rewards: Balance,
@@ -705,7 +705,7 @@ impl<T: Config> Pallet<T> {
 		Ok((rewards, vested_rewards, (lock_start, lock_end)))
 	}
 
-	fn do_claim_rewards(who: &T::AccountId, activate_rewards: bool) -> DispatchResult {
+	fn do_claim_liquidity_tokens(who: &T::AccountId, activate_rewards: bool) -> DispatchResult {
 		ensure!(Self::phase() == BootstrapPhase::Finished, Error::<T>::NotFinishedYet);
 
 		let (liq_token_id, _) = Self::minted_liquidity();
@@ -737,7 +737,7 @@ impl<T: Config> Pallet<T> {
 			.checked_add(first_token_rewards_vested)
 			.ok_or(Error::<T>::MathOverflow)?;
 
-		Self::claim_rewards_from_single_currency(
+		Self::claim_liquidity_tokens_from_single_currency(
 			&who,
 			&Self::second_token_id(),
 			second_token_rewards,
@@ -752,7 +752,7 @@ impl<T: Config> Pallet<T> {
 			second_token_rewards + second_token_rewards_vested
 		);
 
-		Self::claim_rewards_from_single_currency(
+		Self::claim_liquidity_tokens_from_single_currency(
 			&who,
 			&Self::first_token_id(),
 			first_token_rewards,

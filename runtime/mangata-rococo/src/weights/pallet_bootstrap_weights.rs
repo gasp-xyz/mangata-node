@@ -58,8 +58,8 @@ pub trait WeightInfo {
 	fn schedule_bootstrap() -> Weight;
 	fn provision() -> Weight;
 	fn provision_vested() -> Weight;
-	fn claim_rewards() -> Weight;
-	fn claim_and_activate_rewards() -> Weight;
+	fn claim_liquidity_tokens() -> Weight;
+	fn claim_and_activate_liquidity_tokens() -> Weight;
 	fn finalize() -> Weight;
 }
 
@@ -118,13 +118,13 @@ impl<T: frame_system::Config> pallet_bootstrap::WeightInfo for ModuleWeight<T> {
 	// Storage: Vesting Vesting (r:1 w:1)
 	// Storage: Tokens Locks (r:1 w:1)
 	// Storage: Bootstrap ProvisionAccounts (r:0 w:1)
-	fn claim_rewards() -> Weight {
+	fn claim_liquidity_tokens() -> Weight {
 		(173_997_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(15 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}
 
-	fn claim_and_activate_rewards() -> Weight {
+	fn claim_and_activate_liquidity_tokens() -> Weight {
 		(173_997_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(15 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
@@ -164,12 +164,12 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(11 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(8 as Weight))
 	}
-	fn claim_rewards() -> Weight {
+	fn claim_liquidity_tokens() -> Weight {
 		(173_997_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(15 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
 	}
-	fn claim_and_activate_rewards() -> Weight {
+	fn claim_and_activate_liquidity_tokens() -> Weight {
 		(173_997_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(15 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(7 as Weight))

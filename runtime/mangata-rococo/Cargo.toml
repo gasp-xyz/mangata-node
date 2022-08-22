@@ -30,6 +30,7 @@ pallet-sudo-origin = { path = '../../pallets/sudo-origin', default-features = fa
 xcm-asset-registry = { path = '../../pallets/asset-registry', default-features = false}
 pallet-issuance = { path = '../../pallets/issuance', default-features = false}
 pallet-multipurpose-liquidity = { path = '../../pallets/multipurpose-liquidity', default-features = false}
+pallet-token-timeout = { path = '../../pallets/token-timeout', default-features = false}
 mp-multipurpose-liquidity = { path = '../../primitives/multipurpose-liquidity', default-features = false}
 mp-traits = { path = '../../primitives/traits', default-features = false}
 
@@ -202,6 +203,7 @@ std = [
 
 	"pallet-vesting-mangata-rpc-runtime-api/std",
 
+	"pallet-token-timeout/std",
 ]
 
 try-runtime = [
@@ -238,4 +240,5 @@ runtime-benchmarks = [
 	"pallet-bootstrap/runtime-benchmarks",
 	"pallet-multipurpose-liquidity/runtime-benchmarks",
 	"orml-tokens/frame-benchmarking",
+	"pallet-token-timeout/runtime-benchmarks",
 ]

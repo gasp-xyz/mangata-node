@@ -150,3 +150,10 @@ pub trait XykFunctionsTrait<AccountId> {
 
 	fn is_liquidity_token(liquidity_asset_id: TokenId) -> bool;
 }
+
+pub trait TimeoutTriggerTrait<AccountId>{
+    fn process_timeout(who: &AccountId) -> DispatchResult;
+
+    fn can_release_timeout(who: &AccountId) -> DispatchResult;
+}
+

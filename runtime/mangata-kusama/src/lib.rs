@@ -73,6 +73,7 @@ use orml_traits::parameter_type_with_key;
 use pallet_vesting_mangata_rpc_runtime_api::VestingInfosWithLockedAt;
 pub use pallet_xyk;
 use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
+use mp_traits::TimeoutTriggerTrait;
 
 pub const MGX_TOKEN_ID: TokenId = 0;
 pub const KSM_TOKEN_ID: TokenId = 4;
@@ -615,7 +616,7 @@ where
 		Opposite = C::PositiveImbalance,
 	>,
 	OCA: OnChargeTransaction<T, LiquidityInfo = Option<LiquidityInfoEnum<C, T>>, Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance>,
-	OTA: OnChargeTransaction<T, LiquidityInfo = Option<LiquidityInfoEnum<C, T>>, Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance>,
+	OTA: TimeoutTriggerTrait<<T as frame_system::Config>::AccountId>,
 	T: frame_system::Config<Call = Call>,
 	T::AccountId: From<AccountId32> + Into<AccountId32>,
 {
@@ -635,26 +636,24 @@ where
 	) -> Result<Self::LiquidityInfo, TransactionValidityError> {
 
 		// THIS IS NOT PROXY PALLET COMPATIBLE, YET
-
-		// ensure swap cannot fail
-		// This is to ensure that xyk swap fee is always charged
-		// We also need to ensure that the user has enough funds to transact
 		match call {
 			Call::Xyk(pallet_xyk::Call::sell_asset { sold_asset_id: sold_asset_id,
 				sold_asset_amount: sold_asset_amount, 
 				bought_asset_id: bought_asset_id, ..}) =>
 				{
-					// TODO
-					// REENABLE THIS!!
-					// if let Some(timeout_metadata) = TokenTimeout::get_timeout_metadata(){
-					// 	if let Some(threshold) = timeout_metadata.swap_value_threshold.get(sold_asset_id){
-					// 		if sold_asset_amount > threshold{
-					if true {
-						if true {
-							if true {
+					// If else tree for easy edits
+
+					// ensure swap cannot fail
+					// This is to ensure that xyk swap fee is always charged
+					// We also need to ensure that the user has enough funds to transact
+
+					if let Some(timeout_metadata) = TokenTimeout::get_timeout_metadata(){
+						if let Some(threshold) = timeout_metadata.swap_value_threshold.get(sold_asset_id){
+							if sold_asset_amount > threshold{
+								// This is the "high value swap on curated token" branch
+
 								// TODO
-								// This is not enough!!!
-								// We still need to have the entire sell_asset validation including get_reserves (to know if the pool even exists)
+								// Need a clean function call into xyk for this
 								ensure!(!sold_asset_amount.is_zero(), TransactionValidityError::Invalid(InvalidTransaction::Custom(64u8)));
 
 								ensure!(
@@ -709,18 +708,24 @@ where
 
 								Ok(None)
 							} else {
-								OCA::withdraw_fee(who, call, info, fee, tip)
+								// This is the "low value swap on curated token" branch
+								OTA::process_timeout(who, call, info, fee, tip)
+									.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(67u8).into()))?;
+								Ok(Some(LiquidityInfoEnum::Timeout))
 							}
 						} else {
-							OCA::withdraw_fee(who, call, info, fee, tip)
+							// "swap on non-curated token" branch
+							OTA::process_timeout(who, call, info, fee, tip)
+								.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(67u8).into()))?;
+							Ok(Some(LiquidityInfoEnum::Timeout))
 						}
 					} else {
+						// Timeouts are not activated branch
 						OCA::withdraw_fee(who, call, info, fee, tip)
 					}
 				},
 
 			// Call::Xyk(pallet_xyk::Call::buy_asset { .. }
-			// Call::Bootstrap(pallet_bootstrap::Call::provision { .. }
 			// Call::TokenTimeout(pallet_token_timeout::Call::release { .. }
 			_ => 
 				OCA::withdraw_fee(who, call, info, fee, tip)
@@ -901,26 +906,8 @@ impl pallet_transaction_payment_mangata::Config for Runtime {
 			frame_support::traits::ConstU128<KSM_MGX_SCALE_FACTOR>,
 			frame_support::traits::ConstU128<TUR_MGX_SCALE_FACTOR>,
 		>,
-		ThreeCurrencyOnChargeAdapter<
-			orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
-			ToAuthor,
-			MgxTokenId,
-			KsmTokenId,
-			TurTokenId,
-			frame_support::traits::ConstU128<KSM_MGX_SCALE_FACTOR>,
-			frame_support::traits::ConstU128<TUR_MGX_SCALE_FACTOR>,
-		>
-	>
-	// ThreeCurrencyOnChargeAdapter<
-	// 	orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
-	// 	ToAuthor,
-	// 	MgxTokenId,
-	// 	KsmTokenId,
-	// 	TurTokenId,
-	// 	frame_support::traits::ConstU128<KSM_MGX_SCALE_FACTOR>,
-	// 	frame_support::traits::ConstU128<TUR_MGX_SCALE_FACTOR>,
-	// >
-	;
+		TokenTimeout
+	>;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type WeightToFee = WeightToFee;
 	type FeeMultiplierUpdate =
@@ -981,6 +968,13 @@ parameter_types! {
 	pub const SessionLength: BlockNumber = 6 * HOURS;
 	pub const MaxInvulnerables: u32 = 100;
 	pub const ExecutiveBody: BodyId = BodyId::Executive;
+}
+
+impl pallet_token_timeout::Config for Runtime {
+	type Event = Event;
+	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	type NativeTokenId = MgxTokenId;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -1304,6 +1298,9 @@ construct_runtime!(
 		// Xyk stuff
 		AssetsInfo: pallet_assets_info::{Pallet, Call, Config, Storage, Event<T>} = 12,
 		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>} = 13,
+
+		// Token Timeouts
+		TokenTimeout: pallet_token_timeout::{Pallet, Storage, Call, Event<T>} = 14,
 
 		// Vesting
 		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>} = 17,

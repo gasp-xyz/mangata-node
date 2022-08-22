@@ -70,6 +70,7 @@ use orml_traits::parameter_type_with_key;
 use pallet_vesting_mangata_rpc_runtime_api::VestingInfosWithLockedAt;
 pub use pallet_xyk;
 use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
+use mp_traits::TimeoutTriggerTrait;
 
 pub const MGR_TOKEN_ID: TokenId = 0;
 pub const ROC_TOKEN_ID: TokenId = 4;
@@ -549,10 +550,6 @@ parameter_types! {
 
 use scale_info::TypeInfo;
 
-#[derive(Encode, Decode, Clone, TypeInfo)]
-pub struct ThreeCurrencyOnChargeAdapter<C, OU, T1, T2, T3, SF2, SF3>(
-	PhantomData<(C, OU, T1, T2, T3, SF2, SF3)>,
-);
 
 use frame_support::{
 	traits::{ExistenceRequirement, Imbalance, WithdrawReasons},
@@ -571,6 +568,187 @@ type NegativeImbalanceOf<C, T> =
 	<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
 
 use orml_tokens::MultiTokenImbalanceWithZeroTrait;
+
+#[derive(Encode, Decode, TypeInfo)]
+pub enum LiquidityInfoEnum<C: MultiTokenCurrency<T::AccountId>, T: frame_system::Config>{
+	Imbalance((TokenId, NegativeImbalanceOf<C, T>)),
+	Timeout
+}
+
+#[derive(Encode, Decode, Clone, TypeInfo)]
+pub struct OnChargeHandler<C, OCA, OTA>(
+	PhantomData<(C, OCA, OTA)>,
+);
+
+impl <C, OCA, OTA> OnChargeHandler<C, OCA, OTA>{
+	
+}
+
+/// Default implementation for a Currency and an OnUnbalanced handler.
+///
+/// The unbalance handler is given 2 unbalanceds in [`OnUnbalanced::on_unbalanceds`]: fee and
+/// then tip.
+impl<T, C, OCA, OTA> OnChargeTransaction<T>
+	for OnChargeHandler<C, OCA, OTA>
+where
+	T: pallet_transaction_payment_mangata::Config + pallet_xyk::Config,
+	T::LengthToFee: frame_support::weights::WeightToFee<
+		Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
+	>,
+	C: MultiTokenCurrency<<T as frame_system::Config>::AccountId>,
+	C::PositiveImbalance: Imbalance<
+		<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
+		Opposite = C::NegativeImbalance,
+	>,
+	C::NegativeImbalance: Imbalance<
+		<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
+		Opposite = C::PositiveImbalance,
+	>,
+	OCA: OnChargeTransaction<T, LiquidityInfo = Option<LiquidityInfoEnum<C, T>>, Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance>,
+	OTA: TimeoutTriggerTrait<<T as frame_system::Config>::AccountId>,
+	T: frame_system::Config<Call = Call>,
+	T::AccountId: From<AccountId32> + Into<AccountId32>,
+{
+
+	type LiquidityInfo = Option<LiquidityInfoEnum<C, T>>;
+	type Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance;
+
+	/// Withdraw the predicted fee from the transaction origin.
+	///
+	/// Note: The `fee` already includes the `tip`.
+	fn withdraw_fee(
+		who: &T::AccountId,
+		call: &T::Call,
+		info: &DispatchInfoOf<T::Call>,
+		fee: Self::Balance,
+		tip: Self::Balance,
+	) -> Result<Self::LiquidityInfo, TransactionValidityError> {
+
+		// THIS IS NOT PROXY PALLET COMPATIBLE, YET
+		match call {
+			Call::Xyk(pallet_xyk::Call::sell_asset { sold_asset_id: sold_asset_id,
+				sold_asset_amount: sold_asset_amount, 
+				bought_asset_id: bought_asset_id, ..}) =>
+				{
+					// If else tree for easy edits
+
+					// ensure swap cannot fail
+					// This is to ensure that xyk swap fee is always charged
+					// We also need to ensure that the user has enough funds to transact
+
+					if let Some(timeout_metadata) = TokenTimeout::get_timeout_metadata(){
+						if let Some(threshold) = timeout_metadata.swap_value_threshold.get(sold_asset_id){
+							if sold_asset_amount > threshold{
+								// This is the "high value swap on curated token" branch
+
+								// TODO
+								// Need a clean function call into xyk for this
+								ensure!(!sold_asset_amount.is_zero(), TransactionValidityError::Invalid(InvalidTransaction::Custom(64u8)));
+
+								ensure!(
+									!<T as pallet_xyk::Config>::DisabledTokens::contains(&sold_asset_id) &&
+										!<T as pallet_xyk::Config>::DisabledTokens::contains(&bought_asset_id),
+										TransactionValidityError::Invalid(InvalidTransaction::Custom(65u8).into())
+								);
+
+								let buy_and_burn_amount =
+									multiply_by_rational(*sold_asset_amount, <T as pallet_xyk::Config>::BuyAndBurnFeePercentage::get(), 10000)
+										.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(66u8).into()))? +
+										1;
+
+								let treasury_amount =
+									multiply_by_rational(*sold_asset_amount, <T as pallet_xyk::Config>::TreasuryFeePercentage::get(), 10000)
+										.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(66u8).into()))? +
+										1;
+
+								let pool_fee_amount =
+									multiply_by_rational(*sold_asset_amount, <T as pallet_xyk::Config>::PoolFeePercentage::get(), 10000)
+										.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(66u8).into()))? +
+										1;
+
+								// for future implementation of min fee if necessary
+								// let min_fee: u128 = 0;
+								// if buy_and_burn_amount + treasury_amount + pool_fee_amount < min_fee {
+								//     buy_and_burn_amount = min_fee * Self::total_fee() / T::BuyAndBurnFeePercentage::get();
+								//     treasury_amount = min_fee * Self::total_fee() / T::TreasuryFeePercentage::get();
+								//     pool_fee_amount = min_fee - buy_and_burn_amount - treasury_amount;
+								// }
+
+								// Get token reserves
+
+								// MAX: 2R
+								let (input_reserve, output_reserve) =
+									Xyk::get_reserves(*sold_asset_id, *bought_asset_id).map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(66u8).into()))?;
+
+								ensure!(input_reserve.checked_add(*sold_asset_amount).is_some(), TransactionValidityError::Invalid(InvalidTransaction::Custom(66u8).into()));
+
+								// Calculate bought asset amount to be received by paying sold asset amount
+								let bought_asset_amount =
+									Xyk::calculate_sell_price(input_reserve, output_reserve, *sold_asset_amount).map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(66u8).into()))?;
+
+								orml_tokens::MultiTokenCurrencyAdapter::<Runtime>::ensure_can_withdraw(
+									*sold_asset_id,
+									&((who.clone()).into()),
+									*sold_asset_amount,
+									WithdrawReasons::all(),
+									Default::default(),
+								)
+								.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(67u8).into()))?;
+
+								Ok(None)
+							} else {
+								// This is the "low value swap on curated token" branch
+								OTA::process_timeout(who, call, info, fee, tip)
+									.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(67u8).into()))?;
+								Ok(Some(LiquidityInfoEnum::Timeout))
+							}
+						} else {
+							// "swap on non-curated token" branch
+							OTA::process_timeout(who, call, info, fee, tip)
+								.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(67u8).into()))?;
+							Ok(Some(LiquidityInfoEnum::Timeout))
+						}
+					} else {
+						// Timeouts are not activated branch
+						OCA::withdraw_fee(who, call, info, fee, tip)
+					}
+				},
+
+			// Call::Xyk(pallet_xyk::Call::buy_asset { .. }
+			// Call::TokenTimeout(pallet_token_timeout::Call::release { .. }
+			_ => 
+				OCA::withdraw_fee(who, call, info, fee, tip)
+		}
+	}
+
+	/// Hand the fee and the tip over to the `[OnUnbalanced]` implementation.
+	/// Since the predicted fee might have been too high, parts of the fee may
+	/// be refunded.
+	///
+	/// Note: The `corrected_fee` already includes the `tip`.
+	fn correct_and_deposit_fee(
+		who: &T::AccountId,
+		dispatch_info: &DispatchInfoOf<T::Call>,
+		post_info: &PostDispatchInfoOf<T::Call>,
+		corrected_fee: Self::Balance,
+		tip: Self::Balance,
+		already_withdrawn: Self::LiquidityInfo,
+	) -> Result<(), TransactionValidityError> {
+
+		match already_withdrawn{
+		Some(LiquidityInfoEnum::Imbalance(_)) =>
+			OCA::correct_and_deposit_fee(who, dispatch_info, post_info, corrected_fee, tip, already_withdrawn),
+		Some(LiquidityInfoEnum::Timeout) =>
+			OTA::correct_and_deposit_fee(who, dispatch_info, post_info, corrected_fee, tip, already_withdrawn),
+		None => Ok(()),
+		}
+	}
+}
+
+#[derive(Encode, Decode, Clone, TypeInfo)]
+pub struct ThreeCurrencyOnChargeAdapter<C, OU, T1, T2, T3, SF2, SF3>(
+	PhantomData<(C, OU, T1, T2, T3, SF2, SF3)>,
+);
 
 /// Default implementation for a Currency and an OnUnbalanced handler.
 ///
@@ -602,7 +780,7 @@ where
 	SF2: Get<u128>,
 	SF3: Get<u128>,
 {
-	type LiquidityInfo = Option<(TokenId, NegativeImbalanceOf<C, T>)>;
+	type LiquidityInfo = Option<LiquidityInfoEnum<C, T>>;
 	type Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance;
 
 	/// Withdraw the predicted fee from the transaction origin.
@@ -632,7 +810,7 @@ where
 			withdraw_reason,
 			ExistenceRequirement::KeepAlive,
 		) {
-			Ok(imbalance) => Ok(Some((T1::get(), imbalance))),
+			Ok(imbalance) => Ok(Some(LiquidityInfoEnum::Imbalance((T1::get(), imbalance)))),
 			// TODO make sure atleast 1 planck KSM is charged
 			Err(_) => match C::withdraw(
 				T2::get().into(),
@@ -641,7 +819,7 @@ where
 				withdraw_reason,
 				ExistenceRequirement::KeepAlive,
 			) {
-				Ok(imbalance) => Ok(Some((T2::get(), imbalance))),
+				Ok(imbalance) => Ok(Some(LiquidityInfoEnum::Imbalance((T2::get(), imbalance)))),
 				Err(_) => match C::withdraw(
 					T3::get().into(),
 					who,
@@ -649,7 +827,7 @@ where
 					withdraw_reason,
 					ExistenceRequirement::KeepAlive,
 				) {
-					Ok(imbalance) => Ok(Some((T3::get(), imbalance))),
+					Ok(imbalance) => Ok(Some(LiquidityInfoEnum::Imbalance((T3::get(), imbalance)))),
 					Err(_) => Err(InvalidTransaction::Payment.into()),
 				},
 			},
@@ -669,7 +847,7 @@ where
 		tip: Self::Balance,
 		already_withdrawn: Self::LiquidityInfo,
 	) -> Result<(), TransactionValidityError> {
-		if let Some((token_id, paid)) = already_withdrawn {
+		if let Some(LiquidityInfoEnum::Imbalance((token_id, paid))) = already_withdrawn {
 			let (corrected_fee, tip) = if token_id == T3::get() {
 				(corrected_fee / SF3::get().into(), tip / SF3::get().into())
 			} else if token_id == T2::get() {
@@ -705,14 +883,19 @@ parameter_types! {
 }
 
 impl pallet_transaction_payment_mangata::Config for Runtime {
-	type OnChargeTransaction = ThreeCurrencyOnChargeAdapter<
+	type OnChargeTransaction = 
+	OnChargeHandler<
 		orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
-		ToAuthor,
-		MgrTokenId,
-		RocTokenId,
-		TurTokenId,
-		frame_support::traits::ConstU128<ROC_MGR_SCALE_FACTOR>,
-		frame_support::traits::ConstU128<TUR_MGR_SCALE_FACTOR>,
+		ThreeCurrencyOnChargeAdapter<
+			orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
+			ToAuthor,
+			MgxTokenId,
+			KsmTokenId,
+			TurTokenId,
+			frame_support::traits::ConstU128<KSM_MGX_SCALE_FACTOR>,
+			frame_support::traits::ConstU128<TUR_MGX_SCALE_FACTOR>,
+		>,
+		TokenTimeout
 	>;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type WeightToFee = WeightToFee;
@@ -774,6 +957,13 @@ parameter_types! {
 	pub const SessionLength: BlockNumber = 6 * HOURS;
 	pub const MaxInvulnerables: u32 = 100;
 	pub const ExecutiveBody: BodyId = BodyId::Executive;
+}
+
+impl pallet_token_timeout::Config for Runtime {
+	type Event = Event;
+	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	type NativeTokenId = MgxTokenId;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -1097,6 +1287,9 @@ construct_runtime!(
 		// Xyk stuff
 		AssetsInfo: pallet_assets_info::{Pallet, Call, Config, Storage, Event<T>} = 12,
 		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>} = 13,
+
+		// Token Timeouts
+		TokenTimeout: pallet_token_timeout::{Pallet, Storage, Call, Event<T>} = 14,
 
 		// Vesting
 		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>} = 17,

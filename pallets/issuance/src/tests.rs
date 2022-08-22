@@ -439,4 +439,3 @@ fn promote_pool_api_works() {
 // 		mock::MockActivedPoolQueryApi::instance().lock().unwrap().take();
 // 	});
 // }
-

@@ -236,6 +236,7 @@ impl pallet_bootstrap::Config for Test {
 	type TreasuryPalletId = TreasuryPalletId;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type VestingProvider = Vesting;
+	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
 	type WeightInfo = ();
 }
 
@@ -247,6 +248,7 @@ impl pallet_bootstrap::Config for Test {
 	type TreasuryPalletId = TreasuryPalletId;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type VestingProvider = Vesting;
+	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
 	type WeightInfo = ();
 }
 
@@ -300,6 +302,10 @@ where
 		Tokens::accounts(Into::<u128>::into(who.clone()), Into::<u32>::into(id.clone())).free -
 			Tokens::accounts(Into::<u128>::into(who.clone()), Into::<u32>::into(id.clone()))
 				.frozen
+	}
+
+	pub fn reserved_balance(id: TokenId, who: <T as frame_system::Config>::AccountId) -> Balance {
+		Tokens::accounts(Into::<u128>::into(who), Into::<u32>::into(id)).reserved
 	}
 
 	pub fn locked_balance(id: TokenId, who: <T as frame_system::Config>::AccountId) -> Balance {

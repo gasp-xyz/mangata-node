@@ -490,6 +490,7 @@ impl pallet_bootstrap::Config for Runtime {
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type VestingProvider = Vesting;
 	type TreasuryPalletId = TreasuryPalletId;
+	type ActivationReservesProvider = MultiPurposeLiquidity;
 	type WeightInfo = weights::pallet_bootstrap_weights::ModuleWeight<Runtime>;
 }
 

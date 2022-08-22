@@ -349,7 +349,7 @@ pub mod pallet {
 		type RewardsDistributionPeriod: Get<u32>;
 		type DisallowedPools: Contains<(TokenId, TokenId)>;
 		type DisabledTokens: Contains<TokenId>;
-		type VestingProvider: MultiTokenVestingLocks<Self::AccountId, Self::BlockNumber>;
+		type VestingProvider: MultiTokenVestingLocks<Self::AccountId>;
 		type WeightInfo: WeightInfo;
 		#[pallet::constant]
 		type RewardsForAllAccount: Get<Self::AccountId>;
@@ -643,59 +643,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(T::WeightInfo::mint_liquidity_using_vesting_native_tokens())]
-		#[transactional]
-		pub fn mint_liquidity_using_vesting_native_tokens_by_vesting_index(
-			origin: OriginFor<T>,
-			native_asset_vesting_index: u32,
-			vesting_native_asset_unlock_some_amount_or_all: Option<Balance>,
-			second_asset_id: TokenId,
-			expected_second_asset_amount: Balance,
-		) -> DispatchResultWithPostInfo {
-			let sender = ensure_signed(origin)?;
-
-			let liquidity_asset_id =
-				Pallet::<T>::get_liquidity_asset(T::NativeCurrencyId::get(), second_asset_id)?;
-
-			ensure!(
-				<T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some(),
-				Error::<T>::NotAPromotedPool
-			);
-
-			let (unlocked_amount, vesting_starting_block, vesting_ending_block_as_balance): (
-				Balance,
-				T::BlockNumber,
-				Balance,
-			) = T::VestingProvider::unlock_tokens_by_vesting_index(
-				&sender,
-				T::NativeCurrencyId::get().into(),
-				native_asset_vesting_index,
-				vesting_native_asset_unlock_some_amount_or_all.map(Into::into),
-			)
-			.map(|x| (x.0.into(), x.1.into(), x.2.into()))?;
-
-			let (liquidity_token_id, liquidity_assets_minted) =
-				<Self as XykFunctionsTrait<T::AccountId>>::mint_liquidity(
-					sender.clone(),
-					T::NativeCurrencyId::get(),
-					second_asset_id,
-					unlocked_amount,
-					expected_second_asset_amount,
-					false,
-				)?;
-
-			T::VestingProvider::lock_tokens(
-				&sender,
-				liquidity_token_id.into(),
-				liquidity_assets_minted.into(),
-				Some(vesting_starting_block.into()),
-				vesting_ending_block_as_balance.into(),
-			)?;
-
-			Ok(().into())
-		}
-
-		#[pallet::weight(T::WeightInfo::mint_liquidity_using_vesting_native_tokens())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::mint_liquidity_using_vesting_native_tokens())]
 		#[transactional]
 		pub fn mint_liquidity_using_vesting_native_tokens(
 			origin: OriginFor<T>,
@@ -713,15 +661,13 @@ pub mod pallet {
 				Error::<T>::NotAPromotedPool
 			);
 
-			let (vesting_starting_block, vesting_ending_block_as_balance): (
-				T::BlockNumber,
-				Balance,
-			) = T::VestingProvider::unlock_tokens(
-				&sender,
-				T::NativeCurrencyId::get().into(),
-				vesting_native_asset_amount.into(),
-			)
-			.map(|x| (x.0.into(), x.1.into()))?;
+			let vesting_ending_block_as_balance: Balance =
+				<<T as Config>::VestingProvider>::unlock_tokens(
+					&sender,
+					Self::native_token_id().into(),
+					vesting_native_asset_amount.into(),
+				)?
+				.into();
 
 			let (liquidity_token_id, liquidity_assets_minted) =
 				<Self as XykFunctionsTrait<T::AccountId>>::mint_liquidity(
@@ -737,7 +683,6 @@ pub mod pallet {
 				&sender,
 				liquidity_token_id.into(),
 				liquidity_assets_minted.into(),
-				Some(vesting_starting_block.into()),
 				vesting_ending_block_as_balance.into(),
 			)?;
 

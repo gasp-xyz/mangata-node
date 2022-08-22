@@ -70,7 +70,7 @@ benchmarks! {
 		let lock = 100_000_000_u128;
 
 		frame_system::Pallet::<T>::set_block_number(1_u32.into());
-		<T as Config>::VestingProvider::lock_tokens(&caller, first_token_id.into(), (ksm_provision_amount*2).into(), None, lock.into()).unwrap();
+		<T as Config>::VestingProvider::lock_tokens(&caller, first_token_id.into(), (ksm_provision_amount*2).into(), lock.into()).unwrap();
 		frame_system::Pallet::<T>::set_block_number(2_u32.into());
 
 		BootstrapPallet::<T>::schedule_bootstrap(RawOrigin::Root.into(), first_token_id, second_token_id, 10_u32.into(), 10_u32, 10_u32, DEFAULT_RATIO).unwrap();
@@ -78,7 +78,7 @@ benchmarks! {
 		BootstrapPallet::<T>::on_initialize(20_u32.into());
 		BootstrapPallet::<T>::provision(RawOrigin::Signed(caller.clone().into()).into(), second_token_id, mga_provision_amount).unwrap();
 
-		assert_eq!(BootstrapPallet::<T>::vested_provisions(caller.clone(), first_token_id), (0, 0, 0));
+		assert_eq!(BootstrapPallet::<T>::vested_provisions(caller.clone(), first_token_id), (0, 0));
 	}: provision_vested(RawOrigin::Signed(caller.clone().into()), first_token_id, ksm_provision_amount)
 	verify {
 		assert_eq!(BootstrapPallet::<T>::vested_provisions(caller, first_token_id).0, ksm_provision_amount);
@@ -98,8 +98,8 @@ benchmarks! {
 		let total_provision = total_ksm_provision + total_mga_provision;
 		let lock = 150_u128;
 
-		<T as Config>::VestingProvider::lock_tokens(&caller, first_token_id.into(), (ksm_provision_amount + ksm_vested_provision_amount).into(), None, lock.into()).unwrap();
-		<T as Config>::VestingProvider::lock_tokens(&caller, second_token_id.into(), (mga_provision_amount + mga_vested_provision_amount).into(), None, lock.into()).unwrap();
+		<T as Config>::VestingProvider::lock_tokens(&caller, first_token_id.into(), (ksm_provision_amount + ksm_vested_provision_amount).into(), lock.into()).unwrap();
+		<T as Config>::VestingProvider::lock_tokens(&caller, second_token_id.into(), (mga_provision_amount + mga_vested_provision_amount).into(), lock.into()).unwrap();
 
 		BootstrapPallet::<T>::schedule_bootstrap(RawOrigin::Root.into(), first_token_id, second_token_id, 10_u32.into(), 10_u32, 10_u32, DEFAULT_RATIO).unwrap();
 		BootstrapPallet::<T>::on_initialize(20_u32.into());
@@ -115,8 +115,8 @@ benchmarks! {
 		assert_eq!(BootstrapPallet::<T>::valuations(), (total_mga_provision, total_ksm_provision));
 		assert_eq!(BootstrapPallet::<T>::provisions(caller.clone(), first_token_id), (ksm_provision_amount));
 		assert_eq!(BootstrapPallet::<T>::provisions(caller.clone(), second_token_id), (mga_provision_amount));
-		assert_eq!(BootstrapPallet::<T>::vested_provisions(caller.clone(), first_token_id), (ksm_vested_provision_amount, 1, lock + 1));
-		assert_eq!(BootstrapPallet::<T>::vested_provisions(caller.clone(), second_token_id), (mga_vested_provision_amount, 1, lock + 1));
+		assert_eq!(BootstrapPallet::<T>::vested_provisions(caller.clone(), first_token_id), (ksm_vested_provision_amount, lock + 1));
+		assert_eq!(BootstrapPallet::<T>::vested_provisions(caller.clone(), second_token_id), (mga_vested_provision_amount, lock + 1));
 
 	}: claim_rewards(RawOrigin::Signed(caller.clone().into()))
 	verify {
@@ -144,8 +144,8 @@ benchmarks! {
 		let total_provision = total_ksm_provision + total_mga_provision;
 		let lock = 150_u128;
 
-		<T as Config>::VestingProvider::lock_tokens(&caller, first_token_id.into(), (ksm_provision_amount + ksm_vested_provision_amount).into(), None, lock.into()).unwrap();
-		<T as Config>::VestingProvider::lock_tokens(&caller, second_token_id.into(), (mga_provision_amount + mga_vested_provision_amount).into(), None, lock.into()).unwrap();
+		<T as Config>::VestingProvider::lock_tokens(&caller, first_token_id.into(), (ksm_provision_amount + ksm_vested_provision_amount).into(), lock.into()).unwrap();
+		<T as Config>::VestingProvider::lock_tokens(&caller, second_token_id.into(), (mga_provision_amount + mga_vested_provision_amount).into(), lock.into()).unwrap();
 
 		BootstrapPallet::<T>::schedule_bootstrap(RawOrigin::Root.into(), first_token_id, second_token_id, 10_u32.into(), 10_u32, 10_u32, DEFAULT_RATIO).unwrap();
 		BootstrapPallet::<T>::on_initialize(20_u32.into());

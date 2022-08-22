@@ -74,7 +74,6 @@ use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
 pub const MGR_TOKEN_ID: TokenId = 0;
 pub const ROC_TOKEN_ID: TokenId = 4;
 pub const KAR_TOKEN_ID: TokenId = 6;
-pub const TUR_TOKEN_ID: TokenId = 7;
 
 pub use pallet_sudo;
 
@@ -139,21 +138,18 @@ pub struct MangataMigrations;
 
 impl OnRuntimeUpgrade for MangataMigrations {
 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-		pallet_bootstrap::migrations::v1::MigrateToV1::<Runtime>::on_runtime_upgrade() +
-			pallet_bootstrap::migrations::v2::MigrateToV2::<Runtime>::on_runtime_upgrade()
+		pallet_bootstrap::migrations::v1::MigrateToV1::<Runtime>::on_runtime_upgrade()
 	}
 
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
-		pallet_bootstrap::migrations::v1::MigrateToV1::<Runtime>::pre_upgrade().unwrap();
-		pallet_bootstrap::migrations::v2::MigrateToV2::<Runtime>::pre_upgrade().unwrap();
+		pallet_bootstrap::migrations::v1::MigrateToV1::<Runtime>::pre_upgrade();
 		Ok(())
 	}
 
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade() -> Result<(), &'static str> {
-		pallet_bootstrap::migrations::v1::MigrateToV1::<Runtime>::post_upgrade().unwrap();
-		pallet_bootstrap::migrations::v2::MigrateToV2::<Runtime>::post_upgrade().unwrap();
+		pallet_bootstrap::migrations::v1::MigrateToV1::<Runtime>::post_upgrade();
 		Ok(())
 	}
 }
@@ -303,7 +299,7 @@ parameter_types! {
 parameter_types! {
 	pub const MgrTokenId: TokenId = MGR_TOKEN_ID;
 	pub const RocTokenId: TokenId = ROC_TOKEN_ID;
-	pub const TurTokenId: TokenId = TUR_TOKEN_ID;
+	pub const KarTokenId: TokenId = KAR_TOKEN_ID;
 }
 
 // Configure FRAME pallets to include in runtime.
@@ -723,9 +719,9 @@ impl pallet_transaction_payment::Config for Runtime {
 		ToAuthor,
 		MgrTokenId,
 		RocTokenId,
-		TurTokenId,
+		KarTokenId,
 		frame_support::traits::ConstU128<ROC_MGR_SCALE_FACTOR>,
-		frame_support::traits::ConstU128<TUR_MGR_SCALE_FACTOR>,
+		frame_support::traits::ConstU128<KAR_MGR_SCALE_FACTOR>,
 	>;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type WeightToFee = WeightToFee;

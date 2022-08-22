@@ -27,7 +27,6 @@ fn reserve_vesting_liquidity_tokens_works() {
 				&caller,
 				asset_id.into(),
 				dummy_lock_amount.into(),
-				None,
 				dummy_end_block.into(),
 			)
 			.unwrap();
@@ -36,12 +35,10 @@ fn reserve_vesting_liquidity_tokens_works() {
 			&caller,
 			asset_id.into(),
 			locked_amount.into(),
-			None,
 			lock_ending_block_as_balance.into(),
 		)
 		.unwrap();
 
-		let now: BlockNumber = <frame_system::Pallet<Test>>::block_number().saturated_into();
 		assert_ok!(MultiPurposeLiquidity::reserve_vesting_liquidity_tokens(
 			RawOrigin::Signed(caller.clone().into()).into(),
 			asset_id,
@@ -77,7 +74,6 @@ fn reserve_vesting_liquidity_tokens_works() {
 			MultiPurposeLiquidity::get_relock_status(caller, asset_id)[0],
 			RelockStatusInfo {
 				amount: reserve_amount,
-				starting_block: now,
 				ending_block_as_balance: lock_ending_block_as_balance
 			}
 		);
@@ -108,7 +104,6 @@ fn unreserve_and_relock_instance_works() {
 				&caller,
 				asset_id.into(),
 				dummy_lock_amount.into(),
-				None,
 				dummy_end_block.into(),
 			)
 			.unwrap();
@@ -117,12 +112,10 @@ fn unreserve_and_relock_instance_works() {
 			&caller,
 			asset_id.into(),
 			locked_amount.into(),
-			None,
 			lock_ending_block_as_balance.into(),
 		)
 		.unwrap();
 
-		let now: BlockNumber = <frame_system::Pallet<Test>>::block_number().saturated_into();
 		assert_ok!(MultiPurposeLiquidity::reserve_vesting_liquidity_tokens(
 			RawOrigin::Signed(caller.clone().into()).into(),
 			asset_id,
@@ -158,7 +151,6 @@ fn unreserve_and_relock_instance_works() {
 			MultiPurposeLiquidity::get_relock_status(caller, asset_id)[0],
 			RelockStatusInfo {
 				amount: reserve_amount,
-				starting_block: now,
 				ending_block_as_balance: lock_ending_block_as_balance
 			}
 		);
@@ -306,7 +298,7 @@ fn bond_from_activated_unstaked_liquidity_works() {
 			asset_id,
 			&caller,
 			bond_amount,
-			Some(BondKind::ActivatedUnstakedReserves)
+			Some(BondKind::ActivatedUnstakedLiquidity)
 		));
 
 		let reserve_status = Pallet::<Test>::get_reserve_status(caller.clone(), asset_id);
@@ -514,7 +506,7 @@ fn activate_from_staked_unactivated_liquidity_works() {
 			asset_id,
 			&caller,
 			activate_amount,
-			Some(ActivateKind::StakedUnactivatedReserves)
+			Some(ActivateKind::StakedUnactivatedLiquidity)
 		));
 
 		let reserve_status = Pallet::<Test>::get_reserve_status(caller.clone(), asset_id);

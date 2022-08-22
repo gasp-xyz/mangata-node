@@ -1001,7 +1001,6 @@ fn dont_allow_for_provision_in_vested_tokens_without_dedicated_extrinsic() {
 			&USER_ID,
 			MGAId::get(),
 			mga_amount,
-			None,
 			100_u32.into(),
 		)
 		.unwrap();
@@ -1036,15 +1035,13 @@ fn successful_vested_provision_using_vested_tokens_only_when_user_has_both_veste
 		jump_to_public_phase();
 
 		let provision_amount = 10_000;
-		let lock_start: u128 = 1;
-		let lock_end: u128 = 150;
+		let lock: u128 = 150;
 
 		<Test as Config>::VestingProvider::lock_tokens(
 			&USER_ID,
 			MGAId::get(),
 			provision_amount,
-			Some(lock_start.saturated_into()),
-			lock_end.into(),
+			lock.into(),
 		)
 		.unwrap();
 
@@ -1058,7 +1055,7 @@ fn successful_vested_provision_using_vested_tokens_only_when_user_has_both_veste
 		assert_eq!(0, Bootstrap::locked_balance(MGAId::get(), USER_ID));
 
 		assert_eq!(
-			(provision_amount, lock_start, lock_end + 1),
+			(provision_amount, lock + 1),
 			Bootstrap::vested_provisions(USER_ID, MGAId::get())
 		);
 	});
@@ -1072,23 +1069,18 @@ fn successful_vested_provision_is_stored_properly_in_storage() {
 		jump_to_public_phase();
 
 		let mga_amount = Bootstrap::balance(MGAId::get(), USER_ID);
-		let lock_start: u128 = 1;
-		let lock_end: u128 = 150;
+		let lock: u128 = 150;
 
 		<Test as Config>::VestingProvider::lock_tokens(
 			&USER_ID,
 			MGAId::get(),
 			mga_amount,
-			Some(lock_start.saturated_into()),
-			lock_end.into(),
+			lock.into(),
 		)
 		.unwrap();
 		Bootstrap::provision_vested(Origin::signed(USER_ID), MGAId::get(), mga_amount).unwrap();
 
-		assert_eq!(
-			(mga_amount, lock_start, lock_end + 1),
-			Bootstrap::vested_provisions(USER_ID, MGAId::get())
-		);
+		assert_eq!((mga_amount, lock + 1), Bootstrap::vested_provisions(USER_ID, MGAId::get()));
 	});
 }
 
@@ -1100,41 +1092,37 @@ fn successful_merged_vested_provision_is_stored_properly_in_storage() {
 		jump_to_public_phase();
 
 		let mga_amount = Bootstrap::balance(MGAId::get(), USER_ID);
-		let first_lock_start: u128 = 1;
-		let first_lock_end: u128 = 150;
+		let first_lock: u128 = 150;
 		let first_lock_amount = mga_amount / 2;
-		let second_lock_start: u128 = 2;
-		let second_lock_end: u128 = 300;
+		let second_lock: u128 = 300;
 		let second_lock_amount = mga_amount - first_lock_amount;
 
 		<Test as Config>::VestingProvider::lock_tokens(
 			&USER_ID,
 			MGAId::get(),
 			first_lock_amount,
-			Some(first_lock_start.saturated_into()),
-			first_lock_end.into(),
+			first_lock.into(),
 		)
 		.unwrap();
 		<Test as Config>::VestingProvider::lock_tokens(
 			&USER_ID,
 			MGAId::get(),
 			second_lock_amount,
-			Some(second_lock_start.saturated_into()),
-			second_lock_end.into(),
+			second_lock.into(),
 		)
 		.unwrap();
 
 		Bootstrap::provision_vested(Origin::signed(USER_ID), MGAId::get(), first_lock_amount)
 			.unwrap();
 		assert_eq!(
-			(first_lock_amount, first_lock_start, first_lock_end + 1),
+			(first_lock_amount, first_lock + 1),
 			Bootstrap::vested_provisions(USER_ID, MGAId::get())
 		);
 
 		Bootstrap::provision_vested(Origin::signed(USER_ID), MGAId::get(), second_lock_amount)
 			.unwrap();
 		assert_eq!(
-			(mga_amount, second_lock_start, second_lock_end + 1),
+			(mga_amount, second_lock + 1),
 			Bootstrap::vested_provisions(USER_ID, MGAId::get())
 		);
 	});
@@ -1171,15 +1159,9 @@ fn provisions(
 		)
 		.unwrap();
 
-		if let ProvisionKind::Vested(begin, end) = lock {
-			<Test as Config>::VestingProvider::lock_tokens(
-				&user_id,
-				token_id,
-				amount,
-				Some(begin.saturated_into()),
-				end.into(),
-			)
-			.unwrap();
+		if let ProvisionKind::Vested(nr) = lock {
+			<Test as Config>::VestingProvider::lock_tokens(&user_id, token_id, amount, nr.into())
+				.unwrap();
 			Bootstrap::provision_vested(Origin::signed(user_id), token_id, amount).unwrap();
 		} else {
 			Bootstrap::provision(Origin::signed(user_id), token_id, amount).unwrap();
@@ -1199,7 +1181,7 @@ fn vested_provision_included_in_valuation() {
 
 		// ACT
 		provisions(vec![
-			(PROVISION_USER1_ID, MGAId::get(), 1_000_000, ProvisionKind::Vested(1, 150)),
+			(PROVISION_USER1_ID, MGAId::get(), 1_000_000, ProvisionKind::Vested(150)),
 			(PROVISION_USER2_ID, KSMId::get(), 100, ProvisionKind::Regular),
 		]);
 		let (mga_valuation, ksm_valuation) = Bootstrap::valuations();
@@ -1236,9 +1218,9 @@ fn multi_provisions() {
 
 		// ACT
 		provisions(vec![
-			(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Vested(1, 150)),
+			(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Vested(150)),
 			(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Regular),
-			(PROVISION_USER2_ID, MGAId::get(), 300_000, ProvisionKind::Vested(1, 150)),
+			(PROVISION_USER2_ID, MGAId::get(), 300_000, ProvisionKind::Vested(150)),
 			(PROVISION_USER2_ID, KSMId::get(), 30, ProvisionKind::Regular),
 		]);
 		let (mga_valuation, ksm_valuation) = Bootstrap::valuations();
@@ -1280,9 +1262,9 @@ fn multi_provisions() {
 
 #[test_case(
 			vec![
-				(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Vested(1, 150)),
+				(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Vested(150)),
 				(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Regular),
-				(PROVISION_USER2_ID, MGAId::get(), 300_000, ProvisionKind::Vested(1, 150)),
+				(PROVISION_USER2_ID, MGAId::get(), 300_000, ProvisionKind::Vested(150)),
 				(PROVISION_USER2_ID, KSMId::get(), 30, ProvisionKind::Regular),
 			],
 			(25002, 25002),
@@ -1300,8 +1282,8 @@ fn multi_provisions() {
 ]
 #[test_case(
 			vec![
-				(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Vested(1, 150)),
-				(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Vested(1, 150)),
+				(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Vested(150)),
+				(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Vested(150)),
 			],
 			(0, 50_004),
 			(0, 0);
@@ -1309,8 +1291,8 @@ fn multi_provisions() {
 ]
 #[test_case(
 			vec![
-				(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Vested(1, 150)),
-				(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Vested(1, 150)),
+				(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Vested(150)),
+				(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Vested(150)),
 				(PROVISION_USER2_ID, MGAId::get(), 300_000, ProvisionKind::Regular),
 				(PROVISION_USER2_ID, KSMId::get(), 30, ProvisionKind::Regular),
 			],
@@ -1320,22 +1302,22 @@ fn multi_provisions() {
 ]
 #[test_case(
 			vec![
-				(PROVISION_USER1_ID, MGAId::get(), 10_000, ProvisionKind::Vested(1, 150)),
+				(PROVISION_USER1_ID, MGAId::get(), 10_000, ProvisionKind::Vested(150)),
 				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
 				(PROVISION_USER1_ID, MGAId::get(), 20_000, ProvisionKind::Regular),
 				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
 				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
-				(PROVISION_USER1_ID, MGAId::get(), 30_000, ProvisionKind::Vested(1, 150)),
-				(PROVISION_USER1_ID, KSMId::get(), 1, ProvisionKind::Vested(1, 150)),
+				(PROVISION_USER1_ID, MGAId::get(), 30_000, ProvisionKind::Vested(150)),
+				(PROVISION_USER1_ID, KSMId::get(), 1, ProvisionKind::Vested(150)),
 				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
 				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
-				(PROVISION_USER1_ID, MGAId::get(), 40_000, ProvisionKind::Vested(1, 150)),
+				(PROVISION_USER1_ID, MGAId::get(), 40_000, ProvisionKind::Vested(150)),
 				(PROVISION_USER2_ID, MGAId::get(), 200_000, ProvisionKind::Regular),
-				(PROVISION_USER2_ID, MGAId::get(), 100_000, ProvisionKind::Vested(1, 150)),
+				(PROVISION_USER2_ID, MGAId::get(), 100_000, ProvisionKind::Vested(150)),
 				(PROVISION_USER2_ID, KSMId::get(), 10, ProvisionKind::Regular),
 				(PROVISION_USER2_ID, KSMId::get(), 15, ProvisionKind::Regular),
-				(PROVISION_USER1_ID, KSMId::get(), 4, ProvisionKind::Vested(1, 150)),
-				(PROVISION_USER1_ID, KSMId::get(), 5, ProvisionKind::Vested(1, 150)),
+				(PROVISION_USER1_ID, KSMId::get(), 4, ProvisionKind::Vested(150)),
+				(PROVISION_USER1_ID, KSMId::get(), 5, ProvisionKind::Vested(150)),
 			],
 			(5_000, 45_004),
 			(125012, 25_002);
@@ -1691,4 +1673,4 @@ fn archive_previous_bootstrap_schedules() {
 	})
 }
 
-// // TODO: test xyk blocking
+// TODO: test xyk blocking

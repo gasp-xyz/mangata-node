@@ -1017,6 +1017,7 @@ impl<T: Config> Pallet<T> {
 				missing_at_checkpoint,
 				pool_rewards_ratio_current,
 			)?;
+
 		}
 
 		let not_yet_claimed_rewards = rewards_info.rewards_not_yet_claimed;
@@ -1061,8 +1062,8 @@ impl<T: Config> Pallet<T> {
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError2))?
 			.checked_div(U256::from(u128::MAX)) // always fit into u128
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError3))?;
-		// .try_into()
-		// .map_err(|_| DispatchError::from(Error::<T>::CalculateRewardsMathError3))?;
+			// .try_into()
+			// .map_err(|_| DispatchError::from(Error::<T>::CalculateRewardsMathError3))?;
 
 		let cumulative_work_max_ratio = Self::calculate_cumulative_work_max_ratio(
 			liquidity_assets_amount,
@@ -1075,7 +1076,7 @@ impl<T: Config> Pallet<T> {
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError4))?
 			.checked_div(U256::from(REWARDS_PRECISION))
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError5))?
-			.try_into()
+ 			.try_into()
 			.map_err(|_| DispatchError::from(Error::<T>::CalculateRewardsMathError3))?;
 
 		Ok(current_rewards)

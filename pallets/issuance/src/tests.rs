@@ -429,18 +429,14 @@ fn promote_pool_api_works() {
 	});
 }
 
-#[test]
-fn mock_use_demo() {
-	new_test_ext().execute_with(|| {
-		// sets to some value
-		mock::MockActivedPoolQueryApi::instance().lock().unwrap().replace(1_u128);
+// #[test]
+// fn mock_use_demo() {
+// 	new_test_ext().execute_with(|| {
+// 		// sets to some value
+// 		mock::MockActivedPoolQueryApi::instance().lock().unwrap().replace(1_u128);
 
-		// sets to none
-		mock::MockActivedPoolQueryApi::instance().lock().unwrap().take();
-	});
-}
+// 		// sets to none
+// 		mock::MockActivedPoolQueryApi::instance().lock().unwrap().take();
+// 	});
+// }
 
-//PoolPromoteApi
-
-// promote pool or 2
-// go to block 100000 one by one with issuing, check rewards, claim rewards

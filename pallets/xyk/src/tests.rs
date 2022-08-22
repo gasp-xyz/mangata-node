@@ -5,7 +5,6 @@
 use super::*;
 use crate::mock::*;
 use frame_support::assert_err;
-use log::info;
 use serial_test::serial;
 //fn create_pool_W(): create_pool working assert (maps,acocounts values)  //DONE
 //fn create_pool_N_already_exists(): create_pool not working if pool already exists  //DONE
@@ -323,18 +322,10 @@ fn liquidity_rewards_three_users_burn_W() {
 		XykStorage::transfer(0, 2, 4, 1000000).unwrap();
 		XykStorage::transfer(1, 2, 4, 1000000).unwrap();
 
-		let rewards_info = XykStorage::get_rewards_info(2, 4);
+	
 		let liquidity_tokens_owned = XykStorage::balance(4, 2);
 		XykStorage::activate_liquidity_v2(Origin::signed(2), 4, liquidity_tokens_owned, None)
 			.unwrap();
-
-		// let (user_last_checkpoint, user_cummulative_ratio, user_missing_at_last_checkpoint) =
-		// 	XykStorage::liquidity_mining_user_v2((2, 4));
-
-		// assert_eq!(
-		// 	XykStorage::liquidity_mining_user_v2((2, 4)),
-		// 	(0, 0, U256::from_dec_str("10000").unwrap())
-		// );
 
 		System::set_block_number(100000);
 		MockPromotedPoolApi::instance()
@@ -1890,7 +1881,6 @@ fn extreme_case_pool_ratio() {
 		XykStorage::create_pool(Origin::signed(2), 0, max, 1, max).unwrap();
 		XykStorage::promote_pool(Origin::root(), 4).unwrap();
 
-		let liquidity_tokens_owned = XykStorage::balance(4, 2);
 		XykStorage::activate_liquidity_v2(Origin::signed(2), 4, 1, None).unwrap();
 
 		System::set_block_number(10000);

@@ -4,7 +4,7 @@ use frame_support::pallet_prelude::*;
 use mangata_primitives::{Balance, TokenId};
 use mp_multipurpose_liquidity::{ActivateKind, BondKind};
 use sp_runtime::traits::{AtLeast32BitUnsigned, MaybeDisplay};
-use sp_std::{fmt::Debug, prelude::Vec};
+use sp_std::fmt::Debug;
 
 pub trait StakingReservesProviderTrait {
 	type AccountId: Parameter
@@ -149,15 +149,4 @@ pub trait XykFunctionsTrait<AccountId> {
 	) -> DispatchResult;
 
 	fn is_liquidity_token(liquidity_asset_id: TokenId) -> bool;
-}
-
-// temporary until we remove asset-info in kusama-runtime
-pub trait AssetMetadataMutationTrait {
-	fn set_asset_info(
-		asset: TokenId,
-		name: Option<Vec<u8>>,
-		symbol: Option<Vec<u8>>,
-		description: Option<Vec<u8>>,
-		decimals: Option<u32>,
-	) -> DispatchResult;
 }

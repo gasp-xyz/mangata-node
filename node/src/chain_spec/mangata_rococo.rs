@@ -192,7 +192,44 @@ pub fn public_testnet_config() -> ChainSpec {
 						5_000__000_000_000_000_000_000u128,
 					),
 				],
-				vec![],
+				vec![
+					(
+						0,
+						AssetMetadataOf {
+							decimals: 18,
+							name: b"Mangata".to_vec(),
+							symbol: b"MGR".to_vec(),
+							additional: Default::default(),
+							existential_deposit: Default::default(),
+							location: None,
+						},
+					),
+					(
+						1,
+						AssetMetadataOf {
+							decimals: 18,
+							name: b"Ether".to_vec(),
+							symbol: b"ETH".to_vec(),
+							additional: Default::default(),
+							existential_deposit: Default::default(),
+							location: None,
+						},
+					),
+					(
+						ROC_TOKEN_ID,
+						AssetMetadataOf {
+							decimals: 12,
+							name: b"Rococo Native".to_vec(),
+							symbol: b"ROC".to_vec(),
+							additional: CustomMetadata {
+								// 10_000:1 MGR:ROC
+								xcm: Some(XcmMetadata { fee_per_second: roc_per_second() }),
+							},
+							existential_deposit: Default::default(),
+							location: None,
+						},
+					),
+				],
 				parachains::mangata::ID.into(),
 			)
 		},

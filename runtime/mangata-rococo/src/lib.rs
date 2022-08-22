@@ -33,7 +33,6 @@ pub use mangata_primitives::{
 	assets::{CustomMetadata, XcmMetadata},
 	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
 };
-use mp_traits::AssetMetadataMutationTrait;
 pub use orml_tokens;
 use orml_tokens::{
 	MultiTokenCurrency, MultiTokenCurrencyExtended, MultiTokenImbalanceWithZeroTrait, TransferDust,
@@ -78,6 +77,7 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 use static_assertions::const_assert;
 // XCM Imports
+use pallet_xyk::AssetMetadataMutationTrait;
 pub use xcm::{latest::prelude::*, VersionedMultiLocation};
 use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
 
@@ -135,9 +135,7 @@ pub struct MangataMigrations;
 
 impl OnRuntimeUpgrade for MangataMigrations {
 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-		let mut weight = 0;
-		weight += migrations::asset_registry::AssetRegistryMigration::on_runtime_upgrade();
-		weight
+		migrations::asset_registry::AssetRegistryMigration::on_runtime_upgrade()
 	}
 
 	#[cfg(feature = "try-runtime")]
@@ -465,15 +463,14 @@ pub struct AssetMetadataMutation;
 impl AssetMetadataMutationTrait for AssetMetadataMutation {
 	fn set_asset_info(
 		asset: TokenId,
-		name: Option<Vec<u8>>,
-		symbol: Option<Vec<u8>>,
-		_description: Option<Vec<u8>>,
-		decimals: Option<u32>,
+		name: Vec<u8>,
+		symbol: Vec<u8>,
+		decimals: u32,
 	) -> DispatchResult {
 		let metadata = AssetMetadata {
-			name: name.unwrap_or_default(),
-			symbol: symbol.unwrap_or_default(),
-			decimals: decimals.unwrap_or_default(),
+			name,
+			symbol,
+			decimals,
 			existential_deposit: Default::default(),
 			additional: Default::default(),
 			location: None,
@@ -1104,7 +1101,7 @@ impl orml_asset_registry::Config for Runtime {
 	type AuthorityOrigin = AssetAuthority;
 	type AssetProcessor = SequentialIdWithCreation<Runtime>;
 	type Balance = Balance;
-	type WeightInfo = weights::xcm_asset_registry_weights::ModuleWeight<Runtime>; // ??
+	type WeightInfo = weights::xcm_asset_registry_weights::ModuleWeight<Runtime>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -1345,7 +1342,6 @@ impl_runtime_apis! {
 		) -> Balance {
 			Xyk::get_max_instant_unreserve_amount(&user, liquidity_asset_id)
 		}
-
 	}
 
 	impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {

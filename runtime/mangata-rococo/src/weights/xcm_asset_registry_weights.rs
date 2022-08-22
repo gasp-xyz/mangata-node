@@ -77,10 +77,6 @@ impl<T: frame_system::Config> orml_asset_registry::WeightInfo for ModuleWeight<T
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
-
-	fn set_asset_location() -> Weight {
-		0
-	}
 }
 
 // For backwards compatibility and tests

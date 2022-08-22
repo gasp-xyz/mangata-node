@@ -237,7 +237,7 @@ use frame_system::pallet_prelude::*;
 use mangata_primitives::{Balance, TokenId};
 use mp_bootstrap::PoolCreateApi;
 use mp_multipurpose_liquidity::ActivateKind;
-use mp_traits::{ActivationReservesProviderTrait, AssetMetadataMutationTrait, XykFunctionsTrait};
+use mp_traits::{ActivationReservesProviderTrait, XykFunctionsTrait};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_issuance::{ComputeIssuance, PoolPromoteApi};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
@@ -1283,10 +1283,9 @@ impl<T: Config> Pallet<T> {
 
 		T::AssetMetadataMutation::set_asset_info(
 			liquidity_asset_id,
-			Some(name),
-			Some(symbol.to_vec()),
-			Some(description),
-			Some(DEFAULT_DECIMALS),
+			name,
+			symbol,
+			DEFAULT_DECIMALS,
 		)?;
 		Ok(())
 	}
@@ -2684,6 +2683,15 @@ pub trait Valuate {
 	) -> Self::Balance;
 
 	fn get_pool_state(liquidity_token_id: Self::CurrencyId) -> Option<(Balance, Balance)>;
+}
+
+pub trait AssetMetadataMutationTrait {
+	fn set_asset_info(
+		asset: TokenId,
+		name: Vec<u8>,
+		symbol: Vec<u8>,
+		decimals: u32,
+	) -> DispatchResult;
 }
 
 impl<T: Config> Valuate for Pallet<T> {

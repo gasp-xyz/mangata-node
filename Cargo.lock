@@ -4796,13 +4796,13 @@ dependencies = [
  "mangata-primitives",
  "mp-multipurpose-liquidity",
  "mp-traits",
+ "orml-asset-registry",
  "orml-tokens",
  "orml-traits",
  "orml-unknown-tokens",
  "orml-xcm",
  "orml-xcm-support",
  "orml-xtokens",
- "pallet-assets-info",
  "pallet-aura",
  "pallet-authorship",
  "pallet-bootstrap",
@@ -4849,7 +4849,6 @@ dependencies = [
  "substrate-wasm-builder",
  "ver-api",
  "xcm",
- "xcm-asset-registry",
  "xcm-builder",
  "xcm-executor",
  "xyk-runtime-api",
@@ -5691,7 +5690,7 @@ dependencies = [
 [[package]]
 name = "orml-asset-registry"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance/open-runtime-module-library?branch=feature/asset-register-genesis#0ae56ac6067c796ba6895e5e8070c65ab2fadd0a"
+source = "git+https://github.com/mangata-finance/open-runtime-module-library?branch=feature/asset-register-genesis#eb2cacc6e5c5d5962a14a914a0ba5dfbc44f653a"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5833,24 +5832,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ff55baddef9e4ad00f88b6c743a2a8062d4c6ade126c2a528644b8e444d52ce"
 dependencies = [
  "stable_deref_trait",
-]
-
-[[package]]
-name = "pallet-assets-info"
-version = "2.0.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "mangata-primitives",
- "orml-tokens",
- "orml-traits",
- "parity-scale-codec 3.1.5",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -6013,7 +5994,6 @@ dependencies = [
  "mp-traits",
  "orml-tokens",
  "orml-traits",
- "pallet-assets-info",
  "pallet-issuance",
  "pallet-vesting-mangata",
  "pallet-xyk",
@@ -13445,29 +13425,6 @@ dependencies = [
  "parity-scale-codec 3.1.5",
  "scale-info",
  "xcm-procedural",
-]
-
-[[package]]
-name = "xcm-asset-registry"
-version = "2.1.1"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "log",
- "mangata-primitives",
- "orml-tokens",
- "orml-traits",
- "parity-scale-codec 3.1.5",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "xcm",
- "xcm-builder",
- "xcm-executor",
 ]
 
 [[package]]

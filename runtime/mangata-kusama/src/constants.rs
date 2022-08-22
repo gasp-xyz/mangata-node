@@ -58,6 +58,9 @@ pub mod fee {
 }
 
 pub mod parachains {
+	pub mod mangata {
+		pub const ID: u32 = 2110;
+	}
 	pub mod karura {
 		pub const ID: u32 = 2000;
 		pub const KAR_KEY: &[u8] = &[0, 128];

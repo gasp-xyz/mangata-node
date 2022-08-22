@@ -423,7 +423,7 @@ jobs:
 
       - name: Run parallel e2e tests
         working-directory: e2eTests
-        run: yarn test-parallel-v2 --shard=${{ matrix.shard }}
+        run: yarn test-parallel --max-workers=32
 
       - name: Test Report
         uses: dorny/test-reporter@v1

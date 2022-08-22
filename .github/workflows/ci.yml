@@ -87,7 +87,7 @@ jobs:
         name: Run clippy
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh clippy -p pallet-xyk -p pallet-assets-info -p pallet-bridge
+          ./docker-cargo.sh clippy -p pallet-xyk -p pallet-bridge
 
   unit-test:
     name: Unit test
@@ -113,7 +113,7 @@ jobs:
         name: Run unit tests
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh test -j2 -p pallet-bootstrap -p xyk-rpc -p pallet-xyk -p xyk-runtime-api -p pallet-bridge -p pallet-assets-info -p pallet-issuance -p pallet-multipurpose-liquidity -p xcm-asset-registry -p pallet-sudo-origin
+          ./docker-cargo.sh test -j2 -p pallet-bootstrap -p xyk-rpc -p pallet-xyk -p xyk-runtime-api -p pallet-bridge -p pallet-issuance -p pallet-multipurpose-liquidity -p pallet-sudo-origin
 
           # |cargo2junit | tee ut-results.xml
           # sed -i '/<testsuite.*\/>$/d' ut-results.xml
@@ -151,7 +151,7 @@ jobs:
         name: Run benchamrks
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh test -j2 --features=runtime-benchmarks -p pallet-bootstrap -p pallet-xyk -p xyk-runtime-api -p pallet-bridge -p pallet-assets-info -p pallet-issuance
+          ./docker-cargo.sh test -j2 --features=runtime-benchmarks -p pallet-bootstrap -p pallet-xyk -p xyk-runtime-api -p pallet-bridge -p pallet-issuance
 
   run-benchmarks:
     name: Run runtime benchmarks
@@ -420,7 +420,7 @@ jobs:
 
       - name: Docker ps
         run: docker ps
-        
+
       - name: Sleep for 2 minutes
         run: sleep 120s #close buffers of videos.
 
@@ -570,7 +570,7 @@ jobs:
 
       - name: Docker ps
         run: docker ps
-        
+
       - name: Sleep for 2 minutes
         run: sleep 120s #close buffers of videos.
 

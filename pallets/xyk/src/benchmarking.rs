@@ -467,11 +467,12 @@ benchmarks! {
 			initial_liquidity_amount.into()
 		);
 
-		Xyk::<T>::mint_liquidity(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), non_native_asset_id2.into(), 20000000000000000000, 30000000000000000001).unwrap();
+		// Xyk::<T>::mint_liquidity(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), non_native_asset_id2.into(), 20000000000000000000, 30000000000000000001).unwrap();
+		Xyk::<T>::activate_liquidity(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id.into(), initial_liquidity_amount, None);
 
 		frame_system::Pallet::<T>::set_block_number(100_000_u32.into());
 
-	}: deactivate_liquidity(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), 25000000000000000000_u128.into())
+	}: deactivate_liquidity(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), initial_liquidity_amount.into())
 	verify {
 		assert_err!(
 			Xyk::<T>::deactivate_liquidity(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id, 1_u32.into()),
@@ -601,7 +602,7 @@ benchmarks! {
 		frame_system::Pallet::<T>::set_block_number(100_000_u32.into());
 
 	}: activate_liquidity_for_account(RawOrigin::Signed(T::RewardsForAllAccount::get().into()), caller.clone().into(), liquidity_asset_id.into(), initial_liquidity_amount, None)
-	
+
 	verify {
 
 	}
@@ -631,11 +632,12 @@ benchmarks! {
 			initial_liquidity_amount.into()
 		);
 
-		Xyk::<T>::mint_liquidity(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), non_native_asset_id2.into(), 20000000000000000000, 30000000000000000001).unwrap();
+	//	Xyk::<T>::mint_liquidity(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), non_native_asset_id2.into(), 20000000000000000000, 30000000000000000001).unwrap();
+		Xyk::<T>::activate_liquidity(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id.into(), initial_liquidity_amount, None);
 
 		frame_system::Pallet::<T>::set_block_number(100_000_u32.into());
 
-	}: deactivate_liquidity_for_account(RawOrigin::Signed(T::RewardsForAllAccount::get().into()), caller.clone().into(), liquidity_asset_id.into(), 25000000000000000000_u128.into())
+	}: deactivate_liquidity_for_account(RawOrigin::Signed(T::RewardsForAllAccount::get().into()), caller.clone().into(), liquidity_asset_id.into(), initial_liquidity_amount.into())
 	verify {
 		assert_err!(
 			Xyk::<T>::deactivate_liquidity_for_account(RawOrigin::Signed(T::RewardsForAllAccount::get().into()).into(), caller.clone().into(), liquidity_asset_id.into(), 1_u32.into()),

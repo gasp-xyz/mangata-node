@@ -796,7 +796,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		#[pallet::weight(T::WeightInfo::activate_liquidity_v2_for_account())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::activate_liquidity_v2_for_account())]
 		pub fn activate_liquidity_v2_for_account(
 			origin: OriginFor<T>,
 			account: T::AccountId,

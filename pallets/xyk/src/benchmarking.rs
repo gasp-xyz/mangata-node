@@ -634,10 +634,10 @@ benchmarks! {
 
 		frame_system::Pallet::<T>::set_block_number(100_000_u32.into());
 
-	}: deactivate_liquidity(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), 25000000000000000000_u128.into())
+	}: deactivate_liquidity_for_account(RawOrigin::Signed(T::RewardsForAllAccount::get().into()), caller.clone().into(), liquidity_asset_id.into(), 25000000000000000000_u128.into())
 	verify {
 		assert_err!(
-			Xyk::<T>::deactivate_liquidity_for_account(RawOrigin::Signed(T::RewardsForAllAccount::get().into()), caller.clone().into(), liquidity_asset_id, 1_u32.into()),
+			Xyk::<T>::deactivate_liquidity_for_account(RawOrigin::Signed(T::RewardsForAllAccount::get().into()), caller.clone().into(), liquidity_asset_id.into(), 1_u32.into()),
 			Error::<T>::NotEnoughAssets
 		)
 	}

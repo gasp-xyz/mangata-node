@@ -420,6 +420,9 @@ jobs:
 
       - name: Docker ps
         run: docker ps
+        
+      - name: Sleep for 2 minutes
+        run: sleep 120s #close buffers of videos.
 
       - name: Run parallel e2e tests
         working-directory: e2eTests
@@ -567,6 +570,9 @@ jobs:
 
       - name: Docker ps
         run: docker ps
+        
+      - name: Sleep for 2 minutes
+        run: sleep 120s #close buffers of videos.
 
       - name: Run sequential e2e tests
         working-directory: e2eTests

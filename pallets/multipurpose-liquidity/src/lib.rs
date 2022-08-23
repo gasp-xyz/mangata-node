@@ -38,7 +38,6 @@ mod mock;
 mod tests;
 
 mod benchmarking;
-pub mod migration;
 
 pub mod weights;
 pub use weights::WeightInfo;
@@ -72,19 +71,7 @@ pub mod pallet {
 	pub struct Pallet<T>(PhantomData<T>);
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
-		#[cfg(feature = "try-runtime")]
-		fn pre_upgrade() -> Result<(), &'static str> {
-			migration::migrate_from_v0_pre_runtime_upgrade::<T, Pallet<T>>()
-		}
-		fn on_runtime_upgrade() -> frame_support::weights::Weight {
-			migration::migrate_from_v0::<T, Pallet<T>>()
-		}
-		#[cfg(feature = "try-runtime")]
-		fn post_upgrade() -> Result<(), &'static str> {
-			migration::migrate_from_v0_post_runtime_upgrade::<T, Pallet<T>>()
-		}
-	}
+	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {

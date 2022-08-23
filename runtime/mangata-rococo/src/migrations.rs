@@ -30,7 +30,7 @@ pub mod asset_registry {
 			// fetch asset info
 			// fetch locations
 			// construct metadata & merge
-			// add existential deposit ?
+			// add fee_per_second ?
 			// register
 
 			// the easy way, insert new data
@@ -75,8 +75,8 @@ pub mod asset_registry {
 					5,
 					AssetMetadataOf {
 						decimals: 18,
-						name: b"LP for ROC-MGR".to_vec(),
-						symbol: b"ROC-MGR".to_vec(),
+						name: b"LiquidityPoolToken0x00000005".to_vec(),
+						symbol: b"TKN0x00000004-TKN0x00000000".to_vec(),
 						additional: Default::default(),
 						existential_deposit: Default::default(),
 						location: None,
@@ -145,7 +145,7 @@ pub mod asset_registry {
 				)
 				.expect("should not fail");
 			}
-			total_rw += metadata.len() as u32 + 1; // each asset + one location
+			total_rw += metadata.len() as u32 + 2; // each asset + 2 locations
 			log::info!(
 				target: "asset_registry",
 				"on_runtime_upgrade: New data inserted"

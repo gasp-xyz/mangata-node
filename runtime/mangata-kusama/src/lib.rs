@@ -14,7 +14,7 @@ use frame_support::{
 	parameter_types,
 	traits::{
 		Contains, EnsureOrigin, EnsureOriginWithArg, Everything, ExistenceRequirement, Get,
-		Imbalance, LockIdentifier, Nothing, OnRuntimeUpgrade, U128CurrencyToVote, WithdrawReasons,
+		Imbalance, LockIdentifier, OnRuntimeUpgrade, U128CurrencyToVote, WithdrawReasons,
 	},
 	unsigned::TransactionValidityError,
 	weights::{

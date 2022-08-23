@@ -709,13 +709,13 @@ where
 								Ok(None)
 							} else {
 								// This is the "low value swap on curated token" branch
-								OTA::process_timeout(who, call, info, fee, tip)
+								OTA::process_timeout(who)
 									.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(67u8).into()))?;
 								Ok(Some(LiquidityInfoEnum::Timeout))
 							}
 						} else {
 							// "swap on non-curated token" branch
-							OTA::process_timeout(who, call, info, fee, tip)
+							OTA::process_timeout(who)
 								.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(67u8).into()))?;
 							Ok(Some(LiquidityInfoEnum::Timeout))
 						}
@@ -750,7 +750,7 @@ where
 		Some(LiquidityInfoEnum::Imbalance(_)) =>
 			OCA::correct_and_deposit_fee(who, dispatch_info, post_info, corrected_fee, tip, already_withdrawn),
 		Some(LiquidityInfoEnum::Timeout) =>
-			OTA::correct_and_deposit_fee(who, dispatch_info, post_info, corrected_fee, tip, already_withdrawn),
+			Ok(()),
 		None => Ok(()),
 		}
 	}
@@ -970,8 +970,14 @@ parameter_types! {
 	pub const ExecutiveBody: BodyId = BodyId::Executive;
 }
 
+
+parameter_types! {
+	pub const MaxCuratedTokens: u32 = 100;
+}
+
 impl pallet_token_timeout::Config for Runtime {
 	type Event = Event;
+	type MaxCuratedTokens = MaxCuratedTokens;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type NativeTokenId = MgxTokenId;
 	type WeightInfo = ();

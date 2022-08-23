@@ -8,6 +8,7 @@ use frame_system::ensure_signed;
 use sp_core::U256;
 use codec::FullCodec;
 use frame_support::{
+    storage::bounded_btree_map::BoundedBTreeMap,
 	pallet_prelude::*,
 	traits::{ExistenceRequirement, Get, StorageVersion, WithdrawReasons},
 	transactional, Parameter,
@@ -21,7 +22,6 @@ use sp_runtime::traits::{
 	SaturatedConversion, Zero,
 };
 use sp_std::{
-    collections::btree_map::BTreeMap,
 	convert::{TryFrom, TryInto},
 	fmt::Debug,
 	prelude::*,
@@ -70,18 +70,20 @@ pub mod pallet {
 	}
 
     #[derive(
-		Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo, Default,
+		Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, MaxEncodedLen, TypeInfo, Default,
 	)]
-    pub struct TimeoutMetadataInfo<BlockNumber>{
-        pub period_length: BlockNumber,
+    #[codec(mel_bound(T: Config))]
+    #[scale_info(skip_type_params(T))]
+    pub struct TimeoutMetadataInfo<T: Config>{
+        pub period_length: T::BlockNumber,
         pub timeout_amount: Balance,
-        pub swap_value_threshold: BTreeMap<TokenId, Balance>,
+        pub swap_value_threshold: BoundedBTreeMap<TokenId, Balance, T::MaxCuratedTokens>,
     }
 
     #[pallet::storage]
 	#[pallet::getter(fn get_timeout_metadata)]
 	pub type TimeoutMetadata<T: Config> =
-		StorageValue<_, TimeoutMetadataInfo<T::BlockNumber>, OptionQuery>;
+		StorageValue<_, TimeoutMetadataInfo<T>, OptionQuery>;
 
     #[derive(
         Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo, Default,
@@ -116,6 +118,8 @@ pub mod pallet {
         NotTimedout,
         /// The timeout cannot be released yet
         CantReleaseYet,
+        /// The limit on the maximum curated tokens for which there is a swap threshold is exceeded
+        MaxCuratedTokensLimitExceeded,
         /// An unexpected failure has occured
         UnexpectedFailure,
     }
@@ -123,8 +127,11 @@ pub mod pallet {
     #[pallet::config]
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+        #[pallet::constant]
+        type MaxCuratedTokens: Get<u32>;
 		type Tokens: MultiTokenCurrencyExtended<Self::AccountId>
 			+ MultiTokenReservableCurrency<Self::AccountId>;
+        #[pallet::constant]
 		type NativeTokenId: Get<TokenId>;
 		type WeightInfo;
 	}
@@ -140,7 +147,7 @@ pub mod pallet {
             let mut timeout_metadata = Self::get_timeout_metadata().unwrap_or(TimeoutMetadataInfo{
                 period_length: Default::default(),
                 timeout_amount: Default::default(),
-                swap_value_threshold: BTreeMap::new(),
+                swap_value_threshold: BoundedBTreeMap::new(),
             });
             
             timeout_metadata.period_length = period_length.unwrap_or(timeout_metadata.period_length);
@@ -152,7 +159,8 @@ pub mod pallet {
             if let Some(swap_value_thresholds) = swap_value_thresholds{
                 for (token_id, maybe_threshold) in swap_value_thresholds.iter(){
                     match maybe_threshold{
-                        Some(threshold) => {let _ = timeout_metadata.swap_value_threshold.insert(token_id, threshold);},
+                        Some(threshold) => {let _ = timeout_metadata.swap_value_threshold.try_insert(*token_id, *threshold)
+                            .map_err(|_| Error::<T>::MaxCuratedTokensLimitExceeded)?;},
                         None => {let _ = timeout_metadata.swap_value_threshold.remove(token_id);},
                     }
                 }
@@ -162,7 +170,7 @@ pub mod pallet {
 
             Pallet::<T>::deposit_event(Event::TimeoutMetadataUpdated);
 
-            Ok(())
+            Ok(().into())
 
         }
 
@@ -184,27 +192,27 @@ pub mod pallet {
             let now = <frame_system::Pallet<T>>::block_number();
 
             let current_period = now
-                .checked_div(timeout_metadata.period_length)
+                .checked_div(&timeout_metadata.period_length)
                 .ok_or(Error::<T>::TimeoutsIncorrectlyInitialzed)?;
             let last_timeout_block_period = account_timeout_data.last_timeout_block
-                .checked_div(timeout_metadata.period_length)
+                .checked_div(&timeout_metadata.period_length)
                 .ok_or(Error::<T>::TimeoutsIncorrectlyInitialzed)?;
 
             ensure!(current_period > last_timeout_block_period, Error::<T>::CantReleaseYet);
 
-            let unreserve_result = <T as pallet::Config>::Tokens::unreserve(T::NativeTokenId.get().into(), &who, account_timeout_data.total_timeout_amount.into());
+            let unreserve_result = <T as pallet::Config>::Tokens::unreserve(<T as pallet::Config>::NativeTokenId::get().into(), &who, account_timeout_data.total_timeout_amount.into());
             if !unreserve_result.is_zero() {
                 log::warn!("Release timeout unreserve resulted in non-zero unreserve_result {:?}", unreserve_result);
             }
 
-            AccountTimeoutData::<T>::remove(who);
+            AccountTimeoutData::<T>::remove(who.clone());
 
             Pallet::<T>::deposit_event(Event::TimeoutReleased(
 				who,
 				account_timeout_data.total_timeout_amount,
 			));
 
-            Ok(())
+            Ok(().into())
         }
 
     }
@@ -212,17 +220,17 @@ pub mod pallet {
 }
 
 
-impl<T: Config> TimeoutTriggerTrait<T::AccountId> for Pallet<T>{
+impl<T: Config> TimeoutTriggerTrait<T::AccountId> for Pallet<T> {
     fn process_timeout(who: &T::AccountId) -> DispatchResult{
         let timeout_metadata = Self::get_timeout_metadata().ok_or(Error::<T>::TimeoutsNotInitialized)?;
         let mut account_timeout_data = Self::get_account_timeout_data(who);
         let now = <frame_system::Pallet<T>>::block_number();
 
         let current_period = now
-            .checked_div(timeout_metadata.period_length)
+            .checked_div(&timeout_metadata.period_length)
             .ok_or(Error::<T>::TimeoutsIncorrectlyInitialzed)?;
         let last_timeout_block_period = account_timeout_data.last_timeout_block
-            .checked_div(timeout_metadata.period_length)
+            .checked_div(&timeout_metadata.period_length)
             .ok_or(Error::<T>::TimeoutsIncorrectlyInitialzed)?;
 
         // This is cause now >= last_timeout_block
@@ -233,7 +241,7 @@ impl<T: Config> TimeoutTriggerTrait<T::AccountId> for Pallet<T>{
             // Cannot fail beyond this point
             // Rerserve additional timeout_amount
             <T as pallet::Config>::Tokens::reserve(
-                T::NativeTokenId.get().into(), who, timeout_metadata.timeout_amount.into()
+                <T as pallet::Config>::NativeTokenId::get().into(), who, timeout_metadata.timeout_amount.into()
             )?;
 
             // Insert updated account_timeout_info into storage
@@ -245,9 +253,9 @@ impl<T: Config> TimeoutTriggerTrait<T::AccountId> for Pallet<T>{
             // We must either reserve more or unreserve
             match (timeout_metadata.timeout_amount, account_timeout_data.total_timeout_amount){
                 (x, y) if x>y =>
-                    <T as pallet::Config>::Tokens::reserve(T::NativeTokenId.get().into(), who, x.saturating_sub(y).into())?,
+                    <T as pallet::Config>::Tokens::reserve(<T as pallet::Config>::NativeTokenId::get().into(), who, x.saturating_sub(y).into())?,
                 (x, y) if x<y =>{
-                    let unreserve_result = <T as pallet::Config>::Tokens::unreserve(T::NativeTokenId.get().into(), who, y.saturating_sub(x).into());
+                    let unreserve_result = <T as pallet::Config>::Tokens::unreserve(<T as pallet::Config>::NativeTokenId::get().into(), who, y.saturating_sub(x).into());
                     if !unreserve_result.is_zero() {
                         log::warn!("Process timeout unreserve resulted in non-zero unreserve_result {:?}", unreserve_result);
                     }},
@@ -277,10 +285,10 @@ impl<T: Config> TimeoutTriggerTrait<T::AccountId> for Pallet<T>{
         let now = <frame_system::Pallet<T>>::block_number();
 
         let current_period = now
-            .checked_div(timeout_metadata.period_length)
+            .checked_div(&timeout_metadata.period_length)
             .ok_or(Error::<T>::TimeoutsIncorrectlyInitialzed)?;
         let last_timeout_block_period = account_timeout_data.last_timeout_block
-            .checked_div(timeout_metadata.period_length)
+            .checked_div(&timeout_metadata.period_length)
             .ok_or(Error::<T>::TimeoutsIncorrectlyInitialzed)?;
 
         ensure!(current_period > last_timeout_block_period, Error::<T>::CantReleaseYet);

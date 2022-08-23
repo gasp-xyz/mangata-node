@@ -16,8 +16,9 @@ use sp_runtime::{
 		StaticLookup,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, FixedPointNumber, Percent, Perquintill,
+	ApplyExtrinsicResult, FixedPointNumber, Percent, Perquintill, AccountId32
 };
+use sp_runtime::helpers_128bit::multiply_by_rational;
 
 use sp_std::{
 	convert::{TryFrom, TryInto},
@@ -36,6 +37,7 @@ use frame_support::{
 		DispatchClass, Weight,
 	},
 	PalletId,
+	ensure
 };
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
@@ -698,13 +700,13 @@ where
 								Ok(None)
 							} else {
 								// This is the "low value swap on curated token" branch
-								OTA::process_timeout(who, call, info, fee, tip)
+								OTA::process_timeout(who)
 									.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(67u8).into()))?;
 								Ok(Some(LiquidityInfoEnum::Timeout))
 							}
 						} else {
 							// "swap on non-curated token" branch
-							OTA::process_timeout(who, call, info, fee, tip)
+							OTA::process_timeout(who)
 								.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(67u8).into()))?;
 							Ok(Some(LiquidityInfoEnum::Timeout))
 						}
@@ -739,7 +741,7 @@ where
 		Some(LiquidityInfoEnum::Imbalance(_)) =>
 			OCA::correct_and_deposit_fee(who, dispatch_info, post_info, corrected_fee, tip, already_withdrawn),
 		Some(LiquidityInfoEnum::Timeout) =>
-			OTA::correct_and_deposit_fee(who, dispatch_info, post_info, corrected_fee, tip, already_withdrawn),
+			Ok(()),
 		None => Ok(()),
 		}
 	}
@@ -889,11 +891,11 @@ impl pallet_transaction_payment_mangata::Config for Runtime {
 		ThreeCurrencyOnChargeAdapter<
 			orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
 			ToAuthor,
-			MgxTokenId,
-			KsmTokenId,
+			MgrTokenId,
+			RocTokenId,
 			TurTokenId,
-			frame_support::traits::ConstU128<KSM_MGX_SCALE_FACTOR>,
-			frame_support::traits::ConstU128<TUR_MGX_SCALE_FACTOR>,
+			frame_support::traits::ConstU128<ROC_MGR_SCALE_FACTOR>,
+			frame_support::traits::ConstU128<TUR_MGR_SCALE_FACTOR>,
 		>,
 		TokenTimeout
 	>;
@@ -959,10 +961,15 @@ parameter_types! {
 	pub const ExecutiveBody: BodyId = BodyId::Executive;
 }
 
+parameter_types! {
+	pub const MaxCuratedTokens: u32 = 100;
+}
+
 impl pallet_token_timeout::Config for Runtime {
 	type Event = Event;
+	type MaxCuratedTokens = MaxCuratedTokens;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-	type NativeTokenId = MgxTokenId;
+	type NativeTokenId = MgrTokenId;
 	type WeightInfo = ();
 }
 

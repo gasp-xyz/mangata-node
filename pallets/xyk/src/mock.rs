@@ -253,15 +253,14 @@ impl MockAssetRegister {
 impl AssetMetadataMutationTrait for MockAssetRegister {
 	fn set_asset_info(
 		asset: TokenId,
-		name: Option<Vec<u8>>,
-		symbol: Option<Vec<u8>>,
-		_description: Option<Vec<u8>>,
-		decimals: Option<u32>,
+		name: Vec<u8>,
+		symbol: Vec<u8>,
+		decimals: u32,
 	) -> DispatchResult {
 		let meta = AssetMetadata {
-			name: name.expect("has name"),
-			symbol: symbol.expect("has symbol"),
-			decimals: decimals.expect("has decimals"),
+			name,
+			symbol,
+			decimals,
 			location: None,
 			additional: Default::default(),
 			existential_deposit: 0,

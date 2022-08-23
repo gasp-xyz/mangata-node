@@ -25,9 +25,10 @@ use frame_support::{
 };
 use mangata_primitives::{Amount, Balance, TokenId};
 use mp_multipurpose_liquidity::ActivateKind;
-use mp_traits::{ActivationReservesProviderTrait, AssetMetadataMutationTrait};
+use mp_traits::ActivationReservesProviderTrait;
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter};
 use orml_traits::parameter_type_with_key;
+use pallet_xyk::AssetMetadataMutationTrait;
 use sp_runtime::{Perbill, Percent};
 use sp_std::convert::TryFrom;
 
@@ -125,10 +126,9 @@ pub struct AssetMetadataMutation;
 impl AssetMetadataMutationTrait for AssetMetadataMutation {
 	fn set_asset_info(
 		_asset: TokenId,
-		_name: Option<Vec<u8>>,
-		_symbol: Option<Vec<u8>>,
-		_description: Option<Vec<u8>>,
-		_decimals: Option<u32>,
+		_name: Vec<u8>,
+		_symbol: Vec<u8>,
+		_decimals: u32,
 	) -> DispatchResult {
 		Ok(())
 	}
@@ -295,19 +295,6 @@ parameter_types! {
 	pub const MaxDecimals: u32 = 255;
 }
 
-impl pallet_assets_info::Config for Test {
-	type Event = Event;
-	type MinLengthName = MinLengthName;
-	type MaxLengthName = MaxLengthName;
-	type MinLengthSymbol = MinLengthSymbol;
-	type MaxLengthSymbol = MaxLengthSymbol;
-	type MinLengthDescription = MinLengthDescription;
-	type MaxLengthDescription = MaxLengthDescription;
-	type MaxDecimals = MaxDecimals;
-	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
-	type RelayNativeTokensValueScaleFactor = ();
-}
-
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
@@ -319,7 +306,6 @@ construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>},
-		AssetsInfoModule: pallet_assets_info::{Pallet, Call, Config, Storage, Event<T>},
 		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>},
 		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>},
 		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>},

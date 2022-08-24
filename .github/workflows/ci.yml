@@ -322,89 +322,24 @@ jobs:
             ./docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm
             ./docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm.md5
 
-  build-matrix:
+  e2e-test-parallel-self-hosted:
     needs: build-rococo
     runs-on: self-hosted
-    timeout-minutes: 1440
-    if: ${{ (success() || github.event.inputs.skipBuild == 'true') && !contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests') }}
+    timeout-minutes: 180
+    if: ${{ (!cancelled() && (success() || github.event.inputs.skipBuild == 'true')) && !contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests') }}
     env:
-      API_URL: 'ws://127.0.0.1:8844'
+      API_URL: 'ws://127.0.0.1:9946'
       TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}
       E2E_TREASURY_PALLET_ADDRESS : ${{ secrets.E2E_TREASURY_PALLET_ADDRESS }}
       E2E_XYK_PALLET_ADDRESS : ${{ secrets.E2E_XYK_PALLET_ADDRESS }}
       E2E_TREASURY_BURN_PALLET_ADDRESS : ${{ secrets.E2E_TREASURY_BURN_PALLET_ADDRESS }}
-      TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
+      #      TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
+      TEST_SUDO_NAME: '//Alice'
       MANGATA_NODE_VERSION: ${{ github.sha }}
       E2EBRANCHNAME: 'main'
       PARACHAIN_DOCKER_IMAGE: "${{ github.event.inputs.parachainDocker || 'mangatasolutions/mangata-node:rococo-latest' }}"
     steps:
-      -
-        name: Checkout
-        uses: actions/checkout@v2
-
-      - name: E2E- Get branch name
-        id: branch-name
-        uses: tj-actions/branch-names@v4.9
-
-      - name: E2E- Get target branch. 
-        run: |
-          echo "This job name branch is: ${{ steps.branch-name.outputs.current_branch }}"
-
-      - name: E2E- Calculate if run e2e feature branch or main.
-        run: |
-          echo DEFAULT: E2E test will run with: $E2EBRANCHNAME
-          echo "Running on: ${{ steps.branch-name.outputs.current_branch }}"
-          if [ -n "$(git ls-remote --heads https://github.com/mangata-finance/mangata-e2e.git ${{ steps.branch-name.outputs.current_branch }} --force --quiet)" ]; then echo "E2EBRANCHNAME=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_ENV; echo "MATCH - OK" ; elif [ -n "$(git ls-remote --heads https://github.com/mangata-finance/mangata-e2e.git ${{ github.base_ref }} --force --quiet)" ]; then echo "E2EBRANCHNAME=${{ github.base_ref }}" >> $GITHUB_ENV; echo "MATCH - OK" ;  fi
-
-      - name: Decide if main - branch or parameter
-        run: 
-          echo "E2EBRANCHNAME=${{ github.event.inputs.e2eBranch || env.E2EBRANCHNAME }}" >> $GITHUB_ENV
-
-      - name: E2E- Get target branch. 
-        run: |
-         echo "${{ env.E2EBRANCHNAME }}"
-
-      - 
-        name: Checkout tests
-        uses: actions/checkout@v2
-        with:
-          repository: mangata-finance/mangata-e2e
-          ref: '${{ env.E2EBRANCHNAME }}'
-          path: 'e2eTests'
-
-      - id: set-matrix
-        working-directory: e2eTests
-        run: |
-         echo "[ $(jo -a test/parallel/*| jq -rc '[_nwise(length / 5)]' | tail -c +2 | head -c -2 > file.txt  && sed -i 's/",/ /g'   file.txt && sed -i 's/"/ /g'   file.txt   &&   sed -i 's/\[/\"/g' file.txt && sed -i 's/\]/\"/g' file.txt  && cat file.txt) ]"
-         echo "::set-output name=testFiles_matrix::[ $(jo -a test/parallel/*| jq -rc '[_nwise(length / 5)]' | tail -c +2 | head -c -2 > file.txt  && sed -i 's/",/ /g'   file.txt && sed -i 's/"/ /g'   file.txt   &&   sed -i 's/\[/\"/g' file.txt && sed -i 's/\]/\"/g' file.txt  && cat file.txt) ]"
-         echo "::set-output name=testFiles_matrix_seq::[ $(jo -a test/parallel/*| jq -rc '[_nwise(length / 1)]' | tail -c +2 | head -c -2 > file.txt  && sed -i 's/",/ /g'   file.txt && sed -i 's/"/ /g'   file.txt   &&   sed -i 's/\[/\"/g' file.txt && sed -i 's/\]/\"/g' file.txt  && cat file.txt) ]"
-
-    outputs:
-      testFiles_matrix_seq: ${{ steps.set-matrix.outputs.testFiles_matrix_seq }}
-      testFiles_matrix: ${{ steps.set-matrix.outputs.testFiles_matrix }}
-    
-
-  e2e-test-parallel-self-hosted:
-    needs: build-matrix
-    runs-on: self-hosted
-    strategy:
-      matrix:
-        testFiles: ${{ fromJson(needs.build-matrix.outputs.testFiles_matrix) }}
-
-    timeout-minutes: 1440
-    if: ${{ (success() || github.event.inputs.skipBuild == 'true') && !contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests') }}
-    env:
-      API_URL: 'ws://127.0.0.1:8844'
-      TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}
-      E2E_TREASURY_PALLET_ADDRESS : ${{ secrets.E2E_TREASURY_PALLET_ADDRESS }}
-      E2E_XYK_PALLET_ADDRESS : ${{ secrets.E2E_XYK_PALLET_ADDRESS }}
-      E2E_TREASURY_BURN_PALLET_ADDRESS : ${{ secrets.E2E_TREASURY_BURN_PALLET_ADDRESS }}
-      TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
-      MANGATA_NODE_VERSION: ${{ github.sha }}
-      E2EBRANCHNAME: 'main'
-      PARACHAIN_DOCKER_IMAGE: "${{ github.event.inputs.parachainDocker || 'mangatasolutions/mangata-node:rococo-latest' }}"
-    steps:
-    ####IDK, but this is neccesary for reports
+      ####IDK, but this is neccesary for reports
       -
         name: Checkout
         uses: actions/checkout@v2
@@ -427,7 +362,7 @@ jobs:
         id: branch-name
         uses: tj-actions/branch-names@v4.9
 
-      - name: E2E- Get target branch. 
+      - name: E2E- Get target branch.
         run: |
           echo "This job name branch is: ${{ steps.branch-name.outputs.current_branch }}"
 
@@ -438,18 +373,17 @@ jobs:
           if [ -n "$(git ls-remote --heads https://github.com/mangata-finance/mangata-e2e.git ${{ steps.branch-name.outputs.current_branch }} --force --quiet)" ]; then echo "E2EBRANCHNAME=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_ENV; echo "MATCH - OK" ; elif [ -n "$(git ls-remote --heads https://github.com/mangata-finance/mangata-e2e.git ${{ github.base_ref }} --force --quiet)" ]; then echo "E2EBRANCHNAME=${{ github.base_ref }}" >> $GITHUB_ENV; echo "MATCH - OK" ;  fi
 
       - name: Decide if main - branch or parameter
-      # if we have something in e2eBranch - override E2EBranchName, else -> E2EBRANCHNAME , that
-      # by default will be main. 
+        # if we have something in e2eBranch - override E2EBranchName, else -> E2EBRANCHNAME , that
+        # by default will be main.
 
-        run: 
+        run:
           echo "E2EBRANCHNAME=${{ github.event.inputs.e2eBranch || env.E2EBRANCHNAME }}" >> $GITHUB_ENV
 
-      - name: E2E- Get target branch. 
+      - name: E2E- Get target branch.
         run: |
-         echo "${{ env.E2EBRANCHNAME }}"
+          echo "${{ env.E2EBRANCHNAME }}"
 
-      - 
-        name: Checkout tests
+      - name: Checkout tests
         uses: actions/checkout@v2
         with:
           repository: mangata-finance/mangata-e2e
@@ -460,13 +394,25 @@ jobs:
         run: |
           echo ${{ env.PARACHAIN_DOCKER_IMAGE }}
 
+      - name: Replace parachain docker image reference in config
+        working-directory: launch
+        run: sed -i 's+mangatasolutions/mangata-node:dev+${{ env.PARACHAIN_DOCKER_IMAGE }}+g' config.yml
+
+      - name: Install parachain launch
+        working-directory: launch
+        run: yarn
+
+      - name: Generate parachain launch config
+        working-directory: launch
+        run: yarn gen
+
       - name: Stop previous parachain if running
-        run: make -C devops/parachain stop
+        working-directory: launch
+        run: yarn down
 
       - name: Start mangata-node parachain
-        env:
-          ENV: rococo
-        run: make -C devops/parachain start
+        working-directory: launch
+        run: yarn up
 
       - name: Install dependencies
         working-directory: e2eTests
@@ -474,19 +420,19 @@ jobs:
 
       - name: Docker ps
         run: docker ps
-
+        
       - name: Sleep for 2 minutes
         run: sleep 120s #close buffers of videos.
 
       - name: Run parallel e2e tests
         working-directory: e2eTests
-        run: yarn test-parallel-files ${{ matrix.testFiles }}
+        run: yarn test-parallel --max-workers=32
 
       - name: Test Report
         uses: dorny/test-reporter@v1
         if: success() || failure()    # run this step even if previous step failed
         with:
-          name: JEST Tests Parallel        # Name of the check run which will be created
+          name: E2E Tests Parallel        # Name of the check run which will be created
           path: e2eTests/reports/junit-*.xml    # Path to test results
           reporter: jest-junit        # Format of test results
 
@@ -504,9 +450,9 @@ jobs:
       - name: Create images snapshots
         if: failure()
         run: |
-          docker commit  $(docker ps | grep mangata | grep bob | awk '{print $1}') mangata_test_run/mangata_bob_1
+          docker commit  $(docker ps | grep parachain-2110-1 | awk '{print $1}') mangata_test_run/mangata_bob_1
           docker save  --output=/tmp/mangata_bob_1.tar mangata_test_run/mangata_bob_1
-          docker commit  $(docker ps | grep mangata | grep alice | awk '{print $1}') mangata_test_run/mangata_alice_1
+          docker commit  $(docker ps | grep parachain-2110-0 | awk '{print $1}') mangata_test_run/mangata_alice_1
           docker save  --output=/tmp/mangata_alice_1.tar mangata_test_run/mangata_alice_1
 
       - name: Upload logs  and docker images to GitHub
@@ -521,27 +467,28 @@ jobs:
 
       - name: Stop mangata-node parachain
         if: always()
-        run: |
-          make -C devops/parachain stop
-          docker system prune -a -f
+        working-directory: launch
+        run: yarn down
 
 
   e2e-test-sequential-self-hosted:
     needs: build-rococo
     runs-on: self-hosted
-    if: ${{ (success() || github.event.inputs.skipBuild == 'true') && !contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests') }}
+    if: ${{ (!cancelled() && (success() || github.event.inputs.skipBuild == 'true')) && !contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests') }}
+    timeout-minutes: 180
     env:
-      API_URL: 'ws://127.0.0.1:8844'
+      API_URL: 'ws://127.0.0.1:9946'
       TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}
       E2E_TREASURY_PALLET_ADDRESS : ${{ secrets.E2E_TREASURY_PALLET_ADDRESS }}
-      E2E_XYK_PALLET_ADDRESS : ${{ secrets.E2E_XYK_PALLET_ADDRESS }} 
+      E2E_XYK_PALLET_ADDRESS : ${{ secrets.E2E_XYK_PALLET_ADDRESS }}
       E2E_TREASURY_BURN_PALLET_ADDRESS : ${{ secrets.E2E_TREASURY_BURN_PALLET_ADDRESS }}
-      TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
+      #      TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
+      TEST_SUDO_NAME: '//Alice'
       MANGATA_NODE_VERSION: ${{ github.sha }}
       E2EBRANCHNAME: 'main'
       PARACHAIN_DOCKER_IMAGE: "${{ github.event.inputs.parachainDocker || 'mangatasolutions/mangata-node:rococo-latest' }}"
     steps:
-    ####IDK, but this is neccesary for reports
+      ####IDK, but this is neccesary for reports
       -
         name: Checkout
         uses: actions/checkout@v2
@@ -575,15 +522,15 @@ jobs:
           if [ -n "$(git ls-remote --heads https://github.com/mangata-finance/mangata-e2e.git ${{ steps.branch-name.outputs.current_branch }} --force --quiet)" ]; then echo "E2EBRANCHNAME=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_ENV; echo "MATCH - OK" ; elif [ -n "$(git ls-remote --heads https://github.com/mangata-finance/mangata-e2e.git ${{ github.base_ref }} --force --quiet)" ]; then echo "E2EBRANCHNAME=${{ github.base_ref }}" >> $GITHUB_ENV; echo "MATCH - OK" ;  fi
 
       - name: Decide if main - branch or parameter
-      # if we have something in e2eBranch - override E2EBranchName, else -> E2EBRANCHNAME , that
-      # by default will be main.
+        # if we have something in e2eBranch - override E2EBranchName, else -> E2EBRANCHNAME , that
+        # by default will be main.
 
         run:
           echo "E2EBRANCHNAME=${{ github.event.inputs.e2eBranch || env.E2EBRANCHNAME }}" >> $GITHUB_ENV
 
       - name: E2E- Get target branch.
         run: |
-         echo "${{ env.E2EBRANCHNAME }}"
+          echo "${{ env.E2EBRANCHNAME }}"
 
       -
         name: Checkout tests
@@ -597,13 +544,25 @@ jobs:
         run: |
           echo ${{ env.PARACHAIN_DOCKER_IMAGE }}
 
+      - name: Replace parachain docker image reference in config
+        working-directory: launch
+        run: sed -i 's+mangatasolutions/mangata-node:dev+${{ env.PARACHAIN_DOCKER_IMAGE }}+g' config.yml
+
+      - name: Install parachain launch
+        working-directory: launch
+        run: yarn
+
+      - name: Generate parachain launch config
+        working-directory: launch
+        run: yarn gen
+
       - name: Stop previous parachain if running
-        run: make -C devops/parachain stop
+        working-directory: launch
+        run: yarn down
 
       - name: Start mangata-node parachain
-        env:
-          ENV: rococo
-        run: make -C devops/parachain start
+        working-directory: launch
+        run: yarn up
 
       - name: Install dependencies
         working-directory: e2eTests
@@ -611,7 +570,7 @@ jobs:
 
       - name: Docker ps
         run: docker ps
-
+        
       - name: Sleep for 2 minutes
         run: sleep 120s #close buffers of videos.
 
@@ -623,7 +582,7 @@ jobs:
         uses: dorny/test-reporter@v1
         if: success() || failure()    # run this step even if previous step failed
         with:
-          name: JEST Tests           # Name of the check run which will be created
+          name: E2E Tests           # Name of the check run which will be created
           path: e2eTests/reports/junit-*.xml    # Path to test results
           reporter: jest-junit        # Format of test results
 
@@ -640,9 +599,9 @@ jobs:
       - name: Create images snapshots
         if: failure()
         run: |
-          docker commit  $(docker ps | grep mangata | grep bob | awk '{print $1}') mangata_test_run/mangata_bob_1
+          docker commit  $(docker ps | grep parachain-2110-1 | awk '{print $1}') mangata_test_run/mangata_bob_1
           docker save  --output=/tmp/mangata_bob_1.tar mangata_test_run/mangata_bob_1
-          docker commit  $(docker ps | grep mangata | grep alice | awk '{print $1}') mangata_test_run/mangata_alice_1
+          docker commit  $(docker ps | grep parachain-2110-0 | awk '{print $1}') mangata_test_run/mangata_alice_1
           docker save  --output=/tmp/mangata_alice_1.tar mangata_test_run/mangata_alice_1
 
       - name: Upload logs  and docker images to GitHub
@@ -657,9 +616,8 @@ jobs:
 
       - name: Stop mangata-node parachain
         if: always()
-        run: |
-          make -C devops/parachain stop
-          docker system prune -a -f
+        working-directory: launch
+        run: yarn down
 
   publish:
     needs: [rustfmt-check, unit-test, clippy-check, build-rococo, build-kusama, e2e-test-sequential-self-hosted, e2e-test-parallel-self-hosted, run-benchmarks, run-benchmarks-tests]

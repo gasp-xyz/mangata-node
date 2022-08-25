@@ -2806,3 +2806,24 @@ impl<T: Config> PoolCreateApi for Pallet<T> {
 		}
 	}
 }
+
+impl<T: Config> mp_bootstrap::RewardsApi for Pallet<T> {
+	type AccountId = T::AccountId;
+
+	fn can_activate(liquidity_asset_id: TokenId) -> bool {
+		Self::is_promoted_pool(liquidity_asset_id)
+	}
+
+	fn activate_liquidity_tokens(
+		user: &Self::AccountId,
+		liquidity_asset_id: TokenId,
+		amount: Balance,
+	) -> DispatchResult {
+		<Self as XykFunctionsTrait<T::AccountId>>::activate_liquidity(
+			user.clone(),
+			liquidity_asset_id,
+			amount,
+			Some(ActivateKind::AvailableBalance),
+		)
+	}
+}

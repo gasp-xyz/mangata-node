@@ -732,7 +732,7 @@ fn test_crate_pool_is_called_with_proper_arguments_after_bootstrap_finish() {
 
 #[test]
 #[serial]
-fn test_cannot_claim_rewards_when_bootstrap_is_not_finished() {
+fn test_cannot_claim_liquidity_tokens_when_bootstrap_is_not_finished() {
 	new_test_ext().execute_with(|| {
 		set_up();
 
@@ -757,7 +757,7 @@ fn test_cannot_claim_rewards_when_bootstrap_is_not_finished() {
 		assert_eq!(BootstrapPhase::Public, Phase::<Test>::get());
 
 		assert_err!(
-			Bootstrap::claim_rewards(Origin::signed(USER_ID)),
+			Bootstrap::claim_liquidity_tokens(Origin::signed(USER_ID)),
 			Error::<Test>::NotFinishedYet
 		);
 	});
@@ -822,7 +822,7 @@ fn test_rewards_are_distributed_properly_with_single_user() {
 		);
 		assert_eq!(Bootstrap::minted_liquidity(), (liquidity_token_id, liquidity_token_amount));
 
-		Bootstrap::claim_rewards(Origin::signed(USER_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(Origin::signed(USER_ID)).unwrap();
 
 		assert_eq!(Bootstrap::claimed_rewards(USER_ID, MGAId::get()), liquidity_token_amount / 2);
 
@@ -953,8 +953,8 @@ fn test_rewards_are_distributed_properly_with_multiple_user() {
 			liquidity_token_amount / 2 * ANOTHER_USER_MGA_PROVISON / mga_valuation;
 		let user2_expected_liq_amount = user2_expected_ksm_rewards + user2_expected_mga_rewards;
 
-		Bootstrap::claim_rewards(Origin::signed(USER_ID)).unwrap();
-		Bootstrap::claim_rewards(Origin::signed(ANOTHER_USER_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(Origin::signed(USER_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(Origin::signed(ANOTHER_USER_ID)).unwrap();
 
 		assert_eq!(Bootstrap::claimed_rewards(USER_ID, MGAId::get()), user_expected_mga_rewards);
 		assert_eq!(Bootstrap::claimed_rewards(USER_ID, KSMId::get()), user_expected_ksm_rewards);
@@ -968,11 +968,11 @@ fn test_rewards_are_distributed_properly_with_multiple_user() {
 		);
 
 		assert_err!(
-			Bootstrap::claim_rewards(Origin::signed(USER_ID)),
+			Bootstrap::claim_liquidity_tokens(Origin::signed(USER_ID)),
 			Error::<Test>::NothingToClaim
 		);
 		assert_err!(
-			Bootstrap::claim_rewards(Origin::signed(ANOTHER_USER_ID)),
+			Bootstrap::claim_liquidity_tokens(Origin::signed(ANOTHER_USER_ID)),
 			Error::<Test>::NothingToClaim
 		);
 
@@ -1001,6 +1001,7 @@ fn dont_allow_for_provision_in_vested_tokens_without_dedicated_extrinsic() {
 			&USER_ID,
 			MGAId::get(),
 			mga_amount,
+			None,
 			100_u32.into(),
 		)
 		.unwrap();
@@ -1035,13 +1036,15 @@ fn successful_vested_provision_using_vested_tokens_only_when_user_has_both_veste
 		jump_to_public_phase();
 
 		let provision_amount = 10_000;
-		let lock: u128 = 150;
+		let lock_start: u128 = 1;
+		let lock_end: u128 = 150;
 
 		<Test as Config>::VestingProvider::lock_tokens(
 			&USER_ID,
 			MGAId::get(),
 			provision_amount,
-			lock.into(),
+			Some(lock_start.saturated_into()),
+			lock_end.into(),
 		)
 		.unwrap();
 
@@ -1055,7 +1058,7 @@ fn successful_vested_provision_using_vested_tokens_only_when_user_has_both_veste
 		assert_eq!(0, Bootstrap::locked_balance(MGAId::get(), USER_ID));
 
 		assert_eq!(
-			(provision_amount, lock + 1),
+			(provision_amount, lock_start, lock_end + 1),
 			Bootstrap::vested_provisions(USER_ID, MGAId::get())
 		);
 	});
@@ -1069,18 +1072,23 @@ fn successful_vested_provision_is_stored_properly_in_storage() {
 		jump_to_public_phase();
 
 		let mga_amount = Bootstrap::balance(MGAId::get(), USER_ID);
-		let lock: u128 = 150;
+		let lock_start: u128 = 1;
+		let lock_end: u128 = 150;
 
 		<Test as Config>::VestingProvider::lock_tokens(
 			&USER_ID,
 			MGAId::get(),
 			mga_amount,
-			lock.into(),
+			Some(lock_start.saturated_into()),
+			lock_end.into(),
 		)
 		.unwrap();
 		Bootstrap::provision_vested(Origin::signed(USER_ID), MGAId::get(), mga_amount).unwrap();
 
-		assert_eq!((mga_amount, lock + 1), Bootstrap::vested_provisions(USER_ID, MGAId::get()));
+		assert_eq!(
+			(mga_amount, lock_start, lock_end + 1),
+			Bootstrap::vested_provisions(USER_ID, MGAId::get())
+		);
 	});
 }
 
@@ -1092,37 +1100,41 @@ fn successful_merged_vested_provision_is_stored_properly_in_storage() {
 		jump_to_public_phase();
 
 		let mga_amount = Bootstrap::balance(MGAId::get(), USER_ID);
-		let first_lock: u128 = 150;
+		let first_lock_start: u128 = 1;
+		let first_lock_end: u128 = 150;
 		let first_lock_amount = mga_amount / 2;
-		let second_lock: u128 = 300;
+		let second_lock_start: u128 = 2;
+		let second_lock_end: u128 = 300;
 		let second_lock_amount = mga_amount - first_lock_amount;
 
 		<Test as Config>::VestingProvider::lock_tokens(
 			&USER_ID,
 			MGAId::get(),
 			first_lock_amount,
-			first_lock.into(),
+			Some(first_lock_start.saturated_into()),
+			first_lock_end.into(),
 		)
 		.unwrap();
 		<Test as Config>::VestingProvider::lock_tokens(
 			&USER_ID,
 			MGAId::get(),
 			second_lock_amount,
-			second_lock.into(),
+			Some(second_lock_start.saturated_into()),
+			second_lock_end.into(),
 		)
 		.unwrap();
 
 		Bootstrap::provision_vested(Origin::signed(USER_ID), MGAId::get(), first_lock_amount)
 			.unwrap();
 		assert_eq!(
-			(first_lock_amount, first_lock + 1),
+			(first_lock_amount, first_lock_start, first_lock_end + 1),
 			Bootstrap::vested_provisions(USER_ID, MGAId::get())
 		);
 
 		Bootstrap::provision_vested(Origin::signed(USER_ID), MGAId::get(), second_lock_amount)
 			.unwrap();
 		assert_eq!(
-			(mga_amount, second_lock + 1),
+			(mga_amount, second_lock_start, second_lock_end + 1),
 			Bootstrap::vested_provisions(USER_ID, MGAId::get())
 		);
 	});
@@ -1159,9 +1171,15 @@ fn provisions(
 		)
 		.unwrap();
 
-		if let ProvisionKind::Vested(nr) = lock {
-			<Test as Config>::VestingProvider::lock_tokens(&user_id, token_id, amount, nr.into())
-				.unwrap();
+		if let ProvisionKind::Vested(begin, end) = lock {
+			<Test as Config>::VestingProvider::lock_tokens(
+				&user_id,
+				token_id,
+				amount,
+				Some(begin.saturated_into()),
+				end.into(),
+			)
+			.unwrap();
 			Bootstrap::provision_vested(Origin::signed(user_id), token_id, amount).unwrap();
 		} else {
 			Bootstrap::provision(Origin::signed(user_id), token_id, amount).unwrap();
@@ -1181,7 +1199,7 @@ fn vested_provision_included_in_valuation() {
 
 		// ACT
 		provisions(vec![
-			(PROVISION_USER1_ID, MGAId::get(), 1_000_000, ProvisionKind::Vested(150)),
+			(PROVISION_USER1_ID, MGAId::get(), 1_000_000, ProvisionKind::Vested(1, 150)),
 			(PROVISION_USER2_ID, KSMId::get(), 100, ProvisionKind::Regular),
 		]);
 		let (mga_valuation, ksm_valuation) = Bootstrap::valuations();
@@ -1191,8 +1209,8 @@ fn vested_provision_included_in_valuation() {
 
 		Bootstrap::on_initialize(100_u32.into());
 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
-		Bootstrap::claim_rewards(Origin::signed(PROVISION_USER1_ID)).unwrap();
-		Bootstrap::claim_rewards(Origin::signed(PROVISION_USER2_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER1_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER2_ID)).unwrap();
 
 		// ASSERT
 		assert_eq!(
@@ -1218,9 +1236,9 @@ fn multi_provisions() {
 
 		// ACT
 		provisions(vec![
-			(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Vested(150)),
+			(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Vested(1, 150)),
 			(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Regular),
-			(PROVISION_USER2_ID, MGAId::get(), 300_000, ProvisionKind::Vested(150)),
+			(PROVISION_USER2_ID, MGAId::get(), 300_000, ProvisionKind::Vested(1, 150)),
 			(PROVISION_USER2_ID, KSMId::get(), 30, ProvisionKind::Regular),
 		]);
 		let (mga_valuation, ksm_valuation) = Bootstrap::valuations();
@@ -1230,8 +1248,8 @@ fn multi_provisions() {
 
 		Bootstrap::on_initialize(100_u32.into());
 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
-		Bootstrap::claim_rewards(Origin::signed(PROVISION_USER1_ID)).unwrap();
-		Bootstrap::claim_rewards(Origin::signed(PROVISION_USER2_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER1_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER2_ID)).unwrap();
 
 		// ASSERT
 		assert_eq!(
@@ -1262,9 +1280,9 @@ fn multi_provisions() {
 
 #[test_case(
 			vec![
-				(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Vested(150)),
+				(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Vested(1, 150)),
 				(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Regular),
-				(PROVISION_USER2_ID, MGAId::get(), 300_000, ProvisionKind::Vested(150)),
+				(PROVISION_USER2_ID, MGAId::get(), 300_000, ProvisionKind::Vested(1, 150)),
 				(PROVISION_USER2_ID, KSMId::get(), 30, ProvisionKind::Regular),
 			],
 			(25002, 25002),
@@ -1282,8 +1300,8 @@ fn multi_provisions() {
 ]
 #[test_case(
 			vec![
-				(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Vested(150)),
-				(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Vested(150)),
+				(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Vested(1, 150)),
+				(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Vested(1, 150)),
 			],
 			(0, 50_004),
 			(0, 0);
@@ -1291,8 +1309,8 @@ fn multi_provisions() {
 ]
 #[test_case(
 			vec![
-				(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Vested(150)),
-				(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Vested(150)),
+				(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Vested(1, 150)),
+				(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Vested(1, 150)),
 				(PROVISION_USER2_ID, MGAId::get(), 300_000, ProvisionKind::Regular),
 				(PROVISION_USER2_ID, KSMId::get(), 30, ProvisionKind::Regular),
 			],
@@ -1302,22 +1320,22 @@ fn multi_provisions() {
 ]
 #[test_case(
 			vec![
-				(PROVISION_USER1_ID, MGAId::get(), 10_000, ProvisionKind::Vested(150)),
+				(PROVISION_USER1_ID, MGAId::get(), 10_000, ProvisionKind::Vested(1, 150)),
 				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
 				(PROVISION_USER1_ID, MGAId::get(), 20_000, ProvisionKind::Regular),
 				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
 				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
-				(PROVISION_USER1_ID, MGAId::get(), 30_000, ProvisionKind::Vested(150)),
-				(PROVISION_USER1_ID, KSMId::get(), 1, ProvisionKind::Vested(150)),
+				(PROVISION_USER1_ID, MGAId::get(), 30_000, ProvisionKind::Vested(1, 150)),
+				(PROVISION_USER1_ID, KSMId::get(), 1, ProvisionKind::Vested(1, 150)),
 				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
 				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
-				(PROVISION_USER1_ID, MGAId::get(), 40_000, ProvisionKind::Vested(150)),
+				(PROVISION_USER1_ID, MGAId::get(), 40_000, ProvisionKind::Vested(1, 150)),
 				(PROVISION_USER2_ID, MGAId::get(), 200_000, ProvisionKind::Regular),
-				(PROVISION_USER2_ID, MGAId::get(), 100_000, ProvisionKind::Vested(150)),
+				(PROVISION_USER2_ID, MGAId::get(), 100_000, ProvisionKind::Vested(1, 150)),
 				(PROVISION_USER2_ID, KSMId::get(), 10, ProvisionKind::Regular),
 				(PROVISION_USER2_ID, KSMId::get(), 15, ProvisionKind::Regular),
-				(PROVISION_USER1_ID, KSMId::get(), 4, ProvisionKind::Vested(150)),
-				(PROVISION_USER1_ID, KSMId::get(), 5, ProvisionKind::Vested(150)),
+				(PROVISION_USER1_ID, KSMId::get(), 4, ProvisionKind::Vested(1, 150)),
+				(PROVISION_USER1_ID, KSMId::get(), 5, ProvisionKind::Vested(1, 150)),
 			],
 			(5_000, 45_004),
 			(125012, 25_002);
@@ -1376,11 +1394,11 @@ fn test_multi_provisions(
 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
 
 		if user1_has_provisions {
-			Bootstrap::claim_rewards(Origin::signed(PROVISION_USER1_ID)).unwrap();
+			Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER1_ID)).unwrap();
 		}
 
 		if user2_has_provisions {
-			Bootstrap::claim_rewards(Origin::signed(PROVISION_USER2_ID)).unwrap();
+			Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER2_ID)).unwrap();
 		}
 
 		// ASSERT
@@ -1458,7 +1476,7 @@ fn test_restart_bootstrap() {
 		assert_eq!(0, Bootstrap::balance(liq_token_id, USER_ID));
 		assert_eq!(0, Bootstrap::balance(liq_token_id, ANOTHER_USER_ID));
 
-		Bootstrap::claim_rewards(Origin::signed(USER_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(Origin::signed(USER_ID)).unwrap();
 
 		// not all rewards claimed
 		assert_err!(
@@ -1466,7 +1484,12 @@ fn test_restart_bootstrap() {
 			Error::<Test>::BootstrapNotReadyToBeFinished
 		);
 
-		Bootstrap::claim_rewards_for_account(Origin::signed(USER_ID), ANOTHER_USER_ID).unwrap();
+		Bootstrap::claim_liquidity_tokens_for_account(
+			Origin::signed(USER_ID),
+			ANOTHER_USER_ID,
+			false,
+		)
+		.unwrap();
 
 		assert_ne!(0, Bootstrap::balance(liq_token_id, USER_ID));
 		assert_ne!(0, Bootstrap::balance(liq_token_id, ANOTHER_USER_ID));
@@ -1498,7 +1521,7 @@ fn test_restart_bootstrap() {
 
 #[test]
 #[serial]
-fn claim_rewards_even_if_sum_of_rewards_is_zero_because_of_small_provision() {
+fn claim_liquidity_tokens_even_if_sum_of_rewards_is_zero_because_of_small_provision() {
 	new_test_ext().execute_with(|| {
 		ArchivedBootstrap::<mock::Test>::mutate(|v| {
 			v.push(Default::default());
@@ -1551,16 +1574,16 @@ fn claim_rewards_even_if_sum_of_rewards_is_zero_because_of_small_provision() {
 		assert_eq!(0, Bootstrap::balance(liq_token_id, USER_ID));
 		assert_eq!(0, Bootstrap::balance(liq_token_id, ANOTHER_USER_ID));
 
-		Bootstrap::claim_rewards(Origin::signed(USER_ID)).unwrap();
-		Bootstrap::claim_rewards(Origin::signed(ANOTHER_USER_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(Origin::signed(USER_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(Origin::signed(ANOTHER_USER_ID)).unwrap();
 
 		assert_err!(
-			Bootstrap::claim_rewards(Origin::signed(USER_ID)),
+			Bootstrap::claim_liquidity_tokens(Origin::signed(USER_ID)),
 			Error::<Test>::NothingToClaim
 		);
 
 		assert_err!(
-			Bootstrap::claim_rewards(Origin::signed(ANOTHER_USER_ID)),
+			Bootstrap::claim_liquidity_tokens(Origin::signed(ANOTHER_USER_ID)),
 			Error::<Test>::NothingToClaim
 		);
 	});
@@ -1612,8 +1635,8 @@ fn transfer_dust_to_treasury() {
 		assert_eq!(0, Bootstrap::balance(liq_token_id, USER_ID));
 		assert_eq!(0, Bootstrap::balance(liq_token_id, ANOTHER_USER_ID));
 
-		Bootstrap::claim_rewards(Origin::signed(USER_ID)).unwrap();
-		Bootstrap::claim_rewards(Origin::signed(ANOTHER_USER_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(Origin::signed(USER_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(Origin::signed(ANOTHER_USER_ID)).unwrap();
 
 		let before_finalize = Bootstrap::balance(
 			liq_token_id,
@@ -1664,7 +1687,7 @@ fn archive_previous_bootstrap_schedules() {
 		Bootstrap::provision(Origin::signed(USER_ID), MGAId::get(), 1_000_000_000_u128).unwrap();
 		Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), 100_u128).unwrap();
 		Bootstrap::on_initialize(120_u32.into());
-		Bootstrap::claim_rewards(Origin::signed(USER_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(Origin::signed(USER_ID)).unwrap();
 		assert_eq!(0, Bootstrap::archived().len());
 		Bootstrap::finalize(Origin::root(), Some(1)).unwrap();
 		assert_eq!(0, Bootstrap::provisions(USER_ID, KSMId::get()));
@@ -1673,4 +1696,4 @@ fn archive_previous_bootstrap_schedules() {
 	})
 }
 
-// TODO: test xyk blocking
+// // TODO: test xyk blocking

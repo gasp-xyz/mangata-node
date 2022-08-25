@@ -14,7 +14,7 @@ use frame_support::{
 	transactional, Parameter,
 };
 use frame_system::pallet_prelude::*;
-use mangata_primitives::{Balance, TokenId};
+use mangata_primitives::{Balance, BlockNumber, TokenId};
 use mp_multipurpose_liquidity::{ActivateKind, BondKind};
 use mp_traits::{ActivationReservesProviderTrait, StakingReservesProviderTrait, XykFunctionsTrait};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
@@ -38,7 +38,6 @@ mod mock;
 mod tests;
 
 mod benchmarking;
-pub mod migration;
 
 pub mod weights;
 pub use weights::WeightInfo;
@@ -72,19 +71,7 @@ pub mod pallet {
 	pub struct Pallet<T>(PhantomData<T>);
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
-		#[cfg(feature = "try-runtime")]
-		fn pre_upgrade() -> Result<(), &'static str> {
-			migration::migrate_from_v0_pre_runtime_upgrade::<T, Pallet<T>>()
-		}
-		fn on_runtime_upgrade() -> frame_support::weights::Weight {
-			migration::migrate_from_v0::<T, Pallet<T>>()
-		}
-		#[cfg(feature = "try-runtime")]
-		fn post_upgrade() -> Result<(), &'static str> {
-			migration::migrate_from_v0_post_runtime_upgrade::<T, Pallet<T>>()
-		}
-	}
+	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -93,7 +80,7 @@ pub mod pallet {
 		type Tokens: MultiTokenCurrencyExtended<Self::AccountId>
 			+ MultiTokenReservableCurrency<Self::AccountId>;
 		type NativeCurrencyId: Get<TokenId>;
-		type VestingProvider: MultiTokenVestingLocks<Self::AccountId>;
+		type VestingProvider: MultiTokenVestingLocks<Self::AccountId, Self::BlockNumber>;
 		type Xyk: XykFunctionsTrait<Self::AccountId>;
 		type WeightInfo: WeightInfo;
 	}
@@ -140,6 +127,7 @@ pub mod pallet {
 	)]
 	pub struct RelockStatusInfo {
 		pub amount: Balance,
+		pub starting_block: BlockNumber,
 		pub ending_block_as_balance: Balance,
 	}
 
@@ -183,14 +171,17 @@ pub mod pallet {
 
 			ensure!(T::Xyk::is_liquidity_token(liquidity_token_id), Error::<T>::NotALiquidityToken);
 
-			let (unlocked_amount, vesting_ending_block_as_balance): (Balance, Balance) =
-				T::VestingProvider::unlock_tokens_by_vesting_index(
-					&sender,
-					liquidity_token_id.into(),
-					liquidity_token_vesting_index,
-					liquidity_token_unlock_some_amount_or_all.map(Into::into),
-				)
-				.map(|x| (x.0.into(), x.1.into()))?;
+			let (unlocked_amount, vesting_starting_block, vesting_ending_block_as_balance): (
+				Balance,
+				BlockNumber,
+				Balance,
+			) = T::VestingProvider::unlock_tokens_by_vesting_index(
+				&sender,
+				liquidity_token_id.into(),
+				liquidity_token_vesting_index,
+				liquidity_token_unlock_some_amount_or_all.map(Into::into),
+			)
+			.map(|x| (x.0.into(), x.1.saturated_into(), x.2.into()))?;
 
 			let mut reserve_status = Pallet::<T>::get_reserve_status(&sender, liquidity_token_id);
 
@@ -210,6 +201,7 @@ pub mod pallet {
 				liquidity_token_id,
 				RelockStatusInfo {
 					amount: unlocked_amount,
+					starting_block: vesting_starting_block,
 					ending_block_as_balance: vesting_ending_block_as_balance,
 				},
 			)
@@ -238,12 +230,13 @@ pub mod pallet {
 
 			ensure!(T::Xyk::is_liquidity_token(liquidity_token_id), Error::<T>::NotALiquidityToken);
 
-			let vesting_ending_block_as_balance: Balance = T::VestingProvider::unlock_tokens(
-				&sender,
-				liquidity_token_id.into(),
-				liquidity_token_amount.into(),
-			)?
-			.into();
+			let (vesting_starting_block, vesting_ending_block_as_balance): (BlockNumber, Balance) =
+				T::VestingProvider::unlock_tokens(
+					&sender,
+					liquidity_token_id.into(),
+					liquidity_token_amount.into(),
+				)
+				.map(|x| (x.0.saturated_into(), x.1.into()))?;
 
 			let mut reserve_status = Pallet::<T>::get_reserve_status(&sender, liquidity_token_id);
 
@@ -263,6 +256,7 @@ pub mod pallet {
 				liquidity_token_id,
 				RelockStatusInfo {
 					amount: liquidity_token_amount,
+					starting_block: vesting_starting_block,
 					ending_block_as_balance: vesting_ending_block_as_balance,
 				},
 			)
@@ -337,6 +331,7 @@ pub mod pallet {
 				&sender,
 				liquidity_token_id.into(),
 				selected_relock_instance.amount.into(),
+				Some(selected_relock_instance.starting_block.into()),
 				selected_relock_instance.ending_block_as_balance.into(),
 			)?;
 
@@ -379,7 +374,7 @@ impl<T: Config> StakingReservesProviderTrait for Pallet<T> {
 					Default::default(),
 				)
 				.is_ok() && reserve_status.staked_unactivated_reserves.checked_add(amount).is_some(),
-			BondKind::ActivatedUnstakedLiquidity =>
+			BondKind::ActivatedUnstakedReserves =>
 				reserve_status.activated_unstaked_reserves.checked_sub(amount).is_some() &&
 					reserve_status.staked_and_activated_reserves.checked_add(amount).is_some(),
 			BondKind::UnspentReserves =>
@@ -406,7 +401,7 @@ impl<T: Config> StakingReservesProviderTrait for Pallet<T> {
 					.ok_or(Error::<T>::MathError)?;
 				T::Tokens::reserve(token_id.into(), &account_id, amount.into())?;
 			},
-			BondKind::ActivatedUnstakedLiquidity => {
+			BondKind::ActivatedUnstakedReserves => {
 				reserve_status.activated_unstaked_reserves = reserve_status
 					.activated_unstaked_reserves
 					.checked_sub(amount)
@@ -537,7 +532,7 @@ impl<T: Config> ActivationReservesProviderTrait for Pallet<T> {
 					Default::default(),
 				)
 				.is_ok() && reserve_status.activated_unstaked_reserves.checked_add(amount).is_some(),
-			ActivateKind::StakedUnactivatedLiquidity =>
+			ActivateKind::StakedUnactivatedReserves =>
 				reserve_status.staked_unactivated_reserves.checked_sub(amount).is_some() &&
 					reserve_status.staked_and_activated_reserves.checked_add(amount).is_some(),
 			ActivateKind::UnspentReserves =>
@@ -564,7 +559,7 @@ impl<T: Config> ActivationReservesProviderTrait for Pallet<T> {
 					.ok_or(Error::<T>::MathError)?;
 				T::Tokens::reserve(token_id.into(), &account_id, amount.into())?;
 			},
-			ActivateKind::StakedUnactivatedLiquidity => {
+			ActivateKind::StakedUnactivatedReserves => {
 				reserve_status.staked_unactivated_reserves = reserve_status
 					.staked_unactivated_reserves
 					.checked_sub(amount)
@@ -591,7 +586,7 @@ impl<T: Config> ActivationReservesProviderTrait for Pallet<T> {
 	}
 
 	fn deactivate(token_id: TokenId, account_id: &Self::AccountId, amount: Balance) -> Balance {
-		// From ActivatedUnstakedLiquidity goes to either free balance or unspent reserves depending on relock_amount
+		// From ActivatedUnstakedReserves goes to either free balance or unspent reserves depending on relock_amount
 		// From staked_and_activated_reserves goes to staked always.
 
 		let mut reserve_status = Pallet::<T>::get_reserve_status(account_id, token_id);

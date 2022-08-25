@@ -74,6 +74,7 @@ use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
 pub const MGR_TOKEN_ID: TokenId = 0;
 pub const ROC_TOKEN_ID: TokenId = 4;
 pub const KAR_TOKEN_ID: TokenId = 6;
+pub const TUR_TOKEN_ID: TokenId = 7;
 
 pub use pallet_sudo;
 
@@ -130,29 +131,9 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	MangataMigrations,
 >;
 
 use frame_support::traits::OnRuntimeUpgrade;
-pub struct MangataMigrations;
-
-impl OnRuntimeUpgrade for MangataMigrations {
-	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-		pallet_bootstrap::migrations::v1::MigrateToV1::<Runtime>::on_runtime_upgrade()
-	}
-
-	#[cfg(feature = "try-runtime")]
-	fn pre_upgrade() -> Result<(), &'static str> {
-		pallet_bootstrap::migrations::v1::MigrateToV1::<Runtime>::pre_upgrade();
-		Ok(())
-	}
-
-	#[cfg(feature = "try-runtime")]
-	fn post_upgrade() -> Result<(), &'static str> {
-		pallet_bootstrap::migrations::v1::MigrateToV1::<Runtime>::post_upgrade();
-		Ok(())
-	}
-}
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -181,11 +162,11 @@ impl_opaque_keys! {
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
-	authoring_version: 7,
-	spec_version: 7,
+	authoring_version: 8,
+	spec_version: 8,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 7,
+	transaction_version: 8,
 	state_version: 0,
 };
 
@@ -299,7 +280,7 @@ parameter_types! {
 parameter_types! {
 	pub const MgrTokenId: TokenId = MGR_TOKEN_ID;
 	pub const RocTokenId: TokenId = ROC_TOKEN_ID;
-	pub const KarTokenId: TokenId = KAR_TOKEN_ID;
+	pub const TurTokenId: TokenId = TUR_TOKEN_ID;
 }
 
 // Configure FRAME pallets to include in runtime.
@@ -499,6 +480,7 @@ impl pallet_bootstrap::Config for Runtime {
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type VestingProvider = Vesting;
 	type TreasuryPalletId = TreasuryPalletId;
+	type ActivationReservesProvider = MultiPurposeLiquidity;
 	type WeightInfo = weights::pallet_bootstrap_weights::ModuleWeight<Runtime>;
 }
 
@@ -719,9 +701,9 @@ impl pallet_transaction_payment::Config for Runtime {
 		ToAuthor,
 		MgrTokenId,
 		RocTokenId,
-		KarTokenId,
+		TurTokenId,
 		frame_support::traits::ConstU128<ROC_MGR_SCALE_FACTOR>,
-		frame_support::traits::ConstU128<KAR_MGR_SCALE_FACTOR>,
+		frame_support::traits::ConstU128<TUR_MGR_SCALE_FACTOR>,
 	>;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type WeightToFee = WeightToFee;

@@ -595,10 +595,7 @@ pub mod pallet {
 			let liquidity_asset_id =
 				Pallet::<T>::get_liquidity_asset(T::NativeCurrencyId::get(), second_asset_id)?;
 
-			ensure!(
-				<T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some(),
-				Error::<T>::NotAPromotedPool
-			);
+			ensure!(Self::is_promoted_pool(liquidity_asset_id), Error::<T>::NotAPromotedPool);
 
 			let (unlocked_amount, vesting_starting_block, vesting_ending_block_as_balance): (
 				Balance,
@@ -646,10 +643,7 @@ pub mod pallet {
 			let liquidity_asset_id =
 				Pallet::<T>::get_liquidity_asset(T::NativeCurrencyId::get(), second_asset_id)?;
 
-			ensure!(
-				<T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some(),
-				Error::<T>::NotAPromotedPool
-			);
+			ensure!(Self::is_promoted_pool(liquidity_asset_id), Error::<T>::NotAPromotedPool);
 
 			let (vesting_starting_block, vesting_ending_block_as_balance): (
 				T::BlockNumber,
@@ -813,14 +807,15 @@ impl<T: Config> Pallet<T> {
 		T::ActivationReservesProvider::get_max_instant_unreserve_amount(liquidity_asset_id, user)
 	}
 
+	pub fn is_promoted_pool(liquidity_asset_id: TokenId) -> bool {
+		<T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some()
+	}
+
 	pub fn calculate_rewards_amount(
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
 	) -> Result<Balance, DispatchError> {
-		ensure!(
-			<T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some(),
-			Error::<T>::NotAPromotedPool
-		);
+		ensure!(Self::is_promoted_pool(liquidity_asset_id), Error::<T>::NotAPromotedPool);
 
 		let current_time: u32 = <frame_system::Pallet<T>>::block_number().saturated_into::<u32>() /
 			T::RewardsDistributionPeriod::get();
@@ -2557,10 +2552,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		amount: Self::Balance,
 		use_balance_from: Option<ActivateKind>,
 	) -> DispatchResult {
-		ensure!(
-			<T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some(),
-			Error::<T>::NotAPromotedPool
-		);
+		ensure!(Self::is_promoted_pool(liquidity_asset_id), Error::<T>::NotAPromotedPool);
 		ensure!(
 			<T as Config>::ActivationReservesProvider::can_activate(
 				liquidity_asset_id.into(),
@@ -2588,10 +2580,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		liquidity_asset_id: Self::CurrencyId,
 		amount: Self::Balance,
 	) -> DispatchResult {
-		ensure!(
-			<T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some(),
-			Error::<T>::NotAPromotedPool
-		);
+		ensure!(Self::is_promoted_pool(liquidity_asset_id), Error::<T>::NotAPromotedPool);
 		ensure!(
 			LiquidityMiningActiveUser::<T>::get((user.clone(), liquidity_asset_id)) >= amount,
 			Error::<T>::NotEnoughAssets
@@ -2792,6 +2781,7 @@ impl<T: Config> PoolCreateApi for Pallet<T> {
 	fn pool_exists(first: TokenId, second: TokenId) -> bool {
 		Pools::<T>::contains_key((first, second)) || Pools::<T>::contains_key((second, first))
 	}
+
 	fn pool_create(
 		account: Self::AccountId,
 		first: TokenId,

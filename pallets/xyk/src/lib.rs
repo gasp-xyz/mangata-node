@@ -3148,12 +3148,11 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		amount: Self::Balance,
 		use_balance_from: Option<ActivateKind>,
 	) -> DispatchResult {
-  
 		ensure!(
 			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).is_some(),
 			Error::<T>::NotAPromotedPool
 		);
-    
+
 		ensure!(
 			<T as Config>::ActivationReservesProvider::can_activate(
 				liquidity_asset_id.into(),
@@ -3181,7 +3180,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		liquidity_asset_id: Self::CurrencyId,
 		amount: Self::Balance,
 	) -> DispatchResult {
-  
 		ensure!(
 			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).is_some(),
 			Error::<T>::NotAPromotedPool
@@ -3530,7 +3528,7 @@ impl<T: Config> mp_bootstrap::RewardsApi for Pallet<T> {
 	type AccountId = T::AccountId;
 
 	fn can_activate(liquidity_asset_id: TokenId) -> bool {
-    	<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).is_some()
+		<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).is_some()
 	}
 
 	fn activate_liquidity_tokens(

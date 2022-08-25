@@ -34,11 +34,14 @@ pub trait RewardsApi {
 		+ Ord
 		+ MaxEncodedLen;
 
-	fn is_pool_promoted(first: TokenId, second: TokenId) -> bool;
+	/// checks whether given pool is promoted and tokens
+	/// can be activated
+	fn can_activate(liquidity_asset_id: TokenId) -> bool;
 
+	/// Activates liquidity tokens for rewards minting
 	fn activate_liquidity_tokens(
-		user: Self::AccountId,
+		user: &Self::AccountId,
 		liquidity_asset_id: TokenId,
 		amount: Balance,
-	) -> bool;
+	) -> DispatchResult;
 }

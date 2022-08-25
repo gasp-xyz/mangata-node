@@ -11,9 +11,7 @@ use frame_support::{
 };
 use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
 use mangata_primitives::{Balance, TokenId};
-use mp_bootstrap::PoolCreateApi;
-use mp_multipurpose_liquidity::ActivateKind;
-use mp_traits::ActivationReservesProviderTrait;
+use mp_bootstrap::{PoolCreateApi, RewardsApi};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
 use scale_info::TypeInfo;
@@ -152,9 +150,7 @@ pub mod pallet {
 
 		type WeightInfo: WeightInfo;
 
-		type ActivationReservesProvider: ActivationReservesProviderTrait<
-			AccountId = Self::AccountId,
-		>;
+		type RewardsApi: RewardsApi<AccountId = Self::AccountId>;
 	}
 
 	#[pallet::storage]
@@ -475,6 +471,8 @@ pub mod pallet {
 		SameToken,
 		/// Token does not exists
 		TokenIdDoesNotExists,
+		/// Token activations failed
+		TokensActivationFailed,
 	}
 
 	#[pallet::event]
@@ -769,27 +767,18 @@ impl<T: Config> Pallet<T> {
 
 		ProvisionAccounts::<T>::remove(who);
 
-		if activate_rewards {
+		if activate_rewards && <T as Config>::RewardsApi::can_activate(liq_token_id.into()) {
 			let non_vested_rewards = second_token_rewards
 				.checked_add(first_token_rewards)
 				.ok_or(Error::<T>::MathOverflow)?;
-
-			ensure!(
-				<T as Config>::ActivationReservesProvider::can_activate(
-					liq_token_id.into(),
+			if non_vested_rewards > 0 {
+				<T as Config>::RewardsApi::activate_liquidity_tokens(
 					&who,
+					liq_token_id.into(),
 					non_vested_rewards,
-					Some(ActivateKind::AvailableBalance),
-				),
-				Error::<T>::NotEnoughAssets
-			);
-
-			<T as Config>::ActivationReservesProvider::activate(
-				liq_token_id.into(),
-				&who,
-				non_vested_rewards,
-				Some(ActivateKind::AvailableBalance),
-			)?;
+				)
+				.map_err(|_| Error::<T>::TokensActivationFailed)?;
+			}
 		}
 
 		Self::deposit_event(Event::RewardsClaimed(liq_token_id, total_rewards_claimed));

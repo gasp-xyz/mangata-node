@@ -1696,4 +1696,182 @@ fn archive_previous_bootstrap_schedules() {
 	})
 }
 
-// // TODO: test xyk blocking
+#[test]
+#[serial]
+fn test_activate_liq_tokens_is_called_with_all_liq_tokens_when_pool_is_promoted_and_all_provisions_are_non_vested(
+) {
+	new_test_ext().execute_with(|| {
+		// ARRANGE - USER provides vested MGA tokens, ANOTHER_USER provides KSM tokens
+		set_up();
+		jump_to_public_phase();
+		init_mocks!();
+
+		let mga_provision = 1_000_000_u128;
+		let ksm_provision = 100_u128;
+		let expected_liq_tokens_amount = (mga_provision + ksm_provision) / 2;
+		let expected_activated_tokens_amount = expected_liq_tokens_amount / 2;
+
+		let can_activate_mock = MockRewardsApi::can_activate_context();
+		can_activate_mock.expect().return_const(true);
+
+		let activate_liquidity_tokens = MockRewardsApi::activate_liquidity_tokens_context();
+		activate_liquidity_tokens.expect().returning(move |_, _, activated_amount| {
+			assert_eq!(expected_activated_tokens_amount, activated_amount);
+			Ok(().into())
+		});
+
+		// ACT
+		provisions(vec![
+			(PROVISION_USER1_ID, MGAId::get(), mga_provision, ProvisionKind::Regular),
+			(PROVISION_USER2_ID, KSMId::get(), ksm_provision, ProvisionKind::Regular),
+		]);
+		let (mga_valuation, ksm_valuation) = Bootstrap::valuations();
+		assert_eq!(mga_valuation, 1_000_000);
+		assert_eq!(ksm_valuation, 100);
+
+		Bootstrap::on_initialize(100_u32.into());
+		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
+
+		Bootstrap::claim_and_activate_liquidity_tokens(Origin::signed(PROVISION_USER1_ID)).unwrap();
+		Bootstrap::claim_and_activate_liquidity_tokens(Origin::signed(PROVISION_USER2_ID)).unwrap();
+	});
+}
+
+#[test]
+#[serial]
+fn test_dont_activate_liq_tokens_when_pool_is_promoted_but_all_provisions_are_vested() {
+	new_test_ext().execute_with(|| {
+		// ARRANGE - USER provides vested MGA tokens, ANOTHER_USER provides KSM tokens
+		set_up();
+		jump_to_public_phase();
+		init_mocks!();
+
+		let mga_provision = 1_000_000_u128;
+		let ksm_provision = 100_u128;
+
+		let can_activate_mock = MockRewardsApi::can_activate_context();
+		can_activate_mock.expect().return_const(true);
+
+		let activate_liquidity_tokens = MockRewardsApi::activate_liquidity_tokens_context();
+		activate_liquidity_tokens.expect().times(0);
+
+		// ACT
+		provisions(vec![
+			(PROVISION_USER1_ID, MGAId::get(), mga_provision, ProvisionKind::Regular),
+			(PROVISION_USER2_ID, KSMId::get(), ksm_provision, ProvisionKind::Vested(1, 150)),
+		]);
+
+		Bootstrap::on_initialize(100_u32.into());
+		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
+
+		Bootstrap::claim_and_activate_liquidity_tokens(Origin::signed(PROVISION_USER2_ID)).unwrap();
+	});
+}
+
+#[test]
+#[serial]
+fn test_activate_liquidity_tokens_is_called_only_with_non_vested_liq_tokens_when_pool_is_promoted()
+{
+	new_test_ext().execute_with(|| {
+		// ARRANGE - USER provides vested MGA tokens, ANOTHER_USER provides KSM tokens
+		set_up();
+		jump_to_public_phase();
+		init_mocks!();
+
+		let mga_provision = 1_000_000_u128;
+		let ksm_provision = 100_u128;
+		let expected_liq_tokens_amount = (mga_provision + ksm_provision) / 2;
+		let expected_liq_tokens_amount_per_user = expected_liq_tokens_amount / 2;
+		let expected_non_vested_liq_tokens_amount_per_user =
+			expected_liq_tokens_amount_per_user / 2;
+
+		let can_activate_mock = MockRewardsApi::can_activate_context();
+		can_activate_mock.expect().return_const(true);
+
+		let activate_liquidity_tokens = MockRewardsApi::activate_liquidity_tokens_context();
+		activate_liquidity_tokens.expect().returning(move |_, _, activated_amount| {
+			assert_eq!(expected_non_vested_liq_tokens_amount_per_user, activated_amount);
+			Ok(().into())
+		});
+
+		// ACT
+		provisions(vec![
+			(PROVISION_USER1_ID, MGAId::get(), mga_provision, ProvisionKind::Regular),
+			(PROVISION_USER2_ID, KSMId::get(), ksm_provision / 2, ProvisionKind::Regular),
+			(PROVISION_USER2_ID, KSMId::get(), ksm_provision / 2, ProvisionKind::Vested(1, 150)),
+		]);
+
+		Bootstrap::on_initialize(100_u32.into());
+		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
+
+		Bootstrap::claim_and_activate_liquidity_tokens(Origin::signed(PROVISION_USER2_ID)).unwrap();
+	});
+}
+
+#[test]
+#[serial]
+fn test_dont_activate_liquidity_tokens_when_pool_is_not_promoted_and_provisions_are_not_vested() {
+	new_test_ext().execute_with(|| {
+		// ARRANGE - USER provides vested MGA tokens, ANOTHER_USER provides KSM tokens
+		set_up();
+		jump_to_public_phase();
+		init_mocks!();
+
+		let mga_provision = 1_000_000_u128;
+		let ksm_provision = 100_u128;
+
+		let can_activate_mock = MockRewardsApi::can_activate_context();
+		can_activate_mock.expect().return_const(false);
+
+		let activate_liquidity_tokens = MockRewardsApi::activate_liquidity_tokens_context();
+		activate_liquidity_tokens.expect().times(0);
+
+		// ACT
+		provisions(vec![
+			(PROVISION_USER1_ID, MGAId::get(), mga_provision, ProvisionKind::Regular),
+			(PROVISION_USER2_ID, KSMId::get(), ksm_provision, ProvisionKind::Regular),
+		]);
+
+		Bootstrap::on_initialize(100_u32.into());
+		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
+
+		Bootstrap::claim_and_activate_liquidity_tokens(Origin::signed(PROVISION_USER1_ID)).unwrap();
+		Bootstrap::claim_and_activate_liquidity_tokens(Origin::signed(PROVISION_USER2_ID)).unwrap();
+	});
+}
+
+#[test]
+#[serial]
+fn test_claim_and_activate_fails_when_tokens_activations_fails() {
+	new_test_ext().execute_with(|| {
+		// ARRANGE - USER provides vested MGA tokens, ANOTHER_USER provides KSM tokens
+		set_up();
+		jump_to_public_phase();
+		init_mocks!();
+
+		let mga_provision = 1_000_000_u128;
+		let ksm_provision = 100_u128;
+
+		let can_activate_mock = MockRewardsApi::can_activate_context();
+		can_activate_mock.expect().return_const(true);
+
+		let activate_liquidity_tokens = MockRewardsApi::activate_liquidity_tokens_context();
+		activate_liquidity_tokens
+			.expect()
+			// inject any error
+			.returning(move |_, _, _| Err(Error::<Test>::NotEnoughAssets.into()));
+
+		// ACT
+		provisions(vec![
+			(PROVISION_USER1_ID, MGAId::get(), mga_provision, ProvisionKind::Regular),
+			(PROVISION_USER2_ID, KSMId::get(), ksm_provision, ProvisionKind::Regular),
+		]);
+		Bootstrap::on_initialize(100_u32.into());
+		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
+
+		assert_err!(
+			Bootstrap::claim_and_activate_liquidity_tokens(Origin::signed(PROVISION_USER1_ID)),
+			Error::<Test>::TokensActivationFailed
+		);
+	});
+}

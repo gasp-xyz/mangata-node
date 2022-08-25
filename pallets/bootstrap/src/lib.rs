@@ -345,8 +345,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// claim liquidity tokens from pool created as a result of bootstrap event finish
-		#[pallet::weight(T::WeightInfo::claim_liquidity_tokens())]
+		#[pallet::weight(T::WeightInfo::claim_and_activate_liquidity_tokens())]
 		#[transactional]
 		pub fn claim_liquidity_tokens(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;

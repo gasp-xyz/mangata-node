@@ -431,7 +431,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(<<T as Config>::WeightInfo>::claim_liquidity_tokens())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::claim_and_activate_liquidity_tokens())]
 		#[transactional]
 		pub fn claim_liquidity_tokens_for_account(
 			origin: OriginFor<T>,

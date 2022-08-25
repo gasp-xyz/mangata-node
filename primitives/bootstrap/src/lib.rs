@@ -24,3 +24,24 @@ pub trait PoolCreateApi {
 		second_amount: Balance,
 	) -> Option<(TokenId, Balance)>;
 }
+
+pub trait RewardsApi {
+	type AccountId: Parameter
+		+ Member
+		+ MaybeSerializeDeserialize
+		+ Debug
+		+ MaybeDisplay
+		+ Ord
+		+ MaxEncodedLen;
+
+	/// checks whether given pool is promoted and tokens
+	/// can be activated
+	fn can_activate(liquidity_asset_id: TokenId) -> bool;
+
+	/// Activates liquidity tokens for rewards minting
+	fn activate_liquidity_tokens(
+		user: &Self::AccountId,
+		liquidity_asset_id: TokenId,
+		amount: Balance,
+	) -> DispatchResult;
+}

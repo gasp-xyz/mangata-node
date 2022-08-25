@@ -128,18 +128,17 @@ lazy_static::lazy_static! {
 		Mutex::new(m)
 	};
 }
-pub struct MockActivedPoolQueryApi;
 
 pub struct MockPromotedPoolApi;
 pub struct MockActivedPoolQueryApi;
 
 #[cfg(test)]
 
-impl MockActivedPoolQueryApi {
-	pub fn instance() -> &'static Mutex<HashMap<TokenId, U256>> {
-		&ACTIVATED_POOL
-	}
-}
+// impl MockActivedPoolQueryApi {
+// 	pub fn instance() -> &'static Mutex<HashMap<TokenId, U256>> {
+// 		&ACTIVATED_POOL
+// 	}
+// }
 
 impl ActivedPoolQueryApi for MockActivedPoolQueryApi {
 	fn get_pool_activate_amount(liquidity_token_id: TokenId) -> Option<Balance> {

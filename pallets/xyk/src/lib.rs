@@ -657,7 +657,10 @@ pub mod pallet {
 			let liquidity_asset_id =
 				Pallet::<T>::get_liquidity_asset(Self::native_token_id(), second_asset_id)?;
 
-			ensure!(Self::is_promoted_pool(liquidity_asset_id), Error::<T>::NotAPromotedPool);
+			ensure!(
+				<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).is_some(),
+				Error::<T>::NotAPromotedPool
+			);
 
 			let (unlocked_amount, vesting_starting_block, vesting_ending_block_as_balance): (
 				Balance,
@@ -1345,7 +1348,10 @@ impl<T: Config> Pallet<T> {
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
 	) -> Result<Balance, DispatchError> {
-		ensure!(Self::is_promoted_pool(liquidity_asset_id), Error::<T>::NotAPromotedPool);
+		ensure!(
+			<T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some(),
+			Error::<T>::NotAPromotedPool
+		);
 
 		let current_time: u32 = <frame_system::Pallet<T>>::block_number().saturated_into::<u32>() /
 			T::RewardsDistributionPeriod::get();
@@ -3524,7 +3530,7 @@ impl<T: Config> mp_bootstrap::RewardsApi for Pallet<T> {
 	type AccountId = T::AccountId;
 
 	fn can_activate(liquidity_asset_id: TokenId) -> bool {
-    <T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).is_some()
+    	<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).is_some()
 	}
 
 	fn activate_liquidity_tokens(

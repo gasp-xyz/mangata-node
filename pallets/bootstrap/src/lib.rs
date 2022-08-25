@@ -131,9 +131,15 @@ pub mod pallet {
 		}
 	}
 
+	#[cfg(feature = "runtime-benchmarks")]
+	pub trait BootstrapBenchmarkingConfig: pallet_issuance::Config {}
+
+	#[cfg(not(feature = "runtime-benchmarks"))]
+	pub trait BootstrapBenchmarkingConfig {}
+
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + BootstrapBenchmarkingConfig {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
@@ -214,7 +220,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// provisions vested/locked tokens into the boostrstrap
-		#[pallet::weight(T::WeightInfo::provision_vested())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::provision_vested())]
 		#[transactional]
 		pub fn provision_vested(
 			origin: OriginFor<T>,
@@ -223,8 +229,12 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let (vesting_starting_block, vesting_ending_block_as_balance) =
-				T::VestingProvider::unlock_tokens(&sender, token_id.into(), amount.into())
-					.map_err(|_| Error::<T>::NotEnoughVestedAssets)?;
+				<<T as Config>::VestingProvider>::unlock_tokens(
+					&sender,
+					token_id.into(),
+					amount.into(),
+				)
+				.map_err(|_| Error::<T>::NotEnoughVestedAssets)?;
 			Self::do_provision(
 				&sender,
 				token_id,
@@ -240,7 +250,7 @@ pub mod pallet {
 		}
 
 		/// provisions non-vested/non-locked tokens into the boostrstrap
-		#[pallet::weight(T::WeightInfo::provision())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::provision())]
 		#[transactional]
 		pub fn provision(
 			origin: OriginFor<T>,
@@ -283,7 +293,7 @@ pub mod pallet {
 		/// - BeforeStart - blocks 0..ido_start
 		/// - WhitelistPhase - blocks ido_start..(ido_start + whitelist_phase_length)
 		/// - PublicPhase - blocks (ido_start + whitelist_phase_length)..(ido_start + whitelist_phase_length  + public_phase_lenght)
-		#[pallet::weight(T::WeightInfo::schedule_bootstrap())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::schedule_bootstrap())]
 		#[transactional]
 		pub fn schedule_bootstrap(
 			origin: OriginFor<T>,
@@ -345,21 +355,21 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(T::WeightInfo::claim_and_activate_liquidity_tokens())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::claim_and_activate_liquidity_tokens())]
 		#[transactional]
 		pub fn claim_liquidity_tokens(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::do_claim_liquidity_tokens(&sender, false)
 		}
 
-		#[pallet::weight(T::WeightInfo::claim_and_activate_liquidity_tokens())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::claim_and_activate_liquidity_tokens())]
 		#[transactional]
 		pub fn claim_and_activate_liquidity_tokens(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::do_claim_liquidity_tokens(&sender, true)
 		}
 
-		#[pallet::weight(T::WeightInfo::finalize().saturating_add(T::DbWeight::get().reads_writes(1, 1) * Into::<u64>::into(limit.unwrap_or_default())))]
+		#[pallet::weight(<<T as Config>::WeightInfo>::finalize().saturating_add(T::DbWeight::get().reads_writes(1, 1) * Into::<u64>::into(limit.unwrap_or_default())))]
 		#[transactional]
 		pub fn finalize(origin: OriginFor<T>, mut limit: Option<u32>) -> DispatchResult {
 			ensure_root(origin)?;
@@ -421,7 +431,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(T::WeightInfo::claim_liquidity_tokens())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::claim_liquidity_tokens())]
 		#[transactional]
 		pub fn claim_liquidity_tokens_for_account(
 			origin: OriginFor<T>,
@@ -546,7 +556,7 @@ impl<T: Config> Pallet<T> {
 		})?;
 
 		if rewards_vested > 0 {
-			T::VestingProvider::lock_tokens(
+			<<T as Config>::VestingProvider>::lock_tokens(
 				&who,
 				liq_token_id.into(),
 				rewards_vested.into(),

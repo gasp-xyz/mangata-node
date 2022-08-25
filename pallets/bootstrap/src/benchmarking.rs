@@ -92,6 +92,7 @@ benchmarks! {
 		let caller: T::AccountId = whitelisted_caller();
 		let first_token_id = <T as Config>::Currency::create(&caller, MILION.into()).expect("Token creation failed").into();
 		let second_token_id = <T as Config>::Currency::create(&caller, MILION.into()).expect("Token creation failed").into();
+		let liquidity_asset_id = second_token_id + 1;
 
 		let ksm_provision_amount = 100_000_u128;
 		let ksm_vested_provision_amount = 300_000_u128;
@@ -121,6 +122,9 @@ benchmarks! {
 		assert_eq!(BootstrapPallet::<T>::provisions(caller.clone(), second_token_id), (mga_provision_amount));
 		assert_eq!(BootstrapPallet::<T>::vested_provisions(caller.clone(), first_token_id), (ksm_vested_provision_amount, 1, lock + 1));
 		assert_eq!(BootstrapPallet::<T>::vested_provisions(caller.clone(), second_token_id), (mga_vested_provision_amount, 1, lock + 1));
+
+		// promote pool
+		pallet_issuance::PromotedPoolsRewards::<T>::insert(liquidity_asset_id, 0_u128);
 
 	}: claim_and_activate_liquidity_tokens(RawOrigin::Signed(caller.clone().into()))
 	verify {

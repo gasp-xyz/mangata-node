@@ -140,6 +140,8 @@ impl pallet_xyk::Config for Test {
 	type VestingProvider = Vesting;
 }
 
+impl BootstrapBenchmarkingConfig for Test {}
+
 pub struct TokensActivationPassthrough<T: Config>(PhantomData<T>);
 impl<T: Config> ActivationReservesProviderTrait for TokensActivationPassthrough<T>
 where

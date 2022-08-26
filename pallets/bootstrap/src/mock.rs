@@ -121,8 +121,6 @@ impl pallet_vesting_mangata::Config for Test {
 	const MAX_VESTING_SCHEDULES: u32 = 28;
 }
 
-
-
 pub struct RewardsForAllAccountProvider<T: frame_system::Config>(PhantomData<T>);
 impl<T: frame_system::Config> Get<T::AccountId> for RewardsForAllAccountProvider<T> {
 	fn get() -> T::AccountId {

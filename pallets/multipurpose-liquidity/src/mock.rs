@@ -229,19 +229,18 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for MockXyk<T> {
 		true
 	}
 
-	
 	fn claim_rewards_v2(
 		sender: T::AccountId,
 		liquidity_token_id: Self::CurrencyId,
 		amount: Self::Balance,
-	) -> DispatchResult{
+	) -> DispatchResult {
 		unimplemented!()
 	}
 
 	fn claim_rewards_all_v2(
 		sender: T::AccountId,
 		liquidity_token_id: Self::CurrencyId,
-	) -> DispatchResult{
+	) -> DispatchResult {
 		unimplemented!()
 	}
 
@@ -250,7 +249,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for MockXyk<T> {
 		liquidity_token_id: Self::CurrencyId,
 		amount: Self::Balance,
 		use_balance_from: Option<ActivateKind>,
-	) -> DispatchResult{
+	) -> DispatchResult {
 		unimplemented!()
 	}
 
@@ -258,7 +257,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for MockXyk<T> {
 		sender: T::AccountId,
 		liquidity_token_id: Self::CurrencyId,
 		amount: Self::Balance,
-	) -> DispatchResult{
+	) -> DispatchResult {
 		unimplemented!()
 	}
 }

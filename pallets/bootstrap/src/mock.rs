@@ -140,6 +140,8 @@ impl pallet_xyk::Config for Test {
 	type VestingProvider = Vesting;
 }
 
+impl BootstrapBenchmarkingConfig for Test {}
+
 pub struct TokensActivationPassthrough<T: Config>(PhantomData<T>);
 impl<T: Config> ActivationReservesProviderTrait for TokensActivationPassthrough<T>
 where
@@ -225,6 +227,23 @@ mockall::mock! {
 
 		fn pool_exists(first: TokenId, second: TokenId) -> bool;
 		fn pool_create(account: u128, first: TokenId, first_amount: Balance, second: TokenId, second_amount: Balance) -> Option<(TokenId, Balance)>;
+
+	}
+}
+
+mockall::mock! {
+	pub RewardsApi {}
+
+	impl RewardsApi for RewardsApi {
+		type AccountId = u128;
+
+		fn can_activate(liquidity_asset_id: TokenId) -> bool;
+
+		fn activate_liquidity_tokens(
+			user: &u128,
+			liquidity_asset_id: TokenId,
+			amount: Balance,
+		) -> DispatchResult;
 	}
 }
 
@@ -236,6 +255,7 @@ impl pallet_bootstrap::Config for Test {
 	type TreasuryPalletId = TreasuryPalletId;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type VestingProvider = Vesting;
+	type RewardsApi = MockRewardsApi;
 	type WeightInfo = ();
 }
 
@@ -247,6 +267,7 @@ impl pallet_bootstrap::Config for Test {
 	type TreasuryPalletId = TreasuryPalletId;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type VestingProvider = Vesting;
+	type RewardsApi = Xyk;
 	type WeightInfo = ();
 }
 
@@ -300,6 +321,10 @@ where
 		Tokens::accounts(Into::<u128>::into(who.clone()), Into::<u32>::into(id.clone())).free -
 			Tokens::accounts(Into::<u128>::into(who.clone()), Into::<u32>::into(id.clone()))
 				.frozen
+	}
+
+	pub fn reserved_balance(id: TokenId, who: <T as frame_system::Config>::AccountId) -> Balance {
+		Tokens::accounts(Into::<u128>::into(who), Into::<u32>::into(id)).reserved
 	}
 
 	pub fn locked_balance(id: TokenId, who: <T as frame_system::Config>::AccountId) -> Balance {

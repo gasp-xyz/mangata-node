@@ -134,32 +134,9 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	MangataMigrations,
 >;
 
 use frame_support::traits::OnRuntimeUpgrade;
-pub struct MangataMigrations;
-
-impl OnRuntimeUpgrade for MangataMigrations {
-	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-		pallet_bootstrap::migrations::v1::MigrateToV1::<Runtime>::on_runtime_upgrade() +
-			pallet_bootstrap::migrations::v2::MigrateToV2::<Runtime>::on_runtime_upgrade()
-	}
-
-	#[cfg(feature = "try-runtime")]
-	fn pre_upgrade() -> Result<(), &'static str> {
-		pallet_bootstrap::migrations::v1::MigrateToV1::<Runtime>::pre_upgrade().unwrap();
-		pallet_bootstrap::migrations::v2::MigrateToV2::<Runtime>::pre_upgrade().unwrap();
-		Ok(())
-	}
-
-	#[cfg(feature = "try-runtime")]
-	fn post_upgrade() -> Result<(), &'static str> {
-		pallet_bootstrap::migrations::v1::MigrateToV1::<Runtime>::post_upgrade().unwrap();
-		pallet_bootstrap::migrations::v2::MigrateToV2::<Runtime>::post_upgrade().unwrap();
-		Ok(())
-	}
-}
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -188,11 +165,11 @@ impl_opaque_keys! {
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
-	authoring_version: 7,
-	spec_version: 7,
+	authoring_version: 8,
+	spec_version: 8,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 7,
+	transaction_version: 8,
 	state_version: 0,
 };
 
@@ -487,12 +464,15 @@ impl pallet_xyk::Config for Runtime {
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
 }
 
+impl pallet_bootstrap::BootstrapBenchmarkingConfig for Runtime {}
+
 impl pallet_bootstrap::Config for Runtime {
 	type Event = Event;
 	type PoolCreateApi = Xyk;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type VestingProvider = Vesting;
 	type TreasuryPalletId = TreasuryPalletId;
+	type RewardsApi = Xyk;
 	type WeightInfo = weights::pallet_bootstrap_weights::ModuleWeight<Runtime>;
 }
 

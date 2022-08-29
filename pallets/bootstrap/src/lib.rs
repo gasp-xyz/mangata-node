@@ -11,7 +11,7 @@ use frame_support::{
 };
 use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
 use mangata_primitives::{Balance, TokenId};
-use mp_bootstrap::PoolCreateApi;
+use mp_bootstrap::{PoolCreateApi, RewardsApi};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
 use scale_info::TypeInfo;
@@ -131,9 +131,15 @@ pub mod pallet {
 		}
 	}
 
+	#[cfg(feature = "runtime-benchmarks")]
+	pub trait BootstrapBenchmarkingConfig: pallet_issuance::Config {}
+
+	#[cfg(not(feature = "runtime-benchmarks"))]
+	pub trait BootstrapBenchmarkingConfig {}
+
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + BootstrapBenchmarkingConfig {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
@@ -149,6 +155,8 @@ pub mod pallet {
 		type VestingProvider: MultiTokenVestingLocks<Self::AccountId, Self::BlockNumber>;
 
 		type WeightInfo: WeightInfo;
+
+		type RewardsApi: RewardsApi<AccountId = Self::AccountId>;
 	}
 
 	#[pallet::storage]
@@ -212,7 +220,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// provisions vested/locked tokens into the boostrstrap
-		#[pallet::weight(T::WeightInfo::provision_vested())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::provision_vested())]
 		#[transactional]
 		pub fn provision_vested(
 			origin: OriginFor<T>,
@@ -221,8 +229,12 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let (vesting_starting_block, vesting_ending_block_as_balance) =
-				T::VestingProvider::unlock_tokens(&sender, token_id.into(), amount.into())
-					.map_err(|_| Error::<T>::NotEnoughVestedAssets)?;
+				<<T as Config>::VestingProvider>::unlock_tokens(
+					&sender,
+					token_id.into(),
+					amount.into(),
+				)
+				.map_err(|_| Error::<T>::NotEnoughVestedAssets)?;
 			Self::do_provision(
 				&sender,
 				token_id,
@@ -238,7 +250,7 @@ pub mod pallet {
 		}
 
 		/// provisions non-vested/non-locked tokens into the boostrstrap
-		#[pallet::weight(T::WeightInfo::provision())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::provision())]
 		#[transactional]
 		pub fn provision(
 			origin: OriginFor<T>,
@@ -281,7 +293,7 @@ pub mod pallet {
 		/// - BeforeStart - blocks 0..ido_start
 		/// - WhitelistPhase - blocks ido_start..(ido_start + whitelist_phase_length)
 		/// - PublicPhase - blocks (ido_start + whitelist_phase_length)..(ido_start + whitelist_phase_length  + public_phase_lenght)
-		#[pallet::weight(T::WeightInfo::schedule_bootstrap())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::schedule_bootstrap())]
 		#[transactional]
 		pub fn schedule_bootstrap(
 			origin: OriginFor<T>,
@@ -343,15 +355,21 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// claim liquidity tokens from pool created as a result of bootstrap event finish
-		#[pallet::weight(T::WeightInfo::claim_rewards())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::claim_and_activate_liquidity_tokens())]
 		#[transactional]
-		pub fn claim_rewards(origin: OriginFor<T>) -> DispatchResult {
+		pub fn claim_liquidity_tokens(origin: OriginFor<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			Self::do_claim_rewards(&sender)
+			Self::do_claim_liquidity_tokens(&sender, false)
 		}
 
-		#[pallet::weight(T::WeightInfo::finalize().saturating_add(T::DbWeight::get().reads_writes(1, 1) * Into::<u64>::into(limit.unwrap_or_default())))]
+		#[pallet::weight(<<T as Config>::WeightInfo>::claim_and_activate_liquidity_tokens())]
+		#[transactional]
+		pub fn claim_and_activate_liquidity_tokens(origin: OriginFor<T>) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			Self::do_claim_liquidity_tokens(&sender, true)
+		}
+
+		#[pallet::weight(<<T as Config>::WeightInfo>::finalize().saturating_add(T::DbWeight::get().reads_writes(1, 1) * Into::<u64>::into(limit.unwrap_or_default())))]
 		#[transactional]
 		pub fn finalize(origin: OriginFor<T>, mut limit: Option<u32>) -> DispatchResult {
 			ensure_root(origin)?;
@@ -413,14 +431,15 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(T::WeightInfo::claim_rewards())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::claim_and_activate_liquidity_tokens())]
 		#[transactional]
-		pub fn claim_rewards_for_account(
+		pub fn claim_liquidity_tokens_for_account(
 			origin: OriginFor<T>,
 			account: T::AccountId,
+			activate_rewards: bool,
 		) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
-			Self::do_claim_rewards(&account)
+			Self::do_claim_liquidity_tokens(&account, activate_rewards)
 		}
 	}
 
@@ -461,6 +480,8 @@ pub mod pallet {
 		SameToken,
 		/// Token does not exists
 		TokenIdDoesNotExists,
+		/// Token activations failed
+		TokensActivationFailed,
 	}
 
 	#[pallet::event]
@@ -504,7 +525,7 @@ impl<T: Config> Pallet<T> {
 		PALLET_ID.into_account_truncating()
 	}
 
-	fn claim_rewards_from_single_currency(
+	fn claim_liquidity_tokens_from_single_currency(
 		who: &T::AccountId,
 		provision_token_id: &TokenId,
 		rewards: Balance,
@@ -535,7 +556,7 @@ impl<T: Config> Pallet<T> {
 		})?;
 
 		if rewards_vested > 0 {
-			T::VestingProvider::lock_tokens(
+			<<T as Config>::VestingProvider>::lock_tokens(
 				&who,
 				liq_token_id.into(),
 				rewards_vested.into(),
@@ -691,7 +712,7 @@ impl<T: Config> Pallet<T> {
 		Ok((rewards, vested_rewards, (lock_start, lock_end)))
 	}
 
-	fn do_claim_rewards(who: &T::AccountId) -> DispatchResult {
+	fn do_claim_liquidity_tokens(who: &T::AccountId, activate_rewards: bool) -> DispatchResult {
 		ensure!(Self::phase() == BootstrapPhase::Finished, Error::<T>::NotFinishedYet);
 
 		let (liq_token_id, _) = Self::minted_liquidity();
@@ -723,7 +744,7 @@ impl<T: Config> Pallet<T> {
 			.checked_add(first_token_rewards_vested)
 			.ok_or(Error::<T>::MathOverflow)?;
 
-		Self::claim_rewards_from_single_currency(
+		Self::claim_liquidity_tokens_from_single_currency(
 			&who,
 			&Self::second_token_id(),
 			second_token_rewards,
@@ -738,7 +759,7 @@ impl<T: Config> Pallet<T> {
 			second_token_rewards + second_token_rewards_vested
 		);
 
-		Self::claim_rewards_from_single_currency(
+		Self::claim_liquidity_tokens_from_single_currency(
 			&who,
 			&Self::first_token_id(),
 			first_token_rewards,
@@ -754,6 +775,21 @@ impl<T: Config> Pallet<T> {
 		);
 
 		ProvisionAccounts::<T>::remove(who);
+
+		if activate_rewards && <T as Config>::RewardsApi::can_activate(liq_token_id.into()) {
+			let non_vested_rewards = second_token_rewards
+				.checked_add(first_token_rewards)
+				.ok_or(Error::<T>::MathOverflow)?;
+			if non_vested_rewards > 0 {
+				<T as Config>::RewardsApi::activate_liquidity_tokens(
+					&who,
+					liq_token_id.into(),
+					non_vested_rewards,
+				)
+				.map_err(|_| Error::<T>::TokensActivationFailed)?;
+			}
+		}
+
 		Self::deposit_event(Event::RewardsClaimed(liq_token_id, total_rewards_claimed));
 
 		Ok(().into())

@@ -33,6 +33,7 @@ const DEFAULT_RATIO: (u128, u128) = (1_u128, 10_000_u128);
 benchmarks! {
 
 	schedule_bootstrap {
+		frame_system::Pallet::<T>::set_block_number(1_u32.into());
 		assert!(crate::BootstrapSchedule::<T>::get().is_none());
 		let caller: T::AccountId = whitelisted_caller();
 		let first_token_id = <T as Config>::Currency::create(&caller, MILION.into()).expect("Token creation failed").into();
@@ -43,6 +44,7 @@ benchmarks! {
 	}
 
 	provision {
+		frame_system::Pallet::<T>::set_block_number(1_u32.into());
 		let caller: T::AccountId = whitelisted_caller();
 		let first_token_id = <T as Config>::Currency::create(&caller, MILION.into()).expect("Token creation failed").into();
 		let second_token_id = <T as Config>::Currency::create(&caller, MILION.into()).expect("Token creation failed").into();
@@ -60,6 +62,7 @@ benchmarks! {
 	}
 
 	provision_vested {
+		frame_system::Pallet::<T>::set_block_number(1_u32.into());
 		let caller: T::AccountId = whitelisted_caller();
 		let first_token_id = <T as Config>::Currency::create(&caller, MILION.into()).expect("Token creation failed").into();
 		let second_token_id = <T as Config>::Currency::create(&caller, MILION.into()).expect("Token creation failed").into();
@@ -84,10 +87,12 @@ benchmarks! {
 		assert_eq!(BootstrapPallet::<T>::vested_provisions(caller, first_token_id).0, ksm_provision_amount);
 	}
 
-	claim_rewards {
+	claim_and_activate_liquidity_tokens {
+		frame_system::Pallet::<T>::set_block_number(1_u32.into());
 		let caller: T::AccountId = whitelisted_caller();
 		let first_token_id = <T as Config>::Currency::create(&caller, MILION.into()).expect("Token creation failed").into();
 		let second_token_id = <T as Config>::Currency::create(&caller, MILION.into()).expect("Token creation failed").into();
+		let liquidity_asset_id = second_token_id + 1;
 
 		let ksm_provision_amount = 100_000_u128;
 		let ksm_vested_provision_amount = 300_000_u128;
@@ -118,7 +123,10 @@ benchmarks! {
 		assert_eq!(BootstrapPallet::<T>::vested_provisions(caller.clone(), first_token_id), (ksm_vested_provision_amount, 1, lock + 1));
 		assert_eq!(BootstrapPallet::<T>::vested_provisions(caller.clone(), second_token_id), (mga_vested_provision_amount, 1, lock + 1));
 
-	}: claim_rewards(RawOrigin::Signed(caller.clone().into()))
+		// promote pool
+		pallet_issuance::PromotedPoolsRewards::<T>::insert(liquidity_asset_id, 0_u128);
+
+	}: claim_and_activate_liquidity_tokens(RawOrigin::Signed(caller.clone().into()))
 	verify {
 		let (total_mga_provision, total_ksm_provision) = BootstrapPallet::<T>::valuations();
 		let ksm_non_vested_rewards = total_provision / 2 / 2 * ksm_provision_amount / total_ksm_provision;
@@ -131,6 +139,7 @@ benchmarks! {
 	}
 
 	finalize {
+		frame_system::Pallet::<T>::set_block_number(1_u32.into());
 		let caller: T::AccountId = whitelisted_caller();
 		let first_token_id = <T as Config>::Currency::create(&caller, MILION.into()).expect("Token creation failed").into();
 		let second_token_id = <T as Config>::Currency::create(&caller, MILION.into()).expect("Token creation failed").into();
@@ -155,7 +164,7 @@ benchmarks! {
 		BootstrapPallet::<T>::provision_vested(RawOrigin::Signed(caller.clone().into()).into(), first_token_id, ksm_vested_provision_amount).unwrap();
 		BootstrapPallet::<T>::on_initialize(30_u32.into());
 
-		BootstrapPallet::<T>::claim_rewards(RawOrigin::Signed(caller.clone().into()).into()).unwrap();
+		BootstrapPallet::<T>::claim_liquidity_tokens(RawOrigin::Signed(caller.clone().into()).into()).unwrap();
 		assert_eq!(BootstrapPallet::<T>::phase(), BootstrapPhase::Finished);
 
 	}: finalize(RawOrigin::Root, None)

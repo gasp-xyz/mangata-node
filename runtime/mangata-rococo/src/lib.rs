@@ -72,7 +72,7 @@ use orml_traits::parameter_type_with_key;
 use pallet_vesting_mangata_rpc_runtime_api::VestingInfosWithLockedAt;
 pub use pallet_xyk;
 use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
-use mp_traits::TimeoutTriggerTrait;
+use mp_traits::{TimeoutTriggerTrait, PreValidateSwaps};
 
 pub const MGR_TOKEN_ID: TokenId = 0;
 pub const ROC_TOKEN_ID: TokenId = 4;
@@ -620,76 +620,32 @@ where
 	) -> Result<Self::LiquidityInfo, TransactionValidityError> {
 
 		// THIS IS NOT PROXY PALLET COMPATIBLE, YET
+		// Also ugly implementation to keep it maleable for now
 		match call {
 			Call::Xyk(pallet_xyk::Call::sell_asset { sold_asset_id: sold_asset_id,
 				sold_asset_amount: sold_asset_amount, 
-				bought_asset_id: bought_asset_id, ..}) =>
+				bought_asset_id: bought_asset_id,
+				min_amount_out: min_amount_out, ..}) =>
 				{
 					// If else tree for easy edits
 
-					// ensure swap cannot fail
-					// This is to ensure that xyk swap fee is always charged
-					// We also need to ensure that the user has enough funds to transact
-
+					// Check if timeouts are initiazed or not
 					if let Some(timeout_metadata) = TokenTimeout::get_timeout_metadata(){
+						// Check if curated token or not
 						if let Some(threshold) = timeout_metadata.swap_value_threshold.get(sold_asset_id){
+							// ensure swap cannot fail
+							// This is to ensure that xyk swap fee is always charged
+							// We also ensure that the user has enough funds to transact
+							let _ = <Xyk as PreValidateSwaps>::pre_validate_sell_asset(
+								&who.clone().into(),
+								*sold_asset_id,
+								*bought_asset_id,
+								*sold_asset_amount,
+								*min_amount_out
+							).map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(66u8).into()))?;
+
 							if sold_asset_amount > threshold{
-								// This is the "high value swap on curated token" branch
-
-								// TODO
-								// Need a clean function call into xyk for this
-								ensure!(!sold_asset_amount.is_zero(), TransactionValidityError::Invalid(InvalidTransaction::Custom(64u8)));
-
-								ensure!(
-									!<T as pallet_xyk::Config>::DisabledTokens::contains(&sold_asset_id) &&
-										!<T as pallet_xyk::Config>::DisabledTokens::contains(&bought_asset_id),
-										TransactionValidityError::Invalid(InvalidTransaction::Custom(65u8).into())
-								);
-
-								let buy_and_burn_amount =
-									multiply_by_rational(*sold_asset_amount, <T as pallet_xyk::Config>::BuyAndBurnFeePercentage::get(), 10000)
-										.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(66u8).into()))? +
-										1;
-
-								let treasury_amount =
-									multiply_by_rational(*sold_asset_amount, <T as pallet_xyk::Config>::TreasuryFeePercentage::get(), 10000)
-										.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(66u8).into()))? +
-										1;
-
-								let pool_fee_amount =
-									multiply_by_rational(*sold_asset_amount, <T as pallet_xyk::Config>::PoolFeePercentage::get(), 10000)
-										.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(66u8).into()))? +
-										1;
-
-								// for future implementation of min fee if necessary
-								// let min_fee: u128 = 0;
-								// if buy_and_burn_amount + treasury_amount + pool_fee_amount < min_fee {
-								//     buy_and_burn_amount = min_fee * Self::total_fee() / T::BuyAndBurnFeePercentage::get();
-								//     treasury_amount = min_fee * Self::total_fee() / T::TreasuryFeePercentage::get();
-								//     pool_fee_amount = min_fee - buy_and_burn_amount - treasury_amount;
-								// }
-
-								// Get token reserves
-
-								// MAX: 2R
-								let (input_reserve, output_reserve) =
-									Xyk::get_reserves(*sold_asset_id, *bought_asset_id).map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(66u8).into()))?;
-
-								ensure!(input_reserve.checked_add(*sold_asset_amount).is_some(), TransactionValidityError::Invalid(InvalidTransaction::Custom(66u8).into()));
-
-								// Calculate bought asset amount to be received by paying sold asset amount
-								let bought_asset_amount =
-									Xyk::calculate_sell_price(input_reserve, output_reserve, *sold_asset_amount).map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(66u8).into()))?;
-
-								orml_tokens::MultiTokenCurrencyAdapter::<Runtime>::ensure_can_withdraw(
-									*sold_asset_id,
-									&((who.clone()).into()),
-									*sold_asset_amount,
-									WithdrawReasons::all(),
-									Default::default(),
-								)
-								.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(67u8).into()))?;
-
+								// This is the "high value swap on curated token" branch								
 								Ok(None)
 							} else {
 								// This is the "low value swap on curated token" branch
@@ -709,8 +665,56 @@ where
 					}
 				},
 
-			// Call::Xyk(pallet_xyk::Call::buy_asset { .. }
-			// Call::TokenTimeout(pallet_token_timeout::Call::release { .. }
+			Call::Xyk(pallet_xyk::Call::buy_asset { sold_asset_id: sold_asset_id,
+				bought_asset_amount: bought_asset_amount, 
+				bought_asset_id: bought_asset_id,
+				max_amount_in: max_amount_in, ..}) =>
+				{
+					// If else tree for easy edits
+
+					// Check if timeouts are initiazed or not
+					if let Some(timeout_metadata) = TokenTimeout::get_timeout_metadata(){
+						// Check if curated token or not
+						if let Some(threshold) = timeout_metadata.swap_value_threshold.get(sold_asset_id){
+							// ensure swap cannot fail
+							// This is to ensure that xyk swap fee is always charged
+							// We also ensure that the user has enough funds to transact
+							let (_buy_and_burn_amount, _treasury_amount, _pool_fee_amount,
+								_input_reserve, _output_reserve,
+								sold_asset_amount) =
+									<Xyk as PreValidateSwaps>::pre_validate_buy_asset(
+										&who.clone().into(),
+										*sold_asset_id,
+										*bought_asset_id,
+										*bought_asset_amount,
+										*max_amount_in,
+									).map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(66u8).into()))?;
+
+							if sold_asset_amount > *threshold{
+								// This is the "high value swap on curated token" branch								
+								Ok(None)
+							} else {
+								// This is the "low value swap on curated token" branch
+								OTA::process_timeout(who)
+									.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(67u8).into()))?;
+								Ok(Some(LiquidityInfoEnum::Timeout))
+							}
+						} else {
+							// "swap on non-curated token" branch
+							OTA::process_timeout(who)
+								.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(67u8).into()))?;
+							Ok(Some(LiquidityInfoEnum::Timeout))
+						}
+					} else {
+						// Timeouts are not activated branch
+						OCA::withdraw_fee(who, call, info, fee, tip)
+					}
+				},
+			Call::TokenTimeout(pallet_token_timeout::Call::release_timeout { .. }) => {
+				OTA::can_release_timeout(who)
+					.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(68u8).into()))?;
+				Ok(Some(LiquidityInfoEnum::Timeout))
+			}
 			_ => 
 				OCA::withdraw_fee(who, call, info, fee, tip)
 		}

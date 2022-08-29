@@ -237,7 +237,7 @@ use frame_system::pallet_prelude::*;
 use mangata_primitives::{Balance, TokenId};
 use mp_bootstrap::PoolCreateApi;
 use mp_multipurpose_liquidity::ActivateKind;
-use mp_traits::{ActivationReservesProviderTrait, XykFunctionsTrait, PreValidateSwaps};
+use mp_traits::{ActivationReservesProviderTrait, PreValidateSwaps, XykFunctionsTrait};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_assets_info as assets_info;
 use pallet_issuance::{ActivedPoolQueryApi, ComputeIssuance, PoolPromoteApi};
@@ -2201,7 +2201,10 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 		bought_asset_id: Self::CurrencyId,
 		sold_asset_amount: Self::Balance,
 		min_amount_out: Self::Balance,
-	) -> Result<(Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance), DispatchError> {
+	) -> Result<
+		(Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance),
+		DispatchError,
+	> {
 		// Ensure not selling zero amount
 		ensure!(!sold_asset_amount.is_zero(), Error::<T>::ZeroAmount);
 
@@ -2257,10 +2260,14 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 		)
 		.or(Err(Error::<T>::NotEnoughAssets))?;
 
-		Ok((buy_and_burn_amount, treasury_amount, pool_fee_amount,
-		input_reserve, output_reserve,
-		bought_asset_amount))
-
+		Ok((
+			buy_and_burn_amount,
+			treasury_amount,
+			pool_fee_amount,
+			input_reserve,
+			output_reserve,
+			bought_asset_amount,
+		))
 	}
 
 	fn pre_validate_buy_asset(
@@ -2269,7 +2276,10 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 		bought_asset_id: Self::CurrencyId,
 		bought_asset_amount: Self::Balance,
 		max_amount_in: Self::Balance,
-	) -> Result<(Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance), DispatchError> {
+	) -> Result<
+		(Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance),
+		DispatchError,
+	> {
 		ensure!(
 			!T::DisabledTokens::contains(&sold_asset_id) &&
 				!T::DisabledTokens::contains(&bought_asset_id),
@@ -2326,9 +2336,14 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 		)
 		.or(Err(Error::<T>::NotEnoughAssets))?;
 
-		Ok((buy_and_burn_amount, treasury_amount, pool_fee_amount,
-		input_reserve, output_reserve,
-		sold_asset_amount))
+		Ok((
+			buy_and_burn_amount,
+			treasury_amount,
+			pool_fee_amount,
+			input_reserve,
+			output_reserve,
+			sold_asset_amount,
+		))
 	}
 }
 
@@ -2472,16 +2487,20 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		sold_asset_amount: Self::Balance,
 		min_amount_out: Self::Balance,
 	) -> DispatchResult {
-		let (buy_and_burn_amount, treasury_amount, pool_fee_amount,
-			input_reserve, output_reserve,
-			bought_asset_amount) = 
-				<Pallet<T> as PreValidateSwaps>::pre_validate_sell_asset(
-					&sender,
-					sold_asset_id,
-					bought_asset_id,
-					sold_asset_amount,
-					min_amount_out
-				)?;
+		let (
+			buy_and_burn_amount,
+			treasury_amount,
+			pool_fee_amount,
+			input_reserve,
+			output_reserve,
+			bought_asset_amount,
+		) = <Pallet<T> as PreValidateSwaps>::pre_validate_sell_asset(
+			&sender,
+			sold_asset_id,
+			bought_asset_id,
+			sold_asset_amount,
+			min_amount_out,
+		)?;
 
 		let vault = Pallet::<T>::account_id();
 		let treasury_account: T::AccountId = Self::treasury_account_id();
@@ -2605,17 +2624,20 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		bought_asset_amount: Self::Balance,
 		max_amount_in: Self::Balance,
 	) -> DispatchResult {
-
-		let (buy_and_burn_amount, treasury_amount, pool_fee_amount,
-			input_reserve, output_reserve,
-			sold_asset_amount) = 
-				<Pallet<T> as PreValidateSwaps>::pre_validate_buy_asset(
-					&sender,
-					sold_asset_id,
-					bought_asset_id,
-					bought_asset_amount,
-					max_amount_in,
-				)?;		
+		let (
+			buy_and_burn_amount,
+			treasury_amount,
+			pool_fee_amount,
+			input_reserve,
+			output_reserve,
+			sold_asset_amount,
+		) = <Pallet<T> as PreValidateSwaps>::pre_validate_buy_asset(
+			&sender,
+			sold_asset_id,
+			bought_asset_id,
+			bought_asset_amount,
+			max_amount_in,
+		)?;
 
 		let vault = Pallet::<T>::account_id();
 		let treasury_account: T::AccountId = Self::treasury_account_id();

@@ -10,15 +10,16 @@ use pallet_transaction_payment_mangata::{Multiplier, TargetedFeeAdjustment};
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
-	create_runtime_str, generic, impl_opaque_keys,
+	create_runtime_str, generic,
+	helpers_128bit::multiply_by_rational,
+	impl_opaque_keys,
 	traits::{
 		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, ConvertInto,
 		StaticLookup,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, FixedPointNumber, Percent, Perquintill, AccountId32
+	AccountId32, ApplyExtrinsicResult, FixedPointNumber, Percent, Perquintill,
 };
-use sp_runtime::helpers_128bit::multiply_by_rational;
 
 use sp_std::{
 	convert::{TryFrom, TryInto},
@@ -30,14 +31,13 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 use frame_support::{
-	construct_runtime, parameter_types,
+	construct_runtime, ensure, parameter_types,
 	traits::{Contains, Everything, Get, LockIdentifier, Nothing, U128CurrencyToVote},
 	weights::{
 		constants::{RocksDbWeight, WEIGHT_PER_MICROS, WEIGHT_PER_MILLIS, WEIGHT_PER_SECOND},
 		DispatchClass, Weight,
 	},
 	PalletId,
-	ensure
 };
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
@@ -69,10 +69,10 @@ pub use orml_tokens;
 use orml_tokens::TransferDust;
 use orml_traits::parameter_type_with_key;
 
+use mp_traits::{PreValidateSwaps, TimeoutTriggerTrait};
 use pallet_vesting_mangata_rpc_runtime_api::VestingInfosWithLockedAt;
 pub use pallet_xyk;
 use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
-use mp_traits::{TimeoutTriggerTrait, PreValidateSwaps};
 
 pub const MGR_TOKEN_ID: TokenId = 0;
 pub const ROC_TOKEN_ID: TokenId = 4;
@@ -545,7 +545,6 @@ parameter_types! {
 
 use scale_info::TypeInfo;
 
-
 use frame_support::{
 	traits::{ExistenceRequirement, Imbalance, WithdrawReasons},
 	unsigned::TransactionValidityError,
@@ -565,26 +564,21 @@ type NegativeImbalanceOf<C, T> =
 use orml_tokens::MultiTokenImbalanceWithZeroTrait;
 
 #[derive(Encode, Decode, TypeInfo)]
-pub enum LiquidityInfoEnum<C: MultiTokenCurrency<T::AccountId>, T: frame_system::Config>{
+pub enum LiquidityInfoEnum<C: MultiTokenCurrency<T::AccountId>, T: frame_system::Config> {
 	Imbalance((TokenId, NegativeImbalanceOf<C, T>)),
-	Timeout
+	Timeout,
 }
 
 #[derive(Encode, Decode, Clone, TypeInfo)]
-pub struct OnChargeHandler<C, OCA, OTA>(
-	PhantomData<(C, OCA, OTA)>,
-);
+pub struct OnChargeHandler<C, OCA, OTA>(PhantomData<(C, OCA, OTA)>);
 
-impl <C, OCA, OTA> OnChargeHandler<C, OCA, OTA>{
-	
-}
+impl<C, OCA, OTA> OnChargeHandler<C, OCA, OTA> {}
 
 /// Default implementation for a Currency and an OnUnbalanced handler.
 ///
 /// The unbalance handler is given 2 unbalanceds in [`OnUnbalanced::on_unbalanceds`]: fee and
 /// then tip.
-impl<T, C, OCA, OTA> OnChargeTransaction<T>
-	for OnChargeHandler<C, OCA, OTA>
+impl<T, C, OCA, OTA> OnChargeTransaction<T> for OnChargeHandler<C, OCA, OTA>
 where
 	T: pallet_transaction_payment_mangata::Config + pallet_xyk::Config,
 	T::LengthToFee: frame_support::weights::WeightToFee<
@@ -599,12 +593,15 @@ where
 		<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
 		Opposite = C::PositiveImbalance,
 	>,
-	OCA: OnChargeTransaction<T, LiquidityInfo = Option<LiquidityInfoEnum<C, T>>, Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance>,
+	OCA: OnChargeTransaction<
+		T,
+		LiquidityInfo = Option<LiquidityInfoEnum<C, T>>,
+		Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
+	>,
 	OTA: TimeoutTriggerTrait<<T as frame_system::Config>::AccountId>,
 	T: frame_system::Config<Call = Call>,
 	T::AccountId: From<AccountId32> + Into<AccountId32>,
 {
-
 	type LiquidityInfo = Option<LiquidityInfoEnum<C, T>>;
 	type Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance;
 
@@ -618,105 +615,138 @@ where
 		fee: Self::Balance,
 		tip: Self::Balance,
 	) -> Result<Self::LiquidityInfo, TransactionValidityError> {
-
 		// THIS IS NOT PROXY PALLET COMPATIBLE, YET
 		// Also ugly implementation to keep it maleable for now
 		match call {
-			Call::Xyk(pallet_xyk::Call::sell_asset { sold_asset_id: sold_asset_id,
-				sold_asset_amount: sold_asset_amount, 
+			Call::Xyk(pallet_xyk::Call::sell_asset {
+				sold_asset_id: sold_asset_id,
+				sold_asset_amount: sold_asset_amount,
 				bought_asset_id: bought_asset_id,
-				min_amount_out: min_amount_out, ..}) =>
-				{
-					// If else tree for easy edits
+				min_amount_out: min_amount_out,
+				..
+			}) => {
+				// If else tree for easy edits
 
-					// Check if timeouts are initiazed or not
-					if let Some(timeout_metadata) = TokenTimeout::get_timeout_metadata(){
-						// Check if curated token or not
-						if let Some(threshold) = timeout_metadata.swap_value_threshold.get(sold_asset_id){
-							// ensure swap cannot fail
-							// This is to ensure that xyk swap fee is always charged
-							// We also ensure that the user has enough funds to transact
-							let _ = <Xyk as PreValidateSwaps>::pre_validate_sell_asset(
-								&who.clone().into(),
-								*sold_asset_id,
-								*bought_asset_id,
-								*sold_asset_amount,
-								*min_amount_out
-							).map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(66u8).into()))?;
+				// Check if timeouts are initiazed or not
+				if let Some(timeout_metadata) = TokenTimeout::get_timeout_metadata() {
+					// Check if curated token or not
+					if let Some(threshold) =
+						timeout_metadata.swap_value_threshold.get(sold_asset_id)
+					{
+						// ensure swap cannot fail
+						// This is to ensure that xyk swap fee is always charged
+						// We also ensure that the user has enough funds to transact
+						let _ = <Xyk as PreValidateSwaps>::pre_validate_sell_asset(
+							&who.clone().into(),
+							*sold_asset_id,
+							*bought_asset_id,
+							*sold_asset_amount,
+							*min_amount_out,
+						)
+						.map_err(|_| {
+							TransactionValidityError::Invalid(
+								InvalidTransaction::Custom(66u8).into(),
+							)
+						})?;
 
-							if sold_asset_amount > threshold{
-								// This is the "high value swap on curated token" branch								
-								Ok(None)
-							} else {
-								// This is the "low value swap on curated token" branch
-								OTA::process_timeout(who)
-									.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(67u8).into()))?;
-								Ok(Some(LiquidityInfoEnum::Timeout))
-							}
+						if sold_asset_amount > threshold {
+							// This is the "high value swap on curated token" branch
+							Ok(None)
 						} else {
-							// "swap on non-curated token" branch
-							OTA::process_timeout(who)
-								.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(67u8).into()))?;
+							// This is the "low value swap on curated token" branch
+							OTA::process_timeout(who).map_err(|_| {
+								TransactionValidityError::Invalid(
+									InvalidTransaction::Custom(67u8).into(),
+								)
+							})?;
 							Ok(Some(LiquidityInfoEnum::Timeout))
 						}
 					} else {
-						// Timeouts are not activated branch
-						OCA::withdraw_fee(who, call, info, fee, tip)
+						// "swap on non-curated token" branch
+						OTA::process_timeout(who).map_err(|_| {
+							TransactionValidityError::Invalid(
+								InvalidTransaction::Custom(67u8).into(),
+							)
+						})?;
+						Ok(Some(LiquidityInfoEnum::Timeout))
 					}
-				},
+				} else {
+					// Timeouts are not activated branch
+					OCA::withdraw_fee(who, call, info, fee, tip)
+				}
+			},
 
-			Call::Xyk(pallet_xyk::Call::buy_asset { sold_asset_id: sold_asset_id,
-				bought_asset_amount: bought_asset_amount, 
+			Call::Xyk(pallet_xyk::Call::buy_asset {
+				sold_asset_id: sold_asset_id,
+				bought_asset_amount: bought_asset_amount,
 				bought_asset_id: bought_asset_id,
-				max_amount_in: max_amount_in, ..}) =>
-				{
-					// If else tree for easy edits
+				max_amount_in: max_amount_in,
+				..
+			}) => {
+				// If else tree for easy edits
 
-					// Check if timeouts are initiazed or not
-					if let Some(timeout_metadata) = TokenTimeout::get_timeout_metadata(){
-						// Check if curated token or not
-						if let Some(threshold) = timeout_metadata.swap_value_threshold.get(sold_asset_id){
-							// ensure swap cannot fail
-							// This is to ensure that xyk swap fee is always charged
-							// We also ensure that the user has enough funds to transact
-							let (_buy_and_burn_amount, _treasury_amount, _pool_fee_amount,
-								_input_reserve, _output_reserve,
-								sold_asset_amount) =
-									<Xyk as PreValidateSwaps>::pre_validate_buy_asset(
-										&who.clone().into(),
-										*sold_asset_id,
-										*bought_asset_id,
-										*bought_asset_amount,
-										*max_amount_in,
-									).map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(66u8).into()))?;
+				// Check if timeouts are initiazed or not
+				if let Some(timeout_metadata) = TokenTimeout::get_timeout_metadata() {
+					// Check if curated token or not
+					if let Some(threshold) =
+						timeout_metadata.swap_value_threshold.get(sold_asset_id)
+					{
+						// ensure swap cannot fail
+						// This is to ensure that xyk swap fee is always charged
+						// We also ensure that the user has enough funds to transact
+						let (
+							_buy_and_burn_amount,
+							_treasury_amount,
+							_pool_fee_amount,
+							_input_reserve,
+							_output_reserve,
+							sold_asset_amount,
+						) = <Xyk as PreValidateSwaps>::pre_validate_buy_asset(
+							&who.clone().into(),
+							*sold_asset_id,
+							*bought_asset_id,
+							*bought_asset_amount,
+							*max_amount_in,
+						)
+						.map_err(|_| {
+							TransactionValidityError::Invalid(
+								InvalidTransaction::Custom(66u8).into(),
+							)
+						})?;
 
-							if sold_asset_amount > *threshold{
-								// This is the "high value swap on curated token" branch								
-								Ok(None)
-							} else {
-								// This is the "low value swap on curated token" branch
-								OTA::process_timeout(who)
-									.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(67u8).into()))?;
-								Ok(Some(LiquidityInfoEnum::Timeout))
-							}
+						if sold_asset_amount > *threshold {
+							// This is the "high value swap on curated token" branch
+							Ok(None)
 						} else {
-							// "swap on non-curated token" branch
-							OTA::process_timeout(who)
-								.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(67u8).into()))?;
+							// This is the "low value swap on curated token" branch
+							OTA::process_timeout(who).map_err(|_| {
+								TransactionValidityError::Invalid(
+									InvalidTransaction::Custom(67u8).into(),
+								)
+							})?;
 							Ok(Some(LiquidityInfoEnum::Timeout))
 						}
 					} else {
-						// Timeouts are not activated branch
-						OCA::withdraw_fee(who, call, info, fee, tip)
+						// "swap on non-curated token" branch
+						OTA::process_timeout(who).map_err(|_| {
+							TransactionValidityError::Invalid(
+								InvalidTransaction::Custom(67u8).into(),
+							)
+						})?;
+						Ok(Some(LiquidityInfoEnum::Timeout))
 					}
-				},
+				} else {
+					// Timeouts are not activated branch
+					OCA::withdraw_fee(who, call, info, fee, tip)
+				}
+			},
 			Call::TokenTimeout(pallet_token_timeout::Call::release_timeout { .. }) => {
-				OTA::can_release_timeout(who)
-					.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Custom(68u8).into()))?;
+				OTA::can_release_timeout(who).map_err(|_| {
+					TransactionValidityError::Invalid(InvalidTransaction::Custom(68u8).into())
+				})?;
 				Ok(Some(LiquidityInfoEnum::Timeout))
-			}
-			_ => 
-				OCA::withdraw_fee(who, call, info, fee, tip)
+			},
+			_ => OCA::withdraw_fee(who, call, info, fee, tip),
 		}
 	}
 
@@ -733,13 +763,17 @@ where
 		tip: Self::Balance,
 		already_withdrawn: Self::LiquidityInfo,
 	) -> Result<(), TransactionValidityError> {
-
-		match already_withdrawn{
-		Some(LiquidityInfoEnum::Imbalance(_)) =>
-			OCA::correct_and_deposit_fee(who, dispatch_info, post_info, corrected_fee, tip, already_withdrawn),
-		Some(LiquidityInfoEnum::Timeout) =>
-			Ok(()),
-		None => Ok(()),
+		match already_withdrawn {
+			Some(LiquidityInfoEnum::Imbalance(_)) => OCA::correct_and_deposit_fee(
+				who,
+				dispatch_info,
+				post_info,
+				corrected_fee,
+				tip,
+				already_withdrawn,
+			),
+			Some(LiquidityInfoEnum::Timeout) => Ok(()),
+			None => Ok(()),
 		}
 	}
 }
@@ -882,8 +916,7 @@ parameter_types! {
 }
 
 impl pallet_transaction_payment_mangata::Config for Runtime {
-	type OnChargeTransaction = 
-	OnChargeHandler<
+	type OnChargeTransaction = OnChargeHandler<
 		orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
 		ThreeCurrencyOnChargeAdapter<
 			orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
@@ -894,7 +927,7 @@ impl pallet_transaction_payment_mangata::Config for Runtime {
 			frame_support::traits::ConstU128<ROC_MGR_SCALE_FACTOR>,
 			frame_support::traits::ConstU128<TUR_MGR_SCALE_FACTOR>,
 		>,
-		TokenTimeout
+		TokenTimeout,
 	>;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type WeightToFee = WeightToFee;

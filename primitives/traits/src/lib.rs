@@ -176,7 +176,6 @@ pub trait XykFunctionsTrait<AccountId> {
 }
 
 pub trait PreValidateSwaps {
-	
 	type AccountId: Parameter
 		+ Member
 		+ MaybeSerializeDeserialize
@@ -211,7 +210,10 @@ pub trait PreValidateSwaps {
 		bought_asset_id: Self::CurrencyId,
 		sold_asset_amount: Self::Balance,
 		min_amount_out: Self::Balance,
-	) -> Result<(Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance), DispatchError>;
+	) -> Result<
+		(Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance),
+		DispatchError,
+	>;
 
 	fn pre_validate_buy_asset(
 		sender: &Self::AccountId,
@@ -219,12 +221,14 @@ pub trait PreValidateSwaps {
 		bought_asset_id: Self::CurrencyId,
 		bought_asset_amount: Self::Balance,
 		max_amount_in: Self::Balance,
-	) -> Result<(Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance), DispatchError>;
+	) -> Result<
+		(Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance),
+		DispatchError,
+	>;
 }
 
-pub trait TimeoutTriggerTrait<AccountId>{
-    fn process_timeout(who: &AccountId) -> DispatchResult;
+pub trait TimeoutTriggerTrait<AccountId> {
+	fn process_timeout(who: &AccountId) -> DispatchResult;
 
-    fn can_release_timeout(who: &AccountId) -> DispatchResult;
+	fn can_release_timeout(who: &AccountId) -> DispatchResult;
 }
-

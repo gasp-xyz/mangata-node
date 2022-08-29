@@ -445,6 +445,18 @@ impl orml_tokens::Config for Runtime {
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 }
 
+pub struct RewardsForAllAccountProvider<T: frame_system::Config>(PhantomData<T>);
+impl<T: frame_system::Config> Get<T::AccountId> for RewardsForAllAccountProvider<T> {
+	fn get() -> T::AccountId {
+		let account32: sp_runtime::AccountId32 =
+			hex_literal::hex!["0000000000000000000000000000000000000000000000000000000000000000"]
+				.into();
+		let mut init_account32 = sp_runtime::AccountId32::as_ref(&account32);
+		let init_account = T::AccountId::decode(&mut init_account32).unwrap();
+		init_account
+	}
+}
+
 impl pallet_xyk::Config for Runtime {
 	type Event = Event;
 	type ActivationReservesProvider = MultiPurposeLiquidity;
@@ -457,11 +469,12 @@ impl pallet_xyk::Config for Runtime {
 	type PoolFeePercentage = frame_support::traits::ConstU128<20>;
 	type TreasuryFeePercentage = frame_support::traits::ConstU128<5>;
 	type BuyAndBurnFeePercentage = frame_support::traits::ConstU128<5>;
-	type RewardsDistributionPeriod = frame_support::traits::ConstU32<10000>;
+	type RewardsDistributionPeriod = frame_support::traits::ConstU32<1200>;
 	type VestingProvider = Vesting;
 	type DisallowedPools = Bootstrap;
 	type DisabledTokens = Nothing;
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
+	type RewardsForAllAccount = RewardsForAllAccountProvider<Self>;
 }
 
 impl pallet_bootstrap::BootstrapBenchmarkingConfig for Runtime {}
@@ -1174,6 +1187,7 @@ impl pallet_issuance::Config for Runtime {
 	type TGEReleaseBegin = TGEReleaseBegin;
 	type VestingProvider = Vesting;
 	type WeightInfo = weights::pallet_issuance_weights::ModuleWeight<Runtime>;
+	type ActivedPoolQueryApiType = Xyk;
 }
 
 parameter_types! {
@@ -1348,6 +1362,8 @@ mod benches {
 	);
 }
 
+impl pallet_xyk::XykBenchmarkingConfig for Runtime {}
+
 impl_runtime_apis! {
 
 	impl ver_api::VerApi<Block> for Runtime {
@@ -1487,6 +1503,22 @@ impl_runtime_apis! {
 			liquidity_asset_id: TokenId,
 		) -> Balance {
 			Xyk::get_max_instant_unreserve_amount(&user, liquidity_asset_id)
+		}
+
+
+		fn calculate_rewards_amount_v2(
+			user: AccountId,
+			liquidity_asset_id: TokenId,
+		) -> XYKRpcResult<Balance> {
+			match Xyk::calculate_rewards_amount_v2(user, liquidity_asset_id){
+				Ok(claimable_rewards) => XYKRpcResult{
+					price:claimable_rewards
+				},
+				Err(e) => {
+						log::warn!(target:"xyk", "rpc 'XYK::calculate_rewards_amount_v2' error: '{:?}', returning default value instead", e);
+						Default::default()
+				},
+			}
 		}
 
 	}

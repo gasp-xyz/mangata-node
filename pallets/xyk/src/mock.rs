@@ -21,7 +21,7 @@ use mangata_primitives::{Amount, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
 use orml_traits::parameter_type_with_key;
 use pallet_assets_info as assets_info;
-use pallet_issuance::PoolPromoteApi;
+use pallet_issuance::{ActivedPoolQueryApi, PoolPromoteApi};
 use sp_runtime::{Perbill, Percent};
 use std::{collections::HashMap, sync::Mutex};
 
@@ -48,24 +48,38 @@ construct_runtime!(
 );
 
 lazy_static::lazy_static! {
-	static ref PROMOTED_POOLS: Mutex<HashMap<TokenId, Balance>> = {
+	static ref PROMOTED_POOLS: Mutex<HashMap<TokenId, U256>> = {
 		let m = HashMap::new();
 		Mutex::new(m)
 	};
 }
 
 pub struct MockPromotedPoolApi;
+pub struct MockActivedPoolQueryApi;
 
 #[cfg(test)]
+#[cfg(not(feature = "runtime-benchmarks"))]
 impl MockPromotedPoolApi {
-	pub fn instance() -> &'static Mutex<HashMap<TokenId, Balance>> {
+	pub fn instance() -> &'static Mutex<HashMap<TokenId, U256>> {
 		&PROMOTED_POOLS
 	}
 }
 
 impl pallet_issuance::ComputeIssuance for MockPromotedPoolApi {
-	fn compute_issuance(_n: u32) {
+	fn compute_issuance(_n: u32) -> DispatchResult {
 		todo!()
+	}
+}
+
+impl MockActivedPoolQueryApi {
+	pub fn instance() -> &'static Mutex<HashMap<TokenId, U256>> {
+		&PROMOTED_POOLS
+	}
+}
+
+impl ActivedPoolQueryApi for MockActivedPoolQueryApi {
+	fn get_pool_activate_amount(_liquidity_token_id: TokenId) -> Option<u128> {
+		Some(1 as u128)
 	}
 }
 
@@ -75,28 +89,40 @@ impl PoolPromoteApi for MockPromotedPoolApi {
 		if pools.contains_key(&liquidity_token_id) {
 			false
 		} else {
-			pools.insert(liquidity_token_id, 0);
+			pools.insert(liquidity_token_id, 0_u128.into());
+			true
+		}
+	}
+
+	fn unpromote_pool(liquidity_token_id: TokenId) -> bool {
+		let mut pools = PROMOTED_POOLS.lock().unwrap();
+		if pools.contains_key(&liquidity_token_id) {
+			false
+		} else {
+			pools.insert(liquidity_token_id, 0_u128.into());
 			true
 		}
 	}
 
 	fn get_pool_rewards(liquidity_token_id: TokenId) -> Option<Balance> {
 		let pools = PROMOTED_POOLS.lock().unwrap();
+		pools.get(&liquidity_token_id).map(|x| (*x).try_into().unwrap())
+	}
+
+	fn claim_pool_rewards(_liquidity_token_id: TokenId, _amount: Balance) -> bool {
+		true
+	}
+
+	fn get_pool_rewards_v2(liquidity_token_id: TokenId) -> Option<sp_core::U256> {
+		let pools = PROMOTED_POOLS.lock().unwrap();
 		pools.get(&liquidity_token_id).map(|x| *x)
 	}
 
-	fn claim_pool_rewards(liquidity_token_id: TokenId, claimed_amount: Balance) -> bool {
-		let mut pools = PROMOTED_POOLS.lock().unwrap();
-
-		if let Some(reward) = pools.get_mut(&liquidity_token_id) {
-			*reward = *reward - claimed_amount;
-			true
-		} else {
-			false
-		}
+	fn len() -> usize {
+		PROMOTED_POOLS.lock().unwrap().len()
 	}
 
-	fn len() -> usize {
+	fn len_v2() -> usize {
 		PROMOTED_POOLS.lock().unwrap().len()
 	}
 }
@@ -226,6 +252,7 @@ parameter_types! {
 	pub const HistoryLimit: u32 = 10u32;
 }
 
+#[cfg(not(feature = "runtime-benchmarks"))]
 impl pallet_issuance::Config for Test {
 	type Event = Event;
 	type NativeCurrencyId = MgaTokenId;
@@ -244,7 +271,32 @@ impl pallet_issuance::Config for Test {
 	type TGEReleaseBegin = TGEReleaseBegin;
 	type VestingProvider = Vesting;
 	type WeightInfo = ();
+	type ActivedPoolQueryApiType = MockActivedPoolQueryApi;
 }
+
+#[cfg(feature = "runtime-benchmarks")]
+impl pallet_issuance::Config for Test {
+	type Event = Event;
+	type NativeCurrencyId = MgaTokenId;
+	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
+	type BlocksPerRound = BlocksPerRound;
+	type HistoryLimit = HistoryLimit;
+	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
+	type StakingIssuanceVault = StakingIssuanceVault;
+	type TotalCrowdloanAllocation = TotalCrowdloanAllocation;
+	type IssuanceCap = IssuanceCap;
+	type LinearIssuanceBlocks = LinearIssuanceBlocks;
+	type LiquidityMiningSplit = LiquidityMiningSplit;
+	type StakingSplit = StakingSplit;
+	type ImmediateTGEReleasePercent = ImmediateTGEReleasePercent;
+	type TGEReleasePeriod = TGEReleasePeriod;
+	type TGEReleaseBegin = TGEReleaseBegin;
+	type VestingProvider = Vesting;
+	type WeightInfo = ();
+	type ActivedPoolQueryApiType = XykStorage;
+}
+
+impl XykBenchmarkingConfig for Test {}
 
 parameter_types! {
 	pub const LiquidityMiningIssuanceVaultId: PalletId = PalletId(*b"py/lqmiv");
@@ -256,6 +308,19 @@ pub struct DummyBlacklistedPool;
 impl Contains<(TokenId, TokenId)> for DummyBlacklistedPool {
 	fn contains(pair: &(TokenId, TokenId)) -> bool {
 		pair == &(1_u32, 9_u32) || pair == &(9_u32, 1_u32)
+	}
+}
+
+pub struct RewardsForAllAccountProvider<T: frame_system::Config>(PhantomData<T>);
+
+impl<T: frame_system::Config> Get<T::AccountId> for RewardsForAllAccountProvider<T> {
+	fn get() -> T::AccountId {
+		let account32: sp_runtime::AccountId32 =
+			hex_literal::hex!["d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"]
+				.into();
+		let mut init_account32 = sp_runtime::AccountId32::as_ref(&account32);
+		let init_account = T::AccountId::decode(&mut init_account32).unwrap();
+		init_account
 	}
 }
 
@@ -277,6 +342,7 @@ impl Config for Test {
 	type VestingProvider = Vesting;
 	type DisallowedPools = DummyBlacklistedPool;
 	type DisabledTokens = Nothing;
+	type RewardsForAllAccount = RewardsForAllAccountProvider<Self>;
 }
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -297,17 +363,24 @@ impl Config for Test {
 	type VestingProvider = Vesting;
 	type DisallowedPools = Nothing;
 	type DisabledTokens = Nothing;
+	type RewardsForAllAccount = RewardsForAllAccountProvider<Self>;
 }
 
 pub struct TokensActivationPassthrough<T: Config>(PhantomData<T>);
-impl<T: Config> ActivationReservesProviderTrait for TokensActivationPassthrough<T> {
+
+impl<T: Config> ActivationReservesProviderTrait for TokensActivationPassthrough<T>
+where
+	AccountId: From<<T as frame_system::Config>::AccountId>,
+{
 	type AccountId = T::AccountId;
 
 	fn get_max_instant_unreserve_amount(
 		token_id: TokenId,
 		account_id: &Self::AccountId,
 	) -> Balance {
-		Pallet::<T>::liquidity_mining_active_user((account_id, token_id))
+		let account_id: u128 = (account_id.clone()).into();
+		let token_id: u32 = token_id.into();
+		XykStorage::get_rewards_info(account_id, token_id).activated_amount
 	}
 
 	fn can_activate(
@@ -369,5 +442,8 @@ impl<T: Config> Pallet<T> {
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+	let mut ext: sp_io::TestExternalities =
+		system::GenesisConfig::default().build_storage::<Test>().unwrap().into();
+	ext.execute_with(|| System::set_block_number(1));
+	ext
 }

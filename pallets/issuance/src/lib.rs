@@ -13,6 +13,7 @@ use mangata_primitives::{Balance, TokenId};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
 use pallet_vesting_mangata::MultiTokenVestingSchedule;
 use scale_info::TypeInfo;
+use sp_core::U256;
 use sp_runtime::{
 	traits::{CheckedAdd, CheckedSub, One, Zero},
 	Perbill, Percent, RuntimeDebug,
@@ -59,11 +60,18 @@ pub struct TgeInfo<A> {
 pub trait PoolPromoteApi {
 	/// Returns true if pool was promoted, false if it has been promoted already
 	fn promote_pool(liquidity_token_id: TokenId) -> bool;
+	fn unpromote_pool(liquidity_token_id: TokenId) -> bool;
+
 	/// Returns available reward for pool
-	fn get_pool_rewards(liquidity_token_id: TokenId) -> Option<Balance>;
-	/// Returns available reward for pool
+	fn get_pool_rewards_v2(liquidity_token_id: TokenId) -> Option<U256>;
+
+	fn len_v2() -> usize;
+
+	//REWARDS V1 to be removed
 	fn claim_pool_rewards(liquidity_token_id: TokenId, claimed_amount: Balance) -> bool;
-	/// Returns number of promoted pools
+	//REWARDS V1 to be removed
+	fn get_pool_rewards(liquidity_token_id: TokenId) -> Option<Balance>;
+	//REWARDS V1 to be removed
 	fn len() -> usize;
 }
 
@@ -94,6 +102,10 @@ impl WeightInfo for () {
 			// Standard Error: 1_000
 			.saturating_add((130_000 as Weight).saturating_mul(l as Weight))
 	}
+}
+
+pub trait ActivedPoolQueryApi {
+	fn get_pool_activate_amount(liquidity_token_id: TokenId) -> Option<Balance>;
 }
 
 pub use pallet::*;
@@ -163,6 +175,8 @@ pub mod pallet {
 			Moment = Self::BlockNumber,
 		>;
 		type WeightInfo: WeightInfo;
+
+		type ActivedPoolQueryApiType: ActivedPoolQueryApi;
 	}
 
 	#[pallet::storage]
@@ -182,10 +196,16 @@ pub mod pallet {
 	pub type SessionIssuance<T: Config> =
 		StorageMap<_, Twox64Concat, u32, Option<(Balance, Balance)>, ValueQuery>;
 
+	//to be removed
 	#[pallet::storage]
 	#[pallet::getter(fn get_promoted_pools_rewards)]
 	pub type PromotedPoolsRewards<T: Config> =
 		StorageMap<_, Twox64Concat, TokenId, Balance, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn get_promoted_pools_rewards_v2)]
+	pub type PromotedPoolsRewardsV2<T: Config> =
+		StorageMap<_, Twox64Concat, TokenId, U256, ValueQuery>;
 
 	#[pallet::error]
 	/// Errors
@@ -202,6 +222,8 @@ pub mod pallet {
 		IssuanceConfigInvalid,
 		/// An underflow or an overflow has occured
 		MathError,
+		/// unknown pool
+		UnknownPool,
 	}
 
 	// XYK extrinsics.
@@ -302,38 +324,61 @@ pub mod pallet {
 }
 
 pub trait ComputeIssuance {
-	/// should be only used for testing purposes
 	fn initialize() {}
-	fn compute_issuance(n: u32);
+	fn compute_issuance(n: u32) -> DispatchResult;
 }
 
 impl<T: Config> ComputeIssuance for Pallet<T> {
-	/// should be only used for testing purposes
 	fn initialize() {
 		IsTGEFinalized::<T>::put(true);
 		Self::do_init_issuance_config().unwrap();
 	}
 
-	fn compute_issuance(n: u32) {
-		let _ = Pallet::<T>::calculate_and_store_round_issuance(n);
-		let _ = Pallet::<T>::clear_round_issuance_history(n);
+	fn compute_issuance(n: u32) -> DispatchResult {
+		Pallet::<T>::calculate_and_store_round_issuance(n)?;
+		Pallet::<T>::clear_round_issuance_history(n)
 	}
 }
 
 impl<T: Config> PoolPromoteApi for Pallet<T> {
 	fn promote_pool(liquidity_token_id: TokenId) -> bool {
-		if PromotedPoolsRewards::<T>::contains_key(liquidity_token_id) {
+		if PromotedPoolsRewardsV2::<T>::contains_key(liquidity_token_id) {
 			false
 		} else {
-			PromotedPoolsRewards::<T>::insert(liquidity_token_id, 0);
+			PromotedPoolsRewardsV2::<T>::insert(liquidity_token_id, U256::from(0_u128));
 			true
 		}
 	}
 
+	fn get_pool_rewards_v2(liquidity_token_id: TokenId) -> Option<U256> {
+		PromotedPoolsRewardsV2::<T>::try_get(liquidity_token_id).ok()
+	}
+
+	fn unpromote_pool(liquidity_token_id: TokenId) -> bool {
+		if PromotedPoolsRewardsV2::<T>::contains_key(liquidity_token_id) {
+			true
+		} else {
+			PromotedPoolsRewardsV2::<T>::remove(liquidity_token_id);
+			false
+		}
+	}
+
+	// TODO
+	// Specifically account for this in benchmarking
+	fn len() -> usize {
+		PromotedPoolsRewards::<T>::iter_keys().count()
+	}
+
+	fn len_v2() -> usize {
+		PromotedPoolsRewardsV2::<T>::iter_keys().count()
+	}
+
+	//REWARDS V1 to be removed
 	fn get_pool_rewards(liquidity_token_id: TokenId) -> Option<Balance> {
 		PromotedPoolsRewards::<T>::try_get(liquidity_token_id).ok()
 	}
 
+	//REWARDS V1 to be removed
 	fn claim_pool_rewards(liquidity_token_id: TokenId, claimed_amount: Balance) -> bool {
 		PromotedPoolsRewards::<T>::try_mutate(liquidity_token_id, |rewards| {
 			if let Some(val) = rewards.checked_sub(claimed_amount) {
@@ -344,12 +389,6 @@ impl<T: Config> PoolPromoteApi for Pallet<T> {
 			}
 		})
 		.is_ok()
-	}
-
-	// TODO
-	// Specifically account for this in benchmarking
-	fn len() -> usize {
-		PromotedPoolsRewards::<T>::iter_keys().count()
 	}
 }
 
@@ -489,21 +528,31 @@ impl<T: Config> Pallet<T> {
 
 		let liquidity_mining_issuance =
 			issuance_config.liquidity_mining_split * current_round_issuance;
+
 		let staking_issuance = issuance_config.staking_split * current_round_issuance;
 
-		let promoted_pools_count = <Self as PoolPromoteApi>::len();
+		// benchmark with max of X prom pools
+		let activated_pools: Vec<_> = PromotedPoolsRewardsV2::<T>::iter()
+			.filter_map(|(token_id, rewards)| {
+				T::ActivedPoolQueryApiType::get_pool_activate_amount(token_id)
+					.map(|activated_amount| (token_id, rewards, activated_amount))
+			})
+			.collect();
+		let mut liquidity_mining_issuance_per_pool = liquidity_mining_issuance;
 
-		// TODO: what about roundings? transfer mod to next session?
+		if activated_pools.len() > 0 {
+			liquidity_mining_issuance_per_pool /= activated_pools.len() as u128;
+		}
 
-		let liquidity_mining_issuance_per_pool = if promoted_pools_count == 0 {
-			liquidity_mining_issuance
-		} else {
-			liquidity_mining_issuance / promoted_pools_count as u128
-		};
+		for (token_id, rewards, activated_amount) in activated_pools {
+			let rewards_per_liquidity: U256 = U256::from(liquidity_mining_issuance_per_pool)
+				.checked_mul(U256::from(u128::MAX))
+				.and_then(|x| x.checked_div(activated_amount.into()))
+				.and_then(|x| x.checked_add(rewards.into()))
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathError))?;
 
-		PromotedPoolsRewards::<T>::translate(|_, v: Balance| {
-			Some(v + liquidity_mining_issuance_per_pool)
-		});
+			PromotedPoolsRewardsV2::<T>::insert(token_id, rewards_per_liquidity);
+		}
 
 		{
 			let liquidity_mining_issuance_issued = T::Tokens::deposit_creating(

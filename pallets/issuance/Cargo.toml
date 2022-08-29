@@ -18,12 +18,14 @@ frame-system = { default-features = false, version = '4.0.0-dev' , git = "https:
 orml-tokens = { default-features = false, version="0.4.1-dev" , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v0.9.24" }
 mangata-primitives = { default-features = false, version = '0.1.0' , path = '../../primitives/mangata'}
 sp-std = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
+sp-core = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
 sp-runtime = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.24" }
 pallet-vesting-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.24" }
 frame-benchmarking = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24", optional = true, default-features = false }
 cfg-if = "1.0.0"
 
 [dev-dependencies]
+lazy_static = "1.1.1"
 sp-core = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
 sp-io = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
 orml-traits = { default-features = false, version="0.4.1-dev" , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v0.9.24" }
@@ -34,6 +36,7 @@ std = [
 		'serde',
     'codec/std',
     'sp-std/std',
+    'sp-core/std',
     'sp-runtime/std',
     'frame-support/std',
     'frame-system/std',

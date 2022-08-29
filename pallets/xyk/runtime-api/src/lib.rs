@@ -92,5 +92,9 @@ sp_api::decl_runtime_apis! {
 			user: AccountId,
 			liquidity_asset_id: TokenId,
 		) -> Balance;
+		fn calculate_rewards_amount_v2(
+			user: AccountId,
+			liquidity_asset_id: TokenId,
+		) -> XYKRpcResult<Balance>;
 	}
 }

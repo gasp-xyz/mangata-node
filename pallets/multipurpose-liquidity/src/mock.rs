@@ -228,6 +228,38 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for MockXyk<T> {
 	fn is_liquidity_token(liquidity_asset_id: TokenId) -> bool {
 		true
 	}
+
+	fn claim_rewards_v2(
+		sender: T::AccountId,
+		liquidity_token_id: Self::CurrencyId,
+		amount: Self::Balance,
+	) -> DispatchResult {
+		unimplemented!()
+	}
+
+	fn claim_rewards_all_v2(
+		sender: T::AccountId,
+		liquidity_token_id: Self::CurrencyId,
+	) -> DispatchResult {
+		unimplemented!()
+	}
+
+	fn activate_liquidity_v2(
+		sender: T::AccountId,
+		liquidity_token_id: Self::CurrencyId,
+		amount: Self::Balance,
+		use_balance_from: Option<ActivateKind>,
+	) -> DispatchResult {
+		unimplemented!()
+	}
+
+	fn deactivate_liquidity_v2(
+		sender: T::AccountId,
+		liquidity_token_id: Self::CurrencyId,
+		amount: Self::Balance,
+	) -> DispatchResult {
+		unimplemented!()
+	}
 }
 
 // This function basically just builds a genesis storage key/value store according to

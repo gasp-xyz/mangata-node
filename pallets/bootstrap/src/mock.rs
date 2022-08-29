@@ -121,6 +121,16 @@ impl pallet_vesting_mangata::Config for Test {
 	const MAX_VESTING_SCHEDULES: u32 = 28;
 }
 
+pub struct RewardsForAllAccountProvider<T: frame_system::Config>(PhantomData<T>);
+impl<T: frame_system::Config> Get<T::AccountId> for RewardsForAllAccountProvider<T> {
+	fn get() -> T::AccountId {
+		T::AccountId::decode(&mut sp_runtime::traits::TrailingZeroInput::zeroes())
+			.expect("Infinite input; no dead input space; qed")
+	}
+}
+
+impl pallet_xyk::XykBenchmarkingConfig for Test {}
+
 impl pallet_xyk::Config for Test {
 	type Event = Event;
 	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
@@ -138,6 +148,7 @@ impl pallet_xyk::Config for Test {
 	type DisallowedPools = Bootstrap;
 	type DisabledTokens = Nothing;
 	type VestingProvider = Vesting;
+	type RewardsForAllAccount = RewardsForAllAccountProvider<Self>;
 }
 
 impl BootstrapBenchmarkingConfig for Test {}
@@ -216,6 +227,7 @@ impl pallet_issuance::Config for Test {
 	type TGEReleasePeriod = TGEReleasePeriod;
 	type TGEReleaseBegin = TGEReleaseBegin;
 	type VestingProvider = Vesting;
+	type ActivedPoolQueryApiType = Xyk;
 	type WeightInfo = ();
 }
 

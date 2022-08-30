@@ -31,7 +31,7 @@ services:
     ports:
       - 8844:9944
       - 40444:30333
-
+      - 8833:9933
   para_bob:
     image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangata-node:rococo-latest}
     environment:

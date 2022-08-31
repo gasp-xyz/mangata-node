@@ -54,7 +54,7 @@ pub mod pallet {
 
 	use super::*;
 
-	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -154,7 +154,7 @@ pub mod pallet {
 			timeout_metadata.timeout_amount =
 				timeout_amount.unwrap_or(timeout_metadata.timeout_amount);
 
-			ensure!(!timeout_metadata.period_length.is_zero(), Error::<T>::InvalidTimeoutMetadata);
+			ensure!(!timeout_metadata.timeout_amount.is_zero(), Error::<T>::InvalidTimeoutMetadata);
 			ensure!(!timeout_metadata.period_length.is_zero(), Error::<T>::InvalidTimeoutMetadata);
 
 			if let Some(swap_value_thresholds) = swap_value_thresholds {

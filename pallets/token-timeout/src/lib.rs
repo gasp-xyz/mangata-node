@@ -24,10 +24,10 @@ use sp_std::{
 	prelude::*,
 };
 
-// #[cfg(test)]
-// mod mock;
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
 
 // mod benchmarking;
 

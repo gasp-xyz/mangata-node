@@ -1008,7 +1008,7 @@ impl pallet_token_timeout::Config for Runtime {
 	type MaxCuratedTokens = MaxCuratedTokens;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type NativeTokenId = MgxTokenId;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_token_timeout_weights::ModuleWeight<Runtime>;
 }
 
 parameter_types! {
@@ -1406,6 +1406,7 @@ mod benches {
 		[pallet_vesting_mangata, Vesting]
 		[pallet_issuance, Issuance]
 		[pallet_multipurpose_liquidity, MultiPurposeLiquidity]
+		[pallet_token_timeout, TokenTimeout]
 	);
 }
 

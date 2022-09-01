@@ -29,10 +29,10 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-// mod benchmarking;
+mod benchmarking;
 
-// pub mod weights;
-// pub use weights::WeightInfo;
+pub mod weights;
+pub use weights::WeightInfo;
 
 pub(crate) const LOG_TARGET: &'static str = "token-timeouts";
 
@@ -127,13 +127,14 @@ pub mod pallet {
 			+ MultiTokenReservableCurrency<Self::AccountId>;
 		#[pallet::constant]
 		type NativeTokenId: Get<TokenId>;
-		type WeightInfo;
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		// The weight is calculated using MaxCuratedTokens so it is the worst case weight
 		#[transactional]
-		#[pallet::weight(1_000_000_000)]
+		#[pallet::weight(T::WeightInfo::update_timeout_metadata())]
 		pub fn update_timeout_metadata(
 			origin: OriginFor<T>,
 			period_length: Option<T::BlockNumber>,
@@ -181,7 +182,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		#[pallet::weight(1_000_000_000)]
+		#[pallet::weight(T::WeightInfo::release_timeout())]
 		pub fn release_timeout(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 

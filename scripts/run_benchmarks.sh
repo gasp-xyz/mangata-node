@@ -20,6 +20,7 @@ benchmarks=(
     "pallet_issuance"
     "pallet_bootstrap"
     "pallet_multipurpose_liquidity"
+    "pallet_token_timeout"
 )
 
 for bench in ${benchmarks[@]}; do

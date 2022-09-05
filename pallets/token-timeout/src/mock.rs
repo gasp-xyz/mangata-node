@@ -107,7 +107,6 @@ parameter_types! {
 	pub const BnbTreasurySubAccDerive: [u8; 4] = *b"bnbt";
 }
 
-
 parameter_types! {
 	#[derive(PartialEq)]
 	pub const MaxCuratedTokens: u32 = 100;
@@ -120,7 +119,6 @@ impl pallet_token_timeout::Config for Test {
 	type NativeTokenId = NativeCurrencyId;
 	type WeightInfo = ();
 }
-
 
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup.

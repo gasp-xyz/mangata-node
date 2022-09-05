@@ -25,7 +25,7 @@ use frame_benchmarking::{benchmarks, whitelisted_caller};
 use frame_support::{assert_err, assert_ok};
 use frame_system::RawOrigin;
 use orml_tokens::MultiTokenCurrencyExtended;
-use sp_std::{collections::btree_map::BTreeMap};
+use sp_std::collections::btree_map::BTreeMap;
 
 use crate::Pallet as TokenTimeout;
 
@@ -48,7 +48,7 @@ benchmarks! {
 	}
 
 	release_timeout{
-		
+
 		let caller: T::AccountId = whitelisted_caller();
 		let period_length: T::BlockNumber = 10u32.into();
 		let timeout_amount: Balance = 1000;
@@ -71,7 +71,7 @@ benchmarks! {
 		assert_eq!(TokenTimeout::<T>::get_timeout_metadata().unwrap().period_length, period_length);
 		assert_eq!(TokenTimeout::<T>::get_timeout_metadata().unwrap().timeout_amount, timeout_amount);
 		assert_eq!(TokenTimeout::<T>::get_timeout_metadata().unwrap().swap_value_threshold.len(), 0u32 as usize);
-	
+
 		assert_ok!(
 			<TokenTimeout<T> as TimeoutTriggerTrait<_>>::process_timeout(&caller)
 		);

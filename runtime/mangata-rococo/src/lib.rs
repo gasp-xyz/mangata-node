@@ -779,9 +779,7 @@ where
 }
 
 #[derive(Encode, Decode, Clone, TypeInfo)]
-pub struct TwoCurrencyOnChargeAdapter<C, OU, T1, T2, SF2>(
-	PhantomData<(C, OU, T1, T2, SF2)>,
-);
+pub struct TwoCurrencyOnChargeAdapter<C, OU, T1, T2, SF2>(PhantomData<(C, OU, T1, T2, SF2)>);
 
 /// Default implementation for a Currency and an OnUnbalanced handler.
 ///

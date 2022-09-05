@@ -787,16 +787,16 @@ where
 }
 
 #[derive(Encode, Decode, Clone, TypeInfo)]
-pub struct ThreeCurrencyOnChargeAdapter<C, OU, T1, T2, T3, SF2, SF3>(
-	PhantomData<(C, OU, T1, T2, T3, SF2, SF3)>,
+pub struct TwoCurrencyOnChargeAdapter<C, OU, T1, T2, SF2>(
+	PhantomData<(C, OU, T1, T2, SF2)>,
 );
 
 /// Default implementation for a Currency and an OnUnbalanced handler.
 ///
 /// The unbalance handler is given 2 unbalanceds in [`OnUnbalanced::on_unbalanceds`]: fee and
 /// then tip.
-impl<T, C, OU, T1, T2, T3, SF2, SF3> OnChargeTransaction<T>
-	for ThreeCurrencyOnChargeAdapter<C, OU, T1, T2, T3, SF2, SF3>
+impl<T, C, OU, T1, T2, SF2> OnChargeTransaction<T>
+	for TwoCurrencyOnChargeAdapter<C, OU, T1, T2, SF2>
 where
 	T: pallet_transaction_payment_mangata::Config,
 	T::LengthToFee: frame_support::weights::WeightToFee<
@@ -817,9 +817,7 @@ where
 		scale_info::TypeInfo,
 	T1: Get<TokenId>,
 	T2: Get<TokenId>,
-	T3: Get<TokenId>,
 	SF2: Get<u128>,
-	SF3: Get<u128>,
 {
 	type LiquidityInfo = Option<LiquidityInfoEnum<C, T>>;
 	type Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -861,16 +859,7 @@ where
 				ExistenceRequirement::KeepAlive,
 			) {
 				Ok(imbalance) => Ok(Some(LiquidityInfoEnum::Imbalance((T2::get(), imbalance)))),
-				Err(_) => match C::withdraw(
-					T3::get().into(),
-					who,
-					fee / SF3::get().into(),
-					withdraw_reason,
-					ExistenceRequirement::KeepAlive,
-				) {
-					Ok(imbalance) => Ok(Some(LiquidityInfoEnum::Imbalance((T3::get(), imbalance)))),
-					Err(_) => Err(InvalidTransaction::Payment.into()),
-				},
+				Err(_) => Err(InvalidTransaction::Payment.into()),
 			},
 		}
 	}
@@ -889,9 +878,7 @@ where
 		already_withdrawn: Self::LiquidityInfo,
 	) -> Result<(), TransactionValidityError> {
 		if let Some(LiquidityInfoEnum::Imbalance((token_id, paid))) = already_withdrawn {
-			let (corrected_fee, tip) = if token_id == T3::get() {
-				(corrected_fee / SF3::get().into(), tip / SF3::get().into())
-			} else if token_id == T2::get() {
+			let (corrected_fee, tip) = if token_id == T2::get() {
 				(corrected_fee / SF2::get().into(), tip / SF2::get().into())
 			} else {
 				(corrected_fee, tip)
@@ -926,13 +913,11 @@ parameter_types! {
 impl pallet_transaction_payment_mangata::Config for Runtime {
 	type OnChargeTransaction = OnChargeHandler<
 		orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
-		ThreeCurrencyOnChargeAdapter<
+		TwoCurrencyOnChargeAdapter<
 			orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
 			ToAuthor,
 			MgxTokenId,
-			KsmTokenId,
 			TurTokenId,
-			frame_support::traits::ConstU128<KSM_MGX_SCALE_FACTOR>,
 			frame_support::traits::ConstU128<TUR_MGX_SCALE_FACTOR>,
 		>,
 		TokenTimeout,

@@ -15,14 +15,14 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 scale-info = { version = "2.0.0", default-features = false, features = ["derive"] }
-sp-std = { version = "4.0.0-dev", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
-sp-io = { version = "6.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
-sp-runtime = { version = "6.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
-frame-support = { version = "4.0.0-dev", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
-frame-system = { version = "4.0.0-dev", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
+sp-std = { version = "4.0.0-dev", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.26" }
+sp-io = { version = "6.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.26" }
+sp-runtime = { version = "6.0.0", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.26" }
+frame-support = { version = "4.0.0-dev", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.26" }
+frame-system = { version = "4.0.0-dev", default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.26" }
 
 [dev-dependencies]
-sp-core = { version = "6.0.0", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
+sp-core = { version = "6.0.0", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.26" }
 
 [features]
 default = ["std"]

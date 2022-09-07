@@ -439,7 +439,7 @@ fn block_production(criterion: &mut Criterion) {
 			) {
 				cnt += 1;
 			} else {
-				break;
+				break
 			}
 		}
 		let elapsed_micros = now.elapsed().as_micros();

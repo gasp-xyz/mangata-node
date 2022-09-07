@@ -411,7 +411,7 @@ pub struct TokenIdConvert;
 impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
 	fn convert(id: TokenId) -> Option<MultiLocation> {
 		if id == KSM_TOKEN_ID {
-			return Some(MultiLocation::parent());
+			return Some(MultiLocation::parent())
 		}
 
 		match AssetIdMaps::<Runtime>::get_multi_location(id) {
@@ -429,25 +429,22 @@ impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
 impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 	fn convert(location: MultiLocation) -> Option<TokenId> {
 		if location == MultiLocation::parent() {
-			return Some(KSM_TOKEN_ID);
+			return Some(KSM_TOKEN_ID)
 		}
 
 		if let Some(token_id) = AssetIdMaps::<Runtime>::get_currency_id(location.clone()) {
-			return Some(token_id);
+			return Some(token_id)
 		}
 
 		match location {
-			MultiLocation { parents: 1, interior: X2(Parachain(para_id), GeneralKey(key)) } => {
+			MultiLocation { parents: 1, interior: X2(Parachain(para_id), GeneralKey(key)) } =>
 				match (para_id, &key[..]) {
-					(id, key) if id == u32::from(ParachainInfo::get()) => {
-						TokenId::decode(&mut &*key).ok()
-					},
+					(id, key) if id == u32::from(ParachainInfo::get()) =>
+						TokenId::decode(&mut &*key).ok(),
 					_ => None,
-				}
-			},
-			MultiLocation { parents: 0, interior: X1(GeneralKey(key)) } => {
-				TokenId::decode(&mut &(*key)[..]).ok()
-			},
+				},
+			MultiLocation { parents: 0, interior: X1(GeneralKey(key)) } =>
+				TokenId::decode(&mut &(*key)[..]).ok(),
 			_ => None,
 		}
 	}

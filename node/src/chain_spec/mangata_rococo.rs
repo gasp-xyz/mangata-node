@@ -12,7 +12,10 @@ use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, ByteArray, Pair, Public, H160};
-use sp_runtime::traits::{IdentifyAccount, Verify};
+use sp_runtime::{
+	traits::{ConstU32, IdentifyAccount, Verify},
+	WeakBoundedVec,
+};
 
 pub mod public_testnet_keys {
 	pub const ALICE_SR25519: &str =
@@ -357,7 +360,10 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 								1,
 								X2(
 									Parachain(parachains::karura::ID),
-									GeneralKey(parachains::karura::KAR_KEY.to_vec()),
+									GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
+										parachains::karura::KAR_KEY.to_vec(),
+										None,
+									)),
 								),
 							)
 							.into(),

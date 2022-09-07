@@ -365,7 +365,7 @@ impl<T: Config> StakingReservesProviderTrait for Pallet<T> {
 		let use_balance_from = use_balance_from.unwrap_or(BondKind::AvailableBalance);
 
 		match use_balance_from {
-			BondKind::AvailableBalance =>
+			BondKind::AvailableBalance => {
 				T::Tokens::ensure_can_withdraw(
 					token_id.into(),
 					&account_id,
@@ -373,13 +373,16 @@ impl<T: Config> StakingReservesProviderTrait for Pallet<T> {
 					WithdrawReasons::all(),
 					Default::default(),
 				)
-				.is_ok() && reserve_status.staked_unactivated_reserves.checked_add(amount).is_some(),
-			BondKind::ActivatedUnstakedReserves =>
-				reserve_status.activated_unstaked_reserves.checked_sub(amount).is_some() &&
-					reserve_status.staked_and_activated_reserves.checked_add(amount).is_some(),
-			BondKind::UnspentReserves =>
-				reserve_status.unspent_reserves.checked_sub(amount).is_some() &&
-					reserve_status.staked_unactivated_reserves.checked_add(amount).is_some(),
+				.is_ok() && reserve_status.staked_unactivated_reserves.checked_add(amount).is_some()
+			},
+			BondKind::ActivatedUnstakedReserves => {
+				reserve_status.activated_unstaked_reserves.checked_sub(amount).is_some()
+					&& reserve_status.staked_and_activated_reserves.checked_add(amount).is_some()
+			},
+			BondKind::UnspentReserves => {
+				reserve_status.unspent_reserves.checked_sub(amount).is_some()
+					&& reserve_status.staked_unactivated_reserves.checked_add(amount).is_some()
+			},
 		}
 	}
 
@@ -523,7 +526,7 @@ impl<T: Config> ActivationReservesProviderTrait for Pallet<T> {
 		let use_balance_from = use_balance_from.unwrap_or(ActivateKind::AvailableBalance);
 
 		match use_balance_from {
-			ActivateKind::AvailableBalance =>
+			ActivateKind::AvailableBalance => {
 				T::Tokens::ensure_can_withdraw(
 					token_id.into(),
 					&account_id,
@@ -531,13 +534,16 @@ impl<T: Config> ActivationReservesProviderTrait for Pallet<T> {
 					WithdrawReasons::all(),
 					Default::default(),
 				)
-				.is_ok() && reserve_status.activated_unstaked_reserves.checked_add(amount).is_some(),
-			ActivateKind::StakedUnactivatedReserves =>
-				reserve_status.staked_unactivated_reserves.checked_sub(amount).is_some() &&
-					reserve_status.staked_and_activated_reserves.checked_add(amount).is_some(),
-			ActivateKind::UnspentReserves =>
-				reserve_status.unspent_reserves.checked_sub(amount).is_some() &&
-					reserve_status.activated_unstaked_reserves.checked_add(amount).is_some(),
+				.is_ok() && reserve_status.activated_unstaked_reserves.checked_add(amount).is_some()
+			},
+			ActivateKind::StakedUnactivatedReserves => {
+				reserve_status.staked_unactivated_reserves.checked_sub(amount).is_some()
+					&& reserve_status.staked_and_activated_reserves.checked_add(amount).is_some()
+			},
+			ActivateKind::UnspentReserves => {
+				reserve_status.unspent_reserves.checked_sub(amount).is_some()
+					&& reserve_status.activated_unstaked_reserves.checked_add(amount).is_some()
+			},
 		}
 	}
 

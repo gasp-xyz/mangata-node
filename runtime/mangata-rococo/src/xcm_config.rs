@@ -25,6 +25,7 @@ use orml_traits::{
 use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
+use sp_runtime::{traits::ConstU32, WeakBoundedVec};
 use sp_std::{marker::PhantomData, prelude::*};
 use xcm::latest::prelude::*;
 use xcm_builder::{
@@ -35,10 +36,6 @@ use xcm_builder::{
 	SignedToAccountId32, SovereignSignedViaLocation, TakeRevenue, TakeWeightCredit,
 };
 use xcm_executor::{traits::DropAssets, Assets, XcmExecutor};
-use sp_runtime::{
-	traits::{ConstU32},
-	WeakBoundedVec,
-};
 
 parameter_types! {
 	pub RocLocation: MultiLocation = MultiLocation::parent();
@@ -421,10 +418,10 @@ impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
 			Some(multi_location) => Some(multi_location),
 			None => Some(MultiLocation::new(
 				1,
-				X2(Parachain(ParachainInfo::get().into()), GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
-			id.encode(),
-			None,
-		))),
+				X2(
+					Parachain(ParachainInfo::get().into()),
+					GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(id.encode(), None)),
+				),
 			)),
 		}
 	}

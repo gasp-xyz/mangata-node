@@ -2793,7 +2793,8 @@ impl<T: Config> Valuate for Pallet<T> {
 			mga_token_amount,
 			mga_valuation,
 			Rounding::Down,
-		).unwrap_or(Balance::max_value())
+		)
+		.unwrap_or(Balance::max_value())
 	}
 
 	fn get_pool_state(

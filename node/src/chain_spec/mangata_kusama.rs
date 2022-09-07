@@ -433,7 +433,7 @@ pub fn development_config() -> ChainSpec {
 		Some(properties),
 		Extensions {
 			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
-			para_id: parachains::mangata::ID.into(),
+			para_id: parachains::mangata::ID,
 		},
 	)
 }

@@ -216,7 +216,7 @@ impl FixedConversionRateProvider for FeePerSecondProvider {
 				return Some(fee_per_second)
 			}
 		}
-		return None
+		None
 	}
 }
 

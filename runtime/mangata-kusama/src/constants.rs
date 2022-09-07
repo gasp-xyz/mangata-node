@@ -8,10 +8,10 @@ pub mod fee {
 	use smallvec::smallvec;
 	use sp_runtime::Perbill;
 
-	pub const KSM_MGX_SCALE_FACTOR_UNADJUSTED: u128 = 10_000_000_000u128; // 10_000 as KSM/MGX, with 6 decimals accounted for (12 - KSM, 18 - MGX)
+	pub const KSM_MGX_SCALE_FACTOR_UNADJUSTED: u128 = 10_000_000_000_u128; // 10_000 as KSM/MGX, with 6 decimals accounted for (12 - KSM, 18 - MGX)
 
 	// on-chain fees are 10x more expensive then ~real rate
-	pub const KSM_MGX_SCALE_FACTOR: u128 = 1000_000_000u128; // 1000 as KSM/MGX, with 6 decimals accounted for (12 - KSM, 18 - MGX)
+	pub const KSM_MGX_SCALE_FACTOR: u128 = 1000_000_000_u128; // 1000 as KSM/MGX, with 6 decimals accounted for (12 - KSM, 18 - MGX)
 	pub const KAR_MGX_SCALE_FACTOR: u128 = KSM_MGX_SCALE_FACTOR / 100; // 100 as KAR/KSM
 	pub const TUR_MGX_SCALE_FACTOR: u128 = KSM_MGX_SCALE_FACTOR; // 100 as TUR/KSM, with 2 decimals accounted for (10 - TUR, 12 - KSM)
 

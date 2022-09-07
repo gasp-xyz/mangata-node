@@ -122,7 +122,7 @@ pub mod asset_registry {
 			let names = ["AssetRegistry", "AssetsInfo"];
 			let mut total_rw: u32 = 0;
 			for name in names {
-				match kill_prefix(&twox_128(&name.as_bytes()), None) {
+				match kill_prefix(&twox_128(name.as_bytes()), None) {
 					KillStorageResult::AllRemoved(n) => {
 						total_rw += n;
 					},

@@ -1701,7 +1701,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-session-benchmarking"
 version = "3.0.0"
-source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev-v0.9.26#8c0af5efe62cf6ec20988f0ce3e888e7d1b482e3"
+source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev-v0.9.26#cf2f115dda95532aa21a2580a3866e4f866e494a"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -1819,7 +1819,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-inprocess-interface"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev-v0.9.26#8c0af5efe62cf6ec20988f0ce3e888e7d1b482e3"
+source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev-v0.9.26#cf2f115dda95532aa21a2580a3866e4f866e494a"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",

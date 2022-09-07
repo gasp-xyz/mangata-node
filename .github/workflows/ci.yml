@@ -576,7 +576,7 @@ jobs:
 
       - name: Run sequential e2e tests
         working-directory: e2eTests
-        run: yarn test-sequential-e2e
+        run: yarn test-sequential
 
       - name: Test Report
         uses: dorny/test-reporter@v1

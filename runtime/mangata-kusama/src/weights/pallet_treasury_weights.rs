@@ -65,6 +65,10 @@ pub trait WeightInfo {
 /// Weights for pallet_treasury using the Mangata node and recommended hardware.
 pub struct ModuleWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_treasury::WeightInfo for ModuleWeight<T> {
+	fn spend() -> Weight { (34_972_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(2 as Weight))
+			.saturating_add(T::DbWeight::get().writes(3 as Weight)) 
+		}
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: Treasury ProposalCount (r:1 w:1)
 	// Storage: Treasury Proposals (r:0 w:1)

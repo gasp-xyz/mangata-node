@@ -44,7 +44,7 @@ hex-literal = "0.3.4"
 hex = "0.4.0"
 
 # RPC related Dependencies
-jsonrpsee = { version = "0.13.1", features = ["server"] }
+jsonrpsee = { version = "0.14.0", features = ["server"] }
 
 # Local Dependencies
 mangata-kusama-runtime = { path = "../runtime/mangata-kusama/", optional = true }

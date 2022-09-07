@@ -25,6 +25,7 @@ use orml_traits::{
 use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
+use sp_runtime::{traits::ConstU32, WeakBoundedVec};
 use sp_std::{marker::PhantomData, prelude::*};
 use xcm::latest::prelude::*;
 use xcm_builder::{
@@ -117,14 +118,20 @@ parameter_types! {
 	pub MgxPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			0,
-			X1(GeneralKey(MGX_TOKEN_ID.encode())),
+			X1(GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
+			MGX_TOKEN_ID.encode(),
+			None,
+		))),
 		).into(),
 		mgx_per_second()
 	);
 	pub KarPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
-			X2(Parachain(parachains::karura::ID), GeneralKey(parachains::karura::KAR_KEY.to_vec())),
+			X2(Parachain(parachains::karura::ID), GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
+			parachains::karura::KAR_KEY.to_vec(),
+			None,
+		))),
 		).into(),
 		// KAR:KSM 100:1
 		ksm_per_second() * 100
@@ -132,7 +139,10 @@ parameter_types! {
 	pub KusdPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
-			X2(Parachain(parachains::karura::ID), GeneralKey(parachains::karura::KUSD_KEY.to_vec())),
+			X2(Parachain(parachains::karura::ID), GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
+			parachains::karura::KUSD_KEY.to_vec(),
+			None,
+		))),
 		).into(),
 		// KUSD:KSM 50:1
 		ksm_per_second() * 50
@@ -140,7 +150,10 @@ parameter_types! {
 	pub LksmPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
-			X2(Parachain(parachains::karura::ID), GeneralKey(parachains::karura::LKSM_KEY.to_vec())),
+			X2(Parachain(parachains::karura::ID), GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
+			parachains::karura::LKSM_KEY.to_vec(),
+			None,
+		))),
 		).into(),
 		// LKSM:KSM 10:1
 		ksm_per_second() * 10
@@ -156,7 +169,10 @@ parameter_types! {
 	pub ImbuPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
-			X2(Parachain(parachains::imbue::ID), GeneralKey(parachains::imbue::IMBU_KEY.to_vec())),
+			X2(Parachain(parachains::imbue::ID), GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
+			parachains::imbue::IMBU_KEY.to_vec(),
+			None,
+		))),
 		).into(),
 		// IMBU:KSM 50:1
 		ksm_per_second() * 50
@@ -172,7 +188,10 @@ parameter_types! {
 	pub BncPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
-			X2(Parachain(parachains::bifrost::ID), GeneralKey(parachains::bifrost::BNC_KEY.to_vec())),
+			X2(Parachain(parachains::bifrost::ID), GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
+			parachains::bifrost::BNC_KEY.to_vec(),
+			None,
+		))),
 		).into(),
 		// BNC:KSM = 80:1
 		ksm_per_second() * 80
@@ -180,7 +199,10 @@ parameter_types! {
 	pub VsksmPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
-			X2(Parachain(parachains::bifrost::ID), GeneralKey(parachains::bifrost::VSKSM_KEY.to_vec())),
+			X2(Parachain(parachains::bifrost::ID), GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
+			parachains::bifrost::VSKSM_KEY.to_vec(),
+			None,
+		))),
 		).into(),
 		// VSKSM:KSM = 1:1
 		ksm_per_second()
@@ -188,7 +210,10 @@ parameter_types! {
 	pub VksmPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
-			X2(Parachain(parachains::bifrost::ID), GeneralKey(parachains::bifrost::VKSM_KEY.to_vec())),
+			X2(Parachain(parachains::bifrost::ID), GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
+			parachains::bifrost::VKSM_KEY.to_vec(),
+			None,
+		))),
 		).into(),
 		// VKSM:KSM = 1:1
 		ksm_per_second()
@@ -386,14 +411,17 @@ pub struct TokenIdConvert;
 impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
 	fn convert(id: TokenId) -> Option<MultiLocation> {
 		if id == KSM_TOKEN_ID {
-			return Some(MultiLocation::parent())
+			return Some(MultiLocation::parent());
 		}
 
 		match AssetIdMaps::<Runtime>::get_multi_location(id) {
 			Some(multi_location) => Some(multi_location),
 			None => Some(MultiLocation::new(
 				1,
-				X2(Parachain(ParachainInfo::get().into()), GeneralKey(id.encode())),
+				X2(
+					Parachain(ParachainInfo::get().into()),
+					GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(id.encode(), None)),
+				),
 			)),
 		}
 	}
@@ -401,22 +429,25 @@ impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
 impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 	fn convert(location: MultiLocation) -> Option<TokenId> {
 		if location == MultiLocation::parent() {
-			return Some(KSM_TOKEN_ID)
+			return Some(KSM_TOKEN_ID);
 		}
 
 		if let Some(token_id) = AssetIdMaps::<Runtime>::get_currency_id(location.clone()) {
-			return Some(token_id)
+			return Some(token_id);
 		}
 
 		match location {
-			MultiLocation { parents: 1, interior: X2(Parachain(para_id), GeneralKey(key)) } =>
+			MultiLocation { parents: 1, interior: X2(Parachain(para_id), GeneralKey(key)) } => {
 				match (para_id, &key[..]) {
-					(id, key) if id == u32::from(ParachainInfo::get()) =>
-						TokenId::decode(&mut &*key).ok(),
+					(id, key) if id == u32::from(ParachainInfo::get()) => {
+						TokenId::decode(&mut &*key).ok()
+					},
 					_ => None,
-				},
-			MultiLocation { parents: 0, interior: X1(GeneralKey(key)) } =>
-				TokenId::decode(&mut &*key).ok(),
+				}
+			},
+			MultiLocation { parents: 0, interior: X1(GeneralKey(key)) } => {
+				TokenId::decode(&mut &(*key)[..]).ok()
+			},
 			_ => None,
 		}
 	}

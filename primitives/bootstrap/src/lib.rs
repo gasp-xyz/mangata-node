@@ -44,4 +44,6 @@ pub trait RewardsApi {
 		liquidity_asset_id: TokenId,
 		amount: Balance,
 	) -> DispatchResult;
+
+	fn promote_pool(liquidity_token_id: TokenId) -> DispatchResult;
 }

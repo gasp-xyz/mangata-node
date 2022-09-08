@@ -2826,4 +2826,17 @@ impl<T: Config> mp_bootstrap::RewardsApi for Pallet<T> {
 			Some(ActivateKind::AvailableBalance),
 		)
 	}
+
+	fn promote_pool(liquidity_token_id: TokenId) -> DispatchResult {
+		ensure!(
+			<T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_token_id).is_none(),
+			Error::<T>::PoolAlreadyPromoted,
+		);
+
+		<T as Config>::PoolPromoteApi::promote_pool(liquidity_token_id);
+
+		Pallet::<T>::deposit_event(Event::PoolPromoted(liquidity_token_id));
+
+		Ok(())
+	}
 }

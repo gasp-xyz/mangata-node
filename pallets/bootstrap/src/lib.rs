@@ -101,8 +101,8 @@ pub mod pallet {
 						second_token_valuation,
 					) {
 						MintedLiquidity::<T>::put((liq_asset_id, issuance)); // W:1
-						if PromoteBootstrapPool::<T>::get(){
-							if !T::RewardsApi::promote_pool(liq_asset_id).is_ok(){
+						if PromoteBootstrapPool::<T>::get() {
+							if !T::RewardsApi::promote_pool(liq_asset_id).is_ok() {
 								log!(error, "cannot promote pool!");
 								Self::deposit_event(Event::UnableToPromotePool(liq_asset_id));
 							}
@@ -377,7 +377,7 @@ pub mod pallet {
 			ensure_root(origin)?;
 
 			// BootstrapSchedule should exist but not finalized
-			// we allow this to go thru if the BootstrapSchedule exists and the phase is before start 
+			// we allow this to go thru if the BootstrapSchedule exists and the phase is before start
 
 			ensure!(BootstrapSchedule::<T>::get().is_some(), Error::<T>::BootstrapNotSchduled);
 			ensure!(Phase::<T>::get() != BootstrapPhase::Finished, Error::<T>::BootstrapFinished);

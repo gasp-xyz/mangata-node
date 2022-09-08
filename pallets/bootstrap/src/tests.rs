@@ -45,7 +45,7 @@ fn jump_to_whitelist_phase() {
 		10,
 		10,
 		DEFAULT_RATIO,
-false,
+		false,
 	)
 	.unwrap();
 	Bootstrap::on_initialize(15_u32.into());
@@ -64,7 +64,7 @@ fn jump_to_public_phase() {
 		10,
 		10,
 		DEFAULT_RATIO,
-false,
+		false,
 	)
 	.unwrap();
 	Bootstrap::on_initialize(25_u32.into());
@@ -202,7 +202,7 @@ fn test_prevent_provisions_in_before_start_phase() {
 			10,
 			20,
 			DEFAULT_RATIO,
-false,
+			false,
 		)
 		.unwrap();
 
@@ -231,7 +231,7 @@ fn test_fail_scheudle_bootstrap_with_same_token() {
 				10,
 				20,
 				DEFAULT_RATIO,
-false,
+				false,
 			),
 			Error::<Test>::SameToken
 		);
@@ -256,7 +256,7 @@ fn test_prevent_schedule_bootstrap_with_pair_that_does_not_exists() {
 				10,
 				20,
 				DEFAULT_RATIO,
-false,
+				false,
 			),
 			Error::<Test>::TokenIdDoesNotExists
 		);
@@ -280,7 +280,7 @@ fn test_prevent_provisions_in_finished_phase() {
 			10,
 			20,
 			DEFAULT_RATIO,
-false,
+			false,
 		)
 		.unwrap();
 
@@ -368,7 +368,7 @@ fn test_non_root_user_can_not_schedule_bootstrap() {
 				1,
 				1,
 				DEFAULT_RATIO,
-false,
+				false,
 			),
 			BadOrigin
 		);
@@ -408,7 +408,7 @@ fn test_ido_start_cannot_happen_in_the_past() {
 				1,
 				1,
 				DEFAULT_RATIO,
-false,
+				false,
 			),
 			Error::<Test>::BootstrapStartInThePast
 		);
@@ -430,7 +430,7 @@ fn test_ido_start_can_not_be_initialize_with_0_ratio() {
 				1,
 				1,
 				(1, 0),
-false,
+				false,
 			),
 			Error::<Test>::WrongRatio
 		);
@@ -443,7 +443,7 @@ false,
 				1,
 				1,
 				(0, 1),
-false,
+				false,
 			),
 			Error::<Test>::WrongRatio
 		);
@@ -464,7 +464,7 @@ fn test_cannot_schedule_bootstrap_with_whitelist_phase_length_equal_zero() {
 				0,
 				1,
 				DEFAULT_RATIO,
-false,
+				false,
 			),
 			Error::<Test>::PhaseLengthCannotBeZero
 		);
@@ -485,7 +485,7 @@ fn test_cannot_schedule_bootstrap_with_public_phase_length_equal_zero() {
 				1,
 				0,
 				DEFAULT_RATIO,
-false,
+				false,
 			),
 			Error::<Test>::PhaseLengthCannotBeZero
 		);
@@ -509,7 +509,7 @@ fn test_bootstrap_can_be_modified_only_before_its_started() {
 			10,
 			20,
 			DEFAULT_RATIO,
-false,
+			false,
 		)
 		.unwrap();
 
@@ -521,7 +521,7 @@ false,
 			10,
 			20,
 			DEFAULT_RATIO,
-false,
+			false,
 		)
 		.unwrap();
 
@@ -569,7 +569,7 @@ fn test_bootstrap_state_transitions() {
 			(BOOTSTRAP_PUBLIC_START - BOOTSTRAP_WHITELIST_START).try_into().unwrap(),
 			(BOOTSTRAP_FINISH - BOOTSTRAP_PUBLIC_START).try_into().unwrap(),
 			DEFAULT_RATIO,
-false,
+			false,
 		)
 		.unwrap();
 
@@ -624,7 +624,7 @@ fn test_bootstrap_state_transitions_when_on_initialized_is_not_called() {
 			(BOOTSTRAP_PUBLIC_START - BOOTSTRAP_WHITELIST_START).try_into().unwrap(),
 			(BOOTSTRAP_FINISH - BOOTSTRAP_PUBLIC_START).try_into().unwrap(),
 			DEFAULT_RATIO,
-false,
+			false,
 		)
 		.unwrap();
 
@@ -741,7 +741,7 @@ fn test_crate_pool_is_called_with_proper_arguments_after_bootstrap_finish() {
 			10,
 			10,
 			DEFAULT_RATIO,
-false,
+			false,
 		)
 		.unwrap();
 
@@ -769,7 +769,7 @@ fn test_cannot_claim_liquidity_tokens_when_bootstrap_is_not_finished() {
 			10,
 			10,
 			DEFAULT_RATIO,
-false,
+			false,
 		)
 		.unwrap();
 
@@ -820,7 +820,7 @@ fn test_rewards_are_distributed_properly_with_single_user() {
 			10,
 			10,
 			DEFAULT_RATIO,
-false,
+			false,
 		)
 		.unwrap();
 
@@ -904,7 +904,7 @@ fn test_rewards_are_distributed_properly_with_multiple_user() {
 			10,
 			10,
 			DEFAULT_RATIO,
-false,
+			false,
 		)
 		.unwrap();
 
@@ -1473,7 +1473,7 @@ fn test_restart_bootstrap() {
 			10,
 			10,
 			DEFAULT_RATIO,
-false,
+			false,
 		)
 		.unwrap();
 		Bootstrap::on_initialize(110_u32.into());
@@ -1540,7 +1540,7 @@ false,
 			10,
 			10,
 			DEFAULT_RATIO,
-false,
+			false,
 		)
 		.unwrap();
 	});
@@ -1580,7 +1580,7 @@ fn claim_liquidity_tokens_even_if_sum_of_rewards_is_zero_because_of_small_provis
 			10,
 			10,
 			DEFAULT_RATIO,
-false,
+			false,
 		)
 		.unwrap();
 		Bootstrap::on_initialize(110_u32.into());
@@ -1647,7 +1647,7 @@ fn transfer_dust_to_treasury() {
 			10,
 			10,
 			DEFAULT_RATIO,
-false,
+			false,
 		)
 		.unwrap();
 		Bootstrap::on_initialize(110_u32.into());
@@ -1710,7 +1710,7 @@ fn archive_previous_bootstrap_schedules() {
 			10,
 			10,
 			DEFAULT_RATIO,
-false,
+			false,
 		)
 		.unwrap();
 		Bootstrap::on_initialize(110_u32.into());

@@ -1905,3 +1905,113 @@ fn test_claim_and_activate_fails_when_tokens_activations_fails() {
 		);
 	});
 }
+
+#[test]
+#[serial]
+fn test_pool_is_promoted_if_scheduled_to() {
+	new_test_ext().execute_with(|| {
+		use std::sync::{Arc, Mutex};
+		set_up();
+
+		const KSM_PROVISON: Balance = 10;
+		const MGA_PROVISON: Balance = 100_000;
+		let liq_token_id: Arc<Mutex<TokenId>> = Arc::new(Mutex::new(0_u32.into()));
+		let ref_liq_token_id = liq_token_id.clone();
+
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		let pool_create_mock = MockPoolCreateApi::pool_create_context();
+		pool_create_mock
+			.expect()
+			.times(1)
+			.returning(move |addr, _, ksm_amount, _, mga_amount| {
+				let issuance = (ksm_amount + mga_amount) / 2;
+				let id = Bootstrap::create_new_token(&addr, issuance);
+				*(ref_liq_token_id.lock().unwrap()) = id;
+				Some((id, issuance))
+			});
+
+		let mut mock = MockRewardsApi::promote_pool_context();
+		mock.expect()
+			.times(1)
+			.return_const(true);
+
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			10,
+			10,
+			DEFAULT_RATIO,
+			true,
+		)
+		.unwrap();
+
+		Bootstrap::on_initialize(100_u32.into());
+		assert_eq!(BootstrapPhase::Whitelist, Phase::<Test>::get());
+
+		Bootstrap::on_initialize(110_u32.into());
+		assert_eq!(BootstrapPhase::Public, Phase::<Test>::get());
+
+		Bootstrap::on_initialize(120_u32.into());
+		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
+
+	});
+}
+
+#[test]
+#[serial]
+fn test_pool_is_not_promoted_if_not_scheduled_to() {
+	new_test_ext().execute_with(|| {
+		use std::sync::{Arc, Mutex};
+		set_up();
+
+		const KSM_PROVISON: Balance = 10;
+		const MGA_PROVISON: Balance = 100_000;
+		let liq_token_id: Arc<Mutex<TokenId>> = Arc::new(Mutex::new(0_u32.into()));
+		let ref_liq_token_id = liq_token_id.clone();
+
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		let pool_create_mock = MockPoolCreateApi::pool_create_context();
+		pool_create_mock
+			.expect()
+			.times(1)
+			.returning(move |addr, _, ksm_amount, _, mga_amount| {
+				let issuance = (ksm_amount + mga_amount) / 2;
+				let id = Bootstrap::create_new_token(&addr, issuance);
+				*(ref_liq_token_id.lock().unwrap()) = id;
+				Some((id, issuance))
+			});
+
+		let mut mock = MockRewardsApi::promote_pool_context();
+		mock.expect()
+			.times(0)
+			.return_const(true);
+
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			10,
+			10,
+			DEFAULT_RATIO,
+			false,
+		)
+		.unwrap();
+
+		Bootstrap::on_initialize(100_u32.into());
+		assert_eq!(BootstrapPhase::Whitelist, Phase::<Test>::get());
+
+		Bootstrap::on_initialize(110_u32.into());
+		assert_eq!(BootstrapPhase::Public, Phase::<Test>::get());
+
+		Bootstrap::on_initialize(120_u32.into());
+		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
+
+	});
+}

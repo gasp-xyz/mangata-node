@@ -102,9 +102,8 @@ pub mod pallet {
 					) {
 						MintedLiquidity::<T>::put((liq_asset_id, issuance)); // W:1
 						if PromoteBootstrapPool::<T>::get() {
-							if !T::RewardsApi::promote_pool(liq_asset_id).is_ok() {
-								log!(error, "cannot promote pool!");
-								Self::deposit_event(Event::UnableToPromotePool(liq_asset_id));
+							if !T::RewardsApi::promote_pool(liq_asset_id) {
+								log!(error, "pool already promoted!");
 							}
 						}
 					} else {
@@ -515,7 +514,7 @@ pub mod pallet {
 		TokenIdDoesNotExists,
 		/// Token activations failed
 		TokensActivationFailed,
-		/// Bootstrap not schduled
+		/// Bootstrap not scheduled
 		BootstrapNotSchduled,
 		/// Bootstrap already Finished
 		BootstrapFinished,
@@ -536,8 +535,6 @@ pub mod pallet {
 		BootstrapParitallyFinalized,
 		/// finalization process finished
 		BootstrapFinalized,
-		/// Unable to promote pool
-		UnableToPromotePool(TokenId),
 	}
 }
 

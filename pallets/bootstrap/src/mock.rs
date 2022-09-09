@@ -245,7 +245,7 @@ mockall::mock! {
 			amount: Balance,
 		) -> DispatchResult;
 
-		fn promote_pool(liquidity_token_id: TokenId) -> DispatchResult;
+		fn promote_pool(liquidity_token_id: TokenId) -> bool;
 	}
 }
 

@@ -2828,7 +2828,6 @@ impl<T: Config> mp_bootstrap::RewardsApi for Pallet<T> {
 	}
 
 	fn promote_pool(liquidity_token_id: TokenId) -> bool {
-
 		let promote_pool_result = <T as Config>::PoolPromoteApi::promote_pool(liquidity_token_id);
 
 		Pallet::<T>::deposit_event(Event::PoolPromoted(liquidity_token_id));

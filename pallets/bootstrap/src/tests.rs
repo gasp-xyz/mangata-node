@@ -1933,9 +1933,7 @@ fn test_pool_is_promoted_if_scheduled_to() {
 			});
 
 		let mut mock = MockRewardsApi::promote_pool_context();
-		mock.expect()
-			.times(1)
-			.return_const(true);
+		mock.expect().times(1).return_const(true);
 
 		Bootstrap::schedule_bootstrap(
 			Origin::root(),
@@ -1957,7 +1955,6 @@ fn test_pool_is_promoted_if_scheduled_to() {
 
 		Bootstrap::on_initialize(120_u32.into());
 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
-
 	});
 }
 
@@ -1988,9 +1985,7 @@ fn test_pool_is_not_promoted_if_not_scheduled_to() {
 			});
 
 		let mut mock = MockRewardsApi::promote_pool_context();
-		mock.expect()
-			.times(0)
-			.return_const(true);
+		mock.expect().times(0).return_const(true);
 
 		Bootstrap::schedule_bootstrap(
 			Origin::root(),
@@ -2012,6 +2007,5 @@ fn test_pool_is_not_promoted_if_not_scheduled_to() {
 
 		Bootstrap::on_initialize(120_u32.into());
 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
-
 	});
 }

@@ -337,8 +337,7 @@ jobs:
       TEST_SUDO_NAME: '//Alice'
       MANGATA_NODE_VERSION: ${{ github.sha }}
       E2EBRANCHNAME: 'main'
-      IMAGE_NAME: 'mangatasolutions/mangata-node:rococo-${{ github.sha }}'
-      PARACHAIN_DOCKER_IMAGE: "${{ github.event.inputs.parachainDocker || ${{ env.IMAGE_NAME }}  }}"
+      PARACHAIN_DOCKER_IMAGE: "${{ github.event.inputs.parachainDocker || 'mangatasolutions/mangata-node:rococo-${{ github.sha }}'  }}"
     steps:
       ####IDK, but this is neccesary for reports
       -
@@ -487,8 +486,7 @@ jobs:
       TEST_SUDO_NAME: '//Alice'
       MANGATA_NODE_VERSION: ${{ github.sha }}
       E2EBRANCHNAME: 'main'
-      IMAGE_NAME: 'mangatasolutions/mangata-node:rococo-${{ github.sha }}'
-      PARACHAIN_DOCKER_IMAGE: "${{ github.event.inputs.parachainDocker || ${{ env.IMAGE_NAME }} }}"
+      PARACHAIN_DOCKER_IMAGE: "${{ github.event.inputs.parachainDocker || 'mangatasolutions/mangata-node:rococo-${{ github.sha }}' }}"
     steps:
       ####IDK, but this is neccesary for reports
       -

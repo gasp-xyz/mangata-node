@@ -247,7 +247,7 @@ jobs:
       -
         name: Upload docker img artifact
         uses: actions/upload-artifact@v2
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
+        if: ! contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true'
         with:
           name: rococo-docker-${{ needs.init.outputs.GLOBAL_VERSION }}
           path: rococo-docker-${{ needs.init.outputs.GLOBAL_VERSION }}.tar
@@ -334,7 +334,7 @@ jobs:
             ./docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm.md5
 
   e2e-test-parallel-self-hosted:
-    needs: build-rococo
+    needs: [init,build-rococo]
     runs-on: self-hosted
     timeout-minutes: 180
     if: ${{ (!cancelled() && (success() || github.event.inputs.skipBuild == 'true')) && !contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests') }}
@@ -483,7 +483,7 @@ jobs:
 
 
   e2e-test-sequential-self-hosted:
-    needs: build-rococo
+    needs: [init,build-rococo]
     runs-on: self-hosted
     if: ${{ (!cancelled() && (success() || github.event.inputs.skipBuild == 'true')) && !contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests') }}
     timeout-minutes: 180
@@ -631,7 +631,7 @@ jobs:
         run: yarn down
 
   publish:
-    needs: [rustfmt-check, unit-test, clippy-check, build-rococo, build-kusama, e2e-test-sequential-self-hosted, e2e-test-parallel-self-hosted, run-benchmarks, run-benchmarks-tests]
+    needs: [init, rustfmt-check, unit-test, clippy-check, build-rococo, build-kusama, e2e-test-sequential-self-hosted, e2e-test-parallel-self-hosted, run-benchmarks, run-benchmarks-tests]
     runs-on: ubuntu-latest
     if: |
       github.ref == 'refs/heads/develop' &&

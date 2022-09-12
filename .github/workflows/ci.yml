@@ -36,7 +36,16 @@ env:
   DISABLE_TTY: 1
 
 jobs:
-
+  init:
+    name: Global init
+    runs-on: ubuntu-latest
+    outputs:
+      GLOBAL_VERSION: ${{ steps.set_ver.outputs.GLOBAL_VERSION }}
+    steps:
+      - name: Set global version
+        id: set_ver
+        run: echo “::set-output name=GLOBAL_VERSION::${{ github.sha }}”
+  
   rustfmt-check:
     name: Formatting check
     if:  ${{ github.event.inputs.skipBuild != 'true' }}
@@ -181,6 +190,7 @@ jobs:
           ./docker-cargo/release/mangata-node benchmark pallet --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-xyk' --template ./templates/module-weight-template.hbs
 
   build-rococo:
+    needs: [init]
     runs-on: ubuntu-latest
     if: ${{ github.event.inputs.skipBuild != 'true' }}
     steps:
@@ -226,32 +236,33 @@ jobs:
         name: Build node img
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         env:
-          DOCKER_IMAGE_GIT_SHA_TAG: "mangatasolutions/mangata-node:rococo-${{ github.sha }}"
+          DOCKER_IMAGE_GIT_SHA_TAG: "mangatasolutions/mangata-node:rococo-${{ needs.init.outputs.GLOBAL_VERSION }}
           DOCKER_IMAGE_LATEST_TAG: "mangatasolutions/mangata-node:rococo-latest"
           SKIP_BUILD: 1
           NODE_BINARY: "docker-cargo/release/mangata-node"
           WASM: "docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm"
         run: >
           ./scripts/build-image.sh ${{ env.DOCKER_IMAGE_GIT_SHA_TAG }} ${{ env.DOCKER_IMAGE_LATEST_TAG }} &&
-          docker save -o rococo-docker-${{ github.sha }}.tar ${DOCKER_IMAGE_GIT_SHA_TAG} ${DOCKER_IMAGE_LATEST_TAG}
+          docker save -o rococo-docker-${{ needs.init.outputs.GLOBAL_VERSION }}.tar ${DOCKER_IMAGE_GIT_SHA_TAG} ${DOCKER_IMAGE_LATEST_TAG}
       -
         name: Upload docker img artifact
         uses: actions/upload-artifact@v2
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         with:
-          name: rococo-docker-${{ github.sha }}
-          path: rococo-docker-${{ github.sha }}.tar
+          name: rococo-docker-${{ needs.init.outputs.GLOBAL_VERSION }}
+          path: rococo-docker-${{ needs.init.outputs.GLOBAL_VERSION }}.tar
       -
         name: Upload wasm artifact
         uses: actions/upload-artifact@v2
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         with:
-          name: rococo-wasm-${{ github.sha }}
+          name: rococo-wasm-${{ needs.init.outputs.GLOBAL_VERSION }}
           path: |
             ./docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm
             ./docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm.md5
 
   build-kusama:
+    needs: [init]
     runs-on: ubuntu-latest
     if: ${{ github.event.inputs.skipBuild != 'true' }}
     steps:
@@ -297,27 +308,27 @@ jobs:
         name: Build node img
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         env:
-          DOCKER_IMAGE_GIT_SHA_TAG: "mangatasolutions/mangata-node:kusama-${{ github.sha }}"
+          DOCKER_IMAGE_GIT_SHA_TAG: "mangatasolutions/mangata-node:kusama-${{ needs.init.outputs.GLOBAL_VERSION }}"
           DOCKER_IMAGE_LATEST_TAG: "mangatasolutions/mangata-node:kusama-latest"
           SKIP_BUILD: 1
           NODE_BINARY: "docker-cargo/release/mangata-node"
           WASM: "docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm"
         run: >
           ./scripts/build-image.sh ${{ env.DOCKER_IMAGE_GIT_SHA_TAG }} ${{ env.DOCKER_IMAGE_LATEST_TAG }} &&
-          docker save -o kusama-docker-${{ github.sha }}.tar ${DOCKER_IMAGE_GIT_SHA_TAG} ${DOCKER_IMAGE_LATEST_TAG}
+          docker save -o kusama-docker-${{ needs.init.outputs.GLOBAL_VERSION }}.tar ${DOCKER_IMAGE_GIT_SHA_TAG} ${DOCKER_IMAGE_LATEST_TAG}
       -
         name: Upload docker img artifact
         uses: actions/upload-artifact@v2
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         with:
-          name: kusama-docker-${{ github.sha }}
-          path: kusama-docker-${{ github.sha }}.tar
+          name: kusama-docker-${{ needs.init.outputs.GLOBAL_VERSION }}
+          path: kusama-docker-${{ needs.init.outputs.GLOBAL_VERSION }}.tar
       -
         name: Upload wasm artifact
         uses: actions/upload-artifact@v2
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         with:
-          name: kusama-wasm-${{ github.sha }}
+          name: kusama-wasm-${{ needs.init.outputs.GLOBAL_VERSION }}
           path: |
             ./docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm
             ./docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm.md5
@@ -335,9 +346,9 @@ jobs:
       E2E_TREASURY_BURN_PALLET_ADDRESS : ${{ secrets.E2E_TREASURY_BURN_PALLET_ADDRESS }}
       #      TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
       TEST_SUDO_NAME: '//Alice'
-      MANGATA_NODE_VERSION: ${{ github.sha }}
+      MANGATA_NODE_VERSION: ${{ needs.init.outputs.GLOBAL_VERSION }}
       E2EBRANCHNAME: 'main'
-      PARACHAIN_DOCKER_IMAGE: "${{ github.event.inputs.parachainDocker || 'mangatasolutions/mangata-node:rococo-${{ github.sha }}'  }}"
+      PARACHAIN_DOCKER_IMAGE: "${{ github.event.inputs.parachainDocker || 'mangatasolutions/mangata-node:rococo-${{ needs.init.outputs.GLOBAL_VERSION }}'  }}"
     steps:
       ####IDK, but this is neccesary for reports
       -
@@ -349,13 +360,13 @@ jobs:
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         uses: actions/download-artifact@v2
         with:
-          name: rococo-docker-${{ github.sha }}
+          name: rococo-docker-${{ needs.init.outputs.GLOBAL_VERSION }}
           path: /tmp
       -
         name: Load Docker image
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         run: |
-          docker load --input /tmp/rococo-docker-${{ github.sha }}.tar
+          docker load --input /tmp/rococo-docker-${{ needs.init.outputs.GLOBAL_VERSION }}.tar
           docker image ls -a
 
       - name: E2E- Get branch name
@@ -484,9 +495,9 @@ jobs:
       E2E_TREASURY_BURN_PALLET_ADDRESS : ${{ secrets.E2E_TREASURY_BURN_PALLET_ADDRESS }}
       #      TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
       TEST_SUDO_NAME: '//Alice'
-      MANGATA_NODE_VERSION: ${{ github.sha }}
+      MANGATA_NODE_VERSION: ${{ needs.init.outputs.GLOBAL_VERSION }}
       E2EBRANCHNAME: 'main'
-      PARACHAIN_DOCKER_IMAGE: "${{ github.event.inputs.parachainDocker || 'mangatasolutions/mangata-node:rococo-${{ github.sha }}' }}"
+      PARACHAIN_DOCKER_IMAGE: "${{ github.event.inputs.parachainDocker || 'mangatasolutions/mangata-node:rococo-${{ needs.init.outputs.GLOBAL_VERSION }}' }}"
     steps:
       ####IDK, but this is neccesary for reports
       -
@@ -498,13 +509,13 @@ jobs:
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         uses: actions/download-artifact@v2
         with:
-          name: rococo-docker-${{ github.sha }}
+          name: rococo-docker-${{ needs.init.outputs.GLOBAL_VERSION }}
           path: /tmp
       -
         name: Load Docker image
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         run: |
-          docker load --input /tmp/rococo-docker-${{ github.sha }}.tar
+          docker load --input /tmp/rococo-docker-${{ needs.init.outputs.GLOBAL_VERSION }}.tar
           docker image ls -a
 
       - name: E2E- Get branch name
@@ -648,21 +659,21 @@ jobs:
         name: Download artifact
         uses: actions/download-artifact@v2
         with:
-          name: kusama-docker-${{ github.sha }}
+          name: kusama-docker-${{ needs.init.outputs.GLOBAL_VERSION }}
           path: /tmp
 
       -
         name: Download artifact
         uses: actions/download-artifact@v2
         with:
-          name: rococo-docker-${{ github.sha }}
+          name: rococo-docker-${{ needs.init.outputs.GLOBAL_VERSION }}
           path: /tmp
 
       -
         name: Load Docker image
         run: |
-          docker load --input /tmp/rococo-docker-${{ github.sha }}.tar
-          docker load --input /tmp/kusama-docker-${{ github.sha }}.tar
+          docker load --input /tmp/rococo-docker-${{ needs.init.outputs.GLOBAL_VERSION }}.tar
+          docker load --input /tmp/kusama-docker-${{ needs.init.outputs.GLOBAL_VERSION }}.tar
           docker image ls -a
 
       -

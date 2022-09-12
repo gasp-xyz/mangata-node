@@ -44,7 +44,7 @@ jobs:
     steps:
       - name: Set global version
         id: set_ver
-        run: echo “::set-output name=GLOBAL_VERSION::${{ github.sha }}”
+        run: echo "::set-output name=GLOBAL_VERSION::${{ github.sha }}"
   
   rustfmt-check:
     name: Formatting check
@@ -553,7 +553,7 @@ jobs:
 
       - name: Print parachain docker image reference
         run: |
-          echo ${{ env.PARACHAIN_DOCKER_IMAGE }}
+          echo "${{ env.PARACHAIN_DOCKER_IMAGE }}"
 
       - name: Replace parachain docker image reference in config
         working-directory: launch

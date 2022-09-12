@@ -247,7 +247,7 @@ jobs:
       -
         name: Upload docker img artifact
         uses: actions/upload-artifact@v2
-        if: ! contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true'
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         with:
           name: rococo-docker-${{ needs.init.outputs.GLOBAL_VERSION }}
           path: rococo-docker-${{ needs.init.outputs.GLOBAL_VERSION }}.tar

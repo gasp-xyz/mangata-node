@@ -1219,9 +1219,12 @@ impl<T: Config> Pallet<T> {
 			.checked_add(liquidity_assets_added)
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow2))?;
 
+		let rewards_not_yet_claimed_new = rewards_info.rewards_not_yet_claimed.checked_add(user_current_rewards)
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+
 		let rewards_info_new: RewardInfo = RewardInfo {
 			activated_amount: activated_amount_new,
-			rewards_not_yet_claimed: user_current_rewards,
+			rewards_not_yet_claimed: rewards_not_yet_claimed_new,
 			rewards_already_claimed: rewards_info.rewards_already_claimed,
 			last_checkpoint: current_time,
 			pool_ratio_at_last_checkpoint: pool_ratio_current,

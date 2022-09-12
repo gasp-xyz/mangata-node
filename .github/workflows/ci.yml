@@ -236,7 +236,7 @@ jobs:
         name: Build node img
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
         env:
-          DOCKER_IMAGE_GIT_SHA_TAG: "mangatasolutions/mangata-node:rococo-${{ needs.init.outputs.GLOBAL_VERSION }}
+          DOCKER_IMAGE_GIT_SHA_TAG: "mangatasolutions/mangata-node:rococo-${{ needs.init.outputs.GLOBAL_VERSION }}"
           DOCKER_IMAGE_LATEST_TAG: "mangatasolutions/mangata-node:rococo-latest"
           SKIP_BUILD: 1
           NODE_BINARY: "docker-cargo/release/mangata-node"

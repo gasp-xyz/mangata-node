@@ -426,6 +426,7 @@ pub mod pallet {
 		CalculateCumulativeWorkMaxRatioMathError7,
 		CalculateRewardsAllMathError1,
 		CalculateRewardsAllMathError2,
+		CalculateRewardsAllMathError3,
 		NoRights,
 	}
 
@@ -1219,7 +1220,9 @@ impl<T: Config> Pallet<T> {
 			.checked_add(liquidity_assets_added)
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow2))?;
 
-		let rewards_not_yet_claimed_new = rewards_info.rewards_not_yet_claimed.checked_add(user_current_rewards)
+		let rewards_not_yet_claimed_new = rewards_info
+			.rewards_not_yet_claimed
+			.checked_add(user_current_rewards)
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 
 		let rewards_info_new: RewardInfo = RewardInfo {
@@ -1300,9 +1303,14 @@ impl<T: Config> Pallet<T> {
 			.checked_sub(liquidity_assets_burned)
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow2))?;
 
+		let rewards_not_yet_claimed_new = rewards_info
+			.rewards_not_yet_claimed
+			.checked_add(user_current_rewards)
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+
 		let rewards_info_new: RewardInfo = RewardInfo {
 			activated_amount: activated_amount_new,
-			rewards_not_yet_claimed: user_current_rewards,
+			rewards_not_yet_claimed: rewards_not_yet_claimed_new,
 			rewards_already_claimed: rewards_info.rewards_already_claimed,
 			last_checkpoint: current_time,
 			pool_ratio_at_last_checkpoint: pool_ratio_current,
@@ -3104,10 +3112,14 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			.checked_sub(rewards_already_claimed)
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsAllMathError2))?;
 
+		let rewards_already_claimed_new = rewards_already_claimed
+			.checked_add(total_available_rewards)
+			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsAllMathError3))?;
+
 		let rewards_info_new: RewardInfo = RewardInfo {
 			activated_amount: rewards_info.activated_amount,
 			rewards_not_yet_claimed: 0 as u128,
-			rewards_already_claimed: current_rewards,
+			rewards_already_claimed: rewards_already_claimed_new,
 			last_checkpoint: rewards_info.last_checkpoint,
 			pool_ratio_at_last_checkpoint: rewards_info.pool_ratio_at_last_checkpoint,
 			missing_at_last_checkpoint: rewards_info.missing_at_last_checkpoint,

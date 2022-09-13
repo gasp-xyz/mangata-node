@@ -542,7 +542,7 @@ fn liquidity_rewards_work_after_burn_W() {
 			.lock()
 			.unwrap()
 			.insert(4, U256::from(u128::MAX) * 268300 / 10000);
-		assert_eq!(XykStorage::calculate_rewards_amount_v2(4, 4).unwrap(), 7349);
+		assert_eq!(XykStorage::calculate_rewards_amount_v2(4, 4).unwrap(), 8294);
 	});
 }
 
@@ -1807,7 +1807,6 @@ fn liquidity_rewards_not_yet_claimed_already_claimed_W() {
 		System::set_block_number(1);
 		let acc_id: u128 = 2;
 		let amount: u128 = max;
-
 		XykStorage::create_new_token(&acc_id, amount);
 		XykStorage::create_new_token(&acc_id, amount);
 		XykStorage::create_new_token(&acc_id, amount);
@@ -1847,25 +1846,24 @@ fn liquidity_rewards_not_yet_claimed_already_claimed_W() {
 		MockPromotedPoolApi::instance()
 			.lock()
 			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 20000 / 10000);
+			.insert(4, U256::from(u128::MAX) * 100000 / 10000);
 
-		assert_eq!(XykStorage::calculate_rewards_amount_v2(2, 4).unwrap(), 1349);
-		XykStorage::claim_rewards_v2(Origin::signed(2), 4, 1349).unwrap();
+		assert_eq!(XykStorage::calculate_rewards_amount_v2(2, 4).unwrap(), 12432);
+		XykStorage::claim_rewards_v2(Origin::signed(2), 4, 12432).unwrap();
 
 		let rewards_info = XykStorage::get_rewards_info(2, 4);
-		assert_eq!(rewards_info.rewards_already_claimed, 1349);
+		assert_eq!(rewards_info.rewards_already_claimed, 12141);
 	});
 }
 
 // Curve is the same if user claim rewards or not.
 // Contained in liquidity_rewards_claim_W, user is after claiming is getting the claimed amount less, not touching reward amount of others
 
-// test for extreme values inside calculate rewards, mainly pool ratio
+//test for extreme values inside calculate rewards, mainly pool ratio
 #[test]
 #[serial]
 fn extreme_case_pool_ratio() {
 	new_test_ext().execute_with(|| {
-		env_logger::init();
 		MockPromotedPoolApi::instance().lock().unwrap().clear();
 		let max = std::u128::MAX;
 		System::set_block_number(1);

@@ -2701,3 +2701,33 @@ fn test_create_blacklisted_pool() {
 		);
 	});
 }
+
+
+#[test]
+fn sell_asset_awesome_test() {
+	new_test_ext().execute_with(|| {
+		let acc_id: u128 = 2;
+		let amount: u128 = 1000000000000000;
+
+		XykStorage::create_new_token(&acc_id, amount);
+		XykStorage::create_new_token(&acc_id, amount);
+		XykStorage::create_new_token(&acc_id, amount); // token id 2 is dummy
+		XykStorage::create_new_token(&acc_id, amount); // token id 3 is LT for mga-dummy
+		XykStorage::create_new_token(&acc_id, amount);
+		XykStorage::create_new_token(&acc_id, amount);
+		XykStorage::create_pool(Origin::signed(2), 4, 50000000000000, 5, 50000000000000).unwrap();
+
+
+		let beforeBalance4 = XykStorage::balance(4, 2);
+		let beforeBalance5 = XykStorage::balance(5, 2);
+		XykStorage::sell_asset(Origin::signed(2), 4, 5, 1000000000, 2000000000);
+		let afterBalance4 = XykStorage::balance(4, 2);
+		let afterBalance5 = XykStorage::balance(5, 2);
+
+		XykStorage::balance();
+		println!("beforeBalance4: {}", beforeBalance4);
+		println!("beforeBalance5: {}", beforeBalance5);
+		println!("afterBalance4: {}", afterBalance4);
+		println!("afterBalance5: {}", afterBalance5);
+	});
+}

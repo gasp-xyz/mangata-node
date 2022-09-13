@@ -1,8 +1,9 @@
 use super::*;
 
 mod deprecated {
-	use super::*;
 	use frame_support::sp_runtime::RuntimeDebug;
+
+	use super::*;
 
 	#[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq, TypeInfo)]
 	pub struct AssetInfo {
@@ -14,9 +15,13 @@ mod deprecated {
 }
 
 pub mod asset_registry {
-	use super::*;
+	#[cfg(feature = "try-runtime")]
+	use frame_support::{migration::storage_key_iter, Twox64Concat};
 	use frame_support::{storage::unhashed::kill_prefix, traits::OnRuntimeUpgrade};
+
 	use sp_io::{hashing::twox_128, KillStorageResult};
+
+	use super::*;
 
 	pub struct AssetRegistryMigration;
 	impl OnRuntimeUpgrade for AssetRegistryMigration {
@@ -116,6 +121,72 @@ pub mod asset_registry {
 						location: Some(MultiLocation::new(1, X1(Parachain(turing::ID))).into()),
 					},
 				),
+				(
+					8,
+					AssetMetadataOf {
+						decimals: 18,
+						name: b"LiquidityPoolToken0x00000008".to_vec(),
+						symbol: b"TKN0x00000000-TKN0x00000007".to_vec(),
+						additional: Default::default(),
+						existential_deposit: Default::default(),
+						location: None,
+					},
+				),
+				(
+					9,
+					AssetMetadataOf {
+						decimals: 18,
+						name: b"LiquidityPoolToken0x00000009".to_vec(),
+						symbol: b"TKN0x00000000-TKN0x00000007".to_vec(),
+						additional: Default::default(),
+						existential_deposit: Default::default(),
+						location: None,
+					},
+				),
+				(
+					10,
+					AssetMetadataOf {
+						decimals: 18,
+						name: b"LiquidityPoolToken0x0000000A".to_vec(),
+						symbol: b"TKN0x00000000-TKN0x00000007".to_vec(),
+						additional: Default::default(),
+						existential_deposit: Default::default(),
+						location: None,
+					},
+				),
+				(
+					11,
+					AssetMetadataOf {
+						decimals: 18,
+						name: b"LiquidityPoolToken0x0000000B".to_vec(),
+						symbol: b"TKN0x00000004-TKN0x00000007".to_vec(),
+						additional: Default::default(),
+						existential_deposit: Default::default(),
+						location: None,
+					},
+				),
+				(
+					12,
+					AssetMetadataOf {
+						decimals: 18,
+						name: b"LiquidityPoolToken0x0000000C".to_vec(),
+						symbol: b"TKN0x00000006-TKN0x00000007".to_vec(),
+						additional: Default::default(),
+						existential_deposit: Default::default(),
+						location: None,
+					},
+				),
+				(
+					13,
+					AssetMetadataOf {
+						decimals: 18,
+						name: b"LiquidityPoolToken0x0000000D".to_vec(),
+						symbol: b"TKN0x00000006-TKN0x00000000".to_vec(),
+						additional: Default::default(),
+						existential_deposit: Default::default(),
+						location: None,
+					},
+				),
 			];
 
 			// kill storage first
@@ -159,7 +230,7 @@ pub mod asset_registry {
 		fn pre_upgrade() -> Result<(), &'static str> {
 			log::info!(
 				target: "asset_registry",
-				"pre_upgrade check"
+				"pre_upgrade check: asset_registry"
 			);
 
 			let asset_info_storage =
@@ -184,9 +255,10 @@ pub mod asset_registry {
 		fn post_upgrade() -> Result<(), &'static str> {
 			log::info!(
 				target: "asset_registry",
-				"post_upgrade check"
+				"post_upgrade check: asset_registry"
 			);
 
+			// old data should be cleared
 			let asset_info_storage =
 				storage_key_iter::<TokenId, deprecated::AssetInfo, Twox64Concat>(
 					b"AssetsInfo",
@@ -210,6 +282,22 @@ pub mod asset_registry {
 			assert_eq!(asset_info_storage.len(), 0);
 			assert_eq!(asset_location_storage.len(), 0);
 			assert_eq!(location_to_asset_storage.len(), 0);
+
+			// new data check
+			let metadata_storage = storage_key_iter::<TokenId, AssetMetadataOf, Twox64Concat>(
+				b"AssetRegistry",
+				b"Metadata",
+			)
+			.collect::<Vec<_>>();
+
+			let locations_storage = storage_key_iter::<TokenId, MultiLocation, Twox64Concat>(
+				b"AssetRegistry",
+				b"LocationToAssetId",
+			)
+			.collect::<Vec<_>>();
+
+			assert_eq!(metadata_storage.len(), 12);
+			assert_eq!(locations_storage.len(), 2);
 
 			Ok(())
 		}

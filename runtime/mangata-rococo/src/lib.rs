@@ -6,8 +6,6 @@ pub use artemis_asset;
 pub use artemis_erc20_app;
 pub use artemis_eth_app;
 use codec::{Decode, Encode};
-pub use constants::{fee::*, parachains::*};
-pub use currency::*;
 use frame_support::{
 	construct_runtime,
 	dispatch::DispatchResult,
@@ -29,10 +27,6 @@ use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
 };
-pub use mangata_primitives::{
-	assets::{CustomMetadata, XcmMetadata},
-	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
-};
 pub use orml_tokens;
 use orml_tokens::{
 	MultiTokenCurrency, MultiTokenCurrencyExtended, MultiTokenImbalanceWithZeroTrait, TransferDust,
@@ -41,14 +35,10 @@ use orml_traits::{
 	asset_registry::{AssetMetadata, AssetProcessor},
 	parameter_type_with_key,
 };
-pub use pallet_bridge;
-pub use pallet_issuance::{IssuanceInfo, PoolPromoteApi};
 pub use pallet_sudo;
-pub use pallet_sudo_origin;
 use pallet_transaction_payment::{Multiplier, OnChargeTransaction, TargetedFeeAdjustment};
 pub use pallet_verifier;
 use pallet_vesting_mangata_rpc_runtime_api::VestingInfosWithLockedAt;
-pub use pallet_xyk;
 // Polkadot Imports
 use polkadot_runtime_common::BlockHashCount;
 use scale_info::TypeInfo;
@@ -68,6 +58,7 @@ use sp_runtime::{
 };
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
 use sp_std::{
+	cmp::Ordering,
 	convert::{TryFrom, TryInto},
 	marker::PhantomData,
 	prelude::*,
@@ -76,9 +67,20 @@ use sp_std::{
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 use static_assertions::const_assert;
+pub use xcm::{latest::prelude::*, VersionedMultiLocation};
+
+pub use constants::{fee::*, parachains::*};
+pub use currency::*;
+pub use mangata_primitives::{
+	assets::{CustomMetadata, XcmMetadata},
+	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
+};
+pub use pallet_bridge;
+pub use pallet_issuance::{IssuanceInfo, PoolPromoteApi};
+pub use pallet_sudo_origin;
+pub use pallet_xyk;
 // XCM Imports
 use pallet_xyk::AssetMetadataMutationTrait;
-pub use xcm::{latest::prelude::*, VersionedMultiLocation};
 use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
 
 // Make the WASM binary available.
@@ -129,10 +131,10 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
+	MangataMigrations,
 >;
 
 pub struct MangataMigrations;
-
 impl OnRuntimeUpgrade for MangataMigrations {
 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
 		migrations::asset_registry::AssetRegistryMigration::on_runtime_upgrade()
@@ -1063,18 +1065,14 @@ impl<T: orml_asset_registry::Config> AssetProcessor<TokenId, AssetMetadataOf>
 		asset_metadata: AssetMetadataOf,
 	) -> Result<(TokenId, AssetMetadataOf), DispatchError> {
 		let next_id = CurrencyAdapter::get_next_currency_id();
-		fn create_asset(
-			id: TokenId,
-			meta: AssetMetadataOf,
-		) -> Result<(TokenId, AssetMetadataOf), DispatchError> {
-			CurrencyAdapter::create(&TreasuryAccount::get(), Default::default())
-				.and_then(|_| Ok((id, meta)))
-		}
-
-		match id {
-			None => create_asset(next_id, asset_metadata),
-			Some(asset_id) if asset_id == next_id => create_asset(asset_id, asset_metadata),
-			Some(asset_id) if asset_id < next_id => Ok((asset_id, asset_metadata)),
+		let asset_id = id.unwrap_or(next_id);
+		match asset_id.cmp(&next_id) {
+			Ordering::Equal => CurrencyAdapter::create(&TreasuryAccount::get(), Default::default())
+				.and_then(|created_asset_id| match created_asset_id.cmp(&asset_id) {
+					Ordering::Equal => Ok((asset_id, asset_metadata)),
+					_ => Err(orml_asset_registry::Error::<T>::InvalidAssetId.into()),
+				}),
+			Ordering::Less => Ok((asset_id, asset_metadata)),
 			_ => Err(orml_asset_registry::Error::<T>::InvalidAssetId.into()),
 		}
 	}
@@ -1188,6 +1186,7 @@ mod benches {
 		[pallet_session, SessionBench::<Runtime>]
 		[pallet_timestamp, Timestamp]
 		[orml_tokens, Tokens]
+		[orml_asset_registry, AssetRegistry]
 		[parachain_staking, ParachainStaking]
 		[pallet_xyk, Xyk]
 		[pallet_treasury, Treasury]
@@ -1560,6 +1559,7 @@ impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
 #[doc(hidden)]
 mod parachain_validate_block {
 	use super::*;
+
 	#[no_mangle]
 	#[cfg(not(feature = "std"))]
 	unsafe fn validate_block(arguments: *const u8, arguments_len: usize) -> u64 {

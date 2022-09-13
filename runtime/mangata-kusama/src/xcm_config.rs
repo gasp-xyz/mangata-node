@@ -205,9 +205,9 @@ pub struct FeePerSecondProvider;
 impl FixedConversionRateProvider for FeePerSecondProvider {
 	fn get_fee_per_second(location: &MultiLocation) -> Option<u128> {
 		if let Some(asset_id) = AssetRegistryOf::<Runtime>::location_to_asset_id(location) {
-			let metadata: AssetMetadataOf = AssetRegistryOf::<Runtime>::metadata(asset_id)
-				.expect("registered asset has metadata");
-			if let Some(xcm_meta) = metadata.additional.xcm {
+			if let Some(xcm_meta) = AssetRegistryOf::<Runtime>::metadata(asset_id)
+				.and_then(|metadata: AssetMetadataOf| metadata.additional.xcm)
+			{
 				let fee_per_second: u128 = xcm_meta.fee_per_second;
 				log::debug!(
 					target: "xcm::weight", "fee_per_second: asset: {:?}, fps:{:?}",

@@ -279,7 +279,6 @@ const LIQUIDITY_TOKEN_IDENTIFIER: &[u8] = b"LiquidityPoolToken";
 const HEX_INDICATOR: &[u8] = b"0x";
 const TOKEN_SYMBOL: &[u8] = b"TKN";
 const TOKEN_SYMBOL_SEPARATOR: &[u8] = b"-";
-const LIQUIDITY_TOKEN_DESCRIPTION: &[u8] = b"Generated Info for Liquidity Pool Token";
 const DEFAULT_DECIMALS: u32 = 18u32;
 
 pub use pallet::*;
@@ -1277,9 +1276,6 @@ impl<T: Config> Pallet<T> {
 				x => symbol.push(x.saturating_add(55u8)),
 			}
 		}
-
-		let mut description: Vec<u8> = Vec::<u8>::new();
-		description.extend_from_slice(LIQUIDITY_TOKEN_DESCRIPTION);
 
 		T::AssetMetadataMutation::set_asset_info(
 			liquidity_asset_id,

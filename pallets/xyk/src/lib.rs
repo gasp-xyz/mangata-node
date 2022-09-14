@@ -3112,14 +3112,10 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			.checked_sub(rewards_already_claimed)
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsAllMathError2))?;
 
-		let rewards_already_claimed_new = rewards_already_claimed
-			.checked_add(total_available_rewards)
-			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsAllMathError3))?;
-
 		let rewards_info_new: RewardInfo = RewardInfo {
 			activated_amount: rewards_info.activated_amount,
 			rewards_not_yet_claimed: 0 as u128,
-			rewards_already_claimed: rewards_already_claimed_new,
+			rewards_already_claimed: current_rewards,
 			last_checkpoint: rewards_info.last_checkpoint,
 			pool_ratio_at_last_checkpoint: rewards_info.pool_ratio_at_last_checkpoint,
 			missing_at_last_checkpoint: rewards_info.missing_at_last_checkpoint,

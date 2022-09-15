@@ -45,6 +45,7 @@ fn jump_to_whitelist_phase() {
 		10,
 		10,
 		DEFAULT_RATIO,
+		false,
 	)
 	.unwrap();
 	Bootstrap::on_initialize(15_u32.into());
@@ -63,6 +64,7 @@ fn jump_to_public_phase() {
 		10,
 		10,
 		DEFAULT_RATIO,
+		false,
 	)
 	.unwrap();
 	Bootstrap::on_initialize(25_u32.into());
@@ -200,6 +202,7 @@ fn test_prevent_provisions_in_before_start_phase() {
 			10,
 			20,
 			DEFAULT_RATIO,
+			false,
 		)
 		.unwrap();
 
@@ -228,6 +231,7 @@ fn test_fail_scheudle_bootstrap_with_same_token() {
 				10,
 				20,
 				DEFAULT_RATIO,
+				false,
 			),
 			Error::<Test>::SameToken
 		);
@@ -252,6 +256,7 @@ fn test_prevent_schedule_bootstrap_with_pair_that_does_not_exists() {
 				10,
 				20,
 				DEFAULT_RATIO,
+				false,
 			),
 			Error::<Test>::TokenIdDoesNotExists
 		);
@@ -275,6 +280,7 @@ fn test_prevent_provisions_in_finished_phase() {
 			10,
 			20,
 			DEFAULT_RATIO,
+			false,
 		)
 		.unwrap();
 
@@ -361,7 +367,8 @@ fn test_non_root_user_can_not_schedule_bootstrap() {
 				0_u32.into(),
 				1,
 				1,
-				DEFAULT_RATIO
+				DEFAULT_RATIO,
+				false,
 			),
 			BadOrigin
 		);
@@ -400,7 +407,8 @@ fn test_ido_start_cannot_happen_in_the_past() {
 				999_u32.into(),
 				1,
 				1,
-				DEFAULT_RATIO
+				DEFAULT_RATIO,
+				false,
 			),
 			Error::<Test>::BootstrapStartInThePast
 		);
@@ -421,7 +429,8 @@ fn test_ido_start_can_not_be_initialize_with_0_ratio() {
 				999_u32.into(),
 				1,
 				1,
-				(1, 0)
+				(1, 0),
+				false,
 			),
 			Error::<Test>::WrongRatio
 		);
@@ -433,7 +442,8 @@ fn test_ido_start_can_not_be_initialize_with_0_ratio() {
 				999_u32.into(),
 				1,
 				1,
-				(0, 1)
+				(0, 1),
+				false,
 			),
 			Error::<Test>::WrongRatio
 		);
@@ -453,7 +463,8 @@ fn test_cannot_schedule_bootstrap_with_whitelist_phase_length_equal_zero() {
 				100_u32.into(),
 				0,
 				1,
-				DEFAULT_RATIO
+				DEFAULT_RATIO,
+				false,
 			),
 			Error::<Test>::PhaseLengthCannotBeZero
 		);
@@ -473,7 +484,8 @@ fn test_cannot_schedule_bootstrap_with_public_phase_length_equal_zero() {
 				100_u32.into(),
 				1,
 				0,
-				DEFAULT_RATIO
+				DEFAULT_RATIO,
+				false,
 			),
 			Error::<Test>::PhaseLengthCannotBeZero
 		);
@@ -497,6 +509,7 @@ fn test_bootstrap_can_be_modified_only_before_its_started() {
 			10,
 			20,
 			DEFAULT_RATIO,
+			false,
 		)
 		.unwrap();
 
@@ -508,6 +521,7 @@ fn test_bootstrap_can_be_modified_only_before_its_started() {
 			10,
 			20,
 			DEFAULT_RATIO,
+			false,
 		)
 		.unwrap();
 
@@ -521,7 +535,8 @@ fn test_bootstrap_can_be_modified_only_before_its_started() {
 				100_u32.into(),
 				10,
 				20,
-				DEFAULT_RATIO
+				DEFAULT_RATIO,
+				false,
 			),
 			Error::<Test>::AlreadyStarted
 		);
@@ -554,6 +569,7 @@ fn test_bootstrap_state_transitions() {
 			(BOOTSTRAP_PUBLIC_START - BOOTSTRAP_WHITELIST_START).try_into().unwrap(),
 			(BOOTSTRAP_FINISH - BOOTSTRAP_PUBLIC_START).try_into().unwrap(),
 			DEFAULT_RATIO,
+			false,
 		)
 		.unwrap();
 
@@ -608,6 +624,7 @@ fn test_bootstrap_state_transitions_when_on_initialized_is_not_called() {
 			(BOOTSTRAP_PUBLIC_START - BOOTSTRAP_WHITELIST_START).try_into().unwrap(),
 			(BOOTSTRAP_FINISH - BOOTSTRAP_PUBLIC_START).try_into().unwrap(),
 			DEFAULT_RATIO,
+			false,
 		)
 		.unwrap();
 
@@ -631,7 +648,8 @@ fn test_bootstrap_schedule_overflow() {
 				u64::MAX.into(),
 				u32::MAX,
 				1_u32,
-				DEFAULT_RATIO
+				DEFAULT_RATIO,
+				false,
 			),
 			Error::<Test>::MathOverflow
 		);
@@ -644,7 +662,8 @@ fn test_bootstrap_schedule_overflow() {
 				u64::MAX.into(),
 				1_u32,
 				u32::MAX,
-				DEFAULT_RATIO
+				DEFAULT_RATIO,
+				false,
 			),
 			Error::<Test>::MathOverflow
 		);
@@ -657,7 +676,8 @@ fn test_bootstrap_schedule_overflow() {
 				u64::MAX.into(),
 				u32::MAX,
 				u32::MAX,
-				DEFAULT_RATIO
+				DEFAULT_RATIO,
+				false,
 			),
 			Error::<Test>::MathOverflow
 		);
@@ -679,7 +699,8 @@ fn test_do_not_allow_for_creating_starting_bootstrap_for_existing_pool() {
 				100_u32.into(),
 				10,
 				10,
-				DEFAULT_RATIO
+				DEFAULT_RATIO,
+				false,
 			),
 			Error::<Test>::PoolAlreadyExists
 		);
@@ -720,6 +741,7 @@ fn test_crate_pool_is_called_with_proper_arguments_after_bootstrap_finish() {
 			10,
 			10,
 			DEFAULT_RATIO,
+			false,
 		)
 		.unwrap();
 
@@ -747,6 +769,7 @@ fn test_cannot_claim_liquidity_tokens_when_bootstrap_is_not_finished() {
 			10,
 			10,
 			DEFAULT_RATIO,
+			false,
 		)
 		.unwrap();
 
@@ -797,6 +820,7 @@ fn test_rewards_are_distributed_properly_with_single_user() {
 			10,
 			10,
 			DEFAULT_RATIO,
+			false,
 		)
 		.unwrap();
 
@@ -880,6 +904,7 @@ fn test_rewards_are_distributed_properly_with_multiple_user() {
 			10,
 			10,
 			DEFAULT_RATIO,
+			false,
 		)
 		.unwrap();
 
@@ -1448,6 +1473,7 @@ fn test_restart_bootstrap() {
 			10,
 			10,
 			DEFAULT_RATIO,
+			false,
 		)
 		.unwrap();
 		Bootstrap::on_initialize(110_u32.into());
@@ -1514,6 +1540,7 @@ fn test_restart_bootstrap() {
 			10,
 			10,
 			DEFAULT_RATIO,
+			false,
 		)
 		.unwrap();
 	});
@@ -1553,6 +1580,7 @@ fn claim_liquidity_tokens_even_if_sum_of_rewards_is_zero_because_of_small_provis
 			10,
 			10,
 			DEFAULT_RATIO,
+			false,
 		)
 		.unwrap();
 		Bootstrap::on_initialize(110_u32.into());
@@ -1619,6 +1647,7 @@ fn transfer_dust_to_treasury() {
 			10,
 			10,
 			DEFAULT_RATIO,
+			false,
 		)
 		.unwrap();
 		Bootstrap::on_initialize(110_u32.into());
@@ -1681,6 +1710,7 @@ fn archive_previous_bootstrap_schedules() {
 			10,
 			10,
 			DEFAULT_RATIO,
+			false,
 		)
 		.unwrap();
 		Bootstrap::on_initialize(110_u32.into());
@@ -1873,5 +1903,109 @@ fn test_claim_and_activate_fails_when_tokens_activations_fails() {
 			Bootstrap::claim_and_activate_liquidity_tokens(Origin::signed(PROVISION_USER1_ID)),
 			Error::<Test>::TokensActivationFailed
 		);
+	});
+}
+
+#[test]
+#[serial]
+fn test_pool_is_promoted_if_scheduled_to() {
+	new_test_ext().execute_with(|| {
+		use std::sync::{Arc, Mutex};
+		set_up();
+
+		const KSM_PROVISON: Balance = 10;
+		const MGA_PROVISON: Balance = 100_000;
+		let liq_token_id: Arc<Mutex<TokenId>> = Arc::new(Mutex::new(0_u32.into()));
+		let ref_liq_token_id = liq_token_id.clone();
+
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		let pool_create_mock = MockPoolCreateApi::pool_create_context();
+		pool_create_mock
+			.expect()
+			.times(1)
+			.returning(move |addr, _, ksm_amount, _, mga_amount| {
+				let issuance = (ksm_amount + mga_amount) / 2;
+				let id = Bootstrap::create_new_token(&addr, issuance);
+				*(ref_liq_token_id.lock().unwrap()) = id;
+				Some((id, issuance))
+			});
+
+		let mut mock = MockRewardsApi::promote_pool_context();
+		mock.expect().times(1).return_const(true);
+
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			10,
+			10,
+			DEFAULT_RATIO,
+			true,
+		)
+		.unwrap();
+
+		Bootstrap::on_initialize(100_u32.into());
+		assert_eq!(BootstrapPhase::Whitelist, Phase::<Test>::get());
+
+		Bootstrap::on_initialize(110_u32.into());
+		assert_eq!(BootstrapPhase::Public, Phase::<Test>::get());
+
+		Bootstrap::on_initialize(120_u32.into());
+		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
+	});
+}
+
+#[test]
+#[serial]
+fn test_pool_is_not_promoted_if_not_scheduled_to() {
+	new_test_ext().execute_with(|| {
+		use std::sync::{Arc, Mutex};
+		set_up();
+
+		const KSM_PROVISON: Balance = 10;
+		const MGA_PROVISON: Balance = 100_000;
+		let liq_token_id: Arc<Mutex<TokenId>> = Arc::new(Mutex::new(0_u32.into()));
+		let ref_liq_token_id = liq_token_id.clone();
+
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		let pool_create_mock = MockPoolCreateApi::pool_create_context();
+		pool_create_mock
+			.expect()
+			.times(1)
+			.returning(move |addr, _, ksm_amount, _, mga_amount| {
+				let issuance = (ksm_amount + mga_amount) / 2;
+				let id = Bootstrap::create_new_token(&addr, issuance);
+				*(ref_liq_token_id.lock().unwrap()) = id;
+				Some((id, issuance))
+			});
+
+		let mut mock = MockRewardsApi::promote_pool_context();
+		mock.expect().times(0).return_const(true);
+
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			10,
+			10,
+			DEFAULT_RATIO,
+			false,
+		)
+		.unwrap();
+
+		Bootstrap::on_initialize(100_u32.into());
+		assert_eq!(BootstrapPhase::Whitelist, Phase::<Test>::get());
+
+		Bootstrap::on_initialize(110_u32.into());
+		assert_eq!(BootstrapPhase::Public, Phase::<Test>::get());
+
+		Bootstrap::on_initialize(120_u32.into());
+		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
 	});
 }

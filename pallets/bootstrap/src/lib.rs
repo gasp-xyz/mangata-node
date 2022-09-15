@@ -101,11 +101,16 @@ pub mod pallet {
 						second_token_valuation,
 					) {
 						MintedLiquidity::<T>::put((liq_asset_id, issuance)); // W:1
+						if PromoteBootstrapPool::<T>::get() {
+							if !T::RewardsApi::promote_pool(liq_asset_id) {
+								log!(error, "pool already promoted!");
+							}
+						}
 					} else {
 						log!(error, "cannot create pool!");
 					}
 					// TODO: include cost of pool_create call
-					T::DbWeight::get().reads_writes(15, 13)
+					T::DbWeight::get().reads_writes(17, 14)
 				} else if n >= public_start {
 					if phase != BootstrapPhase::Public {
 						Phase::<T>::put(BootstrapPhase::Public);
@@ -213,6 +218,10 @@ pub mod pallet {
 	pub type ActivePair<T: Config> = StorageValue<_, (TokenId, TokenId), OptionQuery>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn get_promote_bootstrap_pool)]
+	pub type PromoteBootstrapPool<T: Config> = StorageValue<_, bool, ValueQuery>;
+
+	#[pallet::storage]
 	#[pallet::getter(fn archived)]
 	pub type ArchivedBootstrap<T: Config> =
 		StorageValue<_, Vec<(T::BlockNumber, u32, u32, (u128, u128))>, ValueQuery>;
@@ -303,6 +312,7 @@ pub mod pallet {
 			whitelist_phase_length: u32,
 			public_phase_lenght: u32,
 			max_first_to_second_ratio: (u128, u128),
+			promote_bootstrap_pool: bool,
 		) -> DispatchResult {
 			ensure_root(origin)?;
 
@@ -351,6 +361,27 @@ pub mod pallet {
 				public_phase_lenght,
 				max_first_to_second_ratio,
 			));
+
+			PromoteBootstrapPool::<T>::put(promote_bootstrap_pool);
+
+			Ok(().into())
+		}
+
+		#[pallet::weight(T::DbWeight::get().reads_writes(2, 1))]
+		#[transactional]
+		pub fn update_promote_bootstrap_pool(
+			origin: OriginFor<T>,
+			promote_bootstrap_pool: bool,
+		) -> DispatchResult {
+			ensure_root(origin)?;
+
+			// BootstrapSchedule should exist but not finalized
+			// we allow this to go thru if the BootstrapSchedule exists and the phase is before start
+
+			ensure!(BootstrapSchedule::<T>::get().is_some(), Error::<T>::BootstrapNotSchduled);
+			ensure!(Phase::<T>::get() != BootstrapPhase::Finished, Error::<T>::BootstrapFinished);
+
+			PromoteBootstrapPool::<T>::put(promote_bootstrap_pool);
 
 			Ok(().into())
 		}
@@ -419,6 +450,7 @@ pub mod pallet {
 			}
 			Valuations::<T>::kill();
 			ActivePair::<T>::kill();
+			PromoteBootstrapPool::<T>::kill();
 
 			if let Some(bootstrap) = BootstrapSchedule::<T>::take() {
 				ArchivedBootstrap::<T>::mutate(|v| {
@@ -482,6 +514,10 @@ pub mod pallet {
 		TokenIdDoesNotExists,
 		/// Token activations failed
 		TokensActivationFailed,
+		/// Bootstrap not scheduled
+		BootstrapNotSchduled,
+		/// Bootstrap already Finished
+		BootstrapFinished,
 	}
 
 	#[pallet::event]

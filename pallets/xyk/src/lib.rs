@@ -1805,8 +1805,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		.ok_or(Error::<T>::UnexpectedFailure)? +
 			1;
 
-		log::debug!("buy_and_burn_amount {:?}", buy_and_burn_amount);
-
 		let treasury_amount = multiply_by_rational_with_rounding(
 			sold_asset_amount,
 			T::TreasuryFeePercentage::get(),
@@ -1816,8 +1814,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		.ok_or(Error::<T>::UnexpectedFailure)? +
 			1;
 
-		log::debug!("treasury_amount {:?}", treasury_amount);
-
 		let pool_fee_amount = multiply_by_rational_with_rounding(
 			sold_asset_amount,
 			T::PoolFeePercentage::get(),
@@ -1826,8 +1822,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		)
 		.ok_or(Error::<T>::UnexpectedFailure)? +
 			1;
-
-		log::debug!("pool_fee_amount {:?}", pool_fee_amount);
 
 		// for future implementation of min fee if necessary
 		// let min_fee: u128 = 0;
@@ -1843,15 +1837,11 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		let (input_reserve, output_reserve) =
 			Pallet::<T>::get_reserves(sold_asset_id, bought_asset_id)?;
 
-		log::debug!("input_reserve {:?}", input_reserve);
-		log::debug!("output_reserve {:?}", output_reserve);
-
 		ensure!(input_reserve.checked_add(sold_asset_amount).is_some(), Error::<T>::MathOverflow);
 
 		// Calculate bought asset amount to be received by paying sold asset amount
 		let bought_asset_amount =
 			Pallet::<T>::calculate_sell_price(input_reserve, output_reserve, sold_asset_amount)?;
-		log::debug!("bought_asset_amount {:?}", bought_asset_amount);
 
 		// Ensure user has enough tokens to sell
 		<T as Config>::Currency::ensure_can_withdraw(
@@ -1864,15 +1854,9 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		)
 		.or(Err(Error::<T>::NotEnoughAssets))?;
 
-		log::debug!("After ensure withdraw");
-
 		let vault = Pallet::<T>::account_id();
 		let treasury_account: T::AccountId = Self::treasury_account_id();
 		let bnb_treasury_account: T::AccountId = Self::bnb_treasury_account_id();
-
-		log::debug!("vault {:?}", vault);
-		log::debug!("treasury_account {:?}", treasury_account);
-		log::debug!("bnb_treasury_account {:?}", bnb_treasury_account);
 
 		// Transfer of fees, before tx can fail on min amount out
 		<T as Config>::Currency::transfer(
@@ -1882,7 +1866,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			pool_fee_amount.into(),
 			ExistenceRequirement::KeepAlive,
 		)?;
-		log::debug!("After first fee transfer");
 
 		<T as Config>::Currency::transfer(
 			sold_asset_id.into(),
@@ -1892,8 +1875,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			ExistenceRequirement::KeepAlive,
 		)?;
 
-		log::debug!("After second fee transfer");
-
 		<T as Config>::Currency::transfer(
 			sold_asset_id.into(),
 			&sender,
@@ -1901,8 +1882,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			buy_and_burn_amount.into(),
 			ExistenceRequirement::KeepAlive,
 		)?;
-
-		log::debug!("After third fee transfer");
 
 		// Add pool fee to pool
 		// 2R 1W
@@ -1913,13 +1892,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			output_reserve,
 		)?;
 
-		log::debug!("After add fee to pool");
-
 		// Ensure bought token amount is higher then requested minimal amount
 		if bought_asset_amount >= min_amount_out {
-			log::debug!("Bought asset amount is higher than requested minimal amount out");
-			log::debug!("bought_asset_amount {:?}", bought_asset_amount);
-			log::debug!("min_amount_out {:?}", min_amount_out);
 			// Transfer the rest of sold token amount from user to vault and bought token amount from vault to user
 			<T as Config>::Currency::transfer(
 				sold_asset_id.into(),
@@ -1931,7 +1905,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				.into(),
 				ExistenceRequirement::KeepAlive,
 			)?;
-			log::debug!("Transfer the rest of sold token amount from user to vault and bought token amount from vault to user");
 			<T as Config>::Currency::transfer(
 				bought_asset_id.into(),
 				&vault,
@@ -1940,17 +1913,12 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				ExistenceRequirement::KeepAlive,
 			)?;
 
-			log::debug!("After another transfer");
-
 			// Apply changes in token pools, adding sold amount and removing bought amount
 			// Neither should fall to zero let alone underflow, due to how pool destruction works
 			// Won't overflow due to earlier ensure
 			let input_reserve_updated = input_reserve
 				.saturating_add(sold_asset_amount - treasury_amount - buy_and_burn_amount);
 			let output_reserve_updated = output_reserve.saturating_sub(bought_asset_amount);
-
-			log::debug!("input_reserve_updated {:?}", input_reserve_updated);
-			log::debug!("output_reserve_updated {:?}", output_reserve_updated);
 
 			// MAX 2R 1W
 			Pallet::<T>::set_reserves(
@@ -1959,8 +1927,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				bought_asset_id,
 				output_reserve_updated,
 			)?;
-
-			log::debug!("After set reserve");
 
 			log!(
 				info,

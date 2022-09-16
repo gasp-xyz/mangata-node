@@ -1099,7 +1099,7 @@ impl orml_asset_registry::Config for Runtime {
 	type AuthorityOrigin = AssetAuthority;
 	type AssetProcessor = SequentialIdWithCreation<Runtime>;
 	type Balance = Balance;
-	type WeightInfo = weights::xcm_asset_registry_weights::ModuleWeight<Runtime>;
+	type WeightInfo = weights::orml_asset_registry_weights::ModuleWeight<Runtime>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

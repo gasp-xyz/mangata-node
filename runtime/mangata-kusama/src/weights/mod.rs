@@ -15,4 +15,4 @@ pub mod pallet_utility_weights;
 pub mod pallet_vesting_mangata_weights;
 pub mod pallet_xyk_weights;
 pub mod parachain_staking_weights;
-pub mod xcm_asset_registry_weights;
+pub mod orml_asset_registry_weights;

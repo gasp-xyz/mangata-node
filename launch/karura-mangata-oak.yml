@@ -9,13 +9,13 @@ relaychain:
         hrmp_channel_max_capacity: 1000
         hrmp_channel_max_total_size: 102400
         hrmp_channel_max_message_size: 102400
-      hrmp:
-        preopenHrmpChannels: [
-          [2000, 2110, 1000, 102400],
-          [2110, 2000, 1000, 102400]
-          [2000, 2114, 1000, 102400],
-          [2114, 2000, 1000, 102400]
-        ]
+    hrmp:
+      preopenHrmpChannels: [
+        [ 2000, 2110, 1000, 102400 ], # karura -> mangata
+        [ 2110, 2000, 1000, 102400 ], # mangata -> karura
+        [ 2000, 2114, 1000, 102400 ], # karura -> oak
+        [ 2114, 2000, 1000, 102400 ]  # oak -> karura
+      ]
 
   env:
     RUST_LOG: x_tokens=trace,xcm=trace,xcmp_queue=trace,runtime=trace
@@ -24,6 +24,7 @@ relaychain:
     - --wasm-execution=compiled
     - --execution=wasm
   nodes:
+#   need 3 relays for 3 paras, otherwise last para not building blocks
     - name: alice
     - name: bob
     - name: charlie
@@ -84,7 +85,13 @@ parachains:
       - flags:
           - --bob
 
-  - image: oaknetwork/turing:1.7.0
+#  local build with:
+#  comment docker/turing/build.sh:17 to skip adding a versioned tag to image
+#  cargo build --release --features turing-node --features dev-queue
+#  cp target/release/oak-collator ./
+#  ./docker/turing/build.sh
+  - image: oaknetwork/turing:latest
+#  - image: oaknetwork/turing:1.7.0
     chain:
       base: turing-dev
       collators:

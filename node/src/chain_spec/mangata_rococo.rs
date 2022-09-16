@@ -5,12 +5,11 @@ use cumulus_primitives_core::ParaId;
 use hex::FromHex;
 use hex_literal::hex;
 use mangata_rococo_runtime::{
-	constants::parachains, AccountId, AuraId, GeneralKey, Junction, MultiLocation, Parachain,
-	Signature, VersionedMultiLocation, KAR_TOKEN_ID, ROC_TOKEN_ID, X2,
+	constants::parachains, roc_per_second, AccountId, AssetMetadataOf, AuraId, CustomMetadata,
+	GeneralKey, MultiLocation, Parachain, Signature, XcmMetadata, KAR_TOKEN_ID, ROC_TOKEN_ID,
+	TUR_TOKEN_ID, X1, X2,
 };
-use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
-use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, ByteArray, Pair, Public, H160};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 
@@ -119,21 +118,15 @@ pub fn public_testnet_config() -> ChainSpec {
 				],
 				// SnowBridged Assets
 				vec![
+					// MGA
 					(
-						b"Mangata".to_vec(),
-						b"MGA".to_vec(),
-						b"Mangata Asset".to_vec(),
-						18u32,
 						0u32,
 						H160::from_slice(&hex!["C7e3Bda797D2cEb740308eC40142ae235e08144A"][..]),
 						300_000_000__000_000_000_000_000_000u128,
 						public_testnet_keys::ALICE_SR25519.parse::<AccountId>().unwrap().into(),
 					),
+					// ETH
 					(
-						b"Ether".to_vec(),
-						b"ETH".to_vec(),
-						b"Ethereum Ether".to_vec(),
-						18u32,
 						1u32,
 						H160::zero(),
 						0u128,
@@ -199,8 +192,45 @@ pub fn public_testnet_config() -> ChainSpec {
 						5_000__000_000_000_000_000_000u128,
 					),
 				],
-				vec![(ROC_TOKEN_ID, None)],
-				2000.into(),
+				vec![
+					(
+						0,
+						AssetMetadataOf {
+							decimals: 18,
+							name: b"Mangata".to_vec(),
+							symbol: b"MGR".to_vec(),
+							additional: Default::default(),
+							existential_deposit: Default::default(),
+							location: None,
+						},
+					),
+					(
+						1,
+						AssetMetadataOf {
+							decimals: 18,
+							name: b"Ether".to_vec(),
+							symbol: b"ETH".to_vec(),
+							additional: Default::default(),
+							existential_deposit: Default::default(),
+							location: None,
+						},
+					),
+					(
+						ROC_TOKEN_ID,
+						AssetMetadataOf {
+							decimals: 12,
+							name: b"Rococo Native".to_vec(),
+							symbol: b"ROC".to_vec(),
+							additional: CustomMetadata {
+								// 10_000:1 MGR:ROC
+								xcm: Some(XcmMetadata { fee_per_second: roc_per_second() }),
+							},
+							existential_deposit: Default::default(),
+							location: None,
+						},
+					),
+				],
+				parachains::mangata::ID.into(),
 			)
 		},
 		Vec::new(),
@@ -213,7 +243,7 @@ pub fn public_testnet_config() -> ChainSpec {
 		Some(properties),
 		Extensions {
 			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
-			para_id: 2000,
+			para_id: parachains::mangata::ID,
 		},
 	)
 }
@@ -265,21 +295,15 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 				],
 				// SnowBridged Assets
 				vec![
+					// MGA
 					(
-						b"Mangata".to_vec(),
-						b"MGA".to_vec(),
-						b"Mangata Asset".to_vec(),
-						18u32,
 						0u32,
 						H160::from_slice(&hex!["F8F7758FbcEfd546eAEff7dE24AFf666B6228e73"][..]),
 						300_000_000__000_000_000_000_000_000u128,
 						get_account_id_from_seed::<sr25519::Public>("Alice"),
 					),
+					// ETH
 					(
-						b"Ether".to_vec(),
-						b"ETH".to_vec(),
-						b"Ethereum Ether".to_vec(),
-						18u32,
 						1u32,
 						H160::zero(),
 						0u128,
@@ -348,23 +372,95 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 					),
 				],
 				vec![
-					(ROC_TOKEN_ID, None),
-					(5, None),
+					(
+						0,
+						AssetMetadataOf {
+							decimals: 18,
+							name: b"Mangata".to_vec(),
+							symbol: b"MGR".to_vec(),
+							additional: Default::default(),
+							existential_deposit: Default::default(),
+							location: None,
+						},
+					),
+					(
+						1,
+						AssetMetadataOf {
+							decimals: 18,
+							name: b"Ether".to_vec(),
+							symbol: b"ETH".to_vec(),
+							additional: Default::default(),
+							existential_deposit: Default::default(),
+							location: None,
+						},
+					),
+					(
+						ROC_TOKEN_ID,
+						AssetMetadataOf {
+							decimals: 12,
+							name: b"Rococo Native".to_vec(),
+							symbol: b"ROC".to_vec(),
+							additional: CustomMetadata {
+								// 10_000:1 MGR:ROC
+								xcm: Some(XcmMetadata { fee_per_second: roc_per_second() }),
+							},
+							existential_deposit: Default::default(),
+							location: None,
+						},
+					),
+					// empty placeholder to issueToken & increment nextAssetId
+					(
+						5,
+						AssetMetadataOf {
+							decimals: 0,
+							name: vec![],
+							symbol: vec![],
+							additional: Default::default(),
+							existential_deposit: Default::default(),
+							location: None,
+						},
+					),
 					(
 						KAR_TOKEN_ID,
-						Some(
-							MultiLocation::new(
-								1,
-								X2(
-									Parachain(parachains::karura::ID),
-									GeneralKey(parachains::karura::KAR_KEY.to_vec()),
-								),
-							)
-							.into(),
-						),
+						AssetMetadataOf {
+							decimals: 12,
+							name: b"Karura".to_vec(),
+							symbol: b"KAR".to_vec(),
+							additional: CustomMetadata {
+								// 100:1 MGR:KAR
+								xcm: Some(XcmMetadata { fee_per_second: roc_per_second() * 100 }),
+							},
+							existential_deposit: Default::default(),
+							location: Some(
+								MultiLocation::new(
+									1,
+									X2(
+										Parachain(parachains::karura::ID),
+										GeneralKey(parachains::karura::KAR_KEY.to_vec()),
+									),
+								)
+								.into(),
+							),
+						},
+					),
+					(
+						TUR_TOKEN_ID,
+						AssetMetadataOf {
+							decimals: 10,
+							name: b"Turing native token".to_vec(),
+							symbol: b"TUR".to_vec(),
+							additional: CustomMetadata {
+								// 100:1 TUR:ROC, 10/12 decimals
+								xcm: Some(XcmMetadata { fee_per_second: roc_per_second() }),
+							},
+							existential_deposit: Default::default(),
+							location: Some(
+								MultiLocation::new(1, X1(Parachain(parachains::turing::ID))).into(),
+							),
+						},
 					),
 				],
-				2000.into(),
+				parachains::mangata::ID.into(),
 			)
 		},
 		// Bootnodes
@@ -380,12 +476,12 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 		// Extensions
 		Extensions {
 			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
-			para_id: 2000,
+			para_id: parachains::mangata::ID,
 		},
 	)
 }
 
-type BridgedAssetsType = Vec<(Vec<u8>, Vec<u8>, Vec<u8>, u32, u32, H160, u128, AccountId)>;
+type BridgedAssetsType = Vec<(u32, H160, u128, AccountId)>;
 
 fn mangata_genesis(
 	initial_authorities: Vec<(AccountId, AuraId)>,
@@ -395,7 +491,7 @@ fn mangata_genesis(
 	bridged_assets: BridgedAssetsType,
 	tokens_endowment: Vec<(u32, u128, AccountId)>,
 	staking_accounts: Vec<(AccountId, u32, u128, u32, u128, u32, u128)>,
-	xcm_tokens: Vec<(u32, Option<VersionedMultiLocation>)>,
+	register_assets: Vec<(u32, AssetMetadataOf)>,
 	id: ParaId,
 ) -> mangata_rococo_runtime::GenesisConfig {
 	mangata_rococo_runtime::GenesisConfig {
@@ -462,16 +558,6 @@ fn mangata_genesis(
 		aura: Default::default(),
 		aura_ext: Default::default(),
 		parachain_system: Default::default(),
-		assets_info: mangata_rococo_runtime::AssetsInfoConfig {
-			bridged_assets_info: bridged_assets
-				.iter()
-				.cloned()
-				.map(|x| {
-					let (name, token, description, decimals, asset_id, ..) = x;
-					(Some(name), Some(token), Some(description), Some(decimals), asset_id)
-				})
-				.collect(),
-		},
 		xyk: mangata_rococo_runtime::XykConfig {
 			created_pools_for_staking: staking_accounts
 				.iter()
@@ -498,14 +584,7 @@ fn mangata_genesis(
 		},
 		bridge: mangata_rococo_runtime::BridgeConfig { bridged_app_id_registry: bridged_app_ids },
 		bridged_asset: mangata_rococo_runtime::BridgedAssetConfig {
-			bridged_assets_links: bridged_assets
-				.iter()
-				.cloned()
-				.map(|x| {
-					let (.., asset_id, bridged_asset_id, initial_supply, initial_owner) = x;
-					(asset_id, bridged_asset_id, initial_supply, initial_owner)
-				})
-				.collect(),
+			bridged_assets_links: bridged_assets,
 		},
 		verifier: mangata_rococo_runtime::VerifierConfig { key: relay_key },
 		council: Default::default(),
@@ -522,15 +601,12 @@ fn mangata_genesis(
 		},
 		polkadot_xcm: mangata_rococo_runtime::PolkadotXcmConfig { safe_xcm_version: Some(2) },
 		asset_registry: mangata_rococo_runtime::AssetRegistryConfig {
-			init_xcm_tokens: xcm_tokens
+			pre_register_assets: register_assets
 				.iter()
 				.cloned()
-				.map(|(x, maybe_y)| {
-					if let Some(y) = maybe_y {
-						(x, Some(VersionedMultiLocation::encode(&y)))
-					} else {
-						(x, None)
-					}
+				.map(|(id, meta)| {
+					let encoded = AssetMetadataOf::encode(&meta);
+					(id, encoded)
 				})
 				.collect(),
 		},

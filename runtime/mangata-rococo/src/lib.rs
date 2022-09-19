@@ -183,11 +183,11 @@ impl_opaque_keys! {
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
-	authoring_version: 8,
-	spec_version: 8,
+	authoring_version: 9,
+	spec_version: 9,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 8,
+	transaction_version: 9,
 	state_version: 0,
 };
 
@@ -1099,7 +1099,7 @@ impl orml_asset_registry::Config for Runtime {
 	type AuthorityOrigin = AssetAuthority;
 	type AssetProcessor = SequentialIdWithCreation<Runtime>;
 	type Balance = Balance;
-	type WeightInfo = weights::xcm_asset_registry_weights::ModuleWeight<Runtime>;
+	type WeightInfo = weights::orml_asset_registry_weights::ModuleWeight<Runtime>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

@@ -1139,7 +1139,7 @@ impl<T: Config> Pallet<T> {
 				.checked_div(cummulative_work_max_possible_for_ratio)
 				.ok_or_else(|| {
 					DispatchError::from(Error::<T>::CalculateCumulativeWorkMaxRatioMathError7)
-				})?;
+				})?;	
 		}
 
 		let cumulative_work_max_ratio_u128 = Balance::try_from(cumulative_work_max_ratio)
@@ -1291,17 +1291,17 @@ impl<T: Config> Pallet<T> {
 			pool_ratio_current,
 		)?;
 
-		let liquidity_assets_burned_u256: U256 = liquidity_assets_burned.into();
-
-		let missing_at_checkpoint_after_burn: U256 = liquidity_assets_burned_u256
+		let activated_amount_new = liquidity_assets_amount
+			.checked_sub(liquidity_assets_burned)
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+	
+		let activated_amount_new_U256: U256 = activated_amount_new.into();
+			
+		let missing_at_checkpoint_after_burn: U256 = activated_amount_new_U256
 			.checked_mul(missing_at_checkpoint_new)
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
 			.checked_div(liquidity_assets_amount.into())
 			.ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
-
-		let activated_amount_new = liquidity_assets_amount
-			.checked_sub(liquidity_assets_burned)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow2))?;
 
 		let rewards_not_yet_claimed_new = rewards_info
 			.rewards_not_yet_claimed

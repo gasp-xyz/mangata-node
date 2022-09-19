@@ -61,22 +61,21 @@ pub trait WeightInfo {
 
 /// Weights for xcm_asset_registry using the Mangata node and recommended hardware.
 pub struct ModuleWeight<T>(PhantomData<T>);
-impl<T: frame_system::Config> xcm_asset_registry::WeightInfo for ModuleWeight<T> {
+impl<T: frame_system::Config> orml_asset_registry::WeightInfo for ModuleWeight<T> {
 	// Storage: Tokens NextCurrencyId (r:1 w:1)
-	// Storage: Tokens Accounts (r:1 w:0)
-	// Storage: AssetRegistry LocationToCurrencyIds (r:1 w:1)
-	// Storage: AssetRegistry AssetLocations (r:1 w:1)
+	// Storage: AssetRegistry Metadata (r:1 w:1)
+	// Storage: AssetRegistry LocationToAssetId (r:1 w:1)
 	fn register_asset() -> Weight {
 		(34_624_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
+			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
-	// Storage: AssetRegistry AssetLocations (r:1 w:1)
-	// Storage: AssetRegistry LocationToCurrencyIds (r:1 w:2)
+	// Storage: AssetRegistry Metadata (r:1 w:1)
+	// Storage: AssetRegistry LocationToAssetId (r:1 w:1)
 	fn update_asset() -> Weight {
 		(28_712_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 }
 

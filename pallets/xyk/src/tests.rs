@@ -5,6 +5,8 @@
 use super::*;
 use crate::mock::*;
 use frame_support::assert_err;
+use mangata_primitives::assets::CustomMetadata;
+use orml_traits::asset_registry::AssetMetadata;
 use serial_test::serial;
 
 //fn create_pool_W(): create_pool working assert (maps,acocounts values)  //DONE
@@ -1718,12 +1720,14 @@ fn set_info_should_work() {
 		.unwrap();
 
 		assert_eq!(
-			<assets_info::Pallet<Test>>::get_info(2u32),
-			assets_info::AssetInfo {
-				name: Some(b"LiquidityPoolToken0x00000002".to_vec()),
-				symbol: Some(b"TKN0x00000000-TKN0x00000001".to_vec()),
-				description: Some(b"Generated Info for Liquidity Pool Token".to_vec()),
-				decimals: Some(18u32),
+			*MockAssetRegister::instance().lock().unwrap().get(&2u32).unwrap(),
+			AssetMetadata {
+				name: b"LiquidityPoolToken0x00000002".to_vec(),
+				symbol: b"TKN0x00000000-TKN0x00000001".to_vec(),
+				decimals: 18u32,
+				location: None,
+				additional: CustomMetadata::default(),
+				existential_deposit: 0u128,
 			}
 		);
 	});
@@ -1751,12 +1755,14 @@ fn set_info_should_work_with_small_numbers() {
 		.unwrap();
 
 		assert_eq!(
-			<assets_info::Pallet<Test>>::get_info(N),
-			assets_info::AssetInfo {
-				name: Some(b"LiquidityPoolToken0x00003039".to_vec()),
-				symbol: Some(b"TKN0x0000000F-TKN0x00002FC9".to_vec()),
-				description: Some(b"Generated Info for Liquidity Pool Token".to_vec()),
-				decimals: Some(18u32),
+			*MockAssetRegister::instance().lock().unwrap().get(&N).unwrap(),
+			AssetMetadata {
+				name: b"LiquidityPoolToken0x00003039".to_vec(),
+				symbol: b"TKN0x0000000F-TKN0x00002FC9".to_vec(),
+				decimals: 18u32,
+				location: None,
+				additional: CustomMetadata::default(),
+				existential_deposit: 0u128,
 			}
 		);
 	});
@@ -1785,12 +1791,14 @@ fn set_info_should_work_with_large_numbers() {
 		.unwrap();
 
 		assert_eq!(
-			<assets_info::Pallet<Test>>::get_info(1524501234u32),
-			assets_info::AssetInfo {
-				name: Some(b"LiquidityPoolToken0x5ADE0AF2".to_vec()),
-				symbol: Some(b"TKN0x00E4E1C0-TKN0x00BAA928".to_vec()),
-				description: Some(b"Generated Info for Liquidity Pool Token".to_vec()),
-				decimals: Some(18u32),
+			*MockAssetRegister::instance().lock().unwrap().get(&1524501234u32).unwrap(),
+			AssetMetadata {
+				name: b"LiquidityPoolToken0x5ADE0AF2".to_vec(),
+				symbol: b"TKN0x00E4E1C0-TKN0x00BAA928".to_vec(),
+				decimals: 18u32,
+				location: None,
+				additional: CustomMetadata::default(),
+				existential_deposit: 0u128,
 			}
 		);
 	});

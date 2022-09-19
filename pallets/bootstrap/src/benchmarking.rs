@@ -38,7 +38,7 @@ benchmarks! {
 		let caller: T::AccountId = whitelisted_caller();
 		let first_token_id = <T as Config>::Currency::create(&caller, MILION.into()).expect("Token creation failed").into();
 		let second_token_id = <T as Config>::Currency::create(&caller, MILION.into()).expect("Token creation failed").into();
-	}: schedule_bootstrap(RawOrigin::Root, first_token_id, second_token_id, 123_456_789_u32.into(), 100_000_u32, 100_000_u32, DEFAULT_RATIO)
+	}: schedule_bootstrap(RawOrigin::Root, first_token_id, second_token_id, 123_456_789_u32.into(), 100_000_u32, 100_000_u32, DEFAULT_RATIO, true)
 	verify {
 		assert!(crate::BootstrapSchedule::<T>::get().is_some());
 	}
@@ -51,7 +51,7 @@ benchmarks! {
 		let ksm_provision_amount = 100_000_u128;
 		let mga_provision_amount = ksm_provision_amount * DEFAULT_RATIO.1 / DEFAULT_RATIO.0;
 
-		BootstrapPallet::<T>::schedule_bootstrap(RawOrigin::Root.into(), first_token_id, second_token_id, 10_u32.into(), 10_u32, 10_u32, DEFAULT_RATIO).unwrap();
+		BootstrapPallet::<T>::schedule_bootstrap(RawOrigin::Root.into(), first_token_id, second_token_id, 10_u32.into(), 10_u32, 10_u32, DEFAULT_RATIO, false).unwrap();
 		// jump to public phase
 		BootstrapPallet::<T>::on_initialize(20_u32.into());
 		BootstrapPallet::<T>::provision(RawOrigin::Signed(caller.clone().into()).into(), second_token_id, mga_provision_amount).unwrap();
@@ -76,7 +76,7 @@ benchmarks! {
 		<T as Config>::VestingProvider::lock_tokens(&caller, first_token_id.into(), (ksm_provision_amount*2).into(), None, lock.into()).unwrap();
 		frame_system::Pallet::<T>::set_block_number(2_u32.into());
 
-		BootstrapPallet::<T>::schedule_bootstrap(RawOrigin::Root.into(), first_token_id, second_token_id, 10_u32.into(), 10_u32, 10_u32, DEFAULT_RATIO).unwrap();
+		BootstrapPallet::<T>::schedule_bootstrap(RawOrigin::Root.into(), first_token_id, second_token_id, 10_u32.into(), 10_u32, 10_u32, DEFAULT_RATIO, false).unwrap();
 		// jump to public phase
 		BootstrapPallet::<T>::on_initialize(20_u32.into());
 		BootstrapPallet::<T>::provision(RawOrigin::Signed(caller.clone().into()).into(), second_token_id, mga_provision_amount).unwrap();
@@ -106,7 +106,7 @@ benchmarks! {
 		<T as Config>::VestingProvider::lock_tokens(&caller, first_token_id.into(), (ksm_provision_amount + ksm_vested_provision_amount).into(), None, lock.into()).unwrap();
 		<T as Config>::VestingProvider::lock_tokens(&caller, second_token_id.into(), (mga_provision_amount + mga_vested_provision_amount).into(), None, lock.into()).unwrap();
 
-		BootstrapPallet::<T>::schedule_bootstrap(RawOrigin::Root.into(), first_token_id, second_token_id, 10_u32.into(), 10_u32, 10_u32, DEFAULT_RATIO).unwrap();
+		BootstrapPallet::<T>::schedule_bootstrap(RawOrigin::Root.into(), first_token_id, second_token_id, 10_u32.into(), 10_u32, 10_u32, DEFAULT_RATIO, false).unwrap();
 		BootstrapPallet::<T>::on_initialize(20_u32.into());
 		BootstrapPallet::<T>::provision(RawOrigin::Signed(caller.clone().into()).into(), second_token_id, mga_provision_amount).unwrap();
 		BootstrapPallet::<T>::provision(RawOrigin::Signed(caller.clone().into()).into(), first_token_id, ksm_provision_amount).unwrap();
@@ -156,7 +156,7 @@ benchmarks! {
 		<T as Config>::VestingProvider::lock_tokens(&caller, first_token_id.into(), (ksm_provision_amount + ksm_vested_provision_amount).into(), None, lock.into()).unwrap();
 		<T as Config>::VestingProvider::lock_tokens(&caller, second_token_id.into(), (mga_provision_amount + mga_vested_provision_amount).into(), None, lock.into()).unwrap();
 
-		BootstrapPallet::<T>::schedule_bootstrap(RawOrigin::Root.into(), first_token_id, second_token_id, 10_u32.into(), 10_u32, 10_u32, DEFAULT_RATIO).unwrap();
+		BootstrapPallet::<T>::schedule_bootstrap(RawOrigin::Root.into(), first_token_id, second_token_id, 10_u32.into(), 10_u32, 10_u32, DEFAULT_RATIO, false).unwrap();
 		BootstrapPallet::<T>::on_initialize(20_u32.into());
 		BootstrapPallet::<T>::provision(RawOrigin::Signed(caller.clone().into()).into(), second_token_id, mga_provision_amount).unwrap();
 		BootstrapPallet::<T>::provision(RawOrigin::Signed(caller.clone().into()).into(), first_token_id, ksm_provision_amount).unwrap();

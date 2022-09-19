@@ -10,14 +10,14 @@ services:
   relay_alice:
     environment:
       - ${RUST_LOG:-info}
-    image: p1k1m4n/polkadot-fast-runtime:0.9.24
+    image: polkadot_fast_runtime_928
     command:
       - "--alice"
       - "--validator"
       - "--base-path=/tmp/relay_alice"
       - "--port=30333"
       - "--ws-port=9944"
-      - "--chain=/etc/mangata/ksm_local_9.18.json"
+      - "--chain=/etc/mangata/ksm_local_9.28.json"
       - "--unsafe-ws-external"
       - "--rpc-port=40333"
       - "--unsafe-rpc-external"
@@ -33,7 +33,7 @@ services:
         ipv4_address: 10.0.0.2
 
   relay_bob:
-    image: p1k1m4n/polkadot-fast-runtime:0.9.24
+    image: polkadot_fast_runtime_928
     environment:
       - ${RUST_LOG:-info}
     command:
@@ -42,7 +42,7 @@ services:
       - "--base-path=/tmp/relay_bob"
       - "--port=30333"
       - "--ws-port=9944"
-      - "--chain=/etc/mangata/ksm_local_9.18.json"
+      - "--chain=/etc/mangata/ksm_local_9.28.json"
       - "--bootnodes=/dns/relay_alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp"
       - "--unsafe-ws-external"
       - "--unsafe-rpc-external"
@@ -58,9 +58,9 @@ services:
         ipv4_address: 10.0.0.3
 
   register:
-    image: mangatasolutions/parachain-register:0.2
+    image: registrator_2110
 
-    command: bash -c "sleep 50s && node index_ksm.js"
+    command: bash -c "sleep 20s && node index_ksm.js"
     environment:
       - STATE_FILE=/config/genesis-state
       - WASM_FILE=/config/genesis-wasm
@@ -72,7 +72,7 @@ services:
         ipv4_address: 10.0.0.4
 
   para_alice:
-    image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangata-node:0.11.1}
+    image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangata-node:kusama-2b4faff9bd0f4cc556a106a422917d7faeff8485}
     environment:
       - ${RUST_LOG:-info}
       - LD_PRELOAD=${LD_PRELOAD}
@@ -94,7 +94,7 @@ services:
       --node-key=0000000000000000000000000000000000000000000000000000000000000003
       --
       --execution=wasm
-      --chain=/etc/mangata/ksm_local_9.18.json
+      --chain=/etc/mangata/ksm_local_9.28.json
       --bootnodes=/dns/relay_alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
       "
     volumes:
@@ -107,7 +107,7 @@ services:
         ipv4_address: 10.0.0.5
 
   para_bob:
-    image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangatasolutions/mangata-node:0.11.1}
+    image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangata-node:kusama-2b4faff9bd0f4cc556a106a422917d7faeff8485}
     environment:
       - ${RUST_LOG:-info}
       - LD_PRELOAD=${LD_PRELOAD}
@@ -128,7 +128,7 @@ services:
       - "--"
       # relay
       - "--execution=wasm"
-      - "--chain=/etc/mangata/ksm_local_9.18.json"
+      - "--chain=/etc/mangata/ksm_local_9.28.json"
       - "--bootnodes=/dns/relay_alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp"
     volumes:
       - ./config:/etc/mangata

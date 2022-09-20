@@ -72,7 +72,7 @@ services:
         ipv4_address: 10.0.0.4
 
   para_alice:
-    image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangata-node:kusama-2b4faff9bd0f4cc556a106a422917d7faeff8485}
+    image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangata-node:kusama-0.22.0}
     environment:
       - ${RUST_LOG:-info}
       - LD_PRELOAD=${LD_PRELOAD}
@@ -107,7 +107,7 @@ services:
         ipv4_address: 10.0.0.5
 
   para_bob:
-    image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangata-node:kusama-2b4faff9bd0f4cc556a106a422917d7faeff8485}
+    image: ${PARACHAIN_DOCKER_IMAGE:-mangatasolutions/mangata-node:kusama-0.22.0}
     environment:
       - ${RUST_LOG:-info}
       - LD_PRELOAD=${LD_PRELOAD}

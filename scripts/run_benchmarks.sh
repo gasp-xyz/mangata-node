@@ -10,7 +10,7 @@ benchmarks=(
     "orml_tokens"
     "parachain_staking"
     "pallet_xyk"
-    "xcm_asset_registry"
+    "orml_asset_registry"
     "pallet_treasury"
     "pallet_collective"
     "pallet_elections_phragmen"

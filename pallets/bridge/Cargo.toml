@@ -15,23 +15,23 @@ serde = { version = "1.0.126", optional = true, features = ["derive"] }
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 scale-info = { version = "2.0.0", default-features = false, features = ["derive"] }
 
-frame-support = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.26" }
-frame-system = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.26" }
-sp-runtime = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.26" }
-sp-core = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.26" }
-sp-std = { version = "4.0.0-dev", default-features = false , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.26" }
-sp-io = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.26" }
-frame-benchmarking = { version = "4.0.0-dev", default-features = false, optional = true , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.26" }
+frame-support = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+frame-system = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-runtime = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-core = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-std = { version = "4.0.0-dev", default-features = false , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-io = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+frame-benchmarking = { version = "4.0.0-dev", default-features = false, optional = true , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
 artemis-core = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v0.9.24"}
 
 [dev-dependencies]
-pallet-verifier = {version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v0.9.24"}
-artemis-erc20-app = {version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v0.9.24"}
-artemis-eth-app = {version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v0.9.24"}
-artemis-asset = {version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev-v0.9.24"}
-orml-tokens = {version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v0.9.26"}
-orml-traits = { default-features = false, version="0.4.1-dev" , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v0.9.26" }
+pallet-verifier = {version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
+artemis-erc20-app = {version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
+artemis-eth-app = {version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
+artemis-asset = {version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
+orml-tokens = {version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev"}
+orml-traits = { default-features = false, version="0.4.1-dev" , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
 mangata-primitives = { path = '../../primitives/mangata', default-features = false, version = '0.1.0' }
 
 

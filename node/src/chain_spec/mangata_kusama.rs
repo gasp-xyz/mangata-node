@@ -4,6 +4,7 @@ use codec::Encode;
 use cumulus_primitives_core::ParaId;
 use hex::FromHex;
 use hex_literal::hex;
+use jsonrpsee::core::__reexports::serde_json;
 use mangata_kusama_runtime::{
 	constants::parachains, ksm_per_second, AccountId, AssetMetadataOf, AuraId, CustomMetadata,
 	GeneralKey, MultiLocation, Parachain, Signature, XcmMetadata, KAR_TOKEN_ID, KSM_TOKEN_ID,
@@ -11,7 +12,10 @@ use mangata_kusama_runtime::{
 };
 use sc_service::ChainType;
 use sp_core::{sr25519, ByteArray, Pair, Public, H160};
-use sp_runtime::traits::{IdentifyAccount, Verify};
+use sp_runtime::{
+	traits::{ConstU32, IdentifyAccount, Verify},
+	WeakBoundedVec,
+};
 
 pub mod public_testnet_keys {
 	pub const ALICE_SR25519: &str =
@@ -442,8 +446,8 @@ pub fn local_config() -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
 	properties.insert("tokenSymbol".into(), "MGAL".into());
-	properties.insert("tokenDecimals".into(), 18.into());
-	properties.insert("ss58Format".into(), 42.into());
+	properties.insert("tokenDecimals".into(), 18u32.into());
+	properties.insert("ss58Format".into(), 42u32.into());
 
 	ChainSpec::from_genesis(
 		// Name
@@ -626,7 +630,10 @@ pub fn local_config() -> ChainSpec {
 									1,
 									X2(
 										Parachain(parachains::karura::ID),
-										GeneralKey(parachains::karura::KAR_KEY.to_vec()),
+										GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
+											parachains::karura::KAR_KEY.to_vec(),
+											None,
+										)),
 									),
 								)
 								.into(),

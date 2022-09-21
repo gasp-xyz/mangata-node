@@ -241,7 +241,7 @@ use mp_traits::{ActivationReservesProviderTrait, XykFunctionsTrait};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_issuance::{ComputeIssuance, PoolPromoteApi};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
-use sp_arithmetic::helpers_128bit::multiply_by_rational;
+use sp_arithmetic::{helpers_128bit::multiply_by_rational_with_rounding, per_things::Rounding};
 use sp_runtime::traits::{
 	AccountIdConversion, AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member,
 	SaturatedConversion, Zero,
@@ -1516,18 +1516,20 @@ impl<T: Config> Pallet<T> {
 
 		// Calculate first and second token amount to be withdrawn
 		ensure!(!total_liquidity_assets.is_zero(), Error::<T>::DivisionByZero);
-		let first_asset_amount = multiply_by_rational(
+		let first_asset_amount = multiply_by_rational_with_rounding(
 			first_asset_reserve,
 			liquidity_asset_amount,
 			total_liquidity_assets,
+			Rounding::Down,
 		)
-		.map_err(|_| Error::<T>::UnexpectedFailure)?;
-		let second_asset_amount = multiply_by_rational(
+		.ok_or(Error::<T>::UnexpectedFailure)?;
+		let second_asset_amount = multiply_by_rational_with_rounding(
 			second_asset_reserve,
 			liquidity_asset_amount,
 			total_liquidity_assets,
+			Rounding::Down,
 		)
-		.map_err(|_| Error::<T>::UnexpectedFailure)?;
+		.ok_or(Error::<T>::UnexpectedFailure)?;
 
 		Ok((first_asset_amount, second_asset_amount))
 	}
@@ -1789,20 +1791,32 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			Error::<T>::FunctionNotAvailableForThisToken
 		);
 
-		let buy_and_burn_amount =
-			multiply_by_rational(sold_asset_amount, T::BuyAndBurnFeePercentage::get(), 10000)
-				.map_err(|_| Error::<T>::UnexpectedFailure)? +
-				1;
+		let buy_and_burn_amount = multiply_by_rational_with_rounding(
+			sold_asset_amount,
+			T::BuyAndBurnFeePercentage::get(),
+			10000,
+			Rounding::Down,
+		)
+		.ok_or(Error::<T>::UnexpectedFailure)? +
+			1;
 
-		let treasury_amount =
-			multiply_by_rational(sold_asset_amount, T::TreasuryFeePercentage::get(), 10000)
-				.map_err(|_| Error::<T>::UnexpectedFailure)? +
-				1;
+		let treasury_amount = multiply_by_rational_with_rounding(
+			sold_asset_amount,
+			T::TreasuryFeePercentage::get(),
+			10000,
+			Rounding::Down,
+		)
+		.ok_or(Error::<T>::UnexpectedFailure)? +
+			1;
 
-		let pool_fee_amount =
-			multiply_by_rational(sold_asset_amount, T::PoolFeePercentage::get(), 10000)
-				.map_err(|_| Error::<T>::UnexpectedFailure)? +
-				1;
+		let pool_fee_amount = multiply_by_rational_with_rounding(
+			sold_asset_amount,
+			T::PoolFeePercentage::get(),
+			10000,
+			Rounding::Down,
+		)
+		.ok_or(Error::<T>::UnexpectedFailure)? +
+			1;
 
 		// for future implementation of min fee if necessary
 		// let min_fee: u128 = 0;
@@ -1977,20 +1991,32 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		let sold_asset_amount =
 			Pallet::<T>::calculate_buy_price(input_reserve, output_reserve, bought_asset_amount)?;
 
-		let buy_and_burn_amount =
-			multiply_by_rational(sold_asset_amount, T::BuyAndBurnFeePercentage::get(), 10000)
-				.map_err(|_| Error::<T>::UnexpectedFailure)? +
-				1;
+		let buy_and_burn_amount = multiply_by_rational_with_rounding(
+			sold_asset_amount,
+			T::BuyAndBurnFeePercentage::get(),
+			10000,
+			Rounding::Down,
+		)
+		.ok_or(Error::<T>::UnexpectedFailure)? +
+			1;
 
-		let treasury_amount =
-			multiply_by_rational(sold_asset_amount, T::TreasuryFeePercentage::get(), 10000)
-				.map_err(|_| Error::<T>::UnexpectedFailure)? +
-				1;
+		let treasury_amount = multiply_by_rational_with_rounding(
+			sold_asset_amount,
+			T::TreasuryFeePercentage::get(),
+			10000,
+			Rounding::Down,
+		)
+		.ok_or(Error::<T>::UnexpectedFailure)? +
+			1;
 
-		let pool_fee_amount =
-			multiply_by_rational(sold_asset_amount, T::PoolFeePercentage::get(), 10000)
-				.map_err(|_| Error::<T>::UnexpectedFailure)? +
-				1;
+		let pool_fee_amount = multiply_by_rational_with_rounding(
+			sold_asset_amount,
+			T::PoolFeePercentage::get(),
+			10000,
+			Rounding::Down,
+		)
+		.ok_or(Error::<T>::UnexpectedFailure)? +
+			1;
 
 		// for future implementation of min fee if necessary
 		// let min_fee: u128 = 0;
@@ -2153,14 +2179,22 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 		// Calculation of required second asset amount and received liquidity token amount
 		ensure!(!first_asset_reserve.is_zero(), Error::<T>::DivisionByZero);
-		let second_asset_amount =
-			multiply_by_rational(first_asset_amount, second_asset_reserve, first_asset_reserve)
-				.map_err(|_| Error::<T>::UnexpectedFailure)?
-				.checked_add(1)
-				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
-		let liquidity_assets_minted =
-			multiply_by_rational(first_asset_amount, total_liquidity_assets, first_asset_reserve)
-				.map_err(|_| Error::<T>::UnexpectedFailure)?;
+		let second_asset_amount = multiply_by_rational_with_rounding(
+			first_asset_amount,
+			second_asset_reserve,
+			first_asset_reserve,
+			Rounding::Down,
+		)
+		.ok_or(Error::<T>::UnexpectedFailure)?
+		.checked_add(1)
+		.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+		let liquidity_assets_minted = multiply_by_rational_with_rounding(
+			first_asset_amount,
+			total_liquidity_assets,
+			first_asset_reserve,
+			Rounding::Down,
+		)
+		.ok_or(Error::<T>::UnexpectedFailure)?;
 
 		ensure!(
 			second_asset_amount <= expected_second_asset_amount,
@@ -2601,20 +2635,22 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			<T as Config>::Currency::total_issuance(liquidity_asset_id.into()).into();
 
 		ensure!(!total_liquidity_assets.is_zero(), Error::<T>::DivisionByZero);
-		let second_asset_amount = multiply_by_rational(
+		let second_asset_amount = multiply_by_rational_with_rounding(
 			liquidity_token_amount,
 			second_asset_reserve,
 			total_liquidity_assets,
+			Rounding::Down,
 		)
-		.map_err(|_| Error::<T>::UnexpectedFailure)?
+		.ok_or(Error::<T>::UnexpectedFailure)?
 		.checked_add(1)
 		.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
-		let first_asset_amount = multiply_by_rational(
+		let first_asset_amount = multiply_by_rational_with_rounding(
 			liquidity_token_amount,
 			first_asset_reserve,
 			total_liquidity_assets,
+			Rounding::Down,
 		)
-		.map_err(|_| Error::<T>::UnexpectedFailure)?
+		.ok_or(Error::<T>::UnexpectedFailure)?
 		.checked_add(1)
 		.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 
@@ -2737,8 +2773,13 @@ impl<T: Config> Valuate for Pallet<T> {
 			return Default::default()
 		}
 
-		multiply_by_rational(mga_token_reserve, liquidity_token_amount, liquidity_token_reserve)
-			.unwrap_or_else(|_| Balance::max_value())
+		multiply_by_rational_with_rounding(
+			mga_token_reserve,
+			liquidity_token_amount,
+			liquidity_token_reserve,
+			Rounding::Down,
+		)
+		.unwrap_or(Balance::max_value())
 	}
 
 	fn scale_liquidity_by_mga_valuation(
@@ -2750,8 +2791,13 @@ impl<T: Config> Valuate for Pallet<T> {
 			return Default::default()
 		}
 
-		multiply_by_rational(liquidity_token_amount, mga_token_amount, mga_valuation)
-			.unwrap_or_else(|_| Balance::max_value())
+		multiply_by_rational_with_rounding(
+			liquidity_token_amount,
+			mga_token_amount,
+			mga_valuation,
+			Rounding::Down,
+		)
+		.unwrap_or(Balance::max_value())
 	}
 
 	fn get_pool_state(

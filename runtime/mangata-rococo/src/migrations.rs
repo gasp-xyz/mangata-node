@@ -1,4 +1,5 @@
 use super::*;
+use sp_runtime::{traits::ConstU32, WeakBoundedVec};
 
 mod deprecated {
 	use frame_support::sp_runtime::RuntimeDebug;
@@ -101,7 +102,13 @@ pub mod asset_registry {
 						location: Some(
 							MultiLocation::new(
 								1,
-								X2(Parachain(karura::ID), GeneralKey(karura::KAR_KEY.to_vec())),
+								X2(
+									Parachain(karura::ID),
+									GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
+										karura::KAR_KEY.to_vec(),
+										None,
+									)),
+								),
 							)
 							.into(),
 						),

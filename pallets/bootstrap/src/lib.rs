@@ -15,7 +15,7 @@ use mp_bootstrap::{PoolCreateApi, RewardsApi};
 use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
 use scale_info::TypeInfo;
-use sp_arithmetic::helpers_128bit::multiply_by_rational;
+use sp_arithmetic::{helpers_128bit::multiply_by_rational_with_rounding, per_things::Rounding};
 use sp_core::U256;
 use sp_io::KillStorageResult;
 use sp_runtime::traits::{AccountIdConversion, CheckedAdd, SaturatedConversion};
@@ -741,10 +741,16 @@ impl<T: Config> Pallet<T> {
 		let provision = Self::provisions(who, token_id);
 		let (vested_provision, lock_start, lock_end) = Self::vested_provisions(who, token_id);
 		let (_, liquidity) = Self::minted_liquidity();
-		let rewards = multiply_by_rational(liquidity / 2, provision, valuation)
-			.map_err(|_| Error::<T>::MathOverflow)?;
-		let vested_rewards = multiply_by_rational(liquidity / 2, vested_provision, valuation)
-			.map_err(|_| Error::<T>::MathOverflow)?;
+		let rewards =
+			multiply_by_rational_with_rounding(liquidity / 2, provision, valuation, Rounding::Down)
+				.ok_or(Error::<T>::MathOverflow)?;
+		let vested_rewards = multiply_by_rational_with_rounding(
+			liquidity / 2,
+			vested_provision,
+			valuation,
+			Rounding::Down,
+		)
+		.ok_or(Error::<T>::MathOverflow)?;
 		Ok((rewards, vested_rewards, (lock_start, lock_end)))
 	}
 

@@ -6,6 +6,7 @@ use super::*;
 use crate::mock::*;
 use frame_support::assert_err;
 use serial_test::serial;
+use log::info;
 //fn create_pool_W(): create_pool working assert (maps,acocounts values)  //DONE
 //fn create_pool_N_already_exists(): create_pool not working if pool already exists  //DONE
 //fn create_pool_N_already_exists_other_way(): create_pool not working if pool already exists other way around (create pool X-Y, but pool Y-X exists) //DONE
@@ -296,7 +297,7 @@ fn liquidity_rewards_three_users_mint_W() {
 
 		assert_eq!(XykStorage::calculate_rewards_amount_v2(2, 4).unwrap(), 85812);
 		assert_eq!(XykStorage::calculate_rewards_amount_v2(3, 4).unwrap(), 35803);
-		assert_eq!(XykStorage::calculate_rewards_amount_v2(4, 4).unwrap(), 21921);
+		assert_eq!(XykStorage::calculate_rewards_amount_v2(4, 4).unwrap(), 21641);
 	});
 }
 
@@ -357,7 +358,7 @@ fn liquidity_rewards_three_users_burn_W() {
 
 		assert_eq!(XykStorage::calculate_rewards_amount_v2(2, 4).unwrap(), 95942);
 		assert_eq!(XykStorage::calculate_rewards_amount_v2(3, 4).unwrap(), 44121);
-		assert_eq!(XykStorage::calculate_rewards_amount_v2(4, 4).unwrap(), 10849);
+		assert_eq!(XykStorage::calculate_rewards_amount_v2(4, 4).unwrap(), 10625);
 	});
 }
 

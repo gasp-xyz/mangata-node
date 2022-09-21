@@ -1123,9 +1123,9 @@ impl<T: Config> Pallet<T> {
 
 			let q_pow = Self::calculate_q_pow(Q, time_passed + 1);
 
-			let cummulative_missing_new = base - base * U256::from(REWARDS_PRECISION) / q_pow;
+			let cummulative_missing_new = base - base * U256::from(REWARDS_PRECISION) / q_pow - missing_at_last_checkpoint;
 
-			let cummulative_work = cummulative_work_max_possible_for_calc
+			let cummulative_work = cummulative_work_max_possible_for_ratio
 				.checked_sub(cummulative_missing_new)
 				.ok_or_else(|| {
 					DispatchError::from(Error::<T>::CalculateCumulativeWorkMaxRatioMathError5)
@@ -1173,7 +1173,7 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		let current_time: u32 = <frame_system::Pallet<T>>::block_number().saturated_into::<u32>() /
 			T::RewardsDistributionPeriod::get();
-		let pool_ratio_current =
+		let mut pool_ratio_current =
 			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).unwrap();
 
 		let rewards_info = RewardsInfo::<T>::try_get(user.clone(), liquidity_asset_id)
@@ -1195,6 +1195,10 @@ impl<T: Config> Pallet<T> {
 			.checked_sub(last_checkpoint)
 			.ok_or_else(|| DispatchError::from(Error::<T>::PastTimeCalculation))?;
 
+		if time_passed == 0 {
+			pool_ratio_current = pool_ratio_at_last_checkpoint;	
+		}
+		
 		let missing_at_checkpoint_new = if liquidity_assets_amount == 0 {
 			U256::from(liquidity_assets_added)
 		} else {
@@ -1265,7 +1269,7 @@ impl<T: Config> Pallet<T> {
 		let current_time: u32 = <frame_system::Pallet<T>>::block_number().saturated_into::<u32>() /
 			T::RewardsDistributionPeriod::get();
 
-		let pool_ratio_current =
+		let mut pool_ratio_current =
 			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).unwrap();
 
 		let rewards_info: RewardInfo = Self::get_rewards_info(user.clone(), liquidity_asset_id);
@@ -1278,6 +1282,10 @@ impl<T: Config> Pallet<T> {
 		let time_passed = current_time
 			.checked_sub(last_checkpoint)
 			.ok_or_else(|| DispatchError::from(Error::<T>::PastTimeCalculation))?;
+
+		if time_passed == 0 {
+			pool_ratio_current = pool_ratio_at_last_checkpoint;	
+		}
 
 		let missing_at_checkpoint_new =
 			Self::calculate_missing_at_checkpoint_v2(time_passed, missing_at_last_checkpoint)?;
@@ -1295,9 +1303,9 @@ impl<T: Config> Pallet<T> {
 			.checked_sub(liquidity_assets_burned)
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 	
-		let activated_amount_new_U256: U256 = activated_amount_new.into();
+		let activated_amount_new_u256: U256 = activated_amount_new.into();
 			
-		let missing_at_checkpoint_after_burn: U256 = activated_amount_new_U256
+		let missing_at_checkpoint_after_burn: U256 = activated_amount_new_u256
 			.checked_mul(missing_at_checkpoint_new)
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
 			.checked_div(liquidity_assets_amount.into())

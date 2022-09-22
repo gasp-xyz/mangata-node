@@ -1,5 +1,5 @@
 relaychain:
-  image: parity/polkadot:v0.9.24
+  image: parity/polkadot:v0.9.29
   chain: rococo-local
   runtimeGenesisConfig:
     configuration:

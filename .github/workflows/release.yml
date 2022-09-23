@@ -20,6 +20,8 @@ jobs:
         with:
           images: docker.io/mangatasolutions/mangata-node
           tags: type=semver,prefix=kusama-,pattern={{version}}
+          flavor: |
+            latest=false
       
       - name: Tag and push image
         uses: akhilerm/tag-push-action@v2.0.0
@@ -43,6 +45,8 @@ jobs:
         with:
           images: docker.io/mangatasolutions/mangata-node
           tags: type=semver,prefix=rococo-,pattern={{version}}
+          flavor: |
+            latest=false
 
       - name: Tag and push image
         uses: akhilerm/tag-push-action@v2.0.0

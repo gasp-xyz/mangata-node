@@ -1,22 +1,29 @@
+[settings]
+timeout = 1000
+bootnode = false
+
 [relaychain]
 default_image = "docker.io/paritypr/polkadot-debug:master"
-default_command = "polkadot"
-default_args = [ "-lparachain=debug" ]
-
 chain = "rococo-local"
 
+[relaychain.genesis.runtime.runtime_genesis_config.configuration.config]
+  max_validators_per_core = 2
+  needed_approvals = 2
   [[relaychain.nodes]]
   name = "alice"
-  validator = true
+  command = "polkadot"
 
   [[relaychain.nodes]]
   name = "bob"
-  validator = true
+  command = "polkadot"
 
 [[parachains]]
-id = 100
+id = 2110
+cumulus_based = true
 
-  [parachains.collator]
-  name = "collator01"
-  image = "docker.io/paritypr/colander:master"
-  command = "adder-collator"
+
+  [[parachains.collator_groups]]
+    count = 2
+    name = "collator"
+    image = "docker.io/mangatasolutions/mangata-node:rococo-latest"
+    command = "/mangata/node"

@@ -118,6 +118,15 @@ pub trait XykFunctionsTrait<AccountId> {
 		activate_minted_liquidity: bool,
 	) -> Result<(Self::CurrencyId, Self::Balance), DispatchError>;
 
+	fn provide_liquidity_with_conversion(
+		sender: AccountId,
+		first_asset_id: Self::CurrencyId,
+		second_asset_id: Self::CurrencyId,
+		provided_asset_id: Self::CurrencyId,
+		provided_asset_amount: Self::Balance,
+		activate_minted_liquidity: bool,
+	) -> Result<(Self::CurrencyId, Self::Balance), DispatchError>;
+
 	fn burn_liquidity(
 		sender: AccountId,
 		first_asset_id: Self::CurrencyId,

@@ -8,6 +8,8 @@ use frame_support::assert_err;
 use mangata_types::assets::CustomMetadata;
 use orml_traits::asset_registry::AssetMetadata;
 use serial_test::serial;
+use test_case::test_case;
+
 //fn create_pool_W(): create_pool working assert (maps,acocounts values)  //DONE
 //fn create_pool_N_already_exists(): create_pool not working if pool already exists  //DONE
 //fn create_pool_N_already_exists_other_way(): create_pool not working if pool already exists other way around (create pool X-Y, but pool Y-X exists) //DONE
@@ -2400,5 +2402,66 @@ fn migration_work() {
 		assert_eq!(rewards_info.last_checkpoint, 20);
 		assert_eq!(rewards_info.pool_ratio_at_last_checkpoint, U256::from(43798)); //these values will be from rew2, but reading pool_ratio_at_last_checkpoint works
 		assert_eq!(rewards_info.missing_at_last_checkpoint, U256::from_dec_str("5584").unwrap());
+	});
+}
+
+#[test_case(200_000_000_000_000_000_000_u128, 1_000_000_000_000_u128, 1_u128 ; "swap plus 1 rounding")]
+#[test_case(2_000_u128, 100_u128, 2_u128 ; "swap plus 2 rounding")]
+fn test_compound_calculate_balanced_swap_for_liquidity(amount: u128, reward: u128, offset: u128) {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		let acc_id: u128 = 2;
+		let pool = amount / 2;
+		XykStorage::create_new_token(&acc_id, amount);
+		XykStorage::create_new_token(&acc_id, amount);
+		XykStorage::create_pool(Origin::signed(2), 0, pool, 1, pool).unwrap();
+
+		let swap_amount =
+			XykStorage::calculate_balanced_sell_amount(reward, pool).unwrap() - 2 + offset;
+
+		let swapped_amount = XykStorage::calculate_sell_price(pool, pool, swap_amount).unwrap();
+		println!("X rounding: +{}", offset);
+		println!("reward: {}", reward);
+		println!("pool: {}:{}", pool, pool);
+		println!("X to swap: {}", swap_amount);
+		println!("swap -fee: {}", swap_amount * 999 / 1000);
+		println!("X: {}", reward - swap_amount);
+		println!("Y: {}", swapped_amount);
+
+		XykStorage::sell_asset(Origin::signed(2), 0, 1, swap_amount, 0).unwrap();
+		let (p1, p2) = XykStorage::asset_pool((0, 1));
+		println!("pool_1: {}:{}", p1, p2);
+
+		let y_m = multiply_by_rational(reward - swap_amount, p2, p1)
+			.unwrap()
+			.checked_add(1)
+			.unwrap();
+
+		println!("y_mint: {}", y_m);
+
+		XykStorage::mint_liquidity(Origin::signed(2), 0, 1, reward - swap_amount, u128::MAX)
+			.unwrap();
+
+		println!("balance X{}, Y{}", XykStorage::balance(0, 2), XykStorage::balance(1, 2));
+		assert_eq!(XykStorage::balance(0, 2), pool - reward); // amount in user acc after mint
+		assert!(XykStorage::balance(1, 2).ge(&pool)); // amount in user acc after mint
+	});
+}
+
+#[test_case(100_000, 1_000 ; "calculate balanced swap requires plus 1 rounding")]
+fn test_compound_provide_liquidity(amount: u128, reward: u128) {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		let acc_id: u128 = 2;
+		let pool = amount / 2;
+		XykStorage::create_new_token(&acc_id, amount);
+		XykStorage::create_new_token(&acc_id, amount);
+		XykStorage::create_pool(Origin::signed(2), 0, pool, 1, pool).unwrap();
+
+		XykStorage::provide_liquidity_with_conversion(Origin::signed(2), 2, 0, reward).unwrap();
+
+		println!("balance X{}, Y{}", XykStorage::balance(0, 2), XykStorage::balance(1, 2));
+		assert_eq!(XykStorage::balance(0, 2), pool - reward); // amount in user acc after mint
+		assert!(XykStorage::balance(1, 2).ge(&pool)); // amount in user acc after mint
 	});
 }

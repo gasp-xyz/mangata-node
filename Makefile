@@ -5,7 +5,7 @@ build:
 		--cache-to=type=registry,ref=mangatasolutions/mangata-node,mode=max \
 		--push .
 
-build2:
+build2-test:
 	docker volume inspect cargo-cache > /dev/null || docker volume create cargo-cache
 	docker run --rm -it --platform linux/amd64 -w /code \
 		-v $(CURDIR):/code \

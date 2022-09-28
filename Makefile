@@ -3,7 +3,7 @@ build:
 		-t mangatasolutions/mangata-node:devm \
 		--cache-from=type=registry,ref=mangatasolutions/mangata-node \
 		--cache-to=type=registry,ref=mangatasolutions/mangata-node,mode=max \
-		--push --builder=container .
+		--push .
 
 build2:
 	docker volume inspect cargo-cache > /dev/null || docker volume create cargo-cache

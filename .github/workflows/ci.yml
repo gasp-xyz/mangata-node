@@ -214,7 +214,38 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - uses: mxschmitt/action-tmate@v3
+      - run: make build
+      - if: ${{ failure() }}
+        uses: mxschmitt/action-tmate@v3
+  
+  build-rococo-self-hosted:
+    needs: [init]
+    runs-on: self-hosted
+    if: ${{ github.event.inputs.skipBuild != 'true' }}
+    steps:
+      -
+        name: Debug info about publishing.
+        run: |
+          echo ${{ github.ref }} == 'refs/heads/develop'
+          echo ${{ github.ref }}
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - run: make build
+      - if: ${{ failure() }}
+        uses: mxschmitt/action-tmate@v3
       # - name: Pull builder image
       #   if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
       #   run: |

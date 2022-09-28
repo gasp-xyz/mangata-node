@@ -195,7 +195,7 @@ jobs:
     if: ${{ github.event.inputs.skipBuild != 'true' }}
     steps:
       -
-        name: Debug info about publishing.
+        name: Debug info about publishing. Test build again.
         run: |
           echo ${{ github.ref }} == 'refs/heads/develop'
           echo ${{ github.ref }}

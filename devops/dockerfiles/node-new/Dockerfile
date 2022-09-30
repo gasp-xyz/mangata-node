@@ -16,10 +16,10 @@ RUN cargo chef cook --check --release --no-default-features -p mangata-node
 ENV SKIP_WASM_BUILD=true
 COPY . .
 RUN cargo build --release -p mangata-node --no-default-features --features=mangata-rococo,mangata-kusama \
-  && mv /app/target/release/mangata-node/mangata-node /app/node \ 
+  && mv /app/target/release/mangata-node /app/node \ 
   && rm -rf /app/target /usr/local/cargo /root/.cache
 
 FROM debian:buster
 RUN mkdir /mangata
 COPY --from=builder /app/node  /mangata/node
-ENTRYPOINT ["/mangata/node"]
+ENTRYPOINT ["/mangata/node/mangata-node"]

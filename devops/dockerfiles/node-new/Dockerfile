@@ -13,12 +13,11 @@ COPY --from=planner /app/recipe.json recipe.json
 RUN cargo chef cook --check --release --no-default-features -p mangata-node
 
 # Build application
+ENV SKIP_WASM_BUILD=true
 COPY . .
 RUN cargo build --release -p mangata-node --no-default-features --features=mangata-rococo,mangata-kusama
 
 FROM debian:buster
 RUN mkdir /mangata
-COPY --from=builder /app/target/release/mangata-node/mangata-node  /mangata/node
-COPY --from=builder /app/target/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm  /mangata/
-COPY --from=builder /app/target/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm  /mangata/
+COPY --from=builder /app/target/release/mangata-node  /mangata/node
 ENTRYPOINT ["/mangata/node"]

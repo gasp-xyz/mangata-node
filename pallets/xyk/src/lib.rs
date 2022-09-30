@@ -253,6 +253,7 @@ use sp_runtime::{
 use sp_std::{
 	convert::{TryFrom, TryInto},
 	fmt::Debug,
+	ops::Div,
 	prelude::*,
 };
 
@@ -753,6 +754,53 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(T::WeightInfo::mint_liquidity())]
+		#[transactional]
+		pub fn compound_rewards(
+			origin: OriginFor<T>,
+			liquidity_asset_id: TokenId,
+			amount_permille: u128,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+
+			let (first_asset_id, second_asset_id) = LiquidityPools::<T>::get(liquidity_asset_id)
+				.ok_or(Error::<T>::NoSuchLiquidityAsset)?;
+
+			ensure!(
+				!T::DisabledTokens::contains(&first_asset_id) &&
+					!T::DisabledTokens::contains(&second_asset_id),
+				Error::<T>::FunctionNotAvailableForThisToken
+			);
+			let rewards_all =
+				Pallet::<T>::calculate_rewards_amount(sender.clone(), liquidity_asset_id)?;
+			ensure!(rewards_all > 0, Error::<T>::NotEnoughtRewardsEarned);
+
+			let rewards_256 =
+				Into::<U256>::into(rewards_all).saturating_mul(amount_permille.into()).div(1000);
+			let rewards = Balance::try_from(rewards_256)
+				.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
+
+			ensure!(rewards <= rewards_all, Error::<T>::NotEnoughtRewardsEarned);
+
+			<Self as XykFunctionsTrait<T::AccountId>>::claim_rewards(
+				sender.clone(),
+				liquidity_asset_id,
+				rewards,
+			)?;
+
+			<Self as XykFunctionsTrait<T::AccountId>>::provide_liquidity_with_conversion(
+				sender,
+				first_asset_id,
+				second_asset_id,
+				first_asset_id,
+				rewards,
+				true,
+			)?;
+
+			Ok(().into())
+		}
+
+		#[pallet::weight(T::WeightInfo::provide_liquidity_with_conversion())]
+		#[transactional]
 		pub fn provide_liquidity_with_conversion(
 			origin: OriginFor<T>,
 			liquidity_asset_id: TokenId,
@@ -2425,6 +2473,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		provided_asset_amount: Self::Balance,
 		activate_minted_liquidity: bool,
 	) -> Result<(Self::CurrencyId, Self::Balance), DispatchError> {
+
+
 		// checks
 		ensure!(!provided_asset_amount.is_zero(), Error::<T>::ZeroAmount,);
 
@@ -2467,6 +2517,18 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		let mint_amount = provided_asset_amount
 			.checked_sub(swap_amount)
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+
+		log!(
+			info,
+			"provide_liquidity_with_conversion: ({:?}, {}, {}, {}, {}) -> ({}, {})",
+			sender,
+			first_asset_id,
+			second_asset_id,
+			provided_asset_id,
+			provided_asset_amount,
+			mint_amount,
+			bought_amount
+		);
 
 		<Self as XykFunctionsTrait<T::AccountId>>::mint_liquidity(
 			sender,

@@ -565,6 +565,84 @@ benchmarks! {
 
    }
 
+	provide_liquidity_with_conversion {
+		let caller: T::AccountId = whitelisted_caller();
+		let initial_amount:mangata_primitives::Balance = 1_000_000_000;
+		let asset_id_1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+		let asset_id_2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+		let liquidity_asset_id = asset_id_2 + 1;
+		<<T as Config>::PoolPromoteApi as ComputeIssuance>::initialize();
+
+		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), asset_id_1.into(), 500_000_000, asset_id_2.into(), 500_000_000).unwrap();
+
+	}: provide_liquidity_with_conversion(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), asset_id_1, 100_000_u128)
+	verify {
+
+		let post_asset_amount_1 = <T as Config>::Currency::free_balance(asset_id_1.into(), &caller).into();
+		let post_asset_amount_2 = <T as Config>::Currency::free_balance(asset_id_2.into(), &caller).into();
+		assert_eq!(post_asset_amount_1, 499_900_000,);
+		assert_eq!(post_asset_amount_2, 500_000_001);
+
+		let post_pool_balance = Xyk::<T>::asset_pool((asset_id_1, asset_id_2));
+		assert_eq!(post_pool_balance.0, 500_099_948);
+		assert_eq!(post_pool_balance.1, 499_999_999);
+	}
+
+	compound_rewards {
+		let other: T::AccountId = account("caller1", 0, 0);
+		let caller: T::AccountId = whitelisted_caller();
+		let reward_ratio = 1_000_000;
+		let initial_amount:mangata_primitives::Balance = 100_000_000_000_000;
+		let pool_amount:mangata_primitives::Balance = initial_amount / 2;
+
+		let asset_id_1 : TokenId= <T as Config>::NativeCurrencyId::get().into();
+		let asset_id_2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+		<T as Config>::Currency::mint(asset_id_1.into(), &caller, initial_amount.into()).unwrap();
+		<T as Config>::Currency::mint(asset_id_1.into(), &other, (initial_amount * reward_ratio).into()).unwrap();
+		<T as Config>::Currency::mint(asset_id_2.into(), &other, (initial_amount * reward_ratio).into()).unwrap();
+
+		let liquidity_asset_id = asset_id_2 + 1;
+		<<T as Config>::PoolPromoteApi as ComputeIssuance>::initialize();
+
+		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), asset_id_1.into(), pool_amount, asset_id_2.into(), pool_amount).unwrap();
+		Xyk::<T>::promote_pool(RawOrigin::Root.into(), liquidity_asset_id).unwrap();
+		Xyk::<T>::activate_liquidity(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id, pool_amount, None).unwrap();
+		// mint for other to split the rewards rewards_ratio:1
+		Xyk::<T>::mint_liquidity(
+			RawOrigin::Signed(other.clone().into()).into(),
+			asset_id_1,
+			asset_id_2,
+			pool_amount * reward_ratio,
+			pool_amount * reward_ratio + 1,
+		).unwrap();
+
+		frame_system::Pallet::<T>::set_block_number(50_000u32.into());
+		<<T as Config>::PoolPromoteApi as ComputeIssuance>::compute_issuance(1);
+
+		let mut pre_pool_balance = Xyk::<T>::asset_pool((asset_id_1, asset_id_2));
+		let rewards_to_claim = Xyk::<T>::calculate_rewards_amount(caller.clone(), liquidity_asset_id).unwrap();
+		let swap_amount = Xyk::<T>::calculate_balanced_sell_amount(rewards_to_claim, pre_pool_balance.0).unwrap();
+		let pre_claim_native_tokens_amount = <T as Config>::Currency::free_balance(<T as Config>::NativeCurrencyId::get().into(), &caller).into();
+		pre_pool_balance = Xyk::<T>::asset_pool((asset_id_1, asset_id_2));
+
+	}: compound_rewards(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), 1000_u128)
+	verify {
+
+		assert_eq!(rewards_to_claim, 135_463_177_684_253_389);
+		assert_eq!(swap_amount, 67_787_502_354_636_248);
+
+		assert_eq!(
+			Xyk::<T>::calculate_rewards_amount(caller.clone(), liquidity_asset_id).unwrap(),
+			(0_u128)
+		);
+
+		let post_claim_native_tokens_amount = <T as Config>::Currency::free_balance(<T as Config>::NativeCurrencyId::get().into(), &caller).into();
+		assert_eq!( pre_claim_native_tokens_amount, post_claim_native_tokens_amount);
+
+		let post_pool_balance = Xyk::<T>::asset_pool((asset_id_1, asset_id_2));
+		assert!( pre_pool_balance.0 < post_pool_balance.0);
+		assert!( pre_pool_balance.1 >= post_pool_balance.1);
+	}
 
 	impl_benchmark_test_suite!(Xyk, crate::mock::new_test_ext(), crate::mock::Test)
 }

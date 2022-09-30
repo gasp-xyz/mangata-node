@@ -238,7 +238,7 @@ jobs:
 
       - name: Download node Docker image
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
-        run: docker pull mangatasolutions/mangata-node:$${{ env.PARACHAIN_DOCKER_IMAGE }}
+        run: docker pull ${{ env.PARACHAIN_DOCKER_IMAGE }}
 
       - name: E2E- Get branch name
         id: branch-name
@@ -352,8 +352,8 @@ jobs:
 
 
   # e2e-test-sequential-self-hosted:
-  #   needs: [init,build-rococo]
-  #   runs-on: self-hosted
+  #   needs: [init,build-node-image]
+  #   runs-on: [self-hosted, basic]
   #   if: ${{ (!cancelled() && (success() || github.event.inputs.skipBuild == 'true')) && !contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests') }}
   #   timeout-minutes: 180
   #   env:
@@ -498,55 +498,3 @@ jobs:
   #       if: always()
   #       working-directory: launch
   #       run: yarn down
-
-  # publish:
-  #   needs: [init, rustfmt-check, unit-test, clippy-check, build-rococo, build-kusama, e2e-test-sequential-self-hosted, e2e-test-parallel-self-hosted, run-benchmarks, run-benchmarks-tests]
-  #   runs-on: ubuntu-latest
-  #   if: |
-  #     github.ref == 'refs/heads/develop' &&
-  #     !contains(github.event.pull_request.labels.*.name, 'skip-publish') &&
-  #     !github.event.inputs.skipBuild
-  #   #if: "!contains(github.event.pull_request.labels.*.name, 'skip-publish') && ${{ github.event_name == 'push'}} && github.event.pull_request.merged == true"
-  #   #if: # its a push to develop.
-  #   steps:
-  #     -
-  #       name: Checkout
-  #       uses: actions/checkout@v2
-  #     -
-  #       name: Set up QEMU
-  #       uses: docker/setup-qemu-action@v1
-  #     -
-  #       name: Set up Docker Buildx
-  #       uses: docker/setup-buildx-action@v1
-  #     -
-  #       name: Login to Docker Hub
-  #       uses: docker/login-action@v1
-  #       with:
-  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
-  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
-  #     -
-  #       name: Download artifact
-  #       uses: actions/download-artifact@v2
-  #       with:
-  #         name: kusama-docker-${{ needs.init.outputs.GLOBAL_VERSION }}
-  #         path: /tmp
-
-  #     -
-  #       name: Download artifact
-  #       uses: actions/download-artifact@v2
-  #       with:
-  #         name: rococo-docker-${{ needs.init.outputs.GLOBAL_VERSION }}
-  #         path: /tmp
-
-  #     -
-  #       name: Load Docker image
-  #       run: |
-  #         docker load --input /tmp/rococo-docker-${{ needs.init.outputs.GLOBAL_VERSION }}.tar
-  #         docker load --input /tmp/kusama-docker-${{ needs.init.outputs.GLOBAL_VERSION }}.tar
-  #         docker image ls -a
-
-  #     -
-  #       name: Push previously generated Docker image
-  #       run: |
-  #         docker image push --all-tags mangatasolutions/mangata-node
-

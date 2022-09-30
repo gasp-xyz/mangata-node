@@ -10,16 +10,15 @@ RUN cargo chef prepare
 FROM base AS builder
 COPY --from=planner /app/recipe.json recipe.json
 # Build dependencies - this is the caching Docker layer!
-RUN cargo +nightly chef cook --check --release --no-default-features -p mangata-node
+RUN cargo chef cook --check --release --no-default-features -p mangata-node
 
 # Build application
 COPY . .
-RUN cargo +nightly build --release -p mangata-node --no-default-features --features=mangata-rococo \
-  && mv /app/target/release/mangata-node /app/node \
-  && mv /app/target/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm /app/
+RUN cargo build --release -p mangata-node --no-default-features --features=mangata-rococo,mangata-kusama
 
 FROM debian:buster
 RUN mkdir /mangata
-COPY --from=builder /app/node  /mangata/node
-COPY --from=builder /app/mangata_rococo_runtime.compact.compressed.wasm  /mangata/
+COPY --from=builder /app/target/release/mangata-node/mangata-node  /mangata/node
+COPY --from=builder /app/target/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm  /mangata/
+COPY --from=builder /app/target/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm  /mangata/
 ENTRYPOINT ["/mangata/node"]

@@ -46,179 +46,151 @@ jobs:
         id: set_ver
         run: echo "::set-output name=GLOBAL_VERSION::${{ github.sha }}"
   
-  # rustfmt-check:
-  #   name: Formatting check
-  #   if:  ${{ github.event.inputs.skipBuild != 'true' }}
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     -
-  #       name: Checkout
-  #       uses: actions/checkout@v2
-  #     -
-  #       name: Set up Docker Buildx
-  #       uses: docker/setup-buildx-action@v1
-  #     -
-  #       name: Login to Docker Hub
-  #       uses: docker/login-action@v1
-  #       with:
-  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
-  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
-  #     - name: Pull builder image
-  #       run: |
-  #         docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
-  #     -
-  #       name: Check formatting
-  #       run: |
-  #         ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-  #         ./docker-cargo.sh fmt --all -- --check
+  rustfmt-check:
+    name: Formatting check
+    if:  ${{ github.event.inputs.skipBuild != 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Pull builder image
+        run: |
+          docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
+      -
+        name: Check formatting
+        run: |
+          ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
+          ./docker-cargo.sh fmt --all -- --check
 
-  # clippy-check:
-  #   name: Clippy check
-  #   runs-on: ubuntu-latest
-  #   if: ${{ github.event.inputs.skipBuild != 'true' }}
-  #   steps:
-  #     -
-  #       name: Checkout
-  #       uses: actions/checkout@v2
-  #     -
-  #       name: Set up Docker Buildx
-  #       uses: docker/setup-buildx-action@v1
-  #     -
-  #       name: Login to Docker Hub
-  #       uses: docker/login-action@v1
-  #       with:
-  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
-  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
-  #     - name: Pull builder image
-  #       run: |
-  #         docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
-  #     -
-  #       name: Run clippy
-  #       run: |
-  #         ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-  #         ./docker-cargo.sh clippy -p pallet-xyk -p pallet-bridge
+  clippy-check:
+    name: Clippy check
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.skipBuild != 'true' }}
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Pull builder image
+        run: |
+          docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
+      -
+        name: Run clippy
+        run: |
+          ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
+          ./docker-cargo.sh clippy -p pallet-xyk -p pallet-bridge
 
-  # unit-test:
-  #   name: Unit test
-  #   runs-on: ubuntu-latest
-  #   if: ${{ github.event.inputs.skipBuild != 'true' }}
-  #   steps:
-  #     -
-  #       name: Checkout
-  #       uses: actions/checkout@v2
-  #     -
-  #       name: Set up Docker Buildx
-  #       uses: docker/setup-buildx-action@v1
-  #     -
-  #       name: Login to Docker Hub
-  #       uses: docker/login-action@v1
-  #       with:
-  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
-  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
-  #     - name: Pull builder image
-  #       run: |
-  #         docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
-  #     -
-  #       name: Run unit tests
-  #       run: |
-  #         ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-  #         ./docker-cargo.sh test -j2 -p pallet-bootstrap -p xyk-rpc -p pallet-xyk -p xyk-runtime-api -p pallet-bridge -p pallet-issuance -p pallet-multipurpose-liquidity -p pallet-sudo-origin
+  unit-test:
+    name: Unit test
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.skipBuild != 'true' }}
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Pull builder image
+        run: |
+          docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
+      -
+        name: Run unit tests
+        run: |
+          ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
+          ./docker-cargo.sh test -j2 -p pallet-bootstrap -p xyk-rpc -p pallet-xyk -p xyk-runtime-api -p pallet-bridge -p pallet-issuance -p pallet-multipurpose-liquidity -p pallet-sudo-origin
 
-  #         # |cargo2junit | tee ut-results.xml
-  #         # sed -i '/<testsuite.*\/>$/d' ut-results.xml
-  #         # sed -i 's/<testsuites>/<testsuites time="0">/g' ut-results.xml
-  #         # cat ut-results.xml
-  #     # - name: Test Report
-  #     #   uses: dorny/test-reporter@v1
-  #     #   if: success() || failure()
-  #     #   with:
-  #     #     name: Unit Tests
-  #     #     path: ut-results.xml
-  #     #     reporter: jest-junit
+          # |cargo2junit | tee ut-results.xml
+          # sed -i '/<testsuite.*\/>$/d' ut-results.xml
+          # sed -i 's/<testsuites>/<testsuites time="0">/g' ut-results.xml
+          # cat ut-results.xml
+      # - name: Test Report
+      #   uses: dorny/test-reporter@v1
+      #   if: success() || failure()
+      #   with:
+      #     name: Unit Tests
+      #     path: ut-results.xml
+      #     reporter: jest-junit
 
-  # run-benchmarks-tests:
-  #   name: Run benchmark tests
-  #   runs-on: ubuntu-latest
-  #   if: ${{ github.event.inputs.skipBuild != 'true' }}
-  #   steps:
-  #     -
-  #       name: Checkout
-  #       uses: actions/checkout@v2
-  #     -
-  #       name: Set up Docker Buildx
-  #       uses: docker/setup-buildx-action@v1
-  #     -
-  #       name: Login to Docker Hub
-  #       uses: docker/login-action@v1
-  #       with:
-  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
-  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
-  #     - name: Pull builder image
-  #       run: |
-  #         docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
-  #     -
-  #       name: Run benchamrks
-  #       run: |
-  #         ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-  #         ./docker-cargo.sh test -j2 --features=runtime-benchmarks -p pallet-bootstrap -p pallet-xyk -p xyk-runtime-api -p pallet-bridge -p pallet-issuance
+  run-benchmarks-tests:
+    name: Run benchmark tests
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.skipBuild != 'true' }}
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Pull builder image
+        run: |
+          docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
+      -
+        name: Run benchamrks
+        run: |
+          ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
+          ./docker-cargo.sh test -j2 --features=runtime-benchmarks -p pallet-bootstrap -p pallet-xyk -p xyk-runtime-api -p pallet-bridge -p pallet-issuance
 
-  # run-benchmarks:
-  #   name: Run runtime benchmarks
-  #   runs-on: ubuntu-latest
-  #   if: ${{ github.event.inputs.skipBuild != 'true' }}
-  #   steps:
-  #     -
-  #       name: Checkout
-  #       uses: actions/checkout@v2
-  #     -
-  #       name: Set up Docker Buildx
-  #       uses: docker/setup-buildx-action@v1
-  #     -
-  #       name: Login to Docker Hub
-  #       uses: docker/login-action@v1
-  #       with:
-  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
-  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
-  #     - name: Pull builder image
-  #       run: |
-  #         docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
-  #     -
-  #       name: Build benchmarks
-  #       run: |
-  #         ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-  #         ./docker-cargo.sh build -j2 --release --features=runtime-benchmarks
-  #         ./docker-cargo/release/mangata-node benchmark pallet --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-xyk' --template ./templates/module-weight-template.hbs
+  run-benchmarks:
+    name: Run runtime benchmarks
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.skipBuild != 'true' }}
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Pull builder image
+        run: |
+          docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
+      -
+        name: Build benchmarks
+        run: |
+          ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
+          ./docker-cargo.sh build -j2 --release --features=runtime-benchmarks
+          ./docker-cargo/release/mangata-node benchmark pallet --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-xyk' --template ./templates/module-weight-template.hbs
 
-  # build-rococo:
-  #   needs: [init]
-  #   runs-on: ubuntu-latest
-  #   if: ${{ github.event.inputs.skipBuild != 'true' }}
-  #   steps:
-  #     -
-  #       name: Debug info about publishing. Test build again.
-  #       run: |
-  #         echo ${{ github.ref }} == 'refs/heads/develop'
-  #         echo ${{ github.ref }}
-  #     -
-  #       name: Checkout
-  #       uses: actions/checkout@v2
-  #     -
-  #       name: Set up QEMU
-  #       uses: docker/setup-qemu-action@v1
-  #     -
-  #       name: Set up Docker Buildx
-  #       uses: docker/setup-buildx-action@v1
-  #     -
-  #       name: Login to Docker Hub
-  #       uses: docker/login-action@v1
-  #       with:
-  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
-  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
-  #     - run: make build
-  #     - if: ${{ failure() }}
-  #       uses: mxschmitt/action-tmate@v3
   
-  build-rococo-self-hosted:
+  build-node-image:
     needs: [init]
     runs-on: [self-hosted, compile]
     if: ${{ github.event.inputs.skipBuild != 'true' }}
@@ -231,131 +203,18 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      
-      - run: make build
-      - if: ${{ failure() }}
-        uses: mxschmitt/action-tmate@v3
-      # - name: Pull builder image
-      #   if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
-      #   run: |
-      #     docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
-      # -
-      #   name: Build node binary
-      #   if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
-      #   run: |
-      #     ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-      #     ./docker-cargo.sh build -j2 --release --features=mangata-rococo
-      # -
-      #   name: Calculate wasm checksum
-      #   if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
-      #   run: >
-      #     md5sum
-      #     ./docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm
-      #     >
-      #     ./docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm.md5
-      # -
-      #   name: Build node img
-      #   if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
-      #   env:
-      #     DOCKER_IMAGE_GIT_SHA_TAG: "mangatasolutions/mangata-node:rococo-${{ needs.init.outputs.GLOBAL_VERSION }}"
-      #     DOCKER_IMAGE_LATEST_TAG: "mangatasolutions/mangata-node:rococo-latest"
-      #     SKIP_BUILD: 1
-      #     NODE_BINARY: "docker-cargo/release/mangata-node"
-      #     WASM: "docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm"
-      #   run: >
-      #     ./scripts/build-image.sh ${{ env.DOCKER_IMAGE_GIT_SHA_TAG }} ${{ env.DOCKER_IMAGE_LATEST_TAG }} &&
-      #     docker save -o rococo-docker-${{ needs.init.outputs.GLOBAL_VERSION }}.tar ${DOCKER_IMAGE_GIT_SHA_TAG} ${DOCKER_IMAGE_LATEST_TAG}
-      # -
-      #   name: Upload docker img artifact
-      #   uses: actions/upload-artifact@v2
-      #   if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
-      #   with:
-      #     name: rococo-docker-${{ needs.init.outputs.GLOBAL_VERSION }}
-      #     path: rococo-docker-${{ needs.init.outputs.GLOBAL_VERSION }}.tar
-      # -
-      #   name: Upload wasm artifact
-      #   uses: actions/upload-artifact@v2
-      #   if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
-      #   with:
-      #     name: rococo-wasm-${{ needs.init.outputs.GLOBAL_VERSION }}
-      #     path: |
-      #       ./docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm
-      #       ./docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm.md5
 
-  # build-kusama:
-  #   needs: [init]
-  #   runs-on: ubuntu-latest
-  #   if: ${{ github.event.inputs.skipBuild != 'true' }}
-  #   steps:
-  #     -
-  #       name: Debug info about publishing.
-  #       run: |
-  #         echo ${{ github.ref }} == 'refs/heads/develop'
-  #         echo ${{ github.ref }}
-  #     -
-  #       name: Checkout
-  #       uses: actions/checkout@v2
-  #     -
-  #       name: Set up QEMU
-  #       uses: docker/setup-qemu-action@v1
-  #     -
-  #       name: Set up Docker Buildx
-  #       uses: docker/setup-buildx-action@v1
-  #     -
-  #       name: Login to Docker Hub
-  #       uses: docker/login-action@v1
-  #       with:
-  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
-  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
-  #     - name: Pull builder image
-  #       if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
-  #       run: |
-  #         docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
-  #     -
-  #       name: Build node binary
-  #       if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
-  #       run: |
-  #         ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-  #         ./docker-cargo.sh build -j2 --release --features=mangata-kusama
-  #     -
-  #       name: Calculate wasm checksum
-  #       if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
-  #       run: >
-  #         md5sum
-  #         ./docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm
-  #         >
-  #         ./docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm.md5
-  #     -
-  #       name: Build node img
-  #       if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
-  #       env:
-  #         DOCKER_IMAGE_GIT_SHA_TAG: "mangatasolutions/mangata-node:kusama-${{ needs.init.outputs.GLOBAL_VERSION }}"
-  #         DOCKER_IMAGE_LATEST_TAG: "mangatasolutions/mangata-node:kusama-latest"
-  #         SKIP_BUILD: 1
-  #         NODE_BINARY: "docker-cargo/release/mangata-node"
-  #         WASM: "docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm"
-  #       run: >
-  #         ./scripts/build-image.sh ${{ env.DOCKER_IMAGE_GIT_SHA_TAG }} ${{ env.DOCKER_IMAGE_LATEST_TAG }} &&
-  #         docker save -o kusama-docker-${{ needs.init.outputs.GLOBAL_VERSION }}.tar ${DOCKER_IMAGE_GIT_SHA_TAG} ${DOCKER_IMAGE_LATEST_TAG}
-  #     -
-  #       name: Upload docker img artifact
-  #       uses: actions/upload-artifact@v2
-  #       if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
-  #       with:
-  #         name: kusama-docker-${{ needs.init.outputs.GLOBAL_VERSION }}
-  #         path: kusama-docker-${{ needs.init.outputs.GLOBAL_VERSION }}.tar
-  #     -
-  #       name: Upload wasm artifact
-  #       uses: actions/upload-artifact@v2
-  #       if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
-  #       with:
-  #         name: kusama-wasm-${{ needs.init.outputs.GLOBAL_VERSION }}
-  #         path: |
-  #           ./docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm
-  #           ./docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm.md5
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          push: true
+          file: devops/dockerfiles/node-new/Dockerfile
+          tags: "mangatasolutions/mangata-node:${{ needs.init.outputs.GLOBAL_VERSION }}"
+          cache-from: type=registry,ref=mangatasolutions/mangata-node
+          cache-to: type=registry,ref=mangatasolutions/mangata-node,mode=max
 
   # e2e-test-parallel-self-hosted:
-  #   needs: [init,build-rococo]
+  #   needs: [self-hosted, basic]
   #   runs-on: self-hosted
   #   timeout-minutes: 180
   #   if: ${{ (!cancelled() && (success() || github.event.inputs.skipBuild == 'true')) && !contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests') }}
@@ -700,18 +559,4 @@ jobs:
   #       name: Push previously generated Docker image
   #       run: |
   #         docker image push --all-tags mangatasolutions/mangata-node
-
-  #     # - name: Install doctl
-  #     #   uses: digitalocean/action-doctl@v2
-  #     #   with:
-  #     #     token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-
-  #     # - name: Save DigitalOcean kubeconfig with short-lived credentials
-  #     #   run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 ${{ secrets.K8S_CLUSTER_ID }}
-
-  #     # - name: Deploy to DigitalOcean Kubernetes
-  #     #   run: kubectl rollout restart deployment/mangata-node
-  #     #
-  #     # - name: Verify deployment
-  #     #   run: kubectl rollout status deployment/mangata-node
 

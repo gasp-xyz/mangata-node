@@ -238,7 +238,6 @@ jobs:
 
       - name: Download node Docker image
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
-        uses: actions/download-artifact@v2
         run: docker pull mangatasolutions/mangata-node:$${{ env.PARACHAIN_DOCKER_IMAGE }}
 
       - name: E2E- Get branch name

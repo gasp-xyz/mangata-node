@@ -371,17 +371,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Download artifact
+      - name: Download node Docker image
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
-        uses: actions/download-artifact@v2
-        with:
-          name: rococo-docker-${{ needs.init.outputs.GLOBAL_VERSION }}
-          path: /tmp
-      - name: Load Docker image
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
-        run: |
-          docker load --input /tmp/rococo-docker-${{ needs.init.outputs.GLOBAL_VERSION }}.tar
-          docker image ls -a
+        run: docker pull ${{ env.PARACHAIN_DOCKER_IMAGE }}
 
       - name: E2E- Get branch name
         id: branch-name

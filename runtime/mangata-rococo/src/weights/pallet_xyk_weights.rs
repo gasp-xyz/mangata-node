@@ -362,7 +362,7 @@ impl WeightInfo for () {
 	// todo run on reference machine
 	fn compound_rewards() -> Weight {
 		(220_046_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(24 as Weight))
-			.saturating_add(T::DbWeight::get().writes(20 as Weight))
+			.saturating_add(RocksDbWeight::get().reads(24 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(20 as Weight))
 	}
 }

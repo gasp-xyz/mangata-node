@@ -1535,9 +1535,7 @@ impl<T: Config> Pallet<T> {
 		// -n/-d == n/d
 		let result_u256 = numerator_negative
 			.checked_div(denominator_negative)
-			.ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?
-			.checked_add(2.into())
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
 		let result = Balance::try_from(result_u256)
 			.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
 
@@ -2473,8 +2471,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		provided_asset_amount: Self::Balance,
 		activate_minted_liquidity: bool,
 	) -> Result<(Self::CurrencyId, Self::Balance), DispatchError> {
-
-
 		// checks
 		ensure!(!provided_asset_amount.is_zero(), Error::<T>::ZeroAmount,);
 
@@ -2530,12 +2526,15 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			bought_amount
 		);
 
+		// we swap the order of the pairs to handle rounding
+		// we spend all of the Y
+		// and have some surplus amount of X that equals to the rounded part of Y
 		<Self as XykFunctionsTrait<T::AccountId>>::mint_liquidity(
 			sender,
-			provided_asset_id,
 			other_asset_id,
-			mint_amount,
+			provided_asset_id,
 			bought_amount,
+			Self::Balance::MAX,
 			activate_minted_liquidity,
 		)
 	}

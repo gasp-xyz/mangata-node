@@ -580,12 +580,12 @@ benchmarks! {
 
 		let post_asset_amount_1 = <T as Config>::Currency::free_balance(asset_id_1.into(), &caller).into();
 		let post_asset_amount_2 = <T as Config>::Currency::free_balance(asset_id_2.into(), &caller).into();
-		assert_eq!(post_asset_amount_1, 499_900_000,);
-		assert_eq!(post_asset_amount_2, 500_000_001);
+		assert_eq!(post_asset_amount_1, 499_900_002,);
+		assert_eq!(post_asset_amount_2, 500_000_000);
 
 		let post_pool_balance = Xyk::<T>::asset_pool((asset_id_1, asset_id_2));
-		assert_eq!(post_pool_balance.0, 500_099_948);
-		assert_eq!(post_pool_balance.1, 499_999_999);
+		assert_eq!(post_pool_balance.0, 500_099_946);
+		assert_eq!(post_pool_balance.1, 500_000_000);
 	}
 
 	compound_rewards {
@@ -622,22 +622,26 @@ benchmarks! {
 		let mut pre_pool_balance = Xyk::<T>::asset_pool((asset_id_1, asset_id_2));
 		let rewards_to_claim = Xyk::<T>::calculate_rewards_amount(caller.clone(), liquidity_asset_id).unwrap();
 		let swap_amount = Xyk::<T>::calculate_balanced_sell_amount(rewards_to_claim, pre_pool_balance.0).unwrap();
-		let pre_claim_native_tokens_amount = <T as Config>::Currency::free_balance(<T as Config>::NativeCurrencyId::get().into(), &caller).into();
+		let balance_native_before = <T as Config>::Currency::free_balance(<T as Config>::NativeCurrencyId::get().into(), &caller).into();
+		let balance_asset_before = <T as Config>::Currency::free_balance(liquidity_asset_id.into(), &caller).into();
 		pre_pool_balance = Xyk::<T>::asset_pool((asset_id_1, asset_id_2));
 
 	}: compound_rewards(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), 1000_u128)
 	verify {
 
 		assert_eq!(rewards_to_claim, 135_463_177_684_253_389);
-		assert_eq!(swap_amount, 67_787_502_354_636_248);
+		assert_eq!(swap_amount, 67_787_502_354_636_246);
 
 		assert_eq!(
 			Xyk::<T>::calculate_rewards_amount(caller.clone(), liquidity_asset_id).unwrap(),
 			(0_u128)
 		);
 
-		let post_claim_native_tokens_amount = <T as Config>::Currency::free_balance(<T as Config>::NativeCurrencyId::get().into(), &caller).into();
-		assert_eq!( pre_claim_native_tokens_amount, post_claim_native_tokens_amount);
+		let balance_native_after = <T as Config>::Currency::free_balance(<T as Config>::NativeCurrencyId::get().into(), &caller).into();
+		let balance_asset_after = <T as Config>::Currency::free_balance(liquidity_asset_id.into(), &caller).into();
+		// two surplus asset amount
+		assert_eq!(balance_native_before + 1, balance_native_after);
+		assert_eq!(balance_asset_before, balance_asset_after);
 
 		let post_pool_balance = Xyk::<T>::asset_pool((asset_id_1, asset_id_2));
 		assert!( pre_pool_balance.0 < post_pool_balance.0);

@@ -1046,8 +1046,8 @@ impl<T: Config> Pallet<T> {
 			Error::<T>::NotAPromotedPool
 		);
 
-		let current_time: u32 = <frame_system::Pallet<T>>::block_number().saturated_into::<u32>() /
-			T::RewardsDistributionPeriod::get();
+		let current_time: u32 = (<frame_system::Pallet<T>>::block_number().saturated_into::<u32>() +
+			1) / T::RewardsDistributionPeriod::get();
 
 		let time_passed = current_time
 			.checked_sub(last_checkpoint)
@@ -1096,12 +1096,6 @@ impl<T: Config> Pallet<T> {
 			// q_pow is multiplied by precision, thus there needs to be *precision in numenator as well
 			let liquidity_assets_amount_u256: U256 = liquidity_assets_amount.into();
 
-			let cummulative_work_max_possible_for_calc: U256 = liquidity_assets_amount_u256
-				.checked_mul(U256::from(time_passed + 1))
-				.ok_or_else(|| {
-					DispatchError::from(Error::<T>::CalculateCumulativeWorkMaxRatioMathError1)
-				})?;
-
 			let cummulative_work_max_possible_for_ratio: U256 =
 				liquidity_assets_amount_u256.checked_mul(U256::from(time_passed)).ok_or_else(
 					|| DispatchError::from(Error::<T>::CalculateCumulativeWorkMaxRatioMathError2),
@@ -1123,7 +1117,8 @@ impl<T: Config> Pallet<T> {
 
 			let q_pow = Self::calculate_q_pow(Q, time_passed + 1);
 
-			let cummulative_missing_new = base - base * U256::from(REWARDS_PRECISION) / q_pow - missing_at_last_checkpoint;
+			let cummulative_missing_new =
+				base - base * U256::from(REWARDS_PRECISION) / q_pow - missing_at_last_checkpoint;
 
 			let cummulative_work = cummulative_work_max_possible_for_ratio
 				.checked_sub(cummulative_missing_new)
@@ -1139,7 +1134,7 @@ impl<T: Config> Pallet<T> {
 				.checked_div(cummulative_work_max_possible_for_ratio)
 				.ok_or_else(|| {
 					DispatchError::from(Error::<T>::CalculateCumulativeWorkMaxRatioMathError7)
-				})?;	
+				})?;
 		}
 
 		let cumulative_work_max_ratio_u128 = Balance::try_from(cumulative_work_max_ratio)
@@ -1171,8 +1166,8 @@ impl<T: Config> Pallet<T> {
 		liquidity_assets_added: Balance,
 		use_balance_from: Option<ActivateKind>,
 	) -> DispatchResult {
-		let current_time: u32 = <frame_system::Pallet<T>>::block_number().saturated_into::<u32>() /
-			T::RewardsDistributionPeriod::get();
+		let current_time: u32 = (<frame_system::Pallet<T>>::block_number().saturated_into::<u32>() +
+			1) / T::RewardsDistributionPeriod::get();
 		let mut pool_ratio_current =
 			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).unwrap();
 
@@ -1196,9 +1191,9 @@ impl<T: Config> Pallet<T> {
 			.ok_or_else(|| DispatchError::from(Error::<T>::PastTimeCalculation))?;
 
 		if time_passed == 0 {
-			pool_ratio_current = pool_ratio_at_last_checkpoint;	
+			pool_ratio_current = pool_ratio_at_last_checkpoint;
 		}
-		
+
 		let missing_at_checkpoint_new = if liquidity_assets_amount == 0 {
 			U256::from(liquidity_assets_added)
 		} else {
@@ -1266,8 +1261,8 @@ impl<T: Config> Pallet<T> {
 		liquidity_asset_id: TokenId,
 		liquidity_assets_burned: Balance,
 	) -> DispatchResult {
-		let current_time: u32 = <frame_system::Pallet<T>>::block_number().saturated_into::<u32>() /
-			T::RewardsDistributionPeriod::get();
+		let current_time: u32 = (<frame_system::Pallet<T>>::block_number().saturated_into::<u32>() +
+			1) / T::RewardsDistributionPeriod::get();
 
 		let mut pool_ratio_current =
 			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).unwrap();
@@ -1284,7 +1279,7 @@ impl<T: Config> Pallet<T> {
 			.ok_or_else(|| DispatchError::from(Error::<T>::PastTimeCalculation))?;
 
 		if time_passed == 0 {
-			pool_ratio_current = pool_ratio_at_last_checkpoint;	
+			pool_ratio_current = pool_ratio_at_last_checkpoint;
 		}
 
 		let missing_at_checkpoint_new =
@@ -1302,9 +1297,9 @@ impl<T: Config> Pallet<T> {
 		let activated_amount_new = liquidity_assets_amount
 			.checked_sub(liquidity_assets_burned)
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
-	
+
 		let activated_amount_new_u256: U256 = activated_amount_new.into();
-			
+
 		let missing_at_checkpoint_after_burn: U256 = activated_amount_new_u256
 			.checked_mul(missing_at_checkpoint_new)
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?

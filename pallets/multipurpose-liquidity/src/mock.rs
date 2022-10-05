@@ -12,7 +12,7 @@ use sp_runtime::{
 use crate as pallet_multipurpose_liquidity;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{ConstU128, ConstU32, Contains, Everything, tokens::currency::{MultiTokenCurrency}},
+	traits::{tokens::currency::MultiTokenCurrency, ConstU128, ConstU32, Contains, Everything},
 	PalletId,
 };
 use frame_system as system;

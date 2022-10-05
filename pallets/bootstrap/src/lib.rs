@@ -6,7 +6,9 @@ use frame_support::pallet_prelude::*;
 
 use frame_support::{
 	codec::{Decode, Encode},
-	traits::{Contains, ExistenceRequirement, Get, StorageVersion, tokens::currency::{MultiTokenCurrency}},
+	traits::{
+		tokens::currency::MultiTokenCurrency, Contains, ExistenceRequirement, Get, StorageVersion,
+	},
 	transactional, PalletId,
 };
 use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};

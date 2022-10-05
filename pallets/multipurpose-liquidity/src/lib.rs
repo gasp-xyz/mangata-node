@@ -10,7 +10,10 @@ use sp_core::U256;
 use codec::FullCodec;
 use frame_support::{
 	pallet_prelude::*,
-	traits::{ExistenceRequirement, Get, StorageVersion, WithdrawReasons, tokens::currency::{MultiTokenCurrency}},
+	traits::{
+		tokens::currency::MultiTokenCurrency, ExistenceRequirement, Get, StorageVersion,
+		WithdrawReasons,
+	},
 	transactional, Parameter,
 };
 use frame_system::pallet_prelude::*;

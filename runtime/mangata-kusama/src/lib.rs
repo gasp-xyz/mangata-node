@@ -11,9 +11,9 @@ use frame_support::{
 	dispatch::DispatchResult,
 	parameter_types,
 	traits::{
+		tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
 		Contains, EnsureOrigin, EnsureOriginWithArg, Everything, ExistenceRequirement, Get,
 		Imbalance, LockIdentifier, OnRuntimeUpgrade, U128CurrencyToVote, WithdrawReasons,
-		tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait}
 	},
 	unsigned::TransactionValidityError,
 	weights::{
@@ -29,9 +29,7 @@ use frame_system::{
 	EnsureRoot,
 };
 pub use orml_tokens;
-use orml_tokens::{
-	MultiTokenCurrencyExtended, TransferDust,
-};
+use orml_tokens::{MultiTokenCurrencyExtended, TransferDust};
 use orml_traits::{
 	asset_registry::{AssetMetadata, AssetProcessor},
 	parameter_type_with_key,

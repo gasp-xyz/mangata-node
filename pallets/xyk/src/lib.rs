@@ -230,7 +230,7 @@ use sp_core::U256;
 use codec::FullCodec;
 use frame_support::{
 	pallet_prelude::*,
-	traits::{ExistenceRequirement, Get, WithdrawReasons, tokens::currency::{MultiTokenCurrency}},
+	traits::{tokens::currency::MultiTokenCurrency, ExistenceRequirement, Get, WithdrawReasons},
 	transactional, Parameter,
 };
 use frame_system::pallet_prelude::*;

@@ -11,9 +11,9 @@ use frame_support::{
 	dispatch::DispatchResult,
 	parameter_types,
 	traits::{
+		tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
 		Contains, EnsureOrigin, EnsureOriginWithArg, Everything, ExistenceRequirement, Get,
 		Imbalance, LockIdentifier, Nothing, OnRuntimeUpgrade, U128CurrencyToVote, WithdrawReasons,
-		tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait}
 	},
 	unsigned::TransactionValidityError,
 	weights::{

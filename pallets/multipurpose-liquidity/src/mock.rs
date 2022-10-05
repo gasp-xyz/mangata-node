@@ -12,12 +12,12 @@ use sp_runtime::{
 use crate as pallet_multipurpose_liquidity;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{ConstU128, ConstU32, Contains, Everything},
+	traits::{ConstU128, ConstU32, Contains, Everything, tokens::currency::{MultiTokenCurrency}},
 	PalletId,
 };
 use frame_system as system;
-use mangata_primitives::{Amount, Balance, TokenId};
-use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
+use mangata_types::{Amount, Balance, TokenId};
+use orml_tokens::{MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
 use orml_traits::parameter_type_with_key;
 
 pub const NATIVE_CURRENCY_ID: u32 = 0;

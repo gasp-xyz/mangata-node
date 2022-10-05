@@ -230,15 +230,15 @@ use sp_core::U256;
 use codec::FullCodec;
 use frame_support::{
 	pallet_prelude::*,
-	traits::{ExistenceRequirement, Get, WithdrawReasons},
+	traits::{ExistenceRequirement, Get, WithdrawReasons, tokens::currency::{MultiTokenCurrency}},
 	transactional, Parameter,
 };
 use frame_system::pallet_prelude::*;
-use mangata_primitives::{Balance, TokenId};
+use mangata_types::{Balance, TokenId};
 use mp_bootstrap::PoolCreateApi;
 use mp_multipurpose_liquidity::ActivateKind;
 use mp_traits::{ActivationReservesProviderTrait, XykFunctionsTrait};
-use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
+use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_issuance::{ComputeIssuance, PoolPromoteApi};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
 use sp_arithmetic::{helpers_128bit::multiply_by_rational_with_rounding, per_things::Rounding};

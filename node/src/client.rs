@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 use crate::service::AuraId;
-pub use mangata_primitives::{
+pub use mangata_types::{
 	AccountId, Balance, Block, BlockNumber, Hash, Header, Index as Nonce, TokenId,
 };
 use sc_client_api::{Backend as BackendT, BlockchainEvents, KeyIterator};

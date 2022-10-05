@@ -21,12 +21,12 @@ use crate as pallet_bootstrap;
 use codec::EncodeLike;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{ConstU128, ConstU32, Contains, Everything, Nothing},
+	traits::{ConstU128, ConstU32, Contains, Everything, Nothing, tokens::currency::{MultiTokenCurrency}},
 };
-use mangata_primitives::{Amount, Balance, TokenId};
+use mangata_types::{Amount, Balance, TokenId};
 use mp_multipurpose_liquidity::ActivateKind;
 use mp_traits::ActivationReservesProviderTrait;
-use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter};
+use orml_tokens::{MultiTokenCurrencyAdapter};
 use orml_traits::parameter_type_with_key;
 use pallet_xyk::AssetMetadataMutationTrait;
 use sp_runtime::{Perbill, Percent};

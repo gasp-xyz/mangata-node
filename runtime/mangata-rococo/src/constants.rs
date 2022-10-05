@@ -4,7 +4,7 @@ pub mod fee {
 		constants::WEIGHT_PER_SECOND, WeightToFeeCoefficient, WeightToFeeCoefficients,
 		WeightToFeePolynomial,
 	};
-	use mangata_primitives::Balance;
+	use mangata_types::Balance;
 	use smallvec::smallvec;
 	use sp_runtime::Perbill;
 

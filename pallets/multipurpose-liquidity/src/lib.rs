@@ -10,14 +10,14 @@ use sp_core::U256;
 use codec::FullCodec;
 use frame_support::{
 	pallet_prelude::*,
-	traits::{ExistenceRequirement, Get, StorageVersion, WithdrawReasons},
+	traits::{ExistenceRequirement, Get, StorageVersion, WithdrawReasons, tokens::currency::{MultiTokenCurrency}},
 	transactional, Parameter,
 };
 use frame_system::pallet_prelude::*;
-use mangata_primitives::{Balance, BlockNumber, TokenId};
+use mangata_types::{Balance, BlockNumber, TokenId};
 use mp_multipurpose_liquidity::{ActivateKind, BondKind};
 use mp_traits::{ActivationReservesProviderTrait, StakingReservesProviderTrait, XykFunctionsTrait};
-use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
+use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
 use sp_runtime::traits::{
 	AccountIdConversion, AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member,

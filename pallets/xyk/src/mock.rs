@@ -12,13 +12,13 @@ use sp_runtime::{
 use crate as xyk;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{ConstU128, ConstU32, Contains, Everything, Nothing},
+	traits::{ConstU128, ConstU32, Contains, Everything, Nothing, tokens::currency::{MultiTokenCurrency}},
 	PalletId,
 };
 
 use frame_system as system;
-use mangata_primitives::{assets::CustomMetadata, Amount, Balance, TokenId};
-use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
+use mangata_types::{assets::CustomMetadata, Amount, Balance, TokenId};
+use orml_tokens::{MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
 use orml_traits::{asset_registry::AssetMetadata, parameter_type_with_key};
 use pallet_issuance::PoolPromoteApi;
 use sp_runtime::{Perbill, Percent};

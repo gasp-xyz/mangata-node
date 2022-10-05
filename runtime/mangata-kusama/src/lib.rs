@@ -13,6 +13,7 @@ use frame_support::{
 	traits::{
 		Contains, EnsureOrigin, EnsureOriginWithArg, Everything, ExistenceRequirement, Get,
 		Imbalance, LockIdentifier, OnRuntimeUpgrade, U128CurrencyToVote, WithdrawReasons,
+		tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait}
 	},
 	unsigned::TransactionValidityError,
 	weights::{
@@ -29,7 +30,7 @@ use frame_system::{
 };
 pub use orml_tokens;
 use orml_tokens::{
-	MultiTokenCurrency, MultiTokenCurrencyExtended, MultiTokenImbalanceWithZeroTrait, TransferDust,
+	MultiTokenCurrencyExtended, TransferDust,
 };
 use orml_traits::{
 	asset_registry::{AssetMetadata, AssetProcessor},
@@ -71,7 +72,7 @@ pub use xcm::{latest::prelude::*, VersionedMultiLocation};
 
 pub use constants::{fee::*, parachains::*};
 pub use currency::*;
-pub use mangata_primitives::{
+pub use mangata_types::{
 	assets::{CustomMetadata, XcmMetadata},
 	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
 };
@@ -534,7 +535,7 @@ impl pallet_utility::Config for Runtime {
 }
 
 type ORMLCurrencyAdapterNegativeImbalance =
-	<orml_tokens::MultiTokenCurrencyAdapter<Runtime> as orml_tokens::MultiTokenCurrency<
+	<orml_tokens::MultiTokenCurrencyAdapter<Runtime> as MultiTokenCurrency<
 		AccountId,
 	>>::NegativeImbalance;
 
@@ -568,7 +569,7 @@ pub struct ToAuthor;
 impl OnMultiTokenUnbalanced<ORMLCurrencyAdapterNegativeImbalance> for ToAuthor {
 	fn on_nonzero_unbalanced(amount: ORMLCurrencyAdapterNegativeImbalance) {
 		if let Some(author) = Authorship::author() {
-			<orml_tokens::MultiTokenCurrencyAdapter<Runtime> as orml_tokens::MultiTokenCurrency<
+			<orml_tokens::MultiTokenCurrencyAdapter<Runtime> as MultiTokenCurrency<
 				AccountId,
 			>>::resolve_creating(amount.0, &author, amount);
 		}
@@ -867,6 +868,7 @@ parameter_types! {
 	pub const TermDuration: BlockNumber = 120 * DAYS;
 	pub const DesiredMembers: u32 = 9;
 	pub const DesiredRunnersUp: u32 = 7;
+	pub const MaxVoters: u32 = 10 * 1000;
 	pub const ElectionsPhragmenPalletId: LockIdentifier = *b"phrelect";
 }
 
@@ -890,6 +892,8 @@ impl pallet_elections_phragmen::Config for Runtime {
 	type DesiredMembers = DesiredMembers;
 	type DesiredRunnersUp = DesiredRunnersUp;
 	type TermDuration = TermDuration;
+	type MaxVoters = MaxVoters;
+	type MaxCandidates = MaxCandidates;
 	type WeightInfo = weights::pallet_elections_phragmen_weights::ModuleWeight<Runtime>;
 }
 

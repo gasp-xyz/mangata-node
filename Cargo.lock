@@ -4983,7 +4983,7 @@ dependencies = [
 [[package]]
 name = "mangata-types"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v0.9.28#3914be7f961a170bb7e824d959e32df907362f52"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v0.9.28#3cdc75718efb85e46fb3a67c592428d57e3519b0"
 dependencies = [
  "parity-scale-codec 3.2.1",
  "scale-info",
@@ -6855,7 +6855,7 @@ dependencies = [
 [[package]]
 name = "parachain-staking"
 version = "3.0.0"
-source = "git+https://github.com/mangata-finance//moonbeam?branch=mangata-dev-v0.9.28#2cbf86f749911960a0aa4a128bf4a3bac7f347d6"
+source = "git+https://github.com/mangata-finance//moonbeam?branch=mangata-dev-v0.9.28#6535a6be23ce94961dc583496b7aa54601496835"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -12361,7 +12361,7 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "digest 0.10.5",
  "rand 0.8.5",
  "static_assertions",
@@ -13342,6 +13342,11 @@ dependencies = [
 ]
 
 [[patch.unused]]
+name = "cumulus-relay-chain-rpc-interface"
+version = "0.1.0"
+source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev-v0.9.28#f829eb0a4dce026c3f49b300ba4c982634472b72"
+
+[[patch.unused]]
 name = "pallet-nicks"
 version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.28#3cdc75718efb85e46fb3a67c592428d57e3519b0"
@@ -13355,11 +13360,6 @@ source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v
 name = "sp-serializer"
 version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.28#3cdc75718efb85e46fb3a67c592428d57e3519b0"
-
-[[patch.unused]]
-name = "cumulus-relay-chain-rpc-interface"
-version = "0.1.0"
-source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev-v0.9.28#f829eb0a4dce026c3f49b300ba4c982634472b72"
 
 [[patch.unused]]
 name = "pallet-nicks"

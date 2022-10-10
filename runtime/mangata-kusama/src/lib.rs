@@ -1128,7 +1128,6 @@ impl orml_asset_registry::Config for Runtime {
 )]
 pub enum ProxyType {
 	Any,
-	CancelProxy,
 	AutoCompound,
 }
 
@@ -1150,14 +1149,11 @@ impl InstanceFilter<Call> for ProxyType {
 		match self {
 			_ if matches!(c, Call::Utility(..)) => true,
 			ProxyType::Any => true,
-			ProxyType::CancelProxy =>
-				matches!(c, Call::Proxy(pallet_proxy::Call::reject_announcement { .. })),
 			ProxyType::AutoCompound => {
 				matches!(
 					c,
-					Call::Xyk(pallet_xyk::Call::mint_liquidity { .. }) |
-						// Call::Xyk(pallet_xyk::Call::claim_rewards_all { .. })
-						Call::Xyk(pallet_xyk::Call::claim_rewards { .. })
+					Call::Xyk(pallet_xyk::Call::provide_liquidity_with_conversion { .. }) |
+					Call::Xyk(pallet_xyk::Call::compound_rewards { .. })
 				)
 			},
 		}

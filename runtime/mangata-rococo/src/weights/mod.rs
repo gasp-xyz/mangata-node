@@ -1,5 +1,10 @@
 #![allow(clippy::unnecessary_cast)]
 
+mod block_weights;
+mod extrinsic_weights;
+
+pub use block_weights::BlockExecutionWeight as VerBlockExecutionWeight;
+pub use extrinsic_weights::ExtrinsicBaseWeight as VerExtrinsicBaseWeight;
 pub mod frame_system_weights;
 pub mod orml_asset_registry_weights;
 pub mod orml_tokens_weights;

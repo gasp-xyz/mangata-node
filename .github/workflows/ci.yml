@@ -34,6 +34,7 @@ on:
 env:
   DOCKER_BUILDER_IMAGE: mangatasolutions/node-builder:0.2
   DISABLE_TTY: 1
+  SKIP_HUSKY: 1
 
 jobs:
   init:
@@ -409,6 +410,14 @@ jobs:
         working-directory: launch
         run: sed -i 's+mangatasolutions/mangata-node:dev+${{ env.PARACHAIN_DOCKER_IMAGE }}+g' config.yml
 
+      - name: Clean artifacts
+        working-directory: e2eTests
+        run: git clean -xfd
+
+      - name: Install dependencies
+        working-directory: e2eTests
+        run: yarn install --network-concurrency 1
+
       - name: Install parachain launch
         working-directory: launch
         run: yarn
@@ -425,9 +434,6 @@ jobs:
         working-directory: launch
         run: yarn up
 
-      - name: Install dependencies
-        working-directory: e2eTests
-        run: yarn
 
       - name: Docker ps
         run: docker ps
@@ -557,6 +563,13 @@ jobs:
       - name: Replace parachain docker image reference in config
         working-directory: launch
         run: sed -i 's+mangatasolutions/mangata-node:dev+${{ env.PARACHAIN_DOCKER_IMAGE }}+g' config.yml
+      - name: Clean artifacts
+        working-directory: e2eTests
+        run: git clean -xfd
+
+      - name: Install dependencies
+        working-directory: e2eTests
+        run: yarn install --network-concurrency 1
 
       - name: Install parachain launch
         working-directory: launch
@@ -573,10 +586,6 @@ jobs:
       - name: Start mangata-node parachain
         working-directory: launch
         run: yarn up
-
-      - name: Install dependencies
-        working-directory: e2eTests
-        run: yarn
 
       - name: Docker ps
         run: docker ps

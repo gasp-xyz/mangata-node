@@ -484,7 +484,7 @@ jobs:
         run: yarn down
 
   publish:
-    needs: [init, rustfmt-check, unit-test, clippy-check, build-rococo, build-kusama, e2e-test-sequential-self-hosted, e2e-test-parallel-self-hosted, run-benchmarks, run-benchmarks-tests]
+    needs: [init, rustfmt-check, unit-test, clippy-check, build-rococo, build-kusama, e2e-test-matrix, run-benchmarks, run-benchmarks-tests]
     runs-on: ubuntu-latest
     if: |
       github.ref == 'refs/heads/develop' &&

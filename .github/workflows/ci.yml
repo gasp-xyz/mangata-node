@@ -459,17 +459,17 @@ jobs:
         with:
           dest: './logs'
 
-      - name: Tar logs
-        if: failure()
-        run: tar cvzf ./logs.tgz ./logs
-
       - name: Create images snapshots
+        working-directory: launch
         if: failure()
         run: |
-          docker commit  $(docker ps | grep parachain-2110-1 | awk '{print $1}') mangata_test_run/mangata_bob_1
-          docker save  --output=/tmp/mangata_bob_1.tar mangata_test_run/mangata_bob_1
-          docker commit  $(docker ps | grep parachain-2110-0 | awk '{print $1}') mangata_test_run/mangata_alice_1
-          docker save  --output=/tmp/mangata_alice_1.tar mangata_test_run/mangata_alice_1
+          yarn stop
+          docker pull alpine
+          docker run --rm --name alpine_tmp -v output_parachain-2110-0:/parachain-2110-0 -v output_parachain-2110-1:/parachain-2110-1 -d alpine sleep 3600
+          mkdir parachain_state
+          docker cp alpine_tmp:parachain-2110-0 ./parachain-2110-0
+          docker cp alpine_tmp:parachain-2110-1 ./parachain-2110-1
+          docker kill alpine_tmp
 
       - name: Upload logs  and docker images to GitHub
         if: failure()
@@ -477,9 +477,9 @@ jobs:
         with:
           name: logsAndImages
           path: |
-            ./logs.tgz
-            /tmp/mangata_bob_1.tar
-            /tmp/mangata_alice_1.tar
+            ./logs
+            ./launch/parachain-2110-0
+            ./launch/parachain-2110-1
 
       - name: Stop mangata-node parachain
         if: always()

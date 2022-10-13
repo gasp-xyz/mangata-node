@@ -7,11 +7,11 @@ license = "GPL-3.0-or-later"
 
 [dependencies]
 serde = { version = "1.0.126", optional = true, features = ["derive"] }
-sp-api = { version = '4.0.0-dev', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.28" }
-sp-runtime = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.28" }
-frame-support = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.28" }
-frame-system = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.28" }
-sp-core = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.28" }
+sp-api = { version = '4.0.0-dev', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-runtime = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+frame-support = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+frame-system = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-core = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 
 [dev-dependencies]

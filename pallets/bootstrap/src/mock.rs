@@ -265,11 +265,17 @@ mockall::mock! {
 	}
 }
 
+
+parameter_types! {
+	pub const BootstrapUpdateBuffer: BlockNumber = 300;
+}
+
 #[cfg(not(feature = "runtime-benchmarks"))]
 // NOTE: use PoolCreateApi mock for unit testing purposes
 impl pallet_bootstrap::Config for Test {
 	type Event = Event;
 	type PoolCreateApi = MockPoolCreateApi;
+	type BootstrapUpdateBuffer = BootstrapUpdateBuffer;
 	type TreasuryPalletId = TreasuryPalletId;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type VestingProvider = Vesting;
@@ -282,6 +288,7 @@ impl pallet_bootstrap::Config for Test {
 impl pallet_bootstrap::Config for Test {
 	type Event = Event;
 	type PoolCreateApi = Xyk;
+	type BootstrapUpdateBuffer = BootstrapUpdateBuffer;
 	type TreasuryPalletId = TreasuryPalletId;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type VestingProvider = Vesting;

@@ -504,11 +504,18 @@ impl pallet_xyk::Config for Runtime {
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
 }
 
+
+parameter_types! {
+	pub const BootstrapUpdateBuffer: BlockNumber = 300;
+}
+
+
 impl pallet_bootstrap::BootstrapBenchmarkingConfig for Runtime {}
 
 impl pallet_bootstrap::Config for Runtime {
 	type Event = Event;
 	type PoolCreateApi = Xyk;
+	type BootstrapUpdateBuffer = BootstrapUpdateBuffer;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type VestingProvider = Vesting;
 	type TreasuryPalletId = TreasuryPalletId;

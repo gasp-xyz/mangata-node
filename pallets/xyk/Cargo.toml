@@ -21,7 +21,7 @@ frame-system = { default-features = false, version = '4.0.0-dev' , git = "https:
 sp-runtime = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-core = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-std = { version = "4.0.0-dev", default-features = false , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-mangata-primitives = { default-features = false, version = '0.1.0' , path = '../../primitives/mangata'}
+mangata-types = { default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 pallet-issuance = { default-features = false, path = "../issuance" }
 pallet-bootstrap = { default-features = false, path = "../bootstrap" }
 sp-arithmetic = { default-features = false, version = '5.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }

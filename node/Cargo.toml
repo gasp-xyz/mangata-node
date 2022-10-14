@@ -44,14 +44,14 @@ hex-literal = "0.3.4"
 hex = "0.4.0"
 
 # RPC related Dependencies
-jsonrpsee = { version = "0.14.0", features = ["server"] }
+jsonrpsee = { version = "0.15.1", features = ["server"] }
 
 # Local Dependencies
 mangata-kusama-runtime = { path = "../runtime/mangata-kusama/", optional = true }
 mangata-rococo-runtime = { path = "../runtime/mangata-rococo/", optional = true }
-mangata-primitives = { path = "../primitives/mangata/"}
 
 # Substrate Dependencies
+mangata-types = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 frame-benchmarking = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 frame-benchmarking-cli = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 try-runtime-cli = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
@@ -69,6 +69,7 @@ sc-client-api = { git = "https://github.com/mangata-finance/substrate", branch =
 sc-consensus = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sc-executor = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sc-network = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sc-network-common = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sc-keystore = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sc-rpc = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sc-rpc-api = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }

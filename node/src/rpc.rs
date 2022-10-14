@@ -7,7 +7,7 @@
 
 use std::sync::Arc;
 
-use mangata_primitives::{AccountId, Balance, Block, BlockNumber, Index as Nonce, TokenId};
+use mangata_types::{AccountId, Balance, Block, BlockNumber, Index as Nonce, TokenId};
 
 use sc_client_api::{AuxStore, BlockBackend};
 pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};

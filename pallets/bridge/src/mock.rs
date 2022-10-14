@@ -6,7 +6,7 @@ use frame_support::{
 	traits::{Contains, Everything},
 	PalletId,
 };
-use mangata_primitives::{Amount, Balance, TokenId};
+use mangata_types::{Amount, Balance, TokenId};
 use orml_tokens::MultiTokenCurrencyAdapter;
 use orml_traits::parameter_type_with_key;
 use sp_core::H256;

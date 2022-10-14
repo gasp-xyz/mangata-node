@@ -7,10 +7,10 @@ use frame_system::pallet_prelude::*;
 
 use frame_support::{
 	codec::{Decode, Encode},
-	traits::{Get, Imbalance},
+	traits::{tokens::currency::MultiTokenCurrency, Get, Imbalance},
 };
-use mangata_primitives::{Balance, TokenId};
-use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended};
+use mangata_types::{Balance, TokenId};
+use orml_tokens::MultiTokenCurrencyExtended;
 use pallet_vesting_mangata::MultiTokenVestingSchedule;
 use scale_info::TypeInfo;
 use sp_runtime::{

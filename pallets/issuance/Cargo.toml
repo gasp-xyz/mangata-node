@@ -16,7 +16,7 @@ scale-info = { version = "2.0.0", default-features = false, features = ["derive"
 frame-support = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 frame-system = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 orml-tokens = { default-features = false, version="0.4.1-dev" , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
-mangata-primitives = { default-features = false, version = '0.1.0' , path = '../../primitives/mangata'}
+mangata-types = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 sp-std = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-runtime = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-vesting-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
@@ -37,7 +37,7 @@ std = [
     'sp-runtime/std',
     'frame-support/std',
     'frame-system/std',
-	  "frame-benchmarking/std",
+	"frame-benchmarking/std",
     'orml-tokens/std',
     'pallet-vesting-mangata/std',
 ]

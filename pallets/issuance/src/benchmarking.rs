@@ -22,7 +22,7 @@ use super::*;
 use frame_benchmarking::{account, benchmarks};
 use frame_support::assert_ok;
 use frame_system::RawOrigin;
-use mangata_primitives::Balance;
+use mangata_types::Balance;
 use orml_tokens::MultiTokenCurrencyExtended;
 
 use crate::{Pallet as Issuance, TgeInfo};

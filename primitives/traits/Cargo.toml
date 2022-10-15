@@ -8,7 +8,7 @@ edition = "2018"
 sp-std = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-runtime = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 frame-support = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-mangata-primitives = { path = "../mangata" , default-features= false}
+mangata-types = { default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 mp-multipurpose-liquidity = { path = "../../primitives/multipurpose-liquidity" , default-features= false}
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
 
@@ -18,7 +18,7 @@ std = [
     'sp-std/std',
     'sp-runtime/std',
     'frame-support/std',
-    'mangata-primitives/std',
+    'mangata-types/std',
     "mp-multipurpose-liquidity/std",
     "codec/std"
 ]

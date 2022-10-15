@@ -37,7 +37,7 @@
 
 use frame_support::{
 	parameter_types,
-	weights::{constants::WEIGHT_PER_NANOS, Weight},
+	weights::{constants::WEIGHT_PER_NANOS, constants::WEIGHT_PER_MICROS, Weight},
 };
 
 parameter_types! {
@@ -54,7 +54,7 @@ parameter_types! {
 	///   99th: 87_243
 	///   95th: 85_399
 	///   75th: 84_974
-	pub const ExtrinsicBaseWeight: Weight = 84_931 * WEIGHT_PER_NANOS;
+	pub const ExtrinsicBaseWeight: Weight = 186 * WEIGHT_PER_MICROS;
 }
 
 #[cfg(test)]

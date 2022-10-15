@@ -37,7 +37,7 @@
 
 use frame_support::{
 	parameter_types,
-	weights::{constants::WEIGHT_PER_NANOS, Weight},
+	weights::{constants::WEIGHT_PER_NANOS, constants::WEIGHT_PER_MILLIS, Weight},
 };
 
 parameter_types! {
@@ -54,7 +54,7 @@ parameter_types! {
 	///   99th: 76_934_073
 	///   95th: 76_658_627
 	///   75th: 76_494_992
-	pub const BlockExecutionWeight: Weight = 76_453_434 * WEIGHT_PER_NANOS;
+	pub const BlockExecutionWeight: Weight = 12 * WEIGHT_PER_MILLIS;
 }
 
 #[cfg(test)]

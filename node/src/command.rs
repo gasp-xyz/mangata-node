@@ -346,6 +346,7 @@ pub fn run() -> Result<()> {
 
 						cmd.run(config, partials.client.clone(), db, storage)
 					}),
+					BenchmarkCmd::Extrinsic(_) => Err("Unsupported benchmarking command".into()),
 					BenchmarkCmd::Overhead(cmd) => runner.sync_run(|config| {
 						let PartialComponents { client, task_manager: _, .. } = new_partial::<
 							service::mangata_kusama_runtime::RuntimeApi,

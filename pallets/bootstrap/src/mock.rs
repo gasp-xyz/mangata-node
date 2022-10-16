@@ -267,7 +267,7 @@ mockall::mock! {
 
 
 parameter_types! {
-	pub const BootstrapUpdateBuffer: BlockNumber = 300;
+	pub const BootstrapUpdateBuffer: <Test as frame_system::Config>::BlockNumber = 10;
 }
 
 #[cfg(not(feature = "runtime-benchmarks"))]

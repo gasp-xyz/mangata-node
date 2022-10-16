@@ -20,7 +20,7 @@ use scale_info::TypeInfo;
 use sp_arithmetic::{helpers_128bit::multiply_by_rational_with_rounding, per_things::Rounding};
 use sp_core::U256;
 use sp_io::KillStorageResult;
-use sp_runtime::traits::{AccountIdConversion, CheckedAdd, SaturatedConversion};
+use sp_runtime::traits::{AccountIdConversion, CheckedAdd, SaturatedConversion, One, Saturating};
 use sp_std::{convert::TryInto, prelude::*};
 
 pub mod migrations;
@@ -336,7 +336,7 @@ pub mod pallet {
 			);
 
 			let whitelist_phase_length = whitelist_phase_length.unwrap_or_default();
-			let max_first_to_second_ratio = max_first_to_second_ratio.unwrap_or((Balance::max(), Balance::one()));
+			let max_first_to_second_ratio = max_first_to_second_ratio.unwrap_or((Balance::max_value(), Balance::one()));
 
 			ensure!(max_first_to_second_ratio.0 != 0, Error::<T>::WrongRatio);
 
@@ -376,7 +376,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(T::DbWeight::get().reads_writes(3, 4))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(3, 4).saturating_add(1_000_000u64))]
 		#[transactional]
 		pub fn cancel_bootstrap(
 			origin: OriginFor<T>,
@@ -388,7 +388,7 @@ pub mod pallet {
 
 			let now = <frame_system::Pallet<T>>::block_number();
 			let (ido_start, _, _, _) = BootstrapSchedule::<T>::get().ok_or(Error::<T>::BootstrapNotSchduled)?;
-			ensure!(Phase::<T>::get() != BootstrapPhase::BeforeStart, Error::<T>::BootstrapStarted);
+			ensure!(Phase::<T>::get() != BootstrapPhase::BeforeStart, Error::<T>::AlreadyStarted);
 
 			ensure!(now.saturating_add(T::BootstrapUpdateBuffer::get()) < ido_start, Error::<T>::TooLateToUpdateBootstrap);
 
@@ -401,7 +401,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(T::DbWeight::get().reads_writes(2, 1))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(2, 1).saturating_add(1_000_000u64))]
 		#[transactional]
 		pub fn update_promote_bootstrap_pool(
 			origin: OriginFor<T>,
@@ -434,7 +434,7 @@ pub mod pallet {
 			Self::do_claim_liquidity_tokens(&sender, true)
 		}
 
-		#[pallet::weight(<<T as Config>::WeightInfo>::finalize().saturating_add(T::DbWeight::get().reads_writes(1, 1).saturating_mul(Into::<u64>::into(limit).saturating_add(u64::one()))))]
+		#[pallet::weight(<<T as Config>::WeightInfo>::finalize().saturating_add(T::DbWeight::get().reads_writes(1, 1).saturating_mul(Into::<u64>::into(*limit).saturating_add(u64::one()))))]
 		#[transactional]
 		pub fn finalize(origin: OriginFor<T>, mut limit: u32) -> DispatchResult {
 			ensure_root(origin)?;
@@ -877,14 +877,14 @@ impl<T: Config> Pallet<T> {
 				);
 				if activate_result.is_err(){
 					log!(
-						err,
-						"Activating liquidity tokens failed upon bootstrap claim rewards = ({}, {}, {})",
+						error,
+						"Activating liquidity tokens failed upon bootstrap claim rewards = ({:?}, {}, {})",
 						who,
 						liq_token_id,
 						non_vested_rewards
 					);
 					
-					Self::deposit_event(Event::RewardsLiquidityAcitvationFailed(who, liq_token_id, non_vested_rewards));
+					Self::deposit_event(Event::RewardsLiquidityAcitvationFailed(who.clone(), liq_token_id, non_vested_rewards));
 				};
 			}
 		}

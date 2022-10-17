@@ -875,13 +875,14 @@ impl<T: Config> Pallet<T> {
 					liq_token_id.into(),
 					non_vested_rewards,
 				);
-				if activate_result.is_err(){
+				if let Err(err) = activate_result.is_err(){
 					log!(
 						error,
-						"Activating liquidity tokens failed upon bootstrap claim rewards = ({:?}, {}, {})",
+						"Activating liquidity tokens failed upon bootstrap claim rewards = ({:?}, {}, {}, {:?})",
 						who,
 						liq_token_id,
-						non_vested_rewards
+						non_vested_rewards,
+						err
 					);
 					
 					Self::deposit_event(Event::RewardsLiquidityAcitvationFailed(who.clone(), liq_token_id, non_vested_rewards));

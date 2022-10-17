@@ -2099,6 +2099,7 @@ fn minting_user_gets_less_rewards() {
 		log::info!("{}", XykStorage::calculate_rewards_amount_v2(4, 4).unwrap());
 		log::info!("{}", XykStorage::calculate_rewards_amount_v2(5, 4).unwrap()); //14700
 
+		//***************
 		XykStorage::claim_rewards_v2(Origin::signed(2), 4, 10000).unwrap();
 
 		let mut rewards_info = XykStorage::get_rewards_info(2, 4);
@@ -2118,13 +2119,37 @@ fn minting_user_gets_less_rewards() {
 		log::info!("AC {}", rewards_info.rewards_already_claimed);
 		log::info!("rew no move {}", XykStorage::calculate_rewards_amount_v2(3, 4).unwrap());
 
+		//***************
 		XykStorage::burn_liquidity(Origin::signed(2), 0, 1, 5000).unwrap();
 		log::info!("================");
 
 		rewards_info = XykStorage::get_rewards_info(2, 4);
-		log::info!("{}", XykStorage::calculate_rewards_amount_v2(2, 4).unwrap());
+		log::info!("rew {}", XykStorage::calculate_rewards_amount_v2(2, 4).unwrap());
 		log::info!("NY {}", rewards_info.rewards_not_yet_claimed);
 		log::info!("AC {}", rewards_info.rewards_already_claimed);
 		log::info!("rew no move {}", XykStorage::calculate_rewards_amount_v2(3, 4).unwrap());
+
+		System::set_block_number(300);
+		MockPromotedPoolApi::instance()
+			.lock()
+			.unwrap()
+			.insert(4, U256::from(u128::MAX) * U256::from(30));
+			
+			log::info!("================");
+
+			rewards_info = XykStorage::get_rewards_info(2, 4);
+			log::info!("rew {}", XykStorage::calculate_rewards_amount_v2(2, 4).unwrap());
+			log::info!("NY {}", rewards_info.rewards_not_yet_claimed);
+			log::info!("AC {}", rewards_info.rewards_already_claimed);
+			log::info!("rew no move {}", XykStorage::calculate_rewards_amount_v2(3, 4).unwrap());
+		//XykStorage::claim_rewards_v2(Origin::signed(2), 4, 41220).unwrap();
+		XykStorage::claim_rewards_all_v2(Origin::signed(2), 4).unwrap();
+		log::info!("================*");
+		rewards_info = XykStorage::get_rewards_info(2, 4);
+		log::info!("rew {}", XykStorage::calculate_rewards_amount_v2(2, 4).unwrap());
+		log::info!("NY {}", rewards_info.rewards_not_yet_claimed);
+		log::info!("AC {}", rewards_info.rewards_already_claimed);
+		log::info!("rew no move {}", XykStorage::calculate_rewards_amount_v2(3, 4).unwrap());
+
 	});
 }

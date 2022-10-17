@@ -646,7 +646,7 @@ pub mod pallet {
 
 		#[pallet::weight(<<T as Config>::WeightInfo>::mint_liquidity_using_vesting_native_tokens())]
 		#[transactional]
-		pub fn mint_liquidity_using_vesting_native_tokens_by_vesting_index(
+		pub fn mint_liquidity_using_vesting_native_tokens_by_vesting_indexmint_liquidityset_liquyi(
 			origin: OriginFor<T>,
 			native_asset_vesting_index: u32,
 			vesting_native_asset_unlock_some_amount_or_all: Option<Balance>,
@@ -1223,15 +1223,16 @@ impl<T: Config> Pallet<T> {
 			.checked_add(liquidity_assets_added)
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow2))?;
 
-		let rewards_not_yet_claimed_new = rewards_info
-			.rewards_not_yet_claimed
-			.checked_add(user_current_rewards)
+		let total_available_rewards = user_current_rewards
+			.checked_add(rewards_info.rewards_not_yet_claimed)
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+			.checked_sub(rewards_info.rewards_already_claimed)
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 
 		let rewards_info_new: RewardInfo = RewardInfo {
 			activated_amount: activated_amount_new,
-			rewards_not_yet_claimed: rewards_not_yet_claimed_new,
-			rewards_already_claimed: rewards_info.rewards_already_claimed,
+			rewards_not_yet_claimed: total_available_rewards,
+			rewards_already_claimed: 0_u128,
 			last_checkpoint: current_time,
 			pool_ratio_at_last_checkpoint: pool_ratio_current,
 			missing_at_last_checkpoint: missing_at_checkpoint_new,
@@ -3225,8 +3226,19 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			ExistenceRequirement::KeepAlive,
 		)?;
 
-		RewardsInfo::<T>::insert(user.clone(), liquidity_asset_id, rewards_info_new);
+		RewardsInfo::<T>::insert(user.clone(), liquidity_asset_id, rewards_info_new.clone());
+		log!(
+			info,
+			"RewardsInfo: ({}, {}) -> ({}, {}, {}, {}, {})",
+			rewards_info_new.activated_amount,
+			rewards_info_new.rewards_not_yet_claimed,
 
+			rewards_info_new.rewards_already_claimed,
+			rewards_info_new.last_checkpoint,
+			rewards_info_new.pool_ratio_at_last_checkpoint,
+			rewards_info_new.missing_at_last_checkpoint,
+			total_available_rewards
+		);
 		Pallet::<T>::deposit_event(Event::RewardsClaimed(
 			user,
 			liquidity_asset_id,

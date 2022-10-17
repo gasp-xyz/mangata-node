@@ -249,25 +249,6 @@ pub fn native_version() -> NativeVersion {
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 
-	// taken from dedicated benchmark (run on reference machine)
-	//
-	// $ cargo bench --features=disable-execution
-	// ...
-	// Block production/full block shuffling without executing extrinsics
-	//                         time:   [12.025 ms 12.029 ms 12.032 ms]
-	//                         change: [-59.043% -59.005% -58.974%] (p = 0.00 < 0.05)
-	//
-	// ...
-	pub const MangataBlockExecutionWeight: Weight = 12 * WEIGHT_PER_MILLIS;
-
-	// taken from dedicated benchmark (run on reference machine)
-	//
-	// $ cargo bench --features=disable-execution
-	// ...
-	// avarege execution time of 5067 noop extrinsic : 946200 microseconds => 186
-	// ...
-	pub const MangataExtrinsicBaseWeight: Weight = 186 * WEIGHT_PER_MICROS;
-
 	// This part is copied from Substrate's `bin/node/runtime/src/lib.rs`.
 	//  The `RuntimeBlockLength` and `RuntimeBlockWeights` exist here because the
 	// `DeletionWeightLimit` and `DeletionQueueDepth` depend on those to parameterize
@@ -275,9 +256,9 @@ parameter_types! {
 	pub RuntimeBlockLength: BlockLength =
 		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 	pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
-		.base_block(MangataBlockExecutionWeight::get())
+		.base_block(weights::VerBlockExecutionWeight::get())
 		.for_class(DispatchClass::all(), |weights| {
-			weights.base_extrinsic = MangataExtrinsicBaseWeight::get();
+			weights.base_extrinsic = weights::VerExtrinsicBaseWeight::get();
 		})
 		.for_class(DispatchClass::Normal, |weights| {
 			weights.max_total = Some(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT);

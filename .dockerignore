@@ -1,6 +1,11 @@
 .git
 .github
 target
+devops
+launch
+scripts
+workflows
+Makefile
 **/target/
 **/*.txt
 **/*.md
@@ -21,7 +26,6 @@ target
 !/docker-cargo/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.wasm.md5
 
 !/docker-cargo/release/mangata-node
-launch
 
 # dotfiles in the repo root
 /.*

@@ -184,7 +184,7 @@ jobs:
   run-benchmarks:
     name: Run runtime benchmarks
     needs: [build-node-image]
-    runs-on: [self-hosted, compile]
+    runs-on: ubuntu-latest
     if: ${{ github.event.inputs.skipBuild != 'true' }}
     env:
       NODE_IMAGE: ${{ format('mangatasolutions/mangata-node:rococo-{0}', needs.init.outputs.GLOBAL_VERSION) }}

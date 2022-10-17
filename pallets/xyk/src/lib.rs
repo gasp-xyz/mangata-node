@@ -1062,26 +1062,37 @@ impl<T: Config> Pallet<T> {
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError2))?
 			.checked_div(U256::from(u128::MAX)) // always fit into u128
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError3))?;
-		// .try_into()
-		// .map_err(|_| DispatchError::from(Error::<T>::CalculateRewardsMathError3))?;
 
-		let cumulative_work_max_ratio = Self::calculate_cumulative_work_max_ratio(
+		let (cumulative_work, cummulative_work_max_possible) = Self::calculate_cumulative_work_max_ratio(
 			liquidity_assets_amount,
 			time_passed,
 			missing_at_last_checkpoint,
 		)?;
 
-		let current_rewards = user_rewards_base
-			.checked_mul(U256::from(cumulative_work_max_ratio))
+		let current_rewards = U256::from(user_rewards_base)
+			.checked_mul(cumulative_work)
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError4))?
-			.checked_div(U256::from(REWARDS_PRECISION))
-			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError5))?
+			.checked_div(cummulative_work_max_possible)	
+			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError3))?
 			.try_into()
 			.map_err(|_| DispatchError::from(Error::<T>::CalculateRewardsMathError3))?;
 
 		let a = pool_rewards_ratio_new
 			.checked_div(U256::from(u128::MAX))
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError5))?;
+
+			log!(
+				info,
+				"calculate_rewards_v2: {},  {},   {},  {},  {}, {}  {}   {}",
+				current_time,
+				last_checkpoint,
+				time_passed,
+				a,
+				liquidity_assets_amount,
+				cumulative_work,
+				cummulative_work_max_possible,
+				current_rewards
+			);
 
 		Ok(current_rewards)
 	}
@@ -1092,15 +1103,16 @@ impl<T: Config> Pallet<T> {
 		liquidity_assets_amount: u128,
 		time_passed: u32,
 		missing_at_last_checkpoint: U256,
-	) -> Result<u128, DispatchError> {
-		let mut cumulative_work_max_ratio = U256::from(0);
+	) -> Result<(U256, U256), DispatchError> {
+		let mut cummulative_work = U256::from(0);
+		let mut cummulative_work_max_possible_for_ratio = U256::from(1);
 
 		if time_passed != 0 {
 			// whole formula: 	missing_at_last_checkpoint*106/6 - missing_at_last_checkpoint*106*precision/6/q_pow
 			// q_pow is multiplied by precision, thus there needs to be *precision in numenator as well
 			let liquidity_assets_amount_u256: U256 = liquidity_assets_amount.into();
 
-			let cummulative_work_max_possible_for_ratio: U256 =
+			cummulative_work_max_possible_for_ratio =
 				liquidity_assets_amount_u256.checked_mul(U256::from(time_passed)).ok_or_else(
 					|| DispatchError::from(Error::<T>::CalculateCumulativeWorkMaxRatioMathError2),
 				)?;
@@ -1124,27 +1136,27 @@ impl<T: Config> Pallet<T> {
 			let cummulative_missing_new =
 				base - base * U256::from(REWARDS_PRECISION) / q_pow - missing_at_last_checkpoint;
 
-			let cummulative_work = cummulative_work_max_possible_for_ratio
+			cummulative_work = cummulative_work_max_possible_for_ratio
 				.checked_sub(cummulative_missing_new)
 				.ok_or_else(|| {
 					DispatchError::from(Error::<T>::CalculateCumulativeWorkMaxRatioMathError5)
 				})?;
 
-			cumulative_work_max_ratio = cummulative_work
-				.checked_mul(U256::from(REWARDS_PRECISION))
-				.ok_or_else(|| {
-					DispatchError::from(Error::<T>::CalculateCumulativeWorkMaxRatioMathError6)
-				})?
-				.checked_div(cummulative_work_max_possible_for_ratio)
-				.ok_or_else(|| {
-					DispatchError::from(Error::<T>::CalculateCumulativeWorkMaxRatioMathError7)
-				})?;
+			// cumulative_work_max_ratio = cummulative_work
+			// 	.checked_mul(U256::from(REWARDS_PRECISION))
+			// 	.ok_or_else(|| {
+			// 		DispatchError::from(Error::<T>::CalculateCumulativeWorkMaxRatioMathError6)
+			// 	})?
+			// 	.checked_div(cummulative_work_max_possible_for_ratio)
+			// 	.ok_or_else(|| {
+			// 		DispatchError::from(Error::<T>::CalculateCumulativeWorkMaxRatioMathError7)
+			// 	})?;
 		}
 
-		let cumulative_work_max_ratio_u128 = Balance::try_from(cumulative_work_max_ratio)
-			.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
+		// let cumulative_work_max_ratio_u128 = Balance::try_from(cumulative_work_max_ratio)
+		// 	.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
 
-		Ok(cumulative_work_max_ratio_u128)
+		Ok((cummulative_work, cummulative_work_max_possible_for_ratio))
 	}
 
 	pub fn calculate_q_pow(q: f64, pow: u32) -> u128 {

@@ -390,7 +390,7 @@ pub mod pallet {
 			let now = <frame_system::Pallet<T>>::block_number();
 			let (ido_start, _, _, _) =
 				BootstrapSchedule::<T>::get().ok_or(Error::<T>::BootstrapNotSchduled)?;
-			ensure!(Phase::<T>::get() != BootstrapPhase::BeforeStart, Error::<T>::AlreadyStarted);
+			ensure!(Phase::<T>::get() == BootstrapPhase::BeforeStart, Error::<T>::AlreadyStarted);
 
 			ensure!(
 				now.saturating_add(T::BootstrapUpdateBuffer::get()) < ido_start,
@@ -880,7 +880,7 @@ impl<T: Config> Pallet<T> {
 					liq_token_id.into(),
 					non_vested_rewards,
 				);
-				if let Err(err) = activate_result.is_err() {
+				if let Err(err) = activate_result {
 					log!(
 						error,
 						"Activating liquidity tokens failed upon bootstrap claim rewards = ({:?}, {}, {}, {:?})",

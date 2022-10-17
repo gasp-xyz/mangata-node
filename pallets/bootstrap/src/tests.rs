@@ -356,6 +356,132 @@ fn test_incremental_whitliested_donation() {
 
 #[test]
 #[serial]
+fn test_bootstrap_promotion_can_be_updated() {
+	new_test_ext().execute_with(|| {
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		let pool_create_mock = MockPoolCreateApi::pool_create_context();
+		pool_create_mock.expect().times(1).return_const(POOL_CREATE_DUMMY_RETURN_VALUE);
+
+		let mut mock = MockRewardsApi::promote_pool_context();
+		mock.expect().times(1).return_const(true);
+
+		set_up();
+		assert_ok!(Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			Some(1),
+			9,
+			Some(DEFAULT_RATIO),
+			false,
+		));
+
+		System::set_block_number(109);
+		Bootstrap::on_initialize(109_u32.into());
+
+		assert_ok!(Bootstrap::update_promote_bootstrap_pool(Origin::root(), true));
+
+		System::set_block_number(111);
+		Bootstrap::on_initialize(111_u32.into());
+
+		assert_err!(
+			Bootstrap::update_promote_bootstrap_pool(Origin::root(), false),
+			Error::<Test>::BootstrapFinished
+		);
+	});
+}
+
+#[test]
+#[serial]
+fn test_scheduled_bootstrap_can_be_updated() {
+	new_test_ext().execute_with(|| {
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		set_up();
+		assert_ok!(Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			Some(1),
+			9,
+			Some(DEFAULT_RATIO),
+			false,
+		));
+
+		System::set_block_number(80);
+		Bootstrap::on_initialize(80_u32.into());
+
+		assert_ok!(Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			Some(1),
+			9,
+			Some((100, 10)),
+			false,
+		));
+
+		System::set_block_number(95);
+		Bootstrap::on_initialize(95_u32.into());
+
+		assert_err!(
+			Bootstrap::schedule_bootstrap(
+				Origin::root(),
+				KSMId::get(),
+				MGAId::get(),
+				100_u32.into(),
+				Some(1),
+				9,
+				Some((1000, 1)),
+				false,
+			),
+			Error::<Test>::TooLateToUpdateBootstrap
+		);
+	});
+}
+
+#[test]
+#[serial]
+fn test_scheduled_bootstrap_can_be_cancelled() {
+	new_test_ext().execute_with(|| {
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		set_up();
+		assert_ok!(Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			Some(1),
+			9,
+			Some(DEFAULT_RATIO),
+			false,
+		));
+
+		System::set_block_number(95);
+		Bootstrap::on_initialize(95_u32.into());
+
+		assert_err!(
+			Bootstrap::cancel_bootstrap(Origin::root()),
+			Error::<Test>::TooLateToUpdateBootstrap
+		);
+
+		System::set_block_number(80);
+		Bootstrap::on_initialize(80_u32.into());
+
+		assert_ok!(Bootstrap::cancel_bootstrap(Origin::root()));
+	});
+}
+
+#[test]
+#[serial]
 fn test_non_root_user_can_not_schedule_bootstrap() {
 	new_test_ext().execute_with(|| {
 		set_up();

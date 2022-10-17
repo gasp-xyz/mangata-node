@@ -37,7 +37,10 @@
 
 use frame_support::{
 	parameter_types,
-	weights::{constants::WEIGHT_PER_NANOS, constants::WEIGHT_PER_MILLIS, Weight},
+	weights::{
+		constants::{WEIGHT_PER_MILLIS, WEIGHT_PER_NANOS},
+		Weight,
+	},
 };
 
 parameter_types! {

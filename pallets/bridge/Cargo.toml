@@ -32,7 +32,7 @@ artemis-eth-app = {version = "0.1.1", git = "https://github.com/mangata-finance/
 artemis-asset = {version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
 orml-tokens = {version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev"}
 orml-traits = { default-features = false, version="0.4.1-dev" , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
-mangata-primitives = { path = '../../primitives/mangata', default-features = false, version = '0.1.0' }
+mangata-types = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 
 
 [features]

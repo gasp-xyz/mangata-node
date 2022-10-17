@@ -5,7 +5,7 @@
 use super::*;
 use crate::mock::*;
 use frame_support::assert_err;
-use mangata_primitives::assets::CustomMetadata;
+use mangata_types::assets::CustomMetadata;
 use orml_traits::asset_registry::AssetMetadata;
 use serial_test::serial;
 

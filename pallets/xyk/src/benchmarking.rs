@@ -59,7 +59,7 @@ benchmarks! {
 		// NOTE: duplicates test case XYK::buy_and_burn_sell_none_have_mangata_pair
 
 		let caller: T::AccountId = whitelisted_caller();
-		let initial_amount:mangata_primitives::Balance = 1000000000000000;
+		let initial_amount:mangata_types::Balance = 1000000000000000;
 		let expected_amount = 0;
 		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
 		let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
@@ -81,7 +81,7 @@ benchmarks! {
 		// NOTE: duplicates test case XYK::buy_and_burn_buy_where_sold_has_mangata_pair
 
 		let caller: T::AccountId = whitelisted_caller();
-		let initial_amount:mangata_primitives::Balance = 1000000000000000;
+		let initial_amount:mangata_types::Balance = 1000000000000000;
 		let expected_amount = 0;
 		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
 		let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
@@ -102,7 +102,7 @@ benchmarks! {
 		// NOTE: duplicates test case XYK::mint_W
 
 		let caller: T::AccountId = whitelisted_caller();
-		let initial_amount:mangata_primitives::Balance = 1000000000000000000000;
+		let initial_amount:mangata_types::Balance = 1000000000000000000000;
 		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
 		let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 		let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
@@ -135,7 +135,7 @@ benchmarks! {
 		// NOTE: duplicates test case XYK::mint_W
 
 		let caller: T::AccountId = whitelisted_caller();
-		let initial_amount:mangata_primitives::Balance = 1000000000000000000000;
+		let initial_amount:mangata_types::Balance = 1000000000000000000000;
 		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
 		let native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get();
 		while <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into() < native_asset_id {
@@ -183,7 +183,7 @@ benchmarks! {
 		// NOTE: worst case scenario is when we want to burn whole liquidity because of the cleanup
 		// that happens there
 		let caller: T::AccountId = whitelisted_caller();
-		let initial_amount:mangata_primitives::Balance = 1000000000000000000000;
+		let initial_amount:mangata_types::Balance = 1000000000000000000000;
 		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
 		let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 		let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
@@ -221,7 +221,7 @@ benchmarks! {
 		// NOTE: need to use actual issuance pallet and call its hooks properly
 		// NOTE: that duplicates test XYK::liquidity_rewards_claim_W
 		let caller: T::AccountId = whitelisted_caller();
-		let initial_amount:mangata_primitives::Balance = 1000000000000000;
+		let initial_amount:mangata_types::Balance = 1000000000000000;
 
 		let asset_id_1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 		let asset_id_2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
@@ -267,7 +267,7 @@ benchmarks! {
 	promote_pool {
 		// NOTE: that duplicates test XYK::liquidity_rewards_claim_W
 		let caller: T::AccountId = whitelisted_caller();
-		let initial_amount:mangata_primitives::Balance = 1000000000000;
+		let initial_amount:mangata_types::Balance = 1000000000000;
 
 		let asset_id_1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 		let asset_id_2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
@@ -294,7 +294,7 @@ benchmarks! {
 		// 3 activate whole amount from which pool was created (with liquidity tokens)
 
 		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
-		let initial_amount:mangata_primitives::Balance = 1000000000000000000000;
+		let initial_amount:mangata_types::Balance = 1000000000000000000000;
 		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
 		let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 		let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
@@ -332,7 +332,7 @@ benchmarks! {
 		// deactivate some tokens (all or some - to be checked)
 
 		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
-		let initial_amount:mangata_primitives::Balance = 1000000000000000000000;
+		let initial_amount:mangata_types::Balance = 1000000000000000000000;
 		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
 		let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 		let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();

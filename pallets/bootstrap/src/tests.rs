@@ -455,22 +455,20 @@ fn test_ido_start_can_not_be_initialize_with_0_ratio() {
 fn test_can_schedule_bootstrap_with_whitelist_phase_length_equal_zero() {
 	new_test_ext().execute_with(|| {
 		set_up();
-		
+
 		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
-		assert_ok!(
-			Bootstrap::schedule_bootstrap(
-				Origin::root(),
-				KSMId::get(),
-				MGAId::get(),
-				100_u32.into(),
-				Some(0),
-				1,
-				Some(DEFAULT_RATIO),
-				false,
-			)
-		);
+		assert_ok!(Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			Some(0),
+			1,
+			Some(DEFAULT_RATIO),
+			false,
+		));
 	});
 }
 
@@ -1210,7 +1208,7 @@ fn provisions(
 		// 	.unwrap();
 		// 	Bootstrap::provision_vested(Origin::signed(user_id), token_id, amount).unwrap();
 		// } else {
-			Bootstrap::provision(Origin::signed(user_id), token_id, amount).unwrap();
+		Bootstrap::provision(Origin::signed(user_id), token_id, amount).unwrap();
 		// }
 	}
 }
@@ -2082,9 +2080,9 @@ fn test_claim_and_activate_doesnt_fail_when_tokens_activations_fails() {
 		Bootstrap::on_initialize(100_u32.into());
 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
 
-		assert_ok!(
-			Bootstrap::claim_and_activate_liquidity_tokens(Origin::signed(PROVISION_USER1_ID))
-		);
+		assert_ok!(Bootstrap::claim_and_activate_liquidity_tokens(Origin::signed(
+			PROVISION_USER1_ID
+		)));
 	});
 }
 

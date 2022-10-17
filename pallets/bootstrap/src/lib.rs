@@ -20,7 +20,7 @@ use scale_info::TypeInfo;
 use sp_arithmetic::{helpers_128bit::multiply_by_rational_with_rounding, per_things::Rounding};
 use sp_core::U256;
 use sp_io::KillStorageResult;
-use sp_runtime::traits::{AccountIdConversion, CheckedAdd, SaturatedConversion, One, Saturating};
+use sp_runtime::traits::{AccountIdConversion, CheckedAdd, One, SaturatedConversion, Saturating};
 use sp_std::{convert::TryInto, prelude::*};
 
 pub mod migrations;
@@ -320,9 +320,12 @@ pub mod pallet {
 
 			ensure!(Phase::<T>::get() == BootstrapPhase::BeforeStart, Error::<T>::AlreadyStarted);
 
-			if let Some((scheduled_ido_start, _, _, _)) = BootstrapSchedule::<T>::get(){
+			if let Some((scheduled_ido_start, _, _, _)) = BootstrapSchedule::<T>::get() {
 				let now = <frame_system::Pallet<T>>::block_number();
-				ensure!(now.saturating_add(T::BootstrapUpdateBuffer::get()) < scheduled_ido_start, Error::<T>::TooLateToUpdateBootstrap);
+				ensure!(
+					now.saturating_add(T::BootstrapUpdateBuffer::get()) < scheduled_ido_start,
+					Error::<T>::TooLateToUpdateBootstrap
+				);
 			}
 
 			ensure!(first_token_id != second_token_id, Error::<T>::SameToken);
@@ -336,7 +339,8 @@ pub mod pallet {
 			);
 
 			let whitelist_phase_length = whitelist_phase_length.unwrap_or_default();
-			let max_first_to_second_ratio = max_first_to_second_ratio.unwrap_or((Balance::max_value(), Balance::one()));
+			let max_first_to_second_ratio =
+				max_first_to_second_ratio.unwrap_or((Balance::max_value(), Balance::one()));
 
 			ensure!(max_first_to_second_ratio.0 != 0, Error::<T>::WrongRatio);
 
@@ -378,19 +382,20 @@ pub mod pallet {
 
 		#[pallet::weight(T::DbWeight::get().reads_writes(3, 4).saturating_add(1_000_000u64))]
 		#[transactional]
-		pub fn cancel_bootstrap(
-			origin: OriginFor<T>,
-		) -> DispatchResult {
+		pub fn cancel_bootstrap(origin: OriginFor<T>) -> DispatchResult {
 			ensure_root(origin)?;
-
 
 			// BootstrapSchedule should exist but not after BootstrapUpdateBuffer blocks before start
 
 			let now = <frame_system::Pallet<T>>::block_number();
-			let (ido_start, _, _, _) = BootstrapSchedule::<T>::get().ok_or(Error::<T>::BootstrapNotSchduled)?;
+			let (ido_start, _, _, _) =
+				BootstrapSchedule::<T>::get().ok_or(Error::<T>::BootstrapNotSchduled)?;
 			ensure!(Phase::<T>::get() != BootstrapPhase::BeforeStart, Error::<T>::AlreadyStarted);
 
-			ensure!(now.saturating_add(T::BootstrapUpdateBuffer::get()) < ido_start, Error::<T>::TooLateToUpdateBootstrap);
+			ensure!(
+				now.saturating_add(T::BootstrapUpdateBuffer::get()) < ido_start,
+				Error::<T>::TooLateToUpdateBootstrap
+			);
 
 			ActivePair::<T>::kill();
 			BootstrapSchedule::<T>::kill();
@@ -572,7 +577,7 @@ pub mod pallet {
 		Provisioned(TokenId, Balance),
 		/// Funds provisioned using vested tokens
 		VestedProvisioned(TokenId, Balance),
-		/// The activation of the rewards liquidity tokens failed 
+		/// The activation of the rewards liquidity tokens failed
 		RewardsLiquidityAcitvationFailed(T::AccountId, TokenId, Balance),
 		/// Rewards claimed
 		RewardsClaimed(TokenId, Balance),
@@ -875,7 +880,7 @@ impl<T: Config> Pallet<T> {
 					liq_token_id.into(),
 					non_vested_rewards,
 				);
-				if let Err(err) = activate_result.is_err(){
+				if let Err(err) = activate_result.is_err() {
 					log!(
 						error,
 						"Activating liquidity tokens failed upon bootstrap claim rewards = ({:?}, {}, {}, {:?})",
@@ -884,8 +889,12 @@ impl<T: Config> Pallet<T> {
 						non_vested_rewards,
 						err
 					);
-					
-					Self::deposit_event(Event::RewardsLiquidityAcitvationFailed(who.clone(), liq_token_id, non_vested_rewards));
+
+					Self::deposit_event(Event::RewardsLiquidityAcitvationFailed(
+						who.clone(),
+						liq_token_id,
+						non_vested_rewards,
+					));
 				};
 			}
 		}

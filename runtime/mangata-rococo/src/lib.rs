@@ -504,11 +504,9 @@ impl pallet_xyk::Config for Runtime {
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
 }
 
-
 parameter_types! {
 	pub const BootstrapUpdateBuffer: BlockNumber = 300;
 }
-
 
 impl pallet_bootstrap::BootstrapBenchmarkingConfig for Runtime {}
 

@@ -265,7 +265,6 @@ mockall::mock! {
 	}
 }
 
-
 parameter_types! {
 	pub const BootstrapUpdateBuffer: <Test as frame_system::Config>::BlockNumber = 10;
 }

@@ -192,7 +192,7 @@ jobs:
       - name: Run Runtime Benchmark
         run: |
           docker pull ${{ env.NODE_IMAGE }}
-          docker run --rm ${{ env.NODE_IMAGE }} /app/node/mangata-node benchmark pallet --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-xyk' --template ./templates/module-weight-template.hbs
+          docker run --rm ${{ env.NODE_IMAGE }} benchmark pallet --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-xyk' --template ./templates/module-weight-template.hbs
 
   e2e-test-matrix:
     strategy:

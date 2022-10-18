@@ -9,7 +9,6 @@ Makefile
 **/target/
 **/*.txt
 **/*.md
-/docker/
 ./docker-cargo
 !/target/release/polkadot-collator
 !/docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm

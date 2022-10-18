@@ -24,6 +24,7 @@ FROM debian:buster
 WORKDIR /mangata
 
 COPY --from=builder /app/mangata-node  /mangata/node
+COPY --from=builder /app/templates  /mangata/templates
 COPY --from=builder /app/mangata_rococo_runtime.compact.compressed.wasm  /mangata/
 COPY --from=builder /app/mangata_kusama_runtime.compact.compressed.wasm  /mangata/
 ENTRYPOINT ["/mangata/node"]

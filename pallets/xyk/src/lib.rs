@@ -470,6 +470,7 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	
 	#[pallet::storage]
 	#[pallet::getter(fn liquidity_mining_active_pool_v2)]
 	pub type LiquidityMiningActivePoolV2<T: Config> =
@@ -1063,16 +1064,17 @@ impl<T: Config> Pallet<T> {
 			.checked_div(U256::from(u128::MAX)) // always fit into u128
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError3))?;
 
-		let (cumulative_work, cummulative_work_max_possible) = Self::calculate_cumulative_work_max_ratio(
-			liquidity_assets_amount,
-			time_passed,
-			missing_at_last_checkpoint,
-		)?;
+		let (cumulative_work, cummulative_work_max_possible) =
+			Self::calculate_cumulative_work_max_ratio(
+				liquidity_assets_amount,
+				time_passed,
+				missing_at_last_checkpoint,
+			)?;
 
 		let current_rewards = U256::from(user_rewards_base)
 			.checked_mul(cumulative_work)
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError4))?
-			.checked_div(cummulative_work_max_possible)	
+			.checked_div(cummulative_work_max_possible)
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError3))?
 			.try_into()
 			.map_err(|_| DispatchError::from(Error::<T>::CalculateRewardsMathError3))?;
@@ -1081,18 +1083,18 @@ impl<T: Config> Pallet<T> {
 			.checked_div(U256::from(u128::MAX))
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError5))?;
 
-			log!(
-				info,
-				"calculate_rewards_v2: {},  {},   {},  {},  {}, {}  {}   {}",
-				current_time,
-				last_checkpoint,
-				time_passed,
-				a,
-				liquidity_assets_amount,
-				cumulative_work,
-				cummulative_work_max_possible,
-				current_rewards
-			);
+		log!(
+			info,
+			"calculate_rewards_v2: {},  {},   {},  {},  {}, {}  {}   {}",
+			current_time,
+			last_checkpoint,
+			time_passed,
+			a,
+			liquidity_assets_amount,
+			cumulative_work,
+			cummulative_work_max_possible,
+			current_rewards
+		);
 
 		Ok(current_rewards)
 	}
@@ -1117,7 +1119,7 @@ impl<T: Config> Pallet<T> {
 					|| DispatchError::from(Error::<T>::CalculateCumulativeWorkMaxRatioMathError2),
 				)?;
 
-			//	libm::floor(libm::pow(q, pow as f64) * REWARDS_PRECISION as f64) as u128
+			// libm::floor(libm::pow(q, pow as f64) * REWARDS_PRECISION as f64) as u128
 
 			// whole formula: 	missing_at_last_checkpoint*Q*100/(Q*100-100) - missing_at_last_checkpoint*Q*100/(Q*100-100)*REWARDS_PRECISION/q_pow
 			// q_pow is multiplied by precision, thus there needs to be *precision in numenator as well
@@ -1141,20 +1143,7 @@ impl<T: Config> Pallet<T> {
 				.ok_or_else(|| {
 					DispatchError::from(Error::<T>::CalculateCumulativeWorkMaxRatioMathError5)
 				})?;
-
-			// cumulative_work_max_ratio = cummulative_work
-			// 	.checked_mul(U256::from(REWARDS_PRECISION))
-			// 	.ok_or_else(|| {
-			// 		DispatchError::from(Error::<T>::CalculateCumulativeWorkMaxRatioMathError6)
-			// 	})?
-			// 	.checked_div(cummulative_work_max_possible_for_ratio)
-			// 	.ok_or_else(|| {
-			// 		DispatchError::from(Error::<T>::CalculateCumulativeWorkMaxRatioMathError7)
-			// 	})?;
 		}
-
-		// let cumulative_work_max_ratio_u128 = Balance::try_from(cumulative_work_max_ratio)
-		// 	.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
 
 		Ok((cummulative_work, cummulative_work_max_possible_for_ratio))
 	}
@@ -1804,15 +1793,70 @@ impl<T: Config> Pallet<T> {
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
 	) -> DispatchResult {
-		//CALCULATE REWARDS
 		let mangata_id: TokenId = Self::native_token_id();
 
-		let current_rewards =
-			Pallet::<T>::calculate_rewards_amount(user.clone(), liquidity_asset_id)?;
-		let already_claimed_rewards =
-			LiquidityMiningUserClaimed::<T>::get((&user, liquidity_asset_id));
+		ensure!(
+			<T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id).is_some(),
+			Error::<T>::NotAPromotedPool
+		);
+		//READING ALL NECESSARY STORAGE
+		let pool_ratio_current =
+			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).unwrap();
+		let available_rewards_for_pool: U256 = U256::from(
+			<T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id)
+				.ok_or_else(|| DispatchError::from(Error::<T>::NotAPromotedPool))?,
+		);
+		let liquidity_assets_amount: Balance =
+			LiquidityMiningActiveUser::<T>::get((&user, &liquidity_asset_id));
+		let pool_activated_amount: Balance =
+			LiquidityMiningActivePool::<T>::get(&liquidity_asset_id);
 		let burned_not_claimed_rewards =
-			LiquidityMiningUserToBeClaimed::<T>::get((&user, liquidity_asset_id));
+			LiquidityMiningUserToBeClaimed::<T>::get((user.clone(), &liquidity_asset_id));
+		let already_claimed_rewards =
+			LiquidityMiningUserClaimed::<T>::get((user.clone(), &liquidity_asset_id));
+		let current_time: u32 = <frame_system::Pallet<T>>::block_number().saturated_into::<u32>() /
+			T::RewardsDistributionPeriod::get();
+		let (
+			user_last_checkpoint,
+			user_cummulative_work_in_last_checkpoint,
+			user_missing_at_last_checkpoint,
+		) = LiquidityMiningUser::<T>::try_get((&user, &liquidity_asset_id))
+			.unwrap_or_else(|_| (current_time, U256::from(0), U256::from(0)));
+		let (
+			pool_last_checkpoint,
+			pool_cummulative_work_in_last_checkpoint,
+			pool_missing_at_last_checkpoint,
+		) = LiquidityMiningPool::<T>::try_get(&liquidity_asset_id)
+			.unwrap_or_else(|_| (current_time, U256::from(0), U256::from(0)));
+
+		//CALCULATE REWARDS
+		let work_user = Self::calculate_work_user(
+			user.clone(),
+			liquidity_asset_id,
+			current_time,
+			user_last_checkpoint,
+			user_cummulative_work_in_last_checkpoint,
+			user_missing_at_last_checkpoint,
+		)?;
+		let work_pool = Self::calculate_work_pool(
+			liquidity_asset_id,
+			current_time,
+			pool_last_checkpoint,
+			pool_cummulative_work_in_last_checkpoint,
+			pool_missing_at_last_checkpoint,
+		)?;
+
+		let mut current_rewards = Balance::try_from(0).unwrap();
+		if work_user != U256::from(0) && work_pool != U256::from(0) {
+			current_rewards = Balance::try_from(
+				available_rewards_for_pool
+					.checked_mul(work_user)
+					.ok_or_else(|| DispatchError::from(Error::<T>::NotEnoughtRewardsEarned))?
+					.checked_div(work_pool)
+					.ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?,
+			)
+			.map_err(|_| DispatchError::from(Error::<T>::NotEnoughtRewardsEarned))?;
+		}
 
 		let total_rewards = current_rewards
 			.checked_add(burned_not_claimed_rewards)
@@ -1835,60 +1879,63 @@ impl<T: Config> Pallet<T> {
 			total_rewards,
 		));
 
-		//REMOVE USER REW ENTRIES
+		// MODIFY REW1 POOL VALUES
+		let q_pow_pool = Self::calculate_q_pow(1.06, current_time - pool_last_checkpoint);
+		let pool_missing_at_checkpoint: U256 =
+			pool_missing_at_last_checkpoint * U256::from(REWARDS_PRECISION) / q_pow_pool;
+		let q_pow_user = Self::calculate_q_pow(1.06, current_time - user_last_checkpoint);
+		let user_missing_at_checkpoint: U256 =
+			user_missing_at_last_checkpoint * U256::from(REWARDS_PRECISION) / q_pow_user;
+		let mut pool_work_new = U256::from(0);
+		let mut pool_missing_new = U256::from(0);
+
+		if pool_activated_amount != liquidity_assets_amount {
+			pool_work_new = work_pool
+				.checked_sub(work_user)
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			pool_missing_new = pool_missing_at_checkpoint
+				.checked_sub(user_missing_at_checkpoint)
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			LiquidityMiningPool::<T>::insert(
+				&liquidity_asset_id,
+				(current_time, pool_work_new, pool_missing_new),
+			);
+
+			LiquidityMiningActivePool::<T>::try_mutate(liquidity_asset_id, |active_amount| {
+				if let Some(val) = active_amount.checked_sub(liquidity_assets_amount) {
+					*active_amount = val;
+					Ok(())
+				} else {
+					Err(())
+				}
+			})
+			.map_err(|_| DispatchError::from(Error::<T>::NotEnoughAssets))?;
+
+			<T as Config>::PoolPromoteApi::claim_pool_rewards(
+				liquidity_asset_id.into(),
+				total_rewards,
+			);
+		} else {
+			// IF LAST REMOVE POOL STORAGE
+			LiquidityMiningActivePool::<T>::remove(&liquidity_asset_id);
+			LiquidityMiningPool::<T>::remove(&liquidity_asset_id);
+		}
+
+		// REMOVE USER REW1 STORAGE
 		LiquidityMiningUser::<T>::remove((user.clone(), &liquidity_asset_id));
 		LiquidityMiningUserToBeClaimed::<T>::remove((user.clone(), &liquidity_asset_id));
 		LiquidityMiningActiveUser::<T>::remove((user.clone(), &liquidity_asset_id));
 		LiquidityMiningUserClaimed::<T>::remove((user.clone(), &liquidity_asset_id));
 
-		// MODIFY REW1 POOL VALUES if users go one after another
-
-		let (
-			current_time,
-			user_work_total,
-			user_missing_at_checkpoint,
-			pool_work_total,
-			pool_missing_at_checkpoint,
-		) = Self::calculate_liquidity_checkpoint(user.clone(), liquidity_asset_id, 0 as u128)?;
-
-		let liquidity_assets_amount: Balance =
-			LiquidityMiningActiveUser::<T>::get((&user, &liquidity_asset_id));
-
-		let pool_activated_amount: Balance =
-			LiquidityMiningActivePool::<T>::get(&liquidity_asset_id);
-
-		let mut pool_work_new = U256::from(0);
-		let mut pool_missing_new = U256::from(0);
-
-		if pool_activated_amount != liquidity_assets_amount {
-			pool_work_new = pool_work_total
-				.checked_sub(user_work_total)
-				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
-			pool_missing_new = pool_missing_at_checkpoint
-				.checked_sub(user_missing_at_checkpoint)
-				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
-		}
-
-		LiquidityMiningPool::<T>::insert(
-			&liquidity_asset_id,
-			(current_time, pool_work_new, pool_missing_new),
-		);
-
-		LiquidityMiningActivePool::<T>::try_mutate(liquidity_asset_id, |active_amount| {
-			if let Some(val) = active_amount.checked_sub(liquidity_assets_amount) {
-				*active_amount = val;
-				Ok(())
-			} else {
-				Err(())
-			}
-		})
-		.map_err(|_| DispatchError::from(Error::<T>::NotEnoughAssets))?;
-
-		<T as Config>::PoolPromoteApi::claim_pool_rewards(liquidity_asset_id.into(), total_rewards);
-
-		//MAYBE CALCULATE % on curve for users = calculate work and compare it to max
-		//FILL IN REWARD INFO WITH NEW ENTRIES
-		//MAYBE, distribute all rewards currently stored in pool by liq % - easier?
+		// ADD USER INFO TO REW2 STORAGE
+		let rewards_info_new: RewardInfo = RewardInfo {
+			activated_amount: liquidity_assets_amount,
+			rewards_not_yet_claimed: 0_u128,
+			rewards_already_claimed: 0_u128,
+			last_checkpoint: current_time,
+			pool_ratio_at_last_checkpoint: pool_ratio_current,
+			missing_at_last_checkpoint: user_missing_at_last_checkpoint,
+		};
 
 		Ok(())
 	}
@@ -3244,7 +3291,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			"RewardsInfo: ({}, {}) -> ({}, {}, {}, {}, {})",
 			rewards_info_new.activated_amount,
 			rewards_info_new.rewards_not_yet_claimed,
-
 			rewards_info_new.rewards_already_claimed,
 			rewards_info_new.last_checkpoint,
 			rewards_info_new.pool_ratio_at_last_checkpoint,

@@ -180,6 +180,17 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for MockXyk<T> {
 		unimplemented!()
 	}
 
+	fn provide_liquidity_with_conversion(
+		sender: T::AccountId,
+		first_asset_id: Self::CurrencyId,
+		second_asset_id: Self::CurrencyId,
+		provided_asset_id: Self::CurrencyId,
+		provided_asset_amount: Self::Balance,
+		activate_minted_liquidity: bool,
+	) -> Result<(Self::CurrencyId, Self::Balance), DispatchError> {
+		unimplemented!()
+	}
+
 	fn burn_liquidity(
 		sender: T::AccountId,
 		first_asset_id: Self::CurrencyId,

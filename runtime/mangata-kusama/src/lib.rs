@@ -1153,7 +1153,7 @@ impl InstanceFilter<Call> for ProxyType {
 				matches!(
 					c,
 					Call::Xyk(pallet_xyk::Call::provide_liquidity_with_conversion { .. }) |
-					Call::Xyk(pallet_xyk::Call::compound_rewards { .. })
+						Call::Xyk(pallet_xyk::Call::compound_rewards { .. })
 				)
 			},
 		}

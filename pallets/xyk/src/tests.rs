@@ -2407,7 +2407,7 @@ fn migration_work() {
 
 #[test_case(200_000_000_000_000_000_000_u128, 1_000_000_000_000_u128, 1_u128 ; "swap plus 1 leftover")]
 #[test_case(2_000_u128, 100_u128, 2_u128 ; "swap plus 2 leftover")]
-#[test_case(100_000_000_000_000_000_000_0000000, 135_463_177_684_253_389, 1_u128 ; "benchmark case")]
+#[test_case(1_000_000_000_000_000_000_000_000_000, 135_463_177_684_253_389, 2_u128 ; "benchmark case")]
 fn test_compound_calculate_balanced_swap_for_liquidity(amount: u128, reward: u128, surplus: u128) {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -2419,44 +2419,27 @@ fn test_compound_calculate_balanced_swap_for_liquidity(amount: u128, reward: u12
 		let balance_before_0 = XykStorage::balance(0, 2);
 		let balance_before_1 = XykStorage::balance(1, 2);
 
-		let swap_amount =
-			XykStorage::calculate_balanced_sell_amount(reward, pool).unwrap();
-
+		let swap_amount = XykStorage::calculate_balanced_sell_amount(reward, pool).unwrap();
 		let swapped_amount = XykStorage::calculate_sell_price(pool, pool, swap_amount).unwrap();
-		println!("reward: {}", reward);
-		println!("pool: {}:{}", pool, pool);
-		println!("X to swap: {}", swap_amount);
-		println!("swap -fee: {}", swap_amount * 999 / 1000);
-		println!("X: {}", reward - swap_amount);
-		println!("Y: {}", swapped_amount);
 
 		XykStorage::sell_asset(Origin::signed(2), 0, 1, swap_amount, 0).unwrap();
-		let (p1, p2) = XykStorage::asset_pool((0, 1));
-		println!("pool_1: {}:{}", p1, p2);
 
-		let y_m = multiply_by_rational(reward - swap_amount, p2, p1)
-			.unwrap()
-			.checked_add(1)
-			.unwrap();
+		XykStorage::mint_liquidity(Origin::signed(2), 1, 0, swapped_amount, u128::MAX).unwrap();
 
-		println!("y_mint: {}", y_m);
-
-		XykStorage::mint_liquidity(Origin::signed(2), 1, 0, swapped_amount, u128::MAX)
-			.unwrap();
-
-		println!("balance X{}, Y{}", XykStorage::balance(0, 2), XykStorage::balance(1, 2));
 		assert_eq!(XykStorage::balance(0, 2), balance_before_0 - reward + surplus);
 		assert_eq!(XykStorage::balance(1, 2), balance_before_1);
 	});
 }
 
-#[test_case(100_000, 1_000, 1 ; "surplus of 1")]
-#[test_case(1_000_000_000, 100_000, 2 ; "benchmark precision test")]
-fn test_compound_provide_liquidity(amount: u128, reward: u128, surplus: u128) {
+#[test_case(100_000, 1_000, 2, 1 ; "surplus of 1")]
+#[test_case(100_000_000_000, 1_000, 2, 1 ; "large reserve, surplus of 1")]
+#[test_case(100_000_000_000, 1_000_000_000, 1_000_000, 52815 ; "small pool, large surplus")]
+#[test_case(1_000_000_000, 100_000, 2, 2 ; "benchmark precision test")]
+fn test_compound_provide_liquidity(amount: u128, reward: u128, pool_r: u128, surplus: u128) {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
 		let acc_id: u128 = 2;
-		let pool = amount / 2;
+		let pool = amount / pool_r;
 		XykStorage::create_new_token(&acc_id, amount);
 		XykStorage::create_new_token(&acc_id, amount);
 		XykStorage::create_pool(Origin::signed(2), 0, pool, 1, pool).unwrap();
@@ -2465,15 +2448,15 @@ fn test_compound_provide_liquidity(amount: u128, reward: u128, surplus: u128) {
 
 		XykStorage::provide_liquidity_with_conversion(Origin::signed(2), 2, 0, reward).unwrap();
 
-		println!("balance X{}, Y{}", XykStorage::balance(0, 2), XykStorage::balance(1, 2));
-		println!("pool: {:?}", XykStorage::asset_pool((0, 1)));
 		assert_eq!(XykStorage::balance(0, 2), balance_before_0 - reward + surplus);
 		assert_eq!(XykStorage::balance(1, 2), balance_before_1);
 	});
 }
 
 #[test_case(2_000_000, 1_000, 1_000, 1 ; "compound all rewards")]
+#[test_case(2_000_000, 1_000, 500, 0 ; "compound half rewards")]
 #[test_case(100_000_000_000_000_000_000, 1_000, 1_000, 1 ; "benchmark precision test")]
+#[serial]
 fn test_compound_rewards(amount: u128, reward: u128, amount_permille: u128, surplus: u128) {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -2490,17 +2473,10 @@ fn test_compound_rewards(amount: u128, reward: u128, amount_permille: u128, surp
 			.unwrap();
 
 		System::set_block_number(500_000);
-		println!("pool: {:?}", XykStorage::asset_pool((0, 1)));
 		let balance_before_0 = XykStorage::balance(0, 2);
 		let balance_before_1 = XykStorage::balance(1, 2);
 		XykStorage::compound_rewards(Origin::signed(2), 2, amount_permille).unwrap();
 
-		println!(
-			"balance X{}, Y{}",
-			XykStorage::balance(0, 2),
-			XykStorage::balance(1, 2),
-		);
-		println!("pool_1: {:?}", XykStorage::asset_pool((0, 1)));
 		assert_eq!(XykStorage::balance(0, 2), balance_before_0 + surplus);
 		assert_eq!(XykStorage::balance(1, 2), balance_before_1);
 	});

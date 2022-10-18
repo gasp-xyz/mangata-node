@@ -571,7 +571,6 @@ benchmarks! {
 		let asset_id_1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 		let asset_id_2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 		let liquidity_asset_id = asset_id_2 + 1;
-		<<T as Config>::PoolPromoteApi as ComputeIssuance>::initialize();
 
 		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), asset_id_1.into(), 500_000_000, asset_id_2.into(), 500_000_000).unwrap();
 
@@ -592,12 +591,13 @@ benchmarks! {
 		let other: T::AccountId = account("caller1", 0, 0);
 		let caller: T::AccountId = whitelisted_caller();
 		let reward_ratio = 1_000_000;
-		let initial_amount:mangata_primitives::Balance = 100_000_000_000_000;
+		let initial_amount:mangata_primitives::Balance = 1_000_000_000;
 		let pool_amount:mangata_primitives::Balance = initial_amount / 2;
 
-		let asset_id_1 : TokenId= <T as Config>::NativeCurrencyId::get().into();
-		let asset_id_2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-		<T as Config>::Currency::mint(asset_id_1.into(), &caller, initial_amount.into()).unwrap();
+		// let asset_id_1: TokenId = <T as Config>::NativeCurrencyId::get().into();
+		let asset_id_1: TokenId = <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+		let asset_id_2: TokenId = <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+		// <T as Config>::Currency::mint(asset_id_1.into(), &caller, initial_amount.into()).unwrap();
 		<T as Config>::Currency::mint(asset_id_1.into(), &other, (initial_amount * reward_ratio).into()).unwrap();
 		<T as Config>::Currency::mint(asset_id_2.into(), &other, (initial_amount * reward_ratio).into()).unwrap();
 
@@ -629,8 +629,8 @@ benchmarks! {
 	}: compound_rewards(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), 1000_u128)
 	verify {
 
-		assert_eq!(rewards_to_claim, 135_463_177_684_253_389);
-		assert_eq!(swap_amount, 67_787_502_354_636_246);
+		assert_eq!(rewards_to_claim, 12_376_225);
+		assert_eq!(swap_amount, 6_197_408);
 
 		assert_eq!(
 			Xyk::<T>::calculate_rewards_amount(caller.clone(), liquidity_asset_id).unwrap(),

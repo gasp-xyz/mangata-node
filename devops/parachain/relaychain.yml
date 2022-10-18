@@ -62,7 +62,7 @@ services:
       - ./config:/etc/mangata
 
   register:
-    image: mangatasolutions/parachain-register:0.1
+    image: mangatasolutions/parachain-register:0.3
     depends_on:
       - gen-wasm-and-state
     command: bash -c "sleep 3s && node index.js"
@@ -70,6 +70,7 @@ services:
       - STATE_FILE=/config/state
       - WASM_FILE=/config/wasm
       - COLLATOR_ADDR=ws://relay_alice:9944
+      - PARA_ID=2110
     volumes:
       - ./config:/config
 

@@ -6,13 +6,15 @@ use frame_support::pallet_prelude::*;
 
 use frame_support::{
 	codec::{Decode, Encode},
-	traits::{Contains, ExistenceRequirement, Get, StorageVersion},
+	traits::{
+		tokens::currency::MultiTokenCurrency, Contains, ExistenceRequirement, Get, StorageVersion,
+	},
 	transactional, PalletId,
 };
 use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
-use mangata_primitives::{Balance, TokenId};
+use mangata_types::{Balance, TokenId};
 use mp_bootstrap::{PoolCreateApi, RewardsApi};
-use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
+use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
 use scale_info::TypeInfo;
 use sp_arithmetic::{helpers_128bit::multiply_by_rational_with_rounding, per_things::Rounding};
@@ -38,6 +40,7 @@ pub use pallet::*;
 const PALLET_ID: PalletId = PalletId(*b"bootstrp");
 
 use core::fmt::Debug;
+use frame_support::traits::tokens;
 
 #[macro_export]
 macro_rules! log {

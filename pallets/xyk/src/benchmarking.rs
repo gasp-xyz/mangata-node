@@ -567,7 +567,7 @@ benchmarks! {
 
 	provide_liquidity_with_conversion {
 		let caller: T::AccountId = whitelisted_caller();
-		let initial_amount:mangata_primitives::Balance = 1_000_000_000;
+		let initial_amount:mangata_types::Balance = 1_000_000_000;
 		let asset_id_1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 		let asset_id_2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 		let liquidity_asset_id = asset_id_2 + 1;
@@ -591,15 +591,26 @@ benchmarks! {
 		let other: T::AccountId = account("caller1", 0, 0);
 		let caller: T::AccountId = whitelisted_caller();
 		let reward_ratio = 1_000_000;
-		let initial_amount:mangata_primitives::Balance = 1_000_000_000;
-		let pool_amount:mangata_primitives::Balance = initial_amount / 2;
+		let initial_amount:mangata_types::Balance = 1_000_000_000;
+		let pool_amount:mangata_types::Balance = initial_amount / 2;
 
-		// let asset_id_1: TokenId = <T as Config>::NativeCurrencyId::get().into();
-		let asset_id_1: TokenId = <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-		let asset_id_2: TokenId = <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-		// <T as Config>::Currency::mint(asset_id_1.into(), &caller, initial_amount.into()).unwrap();
-		<T as Config>::Currency::mint(asset_id_1.into(), &other, (initial_amount * reward_ratio).into()).unwrap();
-		<T as Config>::Currency::mint(asset_id_2.into(), &other, (initial_amount * reward_ratio).into()).unwrap();
+		let next_asset_id: TokenId = <T as Config>::Currency::get_next_currency_id().into();
+		let asset_id_1: TokenId;
+		let asset_id_2: TokenId;
+		if next_asset_id == 0 {
+			// in test there is no other currencies created
+			asset_id_1 = <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+			<T as Config>::Currency::mint(asset_id_1.into(), &other, (initial_amount * reward_ratio).into()).unwrap();
+			asset_id_2 = <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+			<T as Config>::Currency::mint(asset_id_2.into(), &other, (initial_amount * reward_ratio).into()).unwrap();
+		} else {
+			// in bench the genesis sets up the assets
+			asset_id_1 = <T as Config>::NativeCurrencyId::get().into();
+			<T as Config>::Currency::mint(asset_id_1.into(), &caller, initial_amount.into()).unwrap();
+			<T as Config>::Currency::mint(asset_id_1.into(), &other, (initial_amount * reward_ratio).into()).unwrap();
+			asset_id_2 = <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+			<T as Config>::Currency::mint(asset_id_2.into(), &other, (initial_amount * reward_ratio).into()).unwrap();
+		}
 
 		let liquidity_asset_id = asset_id_2 + 1;
 		<<T as Config>::PoolPromoteApi as ComputeIssuance>::initialize();
@@ -629,9 +640,6 @@ benchmarks! {
 	}: compound_rewards(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), 1000_u128)
 	verify {
 
-		assert_eq!(rewards_to_claim, 12_376_225);
-		assert_eq!(swap_amount, 6_197_408);
-
 		assert_eq!(
 			Xyk::<T>::calculate_rewards_amount(caller.clone(), liquidity_asset_id).unwrap(),
 			(0_u128)
@@ -639,8 +647,8 @@ benchmarks! {
 
 		let balance_native_after = <T as Config>::Currency::free_balance(<T as Config>::NativeCurrencyId::get().into(), &caller).into();
 		let balance_asset_after = <T as Config>::Currency::free_balance(liquidity_asset_id.into(), &caller).into();
-		// two surplus asset amount
-		assert_eq!(balance_native_before + 1, balance_native_after);
+		// surplus asset amount
+		assert!(balance_native_before < balance_native_after);
 		assert_eq!(balance_asset_before, balance_asset_after);
 
 		let post_pool_balance = Xyk::<T>::asset_pool((asset_id_1, asset_id_2));

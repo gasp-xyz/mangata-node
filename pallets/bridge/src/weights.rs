@@ -24,13 +24,13 @@ impl WeightInfoTrait for WeightInfo {
 
 impl WeightInfo {
 	fn update_registry_without_current_app_id() -> Weight {
-		(52_195_000 as Weight)
-			.saturating_add(DbWeight::get().reads(3 as Weight))
-			.saturating_add(DbWeight::get().writes(2 as Weight))
+		Weight::from_ref_time(52_195_000)
+			.saturating_add(DbWeight::get().reads(3 as u64))
+			.saturating_add(DbWeight::get().writes(2 as u64))
 	}
 	fn update_registry_with_current_app_id() -> Weight {
-		(37_172_000 as Weight)
-			.saturating_add(DbWeight::get().reads(1 as Weight))
-			.saturating_add(DbWeight::get().writes(2 as Weight))
+		Weight::from_ref_time(37_172_000)
+			.saturating_add(DbWeight::get().reads(1 as u64))
+			.saturating_add(DbWeight::get().writes(2 as u64))
 	}
 }

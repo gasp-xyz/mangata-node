@@ -79,20 +79,20 @@ impl WeightInfo for () {
 	// Storage: Vesting Vesting (r:1 w:1)
 	// Storage: Balances Locks (r:1 w:1)
 	fn init_issuance_config() -> Weight {
-		50_642_000 as Weight
+		Weight::from_ref_time(50_642_000)
 	}
 	// Storage: Vesting Vesting (r:1 w:1)
 	// Storage: Balances Locks (r:1 w:1)
 	fn finalize_tge() -> Weight {
-		50_830_000 as Weight
+		Weight::from_ref_time(50_830_000)
 	}
 	// Storage: Vesting Vesting (r:1 w:1)
 	// Storage: Balances Locks (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn execute_tge(l: u32) -> Weight {
-		(52_151_000 as Weight)
+		Weight::from_ref_time(52_151_000)
 			// Standard Error: 1_000
-			.saturating_add((130_000 as Weight).saturating_mul(l as Weight))
+			.saturating_add((Weight::from_ref_time(130_000)).saturating_mul(l as u64))
 	}
 }
 

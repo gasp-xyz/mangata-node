@@ -6,6 +6,7 @@ launch
 scripts
 workflows
 Makefile
+Tiltfile
 **/target/
 **/*.txt
 **/*.md

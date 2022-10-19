@@ -2,7 +2,7 @@
 use super::*;
 use mock::*;
 
-use frame_support::assert_err;
+use frame_support::{assert_err, assert_ok};
 use serial_test::serial;
 use sp_runtime::traits::BadOrigin;
 use test_case::test_case;
@@ -42,9 +42,9 @@ fn jump_to_whitelist_phase() {
 		KSMId::get(),
 		MGAId::get(),
 		10_u32.into(),
+		Some(10),
 		10,
-		10,
-		DEFAULT_RATIO,
+		Some(DEFAULT_RATIO),
 		false,
 	)
 	.unwrap();
@@ -61,9 +61,9 @@ fn jump_to_public_phase() {
 		KSMId::get(),
 		MGAId::get(),
 		10_u32.into(),
+		Some(10),
 		10,
-		10,
-		DEFAULT_RATIO,
+		Some(DEFAULT_RATIO),
 		false,
 	)
 	.unwrap();
@@ -199,9 +199,9 @@ fn test_prevent_provisions_in_before_start_phase() {
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
-			10,
+			Some(10),
 			20,
-			DEFAULT_RATIO,
+			Some(DEFAULT_RATIO),
 			false,
 		)
 		.unwrap();
@@ -228,9 +228,9 @@ fn test_fail_scheudle_bootstrap_with_same_token() {
 				100,
 				100,
 				100_u32.into(),
-				10,
+				Some(10),
 				20,
-				DEFAULT_RATIO,
+				Some(DEFAULT_RATIO),
 				false,
 			),
 			Error::<Test>::SameToken
@@ -253,9 +253,9 @@ fn test_prevent_schedule_bootstrap_with_pair_that_does_not_exists() {
 				100,
 				101,
 				100_u32.into(),
-				10,
+				Some(10),
 				20,
-				DEFAULT_RATIO,
+				Some(DEFAULT_RATIO),
 				false,
 			),
 			Error::<Test>::TokenIdDoesNotExists
@@ -277,9 +277,9 @@ fn test_prevent_provisions_in_finished_phase() {
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
-			10,
+			Some(10),
 			20,
-			DEFAULT_RATIO,
+			Some(DEFAULT_RATIO),
 			false,
 		)
 		.unwrap();
@@ -356,6 +356,132 @@ fn test_incremental_whitliested_donation() {
 
 #[test]
 #[serial]
+fn test_bootstrap_promotion_can_be_updated() {
+	new_test_ext().execute_with(|| {
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		let pool_create_mock = MockPoolCreateApi::pool_create_context();
+		pool_create_mock.expect().times(1).return_const(POOL_CREATE_DUMMY_RETURN_VALUE);
+
+		let mut mock = MockRewardsApi::promote_pool_context();
+		mock.expect().times(1).return_const(true);
+
+		set_up();
+		assert_ok!(Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			Some(1),
+			9,
+			Some(DEFAULT_RATIO),
+			false,
+		));
+
+		System::set_block_number(109);
+		Bootstrap::on_initialize(109_u32.into());
+
+		assert_ok!(Bootstrap::update_promote_bootstrap_pool(Origin::root(), true));
+
+		System::set_block_number(111);
+		Bootstrap::on_initialize(111_u32.into());
+
+		assert_err!(
+			Bootstrap::update_promote_bootstrap_pool(Origin::root(), false),
+			Error::<Test>::BootstrapFinished
+		);
+	});
+}
+
+#[test]
+#[serial]
+fn test_scheduled_bootstrap_can_be_updated() {
+	new_test_ext().execute_with(|| {
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		set_up();
+		assert_ok!(Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			Some(1),
+			9,
+			Some(DEFAULT_RATIO),
+			false,
+		));
+
+		System::set_block_number(80);
+		Bootstrap::on_initialize(80_u32.into());
+
+		assert_ok!(Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			Some(1),
+			9,
+			Some((100, 10)),
+			false,
+		));
+
+		System::set_block_number(95);
+		Bootstrap::on_initialize(95_u32.into());
+
+		assert_err!(
+			Bootstrap::schedule_bootstrap(
+				Origin::root(),
+				KSMId::get(),
+				MGAId::get(),
+				100_u32.into(),
+				Some(1),
+				9,
+				Some((1000, 1)),
+				false,
+			),
+			Error::<Test>::TooLateToUpdateBootstrap
+		);
+	});
+}
+
+#[test]
+#[serial]
+fn test_scheduled_bootstrap_can_be_cancelled() {
+	new_test_ext().execute_with(|| {
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		set_up();
+		assert_ok!(Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			Some(1),
+			9,
+			Some(DEFAULT_RATIO),
+			false,
+		));
+
+		System::set_block_number(95);
+		Bootstrap::on_initialize(95_u32.into());
+
+		assert_err!(
+			Bootstrap::cancel_bootstrap(Origin::root()),
+			Error::<Test>::TooLateToUpdateBootstrap
+		);
+
+		System::set_block_number(80);
+		Bootstrap::on_initialize(80_u32.into());
+
+		assert_ok!(Bootstrap::cancel_bootstrap(Origin::root()));
+	});
+}
+
+#[test]
+#[serial]
 fn test_non_root_user_can_not_schedule_bootstrap() {
 	new_test_ext().execute_with(|| {
 		set_up();
@@ -365,9 +491,9 @@ fn test_non_root_user_can_not_schedule_bootstrap() {
 				KSMId::get(),
 				MGAId::get(),
 				0_u32.into(),
+				Some(1),
 				1,
-				1,
-				DEFAULT_RATIO,
+				Some(DEFAULT_RATIO),
 				false,
 			),
 			BadOrigin
@@ -405,9 +531,9 @@ fn test_ido_start_cannot_happen_in_the_past() {
 				KSMId::get(),
 				MGAId::get(),
 				999_u32.into(),
+				Some(1),
 				1,
-				1,
-				DEFAULT_RATIO,
+				Some(DEFAULT_RATIO),
 				false,
 			),
 			Error::<Test>::BootstrapStartInThePast
@@ -427,9 +553,9 @@ fn test_ido_start_can_not_be_initialize_with_0_ratio() {
 				KSMId::get(),
 				MGAId::get(),
 				999_u32.into(),
+				Some(1),
 				1,
-				1,
-				(1, 0),
+				Some((1, 0)),
 				false,
 			),
 			Error::<Test>::WrongRatio
@@ -440,9 +566,9 @@ fn test_ido_start_can_not_be_initialize_with_0_ratio() {
 				KSMId::get(),
 				MGAId::get(),
 				999_u32.into(),
+				Some(1),
 				1,
-				1,
-				(0, 1),
+				Some((0, 1)),
 				false,
 			),
 			Error::<Test>::WrongRatio
@@ -452,22 +578,23 @@ fn test_ido_start_can_not_be_initialize_with_0_ratio() {
 
 #[test]
 #[serial]
-fn test_cannot_schedule_bootstrap_with_whitelist_phase_length_equal_zero() {
+fn test_can_schedule_bootstrap_with_whitelist_phase_length_equal_zero() {
 	new_test_ext().execute_with(|| {
 		set_up();
-		assert_err!(
-			Bootstrap::schedule_bootstrap(
-				Origin::root(),
-				KSMId::get(),
-				MGAId::get(),
-				100_u32.into(),
-				0,
-				1,
-				DEFAULT_RATIO,
-				false,
-			),
-			Error::<Test>::PhaseLengthCannotBeZero
-		);
+
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		assert_ok!(Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			Some(0),
+			1,
+			Some(DEFAULT_RATIO),
+			false,
+		));
 	});
 }
 
@@ -482,9 +609,9 @@ fn test_cannot_schedule_bootstrap_with_public_phase_length_equal_zero() {
 				KSMId::get(),
 				MGAId::get(),
 				100_u32.into(),
-				1,
+				Some(1),
 				0,
-				DEFAULT_RATIO,
+				Some(DEFAULT_RATIO),
 				false,
 			),
 			Error::<Test>::PhaseLengthCannotBeZero
@@ -506,9 +633,9 @@ fn test_bootstrap_can_be_modified_only_before_its_started() {
 			KSMId::get(),
 			MGAId::get(),
 			50_u32.into(),
-			10,
+			Some(10),
 			20,
-			DEFAULT_RATIO,
+			Some(DEFAULT_RATIO),
 			false,
 		)
 		.unwrap();
@@ -518,9 +645,9 @@ fn test_bootstrap_can_be_modified_only_before_its_started() {
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
-			10,
+			Some(10),
 			20,
-			DEFAULT_RATIO,
+			Some(DEFAULT_RATIO),
 			false,
 		)
 		.unwrap();
@@ -533,9 +660,9 @@ fn test_bootstrap_can_be_modified_only_before_its_started() {
 				KSMId::get(),
 				MGAId::get(),
 				100_u32.into(),
-				10,
+				Some(10),
 				20,
-				DEFAULT_RATIO,
+				Some(DEFAULT_RATIO),
 				false,
 			),
 			Error::<Test>::AlreadyStarted
@@ -566,9 +693,9 @@ fn test_bootstrap_state_transitions() {
 			KSMId::get(),
 			MGAId::get(),
 			BOOTSTRAP_WHITELIST_START.into(),
-			(BOOTSTRAP_PUBLIC_START - BOOTSTRAP_WHITELIST_START).try_into().unwrap(),
+			Some((BOOTSTRAP_PUBLIC_START - BOOTSTRAP_WHITELIST_START).try_into().unwrap()),
 			(BOOTSTRAP_FINISH - BOOTSTRAP_PUBLIC_START).try_into().unwrap(),
-			DEFAULT_RATIO,
+			Some(DEFAULT_RATIO),
 			false,
 		)
 		.unwrap();
@@ -621,9 +748,9 @@ fn test_bootstrap_state_transitions_when_on_initialized_is_not_called() {
 			KSMId::get(),
 			MGAId::get(),
 			BOOTSTRAP_WHITELIST_START.into(),
-			(BOOTSTRAP_PUBLIC_START - BOOTSTRAP_WHITELIST_START).try_into().unwrap(),
+			Some((BOOTSTRAP_PUBLIC_START - BOOTSTRAP_WHITELIST_START).try_into().unwrap()),
 			(BOOTSTRAP_FINISH - BOOTSTRAP_PUBLIC_START).try_into().unwrap(),
-			DEFAULT_RATIO,
+			Some(DEFAULT_RATIO),
 			false,
 		)
 		.unwrap();
@@ -646,9 +773,9 @@ fn test_bootstrap_schedule_overflow() {
 				KSMId::get(),
 				MGAId::get(),
 				u64::MAX.into(),
-				u32::MAX,
+				Some(u32::MAX),
 				1_u32,
-				DEFAULT_RATIO,
+				Some(DEFAULT_RATIO),
 				false,
 			),
 			Error::<Test>::MathOverflow
@@ -660,9 +787,9 @@ fn test_bootstrap_schedule_overflow() {
 				KSMId::get(),
 				MGAId::get(),
 				u64::MAX.into(),
-				1_u32,
+				Some(1_u32),
 				u32::MAX,
-				DEFAULT_RATIO,
+				Some(DEFAULT_RATIO),
 				false,
 			),
 			Error::<Test>::MathOverflow
@@ -674,9 +801,9 @@ fn test_bootstrap_schedule_overflow() {
 				KSMId::get(),
 				MGAId::get(),
 				u64::MAX.into(),
+				Some(u32::MAX),
 				u32::MAX,
-				u32::MAX,
-				DEFAULT_RATIO,
+				Some(DEFAULT_RATIO),
 				false,
 			),
 			Error::<Test>::MathOverflow
@@ -697,9 +824,9 @@ fn test_do_not_allow_for_creating_starting_bootstrap_for_existing_pool() {
 				KSMId::get(),
 				MGAId::get(),
 				100_u32.into(),
+				Some(10),
 				10,
-				10,
-				DEFAULT_RATIO,
+				Some(DEFAULT_RATIO),
 				false,
 			),
 			Error::<Test>::PoolAlreadyExists
@@ -738,9 +865,9 @@ fn test_crate_pool_is_called_with_proper_arguments_after_bootstrap_finish() {
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
+			Some(10),
 			10,
-			10,
-			DEFAULT_RATIO,
+			Some(DEFAULT_RATIO),
 			false,
 		)
 		.unwrap();
@@ -766,9 +893,9 @@ fn test_cannot_claim_liquidity_tokens_when_bootstrap_is_not_finished() {
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
+			Some(10),
 			10,
-			10,
-			DEFAULT_RATIO,
+			Some(DEFAULT_RATIO),
 			false,
 		)
 		.unwrap();
@@ -817,9 +944,9 @@ fn test_rewards_are_distributed_properly_with_single_user() {
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
+			Some(10),
 			10,
-			10,
-			DEFAULT_RATIO,
+			Some(DEFAULT_RATIO),
 			false,
 		)
 		.unwrap();
@@ -901,9 +1028,9 @@ fn test_rewards_are_distributed_properly_with_multiple_user() {
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
+			Some(10),
 			10,
-			10,
-			DEFAULT_RATIO,
+			Some(DEFAULT_RATIO),
 			false,
 		)
 		.unwrap();
@@ -1038,132 +1165,132 @@ fn dont_allow_for_provision_in_vested_tokens_without_dedicated_extrinsic() {
 	});
 }
 
-#[test]
-#[serial]
-fn fail_vested_token_provision_if_user_doesnt_have_vested_tokens() {
-	new_test_ext().execute_with(|| {
-		set_up();
-		jump_to_public_phase();
+// #[test]
+// #[serial]
+// fn fail_vested_token_provision_if_user_doesnt_have_vested_tokens() {
+// 	new_test_ext().execute_with(|| {
+// 		set_up();
+// 		jump_to_public_phase();
 
-		assert_err!(
-			Bootstrap::provision_vested(Origin::signed(USER_ID), MGAId::get(), 1),
-			Error::<Test>::NotEnoughVestedAssets
-		);
-	});
-}
+// 		assert_err!(
+// 			Bootstrap::provision_vested(Origin::signed(USER_ID), MGAId::get(), 1),
+// 			Error::<Test>::NotEnoughVestedAssets
+// 		);
+// 	});
+// }
 
-#[test]
-#[serial]
-fn successful_vested_provision_using_vested_tokens_only_when_user_has_both_vested_and_non_vested_tokens(
-) {
-	new_test_ext().execute_with(|| {
-		set_up();
-		jump_to_public_phase();
+// #[test]
+// #[serial]
+// fn successful_vested_provision_using_vested_tokens_only_when_user_has_both_vested_and_non_vested_tokens(
+// ) {
+// 	new_test_ext().execute_with(|| {
+// 		set_up();
+// 		jump_to_public_phase();
 
-		let provision_amount = 10_000;
-		let lock_start: u128 = 1;
-		let lock_end: u128 = 150;
+// 		let provision_amount = 10_000;
+// 		let lock_start: u128 = 1;
+// 		let lock_end: u128 = 150;
 
-		<Test as Config>::VestingProvider::lock_tokens(
-			&USER_ID,
-			MGAId::get(),
-			provision_amount,
-			Some(lock_start.saturated_into()),
-			lock_end.into(),
-		)
-		.unwrap();
+// 		<Test as Config>::VestingProvider::lock_tokens(
+// 			&USER_ID,
+// 			MGAId::get(),
+// 			provision_amount,
+// 			Some(lock_start.saturated_into()),
+// 			lock_end.into(),
+// 		)
+// 		.unwrap();
 
-		let non_vested_initial_amount = Bootstrap::balance(MGAId::get(), USER_ID);
+// 		let non_vested_initial_amount = Bootstrap::balance(MGAId::get(), USER_ID);
 
-		Bootstrap::provision_vested(Origin::signed(USER_ID), MGAId::get(), provision_amount)
-			.unwrap();
+// 		Bootstrap::provision_vested(Origin::signed(USER_ID), MGAId::get(), provision_amount)
+// 			.unwrap();
 
-		assert_eq!(non_vested_initial_amount, Bootstrap::balance(MGAId::get(), USER_ID));
+// 		assert_eq!(non_vested_initial_amount, Bootstrap::balance(MGAId::get(), USER_ID));
 
-		assert_eq!(0, Bootstrap::locked_balance(MGAId::get(), USER_ID));
+// 		assert_eq!(0, Bootstrap::locked_balance(MGAId::get(), USER_ID));
 
-		assert_eq!(
-			(provision_amount, lock_start, lock_end + 1),
-			Bootstrap::vested_provisions(USER_ID, MGAId::get())
-		);
-	});
-}
+// 		assert_eq!(
+// 			(provision_amount, lock_start, lock_end + 1),
+// 			Bootstrap::vested_provisions(USER_ID, MGAId::get())
+// 		);
+// 	});
+// }
 
-#[test]
-#[serial]
-fn successful_vested_provision_is_stored_properly_in_storage() {
-	new_test_ext().execute_with(|| {
-		set_up();
-		jump_to_public_phase();
+// #[test]
+// #[serial]
+// fn successful_vested_provision_is_stored_properly_in_storage() {
+// 	new_test_ext().execute_with(|| {
+// 		set_up();
+// 		jump_to_public_phase();
 
-		let mga_amount = Bootstrap::balance(MGAId::get(), USER_ID);
-		let lock_start: u128 = 1;
-		let lock_end: u128 = 150;
+// 		let mga_amount = Bootstrap::balance(MGAId::get(), USER_ID);
+// 		let lock_start: u128 = 1;
+// 		let lock_end: u128 = 150;
 
-		<Test as Config>::VestingProvider::lock_tokens(
-			&USER_ID,
-			MGAId::get(),
-			mga_amount,
-			Some(lock_start.saturated_into()),
-			lock_end.into(),
-		)
-		.unwrap();
-		Bootstrap::provision_vested(Origin::signed(USER_ID), MGAId::get(), mga_amount).unwrap();
+// 		<Test as Config>::VestingProvider::lock_tokens(
+// 			&USER_ID,
+// 			MGAId::get(),
+// 			mga_amount,
+// 			Some(lock_start.saturated_into()),
+// 			lock_end.into(),
+// 		)
+// 		.unwrap();
+// 		Bootstrap::provision_vested(Origin::signed(USER_ID), MGAId::get(), mga_amount).unwrap();
 
-		assert_eq!(
-			(mga_amount, lock_start, lock_end + 1),
-			Bootstrap::vested_provisions(USER_ID, MGAId::get())
-		);
-	});
-}
+// 		assert_eq!(
+// 			(mga_amount, lock_start, lock_end + 1),
+// 			Bootstrap::vested_provisions(USER_ID, MGAId::get())
+// 		);
+// 	});
+// }
 
-#[test]
-#[serial]
-fn successful_merged_vested_provision_is_stored_properly_in_storage() {
-	new_test_ext().execute_with(|| {
-		set_up();
-		jump_to_public_phase();
+// #[test]
+// #[serial]
+// fn successful_merged_vested_provision_is_stored_properly_in_storage() {
+// 	new_test_ext().execute_with(|| {
+// 		set_up();
+// 		jump_to_public_phase();
 
-		let mga_amount = Bootstrap::balance(MGAId::get(), USER_ID);
-		let first_lock_start: u128 = 1;
-		let first_lock_end: u128 = 150;
-		let first_lock_amount = mga_amount / 2;
-		let second_lock_start: u128 = 2;
-		let second_lock_end: u128 = 300;
-		let second_lock_amount = mga_amount - first_lock_amount;
+// 		let mga_amount = Bootstrap::balance(MGAId::get(), USER_ID);
+// 		let first_lock_start: u128 = 1;
+// 		let first_lock_end: u128 = 150;
+// 		let first_lock_amount = mga_amount / 2;
+// 		let second_lock_start: u128 = 2;
+// 		let second_lock_end: u128 = 300;
+// 		let second_lock_amount = mga_amount - first_lock_amount;
 
-		<Test as Config>::VestingProvider::lock_tokens(
-			&USER_ID,
-			MGAId::get(),
-			first_lock_amount,
-			Some(first_lock_start.saturated_into()),
-			first_lock_end.into(),
-		)
-		.unwrap();
-		<Test as Config>::VestingProvider::lock_tokens(
-			&USER_ID,
-			MGAId::get(),
-			second_lock_amount,
-			Some(second_lock_start.saturated_into()),
-			second_lock_end.into(),
-		)
-		.unwrap();
+// 		<Test as Config>::VestingProvider::lock_tokens(
+// 			&USER_ID,
+// 			MGAId::get(),
+// 			first_lock_amount,
+// 			Some(first_lock_start.saturated_into()),
+// 			first_lock_end.into(),
+// 		)
+// 		.unwrap();
+// 		<Test as Config>::VestingProvider::lock_tokens(
+// 			&USER_ID,
+// 			MGAId::get(),
+// 			second_lock_amount,
+// 			Some(second_lock_start.saturated_into()),
+// 			second_lock_end.into(),
+// 		)
+// 		.unwrap();
 
-		Bootstrap::provision_vested(Origin::signed(USER_ID), MGAId::get(), first_lock_amount)
-			.unwrap();
-		assert_eq!(
-			(first_lock_amount, first_lock_start, first_lock_end + 1),
-			Bootstrap::vested_provisions(USER_ID, MGAId::get())
-		);
+// 		Bootstrap::provision_vested(Origin::signed(USER_ID), MGAId::get(), first_lock_amount)
+// 			.unwrap();
+// 		assert_eq!(
+// 			(first_lock_amount, first_lock_start, first_lock_end + 1),
+// 			Bootstrap::vested_provisions(USER_ID, MGAId::get())
+// 		);
 
-		Bootstrap::provision_vested(Origin::signed(USER_ID), MGAId::get(), second_lock_amount)
-			.unwrap();
-		assert_eq!(
-			(mga_amount, second_lock_start, second_lock_end + 1),
-			Bootstrap::vested_provisions(USER_ID, MGAId::get())
-		);
-	});
-}
+// 		Bootstrap::provision_vested(Origin::signed(USER_ID), MGAId::get(), second_lock_amount)
+// 			.unwrap();
+// 		assert_eq!(
+// 			(mga_amount, second_lock_start, second_lock_end + 1),
+// 			Bootstrap::vested_provisions(USER_ID, MGAId::get())
+// 		);
+// 	});
+// }
 
 #[macro_export]
 macro_rules! init_mocks {
@@ -1196,25 +1323,110 @@ fn provisions(
 		)
 		.unwrap();
 
-		if let ProvisionKind::Vested(begin, end) = lock {
-			<Test as Config>::VestingProvider::lock_tokens(
-				&user_id,
-				token_id,
-				amount,
-				Some(begin.saturated_into()),
-				end.into(),
-			)
-			.unwrap();
-			Bootstrap::provision_vested(Origin::signed(user_id), token_id, amount).unwrap();
-		} else {
-			Bootstrap::provision(Origin::signed(user_id), token_id, amount).unwrap();
-		}
+		// if let ProvisionKind::Vested(begin, end) = lock {
+		// 	<Test as Config>::VestingProvider::lock_tokens(
+		// 		&user_id,
+		// 		token_id,
+		// 		amount,
+		// 		Some(begin.saturated_into()),
+		// 		end.into(),
+		// 	)
+		// 	.unwrap();
+		// 	Bootstrap::provision_vested(Origin::signed(user_id), token_id, amount).unwrap();
+		// } else {
+		Bootstrap::provision(Origin::signed(user_id), token_id, amount).unwrap();
+		// }
 	}
 }
 
+// #[test]
+// #[serial]
+// fn vested_provision_included_in_valuation() {
+// 	new_test_ext().execute_with(|| {
+// 		// ARRANGE - USER provides vested MGA tokens, ANOTHER_USER provides KSM tokens
+// 		set_up();
+// 		jump_to_public_phase();
+// 		init_mocks!();
+// 		let liq_token_id = Tokens::next_asset_id();
+
+// 		// ACT
+// 		provisions(vec![
+// 			(PROVISION_USER1_ID, MGAId::get(), 1_000_000, ProvisionKind::Vested(1, 150)),
+// 			(PROVISION_USER2_ID, KSMId::get(), 100, ProvisionKind::Regular),
+// 		]);
+// 		let (mga_valuation, ksm_valuation) = Bootstrap::valuations();
+// 		let liq_token_minted = (mga_valuation + ksm_valuation) / 2;
+// 		assert_eq!(mga_valuation, 1_000_000);
+// 		assert_eq!(ksm_valuation, 100);
+
+// 		Bootstrap::on_initialize(100_u32.into());
+// 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
+// 		Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER1_ID)).unwrap();
+// 		Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER2_ID)).unwrap();
+
+// 		// ASSERT
+// 		assert_eq!(
+// 			liq_token_minted / 2,
+// 			Bootstrap::locked_balance(liq_token_id, PROVISION_USER1_ID)
+// 		);
+// 		assert_eq!(0, Bootstrap::balance(liq_token_id, PROVISION_USER1_ID));
+
+// 		assert_eq!(liq_token_minted / 2, Bootstrap::balance(liq_token_id, PROVISION_USER2_ID));
+// 		assert_eq!(0, Bootstrap::locked_balance(liq_token_id, PROVISION_USER2_ID));
+// 	});
+// }
+
+// #[test]
+// #[serial]
+// fn multi_provisions() {
+// 	new_test_ext().execute_with(|| {
+// 		// ARRANGE - USER provides vested MGA tokens, ANOTHER_USER provides KSM tokens
+// 		set_up();
+// 		jump_to_public_phase();
+// 		init_mocks!();
+// 		let liq_token_id = Tokens::next_asset_id();
+
+// 		// ACT
+// 		provisions(vec![
+// 			(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Vested(1, 150)),
+// 			(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Regular),
+// 			(PROVISION_USER2_ID, MGAId::get(), 300_000, ProvisionKind::Vested(1, 150)),
+// 			(PROVISION_USER2_ID, KSMId::get(), 30, ProvisionKind::Regular),
+// 		]);
+// 		let (mga_valuation, ksm_valuation) = Bootstrap::valuations();
+// 		let liq_token_minted = (mga_valuation + ksm_valuation) / 2;
+// 		assert_eq!(mga_valuation, 400_000);
+// 		assert_eq!(ksm_valuation, 40);
+
+// 		Bootstrap::on_initialize(100_u32.into());
+// 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
+// 		Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER1_ID)).unwrap();
+// 		Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER2_ID)).unwrap();
+
+// 		// ASSERT
+// 		assert_eq!(
+// 			liq_token_minted / 2 * 10 / ksm_valuation,
+// 			Bootstrap::locked_balance(liq_token_id, PROVISION_USER1_ID)
+// 		);
+// 		assert_eq!(
+// 			liq_token_minted / 2 * 100_000 / mga_valuation,
+// 			Bootstrap::balance(liq_token_id, PROVISION_USER1_ID)
+// 		);
+
+// 		assert_eq!(
+// 			liq_token_minted / 2 * 30 / ksm_valuation,
+// 			Bootstrap::locked_balance(liq_token_id, PROVISION_USER2_ID)
+// 		);
+// 		assert_eq!(
+// 			liq_token_minted / 2 * 300_000 / mga_valuation,
+// 			Bootstrap::balance(liq_token_id, PROVISION_USER2_ID)
+// 		);
+// 	});
+// }
+
 #[test]
 #[serial]
-fn vested_provision_included_in_valuation() {
+fn multi_provisions_only_with_non_vested() {
 	new_test_ext().execute_with(|| {
 		// ARRANGE - USER provides vested MGA tokens, ANOTHER_USER provides KSM tokens
 		set_up();
@@ -1224,46 +1436,9 @@ fn vested_provision_included_in_valuation() {
 
 		// ACT
 		provisions(vec![
-			(PROVISION_USER1_ID, MGAId::get(), 1_000_000, ProvisionKind::Vested(1, 150)),
-			(PROVISION_USER2_ID, KSMId::get(), 100, ProvisionKind::Regular),
-		]);
-		let (mga_valuation, ksm_valuation) = Bootstrap::valuations();
-		let liq_token_minted = (mga_valuation + ksm_valuation) / 2;
-		assert_eq!(mga_valuation, 1_000_000);
-		assert_eq!(ksm_valuation, 100);
-
-		Bootstrap::on_initialize(100_u32.into());
-		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
-		Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER1_ID)).unwrap();
-		Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER2_ID)).unwrap();
-
-		// ASSERT
-		assert_eq!(
-			liq_token_minted / 2,
-			Bootstrap::locked_balance(liq_token_id, PROVISION_USER1_ID)
-		);
-		assert_eq!(0, Bootstrap::balance(liq_token_id, PROVISION_USER1_ID));
-
-		assert_eq!(liq_token_minted / 2, Bootstrap::balance(liq_token_id, PROVISION_USER2_ID));
-		assert_eq!(0, Bootstrap::locked_balance(liq_token_id, PROVISION_USER2_ID));
-	});
-}
-
-#[test]
-#[serial]
-fn multi_provisions() {
-	new_test_ext().execute_with(|| {
-		// ARRANGE - USER provides vested MGA tokens, ANOTHER_USER provides KSM tokens
-		set_up();
-		jump_to_public_phase();
-		init_mocks!();
-		let liq_token_id = Tokens::next_asset_id();
-
-		// ACT
-		provisions(vec![
-			(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Vested(1, 150)),
+			(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Regular),
 			(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Regular),
-			(PROVISION_USER2_ID, MGAId::get(), 300_000, ProvisionKind::Vested(1, 150)),
+			(PROVISION_USER2_ID, MGAId::get(), 300_000, ProvisionKind::Regular),
 			(PROVISION_USER2_ID, KSMId::get(), 30, ProvisionKind::Regular),
 		]);
 		let (mga_valuation, ksm_valuation) = Bootstrap::valuations();
@@ -1278,24 +1453,158 @@ fn multi_provisions() {
 
 		// ASSERT
 		assert_eq!(
-			liq_token_minted / 2 * 10 / ksm_valuation,
-			Bootstrap::locked_balance(liq_token_id, PROVISION_USER1_ID)
-		);
-		assert_eq!(
-			liq_token_minted / 2 * 100_000 / mga_valuation,
+			liq_token_minted / 2 * 100_000 / mga_valuation * 2,
 			Bootstrap::balance(liq_token_id, PROVISION_USER1_ID)
 		);
 
 		assert_eq!(
-			liq_token_minted / 2 * 30 / ksm_valuation,
-			Bootstrap::locked_balance(liq_token_id, PROVISION_USER2_ID)
-		);
-		assert_eq!(
-			liq_token_minted / 2 * 300_000 / mga_valuation,
+			liq_token_minted / 2 * 300_000 / mga_valuation * 2,
 			Bootstrap::balance(liq_token_id, PROVISION_USER2_ID)
 		);
 	});
 }
+
+// // formula KSM/MGA for provision calculation
+// // (KSM valuation + MGA valuation)   User KSM/MGA token provision
+// // ------------------------------- * ---------------------------- = liquidity tokens rewards
+// //                2                      KSM/MGA valuation
+// //  EX:
+
+// #[test_case(
+// 			vec![
+// 				(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Vested(1, 150)),
+// 				(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Regular),
+// 				(PROVISION_USER2_ID, MGAId::get(), 300_000, ProvisionKind::Vested(1, 150)),
+// 				(PROVISION_USER2_ID, KSMId::get(), 30, ProvisionKind::Regular),
+// 			],
+// 			(25002, 25002),
+// 			(75007, 75007);
+// 			"two users provision both vested and non vested tokens")
+// ]
+// #[test_case(
+// 			vec![
+// 				(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Regular),
+// 				(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Regular),
+// 			],
+// 			(50_004, 0),
+// 			(0, 0);
+// 			"non vested provisions from single user")
+// ]
+// #[test_case(
+// 			vec![
+// 				(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Vested(1, 150)),
+// 				(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Vested(1, 150)),
+// 			],
+// 			(0, 50_004),
+// 			(0, 0);
+// 			"vested provisions from single user")
+// ]
+// #[test_case(
+// 			vec![
+// 				(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Vested(1, 150)),
+// 				(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Vested(1, 150)),
+// 				(PROVISION_USER2_ID, MGAId::get(), 300_000, ProvisionKind::Regular),
+// 				(PROVISION_USER2_ID, KSMId::get(), 30, ProvisionKind::Regular),
+// 			],
+// 			(0, 50_004), // 400040 / 2 / 2 * 1 / 4
+// 			(150014, 0); // 400040 / 2 / 2 * 3 / 4
+// 			"vested provisions from single user & non vested form second one")
+// ]
+// #[test_case(
+// 			vec![
+// 				(PROVISION_USER1_ID, MGAId::get(), 10_000, ProvisionKind::Vested(1, 150)),
+// 				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
+// 				(PROVISION_USER1_ID, MGAId::get(), 20_000, ProvisionKind::Regular),
+// 				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
+// 				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
+// 				(PROVISION_USER1_ID, MGAId::get(), 30_000, ProvisionKind::Vested(1, 150)),
+// 				(PROVISION_USER1_ID, KSMId::get(), 1, ProvisionKind::Vested(1, 150)),
+// 				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
+// 				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
+// 				(PROVISION_USER1_ID, MGAId::get(), 40_000, ProvisionKind::Vested(1, 150)),
+// 				(PROVISION_USER2_ID, MGAId::get(), 200_000, ProvisionKind::Regular),
+// 				(PROVISION_USER2_ID, MGAId::get(), 100_000, ProvisionKind::Vested(1, 150)),
+// 				(PROVISION_USER2_ID, KSMId::get(), 10, ProvisionKind::Regular),
+// 				(PROVISION_USER2_ID, KSMId::get(), 15, ProvisionKind::Regular),
+// 				(PROVISION_USER1_ID, KSMId::get(), 4, ProvisionKind::Vested(1, 150)),
+// 				(PROVISION_USER1_ID, KSMId::get(), 5, ProvisionKind::Vested(1, 150)),
+// 			],
+// 			(5_000, 45_004),
+// 			(125012, 25_002);
+// 			"multiple provisions from multiple accounts mixed")
+// ]
+// #[serial]
+// fn test_multi_provisions(
+// 	provisions_list: Vec<(
+// 		<Test as frame_system::Config>::AccountId,
+// 		TokenId,
+// 		Balance,
+// 		ProvisionKind,
+// 	)>,
+// 	user1_rewards: (Balance, Balance),
+// 	user2_rewards: (Balance, Balance),
+// ) {
+// 	new_test_ext().execute_with(|| {
+// 		// ARRANGE - USER provides vested MGA tokens, ANOTHER_USER provides KSM tokens
+// 		set_up();
+// 		jump_to_public_phase();
+// 		init_mocks!();
+// 		let liq_token_id = Tokens::next_asset_id();
+// 		let user1_has_provisions =
+// 			provisions_list.iter().any(|(who, _, _, _)| *who == PROVISION_USER1_ID);
+// 		let user2_has_provisions =
+// 			provisions_list.iter().any(|(who, _, _, _)| *who == PROVISION_USER2_ID);
+// 		let total_ksm_provision: u128 = provisions_list
+// 			.iter()
+// 			.filter_map(
+// 				|(_, token_id, amount, _)| {
+// 					if *token_id == KSMId::get() {
+// 						Some(amount)
+// 					} else {
+// 						None
+// 					}
+// 				},
+// 			)
+// 			.sum();
+// 		let total_mga_provision: u128 = provisions_list
+// 			.iter()
+// 			.filter_map(
+// 				|(_, token_id, amount, _)| {
+// 					if *token_id == MGAId::get() {
+// 						Some(amount)
+// 					} else {
+// 						None
+// 					}
+// 				},
+// 			)
+// 			.sum();
+
+// 		// ACT
+// 		provisions(provisions_list);
+
+// 		Bootstrap::on_initialize(100_u32.into());
+// 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
+
+// 		if user1_has_provisions {
+// 			Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER1_ID)).unwrap();
+// 		}
+
+// 		if user2_has_provisions {
+// 			Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER2_ID)).unwrap();
+// 		}
+
+// 		// ASSERT
+// 		let (mga_valuation, ksm_valuation) = Bootstrap::valuations();
+// 		assert_eq!(total_ksm_provision, ksm_valuation);
+// 		assert_eq!(total_mga_provision, mga_valuation);
+
+// 		assert_eq!(user1_rewards.0, Bootstrap::balance(liq_token_id, PROVISION_USER1_ID));
+// 		assert_eq!(user1_rewards.1, Bootstrap::locked_balance(liq_token_id, PROVISION_USER1_ID));
+
+// 		assert_eq!(user2_rewards.0, Bootstrap::balance(liq_token_id, PROVISION_USER2_ID));
+// 		assert_eq!(user2_rewards.1, Bootstrap::locked_balance(liq_token_id, PROVISION_USER2_ID));
+// 	})
+// }
 
 // formula KSM/MGA for provision calculation
 // (KSM valuation + MGA valuation)   User KSM/MGA token provision
@@ -1305,13 +1614,13 @@ fn multi_provisions() {
 
 #[test_case(
 			vec![
-				(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Vested(1, 150)),
+				(PROVISION_USER1_ID, MGAId::get(), 100_000,ProvisionKind::Regular),
 				(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Regular),
-				(PROVISION_USER2_ID, MGAId::get(), 300_000, ProvisionKind::Vested(1, 150)),
+				(PROVISION_USER2_ID, MGAId::get(), 300_000, ProvisionKind::Regular),
 				(PROVISION_USER2_ID, KSMId::get(), 30, ProvisionKind::Regular),
 			],
-			(25002, 25002),
-			(75007, 75007);
+			(50_004, 0),
+			(150014, 0);
 			"two users provision both vested and non vested tokens")
 ]
 #[test_case(
@@ -1325,49 +1634,49 @@ fn multi_provisions() {
 ]
 #[test_case(
 			vec![
-				(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Vested(1, 150)),
-				(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Vested(1, 150)),
+				(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Regular),
+				(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Regular),
 			],
-			(0, 50_004),
+			(50_004, 0),
 			(0, 0);
 			"vested provisions from single user")
 ]
 #[test_case(
 			vec![
-				(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Vested(1, 150)),
-				(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Vested(1, 150)),
+				(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Regular),
+				(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Regular),
 				(PROVISION_USER2_ID, MGAId::get(), 300_000, ProvisionKind::Regular),
 				(PROVISION_USER2_ID, KSMId::get(), 30, ProvisionKind::Regular),
 			],
-			(0, 50_004), // 400040 / 2 / 2 * 1 / 4
+			(50_004, 0), // 400040 / 2 / 2 * 1 / 4
 			(150014, 0); // 400040 / 2 / 2 * 3 / 4
 			"vested provisions from single user & non vested form second one")
 ]
 #[test_case(
 			vec![
-				(PROVISION_USER1_ID, MGAId::get(), 10_000, ProvisionKind::Vested(1, 150)),
+				(PROVISION_USER1_ID, MGAId::get(), 10_000, ProvisionKind::Regular),
 				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
 				(PROVISION_USER1_ID, MGAId::get(), 20_000, ProvisionKind::Regular),
 				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
 				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
-				(PROVISION_USER1_ID, MGAId::get(), 30_000, ProvisionKind::Vested(1, 150)),
-				(PROVISION_USER1_ID, KSMId::get(), 1, ProvisionKind::Vested(1, 150)),
+				(PROVISION_USER1_ID, MGAId::get(), 30_000, ProvisionKind::Regular),
+				(PROVISION_USER1_ID, KSMId::get(), 1, ProvisionKind::Regular),
 				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
 				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
-				(PROVISION_USER1_ID, MGAId::get(), 40_000, ProvisionKind::Vested(1, 150)),
+				(PROVISION_USER1_ID, MGAId::get(), 40_000, ProvisionKind::Regular),
 				(PROVISION_USER2_ID, MGAId::get(), 200_000, ProvisionKind::Regular),
-				(PROVISION_USER2_ID, MGAId::get(), 100_000, ProvisionKind::Vested(1, 150)),
+				(PROVISION_USER2_ID, MGAId::get(), 100_000, ProvisionKind::Regular),
 				(PROVISION_USER2_ID, KSMId::get(), 10, ProvisionKind::Regular),
 				(PROVISION_USER2_ID, KSMId::get(), 15, ProvisionKind::Regular),
-				(PROVISION_USER1_ID, KSMId::get(), 4, ProvisionKind::Vested(1, 150)),
-				(PROVISION_USER1_ID, KSMId::get(), 5, ProvisionKind::Vested(1, 150)),
+				(PROVISION_USER1_ID, KSMId::get(), 4, ProvisionKind::Regular),
+				(PROVISION_USER1_ID, KSMId::get(), 5, ProvisionKind::Regular),
 			],
-			(5_000, 45_004),
-			(125012, 25_002);
+			(50004, 0),
+			(150014, 0);
 			"multiple provisions from multiple accounts mixed")
 ]
 #[serial]
-fn test_multi_provisions(
+fn test_multi_provisions_only_with_non_vested(
 	provisions_list: Vec<(
 		<Test as frame_system::Config>::AccountId,
 		TokenId,
@@ -1432,10 +1741,8 @@ fn test_multi_provisions(
 		assert_eq!(total_mga_provision, mga_valuation);
 
 		assert_eq!(user1_rewards.0, Bootstrap::balance(liq_token_id, PROVISION_USER1_ID));
-		assert_eq!(user1_rewards.1, Bootstrap::locked_balance(liq_token_id, PROVISION_USER1_ID));
 
 		assert_eq!(user2_rewards.0, Bootstrap::balance(liq_token_id, PROVISION_USER2_ID));
-		assert_eq!(user2_rewards.1, Bootstrap::locked_balance(liq_token_id, PROVISION_USER2_ID));
 	})
 }
 
@@ -1470,9 +1777,9 @@ fn test_restart_bootstrap() {
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
+			Some(10),
 			10,
-			10,
-			DEFAULT_RATIO,
+			Some(DEFAULT_RATIO),
 			false,
 		)
 		.unwrap();
@@ -1495,7 +1802,7 @@ fn test_restart_bootstrap() {
 		)
 		.unwrap();
 
-		assert_err!(Bootstrap::finalize(Origin::root(), None), Error::<Test>::NotFinishedYet);
+		assert_err!(Bootstrap::finalize(Origin::root(), 200), Error::<Test>::NotFinishedYet);
 
 		Bootstrap::on_initialize(120_u32.into());
 
@@ -1506,7 +1813,7 @@ fn test_restart_bootstrap() {
 
 		// not all rewards claimed
 		assert_err!(
-			Bootstrap::finalize(Origin::root(), None),
+			Bootstrap::finalize(Origin::root(), 200),
 			Error::<Test>::BootstrapNotReadyToBeFinished
 		);
 
@@ -1520,7 +1827,7 @@ fn test_restart_bootstrap() {
 		assert_ne!(0, Bootstrap::balance(liq_token_id, USER_ID));
 		assert_ne!(0, Bootstrap::balance(liq_token_id, ANOTHER_USER_ID));
 
-		Bootstrap::finalize(Origin::root(), None).unwrap();
+		Bootstrap::finalize(Origin::root(), 200).unwrap();
 		assert!(Provisions::<Test>::iter_keys().next().is_none());
 		assert!(VestedProvisions::<Test>::iter_keys().next().is_none());
 		assert!(WhitelistedAccount::<Test>::iter_keys().next().is_none());
@@ -1537,9 +1844,9 @@ fn test_restart_bootstrap() {
 			KSMId::get(),
 			MGAId::get(),
 			200_u32.into(),
+			Some(10),
 			10,
-			10,
-			DEFAULT_RATIO,
+			Some(DEFAULT_RATIO),
 			false,
 		)
 		.unwrap();
@@ -1577,9 +1884,9 @@ fn claim_liquidity_tokens_even_if_sum_of_rewards_is_zero_because_of_small_provis
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
+			Some(10),
 			10,
-			10,
-			DEFAULT_RATIO,
+			Some(DEFAULT_RATIO),
 			false,
 		)
 		.unwrap();
@@ -1644,9 +1951,9 @@ fn transfer_dust_to_treasury() {
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
+			Some(10),
 			10,
-			10,
-			DEFAULT_RATIO,
+			Some(DEFAULT_RATIO),
 			false,
 		)
 		.unwrap();
@@ -1672,7 +1979,7 @@ fn transfer_dust_to_treasury() {
 			<mock::Test as Config>::TreasuryPalletId::get().into_account_truncating(),
 		);
 
-		Bootstrap::finalize(Origin::root(), None).unwrap();
+		Bootstrap::finalize(Origin::root(), 200).unwrap();
 
 		let after_finalize = Bootstrap::balance(
 			liq_token_id,
@@ -1707,9 +2014,9 @@ fn archive_previous_bootstrap_schedules() {
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
+			Some(10),
 			10,
-			10,
-			DEFAULT_RATIO,
+			Some(DEFAULT_RATIO),
 			false,
 		)
 		.unwrap();
@@ -1719,7 +2026,7 @@ fn archive_previous_bootstrap_schedules() {
 		Bootstrap::on_initialize(120_u32.into());
 		Bootstrap::claim_liquidity_tokens(Origin::signed(USER_ID)).unwrap();
 		assert_eq!(0, Bootstrap::archived().len());
-		Bootstrap::finalize(Origin::root(), Some(1)).unwrap();
+		Bootstrap::finalize(Origin::root(), 1).unwrap();
 		assert_eq!(0, Bootstrap::provisions(USER_ID, KSMId::get()));
 
 		assert_eq!(1, Bootstrap::archived().len());
@@ -1767,76 +2074,76 @@ fn test_activate_liq_tokens_is_called_with_all_liq_tokens_when_pool_is_promoted_
 	});
 }
 
-#[test]
-#[serial]
-fn test_dont_activate_liq_tokens_when_pool_is_promoted_but_all_provisions_are_vested() {
-	new_test_ext().execute_with(|| {
-		// ARRANGE - USER provides vested MGA tokens, ANOTHER_USER provides KSM tokens
-		set_up();
-		jump_to_public_phase();
-		init_mocks!();
+// #[test]
+// #[serial]
+// fn test_dont_activate_liq_tokens_when_pool_is_promoted_but_all_provisions_are_vested() {
+// 	new_test_ext().execute_with(|| {
+// 		// ARRANGE - USER provides vested MGA tokens, ANOTHER_USER provides KSM tokens
+// 		set_up();
+// 		jump_to_public_phase();
+// 		init_mocks!();
 
-		let mga_provision = 1_000_000_u128;
-		let ksm_provision = 100_u128;
+// 		let mga_provision = 1_000_000_u128;
+// 		let ksm_provision = 100_u128;
 
-		let can_activate_mock = MockRewardsApi::can_activate_context();
-		can_activate_mock.expect().return_const(true);
+// 		let can_activate_mock = MockRewardsApi::can_activate_context();
+// 		can_activate_mock.expect().return_const(true);
 
-		let activate_liquidity_tokens = MockRewardsApi::activate_liquidity_tokens_context();
-		activate_liquidity_tokens.expect().times(0);
+// 		let activate_liquidity_tokens = MockRewardsApi::activate_liquidity_tokens_context();
+// 		activate_liquidity_tokens.expect().times(0);
 
-		// ACT
-		provisions(vec![
-			(PROVISION_USER1_ID, MGAId::get(), mga_provision, ProvisionKind::Regular),
-			(PROVISION_USER2_ID, KSMId::get(), ksm_provision, ProvisionKind::Vested(1, 150)),
-		]);
+// 		// ACT
+// 		provisions(vec![
+// 			(PROVISION_USER1_ID, MGAId::get(), mga_provision, ProvisionKind::Regular),
+// 			(PROVISION_USER2_ID, KSMId::get(), ksm_provision, ProvisionKind::Vested(1, 150)),
+// 		]);
 
-		Bootstrap::on_initialize(100_u32.into());
-		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
+// 		Bootstrap::on_initialize(100_u32.into());
+// 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
 
-		Bootstrap::claim_and_activate_liquidity_tokens(Origin::signed(PROVISION_USER2_ID)).unwrap();
-	});
-}
+// 		Bootstrap::claim_and_activate_liquidity_tokens(Origin::signed(PROVISION_USER2_ID)).unwrap();
+// 	});
+// }
 
-#[test]
-#[serial]
-fn test_activate_liquidity_tokens_is_called_only_with_non_vested_liq_tokens_when_pool_is_promoted()
-{
-	new_test_ext().execute_with(|| {
-		// ARRANGE - USER provides vested MGA tokens, ANOTHER_USER provides KSM tokens
-		set_up();
-		jump_to_public_phase();
-		init_mocks!();
+// #[test]
+// #[serial]
+// fn test_activate_liquidity_tokens_is_called_only_with_non_vested_liq_tokens_when_pool_is_promoted()
+// {
+// 	new_test_ext().execute_with(|| {
+// 		// ARRANGE - USER provides vested MGA tokens, ANOTHER_USER provides KSM tokens
+// 		set_up();
+// 		jump_to_public_phase();
+// 		init_mocks!();
 
-		let mga_provision = 1_000_000_u128;
-		let ksm_provision = 100_u128;
-		let expected_liq_tokens_amount = (mga_provision + ksm_provision) / 2;
-		let expected_liq_tokens_amount_per_user = expected_liq_tokens_amount / 2;
-		let expected_non_vested_liq_tokens_amount_per_user =
-			expected_liq_tokens_amount_per_user / 2;
+// 		let mga_provision = 1_000_000_u128;
+// 		let ksm_provision = 100_u128;
+// 		let expected_liq_tokens_amount = (mga_provision + ksm_provision) / 2;
+// 		let expected_liq_tokens_amount_per_user = expected_liq_tokens_amount / 2;
+// 		let expected_non_vested_liq_tokens_amount_per_user =
+// 			expected_liq_tokens_amount_per_user / 2;
 
-		let can_activate_mock = MockRewardsApi::can_activate_context();
-		can_activate_mock.expect().return_const(true);
+// 		let can_activate_mock = MockRewardsApi::can_activate_context();
+// 		can_activate_mock.expect().return_const(true);
 
-		let activate_liquidity_tokens = MockRewardsApi::activate_liquidity_tokens_context();
-		activate_liquidity_tokens.expect().returning(move |_, _, activated_amount| {
-			assert_eq!(expected_non_vested_liq_tokens_amount_per_user, activated_amount);
-			Ok(().into())
-		});
+// 		let activate_liquidity_tokens = MockRewardsApi::activate_liquidity_tokens_context();
+// 		activate_liquidity_tokens.expect().returning(move |_, _, activated_amount| {
+// 			assert_eq!(expected_non_vested_liq_tokens_amount_per_user, activated_amount);
+// 			Ok(().into())
+// 		});
 
-		// ACT
-		provisions(vec![
-			(PROVISION_USER1_ID, MGAId::get(), mga_provision, ProvisionKind::Regular),
-			(PROVISION_USER2_ID, KSMId::get(), ksm_provision / 2, ProvisionKind::Regular),
-			(PROVISION_USER2_ID, KSMId::get(), ksm_provision / 2, ProvisionKind::Vested(1, 150)),
-		]);
+// 		// ACT
+// 		provisions(vec![
+// 			(PROVISION_USER1_ID, MGAId::get(), mga_provision, ProvisionKind::Regular),
+// 			(PROVISION_USER2_ID, KSMId::get(), ksm_provision / 2, ProvisionKind::Regular),
+// 			(PROVISION_USER2_ID, KSMId::get(), ksm_provision / 2, ProvisionKind::Vested(1, 150)),
+// 		]);
 
-		Bootstrap::on_initialize(100_u32.into());
-		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
+// 		Bootstrap::on_initialize(100_u32.into());
+// 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
 
-		Bootstrap::claim_and_activate_liquidity_tokens(Origin::signed(PROVISION_USER2_ID)).unwrap();
-	});
-}
+// 		Bootstrap::claim_and_activate_liquidity_tokens(Origin::signed(PROVISION_USER2_ID)).unwrap();
+// 	});
+// }
 
 #[test]
 #[serial]
@@ -1872,7 +2179,7 @@ fn test_dont_activate_liquidity_tokens_when_pool_is_not_promoted_and_provisions_
 
 #[test]
 #[serial]
-fn test_claim_and_activate_fails_when_tokens_activations_fails() {
+fn test_claim_and_activate_doesnt_fail_when_tokens_activations_fails() {
 	new_test_ext().execute_with(|| {
 		// ARRANGE - USER provides vested MGA tokens, ANOTHER_USER provides KSM tokens
 		set_up();
@@ -1899,10 +2206,9 @@ fn test_claim_and_activate_fails_when_tokens_activations_fails() {
 		Bootstrap::on_initialize(100_u32.into());
 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
 
-		assert_err!(
-			Bootstrap::claim_and_activate_liquidity_tokens(Origin::signed(PROVISION_USER1_ID)),
-			Error::<Test>::TokensActivationFailed
-		);
+		assert_ok!(Bootstrap::claim_and_activate_liquidity_tokens(Origin::signed(
+			PROVISION_USER1_ID
+		)));
 	});
 }
 
@@ -1940,9 +2246,9 @@ fn test_pool_is_promoted_if_scheduled_to() {
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
+			Some(10),
 			10,
-			10,
-			DEFAULT_RATIO,
+			Some(DEFAULT_RATIO),
 			true,
 		)
 		.unwrap();
@@ -1992,9 +2298,9 @@ fn test_pool_is_not_promoted_if_not_scheduled_to() {
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
+			Some(10),
 			10,
-			10,
-			DEFAULT_RATIO,
+			Some(DEFAULT_RATIO),
 			false,
 		)
 		.unwrap();

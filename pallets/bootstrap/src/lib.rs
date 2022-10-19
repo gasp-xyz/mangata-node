@@ -135,7 +135,7 @@ use frame_support::{
 };
 use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
 use mangata_types::{Balance, TokenId};
-use mp_bootstrap::{PoolCreateApi, RewardsApi};
+use mp_bootstrap::{AssetRegistryApi, PoolCreateApi, RewardsApi};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
 use scale_info::TypeInfo;
@@ -214,6 +214,14 @@ pub mod pallet {
 					Phase::<T>::put(BootstrapPhase::Finished); // 1 WRINTE
 					log!(info, "bootstrap event finished");
 					let (second_token_valuation, first_token_valuation) = Valuations::<T>::get();
+
+					// one updated takes R:2, W:2; and multiply for two assets
+					if !T::AssetRegistryApi::enable_pool_creation((
+						Self::first_token_id(),
+						Self::first_token_id(),
+					)) {
+						log!(error, "cannot modify asset registry!");
+					}
 					// XykFunctionsTrait R: 11 W:12
 					// PoolCreateApi::pool_create R:2  +
 					// ---------------------------------
@@ -235,7 +243,7 @@ pub mod pallet {
 						log!(error, "cannot create pool!");
 					}
 					// TODO: include cost of pool_create call
-					T::DbWeight::get().reads_writes(17, 14)
+					T::DbWeight::get().reads_writes(21, 18)
 				} else if n >= public_start {
 					if phase != BootstrapPhase::Public {
 						Phase::<T>::put(BootstrapPhase::Public);
@@ -290,6 +298,8 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 
 		type RewardsApi: RewardsApi<AccountId = Self::AccountId>;
+
+		type AssetRegistryApi: AssetRegistryApi;
 	}
 
 	/// maps ([`frame_system::Config::AccountId`], [`TokenId`]) -> [`Balance`] - identifies how much tokens did account provisioned in active bootstrap

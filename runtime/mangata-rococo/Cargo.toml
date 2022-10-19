@@ -29,6 +29,7 @@ pallet-issuance = { path = '../../pallets/issuance', default-features = false}
 pallet-multipurpose-liquidity = { path = '../../pallets/multipurpose-liquidity', default-features = false}
 mp-multipurpose-liquidity = { path = '../../primitives/multipurpose-liquidity', default-features = false}
 mp-traits = { path = '../../primitives/traits', default-features = false}
+mp-bootstrap = { path = '../../primitives/bootstrap', default-features = false}
 
 # Substrate Dependencies
 ## Substrate Primitive Dependencies
@@ -179,6 +180,7 @@ std = [
 	"pallet-multipurpose-liquidity/std",
     "mp-multipurpose-liquidity/std",
     "mp-traits/std",
+    "mp-bootstrap/std",
 
 	"pallet-vesting-mangata-rpc-runtime-api/std",
 

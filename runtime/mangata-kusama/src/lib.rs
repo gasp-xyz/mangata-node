@@ -67,9 +67,10 @@ pub use xcm::{latest::prelude::*, VersionedMultiLocation};
 pub use constants::{fee::*, parachains::*};
 pub use currency::*;
 pub use mangata_types::{
-	assets::{CustomMetadata, XcmMetadata},
+	assets::{CustomMetadata, XcmMetadata, XykMetadata},
 	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
 };
+use mp_bootstrap::AssetRegistryApi;
 pub use pallet_issuance::{IssuanceInfo, PoolPromoteApi};
 pub use pallet_sudo_origin;
 pub use pallet_xyk;
@@ -477,6 +478,17 @@ impl<T: frame_system::Config> Get<T::AccountId> for RewardsMigrationAccountProvi
 	}
 }
 
+pub struct AssetRegisterFilter;
+impl Contains<TokenId> for AssetRegisterFilter {
+	fn contains(t: &TokenId) -> bool {
+		let meta: Option<AssetMetadataOf> = orml_asset_registry::Metadata::<Runtime>::get(t);
+		if let Some(xyk) = meta.and_then(|m| m.additional.xyk) {
+			return xyk.pool_creation_disabled
+		}
+		return false
+	}
+}
+
 pub struct AssetMetadataMutation;
 impl AssetMetadataMutationTrait for AssetMetadataMutation {
 	fn set_asset_info(
@@ -515,10 +527,42 @@ impl pallet_xyk::Config for Runtime {
 	type RewardsDistributionPeriod = frame_support::traits::ConstU32<1200>;
 	type VestingProvider = Vesting;
 	type DisallowedPools = Bootstrap;
-	type DisabledTokens = TestTokensFilter;
+	type DisabledTokens = (TestTokensFilter, AssetRegisterFilter);
 	type AssetMetadataMutation = AssetMetadataMutation;
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
 	type RewardsMigrateAccount = RewardsMigrationAccountProvider<Self>;
+}
+
+pub struct EnableAssetPoolApi;
+impl AssetRegistryApi for EnableAssetPoolApi {
+	fn enable_pool_creation(assets: (TokenId, TokenId)) -> bool {
+		for &asset in [assets.0, assets.1].iter() {
+			let meta_maybe: Option<AssetMetadataOf> =
+				orml_asset_registry::Metadata::<Runtime>::get(asset);
+			if let Some(xyk) = meta_maybe.clone().and_then(|m| m.additional.xyk) {
+				let mut additional = meta_maybe.unwrap().additional;
+				if xyk.pool_creation_disabled {
+					additional.xyk = Some(XykMetadata { pool_creation_disabled: true });
+					match orml_asset_registry::Pallet::<Runtime>::do_update_asset(
+						asset,
+						None,
+						None,
+						None,
+						None,
+						None,
+						Some(additional),
+					) {
+						Ok(_) => {},
+						Err(e) => {
+							log::error!(target: "bootstrap", "cannot modify {} asset: {:?}!", asset, e);
+							return false
+						},
+					}
+				}
+			}
+		}
+		true
+	}
 }
 
 parameter_types! {
@@ -536,6 +580,7 @@ impl pallet_bootstrap::Config for Runtime {
 	type TreasuryPalletId = TreasuryPalletId;
 	type RewardsApi = Xyk;
 	type WeightInfo = weights::pallet_bootstrap_weights::ModuleWeight<Runtime>;
+	type AssetRegistryApi = EnableAssetPoolApi;
 }
 
 impl pallet_utility::Config for Runtime {

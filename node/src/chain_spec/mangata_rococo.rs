@@ -209,6 +209,7 @@ pub fn public_testnet_config() -> ChainSpec {
 							additional: CustomMetadata {
 								// 10_000:1 MGR:ROC
 								xcm: Some(XcmMetadata { fee_per_second: roc_per_second() }),
+								xyk: None,
 							},
 							existential_deposit: Default::default(),
 							location: None,
@@ -366,6 +367,7 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 							additional: CustomMetadata {
 								// 10_000:1 MGR:ROC
 								xcm: Some(XcmMetadata { fee_per_second: roc_per_second() }),
+								xyk: None,
 							},
 							existential_deposit: Default::default(),
 							location: None,
@@ -392,6 +394,7 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 							additional: CustomMetadata {
 								// 100:1 MGR:KAR
 								xcm: Some(XcmMetadata { fee_per_second: roc_per_second() * 100 }),
+								xyk: None,
 							},
 							existential_deposit: Default::default(),
 							location: Some(
@@ -418,6 +421,7 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 							additional: CustomMetadata {
 								// 100:1 TUR:ROC, 10/12 decimals
 								xcm: Some(XcmMetadata { fee_per_second: roc_per_second() }),
+								xyk: None,
 							},
 							existential_deposit: Default::default(),
 							location: Some(

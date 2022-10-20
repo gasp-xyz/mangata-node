@@ -105,7 +105,6 @@ pallet-verifier = {default-features = false, version = "0.1.1", git = "https://g
 artemis-erc20-app = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
 artemis-eth-app = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
 artemis-asset = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
-pallet-bridge = {default-features = false, version = "0.1.1", path = "../../pallets/bridge"}
 
 # Staking dependencies
 parachain-staking = { default-features = false, git = "https://github.com/mangata-finance/moonbeam.git", branch = "mangata-dev-v0.9.29" }
@@ -177,7 +176,6 @@ std = [
 	"artemis-erc20-app/std",
 	"artemis-eth-app/std",
 	"artemis-asset/std",
-	"pallet-bridge/std",
 
 	"parachain-staking/std",
 

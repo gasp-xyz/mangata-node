@@ -74,7 +74,6 @@ pub use mangata_types::{
 	assets::{CustomMetadata, XcmMetadata},
 	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
 };
-pub use pallet_bridge;
 pub use pallet_issuance::{IssuanceInfo, PoolPromoteApi};
 pub use pallet_sudo_origin;
 pub use pallet_xyk;
@@ -238,7 +237,7 @@ const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
 /// NOTE: reduced by half comparing to origin impl as we want to fill block only up to 50%
 /// so there is room for new extrinsics in the next block
-const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 4;
+const MAXIMUM_BLOCK_WEIGHT: u64 = WEIGHT_PER_SECOND.ref_time() / 4;
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
@@ -258,7 +257,7 @@ parameter_types! {
 	//                         change: [-59.043% -59.005% -58.974%] (p = 0.00 < 0.05)
 	//
 	// ...
-	pub const MangataBlockExecutionWeight: Weight = 12 * WEIGHT_PER_MILLIS;
+	pub const MangataBlockExecutionWeight: u64 = 12 * WEIGHT_PER_MILLIS.ref_time();
 
 	// taken from dedicated benchmark (run on reference machine)
 	//
@@ -266,7 +265,7 @@ parameter_types! {
 	// ...
 	// avarege execution time of 5067 noop extrinsic : 946200 microseconds => 186
 	// ...
-	pub const MangataExtrinsicBaseWeight: Weight = 186 * WEIGHT_PER_MICROS;
+	pub const MangataExtrinsicBaseWeight: u64 = 186 * WEIGHT_PER_MICROS.ref_time();
 
 	// This part is copied from Substrate's `bin/node/runtime/src/lib.rs`.
 	//  The `RuntimeBlockLength` and `RuntimeBlockWeights` exist here because the
@@ -275,20 +274,19 @@ parameter_types! {
 	pub RuntimeBlockLength: BlockLength =
 		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 	pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
-		.base_block(MangataBlockExecutionWeight::get())
+		.base_block(Weight::from_ref_time(MangataBlockExecutionWeight::get()))
 		.for_class(DispatchClass::all(), |weights| {
-			weights.base_extrinsic = MangataExtrinsicBaseWeight::get();
+			weights.base_extrinsic = Weight::from_ref_time(MangataExtrinsicBaseWeight::get());
 		})
 		.for_class(DispatchClass::Normal, |weights| {
-			weights.max_total = Some(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT);
+			weights.max_total = Some(Weight::from_ref_time(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT));
 		})
 		.for_class(DispatchClass::Operational, |weights| {
-			weights.max_total = Some(MAXIMUM_BLOCK_WEIGHT);
+			weights.max_total = Some(Weight::from_ref_time(MAXIMUM_BLOCK_WEIGHT));
 			// Operational transactions have some extra reserved space, so that they
 			// are included even if block reached `MAXIMUM_BLOCK_WEIGHT`.
-			weights.reserved = Some(
-				MAXIMUM_BLOCK_WEIGHT - NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT
-			);
+			weights.reserved =
+				Some(Weight::from_ref_time(MAXIMUM_BLOCK_WEIGHT - NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT));
 		})
 		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
 		.build_or_panic();
@@ -304,12 +302,16 @@ parameter_types! {
 // Configure FRAME pallets to include in runtime.
 
 impl frame_system::Config for Runtime {
-	/// The identifier used to distinguish between accounts.
-	type AccountId = AccountId;
+	/// The basic call filter to use in dispatchable.
+	type BaseCallFilter = Everything;
+	/// Block & extrinsics weights: base values and limits.
+	type BlockWeights = RuntimeBlockWeights;
+	/// The maximum length of a block (in bytes).
+	type BlockLength = RuntimeBlockLength;
+	/// The ubiquitous origin type.
+	type Origin = Origin;
 	/// The aggregated dispatch type that is available for extrinsics.
 	type Call = Call;
-	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
-	type Lookup = AccountIdLookup<AccountId, ()>;
 	/// The index type for storing how many extrinsics an account has signed.
 	type Index = Index;
 	/// The index type for blocks.
@@ -318,14 +320,18 @@ impl frame_system::Config for Runtime {
 	type Hash = Hash;
 	/// The hashing algorithm used.
 	type Hashing = BlakeTwo256;
+	/// The identifier used to distinguish between accounts.
+	type AccountId = AccountId;
+	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
+	type Lookup = AccountIdLookup<AccountId, ()>;
 	/// The header type.
 	type Header = generic::HeaderVer<BlockNumber, BlakeTwo256>;
 	/// The ubiquitous event type.
 	type Event = Event;
-	/// The ubiquitous origin type.
-	type Origin = Origin;
 	/// Maximum number of block number to block hash mappings to keep (oldest pruned first).
 	type BlockHashCount = BlockHashCount;
+	/// The weight of database operations that the runtime can invoke.
+	type DbWeight = RocksDbWeight;
 	/// Runtime version.
 	type Version = Version;
 	/// Converts a module to an index of this module in the runtime.
@@ -336,16 +342,8 @@ impl frame_system::Config for Runtime {
 	type OnNewAccount = ();
 	/// What to do if an account is fully reaped from the system.
 	type OnKilledAccount = ();
-	/// The weight of database operations that the runtime can invoke.
-	type DbWeight = RocksDbWeight;
-	/// The basic call filter to use in dispatchable.
-	type BaseCallFilter = Everything;
 	/// Weight information for the extrinsics of this pallet.
 	type SystemWeightInfo = weights::frame_system_weights::ModuleWeight<Runtime>;
-	/// Block & extrinsics weights: base values and limits.
-	type BlockWeights = RuntimeBlockWeights;
-	/// The maximum length of a block (in bytes).
-	type BlockLength = RuntimeBlockLength;
 	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
 	type SS58Prefix = SS58Prefix;
 	/// The action to take on a Runtime Upgrade
@@ -738,8 +736,8 @@ impl pallet_transaction_payment::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
-	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
+	pub const ReservedXcmpWeight: Weight = Weight::from_ref_time(MAXIMUM_BLOCK_WEIGHT / 4);
+	pub const ReservedDmpWeight: Weight = Weight::from_ref_time(MAXIMUM_BLOCK_WEIGHT / 4);
 }
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
@@ -801,13 +799,6 @@ parameter_types! {
 	pub const MinLengthDescription: usize = 1;
 	pub const MaxLengthDescription: usize = 255;
 	pub const MaxDecimals: u32 = 255;
-}
-
-impl pallet_bridge::Config for Runtime {
-	type Event = Event;
-	type Verifier = pallet_verifier::Pallet<Runtime>;
-	type AppETH = artemis_eth_app::Module<Runtime>;
-	type AppERC20 = artemis_erc20_app::Module<Runtime>;
 }
 
 impl pallet_verifier::Config for Runtime {
@@ -1132,7 +1123,6 @@ construct_runtime!(
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 3,
 
 		// Snowbridge stuff
-		Bridge: pallet_bridge::{Pallet, Call, Config, Storage, Event} = 4,
 		Verifier: pallet_verifier::{Pallet, Call, Storage, Event, Config<T>} = 5,
 		BridgedAsset: artemis_asset::{Pallet, Call, Config<T>, Storage, Event<T>} = 6,
 		ETH: artemis_eth_app::{Pallet, Call, Storage, Event<T>} = 7,

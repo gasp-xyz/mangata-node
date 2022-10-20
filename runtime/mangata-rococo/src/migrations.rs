@@ -230,7 +230,7 @@ pub mod asset_registry {
 			);
 
 			<Runtime as frame_system::Config>::DbWeight::get()
-				.reads_writes(total_rw as Weight + 1, total_rw as Weight + 1)
+				.reads_writes(total_rw as u64 + 1, total_rw as u64 + 1)
 		}
 
 		#[cfg(feature = "try-runtime")]

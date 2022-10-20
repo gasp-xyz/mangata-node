@@ -289,8 +289,8 @@ impl WeightInfo for () {
 	fn disapprove_proposal(p: u32, ) -> Weight {
 		Weight::from_ref_time(22_902_000)
 			// Standard Error: 1_000
-			.saturating_add((Weight::from_ref_time(247_000)).saturating_mul(p as Weight))
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+			.saturating_add((Weight::from_ref_time(247_000)).saturating_mul(p as u64))
+			.saturating_add(RocksDbWeight::get().reads(1 as u64))
+			.saturating_add(RocksDbWeight::get().writes(3 as u64))
 	}
 }

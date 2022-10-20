@@ -1829,22 +1829,45 @@ impl<T: Config> Pallet<T> {
 		) = LiquidityMiningPool::<T>::try_get(&liquidity_asset_id)
 			.unwrap_or_else(|_| (current_time, U256::from(0), U256::from(0)));
 
+			
 		//CALCULATE REWARDS
-		let work_user = Self::calculate_work_user(
-			user.clone(),
-			liquidity_asset_id,
-			current_time,
-			user_last_checkpoint,
-			user_cummulative_work_in_last_checkpoint,
-			user_missing_at_last_checkpoint,
-		)?;
-		let work_pool = Self::calculate_work_pool(
-			liquidity_asset_id,
-			current_time,
-			pool_last_checkpoint,
-			pool_cummulative_work_in_last_checkpoint,
-			pool_missing_at_last_checkpoint,
-		)?;
+		
+
+
+		let time_passed_user = current_time - user_last_checkpoint;
+		let asymptote_u256_user: U256 = liquidity_assets_amount.into();
+		let cummulative_work_new_max_possible_user: U256 = asymptote_u256_user
+			.checked_mul(U256::from(time_passed_user))
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+		let base_user = user_missing_at_last_checkpoint
+			.checked_mul(U256::from(106))
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))? /
+			U256::from(6);	
+		let q_pow_user = Self::calculate_q_pow(1.06, time_passed_user);
+		let cummulative_missing_new_user = base_user - base_user * REWARDS_PRECISION / q_pow_user;
+		let cummulative_work_new_user = cummulative_work_new_max_possible_user
+			.checked_sub(cummulative_missing_new_user)
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+		let work_user = user_cummulative_work_in_last_checkpoint + cummulative_work_new_user;
+
+		let time_passed_pool = current_time - pool_last_checkpoint;
+		let asymptote_u256_pool: U256 = pool_activated_amount.into();
+		let cummulative_work_new_max_possible_pool: U256 = asymptote_u256_pool
+			.checked_mul(U256::from(time_passed_pool))
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow1))?;
+		let base_pool = pool_missing_at_last_checkpoint
+			.checked_mul(U256::from(106))
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow2))? /
+			U256::from(6);	
+		let q_pow_pool = Self::calculate_q_pow(1.06, time_passed_pool);
+		let cummulative_missing_new_pool = base_pool - base_pool * REWARDS_PRECISION / q_pow_pool;
+		let cummulative_work_new_pool = cummulative_work_new_max_possible_pool
+			.checked_sub(cummulative_missing_new_pool)
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow3))?;
+		let work_pool = pool_cummulative_work_in_last_checkpoint + cummulative_work_new_pool;
+
+		
+
 
 		let mut current_rewards = Balance::try_from(0).unwrap();
 		if work_user != U256::from(0) && work_pool != U256::from(0) {
@@ -1880,10 +1903,10 @@ impl<T: Config> Pallet<T> {
 		));
 
 		// MODIFY REW1 POOL VALUES
-		let q_pow_pool = Self::calculate_q_pow(1.06, current_time - pool_last_checkpoint);
+		let q_pow_pool = Self::calculate_q_pow(1.06, time_passed_pool);
 		let pool_missing_at_checkpoint: U256 =
 			pool_missing_at_last_checkpoint * U256::from(REWARDS_PRECISION) / q_pow_pool;
-		let q_pow_user = Self::calculate_q_pow(1.06, current_time - user_last_checkpoint);
+		
 		let user_missing_at_checkpoint: U256 =
 			user_missing_at_last_checkpoint * U256::from(REWARDS_PRECISION) / q_pow_user;
 		let mut pool_work_new = U256::from(0);
@@ -1915,10 +1938,16 @@ impl<T: Config> Pallet<T> {
 				liquidity_asset_id.into(),
 				total_rewards,
 			);
+
 		} else {
 			// IF LAST REMOVE POOL STORAGE
 			LiquidityMiningActivePool::<T>::remove(&liquidity_asset_id);
 			LiquidityMiningPool::<T>::remove(&liquidity_asset_id);
+			<T as Config>::PoolPromoteApi::claim_pool_rewards(
+				liquidity_asset_id.into(),
+				total_rewards,
+			);
+			// THERE WILL BE SOME REWARD LEFT
 		}
 
 		// REMOVE USER REW1 STORAGE
@@ -1927,6 +1956,8 @@ impl<T: Config> Pallet<T> {
 		LiquidityMiningActiveUser::<T>::remove((user.clone(), &liquidity_asset_id));
 		LiquidityMiningUserClaimed::<T>::remove((user.clone(), &liquidity_asset_id));
 
+		
+
 		// ADD USER INFO TO REW2 STORAGE
 		let rewards_info_new: RewardInfo = RewardInfo {
 			activated_amount: liquidity_assets_amount,
@@ -1934,8 +1965,10 @@ impl<T: Config> Pallet<T> {
 			rewards_already_claimed: 0_u128,
 			last_checkpoint: current_time,
 			pool_ratio_at_last_checkpoint: pool_ratio_current,
-			missing_at_last_checkpoint: user_missing_at_last_checkpoint,
+			missing_at_last_checkpoint: user_missing_at_checkpoint,
 		};
+
+		RewardsInfo::<T>::insert(user.clone(), liquidity_asset_id, rewards_info_new);
 
 		Ok(())
 	}
@@ -3286,17 +3319,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		)?;
 
 		RewardsInfo::<T>::insert(user.clone(), liquidity_asset_id, rewards_info_new.clone());
-		log!(
-			info,
-			"RewardsInfo: ({}, {}) -> ({}, {}, {}, {}, {})",
-			rewards_info_new.activated_amount,
-			rewards_info_new.rewards_not_yet_claimed,
-			rewards_info_new.rewards_already_claimed,
-			rewards_info_new.last_checkpoint,
-			rewards_info_new.pool_ratio_at_last_checkpoint,
-			rewards_info_new.missing_at_last_checkpoint,
-			total_available_rewards
-		);
+		
 		Pallet::<T>::deposit_event(Event::RewardsClaimed(
 			user,
 			liquidity_asset_id,

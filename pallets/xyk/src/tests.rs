@@ -2469,15 +2469,71 @@ const DUMMY_USER_ID: u128 = 2;
 #[serial]
 fn migration_work() {
     new_test_ext().execute_with(|| {
-    
-        XykStorage::LiquidityMiningActivePool::insert(4,50000);
-		// LiquidityMiningPool::<T>::insert(4,(0,0,0));
+       
+    	MockPromotedPoolApi::instance().lock().unwrap().clear();
+		let max = std::u128::MAX;
+		System::set_block_number(1);
+      
+		let acc_id: u128 = 2;
+		let amount: u128 = 10000000000;
+		env_logger::init();
+		XykStorage::create_new_token(&acc_id, amount);
+		XykStorage::create_new_token(&acc_id, amount);
+		XykStorage::create_new_token(&acc_id, amount);
+		XykStorage::create_new_token(&acc_id, amount);
+		XykStorage::transfer(
+			0,
+			2,
+			<Test as Config>::LiquidityMiningIssuanceVault::get(),
+			10000000000,
+		)
+		.unwrap();
 
-        // LiquidityMiningUser::<T>::insert((2,4), (0,0,0));
-        // LiquidityMiningUserToBeClaimed::<T>::insert((2,4),0);
-        // LiquidityMiningActiveUser::<T>::insert((2,4),10000);
-        // LiquidityMiningUserClaimed::<T>::insert((2,4),0);
-    
+        XykStorage::set_liquidity_minting_checkpoint(2,4,10000, None);
+
+        System::set_block_number(100);
+        MockPromotedPoolApi::instance()
+			.lock()
+			.unwrap()
+			.insert(4, U256::from(100000));
+       
+        XykStorage::set_liquidity_minting_checkpoint(3,4,10000, None);
+
+        System::set_block_number(200);    
+        MockPromotedPoolApi::instance()
+        .lock()
+        .unwrap()
+        .insert(4, U256::from(200000));
+
+        assert_eq!(XykStorage::balance(0,2),0); 
+        assert_eq!(XykStorage::balance(0,3),0); 
+        log::info!("{:?}",MockPromotedPoolApi::get_pool_rewards(4));
+        XykStorage::rewards_migrate_v1_to_v2(2,4).unwrap();
+        log::info!("{:?}",MockPromotedPoolApi::get_pool_rewards(4));
+        XykStorage::rewards_migrate_v1_to_v2(3,4).unwrap();
+        log::info!("{:?}",MockPromotedPoolApi::get_pool_rewards(4)); // SHOULD BE AROUND 0
+
+        assert_eq!(XykStorage::balance(0,2),156202); 
+        assert_eq!(XykStorage::balance(0,3),43792); 
+        assert_eq!(XykStorage::liquidity_mining_user((2,4)),(0,U256::from(0),U256::from(0)));
+        assert_eq!(XykStorage::liquidity_mining_user((3,4)),(0,U256::from(0),U256::from(0)));
+        assert_eq!(XykStorage::liquidity_mining_pool(4),(0,U256::from(0),U256::from(0)));
+
+        let mut rewards_info = XykStorage::get_rewards_info(2, 4);
+		assert_eq!(rewards_info.activated_amount, 10000);
+		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
+		assert_eq!(rewards_info.rewards_already_claimed, 0);
+		assert_eq!(rewards_info.last_checkpoint, 20);
+		assert_eq!(rewards_info.pool_ratio_at_last_checkpoint, U256::from(200000)); //these values will be from rew2, but reading pool_ratio_at_last_checkpoint works
+		assert_eq!(rewards_info.missing_at_last_checkpoint, U256::from_dec_str("3118").unwrap());
+
+        rewards_info = XykStorage::get_rewards_info(3, 4);
+		assert_eq!(rewards_info.activated_amount, 10000);
+		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
+		assert_eq!(rewards_info.rewards_already_claimed, 0);
+		assert_eq!(rewards_info.last_checkpoint, 20);
+		assert_eq!(rewards_info.pool_ratio_at_last_checkpoint, U256::from(43798)); //these values will be from rew2, but reading pool_ratio_at_last_checkpoint works
+		assert_eq!(rewards_info.missing_at_last_checkpoint, U256::from_dec_str("5584").unwrap());
 
 
     });

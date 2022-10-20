@@ -19,7 +19,7 @@
 
 use super::*;
 use crate as sudo_origin;
-use frame_support::{parameter_types, traits::Contains};
+use frame_support::{parameter_types, traits::Contains, weights::{Weight}};
 use frame_system::{limits, EnsureRoot};
 use sp_core::H256;
 use sp_io;
@@ -108,7 +108,7 @@ frame_support::construct_runtime!(
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
-	pub BlockWeights: limits::BlockWeights = limits::BlockWeights::simple_max(1024);
+	pub BlockWeights: limits::BlockWeights = limits::BlockWeights::simple_max(Weight::from_ref_time(1024));
 }
 
 pub struct BlockEverything;

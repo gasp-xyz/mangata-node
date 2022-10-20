@@ -18,7 +18,7 @@
 //! Tests for the module.
 
 use super::*;
-use frame_support::{assert_noop, assert_ok, dispatch::DispatchError};
+use frame_support::{assert_noop, assert_ok, dispatch::DispatchError, weights::{Weight}};
 use frame_system::RawOrigin;
 use mock::{
 	new_test_ext, Call, Event as TestEvent, Logger, LoggerCall, Origin, SudoOrigin, SudoOriginCall,
@@ -39,12 +39,12 @@ fn sudo_basics() {
 	// Configure a default test environment and set the root `key` to 1.
 	new_test_ext().execute_with(|| {
 		// A privileged function should work when `sudo` is passed the root `key` as `origin`.
-		let call = Box::new(Call::Logger(LoggerCall::privileged_i32_log { i: 42, weight: 1_000 }));
+		let call = Box::new(Call::Logger(LoggerCall::privileged_i32_log { i: 42, weight: Weight::from_ref_time(1_000) }));
 		assert_ok!(SudoOrigin::sudo(RawOrigin::Root.into(), call));
 		assert_eq!(Logger::i32_log(), vec![42i32]);
 
 		// A privileged function should not work when `sudo` is passed a non-root `key` as `origin`.
-		let call = Box::new(Call::Logger(LoggerCall::privileged_i32_log { i: 42, weight: 1_000 }));
+		let call = Box::new(Call::Logger(LoggerCall::privileged_i32_log { i: 42, weight: Weight::from_ref_time(1_000) }));
 		assert_noop!(SudoOrigin::sudo(Origin::signed(2), call), DispatchError::BadOrigin);
 	});
 }
@@ -56,7 +56,7 @@ fn sudo_emits_events_correctly() {
 		System::set_block_number(1);
 
 		// Should emit event to indicate success when called with the root `key` and `call` is `Ok`.
-		let call = Box::new(Call::Logger(LoggerCall::privileged_i32_log { i: 42, weight: 1 }));
+		let call = Box::new(Call::Logger(LoggerCall::privileged_i32_log { i: 42, weight: Weight::from_ref_time(1) }));
 		assert_ok!(SudoOrigin::sudo(RawOrigin::Root.into(), call));
 		System::assert_has_event(TestEvent::SudoOrigin(Event::SuOriginDid(Ok(()))));
 	})
@@ -66,25 +66,25 @@ fn sudo_emits_events_correctly() {
 fn sudo_unchecked_weight_basics() {
 	new_test_ext().execute_with(|| {
 		// A privileged function should work when `sudo` is passed the root `key` as origin.
-		let call = Box::new(Call::Logger(LoggerCall::privileged_i32_log { i: 42, weight: 1_000 }));
-		assert_ok!(SudoOrigin::sudo_unchecked_weight(RawOrigin::Root.into(), call, 1_000));
+		let call = Box::new(Call::Logger(LoggerCall::privileged_i32_log { i: 42, weight: Weight::from_ref_time(1000)  }));
+		assert_ok!(SudoOrigin::sudo_unchecked_weight(RawOrigin::Root.into(), call, Weight::from_ref_time(1_000)));
 		assert_eq!(Logger::i32_log(), vec![42i32]);
 
 		// A privileged function should not work when called with a non-root `key`.
-		let call = Box::new(Call::Logger(LoggerCall::privileged_i32_log { i: 42, weight: 1_000 }));
+		let call = Box::new(Call::Logger(LoggerCall::privileged_i32_log { i: 42, weight: Weight::from_ref_time(1_000) }));
 		assert_noop!(
-			SudoOrigin::sudo_unchecked_weight(Origin::signed(2), call, 1_000),
+			SudoOrigin::sudo_unchecked_weight(Origin::signed(2), call, Weight::from_ref_time(1_000)),
 			DispatchError::BadOrigin,
 		);
 		// `I32Log` is unchanged after unsuccessful call.
 		assert_eq!(Logger::i32_log(), vec![42i32]);
 
 		// Controls the dispatched weight.
-		let call = Box::new(Call::Logger(LoggerCall::privileged_i32_log { i: 42, weight: 1 }));
+		let call = Box::new(Call::Logger(LoggerCall::privileged_i32_log { i: 42, weight: Weight::from_ref_time(1) }));
 		let sudo_unchecked_weight_call =
-			SudoOriginCall::sudo_unchecked_weight { call, weight: 1_000 };
+			SudoOriginCall::sudo_unchecked_weight { call, weight: Weight::from_ref_time(1_000) };
 		let info = sudo_unchecked_weight_call.get_dispatch_info();
-		assert_eq!(info.weight, 1_000);
+		assert_eq!(info.weight, Weight::from_ref_time(1_000));
 	});
 }
 
@@ -95,8 +95,8 @@ fn sudo_unchecked_weight_emits_events_correctly() {
 		System::set_block_number(1);
 
 		// Should emit event to indicate success when called with the root `key` and `call` is `Ok`.
-		let call = Box::new(Call::Logger(LoggerCall::privileged_i32_log { i: 42, weight: 1 }));
-		assert_ok!(SudoOrigin::sudo_unchecked_weight(RawOrigin::Root.into(), call, 1_000));
+		let call = Box::new(Call::Logger(LoggerCall::privileged_i32_log { i: 42, weight: Weight::from_ref_time(1) }));
+		assert_ok!(SudoOrigin::sudo_unchecked_weight(RawOrigin::Root.into(), call, Weight::from_ref_time(1_000)));
 		System::assert_has_event(TestEvent::SudoOrigin(Event::SuOriginDid(Ok(()))));
 	})
 }
@@ -105,17 +105,17 @@ fn sudo_unchecked_weight_emits_events_correctly() {
 fn sudo_as_basics() {
 	new_test_ext().execute_with(|| {
 		// A privileged function will not work when passed to `sudo_as`.
-		let call = Box::new(Call::Logger(LoggerCall::privileged_i32_log { i: 42, weight: 1_000 }));
+		let call = Box::new(Call::Logger(LoggerCall::privileged_i32_log { i: 42, weight: Weight::from_ref_time(1_000) }));
 		assert_ok!(SudoOrigin::sudo_as(RawOrigin::Root.into(), 2, call));
 		assert!(Logger::i32_log().is_empty());
 		assert!(Logger::account_log().is_empty());
 
 		// A non-privileged function should not work when called with a non-root `key`.
-		let call = Box::new(Call::Logger(LoggerCall::non_privileged_log { i: 42, weight: 1 }));
+		let call = Box::new(Call::Logger(LoggerCall::non_privileged_log { i: 42, weight: Weight::from_ref_time(1) }));
 		assert_noop!(SudoOrigin::sudo_as(Origin::signed(3), 2, call), DispatchError::BadOrigin);
 
 		// A non-privileged function will work when passed to `sudo_as` with the root `key`.
-		let call = Box::new(Call::Logger(LoggerCall::non_privileged_log { i: 42, weight: 1 }));
+		let call = Box::new(Call::Logger(LoggerCall::non_privileged_log { i: 42, weight: Weight::from_ref_time(1) }));
 		assert_ok!(SudoOrigin::sudo_as(RawOrigin::Root.into(), 2, call));
 		assert_eq!(Logger::i32_log(), vec![42i32]);
 		// The correct user makes the call within `sudo_as`.
@@ -130,7 +130,7 @@ fn sudo_as_emits_events_correctly() {
 		System::set_block_number(1);
 
 		// A non-privileged function will work when passed to `sudo_as` with the root `key`.
-		let call = Box::new(Call::Logger(LoggerCall::non_privileged_log { i: 42, weight: 1 }));
+		let call = Box::new(Call::Logger(LoggerCall::non_privileged_log { i: 42, weight: Weight::from_ref_time(1) }));
 		assert_ok!(SudoOrigin::sudo_as(RawOrigin::Root.into(), 2, call));
 		System::assert_has_event(TestEvent::SudoOrigin(Event::SuOriginDoAsDone(Ok(()))));
 	});

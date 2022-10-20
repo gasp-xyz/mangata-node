@@ -805,7 +805,6 @@ fn mangata_genesis(
 					(id, encoded)
 				})
 				.collect(),
-			last_asset_id: Default::default(),
 		},
 	}
 }

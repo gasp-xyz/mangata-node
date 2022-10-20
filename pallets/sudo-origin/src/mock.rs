@@ -19,7 +19,7 @@
 
 use super::*;
 use crate as sudo_origin;
-use frame_support::{parameter_types, traits::Contains, weights::{Weight}};
+use frame_support::{parameter_types, traits::Contains, weights::Weight};
 use frame_system::{limits, EnsureRoot};
 use sp_core::H256;
 use sp_io;

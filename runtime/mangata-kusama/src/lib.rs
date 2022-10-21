@@ -456,7 +456,9 @@ impl<T: frame_system::Config> Get<T::AccountId> for RewardsMigrationAccountProvi
 		let mut init_account32 = sp_runtime::AccountId32::as_ref(&account32);
 		let init_account = T::AccountId::decode(&mut init_account32).unwrap();
 		init_account
-		
+	}
+}
+
 pub struct AssetMetadataMutation;
 impl AssetMetadataMutationTrait for AssetMetadataMutation {
 	fn set_asset_info(
@@ -498,7 +500,7 @@ impl pallet_xyk::Config for Runtime {
 	type DisabledTokens = TestTokensFilter;
 	type AssetMetadataMutation = AssetMetadataMutation;
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
-	type RewardsForAllAccount = RewardsMigrationAccountProvider<Self>;
+	type RewardsMigrateAccount = RewardsMigrationAccountProvider<Self>;
 }
 
 parameter_types! {

@@ -2377,9 +2377,9 @@ fn migration_work() {
 		assert_eq!(XykStorage::balance(0, 2), 0);
 		assert_eq!(XykStorage::balance(0, 3), 0);
 
-		XykStorage::rewards_migrate_v1_to_v2(2, 4).unwrap();
+		<XykStorage as XykFunctionsTrait<AccountId>>::rewards_migrate_v1_to_v2(2, 4).unwrap();
 		log::info!("{:?}", MockPromotedPoolApi::get_pool_rewards(4));
-		XykStorage::rewards_migrate_v1_to_v2(3, 4).unwrap();
+		<XykStorage as XykFunctionsTrait<AccountId>>::rewards_migrate_v1_to_v2(3, 4).unwrap();
 		log::info!("{:?}", MockPromotedPoolApi::get_pool_rewards(4)); // SHOULD BE AROUND 0
 
 		assert_eq!(XykStorage::balance(0, 2), 156202);

@@ -235,6 +235,13 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for MockXyk<T> {
 	) -> DispatchResult {
 		unimplemented!()
 	}
+
+	fn rewards_migrate_v1_to_v2(
+		account: T::AccountId,
+		liquidity_token_id: Self::CurrencyId,
+	) -> DispatchResult {
+		unimplemented!()
+	}
 }
 
 // This function basically just builds a genesis storage key/value store according to

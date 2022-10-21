@@ -331,7 +331,6 @@ pub mod pallet {
 		type TreasuryPalletId: Get<PalletId>;
 		type BnbTreasurySubAccDerive: Get<[u8; 4]>;
 		// type ActivedPoolQueryApi: ActivedPoolQueryApi;
-		type ActivedPoolQueryApi: ActivedPoolQueryApi;
 		type PoolPromoteApi: ComputeIssuance + PoolPromoteApi;
 		#[pallet::constant]
 		/// The account id that holds the liquidity mining issuance

@@ -164,6 +164,7 @@ impl pallet_xyk::Config for Test {
 	type DisabledTokens = Nothing;
 	type VestingProvider = Vesting;
 	type AssetMetadataMutation = AssetMetadataMutation;
+	type RewardsMigrateAccount = RewardsMigrateAccountProvider<Test>;
 }
 
 impl BootstrapBenchmarkingConfig for Test {}

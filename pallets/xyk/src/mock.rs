@@ -303,6 +303,9 @@ impl<T: frame_system::Config> Get<T::AccountId> for RewardsMigrateAccountProvide
 		let mut init_account32 = sp_runtime::AccountId32::as_ref(&account32);
 		let init_account = T::AccountId::decode(&mut init_account32).unwrap();
 		init_account
+	}
+}
+
 pub struct MockAssetRegister;
 
 lazy_static::lazy_static! {

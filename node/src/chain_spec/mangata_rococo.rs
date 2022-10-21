@@ -588,7 +588,6 @@ fn mangata_genesis(
 				})
 				.collect(),
 		},
-		bridge: mangata_rococo_runtime::BridgeConfig { bridged_app_id_registry: bridged_app_ids },
 		bridged_asset: mangata_rococo_runtime::BridgedAssetConfig {
 			bridged_assets_links: bridged_assets,
 		},
@@ -607,7 +606,7 @@ fn mangata_genesis(
 		},
 		polkadot_xcm: mangata_rococo_runtime::PolkadotXcmConfig { safe_xcm_version: Some(2) },
 		asset_registry: mangata_rococo_runtime::AssetRegistryConfig {
-			pre_register_assets: register_assets
+			assets: register_assets
 				.iter()
 				.cloned()
 				.map(|(id, meta)| {

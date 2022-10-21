@@ -692,8 +692,5 @@ benchmarks! {
 		)
 	}
 
-	//TODO claim_rewards
-	//TODO claim_rewards_for_account
-
 	impl_benchmark_test_suite!(Xyk, crate::mock::new_test_ext(), crate::mock::Test)
 }

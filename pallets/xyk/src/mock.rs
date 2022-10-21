@@ -111,7 +111,8 @@ impl PoolPromoteApi for MockPromotedPoolApi {
 
 	fn claim_pool_rewards(liquidity_token_id: TokenId, amount: Balance) -> bool {
 		let mut pools = PROMOTED_POOLS.lock().unwrap();
-		let rewards: Balance = pools.get(&liquidity_token_id).map(|x| (*x).try_into().unwrap()).unwrap();
+		let rewards: Balance =
+			pools.get(&liquidity_token_id).map(|x| (*x).try_into().unwrap()).unwrap();
 		let new_rewards = U256::from(rewards - amount);
 		pools.insert(liquidity_token_id, new_rewards);
 		true

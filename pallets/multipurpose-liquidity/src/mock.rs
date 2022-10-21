@@ -196,32 +196,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for MockXyk<T> {
 		unimplemented!()
 	}
 
-	fn claim_rewards(
-		sender: T::AccountId,
-		liquidity_token_id: Self::CurrencyId,
-		amount: Self::Balance,
-	) -> DispatchResult {
-		unimplemented!()
-	}
-
 	fn promote_pool(liquidity_token_id: TokenId) -> DispatchResult {
-		unimplemented!()
-	}
-
-	fn activate_liquidity(
-		sender: T::AccountId,
-		liquidity_token_id: Self::CurrencyId,
-		amount: Self::Balance,
-		use_balance_from: Option<ActivateKind>,
-	) -> DispatchResult {
-		unimplemented!()
-	}
-
-	fn deactivate_liquidity(
-		sender: T::AccountId,
-		liquidity_token_id: Self::CurrencyId,
-		amount: Self::Balance,
-	) -> DispatchResult {
 		unimplemented!()
 	}
 

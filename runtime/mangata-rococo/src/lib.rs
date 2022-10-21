@@ -1276,21 +1276,6 @@ impl_runtime_apis! {
 			}
 		}
 
-		fn calculate_rewards_amount(
-			user: AccountId,
-			liquidity_asset_id: TokenId,
-		) -> XYKRpcResult<Balance> {
-			match Xyk::calculate_rewards_amount(user, liquidity_asset_id){
-				Ok(claimable_rewards) => XYKRpcResult{
-					price:claimable_rewards
-				},
-				Err(e) => {
-						log::warn!(target:"xyk", "rpc 'XYK::calculate_rewards_amount' error: '{:?}', returning default value instead", e);
-						Default::default()
-				},
-			}
-		}
-
 		fn get_max_instant_burn_amount(
 			user: AccountId,
 			liquidity_asset_id: TokenId,
@@ -1304,7 +1289,6 @@ impl_runtime_apis! {
 		) -> Balance {
 			Xyk::get_max_instant_unreserve_amount(&user, liquidity_asset_id)
 		}
-
 
 		fn calculate_rewards_amount_v2(
 			user: AccountId,
@@ -1320,7 +1304,6 @@ impl_runtime_apis! {
 				},
 			}
 		}
-
 	}
 
 	impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {

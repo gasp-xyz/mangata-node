@@ -21,13 +21,16 @@ use crate as pallet_bootstrap;
 use codec::EncodeLike;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{ConstU128, ConstU32, Contains, Everything, Nothing},
+	traits::{
+		tokens::currency::MultiTokenCurrency, ConstU128, ConstU32, Contains, Everything, Nothing,
+	},
 };
-use mangata_primitives::{Amount, Balance, TokenId};
+use mangata_types::{Amount, Balance, TokenId};
 use mp_multipurpose_liquidity::ActivateKind;
 use mp_traits::ActivationReservesProviderTrait;
-use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter};
+use orml_tokens::MultiTokenCurrencyAdapter;
 use orml_traits::parameter_type_with_key;
+use pallet_xyk::AssetMetadataMutationTrait;
 use sp_runtime::{Perbill, Percent};
 use sp_std::convert::TryFrom;
 
@@ -131,6 +134,18 @@ impl<T: frame_system::Config> Get<T::AccountId> for RewardsForAllAccountProvider
 
 impl pallet_xyk::XykBenchmarkingConfig for Test {}
 
+pub struct AssetMetadataMutation;
+impl AssetMetadataMutationTrait for AssetMetadataMutation {
+	fn set_asset_info(
+		_asset: TokenId,
+		_name: Vec<u8>,
+		_symbol: Vec<u8>,
+		_decimals: u32,
+	) -> DispatchResult {
+		Ok(())
+	}
+}
+
 impl pallet_xyk::Config for Test {
 	type Event = Event;
 	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
@@ -148,7 +163,7 @@ impl pallet_xyk::Config for Test {
 	type DisallowedPools = Bootstrap;
 	type DisabledTokens = Nothing;
 	type VestingProvider = Vesting;
-	type RewardsForAllAccount = RewardsForAllAccountProvider<Self>;
+	type AssetMetadataMutation = AssetMetadataMutation;
 }
 
 impl BootstrapBenchmarkingConfig for Test {}
@@ -256,7 +271,13 @@ mockall::mock! {
 			liquidity_asset_id: TokenId,
 			amount: Balance,
 		) -> DispatchResult;
+
+		fn promote_pool(liquidity_token_id: TokenId) -> bool;
 	}
+}
+
+parameter_types! {
+	pub const BootstrapUpdateBuffer: <Test as frame_system::Config>::BlockNumber = 10;
 }
 
 #[cfg(not(feature = "runtime-benchmarks"))]
@@ -264,6 +285,7 @@ mockall::mock! {
 impl pallet_bootstrap::Config for Test {
 	type Event = Event;
 	type PoolCreateApi = MockPoolCreateApi;
+	type BootstrapUpdateBuffer = BootstrapUpdateBuffer;
 	type TreasuryPalletId = TreasuryPalletId;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type VestingProvider = Vesting;
@@ -276,6 +298,7 @@ impl pallet_bootstrap::Config for Test {
 impl pallet_bootstrap::Config for Test {
 	type Event = Event;
 	type PoolCreateApi = Xyk;
+	type BootstrapUpdateBuffer = BootstrapUpdateBuffer;
 	type TreasuryPalletId = TreasuryPalletId;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type VestingProvider = Vesting;
@@ -293,19 +316,6 @@ parameter_types! {
 	pub const MaxDecimals: u32 = 255;
 }
 
-impl pallet_assets_info::Config for Test {
-	type Event = Event;
-	type MinLengthName = MinLengthName;
-	type MaxLengthName = MaxLengthName;
-	type MinLengthSymbol = MinLengthSymbol;
-	type MaxLengthSymbol = MaxLengthSymbol;
-	type MinLengthDescription = MinLengthDescription;
-	type MaxLengthDescription = MaxLengthDescription;
-	type MaxDecimals = MaxDecimals;
-	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
-	type RelayNativeTokensValueScaleFactor = ();
-}
-
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
@@ -317,7 +327,6 @@ construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>},
-		AssetsInfoModule: pallet_assets_info::{Pallet, Call, Config, Storage, Event<T>},
 		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>},
 		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>},
 		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>},

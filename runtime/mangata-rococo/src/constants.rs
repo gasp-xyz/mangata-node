@@ -4,14 +4,14 @@ pub mod fee {
 		constants::WEIGHT_PER_SECOND, WeightToFeeCoefficient, WeightToFeeCoefficients,
 		WeightToFeePolynomial,
 	};
-	use mangata_primitives::Balance;
+	use mangata_types::Balance;
 	use smallvec::smallvec;
 	use sp_runtime::Perbill;
 
-	pub const ROC_MGR_SCALE_FACTOR_UNADJUSTED: u128 = 10_000_000_000u128; // 10_000 as KSM/MGX, with 6 decimals accounted for (12 - KSM, 18 - MGR)
+	pub const ROC_MGR_SCALE_FACTOR_UNADJUSTED: u128 = 10_000_000_000_u128; // 10_000 as KSM/MGX, with 6 decimals accounted for (12 - KSM, 18 - MGR)
 
 	// on-chain fees are 10x more expensive then ~real rate
-	pub const ROC_MGR_SCALE_FACTOR: u128 = 1000_000_000u128; // 1000 as KSM/MGR, with 6 decimals accounted for (12 - KSM, 18 - MGR)
+	pub const ROC_MGR_SCALE_FACTOR: u128 = 1000_000_000_u128; // 1000 as KSM/MGR, with 6 decimals accounted for (12 - KSM, 18 - MGR)
 	pub const KAR_MGR_SCALE_FACTOR: u128 = ROC_MGR_SCALE_FACTOR / 100; // 100 as KAR/ROC
 	pub const TUR_MGR_SCALE_FACTOR: u128 = ROC_MGR_SCALE_FACTOR; // 100 as TUR/ROC, with 2 decimals accounted for (10 - TUR, 12 - ROC)
 
@@ -58,6 +58,9 @@ pub mod fee {
 }
 
 pub mod parachains {
+	pub mod mangata {
+		pub const ID: u32 = 2110;
+	}
 	pub mod karura {
 		pub const ID: u32 = 2000;
 		pub const KAR_KEY: &[u8] = &[0, 128];

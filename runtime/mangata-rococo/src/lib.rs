@@ -2,24 +2,62 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
-// Make the WASM binary available.
-#[cfg(feature = "std")]
-include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
-
-use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
+pub use artemis_asset;
+pub use artemis_erc20_app;
+pub use artemis_eth_app;
+use codec::{Decode, Encode};
+use frame_support::{
+	construct_runtime,
+	dispatch::DispatchResult,
+	parameter_types,
+	traits::{
+		tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
+		Contains, EnsureOrigin, EnsureOriginWithArg, Everything, ExistenceRequirement, Get,
+		Imbalance, LockIdentifier, Nothing, U128CurrencyToVote, WithdrawReasons,
+	},
+	unsigned::TransactionValidityError,
+	weights::{
+		constants::{RocksDbWeight, WEIGHT_PER_MICROS, WEIGHT_PER_MILLIS, WEIGHT_PER_SECOND},
+		ConstantMultiplier, DispatchClass, Weight,
+	},
+	PalletId,
+};
+#[cfg(any(feature = "std", test))]
+pub use frame_system::Call as SystemCall;
+use frame_system::{
+	limits::{BlockLength, BlockWeights},
+	EnsureRoot,
+};
+pub use orml_tokens;
+use orml_tokens::{MultiTokenCurrencyExtended, TransferDust};
+use orml_traits::{
+	asset_registry::{AssetMetadata, AssetProcessor},
+	parameter_type_with_key,
+};
+pub use pallet_sudo;
+use pallet_transaction_payment::{Multiplier, OnChargeTransaction, TargetedFeeAdjustment};
+pub use pallet_verifier;
+use pallet_vesting_mangata_rpc_runtime_api::VestingInfosWithLockedAt;
+// Polkadot Imports
+use polkadot_runtime_common::BlockHashCount;
+use scale_info::TypeInfo;
 use sp_api::impl_runtime_apis;
+pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+#[cfg(any(feature = "std", test))]
+pub use sp_runtime::BuildStorage;
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, ConvertInto,
-		StaticLookup,
+		DispatchInfoOf, PostDispatchInfoOf, Saturating, StaticLookup, Zero,
 	},
-	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, FixedPointNumber, Percent, Perquintill,
+	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
+	ApplyExtrinsicResult, DispatchError, FixedPointNumber, Percent, Perquintill,
 };
-
+pub use sp_runtime::{MultiAddress, Perbill, Permill};
 use sp_std::{
+	cmp::Ordering,
 	convert::{TryFrom, TryInto},
 	marker::PhantomData,
 	prelude::*,
@@ -27,75 +65,35 @@ use sp_std::{
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-
-use frame_support::{
-	construct_runtime, parameter_types,
-	traits::{Contains, Everything, Get, LockIdentifier, Nothing, U128CurrencyToVote},
-	weights::{
-		constants::{RocksDbWeight, WEIGHT_PER_MICROS, WEIGHT_PER_MILLIS, WEIGHT_PER_SECOND},
-		DispatchClass, Weight,
-	},
-	PalletId,
-};
-use frame_system::{
-	limits::{BlockLength, BlockWeights},
-	EnsureRoot,
-};
-pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-pub use sp_runtime::{MultiAddress, Perbill, Permill};
-
-#[cfg(any(feature = "std", test))]
-pub use sp_runtime::BuildStorage;
-
-// Polkadot Imports
-use polkadot_runtime_common::BlockHashCount;
-
-// XCM Imports
-pub use xcm::{latest::prelude::*, VersionedMultiLocation};
-use xcm_asset_registry::{AssetIdMapping, AssetIdMaps};
-
-use codec::{Decode, Encode};
 use static_assertions::const_assert;
+pub use xcm::{latest::prelude::*, VersionedMultiLocation};
 
-pub use pallet_issuance::{IssuanceInfo, PoolPromoteApi};
-
-pub use mangata_primitives::{
+pub use constants::{fee::*, parachains::*};
+pub use currency::*;
+pub use mangata_types::{
+	assets::{CustomMetadata, XcmMetadata},
 	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
 };
-
-pub use orml_tokens;
-use orml_tokens::TransferDust;
-use orml_traits::parameter_type_with_key;
-
-use pallet_vesting_mangata_rpc_runtime_api::VestingInfosWithLockedAt;
+pub use pallet_bridge;
+pub use pallet_issuance::{IssuanceInfo, PoolPromoteApi};
+pub use pallet_sudo_origin;
 pub use pallet_xyk;
+// XCM Imports
+use pallet_xyk::AssetMetadataMutationTrait;
 use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
+
+// Make the WASM binary available.
+#[cfg(feature = "std")]
+include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 pub const MGR_TOKEN_ID: TokenId = 0;
 pub const ROC_TOKEN_ID: TokenId = 4;
 pub const KAR_TOKEN_ID: TokenId = 6;
 pub const TUR_TOKEN_ID: TokenId = 7;
 
-pub use pallet_sudo;
-
-pub use pallet_sudo_origin;
-
-pub use pallet_assets_info;
-
-pub use artemis_asset;
-pub use artemis_erc20_app;
-pub use artemis_eth_app;
-pub use pallet_bridge;
-pub use pallet_verifier;
-
-pub use constants::{fee::*, parachains::*};
-
 pub mod constants;
 mod weights;
 pub mod xcm_config;
-
-#[cfg(any(feature = "std", test))]
-pub use frame_system::Call as SystemCall;
 
 /// Block header type as expected by this runtime.
 pub type Header = generic::HeaderVer<BlockNumber, BlakeTwo256>;
@@ -133,17 +131,16 @@ pub type Executive = frame_executive::Executive<
 	AllPalletsWithSystem,
 >;
 
-use frame_support::traits::OnRuntimeUpgrade;
-
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
 /// of data like extrinsics, allowing for them to continue syncing the network through upgrades
 /// to even the core data structures.
 pub mod opaque {
-	use super::*;
+	pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
 	use sp_runtime::{generic, traits::BlakeTwo256};
 
-	pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
+	use super::*;
+
 	/// Opaque block header type.
 	pub type Header = generic::HeaderVer<BlockNumber, BlakeTwo256>;
 	/// Opaque block type.
@@ -162,17 +159,15 @@ impl_opaque_keys! {
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
-	authoring_version: 8,
-	spec_version: 8,
+	authoring_version: 10,
+	spec_version: 10,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 8,
+	transaction_version: 10,
 	state_version: 0,
 };
 
-pub use currency::*;
 mod currency {
-
 	use super::Balance;
 
 	pub const MILLICENTS: Balance = CENTS / 1000;
@@ -396,6 +391,7 @@ impl pallet_treasury::Config for Runtime {
 	type SpendFunds = ();
 	type WeightInfo = weights::pallet_treasury_weights::ModuleWeight<Runtime>;
 	type MaxApprovals = MaxApprovals;
+	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<u128>;
 }
 
 // TODO: discuiss existential deposit feature
@@ -451,6 +447,26 @@ impl<T: frame_system::Config> Get<T::AccountId> for RewardsForAllAccountProvider
 		let mut init_account32 = sp_runtime::AccountId32::as_ref(&account32);
 		let init_account = T::AccountId::decode(&mut init_account32).unwrap();
 		init_account
+pub struct AssetMetadataMutation;
+impl AssetMetadataMutationTrait for AssetMetadataMutation {
+	fn set_asset_info(
+		asset: TokenId,
+		name: Vec<u8>,
+		symbol: Vec<u8>,
+		decimals: u32,
+	) -> DispatchResult {
+		let metadata = AssetMetadata {
+			name,
+			symbol,
+			decimals,
+			existential_deposit: Default::default(),
+			additional: Default::default(),
+			location: None,
+		};
+		orml_asset_registry::Pallet::<Runtime>::do_register_asset_without_asset_processor(
+			metadata, asset,
+		)?;
+		Ok(())
 	}
 }
 
@@ -470,8 +486,13 @@ impl pallet_xyk::Config for Runtime {
 	type VestingProvider = Vesting;
 	type DisallowedPools = Bootstrap;
 	type DisabledTokens = Nothing;
+	type AssetMetadataMutation = AssetMetadataMutation;
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
 	type RewardsForAllAccount = RewardsForAllAccountProvider<Self>;
+}
+
+parameter_types! {
+	pub const BootstrapUpdateBuffer: BlockNumber = 300;
 }
 
 impl pallet_bootstrap::BootstrapBenchmarkingConfig for Runtime {}
@@ -479,6 +500,7 @@ impl pallet_bootstrap::BootstrapBenchmarkingConfig for Runtime {}
 impl pallet_bootstrap::Config for Runtime {
 	type Event = Event;
 	type PoolCreateApi = Xyk;
+	type BootstrapUpdateBuffer = BootstrapUpdateBuffer;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type VestingProvider = Vesting;
 	type TreasuryPalletId = TreasuryPalletId;
@@ -494,7 +516,7 @@ impl pallet_utility::Config for Runtime {
 }
 
 type ORMLCurrencyAdapterNegativeImbalance =
-	<orml_tokens::MultiTokenCurrencyAdapter<Runtime> as orml_tokens::MultiTokenCurrency<
+	<orml_tokens::MultiTokenCurrencyAdapter<Runtime> as MultiTokenCurrency<
 		AccountId,
 	>>::NegativeImbalance;
 
@@ -528,7 +550,7 @@ pub struct ToAuthor;
 impl OnMultiTokenUnbalanced<ORMLCurrencyAdapterNegativeImbalance> for ToAuthor {
 	fn on_nonzero_unbalanced(amount: ORMLCurrencyAdapterNegativeImbalance) {
 		if let Some(author) = Authorship::author() {
-			<orml_tokens::MultiTokenCurrencyAdapter<Runtime> as orml_tokens::MultiTokenCurrency<
+			<orml_tokens::MultiTokenCurrencyAdapter<Runtime> as MultiTokenCurrency<
 				AccountId,
 			>>::resolve_creating(amount.0, &author, amount);
 		}
@@ -540,30 +562,13 @@ parameter_types! {
 	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
-use scale_info::TypeInfo;
-
 #[derive(Encode, Decode, Clone, TypeInfo)]
 pub struct ThreeCurrencyOnChargeAdapter<C, OU, T1, T2, T3, SF2, SF3>(
 	PhantomData<(C, OU, T1, T2, T3, SF2, SF3)>,
 );
 
-use frame_support::{
-	traits::{ExistenceRequirement, Imbalance, WithdrawReasons},
-	unsigned::TransactionValidityError,
-	weights::ConstantMultiplier,
-};
-use orml_tokens::MultiTokenCurrency;
-use sp_runtime::{
-	traits::{DispatchInfoOf, PostDispatchInfoOf, Saturating, Zero},
-	transaction_validity::InvalidTransaction,
-};
-
-use pallet_transaction_payment::OnChargeTransaction;
-
 type NegativeImbalanceOf<C, T> =
 	<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
-
-use orml_tokens::MultiTokenImbalanceWithZeroTrait;
 
 /// Default implementation for a Currency and an OnUnbalanced handler.
 ///
@@ -698,6 +703,7 @@ parameter_types! {
 }
 
 impl pallet_transaction_payment::Config for Runtime {
+	type Event = Event;
 	type OnChargeTransaction = ThreeCurrencyOnChargeAdapter<
 		orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
 		ToAuthor,
@@ -728,6 +734,7 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type OutboundXcmpMessageSource = XcmpQueue;
 	type XcmpMessageHandler = XcmpQueue;
 	type ReservedXcmpWeight = ReservedXcmpWeight;
+	type CheckAssociatedRelayNumber = cumulus_pallet_parachain_system::AnyRelayNumber;
 }
 
 impl parachain_info::Config for Runtime {}
@@ -761,15 +768,6 @@ impl pallet_aura::Config for Runtime {
 }
 
 parameter_types! {
-	pub const PotId: PalletId = PalletId(*b"PotStake");
-	pub const MaxCandidates: u32 = 1000;
-	pub const MinCandidates: u32 = 5;
-	pub const SessionLength: BlockNumber = 6 * HOURS;
-	pub const MaxInvulnerables: u32 = 100;
-	pub const ExecutiveBody: BodyId = BodyId::Executive;
-}
-
-parameter_types! {
 	pub const MinLengthName: usize = 1;
 	pub const MaxLengthName: usize = 255;
 	pub const MinLengthSymbol: usize = 1;
@@ -777,19 +775,6 @@ parameter_types! {
 	pub const MinLengthDescription: usize = 1;
 	pub const MaxLengthDescription: usize = 255;
 	pub const MaxDecimals: u32 = 255;
-}
-
-impl pallet_assets_info::Config for Runtime {
-	type Event = Event;
-	type MinLengthName = MinLengthName;
-	type MaxLengthName = MaxLengthName;
-	type MinLengthSymbol = MinLengthSymbol;
-	type MaxLengthSymbol = MaxLengthSymbol;
-	type MinLengthDescription = MinLengthDescription;
-	type MaxLengthDescription = MaxLengthDescription;
-	type MaxDecimals = MaxDecimals;
-	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-	type RelayNativeTokensValueScaleFactor = frame_support::traits::ConstU128<ROC_MGR_SCALE_FACTOR>;
 }
 
 impl pallet_bridge::Config for Runtime {
@@ -855,6 +840,8 @@ parameter_types! {
 	pub const TermDuration: BlockNumber = 120 * DAYS;
 	pub const DesiredMembers: u32 = 9;
 	pub const DesiredRunnersUp: u32 = 7;
+	pub const MaxVoters: u32 = 10 * 1000;
+	pub const MaxCandidates: u32 = 1000;
 	pub const ElectionsPhragmenPalletId: LockIdentifier = *b"phrelect";
 }
 
@@ -878,6 +865,8 @@ impl pallet_elections_phragmen::Config for Runtime {
 	type DesiredMembers = DesiredMembers;
 	type DesiredRunnersUp = DesiredRunnersUp;
 	type TermDuration = TermDuration;
+	type MaxVoters = MaxVoters;
+	type MaxCandidates = MaxCandidates;
 	type WeightInfo = weights::pallet_elections_phragmen_weights::ModuleWeight<Runtime>;
 }
 
@@ -1054,12 +1043,53 @@ impl orml_xcm::Config for Runtime {
 	type SovereignOrigin = EnsureRoot<AccountId>;
 }
 
-impl xcm_asset_registry::Config for Runtime {
+pub type AssetMetadataOf = AssetMetadata<Balance, CustomMetadata>;
+type CurrencyAdapter = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+
+pub struct SequentialIdWithCreation<T>(PhantomData<T>);
+impl<T: orml_asset_registry::Config> AssetProcessor<TokenId, AssetMetadataOf>
+	for SequentialIdWithCreation<T>
+{
+	fn pre_register(
+		id: Option<TokenId>,
+		asset_metadata: AssetMetadataOf,
+	) -> Result<(TokenId, AssetMetadataOf), DispatchError> {
+		let next_id = CurrencyAdapter::get_next_currency_id();
+		let asset_id = id.unwrap_or(next_id);
+		match asset_id.cmp(&next_id) {
+			Ordering::Equal => CurrencyAdapter::create(&TreasuryAccount::get(), Default::default())
+				.and_then(|created_asset_id| match created_asset_id.cmp(&asset_id) {
+					Ordering::Equal => Ok((asset_id, asset_metadata)),
+					_ => Err(orml_asset_registry::Error::<T>::InvalidAssetId.into()),
+				}),
+			Ordering::Less => Ok((asset_id, asset_metadata)),
+			_ => Err(orml_asset_registry::Error::<T>::InvalidAssetId.into()),
+		}
+	}
+}
+
+pub struct AssetAuthority;
+impl EnsureOriginWithArg<Origin, Option<u32>> for AssetAuthority {
+	type Success = ();
+
+	fn try_origin(origin: Origin, _asset_id: &Option<u32>) -> Result<Self::Success, Origin> {
+		EnsureRoot::try_origin(origin)
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn successful_origin(_asset_id: &Option<u32>) -> Origin {
+		EnsureRoot::successful_origin()
+	}
+}
+
+impl orml_asset_registry::Config for Runtime {
 	type Event = Event;
-	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-	type RegisterOrigin = EnsureRoot<AccountId>;
-	type WeightInfo = weights::xcm_asset_registry_weights::ModuleWeight<Runtime>;
-	type TreasuryAddress = TreasuryAccount;
+	type CustomMetadata = CustomMetadata;
+	type AssetId = TokenId;
+	type AuthorityOrigin = AssetAuthority;
+	type AssetProcessor = SequentialIdWithCreation<Runtime>;
+	type Balance = Balance;
+	type WeightInfo = weights::orml_asset_registry_weights::ModuleWeight<Runtime>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -1086,10 +1116,9 @@ construct_runtime!(
 
 		// Monetary stuff.
 		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>} = 10,
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 11,
+		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<Runtime>} = 11,
 
 		// Xyk stuff
-		AssetsInfo: pallet_assets_info::{Pallet, Call, Config, Storage, Event<T>} = 12,
 		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>} = 13,
 
 		// Vesting
@@ -1121,7 +1150,7 @@ construct_runtime!(
 		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 35,
 		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 36,
 		OrmlXcm: orml_xcm::{Pallet, Call, Event<T>} = 37,
-		AssetRegistry: xcm_asset_registry::{Pallet, Call, Storage, Event, Config} = 38,
+		AssetRegistry: orml_asset_registry::{Pallet, Call, Storage, Event<T>, Config<T>} = 38,
 
 		// Governance stuff
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 41,
@@ -1147,9 +1176,9 @@ mod benches {
 		[pallet_session, SessionBench::<Runtime>]
 		[pallet_timestamp, Timestamp]
 		[orml_tokens, Tokens]
+		[orml_asset_registry, AssetRegistry]
 		[parachain_staking, ParachainStaking]
 		[pallet_xyk, Xyk]
-		[xcm_asset_registry, AssetRegistry]
 		[pallet_treasury, Treasury]
 		[pallet_collective, Council]
 		[pallet_elections_phragmen, Elections]
@@ -1522,6 +1551,7 @@ impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
 #[doc(hidden)]
 mod parachain_validate_block {
 	use super::*;
+
 	#[no_mangle]
 	#[cfg(not(feature = "std"))]
 	unsafe fn validate_block(arguments: *const u8, arguments_len: usize) -> u64 {

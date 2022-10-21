@@ -1,30 +1,22 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-// `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
-#![recursion_limit = "256"]
 
-// Make the WASM binary available.
-#[cfg(feature = "std")]
-include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
-
-use super::{
-	constants::{fee::*, parachains},
-	AccountId, AssetIdMapping, AssetIdMaps, Balance, Call, Convert, Event, ExistentialDeposits,
-	Origin, ParachainInfo, ParachainSystem, PolkadotXcm, Runtime, TokenId, Tokens, TreasuryAccount,
-	UnknownTokens, XcmpQueue, KSM_TOKEN_ID, MGX_TOKEN_ID,
-};
 use codec::{Decode, Encode};
+use cumulus_primitives_core::ParaId;
 use frame_support::{
 	match_types, parameter_types,
 	traits::{Everything, Get, Nothing},
 	weights::Weight,
 };
 use frame_system::EnsureRoot;
+use orml_asset_registry::{AssetRegistryTrader, FixedRateAssetRegistryTrader};
 use orml_traits::{
-	location::AbsoluteReserveProvider, parameter_type_with_key, GetByKey, MultiCurrency,
+	location::AbsoluteReserveProvider, parameter_type_with_key, FixedConversionRateProvider,
+	GetByKey, MultiCurrency,
 };
 use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
+use sp_runtime::{traits::ConstU32, WeakBoundedVec};
 use sp_std::{marker::PhantomData, prelude::*};
 use xcm::latest::prelude::*;
 use xcm_builder::{
@@ -35,6 +27,17 @@ use xcm_builder::{
 	SignedToAccountId32, SovereignSignedViaLocation, TakeRevenue, TakeWeightCredit,
 };
 use xcm_executor::{traits::DropAssets, Assets, XcmExecutor};
+
+use super::{
+	constants::{fee::*, parachains},
+	AccountId, AssetMetadataOf, Balance, Call, Convert, Event, ExistentialDeposits, Origin,
+	ParachainInfo, ParachainSystem, PolkadotXcm, Runtime, TokenId, Tokens, TreasuryAccount,
+	UnknownTokens, XcmpQueue, KSM_TOKEN_ID, MGX_TOKEN_ID,
+};
+
+// Make the WASM binary available.
+#[cfg(feature = "std")]
+include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 parameter_types! {
 	pub KsmLocation: MultiLocation = MultiLocation::parent();
@@ -117,14 +120,20 @@ parameter_types! {
 	pub MgxPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			0,
-			X1(GeneralKey(MGX_TOKEN_ID.encode())),
+			X1(GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
+			MGX_TOKEN_ID.encode(),
+			None,
+		))),
 		).into(),
 		mgx_per_second()
 	);
 	pub KarPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
-			X2(Parachain(parachains::karura::ID), GeneralKey(parachains::karura::KAR_KEY.to_vec())),
+			X2(Parachain(parachains::karura::ID), GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
+			parachains::karura::KAR_KEY.to_vec(),
+			None,
+		))),
 		).into(),
 		// KAR:KSM 100:1
 		ksm_per_second() * 100
@@ -132,7 +141,10 @@ parameter_types! {
 	pub KusdPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
-			X2(Parachain(parachains::karura::ID), GeneralKey(parachains::karura::KUSD_KEY.to_vec())),
+			X2(Parachain(parachains::karura::ID), GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
+			parachains::karura::KUSD_KEY.to_vec(),
+			None,
+		))),
 		).into(),
 		// KUSD:KSM 50:1
 		ksm_per_second() * 50
@@ -140,7 +152,10 @@ parameter_types! {
 	pub LksmPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
-			X2(Parachain(parachains::karura::ID), GeneralKey(parachains::karura::LKSM_KEY.to_vec())),
+			X2(Parachain(parachains::karura::ID), GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
+			parachains::karura::LKSM_KEY.to_vec(),
+			None,
+		))),
 		).into(),
 		// LKSM:KSM 10:1
 		ksm_per_second() * 10
@@ -156,7 +171,10 @@ parameter_types! {
 	pub ImbuPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
-			X2(Parachain(parachains::imbue::ID), GeneralKey(parachains::imbue::IMBU_KEY.to_vec())),
+			X2(Parachain(parachains::imbue::ID), GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
+			parachains::imbue::IMBU_KEY.to_vec(),
+			None,
+		))),
 		).into(),
 		// IMBU:KSM 50:1
 		ksm_per_second() * 50
@@ -172,7 +190,10 @@ parameter_types! {
 	pub BncPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
-			X2(Parachain(parachains::bifrost::ID), GeneralKey(parachains::bifrost::BNC_KEY.to_vec())),
+			X2(Parachain(parachains::bifrost::ID), GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
+			parachains::bifrost::BNC_KEY.to_vec(),
+			None,
+		))),
 		).into(),
 		// BNC:KSM = 80:1
 		ksm_per_second() * 80
@@ -180,7 +201,10 @@ parameter_types! {
 	pub VsksmPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
-			X2(Parachain(parachains::bifrost::ID), GeneralKey(parachains::bifrost::VSKSM_KEY.to_vec())),
+			X2(Parachain(parachains::bifrost::ID), GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
+			parachains::bifrost::VSKSM_KEY.to_vec(),
+			None,
+		))),
 		).into(),
 		// VSKSM:KSM = 1:1
 		ksm_per_second()
@@ -188,16 +212,43 @@ parameter_types! {
 	pub VksmPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
-			X2(Parachain(parachains::bifrost::ID), GeneralKey(parachains::bifrost::VKSM_KEY.to_vec())),
+			X2(Parachain(parachains::bifrost::ID), GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
+			parachains::bifrost::VKSM_KEY.to_vec(),
+			None,
+		))),
 		).into(),
 		// VKSM:KSM = 1:1
 		ksm_per_second()
 	);
+
+	pub BaseRate: u128 = mgx_per_second();
+}
+
+type AssetRegistryOf<T> = orml_asset_registry::Pallet<T>;
+
+pub struct FeePerSecondProvider;
+impl FixedConversionRateProvider for FeePerSecondProvider {
+	fn get_fee_per_second(location: &MultiLocation) -> Option<u128> {
+		if let Some(asset_id) = AssetRegistryOf::<Runtime>::location_to_asset_id(location) {
+			if let Some(xcm_meta) = AssetRegistryOf::<Runtime>::metadata(asset_id)
+				.and_then(|metadata: AssetMetadataOf| metadata.additional.xcm)
+			{
+				let fee_per_second: u128 = xcm_meta.fee_per_second;
+				log::debug!(
+					target: "xcm::weight", "fee_per_second: asset: {:?}, fps:{:?}",
+					asset_id, fee_per_second
+				);
+				return Some(fee_per_second)
+			}
+		}
+		None
+	}
 }
 
 pub type Trader = (
-	FixedRateOfFungible<KsmPerSecond, ToTreasury>,
 	FixedRateOfFungible<MgxPerSecond, ToTreasury>,
+	AssetRegistryTrader<FixedRateAssetRegistryTrader<FeePerSecondProvider>, ToTreasury>,
+	FixedRateOfFungible<KsmPerSecond, ToTreasury>,
 	FixedRateOfFungible<KarPerSecond, ToTreasury>,
 	FixedRateOfFungible<KusdPerSecond, ToTreasury>,
 	FixedRateOfFungible<TurPerSecond, ToTreasury>,
@@ -389,11 +440,14 @@ impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
 			return Some(MultiLocation::parent())
 		}
 
-		match AssetIdMaps::<Runtime>::get_multi_location(id) {
-			Some(multi_location) => Some(multi_location),
-			None => Some(MultiLocation::new(
+		match AssetRegistryOf::<Runtime>::multilocation(&id) {
+			Ok(Some(multi_location)) => Some(multi_location),
+			_ => Some(MultiLocation::new(
 				1,
-				X2(Parachain(ParachainInfo::get().into()), GeneralKey(id.encode())),
+				X2(
+					Parachain(ParachainInfo::get().into()),
+					GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(id.encode(), None)),
+				),
 			)),
 		}
 	}
@@ -404,20 +458,14 @@ impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 			return Some(KSM_TOKEN_ID)
 		}
 
-		if let Some(token_id) = AssetIdMaps::<Runtime>::get_currency_id(location.clone()) {
-			return Some(token_id)
-		}
-
 		match location {
-			MultiLocation { parents: 1, interior: X2(Parachain(para_id), GeneralKey(key)) } =>
-				match (para_id, &key[..]) {
-					(id, key) if id == u32::from(ParachainInfo::get()) =>
-						TokenId::decode(&mut &*key).ok(),
-					_ => None,
-				},
+			MultiLocation { parents: 1, interior: X2(Parachain(para_id), GeneralKey(key)) }
+				if ParaId::from(para_id) == ParachainInfo::get() =>
+				TokenId::decode(&mut &(*key)[..]).ok(),
+
 			MultiLocation { parents: 0, interior: X1(GeneralKey(key)) } =>
-				TokenId::decode(&mut &*key).ok(),
-			_ => None,
+				TokenId::decode(&mut &(*key)[..]).ok(),
+			_ => AssetRegistryOf::<Runtime>::location_to_asset_id(location.clone()),
 		}
 	}
 }

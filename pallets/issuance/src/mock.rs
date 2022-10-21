@@ -23,7 +23,7 @@ use frame_support::{
 	traits::{Contains, Everything},
 	PalletId,
 };
-use mangata_primitives::{Amount, Balance, TokenId};
+use mangata_types::{Amount, Balance, TokenId};
 use orml_traits::parameter_type_with_key;
 use sp_runtime::{
 	traits::{AccountIdConversion, ConvertInto},

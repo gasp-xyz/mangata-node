@@ -5,7 +5,7 @@ use crate::{
 	service::new_partial,
 };
 use codec::Encode;
-use cumulus_client_service::genesis::generate_genesis_block;
+use cumulus_client_cli::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
 use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 use log::info;
@@ -252,7 +252,7 @@ pub fn run() -> Result<()> {
 				spec if spec.is_mangata_kusama() => {
 					let state_version = Cli::native_runtime_version(&spec).state_version();
 					let block: service::mangata_kusama_runtime::Block =
-						generate_genesis_block(&spec, state_version)?;
+						generate_genesis_block(&*spec, state_version)?;
 					let raw_header = block.header().encode();
 					let output_buf = if params.raw {
 						raw_header
@@ -265,7 +265,7 @@ pub fn run() -> Result<()> {
 				spec if spec.is_mangata_rococo() => {
 					let state_version = Cli::native_runtime_version(&spec).state_version();
 					let block: service::mangata_rococo_runtime::Block =
-						generate_genesis_block(&spec, state_version)?;
+						generate_genesis_block(&*spec, state_version)?;
 					let raw_header = block.header().encode();
 					let output_buf = if params.raw {
 						raw_header
@@ -341,6 +341,8 @@ pub fn run() -> Result<()> {
 						cmd.run(config, partials.client.clone(), db, storage)
 					}),
 					BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
+					// TODO: not sure what to do with this Extrinsic
+					BenchmarkCmd::Extrinsic(_) => Err("Unsupported benchmarking command".into()),
 					BenchmarkCmd::Machine(cmd) => runner
 						.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone())),
 				},
@@ -374,6 +376,8 @@ pub fn run() -> Result<()> {
 						cmd.run(config, partials.client.clone(), db, storage)
 					}),
 					BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
+					// TODO: not sure what to do with this Extrinsic
+					BenchmarkCmd::Extrinsic(_) => Err("Unsupported benchmarking command".into()),
 					BenchmarkCmd::Machine(cmd) => runner
 						.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone())),
 				},
@@ -453,7 +457,7 @@ pub fn run() -> Result<()> {
 					spec if spec.is_mangata_kusama() => {
 						let state_version = Cli::native_runtime_version(&spec).state_version();
 						let block: service::mangata_kusama_runtime::Block =
-							generate_genesis_block(&spec, state_version)
+							generate_genesis_block(&*config.chain_spec, state_version)
 								.map_err(|e| format!("{:?}", e))?;
 						format!("0x{:?}", HexDisplay::from(&block.header().encode()))
 					},
@@ -461,7 +465,7 @@ pub fn run() -> Result<()> {
 					spec if spec.is_mangata_rococo() => {
 						let state_version = Cli::native_runtime_version(&spec).state_version();
 						let block: service::mangata_rococo_runtime::Block =
-							generate_genesis_block(&spec, state_version)
+							generate_genesis_block(&*config.chain_spec, state_version)
 								.map_err(|e| format!("{:?}", e))?;
 						format!("0x{:?}", HexDisplay::from(&block.header().encode()))
 					},
@@ -587,8 +591,8 @@ impl CliConfiguration<Self> for RelayChainCli {
 		self.base.base.role(is_dev)
 	}
 
-	fn transaction_pool(&self) -> Result<sc_service::config::TransactionPoolOptions> {
-		self.base.base.transaction_pool()
+	fn transaction_pool(&self, is_dev: bool) -> Result<sc_service::config::TransactionPoolOptions> {
+		self.base.base.transaction_pool(is_dev)
 	}
 
 	fn state_cache_child_ratio(&self) -> Result<Option<usize>> {

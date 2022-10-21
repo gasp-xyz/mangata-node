@@ -6,19 +6,21 @@ use frame_support::pallet_prelude::*;
 
 use frame_support::{
 	codec::{Decode, Encode},
-	traits::{Contains, ExistenceRequirement, Get, StorageVersion},
+	traits::{
+		tokens::currency::MultiTokenCurrency, Contains, ExistenceRequirement, Get, StorageVersion,
+	},
 	transactional, PalletId,
 };
 use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
-use mangata_primitives::{Balance, TokenId};
+use mangata_types::{Balance, TokenId};
 use mp_bootstrap::{PoolCreateApi, RewardsApi};
-use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
+use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
 use scale_info::TypeInfo;
-use sp_arithmetic::helpers_128bit::multiply_by_rational;
+use sp_arithmetic::{helpers_128bit::multiply_by_rational_with_rounding, per_things::Rounding};
 use sp_core::U256;
 use sp_io::KillStorageResult;
-use sp_runtime::traits::{AccountIdConversion, CheckedAdd, SaturatedConversion};
+use sp_runtime::traits::{AccountIdConversion, CheckedAdd, One, SaturatedConversion, Saturating};
 use sp_std::{convert::TryInto, prelude::*};
 
 pub mod migrations;
@@ -38,6 +40,7 @@ pub use pallet::*;
 const PALLET_ID: PalletId = PalletId(*b"bootstrp");
 
 use core::fmt::Debug;
+use frame_support::traits::tokens;
 
 #[macro_export]
 macro_rules! log {
@@ -101,11 +104,16 @@ pub mod pallet {
 						second_token_valuation,
 					) {
 						MintedLiquidity::<T>::put((liq_asset_id, issuance)); // W:1
+						if PromoteBootstrapPool::<T>::get() {
+							if !T::RewardsApi::promote_pool(liq_asset_id) {
+								log!(error, "pool already promoted!");
+							}
+						}
 					} else {
 						log!(error, "cannot create pool!");
 					}
 					// TODO: include cost of pool_create call
-					T::DbWeight::get().reads_writes(15, 13)
+					T::DbWeight::get().reads_writes(17, 14)
 				} else if n >= public_start {
 					if phase != BootstrapPhase::Public {
 						Phase::<T>::put(BootstrapPhase::Public);
@@ -148,6 +156,9 @@ pub mod pallet {
 			+ MultiTokenReservableCurrency<Self::AccountId>;
 
 		type PoolCreateApi: PoolCreateApi<AccountId = Self::AccountId>;
+
+		#[pallet::constant]
+		type BootstrapUpdateBuffer: Get<Self::BlockNumber>;
 
 		#[pallet::constant]
 		type TreasuryPalletId: Get<PalletId>;
@@ -213,41 +224,45 @@ pub mod pallet {
 	pub type ActivePair<T: Config> = StorageValue<_, (TokenId, TokenId), OptionQuery>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn get_promote_bootstrap_pool)]
+	pub type PromoteBootstrapPool<T: Config> = StorageValue<_, bool, ValueQuery>;
+
+	#[pallet::storage]
 	#[pallet::getter(fn archived)]
 	pub type ArchivedBootstrap<T: Config> =
 		StorageValue<_, Vec<(T::BlockNumber, u32, u32, (u128, u128))>, ValueQuery>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// provisions vested/locked tokens into the boostrstrap
-		#[pallet::weight(<<T as Config>::WeightInfo>::provision_vested())]
-		#[transactional]
-		pub fn provision_vested(
-			origin: OriginFor<T>,
-			token_id: TokenId,
-			amount: Balance,
-		) -> DispatchResult {
-			let sender = ensure_signed(origin)?;
-			let (vesting_starting_block, vesting_ending_block_as_balance) =
-				<<T as Config>::VestingProvider>::unlock_tokens(
-					&sender,
-					token_id.into(),
-					amount.into(),
-				)
-				.map_err(|_| Error::<T>::NotEnoughVestedAssets)?;
-			Self::do_provision(
-				&sender,
-				token_id,
-				amount,
-				ProvisionKind::Vested(
-					vesting_starting_block.saturated_into::<BlockNrAsBalance>(),
-					vesting_ending_block_as_balance.into(),
-				),
-			)?;
-			ProvisionAccounts::<T>::insert(&sender, ());
-			Self::deposit_event(Event::Provisioned(token_id, amount));
-			Ok(().into())
-		}
+		// /// provisions vested/locked tokens into the boostrstrap
+		// #[pallet::weight(<<T as Config>::WeightInfo>::provision_vested())]
+		// #[transactional]
+		// pub fn provision_vested(
+		// 	origin: OriginFor<T>,
+		// 	token_id: TokenId,
+		// 	amount: Balance,
+		// ) -> DispatchResult {
+		// 	let sender = ensure_signed(origin)?;
+		// 	let (vesting_starting_block, vesting_ending_block_as_balance) =
+		// 		<<T as Config>::VestingProvider>::unlock_tokens(
+		// 			&sender,
+		// 			token_id.into(),
+		// 			amount.into(),
+		// 		)
+		// 		.map_err(|_| Error::<T>::NotEnoughVestedAssets)?;
+		// 	Self::do_provision(
+		// 		&sender,
+		// 		token_id,
+		// 		amount,
+		// 		ProvisionKind::Vested(
+		// 			vesting_starting_block.saturated_into::<BlockNrAsBalance>(),
+		// 			vesting_ending_block_as_balance.into(),
+		// 		),
+		// 	)?;
+		// 	ProvisionAccounts::<T>::insert(&sender, ());
+		// 	Self::deposit_event(Event::Provisioned(token_id, amount));
+		// 	Ok(().into())
+		// }
 
 		/// provisions non-vested/non-locked tokens into the boostrstrap
 		#[pallet::weight(<<T as Config>::WeightInfo>::provision())]
@@ -285,10 +300,6 @@ pub mod pallet {
 		/// - public_phase_length - length of public phase in blocks
 		/// - max_first_token_to_mgx_ratio - maximum tokens ratio that is held by the pallet during bootstrap event
 		///
-		/// max_first_token_to_mgx_ratio[0]       KSM VALUATION
-		/// --------------------------------- < ---------------------
-		/// max_first_token_to_mgx_ratio[1]       MGX VALUATION
-		///
 		/// bootstrap phases:
 		/// - BeforeStart - blocks 0..ido_start
 		/// - WhitelistPhase - blocks ido_start..(ido_start + whitelist_phase_length)
@@ -300,13 +311,23 @@ pub mod pallet {
 			first_token_id: TokenId,
 			second_token_id: TokenId,
 			ido_start: T::BlockNumber,
-			whitelist_phase_length: u32,
+			whitelist_phase_length: Option<u32>,
 			public_phase_lenght: u32,
-			max_first_to_second_ratio: (u128, u128),
+			max_first_to_second_ratio: Option<(u128, u128)>,
+			promote_bootstrap_pool: bool,
 		) -> DispatchResult {
 			ensure_root(origin)?;
 
 			ensure!(Phase::<T>::get() == BootstrapPhase::BeforeStart, Error::<T>::AlreadyStarted);
+
+			if let Some((scheduled_ido_start, _, _, _)) = BootstrapSchedule::<T>::get() {
+				let now = <frame_system::Pallet<T>>::block_number();
+				ensure!(
+					now.saturating_add(T::BootstrapUpdateBuffer::get()) < scheduled_ido_start,
+					Error::<T>::TooLateToUpdateBootstrap
+				);
+			}
+
 			ensure!(first_token_id != second_token_id, Error::<T>::SameToken);
 
 			ensure!(T::Currency::exists(first_token_id.into()), Error::<T>::TokenIdDoesNotExists);
@@ -317,11 +338,13 @@ pub mod pallet {
 				Error::<T>::BootstrapStartInThePast
 			);
 
+			let whitelist_phase_length = whitelist_phase_length.unwrap_or_default();
+			let max_first_to_second_ratio =
+				max_first_to_second_ratio.unwrap_or((Balance::max_value(), Balance::one()));
+
 			ensure!(max_first_to_second_ratio.0 != 0, Error::<T>::WrongRatio);
 
 			ensure!(max_first_to_second_ratio.1 != 0, Error::<T>::WrongRatio);
-
-			ensure!(whitelist_phase_length > 0, Error::<T>::PhaseLengthCannotBeZero);
 
 			ensure!(public_phase_lenght > 0, Error::<T>::PhaseLengthCannotBeZero);
 
@@ -352,6 +375,53 @@ pub mod pallet {
 				max_first_to_second_ratio,
 			));
 
+			PromoteBootstrapPool::<T>::put(promote_bootstrap_pool);
+
+			Ok(().into())
+		}
+
+		#[pallet::weight(T::DbWeight::get().reads_writes(3, 4).saturating_add(1_000_000u64))]
+		#[transactional]
+		pub fn cancel_bootstrap(origin: OriginFor<T>) -> DispatchResult {
+			ensure_root(origin)?;
+
+			// BootstrapSchedule should exist but not after BootstrapUpdateBuffer blocks before start
+
+			let now = <frame_system::Pallet<T>>::block_number();
+			let (ido_start, _, _, _) =
+				BootstrapSchedule::<T>::get().ok_or(Error::<T>::BootstrapNotSchduled)?;
+			ensure!(Phase::<T>::get() == BootstrapPhase::BeforeStart, Error::<T>::AlreadyStarted);
+
+			ensure!(
+				now.saturating_add(T::BootstrapUpdateBuffer::get()) < ido_start,
+				Error::<T>::TooLateToUpdateBootstrap
+			);
+
+			ActivePair::<T>::kill();
+			BootstrapSchedule::<T>::kill();
+			PromoteBootstrapPool::<T>::kill();
+			// Unnecessary
+			Phase::<T>::put(BootstrapPhase::BeforeStart);
+
+			Ok(().into())
+		}
+
+		#[pallet::weight(T::DbWeight::get().reads_writes(2, 1).saturating_add(1_000_000u64))]
+		#[transactional]
+		pub fn update_promote_bootstrap_pool(
+			origin: OriginFor<T>,
+			promote_bootstrap_pool: bool,
+		) -> DispatchResult {
+			ensure_root(origin)?;
+
+			// BootstrapSchedule should exist but not finalized
+			// we allow this to go thru if the BootstrapSchedule exists and the phase is before finalized
+
+			ensure!(BootstrapSchedule::<T>::get().is_some(), Error::<T>::BootstrapNotSchduled);
+			ensure!(Phase::<T>::get() != BootstrapPhase::Finished, Error::<T>::BootstrapFinished);
+
+			PromoteBootstrapPool::<T>::put(promote_bootstrap_pool);
+
 			Ok(().into())
 		}
 
@@ -369,9 +439,9 @@ pub mod pallet {
 			Self::do_claim_liquidity_tokens(&sender, true)
 		}
 
-		#[pallet::weight(<<T as Config>::WeightInfo>::finalize().saturating_add(T::DbWeight::get().reads_writes(1, 1) * Into::<u64>::into(limit.unwrap_or_default())))]
+		#[pallet::weight(<<T as Config>::WeightInfo>::finalize().saturating_add(T::DbWeight::get().reads_writes(1, 1).saturating_mul(Into::<u64>::into(*limit).saturating_add(u64::one()))))]
 		#[transactional]
-		pub fn finalize(origin: OriginFor<T>, mut limit: Option<u32>) -> DispatchResult {
+		pub fn finalize(origin: OriginFor<T>, mut limit: u32) -> DispatchResult {
 			ensure_root(origin)?;
 
 			ensure!(Self::phase() == BootstrapPhase::Finished, Error::<T>::NotFinishedYet);
@@ -381,28 +451,36 @@ pub mod pallet {
 				Error::<T>::BootstrapNotReadyToBeFinished
 			);
 
-			for result in [
-				VestedProvisions::<T>::remove_all(limit),
-				WhitelistedAccount::<T>::remove_all(limit),
-				ClaimedRewards::<T>::remove_all(limit),
-				Provisions::<T>::remove_all(limit),
-			] {
-				match (result, limit.as_mut()) {
-					(KillStorageResult::AllRemoved(num_removed), Some(l)) |
-					(KillStorageResult::SomeRemaining(num_removed), Some(l))
-						if *l > num_removed =>
-					{
-						*l -= num_removed;
-					},
-					(KillStorageResult::AllRemoved(num_removed), Some(l)) |
-					(KillStorageResult::SomeRemaining(num_removed), Some(l))
-						if *l <= num_removed =>
-					{
-						Self::deposit_event(Event::BootstrapParitallyFinalized);
-						return Ok(().into())
-					},
-					_ => {},
-				};
+			match VestedProvisions::<T>::clear(limit, None).into() {
+				KillStorageResult::AllRemoved(num_iter) => limit = limit.saturating_sub(num_iter),
+				KillStorageResult::SomeRemaining(_) => {
+					Self::deposit_event(Event::BootstrapParitallyFinalized);
+					return Ok(().into())
+				},
+			}
+
+			match WhitelistedAccount::<T>::clear(limit, None).into() {
+				KillStorageResult::AllRemoved(num_iter) => limit = limit.saturating_sub(num_iter),
+				KillStorageResult::SomeRemaining(_) => {
+					Self::deposit_event(Event::BootstrapParitallyFinalized);
+					return Ok(().into())
+				},
+			}
+
+			match ClaimedRewards::<T>::clear(limit, None).into() {
+				KillStorageResult::AllRemoved(num_iter) => limit = limit.saturating_sub(num_iter),
+				KillStorageResult::SomeRemaining(_) => {
+					Self::deposit_event(Event::BootstrapParitallyFinalized);
+					return Ok(().into())
+				},
+			}
+
+			match Provisions::<T>::clear(limit, None).into() {
+				KillStorageResult::AllRemoved(num_iter) => limit = limit.saturating_sub(num_iter),
+				KillStorageResult::SomeRemaining(_) => {
+					Self::deposit_event(Event::BootstrapParitallyFinalized);
+					return Ok(().into())
+				},
 			}
 
 			Phase::<T>::put(BootstrapPhase::BeforeStart);
@@ -419,6 +497,7 @@ pub mod pallet {
 			}
 			Valuations::<T>::kill();
 			ActivePair::<T>::kill();
+			PromoteBootstrapPool::<T>::kill();
 
 			if let Some(bootstrap) = BootstrapSchedule::<T>::take() {
 				ArchivedBootstrap::<T>::mutate(|v| {
@@ -482,6 +561,13 @@ pub mod pallet {
 		TokenIdDoesNotExists,
 		/// Token activations failed
 		TokensActivationFailed,
+		/// Bootstrap not scheduled
+		BootstrapNotSchduled,
+		/// Bootstrap already Finished
+		BootstrapFinished,
+		/// Bootstrap can only be updated or cancelled
+		/// BootstrapUpdateBuffer blocks or more before bootstrap start
+		TooLateToUpdateBootstrap,
 	}
 
 	#[pallet::event]
@@ -491,6 +577,8 @@ pub mod pallet {
 		Provisioned(TokenId, Balance),
 		/// Funds provisioned using vested tokens
 		VestedProvisioned(TokenId, Balance),
+		/// The activation of the rewards liquidity tokens failed
+		RewardsLiquidityAcitvationFailed(T::AccountId, TokenId, Balance),
 		/// Rewards claimed
 		RewardsClaimed(TokenId, Balance),
 		/// account whitelisted
@@ -705,10 +793,16 @@ impl<T: Config> Pallet<T> {
 		let provision = Self::provisions(who, token_id);
 		let (vested_provision, lock_start, lock_end) = Self::vested_provisions(who, token_id);
 		let (_, liquidity) = Self::minted_liquidity();
-		let rewards = multiply_by_rational(liquidity / 2, provision, valuation)
-			.map_err(|_| Error::<T>::MathOverflow)?;
-		let vested_rewards = multiply_by_rational(liquidity / 2, vested_provision, valuation)
-			.map_err(|_| Error::<T>::MathOverflow)?;
+		let rewards =
+			multiply_by_rational_with_rounding(liquidity / 2, provision, valuation, Rounding::Down)
+				.ok_or(Error::<T>::MathOverflow)?;
+		let vested_rewards = multiply_by_rational_with_rounding(
+			liquidity / 2,
+			vested_provision,
+			valuation,
+			Rounding::Down,
+		)
+		.ok_or(Error::<T>::MathOverflow)?;
 		Ok((rewards, vested_rewards, (lock_start, lock_end)))
 	}
 
@@ -781,12 +875,27 @@ impl<T: Config> Pallet<T> {
 				.checked_add(first_token_rewards)
 				.ok_or(Error::<T>::MathOverflow)?;
 			if non_vested_rewards > 0 {
-				<T as Config>::RewardsApi::activate_liquidity_tokens(
+				let activate_result = <T as Config>::RewardsApi::activate_liquidity_tokens(
 					&who,
 					liq_token_id.into(),
 					non_vested_rewards,
-				)
-				.map_err(|_| Error::<T>::TokensActivationFailed)?;
+				);
+				if let Err(err) = activate_result {
+					log!(
+						error,
+						"Activating liquidity tokens failed upon bootstrap claim rewards = ({:?}, {}, {}, {:?})",
+						who,
+						liq_token_id,
+						non_vested_rewards,
+						err
+					);
+
+					Self::deposit_event(Event::RewardsLiquidityAcitvationFailed(
+						who.clone(),
+						liq_token_id,
+						non_vested_rewards,
+					));
+				};
 			}
 		}
 

@@ -1,6 +1,6 @@
 {
-  "name": "dev-test-encrypted-transactions",
-  "version": "1.0.0",
+  "name": "parachain-registrator",
+  "version": "1.0.2",
   "main": "index.ts",
   "license": "MIT",
   "type": "module",

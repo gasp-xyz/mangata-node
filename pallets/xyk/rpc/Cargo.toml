@@ -8,17 +8,17 @@ license = "GPL-3.0-or-later"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0" }
-jsonrpsee = { version = "0.13.0", features = ["server", "macros"] }
+jsonrpsee = { version = "0.15.1", features = ["server", "macros"] }
 serde = { version = "1.0.126", features = ["derive"], optional = true }
 
 # Substrate packages
 
-sp-api = { version = '4.0.0-dev', default-features = false , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
-sp-blockchain = { version = '4.0.0-dev', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
-sp-rpc = { version = '6.0.0', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
-sp-core = { version = '6.0.0', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
-sp-std = { version = '4.0.0-dev', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
-sp-runtime = { version = '6.0.0', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.24" }
+sp-api = { version = '4.0.0-dev', default-features = false , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-blockchain = { version = '4.0.0-dev', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-rpc = { version = '6.0.0', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-core = { version = '6.0.0', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-std = { version = '4.0.0-dev', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-runtime = { version = '6.0.0', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
 # local packages
 

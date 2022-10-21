@@ -1,7 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_support::pallet_prelude::*;
-use mangata_primitives::{Balance, TokenId};
+use mangata_types::{Balance, TokenId};
 use sp_runtime::traits::MaybeDisplay;
 use sp_std::fmt::Debug;
 
@@ -44,4 +44,6 @@ pub trait RewardsApi {
 		liquidity_asset_id: TokenId,
 		amount: Balance,
 	) -> DispatchResult;
+
+	fn promote_pool(liquidity_token_id: TokenId) -> bool;
 }

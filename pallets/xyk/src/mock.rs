@@ -12,16 +12,17 @@ use sp_runtime::{
 use crate as xyk;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{ConstU128, ConstU32, Contains, Everything, Nothing},
+	traits::{
+		tokens::currency::MultiTokenCurrency, ConstU128, ConstU32, Contains, Everything, Nothing,
+	},
 	PalletId,
 };
 
 use frame_system as system;
-use mangata_primitives::{Amount, Balance, TokenId};
-use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
-use orml_traits::parameter_type_with_key;
-use pallet_assets_info as assets_info;
-use pallet_issuance::{ActivedPoolQueryApi, PoolPromoteApi};
+use mangata_types::{assets::CustomMetadata, Amount, Balance, TokenId};
+use orml_tokens::{MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
+use orml_traits::{asset_registry::AssetMetadata, parameter_type_with_key};
+use pallet_issuance::PoolPromoteApi;
 use sp_runtime::{Perbill, Percent};
 use std::{collections::HashMap, sync::Mutex};
 
@@ -40,7 +41,6 @@ construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>},
-		AssetsInfoModule: assets_info::{Pallet, Call, Config, Storage, Event<T>},
 		XykStorage: xyk::{Pallet, Call, Storage, Event<T>, Config<T>},
 		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>},
 		Issuance: pallet_issuance::{Pallet, Event<T>, Storage},
@@ -195,29 +195,6 @@ impl orml_tokens::Config for Test {
 }
 
 parameter_types! {
-	pub const MinLengthName: usize = 1;
-	pub const MaxLengthName: usize = 255;
-	pub const MinLengthSymbol: usize = 1;
-	pub const MaxLengthSymbol: usize = 255;
-	pub const MinLengthDescription: usize = 1;
-	pub const MaxLengthDescription: usize = 255;
-	pub const MaxDecimals: u32 = 255;
-}
-
-impl assets_info::Config for Test {
-	type Event = Event;
-	type MinLengthName = MinLengthName;
-	type MaxLengthName = MaxLengthName;
-	type MinLengthSymbol = MinLengthSymbol;
-	type MaxLengthSymbol = MaxLengthSymbol;
-	type MinLengthDescription = MinLengthDescription;
-	type MaxLengthDescription = MaxLengthDescription;
-	type MaxDecimals = MaxDecimals;
-	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
-	type RelayNativeTokensValueScaleFactor = ();
-}
-
-parameter_types! {
 	pub const NativeCurrencyId: u32 = NATIVE_CURRENCY_ID;
 	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
 	pub const BnbTreasurySubAccDerive: [u8; 4] = *b"bnbt";
@@ -326,6 +303,40 @@ impl<T: frame_system::Config> Get<T::AccountId> for RewardsForAllAccountProvider
 		let mut init_account32 = sp_runtime::AccountId32::as_ref(&account32);
 		let init_account = T::AccountId::decode(&mut init_account32).unwrap();
 		init_account
+pub struct MockAssetRegister;
+
+lazy_static::lazy_static! {
+	static ref ASSET_REGISTER: Mutex<HashMap<TokenId, AssetMetadata<Balance, CustomMetadata>>> = {
+		let m = HashMap::new();
+		Mutex::new(m)
+	};
+}
+
+#[cfg(test)]
+impl MockAssetRegister {
+	pub fn instance() -> &'static Mutex<HashMap<TokenId, AssetMetadata<Balance, CustomMetadata>>> {
+		&ASSET_REGISTER
+	}
+}
+
+impl AssetMetadataMutationTrait for MockAssetRegister {
+	fn set_asset_info(
+		asset: TokenId,
+		name: Vec<u8>,
+		symbol: Vec<u8>,
+		decimals: u32,
+	) -> DispatchResult {
+		let meta = AssetMetadata {
+			name,
+			symbol,
+			decimals,
+			location: None,
+			additional: Default::default(),
+			existential_deposit: 0,
+		};
+		let mut register = ASSET_REGISTER.lock().unwrap();
+		register.insert(asset, meta);
+		Ok(())
 	}
 }
 
@@ -348,6 +359,7 @@ impl Config for Test {
 	type DisallowedPools = DummyBlacklistedPool;
 	type DisabledTokens = Nothing;
 	type RewardsForAllAccount = RewardsForAllAccountProvider<Self>;
+	type AssetMetadataMutation = MockAssetRegister;
 }
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -369,6 +381,7 @@ impl Config for Test {
 	type DisallowedPools = Nothing;
 	type DisabledTokens = Nothing;
 	type RewardsForAllAccount = RewardsForAllAccountProvider<Self>;
+	type AssetMetadataMutation = MockAssetRegister;
 }
 
 pub struct TokensActivationPassthrough<T: Config>(PhantomData<T>);

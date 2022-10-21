@@ -246,15 +246,10 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
-	fn activate_liquidity() -> Weight {
-		(89_332_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(7 as Weight))
+	fn claim_rewards_v2() -> Weight {
+		(156_724_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(8 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
-	}
-	fn deactivate_liquidity() -> Weight {
-		(101_598_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(9 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
 	fn claim_rewards_all_v2() -> Weight {
 		(86_814_000 as Weight)

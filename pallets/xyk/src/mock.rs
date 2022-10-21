@@ -293,9 +293,9 @@ impl Contains<(TokenId, TokenId)> for DummyBlacklistedPool {
 	}
 }
 
-pub struct RewardsForAllAccountProvider<T: frame_system::Config>(PhantomData<T>);
+pub struct RewardsMigrateAccountProvider<T: frame_system::Config>(PhantomData<T>);
 
-impl<T: frame_system::Config> Get<T::AccountId> for RewardsForAllAccountProvider<T> {
+impl<T: frame_system::Config> Get<T::AccountId> for RewardsMigrateAccountProvider<T> {
 	fn get() -> T::AccountId {
 		let account32: sp_runtime::AccountId32 =
 			hex_literal::hex!["d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"]
@@ -358,7 +358,7 @@ impl Config for Test {
 	type VestingProvider = Vesting;
 	type DisallowedPools = DummyBlacklistedPool;
 	type DisabledTokens = Nothing;
-	type RewardsForAllAccount = RewardsForAllAccountProvider<Self>;
+	type RewardsMigrateAccount = RewardsMigrateAccountProvider<Self>;
 	type AssetMetadataMutation = MockAssetRegister;
 }
 
@@ -380,7 +380,7 @@ impl Config for Test {
 	type VestingProvider = Vesting;
 	type DisallowedPools = Nothing;
 	type DisabledTokens = Nothing;
-	type RewardsForAllAccount = RewardsForAllAccountProvider<Self>;
+	type RewardsMigrateAccount = RewardsMigrateAccountProvider<Self>;
 	type AssetMetadataMutation = MockAssetRegister;
 }
 

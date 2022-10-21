@@ -6202,7 +6202,6 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "lazy_static",
  "log",
  "mangata-types 0.1.0 (git+https://github.com/mangata-finance/substrate?branch=mangata-dev)",
  "orml-tokens",
@@ -6276,6 +6275,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
+ "lazy_static",
  "log",
  "mangata-types 0.1.0 (git+https://github.com/mangata-finance/substrate?branch=mangata-dev)",
  "mp-multipurpose-liquidity",
@@ -13342,6 +13342,11 @@ dependencies = [
 ]
 
 [[patch.unused]]
+name = "cumulus-relay-chain-rpc-interface"
+version = "0.1.0"
+source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev#30b28d95f7f5d3b1602167c7e0b915e50e41be71"
+
+[[patch.unused]]
 name = "pallet-nicks"
 version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#8d29e219d32ee88c22eef88988ee4e9867f4943b"
@@ -13355,11 +13360,6 @@ source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#8
 name = "sp-serializer"
 version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#8d29e219d32ee88c22eef88988ee4e9867f4943b"
-
-[[patch.unused]]
-name = "cumulus-relay-chain-rpc-interface"
-version = "0.1.0"
-source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev#30b28d95f7f5d3b1602167c7e0b915e50e41be71"
 
 [[patch.unused]]
 name = "pallet-nicks"

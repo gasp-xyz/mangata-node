@@ -597,7 +597,7 @@ benchmarks! {
 
 		frame_system::Pallet::<T>::set_block_number(100_000_u32.into());
 
-	}: activate_liquidity_for_account(RawOrigin::Signed(T::RewardsForAllAccount::get().into()), caller.clone().into(), liquidity_asset_id.into(), initial_liquidity_amount, None)
+	}: activate_liquidity_for_account(RawOrigin::Signed(T::RewardsMigrateAccount::get().into()), caller.clone().into(), liquidity_asset_id.into(), initial_liquidity_amount, None)
 
 	verify {
 
@@ -633,10 +633,10 @@ benchmarks! {
 
 		frame_system::Pallet::<T>::set_block_number(100_000_u32.into());
 
-	}: deactivate_liquidity_for_account(RawOrigin::Signed(T::RewardsForAllAccount::get().into()), caller.clone().into(), liquidity_asset_id.into(), initial_liquidity_amount.into())
+	}: deactivate_liquidity_for_account(RawOrigin::Signed(T::RewardsMigrateAccount::get().into()), caller.clone().into(), liquidity_asset_id.into(), initial_liquidity_amount.into())
 	verify {
 		assert_err!(
-			Xyk::<T>::deactivate_liquidity_for_account(RawOrigin::Signed(T::RewardsForAllAccount::get().into()).into(), caller.clone().into(), liquidity_asset_id.into(), 1_u32.into()),
+			Xyk::<T>::deactivate_liquidity_for_account(RawOrigin::Signed(T::RewardsMigrateAccount::get().into()).into(), caller.clone().into(), liquidity_asset_id.into(), 1_u32.into()),
 			Error::<T>::NotEnoughAssets
 		)
 	}
@@ -679,7 +679,7 @@ benchmarks! {
 
 		forward_to_next_session!();
 
-	}: activate_liquidity_v2_for_account(RawOrigin::Signed(T::RewardsForAllAccount::get().into()), caller.clone().into(), liquidity_asset_id.into(), quater_of_minted_liquidity, None)
+	}: activate_liquidity_v2_for_account(RawOrigin::Signed(T::RewardsMigrateAccount::get().into()), caller.clone().into(), liquidity_asset_id.into(), quater_of_minted_liquidity, None)
 	verify {
 
 		assert_eq!(

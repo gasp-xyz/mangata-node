@@ -239,7 +239,7 @@ use mp_bootstrap::PoolCreateApi;
 use mp_multipurpose_liquidity::ActivateKind;
 use mp_traits::{ActivationReservesProviderTrait, XykFunctionsTrait};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
-use pallet_issuance::{ComputeIssuance, PoolPromoteApi};
+use pallet_issuance::{ActivedPoolQueryApi, ComputeIssuance, PoolPromoteApi};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
 use sp_arithmetic::{helpers_128bit::multiply_by_rational_with_rounding, per_things::Rounding};
 use sp_runtime::traits::{
@@ -331,6 +331,7 @@ pub mod pallet {
 		type TreasuryPalletId: Get<PalletId>;
 		type BnbTreasurySubAccDerive: Get<[u8; 4]>;
 		// type ActivedPoolQueryApi: ActivedPoolQueryApi;
+		type ActivedPoolQueryApi: ActivedPoolQueryApi;
 		type PoolPromoteApi: ComputeIssuance + PoolPromoteApi;
 		#[pallet::constant]
 		/// The account id that holds the liquidity mining issuance
@@ -349,7 +350,7 @@ pub mod pallet {
 		type AssetMetadataMutation: AssetMetadataMutationTrait;
 		type WeightInfo: WeightInfo;
 		#[pallet::constant]
-		type RewardsForAllAccount: Get<Self::AccountId>;
+		type RewardsMigrateAccount: Get<Self::AccountId>;
 	}
 
 	#[pallet::error]
@@ -872,7 +873,7 @@ pub mod pallet {
 			liquidity_token_id: TokenId,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			ensure!(sender == T::RewardsForAllAccount::get(), Error::<T>::NoRights);
+			ensure!(sender == T::RewardsMigrateAccount::get(), Error::<T>::NoRights);
 
 			<Self as XykFunctionsTrait<T::AccountId>>::rewards_migrate_v1_to_v2(
 				account,

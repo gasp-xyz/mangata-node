@@ -785,13 +785,6 @@ fn mangata_genesis(
 		},
 		verifier: mangata_kusama_runtime::VerifierConfig { key: relay_key },
 		council: Default::default(),
-		elections: mangata_kusama_runtime::ElectionsConfig {
-			members: tokens_endowment
-				.iter()
-				.cloned()
-				.map(|(_, _, member)| (member, 100 * 100_000_000_000_000))
-				.collect(),
-		},
 		sudo: mangata_kusama_runtime::SudoConfig {
 			// Assign network admin rights.
 			key: Some(root_key),

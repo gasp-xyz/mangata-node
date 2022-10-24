@@ -971,9 +971,9 @@ impl<T: Config> Pallet<T> {
 			.checked_mul(cumulative_work)
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError4))?
 			.checked_div(cummulative_work_max_possible)
-			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError3))?
+			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError5))?
 			.try_into()
-			.map_err(|_| DispatchError::from(Error::<T>::CalculateRewardsMathError3))?;
+			.map_err(|_| DispatchError::from(Error::<T>::CalculateRewardsMathError6))?;
 
 		Ok(current_rewards)
 	}
@@ -988,10 +988,11 @@ impl<T: Config> Pallet<T> {
 		let mut cummulative_work = U256::from(0);
 		let mut cummulative_work_max_possible_for_ratio = U256::from(1);
 
-		if time_passed != 0 {
+		if time_passed != 0 && liquidity_assets_amount != 0 {
+			let liquidity_assets_amount_u256: U256 = liquidity_assets_amount.into();
+
 			// whole formula: 	missing_at_last_checkpoint*106/6 - missing_at_last_checkpoint*106*precision/6/q_pow
 			// q_pow is multiplied by precision, thus there needs to be *precision in numenator as well
-			let liquidity_assets_amount_u256: U256 = liquidity_assets_amount.into();
 
 			cummulative_work_max_possible_for_ratio =
 				liquidity_assets_amount_u256.checked_mul(U256::from(time_passed)).ok_or_else(

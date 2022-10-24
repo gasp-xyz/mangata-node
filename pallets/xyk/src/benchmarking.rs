@@ -376,7 +376,7 @@ benchmarks! {
 		assert!(Xyk::<T>::calculate_rewards_amount_v2(caller.clone(), liquidity_asset_id).unwrap() > 0);
 
 	}: claim_rewards_all_v2(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id)
-	
+
 
 	verify {
 

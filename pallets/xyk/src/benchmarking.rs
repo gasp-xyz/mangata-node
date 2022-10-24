@@ -293,6 +293,8 @@ benchmarks! {
 		// 4. wait some
 		// 5. claim some
 
+		init!();
+
 		// NOTE: need to use actual issuance pallet and call its hooks properly
 		// NOTE: that duplicates test XYK::liquidity_rewards_claim_W
 		let caller: T::AccountId = whitelisted_caller();
@@ -497,4 +499,5 @@ benchmarks! {
 			quater_of_minted_liquidity
 		);
 	}
+	impl_benchmark_test_suite!(Xyk, crate::mock::new_test_ext(), crate::mock::Test)
 }

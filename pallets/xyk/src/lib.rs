@@ -320,7 +320,7 @@ pub mod pallet {
 	pub trait XykBenchmarkingConfig {}
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + XykBenchmarkingConfig {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type ActivationReservesProvider: ActivationReservesProviderTrait<
 			AccountId = Self::AccountId,

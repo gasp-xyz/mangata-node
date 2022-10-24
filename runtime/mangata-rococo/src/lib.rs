@@ -941,6 +941,7 @@ impl parachain_staking::Config for Runtime {
 	type WeightInfo = weights::parachain_staking_weights::ModuleWeight<Runtime>;
 }
 
+impl pallet_xyk::XykBenchmarkingConfig for Runtime {}
 impl parachain_staking::StakingBenchmarkConfig for Runtime {}
 
 parameter_types! {

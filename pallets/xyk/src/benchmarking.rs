@@ -294,7 +294,6 @@ benchmarks! {
 		// 5. claim some
 
 		init!();
-
 		// NOTE: need to use actual issuance pallet and call its hooks properly
 		// NOTE: that duplicates test XYK::liquidity_rewards_claim_W
 		let caller: T::AccountId = whitelisted_caller();
@@ -343,7 +342,6 @@ benchmarks! {
 		// 3. mint
 		// 4. wait some
 		// 5. claim all
-
 
 		init!();
 		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();

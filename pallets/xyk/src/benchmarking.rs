@@ -298,7 +298,7 @@ benchmarks! {
 		// NOTE: need to use actual issuance pallet and call its hooks properly
 		// NOTE: that duplicates test XYK::liquidity_rewards_claim_W
 		let caller: T::AccountId = whitelisted_caller();
-		let initial_amount:mangata_types::Balance = 1000000000000000;
+		let initial_amount:mangata_types::Balance = 1000000000000000000000000;
 		let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 		let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 		let non_native_asset_id2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
@@ -320,9 +320,10 @@ benchmarks! {
 		Xyk::<T>::activate_liquidity_v2(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id.into(), quater_of_minted_liquidity, None).unwrap();
 
 		forward_to_next_session!();
+		forward_to_next_session!();
 
 		let available_rewards = Xyk::<T>::calculate_rewards_amount_v2(caller.clone(), liquidity_asset_id).unwrap();
-
+		//println!("{}",available_rewards);
 		assert!(available_rewards > 0);
 
 	}: claim_rewards_v2(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id, 1)
@@ -375,6 +376,7 @@ benchmarks! {
 		assert!(Xyk::<T>::calculate_rewards_amount_v2(caller.clone(), liquidity_asset_id).unwrap() > 0);
 
 	}: claim_rewards_all_v2(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id)
+	
 
 	verify {
 

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: relaychain-alice
+  labels: {{- include "mangata-node.labels" . | nindent 4 }}
+    service: relaychain-alice
+spec:
+  ports:
+    - port: 30333
+      name: node-port
+    - port: 9944
+      name: wss
+  selector:
+    {{- include "mangata-node.selectorLabels" . | nindent 4 }}
+    service: relaychain-alice

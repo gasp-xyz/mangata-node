@@ -17,7 +17,6 @@ Common labels
 {{- define "mangata-node.labels" -}}
 {{ include "mangata-node.selectorLabels" . }}
 heritage: {{ .Release.Service }}
-environment: {{ .Values.env }}
 {{- end }}
 
 {{/*

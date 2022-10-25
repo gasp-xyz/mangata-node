@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: relaychain-bob
+  labels: {{- include "mangata-node.labels" . | nindent 4 }}
+    service: relaychain-bob
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "mangata-node.selectorLabels" . | nindent 6 }}
+      service: relaychain-bob
+  serviceName: relaychain-bob
+  template:
+    metadata:
+      labels:
+        {{- include "mangata-node.labels" . | nindent 8 }}
+        service: relaychain-bob
+    spec:
+      initContainers:
+        - name: chainspec-generator
+          image: parity/polkadot:v0.9.29
+          command: 
+            - "/bin/bash"
+            - "-c" 
+            - "/usr/bin/polkadot build-spec --chain=rococo-local --disable-default-bootnode --raw > /etc/mangata/local.json"
+          volumeMounts:
+            - mountPath: /etc/mangata/
+              name: node-chainspec-volume
+      containers:
+        - name: relaychain-bob
+          image: "parity/polkadot:v0.9.29"
+          command:
+            - /usr/bin/polkadot
+            - --bob
+            - --validator
+            - --port=30333
+            - --ws-port=9944
+            - --chain=/etc/mangata/local.json
+            - --unsafe-ws-external
+            - --rpc-port=40333
+            - --unsafe-rpc-external
+            - --rpc-cors=all
+            - "--bootnodes=/dns/relaychain-alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp"
+          ports:
+            - containerPort: 30333
+            - containerPort: 9944
+            - containerPort: 40333
+          env:
+            - name: RUST_LOG
+              value: "info"
+          volumeMounts:
+            - mountPath: /etc/mangata/
+              name: node-chainspec-volume
+            - mountPath: /root/.local/share/node
+              name: chaindata
+      volumes:
+        - name: node-chainspec-volume
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: chaindata
+      spec:
+        storageClassName: "standard-rwo"
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi

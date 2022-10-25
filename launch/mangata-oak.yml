@@ -55,13 +55,7 @@ parachains:
       - flags:
           - --bob
 
-#  local build with:
-#  comment docker/turing/build.sh:17 to skip adding a versioned tag to image
-#  cargo build --release --features neumann-node,dev-queue
-#  cp target/release/oak-collator ./
-#  ./docker/turing/build.sh
-  - image: oaknetwork/turing:latest
-#  - image: oaknetwork/turing:1.7.0
+  - image: oaknetwork/neumann:1.7.0
     chain:
       base: dev
       collators:

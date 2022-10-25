@@ -8,6 +8,8 @@
 //! - burn_liquidity
 //! - sell_asset
 //! - buy_asset
+//! - compound_rewards
+//! - provide_liquidity_with_conversion
 //!
 //! ### Supporting public functions:
 //! - calculate_sell_price
@@ -18,6 +20,7 @@
 //! - get_burn_amount
 //! - account_id
 //! - settle_treasury_buy_and_burn
+//! - calculate_balanced_sell_amount
 //!
 //! # fn create_pool
 //! -Sets the initial ratio/price of both assets to each other depending on amounts of each assets when creating pool.
@@ -196,6 +199,68 @@
 //!
 //! `NotEnoughTokens` -  burning more liquidity tokens than user owns
 //!
+//! # fn compound_rewards
+//! - Claims a specified portion of rewards, and provides them back into the selected pool.
+//! - Wraps claim_rewards, sell_asset and mint_liquidity, so that there is minimal surplus of reward asset left after operation.
+//! - Current impl assumes a MGX-ASSET pool & rewards in MGX asset
+//!
+//! ### arguments
+//! `origin` - sender of a fn, user claiming rewards and providing liquidity to the pool
+//!
+//! liquidity_asset_id - the pool where we provide the liquidity
+//!
+//! amount_permille - portion of rewards to claim
+//!
+//! ### Example
+//! ```ignore
+//! compound_rewards (
+//!    Origin::signed(1),
+//!    2,
+//!    1_000,
+//!)
+//! ```
+//! Claim all of the rewards, currently in MGX, and use them to provide liquidity for the pool with asset id 2
+//!
+//! ### Errors
+//! - inherits all of the errors from `claim_rewards`, `sell_asset` and `mint_liquidity`
+//!
+//! `NoSuchLiquidityAsset` - pool wiht given asset id does not exist
+//!
+//! `FunctionNotAvailableForThisToken` - not available for this asset id
+//!
+//! `NotEnoughtRewardsEarned` - not enough rewards available
+//!
+//! # fn provide_liquidity_with_conversion
+//! - Given one of the liquidity pool asset, computes balanced sell amount and provides liquidity into the pool
+//! - Wraps sell_asset and mint_liquidity
+//!
+//! ### arguments
+//! `origin` - sender of a fn, user claiming rewards and providing liquidity to the pool
+//!
+//! liquidity_asset_id - the pool where we provide the liquidity
+//!
+//! provided_asset_id - which asset of the pool
+//!
+//! provided_asset_amount - amount of the provided asset to use
+//!
+//! ### Example
+//! ```ignore
+//! provide_liquidity_with_conversion (
+//!    Origin::signed(1),
+//!    2,
+//!    1,
+//!    1_000_000,
+//!)
+//! ```
+//! Given the liquidity pool with asset id 2, we assume that asset id 1 is one of the pool's pair, compute balanced swap and provide liquidity into the pool
+//!
+//! ### Errors
+//! - inherits all of the errors from `sell_asset` and `mint_liquidity`
+//!
+//! `NoSuchLiquidityAsset` - pool wiht given asset id does not exist
+//!
+//! `FunctionNotAvailableForThisToken` - not available for this asset id
+//!
 //! # calculate_sell_price
 //! - Supporting public function accessible through rpc call which calculates and returns bought_token_amount while providing sold_token_amount and respective reserves
 //! # calculate_buy_price
@@ -215,6 +280,9 @@
 //! - First step is deciding whether we are using sold or bought token id, depending which is closer to mangata token
 //! - In second step, if tokens are mangata, they are placed to treasury and removed from corresponding pool. If tokens are not mangata, but are available in mangata pool,
 //!   they are swapped to mangata and placed to treasury and removed from corresponding pool. If token is not connected to mangata, token is temporarily placed to treasury and burn treasury.
+//! # calculate_balanced_sell_amount
+//! - Supporting public function accessible through rpc call which calculates how much amount x we need to swap from total_amount, so that after `y = swap(x)`, the resulting balance equals `(total_amount - x) / y = pool_x / pool_y`
+//! - the resulting amounts can then be used to `mint_liquidity` with minimal leftover after operation
 
 #![cfg_attr(not(feature = "std"), no_std)]
 

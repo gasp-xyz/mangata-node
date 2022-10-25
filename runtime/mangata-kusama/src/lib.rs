@@ -1415,6 +1415,21 @@ impl_runtime_apis! {
 				},
 			}
 		}
+
+		fn calculate_balanced_sell_amount(
+			total_amount: Balance,
+			reserve_amount: Balance,
+		) -> XYKRpcResult<Balance> {
+			XYKRpcResult {
+				price: Xyk::calculate_balanced_sell_amount(total_amount, reserve_amount)
+					.map_err(|e|
+						{
+							log::warn!(target:"xyk", "rpc 'XYK::calculate_balanced_sell_amount' error: '{:?}', returning default value instead", e);
+							e
+						}
+					).unwrap_or_default()
+			}
+		}
 	}
 
 	impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {

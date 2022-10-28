@@ -42,8 +42,8 @@ spec:
             - --unsafe-rpc-external
             - --rpc-cors=all
             - --node-key=0000000000000000000000000000000000000000000000000000000000000001
-            - --public-addr=/dns4/alice-2.mangata.online/tcp/30333
-            - --public-addr=/dns4/alice-2.mangata.online/tcp/9944/ws
+            - "--public-addr=/dns4/relaychain-alice.{{ .Values.env }}.mangata.online/tcp/30333"
+            - "--public-addr=/dns4/relaychain-alice-ws.{{ .Values.env }}.mangata.online/tcp/9944/ws"
           ports:
             - containerPort: 30333
             - containerPort: 9944

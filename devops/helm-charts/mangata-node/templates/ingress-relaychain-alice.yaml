@@ -3,30 +3,19 @@ kind: ComputeAddress
 metadata:
   name: relaychain-alice
   annotations:
-    cnrm.cloud.google.com/project-id: direct-pixel-353917
+    cnrm.cloud.google.com/project-id: "{{ .Values.gcp.project }}"
 spec:
   location: global
 ---
 apiVersion: networking.gke.io/v1
 kind: ManagedCertificate
 metadata:
-  name: relaychain-alice-2
+  name: relaychain-alice
   annotations:
-    cnrm.cloud.google.com/project-id: direct-pixel-353917
+    cnrm.cloud.google.com/project-id: "{{ .Values.gcp.project }}"
 spec:
   domains:
-    - alice-2.mangata.online
----
-apiVersion: cloud.google.com/v1
-kind: BackendConfig
-metadata:
-  name: test
-spec:
-  healthCheck:
-    timeoutSec: 1
-    type: HTTP
-    requestPath: /health
-    port: 40333
+    - "relaychain-alice-ws.{{ .Values.env }}.mangata.online"
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -34,13 +23,12 @@ metadata:
   name: relaychain-alice
   annotations:
     kubernetes.io/ingress.global-static-ip-name: relaychain-alice
-    networking.gke.io/managed-certificates: relaychain-alice-2
+    networking.gke.io/managed-certificates: relaychain-alice
     kubernetes.io/ingress.class: "gce"
-    external-dns.alpha.kubernetes.io/hostname: alice-2.mangata.online
-    kubernetes.io/ingress.allow-http: "false"
+    external-dns.alpha.kubernetes.io/hostname: "relaychain-alice-ws.{{ .Values.env }}.mangata.online"
 spec:
   rules:
-    - host: alice-2.mangata.online
+    - host: "relaychain-alice-ws.{{ .Values.env }}.mangata.online"
       http:
         paths:
         - pathType: ImplementationSpecific
@@ -49,13 +37,3 @@ spec:
               name: relaychain-alice
               port:
                 number: 9944
-    # - host: alice-2.mangata.online
-    #   http:
-    #     paths:
-    #       - backend:
-    #           service:
-    #             name: relaychain-alice-lb
-    #             port:
-    #               number: 9944
-    #         path: /
-    #         pathType: Prefix

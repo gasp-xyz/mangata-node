@@ -7,9 +7,11 @@ metadata:
 spec:
   ports:
     - port: 30333
-      name: node-port
+      name: p2p-port
+    - port: 40333
+      name: http-rpc
     - port: 9944
-      name: wss
+      name: http-ws
   selector:
     {{- include "mangata-node.selectorLabels" . | nindent 4 }}
     service: relaychain-bob

@@ -3,18 +3,19 @@ kind: Service
 metadata:
   name: relaychain-alice
   annotations:
-    cloud.google.com/neg: '{"ingress": true}'
-    beta.cloud.google.com/backend-config: '{"default": "test"}'
+    cloud.google.com/backend-config: '{"default": "websocket"}'
   labels: {{- include "mangata-node.labels" . | nindent 4 }}
     service: relaychain-alice
 spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Local
   ports:
     - port: 30333
-      name: node-port
+      name: p2p-port
     - port: 40333
-      name: rpc
+      name: http-rpc
     - port: 9944
-      name: wss
+      name: http-ws
   selector:
     {{- include "mangata-node.selectorLabels" . | nindent 4 }}
     service: relaychain-alice

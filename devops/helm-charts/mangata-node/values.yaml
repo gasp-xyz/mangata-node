@@ -1,6 +1,7 @@
 # Default values for mangata-node.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
+env: "pr-341"
 
 replicas: 1
 
@@ -9,3 +10,10 @@ image:
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: "v0.25.0"
+
+relaychain:
+  enabled: true
+  aliceUrl:
+
+gcp:
+  project: direct-pixel-353917

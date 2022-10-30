@@ -13523,11 +13523,6 @@ version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.29#2dadfe96fda9b748b6331b383a2c03b4d017a488"
 
 [[patch.unused]]
-name = "cumulus-relay-chain-rpc-interface"
-version = "0.1.0"
-source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev-v0.9.29#948ae3de7740129746bc3bcace84353fcd114019"
-
-[[patch.unused]]
 name = "pallet-nicks"
 version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.29#2dadfe96fda9b748b6331b383a2c03b4d017a488"
@@ -13541,3 +13536,8 @@ source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v
 name = "sp-serializer"
 version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.29#2dadfe96fda9b748b6331b383a2c03b4d017a488"
+
+[[patch.unused]]
+name = "cumulus-relay-chain-rpc-interface"
+version = "0.1.0"
+source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev-v0.9.29#948ae3de7740129746bc3bcace84353fcd114019"

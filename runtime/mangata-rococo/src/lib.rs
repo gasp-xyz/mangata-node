@@ -2,9 +2,6 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
-pub use artemis_asset;
-pub use artemis_erc20_app;
-pub use artemis_eth_app;
 use codec::{Decode, Encode};
 use frame_support::{
 	construct_runtime,
@@ -36,7 +33,6 @@ use orml_traits::{
 };
 pub use pallet_sudo;
 use pallet_transaction_payment::{Multiplier, OnChargeTransaction, TargetedFeeAdjustment};
-pub use pallet_verifier;
 use pallet_vesting_mangata_rpc_runtime_api::VestingInfosWithLockedAt;
 // Polkadot Imports
 use polkadot_runtime_common::BlockHashCount;
@@ -756,33 +752,6 @@ impl pallet_aura::Config for Runtime {
 	type MaxAuthorities = MaxAuthorities;
 }
 
-parameter_types! {
-	pub const MinLengthName: usize = 1;
-	pub const MaxLengthName: usize = 255;
-	pub const MinLengthSymbol: usize = 1;
-	pub const MaxLengthSymbol: usize = 255;
-	pub const MinLengthDescription: usize = 1;
-	pub const MaxLengthDescription: usize = 255;
-	pub const MaxDecimals: u32 = 255;
-}
-
-impl pallet_verifier::Config for Runtime {
-	type Event = Event;
-}
-
-impl artemis_asset::Config for Runtime {
-	type Event = Event;
-	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-}
-
-impl artemis_eth_app::Config for Runtime {
-	type Event = Event;
-}
-
-impl artemis_erc20_app::Config for Runtime {
-	type Event = Event;
-}
-
 impl pallet_sudo::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
@@ -1087,12 +1056,6 @@ construct_runtime!(
 		} = 1,
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 2,
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 3,
-
-		// Snowbridge stuff
-		Verifier: pallet_verifier::{Pallet, Call, Storage, Event, Config<T>} = 5,
-		BridgedAsset: artemis_asset::{Pallet, Call, Config<T>, Storage, Event<T>} = 6,
-		ETH: artemis_eth_app::{Pallet, Call, Storage, Event<T>} = 7,
-		ERC20: artemis_erc20_app::{Pallet, Call, Storage, Event<T>} = 8,
 
 		// Monetary stuff.
 		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>} = 10,
@@ -1443,8 +1406,21 @@ impl_runtime_apis! {
 			(weight, RuntimeBlockWeights::get().max_block)
 		}
 
-		fn execute_block_no_check(block: Block) -> Weight {
-			Executive::execute_block_no_check(block)
+		fn execute_block(
+			block: Block,
+			state_root_check: bool,
+			select: frame_try_runtime::TryStateSelect
+		) -> Weight {
+			log::info!(
+				target: "node-runtime",
+				"try-runtime: executing block {:?} / root checks: {:?} / try-state-select: {:?}",
+				block.header.hash(),
+				state_root_check,
+				select,
+			);
+			// NOTE: intentional unwrap: we don't want to propagate the error backwards, and want to
+			// have a backtrace here.
+			Executive::try_execute_block(block, state_root_check, select).unwrap()
 		}
 	}
 

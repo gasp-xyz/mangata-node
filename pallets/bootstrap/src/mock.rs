@@ -328,8 +328,8 @@ where
 	u128: From<<T as frame_system::Config>::AccountId>,
 {
 	pub fn balance(id: TokenId, who: T::AccountId) -> Balance {
-		Tokens::accounts(Into::<u128>::into(who.clone()), Into::<u32>::into(id.clone())).free
-			- Tokens::accounts(Into::<u128>::into(who.clone()), Into::<u32>::into(id.clone()))
+		Tokens::accounts(Into::<u128>::into(who.clone()), Into::<u32>::into(id.clone())).free -
+			Tokens::accounts(Into::<u128>::into(who.clone()), Into::<u32>::into(id.clone()))
 				.frozen
 	}
 

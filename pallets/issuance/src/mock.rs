@@ -245,8 +245,8 @@ pub(crate) fn roll_to_while_minting(n: u64, expected_amount_minted: Option<Balan
 		session_number = System::block_number().saturated_into::<u32>() / BlocksPerRound::get();
 		session_issuance = <Issuance as GetIssuance>::get_all_issuance(session_number)
 			.expect("session issuance is always populated in advance");
-		block_issuance = (session_issuance.0 + session_issuance.1)
-			/ (BlocksPerRound::get().saturated_into::<u128>());
+		block_issuance = (session_issuance.0 + session_issuance.1) /
+			(BlocksPerRound::get().saturated_into::<u128>());
 
 		if let Some(x) = expected_amount_minted {
 			assert_eq!(x, block_issuance);

@@ -550,9 +550,9 @@ fn mangata_genesis(
 				.iter()
 				.cloned()
 				.map(|(_, _, member)| (member, 100 * 100_000_000_000_000))
+				.collect()
 				.sort()
-				.dedup()
-				.collect(),
+				.dedup(),
 		},
 		sudo: mangata_rococo_runtime::SudoConfig {
 			// Assign network admin rights.

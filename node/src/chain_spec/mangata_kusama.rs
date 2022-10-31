@@ -286,11 +286,7 @@ pub fn development_config() -> ChainSpec {
 						300_000_000__000_000_000_000_000_000u128,
 						get_account_id_from_seed::<sr25519::Public>("Alice"),
 					),
-					(
-						1u32,
-						0u128,
-						get_account_id_from_seed::<sr25519::Public>("Alice"),
-					),
+					(1u32, 0u128, get_account_id_from_seed::<sr25519::Public>("Alice")),
 					(
 						0u32,
 						400_000_000__000_000_000_000_000_000u128,
@@ -447,11 +443,7 @@ pub fn local_config() -> ChainSpec {
 						get_account_id_from_seed::<sr25519::Public>("Alice"),
 					),
 					// ETH
-					(
-						1u32,
-						0u128,
-						get_account_id_from_seed::<sr25519::Public>("Alice"),
-					),
+					(1u32, 0u128, get_account_id_from_seed::<sr25519::Public>("Alice")),
 					(
 						0u32,
 						400_000_000__000_000_000_000_000_000u128,

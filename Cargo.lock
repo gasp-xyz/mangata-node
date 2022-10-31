@@ -13019,9 +13019,28 @@ dependencies = [
 ]
 
 [[patch.unused]]
-name = "mangata-types"
-version = "0.1.0"
-source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.29#2dadfe96fda9b748b6331b383a2c03b4d017a488"
+name = "pallet-nicks"
+version = "4.0.0-dev"
+
+[[patch.unused]]
+name = "sc-consensus-uncles"
+version = "0.10.0-dev"
+
+[[patch.unused]]
+name = "sp-serializer"
+version = "4.0.0-dev"
+
+[[patch.unused]]
+name = "pallet-nicks"
+version = "4.0.0-dev"
+
+[[patch.unused]]
+name = "sc-consensus-uncles"
+version = "0.10.0-dev"
+
+[[patch.unused]]
+name = "sp-serializer"
+version = "4.0.0-dev"
 
 [[patch.unused]]
 name = "cumulus-relay-chain-rpc-interface"
@@ -13041,25 +13060,6 @@ name = "sp-serializer"
 version = "4.0.0-dev"
 
 [[patch.unused]]
-name = "pallet-nicks"
-version = "4.0.0-dev"
-
-[[patch.unused]]
-name = "sc-consensus-uncles"
-version = "0.10.0-dev"
-
-[[patch.unused]]
-name = "sp-serializer"
-version = "4.0.0-dev"
-
-[[patch.unused]]
-name = "pallet-nicks"
-version = "4.0.0-dev"
-
-[[patch.unused]]
-name = "sc-consensus-uncles"
-version = "0.10.0-dev"
-
-[[patch.unused]]
-name = "sp-serializer"
-version = "4.0.0-dev"
+name = "mangata-types"
+version = "0.1.0"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.29#2dadfe96fda9b748b6331b383a2c03b4d017a488"

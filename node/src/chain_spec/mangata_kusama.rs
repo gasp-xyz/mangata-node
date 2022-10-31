@@ -719,6 +719,8 @@ fn mangata_genesis(
 				.iter()
 				.cloned()
 				.map(|(_, _, member)| (member, 100 * 100_000_000_000_000))
+				.sort()
+				.dedup()
 				.collect(),
 		},
 		sudo: mangata_kusama_runtime::SudoConfig {

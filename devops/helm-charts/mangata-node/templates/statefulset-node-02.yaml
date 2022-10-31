@@ -36,11 +36,13 @@ spec:
             - --rpc-methods=Unsafe
             - --rpc-cors=all
             - "--public-addr=/dns4/node-02.{{ .Values.env }}.mangata.online/tcp/30333"
-            - --bootnodes=/dns4/node-01/tcp/30333/p2p/12D3KooWSCufgHzV4fCwRijfH2k3abrpAJxTKxEvN1FDuRXA2U9x
+            - --bootnodes=/dns4/node-01/tcp/30333/p2p/12D3KooWGsinuijQt1R8AvYDRuev129sHSXPrXnRFVVCQL4CwXMZ
+            - --bob
             - --
             # relay
             - --bootnodes=/dns/relaychain-alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
             - --execution=wasm
+            - --wasm-execution=compiled
             - --chain=/app/rococo-local.json
           ports:
             - containerPort: 30333

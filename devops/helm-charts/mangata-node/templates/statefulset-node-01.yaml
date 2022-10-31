@@ -28,6 +28,9 @@ spec:
             - --chain=/app/mangata-rococo-local-testnet-2110.json
             - --collator
             - --force-authoring
+            - --wasm-execution=compiled
+            - --execution=wasm
+            - --alice
             - --port=30333
             - --ws-port=9944
             - --rpc-port=9933
@@ -35,12 +38,13 @@ spec:
             - --unsafe-rpc-external
             - --rpc-methods=Unsafe
             - --rpc-cors=all
-            - --node-key=0000000000000000000000000000000000000000000000000000000000000003
+            - --node-key=b0cc32fda481d8ea7f10bfaa73bac980dae7608977c67936728f486834d2e011
             - "--public-addr=/dns4/node-01.{{ .Values.env }}.mangata.online/tcp/30333"
             - --
             # relay
             - --bootnodes=/dns/relaychain-alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
             - --execution=wasm
+            - --wasm-execution=compiled
             - --chain=/app/rococo-local.json
           ports:
             - containerPort: 30333

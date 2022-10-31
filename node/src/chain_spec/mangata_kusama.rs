@@ -715,13 +715,7 @@ fn mangata_genesis(
 		},
 		council: Default::default(),
 		elections: mangata_kusama_runtime::ElectionsConfig {
-			members: tokens_endowment
-				.iter()
-				.cloned()
-				.map(|(_, _, member)| (member, 100 * 100_000_000_000_000))
-				.collect()
-				.sort()
-				.dedup(),
+			members: vec![],
 		},
 		sudo: mangata_kusama_runtime::SudoConfig {
 			// Assign network admin rights.

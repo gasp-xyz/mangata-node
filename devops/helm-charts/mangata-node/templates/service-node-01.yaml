@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-01
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: "node-01.{{ .Values.env }}.mangata.online"
+  labels: {{- include "mangata-node.labels" . | nindent 4 }}
+    service: node-01
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Local
+  ports:
+    - port: 30333
+      name: p2p-port
+    - port: 40333
+      name: http-rpc
+    - port: 9944
+      name: http-ws
+  selector:
+    {{- include "mangata-node.selectorLabels" . | nindent 4 }}
+    service: node-01

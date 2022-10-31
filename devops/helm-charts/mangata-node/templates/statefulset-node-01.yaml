@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: node-01
+  labels: {{- include "mangata-node.labels" . | nindent 4 }}
+    service: node-01
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "mangata-node.selectorLabels" . | nindent 6 }}
+      service: node-01
+  serviceName: node-01
+  template:
+    metadata:
+      labels:
+        {{- include "mangata-node.labels" . | nindent 8 }}
+        service: node-01
+    spec:
+      containers:
+        - name: node-01
+          image: "mangatasolutions/mangata-node-dev:rococo-0.25.0"
+          command:
+            # parachain
+            - /mangata/node
+            - --name=node-01
+            - --base-path=/mangata/data
+            - --chain=/app/mangata-rococo-local-testnet-2110.json
+            - --collator
+            - --force-authoring
+            - --port=30333
+            - --ws-port=9944
+            - --rpc-port=9933
+            - --unsafe-ws-external
+            - --unsafe-rpc-external
+            - --rpc-methods=Unsafe
+            - --rpc-cors=all
+            - --node-key=0000000000000000000000000000000000000000000000000000000000000003
+            - "--public-addr=/dns4/node-01.{{ .Values.env }}.mangata.online/tcp/30333"
+            - --
+            # relay
+            - --bootnodes=/dns/relaychain-alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
+            - --execution=wasm
+            - --chain=/app/rococo-local.json
+          ports:
+            - containerPort: 30333
+            - containerPort: 9944
+            - containerPort: 40333
+          env:
+            - name: RUST_LOG
+              value: "info"
+          volumeMounts:
+            - mountPath: /mangata/data
+              name: chaindata
+  volumeClaimTemplates:
+    - metadata:
+        name: chaindata
+      spec:
+        storageClassName: "standard-rwo"
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi

@@ -17,26 +17,26 @@ spec:
         {{- include "mangata-node.labels" . | nindent 8 }}
         service: relaychain-bob
     spec:
-      initContainers:
-        - name: chainspec-generator
-          image: parity/polkadot:v0.9.29
-          command: 
-            - "/bin/bash"
-            - "-c" 
-            - "/usr/bin/polkadot build-spec --chain=rococo-local --disable-default-bootnode --raw > /etc/mangata/local.json"
-          volumeMounts:
-            - mountPath: /etc/mangata/
-              name: node-chainspec-volume
+      # initContainers:
+      #   - name: chainspec-generator
+      #     image: parity/polkadot:v0.9.29
+      #     command: 
+      #       - "/bin/bash"
+      #       - "-c" 
+      #       - "/usr/bin/polkadot build-spec --chain=rococo-local --disable-default-bootnode --raw > /etc/mangata/local.json"
+      #     volumeMounts:
+      #       - mountPath: /etc/mangata/
+      #         name: node-chainspec-volume
       containers:
         - name: relaychain-bob
-          image: "parity/polkadot:v0.9.29"
+          image: "mangatasolutions/polkadot-dev:v0.9.29"
           command:
             - /usr/bin/polkadot
             - --bob
             - --validator
             - --port=30333
             - --ws-port=9944
-            - --chain=/etc/mangata/local.json
+            - --chain=/app/rococo-local.json
             - --unsafe-ws-external
             - --rpc-port=40333
             - --unsafe-rpc-external
@@ -50,13 +50,13 @@ spec:
             - name: RUST_LOG
               value: "info"
           volumeMounts:
-            - mountPath: /etc/mangata/
-              name: node-chainspec-volume
+            # - mountPath: /etc/mangata/
+            #   name: node-chainspec-volume
             - mountPath: /polkadot/.local/share/polkadot
               name: chaindata
-      volumes:
-        - name: node-chainspec-volume
-          emptyDir: {}
+      # volumes:
+      #   - name: node-chainspec-volume
+      #     emptyDir: {}
       securityContext:
         runAsUser: 1000
         runAsGroup: 1000

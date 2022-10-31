@@ -18,6 +18,8 @@ scale-info = { version = "2.1.1", default-features = false, features = ["derive"
 frame-support = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.29" }
 frame-benchmarking = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.29" }
 frame-system = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.29" }
+frame-executive = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.29" }
+frame-try-runtime = { git = "https://github.com/mangata-finance/substrate", default-features = false, optional = true , branch = "mangata-dev-v0.9.29" }
 sp-runtime = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.29" }
 sp-core = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.29" }
 sp-std = { version = "4.0.0-dev", default-features = false , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.29" }
@@ -59,4 +61,9 @@ std = [
 
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
 
-try-runtime = [ "frame-support/try-runtime" ]
+try-runtime = [
+	"frame-support/try-runtime",
+	"frame-try-runtime",
+	"frame-executive/try-runtime",
+	"frame-system/try-runtime",
+]

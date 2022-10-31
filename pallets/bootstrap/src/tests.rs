@@ -329,8 +329,8 @@ fn test_whitelist_account_deposit_event() {
 		set_up();
 		Bootstrap::whitelist_accounts(Origin::root(), vec![USER_ID]).unwrap();
 
-		assert!(System::events().iter().any(|record| record.event ==
-			crate::mock::Event::Bootstrap(crate::Event::<Test>::AccountsWhitelisted)));
+		assert!(System::events().iter().any(|record| record.event
+			== crate::mock::Event::Bootstrap(crate::Event::<Test>::AccountsWhitelisted)));
 	});
 }
 
@@ -1134,10 +1134,10 @@ fn test_rewards_are_distributed_properly_with_multiple_user() {
 			user2_expected_liq_amount
 		);
 
-		assert!(System::events().iter().any(|record| record.event ==
-			rewards_claimed_ev(liquidity_token_id, user_expected_liq_amount)));
-		assert!(System::events().iter().any(|record| record.event ==
-			rewards_claimed_ev(liquidity_token_id, user2_expected_liq_amount)));
+		assert!(System::events().iter().any(|record| record.event
+			== rewards_claimed_ev(liquidity_token_id, user_expected_liq_amount)));
+		assert!(System::events().iter().any(|record| record.event
+			== rewards_claimed_ev(liquidity_token_id, user2_expected_liq_amount)));
 	});
 }
 

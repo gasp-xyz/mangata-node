@@ -238,7 +238,7 @@ impl FixedConversionRateProvider for FeePerSecondProvider {
 					target: "xcm::weight", "fee_per_second: asset: {:?}, fps:{:?}",
 					asset_id, fee_per_second
 				);
-				return Some(fee_per_second)
+				return Some(fee_per_second);
 			}
 		}
 		None
@@ -437,7 +437,7 @@ pub struct TokenIdConvert;
 impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
 	fn convert(id: TokenId) -> Option<MultiLocation> {
 		if id == ROC_TOKEN_ID {
-			return Some(MultiLocation::parent())
+			return Some(MultiLocation::parent());
 		}
 
 		match AssetRegistryOf::<Runtime>::multilocation(&id) {
@@ -455,16 +455,19 @@ impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
 impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 	fn convert(location: MultiLocation) -> Option<TokenId> {
 		if location == MultiLocation::parent() {
-			return Some(ROC_TOKEN_ID)
+			return Some(ROC_TOKEN_ID);
 		}
 
 		match location {
 			MultiLocation { parents: 1, interior: X2(Parachain(para_id), GeneralKey(key)) }
 				if ParaId::from(para_id) == ParachainInfo::get() =>
-				TokenId::decode(&mut &(*key)[..]).ok(),
+			{
+				TokenId::decode(&mut &(*key)[..]).ok()
+			},
 
-			MultiLocation { parents: 0, interior: X1(GeneralKey(key)) } =>
-				TokenId::decode(&mut &(*key)[..]).ok(),
+			MultiLocation { parents: 0, interior: X1(GeneralKey(key)) } => {
+				TokenId::decode(&mut &(*key)[..]).ok()
+			},
 
 			_ => AssetRegistryOf::<Runtime>::location_to_asset_id(location.clone()),
 		}

@@ -11994,7 +11994,7 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 0.1.10",
+ "cfg-if 1.0.0",
  "digest 0.10.5",
  "rand 0.8.5",
  "static_assertions",
@@ -13031,6 +13031,11 @@ name = "sp-serializer"
 version = "4.0.0-dev"
 
 [[patch.unused]]
+name = "cumulus-relay-chain-rpc-interface"
+version = "0.1.0"
+source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev-v0.9.29#948ae3de7740129746bc3bcace84353fcd114019"
+
+[[patch.unused]]
 name = "pallet-nicks"
 version = "4.0.0-dev"
 
@@ -13041,11 +13046,6 @@ version = "0.10.0-dev"
 [[patch.unused]]
 name = "sp-serializer"
 version = "4.0.0-dev"
-
-[[patch.unused]]
-name = "cumulus-relay-chain-rpc-interface"
-version = "0.1.0"
-source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev-v0.9.29#948ae3de7740129746bc3bcace84353fcd114019"
 
 [[patch.unused]]
 name = "pallet-nicks"

@@ -545,9 +545,7 @@ fn mangata_genesis(
 				.collect(),
 		},
 		council: Default::default(),
-		elections: mangata_rococo_runtime::ElectionsConfig {
-			members: vec![],
-		},
+		elections: mangata_rococo_runtime::ElectionsConfig { members: vec![] },
 		sudo: mangata_rococo_runtime::SudoConfig {
 			// Assign network admin rights.
 			key: Some(root_key),

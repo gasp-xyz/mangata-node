@@ -2,6 +2,128 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+//! # Bootstrap Module
+//!
+//! The Bootstrap module provides price discovery mechanism between two tokens. When bootstrap
+//! is finished all provisioned tokens are collected and used for new liquidity token(pool) creation.
+//! From that moment people that participated in bootstrap can claim their liquidity tokens share using
+//! dedicated. Also since that moment its possible to exchange/trade tokens that were bootstraped using `Xyk `pallet.
+//!
+//!
+//! ### Features
+//!
+//! * Bootstrap pallet is reusable** - after bootstrap between tokens `X` and `Y` is finished the following one can be scheduled (with different pair of tokens).
+//! * After bootstrap is finished new liquidity token (`Z`) is created and [`pallet_xyk`] can be used to:
+//!		* exchange/trade `X` and `Y` tokens
+//!		* mint/burn `Z` tokens
+//!
+//! * Bootstrap state transition from [`BeforeStart`] -> [`Finished`] happens automatically thanks to substrate framework
+//! hooks. **Only transition from `Finished` -> `BeforeStart` needs to be triggered manually because
+//! cleaning up storage is complex operation and might not fit in a single block.(as it needs to
+//! remove a lot of keys/value pair from the runtime storage)**
+//!
+//! # How to bootstrap
+//! 1. Entity with sudo privileges needs to use [`Pallet::schedule_bootstrap`] to initiate new bootstrap
+//!
+//! 1.1 [**optional**] depending on fact if [`BootstrapPhase::Whitelist`] is enabled entity
+//!   with sudo privileges can whitelist particular users using [`Pallet::whitelist_accounts`]
+//!
+//! 1.2 [**optional**] [`Pallet::update_promote_bootstrap_pool`] can be used to enable or disable
+//!   automatic pool promotion of liquidity pool.
+//!
+//! 1.3 [**optional**] [`Pallet::cancel_bootstrap`] can be used to cancel bootstrap event
+//!
+//! 2. When blockchain reaches block that is scheduled as start od the bootstrap participation is
+//!    automatically enabled:
+//!    * in [`BootstrapPhase::Whitelist`] phase only whitelisted accounts [`Pallet::whitelist_accounts`]
+//!    can participate
+//!    * in [`BootstrapPhase::Public`] phase everyone can participate
+//!
+//! 3. When blockchain reaches block:
+//! ```ignore
+//!  current_block_nr > bootstrap_start_block + whitelist_phase_length + public_phase_length
+//! ```
+//!
+//! Bootstrap is automatically finished and following participations will not be accepted. Also new
+//! liquidity pool is created from all the tokens gathered during bootstrap (see [`Valuations`]). `TokenId`
+//! of newly created liquidity token as well as amount of minted tokens is persisted into [`MintedLiquidity`]
+//! storage item. All the liquidity token minted as a result of pool creation are now stored in
+//! bootstrap pallet account.
+//!
+//! 4. Accounts that participated in bootstrap can claim their liquidity pool share. Share is
+//!    calculated proportionally based on provisioned amount. One can use one of below extrinsics to
+//!    claim rewards:
+//!    * [`Pallet::claim_liquidity_tokens`]
+//!    * [`Pallet::claim_and_activate_liquidity_tokens`]
+//!
+//! 5. When every participant of the bootstrap has claimed their liquidity tokens entity with sudo
+//!    rights can [`Pallet::finalize`] whole bootstrap event. If there are some accounts that still
+//!    hasnt claim their tokens [`Pallet::claim_liquidity_tokens_for_account`] can be used to do
+//!    that in behalf of these accounts. When [`Pallet::finalize`] results with [`Event::BootstrapFinalized`]
+//!    Bootstrap is finalized and another bootstrap can be scheduled (as described in 1st point).
+//!
+//! Bootstrap has specific lifecycle as presented below:
+//! ```plantuml
+//! @startuml
+//! [*] --> BeforeStart
+//! BeforeStart --> Whitelist
+//! BeforeStart --> Public
+//! Whitelist --> Public
+//! Public --> Finished
+//! Finished --> BeforeStart
+//! @enduml
+//! ```
+//!
+//! # API
+//!
+//! ## Runtime Storage Entries
+//!
+//! - [`Provisions`] - stores information about who provisioned what (non vested tokens)
+//!
+//! - [`VestedProvisions`] - stores information about who provisioned what (vested tokens)
+//!
+//! - [`WhitelistedAccount`] - list of accounts allowed to participate in [`BootstrapPhase::Whitelist`]
+//!
+//! - [`Phase`] - current state of bootstrap
+//!
+//! - [`Valuations`] - sum of all provisions in active bootstrap
+//!
+//! - [`BootstrapSchedule`] - parameters of active bootstrap stored as for more details check [`Pallet::schedule_bootstrap`]
+//!
+//!  ```ignore
+//!  [
+//!			block_nr: T::BlockNumber,
+//!			first_token_id: u32,
+//!			second_token_id: u32,
+//!			[
+//!					ratio_numerator:u128,
+//!					ratio_denominator:u128
+//!			]
+//!  ]
+//!  ```
+//!
+//! - [`ClaimedRewards`] - how many liquidity tokens has user already **after** bootstrap
+//! [`BootstrapPhase::Public`] period has finished.
+//!
+//! - [`ProvisionAccounts`] - list of participants that hasnt claim their tokens yet
+//!
+//! - [`ActivePair`] - bootstraped pair of tokens
+//!
+//! ## Extrinsics
+//!
+//! * [`Pallet::schedule_bootstrap`]
+//! * [`Pallet::whitelist_accounts`]
+//! * [`Pallet::update_promote_bootstrap_pool`]
+//! * [`Pallet::cancel_bootstrap`]
+//! * [`Pallet::provision`]
+//! * [`Pallet::claim_liquidity_tokens`]
+//! * [`Pallet::claim_liquidity_tokens_for_account`]
+//! * [`Pallet::claim_and_activate_liquidity_tokens`]
+//! * [`Pallet::finalize`]
+//!
+//! for more details see [click](#how-to-bootstrap)
+//!
+//!
 use frame_support::pallet_prelude::*;
 
 use frame_support::{
@@ -170,11 +292,13 @@ pub mod pallet {
 		type RewardsApi: RewardsApi<AccountId = Self::AccountId>;
 	}
 
+	/// maps ([`frame_system::Config::AccountId`], [`TokenId`]) -> [`Balance`] - identifies how much tokens did account provisioned in active bootstrap
 	#[pallet::storage]
 	#[pallet::getter(fn provisions)]
 	pub type Provisions<T: Config> =
 		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, TokenId, Balance, ValueQuery>;
 
+	/// maps ([`frame_system::Config::AccountId`], [`TokenId`]) -> [`Balance`] - identifies how much vested tokens did account provisioned in active bootstrap
 	#[pallet::storage]
 	#[pallet::getter(fn vested_provisions)]
 	pub type VestedProvisions<T: Config> = StorageDoubleMap<
@@ -187,19 +311,23 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	/// list ([`Vec<AccountId>`]) of whitelisted accounts allowed to participate in [`BootstrapPhase::Whitelist`] phase
 	#[pallet::storage]
 	#[pallet::getter(fn whitelisted_accounts)]
 	pub type WhitelistedAccount<T: Config> =
 		StorageMap<_, Twox64Concat, T::AccountId, (), ValueQuery>;
 
+	/// Current state of bootstrap as [`BootstrapPhase`]
 	#[pallet::storage]
 	#[pallet::getter(fn phase)]
 	pub type Phase<T: Config> = StorageValue<_, BootstrapPhase, ValueQuery>;
 
+	/// Total sum of provisions of `first` and `second` token in active bootstrap
 	#[pallet::storage]
 	#[pallet::getter(fn valuations)]
 	pub type Valuations<T: Config> = StorageValue<_, (Balance, Balance), ValueQuery>;
 
+	/// Active bootstrap parameters
 	#[pallet::storage]
 	#[pallet::getter(fn config)]
 	pub type BootstrapSchedule<T: Config> =
@@ -209,20 +337,24 @@ pub mod pallet {
 	#[pallet::getter(fn minted_liquidity)]
 	pub type MintedLiquidity<T: Config> = StorageValue<_, (TokenId, Balance), ValueQuery>;
 
+	///  Maps ([`frame_system::Config::AccountId`], [`TokenId`] ) -> [`Balance`] - where [`TokeinId`] is id of the token that user participated with. This storage item is used to identify how much liquidity tokens has been claim by the user. If user participated with 2 tokens there are two entries associated with given account (`Address`, `first_token_id`) and (`Address`, `second_token_id`)
 	#[pallet::storage]
 	#[pallet::getter(fn claimed_rewards)]
 	pub type ClaimedRewards<T: Config> =
 		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, TokenId, Balance, ValueQuery>;
 
+	/// List of accouts that provisioned funds to bootstrap and has not claimed liquidity tokens yet
 	#[pallet::storage]
 	#[pallet::getter(fn provision_accounts)]
 	pub type ProvisionAccounts<T: Config> =
 		StorageMap<_, Twox64Concat, T::AccountId, (), OptionQuery>;
 
+	/// Currently bootstraped pair of tokens representaed as [ `first_token_id`, `second_token_id`]
 	#[pallet::storage]
 	#[pallet::getter(fn pair)]
 	pub type ActivePair<T: Config> = StorageValue<_, (TokenId, TokenId), OptionQuery>;
 
+	/// Wheter to automatically promote the pool after [`BootstrapPhase::PublicPhase`] or not.
 	#[pallet::storage]
 	#[pallet::getter(fn get_promote_bootstrap_pool)]
 	pub type PromoteBootstrapPool<T: Config> = StorageValue<_, bool, ValueQuery>;
@@ -264,7 +396,15 @@ pub mod pallet {
 		// 	Ok(().into())
 		// }
 
-		/// provisions non-vested/non-locked tokens into the boostrstrap
+		/// Allows for provisioning one of the tokens from currently bootstrapped pair. Can only be called during:
+		/// - [`BootstrapPhase::Whitelist`]
+		/// - [`BootstrapPhase::Public`]
+		///
+		/// phases.
+		///
+		/// # Args:
+		///  - `token_id` - id of the token to provision (should be one of the currently bootstraped pair([`ActivePair`]))
+		///  - `amount` - amount of the token to provision
 		#[pallet::weight(<<T as Config>::WeightInfo>::provision())]
 		#[transactional]
 		pub fn provision(
@@ -279,7 +419,8 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// provides a list of whitelisted accounts, list is extended with every call
+		/// Allows for whitelisting accounts, so they can participate in during whitelist phase. The list of
+		/// account is extended with every subsequent call
 		#[pallet::weight(T::DbWeight::get().writes(1) * (accounts.len() as u64))]
 		#[transactional]
 		pub fn whitelist_accounts(
@@ -294,16 +435,60 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// schedules start of an bootstrap event where
-		/// - ido_start - number of block when bootstrap event should be started
-		/// - whitelist_phase_length - length of whitelist phase in blocks.
-		/// - public_phase_length - length of public phase in blocks
-		/// - max_first_token_to_mgx_ratio - maximum tokens ratio that is held by the pallet during bootstrap event
+		/// Used for starting/scheduling new bootstrap
 		///
-		/// bootstrap phases:
-		/// - BeforeStart - blocks 0..ido_start
-		/// - WhitelistPhase - blocks ido_start..(ido_start + whitelist_phase_length)
-		/// - PublicPhase - blocks (ido_start + whitelist_phase_length)..(ido_start + whitelist_phase_length  + public_phase_lenght)
+		/// # Args:
+		/// - `first_token_id` - first token of the tokens pair
+		/// - `second_token_id`: second token of the tokens pair
+		/// - `ido_start` - number of block when bootstrap will be started (people will be allowed to participate)
+		/// - `whitelist_phase_length`: - length of whitelist phase
+		/// - `public_phase_lenght`- length of public phase
+		/// - `promote_bootstrap_pool`- whether liquidity pool created by bootstrap should be promoted
+		/// - `max_first_to_second_ratio` - represented as (numerator,denominator) - Ratio may be used to limit participations of second token id. Ratio between first and second token needs to be held during whole bootstrap. Whenever user tries to participate (using [`Pallet::provision`] extrinsic) the following conditions is check.
+		/// ```ignore
+		/// all previous first participations + first token participations             ratio numerator
+		/// ----------------------------------------------------------------------- <= ------------------
+		/// all previous second token participations + second token participations     ratio denominator
+		/// ```
+		/// and if it evaluates to `false` extrinsic will fail.
+		///
+		/// **Because of above equation only participations with first token of a bootstrap pair are limited!**
+		///
+		/// # Examples
+		/// Consider:
+		///
+		/// - user willing to participate 1000 of first token, when:
+		/// 	- ratio set during bootstrap schedule is is set to (1/2)
+		/// 	- sum of first token participations - 10_000
+		/// 	- sum of second token participations - 20_000
+		///
+		/// participation extrinsic will **fail** because ratio condition **is not met**
+		/// ```ignore
+		/// 10_000 + 10_000      1
+		/// --------------- <=  ---
+		///     20_000           2
+		/// ```
+		///
+		/// - user willing to participate 1000 of first token, when:
+		/// 	- ratio set during bootstrap schedule is is set to (1/2)
+		/// 	- sum of first token participations - 10_000
+		/// 	- sum of second token participations - 40_000
+		///
+		/// participation extrinsic will **succeed** because ratio condition **is met**
+		/// ```ignore
+		/// 10_000 + 10_000      1
+		/// --------------- <=  ---
+		///     40_000           2
+		/// ```
+		///
+		///
+		/// **If one doesn't want to limit participations in any way, ratio should be set to (u128::MAX,0) - then ratio requirements are always met**
+		///
+		/// ```ignore
+		/// all previous first participations + first token participations                u128::MAX
+		/// ----------------------------------------------------------------------- <= ------------------
+		/// all previous second token participations + second token participations            1
+		/// ```
 		#[pallet::weight(<<T as Config>::WeightInfo>::schedule_bootstrap())]
 		#[transactional]
 		pub fn schedule_bootstrap(
@@ -380,6 +565,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		/// Used to cancel active bootstrap. Can only be called before bootstrap is actually started
 		#[pallet::weight(T::DbWeight::get().reads_writes(3, 4).saturating_add(Weight::from_ref_time(1_000_000)))]
 		#[transactional]
 		pub fn cancel_bootstrap(origin: OriginFor<T>) -> DispatchResult {
@@ -408,6 +594,7 @@ pub mod pallet {
 
 		#[pallet::weight(T::DbWeight::get().reads_writes(2, 1).saturating_add(Weight::from_ref_time(1_000_000)))]
 		#[transactional]
+		// can be used to enable or disable automatic pool promotion of liquidity pool. Updates [`PromoteBootstrapPool`]
 		pub fn update_promote_bootstrap_pool(
 			origin: OriginFor<T>,
 			promote_bootstrap_pool: bool,
@@ -425,6 +612,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		/// When bootstrap is in [`BootstrapPhase::Finished`] state user can claim his part of liquidity tokens.
 		#[pallet::weight(<<T as Config>::WeightInfo>::claim_and_activate_liquidity_tokens())]
 		#[transactional]
 		pub fn claim_liquidity_tokens(origin: OriginFor<T>) -> DispatchResult {
@@ -432,6 +620,7 @@ pub mod pallet {
 			Self::do_claim_liquidity_tokens(&sender, false)
 		}
 
+		/// When bootstrap is in [`BootstrapPhase::Finished`] state user can claim his part of liquidity tokens comparing to `claim_liquidity_tokens` when calling `claim_and_activate_liquidity_tokens` tokens will be automatically activated.
 		#[pallet::weight(<<T as Config>::WeightInfo>::claim_and_activate_liquidity_tokens())]
 		#[transactional]
 		pub fn claim_and_activate_liquidity_tokens(origin: OriginFor<T>) -> DispatchResult {
@@ -439,6 +628,15 @@ pub mod pallet {
 			Self::do_claim_liquidity_tokens(&sender, true)
 		}
 
+		/// Used to reset Bootstrap state and prepare it for running another bootstrap.
+		/// It should be called multiple times until it produces [`Event::BootstrapFinalized`] event.
+		///
+		/// # Args:
+		/// * `limit` - limit of storage entries to be removed in single call. Should be set to some
+		/// reasonable balue like `100`.
+		///
+		/// **!!! Cleaning up storage is complex operation and pruning all storage items related to particular
+		/// bootstrap might not fit in a single block. As a result tx can be rejected !!!**
 		#[pallet::weight(<<T as Config>::WeightInfo>::finalize().saturating_add(T::DbWeight::get().reads_writes(1, 1).saturating_mul(Into::<u64>::into(*limit).saturating_add(u64::one()))))]
 		#[transactional]
 		pub fn finalize(origin: OriginFor<T>, mut limit: u32) -> DispatchResult {
@@ -510,6 +708,10 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		/// Allows claiming rewards for some account that haven't done that yet. The only difference between
+		/// calling [`Pallet::claim_liquidity_tokens_for_account`] by some other account and calling [`Pallet::claim_liquidity_tokens`] directly by that account is account that will be charged for transaction fee.
+		/// # Args:
+		/// - `other` - account in behalf of which liquidity tokens should be claimed
 		#[pallet::weight(<<T as Config>::WeightInfo>::claim_and_activate_liquidity_tokens())]
 		#[transactional]
 		pub fn claim_liquidity_tokens_for_account(
@@ -527,9 +729,9 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// Only scheduled token pair can be used for provisions
 		UnsupportedTokenId,
-		/// Not enought funds for provisio
+		/// Not enough funds for provision
 		NotEnoughAssets,
-		/// Not enought funds for provisio (vested)
+		/// Not enough funds for provision (vested)
 		NotEnoughVestedAssets,
 		/// Math problem
 		MathOverflow,
@@ -592,9 +794,13 @@ pub mod pallet {
 
 #[derive(Eq, PartialEq, Encode, Decode, TypeInfo, Debug)]
 pub enum BootstrapPhase {
+	/// Waiting for another bootstrap to be scheduled using [`Pallet::schedule_bootstrap`]
 	BeforeStart,
+	// Phase where only whitelisted accounts (see [`Bootstrap::whitelist_accounts`]) can participate with both tokens as long as particular accounts are whitelisted and ratio after participation is below enforced ratio.
 	Whitelist,
+	/// Anyone can participate as long as ratio after participation is below enforced ratio
 	Public,
+	/// Bootstrap has finished. At this phase users that participated in bootstrap during previous phases can claim their share of minted `liquidity tokens`. `Bootstrap::finalize` can be call to reset pallet state schedule following bootstrap again.
 	Finished,
 }
 

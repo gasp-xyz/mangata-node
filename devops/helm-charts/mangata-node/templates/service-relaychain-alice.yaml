@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: relaychain-alice
   annotations:
-    cloud.google.com/backend-config: '{"default": "websocket"}'
+    external-dns.alpha.kubernetes.io/hostname: "relaychain-alice.{{ .Values.env }}.mangata.online"
   labels: {{- include "mangata-node.labels" . | nindent 4 }}
     service: relaychain-alice
 spec:

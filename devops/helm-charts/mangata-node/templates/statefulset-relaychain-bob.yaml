@@ -41,7 +41,7 @@ spec:
             - --rpc-port=40333
             - --unsafe-rpc-external
             - --rpc-cors=all
-            - "--bootnodes=/dns/relaychain-alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp"
+            - --bootnodes=/dns/relaychain-alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
           ports:
             - containerPort: 30333
             - containerPort: 9944
@@ -52,11 +52,15 @@ spec:
           volumeMounts:
             - mountPath: /etc/mangata/
               name: node-chainspec-volume
-            - mountPath: /root/.local/share/node
+            - mountPath: /polkadot/.local/share/polkadot
               name: chaindata
       volumes:
         - name: node-chainspec-volume
           emptyDir: {}
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
   volumeClaimTemplates:
     - metadata:
         name: chaindata

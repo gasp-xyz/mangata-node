@@ -1,39 +1,25 @@
-apiVersion: compute.cnrm.cloud.google.com/v1beta1
-kind: ComputeAddress
-metadata:
-  name: relaychain-alice
-  annotations:
-    cnrm.cloud.google.com/project-id: "{{ .Values.gcp.project }}"
-spec:
-  location: global
----
-apiVersion: networking.gke.io/v1
-kind: ManagedCertificate
-metadata:
-  name: relaychain-alice
-  annotations:
-    cnrm.cloud.google.com/project-id: "{{ .Values.gcp.project }}"
-spec:
-  domains:
-    - "relaychain-alice-ws.{{ .Values.env }}.mangata.online"
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: relaychain-alice
   annotations:
-    kubernetes.io/ingress.global-static-ip-name: relaychain-alice
-    networking.gke.io/managed-certificates: relaychain-alice
-    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt"
     external-dns.alpha.kubernetes.io/hostname: "relaychain-alice-ws.{{ .Values.env }}.mangata.online"
 spec:
   rules:
     - host: "relaychain-alice-ws.{{ .Values.env }}.mangata.online"
       http:
         paths:
-        - pathType: ImplementationSpecific
+        - pathType: Prefix
+          path: /
           backend:
             service:
               name: relaychain-alice
               port:
                 number: 9944
+  tls:
+    - hosts:
+        - "relaychain-alice-ws.{{ .Values.env }}.mangata.online"
+      secretName: "relaychain-alice-tls"

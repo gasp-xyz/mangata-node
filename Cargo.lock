@@ -4857,7 +4857,7 @@ dependencies = [
 [[package]]
 name = "mangata-types"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v0.9.29#1482bf21eb5af309fa92b033d0f922425f600bdf"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v0.9.29#3eecc8ad724afef8de44b76bca61a86092d4e25b"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -5763,8 +5763,10 @@ name = "pallet-bootstrap"
 version = "0.1.0"
 dependencies = [
  "frame-benchmarking",
+ "frame-executive",
  "frame-support",
  "frame-system",
+ "frame-try-runtime",
  "log",
  "mangata-types 0.1.0 (git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v0.9.29)",
  "mockall",
@@ -5842,7 +5844,7 @@ dependencies = [
 [[package]]
 name = "pallet-crowdloan-rewards"
 version = "0.6.0"
-source = "git+https://github.com/mangata-finance//crowdloan-rewards?branch=mangata-dev-v0.9.29#bac0518bedd3265c6d31251367573b3f7f56bd3e"
+source = "git+https://github.com/mangata-finance//crowdloan-rewards?branch=mangata-dev-v0.9.29#a28fbaf4e89c5c392fd488bf509725b02089625f"
 dependencies = [
  "ed25519-dalek",
  "frame-benchmarking",
@@ -6021,8 +6023,10 @@ version = "2.0.0"
 dependencies = [
  "cfg-if 1.0.0",
  "frame-benchmarking",
+ "frame-executive",
  "frame-support",
  "frame-system",
+ "frame-try-runtime",
  "log",
  "mangata-types 0.1.0 (git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v0.9.29)",
  "orml-tokens",
@@ -6090,8 +6094,10 @@ version = "0.1.0"
 dependencies = [
  "env_logger",
  "frame-benchmarking",
+ "frame-executive",
  "frame-support",
  "frame-system",
+ "frame-try-runtime",
  "hex-literal",
  "lazy_static",
  "log",
@@ -6375,8 +6381,10 @@ dependencies = [
 name = "pallet-sudo-origin"
 version = "4.0.0-dev"
 dependencies = [
+ "frame-executive",
  "frame-support",
  "frame-system",
+ "frame-try-runtime",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
@@ -6587,8 +6595,10 @@ version = "0.1.0"
 dependencies = [
  "env_logger",
  "frame-benchmarking",
+ "frame-executive",
  "frame-support",
  "frame-system",
+ "frame-try-runtime",
  "hex-literal",
  "lazy_static",
  "libm 0.2.1",
@@ -11984,7 +11994,7 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "digest 0.10.5",
  "rand 0.8.5",
  "static_assertions",
@@ -13009,6 +13019,23 @@ dependencies = [
 ]
 
 [[patch.unused]]
+name = "mangata-types"
+version = "0.1.0"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.29#2dadfe96fda9b748b6331b383a2c03b4d017a488"
+
+[[patch.unused]]
+name = "pallet-nicks"
+version = "4.0.0-dev"
+
+[[patch.unused]]
+name = "sc-consensus-uncles"
+version = "0.10.0-dev"
+
+[[patch.unused]]
+name = "sp-serializer"
+version = "4.0.0-dev"
+
+[[patch.unused]]
 name = "pallet-nicks"
 version = "4.0.0-dev"
 
@@ -13024,23 +13051,6 @@ version = "4.0.0-dev"
 name = "cumulus-relay-chain-rpc-interface"
 version = "0.1.0"
 source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev-v0.9.29#948ae3de7740129746bc3bcace84353fcd114019"
-
-[[patch.unused]]
-name = "pallet-nicks"
-version = "4.0.0-dev"
-
-[[patch.unused]]
-name = "sc-consensus-uncles"
-version = "0.10.0-dev"
-
-[[patch.unused]]
-name = "sp-serializer"
-version = "4.0.0-dev"
-
-[[patch.unused]]
-name = "mangata-types"
-version = "0.1.0"
-source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.29#2dadfe96fda9b748b6331b383a2c03b4d017a488"
 
 [[patch.unused]]
 name = "pallet-nicks"

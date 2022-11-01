@@ -80,11 +80,11 @@ impl<T: frame_system::Config> pallet_elections_phragmen::WeightInfo for ModuleWe
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: Tokens Locks (r:1 w:1)
 	fn vote_equal(v: u32, ) -> Weight {
-		(36_052_000 as Weight)
+		(Weight::from_ref_time(36_052_000))
 			// Standard Error: 4_000
-			.saturating_add((357_000 as Weight).saturating_mul(v as Weight))
-			.saturating_add(T::DbWeight::get().reads(6 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+			.saturating_add((Weight::from_ref_time(357_000)).saturating_mul(v as u64))
+			.saturating_add(T::DbWeight::get().reads(6 as u64))
+			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 	// Storage: Elections Candidates (r:1 w:0)
 	// Storage: Elections Members (r:1 w:0)
@@ -93,11 +93,11 @@ impl<T: frame_system::Config> pallet_elections_phragmen::WeightInfo for ModuleWe
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: Tokens Locks (r:1 w:1)
 	fn vote_more(v: u32, ) -> Weight {
-		(55_043_000 as Weight)
+		(Weight::from_ref_time(55_043_000))
 			// Standard Error: 6_000
-			.saturating_add((351_000 as Weight).saturating_mul(v as Weight))
-			.saturating_add(T::DbWeight::get().reads(6 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+			.saturating_add((Weight::from_ref_time(351_000)).saturating_mul(v as u64))
+			.saturating_add(T::DbWeight::get().reads(6 as u64))
+			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 	// Storage: Elections Candidates (r:1 w:0)
 	// Storage: Elections Members (r:1 w:0)
@@ -106,39 +106,39 @@ impl<T: frame_system::Config> pallet_elections_phragmen::WeightInfo for ModuleWe
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: Tokens Locks (r:1 w:1)
 	fn vote_less(v: u32, ) -> Weight {
-		(50_626_000 as Weight)
+		(Weight::from_ref_time(50_626_000))
 			// Standard Error: 5_000
-			.saturating_add((399_000 as Weight).saturating_mul(v as Weight))
-			.saturating_add(T::DbWeight::get().reads(6 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+			.saturating_add((Weight::from_ref_time(399_000)).saturating_mul(v as u64))
+			.saturating_add(T::DbWeight::get().reads(6 as u64))
+			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 	// Storage: Elections Voting (r:1 w:1)
 	// Storage: Tokens Locks (r:1 w:1)
 	// Storage: Tokens Accounts (r:1 w:1)
 	fn remove_voter() -> Weight {
-		(50_758_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+		(Weight::from_ref_time(50_758_000))
+			.saturating_add(T::DbWeight::get().reads(3 as u64))
+			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 	// Storage: Elections Candidates (r:1 w:1)
 	// Storage: Elections Members (r:1 w:0)
 	// Storage: Elections RunnersUp (r:1 w:0)
 	// Storage: Tokens Accounts (r:1 w:1)
 	fn submit_candidacy(c: u32, ) -> Weight {
-		(52_760_000 as Weight)
+		(Weight::from_ref_time(52_760_000))
 			// Standard Error: 2_000
-			.saturating_add((164_000 as Weight).saturating_mul(c as Weight))
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+			.saturating_add((Weight::from_ref_time(164_000)).saturating_mul(c as u64))
+			.saturating_add(T::DbWeight::get().reads(4 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 	// Storage: Elections Candidates (r:1 w:1)
 	// Storage: Tokens Accounts (r:1 w:1)
 	fn renounce_candidacy_candidate(c: u32, ) -> Weight {
-		(44_733_000 as Weight)
+		(Weight::from_ref_time(44_733_000))
 			// Standard Error: 3_000
-			.saturating_add((75_000 as Weight).saturating_mul(c as Weight))
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+			.saturating_add((Weight::from_ref_time(75_000)).saturating_mul(c as u64))
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 	// Storage: Elections Members (r:1 w:1)
 	// Storage: Tokens Accounts (r:1 w:1)
@@ -147,20 +147,20 @@ impl<T: frame_system::Config> pallet_elections_phragmen::WeightInfo for ModuleWe
 	// Storage: Council Proposals (r:1 w:0)
 	// Storage: Council Members (r:0 w:1)
 	fn renounce_candidacy_members() -> Weight {
-		(57_321_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(5 as Weight))
-			.saturating_add(T::DbWeight::get().writes(5 as Weight))
+		(Weight::from_ref_time(57_321_000))
+			.saturating_add(T::DbWeight::get().reads(5 as u64))
+			.saturating_add(T::DbWeight::get().writes(5 as u64))
 	}
 	// Storage: Elections RunnersUp (r:1 w:1)
 	// Storage: Tokens Accounts (r:1 w:1)
 	fn renounce_candidacy_runners_up() -> Weight {
-		(41_693_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		(Weight::from_ref_time(41_693_000))
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 	// Storage: Benchmark Override (r:0 w:0)
 	fn remove_member_without_replacement() -> Weight {
-		(250_000_000_000 as Weight)
+		(Weight::from_ref_time(250_000_000_000))
 	}
 	// Storage: Elections RunnersUp (r:1 w:1)
 	// Storage: Elections Members (r:1 w:1)
@@ -170,9 +170,9 @@ impl<T: frame_system::Config> pallet_elections_phragmen::WeightInfo for ModuleWe
 	// Storage: Council Proposals (r:1 w:0)
 	// Storage: Council Members (r:0 w:1)
 	fn remove_member_with_replacement() -> Weight {
-		(66_871_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(6 as Weight))
-			.saturating_add(T::DbWeight::get().writes(6 as Weight))
+		(Weight::from_ref_time(66_871_000))
+			.saturating_add(T::DbWeight::get().reads(6 as u64))
+			.saturating_add(T::DbWeight::get().writes(6 as u64))
 	}
 	// Storage: Elections Voting (r:251 w:250)
 	// Storage: Elections Members (r:1 w:0)
@@ -182,14 +182,14 @@ impl<T: frame_system::Config> pallet_elections_phragmen::WeightInfo for ModuleWe
 	// Storage: Tokens Accounts (r:250 w:250)
 	// Storage: System Account (r:250 w:250)
 	fn clean_defunct_voters(v: u32, d: u32, ) -> Weight {
-		(0 as Weight)
+		(Weight::from_ref_time(0))
 			// Standard Error: 54_000
-			.saturating_add((80_487_000 as Weight).saturating_mul(v as Weight))
+			.saturating_add((Weight::from_ref_time(80_487_000)).saturating_mul(v as u64))
 			// Standard Error: 52_000
-			.saturating_add((89_000 as Weight).saturating_mul(d as Weight))
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().reads((4 as Weight).saturating_mul(v as Weight)))
-			.saturating_add(T::DbWeight::get().writes((4 as Weight).saturating_mul(v as Weight)))
+			.saturating_add((Weight::from_ref_time(89_000)).saturating_mul(d as u64))
+			.saturating_add(T::DbWeight::get().reads(4 as u64))
+			.saturating_add(T::DbWeight::get().reads((4 as u64).saturating_mul(v as u64)))
+			.saturating_add(T::DbWeight::get().writes((4 as u64).saturating_mul(v as u64)))
 	}
 	// Storage: Elections Candidates (r:1 w:1)
 	// Storage: Elections Members (r:1 w:1)
@@ -202,103 +202,103 @@ impl<T: frame_system::Config> pallet_elections_phragmen::WeightInfo for ModuleWe
 	// Storage: Council Prime (r:0 w:1)
 	// Storage: Tokens Accounts (r:3 w:3)
 	fn election_phragmen(c: u32, v: u32, e: u32, ) -> Weight {
-		(0 as Weight)
+		(Weight::from_ref_time(0))
 			// Standard Error: 1_757_000
-			.saturating_add((18_761_000 as Weight).saturating_mul(c as Weight))
+			.saturating_add((Weight::from_ref_time(18_761_000)).saturating_mul(c as u64))
 			// Standard Error: 730_000
-			.saturating_add((50_599_000 as Weight).saturating_mul(v as Weight))
+			.saturating_add((Weight::from_ref_time(50_599_000)).saturating_mul(v as u64))
 			// Standard Error: 49_000
-			.saturating_add((3_256_000 as Weight).saturating_mul(e as Weight))
-			.saturating_add(T::DbWeight::get().reads((2 as Weight).saturating_mul(c as Weight)))
-			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(v as Weight)))
-			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(c as Weight)))
+			.saturating_add((Weight::from_ref_time(3_256_000)).saturating_mul(e as u64))
+			.saturating_add(T::DbWeight::get().reads((2 as u64).saturating_mul(c as u64)))
+			.saturating_add(T::DbWeight::get().reads((1 as u64).saturating_mul(v as u64)))
+			.saturating_add(T::DbWeight::get().writes((1 as u64).saturating_mul(c as u64)))
 	}
 }
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
 	fn vote_equal(v: u32, ) -> Weight {
-		(36_052_000 as Weight)
+		(Weight::from_ref_time(36_052_000))
 			// Standard Error: 4_000
-			.saturating_add((357_000 as Weight).saturating_mul(v as Weight))
-			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+			.saturating_add((Weight::from_ref_time(357_000)).saturating_mul(v as u64))
+			.saturating_add(RocksDbWeight::get().reads(6 as u64))
+			.saturating_add(RocksDbWeight::get().writes(3 as u64))
 	}
 	fn vote_more(v: u32, ) -> Weight {
-		(55_043_000 as Weight)
+		(Weight::from_ref_time(55_043_000))
 			// Standard Error: 6_000
-			.saturating_add((351_000 as Weight).saturating_mul(v as Weight))
-			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+			.saturating_add((Weight::from_ref_time(351_000)).saturating_mul(v as u64))
+			.saturating_add(RocksDbWeight::get().reads(6 as u64))
+			.saturating_add(RocksDbWeight::get().writes(3 as u64))
 	}
 	fn vote_less(v: u32, ) -> Weight {
-		(50_626_000 as Weight)
+		(Weight::from_ref_time(50_626_000))
 			// Standard Error: 5_000
-			.saturating_add((399_000 as Weight).saturating_mul(v as Weight))
-			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+			.saturating_add((Weight::from_ref_time(399_000)).saturating_mul(v as u64))
+			.saturating_add(RocksDbWeight::get().reads(6 as u64))
+			.saturating_add(RocksDbWeight::get().writes(3 as u64))
 	}
 	fn remove_voter() -> Weight {
-		(50_758_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+		(Weight::from_ref_time(50_758_000))
+			.saturating_add(RocksDbWeight::get().reads(3 as u64))
+			.saturating_add(RocksDbWeight::get().writes(3 as u64))
 	}
 	fn submit_candidacy(c: u32, ) -> Weight {
-		(52_760_000 as Weight)
+		(Weight::from_ref_time(52_760_000))
 			// Standard Error: 2_000
-			.saturating_add((164_000 as Weight).saturating_mul(c as Weight))
-			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
+			.saturating_add((Weight::from_ref_time(164_000)).saturating_mul(c as u64))
+			.saturating_add(RocksDbWeight::get().reads(4 as u64))
+			.saturating_add(RocksDbWeight::get().writes(2 as u64))
 	}
 	fn renounce_candidacy_candidate(c: u32, ) -> Weight {
-		(44_733_000 as Weight)
+		(Weight::from_ref_time(44_733_000))
 			// Standard Error: 3_000
-			.saturating_add((75_000 as Weight).saturating_mul(c as Weight))
-			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
+			.saturating_add((Weight::from_ref_time(75_000)).saturating_mul(c as u64))
+			.saturating_add(RocksDbWeight::get().reads(2 as u64))
+			.saturating_add(RocksDbWeight::get().writes(2 as u64))
 	}
 	fn renounce_candidacy_members() -> Weight {
-		(57_321_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
+		(Weight::from_ref_time(57_321_000))
+			.saturating_add(RocksDbWeight::get().reads(5 as u64))
+			.saturating_add(RocksDbWeight::get().writes(5 as u64))
 	}
 	fn renounce_candidacy_runners_up() -> Weight {
-		(41_693_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
+		(Weight::from_ref_time(41_693_000))
+			.saturating_add(RocksDbWeight::get().reads(2 as u64))
+			.saturating_add(RocksDbWeight::get().writes(2 as u64))
 	}
 	fn remove_member_without_replacement() -> Weight {
-		(250_000_000_000 as Weight)
+		(Weight::from_ref_time(250_000_000_000))
 	}
 	fn remove_member_with_replacement() -> Weight {
-		(66_871_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
+		(Weight::from_ref_time(66_871_000))
+			.saturating_add(RocksDbWeight::get().reads(6 as u64))
+			.saturating_add(RocksDbWeight::get().writes(6 as u64))
 	}
 	fn remove_member_wrong_refund() -> Weight {
-		(7_501_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
+		(Weight::from_ref_time(7_501_000))
+			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 	}
 	fn clean_defunct_voters(v: u32, d: u32, ) -> Weight {
-		(0 as Weight)
+		(Weight::from_ref_time(0))
 			// Standard Error: 54_000
-			.saturating_add((80_487_000 as Weight).saturating_mul(v as Weight))
+			.saturating_add((Weight::from_ref_time(80_487_000)).saturating_mul(v as u64))
 			// Standard Error: 52_000
-			.saturating_add((89_000 as Weight).saturating_mul(d as Weight))
-			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
-			.saturating_add(RocksDbWeight::get().reads((4 as Weight).saturating_mul(v as Weight)))
-			.saturating_add(RocksDbWeight::get().writes((4 as Weight).saturating_mul(v as Weight)))
+			.saturating_add((Weight::from_ref_time(89_000)).saturating_mul(d as u64))
+			.saturating_add(RocksDbWeight::get().reads(4 as u64))
+			.saturating_add(RocksDbWeight::get().reads((4 as u64).saturating_mul(v as u64)))
+			.saturating_add(RocksDbWeight::get().writes((4 as u64).saturating_mul(v as u64)))
 	}
 	fn election_phragmen(c: u32, v: u32, e: u32, ) -> Weight {
-		(0 as Weight)
+		(Weight::from_ref_time(0))
 			// Standard Error: 1_757_000
-			.saturating_add((18_761_000 as Weight).saturating_mul(c as Weight))
+			.saturating_add((Weight::from_ref_time(18_761_000)).saturating_mul(c as u64))
 			// Standard Error: 730_000
-			.saturating_add((50_599_000 as Weight).saturating_mul(v as Weight))
+			.saturating_add((Weight::from_ref_time(50_599_000)).saturating_mul(v as u64))
 			// Standard Error: 49_000
-			.saturating_add((3_256_000 as Weight).saturating_mul(e as Weight))
-			.saturating_add(RocksDbWeight::get().reads((2 as Weight).saturating_mul(c as Weight)))
-			.saturating_add(RocksDbWeight::get().reads((1 as Weight).saturating_mul(v as Weight)))
-			.saturating_add(RocksDbWeight::get().writes((1 as Weight).saturating_mul(c as Weight)))
+			.saturating_add((Weight::from_ref_time(3_256_000)).saturating_mul(e as u64))
+			.saturating_add(RocksDbWeight::get().reads((2 as u64).saturating_mul(c as u64)))
+			.saturating_add(RocksDbWeight::get().reads((1 as u64).saturating_mul(v as u64)))
+			.saturating_add(RocksDbWeight::get().writes((1 as u64).saturating_mul(c as u64)))
 	}
 }

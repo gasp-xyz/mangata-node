@@ -45,7 +45,7 @@ jobs:
       - name: Set global version
         id: set_ver
         run: echo "::set-output name=GLOBAL_VERSION::${{ github.sha }}"
-  
+
   rustfmt-check:
     name: Formatting check
     if:  ${{ github.event.inputs.skipBuild != 'true' }}
@@ -96,7 +96,7 @@ jobs:
         name: Run clippy
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh clippy -p pallet-xyk -p pallet-bridge
+          ./docker-cargo.sh clippy -p pallet-xyk
 
   unit-test:
     name: Unit test
@@ -122,7 +122,7 @@ jobs:
         name: Run unit tests
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh test -j2 -p pallet-bootstrap -p xyk-rpc -p pallet-xyk -p xyk-runtime-api -p pallet-bridge -p pallet-issuance -p pallet-multipurpose-liquidity -p pallet-sudo-origin
+          ./docker-cargo.sh test -j2 -p pallet-bootstrap -p xyk-rpc -p pallet-xyk -p xyk-runtime-api -p pallet-issuance -p pallet-multipurpose-liquidity -p pallet-sudo-origin
 
           # |cargo2junit | tee ut-results.xml
           # sed -i '/<testsuite.*\/>$/d' ut-results.xml
@@ -147,14 +147,14 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      
+
       - name: Pull builder image
         run: docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
       - name: Run benchamrks
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh test -j2 --features=runtime-benchmarks -p pallet-bootstrap -p pallet-xyk -p xyk-runtime-api -p pallet-bridge -p pallet-issuance
-  
+          ./docker-cargo.sh test -j2 --features=runtime-benchmarks -p pallet-bootstrap -p pallet-xyk -p xyk-runtime-api -p pallet-issuance
+
   build-node-image:
     needs: [init]
     runs-on: [self-hosted, compile]

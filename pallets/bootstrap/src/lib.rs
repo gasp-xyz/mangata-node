@@ -43,7 +43,7 @@
 //! ```ignore
 //!  current_block_nr > bootstrap_start_block + whitelist_phase_length + public_phase_length
 //! ```
-//!  
+//!
 //! Bootstrap is automatically finished and following participations will not be accepted. Also new
 //! liquidity pool is created from all the tokens gathered during bootstrap (see [`Valuations`]). `TokenId`
 //! of newly created liquidity token as well as amount of minted tokens is persisted into [`MintedLiquidity`]
@@ -566,7 +566,7 @@ pub mod pallet {
 		}
 
 		/// Used to cancel active bootstrap. Can only be called before bootstrap is actually started
-		#[pallet::weight(T::DbWeight::get().reads_writes(3, 4).saturating_add(1_000_000u64))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(3, 4).saturating_add(Weight::from_ref_time(1_000_000)))]
 		#[transactional]
 		pub fn cancel_bootstrap(origin: OriginFor<T>) -> DispatchResult {
 			ensure_root(origin)?;
@@ -592,7 +592,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(T::DbWeight::get().reads_writes(2, 1).saturating_add(1_000_000u64))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(2, 1).saturating_add(Weight::from_ref_time(1_000_000)))]
 		#[transactional]
 		// can be used to enable or disable automatic pool promotion of liquidity pool. Updates [`PromoteBootstrapPool`]
 		pub fn update_promote_bootstrap_pool(

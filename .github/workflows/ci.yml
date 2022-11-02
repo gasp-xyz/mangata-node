@@ -195,13 +195,17 @@ jobs:
 
       - name: Pull builder image
         run: docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
+      - name: Clean
+        run: |
+          ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
+          ./docker-cargo.sh clean
       - name: Build node using try runtime feature
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
           ./docker-cargo.sh build --release --features=try-runtime
-      - name:
+      - name: Run try-runtime
         run: |
-          ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
+          sudo ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
           ./docker-cargo.sh run --release --features=try-runtime try-runtime --chain=kusama-mainnet --execution=Native on-runtime-upgrade live --uri wss://prod-kusama-collator-01.mangatafinance.cloud:443
 
   run-benchmarks:

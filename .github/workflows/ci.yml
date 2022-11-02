@@ -206,6 +206,8 @@ jobs:
           bucket: mangata-node-ci-cache
           path: /usr/local/cargo
           key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            cargo-${{ runner.os }}-
       
       - name: Cache the build target dir
         uses: mansagroup/gcs-cache-action@v1
@@ -213,6 +215,8 @@ jobs:
           bucket: mangata-node-ci-cache
           path: /app/target
           key: cargo-target-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            cargo-target-${{ runner.os }}-
 
       - name: Build node using try runtime feature
         run: cargo build --release --features=try-runtime

@@ -182,6 +182,9 @@ jobs:
   #           "mangatasolutions/mangata-node:kusama-${{ needs.init.outputs.GLOBAL_VERSION }}"
 
   build-and-run-try-runtime:
+    permissions:
+      contents: 'read'
+      id-token: 'write'
     runs-on: [self-hosted, compile]
     container:
       image: paritytech/ci-linux:production

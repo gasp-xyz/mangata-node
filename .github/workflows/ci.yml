@@ -200,13 +200,19 @@ jobs:
       - name: 'Set up Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@v0'
       
-      - name: Cache the node_modules
-        id: node-modules-cache
+      - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1
         with:
           bucket: mangata-node-ci-cache
-          path: /usr/local/cargo,/root/.cache,/app/target
+          path: /usr/local/cargo
           key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Cache the build target dir
+        uses: mansagroup/gcs-cache-action@v1
+        with:
+          bucket: mangata-node-ci-cache
+          path: /app/target
+          key: cargo-target-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build node using try runtime feature
         run: cargo build --release --features=try-runtime

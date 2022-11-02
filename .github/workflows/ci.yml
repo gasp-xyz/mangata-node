@@ -192,31 +192,19 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - uses: 'google-github-actions/auth@v0'
-        with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+      # - uses: 'google-github-actions/auth@v0'
+      #   with:
+      #     workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
+      #     service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
      
-      - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@v0'
+      # - name: 'Set up Cloud SDK'
+      #   uses: 'google-github-actions/setup-gcloud@v0'
       
       - name: Cache the Cargo dependencies
-        uses: mansagroup/gcs-cache-action@v1
+        uses: actions/cache@v3
         with:
-          bucket: mangata-node-ci-cache
           path: /usr/local/cargo
           key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            cargo-${{ runner.os }}-
-      
-      - name: Cache the build target dir
-        uses: mansagroup/gcs-cache-action@v1
-        with:
-          bucket: mangata-node-ci-cache
-          path: /app/target
-          key: cargo-target-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            cargo-target-${{ runner.os }}-
 
       - name: Build node using try runtime feature
         run: cargo build --release --features=try-runtime

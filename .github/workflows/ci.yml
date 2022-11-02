@@ -157,7 +157,7 @@ jobs:
 
   build-node-image:
     needs: [init]
-    runs-on: [self-hosted]
+    runs-on: ubuntu-latest
     if: ${{ github.event.inputs.skipBuild != 'true' }}
     steps:
       - name: Debug info about publishing.

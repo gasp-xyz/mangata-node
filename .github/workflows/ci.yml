@@ -157,7 +157,7 @@ jobs:
 
   build-node-image:
     needs: [init]
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, compile]
     if: ${{ github.event.inputs.skipBuild != 'true' }}
     steps:
       - name: Debug info about publishing.
@@ -183,7 +183,7 @@ jobs:
 
   build-and-run-try-runtime:
     needs: [init]
-    runs-on: [self-hosted, compile]
+    runs-on: ubuntu-latest
     if: ${{ github.event.inputs.skipBuild != 'true' }}
     steps:
       - uses: actions/checkout@v2

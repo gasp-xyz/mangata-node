@@ -1,11 +1,13 @@
+{{- if .Values.relaychain.enabled -}}
+{{ $name :=  "relaychain-alice" }}
 apiVersion: v1
 kind: Service
 metadata:
-  name: relaychain-alice
+  name: {{ $name }}
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: "relaychain-alice.{{ .Values.env }}.mangata.online"
-  labels: {{- include "mangata-node.labels" . | nindent 4 }}
-    service: relaychain-alice
+    external-dns.alpha.kubernetes.io/hostname: "{{ $name }}-{{ .Values.env }}.{{ .Values.domainZone }}"
+  labels: {{- include "node.labels" . | nindent 4 }}
+    service: {{ $name }}
 spec:
   type: LoadBalancer
   externalTrafficPolicy: Local
@@ -17,5 +19,6 @@ spec:
     - port: 9944
       name: http-ws
   selector:
-    {{- include "mangata-node.selectorLabels" . | nindent 4 }}
-    service: relaychain-alice
+    {{- include "node.selectorLabels" . | nindent 4 }}
+    service: {{ $name }}
+{{- end }}

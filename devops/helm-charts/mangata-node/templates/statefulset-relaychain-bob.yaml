@@ -1,38 +1,29 @@
+{{- if .Values.relaychain.enabled -}}
+{{ $name :=  "relaychain-bob" }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: relaychain-bob
-  labels: {{- include "mangata-node.labels" . | nindent 4 }}
-    service: relaychain-bob
+  name: {{ $name }}
+  labels: {{- include "node.labels" . | nindent 4 }}
+    service: {{ $name }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      {{- include "mangata-node.selectorLabels" . | nindent 6 }}
-      service: relaychain-bob
-  serviceName: relaychain-bob
+      {{- include "node.selectorLabels" . | nindent 6 }}
+      service: {{ $name }}
+  serviceName: {{ $name }}
   template:
     metadata:
       labels:
-        {{- include "mangata-node.labels" . | nindent 8 }}
-        service: relaychain-bob
+        {{- include "node.labels" . | nindent 8 }}
+        service: {{ $name }}
     spec:
-      # initContainers:
-      #   - name: chainspec-generator
-      #     image: parity/polkadot:v0.9.29
-      #     command: 
-      #       - "/bin/bash"
-      #       - "-c" 
-      #       - "/usr/bin/polkadot build-spec --chain=rococo-local --disable-default-bootnode --raw > /etc/mangata/local.json"
-      #     volumeMounts:
-      #       - mountPath: /etc/mangata/
-      #         name: node-chainspec-volume
       containers:
-        - name: relaychain-bob
-          image: "mangatasolutions/polkadot-dev:v0.9.29"
+        - name: {{ $name }}
+          image: {{ .Values.relaychain.image | quote }}
           command:
             - /usr/bin/polkadot
-            - --bob
             - --validator
             - --port=30333
             - --ws-port=9944
@@ -42,21 +33,21 @@ spec:
             - --unsafe-rpc-external
             - --rpc-cors=all
             - --bootnodes=/dns/relaychain-alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
+            - --bob
           ports:
             - containerPort: 30333
-            - containerPort: 9944
             - containerPort: 40333
+            - containerPort: 9944
           env:
-            - name: RUST_LOG
-              value: "info"
+            {{- range $key, $val := .Values.relaychain.env }}
+            - name: {{ $key }}
+              value: {{ $val }}
+            {{- end }}
+          resources:
+          {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
-            # - mountPath: /etc/mangata/
-            #   name: node-chainspec-volume
             - mountPath: /polkadot/.local/share/polkadot
               name: chaindata
-      # volumes:
-      #   - name: node-chainspec-volume
-      #     emptyDir: {}
       securityContext:
         runAsUser: 1000
         runAsGroup: 1000
@@ -69,4 +60,5 @@ spec:
         accessModes: ["ReadWriteOnce"]
         resources:
           requests:
-            storage: 10Gi
+            storage: {{ .Values.relaychain.storageSize }}
+{{- end }}

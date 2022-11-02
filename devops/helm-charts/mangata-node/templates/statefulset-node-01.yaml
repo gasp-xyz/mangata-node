@@ -2,24 +2,24 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: node-01
-  labels: {{- include "mangata-node.labels" . | nindent 4 }}
+  labels: {{- include "node.labels" . | nindent 4 }}
     service: node-01
 spec:
   replicas: 1
   selector:
     matchLabels:
-      {{- include "mangata-node.selectorLabels" . | nindent 6 }}
+      {{- include "node.selectorLabels" . | nindent 6 }}
       service: node-01
   serviceName: node-01
   template:
     metadata:
       labels:
-        {{- include "mangata-node.labels" . | nindent 8 }}
+        {{- include "node.labels" . | nindent 8 }}
         service: node-01
     spec:
       containers:
         - name: node-01
-          image: "mangatasolutions/mangata-node-dev:rococo-0.25.0"
+          image: "{{ .Values.image.repository}}:{{ .Values.image.tag }}"
           command:
             # parachain
             - /mangata/node
@@ -39,7 +39,7 @@ spec:
             - --rpc-methods=Unsafe
             - --rpc-cors=all
             - --node-key=b0cc32fda481d8ea7f10bfaa73bac980dae7608977c67936728f486834d2e011
-            - "--public-addr=/dns4/node-01.{{ .Values.env }}.mangata.online/tcp/30333"
+            - "--public-addr=/dns4/node-01-{{ .Values.env }}.{{ .Values.domainZone }}/tcp/30333"
             - --
             # relay
             - --bootnodes=/dns/relaychain-alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
@@ -48,11 +48,15 @@ spec:
             - --chain=/app/rococo-local.json
           ports:
             - containerPort: 30333
-            - containerPort: 9944
             - containerPort: 40333
+            - containerPort: 9944
           env:
-            - name: RUST_LOG
-              value: "info"
+            {{- range $key, $val := .Values.node.env }}
+            - name: {{ $key }}
+              value: {{ $val }}
+            {{- end }}
+          resources:
+          {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
             - mountPath: /mangata/data
               name: chaindata
@@ -64,4 +68,4 @@ spec:
         accessModes: ["ReadWriteOnce"]
         resources:
           requests:
-            storage: 10Gi
+            storage: {{ .Values.node.storageSize }}

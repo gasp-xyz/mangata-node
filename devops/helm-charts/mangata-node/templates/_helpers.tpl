@@ -7,21 +7,21 @@ https://www.replex.io/blog/9-best-practices-and-examples-for-working-with-kubern
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "mangata-node.name" -}}
+{{- define "node.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "mangata-node.labels" -}}
-{{ include "mangata-node.selectorLabels" . }}
+{{- define "node.labels" -}}
+{{ include "node.selectorLabels" . }}
 heritage: {{ .Release.Service }}
 {{- end }}
 
 {{/*
 Selector labels
 */}}
-{{- define "mangata-node.selectorLabels" -}}
-application: {{ include "mangata-node.name" . }}
+{{- define "node.selectorLabels" -}}
+application: {{ include "node.name" . }}
 {{- end }}

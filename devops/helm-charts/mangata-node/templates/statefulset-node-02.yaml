@@ -2,24 +2,24 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: node-02
-  labels: {{- include "mangata-node.labels" . | nindent 4 }}
+  labels: {{- include "node.labels" . | nindent 4 }}
     service: node-02
 spec:
   replicas: 1
   selector:
     matchLabels:
-      {{- include "mangata-node.selectorLabels" . | nindent 6 }}
+      {{- include "node.selectorLabels" . | nindent 6 }}
       service: node-02
   serviceName: node-02
   template:
     metadata:
       labels:
-        {{- include "mangata-node.labels" . | nindent 8 }}
+        {{- include "node.labels" . | nindent 8 }}
         service: node-02
     spec:
       containers:
         - name: node-02
-          image: "mangatasolutions/mangata-node-dev:rococo-0.25.0"
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           command:
             # parachain
             - /mangata/node
@@ -35,7 +35,7 @@ spec:
             - --unsafe-rpc-external
             - --rpc-methods=Unsafe
             - --rpc-cors=all
-            - "--public-addr=/dns4/node-02.{{ .Values.env }}.mangata.online/tcp/30333"
+            - "--public-addr=/dns4/node-02-{{ .Values.env }}.{{ .Values.domainZone }}/tcp/30333"
             - --bootnodes=/dns4/node-01/tcp/30333/p2p/12D3KooWGsinuijQt1R8AvYDRuev129sHSXPrXnRFVVCQL4CwXMZ
             - --bob
             - --
@@ -46,11 +46,15 @@ spec:
             - --chain=/app/rococo-local.json
           ports:
             - containerPort: 30333
-            - containerPort: 9944
             - containerPort: 40333
+            - containerPort: 9944
           env:
-            - name: RUST_LOG
-              value: "info"
+            {{- range $key, $val := .Values.node.env }}
+            - name: {{ $key }}
+              value: {{ $val }}
+            {{- end }}
+          resources:
+          {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
             - mountPath: /mangata/data
               name: chaindata
@@ -62,4 +66,4 @@ spec:
         accessModes: ["ReadWriteOnce"]
         resources:
           requests:
-            storage: 10Gi
+            storage: {{ .Values.node.storageSize }}

@@ -2,18 +2,34 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 env: "pr-341"
+domainZone: "mangata.online"
 
 replicas: 1
 
 image:
-  repository: mangatasolutions/mangata-node
+  repository: mangatasolutions/mangata-node-dev
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "v0.25.0"
+  tag: "rococo-0.25.0"
+
+node:
+  storageSize: "10Gi"
+  env:
+    RUST_LOG: "info"
 
 relaychain:
   enabled: true
-  aliceUrl:
+  image: "mangatasolutions/polkadot-dev:v0.9.29"
+  storageSize: "10Gi"
+  env:
+    RUST_LOG: "info"
 
+resources:
+  requests:
+    cpu: 200m
+    memory: 1Gi
+  limits:
+    cpu: 1000m
+    memory: 2Gi
 gcp:
   project: direct-pixel-353917

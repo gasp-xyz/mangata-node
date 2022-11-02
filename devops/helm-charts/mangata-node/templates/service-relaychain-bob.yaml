@@ -1,9 +1,11 @@
+{{- if .Values.relaychain.enabled -}}
+{{ $name :=  "relaychain-bob" }}
 apiVersion: v1
 kind: Service
 metadata:
-  name: relaychain-bob
-  labels: {{- include "mangata-node.labels" . | nindent 4 }}
-    service: relaychain-bob
+  name: {{ $name }}
+  labels: {{- include "node.labels" . | nindent 4 }}
+    service: {{ $name }}
 spec:
   ports:
     - port: 30333
@@ -13,5 +15,6 @@ spec:
     - port: 9944
       name: http-ws
   selector:
-    {{- include "mangata-node.selectorLabels" . | nindent 4 }}
-    service: relaychain-bob
+    {{- include "node.selectorLabels" . | nindent 4 }}
+    service: {{ $name }}
+{{- end }}

@@ -35,7 +35,9 @@ spec:
             - --unsafe-rpc-external
             - --rpc-methods=Unsafe
             - --rpc-cors=all
+            {{- if .Values.remoteCluster }}
             - "--public-addr=/dns4/node-02-{{ .Values.env }}.{{ .Values.domainZone }}/tcp/30333"
+            {{- end }}
             - --bootnodes=/dns4/node-01/tcp/30333/p2p/12D3KooWGsinuijQt1R8AvYDRuev129sHSXPrXnRFVVCQL4CwXMZ
             - --bob
             - --

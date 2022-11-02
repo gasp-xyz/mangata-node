@@ -1,5 +1,4 @@
-{{- if .Values.relaychain.enabled -}}
----
+{{- if and .Values.relaychain.enabled .Values.remoteCluster -}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:

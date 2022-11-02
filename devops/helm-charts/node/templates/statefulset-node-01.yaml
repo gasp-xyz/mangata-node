@@ -39,7 +39,9 @@ spec:
             - --rpc-methods=Unsafe
             - --rpc-cors=all
             - --node-key=b0cc32fda481d8ea7f10bfaa73bac980dae7608977c67936728f486834d2e011
+            {{- if .Values.remoteCluster }}
             - "--public-addr=/dns4/node-01-{{ .Values.env }}.{{ .Values.domainZone }}/tcp/30333"
+            {{- end }}
             - --
             # relay
             - --bootnodes=/dns/relaychain-alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp

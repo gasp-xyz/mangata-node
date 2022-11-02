@@ -1,4 +1,4 @@
----
+{{- if .Values.remoteCluster -}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -24,3 +24,4 @@ spec:
     - hosts:
         - "node-02-ws-{{ .Values.env }}.{{ .Values.domainZone }}"
       secretName: "node-02-tls"
+{{- end }}

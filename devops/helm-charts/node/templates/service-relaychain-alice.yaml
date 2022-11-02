@@ -4,8 +4,10 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ $name }}
+  {{- if .Values.remoteCluster }}
   annotations:
     external-dns.alpha.kubernetes.io/hostname: "{{ $name }}-{{ .Values.env }}.{{ .Values.domainZone }}"
+  {{- end }}
   labels: {{- include "node.labels" . | nindent 4 }}
     service: {{ $name }}
 spec:

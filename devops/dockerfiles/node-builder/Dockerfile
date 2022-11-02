@@ -22,7 +22,7 @@ RUN curl https://www.openssl.org/source/openssl-$SSL_VERSION.tar.gz -O && \
 ENV OPENSSL_LIB_DIR=/usr/local/ssl/lib \
     OPENSSL_INCLUDE_DIR=/usr/local/ssl/include \
     OPENSSL_STATIC=1
-ENV RUST_TOOLCHAIN=nightly-2022-05-11
+ENV RUST_TOOLCHAIN=nightly-2022-07-16
 
 ENV RUSTUP_HOME=/opt/rust
 ENV CARGO_HOME=/opt/cargo

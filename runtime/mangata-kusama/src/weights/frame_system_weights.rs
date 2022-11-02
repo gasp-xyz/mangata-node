@@ -67,74 +67,74 @@ pub trait WeightInfo {
 pub struct ModuleWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> frame_system::WeightInfo for ModuleWeight<T> {
 	fn remark(_b: u32, ) -> Weight {
-		(0 as Weight)
+		(Weight::from_ref_time(0 ))
 	}
 	fn remark_with_event(b: u32, ) -> Weight {
-		(0 as Weight)
+		(Weight::from_ref_time(0 ))
 			// Standard Error: 0
-			.saturating_add((2_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add((Weight::from_ref_time(2_000 )).saturating_mul(b as u64))
 	}
 	// Storage: System Digest (r:1 w:1)
 	// Storage: unknown [0x3a686561707061676573] (r:0 w:1)
 	fn set_heap_pages() -> Weight {
-		(4_333_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		(Weight::from_ref_time(4_333_000 ))
+			.saturating_add(T::DbWeight::get().reads(1  as u64))
+			.saturating_add(T::DbWeight::get().writes(2  as u64))
 	}
 	// Storage: Skipped Metadata (r:0 w:0)
 	fn set_storage(i: u32, ) -> Weight {
-		(0 as Weight)
+		(Weight::from_ref_time(0 ))
 			// Standard Error: 0
-			.saturating_add((604_000 as Weight).saturating_mul(i as Weight))
-			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(i as Weight)))
+			.saturating_add((Weight::from_ref_time(604_000 )).saturating_mul(i as u64))
+			.saturating_add(T::DbWeight::get().writes((1  as u64).saturating_mul(i as u64)))
 	}
 	// Storage: Skipped Metadata (r:0 w:0)
 	fn kill_storage(i: u32, ) -> Weight {
-		(0 as Weight)
+		(Weight::from_ref_time(0 ))
 			// Standard Error: 1_000
-			.saturating_add((414_000 as Weight).saturating_mul(i as Weight))
-			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(i as Weight)))
+			.saturating_add((Weight::from_ref_time(414_000 )).saturating_mul(i as u64))
+			.saturating_add(T::DbWeight::get().writes((1  as u64).saturating_mul(i as u64)))
 	}
 	// Storage: Skipped Metadata (r:0 w:0)
 	fn kill_prefix(p: u32, ) -> Weight {
-		(861_000 as Weight)
+		(Weight::from_ref_time(861_000 ))
 			// Standard Error: 0
-			.saturating_add((818_000 as Weight).saturating_mul(p as Weight))
-			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(p as Weight)))
+			.saturating_add((Weight::from_ref_time(818_000 )).saturating_mul(p as u64))
+			.saturating_add(T::DbWeight::get().writes((1  as u64).saturating_mul(p as u64)))
 	}
 }
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
 	fn remark(_b: u32, ) -> Weight {
-		(0 as Weight)
+		(Weight::from_ref_time(0 ))
 	}
 	fn remark_with_event(b: u32, ) -> Weight {
-		(0 as Weight)
+		(Weight::from_ref_time(0 ))
 			// Standard Error: 0
-			.saturating_add((2_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add((Weight::from_ref_time(2_000 )).saturating_mul(b as u64))
 	}
 	fn set_heap_pages() -> Weight {
-		(4_333_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
+		(Weight::from_ref_time(4_333_000 ))
+			.saturating_add(RocksDbWeight::get().reads(1  as u64))
+			.saturating_add(RocksDbWeight::get().writes(2  as u64))
 	}
 	fn set_storage(i: u32, ) -> Weight {
-		(0 as Weight)
+		(Weight::from_ref_time(0 ))
 			// Standard Error: 0
-			.saturating_add((604_000 as Weight).saturating_mul(i as Weight))
-			.saturating_add(RocksDbWeight::get().writes((1 as Weight).saturating_mul(i as Weight)))
+			.saturating_add((Weight::from_ref_time(604_000 )).saturating_mul(i as u64))
+			.saturating_add(RocksDbWeight::get().writes((1  as u64).saturating_mul(i as u64)))
 	}
 	fn kill_storage(i: u32, ) -> Weight {
-		(0 as Weight)
+		(Weight::from_ref_time(0 ))
 			// Standard Error: 1_000
-			.saturating_add((414_000 as Weight).saturating_mul(i as Weight))
-			.saturating_add(RocksDbWeight::get().writes((1 as Weight).saturating_mul(i as Weight)))
+			.saturating_add((Weight::from_ref_time(414_000 )).saturating_mul(i as u64))
+			.saturating_add(RocksDbWeight::get().writes((1  as u64).saturating_mul(i as u64)))
 	}
 	fn kill_prefix(p: u32, ) -> Weight {
-		(861_000 as Weight)
+		(Weight::from_ref_time(861_000 ))
 			// Standard Error: 0
-			.saturating_add((818_000 as Weight).saturating_mul(p as Weight))
-			.saturating_add(RocksDbWeight::get().writes((1 as Weight).saturating_mul(p as Weight)))
+			.saturating_add((Weight::from_ref_time(818_000 )).saturating_mul(p as u64))
+			.saturating_add(RocksDbWeight::get().writes((1  as u64).saturating_mul(p as u64)))
 	}
 }

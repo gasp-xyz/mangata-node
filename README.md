@@ -43,7 +43,6 @@ Find manual setup instructions at the
 [Substrate Developer Hub](https://substrate.dev/docs/en/knowledgebase/getting-started/#manual-installation).
 
 ## Build
-
 ### Local target
 
 Recommended rustc version for the build is `nightly-2021-10-19`

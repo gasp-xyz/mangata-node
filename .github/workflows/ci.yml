@@ -182,23 +182,13 @@ jobs:
   #           "mangatasolutions/mangata-node:kusama-${{ needs.init.outputs.GLOBAL_VERSION }}"
 
   build-and-run-try-runtime:
-    permissions:
-      contents: 'write'
-      id-token: 'write'
     runs-on: [self-hosted, compile]
     container:
-      image: paritytech/ci-linux:production
+      # The same image as used in `devops/dockerfiles/node-new/Dockerfile`
+      image: paritytech/ci-linux@sha256:535c8a792a618f549832fa57e52c346d352021fa050ec82b30073810eb15369e
     if: ${{ github.event.inputs.skipBuild != 'true' }}
     steps:
       - uses: actions/checkout@v3
-      
-      # - uses: 'google-github-actions/auth@v0'
-      #   with:
-      #     workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-      #     service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
-     
-      # - name: 'Set up Cloud SDK'
-      #   uses: 'google-github-actions/setup-gcloud@v0'
       
       - name: Cache the Cargo dependencies
         uses: actions/cache@v3

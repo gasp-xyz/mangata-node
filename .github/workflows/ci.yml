@@ -191,10 +191,14 @@ jobs:
     if: ${{ github.event.inputs.skipBuild != 'true' }}
     steps:
       - uses: actions/checkout@v3
+      
       - uses: 'google-github-actions/auth@v0'
         with:
           workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
           service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v0'
+      
       - name: Cache the node_modules
         id: node-modules-cache
         uses: mansagroup/gcs-cache-action@v1

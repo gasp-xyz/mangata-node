@@ -196,6 +196,7 @@ jobs:
         with:
           workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
           service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+     
       - name: 'Set up Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@v0'
       
@@ -204,10 +205,7 @@ jobs:
         uses: mansagroup/gcs-cache-action@v1
         with:
           bucket: mangata-node-ci-cache
-          path: |
-            /usr/local/cargo
-            /root/.cache
-            /app/target
+          path: /usr/local/cargo,/root/.cache,/app/target
           key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build node using try runtime feature

@@ -562,12 +562,6 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 
 			ensure!(
-				!T::DisabledTokens::contains(&first_asset_id) &&
-					!T::DisabledTokens::contains(&second_asset_id),
-				Error::<T>::FunctionNotAvailableForThisToken
-			);
-
-			ensure!(
 				!T::DisallowedPools::contains(&(first_asset_id, second_asset_id)),
 				Error::<T>::DisallowedPool,
 			);
@@ -1658,6 +1652,12 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		second_asset_id: Self::CurrencyId,
 		second_asset_amount: Self::Balance,
 	) -> DispatchResult {
+		ensure!(
+			!T::DisabledTokens::contains(&first_asset_id) &&
+				!T::DisabledTokens::contains(&second_asset_id),
+			Error::<T>::FunctionNotAvailableForThisToken
+		);
+
 		let vault: T::AccountId = Pallet::<T>::account_id();
 
 		// Ensure pool is not created with zero amount

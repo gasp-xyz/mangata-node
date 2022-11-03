@@ -218,7 +218,7 @@ pub mod pallet {
 					// one updated takes R:2, W:2; and multiply for two assets
 					if !T::AssetRegistryApi::enable_pool_creation((
 						Self::first_token_id(),
-						Self::first_token_id(),
+						Self::second_token_id(),
 					)) {
 						log!(error, "cannot modify asset registry!");
 					}

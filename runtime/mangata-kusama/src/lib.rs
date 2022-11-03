@@ -542,7 +542,7 @@ impl AssetRegistryApi for EnableAssetPoolApi {
 			if let Some(xyk) = meta_maybe.clone().and_then(|m| m.additional.xyk) {
 				let mut additional = meta_maybe.unwrap().additional;
 				if xyk.pool_creation_disabled {
-					additional.xyk = Some(XykMetadata { pool_creation_disabled: true });
+					additional.xyk = Some(XykMetadata { pool_creation_disabled: false });
 					match orml_asset_registry::Pallet::<Runtime>::do_update_asset(
 						asset,
 						None,

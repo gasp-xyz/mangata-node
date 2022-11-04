@@ -172,11 +172,10 @@ jobs:
   build-and-run-try-runtime:
     strategy:
       matrix:
-        chain: ["rococo-testnet", "kusama-mainnet"]
-        url:
+        command:
           [
-            "wss://roccoco-testnet-collator-01.mangatafinance.cloud",
-            "wss://prod-kusama-collator-01.mangatafinance.cloud:443",
+            "cargo run --release --features=try-runtime try-runtime --chain=rococo-testnet --execution=Native on-runtime-upgrade live --uri wss://roccoco-testnet-collator-01.mangatafinance.cloud",
+            "cargo run --release --features=try-runtime try-runtime --chain=kusama-mainnet --execution=Native on-runtime-upgrade live --uri wss://prod-kusama-collator-01.mangatafinance.cloud:443",
           ]
     runs-on: [self-hosted, compile]
     container:
@@ -196,7 +195,7 @@ jobs:
         run: cargo build --release --features=try-runtime
 
       - name: Run try-runtime
-        run: cargo run --release --features=try-runtime try-runtime --chain=${{ matrix.chain }} --execution=Native on-runtime-upgrade live --uri ${{ matrix.chain }}
+        run: ${{ matrix.command }}
 
   run-benchmarks:
     name: Run runtime benchmarks

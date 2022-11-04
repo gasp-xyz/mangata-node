@@ -176,8 +176,6 @@ jobs:
       image: paritytech/ci-linux@sha256:535c8a792a618f549832fa57e52c346d352021fa050ec82b30073810eb15369e
     if: ${{ github.event.inputs.skipBuild != 'true' }}
     steps:
-      - name: Clean the workspace
-        run: rm -rf $GITHUB_WORKSPACE/*
       - uses: actions/checkout@v3
       - name: Cache the Cargo dependencies
         uses: actions/cache@v3
@@ -186,7 +184,7 @@ jobs:
           key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build node using try runtime feature rococo
-        run: cargo build --release --features=try-runtime
+        run: cargo build --release --features=try-runtime,mangata-rococo
 
       - name: Run try-runtime Rococo testnet
         run: cargo run --release --features=try-runtime,mangata-rococo try-runtime --chain=rococo-testnet --execution=Native on-runtime-upgrade live --uri wss://roccoco-testnet-collator-01.mangatafinance.cloud
@@ -195,6 +193,7 @@ jobs:
         run: cargo run --release --features=try-runtime try-runtime --chain=kusama-mainnet --execution=Native on-runtime-upgrade live --uri wss://prod-kusama-collator-01.mangatafinance.cloud:443
       
       - name: Fix permissions on self-hosted runner
+        if: always()
         run: chown -R 1003:1004 $GITHUB_WORKSPACE/*
 
   run-benchmarks:

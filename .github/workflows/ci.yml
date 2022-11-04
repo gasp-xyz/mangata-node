@@ -170,13 +170,6 @@ jobs:
             "mangatasolutions/mangata-node:kusama-${{ needs.init.outputs.GLOBAL_VERSION }}"
 
   build-and-run-try-runtime:
-    strategy:
-      matrix:
-        command:
-          [
-            "cargo run --release --features=try-runtime try-runtime --chain=rococo-testnet --execution=Native on-runtime-upgrade live --uri wss://roccoco-testnet-collator-01.mangatafinance.cloud",
-            "cargo run --release --features=try-runtime try-runtime --chain=kusama-mainnet --execution=Native on-runtime-upgrade live --uri wss://prod-kusama-collator-01.mangatafinance.cloud:443",
-          ]
     runs-on: [self-hosted, compile]
     container:
       # The same image as used in `devops/dockerfiles/node-new/Dockerfile`
@@ -194,8 +187,11 @@ jobs:
       - name: Build node using try runtime feature
         run: cargo build --release --features=try-runtime
 
-      - name: Run try-runtime
-        run: ${{ matrix.command }}
+      - name: Run try-runtime Rococo testnet
+        run: cargo run --release --features=try-runtime try-runtime --chain=rococo-testnet --execution=Native on-runtime-upgrade live --uri wss://roccoco-testnet-collator-01.mangatafinance.cloud
+
+      - name: Run try-runtime Kusama Mainnet
+        run: cargo run --release --features=try-runtime try-runtime --chain=kusama-mainnet --execution=Native on-runtime-upgrade live --uri wss://prod-kusama-collator-01.mangatafinance.cloud:443
 
   run-benchmarks:
     name: Run runtime benchmarks

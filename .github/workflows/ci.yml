@@ -149,7 +149,7 @@ jobs:
 
   build-node-image:
     needs: [init]
-    runs-on: [linux, compile]
+    runs-on: [gha, compile]
     if: ${{ github.event.inputs.skipBuild != 'true' }}
     steps:
       - name: Debug info about publishing.
@@ -174,7 +174,7 @@ jobs:
             "mangatasolutions/mangata-node:kusama-${{ needs.init.outputs.GLOBAL_VERSION }}"
 
   build-and-run-try-runtime:
-    runs-on: [linux, compile]
+    runs-on: [gha, compile]
     container:
       # The same image as used in `devops/dockerfiles/node-new/Dockerfile`
       image: paritytech/ci-linux@sha256:535c8a792a618f549832fa57e52c346d352021fa050ec82b30073810eb15369e

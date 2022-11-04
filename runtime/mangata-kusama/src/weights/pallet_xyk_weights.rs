@@ -152,9 +152,9 @@ impl<T: frame_system::Config> pallet_xyk::WeightInfo for ModuleWeight<T> {
 
 	// Storage: Issuance PromotedPoolsRewards (r:1 w:1)
 	fn promote_pool() -> Weight {
-		(21_822_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		(Weight::from_ref_time(21_822_000 as u64))
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 
 	// Storage: Issuance PromotedPoolsRewards (r:1 w:0)
@@ -166,15 +166,15 @@ impl<T: frame_system::Config> pallet_xyk::WeightInfo for ModuleWeight<T> {
 	// Storage: Xyk LiquidityMiningUserClaimed (r:1 w:1)
 	// Storage: Tokens Accounts (r:2 w:2)
 	fn claim_rewards_v2() -> Weight {
-		(86_814_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(9 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+		(Weight::from_ref_time(86_814_000))
+			.saturating_add(T::DbWeight::get().reads(9 as u64))
+			.saturating_add(T::DbWeight::get().writes(4 as u64))
 	}
 
 	fn claim_rewards_all_v2() -> Weight {
-		(86_814_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(9 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+		(Weight::from_ref_time(86_814_000))
+			.saturating_add(T::DbWeight::get().reads(9 as u64))
+			.saturating_add(T::DbWeight::get().writes(4 as u64))
 	}
 
 	// Storage: Issuance PromotedPoolsRewards (r:1 w:0)
@@ -184,9 +184,9 @@ impl<T: frame_system::Config> pallet_xyk::WeightInfo for ModuleWeight<T> {
 	// Storage: Xyk LiquidityMiningPool (r:1 w:1)
 	// Storage: Xyk LiquidityMiningActivePool (r:1 w:1)
 	fn activate_liquidity_v2() -> Weight {
-		(70_204_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(6 as Weight))
-			.saturating_add(T::DbWeight::get().writes(5 as Weight))
+		(Weight::from_ref_time(70_204_000))
+			.saturating_add(T::DbWeight::get().reads(6 as u64))
+			.saturating_add(T::DbWeight::get().writes(5 as u64))
 	}
 	// Storage: Issuance PromotedPoolsRewards (r:1 w:1)
 	// Storage: Xyk LiquidityMiningActiveUser (r:1 w:1)
@@ -197,15 +197,15 @@ impl<T: frame_system::Config> pallet_xyk::WeightInfo for ModuleWeight<T> {
 	// Storage: Xyk LiquidityMiningUserClaimed (r:1 w:1)
 	// Storage: Tokens Accounts (r:1 w:1)
 	fn deactivate_liquidity_v2() -> Weight {
-		(84_598_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(8 as Weight))
-			.saturating_add(T::DbWeight::get().writes(8 as Weight))
+		(Weight::from_ref_time(84_598_000))
+			.saturating_add(T::DbWeight::get().reads(8 as u64))
+			.saturating_add(T::DbWeight::get().writes(8 as u64))
 	}
 	//TODO retest
 	fn rewards_migrate_v1_to_v2() -> Weight {
-		(133_607_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(7 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
+		(Weight::from_ref_time(133_607_000))
+			.saturating_add(RocksDbWeight::get().reads(7 as u64))
+			.saturating_add(RocksDbWeight::get().writes(7 as u64))
 	}
 }
 
@@ -248,31 +248,31 @@ impl WeightInfo for () {
 	}
 	//TODO retest
 	fn claim_rewards_v2() -> Weight {
-		(156_724_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(8 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
+		(Weight::from_ref_time(156_724_000))
+			.saturating_add(RocksDbWeight::get().reads(8 as u64))
+			.saturating_add(RocksDbWeight::get().writes(6 as u64))
 	}
 	//TODO retest
 	fn claim_rewards_all_v2() -> Weight {
-		(156_724_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(8 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
+		(Weight::from_ref_time(156_724_000))
+			.saturating_add(RocksDbWeight::get().reads(8 as u64))
+			.saturating_add(RocksDbWeight::get().writes(6 as u64))
 	}
 	//TODO retest
 	fn activate_liquidity_v2() -> Weight {
-		(119_779_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
+		(Weight::from_ref_time(119_779_000))
+			.saturating_add(RocksDbWeight::get().reads(6 as u64))
+			.saturating_add(RocksDbWeight::get().writes(5 as u64))
 	}
 	//TODO retest
 	fn deactivate_liquidity_v2() -> Weight {
-		(133_607_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(7 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
+		(Weight::from_ref_time(133_607_000))
+			.saturating_add(RocksDbWeight::get().reads(7 as u64))
+			.saturating_add(RocksDbWeight::get().writes(7 as u64))
 	}
 	fn rewards_migrate_v1_to_v2() -> Weight {
-		(133_607_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(7 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
+		(Weight::from_ref_time(133_607_000))
+			.saturating_add(RocksDbWeight::get().reads(7 as u64))
+			.saturating_add(RocksDbWeight::get().writes(7 as u64))
 	}
 }

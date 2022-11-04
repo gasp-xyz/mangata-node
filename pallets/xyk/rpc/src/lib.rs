@@ -89,7 +89,7 @@ pub trait XykApi<
 		user: AccountId,
 		liquidity_asset_id: TokenId,
 		at: Option<BlockHash>,
-	) -> RpcResult<BalanceOutput>;
+	) -> RpcResult<ResponseTypePrice>;
 
 	#[method(name = "xyk_calculate_rewards_amount_v2")]
 	fn calculate_rewards_amount_v2(

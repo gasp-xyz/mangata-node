@@ -173,8 +173,7 @@ jobs:
     runs-on: [self-hosted, compile]
     container:
       # The same image as used in `devops/dockerfiles/node-new/Dockerfile`
-      image: mangatasolutions/ci-linux:gha-2
-      options: --user 1003:1004
+      image: paritytech/ci-linux@sha256:535c8a792a618f549832fa57e52c346d352021fa050ec82b30073810eb15369e
     if: ${{ github.event.inputs.skipBuild != 'true' }}
     steps:
       - uses: actions/checkout@v3
@@ -193,9 +192,9 @@ jobs:
       - name: Run try-runtime Kusama Mainnet
         run: cargo run --release --features=try-runtime try-runtime --chain=kusama-mainnet --execution=Native on-runtime-upgrade live --uri wss://prod-kusama-collator-01.mangatafinance.cloud:443
       
-      # - name: Fix permissions on self-hosted runner
-      #   if: always()
-      #   run: chown -R 1003:1004 $GITHUB_WORKSPACE/*
+      - name: Fix permissions on self-hosted runner
+        if: always()
+        run: chown -R 1003:1004 $GITHUB_WORKSPACE
 
   run-benchmarks:
     name: Run runtime benchmarks

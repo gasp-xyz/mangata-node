@@ -1,7 +1,0 @@
-# mangatasolutions/ci-linux:gha
-FROM paritytech/ci-linux@sha256:535c8a792a618f549832fa57e52c346d352021fa050ec82b30073810eb15369e
-
-# add github user
-RUN groupadd -g 1004 github && useradd -u 1003 -g 1004 -s /bin/bash -m github && \
-    chown -R root:github ${RUSTUP_HOME} ${CARGO_HOME}; \
-  	chmod -R g+w ${RUSTUP_HOME} ${CARGO_HOME}

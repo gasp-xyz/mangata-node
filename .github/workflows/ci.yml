@@ -44,7 +44,7 @@ jobs:
     steps:
       - name: Set global version
         id: set_ver
-        run: echo "::set-output name=GLOBAL_VERSION::${{ github.sha }}"
+        run: echo "GLOBAL_VERSION=${{ github.sha }}" >> $GITHUB_OUTPUT
 
   rustfmt-check:
     name: Formatting check
@@ -187,10 +187,10 @@ jobs:
         run: cargo build --release --features=try-runtime,mangata-rococo
 
       - name: Run try-runtime Rococo testnet
-        run: cargo run --release --features=try-runtime,mangata-rococo try-runtime --chain=public-testnet --execution=Native on-runtime-upgrade live --uri wss://roccoco-testnet-collator-01.mangatafinance.cloud
+        run: cargo run --release --features=try-runtime,mangata-rococo try-runtime --chain=public-testnet --execution=Native on-runtime-upgrade live --uri wss://roccoco-testnet-collator-01.mangatafinance.cloud:443
 
-      - name: Build node using try runtime feature kusama
-        run: cargo build --release --features=try-runtime
+      # - name: Build node using try runtime feature kusama
+      #   run: cargo build --release --features=try-runtime
 
       - name: Run try-runtime Kusama Mainnet
         run: cargo run --release --features=try-runtime try-runtime --chain=kusama-mainnet --execution=Native on-runtime-upgrade live --uri wss://prod-kusama-collator-01.mangatafinance.cloud:443

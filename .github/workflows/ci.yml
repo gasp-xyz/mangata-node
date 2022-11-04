@@ -31,10 +31,6 @@ on:
         required: true
         default: false
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
-
 env:
   DOCKER_BUILDER_IMAGE: mangatasolutions/node-builder:0.2
   DISABLE_TTY: 1
@@ -149,7 +145,7 @@ jobs:
 
   build-node-image:
     needs: [init]
-    runs-on: [gha, compile]
+    runs-on: [self-hosted, compile]
     if: ${{ github.event.inputs.skipBuild != 'true' }}
     steps:
       - name: Debug info about publishing.
@@ -174,11 +170,11 @@ jobs:
             "mangatasolutions/mangata-node:kusama-${{ needs.init.outputs.GLOBAL_VERSION }}"
 
   build-and-run-try-runtime:
-    runs-on: [gha, compile]
+    runs-on: [self-hosted, compile]
     container:
       # The same image as used in `devops/dockerfiles/node-new/Dockerfile`
       image: paritytech/ci-linux@sha256:535c8a792a618f549832fa57e52c346d352021fa050ec82b30073810eb15369e
-      options: --user nonroot
+      options: --user 1000:999
     if: ${{ github.event.inputs.skipBuild != 'true' }}
     steps:
       - uses: actions/checkout@v3

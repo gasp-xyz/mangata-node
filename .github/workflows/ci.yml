@@ -31,6 +31,10 @@ on:
         required: true
         default: false
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
 env:
   DOCKER_BUILDER_IMAGE: mangatasolutions/node-builder:0.2
   DISABLE_TTY: 1
@@ -174,10 +178,10 @@ jobs:
     container:
       # The same image as used in `devops/dockerfiles/node-new/Dockerfile`
       image: paritytech/ci-linux@sha256:535c8a792a618f549832fa57e52c346d352021fa050ec82b30073810eb15369e
+      options: --user nonroot
     if: ${{ github.event.inputs.skipBuild != 'true' }}
     steps:
       - uses: actions/checkout@v3
-
       - name: Cache the Cargo dependencies
         uses: actions/cache@v3
         with:
@@ -185,13 +189,10 @@ jobs:
           key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build node using try runtime feature rococo
-        run: cargo build --release --features=try-runtime,mangata-rococo
+        run: cargo build --release --features=try-runtime
 
       - name: Run try-runtime Rococo testnet
         run: cargo run --release --features=try-runtime try-runtime --chain=mangata-rococo --execution=Native on-runtime-upgrade live --uri wss://roccoco-testnet-collator-01.mangatafinance.cloud
-
-      - name: Build node using try runtime feature kusama
-        run: cargo build --release --features=try-runtime
 
       - name: Run try-runtime Kusama Mainnet
         run: cargo run --release --features=try-runtime try-runtime --chain=kusama-mainnet --execution=Native on-runtime-upgrade live --uri wss://prod-kusama-collator-01.mangatafinance.cloud:443

@@ -89,7 +89,7 @@ pub trait XykApi<
 		user: AccountId,
 		liquidity_asset_id: TokenId,
 		at: Option<BlockHash>,
-	) -> RpcResult<BalanceOutput>;
+	) -> RpcResult<ResponseTypePrice>;
 
 	#[method(name = "xyk_get_max_instant_unreserve_amount")]
 	fn get_max_instant_unreserve_amount(
@@ -97,7 +97,7 @@ pub trait XykApi<
 		user: AccountId,
 		liquidity_asset_id: TokenId,
 		at: Option<BlockHash>,
-	) -> RpcResult<BalanceOutput>;
+	) -> RpcResult<ResponseTypePrice>;
 }
 
 pub struct Xyk<C, M> {
@@ -309,7 +309,7 @@ where
 		user: AccountId,
 		liquidity_asset_id: TokenId,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<Balance> {
+	) -> RpcResult<XYKRpcResult<Balance>> {
 		let api = self.client.runtime_api();
 		let at = BlockId::<Block>::hash(at.unwrap_or_else(||
             // If the block hash is not supplied assume the best block.
@@ -329,7 +329,7 @@ where
 		user: AccountId,
 		liquidity_asset_id: TokenId,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<Balance> {
+	) -> RpcResult<XYKRpcResult<Balance>> {
 		let api = self.client.runtime_api();
 		let at = BlockId::<Block>::hash(at.unwrap_or_else(||
             // If the block hash is not supplied assume the best block.

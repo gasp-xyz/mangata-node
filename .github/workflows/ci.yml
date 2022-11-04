@@ -187,7 +187,7 @@ jobs:
         run: cargo build --release --features=try-runtime,mangata-rococo
 
       - name: Run try-runtime Rococo testnet
-        run: cargo run --release --features=try-runtime,mangata-rococo try-runtime --chain=rococo-testnet --execution=Native on-runtime-upgrade live --uri wss://roccoco-testnet-collator-01.mangatafinance.cloud
+        run: cargo run --release --features=try-runtime,mangata-rococo try-runtime --chain=public-testnet --execution=Native on-runtime-upgrade live --uri wss://roccoco-testnet-collator-01.mangatafinance.cloud
 
       - name: Build node using try runtime feature kusama
         run: cargo build --release --features=try-runtime

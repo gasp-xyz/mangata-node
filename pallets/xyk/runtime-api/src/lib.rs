@@ -83,7 +83,7 @@ sp_api::decl_runtime_apis! {
 		fn get_max_instant_burn_amount(
 			user: AccountId,
 			liquidity_asset_id: TokenId,
-		) -> Balance;
+		) -> XYKRpcResult<Balance>;
 		fn get_max_instant_unreserve_amount(
 			user: AccountId,
 			liquidity_asset_id: TokenId,

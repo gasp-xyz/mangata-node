@@ -82,25 +82,25 @@ impl<T: frame_system::Config> pallet_xyk::WeightInfo for ModuleWeight<T> {
 	// Storage: Xyk LiquidityAssets (r:0 w:1)
 	// Storage: Xyk LiquidityPools (r:0 w:1)
 	fn create_pool() -> Weight {
-		(143_430_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(12 as Weight))
-			.saturating_add(T::DbWeight::get().writes(12 as Weight))
+		(Weight::from_ref_time(143_430_000))
+			.saturating_add(T::DbWeight::get().reads(12 as u64))
+			.saturating_add(T::DbWeight::get().writes(12 as u64))
 	}
 	// Storage: Xyk Pools (r:3 w:1)
 	// Storage: Tokens Accounts (r:6 w:6)
 	// Storage: System Account (r:2 w:2)
 	fn sell_asset() -> Weight {
-		(151_597_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(11 as Weight))
-			.saturating_add(T::DbWeight::get().writes(9 as Weight))
+		(Weight::from_ref_time(151_597_000))
+			.saturating_add(T::DbWeight::get().reads(11 as u64))
+			.saturating_add(T::DbWeight::get().writes(9 as u64))
 	}
 	// Storage: Xyk Pools (r:4 w:1)
 	// Storage: Tokens Accounts (r:6 w:6)
 	// Storage: System Account (r:2 w:2)
 	fn buy_asset() -> Weight {
-		(158_939_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(12 as Weight))
-			.saturating_add(T::DbWeight::get().writes(9 as Weight))
+		(Weight::from_ref_time(158_939_000))
+			.saturating_add(T::DbWeight::get().reads(12 as u64))
+			.saturating_add(T::DbWeight::get().writes(9 as u64))
 	}
 	// Storage: Xyk LiquidityAssets (r:1 w:0)
 	// Storage: Xyk Pools (r:1 w:1)
@@ -114,9 +114,9 @@ impl<T: frame_system::Config> pallet_xyk::WeightInfo for ModuleWeight<T> {
 	// Storage: Xyk LiquidityMiningActivePool (r:1 w:1)
 	// Storage: MultiPurposeLiquidity ReserveStatus (r:1 w:1)
 	fn mint_liquidity() -> Weight {
-		(169_416_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(15 as Weight))
-			.saturating_add(T::DbWeight::get().writes(12 as Weight))
+		(Weight::from_ref_time(169_416_000))
+			.saturating_add(T::DbWeight::get().reads(15 as u64))
+			.saturating_add(T::DbWeight::get().writes(12 as u64))
 	}
 	// Storage: Xyk LiquidityAssets (r:1 w:0)
 	// Storage: Issuance PromotedPoolsRewards (r:1 w:0)
@@ -127,9 +127,9 @@ impl<T: frame_system::Config> pallet_xyk::WeightInfo for ModuleWeight<T> {
 	// Storage: Tokens TotalIssuance (r:1 w:1)
 	// Storage: Tokens NextCurrencyId (r:1 w:0)
 	fn mint_liquidity_using_vesting_native_tokens() -> Weight {
-		(198_407_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(14 as Weight))
-			.saturating_add(T::DbWeight::get().writes(11 as Weight))
+		(Weight::from_ref_time(198_407_000))
+			.saturating_add(T::DbWeight::get().reads(14 as u64))
+			.saturating_add(T::DbWeight::get().writes(11 as u64))
 	}
 	// Storage: Xyk LiquidityAssets (r:1 w:2)
 	// Storage: Issuance PromotedPoolsRewards (r:1 w:1)
@@ -145,9 +145,9 @@ impl<T: frame_system::Config> pallet_xyk::WeightInfo for ModuleWeight<T> {
 	// Storage: Tokens TotalIssuance (r:1 w:1)
 	// Storage: Xyk LiquidityPools (r:0 w:1)
 	fn burn_liquidity() -> Weight {
-		(175_567_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(16 as Weight))
-			.saturating_add(T::DbWeight::get().writes(19 as Weight))
+		(Weight::from_ref_time(175_567_000))
+			.saturating_add(T::DbWeight::get().reads(16 as u64))
+			.saturating_add(T::DbWeight::get().writes(19 as u64))
 	}
 	// Storage: Issuance PromotedPoolsRewards (r:1 w:0)
 	// Storage: Xyk LiquidityMiningUser (r:1 w:0)
@@ -159,9 +159,9 @@ impl<T: frame_system::Config> pallet_xyk::WeightInfo for ModuleWeight<T> {
 	// Storage: Tokens Accounts (r:2 w:2)
 	// Storage: Issuance PromotedPoolsRewards (r:1 w:1)
 	fn promote_pool() -> Weight {
-		(21_528_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		(Weight::from_ref_time(21_528_000))
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 
 	// Storage: Issuance PromotedPoolsRewards (r:1 w:0)
@@ -212,39 +212,39 @@ fn rewards_migrate_v1_to_v2() -> Weight {
 // For backwards compatibility and tests
 impl WeightInfo for () {
 	fn create_pool() -> Weight {
-		(143_430_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(12 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(12 as Weight))
+		(Weight::from_ref_time(143_430_000))
+			.saturating_add(RocksDbWeight::get().reads(12 as u64))
+			.saturating_add(RocksDbWeight::get().writes(12 as u64))
 	}
 	fn sell_asset() -> Weight {
-		(151_597_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(11 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(9 as Weight))
+		(Weight::from_ref_time(151_597_000))
+			.saturating_add(RocksDbWeight::get().reads(11 as u64))
+			.saturating_add(RocksDbWeight::get().writes(9 as u64))
 	}
 	fn buy_asset() -> Weight {
-		(158_939_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(12 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(9 as Weight))
+		(Weight::from_ref_time(158_939_000))
+			.saturating_add(RocksDbWeight::get().reads(12 as u64))
+			.saturating_add(RocksDbWeight::get().writes(9 as u64))
 	}
 	fn mint_liquidity() -> Weight {
-		(169_416_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(15 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(12 as Weight))
+		(Weight::from_ref_time(169_416_000))
+			.saturating_add(RocksDbWeight::get().reads(15 as u64))
+			.saturating_add(RocksDbWeight::get().writes(12 as u64))
 	}
 	fn mint_liquidity_using_vesting_native_tokens() -> Weight {
-		(198_407_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(14 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(11 as Weight))
+		(Weight::from_ref_time(198_407_000))
+			.saturating_add(RocksDbWeight::get().reads(14 as u64))
+			.saturating_add(RocksDbWeight::get().writes(11 as u64))
 	}
 	fn burn_liquidity() -> Weight {
-		(175_567_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(16 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(19 as Weight))
+		(Weight::from_ref_time(175_567_000))
+			.saturating_add(RocksDbWeight::get().reads(16 as u64))
+			.saturating_add(RocksDbWeight::get().writes(19 as u64))
 	}
 	fn promote_pool() -> Weight {
-		(21_528_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+		(Weight::from_ref_time(21_528_000))
+			.saturating_add(RocksDbWeight::get().reads(1 as u64))
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	fn claim_rewards_v2() -> Weight {
 		(156_724_000 as Weight)

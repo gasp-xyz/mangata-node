@@ -70,93 +70,93 @@ impl<T: frame_system::Config> orml_tokens::WeightInfo for ModuleWeight<T> {
 	// Storage: Tokens Accounts (r:2 w:2)
 	// Storage: System Account (r:1 w:1)
 	fn transfer() -> Weight {
-		(47_244_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+		(Weight::from_ref_time(47_244_000 ))
+			.saturating_add(T::DbWeight::get().reads(3  as u64))
+			.saturating_add(T::DbWeight::get().writes(3  as u64))
 	}
 	// Storage: Tokens Accounts (r:2 w:2)
 	// Storage: System Account (r:1 w:1)
 	fn transfer_all() -> Weight {
-		(49_010_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+		(Weight::from_ref_time(49_010_000 ))
+			.saturating_add(T::DbWeight::get().reads(3  as u64))
+			.saturating_add(T::DbWeight::get().writes(3  as u64))
 	}
 	// Storage: Tokens Accounts (r:2 w:2)
 	// Storage: System Account (r:1 w:1)
 	fn transfer_keep_alive() -> Weight {
-		(43_617_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+		(Weight::from_ref_time(43_617_000 ))
+			.saturating_add(T::DbWeight::get().reads(3  as u64))
+			.saturating_add(T::DbWeight::get().writes(3  as u64))
 	}
 	// Storage: Tokens Accounts (r:2 w:2)
 	// Storage: System Account (r:2 w:1)
 	fn force_transfer() -> Weight {
-		(46_382_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+		(Weight::from_ref_time(46_382_000 ))
+			.saturating_add(T::DbWeight::get().reads(4  as u64))
+			.saturating_add(T::DbWeight::get().writes(3  as u64))
 	}
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: Tokens TotalIssuance (r:1 w:1)
 	fn set_balance() -> Weight {
-		(24_719_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		(Weight::from_ref_time(24_719_000 ))
+			.saturating_add(T::DbWeight::get().reads(2  as u64))
+			.saturating_add(T::DbWeight::get().writes(2  as u64))
 	}
 	// Storage: Tokens NextCurrencyId (r:1 w:1)
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: Tokens TotalIssuance (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn create() -> Weight {
-		(42_794_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+		(Weight::from_ref_time(42_794_000 ))
+			.saturating_add(T::DbWeight::get().reads(4  as u64))
+			.saturating_add(T::DbWeight::get().writes(4  as u64))
 	}
 	// Storage: Tokens NextCurrencyId (r:1 w:0)
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: Tokens TotalIssuance (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn mint() -> Weight {
-		(42_599_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+		(Weight::from_ref_time(42_599_000 ))
+			.saturating_add(T::DbWeight::get().reads(4  as u64))
+			.saturating_add(T::DbWeight::get().writes(3  as u64))
 	}
 }
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
 	fn transfer() -> Weight {
-		(47_244_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+		(Weight::from_ref_time(47_244_000 ))
+			.saturating_add(RocksDbWeight::get().reads(3  as u64))
+			.saturating_add(RocksDbWeight::get().writes(3  as u64))
 	}
 	fn transfer_all() -> Weight {
-		(49_010_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+		(Weight::from_ref_time(49_010_000 ))
+			.saturating_add(RocksDbWeight::get().reads(3  as u64))
+			.saturating_add(RocksDbWeight::get().writes(3  as u64))
 	}
 	fn transfer_keep_alive() -> Weight {
-		(43_617_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+		(Weight::from_ref_time(43_617_000 ))
+			.saturating_add(RocksDbWeight::get().reads(3  as u64))
+			.saturating_add(RocksDbWeight::get().writes(3  as u64))
 	}
 	fn force_transfer() -> Weight {
-		(46_382_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+		(Weight::from_ref_time(46_382_000 ))
+			.saturating_add(RocksDbWeight::get().reads(4  as u64))
+			.saturating_add(RocksDbWeight::get().writes(3  as u64))
 	}
 	fn set_balance() -> Weight {
-		(24_719_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
+		(Weight::from_ref_time(24_719_000 ))
+			.saturating_add(RocksDbWeight::get().reads(2  as u64))
+			.saturating_add(RocksDbWeight::get().writes(2  as u64))
 	}
 	fn create() -> Weight {
-		(42_794_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+		(Weight::from_ref_time(42_794_000 ))
+			.saturating_add(RocksDbWeight::get().reads(4  as u64))
+			.saturating_add(RocksDbWeight::get().writes(4  as u64))
 	}
 	fn mint() -> Weight {
-		(42_599_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+		(Weight::from_ref_time(42_599_000 ))
+			.saturating_add(RocksDbWeight::get().reads(4  as u64))
+			.saturating_add(RocksDbWeight::get().writes(3  as u64))
 	}
 }

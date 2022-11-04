@@ -174,7 +174,7 @@ jobs:
     container:
       # The same image as used in `devops/dockerfiles/node-new/Dockerfile`
       image: paritytech/ci-linux@sha256:535c8a792a618f549832fa57e52c346d352021fa050ec82b30073810eb15369e
-      options: --user 1004:999
+      options: --user 1004:1004
     if: ${{ github.event.inputs.skipBuild != 'true' }}
     steps:
       - uses: actions/checkout@v3

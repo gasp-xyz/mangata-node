@@ -23,5 +23,7 @@ jobs:
           cluster_name: 'mangata-dev'
           location: 'europe-west1'
      
-      - id: 'get-pods'
-        run: kubectl -n pr-341 get pods
+      - run: | 
+          helm upgrade -i --create-namespace -n pr-341 node . \
+          -f values.yaml -f values-fungible.yaml
+        working-directory: devops/helm-charts/node

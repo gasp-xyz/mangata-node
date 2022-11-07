@@ -24,6 +24,6 @@ jobs:
           location: 'europe-west1'
      
       - run: | 
-          helm upgrade -i --create-namespace -n pr-341 node . \
+          helm upgrade -i --create-namespace -n pr-341 --wait node . \
           -f values.yaml -f values-fungible.yaml
         working-directory: devops/helm-charts/node

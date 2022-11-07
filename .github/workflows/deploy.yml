@@ -5,6 +5,9 @@ on:
       - develop
   workflow_dispatch:
 
+env:
+  version: pr-341
+
 jobs:
   deploy:
     permissions:
@@ -18,12 +21,13 @@ jobs:
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-      - uses: google-github-actions/get-gke-credentials@v0.8.2
+      - name: Set up GKE credentials
+        uses: google-github-actions/get-gke-credentials@v0.8.0
         with:
-          cluster_name: 'mangata-dev'
-          location: 'europe-west1'
+          cluster_name: mangata-dev
+          location: europe-west1
      
       - run: | 
-          helm upgrade -i --create-namespace -n pr-341 --wait node . \
+          helm upgrade -i --create-namespace -n ${{ env.version }} --wait node . \
           -f values.yaml -f values-fungible.yaml
         working-directory: devops/helm-charts/node

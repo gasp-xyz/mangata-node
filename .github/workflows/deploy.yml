@@ -18,10 +18,10 @@ jobs:
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-      - uses: 'google-github-actions/get-gke-credentials@v0'
+      - uses: google-github-actions/get-gke-credentials@v0.8.2
         with:
           cluster_name: 'mangata-dev'
           location: 'europe-west1'
      
       - id: 'get-pods'
-        run: kubectl get pods
+        run: kubectl -n pr-341 get pods

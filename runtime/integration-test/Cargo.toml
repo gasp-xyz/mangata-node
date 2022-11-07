@@ -55,6 +55,7 @@ xcm-executor = { git = "https://github.com/mangata-finance/polkadot", branch = "
 xcm-emulator = { git = "https://github.com/shaunxw/xcm-simulator", rev = "6c02911a3eeb04c342e4eb273d2ffbedd45dabff" }
 
 [features]
+default = ["with-kusama-runtime"]
 with-kusama-runtime = [
     "mangata-kusama-runtime",
 ]

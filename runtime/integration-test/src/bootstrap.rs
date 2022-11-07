@@ -1,6 +1,5 @@
-use frame_support::{assert_err, assert_noop, assert_ok, traits::OnInitialize};
+use frame_support::{assert_err, assert_ok, traits::OnInitialize};
 use std::default::Default;
-use log::info;
 
 use mangata_types::{
 	assets::{CustomMetadata, XykMetadata},

@@ -2638,7 +2638,7 @@ dependencies = [
  "impl-trait-for-tuples",
  "k256",
  "log",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance//substrate?branch=feature/asset-metadata-xyk)",
+ "mangata-types",
  "once_cell",
  "parity-scale-codec",
  "paste",
@@ -4594,7 +4594,7 @@ dependencies = [
  "frame-try-runtime",
  "hex-literal",
  "log",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance/substrate?branch=mangata-dev)",
+ "mangata-types",
  "mp-bootstrap",
  "mp-multipurpose-liquidity",
  "mp-traits",
@@ -4687,7 +4687,7 @@ dependencies = [
  "mangata-kusama-runtime",
  "mangata-rococo-runtime",
  "mangata-rpc-nonce",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance/substrate?branch=mangata-dev)",
+ "mangata-types",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc",
@@ -4772,7 +4772,7 @@ dependencies = [
  "frame-try-runtime",
  "hex-literal",
  "log",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance/substrate?branch=mangata-dev)",
+ "mangata-types",
  "mp-bootstrap",
  "mp-multipurpose-liquidity",
  "mp-traits",
@@ -4855,17 +4855,6 @@ dependencies = [
 name = "mangata-types"
 version = "0.1.0"
 source = "git+https://github.com/mangata-finance//substrate?branch=feature/asset-metadata-xyk#000176749274c37c5ead5da749157c20b3ae2495"
-dependencies = [
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-runtime",
-]
-
-[[package]]
-name = "mangata-types"
-version = "0.1.0"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#60c819124ade4c10f927d76f9031eb73d88934d0"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -5050,7 +5039,7 @@ name = "mp-bootstrap"
 version = "0.1.0"
 dependencies = [
  "frame-support",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance/substrate?branch=mangata-dev)",
+ "mangata-types",
  "sp-runtime",
  "sp-std",
 ]
@@ -5071,7 +5060,7 @@ name = "mp-traits"
 version = "0.1.0"
 dependencies = [
  "frame-support",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance/substrate?branch=mangata-dev)",
+ "mangata-types",
  "mp-multipurpose-liquidity",
  "parity-scale-codec",
  "sp-runtime",
@@ -5488,7 +5477,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance/substrate?branch=mangata-dev)",
+ "mangata-types",
  "orml-traits",
  "pallet-xcm",
  "parity-scale-codec",
@@ -5509,7 +5498,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance/substrate?branch=mangata-dev)",
+ "mangata-types",
  "orml-traits",
  "parity-scale-codec",
  "scale-info",
@@ -5784,7 +5773,7 @@ dependencies = [
  "frame-system",
  "frame-try-runtime",
  "log",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance/substrate?branch=mangata-dev)",
+ "mangata-types",
  "mockall",
  "mp-bootstrap",
  "mp-multipurpose-liquidity",
@@ -5870,7 +5859,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance/substrate?branch=mangata-dev)",
+ "mangata-types",
  "orml-tokens",
  "pallet-utility",
  "parity-scale-codec",
@@ -6056,7 +6045,7 @@ dependencies = [
  "frame-try-runtime",
  "lazy_static",
  "log",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance/substrate?branch=mangata-dev)",
+ "mangata-types",
  "orml-tokens",
  "orml-traits",
  "pallet-vesting-mangata",
@@ -6132,7 +6121,7 @@ dependencies = [
  "hex-literal",
  "lazy_static",
  "log",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance/substrate?branch=mangata-dev)",
+ "mangata-types",
  "mp-multipurpose-liquidity",
  "mp-traits",
  "orml-tokens",
@@ -6658,7 +6647,7 @@ dependencies = [
  "lazy_static",
  "libm 0.2.1",
  "log",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance/substrate?branch=mangata-dev)",
+ "mangata-types",
  "mp-bootstrap",
  "mp-multipurpose-liquidity",
  "mp-traits",
@@ -6701,7 +6690,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance/substrate?branch=mangata-dev)",
+ "mangata-types",
  "mp-multipurpose-liquidity",
  "mp-traits",
  "orml-tokens",
@@ -8978,6 +8967,47 @@ dependencies = [
  "netlink-proto",
  "nix",
  "thiserror",
+]
+
+[[package]]
+name = "runtime-integration-test"
+version = "0.1.0"
+dependencies = [
+ "cumulus-primitives-core",
+ "env_logger",
+ "frame-support",
+ "frame-system",
+ "log",
+ "mangata-kusama-runtime",
+ "mangata-types",
+ "mp-bootstrap",
+ "mp-multipurpose-liquidity",
+ "mp-traits",
+ "orml-asset-registry",
+ "orml-tokens",
+ "orml-traits",
+ "orml-unknown-tokens",
+ "orml-xcm",
+ "orml-xcm-support",
+ "orml-xtokens",
+ "pallet-balances",
+ "pallet-bootstrap",
+ "pallet-issuance",
+ "pallet-multipurpose-liquidity",
+ "pallet-sudo-origin",
+ "pallet-xcm",
+ "pallet-xyk",
+ "parachain-info",
+ "polkadot-parachain",
+ "polkadot-primitives",
+ "polkadot-runtime-parachains",
+ "sp-io",
+ "sp-runtime",
+ "xcm",
+ "xcm-builder",
+ "xcm-emulator",
+ "xcm-executor",
+ "xyk-runtime-api",
 ]
 
 [[package]]
@@ -13049,6 +13079,31 @@ dependencies = [
  "sp-arithmetic",
  "sp-io",
  "sp-runtime",
+ "sp-std",
+ "xcm",
+ "xcm-executor",
+]
+
+[[package]]
+name = "xcm-emulator"
+version = "0.1.0"
+source = "git+https://github.com/shaunxw/xcm-simulator?rev=6c02911a3eeb04c342e4eb273d2ffbedd45dabff#6c02911a3eeb04c342e4eb273d2ffbedd45dabff"
+dependencies = [
+ "cumulus-pallet-dmp-queue",
+ "cumulus-pallet-parachain-system",
+ "cumulus-pallet-xcmp-queue",
+ "cumulus-primitives-core",
+ "cumulus-primitives-parachain-inherent",
+ "cumulus-test-relay-sproof-builder",
+ "frame-support",
+ "frame-system",
+ "parachain-info",
+ "parity-scale-codec",
+ "paste",
+ "polkadot-primitives",
+ "polkadot-runtime-parachains",
+ "quote",
+ "sp-io",
  "sp-std",
  "xcm",
  "xcm-executor",

@@ -11,7 +11,7 @@
 .local
 
 # The cache for docker container dependency
-/.cargo/config
+/.cargo
 docker-cargo
 
 .DS_Store

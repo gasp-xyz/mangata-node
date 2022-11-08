@@ -127,7 +127,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	MangataMigrations,
+	(MangataMigrations, migrations::asset_register::MigrateToXykMetadata),
 >;
 
 pub struct MangataMigrations;
@@ -483,7 +483,7 @@ impl Contains<TokenId> for AssetRegisterFilter {
 	fn contains(t: &TokenId) -> bool {
 		let meta: Option<AssetMetadataOf> = orml_asset_registry::Metadata::<Runtime>::get(t);
 		if let Some(xyk) = meta.and_then(|m| m.additional.xyk) {
-			return xyk.pool_creation_disabled
+			return xyk.operations_disabled
 		}
 		return false
 	}
@@ -541,8 +541,8 @@ impl AssetRegistryApi for EnableAssetPoolApi {
 				orml_asset_registry::Metadata::<Runtime>::get(asset);
 			if let Some(xyk) = meta_maybe.clone().and_then(|m| m.additional.xyk) {
 				let mut additional = meta_maybe.unwrap().additional;
-				if xyk.pool_creation_disabled {
-					additional.xyk = Some(XykMetadata { pool_creation_disabled: false });
+				if xyk.operations_disabled {
+					additional.xyk = Some(XykMetadata { operations_disabled: false });
 					match orml_asset_registry::Pallet::<Runtime>::do_update_asset(
 						asset,
 						None,

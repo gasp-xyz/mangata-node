@@ -27,6 +27,32 @@ spec:
           volumeMounts:
             - mountPath: /etc/mangata/
               name: node-chainspec-volume
+        - name: inject-keys
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          command: ["/bin/bash"]
+          args:
+            - -c
+            - |
+              set -eu
+              {{- range $keys := .Values.node.node_02.keys }}
+              if [ ! -f /var/run/secrets/{{ .type }}/type ]; then
+                 echo "Error: File /var/run/secrets/{{ .type }}/type does not exist"
+                 exit 1
+              fi
+              /mangata/node key insert --chain public-testnet --keystore-path /keystore \
+              --key-type $(cat /var/run/secrets/{{ .type }}/type) \
+              --scheme $(cat /var/run/secrets/{{ .type }}/scheme) \
+              --suri /var/run/secrets/{{ .type }}/seed \
+              && echo "Inserted key {{ .type }} into Keystore" \
+              || echo "Failed to insert key {{ .type}} into Keystore."
+              {{- end }}
+          volumeMounts:
+            - mountPath: /keystore
+              name: chain-keystore
+          {{- range $keys := .Values.node.node_02.keys }}
+            - mountPath: /var/run/secrets/{{ .type }}
+              name: {{ .type }}
+          {{- end }}
       containers:
         - name: node-02
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -85,6 +111,12 @@ spec:
           emptyDir:
             medium: "Memory"
             sizeLimit: 10Mi
+      {{- range $keys := .Values.node.node_02.keys }}
+        - name: {{ .type }}
+          secret:
+            secretName: "node-02-{{ .type }}"
+            defaultMode: 0400
+      {{- end }}
   volumeClaimTemplates:
     - metadata:
         name: chaindata

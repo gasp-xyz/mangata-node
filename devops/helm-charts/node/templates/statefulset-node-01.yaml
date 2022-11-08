@@ -61,7 +61,7 @@ spec:
           volumeMounts:
             - mountPath: /keystore
               name: chain-keystore
-          {{- range $keys := .Values.node.keys }}
+          {{- range $keys := .Values.node.node_01.keys }}
             - mountPath: /var/run/secrets/{{ .type }}
               name: {{ .type }}
           {{- end }}

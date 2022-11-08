@@ -8,7 +8,7 @@ relaychain:
 
 image:
   repository: mangatasolutions/mangata-node
-  tag: rococo-0.25.0
+  tag: rococo-75aa2dca9f362a582da59c05741f879eb99414aa
 
 node:
   storageSize: "10Gi"

@@ -233,6 +233,7 @@ pub fn run() -> Result<()> {
 				cmd.run(config, polkadot_config)
 			})
 		},
+		Some(Subcommand::Key(cmd)) => Ok(cmd.run(&cli)?),
 		Some(Subcommand::Revert(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			runner.async_run(|mut config| {

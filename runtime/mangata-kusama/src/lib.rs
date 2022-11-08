@@ -1230,8 +1230,12 @@ impl_runtime_apis! {
 		}
 
 
-		fn pop_tx() -> Option<Vec<u8>>{
-			System::pop_txs(1).get(0).cloned()
+		fn get_previous_block_txs() -> Vec<Vec<u8>> {
+			System::get_previous_blocks_txs()
+		}
+
+		fn pop_txs(count: u64) -> Vec<Vec<u8>>{
+			System::pop_txs(count as usize)
 		}
 
 		fn create_enqueue_txs_inherent(txs: Vec<<Block as BlockT>::Extrinsic>) -> <Block as BlockT>::Extrinsic{

@@ -18,6 +18,17 @@ node:
   env:
     RUST_LOG: "info"
 
+  node_01:
+    keys:
+    - type: "aura"
+      scheme: "sr25519"
+      seed: "//Alice"
+  node_02:
+    keys:
+    - type: "aura"
+      scheme: "sr25519"
+      seed: "//Bob"
+
 relaychain:
   enabled: true
   image: "mangatasolutions/polkadot-dev:v0.9.29"

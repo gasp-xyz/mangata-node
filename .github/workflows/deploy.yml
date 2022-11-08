@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  version: pr-341
+  version: dev
 
 jobs:
   deploy:
@@ -27,7 +27,10 @@ jobs:
           cluster_name: mangata-dev
           location: europe-west1
      
-      - run: | 
-          helm upgrade -i --create-namespace -n ${{ env.version }} --wait node . \
-          -f values.yaml -f values-fungible.yaml
-        working-directory: devops/helm-charts/node
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+      
+      # - run: | 
+      #     helm upgrade -i --create-namespace -n ${{ env.version }} --wait node . \
+      #     -f values.yaml -f values-fungible.yaml
+      #   working-directory: devops/helm-charts/node

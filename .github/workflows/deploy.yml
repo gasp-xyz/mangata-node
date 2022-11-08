@@ -26,7 +26,9 @@ jobs:
         with:
           cluster_name: mangata-dev
           location: europe-west1
-     
+      
+      - uses: jkroepke/setup-vals@v1
+      
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
       

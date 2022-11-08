@@ -27,7 +27,7 @@ fn bootstrap_updates_metadata_and_creates_pool_correctly() {
 				location: None,
 				existential_deposit: Default::default(),
 				additional: CustomMetadata {
-					xyk: Some(XykMetadata { pool_creation_disabled: true }),
+					xyk: Some(XykMetadata { operations_disabled: true }),
 					..CustomMetadata::default()
 				},
 			},
@@ -87,6 +87,6 @@ fn bootstrap_updates_metadata_and_creates_pool_correctly() {
 
 		let meta: Option<AssetMetadataOf> =
 			orml_asset_registry::Metadata::<Runtime>::get(ASSET_ID_1);
-		assert_eq!(meta.unwrap().additional.xyk.unwrap().pool_creation_disabled, false);
+		assert_eq!(meta.unwrap().additional.xyk.unwrap().operations_disabled, false);
 	});
 }

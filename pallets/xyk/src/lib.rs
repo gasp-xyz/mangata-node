@@ -219,6 +219,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_support::{
+	assert_ok,
 	dispatch::{DispatchError, DispatchResult},
 	ensure,
 	traits::Contains,
@@ -304,7 +305,6 @@ type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::assert_ok;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]

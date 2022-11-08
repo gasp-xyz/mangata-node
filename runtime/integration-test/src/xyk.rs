@@ -45,7 +45,7 @@ fn create_pool() -> DispatchResultWithPostInfo {
 
 #[test]
 fn create_pool_works_meta_allowed() {
-	test_env(Some(XykMetadata { pool_creation_disabled: false })).execute_with(|| {
+	test_env(Some(XykMetadata { operations_disabled: false })).execute_with(|| {
 		assert_ok!(create_pool());
 	});
 }
@@ -59,7 +59,7 @@ fn create_pool_works_no_meta() {
 
 #[test]
 fn create_pool_disabled_meta_disabled() {
-	test_env(Some(XykMetadata { pool_creation_disabled: true })).execute_with(|| {
+	test_env(Some(XykMetadata { operations_disabled: true })).execute_with(|| {
 		assert_err!(create_pool(), pallet_xyk::Error::<Runtime>::FunctionNotAvailableForThisToken);
 	});
 }

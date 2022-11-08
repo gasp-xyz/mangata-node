@@ -1802,7 +1802,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-rpc-interface"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev#6faa4601f2c0f7c9e752dc1ff108c1dcec19ecb9"
+source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#6faa4601f2c0f7c9e752dc1ff108c1dcec19ecb9"
 dependencies = [
  "async-trait",
  "backoff",
@@ -5927,7 +5927,7 @@ dependencies = [
 [[package]]
 name = "pallet-elections-phragmen"
 version = "5.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.29#cc370aa61e15c18d23a2f686b812fd576a630afe"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/asset-metadata-xyk#000176749274c37c5ead5da749157c20b3ae2495"
 dependencies = [
  "frame-benchmarking",
  "frame-support",

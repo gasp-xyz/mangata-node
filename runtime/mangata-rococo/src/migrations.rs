@@ -213,17 +213,9 @@ pub mod asset_register {
 
 #[cfg(test)]
 mod tests {
-	use frame_support::{
-		assert_ok,
-		migration::{storage_iter, storage_key_iter},
-		pallet_prelude::GenesisBuild,
-		storage,
-		traits::OnRuntimeUpgrade,
-	};
-	use mangata_types::TokenId;
-	use sp_core::{hexdisplay::HexDisplay, twox_128, twox_64};
+	use frame_support::{storage, traits::OnRuntimeUpgrade};
 
-	use crate::migrations::asset_register::MigrateToXykMetadata;
+	use crate::migration::asset_register::MigrateToXykMetadata;
 
 	use super::*;
 

@@ -60,6 +60,7 @@ jobs:
           step: start
           token: ${{ secrets.GITHUB_TOKEN }}
           env: ${{ inputs.environment }}
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
 
       - run: |
           helm plugin install https://github.com/jkroepke/helm-secrets --version v4.1.1

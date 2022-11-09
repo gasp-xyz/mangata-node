@@ -16,8 +16,8 @@
 // limitations under the License.
 
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
-//! DATE: 2022-10-13 (Y/M/D)
-//! HOSTNAME: `thinkpad`, CPU: `AMD Ryzen 7 PRO 4750U with Radeon Graphics`
+//! DATE: 2022-11-09 (Y/M/D)
+//! HOSTNAME: `ns5000592`, CPU: `Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz`
 //!
 //! SHORT-NAME: `extrinsic`, LONG-NAME: `ExtrinsicBase`, RUNTIME: `Mangata Development`
 //! WARMUPS: `10`, REPEAT: `100`
@@ -25,15 +25,15 @@
 //! WEIGHT-METRIC: `Average`, WEIGHT-MUL: `1.0`, WEIGHT-ADD: `0`
 
 // Executed Command:
-//   target/release/mangata-node
+//   ./target/release/mangata-node
 //   benchmark
 //   overhead
+//   --max-ext-per-block
+//   2000
 //   --execution
 //   native
 //   --chain
 //   dev
-//   -l
-//   info
 
 use frame_support::{
 	parameter_types,
@@ -45,16 +45,16 @@ parameter_types! {
 	/// Calculated by multiplying the *Average* with `1.0` and adding `0`.
 	///
 	/// Stats nanoseconds:
-	///   Min, Max: 84_539, 87_876
-	///   Average:  84_931
-	///   Median:   84_885
-	///   Std-Dev:  436.77
+	///   Min, Max: 77_874, 78_235
+	///   Average:  77_996
+	///   Median:   77_994
+	///   Std-Dev:  62.2
 	///
 	/// Percentiles nanoseconds:
-	///   99th: 87_243
-	///   95th: 85_399
-	///   75th: 84_974
-	pub const ExtrinsicBaseWeight: Weight = 84_931 * WEIGHT_PER_NANOS;
+	///   99th: 78_180
+	///   95th: 78_096
+	///   75th: 78_025
+	pub const ExtrinsicBaseWeight: Weight = 77_996 * WEIGHT_PER_NANOS;
 }
 
 #[cfg(test)]

@@ -445,7 +445,7 @@ pub struct RewardsMigrationAccountProvider<T: frame_system::Config>(PhantomData<
 impl<T: frame_system::Config> Get<T::AccountId> for RewardsMigrationAccountProvider<T> {
 	fn get() -> T::AccountId {
 		let account32: sp_runtime::AccountId32 =
-			hex_literal::hex!["0000000000000000000000000000000000000000000000000000000000000000"]
+			hex_literal::hex!["0e33df23356eb2e9e3baf0e8a5faae15bc70a6a5cce88f651a9faf6e8e937324"]
 				.into();
 		let mut init_account32 = sp_runtime::AccountId32::as_ref(&account32);
 		let init_account = T::AccountId::decode(&mut init_account32).unwrap();

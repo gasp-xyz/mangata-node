@@ -1,17 +1,21 @@
 name: deploy
+
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       environment:
         description: "Target environment for deployment"
         required: true
+        type: string
       version:
         description: "Version to be assigned to the built image"
         required: true
+        type: string
       cluster_name:
         description: "Name of the cluster on which to perform deployment"
         default: mangata-dev
         required: false
+        type: string
 
 jobs:
   deploy:

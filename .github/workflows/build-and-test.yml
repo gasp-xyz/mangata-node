@@ -1,11 +1,12 @@
 name: Build and test
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       version:
         description: "Version to be assigned to the built image"
         required: true
+        type: string
 
 env:
   DOCKER_BUILDER_IMAGE: mangatasolutions/node-builder:0.2
@@ -109,7 +110,7 @@ jobs:
     needs: [build-node-image]
     runs-on: ubuntu-latest
     env:
-      NODE_IMAGE: ${{ format('mangatasolutions/mangata-node:rococo-{0}', inputs.version) }}
+      NODE_IMAGE: "mangatasolutions/mangata-node:rococo-${{ inputs.version }}"
     steps:
       - name: Run Runtime Benchmark
         run: |

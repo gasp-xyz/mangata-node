@@ -64,7 +64,6 @@ jobs:
       contents: read
       id-token: write
       deployments: write
-    environment: dev
     with:
       environment: dev
       version: ${{ needs.init.outputs.GLOBAL_VERSION }}

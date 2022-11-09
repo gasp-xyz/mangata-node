@@ -1,6 +1,16 @@
 name: deploy
 
 on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment for deployment"
+        required: true
+        type: string
+      version:
+        description: "Version to be assigned to the built image"
+        required: true
+        type: string
   workflow_call:
     inputs:
       environment:
@@ -17,11 +27,17 @@ on:
         required: false
         type: string
 
+permissions:
+  contents: read
+  id-token: write
+  deployments: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: jkroepke/setup-vals@v1.0.4
       - uses: google-github-actions/auth@v1
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
@@ -32,10 +48,28 @@ jobs:
           cluster_name: ${{ inputs.cluster_name }}
           location: europe-west1
       
-      - uses: jkroepke/setup-vals@v1.0.4
+      - name: Create a GitHub Deployment
+        uses: bobheadxi/deployments@v1.3.0
+        id: deployment
+        with:
+          step: start
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: ${{ inputs.environment }}
+
       - run: |
           helm plugin install https://github.com/jkroepke/helm-secrets --version v4.1.1
           helm secrets -b vals upgrade -i --create-namespace -n ${{ inputs.environment }} --wait node . \
           --set image.tag=${{ inputs.version }} \
           -f values.yaml -f values-dev.yaml
         working-directory: devops/helm-charts/node
+      
+      - name: Update the GitHub Deployment status
+        uses: bobheadxi/deployments@v1.3.0
+        if: always()
+        with:
+          step: finish
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
+          status: ${{ job.status }}
+          env: ${{ steps.deployment.outputs.env }}
+          deployment_id: ${{ steps.deployment.outputs.deployment_id }}
+          env_url: "https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fnode-01-ws-${{ inputs.environment }}.mangata.online#/explorer"

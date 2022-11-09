@@ -48,7 +48,7 @@ jobs:
   build-and-test:
     if: ${{ github.event.inputs.skipBuild != 'true' }}
     needs: [init]
-    name: Build, Test and Publish docker image
+    name: Build
     uses: ./.github/workflows/build-and-test.yml
     secrets: inherit
     with:

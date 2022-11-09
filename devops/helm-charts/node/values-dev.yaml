@@ -6,7 +6,7 @@ relaychain:
   enabled: true
 
 node:
-  storageSize: 10Gi
+  storageSize: 50Gi
   node_01:
     keys:
     - type: "aura"

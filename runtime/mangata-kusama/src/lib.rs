@@ -482,7 +482,7 @@ impl pallet_xyk::Config for Runtime {
 	type PoolFeePercentage = frame_support::traits::ConstU128<20>;
 	type TreasuryFeePercentage = frame_support::traits::ConstU128<5>;
 	type BuyAndBurnFeePercentage = frame_support::traits::ConstU128<5>;
-	type RewardsDistributionPeriod = frame_support::traits::ConstU32<10000>;
+	type RewardsDistributionPeriod = frame_support::traits::ConstU32<10>;
 	type VestingProvider = Vesting;
 	type DisallowedPools = Bootstrap;
 	type DisabledTokens = TestTokensFilter;
@@ -879,7 +879,7 @@ impl pallet_elections_phragmen::Config for Runtime {
 
 parameter_types! {
 	/// Default BlocksPerRound is every 4 hours (1200 * 12 second block times)
-	pub const BlocksPerRound: u32 = 4 * HOURS;
+	pub const BlocksPerRound: u32 = 2 * MINUTES;
 	/// Collator candidate exit delay (number of rounds)
 	pub const LeaveCandidatesDelay: u32 = 2;
 	/// Collator candidate bond increases/decreases delay (number of rounds)

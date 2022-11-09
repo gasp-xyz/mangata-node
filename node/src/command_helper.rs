@@ -5,7 +5,7 @@ use codec::Encode;
 use sc_cli::Result;
 use sc_client_api::BlockBackend;
 use sp_api::ProvideRuntimeApi;
-use sp_core::{testing::SR25519, Pair};
+use sp_core::{crypto::key_types::AURA, Pair};
 use sp_inherents::{InherentData, InherentDataProvider};
 use sp_keyring::Sr25519Keyring;
 use sp_keystore::SyncCryptoStore;
@@ -130,7 +130,7 @@ pub fn inherent_benchmark_data(prev_seed: [u8; 32], duration: Duration) -> Resul
 	let key_pair =
 		sp_core::sr25519::Pair::from_string(secret_uri, None).expect("Generates key pair");
 	keystore
-		.insert_unknown(SR25519, secret_uri, key_pair.public().as_ref())
+		.insert_unknown(AURA, secret_uri, key_pair.public().as_ref())
 		.expect("Inserts unknown key");
 
 	let seed =

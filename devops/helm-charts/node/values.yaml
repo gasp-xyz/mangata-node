@@ -8,7 +8,7 @@ remoteCluster: false
 replicas: 1
 
 image:
-  repository: mangatasolutions/mangata-node-dev
+  repository: mangatasolutions/mangata-node
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: "rococo-0.25.0"
@@ -17,7 +17,6 @@ node:
   storageSize: "10Gi"
   env:
     RUST_LOG: "info"
-
   node_01:
     keys:
     - type: "aura"
@@ -31,7 +30,7 @@ node:
 
 relaychain:
   enabled: true
-  image: "mangatasolutions/polkadot-dev:v0.9.29"
+  image: "parity/polkadot:v0.9.29"
   storageSize: "10Gi"
   env:
     RUST_LOG: "info"

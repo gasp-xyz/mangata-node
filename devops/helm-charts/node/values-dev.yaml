@@ -4,17 +4,9 @@ remoteCluster: true
 
 relaychain:
   enabled: true
-  image: "parity/polkadot:v0.9.29"
-
-image:
-  repository: mangatasolutions/mangata-node
-  tag: rococo-75aa2dca9f362a582da59c05741f879eb99414aa
 
 node:
-  storageSize: "10Gi"
-  env:
-    RUST_LOG: "info"
-
+  storageSize: 50Gi
   node_01:
     keys:
     - type: "aura"

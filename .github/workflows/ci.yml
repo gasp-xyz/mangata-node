@@ -60,8 +60,9 @@ jobs:
     uses: ./.github/workflows/deploy.yml
     secrets: inherit
     permissions:
-      contents: 'read'
-      id-token: 'write'
+      contents: read
+      id-token: write
+      deployments: write
     with:
       environment: dev
       version: ${{ needs.init.outputs.GLOBAL_VERSION }}

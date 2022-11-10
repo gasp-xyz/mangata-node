@@ -239,6 +239,7 @@ pub fn run() -> Result<()> {
 				cmd.run(config, polkadot_config)
 			})
 		},
+		Some(Subcommand::Key(cmd)) => Ok(cmd.run(&cli)?),
 		Some(Subcommand::Revert(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			runner.async_run(|mut config| {
@@ -566,19 +567,34 @@ impl CliConfiguration<Self> for RelayChainCli {
 		self.base.base.import_params()
 	}
 
-	fn network_params(&self) -> Option<&NetworkParams> {
-		self.base.base.network_params()
-	}
-
 	fn keystore_params(&self) -> Option<&KeystoreParams> {
 		self.base.base.keystore_params()
 	}
 
+	fn network_params(&self) -> Option<&NetworkParams> {
+		self.base.base.network_params()
+	}
+
 	fn base_path(&self) -> Result<Option<BasePath>> {
-		Ok(self
-			.shared_params()
-			.base_path()
-			.or_else(|| self.base_path.clone().map(Into::into)))
+		self.shared_params().base_path()
+	}
+
+	fn role(&self, is_dev: bool) -> Result<sc_service::Role> {
+		self.base.base.role(is_dev)
+	}
+
+	fn transaction_pool(&self, is_dev: bool) -> Result<sc_service::config::TransactionPoolOptions> {
+		self.base.base.transaction_pool(is_dev)
+	}
+
+	fn chain_id(&self, is_dev: bool) -> Result<String> {
+		let chain_id = self.base.base.chain_id(is_dev)?;
+
+		Ok(if chain_id.is_empty() { self.chain_id.clone().unwrap_or_default() } else { chain_id })
+	}
+
+	fn node_name(&self) -> Result<String> {
+		self.base.base.node_name()
 	}
 
 	fn rpc_http(&self, default_listen_port: u16) -> Result<Option<SocketAddr>> {
@@ -593,45 +609,6 @@ impl CliConfiguration<Self> for RelayChainCli {
 		self.base.base.rpc_ws(default_listen_port)
 	}
 
-	fn prometheus_config(
-		&self,
-		default_listen_port: u16,
-		chain_spec: &Box<dyn ChainSpec>,
-	) -> Result<Option<PrometheusConfig>> {
-		self.base.base.prometheus_config(default_listen_port, chain_spec)
-	}
-
-	fn init<F>(
-		&self,
-		_support_url: &String,
-		_impl_version: &String,
-		_logger_hook: F,
-		_config: &sc_service::Configuration,
-	) -> Result<()>
-	where
-		F: FnOnce(&mut sc_cli::LoggerBuilder, &sc_service::Configuration),
-	{
-		unreachable!("PolkadotCli is never initialized; qed");
-	}
-
-	fn chain_id(&self, is_dev: bool) -> Result<String> {
-		let chain_id = self.base.base.chain_id(is_dev)?;
-
-		Ok(if chain_id.is_empty() { self.chain_id.clone().unwrap_or_default() } else { chain_id })
-	}
-
-	fn role(&self, is_dev: bool) -> Result<sc_service::Role> {
-		self.base.base.role(is_dev)
-	}
-
-	fn transaction_pool(&self, is_dev: bool) -> Result<sc_service::config::TransactionPoolOptions> {
-		self.base.base.transaction_pool(is_dev)
-	}
-
-	fn state_cache_child_ratio(&self) -> Result<Option<usize>> {
-		self.base.base.state_cache_child_ratio()
-	}
-
 	fn rpc_methods(&self) -> Result<sc_service::config::RpcMethods> {
 		self.base.base.rpc_methods()
 	}
@@ -642,6 +619,21 @@ impl CliConfiguration<Self> for RelayChainCli {
 
 	fn rpc_cors(&self, is_dev: bool) -> Result<Option<Vec<String>>> {
 		self.base.base.rpc_cors(is_dev)
+	}
+
+	fn prometheus_config(
+		&self,
+		default_listen_port: u16,
+		chain_spec: &Box<dyn ChainSpec>,
+	) -> Result<Option<PrometheusConfig>> {
+		self.base.base.prometheus_config(default_listen_port, chain_spec)
+	}
+
+	fn telemetry_endpoints(
+		&self,
+		chain_spec: &Box<dyn ChainSpec>,
+	) -> Result<Option<sc_telemetry::TelemetryEndpoints>> {
+		self.base.base.telemetry_endpoints(chain_spec)
 	}
 
 	fn default_heap_pages(&self) -> Result<Option<u64>> {
@@ -664,14 +656,16 @@ impl CliConfiguration<Self> for RelayChainCli {
 		self.base.base.announce_block()
 	}
 
-	fn telemetry_endpoints(
+	fn init<F>(
 		&self,
-		chain_spec: &Box<dyn ChainSpec>,
-	) -> Result<Option<sc_telemetry::TelemetryEndpoints>> {
-		self.base.base.telemetry_endpoints(chain_spec)
-	}
-
-	fn node_name(&self) -> Result<String> {
-		self.base.base.node_name()
+		_support_url: &String,
+		_impl_version: &String,
+		_logger_hook: F,
+		_config: &sc_service::Configuration,
+	) -> Result<()>
+	where
+		F: FnOnce(&mut sc_cli::LoggerBuilder, &sc_service::Configuration),
+	{
+		unreachable!("PolkadotCli is never initialized; qed");
 	}
 }

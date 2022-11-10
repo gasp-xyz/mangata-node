@@ -54,7 +54,7 @@ parameter_types! {
 	///   99th: 78_180
 	///   95th: 78_096
 	///   75th: 78_025
-	pub const ExtrinsicBaseWeight: Weight = 77_996 * WEIGHT_PER_NANOS;
+	pub const ExtrinsicBaseWeight: Weight = Weight::from_ref_time(77_996).saturating_mul(WEIGHT_PER_NANOS.ref_time());
 }
 
 #[cfg(test)]
@@ -66,7 +66,7 @@ mod test_weights {
 	// you can delete it.
 	#[test]
 	fn sane() {
-		let w = super::ExtrinsicBaseWeight::get();
+		let w = super::ExtrinsicBaseWeight::get().ref_time();
 
 		// At least 10 µs.
 		assert!(w >= 10 * constants::WEIGHT_PER_MICROS, "Weight should be at least 10 µs.");

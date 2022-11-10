@@ -1233,5 +1233,3 @@ pallet-vesting-mangata-rpc = { git = "https://github.com/mangata-finance//substr
 # sp-consensus-vrf = { path = "../substrate/primitives/consensus/vrf" }
 # sp-consensus-babe = { path = "../substrate/primitives/consensus/babe" }
 # sp-timestamp = { path = "../substrate/primitives/timestamp" }
-# sp-runtime = { path = "../substrate/primitives/runtime" }
-# sp-io = { path = "../substrate/primitives/io" }

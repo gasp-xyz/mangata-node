@@ -100,14 +100,6 @@ xcm = { git = "https://github.com/mangata-finance/polkadot", default-features = 
 xcm-builder = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "mangata-dev" }
 xcm-executor = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "mangata-dev" }
 
-# Snowbridge Dependencies
-artemis-core = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
-pallet-verifier = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
-artemis-erc20-app = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
-artemis-eth-app = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
-artemis-asset = {default-features = false, version = "0.1.1", git = "https://github.com/mangata-finance/snowbridge", branch = "mangata-dev"}
-pallet-bridge = {default-features = false, version = "0.1.1", path = "../../pallets/bridge"}
-
 # Staking dependencies
 parachain-staking = { default-features = false, git = "https://github.com/mangata-finance/moonbeam.git", branch = "mangata-dev" }
 
@@ -173,13 +165,6 @@ std = [
 	"pallet-bootstrap/std",
     "xyk-runtime-api/std",
 
-	"artemis-core/std",
-	"pallet-verifier/std",
-	"artemis-erc20-app/std",
-	"artemis-eth-app/std",
-	"artemis-asset/std",
-	"pallet-bridge/std",
-
 	"parachain-staking/std",
 
 	"orml-xtokens/std",
@@ -203,10 +188,41 @@ std = [
 
 ]
 
+
 try-runtime = [
+	"frame-support/try-runtime",
 	"frame-try-runtime",
 	"frame-executive/try-runtime",
 	"pallet-multipurpose-liquidity/try-runtime",
+	"cumulus-pallet-parachain-system/try-runtime",
+	"pallet-timestamp/try-runtime",
+	"parachain-info/try-runtime",
+	"orml-tokens/try-runtime",
+	"pallet-transaction-payment/try-runtime",
+	"pallet-xyk/try-runtime",
+	"pallet-vesting-mangata/try-runtime",
+	"pallet-crowdloan-rewards/try-runtime",
+	"pallet-issuance/try-runtime",
+	"pallet-authorship/try-runtime",
+	"parachain-staking/try-runtime",
+	"pallet-session/try-runtime",
+	"pallet-aura/try-runtime",
+	"cumulus-pallet-aura-ext/try-runtime",
+	"cumulus-pallet-xcmp-queue/try-runtime",
+	"pallet-xcm/try-runtime",
+	"cumulus-pallet-xcm/try-runtime",
+	"cumulus-pallet-dmp-queue/try-runtime",
+	"orml-xtokens/try-runtime",
+	"orml-unknown-tokens/try-runtime",
+	"orml-xcm/try-runtime",
+	"orml-asset-registry/try-runtime",
+	"pallet-treasury/try-runtime",
+	"pallet-sudo/try-runtime",
+	"pallet-sudo-origin/try-runtime",
+	"pallet-collective/try-runtime",
+	"pallet-elections-phragmen/try-runtime",
+	"pallet-bootstrap/try-runtime",
+	"pallet-utility/try-runtime",
 ]
 
 #disable-execution = [

@@ -54,7 +54,7 @@ parameter_types! {
 	///   99th: 132_247_405
 	///   95th: 132_219_202
 	///   75th: 132_185_883
-	pub const BlockExecutionWeight: Weight = 132_149_799 * WEIGHT_PER_NANOS;
+	pub const BlockExecutionWeight: Weight = Weight::from_ref_time(132_149_799).saturating_mul(WEIGHT_PER_NANOS.ref_time());
 }
 
 #[cfg(test)]
@@ -66,7 +66,7 @@ mod test_weights {
 	// you can delete it.
 	#[test]
 	fn sane() {
-		let w = super::BlockExecutionWeight::get();
+		let w = super::BlockExecutionWeight::get().ref_time();
 
 		// At least 100 µs.
 		assert!(w >= 100 * constants::WEIGHT_PER_MICROS, "Weight should be at least 100 µs.");

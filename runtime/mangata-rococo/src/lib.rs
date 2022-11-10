@@ -2,9 +2,6 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
-pub use artemis_asset;
-pub use artemis_erc20_app;
-pub use artemis_eth_app;
 use codec::{Decode, Encode};
 use frame_support::{
 	construct_runtime,
@@ -13,7 +10,7 @@ use frame_support::{
 	traits::{
 		tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
 		Contains, EnsureOrigin, EnsureOriginWithArg, Everything, ExistenceRequirement, Get,
-		Imbalance, LockIdentifier, Nothing, OnRuntimeUpgrade, U128CurrencyToVote, WithdrawReasons,
+		Imbalance, LockIdentifier, Nothing, U128CurrencyToVote, WithdrawReasons,
 	},
 	unsigned::TransactionValidityError,
 	weights::{
@@ -36,7 +33,6 @@ use orml_traits::{
 };
 pub use pallet_sudo;
 use pallet_transaction_payment::{Multiplier, OnChargeTransaction, TargetedFeeAdjustment};
-pub use pallet_verifier;
 use pallet_vesting_mangata_rpc_runtime_api::VestingInfosWithLockedAt;
 // Polkadot Imports
 pub use polkadot_runtime_common::BlockHashCount;
@@ -74,7 +70,6 @@ pub use mangata_types::{
 	assets::{CustomMetadata, XcmMetadata},
 	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
 };
-pub use pallet_bridge;
 pub use pallet_issuance::{IssuanceInfo, PoolPromoteApi};
 pub use pallet_sudo_origin;
 pub use pallet_xyk;
@@ -92,7 +87,6 @@ pub const KAR_TOKEN_ID: TokenId = 6;
 pub const TUR_TOKEN_ID: TokenId = 7;
 
 pub mod constants;
-mod migrations;
 mod weights;
 pub mod xcm_config;
 
@@ -130,29 +124,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	MangataMigrations,
 >;
-
-pub struct MangataMigrations;
-impl OnRuntimeUpgrade for MangataMigrations {
-	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-		migrations::asset_registry::AssetRegistryMigration::on_runtime_upgrade()
-	}
-
-	#[cfg(feature = "try-runtime")]
-	fn pre_upgrade() -> Result<(), &'static str> {
-		migrations::asset_registry::AssetRegistryMigration::pre_upgrade()
-			.expect("try-runtime pre_upgrade for AssetRegistryMigration failed!!");
-		Ok(())
-	}
-
-	#[cfg(feature = "try-runtime")]
-	fn post_upgrade() -> Result<(), &'static str> {
-		migrations::asset_registry::AssetRegistryMigration::post_upgrade()
-			.expect("try-runtime post_upgrade for AssetRegistryMigration failed!!");
-		Ok(())
-	}
-}
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -182,11 +154,11 @@ impl_opaque_keys! {
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
-	authoring_version: 9,
-	spec_version: 9,
+	authoring_version: 10,
+	spec_version: 10,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 9,
+	transaction_version: 10,
 	state_version: 0,
 };
 
@@ -238,7 +210,7 @@ const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
 /// NOTE: reduced by half comparing to origin impl as we want to fill block only up to 50%
 /// so there is room for new extrinsics in the next block
-const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 4;
+const MAXIMUM_BLOCK_WEIGHT: u64 = WEIGHT_PER_SECOND.ref_time() / 4;
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
@@ -261,14 +233,14 @@ parameter_types! {
 			weights.base_extrinsic = weights::VerExtrinsicBaseWeight::get();
 		})
 		.for_class(DispatchClass::Normal, |weights| {
-			weights.max_total = Some(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT);
+			weights.max_total = Some(Weight::from_ref_time(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT));
 		})
 		.for_class(DispatchClass::Operational, |weights| {
-			weights.max_total = Some(MAXIMUM_BLOCK_WEIGHT);
+			weights.max_total = Some(Weight::from_ref_time(MAXIMUM_BLOCK_WEIGHT));
 			// Operational transactions have some extra reserved space, so that they
 			// are included even if block reached `MAXIMUM_BLOCK_WEIGHT`.
 			weights.reserved = Some(
-				MAXIMUM_BLOCK_WEIGHT - NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT
+				Weight::from_ref_time(MAXIMUM_BLOCK_WEIGHT - NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT)
 			);
 		})
 		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
@@ -715,8 +687,8 @@ impl pallet_transaction_payment::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
-	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
+	pub const ReservedXcmpWeight: Weight = Weight::from_ref_time(MAXIMUM_BLOCK_WEIGHT / 4);
+	pub const ReservedDmpWeight: Weight = Weight::from_ref_time(MAXIMUM_BLOCK_WEIGHT / 4);
 }
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
@@ -759,40 +731,6 @@ impl pallet_aura::Config for Runtime {
 	type AuthorityId = AuraId;
 	type DisabledValidators = ();
 	type MaxAuthorities = MaxAuthorities;
-}
-
-parameter_types! {
-	pub const MinLengthName: usize = 1;
-	pub const MaxLengthName: usize = 255;
-	pub const MinLengthSymbol: usize = 1;
-	pub const MaxLengthSymbol: usize = 255;
-	pub const MinLengthDescription: usize = 1;
-	pub const MaxLengthDescription: usize = 255;
-	pub const MaxDecimals: u32 = 255;
-}
-
-impl pallet_bridge::Config for Runtime {
-	type Event = Event;
-	type Verifier = pallet_verifier::Pallet<Runtime>;
-	type AppETH = artemis_eth_app::Module<Runtime>;
-	type AppERC20 = artemis_erc20_app::Module<Runtime>;
-}
-
-impl pallet_verifier::Config for Runtime {
-	type Event = Event;
-}
-
-impl artemis_asset::Config for Runtime {
-	type Event = Event;
-	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-}
-
-impl artemis_eth_app::Config for Runtime {
-	type Event = Event;
-}
-
-impl artemis_erc20_app::Config for Runtime {
-	type Event = Event;
 }
 
 impl pallet_sudo::Config for Runtime {
@@ -1100,13 +1038,6 @@ construct_runtime!(
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 2,
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 3,
 
-		// Snowbridge stuff
-		Bridge: pallet_bridge::{Pallet, Call, Config, Storage, Event} = 4,
-		Verifier: pallet_verifier::{Pallet, Call, Storage, Event, Config<T>} = 5,
-		BridgedAsset: artemis_asset::{Pallet, Call, Config<T>, Storage, Event<T>} = 6,
-		ETH: artemis_eth_app::{Pallet, Call, Storage, Event<T>} = 7,
-		ERC20: artemis_erc20_app::{Pallet, Call, Storage, Event<T>} = 8,
-
 		// Monetary stuff.
 		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>} = 10,
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<Runtime>} = 11,
@@ -1350,15 +1281,19 @@ impl_runtime_apis! {
 		fn get_max_instant_burn_amount(
 			user: AccountId,
 			liquidity_asset_id: TokenId,
-		) -> Balance {
-			Xyk::get_max_instant_burn_amount(&user, liquidity_asset_id)
+		) -> XYKRpcResult<Balance> {
+			XYKRpcResult {
+				price: Xyk::get_max_instant_burn_amount(&user, liquidity_asset_id)
+			}
 		}
 
 		fn get_max_instant_unreserve_amount(
 			user: AccountId,
 			liquidity_asset_id: TokenId,
-		) -> Balance {
-			Xyk::get_max_instant_unreserve_amount(&user, liquidity_asset_id)
+		) -> XYKRpcResult<Balance> {
+			XYKRpcResult {
+				price: Xyk::get_max_instant_unreserve_amount(&user, liquidity_asset_id)
+			}
 		}
 	}
 
@@ -1487,13 +1422,28 @@ impl_runtime_apis! {
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
 		fn on_runtime_upgrade() -> (Weight, Weight) {
-			log::info!("try-runtime::on_runtime_upgrade parachain-template.");
+			// NOTE: intentional unwrap: we don't want to propagate the error backwards, and want to
+			// have a backtrace here. If any of the pre/post migration checks fail, we shall stop
+			// right here and right now.
 			let weight = Executive::try_runtime_upgrade().unwrap();
 			(weight, RuntimeBlockWeights::get().max_block)
 		}
 
-		fn execute_block_no_check(block: Block) -> Weight {
-			Executive::execute_block_no_check(block)
+		fn execute_block(
+			block: Block,
+			state_root_check: bool,
+			select: frame_try_runtime::TryStateSelect
+		) -> Weight {
+			log::info!(
+				target: "node-runtime",
+				"try-runtime: executing block {:?} / root checks: {:?} / try-state-select: {:?}",
+				block.header.hash(),
+				state_root_check,
+				select,
+			);
+			// NOTE: intentional unwrap: we don't want to propagate the error backwards, and want to
+			// have a backtrace here.
+			Executive::try_execute_block(block, state_root_check, select).unwrap()
 		}
 	}
 

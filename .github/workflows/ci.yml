@@ -56,7 +56,7 @@ jobs:
 
   deploy-to-dev:
     needs: [init,build-and-test]
-    # if: github.event_name == 'push' && github.ref_name == 'develop'
+    if: github.event_name == 'push' && github.ref_name == 'develop'
     name: Deploy to `dev` environment
     uses: ./.github/workflows/deploy.yml
     secrets: inherit

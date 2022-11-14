@@ -1,0 +1,85 @@
+{{- if .Values.relaychain.enabled -}}
+{{ $name :=  "relaychain-alice" }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $name }}
+  labels: {{- include "node.labels" . | nindent 4 }}
+    service: {{ $name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "node.selectorLabels" . | nindent 6 }}
+      service: {{ $name }}
+  serviceName: {{ $name }}
+  template:
+    metadata:
+      labels:
+        {{- include "node.labels" . | nindent 8 }}
+        service: {{ $name }}
+    spec:
+      initContainers:
+        - name: chainspec-generator
+          image: {{ .Values.relaychain.image | quote }}
+          command: 
+            - "/bin/bash"
+            - "-c" 
+            - "/usr/bin/polkadot build-spec --chain=rococo-local --disable-default-bootnode --raw > /etc/mangata/local.json"
+          volumeMounts:
+            - mountPath: /etc/mangata/
+              name: node-chainspec-volume
+      containers:
+        - name: {{ $name }}
+          image: {{ .Values.relaychain.image | quote }}
+          command:
+            - /usr/bin/polkadot
+            - --chain=/etc/mangata/local.json
+            - --validator
+            - --port=30333
+            - --ws-port=9944
+            - --unsafe-ws-external
+            - --rpc-port=40333
+            - --unsafe-rpc-external
+            - --rpc-cors=all
+            - --prometheus-external
+            - --prometheus-port=9616
+            - --node-key=0000000000000000000000000000000000000000000000000000000000000001
+            {{- if .Values.remoteCluster }}
+            - "--public-addr=/dns4/{{ $name }}.{{ .Values.env }}.{{ .Values.domainZone }}/tcp/30333"
+            {{- end }}
+            - "--alice"
+          ports:
+            - containerPort: 9616
+            - containerPort: 9944
+            - containerPort: 30333
+            - containerPort: 40333
+          env:
+            {{- range $key, $val := .Values.relaychain.env }}
+            - name: {{ $key }}
+              value: {{ $val }}
+            {{- end }}
+          resources:
+          {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - mountPath: /etc/mangata/
+              name: node-chainspec-volume
+            - mountPath: /polkadot/.local/share/polkadot
+              name: chaindata
+      volumes:
+        - name: node-chainspec-volume
+          emptyDir: {}
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+  volumeClaimTemplates:
+    - metadata:
+        name: chaindata
+      spec:
+        storageClassName: "standard-rwo"
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.relaychain.storageSize }}
+{{- end }}

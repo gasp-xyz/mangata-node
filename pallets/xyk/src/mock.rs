@@ -66,7 +66,7 @@ impl MockPromotedPoolApi {
 }
 
 impl pallet_issuance::ComputeIssuance for MockPromotedPoolApi {
-	fn compute_issuance(_n: u32) -> DispatchResult {
+	fn compute_issuance(_n: u32) {
 		todo!()
 	}
 }
@@ -298,7 +298,7 @@ pub struct RewardsMigrateAccountProvider<T: frame_system::Config>(PhantomData<T>
 impl<T: frame_system::Config> Get<T::AccountId> for RewardsMigrateAccountProvider<T> {
 	fn get() -> T::AccountId {
 		let account32: sp_runtime::AccountId32 =
-			hex_literal::hex!["d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"]
+			hex_literal::hex!["0e33df23356eb2e9e3baf0e8a5faae15bc70a6a5cce88f651a9faf6e8e937324"]
 				.into();
 		let mut init_account32 = sp_runtime::AccountId32::as_ref(&account32);
 		let init_account = T::AccountId::decode(&mut init_account32).unwrap();

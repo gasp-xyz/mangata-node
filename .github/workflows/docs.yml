@@ -23,6 +23,8 @@ jobs:
         run: |
           ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
           ./docker-cargo.sh doc
+        env:
+          DISABLE_TTY: 1
       
       - name: Deploy to GCP
         uses: google-github-actions/upload-cloud-storage@v0.10.4

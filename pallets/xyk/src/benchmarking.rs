@@ -514,23 +514,30 @@ benchmarks! {
 
 	   pallet_issuance::PromotedPoolsRewards::<T>::insert(4, 200000);
 
-	   LiquidityMiningActiveUser::<T>::insert((user1, 4), 10000);
-	   LiquidityMiningActiveUser::<T>::insert((user2, 4), 10000);
+	   LiquidityMiningActiveUser::<T>::insert((user1.clone(), 4), 10000);
+	   LiquidityMiningActiveUser::<T>::insert((user2.clone(), 4), 10000);
 	   LiquidityMiningActivePool::<T>::insert(4, 20000);
-	   LiquidityMiningUser::<T>::insert((user1, 4), (0, U256::from(0_u64), U256::from(10000_u64)));
-	   LiquidityMiningUser::<T>::insert((user2, 4), (0, U256::from(1200), U256::from(10000)));
+	   LiquidityMiningUser::<T>::insert((user1.clone(), 4), (0, U256::from(0_u64), U256::from(10000_u64)));
+	   LiquidityMiningUser::<T>::insert((user2.clone(), 4), (0, U256::from(1200), U256::from(10000)));
 	   LiquidityMiningPool::<T>::insert(4, (1200, U256::from(21985_u64), U256::from(15584_u64)));
-	   LiquidityMiningUserToBeClaimed::<T>::insert((user1, 4), 0);
-	   LiquidityMiningUserClaimed::<T>::insert((user1, 4), 0);
-	   LiquidityMiningUserToBeClaimed::<T>::insert((user2, 4), 0);
-	   LiquidityMiningUserClaimed::<T>::insert((user2, 4), 0);
+	   LiquidityMiningUserToBeClaimed::<T>::insert((user1.clone(), 4), 0);
+	   LiquidityMiningUserClaimed::<T>::insert((user1.clone(), 4), 0);
+	   LiquidityMiningUserToBeClaimed::<T>::insert((user2.clone(), 4), 0);
+	   LiquidityMiningUserClaimed::<T>::insert((user2.clone(), 4), 0);
 
-	   frame_system::Pallet::<T>::set_block_number(2400.into());
-
-	   Xyk::<T>::rewards_migrate_v1_to_v2(RawOrigin::Signed(caller.clone().into()),user1.clone(), 4).unwrap();
+	   frame_system::Pallet::<T>::set_block_number(2400_u32.into());
 
 
-   }: rewards_migrate_v1_to_v2(RawOrigin::Signed(caller.clone().into()),user2.clone(), 4)
+		let account32: sp_runtime::AccountId32 =
+			hex_literal::hex!["0e33df23356eb2e9e3baf0e8a5faae15bc70a6a5cce88f651a9faf6e8e937324"]
+				.into();
+		let mut init_account32 = sp_runtime::AccountId32::as_ref(&account32);
+		let acc = T::AccountId::decode(&mut init_account32).unwrap();
+
+	   // Xyk::<T>::rewards_migrate_v1_to_v2(RawOrigin::Signed(acc.clone()).into(),user1.clone(), 4).unwrap();
+
+
+   }: rewards_migrate_v1_to_v2(RawOrigin::Signed(acc.clone()),user2.clone(), 4)
    verify {
 
 	   assert_eq!(Xyk::<T>::get_rewards_info(user1.clone(), 4).activated_amount, 10000);

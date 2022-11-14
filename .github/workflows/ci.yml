@@ -133,14 +133,6 @@ jobs:
         working-directory: launch
         run: sed -i 's+mangatasolutions/mangata-node:dev+${{ env.PARACHAIN_DOCKER_IMAGE }}+g' config.yml
 
-      - name: Clean artifacts
-        working-directory: e2eTests
-        run: git clean -xfd
-
-      - name: Install dependencies
-        working-directory: e2eTests
-        run: yarn install --network-concurrency 1
-
       - name: Install parachain launch
         working-directory: launch
         run: yarn

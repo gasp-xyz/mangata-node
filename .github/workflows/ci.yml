@@ -87,6 +87,7 @@ jobs:
       MANGATA_NODE_VERSION: ${{ needs.init.outputs.GLOBAL_VERSION }}
       E2EBRANCHNAME: "main"
       PARACHAIN_DOCKER_IMAGE: ${{ github.event.inputs.parachainDocker || format('mangatasolutions/mangata-node:rococo-{0}', needs.init.outputs.GLOBAL_VERSION) }}
+      SKIP_HUSKY: 1
     steps:
       ####IDK, but this is neccesary for reports
       - uses: actions/checkout@v3
@@ -151,7 +152,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: e2eTests
-        run: yarn
+        run: yarn install --network-concurrency=1
 
       - name: Docker ps
         run: docker ps

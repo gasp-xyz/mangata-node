@@ -1,6 +1,6 @@
 relaychain:
-  image: parity/polkadot:v0.9.24
-  chain: rococo-local
+  image: mangatasolutions/polkadot:0.9.32-fast-runtime
+  chain: kusama-local
   runtimeGenesisConfig:
     configuration:
       config:
@@ -19,7 +19,7 @@ relaychain:
 parachains:
 - image: mangatasolutions/mangata-node:dev
   chain:
-    base: mangata-rococo-local-testnet
+    base: local
     collators:
       - alice
       - bob

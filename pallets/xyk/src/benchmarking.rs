@@ -506,6 +506,13 @@ benchmarks! {
 	   // 2 promote pool v2
 	   // 3 migrate (last migration to be checked)
 
+	//    XykStorage::transfer(
+	// 	0,
+	// 	2,
+	// 	<Test as Config>::LiquidityMiningIssuanceVault::get(),
+	// 	10000000000000,
+	// )
+	//.unwrap();
 
 	   init!();
 	   let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
@@ -513,20 +520,21 @@ benchmarks! {
 	   let user2: T::AccountId = account("user2", 1, 0);
 
 	   pallet_issuance::PromotedPoolsRewards::<T>::insert(4, 200000);
+	   Xyk::<T>::promote_pool(RawOrigin::Root.into(), 4);
 
 	   LiquidityMiningActiveUser::<T>::insert((user1.clone(), 4), 10000);
 	   LiquidityMiningActiveUser::<T>::insert((user2.clone(), 4), 10000);
 	   LiquidityMiningActivePool::<T>::insert(4, 20000);
 	   LiquidityMiningUser::<T>::insert((user1.clone(), 4), (0, U256::from(0_u64), U256::from(10000_u64)));
-	   LiquidityMiningUser::<T>::insert((user2.clone(), 4), (0, U256::from(1200), U256::from(10000)));
-	   LiquidityMiningPool::<T>::insert(4, (1200, U256::from(21985_u64), U256::from(15584_u64)));
+	   LiquidityMiningUser::<T>::insert((user2.clone(), 4), (10, U256::from(0_u64), U256::from(10000_u64)));
+	   LiquidityMiningPool::<T>::insert(4, (10, U256::from(21985_u64), U256::from(15584_u64)));
 	   LiquidityMiningUserToBeClaimed::<T>::insert((user1.clone(), 4), 0);
 	   LiquidityMiningUserClaimed::<T>::insert((user1.clone(), 4), 0);
 	   LiquidityMiningUserToBeClaimed::<T>::insert((user2.clone(), 4), 0);
 	   LiquidityMiningUserClaimed::<T>::insert((user2.clone(), 4), 0);
 
-	   frame_system::Pallet::<T>::set_block_number(2400_u32.into());
-
+	   frame_system::Pallet::<T>::set_block_number(200000_u32.into());
+	   T::PoolPromoteApi::compute_issuance(200000_u32.into());
 
 		let account32: sp_runtime::AccountId32 =
 			hex_literal::hex!["0e33df23356eb2e9e3baf0e8a5faae15bc70a6a5cce88f651a9faf6e8e937324"]
@@ -534,7 +542,7 @@ benchmarks! {
 		let mut init_account32 = sp_runtime::AccountId32::as_ref(&account32);
 		let acc = T::AccountId::decode(&mut init_account32).unwrap();
 
-	   // Xyk::<T>::rewards_migrate_v1_to_v2(RawOrigin::Signed(acc.clone()).into(),user1.clone(), 4).unwrap();
+		Xyk::<T>::rewards_migrate_v1_to_v2(RawOrigin::Signed(acc.clone()).into(),user1.clone(), 4);
 
 
    }: rewards_migrate_v1_to_v2(RawOrigin::Signed(acc.clone()),user2.clone(), 4)
@@ -543,16 +551,16 @@ benchmarks! {
 	   assert_eq!(Xyk::<T>::get_rewards_info(user1.clone(), 4).activated_amount, 10000);
 	   assert_eq!(Xyk::<T>::get_rewards_info(user1.clone(), 4).rewards_not_yet_claimed, 0);
 	   assert_eq!(Xyk::<T>::get_rewards_info(user1.clone(), 4).rewards_already_claimed, 0);
-	   assert_eq!(Xyk::<T>::get_rewards_info(user1.clone(), 4).last_checkpoint, 2400);
-	   assert_eq!(Xyk::<T>::get_rewards_info(user1.clone(), 4).pool_ratio_at_last_checkpoint, U256::from(200000_u64)); //these values will be from rew2, but reading pool_ratio_at_last_checkpoint works
+	   assert_eq!(Xyk::<T>::get_rewards_info(user1.clone(), 4).last_checkpoint, 20);
+	   assert_eq!(Xyk::<T>::get_rewards_info(user1.clone(), 4).pool_ratio_at_last_checkpoint, U256::from(0_u64)); //these values will be from rew2, but reading pool_ratio_at_last_checkpoint works
 	   assert_eq!(Xyk::<T>::get_rewards_info(user1.clone(), 4).missing_at_last_checkpoint, U256::from(3118_u64));
 
-	   assert_eq!(Xyk::<T>::get_rewards_info(user1.clone(), 4).activated_amount, 10000);
-	   assert_eq!(Xyk::<T>::get_rewards_info(user1.clone(), 4).rewards_not_yet_claimed, 0);
-	   assert_eq!(Xyk::<T>::get_rewards_info(user1.clone(), 4).rewards_already_claimed, 0);
-	   assert_eq!(Xyk::<T>::get_rewards_info(user1.clone(), 4).last_checkpoint, 20);
-	   assert_eq!(Xyk::<T>::get_rewards_info(user1.clone(), 4).pool_ratio_at_last_checkpoint, U256::from(43798_u64)); //these values will be from rew2, but reading pool_ratio_at_last_checkpoint works
-	   assert_eq!(Xyk::<T>::get_rewards_info(user1.clone(), 4).missing_at_last_checkpoint, U256::from(5584_u64));
+	   assert_eq!(Xyk::<T>::get_rewards_info(user2.clone(), 4).activated_amount, 10000);
+	   assert_eq!(Xyk::<T>::get_rewards_info(user2.clone(), 4).rewards_not_yet_claimed, 0);
+	   assert_eq!(Xyk::<T>::get_rewards_info(user2.clone(), 4).rewards_already_claimed, 0);
+	   assert_eq!(Xyk::<T>::get_rewards_info(user2.clone(), 4).last_checkpoint, 20);
+	   assert_eq!(Xyk::<T>::get_rewards_info(user2.clone(), 4).pool_ratio_at_last_checkpoint, U256::from(0_u64)); //these values will be from rew2, but reading pool_ratio_at_last_checkpoint works
+	   assert_eq!(Xyk::<T>::get_rewards_info(user2.clone(), 4).missing_at_last_checkpoint, U256::from(5584_u64));
 
    }
 

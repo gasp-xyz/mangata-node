@@ -403,27 +403,10 @@ pub mod pallet {
 		FunctionNotAvailableForThisToken,
 		/// Pool considting of passed tokens id is blacklisted
 		DisallowedPool,
-		MathError,
-		MathOverflow1,
-		MathOverflow2,
-		MathOverflow3,
-		CalculateRewardsMathError1,
-		CalculateRewardsMathError2,
-		CalculateRewardsMathError3,
-		CalculateRewardsMathError4,
-		CalculateRewardsMathError5,
-		CalculateRewardsMathError6,
-		CalculateRewardsMathError7,
-		CalculateCumulativeWorkMaxRatioMathError1,
-		CalculateCumulativeWorkMaxRatioMathError2,
-		CalculateCumulativeWorkMaxRatioMathError3,
-		CalculateCumulativeWorkMaxRatioMathError4,
-		CalculateCumulativeWorkMaxRatioMathError5,
-		CalculateCumulativeWorkMaxRatioMathError6,
-		CalculateCumulativeWorkMaxRatioMathError7,
-		CalculateRewardsAllMathError1,
-		CalculateRewardsAllMathError2,
-		CalculateRewardsAllMathError3,
+		LiquidityCheckpointMathError,
+		CalculateRewardsMathError,
+		CalculateCumulativeWorkMaxRatioMathError,
+		CalculateRewardsAllMathError,
 		NoRights,
 	}
 
@@ -643,7 +626,7 @@ pub mod pallet {
 
 		#[pallet::weight(<<T as Config>::WeightInfo>::mint_liquidity_using_vesting_native_tokens())]
 		#[transactional]
-		pub fn mint_liquidity_using_vesting_native_tokens_by_vesting_indexmint_liquidityset_liquyi(
+		pub fn mint_liquidity_using_vesting_native_tokens_by_vesting_index(
 			origin: OriginFor<T>,
 			native_asset_vesting_index: u32,
 			vesting_native_asset_unlock_some_amount_or_all: Option<Balance>,
@@ -901,7 +884,8 @@ impl<T: Config> Pallet<T> {
 
 		if liquidity_assets_amount != 0 {
 			let pool_rewards_ratio_current =
-				<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).unwrap();
+				<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id)
+					.ok_or_else(|| DispatchError::from(Error::<T>::NotAPromotedPool))?;
 
 			let last_checkpoint = rewards_info.last_checkpoint;
 			let pool_ratio_at_last_checkpoint = rewards_info.pool_ratio_at_last_checkpoint;
@@ -923,9 +907,9 @@ impl<T: Config> Pallet<T> {
 
 		let total_available_rewards = current_rewards
 			.checked_add(not_yet_claimed_rewards)
-			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError6))?
+			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError))?
 			.checked_sub(already_claimed_rewards)
-			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError7))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError))?;
 
 		Ok(total_available_rewards)
 	}
@@ -952,13 +936,13 @@ impl<T: Config> Pallet<T> {
 
 		let pool_rewards_ratio_new = pool_rewards_ratio_current
 			.checked_sub(pool_rewards_ratio)
-			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError1))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError))?;
 
 		let user_rewards_base: U256 = U256::from(liquidity_assets_amount)
 			.checked_mul(pool_rewards_ratio_new.into()) // TODO: please add UT and link it in this comment
-			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError2))?
+			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError))?
 			.checked_div(U256::from(u128::MAX)) // always fit into u128
-			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError3))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError))?;
 
 		let (cumulative_work, cummulative_work_max_possible) =
 			Self::calculate_cumulative_work_max_ratio(
@@ -969,11 +953,11 @@ impl<T: Config> Pallet<T> {
 
 		let current_rewards = U256::from(user_rewards_base)
 			.checked_mul(cumulative_work)
-			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError4))?
+			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError))?
 			.checked_div(cummulative_work_max_possible)
-			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError5))?
+			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError))?
 			.try_into()
-			.map_err(|_| DispatchError::from(Error::<T>::CalculateRewardsMathError6))?;
+			.map_err(|_| DispatchError::from(Error::<T>::CalculateRewardsMathError))?;
 
 		Ok(current_rewards)
 	}
@@ -996,21 +980,19 @@ impl<T: Config> Pallet<T> {
 
 			cummulative_work_max_possible_for_ratio =
 				liquidity_assets_amount_u256.checked_mul(U256::from(time_passed)).ok_or_else(
-					|| DispatchError::from(Error::<T>::CalculateCumulativeWorkMaxRatioMathError2),
+					|| DispatchError::from(Error::<T>::CalculateCumulativeWorkMaxRatioMathError),
 				)?;
-
-			// libm::floor(libm::pow(q, pow as f64) * REWARDS_PRECISION as f64) as u128
 
 			// whole formula: 	missing_at_last_checkpoint*Q*100/(Q*100-100) - missing_at_last_checkpoint*Q*100/(Q*100-100)*REWARDS_PRECISION/q_pow
 			// q_pow is multiplied by precision, thus there needs to be *precision in numenator as well
 			let base = missing_at_last_checkpoint
 				.checked_mul(U256::from(libm::floor(Q * 100 as f64) as u128))
 				.ok_or_else(|| {
-					DispatchError::from(Error::<T>::CalculateCumulativeWorkMaxRatioMathError3)
+					DispatchError::from(Error::<T>::CalculateCumulativeWorkMaxRatioMathError)
 				})?
 				.checked_div(U256::from(libm::floor(Q * 100 as f64 - 100 as f64) as u128))
 				.ok_or_else(|| {
-					DispatchError::from(Error::<T>::CalculateCumulativeWorkMaxRatioMathError4)
+					DispatchError::from(Error::<T>::CalculateCumulativeWorkMaxRatioMathError)
 				})?;
 
 			let q_pow = Self::calculate_q_pow(Q, time_passed + 1);
@@ -1021,7 +1003,7 @@ impl<T: Config> Pallet<T> {
 			cummulative_work = cummulative_work_max_possible_for_ratio
 				.checked_sub(cummulative_missing_new)
 				.ok_or_else(|| {
-					DispatchError::from(Error::<T>::CalculateCumulativeWorkMaxRatioMathError5)
+					DispatchError::from(Error::<T>::CalculateCumulativeWorkMaxRatioMathError)
 				})?;
 		}
 
@@ -1054,7 +1036,8 @@ impl<T: Config> Pallet<T> {
 		let current_time: u32 = (<frame_system::Pallet<T>>::block_number().saturated_into::<u32>() +
 			1) / T::RewardsDistributionPeriod::get();
 		let mut pool_ratio_current =
-			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).unwrap();
+			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id)
+				.ok_or_else(|| DispatchError::from(Error::<T>::NotAPromotedPool))?;
 
 		let rewards_info = RewardsInfo::<T>::try_get(user.clone(), liquidity_asset_id)
 			.unwrap_or_else(|_| RewardInfo {
@@ -1084,7 +1067,7 @@ impl<T: Config> Pallet<T> {
 		} else {
 			Self::calculate_missing_at_checkpoint_v2(time_passed, missing_at_last_checkpoint)?
 				.checked_add(U256::from(liquidity_assets_added))
-				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow1))?
+				.ok_or_else(|| DispatchError::from(Error::<T>::LiquidityCheckpointMathError))?
 		};
 
 		let user_current_rewards = if liquidity_assets_amount == 0 {
@@ -1102,13 +1085,13 @@ impl<T: Config> Pallet<T> {
 
 		let activated_amount_new = liquidity_assets_amount
 			.checked_add(liquidity_assets_added)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow2))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::LiquidityCheckpointMathError))?;
 
 		let total_available_rewards = user_current_rewards
 			.checked_add(rewards_info.rewards_not_yet_claimed)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+			.ok_or_else(|| DispatchError::from(Error::<T>::LiquidityCheckpointMathError))?
 			.checked_sub(rewards_info.rewards_already_claimed)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::LiquidityCheckpointMathError))?;
 
 		let rewards_info_new: RewardInfo = RewardInfo {
 			activated_amount: activated_amount_new,
@@ -1129,7 +1112,7 @@ impl<T: Config> Pallet<T> {
 				Err(())
 			}
 		})
-		.map_err(|_| DispatchError::from(Error::<T>::MathOverflow3))?;
+		.map_err(|_| DispatchError::from(Error::<T>::LiquidityCheckpointMathError))?;
 
 		// This must not fail due storage edits above
 		<T as Config>::ActivationReservesProvider::activate(
@@ -1151,7 +1134,8 @@ impl<T: Config> Pallet<T> {
 			1) / T::RewardsDistributionPeriod::get();
 
 		let mut pool_ratio_current =
-			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).unwrap();
+			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id)
+				.ok_or_else(|| DispatchError::from(Error::<T>::NotAPromotedPool))?;
 
 		let rewards_info: RewardInfo = Self::get_rewards_info(user.clone(), liquidity_asset_id);
 
@@ -1182,21 +1166,21 @@ impl<T: Config> Pallet<T> {
 
 		let activated_amount_new = liquidity_assets_amount
 			.checked_sub(liquidity_assets_burned)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::LiquidityCheckpointMathError))?;
 
 		let activated_amount_new_u256: U256 = activated_amount_new.into();
 
 		let missing_at_checkpoint_after_burn: U256 = activated_amount_new_u256
 			.checked_mul(missing_at_checkpoint_new)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+			.ok_or_else(|| DispatchError::from(Error::<T>::LiquidityCheckpointMathError))?
 			.checked_div(liquidity_assets_amount.into())
 			.ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
 
 		let total_available_rewards = user_current_rewards
 			.checked_add(rewards_info.rewards_not_yet_claimed)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+			.ok_or_else(|| DispatchError::from(Error::<T>::LiquidityCheckpointMathError))?
 			.checked_sub(rewards_info.rewards_already_claimed)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::LiquidityCheckpointMathError))?;
 
 		let rewards_info_new: RewardInfo = RewardInfo {
 			activated_amount: activated_amount_new,
@@ -1217,7 +1201,7 @@ impl<T: Config> Pallet<T> {
 				Err(())
 			}
 		})
-		.map_err(|_| DispatchError::from(Error::<T>::MathOverflow3))?;
+		.map_err(|_| DispatchError::from(Error::<T>::LiquidityCheckpointMathError))?;
 
 		<T as Config>::ActivationReservesProvider::deactivate(
 			liquidity_asset_id.into(),
@@ -2578,7 +2562,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		let rewards_info: RewardInfo = Self::get_rewards_info(user.clone(), liquidity_asset_id);
 
 		let pool_rewards_ratio_current =
-			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).unwrap();
+			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id)
+				.ok_or_else(|| DispatchError::from(Error::<T>::NotAPromotedPool))?;
 
 		let current_rewards = Pallet::<T>::calculate_rewards_v2(
 			rewards_info.activated_amount,
@@ -2594,9 +2579,9 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 		let total_available_rewards = current_rewards
 			.checked_add(rewards_not_yet_claimed)
-			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsAllMathError1))?
+			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsAllMathError))?
 			.checked_sub(rewards_already_claimed)
-			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsAllMathError2))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsAllMathError))?;
 
 		let rewards_info_new: RewardInfo = RewardInfo {
 			activated_amount: rewards_info.activated_amount,
@@ -2705,7 +2690,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		);
 		//READING ALL NECESSARY STORAGE
 		let pool_ratio_current =
-			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).unwrap();
+			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id)
+				.ok_or_else(|| DispatchError::from(Error::<T>::NotAPromotedPool))?;
 		let available_rewards_for_pool: U256 = U256::from(
 			<T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id)
 				.ok_or_else(|| DispatchError::from(Error::<T>::NotAPromotedPool))?,
@@ -2749,21 +2735,20 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			.checked_sub(cummulative_missing_new_user)
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 		let work_user = user_cummulative_work_in_last_checkpoint + cummulative_work_new_user;
-
 		let time_passed_pool = current_time - pool_last_checkpoint;
 		let asymptote_u256_pool: U256 = pool_activated_amount.into();
 		let cummulative_work_new_max_possible_pool: U256 = asymptote_u256_pool
 			.checked_mul(U256::from(time_passed_pool))
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow1))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 		let base_pool = pool_missing_at_last_checkpoint
 			.checked_mul(U256::from(106))
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow2))? /
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))? /
 			U256::from(6);
 		let q_pow_pool = Self::calculate_q_pow(1.06, time_passed_pool);
 		let cummulative_missing_new_pool = base_pool - base_pool * REWARDS_PRECISION / q_pow_pool;
 		let cummulative_work_new_pool = cummulative_work_new_max_possible_pool
 			.checked_sub(cummulative_missing_new_pool)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow3))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 		let work_pool = pool_cummulative_work_in_last_checkpoint + cummulative_work_new_pool;
 
 		let mut current_rewards = Balance::try_from(0).unwrap();

@@ -30,8 +30,6 @@ use sp_runtime::{
 	SaturatedConversion,
 };
 use sp_std::convert::TryFrom;
-
-//use sp_std::sync::Mutex;
 use std::{collections::HashMap, sync::Mutex};
 pub const MGA_TOKEN_ID: TokenId = 0;
 pub(crate) type AccountId = u128;

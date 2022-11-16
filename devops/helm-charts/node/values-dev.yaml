@@ -1,0 +1,19 @@
+env: dev
+domainZone: mangata.online
+remoteCluster: true
+
+relaychain:
+  enabled: true
+
+node:
+  storageSize: 50Gi
+  node_01:
+    keys:
+    - type: "aura"
+      scheme: "sr25519"
+      seed: ref+gcpsecrets://direct-pixel-353917/node-01-key-seed-dev
+  node_02:
+    keys:
+    - type: "aura"
+      scheme: "sr25519"
+      seed: ref+gcpsecrets://direct-pixel-353917/node-02-key-seed-dev

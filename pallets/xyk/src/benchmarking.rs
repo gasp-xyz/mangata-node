@@ -533,8 +533,8 @@ benchmarks! {
 	   LiquidityMiningUserToBeClaimed::<T>::insert((user2.clone(), 4), 0);
 	   LiquidityMiningUserClaimed::<T>::insert((user2.clone(), 4), 0);
 
-	   frame_system::Pallet::<T>::set_block_number(200000_u32.into());
-	   T::PoolPromoteApi::compute_issuance(200000_u32.into());
+	   frame_system::Pallet::<T>::set_block_number(24000_u32.into());
+	   T::PoolPromoteApi::compute_issuance(24000_u32.into());
 
 		let account32: sp_runtime::AccountId32 =
 			hex_literal::hex!["0e33df23356eb2e9e3baf0e8a5faae15bc70a6a5cce88f651a9faf6e8e937324"]

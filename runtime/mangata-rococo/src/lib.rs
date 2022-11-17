@@ -154,11 +154,11 @@ impl_opaque_keys! {
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
-	authoring_version: 11,
-	spec_version: 11,
+	authoring_version: 10,
+	spec_version: 10,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 11,
+	transaction_version: 10,
 	state_version: 0,
 };
 

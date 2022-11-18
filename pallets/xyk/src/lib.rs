@@ -2845,6 +2845,16 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			missing_at_last_checkpoint: user_missing_at_checkpoint,
 		};
 
+		LiquidityMiningActivePoolV2::<T>::try_mutate(liquidity_asset_id, |active_amount| {
+			if let Some(val) = active_amount.checked_add(liquidity_assets_amount) {
+				*active_amount = val;
+				Ok(())
+			} else {
+				Err(())
+			}
+		})
+		.map_err(|_| DispatchError::from(Error::<T>::LiquidityCheckpointMathError))?;
+
 		RewardsInfo::<T>::insert(user.clone(), liquidity_asset_id, rewards_info_new);
 
 		Ok(())

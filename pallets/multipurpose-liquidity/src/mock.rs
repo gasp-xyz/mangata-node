@@ -196,7 +196,15 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for MockXyk<T> {
 		unimplemented!()
 	}
 
-	fn claim_rewards(
+	fn promote_pool(liquidity_token_id: TokenId) -> DispatchResult {
+		unimplemented!()
+	}
+
+	fn is_liquidity_token(liquidity_asset_id: TokenId) -> bool {
+		true
+	}
+
+	fn claim_rewards_v2(
 		sender: T::AccountId,
 		liquidity_token_id: Self::CurrencyId,
 		amount: Self::Balance,
@@ -204,11 +212,14 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for MockXyk<T> {
 		unimplemented!()
 	}
 
-	fn promote_pool(liquidity_token_id: TokenId) -> DispatchResult {
+	fn claim_rewards_all_v2(
+		sender: T::AccountId,
+		liquidity_token_id: Self::CurrencyId,
+	) -> DispatchResult {
 		unimplemented!()
 	}
 
-	fn activate_liquidity(
+	fn activate_liquidity_v2(
 		sender: T::AccountId,
 		liquidity_token_id: Self::CurrencyId,
 		amount: Self::Balance,
@@ -217,7 +228,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for MockXyk<T> {
 		unimplemented!()
 	}
 
-	fn deactivate_liquidity(
+	fn deactivate_liquidity_v2(
 		sender: T::AccountId,
 		liquidity_token_id: Self::CurrencyId,
 		amount: Self::Balance,
@@ -225,8 +236,11 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for MockXyk<T> {
 		unimplemented!()
 	}
 
-	fn is_liquidity_token(liquidity_asset_id: TokenId) -> bool {
-		true
+	fn rewards_migrate_v1_to_v2(
+		account: T::AccountId,
+		liquidity_token_id: Self::CurrencyId,
+	) -> DispatchResult {
+		unimplemented!()
 	}
 }
 

@@ -90,7 +90,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::{traits::UnfilteredDispatchable, weights::GetDispatchInfo};
+use frame_support::{traits::UnfilteredDispatchable, dispatch::GetDispatchInfo};
 use sp_runtime::{traits::StaticLookup, DispatchResult};
 use sp_std::{convert::TryInto, prelude::*};
 
@@ -110,13 +110,13 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// The overarching event type.
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// A sudo-able call.
-		type Call: Parameter + UnfilteredDispatchable<Origin = Self::Origin> + GetDispatchInfo;
+		type Call: Parameter + UnfilteredDispatchable<Origin = Self::RuntimeOrigin> + GetDispatchInfo;
 
 		/// The Origin allowed to use sudo
-		type SudoOrigin: EnsureOrigin<Self::Origin>;
+		type SudoOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}
 
 	#[pallet::pallet]

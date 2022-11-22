@@ -5,6 +5,7 @@ use super::*;
 use sp_core::H256;
 
 use sp_runtime::{
+	Percent,
 	testing::Header,
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
 };

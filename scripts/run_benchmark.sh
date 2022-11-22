@@ -9,8 +9,8 @@ ${REPO_ROOT}/target/release/mangata-node benchmark pallet \
     --wasm-execution compiled \
     --pallet $1 \
     --extrinsic '*' \
-    --steps 2 \
-    --repeat 2 \
+    --steps 50 \
+    --repeat 20 \
     --output ./benchmarks/$1_weights.rs \
     --template ./templates/module-weight-template.hbs \
     &> ./benchmarks/benchmark_$1.txt

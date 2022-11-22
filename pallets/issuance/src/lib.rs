@@ -358,10 +358,7 @@ impl<T: Config> PoolPromoteApi for Pallet<T> {
 					promoted_pools
 						.entry(liquidity_token_id)
 						.and_modify(|info| info.weight = weight)
-						.or_insert(PromotedPoolsRewardsInfo {
-							weight: weight,
-							rewards: U256::zero(),
-						});
+						.or_insert(PromotedPoolsRewardsInfo { weight, rewards: U256::zero() });
 				},
 				None => {
 					let _ = promoted_pools.remove(&liquidity_token_id);
@@ -566,18 +563,14 @@ impl<T: Config> Pallet<T> {
 			let activated_pools_len = activated_pools.len() as u128;
 
 			for (token_id, weight, rewards, activated_amount) in activated_pools {
-				let liquidity_mining_issuance_for_pool =
-					match maybe_total_weight {
-						Some(total_weight) if !total_weight.is_zero() => {
-							Perbill::from_rational(weight.into(), total_weight)
-								.mul_floor(liquidity_mining_issuance)
-						}
-						_ => {
-							liquidity_mining_issuance
-								.checked_div(activated_pools_len)
-								.unwrap_or(liquidity_mining_issuance)
-						}
-					};
+				let liquidity_mining_issuance_for_pool = match maybe_total_weight {
+					Some(total_weight) if !total_weight.is_zero() =>
+						Perbill::from_rational(weight.into(), total_weight)
+							.mul_floor(liquidity_mining_issuance),
+					_ => liquidity_mining_issuance
+						.checked_div(activated_pools_len)
+						.unwrap_or(liquidity_mining_issuance),
+				};
 
 				let rewards_for_liquidity: U256 = U256::from(liquidity_mining_issuance_for_pool)
 					.checked_mul(U256::from(u128::MAX))

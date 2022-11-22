@@ -84,24 +84,12 @@ impl ActivedPoolQueryApi for MockActivedPoolQueryApi {
 }
 
 impl PoolPromoteApi for MockPromotedPoolApi {
-	fn promote_pool(liquidity_token_id: TokenId) -> bool {
+	fn update_pool_promotion(liquidity_token_id: TokenId, weight_percent: Option<Percent>) {
 		let mut pools = PROMOTED_POOLS.lock().unwrap();
-		if pools.contains_key(&liquidity_token_id) {
-			false
-		} else {
-			pools.insert(liquidity_token_id, 0_u128.into());
-			true
-		}
-	}
-
-	fn unpromote_pool(liquidity_token_id: TokenId) -> bool {
-		let mut pools = PROMOTED_POOLS.lock().unwrap();
-		if pools.contains_key(&liquidity_token_id) {
-			false
-		} else {
-			pools.insert(liquidity_token_id, 0_u128.into());
-			true
-		}
+		match weight_percent {
+			Some(_) => pools.insert(liquidity_token_id, 0_u128.into()),
+			None => pools.remove(&liquidity_token_id),
+		};
 	}
 
 	fn get_pool_rewards(liquidity_token_id: TokenId) -> Option<Balance> {

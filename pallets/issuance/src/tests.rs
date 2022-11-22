@@ -392,7 +392,7 @@ fn issuance_after_linear_period_never_execeeds_linear() {
 #[test]
 fn promote_pool_api_works() {
 	new_test_ext().execute_with(|| {
-		Issuance::promote_pool(1);
+		Issuance::update_pool_promotion(1, Some(Percent::from_percent(50u8.into())));
 
 		roll_to_while_minting(4, None);
 		assert_eq!(
@@ -405,7 +405,87 @@ fn promote_pool_api_works() {
 			Issuance::get_pool_rewards_v2(1).unwrap()
 		);
 
-		Issuance::promote_pool(2);
+		Issuance::update_pool_promotion(2, Some(Percent::from_percent(50u8.into())));
+		//	assert_eq!(2, Issuance::len());
+		roll_to_while_minting(14, None);
+		assert_eq!(
+			U256::from_dec_str("191427546923208537313638702283778366195067525").unwrap(),
+			Issuance::get_pool_rewards_v2(1).unwrap()
+		);
+		assert_eq!(
+			U256::from_dec_str("38285509384641707462727740456755673239013505").unwrap(),
+			Issuance::get_pool_rewards_v2(2).unwrap()
+		);
+
+		roll_to_while_minting(19, None);
+		assert_eq!(
+			U256::from_dec_str("229713056307850244776366442740534039434081030").unwrap(),
+			Issuance::get_pool_rewards_v2(1).unwrap()
+		);
+		assert_eq!(
+			U256::from_dec_str("76571018769283414925455480913511346478027010").unwrap(),
+			Issuance::get_pool_rewards_v2(2).unwrap()
+		);
+	});
+}
+
+#[test]
+fn promote_pool_api_works_with_overflow() {
+	new_test_ext().execute_with(|| {
+		Issuance::update_pool_promotion(1, Some(Percent::from_percent(100u8.into())));
+
+		roll_to_while_minting(4, None);
+		assert_eq!(
+			U256::from_dec_str("76571018769283414925455480913511346478027010").unwrap(),
+			Issuance::get_pool_rewards_v2(1).unwrap()
+		);
+		roll_to_while_minting(9, None);
+		assert_eq!(
+			U256::from_dec_str("153142037538566829850910961827022692956054020").unwrap(),
+			Issuance::get_pool_rewards_v2(1).unwrap()
+		);
+
+		Issuance::update_pool_promotion(2, Some(Percent::from_percent(100u8.into())));
+		//	assert_eq!(2, Issuance::len());
+		roll_to_while_minting(14, None);
+		assert_eq!(
+			U256::from_dec_str("191427546923208537313638702283778366195067525").unwrap(),
+			Issuance::get_pool_rewards_v2(1).unwrap()
+		);
+		assert_eq!(
+			U256::from_dec_str("38285509384641707462727740456755673239013505").unwrap(),
+			Issuance::get_pool_rewards_v2(2).unwrap()
+		);
+
+		roll_to_while_minting(19, None);
+		assert_eq!(
+			U256::from_dec_str("229713056307850244776366442740534039434081030").unwrap(),
+			Issuance::get_pool_rewards_v2(1).unwrap()
+		);
+		assert_eq!(
+			U256::from_dec_str("76571018769283414925455480913511346478027010").unwrap(),
+			Issuance::get_pool_rewards_v2(2).unwrap()
+		);
+	});
+}
+
+#[test]
+fn promote_pool_api_works_with_underflow() {
+	new_test_ext().execute_with(|| {
+		Issuance::update_pool_promotion(1, Some(Percent::from_percent(10u8.into())));
+
+		roll_to_while_minting(4, None);
+		assert_eq!(
+			U256::from_dec_str("76571018769283414925455480913511346478027010").unwrap(),
+			Issuance::get_pool_rewards_v2(1).unwrap()
+		);
+		roll_to_while_minting(9, None);
+		assert_eq!(
+			U256::from_dec_str("153142037538566829850910961827022692956054020").unwrap(),
+			Issuance::get_pool_rewards_v2(1).unwrap()
+		);
+
+		Issuance::update_pool_promotion(2, Some(Percent::from_percent(10u8.into())));
 		//	assert_eq!(2, Issuance::len());
 		roll_to_while_minting(14, None);
 		assert_eq!(

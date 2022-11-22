@@ -29,6 +29,8 @@ use pallet_issuance::ComputeIssuance;
 
 use crate::Pallet as Xyk;
 
+const MaxNumberOfPromotedPools: u32 = 100;
+
 const MILION: u128 = 1_000__000_000__000_000;
 
 #[macro_export]
@@ -165,7 +167,7 @@ benchmarks! {
 	   let initial_liquidity_amount = <T as Config>::Currency::total_issuance(liquidity_asset_id.into());
 
 
-	   Xyk::<T>::promote_pool(RawOrigin::Root.into(), liquidity_asset_id).unwrap();
+	   Xyk::<T>::update_pool_promotion(RawOrigin::Root.into(), liquidity_asset_id, Some(Percent::from_percent(100u8.into()))).unwrap();
 
 	   Xyk::<T>::mint_liquidity(
 		   RawOrigin::Signed(caller.clone().into()).into(),
@@ -222,7 +224,7 @@ benchmarks! {
 		   non_native_asset_id2.into(),
 		   pool_creation_asset_2_amount
 	   ).unwrap();
-	   Xyk::<T>::promote_pool(RawOrigin::Root.into(), liquidity_asset_id).unwrap();
+	   Xyk::<T>::update_pool_promotion(RawOrigin::Root.into(), liquidity_asset_id, Some(Percent::from_percent(100u8.into()))).unwrap();
 
 
 	   assert_eq!(
@@ -270,7 +272,7 @@ benchmarks! {
 	   let pool_mint_second_token_amount = 30000000000000000001_u128;
 
 	   Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), pool_create_first_token_amount, non_native_asset_id2.into(), pool_create_second_token_amount).unwrap();
-	   Xyk::<T>::promote_pool(RawOrigin::Root.into(), liquidity_asset_id).unwrap();
+	   Xyk::<T>::update_pool_promotion(RawOrigin::Root.into(), liquidity_asset_id, Some(Percent::from_percent(100u8.into()))).unwrap();
 
 
 	   assert!(Xyk::<T>::liquidity_pool(liquidity_asset_id).is_some());
@@ -304,7 +306,7 @@ benchmarks! {
 	   let liquidity_asset_id = non_native_asset_id2 + 1;
 
 	   Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), 40000000000000000000, non_native_asset_id2.into(), 60000000000000000000).unwrap();
-	   Xyk::<T>::promote_pool(RawOrigin::Root.into(), liquidity_asset_id).unwrap();
+	   Xyk::<T>::update_pool_promotion(RawOrigin::Root.into(), liquidity_asset_id, Some(Percent::from_percent(100u8.into()))).unwrap();
 
 	   assert_eq!(			<T as Config>::Currency::total_issuance(liquidity_asset_id.into()),
 		   <T as Config>::Currency::free_balance(liquidity_asset_id.into(), &caller),
@@ -353,7 +355,7 @@ benchmarks! {
 	   let liquidity_asset_id = non_native_asset_id2 + 1;
 
 	   Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), 40000000000000000000, non_native_asset_id2.into(), 60000000000000000000).unwrap();
-	   Xyk::<T>::promote_pool(RawOrigin::Root.into(), liquidity_asset_id).unwrap();
+	   Xyk::<T>::update_pool_promotion(RawOrigin::Root.into(), liquidity_asset_id, Some(Percent::from_percent(100u8.into()))).unwrap();
 
 	   assert_eq!(
 		   <T as Config>::Currency::total_issuance(liquidity_asset_id.into()),
@@ -386,7 +388,7 @@ benchmarks! {
    }
 
 
-   promote_pool {
+   update_pool_promotion {
 	   // NOTE: that duplicates test XYK::liquidity_rewards_claim_W
 	   //
 	   init!();
@@ -400,13 +402,12 @@ benchmarks! {
 	   Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), asset_id_1.into(), 5000, asset_id_2.into(), 5000).unwrap();
 
 
-   }: promote_pool(RawOrigin::Root, liquidity_asset_id)
+   }: update_pool_promotion(RawOrigin::Root, liquidity_asset_id, Some(Percent::from_percent(100u8.into())))
 
    verify {
-	   assert_err!(
-		   Xyk::<T>::promote_pool(RawOrigin::Root.into(), liquidity_asset_id),
-		   Error::<T>::PoolAlreadyPromoted
-	   );
+	   assert!(
+			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).is_some()
+		);
    }
 
    activate_liquidity_v2 {
@@ -427,7 +428,7 @@ benchmarks! {
 	   let liquidity_asset_id = non_native_asset_id2 + 1;
 
 	   Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), 40000000000000000000, non_native_asset_id2.into(), 60000000000000000000).unwrap();
-	   Xyk::<T>::promote_pool(RawOrigin::Root.into(), liquidity_asset_id).unwrap();
+	   Xyk::<T>::update_pool_promotion(RawOrigin::Root.into(), liquidity_asset_id, Some(Percent::from_percent(100u8.into()))).unwrap();
 
 	   assert_eq!(
 		   <T as Config>::Currency::total_issuance(liquidity_asset_id.into()),
@@ -473,7 +474,7 @@ benchmarks! {
 	   let liquidity_asset_id = non_native_asset_id2 + 1;
 
 	   Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), 40000000000000000000, non_native_asset_id2.into(), 60000000000000000000).unwrap();
-	   Xyk::<T>::promote_pool(RawOrigin::Root.into(), liquidity_asset_id).unwrap();
+	   Xyk::<T>::update_pool_promotion(RawOrigin::Root.into(), liquidity_asset_id, Some(Percent::from_percent(100u8.into()))).unwrap();
 
 	   assert_eq!(
 		   <T as Config>::Currency::total_issuance(liquidity_asset_id.into()),
@@ -520,7 +521,7 @@ benchmarks! {
 	   let user2: T::AccountId = account("user2", 1, 0);
 
 	   pallet_issuance::PromotedPoolsRewards::<T>::insert(4, 200000);
-	   Xyk::<T>::promote_pool(RawOrigin::Root.into(), 4);
+	   Xyk::<T>::update_pool_promotion(RawOrigin::Root.into(), 4, Some(Percent::from_percent(100u8.into())));
 
 	   LiquidityMiningActiveUser::<T>::insert((user1.clone(), 4), 10000);
 	   LiquidityMiningActiveUser::<T>::insert((user2.clone(), 4), 10000);

@@ -127,25 +127,35 @@ pub trait XykFunctionsTrait<AccountId> {
 		liquidity_token_amount: Self::Balance,
 	) -> Result<(Self::CurrencyId, Self::Balance, Self::CurrencyId, Self::Balance), DispatchError>;
 
-	fn claim_rewards(
+	fn claim_rewards_v2(
 		sender: AccountId,
 		liquidity_token_id: Self::CurrencyId,
 		amount: Self::Balance,
 	) -> DispatchResult;
 
+	fn claim_rewards_all_v2(
+		sender: AccountId,
+		liquidity_token_id: Self::CurrencyId,
+	) -> DispatchResult;
+
 	fn promote_pool(liquidity_token_id: TokenId) -> DispatchResult;
 
-	fn activate_liquidity(
+	fn activate_liquidity_v2(
 		sender: AccountId,
 		liquidity_token_id: Self::CurrencyId,
 		amount: Self::Balance,
 		use_balance_from: Option<ActivateKind>,
 	) -> DispatchResult;
 
-	fn deactivate_liquidity(
+	fn deactivate_liquidity_v2(
 		sender: AccountId,
 		liquidity_token_id: Self::CurrencyId,
 		amount: Self::Balance,
+	) -> DispatchResult;
+
+	fn rewards_migrate_v1_to_v2(
+		account: AccountId,
+		liquidity_token_id: Self::CurrencyId,
 	) -> DispatchResult;
 
 	fn is_liquidity_token(liquidity_asset_id: TokenId) -> bool;

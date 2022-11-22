@@ -24,11 +24,13 @@ sp-runtime = { git = "https://github.com/mangata-finance/substrate", default-fea
 pallet-vesting-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.31" }
 frame-benchmarking = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31", optional = true, default-features = false }
 cfg-if = "1.0.0"
+sp-core = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
+
 
 [dev-dependencies]
-sp-core = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
 sp-io = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
 orml-traits = { default-features = false, version="0.4.1-dev" , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v0.9.31" }
+lazy_static = "1.1.1"
 
 [features]
 default = ['std']
@@ -36,6 +38,7 @@ std = [
 		'serde',
     'codec/std',
     'sp-std/std',
+    'sp-core/std',
     'sp-runtime/std',
     'frame-support/std',
     'frame-system/std',

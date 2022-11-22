@@ -5879,6 +5879,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "frame-try-runtime",
+ "lazy_static",
  "log",
  "mangata-types 0.1.0 (git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v0.9.31)",
  "orml-tokens",

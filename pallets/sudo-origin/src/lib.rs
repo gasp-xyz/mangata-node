@@ -113,7 +113,7 @@ pub mod pallet {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// A sudo-able call.
-		type Call: Parameter + UnfilteredDispatchable<Origin = Self::RuntimeOrigin> + GetDispatchInfo;
+		type RuntimeCall: Parameter + UnfilteredDispatchable<RuntimeOrigin = Self::RuntimeOrigin> + GetDispatchInfo;
 
 		/// The Origin allowed to use sudo
 		type SudoOrigin: EnsureOrigin<Self::RuntimeOrigin>;
@@ -139,7 +139,7 @@ pub mod pallet {
 		})]
 		pub fn sudo(
 			origin: OriginFor<T>,
-			call: Box<<T as Config>::Call>,
+			call: Box<<T as Config>::RuntimeCall>,
 		) -> DispatchResultWithPostInfo {
 			// This is a public call, so we ensure that the origin is SudoOrigin.
 			T::SudoOrigin::ensure_origin(origin)?;
@@ -161,7 +161,7 @@ pub mod pallet {
 		#[pallet::weight((*_weight, call.get_dispatch_info().class))]
 		pub fn sudo_unchecked_weight(
 			origin: OriginFor<T>,
-			call: Box<<T as Config>::Call>,
+			call: Box<<T as Config>::RuntimeCall>,
 			_weight: Weight,
 		) -> DispatchResultWithPostInfo {
 			// This is a public call, so we ensure that the origin is SudoOrigin.
@@ -195,7 +195,7 @@ pub mod pallet {
 		pub fn sudo_as(
 			origin: OriginFor<T>,
 			who: <T::Lookup as StaticLookup>::Source,
-			call: Box<<T as Config>::Call>,
+			call: Box<<T as Config>::RuntimeCall>,
 		) -> DispatchResultWithPostInfo {
 			// This is a public call, so we ensure that the origin is SudoOrigin.
 			T::SudoOrigin::ensure_origin(origin)?;

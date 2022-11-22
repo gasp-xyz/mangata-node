@@ -246,7 +246,7 @@ pub fn run() -> Result<()> {
 			builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
 			let _ = builder.init();
 
-			let spec = load_spec(&params.chain.clone().unwrap_or_default())?;
+			let spec = load_spec(&params.shared_params.chain.clone().unwrap_or_default())?;
 
 			let output_buf = match spec {
 				#[cfg(feature = "mangata-kusama")]
@@ -292,7 +292,7 @@ pub fn run() -> Result<()> {
 			let _ = builder.init();
 
 			let raw_wasm_blob =
-				extract_genesis_wasm(&cli.load_spec(&params.chain.clone().unwrap_or_default())?)?;
+				extract_genesis_wasm(&cli.load_spec(&params.shared_params.chain.clone().unwrap_or_default())?)?;
 			let output_buf = if params.raw {
 				raw_wasm_blob
 			} else {
@@ -331,6 +331,15 @@ pub fn run() -> Result<()> {
 						>(&config)?;
 						cmd.run(partials.client)
 					}),
+					#[cfg(not(feature = "runtime-benchmarks"))]
+					BenchmarkCmd::Storage(_) =>
+						return Err(sc_cli::Error::Input(
+							"Compile with --features=runtime-benchmarks \
+						to enable storage benchmarks."
+								.into(),
+						)
+							.into()),
+					#[cfg(feature = "runtime-benchmarks")]
 					BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
 						let partials = new_partial::<
 							service::mangata_kusama_runtime::RuntimeApi,
@@ -366,6 +375,15 @@ pub fn run() -> Result<()> {
 						>(&config)?;
 						cmd.run(partials.client)
 					}),
+					#[cfg(not(feature = "runtime-benchmarks"))]
+					BenchmarkCmd::Storage(_) =>
+						return Err(sc_cli::Error::Input(
+							"Compile with --features=runtime-benchmarks \
+						to enable storage benchmarks."
+								.into(),
+						)
+							.into()),
+					#[cfg(feature = "runtime-benchmarks")]
 					BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
 						let partials = new_partial::<
 							service::mangata_rococo_runtime::RuntimeApi,

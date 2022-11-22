@@ -420,7 +420,7 @@ pub mod pallet {
 		AssetsSwapped(T::AccountId, TokenId, Balance, TokenId, Balance),
 		LiquidityMinted(T::AccountId, TokenId, Balance, TokenId, Balance, TokenId, Balance),
 		LiquidityBurned(T::AccountId, TokenId, Balance, TokenId, Balance, TokenId, Balance),
-		PoolPromotionUpdated(TokenId, Option<Percent>),
+		PoolPromotionUpdated(TokenId, Option<u8>),
 		LiquidityActivated(T::AccountId, TokenId, Balance),
 		LiquidityDeactivated(T::AccountId, TokenId, Balance),
 		RewardsClaimed(T::AccountId, TokenId, Balance),
@@ -813,13 +813,13 @@ pub mod pallet {
 		pub fn update_pool_promotion(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
-			liquidity_mining_issuance_percent: Option<Percent>,
+			liquidity_mining_issuance_weight: Option<u8>,
 		) -> DispatchResult {
 			ensure_root(origin)?;
 
 			<Self as XykFunctionsTrait<T::AccountId>>::update_pool_promotion(
 				liquidity_token_id,
-				liquidity_mining_issuance_percent,
+				liquidity_mining_issuance_weight,
 			)
 		}
 
@@ -2623,16 +2623,16 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 	fn update_pool_promotion(
 		liquidity_token_id: TokenId,
-		liquidity_mining_issuance_percent: Option<Percent>,
+		liquidity_mining_issuance_weight: Option<u8>,
 	) -> DispatchResult {
 		<T as Config>::PoolPromoteApi::update_pool_promotion(
 			liquidity_token_id,
-			liquidity_mining_issuance_percent,
+			liquidity_mining_issuance_weight,
 		);
 
 		Pallet::<T>::deposit_event(Event::PoolPromotionUpdated(
 			liquidity_token_id,
-			liquidity_mining_issuance_percent,
+			liquidity_mining_issuance_weight,
 		));
 
 		Ok(())
@@ -3137,16 +3137,16 @@ impl<T: Config> mp_bootstrap::RewardsApi for Pallet<T> {
 
 	fn update_pool_promotion(
 		liquidity_token_id: TokenId,
-		liquidity_mining_issuance_percent: Option<Percent>,
+		liquidity_mining_issuance_weight: Option<u8>,
 	) {
 		<T as Config>::PoolPromoteApi::update_pool_promotion(
 			liquidity_token_id,
-			liquidity_mining_issuance_percent,
+			liquidity_mining_issuance_weight,
 		);
 
 		Pallet::<T>::deposit_event(Event::PoolPromotionUpdated(
 			liquidity_token_id,
-			liquidity_mining_issuance_percent,
+			liquidity_mining_issuance_weight,
 		));
 	}
 }

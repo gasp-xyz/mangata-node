@@ -146,7 +146,7 @@ fn liquidity_rewards_single_user_mint_W() {
 		XykStorage::update_pool_promotion(
 			Origin::root(),
 			4,
-			Some(Percent::from_percent(100u8.into())),
+			Some(1u8),
 		)
 		.unwrap();
 
@@ -257,7 +257,7 @@ fn liquidity_rewards_three_users_mint_W() {
 		XykStorage::update_pool_promotion(
 			Origin::root(),
 			4,
-			Some(Percent::from_percent(100u8.into())),
+			Some(1u8),
 		)
 		.unwrap();
 		XykStorage::transfer(0, 2, 3, 1000000).unwrap();
@@ -331,7 +331,7 @@ fn liquidity_rewards_three_users_burn_W() {
 		XykStorage::update_pool_promotion(
 			Origin::root(),
 			4,
-			Some(Percent::from_percent(100u8.into())),
+			Some(1u8),
 		)
 		.unwrap();
 		XykStorage::transfer(0, 2, 3, 1000000).unwrap();
@@ -404,7 +404,7 @@ fn liquidity_rewards_claim_W() {
 		XykStorage::update_pool_promotion(
 			Origin::root(),
 			4,
-			Some(Percent::from_percent(100u8.into())),
+			Some(1u8),
 		)
 		.unwrap();
 		let liquidity_tokens_owned = XykStorage::balance(4, 2);
@@ -455,7 +455,7 @@ fn liquidity_rewards_promote_pool_W() {
 		XykStorage::update_pool_promotion(
 			Origin::root(),
 			4,
-			Some(Percent::from_percent(100u8.into())),
+			Some(1u8),
 		)
 		.unwrap();
 	});
@@ -478,7 +478,7 @@ fn liquidity_rewards_promote_pool_already_promoted_NW() {
 		XykStorage::update_pool_promotion(
 			Origin::root(),
 			4,
-			Some(Percent::from_percent(100u8.into())),
+			Some(1u8),
 		)
 		.unwrap();
 
@@ -525,7 +525,7 @@ fn liquidity_rewards_work_after_burn_W() {
 		XykStorage::update_pool_promotion(
 			Origin::root(),
 			4,
-			Some(Percent::from_percent(100u8.into())),
+			Some(1u8),
 		)
 		.unwrap();
 		XykStorage::transfer(0, 2, 3, 1000000).unwrap();
@@ -599,7 +599,7 @@ fn liquidity_rewards_deactivate_transfer_controled_W() {
 		XykStorage::update_pool_promotion(
 			Origin::root(),
 			4,
-			Some(Percent::from_percent(100u8.into())),
+			Some(1u8),
 		)
 		.unwrap();
 
@@ -641,7 +641,7 @@ fn liquidity_rewards_deactivate_more_NW() {
 		XykStorage::update_pool_promotion(
 			Origin::root(),
 			4,
-			Some(Percent::from_percent(100u8.into())),
+			Some(1u8),
 		)
 		.unwrap();
 
@@ -674,7 +674,7 @@ fn liquidity_rewards_activate_more_NW() {
 		XykStorage::update_pool_promotion(
 			Origin::root(),
 			4,
-			Some(Percent::from_percent(100u8.into())),
+			Some(1u8),
 		)
 		.unwrap();
 
@@ -1879,7 +1879,7 @@ fn liquidity_rewards_not_yet_claimed_already_claimed_W() {
 		XykStorage::update_pool_promotion(
 			Origin::root(),
 			4,
-			Some(Percent::from_percent(100u8.into())),
+			Some(1u8),
 		)
 		.unwrap();
 
@@ -1939,7 +1939,7 @@ fn extreme_case_pool_ratio() {
 		XykStorage::update_pool_promotion(
 			Origin::root(),
 			4,
-			Some(Percent::from_percent(100u8.into())),
+			Some(1u8),
 		)
 		.unwrap();
 
@@ -1991,7 +1991,7 @@ fn rewards_rounding_during_often_mint() {
 		XykStorage::update_pool_promotion(
 			Origin::root(),
 			4,
-			Some(Percent::from_percent(100u8.into())),
+			Some(1u8),
 		)
 		.unwrap();
 		MockPromotedPoolApi::instance()
@@ -2071,7 +2071,7 @@ fn rewards_storage_right_amounts_start1() {
 		XykStorage::update_pool_promotion(
 			Origin::root(),
 			4,
-			Some(Percent::from_percent(100u8.into())),
+			Some(1u8),
 		)
 		.unwrap();
 		MockPromotedPoolApi::instance()
@@ -2220,7 +2220,7 @@ fn rewards_storage_right_amounts_start2() {
 		XykStorage::update_pool_promotion(
 			Origin::root(),
 			4,
-			Some(Percent::from_percent(100u8.into())),
+			Some(1u8),
 		)
 		.unwrap();
 		MockPromotedPoolApi::instance()
@@ -2352,7 +2352,7 @@ fn rewards_storage_right_amounts_start3() {
 		XykStorage::update_pool_promotion(
 			Origin::root(),
 			4,
-			Some(Percent::from_percent(100u8.into())),
+			Some(1u8),
 		)
 		.unwrap();
 		MockPromotedPoolApi::instance()

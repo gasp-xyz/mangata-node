@@ -7,7 +7,6 @@ use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
-	Percent,
 };
 
 use crate as pallet_multipurpose_liquidity;
@@ -199,7 +198,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for MockXyk<T> {
 
 	fn update_pool_promotion(
 		liquidity_token_id: TokenId,
-		liquidity_mining_issuance_percent: Option<Percent>,
+		liquidity_mining_issuance_weight: Option<u8>,
 	) -> DispatchResult {
 		unimplemented!()
 	}

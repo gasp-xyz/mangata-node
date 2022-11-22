@@ -143,7 +143,7 @@ pub trait XykFunctionsTrait<AccountId> {
 
 	fn update_pool_promotion(
 		liquidity_token_id: TokenId,
-		liquidity_mining_issuance_percent: Option<Percent>,
+		liquidity_mining_issuance_weight: Option<u8>,
 	) -> DispatchResult;
 
 	fn activate_liquidity_v2(

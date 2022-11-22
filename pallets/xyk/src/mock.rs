@@ -84,9 +84,9 @@ impl ActivedPoolQueryApi for MockActivedPoolQueryApi {
 }
 
 impl PoolPromoteApi for MockPromotedPoolApi {
-	fn update_pool_promotion(liquidity_token_id: TokenId, weight_percent: Option<Percent>) {
+	fn update_pool_promotion(liquidity_token_id: TokenId, weight: Option<u8>) {
 		let mut pools = PROMOTED_POOLS.lock().unwrap();
-		match weight_percent {
+		match weight {
 			Some(_) => pools.insert(liquidity_token_id, 0_u128.into()),
 			None => pools.remove(&liquidity_token_id),
 		};

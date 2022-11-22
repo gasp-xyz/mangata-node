@@ -60,7 +60,7 @@ pub struct TgeInfo<A> {
 pub trait PoolPromoteApi {
 	fn update_pool_promotion(
 		liquidity_token_id: TokenId,
-		liquidity_mining_issuance_percent: Option<Percent>,
+		liquidity_mining_issuance_weight: Option<u8>,
 	);
 
 	/// Returns available reward for pool
@@ -210,7 +210,7 @@ pub mod pallet {
 
 	#[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq, TypeInfo)]
 	pub struct PromotedPoolsRewardsInfo {
-		pub weight_percent: Percent,
+		pub weight: u8,
 		pub rewards: U256,
 	}
 
@@ -350,16 +350,16 @@ impl<T: Config> ComputeIssuance for Pallet<T> {
 impl<T: Config> PoolPromoteApi for Pallet<T> {
 	fn update_pool_promotion(
 		liquidity_token_id: TokenId,
-		liquidity_mining_issuance_percent: Option<Percent>,
+		liquidity_mining_issuance_weight: Option<u8>,
 	) {
 		PromotedPoolsRewardsV2::<T>::mutate(
-			|promoted_pools| match liquidity_mining_issuance_percent {
-				Some(percent) => {
+			|promoted_pools| match liquidity_mining_issuance_weight {
+				Some(weight) => {
 					promoted_pools
 						.entry(liquidity_token_id)
-						.and_modify(|info| info.weight_percent = percent)
+						.and_modify(|info| info.weight = weight)
 						.or_insert(PromotedPoolsRewardsInfo {
-							weight_percent: percent,
+							weight: weight,
 							rewards: U256::zero(),
 						});
 				},
@@ -550,16 +550,16 @@ impl<T: Config> Pallet<T> {
 				.filter_map(|(token_id, info)| {
 					match T::ActivedPoolQueryApiType::get_pool_activate_amount(token_id) {
 						Some(activated_amount) if !activated_amount.is_zero() =>
-							Some((token_id, info.weight_percent, info.rewards, activated_amount)),
+							Some((token_id, info.weight, info.rewards, activated_amount)),
 						_ => None,
 					}
 				})
 				.collect();
 
 			let maybe_total_weight = activated_pools.iter().try_fold(
-				Balance::zero(),
-				|acc, &(_token_id, weight_percent, _rewards, _activated_amount)| {
-					acc.checked_add(weight_percent.deconstruct().into())
+				u64::zero(),
+				|acc, &(_token_id, weight, _rewards, _activated_amount)| {
+					acc.checked_add(weight.into())
 				},
 			);
 
@@ -567,19 +567,16 @@ impl<T: Config> Pallet<T> {
 
 			for (token_id, weight, rewards, activated_amount) in activated_pools {
 				let liquidity_mining_issuance_for_pool =
-					if let Some(total_weight) = maybe_total_weight {
-						if total_weight != Balance::from(100u128) {
-							log::warn!(
-								"Promoted pool issuance calculations resulted in total_weight != 100 percent : {:?}",
-								total_weight
-							);
+					match maybe_total_weight {
+						Some(total_weight) if !total_weight.is_zero() => {
+							Perbill::from_rational(weight.into(), total_weight)
+								.mul_floor(liquidity_mining_issuance)
 						}
-						Percent::from_rational(weight.deconstruct().into(), total_weight)
-							.mul_floor(liquidity_mining_issuance)
-					} else {
-						liquidity_mining_issuance
-							.checked_div(activated_pools_len)
-							.unwrap_or(liquidity_mining_issuance)
+						_ => {
+							liquidity_mining_issuance
+								.checked_div(activated_pools_len)
+								.unwrap_or(liquidity_mining_issuance)
+						}
 					};
 
 				let rewards_for_liquidity: U256 = U256::from(liquidity_mining_issuance_for_pool)

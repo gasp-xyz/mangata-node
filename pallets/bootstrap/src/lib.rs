@@ -232,7 +232,7 @@ pub mod pallet {
 						if PromoteBootstrapPool::<T>::get() {
 							T::RewardsApi::update_pool_promotion(
 								liq_asset_id,
-								Some(T::DefaultBootstrapPromotedPoolWeightPercent::get()),
+								Some(T::DefaultBootstrapPromotedPoolWeight::get()),
 							);
 						}
 					} else {
@@ -284,7 +284,7 @@ pub mod pallet {
 		type PoolCreateApi: PoolCreateApi<AccountId = Self::AccountId>;
 
 		#[pallet::constant]
-		type DefaultBootstrapPromotedPoolWeightPercent: Get<Percent>;
+		type DefaultBootstrapPromotedPoolWeight: Get<u8>;
 
 		#[pallet::constant]
 		type BootstrapUpdateBuffer: Get<Self::BlockNumber>;

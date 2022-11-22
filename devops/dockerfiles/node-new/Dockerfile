@@ -1,6 +1,8 @@
 # syntax=docker/dockerfile:1
 # Referenced digest is for `paritytech/ci-linux:production` image tag used for immutability
-FROM paritytech/ci-linux@sha256:535c8a792a618f549832fa57e52c346d352021fa050ec82b30073810eb15369e AS base
+# for M1/aarch64 use `docker build --build-arg BUILDER=mangatasolutions/ci-linux@sha256:a6713bb6b993a6afeeecd3fa29cbf5dc932b700f54feb141bd6adb1ae6fe9a68
+ARG BUILDER=paritytech/ci-linux@sha256:535c8a792a618f549832fa57e52c346d352021fa050ec82b30073810eb15369e
+FROM $BUILDER AS base
 RUN cargo install cargo-chef
 WORKDIR /app
 

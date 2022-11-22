@@ -66,8 +66,10 @@ pub mod phragmen_elections {
 				clear_result.maybe_cursor, clear_result.loops
 			);
 
-			<Runtime as frame_system::Config>::DbWeight::get()
-				.reads_writes(clear_result.loops as Weight + 1, clear_result.loops as Weight + 1)
+			<Runtime as frame_system::Config>::DbWeight::get().reads_writes(
+				(clear_result.loops as u64) + 1_u64,
+				(clear_result.loops as u64) + 1_u64,
+			)
 		}
 
 		#[cfg(feature = "try-runtime")]

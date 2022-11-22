@@ -120,38 +120,20 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 				kusama_mainnet_keys::RELAY_SR25519.parse::<AccountId>().unwrap().into(),
 				// Sudo account
 				kusama_mainnet_keys::SUDO_SR25519.parse::<AccountId>().unwrap().into(),
-				// Ethereum AppId for SnowBridged Assets
-				vec![
-					(
-						App::ETH,
-						H160::from_slice(&hex!["6aA07B0e455B393164414380A8A314d7c860CEC8"][..])
-							.into(),
-					),
-					(
-						App::ERC20,
-						H160::from_slice(&hex!["244691D3822e13e61968322f8d82Dee3B31e0D4a"][..])
-							.into(),
-					),
-				],
-				// SnowBridged Assets
+				// Tokens endowment
 				vec![
 					// MGX
 					(
 						0u32,
-						H160::from_slice(&hex!["C7e3Bda797D2cEb740308eC40142ae235e08144A"][..]),
 						300_000_000__000_000_000_000_000_000u128,
 						kusama_mainnet_keys::ALICE_SR25519.parse::<AccountId>().unwrap().into(),
 					),
 					// ETH
 					(
 						1u32,
-						H160::zero(),
 						0u128,
 						kusama_mainnet_keys::ALICE_SR25519.parse::<AccountId>().unwrap().into(),
 					),
-				],
-				// Tokens endowment
-				vec![
 					(
 						0u32,
 						400_000_000__000_000_000_000_000_000u128,
@@ -297,36 +279,14 @@ pub fn development_config() -> ChainSpec {
 				"0xec00ad0ec6eeb271a9689888f644d9262016a26a25314ff4ff5d756404c44112"
 					.parse()
 					.unwrap(),
-				// Ethereum AppId for SnowBridged Assets
-				vec![
-					(
-						App::ETH,
-						H160::from_slice(&hex!["dd514baa317bf095ddba2c0a847765feb389c6a0"][..])
-							.into(),
-					),
-					(
-						App::ERC20,
-						H160::from_slice(&hex!["00e392c04743359e39f00cd268a5390d27ef6b44"][..])
-							.into(),
-					),
-				],
-				// SnowBridged Assets
+				// Tokens endowment
 				vec![
 					(
 						0u32,
-						H160::from_slice(&hex!["F8F7758FbcEfd546eAEff7dE24AFf666B6228e73"][..]),
 						300_000_000__000_000_000_000_000_000u128,
 						get_account_id_from_seed::<sr25519::Public>("Alice"),
 					),
-					(
-						1u32,
-						H160::zero(),
-						0u128,
-						get_account_id_from_seed::<sr25519::Public>("Alice"),
-					),
-				],
-				// Tokens endowment
-				vec![
+					(1u32, 0u128, get_account_id_from_seed::<sr25519::Public>("Alice")),
 					(
 						0u32,
 						400_000_000__000_000_000_000_000_000u128,
@@ -474,38 +434,16 @@ pub fn local_config() -> ChainSpec {
 				"0xec00ad0ec6eeb271a9689888f644d9262016a26a25314ff4ff5d756404c44112"
 					.parse()
 					.unwrap(),
-				// Ethereum AppId for SnowBridged Assets
-				vec![
-					(
-						App::ETH,
-						H160::from_slice(&hex!["Fc97A6197dc90bef6bbEFD672742Ed75E9768553"][..])
-							.into(),
-					),
-					(
-						App::ERC20,
-						H160::from_slice(&hex!["EDa338E4dC46038493b885327842fD3E301CaB39"][..])
-							.into(),
-					),
-				],
-				// SnowBridged Assets
+				// Tokens endowment
 				vec![
 					// MGA
 					(
 						0u32,
-						H160::from_slice(&hex!["F8F7758FbcEfd546eAEff7dE24AFf666B6228e73"][..]),
 						300_000_000__000_000_000_000_000_000u128,
 						get_account_id_from_seed::<sr25519::Public>("Alice"),
 					),
 					// ETH
-					(
-						1u32,
-						H160::zero(),
-						0u128,
-						get_account_id_from_seed::<sr25519::Public>("Alice"),
-					),
-				],
-				// Tokens endowment
-				vec![
+					(1u32, 0u128, get_account_id_from_seed::<sr25519::Public>("Alice")),
 					(
 						0u32,
 						400_000_000__000_000_000_000_000_000u128,
@@ -678,14 +616,10 @@ pub fn local_config() -> ChainSpec {
 	)
 }
 
-type BridgedAssetsType = Vec<(u32, H160, u128, AccountId)>;
-
 fn mangata_genesis(
 	initial_authorities: Vec<(AccountId, AuraId)>,
 	relay_key: AccountId,
 	root_key: AccountId,
-	bridged_app_ids: Vec<(App, AppId)>,
-	bridged_assets: BridgedAssetsType,
 	tokens_endowment: Vec<(u32, u128, AccountId)>,
 	staking_accounts: Vec<(AccountId, u32, u128, u32, u128, u32, u128)>,
 	register_assets: Vec<(u32, AssetMetadataOf)>,
@@ -779,11 +713,6 @@ fn mangata_genesis(
 				})
 				.collect(),
 		},
-		bridge: mangata_kusama_runtime::BridgeConfig { bridged_app_id_registry: bridged_app_ids },
-		bridged_asset: mangata_kusama_runtime::BridgedAssetConfig {
-			bridged_assets_links: bridged_assets,
-		},
-		verifier: mangata_kusama_runtime::VerifierConfig { key: relay_key },
 		council: Default::default(),
 		sudo: mangata_kusama_runtime::SudoConfig {
 			// Assign network admin rights.
@@ -791,7 +720,7 @@ fn mangata_genesis(
 		},
 		polkadot_xcm: mangata_kusama_runtime::PolkadotXcmConfig { safe_xcm_version: Some(2) },
 		asset_registry: mangata_kusama_runtime::AssetRegistryConfig {
-			pre_register_assets: register_assets
+			assets: register_assets
 				.iter()
 				.cloned()
 				.map(|(id, meta)| {

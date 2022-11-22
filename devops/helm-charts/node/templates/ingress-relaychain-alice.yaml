@@ -1,0 +1,25 @@
+{{- if and .Values.relaychain.enabled .Values.remoteCluster -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: relaychain-alice
+  labels: {{- include "node.labels" . | nindent 4 }}
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    external-dns.alpha.kubernetes.io/hostname: "relaychain-alice-ws-{{ .Values.env }}.{{ .Values.domainZone }}"
+spec:
+  rules:
+    - host: "relaychain-alice-ws-{{ .Values.env }}.{{ .Values.domainZone }}"
+      http:
+        paths:
+        - pathType: Prefix
+          path: /
+          backend:
+            service:
+              name: relaychain-alice
+              port:
+                number: 9944
+  tls:
+    - hosts:
+        - "relaychain-alice-ws-{{ .Values.env }}.{{ .Values.domainZone }}"
+{{- end }}

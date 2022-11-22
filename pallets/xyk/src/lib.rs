@@ -242,11 +242,13 @@ use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_issuance::{ActivedPoolQueryApi, ComputeIssuance, PoolPromoteApi};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
 use sp_arithmetic::{helpers_128bit::multiply_by_rational_with_rounding, per_things::Rounding};
-use sp_runtime::traits::{
-	AccountIdConversion, AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member,
-	SaturatedConversion, Zero,
+use sp_runtime::{
+	traits::{
+		AccountIdConversion, AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member,
+		SaturatedConversion, Zero,
+	},
+	Percent,
 };
-use sp_runtime::Percent;
 use sp_std::{
 	convert::{TryFrom, TryInto},
 	fmt::Debug,
@@ -808,10 +810,17 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(<<T as Config>::WeightInfo>::update_pool_promotion())]
-		pub fn update_pool_promotion(origin: OriginFor<T>, liquidity_token_id: TokenId, liquidity_mining_issuance_percent: Option<Percent>) -> DispatchResult {
+		pub fn update_pool_promotion(
+			origin: OriginFor<T>,
+			liquidity_token_id: TokenId,
+			liquidity_mining_issuance_percent: Option<Percent>,
+		) -> DispatchResult {
 			ensure_root(origin)?;
 
-			<Self as XykFunctionsTrait<T::AccountId>>::update_pool_promotion(liquidity_token_id, liquidity_mining_issuance_percent)
+			<Self as XykFunctionsTrait<T::AccountId>>::update_pool_promotion(
+				liquidity_token_id,
+				liquidity_mining_issuance_percent,
+			)
 		}
 
 		#[transactional]
@@ -2612,11 +2621,19 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		Ok(())
 	}
 
-	fn update_pool_promotion(liquidity_token_id: TokenId, liquidity_mining_issuance_percent: Option<Percent>) -> DispatchResult {
+	fn update_pool_promotion(
+		liquidity_token_id: TokenId,
+		liquidity_mining_issuance_percent: Option<Percent>,
+	) -> DispatchResult {
+		<T as Config>::PoolPromoteApi::update_pool_promotion(
+			liquidity_token_id,
+			liquidity_mining_issuance_percent,
+		);
 
-		<T as Config>::PoolPromoteApi::update_pool_promotion(liquidity_token_id, liquidity_mining_issuance_percent);
-
-		Pallet::<T>::deposit_event(Event::PoolPromotionUpdated(liquidity_token_id, liquidity_mining_issuance_percent));
+		Pallet::<T>::deposit_event(Event::PoolPromotionUpdated(
+			liquidity_token_id,
+			liquidity_mining_issuance_percent,
+		));
 
 		Ok(())
 	}
@@ -3118,11 +3135,18 @@ impl<T: Config> mp_bootstrap::RewardsApi for Pallet<T> {
 		)
 	}
 
-	fn update_pool_promotion(liquidity_token_id: TokenId, liquidity_mining_issuance_percent: Option<Percent>){
+	fn update_pool_promotion(
+		liquidity_token_id: TokenId,
+		liquidity_mining_issuance_percent: Option<Percent>,
+	) {
+		<T as Config>::PoolPromoteApi::update_pool_promotion(
+			liquidity_token_id,
+			liquidity_mining_issuance_percent,
+		);
 
-		<T as Config>::PoolPromoteApi::update_pool_promotion(liquidity_token_id, liquidity_mining_issuance_percent);
-
-		Pallet::<T>::deposit_event(Event::PoolPromotionUpdated(liquidity_token_id, liquidity_mining_issuance_percent));
-
+		Pallet::<T>::deposit_event(Event::PoolPromotionUpdated(
+			liquidity_token_id,
+			liquidity_mining_issuance_percent,
+		));
 	}
 }

@@ -35,10 +35,11 @@ permissions:
   id-token: write
   deployments: write
 
-env:
-  DOCKER_BUILDER_IMAGE: mangatasolutions/node-builder:0.2
-  DISABLE_TTY: 1
-  version: dev
+# The following concurrency group cancels in-progress jobs or runs on pull_request events only
+# https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
+concurrency: 
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   init:

@@ -95,6 +95,7 @@ jobs:
         run: kubectl delete namespace pr-${{ github.event.number }}
       
       - name: Delete GitHub Deployment environment
+        if: always()
         uses: bobheadxi/deployments@v1.3.0
         with:
           step: delete-env

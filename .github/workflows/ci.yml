@@ -30,10 +30,16 @@ on:
         required: true
         default: false
 
-env:
-  DOCKER_BUILDER_IMAGE: mangatasolutions/node-builder:0.2
-  DISABLE_TTY: 1
-  version: dev
+permissions:
+  contents: read
+  id-token: write
+  deployments: write
+
+# The following concurrency group cancels in-progress jobs or runs on pull_request events only
+# https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
+concurrency: 
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   init:
@@ -48,9 +54,6 @@ jobs:
         run: echo "GLOBAL_VERSION=${{ github.sha }}" >> $GITHUB_OUTPUT
 
   build-and-test:
-    permissions:
-      contents: write
-      id-token: write
     if: ${{ github.event.inputs.skipBuild != 'true' }}
     needs: [init]
     name: Build
@@ -67,10 +70,6 @@ jobs:
       (github.event_name == 'pull_request' && github.event.action != 'labeled' && contains(github.event.pull_request.labels.*.name, ':rocket: deploy'))
     uses: ./.github/workflows/deploy.yml
     secrets: inherit
-    permissions:
-      contents: read
-      id-token: write
-      deployments: write
     with:
       env: fungible
       version: ${{ needs.init.outputs.GLOBAL_VERSION }}
@@ -97,6 +96,7 @@ jobs:
         run: kubectl delete namespace pr-${{ github.event.number }}
       
       - name: Delete GitHub Deployment environment
+        if: always()
         uses: bobheadxi/deployments@v1.3.0
         with:
           step: delete-env
@@ -109,10 +109,6 @@ jobs:
     name: Deploy `dev` environment
     uses: ./.github/workflows/deploy.yml
     secrets: inherit
-    permissions:
-      contents: read
-      id-token: write
-      deployments: write
     with:
       env: dev
       version: ${{ needs.init.outputs.GLOBAL_VERSION }}

@@ -45,8 +45,8 @@ parameter_types! {
 }
 impl system::Config for Test {
 	type BaseCallFilter = Everything;
-	type Origin = Origin;
-	type Call = Call;
+	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeCall = RuntimeCall;
 	type Index = u64;
 	type BlockNumber = u64;
 	type Hash = H256;
@@ -54,7 +54,7 @@ impl system::Config for Test {
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type DbWeight = ();
 	type Version = ();
@@ -91,7 +91,7 @@ parameter_types! {
 }
 
 impl orml_tokens::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type Amount = Amount;
 	type CurrencyId = TokenId;
@@ -100,6 +100,13 @@ impl orml_tokens::Config for Test {
 	type OnDust = ();
 	type MaxLocks = MaxLocks;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
+	type OnSlash = ();
+	type OnDeposit = ();
+	type OnTransfer = ();
+	type MaxReserves = ();
+	type OnNewTokenAccount = ();
+	type OnKilledTokenAccount = ();
+	type ReserveIdentifier = [u8; 8];
 }
 
 parameter_types! {
@@ -113,7 +120,7 @@ parameter_types! {
 }
 
 impl pallet_vesting_mangata::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Tokens = MultiTokenCurrencyAdapter<Test>;
 	type BlockNumberToBalance = sp_runtime::traits::ConvertInto;
 	type MinVestedTransfer = MinVestedTransfer;
@@ -124,7 +131,7 @@ impl pallet_vesting_mangata::Config for Test {
 }
 
 impl Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type MaxRelocks = MaxLocks;
 	type Tokens = MultiTokenCurrencyAdapter<Test>;
 	type NativeCurrencyId = NativeCurrencyId;

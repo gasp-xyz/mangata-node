@@ -2712,22 +2712,7 @@ dependencies = [
 [[package]]
 name = "frame-system-benchmarking"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v0.9.31#7eab46fae97c891aafa8853decba4e97fc2f97f4"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "frame-system-benchmarking"
-version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31#7a4e5163091384c4c10b6d76f5cb80dac0834f38"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.31#6304e5a82eb8f4449f19e7a391a7f0b380e268e6"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -3639,7 +3624,7 @@ dependencies = [
  "frame-executive",
  "frame-support",
  "frame-system",
- "frame-system-benchmarking 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31)",
+ "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "hex-literal",
@@ -4370,7 +4355,7 @@ dependencies = [
  "frame-executive",
  "frame-support",
  "frame-system",
- "frame-system-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v0.9.31)",
+ "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "hex-literal",
@@ -4548,7 +4533,7 @@ dependencies = [
  "frame-executive",
  "frame-support",
  "frame-system",
- "frame-system-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v0.9.31)",
+ "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "hex-literal",
@@ -7729,7 +7714,7 @@ dependencies = [
  "frame-executive",
  "frame-support",
  "frame-system",
- "frame-system-benchmarking 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31)",
+ "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "hex-literal",
@@ -8780,7 +8765,7 @@ dependencies = [
  "frame-executive",
  "frame-support",
  "frame-system",
- "frame-system-benchmarking 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31)",
+ "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "hex-literal",
  "log",
@@ -12809,7 +12794,7 @@ dependencies = [
  "frame-executive",
  "frame-support",
  "frame-system",
- "frame-system-benchmarking 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31)",
+ "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "hex-literal",
@@ -13281,17 +13266,32 @@ dependencies = [
 [[patch.unused]]
 name = "pallet-nicks"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.31#7eab46fae97c891aafa8853decba4e97fc2f97f4"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.31#6304e5a82eb8f4449f19e7a391a7f0b380e268e6"
 
 [[patch.unused]]
 name = "sc-consensus-uncles"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.31#7eab46fae97c891aafa8853decba4e97fc2f97f4"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.31#6304e5a82eb8f4449f19e7a391a7f0b380e268e6"
 
 [[patch.unused]]
 name = "sp-serializer"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.31#7eab46fae97c891aafa8853decba4e97fc2f97f4"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.31#6304e5a82eb8f4449f19e7a391a7f0b380e268e6"
+
+[[patch.unused]]
+name = "pallet-nicks"
+version = "4.0.0-dev"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.31#6304e5a82eb8f4449f19e7a391a7f0b380e268e6"
+
+[[patch.unused]]
+name = "sc-consensus-uncles"
+version = "0.10.0-dev"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.31#6304e5a82eb8f4449f19e7a391a7f0b380e268e6"
+
+[[patch.unused]]
+name = "sp-serializer"
+version = "4.0.0-dev"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.31#6304e5a82eb8f4449f19e7a391a7f0b380e268e6"
 
 [[patch.unused]]
 name = "cumulus-relay-chain-rpc-interface"
@@ -13301,29 +13301,14 @@ source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev-v0.9
 [[patch.unused]]
 name = "pallet-nicks"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.31#7eab46fae97c891aafa8853decba4e97fc2f97f4"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.31#6304e5a82eb8f4449f19e7a391a7f0b380e268e6"
 
 [[patch.unused]]
 name = "sc-consensus-uncles"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.31#7eab46fae97c891aafa8853decba4e97fc2f97f4"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.31#6304e5a82eb8f4449f19e7a391a7f0b380e268e6"
 
 [[patch.unused]]
 name = "sp-serializer"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.31#7eab46fae97c891aafa8853decba4e97fc2f97f4"
-
-[[patch.unused]]
-name = "pallet-nicks"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.31#7eab46fae97c891aafa8853decba4e97fc2f97f4"
-
-[[patch.unused]]
-name = "sc-consensus-uncles"
-version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.31#7eab46fae97c891aafa8853decba4e97fc2f97f4"
-
-[[patch.unused]]
-name = "sp-serializer"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.31#7eab46fae97c891aafa8853decba4e97fc2f97f4"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.31#6304e5a82eb8f4449f19e7a391a7f0b380e268e6"

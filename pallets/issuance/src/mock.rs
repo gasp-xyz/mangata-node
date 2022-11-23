@@ -41,16 +41,16 @@ parameter_types!(
 
 impl frame_system::Config for Test {
 	type BaseCallFilter = Everything;
-	type Origin = Origin;
+	type RuntimeOrigin = RuntimeOrigin;
 	type Index = u64;
 	type BlockNumber = u64;
-	type Call = Call;
+	type RuntimeCall = RuntimeCall;
 	type Hash = sp_runtime::testing::H256;
 	type Hashing = sp_runtime::traits::BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = sp_runtime::traits::IdentityLookup<Self::AccountId>;
 	type Header = sp_runtime::testing::Header;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type BlockWeights = ();
 	type BlockLength = ();
@@ -91,7 +91,7 @@ parameter_types! {
 }
 
 impl orml_tokens::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type Amount = Amount;
 	type CurrencyId = TokenId;
@@ -100,6 +100,13 @@ impl orml_tokens::Config for Test {
 	type OnDust = ();
 	type MaxLocks = MaxLocks;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
+	type OnSlash = ();
+	type OnDeposit = ();
+	type OnTransfer = ();
+	type MaxReserves = ();
+	type OnNewTokenAccount = ();
+	type OnKilledTokenAccount = ();
+	type ReserveIdentifier = [u8; 8];
 }
 
 parameter_types! {
@@ -145,7 +152,7 @@ impl ActivedPoolQueryApi for MockActivedPoolQueryApi {
 }
 
 impl pallet_issuance::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type NativeCurrencyId = MgaTokenId;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type BlocksPerRound = BlocksPerRound;
@@ -171,7 +178,7 @@ parameter_types! {
 }
 
 impl pallet_vesting_mangata::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type BlockNumberToBalance = ConvertInto;
 	type MinVestedTransfer = MinVestedTransfer;
@@ -251,8 +258,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
 		assert_ok!(StakeCurrency::mint(MGA_TOKEN_ID, &99999, target_tge - current_issuance));
 
-		assert_ok!(Issuance::finalize_tge(Origin::root()));
-		assert_ok!(Issuance::init_issuance_config(Origin::root()));
+		assert_ok!(Issuance::finalize_tge(RuntimeOrigin::root()));
+		assert_ok!(Issuance::init_issuance_config(RuntimeOrigin::root()));
 		assert_ok!(Issuance::calculate_and_store_round_issuance(0u32));
 	});
 	ext
@@ -271,8 +278,8 @@ pub(crate) fn roll_to_while_minting(n: u64, expected_amount_minted: Option<Balan
 		session_number = System::block_number().saturated_into::<u32>() / BlocksPerRound::get();
 		session_issuance = <Issuance as GetIssuance>::get_all_issuance(session_number)
 			.expect("session issuance is always populated in advance");
-		block_issuance = (session_issuance.0 + session_issuance.1) /
-			(BlocksPerRound::get().saturated_into::<u128>());
+		block_issuance = (session_issuance.0 + session_issuance.1)
+			/ (BlocksPerRound::get().saturated_into::<u128>());
 
 		if let Some(x) = expected_amount_minted {
 			assert_eq!(x, block_issuance);

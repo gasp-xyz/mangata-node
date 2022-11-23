@@ -38,7 +38,7 @@ fn jump_to_whitelist_phase() {
 	let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 	pool_exists_mock.expect().return_const(false);
 	Bootstrap::schedule_bootstrap(
-		Origin::root(),
+		RuntimeOrigin::root(),
 		KSMId::get(),
 		MGAId::get(),
 		10_u32.into(),
@@ -57,7 +57,7 @@ fn jump_to_public_phase() {
 	pool_exists_mock.expect().return_const(false);
 
 	Bootstrap::schedule_bootstrap(
-		Origin::root(),
+		RuntimeOrigin::root(),
 		KSMId::get(),
 		MGAId::get(),
 		10_u32.into(),
@@ -77,7 +77,7 @@ fn do_not_allow_for_provision_in_unsupported_currency() {
 	new_test_ext().execute_with(|| {
 		set_up();
 		assert_err!(
-			Bootstrap::provision(Origin::signed(USER_ID), DUMMY_ID, 1000),
+			Bootstrap::provision(RuntimeOrigin::signed(USER_ID), DUMMY_ID, 1000),
 			Error::<Test>::UnsupportedTokenId
 		)
 	});
@@ -91,7 +91,7 @@ fn test_first_provision_with_ksm_fails() {
 		jump_to_public_phase();
 
 		assert_err!(
-			Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), 1),
+			Bootstrap::provision(RuntimeOrigin::signed(USER_ID), KSMId::get(), 1),
 			Error::<Test>::FirstProvisionInSecondTokenId
 		);
 	});
@@ -103,10 +103,10 @@ fn test_event_is_published_after_successful_provision() {
 	new_test_ext().execute_with(|| {
 		set_up();
 		jump_to_public_phase();
-		Bootstrap::provision(Origin::signed(USER_ID), MGAId::get(), 1).unwrap();
+		Bootstrap::provision(RuntimeOrigin::signed(USER_ID), MGAId::get(), 1).unwrap();
 
 		let event =
-			crate::mock::Event::Bootstrap(crate::Event::<Test>::Provisioned(MGAId::get(), 1));
+			crate::mock::RuntimeEvent::Bootstrap(crate::Event::<Test>::Provisioned(MGAId::get(), 1));
 
 		assert!(System::events().iter().any(|record| record.event == event));
 	});
@@ -120,25 +120,25 @@ fn test_dont_allow_for_ksm_donation_before_minimal_valuation_fro_mga_is_provided
 
 		jump_to_public_phase();
 
-		Bootstrap::provision(Origin::signed(USER_ID), MGAId::get(), 1).unwrap();
+		Bootstrap::provision(RuntimeOrigin::signed(USER_ID), MGAId::get(), 1).unwrap();
 		assert_eq!(1, Bootstrap::provisions(USER_ID, MGAId::get()));
 		assert_eq!((1, 0), Bootstrap::valuations());
 
 		assert_err!(
-			Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), 1),
+			Bootstrap::provision(RuntimeOrigin::signed(USER_ID), KSMId::get(), 1),
 			Error::<Test>::ValuationRatio
 		);
 
-		Bootstrap::provision(Origin::signed(USER_ID), MGAId::get(), 9999).unwrap();
+		Bootstrap::provision(RuntimeOrigin::signed(USER_ID), MGAId::get(), 9999).unwrap();
 		assert_eq!(10000, Bootstrap::provisions(USER_ID, MGAId::get()));
 		assert_eq!((10000, 0), Bootstrap::valuations());
 
-		Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), 1).unwrap();
+		Bootstrap::provision(RuntimeOrigin::signed(USER_ID), KSMId::get(), 1).unwrap();
 		assert_eq!(1, Bootstrap::provisions(USER_ID, KSMId::get()));
 		assert_eq!((10000, 1), Bootstrap::valuations());
 
 		assert_err!(
-			Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), 1),
+			Bootstrap::provision(RuntimeOrigin::signed(USER_ID), KSMId::get(), 1),
 			Error::<Test>::ValuationRatio
 		);
 	});
@@ -151,16 +151,16 @@ fn test_donation_in_supported_tokens() {
 		set_up();
 		jump_to_public_phase();
 
-		Bootstrap::provision(Origin::signed(USER_ID), MGAId::get(), 10000).unwrap();
+		Bootstrap::provision(RuntimeOrigin::signed(USER_ID), MGAId::get(), 10000).unwrap();
 		assert_eq!(10000, Bootstrap::provisions(USER_ID, MGAId::get()));
 
-		Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), 1).unwrap();
+		Bootstrap::provision(RuntimeOrigin::signed(USER_ID), KSMId::get(), 1).unwrap();
 		assert_eq!(1, Bootstrap::provisions(USER_ID, KSMId::get()));
 
-		Bootstrap::provision(Origin::signed(USER_ID), MGAId::get(), 20000).unwrap();
+		Bootstrap::provision(RuntimeOrigin::signed(USER_ID), MGAId::get(), 20000).unwrap();
 		assert_eq!(30000, Bootstrap::provisions(USER_ID, MGAId::get()));
 
-		Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), 2).unwrap();
+		Bootstrap::provision(RuntimeOrigin::signed(USER_ID), KSMId::get(), 2).unwrap();
 		assert_eq!(3, Bootstrap::provisions(USER_ID, KSMId::get()));
 	});
 }
@@ -174,12 +174,12 @@ fn test_donation_with_more_tokens_than_available() {
 		jump_to_public_phase();
 
 		assert_err!(
-			Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), INITIAL_AMOUNT * 2),
+			Bootstrap::provision(RuntimeOrigin::signed(USER_ID), KSMId::get(), INITIAL_AMOUNT * 2),
 			Error::<Test>::NotEnoughAssets
 		);
 
 		assert_err!(
-			Bootstrap::provision(Origin::signed(USER_ID), MGAId::get(), INITIAL_AMOUNT * 2),
+			Bootstrap::provision(RuntimeOrigin::signed(USER_ID), MGAId::get(), INITIAL_AMOUNT * 2),
 			Error::<Test>::NotEnoughAssets
 		);
 	});
@@ -195,7 +195,7 @@ fn test_prevent_provisions_in_before_start_phase() {
 		pool_exists_mock.expect().return_const(false);
 
 		Bootstrap::schedule_bootstrap(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
@@ -207,7 +207,7 @@ fn test_prevent_provisions_in_before_start_phase() {
 		.unwrap();
 
 		assert_err!(
-			Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), INITIAL_AMOUNT * 2),
+			Bootstrap::provision(RuntimeOrigin::signed(USER_ID), KSMId::get(), INITIAL_AMOUNT * 2),
 			Error::<Test>::Unauthorized
 		);
 	});
@@ -224,7 +224,7 @@ fn test_fail_scheudle_bootstrap_with_same_token() {
 
 		assert_err!(
 			Bootstrap::schedule_bootstrap(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				100,
 				100,
 				100_u32.into(),
@@ -249,7 +249,7 @@ fn test_prevent_schedule_bootstrap_with_pair_that_does_not_exists() {
 
 		assert_err!(
 			Bootstrap::schedule_bootstrap(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				100,
 				101,
 				100_u32.into(),
@@ -273,7 +273,7 @@ fn test_prevent_provisions_in_finished_phase() {
 		pool_exists_mock.expect().return_const(false);
 
 		Bootstrap::schedule_bootstrap(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
@@ -287,7 +287,7 @@ fn test_prevent_provisions_in_finished_phase() {
 		Phase::<Test>::put(BootstrapPhase::Finished);
 
 		assert_err!(
-			Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), INITIAL_AMOUNT * 2),
+			Bootstrap::provision(RuntimeOrigin::signed(USER_ID), KSMId::get(), INITIAL_AMOUNT * 2),
 			Error::<Test>::Unauthorized
 		);
 	});
@@ -303,7 +303,7 @@ fn test_prevent_non_whitelited_account_to_provision_in_whitelisted_phase() {
 
 		assert!(!Bootstrap::is_whitelisted(&USER_ID));
 		assert_err!(
-			Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), 1000),
+			Bootstrap::provision(RuntimeOrigin::signed(USER_ID), KSMId::get(), 1000),
 			Error::<Test>::Unauthorized
 		);
 	});
@@ -318,7 +318,7 @@ fn test_allow_non_whitelited_account_to_provision_in_whitelisted_phase_with_mga(
 		jump_to_whitelist_phase();
 
 		assert!(!Bootstrap::is_whitelisted(&USER_ID));
-		Bootstrap::provision(Origin::signed(USER_ID), MGAId::get(), 1000).unwrap();
+		Bootstrap::provision(RuntimeOrigin::signed(USER_ID), MGAId::get(), 1000).unwrap();
 	});
 }
 
@@ -327,10 +327,10 @@ fn test_allow_non_whitelited_account_to_provision_in_whitelisted_phase_with_mga(
 fn test_whitelist_account_deposit_event() {
 	new_test_ext().execute_with(|| {
 		set_up();
-		Bootstrap::whitelist_accounts(Origin::root(), vec![USER_ID]).unwrap();
+		Bootstrap::whitelist_accounts(RuntimeOrigin::root(), vec![USER_ID]).unwrap();
 
-		assert!(System::events().iter().any(|record| record.event ==
-			crate::mock::Event::Bootstrap(crate::Event::<Test>::AccountsWhitelisted)));
+		assert!(System::events().iter().any(|record| record.event
+			== crate::mock::RuntimeEvent::Bootstrap(crate::Event::<Test>::AccountsWhitelisted)));
 	});
 }
 
@@ -342,14 +342,14 @@ fn test_incremental_whitliested_donation() {
 
 		jump_to_whitelist_phase();
 
-		Bootstrap::whitelist_accounts(Origin::root(), vec![USER_ID]).unwrap();
-		Bootstrap::provision(Origin::signed(USER_ID), MGAId::get(), 1000).unwrap();
+		Bootstrap::whitelist_accounts(RuntimeOrigin::root(), vec![USER_ID]).unwrap();
+		Bootstrap::provision(RuntimeOrigin::signed(USER_ID), MGAId::get(), 1000).unwrap();
 
 		Bootstrap::transfer(MGAId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 10_000).unwrap();
-		Bootstrap::whitelist_accounts(Origin::root(), vec![ANOTHER_USER_ID]).unwrap();
+		Bootstrap::whitelist_accounts(RuntimeOrigin::root(), vec![ANOTHER_USER_ID]).unwrap();
 
-		Bootstrap::provision(Origin::signed(USER_ID), MGAId::get(), 1000).unwrap();
-		Bootstrap::provision(Origin::signed(ANOTHER_USER_ID), MGAId::get(), 1000).unwrap();
+		Bootstrap::provision(RuntimeOrigin::signed(USER_ID), MGAId::get(), 1000).unwrap();
+		Bootstrap::provision(RuntimeOrigin::signed(ANOTHER_USER_ID), MGAId::get(), 1000).unwrap();
 		assert_ne!(USER_ID, ANOTHER_USER_ID);
 	});
 }
@@ -369,7 +369,7 @@ fn test_bootstrap_promotion_can_be_updated() {
 
 		set_up();
 		assert_ok!(Bootstrap::schedule_bootstrap(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
@@ -382,13 +382,13 @@ fn test_bootstrap_promotion_can_be_updated() {
 		System::set_block_number(109);
 		Bootstrap::on_initialize(109_u32.into());
 
-		assert_ok!(Bootstrap::update_promote_bootstrap_pool(Origin::root(), true));
+		assert_ok!(Bootstrap::update_promote_bootstrap_pool(RuntimeOrigin::root(), true));
 
 		System::set_block_number(111);
 		Bootstrap::on_initialize(111_u32.into());
 
 		assert_err!(
-			Bootstrap::update_promote_bootstrap_pool(Origin::root(), false),
+			Bootstrap::update_promote_bootstrap_pool(RuntimeOrigin::root(), false),
 			Error::<Test>::BootstrapFinished
 		);
 	});
@@ -403,7 +403,7 @@ fn test_scheduled_bootstrap_can_be_updated() {
 
 		set_up();
 		assert_ok!(Bootstrap::schedule_bootstrap(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
@@ -417,7 +417,7 @@ fn test_scheduled_bootstrap_can_be_updated() {
 		Bootstrap::on_initialize(80_u32.into());
 
 		assert_ok!(Bootstrap::schedule_bootstrap(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
@@ -432,7 +432,7 @@ fn test_scheduled_bootstrap_can_be_updated() {
 
 		assert_err!(
 			Bootstrap::schedule_bootstrap(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				KSMId::get(),
 				MGAId::get(),
 				100_u32.into(),
@@ -455,7 +455,7 @@ fn test_scheduled_bootstrap_can_be_cancelled() {
 
 		set_up();
 		assert_ok!(Bootstrap::schedule_bootstrap(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
@@ -469,14 +469,14 @@ fn test_scheduled_bootstrap_can_be_cancelled() {
 		Bootstrap::on_initialize(95_u32.into());
 
 		assert_err!(
-			Bootstrap::cancel_bootstrap(Origin::root()),
+			Bootstrap::cancel_bootstrap(RuntimeOrigin::root()),
 			Error::<Test>::TooLateToUpdateBootstrap
 		);
 
 		System::set_block_number(80);
 		Bootstrap::on_initialize(80_u32.into());
 
-		assert_ok!(Bootstrap::cancel_bootstrap(Origin::root()));
+		assert_ok!(Bootstrap::cancel_bootstrap(RuntimeOrigin::root()));
 	});
 }
 
@@ -487,7 +487,7 @@ fn test_non_root_user_can_not_schedule_bootstrap() {
 		set_up();
 		assert_err!(
 			Bootstrap::schedule_bootstrap(
-				Origin::signed(USER_ID),
+				RuntimeOrigin::signed(USER_ID),
 				KSMId::get(),
 				MGAId::get(),
 				0_u32.into(),
@@ -506,7 +506,7 @@ fn test_non_root_user_can_not_schedule_bootstrap() {
 fn test_non_root_user_can_not_whitelist_accounts() {
 	new_test_ext().execute_with(|| {
 		set_up();
-		assert_err!(Bootstrap::whitelist_accounts(Origin::signed(USER_ID), vec![],), BadOrigin);
+		assert_err!(Bootstrap::whitelist_accounts(RuntimeOrigin::signed(USER_ID), vec![],), BadOrigin);
 	});
 }
 
@@ -515,7 +515,7 @@ fn test_non_root_user_can_not_whitelist_accounts() {
 fn test_only_root_can_whitelist_accounts() {
 	new_test_ext().execute_with(|| {
 		set_up();
-		Bootstrap::whitelist_accounts(Origin::root(), vec![]).unwrap();
+		Bootstrap::whitelist_accounts(RuntimeOrigin::root(), vec![]).unwrap();
 	});
 }
 
@@ -527,7 +527,7 @@ fn test_ido_start_cannot_happen_in_the_past() {
 		System::set_block_number(1000);
 		assert_err!(
 			Bootstrap::schedule_bootstrap(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				KSMId::get(),
 				MGAId::get(),
 				999_u32.into(),
@@ -549,7 +549,7 @@ fn test_ido_start_can_not_be_initialize_with_0_ratio() {
 		System::set_block_number(10);
 		assert_err!(
 			Bootstrap::schedule_bootstrap(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				KSMId::get(),
 				MGAId::get(),
 				999_u32.into(),
@@ -562,7 +562,7 @@ fn test_ido_start_can_not_be_initialize_with_0_ratio() {
 		);
 		assert_err!(
 			Bootstrap::schedule_bootstrap(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				KSMId::get(),
 				MGAId::get(),
 				999_u32.into(),
@@ -586,7 +586,7 @@ fn test_can_schedule_bootstrap_with_whitelist_phase_length_equal_zero() {
 		pool_exists_mock.expect().return_const(false);
 
 		assert_ok!(Bootstrap::schedule_bootstrap(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
@@ -605,7 +605,7 @@ fn test_cannot_schedule_bootstrap_with_public_phase_length_equal_zero() {
 		set_up();
 		assert_err!(
 			Bootstrap::schedule_bootstrap(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				KSMId::get(),
 				MGAId::get(),
 				100_u32.into(),
@@ -629,7 +629,7 @@ fn test_bootstrap_can_be_modified_only_before_its_started() {
 		pool_exists_mock.expect().return_const(false);
 
 		Bootstrap::schedule_bootstrap(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			KSMId::get(),
 			MGAId::get(),
 			50_u32.into(),
@@ -641,7 +641,7 @@ fn test_bootstrap_can_be_modified_only_before_its_started() {
 		.unwrap();
 
 		Bootstrap::schedule_bootstrap(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
@@ -656,7 +656,7 @@ fn test_bootstrap_can_be_modified_only_before_its_started() {
 
 		assert_err!(
 			Bootstrap::schedule_bootstrap(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				KSMId::get(),
 				MGAId::get(),
 				100_u32.into(),
@@ -689,7 +689,7 @@ fn test_bootstrap_state_transitions() {
 		pool_create_mock.expect().times(1).return_const(POOL_CREATE_DUMMY_RETURN_VALUE);
 
 		Bootstrap::schedule_bootstrap(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			KSMId::get(),
 			MGAId::get(),
 			BOOTSTRAP_WHITELIST_START.into(),
@@ -744,7 +744,7 @@ fn test_bootstrap_state_transitions_when_on_initialized_is_not_called() {
 		pool_exists_mock.expect().return_const(false);
 
 		Bootstrap::schedule_bootstrap(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			KSMId::get(),
 			MGAId::get(),
 			BOOTSTRAP_WHITELIST_START.into(),
@@ -769,7 +769,7 @@ fn test_bootstrap_schedule_overflow() {
 
 		assert_err!(
 			Bootstrap::schedule_bootstrap(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				KSMId::get(),
 				MGAId::get(),
 				u64::MAX.into(),
@@ -783,7 +783,7 @@ fn test_bootstrap_schedule_overflow() {
 
 		assert_err!(
 			Bootstrap::schedule_bootstrap(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				KSMId::get(),
 				MGAId::get(),
 				u64::MAX.into(),
@@ -797,7 +797,7 @@ fn test_bootstrap_schedule_overflow() {
 
 		assert_err!(
 			Bootstrap::schedule_bootstrap(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				KSMId::get(),
 				MGAId::get(),
 				u64::MAX.into(),
@@ -820,7 +820,7 @@ fn test_do_not_allow_for_creating_starting_bootstrap_for_existing_pool() {
 
 		assert_err!(
 			Bootstrap::schedule_bootstrap(
-				Origin::root(),
+				RuntimeOrigin::root(),
 				KSMId::get(),
 				MGAId::get(),
 				100_u32.into(),
@@ -861,7 +861,7 @@ fn test_crate_pool_is_called_with_proper_arguments_after_bootstrap_finish() {
 			.return_const(POOL_CREATE_DUMMY_RETURN_VALUE);
 
 		Bootstrap::schedule_bootstrap(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
@@ -873,8 +873,8 @@ fn test_crate_pool_is_called_with_proper_arguments_after_bootstrap_finish() {
 		.unwrap();
 
 		Bootstrap::on_initialize(110_u32.into());
-		Bootstrap::provision(Origin::signed(USER_ID), MGAId::get(), MGA_PROVISON).unwrap();
-		Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), KSM_PROVISON).unwrap();
+		Bootstrap::provision(RuntimeOrigin::signed(USER_ID), MGAId::get(), MGA_PROVISON).unwrap();
+		Bootstrap::provision(RuntimeOrigin::signed(USER_ID), KSMId::get(), KSM_PROVISON).unwrap();
 		Bootstrap::on_initialize(120_u32.into());
 	});
 }
@@ -889,7 +889,7 @@ fn test_cannot_claim_liquidity_tokens_when_bootstrap_is_not_finished() {
 		pool_exists_mock.expect().return_const(false);
 
 		Bootstrap::schedule_bootstrap(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
@@ -907,7 +907,7 @@ fn test_cannot_claim_liquidity_tokens_when_bootstrap_is_not_finished() {
 		assert_eq!(BootstrapPhase::Public, Phase::<Test>::get());
 
 		assert_err!(
-			Bootstrap::claim_liquidity_tokens(Origin::signed(USER_ID)),
+			Bootstrap::claim_liquidity_tokens(RuntimeOrigin::signed(USER_ID)),
 			Error::<Test>::NotFinishedYet
 		);
 	});
@@ -940,7 +940,7 @@ fn test_rewards_are_distributed_properly_with_single_user() {
 			});
 
 		Bootstrap::schedule_bootstrap(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
@@ -957,8 +957,8 @@ fn test_rewards_are_distributed_properly_with_single_user() {
 		Bootstrap::on_initialize(110_u32.into());
 		assert_eq!(BootstrapPhase::Public, Phase::<Test>::get());
 
-		Bootstrap::provision(Origin::signed(USER_ID), MGAId::get(), MGA_PROVISON).unwrap();
-		Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), KSM_PROVISON).unwrap();
+		Bootstrap::provision(RuntimeOrigin::signed(USER_ID), MGAId::get(), MGA_PROVISON).unwrap();
+		Bootstrap::provision(RuntimeOrigin::signed(USER_ID), KSMId::get(), KSM_PROVISON).unwrap();
 
 		Bootstrap::on_initialize(120_u32.into());
 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
@@ -973,7 +973,7 @@ fn test_rewards_are_distributed_properly_with_single_user() {
 		);
 		assert_eq!(Bootstrap::minted_liquidity(), (liquidity_token_id, liquidity_token_amount));
 
-		Bootstrap::claim_liquidity_tokens(Origin::signed(USER_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(RuntimeOrigin::signed(USER_ID)).unwrap();
 
 		assert_eq!(Bootstrap::claimed_rewards(USER_ID, MGAId::get()), liquidity_token_amount / 2);
 
@@ -995,11 +995,11 @@ fn test_rewards_are_distributed_properly_with_multiple_user() {
 		set_up();
 
 		let provisioned_ev = |id, amount| {
-			crate::mock::Event::Bootstrap(crate::Event::<Test>::Provisioned(id, amount))
+			crate::mock::RuntimeEvent::Bootstrap(crate::Event::<Test>::Provisioned(id, amount))
 		};
 
 		let rewards_claimed_ev = |id, amount| {
-			crate::mock::Event::Bootstrap(crate::Event::<Test>::RewardsClaimed(id, amount))
+			crate::mock::RuntimeEvent::Bootstrap(crate::Event::<Test>::RewardsClaimed(id, amount))
 		};
 
 		const USER_KSM_PROVISON: Balance = 15;
@@ -1024,7 +1024,7 @@ fn test_rewards_are_distributed_properly_with_multiple_user() {
 			});
 
 		Bootstrap::schedule_bootstrap(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
@@ -1044,17 +1044,17 @@ fn test_rewards_are_distributed_properly_with_multiple_user() {
 		Bootstrap::transfer(MGAId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 500_000).unwrap();
 		Bootstrap::transfer(KSMId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 500_000).unwrap();
 
-		Bootstrap::provision(Origin::signed(USER_ID), MGAId::get(), USER_MGA_PROVISON).unwrap();
+		Bootstrap::provision(RuntimeOrigin::signed(USER_ID), MGAId::get(), USER_MGA_PROVISON).unwrap();
 		Bootstrap::provision(
-			Origin::signed(ANOTHER_USER_ID),
+			RuntimeOrigin::signed(ANOTHER_USER_ID),
 			MGAId::get(),
 			ANOTHER_USER_MGA_PROVISON,
 		)
 		.unwrap();
 
-		Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), USER_KSM_PROVISON).unwrap();
+		Bootstrap::provision(RuntimeOrigin::signed(USER_ID), KSMId::get(), USER_KSM_PROVISON).unwrap();
 		Bootstrap::provision(
-			Origin::signed(ANOTHER_USER_ID),
+			RuntimeOrigin::signed(ANOTHER_USER_ID),
 			KSMId::get(),
 			ANOTHER_USER_KSM_PROVISON,
 		)
@@ -1105,8 +1105,8 @@ fn test_rewards_are_distributed_properly_with_multiple_user() {
 			liquidity_token_amount / 2 * ANOTHER_USER_MGA_PROVISON / mga_valuation;
 		let user2_expected_liq_amount = user2_expected_ksm_rewards + user2_expected_mga_rewards;
 
-		Bootstrap::claim_liquidity_tokens(Origin::signed(USER_ID)).unwrap();
-		Bootstrap::claim_liquidity_tokens(Origin::signed(ANOTHER_USER_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(RuntimeOrigin::signed(USER_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(RuntimeOrigin::signed(ANOTHER_USER_ID)).unwrap();
 
 		assert_eq!(Bootstrap::claimed_rewards(USER_ID, MGAId::get()), user_expected_mga_rewards);
 		assert_eq!(Bootstrap::claimed_rewards(USER_ID, KSMId::get()), user_expected_ksm_rewards);
@@ -1120,11 +1120,11 @@ fn test_rewards_are_distributed_properly_with_multiple_user() {
 		);
 
 		assert_err!(
-			Bootstrap::claim_liquidity_tokens(Origin::signed(USER_ID)),
+			Bootstrap::claim_liquidity_tokens(RuntimeOrigin::signed(USER_ID)),
 			Error::<Test>::NothingToClaim
 		);
 		assert_err!(
-			Bootstrap::claim_liquidity_tokens(Origin::signed(ANOTHER_USER_ID)),
+			Bootstrap::claim_liquidity_tokens(RuntimeOrigin::signed(ANOTHER_USER_ID)),
 			Error::<Test>::NothingToClaim
 		);
 
@@ -1134,10 +1134,10 @@ fn test_rewards_are_distributed_properly_with_multiple_user() {
 			user2_expected_liq_amount
 		);
 
-		assert!(System::events().iter().any(|record| record.event ==
-			rewards_claimed_ev(liquidity_token_id, user_expected_liq_amount)));
-		assert!(System::events().iter().any(|record| record.event ==
-			rewards_claimed_ev(liquidity_token_id, user2_expected_liq_amount)));
+		assert!(System::events().iter().any(|record| record.event
+			== rewards_claimed_ev(liquidity_token_id, user_expected_liq_amount)));
+		assert!(System::events().iter().any(|record| record.event
+			== rewards_claimed_ev(liquidity_token_id, user2_expected_liq_amount)));
 	});
 }
 
@@ -1159,7 +1159,7 @@ fn dont_allow_for_provision_in_vested_tokens_without_dedicated_extrinsic() {
 		.unwrap();
 
 		assert_err!(
-			Bootstrap::provision(Origin::signed(USER_ID), MGAId::get(), 1),
+			Bootstrap::provision(RuntimeOrigin::signed(USER_ID), MGAId::get(), 1),
 			Error::<Test>::NotEnoughAssets
 		);
 	});
@@ -1173,7 +1173,7 @@ fn dont_allow_for_provision_in_vested_tokens_without_dedicated_extrinsic() {
 // 		jump_to_public_phase();
 
 // 		assert_err!(
-// 			Bootstrap::provision_vested(Origin::signed(USER_ID), MGAId::get(), 1),
+// 			Bootstrap::provision_vested(RuntimeOrigin::signed(USER_ID), MGAId::get(), 1),
 // 			Error::<Test>::NotEnoughVestedAssets
 // 		);
 // 	});
@@ -1202,7 +1202,7 @@ fn dont_allow_for_provision_in_vested_tokens_without_dedicated_extrinsic() {
 
 // 		let non_vested_initial_amount = Bootstrap::balance(MGAId::get(), USER_ID);
 
-// 		Bootstrap::provision_vested(Origin::signed(USER_ID), MGAId::get(), provision_amount)
+// 		Bootstrap::provision_vested(RuntimeOrigin::signed(USER_ID), MGAId::get(), provision_amount)
 // 			.unwrap();
 
 // 		assert_eq!(non_vested_initial_amount, Bootstrap::balance(MGAId::get(), USER_ID));
@@ -1235,7 +1235,7 @@ fn dont_allow_for_provision_in_vested_tokens_without_dedicated_extrinsic() {
 // 			lock_end.into(),
 // 		)
 // 		.unwrap();
-// 		Bootstrap::provision_vested(Origin::signed(USER_ID), MGAId::get(), mga_amount).unwrap();
+// 		Bootstrap::provision_vested(RuntimeOrigin::signed(USER_ID), MGAId::get(), mga_amount).unwrap();
 
 // 		assert_eq!(
 // 			(mga_amount, lock_start, lock_end + 1),
@@ -1276,14 +1276,14 @@ fn dont_allow_for_provision_in_vested_tokens_without_dedicated_extrinsic() {
 // 		)
 // 		.unwrap();
 
-// 		Bootstrap::provision_vested(Origin::signed(USER_ID), MGAId::get(), first_lock_amount)
+// 		Bootstrap::provision_vested(RuntimeOrigin::signed(USER_ID), MGAId::get(), first_lock_amount)
 // 			.unwrap();
 // 		assert_eq!(
 // 			(first_lock_amount, first_lock_start, first_lock_end + 1),
 // 			Bootstrap::vested_provisions(USER_ID, MGAId::get())
 // 		);
 
-// 		Bootstrap::provision_vested(Origin::signed(USER_ID), MGAId::get(), second_lock_amount)
+// 		Bootstrap::provision_vested(RuntimeOrigin::signed(USER_ID), MGAId::get(), second_lock_amount)
 // 			.unwrap();
 // 		assert_eq!(
 // 			(mga_amount, second_lock_start, second_lock_end + 1),
@@ -1332,9 +1332,9 @@ fn provisions(
 		// 		end.into(),
 		// 	)
 		// 	.unwrap();
-		// 	Bootstrap::provision_vested(Origin::signed(user_id), token_id, amount).unwrap();
+		// 	Bootstrap::provision_vested(RuntimeOrigin::signed(user_id), token_id, amount).unwrap();
 		// } else {
-		Bootstrap::provision(Origin::signed(user_id), token_id, amount).unwrap();
+		Bootstrap::provision(RuntimeOrigin::signed(user_id), token_id, amount).unwrap();
 		// }
 	}
 }
@@ -1361,8 +1361,8 @@ fn provisions(
 
 // 		Bootstrap::on_initialize(100_u32.into());
 // 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
-// 		Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER1_ID)).unwrap();
-// 		Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER2_ID)).unwrap();
+// 		Bootstrap::claim_liquidity_tokens(RuntimeOrigin::signed(PROVISION_USER1_ID)).unwrap();
+// 		Bootstrap::claim_liquidity_tokens(RuntimeOrigin::signed(PROVISION_USER2_ID)).unwrap();
 
 // 		// ASSERT
 // 		assert_eq!(
@@ -1400,8 +1400,8 @@ fn provisions(
 
 // 		Bootstrap::on_initialize(100_u32.into());
 // 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
-// 		Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER1_ID)).unwrap();
-// 		Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER2_ID)).unwrap();
+// 		Bootstrap::claim_liquidity_tokens(RuntimeOrigin::signed(PROVISION_USER1_ID)).unwrap();
+// 		Bootstrap::claim_liquidity_tokens(RuntimeOrigin::signed(PROVISION_USER2_ID)).unwrap();
 
 // 		// ASSERT
 // 		assert_eq!(
@@ -1448,8 +1448,8 @@ fn multi_provisions_only_with_non_vested() {
 
 		Bootstrap::on_initialize(100_u32.into());
 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
-		Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER1_ID)).unwrap();
-		Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER2_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(RuntimeOrigin::signed(PROVISION_USER1_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(RuntimeOrigin::signed(PROVISION_USER2_ID)).unwrap();
 
 		// ASSERT
 		assert_eq!(
@@ -1586,11 +1586,11 @@ fn multi_provisions_only_with_non_vested() {
 // 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
 
 // 		if user1_has_provisions {
-// 			Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER1_ID)).unwrap();
+// 			Bootstrap::claim_liquidity_tokens(RuntimeOrigin::signed(PROVISION_USER1_ID)).unwrap();
 // 		}
 
 // 		if user2_has_provisions {
-// 			Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER2_ID)).unwrap();
+// 			Bootstrap::claim_liquidity_tokens(RuntimeOrigin::signed(PROVISION_USER2_ID)).unwrap();
 // 		}
 
 // 		// ASSERT
@@ -1728,11 +1728,11 @@ fn test_multi_provisions_only_with_non_vested(
 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
 
 		if user1_has_provisions {
-			Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER1_ID)).unwrap();
+			Bootstrap::claim_liquidity_tokens(RuntimeOrigin::signed(PROVISION_USER1_ID)).unwrap();
 		}
 
 		if user2_has_provisions {
-			Bootstrap::claim_liquidity_tokens(Origin::signed(PROVISION_USER2_ID)).unwrap();
+			Bootstrap::claim_liquidity_tokens(RuntimeOrigin::signed(PROVISION_USER2_ID)).unwrap();
 		}
 
 		// ASSERT
@@ -1773,7 +1773,7 @@ fn test_restart_bootstrap() {
 			});
 
 		Bootstrap::schedule_bootstrap(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
@@ -1786,39 +1786,39 @@ fn test_restart_bootstrap() {
 		Bootstrap::on_initialize(110_u32.into());
 		Bootstrap::transfer(MGAId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 500_000).unwrap();
 		Bootstrap::transfer(KSMId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 500_000).unwrap();
-		Bootstrap::provision(Origin::signed(USER_ID), MGAId::get(), USER_MGA_PROVISON).unwrap();
+		Bootstrap::provision(RuntimeOrigin::signed(USER_ID), MGAId::get(), USER_MGA_PROVISON).unwrap();
 		Bootstrap::provision(
-			Origin::signed(ANOTHER_USER_ID),
+			RuntimeOrigin::signed(ANOTHER_USER_ID),
 			MGAId::get(),
 			ANOTHER_USER_MGA_PROVISON,
 		)
 		.unwrap();
 
-		Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), USER_KSM_PROVISON).unwrap();
+		Bootstrap::provision(RuntimeOrigin::signed(USER_ID), KSMId::get(), USER_KSM_PROVISON).unwrap();
 		Bootstrap::provision(
-			Origin::signed(ANOTHER_USER_ID),
+			RuntimeOrigin::signed(ANOTHER_USER_ID),
 			KSMId::get(),
 			ANOTHER_USER_KSM_PROVISON,
 		)
 		.unwrap();
 
-		assert_err!(Bootstrap::finalize(Origin::root(), 200), Error::<Test>::NotFinishedYet);
+		assert_err!(Bootstrap::finalize(RuntimeOrigin::root(), 200), Error::<Test>::NotFinishedYet);
 
 		Bootstrap::on_initialize(120_u32.into());
 
 		assert_eq!(0, Bootstrap::balance(liq_token_id, USER_ID));
 		assert_eq!(0, Bootstrap::balance(liq_token_id, ANOTHER_USER_ID));
 
-		Bootstrap::claim_liquidity_tokens(Origin::signed(USER_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(RuntimeOrigin::signed(USER_ID)).unwrap();
 
 		// not all rewards claimed
 		assert_err!(
-			Bootstrap::finalize(Origin::root(), 200),
+			Bootstrap::finalize(RuntimeOrigin::root(), 200),
 			Error::<Test>::BootstrapNotReadyToBeFinished
 		);
 
 		Bootstrap::claim_liquidity_tokens_for_account(
-			Origin::signed(USER_ID),
+			RuntimeOrigin::signed(USER_ID),
 			ANOTHER_USER_ID,
 			false,
 		)
@@ -1827,7 +1827,7 @@ fn test_restart_bootstrap() {
 		assert_ne!(0, Bootstrap::balance(liq_token_id, USER_ID));
 		assert_ne!(0, Bootstrap::balance(liq_token_id, ANOTHER_USER_ID));
 
-		Bootstrap::finalize(Origin::root(), 200).unwrap();
+		Bootstrap::finalize(RuntimeOrigin::root(), 200).unwrap();
 		assert!(Provisions::<Test>::iter_keys().next().is_none());
 		assert!(VestedProvisions::<Test>::iter_keys().next().is_none());
 		assert!(WhitelistedAccount::<Test>::iter_keys().next().is_none());
@@ -1840,7 +1840,7 @@ fn test_restart_bootstrap() {
 		assert_eq!(ActivePair::<Test>::get(), None);
 
 		Bootstrap::schedule_bootstrap(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			KSMId::get(),
 			MGAId::get(),
 			200_u32.into(),
@@ -1880,7 +1880,7 @@ fn claim_liquidity_tokens_even_if_sum_of_rewards_is_zero_because_of_small_provis
 			});
 
 		Bootstrap::schedule_bootstrap(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
@@ -1895,30 +1895,30 @@ fn claim_liquidity_tokens_even_if_sum_of_rewards_is_zero_because_of_small_provis
 		Bootstrap::transfer(KSMId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 1).unwrap();
 
 		Bootstrap::provision(
-			Origin::signed(USER_ID),
+			RuntimeOrigin::signed(USER_ID),
 			MGAId::get(),
 			1_000_000_000_000_000_000_000_000_000_000_000_u128,
 		)
 		.unwrap();
-		Bootstrap::provision(Origin::signed(ANOTHER_USER_ID), MGAId::get(), 1).unwrap();
+		Bootstrap::provision(RuntimeOrigin::signed(ANOTHER_USER_ID), MGAId::get(), 1).unwrap();
 
-		Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), 1_000_000_u128).unwrap();
+		Bootstrap::provision(RuntimeOrigin::signed(USER_ID), KSMId::get(), 1_000_000_u128).unwrap();
 
 		Bootstrap::on_initialize(120_u32.into());
 
 		assert_eq!(0, Bootstrap::balance(liq_token_id, USER_ID));
 		assert_eq!(0, Bootstrap::balance(liq_token_id, ANOTHER_USER_ID));
 
-		Bootstrap::claim_liquidity_tokens(Origin::signed(USER_ID)).unwrap();
-		Bootstrap::claim_liquidity_tokens(Origin::signed(ANOTHER_USER_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(RuntimeOrigin::signed(USER_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(RuntimeOrigin::signed(ANOTHER_USER_ID)).unwrap();
 
 		assert_err!(
-			Bootstrap::claim_liquidity_tokens(Origin::signed(USER_ID)),
+			Bootstrap::claim_liquidity_tokens(RuntimeOrigin::signed(USER_ID)),
 			Error::<Test>::NothingToClaim
 		);
 
 		assert_err!(
-			Bootstrap::claim_liquidity_tokens(Origin::signed(ANOTHER_USER_ID)),
+			Bootstrap::claim_liquidity_tokens(RuntimeOrigin::signed(ANOTHER_USER_ID)),
 			Error::<Test>::NothingToClaim
 		);
 	});
@@ -1947,7 +1947,7 @@ fn transfer_dust_to_treasury() {
 			});
 
 		Bootstrap::schedule_bootstrap(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
@@ -1961,25 +1961,25 @@ fn transfer_dust_to_treasury() {
 		Bootstrap::transfer(MGAId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 1).unwrap();
 		Bootstrap::transfer(KSMId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 1).unwrap();
 
-		Bootstrap::provision(Origin::signed(USER_ID), MGAId::get(), 1_000_000_000_u128).unwrap();
-		Bootstrap::provision(Origin::signed(ANOTHER_USER_ID), MGAId::get(), 1).unwrap();
+		Bootstrap::provision(RuntimeOrigin::signed(USER_ID), MGAId::get(), 1_000_000_000_u128).unwrap();
+		Bootstrap::provision(RuntimeOrigin::signed(ANOTHER_USER_ID), MGAId::get(), 1).unwrap();
 
-		Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), 100_u128).unwrap();
+		Bootstrap::provision(RuntimeOrigin::signed(USER_ID), KSMId::get(), 100_u128).unwrap();
 
 		Bootstrap::on_initialize(120_u32.into());
 
 		assert_eq!(0, Bootstrap::balance(liq_token_id, USER_ID));
 		assert_eq!(0, Bootstrap::balance(liq_token_id, ANOTHER_USER_ID));
 
-		Bootstrap::claim_liquidity_tokens(Origin::signed(USER_ID)).unwrap();
-		Bootstrap::claim_liquidity_tokens(Origin::signed(ANOTHER_USER_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(RuntimeOrigin::signed(USER_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(RuntimeOrigin::signed(ANOTHER_USER_ID)).unwrap();
 
 		let before_finalize = Bootstrap::balance(
 			liq_token_id,
 			<mock::Test as Config>::TreasuryPalletId::get().into_account_truncating(),
 		);
 
-		Bootstrap::finalize(Origin::root(), 200).unwrap();
+		Bootstrap::finalize(RuntimeOrigin::root(), 200).unwrap();
 
 		let after_finalize = Bootstrap::balance(
 			liq_token_id,
@@ -2010,7 +2010,7 @@ fn archive_previous_bootstrap_schedules() {
 			});
 
 		Bootstrap::schedule_bootstrap(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
@@ -2021,12 +2021,12 @@ fn archive_previous_bootstrap_schedules() {
 		)
 		.unwrap();
 		Bootstrap::on_initialize(110_u32.into());
-		Bootstrap::provision(Origin::signed(USER_ID), MGAId::get(), 1_000_000_000_u128).unwrap();
-		Bootstrap::provision(Origin::signed(USER_ID), KSMId::get(), 100_u128).unwrap();
+		Bootstrap::provision(RuntimeOrigin::signed(USER_ID), MGAId::get(), 1_000_000_000_u128).unwrap();
+		Bootstrap::provision(RuntimeOrigin::signed(USER_ID), KSMId::get(), 100_u128).unwrap();
 		Bootstrap::on_initialize(120_u32.into());
-		Bootstrap::claim_liquidity_tokens(Origin::signed(USER_ID)).unwrap();
+		Bootstrap::claim_liquidity_tokens(RuntimeOrigin::signed(USER_ID)).unwrap();
 		assert_eq!(0, Bootstrap::archived().len());
-		Bootstrap::finalize(Origin::root(), 1).unwrap();
+		Bootstrap::finalize(RuntimeOrigin::root(), 1).unwrap();
 		assert_eq!(0, Bootstrap::provisions(USER_ID, KSMId::get()));
 
 		assert_eq!(1, Bootstrap::archived().len());
@@ -2069,8 +2069,8 @@ fn test_activate_liq_tokens_is_called_with_all_liq_tokens_when_pool_is_promoted_
 		Bootstrap::on_initialize(100_u32.into());
 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
 
-		Bootstrap::claim_and_activate_liquidity_tokens(Origin::signed(PROVISION_USER1_ID)).unwrap();
-		Bootstrap::claim_and_activate_liquidity_tokens(Origin::signed(PROVISION_USER2_ID)).unwrap();
+		Bootstrap::claim_and_activate_liquidity_tokens(RuntimeOrigin::signed(PROVISION_USER1_ID)).unwrap();
+		Bootstrap::claim_and_activate_liquidity_tokens(RuntimeOrigin::signed(PROVISION_USER2_ID)).unwrap();
 	});
 }
 
@@ -2101,7 +2101,7 @@ fn test_activate_liq_tokens_is_called_with_all_liq_tokens_when_pool_is_promoted_
 // 		Bootstrap::on_initialize(100_u32.into());
 // 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
 
-// 		Bootstrap::claim_and_activate_liquidity_tokens(Origin::signed(PROVISION_USER2_ID)).unwrap();
+// 		Bootstrap::claim_and_activate_liquidity_tokens(RuntimeOrigin::signed(PROVISION_USER2_ID)).unwrap();
 // 	});
 // }
 
@@ -2141,7 +2141,7 @@ fn test_activate_liq_tokens_is_called_with_all_liq_tokens_when_pool_is_promoted_
 // 		Bootstrap::on_initialize(100_u32.into());
 // 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
 
-// 		Bootstrap::claim_and_activate_liquidity_tokens(Origin::signed(PROVISION_USER2_ID)).unwrap();
+// 		Bootstrap::claim_and_activate_liquidity_tokens(RuntimeOrigin::signed(PROVISION_USER2_ID)).unwrap();
 // 	});
 // }
 
@@ -2172,8 +2172,8 @@ fn test_dont_activate_liquidity_tokens_when_pool_is_not_promoted_and_provisions_
 		Bootstrap::on_initialize(100_u32.into());
 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
 
-		Bootstrap::claim_and_activate_liquidity_tokens(Origin::signed(PROVISION_USER1_ID)).unwrap();
-		Bootstrap::claim_and_activate_liquidity_tokens(Origin::signed(PROVISION_USER2_ID)).unwrap();
+		Bootstrap::claim_and_activate_liquidity_tokens(RuntimeOrigin::signed(PROVISION_USER1_ID)).unwrap();
+		Bootstrap::claim_and_activate_liquidity_tokens(RuntimeOrigin::signed(PROVISION_USER2_ID)).unwrap();
 	});
 }
 
@@ -2206,7 +2206,7 @@ fn test_claim_and_activate_doesnt_fail_when_tokens_activations_fails() {
 		Bootstrap::on_initialize(100_u32.into());
 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
 
-		assert_ok!(Bootstrap::claim_and_activate_liquidity_tokens(Origin::signed(
+		assert_ok!(Bootstrap::claim_and_activate_liquidity_tokens(RuntimeOrigin::signed(
 			PROVISION_USER1_ID
 		)));
 	});
@@ -2242,7 +2242,7 @@ fn test_pool_is_promoted_if_scheduled_to() {
 		mock.expect().times(1).return_const(true);
 
 		Bootstrap::schedule_bootstrap(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),
@@ -2294,7 +2294,7 @@ fn test_pool_is_not_promoted_if_not_scheduled_to() {
 		mock.expect().times(0).return_const(true);
 
 		Bootstrap::schedule_bootstrap(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),

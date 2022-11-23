@@ -43,16 +43,16 @@ parameter_types!(
 
 impl frame_system::Config for Test {
 	type BaseCallFilter = Everything;
-	type Origin = Origin;
+	type RuntimeOrigin = RuntimeOrigin;
 	type Index = u64;
 	type BlockNumber = u64;
-	type Call = Call;
+	type RuntimeCall = RuntimeCall;
 	type Hash = sp_runtime::testing::H256;
 	type Hashing = sp_runtime::traits::BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = sp_runtime::traits::IdentityLookup<Self::AccountId>;
 	type Header = sp_runtime::testing::Header;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type BlockWeights = ();
 	type BlockLength = ();
@@ -90,7 +90,7 @@ parameter_type_with_key! {
 }
 
 impl orml_tokens::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type Amount = Amount;
 	type CurrencyId = TokenId;
@@ -99,6 +99,13 @@ impl orml_tokens::Config for Test {
 	type OnDust = ();
 	type MaxLocks = MaxLocks;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
+	type OnSlash = ();
+	type OnDeposit = ();
+	type OnTransfer = ();
+	type MaxReserves = ();
+	type OnNewTokenAccount = ();
+	type OnKilledTokenAccount = ();
+	type ReserveIdentifier = [u8; 8];
 }
 
 parameter_types! {
@@ -114,7 +121,7 @@ parameter_types! {
 }
 
 impl pallet_vesting_mangata::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Tokens = MultiTokenCurrencyAdapter<Test>;
 	type BlockNumberToBalance = sp_runtime::traits::ConvertInto;
 	type MinVestedTransfer = MinVestedTransfer;
@@ -147,7 +154,7 @@ impl AssetMetadataMutationTrait for AssetMetadataMutation {
 }
 
 impl pallet_xyk::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
 	type Currency = MultiTokenCurrencyAdapter<Test>;
 	type NativeCurrencyId = NativeCurrencyId;
@@ -227,7 +234,7 @@ parameter_types! {
 }
 
 impl pallet_issuance::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type NativeCurrencyId = MgaTokenId;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type BlocksPerRound = BlocksPerRound;
@@ -284,7 +291,7 @@ parameter_types! {
 #[cfg(not(feature = "runtime-benchmarks"))]
 // NOTE: use PoolCreateApi mock for unit testing purposes
 impl pallet_bootstrap::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type PoolCreateApi = MockPoolCreateApi;
 	type BootstrapUpdateBuffer = BootstrapUpdateBuffer;
 	type TreasuryPalletId = TreasuryPalletId;
@@ -297,7 +304,7 @@ impl pallet_bootstrap::Config for Test {
 #[cfg(feature = "runtime-benchmarks")]
 // NOTE: use Xyk as PoolCreateApi for benchmarking purposes
 impl pallet_bootstrap::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type PoolCreateApi = Xyk;
 	type BootstrapUpdateBuffer = BootstrapUpdateBuffer;
 	type TreasuryPalletId = TreasuryPalletId;
@@ -340,8 +347,8 @@ where
 	u128: From<<T as frame_system::Config>::AccountId>,
 {
 	pub fn balance(id: TokenId, who: T::AccountId) -> Balance {
-		Tokens::accounts(Into::<u128>::into(who.clone()), Into::<u32>::into(id.clone())).free -
-			Tokens::accounts(Into::<u128>::into(who.clone()), Into::<u32>::into(id.clone()))
+		Tokens::accounts(Into::<u128>::into(who.clone()), Into::<u32>::into(id.clone())).free
+			- Tokens::accounts(Into::<u128>::into(who.clone()), Into::<u32>::into(id.clone()))
 				.frozen
 	}
 

@@ -30,9 +30,9 @@ use xcm_executor::{traits::DropAssets, Assets, XcmExecutor};
 
 use super::{
 	constants::{fee::*, parachains},
-	AccountId, AssetMetadataOf, Balance, RuntimeOrigin, RuntimeCall, RuntimeEvent, Convert, ExistentialDeposits,
-	ParachainInfo, ParachainSystem, PolkadotXcm, Runtime, TokenId, Tokens, TreasuryAccount,
-	UnknownTokens, XcmpQueue, MGR_TOKEN_ID, ROC_TOKEN_ID,
+	AccountId, AssetMetadataOf, Balance, Convert, ExistentialDeposits, ParachainInfo,
+	ParachainSystem, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, TokenId,
+	Tokens, TreasuryAccount, UnknownTokens, XcmpQueue, MGR_TOKEN_ID, ROC_TOKEN_ID,
 };
 
 // Make the WASM binary available.
@@ -238,7 +238,7 @@ impl FixedConversionRateProvider for FeePerSecondProvider {
 					target: "xcm::weight", "fee_per_second: asset: {:?}, fps:{:?}",
 					asset_id, fee_per_second
 				);
-				return Some(fee_per_second)
+				return Some(fee_per_second);
 			}
 		}
 		None
@@ -257,7 +257,7 @@ pub type Trader = (
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
-	type RuntimeCall= RuntimeCall;
+	type RuntimeCall = RuntimeCall;
 	type XcmSender = XcmRouter;
 	// How to withdraw and deposit an asset.
 	type AssetTransactor = LocalAssetTransactor;
@@ -289,7 +289,7 @@ pub type XcmRouter = (
 );
 
 impl pallet_xcm::Config for Runtime {
-	type RuntimeEvent= RuntimeEvent;
+	type RuntimeEvent = RuntimeEvent;
 	type SendXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
@@ -299,14 +299,14 @@ impl pallet_xcm::Config for Runtime {
 	type XcmReserveTransferFilter = Everything;
 	type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
 	type LocationInverter = LocationInverter<Ancestry>;
-	type RuntimeOrigin= RuntimeOrigin;
-	type RuntimeCall= RuntimeCall;
+	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeCall = RuntimeCall;
 	const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
 	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
 }
 
 impl cumulus_pallet_xcm::Config for Runtime {
-	type RuntimeEvent= RuntimeEvent;
+	type RuntimeEvent = RuntimeEvent;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 }
 
@@ -332,7 +332,7 @@ pub type XcmOriginToTransactDispatchOrigin = (
 );
 
 impl cumulus_pallet_xcmp_queue::Config for Runtime {
-	type RuntimeEvent= RuntimeEvent;
+	type RuntimeEvent = RuntimeEvent;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type ChannelInfo = ParachainSystem;
 	type VersionWrapper = ();
@@ -343,7 +343,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 }
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {
-	type RuntimeEvent= RuntimeEvent;
+	type RuntimeEvent = RuntimeEvent;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
 }
@@ -368,7 +368,7 @@ parameter_type_with_key! {
 }
 
 impl orml_xtokens::Config for Runtime {
-	type RuntimeEvent= RuntimeEvent;
+	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type CurrencyId = TokenId;
 	type CurrencyIdConvert = TokenIdConvert;
@@ -437,7 +437,7 @@ pub struct TokenIdConvert;
 impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
 	fn convert(id: TokenId) -> Option<MultiLocation> {
 		if id == ROC_TOKEN_ID {
-			return Some(MultiLocation::parent())
+			return Some(MultiLocation::parent());
 		}
 
 		match AssetRegistryOf::<Runtime>::multilocation(&id) {
@@ -455,16 +455,19 @@ impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
 impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 	fn convert(location: MultiLocation) -> Option<TokenId> {
 		if location == MultiLocation::parent() {
-			return Some(ROC_TOKEN_ID)
+			return Some(ROC_TOKEN_ID);
 		}
 
 		match location {
 			MultiLocation { parents: 1, interior: X2(Parachain(para_id), GeneralKey(key)) }
 				if ParaId::from(para_id) == ParachainInfo::get() =>
-				TokenId::decode(&mut &(*key)[..]).ok(),
+			{
+				TokenId::decode(&mut &(*key)[..]).ok()
+			},
 
-			MultiLocation { parents: 0, interior: X1(GeneralKey(key)) } =>
-				TokenId::decode(&mut &(*key)[..]).ok(),
+			MultiLocation { parents: 0, interior: X1(GeneralKey(key)) } => {
+				TokenId::decode(&mut &(*key)[..]).ok()
+			},
 
 			_ => AssetRegistryOf::<Runtime>::location_to_asset_id(location.clone()),
 		}

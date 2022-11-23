@@ -21,6 +21,7 @@ use sc_client_api::{Backend as BackendT, BlockchainEvents, KeyIterator};
 use sp_api::{CallApiAt, NumberFor, ProvideRuntimeApi};
 use sp_blockchain::HeaderBackend;
 use sp_consensus::BlockStatus;
+use sp_core::H256;
 use sp_runtime::{
 	generic::{BlockId, SignedBlock},
 	traits::{BlakeTwo256, Block as BlockT},
@@ -28,7 +29,6 @@ use sp_runtime::{
 };
 use sp_storage::{ChildInfo, StorageData, StorageKey};
 use std::sync::Arc;
-use sp_core::H256;
 
 /// A set of APIs that polkadot-like runtimes must implement.
 ///
@@ -229,11 +229,13 @@ impl ClientHandle for Client {
 	fn execute_with<T: ExecuteWithClient>(&self, t: T) -> T::Output {
 		match self {
 			#[cfg(feature = "mangata-kusama")]
-			Self::MangataKusama(client) =>
-				T::execute_with_client::<_, _, crate::service::FullBackend>(t, client.clone()),
+			Self::MangataKusama(client) => {
+				T::execute_with_client::<_, _, crate::service::FullBackend>(t, client.clone())
+			},
 			#[cfg(feature = "mangata-rococo")]
-			Self::MangataRococo(client) =>
-				T::execute_with_client::<_, _, crate::service::FullBackend>(t, client.clone()),
+			Self::MangataRococo(client) => {
+				T::execute_with_client::<_, _, crate::service::FullBackend>(t, client.clone())
+			},
 		}
 	}
 }
@@ -309,11 +311,7 @@ impl sc_client_api::BlockBackend<Block> for Client {
 }
 
 impl sc_client_api::StorageProvider<Block, crate::service::FullBackend> for Client {
-	fn storage(
-		&self,
-		id: &H256,
-		key: &StorageKey,
-	) -> sp_blockchain::Result<Option<StorageData>> {
+	fn storage(&self, id: &H256, key: &StorageKey) -> sp_blockchain::Result<Option<StorageData>> {
 		match_client!(self, storage(id, key))
 	}
 

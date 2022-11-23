@@ -228,6 +228,7 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
  pallet-beefy = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.31" }
  pallet-membership = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.31" }
  frame-benchmarking = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.31" }
+ frame-system-benchmarking = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.31" }
  pallet-identity = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.31" }
  pallet-session = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.31" }
  pallet-aura = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.31" }
@@ -394,6 +395,7 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
  pallet-beefy = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.31" }
  pallet-membership = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.31" }
  frame-benchmarking = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.31" }
+ frame-system-benchmarking = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.31" }
  pallet-identity = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.31" }
  pallet-session = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.31" }
  pallet-aura = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.31" }
@@ -559,6 +561,7 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
  pallet-beefy = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.31" }
  pallet-membership = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.31" }
  frame-benchmarking = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.31" }
+ frame-system-benchmarking = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.31" }
  pallet-identity = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.31" }
  pallet-session = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.31" }
  pallet-aura = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.31" }

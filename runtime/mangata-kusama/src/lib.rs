@@ -5,7 +5,7 @@
 use codec::{Decode, Encode};
 use frame_support::{
 	construct_runtime,
-	dispatch::{DispatchResult, DispatchClass},
+	dispatch::{DispatchClass, DispatchResult},
 	parameter_types,
 	traits::{
 		tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
@@ -42,10 +42,15 @@ pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-use sp_runtime::{create_runtime_str, generic, impl_opaque_keys, traits::{
-	AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, ConvertInto,
-	DispatchInfoOf, PostDispatchInfoOf, Saturating, StaticLookup, Zero,
-}, transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity}, ApplyExtrinsicResult, DispatchError, FixedPointNumber, Percent, Perquintill};
+use sp_runtime::{
+	create_runtime_str, generic, impl_opaque_keys,
+	traits::{
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, ConvertInto,
+		DispatchInfoOf, PostDispatchInfoOf, Saturating, StaticLookup, Zero,
+	},
+	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
+	ApplyExtrinsicResult, DispatchError, FixedPointNumber, Percent, Perquintill,
+};
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
 use sp_std::{
 	cmp::Ordering,
@@ -107,7 +112,8 @@ pub type SignedExtra = (
 pub type SignedPayload = generic::SignedPayload<RuntimeCall, SignedExtra>;
 
 /// Unchecked extrinsic type as expected by this runtime.
-pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
+pub type UncheckedExtrinsic =
+	generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
 
 /// Extrinsic type that has already been checked.
 pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, RuntimeCall, SignedExtra>;
@@ -622,7 +628,7 @@ where
 		tip: Self::Balance,
 	) -> Result<Self::LiquidityInfo, TransactionValidityError> {
 		if fee.is_zero() {
-			return Ok(None)
+			return Ok(None);
 		}
 
 		let withdraw_reason = if tip.is_zero() {
@@ -724,8 +730,13 @@ impl pallet_transaction_payment::Config for Runtime {
 	>;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type WeightToFee = WeightToFee;
-	type FeeMultiplierUpdate =
-		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier, MaximumMultiplier>;
+	type FeeMultiplierUpdate = TargetedFeeAdjustment<
+		Self,
+		TargetBlockFullness,
+		AdjustmentVariable,
+		MinimumMultiplier,
+		MaximumMultiplier,
+	>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 }
 
@@ -1049,7 +1060,10 @@ pub struct AssetAuthority;
 impl EnsureOriginWithArg<RuntimeOrigin, Option<u32>> for AssetAuthority {
 	type Success = ();
 
-	fn try_origin(origin: RuntimeOrigin, _asset_id: &Option<u32>) -> Result<Self::Success, RuntimeOrigin> {
+	fn try_origin(
+		origin: RuntimeOrigin,
+		_asset_id: &Option<u32>,
+	) -> Result<Self::Success, RuntimeOrigin> {
 		EnsureRoot::try_origin(origin)
 	}
 

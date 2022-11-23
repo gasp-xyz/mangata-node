@@ -4609,7 +4609,6 @@ dependencies = [
  "pallet-bootstrap",
  "pallet-collective",
  "pallet-crowdloan-rewards",
- "pallet-elections-phragmen",
  "pallet-issuance",
  "pallet-multipurpose-liquidity",
  "pallet-session",
@@ -4787,7 +4786,6 @@ dependencies = [
  "pallet-bootstrap",
  "pallet-collective",
  "pallet-crowdloan-rewards",
- "pallet-elections-phragmen",
  "pallet-issuance",
  "pallet-multipurpose-liquidity",
  "pallet-session",
@@ -5938,7 +5936,7 @@ dependencies = [
 [[package]]
 name = "pallet-elections-phragmen"
 version = "5.0.0-dev"
-source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#8799bec7481d50db3e1eafed3b0d0b8e271ccaa2"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.29#cc370aa61e15c18d23a2f686b812fd576a630afe"
 dependencies = [
  "frame-benchmarking",
  "frame-support",

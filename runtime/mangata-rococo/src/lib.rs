@@ -10,7 +10,7 @@ use frame_support::{
 	traits::{
 		tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
 		Contains, EnsureOrigin, EnsureOriginWithArg, Everything, ExistenceRequirement, Get,
-		Imbalance, LockIdentifier, Nothing, U128CurrencyToVote, WithdrawReasons,
+		Imbalance, LockIdentifier, Nothing, OnRuntimeUpgrade, U128CurrencyToVote, WithdrawReasons,
 	},
 	unsigned::TransactionValidityError,
 	weights::{
@@ -87,6 +87,7 @@ pub const KAR_TOKEN_ID: TokenId = 6;
 pub const TUR_TOKEN_ID: TokenId = 7;
 
 pub mod constants;
+mod migrations;
 mod weights;
 pub mod xcm_config;
 
@@ -124,7 +125,29 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
+	MangataMigrations,
 >;
+
+pub struct MangataMigrations;
+impl OnRuntimeUpgrade for MangataMigrations {
+	fn on_runtime_upgrade() -> frame_support::weights::Weight {
+		migrations::phragmen_elections::PhragmenElectionsMigration::on_runtime_upgrade()
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn pre_upgrade() -> Result<(), &'static str> {
+		migrations::phragmen_elections::PhragmenElectionsMigration::pre_upgrade()
+			.expect("try-runtime pre_upgrade for PhragmenElectionsMigration failed!!");
+		Ok(())
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn post_upgrade() -> Result<(), &'static str> {
+		migrations::phragmen_elections::PhragmenElectionsMigration::post_upgrade()
+			.expect("try-runtime post_upgrade for PhragmenElectionsMigration failed!!");
+		Ok(())
+	}
+}
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -796,45 +819,6 @@ impl pallet_collective::Config<CouncilCollective> for Runtime {
 }
 
 parameter_types! {
-	pub const CandidacyBond: Balance = 10 * DOLLARS;
-	// 1 storage item created, key size is 32 bytes, value size is 16+16.
-	pub const VotingBondBase: Balance = deposit(1, 64);
-	// additional data per vote is 32 bytes (account id).
-	pub const VotingBondFactor: Balance = deposit(0, 32);
-	pub const TermDuration: BlockNumber = 120 * DAYS;
-	pub const DesiredMembers: u32 = 9;
-	pub const DesiredRunnersUp: u32 = 7;
-	pub const MaxVoters: u32 = 10 * 1000;
-	pub const MaxCandidates: u32 = 1000;
-	pub const ElectionsPhragmenPalletId: LockIdentifier = *b"phrelect";
-}
-
-// Make sure that there are no more than `MaxMembers` members elected via elections-phragmen.
-const_assert!(DesiredMembers::get() <= CouncilMaxMembers::get());
-
-impl pallet_elections_phragmen::Config for Runtime {
-	type Event = Event;
-	type PalletId = ElectionsPhragmenPalletId;
-	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgrTokenId>;
-	type ChangeMembers = Council;
-	// NOTE: this implies that council's genesis members cannot be set directly and must come from
-	// this module.
-	type InitializeMembers = Council;
-	type CurrencyToVote = U128CurrencyToVote;
-	type CandidacyBond = CandidacyBond;
-	type VotingBondBase = VotingBondBase;
-	type VotingBondFactor = VotingBondFactor;
-	type LoserCandidate = Treasury;
-	type KickedMember = Treasury;
-	type DesiredMembers = DesiredMembers;
-	type DesiredRunnersUp = DesiredRunnersUp;
-	type TermDuration = TermDuration;
-	type MaxVoters = MaxVoters;
-	type MaxCandidates = MaxCandidates;
-	type WeightInfo = weights::pallet_elections_phragmen_weights::ModuleWeight<Runtime>;
-}
-
-parameter_types! {
 	/// Default BlocksPerRound is every 4 hours (1200 * 12 second block times)
 	pub const BlocksPerRound: u32 = 4 * HOURS;
 	/// Collator candidate exit delay (number of rounds)
@@ -1115,7 +1099,6 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 49,
 		SudoOrigin: pallet_sudo_origin::{Pallet, Call, Event<T>} = 50,
 		Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 51,
-		Elections: pallet_elections_phragmen::{Pallet, Call, Storage, Event<T>, Config<T>} = 52,
 
 		// Bootstrap
 		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>} = 53,
@@ -1139,7 +1122,6 @@ mod benches {
 		[pallet_xyk, Xyk]
 		[pallet_treasury, Treasury]
 		[pallet_collective, Council]
-		[pallet_elections_phragmen, Elections]
 		[pallet_bootstrap, Bootstrap]
 		[pallet_crowdloan_rewards, Crowdloan]
 		[pallet_utility, Utility]

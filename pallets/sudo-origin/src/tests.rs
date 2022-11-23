@@ -21,8 +21,8 @@ use super::*;
 use frame_support::{assert_noop, assert_ok, dispatch::DispatchError, weights::Weight};
 use frame_system::RawOrigin;
 use mock::{
-	new_test_ext, RuntimeCall, RuntimeEvent as TestEvent, Logger, LoggerCall, RuntimeOrigin, SudoOrigin, SudoOriginCall,
-	System,
+	new_test_ext, Logger, LoggerCall, RuntimeCall, RuntimeEvent as TestEvent, RuntimeOrigin,
+	SudoOrigin, SudoOriginCall, System,
 };
 
 #[test]
@@ -151,7 +151,10 @@ fn sudo_as_basics() {
 			i: 42,
 			weight: Weight::from_ref_time(1),
 		}));
-		assert_noop!(SudoOrigin::sudo_as(RuntimeOrigin::signed(3), 2, call), DispatchError::BadOrigin);
+		assert_noop!(
+			SudoOrigin::sudo_as(RuntimeOrigin::signed(3), 2, call),
+			DispatchError::BadOrigin
+		);
 
 		// A non-privileged function will work when passed to `sudo_as` with the root `key`.
 		let call = Box::new(RuntimeCall::Logger(LoggerCall::non_privileged_log {

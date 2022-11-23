@@ -86,13 +86,9 @@ fn initialize() {
 	)
 	.unwrap();
 
-	let pool_created_event = crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::PoolCreated(
-		acc_id,
-		1,
-		40000000000000000000,
-		4,
-		60000000000000000000,
-	));
+	let pool_created_event = crate::mock::RuntimeEvent::XykStorage(
+		crate::Event::<Test>::PoolCreated(acc_id, 1, 40000000000000000000, 4, 60000000000000000000),
+	);
 
 	assert!(System::events().iter().any(|record| record.event == pool_created_event));
 }
@@ -108,8 +104,10 @@ fn initialize_buy_and_burn() {
 	XykStorage::create_new_token(&acc_id, amount); // token id 3 is LT for mga-dummy
 	XykStorage::create_new_token(&acc_id, amount);
 	XykStorage::create_new_token(&acc_id, amount);
-	XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 100000000000000, 1, 100000000000000).unwrap();
-	XykStorage::create_pool(RuntimeOrigin::signed(2), 1, 100000000000000, 4, 100000000000000).unwrap();
+	XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 100000000000000, 1, 100000000000000)
+		.unwrap();
+	XykStorage::create_pool(RuntimeOrigin::signed(2), 1, 100000000000000, 4, 100000000000000)
+		.unwrap();
 }
 
 fn initialize_liquidity_rewards() {
@@ -146,8 +144,13 @@ fn liquidity_rewards_single_user_mint_W() {
 		XykStorage::promote_pool(RuntimeOrigin::root(), 4).unwrap();
 
 		let liquidity_tokens_owned = XykStorage::balance(4, 2);
-		XykStorage::activate_liquidity_v2(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned, None)
-			.unwrap();
+		XykStorage::activate_liquidity_v2(
+			RuntimeOrigin::signed(2),
+			4,
+			liquidity_tokens_owned,
+			None,
+		)
+		.unwrap();
 
 		// let (user_last_checkpoint, user_cummulative_ratio, user_missing_at_last_checkpoint) =
 		// 	XykStorage::liquidity_mining_user_v2((2, 4));
@@ -256,8 +259,13 @@ fn liquidity_rewards_three_users_mint_W() {
 		XykStorage::transfer(1, 2, 4, 1000000).unwrap();
 		//
 		let liquidity_tokens_owned = XykStorage::balance(4, 2);
-		XykStorage::activate_liquidity_v2(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned, None)
-			.unwrap();
+		XykStorage::activate_liquidity_v2(
+			RuntimeOrigin::signed(2),
+			4,
+			liquidity_tokens_owned,
+			None,
+		)
+		.unwrap();
 
 		let rewards_info = XykStorage::get_rewards_info(2, 4);
 		assert_eq!(rewards_info.activated_amount, 10000);
@@ -325,8 +333,13 @@ fn liquidity_rewards_three_users_burn_W() {
 		XykStorage::transfer(1, 2, 4, 1000000).unwrap();
 
 		let liquidity_tokens_owned = XykStorage::balance(4, 2);
-		XykStorage::activate_liquidity_v2(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned, None)
-			.unwrap();
+		XykStorage::activate_liquidity_v2(
+			RuntimeOrigin::signed(2),
+			4,
+			liquidity_tokens_owned,
+			None,
+		)
+		.unwrap();
 
 		System::set_block_number(100);
 		MockPromotedPoolApi::instance()
@@ -388,8 +401,13 @@ fn liquidity_rewards_claim_W() {
 		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 10000, 1, 10000).unwrap();
 		XykStorage::promote_pool(RuntimeOrigin::root(), 4).unwrap();
 		let liquidity_tokens_owned = XykStorage::balance(4, 2);
-		XykStorage::activate_liquidity_v2(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned, None)
-			.unwrap();
+		XykStorage::activate_liquidity_v2(
+			RuntimeOrigin::signed(2),
+			4,
+			liquidity_tokens_owned,
+			None,
+		)
+		.unwrap();
 
 		// assert_eq!(
 		// 	XykStorage::liquidity_mining_user_v2((2, 4)),
@@ -502,8 +520,13 @@ fn liquidity_rewards_work_after_burn_W() {
 		XykStorage::transfer(1, 2, 4, 1000000).unwrap();
 
 		let liquidity_tokens_owned = XykStorage::balance(4, 2);
-		XykStorage::activate_liquidity_v2(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned, None)
-			.unwrap();
+		XykStorage::activate_liquidity_v2(
+			RuntimeOrigin::signed(2),
+			4,
+			liquidity_tokens_owned,
+			None,
+		)
+		.unwrap();
 
 		System::set_block_number(100);
 		MockPromotedPoolApi::instance()
@@ -568,8 +591,13 @@ fn liquidity_rewards_deactivate_transfer_controled_W() {
 
 		let liquidity_tokens_owned = XykStorage::balance(4, 2);
 
-		XykStorage::activate_liquidity_v2(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned, None)
-			.unwrap();
+		XykStorage::activate_liquidity_v2(
+			RuntimeOrigin::signed(2),
+			4,
+			liquidity_tokens_owned,
+			None,
+		)
+		.unwrap();
 		assert_err!(XykStorage::transfer(4, 2, 3, 10), orml_tokens::Error::<Test>::BalanceTooLow,);
 
 		System::set_block_number(100);
@@ -579,7 +607,8 @@ fn liquidity_rewards_deactivate_transfer_controled_W() {
 			.insert(4, U256::from(u128::MAX) * 100000 / 10000);
 		assert_eq!(XykStorage::calculate_rewards_amount_v2(2, 4).unwrap(), 14704);
 
-		XykStorage::deactivate_liquidity_v2(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned).unwrap();
+		XykStorage::deactivate_liquidity_v2(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned)
+			.unwrap();
 		XykStorage::transfer(4, 2, 3, 10).unwrap();
 		assert_eq!(XykStorage::calculate_rewards_amount_v2(2, 4).unwrap(), 14704);
 	});
@@ -604,10 +633,19 @@ fn liquidity_rewards_deactivate_more_NW() {
 		XykStorage::promote_pool(RuntimeOrigin::root(), 4).unwrap();
 
 		let liquidity_tokens_owned = XykStorage::balance(4, 2);
-		XykStorage::activate_liquidity_v2(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned, None)
-			.unwrap();
+		XykStorage::activate_liquidity_v2(
+			RuntimeOrigin::signed(2),
+			4,
+			liquidity_tokens_owned,
+			None,
+		)
+		.unwrap();
 		assert_err!(
-			XykStorage::deactivate_liquidity_v2(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned + 1),
+			XykStorage::deactivate_liquidity_v2(
+				RuntimeOrigin::signed(2),
+				4,
+				liquidity_tokens_owned + 1
+			),
 			Error::<Test>::NotEnoughAssets
 		);
 	});
@@ -861,7 +899,8 @@ fn buy_and_burn_sell_none_have_mangata_pair() {
 fn buy_and_burn_buy_where_sold_is_mangata() {
 	new_test_ext().execute_with(|| {
 		initialize_buy_and_burn();
-		XykStorage::buy_asset(RuntimeOrigin::signed(2), 0, 1, 33266599933266, 50000000000001).unwrap();
+		XykStorage::buy_asset(RuntimeOrigin::signed(2), 0, 1, 33266599933266, 50000000000001)
+			.unwrap();
 
 		assert_eq!(XykStorage::asset_pool((0, 1)), (149949999999999, 66733400066734));
 		assert_eq!(XykStorage::balance(0, 2), 850000000000001);
@@ -880,7 +919,8 @@ fn buy_and_burn_buy_where_sold_is_mangata() {
 fn buy_and_burn_buy_where_sold_has_mangata_pair() {
 	new_test_ext().execute_with(|| {
 		initialize_buy_and_burn();
-		XykStorage::buy_asset(RuntimeOrigin::signed(2), 1, 4, 33266599933266, 50000000000001).unwrap();
+		XykStorage::buy_asset(RuntimeOrigin::signed(2), 1, 4, 33266599933266, 50000000000001)
+			.unwrap();
 
 		assert_eq!(XykStorage::asset_pool((0, 1)), (99950024987507, 100050000000000));
 		assert_eq!(XykStorage::asset_pool((1, 4)), (149949999999999, 66733400066734));
@@ -900,7 +940,8 @@ fn buy_and_burn_buy_where_sold_has_mangata_pair() {
 fn buy_and_burn_buy_none_have_mangata_pair() {
 	new_test_ext().execute_with(|| {
 		initialize_buy_and_burn();
-		XykStorage::buy_asset(RuntimeOrigin::signed(2), 4, 1, 33266599933266, 50000000000001).unwrap();
+		XykStorage::buy_asset(RuntimeOrigin::signed(2), 4, 1, 33266599933266, 50000000000001)
+			.unwrap();
 
 		assert_eq!(XykStorage::asset_pool((0, 1)), (100000000000000, 100000000000000));
 		assert_eq!(XykStorage::asset_pool((1, 4)), (66733400066734, 149949999999999));
@@ -968,7 +1009,8 @@ fn multi() {
 		assert_eq!(XykStorage::balance(1, XykStorage::account_id()), 1500000000000000000000000); // amount of asset 1 in vault acc after creating pool
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 750000000000000000000001); // amount of asset 2 in vault acc after creating pool
 
-		XykStorage::burn_liquidity(RuntimeOrigin::signed(2), 1, 4, 225000000000000000000000).unwrap();
+		XykStorage::burn_liquidity(RuntimeOrigin::signed(2), 1, 4, 225000000000000000000000)
+			.unwrap();
 
 		assert_eq!(
 			XykStorage::asset_pool((1, 4)),
@@ -981,7 +1023,8 @@ fn multi() {
 		assert_eq!(XykStorage::balance(1, XykStorage::account_id()), 1200000000000000000000000); // amount of asset 1 in vault acc after creating pool
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 600000000000000000000001); // amount of asset 2 in vault acc after creating pool
 
-		XykStorage::burn_liquidity(RuntimeOrigin::signed(2), 1, 4, 225000000000000000000000).unwrap();
+		XykStorage::burn_liquidity(RuntimeOrigin::signed(2), 1, 4, 225000000000000000000000)
+			.unwrap();
 
 		assert_eq!(
 			XykStorage::asset_pool((1, 4)),
@@ -1582,7 +1625,8 @@ fn successful_buy_assets_does_not_charge_fee() {
 		initialize();
 		let first_token_balance = XykStorage::balance(1, DUMMY_USER_ID);
 		let post_info =
-			XykStorage::buy_asset(RuntimeOrigin::signed(2), 1, 4, 1000, first_token_balance).unwrap();
+			XykStorage::buy_asset(RuntimeOrigin::signed(2), 1, 4, 1000, first_token_balance)
+				.unwrap();
 		assert_eq!(post_info.pays_fee, Pays::No);
 	});
 }
@@ -1593,8 +1637,9 @@ fn unsuccessful_buy_assets_charges_fee() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
 		//try to sell non owned, non existing tokens
-		let post_info =
-			XykStorage::buy_asset(RuntimeOrigin::signed(2), 100, 200, 0, 0).unwrap_err().post_info;
+		let post_info = XykStorage::buy_asset(RuntimeOrigin::signed(2), 100, 200, 0, 0)
+			.unwrap_err()
+			.post_info;
 		assert_eq!(post_info.pays_fee, Pays::Yes);
 	});
 }
@@ -1616,8 +1661,9 @@ fn unsuccessful_sell_assets_charges_fee() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
 		//try to sell non owned, non existing tokens
-		let post_info =
-			XykStorage::sell_asset(RuntimeOrigin::signed(2), 100, 200, 0, 0).unwrap_err().post_info;
+		let post_info = XykStorage::sell_asset(RuntimeOrigin::signed(2), 100, 200, 0, 0)
+			.unwrap_err()
+			.post_info;
 		assert_eq!(post_info.pays_fee, Pays::Yes);
 	});
 }
@@ -1751,8 +1797,13 @@ fn liquidity_rewards_transfered_liq_tokens_produce_rewards_W() {
 
 		XykStorage::transfer(4, 2, 3, liquidity_tokens_owned).unwrap();
 
-		XykStorage::activate_liquidity_v2(RuntimeOrigin::signed(3), 4, liquidity_tokens_owned, None)
-			.unwrap();
+		XykStorage::activate_liquidity_v2(
+			RuntimeOrigin::signed(3),
+			4,
+			liquidity_tokens_owned,
+			None,
+		)
+		.unwrap();
 
 		System::set_block_number(100);
 		MockPromotedPoolApi::instance()
@@ -1832,8 +1883,13 @@ fn liquidity_rewards_not_yet_claimed_already_claimed_W() {
 		XykStorage::promote_pool(RuntimeOrigin::root(), 4).unwrap();
 
 		let liquidity_tokens_owned = XykStorage::balance(4, 2);
-		XykStorage::activate_liquidity_v2(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned, None)
-			.unwrap();
+		XykStorage::activate_liquidity_v2(
+			RuntimeOrigin::signed(2),
+			4,
+			liquidity_tokens_owned,
+			None,
+		)
+		.unwrap();
 
 		System::set_block_number(10);
 
@@ -1843,13 +1899,19 @@ fn liquidity_rewards_not_yet_claimed_already_claimed_W() {
 			.insert(4, U256::from(u128::MAX) * 10000 / 10000);
 
 		assert_eq!(XykStorage::calculate_rewards_amount_v2(2, 4).unwrap(), 291);
-		XykStorage::deactivate_liquidity_v2(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned).unwrap();
+		XykStorage::deactivate_liquidity_v2(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned)
+			.unwrap();
 
 		let rewards_info = XykStorage::get_rewards_info(2, 4);
 		assert_eq!(rewards_info.rewards_not_yet_claimed, 291);
 
-		XykStorage::activate_liquidity_v2(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned, None)
-			.unwrap();
+		XykStorage::activate_liquidity_v2(
+			RuntimeOrigin::signed(2),
+			4,
+			liquidity_tokens_owned,
+			None,
+		)
+		.unwrap();
 		System::set_block_number(100);
 		MockPromotedPoolApi::instance()
 			.lock()
@@ -1938,10 +2000,22 @@ fn rewards_rounding_during_often_mint() {
 			.insert(4, U256::from(u128::MAX) * U256::from(0));
 		XykStorage::transfer(0, 2, 3, 10000000000000000000000000).unwrap();
 		XykStorage::transfer(1, 2, 3, 10000000000000000000000000).unwrap();
-		XykStorage::mint_liquidity(RuntimeOrigin::signed(2), 0, 1, 25000000000000000000000, 2000000000000)
-			.unwrap();
-		XykStorage::mint_liquidity(RuntimeOrigin::signed(3), 0, 1, 25000000000000000000000, 2000000000000)
-			.unwrap();
+		XykStorage::mint_liquidity(
+			RuntimeOrigin::signed(2),
+			0,
+			1,
+			25000000000000000000000,
+			2000000000000,
+		)
+		.unwrap();
+		XykStorage::mint_liquidity(
+			RuntimeOrigin::signed(3),
+			0,
+			1,
+			25000000000000000000000,
+			2000000000000,
+		)
+		.unwrap();
 
 		let mut non_minter_higher_rewards_counter = 0;
 		let mut higher_rewards_cumulative = 0;

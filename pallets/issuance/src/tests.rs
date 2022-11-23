@@ -38,7 +38,10 @@ fn cannot_finalize_tge_when_already_finalized() {
 		assert_ok!(Issuance::finalize_tge(RuntimeOrigin::root()));
 		assert_eq!(Issuance::is_tge_finalized(), true);
 
-		assert_noop!(Issuance::finalize_tge(RuntimeOrigin::root()), Error::<Test>::TGEIsAlreadyFinalized);
+		assert_noop!(
+			Issuance::finalize_tge(RuntimeOrigin::root()),
+			Error::<Test>::TGEIsAlreadyFinalized
+		);
 	});
 }
 

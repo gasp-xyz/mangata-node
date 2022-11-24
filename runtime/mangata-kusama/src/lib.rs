@@ -499,7 +499,7 @@ impl pallet_xyk::Config for Runtime {
 
 parameter_types! {
 	pub const BootstrapUpdateBuffer: BlockNumber = 300;
-	pub const DefaultBootstrapPromotedPoolWeight: u8 = 1u8;
+	pub const DefaultBootstrapPromotedPoolWeight: u8 = 0u8;
 }
 
 impl pallet_bootstrap::BootstrapBenchmarkingConfig for Runtime {}

@@ -277,6 +277,14 @@ mockall::mock! {
 	}
 }
 
+mockall::mock! {
+	pub AssetRegistryApi {}
+
+	impl AssetRegistryApi for AssetRegistryApi {
+		fn enable_pool_creation(assets: (TokenId, TokenId)) -> bool;
+	}
+}
+
 pub struct AssetRegistry;
 impl AssetRegistryApi for AssetRegistry {
 	fn enable_pool_creation(assets: (TokenId, TokenId)) -> bool {
@@ -299,7 +307,7 @@ impl pallet_bootstrap::Config for Test {
 	type VestingProvider = Vesting;
 	type RewardsApi = MockRewardsApi;
 	type WeightInfo = ();
-	type AssetRegistryApi = AssetRegistry;
+	type AssetRegistryApi = MockAssetRegistryApi;
 }
 
 #[cfg(feature = "runtime-benchmarks")]

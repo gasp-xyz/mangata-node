@@ -136,15 +136,15 @@ impl OnRuntimeUpgrade for MangataMigrations {
 	}
 
 	#[cfg(feature = "try-runtime")]
-	fn pre_upgrade() -> Result<(), &'static str> {
+	fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
 		migrations::phragmen_elections::PhragmenElectionsMigration::pre_upgrade()
 			.expect("try-runtime pre_upgrade for PhragmenElectionsMigration failed!!");
-		Ok(())
+		Ok(Vec::new())
 	}
 
 	#[cfg(feature = "try-runtime")]
-	fn post_upgrade() -> Result<(), &'static str> {
-		migrations::phragmen_elections::PhragmenElectionsMigration::post_upgrade()
+	fn post_upgrade(_state: Vec<u8>) -> Result<(), &'static str> {
+		migrations::phragmen_elections::PhragmenElectionsMigration::post_upgrade(_state)
 			.expect("try-runtime post_upgrade for PhragmenElectionsMigration failed!!");
 		Ok(())
 	}

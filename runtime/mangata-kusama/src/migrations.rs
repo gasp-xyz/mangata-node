@@ -73,7 +73,7 @@ pub mod phragmen_elections {
 		}
 
 		#[cfg(feature = "try-runtime")]
-		fn pre_upgrade() -> Result<(), &'static str> {
+		fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
 			log::info!(
 				target: "phragmen_elections",
 				"pre_upgrade check: phragmen_elections"
@@ -97,11 +97,11 @@ pub mod phragmen_elections {
 
 			assert!(have_storage_value(b"Elections", b":__STORAGE_VERSION__:", b"",));
 
-			Ok(())
+			Ok(Vec::new())
 		}
 
 		#[cfg(feature = "try-runtime")]
-		fn post_upgrade() -> Result<(), &'static str> {
+		fn post_upgrade(_state: Vec<u8>) -> Result<(), &'static str> {
 			log::info!(
 				target: "phragmen_elections",
 				"post_upgrade check: phragmen_elections"

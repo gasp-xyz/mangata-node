@@ -34,6 +34,7 @@ permissions:
   contents: read
   id-token: write
   deployments: write
+  checks: write
 
 # The following concurrency group cancels in-progress jobs or runs on pull_request events only
 # https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value

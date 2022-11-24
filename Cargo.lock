@@ -164,7 +164,7 @@ checksum = "8da52d66c7071e2e3fa2a1e5c6d088fec47b593032b254f5e980de8ea54454d6"
 [[package]]
 name = "artemis-core"
 version = "0.1.1"
-source = "git+https://github.com/mangata-finance//snowbridge?branch=mangata-dev#5cd2e8fd82d06de6b2b57d86911f9c58a1bab160"
+source = "git+https://github.com/mangata-finance/snowbridge?branch=mangata-dev#5cd2e8fd82d06de6b2b57d86911f9c58a1bab160"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -1735,7 +1735,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-rpc-interface"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#6faa4601f2c0f7c9e752dc1ff108c1dcec19ecb9"
+source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev#6faa4601f2c0f7c9e752dc1ff108c1dcec19ecb9"
 dependencies = [
  "async-trait",
  "backoff",
@@ -4551,7 +4551,6 @@ dependencies = [
  "pallet-bootstrap",
  "pallet-collective",
  "pallet-crowdloan-rewards",
- "pallet-elections-phragmen",
  "pallet-issuance",
  "pallet-multipurpose-liquidity",
  "pallet-session",
@@ -4730,7 +4729,6 @@ dependencies = [
  "pallet-bootstrap",
  "pallet-collective",
  "pallet-crowdloan-rewards",
- "pallet-elections-phragmen",
  "pallet-issuance",
  "pallet-multipurpose-liquidity",
  "pallet-session",
@@ -4809,7 +4807,7 @@ dependencies = [
 [[package]]
 name = "mangata-types"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#8799bec7481d50db3e1eafed3b0d0b8e271ccaa2"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#60c819124ade4c10f927d76f9031eb73d88934d0"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -5876,7 +5874,7 @@ dependencies = [
 [[package]]
 name = "pallet-elections-phragmen"
 version = "5.0.0-dev"
-source = "git+https://github.com/mangata-finance//substrate?branch=feature/storage_queue#9e6f59d762632d435c1e410b81b45594b54f3c79"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.29#cc370aa61e15c18d23a2f686b812fd576a630afe"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5992,6 +5990,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "frame-try-runtime",
+ "lazy_static",
  "log",
  "mangata-types 0.1.0 (git+https://github.com/mangata-finance/substrate?branch=mangata-dev)",
  "orml-tokens",
@@ -12038,7 +12037,7 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "digest 0.10.5",
  "rand 0.8.5",
  "static_assertions",
@@ -13064,81 +13063,6 @@ dependencies = [
  "cc",
  "libc",
 ]
-
-[[patch.unused]]
-name = "artemis-asset"
-version = "0.1.1"
-source = "git+https://github.com/mangata-finance//snowbridge?branch=mangata-dev#5cd2e8fd82d06de6b2b57d86911f9c58a1bab160"
-
-[[patch.unused]]
-name = "artemis-erc20-app"
-version = "0.1.1"
-source = "git+https://github.com/mangata-finance//snowbridge?branch=mangata-dev#5cd2e8fd82d06de6b2b57d86911f9c58a1bab160"
-
-[[patch.unused]]
-name = "artemis-eth-app"
-version = "0.1.1"
-source = "git+https://github.com/mangata-finance//snowbridge?branch=mangata-dev#5cd2e8fd82d06de6b2b57d86911f9c58a1bab160"
-
-[[patch.unused]]
-name = "artemis-ethereum"
-version = "0.1.0"
-source = "git+https://github.com/mangata-finance//snowbridge?branch=mangata-dev#5cd2e8fd82d06de6b2b57d86911f9c58a1bab160"
-
-[[patch.unused]]
-name = "pallet-verifier"
-version = "0.1.1"
-source = "git+https://github.com/mangata-finance//snowbridge?branch=mangata-dev#5cd2e8fd82d06de6b2b57d86911f9c58a1bab160"
-
-[[patch.unused]]
-name = "pallet-nicks"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance//substrate?branch=feature/storage_queue#9e6f59d762632d435c1e410b81b45594b54f3c79"
-
-[[patch.unused]]
-name = "sc-consensus-uncles"
-version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance//substrate?branch=feature/storage_queue#9e6f59d762632d435c1e410b81b45594b54f3c79"
-
-[[patch.unused]]
-name = "sp-serializer"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance//substrate?branch=feature/storage_queue#9e6f59d762632d435c1e410b81b45594b54f3c79"
-
-[[patch.unused]]
-name = "pallet-nicks"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance//substrate?branch=feature/storage_queue#9e6f59d762632d435c1e410b81b45594b54f3c79"
-
-[[patch.unused]]
-name = "sc-consensus-uncles"
-version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance//substrate?branch=feature/storage_queue#9e6f59d762632d435c1e410b81b45594b54f3c79"
-
-[[patch.unused]]
-name = "sp-serializer"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance//substrate?branch=feature/storage_queue#9e6f59d762632d435c1e410b81b45594b54f3c79"
-
-[[patch.unused]]
-name = "cumulus-relay-chain-rpc-interface"
-version = "0.1.0"
-source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev#6faa4601f2c0f7c9e752dc1ff108c1dcec19ecb9"
-
-[[patch.unused]]
-name = "pallet-nicks"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance//substrate?branch=feature/storage_queue#9e6f59d762632d435c1e410b81b45594b54f3c79"
-
-[[patch.unused]]
-name = "sc-consensus-uncles"
-version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance//substrate?branch=feature/storage_queue#9e6f59d762632d435c1e410b81b45594b54f3c79"
-
-[[patch.unused]]
-name = "sp-serializer"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance//substrate?branch=feature/storage_queue#9e6f59d762632d435c1e410b81b45594b54f3c79"
 
 [[patch.unused]]
 name = "mangata-types"

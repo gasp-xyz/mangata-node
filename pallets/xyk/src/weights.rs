@@ -12,10 +12,12 @@ pub trait WeightInfo {
 	fn mint_liquidity() -> Weight;
 	fn mint_liquidity_using_vesting_native_tokens() -> Weight;
 	fn burn_liquidity() -> Weight;
-	fn claim_rewards() -> Weight;
 	fn promote_pool() -> Weight;
-	fn activate_liquidity() -> Weight;
-	fn deactivate_liquidity() -> Weight;
+	fn claim_rewards_v2() -> Weight;
+	fn claim_rewards_all_v2() -> Weight;
+	fn activate_liquidity_v2() -> Weight;
+	fn deactivate_liquidity_v2() -> Weight;
+	fn rewards_migrate_v1_to_v2() -> Weight;
 }
 
 // For backwards compatibility and tests
@@ -50,22 +52,42 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(14 as u64))
 			.saturating_add(RocksDbWeight::get().writes(17 as u64))
 	}
-	fn claim_rewards() -> Weight {
-		Weight::from_ref_time(156_724_000)
-			.saturating_add(RocksDbWeight::get().reads(8 as u64))
-			.saturating_add(RocksDbWeight::get().writes(6 as u64))
-	}
 	fn promote_pool() -> Weight {
 		Weight::from_ref_time(36_108_000)
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
-	fn activate_liquidity() -> Weight {
+
+
+	//TODO retest
+	fn claim_rewards_v2() -> Weight {
+		Weight::from_ref_time(156_724_000)
+			.saturating_add(RocksDbWeight::get().reads(8 as u64))
+			.saturating_add(RocksDbWeight::get().writes(6 as u64))
+	}
+
+	//TODO retest
+	fn claim_rewards_all_v2() -> Weight {
+		Weight::from_ref_time(156_724_000)
+			.saturating_add(RocksDbWeight::get().reads(8 as u64))
+			.saturating_add(RocksDbWeight::get().writes(6 as u64))
+	}
+	//TODO retest
+	fn activate_liquidity_v2() -> Weight {
 		Weight::from_ref_time(119_779_000)
 			.saturating_add(RocksDbWeight::get().reads(6 as u64))
 			.saturating_add(RocksDbWeight::get().writes(5 as u64))
 	}
-	fn deactivate_liquidity() -> Weight {
+	
+	//TODO retest
+	fn deactivate_liquidity_v2() -> Weight {
+		Weight::from_ref_time(133_607_000)
+			.saturating_add(RocksDbWeight::get().reads(7 as u64))
+			.saturating_add(RocksDbWeight::get().writes(7 as u64))
+	}
+
+	//TODO retest
+	fn rewards_migrate_v1_to_v2() -> Weight {
 		Weight::from_ref_time(133_607_000)
 			.saturating_add(RocksDbWeight::get().reads(7 as u64))
 			.saturating_add(RocksDbWeight::get().writes(7 as u64))

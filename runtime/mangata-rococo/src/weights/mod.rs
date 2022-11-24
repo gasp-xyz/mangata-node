@@ -11,7 +11,6 @@ pub mod orml_tokens_weights;
 pub mod pallet_bootstrap_weights;
 pub mod pallet_collective_weights;
 pub mod pallet_crowdloan_rewards_weights;
-pub mod pallet_elections_phragmen_weights;
 pub mod pallet_issuance_weights;
 pub mod pallet_multipurpose_liquidity_weights;
 pub mod pallet_session_weights;

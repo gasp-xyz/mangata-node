@@ -30,7 +30,7 @@ use sp_runtime::{
 	SaturatedConversion,
 };
 use sp_std::convert::TryFrom;
-
+use std::{collections::HashMap, sync::Mutex};
 pub const MGA_TOKEN_ID: TokenId = 0;
 pub(crate) type AccountId = u128;
 
@@ -120,6 +120,30 @@ parameter_types! {
 
 }
 
+lazy_static::lazy_static! {
+	static ref ACTIVATED_POOL: Mutex<HashMap<TokenId, U256>> = {
+		let m = HashMap::new();
+		Mutex::new(m)
+	};
+}
+
+pub struct MockPromotedPoolApi;
+pub struct MockActivedPoolQueryApi;
+
+#[cfg(test)]
+
+// impl MockActivedPoolQueryApi {
+// 	pub fn instance() -> &'static Mutex<HashMap<TokenId, U256>> {
+// 		&ACTIVATED_POOL
+// 	}
+// }
+
+impl ActivedPoolQueryApi for MockActivedPoolQueryApi {
+	fn get_pool_activate_amount(liquidity_token_id: TokenId) -> Option<Balance> {
+		Some(1_u128)
+	}
+}
+
 impl pallet_issuance::Config for Test {
 	type Event = Event;
 	type NativeCurrencyId = MgaTokenId;
@@ -138,6 +162,8 @@ impl pallet_issuance::Config for Test {
 	type TGEReleaseBegin = TGEReleaseBegin;
 	type VestingProvider = Vesting;
 	type WeightInfo = ();
+	// TODO implement unit tests using mock
+	type ActivedPoolQueryApiType = MockActivedPoolQueryApi;
 }
 
 parameter_types! {

@@ -67,7 +67,6 @@ pallet-timestamp = { git = "https://github.com/mangata-finance/substrate", defau
 pallet-transaction-payment = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-treasury = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
-pallet-elections-phragmen = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-collective = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-vesting-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 
@@ -177,7 +176,6 @@ std = [
 	"pallet-vesting-mangata/std",
 	"pallet-crowdloan-rewards/std",
 	"pallet-collective/std",
-	"pallet-elections-phragmen/std",
 	"frame-system-rpc-runtime-api/std",
 
 	"pallet-multipurpose-liquidity/std",
@@ -219,7 +217,6 @@ try-runtime = [
 	"pallet-sudo/try-runtime",
 	"pallet-sudo-origin/try-runtime",
 	"pallet-collective/try-runtime",
-	"pallet-elections-phragmen/try-runtime",
 	"pallet-bootstrap/try-runtime",
 	"pallet-utility/try-runtime",
 ]
@@ -244,7 +241,6 @@ runtime-benchmarks = [
 	"pallet-xyk/runtime-benchmarks",
 	"parachain-staking/runtime-benchmarks",
 	"pallet-treasury/runtime-benchmarks",
-	"pallet-elections-phragmen/runtime-benchmarks",
 	"pallet-crowdloan-rewards/runtime-benchmarks",
 	"pallet-utility/runtime-benchmarks",
 	"pallet-vesting-mangata/runtime-benchmarks",

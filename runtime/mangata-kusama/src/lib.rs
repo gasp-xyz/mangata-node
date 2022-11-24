@@ -10,7 +10,7 @@ use frame_support::{
 	traits::{
 		tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
 		Contains, EnsureOrigin, EnsureOriginWithArg, Everything, ExistenceRequirement, Get,
-		Imbalance, LockIdentifier, U128CurrencyToVote, WithdrawReasons,
+		Imbalance, LockIdentifier, OnRuntimeUpgrade, U128CurrencyToVote, WithdrawReasons,
 	},
 	unsigned::TransactionValidityError,
 	weights::{
@@ -90,6 +90,8 @@ pub mod constants;
 mod weights;
 pub mod xcm_config;
 
+mod migrations;
+
 /// Block header type as expected by this runtime.
 pub type Header = generic::HeaderVer<BlockNumber, BlakeTwo256>;
 /// Block type as expected by this runtime.
@@ -124,7 +126,29 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
+	MangataMigrations,
 >;
+
+pub struct MangataMigrations;
+impl OnRuntimeUpgrade for MangataMigrations {
+	fn on_runtime_upgrade() -> frame_support::weights::Weight {
+		migrations::phragmen_elections::PhragmenElectionsMigration::on_runtime_upgrade()
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn pre_upgrade() -> Result<(), &'static str> {
+		migrations::phragmen_elections::PhragmenElectionsMigration::pre_upgrade()
+			.expect("try-runtime pre_upgrade for PhragmenElectionsMigration failed!!");
+		Ok(())
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn post_upgrade() -> Result<(), &'static str> {
+		migrations::phragmen_elections::PhragmenElectionsMigration::post_upgrade()
+			.expect("try-runtime post_upgrade for PhragmenElectionsMigration failed!!");
+		Ok(())
+	}
+}
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -421,6 +445,18 @@ impl Contains<TokenId> for TestTokensFilter {
 	}
 }
 
+pub struct RewardsMigrationAccountProvider<T: frame_system::Config>(PhantomData<T>);
+impl<T: frame_system::Config> Get<T::AccountId> for RewardsMigrationAccountProvider<T> {
+	fn get() -> T::AccountId {
+		let account32: sp_runtime::AccountId32 =
+			hex_literal::hex!["0e33df23356eb2e9e3baf0e8a5faae15bc70a6a5cce88f651a9faf6e8e937324"]
+				.into();
+		let mut init_account32 = sp_runtime::AccountId32::as_ref(&account32);
+		let init_account = T::AccountId::decode(&mut init_account32).unwrap();
+		init_account
+	}
+}
+
 pub struct AssetMetadataMutation;
 impl AssetMetadataMutationTrait for AssetMetadataMutation {
 	fn set_asset_info(
@@ -456,12 +492,13 @@ impl pallet_xyk::Config for Runtime {
 	type PoolFeePercentage = frame_support::traits::ConstU128<20>;
 	type TreasuryFeePercentage = frame_support::traits::ConstU128<5>;
 	type BuyAndBurnFeePercentage = frame_support::traits::ConstU128<5>;
-	type RewardsDistributionPeriod = frame_support::traits::ConstU32<10000>;
+	type RewardsDistributionPeriod = frame_support::traits::ConstU32<1200>;
 	type VestingProvider = Vesting;
 	type DisallowedPools = Bootstrap;
 	type DisabledTokens = TestTokensFilter;
 	type AssetMetadataMutation = AssetMetadataMutation;
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
+	type RewardsMigrateAccount = RewardsMigrationAccountProvider<Self>;
 }
 
 parameter_types! {
@@ -771,45 +808,6 @@ impl pallet_collective::Config<CouncilCollective> for Runtime {
 }
 
 parameter_types! {
-	pub const CandidacyBond: Balance = 10 * DOLLARS;
-	// 1 storage item created, key size is 32 bytes, value size is 16+16.
-	pub const VotingBondBase: Balance = deposit(1, 64);
-	// additional data per vote is 32 bytes (account id).
-	pub const VotingBondFactor: Balance = deposit(0, 32);
-	pub const TermDuration: BlockNumber = 120 * DAYS;
-	pub const DesiredMembers: u32 = 9;
-	pub const DesiredRunnersUp: u32 = 7;
-	pub const MaxVoters: u32 = 10 * 1000;
-	pub const MaxCandidates: u32 = 1000;
-	pub const ElectionsPhragmenPalletId: LockIdentifier = *b"phrelect";
-}
-
-// Make sure that there are no more than `MaxMembers` members elected via elections-phragmen.
-const_assert!(DesiredMembers::get() <= CouncilMaxMembers::get());
-
-impl pallet_elections_phragmen::Config for Runtime {
-	type Event = Event;
-	type PalletId = ElectionsPhragmenPalletId;
-	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgxTokenId>;
-	type ChangeMembers = Council;
-	// NOTE: this implies that council's genesis members cannot be set directly and must come from
-	// this module.
-	type InitializeMembers = Council;
-	type CurrencyToVote = U128CurrencyToVote;
-	type CandidacyBond = CandidacyBond;
-	type VotingBondBase = VotingBondBase;
-	type VotingBondFactor = VotingBondFactor;
-	type LoserCandidate = Treasury;
-	type KickedMember = Treasury;
-	type DesiredMembers = DesiredMembers;
-	type DesiredRunnersUp = DesiredRunnersUp;
-	type TermDuration = TermDuration;
-	type MaxVoters = MaxVoters;
-	type MaxCandidates = MaxCandidates;
-	type WeightInfo = weights::pallet_elections_phragmen_weights::ModuleWeight<Runtime>;
-}
-
-parameter_types! {
 	/// Default BlocksPerRound is every 4 hours (1200 * 12 second block times)
 	pub const BlocksPerRound: u32 = 4 * HOURS;
 	/// Collator candidate exit delay (number of rounds)
@@ -879,6 +877,8 @@ impl parachain_staking::Config for Runtime {
 
 impl parachain_staking::StakingBenchmarkConfig for Runtime {}
 
+impl pallet_xyk::XykBenchmarkingConfig for Runtime {}
+
 parameter_types! {
 	pub const HistoryLimit: u32 = 10u32;
 
@@ -918,6 +918,7 @@ impl pallet_issuance::Config for Runtime {
 	type TGEReleaseBegin = TGEReleaseBegin;
 	type VestingProvider = Vesting;
 	type WeightInfo = weights::pallet_issuance_weights::ModuleWeight<Runtime>;
+	type ActivedPoolQueryApiType = Xyk;
 }
 
 parameter_types! {
@@ -1088,7 +1089,6 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 49,
 		SudoOrigin: pallet_sudo_origin::{Pallet, Call, Event<T>} = 50,
 		Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 51,
-		Elections: pallet_elections_phragmen::{Pallet, Call, Storage, Event<T>, Config<T>} = 52,
 
 		// Bootstrap
 		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>} = 53,
@@ -1112,7 +1112,6 @@ mod benches {
 		[pallet_xyk, Xyk]
 		[pallet_treasury, Treasury]
 		[pallet_collective, Council]
-		[pallet_elections_phragmen, Elections]
 		[pallet_bootstrap, Bootstrap]
 		[pallet_crowdloan_rewards, Crowdloan]
 		[pallet_utility, Utility]
@@ -1271,21 +1270,6 @@ impl_runtime_apis! {
 			}
 		}
 
-		fn calculate_rewards_amount(
-			user: AccountId,
-			liquidity_asset_id: TokenId,
-		) -> XYKRpcResult<Balance> {
-			match Xyk::calculate_rewards_amount(user, liquidity_asset_id){
-				Ok(claimable_rewards) => XYKRpcResult{
-					price:claimable_rewards
-				},
-				Err(e) => {
-						log::warn!(target:"xyk", "rpc 'XYK::calculate_rewards_amount' error: '{:?}', returning default value instead", e);
-						Default::default()
-				},
-			}
-		}
-
 		fn get_max_instant_burn_amount(
 			user: AccountId,
 			liquidity_asset_id: TokenId,
@@ -1298,6 +1282,21 @@ impl_runtime_apis! {
 			liquidity_asset_id: TokenId,
 		) -> XYKRpcResult<Balance> {
 			XYKRpcResult { price: Xyk::get_max_instant_unreserve_amount(&user, liquidity_asset_id) }
+		}
+
+		fn calculate_rewards_amount_v2(
+			user: AccountId,
+			liquidity_asset_id: TokenId,
+		) -> XYKRpcResult<Balance> {
+			match Xyk::calculate_rewards_amount_v2(user, liquidity_asset_id){
+				Ok(claimable_rewards) => XYKRpcResult{
+					price:claimable_rewards
+				},
+				Err(e) => {
+						log::warn!(target:"xyk", "rpc 'XYK::calculate_rewards_amount' error: '{:?}', returning default value instead", e);
+						Default::default()
+				},
+			}
 		}
 	}
 

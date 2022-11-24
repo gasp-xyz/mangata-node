@@ -3,7 +3,7 @@ name: deploy
 on:
   workflow_dispatch:
     inputs:
-      environment:
+      env:
         description: "Target environment for deployment"
         required: true
         type: string
@@ -18,7 +18,7 @@ on:
         type: string
   workflow_call:
     inputs:
-      environment:
+      env:
         description: "Target environment for deployment"
         required: true
         type: string
@@ -40,6 +40,8 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      ENV_REF: ${{ inputs.env == 'fungible' && format('pr-{0}', github.event.number) || inputs.env }}
     steps:
       - uses: actions/checkout@v3
       - uses: jkroepke/setup-vals@v1.0.4
@@ -48,7 +50,7 @@ jobs:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       - name: Set up GKE credentials
-        uses: google-github-actions/get-gke-credentials@v0.8.0
+        uses: google-github-actions/get-gke-credentials@v0.8.2
         with:
           cluster_name: ${{ inputs.cluster_name }}
           location: europe-west1
@@ -59,14 +61,15 @@ jobs:
         with:
           step: start
           token: ${{ secrets.GITHUB_TOKEN }}
-          env: ${{ inputs.environment }}
+          env: ${{ env.ENV_REF }}
           ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
 
       - run: |
           helm plugin install https://github.com/jkroepke/helm-secrets --version v4.1.1
-          helm secrets -b vals upgrade -i --create-namespace -n ${{ inputs.environment }} --wait node . \
+          helm secrets -b vals upgrade -i --create-namespace -n ${{ env.ENV_REF }} --wait node . \
           --set image.tag=${{ inputs.version }} \
-          -f values.yaml -f values-dev.yaml
+          --set env=${{ env.ENV_REF }} \
+          -f values.yaml -f values-${{ inputs.env }}.yaml
         working-directory: devops/helm-charts/node
       
       - name: Update the GitHub Deployment status
@@ -78,4 +81,4 @@ jobs:
           status: ${{ job.status }}
           env: ${{ steps.deployment.outputs.env }}
           deployment_id: ${{ steps.deployment.outputs.deployment_id }}
-          env_url: "https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fnode-01-ws-${{ inputs.environment }}.mangata.online#/explorer"
+          env_url: "https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fnode-01-ws-${{ env.ENV_REF }}.mangata.online#/explorer"

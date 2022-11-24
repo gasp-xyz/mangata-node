@@ -48,6 +48,31 @@ async function blockUntilFinalized(tx, account, options, verbose = false) {
 	})
 }
 
+async function forceLease(api, sudo, paraId, blockNr) {
+	const lease_periods = (await api.query.slots.leases(paraId)).toHuman();
+
+	if (lease_periods.length > 0) {
+		console.info(`#${blockNr} Parachain ${paraId}: active leases period found`);
+		return Promise.resolve();
+	}
+
+
+	let period = api.consts.slots.leasePeriod.toBn();
+	let offset = api.consts.slots.leaseOffset.toBn();
+
+
+	// Note that blocks before `LeaseOffset` do not count as any lease period.
+	let leasePeriod = blockNr.sub(offset).div(period);
+
+	console.info(`#${blockNr} Parachain ${paraId}: no leases found - calling slots::forceLease`);
+
+	return api.tx.sudo.sudo(
+		api.tx.slots.forceLease(paraId, sudo.address, 666, leasePeriod, 999)
+	).signAndSend(sudo);
+
+}
+
+
 async function main() {
 
 	const wsProvider = new WsProvider(address);
@@ -65,38 +90,45 @@ async function main() {
 
 	let nextId = await getNextFreeParaId(api);
 
-	if (nextId.gte(paraId)) {
-		console.info(`parachain id ${paraId} already registered ...`);
-		return;
+	if (nextId.lt(paraId)) {
+		console.info(`reserving parachain slots from ${nextId} to ${paraId}`);
+		let slotsCount = paraId.sub(nextId);
+		let nonces = range(slotsCount.toNumber(), aliceNonce.toNumber());
+		aliceNonce.iaddn(nonces.length);
+		let slotsReserveTxs = nonces.map((nonce) => blockUntilFinalized(api.tx.registrar.reserve(), alice, { nonce: nonce }));
+		await Promise.all(slotsReserveTxs);
+
+		console.info(`Parachain ${paraId} - preparing initialization tx`);
+		const genesis = fs.readFileSync(state_file).toString();
+		const wasm = fs.readFileSync(wasm_file).toString();
+		const scheduleParaInit = api.tx.parasSudoWrapper.sudoScheduleParaInitialize(
+			paraId,
+			{
+				genesisHead: genesis,
+				validationCode: wasm,
+				parachain: true,
+			}
+		);
+
+		console.info(`Parachain ${paraId} - sending initialization tx`);
+		await blockUntilFinalized(
+			api.tx.sudo.sudo(scheduleParaInit),
+			alice,
+			{ nonce: aliceNonce },
+		);
+		console.info(`Parachain ${paraId} - initialization completed`);
 	}
 
-	console.info(`reserving parachain slots from ${nextId} to ${paraId}`);
-	let slotsCount = paraId.sub(nextId);
-	let nonces = range(slotsCount.toNumber(), aliceNonce.toNumber());
-	aliceNonce.iaddn(nonces.length);
-	let slotsReserveTxs = nonces.map((nonce) => blockUntilFinalized(api.tx.registrar.reserve(), alice, { nonce: nonce }));
-	await Promise.all(slotsReserveTxs);
+	let init_call = true;
+	return new Promise(async (_) => {
+		const unsub = await api.derive.chain.subscribeNewHeads(async (header) => {
+			if (init_call || header.number.toBn().modn(10) == new BN(0)) {
+				init_call = false;
+				await forceLease(api, alice, paraId, header.number.toBn());
+			}
+		})
 
-	console.info(`Parachain ${paraId} - preparing initialization tx`);
-	const genesis = fs.readFileSync(state_file).toString();
-	const wasm = fs.readFileSync(wasm_file).toString();
-	const scheduleParaInit = api.tx.parasSudoWrapper.sudoScheduleParaInitialize(
-		paraId,
-		{
-			genesisHead: genesis,
-			validationCode: wasm,
-			parachain: true,
-		}
-	);
-
-	console.info(`Parachain ${paraId} - sending initialization tx`);
-	await blockUntilFinalized(
-		api.tx.sudo.sudo(scheduleParaInit),
-		alice,
-		{ nonce: aliceNonce },
-	);
-	console.info(`Parachain ${paraId} - initialization completed`);
-	return Promise.resolve()
+	});
 };
 
 

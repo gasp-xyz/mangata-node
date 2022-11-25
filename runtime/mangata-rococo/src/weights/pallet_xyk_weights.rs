@@ -298,12 +298,6 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(4 as u64))
 			.saturating_add(RocksDbWeight::get().writes(3 as u64))
 	}
-	// Storage: Issuance PromotedPoolsRewardsV2 (r:1 w:1)
-	fn promote_pool() -> Weight {
-		(Weight::from_ref_time(29_400_000))
-			.saturating_add(RocksDbWeight::get().reads(1 as u64))
-			.saturating_add(RocksDbWeight::get().writes(1 as u64))
-	}
 	// Storage: Issuance PromotedPoolsRewardsV2 (r:1 w:0)
 	// Storage: MultiPurposeLiquidity ReserveStatus (r:1 w:1)
 	// Storage: Tokens Accounts (r:1 w:1)

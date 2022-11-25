@@ -80,17 +80,17 @@ sp_api::decl_runtime_apis! {
 			second_asset_id: TokenId,
 			liquidity_asset_amount: Balance,
 		) -> RpcAmountsResult<Balance>;
-		fn calculate_rewards_amount(
-			user: AccountId,
-			liquidity_asset_id: TokenId,
-		) -> XYKRpcResult<Balance>;
 		fn get_max_instant_burn_amount(
 			user: AccountId,
 			liquidity_asset_id: TokenId,
-		) -> Balance;
+		) -> XYKRpcResult<Balance>;
 		fn get_max_instant_unreserve_amount(
 			user: AccountId,
 			liquidity_asset_id: TokenId,
-		) -> Balance;
+		) -> XYKRpcResult<Balance>;
+		fn calculate_rewards_amount_v2(
+			user: AccountId,
+			liquidity_asset_id: TokenId,
+		) -> XYKRpcResult<Balance>;
 	}
 }

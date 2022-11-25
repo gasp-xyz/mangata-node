@@ -1,0 +1,84 @@
+name: deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        description: "Target environment for deployment"
+        required: true
+        type: string
+      version:
+        description: "Version to be assigned to the built image"
+        required: true
+        type: string
+      cluster_name:
+        description: "Name of the cluster on which to perform deployment"
+        default: mangata-dev
+        required: false
+        type: string
+  workflow_call:
+    inputs:
+      env:
+        description: "Target environment for deployment"
+        required: true
+        type: string
+      version:
+        description: "Version to be assigned to the built image"
+        required: true
+        type: string
+      cluster_name:
+        description: "Name of the cluster on which to perform deployment"
+        default: mangata-dev
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+  deployments: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      ENV_REF: ${{ inputs.env == 'fungible' && format('pr-{0}', github.event.number) || inputs.env }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: jkroepke/setup-vals@v1.0.4
+      - uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      - name: Set up GKE credentials
+        uses: google-github-actions/get-gke-credentials@v0.8.2
+        with:
+          cluster_name: ${{ inputs.cluster_name }}
+          location: europe-west1
+      
+      - name: Create a GitHub Deployment
+        uses: bobheadxi/deployments@v1.3.0
+        id: deployment
+        with:
+          step: start
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: ${{ env.ENV_REF }}
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
+
+      - run: |
+          helm plugin install https://github.com/jkroepke/helm-secrets --version v4.1.1
+          helm secrets -b vals upgrade -i --create-namespace -n ${{ env.ENV_REF }} --wait node . \
+          --set image.tag=${{ inputs.version }} \
+          --set env=${{ env.ENV_REF }} \
+          -f values.yaml -f values-${{ inputs.env }}.yaml
+        working-directory: devops/helm-charts/node
+      
+      - name: Update the GitHub Deployment status
+        uses: bobheadxi/deployments@v1.3.0
+        if: always()
+        with:
+          step: finish
+          token: ${{ secrets.GITHUB_TOKEN }}
+          status: ${{ job.status }}
+          env: ${{ steps.deployment.outputs.env }}
+          deployment_id: ${{ steps.deployment.outputs.deployment_id }}
+          env_url: "https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fnode-01-ws-${{ env.ENV_REF }}.mangata.online#/explorer"

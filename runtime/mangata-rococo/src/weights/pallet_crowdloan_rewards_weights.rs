@@ -69,8 +69,8 @@ pub struct ModuleWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_crowdloan_rewards::WeightInfo for ModuleWeight<T> {
 	// Storage: Crowdloan CrowdloanAllocation (r:0 w:1)
 	fn set_crowdloan_allocation() -> Weight {
-		(2_015_000 as Weight)
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(2_015_000)
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Crowdloan Initialized (r:1 w:0)
 	// Storage: Crowdloan InitializedRewardAmount (r:1 w:1)
@@ -84,13 +84,13 @@ impl<T: frame_system::Config> pallet_crowdloan_rewards::WeightInfo for ModuleWei
 	// Storage: System Account (r:1 w:1)
 	// Storage: Crowdloan AccountsPayable (r:1 w:1)
 	fn initialize_reward_vec(x: u32, ) -> Weight {
-		(229_673_000 as Weight)
+		Weight::from_ref_time(229_673_000)
 			// Standard Error: 31_000
-			.saturating_add((53_971_000 as Weight).saturating_mul(x as Weight))
-			.saturating_add(T::DbWeight::get().reads(6 as Weight))
-			.saturating_add(T::DbWeight::get().reads((5 as Weight).saturating_mul(x as Weight)))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes((4 as Weight).saturating_mul(x as Weight)))
+			.saturating_add((Weight::from_ref_time(53_971_000)).saturating_mul(x as u64))
+			.saturating_add(T::DbWeight::get().reads(6 as u64))
+			.saturating_add(T::DbWeight::get().reads((5 as u64).saturating_mul(x as u64)))
+			.saturating_add(T::DbWeight::get().writes(3 as u64))
+			.saturating_add(T::DbWeight::get().writes((4 as u64).saturating_mul(x as u64)))
 	}
 	// Storage: Crowdloan Initialized (r:1 w:1)
 	// Storage: Crowdloan InitRelayBlock (r:1 w:0)
@@ -99,9 +99,9 @@ impl<T: frame_system::Config> pallet_crowdloan_rewards::WeightInfo for ModuleWei
 	// Storage: Crowdloan TotalContributors (r:1 w:0)
 	// Storage: Crowdloan EndRelayBlock (r:0 w:1)
 	fn complete_initialization() -> Weight {
-		(19_091_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(5 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		Weight::from_ref_time(19_091_000)
+			.saturating_add(T::DbWeight::get().reads(5 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 	// Storage: Crowdloan Initialized (r:1 w:0)
 	// Storage: Crowdloan AccountsPayable (r:1 w:1)
@@ -111,15 +111,15 @@ impl<T: frame_system::Config> pallet_crowdloan_rewards::WeightInfo for ModuleWei
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: Tokens TotalIssuance (r:1 w:1)
 	fn claim() -> Weight {
-		(50_138_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(7 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+		Weight::from_ref_time(50_138_000)
+			.saturating_add(T::DbWeight::get().reads(7 as u64))
+			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 	// Storage: Crowdloan AccountsPayable (r:2 w:2)
 	fn update_reward_address() -> Weight {
-		(27_393_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		Weight::from_ref_time(27_393_000)
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 	// Storage: Crowdloan UnassociatedContributions (r:1 w:1)
 	// Storage: Crowdloan ClaimedRelayChainIds (r:1 w:1)
@@ -128,60 +128,60 @@ impl<T: frame_system::Config> pallet_crowdloan_rewards::WeightInfo for ModuleWei
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: Tokens TotalIssuance (r:1 w:1)
 	fn associate_native_identity() -> Weight {
-		(110_060_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(6 as Weight))
-			.saturating_add(T::DbWeight::get().writes(5 as Weight))
+		Weight::from_ref_time(110_060_000)
+			.saturating_add(T::DbWeight::get().reads(6 as u64))
+			.saturating_add(T::DbWeight::get().writes(5 as u64))
 	}
 	// Storage: Crowdloan AccountsPayable (r:2 w:2)
 	fn change_association_with_relay_keys(x: u32, ) -> Weight {
-		(29_746_000 as Weight)
+		Weight::from_ref_time(29_746_000)
 			// Standard Error: 1_000
-			.saturating_add((49_934_000 as Weight).saturating_mul(x as Weight))
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+			.saturating_add((Weight::from_ref_time(49_934_000)).saturating_mul(x as u64))
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 }
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
 	fn set_crowdloan_allocation() -> Weight {
-		(2_015_000 as Weight)
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(2_015_000)
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	fn initialize_reward_vec(x: u32, ) -> Weight {
-		(229_673_000 as Weight)
+		Weight::from_ref_time(229_673_000)
 			// Standard Error: 31_000
-			.saturating_add((53_971_000 as Weight).saturating_mul(x as Weight))
-			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
-			.saturating_add(RocksDbWeight::get().reads((5 as Weight).saturating_mul(x as Weight)))
-			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
-			.saturating_add(RocksDbWeight::get().writes((4 as Weight).saturating_mul(x as Weight)))
+			.saturating_add((Weight::from_ref_time(53_971_000)).saturating_mul(x as u64))
+			.saturating_add(RocksDbWeight::get().reads(6 as u64))
+			.saturating_add(RocksDbWeight::get().reads((5 as u64).saturating_mul(x as u64)))
+			.saturating_add(RocksDbWeight::get().writes(3 as u64))
+			.saturating_add(RocksDbWeight::get().writes((4 as u64).saturating_mul(x as u64)))
 	}
 	fn complete_initialization() -> Weight {
-		(19_091_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
+		Weight::from_ref_time(19_091_000)
+			.saturating_add(RocksDbWeight::get().reads(5 as u64))
+			.saturating_add(RocksDbWeight::get().writes(2 as u64))
 	}
 	fn claim() -> Weight {
-		(50_138_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(7 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+		Weight::from_ref_time(50_138_000)
+			.saturating_add(RocksDbWeight::get().reads(7 as u64))
+			.saturating_add(RocksDbWeight::get().writes(3 as u64))
 	}
 	fn update_reward_address() -> Weight {
-		(27_393_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
+		Weight::from_ref_time(27_393_000)
+			.saturating_add(RocksDbWeight::get().reads(2 as u64))
+			.saturating_add(RocksDbWeight::get().writes(2 as u64))
 	}
 	fn associate_native_identity() -> Weight {
-		(110_060_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
+		Weight::from_ref_time(110_060_000)
+			.saturating_add(RocksDbWeight::get().reads(6 as u64))
+			.saturating_add(RocksDbWeight::get().writes(5 as u64))
 	}
 	fn change_association_with_relay_keys(x: u32, ) -> Weight {
-		(29_746_000 as Weight)
+		Weight::from_ref_time(29_746_000)
 			// Standard Error: 1_000
-			.saturating_add((49_934_000 as Weight).saturating_mul(x as Weight))
-			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
+			.saturating_add((Weight::from_ref_time(49_934_000)).saturating_mul(x as u64))
+			.saturating_add(RocksDbWeight::get().reads(2 as u64))
+			.saturating_add(RocksDbWeight::get().writes(2 as u64))
 	}
 }

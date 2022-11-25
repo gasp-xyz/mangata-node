@@ -7,212 +7,139 @@ name: Continous Integration
 
 on:
   pull_request:
+    types: [labeled, opened, synchronize, unlabeled, closed]
     branches:
       - develop
   push:
-    branches: [ develop ]
+    branches: [develop]
 
   workflow_dispatch:
     # For manually trigger
     inputs:
-        e2eBranch:
-          description: 'Name of the e2e target branch'
-          required: false
-          default: 'main'
+      e2eBranch:
+        description: "Name of the e2e target branch"
+        required: false
+        default: "main"
+      parachainDocker:
+        description: "Name of the parachain docker reference"
+        required: false
+        default: "mangatasolutions/mangata-node:latest"
+      skipBuild:
+        description: "Skip build phase"
+        type: boolean
+        required: true
+        default: false
 
-        parachainDocker:
-          description: 'Name of the parachain docker reference'
-          required: false
-          default: "mangatasolutions/mangata-node:rococo-latest"
+permissions:
+  contents: write
+  id-token: write
+  deployments: write
+  checks: write
 
-        skipBuild:
-          description: "Skip build phase"
-          type: boolean
-          required: true
-          default: false
-
-env:
-  DOCKER_BUILDER_IMAGE: mangatasolutions/node-builder:0.2
-  DISABLE_TTY: 1
+# The following concurrency group cancels in-progress jobs or runs on pull_request events only
+# https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
+concurrency: 
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   init:
     name: Global init
+    if: github.event.action != 'unlabeled' && github.event.action != 'closed'
     runs-on: ubuntu-latest
     outputs:
-      GLOBAL_VERSION: ${{ steps.set_ver.outputs.GLOBAL_VERSION }}
+      GLOBAL_VERSION: ${{ steps.set_vars.outputs.GLOBAL_VERSION }}
+      GIT_BRANCH: ${{ steps.set_vars.outputs.GIT_BRANCH }}
     steps:
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v6
       - name: Set global version
-        id: set_ver
-        run: echo "::set-output name=GLOBAL_VERSION::${{ github.sha }}"
-  
-  rustfmt-check:
-    name: Formatting check
-    if:  ${{ github.event.inputs.skipBuild != 'true' }}
-    runs-on: ubuntu-latest
-    steps:
-      -
-        name: Checkout
-        uses: actions/checkout@v2
-      -
-        name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-      -
-        name: Login to Docker Hub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Pull builder image
+        id: set_vars
         run: |
-          docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
-      -
-        name: Check formatting
-        run: |
-          ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh fmt --all -- --check
+          echo "GLOBAL_VERSION=${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "GIT_BRANCH=${{ steps.branch-name.outputs.current_branch }}" | sed "s@/@-@g" >> $GITHUB_OUTPUT
 
-  clippy-check:
-    name: Clippy check
-    runs-on: ubuntu-latest
+  build-and-test:
     if: ${{ github.event.inputs.skipBuild != 'true' }}
-    steps:
-      -
-        name: Checkout
-        uses: actions/checkout@v2
-      -
-        name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-      -
-        name: Login to Docker Hub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Pull builder image
-        run: |
-          docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
-      -
-        name: Run clippy
-        run: |
-          ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh clippy -p pallet-xyk -p pallet-bridge
-
-  unit-test:
-    name: Unit test
-    runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.skipBuild != 'true' }}
-    steps:
-      -
-        name: Checkout
-        uses: actions/checkout@v2
-      -
-        name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-      -
-        name: Login to Docker Hub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Pull builder image
-        run: |
-          docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
-      -
-        name: Run unit tests
-        run: |
-          ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh test -j2 -p pallet-bootstrap -p xyk-rpc -p pallet-xyk -p xyk-runtime-api -p pallet-bridge -p pallet-issuance -p pallet-multipurpose-liquidity -p pallet-sudo-origin
-
-          # |cargo2junit | tee ut-results.xml
-          # sed -i '/<testsuite.*\/>$/d' ut-results.xml
-          # sed -i 's/<testsuites>/<testsuites time="0">/g' ut-results.xml
-          # cat ut-results.xml
-      # - name: Test Report
-      #   uses: dorny/test-reporter@v1
-      #   if: success() || failure()
-      #   with:
-      #     name: Unit Tests
-      #     path: ut-results.xml
-      #     reporter: jest-junit
-
-  run-benchmarks-tests:
-    name: Run benchmark tests
-    runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.skipBuild != 'true' }}
-    steps:
-      - uses: actions/checkout@v2
-      - uses: docker/setup-buildx-action@v1
-      - uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      
-      - name: Pull builder image
-        run: docker pull ${{ env.DOCKER_BUILDER_IMAGE }}
-      - name: Run benchamrks
-        run: |
-          ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh test -j2 --features=runtime-benchmarks -p pallet-bootstrap -p pallet-xyk -p xyk-runtime-api -p pallet-bridge -p pallet-issuance
-  
-  build-node-image:
     needs: [init]
-    runs-on: [self-hosted, compile]
-    if: ${{ github.event.inputs.skipBuild != 'true' }}
-    steps:
-      - name: Debug info about publishing.
-        run: echo ${{ github.ref }} == 'refs/heads/develop' && echo ${{ github.ref }}
-      - uses: actions/checkout@v3
-      - uses: docker/setup-buildx-action@v1
-      - uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+    name: Build
+    uses: ./.github/workflows/build-and-test.yml
+    secrets: inherit
+    with:
+      version: ${{ needs.init.outputs.GLOBAL_VERSION }}
+      branch: ${{ needs.init.outputs.GIT_BRANCH }}
 
-      - name: Build and push
-        uses: docker/build-push-action@v3
-        with:
-          push: true
-          file: devops/dockerfiles/node-new/Dockerfile
-          cache-from: type=registry,ref=mangatasolutions/mangata-node
-          cache-to: type=registry,ref=mangatasolutions/mangata-node,mode=max
-          tags: |
-            "mangatasolutions/mangata-node:${{ needs.init.outputs.GLOBAL_VERSION }}"
-            "mangatasolutions/mangata-node:rococo-${{ needs.init.outputs.GLOBAL_VERSION }}"
-            "mangatasolutions/mangata-node:kusama-${{ needs.init.outputs.GLOBAL_VERSION }}"
-
-  run-benchmarks:
-    name: Run runtime benchmarks
-    needs: [init,build-node-image]
+  deploy-fungible:
+    name: Deploy fungible environment
+    needs: [init,build-and-test]
+    if: |
+      (github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == ':rocket: deploy') ||
+      (github.event_name == 'pull_request' && github.event.action != 'labeled' && contains(github.event.pull_request.labels.*.name, ':rocket: deploy'))
+    uses: ./.github/workflows/deploy.yml
+    secrets: inherit
+    with:
+      env: fungible
+      version: ${{ needs.init.outputs.GLOBAL_VERSION }}
+  
+  clean-up-fungible:
+    name: Delete fungible environment
+    if: |
+      (github.event_name == 'pull_request' && github.event.action == 'unlabeled' && github.event.label.name == ':rocket: deploy') ||
+      (github.event_name == 'pull_request' && github.event.action == 'closed' && contains(github.event.pull_request.labels.*.name, ':rocket: deploy'))
     runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.skipBuild != 'true' }}
-    env:
-      NODE_IMAGE: ${{ format('mangatasolutions/mangata-node:rococo-{0}', needs.init.outputs.GLOBAL_VERSION) }}
     steps:
-      - name: Run Runtime Benchmark
-        run: |
-          docker pull ${{ env.NODE_IMAGE }}
-          docker run --rm ${{ env.NODE_IMAGE }} benchmark pallet --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-xyk' --template ./templates/module-weight-template.hbs
+      - uses: actions/checkout@v3
+      - uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      - name: Set up GKE credentials
+        uses: google-github-actions/get-gke-credentials@v0.8.2
+        with:
+          cluster_name: mangata-dev
+          location: europe-west1
+
+      - name: Delete Kubernetes namespace with resources for fungible environment
+        run: kubectl delete namespace pr-${{ github.event.number }}
+      
+      - name: Delete GitHub Deployment environment
+        if: always()
+        uses: bobheadxi/deployments@v1.3.0
+        with:
+          step: delete-env
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: pr-${{ github.event.number }}
+
+  deploy-dev:
+    needs: [init,build-and-test]
+    if: github.event_name == 'push' && github.ref_name == 'develop'
+    name: Deploy `dev` environment
+    uses: ./.github/workflows/deploy.yml
+    secrets: inherit
+    with:
+      env: dev
+      version: ${{ needs.init.outputs.GLOBAL_VERSION }}
 
   e2e-test-matrix:
     strategy:
-        matrix:
-          command: ["yarn test-parallel --max-workers=32", "yarn test-sequential-e2e"]
-    needs: [init,build-node-image]
+      matrix:
+        command: ["yarn test-parallel --max-workers=32", "yarn test-sequential-e2e"]
+    needs: [init, build-and-test]
     runs-on: [self-hosted, basic]
     timeout-minutes: 180
     if: ${{ (!cancelled() && (success() || github.event.inputs.skipBuild == 'true')) && !contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests') }}
     env:
-      API_URL: 'ws://127.0.0.1:9946'
+      API_URL: "ws://127.0.0.1:9946"
       TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}
-      E2E_TREASURY_PALLET_ADDRESS : ${{ secrets.E2E_TREASURY_PALLET_ADDRESS }}
-      E2E_XYK_PALLET_ADDRESS : ${{ secrets.E2E_XYK_PALLET_ADDRESS }}
-      E2E_TREASURY_BURN_PALLET_ADDRESS : ${{ secrets.E2E_TREASURY_BURN_PALLET_ADDRESS }}
+      E2E_TREASURY_PALLET_ADDRESS: ${{ secrets.E2E_TREASURY_PALLET_ADDRESS }}
+      E2E_XYK_PALLET_ADDRESS: ${{ secrets.E2E_XYK_PALLET_ADDRESS }}
+      E2E_TREASURY_BURN_PALLET_ADDRESS: ${{ secrets.E2E_TREASURY_BURN_PALLET_ADDRESS }}
       #      TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
-      TEST_SUDO_NAME: '//Alice'
+      TEST_SUDO_NAME: "//Alice"
       MANGATA_NODE_VERSION: ${{ needs.init.outputs.GLOBAL_VERSION }}
-      E2EBRANCHNAME: 'main'
-      PARACHAIN_DOCKER_IMAGE: ${{ github.event.inputs.parachainDocker || format('mangatasolutions/mangata-node:rococo-{0}', needs.init.outputs.GLOBAL_VERSION) }}
+      E2EBRANCHNAME: "main"
+      PARACHAIN_DOCKER_IMAGE: ${{ github.event.inputs.parachainDocker || format('mangatasolutions/mangata-node:{0}', needs.init.outputs.GLOBAL_VERSION) }}
     steps:
       ####IDK, but this is neccesary for reports
       - uses: actions/checkout@v3
@@ -238,19 +165,18 @@ jobs:
       - name: Decide if main - branch or parameter
         # if we have something in e2eBranch - override E2EBranchName, else -> E2EBRANCHNAME , that
         # by default will be main.
-        run:
-          echo "E2EBRANCHNAME=${{ github.event.inputs.e2eBranch || env.E2EBRANCHNAME }}" >> $GITHUB_ENV
+        run: echo "E2EBRANCHNAME=${{ github.event.inputs.e2eBranch || env.E2EBRANCHNAME }}" >> $GITHUB_ENV
 
       - name: E2E- Get target branch.
         run: |
           echo "${{ env.E2EBRANCHNAME }}"
 
       - name: Checkout tests
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: mangata-finance/mangata-e2e
-          ref: '${{ env.E2EBRANCHNAME }}'
-          path: 'e2eTests'
+          ref: "${{ env.E2EBRANCHNAME }}"
+          path: e2eTests
 
       - name: Print parachain docker image reference
         run: |
@@ -291,18 +217,18 @@ jobs:
         run: ${{ matrix.command }}
 
       - name: Test Report
-        uses: dorny/test-reporter@v1
-        if: success() || failure()    # run this step even if previous step failed
+        uses: dorny/test-reporter@v1.6.0
+        if: success() || failure() # run this step even if previous step failed
         with:
-          name: E2E report ${{ matrix.command }}       # Name of the check run which will be created
-          path: e2eTests/reports/junit-*.xml    # Path to test results
-          reporter: jest-junit        # Format of test results
+          name: E2E report ${{ matrix.command }} # Name of the check run which will be created
+          path: e2eTests/reports/junit-*.xml # Path to test results
+          reporter: jest-junit # Format of test results
 
       - name: Collect docker logs on failure
         if: failure()
-        uses: jwalton/gh-docker-logs@v1
+        uses: jwalton/gh-docker-logs@v2.2.1
         with:
-          dest: './logs'
+          dest: "./logs"
 
       - name: Tar logs
         if: failure()
@@ -318,7 +244,7 @@ jobs:
 
       - name: Upload logs  and docker images to GitHub
         if: failure()
-        uses: actions/upload-artifact@master
+        uses: actions/upload-artifact@v3.1.1
         with:
           name: logsAndImages
           path: |

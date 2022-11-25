@@ -72,9 +72,9 @@ impl<T: frame_system::Config> pallet_bootstrap::WeightInfo for ModuleWeight<T> {
 	// Storage: Bootstrap PromoteBootstrapPool (r:0 w:1)
 	// Storage: Bootstrap ActivePair (r:0 w:1)
 	fn schedule_bootstrap() -> Weight {
-		(26_692_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+		(Weight::from_ref_time(26_692_000 ))
+			.saturating_add(T::DbWeight::get().reads(4  as u64))
+			.saturating_add(T::DbWeight::get().writes(3  as u64))
 	}
 	// Storage: Bootstrap ActivePair (r:1 w:0)
 	// Storage: Bootstrap Phase (r:1 w:0)
@@ -86,9 +86,9 @@ impl<T: frame_system::Config> pallet_bootstrap::WeightInfo for ModuleWeight<T> {
 	// Storage: Bootstrap Valuations (r:1 w:1)
 	// Storage: Bootstrap ProvisionAccounts (r:0 w:1)
 	fn provision() -> Weight {
-		(80_812_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(9 as Weight))
-			.saturating_add(T::DbWeight::get().writes(6 as Weight))
+		(Weight::from_ref_time(80_812_000 ))
+			.saturating_add(T::DbWeight::get().reads(9  as u64))
+			.saturating_add(T::DbWeight::get().writes(6  as u64))
 	}
 	// Storage: Vesting Vesting (r:1 w:1)
 	// Storage: Tokens Locks (r:1 w:1)
@@ -102,9 +102,9 @@ impl<T: frame_system::Config> pallet_bootstrap::WeightInfo for ModuleWeight<T> {
 	// Storage: Bootstrap Valuations (r:1 w:1)
 	// Storage: Bootstrap ProvisionAccounts (r:0 w:1)
 	fn provision_vested() -> Weight {
-		(111_492_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(11 as Weight))
-			.saturating_add(T::DbWeight::get().writes(8 as Weight))
+		(Weight::from_ref_time(111_492_000 ))
+			.saturating_add(T::DbWeight::get().reads(11  as u64))
+			.saturating_add(T::DbWeight::get().writes(8  as u64))
 	}
 	// Storage: Bootstrap Phase (r:1 w:0)
 	// Storage: Bootstrap MintedLiquidity (r:1 w:0)
@@ -125,9 +125,9 @@ impl<T: frame_system::Config> pallet_bootstrap::WeightInfo for ModuleWeight<T> {
 	// Storage: Xyk LiquidityMiningActivePool (r:1 w:1)
 	// Storage: Bootstrap ProvisionAccounts (r:0 w:1)
 	fn claim_and_activate_liquidity_tokens() -> Weight {
-		(253_032_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(21 as Weight))
-			.saturating_add(T::DbWeight::get().writes(12 as Weight))
+		(Weight::from_ref_time(253_032_000 ))
+			.saturating_add(T::DbWeight::get().reads(21  as u64))
+			.saturating_add(T::DbWeight::get().writes(12  as u64))
 	}
 	// Storage: Bootstrap Phase (r:1 w:1)
 	// Storage: Bootstrap ProvisionAccounts (r:1 w:0)
@@ -142,37 +142,37 @@ impl<T: frame_system::Config> pallet_bootstrap::WeightInfo for ModuleWeight<T> {
 	// Storage: Bootstrap PromoteBootstrapPool (r:0 w:1)
 	// Storage: Bootstrap ActivePair (r:0 w:1)
 	fn finalize() -> Weight {
-		(81_226_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(6 as Weight))
-			.saturating_add(T::DbWeight::get().writes(13 as Weight))
+		(Weight::from_ref_time(81_226_000 ))
+			.saturating_add(T::DbWeight::get().reads(6  as u64))
+			.saturating_add(T::DbWeight::get().writes(13  as u64))
 	}
 }
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
 	fn schedule_bootstrap() -> Weight {
-		(26_692_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+		(Weight::from_ref_time(26_692_000 ))
+			.saturating_add(RocksDbWeight::get().reads(4  as u64))
+			.saturating_add(RocksDbWeight::get().writes(3  as u64))
 	}
 	fn provision() -> Weight {
-		(80_812_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(9 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
+		(Weight::from_ref_time(80_812_000 ))
+			.saturating_add(RocksDbWeight::get().reads(9  as u64))
+			.saturating_add(RocksDbWeight::get().writes(6  as u64))
 	}
 	fn provision_vested() -> Weight {
-		(111_492_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(11 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(8 as Weight))
+		(Weight::from_ref_time(111_492_000 ))
+			.saturating_add(RocksDbWeight::get().reads(11  as u64))
+			.saturating_add(RocksDbWeight::get().writes(8  as u64))
 	}
 	fn claim_and_activate_liquidity_tokens() -> Weight {
-		(253_032_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(21 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(12 as Weight))
+		(Weight::from_ref_time(253_032_000 ))
+			.saturating_add(RocksDbWeight::get().reads(21  as u64))
+			.saturating_add(RocksDbWeight::get().writes(12  as u64))
 	}
 	fn finalize() -> Weight {
-		(81_226_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(13 as Weight))
+		(Weight::from_ref_time(81_226_000 ))
+			.saturating_add(RocksDbWeight::get().reads(6  as u64))
+			.saturating_add(RocksDbWeight::get().writes(13  as u64))
 	}
 }

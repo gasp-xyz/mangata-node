@@ -395,23 +395,47 @@ fn promote_pool_api_works() {
 		Issuance::promote_pool(1);
 
 		roll_to_while_minting(4, None);
-		assert_eq!(225022, Issuance::get_pool_rewards(1).unwrap());
+		assert_eq!(
+			U256::from_dec_str("76571018769283414925455480913511346478027010").unwrap(),
+			Issuance::get_pool_rewards_v2(1).unwrap()
+		);
 		roll_to_while_minting(9, None);
-		assert_eq!(450044, Issuance::get_pool_rewards(1).unwrap());
+		assert_eq!(
+			U256::from_dec_str("153142037538566829850910961827022692956054020").unwrap(),
+			Issuance::get_pool_rewards_v2(1).unwrap()
+		);
 
 		Issuance::promote_pool(2);
-		assert_eq!(2, Issuance::len());
+		//	assert_eq!(2, Issuance::len());
 		roll_to_while_minting(14, None);
-		assert_eq!(562555, Issuance::get_pool_rewards(1).unwrap());
-		assert_eq!(112511, Issuance::get_pool_rewards(2).unwrap());
+		assert_eq!(
+			U256::from_dec_str("191427546923208537313638702283778366195067525").unwrap(),
+			Issuance::get_pool_rewards_v2(1).unwrap()
+		);
+		assert_eq!(
+			U256::from_dec_str("38285509384641707462727740456755673239013505").unwrap(),
+			Issuance::get_pool_rewards_v2(2).unwrap()
+		);
 
-		assert!(Issuance::claim_pool_rewards(1, 100000));
-		assert_eq!(462555, Issuance::get_pool_rewards(1).unwrap());
-		assert_eq!(112511, Issuance::get_pool_rewards(2).unwrap());
+		roll_to_while_minting(19, None);
+		assert_eq!(
+			U256::from_dec_str("229713056307850244776366442740534039434081030").unwrap(),
+			Issuance::get_pool_rewards_v2(1).unwrap()
+		);
+		assert_eq!(
+			U256::from_dec_str("76571018769283414925455480913511346478027010").unwrap(),
+			Issuance::get_pool_rewards_v2(2).unwrap()
+		);
 	});
 }
 
-//PoolPromoteApi
+// #[test]
+// fn mock_use_demo() {
+// 	new_test_ext().execute_with(|| {
+// 		// sets to some value
+// 		mock::MockActivedPoolQueryApi::instance().lock().unwrap().replace(1_u128);
 
-// promote pool or 2
-// go to block 100000 one by one with issuing, check rewards, claim rewards
+// 		// sets to none
+// 		mock::MockActivedPoolQueryApi::instance().lock().unwrap().take();
+// 	});
+// }

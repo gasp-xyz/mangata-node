@@ -43,7 +43,7 @@ jobs:
         uses: docker/metadata-action@v4.1.1
         with:
           images: docker.io/mangatasolutions/mangata-node
-          tags: type=semver,prefix=kusama-,pattern=${{ env.TAG_NAME }}
+          tags: type=semver,prefix=kusama-,pattern={{ version }}
           flavor: |
             latest=false
 
@@ -52,7 +52,7 @@ jobs:
         uses: docker/metadata-action@v4.1.1
         with:
           images: docker.io/mangatasolutions/mangata-node
-          tags: type=semver,prefix=rococo-,pattern=${{ env.TAG_NAME }}
+          tags: type=semver,prefix=rococo-,pattern={{ version }}
           flavor: |
             latest=false
 

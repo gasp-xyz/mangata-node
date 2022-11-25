@@ -223,6 +223,7 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 							additional: CustomMetadata {
 								// 10_000:1 MGX:KSM
 								xcm: Some(XcmMetadata { fee_per_second: ksm_per_second() }),
+								xyk: None,
 							},
 							existential_deposit: Default::default(),
 							location: None,
@@ -378,6 +379,7 @@ pub fn development_config() -> ChainSpec {
 							additional: CustomMetadata {
 								// 10_000:1 MGX:KSM
 								xcm: Some(XcmMetadata { fee_per_second: ksm_per_second() }),
+								xyk: None,
 							},
 							existential_deposit: Default::default(),
 							location: None,
@@ -535,6 +537,7 @@ pub fn local_config() -> ChainSpec {
 							additional: CustomMetadata {
 								// 10_000:1 MGX:KSM
 								xcm: Some(XcmMetadata { fee_per_second: ksm_per_second() }),
+								xyk: None,
 							},
 							existential_deposit: Default::default(),
 							location: None,
@@ -561,6 +564,7 @@ pub fn local_config() -> ChainSpec {
 							additional: CustomMetadata {
 								// 100:1 MGR:KAR
 								xcm: Some(XcmMetadata { fee_per_second: ksm_per_second() * 100 }),
+								xyk: None,
 							},
 							existential_deposit: Default::default(),
 							location: Some(
@@ -587,6 +591,7 @@ pub fn local_config() -> ChainSpec {
 							additional: CustomMetadata {
 								// 100:1 TUR:ROC, 10/12 decimals
 								xcm: Some(XcmMetadata { fee_per_second: ksm_per_second() }),
+								xyk: None,
 							},
 							existential_deposit: Default::default(),
 							location: Some(
@@ -714,7 +719,6 @@ fn mangata_genesis(
 				.collect(),
 		},
 		council: Default::default(),
-		elections: mangata_kusama_runtime::ElectionsConfig { members: vec![] },
 		sudo: mangata_kusama_runtime::SudoConfig {
 			// Assign network admin rights.
 			key: Some(root_key),

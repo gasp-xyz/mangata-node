@@ -7,6 +7,7 @@ name: Continous Integration
 
 on:
   pull_request:
+    types: [labeled, opened, synchronize, unlabeled, closed]
     branches:
       - develop
   push:
@@ -22,28 +23,42 @@ on:
       parachainDocker:
         description: "Name of the parachain docker reference"
         required: false
-        default: "mangatasolutions/mangata-node:rococo-latest"
+        default: "mangatasolutions/mangata-node:latest"
       skipBuild:
         description: "Skip build phase"
         type: boolean
         required: true
         default: false
 
-env:
-  DOCKER_BUILDER_IMAGE: mangatasolutions/node-builder:0.2
-  DISABLE_TTY: 1
-  version: dev
+permissions:
+  contents: write
+  id-token: write
+  deployments: write
+  checks: write
+
+# The following concurrency group cancels in-progress jobs or runs on pull_request events only
+# https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
+concurrency: 
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   init:
     name: Global init
+    if: github.event.action != 'unlabeled' && github.event.action != 'closed'
     runs-on: ubuntu-latest
     outputs:
-      GLOBAL_VERSION: ${{ steps.set_ver.outputs.GLOBAL_VERSION }}
+      GLOBAL_VERSION: ${{ steps.set_vars.outputs.GLOBAL_VERSION }}
+      GIT_BRANCH: ${{ steps.set_vars.outputs.GIT_BRANCH }}
     steps:
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v6
       - name: Set global version
-        id: set_ver
-        run: echo "GLOBAL_VERSION=${{ github.sha }}" >> $GITHUB_OUTPUT
+        id: set_vars
+        run: |
+          echo "GLOBAL_VERSION=${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "GIT_BRANCH=${{ steps.branch-name.outputs.current_branch }}" | sed "s@/@-@g" >> $GITHUB_OUTPUT
 
   build-and-test:
     if: ${{ github.event.inputs.skipBuild != 'true' }}
@@ -53,19 +68,57 @@ jobs:
     secrets: inherit
     with:
       version: ${{ needs.init.outputs.GLOBAL_VERSION }}
+      branch: ${{ needs.init.outputs.GIT_BRANCH }}
 
-  deploy-to-dev:
+  deploy-fungible:
+    name: Deploy fungible environment
     needs: [init,build-and-test]
-    if: github.event_name == 'push' && github.ref_name == 'develop'
-    name: Deploy to `dev` environment
+    if: |
+      (github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == ':rocket: deploy') ||
+      (github.event_name == 'pull_request' && github.event.action != 'labeled' && contains(github.event.pull_request.labels.*.name, ':rocket: deploy'))
     uses: ./.github/workflows/deploy.yml
     secrets: inherit
-    permissions:
-      contents: read
-      id-token: write
-      deployments: write
     with:
-      environment: dev
+      env: fungible
+      version: ${{ needs.init.outputs.GLOBAL_VERSION }}
+  
+  clean-up-fungible:
+    name: Delete fungible environment
+    if: |
+      (github.event_name == 'pull_request' && github.event.action == 'unlabeled' && github.event.label.name == ':rocket: deploy') ||
+      (github.event_name == 'pull_request' && github.event.action == 'closed' && contains(github.event.pull_request.labels.*.name, ':rocket: deploy'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      - name: Set up GKE credentials
+        uses: google-github-actions/get-gke-credentials@v0.8.2
+        with:
+          cluster_name: mangata-dev
+          location: europe-west1
+
+      - name: Delete Kubernetes namespace with resources for fungible environment
+        run: kubectl delete namespace pr-${{ github.event.number }}
+      
+      - name: Delete GitHub Deployment environment
+        if: always()
+        uses: bobheadxi/deployments@v1.3.0
+        with:
+          step: delete-env
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: pr-${{ github.event.number }}
+
+  deploy-dev:
+    needs: [init,build-and-test]
+    if: github.event_name == 'push' && github.ref_name == 'develop'
+    name: Deploy `dev` environment
+    uses: ./.github/workflows/deploy.yml
+    secrets: inherit
+    with:
+      env: dev
       version: ${{ needs.init.outputs.GLOBAL_VERSION }}
 
   e2e-test-matrix:
@@ -86,7 +139,7 @@ jobs:
       TEST_SUDO_NAME: "//Alice"
       MANGATA_NODE_VERSION: ${{ needs.init.outputs.GLOBAL_VERSION }}
       E2EBRANCHNAME: "main"
-      PARACHAIN_DOCKER_IMAGE: ${{ github.event.inputs.parachainDocker || format('mangatasolutions/mangata-node:rococo-{0}', needs.init.outputs.GLOBAL_VERSION) }}
+      PARACHAIN_DOCKER_IMAGE: ${{ github.event.inputs.parachainDocker || format('mangatasolutions/mangata-node:{0}', needs.init.outputs.GLOBAL_VERSION) }}
     steps:
       ####IDK, but this is neccesary for reports
       - uses: actions/checkout@v3

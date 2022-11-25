@@ -10,7 +10,7 @@ use frame_support::{
 	traits::{
 		tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
 		Contains, EnsureOrigin, EnsureOriginWithArg, Everything, ExistenceRequirement, Get,
-		Imbalance, LockIdentifier, Nothing, U128CurrencyToVote, WithdrawReasons,
+		Imbalance, LockIdentifier, Nothing, OnRuntimeUpgrade, U128CurrencyToVote, WithdrawReasons,
 	},
 	unsigned::TransactionValidityError,
 	weights::{
@@ -67,9 +67,10 @@ pub use xcm::{latest::prelude::*, VersionedMultiLocation};
 pub use constants::{fee::*, parachains::*};
 pub use currency::*;
 pub use mangata_types::{
-	assets::{CustomMetadata, XcmMetadata},
+	assets::{CustomMetadata, XcmMetadata, XykMetadata},
 	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
 };
+use mp_bootstrap::AssetRegistryApi;
 pub use pallet_issuance::{IssuanceInfo, PoolPromoteApi};
 pub use pallet_sudo_origin;
 pub use pallet_xyk;
@@ -87,6 +88,7 @@ pub const KAR_TOKEN_ID: TokenId = 6;
 pub const TUR_TOKEN_ID: TokenId = 7;
 
 pub mod constants;
+mod migrations;
 mod weights;
 pub mod xcm_config;
 
@@ -124,7 +126,29 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
+	(MangataMigrations, migrations::asset_register::MigrateToXykMetadata),
 >;
+
+pub struct MangataMigrations;
+impl OnRuntimeUpgrade for MangataMigrations {
+	fn on_runtime_upgrade() -> frame_support::weights::Weight {
+		migrations::phragmen_elections::PhragmenElectionsMigration::on_runtime_upgrade()
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn pre_upgrade() -> Result<(), &'static str> {
+		migrations::phragmen_elections::PhragmenElectionsMigration::pre_upgrade()
+			.expect("try-runtime pre_upgrade for PhragmenElectionsMigration failed!!");
+		Ok(())
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn post_upgrade() -> Result<(), &'static str> {
+		migrations::phragmen_elections::PhragmenElectionsMigration::post_upgrade()
+			.expect("try-runtime post_upgrade for PhragmenElectionsMigration failed!!");
+		Ok(())
+	}
+}
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -445,6 +469,17 @@ impl<T: frame_system::Config> Get<T::AccountId> for RewardsMigrateAccountProvide
 	}
 }
 
+pub struct AssetRegisterFilter;
+impl Contains<TokenId> for AssetRegisterFilter {
+	fn contains(t: &TokenId) -> bool {
+		let meta: Option<AssetMetadataOf> = orml_asset_registry::Metadata::<Runtime>::get(t);
+		if let Some(xyk) = meta.and_then(|m| m.additional.xyk) {
+			return xyk.operations_disabled
+		}
+		return false
+	}
+}
+
 pub struct AssetMetadataMutation;
 impl AssetMetadataMutationTrait for AssetMetadataMutation {
 	fn set_asset_info(
@@ -468,6 +503,8 @@ impl AssetMetadataMutationTrait for AssetMetadataMutation {
 	}
 }
 
+type SessionLenghtOf<T> = <T as parachain_staking::Config>::BlocksPerRound;
+
 impl pallet_xyk::Config for Runtime {
 	type Event = Event;
 	type ActivationReservesProvider = MultiPurposeLiquidity;
@@ -480,13 +517,45 @@ impl pallet_xyk::Config for Runtime {
 	type PoolFeePercentage = frame_support::traits::ConstU128<20>;
 	type TreasuryFeePercentage = frame_support::traits::ConstU128<5>;
 	type BuyAndBurnFeePercentage = frame_support::traits::ConstU128<5>;
-	type RewardsDistributionPeriod = frame_support::traits::ConstU32<1200>;
+	type RewardsDistributionPeriod = SessionLenghtOf<Runtime>;
 	type VestingProvider = Vesting;
 	type DisallowedPools = Bootstrap;
-	type DisabledTokens = Nothing;
+	type DisabledTokens = AssetRegisterFilter;
 	type AssetMetadataMutation = AssetMetadataMutation;
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
 	type RewardsMigrateAccount = RewardsMigrateAccountProvider<Self>;
+}
+
+pub struct EnableAssetPoolApi;
+impl AssetRegistryApi for EnableAssetPoolApi {
+	fn enable_pool_creation(assets: (TokenId, TokenId)) -> bool {
+		for &asset in [assets.0, assets.1].iter() {
+			let meta_maybe: Option<AssetMetadataOf> =
+				orml_asset_registry::Metadata::<Runtime>::get(asset);
+			if let Some(xyk) = meta_maybe.clone().and_then(|m| m.additional.xyk) {
+				let mut additional = meta_maybe.unwrap().additional;
+				if xyk.operations_disabled {
+					additional.xyk = Some(XykMetadata { operations_disabled: false });
+					match orml_asset_registry::Pallet::<Runtime>::do_update_asset(
+						asset,
+						None,
+						None,
+						None,
+						None,
+						None,
+						Some(additional),
+					) {
+						Ok(_) => {},
+						Err(e) => {
+							log::error!(target: "bootstrap", "cannot modify {} asset: {:?}!", asset, e);
+							return false
+						},
+					}
+				}
+			}
+		}
+		true
+	}
 }
 
 parameter_types! {
@@ -506,6 +575,7 @@ impl pallet_bootstrap::Config for Runtime {
 	type TreasuryPalletId = TreasuryPalletId;
 	type RewardsApi = Xyk;
 	type WeightInfo = weights::pallet_bootstrap_weights::ModuleWeight<Runtime>;
+	type AssetRegistryApi = EnableAssetPoolApi;
 }
 
 impl pallet_utility::Config for Runtime {
@@ -797,48 +867,19 @@ impl pallet_collective::Config<CouncilCollective> for Runtime {
 	type WeightInfo = weights::pallet_collective_weights::ModuleWeight<Runtime>;
 }
 
+#[cfg(feature = "fast-runtime")]
 parameter_types! {
-	pub const CandidacyBond: Balance = 10 * DOLLARS;
-	// 1 storage item created, key size is 32 bytes, value size is 16+16.
-	pub const VotingBondBase: Balance = deposit(1, 64);
-	// additional data per vote is 32 bytes (account id).
-	pub const VotingBondFactor: Balance = deposit(0, 32);
-	pub const TermDuration: BlockNumber = 120 * DAYS;
-	pub const DesiredMembers: u32 = 9;
-	pub const DesiredRunnersUp: u32 = 7;
-	pub const MaxVoters: u32 = 10 * 1000;
-	pub const MaxCandidates: u32 = 1000;
-	pub const ElectionsPhragmenPalletId: LockIdentifier = *b"phrelect";
+	/// Default SessionLenght is every 2 minutes (10 * 12 second block times)
+	pub const BlocksPerRound: u32 = 2 * MINUTES;
 }
 
-// Make sure that there are no more than `MaxMembers` members elected via elections-phragmen.
-const_assert!(DesiredMembers::get() <= CouncilMaxMembers::get());
-
-impl pallet_elections_phragmen::Config for Runtime {
-	type Event = Event;
-	type PalletId = ElectionsPhragmenPalletId;
-	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgrTokenId>;
-	type ChangeMembers = Council;
-	// NOTE: this implies that council's genesis members cannot be set directly and must come from
-	// this module.
-	type InitializeMembers = Council;
-	type CurrencyToVote = U128CurrencyToVote;
-	type CandidacyBond = CandidacyBond;
-	type VotingBondBase = VotingBondBase;
-	type VotingBondFactor = VotingBondFactor;
-	type LoserCandidate = Treasury;
-	type KickedMember = Treasury;
-	type DesiredMembers = DesiredMembers;
-	type DesiredRunnersUp = DesiredRunnersUp;
-	type TermDuration = TermDuration;
-	type MaxVoters = MaxVoters;
-	type MaxCandidates = MaxCandidates;
-	type WeightInfo = weights::pallet_elections_phragmen_weights::ModuleWeight<Runtime>;
-}
-
+#[cfg(not(feature = "fast-runtime"))]
 parameter_types! {
-	/// Default BlocksPerRound is every 4 hours (1200 * 12 second block times)
+	/// Default SessionLenght is every 4 hours (1200 * 12 second block times)
 	pub const BlocksPerRound: u32 = 4 * HOURS;
+}
+
+parameter_types! {
 	/// Collator candidate exit delay (number of rounds)
 	pub const LeaveCandidatesDelay: u32 = 2;
 	/// Collator candidate bond increases/decreases delay (number of rounds)
@@ -1117,7 +1158,6 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 49,
 		SudoOrigin: pallet_sudo_origin::{Pallet, Call, Event<T>} = 50,
 		Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 51,
-		Elections: pallet_elections_phragmen::{Pallet, Call, Storage, Event<T>, Config<T>} = 52,
 
 		// Bootstrap
 		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>} = 53,
@@ -1141,7 +1181,6 @@ mod benches {
 		[pallet_xyk, Xyk]
 		[pallet_treasury, Treasury]
 		[pallet_collective, Council]
-		[pallet_elections_phragmen, Elections]
 		[pallet_bootstrap, Bootstrap]
 		[pallet_crowdloan_rewards, Crowdloan]
 		[pallet_utility, Utility]

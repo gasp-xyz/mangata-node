@@ -50,3 +50,7 @@ pub trait RewardsApi {
 		liquidity_mining_issuance_weight: Option<u8>,
 	);
 }
+
+pub trait AssetRegistryApi {
+	fn enable_pool_creation(assets: (TokenId, TokenId)) -> bool;
+}

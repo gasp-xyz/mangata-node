@@ -219,6 +219,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_support::{
+	assert_ok,
 	dispatch::{DispatchError, DispatchResult},
 	ensure,
 	traits::Contains,
@@ -306,7 +307,6 @@ pub use weights::WeightInfo;
 type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 #[frame_support::pallet]
 pub mod pallet {
-
 	use super::*;
 
 	#[pallet::pallet]
@@ -530,21 +530,17 @@ pub mod pallet {
 					} else {
 						let created_liquidity_token_id: TokenId =
 							<T as Config>::Currency::get_next_currency_id().into();
-						assert!(
-							created_liquidity_token_id == *liquidity_token_id,
-							"Assets not initialized in the expected sequence"
+						assert_eq!(
+							created_liquidity_token_id, *liquidity_token_id,
+							"Assets not initialized in the expected sequence",
 						);
-						assert!(
-							<Pallet<T> as XykFunctionsTrait<T::AccountId>>::create_pool(
-								account_id.clone(),
-								*native_token_id,
-								*native_token_amount,
-								*pooled_token_id,
-								*pooled_token_amount
-							)
-							.is_ok(),
-							"Pool creation failed"
-						);
+						assert_ok!(<Pallet<T> as XykFunctionsTrait<T::AccountId>>::create_pool(
+							account_id.clone(),
+							*native_token_id,
+							*native_token_amount,
+							*pooled_token_id,
+							*pooled_token_amount
+						));
 					}
 				},
 			)

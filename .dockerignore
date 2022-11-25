@@ -27,5 +27,8 @@ Tiltfile
 
 !/docker-cargo/release/mangata-node
 
+!target/release/mangata-node
+!target/release/wbuild/mangata*
+
 # dotfiles in the repo root
 /.*

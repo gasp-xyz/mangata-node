@@ -4,18 +4,6 @@ on:
   release:
     types: [published]
 
-  # For testing purposes only
-  workflow_dispatch:
-    inputs:
-      git_sha:
-        description: "Release commit hash"
-        required: true
-        default: "test"
-      version:
-        description: "Relase tag version"
-        required: true
-        default: "test"
-
 
 jobs:
   publish:
@@ -23,9 +11,6 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Set env
-        run: echo "TAG_COMMIT_HASH=${{ github.event.inputs.git_sha || github.sha }}" >> $GITHUB_ENV
-        run: echo "TAG_NAME=${{ github.event.inputs.version || version }}" >> $GITHUB_ENV
 
       - name: Login to Docker Hub
         uses: docker/login-action@v2.1.0
@@ -38,7 +23,7 @@ jobs:
         uses: docker/metadata-action@v4.1.1
         with:
           images: docker.io/mangatasolutions/mangata-node
-          tags: type=semver,prefix=kusama-,pattern=${{ env.TAG_NAME }}
+          tags: type=semver,prefix=kusama-,pattern={{ version }}
           flavor: |
             latest=false
 
@@ -47,20 +32,20 @@ jobs:
         uses: docker/metadata-action@v4.1.1
         with:
           images: docker.io/mangatasolutions/mangata-node
-          tags: type=semver,prefix=rococo-,pattern=${{ env.TAG_NAME }}
+          tags: type=semver,prefix=rococo-,pattern={{ version }}
           flavor: |
             latest=false
 
       - name: Tag and push image [kusama]
         uses: akhilerm/tag-push-action@v2.0.0
         with:
-          src: docker.io/mangatasolutions/mangata-node:${{ env.TAG_COMMIT_HASH }}
+          src: docker.io/mangatasolutions/mangata-node:${{ github.sha }}
           dst: ${{ steps.meta_kusama.outputs.tags }}
 
       - name: Tag and push image [rococo]
         uses: akhilerm/tag-push-action@v2.0.0
         with:
-          src: docker.io/mangatasolutions/mangata-node:${{ env.TAG_COMMIT_HASH }}
+          src: docker.io/mangatasolutions/mangata-node:${{ github.sha }}
           dst: ${{ steps.meta_rococo.outputs.tags }}
 
       - name: Extract wasms
@@ -72,7 +57,7 @@ jobs:
       - name: Upload wasms to release page
         uses: ncipollo/release-action@v1
         with:
-          tag: ${{ env.TAG_NAME }}
+          tag: ${{ github.ref_name }}
           allowUpdates: true
           artifacts: |
             "host/mangata_kusama_runtime.compact.compressed.wasm"

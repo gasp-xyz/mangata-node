@@ -1,6 +1,10 @@
 name: Release
 
 on:
+  pull_request:
+    branches:
+      - release-test
+
   release:
     types: [published]
 

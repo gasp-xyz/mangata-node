@@ -113,7 +113,7 @@ impl TakeRevenue for ToTreasury {
 
 parameter_types! {
 	// regular transfer is ~400M weight, xcm transfer weight is ~4*UnitWeightCost
-	pub UnitWeightCost: Weight = 150_000_000;
+	pub UnitWeightCost: u64 = 150_000_000;
 	pub const MaxInstructions: u32 = 100;
 
 	pub RocPerSecond: (AssetId, u128) = (MultiLocation::parent().into(), roc_per_second());
@@ -357,7 +357,7 @@ impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 
 parameter_types! {
 	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
-	pub const BaseXcmWeight: Weight = 100_000_000; // TODO: recheck this
+	pub const BaseXcmWeight: u64 = 100_000_000; // TODO: recheck this
 	pub const MaxAssetsForTransfer:usize = 2;
 }
 
@@ -409,7 +409,7 @@ where
 	C: Convert<MultiLocation, Option<TokenId>>,
 	GK: GetByKey<TokenId, Balance>,
 {
-	fn drop_assets(origin: &MultiLocation, assets: Assets) -> Weight {
+	fn drop_assets(origin: &MultiLocation, assets: Assets) -> u64 {
 		let multi_assets: Vec<MultiAsset> = assets.into();
 		let mut asset_traps: Vec<MultiAsset> = vec![];
 		for asset in multi_assets {

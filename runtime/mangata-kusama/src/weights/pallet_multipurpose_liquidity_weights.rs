@@ -69,9 +69,9 @@ impl<T: frame_system::Config> pallet_multipurpose_liquidity::WeightInfo for Modu
 	// Storage: MultiPurposeLiquidity ReserveStatus (r:1 w:1)
 	// Storage: MultiPurposeLiquidity RelockStatus (r:1 w:1)
 	fn reserve_vesting_liquidity_tokens() -> Weight {
-		(93_907_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(6 as Weight))
-			.saturating_add(T::DbWeight::get().writes(5 as Weight))
+		(Weight::from_ref_time(93_907_000))
+			.saturating_add(T::DbWeight::get().reads(6 as u64))
+			.saturating_add(T::DbWeight::get().writes(5 as u64))
 	}
 	// Storage: MultiPurposeLiquidity RelockStatus (r:1 w:1)
 	// Storage: MultiPurposeLiquidity ReserveStatus (r:1 w:1)
@@ -79,22 +79,22 @@ impl<T: frame_system::Config> pallet_multipurpose_liquidity::WeightInfo for Modu
 	// Storage: Vesting Vesting (r:1 w:1)
 	// Storage: Tokens Locks (r:1 w:1)
 	fn unreserve_and_relock_instance() -> Weight {
-		(89_625_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(5 as Weight))
-			.saturating_add(T::DbWeight::get().writes(5 as Weight))
+		(Weight::from_ref_time(89_625_000))
+			.saturating_add(T::DbWeight::get().reads(5 as u64))
+			.saturating_add(T::DbWeight::get().writes(5 as u64))
 	}
 }
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
 	fn reserve_vesting_liquidity_tokens() -> Weight {
-		(93_907_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
+		(Weight::from_ref_time(93_907_000))
+			.saturating_add(RocksDbWeight::get().reads(6 as u64))
+			.saturating_add(RocksDbWeight::get().writes(5 as u64))
 	}
 	fn unreserve_and_relock_instance() -> Weight {
-		(89_625_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
+		(Weight::from_ref_time(89_625_000))
+			.saturating_add(RocksDbWeight::get().reads(5 as u64))
+			.saturating_add(RocksDbWeight::get().writes(5 as u64))
 	}
 }

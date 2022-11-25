@@ -1,0 +1,249 @@
+name: Build and test
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: Version to be assigned to the built image
+        required: true
+        type: string
+      branch:
+        default: ci
+        description: Branch that given job relates to, that value will be used to tag docker image mangatasolutions/mangata-node:<BRANCH_NAME>
+        required: true
+        type: string
+      builder_image:
+        default: mangatasolutions/node-builder:multi-nightly-2022-11-21
+        description: Docker image used for Rust builds
+        required: false
+        type: string
+      cache-version:
+        default: 0
+        description: Cache version variable to be used to invalidate cache when needed
+        required: false
+        type: number
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build-node-image:
+    name: Build Docker image
+    runs-on: [self-hosted, compile]
+    container:
+      image: ${{ inputs.builder_image }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
+          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+
+      - name: Cache the Cargo dependencies
+        uses: mansagroup/gcs-cache-action@v1.0.3
+        with:
+          bucket: mangata-node-ci-cache
+          path: |
+            ${{ github.workspace }}/target
+            /usr/local/cargo/git
+            /usr/local/cargo/registry
+            ~/.cache/sccache
+          key: node-cache-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
+      
+      - name: Compile mangata-node code
+        run: cargo build --release --no-default-features --features=mangata-rococo,mangata-kusama
+
+      - name: Rename wasms
+        run: |
+          cp target/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm ./mangata_kusama_runtime-${{ inputs.version }}.compact.compressed.wasm
+          cp target/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm ./mangata_rococo_runtime-${{ inputs.version }}.compact.compressed.wasm
+      
+      - name: Build and push Docker image
+        run: |
+          docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+          docker build -f devops/dockerfiles/node-new/Dockerfile \
+          -t mangatasolutions/mangata-node:${{ inputs.version }} \
+          -t mangatasolutions/mangata-node:${{ inputs.branch }} .
+          docker push mangatasolutions/mangata-node:${{ inputs.version }}
+          docker push mangatasolutions/mangata-node:${{ inputs.branch }}
+
+      - name: Compile mangata-node code with fast runtime
+        run: cargo build --release --no-default-features --features=mangata-rococo,mangata-kusama,fast-runtime
+
+      - name: Rename wasms with fast runtime
+        run: |
+          cp target/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm ./mangata_kusama_runtime-${{ inputs.version }}-fast.compact.compressed.wasm
+          cp target/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm ./mangata_rococo_runtime-${{ inputs.version }}-fast.compact.compressed.wasm
+      
+      - name: Build and push Docker image with fast runtime
+        run: |
+          docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+          docker build -f devops/dockerfiles/node-new/Dockerfile \
+          -t mangatasolutions/mangata-node:${{ inputs.version }}-fast \
+          -t mangatasolutions/mangata-node:${{ inputs.branch }}-fast .
+          docker push mangatasolutions/mangata-node:${{ inputs.version }}-fast
+          docker push mangatasolutions/mangata-node:${{ inputs.branch }}-fast
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: wasms-${{ inputs.version }}
+          path: |
+            ./mangata_kusama_runtime-${{ inputs.version }}.compact.compressed.wasm
+            ./mangata_rococo_runtime-${{ inputs.version }}.compact.compressed.wasm
+            ./mangata_kusama_runtime-${{ inputs.version }}-fast.compact.compressed.wasm
+            ./mangata_rococo_runtime-${{ inputs.version }}-fast.compact.compressed.wasm
+      
+      - name: Fix permissions on self-hosted runner
+        if: always()
+        run: chown -R 1003:1004 $GITHUB_WORKSPACE
+
+  rustfmt-check:
+    name: Formatting check
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ inputs.builder_image }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+  clippy-check:
+    name: Clippy check
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ inputs.builder_image }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
+          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+      - name: Cache the Cargo dependencies
+        uses: mansagroup/gcs-cache-action@v1.0.3
+        with:
+          bucket: mangata-node-ci-cache
+          path: |
+            ${{ github.workspace }}/target
+            /usr/local/cargo/git
+            /usr/local/cargo/registry
+          key: cargo-clippy-cache-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
+      - name: Run clippy
+        run: cargo clippy -p pallet-xyk
+
+  unit-test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ inputs.builder_image }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
+          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+      - name: Cache the Cargo dependencies
+        uses: mansagroup/gcs-cache-action@v1.0.3
+        with:
+          bucket: mangata-node-ci-cache
+          path: |
+            ${{ github.workspace }}/target
+            /usr/local/cargo/git
+            /usr/local/cargo/registry
+          key: cargo-unit-cache-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
+      - name: Run unit tests
+        run: cargo test -j2 -p pallet-bootstrap -p xyk-rpc -p pallet-xyk -p xyk-runtime-api -p pallet-issuance -p pallet-multipurpose-liquidity -p pallet-sudo-origin -p runtime-integration-test
+
+  run-benchmarks-tests:
+    name: Run benchmark tests
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ inputs.builder_image }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
+          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+      - name: Cache the Cargo dependencies
+        uses: mansagroup/gcs-cache-action@v1.0.3
+        with:
+          bucket: mangata-node-ci-cache
+          path: |
+            ${{ github.workspace }}/target
+            /usr/local/cargo/git
+            /usr/local/cargo/registry
+          key: cargo-benchmark-cache-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
+      - name: Run benchmarks
+        run: cargo test -j2 --features=runtime-benchmarks -p pallet-bootstrap -p pallet-xyk -p xyk-runtime-api -p pallet-issuance
+
+  build-and-run-try-runtime:
+    name: Run try-runtime checks
+    runs-on: [self-hosted, compile]
+    container:
+      image: ${{ inputs.builder_image }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
+          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+      - name: Cache the Cargo dependencies
+        uses: mansagroup/gcs-cache-action@v1.0.3
+        with:
+          bucket: mangata-node-ci-cache
+          path: |
+            ${{ github.workspace }}/target
+            /usr/local/cargo/git
+            /usr/local/cargo/registry
+            ~/.cache/sccache
+          key: cargo-try-runtime-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
+
+      - name: Run try-runtime Rococo testnet
+        run: cargo run --release --features=try-runtime,mangata-rococo try-runtime --chain=public-testnet --execution=Native on-runtime-upgrade live --uri wss://roccoco-testnet-collator-01.mangatafinance.cloud:443
+
+      - name: Run try-runtime Kusama Mainnet
+        run: cargo run --release --features=try-runtime try-runtime --chain=kusama-mainnet --execution=Native on-runtime-upgrade live --uri wss://prod-kusama-collator-01.mangatafinance.cloud:443
+      
+      - name: Fix permissions on self-hosted runner
+        if: always()
+        run: chown -R 1003:1004 $GITHUB_WORKSPACE
+
+  run-benchmarks:
+    name: Run runtime benchmarks
+    runs-on: [self-hosted, compile]
+    container:
+      image: ${{ inputs.builder_image }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
+          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+
+      - name: Cache the Cargo dependencies
+        uses: mansagroup/gcs-cache-action@v1.0.3
+        with:
+          bucket: mangata-node-ci-cache
+          path: |
+            ${{ github.workspace }}/target
+            /usr/local/cargo/git
+            /usr/local/cargo/registry
+            ~/.cache/sccache
+          key: runtime-benchmark-cache-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
+      
+      - name: Compile mangata-node code
+        run: cargo build --release --no-default-features --features=mangata-rococo,mangata-kusama,runtime-benchmarks
+      
+      - name: Run benchmark tests
+        run: target/release/mangata-node benchmark pallet --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-xyk' --template ./templates/module-weight-template.hbs
+      
+      - name: Fix permissions on self-hosted runner
+        if: always()
+        run: chown -R 1003:1004 $GITHUB_WORKSPACE

@@ -472,6 +472,8 @@ impl AssetMetadataMutationTrait for AssetMetadataMutation {
 	}
 }
 
+type SessionLenghtOf<T> = <T as parachain_staking::Config>::BlocksPerRound;
+
 impl pallet_xyk::Config for Runtime {
 	type Event = Event;
 	type ActivationReservesProvider = MultiPurposeLiquidity;
@@ -484,7 +486,7 @@ impl pallet_xyk::Config for Runtime {
 	type PoolFeePercentage = frame_support::traits::ConstU128<20>;
 	type TreasuryFeePercentage = frame_support::traits::ConstU128<5>;
 	type BuyAndBurnFeePercentage = frame_support::traits::ConstU128<5>;
-	type RewardsDistributionPeriod = frame_support::traits::ConstU32<1200>;
+	type RewardsDistributionPeriod = SessionLenghtOf<Runtime>;
 	type VestingProvider = Vesting;
 	type DisallowedPools = Bootstrap;
 	type DisabledTokens = Nothing;
@@ -799,9 +801,19 @@ impl pallet_collective::Config<CouncilCollective> for Runtime {
 	type WeightInfo = weights::pallet_collective_weights::ModuleWeight<Runtime>;
 }
 
+#[cfg(feature = "fast-runtime")]
 parameter_types! {
-	/// Default BlocksPerRound is every 4 hours (1200 * 12 second block times)
+	/// Default SessionLenght is every 2 minutes (10 * 12 second block times)
+	pub const BlocksPerRound: u32 = 2 * MINUTES;
+}
+
+#[cfg(not(feature = "fast-runtime"))]
+parameter_types! {
+	/// Default SessionLenght is every 4 hours (1200 * 12 second block times)
 	pub const BlocksPerRound: u32 = 4 * HOURS;
+}
+
+parameter_types! {
 	/// Collator candidate exit delay (number of rounds)
 	pub const LeaveCandidatesDelay: u32 = 2;
 	/// Collator candidate bond increases/decreases delay (number of rounds)

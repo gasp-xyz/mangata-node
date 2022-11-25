@@ -221,9 +221,7 @@ try-runtime = [
 	"pallet-utility/try-runtime",
 ]
 
-#disable-execution = [
-#	"frame-executive/disable-execution",
-#]
+fast-runtime = []
 
 runtime-benchmarks = [
 	"sp-runtime/runtime-benchmarks",

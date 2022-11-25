@@ -4,53 +4,76 @@ on:
   release:
     types: [published]
 
+  # For testing purposes only
+  workflow_dispatch:
+    inputs:
+      git_sha:
+        description: "Release commit hash"
+        required: true
+        default: "test"
+      version:
+        description: "Relase tag version"
+        required: true
+        default: "test"
+
+
 jobs:
-  publish-kusama:
+  publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
+      - name: Set env
+        run: echo "TAG_COMMIT_HASH=${{ github.event.inputs.git_sha || github.sha }}" >> $GITHUB_ENV
+        run: echo "TAG_NAME=${{ github.event.inputs.version || version }}" >> $GITHUB_ENV
+
       - name: Login to Docker Hub
         uses: docker/login-action@v2.1.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Docker meta
-        id: meta
+      - name: Docker meta [kusama]
+        id: meta_kusama
         uses: docker/metadata-action@v4.1.1
         with:
           images: docker.io/mangatasolutions/mangata-node
-          tags: type=semver,prefix=kusama-,pattern={{version}}
+          tags: type=semver,prefix=kusama-,pattern=${{ env.TAG_NAME }}
           flavor: |
             latest=false
-      
-      - name: Tag and push image
-        uses: akhilerm/tag-push-action@v2.0.0
-        with:
-          src: docker.io/mangatasolutions/mangata-node:kusama-${{ github.sha }}
-          dst: |
-            ${{ steps.meta.outputs.tags }}
 
-  publish-rococo:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2.1.0
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Docker meta
-        id: meta
+      - name: Docker meta [rococo]
+        id: meta_rococo
         uses: docker/metadata-action@v4.1.1
         with:
           images: docker.io/mangatasolutions/mangata-node
-          tags: type=semver,prefix=rococo-,pattern={{version}}
+          tags: type=semver,prefix=rococo-,pattern=${{ env.TAG_NAME }}
           flavor: |
             latest=false
 
-      - name: Tag and push image
+      - name: Tag and push image [kusama]
         uses: akhilerm/tag-push-action@v2.0.0
         with:
-          src: docker.io/mangatasolutions/mangata-node:rococo-${{ github.sha }}
-          dst: |
-            ${{ steps.meta.outputs.tags }}
+          src: docker.io/mangatasolutions/mangata-node:${{ env.TAG_COMMIT_HASH }}
+          dst: ${{ steps.meta_kusama.outputs.tags }}
+
+      - name: Tag and push image [rococo]
+        uses: akhilerm/tag-push-action@v2.0.0
+        with:
+          src: docker.io/mangatasolutions/mangata-node:${{ env.TAG_COMMIT_HASH }}
+          dst: ${{ steps.meta_rococo.outputs.tags }}
+
+      - name: Extract wasms
+        run: |
+          mkdir host
+          docker run --entrypoint="" -v$(pwd)/host:/host --rm -it mangatasolutions/mangata-node:${{ github.sha }} cp /mangata/mangata_kusama_runtime.compact.compressed.wasm  /host/
+          docker run --entrypoint="" -v$(pwd)/host:/host --rm -it mangatasolutions/mangata-node:${{ github.sha }} cp /mangata/mangata_rococo_runtime.compact.compressed.wasm  /host/
+
+      - name: Upload wasms to release page
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ env.TAG_NAME }}
+          allowUpdates: true
+          artifacts: |
+            "host/mangata_kusama_runtime.compact.compressed.wasm"
+            "host/mangata_rococo_runtime.compact.compressed.wasm"

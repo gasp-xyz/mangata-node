@@ -55,9 +55,18 @@ jobs:
           docker run --entrypoint="" --rm mangatasolutions/mangata-node:da00cc6a7db7d42fe3f682b3e61ada140dc45634 cat /mangata/mangata_kusama_runtime.compact.compressed.wasm > kusama.wasm
           docker run --entrypoint="" --rm mangatasolutions/mangata-node:da00cc6a7db7d42fe3f682b3e61ada140dc45634 cat /mangata/mangata_rococo_runtime.compact.compressed.wasm > rococo.wasm
 
+      - name: Calculate Blake2 hashes
+        working-directory: scripts/hash-file
+        run: |
+          npm install
+          echo -n "Kusama : " > ../../hashes.txt
+          node index.js -i ../../kusama.wasm  >> ../../hashes.txt
+          echo -n "Rococo : " >> ../../hashes.txt
+          node index.js -i ../../rococo.wasm  >> ../../hashes.txt
+
       - name: Upload wasms to release page
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref_name }}
           allowUpdates: true
-          artifacts: "kusama.wasm,rococo.wasm"
+          artifacts: "kusama.wasm,rococo.wasm,hashes.txt"

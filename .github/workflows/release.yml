@@ -51,13 +51,15 @@ jobs:
 
       - name: Export docker image [rococo]
         run: |
-          docker save ${{ steps.meta_rococo.outputs.tags }} -o ${{ steps.meta_rococo.outputs.tags }}.tar
-          zip -r ${{ steps.meta_rococo.outputs.tags }}.zip ${{ steps.meta_rococo.outputs.tags }}.tar
+          export DOCKER_IMAGE=$(echo ${{ steps.meta_rococo.outputs.tags }| grep -oE "mangatasolution\S+")
+          docker save $DOCKER_IMAGE -o $DOCKER_IMAGE.tar
+          zip -r $DOCKER_IMAGE.zip $DOCKER_IMAGE.tar
 
       - name: Export docker image [kusama]
         run: |
-          docker save ${{ steps.meta_kusama.outputs.tags }} -o ${{ steps.meta_kusama.outputs.tags }}.tar
-          zip -r ${{ steps.meta_kusama.outputs.tags }}.zip ${{ steps.meta_kusama.outputs.tags }}.tar
+          export DOCKER_IMAGE=$(echo ${{ steps.meta_rococo.outputs.tags }| grep -oE "mangatasolution\S+")
+          docker save $DOCKER_IMAGE -o $DOCKER_IMAGE.tar
+          zip -r $DOCKER_IMAGE.zip $DOCKER_IMAGE.tar
 
       - name: Extract wasms
         run: |

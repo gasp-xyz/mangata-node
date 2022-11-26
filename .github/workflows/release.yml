@@ -51,13 +51,15 @@ jobs:
 
       - name: Export docker image [rococo]
         run: |
-          export DOCKER_IMAGE=$(echo ${{ steps.meta_rococo.outputs.tags }} | grep -oE "mangatasolution\S+")
+          export DOCKER_IMAGE=mangatasolutions/$(echo ${{ steps.meta_rococo.outputs.tags }} | grep -oE "mangata-node\S+")
+          echo $DOCKER_IMAGE
           docker save $DOCKER_IMAGE -o $DOCKER_IMAGE.tar
           zip -r $DOCKER_IMAGE.zip $DOCKER_IMAGE.tar
 
       - name: Export docker image [kusama]
         run: |
-          export DOCKER_IMAGE=$(echo ${{ steps.meta_rococo.outputs.tags }} | grep -oE "mangatasolution\S+")
+          export DOCKER_IMAGE=mangatasolutions/$(echo ${{ steps.meta_kusama.outputs.tags }} | grep -oE "mangata-node\S+")
+          echo $DOCKER_IMAGE
           docker save $DOCKER_IMAGE -o $DOCKER_IMAGE.tar
           zip -r $DOCKER_IMAGE.zip $DOCKER_IMAGE.tar
 

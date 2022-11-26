@@ -57,17 +57,28 @@ jobs:
           docker run --entrypoint="" --rm mangatasolutions/mangata-node:da00cc6a7db7d42fe3f682b3e61ada140dc45634 cat /mangata/mangata_rococo_runtime.compact.compressed.wasm > rococo.wasm
 
       - name: Calculate Blake2 hashes
-        working-directory: scripts/hash-file
+        working-directory: scripts/blake2-hash
         run: |
           npm install
-          echo -n "Kusama : " > ../../hashes.txt
-          node index.js -i ../../kusama.wasm  >> ../../hashes.txt
-          echo -n "Rococo : " >> ../../hashes.txt
-          node index.js -i ../../rococo.wasm  >> ../../hashes.txt
+          echo -n "kusama.wasm [blake2]: " > hashes.txt
+          node index.js -i ../../kusama.wasm  >> hashes.txt
+          echo -n "kusama.wasm [md5sum]: " >> hashes.txt
+          md5sum ../../kusama.wasm >> hashes.txt
+          echo -n "rococo.wasm [blake2]: " >> hashes.txt
+          node index.js -i ../../rococo.wasm  >> hashes.txt
+          echo -n "rococo.wasm [md5sum]: " >> hashes.txt
+          md5sum ../../rococo.wasm >> hashes.txt
+
+      - name: Rename artifacts
+        run: |
+          mv kusama.wasm kusama-${{ github.ref_name }}.wasm
+          mv rococo.wasm rococo-${{ github.ref_name }}.wasm
+          mv ./scripts/blake2-hash/hashes.txt hashes-${{ github.ref_name }}.txt
 
       - name: Upload wasms to release page
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref_name }}
           allowUpdates: true
-          artifacts: "kusama.wasm,rococo.wasm,hashes.txt"
+          artifacts: "kusama-${{ github.ref_name }}.wasm,rococo-${{ github.ref_name }}.wasm,hashes-${{ github.ref_name }}.txt"
+

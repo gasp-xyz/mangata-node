@@ -40,33 +40,31 @@ jobs:
       - name: Tag and push image [kusama]
         uses: akhilerm/tag-push-action@v2.0.0
         with:
-          # src: docker.io/mangatasolutions/mangata-node:${{ github.sha }}
-          src: docker.io/mangatasolutions/mangata-node:da00cc6a7db7d42fe3f682b3e61ada140dc45634
+          src: docker.io/mangatasolutions/mangata-node:${{ github.sha }}
           dst: ${{ steps.meta_kusama.outputs.tags }}
 
       - name: Tag and push image [rococo]
         uses: akhilerm/tag-push-action@v2.0.0
         with:
-          # src: docker.io/mangatasolutions/mangata-node:${{ github.sha }}
-          src: docker.io/mangatasolutions/mangata-node:da00cc6a7db7d42fe3f682b3e61ada140dc45634
+          src: docker.io/mangatasolutions/mangata-node:${{ github.sha }}
           dst: ${{ steps.meta_rococo.outputs.tags }}
 
       - name: Extract wasms
         run: |
-          docker run --entrypoint="" --rm mangatasolutions/mangata-node:da00cc6a7db7d42fe3f682b3e61ada140dc45634 cat /mangata/mangata_kusama_runtime.compact.compressed.wasm > kusama.wasm
-          docker run --entrypoint="" --rm mangatasolutions/mangata-node:da00cc6a7db7d42fe3f682b3e61ada140dc45634 cat /mangata/mangata_rococo_runtime.compact.compressed.wasm > rococo.wasm
+          docker run --entrypoint="" --rm mangatasolutions/mangata-node:${{ github.sha }} cat /mangata/mangata_kusama_runtime.compact.compressed.wasm > kusama.wasm
+          docker run --entrypoint="" --rm mangatasolutions/mangata-node:${{ github.sha }} cat /mangata/mangata_rococo_runtime.compact.compressed.wasm > rococo.wasm
 
       - name: Calculate Blake2 hashes
         working-directory: scripts/blake2-hash
         run: |
           npm install
-          echo -n "kusama.wasm [blake2]: " > hashes.txt
+          echo -n "kusama-${{ github.ref_name }}.wasm [blake2]: " > hashes.txt
           node index.js -i ../../kusama.wasm  >> hashes.txt
-          echo -n "kusama.wasm [md5sum]: " >> hashes.txt
+          echo -n "kusama-${{ github.ref_name }}.wasm [md5sum]: " >> hashes.txt
           md5sum ../../kusama.wasm | awk '{ print $1 }' >> hashes.txt
-          echo -n "rococo.wasm [blake2]: " >> hashes.txt
+          echo -n "rococo-${{ github.ref_name }}.wasm [blake2]: " >> hashes.txt
           node index.js -i ../../rococo.wasm  >> hashes.txt
-          echo -n "rococo.wasm [md5sum]: " >> hashes.txt
+          echo -n "rococo-${{ github.ref_name }}.wasm [md5sum]: " >> hashes.txt
           md5sum ../../rococo.wasm | awk '{ print $1 }' >> hashes.txt
 
       - name: Rename artifacts

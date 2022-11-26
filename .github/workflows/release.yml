@@ -52,17 +52,12 @@ jobs:
 
       - name: Extract wasms
         run: |
-          mkdir host
-          # docker run --entrypoint="" -v$(pwd)/host:/host --rm -it mangatasolutions/mangata-node:${{ github.sha }} cp /mangata/mangata_kusama_runtime.compact.compressed.wasm  /host/
-          # docker run --entrypoint="" -v$(pwd)/host:/host --rm -it mangatasolutions/mangata-node:${{ github.sha }} cp /mangata/mangata_rococo_runtime.compact.compressed.wasm  /host/
-          docker run --entrypoint="" -v$(pwd)/host:/host --rm -it mangatasolutions/mangata-node:da00cc6a7db7d42fe3f682b3e61ada140dc45634 cp /mangata/mangata_kusama_runtime.compact.compressed.wasm  /host/
-          docker run --entrypoint="" -v$(pwd)/host:/host --rm -it mangatasolutions/mangata-node:da00cc6a7db7d42fe3f682b3e61ada140dc45634 cp /mangata/mangata_rococo_runtime.compact.compressed.wasm  /host/
+          docker run --entrypoint="" --rm mangatasolutions/mangata-node:da00cc6a7db7d42fe3f682b3e61ada140dc45634 cat /mangata/mangata_kusama_runtime.compact.compressed.wasm > kusama.wasm
+          docker run --entrypoint="" --rm mangatasolutions/mangata-node:da00cc6a7db7d42fe3f682b3e61ada140dc45634 cat /mangata/mangata_rococo_runtime.compact.compressed.wasm > rococo.wasm
 
       - name: Upload wasms to release page
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref_name }}
           allowUpdates: true
-          artifacts: |
-            "host/mangata_kusama_runtime.compact.compressed.wasm"
-            "host/mangata_rococo_runtime.compact.compressed.wasm"
+          artifacts: "kusama.wasm,rococo.wasm"

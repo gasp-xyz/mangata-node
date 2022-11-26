@@ -63,11 +63,11 @@ jobs:
           echo -n "kusama.wasm [blake2]: " > hashes.txt
           node index.js -i ../../kusama.wasm  >> hashes.txt
           echo -n "kusama.wasm [md5sum]: " >> hashes.txt
-          md5sum ../../kusama.wasm >> hashes.txt
+          md5sum ../../kusama.wasm | awk '{ print $1 }' >> hashes.txt
           echo -n "rococo.wasm [blake2]: " >> hashes.txt
           node index.js -i ../../rococo.wasm  >> hashes.txt
           echo -n "rococo.wasm [md5sum]: " >> hashes.txt
-          md5sum ../../rococo.wasm >> hashes.txt
+          md5sum ../../rococo.wasm | awk '{ print $1 }' >> hashes.txt
 
       - name: Rename artifacts
         run: |

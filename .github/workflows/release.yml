@@ -49,19 +49,11 @@ jobs:
           src: docker.io/mangatasolutions/mangata-node:${{ github.sha }}
           dst: ${{ steps.meta_rococo.outputs.tags }}
 
-      - name: Export docker image [rococo]
+      - name: Export docker image
         run: |
-          export DOCKER_IMAGE=$(echo ${{ steps.meta_rococo.outputs.tags }} | grep -oE "mangata-node\S+")
           docker pull mangatasolutions/mangata-node:${{ github.sha }}
-          docker save mangatasolutions/mangata-node:${{ github.sha }} -o $DOCKER_IMAGE.tar
-          zip -r $DOCKER_IMAGE.zip $DOCKER_IMAGE.tar
-
-      - name: Export docker image [kusama]
-        run: |
-          export DOCKER_IMAGE=$(echo ${{ steps.meta_kusama.outputs.tags }} | grep -oE "mangata-node\S+")
-          docker pull mangatasolutions/mangata-node:${{ github.sha }}
-          docker save mangatasolutions/mangata-node:${{ github.sha }} -o $DOCKER_IMAGE.tar
-          zip -r $DOCKER_IMAGE.zip $DOCKER_IMAGE.tar
+          docker save mangatasolutions/mangata-node:${{ github.sha }} -o docker-${{ github.ref_name }}.tar
+          zip -r docker-${{ github.ref_name }}.tar docker-${{ github.ref_name }}.zip
 
       - name: Extract wasms
         run: |
@@ -92,5 +84,5 @@ jobs:
         with:
           tag: ${{ github.ref_name }}
           allowUpdates: true
-          artifacts: "kusama-${{ github.ref_name }}.wasm,rococo-${{ github.ref_name }}.wasm,hashes-${{ github.ref_name }}.txt,mangata-node*.zip"
+          artifacts: "kusama-${{ github.ref_name }}.wasm,rococo-${{ github.ref_name }}.wasm,hashes-${{ github.ref_name }}.txt,docker-${{ github.ref_name }}.zip"
 

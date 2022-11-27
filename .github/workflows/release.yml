@@ -53,7 +53,7 @@ jobs:
         run: |
           docker pull mangatasolutions/mangata-node:${{ github.sha }}
           docker save mangatasolutions/mangata-node:${{ github.sha }} -o docker-${{ github.ref_name }}.tar
-          zip -r docker-${{ github.ref_name }}.tar docker-${{ github.ref_name }}.zip
+          zip -r docker-${{ github.ref_name }}.zip docker-${{ github.ref_name }}.tar
 
       - name: Extract wasms
         run: |

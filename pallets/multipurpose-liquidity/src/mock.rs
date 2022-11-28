@@ -229,7 +229,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for MockXyk<T> {
 	fn claim_rewards_all_v2(
 		sender: T::AccountId,
 		liquidity_token_id: Self::CurrencyId,
-	) -> DispatchResult {
+	) -> Result<Self::Balance, DispatchError> {
 		unimplemented!()
 	}
 

@@ -207,16 +207,16 @@ impl<T: frame_system::Config> pallet_xyk::WeightInfo for ModuleWeight<T> {
 
 	// todo run on reference machine
 	fn provide_liquidity_with_conversion() -> Weight {
-		(275_376_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(17 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(11 as Weight))
+		Weight::from_ref_time(275_376_000)
+			.saturating_add(RocksDbWeight::get().reads(21 as u64))
+			.saturating_add(RocksDbWeight::get().writes(11 as u64))
 	}
 
 	// todo run on reference machine
 	fn compound_rewards() -> Weight {
-		(220_046_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(24 as Weight))
-			.saturating_add(T::DbWeight::get().writes(20 as Weight))
+		Weight::from_ref_time(220_046_000)
+			.saturating_add(T::DbWeight::get().reads(24 as u64))
+			.saturating_add(T::DbWeight::get().writes(16 as u64))
 	}
 }
 
@@ -354,15 +354,15 @@ impl WeightInfo for () {
 
 	// todo run on reference machine
 	fn provide_liquidity_with_conversion() -> Weight {
-		(275_376_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(17 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(11 as Weight))
+		Weight::from_ref_time(275_376_000)
+			.saturating_add(RocksDbWeight::get().reads(21 as u64))
+			.saturating_add(RocksDbWeight::get().writes(11 as u64))
 	}
 
 	// todo run on reference machine
 	fn compound_rewards() -> Weight {
-		(220_046_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(24 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(20 as Weight))
+		Weight::from_ref_time(220_046_000)
+			.saturating_add(RocksDbWeight::get().reads(24 as u64))
+			.saturating_add(RocksDbWeight::get().writes(16 as u64))
 	}
 }

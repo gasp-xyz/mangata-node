@@ -821,7 +821,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(T::WeightInfo::mint_liquidity())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::compound_rewards())]
 		#[transactional]
 		pub fn compound_rewards(
 			origin: OriginFor<T>,
@@ -838,22 +838,16 @@ pub mod pallet {
 					!T::DisabledTokens::contains(&second_asset_id),
 				Error::<T>::FunctionNotAvailableForThisToken
 			);
-			let rewards_all =
-				Pallet::<T>::calculate_rewards_amount(sender.clone(), liquidity_asset_id)?;
-			ensure!(rewards_all > 0, Error::<T>::NotEnoughtRewardsEarned);
 
-			let rewards_256 =
-				Into::<U256>::into(rewards_all).saturating_mul(amount_permille.into()).div(1000);
-			let rewards = Balance::try_from(rewards_256)
-				.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
-
-			ensure!(rewards <= rewards_all, Error::<T>::NotEnoughtRewardsEarned);
-
-			<Self as XykFunctionsTrait<T::AccountId>>::claim_rewards(
+			let rewards_claimed = <Self as XykFunctionsTrait<T::AccountId>>::claim_rewards_all_v2(
 				sender.clone(),
 				liquidity_asset_id,
-				rewards,
 			)?;
+
+			let rewards_256 =
+				Into::<U256>::into(rewards_claimed).saturating_mul(amount_permille.into()).div(1000);
+			let rewards = Balance::try_from(rewards_256)
+				.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
 
 			<Self as XykFunctionsTrait<T::AccountId>>::provide_liquidity_with_conversion(
 				sender,
@@ -867,7 +861,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(T::WeightInfo::provide_liquidity_with_conversion())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::provide_liquidity_with_conversion())]
 		#[transactional]
 		pub fn provide_liquidity_with_conversion(
 			origin: OriginFor<T>,
@@ -2847,7 +2841,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 	fn claim_rewards_all_v2(
 		user: T::AccountId,
 		liquidity_asset_id: Self::CurrencyId,
-	) -> DispatchResult {
+	) -> Result<Self::Balance, DispatchError> {
 		let mangata_id: TokenId = Self::native_token_id();
 
 		let rewards_info: RewardInfo = Self::get_rewards_info(user.clone(), liquidity_asset_id);
@@ -2899,7 +2893,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			total_available_rewards,
 		));
 
-		Ok(())
+		Ok(total_available_rewards)
 	}
 
 	fn update_pool_promotion(

@@ -617,7 +617,7 @@ benchmarks! {
 
 		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), asset_id_1.into(), pool_amount, asset_id_2.into(), pool_amount).unwrap();
 		Xyk::<T>::promote_pool(RawOrigin::Root.into(), liquidity_asset_id).unwrap();
-		Xyk::<T>::activate_liquidity(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id, pool_amount, None).unwrap();
+		Xyk::<T>::activate_liquidity_v2(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id, pool_amount, None).unwrap();
 		// mint for other to split the rewards rewards_ratio:1
 		Xyk::<T>::mint_liquidity(
 			RawOrigin::Signed(other.clone().into()).into(),
@@ -631,7 +631,7 @@ benchmarks! {
 		<<T as Config>::PoolPromoteApi as ComputeIssuance>::compute_issuance(1);
 
 		let mut pre_pool_balance = Xyk::<T>::asset_pool((asset_id_1, asset_id_2));
-		let rewards_to_claim = Xyk::<T>::calculate_rewards_amount(caller.clone(), liquidity_asset_id).unwrap();
+		let rewards_to_claim = Xyk::<T>::calculate_rewards_amount_v2(caller.clone(), liquidity_asset_id).unwrap();
 		let swap_amount = Xyk::<T>::calculate_balanced_sell_amount(rewards_to_claim, pre_pool_balance.0).unwrap();
 		let balance_native_before = <T as Config>::Currency::free_balance(<T as Config>::NativeCurrencyId::get().into(), &caller).into();
 		let balance_asset_before = <T as Config>::Currency::free_balance(liquidity_asset_id.into(), &caller).into();
@@ -641,7 +641,7 @@ benchmarks! {
 	verify {
 
 		assert_eq!(
-			Xyk::<T>::calculate_rewards_amount(caller.clone(), liquidity_asset_id).unwrap(),
+			Xyk::<T>::calculate_rewards_amount_v2(caller.clone(), liquidity_asset_id).unwrap(),
 			(0_u128)
 		);
 

@@ -148,7 +148,7 @@ pub trait XykFunctionsTrait<AccountId> {
 	fn claim_rewards_all_v2(
 		sender: AccountId,
 		liquidity_token_id: Self::CurrencyId,
-	) -> DispatchResult;
+	) -> Result<Self::Balance, DispatchError>;
 
 	fn update_pool_promotion(
 		liquidity_token_id: TokenId,

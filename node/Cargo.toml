@@ -32,6 +32,7 @@ mangata-rococo = [
 ]
 #disable-execution = ['mangata-kusama-runtime/disable-execution']
 runtime-benchmarks = ["mangata-kusama-runtime/runtime-benchmarks", "polkadot-cli/runtime-benchmarks"]
+fast-runtime = ["mangata-kusama-runtime/fast-runtime", "mangata-kusama-runtime/fast-runtime"]
 try-runtime = ["mangata-kusama-runtime/try-runtime", "mangata-rococo-runtime/try-runtime"]
 
 [dependencies]
@@ -70,6 +71,9 @@ sc-consensus = { git = "https://github.com/mangata-finance/substrate", branch = 
 sc-executor = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
 sc-network = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
 sc-network-common = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
+sc-network-light = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
+sc-network-sync = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
+sc-network-bitswap = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
 sc-keystore = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
 sc-rpc = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
 sc-rpc-api = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }

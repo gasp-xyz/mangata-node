@@ -47,3 +47,7 @@ pub trait RewardsApi {
 
 	fn promote_pool(liquidity_token_id: TokenId) -> bool;
 }
+
+pub trait AssetRegistryApi {
+	fn enable_pool_creation(assets: (TokenId, TokenId)) -> bool;
+}

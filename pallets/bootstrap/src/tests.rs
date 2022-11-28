@@ -360,6 +360,9 @@ fn test_incremental_whitliested_donation() {
 #[serial]
 fn test_bootstrap_promotion_can_be_updated() {
 	new_test_ext().execute_with(|| {
+		let enable_pool_creation_mock = MockAssetRegistryApi::enable_pool_creation_context();
+		enable_pool_creation_mock.expect().return_const(true);
+
 		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
@@ -683,6 +686,9 @@ fn test_bootstrap_state_transitions() {
 	new_test_ext().execute_with(|| {
 		set_up();
 
+		let enable_pool_creation_mock = MockAssetRegistryApi::enable_pool_creation_context();
+		enable_pool_creation_mock.expect().return_const(true);
+
 		const BOOTSTRAP_WHITELIST_START: u64 = 100;
 		const BOOTSTRAP_PUBLIC_START: u64 = 110;
 		const BOOTSTRAP_FINISH: u64 = 130;
@@ -738,6 +744,9 @@ fn test_bootstrap_state_transitions() {
 fn test_bootstrap_state_transitions_when_on_initialized_is_not_called() {
 	new_test_ext().execute_with(|| {
 		set_up();
+
+		let enable_pool_creation_mock = MockAssetRegistryApi::enable_pool_creation_context();
+		enable_pool_creation_mock.expect().return_const(true);
 
 		let pool_create_mock = MockPoolCreateApi::pool_create_context();
 		pool_create_mock.expect().times(1).return_const(POOL_CREATE_DUMMY_RETURN_VALUE);
@@ -849,6 +858,9 @@ fn test_crate_pool_is_called_with_proper_arguments_after_bootstrap_finish() {
 		const KSM_PROVISON: Balance = 30;
 		const MGA_PROVISON: Balance = 500_000;
 
+		let enable_pool_creation_mock = MockAssetRegistryApi::enable_pool_creation_context();
+		enable_pool_creation_mock.expect().return_const(true);
+
 		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
@@ -929,6 +941,9 @@ fn test_rewards_are_distributed_properly_with_single_user() {
 		const MGA_PROVISON: Balance = 100_000;
 		let liq_token_id: Arc<Mutex<TokenId>> = Arc::new(Mutex::new(0_u32.into()));
 		let ref_liq_token_id = liq_token_id.clone();
+
+		let enable_pool_creation_mock = MockAssetRegistryApi::enable_pool_creation_context();
+		enable_pool_creation_mock.expect().return_const(true);
 
 		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
@@ -1013,6 +1028,9 @@ fn test_rewards_are_distributed_properly_with_multiple_user() {
 		const ANOTHER_USER_MGA_PROVISON: Balance = 100_000;
 		let liq_token_id: Arc<Mutex<TokenId>> = Arc::new(Mutex::new(0_u32.into()));
 		let ref_liq_token_id = liq_token_id.clone();
+
+		let enable_pool_creation_mock = MockAssetRegistryApi::enable_pool_creation_context();
+		enable_pool_creation_mock.expect().return_const(true);
 
 		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
@@ -1441,6 +1459,9 @@ fn multi_provisions_only_with_non_vested() {
 		init_mocks!();
 		let liq_token_id = Tokens::next_asset_id();
 
+		let enable_pool_creation_mock = MockAssetRegistryApi::enable_pool_creation_context();
+		enable_pool_creation_mock.expect().return_const(true);
+
 		// ACT
 		provisions(vec![
 			(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Regular),
@@ -1698,6 +1719,9 @@ fn test_multi_provisions_only_with_non_vested(
 		set_up();
 		jump_to_public_phase();
 		init_mocks!();
+		let enable_pool_creation_mock = MockAssetRegistryApi::enable_pool_creation_context();
+		enable_pool_creation_mock.expect().return_const(true);
+
 		let liq_token_id = Tokens::next_asset_id();
 		let user1_has_provisions =
 			provisions_list.iter().any(|(who, _, _, _)| *who == PROVISION_USER1_ID);
@@ -1764,6 +1788,9 @@ fn test_restart_bootstrap() {
 		const ANOTHER_USER_KSM_PROVISON: Balance = 20;
 		const ANOTHER_USER_MGA_PROVISON: Balance = 100_000;
 		let liq_token_id = Tokens::next_asset_id();
+
+		let enable_pool_creation_mock = MockAssetRegistryApi::enable_pool_creation_context();
+		enable_pool_creation_mock.expect().return_const(true);
 
 		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
@@ -1866,6 +1893,9 @@ fn test_restart_bootstrap() {
 #[serial]
 fn claim_liquidity_tokens_even_if_sum_of_rewards_is_zero_because_of_small_provision() {
 	new_test_ext().execute_with(|| {
+		let enable_pool_creation_mock = MockAssetRegistryApi::enable_pool_creation_context();
+		enable_pool_creation_mock.expect().return_const(true);
+
 		ArchivedBootstrap::<mock::Test>::mutate(|v| {
 			v.push(Default::default());
 		});
@@ -1941,6 +1971,9 @@ fn transfer_dust_to_treasury() {
 		Bootstrap::create_new_token(&USER_ID, u128::MAX);
 		let liq_token_id = Tokens::next_asset_id();
 
+		let enable_pool_creation_mock = MockAssetRegistryApi::enable_pool_creation_context();
+		enable_pool_creation_mock.expect().return_const(true);
+
 		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
@@ -2003,6 +2036,9 @@ fn transfer_dust_to_treasury() {
 #[serial]
 fn archive_previous_bootstrap_schedules() {
 	new_test_ext().execute_with(|| {
+		let enable_pool_creation_mock = MockAssetRegistryApi::enable_pool_creation_context();
+		enable_pool_creation_mock.expect().return_const(true);
+
 		Bootstrap::create_new_token(&USER_ID, u128::MAX);
 		Bootstrap::create_new_token(&USER_ID, u128::MAX);
 
@@ -2053,6 +2089,9 @@ fn test_activate_liq_tokens_is_called_with_all_liq_tokens_when_pool_is_promoted_
 		set_up();
 		jump_to_public_phase();
 		init_mocks!();
+
+		let enable_pool_creation_mock = MockAssetRegistryApi::enable_pool_creation_context();
+		enable_pool_creation_mock.expect().return_const(true);
 
 		let mga_provision = 1_000_000_u128;
 		let ksm_provision = 100_u128;
@@ -2170,6 +2209,9 @@ fn test_dont_activate_liquidity_tokens_when_pool_is_not_promoted_and_provisions_
 		let mga_provision = 1_000_000_u128;
 		let ksm_provision = 100_u128;
 
+		let enable_pool_creation_mock = MockAssetRegistryApi::enable_pool_creation_context();
+		enable_pool_creation_mock.expect().return_const(true);
+
 		let can_activate_mock = MockRewardsApi::can_activate_context();
 		can_activate_mock.expect().return_const(false);
 
@@ -2200,6 +2242,9 @@ fn test_claim_and_activate_doesnt_fail_when_tokens_activations_fails() {
 		set_up();
 		jump_to_public_phase();
 		init_mocks!();
+
+		let enable_pool_creation_mock = MockAssetRegistryApi::enable_pool_creation_context();
+		enable_pool_creation_mock.expect().return_const(true);
 
 		let mga_provision = 1_000_000_u128;
 		let ksm_provision = 100_u128;
@@ -2238,6 +2283,9 @@ fn test_pool_is_promoted_if_scheduled_to() {
 		const MGA_PROVISON: Balance = 100_000;
 		let liq_token_id: Arc<Mutex<TokenId>> = Arc::new(Mutex::new(0_u32.into()));
 		let ref_liq_token_id = liq_token_id.clone();
+
+		let enable_pool_creation_mock = MockAssetRegistryApi::enable_pool_creation_context();
+		enable_pool_creation_mock.expect().return_const(true);
 
 		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
@@ -2291,6 +2339,9 @@ fn test_pool_is_not_promoted_if_not_scheduled_to() {
 		let liq_token_id: Arc<Mutex<TokenId>> = Arc::new(Mutex::new(0_u32.into()));
 		let ref_liq_token_id = liq_token_id.clone();
 
+		let enable_pool_creation_mock = MockAssetRegistryApi::enable_pool_creation_context();
+		enable_pool_creation_mock.expect().return_const(true);
+
 		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
 		pool_exists_mock.expect().return_const(false);
 
@@ -2325,6 +2376,38 @@ fn test_pool_is_not_promoted_if_not_scheduled_to() {
 
 		Bootstrap::on_initialize(110_u32.into());
 		assert_eq!(BootstrapPhase::Public, Phase::<Test>::get());
+
+		Bootstrap::on_initialize(120_u32.into());
+		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
+	});
+}
+
+#[test]
+#[serial]
+fn test_pool_bootstrap_finalize_continues_if_asset_metadata_update_fails() {
+	new_test_ext().execute_with(|| {
+		set_up();
+
+		let enable_pool_creation_mock = MockAssetRegistryApi::enable_pool_creation_context();
+		enable_pool_creation_mock.expect().return_const(false);
+
+		let pool_exists_mock = MockPoolCreateApi::pool_exists_context();
+		pool_exists_mock.expect().return_const(false);
+
+		let pool_create_mock = MockPoolCreateApi::pool_create_context();
+		pool_create_mock.expect().times(1).return_const(POOL_CREATE_DUMMY_RETURN_VALUE);
+
+		Bootstrap::schedule_bootstrap(
+			Origin::root(),
+			KSMId::get(),
+			MGAId::get(),
+			100_u32.into(),
+			Some(10),
+			10,
+			Some(DEFAULT_RATIO),
+			false,
+		)
+		.unwrap();
 
 		Bootstrap::on_initialize(120_u32.into());
 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());

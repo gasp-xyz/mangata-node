@@ -69,7 +69,7 @@ else
 fi
 
 if [ -n "${DISABLE_CARGO_CACHE}" ]; then
-  DOCKER_MOUNT_CACHE_VOLUMES="- v "
+  DOCKER_MOUNT_CACHE_VOLUMES=""
 else
   DOCKER_MOUNT_CACHE_VOLUMES="-v ${CARGO_CACHE_GIT}:/usr/local/cargo/git -v ${CARGO_CACHE_REGISTRY}:/usr/local/cargo/registry -v ${SCCACHE_DIR}:/.cache/sccache"
 fi
@@ -78,7 +78,7 @@ docker run \
   --rm \
   --name=${DOCKER_JOB_NAME} \
   --user $DOCKER_USER \
-  -v ${REPO_ROOT}:/code $() \
+  -v ${REPO_ROOT}:/code \
   ${DOCKER_MOUNT_CACHE_VOLUMES} \
   ${DOCKER_RUN_EXTRA_ARGS} \
   -e CARGO_TARGET_DIR="/code/${OUTPUT_DIR}" \

@@ -38,7 +38,7 @@ fn bootstrap_updates_metadata_and_creates_pool_correctly() {
 	.execute_with(|| {
 		assert_err!(
 			pallet_xyk::Pallet::<Runtime>::create_pool(
-				Origin::signed(AccountId::from(ALICE)),
+				RuntimeOrigin::signed(AccountId::from(ALICE)),
 				NATIVE_ASSET_ID,
 				10_ * UNIT,
 				ASSET_ID_1,
@@ -48,7 +48,7 @@ fn bootstrap_updates_metadata_and_creates_pool_correctly() {
 		);
 
 		assert_ok!(pallet_bootstrap::Pallet::<Runtime>::schedule_bootstrap(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			NATIVE_ASSET_ID,
 			ASSET_ID_1,
 			10_u32.into(),
@@ -62,12 +62,12 @@ fn bootstrap_updates_metadata_and_creates_pool_correctly() {
 		assert_eq!(BootstrapPhase::Public, Phase::<Runtime>::get());
 
 		assert_ok!(pallet_bootstrap::Pallet::<Runtime>::provision(
-			Origin::signed(AccountId::from(ALICE)),
+			RuntimeOrigin::signed(AccountId::from(ALICE)),
 			ASSET_ID_1,
 			10 * UNIT,
 		));
 		assert_ok!(pallet_bootstrap::Pallet::<Runtime>::provision(
-			Origin::signed(AccountId::from(ALICE)),
+			RuntimeOrigin::signed(AccountId::from(ALICE)),
 			NATIVE_ASSET_ID,
 			10 * UNIT,
 		));

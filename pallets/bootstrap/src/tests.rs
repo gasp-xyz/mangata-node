@@ -2398,7 +2398,7 @@ fn test_pool_bootstrap_finalize_continues_if_asset_metadata_update_fails() {
 		pool_create_mock.expect().times(1).return_const(POOL_CREATE_DUMMY_RETURN_VALUE);
 
 		Bootstrap::schedule_bootstrap(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			KSMId::get(),
 			MGAId::get(),
 			100_u32.into(),

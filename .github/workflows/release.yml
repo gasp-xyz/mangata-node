@@ -4,18 +4,6 @@ on:
   release:
     types: [published]
 
-  # For testing purposes only
-  workflow_dispatch:
-    inputs:
-      git_sha:
-        description: "Release commit hash"
-        required: true
-        default: "test"
-      version:
-        description: "Relase tag version"
-        required: true
-        default: "test"
-
 
 jobs:
   publish:
@@ -23,9 +11,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Set env
-        run: echo "TAG_COMMIT_HASH=${{ github.event.inputs.git_sha || github.sha }}" >> $GITHUB_ENV
-        run: echo "TAG_NAME=${{ github.event.inputs.version || version }}" >> $GITHUB_ENV
+      - uses: actions/checkout@v3
 
       - name: Login to Docker Hub
         uses: docker/login-action@v2.1.0
@@ -38,7 +24,7 @@ jobs:
         uses: docker/metadata-action@v4.1.1
         with:
           images: docker.io/mangatasolutions/mangata-node
-          tags: type=semver,prefix=kusama-,pattern=${{ env.TAG_NAME }}
+          tags: type=semver,prefix=kusama-,pattern={{ version }}
           flavor: |
             latest=false
 
@@ -47,33 +33,56 @@ jobs:
         uses: docker/metadata-action@v4.1.1
         with:
           images: docker.io/mangatasolutions/mangata-node
-          tags: type=semver,prefix=rococo-,pattern=${{ env.TAG_NAME }}
+          tags: type=semver,prefix=rococo-,pattern={{ version }}
           flavor: |
             latest=false
 
       - name: Tag and push image [kusama]
         uses: akhilerm/tag-push-action@v2.0.0
         with:
-          src: docker.io/mangatasolutions/mangata-node:${{ env.TAG_COMMIT_HASH }}
+          src: docker.io/mangatasolutions/mangata-node:${{ github.sha }}
           dst: ${{ steps.meta_kusama.outputs.tags }}
 
       - name: Tag and push image [rococo]
         uses: akhilerm/tag-push-action@v2.0.0
         with:
-          src: docker.io/mangatasolutions/mangata-node:${{ env.TAG_COMMIT_HASH }}
+          src: docker.io/mangatasolutions/mangata-node:${{ github.sha }}
           dst: ${{ steps.meta_rococo.outputs.tags }}
+
+      - name: Export docker image
+        run: |
+          docker pull mangatasolutions/mangata-node:${{ github.sha }}
+          docker save mangatasolutions/mangata-node:${{ github.sha }} -o docker-${{ github.ref_name }}.tar
+          zip -r docker-${{ github.ref_name }}.zip docker-${{ github.ref_name }}.tar
 
       - name: Extract wasms
         run: |
-          mkdir host
-          docker run --entrypoint="" -v$(pwd)/host:/host --rm -it mangatasolutions/mangata-node:${{ github.sha }} cp /mangata/mangata_kusama_runtime.compact.compressed.wasm  /host/
-          docker run --entrypoint="" -v$(pwd)/host:/host --rm -it mangatasolutions/mangata-node:${{ github.sha }} cp /mangata/mangata_rococo_runtime.compact.compressed.wasm  /host/
+          docker run --entrypoint="" --rm mangatasolutions/mangata-node:${{ github.sha }} cat /mangata/mangata_kusama_runtime.compact.compressed.wasm > kusama.wasm
+          docker run --entrypoint="" --rm mangatasolutions/mangata-node:${{ github.sha }} cat /mangata/mangata_rococo_runtime.compact.compressed.wasm > rococo.wasm
+
+      - name: Calculate Blake2 hashes
+        working-directory: scripts/blake2-hash
+        run: |
+          npm install
+          echo -n "kusama-${{ github.ref_name }}.wasm [blake2]: " > hashes.txt
+          node index.js -i ../../kusama.wasm  >> hashes.txt
+          echo -n "kusama-${{ github.ref_name }}.wasm [md5sum]: " >> hashes.txt
+          md5sum ../../kusama.wasm | awk '{ print $1 }' >> hashes.txt
+          echo -n "rococo-${{ github.ref_name }}.wasm [blake2]: " >> hashes.txt
+          node index.js -i ../../rococo.wasm  >> hashes.txt
+          echo -n "rococo-${{ github.ref_name }}.wasm [md5sum]: " >> hashes.txt
+          md5sum ../../rococo.wasm | awk '{ print $1 }' >> hashes.txt
+
+      - name: Rename artifacts
+        run: |
+          mv kusama.wasm kusama-${{ github.ref_name }}.wasm
+          mv rococo.wasm rococo-${{ github.ref_name }}.wasm
+          mv ./scripts/blake2-hash/hashes.txt hashes-${{ github.ref_name }}.txt
 
       - name: Upload wasms to release page
         uses: ncipollo/release-action@v1
         with:
-          tag: ${{ env.TAG_NAME }}
+          tag: ${{ github.ref_name }}
           allowUpdates: true
-          artifacts: |
-            "host/mangata_kusama_runtime.compact.compressed.wasm"
-            "host/mangata_rococo_runtime.compact.compressed.wasm"
+          artifacts: "kusama-${{ github.ref_name }}.wasm,rococo-${{ github.ref_name }}.wasm,hashes-${{ github.ref_name }}.txt,docker-${{ github.ref_name }}.zip"
+

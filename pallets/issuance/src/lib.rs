@@ -458,13 +458,13 @@ impl<T: Config> Pallet<T> {
 			issuance_config
 				.liquidity_mining_split
 				.checked_add(&issuance_config.staking_split)
-				.ok_or(Error::<T>::IssuanceConfigInvalid)? ==
-				Perbill::from_percent(100),
+				.ok_or(Error::<T>::IssuanceConfigInvalid)?
+				== Perbill::from_percent(100),
 			Error::<T>::IssuanceConfigInvalid
 		);
 		ensure!(
-			issuance_config.cap >=
-				issuance_config
+			issuance_config.cap
+				>= issuance_config
 					.issuance_at_init
 					.checked_add(issuance_config.total_crowdloan_allocation)
 					.ok_or(Error::<T>::IssuanceConfigInvalid)?,

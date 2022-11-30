@@ -844,8 +844,9 @@ pub mod pallet {
 				liquidity_asset_id,
 			)?;
 
-			let rewards_256 =
-				Into::<U256>::into(rewards_claimed).saturating_mul(amount_permille.into()).div(1000);
+			let rewards_256 = Into::<U256>::into(rewards_claimed)
+				.saturating_mul(amount_permille.into())
+				.div(1000);
 			let rewards = Balance::try_from(rewards_256)
 				.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
 

@@ -61,9 +61,9 @@ pub trait WeightInfo {
 	fn mint_liquidity() -> Weight;
 	fn mint_liquidity_using_vesting_native_tokens() -> Weight;
 	fn burn_liquidity() -> Weight;
+	fn update_pool_promotion() -> Weight;
 	fn claim_rewards_v2() -> Weight;
 	fn claim_rewards_all_v2() -> Weight;
-	fn promote_pool() -> Weight;
 	fn activate_liquidity_v2() -> Weight;
 	fn deactivate_liquidity_v2() -> Weight;
 	fn rewards_migrate_v1_to_v2() -> Weight;
@@ -139,9 +139,16 @@ impl<T: frame_system::Config> pallet_xyk::WeightInfo for ModuleWeight<T> {
 	// Storage: Tokens TotalIssuance (r:1 w:1)
 	// Storage: Xyk LiquidityPools (r:0 w:1)
 	fn burn_liquidity() -> Weight {
-		(Weight::from_ref_time(161_708_000))
-			.saturating_add(T::DbWeight::get().reads(12 as u64))
-			.saturating_add(T::DbWeight::get().writes(14 as u64))
+		(Weight::from_ref_time(175_567_000))
+			.saturating_add(T::DbWeight::get().reads(16 as u64))
+			.saturating_add(T::DbWeight::get().writes(19 as u64))
+	}
+
+	// Storage: Issuance PromotedPoolsRewards (r:1 w:1)
+	fn update_pool_promotion() -> Weight {
+		(Weight::from_ref_time(21_822_000 as u64))
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Xyk RewardsInfo (r:1 w:1)
 	// Storage: Issuance PromotedPoolsRewardsV2 (r:1 w:0)
@@ -158,12 +165,6 @@ impl<T: frame_system::Config> pallet_xyk::WeightInfo for ModuleWeight<T> {
 		(Weight::from_ref_time(84_820_000))
 			.saturating_add(T::DbWeight::get().reads(4 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
-	}
-	// Storage: Issuance PromotedPoolsRewardsV2 (r:1 w:1)
-	fn promote_pool() -> Weight {
-		(Weight::from_ref_time(29_400_000))
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Issuance PromotedPoolsRewardsV2 (r:1 w:0)
 	// Storage: MultiPurposeLiquidity ReserveStatus (r:1 w:1)
@@ -273,9 +274,14 @@ impl WeightInfo for () {
 	// Storage: Tokens TotalIssuance (r:1 w:1)
 	// Storage: Xyk LiquidityPools (r:0 w:1)
 	fn burn_liquidity() -> Weight {
-		(Weight::from_ref_time(161_708_000))
-			.saturating_add(RocksDbWeight::get().reads(12 as u64))
-			.saturating_add(RocksDbWeight::get().writes(14 as u64))
+		(Weight::from_ref_time(175_567_000))
+			.saturating_add(RocksDbWeight::get().reads(16 as u64))
+			.saturating_add(RocksDbWeight::get().writes(19 as u64))
+	}
+	fn update_pool_promotion() -> Weight {
+		(Weight::from_ref_time(21_528_000))
+			.saturating_add(RocksDbWeight::get().reads(1 as u64))
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: Xyk RewardsInfo (r:1 w:1)
 	// Storage: Issuance PromotedPoolsRewardsV2 (r:1 w:0)
@@ -292,12 +298,6 @@ impl WeightInfo for () {
 		(Weight::from_ref_time(84_820_000))
 			.saturating_add(RocksDbWeight::get().reads(4 as u64))
 			.saturating_add(RocksDbWeight::get().writes(3 as u64))
-	}
-	// Storage: Issuance PromotedPoolsRewardsV2 (r:1 w:1)
-	fn promote_pool() -> Weight {
-		(Weight::from_ref_time(29_400_000))
-			.saturating_add(RocksDbWeight::get().reads(1 as u64))
-			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: Issuance PromotedPoolsRewardsV2 (r:1 w:0)
 	// Storage: MultiPurposeLiquidity ReserveStatus (r:1 w:1)

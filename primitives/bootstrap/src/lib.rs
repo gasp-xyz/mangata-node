@@ -2,7 +2,7 @@
 
 use frame_support::pallet_prelude::*;
 use mangata_types::{Balance, TokenId};
-use sp_runtime::traits::MaybeDisplay;
+use sp_runtime::{traits::MaybeDisplay, Percent};
 use sp_std::fmt::Debug;
 
 pub trait PoolCreateApi {
@@ -45,7 +45,10 @@ pub trait RewardsApi {
 		amount: Balance,
 	) -> DispatchResult;
 
-	fn promote_pool(liquidity_token_id: TokenId) -> bool;
+	fn update_pool_promotion(
+		liquidity_token_id: TokenId,
+		liquidity_mining_issuance_weight: Option<u8>,
+	);
 }
 
 pub trait AssetRegistryApi {

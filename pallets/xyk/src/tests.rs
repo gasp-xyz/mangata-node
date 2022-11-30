@@ -8,7 +8,6 @@ use frame_support::assert_err;
 use mangata_types::assets::CustomMetadata;
 use orml_traits::asset_registry::AssetMetadata;
 use serial_test::serial;
-use std::arch::aarch64::uint64x1x2_t;
 use test_case::test_case;
 
 //fn create_pool_W(): create_pool working assert (maps,acocounts values)  //DONE

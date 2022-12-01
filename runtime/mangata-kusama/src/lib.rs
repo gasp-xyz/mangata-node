@@ -175,6 +175,8 @@ impl_opaque_keys! {
 	}
 }
 
+// match curently deployed versions
+#[cfg(feature = "try-runtime")]
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
@@ -184,6 +186,19 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 10,
+	state_version: 0,
+};
+
+#[cfg(not(feature = "try-runtime"))]
+#[sp_version::runtime_version]
+pub const VERSION: RuntimeVersion = RuntimeVersion {
+	spec_name: create_runtime_str!("mangata-parachain"),
+	impl_name: create_runtime_str!("mangata-parachain"),
+	authoring_version: 11,
+	spec_version: 11,
+	impl_version: 0,
+	apis: RUNTIME_API_VERSIONS,
+	transaction_version: 11,
 	state_version: 0,
 };
 

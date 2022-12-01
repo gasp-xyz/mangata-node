@@ -8,6 +8,7 @@ use frame_support::assert_err;
 use mangata_types::assets::CustomMetadata;
 use orml_traits::asset_registry::AssetMetadata;
 use serial_test::serial;
+use sp_runtime::Permill;
 use test_case::test_case;
 
 //fn create_pool_W(): create_pool working assert (maps,acocounts values)  //DONE
@@ -2453,19 +2454,20 @@ fn test_compound_provide_liquidity(amount: u128, reward: u128, pool_r: u128, sur
 	});
 }
 
-#[test_case(2_000_000, 1_000, 0 ; "compound all rewards")]
-#[test_case(2_000_000, 500, 0 ; "compound half rewards")]
-#[test_case(100_000_000_000_000_000_000, 1_000, 1 ; "benchmark precision test")]
+#[test_case(2_000_000, 1_000_000, 0 ; "compound all rewards")]
+#[test_case(2_000_000, 500_000, 0 ; "compound half rewards")]
+#[test_case(100_000_000_000_000_000_000, 1_000_000, 1 ; "benchmark precision test")]
 #[serial]
-fn test_compound_rewards(amount: u128, amount_permille: u128, surplus: u128) {
+fn test_compound_rewards(amount: u128, part_permille: u32, surplus: u128) {
 	new_test_ext().execute_with(|| {
+		let amount_permille = Permill::from_parts(part_permille);
 		System::set_block_number(1);
 		MockPromotedPoolApi::instance().lock().unwrap().clear();
 
 		XykStorage::create_new_token(&2, amount);
 		XykStorage::create_new_token(&2, amount);
 		XykStorage::create_pool(Origin::signed(2), 0, amount / 2, 1, amount / 2).unwrap();
-		XykStorage::promote_pool(Origin::root(), 2).unwrap();
+		XykStorage::update_pool_promotion(Origin::root(), 2, Some(1)).unwrap();
 		XykStorage::activate_liquidity_v2(Origin::signed(2), 2, amount / 2, None).unwrap();
 
 		MockPromotedPoolApi::instance().lock().unwrap().insert(2, U256::from(u128::MAX));
@@ -2478,7 +2480,7 @@ fn test_compound_rewards(amount: u128, amount_permille: u128, surplus: u128) {
 
 		let balance_before_0 = XykStorage::balance(0, 2);
 		let balance_before_1 = XykStorage::balance(1, 2);
-		let balance_not_compounded = amount * (1_000 - amount_permille) / 1_000;
+		let balance_not_compounded: u128 = (Permill::one() - amount_permille) * amount;
 		XykStorage::compound_rewards(Origin::signed(2), 2, amount_permille).unwrap();
 
 		assert_eq!(XykStorage::balance(0, 2), balance_before_0 + surplus + balance_not_compounded);

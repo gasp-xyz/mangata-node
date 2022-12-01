@@ -22,10 +22,10 @@
 use super::*;
 
 use frame_benchmarking::{account, benchmarks, whitelisted_caller};
-use frame_support::assert_err;
 use frame_system::RawOrigin;
 use orml_tokens::MultiTokenCurrencyExtended;
 use pallet_issuance::ComputeIssuance;
+use sp_runtime::Permill;
 
 use crate::Pallet as Xyk;
 
@@ -616,7 +616,7 @@ benchmarks! {
 		<<T as Config>::PoolPromoteApi as ComputeIssuance>::initialize();
 
 		Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), asset_id_1.into(), pool_amount, asset_id_2.into(), pool_amount).unwrap();
-		Xyk::<T>::promote_pool(RawOrigin::Root.into(), liquidity_asset_id).unwrap();
+		Xyk::<T>::update_pool_promotion(RawOrigin::Root.into(), liquidity_asset_id, Some(1)).unwrap();
 		Xyk::<T>::activate_liquidity_v2(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id, pool_amount, None).unwrap();
 		// mint for other to split the rewards rewards_ratio:1
 		Xyk::<T>::mint_liquidity(
@@ -637,7 +637,7 @@ benchmarks! {
 		let balance_asset_before = <T as Config>::Currency::free_balance(liquidity_asset_id.into(), &caller).into();
 		pre_pool_balance = Xyk::<T>::asset_pool((asset_id_1, asset_id_2));
 
-	}: compound_rewards(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), 1000_u128)
+	}: compound_rewards(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), Permill::one())
 	verify {
 
 		assert_eq!(

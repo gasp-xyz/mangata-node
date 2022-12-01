@@ -224,11 +224,11 @@
 //! ### Errors
 //! - inherits all of the errors from `claim_rewards`, `sell_asset` and `mint_liquidity`
 //!
-//! `NoSuchLiquidityAsset` - pool wiht given asset id does not exist
+//! `NoSuchLiquidityAsset` - pool with given asset id does not exist
 //!
 //! `FunctionNotAvailableForThisToken` - not available for this asset id
 //!
-//! `NotEnoughtRewardsEarned` - not enough rewards available
+//! `NotEnoughRewardsEarned` - not enough rewards available
 //!
 //! # fn provide_liquidity_with_conversion
 //! - Given one of the liquidity pool asset, computes balanced sell amount and provides liquidity into the pool
@@ -316,7 +316,7 @@ use sp_runtime::{
 		AccountIdConversion, AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member,
 		SaturatedConversion, Zero,
 	},
-	Percent,
+	Permill,
 };
 use sp_std::{
 	convert::{TryFrom, TryInto},
@@ -461,8 +461,8 @@ pub mod pallet {
 		MathOverflow,
 		/// Liquidity token creation failed
 		LiquidityTokenCreationFailed,
-		/// Not enought rewards earned
-		NotEnoughtRewardsEarned,
+		/// Not enough rewards earned
+		NotEnoughRewardsEarned,
 		/// Not a promoted pool
 		NotAPromotedPool,
 		/// Past time calculation
@@ -826,7 +826,7 @@ pub mod pallet {
 		pub fn compound_rewards(
 			origin: OriginFor<T>,
 			liquidity_asset_id: TokenId,
-			amount_permille: u128,
+			amount_permille: Permill,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
@@ -845,8 +845,8 @@ pub mod pallet {
 			)?;
 
 			let rewards_256 = Into::<U256>::into(rewards_claimed)
-				.saturating_mul(amount_permille.into())
-				.div(1000);
+				.saturating_mul(amount_permille.deconstruct().into())
+				.div(Permill::one().deconstruct());
 			let rewards = Balance::try_from(rewards_256)
 				.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
 
@@ -2793,7 +2793,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		let claimable_rewards =
 			Pallet::<T>::calculate_rewards_amount_v2(user.clone(), liquidity_asset_id)?;
 
-		ensure!(mangata_amount <= claimable_rewards, Error::<T>::NotEnoughtRewardsEarned);
+		ensure!(mangata_amount <= claimable_rewards, Error::<T>::NotEnoughRewardsEarned);
 
 		let rewards_info: RewardInfo = Self::get_rewards_info(user.clone(), liquidity_asset_id);
 
@@ -3046,11 +3046,11 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			current_rewards = Balance::try_from(
 				available_rewards_for_pool
 					.checked_mul(work_user)
-					.ok_or_else(|| DispatchError::from(Error::<T>::NotEnoughtRewardsEarned))?
+					.ok_or_else(|| DispatchError::from(Error::<T>::NotEnoughRewardsEarned))?
 					.checked_div(work_pool)
 					.ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?,
 			)
-			.map_err(|_| DispatchError::from(Error::<T>::NotEnoughtRewardsEarned))?;
+			.map_err(|_| DispatchError::from(Error::<T>::NotEnoughRewardsEarned))?;
 		}
 
 		let total_rewards = current_rewards

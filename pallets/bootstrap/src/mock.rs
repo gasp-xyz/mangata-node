@@ -273,7 +273,7 @@ mockall::mock! {
 			amount: Balance,
 		) -> DispatchResult;
 
-		fn promote_pool(liquidity_token_id: TokenId) -> bool;
+		fn update_pool_promotion(liquidity_token_id: TokenId, liquidity_mining_issuance_weight: Option<u8>);
 	}
 }
 
@@ -294,6 +294,7 @@ impl AssetRegistryApi for AssetRegistry {
 
 parameter_types! {
 	pub const BootstrapUpdateBuffer: <Test as frame_system::Config>::BlockNumber = 10;
+	pub const DefaultBootstrapPromotedPoolWeight: u8 = 1u8;
 }
 
 #[cfg(not(feature = "runtime-benchmarks"))]
@@ -301,6 +302,7 @@ parameter_types! {
 impl pallet_bootstrap::Config for Test {
 	type Event = Event;
 	type PoolCreateApi = MockPoolCreateApi;
+	type DefaultBootstrapPromotedPoolWeight = DefaultBootstrapPromotedPoolWeight;
 	type BootstrapUpdateBuffer = BootstrapUpdateBuffer;
 	type TreasuryPalletId = TreasuryPalletId;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
@@ -315,6 +317,7 @@ impl pallet_bootstrap::Config for Test {
 impl pallet_bootstrap::Config for Test {
 	type Event = Event;
 	type PoolCreateApi = Xyk;
+	type DefaultBootstrapPromotedPoolWeight = DefaultBootstrapPromotedPoolWeight;
 	type BootstrapUpdateBuffer = BootstrapUpdateBuffer;
 	type TreasuryPalletId = TreasuryPalletId;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;

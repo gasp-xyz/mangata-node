@@ -1,0 +1,18 @@
+{
+  "name": "mangata-crowdloan-tge",
+  "version": "1.0.0",
+  "description": "Script for tge and crowdloan rewards",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Michal",
+  "license": "ISC",
+  "dependencies": {
+    "@polkadot/util-crypto": "^10.1.11",
+    "@types/yargs": "^17.0.13",
+    "yargs": "17.6.0"
+  }
+}

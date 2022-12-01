@@ -392,7 +392,7 @@ fn issuance_after_linear_period_never_execeeds_linear() {
 #[test]
 fn promote_pool_api_works() {
 	new_test_ext().execute_with(|| {
-		Issuance::promote_pool(1);
+		Issuance::update_pool_promotion(1, Some(1u8));
 
 		roll_to_while_minting(4, None);
 		assert_eq!(
@@ -405,7 +405,7 @@ fn promote_pool_api_works() {
 			Issuance::get_pool_rewards_v2(1).unwrap()
 		);
 
-		Issuance::promote_pool(2);
+		Issuance::update_pool_promotion(2, Some(1u8));
 		//	assert_eq!(2, Issuance::len());
 		roll_to_while_minting(14, None);
 		assert_eq!(

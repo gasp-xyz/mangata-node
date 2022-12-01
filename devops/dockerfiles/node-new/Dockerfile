@@ -1,9 +1,11 @@
 FROM debian:buster
 
+ARG BUILD_DIR=target/release
+
 WORKDIR /mangata
 
-COPY target/release/mangata-node /mangata/node
-COPY target/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm /mangata/
-COPY target/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm /mangata/
+COPY $BUILD_DIR/mangata-node /mangata/node
+COPY $BUILD_DIR/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm /mangata/
+COPY $BUILD_DIR/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm /mangata/
 
 ENTRYPOINT ["/mangata/node"]

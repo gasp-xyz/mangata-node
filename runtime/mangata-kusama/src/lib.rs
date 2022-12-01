@@ -549,6 +549,7 @@ impl AssetRegistryApi for EnableAssetPoolApi {
 
 parameter_types! {
 	pub const BootstrapUpdateBuffer: BlockNumber = 300;
+	pub const DefaultBootstrapPromotedPoolWeight: u8 = 0u8;
 }
 
 impl pallet_bootstrap::BootstrapBenchmarkingConfig for Runtime {}
@@ -556,6 +557,7 @@ impl pallet_bootstrap::BootstrapBenchmarkingConfig for Runtime {}
 impl pallet_bootstrap::Config for Runtime {
 	type Event = Event;
 	type PoolCreateApi = Xyk;
+	type DefaultBootstrapPromotedPoolWeight = DefaultBootstrapPromotedPoolWeight;
 	type BootstrapUpdateBuffer = BootstrapUpdateBuffer;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type VestingProvider = Vesting;

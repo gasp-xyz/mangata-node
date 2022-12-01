@@ -20,7 +20,7 @@ fn proxy_behavior_correct() {
 		assert_noop!(
 			Proxy::add_proxy(
 				Origin::signed(AccountId::from([21; 32])),
-				MultiAddress::from(AccountId::from(ALICE)),
+				AccountId::from(ALICE).into(),
 				ProxyType::Any,
 				0
 			),
@@ -35,7 +35,7 @@ fn proxy_behavior_correct() {
 		// Alice has all Bob's permissions now
 		assert_ok!(Proxy::add_proxy(
 			Origin::signed(AccountId::from(BOB)),
-			MultiAddress::from(AccountId::from(ALICE)),
+			AccountId::from(ALICE).into(),
 			ProxyType::Any,
 			0
 		));
@@ -45,7 +45,7 @@ fn proxy_behavior_correct() {
 		// alice can now make calls for bob's account
 		assert_ok!(Proxy::proxy(
 			Origin::signed(AccountId::from(ALICE)),
-			MultiAddress::from(AccountId::from(BOB)),
+			AccountId::from(BOB).into(),
 			None,
 			call.clone()
 		));
@@ -54,14 +54,14 @@ fn proxy_behavior_correct() {
 		// alice cannot make calls for bob's account anymore
 		assert_ok!(Proxy::remove_proxy(
 			Origin::signed(AccountId::from(BOB)),
-			MultiAddress::from(AccountId::from(ALICE)),
+			AccountId::from(ALICE).into(),
 			ProxyType::Any,
 			0
 		));
 		assert_noop!(
 			Proxy::proxy(
 				Origin::signed(AccountId::from(ALICE)),
-				MultiAddress::from(AccountId::from(BOB)),
+				AccountId::from(BOB).into(),
 				None,
 				call.clone()
 			),
@@ -94,7 +94,7 @@ fn proxy_permissions_correct() {
 		// Alice has all Bob's permissions now
 		assert_ok!(Proxy::add_proxy(
 			Origin::signed(AccountId::from(BOB)),
-			MultiAddress::from(AccountId::from(ALICE)),
+			AccountId::from(ALICE).into(),
 			ProxyType::Any,
 			0
 		));
@@ -117,7 +117,7 @@ fn proxy_permissions_correct() {
 			}));
 		let compound_call = Box::new(Call::Xyk(pallet_xyk::Call::compound_rewards {
 			liquidity_asset_id: LP_ASSET_ID,
-			amount_permille: 1000,
+			amount_permille: Permill::one(),
 		}));
 		let create_pool_call = Box::new(Call::Xyk(pallet_xyk::Call::create_pool {
 			first_asset_id: NATIVE_ASSET_ID,
@@ -129,7 +129,7 @@ fn proxy_permissions_correct() {
 		// Proxy calls do not bypass root permission
 		assert_ok!(Proxy::proxy(
 			Origin::signed(AccountId::from(ALICE)),
-			MultiAddress::from(AccountId::from(BOB)),
+			AccountId::from(BOB).into(),
 			None,
 			root_call.clone()
 		));
@@ -139,14 +139,14 @@ fn proxy_permissions_correct() {
 		// Alice's gives compound permissions to Bob
 		assert_ok!(Proxy::add_proxy(
 			Origin::signed(AccountId::from(ALICE)),
-			MultiAddress::from(AccountId::from(BOB)),
+			AccountId::from(BOB).into(),
 			ProxyType::AutoCompound,
 			0
 		));
 		// Bob can be a proxy for alice compound calls
 		assert_ok!(Proxy::proxy(
 			Origin::signed(AccountId::from(BOB)),
-			MultiAddress::from(AccountId::from(ALICE)),
+			AccountId::from(ALICE).into(),
 			Some(ProxyType::AutoCompound),
 			provide_liquidity_call.clone()
 		));
@@ -158,7 +158,7 @@ fn proxy_permissions_correct() {
 		// Bob can be a proxy for alice compound calls
 		assert_ok!(Proxy::proxy(
 			Origin::signed(AccountId::from(BOB)),
-			MultiAddress::from(AccountId::from(ALICE)),
+			AccountId::from(ALICE).into(),
 			Some(ProxyType::AutoCompound),
 			compound_call.clone()
 		));
@@ -167,7 +167,7 @@ fn proxy_permissions_correct() {
 		// Bob can't proxy for alice in a non compound call, once again proxy call works but nested call fails
 		assert_ok!(Proxy::proxy(
 			Origin::signed(AccountId::from(BOB)),
-			MultiAddress::from(AccountId::from(ALICE)),
+			AccountId::from(ALICE).into(),
 			Some(ProxyType::AutoCompound),
 			transfer_call.clone()
 		));
@@ -177,7 +177,7 @@ fn proxy_permissions_correct() {
 		// create pool call is part of the Xyk but is not in the AutoCompound ProxyType filter
 		assert_ok!(Proxy::proxy(
 			Origin::signed(AccountId::from(BOB)),
-			MultiAddress::from(AccountId::from(ALICE)),
+			AccountId::from(ALICE).into(),
 			Some(ProxyType::AutoCompound),
 			create_pool_call.clone()
 		));
@@ -190,14 +190,14 @@ fn proxy_permissions_correct() {
 		// remove proxy works
 		assert_ok!(Proxy::remove_proxy(
 			Origin::signed(AccountId::from(ALICE)),
-			MultiAddress::from(AccountId::from(BOB)),
+			AccountId::from(BOB).into(),
 			ProxyType::AutoCompound,
 			0
 		));
 		assert_noop!(
 			Proxy::proxy(
 				Origin::signed(AccountId::from(BOB)),
-				MultiAddress::from(AccountId::from(ALICE)),
+				AccountId::from(ALICE).into(),
 				Some(ProxyType::AutoCompound),
 				provide_liquidity_call.clone()
 			),

@@ -4,7 +4,7 @@ use frame_support::traits::GenesisBuild;
 pub use frame_support::{assert_err, assert_noop, assert_ok, dispatch::DispatchResultWithPostInfo};
 pub use orml_traits::currency::{MultiCurrency, MultiCurrencyExtended};
 pub use sp_io::TestExternalities;
-pub use sp_runtime::{codec::Encode, MultiAddress};
+pub use sp_runtime::{codec::Encode, MultiAddress, Permill};
 
 #[cfg(feature = "with-kusama-runtime")]
 pub use kusama_imports::*;

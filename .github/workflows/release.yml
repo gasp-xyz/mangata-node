@@ -69,13 +69,13 @@ jobs:
           echo -n "kusama-${{ github.ref_name }}.wasm [md5sum]: " >> hashes.txt
           md5sum ../../kusama.wasm | awk '{ print $1 }' >> hashes.txt
           echo -n "kusama-${{ github.ref_name }} spec version : " >> hashes.txt
-          grep -oE "spec_version:.*" runtime/mangata-kusama/src/lib.rs | grep -oE "[0-9]+" >> hashes.txt
+          grep -oE "spec_version:.*" runtime/mangata-kusama/src/lib.rs | grep -oE "[0-9]+" | sort | tail -1 >> hashes.txt
           echo -n "rococo-${{ github.ref_name }}.wasm [blake2]: " >> hashes.txt
           node index.js -i ../../rococo.wasm  >> hashes.txt
           echo -n "rococo-${{ github.ref_name }}.wasm [md5sum]: " >> hashes.txt
           md5sum ../../rococo.wasm | awk '{ print $1 }' >> hashes.txt
           echo -n "rococo-${{ github.ref_name }} spec version : " >> hashes.txt
-          grep -oE "spec_version:.*" runtime/mangata-rococo/src/lib.rs | grep -oE "[0-9]+" >> hashes.txt
+          grep -oE "spec_version:.*" runtime/mangata-rococo/src/lib.rs | grep -oE "[0-9]+" | sort | tail -1 >> hashes.txt
 
 
       - name: Rename artifacts

@@ -474,7 +474,7 @@ fn liquidity_rewards_claim_more_NW() {
 
 		assert_err!(
 			XykStorage::claim_rewards_v2(Origin::signed(2), 4, 15000),
-			Error::<Test>::NotEnoughtRewardsEarned,
+			Error::<Test>::NotEnoughRewardsEarned,
 		);
 	});
 }
@@ -681,7 +681,7 @@ fn liquidity_rewards_claim_pool_not_promoted() {
 
 		assert_err!(
 			XykStorage::claim_rewards_v2(Origin::signed(2), 7, 5000000000),
-			Error::<Test>::NotEnoughtRewardsEarned,
+			Error::<Test>::NotEnoughRewardsEarned,
 		);
 	});
 }

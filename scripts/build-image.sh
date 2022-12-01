@@ -1,7 +1,7 @@
 #!/bin/bash -xe
 REPO_ROOT=$(readlink -f $(dirname $(dirname $(readlink -f $0))))
 if [ -z "${SKIP_BUILD}" ]; then
-  ${REPO_ROOT}/docker-cargo.sh build --release --features mangata-rococogst
+  ${REPO_ROOT}/docker-cargo.sh build --release --features mangata-rococo
 else
   echo "build skipped because SKIP_BUILD flag is set"
 fi

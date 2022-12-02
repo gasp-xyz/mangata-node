@@ -135,7 +135,7 @@ jobs:
 
   unit-test:
     name: Unit tests
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, compile]
     container:
       image: ${{ inputs.builder_image }}
     steps:
@@ -153,7 +153,6 @@ jobs:
             ${{ github.workspace }}/target
             /usr/local/cargo/git
             /usr/local/cargo/registry
-            ~/.cache/sccache
           key: cargo-unit-cache-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
       - name: Run unit tests
         run: cargo test -j2 -p pallet-bootstrap -p xyk-rpc -p pallet-xyk -p xyk-runtime-api -p pallet-issuance -p pallet-multipurpose-liquidity -p pallet-sudo-origin -p runtime-integration-test

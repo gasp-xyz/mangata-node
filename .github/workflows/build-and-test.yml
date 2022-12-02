@@ -260,4 +260,5 @@ jobs:
         run: |
           cd devops/helm-charts/node
           helm lint .
-          helm template . | kubeconform -kubernetes-version 1.24.5 -output json -summary -strict
+          helm template -f values-fungible.yaml . | kubeconform -kubernetes-version 1.24.5 -output json -summary -strict
+          helm template -f values-dev.yaml . | kubeconform -kubernetes-version 1.24.5 -output json -summary -strict

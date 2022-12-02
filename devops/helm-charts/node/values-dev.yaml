@@ -6,6 +6,7 @@ relaychain:
   enabled: true
 
 node:
+  enableParachainRegisterSidecar: true
   storageSize: 50Gi
   node_01:
     keys:

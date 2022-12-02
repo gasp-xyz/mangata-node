@@ -65,24 +65,6 @@ spec:
             - mountPath: /var/run/secrets/{{ .type }}
               name: {{ .type }}
           {{- end }}
-        - name: para-register
-          image: mangatasolutions/parachain-register:0.3
-          command:
-            - "bash"
-            - "-c"
-            - "node index.js"
-          env:
-            - name: STATE_FILE
-              value: /etc/mangata/genesis-state
-            - name: WASM_FILE
-              value: /etc/mangata/genesis-wasm
-            - name: COLLATOR_ADDR
-              value: ws://relaychain-alice:9944
-            - name: PARA_ID
-              value: "2110"
-          volumeMounts:
-            - mountPath: /etc/mangata/
-              name: node-chainspec-volume
       containers:
         - name: node-01
           image: "{{ .Values.image.repository}}:{{ .Values.image.tag }}"
@@ -133,6 +115,26 @@ spec:
               name: chain-keystore
             - mountPath: /mangata/data
               name: chaindata
+        {{- if .Values.node.enableParachainRegisterSidecar }}
+        - name: parachain-register-sidecar
+          image: mangatasolutions/parachain-register:1.0
+          command:
+            - "bash"
+            - "-c"
+            - "node index.js"
+          env:
+            - name: STATE_FILE
+              value: /etc/mangata/genesis-state
+            - name: WASM_FILE
+              value: /etc/mangata/genesis-wasm
+            - name: COLLATOR_ADDR
+              value: ws://relaychain-alice:9944
+            - name: PARA_ID
+              value: "2110"
+          volumeMounts:
+            - mountPath: /etc/mangata/
+              name: node-chainspec-volume
+        {{- end }}
       volumes:
         - name: node-chainspec-volume
           emptyDir: {}

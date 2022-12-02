@@ -57,7 +57,7 @@ use sp_std::marker::PhantomData;
 pub trait WeightInfo {
 	fn schedule_bootstrap() -> Weight;
 	fn provision() -> Weight;
-	fn provision_vested() -> Weight;
+	// fn provision_vested() -> Weight;
 	fn claim_and_activate_liquidity_tokens() -> Weight;
 	fn finalize() -> Weight;
 }
@@ -75,11 +75,11 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(9 as u64))
 			.saturating_add(RocksDbWeight::get().writes(6 as u64))
 	}
-	fn provision_vested() -> Weight {
-		Weight::from_ref_time(183_414_000)
-			.saturating_add(RocksDbWeight::get().reads(11 as u64))
-			.saturating_add(RocksDbWeight::get().writes(8 as u64))
-	}
+	// fn provision_vested() -> Weight {
+	// 	Weight::from_ref_time(183_414_000)
+	// 		.saturating_add(RocksDbWeight::get().reads(11 as u64))
+	// 		.saturating_add(RocksDbWeight::get().writes(8 as u64))
+	// }
 	fn claim_and_activate_liquidity_tokens() -> Weight {
 		Weight::from_ref_time(432_898_000)
 			.saturating_add(RocksDbWeight::get().reads(21 as u64))

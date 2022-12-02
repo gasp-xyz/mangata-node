@@ -31,9 +31,10 @@ on:
         default: false
 
 permissions:
-  contents: read
+  contents: write
   id-token: write
   deployments: write
+  checks: write
 
 # The following concurrency group cancels in-progress jobs or runs on pull_request events only
 # https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
@@ -47,11 +48,17 @@ jobs:
     if: github.event.action != 'unlabeled' && github.event.action != 'closed'
     runs-on: ubuntu-latest
     outputs:
-      GLOBAL_VERSION: ${{ steps.set_ver.outputs.GLOBAL_VERSION }}
+      GLOBAL_VERSION: ${{ steps.set_vars.outputs.GLOBAL_VERSION }}
+      GIT_BRANCH: ${{ steps.set_vars.outputs.GIT_BRANCH }}
     steps:
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v6
       - name: Set global version
-        id: set_ver
-        run: echo "GLOBAL_VERSION=${{ github.sha }}" >> $GITHUB_OUTPUT
+        id: set_vars
+        run: |
+          echo "GLOBAL_VERSION=${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "GIT_BRANCH=${{ steps.branch-name.outputs.current_branch }}" | sed "s@/@-@g" >> $GITHUB_OUTPUT
 
   build-and-test:
     if: ${{ github.event.inputs.skipBuild != 'true' }}
@@ -61,6 +68,7 @@ jobs:
     secrets: inherit
     with:
       version: ${{ needs.init.outputs.GLOBAL_VERSION }}
+      branch: ${{ needs.init.outputs.GIT_BRANCH }}
 
   deploy-fungible:
     name: Deploy fungible environment
@@ -118,7 +126,7 @@ jobs:
       matrix:
         command: ["yarn test-parallel --max-workers=32", "yarn test-sequential-e2e"]
     needs: [init, build-and-test]
-    runs-on: [self-hosted, basic]
+    runs-on: [self-hosted, compile]
     timeout-minutes: 180
     if: ${{ (!cancelled() && (success() || github.event.inputs.skipBuild == 'true')) && !contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests') }}
     env:

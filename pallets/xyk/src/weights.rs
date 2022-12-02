@@ -12,7 +12,7 @@ pub trait WeightInfo {
 	fn mint_liquidity() -> Weight;
 	fn mint_liquidity_using_vesting_native_tokens() -> Weight;
 	fn burn_liquidity() -> Weight;
-	fn promote_pool() -> Weight;
+	fn update_pool_promotion() -> Weight;
 	fn claim_rewards_v2() -> Weight;
 	fn claim_rewards_all_v2() -> Weight;
 	fn activate_liquidity_v2() -> Weight;
@@ -52,7 +52,7 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(14 as u64))
 			.saturating_add(RocksDbWeight::get().writes(17 as u64))
 	}
-	fn promote_pool() -> Weight {
+	fn update_pool_promotion() -> Weight {
 		Weight::from_ref_time(36_108_000)
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))

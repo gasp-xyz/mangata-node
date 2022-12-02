@@ -219,6 +219,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_support::{
+	assert_ok,
 	dispatch::{DispatchError, DispatchResult},
 	ensure,
 	traits::Contains,
@@ -242,9 +243,12 @@ use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_issuance::{ActivedPoolQueryApi, ComputeIssuance, PoolPromoteApi};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
 use sp_arithmetic::{helpers_128bit::multiply_by_rational_with_rounding, per_things::Rounding};
-use sp_runtime::traits::{
-	AccountIdConversion, AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member,
-	SaturatedConversion, Zero,
+use sp_runtime::{
+	traits::{
+		AccountIdConversion, AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member,
+		SaturatedConversion, Zero,
+	},
+	Percent,
 };
 use sp_std::{
 	convert::{TryFrom, TryInto},
@@ -303,7 +307,6 @@ pub use weights::WeightInfo;
 type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 #[frame_support::pallet]
 pub mod pallet {
-
 	use super::*;
 
 	#[pallet::pallet]
@@ -417,7 +420,7 @@ pub mod pallet {
 		AssetsSwapped(T::AccountId, TokenId, Balance, TokenId, Balance),
 		LiquidityMinted(T::AccountId, TokenId, Balance, TokenId, Balance, TokenId, Balance),
 		LiquidityBurned(T::AccountId, TokenId, Balance, TokenId, Balance, TokenId, Balance),
-		PoolPromoted(TokenId),
+		PoolPromotionUpdated(TokenId, Option<u8>),
 		LiquidityActivated(T::AccountId, TokenId, Balance),
 		LiquidityDeactivated(T::AccountId, TokenId, Balance),
 		RewardsClaimed(T::AccountId, TokenId, Balance),
@@ -527,21 +530,17 @@ pub mod pallet {
 					} else {
 						let created_liquidity_token_id: TokenId =
 							<T as Config>::Currency::get_next_currency_id().into();
-						assert!(
-							created_liquidity_token_id == *liquidity_token_id,
-							"Assets not initialized in the expected sequence"
+						assert_eq!(
+							created_liquidity_token_id, *liquidity_token_id,
+							"Assets not initialized in the expected sequence",
 						);
-						assert!(
-							<Pallet<T> as XykFunctionsTrait<T::AccountId>>::create_pool(
-								account_id.clone(),
-								*native_token_id,
-								*native_token_amount,
-								*pooled_token_id,
-								*pooled_token_amount
-							)
-							.is_ok(),
-							"Pool creation failed"
-						);
+						assert_ok!(<Pallet<T> as XykFunctionsTrait<T::AccountId>>::create_pool(
+							account_id.clone(),
+							*native_token_id,
+							*native_token_amount,
+							*pooled_token_id,
+							*pooled_token_amount
+						));
 					}
 				},
 			)
@@ -806,11 +805,18 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(<<T as Config>::WeightInfo>::promote_pool())]
-		pub fn promote_pool(origin: OriginFor<T>, liquidity_token_id: TokenId) -> DispatchResult {
+		#[pallet::weight(<<T as Config>::WeightInfo>::update_pool_promotion())]
+		pub fn update_pool_promotion(
+			origin: OriginFor<T>,
+			liquidity_token_id: TokenId,
+			liquidity_mining_issuance_weight: Option<u8>,
+		) -> DispatchResult {
 			ensure_root(origin)?;
 
-			<Self as XykFunctionsTrait<T::AccountId>>::promote_pool(liquidity_token_id)
+			<Self as XykFunctionsTrait<T::AccountId>>::update_pool_promotion(
+				liquidity_token_id,
+				liquidity_mining_issuance_weight,
+			)
 		}
 
 		#[transactional]
@@ -2611,15 +2617,19 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		Ok(())
 	}
 
-	fn promote_pool(liquidity_token_id: TokenId) -> DispatchResult {
-		ensure!(
-			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_token_id).is_none(),
-			Error::<T>::PoolAlreadyPromoted,
+	fn update_pool_promotion(
+		liquidity_token_id: TokenId,
+		liquidity_mining_issuance_weight: Option<u8>,
+	) -> DispatchResult {
+		<T as Config>::PoolPromoteApi::update_pool_promotion(
+			liquidity_token_id,
+			liquidity_mining_issuance_weight,
 		);
 
-		<T as Config>::PoolPromoteApi::promote_pool(liquidity_token_id);
-
-		Pallet::<T>::deposit_event(Event::PoolPromoted(liquidity_token_id));
+		Pallet::<T>::deposit_event(Event::PoolPromotionUpdated(
+			liquidity_token_id,
+			liquidity_mining_issuance_weight,
+		));
 
 		Ok(())
 	}
@@ -3121,11 +3131,18 @@ impl<T: Config> mp_bootstrap::RewardsApi for Pallet<T> {
 		)
 	}
 
-	fn promote_pool(liquidity_token_id: TokenId) -> bool {
-		let promote_pool_result = <T as Config>::PoolPromoteApi::promote_pool(liquidity_token_id);
+	fn update_pool_promotion(
+		liquidity_token_id: TokenId,
+		liquidity_mining_issuance_weight: Option<u8>,
+	) {
+		<T as Config>::PoolPromoteApi::update_pool_promotion(
+			liquidity_token_id,
+			liquidity_mining_issuance_weight,
+		);
 
-		Pallet::<T>::deposit_event(Event::PoolPromoted(liquidity_token_id));
-
-		promote_pool_result
+		Pallet::<T>::deposit_event(Event::PoolPromotionUpdated(
+			liquidity_token_id,
+			liquidity_mining_issuance_weight,
+		));
 	}
 }

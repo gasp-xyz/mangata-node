@@ -64,6 +64,10 @@ jobs:
         run: |
           docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
           docker build -f devops/dockerfiles/node-new/Dockerfile \
+          --label="git_rev=$(git rev-parse HEAD)" \
+          --label="author=github" \
+          --label="git_ref=${{ github.ref_name }}" \
+          --label="session_length=production" \
           -t mangatasolutions/mangata-node:${{ inputs.version }} \
           -t mangatasolutions/mangata-node:${{ inputs.branch }} .
           docker push mangatasolutions/mangata-node:${{ inputs.version }}
@@ -81,6 +85,10 @@ jobs:
         run: |
           docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
           docker build -f devops/dockerfiles/node-new/Dockerfile \
+          --label="git_rev=$(git rev-parse HEAD)" \
+          --label="author=github" \
+          --label="git_ref=${{ github.ref_name }}" \
+          --label="session_length=fast" \
           -t mangatasolutions/mangata-node:${{ inputs.version }}-fast \
           -t mangatasolutions/mangata-node:${{ inputs.branch }}-fast .
           docker push mangatasolutions/mangata-node:${{ inputs.version }}-fast

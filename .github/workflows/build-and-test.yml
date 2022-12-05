@@ -67,6 +67,7 @@ jobs:
           --label="git_rev=$(git rev-parse HEAD)" \
           --label="author=github" \
           --label="git_ref=${{ github.ref_name }}" \
+          --label="session_length=production" \
           -t mangatasolutions/mangata-node:${{ inputs.version }} \
           -t mangatasolutions/mangata-node:${{ inputs.branch }} .
           docker push mangatasolutions/mangata-node:${{ inputs.version }}
@@ -87,6 +88,7 @@ jobs:
           --label="git_rev=$(git rev-parse HEAD)" \
           --label="author=github" \
           --label="git_ref=${{ github.ref_name }}" \
+          --label="session_length=fast" \
           -t mangatasolutions/mangata-node:${{ inputs.version }}-fast \
           -t mangatasolutions/mangata-node:${{ inputs.branch }}-fast .
           docker push mangatasolutions/mangata-node:${{ inputs.version }}-fast

@@ -143,7 +143,7 @@ jobs:
 
   unit-test:
     name: Unit tests
-    runs-on: [self-hosted, compile]
+    runs-on: ubuntu-latest
     container:
       image: ${{ inputs.builder_image }}
     steps:

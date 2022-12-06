@@ -1341,7 +1341,7 @@ impl_runtime_apis! {
 			XYKRpcResult { price: Xyk::get_max_instant_unreserve_amount(&user, liquidity_asset_id) }
 		}
 
-		fn calculate_rewards_amount_v2(
+		fn calculate_rewards_amount(
 			user: AccountId,
 			liquidity_asset_id: TokenId,
 		) -> XYKRpcResult<Balance> {

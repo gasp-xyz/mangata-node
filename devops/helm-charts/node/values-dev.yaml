@@ -8,6 +8,7 @@ relaychain:
 node:
   enableParachainRegisterSidecar: true
   storageSize: 50Gi
+  relaychainStorageSize: 50Gi
   node_01:
     keys:
     - type: "aura"

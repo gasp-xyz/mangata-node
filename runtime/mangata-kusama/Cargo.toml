@@ -252,5 +252,4 @@ runtime-benchmarks = [
     "pallet-bootstrap/runtime-benchmarks",
     "pallet-multipurpose-liquidity/runtime-benchmarks",
     "pallet-proxy/runtime-benchmarks",
-    "orml-tokens/frame-benchmarking",
 ]

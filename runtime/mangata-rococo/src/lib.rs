@@ -75,6 +75,7 @@ pub use pallet_issuance::{IssuanceInfo, PoolPromoteApi};
 pub use pallet_sudo_origin;
 pub use pallet_xyk;
 // XCM Imports
+use frame_system_benchmarking::Pallet;
 use pallet_xyk::AssetMetadataMutationTrait;
 use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
 
@@ -497,9 +498,9 @@ impl Contains<TokenId> for AssetRegisterFilter {
 	fn contains(t: &TokenId) -> bool {
 		let meta: Option<AssetMetadataOf> = orml_asset_registry::Metadata::<Runtime>::get(t);
 		if let Some(xyk) = meta.and_then(|m| m.additional.xyk) {
-			return xyk.operations_disabled;
+			return xyk.operations_disabled
 		}
-		return false;
+		return false
 	}
 }
 
@@ -571,7 +572,7 @@ impl AssetRegistryApi for EnableAssetPoolApi {
 						Ok(_) => {},
 						Err(e) => {
 							log::error!(target: "bootstrap", "cannot modify {} asset: {:?}!", asset, e);
-							return false;
+							return false
 						},
 					}
 				}
@@ -707,7 +708,7 @@ where
 		tip: Self::Balance,
 	) -> Result<Self::LiquidityInfo, TransactionValidityError> {
 		if fee.is_zero() {
-			return Ok(None);
+			return Ok(None)
 		}
 
 		let withdraw_reason = if tip.is_zero() {

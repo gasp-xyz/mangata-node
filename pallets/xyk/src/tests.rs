@@ -510,7 +510,6 @@ fn liquidity_rewards_work_after_burn_W() {
 		XykStorage::create_new_token(&acc_id, amount);
 		XykStorage::create_new_token(&acc_id, amount);
 
-
 		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 10000, 1, 10000).unwrap();
 		XykStorage::update_pool_promotion(RuntimeOrigin::root(), 4, Some(1u8)).unwrap();
 		XykStorage::transfer(0, 2, 3, 1000000).unwrap();

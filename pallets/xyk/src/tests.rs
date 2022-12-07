@@ -141,7 +141,7 @@ fn liquidity_rewards_single_user_mint_W() {
 		XykStorage::create_new_token(&acc_id, amount);
 
 		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 10000, 1, 10000).unwrap();
-		XykStorage::promote_pool(RuntimeOrigin::root(), 4).unwrap();
+		XykStorage::update_pool_promotion(RuntimeOrigin::root(), 4, Some(1u8)).unwrap();
 
 		let liquidity_tokens_owned = XykStorage::balance(4, 2);
 		XykStorage::activate_liquidity_v2(
@@ -252,7 +252,8 @@ fn liquidity_rewards_three_users_mint_W() {
 		XykStorage::create_new_token(&acc_id, amount);
 
 		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 10000, 1, 10000).unwrap();
-		XykStorage::promote_pool(RuntimeOrigin::root(), 4).unwrap();
+		XykStorage::update_pool_promotion(RuntimeOrigin::root(), 4, Some(1u8)).unwrap();
+
 		XykStorage::transfer(0, 2, 3, 1000000).unwrap();
 		XykStorage::transfer(1, 2, 3, 1000000).unwrap();
 		XykStorage::transfer(0, 2, 4, 1000000).unwrap();
@@ -326,7 +327,7 @@ fn liquidity_rewards_three_users_burn_W() {
 		XykStorage::create_new_token(&acc_id, amount);
 
 		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 10000, 1, 10000).unwrap();
-		XykStorage::promote_pool(RuntimeOrigin::root(), 4).unwrap();
+		XykStorage::update_pool_promotion(RuntimeOrigin::root(), 4, Some(1u8)).unwrap();
 		XykStorage::transfer(0, 2, 3, 1000000).unwrap();
 		XykStorage::transfer(1, 2, 3, 1000000).unwrap();
 		XykStorage::transfer(0, 2, 4, 1000000).unwrap();
@@ -399,7 +400,7 @@ fn liquidity_rewards_claim_W() {
 		.unwrap();
 
 		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 10000, 1, 10000).unwrap();
-		XykStorage::promote_pool(RuntimeOrigin::root(), 4).unwrap();
+		XykStorage::update_pool_promotion(RuntimeOrigin::root(), 4, Some(1u8)).unwrap();
 		let liquidity_tokens_owned = XykStorage::balance(4, 2);
 		XykStorage::activate_liquidity_v2(
 			RuntimeOrigin::signed(2),
@@ -450,7 +451,7 @@ fn liquidity_rewards_promote_pool_W() {
 		XykStorage::create_new_token(&acc_id, amount);
 		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 5000, 1, 5000).unwrap();
 
-		XykStorage::promote_pool(RuntimeOrigin::root(), 4).unwrap();
+		XykStorage::update_pool_promotion(RuntimeOrigin::root(), 4, Some(1u8)).unwrap();
 	});
 }
 
@@ -468,12 +469,9 @@ fn liquidity_rewards_promote_pool_already_promoted_NW() {
 		XykStorage::create_new_token(&acc_id, amount);
 		XykStorage::create_new_token(&acc_id, amount);
 		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 5000, 1, 5000).unwrap();
-		XykStorage::promote_pool(RuntimeOrigin::root(), 4).unwrap();
+		XykStorage::update_pool_promotion(RuntimeOrigin::root(), 4, Some(1u8)).unwrap();
 
-		assert_err!(
-			XykStorage::promote_pool(RuntimeOrigin::root(), 4),
-			Error::<Test>::PoolAlreadyPromoted
-		);
+		assert!(<Test as Config>::PoolPromoteApi::get_pool_rewards_v2(4).is_some());
 	});
 }
 
@@ -512,8 +510,9 @@ fn liquidity_rewards_work_after_burn_W() {
 		XykStorage::create_new_token(&acc_id, amount);
 		XykStorage::create_new_token(&acc_id, amount);
 
+
 		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 10000, 1, 10000).unwrap();
-		XykStorage::promote_pool(RuntimeOrigin::root(), 4).unwrap();
+		XykStorage::update_pool_promotion(RuntimeOrigin::root(), 4, Some(1u8)).unwrap();
 		XykStorage::transfer(0, 2, 3, 1000000).unwrap();
 		XykStorage::transfer(1, 2, 3, 1000000).unwrap();
 		XykStorage::transfer(0, 2, 4, 1000000).unwrap();
@@ -587,7 +586,7 @@ fn liquidity_rewards_deactivate_transfer_controled_W() {
 		XykStorage::create_new_token(&acc_id, amount);
 
 		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 10000, 1, 10000).unwrap();
-		XykStorage::promote_pool(RuntimeOrigin::root(), 4).unwrap();
+		XykStorage::update_pool_promotion(RuntimeOrigin::root(), 4, Some(1u8)).unwrap();
 
 		let liquidity_tokens_owned = XykStorage::balance(4, 2);
 
@@ -630,7 +629,7 @@ fn liquidity_rewards_deactivate_more_NW() {
 		XykStorage::create_new_token(&acc_id, amount);
 
 		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 10000, 1, 10000).unwrap();
-		XykStorage::promote_pool(RuntimeOrigin::root(), 4).unwrap();
+		XykStorage::update_pool_promotion(RuntimeOrigin::root(), 4, Some(1u8)).unwrap();
 
 		let liquidity_tokens_owned = XykStorage::balance(4, 2);
 		XykStorage::activate_liquidity_v2(
@@ -667,7 +666,7 @@ fn liquidity_rewards_activate_more_NW() {
 		XykStorage::create_new_token(&acc_id, amount);
 
 		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 10000, 1, 10000).unwrap();
-		XykStorage::promote_pool(RuntimeOrigin::root(), 4).unwrap();
+		XykStorage::update_pool_promotion(RuntimeOrigin::root(), 4, Some(1u8)).unwrap();
 
 		let liquidity_tokens_owned = XykStorage::balance(4, 2);
 		assert_err!(
@@ -1880,7 +1879,7 @@ fn liquidity_rewards_not_yet_claimed_already_claimed_W() {
 		.unwrap();
 
 		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 10000, 1, 10000).unwrap();
-		XykStorage::promote_pool(RuntimeOrigin::root(), 4).unwrap();
+		XykStorage::update_pool_promotion(RuntimeOrigin::root(), 4, Some(1u8)).unwrap();
 
 		let liquidity_tokens_owned = XykStorage::balance(4, 2);
 		XykStorage::activate_liquidity_v2(
@@ -1946,7 +1945,7 @@ fn extreme_case_pool_ratio() {
 		XykStorage::create_new_token(&acc_id, amount);
 
 		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, max, 1, max).unwrap();
-		XykStorage::promote_pool(RuntimeOrigin::root(), 4).unwrap();
+		XykStorage::update_pool_promotion(RuntimeOrigin::root(), 4, Some(1u8)).unwrap();
 
 		XykStorage::activate_liquidity_v2(RuntimeOrigin::signed(2), 4, 1, None).unwrap();
 
@@ -1993,7 +1992,7 @@ fn rewards_rounding_during_often_mint() {
 			10000000000000000,
 		)
 		.unwrap();
-		XykStorage::promote_pool(RuntimeOrigin::root(), 4).unwrap();
+		XykStorage::update_pool_promotion(RuntimeOrigin::root(), 4, Some(1u8)).unwrap();
 		MockPromotedPoolApi::instance()
 			.lock()
 			.unwrap()
@@ -2080,7 +2079,7 @@ fn rewards_storage_right_amounts_start1() {
 		.unwrap();
 
 		XykStorage::create_pool(RuntimeOrigin::signed(2), 1, 10000, 2, 10000).unwrap();
-		XykStorage::promote_pool(RuntimeOrigin::root(), 4).unwrap();
+		XykStorage::update_pool_promotion(RuntimeOrigin::root(), 4, Some(1u8)).unwrap();
 		MockPromotedPoolApi::instance()
 			.lock()
 			.unwrap()
@@ -2224,7 +2223,7 @@ fn rewards_storage_right_amounts_start2() {
 		.unwrap();
 
 		XykStorage::create_pool(RuntimeOrigin::signed(2), 1, 10000, 2, 10000).unwrap();
-		XykStorage::promote_pool(RuntimeOrigin::root(), 4).unwrap();
+		XykStorage::update_pool_promotion(RuntimeOrigin::root(), 4, Some(1u8)).unwrap();
 		MockPromotedPoolApi::instance()
 			.lock()
 			.unwrap()
@@ -2351,7 +2350,7 @@ fn rewards_storage_right_amounts_start3() {
 		.unwrap();
 
 		XykStorage::create_pool(RuntimeOrigin::signed(2), 1, 10000, 2, 10000).unwrap();
-		XykStorage::promote_pool(RuntimeOrigin::root(), 4).unwrap();
+		XykStorage::update_pool_promotion(RuntimeOrigin::root(), 4, Some(1u8)).unwrap();
 		MockPromotedPoolApi::instance()
 			.lock()
 			.unwrap()

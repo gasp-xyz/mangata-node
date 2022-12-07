@@ -176,6 +176,8 @@ impl_opaque_keys! {
 	}
 }
 
+// match curently deployed versions
+#[cfg(feature = "try-runtime")]
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
@@ -185,6 +187,19 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 10,
+	state_version: 0,
+};
+
+#[cfg(not(feature = "try-runtime"))]
+#[sp_version::runtime_version]
+pub const VERSION: RuntimeVersion = RuntimeVersion {
+	spec_name: create_runtime_str!("mangata-parachain"),
+	impl_name: create_runtime_str!("mangata-parachain"),
+	authoring_version: 11,
+	spec_version: 11,
+	impl_version: 0,
+	apis: RUNTIME_API_VERSIONS,
+	transaction_version: 11,
 	state_version: 0,
 };
 
@@ -577,6 +592,7 @@ impl AssetRegistryApi for EnableAssetPoolApi {
 
 parameter_types! {
 	pub const BootstrapUpdateBuffer: BlockNumber = 300;
+	pub const DefaultBootstrapPromotedPoolWeight: u8 = 0u8;
 }
 
 impl pallet_bootstrap::BootstrapBenchmarkingConfig for Runtime {}
@@ -584,6 +600,7 @@ impl pallet_bootstrap::BootstrapBenchmarkingConfig for Runtime {}
 impl pallet_bootstrap::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type PoolCreateApi = Xyk;
+	type DefaultBootstrapPromotedPoolWeight = DefaultBootstrapPromotedPoolWeight;
 	type BootstrapUpdateBuffer = BootstrapUpdateBuffer;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type VestingProvider = Vesting;
@@ -1341,7 +1358,7 @@ impl_runtime_apis! {
 			XYKRpcResult { price: Xyk::get_max_instant_unreserve_amount(&user, liquidity_asset_id) }
 		}
 
-		fn calculate_rewards_amount_v2(
+		fn calculate_rewards_amount(
 			user: AccountId,
 			liquidity_asset_id: TokenId,
 		) -> XYKRpcResult<Balance> {

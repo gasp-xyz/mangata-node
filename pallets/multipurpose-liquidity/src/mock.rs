@@ -203,7 +203,10 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for MockXyk<T> {
 		unimplemented!()
 	}
 
-	fn promote_pool(liquidity_token_id: TokenId) -> DispatchResult {
+	fn update_pool_promotion(
+		liquidity_token_id: TokenId,
+		liquidity_mining_issuance_weight: Option<u8>,
+	) -> DispatchResult {
 		unimplemented!()
 	}
 

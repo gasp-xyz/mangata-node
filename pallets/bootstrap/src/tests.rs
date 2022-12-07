@@ -369,8 +369,8 @@ fn test_bootstrap_promotion_can_be_updated() {
 		let pool_create_mock = MockPoolCreateApi::pool_create_context();
 		pool_create_mock.expect().times(1).return_const(POOL_CREATE_DUMMY_RETURN_VALUE);
 
-		let mut mock = MockRewardsApi::promote_pool_context();
-		mock.expect().times(1).return_const(true);
+		let mut mock = MockRewardsApi::update_pool_promotion_context();
+		mock.expect().times(1).return_const(());
 
 		set_up();
 		assert_ok!(Bootstrap::schedule_bootstrap(
@@ -2301,8 +2301,8 @@ fn test_pool_is_promoted_if_scheduled_to() {
 				Some((id, issuance))
 			});
 
-		let mut mock = MockRewardsApi::promote_pool_context();
-		mock.expect().times(1).return_const(true);
+		let mut mock = MockRewardsApi::update_pool_promotion_context();
+		mock.expect().times(1).return_const(());
 
 		Bootstrap::schedule_bootstrap(
 			RuntimeOrigin::root(),
@@ -2356,8 +2356,8 @@ fn test_pool_is_not_promoted_if_not_scheduled_to() {
 				Some((id, issuance))
 			});
 
-		let mut mock = MockRewardsApi::promote_pool_context();
-		mock.expect().times(0).return_const(true);
+		let mut mock = MockRewardsApi::update_pool_promotion_context();
+		mock.expect().times(0).return_const(());
 
 		Bootstrap::schedule_bootstrap(
 			RuntimeOrigin::root(),

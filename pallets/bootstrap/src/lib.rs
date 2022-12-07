@@ -142,7 +142,10 @@ use scale_info::TypeInfo;
 use sp_arithmetic::{helpers_128bit::multiply_by_rational_with_rounding, per_things::Rounding};
 use sp_core::U256;
 use sp_io::KillStorageResult;
-use sp_runtime::traits::{AccountIdConversion, CheckedAdd, One, SaturatedConversion, Saturating};
+use sp_runtime::{
+	traits::{AccountIdConversion, CheckedAdd, One, SaturatedConversion, Saturating},
+	Percent,
+};
 use sp_std::{convert::TryInto, prelude::*};
 
 pub mod migrations;
@@ -235,9 +238,10 @@ pub mod pallet {
 					) {
 						MintedLiquidity::<T>::put((liq_asset_id, issuance)); // W:1
 						if PromoteBootstrapPool::<T>::get() {
-							if !T::RewardsApi::promote_pool(liq_asset_id) {
-								log!(error, "pool already promoted!");
-							}
+							T::RewardsApi::update_pool_promotion(
+								liq_asset_id,
+								Some(T::DefaultBootstrapPromotedPoolWeight::get()),
+							);
 						}
 					} else {
 						log!(error, "cannot create pool!");
@@ -286,6 +290,9 @@ pub mod pallet {
 			+ MultiTokenReservableCurrency<Self::AccountId>;
 
 		type PoolCreateApi: PoolCreateApi<AccountId = Self::AccountId>;
+
+		#[pallet::constant]
+		type DefaultBootstrapPromotedPoolWeight: Get<u8>;
 
 		#[pallet::constant]
 		type BootstrapUpdateBuffer: Get<Self::BlockNumber>;

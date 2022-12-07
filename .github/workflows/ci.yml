@@ -126,7 +126,7 @@ jobs:
       matrix:
         command: ["yarn test-parallel --max-workers=32", "yarn test-sequential-e2e"]
     needs: [init, build-and-test]
-    runs-on: [self-hosted, basic]
+    runs-on: [self-hosted, compile]
     timeout-minutes: 180
     if: ${{ (!cancelled() && (success() || github.event.inputs.skipBuild == 'true')) && !contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests') }}
     env:

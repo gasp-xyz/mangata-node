@@ -248,5 +248,4 @@ runtime-benchmarks = [
 	"pallet-issuance/runtime-benchmarks",
 	"pallet-bootstrap/runtime-benchmarks",
 	"pallet-multipurpose-liquidity/runtime-benchmarks",
-	"orml-tokens/frame-benchmarking",
 ]

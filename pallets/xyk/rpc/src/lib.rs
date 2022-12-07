@@ -91,8 +91,8 @@ pub trait XykApi<
 		at: Option<BlockHash>,
 	) -> RpcResult<ResponseTypePrice>;
 
-	#[method(name = "xyk_calculate_rewards_amount_v2")]
-	fn calculate_rewards_amount_v2(
+	#[method(name = "xyk_calculate_rewards_amount")]
+	fn calculate_rewards_amount(
 		&self,
 		user: AccountId,
 		liquidity_asset_id: TokenId,
@@ -324,7 +324,7 @@ where
 			})
 	}
 
-	fn calculate_rewards_amount_v2(
+	fn calculate_rewards_amount(
 		&self,
 		user: AccountId,
 		liquidity_asset_id: TokenId,
@@ -335,7 +335,7 @@ where
             // If the block hash is not supplied assume the best block.
             self.client.info().best_hash));
 
-		let runtime_api_result = api.calculate_rewards_amount_v2(&at, user, liquidity_asset_id);
+		let runtime_api_result = api.calculate_rewards_amount(&at, user, liquidity_asset_id);
 
 		runtime_api_result.map_err(|e| {
 			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(

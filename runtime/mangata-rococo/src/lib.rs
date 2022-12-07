@@ -1334,7 +1334,7 @@ impl_runtime_apis! {
 			}
 		}
 
-		fn calculate_rewards_amount_v2(
+		fn calculate_rewards_amount(
 			user: AccountId,
 			liquidity_asset_id: TokenId,
 		) -> XYKRpcResult<Balance> {

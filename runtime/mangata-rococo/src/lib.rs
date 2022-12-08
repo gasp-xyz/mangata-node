@@ -75,7 +75,6 @@ pub use pallet_issuance::{IssuanceInfo, PoolPromoteApi};
 pub use pallet_sudo_origin;
 pub use pallet_xyk;
 // XCM Imports
-use frame_system_benchmarking::Pallet;
 use pallet_xyk::AssetMetadataMutationTrait;
 use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
 

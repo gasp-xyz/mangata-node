@@ -32,7 +32,7 @@ use orml_traits::{
 	asset_registry::{AssetMetadata, AssetProcessor},
 	parameter_type_with_key,
 };
-pub use pallet_sudo;
+pub use pallet_sudo_mangata;
 use pallet_transaction_payment::{Multiplier, OnChargeTransaction, TargetedFeeAdjustment};
 use pallet_vesting_mangata_rpc_runtime_api::VestingInfosWithLockedAt;
 // Polkadot Imports
@@ -853,7 +853,7 @@ impl pallet_aura::Config for Runtime {
 	type MaxAuthorities = MaxAuthorities;
 }
 
-impl pallet_sudo::Config for Runtime {
+impl pallet_sudo_mangata::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 }
@@ -862,25 +862,27 @@ impl pallet_sudo_origin::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 	type SudoOrigin =
-		pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>;
+		pallet_collective_mangata::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>;
 }
 
 parameter_types! {
 	pub const CouncilMotionDuration: BlockNumber = 5 * DAYS;
+	pub const CouncilProposalCloseDelay: BlockNumber = 3 * DAYS;
 	pub const CouncilMaxProposals: u32 = 100;
 	pub const CouncilMaxMembers: u32 = 100;
 }
 
-type CouncilCollective = pallet_collective::Instance1;
-impl pallet_collective::Config<CouncilCollective> for Runtime {
+type CouncilCollective = pallet_collective_mangata::Instance1;
+impl pallet_collective_mangata::Config<CouncilCollective> for Runtime {
 	type Origin = Origin;
 	type Proposal = Call;
 	type Event = Event;
 	type MotionDuration = CouncilMotionDuration;
+	type ProposalCloseDelay = CouncilProposalCloseDelay;
 	type MaxProposals = CouncilMaxProposals;
 	type MaxMembers = CouncilMaxMembers;
-	type DefaultVote = pallet_collective::PrimeDefaultVote;
-	type WeightInfo = weights::pallet_collective_weights::ModuleWeight<Runtime>;
+	type DefaultVote = pallet_collective_mangata::PrimeDefaultVote;
+	type WeightInfo = weights::pallet_collective_mangata_weights::ModuleWeight<Runtime>;
 }
 
 #[cfg(feature = "fast-runtime")]
@@ -1243,9 +1245,9 @@ construct_runtime!(
 
 		// Governance stuff
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 41,
-		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 49,
+		Sudo: pallet_sudo_mangata::{Pallet, Call, Config<T>, Storage, Event<T>} = 49,
 		SudoOrigin: pallet_sudo_origin::{Pallet, Call, Event<T>} = 50,
-		Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 51,
+		Council: pallet_collective_mangata::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 51,
 
 		// Bootstrap
 		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>} = 53,
@@ -1270,7 +1272,7 @@ mod benches {
 		[parachain_staking, ParachainStaking]
 		[pallet_xyk, Xyk]
 		[pallet_treasury, Treasury]
-		[pallet_collective, Council]
+		[pallet_collective_mangata, Council]
 		[pallet_bootstrap, Bootstrap]
 		[pallet_crowdloan_rewards, Crowdloan]
 		[pallet_utility, Utility]

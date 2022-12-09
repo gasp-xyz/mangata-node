@@ -4,7 +4,7 @@ pub mod frame_system_weights;
 pub mod orml_asset_registry_weights;
 pub mod orml_tokens_weights;
 pub mod pallet_bootstrap_weights;
-pub mod pallet_collective_weights;
+pub mod pallet_collective_mangata_weights;
 pub mod pallet_crowdloan_rewards_weights;
 pub mod pallet_issuance_weights;
 pub mod pallet_multipurpose_liquidity_weights;

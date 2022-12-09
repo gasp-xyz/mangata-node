@@ -185,7 +185,7 @@ pub mod asset_register {
 		}
 
 		#[cfg(feature = "try-runtime")]
-		fn pre_upgrade() -> Result<(), &'static str> {
+		fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
 			log::info!(target: "asset-registry", "AssetRegistry::pre_upgrade, check deprecated items count");
 			let count = storage_key_iter::<
 				TokenId,
@@ -194,11 +194,11 @@ pub mod asset_register {
 			>(b"AssetRegistry", b"Metadata")
 			.count();
 			assert!(count > 0);
-			Ok(())
+			Ok(Vec::new())
 		}
 
 		#[cfg(feature = "try-runtime")]
-		fn post_upgrade() -> Result<(), &'static str> {
+		fn post_upgrade(_state: Vec<u8>) -> Result<(), &'static str> {
 			log::info!(target: "asset-registry", "AssetRegistry::post_upgrade, check upgraded count");
 			let count = storage_key_iter::<TokenId, AssetMetadataOf, Twox64Concat>(
 				b"AssetRegistry",

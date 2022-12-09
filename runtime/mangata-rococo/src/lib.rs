@@ -261,49 +261,16 @@ pub fn native_version() -> NativeVersion {
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 
-	// taken from dedicated benchmark (run on reference machine)
-	//
-	// $ cargo bench --features=disable-execution
-	// ...
-	// Block production/full block shuffling without executing extrinsics
-	//                         time:   [12.025 ms 12.029 ms 12.032 ms]
-	//                         change: [-59.043% -59.005% -58.974%] (p = 0.00 < 0.05)
-	//
-	// ...
-	pub const MangataBlockExecutionWeight: u64 = 12 * WEIGHT_PER_MILLIS.ref_time();
-
-	// taken from dedicated benchmark (run on reference machine)
-	//
-	// $ cargo bench --features=disable-execution
-	// ...
-	// avarege execution time of 5067 noop extrinsic : 946200 microseconds => 186
-	// ...
-	pub const MangataExtrinsicBaseWeight: u64 = 186 * WEIGHT_PER_MICROS.ref_time();
-
 	// This part is copied from Substrate's `bin/node/runtime/src/lib.rs`.
 	//  The `RuntimeBlockLength` and `RuntimeBlockWeights` exist here because the
 	// `DeletionWeightLimit` and `DeletionQueueDepth` depend on those to parameterize
 	// the lazy contract deletion.
 	pub RuntimeBlockLength: BlockLength =
 		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
-	pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
-		.base_block(Weight::from_ref_time(MangataBlockExecutionWeight::get()))
-		.for_class(DispatchClass::all(), |weights| {
-			weights.base_extrinsic = Weight::from_ref_time(MangataExtrinsicBaseWeight::get());
-		})
-		.for_class(DispatchClass::Normal, |weights| {
-			weights.max_total = Some(Weight::from_ref_time(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT));
-		})
-		.for_class(DispatchClass::Operational, |weights| {
-			weights.max_total = Some(Weight::from_ref_time(MAXIMUM_BLOCK_WEIGHT));
-			// Operational transactions have some extra reserved space, so that they
-			// are included even if block reached `MAXIMUM_BLOCK_WEIGHT`.
-			weights.reserved = Some(
-				Weight::from_ref_time(MAXIMUM_BLOCK_WEIGHT - NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT)
-			);
-		})
-		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
-		.build_or_panic();
+	pub RuntimeBlockWeights: BlockWeights = BlockWeights::with_sensible_defaults(
+			(2u64 * WEIGHT_PER_SECOND).set_proof_size(u64::MAX),
+			NORMAL_DISPATCH_RATIO,
+		);
 	pub const SS58Prefix: u16 = 42;
 }
 

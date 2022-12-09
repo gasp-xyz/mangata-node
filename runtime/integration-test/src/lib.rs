@@ -8,3 +8,6 @@ mod xyk;
 
 #[cfg(any(feature = "with-kusama-runtime",))]
 mod bootstrap;
+
+#[cfg(any(feature = "with-kusama-runtime",))]
+mod proxy;

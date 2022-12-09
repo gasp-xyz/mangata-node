@@ -1663,6 +1663,7 @@ version = "0.1.0"
 source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#6faa4601f2c0f7c9e752dc1ff108c1dcec19ecb9"
 dependencies = [
  "cumulus-primitives-core",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
@@ -4612,6 +4613,7 @@ dependencies = [
  "pallet-crowdloan-rewards",
  "pallet-issuance",
  "pallet-multipurpose-liquidity",
+ "pallet-proxy",
  "pallet-session",
  "pallet-sudo",
  "pallet-sudo-origin",
@@ -4790,6 +4792,7 @@ dependencies = [
  "pallet-crowdloan-rewards",
  "pallet-issuance",
  "pallet-multipurpose-liquidity",
+ "pallet-proxy",
  "pallet-session",
  "pallet-sudo",
  "pallet-sudo-origin",
@@ -6666,6 +6669,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "test-case",
 ]
 
 [[package]]
@@ -8990,10 +8994,10 @@ dependencies = [
  "orml-xcm",
  "orml-xcm-support",
  "orml-xtokens",
- "pallet-balances",
  "pallet-bootstrap",
  "pallet-issuance",
  "pallet-multipurpose-liquidity",
+ "pallet-proxy",
  "pallet-sudo-origin",
  "pallet-xcm",
  "pallet-xyk",

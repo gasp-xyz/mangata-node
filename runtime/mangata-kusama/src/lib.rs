@@ -2,7 +2,7 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
 	construct_runtime,
 	dispatch::DispatchResult,
@@ -10,7 +10,8 @@ use frame_support::{
 	traits::{
 		tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
 		Contains, EnsureOrigin, EnsureOriginWithArg, Everything, ExistenceRequirement, Get,
-		Imbalance, LockIdentifier, OnRuntimeUpgrade, U128CurrencyToVote, WithdrawReasons,
+		Imbalance, InstanceFilter, LockIdentifier, OnRuntimeUpgrade, U128CurrencyToVote,
+		WithdrawReasons,
 	},
 	unsigned::TransactionValidityError,
 	weights::{
@@ -49,7 +50,7 @@ use sp_runtime::{
 		DispatchInfoOf, PostDispatchInfoOf, Saturating, StaticLookup, Zero,
 	},
 	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, DispatchError, FixedPointNumber, Percent, Perquintill,
+	ApplyExtrinsicResult, DispatchError, FixedPointNumber, Percent, Perquintill, RuntimeDebug,
 };
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
 use sp_std::{
@@ -1125,6 +1126,78 @@ impl orml_asset_registry::Config for Runtime {
 	type WeightInfo = weights::orml_asset_registry_weights::ModuleWeight<Runtime>;
 }
 
+// Proxy Pallet
+/// The type used to represent the kinds of proxying allowed.
+#[derive(
+	Copy,
+	Clone,
+	Eq,
+	PartialEq,
+	Ord,
+	PartialOrd,
+	Encode,
+	Decode,
+	RuntimeDebug,
+	MaxEncodedLen,
+	TypeInfo,
+)]
+pub enum ProxyType {
+	Any,
+	AutoCompound,
+}
+
+impl Default for ProxyType {
+	fn default() -> Self {
+		Self::Any
+	}
+}
+
+parameter_types! {
+	pub const ProxyDepositBase: Balance = deposit(1, 16);
+	pub const ProxyDepositFactor: Balance = deposit(0, 33);
+	pub const AnnouncementDepositBase: Balance = deposit(1, 16);
+	pub const AnnouncementDepositFactor: Balance = deposit(0, 68);
+}
+
+impl InstanceFilter<Call> for ProxyType {
+	fn filter(&self, c: &Call) -> bool {
+		match self {
+			_ if matches!(c, Call::Utility(..)) => true,
+			ProxyType::Any => true,
+			ProxyType::AutoCompound => {
+				matches!(
+					c,
+					Call::Xyk(pallet_xyk::Call::provide_liquidity_with_conversion { .. }) |
+						Call::Xyk(pallet_xyk::Call::compound_rewards { .. })
+				)
+			},
+		}
+	}
+	fn is_superset(&self, o: &Self) -> bool {
+		match (self, o) {
+			(x, y) if x == y => true,
+			(ProxyType::Any, _) => true,
+			(_, ProxyType::Any) => false,
+			_ => false,
+		}
+	}
+}
+
+impl pallet_proxy::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgxTokenId>;
+	type ProxyType = ProxyType;
+	type ProxyDepositBase = ProxyDepositBase;
+	type ProxyDepositFactor = ProxyDepositFactor;
+	type MaxProxies = frame_support::traits::ConstU32<32>;
+	type WeightInfo = pallet_proxy::weights::SubstrateWeight<Runtime>;
+	type MaxPending = frame_support::traits::ConstU32<32>;
+	type CallHasher = BlakeTwo256;
+	type AnnouncementDepositBase = AnnouncementDepositBase;
+	type AnnouncementDepositFactor = AnnouncementDepositFactor;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -1187,6 +1260,8 @@ construct_runtime!(
 		// Bootstrap
 		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>} = 53,
 		Utility: pallet_utility::{Pallet, Call, Event} = 54,
+
+		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 55,
 	}
 );
 
@@ -1353,6 +1428,21 @@ impl_runtime_apis! {
 						log::warn!(target:"xyk", "rpc 'XYK::calculate_rewards_amount' error: '{:?}', returning default value instead", e);
 						Default::default()
 				},
+			}
+		}
+
+		fn calculate_balanced_sell_amount(
+			total_amount: Balance,
+			reserve_amount: Balance,
+		) -> XYKRpcResult<Balance> {
+			XYKRpcResult {
+				price: Xyk::calculate_balanced_sell_amount(total_amount, reserve_amount)
+					.map_err(|e|
+						{
+							log::warn!(target:"xyk", "rpc 'XYK::calculate_balanced_sell_amount' error: '{:?}', returning default value instead", e);
+							e
+						}
+					).unwrap_or_default()
 			}
 		}
 	}

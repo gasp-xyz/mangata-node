@@ -62,12 +62,12 @@ ver-api = { git = "https://github.com/mangata-finance/substrate", default-featur
 pallet-aura = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-authorship = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-session = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
-pallet-sudo = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+pallet-sudo-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-timestamp = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-transaction-payment = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-treasury = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
-pallet-collective = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+pallet-collective-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-vesting-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-proxy = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 
@@ -137,7 +137,7 @@ std = [
 	"pallet-authorship/std",
 	"pallet-proxy/std",
 	"pallet-session/std",
-	"pallet-sudo/std",
+	"pallet-sudo-mangata/std",
 	"pallet-sudo-origin/std",
 	"pallet-timestamp/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
@@ -174,8 +174,8 @@ std = [
 	"pallet-issuance/std",
 	"pallet-vesting-mangata/std",
 	"pallet-crowdloan-rewards/std",
+	"pallet-collective-mangata/std",
 	"frame-system-rpc-runtime-api/std",
-	"pallet-collective/std",
 	"pallet-multipurpose-liquidity/std",
 	"mp-multipurpose-liquidity/std",
 	"mp-traits/std",
@@ -213,9 +213,9 @@ try-runtime = [
 	"orml-xcm/try-runtime",
 	"orml-asset-registry/try-runtime",
 	"pallet-treasury/try-runtime",
-	"pallet-sudo/try-runtime",
+	"pallet-sudo-mangata/try-runtime",
 	"pallet-sudo-origin/try-runtime",
-	"pallet-collective/try-runtime",
+	"pallet-collective-mangata/try-runtime",
 	"pallet-bootstrap/try-runtime",
 	"pallet-utility/try-runtime",
 	"pallet-proxy/try-runtime",
@@ -235,7 +235,7 @@ runtime-benchmarks = [
 	"frame-system/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"pallet-xcm/runtime-benchmarks",
-	"pallet-collective/runtime-benchmarks",
+	"pallet-collective-mangata/runtime-benchmarks",
 	"orml-asset-registry/runtime-benchmarks",
 	"orml-tokens/runtime-benchmarks",
 	"orml-xtokens/runtime-benchmarks",

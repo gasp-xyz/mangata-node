@@ -98,6 +98,14 @@ pub trait XykApi<
 		liquidity_asset_id: TokenId,
 		at: Option<BlockHash>,
 	) -> RpcResult<ResponseTypePrice>;
+
+	#[method(name = "xyk_calculate_balanced_sell_amount")]
+	fn calculate_balanced_sell_amount(
+		&self,
+		total_amount: Balance,
+		reserve_amount: Balance,
+		at: Option<BlockHash>,
+	) -> RpcResult<ResponseTypePrice>;
 }
 
 pub struct Xyk<C, M> {
@@ -338,6 +346,31 @@ where
 		let runtime_api_result = api.calculate_rewards_amount(&at, user, liquidity_asset_id);
 
 		runtime_api_result.map_err(|e| {
+			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+				1,
+				"Unable to serve the request",
+				Some(format!("{:?}", e)),
+			)))
+		})
+	}
+
+	fn calculate_balanced_sell_amount(
+		&self,
+		total_amount: NumberOrHex,
+		reserve_amount: NumberOrHex,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> RpcResult<XYKRpcResult<Balance>> {
+		let api = self.client.runtime_api();
+		let at = BlockId::<Block>::hash(at.unwrap_or_else(||
+            // If the block hash is not supplied assume the best block.
+            self.client.info().best_hash));
+
+		api.calculate_balanced_sell_amount(
+			&at,
+			total_amount.try_into_balance()?,
+			reserve_amount.try_into_balance()?,
+		)
+		.map_err(|e| {
 			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
 				1,
 				"Unable to serve the request",

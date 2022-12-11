@@ -69,7 +69,7 @@ pub trait WeightInfo {
 
 /// Weights for pallet_collective using the Mangata node and recommended hardware.
 pub struct ModuleWeight<T>(PhantomData<T>);
-impl<T: frame_system::Config> pallet_collective::WeightInfo for ModuleWeight<T> {
+impl<T: frame_system::Config> pallet_collective_mangata::WeightInfo for ModuleWeight<T> {
 	// Storage: Council Members (r:1 w:1)
 	// Storage: Council Proposals (r:1 w:0)
 	// Storage: Council Voting (r:100 w:100)

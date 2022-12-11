@@ -1596,6 +1596,7 @@ version = "0.1.0"
 source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#6faa4601f2c0f7c9e752dc1ff108c1dcec19ecb9"
 dependencies = [
  "cumulus-primitives-core",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
@@ -2660,7 +2661,7 @@ dependencies = [
 [[package]]
 name = "frame-system-benchmarking"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#8799bec7481d50db3e1eafed3b0d0b8e271ccaa2"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#1380654e7a9434e7181b69912c36a21130b3fb50"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -4550,12 +4551,13 @@ dependencies = [
  "pallet-aura",
  "pallet-authorship",
  "pallet-bootstrap",
- "pallet-collective",
+ "pallet-collective-mangata",
  "pallet-crowdloan-rewards",
  "pallet-issuance",
  "pallet-multipurpose-liquidity",
+ "pallet-proxy",
  "pallet-session",
- "pallet-sudo",
+ "pallet-sudo-mangata",
  "pallet-sudo-origin",
  "pallet-timestamp",
  "pallet-transaction-payment",
@@ -4729,12 +4731,13 @@ dependencies = [
  "pallet-aura",
  "pallet-authorship",
  "pallet-bootstrap",
- "pallet-collective",
+ "pallet-collective-mangata",
  "pallet-crowdloan-rewards",
  "pallet-issuance",
  "pallet-multipurpose-liquidity",
+ "pallet-proxy",
  "pallet-session",
- "pallet-sudo",
+ "pallet-sudo-mangata",
  "pallet-sudo-origin",
  "pallet-timestamp",
  "pallet-transaction-payment",
@@ -5788,6 +5791,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-collective-mangata"
+version = "4.0.0-dev"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#1380654e7a9434e7181b69912c36a21130b3fb50"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-crowdloan-rewards"
 version = "0.6.0"
 source = "git+https://github.com/mangata-finance//crowdloan-rewards?branch=mangata-dev#f24ec9db406abd7ef277a61a0313bfdbaebd7ad6"
@@ -6349,6 +6369,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-sudo-mangata"
+version = "4.0.0-dev"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#1380654e7a9434e7181b69912c36a21130b3fb50"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-sudo-origin"
 version = "4.0.0-dev"
 dependencies = [
@@ -6356,6 +6391,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "frame-try-runtime",
+ "log",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
@@ -6604,6 +6640,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "test-case",
 ]
 
 [[package]]
@@ -6622,7 +6659,7 @@ dependencies = [
 [[package]]
 name = "parachain-staking"
 version = "3.0.0"
-source = "git+https://github.com/mangata-finance//moonbeam?branch=mangata-dev#0f449ecd8323cd547f6262c37042f2dcc1679f65"
+source = "git+https://github.com/mangata-finance//moonbeam?branch=mangata-dev#20de9f9bc8310e76e8dc3af50910dedea1ae3c5c"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6633,7 +6670,7 @@ dependencies = [
  "mp-traits",
  "orml-tokens",
  "pallet-authorship",
- "pallet-collective",
+ "pallet-collective-mangata",
  "pallet-issuance",
  "pallet-session",
  "pallet-xyk",
@@ -8900,10 +8937,10 @@ dependencies = [
  "orml-xcm",
  "orml-xcm-support",
  "orml-xtokens",
- "pallet-balances",
  "pallet-bootstrap",
  "pallet-issuance",
  "pallet-multipurpose-liquidity",
+ "pallet-proxy",
  "pallet-sudo-origin",
  "pallet-xcm",
  "pallet-xyk",
@@ -12069,7 +12106,7 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "digest 0.10.5",
  "rand 0.8.5",
  "static_assertions",

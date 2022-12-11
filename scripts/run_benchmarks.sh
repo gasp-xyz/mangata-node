@@ -12,7 +12,7 @@ benchmarks=(
     "pallet_xyk"
     "orml_asset_registry"
     "pallet_treasury"
-    "pallet_collective"
+    "pallet_collective_mangata"
     "pallet_elections_phragmen"
     "pallet_crowdloan_rewards"
     "pallet_utility"

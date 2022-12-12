@@ -88,7 +88,6 @@ pub const KAR_TOKEN_ID: TokenId = 6;
 pub const TUR_TOKEN_ID: TokenId = 7;
 
 pub mod constants;
-mod migrations;
 mod weights;
 pub mod xcm_config;
 
@@ -126,29 +125,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	(MangataMigrations, migrations::asset_register::MigrateToXykMetadata),
 >;
-
-pub struct MangataMigrations;
-impl OnRuntimeUpgrade for MangataMigrations {
-	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-		migrations::phragmen_elections::PhragmenElectionsMigration::on_runtime_upgrade()
-	}
-
-	#[cfg(feature = "try-runtime")]
-	fn pre_upgrade() -> Result<(), &'static str> {
-		migrations::phragmen_elections::PhragmenElectionsMigration::pre_upgrade()
-			.expect("try-runtime pre_upgrade for PhragmenElectionsMigration failed!!");
-		Ok(())
-	}
-
-	#[cfg(feature = "try-runtime")]
-	fn post_upgrade() -> Result<(), &'static str> {
-		migrations::phragmen_elections::PhragmenElectionsMigration::post_upgrade()
-			.expect("try-runtime post_upgrade for PhragmenElectionsMigration failed!!");
-		Ok(())
-	}
-}
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats

@@ -99,6 +99,20 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+pub(crate) const LOG_TARGET: &'static str = "sudo-origin";
+pub(crate) const ALERT_STRING: &'static str = "ALERT!ALERT!ALERT!";
+
+// syntactic sugar for logging.
+#[macro_export]
+macro_rules! alert_log {
+	($level:tt, $patter:expr $(, $values:expr)* $(,)?) => {
+		log::$level!(
+			target: crate::LOG_TARGET,
+			concat!("[{:?}] {:?} ", $patter), <frame_system::Pallet<T>>::block_number(), crate::ALERT_STRING $(, $values)*
+		)
+	};
+}
+
 pub use pallet::*;
 
 #[frame_support::pallet]
@@ -144,8 +158,9 @@ pub mod pallet {
 			// This is a public call, so we ensure that the origin is SudoOrigin.
 			T::SudoOrigin::ensure_origin(origin)?;
 
-			let res = call.dispatch_bypass_filter(frame_system::RawOrigin::Root.into());
-			Self::deposit_event(Event::SuOriginDid(res.map(|_| ()).map_err(|e| e.error)));
+			let res = call.clone().dispatch_bypass_filter(frame_system::RawOrigin::Root.into());
+			Self::deposit_event(Event::SuOriginDid(res.clone().map(|_| ()).map_err(|e| e.error)));
+			alert_log!(info, "A sudo action was performed: Call - {:?}, Result - {:?}!", call, res);
 			// Sudo user does not pay a fee.
 			Ok(Pays::No.into())
 		}
@@ -167,8 +182,14 @@ pub mod pallet {
 			// This is a public call, so we ensure that the origin is SudoOrigin.
 			T::SudoOrigin::ensure_origin(origin)?;
 
-			let res = call.dispatch_bypass_filter(frame_system::RawOrigin::Root.into());
-			Self::deposit_event(Event::SuOriginDid(res.map(|_| ()).map_err(|e| e.error)));
+			let res = call.clone().dispatch_bypass_filter(frame_system::RawOrigin::Root.into());
+			Self::deposit_event(Event::SuOriginDid(res.clone().map(|_| ()).map_err(|e| e.error)));
+			alert_log!(
+				info,
+				"A sudo action was performed with unchecked weight: Call - {:?}, Result - {:?}!",
+				call,
+				res
+			);
 			// Sudo user does not pay a fee.
 			Ok(Pays::No.into())
 		}
@@ -202,9 +223,20 @@ pub mod pallet {
 
 			let who = T::Lookup::lookup(who)?;
 
-			let res = call.dispatch_bypass_filter(frame_system::RawOrigin::Signed(who).into());
+			let res = call
+				.clone()
+				.dispatch_bypass_filter(frame_system::RawOrigin::Signed(who.clone()).into());
 
-			Self::deposit_event(Event::SuOriginDoAsDone(res.map(|_| ()).map_err(|e| e.error)));
+			Self::deposit_event(Event::SuOriginDoAsDone(
+				res.clone().map(|_| ()).map_err(|e| e.error),
+			));
+			alert_log!(
+				info,
+				"A sudo_as action was performed: Who - {:?}, Call - {:?}, Result - {:?}!",
+				who,
+				call,
+				res
+			);
 			// Sudo user does not pay a fee.
 			Ok(Pays::No.into())
 		}

@@ -5,6 +5,7 @@ relaychain:
   enabled: true
 
 node:
+  enableParachainRegisterSidecar: true
   node_01:
     keys:
     - type: "aura"

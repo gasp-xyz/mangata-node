@@ -92,5 +92,9 @@ sp_api::decl_runtime_apis! {
 			user: AccountId,
 			liquidity_asset_id: TokenId,
 		) -> XYKRpcResult<Balance>;
+		fn calculate_balanced_sell_amount(
+			total_amount: Balance,
+			reserve_amount: Balance,
+		) -> XYKRpcResult<Balance>;
 	}
 }

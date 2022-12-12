@@ -215,7 +215,7 @@ pub mod asset_register {
 mod tests {
 	use frame_support::{storage, traits::OnRuntimeUpgrade};
 
-	use crate::migration::asset_register::MigrateToXykMetadata;
+	use crate::migrations::asset_register::MigrateToXykMetadata;
 
 	use super::*;
 

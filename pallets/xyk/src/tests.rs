@@ -8,6 +8,9 @@ use frame_support::assert_err;
 use mangata_types::assets::CustomMetadata;
 use orml_traits::asset_registry::AssetMetadata;
 use serial_test::serial;
+use sp_runtime::Permill;
+use test_case::test_case;
+
 //fn create_pool_W(): create_pool working assert (maps,acocounts values)  //DONE
 //fn create_pool_N_already_exists(): create_pool not working if pool already exists  //DONE
 //fn create_pool_N_already_exists_other_way(): create_pool not working if pool already exists other way around (create pool X-Y, but pool Y-X exists) //DONE
@@ -471,7 +474,7 @@ fn liquidity_rewards_claim_more_NW() {
 
 		assert_err!(
 			XykStorage::claim_rewards_v2(Origin::signed(2), 4, 15000),
-			Error::<Test>::NotEnoughtRewardsEarned,
+			Error::<Test>::NotEnoughRewardsEarned,
 		);
 	});
 }
@@ -678,7 +681,7 @@ fn liquidity_rewards_claim_pool_not_promoted() {
 
 		assert_err!(
 			XykStorage::claim_rewards_v2(Origin::signed(2), 7, 5000000000),
-			Error::<Test>::NotEnoughtRewardsEarned,
+			Error::<Test>::NotEnoughRewardsEarned,
 		);
 	});
 }
@@ -2400,5 +2403,87 @@ fn migration_work() {
 		assert_eq!(rewards_info.last_checkpoint, 20);
 		assert_eq!(rewards_info.pool_ratio_at_last_checkpoint, U256::from(43798)); //these values will be from rew2, but reading pool_ratio_at_last_checkpoint works
 		assert_eq!(rewards_info.missing_at_last_checkpoint, U256::from_dec_str("5584").unwrap());
+	});
+}
+
+#[test_case(200_000_000_000_000_000_000_u128, 1_000_000_000_000_u128, 1_u128 ; "swap plus 1 leftover")]
+#[test_case(2_000_u128, 100_u128, 2_u128 ; "swap plus 2 leftover")]
+#[test_case(1_000_000_000_000_000_000_000_000_000, 135_463_177_684_253_389, 2_u128 ; "benchmark case")]
+fn test_compound_calculate_balanced_swap_for_liquidity(amount: u128, reward: u128, surplus: u128) {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		let acc_id: u128 = 2;
+		let pool = amount / 2;
+		XykStorage::create_new_token(&acc_id, amount);
+		XykStorage::create_new_token(&acc_id, amount);
+		XykStorage::create_pool(Origin::signed(2), 0, pool, 1, pool).unwrap();
+		let balance_before_0 = XykStorage::balance(0, 2);
+		let balance_before_1 = XykStorage::balance(1, 2);
+
+		let swap_amount = XykStorage::calculate_balanced_sell_amount(reward, pool).unwrap();
+		let swapped_amount = XykStorage::calculate_sell_price(pool, pool, swap_amount).unwrap();
+
+		XykStorage::sell_asset(Origin::signed(2), 0, 1, swap_amount, 0).unwrap();
+
+		XykStorage::mint_liquidity(Origin::signed(2), 1, 0, swapped_amount, u128::MAX).unwrap();
+
+		assert_eq!(XykStorage::balance(0, 2), balance_before_0 - reward + surplus);
+		assert_eq!(XykStorage::balance(1, 2), balance_before_1);
+	});
+}
+
+#[test_case(100_000, 1_000, 2, 1 ; "surplus of 1")]
+#[test_case(100_000_000_000, 1_000, 2, 1 ; "large reserve, surplus of 1")]
+#[test_case(100_000_000_000, 1_000_000_000, 1_000_000, 52815 ; "small pool, large surplus")]
+#[test_case(1_000_000_000, 100_000, 2, 2 ; "benchmark precision test")]
+fn test_compound_provide_liquidity(amount: u128, reward: u128, pool_r: u128, surplus: u128) {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		let acc_id: u128 = 2;
+		let pool = amount / pool_r;
+		XykStorage::create_new_token(&acc_id, amount);
+		XykStorage::create_new_token(&acc_id, amount);
+		XykStorage::create_pool(Origin::signed(2), 0, pool, 1, pool).unwrap();
+		let balance_before_0 = XykStorage::balance(0, 2);
+		let balance_before_1 = XykStorage::balance(1, 2);
+
+		XykStorage::provide_liquidity_with_conversion(Origin::signed(2), 2, 0, reward).unwrap();
+
+		assert_eq!(XykStorage::balance(0, 2), balance_before_0 - reward + surplus);
+		assert_eq!(XykStorage::balance(1, 2), balance_before_1);
+	});
+}
+
+#[test_case(2_000_000, 1_000_000, 0 ; "compound all rewards")]
+#[test_case(2_000_000, 500_000, 0 ; "compound half rewards")]
+#[test_case(100_000_000_000_000_000_000, 1_000_000, 1 ; "benchmark precision test")]
+#[serial]
+fn test_compound_rewards(amount: u128, part_permille: u32, surplus: u128) {
+	new_test_ext().execute_with(|| {
+		let amount_permille = Permill::from_parts(part_permille);
+		System::set_block_number(1);
+		MockPromotedPoolApi::instance().lock().unwrap().clear();
+
+		XykStorage::create_new_token(&2, amount);
+		XykStorage::create_new_token(&2, amount);
+		XykStorage::create_pool(Origin::signed(2), 0, amount / 2, 1, amount / 2).unwrap();
+		XykStorage::update_pool_promotion(Origin::root(), 2, Some(1)).unwrap();
+		XykStorage::activate_liquidity_v2(Origin::signed(2), 2, amount / 2, None).unwrap();
+
+		MockPromotedPoolApi::instance().lock().unwrap().insert(2, U256::from(u128::MAX));
+
+		System::set_block_number(10);
+
+		let amount = XykStorage::calculate_rewards_amount_v2(2, 2).unwrap();
+		XykStorage::transfer(0, 2, <Test as Config>::LiquidityMiningIssuanceVault::get(), amount)
+			.unwrap();
+
+		let balance_before_0 = XykStorage::balance(0, 2);
+		let balance_before_1 = XykStorage::balance(1, 2);
+		let balance_not_compounded: u128 = (Permill::one() - amount_permille) * amount;
+		XykStorage::compound_rewards(Origin::signed(2), 2, amount_permille).unwrap();
+
+		assert_eq!(XykStorage::balance(0, 2), balance_before_0 + surplus + balance_not_compounded);
+		assert_eq!(XykStorage::balance(1, 2), balance_before_1);
 	});
 }

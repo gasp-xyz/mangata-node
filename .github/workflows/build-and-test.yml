@@ -250,16 +250,16 @@ jobs:
         run: cargo build --release --no-default-features --features=mangata-rococo,mangata-kusama,runtime-benchmarks
       
       - name: Run benchmark tests - pallet-xyk
-        run: target/release/mangata-node benchmark pallet --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-xyk' --template ./templates/module-weight-template.hbs
+        run: target/release/mangata-node benchmark pallet --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-xyk' --template ./templates/module-weight-template.hbs --steps 2
 
       - name: Run benchmark tests - pallet-issuance
-        run: target/release/mangata-node benchmark pallet --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-issuance' --template ./templates/module-weight-template.hbs
+        run: target/release/mangata-node benchmark pallet --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-issuance' --template ./templates/module-weight-template.hbs --steps 2
 
       - name: Run benchmark tests - pallet-multipurpose-liquidity
-        run: target/release/mangata-node benchmark pallet --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-multipurpose-liquidity' --template ./templates/module-weight-template.hbs
+        run: target/release/mangata-node benchmark pallet --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-multipurpose-liquidity' --template ./templates/module-weight-template.hbs --steps 2
       
       - name: Run benchmark tests - pallet-bootstrap
-        run: target/release/mangata-node benchmark pallet --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-bootstrap' --template ./templates/module-weight-template.hbs
+        run: target/release/mangata-node benchmark pallet --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-bootstrap' --template ./templates/module-weight-template.hbs --steps 2
 
       - name: Run block & extrinsic overhead benchmarks
         run: target/release/mangata-node benchmark overhead --execution native --chain dev -lblock_builder=debug

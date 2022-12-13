@@ -466,13 +466,13 @@ impl<T: Config> Pallet<T> {
 			issuance_config
 				.liquidity_mining_split
 				.checked_add(&issuance_config.staking_split)
-				.ok_or(Error::<T>::IssuanceConfigInvalid)?
-				== Perbill::from_percent(100),
+				.ok_or(Error::<T>::IssuanceConfigInvalid)? ==
+				Perbill::from_percent(100),
 			Error::<T>::IssuanceConfigInvalid
 		);
 		ensure!(
-			issuance_config.cap
-				>= issuance_config
+			issuance_config.cap >=
+				issuance_config
 					.issuance_at_init
 					.checked_add(issuance_config.total_crowdloan_allocation)
 					.ok_or(Error::<T>::IssuanceConfigInvalid)?,
@@ -546,9 +546,8 @@ impl<T: Config> Pallet<T> {
 				.into_iter()
 				.filter_map(|(token_id, info)| {
 					match T::ActivedPoolQueryApiType::get_pool_activate_amount(token_id) {
-						Some(activated_amount) if !activated_amount.is_zero() => {
-							Some((token_id, info.weight, info.rewards, activated_amount))
-						},
+						Some(activated_amount) if !activated_amount.is_zero() =>
+							Some((token_id, info.weight, info.rewards, activated_amount)),
 						_ => None,
 					}
 				})
@@ -565,10 +564,9 @@ impl<T: Config> Pallet<T> {
 
 			for (token_id, weight, rewards, activated_amount) in activated_pools {
 				let liquidity_mining_issuance_for_pool = match maybe_total_weight {
-					Some(total_weight) if !total_weight.is_zero() => {
+					Some(total_weight) if !total_weight.is_zero() =>
 						Perbill::from_rational(weight.into(), total_weight)
-							.mul_floor(liquidity_mining_issuance)
-					},
+							.mul_floor(liquidity_mining_issuance),
 					_ => liquidity_mining_issuance
 						.checked_div(activated_pools_len)
 						.unwrap_or(liquidity_mining_issuance),

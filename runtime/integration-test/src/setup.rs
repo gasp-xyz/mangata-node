@@ -1,6 +1,10 @@
+pub use std::default::Default;
+
 use frame_support::traits::GenesisBuild;
-use mangata_types::{AccountId, Balance, TokenId};
-use sp_runtime::codec::Encode;
+pub use frame_support::{assert_err, assert_noop, assert_ok, dispatch::DispatchResultWithPostInfo};
+pub use orml_traits::currency::{MultiCurrency, MultiCurrencyExtended};
+pub use sp_io::TestExternalities;
+pub use sp_runtime::{codec::Encode, MultiAddress, Permill};
 
 #[cfg(feature = "with-kusama-runtime")]
 pub use kusama_imports::*;
@@ -8,9 +12,9 @@ pub use kusama_imports::*;
 #[cfg(feature = "with-kusama-runtime")]
 mod kusama_imports {
 	pub use mangata_kusama_runtime::{
-		AssetMetadataOf, Bootstrap, Runtime, RuntimeOrigin, System, UNIT,
+		AccountId, AssetMetadataOf, Balance, Bootstrap, Call, CustomMetadata, Origin, Proxy,
+		ProxyType, Runtime, System, TokenId, Tokens, Xyk, XykMetadata, UNIT,
 	};
-	use mangata_types::TokenId;
 
 	pub const NATIVE_ASSET_ID: TokenId = mangata_kusama_runtime::MGX_TOKEN_ID;
 }

@@ -8,6 +8,8 @@
 //! - burn_liquidity
 //! - sell_asset
 //! - buy_asset
+//! - compound_rewards
+//! - provide_liquidity_with_conversion
 //!
 //! ### Supporting public functions:
 //! - calculate_sell_price
@@ -18,6 +20,7 @@
 //! - get_burn_amount
 //! - account_id
 //! - settle_treasury_buy_and_burn
+//! - calculate_balanced_sell_amount
 //!
 //! # fn create_pool
 //! -Sets the initial ratio/price of both assets to each other depending on amounts of each assets when creating pool.
@@ -196,6 +199,68 @@
 //!
 //! `NotEnoughTokens` -  burning more liquidity tokens than user owns
 //!
+//! # fn compound_rewards
+//! - Claims a specified portion of rewards, and provides them back into the selected pool.
+//! - Wraps claim_rewards, sell_asset and mint_liquidity, so that there is minimal surplus of reward asset left after operation.
+//! - Current impl assumes a MGX-ASSET pool & rewards in MGX asset
+//!
+//! ### arguments
+//! `origin` - sender of a fn, user claiming rewards and providing liquidity to the pool
+//!
+//! liquidity_asset_id - the pool where we provide the liquidity
+//!
+//! amount_permille - portion of rewards to claim
+//!
+//! ### Example
+//! ```ignore
+//! compound_rewards (
+//!    Origin::signed(1),
+//!    2,
+//!    1_000,
+//!)
+//! ```
+//! Claim all of the rewards, currently in MGX, and use them to provide liquidity for the pool with asset id 2
+//!
+//! ### Errors
+//! - inherits all of the errors from `claim_rewards`, `sell_asset` and `mint_liquidity`
+//!
+//! `NoSuchLiquidityAsset` - pool with given asset id does not exist
+//!
+//! `FunctionNotAvailableForThisToken` - not available for this asset id
+//!
+//! `NotEnoughRewardsEarned` - not enough rewards available
+//!
+//! # fn provide_liquidity_with_conversion
+//! - Given one of the liquidity pool asset, computes balanced sell amount and provides liquidity into the pool
+//! - Wraps sell_asset and mint_liquidity
+//!
+//! ### arguments
+//! `origin` - sender of a fn, user claiming rewards and providing liquidity to the pool
+//!
+//! liquidity_asset_id - the pool where we provide the liquidity
+//!
+//! provided_asset_id - which asset of the pool
+//!
+//! provided_asset_amount - amount of the provided asset to use
+//!
+//! ### Example
+//! ```ignore
+//! provide_liquidity_with_conversion (
+//!    Origin::signed(1),
+//!    2,
+//!    1,
+//!    1_000_000,
+//!)
+//! ```
+//! Given the liquidity pool with asset id 2, we assume that asset id 1 is one of the pool's pair, compute balanced swap and provide liquidity into the pool
+//!
+//! ### Errors
+//! - inherits all of the errors from `sell_asset` and `mint_liquidity`
+//!
+//! `NoSuchLiquidityAsset` - pool wiht given asset id does not exist
+//!
+//! `FunctionNotAvailableForThisToken` - not available for this asset id
+//!
 //! # calculate_sell_price
 //! - Supporting public function accessible through rpc call which calculates and returns bought_token_amount while providing sold_token_amount and respective reserves
 //! # calculate_buy_price
@@ -215,6 +280,9 @@
 //! - First step is deciding whether we are using sold or bought token id, depending which is closer to mangata token
 //! - In second step, if tokens are mangata, they are placed to treasury and removed from corresponding pool. If tokens are not mangata, but are available in mangata pool,
 //!   they are swapped to mangata and placed to treasury and removed from corresponding pool. If token is not connected to mangata, token is temporarily placed to treasury and burn treasury.
+//! # calculate_balanced_sell_amount
+//! - Supporting public function accessible through rpc call which calculates how much amount x we need to swap from total_amount, so that after `y = swap(x)`, the resulting balance equals `(total_amount - x) / y = pool_x / pool_y`
+//! - the resulting amounts can then be used to `mint_liquidity` with minimal leftover after operation
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -248,11 +316,12 @@ use sp_runtime::{
 		AccountIdConversion, AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member,
 		SaturatedConversion, Zero,
 	},
-	Percent,
+	Permill,
 };
 use sp_std::{
 	convert::{TryFrom, TryInto},
 	fmt::Debug,
+	ops::Div,
 	prelude::*,
 };
 
@@ -392,8 +461,8 @@ pub mod pallet {
 		MathOverflow,
 		/// Liquidity token creation failed
 		LiquidityTokenCreationFailed,
-		/// Not enought rewards earned
-		NotEnoughtRewardsEarned,
+		/// Not enough rewards earned
+		NotEnoughRewardsEarned,
 		/// Not a promoted pool
 		NotAPromotedPool,
 		/// Past time calculation
@@ -746,6 +815,78 @@ pub mod pallet {
 				second_asset_id,
 				first_asset_amount,
 				expected_second_asset_amount,
+				true,
+			)?;
+
+			Ok(().into())
+		}
+
+		#[pallet::weight(<<T as Config>::WeightInfo>::compound_rewards())]
+		#[transactional]
+		pub fn compound_rewards(
+			origin: OriginFor<T>,
+			liquidity_asset_id: TokenId,
+			amount_permille: Permill,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+
+			let (first_asset_id, second_asset_id) = LiquidityPools::<T>::get(liquidity_asset_id)
+				.ok_or(Error::<T>::NoSuchLiquidityAsset)?;
+
+			ensure!(
+				!T::DisabledTokens::contains(&first_asset_id) &&
+					!T::DisabledTokens::contains(&second_asset_id),
+				Error::<T>::FunctionNotAvailableForThisToken
+			);
+
+			let rewards_claimed = <Self as XykFunctionsTrait<T::AccountId>>::claim_rewards_all_v2(
+				sender.clone(),
+				liquidity_asset_id,
+			)?;
+
+			let rewards_256 = Into::<U256>::into(rewards_claimed)
+				.saturating_mul(amount_permille.deconstruct().into())
+				.div(Permill::one().deconstruct());
+			let rewards = Balance::try_from(rewards_256)
+				.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
+
+			<Self as XykFunctionsTrait<T::AccountId>>::provide_liquidity_with_conversion(
+				sender,
+				first_asset_id,
+				second_asset_id,
+				first_asset_id,
+				rewards,
+				true,
+			)?;
+
+			Ok(().into())
+		}
+
+		#[pallet::weight(<<T as Config>::WeightInfo>::provide_liquidity_with_conversion())]
+		#[transactional]
+		pub fn provide_liquidity_with_conversion(
+			origin: OriginFor<T>,
+			liquidity_asset_id: TokenId,
+			provided_asset_id: TokenId,
+			provided_asset_amount: Balance,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+
+			let (first_asset_id, second_asset_id) = LiquidityPools::<T>::get(liquidity_asset_id)
+				.ok_or(Error::<T>::NoSuchLiquidityAsset)?;
+
+			ensure!(
+				!T::DisabledTokens::contains(&first_asset_id) &&
+					!T::DisabledTokens::contains(&second_asset_id),
+				Error::<T>::FunctionNotAvailableForThisToken
+			);
+
+			<Self as XykFunctionsTrait<T::AccountId>>::provide_liquidity_with_conversion(
+				sender,
+				first_asset_id,
+				second_asset_id,
+				provided_asset_id,
+				provided_asset_amount,
 				true,
 			)?;
 
@@ -1398,6 +1539,69 @@ impl<T: Config> Pallet<T> {
 			buy_amount,
 			result
 		);
+		Ok(result)
+	}
+
+	pub fn calculate_balanced_sell_amount(
+		total_amount: Balance,
+		reserve_amount: Balance,
+	) -> Result<Balance, DispatchError> {
+		let multiplier: U256 = 10_000.into();
+		let multiplier_sq: U256 = multiplier.pow(2.into());
+		let non_pool_fees: U256 = (Self::total_fee() - T::PoolFeePercentage::get()).into(); // npf
+		let total_fee: U256 = Self::total_fee().into(); // tf
+		let total_amount_saturated: U256 = total_amount.into(); // z
+		let reserve_amount_saturated: U256 = reserve_amount.into(); // a
+
+		// n: 2*10_000^2*a - 10_000*tf*a - sqrt( (-2*10_000^2*a + 10_000*tf*a)^2 - 4*10_000^2*a*z*(10_000tf - npf*tf + 10_000npf - 10_000^2) )
+		// d: 2 * (10_000tf - npf*tf + 10_000npf - 10_000^2)
+		// x = n / d
+
+		// fee_rate: 2*10_000^2 - 10_000*tf
+		// simplify n: fee_rate*a - sqrt( fee_rate^2*s^2 - 2*10_000^2*(-d)*a*z )
+		let fee_rate = multiplier_sq
+			.saturating_mul(2.into())
+			.checked_sub(total_fee.saturating_mul(multiplier))
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+
+		// 2*(10_000tf - npf*tf + 10_000npf - 10_000^2) -> negative number
+		// change to: d = (10_000^2 + npf*tf - 10_000tf - 10_000npf) * 2
+		let denominator_negative = multiplier_sq
+			.checked_add(non_pool_fees.saturating_mul(total_fee))
+			.and_then(|v| v.checked_sub(total_fee.saturating_mul(multiplier)))
+			.and_then(|v| v.checked_sub(non_pool_fees.saturating_mul(multiplier)))
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+			.saturating_mul(2.into());
+
+		// fee_rate^2*a^2 - 2*10_000^2*(-den)*a*z
+		let sqrt_arg = reserve_amount_saturated
+			.checked_pow(2.into())
+			.and_then(|v| v.checked_mul(fee_rate.pow(2.into())))
+			.and_then(|v| {
+				v.checked_add(
+					total_amount_saturated
+						.saturating_mul(reserve_amount_saturated)
+						.saturating_mul(denominator_negative)
+						.saturating_mul(multiplier_sq)
+						.saturating_mul(2.into()),
+				)
+			})
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+
+		// n: fee_rate*a - sqrt(...) -> negative
+		// sqrt(..) - fee_rate*a
+		let numerator_negative = sqrt_arg
+			.integer_sqrt()
+			.checked_sub(reserve_amount_saturated.saturating_mul(fee_rate))
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+
+		// -n/-d == n/d
+		let result_u256 = numerator_negative
+			.checked_div(denominator_negative)
+			.ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?;
+		let result = Balance::try_from(result_u256)
+			.map_err(|_| DispatchError::from(Error::<T>::MathOverflow))?;
+
 		Ok(result)
 	}
 
@@ -2322,6 +2526,82 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		Ok((liquidity_asset_id, liquidity_assets_minted))
 	}
 
+	fn provide_liquidity_with_conversion(
+		sender: T::AccountId,
+		first_asset_id: Self::CurrencyId,
+		second_asset_id: Self::CurrencyId,
+		provided_asset_id: Self::CurrencyId,
+		provided_asset_amount: Self::Balance,
+		activate_minted_liquidity: bool,
+	) -> Result<(Self::CurrencyId, Self::Balance), DispatchError> {
+		// checks
+		ensure!(!provided_asset_amount.is_zero(), Error::<T>::ZeroAmount,);
+
+		let (first_reserve, second_reserve) =
+			Pallet::<T>::get_reserves(first_asset_id, second_asset_id)?;
+
+		let (reserve, other_reserve, other_asset_id) = if provided_asset_id == first_asset_id {
+			(first_reserve, second_reserve, second_asset_id)
+		} else if provided_asset_id == second_asset_id {
+			(second_reserve, first_reserve, first_asset_id)
+		} else {
+			return Err(DispatchError::from(Error::<T>::FunctionNotAvailableForThisToken))
+		};
+
+		// Ensure user has enough tokens to sell
+		<T as Config>::Currency::ensure_can_withdraw(
+			provided_asset_id.into(),
+			&sender,
+			provided_asset_amount.into(),
+			WithdrawReasons::all(),
+			// Does not fail due to earlier ensure
+			Default::default(),
+		)
+		.or(Err(Error::<T>::NotEnoughAssets))?;
+
+		// calculate sell
+		let swap_amount =
+			Pallet::<T>::calculate_balanced_sell_amount(provided_asset_amount, reserve)?;
+
+		let bought_amount = Pallet::<T>::calculate_sell_price(reserve, other_reserve, swap_amount)?;
+
+		<Self as XykFunctionsTrait<T::AccountId>>::sell_asset(
+			sender.clone(),
+			provided_asset_id,
+			other_asset_id,
+			swap_amount,
+			bought_amount,
+		)?;
+
+		let mint_amount = provided_asset_amount
+			.checked_sub(swap_amount)
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+
+		log!(
+			info,
+			"provide_liquidity_with_conversion: ({:?}, {}, {}, {}, {}) -> ({}, {})",
+			sender,
+			first_asset_id,
+			second_asset_id,
+			provided_asset_id,
+			provided_asset_amount,
+			mint_amount,
+			bought_amount
+		);
+
+		// we swap the order of the pairs to handle rounding
+		// we spend all of the Y
+		// and have some surplus amount of X that equals to the rounded part of Y
+		<Self as XykFunctionsTrait<T::AccountId>>::mint_liquidity(
+			sender,
+			other_asset_id,
+			provided_asset_id,
+			bought_amount,
+			Self::Balance::MAX,
+			activate_minted_liquidity,
+		)
+	}
+
 	fn burn_liquidity(
 		sender: T::AccountId,
 		first_asset_id: Self::CurrencyId,
@@ -2513,7 +2793,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		let claimable_rewards =
 			Pallet::<T>::calculate_rewards_amount_v2(user.clone(), liquidity_asset_id)?;
 
-		ensure!(mangata_amount <= claimable_rewards, Error::<T>::NotEnoughtRewardsEarned);
+		ensure!(mangata_amount <= claimable_rewards, Error::<T>::NotEnoughRewardsEarned);
 
 		let rewards_info: RewardInfo = Self::get_rewards_info(user.clone(), liquidity_asset_id);
 
@@ -2562,7 +2842,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 	fn claim_rewards_all_v2(
 		user: T::AccountId,
 		liquidity_asset_id: Self::CurrencyId,
-	) -> DispatchResult {
+	) -> Result<Self::Balance, DispatchError> {
 		let mangata_id: TokenId = Self::native_token_id();
 
 		let rewards_info: RewardInfo = Self::get_rewards_info(user.clone(), liquidity_asset_id);
@@ -2614,7 +2894,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			total_available_rewards,
 		));
 
-		Ok(())
+		Ok(total_available_rewards)
 	}
 
 	fn update_pool_promotion(
@@ -2766,11 +3046,11 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			current_rewards = Balance::try_from(
 				available_rewards_for_pool
 					.checked_mul(work_user)
-					.ok_or_else(|| DispatchError::from(Error::<T>::NotEnoughtRewardsEarned))?
+					.ok_or_else(|| DispatchError::from(Error::<T>::NotEnoughRewardsEarned))?
 					.checked_div(work_pool)
 					.ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?,
 			)
-			.map_err(|_| DispatchError::from(Error::<T>::NotEnoughtRewardsEarned))?;
+			.map_err(|_| DispatchError::from(Error::<T>::NotEnoughRewardsEarned))?;
 		}
 
 		let total_rewards = current_rewards

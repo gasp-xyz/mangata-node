@@ -2,7 +2,7 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
 	construct_runtime,
 	dispatch::{DispatchClass, DispatchResult},
@@ -10,7 +10,8 @@ use frame_support::{
 	traits::{
 		tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
 		Contains, EnsureOrigin, EnsureOriginWithArg, Everything, ExistenceRequirement, Get,
-		Imbalance, LockIdentifier, Nothing, OnRuntimeUpgrade, U128CurrencyToVote, WithdrawReasons,
+		Imbalance, InstanceFilter, LockIdentifier, Nothing, OnRuntimeUpgrade, U128CurrencyToVote,
+		WithdrawReasons,
 	},
 	unsigned::TransactionValidityError,
 	weights::{
@@ -31,7 +32,7 @@ use orml_traits::{
 	asset_registry::{AssetMetadata, AssetProcessor},
 	parameter_type_with_key,
 };
-pub use pallet_sudo;
+pub use pallet_sudo_mangata;
 use pallet_transaction_payment::{Multiplier, OnChargeTransaction, TargetedFeeAdjustment};
 use pallet_vesting_mangata_rpc_runtime_api::VestingInfosWithLockedAt;
 // Polkadot Imports
@@ -49,7 +50,7 @@ use sp_runtime::{
 		DispatchInfoOf, PostDispatchInfoOf, Saturating, StaticLookup, Zero,
 	},
 	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, DispatchError, FixedPointNumber, Percent, Perquintill,
+	ApplyExtrinsicResult, DispatchError, FixedPointNumber, Percent, Perquintill, RuntimeDebug,
 };
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
 use sp_std::{
@@ -88,7 +89,6 @@ pub const KAR_TOKEN_ID: TokenId = 6;
 pub const TUR_TOKEN_ID: TokenId = 7;
 
 pub mod constants;
-mod migrations;
 mod weights;
 pub mod xcm_config;
 
@@ -127,29 +127,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	(MangataMigrations, migrations::asset_register::MigrateToXykMetadata),
 >;
-
-pub struct MangataMigrations;
-impl OnRuntimeUpgrade for MangataMigrations {
-	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-		migrations::phragmen_elections::PhragmenElectionsMigration::on_runtime_upgrade()
-	}
-
-	#[cfg(feature = "try-runtime")]
-	fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
-		migrations::phragmen_elections::PhragmenElectionsMigration::pre_upgrade()
-			.expect("try-runtime pre_upgrade for PhragmenElectionsMigration failed!!");
-		Ok(Vec::new())
-	}
-
-	#[cfg(feature = "try-runtime")]
-	fn post_upgrade(_state: Vec<u8>) -> Result<(), &'static str> {
-		migrations::phragmen_elections::PhragmenElectionsMigration::post_upgrade(_state)
-			.expect("try-runtime post_upgrade for PhragmenElectionsMigration failed!!");
-		Ok(())
-	}
-}
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -194,11 +172,11 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
-	authoring_version: 11,
-	spec_version: 11,
+	authoring_version: 12,
+	spec_version: 12,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 11,
+	transaction_version: 12,
 	state_version: 0,
 };
 
@@ -833,7 +811,8 @@ impl pallet_aura::Config for Runtime {
 	type MaxAuthorities = MaxAuthorities;
 }
 
-impl pallet_sudo::Config for Runtime {
+
+impl pallet_sudo_mangata::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
 }
@@ -842,25 +821,27 @@ impl pallet_sudo_origin::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
 	type SudoOrigin =
-		pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>;
+		pallet_collective_mangata::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>;
 }
 
 parameter_types! {
 	pub const CouncilMotionDuration: BlockNumber = 5 * DAYS;
+	pub const CouncilProposalCloseDelay: BlockNumber = 3 * DAYS;
 	pub const CouncilMaxProposals: u32 = 100;
 	pub const CouncilMaxMembers: u32 = 100;
 }
 
-type CouncilCollective = pallet_collective::Instance1;
-impl pallet_collective::Config<CouncilCollective> for Runtime {
+type CouncilCollective = pallet_collective_mangata::Instance1;
+impl pallet_collective_mangata::Config<CouncilCollective> for Runtime {
 	type RuntimeOrigin = RuntimeOrigin;
 	type Proposal = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
 	type MotionDuration = CouncilMotionDuration;
+	type ProposalCloseDelay = CouncilProposalCloseDelay;
 	type MaxProposals = CouncilMaxProposals;
 	type MaxMembers = CouncilMaxMembers;
-	type DefaultVote = pallet_collective::PrimeDefaultVote;
-	type WeightInfo = weights::pallet_collective_weights::ModuleWeight<Runtime>;
+	type DefaultVote = pallet_collective_mangata::PrimeDefaultVote;
+	type WeightInfo = weights::pallet_collective_mangata_weights::ModuleWeight<Runtime>;
 }
 
 #[cfg(feature = "fast-runtime")]
@@ -1099,6 +1080,78 @@ impl orml_asset_registry::Config for Runtime {
 	type WeightInfo = weights::orml_asset_registry_weights::ModuleWeight<Runtime>;
 }
 
+// Proxy Pallet
+/// The type used to represent the kinds of proxying allowed.
+#[derive(
+	Copy,
+	Clone,
+	Eq,
+	PartialEq,
+	Ord,
+	PartialOrd,
+	Encode,
+	Decode,
+	RuntimeDebug,
+	MaxEncodedLen,
+	TypeInfo,
+)]
+pub enum ProxyType {
+	Any,
+	AutoCompound,
+}
+
+impl Default for ProxyType {
+	fn default() -> Self {
+		Self::Any
+	}
+}
+
+parameter_types! {
+	pub const ProxyDepositBase: Balance = deposit(1, 16);
+	pub const ProxyDepositFactor: Balance = deposit(0, 33);
+	pub const AnnouncementDepositBase: Balance = deposit(1, 16);
+	pub const AnnouncementDepositFactor: Balance = deposit(0, 68);
+}
+
+impl InstanceFilter<RuntimeCall> for ProxyType {
+	fn filter(&self, c: &RuntimeCall) -> bool {
+		match self {
+			_ if matches!(c, RuntimeCall::Utility(..)) => true,
+			ProxyType::Any => true,
+			ProxyType::AutoCompound => {
+				matches!(
+					c,
+					RuntimeCall::Xyk(pallet_xyk::Call::provide_liquidity_with_conversion { .. }) |
+						RuntimeCall::Xyk(pallet_xyk::Call::compound_rewards { .. })
+				)
+			},
+		}
+	}
+	fn is_superset(&self, o: &Self) -> bool {
+		match (self, o) {
+			(x, y) if x == y => true,
+			(ProxyType::Any, _) => true,
+			(_, ProxyType::Any) => false,
+			_ => false,
+		}
+	}
+}
+
+impl pallet_proxy::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
+	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgrTokenId>;
+	type ProxyType = ProxyType;
+	type ProxyDepositBase = ProxyDepositBase;
+	type ProxyDepositFactor = ProxyDepositFactor;
+	type MaxProxies = frame_support::traits::ConstU32<32>;
+	type WeightInfo = pallet_proxy::weights::SubstrateWeight<Runtime>;
+	type MaxPending = frame_support::traits::ConstU32<32>;
+	type CallHasher = BlakeTwo256;
+	type AnnouncementDepositBase = AnnouncementDepositBase;
+	type AnnouncementDepositFactor = AnnouncementDepositFactor;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -1154,13 +1207,15 @@ construct_runtime!(
 
 		// Governance stuff
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 41,
-		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 49,
+		Sudo: pallet_sudo_mangata::{Pallet, Call, Config<T>, Storage, Event<T>} = 49,
 		SudoOrigin: pallet_sudo_origin::{Pallet, Call, Event<T>} = 50,
-		Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 51,
+		Council: pallet_collective_mangata::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 51,
 
 		// Bootstrap
 		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>} = 53,
 		Utility: pallet_utility::{Pallet, Call, Event} = 54,
+
+		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 55,
 	}
 );
 
@@ -1179,7 +1234,7 @@ mod benches {
 		[parachain_staking, ParachainStaking]
 		[pallet_xyk, Xyk]
 		[pallet_treasury, Treasury]
-		[pallet_collective, Council]
+		[pallet_collective_mangata, Council]
 		[pallet_bootstrap, Bootstrap]
 		[pallet_crowdloan_rewards, Crowdloan]
 		[pallet_utility, Utility]
@@ -1331,6 +1386,21 @@ impl_runtime_apis! {
 		) -> XYKRpcResult<Balance> {
 			XYKRpcResult {
 				price: Xyk::get_max_instant_unreserve_amount(&user, liquidity_asset_id)
+			}
+		}
+
+		fn calculate_balanced_sell_amount(
+			total_amount: Balance,
+			reserve_amount: Balance,
+		) -> XYKRpcResult<Balance> {
+			XYKRpcResult {
+				price: Xyk::calculate_balanced_sell_amount(total_amount, reserve_amount)
+					.map_err(|e|
+						{
+							log::warn!(target:"xyk", "rpc 'XYK::calculate_balanced_sell_amount' error: '{:?}', returning default value instead", e);
+							e
+						}
+					).unwrap_or_default()
 			}
 		}
 	}

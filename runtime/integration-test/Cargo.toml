@@ -11,6 +11,7 @@ frame-system = { git = "https://github.com/mangata-finance/substrate", branch = 
 pallet-balances = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
 sp-io = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
 sp-runtime = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
+pallet-proxy = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
 
 # Polkadot
 #kusama-runtime = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v0.9.31" }

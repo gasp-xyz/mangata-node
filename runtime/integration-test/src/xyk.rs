@@ -1,12 +1,3 @@
-use frame_support::{assert_err, assert_ok, dispatch::DispatchResultWithPostInfo};
-use std::default::Default;
-
-use mangata_types::{
-	assets::{CustomMetadata, XykMetadata},
-	AccountId,
-};
-use sp_io::TestExternalities;
-
 use crate::setup::*;
 
 const ASSET_ID_1: u32 = 1;

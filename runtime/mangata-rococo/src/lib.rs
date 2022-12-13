@@ -1279,14 +1279,15 @@ impl_runtime_apis! {
 
 		fn create_enqueue_txs_inherent(txs: Vec<<Block as BlockT>::Extrinsic>) -> <Block as BlockT>::Extrinsic{
 			UncheckedExtrinsic::new_unsigned(
-					Call::System(frame_system::Call::enqueue_txs{txs:
-						txs.into_iter()
-							.map(|tx| (
-									tx.signature.clone().and_then(|sig|
-										<Runtime as frame_system::Config>::Lookup::lookup(sig.0).ok()
-									),
-									tx.encode())
-							).collect()}))
+				Call::System(frame_system::Call::enqueue_txs{txs:
+					txs.into_iter()
+					.map(|tx|
+						(
+							tx.signature.clone().and_then(|sig| <Runtime as frame_system::Config>::Lookup::lookup(sig.0).ok()),
+							tx.encode()
+						)
+					)
+					.collect()}))
 		}
 
 		fn can_enqueue_txs() -> bool{

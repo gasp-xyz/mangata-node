@@ -146,8 +146,8 @@ fn linear_issuance_works() {
 		let session_number = System::block_number().saturated_into::<u32>() / BlocksPerRound::get();
 		let session_issuance = <Issuance as GetIssuance>::get_all_issuance(session_number)
 			.expect("session issuance is always populated in advance");
-		let block_issuance = (session_issuance.0 + session_issuance.1) /
-			(BlocksPerRound::get().saturated_into::<u128>());
+		let block_issuance = (session_issuance.0 + session_issuance.1)
+			/ (BlocksPerRound::get().saturated_into::<u128>());
 
 		// Mint in block 1
 		// We are not minting in block 0, but that's okay

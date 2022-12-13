@@ -2491,16 +2491,17 @@ fn test_compound_calculate_balanced_swap_for_liquidity(amount: u128, reward: u12
 		let pool = amount / 2;
 		XykStorage::create_new_token(&acc_id, amount);
 		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_pool(Origin::signed(2), 0, pool, 1, pool).unwrap();
+		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, pool, 1, pool).unwrap();
 		let balance_before_0 = XykStorage::balance(0, 2);
 		let balance_before_1 = XykStorage::balance(1, 2);
 
 		let swap_amount = XykStorage::calculate_balanced_sell_amount(reward, pool).unwrap();
 		let swapped_amount = XykStorage::calculate_sell_price(pool, pool, swap_amount).unwrap();
 
-		XykStorage::sell_asset(Origin::signed(2), 0, 1, swap_amount, 0).unwrap();
+		XykStorage::sell_asset(RuntimeOrigin::signed(2), 0, 1, swap_amount, 0).unwrap();
 
-		XykStorage::mint_liquidity(Origin::signed(2), 1, 0, swapped_amount, u128::MAX).unwrap();
+		XykStorage::mint_liquidity(RuntimeOrigin::signed(2), 1, 0, swapped_amount, u128::MAX)
+			.unwrap();
 
 		assert_eq!(XykStorage::balance(0, 2), balance_before_0 - reward + surplus);
 		assert_eq!(XykStorage::balance(1, 2), balance_before_1);
@@ -2518,11 +2519,12 @@ fn test_compound_provide_liquidity(amount: u128, reward: u128, pool_r: u128, sur
 		let pool = amount / pool_r;
 		XykStorage::create_new_token(&acc_id, amount);
 		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_pool(Origin::signed(2), 0, pool, 1, pool).unwrap();
+		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, pool, 1, pool).unwrap();
 		let balance_before_0 = XykStorage::balance(0, 2);
 		let balance_before_1 = XykStorage::balance(1, 2);
 
-		XykStorage::provide_liquidity_with_conversion(Origin::signed(2), 2, 0, reward).unwrap();
+		XykStorage::provide_liquidity_with_conversion(RuntimeOrigin::signed(2), 2, 0, reward)
+			.unwrap();
 
 		assert_eq!(XykStorage::balance(0, 2), balance_before_0 - reward + surplus);
 		assert_eq!(XykStorage::balance(1, 2), balance_before_1);
@@ -2541,9 +2543,9 @@ fn test_compound_rewards(amount: u128, part_permille: u32, surplus: u128) {
 
 		XykStorage::create_new_token(&2, amount);
 		XykStorage::create_new_token(&2, amount);
-		XykStorage::create_pool(Origin::signed(2), 0, amount / 2, 1, amount / 2).unwrap();
-		XykStorage::update_pool_promotion(Origin::root(), 2, Some(1)).unwrap();
-		XykStorage::activate_liquidity_v2(Origin::signed(2), 2, amount / 2, None).unwrap();
+		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, amount / 2, 1, amount / 2).unwrap();
+		XykStorage::update_pool_promotion(RuntimeOrigin::root(), 2, Some(1)).unwrap();
+		XykStorage::activate_liquidity_v2(RuntimeOrigin::signed(2), 2, amount / 2, None).unwrap();
 
 		MockPromotedPoolApi::instance().lock().unwrap().insert(2, U256::from(u128::MAX));
 
@@ -2556,7 +2558,7 @@ fn test_compound_rewards(amount: u128, part_permille: u32, surplus: u128) {
 		let balance_before_0 = XykStorage::balance(0, 2);
 		let balance_before_1 = XykStorage::balance(1, 2);
 		let balance_not_compounded: u128 = (Permill::one() - amount_permille) * amount;
-		XykStorage::compound_rewards(Origin::signed(2), 2, amount_permille).unwrap();
+		XykStorage::compound_rewards(RuntimeOrigin::signed(2), 2, amount_permille).unwrap();
 
 		assert_eq!(XykStorage::balance(0, 2), balance_before_0 + surplus + balance_not_compounded);
 		assert_eq!(XykStorage::balance(1, 2), balance_before_1);

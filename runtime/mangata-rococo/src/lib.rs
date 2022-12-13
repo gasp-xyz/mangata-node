@@ -90,7 +90,6 @@ pub const KAR_TOKEN_ID: TokenId = 6;
 pub const TUR_TOKEN_ID: TokenId = 7;
 
 pub mod constants;
-mod migrations;
 mod weights;
 pub mod xcm_config;
 
@@ -128,29 +127,8 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	(MangataMigrations, migrations::asset_register::MigrateToXykMetadata),
+	(),
 >;
-
-pub struct MangataMigrations;
-impl OnRuntimeUpgrade for MangataMigrations {
-	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-		migrations::phragmen_elections::PhragmenElectionsMigration::on_runtime_upgrade()
-	}
-
-	#[cfg(feature = "try-runtime")]
-	fn pre_upgrade() -> Result<(), &'static str> {
-		migrations::phragmen_elections::PhragmenElectionsMigration::pre_upgrade()
-			.expect("try-runtime pre_upgrade for PhragmenElectionsMigration failed!!");
-		Ok(())
-	}
-
-	#[cfg(feature = "try-runtime")]
-	fn post_upgrade() -> Result<(), &'static str> {
-		migrations::phragmen_elections::PhragmenElectionsMigration::post_upgrade()
-			.expect("try-runtime post_upgrade for PhragmenElectionsMigration failed!!");
-		Ok(())
-	}
-}
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -182,11 +160,11 @@ impl_opaque_keys! {
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
-	authoring_version: 10,
-	spec_version: 10,
+	authoring_version: 11,
+	spec_version: 11,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 10,
+	transaction_version: 11,
 	state_version: 0,
 };
 
@@ -195,11 +173,11 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
-	authoring_version: 11,
-	spec_version: 11,
+	authoring_version: 12,
+	spec_version: 12,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 11,
+	transaction_version: 12,
 	state_version: 0,
 };
 

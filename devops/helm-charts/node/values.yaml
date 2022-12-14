@@ -14,7 +14,9 @@ image:
   tag: "rococo-0.25.0"
 
 node:
+  enableParachainRegisterSidecar: false
   storageSize: "10Gi"
+  relaychainStorageSize: "10Gi"
   env:
     RUST_LOG: "info"
   node_01:

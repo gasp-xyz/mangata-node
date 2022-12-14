@@ -28,6 +28,7 @@ pallet-sudo-origin = { path = '../../pallets/sudo-origin', default-features = fa
 pallet-issuance = { path = '../../pallets/issuance', default-features = false }
 pallet-multipurpose-liquidity = { path = '../../pallets/multipurpose-liquidity', default-features = false }
 mp-multipurpose-liquidity = { path = '../../primitives/multipurpose-liquidity', default-features = false }
+pallet-token-timeout = { path = '../../pallets/token-timeout', default-features = false}
 mp-traits = { path = '../../primitives/traits', default-features = false }
 mp-bootstrap = { path = '../../primitives/bootstrap', default-features = false }
 
@@ -164,7 +165,7 @@ std = [
 	"pallet-treasury/std",
 	"pallet-xyk/std",
 	"pallet-bootstrap/std",
-  "xyk-runtime-api/std",
+  	"xyk-runtime-api/std",
 	"parachain-staking/std",
 	"orml-xtokens/std",
 	"orml-xcm-support/std",
@@ -181,6 +182,7 @@ std = [
 	"mp-traits/std",
 	"mp-bootstrap/std",
 	"pallet-vesting-mangata-rpc-runtime-api/std",
+	"pallet-token-timeout/std",
 ]
 
 
@@ -220,6 +222,7 @@ try-runtime = [
 	"pallet-bootstrap/try-runtime",
 	"pallet-utility/try-runtime",
 	"pallet-proxy/try-runtime",
+	"pallet-token-timeout/try-runtime",
 ]
 
 fast-runtime = []
@@ -254,4 +257,5 @@ runtime-benchmarks = [
 	"pallet-bootstrap/runtime-benchmarks",
 	"pallet-multipurpose-liquidity/runtime-benchmarks",
 	"pallet-proxy/runtime-benchmarks",
+	"pallet-token-timeout/runtime-benchmarks",
 ]

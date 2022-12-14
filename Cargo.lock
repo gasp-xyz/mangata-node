@@ -4618,7 +4618,6 @@ dependencies = [
  "pallet-sudo-mangata",
  "pallet-sudo-origin",
  "pallet-timestamp",
- "pallet-token-timeout",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
@@ -4798,7 +4797,6 @@ dependencies = [
  "pallet-sudo-mangata",
  "pallet-sudo-origin",
  "pallet-timestamp",
- "pallet-token-timeout",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
@@ -6506,32 +6504,6 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-token-timeout"
-version = "0.1.0"
-dependencies = [
- "env_logger",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "hex-literal",
- "lazy_static",
- "log",
- "mangata-types 0.1.0 (git+https://github.com/mangata-finance/substrate?branch=mangata-dev)",
- "mp-traits",
- "orml-tokens",
- "orml-traits",
- "parity-scale-codec",
- "rustc-hex",
- "scale-info",
- "serde",
- "serial_test",
  "sp-core",
  "sp-io",
  "sp-runtime",

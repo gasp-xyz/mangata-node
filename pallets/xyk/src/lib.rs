@@ -306,7 +306,7 @@ use frame_system::pallet_prelude::*;
 use mangata_types::{Balance, TokenId};
 use mp_bootstrap::PoolCreateApi;
 use mp_multipurpose_liquidity::ActivateKind;
-use mp_traits::{ActivationReservesProviderTrait, PreValidateSwaps, XykFunctionsTrait};
+use mp_traits::{ActivationReservesProviderTrait, XykFunctionsTrait};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_issuance::{ActivedPoolQueryApi, ComputeIssuance, PoolPromoteApi};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
@@ -1856,189 +1856,6 @@ impl<T: Config> Pallet<T> {
 	}
 }
 
-impl<T: Config> PreValidateSwaps for Pallet<T> {
-	type AccountId = T::AccountId;
-
-	type Balance = Balance;
-
-	type CurrencyId = TokenId;
-
-	fn pre_validate_sell_asset(
-		sender: &Self::AccountId,
-		sold_asset_id: Self::CurrencyId,
-		bought_asset_id: Self::CurrencyId,
-		sold_asset_amount: Self::Balance,
-		min_amount_out: Self::Balance,
-	) -> Result<
-		(Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance),
-		DispatchError,
-	> {
-		// Ensure not selling zero amount
-		ensure!(!sold_asset_amount.is_zero(), Error::<T>::ZeroAmount,);
-
-		ensure!(
-			!T::DisabledTokens::contains(&sold_asset_id) &&
-				!T::DisabledTokens::contains(&bought_asset_id),
-			Error::<T>::FunctionNotAvailableForThisToken
-		);
-
-		let buy_and_burn_amount = multiply_by_rational_with_rounding(
-			sold_asset_amount,
-			T::BuyAndBurnFeePercentage::get(),
-			10000,
-			Rounding::Down,
-		)
-		.ok_or(Error::<T>::UnexpectedFailure)? +
-			1;
-
-		let treasury_amount = multiply_by_rational_with_rounding(
-			sold_asset_amount,
-			T::TreasuryFeePercentage::get(),
-			10000,
-			Rounding::Down,
-		)
-		.ok_or(Error::<T>::UnexpectedFailure)? +
-			1;
-
-		let pool_fee_amount = multiply_by_rational_with_rounding(
-			sold_asset_amount,
-			T::PoolFeePercentage::get(),
-			10000,
-			Rounding::Down,
-		)
-		.ok_or(Error::<T>::UnexpectedFailure)? +
-			1;
-
-		// for future implementation of min fee if necessary
-		// let min_fee: u128 = 0;
-		// if buy_and_burn_amount + treasury_amount + pool_fee_amount < min_fee {
-		//     buy_and_burn_amount = min_fee * Self::total_fee() / T::BuyAndBurnFeePercentage::get();
-		//     treasury_amount = min_fee * Self::total_fee() / T::TreasuryFeePercentage::get();
-		//     pool_fee_amount = min_fee - buy_and_burn_amount - treasury_amount;
-		// }
-
-		// Get token reserves
-
-		// MAX: 2R
-		let (input_reserve, output_reserve) =
-			Pallet::<T>::get_reserves(sold_asset_id, bought_asset_id)?;
-
-		ensure!(input_reserve.checked_add(sold_asset_amount).is_some(), Error::<T>::MathOverflow);
-
-		// Calculate bought asset amount to be received by paying sold asset amount
-		let bought_asset_amount =
-			Pallet::<T>::calculate_sell_price(input_reserve, output_reserve, sold_asset_amount)?;
-
-		// Ensure user has enough tokens to sell
-		<T as Config>::Currency::ensure_can_withdraw(
-			sold_asset_id.into(),
-			&sender,
-			sold_asset_amount.into(),
-			WithdrawReasons::all(),
-			// Does not fail due to earlier ensure
-			Default::default(),
-		)
-		.or(Err(Error::<T>::NotEnoughAssets))?;
-
-		Ok((
-			buy_and_burn_amount,
-			treasury_amount,
-			pool_fee_amount,
-			input_reserve,
-			output_reserve,
-			bought_asset_amount,
-		))
-	}
-
-	fn pre_validate_buy_asset(
-		sender: &Self::AccountId,
-		sold_asset_id: Self::CurrencyId,
-		bought_asset_id: Self::CurrencyId,
-		bought_asset_amount: Self::Balance,
-		max_amount_in: Self::Balance,
-	) -> Result<
-		(Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance),
-		DispatchError,
-	> {
-		ensure!(
-			!T::DisabledTokens::contains(&sold_asset_id) &&
-				!T::DisabledTokens::contains(&bought_asset_id),
-			Error::<T>::FunctionNotAvailableForThisToken
-		);
-
-		// Get token reserves
-		let (input_reserve, output_reserve) =
-			Pallet::<T>::get_reserves(sold_asset_id, bought_asset_id)?;
-
-		// Ensure there are enough tokens in reserves
-		ensure!(output_reserve > bought_asset_amount, Error::<T>::NotEnoughReserve,);
-
-		// Ensure not buying zero amount
-		ensure!(!bought_asset_amount.is_zero(), Error::<T>::ZeroAmount,);
-
-		// Calculate amount to be paid from bought amount
-		let sold_asset_amount =
-			Pallet::<T>::calculate_buy_price(input_reserve, output_reserve, bought_asset_amount)?;
-
-		let buy_and_burn_amount = multiply_by_rational_with_rounding(
-			sold_asset_amount,
-			T::BuyAndBurnFeePercentage::get(),
-			10000,
-			Rounding::Down,
-		)
-		.ok_or(Error::<T>::UnexpectedFailure)? +
-			1;
-
-		let treasury_amount = multiply_by_rational_with_rounding(
-			sold_asset_amount,
-			T::TreasuryFeePercentage::get(),
-			10000,
-			Rounding::Down,
-		)
-		.ok_or(Error::<T>::UnexpectedFailure)? +
-			1;
-
-		let pool_fee_amount = multiply_by_rational_with_rounding(
-			sold_asset_amount,
-			T::PoolFeePercentage::get(),
-			10000,
-			Rounding::Down,
-		)
-		.ok_or(Error::<T>::UnexpectedFailure)? +
-			1;
-
-		// for future implementation of min fee if necessary
-		// let min_fee: u128 = 0;
-		// if buy_and_burn_amount + treasury_amount + pool_fee_amount < min_fee {
-		//     buy_and_burn_amount = min_fee * Self::total_fee() / T::BuyAndBurnFeePercentage::get();
-		//     treasury_amount = min_fee * Self::total_fee() / T::TreasuryFeePercentage::get();
-		//     pool_fee_amount = min_fee - buy_and_burn_amount - treasury_amount;
-		// }
-
-		ensure!(input_reserve.checked_add(sold_asset_amount).is_some(), Error::<T>::MathOverflow);
-
-		// Ensure user has enough tokens to sell
-		<T as Config>::Currency::ensure_can_withdraw(
-			sold_asset_id.into(),
-			&sender,
-			sold_asset_amount.into(),
-			WithdrawReasons::all(),
-			// Does not fail due to earlier ensure
-			Default::default(),
-		)
-		.or(Err(Error::<T>::NotEnoughAssets))?;
-
-		Ok((
-			buy_and_burn_amount,
-			treasury_amount,
-			pool_fee_amount,
-			input_reserve,
-			output_reserve,
-			sold_asset_amount,
-		))
-	}
-}
-
 impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 	type Balance = Balance;
 
@@ -2179,20 +1996,72 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		sold_asset_amount: Self::Balance,
 		min_amount_out: Self::Balance,
 	) -> DispatchResult {
-		let (
-			buy_and_burn_amount,
-			treasury_amount,
-			pool_fee_amount,
-			input_reserve,
-			output_reserve,
-			bought_asset_amount,
-		) = <Pallet<T> as PreValidateSwaps>::pre_validate_sell_asset(
-			&sender,
-			sold_asset_id,
-			bought_asset_id,
+		// Ensure not selling zero amount
+		ensure!(!sold_asset_amount.is_zero(), Error::<T>::ZeroAmount,);
+
+		ensure!(
+			!T::DisabledTokens::contains(&sold_asset_id) &&
+				!T::DisabledTokens::contains(&bought_asset_id),
+			Error::<T>::FunctionNotAvailableForThisToken
+		);
+
+		let buy_and_burn_amount = multiply_by_rational_with_rounding(
 			sold_asset_amount,
-			min_amount_out,
-		)?;
+			T::BuyAndBurnFeePercentage::get(),
+			10000,
+			Rounding::Down,
+		)
+		.ok_or(Error::<T>::UnexpectedFailure)? +
+			1;
+
+		let treasury_amount = multiply_by_rational_with_rounding(
+			sold_asset_amount,
+			T::TreasuryFeePercentage::get(),
+			10000,
+			Rounding::Down,
+		)
+		.ok_or(Error::<T>::UnexpectedFailure)? +
+			1;
+
+		let pool_fee_amount = multiply_by_rational_with_rounding(
+			sold_asset_amount,
+			T::PoolFeePercentage::get(),
+			10000,
+			Rounding::Down,
+		)
+		.ok_or(Error::<T>::UnexpectedFailure)? +
+			1;
+
+		// for future implementation of min fee if necessary
+		// let min_fee: u128 = 0;
+		// if buy_and_burn_amount + treasury_amount + pool_fee_amount < min_fee {
+		//     buy_and_burn_amount = min_fee * Self::total_fee() / T::BuyAndBurnFeePercentage::get();
+		//     treasury_amount = min_fee * Self::total_fee() / T::TreasuryFeePercentage::get();
+		//     pool_fee_amount = min_fee - buy_and_burn_amount - treasury_amount;
+		// }
+
+		// Get token reserves
+
+		// MAX: 2R
+		let (input_reserve, output_reserve) =
+			Pallet::<T>::get_reserves(sold_asset_id, bought_asset_id)?;
+
+		ensure!(input_reserve.checked_add(sold_asset_amount).is_some(), Error::<T>::MathOverflow);
+
+		// Calculate bought asset amount to be received by paying sold asset amount
+		let bought_asset_amount =
+			Pallet::<T>::calculate_sell_price(input_reserve, output_reserve, sold_asset_amount)?;
+
+		// Ensure user has enough tokens to sell
+		<T as Config>::Currency::ensure_can_withdraw(
+			sold_asset_id.into(),
+			&sender,
+			sold_asset_amount.into(),
+			WithdrawReasons::all(),
+			// Does not fail due to earlier ensure
+			Default::default(),
+		)
+		.or(Err(Error::<T>::NotEnoughAssets))?;
 
 		let vault = Pallet::<T>::account_id();
 		let treasury_account: T::AccountId = Self::treasury_account_id();
@@ -2316,20 +2185,73 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		bought_asset_amount: Self::Balance,
 		max_amount_in: Self::Balance,
 	) -> DispatchResult {
-		let (
-			buy_and_burn_amount,
-			treasury_amount,
-			pool_fee_amount,
-			input_reserve,
-			output_reserve,
+		ensure!(
+			!T::DisabledTokens::contains(&sold_asset_id) &&
+				!T::DisabledTokens::contains(&bought_asset_id),
+			Error::<T>::FunctionNotAvailableForThisToken
+		);
+
+		// Get token reserves
+		let (input_reserve, output_reserve) =
+			Pallet::<T>::get_reserves(sold_asset_id, bought_asset_id)?;
+
+		// Ensure there are enough tokens in reserves
+		ensure!(output_reserve > bought_asset_amount, Error::<T>::NotEnoughReserve,);
+
+		// Ensure not buying zero amount
+		ensure!(!bought_asset_amount.is_zero(), Error::<T>::ZeroAmount,);
+
+		// Calculate amount to be paid from bought amount
+		let sold_asset_amount =
+			Pallet::<T>::calculate_buy_price(input_reserve, output_reserve, bought_asset_amount)?;
+
+		let buy_and_burn_amount = multiply_by_rational_with_rounding(
 			sold_asset_amount,
-		) = <Pallet<T> as PreValidateSwaps>::pre_validate_buy_asset(
+			T::BuyAndBurnFeePercentage::get(),
+			10000,
+			Rounding::Down,
+		)
+		.ok_or(Error::<T>::UnexpectedFailure)? +
+			1;
+
+		let treasury_amount = multiply_by_rational_with_rounding(
+			sold_asset_amount,
+			T::TreasuryFeePercentage::get(),
+			10000,
+			Rounding::Down,
+		)
+		.ok_or(Error::<T>::UnexpectedFailure)? +
+			1;
+
+		let pool_fee_amount = multiply_by_rational_with_rounding(
+			sold_asset_amount,
+			T::PoolFeePercentage::get(),
+			10000,
+			Rounding::Down,
+		)
+		.ok_or(Error::<T>::UnexpectedFailure)? +
+			1;
+
+		// for future implementation of min fee if necessary
+		// let min_fee: u128 = 0;
+		// if buy_and_burn_amount + treasury_amount + pool_fee_amount < min_fee {
+		//     buy_and_burn_amount = min_fee * Self::total_fee() / T::BuyAndBurnFeePercentage::get();
+		//     treasury_amount = min_fee * Self::total_fee() / T::TreasuryFeePercentage::get();
+		//     pool_fee_amount = min_fee - buy_and_burn_amount - treasury_amount;
+		// }
+
+		ensure!(input_reserve.checked_add(sold_asset_amount).is_some(), Error::<T>::MathOverflow);
+
+		// Ensure user has enough tokens to sell
+		<T as Config>::Currency::ensure_can_withdraw(
+			sold_asset_id.into(),
 			&sender,
-			sold_asset_id,
-			bought_asset_id,
-			bought_asset_amount,
-			max_amount_in,
-		)?;
+			sold_asset_amount.into(),
+			WithdrawReasons::all(),
+			// Does not fail due to earlier ensure
+			Default::default(),
+		)
+		.or(Err(Error::<T>::NotEnoughAssets))?;
 
 		let vault = Pallet::<T>::account_id();
 		let treasury_account: T::AccountId = Self::treasury_account_id();

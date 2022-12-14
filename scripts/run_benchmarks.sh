@@ -21,7 +21,6 @@ benchmarks=(
     "pallet_bootstrap"
     "pallet_multipurpose_liquidity"
     "pallet_sudo_origin"
-    "pallet_token_timeout"
 )
 
 for bench in ${benchmarks[@]}; do

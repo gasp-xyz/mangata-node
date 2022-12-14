@@ -487,6 +487,8 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		PoolCreated(T::AccountId, TokenId, Balance, TokenId, Balance),
 		AssetsSwapped(T::AccountId, TokenId, Balance, TokenId, Balance),
+		SellAssetFailed(T::AccountId, TokenId, Balance, TokenId, Balance, Balance),
+		BuyAssetFailed(T::AccountId, TokenId, Balance, TokenId, Balance, Balance),
 		LiquidityMinted(T::AccountId, TokenId, Balance, TokenId, Balance, TokenId, Balance),
 		LiquidityBurned(T::AccountId, TokenId, Balance, TokenId, Balance, TokenId, Balance),
 		PoolPromotionUpdated(TokenId, Option<u8>),
@@ -668,6 +670,7 @@ pub mod pallet {
 				bought_asset_id,
 				sold_asset_amount,
 				min_amount_out,
+				false
 			)?;
 			Ok(().into())
 		}
@@ -688,6 +691,7 @@ pub mod pallet {
 				bought_asset_id,
 				bought_asset_amount,
 				max_amount_in,
+				false
 			)?;
 			Ok(().into())
 		}
@@ -2172,12 +2176,19 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		Ok(())
 	}
 
+	// To put it comprehensively the only reason that the user should lose out on swap fee
+	// is if the mistake is theirs, which in the context of swaps is bad slippage besides pre_validation.
+	// In this implementation, once pre_validation passes the swap fee mechanism that follows should suceed.
+	// And if the function fails beyond pre_validation but not on slippage then the user is free from blame.
+	// Further internals calls, might determine the slippage themselves before calling this swap function,
+	// in which case again the user must not be charged the swap fee.
 	fn sell_asset(
 		sender: T::AccountId,
 		sold_asset_id: Self::CurrencyId,
 		bought_asset_id: Self::CurrencyId,
 		sold_asset_amount: Self::Balance,
 		min_amount_out: Self::Balance,
+		err_upon_bad_slippage: bool,
 	) -> DispatchResult {
 		let (
 			buy_and_burn_amount,
@@ -2291,7 +2302,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			);
 
 			Pallet::<T>::deposit_event(Event::AssetsSwapped(
-				sender,
+				sender.clone(),
 				sold_asset_id,
 				sold_asset_amount,
 				bought_asset_id,
@@ -2303,18 +2314,37 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		Pallet::<T>::settle_treasury_and_burn(sold_asset_id, buy_and_burn_amount, treasury_amount)?;
 
 		if bought_asset_amount < min_amount_out {
-			return Err(DispatchError::from(Error::<T>::InsufficientOutputAmount))
+			if err_upon_bad_slippage {
+				return Err(DispatchError::from(Error::<T>::InsufficientOutputAmount))
+			}
+			else {
+				Pallet::<T>::deposit_event(Event::SellAssetFailed(
+					sender,
+					sold_asset_id,
+					sold_asset_amount,
+					bought_asset_id,
+					bought_asset_amount,
+					min_amount_out
+				));
+			}
 		}
 
 		Ok(())
 	}
 
+	// To put it comprehensively the only reason that the user should lose out on swap fee
+	// is if the mistake is theirs, which in the context of swaps is bad slippage besides pre_validation.
+	// In this implementation, once pre_validation passes the swap fee mechanism that follows should suceed.
+	// And if the function fails beyond pre_validation but not on slippage then the user is free from blame.
+	// Further internals calls, might determine the slippage themselves before calling this swap function,
+	// in which case again the user must not be charged the swap fee.
 	fn buy_asset(
 		sender: T::AccountId,
 		sold_asset_id: Self::CurrencyId,
 		bought_asset_id: Self::CurrencyId,
 		bought_asset_amount: Self::Balance,
 		max_amount_in: Self::Balance,
+		err_upon_bad_slippage: bool,
 	) -> DispatchResult {
 		let (
 			buy_and_burn_amount,
@@ -2425,7 +2455,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			);
 
 			Pallet::<T>::deposit_event(Event::AssetsSwapped(
-				sender,
+				sender.clone(),
 				sold_asset_id,
 				sold_asset_amount,
 				bought_asset_id,
@@ -2436,7 +2466,19 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		Pallet::<T>::settle_treasury_and_burn(sold_asset_id, buy_and_burn_amount, treasury_amount)?;
 
 		if sold_asset_amount > max_amount_in {
-			return Err(DispatchError::from(Error::<T>::InsufficientInputAmount))
+			if err_upon_bad_slippage {
+				return Err(DispatchError::from(Error::<T>::InsufficientInputAmount))
+			}
+			else {
+				Pallet::<T>::deposit_event(Event::BuyAssetFailed(
+					sender,
+					sold_asset_id,
+					sold_asset_amount,
+					bought_asset_id,
+					bought_asset_amount,
+					max_amount_in
+				));
+			}
 		}
 
 		Ok(())
@@ -2649,6 +2691,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			other_asset_id,
 			swap_amount,
 			bought_amount,
+			true
 		)?;
 
 		let mint_amount = provided_asset_amount

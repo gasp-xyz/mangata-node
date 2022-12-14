@@ -1,6 +1,7 @@
 // Copyright (C) 2020 Mangata team
 
 use super::*;
+use sp_std::convert::TryFrom;
 
 use sp_core::H256;
 
@@ -12,7 +13,7 @@ use sp_runtime::{
 use crate as pallet_token_timeout;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{ConstU128, ConstU32, Contains, Everything},
+	traits::{ConstU32, Contains, Everything},
 	PalletId,
 };
 use frame_system as system;

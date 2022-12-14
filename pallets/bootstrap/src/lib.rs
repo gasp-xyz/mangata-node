@@ -144,7 +144,6 @@ use sp_core::U256;
 use sp_io::KillStorageResult;
 use sp_runtime::{
 	traits::{AccountIdConversion, CheckedAdd, One, SaturatedConversion, Saturating},
-	Percent,
 };
 use sp_std::{convert::TryInto, prelude::*};
 
@@ -165,7 +164,7 @@ pub use pallet::*;
 const PALLET_ID: PalletId = PalletId(*b"bootstrp");
 
 use core::fmt::Debug;
-use frame_support::traits::tokens;
+
 
 #[macro_export]
 macro_rules! log {

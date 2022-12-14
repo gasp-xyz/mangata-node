@@ -2,7 +2,7 @@
 
 use frame_support::pallet_prelude::*;
 use mangata_types::{Balance, TokenId};
-use sp_runtime::{traits::MaybeDisplay, Percent};
+use sp_runtime::{traits::MaybeDisplay};
 use sp_std::fmt::Debug;
 
 pub trait PoolCreateApi {

@@ -5,7 +5,6 @@ use mangata_types::{Balance, TokenId};
 use mp_multipurpose_liquidity::{ActivateKind, BondKind};
 use sp_runtime::{
 	traits::{AtLeast32BitUnsigned, MaybeDisplay},
-	Percent,
 };
 use sp_std::fmt::Debug;
 

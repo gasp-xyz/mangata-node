@@ -1872,7 +1872,7 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 		sold_asset_id: Self::CurrencyId,
 		bought_asset_id: Self::CurrencyId,
 		sold_asset_amount: Self::Balance,
-		min_amount_out: Self::Balance,
+		_min_amount_out: Self::Balance,
 	) -> Result<
 		(Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance),
 		DispatchError,
@@ -1959,7 +1959,7 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 		sold_asset_id: Self::CurrencyId,
 		bought_asset_id: Self::CurrencyId,
 		bought_asset_amount: Self::Balance,
-		max_amount_in: Self::Balance,
+		_max_amount_in: Self::Balance,
 	) -> Result<
 		(Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance),
 		DispatchError,

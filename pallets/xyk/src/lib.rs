@@ -670,7 +670,7 @@ pub mod pallet {
 				bought_asset_id,
 				sold_asset_amount,
 				min_amount_out,
-				false
+				false,
 			)?;
 			Ok(().into())
 		}
@@ -691,7 +691,7 @@ pub mod pallet {
 				bought_asset_id,
 				bought_asset_amount,
 				max_amount_in,
-				false
+				false,
 			)?;
 			Ok(().into())
 		}
@@ -2316,15 +2316,14 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		if bought_asset_amount < min_amount_out {
 			if err_upon_bad_slippage {
 				return Err(DispatchError::from(Error::<T>::InsufficientOutputAmount))
-			}
-			else {
+			} else {
 				Pallet::<T>::deposit_event(Event::SellAssetFailed(
 					sender,
 					sold_asset_id,
 					sold_asset_amount,
 					bought_asset_id,
 					bought_asset_amount,
-					min_amount_out
+					min_amount_out,
 				));
 			}
 		}
@@ -2468,15 +2467,14 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		if sold_asset_amount > max_amount_in {
 			if err_upon_bad_slippage {
 				return Err(DispatchError::from(Error::<T>::InsufficientInputAmount))
-			}
-			else {
+			} else {
 				Pallet::<T>::deposit_event(Event::BuyAssetFailed(
 					sender,
 					sold_asset_id,
 					sold_asset_amount,
 					bought_asset_id,
 					bought_asset_amount,
-					max_amount_in
+					max_amount_in,
 				));
 			}
 		}
@@ -2691,7 +2689,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			other_asset_id,
 			swap_amount,
 			bought_amount,
-			true
+			true,
 		)?;
 
 		let mint_amount = provided_asset_amount

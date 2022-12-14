@@ -139,7 +139,7 @@ pub struct MockActivedPoolQueryApi;
 // }
 
 impl ActivedPoolQueryApi for MockActivedPoolQueryApi {
-	fn get_pool_activate_amount(liquidity_token_id: TokenId) -> Option<Balance> {
+	fn get_pool_activate_amount(_liquidity_token_id: TokenId) -> Option<Balance> {
 		Some(1_u128)
 	}
 }

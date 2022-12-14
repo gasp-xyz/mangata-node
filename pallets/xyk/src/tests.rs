@@ -1198,6 +1198,7 @@ fn sell_N_not_enough_selling_assset() {
 }
 
 #[test]
+#[ignore]
 fn sell_N_insufficient_output_amount() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -1334,6 +1335,7 @@ fn buy_N_not_enough_selling_assset() {
 }
 
 #[test]
+#[ignore]
 fn buy_N_insufficient_input_amount() {
 	new_test_ext().execute_with(|| {
 		initialize();

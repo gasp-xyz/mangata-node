@@ -16,8 +16,8 @@ use frame_support::{
 	PalletId,
 };
 use frame_system as system;
-use mangata_primitives::{Amount, Balance, TokenId};
-use orml_tokens::{MultiTokenCurrency, MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
+use mangata_types::Amount;
+use orml_tokens::{MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
 use orml_traits::parameter_type_with_key;
 
 pub const NATIVE_CURRENCY_ID: u32 = 0;

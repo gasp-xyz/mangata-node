@@ -3,9 +3,7 @@ use codec::FullCodec;
 use frame_support::pallet_prelude::*;
 use mangata_types::{Balance, TokenId};
 use mp_multipurpose_liquidity::{ActivateKind, BondKind};
-use sp_runtime::{
-	traits::{AtLeast32BitUnsigned, MaybeDisplay},
-};
+use sp_runtime::traits::{AtLeast32BitUnsigned, MaybeDisplay};
 use sp_std::fmt::Debug;
 
 pub trait StakingReservesProviderTrait {

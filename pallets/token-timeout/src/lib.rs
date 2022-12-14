@@ -1,14 +1,11 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-
 use frame_support::{
-	dispatch::{DispatchResult},
+	dispatch::DispatchResult,
 	ensure,
 	pallet_prelude::*,
 	storage::bounded_btree_map::BoundedBTreeMap,
-	traits::{
-		Get, StorageVersion,
-	},
+	traits::{Get, StorageVersion},
 	transactional,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
@@ -16,13 +13,8 @@ use mangata_types::{Balance, TokenId};
 use mp_traits::TimeoutTriggerTrait;
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 
-use sp_runtime::traits::{
-	CheckedDiv, Zero,
-};
-use sp_std::{
-	convert::{TryInto},
-	prelude::*,
-};
+use sp_runtime::traits::{CheckedDiv, Zero};
+use sp_std::{convert::TryInto, prelude::*};
 
 #[cfg(test)]
 mod mock;

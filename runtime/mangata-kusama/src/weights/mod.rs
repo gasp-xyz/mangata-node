@@ -15,6 +15,7 @@ pub mod pallet_issuance_weights;
 pub mod pallet_multipurpose_liquidity_weights;
 pub mod pallet_session_weights;
 pub mod pallet_timestamp_weights;
+pub mod pallet_token_timeout_weights;
 pub mod pallet_treasury_weights;
 pub mod pallet_utility_weights;
 pub mod pallet_vesting_mangata_weights;

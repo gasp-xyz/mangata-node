@@ -72,6 +72,7 @@ pub use mangata_types::{
 	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
 };
 use mp_bootstrap::AssetRegistryApi;
+use mp_traits::{PreValidateSwaps, TimeoutTriggerTrait};
 pub use pallet_issuance::{IssuanceInfo, PoolPromoteApi};
 pub use pallet_sudo_origin;
 pub use pallet_xyk;
@@ -91,8 +92,6 @@ pub const TUR_TOKEN_ID: TokenId = 7;
 pub mod constants;
 mod weights;
 pub mod xcm_config;
-
-mod migrations;
 
 /// Block header type as expected by this runtime.
 pub type Header = generic::HeaderVer<BlockNumber, BlakeTwo256>;
@@ -128,29 +127,8 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	(MangataMigrations, migrations::asset_register::MigrateToXykMetadata),
+	(),
 >;
-
-pub struct MangataMigrations;
-impl OnRuntimeUpgrade for MangataMigrations {
-	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-		migrations::phragmen_elections::PhragmenElectionsMigration::on_runtime_upgrade()
-	}
-
-	#[cfg(feature = "try-runtime")]
-	fn pre_upgrade() -> Result<(), &'static str> {
-		migrations::phragmen_elections::PhragmenElectionsMigration::pre_upgrade()
-			.expect("try-runtime pre_upgrade for PhragmenElectionsMigration failed!!");
-		Ok(())
-	}
-
-	#[cfg(feature = "try-runtime")]
-	fn post_upgrade() -> Result<(), &'static str> {
-		migrations::phragmen_elections::PhragmenElectionsMigration::post_upgrade()
-			.expect("try-runtime post_upgrade for PhragmenElectionsMigration failed!!");
-		Ok(())
-	}
-}
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -195,11 +173,11 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
-	authoring_version: 11,
-	spec_version: 11,
+	authoring_version: 12,
+	spec_version: 12,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 11,
+	transaction_version: 12,
 	state_version: 0,
 };
 
@@ -652,6 +630,221 @@ impl OnMultiTokenUnbalanced<ORMLCurrencyAdapterNegativeImbalance> for ToAuthor {
 	}
 }
 
+#[derive(Encode, Decode, TypeInfo)]
+pub enum LiquidityInfoEnum<C: MultiTokenCurrency<T::AccountId>, T: frame_system::Config> {
+	Imbalance((TokenId, NegativeImbalanceOf<C, T>)),
+	Timeout,
+}
+
+#[derive(Encode, Decode, Clone, TypeInfo)]
+pub struct OnChargeHandler<C, OCA, OTA>(PhantomData<(C, OCA, OTA)>);
+
+impl<C, OCA, OTA> OnChargeHandler<C, OCA, OTA> {}
+
+/// Default implementation for a Currency and an OnUnbalanced handler.
+///
+/// The unbalance handler is given 2 unbalanceds in [`OnUnbalanced::on_unbalanceds`]: fee and
+/// then tip.
+impl<T, C, OCA, OTA> OnChargeTransaction<T> for OnChargeHandler<C, OCA, OTA>
+where
+	T: pallet_transaction_payment::Config + pallet_xyk::Config,
+	T::LengthToFee: frame_support::weights::WeightToFee<
+		Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
+	>,
+	C: MultiTokenCurrency<<T as frame_system::Config>::AccountId>,
+	C::PositiveImbalance: Imbalance<
+		<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
+		Opposite = C::NegativeImbalance,
+	>,
+	C::NegativeImbalance: Imbalance<
+		<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
+		Opposite = C::PositiveImbalance,
+	>,
+	OCA: OnChargeTransaction<
+		T,
+		LiquidityInfo = Option<LiquidityInfoEnum<C, T>>,
+		Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
+	>,
+	OTA: TimeoutTriggerTrait<<T as frame_system::Config>::AccountId>,
+	T: frame_system::Config<Call = Call>,
+	T::AccountId: From<sp_runtime::AccountId32> + Into<sp_runtime::AccountId32>,
+{
+	type LiquidityInfo = Option<LiquidityInfoEnum<C, T>>;
+	type Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance;
+
+	/// Withdraw the predicted fee from the transaction origin.
+	///
+	/// Note: The `fee` already includes the `tip`.
+	fn withdraw_fee(
+		who: &T::AccountId,
+		call: &T::Call,
+		info: &DispatchInfoOf<T::Call>,
+		fee: Self::Balance,
+		tip: Self::Balance,
+	) -> Result<Self::LiquidityInfo, TransactionValidityError> {
+		// THIS IS NOT PROXY PALLET COMPATIBLE, YET
+		// Also ugly implementation to keep it maleable for now
+		match call {
+			Call::Xyk(pallet_xyk::Call::sell_asset {
+				sold_asset_id: sold_asset_id,
+				sold_asset_amount: sold_asset_amount,
+				bought_asset_id: bought_asset_id,
+				min_amount_out: min_amount_out,
+				..
+			}) => {
+				// If else tree for easy edits
+
+				// Check if timeouts are initiazed or not
+				if let Some(timeout_metadata) = TokenTimeout::get_timeout_metadata() {
+					// Check if curated token or not
+					if let Some(threshold) =
+						timeout_metadata.swap_value_threshold.get(sold_asset_id)
+					{
+						// ensure swap cannot fail
+						// This is to ensure that xyk swap fee is always charged
+						// We also ensure that the user has enough funds to transact
+						let _ = <Xyk as PreValidateSwaps>::pre_validate_sell_asset(
+							&who.clone().into(),
+							*sold_asset_id,
+							*bought_asset_id,
+							*sold_asset_amount,
+							*min_amount_out,
+						)
+						.map_err(|_| {
+							TransactionValidityError::Invalid(
+								InvalidTransaction::Custom(66u8).into(),
+							)
+						})?;
+
+						if sold_asset_amount > threshold {
+							// This is the "high value swap on curated token" branch
+							Ok(None)
+						} else {
+							// This is the "low value swap on curated token" branch
+							OTA::process_timeout(who).map_err(|_| {
+								TransactionValidityError::Invalid(
+									InvalidTransaction::Custom(67u8).into(),
+								)
+							})?;
+							Ok(Some(LiquidityInfoEnum::Timeout))
+						}
+					} else {
+						// "swap on non-curated token" branch
+						OTA::process_timeout(who).map_err(|_| {
+							TransactionValidityError::Invalid(
+								InvalidTransaction::Custom(67u8).into(),
+							)
+						})?;
+						Ok(Some(LiquidityInfoEnum::Timeout))
+					}
+				} else {
+					// Timeouts are not activated branch
+					OCA::withdraw_fee(who, call, info, fee, tip)
+				}
+			},
+
+			Call::Xyk(pallet_xyk::Call::buy_asset {
+				sold_asset_id: sold_asset_id,
+				bought_asset_amount: bought_asset_amount,
+				bought_asset_id: bought_asset_id,
+				max_amount_in: max_amount_in,
+				..
+			}) => {
+				// If else tree for easy edits
+
+				// Check if timeouts are initiazed or not
+				if let Some(timeout_metadata) = TokenTimeout::get_timeout_metadata() {
+					// Check if curated token or not
+					if let Some(threshold) =
+						timeout_metadata.swap_value_threshold.get(sold_asset_id)
+					{
+						// ensure swap cannot fail
+						// This is to ensure that xyk swap fee is always charged
+						// We also ensure that the user has enough funds to transact
+						let (
+							_buy_and_burn_amount,
+							_treasury_amount,
+							_pool_fee_amount,
+							_input_reserve,
+							_output_reserve,
+							sold_asset_amount,
+						) = <Xyk as PreValidateSwaps>::pre_validate_buy_asset(
+							&who.clone().into(),
+							*sold_asset_id,
+							*bought_asset_id,
+							*bought_asset_amount,
+							*max_amount_in,
+						)
+						.map_err(|_| {
+							TransactionValidityError::Invalid(
+								InvalidTransaction::Custom(66u8).into(),
+							)
+						})?;
+
+						if sold_asset_amount > *threshold {
+							// This is the "high value swap on curated token" branch
+							Ok(None)
+						} else {
+							// This is the "low value swap on curated token" branch
+							OTA::process_timeout(who).map_err(|_| {
+								TransactionValidityError::Invalid(
+									InvalidTransaction::Custom(67u8).into(),
+								)
+							})?;
+							Ok(Some(LiquidityInfoEnum::Timeout))
+						}
+					} else {
+						// "swap on non-curated token" branch
+						OTA::process_timeout(who).map_err(|_| {
+							TransactionValidityError::Invalid(
+								InvalidTransaction::Custom(67u8).into(),
+							)
+						})?;
+						Ok(Some(LiquidityInfoEnum::Timeout))
+					}
+				} else {
+					// Timeouts are not activated branch
+					OCA::withdraw_fee(who, call, info, fee, tip)
+				}
+			},
+			Call::TokenTimeout(pallet_token_timeout::Call::release_timeout { .. }) => {
+				OTA::can_release_timeout(who).map_err(|_| {
+					TransactionValidityError::Invalid(InvalidTransaction::Custom(68u8).into())
+				})?;
+				Ok(Some(LiquidityInfoEnum::Timeout))
+			},
+			_ => OCA::withdraw_fee(who, call, info, fee, tip),
+		}
+	}
+
+	/// Hand the fee and the tip over to the `[OnUnbalanced]` implementation.
+	/// Since the predicted fee might have been too high, parts of the fee may
+	/// be refunded.
+	///
+	/// Note: The `corrected_fee` already includes the `tip`.
+	fn correct_and_deposit_fee(
+		who: &T::AccountId,
+		dispatch_info: &DispatchInfoOf<T::Call>,
+		post_info: &PostDispatchInfoOf<T::Call>,
+		corrected_fee: Self::Balance,
+		tip: Self::Balance,
+		already_withdrawn: Self::LiquidityInfo,
+	) -> Result<(), TransactionValidityError> {
+		match already_withdrawn {
+			Some(LiquidityInfoEnum::Imbalance(_)) => OCA::correct_and_deposit_fee(
+				who,
+				dispatch_info,
+				post_info,
+				corrected_fee,
+				tip,
+				already_withdrawn,
+			),
+			Some(LiquidityInfoEnum::Timeout) => Ok(()),
+			None => Ok(()),
+		}
+	}
+}
+
 parameter_types! {
 	pub const TransactionByteFee: Balance = 5 * MILLIUNIT;
 	pub const OperationalFeeMultiplier: u8 = 5;
@@ -695,7 +888,7 @@ where
 	SF2: Get<u128>,
 	SF3: Get<u128>,
 {
-	type LiquidityInfo = Option<(TokenId, NegativeImbalanceOf<C, T>)>;
+	type LiquidityInfo = Option<LiquidityInfoEnum<C, T>>;
 	type Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance;
 
 	/// Withdraw the predicted fee from the transaction origin.
@@ -725,7 +918,7 @@ where
 			withdraw_reason,
 			ExistenceRequirement::KeepAlive,
 		) {
-			Ok(imbalance) => Ok(Some((T1::get(), imbalance))),
+			Ok(imbalance) => Ok(Some(LiquidityInfoEnum::Imbalance((T1::get(), imbalance)))),
 			// TODO make sure atleast 1 planck KSM is charged
 			Err(_) => match C::withdraw(
 				T2::get().into(),
@@ -734,7 +927,7 @@ where
 				withdraw_reason,
 				ExistenceRequirement::KeepAlive,
 			) {
-				Ok(imbalance) => Ok(Some((T2::get(), imbalance))),
+				Ok(imbalance) => Ok(Some(LiquidityInfoEnum::Imbalance((T2::get(), imbalance)))),
 				Err(_) => match C::withdraw(
 					T3::get().into(),
 					who,
@@ -742,7 +935,7 @@ where
 					withdraw_reason,
 					ExistenceRequirement::KeepAlive,
 				) {
-					Ok(imbalance) => Ok(Some((T3::get(), imbalance))),
+					Ok(imbalance) => Ok(Some(LiquidityInfoEnum::Imbalance((T3::get(), imbalance)))),
 					Err(_) => Err(InvalidTransaction::Payment.into()),
 				},
 			},
@@ -762,7 +955,7 @@ where
 		tip: Self::Balance,
 		already_withdrawn: Self::LiquidityInfo,
 	) -> Result<(), TransactionValidityError> {
-		if let Some((token_id, paid)) = already_withdrawn {
+		if let Some(LiquidityInfoEnum::Imbalance((token_id, paid))) = already_withdrawn {
 			let (corrected_fee, tip) = if token_id == T3::get() {
 				(corrected_fee / SF3::get().into(), tip / SF3::get().into())
 			} else if token_id == T2::get() {
@@ -799,20 +992,36 @@ parameter_types! {
 
 impl pallet_transaction_payment::Config for Runtime {
 	type Event = Event;
-	type OnChargeTransaction = ThreeCurrencyOnChargeAdapter<
+	type OnChargeTransaction = OnChargeHandler<
 		orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
-		ToAuthor,
-		MgxTokenId,
-		KsmTokenId,
-		TurTokenId,
-		frame_support::traits::ConstU128<KSM_MGX_SCALE_FACTOR>,
-		frame_support::traits::ConstU128<TUR_MGX_SCALE_FACTOR>,
+		ThreeCurrencyOnChargeAdapter<
+			orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
+			ToAuthor,
+			MgxTokenId,
+			KsmTokenId,
+			TurTokenId,
+			frame_support::traits::ConstU128<KSM_MGX_SCALE_FACTOR>,
+			frame_support::traits::ConstU128<TUR_MGX_SCALE_FACTOR>,
+		>,
+		TokenTimeout,
 	>;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type WeightToFee = WeightToFee;
 	type FeeMultiplierUpdate =
 		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
+}
+
+parameter_types! {
+	pub const MaxCuratedTokens: u32 = 100;
+}
+
+impl pallet_token_timeout::Config for Runtime {
+	type Event = Event;
+	type MaxCuratedTokens = MaxCuratedTokens;
+	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	type NativeTokenId = MgxTokenId;
+	type WeightInfo = weights::pallet_token_timeout_weights::ModuleWeight<Runtime>;
 }
 
 parameter_types! {
@@ -1222,6 +1431,9 @@ construct_runtime!(
 		// Xyk stuff
 		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>} = 13,
 
+		// Token Timeouts
+		TokenTimeout: pallet_token_timeout::{Pallet, Storage, Call, Event<T>} = 14,
+
 		// Vesting
 		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>} = 17,
 
@@ -1289,6 +1501,7 @@ mod benches {
 		[pallet_vesting_mangata, Vesting]
 		[pallet_issuance, Issuance]
 		[pallet_multipurpose_liquidity, MultiPurposeLiquidity]
+		[pallet_token_timeout, TokenTimeout]
 	);
 }
 

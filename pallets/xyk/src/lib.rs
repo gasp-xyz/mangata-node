@@ -2766,33 +2766,44 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			current_rewards = Balance::try_from(
 				available_rewards_for_pool
 					.checked_mul(work_user)
-					.ok_or_else(|| DispatchError::from(Error::<T>::NotEnoughtRewardsEarned))?
+					.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
 					.checked_div(work_pool)
 					.ok_or_else(|| DispatchError::from(Error::<T>::DivisionByZero))?,
 			)
 			.map_err(|_| DispatchError::from(Error::<T>::NotEnoughtRewardsEarned))?;
 		}
 
-		let total_rewards = current_rewards
-			.checked_add(burned_not_claimed_rewards)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
-			.checked_sub(already_claimed_rewards)
+
+		let possitive_rewards = current_rewards
+		.checked_add(burned_not_claimed_rewards)
+		.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+
+		let mut rewards_not_yet_claimed = 0_u128;
+		let mut rewards_already_claimed = 0_u128;
+
+		if possitive_rewards >= already_claimed_rewards {
+			rewards_not_yet_claimed = possitive_rewards.checked_sub(already_claimed_rewards)
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+		}
+		else {
+			rewards_already_claimed = already_claimed_rewards.checked_sub(possitive_rewards)
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+		}
 
 		//TRANSFER ALL REWARDS TO USER
-		<T as Config>::Currency::transfer(
-			mangata_id.into(),
-			&<T as Config>::LiquidityMiningIssuanceVault::get(),
-			&user,
-			total_rewards.into(),
-			ExistenceRequirement::KeepAlive,
-		)?;
+		// <T as Config>::Currency::transfer(
+		// 	mangata_id.into(),
+		// 	&<T as Config>::LiquidityMiningIssuanceVault::get(),
+		// 	&user,
+		// 	total_rewards.into(),
+		// 	ExistenceRequirement::KeepAlive,
+		// )?;
 
-		Pallet::<T>::deposit_event(Event::RewardsClaimed(
-			user.clone(),
-			liquidity_asset_id,
-			total_rewards,
-		));
+		// Pallet::<T>::deposit_event(Event::RewardsClaimed(
+		// 	user.clone(),
+		// 	liquidity_asset_id,
+		// 	total_rewards,
+		// ));
 
 		// MODIFY REW1 POOL VALUES
 		let q_pow_pool = Self::calculate_q_pow(1.06, time_passed_pool);
@@ -2826,7 +2837,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 			<T as Config>::PoolPromoteApi::claim_pool_rewards(
 				liquidity_asset_id.into(),
-				total_rewards,
+				possitive_rewards, //changed
 			);
 		} else {
 			// IF LAST REMOVE POOL STORAGE
@@ -2834,7 +2845,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			LiquidityMiningPool::<T>::remove(&liquidity_asset_id);
 			<T as Config>::PoolPromoteApi::claim_pool_rewards(
 				liquidity_asset_id.into(),
-				total_rewards,
+				possitive_rewards, //changed
 			);
 			// THERE WILL BE SOME REWARD LEFT
 		}
@@ -2848,8 +2859,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		// ADD USER INFO TO REW2 STORAGE
 		let rewards_info_new: RewardInfo = RewardInfo {
 			activated_amount: liquidity_assets_amount,
-			rewards_not_yet_claimed: 0_u128,
-			rewards_already_claimed: 0_u128,
+			rewards_not_yet_claimed: rewards_not_yet_claimed,
+			rewards_already_claimed: rewards_already_claimed,
 			last_checkpoint: current_time,
 			pool_ratio_at_last_checkpoint: pool_ratio_current,
 			missing_at_last_checkpoint: user_missing_at_checkpoint,

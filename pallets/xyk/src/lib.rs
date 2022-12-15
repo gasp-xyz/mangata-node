@@ -243,6 +243,7 @@ use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_issuance::{ActivedPoolQueryApi, ComputeIssuance, PoolPromoteApi};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
 use sp_arithmetic::{helpers_128bit::multiply_by_rational_with_rounding, per_things::Rounding};
+use frame_support::{log, traits::OnRuntimeUpgrade};
 use sp_runtime::{
 	traits::{
 		AccountIdConversion, AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member,
@@ -3157,3 +3158,58 @@ impl<T: Config> mp_bootstrap::RewardsApi for Pallet<T> {
 		));
 	}
 }
+
+pub struct MigrateRewards<T>(sp_std::marker::PhantomData<T>);
+
+impl<T: Config> OnRuntimeUpgrade for MigrateRewards<T> {
+		fn on_runtime_upgrade() -> Weight {
+			<T as frame_system::Config>::DbWeight::get().reads_writes(0, 0)
+		}
+
+		#[cfg(feature = "try-runtime")]
+		fn pre_upgrade() -> Result<(), &'static str> {
+			let mut tokens = vec![];
+
+			log!(
+				info,
+				"EXCEL account, token, not_yet_claimed_rewards, rewards_already_claimed"
+				);
+			for ((acc, token), amount) in LiquidityMiningActiveUser::<T>::iter(){
+				tokens.push(token);
+				log!(
+					info,
+					"migrating account {:?} with token id {:?}",
+					acc, token
+				);
+				match <Pallet<T> as XykFunctionsTrait<T::AccountId>>::rewards_migrate_v1_to_v2(acc.clone(),token){
+					Ok(_) => {
+						let rewards_info = RewardsInfo::<T>::try_get(acc.clone(), token).unwrap();
+						log!(
+							info,
+							"EXCEL {}, {}, {}, {};",
+							acc, token, rewards_info.rewards_not_yet_claimed, rewards_info.rewards_already_claimed
+							);
+					},
+					Err(err) => {
+						log!(
+							error,
+							"{:?} with token id {:?} migrated problem {:?}",
+							acc, token, err
+						);
+					}
+				}
+			}
+
+			for t in tokens {
+				let rewards = <T as Config>::PoolPromoteApi::get_pool_rewards_v2(t).unwrap();
+				log!(info, "remaining tokens for token {} : {}", t, rewards);
+			}
+
+			Ok(())
+		}
+
+		#[cfg(feature = "try-runtime")]
+		fn post_upgrade() -> Result<(), &'static str> {
+			Ok(())
+		}
+	}

@@ -218,7 +218,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use sp_runtime::AccountId32;
 use frame_support::{
 	assert_ok,
 	dispatch::{DispatchError, DispatchResult},
@@ -228,11 +227,16 @@ use frame_support::{
 };
 use frame_system::ensure_signed;
 use sp_core::U256;
+use sp_runtime::AccountId32;
 // TODO documentation!
 use codec::FullCodec;
 use frame_support::{
+	log,
 	pallet_prelude::*,
-	traits::{tokens::currency::MultiTokenCurrency, ExistenceRequirement, Get, WithdrawReasons},
+	traits::{
+		tokens::currency::MultiTokenCurrency, ExistenceRequirement, Get, OnRuntimeUpgrade,
+		WithdrawReasons,
+	},
 	transactional, Parameter,
 };
 use frame_system::pallet_prelude::*;
@@ -244,7 +248,6 @@ use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_issuance::{ActivedPoolQueryApi, ComputeIssuance, PoolPromoteApi};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
 use sp_arithmetic::{helpers_128bit::multiply_by_rational_with_rounding, per_things::Rounding};
-use frame_support::{log, traits::OnRuntimeUpgrade};
 use sp_runtime::{
 	traits::{
 		AccountIdConversion, AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member,
@@ -894,10 +897,7 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			ensure!(sender == T::RewardsMigrateAccount::get(), Error::<T>::NoRights);
 
-			<Self as XykFunctionsTrait<T::AccountId>>::fix_rewards_info(
-				account,
-				liquidity_token_id,
-			)
+			<Self as XykFunctionsTrait<T::AccountId>>::fix_rewards_info(account, liquidity_token_id)
 		}
 	}
 }
@@ -1682,7 +1682,6 @@ impl<T: Config> Pallet<T> {
 		<T as Config>::NativeCurrencyId::get()
 	}
 }
-
 
 impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 	type Balance = Balance;
@@ -2731,16 +2730,16 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			Error::<T>::NotAPromotedPool
 		);
 		//READING ALL NECESSARY STORAGE
-		
+
 		let liquidity_assets_amount: Balance =
 			LiquidityMiningActiveUser::<T>::get((&user, &liquidity_asset_id));
-		
+
 		let burned_not_claimed_rewards =
 			LiquidityMiningUserToBeClaimed::<T>::get((user.clone(), &liquidity_asset_id));
 		let already_claimed_rewards =
 			LiquidityMiningUserClaimed::<T>::get((user.clone(), &liquidity_asset_id));
 		// let current_time: u32 = <frame_system::Pallet<T>>::block_number().saturated_into::<u32>() /
-		// 	T::RewardsDistributionPeriod::get(); 
+		// 	T::RewardsDistributionPeriod::get();
 		// current time is hardcoded for block 1321963 / 10000 when original migration of most accounts happened
 		let current_time: u32 = 132;
 		let (
@@ -2764,23 +2763,29 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				U256::from_dec_str("7138622111567731689303225470").unwrap(),
 				U256::from_dec_str("1966097639746402001566978").unwrap(),
 				U256::from_dec_str("73434430403556776125546327").unwrap(),
-				89877206575212786839824171_u128
+				89877206575212786839824171_u128,
 			),
 			8_u32 => (
 				132,
 				U256::from_dec_str("1166732959006428506038581845").unwrap(),
 				U256::from_dec_str("4370068652543022869299704").unwrap(),
 				U256::from_dec_str("33247844173643885377292052").unwrap(),
-				32445498209261654297134369_u128
+				32445498209261654297134369_u128,
 			),
 			12_u32 => (
 				131,
 				U256::from_dec_str("95929251164916073874507127").unwrap(),
 				U256::from_dec_str("5676691893273815442324755").unwrap(),
 				U256::from_dec_str("8018165736146769093342890").unwrap(),
-				14361023177739333683969596_u128
+				14361023177739333683969596_u128,
 			),
-			_ => (0, U256::from_dec_str("0").unwrap(), U256::from_dec_str("0").unwrap(), U256::from_dec_str("0").unwrap(), 0_u128),
+			_ => (
+				0,
+				U256::from_dec_str("0").unwrap(),
+				U256::from_dec_str("0").unwrap(),
+				U256::from_dec_str("0").unwrap(),
+				0_u128,
+			),
 		};
 
 		//CALCULATE REWARDS
@@ -2851,7 +2856,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 		let user_missing_at_checkpoint: U256 =
 			user_missing_at_last_checkpoint * U256::from(REWARDS_PRECISION) / q_pow_user;
-		
+
 		if pool_activated_amount != liquidity_assets_amount {
 			let pool_work_new = work_pool
 				.checked_sub(work_user)
@@ -2920,18 +2925,16 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		Ok(())
 	}
 
-	fn fix_rewards_info(
-		user: AccountIdOf<T>,
-		liquidity_asset_id: TokenId,
-	) -> DispatchResult {
+	fn fix_rewards_info(user: AccountIdOf<T>, liquidity_asset_id: TokenId) -> DispatchResult {
 		let mut rewards_info: RewardInfo = Self::get_rewards_info(user.clone(), liquidity_asset_id);
-		
-		// always passes
-		let acc : AccountId32 = AccountId32::try_from(user.encode().as_ref()).unwrap();
 
-		let missing_at_last_checkpoint_new = missing::get_missing_at_checkpoint(&acc, &liquidity_asset_id)
-			.ok_or(Error::<T>::MissingRewardsFixInfo)?
-			.into();
+		// always passes
+		let acc: AccountId32 = AccountId32::try_from(user.encode().as_ref()).unwrap();
+
+		let missing_at_last_checkpoint_new =
+			missing::get_missing_at_checkpoint(&acc, &liquidity_asset_id)
+				.ok_or(Error::<T>::MissingRewardsFixInfo)?
+				.into();
 
 		rewards_info.missing_at_last_checkpoint = missing_at_last_checkpoint_new;
 
@@ -3149,7 +3152,7 @@ impl<T: Config> PoolCreateApi for Pallet<T> {
 	fn pool_exists(first: TokenId, second: TokenId) -> bool {
 		Pools::<T>::contains_key((first, second)) || Pools::<T>::contains_key((second, first))
 	}
-fn pool_create(
+	fn pool_create(
 		account: Self::AccountId,
 		first: TokenId,
 		first_amount: Balance,
@@ -3219,54 +3222,49 @@ impl<T: Config> mp_bootstrap::RewardsApi for Pallet<T> {
 pub struct MigrateRewards<T>(sp_std::marker::PhantomData<T>);
 
 impl<T: Config> OnRuntimeUpgrade for MigrateRewards<T> {
-		fn on_runtime_upgrade() -> Weight {
-			<T as frame_system::Config>::DbWeight::get().reads_writes(0, 0)
-		}
-
-		#[cfg(feature = "try-runtime")]
-		fn pre_upgrade() -> Result<(), &'static str> {
-			let mut tokens = vec![];
-
-			log!(
-				info,
-				"EXCEL account, token, not_yet_claimed_rewards, rewards_already_claimed"
-				);
-			for ((acc, token), amount) in LiquidityMiningActiveUser::<T>::iter(){
-				tokens.push(token);
-				log!(
-					info,
-					"migrating account {:?} with token id {:?}",
-					acc, token
-				);
-				match <Pallet<T> as XykFunctionsTrait<T::AccountId>>::rewards_migrate_v1_to_v2(acc.clone(),token){
-					Ok(_) => {
-						let rewards_info = RewardsInfo::<T>::try_get(acc.clone(), token).unwrap();
-						log!(
-							info,
-							"EXCEL {}, {}, {}, {};",
-							acc, token, rewards_info.rewards_not_yet_claimed, rewards_info.rewards_already_claimed
-							);
-					},
-					Err(err) => {
-						log!(
-							error,
-							"{:?} with token id {:?} migrated problem {:?}",
-							acc, token, err
-						);
-					}
-				}
-			}
-
-			for t in tokens {
-				let rewards = <T as Config>::PoolPromoteApi::get_pool_rewards_v2(t).unwrap();
-				log!(info, "remaining tokens for token {} : {}", t, rewards);
-			}
-
-			Ok(())
-		}
-
-		#[cfg(feature = "try-runtime")]
-		fn post_upgrade() -> Result<(), &'static str> {
-			Ok(())
-		}
+	fn on_runtime_upgrade() -> Weight {
+		<T as frame_system::Config>::DbWeight::get().reads_writes(0, 0)
 	}
+
+	#[cfg(feature = "try-runtime")]
+	fn pre_upgrade() -> Result<(), &'static str> {
+		let mut tokens = vec![];
+
+		log!(info, "EXCEL account, token, not_yet_claimed_rewards, rewards_already_claimed");
+		for ((acc, token), amount) in LiquidityMiningActiveUser::<T>::iter() {
+			tokens.push(token);
+			log!(info, "migrating account {:?} with token id {:?}", acc, token);
+			match <Pallet<T> as XykFunctionsTrait<T::AccountId>>::rewards_migrate_v1_to_v2(
+				acc.clone(),
+				token,
+			) {
+				Ok(_) => {
+					let rewards_info = RewardsInfo::<T>::try_get(acc.clone(), token).unwrap();
+					log!(
+						info,
+						"EXCEL {}, {}, {}, {};",
+						acc,
+						token,
+						rewards_info.rewards_not_yet_claimed,
+						rewards_info.rewards_already_claimed
+					);
+				},
+				Err(err) => {
+					log!(error, "{:?} with token id {:?} migrated problem {:?}", acc, token, err);
+				},
+			}
+		}
+
+		for t in tokens {
+			let rewards = <T as Config>::PoolPromoteApi::get_pool_rewards_v2(t).unwrap();
+			log!(info, "remaining tokens for token {} : {}", t, rewards);
+		}
+
+		Ok(())
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn post_upgrade() -> Result<(), &'static str> {
+		Ok(())
+	}
+}

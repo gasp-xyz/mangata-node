@@ -2330,7 +2330,6 @@ const DUMMY_USER_ID: u128 = 2;
 // 	});
 // }
 
-
 #[test]
 #[serial]
 fn migration_work() {

@@ -127,7 +127,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	pallet_xyk::MigrateRewards<Runtime>,
+	(),
 >;
 
 pub struct MangataMigrations;

@@ -235,7 +235,7 @@ use frame_support::{
 	transactional, Parameter,
 };
 use frame_system::pallet_prelude::*;
-use mangata_types::{Balance, TokenId};
+use mangata_types::{AccountId, Balance, TokenId};
 use mp_bootstrap::PoolCreateApi;
 use mp_multipurpose_liquidity::ActivateKind;
 use mp_traits::{ActivationReservesProviderTrait, XykFunctionsTrait};
@@ -262,6 +262,8 @@ mod mock;
 
 #[cfg(test)]
 mod tests;
+
+mod missing;
 
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 pub struct RewardInfo {
@@ -1678,6 +1680,7 @@ impl<T: Config> Pallet<T> {
 		<T as Config>::NativeCurrencyId::get()
 	}
 }
+
 
 impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 	type Balance = Balance;

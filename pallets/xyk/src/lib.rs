@@ -218,6 +218,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use sp_runtime::AccountId32;
 use frame_support::{
 	assert_ok,
 	dispatch::{DispatchError, DispatchResult},
@@ -424,6 +425,7 @@ pub mod pallet {
 		MathOverflow8,
 		MathOverflow9,
 		MathOverflow10,
+		MissingRewardsFixInfo,
 	}
 
 	#[pallet::event]
@@ -2922,21 +2924,18 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
 	) -> DispatchResult {
-		let rewards_info: RewardInfo = Self::get_rewards_info(user.clone(), liquidity_asset_id);
+		let mut rewards_info: RewardInfo = Self::get_rewards_info(user.clone(), liquidity_asset_id);
 		
-		// get this from table, not 0, its a placeholder
-		let missing_at_last_checkpoint_new = U256::from(0);
+		// always passes
+		let acc : AccountId32 = AccountId32::try_from(user.encode().as_ref()).unwrap();
 
-		let rewards_info_new: RewardInfo = RewardInfo {
-			activated_amount: rewards_info.activated_amount,
-			rewards_not_yet_claimed: rewards_info.rewards_not_yet_claimed,
-			rewards_already_claimed: rewards_info.rewards_already_claimed,
-			last_checkpoint: rewards_info.last_checkpoint,
-			pool_ratio_at_last_checkpoint: rewards_info.pool_ratio_at_last_checkpoint,
-			missing_at_last_checkpoint: missing_at_last_checkpoint_new,
-		};
+		let missing_at_last_checkpoint_new = missing::get_missing_at_checkpoint(&acc, &liquidity_asset_id)
+			.ok_or(Error::<T>::MissingRewardsFixInfo)?
+			.into();
 
-		RewardsInfo::<T>::insert(user, liquidity_asset_id, rewards_info_new);
+		rewards_info.missing_at_last_checkpoint = missing_at_last_checkpoint_new;
+
+		RewardsInfo::<T>::insert(user, liquidity_asset_id, rewards_info);
 
 		Ok(())
 	}
@@ -3150,8 +3149,7 @@ impl<T: Config> PoolCreateApi for Pallet<T> {
 	fn pool_exists(first: TokenId, second: TokenId) -> bool {
 		Pools::<T>::contains_key((first, second)) || Pools::<T>::contains_key((second, first))
 	}
-
-	fn pool_create(
+fn pool_create(
 		account: Self::AccountId,
 		first: TokenId,
 		first_amount: Balance,

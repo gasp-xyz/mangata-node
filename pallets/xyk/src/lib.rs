@@ -412,6 +412,16 @@ pub mod pallet {
 		CalculateCumulativeWorkMaxRatioMathError,
 		CalculateRewardsAllMathError,
 		NoRights,
+		MathOverflow1,
+		MathOverflow2,
+		MathOverflow3,
+		MathOverflow4,
+		MathOverflow5,
+		MathOverflow6,
+		MathOverflow7,
+		MathOverflow8,
+		MathOverflow9,
+		MathOverflow10,
 	}
 
 	#[pallet::event]
@@ -2703,10 +2713,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		let pool_ratio_current =
 			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id)
 				.ok_or_else(|| DispatchError::from(Error::<T>::NotAPromotedPool))?;
-		let available_rewards_for_pool: U256 = U256::from(
-			<T as Config>::PoolPromoteApi::get_pool_rewards(liquidity_asset_id)
-				.ok_or_else(|| DispatchError::from(Error::<T>::NotAPromotedPool))?,
-		);
+		
 		let liquidity_assets_amount: Balance =
 			LiquidityMiningActiveUser::<T>::get((&user, &liquidity_asset_id));
 		let pool_activated_amount: Balance =
@@ -2727,56 +2734,95 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			.unwrap_or_else(|_| (current_time, U256::from(0), U256::from(0)));
 
 		// values from block 1321963 when original migration of most accounts happened
+		
+
+
+
 		let (
 			pool_last_checkpoint,
 			pool_cummulative_work_in_last_checkpoint,
 			pool_missing_at_last_checkpoint,
+			available_rewards_for_pool,
 		) = match liquidity_asset_id {
 			5_u32 => (
 				132,
 				U256::from_dec_str("7138622111567731689303225470").unwrap(),
 				U256::from_dec_str("1966097639746402001566978").unwrap(),
+				U256::from_dec_str("73434430403556776125546327").unwrap(),
 			),
 			8_u32 => (
 				132,
 				U256::from_dec_str("1166732959006428506038581845").unwrap(),
 				U256::from_dec_str("4370068652543022869299704").unwrap(),
+				U256::from_dec_str("33247844173643885377292052").unwrap(),
 			),
 			12_u32 => (
 				131,
 				U256::from_dec_str("95929251164916073874507127").unwrap(),
 				U256::from_dec_str("5676691893273815442324755").unwrap(),
+				U256::from_dec_str("8018165736146769093342890").unwrap(),
 			),
-			_ => (0, U256::from_dec_str("0").unwrap(), U256::from_dec_str("0").unwrap()),
+			_ => (0, U256::from_dec_str("0").unwrap(), U256::from_dec_str("0").unwrap(), U256::from_dec_str("0").unwrap()),
 		};
+
+		log!(
+			info,
+			"----------------------: {}, {}, {}, {}, {}, {}, {})",
+
+			available_rewards_for_pool,
+			user_last_checkpoint,
+			user_cummulative_work_in_last_checkpoint,
+			user_missing_at_last_checkpoint,
+			pool_last_checkpoint,
+			pool_cummulative_work_in_last_checkpoint,
+			pool_missing_at_last_checkpoint,
+		);
+
+
 
 		//CALCULATE REWARDS
 		let time_passed_user = current_time - user_last_checkpoint;
 		let asymptote_u256_user: U256 = liquidity_assets_amount.into();
 		let cummulative_work_new_max_possible_user: U256 = asymptote_u256_user
 			.checked_mul(U256::from(time_passed_user))
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow1))?;
 		let base_user = user_missing_at_last_checkpoint
 			.checked_mul(U256::from(106))
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))? /
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow2))? /
 			U256::from(6);
 		let q_pow_user = Self::calculate_q_pow(1.06, time_passed_user);
 		let cummulative_missing_new_user = base_user - base_user * REWARDS_PRECISION / q_pow_user;
 		let cummulative_work_new_user = cummulative_work_new_max_possible_user
 			.checked_sub(cummulative_missing_new_user)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow3))?;
 		let work_user = user_cummulative_work_in_last_checkpoint + cummulative_work_new_user;
 		let time_passed_pool = current_time - pool_last_checkpoint;
 		let asymptote_u256_pool: U256 = pool_activated_amount.into();
 		let cummulative_work_new_max_possible_pool: U256 = asymptote_u256_pool
 			.checked_mul(U256::from(time_passed_pool))
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow4))?;
 		let base_pool = pool_missing_at_last_checkpoint
 			.checked_mul(U256::from(106))
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))? /
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow5))? /
 			U256::from(6);
 		let q_pow_pool = Self::calculate_q_pow(1.06, time_passed_pool);
 		let cummulative_missing_new_pool = base_pool - base_pool * REWARDS_PRECISION / q_pow_pool;
+		log!(
+			info,
+			"----------------------: {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, )",
+			time_passed_user,
+			asymptote_u256_user,
+			cummulative_work_new_max_possible_user,
+			base_user,
+			cummulative_missing_new_user,
+			work_user,
+			time_passed_pool,
+			asymptote_u256_pool,
+			cummulative_work_new_max_possible_pool,
+			base_pool,
+			q_pow_pool,
+			cummulative_missing_new_pool
+		);
 		let cummulative_work_new_pool = cummulative_work_new_max_possible_pool
 			.checked_sub(cummulative_missing_new_pool)
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
@@ -2796,7 +2842,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 		let possitive_rewards = current_rewards
 			.checked_add(burned_not_claimed_rewards)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow6))?;
 
 		let mut rewards_not_yet_claimed = 0_u128;
 		let mut rewards_already_claimed = 0_u128;
@@ -2804,11 +2850,11 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		if possitive_rewards >= already_claimed_rewards {
 			rewards_not_yet_claimed = possitive_rewards
 				.checked_sub(already_claimed_rewards)
-				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow7))?;
 		} else {
 			rewards_already_claimed = already_claimed_rewards
 				.checked_sub(possitive_rewards)
-				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow8))?;
 		}
 
 		// MODIFY REW1 POOL VALUES
@@ -2818,14 +2864,17 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 		let user_missing_at_checkpoint: U256 =
 			user_missing_at_last_checkpoint * U256::from(REWARDS_PRECISION) / q_pow_user;
+		
+			
+
 
 		if pool_activated_amount != liquidity_assets_amount {
 			let pool_work_new = work_pool
 				.checked_sub(work_user)
-				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow9))?;
 			let pool_missing_new = pool_missing_at_checkpoint
 				.checked_sub(user_missing_at_checkpoint)
-				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow10))?;
 			LiquidityMiningPool::<T>::insert(
 				&liquidity_asset_id,
 				(current_time, pool_work_new, pool_missing_new),

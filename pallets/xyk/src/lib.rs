@@ -985,7 +985,7 @@ impl<T: Config> Pallet<T> {
 		liquidity_assets_amount: u128,
 		time_passed: u32,
 		missing_at_last_checkpoint: U256,
-	) -> Result<(U256, U256), DispatchError> {calculate_q_pow
+	) -> Result<(U256, U256), DispatchError> {
 		let mut cummulative_work = U256::from(0);
 		let mut cummulative_work_max_possible_for_ratio = U256::from(1);
 
@@ -2730,13 +2730,12 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			.unwrap_or_else(|_| (current_time, U256::from(0), U256::from(0)));
 
 		// values from block 1321963 when original migration of most accounts happened
-		let pool_ratio_current = U256::from_dec_str("0")
+		let pool_ratio_current = U256::from_dec_str("0").unwrap();
 		let (
 			pool_last_checkpoint,
 			pool_cummulative_work_in_last_checkpoint,
 			pool_missing_at_last_checkpoint,
 			available_rewards_for_pool,
-			pool_activated_amount,
 			pool_activated_amount,
 		) = match liquidity_asset_id {
 			5_u32 => (
@@ -2744,21 +2743,21 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				U256::from_dec_str("7138622111567731689303225470").unwrap(),
 				U256::from_dec_str("1966097639746402001566978").unwrap(),
 				U256::from_dec_str("73434430403556776125546327").unwrap(),
-				u128::from_str("89877206575212786839824171").unwrap()
+				89877206575212786839824171_u128
 			),
 			8_u32 => (
 				132,
 				U256::from_dec_str("1166732959006428506038581845").unwrap(),
 				U256::from_dec_str("4370068652543022869299704").unwrap(),
 				U256::from_dec_str("33247844173643885377292052").unwrap(),
-				u128::from_str("32445498209261654297134369").unwrap()
+				32445498209261654297134369_u128
 			),
 			12_u32 => (
 				131,
 				U256::from_dec_str("95929251164916073874507127").unwrap(),
 				U256::from_dec_str("5676691893273815442324755").unwrap(),
 				U256::from_dec_str("8018165736146769093342890").unwrap(),
-				u128::from_str("14361023177739333683969596").unwrap()
+				14361023177739333683969596_u128
 			),
 			_ => (0, U256::from_dec_str("0").unwrap(), U256::from_dec_str("0").unwrap(), U256::from_dec_str("0").unwrap(), 0_u128),
 		};

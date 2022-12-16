@@ -2714,20 +2714,40 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			LiquidityMiningUserToBeClaimed::<T>::get((user.clone(), &liquidity_asset_id));
 		let already_claimed_rewards =
 			LiquidityMiningUserClaimed::<T>::get((user.clone(), &liquidity_asset_id));
-		let current_time: u32 = <frame_system::Pallet<T>>::block_number().saturated_into::<u32>() /
-			T::RewardsDistributionPeriod::get();
+		// let current_time: u32 = <frame_system::Pallet<T>>::block_number().saturated_into::<u32>() /
+		// 	T::RewardsDistributionPeriod::get();
+		// current time is hardcoded for block 1321963 / 10000 when original migration of most accounts happened
+		let current_time: u32 = 132;
 		let (
 			user_last_checkpoint,
 			user_cummulative_work_in_last_checkpoint,
 			user_missing_at_last_checkpoint,
 		) = LiquidityMiningUser::<T>::try_get((&user, &liquidity_asset_id))
 			.unwrap_or_else(|_| (current_time, U256::from(0), U256::from(0)));
+
+		// values from block 1321963 when original migration of most accounts happened
 		let (
 			pool_last_checkpoint,
 			pool_cummulative_work_in_last_checkpoint,
 			pool_missing_at_last_checkpoint,
-		) = LiquidityMiningPool::<T>::try_get(&liquidity_asset_id)
-			.unwrap_or_else(|_| (current_time, U256::from(0), U256::from(0)));
+		) = match liquidity_asset_id {
+			5_u32 => (
+				132,
+				U256::from_dec_str("7138622111567731689303225470").unwrap(),
+				U256::from_dec_str("1966097639746402001566978").unwrap(),
+			),
+			8_u32 => (
+				132,
+				U256::from_dec_str("1166732959006428506038581845").unwrap(),
+				U256::from_dec_str("4370068652543022869299704").unwrap(),
+			),
+			12_u32 => (
+				131,
+				U256::from_dec_str("95929251164916073874507127").unwrap(),
+				U256::from_dec_str("5676691893273815442324755").unwrap(),
+			),
+			_ => (0, U256::from_dec_str("0").unwrap(), U256::from_dec_str("0").unwrap()),
+		};
 
 		//CALCULATE REWARDS
 		let time_passed_user = current_time - user_last_checkpoint;
@@ -2773,37 +2793,22 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			.map_err(|_| DispatchError::from(Error::<T>::NotEnoughtRewardsEarned))?;
 		}
 
-
 		let possitive_rewards = current_rewards
-		.checked_add(burned_not_claimed_rewards)
-		.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			.checked_add(burned_not_claimed_rewards)
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 
 		let mut rewards_not_yet_claimed = 0_u128;
 		let mut rewards_already_claimed = 0_u128;
 
 		if possitive_rewards >= already_claimed_rewards {
-			rewards_not_yet_claimed = possitive_rewards.checked_sub(already_claimed_rewards)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			rewards_not_yet_claimed = possitive_rewards
+				.checked_sub(already_claimed_rewards)
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+		} else {
+			rewards_already_claimed = already_claimed_rewards
+				.checked_sub(possitive_rewards)
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 		}
-		else {
-			rewards_already_claimed = already_claimed_rewards.checked_sub(possitive_rewards)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
-		}
-
-		//TRANSFER ALL REWARDS TO USER
-		// <T as Config>::Currency::transfer(
-		// 	mangata_id.into(),
-		// 	&<T as Config>::LiquidityMiningIssuanceVault::get(),
-		// 	&user,
-		// 	total_rewards.into(),
-		// 	ExistenceRequirement::KeepAlive,
-		// )?;
-
-		// Pallet::<T>::deposit_event(Event::RewardsClaimed(
-		// 	user.clone(),
-		// 	liquidity_asset_id,
-		// 	total_rewards,
-		// ));
 
 		// MODIFY REW1 POOL VALUES
 		let q_pow_pool = Self::calculate_q_pow(1.06, time_passed_pool);
@@ -2859,8 +2864,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		// ADD USER INFO TO REW2 STORAGE
 		let rewards_info_new: RewardInfo = RewardInfo {
 			activated_amount: liquidity_assets_amount,
-			rewards_not_yet_claimed: rewards_not_yet_claimed,
-			rewards_already_claimed: rewards_already_claimed,
+			rewards_not_yet_claimed,
+			rewards_already_claimed,
 			last_checkpoint: current_time,
 			pool_ratio_at_last_checkpoint: pool_ratio_current,
 			missing_at_last_checkpoint: user_missing_at_checkpoint,

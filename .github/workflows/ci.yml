@@ -10,8 +10,11 @@ on:
     types: [labeled, opened, synchronize, unlabeled, closed]
     branches:
       - develop
+      - rc/0.26.3
   push:
-    branches: [develop]
+    branches:
+      - develop
+      - rc/0.26.3
 
   workflow_dispatch:
     # For manually trigger

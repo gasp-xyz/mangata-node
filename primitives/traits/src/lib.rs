@@ -164,5 +164,10 @@ pub trait XykFunctionsTrait<AccountId> {
 		liquidity_token_id: Self::CurrencyId,
 	) -> DispatchResult;
 
+	fn fix_rewards_info(
+		account: AccountId,
+		liquidity_token_id: Self::CurrencyId,
+	) -> DispatchResult;
+
 	fn is_liquidity_token(liquidity_asset_id: TokenId) -> bool;
 }

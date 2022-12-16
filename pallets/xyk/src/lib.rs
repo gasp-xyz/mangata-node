@@ -879,6 +879,22 @@ pub mod pallet {
 				liquidity_token_id,
 			)
 		}
+
+		#[transactional]
+		#[pallet::weight(<<T as Config>::WeightInfo>::rewards_migrate_v1_to_v2())]
+		pub fn fix_rewards_info(
+			origin: OriginFor<T>,
+			account: T::AccountId,
+			liquidity_token_id: TokenId,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			ensure!(sender == T::RewardsMigrateAccount::get(), Error::<T>::NoRights);
+
+			<Self as XykFunctionsTrait<T::AccountId>>::fix_rewards_info(
+				account,
+				liquidity_token_id,
+			)
+		}
 	}
 }
 
@@ -2719,7 +2735,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		let already_claimed_rewards =
 			LiquidityMiningUserClaimed::<T>::get((user.clone(), &liquidity_asset_id));
 		// let current_time: u32 = <frame_system::Pallet<T>>::block_number().saturated_into::<u32>() /
-		// 	T::RewardsDistributionPeriod::get();
+		// 	T::RewardsDistributionPeriod::get(); 
 		// current time is hardcoded for block 1321963 / 10000 when original migration of most accounts happened
 		let current_time: u32 = 132;
 		let (
@@ -2762,21 +2778,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			_ => (0, U256::from_dec_str("0").unwrap(), U256::from_dec_str("0").unwrap(), U256::from_dec_str("0").unwrap(), 0_u128),
 		};
 
-		log!(
-			info,
-			"----------------------: {}, {}, {}, {}, {}, {}, {})",
-
-			available_rewards_for_pool,
-			user_last_checkpoint,
-			user_cummulative_work_in_last_checkpoint,
-			user_missing_at_last_checkpoint,
-			pool_last_checkpoint,
-			pool_cummulative_work_in_last_checkpoint,
-			pool_missing_at_last_checkpoint,
-		);
-
-
-
 		//CALCULATE REWARDS
 		let time_passed_user = current_time - user_last_checkpoint;
 		let asymptote_u256_user: U256 = liquidity_assets_amount.into();
@@ -2804,22 +2805,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			U256::from(6);
 		let q_pow_pool = Self::calculate_q_pow(1.06, time_passed_pool);
 		let cummulative_missing_new_pool = base_pool - base_pool * REWARDS_PRECISION / q_pow_pool;
-		log!(
-			info,
-			"----------------------: {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, )",
-			time_passed_user,
-			asymptote_u256_user,
-			cummulative_work_new_max_possible_user,
-			base_user,
-			cummulative_missing_new_user,
-			work_user,
-			time_passed_pool,
-			asymptote_u256_pool,
-			cummulative_work_new_max_possible_pool,
-			base_pool,
-			q_pow_pool,
-			cummulative_missing_new_pool
-		);
 		let cummulative_work_new_pool = cummulative_work_new_max_possible_pool
 			.checked_sub(cummulative_missing_new_pool)
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
@@ -2862,9 +2847,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		let user_missing_at_checkpoint: U256 =
 			user_missing_at_last_checkpoint * U256::from(REWARDS_PRECISION) / q_pow_user;
 		
-			
-
-
 		if pool_activated_amount != liquidity_assets_amount {
 			let pool_work_new = work_pool
 				.checked_sub(work_user)
@@ -2913,7 +2895,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			activated_amount: liquidity_assets_amount,
 			rewards_not_yet_claimed,
 			rewards_already_claimed,
-			last_checkpoint: current_time,
+			last_checkpoint: 1101_u32,
 			pool_ratio_at_last_checkpoint: pool_ratio_current,
 			missing_at_last_checkpoint: user_missing_at_checkpoint,
 		};
@@ -2929,6 +2911,29 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		.map_err(|_| DispatchError::from(Error::<T>::LiquidityCheckpointMathError))?;
 
 		RewardsInfo::<T>::insert(user.clone(), liquidity_asset_id, rewards_info_new);
+
+		Ok(())
+	}
+
+	fn fix_rewards_info(
+		user: AccountIdOf<T>,
+		liquidity_asset_id: TokenId,
+	) -> DispatchResult {
+		let rewards_info: RewardInfo = Self::get_rewards_info(user.clone(), liquidity_asset_id);
+		
+		// get this from table, not 0, its a placeholder
+		let missing_at_last_checkpoint_new = U256::from(0);
+
+		let rewards_info_new: RewardInfo = RewardInfo {
+			activated_amount: rewards_info.activated_amount,
+			rewards_not_yet_claimed: rewards_info.rewards_not_yet_claimed,
+			rewards_already_claimed: rewards_info.rewards_already_claimed,
+			last_checkpoint: rewards_info.last_checkpoint,
+			pool_ratio_at_last_checkpoint: rewards_info.pool_ratio_at_last_checkpoint,
+			missing_at_last_checkpoint: missing_at_last_checkpoint_new,
+		};
+
+		RewardsInfo::<T>::insert(user, liquidity_asset_id, rewards_info_new);
 
 		Ok(())
 	}

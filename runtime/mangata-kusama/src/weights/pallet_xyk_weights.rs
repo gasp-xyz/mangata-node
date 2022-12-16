@@ -67,6 +67,7 @@ pub trait WeightInfo {
 	fn activate_liquidity_v2() -> Weight;
 	fn deactivate_liquidity_v2() -> Weight;
 	fn rewards_migrate_v1_to_v2() -> Weight;
+	fn fix_rewards_info() -> Weight;
 }
 
 /// Weights for pallet_xyk using the Mangata node and recommended hardware.
@@ -206,6 +207,11 @@ impl<T: frame_system::Config> pallet_xyk::WeightInfo for ModuleWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(12 as u64))
 			.saturating_add(T::DbWeight::get().writes(12 as u64))
 	}
+	fn fix_rewards_info() -> Weight {
+		(Weight::from_ref_time(125_173_000))
+			.saturating_add(RocksDbWeight::get().reads(12 as u64))
+			.saturating_add(RocksDbWeight::get().writes(12 as u64))
+	}
 }
 
 // For backwards compatibility and tests
@@ -340,6 +346,11 @@ impl WeightInfo for () {
 	// Storage: Xyk LiquidityMiningActivePoolV2 (r:1 w:1)
 	// Storage: Xyk RewardsInfo (r:0 w:1)
 	fn rewards_migrate_v1_to_v2() -> Weight {
+		(Weight::from_ref_time(125_173_000))
+			.saturating_add(RocksDbWeight::get().reads(12 as u64))
+			.saturating_add(RocksDbWeight::get().writes(12 as u64))
+	}
+	fn fix_rewards_info() -> Weight {
 		(Weight::from_ref_time(125_173_000))
 			.saturating_add(RocksDbWeight::get().reads(12 as u64))
 			.saturating_add(RocksDbWeight::get().writes(12 as u64))

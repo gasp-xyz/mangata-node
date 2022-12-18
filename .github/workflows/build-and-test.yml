@@ -163,7 +163,7 @@ jobs:
             /usr/local/cargo/registry
           key: cargo-unit-cache-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
       - name: Run unit tests
-        run: cargo test -j2 -p pallet-bootstrap -p xyk-rpc -p pallet-xyk -p xyk-runtime-api -p pallet-issuance -p pallet-multipurpose-liquidity -p pallet-sudo-origin -p runtime-integration-test
+        run: cargo test -j2
 
   run-benchmarks-tests:
     name: Run benchmark tests

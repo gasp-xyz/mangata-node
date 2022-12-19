@@ -3,10 +3,9 @@ repositories:
     url: git+https://github.com/mangata-finance/helm-charts@charts?ref=feat/MGX-241-node-chart
 
 environments:
-  default:
+  fungible:
     values:
-      - node01KeySeed: ref+gcpsecrets://direct-pixel-353917/node-01-key-seed-dev
-      - node02KeySeed: ref+gcpsecrets://direct-pixel-353917/node-02-key-seed-dev
+      - "./config/values-fungible.yaml"
 
 releases:
   - name: relaychain
@@ -28,7 +27,7 @@ releases:
         node:
           parachainRegisterSidecar:
             enable: true
-          nodeKey: '0000000000000000000000000000000000000000000000000000000000000003'
+          nodeKey: {{ .Values.node01NodeKey | quote }}
           accountKeys:
             - type: aura
               scheme: sr25519
@@ -43,10 +42,10 @@ releases:
           tag: {{ requiredEnv "IMAGE_TAG" | quote }}
         remoteCluster: true
         node:
-          bootnodeAddr: /dns4/node-01/tcp/30333/p2p/12D3KooWSCufgHzV4fCwRijfH2k3abrpAJxTKxEvN1FDuRXA2U9x
+          bootnodeAddr: {{ .Values.bootnodeAddr | quote }}
           parachainRegisterSidecar:
             enable: false
-          nodeKey: '0000000000000000000000000000000000000000000000000000000000000004'
+          nodeKey: {{ .Values.node02NodeKey | quote }}
           accountKeys:
             - type: aura
               scheme: sr25519

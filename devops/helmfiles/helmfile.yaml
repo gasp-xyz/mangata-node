@@ -1,3 +1,7 @@
+repositories:
+  - name: mangata
+    url: git+https://github.com/mangata-finance/helm-charts@charts?ref=feat/MGX-241-node-chart
+
 environments:
   default:
     values:
@@ -7,14 +11,14 @@ environments:
 releases:
   - name: relaychain
     namespace: testm
-    chart: /Users/tenequm/Projects/helm-charts-m/charts/relaychain-testnet
+    chart: mangata/relaychain-testnet
     wait: true
     values:
       - env: testm
         remoteCluster: true
   - name: node-01
     namespace: testm
-    chart: /Users/tenequm/Projects/helm-charts-m/charts/node
+    chart: mangata/node
     wait: true
     values:
       - env: testm
@@ -29,7 +33,7 @@ releases:
               seed: {{ .Values.node01KeySeed | fetchSecretValue | quote }}
   - name: node-02
     namespace: testm
-    chart: /Users/tenequm/Projects/helm-charts-m/charts/node
+    chart: mangata/node
     wait: true
     values:
       - env: testm

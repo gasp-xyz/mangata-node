@@ -224,7 +224,7 @@ jobs:
 
   run-benchmarks:
     name: Run runtime benchmarks
-    runs-on: [performance]
+    runs-on: [self-hosted, performance]
     env:
       STEPS: 2
       REPEATS: 1

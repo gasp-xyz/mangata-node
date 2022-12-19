@@ -9,12 +9,18 @@ environments:
   fungible:
     values:
       - "./config/fungible.yaml"
+  rococo:
+    values:
+      - "./config/rococo.yaml"
+
+helmDefaults:
+  wait: true
 
 releases:
   - name: relaychain
+    installed: {{ .Values.enableLocalRelaychain | toYaml }}
     namespace: '{{ requiredEnv "ENVIRONMENT" }}'
     chart: mangata/relaychain-testnet
-    wait: true
     values:
       - env: {{ requiredEnv "ENVIRONMENT" | quote }}
         storageSize: {{ .Values.relaychainStorageSize }}
@@ -22,7 +28,6 @@ releases:
   - name: node-01
     namespace: '{{ requiredEnv "ENVIRONMENT" }}'
     chart: mangata/node
-    wait: true
     values:
       - env: {{ requiredEnv "ENVIRONMENT" | quote }}
         image:
@@ -33,28 +38,47 @@ releases:
           relaychainStorageSize: {{ .Values.relaychainStorageSize }}
           parachainRegisterSidecar:
             enable: true
-          nodeKey: {{ .Values.node01NodeKey | quote }}
+          nodeKey: {{ .Values.node01.nodeKey | quote }}
           accountKeys:
             - type: aura
               scheme: sr25519
-              seed: {{ .Values.node01KeySeed | fetchSecretValue | quote }}
+              seed: {{ .Values.node01.accountKeySeed | fetchSecretValue | quote }}
   - name: node-02
     namespace: '{{ requiredEnv "ENVIRONMENT" }}'
     chart: mangata/node
-    wait: true
     values:
       - env: {{ requiredEnv "ENVIRONMENT" | quote }}
         image:
           tag: {{ requiredEnv "IMAGE_TAG" | quote }}
         remoteCluster: true
         node:
-          bootnodeAddr: {{ .Values.bootnodeAddr | quote }}
+          bootnodeAddr: {{ .Values.followerBootnodeAddr | quote }}
           storageSize: {{ .Values.storageSize }}
           relaychainStorageSize: {{ .Values.relaychainStorageSize }}
           parachainRegisterSidecar:
             enable: false
-          nodeKey: {{ .Values.node02NodeKey | quote }}
+          nodeKey: {{ .Values.node02.nodeKey | quote }}
           accountKeys:
             - type: aura
               scheme: sr25519
-              seed: {{ .Values.node02KeySeed | fetchSecretValue | quote }}        
+              seed: {{ .Values.node02.accountKeySeed | fetchSecretValue | quote }}
+  - name: node-03
+    installed: {{ .Values.node03.enabled | toYaml }}
+    namespace: '{{ requiredEnv "ENVIRONMENT" }}'
+    chart: mangata/node
+    values:
+      - env: {{ requiredEnv "ENVIRONMENT" | quote }}
+        image:
+          tag: {{ requiredEnv "IMAGE_TAG" | quote }}
+        remoteCluster: true
+        node:
+          bootnodeAddr: {{ .Values.followerBootnodeAddr | quote }}
+          storageSize: {{ .Values.storageSize }}
+          relaychainStorageSize: {{ .Values.relaychainStorageSize }}
+          parachainRegisterSidecar:
+            enable: false
+          nodeKey: {{ .Values.node03.nodeKey | quote }}
+          accountKeys:
+            - type: aura
+              scheme: sr25519
+              seed: {{ .Values.node03.accountKeySeed | fetchSecretValue | quote }}

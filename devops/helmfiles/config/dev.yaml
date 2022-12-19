@@ -1,7 +1,12 @@
-node01KeySeed: ref+gcpsecrets://direct-pixel-353917/node-01-key-seed-dev
-node02KeySeed: ref+gcpsecrets://direct-pixel-353917/node-02-key-seed-dev
-node01NodeKey: '0000000000000000000000000000000000000000000000000000000000000003'
-node02NodeKey: '0000000000000000000000000000000000000000000000000000000000000004'
-bootnodeAddr: /dns4/node-01/tcp/30333/p2p/12D3KooWSCufgHzV4fCwRijfH2k3abrpAJxTKxEvN1FDuRXA2U9x
+enableLocalRelaychain: true
+followerBootnodeAddr: /dns4/node-01/tcp/30333/p2p/12D3KooWSCufgHzV4fCwRijfH2k3abrpAJxTKxEvN1FDuRXA2U9x
 storageSize: 200Gi
 relaychainStorageSize: 200Gi
+
+node01:
+  accountKeySeed: ref+gcpsecrets://direct-pixel-353917/node-01-key-seed-dev
+  nodeKey: '0000000000000000000000000000000000000000000000000000000000000003'
+
+node02:
+  accountKeySeed: ref+gcpsecrets://direct-pixel-353917/node-02-key-seed-dev
+  nodeKey: '0000000000000000000000000000000000000000000000000000000000000004'

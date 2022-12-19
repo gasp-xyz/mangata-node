@@ -10,18 +10,20 @@ environments:
 
 releases:
   - name: relaychain
-    namespace: testm
+    namespace: '{{ requiredEnv "ENVIRONMENT" }}'
     chart: mangata/relaychain-testnet
     wait: true
     values:
-      - env: testm
+      - env: {{ requiredEnv "ENVIRONMENT" | quote }}
         remoteCluster: true
   - name: node-01
-    namespace: testm
+    namespace: '{{ requiredEnv "ENVIRONMENT" }}'
     chart: mangata/node
     wait: true
     values:
-      - env: testm
+      - env: {{ requiredEnv "ENVIRONMENT" | quote }}
+        image:
+          tag: {{ requiredEnv "IMAGE_TAG" | quote }}
         remoteCluster: true
         node:
           parachainRegisterSidecar:
@@ -32,11 +34,13 @@ releases:
               scheme: sr25519
               seed: {{ .Values.node01KeySeed | fetchSecretValue | quote }}
   - name: node-02
-    namespace: testm
+    namespace: '{{ requiredEnv "ENVIRONMENT" }}'
     chart: mangata/node
     wait: true
     values:
-      - env: testm
+      - env: {{ requiredEnv "ENVIRONMENT" | quote }}
+        image:
+          tag: {{ requiredEnv "IMAGE_TAG" | quote }}
         remoteCluster: true
         node:
           bootnodeAddr: /dns4/node-01/tcp/30333/p2p/12D3KooWSCufgHzV4fCwRijfH2k3abrpAJxTKxEvN1FDuRXA2U9x

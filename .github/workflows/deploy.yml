@@ -45,6 +45,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: jkroepke/setup-vals@v1.0.4
+      - name: Setup helmfile
+        uses: mamezou-tech/setup-helmfile@v1.2.0
+        with:
+          install-kubectl: no
+          install-helm: no
+          additional-helm-plugins: https://github.com/jkroepke/helm-secrets --version v4.1.1,https://github.com/aslafy-z/helm-git --version 0.14.0
       - uses: google-github-actions/auth@v1
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
@@ -64,13 +70,18 @@ jobs:
           env: ${{ env.ENV_REF }}
           ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
 
+      # - run: |
+      #     helm plugin install https://github.com/jkroepke/helm-secrets --version v4.1.1
+      #     helm secrets -b vals upgrade -i --create-namespace -n ${{ env.ENV_REF }} --wait node . \
+      #     --set image.tag=${{ inputs.version }} \
+      #     --set env=${{ env.ENV_REF }} \
+      #     -f values.yaml -f values-${{ inputs.env }}.yaml
+      #   working-directory: devops/helm-charts/node
       - run: |
-          helm plugin install https://github.com/jkroepke/helm-secrets --version v4.1.1
-          helm secrets -b vals upgrade -i --create-namespace -n ${{ env.ENV_REF }} --wait node . \
-          --set image.tag=${{ inputs.version }} \
-          --set env=${{ env.ENV_REF }} \
-          -f values.yaml -f values-${{ inputs.env }}.yaml
-        working-directory: devops/helm-charts/node
+          export ENVIRONMENT=${{ env.ENV_REF }}
+          export IMAGE_TAG=${{ inputs.version }}
+          helmfile apply
+        working-directory: devops/helmfiles
       
       - name: Update the GitHub Deployment status
         uses: bobheadxi/deployments@v1.3.0

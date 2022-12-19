@@ -63,7 +63,7 @@ jobs:
       - name: Build and push Docker image
         run: |
           docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
-          docker build -f devops/dockerfiles/node-new/Dockerfile \
+          docker build -f devops/dockerfiles/node/Dockerfile \
           --label="git_rev=$(git rev-parse HEAD)" \
           --label="author=github" \
           --label="git_ref=${{ github.ref_name }}" \
@@ -84,7 +84,7 @@ jobs:
       - name: Build and push Docker image with fast runtime
         run: |
           docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
-          docker build -f devops/dockerfiles/node-new/Dockerfile \
+          docker build -f devops/dockerfiles/node/Dockerfile \
           --label="git_rev=$(git rev-parse HEAD)" \
           --label="author=github" \
           --label="git_ref=${{ github.ref_name }}" \
@@ -255,18 +255,3 @@ jobs:
       - name: Fix permissions on self-hosted runner
         if: always()
         run: chown -R 1003:1004 $GITHUB_WORKSPACE
-    
-  helm-validate:
-    name: Validate Node Helm Chart
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: yokawasa/action-setup-kube-tools@v0.9.2
-        with:
-          setup-tools: kubeconform
-      - name: Validate Helm Chart
-        run: |
-          cd devops/helm-charts/node
-          helm lint .
-          helm template -f values-fungible.yaml . | kubeconform -kubernetes-version 1.24.5 -output json -summary -strict
-          helm template -f values-dev.yaml . | kubeconform -kubernetes-version 1.24.5 -output json -summary -strict

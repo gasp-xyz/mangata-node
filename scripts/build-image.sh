@@ -32,5 +32,5 @@ docker build \
   --build-arg BUILD_DIR=${BUILD_DIR} \
   --label "git_rev=${DOCKER_LABEL}" \
   ${DOCKER_TAGS} \
-  -f ${REPO_ROOT}/devops/dockerfiles/node-new/Dockerfile \
+  -f ${REPO_ROOT}/devops/dockerfiles/node/Dockerfile \
   ${REPO_ROOT}

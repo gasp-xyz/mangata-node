@@ -186,8 +186,8 @@ jobs:
             /usr/local/cargo/git
             /usr/local/cargo/registry
           key: cargo-benchmark-cache-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
-      - name: Run benchmarks
-        run: cargo test -j2 --features=runtime-benchmarks -p pallet-bootstrap -p pallet-xyk -p xyk-runtime-api -p pallet-issuance
+      - name: Run benchmarks tests
+        run: cargo test --release -j8 --features=runtime-benchmarks -p pallet-xyk -p pallet-issuance -p pallet-multipurpose-liquidity -p pallet-bootstrap -p pallet-token-timeout
 
   build-and-run-try-runtime:
     name: Run try-runtime checks
@@ -224,7 +224,10 @@ jobs:
 
   run-benchmarks:
     name: Run runtime benchmarks
-    runs-on: [self-hosted, compile]
+    runs-on: [performance]
+    env:
+      STEPS: 2
+      REPEATS: 1
     container:
       image: ${{ inputs.builder_image }}
     steps:
@@ -245,18 +248,29 @@ jobs:
             /usr/local/cargo/registry
             ~/.cache/sccache
           key: runtime-benchmark-cache-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
-      
+
       - name: Compile mangata-node code
         run: cargo build --release --no-default-features --features=mangata-rococo,mangata-kusama,runtime-benchmarks
-      
-      - name: Run benchmark tests - pallet-xyk
-        run: target/release/mangata-node benchmark pallet --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-xyk' --template ./templates/module-weight-template.hbs --steps 2
 
-      - name: Run benchmark tests - pallet-issuance
-        run: target/release/mangata-node benchmark pallet --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-issuance' --template ./templates/module-weight-template.hbs --steps 2
+      - name: Set full benchmark params
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'full-benchmarks') }}
+        run: |
+          echo "STEPS=50" >> $GITHUB_ENV
+          echo "REPEATS=20" >> $GITHUB_ENV
 
-      - name: Run benchmark tests - pallet-multipurpose-liquidity
-        run: target/release/mangata-node benchmark pallet --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-multipurpose-liquidity' --template ./templates/module-weight-template.hbs --steps 2
+      - name: Run pallet benchmarks
+        run: |
+          mkdir ./benchmarks && target/release/mangata-node benchmark pallet \
+          -l=info,xyk=error,collective-mangata=warn,bootstrap=warn \
+          --chain dev \
+          --execution wasm \
+          --wasm-execution compiled \
+          --pallet '*' \
+          --extrinsic '*' \
+          --steps ${{ env.STEPS }} \
+          --repeat ${{ env.REPEATS }} \
+          --template ./templates/module-weight-template.hbs \
+          --output ./benchmarks/
       
       - name: Run benchmark tests - pallet-bootstrap
         run: target/release/mangata-node benchmark pallet --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-bootstrap' --template ./templates/module-weight-template.hbs --steps 2
@@ -267,6 +281,13 @@ jobs:
       - name: Fix permissions on self-hosted runner
         if: always()
         run: chown -R 1003:1004 $GITHUB_WORKSPACE
+
+      - name: Upload logs  and docker images to GitHub
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'full-benchmarks') }}
+        uses: actions/upload-artifact@v3.1.1
+        with:
+          name: benchmarks
+          path: ./benchmarks
     
   helm-validate:
     name: Validate Node Helm Chart

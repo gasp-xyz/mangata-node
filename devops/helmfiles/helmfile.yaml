@@ -5,10 +5,10 @@ repositories:
 environments:
   dev:
     values:
-      - "./config/values-dev.yaml"
+      - "./config/dev.yaml"
   fungible:
     values:
-      - "./config/values-fungible.yaml"
+      - "./config/fungible.yaml"
 
 releases:
   - name: relaychain
@@ -17,6 +17,7 @@ releases:
     wait: true
     values:
       - env: {{ requiredEnv "ENVIRONMENT" | quote }}
+        storageSize: {{ .Values.relaychainStorageSize }}
         remoteCluster: true
   - name: node-01
     namespace: '{{ requiredEnv "ENVIRONMENT" }}'

@@ -70,13 +70,6 @@ jobs:
           env: ${{ env.ENV_REF }}
           ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
 
-      # - run: |
-      #     helm plugin install https://github.com/jkroepke/helm-secrets --version v4.1.1
-      #     helm secrets -b vals upgrade -i --create-namespace -n ${{ env.ENV_REF }} --wait node . \
-      #     --set image.tag=${{ inputs.version }} \
-      #     --set env=${{ env.ENV_REF }} \
-      #     -f values.yaml -f values-${{ inputs.env }}.yaml
-      #   working-directory: devops/helm-charts/node
       - run: |
           export ENVIRONMENT=${{ env.ENV_REF }}
           export IMAGE_TAG=${{ inputs.version }}

@@ -3,6 +3,9 @@ repositories:
     url: git+https://github.com/mangata-finance/helm-charts@charts?ref=feat/MGX-241-node-chart
 
 environments:
+  dev:
+    values:
+      - "./config/values-dev.yaml"
   fungible:
     values:
       - "./config/values-fungible.yaml"
@@ -25,6 +28,8 @@ releases:
           tag: {{ requiredEnv "IMAGE_TAG" | quote }}
         remoteCluster: true
         node:
+          storageSize: {{ .Values.storageSize }}
+          relaychainStorageSize: {{ .Values.relaychainStorageSize }}
           parachainRegisterSidecar:
             enable: true
           nodeKey: {{ .Values.node01NodeKey | quote }}
@@ -43,6 +48,8 @@ releases:
         remoteCluster: true
         node:
           bootnodeAddr: {{ .Values.bootnodeAddr | quote }}
+          storageSize: {{ .Values.storageSize }}
+          relaychainStorageSize: {{ .Values.relaychainStorageSize }}
           parachainRegisterSidecar:
             enable: false
           nodeKey: {{ .Values.node02NodeKey | quote }}

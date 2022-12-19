@@ -3,10 +3,7 @@ use codec::FullCodec;
 use frame_support::pallet_prelude::*;
 use mangata_types::{Balance, TokenId};
 use mp_multipurpose_liquidity::{ActivateKind, BondKind};
-use sp_runtime::{
-	traits::{AtLeast32BitUnsigned, MaybeDisplay},
-	Percent,
-};
+use sp_runtime::traits::{AtLeast32BitUnsigned, MaybeDisplay};
 use sp_std::fmt::Debug;
 
 pub trait StakingReservesProviderTrait {
@@ -174,4 +171,62 @@ pub trait XykFunctionsTrait<AccountId> {
 	) -> DispatchResult;
 
 	fn is_liquidity_token(liquidity_asset_id: TokenId) -> bool;
+}
+
+pub trait PreValidateSwaps {
+	type AccountId: Parameter
+		+ Member
+		+ MaybeSerializeDeserialize
+		+ Debug
+		+ MaybeDisplay
+		+ Ord
+		+ MaxEncodedLen;
+
+	type Balance: AtLeast32BitUnsigned
+		+ FullCodec
+		+ Copy
+		+ MaybeSerializeDeserialize
+		+ Debug
+		+ Default
+		+ From<Balance>
+		+ Into<Balance>;
+
+	type CurrencyId: Parameter
+		+ Member
+		+ Copy
+		+ MaybeSerializeDeserialize
+		+ Ord
+		+ Default
+		+ AtLeast32BitUnsigned
+		+ FullCodec
+		+ From<TokenId>
+		+ Into<TokenId>;
+
+	fn pre_validate_sell_asset(
+		sender: &Self::AccountId,
+		sold_asset_id: Self::CurrencyId,
+		bought_asset_id: Self::CurrencyId,
+		sold_asset_amount: Self::Balance,
+		min_amount_out: Self::Balance,
+	) -> Result<
+		(Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance),
+		DispatchError,
+	>;
+
+	fn pre_validate_buy_asset(
+		sender: &Self::AccountId,
+		sold_asset_id: Self::CurrencyId,
+		bought_asset_id: Self::CurrencyId,
+		bought_asset_amount: Self::Balance,
+		max_amount_in: Self::Balance,
+	) -> Result<
+		(Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance),
+		DispatchError,
+	>;
+}
+
+pub trait TimeoutTriggerTrait<AccountId> {
+	fn process_timeout(who: &AccountId) -> DispatchResult;
+
+	fn can_release_timeout(who: &AccountId) -> DispatchResult;
 }

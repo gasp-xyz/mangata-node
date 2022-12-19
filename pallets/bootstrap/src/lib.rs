@@ -142,10 +142,7 @@ use scale_info::TypeInfo;
 use sp_arithmetic::{helpers_128bit::multiply_by_rational_with_rounding, per_things::Rounding};
 use sp_core::U256;
 use sp_io::KillStorageResult;
-use sp_runtime::{
-	traits::{AccountIdConversion, CheckedAdd, One, SaturatedConversion, Saturating},
-	Percent,
-};
+use sp_runtime::traits::{AccountIdConversion, CheckedAdd, One, SaturatedConversion, Saturating};
 use sp_std::{convert::TryInto, prelude::*};
 
 pub mod migrations;
@@ -165,7 +162,6 @@ pub use pallet::*;
 const PALLET_ID: PalletId = PalletId(*b"bootstrp");
 
 use core::fmt::Debug;
-use frame_support::traits::tokens;
 
 #[macro_export]
 macro_rules! log {

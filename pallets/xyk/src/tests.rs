@@ -1211,7 +1211,8 @@ fn sell_W_insufficient_output_amount() {
 
 		assert_ok!(XykStorage::sell_asset(Origin::signed(2), 1, 4, 250000, 500000)); // selling 250000 assetId 0 of pool 0 1, by the formula user should get 166333 asset 1, but is requesting 500000
 
-		let mut new_events_0 = vec![Event::SellAssetFailed(2, 1, 250000, 4, 373874, 500000)];
+		let mut new_events_0 =
+			vec![Event::SellAssetFailedDueToSlippage(2, 1, 250000, 4, 373874, 500000)];
 
 		expected_events.append(&mut new_events_0);
 		assert_eq_events!(expected_events.clone());
@@ -1385,7 +1386,8 @@ fn buy_W_insufficient_input_amount() {
 
 		// buying 150000 liquidity assetId 1 of pool 0 1
 		assert_ok!(XykStorage::buy_asset(Origin::signed(2), 1, 4, 150000, 10));
-		let mut new_events_0 = vec![Event::BuyAssetFailed(2, 1, 100301, 4, 150000, 10)];
+		let mut new_events_0 =
+			vec![Event::BuyAssetFailedDueToSlippage(2, 1, 100301, 4, 150000, 10)];
 
 		expected_events.append(&mut new_events_0);
 		assert_eq_events!(expected_events.clone());

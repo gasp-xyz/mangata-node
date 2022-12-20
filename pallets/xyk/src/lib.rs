@@ -487,8 +487,8 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		PoolCreated(T::AccountId, TokenId, Balance, TokenId, Balance),
 		AssetsSwapped(T::AccountId, TokenId, Balance, TokenId, Balance),
-		SellAssetFailed(T::AccountId, TokenId, Balance, TokenId, Balance, Balance),
-		BuyAssetFailed(T::AccountId, TokenId, Balance, TokenId, Balance, Balance),
+		SellAssetFailedDueToSlippage(T::AccountId, TokenId, Balance, TokenId, Balance, Balance),
+		BuyAssetFailedDueToSlippage(T::AccountId, TokenId, Balance, TokenId, Balance, Balance),
 		LiquidityMinted(T::AccountId, TokenId, Balance, TokenId, Balance, TokenId, Balance),
 		LiquidityBurned(T::AccountId, TokenId, Balance, TokenId, Balance, TokenId, Balance),
 		PoolPromotionUpdated(TokenId, Option<u8>),
@@ -2317,7 +2317,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			if err_upon_bad_slippage {
 				return Err(DispatchError::from(Error::<T>::InsufficientOutputAmount))
 			} else {
-				Pallet::<T>::deposit_event(Event::SellAssetFailed(
+				Pallet::<T>::deposit_event(Event::SellAssetFailedDueToSlippage(
 					sender,
 					sold_asset_id,
 					sold_asset_amount,
@@ -2468,7 +2468,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			if err_upon_bad_slippage {
 				return Err(DispatchError::from(Error::<T>::InsufficientInputAmount))
 			} else {
-				Pallet::<T>::deposit_event(Event::BuyAssetFailed(
+				Pallet::<T>::deposit_event(Event::BuyAssetFailedDueToSlippage(
 					sender,
 					sold_asset_id,
 					sold_asset_amount,

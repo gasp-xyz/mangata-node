@@ -43,7 +43,7 @@ pub trait RuntimeApiCollection:
 	+ cumulus_primitives_core::CollectCollationInfo<Block>
 	+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
 	+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
-	+ ver_api::VerApi<Block>
+	+ ver_api::VerNonceApi<Block, AccountId>
 	+ xyk_rpc::XykRuntimeApi<Block, Balance, TokenId, AccountId>
 	+ pallet_vesting_mangata_rpc::VestingMangataRuntimeApi<
 		Block,
@@ -68,7 +68,7 @@ where
 		+ cumulus_primitives_core::CollectCollationInfo<Block>
 		+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
 		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
-		+ ver_api::VerApi<Block>
+		+ ver_api::VerNonceApi<Block, AccountId>
 		+ xyk_rpc::XykRuntimeApi<Block, Balance, TokenId, AccountId>
 		+ pallet_vesting_mangata_rpc::VestingMangataRuntimeApi<
 			Block,

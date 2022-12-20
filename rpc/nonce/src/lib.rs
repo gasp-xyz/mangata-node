@@ -27,23 +27,17 @@ use jsonrpsee::{
 };
 use sc_rpc_api::DenyUnsafe;
 use sc_transaction_pool_api::{InPoolTransaction, TransactionPool};
-use sp_api::ApiExt;
+
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::HeaderBackend;
 use sp_core::{hexdisplay::HexDisplay, Bytes};
-use sp_runtime::{
-	generic::BlockId,
-	traits,
-	traits::{Block as BlockT, Header as HeaderT},
-	SaturatedConversion,
-};
-use std::convert::TryInto;
+use sp_runtime::{generic::BlockId, traits};
 
 pub use frame_system_rpc_runtime_api::AccountNonceApi;
 use sc_client_api::BlockBackend;
 use sp_api::ProvideRuntimeApi;
-use sp_runtime::TransactionOutcome;
-use ver_api::VerApi;
+
+use ver_api::VerNonceApi;
 
 /// System RPC methods.
 #[rpc(client, server)]
@@ -104,7 +98,7 @@ where
 	C: ProvideRuntimeApi<Block>,
 	C::Api: AccountNonceApi<Block, AccountId, Index>,
 	C::Api: BlockBuilder<Block>,
-	C::Api: VerApi<Block>,
+	C::Api: VerNonceApi<Block, AccountId>,
 	P: TransactionPool + 'static,
 	Block: traits::Block,
 	AccountId: Clone + std::fmt::Display + Codec + Send + 'static + std::cmp::PartialEq,
@@ -123,9 +117,11 @@ where
 			))
 		})?;
 
-		for _ in 0..number_of_delayed_txs(self.client.clone(), account.clone()) {
+		let txs_in_queue = api.enqueued_txs_count(&at, account.clone()).unwrap();
+		for _ in 0..txs_in_queue {
 			nonce += traits::One::one();
 		}
+		log::debug!(target: "rpc::nonce", "nonce for {} at block {} => {} ({} in queue)", account, best, nonce, txs_in_queue);
 
 		Ok(adjust_nonce(&*self.pool, account, nonce))
 	}
@@ -196,59 +192,4 @@ where
 	}
 
 	current_nonce
-}
-
-fn number_of_delayed_txs<C, Block, AccountId>(client: Arc<C>, signer_id: AccountId) -> u32
-where
-	C: HeaderBackend<Block>,
-	C: BlockBackend<Block>,
-	C: Send + Sync + 'static,
-	C: ProvideRuntimeApi<Block>,
-	C::Api: BlockBuilder<Block>,
-	C::Api: VerApi<Block>,
-	Block: BlockT,
-	AccountId: Clone + std::fmt::Display + Codec + std::cmp::PartialEq,
-{
-	let api = client.runtime_api();
-	let best = client.info().best_hash;
-	let at = BlockId::<Block>::hash(best);
-
-	let previous_block_header = client.header(at).unwrap().unwrap();
-
-	let best_block_extrinsics: Vec<Block::Extrinsic> = client
-		.block_body(&at)
-		.map_err(|e| {
-			CallError::Custom(ErrorObject::owned(
-				Error::RuntimeError.into(),
-				"UFailed to get parent blocks extrinsics.",
-				Some(e.to_string()),
-			))
-		})
-		.unwrap()
-		.unwrap_or_default();
-
-	let result = best_block_extrinsics
-		.into_iter()
-		.take((*previous_block_header.count()).saturated_into::<usize>())
-		.map(|tx|
-         //TODO limit to unexecuted txs
-             api.execute_in_transaction(|api| {
-                    // store deserialized data and revert state modification caused by 'get_info' call
-                    match api.get_signer(&at, tx.clone()) {
-                        Ok(result) => TransactionOutcome::Rollback(result),
-                        Err(_) => TransactionOutcome::Rollback(None),
-                    }
-            }))
-		.filter(|result| {
-			if let Some((who, _nonce)) = result {
-				<AccountId>::decode(&mut &<[u8; 32]>::from(who.clone())[..]).unwrap() == signer_id
-			} else {
-				false
-			}
-		})
-		.count()
-		.try_into()
-		.unwrap();
-	log::debug!(target: "rpc_nonce", "advance nonce for {} : {}", signer_id, result);
-	result
 }

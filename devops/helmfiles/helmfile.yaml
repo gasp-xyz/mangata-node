@@ -63,7 +63,7 @@ releases:
               scheme: sr25519
               seed: {{ .Values.node02.accountKeySeed | fetchSecretValue | quote }}
   - name: node-03
-    installed: {{ .Values.node03.enabled | toYaml }}
+    installed: {{ .Values | get "node03.enabled" }}
     namespace: '{{ requiredEnv "ENVIRONMENT" }}'
     chart: mangata/node
     values:

@@ -10,3 +10,8 @@ node01:
 node02:
   accountKeySeed: ref+gcpsecrets://direct-pixel-353917/node-02-key-seed-dev
   nodeKey: '0000000000000000000000000000000000000000000000000000000000000004'
+
+node03:
+  enabled: false
+  nodeKey: '0000000000000000000000000000000000000000000000000000000000000005'
+  accountKeySeed: ref+gcpsecrets://direct-pixel-353917/node-01-key-seed-dev

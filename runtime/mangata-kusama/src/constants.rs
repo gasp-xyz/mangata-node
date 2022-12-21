@@ -1,5 +1,5 @@
 pub mod fee {
-	use crate::{MangataExtrinsicBaseWeight, UNIT};
+	use crate::{weights::VerExtrinsicBaseWeight, UNIT};
 	use frame_support::weights::{
 		constants::WEIGHT_PER_SECOND, WeightToFeeCoefficient, WeightToFeeCoefficients,
 		WeightToFeePolynomial,
@@ -32,7 +32,7 @@ pub mod fee {
 			// in Rococo, extrinsic base weight (smallest non-zero weight) is mapped to 1 MILLIUNIT:
 			// in mangata, we map to 1/10 of that, or 1/10 MILLIUNIT
 			let p = base_tx_in_mgx();
-			let q = Balance::from(MangataExtrinsicBaseWeight::get());
+			let q = Balance::from(VerExtrinsicBaseWeight::get().ref_time());
 			smallvec![WeightToFeeCoefficient {
 				degree: 1,
 				negative: false,
@@ -47,7 +47,7 @@ pub mod fee {
 	}
 
 	pub fn mgx_per_second() -> u128 {
-		let base_weight = Balance::from(MangataExtrinsicBaseWeight::get());
+		let base_weight = Balance::from(VerExtrinsicBaseWeight::get().ref_time());
 		let base_per_second = (WEIGHT_PER_SECOND.ref_time() / base_weight as u64) as u128;
 		base_per_second * base_tx_in_mgx()
 	}

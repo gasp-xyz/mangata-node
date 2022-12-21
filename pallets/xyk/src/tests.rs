@@ -3,7 +3,7 @@
 #![allow(non_snake_case)]
 
 use super::{Event, *};
-use crate::mock::{*};
+use crate::mock::*;
 use frame_support::assert_err;
 use mangata_types::assets::CustomMetadata;
 use orml_traits::asset_registry::AssetMetadata;

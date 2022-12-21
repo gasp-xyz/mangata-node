@@ -3,7 +3,7 @@ use codec::Encode;
 use cumulus_primitives_core::ParaId;
 use hex::FromHex;
 use hex_literal::hex;
-use jsonrpsee::core::__reexports::serde_json;
+
 use mangata_kusama_runtime::{
 	constants::parachains, ksm_per_second, AccountId, AssetMetadataOf, AuraId, CustomMetadata,
 	GeneralKey, MultiLocation, Parachain, Signature, XcmMetadata, KAR_TOKEN_ID, KSM_TOKEN_ID,

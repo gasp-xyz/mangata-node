@@ -85,7 +85,12 @@ fn update_timeout_metadata_works() {
 			Error::<Test>::InvalidTimeoutMetadata
 		);
 
-		assert_ok!(TokenTimeout::update_timeout_metadata(RuntimeOrigin::root(), None, Some(8000), None,));
+		assert_ok!(TokenTimeout::update_timeout_metadata(
+			RuntimeOrigin::root(),
+			None,
+			Some(8000),
+			None,
+		));
 		assert_eq!(
 			TokenTimeout::get_timeout_metadata(),
 			Some(TimeoutMetadataInfo {

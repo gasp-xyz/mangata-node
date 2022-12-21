@@ -36,7 +36,7 @@ pub use pallet_sudo_mangata;
 use pallet_transaction_payment::{Multiplier, OnChargeTransaction, TargetedFeeAdjustment};
 use pallet_vesting_mangata_rpc_runtime_api::VestingInfosWithLockedAt;
 // Polkadot Imports
-use polkadot_runtime_common::BlockHashCount;
+pub use polkadot_runtime_common::BlockHashCount;
 use scale_info::TypeInfo;
 use sp_api::impl_runtime_apis;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -1489,7 +1489,8 @@ impl_runtime_apis! {
 			if let Some(sig) = tx.signature.clone(){
 				let nonce: frame_system::CheckNonce<_> = sig.2.4;
 				<Runtime as frame_system::Config>::Lookup::lookup(sig.0)
-					.map(|addr| Some((addr, nonce.0))).expect("unknown address for signed extrinsic")
+					.ok()
+					.and_then(|addr| Some((addr, nonce.0)))
 			}else{
 				None
 			}
@@ -1506,6 +1507,42 @@ impl_runtime_apis! {
 		fn store_seed(seed: sp_core::H256){
 			// initialize has been called already so we can fetch number from the storage
 			System::set_block_seed(&seed);
+		}
+
+		fn get_previous_block_txs() -> Vec<Vec<u8>> {
+			System::get_previous_blocks_txs()
+		}
+
+		fn pop_txs(count: u64) -> Vec<Vec<u8>>{
+			System::pop_txs(count as usize)
+		}
+
+		fn create_enqueue_txs_inherent(txs: Vec<<Block as BlockT>::Extrinsic>) -> <Block as BlockT>::Extrinsic{
+			UncheckedExtrinsic::new_unsigned(
+				RuntimeCall::System(frame_system::Call::enqueue_txs{txs:
+					txs.into_iter()
+					.map(|tx|
+						(
+							tx.signature.clone().and_then(|sig| <Runtime as frame_system::Config>::Lookup::lookup(sig.0).ok()),
+							tx.encode()
+						)
+					)
+					.collect()}))
+		}
+
+		fn can_enqueue_txs() -> bool{
+			System::can_enqueue_txs()
+		}
+
+		fn start_prevalidation() {
+			System::set_prevalidation()
+		}
+	}
+
+	impl ver_api::VerNonceApi<Block, AccountId> for Runtime {
+		fn enqueued_txs_count(acc: AccountId) -> u64 {
+
+			System::enqueued_txs_count(&acc) as u64
 		}
 	}
 

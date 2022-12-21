@@ -321,6 +321,7 @@ where
 		+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
 		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
 		+ ver_api::VerApi<Block>
+		+ ver_api::VerNonceApi<Block, AccountId>
 		+ xyk_rpc::XykRuntimeApi<Block, Balance, TokenId, AccountId>
 		+ pallet_vesting_mangata_rpc::VestingMangataRuntimeApi<
 			Block,
@@ -356,6 +357,10 @@ where
 	let parachain_config = prepare_node_config(parachain_config);
 
 	let params = new_partial::<RuntimeApi, Executor>(&parachain_config)?;
+	// let at = sp_runtime::generic::BlockId::Number(0u32.into());
+	// let c = params.client.clone();
+	// c.runtime_api().inherent_extrinsics(&at, InherentData::new()).unwrap();
+
 	let (mut telemetry, telemetry_worker_handle) = params.other;
 
 	let client = params.client.clone();
@@ -523,6 +528,7 @@ where
 		+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
 		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
 		+ ver_api::VerApi<Block>
+		+ ver_api::VerNonceApi<Block, AccountId>
 		+ xyk_rpc::XykRuntimeApi<Block, Balance, TokenId, AccountId>
 		+ pallet_vesting_mangata_rpc::VestingMangataRuntimeApi<
 			Block,

@@ -47,6 +47,7 @@ sp-session = { git = "https://github.com/mangata-finance/substrate", default-fea
 sp-std = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.31" }
 sp-transaction-pool = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.31" }
 pallet-utility = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.31" }
+sp-ver = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.31" }
 sp-version = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.31" }
 
 ## Substrate FRAME Dependencies
@@ -130,6 +131,7 @@ std = [
 	"sp-session/std",
 	"sp-std/std",
 	"sp-transaction-pool/std",
+	"sp-ver/std",
 	"sp-version/std",
 	"frame-executive/std",
 	"frame-support/std",

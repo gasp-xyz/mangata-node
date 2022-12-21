@@ -56,6 +56,8 @@ mangata-types = { git = "https://github.com/mangata-finance/substrate", branch =
 frame-benchmarking = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
 frame-benchmarking-cli = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
 try-runtime-cli = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
+frame-system = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
+pallet-transaction-payment = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
 
 pallet-transaction-payment-rpc = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
 
@@ -94,6 +96,7 @@ sp-consensus = { git = "https://github.com/mangata-finance/substrate", branch = 
 sp-consensus-aura = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
 sp-core = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
 sp-inherents = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
+sp-keyring = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
 sp-keystore = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
 sp-offchain = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
 sp-runtime = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
@@ -103,6 +106,7 @@ sp-transaction-pool = { git = "https://github.com/mangata-finance/substrate", br
 ver-api = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
 sp-storage = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
 sp-trie = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
+sp-ver = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31", features = ["helpers"]}
 
 
 # Cumulus dependencies
@@ -138,9 +142,9 @@ pallet-vesting-mangata-rpc-runtime-api = { git = "https://github.com/mangata-fin
 
 [dev-dependencies]
 sub-tokens = { git = "https://github.com/paritytech/substrate-debug-kit", branch = "master" }
-criterion = { version = "0.3.5", features = [ "async_tokio", "html_reports" ] }
 sc-block-builder = { package="sc-block-builder-ver", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
 sp-keyring = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
+
 tokio = { version = "1.15", features = ["macros", "time"] }
 pallet-timestamp = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.31" }
 sp-tracing = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31" }
@@ -156,7 +160,3 @@ schnorrkel = { version = "0.9.1", features = ["preaudit_deprecated", "u64_backen
 sp-core = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31", features = ["full_crypto"]}
 extrinsic-shuffler = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.31"}
 cfg-if = "1.0.0"
-
-[[bench]]
-name = "block_production"
-harness = false

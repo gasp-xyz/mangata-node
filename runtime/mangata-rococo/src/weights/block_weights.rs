@@ -54,5 +54,5 @@ parameter_types! {
 	///   99th: 132_247_405
 	///   95th: 132_219_202
 	///   75th: 132_185_883
-	pub const BlockExecutionWeight: Weight = Weight::from_ref_time(132_149_799).saturating_mul(WEIGHT_PER_NANOS.ref_time());
+	pub const BlockExecutionWeight: Weight = Weight::from_ref_time(132_149_799).saturating_mul(WEIGHT_PER_NANOS.ref_time()).set_proof_size(u64::MAX);
 }

@@ -15,7 +15,7 @@ use frame_support::{
 	},
 	unsigned::TransactionValidityError,
 	weights::{
-		constants::{RocksDbWeight, WEIGHT_PER_MICROS, WEIGHT_PER_SECOND},
+		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_MICROS, WEIGHT_PER_SECOND},
 		ConstantMultiplier, Weight,
 	},
 	PalletId,
@@ -26,6 +26,7 @@ use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
 };
+use frame_system::limits::BlockWeightsBuilder;
 pub use orml_tokens;
 use orml_tokens::{MultiTokenCurrencyExtended, TransferDust};
 use orml_traits::{
@@ -238,6 +239,25 @@ pub fn native_version() -> NativeVersion {
 	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
 }
 
+fn set_block_weights(expected_block_weight: Weight, normal_ratio: Perbill) -> BlockWeightsBuilder {
+	let normal_weight = normal_ratio * expected_block_weight;
+	BlockWeights::builder()
+		.base_block(BlockExecutionWeight::get())
+		.for_class(DispatchClass::all(), |weights| {
+			weights.base_extrinsic = ExtrinsicBaseWeight::get();
+		})
+		.for_class(DispatchClass::Normal, |weights| {
+			weights.max_total = normal_weight.into();
+		})
+		.for_class(DispatchClass::Operational, |weights| {
+			weights.max_total = expected_block_weight.into();
+			// Operational transactions have some extra reserved space, so that they
+			// are included even if block reached `MAXIMUM_BLOCK_WEIGHT`.
+			weights.reserved = (expected_block_weight - normal_weight).into();
+		})
+		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
+}
+
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 	// This part is copied from Substrate's `bin/node/runtime/src/lib.rs`.
@@ -246,10 +266,7 @@ parameter_types! {
 	// the lazy contract deletion.
 	pub RuntimeBlockLength: BlockLength =
 		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
-	pub RuntimeBlockWeights: BlockWeights = BlockWeights::with_sensible_defaults(
-			(2u64 * WEIGHT_PER_SECOND).set_proof_size(u64::MAX),
-			NORMAL_DISPATCH_RATIO,
-		);
+	pub RuntimeBlockWeights: BlockWeights = set_block_weights((2u64 * WEIGHT_PER_SECOND).set_proof_size(u64::MAX), NORMAL_DISPATCH_RATIO).build_or_panic();
 	pub const SS58Prefix: u16 = 42;
 }
 

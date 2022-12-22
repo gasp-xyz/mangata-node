@@ -54,5 +54,5 @@ parameter_types! {
 	///   99th: 78_180
 	///   95th: 78_096
 	///   75th: 78_025
-	pub const ExtrinsicBaseWeight: Weight = Weight::from_ref_time(77_996).saturating_mul(WEIGHT_PER_NANOS.ref_time());
+	pub const ExtrinsicBaseWeight: Weight = Weight::from_ref_time(77_996).saturating_mul(WEIGHT_PER_NANOS.ref_time()).set_proof_size(u64::MAX);
 }

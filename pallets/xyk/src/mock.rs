@@ -456,3 +456,53 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	ext.execute_with(|| System::set_block_number(1));
 	ext
 }
+
+pub(crate) fn last_event() -> Event {
+	System::events().pop().expect("Event expected").event
+}
+
+pub(crate) fn events() -> Vec<pallet::Event<Test>> {
+	System::events()
+		.into_iter()
+		.map(|r| r.event)
+		.filter_map(|e| if let Event::XykStorage(inner) = e { Some(inner) } else { None })
+		.collect::<Vec<_>>()
+}
+
+/// Assert input equal to the last event emitted
+#[macro_export]
+macro_rules! assert_last_event {
+	($event:expr) => {
+		match &$event {
+			e => assert_eq!(*e, crate::mock::last_event()),
+		}
+	};
+}
+
+/// Compares the system events with passed in events
+/// Prints highlighted diff iff assert_eq fails
+#[macro_export]
+macro_rules! assert_eq_events {
+	($events:expr) => {
+		match &$events {
+			e => similar_asserts::assert_eq!(*e, crate::mock::events()),
+		}
+	};
+}
+
+/// Panics if an event is not found in the system log of events
+#[macro_export]
+macro_rules! assert_event_emitted {
+	($event:expr) => {
+		match &$event {
+			e => {
+				assert!(
+					crate::mock::events().iter().find(|x| *x == e).is_some(),
+					"Event {:?} was not found in events: \n {:?}",
+					e,
+					crate::mock::events()
+				);
+			},
+		}
+	};
+}

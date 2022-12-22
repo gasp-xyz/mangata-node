@@ -15,7 +15,7 @@ use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
-use ver_api::VerApi;
+use ver_api::VerNonceApi;
 
 /// A type representing all RPC extensions.
 pub type RpcExtension = jsonrpsee::RpcModule<()>;
@@ -54,7 +54,7 @@ where
 		BlockNumber,
 	>,
 	C::Api: BlockBuilder<Block>,
-	C::Api: VerApi<Block>,
+	C::Api: VerNonceApi<Block, AccountId>,
 	P: TransactionPool + Sync + Send + 'static,
 {
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};

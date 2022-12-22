@@ -204,7 +204,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: e2eTests
-        run: yarn
+        run: yarn --network-concurrency=1
 
       - name: Docker ps
         run: docker ps

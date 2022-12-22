@@ -155,6 +155,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for MockXyk<T> {
 		bought_asset_id: Self::CurrencyId,
 		sold_asset_amount: Self::Balance,
 		min_amount_out: Self::Balance,
+		err_upon_bad_slippage: bool,
 	) -> DispatchResult {
 		unimplemented!()
 	}
@@ -165,6 +166,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for MockXyk<T> {
 		bought_asset_id: Self::CurrencyId,
 		bought_asset_amount: Self::Balance,
 		max_amount_in: Self::Balance,
+		err_upon_bad_slippage: bool,
 	) -> DispatchResult {
 		unimplemented!()
 	}

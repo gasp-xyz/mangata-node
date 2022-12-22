@@ -1,6 +1,7 @@
 use crate::{
 	chain_spec,
 	cli::{Cli, RelayChainCli, Subcommand},
+	command_helper::{inherent_benchmark_data, BenchmarkExtrinsicBuilder},
 	service,
 	service::new_partial,
 };
@@ -13,10 +14,15 @@ use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
 	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
 };
-use sc_service::config::{BasePath, PrometheusConfig};
+use sc_service::{
+	config::{BasePath, PrometheusConfig},
+	PartialComponents,
+};
+
 use sp_core::hexdisplay::HexDisplay;
+
 use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
-use std::{io::Write, net::SocketAddr};
+use std::{convert::TryInto, io::Write, net::SocketAddr, sync::Arc, time::Duration};
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
@@ -341,9 +347,36 @@ pub fn run() -> Result<()> {
 
 						cmd.run(config, partials.client.clone(), db, storage)
 					}),
-					BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
-					// TODO: not sure what to do with this Extrinsic
 					BenchmarkCmd::Extrinsic(_) => Err("Unsupported benchmarking command".into()),
+					BenchmarkCmd::Overhead(cmd) => runner.sync_run(|config| {
+						let PartialComponents { client, task_manager: _, .. } = new_partial::<
+							service::mangata_kusama_runtime::RuntimeApi,
+							service::MangataKusamaRuntimeExecutor,
+						>(&config)?;
+						let ext_builder = BenchmarkExtrinsicBuilder::new(client.clone());
+
+						let first_block_inherent =
+							inherent_benchmark_data([0u8; 32], Duration::from_millis(0))?;
+
+						let first_block_seed = sp_ver::extract_inherent_data(&first_block_inherent)
+							.map_err(|_| {
+								sp_blockchain::Error::Backend(String::from(
+									"cannot read random seed from inherents data",
+								))
+							})?;
+
+						let second_block_inherent = inherent_benchmark_data(
+							first_block_seed.seed.as_bytes().try_into().unwrap(),
+							Duration::from_millis(12000),
+						)?;
+
+						cmd.run_ver(
+							config,
+							client.clone(),
+							(first_block_inherent, second_block_inherent),
+							&ext_builder,
+						)
+					}),
 					BenchmarkCmd::Machine(cmd) => runner
 						.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone())),
 				},

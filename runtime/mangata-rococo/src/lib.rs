@@ -36,7 +36,7 @@ pub use pallet_sudo_mangata;
 use pallet_transaction_payment::{Multiplier, OnChargeTransaction, TargetedFeeAdjustment};
 use pallet_vesting_mangata_rpc_runtime_api::VestingInfosWithLockedAt;
 // Polkadot Imports
-use polkadot_runtime_common::BlockHashCount;
+pub use polkadot_runtime_common::BlockHashCount;
 use scale_info::TypeInfo;
 use sp_api::impl_runtime_apis;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -240,25 +240,6 @@ pub fn native_version() -> NativeVersion {
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 
-	// taken from dedicated benchmark (run on reference machine)
-	//
-	// $ cargo bench --features=disable-execution
-	// ...
-	// Block production/full block shuffling without executing extrinsics
-	//                         time:   [12.025 ms 12.029 ms 12.032 ms]
-	//                         change: [-59.043% -59.005% -58.974%] (p = 0.00 < 0.05)
-	//
-	// ...
-	pub const MangataBlockExecutionWeight: u64 = 12 * WEIGHT_PER_MILLIS.ref_time();
-
-	// taken from dedicated benchmark (run on reference machine)
-	//
-	// $ cargo bench --features=disable-execution
-	// ...
-	// avarege execution time of 5067 noop extrinsic : 946200 microseconds => 186
-	// ...
-	pub const MangataExtrinsicBaseWeight: u64 = 186 * WEIGHT_PER_MICROS.ref_time();
-
 	// This part is copied from Substrate's `bin/node/runtime/src/lib.rs`.
 	//  The `RuntimeBlockLength` and `RuntimeBlockWeights` exist here because the
 	// `DeletionWeightLimit` and `DeletionQueueDepth` depend on those to parameterize
@@ -266,9 +247,9 @@ parameter_types! {
 	pub RuntimeBlockLength: BlockLength =
 		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 	pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
-		.base_block(Weight::from_ref_time(MangataBlockExecutionWeight::get()))
+		.base_block(weights::VerBlockExecutionWeight::get())
 		.for_class(DispatchClass::all(), |weights| {
-			weights.base_extrinsic = Weight::from_ref_time(MangataExtrinsicBaseWeight::get());
+			weights.base_extrinsic = weights::VerExtrinsicBaseWeight::get();
 		})
 		.for_class(DispatchClass::Normal, |weights| {
 			weights.max_total = Some(Weight::from_ref_time(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT));
@@ -1505,7 +1486,8 @@ impl_runtime_apis! {
 			if let Some(sig) = tx.signature.clone(){
 				let nonce: frame_system::CheckNonce<_> = sig.2.4;
 				<Runtime as frame_system::Config>::Lookup::lookup(sig.0)
-					.map(|addr| Some((addr, nonce.0))).expect("unknown address for signed extrinsic")
+					.ok()
+					.and_then(|addr| Some((addr, nonce.0)))
 			}else{
 				None
 			}
@@ -1522,6 +1504,42 @@ impl_runtime_apis! {
 		fn store_seed(seed: sp_core::H256){
 			// initialize has been called already so we can fetch number from the storage
 			System::set_block_seed(&seed);
+		}
+
+		fn get_previous_block_txs() -> Vec<Vec<u8>> {
+			System::get_previous_blocks_txs()
+		}
+
+		fn pop_txs(count: u64) -> Vec<Vec<u8>>{
+			System::pop_txs(count as usize)
+		}
+
+		fn create_enqueue_txs_inherent(txs: Vec<<Block as BlockT>::Extrinsic>) -> <Block as BlockT>::Extrinsic{
+			UncheckedExtrinsic::new_unsigned(
+				Call::System(frame_system::Call::enqueue_txs{txs:
+					txs.into_iter()
+					.map(|tx|
+						(
+							tx.signature.clone().and_then(|sig| <Runtime as frame_system::Config>::Lookup::lookup(sig.0).ok()),
+							tx.encode()
+						)
+					)
+					.collect()}))
+		}
+
+		fn can_enqueue_txs() -> bool{
+			System::can_enqueue_txs()
+		}
+
+		fn start_prevalidation() {
+			System::set_prevalidation()
+		}
+	}
+
+	impl ver_api::VerNonceApi<Block, AccountId> for Runtime {
+		fn enqueued_txs_count(acc: AccountId) -> u64 {
+
+			System::enqueued_txs_count(&acc) as u64
 		}
 	}
 

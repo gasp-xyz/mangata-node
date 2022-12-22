@@ -2,8 +2,8 @@
 #![cfg(not(feature = "runtime-benchmarks"))]
 #![allow(non_snake_case)]
 
-use super::*;
-use crate::mock::*;
+use super::{Event, *};
+use crate::mock::{Event as MetaEvent, *};
 use frame_support::assert_err;
 use mangata_types::assets::CustomMetadata;
 use orml_traits::asset_registry::AssetMetadata;
@@ -1198,14 +1198,53 @@ fn sell_N_not_enough_selling_assset() {
 }
 
 #[test]
-fn sell_N_insufficient_output_amount() {
+fn sell_W_insufficient_output_amount() {
+	new_test_ext().execute_with(|| {
+		initialize();
+
+		let input_balance_before = XykStorage::balance(1, 2);
+		let output_balance_before = XykStorage::balance(4, 2);
+
+		let mut expected_events =
+			vec![Event::PoolCreated(2, 1, 40000000000000000000, 4, 60000000000000000000)];
+		assert_eq_events!(expected_events.clone());
+
+		assert_ok!(XykStorage::sell_asset(Origin::signed(2), 1, 4, 250000, 500000)); // selling 250000 assetId 0 of pool 0 1, by the formula user should get 166333 asset 1, but is requesting 500000
+
+		let mut new_events_0 =
+			vec![Event::SellAssetFailedDueToSlippage(2, 1, 250000, 4, 373874, 500000)];
+
+		expected_events.append(&mut new_events_0);
+		assert_eq_events!(expected_events.clone());
+
+		let input_balance_after = XykStorage::balance(1, 2);
+		let output_balance_after = XykStorage::balance(4, 2);
+
+		assert_ne!(input_balance_before, input_balance_after);
+		assert_eq!(output_balance_before, output_balance_after);
+	});
+}
+
+#[test]
+fn sell_N_insufficient_output_amount_inner_function_error_upon_bad_slippage() {
 	new_test_ext().execute_with(|| {
 		initialize();
 
 		assert_err!(
-			XykStorage::sell_asset(Origin::signed(2), 1, 4, 250000, 500000),
+			<XykStorage as XykFunctionsTrait<AccountId>>::sell_asset(2, 1, 4, 250000, 500000, true),
 			Error::<Test>::InsufficientOutputAmount,
 		); // selling 250000 assetId 0 of pool 0 1, by the formula user should get 166333 asset 1, but is requesting 500000
+	});
+}
+
+#[test]
+fn sell_W_insufficient_output_amount_inner_function_NO_error_upon_bad_slippage() {
+	new_test_ext().execute_with(|| {
+		initialize();
+
+		assert_ok!(<XykStorage as XykFunctionsTrait<AccountId>>::sell_asset(
+			2, 1, 4, 250000, 500000, false
+		),); // selling 250000 assetId 0 of pool 0 1, by the formula user should get 166333 asset 1, but is requesting 500000
 	});
 }
 
@@ -1334,14 +1373,55 @@ fn buy_N_not_enough_selling_assset() {
 }
 
 #[test]
-fn buy_N_insufficient_input_amount() {
+fn buy_W_insufficient_input_amount() {
 	new_test_ext().execute_with(|| {
 		initialize();
+
+		let mut expected_events =
+			vec![Event::PoolCreated(2, 1, 40000000000000000000, 4, 60000000000000000000)];
+		assert_eq_events!(expected_events.clone());
+
+		let input_balance_before = XykStorage::balance(1, 2);
+		let output_balance_before = XykStorage::balance(4, 2);
+
+		// buying 150000 liquidity assetId 1 of pool 0 1
+		assert_ok!(XykStorage::buy_asset(Origin::signed(2), 1, 4, 150000, 10));
+		let mut new_events_0 =
+			vec![Event::BuyAssetFailedDueToSlippage(2, 1, 100301, 4, 150000, 10)];
+
+		expected_events.append(&mut new_events_0);
+		assert_eq_events!(expected_events.clone());
+
+		let input_balance_after = XykStorage::balance(1, 2);
+		let output_balance_after = XykStorage::balance(4, 2);
+
+		assert_ne!(input_balance_before, input_balance_after);
+		assert_eq!(output_balance_before, output_balance_after);
+	});
+}
+
+#[test]
+fn buy_N_insufficient_input_amount_inner_function_error_upon_bad_slippage() {
+	new_test_ext().execute_with(|| {
+		initialize();
+
 		// buying 150000 liquidity assetId 1 of pool 0 1
 		assert_err!(
-			XykStorage::buy_asset(Origin::signed(2), 1, 4, 150000, 10),
+			<XykStorage as XykFunctionsTrait<AccountId>>::buy_asset(2, 1, 4, 150000, 10, true),
 			Error::<Test>::InsufficientInputAmount,
 		);
+	});
+}
+
+#[test]
+fn buy_W_insufficient_input_amount_inner_function_NO_error_upon_bad_slippage() {
+	new_test_ext().execute_with(|| {
+		initialize();
+
+		// buying 150000 liquidity assetId 1 of pool 0 1
+		assert_ok!(<XykStorage as XykFunctionsTrait<AccountId>>::buy_asset(
+			2, 1, 4, 150000, 10, false
+		));
 	});
 }
 

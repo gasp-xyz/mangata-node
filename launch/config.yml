@@ -38,7 +38,8 @@ parachains:
     - --wasm-execution=compiled
     - --execution=wasm
   env:
-    RUST_LOG: sc_basic_authorship=trace,cumulus-consensus=trace,cumulus-collator=trace,collator_protocol=trace,collation_generation=trace,aura=debug
+    # RUST_LOG: info,block_builder=trace,block_shuffler=trace,runtime::ver=trace,txpool=trace,rpc::nonce=trace
+    RUST_LOG: info,block_builder=trace
   volumePath: /mangata/data
   nodes:
   - flags:

@@ -3797,9 +3797,9 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
 name = "libc"
-version = "0.2.138"
+version = "0.2.139"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db6d7e329c562c5dfab7a46a2afabc8b987ab9a4834c9d1ca04dc54c1546cef8"
+checksum = "201de327520df007757c1f0adce6e827fe8562fbc28bfd9c15571c66ca1f5f79"
 
 [[package]]
 name = "libloading"
@@ -5277,7 +5277,7 @@ dependencies = [
 [[package]]
 name = "orml-asset-registry"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.31#b5433bc315c79a9044fd77d051c0590b41903586"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.31#19a551aefb07c7fb2155ce0c155e28377be306cb"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5298,7 +5298,7 @@ dependencies = [
 [[package]]
 name = "orml-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.31#b5433bc315c79a9044fd77d051c0590b41903586"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.31#19a551aefb07c7fb2155ce0c155e28377be306cb"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5315,7 +5315,7 @@ dependencies = [
 [[package]]
 name = "orml-traits"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.31#b5433bc315c79a9044fd77d051c0590b41903586"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.31#19a551aefb07c7fb2155ce0c155e28377be306cb"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
@@ -5333,7 +5333,7 @@ dependencies = [
 [[package]]
 name = "orml-unknown-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.31#b5433bc315c79a9044fd77d051c0590b41903586"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.31#19a551aefb07c7fb2155ce0c155e28377be306cb"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5348,7 +5348,7 @@ dependencies = [
 [[package]]
 name = "orml-utilities"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.31#b5433bc315c79a9044fd77d051c0590b41903586"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.31#19a551aefb07c7fb2155ce0c155e28377be306cb"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -5362,7 +5362,7 @@ dependencies = [
 [[package]]
 name = "orml-xcm"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.31#b5433bc315c79a9044fd77d051c0590b41903586"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.31#19a551aefb07c7fb2155ce0c155e28377be306cb"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5376,7 +5376,7 @@ dependencies = [
 [[package]]
 name = "orml-xcm-support"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.31#b5433bc315c79a9044fd77d051c0590b41903586"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.31#19a551aefb07c7fb2155ce0c155e28377be306cb"
 dependencies = [
  "frame-support",
  "orml-traits",
@@ -5390,7 +5390,7 @@ dependencies = [
 [[package]]
 name = "orml-xtokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.31#b5433bc315c79a9044fd77d051c0590b41903586"
+source = "git+https://github.com/mangata-finance//open-runtime-module-library?branch=mangata-dev-v0.9.31#19a551aefb07c7fb2155ce0c155e28377be306cb"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",

@@ -1,6 +1,11 @@
-FROM mangatasolutions/node-runner:0.2
-ARG NODE_BINARY
-ARG WASM
-COPY $NODE_BINARY /mangata/node
-COPY $WASM /mangata/
+FROM debian:buster
+
+ARG BUILD_DIR=target/release
+
+WORKDIR /mangata
+
+COPY $BUILD_DIR/mangata-node /mangata/node
+COPY $BUILD_DIR/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm /mangata/
+COPY $BUILD_DIR/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm /mangata/
+
 ENTRYPOINT ["/mangata/node"]

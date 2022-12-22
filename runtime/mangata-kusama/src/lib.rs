@@ -15,7 +15,10 @@ use frame_support::{
 	},
 	unsigned::TransactionValidityError,
 	weights::{
-		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_MICROS, WEIGHT_PER_SECOND},
+		constants::{
+			BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_MICROS,
+			WEIGHT_PER_SECOND,
+		},
 		ConstantMultiplier, Weight,
 	},
 	PalletId,
@@ -23,10 +26,9 @@ use frame_support::{
 #[cfg(any(feature = "std", test))]
 pub use frame_system::Call as SystemCall;
 use frame_system::{
-	limits::{BlockLength, BlockWeights},
+	limits::{BlockLength, BlockWeights, BlockWeightsBuilder},
 	EnsureRoot,
 };
-use frame_system::limits::BlockWeightsBuilder;
 pub use orml_tokens;
 use orml_tokens::{MultiTokenCurrencyExtended, TransferDust};
 use orml_traits::{

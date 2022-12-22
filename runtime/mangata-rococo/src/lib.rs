@@ -15,7 +15,10 @@ use frame_support::{
 	},
 	unsigned::TransactionValidityError,
 	weights::{
-		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_MICROS, WEIGHT_PER_MILLIS, WEIGHT_PER_SECOND},
+		constants::{
+			BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_MICROS,
+			WEIGHT_PER_MILLIS, WEIGHT_PER_SECOND,
+		},
 		ConstantMultiplier, Weight,
 	},
 	PalletId,
@@ -23,10 +26,9 @@ use frame_support::{
 #[cfg(any(feature = "std", test))]
 pub use frame_system::Call as SystemCall;
 use frame_system::{
-	limits::{BlockLength, BlockWeights},
+	limits::{BlockLength, BlockWeights, BlockWeightsBuilder},
 	EnsureRoot,
 };
-use frame_system::limits::BlockWeightsBuilder;
 pub use orml_tokens;
 use orml_tokens::{MultiTokenCurrencyExtended, TransferDust};
 use orml_traits::{
@@ -231,7 +233,8 @@ const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
 /// NOTE: reduced by half comparing to origin impl as we want to fill block only up to 50%
 /// so there is room for new extrinsics in the next block
-const MAXIMUM_BLOCK_WEIGHT: u64 = WEIGHT_PER_SECOND.saturating_mul(2).set_proof_size(u64::MAX).ref_time();
+const MAXIMUM_BLOCK_WEIGHT: u64 =
+	WEIGHT_PER_SECOND.saturating_mul(2).set_proof_size(u64::MAX).ref_time();
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]

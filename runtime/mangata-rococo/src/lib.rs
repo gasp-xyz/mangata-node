@@ -36,7 +36,7 @@ use orml_traits::{
 	parameter_type_with_key,
 };
 pub use pallet_sudo_mangata;
-use pallet_transaction_payment::{Multiplier, OnChargeTransaction, ConstFeeMultiplier};
+use pallet_transaction_payment::{ConstFeeMultiplier, Multiplier, OnChargeTransaction};
 use pallet_vesting_mangata_rpc_runtime_api::VestingInfosWithLockedAt;
 // Polkadot Imports
 pub use polkadot_runtime_common::BlockHashCount;

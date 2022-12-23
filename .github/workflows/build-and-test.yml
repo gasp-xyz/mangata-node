@@ -164,6 +164,9 @@ jobs:
           key: cargo-unit-cache-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
       - name: Run unit tests
         run: cargo test -j2
+      - name: Fix permissions on self-hosted runner
+        if: always()
+        run: chown -R 1003:1004 $GITHUB_WORKSPACE
 
   run-benchmarks-tests:
     name: Run benchmark tests

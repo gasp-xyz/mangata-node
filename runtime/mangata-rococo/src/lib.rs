@@ -16,7 +16,7 @@ use frame_support::{
 	unsigned::TransactionValidityError,
 	weights::{
 		constants::{
-			BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_MICROS,
+			RocksDbWeight, WEIGHT_PER_MICROS,
 			WEIGHT_PER_MILLIS, WEIGHT_PER_SECOND,
 		},
 		ConstantMultiplier, Weight,
@@ -233,32 +233,15 @@ const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
 /// NOTE: reduced by half comparing to origin impl as we want to fill block only up to 50%
 /// so there is room for new extrinsics in the next block
-const MAXIMUM_BLOCK_WEIGHT: u64 =
-	WEIGHT_PER_SECOND.saturating_mul(2).set_proof_size(u64::MAX).ref_time();
+// const MAXIMUM_BLOCK_WEIGHT: Weight =
+// 	WEIGHT_PER_SECOND.saturating_div(4).set_proof_size((cumulus_primitives_core::relay_chain::v2::MAX_POV_SIZE as u64).saturating_div(2));
+const MAXIMUM_BLOCK_WEIGHT: Weight =
+	WEIGHT_PER_SECOND.saturating_div(4).set_proof_size((u64::max_value()).saturating_div(2));
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
 pub fn native_version() -> NativeVersion {
 	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
-}
-
-fn set_block_weights(expected_block_weight: Weight, normal_ratio: Perbill) -> BlockWeightsBuilder {
-	let normal_weight = normal_ratio * expected_block_weight;
-	BlockWeights::builder()
-		.base_block(BlockExecutionWeight::get())
-		.for_class(DispatchClass::all(), |weights| {
-			weights.base_extrinsic = ExtrinsicBaseWeight::get();
-		})
-		.for_class(DispatchClass::Normal, |weights| {
-			weights.max_total = normal_weight.into();
-		})
-		.for_class(DispatchClass::Operational, |weights| {
-			weights.max_total = expected_block_weight.into();
-			// Operational transactions have some extra reserved space, so that they
-			// are included even if block reached `MAXIMUM_BLOCK_WEIGHT`.
-			weights.reserved = (expected_block_weight - normal_weight).into();
-		})
-		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
 }
 
 parameter_types! {
@@ -270,12 +253,24 @@ parameter_types! {
 	// the lazy contract deletion.
 	pub RuntimeBlockLength: BlockLength =
 		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
-	// pub RuntimeBlockWeights: BlockWeights = BlockWeights::with_sensible_defaults(
-	// 		(2u64 * WEIGHT_PER_SECOND).set_proof_size(u64::MAX),
-	// 		NORMAL_DISPATCH_RATIO,
-	// 	);
-
-	pub RuntimeBlockWeights: BlockWeights = set_block_weights((2u64 * WEIGHT_PER_SECOND).set_proof_size(u64::MAX), NORMAL_DISPATCH_RATIO).build_or_panic();
+	pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
+		.base_block(weights::VerBlockExecutionWeight::get())
+		.for_class(DispatchClass::all(), |weights| {
+			weights.base_extrinsic = weights::VerExtrinsicBaseWeight::get();
+		})
+		.for_class(DispatchClass::Normal, |weights| {
+			weights.max_total = Some(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT);
+		})
+		.for_class(DispatchClass::Operational, |weights| {
+			weights.max_total = Some(MAXIMUM_BLOCK_WEIGHT);
+			// Operational transactions have some extra reserved space, so that they
+			// are included even if block reached `MAXIMUM_BLOCK_WEIGHT`.
+			weights.reserved = Some(
+				MAXIMUM_BLOCK_WEIGHT - NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT
+			);
+		})
+		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
+		.build_or_panic();
 	pub const SS58Prefix: u16 = 42;
 }
 
@@ -1013,8 +1008,8 @@ impl pallet_token_timeout::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ReservedXcmpWeight: Weight = Weight::from_ref_time(MAXIMUM_BLOCK_WEIGHT / 4);
-	pub const ReservedDmpWeight: Weight = Weight::from_ref_time(MAXIMUM_BLOCK_WEIGHT / 4);
+	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
+	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
 }
 
 impl cumulus_pallet_parachain_system::Config for Runtime {

@@ -36,7 +36,7 @@ use orml_traits::{
 	parameter_type_with_key,
 };
 pub use pallet_sudo_mangata;
-use pallet_transaction_payment::{Multiplier, OnChargeTransaction, TargetedFeeAdjustment};
+use pallet_transaction_payment::{Multiplier, OnChargeTransaction, ConstFeeMultiplier};
 use pallet_vesting_mangata_rpc_runtime_api::VestingInfosWithLockedAt;
 // Polkadot Imports
 pub use polkadot_runtime_common::BlockHashCount;
@@ -976,11 +976,7 @@ where
 }
 
 parameter_types! {
-	// We want no variability, the other parameters are superfluous
-	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
-	pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(0, 100_000);
-	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1);
-	pub MaximumMultiplier: Multiplier = <Multiplier as sp_runtime::traits::Bounded>::max_value();
+	pub ConstFeeMultiplierValue: Multiplier = Multiplier::saturating_from_rational(1, 1);
 }
 
 impl pallet_transaction_payment::Config for Runtime {
@@ -1001,13 +997,7 @@ impl pallet_transaction_payment::Config for Runtime {
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
-	type FeeMultiplierUpdate = TargetedFeeAdjustment<
-		Self,
-		TargetBlockFullness,
-		AdjustmentVariable,
-		MinimumMultiplier,
-		MaximumMultiplier,
-	>;
+	type FeeMultiplierUpdate = ConstFeeMultiplier<ConstFeeMultiplierValue>;
 }
 
 parameter_types! {

@@ -275,11 +275,10 @@ jobs:
           --template ./templates/module-weight-template.hbs \
           --output ./benchmarks/
       
-      - name: Run benchmark tests - pallet-bootstrap
-        run: target/release/mangata-node benchmark pallet --chain kusama-mainnet --execution wasm --wasm-execution compiled --extrinsic '*' --pallet 'pallet-bootstrap' --template ./templates/module-weight-template.hbs --steps 2
-
       - name: Run block & extrinsic overhead benchmarks
-        run: target/release/mangata-node benchmark overhead --execution native --chain dev -lblock_builder=debug --base-path .
+        run: |
+          target/release/mangata-node benchmark overhead --execution native --chain dev -lblock_builder=debug --base-path .
+          cp block_weights.rs extrinsic_weights.rs ./benchmarks
 
       - name: Fix permissions on self-hosted runner
         if: always()

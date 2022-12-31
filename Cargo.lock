@@ -1539,7 +1539,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-session-benchmarking"
 version = "3.0.0"
-source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev-v0.9.31#729fdb440a2c59329091e45401b5e90b4e259243"
+source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev#729fdb440a2c59329091e45401b5e90b4e259243"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -1656,7 +1656,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-inprocess-interface"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev-v0.9.31#729fdb440a2c59329091e45401b5e90b4e259243"
+source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev#729fdb440a2c59329091e45401b5e90b4e259243"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -1700,7 +1700,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-minimal-node"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev-v0.9.31#729fdb440a2c59329091e45401b5e90b4e259243"
+source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev#729fdb440a2c59329091e45401b5e90b4e259243"
 dependencies = [
  "array-bytes",
  "async-trait",
@@ -1744,7 +1744,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-rpc-interface"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev-v0.9.31#729fdb440a2c59329091e45401b5e90b4e259243"
+source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev#729fdb440a2c59329091e45401b5e90b4e259243"
 dependencies = [
  "async-trait",
  "backoff",

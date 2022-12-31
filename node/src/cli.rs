@@ -6,12 +6,10 @@ use std::path::PathBuf;
 #[derive(Debug, clap::Subcommand)]
 pub enum Subcommand {
 	/// Export the genesis state of the parachain.
-	#[clap(name = "export-genesis-state")]
-	ExportGenesisState(ExportGenesisStateCommand),
+	ExportGenesisState(cumulus_client_cli::ExportGenesisStateCommand),
 
 	/// Export the genesis wasm of the parachain.
-	#[clap(name = "export-genesis-wasm")]
-	ExportGenesisWasm(ExportGenesisWasmCommand),
+	ExportGenesisWasm(cumulus_client_cli::ExportGenesisWasmCommand),
 
 	/// Build a chain specification.
 	BuildSpec(sc_cli::BuildSpecCmd),
@@ -82,7 +80,7 @@ pub struct ExportGenesisWasmCommand {
 #[derive(Debug, Parser)]
 #[clap(
 	propagate_version = true,
-	args_conflicts_with_subcommands = false,
+	args_conflicts_with_subcommands = true,
 	subcommand_negates_reqs = true
 )]
 pub struct Cli {

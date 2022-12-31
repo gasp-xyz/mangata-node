@@ -10,27 +10,27 @@ use sp_std::collections::btree_map::BTreeMap;
 fn update_timeout_metadata_works() {
 	new_test_ext().execute_with(|| {
 		assert_noop!(
-			TokenTimeout::update_timeout_metadata(Origin::root(), Some(500), Some(0), None,),
+			TokenTimeout::update_timeout_metadata(RuntimeOrigin::root(), Some(500), Some(0), None,),
 			Error::<Test>::InvalidTimeoutMetadata
 		);
 
 		assert_noop!(
-			TokenTimeout::update_timeout_metadata(Origin::root(), Some(500), None, None,),
+			TokenTimeout::update_timeout_metadata(RuntimeOrigin::root(), Some(500), None, None,),
 			Error::<Test>::InvalidTimeoutMetadata
 		);
 
 		assert_noop!(
-			TokenTimeout::update_timeout_metadata(Origin::root(), Some(0), Some(500), None,),
+			TokenTimeout::update_timeout_metadata(RuntimeOrigin::root(), Some(0), Some(500), None,),
 			Error::<Test>::InvalidTimeoutMetadata
 		);
 
 		assert_noop!(
-			TokenTimeout::update_timeout_metadata(Origin::root(), None, Some(500), None,),
+			TokenTimeout::update_timeout_metadata(RuntimeOrigin::root(), None, Some(500), None,),
 			Error::<Test>::InvalidTimeoutMetadata
 		);
 
 		assert_ok!(TokenTimeout::update_timeout_metadata(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			Some(1000),
 			Some(500),
 			Some(vec![(0, Some(500)), (1, Some(1000))]),
@@ -53,7 +53,7 @@ fn update_timeout_metadata_works() {
 		);
 
 		assert_ok!(TokenTimeout::update_timeout_metadata(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			Some(2000),
 			Some(2500),
 			Some(vec![(0, None), (1, Some(2000)), (2, Some(4000))]),
@@ -76,16 +76,21 @@ fn update_timeout_metadata_works() {
 		);
 
 		assert_noop!(
-			TokenTimeout::update_timeout_metadata(Origin::root(), None, Some(0), None,),
+			TokenTimeout::update_timeout_metadata(RuntimeOrigin::root(), None, Some(0), None,),
 			Error::<Test>::InvalidTimeoutMetadata
 		);
 
 		assert_noop!(
-			TokenTimeout::update_timeout_metadata(Origin::root(), Some(0), None, None,),
+			TokenTimeout::update_timeout_metadata(RuntimeOrigin::root(), Some(0), None, None,),
 			Error::<Test>::InvalidTimeoutMetadata
 		);
 
-		assert_ok!(TokenTimeout::update_timeout_metadata(Origin::root(), None, Some(8000), None,));
+		assert_ok!(TokenTimeout::update_timeout_metadata(
+			RuntimeOrigin::root(),
+			None,
+			Some(8000),
+			None,
+		));
 		assert_eq!(
 			TokenTimeout::get_timeout_metadata(),
 			Some(TimeoutMetadataInfo {
@@ -121,7 +126,7 @@ fn process_timeout_trigger_works() {
 
 		// We initaite the threshold map as empty as it is not required here
 		assert_ok!(TokenTimeout::update_timeout_metadata(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			Some(period_length),
 			Some(timeout_amount),
 			None,
@@ -324,7 +329,7 @@ fn release_timeout_works() {
 
 		// We initaite the threshold map as empty as it is not required here
 		assert_ok!(TokenTimeout::update_timeout_metadata(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			Some(period_length),
 			Some(timeout_amount),
 			None,
@@ -360,7 +365,7 @@ fn release_timeout_works() {
 			Error::<Test>::NotTimedout
 		);
 		assert_noop!(
-			TokenTimeout::release_timeout(Origin::signed(0u128).into()),
+			TokenTimeout::release_timeout(RuntimeOrigin::signed(0u128).into()),
 			Error::<Test>::NotTimedout
 		);
 
@@ -429,7 +434,7 @@ fn release_timeout_works() {
 			Error::<Test>::CantReleaseYet
 		);
 		assert_noop!(
-			TokenTimeout::release_timeout(Origin::signed(0u128).into()),
+			TokenTimeout::release_timeout(RuntimeOrigin::signed(0u128).into()),
 			Error::<Test>::CantReleaseYet
 		);
 
@@ -439,7 +444,7 @@ fn release_timeout_works() {
 		let now = System::block_number();
 
 		assert_ok!(<TokenTimeout as TimeoutTriggerTrait<_>>::can_release_timeout(&0u128));
-		assert_ok!(TokenTimeout::release_timeout(Origin::signed(0u128).into()));
+		assert_ok!(TokenTimeout::release_timeout(RuntimeOrigin::signed(0u128).into()));
 
 		assert_eq!(
 			Tokens::accounts(0u128, token_id),
@@ -463,7 +468,7 @@ fn release_timeout_works() {
 			Error::<Test>::NotTimedout
 		);
 		assert_noop!(
-			TokenTimeout::release_timeout(Origin::signed(0u128).into()),
+			TokenTimeout::release_timeout(RuntimeOrigin::signed(0u128).into()),
 			Error::<Test>::NotTimedout
 		);
 
@@ -492,7 +497,7 @@ fn release_timeout_works() {
 			Error::<Test>::CantReleaseYet
 		);
 		assert_noop!(
-			TokenTimeout::release_timeout(Origin::signed(0u128).into()),
+			TokenTimeout::release_timeout(RuntimeOrigin::signed(0u128).into()),
 			Error::<Test>::CantReleaseYet
 		);
 
@@ -526,7 +531,7 @@ fn release_timeout_works() {
 			Error::<Test>::CantReleaseYet
 		);
 		assert_noop!(
-			TokenTimeout::release_timeout(Origin::signed(0u128).into()),
+			TokenTimeout::release_timeout(RuntimeOrigin::signed(0u128).into()),
 			Error::<Test>::CantReleaseYet
 		);
 
@@ -555,7 +560,7 @@ fn release_timeout_works() {
 			Error::<Test>::CantReleaseYet
 		);
 		assert_noop!(
-			TokenTimeout::release_timeout(Origin::signed(0u128).into()),
+			TokenTimeout::release_timeout(RuntimeOrigin::signed(0u128).into()),
 			Error::<Test>::CantReleaseYet
 		);
 
@@ -565,7 +570,7 @@ fn release_timeout_works() {
 		let now = System::block_number();
 
 		assert_ok!(<TokenTimeout as TimeoutTriggerTrait<_>>::can_release_timeout(&0u128));
-		assert_ok!(TokenTimeout::release_timeout(Origin::signed(0u128).into()));
+		assert_ok!(TokenTimeout::release_timeout(RuntimeOrigin::signed(0u128).into()));
 
 		assert_eq!(
 			Tokens::accounts(0u128, token_id),
@@ -589,7 +594,7 @@ fn release_timeout_works() {
 			Error::<Test>::NotTimedout
 		);
 		assert_noop!(
-			TokenTimeout::release_timeout(Origin::signed(0u128).into()),
+			TokenTimeout::release_timeout(RuntimeOrigin::signed(0u128).into()),
 			Error::<Test>::NotTimedout
 		);
 	})

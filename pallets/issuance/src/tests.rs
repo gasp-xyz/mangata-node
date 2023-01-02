@@ -1,7 +1,7 @@
 use super::*;
 use mock::{
 	new_test_ext, new_test_ext_without_issuance_config, roll_to_while_minting, BlocksPerRound,
-	Issuance, Origin, StakeCurrency, System, Test, Tokens, Vesting, MGA_TOKEN_ID,
+	Issuance, RuntimeOrigin, StakeCurrency, System, Test, Tokens, Vesting, MGA_TOKEN_ID,
 };
 use sp_runtime::SaturatedConversion;
 
@@ -13,10 +13,10 @@ fn init_issuance_config_works() {
 		let current_issuance = StakeCurrency::total_issuance(MGA_TOKEN_ID);
 
 		assert_eq!(Issuance::is_tge_finalized(), false);
-		assert_ok!(Issuance::finalize_tge(Origin::root()));
+		assert_ok!(Issuance::finalize_tge(RuntimeOrigin::root()));
 		assert_eq!(Issuance::is_tge_finalized(), true);
 
-		assert_ok!(Issuance::init_issuance_config(Origin::root()));
+		assert_ok!(Issuance::init_issuance_config(RuntimeOrigin::root()));
 		assert_eq!(
 			Issuance::get_issuance_config(),
 			Some(IssuanceInfo {
@@ -35,10 +35,13 @@ fn init_issuance_config_works() {
 fn cannot_finalize_tge_when_already_finalized() {
 	new_test_ext_without_issuance_config().execute_with(|| {
 		assert_eq!(Issuance::is_tge_finalized(), false);
-		assert_ok!(Issuance::finalize_tge(Origin::root()));
+		assert_ok!(Issuance::finalize_tge(RuntimeOrigin::root()));
 		assert_eq!(Issuance::is_tge_finalized(), true);
 
-		assert_noop!(Issuance::finalize_tge(Origin::root()), Error::<Test>::TGEIsAlreadyFinalized);
+		assert_noop!(
+			Issuance::finalize_tge(RuntimeOrigin::root()),
+			Error::<Test>::TGEIsAlreadyFinalized
+		);
 	});
 }
 
@@ -48,7 +51,7 @@ fn cannot_init_issuance_config_when_tge_is_not_finalized() {
 		assert_eq!(Issuance::is_tge_finalized(), false);
 
 		assert_noop!(
-			Issuance::init_issuance_config(Origin::root()),
+			Issuance::init_issuance_config(RuntimeOrigin::root()),
 			Error::<Test>::TGENotFinalized
 		);
 	});
@@ -60,10 +63,10 @@ fn cannot_init_issuance_config_when_already_init() {
 		let current_issuance = StakeCurrency::total_issuance(MGA_TOKEN_ID);
 
 		assert_eq!(Issuance::is_tge_finalized(), false);
-		assert_ok!(Issuance::finalize_tge(Origin::root()));
+		assert_ok!(Issuance::finalize_tge(RuntimeOrigin::root()));
 		assert_eq!(Issuance::is_tge_finalized(), true);
 
-		assert_ok!(Issuance::init_issuance_config(Origin::root()));
+		assert_ok!(Issuance::init_issuance_config(RuntimeOrigin::root()));
 		assert_eq!(
 			Issuance::get_issuance_config(),
 			Some(IssuanceInfo {
@@ -76,7 +79,7 @@ fn cannot_init_issuance_config_when_already_init() {
 			})
 		);
 		assert_noop!(
-			Issuance::init_issuance_config(Origin::root()),
+			Issuance::init_issuance_config(RuntimeOrigin::root()),
 			Error::<Test>::IssuanceConfigAlreadyInitialized
 		);
 	});
@@ -88,7 +91,7 @@ fn execute_tge_works() {
 		assert_eq!(Issuance::is_tge_finalized(), false);
 
 		assert_ok!(Issuance::execute_tge(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			vec![
 				TgeInfo { who: 1, amount: 1000u128 },
 				TgeInfo { who: 2, amount: 2000u128 },
@@ -118,7 +121,7 @@ fn execute_tge_works() {
 		assert_eq!(Vesting::vesting(&3, MGA_TOKEN_ID).unwrap()[0].per_block(), 24u128);
 		assert_eq!(Vesting::vesting(&4, MGA_TOKEN_ID).unwrap()[0].per_block(), 32u128);
 
-		assert_ok!(Issuance::finalize_tge(Origin::root()));
+		assert_ok!(Issuance::finalize_tge(RuntimeOrigin::root()));
 		assert_eq!(Issuance::is_tge_finalized(), true);
 	});
 }
@@ -127,11 +130,11 @@ fn execute_tge_works() {
 fn cannot_execute_tge_if_already_finalized() {
 	new_test_ext_without_issuance_config().execute_with(|| {
 		assert_eq!(Issuance::is_tge_finalized(), false);
-		assert_ok!(Issuance::finalize_tge(Origin::root()));
+		assert_ok!(Issuance::finalize_tge(RuntimeOrigin::root()));
 		assert_eq!(Issuance::is_tge_finalized(), true);
 
 		assert_noop!(
-			Issuance::execute_tge(Origin::root(), vec![]),
+			Issuance::execute_tge(RuntimeOrigin::root(), vec![]),
 			Error::<Test>::TGEIsAlreadyFinalized
 		);
 	});

@@ -5,7 +5,7 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
 	construct_runtime,
-	dispatch::DispatchResult,
+	dispatch::{DispatchClass, DispatchResult},
 	parameter_types,
 	traits::{
 		tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
@@ -16,14 +16,14 @@ use frame_support::{
 	unsigned::TransactionValidityError,
 	weights::{
 		constants::{RocksDbWeight, WEIGHT_PER_MICROS, WEIGHT_PER_MILLIS, WEIGHT_PER_SECOND},
-		ConstantMultiplier, DispatchClass, Weight,
+		ConstantMultiplier, Weight,
 	},
 	PalletId,
 };
 #[cfg(any(feature = "std", test))]
 pub use frame_system::Call as SystemCall;
 use frame_system::{
-	limits::{BlockLength, BlockWeights},
+	limits::{BlockLength, BlockWeights, BlockWeightsBuilder},
 	EnsureRoot,
 };
 pub use orml_tokens;
@@ -33,7 +33,7 @@ use orml_traits::{
 	parameter_type_with_key,
 };
 pub use pallet_sudo_mangata;
-use pallet_transaction_payment::{Multiplier, OnChargeTransaction, TargetedFeeAdjustment};
+use pallet_transaction_payment::{ConstFeeMultiplier, Multiplier, OnChargeTransaction};
 use pallet_vesting_mangata_rpc_runtime_api::VestingInfosWithLockedAt;
 // Polkadot Imports
 pub use polkadot_runtime_common::BlockHashCount;
@@ -112,13 +112,14 @@ pub type SignedExtra = (
 	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 );
 /// The payload being signed in transactions.
-pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
+pub type SignedPayload = generic::SignedPayload<RuntimeCall, SignedExtra>;
 
 /// Unchecked extrinsic type as expected by this runtime.
-pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+pub type UncheckedExtrinsic =
+	generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
 
 /// Extrinsic type that has already been checked.
-pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, Call, SignedExtra>;
+pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, RuntimeCall, SignedExtra>;
 
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
@@ -229,7 +230,11 @@ const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
 /// NOTE: reduced by half comparing to origin impl as we want to fill block only up to 50%
 /// so there is room for new extrinsics in the next block
-const MAXIMUM_BLOCK_WEIGHT: u64 = WEIGHT_PER_SECOND.ref_time() / 4;
+// const MAXIMUM_BLOCK_WEIGHT: Weight =
+// 	WEIGHT_PER_SECOND.saturating_div(4).set_proof_size((cumulus_primitives_core::relay_chain::v2::MAX_POV_SIZE as u64).saturating_div(2));
+const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND
+	.saturating_div(4)
+	.set_proof_size((u64::max_value()).saturating_div(2));
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
@@ -252,14 +257,14 @@ parameter_types! {
 			weights.base_extrinsic = weights::VerExtrinsicBaseWeight::get();
 		})
 		.for_class(DispatchClass::Normal, |weights| {
-			weights.max_total = Some(Weight::from_ref_time(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT));
+			weights.max_total = Some(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT);
 		})
 		.for_class(DispatchClass::Operational, |weights| {
-			weights.max_total = Some(Weight::from_ref_time(MAXIMUM_BLOCK_WEIGHT));
+			weights.max_total = Some(MAXIMUM_BLOCK_WEIGHT);
 			// Operational transactions have some extra reserved space, so that they
 			// are included even if block reached `MAXIMUM_BLOCK_WEIGHT`.
 			weights.reserved = Some(
-				Weight::from_ref_time(MAXIMUM_BLOCK_WEIGHT - NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT)
+				MAXIMUM_BLOCK_WEIGHT - NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT
 			);
 		})
 		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
@@ -279,7 +284,7 @@ impl frame_system::Config for Runtime {
 	/// The identifier used to distinguish between accounts.
 	type AccountId = AccountId;
 	/// The aggregated dispatch type that is available for extrinsics.
-	type Call = Call;
+	type RuntimeCall = RuntimeCall;
 	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
 	type Lookup = AccountIdLookup<AccountId, ()>;
 	/// The index type for storing how many extrinsics an account has signed.
@@ -293,9 +298,9 @@ impl frame_system::Config for Runtime {
 	/// The header type.
 	type Header = generic::HeaderVer<BlockNumber, BlakeTwo256>;
 	/// The ubiquitous event type.
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	/// The ubiquitous origin type.
-	type Origin = Origin;
+	type RuntimeOrigin = RuntimeOrigin;
 	/// Maximum number of block number to block hash mappings to keep (oldest pruned first).
 	type BlockHashCount = BlockHashCount;
 	/// Runtime version.
@@ -375,7 +380,7 @@ impl pallet_treasury::Config for Runtime {
 	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgrTokenId>;
 	type ApproveOrigin = EnsureRoot<AccountId>;
 	type RejectOrigin = EnsureRoot<AccountId>;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type OnSlash = ();
 	type ProposalBond = ProposalBond;
 	type ProposalBondMinimum = ProposalBondMinimum;
@@ -422,7 +427,7 @@ impl Contains<AccountId> for DustRemovalWhitelist {
 }
 
 impl orml_tokens::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type Amount = Amount;
 	type CurrencyId = TokenId;
@@ -431,6 +436,13 @@ impl orml_tokens::Config for Runtime {
 	type OnDust = TransferDust<Runtime, TreasuryAccount>;
 	type MaxLocks = MaxLocks;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
+	type OnSlash = ();
+	type OnDeposit = ();
+	type OnTransfer = ();
+	type MaxReserves = ();
+	type OnNewTokenAccount = ();
+	type OnKilledTokenAccount = ();
+	type ReserveIdentifier = [u8; 8];
 }
 
 pub struct RewardsMigrateAccountProvider<T: frame_system::Config>(PhantomData<T>);
@@ -482,7 +494,7 @@ impl AssetMetadataMutationTrait for AssetMetadataMutation {
 type SessionLenghtOf<T> = <T as parachain_staking::Config>::BlocksPerRound;
 
 impl pallet_xyk::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type ActivationReservesProvider = MultiPurposeLiquidity;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type NativeCurrencyId = MgrTokenId;
@@ -542,7 +554,7 @@ parameter_types! {
 impl pallet_bootstrap::BootstrapBenchmarkingConfig for Runtime {}
 
 impl pallet_bootstrap::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type PoolCreateApi = Xyk;
 	type DefaultBootstrapPromotedPoolWeight = DefaultBootstrapPromotedPoolWeight;
 	type BootstrapUpdateBuffer = BootstrapUpdateBuffer;
@@ -555,8 +567,8 @@ impl pallet_bootstrap::Config for Runtime {
 }
 
 impl pallet_utility::Config for Runtime {
-	type Event = Event;
-	type Call = Call;
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
 	type PalletsOrigin = OriginCaller;
 	type WeightInfo = weights::pallet_utility_weights::ModuleWeight<Runtime>;
 }
@@ -639,7 +651,7 @@ where
 		Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
 	>,
 	OTA: TimeoutTriggerTrait<<T as frame_system::Config>::AccountId>,
-	T: frame_system::Config<Call = Call>,
+	T: frame_system::Config<RuntimeCall = RuntimeCall>,
 	T::AccountId: From<sp_runtime::AccountId32> + Into<sp_runtime::AccountId32>,
 {
 	type LiquidityInfo = Option<LiquidityInfoEnum<C, T>>;
@@ -650,15 +662,15 @@ where
 	/// Note: The `fee` already includes the `tip`.
 	fn withdraw_fee(
 		who: &T::AccountId,
-		call: &T::Call,
-		info: &DispatchInfoOf<T::Call>,
+		call: &T::RuntimeCall,
+		info: &DispatchInfoOf<T::RuntimeCall>,
 		fee: Self::Balance,
 		tip: Self::Balance,
 	) -> Result<Self::LiquidityInfo, TransactionValidityError> {
 		// THIS IS NOT PROXY PALLET COMPATIBLE, YET
 		// Also ugly implementation to keep it maleable for now
 		match call {
-			Call::Xyk(pallet_xyk::Call::sell_asset {
+			RuntimeCall::Xyk(pallet_xyk::Call::sell_asset {
 				sold_asset_id: sold_asset_id,
 				sold_asset_amount: sold_asset_amount,
 				bought_asset_id: bought_asset_id,
@@ -716,7 +728,7 @@ where
 				}
 			},
 
-			Call::Xyk(pallet_xyk::Call::buy_asset {
+			RuntimeCall::Xyk(pallet_xyk::Call::buy_asset {
 				sold_asset_id: sold_asset_id,
 				bought_asset_amount: bought_asset_amount,
 				bought_asset_id: bought_asset_id,
@@ -780,7 +792,7 @@ where
 					OCA::withdraw_fee(who, call, info, fee, tip)
 				}
 			},
-			Call::TokenTimeout(pallet_token_timeout::Call::release_timeout { .. }) => {
+			RuntimeCall::TokenTimeout(pallet_token_timeout::Call::release_timeout { .. }) => {
 				OTA::can_release_timeout(who).map_err(|_| {
 					TransactionValidityError::Invalid(InvalidTransaction::Custom(68u8).into())
 				})?;
@@ -797,8 +809,8 @@ where
 	/// Note: The `corrected_fee` already includes the `tip`.
 	fn correct_and_deposit_fee(
 		who: &T::AccountId,
-		dispatch_info: &DispatchInfoOf<T::Call>,
-		post_info: &PostDispatchInfoOf<T::Call>,
+		dispatch_info: &DispatchInfoOf<T::RuntimeCall>,
+		post_info: &PostDispatchInfoOf<T::RuntimeCall>,
 		corrected_fee: Self::Balance,
 		tip: Self::Balance,
 		already_withdrawn: Self::LiquidityInfo,
@@ -869,8 +881,8 @@ where
 	/// Note: The `fee` already includes the `tip`.
 	fn withdraw_fee(
 		who: &T::AccountId,
-		_call: &T::Call,
-		_info: &DispatchInfoOf<T::Call>,
+		_call: &T::RuntimeCall,
+		_info: &DispatchInfoOf<T::RuntimeCall>,
 		fee: Self::Balance,
 		tip: Self::Balance,
 	) -> Result<Self::LiquidityInfo, TransactionValidityError> {
@@ -922,8 +934,8 @@ where
 	/// Note: The `corrected_fee` already includes the `tip`.
 	fn correct_and_deposit_fee(
 		who: &T::AccountId,
-		_dispatch_info: &DispatchInfoOf<T::Call>,
-		_post_info: &PostDispatchInfoOf<T::Call>,
+		_dispatch_info: &DispatchInfoOf<T::RuntimeCall>,
+		_post_info: &PostDispatchInfoOf<T::RuntimeCall>,
 		corrected_fee: Self::Balance,
 		tip: Self::Balance,
 		already_withdrawn: Self::LiquidityInfo,
@@ -957,14 +969,11 @@ where
 }
 
 parameter_types! {
-	// We want no variability, the other parameters are superfluous
-	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
-	pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(0, 100_000);
-	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1);
+	pub ConstFeeMultiplierValue: Multiplier = Multiplier::saturating_from_rational(1, 1);
 }
 
 impl pallet_transaction_payment::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction = OnChargeHandler<
 		orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
 		ThreeCurrencyOnChargeAdapter<
@@ -978,11 +987,10 @@ impl pallet_transaction_payment::Config for Runtime {
 		>,
 		TokenTimeout,
 	>;
-	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
-	type WeightToFee = WeightToFee;
-	type FeeMultiplierUpdate =
-		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
+	type WeightToFee = WeightToFee;
+	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
+	type FeeMultiplierUpdate = ConstFeeMultiplier<ConstFeeMultiplierValue>;
 }
 
 parameter_types! {
@@ -990,7 +998,7 @@ parameter_types! {
 }
 
 impl pallet_token_timeout::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type MaxCuratedTokens = MaxCuratedTokens;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type NativeTokenId = MgrTokenId;
@@ -998,12 +1006,12 @@ impl pallet_token_timeout::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ReservedXcmpWeight: Weight = Weight::from_ref_time(MAXIMUM_BLOCK_WEIGHT / 4);
-	pub const ReservedDmpWeight: Weight = Weight::from_ref_time(MAXIMUM_BLOCK_WEIGHT / 4);
+	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
+	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
 }
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type OnSystemEvent = ();
 	type SelfParaId = ParachainInfo;
 	type DmpMessageHandler = DmpQueue;
@@ -1025,7 +1033,7 @@ parameter_types! {
 }
 
 impl pallet_session::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type ValidatorId = <Self as frame_system::Config>::AccountId;
 	// we don't have stash and controller, thus we don't need the convert as well.
 	type ValidatorIdOf = ConvertInto;
@@ -1045,13 +1053,13 @@ impl pallet_aura::Config for Runtime {
 }
 
 impl pallet_sudo_mangata::Config for Runtime {
-	type Event = Event;
-	type Call = Call;
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
 }
 
 impl pallet_sudo_origin::Config for Runtime {
-	type Event = Event;
-	type Call = Call;
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
 	type SudoOrigin =
 		pallet_collective_mangata::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>;
 }
@@ -1065,9 +1073,9 @@ parameter_types! {
 
 type CouncilCollective = pallet_collective_mangata::Instance1;
 impl pallet_collective_mangata::Config<CouncilCollective> for Runtime {
-	type Origin = Origin;
-	type Proposal = Call;
-	type Event = Event;
+	type RuntimeOrigin = RuntimeOrigin;
+	type Proposal = RuntimeCall;
+	type RuntimeEvent = RuntimeEvent;
 	type MotionDuration = CouncilMotionDuration;
 	type ProposalCloseDelay = CouncilProposalCloseDelay;
 	type MaxProposals = CouncilMaxProposals;
@@ -1126,7 +1134,7 @@ parameter_types! {
 const_assert!(BlocksPerRound::get() >= 2);
 
 impl parachain_staking::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type StakingReservesProvider = MultiPurposeLiquidity;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type MonetaryGovernanceOrigin = EnsureRoot<AccountId>;
@@ -1179,7 +1187,7 @@ parameter_types! {
 const_assert!(RewardPaymentDelay::get() <= HistoryLimit::get());
 
 impl pallet_issuance::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type NativeCurrencyId = MgrTokenId;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type BlocksPerRound = BlocksPerRound;
@@ -1204,7 +1212,7 @@ parameter_types! {
 }
 
 impl pallet_vesting_mangata::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type BlockNumberToBalance = ConvertInto;
 	type MinVestedTransfer = MinVestedTransfer;
@@ -1224,7 +1232,7 @@ parameter_types! {
 }
 
 impl pallet_crowdloan_rewards::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Initialized = Initialized;
 	type InitializationPayment = InitializationPayment;
 	type MaxInitContributors = MaxInitContributorsBatchSizes;
@@ -1242,7 +1250,7 @@ impl pallet_crowdloan_rewards::Config for Runtime {
 }
 
 impl pallet_multipurpose_liquidity::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type MaxRelocks = MaxLocks;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type NativeCurrencyId = MgrTokenId;
@@ -1252,11 +1260,11 @@ impl pallet_multipurpose_liquidity::Config for Runtime {
 }
 
 impl orml_unknown_tokens::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 }
 
 impl orml_xcm::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type SovereignOrigin = EnsureRoot<AccountId>;
 }
 
@@ -1286,21 +1294,24 @@ impl<T: orml_asset_registry::Config> AssetProcessor<TokenId, AssetMetadataOf>
 }
 
 pub struct AssetAuthority;
-impl EnsureOriginWithArg<Origin, Option<u32>> for AssetAuthority {
+impl EnsureOriginWithArg<RuntimeOrigin, Option<u32>> for AssetAuthority {
 	type Success = ();
 
-	fn try_origin(origin: Origin, _asset_id: &Option<u32>) -> Result<Self::Success, Origin> {
+	fn try_origin(
+		origin: RuntimeOrigin,
+		_asset_id: &Option<u32>,
+	) -> Result<Self::Success, RuntimeOrigin> {
 		EnsureRoot::try_origin(origin)
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
-	fn successful_origin(_asset_id: &Option<u32>) -> Origin {
+	fn successful_origin(_asset_id: &Option<u32>) -> RuntimeOrigin {
 		EnsureRoot::successful_origin()
 	}
 }
 
 impl orml_asset_registry::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type CustomMetadata = CustomMetadata;
 	type AssetId = TokenId;
 	type AuthorityOrigin = AssetAuthority;
@@ -1342,16 +1353,16 @@ parameter_types! {
 	pub const AnnouncementDepositFactor: Balance = deposit(0, 68);
 }
 
-impl InstanceFilter<Call> for ProxyType {
-	fn filter(&self, c: &Call) -> bool {
+impl InstanceFilter<RuntimeCall> for ProxyType {
+	fn filter(&self, c: &RuntimeCall) -> bool {
 		match self {
-			_ if matches!(c, Call::Utility(..)) => true,
+			_ if matches!(c, RuntimeCall::Utility(..)) => true,
 			ProxyType::Any => true,
 			ProxyType::AutoCompound => {
 				matches!(
 					c,
-					Call::Xyk(pallet_xyk::Call::provide_liquidity_with_conversion { .. }) |
-						Call::Xyk(pallet_xyk::Call::compound_rewards { .. })
+					RuntimeCall::Xyk(pallet_xyk::Call::provide_liquidity_with_conversion { .. }) |
+						RuntimeCall::Xyk(pallet_xyk::Call::compound_rewards { .. })
 				)
 			},
 		}
@@ -1367,8 +1378,8 @@ impl InstanceFilter<Call> for ProxyType {
 }
 
 impl pallet_proxy::Config for Runtime {
-	type Event = Event;
-	type Call = Call;
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
 	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgrTokenId>;
 	type ProxyType = ProxyType;
 	type ProxyDepositBase = ProxyDepositBase;
@@ -1498,7 +1509,7 @@ impl_runtime_apis! {
 				.iter()
 				.any(|record|
 					matches!(record.event,
-						Event::ParachainSystem( cumulus_pallet_parachain_system::Event::<Runtime>::ValidationFunctionApplied{relay_chain_block_num: _})))
+						RuntimeEvent::ParachainSystem( cumulus_pallet_parachain_system::Event::<Runtime>::ValidationFunctionApplied{relay_chain_block_num: _})))
 		}
 
 		fn store_seed(seed: sp_core::H256){
@@ -1516,7 +1527,7 @@ impl_runtime_apis! {
 
 		fn create_enqueue_txs_inherent(txs: Vec<<Block as BlockT>::Extrinsic>) -> <Block as BlockT>::Extrinsic{
 			UncheckedExtrinsic::new_unsigned(
-				Call::System(frame_system::Call::enqueue_txs{txs:
+				RuntimeCall::System(frame_system::Call::enqueue_txs{txs:
 					txs.into_iter()
 					.map(|tx|
 						(

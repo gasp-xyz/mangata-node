@@ -26,7 +26,7 @@ fn test_env(xyk_metadata: Option<XykMetadata>) -> TestExternalities {
 
 fn create_pool() -> DispatchResultWithPostInfo {
 	pallet_xyk::Pallet::<Runtime>::create_pool(
-		Origin::signed(AccountId::from(ALICE)),
+		RuntimeOrigin::signed(AccountId::from(ALICE)),
 		NATIVE_ASSET_ID,
 		10_ * UNIT,
 		ASSET_ID_1,

@@ -57,14 +57,14 @@ pub mod v1 {
 		}
 
 		#[cfg(feature = "try-runtime")]
-		fn pre_upgrade() -> Result<(), &'static str> {
+		fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
 			log!(info, "Bootstrap::pre_upgrade");
 			assert_eq!(Pallet::<T>::on_chain_storage_version(), 1);
-			Ok(())
+			Ok(Vec::new())
 		}
 
 		#[cfg(feature = "try-runtime")]
-		fn post_upgrade() -> Result<(), &'static str> {
+		fn post_upgrade(_state: Vec<u8>) -> Result<(), &'static str> {
 			log!(info, "Bootstrap::post_upgrade");
 			assert_eq!(Pallet::<T>::on_chain_storage_version(), 1);
 			Ok(())
@@ -124,14 +124,14 @@ pub mod v2 {
 		}
 
 		#[cfg(feature = "try-runtime")]
-		fn pre_upgrade() -> Result<(), &'static str> {
+		fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
 			log!(info, "Bootstrap::pre_upgrade");
 			assert_eq!(Pallet::<T>::on_chain_storage_version(), 2);
-			Ok(())
+			Ok(Vec::new())
 		}
 
 		#[cfg(feature = "try-runtime")]
-		fn post_upgrade() -> Result<(), &'static str> {
+		fn post_upgrade(_state: Vec<u8>) -> Result<(), &'static str> {
 			log!(info, "Bootstrap::post_upgrade");
 			assert_eq!(Pallet::<T>::on_chain_storage_version(), 2);
 			Ok(())

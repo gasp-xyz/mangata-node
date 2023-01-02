@@ -8,6 +8,7 @@ edition = "2021"
 mangata-types = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 frame-support = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 frame-system = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+pallet-balances = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-io = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-runtime = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 pallet-proxy = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }

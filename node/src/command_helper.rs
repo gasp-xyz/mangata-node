@@ -33,7 +33,7 @@ pub fn fetch_nonce(client: &KusamaFullClient, account: sp_core::sr25519::Pair) -
 pub fn create_extrinsic(
 	client: &KusamaFullClient,
 	sender: sp_core::sr25519::Pair,
-	function: impl Into<mangata_kusama_runtime::Call>,
+	function: impl Into<mangata_kusama_runtime::RuntimeCall>,
 	nonce: Option<u32>,
 ) -> mangata_kusama_runtime::UncheckedExtrinsic {
 	let function = function.into();
@@ -151,6 +151,8 @@ pub fn inherent_benchmark_data(prev_seed: [u8; 32], duration: Duration) -> Resul
 		current_para_block: 0,
 		relay_offset: 0,
 		relay_blocks_per_para_block: 2,
+		para_blocks_per_relay_epoch: 0,
+		relay_randomness_config: (),
 		xcm_config: Default::default(),
 		raw_downward_messages: Default::default(),
 		raw_horizontal_messages: Default::default(),

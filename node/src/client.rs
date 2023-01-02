@@ -21,6 +21,7 @@ use sc_client_api::{Backend as BackendT, BlockchainEvents, KeyIterator};
 use sp_api::{CallApiAt, NumberFor, ProvideRuntimeApi};
 use sp_blockchain::HeaderBackend;
 use sp_consensus::BlockStatus;
+use sp_core::H256;
 use sp_runtime::{
 	generic::{BlockId, SignedBlock},
 	traits::{BlakeTwo256, Block as BlockT},
@@ -308,17 +309,13 @@ impl sc_client_api::BlockBackend<Block> for Client {
 }
 
 impl sc_client_api::StorageProvider<Block, crate::service::FullBackend> for Client {
-	fn storage(
-		&self,
-		id: &BlockId<Block>,
-		key: &StorageKey,
-	) -> sp_blockchain::Result<Option<StorageData>> {
+	fn storage(&self, id: &H256, key: &StorageKey) -> sp_blockchain::Result<Option<StorageData>> {
 		match_client!(self, storage(id, key))
 	}
 
 	fn storage_keys(
 		&self,
-		id: &BlockId<Block>,
+		id: &H256,
 		key_prefix: &StorageKey,
 	) -> sp_blockchain::Result<Vec<StorageKey>> {
 		match_client!(self, storage_keys(id, key_prefix))
@@ -326,7 +323,7 @@ impl sc_client_api::StorageProvider<Block, crate::service::FullBackend> for Clie
 
 	fn storage_hash(
 		&self,
-		id: &BlockId<Block>,
+		id: &H256,
 		key: &StorageKey,
 	) -> sp_blockchain::Result<Option<<Block as BlockT>::Hash>> {
 		match_client!(self, storage_hash(id, key))
@@ -334,7 +331,7 @@ impl sc_client_api::StorageProvider<Block, crate::service::FullBackend> for Clie
 
 	fn storage_pairs(
 		&self,
-		id: &BlockId<Block>,
+		id: &H256,
 		key_prefix: &StorageKey,
 	) -> sp_blockchain::Result<Vec<(StorageKey, StorageData)>> {
 		match_client!(self, storage_pairs(id, key_prefix))
@@ -342,7 +339,7 @@ impl sc_client_api::StorageProvider<Block, crate::service::FullBackend> for Clie
 
 	fn storage_keys_iter<'a>(
 		&self,
-		id: &BlockId<Block>,
+		id: &H256,
 		prefix: Option<&'a StorageKey>,
 		start_key: Option<&StorageKey>,
 	) -> sp_blockchain::Result<
@@ -357,7 +354,7 @@ impl sc_client_api::StorageProvider<Block, crate::service::FullBackend> for Clie
 
 	fn child_storage(
 		&self,
-		id: &BlockId<Block>,
+		id: &H256,
 		child_info: &ChildInfo,
 		key: &StorageKey,
 	) -> sp_blockchain::Result<Option<StorageData>> {
@@ -366,7 +363,7 @@ impl sc_client_api::StorageProvider<Block, crate::service::FullBackend> for Clie
 
 	fn child_storage_keys(
 		&self,
-		id: &BlockId<Block>,
+		id: &H256,
 		child_info: &ChildInfo,
 		key_prefix: &StorageKey,
 	) -> sp_blockchain::Result<Vec<StorageKey>> {
@@ -375,7 +372,7 @@ impl sc_client_api::StorageProvider<Block, crate::service::FullBackend> for Clie
 
 	fn child_storage_keys_iter<'a>(
 		&self,
-		id: &BlockId<Block>,
+		id: &H256,
 		child_info: ChildInfo,
 		prefix: Option<&'a StorageKey>,
 		start_key: Option<&StorageKey>,
@@ -391,7 +388,7 @@ impl sc_client_api::StorageProvider<Block, crate::service::FullBackend> for Clie
 
 	fn child_storage_hash(
 		&self,
-		id: &BlockId<Block>,
+		id: &H256,
 		child_info: &ChildInfo,
 		key: &StorageKey,
 	) -> sp_blockchain::Result<Option<<Block as BlockT>::Hash>> {

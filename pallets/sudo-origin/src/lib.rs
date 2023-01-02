@@ -90,7 +90,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::{traits::UnfilteredDispatchable, weights::GetDispatchInfo};
+use frame_support::{dispatch::GetDispatchInfo, traits::UnfilteredDispatchable};
 use sp_runtime::{traits::StaticLookup, DispatchResult};
 use sp_std::{convert::TryInto, prelude::*};
 
@@ -124,13 +124,15 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// The overarching event type.
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// A sudo-able call.
-		type Call: Parameter + UnfilteredDispatchable<Origin = Self::Origin> + GetDispatchInfo;
+		type RuntimeCall: Parameter
+			+ UnfilteredDispatchable<RuntimeOrigin = Self::RuntimeOrigin>
+			+ GetDispatchInfo;
 
 		/// The Origin allowed to use sudo
-		type SudoOrigin: EnsureOrigin<Self::Origin>;
+		type SudoOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}
 
 	#[pallet::pallet]
@@ -153,7 +155,7 @@ pub mod pallet {
 		})]
 		pub fn sudo(
 			origin: OriginFor<T>,
-			call: Box<<T as Config>::Call>,
+			call: Box<<T as Config>::RuntimeCall>,
 		) -> DispatchResultWithPostInfo {
 			// This is a public call, so we ensure that the origin is SudoOrigin.
 			T::SudoOrigin::ensure_origin(origin)?;
@@ -176,7 +178,7 @@ pub mod pallet {
 		#[pallet::weight((*_weight, call.get_dispatch_info().class))]
 		pub fn sudo_unchecked_weight(
 			origin: OriginFor<T>,
-			call: Box<<T as Config>::Call>,
+			call: Box<<T as Config>::RuntimeCall>,
 			_weight: Weight,
 		) -> DispatchResultWithPostInfo {
 			// This is a public call, so we ensure that the origin is SudoOrigin.
@@ -216,7 +218,7 @@ pub mod pallet {
 		pub fn sudo_as(
 			origin: OriginFor<T>,
 			who: <T::Lookup as StaticLookup>::Source,
-			call: Box<<T as Config>::Call>,
+			call: Box<<T as Config>::RuntimeCall>,
 		) -> DispatchResultWithPostInfo {
 			// This is a public call, so we ensure that the origin is SudoOrigin.
 			T::SudoOrigin::ensure_origin(origin)?;

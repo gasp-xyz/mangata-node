@@ -1,5 +1,4 @@
 use crate::chain_spec::Extensions;
-use artemis_core::{App, AppId};
 use codec::Encode;
 use cumulus_primitives_core::ParaId;
 use hex::FromHex;

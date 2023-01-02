@@ -279,7 +279,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config + BootstrapBenchmarkingConfig {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// tokens
 		type Currency: MultiTokenCurrencyExtended<Self::AccountId>

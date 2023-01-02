@@ -43,7 +43,7 @@ parameter_types! {
 
 #[cfg(test)]
 mod test_weights {
-	use sp_weights::constants;
+	use frame_support::weights::constants;
 
 	/// Checks that the weight exists and is sane.
 	// NOTE: If this test fails but you are sure that the generated values are fine,

@@ -1,23 +1,6 @@
-// This file is part of Substrate.
-
-// Copyright (C) 2022 Parity Technologies (UK) Ltd.
-// SPDX-License-Identifier: Apache-2.0
-
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
-//! DATE: 2022-12-30 (Y/M/D)
-//! HOSTNAME: `ecd803424b9c`, CPU: `AMD EPYC 7B13`
+//! DATE: 2023-01-02 (Y/M/D)
+//! HOSTNAME: `6b0c83a231cd`, CPU: `AMD EPYC 7B13`
 //!
 //! SHORT-NAME: `block`, LONG-NAME: `BlockExecution`, RUNTIME: `Mangata Development`
 //! WARMUPS: `10`, REPEAT: `100`
@@ -46,14 +29,38 @@ parameter_types! {
 	/// Calculated by multiplying the *Average* with `1.0` and adding `0`.
 	///
 	/// Stats nanoseconds:
-	///   Min, Max: 2_366_040, 2_458_889
-	///   Average:  2_389_834
-	///   Median:   2_388_079
-	///   Std-Dev:  16515.8
+	///   Min, Max: 7_965_169, 8_157_708
+	///   Average:  8_012_576
+	///   Median:   8_010_819
+	///   Std-Dev:  26739.71
 	///
 	/// Percentiles nanoseconds:
-	///   99th: 2_456_300
-	///   95th: 2_410_270
-	///   75th: 2_394_860
-	pub const BlockExecutionWeight: Weight = WEIGHT_PER_NANOS.saturating_mul(2_389_834);
+	///   99th: 8_120_089
+	///   95th: 8_045_149
+	///   75th: 8_020_858
+	pub const BlockExecutionWeight: Weight = WEIGHT_PER_NANOS.saturating_mul(8_012_576);
+}
+
+#[cfg(test)]
+mod test_weights {
+	use frame_support::weights::constants;
+
+	/// Checks that the weight exists and is sane.
+	// NOTE: If this test fails but you are sure that the generated values are fine,
+	// you can delete it.
+	#[test]
+	fn sane() {
+		let w = super::BlockExecutionWeight::get();
+
+		// At least 100 µs.
+		assert!(
+			w.ref_time() >= 100u64 * constants::WEIGHT_PER_MICROS.ref_time(),
+			"Weight should be at least 100 µs."
+		);
+		// At most 50 ms.
+		assert!(
+			w.ref_time() <= 50u64 * constants::WEIGHT_PER_MILLIS.ref_time(),
+			"Weight should be at most 50 ms."
+		);
+	}
 }

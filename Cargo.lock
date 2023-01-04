@@ -1724,8 +1724,8 @@ dependencies = [
  "sc-keystore",
  "sc-network",
  "sc-network-common",
- "sc-network-light 0.10.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31)",
- "sc-network-sync 0.10.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31)",
+ "sc-network-light",
+ "sc-network-sync",
  "sc-service",
  "sc-telemetry",
  "sc-tracing",
@@ -3653,7 +3653,7 @@ dependencies = [
  "pallet-conviction-voting",
  "pallet-democracy",
  "pallet-election-provider-multi-phase",
- "pallet-election-provider-support-benchmarking 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31)",
+ "pallet-election-provider-support-benchmarking",
  "pallet-elections-phragmen",
  "pallet-fast-unstake",
  "pallet-gilt",
@@ -4499,8 +4499,8 @@ dependencies = [
  "sc-network",
  "sc-network-bitswap 0.10.0-dev (git+https://github.com/mangata-finance/substrate?branch=mangata-dev)",
  "sc-network-common",
- "sc-network-light 0.10.0-dev (git+https://github.com/mangata-finance/substrate?branch=mangata-dev)",
- "sc-network-sync 0.10.0-dev (git+https://github.com/mangata-finance/substrate?branch=mangata-dev)",
+ "sc-network-light",
+ "sc-network-sync",
  "sc-rpc",
  "sc-rpc-api",
  "sc-service",
@@ -5621,7 +5621,7 @@ dependencies = [
 [[package]]
 name = "pallet-child-bounties"
 version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31#7a4e5163091384c4c10b6d76f5cb80dac0834f38"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#902813c21e6d784fe5e3b67772d3a176afe643ff"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5674,7 +5674,7 @@ dependencies = [
 [[package]]
 name = "pallet-conviction-voting"
 version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31#7a4e5163091384c4c10b6d76f5cb80dac0834f38"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#902813c21e6d784fe5e3b67772d3a176afe643ff"
 dependencies = [
  "assert_matches",
  "frame-benchmarking",
@@ -5739,7 +5739,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
- "pallet-election-provider-support-benchmarking 4.0.0-dev (git+https://github.com/mangata-finance//substrate?branch=mangata-dev)",
+ "pallet-election-provider-support-benchmarking",
  "parity-scale-codec",
  "rand 0.7.3",
  "scale-info",
@@ -5757,19 +5757,6 @@ dependencies = [
 name = "pallet-election-provider-support-benchmarking"
 version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#902813c21e6d784fe5e3b67772d3a176afe643ff"
-dependencies = [
- "frame-benchmarking",
- "frame-election-provider-support",
- "frame-system",
- "parity-scale-codec",
- "sp-npos-elections",
- "sp-runtime",
-]
-
-[[package]]
-name = "pallet-election-provider-support-benchmarking"
-version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31#7a4e5163091384c4c10b6d76f5cb80dac0834f38"
 dependencies = [
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -5800,7 +5787,7 @@ dependencies = [
 [[package]]
 name = "pallet-fast-unstake"
 version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31#7a4e5163091384c4c10b6d76f5cb80dac0834f38"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#902813c21e6d784fe5e3b67772d3a176afe643ff"
 dependencies = [
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -5821,7 +5808,7 @@ dependencies = [
 [[package]]
 name = "pallet-gilt"
 version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31#7a4e5163091384c4c10b6d76f5cb80dac0834f38"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#902813c21e6d784fe5e3b67772d3a176afe643ff"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6034,7 +6021,7 @@ dependencies = [
 [[package]]
 name = "pallet-nomination-pools"
 version = "1.0.0"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31#7a4e5163091384c4c10b6d76f5cb80dac0834f38"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#902813c21e6d784fe5e3b67772d3a176afe643ff"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -6051,7 +6038,7 @@ dependencies = [
 [[package]]
 name = "pallet-nomination-pools-benchmarking"
 version = "1.0.0"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31#7a4e5163091384c4c10b6d76f5cb80dac0834f38"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#902813c21e6d784fe5e3b67772d3a176afe643ff"
 dependencies = [
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -6071,7 +6058,7 @@ dependencies = [
 [[package]]
 name = "pallet-nomination-pools-runtime-api"
 version = "1.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31#7a4e5163091384c4c10b6d76f5cb80dac0834f38"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#902813c21e6d784fe5e3b67772d3a176afe643ff"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
@@ -6098,7 +6085,7 @@ dependencies = [
 [[package]]
 name = "pallet-offences-benchmarking"
 version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31#7a4e5163091384c4c10b6d76f5cb80dac0834f38"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#902813c21e6d784fe5e3b67772d3a176afe643ff"
 dependencies = [
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -6121,7 +6108,7 @@ dependencies = [
 [[package]]
 name = "pallet-preimage"
 version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31#7a4e5163091384c4c10b6d76f5cb80dac0834f38"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#902813c21e6d784fe5e3b67772d3a176afe643ff"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6153,7 +6140,7 @@ dependencies = [
 [[package]]
 name = "pallet-ranked-collective"
 version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31#7a4e5163091384c4c10b6d76f5cb80dac0834f38"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#902813c21e6d784fe5e3b67772d3a176afe643ff"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6171,7 +6158,7 @@ dependencies = [
 [[package]]
 name = "pallet-recovery"
 version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31#7a4e5163091384c4c10b6d76f5cb80dac0834f38"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#902813c21e6d784fe5e3b67772d3a176afe643ff"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6186,7 +6173,7 @@ dependencies = [
 [[package]]
 name = "pallet-referenda"
 version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31#7a4e5163091384c4c10b6d76f5cb80dac0834f38"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#902813c21e6d784fe5e3b67772d3a176afe643ff"
 dependencies = [
  "assert_matches",
  "frame-benchmarking",
@@ -6241,7 +6228,7 @@ dependencies = [
 [[package]]
 name = "pallet-session-benchmarking"
 version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31#7a4e5163091384c4c10b6d76f5cb80dac0834f38"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#902813c21e6d784fe5e3b67772d3a176afe643ff"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6305,7 +6292,7 @@ dependencies = [
 [[package]]
 name = "pallet-staking-reward-fn"
 version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31#7a4e5163091384c4c10b6d76f5cb80dac0834f38"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#902813c21e6d784fe5e3b67772d3a176afe643ff"
 dependencies = [
  "log",
  "sp-arithmetic",
@@ -6558,7 +6545,7 @@ dependencies = [
 [[package]]
 name = "pallet-whitelist"
 version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31#7a4e5163091384c4c10b6d76f5cb80dac0834f38"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#902813c21e6d784fe5e3b67772d3a176afe643ff"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7806,7 +7793,7 @@ dependencies = [
  "pallet-collective",
  "pallet-democracy",
  "pallet-election-provider-multi-phase",
- "pallet-election-provider-support-benchmarking 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31)",
+ "pallet-election-provider-support-benchmarking",
  "pallet-elections-phragmen",
  "pallet-fast-unstake",
  "pallet-grandpa",
@@ -9853,111 +9840,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "sc-network-light"
-version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#902813c21e6d784fe5e3b67772d3a176afe643ff"
-dependencies = [
- "array-bytes",
- "futures",
- "libp2p",
- "log",
- "parity-scale-codec",
- "prost",
- "prost-build",
- "sc-client-api",
- "sc-network-common",
- "sc-peerset",
- "sp-blockchain",
- "sp-core",
- "sp-runtime",
- "thiserror",
-]
-
-[[package]]
-name = "sc-network-light"
-version = "0.10.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31#7a4e5163091384c4c10b6d76f5cb80dac0834f38"
-dependencies = [
- "array-bytes",
- "futures",
- "libp2p",
- "log",
- "parity-scale-codec",
- "prost",
- "prost-build",
- "sc-client-api",
- "sc-network-common",
- "sc-peerset",
- "sp-blockchain",
- "sp-core",
- "sp-runtime",
- "thiserror",
-]
-
-[[package]]
 name = "sc-network-sync"
 version = "0.10.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#902813c21e6d784fe5e3b67772d3a176afe643ff"
-dependencies = [
- "array-bytes",
- "fork-tree",
- "futures",
- "libp2p",
- "log",
- "lru 0.7.8",
- "mockall",
- "parity-scale-codec",
- "prost",
- "prost-build",
- "sc-client-api",
- "sc-consensus",
- "sc-network-common",
- "sc-peerset",
- "sc-utils",
- "smallvec",
- "sp-arithmetic",
- "sp-blockchain",
- "sp-consensus",
- "sp-core",
- "sp-finality-grandpa",
- "sp-runtime",
- "thiserror",
-]
-
-[[package]]
-name = "sc-network-sync"
-version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#902813c21e6d784fe5e3b67772d3a176afe643ff"
-dependencies = [
- "array-bytes",
- "fork-tree",
- "futures",
- "libp2p",
- "log",
- "lru 0.7.8",
- "mockall",
- "parity-scale-codec",
- "prost",
- "prost-build",
- "sc-client-api",
- "sc-consensus",
- "sc-network-common",
- "sc-peerset",
- "sc-utils",
- "smallvec",
- "sp-arithmetic",
- "sp-blockchain",
- "sp-consensus",
- "sp-core",
- "sp-finality-grandpa",
- "sp-runtime",
- "thiserror",
-]
-
-[[package]]
-name = "sc-network-sync"
-version = "0.10.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31#7a4e5163091384c4c10b6d76f5cb80dac0834f38"
 dependencies = [
  "array-bytes",
  "fork-tree",
@@ -10170,8 +10055,8 @@ dependencies = [
  "sc-network",
  "sc-network-bitswap 0.10.0-dev (git+https://github.com/mangata-finance//substrate?branch=mangata-dev)",
  "sc-network-common",
- "sc-network-light 0.10.0-dev (git+https://github.com/mangata-finance//substrate?branch=mangata-dev)",
- "sc-network-sync 0.10.0-dev (git+https://github.com/mangata-finance//substrate?branch=mangata-dev)",
+ "sc-network-light",
+ "sc-network-sync",
  "sc-network-transactions",
  "sc-offchain",
  "sc-rpc",
@@ -11817,7 +11702,7 @@ dependencies = [
 [[package]]
 name = "substrate-state-trie-migration-rpc"
 version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31#7a4e5163091384c4c10b6d76f5cb80dac0834f38"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#902813c21e6d784fe5e3b67772d3a176afe643ff"
 dependencies = [
  "jsonrpsee",
  "log",
@@ -13011,7 +12896,7 @@ dependencies = [
  "pallet-collective",
  "pallet-democracy",
  "pallet-election-provider-multi-phase",
- "pallet-election-provider-support-benchmarking 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31)",
+ "pallet-election-provider-support-benchmarking",
  "pallet-elections-phragmen",
  "pallet-fast-unstake",
  "pallet-grandpa",

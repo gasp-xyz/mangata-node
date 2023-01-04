@@ -19,8 +19,6 @@ use sc_service::{
 	PartialComponents,
 };
 use std::sync::Mutex;
-use std::rc::Rc;
-use std::cell::RefCell;
 
 use sp_core::hexdisplay::HexDisplay;
 
@@ -395,7 +393,7 @@ pub fn run() -> Result<()> {
 								executor,
 								)?;
 
-						let mut client = Rc::new(RefCell::new(c));
+						let mut client = Arc::new(Mutex::new(c));
 
 						let ext_builder = BenchmarkExtrinsicBuilder::new(client.clone());
 

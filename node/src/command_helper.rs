@@ -12,9 +12,7 @@ use sp_keystore::SyncCryptoStore;
 use sp_runtime::{generic, OpaqueExtrinsic, SaturatedConversion};
 use substrate_frame_rpc_system::AccountNonceApi;
 
-use std::{sync::Arc, time::Duration};
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::{sync::{Arc, Mutex}, time::Duration};
 
 #[cfg(feature = "mangata-kusama")]
 pub type KusamaFullClient = crate::service::FullClient<
@@ -90,13 +88,13 @@ pub fn create_extrinsic(
 /// Generates extrinsics for the `benchmark overhead` command.
 #[cfg(feature = "mangata-kusama")]
 pub struct BenchmarkExtrinsicBuilder {
-	client: Rc<RefCell<KusamaFullClient>>,
+	client: Arc<Mutex<KusamaFullClient>>,
 }
 
 #[cfg(feature = "mangata-kusama")]
 impl BenchmarkExtrinsicBuilder {
 	/// Creates a new [`Self`] from the given client.
-	pub fn new(client: Rc<RefCell<KusamaFullClient>>) -> Self {
+	pub fn new(client: Arc<Mutex<KusamaFullClient>>) -> Self {
 		Self { client }
 	}
 }
@@ -114,7 +112,7 @@ impl frame_benchmarking_cli::ExtrinsicBuilder for BenchmarkExtrinsicBuilder {
 	fn build(&self, nonce: u32) -> std::result::Result<OpaqueExtrinsic, &'static str> {
 		let acc = Sr25519Keyring::Bob.pair();
 		let extrinsic: OpaqueExtrinsic = create_extrinsic(
-			&*self.client.borrow(),
+			&*self.client.lock().unwrap(),
 			acc,
 			frame_system::Call::remark { remark: vec![] },
 			Some(nonce),

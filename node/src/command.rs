@@ -18,6 +18,7 @@ use sc_service::{
 	config::{BasePath, PrometheusConfig},
 	PartialComponents,
 };
+use std::sync::Mutex;
 
 use sp_core::hexdisplay::HexDisplay;
 
@@ -359,11 +360,43 @@ pub fn run() -> Result<()> {
 					}),
 					BenchmarkCmd::Extrinsic(_) => Err("Unsupported benchmarking command".into()),
 					BenchmarkCmd::Overhead(cmd) => runner.sync_run(|config| {
-						let PartialComponents { client, task_manager: _, .. } = new_partial::<
-							service::mangata_kusama_runtime::RuntimeApi,
-							service::MangataKusamaRuntimeExecutor,
-						>(&config)?;
+
+						// let PartialComponents { 
+						// 	backend,
+						// 	mut client,
+						// 	import_queue,
+						// 	keystore_container,
+						// 	task_manager,
+						// 	transaction_pool,
+						// 	select_chain,
+						// 	other,
+						// } = new_partial::<
+						// 	service::mangata_kusama_runtime::RuntimeApi,
+						// 	service::MangataKusamaRuntimeExecutor,
+						// >(&config)?;
+
+							// drop(transaction_pool);
+							// drop(import_queue);
+						
+						let executor = sc_executor::NativeElseWasmExecutor::<service::MangataKusamaRuntimeExecutor>::new(
+							config.wasm_method,
+							config.default_heap_pages,
+							config.max_runtime_instances,
+							config.runtime_cache_size,
+						);
+
+						let (c, backend, _, _) =
+							sc_service::new_full_parts::<mangata_types::Block,
+							service::mangata_kusama_runtime::RuntimeApi, _>(
+								&config,
+								None,
+								executor,
+								)?;
+
+						let mut client = Arc::new(Mutex::new(c));
+
 						let ext_builder = BenchmarkExtrinsicBuilder::new(client.clone());
+
 
 						let first_block_inherent =
 							inherent_benchmark_data([0u8; 32], Duration::from_millis(0))?;

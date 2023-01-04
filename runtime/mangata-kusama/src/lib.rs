@@ -497,6 +497,7 @@ type SessionLenghtOf<T> = <T as parachain_staking::Config>::BlocksPerRound;
 
 impl pallet_xyk::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type MaintenanceStatusProvider = Maintenance;
 	type ActivationReservesProvider = MultiPurposeLiquidity;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type NativeCurrencyId = MgxTokenId;
@@ -557,6 +558,7 @@ impl pallet_bootstrap::BootstrapBenchmarkingConfig for Runtime {}
 
 impl pallet_bootstrap::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type MaintenanceStatusProvider = Maintenance;
 	type PoolCreateApi = Xyk;
 	type DefaultBootstrapPromotedPoolWeight = DefaultBootstrapPromotedPoolWeight;
 	type BootstrapUpdateBuffer = BootstrapUpdateBuffer;
@@ -1179,6 +1181,7 @@ parameter_types! {
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type MaintenanceStatusProvider = Maintenance;
 	type OnSystemEvent = ();
 	type SelfParaId = ParachainInfo;
 	type DmpMessageHandler = DmpQueue;
@@ -1565,6 +1568,19 @@ impl pallet_proxy::Config for Runtime {
 	type AnnouncementDepositFactor = AnnouncementDepositFactor;
 }
 
+pub struct FoundationAccountsProvider<T: frame_system::Config>(PhantomData<T>);
+impl<T: frame_system::Config> Get<Vec<T::AccountId>> for FoundationAccountsProvider<T> {
+	fn get() -> Vec<T::AccountId> {
+		// TODO - Add foundation accounts
+		vec![]
+	}
+}
+
+impl pallet_maintenance::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type FoundationAccountsProvider = FoundationAccountsProvider<Runtime>;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -1632,6 +1648,8 @@ construct_runtime!(
 		Utility: pallet_utility_mangata::{Pallet, Call, Event} = 54,
 
 		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 55,
+
+		Maintenance: pallet_maintenance::{Pallet, Call, Storage, Event<T>} = 60,
 	}
 );
 

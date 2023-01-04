@@ -1265,7 +1265,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-cli"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#3bdb665fed76e2d0cf2ee03cbbe5a5feca50b7c6"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/node-maintenance-mode#b8e3afec16d28a4c757bd03f9ba0adef9761eb04"
 dependencies = [
  "clap",
  "parity-scale-codec",
@@ -1280,7 +1280,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-collator"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#3bdb665fed76e2d0cf2ee03cbbe5a5feca50b7c6"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/node-maintenance-mode#b8e3afec16d28a4c757bd03f9ba0adef9761eb04"
 dependencies = [
  "cumulus-client-consensus-common",
  "cumulus-client-network",
@@ -1303,7 +1303,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-consensus-aura"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#3bdb665fed76e2d0cf2ee03cbbe5a5feca50b7c6"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/node-maintenance-mode#b8e3afec16d28a4c757bd03f9ba0adef9761eb04"
 dependencies = [
  "async-trait",
  "cumulus-client-consensus-common",
@@ -1332,7 +1332,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-consensus-common"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#3bdb665fed76e2d0cf2ee03cbbe5a5feca50b7c6"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/node-maintenance-mode#b8e3afec16d28a4c757bd03f9ba0adef9761eb04"
 dependencies = [
  "async-trait",
  "cumulus-client-pov-recovery",
@@ -1355,7 +1355,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-network"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#3bdb665fed76e2d0cf2ee03cbbe5a5feca50b7c6"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/node-maintenance-mode#b8e3afec16d28a4c757bd03f9ba0adef9761eb04"
 dependencies = [
  "async-trait",
  "cumulus-relay-chain-interface",
@@ -1378,7 +1378,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-pov-recovery"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#3bdb665fed76e2d0cf2ee03cbbe5a5feca50b7c6"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/node-maintenance-mode#b8e3afec16d28a4c757bd03f9ba0adef9761eb04"
 dependencies = [
  "cumulus-primitives-core",
  "cumulus-relay-chain-interface",
@@ -1401,7 +1401,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-service"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#3bdb665fed76e2d0cf2ee03cbbe5a5feca50b7c6"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/node-maintenance-mode#b8e3afec16d28a4c757bd03f9ba0adef9761eb04"
 dependencies = [
  "cumulus-client-cli",
  "cumulus-client-collator",
@@ -1429,7 +1429,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-aura-ext"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#3bdb665fed76e2d0cf2ee03cbbe5a5feca50b7c6"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/node-maintenance-mode#b8e3afec16d28a4c757bd03f9ba0adef9761eb04"
 dependencies = [
  "frame-executive",
  "frame-support",
@@ -1446,12 +1446,13 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-dmp-queue"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#3bdb665fed76e2d0cf2ee03cbbe5a5feca50b7c6"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/node-maintenance-mode#b8e3afec16d28a4c757bd03f9ba0adef9761eb04"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
  "frame-system",
  "log",
+ "mangata-types",
  "parity-scale-codec",
  "scale-info",
  "sp-io",
@@ -1463,7 +1464,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-parachain-system"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#3bdb665fed76e2d0cf2ee03cbbe5a5feca50b7c6"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/node-maintenance-mode#b8e3afec16d28a4c757bd03f9ba0adef9761eb04"
 dependencies = [
  "bytes",
  "cumulus-pallet-parachain-system-proc-macro",
@@ -1474,6 +1475,7 @@ dependencies = [
  "frame-system",
  "impl-trait-for-tuples",
  "log",
+ "mangata-types",
  "parity-scale-codec",
  "polkadot-parachain",
  "scale-info",
@@ -1491,7 +1493,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-parachain-system-proc-macro"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#3bdb665fed76e2d0cf2ee03cbbe5a5feca50b7c6"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/node-maintenance-mode#b8e3afec16d28a4c757bd03f9ba0adef9761eb04"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -1502,7 +1504,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-session-benchmarking"
 version = "3.0.0"
-source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev-v0.9.36#54e9d305d9fa8cfee4768c1d365226befc1f2819"
+source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev#6ab2e3a1969828966a2175a88584d210d7380959"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -1516,7 +1518,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-xcm"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#3bdb665fed76e2d0cf2ee03cbbe5a5feca50b7c6"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/node-maintenance-mode#b8e3afec16d28a4c757bd03f9ba0adef9761eb04"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -1532,13 +1534,14 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-xcmp-queue"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#3bdb665fed76e2d0cf2ee03cbbe5a5feca50b7c6"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/node-maintenance-mode#b8e3afec16d28a4c757bd03f9ba0adef9761eb04"
 dependencies = [
  "cumulus-primitives-core",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
+ "mangata-types",
  "parity-scale-codec",
  "rand_chacha 0.3.1",
  "scale-info",
@@ -1551,7 +1554,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-core"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#3bdb665fed76e2d0cf2ee03cbbe5a5feca50b7c6"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/node-maintenance-mode#b8e3afec16d28a4c757bd03f9ba0adef9761eb04"
 dependencies = [
  "parity-scale-codec",
  "polkadot-core-primitives",
@@ -1566,7 +1569,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-parachain-inherent"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#3bdb665fed76e2d0cf2ee03cbbe5a5feca50b7c6"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/node-maintenance-mode#b8e3afec16d28a4c757bd03f9ba0adef9761eb04"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -1589,7 +1592,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-timestamp"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#3bdb665fed76e2d0cf2ee03cbbe5a5feca50b7c6"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/node-maintenance-mode#b8e3afec16d28a4c757bd03f9ba0adef9761eb04"
 dependencies = [
  "cumulus-primitives-core",
  "futures",
@@ -1602,7 +1605,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-utility"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#3bdb665fed76e2d0cf2ee03cbbe5a5feca50b7c6"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/node-maintenance-mode#b8e3afec16d28a4c757bd03f9ba0adef9761eb04"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -1618,32 +1621,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-inprocess-interface"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#3bdb665fed76e2d0cf2ee03cbbe5a5feca50b7c6"
-dependencies = [
- "async-trait",
- "cumulus-primitives-core",
- "cumulus-relay-chain-interface",
- "futures",
- "futures-timer",
- "polkadot-cli",
- "polkadot-client",
- "polkadot-service",
- "sc-cli",
- "sc-client-api",
- "sc-sysinfo",
- "sc-telemetry",
- "sc-tracing",
- "sp-api",
- "sp-consensus",
- "sp-core",
- "sp-runtime",
- "sp-state-machine",
-]
-
-[[package]]
-name = "cumulus-relay-chain-inprocess-interface"
-version = "0.1.0"
-source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev-v0.9.36#54e9d305d9fa8cfee4768c1d365226befc1f2819"
+source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev#6ab2e3a1969828966a2175a88584d210d7380959"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -1668,7 +1646,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-interface"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#3bdb665fed76e2d0cf2ee03cbbe5a5feca50b7c6"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/node-maintenance-mode#b8e3afec16d28a4c757bd03f9ba0adef9761eb04"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -1688,7 +1666,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-minimal-node"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#3bdb665fed76e2d0cf2ee03cbbe5a5feca50b7c6"
+source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev#6ab2e3a1969828966a2175a88584d210d7380959"
 dependencies = [
  "array-bytes 6.0.0",
  "async-trait",
@@ -1750,6 +1728,8 @@ dependencies = [
  "sc-keystore",
  "sc-network",
  "sc-network-common",
+ "sc-network-light 0.10.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31)",
+ "sc-network-sync 0.10.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.31)",
  "sc-service",
  "sc-telemetry",
  "sc-tracing",
@@ -1768,7 +1748,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-rpc-interface"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#3bdb665fed76e2d0cf2ee03cbbe5a5feca50b7c6"
+source = "git+https://github.com/mangata-finance/cumulus?branch=mangata-dev#6ab2e3a1969828966a2175a88584d210d7380959"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -1826,7 +1806,7 @@ dependencies = [
 [[package]]
 name = "cumulus-test-relay-sproof-builder"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#3bdb665fed76e2d0cf2ee03cbbe5a5feca50b7c6"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/node-maintenance-mode#b8e3afec16d28a4c757bd03f9ba0adef9761eb04"
 dependencies = [
  "cumulus-primitives-core",
  "parity-scale-codec",
@@ -4465,6 +4445,7 @@ dependencies = [
  "pallet-crowdloan-rewards",
  "pallet-fee-lock",
  "pallet-issuance",
+ "pallet-maintenance",
  "pallet-multipurpose-liquidity",
  "pallet-proxy",
  "pallet-session",
@@ -4569,8 +4550,8 @@ dependencies = [
  "sc-network",
  "sc-network-bitswap 0.10.0-dev (git+https://github.com/mangata-finance/substrate?branch=mangata-dev)",
  "sc-network-common",
- "sc-network-light",
- "sc-network-sync",
+ "sc-network-light 0.10.0-dev (git+https://github.com/mangata-finance/substrate?branch=mangata-dev)",
+ "sc-network-sync 0.10.0-dev (git+https://github.com/mangata-finance/substrate?branch=mangata-dev)",
  "sc-rpc",
  "sc-rpc-api",
  "sc-service",
@@ -4651,6 +4632,7 @@ dependencies = [
  "pallet-crowdloan-rewards",
  "pallet-fee-lock",
  "pallet-issuance",
+ "pallet-maintenance",
  "pallet-multipurpose-liquidity",
  "pallet-proxy",
  "pallet-session",
@@ -5655,6 +5637,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "frame-try-runtime",
+ "lazy_static",
  "log",
  "mangata-types",
  "mockall",
@@ -6003,6 +5986,32 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-maintenance"
+version = "0.1.0"
+dependencies = [
+ "env_logger",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "lazy_static",
+ "log",
+ "mangata-types",
+ "mp-traits",
+ "orml-tokens",
+ "orml-traits",
+ "parity-scale-codec",
+ "rustc-hex",
+ "scale-info",
+ "serde",
+ "serial_test",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -6731,7 +6740,7 @@ dependencies = [
 [[package]]
 name = "parachain-info"
 version = "0.1.0"
-source = "git+https://github.com/mangata-finance//cumulus?branch=mangata-dev#3bdb665fed76e2d0cf2ee03cbbe5a5feca50b7c6"
+source = "git+https://github.com/mangata-finance//cumulus?branch=feature/node-maintenance-mode#b8e3afec16d28a4c757bd03f9ba0adef9761eb04"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -10116,8 +10125,8 @@ dependencies = [
  "sc-network",
  "sc-network-bitswap 0.10.0-dev (git+https://github.com/mangata-finance//substrate?branch=mangata-dev)",
  "sc-network-common",
- "sc-network-light",
- "sc-network-sync",
+ "sc-network-light 0.10.0-dev (git+https://github.com/mangata-finance//substrate?branch=mangata-dev)",
+ "sc-network-sync 0.10.0-dev (git+https://github.com/mangata-finance//substrate?branch=mangata-dev)",
  "sc-network-transactions",
  "sc-offchain",
  "sc-rpc",
@@ -12418,7 +12427,7 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if",
+ "cfg-if 0.1.10",
  "digest 0.10.6",
  "rand 0.8.5",
  "static_assertions",

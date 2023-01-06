@@ -38,6 +38,7 @@ releases:
           storageSize: {{ .Values.relaychainStorageSize }}
           customChainspecUrl: {{ .Values.relaychainCustomChainspecUrl | quote }}
         node:
+          forceDownloadChainspec: true
           isCollator: {{ .Values.node01.isCollator | toYaml }}
           bootnodeAddr: {{ .Values.followerBootnodeAddr | quote }}
           customChainspecUrl: {{ .Values.nodeCustomChainspecUrl | quote }}
@@ -69,6 +70,7 @@ releases:
           storageSize: {{ .Values.relaychainStorageSize }}
           customChainspecUrl: {{ .Values.relaychainCustomChainspecUrl | quote }}
         node:
+          forceDownloadChainspec: true
           isCollator: {{ .Values.node02.isCollator | toYaml }}
           bootnodeAddr: {{ .Values.followerBootnodeAddr | quote }}
           customChainspecUrl: {{ .Values.nodeCustomChainspecUrl | quote }}

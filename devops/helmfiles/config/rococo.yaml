@@ -3,11 +3,9 @@ storageSize: 200Gi
 relaychainStorageSize: 500Gi
 enableParachainRegisterSidecar: false
 followerBootnodeAddr: /dns/roccoco-collator01-relay.mangatafinance.cloud/tcp/30333/p2p/12D3KooWSCufgHzV4fCwRijfH2k3abrpAJxTKxEvN1FDuRXA2U9x
-nodeCustomChainspecUrl: https://raw.githubusercontent.com/mangata-finance/chainspec/8b5b5b0c93c0cf8db444af491d33a7f6b1e2ff93/rococo-0.26.2.json
+nodeCustomChainspecUrl: https://raw.githubusercontent.com/mangata-finance/chainspec/master/rococo-raw.json
 relaychainCustomChainspecUrl: https://raw.githubusercontent.com/paritytech/polkadot/master/node/service/chain-specs/rococo.json
 
-image:
-  tag: rococo-0.26.2
 
 node01:
   isCollator: false

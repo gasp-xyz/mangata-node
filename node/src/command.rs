@@ -18,6 +18,7 @@ use sc_service::{
 	config::{BasePath, PrometheusConfig},
 	PartialComponents,
 };
+use std::{cell::RefCell, rc::Rc, sync::Mutex};
 
 use sp_core::hexdisplay::HexDisplay;
 
@@ -359,10 +360,23 @@ pub fn run() -> Result<()> {
 					}),
 					BenchmarkCmd::Extrinsic(_) => Err("Unsupported benchmarking command".into()),
 					BenchmarkCmd::Overhead(cmd) => runner.sync_run(|config| {
-						let PartialComponents { client, task_manager: _, .. } = new_partial::<
-							service::mangata_kusama_runtime::RuntimeApi,
+						let executor = sc_executor::NativeElseWasmExecutor::<
 							service::MangataKusamaRuntimeExecutor,
-						>(&config)?;
+						>::new(
+							config.wasm_method,
+							config.default_heap_pages,
+							config.max_runtime_instances,
+							config.runtime_cache_size,
+						);
+
+						let (c, backend, _, _) = sc_service::new_full_parts::<
+							mangata_types::Block,
+							service::mangata_kusama_runtime::RuntimeApi,
+							_,
+						>(&config, None, executor)?;
+
+						let mut client = Rc::new(RefCell::new(c));
+
 						let ext_builder = BenchmarkExtrinsicBuilder::new(client.clone());
 
 						let first_block_inherent =

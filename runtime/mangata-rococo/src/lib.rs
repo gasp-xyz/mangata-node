@@ -15,7 +15,7 @@ use frame_support::{
 	},
 	unsigned::TransactionValidityError,
 	weights::{
-		constants::{RocksDbWeight, WEIGHT_PER_MICROS, WEIGHT_PER_MILLIS, WEIGHT_PER_SECOND},
+		constants::{RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND, WEIGHT_REF_TIME_PER_MICROS, WEIGHT_REF_TIME_PER_MILLIS},
 		ConstantMultiplier, Weight,
 	},
 	PalletId,
@@ -232,9 +232,7 @@ const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 /// so there is room for new extrinsics in the next block
 // const MAXIMUM_BLOCK_WEIGHT: Weight =
 // 	WEIGHT_PER_SECOND.saturating_div(4).set_proof_size((cumulus_primitives_core::relay_chain::v2::MAX_POV_SIZE as u64).saturating_div(2));
-const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND
-	.saturating_div(4)
-	.set_proof_size((u64::max_value()).saturating_div(2));
+const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(WEIGHT_REF_TIME_PER_SECOND.saturating_mul(2), u64::MAX);
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
@@ -433,15 +431,10 @@ impl orml_tokens::Config for Runtime {
 	type CurrencyId = TokenId;
 	type WeightInfo = weights::orml_tokens_weights::ModuleWeight<Runtime>;
 	type ExistentialDeposits = ExistentialDeposits;
-	type OnDust = TransferDust<Runtime, TreasuryAccount>;
 	type MaxLocks = MaxLocks;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
-	type OnSlash = ();
-	type OnDeposit = ();
-	type OnTransfer = ();
+	type CurrencyHooks = ();
 	type MaxReserves = ();
-	type OnNewTokenAccount = ();
-	type OnKilledTokenAccount = ();
 	type ReserveIdentifier = [u8; 8];
 }
 

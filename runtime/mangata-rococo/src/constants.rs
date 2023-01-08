@@ -1,7 +1,7 @@
 pub mod fee {
 	use crate::{weights::VerExtrinsicBaseWeight, UNIT};
 	use frame_support::weights::{
-		constants::{ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
+		constants::{ExtrinsicBaseWeight, WEIGHT_REF_TIME_PER_SECOND},
 		WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
 	};
 	use mangata_types::Balance;
@@ -48,7 +48,7 @@ pub mod fee {
 
 	pub fn mgr_per_second() -> u128 {
 		let base_weight = Balance::from(VerExtrinsicBaseWeight::get().ref_time());
-		let base_per_second = (WEIGHT_PER_SECOND.ref_time() / base_weight as u64) as u128;
+		let base_per_second = (WEIGHT_REF_TIME_PER_SECOND / base_weight as u64) as u128;
 		base_per_second * base_tx_in_mgr()
 	}
 

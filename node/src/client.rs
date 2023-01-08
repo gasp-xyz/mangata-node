@@ -259,8 +259,8 @@ impl sc_client_api::BlockBackend<Block> for Client {
 	fn block_body(
 		&self,
 		id: &BlockId<Block>,
-	) -> sp_blockchain::Result<Option<Vec<<Block as BlockT>::Extrinsic>>> {
-		match_client!(self, block_body(id))
+	) -> Box<sp_blockchain::Result<Option<Vec<<Block as BlockT>::Extrinsic>>>> {
+		match_client!(self, block_body(id)
 	}
 
 	fn block_indexed_body(

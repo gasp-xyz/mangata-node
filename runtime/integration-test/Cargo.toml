@@ -5,35 +5,35 @@ edition = "2021"
 
 [dependencies]
 # Substrate
-mangata-types = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-frame-support = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-frame-system = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-pallet-balances = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-io = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-runtime = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-pallet-proxy = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+mangata-types = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.36" }
+frame-support = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.36" }
+frame-system = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.36" }
+pallet-balances = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.36" }
+sp-io = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.36" }
+sp-runtime = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.36" }
+pallet-proxy = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.36" }
 
 # Polkadot
-#kusama-runtime = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev" }
-pallet-xcm = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev" }
-polkadot-parachain = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev" }
-polkadot-primitives = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev" }
-polkadot-runtime-parachains = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev" }
-xcm = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev" }
-xcm-builder = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev" }
+#kusama-runtime = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v0.9.36" }
+pallet-xcm = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v0.9.36" }
+polkadot-parachain = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v0.9.36" }
+polkadot-primitives = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v0.9.36" }
+polkadot-runtime-parachains = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v0.9.36" }
+xcm = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v0.9.36" }
+xcm-builder = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v0.9.36" }
 
 # Cumulus
-cumulus-primitives-core = { git = "https://github.com/mangata-finance/cumulus", branch = "mangata-dev" }
-parachain-info = { git = "https://github.com/mangata-finance/cumulus", branch = "mangata-dev" }
+cumulus-primitives-core = { git = "https://github.com/mangata-finance/cumulus", branch = "mangata-dev-v0.9.36" }
+parachain-info = { git = "https://github.com/mangata-finance/cumulus", branch = "mangata-dev-v0.9.36" }
 
 # Open-Runtime-Module-Library Dependencies
-orml-tokens = { version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
-orml-traits = { version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
-orml-xtokens = { version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
-orml-xcm-support = { version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
-orml-unknown-tokens = { version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
-orml-xcm = { version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
-orml-asset-registry = { version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
+orml-tokens = { version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v0.9.36" }
+orml-traits = { version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v0.9.36" }
+orml-xtokens = { version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v0.9.36" }
+orml-xcm-support = { version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v0.9.36" }
+orml-unknown-tokens = { version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v0.9.36" }
+orml-xcm = { version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v0.9.36" }
+orml-asset-registry = { version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v0.9.36" }
 
 # Local
 mangata-kusama-runtime = { path = "../mangata-kusama", optional = true }
@@ -51,8 +51,8 @@ mp-bootstrap = { path = '../../primitives/bootstrap' }
 [dev-dependencies]
 env_logger = "0.9.1"
 log = "0.4.17"
-sp-io = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-xcm-executor = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev" }
+sp-io = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.36" }
+xcm-executor = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v0.9.36" }
 xcm-emulator = { git = "https://github.com/shaunxw/xcm-simulator", rev = "6c02911a3eeb04c342e4eb273d2ffbedd45dabff" }
 
 [features]

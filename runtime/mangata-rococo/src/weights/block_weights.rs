@@ -21,7 +21,7 @@
 
 use frame_support::{
 	parameter_types,
-	weights::{constants::WEIGHT_PER_NANOS, Weight},
+	weights::{constants::WEIGHT_REF_TIME_PER_NANOS, Weight},
 };
 
 parameter_types! {
@@ -38,7 +38,7 @@ parameter_types! {
 	///   99th: 8_120_089
 	///   95th: 8_045_149
 	///   75th: 8_020_858
-	pub const BlockExecutionWeight: Weight = WEIGHT_PER_NANOS.saturating_mul(8_012_576);
+	pub const BlockExecutionWeight: Weight = Weight::from_ref_time(WEIGHT_REF_TIME_PER_NANOS.saturating_mul(8_012_576));
 }
 
 #[cfg(test)]

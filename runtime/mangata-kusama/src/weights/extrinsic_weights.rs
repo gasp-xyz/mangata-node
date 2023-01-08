@@ -21,7 +21,7 @@
 
 use frame_support::{
 	parameter_types,
-	weights::{constants::WEIGHT_PER_NANOS, Weight},
+	weights::{constants::WEIGHT_REF_TIME_PER_NANOS, Weight},
 };
 
 parameter_types! {
@@ -38,7 +38,7 @@ parameter_types! {
 	///   99th: 113_085
 	///   95th: 112_899
 	///   75th: 111_871
-	pub const ExtrinsicBaseWeight: Weight = WEIGHT_PER_NANOS.saturating_mul(111_477);
+	pub const ExtrinsicBaseWeight: Weight = Weight::from_ref_time(WEIGHT_REF_TIME_PER_NANOS.saturating_mul(111_477));
 }
 
 #[cfg(test)]

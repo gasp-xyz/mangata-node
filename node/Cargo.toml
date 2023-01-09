@@ -48,8 +48,8 @@ hex = "0.4.0"
 jsonrpsee = { version = "0.16.2", features = ["server"] }
 
 # Local Dependencies
-mangata-kusama-runtime = { path = "../runtime/mangata-kusama/", optional = true }
-mangata-rococo-runtime = { path = "../runtime/mangata-rococo/", optional = true }
+mangata-kusama-runtime = { path = "../runtime/mangata-kusama", optional = true }
+mangata-rococo-runtime = { path = "../runtime/mangata-rococo", optional = true }
 
 # Substrate Dependencies
 mangata-types = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.36" }

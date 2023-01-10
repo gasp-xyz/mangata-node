@@ -406,10 +406,7 @@ pub trait ProvideTotalCrowdloanRewardAllocation {
 
 impl<T: Config> ProvideTotalCrowdloanRewardAllocation for Pallet<T> {
 	fn get_total_crowdloan_allocation() -> Option<Balance> {
-		match IssuanceConfigStore::<T>::get() {
-			Some(issuance_config) => Some(issuance_config.total_crowdloan_allocation),
-			None => None,
-		}
+		IssuanceConfigStore::<T>::get().map(|issuance_config| issuance_config.total_crowdloan_allocation)
 	}
 }
 
@@ -424,16 +421,10 @@ impl<T: Config> GetIssuance for Pallet<T> {
 		SessionIssuance::<T>::get(n)
 	}
 	fn get_liquidity_mining_issuance(n: u32) -> Option<Balance> {
-		match SessionIssuance::<T>::get(n) {
-			Some((x, _)) => Some(x),
-			None => None,
-		}
+		SessionIssuance::<T>::get(n).map(|(x, _)| x)
 	}
 	fn get_staking_issuance(n: u32) -> Option<Balance> {
-		match SessionIssuance::<T>::get(n) {
-			Some((_, x)) => Some(x),
-			None => None,
-		}
+		SessionIssuance::<T>::get(n).map(|(_, x)| x)
 	}
 }
 
@@ -487,7 +478,7 @@ impl<T: Config> Pallet<T> {
 			Error::<T>::IssuanceConfigInvalid
 		);
 		ensure!(T::BlocksPerRound::get() != u32::zero(), Error::<T>::IssuanceConfigInvalid);
-		IssuanceConfigStore::<T>::put(issuance_config.clone());
+		IssuanceConfigStore::<T>::put(issuance_config);
 		Ok(())
 	}
 
@@ -575,7 +566,7 @@ impl<T: Config> Pallet<T> {
 				let rewards_for_liquidity: U256 = U256::from(liquidity_mining_issuance_for_pool)
 					.checked_mul(U256::from(u128::MAX))
 					.and_then(|x| x.checked_div(activated_amount.into()))
-					.and_then(|x| x.checked_add(rewards.into()))
+					.and_then(|x| x.checked_add(rewards))
 					.ok_or_else(|| DispatchError::from(Error::<T>::MathError))?;
 
 				promoted_pools

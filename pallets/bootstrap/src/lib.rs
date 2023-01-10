@@ -145,8 +145,6 @@ use sp_io::KillStorageResult;
 use sp_runtime::traits::{AccountIdConversion, CheckedAdd, One, SaturatedConversion, Saturating};
 use sp_std::{convert::TryInto, prelude::*};
 
-pub mod migrations;
-
 #[cfg(test)]
 mod mock;
 

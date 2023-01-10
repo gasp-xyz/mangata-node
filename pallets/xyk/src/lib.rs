@@ -997,7 +997,6 @@ pub mod pallet {
 				amount,
 			)
 		}
-
 	}
 }
 
@@ -1009,8 +1008,9 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn current_rewards_time() -> Option<u32> {
-			<frame_system::Pallet<T>>::block_number().saturated_into::<u32>()
-			.checked_add(1) 
+		<frame_system::Pallet<T>>::block_number()
+			.saturated_into::<u32>()
+			.checked_add(1)
 			.and_then(|v| v.checked_div(T::RewardsDistributionPeriod::get()))
 	}
 
@@ -1137,9 +1137,12 @@ impl<T: Config> Pallet<T> {
 					DispatchError::from(Error::<T>::CalculateCumulativeWorkMaxRatioMathError)
 				})?;
 
-			let q_pow = Self::calculate_q_pow(Q, time_passed.checked_add(1)
-											  .ok_or(Error::<T>::CalculateCumulativeWorkMaxRatioMathError)?
-											  );
+			let q_pow = Self::calculate_q_pow(
+				Q,
+				time_passed
+					.checked_add(1)
+					.ok_or(Error::<T>::CalculateCumulativeWorkMaxRatioMathError)?,
+			);
 
 			let cummulative_missing_new =
 				base - base * U256::from(REWARDS_PRECISION) / q_pow - missing_at_last_checkpoint;
@@ -1384,7 +1387,10 @@ impl<T: Config> Pallet<T> {
 		name.extend_from_slice(LIQUIDITY_TOKEN_IDENTIFIER);
 		name.extend_from_slice(HEX_INDICATOR);
 		for bytes in liquidity_asset_id.to_be_bytes().iter() {
-			match (bytes.checked_shr(4).ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?) as u8 {
+			match (bytes
+				.checked_shr(4)
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?) as u8
+			{
 				x @ 0u8..=9u8 => name.push(x.saturating_add(48u8)),
 				x => name.push(x.saturating_add(55u8)),
 			}
@@ -1398,7 +1404,10 @@ impl<T: Config> Pallet<T> {
 		symbol.extend_from_slice(TOKEN_SYMBOL);
 		symbol.extend_from_slice(HEX_INDICATOR);
 		for bytes in first_asset_id.to_be_bytes().iter() {
-			match (bytes.checked_shr(4).ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?) as u8 {
+			match (bytes
+				.checked_shr(4)
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?) as u8
+			{
 				x @ 0u8..=9u8 => symbol.push(x.saturating_add(48u8)),
 				x => symbol.push(x.saturating_add(55u8)),
 			}
@@ -1411,7 +1420,10 @@ impl<T: Config> Pallet<T> {
 		symbol.extend_from_slice(TOKEN_SYMBOL);
 		symbol.extend_from_slice(HEX_INDICATOR);
 		for bytes in second_asset_id.to_be_bytes().iter() {
-			match (bytes.checked_shr(4).ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?) as u8 {
+			match (bytes
+				.checked_shr(4)
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?) as u8
+			{
 				x @ 0u8..=9u8 => symbol.push(x.saturating_add(48u8)),
 				x => symbol.push(x.saturating_add(55u8)),
 			}
@@ -1436,7 +1448,8 @@ impl<T: Config> Pallet<T> {
 		output_reserve: Balance,
 		sell_amount: Balance,
 	) -> Result<Balance, DispatchError> {
-		let after_fee_percentage: u128 = 10000_u128.checked_sub(Self::total_fee())
+		let after_fee_percentage: u128 = 10000_u128
+			.checked_sub(Self::total_fee())
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 		let input_reserve_saturated: U256 = input_reserve.into();
 		let output_reserve_saturated: U256 = output_reserve.into();
@@ -1505,7 +1518,8 @@ impl<T: Config> Pallet<T> {
 		output_reserve: Balance,
 		buy_amount: Balance,
 	) -> Result<Balance, DispatchError> {
-		let after_fee_percentage: u128 = 10000_u128.checked_sub(Self::total_fee())
+		let after_fee_percentage: u128 = 10000_u128
+			.checked_sub(Self::total_fee())
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 		let input_reserve_saturated: U256 = input_reserve.into();
 		let output_reserve_saturated: U256 = output_reserve.into();
@@ -1550,7 +1564,7 @@ impl<T: Config> Pallet<T> {
 		let non_pool_fees: U256 = Self::total_fee()
 			.checked_sub(T::PoolFeePercentage::get())
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
-		    .into(); // npf
+			.into(); // npf
 		let total_fee: U256 = Self::total_fee().into(); // tf
 		let total_amount_saturated: U256 = total_amount.into(); // z
 		let reserve_amount_saturated: U256 = reserve_amount.into(); // a
@@ -1783,21 +1797,23 @@ impl<T: Config> Pallet<T> {
 			let settle_amount_in_mangata = Self::calculate_sell_price_no_fee(
 				input_reserve,
 				output_reserve,
-				treasury_amount.checked_add(burn_amount)
-					.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
-				,
+				treasury_amount
+					.checked_add(burn_amount)
+					.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?,
 			)?;
 
 			let treasury_amount_in_mangata = settle_amount_in_mangata
-				.checked_mul( T::TreasuryFeePercentage::get())
+				.checked_mul(T::TreasuryFeePercentage::get())
 				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
 				.checked_div(
-					T::TreasuryFeePercentage::get().checked_add(T::BuyAndBurnFeePercentage::get())
-						.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+					T::TreasuryFeePercentage::get()
+						.checked_add(T::BuyAndBurnFeePercentage::get())
+						.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?,
 				)
 				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 
-			let burn_amount_in_mangata = settle_amount_in_mangata.checked_sub(treasury_amount_in_mangata)
+			let burn_amount_in_mangata = settle_amount_in_mangata
+				.checked_sub(treasury_amount_in_mangata)
 				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 
 			// Apply changes in token pools, adding treasury and burn amounts of settling token, removing  treasury and burn amounts of mangata
@@ -2118,8 +2134,9 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			.checked_div(2)
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
 			.checked_add(
-				second_asset_amount.checked_div(2)
-				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+				second_asset_amount
+					.checked_div(2)
+					.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?,
 			)
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 
@@ -2273,10 +2290,11 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				&vault,
 				(sold_asset_amount
 					.checked_sub(
-						buy_and_burn_amount.checked_add(treasury_amount)
+						buy_and_burn_amount
+							.checked_add(treasury_amount)
 							.and_then(|v| v.checked_add(pool_fee_amount))
-							.ok_or_else(|| DispatchError::from(Error::<T>::SoldAmountTooLow))?
-						)
+							.ok_or_else(|| DispatchError::from(Error::<T>::SoldAmountTooLow))?,
+					)
 					.ok_or_else(|| DispatchError::from(Error::<T>::SoldAmountTooLow))?)
 				.into(),
 				ExistenceRequirement::KeepAlive,
@@ -2292,11 +2310,11 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			// Apply changes in token pools, adding sold amount and removing bought amount
 			// Neither should fall to zero let alone underflow, due to how pool destruction works
 			// Won't overflow due to earlier ensure
-			let input_reserve_updated = input_reserve
-				.saturating_add(
-					sold_asset_amount.checked_sub(treasury_amount)
+			let input_reserve_updated = input_reserve.saturating_add(
+				sold_asset_amount
+					.checked_sub(treasury_amount)
 					.and_then(|v| v.checked_sub(buy_and_burn_amount))
-					.ok_or_else(|| DispatchError::from(Error::<T>::SoldAmountTooLow))?
+					.ok_or_else(|| DispatchError::from(Error::<T>::SoldAmountTooLow))?,
 			);
 			let output_reserve_updated = output_reserve.saturating_sub(bought_asset_amount);
 
@@ -2435,11 +2453,13 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				&vault,
 				sold_asset_amount
 					.checked_sub(
-						buy_and_burn_amount.checked_add(treasury_amount)
-						.and_then(|v| v.checked_add(pool_fee_amount))
-						.ok_or_else(|| DispatchError::from(Error::<T>::SoldAmountTooLow))?
+						buy_and_burn_amount
+							.checked_add(treasury_amount)
+							.and_then(|v| v.checked_add(pool_fee_amount))
+							.ok_or_else(|| DispatchError::from(Error::<T>::SoldAmountTooLow))?,
 					)
-					.ok_or_else(|| DispatchError::from(Error::<T>::SoldAmountTooLow))?.into(),
+					.ok_or_else(|| DispatchError::from(Error::<T>::SoldAmountTooLow))?
+					.into(),
 				ExistenceRequirement::KeepAlive,
 			)?;
 			<T as Config>::Currency::transfer(
@@ -2454,9 +2474,10 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			// Neither should fall to zero let alone underflow, due to how pool destruction works
 			// Won't overflow due to earlier ensure
 			let input_reserve_updated = input_reserve.saturating_add(
-				sold_asset_amount.checked_sub(treasury_amount)
+				sold_asset_amount
+					.checked_sub(treasury_amount)
 					.and_then(|v| v.checked_sub(buy_and_burn_amount))
-					.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+					.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?,
 			);
 
 			let output_reserve_updated = output_reserve.saturating_sub(bought_asset_amount);
@@ -2956,8 +2977,9 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		let mut already_claimed_rewards = rewards_info.rewards_already_claimed;
 
 		if mangata_amount <= not_yet_claimed_rewards {
-			not_yet_claimed_rewards = not_yet_claimed_rewards.checked_sub(mangata_amount)
-					.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+			not_yet_claimed_rewards = not_yet_claimed_rewards
+				.checked_sub(mangata_amount)
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 		}
 		// user is taking out more rewards then rewards from LP which was already removed from pool, additional work needs to be removed from pool and user
 		else {

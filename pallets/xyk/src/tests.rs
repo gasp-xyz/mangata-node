@@ -1776,10 +1776,7 @@ fn PoolCreateApi_pool_create_creates_a_pool() {
 		let first_asset_amount = 10_000_u128;
 		let second_asset_id = 1_u32;
 		let second_asset_amount = 5_000_u128;
-		assert!(!<XykStorage as PoolCreateApi>::pool_exists(
-			first_asset_id,
-			second_asset_id
-		));
+		assert!(!<XykStorage as PoolCreateApi>::pool_exists(first_asset_id, second_asset_id));
 
 		let liq_token_id = Tokens::next_asset_id();
 		let liq_token_amount = (first_asset_amount + second_asset_amount) / 2;

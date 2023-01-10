@@ -296,7 +296,7 @@ impl<T: frame_system::Config> Get<T::AccountId> for RewardsMigrateAccountProvide
 			hex_literal::hex!["0e33df23356eb2e9e3baf0e8a5faae15bc70a6a5cce88f651a9faf6e8e937324"]
 				.into();
 		let mut init_account32 = sp_runtime::AccountId32::as_ref(&account32);
-		
+
 		T::AccountId::decode(&mut init_account32).unwrap()
 	}
 }
@@ -462,7 +462,6 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	ext.execute_with(|| System::set_block_number(1));
 	ext
 }
-
 
 pub(crate) fn events() -> Vec<pallet::Event<Test>> {
 	System::events()

@@ -406,7 +406,8 @@ pub trait ProvideTotalCrowdloanRewardAllocation {
 
 impl<T: Config> ProvideTotalCrowdloanRewardAllocation for Pallet<T> {
 	fn get_total_crowdloan_allocation() -> Option<Balance> {
-		IssuanceConfigStore::<T>::get().map(|issuance_config| issuance_config.total_crowdloan_allocation)
+		IssuanceConfigStore::<T>::get()
+			.map(|issuance_config| issuance_config.total_crowdloan_allocation)
 	}
 }
 

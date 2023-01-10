@@ -167,7 +167,6 @@ pub trait XykFunctionsTrait<AccountId> {
 		amount: Self::Balance,
 	) -> DispatchResult;
 
-
 	fn is_liquidity_token(liquidity_asset_id: TokenId) -> bool;
 }
 

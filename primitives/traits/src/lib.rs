@@ -167,10 +167,6 @@ pub trait XykFunctionsTrait<AccountId> {
 		amount: Self::Balance,
 	) -> DispatchResult;
 
-	fn rewards_migrate_v1_to_v2(
-		account: AccountId,
-		liquidity_token_id: Self::CurrencyId,
-	) -> DispatchResult;
 
 	fn is_liquidity_token(liquidity_asset_id: TokenId) -> bool;
 }

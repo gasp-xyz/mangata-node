@@ -14,8 +14,8 @@
 //!
 //! * Bootstrap pallet is reusable** - after bootstrap between tokens `X` and `Y` is finished the following one can be scheduled (with different pair of tokens).
 //! * After bootstrap is finished new liquidity token (`Z`) is created and [`pallet_xyk`] can be used to:
-//!		* exchange/trade `X` and `Y` tokens
-//!		* mint/burn `Z` tokens
+//!        * exchange/trade `X` and `Y` tokens
+//!        * mint/burn `Z` tokens
 //!
 //! * Bootstrap state transition from [`BeforeStart`] -> [`Finished`] happens automatically thanks to substrate framework
 //! hooks. **Only transition from `Finished` -> `BeforeStart` needs to be triggered manually because
@@ -92,13 +92,13 @@
 //!
 //!  ```ignore
 //!  [
-//!			block_nr: T::BlockNumber,
-//!			first_token_id: u32,
-//!			second_token_id: u32,
-//!			[
-//!					ratio_numerator:u128,
-//!					ratio_denominator:u128
-//!			]
+//!            block_nr: T::BlockNumber,
+//!            first_token_id: u32,
+//!            second_token_id: u32,
+//!            [
+//!                    ratio_numerator:u128,
+//!                    ratio_denominator:u128
+//!            ]
 //!  ]
 //!  ```
 //!
@@ -1064,10 +1064,9 @@ impl<T: Config> Pallet<T> {
 		)?;
 		log!(
 			info,
-			"Second token rewards (non-vested, vested, total) = ({}, {}, {})",
+			"Second token rewards (non-vested, vested) = ({}, {})",
 			second_token_rewards,
 			second_token_rewards_vested,
-			second_token_rewards + second_token_rewards_vested
 		);
 
 		Self::claim_liquidity_tokens_from_single_currency(
@@ -1079,10 +1078,9 @@ impl<T: Config> Pallet<T> {
 		)?;
 		log!(
 			info,
-			"First token rewards (non-vested, vested, total) = ({}, {}, {})",
+			"First token rewards (non-vested, vested) = ({}, {})",
 			first_token_rewards,
 			first_token_rewards_vested,
-			first_token_rewards + first_token_rewards_vested
 		);
 
 		ProvisionAccounts::<T>::remove(who);

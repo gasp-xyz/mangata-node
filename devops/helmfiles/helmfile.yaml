@@ -1,20 +1,29 @@
 repositories:
   - name: mangata
-    url: git+https://github.com/mangata-finance/helm-charts@charts?ref=feat/MGX-241-node-chart
+    # url: git+https://github.com/mangata-finance/helm-charts@charts?ref=feat/MGX-241-node-chart
+    url: git+https://github.com/mangata-finance/helm-charts@charts?ref=8c4234bb8a12a03f033154ecdcf74e986f2a1333
 
 environments:
   dev:
     values:
-      - "./config/dev.yaml"
+      - ./config/default.yaml
+      - ./config/dev.yaml
   fungible:
     values:
-      - "./config/fungible.yaml"
+      - ./config/default.yaml
+      - ./config/fungible.yaml
   rococo:
     values:
-      - "./config/rococo.yaml"
+      - ./config/default.yaml
+      - ./config/rococo.yaml
 
 helmDefaults:
   wait: true
+
+templates:
+  nodeDefault: &nodeDefault
+    chart: mangata/node
+    namespace: '{{ requiredEnv "ENVIRONMENT" }}'
 
 releases:
   - name: relaychain
@@ -26,87 +35,37 @@ releases:
         storageSize: {{ .Values.relaychainStorageSize }}
         remoteCluster: true
   - name: node-01
-    namespace: '{{ requiredEnv "ENVIRONMENT" }}'
-    # chart: mangata/node
-    chart: /Users/tenequm/Projects/helm-charts-m/charts/node
+    <<: *nodeDefault
     values:
-      - env: {{ requiredEnv "ENVIRONMENT" | quote }}
-        image:
-          tag: {{ requiredEnv "IMAGE_TAG" | quote }}
-        remoteCluster: true
-        relaychain:
-          storageSize: {{ .Values.relaychainStorageSize }}
-          customChainspecUrl: {{ .Values.relaychainCustomChainspecUrl | quote }}
-        node:
-          forceDownloadChainspec: true
-          isCollator: {{ .Values.node01.isCollator | toYaml }}
-          bootnodeAddr: {{ .Values.followerBootnodeAddr | quote }}
-          customChainspecUrl: {{ .Values.nodeCustomChainspecUrl | quote }}
-          storageSize: {{ .Values.storageSize }}
-          parachainRegisterSidecar:
-            enable: {{ .Values.enableParachainRegisterSidecar | toYaml }}
-          customNodeKey: {{ .Values.node01.nodeKey | quote }}
-          accountKeys:
-            - type: aura
-              scheme: sr25519
-              seed: {{ .Values.node01.accountKeySeed | fetchSecretValue | quote }}
-        resources:
-          requests:
-            cpu: '8.0'
-            memory: 16Gi
-          limits:
-            cpu: '8.0'
-            memory: 16Gi
+      - values.yaml.gotmpl
+      - isCollator: {{ .Values.node01.isCollator  | toYaml }}
+        parachainRegisterSidecar:
+          enable: {{ .Values.enableParachainRegisterSidecar  | toYaml }}
+        bootnodeAddr: {{ .Values.node01.bootnodeAddr }}
+        customNodeKey: {{ .Values.node01.nodeKey | fetchSecretValue | quote }}
+        accountKeys:
+          - type: aura
+            scheme: sr25519
+            seed: {{ .Values.node01.accountKeySeed | fetchSecretValue | quote }}
   - name: node-02
-    namespace: '{{ requiredEnv "ENVIRONMENT" }}'
-    # chart: mangata/node
-    chart: /Users/tenequm/Projects/helm-charts-m/charts/node
+    <<: *nodeDefault
     values:
-      - env: {{ requiredEnv "ENVIRONMENT" | quote }}
-        image:
-          tag: {{ requiredEnv "IMAGE_TAG" | quote }}
-        remoteCluster: true
-        relaychain:
-          storageSize: {{ .Values.relaychainStorageSize }}
-          customChainspecUrl: {{ .Values.relaychainCustomChainspecUrl | quote }}
-        node:
-          forceDownloadChainspec: true
-          isCollator: {{ .Values.node02.isCollator | toYaml }}
-          bootnodeAddr: {{ .Values.followerBootnodeAddr | quote }}
-          customChainspecUrl: {{ .Values.nodeCustomChainspecUrl | quote }}
-          storageSize: {{ .Values.storageSize }}
-          parachainRegisterSidecar:
-            enable: false
-          customNodeKey: {{ .Values.node02.nodeKey | quote }}
-          accountKeys:
-            - type: aura
-              scheme: sr25519
-              seed: {{ .Values.node02.accountKeySeed | fetchSecretValue | quote }}
-        resources:
-          requests:
-            cpu: '8.0'
-            memory: 16Gi
-          limits:
-            cpu: '8.0'
-            memory: 16Gi
+      - values.yaml.gotmpl
+      - isCollator: {{ .Values.node02.isCollator  | toYaml }}
+        bootnodeAddr: {{ .Values.node02.bootnodeAddr }}
+        customNodeKey: {{ .Values.node02.nodeKey |fetchSecretValue | quote }}
+        accountKeys:
+          - type: aura
+            scheme: sr25519
+            seed: {{ .Values.node02.accountKeySeed | fetchSecretValue | quote }}
   - name: node-03
+    <<: *nodeDefault
     installed: {{ .Values | get "node03.enabled" }}
-    namespace: '{{ requiredEnv "ENVIRONMENT" }}'
-    # chart: mangata/node
-    chart: /Users/tenequm/Projects/helm-charts-m/charts/node
     values:
-      - env: {{ requiredEnv "ENVIRONMENT" | quote }}
-        image:
-          tag: {{ requiredEnv "IMAGE_TAG" | quote }}
-        remoteCluster: true
-        node:
-          bootnodeAddr: {{ .Values.followerBootnodeAddr | quote }}
-          storageSize: {{ .Values.storageSize }}
-          relaychainStorageSize: {{ .Values.relaychainStorageSize }}
-          parachainRegisterSidecar:
-            enable: false
-          customNodeKey: {{ .Values.node03.nodeKey | quote }}
-          accountKeys:
-            - type: aura
-              scheme: sr25519
-              seed: {{ .Values.node03.accountKeySeed | fetchSecretValue | quote }}
+      - isCollator: {{ .Values.node03.isCollator  | toYaml }}
+        bootnodeAddr: {{ .Values.node03.bootnodeAddr }}
+        customNodeKey: {{ .Values.node03.nodeKey |fetchSecretValue | quote }}
+        accountKeys:
+          - type: aura
+            scheme: sr25519
+            seed: {{ .Values.node03.accountKeySeed | fetchSecretValue | quote }}

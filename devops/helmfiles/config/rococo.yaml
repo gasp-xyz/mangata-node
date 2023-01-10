@@ -1,28 +1,22 @@
-enableLocalRelaychain: false
 storageSize: 200Gi
 relaychainStorageSize: 500Gi
-enableParachainRegisterSidecar: false
-followerBootnodeAddr: /dns/roccoco-collator01-relay.mangatafinance.cloud/tcp/30333/p2p/12D3KooWSCufgHzV4fCwRijfH2k3abrpAJxTKxEvN1FDuRXA2U9x
 nodeCustomChainspecUrl: https://raw.githubusercontent.com/mangata-finance/chainspec/master/rococo-raw.json
 relaychainCustomChainspecUrl: https://raw.githubusercontent.com/paritytech/polkadot/master/node/service/chain-specs/rococo.json
-
+storageClass: regional-ssd-retain
 
 node01:
   isCollator: false
+  bootnodeAddr: /dns/roccoco-collator01-relay.mangatafinance.cloud/tcp/30333/p2p/12D3KooWSCufgHzV4fCwRijfH2k3abrpAJxTKxEvN1FDuRXA2U9x
   accountKeySeed: ref+gcpsecrets://direct-pixel-353917/node-01-key-seed-rococo
   # Identity ID: 12D3KooWL6TanGvXBRuC16o1yNXb5otUJ4LAV9fuorQpzarTD8xr
   nodeKey: ref+gcpsecrets://direct-pixel-353917/node-01-node-key-rococo
 
 node02:
   isCollator: false
+  bootnodeAddr: /dns/roccoco-collator01-relay.mangatafinance.cloud/tcp/30333/p2p/12D3KooWSCufgHzV4fCwRijfH2k3abrpAJxTKxEvN1FDuRXA2U9x
   accountKeySeed: ref+gcpsecrets://direct-pixel-353917/node-02-key-seed-rococo
   # Identity ID: 12D3KooWQ8GcUNe39YrKqt9QqYpcsPWWRnyEoxPwUSieHCMEhuYf
   nodeKey: ref+gcpsecrets://direct-pixel-353917/node-02-node-key-rococo
-
-node03:
-  enabled: false
-  nodeKey: '0000000000000000000000000000000000000000000000000000000000000005'
-  accountKeySeed: ref+gcpsecrets://direct-pixel-353917/node-01-key-seed-dev
 
 resources:
   requests:

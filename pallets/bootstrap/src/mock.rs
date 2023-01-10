@@ -82,10 +82,8 @@ impl Contains<AccountId> for DustRemovalWhitelist {
 }
 
 parameter_type_with_key! {
-	pub ExistentialDeposits: |currency_id: TokenId| -> Balance {
-		match currency_id {
-			_ => 0,
-		}
+	pub ExistentialDeposits: |_currency_id: TokenId| -> Balance {
+		0
 	};
 }
 
@@ -294,7 +292,7 @@ mockall::mock! {
 
 pub struct AssetRegistry;
 impl AssetRegistryApi for AssetRegistry {
-	fn enable_pool_creation(assets: (TokenId, TokenId)) -> bool {
+	fn enable_pool_creation(_assets: (TokenId, TokenId)) -> bool {
 		true
 	}
 }
@@ -367,8 +365,8 @@ where
 	u128: From<<T as frame_system::Config>::AccountId>,
 {
 	pub fn balance(id: TokenId, who: T::AccountId) -> Balance {
-		Tokens::accounts(Into::<u128>::into(who.clone()), Into::<u32>::into(id.clone())).free -
-			Tokens::accounts(Into::<u128>::into(who.clone()), Into::<u32>::into(id.clone()))
+		Tokens::accounts(Into::<u128>::into(who.clone()), Into::<u32>::into(id)).free -
+			Tokens::accounts(Into::<u128>::into(who), Into::<u32>::into(id))
 				.frozen
 	}
 

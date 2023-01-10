@@ -347,7 +347,7 @@ fn test_incremental_whitliested_donation() {
 		Bootstrap::whitelist_accounts(RuntimeOrigin::root(), vec![USER_ID]).unwrap();
 		Bootstrap::provision(RuntimeOrigin::signed(USER_ID), MGAId::get(), 1000).unwrap();
 
-		Bootstrap::transfer(MGAId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 10_000).unwrap();
+		Bootstrap::transfer(MGAId::get(), USER_ID, ANOTHER_USER_ID, 10_000).unwrap();
 		Bootstrap::whitelist_accounts(RuntimeOrigin::root(), vec![ANOTHER_USER_ID]).unwrap();
 
 		Bootstrap::provision(RuntimeOrigin::signed(USER_ID), MGAId::get(), 1000).unwrap();
@@ -369,7 +369,7 @@ fn test_bootstrap_promotion_can_be_updated() {
 		let pool_create_mock = MockPoolCreateApi::pool_create_context();
 		pool_create_mock.expect().times(1).return_const(POOL_CREATE_DUMMY_RETURN_VALUE);
 
-		let mut mock = MockRewardsApi::update_pool_promotion_context();
+		let mock = MockRewardsApi::update_pool_promotion_context();
 		mock.expect().times(1).return_const(());
 
 		set_up();
@@ -703,7 +703,7 @@ fn test_bootstrap_state_transitions() {
 			RuntimeOrigin::root(),
 			KSMId::get(),
 			MGAId::get(),
-			BOOTSTRAP_WHITELIST_START.into(),
+			BOOTSTRAP_WHITELIST_START,
 			Some((BOOTSTRAP_PUBLIC_START - BOOTSTRAP_WHITELIST_START).try_into().unwrap()),
 			(BOOTSTRAP_FINISH - BOOTSTRAP_PUBLIC_START).try_into().unwrap(),
 			Some(DEFAULT_RATIO),
@@ -761,7 +761,7 @@ fn test_bootstrap_state_transitions_when_on_initialized_is_not_called() {
 			RuntimeOrigin::root(),
 			KSMId::get(),
 			MGAId::get(),
-			BOOTSTRAP_WHITELIST_START.into(),
+			BOOTSTRAP_WHITELIST_START,
 			Some((BOOTSTRAP_PUBLIC_START - BOOTSTRAP_WHITELIST_START).try_into().unwrap()),
 			(BOOTSTRAP_FINISH - BOOTSTRAP_PUBLIC_START).try_into().unwrap(),
 			Some(DEFAULT_RATIO),
@@ -786,7 +786,7 @@ fn test_bootstrap_schedule_overflow() {
 				RuntimeOrigin::root(),
 				KSMId::get(),
 				MGAId::get(),
-				u64::MAX.into(),
+				u64::MAX,
 				Some(u32::MAX),
 				1_u32,
 				Some(DEFAULT_RATIO),
@@ -800,7 +800,7 @@ fn test_bootstrap_schedule_overflow() {
 				RuntimeOrigin::root(),
 				KSMId::get(),
 				MGAId::get(),
-				u64::MAX.into(),
+				u64::MAX,
 				Some(1_u32),
 				u32::MAX,
 				Some(DEFAULT_RATIO),
@@ -814,7 +814,7 @@ fn test_bootstrap_schedule_overflow() {
 				RuntimeOrigin::root(),
 				KSMId::get(),
 				MGAId::get(),
-				u64::MAX.into(),
+				u64::MAX,
 				Some(u32::MAX),
 				u32::MAX,
 				Some(DEFAULT_RATIO),
@@ -939,7 +939,7 @@ fn test_rewards_are_distributed_properly_with_single_user() {
 
 		const KSM_PROVISON: Balance = 10;
 		const MGA_PROVISON: Balance = 100_000;
-		let liq_token_id: Arc<Mutex<TokenId>> = Arc::new(Mutex::new(0_u32.into()));
+		let liq_token_id: Arc<Mutex<TokenId>> = Arc::new(Mutex::new(0_u32));
 		let ref_liq_token_id = liq_token_id.clone();
 
 		let enable_pool_creation_mock = MockAssetRegistryApi::enable_pool_creation_context();
@@ -1026,7 +1026,7 @@ fn test_rewards_are_distributed_properly_with_multiple_user() {
 		const USER_MGA_PROVISON: Balance = 400_000;
 		const ANOTHER_USER_KSM_PROVISON: Balance = 20;
 		const ANOTHER_USER_MGA_PROVISON: Balance = 100_000;
-		let liq_token_id: Arc<Mutex<TokenId>> = Arc::new(Mutex::new(0_u32.into()));
+		let liq_token_id: Arc<Mutex<TokenId>> = Arc::new(Mutex::new(0_u32));
 		let ref_liq_token_id = liq_token_id.clone();
 
 		let enable_pool_creation_mock = MockAssetRegistryApi::enable_pool_creation_context();
@@ -1064,8 +1064,8 @@ fn test_rewards_are_distributed_properly_with_multiple_user() {
 		Bootstrap::on_initialize(110_u32.into());
 		assert_eq!(BootstrapPhase::Public, Phase::<Test>::get());
 
-		Bootstrap::transfer(MGAId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 500_000).unwrap();
-		Bootstrap::transfer(KSMId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 500_000).unwrap();
+		Bootstrap::transfer(MGAId::get(), USER_ID, ANOTHER_USER_ID, 500_000).unwrap();
+		Bootstrap::transfer(KSMId::get(), USER_ID, ANOTHER_USER_ID, 500_000).unwrap();
 
 		Bootstrap::provision(RuntimeOrigin::signed(USER_ID), MGAId::get(), USER_MGA_PROVISON)
 			.unwrap();
@@ -1338,12 +1338,12 @@ macro_rules! init_mocks {
 fn provisions(
 	provisions: Vec<(<Test as frame_system::Config>::AccountId, TokenId, Balance, ProvisionKind)>,
 ) {
-	for (user_id, token_id, amount, lock) in provisions {
+	for (user_id, token_id, amount, _lock) in provisions {
 		<Test as Config>::Currency::transfer(
-			token_id.into(),
+			token_id,
 			&USER_ID,
 			&user_id,
-			amount.into(),
+			amount,
 			frame_support::traits::ExistenceRequirement::KeepAlive,
 		)
 		.unwrap();
@@ -1818,8 +1818,8 @@ fn test_restart_bootstrap() {
 		)
 		.unwrap();
 		Bootstrap::on_initialize(110_u32.into());
-		Bootstrap::transfer(MGAId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 500_000).unwrap();
-		Bootstrap::transfer(KSMId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 500_000).unwrap();
+		Bootstrap::transfer(MGAId::get(), USER_ID, ANOTHER_USER_ID, 500_000).unwrap();
+		Bootstrap::transfer(KSMId::get(), USER_ID, ANOTHER_USER_ID, 500_000).unwrap();
 		Bootstrap::provision(RuntimeOrigin::signed(USER_ID), MGAId::get(), USER_MGA_PROVISON)
 			.unwrap();
 		Bootstrap::provision(
@@ -1930,8 +1930,8 @@ fn claim_liquidity_tokens_even_if_sum_of_rewards_is_zero_because_of_small_provis
 		)
 		.unwrap();
 		Bootstrap::on_initialize(110_u32.into());
-		Bootstrap::transfer(MGAId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 1).unwrap();
-		Bootstrap::transfer(KSMId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 1).unwrap();
+		Bootstrap::transfer(MGAId::get(), USER_ID, ANOTHER_USER_ID, 1).unwrap();
+		Bootstrap::transfer(KSMId::get(), USER_ID, ANOTHER_USER_ID, 1).unwrap();
 
 		Bootstrap::provision(
 			RuntimeOrigin::signed(USER_ID),
@@ -2000,8 +2000,8 @@ fn transfer_dust_to_treasury() {
 		)
 		.unwrap();
 		Bootstrap::on_initialize(110_u32.into());
-		Bootstrap::transfer(MGAId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 1).unwrap();
-		Bootstrap::transfer(KSMId::get(), USER_ID.into(), ANOTHER_USER_ID.into(), 1).unwrap();
+		Bootstrap::transfer(MGAId::get(), USER_ID, ANOTHER_USER_ID, 1).unwrap();
+		Bootstrap::transfer(KSMId::get(), USER_ID, ANOTHER_USER_ID, 1).unwrap();
 
 		Bootstrap::provision(RuntimeOrigin::signed(USER_ID), MGAId::get(), 1_000_000_000_u128)
 			.unwrap();
@@ -2104,7 +2104,7 @@ fn test_activate_liq_tokens_is_called_with_all_liq_tokens_when_pool_is_promoted_
 		let activate_liquidity_tokens = MockRewardsApi::activate_liquidity_tokens_context();
 		activate_liquidity_tokens.expect().returning(move |_, _, activated_amount| {
 			assert_eq!(expected_activated_tokens_amount, activated_amount);
-			Ok(().into())
+			Ok(())
 		});
 
 		// ACT
@@ -2279,10 +2279,8 @@ fn test_pool_is_promoted_if_scheduled_to() {
 		use std::sync::{Arc, Mutex};
 		set_up();
 
-		const KSM_PROVISON: Balance = 10;
-		const MGA_PROVISON: Balance = 100_000;
-		let liq_token_id: Arc<Mutex<TokenId>> = Arc::new(Mutex::new(0_u32.into()));
-		let ref_liq_token_id = liq_token_id.clone();
+		let liq_token_id: Arc<Mutex<TokenId>> = Arc::new(Mutex::new(0_u32));
+		let ref_liq_token_id = liq_token_id;
 
 		let enable_pool_creation_mock = MockAssetRegistryApi::enable_pool_creation_context();
 		enable_pool_creation_mock.expect().return_const(true);
@@ -2301,7 +2299,7 @@ fn test_pool_is_promoted_if_scheduled_to() {
 				Some((id, issuance))
 			});
 
-		let mut mock = MockRewardsApi::update_pool_promotion_context();
+		let mock = MockRewardsApi::update_pool_promotion_context();
 		mock.expect().times(1).return_const(());
 
 		Bootstrap::schedule_bootstrap(
@@ -2334,10 +2332,8 @@ fn test_pool_is_not_promoted_if_not_scheduled_to() {
 		use std::sync::{Arc, Mutex};
 		set_up();
 
-		const KSM_PROVISON: Balance = 10;
-		const MGA_PROVISON: Balance = 100_000;
-		let liq_token_id: Arc<Mutex<TokenId>> = Arc::new(Mutex::new(0_u32.into()));
-		let ref_liq_token_id = liq_token_id.clone();
+		let liq_token_id: Arc<Mutex<TokenId>> = Arc::new(Mutex::new(0_u32));
+		let ref_liq_token_id = liq_token_id;
 
 		let enable_pool_creation_mock = MockAssetRegistryApi::enable_pool_creation_context();
 		enable_pool_creation_mock.expect().return_const(true);
@@ -2356,7 +2352,7 @@ fn test_pool_is_not_promoted_if_not_scheduled_to() {
 				Some((id, issuance))
 			});
 
-		let mut mock = MockRewardsApi::update_pool_promotion_context();
+		let mock = MockRewardsApi::update_pool_promotion_context();
 		mock.expect().times(0).return_const(());
 
 		Bootstrap::schedule_bootstrap(

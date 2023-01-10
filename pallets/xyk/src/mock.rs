@@ -79,7 +79,7 @@ impl MockActivedPoolQueryApi {
 
 impl ActivedPoolQueryApi for MockActivedPoolQueryApi {
 	fn get_pool_activate_amount(_liquidity_token_id: TokenId) -> Option<u128> {
-		Some(1 as u128)
+		Some(1_u128)
 	}
 }
 
@@ -108,7 +108,7 @@ impl PoolPromoteApi for MockPromotedPoolApi {
 
 	fn get_pool_rewards_v2(liquidity_token_id: TokenId) -> Option<sp_core::U256> {
 		let pools = PROMOTED_POOLS.lock().unwrap();
-		pools.get(&liquidity_token_id).map(|x| *x)
+		pools.get(&liquidity_token_id).copied()
 	}
 
 	fn len() -> usize {
@@ -218,7 +218,7 @@ parameter_types! {
 
 
 	pub const TotalCrowdloanAllocation: Balance = 200_000_000;
-	pub const IssuanceCap: Balance = 100_000__000_000__000_000;
+	pub const IssuanceCap: Balance = 100_000_000_000_000_000;
 	pub const LinearIssuanceBlocks: u32 = 22_222u32;
 	pub const LiquidityMiningSplit: Perbill = Perbill::from_parts(555555556);
 	pub const StakingSplit: Perbill = Perbill::from_parts(444444444);
@@ -296,8 +296,8 @@ impl<T: frame_system::Config> Get<T::AccountId> for RewardsMigrateAccountProvide
 			hex_literal::hex!["0e33df23356eb2e9e3baf0e8a5faae15bc70a6a5cce88f651a9faf6e8e937324"]
 				.into();
 		let mut init_account32 = sp_runtime::AccountId32::as_ref(&account32);
-		let init_account = T::AccountId::decode(&mut init_account32).unwrap();
-		init_account
+		
+		T::AccountId::decode(&mut init_account32).unwrap()
 	}
 }
 
@@ -395,7 +395,7 @@ where
 		account_id: &Self::AccountId,
 	) -> Balance {
 		let account_id: u128 = (account_id.clone()).into();
-		let token_id: u32 = token_id.into();
+		let token_id: u32 = token_id;
 		XykStorage::get_rewards_info(account_id, token_id).activated_amount
 	}
 
@@ -446,7 +446,6 @@ impl<T: Config> Pallet<T> {
 			value.into(),
 			ExistenceRequirement::KeepAlive,
 		)
-		.into()
 	}
 	pub fn create_new_token(who: &T::AccountId, amount: Balance) -> TokenId {
 		<T as Config>::Currency::create(who, amount.into())
@@ -464,9 +463,6 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	ext
 }
 
-pub(crate) fn last_event() -> RuntimeEvent {
-	System::events().pop().expect("Event expected").event
-}
 
 pub(crate) fn events() -> Vec<pallet::Event<Test>> {
 	System::events()
@@ -476,23 +472,13 @@ pub(crate) fn events() -> Vec<pallet::Event<Test>> {
 		.collect::<Vec<_>>()
 }
 
-/// Assert input equal to the last event emitted
-#[macro_export]
-macro_rules! assert_last_event {
-	($event:expr) => {
-		match &$event {
-			e => assert_eq!(*e, crate::mock::last_event()),
-		}
-	};
-}
-
 /// Compares the system events with passed in events
 /// Prints highlighted diff iff assert_eq fails
 #[macro_export]
 macro_rules! assert_eq_events {
 	($events:expr) => {
 		match &$events {
-			e => similar_asserts::assert_eq!(*e, crate::mock::events()),
+			e => similar_asserts::assert_eq!(*e, $crate::mock::events()),
 		}
 	};
 }
@@ -504,7 +490,7 @@ macro_rules! assert_event_emitted {
 		match &$event {
 			e => {
 				assert!(
-					crate::mock::events().iter().find(|x| *x == e).is_some(),
+					$crate::mock::events().iter().find(|x| *x == e).is_some(),
 					"Event {:?} was not found in events: \n {:?}",
 					e,
 					crate::mock::events()

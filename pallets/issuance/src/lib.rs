@@ -342,8 +342,8 @@ impl<T: Config> ComputeIssuance for Pallet<T> {
 	}
 
 	fn compute_issuance(n: u32) {
-		Pallet::<T>::calculate_and_store_round_issuance(n);
-		Pallet::<T>::clear_round_issuance_history(n);
+		let _ = Pallet::<T>::calculate_and_store_round_issuance(n);
+		let _ = Pallet::<T>::clear_round_issuance_history(n);
 	}
 }
 

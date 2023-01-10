@@ -1753,7 +1753,7 @@ fn unsuccessful_sell_assets_charges_fee() {
 fn PoolCreateApi_test_pool_exists_return_false_for_non_existing_pool() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
-		assert!(!<XykStorage as PoolCreateApi>::pool_exists(1_u32.into(), 4_u32.into()));
+		assert!(!<XykStorage as PoolCreateApi>::pool_exists(1_u32, 4_u32));
 	});
 }
 
@@ -1763,7 +1763,7 @@ fn PoolCreateApi_pool_exists_return_true_for_existing_pool() {
 		initialize();
 
 		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 500000, 1, 10000).unwrap();
-		assert!(<XykStorage as PoolCreateApi>::pool_exists(0_u32.into(), 1_u32.into()));
+		assert!(<XykStorage as PoolCreateApi>::pool_exists(0_u32, 1_u32));
 	});
 }
 
@@ -1777,8 +1777,8 @@ fn PoolCreateApi_pool_create_creates_a_pool() {
 		let second_asset_id = 1_u32;
 		let second_asset_amount = 5_000_u128;
 		assert!(!<XykStorage as PoolCreateApi>::pool_exists(
-			first_asset_id.into(),
-			second_asset_id.into()
+			first_asset_id,
+			second_asset_id
 		));
 
 		let liq_token_id = Tokens::next_asset_id();
@@ -1786,19 +1786,19 @@ fn PoolCreateApi_pool_create_creates_a_pool() {
 
 		assert_eq!(
 			<XykStorage as PoolCreateApi>::pool_create(
-				DUMMY_USER_ID.into(),
-				first_asset_id.into(),
+				DUMMY_USER_ID,
+				first_asset_id,
 				first_asset_amount,
-				second_asset_id.into(),
+				second_asset_id,
 				second_asset_amount
 			),
 			Some((liq_token_id, liq_token_amount))
 		);
 
 		assert_ne!(liq_token_id, Tokens::next_asset_id());
-		assert_eq!(liq_token_amount, XykStorage::balance(liq_token_id, DUMMY_USER_ID.into()));
+		assert_eq!(liq_token_amount, XykStorage::balance(liq_token_id, DUMMY_USER_ID));
 
-		assert!(<XykStorage as PoolCreateApi>::pool_exists(0_u32.into(), 1_u32.into()));
+		assert!(<XykStorage as PoolCreateApi>::pool_exists(0_u32, 1_u32));
 	});
 }
 
@@ -2122,9 +2122,8 @@ fn rewards_rounding_during_often_mint() {
 				log::info!("rew minter {} {}", n, rew_minter);
 
 				if rew_non_minter > rew_minter {
-					non_minter_higher_rewards_counter = non_minter_higher_rewards_counter + 1;
-					higher_rewards_cumulative =
-						rew_minter * 10000 / rew_non_minter + higher_rewards_cumulative;
+					non_minter_higher_rewards_counter += 1;
+					higher_rewards_cumulative += rew_minter * 10000 / rew_non_minter;
 				}
 			}
 		}

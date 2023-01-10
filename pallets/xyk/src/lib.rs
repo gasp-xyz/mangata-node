@@ -341,14 +341,14 @@ pub struct RewardInfo {
 	pub missing_at_last_checkpoint: U256,
 }
 
-pub(crate) const LOG_TARGET: &'static str = "xyk";
+pub(crate) const LOG_TARGET: &str = "xyk";
 
 // syntactic sugar for logging.
 #[macro_export]
 macro_rules! log {
 	($level:tt, $patter:expr $(, $values:expr)* $(,)?) => {
 		log::$level!(
-			target: crate::LOG_TARGET,
+			target: $crate::LOG_TARGET,
 			concat!("[{:?}] 💸 ", $patter), <frame_system::Pallet<T>>::block_number() $(, $values)*
 		)
 	};
@@ -725,7 +725,7 @@ pub mod pallet {
 				native_asset_vesting_index,
 				vesting_native_asset_unlock_some_amount_or_all.map(Into::into),
 			)
-			.map(|x| (x.0.into(), x.1.into(), x.2.into()))?;
+			.map(|x| (x.0.into(), x.1, x.2.into()))?;
 
 			let (liquidity_token_id, liquidity_assets_minted) =
 				<Self as XykFunctionsTrait<T::AccountId>>::mint_liquidity(
@@ -741,7 +741,7 @@ pub mod pallet {
 				&sender,
 				liquidity_token_id.into(),
 				liquidity_assets_minted.into(),
-				Some(vesting_starting_block.into()),
+				Some(vesting_starting_block),
 				vesting_ending_block_as_balance.into(),
 			)?;
 
@@ -774,7 +774,7 @@ pub mod pallet {
 				Self::native_token_id().into(),
 				vesting_native_asset_amount.into(),
 			)
-			.map(|x| (x.0.into(), x.1.into()))?;
+			.map(|x| (x.0, x.1.into()))?;
 
 			let (liquidity_token_id, liquidity_assets_minted) =
 				<Self as XykFunctionsTrait<T::AccountId>>::mint_liquidity(
@@ -790,7 +790,7 @@ pub mod pallet {
 				&sender,
 				liquidity_token_id.into(),
 				liquidity_assets_minted.into(),
-				Some(vesting_starting_block.into()),
+				Some(vesting_starting_block),
 				vesting_ending_block_as_balance.into(),
 			)?;
 
@@ -931,7 +931,7 @@ pub mod pallet {
 				amount,
 			)?;
 
-			Ok(().into())
+			Ok(())
 		}
 
 		#[transactional]
@@ -947,7 +947,7 @@ pub mod pallet {
 				liquidity_token_id,
 			)?;
 
-			Ok(().into())
+			Ok(())
 		}
 
 		#[pallet::weight(<<T as Config>::WeightInfo>::update_pool_promotion())]
@@ -1008,11 +1008,17 @@ impl<T: Config> Pallet<T> {
 			T::BuyAndBurnFeePercentage::get()
 	}
 
+	fn current_rewards_time() -> Option<u32> {
+			<frame_system::Pallet<T>>::block_number().saturated_into::<u32>()
+			.checked_add(1) 
+			.and_then(|v| v.checked_div(T::RewardsDistributionPeriod::get()))
+	}
+
 	pub fn calculate_rewards_amount_v2(
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
 	) -> Result<Balance, DispatchError> {
-		let rewards_info: RewardInfo = Self::get_rewards_info(user.clone(), liquidity_asset_id);
+		let rewards_info: RewardInfo = Self::get_rewards_info(user, liquidity_asset_id);
 
 		let liquidity_assets_amount: Balance = rewards_info.activated_amount;
 
@@ -1063,8 +1069,8 @@ impl<T: Config> Pallet<T> {
 			Error::<T>::NotAPromotedPool
 		);
 
-		let current_time: u32 = (<frame_system::Pallet<T>>::block_number().saturated_into::<u32>() +
-			1) / T::RewardsDistributionPeriod::get();
+		let current_time: u32 = Self::current_rewards_time()
+			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError))?;
 
 		let time_passed = current_time
 			.checked_sub(last_checkpoint)
@@ -1075,7 +1081,7 @@ impl<T: Config> Pallet<T> {
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError))?;
 
 		let user_rewards_base: U256 = U256::from(liquidity_assets_amount)
-			.checked_mul(pool_rewards_ratio_new.into()) // TODO: please add UT and link it in this comment
+			.checked_mul(pool_rewards_ratio_new) // TODO: please add UT and link it in this comment
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError))?
 			.checked_div(U256::from(u128::MAX)) // always fit into u128
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError))?;
@@ -1087,7 +1093,7 @@ impl<T: Config> Pallet<T> {
 				missing_at_last_checkpoint,
 			)?;
 
-		let current_rewards = U256::from(user_rewards_base)
+		let current_rewards = user_rewards_base
 			.checked_mul(cumulative_work)
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError))?
 			.checked_div(cummulative_work_max_possible)
@@ -1122,16 +1128,18 @@ impl<T: Config> Pallet<T> {
 			// whole formula: 	missing_at_last_checkpoint*Q*100/(Q*100-100) - missing_at_last_checkpoint*Q*100/(Q*100-100)*REWARDS_PRECISION/q_pow
 			// q_pow is multiplied by precision, thus there needs to be *precision in numenator as well
 			let base = missing_at_last_checkpoint
-				.checked_mul(U256::from(libm::floor(Q * 100 as f64) as u128))
+				.checked_mul(U256::from(libm::floor(Q * 100_f64) as u128))
 				.ok_or_else(|| {
 					DispatchError::from(Error::<T>::CalculateCumulativeWorkMaxRatioMathError)
 				})?
-				.checked_div(U256::from(libm::floor(Q * 100 as f64 - 100 as f64) as u128))
+				.checked_div(U256::from(libm::floor(Q * 100_f64 - 100_f64) as u128))
 				.ok_or_else(|| {
 					DispatchError::from(Error::<T>::CalculateCumulativeWorkMaxRatioMathError)
 				})?;
 
-			let q_pow = Self::calculate_q_pow(Q, time_passed + 1);
+			let q_pow = Self::calculate_q_pow(Q, time_passed.checked_add(1)
+											  .ok_or(Error::<T>::CalculateCumulativeWorkMaxRatioMathError)?
+											  );
 
 			let cummulative_missing_new =
 				base - base * U256::from(REWARDS_PRECISION) / q_pow - missing_at_last_checkpoint;
@@ -1169,17 +1177,17 @@ impl<T: Config> Pallet<T> {
 		liquidity_assets_added: Balance,
 		use_balance_from: Option<ActivateKind>,
 	) -> DispatchResult {
-		let current_time: u32 = (<frame_system::Pallet<T>>::block_number().saturated_into::<u32>() +
-			1) / T::RewardsDistributionPeriod::get();
+		let current_time: u32 = Self::current_rewards_time()
+			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError))?;
 		let mut pool_ratio_current =
 			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id)
 				.ok_or_else(|| DispatchError::from(Error::<T>::NotAPromotedPool))?;
 
 		let rewards_info = RewardsInfo::<T>::try_get(user.clone(), liquidity_asset_id)
 			.unwrap_or_else(|_| RewardInfo {
-				activated_amount: 0 as u128,
-				rewards_not_yet_claimed: 0 as u128,
-				rewards_already_claimed: 0 as u128,
+				activated_amount: 0_u128,
+				rewards_not_yet_claimed: 0_u128,
+				rewards_already_claimed: 0_u128,
 				last_checkpoint: current_time,
 				pool_ratio_at_last_checkpoint: pool_ratio_current,
 				missing_at_last_checkpoint: U256::from(liquidity_assets_added),
@@ -1252,9 +1260,9 @@ impl<T: Config> Pallet<T> {
 
 		// This must not fail due storage edits above
 		<T as Config>::ActivationReservesProvider::activate(
-			liquidity_asset_id.into(),
+			liquidity_asset_id,
 			&user,
-			liquidity_assets_added.into(),
+			liquidity_assets_added,
 			use_balance_from,
 		)?;
 
@@ -1266,8 +1274,8 @@ impl<T: Config> Pallet<T> {
 		liquidity_asset_id: TokenId,
 		liquidity_assets_burned: Balance,
 	) -> DispatchResult {
-		let current_time: u32 = (<frame_system::Pallet<T>>::block_number().saturated_into::<u32>() +
-			1) / T::RewardsDistributionPeriod::get();
+		let current_time: u32 = Self::current_rewards_time()
+			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError))?;
 
 		let mut pool_ratio_current =
 			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id)
@@ -1340,9 +1348,9 @@ impl<T: Config> Pallet<T> {
 		.map_err(|_| DispatchError::from(Error::<T>::LiquidityCheckpointMathError))?;
 
 		<T as Config>::ActivationReservesProvider::deactivate(
-			liquidity_asset_id.into(),
+			liquidity_asset_id,
 			&user,
-			liquidity_assets_burned.into(),
+			liquidity_assets_burned,
 		);
 
 		Ok(())
@@ -1376,7 +1384,7 @@ impl<T: Config> Pallet<T> {
 		name.extend_from_slice(LIQUIDITY_TOKEN_IDENTIFIER);
 		name.extend_from_slice(HEX_INDICATOR);
 		for bytes in liquidity_asset_id.to_be_bytes().iter() {
-			match (bytes >> 4) as u8 {
+			match (bytes.checked_shr(4).ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?) as u8 {
 				x @ 0u8..=9u8 => name.push(x.saturating_add(48u8)),
 				x => name.push(x.saturating_add(55u8)),
 			}
@@ -1390,7 +1398,7 @@ impl<T: Config> Pallet<T> {
 		symbol.extend_from_slice(TOKEN_SYMBOL);
 		symbol.extend_from_slice(HEX_INDICATOR);
 		for bytes in first_asset_id.to_be_bytes().iter() {
-			match (bytes >> 4) as u8 {
+			match (bytes.checked_shr(4).ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?) as u8 {
 				x @ 0u8..=9u8 => symbol.push(x.saturating_add(48u8)),
 				x => symbol.push(x.saturating_add(55u8)),
 			}
@@ -1403,7 +1411,7 @@ impl<T: Config> Pallet<T> {
 		symbol.extend_from_slice(TOKEN_SYMBOL);
 		symbol.extend_from_slice(HEX_INDICATOR);
 		for bytes in second_asset_id.to_be_bytes().iter() {
-			match (bytes >> 4) as u8 {
+			match (bytes.checked_shr(4).ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?) as u8 {
 				x @ 0u8..=9u8 => symbol.push(x.saturating_add(48u8)),
 				x => symbol.push(x.saturating_add(55u8)),
 			}
@@ -1428,7 +1436,8 @@ impl<T: Config> Pallet<T> {
 		output_reserve: Balance,
 		sell_amount: Balance,
 	) -> Result<Balance, DispatchError> {
-		let after_fee_percentage: u128 = 10000 - Self::total_fee();
+		let after_fee_percentage: u128 = 10000_u128.checked_sub(Self::total_fee())
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 		let input_reserve_saturated: U256 = input_reserve.into();
 		let output_reserve_saturated: U256 = output_reserve.into();
 		let sell_amount_saturated: U256 = sell_amount.into();
@@ -1496,7 +1505,8 @@ impl<T: Config> Pallet<T> {
 		output_reserve: Balance,
 		buy_amount: Balance,
 	) -> Result<Balance, DispatchError> {
-		let after_fee_percentage: u128 = 10000 - Self::total_fee();
+		let after_fee_percentage: u128 = 10000_u128.checked_sub(Self::total_fee())
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 		let input_reserve_saturated: U256 = input_reserve.into();
 		let output_reserve_saturated: U256 = output_reserve.into();
 		let buy_amount_saturated: U256 = buy_amount.into();
@@ -1537,7 +1547,10 @@ impl<T: Config> Pallet<T> {
 	) -> Result<Balance, DispatchError> {
 		let multiplier: U256 = 10_000.into();
 		let multiplier_sq: U256 = multiplier.pow(2.into());
-		let non_pool_fees: U256 = (Self::total_fee() - T::PoolFeePercentage::get()).into(); // npf
+		let non_pool_fees: U256 = Self::total_fee()
+			.checked_sub(T::PoolFeePercentage::get())
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+		    .into(); // npf
 		let total_fee: U256 = Self::total_fee().into(); // tf
 		let total_amount_saturated: U256 = total_amount.into(); // z
 		let reserve_amount_saturated: U256 = reserve_amount.into(); // a
@@ -1637,12 +1650,12 @@ impl<T: Config> Pallet<T> {
 		let mut reserves = Pools::<T>::get((first_asset_id, second_asset_id));
 
 		if Pools::<T>::contains_key((first_asset_id, second_asset_id)) {
-			return Ok((reserves.0, reserves.1))
+			Ok((reserves.0, reserves.1))
 		} else if Pools::<T>::contains_key((second_asset_id, first_asset_id)) {
 			reserves = Pools::<T>::get((second_asset_id, first_asset_id));
-			return Ok((reserves.1, reserves.0))
+			Ok((reserves.1, reserves.0))
 		} else {
-			return Err(DispatchError::from(Error::<T>::NoSuchPool))
+			Err(DispatchError::from(Error::<T>::NoSuchPool))
 		}
 	}
 
@@ -1770,13 +1783,22 @@ impl<T: Config> Pallet<T> {
 			let settle_amount_in_mangata = Self::calculate_sell_price_no_fee(
 				input_reserve,
 				output_reserve,
-				treasury_amount + burn_amount,
+				treasury_amount.checked_add(burn_amount)
+					.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+				,
 			)?;
-			let treasury_amount_in_mangata = settle_amount_in_mangata *
-				T::TreasuryFeePercentage::get() /
-				(T::TreasuryFeePercentage::get() + T::BuyAndBurnFeePercentage::get());
 
-			let burn_amount_in_mangata = settle_amount_in_mangata - treasury_amount_in_mangata;
+			let treasury_amount_in_mangata = settle_amount_in_mangata
+				.checked_mul( T::TreasuryFeePercentage::get())
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+				.checked_div(
+					T::TreasuryFeePercentage::get().checked_add(T::BuyAndBurnFeePercentage::get())
+						.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+				)
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+
+			let burn_amount_in_mangata = settle_amount_in_mangata.checked_sub(treasury_amount_in_mangata)
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 
 			// Apply changes in token pools, adding treasury and burn amounts of settling token, removing  treasury and burn amounts of mangata
 
@@ -1877,8 +1899,9 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 			10000,
 			Rounding::Down,
 		)
-		.ok_or(Error::<T>::UnexpectedFailure)? +
-			1;
+		.ok_or(Error::<T>::UnexpectedFailure)?
+		.checked_add(1)
+		.ok_or(Error::<T>::MathOverflow)?;
 
 		let treasury_amount = multiply_by_rational_with_rounding(
 			sold_asset_amount,
@@ -1886,8 +1909,9 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 			10000,
 			Rounding::Down,
 		)
-		.ok_or(Error::<T>::UnexpectedFailure)? +
-			1;
+		.ok_or(Error::<T>::UnexpectedFailure)?
+		.checked_add(1)
+		.ok_or(Error::<T>::MathOverflow)?;
 
 		let pool_fee_amount = multiply_by_rational_with_rounding(
 			sold_asset_amount,
@@ -1895,8 +1919,9 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 			10000,
 			Rounding::Down,
 		)
-		.ok_or(Error::<T>::UnexpectedFailure)? +
-			1;
+		.ok_or(Error::<T>::UnexpectedFailure)?
+		.checked_add(1)
+		.ok_or(Error::<T>::MathOverflow)?;
 
 		// for future implementation of min fee if necessary
 		// let min_fee: u128 = 0;
@@ -1921,7 +1946,7 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 		// Ensure user has enough tokens to sell
 		<T as Config>::Currency::ensure_can_withdraw(
 			sold_asset_id.into(),
-			&sender,
+			sender,
 			sold_asset_amount.into(),
 			WithdrawReasons::all(),
 			// Does not fail due to earlier ensure
@@ -1975,8 +2000,9 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 			10000,
 			Rounding::Down,
 		)
-		.ok_or(Error::<T>::UnexpectedFailure)? +
-			1;
+		.ok_or(Error::<T>::UnexpectedFailure)?
+		.checked_add(1)
+		.ok_or(Error::<T>::MathOverflow)?;
 
 		let treasury_amount = multiply_by_rational_with_rounding(
 			sold_asset_amount,
@@ -1984,8 +2010,9 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 			10000,
 			Rounding::Down,
 		)
-		.ok_or(Error::<T>::UnexpectedFailure)? +
-			1;
+		.ok_or(Error::<T>::UnexpectedFailure)?
+		.checked_add(1)
+		.ok_or(Error::<T>::MathOverflow)?;
 
 		let pool_fee_amount = multiply_by_rational_with_rounding(
 			sold_asset_amount,
@@ -1993,8 +2020,9 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 			10000,
 			Rounding::Down,
 		)
-		.ok_or(Error::<T>::UnexpectedFailure)? +
-			1;
+		.ok_or(Error::<T>::UnexpectedFailure)?
+		.checked_add(1)
+		.ok_or(Error::<T>::MathOverflow)?;
 
 		// for future implementation of min fee if necessary
 		// let min_fee: u128 = 0;
@@ -2009,7 +2037,7 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 		// Ensure user has enough tokens to sell
 		<T as Config>::Currency::ensure_can_withdraw(
 			sold_asset_id.into(),
-			&sender,
+			sender,
 			sold_asset_amount.into(),
 			WithdrawReasons::all(),
 			// Does not fail due to earlier ensure
@@ -2086,7 +2114,15 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		ensure!(first_asset_id != second_asset_id, Error::<T>::SameAsset,);
 
 		// Liquidity token amount calculation
-		let mut initial_liquidity = first_asset_amount / 2 + second_asset_amount / 2;
+		let mut initial_liquidity = first_asset_amount
+			.checked_div(2)
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+			.checked_add(
+				second_asset_amount.checked_div(2)
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+			)
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+
 		if initial_liquidity == 0 {
 			initial_liquidity = 1
 		}
@@ -2236,7 +2272,11 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				&sender,
 				&vault,
 				(sold_asset_amount
-					.checked_sub(buy_and_burn_amount + treasury_amount + pool_fee_amount)
+					.checked_sub(
+						buy_and_burn_amount.checked_add(treasury_amount)
+							.and_then(|v| v.checked_add(pool_fee_amount))
+							.ok_or_else(|| DispatchError::from(Error::<T>::SoldAmountTooLow))?
+						)
 					.ok_or_else(|| DispatchError::from(Error::<T>::SoldAmountTooLow))?)
 				.into(),
 				ExistenceRequirement::KeepAlive,
@@ -2253,7 +2293,11 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			// Neither should fall to zero let alone underflow, due to how pool destruction works
 			// Won't overflow due to earlier ensure
 			let input_reserve_updated = input_reserve
-				.saturating_add(sold_asset_amount - treasury_amount - buy_and_burn_amount);
+				.saturating_add(
+					sold_asset_amount.checked_sub(treasury_amount)
+					.and_then(|v| v.checked_sub(buy_and_burn_amount))
+					.ok_or_else(|| DispatchError::from(Error::<T>::SoldAmountTooLow))?
+			);
 			let output_reserve_updated = output_reserve.saturating_sub(bought_asset_amount);
 
 			// MAX 2R 1W
@@ -2389,10 +2433,13 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				sold_asset_id.into(),
 				&sender,
 				&vault,
-				(sold_asset_amount
-					.checked_sub(buy_and_burn_amount + treasury_amount + pool_fee_amount)
-					.ok_or_else(|| DispatchError::from(Error::<T>::SoldAmountTooLow))?)
-				.into(),
+				sold_asset_amount
+					.checked_sub(
+						buy_and_burn_amount.checked_add(treasury_amount)
+						.and_then(|v| v.checked_add(pool_fee_amount))
+						.ok_or_else(|| DispatchError::from(Error::<T>::SoldAmountTooLow))?
+					)
+					.ok_or_else(|| DispatchError::from(Error::<T>::SoldAmountTooLow))?.into(),
 				ExistenceRequirement::KeepAlive,
 			)?;
 			<T as Config>::Currency::transfer(
@@ -2406,8 +2453,12 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			// Apply changes in token pools, adding sold amount and removing bought amount
 			// Neither should fall to zero let alone underflow, due to how pool destruction works
 			// Won't overflow due to earlier ensure
-			let input_reserve_updated = input_reserve
-				.saturating_add(sold_asset_amount - treasury_amount - buy_and_burn_amount);
+			let input_reserve_updated = input_reserve.saturating_add(
+				sold_asset_amount.checked_sub(treasury_amount)
+					.and_then(|v| v.checked_sub(buy_and_burn_amount))
+					.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+			);
+
 			let output_reserve_updated = output_reserve.saturating_sub(bought_asset_amount);
 			Pallet::<T>::set_reserves(
 				sold_asset_id,
@@ -2905,7 +2956,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		let mut already_claimed_rewards = rewards_info.rewards_already_claimed;
 
 		if mangata_amount <= not_yet_claimed_rewards {
-			not_yet_claimed_rewards = not_yet_claimed_rewards - mangata_amount;
+			not_yet_claimed_rewards = not_yet_claimed_rewards.checked_sub(mangata_amount)
+					.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 		}
 		// user is taking out more rewards then rewards from LP which was already removed from pool, additional work needs to be removed from pool and user
 		else {
@@ -2916,7 +2968,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			already_claimed_rewards = already_claimed_rewards
 				.checked_add(rewards_to_claim)
 				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
-			not_yet_claimed_rewards = 0 as u128;
+			not_yet_claimed_rewards = 0_u128;
 		}
 
 		let rewards_info_new: RewardInfo = RewardInfo {
@@ -2975,7 +3027,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 		let rewards_info_new: RewardInfo = RewardInfo {
 			activated_amount: rewards_info.activated_amount,
-			rewards_not_yet_claimed: 0 as u128,
+			rewards_not_yet_claimed: 0_u128,
 			rewards_already_claimed: current_rewards,
 			last_checkpoint: rewards_info.last_checkpoint,
 			pool_ratio_at_last_checkpoint: rewards_info.pool_ratio_at_last_checkpoint,
@@ -2990,7 +3042,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			ExistenceRequirement::KeepAlive,
 		)?;
 
-		RewardsInfo::<T>::insert(user.clone(), liquidity_asset_id, rewards_info_new.clone());
+		RewardsInfo::<T>::insert(user.clone(), liquidity_asset_id, rewards_info_new);
 
 		Pallet::<T>::deposit_event(Event::RewardsClaimed(
 			user,
@@ -3031,7 +3083,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 		ensure!(
 			<T as Config>::ActivationReservesProvider::can_activate(
-				liquidity_asset_id.into(),
+				liquidity_asset_id,
 				&user,
 				amount,
 				use_balance_from.clone()

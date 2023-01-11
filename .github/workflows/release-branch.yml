@@ -9,7 +9,7 @@ on:
   pull_request:
     types: [labeled, opened, synchronize, unlabeled, closed]
     branches:
-      - main
+      - feature/release-branch-main-placeholder
   push:
     branches: [feature/release-branch]
 

@@ -9,6 +9,9 @@ environments:
   fungible:
     values:
       - "./config/fungible.yaml"
+  release:
+    values:
+      - "./config/release.yaml"
   rococo:
     values:
       - "./config/rococo.yaml"

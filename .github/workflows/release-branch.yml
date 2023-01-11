@@ -1,0 +1,248 @@
+name: Continous Integration
+
+# available flags:
+## skip-e2e-tests: skip running e2e tests
+## skip-build : run the test with latest version.
+## skip-publish: skip publish
+
+on:
+  pull_request:
+    types: [labeled, opened, synchronize, unlabeled, closed]
+    branches:
+      - main
+  push:
+    branches: [feature/release-branch]
+
+  workflow_dispatch:
+    # For manually trigger
+    inputs:
+      e2eBranch:
+        description: "Name of the e2e target branch"
+        required: false
+        default: "main"
+      parachainDocker:
+        description: "Name of the parachain docker reference"
+        required: false
+        default: "mangatasolutions/mangata-node:latest"
+      skipBuild:
+        description: "Skip build phase"
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: write
+  id-token: write
+  deployments: write
+  checks: write
+
+# The following concurrency group cancels in-progress jobs or runs on pull_request events only
+# https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
+concurrency: 
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  init:
+    name: Global init
+    if: github.event.action != 'unlabeled' && github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    outputs:
+      GLOBAL_VERSION: ${{ steps.set_vars.outputs.GLOBAL_VERSION }}
+      GIT_BRANCH: ${{ steps.set_vars.outputs.GIT_BRANCH }}
+    steps:
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v6
+      - name: Set global version
+        id: set_vars
+        run: |
+          echo "GLOBAL_VERSION=${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "GIT_BRANCH=${{ steps.branch-name.outputs.current_branch }}" | sed "s@/@-@g" >> $GITHUB_OUTPUT
+
+  build-and-test:
+    if: ${{ github.event.inputs.skipBuild != 'true' }}
+    needs: [init]
+    name: Build
+    uses: ./.github/workflows/build-and-test.yml
+    secrets: inherit
+    with:
+      version: ${{ needs.init.outputs.GLOBAL_VERSION }}
+      branch: ${{ needs.init.outputs.GIT_BRANCH }}
+
+  deploy-fungible:
+    name: Deploy fungible environment
+    needs: [init,build-and-test]
+    if: |
+      (github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == ':rocket: deploy') ||
+      (github.event_name == 'pull_request' && github.event.action != 'labeled' && contains(github.event.pull_request.labels.*.name, ':rocket: deploy'))
+    uses: ./.github/workflows/deploy.yml
+    secrets: inherit
+    with:
+      env: fungible
+      version: ${{ needs.init.outputs.GLOBAL_VERSION }}
+  
+  clean-up-fungible:
+    name: Delete fungible environment
+    if: |
+      (github.event_name == 'pull_request' && github.event.action == 'unlabeled' && github.event.label.name == ':rocket: deploy') ||
+      (github.event_name == 'pull_request' && github.event.action == 'closed' && contains(github.event.pull_request.labels.*.name, ':rocket: deploy'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      - name: Set up GKE credentials
+        uses: google-github-actions/get-gke-credentials@v0.8.2
+        with:
+          cluster_name: mangata-dev
+          location: europe-west1
+
+      - name: Delete Kubernetes namespace with resources for fungible environment
+        run: kubectl delete namespace pr-${{ github.event.number }}
+      
+      - name: Delete GitHub Deployment environment
+        if: always()
+        uses: bobheadxi/deployments@v1.3.0
+        with:
+          step: delete-env
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: pr-${{ github.event.number }}
+
+  e2e-test-matrix:
+    strategy:
+      matrix:
+        command: ["yarn test-parallel --max-workers=32", "yarn test-sequential-e2e"]
+    needs: [init, build-and-test]
+    runs-on: [self-hosted, compile]
+    timeout-minutes: 180
+    if: ${{ (!cancelled() && (success() || github.event.inputs.skipBuild == 'true')) && !contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests') }}
+    env:
+      API_URL: "ws://127.0.0.1:9946"
+      TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}
+      E2E_TREASURY_PALLET_ADDRESS: ${{ secrets.E2E_TREASURY_PALLET_ADDRESS }}
+      E2E_XYK_PALLET_ADDRESS: ${{ secrets.E2E_XYK_PALLET_ADDRESS }}
+      E2E_TREASURY_BURN_PALLET_ADDRESS: ${{ secrets.E2E_TREASURY_BURN_PALLET_ADDRESS }}
+      #      TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
+      TEST_SUDO_NAME: "//Alice"
+      MANGATA_NODE_VERSION: ${{ needs.init.outputs.GLOBAL_VERSION }}
+      E2EBRANCHNAME: "main"
+      PARACHAIN_DOCKER_IMAGE: ${{ github.event.inputs.parachainDocker || format('mangatasolutions/mangata-node:{0}', needs.init.outputs.GLOBAL_VERSION) }}
+    steps:
+      ####IDK, but this is neccesary for reports
+      - uses: actions/checkout@v3
+
+      - name: Download node Docker image
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
+        run: docker pull ${{ env.PARACHAIN_DOCKER_IMAGE }}
+
+      - name: E2E- Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v4.9
+
+      - name: E2E- Get target branch.
+        run: |
+          echo "This job name branch is: ${{ steps.branch-name.outputs.current_branch }}"
+
+      - name: E2E- Calculate if run e2e feature branch or main.
+        run: |
+          echo DEFAULT: E2E test will run with: $E2EBRANCHNAME
+          echo "Running on: ${{ steps.branch-name.outputs.current_branch }}"
+          if [ -n "$(git ls-remote --heads https://github.com/mangata-finance/mangata-e2e.git ${{ steps.branch-name.outputs.current_branch }} --force --quiet)" ]; then echo "E2EBRANCHNAME=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_ENV; echo "MATCH - OK" ; elif [ -n "$(git ls-remote --heads https://github.com/mangata-finance/mangata-e2e.git ${{ github.base_ref }} --force --quiet)" ]; then echo "E2EBRANCHNAME=${{ github.base_ref }}" >> $GITHUB_ENV; echo "MATCH - OK" ;  fi
+
+      - name: Decide if main - branch or parameter
+        # if we have something in e2eBranch - override E2EBranchName, else -> E2EBRANCHNAME , that
+        # by default will be main.
+        run: echo "E2EBRANCHNAME=${{ github.event.inputs.e2eBranch || env.E2EBRANCHNAME }}" >> $GITHUB_ENV
+
+      - name: E2E- Get target branch.
+        run: |
+          echo "${{ env.E2EBRANCHNAME }}"
+
+      - name: Checkout tests
+        uses: actions/checkout@v3
+        with:
+          repository: mangata-finance/mangata-e2e
+          ref: "${{ env.E2EBRANCHNAME }}"
+          path: e2eTests
+
+      - name: Print parachain docker image reference
+        run: |
+          echo ${{ env.PARACHAIN_DOCKER_IMAGE }}
+
+      - name: Replace parachain docker image reference in config
+        working-directory: launch
+        run: sed -i 's+mangatasolutions/mangata-node:dev+${{ env.PARACHAIN_DOCKER_IMAGE }}+g' config.yml
+
+      - name: Install parachain launch
+        working-directory: launch
+        run: yarn
+
+      - name: Generate parachain launch config
+        working-directory: launch
+        run: yarn gen
+
+      - name: Stop previous parachain if running
+        working-directory: launch
+        run: yarn down
+
+      - name: Start mangata-node parachain
+        working-directory: launch
+        run: yarn up
+
+      - name: Install dependencies
+        working-directory: e2eTests
+        run: yarn
+
+      - name: Docker ps
+        run: docker ps
+
+      - name: Sleep for 2 minutes
+        run: sleep 120s #close buffers of videos.
+
+      - name: Run tests
+        working-directory: e2eTests
+        run: ${{ matrix.command }}
+
+      - name: Test Report
+        uses: dorny/test-reporter@v1.6.0
+        if: success() || failure() # run this step even if previous step failed
+        with:
+          name: E2E report ${{ matrix.command }} # Name of the check run which will be created
+          path: e2eTests/reports/junit-*.xml # Path to test results
+          reporter: jest-junit # Format of test results
+
+      - name: Collect docker logs on failure
+        if: failure()
+        uses: jwalton/gh-docker-logs@v2.2.1
+        with:
+          dest: "./logs"
+
+      - name: Tar logs
+        if: failure()
+        run: tar cvzf ./logs.tgz ./logs
+
+      - name: Create images snapshots
+        if: failure()
+        run: |
+          docker commit  $(docker ps | grep parachain-2110-1 | awk '{print $1}') mangata_test_run/mangata_bob_1
+          docker save  --output=/tmp/mangata_bob_1.tar mangata_test_run/mangata_bob_1
+          docker commit  $(docker ps | grep parachain-2110-0 | awk '{print $1}') mangata_test_run/mangata_alice_1
+          docker save  --output=/tmp/mangata_alice_1.tar mangata_test_run/mangata_alice_1
+
+      - name: Upload logs  and docker images to GitHub
+        if: failure()
+        uses: actions/upload-artifact@v3.1.1
+        with:
+          name: logsAndImages
+          path: |
+            ./logs.tgz
+            /tmp/mangata_bob_1.tar
+            /tmp/mangata_alice_1.tar
+
+      - name: Stop mangata-node parachain
+        if: always()
+        working-directory: launch
+        run: yarn down

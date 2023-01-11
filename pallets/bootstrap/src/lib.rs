@@ -14,8 +14,8 @@
 //!
 //! * Bootstrap pallet is reusable** - after bootstrap between tokens `X` and `Y` is finished the following one can be scheduled (with different pair of tokens).
 //! * After bootstrap is finished new liquidity token (`Z`) is created and [`pallet_xyk`] can be used to:
-//!		* exchange/trade `X` and `Y` tokens
-//!		* mint/burn `Z` tokens
+//!        * exchange/trade `X` and `Y` tokens
+//!        * mint/burn `Z` tokens
 //!
 //! * Bootstrap state transition from [`BeforeStart`] -> [`Finished`] happens automatically thanks to substrate framework
 //! hooks. **Only transition from `Finished` -> `BeforeStart` needs to be triggered manually because
@@ -92,13 +92,13 @@
 //!
 //!  ```ignore
 //!  [
-//!			block_nr: T::BlockNumber,
-//!			first_token_id: u32,
-//!			second_token_id: u32,
-//!			[
-//!					ratio_numerator:u128,
-//!					ratio_denominator:u128
-//!			]
+//!            block_nr: T::BlockNumber,
+//!            first_token_id: u32,
+//!            second_token_id: u32,
+//!            [
+//!                    ratio_numerator:u128,
+//!                    ratio_denominator:u128
+//!            ]
 //!  ]
 //!  ```
 //!
@@ -144,8 +144,6 @@ use sp_core::U256;
 use sp_io::KillStorageResult;
 use sp_runtime::traits::{AccountIdConversion, CheckedAdd, One, SaturatedConversion, Saturating};
 use sp_std::{convert::TryInto, prelude::*};
-
-pub mod migrations;
 
 #[cfg(test)]
 mod mock;
@@ -429,7 +427,7 @@ pub mod pallet {
 			Self::do_provision(&sender, token_id, amount, ProvisionKind::Regular)?;
 			ProvisionAccounts::<T>::insert(&sender, ());
 			Self::deposit_event(Event::Provisioned(token_id, amount));
-			Ok(().into())
+			Ok(())
 		}
 
 		/// Allows for whitelisting accounts, so they can participate in during whitelist phase. The list of
@@ -445,7 +443,7 @@ pub mod pallet {
 				WhitelistedAccount::<T>::insert(&account, ());
 			}
 			Self::deposit_event(Event::AccountsWhitelisted);
-			Ok(().into())
+			Ok(())
 		}
 
 		/// Used for starting/scheduling new bootstrap
@@ -575,7 +573,7 @@ pub mod pallet {
 
 			PromoteBootstrapPool::<T>::put(promote_bootstrap_pool);
 
-			Ok(().into())
+			Ok(())
 		}
 
 		/// Used to cancel active bootstrap. Can only be called before bootstrap is actually started
@@ -602,7 +600,7 @@ pub mod pallet {
 			// Unnecessary
 			Phase::<T>::put(BootstrapPhase::BeforeStart);
 
-			Ok(().into())
+			Ok(())
 		}
 
 		#[pallet::weight(T::DbWeight::get().reads_writes(2, 1).saturating_add(Weight::from_ref_time(1_000_000)))]
@@ -622,7 +620,7 @@ pub mod pallet {
 
 			PromoteBootstrapPool::<T>::put(promote_bootstrap_pool);
 
-			Ok(().into())
+			Ok(())
 		}
 
 		/// When bootstrap is in [`BootstrapPhase::Finished`] state user can claim his part of liquidity tokens.
@@ -666,7 +664,7 @@ pub mod pallet {
 				KillStorageResult::AllRemoved(num_iter) => limit = limit.saturating_sub(num_iter),
 				KillStorageResult::SomeRemaining(_) => {
 					Self::deposit_event(Event::BootstrapParitallyFinalized);
-					return Ok(().into())
+					return Ok(())
 				},
 			}
 
@@ -674,7 +672,7 @@ pub mod pallet {
 				KillStorageResult::AllRemoved(num_iter) => limit = limit.saturating_sub(num_iter),
 				KillStorageResult::SomeRemaining(_) => {
 					Self::deposit_event(Event::BootstrapParitallyFinalized);
-					return Ok(().into())
+					return Ok(())
 				},
 			}
 
@@ -682,7 +680,7 @@ pub mod pallet {
 				KillStorageResult::AllRemoved(num_iter) => limit = limit.saturating_sub(num_iter),
 				KillStorageResult::SomeRemaining(_) => {
 					Self::deposit_event(Event::BootstrapParitallyFinalized);
-					return Ok(().into())
+					return Ok(())
 				},
 			}
 
@@ -690,7 +688,7 @@ pub mod pallet {
 				KillStorageResult::AllRemoved(num_iter) => limit = limit.saturating_sub(num_iter),
 				KillStorageResult::SomeRemaining(_) => {
 					Self::deposit_event(Event::BootstrapParitallyFinalized);
-					return Ok(().into())
+					return Ok(())
 				},
 			}
 
@@ -718,7 +716,7 @@ pub mod pallet {
 
 			Self::deposit_event(Event::BootstrapFinalized);
 
-			Ok(().into())
+			Ok(())
 		}
 
 		/// Allows claiming rewards for some account that haven't done that yet. The only difference between
@@ -842,7 +840,7 @@ impl<T: Config> Pallet<T> {
 		let (liq_token_id, _) = Self::minted_liquidity();
 		let total_rewards = rewards.checked_add(rewards_vested).ok_or(Error::<T>::MathOverflow)?;
 		if total_rewards == 0 {
-			return Ok(().into())
+			return Ok(())
 		}
 
 		T::Currency::transfer(
@@ -864,7 +862,7 @@ impl<T: Config> Pallet<T> {
 
 		if rewards_vested > 0 {
 			<<T as Config>::VestingProvider>::lock_tokens(
-				&who,
+				who,
 				liq_token_id.into(),
 				rewards_vested.into(),
 				Some(lock.0.saturated_into()),
@@ -872,7 +870,7 @@ impl<T: Config> Pallet<T> {
 			)?;
 		}
 
-		Ok(().into())
+		Ok(())
 	}
 
 	///
@@ -991,7 +989,7 @@ impl<T: Config> Pallet<T> {
 				Error::<T>::ValuationRatio
 			);
 		}
-		Ok(().into())
+		Ok(())
 	}
 
 	fn get_valuation(token_id: &TokenId) -> Balance {
@@ -1031,7 +1029,7 @@ impl<T: Config> Pallet<T> {
 		let (liq_token_id, _) = Self::minted_liquidity();
 
 		// for backward compatibility
-		if Self::archived().len() > 0 {
+		if !Self::archived().is_empty() {
 			ensure!(ProvisionAccounts::<T>::get(who).is_some(), Error::<T>::NothingToClaim);
 		} else {
 			ensure!(
@@ -1045,9 +1043,9 @@ impl<T: Config> Pallet<T> {
 		}
 
 		let (first_token_rewards, first_token_rewards_vested, first_token_lock) =
-			Self::calculate_rewards(&who, &Self::first_token_id())?;
+			Self::calculate_rewards(who, &Self::first_token_id())?;
 		let (second_token_rewards, second_token_rewards_vested, second_token_lock) =
-			Self::calculate_rewards(&who, &Self::second_token_id())?;
+			Self::calculate_rewards(who, &Self::second_token_id())?;
 
 		let total_rewards_claimed = second_token_rewards
 			.checked_add(second_token_rewards_vested)
@@ -1058,7 +1056,7 @@ impl<T: Config> Pallet<T> {
 			.ok_or(Error::<T>::MathOverflow)?;
 
 		Self::claim_liquidity_tokens_from_single_currency(
-			&who,
+			who,
 			&Self::second_token_id(),
 			second_token_rewards,
 			second_token_rewards_vested,
@@ -1066,14 +1064,13 @@ impl<T: Config> Pallet<T> {
 		)?;
 		log!(
 			info,
-			"Second token rewards (non-vested, vested, total) = ({}, {}, {})",
+			"Second token rewards (non-vested, vested) = ({}, {})",
 			second_token_rewards,
 			second_token_rewards_vested,
-			second_token_rewards + second_token_rewards_vested
 		);
 
 		Self::claim_liquidity_tokens_from_single_currency(
-			&who,
+			who,
 			&Self::first_token_id(),
 			first_token_rewards,
 			first_token_rewards_vested,
@@ -1081,22 +1078,21 @@ impl<T: Config> Pallet<T> {
 		)?;
 		log!(
 			info,
-			"First token rewards (non-vested, vested, total) = ({}, {}, {})",
+			"First token rewards (non-vested, vested) = ({}, {})",
 			first_token_rewards,
 			first_token_rewards_vested,
-			first_token_rewards + first_token_rewards_vested
 		);
 
 		ProvisionAccounts::<T>::remove(who);
 
-		if activate_rewards && <T as Config>::RewardsApi::can_activate(liq_token_id.into()) {
+		if activate_rewards && <T as Config>::RewardsApi::can_activate(liq_token_id) {
 			let non_vested_rewards = second_token_rewards
 				.checked_add(first_token_rewards)
 				.ok_or(Error::<T>::MathOverflow)?;
 			if non_vested_rewards > 0 {
 				let activate_result = <T as Config>::RewardsApi::activate_liquidity_tokens(
-					&who,
-					liq_token_id.into(),
+					who,
+					liq_token_id,
 					non_vested_rewards,
 				);
 				if let Err(err) = activate_result {
@@ -1120,7 +1116,7 @@ impl<T: Config> Pallet<T> {
 
 		Self::deposit_event(Event::RewardsClaimed(liq_token_id, total_rewards_claimed));
 
-		Ok(().into())
+		Ok(())
 	}
 
 	fn first_token_id() -> TokenId {

@@ -1,7 +1,7 @@
 repositories:
   - name: mangata
     # url: git+https://github.com/mangata-finance/helm-charts@charts?ref=feat/MGX-241-node-chart
-    url: git+https://github.com/mangata-finance/helm-charts@charts?ref=8c4234bb8a12a03f033154ecdcf74e986f2a1333
+    url: git+https://github.com/mangata-finance/helm-charts@charts?ref=cb7d76de03ba7831cb4d7ada321b17e059b65f92
 
 environments:
   dev:
@@ -62,6 +62,7 @@ releases:
     <<: *nodeDefault
     installed: {{ .Values | get "node03.enabled" }}
     values:
+      - values.yaml.gotmpl
       - isCollator: {{ .Values.node03.isCollator  | toYaml }}
         bootnodeAddr: {{ .Values.node03.bootnodeAddr }}
         customNodeKey: {{ .Values.node03.nodeKey |fetchSecretValue | quote }}

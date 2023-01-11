@@ -2,7 +2,9 @@ storageSize: 200Gi
 relaychainStorageSize: 500Gi
 nodeCustomChainspecUrl: https://raw.githubusercontent.com/mangata-finance/chainspec/master/rococo-raw.json
 relaychainCustomChainspecUrl: https://raw.githubusercontent.com/paritytech/polkadot/master/node/service/chain-specs/rococo.json
-storageClass: regional-ssd-retain
+# relaychainKubernetesVolumeSnapshot: "relaychain-data-snapshot"
+storageClass: standard-rwo
+# storageClass: regional-ssd-retain
 
 node01:
   isCollator: false

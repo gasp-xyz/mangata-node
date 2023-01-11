@@ -124,7 +124,10 @@ impl frame_benchmarking_cli::ExtrinsicBuilder for BenchmarkExtrinsicBuilder {
 }
 
 /// Generates inherent data for the `benchmark overhead` command.
-pub fn inherent_benchmark_data(prev_seed: [u8; 32], duration: Duration) -> Result<InherentData> {
+pub async fn inherent_benchmark_data(
+	prev_seed: [u8; 32],
+	duration: Duration,
+) -> Result<InherentData> {
 	let keystore = sp_keystore::testing::KeyStore::new();
 	let secret_uri = "//Alice";
 	let key_pair =
@@ -141,10 +144,12 @@ pub fn inherent_benchmark_data(prev_seed: [u8; 32], duration: Duration) -> Resul
 
 	sp_timestamp::InherentDataProvider::new(duration.into())
 		.provide_inherent_data(&mut inherent_data)
+		.await
 		.map_err(|e| format!("creating inherent data: {:?}", e))?;
 
 	sp_ver::RandomSeedInherentDataProvider(seed)
 		.provide_inherent_data(&mut inherent_data)
+		.await
 		.map_err(|e| format!("creating inherent data: {:?}", e))?;
 
 	cumulus_primitives_parachain_inherent::MockValidationDataInherentDataProvider {
@@ -158,6 +163,7 @@ pub fn inherent_benchmark_data(prev_seed: [u8; 32], duration: Duration) -> Resul
 		raw_horizontal_messages: Default::default(),
 	}
 	.provide_inherent_data(&mut inherent_data)
+	.await
 	.map_err(|e| format!("creating inherent data: {:?}", e))?;
 
 	Ok(inherent_data)

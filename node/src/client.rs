@@ -263,10 +263,7 @@ impl sc_client_api::BlockBackend<Block> for Client {
 		match_client!(self, block_body(hash))
 	}
 
-	fn block_indexed_body(
-		&self,
-		id: H256,
-	) -> sp_blockchain::Result<Option<Vec<Vec<u8>>>> {
+	fn block_indexed_body(&self, id: H256) -> sp_blockchain::Result<Option<Vec<Vec<u8>>>> {
 		match_client!(self, block_indexed_body(id))
 	}
 

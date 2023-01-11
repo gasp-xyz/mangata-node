@@ -621,6 +621,7 @@ pub mod pallet {
 	// XYK extrinsics.
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		#[pallet::call_index(0)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::create_pool())]
 		pub fn create_pool(
 			origin: OriginFor<T>,
@@ -654,6 +655,7 @@ pub mod pallet {
 		}
 
 		// you will sell your sold_asset_amount of sold_asset_id to get some amount of bought_asset_id
+		#[pallet::call_index(1)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::sell_asset())]
 		pub fn sell_asset(
 			origin: OriginFor<T>,
@@ -675,6 +677,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		#[pallet::call_index(2)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::buy_asset())]
 		pub fn buy_asset(
 			origin: OriginFor<T>,
@@ -696,6 +699,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		#[pallet::call_index(3)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::mint_liquidity_using_vesting_native_tokens())]
 		#[transactional]
 		pub fn mint_liquidity_using_vesting_native_tokens_by_vesting_index(
@@ -748,6 +752,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		#[pallet::call_index(4)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::mint_liquidity_using_vesting_native_tokens())]
 		#[transactional]
 		pub fn mint_liquidity_using_vesting_native_tokens(
@@ -797,6 +802,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		#[pallet::call_index(5)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::mint_liquidity())]
 		pub fn mint_liquidity(
 			origin: OriginFor<T>,
@@ -825,6 +831,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		#[pallet::call_index(6)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::compound_rewards())]
 		#[transactional]
 		pub fn compound_rewards(
@@ -866,6 +873,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		#[pallet::call_index(7)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::provide_liquidity_with_conversion())]
 		#[transactional]
 		pub fn provide_liquidity_with_conversion(
@@ -897,6 +905,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		#[pallet::call_index(8)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::burn_liquidity())]
 		pub fn burn_liquidity(
 			origin: OriginFor<T>,
@@ -917,6 +926,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
+		#[pallet::call_index(9)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::claim_rewards_v2())]
 		pub fn claim_rewards_v2(
 			origin: OriginFor<T>,
@@ -935,6 +945,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
+		#[pallet::call_index(10)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::claim_rewards_v2())]
 		pub fn claim_rewards_all_v2(
 			origin: OriginFor<T>,
@@ -950,6 +961,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		#[pallet::call_index(11)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::update_pool_promotion())]
 		pub fn update_pool_promotion(
 			origin: OriginFor<T>,
@@ -965,6 +977,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
+		#[pallet::call_index(12)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::activate_liquidity_v2())]
 		pub fn activate_liquidity_v2(
 			origin: OriginFor<T>,
@@ -983,6 +996,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
+		#[pallet::call_index(13)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::deactivate_liquidity_v2())]
 		pub fn deactivate_liquidity_v2(
 			origin: OriginFor<T>,
@@ -999,6 +1013,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
+		#[pallet::call_index(14)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::rewards_migrate_v1_to_v2())]
 		pub fn rewards_migrate_v1_to_v2(
 			origin: OriginFor<T>,

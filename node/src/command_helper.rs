@@ -12,7 +12,7 @@ use sp_keystore::SyncCryptoStore;
 use sp_runtime::{generic, OpaqueExtrinsic, SaturatedConversion};
 use substrate_frame_rpc_system::AccountNonceApi;
 
-use std::{cell::RefCell, rc::Rc, sync::Arc, time::Duration};
+use std::{cell::RefCell, rc::Rc, time::Duration};
 
 #[cfg(feature = "mangata-kusama")]
 pub type KusamaFullClient = crate::service::FullClient<

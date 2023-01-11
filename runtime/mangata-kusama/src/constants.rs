@@ -1,8 +1,8 @@
 pub mod fee {
 	use crate::{weights::VerExtrinsicBaseWeight, UNIT};
 	use frame_support::weights::{
-		constants::{ExtrinsicBaseWeight, WEIGHT_REF_TIME_PER_SECOND},
-		WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
+		constants::WEIGHT_REF_TIME_PER_SECOND, WeightToFeeCoefficient, WeightToFeeCoefficients,
+		WeightToFeePolynomial,
 	};
 	use mangata_types::Balance;
 	use smallvec::smallvec;

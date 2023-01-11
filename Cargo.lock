@@ -4870,7 +4870,7 @@ dependencies = [
 [[package]]
 name = "mmr-gadget"
 version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.36#cb4f2491b00af7d7817f3a54209c26b20faa1f51"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.36#875b18b1808c8e5903d4b7198dd5ee4a1dee6dfd"
 dependencies = [
  "futures",
  "log",
@@ -4890,7 +4890,7 @@ dependencies = [
 [[package]]
 name = "mmr-rpc"
 version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.36#cb4f2491b00af7d7817f3a54209c26b20faa1f51"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.36#875b18b1808c8e5903d4b7198dd5ee4a1dee6dfd"
 dependencies = [
  "anyhow",
  "jsonrpsee",
@@ -6058,7 +6058,7 @@ dependencies = [
 [[package]]
 name = "pallet-nis"
 version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.36#cb4f2491b00af7d7817f3a54209c26b20faa1f51"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.36#875b18b1808c8e5903d4b7198dd5ee4a1dee6dfd"
 dependencies = [
  "frame-benchmarking",
  "frame-support",

@@ -15,16 +15,13 @@ use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
 	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
 };
-use sc_service::{
-	config::{BasePath, PrometheusConfig},
-	PartialComponents,
-};
-use std::{cell::RefCell, rc::Rc, sync::Mutex};
+use sc_service::config::{BasePath, PrometheusConfig};
+use std::{cell::RefCell, rc::Rc};
 
 use sp_core::hexdisplay::HexDisplay;
 
 use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
-use std::{convert::TryInto, io::Write, net::SocketAddr, sync::Arc, time::Duration};
+use std::{convert::TryInto, io::Write, net::SocketAddr, time::Duration};
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
@@ -370,7 +367,7 @@ pub fn run() -> Result<()> {
 							config.runtime_cache_size,
 						);
 
-						let (c, backend, _, _) = sc_service::new_full_parts::<
+						let (c, _, _, _) = sc_service::new_full_parts::<
 							mangata_types::Block,
 							service::mangata_kusama_runtime::RuntimeApi,
 							_,

@@ -10,15 +10,11 @@ use frame_support::{
 	traits::{
 		tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
 		Contains, EnsureOrigin, EnsureOriginWithArg, Everything, ExistenceRequirement, Get,
-		Imbalance, InstanceFilter, LockIdentifier, Nothing, OnRuntimeUpgrade, U128CurrencyToVote,
-		WithdrawReasons,
+		Imbalance, InstanceFilter, WithdrawReasons,
 	},
 	unsigned::TransactionValidityError,
 	weights::{
-		constants::{
-			RocksDbWeight, WEIGHT_REF_TIME_PER_MICROS, WEIGHT_REF_TIME_PER_MILLIS,
-			WEIGHT_REF_TIME_PER_SECOND,
-		},
+		constants::{RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND},
 		ConstantMultiplier, Weight,
 	},
 	PalletId,
@@ -26,11 +22,11 @@ use frame_support::{
 #[cfg(any(feature = "std", test))]
 pub use frame_system::Call as SystemCall;
 use frame_system::{
-	limits::{BlockLength, BlockWeights, BlockWeightsBuilder},
+	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
 };
 pub use orml_tokens;
-use orml_tokens::{MultiTokenCurrencyExtended, TransferDust};
+use orml_tokens::MultiTokenCurrencyExtended;
 use orml_traits::{
 	asset_registry::{AssetMetadata, AssetProcessor},
 	parameter_type_with_key,
@@ -53,7 +49,7 @@ use sp_runtime::{
 		DispatchInfoOf, PostDispatchInfoOf, Saturating, StaticLookup, Zero,
 	},
 	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, DispatchError, FixedPointNumber, Percent, Perquintill, RuntimeDebug,
+	ApplyExtrinsicResult, DispatchError, FixedPointNumber, Percent, RuntimeDebug,
 };
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
 use sp_std::{
@@ -668,10 +664,10 @@ where
 		// Also ugly implementation to keep it maleable for now
 		match call {
 			RuntimeCall::Xyk(pallet_xyk::Call::sell_asset {
-				sold_asset_id: sold_asset_id,
-				sold_asset_amount: sold_asset_amount,
-				bought_asset_id: bought_asset_id,
-				min_amount_out: min_amount_out,
+				sold_asset_id,
+				sold_asset_amount,
+				bought_asset_id,
+				min_amount_out,
 				..
 			}) => {
 				// If else tree for easy edits
@@ -726,10 +722,10 @@ where
 			},
 
 			RuntimeCall::Xyk(pallet_xyk::Call::buy_asset {
-				sold_asset_id: sold_asset_id,
-				bought_asset_amount: bought_asset_amount,
-				bought_asset_id: bought_asset_id,
-				max_amount_in: max_amount_in,
+				sold_asset_id,
+				bought_asset_amount,
+				bought_asset_id,
+				max_amount_in,
 				..
 			}) => {
 				// If else tree for easy edits

@@ -126,6 +126,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		// The weight is calculated using MaxCuratedTokens so it is the worst case weight
 		#[transactional]
+		#[pallet::call_index(0)]
 		#[pallet::weight(T::WeightInfo::update_timeout_metadata())]
 		pub fn update_timeout_metadata(
 			origin: OriginFor<T>,
@@ -174,6 +175,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
+		#[pallet::call_index(1)]
 		#[pallet::weight(T::WeightInfo::release_timeout())]
 		pub fn release_timeout(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;

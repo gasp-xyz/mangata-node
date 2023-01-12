@@ -157,11 +157,7 @@ fn linear_issuance_works() {
 		roll_to_while_minting(10000, Some(81008));
 
 		// Mint for crowdloan
-		let _ = orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(
-			0u32.into(),
-			&1u128,
-			200_000_000u128.into(),
-		);
+		let _ = orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(0u32, &1u128, 200_000_000u128);
 
 		roll_to_while_minting(22218, Some(81008));
 
@@ -180,21 +176,13 @@ fn linear_issuance_doesnt_change_upon_burn() {
 	new_test_ext().execute_with(|| {
 		roll_to_while_minting(15000, Some(81008));
 
-		orml_tokens::MultiTokenCurrencyAdapter::<Test>::burn_and_settle(
-			0u32.into(),
-			&0u128,
-			100_000_000,
-		)
-		.unwrap();
+		orml_tokens::MultiTokenCurrencyAdapter::<Test>::burn_and_settle(0u32, &0u128, 100_000_000)
+			.unwrap();
 
 		assert_eq!(3115525040, Tokens::total_issuance(0u32) as Balance);
 
 		// Mint for crowdloan
-		let _ = orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(
-			0u32.into(),
-			&1u128,
-			200_000_000u128.into(),
-		);
+		let _ = orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(0u32, &1u128, 200_000_000u128);
 
 		roll_to_while_minting(22218, Some(81008));
 
@@ -215,11 +203,7 @@ fn issuance_stops_upon_reaching_cap() {
 		// on the basis of total_issuance
 
 		// Mint for crowdloan
-		let _ = orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(
-			0u32.into(),
-			&1u128,
-			200_000_000u128.into(),
-		);
+		let _ = orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(0u32, &1u128, 200_000_000u128);
 
 		// At this point the entirety of the missing issuance will be allocated to the next session
 		roll_to_while_minting(22219, Some(81008));
@@ -242,11 +226,7 @@ fn issuance_stops_upon_reaching_cap() {
 fn issuance_does_not_stop_upon_burn() {
 	new_test_ext().execute_with(|| {
 		// Mint for crowdloan
-		let _ = orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(
-			0u32.into(),
-			&1u128,
-			200_000_000u128.into(),
-		);
+		let _ = orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(0u32, &1u128, 200_000_000u128);
 
 		// This the point the next session's issuance will be calculated and minted
 		// on the basis of total_issuance
@@ -256,12 +236,8 @@ fn issuance_does_not_stop_upon_burn() {
 
 		roll_to_while_minting(22221, Some(448));
 
-		orml_tokens::MultiTokenCurrencyAdapter::<Test>::burn_and_settle(
-			0u32.into(),
-			&0u128,
-			100_000,
-		)
-		.unwrap();
+		orml_tokens::MultiTokenCurrencyAdapter::<Test>::burn_and_settle(0u32, &0u128, 100_000)
+			.unwrap();
 
 		// At this point the entirety of the missing issuance will be allocated to the next session
 
@@ -283,11 +259,7 @@ fn issuance_does_not_stop_upon_burn() {
 fn issuance_restarts_upon_burn() {
 	new_test_ext().execute_with(|| {
 		// Mint for crowdloan
-		let _ = orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(
-			0u32.into(),
-			&1u128,
-			200_000_000u128.into(),
-		);
+		let _ = orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(0u32, &1u128, 200_000_000u128);
 
 		// This the point the next session's issuance will be calculated and minted
 		// on the basis of total_issuance
@@ -307,12 +279,8 @@ fn issuance_restarts_upon_burn() {
 
 		assert_eq!(4000000000, Tokens::total_issuance(0u32) as Balance);
 
-		orml_tokens::MultiTokenCurrencyAdapter::<Test>::burn_and_settle(
-			0u32.into(),
-			&0u128,
-			100_000,
-		)
-		.unwrap();
+		orml_tokens::MultiTokenCurrencyAdapter::<Test>::burn_and_settle(0u32, &0u128, 100_000)
+			.unwrap();
 
 		assert_eq!(3999900000, Tokens::total_issuance(0u32) as Balance);
 
@@ -332,11 +300,7 @@ fn issuance_restarts_upon_burn() {
 fn issuance_after_linear_period_never_execeeds_linear() {
 	new_test_ext().execute_with(|| {
 		// Mint for crowdloan
-		let _ = orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(
-			0u32.into(),
-			&1u128,
-			200_000_000u128.into(),
-		);
+		let _ = orml_tokens::MultiTokenCurrencyAdapter::<Test>::mint(0u32, &1u128, 200_000_000u128);
 
 		// This the point the next session's issuance will be calculated and minted
 		// on the basis of total_issuance
@@ -356,12 +320,8 @@ fn issuance_after_linear_period_never_execeeds_linear() {
 
 		assert_eq!(4000000000, Tokens::total_issuance(0u32) as Balance);
 
-		orml_tokens::MultiTokenCurrencyAdapter::<Test>::burn_and_settle(
-			0u32.into(),
-			&0u128,
-			100_000,
-		)
-		.unwrap();
+		orml_tokens::MultiTokenCurrencyAdapter::<Test>::burn_and_settle(0u32, &0u128, 100_000)
+			.unwrap();
 
 		assert_eq!(3999900000, Tokens::total_issuance(0u32) as Balance);
 
@@ -375,12 +335,8 @@ fn issuance_after_linear_period_never_execeeds_linear() {
 
 		assert_eq!(4000000000, Tokens::total_issuance(0u32) as Balance);
 
-		orml_tokens::MultiTokenCurrencyAdapter::<Test>::burn_and_settle(
-			0u32.into(),
-			&0u128,
-			100_000_000,
-		)
-		.unwrap();
+		orml_tokens::MultiTokenCurrencyAdapter::<Test>::burn_and_settle(0u32, &0u128, 100_000_000)
+			.unwrap();
 
 		assert_eq!(3900000000, Tokens::total_issuance(0u32) as Balance);
 

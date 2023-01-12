@@ -1753,7 +1753,7 @@ fn unsuccessful_sell_assets_charges_fee() {
 fn PoolCreateApi_test_pool_exists_return_false_for_non_existing_pool() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
-		assert!(!<XykStorage as PoolCreateApi>::pool_exists(1_u32.into(), 4_u32.into()));
+		assert!(!<XykStorage as PoolCreateApi>::pool_exists(1_u32, 4_u32));
 	});
 }
 
@@ -1763,7 +1763,7 @@ fn PoolCreateApi_pool_exists_return_true_for_existing_pool() {
 		initialize();
 
 		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 500000, 1, 10000).unwrap();
-		assert!(<XykStorage as PoolCreateApi>::pool_exists(0_u32.into(), 1_u32.into()));
+		assert!(<XykStorage as PoolCreateApi>::pool_exists(0_u32, 1_u32));
 	});
 }
 
@@ -1776,29 +1776,26 @@ fn PoolCreateApi_pool_create_creates_a_pool() {
 		let first_asset_amount = 10_000_u128;
 		let second_asset_id = 1_u32;
 		let second_asset_amount = 5_000_u128;
-		assert!(!<XykStorage as PoolCreateApi>::pool_exists(
-			first_asset_id.into(),
-			second_asset_id.into()
-		));
+		assert!(!<XykStorage as PoolCreateApi>::pool_exists(first_asset_id, second_asset_id));
 
 		let liq_token_id = Tokens::next_asset_id();
 		let liq_token_amount = (first_asset_amount + second_asset_amount) / 2;
 
 		assert_eq!(
 			<XykStorage as PoolCreateApi>::pool_create(
-				DUMMY_USER_ID.into(),
-				first_asset_id.into(),
+				DUMMY_USER_ID,
+				first_asset_id,
 				first_asset_amount,
-				second_asset_id.into(),
+				second_asset_id,
 				second_asset_amount
 			),
 			Some((liq_token_id, liq_token_amount))
 		);
 
 		assert_ne!(liq_token_id, Tokens::next_asset_id());
-		assert_eq!(liq_token_amount, XykStorage::balance(liq_token_id, DUMMY_USER_ID.into()));
+		assert_eq!(liq_token_amount, XykStorage::balance(liq_token_id, DUMMY_USER_ID));
 
-		assert!(<XykStorage as PoolCreateApi>::pool_exists(0_u32.into(), 1_u32.into()));
+		assert!(<XykStorage as PoolCreateApi>::pool_exists(0_u32, 1_u32));
 	});
 }
 
@@ -2122,9 +2119,8 @@ fn rewards_rounding_during_often_mint() {
 				log::info!("rew minter {} {}", n, rew_minter);
 
 				if rew_non_minter > rew_minter {
-					non_minter_higher_rewards_counter = non_minter_higher_rewards_counter + 1;
-					higher_rewards_cumulative =
-						rew_minter * 10000 / rew_non_minter + higher_rewards_cumulative;
+					non_minter_higher_rewards_counter += 1;
+					higher_rewards_cumulative += rew_minter * 10000 / rew_non_minter;
 				}
 			}
 		}
@@ -2485,79 +2481,6 @@ fn rewards_storage_right_amounts_start3() {
 		assert_eq!(rewards_info.rewards_already_claimed, 10000);
 		assert_eq!(XykStorage::calculate_rewards_amount_v2(3, 4).unwrap(), 4704);
 		assert_eq!(user_balance_after - user_balance_before, 10000);
-	});
-}
-
-#[test]
-#[serial]
-fn migration_work() {
-	new_test_ext().execute_with(|| {
-		//env_logger::init();
-		MockPromotedPoolApi::instance().lock().unwrap().clear();
-		System::set_block_number(1);
-
-		let acc_id: u128 = 2;
-		let amount: u128 = 10000000000;
-
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::transfer(
-			0,
-			2,
-			<Test as Config>::LiquidityMiningIssuanceVault::get(),
-			10000000000,
-		)
-		.unwrap();
-
-		System::set_block_number(200);
-		MockPromotedPoolApi::instance().lock().unwrap().insert(4, U256::from(200000));
-
-		LiquidityMiningActiveUser::<Test>::insert((2, 4), 10000);
-		LiquidityMiningActiveUser::<Test>::insert((3, 4), 10000);
-		LiquidityMiningActivePool::<Test>::insert(4, 20000);
-		LiquidityMiningUser::<Test>::insert((2, 4), (0, U256::from(0), U256::from(10000)));
-		LiquidityMiningUser::<Test>::insert((3, 4), (10, U256::from(0), U256::from(10000)));
-		LiquidityMiningPool::<Test>::insert(4, (10, U256::from(21985), U256::from(15584)));
-		LiquidityMiningUserToBeClaimed::<Test>::insert((2, 4), 0);
-		LiquidityMiningUserClaimed::<Test>::insert((2, 4), 0);
-		LiquidityMiningUserToBeClaimed::<Test>::insert((3, 4), 0);
-		LiquidityMiningUserClaimed::<Test>::insert((3, 4), 0);
-
-		log::info!("{:?}", XykStorage::liquidity_mining_user((2, 4)));
-		log::info!("{:?}", XykStorage::liquidity_mining_user((3, 4)));
-		log::info!("{:?}", XykStorage::liquidity_mining_pool(4));
-
-		assert_eq!(XykStorage::balance(0, 2), 0);
-		assert_eq!(XykStorage::balance(0, 3), 0);
-
-		<XykStorage as XykFunctionsTrait<AccountId>>::rewards_migrate_v1_to_v2(2, 4).unwrap();
-		log::info!("{:?}", MockPromotedPoolApi::get_pool_rewards(4));
-		<XykStorage as XykFunctionsTrait<AccountId>>::rewards_migrate_v1_to_v2(3, 4).unwrap();
-		log::info!("{:?}", MockPromotedPoolApi::get_pool_rewards(4)); // SHOULD BE AROUND 0
-
-		assert_eq!(XykStorage::balance(0, 2), 156202);
-		assert_eq!(XykStorage::balance(0, 3), 43792);
-		assert_eq!(XykStorage::liquidity_mining_user((2, 4)), (0, U256::from(0), U256::from(0)));
-		assert_eq!(XykStorage::liquidity_mining_user((3, 4)), (0, U256::from(0), U256::from(0)));
-		assert_eq!(XykStorage::liquidity_mining_pool(4), (0, U256::from(0), U256::from(0)));
-
-		let mut rewards_info = XykStorage::get_rewards_info(2, 4);
-		assert_eq!(rewards_info.activated_amount, 10000);
-		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
-		assert_eq!(rewards_info.rewards_already_claimed, 0);
-		assert_eq!(rewards_info.last_checkpoint, 20);
-		assert_eq!(rewards_info.pool_ratio_at_last_checkpoint, U256::from(200000)); //these values will be from rew2, but reading pool_ratio_at_last_checkpoint works
-		assert_eq!(rewards_info.missing_at_last_checkpoint, U256::from_dec_str("3118").unwrap());
-
-		rewards_info = XykStorage::get_rewards_info(3, 4);
-		assert_eq!(rewards_info.activated_amount, 10000);
-		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
-		assert_eq!(rewards_info.rewards_already_claimed, 0);
-		assert_eq!(rewards_info.last_checkpoint, 20);
-		assert_eq!(rewards_info.pool_ratio_at_last_checkpoint, U256::from(43798)); //these values will be from rew2, but reading pool_ratio_at_last_checkpoint works
-		assert_eq!(rewards_info.missing_at_last_checkpoint, U256::from_dec_str("5584").unwrap());
 	});
 }
 

@@ -2,14 +2,13 @@ use crate::chain_spec::Extensions;
 use codec::Encode;
 use cumulus_primitives_core::ParaId;
 use hex::FromHex;
-use hex_literal::hex;
 use mangata_rococo_runtime::{
 	constants::parachains, roc_per_second, AccountId, AssetMetadataOf, AuraId, CustomMetadata,
 	GeneralKey, MultiLocation, Parachain, Signature, XcmMetadata, KAR_TOKEN_ID, ROC_TOKEN_ID,
 	TUR_TOKEN_ID, X1, X2,
 };
 use sc_service::ChainType;
-use sp_core::{sr25519, ByteArray, Pair, Public, H160};
+use sp_core::{sr25519, ByteArray, Pair, Public};
 use sp_runtime::{
 	traits::{ConstU32, IdentifyAccount, Verify},
 	WeakBoundedVec,

@@ -10,13 +10,16 @@ use cumulus_client_cli::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
 use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 use futures::executor::block_on;
-use log::info;
+use log::{info, warn};
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
 	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
 };
 use sc_service::config::{BasePath, PrometheusConfig};
 use std::{cell::RefCell, rc::Rc};
+pub use mangata_types::{
+	Block,
+};
 
 use sp_core::hexdisplay::HexDisplay;
 
@@ -490,9 +493,9 @@ pub fn run() -> Result<()> {
 				_ => panic!("invalid chain spec"),
 			}
 		},
-		#[cfg(not(features = "try-runtime"))]
-		Some(Subcommand::TryRuntime) =>
-			Err("Try-runtime must be enabled by `--features try-runtime`.".into()),
+		#[cfg(not(feature = "try-runtime"))]
+		Some(Subcommand::TryRuntime) => Err("TryRuntime wasn't enabled when building the node. \
+				You can enable it with `--features try-runtime`.".into()),
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 			let collator_options = cli.run.collator_options();
@@ -506,6 +509,7 @@ pub fn run() -> Result<()> {
 				} else {
 					None
 				};
+
 				let para_id = chain_spec::Extensions::try_get(&*config.chain_spec)
 					.map(|e| e.para_id)
 					.ok_or_else(|| "Could not find parachain ID in chain-spec.")?;
@@ -520,25 +524,10 @@ pub fn run() -> Result<()> {
 				let parachain_account =
 					AccountIdConversion::<polkadot_primitives::v2::AccountId>::into_account_truncating(&id);
 
-				let genesis_state = match &config.chain_spec {
-					#[cfg(feature = "mangata-kusama")]
-					spec if spec.is_mangata_kusama() => {
-						let state_version = Cli::native_runtime_version(&spec).state_version();
-						let block: service::mangata_kusama_runtime::Block =
-							generate_genesis_block(&*config.chain_spec, state_version)
-								.map_err(|e| format!("{:?}", e))?;
-						format!("0x{:?}", HexDisplay::from(&block.header().encode()))
-					},
-					#[cfg(feature = "mangata-rococo")]
-					spec if spec.is_mangata_rococo() => {
-						let state_version = Cli::native_runtime_version(&spec).state_version();
-						let block: service::mangata_rococo_runtime::Block =
-							generate_genesis_block(&*config.chain_spec, state_version)
-								.map_err(|e| format!("{:?}", e))?;
-						format!("0x{:?}", HexDisplay::from(&block.header().encode()))
-					},
-					_ => panic!("invalid chain spec"),
-				};
+				let state_version = Cli::native_runtime_version(&config.chain_spec).state_version();
+				let block: Block = generate_genesis_block(&*config.chain_spec, state_version)
+					.map_err(|e| format!("{:?}", e))?;
+				let genesis_state = format!("0x{:?}", HexDisplay::from(&block.header().encode()));
 
 				let tokio_handle = config.tokio_handle.clone();
 				let polkadot_config =
@@ -550,27 +539,22 @@ pub fn run() -> Result<()> {
 				info!("Parachain genesis state: {}", genesis_state);
 				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
 
-				match &config.chain_spec {
-					#[cfg(feature = "mangata-kusama")]
-					spec if spec.is_mangata_kusama() => crate::service::start_parachain_node::<
-						service::mangata_kusama_runtime::RuntimeApi,
-						service::MangataKusamaRuntimeExecutor,
-					>(config, polkadot_config, collator_options, id, hwbench)
-					.await
-					.map(|r| r.0)
-					.map_err(Into::into),
-					#[cfg(feature = "mangata-rococo")]
-					spec if spec.is_mangata_rococo() => crate::service::start_parachain_node::<
-						service::mangata_rococo_runtime::RuntimeApi,
-						service::MangataRococoRuntimeExecutor,
-					>(config, polkadot_config, collator_options, id, hwbench)
-					.await
-					.map(|r| r.0)
-					.map_err(Into::into),
-					_ => panic!("invalid chain spec"),
+				if !collator_options.relay_chain_rpc_urls.is_empty() && cli.relay_chain_args.len() > 0 {
+					warn!("Detected relay chain node arguments together with --relay-chain-rpc-url. This command starts a minimal Polkadot node that only uses a network-related subset of all relay chain CLI options.");
 				}
+
+				crate::service::start_parachain_node(
+					config,
+					polkadot_config,
+					collator_options,
+					id,
+					hwbench,
+				)
+					.await
+					.map(|r| r.0)
+					.map_err(Into::into)
 			})
-		},
+		}
 	}
 }
 

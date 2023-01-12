@@ -29,8 +29,6 @@ use sp_runtime::Permill;
 
 use crate::Pallet as Xyk;
 
-const MaxNumberOfPromotedPools: u32 = 100;
-
 const MILION: u128 = 1_000__000_000__000_000;
 
 #[macro_export]

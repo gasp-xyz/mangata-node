@@ -33,14 +33,14 @@ mangata-rococo = [
 #disable-execution = ['mangata-kusama-runtime/disable-execution']
 runtime-benchmarks = ["mangata-kusama-runtime/runtime-benchmarks", "polkadot-cli/runtime-benchmarks"]
 fast-runtime = ["mangata-kusama-runtime/fast-runtime", "mangata-kusama-runtime/fast-runtime"]
-try-runtime = ["mangata-kusama-runtime/try-runtime", "mangata-rococo-runtime/try-runtime"]
+try-runtime = ["mangata-kusama-runtime/try-runtime", "mangata-rococo-runtime/try-runtime", "try-runtime-cli/try-runtime"]
 
 [dependencies]
 derive_more = "0.99.2"
 futures = "0.3.9"
 log = "0.4.17"
 codec = { package = "parity-scale-codec", version = "3.0.0" }
-clap = { version = "4.0.17", features = ["derive"] }
+clap = { version = "4.0.29", features = ["derive"] }
 serde = { version = "1.0.137", features = ["derive"] }
 hex-literal = "0.3.4"
 hex = "0.4.0"
@@ -56,7 +56,7 @@ mangata-rococo-runtime = { path = "../runtime/mangata-rococo", optional = true }
 mangata-types = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.36" }
 frame-benchmarking = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.36" }
 frame-benchmarking-cli = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.36" }
-try-runtime-cli = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.36" }
+try-runtime-cli = { git = "https://github.com/mangata-finance/substrate", optional = true, branch = "mangata-dev-v0.9.36" }
 frame-system = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.36" }
 pallet-transaction-payment = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.36" }
 
@@ -161,3 +161,4 @@ schnorrkel = { version = "0.9.1", features = ["preaudit_deprecated", "u64_backen
 sp-core = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.36", features = ["full_crypto"]}
 extrinsic-shuffler = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.36"}
 cfg-if = "1.0.0"
+

@@ -455,7 +455,7 @@ pub fn run() -> Result<()> {
 				_ => panic!("invalid chain spec"),
 			}
 		},
-		#[cfg(features = "try-runtime")]
+		#[cfg(feature = "try-runtime")]
 		Some(Subcommand::TryRuntime(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			let chain_spec = &runner.config().chain_spec;

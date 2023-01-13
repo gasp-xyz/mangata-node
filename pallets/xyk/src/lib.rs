@@ -664,10 +664,29 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
-			<Self as XykFunctionsTrait<T::AccountId>>::sell_asset(
+			let _ = <Self as XykFunctionsTrait<T::AccountId>>::sell_asset(
 				sender,
 				sold_asset_id,
 				bought_asset_id,
+				sold_asset_amount,
+				min_amount_out,
+				false,
+			)?;
+			Ok(().into())
+		}
+
+		#[pallet::weight(<<T as Config>::WeightInfo>::multiswap_sell_asset())]
+		pub fn multiswap_sell_asset(
+			origin: OriginFor<T>,
+			swap_token_list: Vec<TokenId>,
+			sold_asset_amount: Balance,
+			min_amount_out: Balance,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+
+			<Self as XykFunctionsTrait<T::AccountId>>::multiswap_sell_asset(
+				sender,
+				swap_token_list,
 				sold_asset_amount,
 				min_amount_out,
 				false,
@@ -685,10 +704,29 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
-			<Self as XykFunctionsTrait<T::AccountId>>::buy_asset(
+			let _ = <Self as XykFunctionsTrait<T::AccountId>>::buy_asset(
 				sender,
 				sold_asset_id,
 				bought_asset_id,
+				bought_asset_amount,
+				max_amount_in,
+				false,
+			)?;
+			Ok(().into())
+		}
+
+		#[pallet::weight(<<T as Config>::WeightInfo>::multiswap_buy_asset())]
+		pub fn multiswap_buy_asset(
+			origin: OriginFor<T>,
+			swap_token_list: Vec<TokenId>,
+			bought_asset_amount: Balance,
+			max_amount_in: Balance,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+
+			<Self as XykFunctionsTrait<T::AccountId>>::multiswap_buy_asset(
+				sender,
+				swap_token_list,
 				bought_asset_amount,
 				max_amount_in,
 				false,
@@ -1977,6 +2015,87 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 		))
 	}
 
+	/// We only validate the first atomic swap's ability to accept fees
+	fn pre_validate_multiswap_sell_asset(
+		sender: &Self::AccountId,
+		swap_token_list: Vec<TokenId>,
+		sold_asset_amount: Self::Balance,
+		_min_amount_out: Self::Balance,
+	) -> Result<
+		(),
+		DispatchError,
+	> {
+
+		ensure!( swap_token_list.len() > One::one() , MultiswapShouldBeAtleastTwoHops);
+		// Unwraps are fine due to above ensure
+		let sold_asset_id = swap_token_list.get(0).unwrap();
+		let bought_asset_id = swap_token_list.get(1).unwrap();
+
+		// Ensure not selling zero amount
+		ensure!(!sold_asset_amount.is_zero(), Error::<T>::ZeroAmount,);
+
+		ensure!(
+			!T::DisabledTokens::contains(&sold_asset_id) &&
+				!T::DisabledTokens::contains(&bought_asset_id),
+			Error::<T>::FunctionNotAvailableForThisToken
+		);
+
+		let buy_and_burn_amount = multiply_by_rational_with_rounding(
+			sold_asset_amount,
+			T::BuyAndBurnFeePercentage::get(),
+			10000,
+			Rounding::Down,
+		)
+		.ok_or(Error::<T>::UnexpectedFailure)?
+		.checked_add(1)
+		.ok_or(Error::<T>::MathOverflow)?;
+
+		let treasury_amount = multiply_by_rational_with_rounding(
+			sold_asset_amount,
+			T::TreasuryFeePercentage::get(),
+			10000,
+			Rounding::Down,
+		)
+		.ok_or(Error::<T>::UnexpectedFailure)?
+		.checked_add(1)
+		.ok_or(Error::<T>::MathOverflow)?;
+
+		let pool_fee_amount = multiply_by_rational_with_rounding(
+			sold_asset_amount,
+			T::PoolFeePercentage::get(),
+			10000,
+			Rounding::Down,
+		)
+		.ok_or(Error::<T>::UnexpectedFailure)?
+		.checked_add(1)
+		.ok_or(Error::<T>::MathOverflow)?;
+
+		let total_fees = buy_and_burn_amount.checked_add(treasury_amount)
+			.and_then(|v| v.checked_add(pool_fee_amount))
+			.ok_or(Error::<T>::MathOverflow)?;
+
+		// Get token reserves
+
+		// MAX: 2R
+		let (input_reserve, _) =
+			Pallet::<T>::get_reserves(sold_asset_id, bought_asset_id)?;
+
+		ensure!(input_reserve.checked_add(pool_fee_amount).is_some(), Error::<T>::MathOverflow);
+
+		// Ensure user has enough tokens to sell
+		<T as Config>::Currency::ensure_can_withdraw(
+			sold_asset_id.into(),
+			sender,
+			total_fees.into(),
+			WithdrawReasons::all(),
+			// Does not fail due to earlier ensure
+			Default::default(),
+		)
+		.or(Err(Error::<T>::NotEnoughAssets))?;
+
+		Ok(())
+	}
+
 	fn pre_validate_buy_asset(
 		sender: &Self::AccountId,
 		sold_asset_id: Self::CurrencyId,
@@ -2065,6 +2184,89 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 			input_reserve,
 			output_reserve,
 			sold_asset_amount,
+		))
+	}
+
+	/// We only validate the first atomic swap's ability to accept fees
+	fn pre_validate_multiswap_buy_asset(
+		sender: &Self::AccountId,
+		swap_token_list: Vec<TokenId>,
+		final_bought_asset_amount: Self::Balance,
+		max_amount_in: Self::Balance,
+	) -> Result<
+		(),
+		DispatchError,
+	> {
+
+		ensure!( swap_token_list.len() > One::one() , MultiswapShouldBeAtleastTwoHops);
+		// Unwraps are fine due to above ensure
+		let sold_asset_id = swap_token_list.get(0).unwrap();
+		let bought_asset_id = swap_token_list.get(1).unwrap();
+
+		// Ensure not buying zero amount
+		ensure!(!final_bought_asset_amount.is_zero(), Error::<T>::ZeroAmount,);
+
+		ensure!(
+			!T::DisabledTokens::contains(&sold_asset_id) &&
+				!T::DisabledTokens::contains(&bought_asset_id),
+			Error::<T>::FunctionNotAvailableForThisToken
+		);
+
+		// Get token reserves
+		let (input_reserve, _) =
+			Pallet::<T>::get_reserves(sold_asset_id, bought_asset_id)?;
+
+		
+		let sold_asset_amount = max_amount_in;
+
+		let buy_and_burn_amount = multiply_by_rational_with_rounding(
+			sold_asset_amount,
+			T::BuyAndBurnFeePercentage::get(),
+			10000,
+			Rounding::Down,
+		)
+		.ok_or(Error::<T>::UnexpectedFailure)?
+		.checked_add(1)
+		.ok_or(Error::<T>::MathOverflow)?;
+
+		let treasury_amount = multiply_by_rational_with_rounding(
+			sold_asset_amount,
+			T::TreasuryFeePercentage::get(),
+			10000,
+			Rounding::Down,
+		)
+		.ok_or(Error::<T>::UnexpectedFailure)?
+		.checked_add(1)
+		.ok_or(Error::<T>::MathOverflow)?;
+
+		let pool_fee_amount = multiply_by_rational_with_rounding(
+			sold_asset_amount,
+			T::PoolFeePercentage::get(),
+			10000,
+			Rounding::Down,
+		)
+		.ok_or(Error::<T>::UnexpectedFailure)?
+		.checked_add(1)
+		.ok_or(Error::<T>::MathOverflow)?;
+
+		let total_fees = buy_and_burn_amount.checked_add(treasury_amount)
+			.and_then(|v| v.checked_add(pool_fee_amount))
+			.ok_or(Error::<T>::MathOverflow)?;
+
+		ensure!(input_reserve.checked_add(pool_fee_amount).is_some(), Error::<T>::MathOverflow);
+
+		// Ensure user has enough tokens to sell
+		<T as Config>::Currency::ensure_can_withdraw(
+			sold_asset_id.into(),
+			sender,
+			total_fees.into(),
+			WithdrawReasons::all(),
+			// Does not fail due to earlier ensure
+			Default::default(),
+		)
+		.or(Err(Error::<T>::NotEnoughAssets))?;
+
+		Ok((
 		))
 	}
 }
@@ -2224,7 +2426,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		sold_asset_amount: Self::Balance,
 		min_amount_out: Self::Balance,
 		err_upon_bad_slippage: bool,
-	) -> DispatchResult {
+	) -> Result<Balance, DispatchError> {
 		let (
 			buy_and_burn_amount,
 			treasury_amount,
@@ -2372,7 +2574,170 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			}
 		}
 
-		Ok(())
+		Ok(bought_asset_amount)
+	}
+
+	fn multiswap_sell_asset(
+		sender: T::AccountId,
+		swap_token_list: Vec<TokenId>,
+		sold_asset_amount: Self::Balance,
+		min_amount_out: Self::Balance,
+		err_upon_bad_slippage: bool,
+	) -> Result<Balance, DispatchError> {
+
+		// First execute all atomic swaps in a storage layer
+		// And then the finally bought amount
+		let _ = frame_support::storage::with_storage_layer(|| -> Result<>);
+
+		// If 
+		let (
+			buy_and_burn_amount,
+			treasury_amount,
+			pool_fee_amount,
+			input_reserve,
+			output_reserve,
+			bought_asset_amount,
+		) = <Pallet<T> as PreValidateSwaps>::pre_validate_sell_asset(
+			&sender,
+			sold_asset_id,
+			bought_asset_id,
+			sold_asset_amount,
+			min_amount_out,
+		)?;
+
+		let vault = Pallet::<T>::account_id();
+		let treasury_account: T::AccountId = Self::treasury_account_id();
+		let bnb_treasury_account: T::AccountId = Self::bnb_treasury_account_id();
+
+		// Transfer of fees, before tx can fail on min amount out
+		<T as Config>::Currency::transfer(
+			sold_asset_id.into(),
+			&sender,
+			&vault,
+			pool_fee_amount.into(),
+			ExistenceRequirement::KeepAlive,
+		)?;
+
+		<T as Config>::Currency::transfer(
+			sold_asset_id.into(),
+			&sender,
+			&treasury_account,
+			treasury_amount.into(),
+			ExistenceRequirement::KeepAlive,
+		)?;
+
+		<T as Config>::Currency::transfer(
+			sold_asset_id.into(),
+			&sender,
+			&bnb_treasury_account,
+			buy_and_burn_amount.into(),
+			ExistenceRequirement::KeepAlive,
+		)?;
+
+		// Add pool fee to pool
+		// 2R 1W
+		Pallet::<T>::set_reserves(
+			sold_asset_id,
+			input_reserve.saturating_add(pool_fee_amount),
+			bought_asset_id,
+			output_reserve,
+		)?;
+
+		// Ensure bought token amount is higher then requested minimal amount
+		if bought_asset_amount >= min_amount_out {
+			// Transfer the rest of sold token amount from user to vault and bought token amount from vault to user
+			<T as Config>::Currency::transfer(
+				sold_asset_id.into(),
+				&sender,
+				&vault,
+				(sold_asset_amount
+					.checked_sub(
+						buy_and_burn_amount
+							.checked_add(treasury_amount)
+							.and_then(|v| v.checked_add(pool_fee_amount))
+							.ok_or_else(|| DispatchError::from(Error::<T>::SoldAmountTooLow))?,
+					)
+					.ok_or_else(|| DispatchError::from(Error::<T>::SoldAmountTooLow))?)
+				.into(),
+				ExistenceRequirement::KeepAlive,
+			)?;
+			<T as Config>::Currency::transfer(
+				bought_asset_id.into(),
+				&vault,
+				&sender,
+				bought_asset_amount.into(),
+				ExistenceRequirement::KeepAlive,
+			)?;
+
+			// Apply changes in token pools, adding sold amount and removing bought amount
+			// Neither should fall to zero let alone underflow, due to how pool destruction works
+			// Won't overflow due to earlier ensure
+			let input_reserve_updated = input_reserve.saturating_add(
+				sold_asset_amount
+					.checked_sub(treasury_amount)
+					.and_then(|v| v.checked_sub(buy_and_burn_amount))
+					.ok_or_else(|| DispatchError::from(Error::<T>::SoldAmountTooLow))?,
+			);
+			let output_reserve_updated = output_reserve.saturating_sub(bought_asset_amount);
+
+			// MAX 2R 1W
+			Pallet::<T>::set_reserves(
+				sold_asset_id,
+				input_reserve_updated,
+				bought_asset_id,
+				output_reserve_updated,
+			)?;
+
+			log!(
+				info,
+				"sell_asset: ({:?}, {}, {}, {}, {}) -> {}",
+				sender,
+				sold_asset_id,
+				bought_asset_id,
+				sold_asset_amount,
+				min_amount_out,
+				bought_asset_amount
+			);
+
+			log!(
+				info,
+				"pool-state: [({}, {}) -> {}, ({}, {}) -> {}]",
+				sold_asset_id,
+				bought_asset_id,
+				input_reserve_updated,
+				bought_asset_id,
+				sold_asset_id,
+				output_reserve_updated
+			);
+
+			Pallet::<T>::deposit_event(Event::AssetsSwapped(
+				sender.clone(),
+				sold_asset_id,
+				sold_asset_amount,
+				bought_asset_id,
+				bought_asset_amount,
+			));
+		}
+
+		// Settle tokens which goes to treasury and for buy and burn purpose
+		Pallet::<T>::settle_treasury_and_burn(sold_asset_id, buy_and_burn_amount, treasury_amount)?;
+
+		if bought_asset_amount < min_amount_out {
+			if err_upon_bad_slippage {
+				return Err(DispatchError::from(Error::<T>::InsufficientOutputAmount))
+			} else {
+				Pallet::<T>::deposit_event(Event::SellAssetFailedDueToSlippage(
+					sender,
+					sold_asset_id,
+					sold_asset_amount,
+					bought_asset_id,
+					bought_asset_amount,
+					min_amount_out,
+				));
+			}
+		}
+
+		Ok(bought_asset_amount)
 	}
 
 	// To put it comprehensively the only reason that the user should lose out on swap fee
@@ -2388,7 +2753,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		bought_asset_amount: Self::Balance,
 		max_amount_in: Self::Balance,
 		err_upon_bad_slippage: bool,
-	) -> DispatchResult {
+	) -> Result<Balance, DispatchError> {
 		let (
 			buy_and_burn_amount,
 			treasury_amount,
@@ -2533,7 +2898,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			}
 		}
 
-		Ok(())
+		Ok(sold_asset_amount)
 	}
 
 	fn mint_liquidity(
@@ -2737,7 +3102,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 		let bought_amount = Pallet::<T>::calculate_sell_price(reserve, other_reserve, swap_amount)?;
 
-		<Self as XykFunctionsTrait<T::AccountId>>::sell_asset(
+		let _ = <Self as XykFunctionsTrait<T::AccountId>>::sell_asset(
 			sender.clone(),
 			provided_asset_id,
 			other_asset_id,

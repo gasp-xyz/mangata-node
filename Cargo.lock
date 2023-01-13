@@ -5785,6 +5785,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-encrypted-transactions"
+version = "0.2.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "log",
+ "mangata-types",
+ "orml-tokens",
+ "pallet-session",
+ "parity-scale-codec",
+ "rustc-hex",
+ "scale-info",
+ "serde",
+ "sp-application-crypto",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-fast-unstake"
 version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#bd36a12d9828ddc594f3be479281c266cacffad1"

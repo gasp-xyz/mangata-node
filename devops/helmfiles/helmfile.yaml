@@ -1,7 +1,7 @@
 repositories:
   - name: mangata
     # url: git+https://github.com/mangata-finance/helm-charts@charts?ref=feat/MGX-241-node-chart
-    url: git+https://github.com/mangata-finance/helm-charts@charts?ref=cb7d76de03ba7831cb4d7ada321b17e059b65f92
+    url: git+https://github.com/mangata-finance/helm-charts@charts?ref=1079d1d8be2c932b32c9cff83488fda77878c8ad
 
 environments:
   dev:
@@ -32,6 +32,7 @@ releases:
     chart: mangata/relaychain-testnet
     values:
       - env: {{ requiredEnv "ENVIRONMENT" | quote }}
+        storageClass: regional-ssd
         storageSize: {{ .Values.relaychainStorageSize }}
         remoteCluster: true
   - name: node-01

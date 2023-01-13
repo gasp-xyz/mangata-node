@@ -1346,13 +1346,12 @@ impl orml_asset_registry::Config for Runtime {
 	TypeInfo,
 )]
 pub enum ProxyType {
-	Any,
 	AutoCompound,
 }
 
 impl Default for ProxyType {
 	fn default() -> Self {
-		Self::Any
+		Self::AutoCompound
 	}
 }
 
@@ -1367,7 +1366,6 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 	fn filter(&self, c: &RuntimeCall) -> bool {
 		match self {
 			_ if matches!(c, RuntimeCall::Utility(..)) => true,
-			ProxyType::Any => true,
 			ProxyType::AutoCompound => {
 				matches!(
 					c,
@@ -1380,8 +1378,6 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 	fn is_superset(&self, o: &Self) -> bool {
 		match (self, o) {
 			(x, y) if x == y => true,
-			(ProxyType::Any, _) => true,
-			(_, ProxyType::Any) => false,
 			_ => false,
 		}
 	}

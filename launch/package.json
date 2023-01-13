@@ -7,6 +7,7 @@
     "rm": "rm -Rf output",
     "gen": "yarn rm && parachain-launch generate",
     "gen-karura": "yarn rm -Rf output && parachain-launch generate --config=karura-mangata.yml",
+    "gen-kusama-fast": "yarn rm -Rf output && parachain-launch generate --config=kusama-fast.yml",
     "up": "docker-compose -f output/docker-compose.yml up -d --build",
     "logs-para": "docker-compose -f output/docker-compose.yml logs parachain-2110-1 parachain-2110-0",
     "logs-para0": "docker-compose -f output/docker-compose.yml logs -f parachain-2110-0",

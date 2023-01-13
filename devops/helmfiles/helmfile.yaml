@@ -11,10 +11,6 @@ environments:
     values:
       - ./config/default.yaml
       - ./config/fungible.yaml
-  rococo:
-    values:
-      - ./config/default.yaml
-      - ./config/rococo.yaml
 
 helmDefaults:
   wait: true
@@ -58,15 +54,3 @@ releases:
           - type: aura
             scheme: sr25519
             seed: {{ .Values.node02.accountKeySeed | fetchSecretValue | quote }}
-  - name: node-03
-    <<: *nodeDefault
-    installed: {{ .Values | get "node03.enabled" }}
-    values:
-      - values.yaml.gotmpl
-      - isCollator: {{ .Values.node03.isCollator  | toYaml }}
-        bootnodeAddr: {{ .Values.node03.bootnodeAddr }}
-        customNodeKey: {{ .Values.node03.nodeKey |fetchSecretValue | quote }}
-        accountKeys:
-          - type: aura
-            scheme: sr25519
-            seed: {{ .Values.node03.accountKeySeed | fetchSecretValue | quote }}

@@ -25,6 +25,7 @@ use sp_core::hexdisplay::HexDisplay;
 
 use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
 use std::{convert::TryInto, io::Write, net::SocketAddr, time::Duration};
+use frame_benchmarking::frame_support::sp_io;
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
@@ -458,35 +459,26 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::TryRuntime(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			let chain_spec = &runner.config().chain_spec;
+			use sc_executor::{sp_wasm_interface::ExtendedHostFunctions, NativeExecutionDispatch};
+			type HostFunctionsOf<E> = ExtendedHostFunctions<
+				sp_io::SubstrateHostFunctions,
+				<E as NativeExecutionDispatch>::ExtendHostFunctions,
+			>;
+			let registry = &runner.config().prometheus_config.as_ref().map(|cfg| &cfg.registry);
+			let task_manager =
+				sc_service::TaskManager::new(runner.config().tokio_handle.clone(), *registry)
+					.map_err(|e| format!("Error: {:?}", e))?;
 
 			match chain_spec {
 				#[cfg(feature = "mangata-kusama")]
-				spec if spec.is_mangata_kusama() => runner.async_run(|config| {
-					let registry = config.prometheus_config.as_ref().map(|cfg| &cfg.registry);
-					let task_manager =
-						sc_service::TaskManager::new(config.tokio_handle.clone(), registry)
-							.map_err(|e| {
-								sc_cli::Error::Service(sc_service::Error::Prometheus(e))
-							})?;
-
-					Ok((
-								cmd.run::<service::mangata_kusama_runtime::Block, service::MangataKusamaRuntimeExecutor>(config),
+				spec if spec.is_mangata_kusama() => runner.async_run(|_| {
+					Ok((cmd.run::<mangata_kusama_runtime::Block, HostFunctionsOf<service::MangataKusamaRuntimeExecutor>>(),
 								task_manager,
 							))
 				}),
 				#[cfg(feature = "mangata-rococo")]
-				spec if spec.is_mangata_rococo() => runner.async_run(|config| {
-					let registry = config.prometheus_config.as_ref().map(|cfg| &cfg.registry);
-					let task_manager =
-						sc_service::TaskManager::new(config.tokio_handle.clone(), registry)
-							.map_err(|e| {
-								sc_cli::Error::Service(sc_service::Error::Prometheus(e))
-							})?;
-
-					Ok((
-								cmd.run::<service::mangata_rococo_runtime::Block, service::MangataRococoRuntimeExecutor>(
-									config,
-								),
+				spec if spec.is_mangata_rococo() => runner.async_run(|_| {
+					Ok((cmd.run::<mangata_rococo_runtime::Block, HostFunctionsOf<service::MangataRococoRuntimeExecutor>>() ,
 								task_manager,
 							))
 				}),

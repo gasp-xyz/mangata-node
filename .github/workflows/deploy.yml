@@ -73,7 +73,7 @@ jobs:
       - run: |
           export ENVIRONMENT=${{ env.ENV_REF }}
           export IMAGE_TAG=${{ inputs.version }}
-          helmfile sync -e ${{ inputs.env }}
+          helmfile apply -e ${{ inputs.env }}
         working-directory: devops/helmfiles
       
       - name: Update the GitHub Deployment status

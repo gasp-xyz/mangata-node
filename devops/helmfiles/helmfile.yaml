@@ -1,7 +1,6 @@
 repositories:
   - name: mangata
-    # url: git+https://github.com/mangata-finance/helm-charts@charts?ref=feat/MGX-241-node-chart
-    url: git+https://github.com/mangata-finance/helm-charts@charts?ref=1079d1d8be2c932b32c9cff83488fda77878c8ad
+    url: git+https://github.com/mangata-finance/helm-charts@charts?ref=main
 
 environments:
   dev:

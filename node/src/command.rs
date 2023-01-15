@@ -11,21 +11,19 @@ use cumulus_primitives_core::ParaId;
 use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 use futures::executor::block_on;
 use log::{info, warn};
+pub use mangata_types::Block;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
 	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
 };
 use sc_service::config::{BasePath, PrometheusConfig};
 use std::{cell::RefCell, rc::Rc};
-pub use mangata_types::{
-	Block,
-};
 
 use sp_core::hexdisplay::HexDisplay;
 
+use frame_benchmarking::frame_support::sp_io;
 use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
 use std::{convert::TryInto, io::Write, net::SocketAddr, time::Duration};
-use frame_benchmarking::frame_support::sp_io;
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
@@ -487,7 +485,8 @@ pub fn run() -> Result<()> {
 		},
 		#[cfg(not(feature = "try-runtime"))]
 		Some(Subcommand::TryRuntime) => Err("TryRuntime wasn't enabled when building the node. \
-				You can enable it with `--features try-runtime`.".into()),
+				You can enable it with `--features try-runtime`."
+			.into()),
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 			let collator_options = cli.run.collator_options();
@@ -551,21 +550,21 @@ pub fn run() -> Result<()> {
 						service::mangata_kusama_runtime::RuntimeApi,
 						service::MangataKusamaRuntimeExecutor,
 					>(config, polkadot_config, collator_options, id, hwbench)
-						.await
-						.map(|r| r.0)
-						.map_err(Into::into),
+					.await
+					.map(|r| r.0)
+					.map_err(Into::into),
 					#[cfg(feature = "mangata-rococo")]
 					spec if spec.is_mangata_rococo() => crate::service::start_parachain_node::<
 						service::mangata_rococo_runtime::RuntimeApi,
 						service::MangataRococoRuntimeExecutor,
 					>(config, polkadot_config, collator_options, id, hwbench)
-						.await
-						.map(|r| r.0)
-						.map_err(Into::into),
+					.await
+					.map(|r| r.0)
+					.map_err(Into::into),
 					_ => panic!("invalid chain spec"),
 				}
 			})
-		}
+		},
 	}
 }
 

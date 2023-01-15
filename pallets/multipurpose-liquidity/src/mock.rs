@@ -18,7 +18,7 @@ use frame_support::{
 };
 use frame_system as system;
 use mangata_types::{Amount, Balance, TokenId};
-use orml_tokens::{MultiTokenCurrencyAdapter};
+use orml_tokens::MultiTokenCurrencyAdapter;
 use orml_traits::parameter_type_with_key;
 
 pub const NATIVE_CURRENCY_ID: u32 = 0;

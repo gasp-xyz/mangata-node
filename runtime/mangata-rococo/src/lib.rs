@@ -1057,9 +1057,18 @@ impl pallet_sudo_origin::Config for Runtime {
 		pallet_collective_mangata::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>;
 }
 
+#[cfg(not(feature = "fast-runtime"))]
+parameter_types! {
+	pub const CouncilProposalCloseDelay: BlockNumber = 3 * DAYS;
+}
+
+#[cfg(feature = "fast-runtime")]
+parameter_types! {
+	pub const CouncilProposalCloseDelay: BlockNumber = 6 * MINUTES;
+}
+
 parameter_types! {
 	pub const CouncilMotionDuration: BlockNumber = 5 * DAYS;
-	pub const CouncilProposalCloseDelay: BlockNumber = 3 * DAYS;
 	pub const CouncilMaxProposals: u32 = 100;
 	pub const CouncilMaxMembers: u32 = 100;
 }

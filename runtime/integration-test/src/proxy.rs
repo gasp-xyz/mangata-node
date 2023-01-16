@@ -9,7 +9,7 @@ const LP_ASSET_ID: u32 = 2;
 fn proxy_permissions_correct() {
 	ExtBuilder {
 		balances: vec![
-			(AccountId::from(ALICE), NATIVE_ASSET_ID, 1000 * UNIT),
+			(AccountId::from(ALICE), NATIVE_ASSET_ID, 10000 * UNIT),
 			(AccountId::from(BOB), NATIVE_ASSET_ID, 1000 * UNIT),
 			(AccountId::from(BOB), ASSET_ID_1, 1000 * UNIT),
 		],

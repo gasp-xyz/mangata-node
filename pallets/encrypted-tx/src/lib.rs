@@ -26,10 +26,10 @@ use scale_info::TypeInfo;
 use sp_runtime::{traits::Hash, KeyTypeId, RuntimeAppPublic};
 use sp_std::{boxed::Box, collections::btree_map::BTreeMap, vec::Vec};
 
-// #[cfg(test)]
-// mod mock;
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
 
 pub const XXTX_KEY_TYPE_ID: KeyTypeId = KeyTypeId(*b"xxtx");
 
@@ -78,6 +78,7 @@ pub struct TxnRegistryDetails<AccountId, Index> {
 }
 
 // pub use pallet::*;
+//
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -95,13 +96,12 @@ pub mod pallet {
 		type Tokens: MultiTokenCurrency<Self::AccountId>;
 		type AuthorityId: Member + Parameter + RuntimeAppPublic + Default + Ord;
 		type Fee: Get<Balance>;
-		type Treasury: OnUnbalanced<
-			<Self::Tokens as MultiTokenCurrency<Self::AccountId>>::NegativeImbalance,
-		>;
+		// type Treasury: OnUnbalanced<
+		// 	<Self::Tokens as MultiTokenCurrency<Self::AccountId>>::NegativeImbalance,
+		// >;
 		type Call: Parameter
 			+ UnfilteredDispatchable<RuntimeOrigin = Self::RuntimeOrigin>
-			+ GetDispatchInfo
-			+ From<Call<Self>>;
+			+ GetDispatchInfo;
 		type DoublyEncryptedCallMaxLength: Get<u32>;
 	}
 
@@ -222,7 +222,7 @@ pub mod pallet {
 				WithdrawReasons::all(),
 				ExistenceRequirement::AllowDeath,
 			)?;
-			T::Treasury::on_unbalanced(negative_imbalance);
+			// T::Treasury::on_unbalanced(negative_imbalance);
 
 			let mut identifier_vec: Vec<u8> = Vec::<u8>::new();
 			identifier_vec.extend_from_slice(&doubly_encrypted_call[..]);

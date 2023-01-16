@@ -5794,6 +5794,7 @@ dependencies = [
  "log",
  "mangata-types",
  "orml-tokens",
+ "orml-traits",
  "pallet-session",
  "parity-scale-codec",
  "rustc-hex",
@@ -5802,6 +5803,7 @@ dependencies = [
  "sp-application-crypto",
  "sp-arithmetic",
  "sp-core",
+ "sp-io",
  "sp-runtime",
  "sp-std",
 ]

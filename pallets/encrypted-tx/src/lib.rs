@@ -77,12 +77,11 @@ pub struct TxnRegistryDetails<AccountId, Index> {
 	pub decrypted_call: Option<Vec<u8>>,
 }
 
-// pub use pallet::*;
+pub use pallet::*;
 //
 
 #[frame_support::pallet]
 pub mod pallet {
-
 	use super::*;
 
 	#[pallet::pallet]
@@ -96,9 +95,9 @@ pub mod pallet {
 		type Tokens: MultiTokenCurrency<Self::AccountId>;
 		type AuthorityId: Member + Parameter + RuntimeAppPublic + Default + Ord;
 		type Fee: Get<Balance>;
-		// type Treasury: OnUnbalanced<
-		// 	<Self::Tokens as MultiTokenCurrency<Self::AccountId>>::NegativeImbalance,
-		// >;
+		type Treasury: OnUnbalanced<
+			<Self::Tokens as MultiTokenCurrency<Self::AccountId>>::NegativeImbalance,
+		>;
 		type Call: Parameter
 			+ UnfilteredDispatchable<RuntimeOrigin = Self::RuntimeOrigin>
 			+ GetDispatchInfo;

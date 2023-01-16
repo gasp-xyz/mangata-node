@@ -162,15 +162,15 @@ parameter_types!(
 );
 
 // NOTE: use PoolCreateApi mock for unit testing purposes
-// impl pallet_encrypted_tx::pallet::Config for Test {
-// 	type RuntimeEvent = RuntimeEvent;
-// 	type Tokens = OrmlTokens;
-// 	type Fee = Fee;
-// 	// type Treasury = OnDustRemoval;
-// 	type Call = RuntimeCall;
-// 	type DoublyEncryptedCallMaxLength = DoublyEncryptedCallMaxLength;
-// 	type AuthorityId = pallet_encrypted_tx::ecdsa::AuthorityId;
-// }
+impl pallet_encrypted_tx::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
+	type Fee = Fee;
+	type Treasury = OnDustRemoval;
+	type Call = RuntimeCall;
+	type DoublyEncryptedCallMaxLength = DoublyEncryptedCallMaxLength;
+	type AuthorityId = UintAuthorityId;
+}
 
 parameter_types! {
 	pub const MinLengthName: usize = 1;
@@ -186,12 +186,14 @@ type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
 
-// pub struct OnDustRemoval;
-// impl OnUnbalanced<<<Test as pallet_encrypted_tx::Config>::Tokens as MultiTokenCurrency>::NegativeImbalance> for OnDustRemoval {
-// 	fn on_nonzero_unbalanced(amount: NegativeImbalance<Test>) {
-// 		unimplemented!()
-// 	}
-// }
+type NegativeImbalanceOf<T> = <<T as pallet_encrypted_tx::Config>::Tokens as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
+
+pub struct OnDustRemoval;
+impl OnUnbalanced<NegativeImbalanceOf<Test>> for OnDustRemoval {
+	fn on_nonzero_unbalanced(amount: NegativeImbalanceOf<Test>) {
+		unimplemented!()
+	}
+}
 
 construct_runtime!(
 	pub enum Test where
@@ -201,8 +203,8 @@ construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
+		EncryptedTx: pallet_encrypted_tx::{Pallet, Call, Storage, Event<T>},
 		OrmlTokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>},
-		// EncryptedTx: pallet_encrypted_tx::{Pallet, Call, Storage, Event<T>},
 	}
 );
 

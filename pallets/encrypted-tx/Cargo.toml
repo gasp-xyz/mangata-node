@@ -31,6 +31,7 @@ orml-tokens = { default-features = false, version="0.4.1-dev" , git = "https://g
 [dev-dependencies]
 orml-traits = { version="0.4.1-dev" , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
 pallet-session = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+serial_test = { version = "0.6.0", default-features = false }
 
 [features]
 default = ['std']

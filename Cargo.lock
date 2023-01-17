@@ -5800,6 +5800,7 @@ dependencies = [
  "rustc-hex",
  "scale-info",
  "serde",
+ "serial_test",
  "sp-application-crypto",
  "sp-arithmetic",
  "sp-core",

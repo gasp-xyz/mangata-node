@@ -1,5 +1,6 @@
 //! # XYK pallet
 
+#![cfg_attr(test, feature(repr128))]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use sp_std::convert::TryInto;
@@ -10,7 +11,7 @@ use frame_support::{
 	traits::OnUnbalanced,
 	PalletId,
 };
-use mangata_types::Balance;
+use mangata_types::{Balance, TokenId};
 
 use frame_support::{
 	dispatch::GetDispatchInfo,
@@ -23,7 +24,7 @@ use frame_support::{
 use frame_system::{pallet_prelude::*, RawOrigin};
 use scale_info::TypeInfo;
 
-use sp_runtime::{traits::Hash, KeyTypeId, RuntimeAppPublic};
+use sp_runtime::{traits::{Hash, AccountIdConversion}, KeyTypeId, RuntimeAppPublic};
 use sp_std::{boxed::Box, collections::btree_map::BTreeMap, vec::Vec};
 
 #[cfg(test)]
@@ -63,13 +64,12 @@ macro_rules! log {
 	};
 }
 
-const PALLET_ID: PalletId = PalletId(*b"79b14c96");
+const PALLET_ID: PalletId = PalletId(*b"encry_tx");
 
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
-pub struct TxnRegistryDetails<AccountId, Index> {
+pub struct TxnRegistryDetails<AccountId> {
 	pub doubly_encrypted_call: Vec<u8>,
 	pub user: AccountId,
-	pub nonce: Index,
 	pub weight: Weight,
 	pub builder: AccountId,
 	pub executor: AccountId,
@@ -78,7 +78,6 @@ pub struct TxnRegistryDetails<AccountId, Index> {
 }
 
 pub use pallet::*;
-//
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -94,14 +93,12 @@ pub mod pallet {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		type Tokens: MultiTokenCurrency<Self::AccountId>;
 		type AuthorityId: Member + Parameter + RuntimeAppPublic + Default + Ord;
-		type Fee: Get<Balance>;
-		type Treasury: OnUnbalanced<
-			<Self::Tokens as MultiTokenCurrency<Self::AccountId>>::NegativeImbalance,
-		>;
 		type Call: Parameter
 			+ UnfilteredDispatchable<RuntimeOrigin = Self::RuntimeOrigin>
 			+ GetDispatchInfo;
 		type DoublyEncryptedCallMaxLength: Get<u32>;
+		#[pallet::constant]
+		type NativeCurrencyId: Get<TokenId>;
 	}
 
 	#[pallet::error]
@@ -111,6 +108,7 @@ pub mod pallet {
 		NoMarkedRefund,
 		CallDeserilizationFailed,
 		DoublyEncryptedCallMaxLengthExceeded,
+		NotEnoughtBalance,
 		TxnDoesNotExistsInRegistry,
 		UnexpectedError,
 	}
@@ -119,19 +117,19 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		//TODO add trading events
-		Called(DispatchResult, T::AccountId, T::Index, T::Hash),
+		Called(DispatchResult, T::AccountId, T::Hash),
 
 		/// Calls were executed
-		CallsExecuted(T::AccountId, T::Index, T::Hash),
+		CallsExecuted(T::AccountId, T::Hash),
 
 		/// A user has submitted a doubly encrypted transaction.
-		DoublyEncryptedTxnSubmitted(T::AccountId, T::Index, T::Hash),
+		DoublyEncryptedTxnSubmitted(T::AccountId, T::Hash),
 
 		/// A collator has submitted a singly encrypted transaction.
-		SinglyEncryptedTxnSubmitted(T::AccountId, T::Index, T::Hash),
+		SinglyEncryptedTxnSubmitted(T::AccountId, T::Hash),
 
 		/// A collator has submitted a decrypted transaction.
-		DecryptedTransactionSubmitted(T::AccountId, T::Index, T::Hash),
+		DecryptedTransactionSubmitted(T::AccountId, T::Hash),
 
 		/// User refunded
 		UserRefunded(T::Index, T::AccountId, T::Index, T::Hash, Balance),
@@ -148,7 +146,7 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		T::Hash,
-		Option<TxnRegistryDetails<T::AccountId, T::Index>>,
+		Option<TxnRegistryDetails<T::AccountId>>,
 		ValueQuery,
 	>;
 
@@ -163,16 +161,19 @@ pub mod pallet {
 		StorageMap<_, Blake2_128Concat, T::AccountId, Vec<T::Hash>, ValueQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn txn_record)]
-	pub type TxnRecord<T: Config> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		T::Index,
-		Blake2_128Concat,
-		T::AccountId,
-		BTreeMap<T::Hash, (T::Index, Balance, bool)>,
-		ValueQuery,
-	>;
+	pub type UniqueId<T: Config> = StorageValue<_, u128, ValueQuery>;
+
+	// #[pallet::storage]
+	// #[pallet::getter(fn txn_record)]
+	// pub type TxnRecord<T: Config> = StorageDoubleMap<
+	// 	_,
+	// 	Blake2_128Concat,
+	// 	T::Index,
+	// 	Blake2_128Concat,
+	// 	T::AccountId,
+	// 	BTreeMap<T::Hash, (T::Index, Balance, bool)>,
+	// 	ValueQuery,
+	// >;
 
 	#[pallet::storage]
 	#[pallet::getter(fn execd_txn_record)]
@@ -193,35 +194,24 @@ pub mod pallet {
 		pub fn submit_doubly_encrypted_transaction(
 			origin: OriginFor<T>,
 			doubly_encrypted_call: Vec<u8>,
-			nonce: T::Index,
+			fee: Balance,
 			weight: Weight,
 			builder: T::AccountId,
 			executor: T::AccountId,
 		) -> DispatchResult {
 			let user = ensure_signed(origin)?;
+			let nonce = UniqueId::<T>::mutate(|id| {
+				*id+=1;
+				*id
+			});
 
 			ensure!(
 				doubly_encrypted_call.len() <= T::DoublyEncryptedCallMaxLength::get() as usize,
 				Error::<T>::DoublyEncryptedCallMaxLengthExceeded
 			);
-			//
-			let fee_charged = T::Fee::get();
 
-			T::Tokens::ensure_can_withdraw(
-				0u8.into(),
-				&user,
-				fee_charged.into(),
-				WithdrawReasons::all(),
-				Default::default(),
-			)?;
-			let negative_imbalance = T::Tokens::withdraw(
-				0u8.into(),
-				&user,
-				fee_charged.into(),
-				WithdrawReasons::all(),
-				ExistenceRequirement::AllowDeath,
-			)?;
-			// T::Treasury::on_unbalanced(negative_imbalance);
+			T::Tokens::transfer(Self::native_token_id().into(), &user, &Self::account_id(), fee.into(), ExistenceRequirement::KeepAlive)
+				.map_err(|_| Error::<T>::NotEnoughtBalance)?;
 
 			let mut identifier_vec: Vec<u8> = Vec::<u8>::new();
 			identifier_vec.extend_from_slice(&doubly_encrypted_call[..]);
@@ -233,7 +223,6 @@ pub mod pallet {
 			let txn_registry_details = TxnRegistryDetails {
 				doubly_encrypted_call,
 				user: user.clone(),
-				nonce,
 				weight,
 				builder: builder.clone(),
 				executor,
@@ -243,12 +232,22 @@ pub mod pallet {
 
 			TxnRegistry::<T>::insert(identifier, Some(txn_registry_details));
 			DoublyEncryptedQueue::<T>::mutate(&builder, |vec_hash| vec_hash.push(identifier));
-			TxnRecord::<T>::mutate(
-				T::Index::from(<pallet_session::Pallet<T>>::current_index()),
-				&user,
-				|tree_record| tree_record.insert(identifier, (nonce, fee_charged, false)),
-			);
-			Self::deposit_event(Event::DoublyEncryptedTxnSubmitted(user, nonce, identifier));
+			// TxnRecord::<T>::mutate(
+			// 	T::Index::from(<pallet_session::Pallet<T>>::current_index()),
+			// 	&user,
+			// 	|tree_record| tree_record.insert(identifier, (nonce, fee_charged, false)),
+			// );
+			Self::deposit_event(Event::DoublyEncryptedTxnSubmitted(user, identifier));
+			Ok(())
+		}
+
+		#[pallet::weight(10_000)]
+		pub fn dummy_tx(
+			origin: OriginFor<T>,
+			_data: Vec<u8>,
+		) -> DispatchResult {
+			let user = ensure_signed(origin)?;
+
 			Ok(())
 		}
 
@@ -275,7 +274,6 @@ pub mod pallet {
 
 						Self::deposit_event(Event::SinglyEncryptedTxnSubmitted(
 							txn_registry_details.user.clone(),
-							txn_registry_details.nonce,
 							identifier,
 						));
 
@@ -316,7 +314,6 @@ pub mod pallet {
 
 			Self::deposit_event(Event::DecryptedTransactionSubmitted(
 				txn_registry_details.user.clone(),
-				txn_registry_details.nonce,
 				identifier,
 			));
 
@@ -328,7 +325,6 @@ pub mod pallet {
 				calls,
 				txn_registry_details.user,
 				identifier,
-				txn_registry_details.nonce,
 				txn_registry_details.weight,
 			)?;
 
@@ -342,7 +338,6 @@ pub mod pallet {
 			calls: Vec<Box<<T as Config>::Call>>,
 			user_account: T::AccountId,
 			identifier: T::Hash,
-			nonce: T::Index,
 			weight: Weight,
 		) -> DispatchResult {
 			ensure_root(origin)?;
@@ -363,67 +358,74 @@ pub mod pallet {
 				Self::deposit_event(Event::Called(
 					res.map(|_| ()).map_err(|e| e.error),
 					user_account.clone(),
-					nonce,
 					identifier,
 				));
 			}
 
-			Self::deposit_event(Event::CallsExecuted(user_account, nonce, identifier));
+			Self::deposit_event(Event::CallsExecuted(user_account, identifier));
 
 			Ok(())
 		}
-		//
 
-		#[pallet::weight(10_000)]
-		pub fn refund_user(origin: OriginFor<T>, identifier: T::Hash) -> DispatchResult {
-			let user = ensure_signed(origin)?;
-			let current_session_index = <pallet_session::Pallet<T>>::current_index();
-			let previous_session_index: T::Index = current_session_index
-				.checked_sub(1u8.into())
-				.ok_or_else(|| DispatchError::from(Error::<T>::NoMarkedRefund))?
-				.into();
-
-			if ExecutedTxnRecord::<T>::get(previous_session_index, &user).contains(&identifier) {
-				return Err(DispatchError::from(Error::<T>::NoMarkedRefund))
-			} else {
-				let (nonce, fee_charged, already_refunded) =
-					TxnRecord::<T>::get(previous_session_index, &user)
-						.get(&identifier)
-						.ok_or_else(|| DispatchError::from(Error::<T>::NoMarkedRefund))?
-						.clone();
-
-				ensure!(!already_refunded, Error::<T>::NoMarkedRefund);
-
-				// TODO
-				// Refund fee
-				TxnRecord::<T>::mutate(
-					T::Index::from(<pallet_session::Pallet<T>>::current_index()),
-					&user,
-					|tree_record| tree_record.insert(identifier, (nonce, fee_charged, true)),
-				);
-
-				Self::deposit_event(Event::UserRefunded(
-					previous_session_index,
-					user,
-					nonce,
-					identifier,
-					fee_charged,
-				));
-			}
-
-			Ok(())
-		}
+	// 	#[pallet::weight(10_000)]
+	// 	pub fn refund_user(origin: OriginFor<T>, identifier: T::Hash) -> DispatchResult {
+	// 		let user = ensure_signed(origin)?;
+	// 		let current_session_index = <pallet_session::Pallet<T>>::current_index();
+	// 		let previous_session_index: T::Index = current_session_index
+	// 			.checked_sub(1u8.into())
+	// 			.ok_or_else(|| DispatchError::from(Error::<T>::NoMarkedRefund))?
+	// 			.into();
+    //
+	// 		if ExecutedTxnRecord::<T>::get(previous_session_index, &user).contains(&identifier) {
+	// 			return Err(DispatchError::from(Error::<T>::NoMarkedRefund))
+	// 		} else {
+	// 			let (nonce, fee_charged, already_refunded) =
+	// 				TxnRecord::<T>::get(previous_session_index, &user)
+	// 					.get(&identifier)
+	// 					.ok_or_else(|| DispatchError::from(Error::<T>::NoMarkedRefund))?
+	// 					.clone();
+    //
+	// 			ensure!(!already_refunded, Error::<T>::NoMarkedRefund);
+    //
+	// 			// TODO
+	// 			// Refund fee
+	// 			TxnRecord::<T>::mutate(
+	// 				T::Index::from(<pallet_session::Pallet<T>>::current_index()),
+	// 				&user,
+	// 				|tree_record| tree_record.insert(identifier, (nonce, fee_charged, true)),
+	// 			);
+    //
+	// 			Self::deposit_event(Event::UserRefunded(
+	// 				previous_session_index,
+	// 				user,
+	// 				nonce,
+	// 				identifier,
+	// 				fee_charged,
+	// 			));
+	// 		}
+    //
+	// 		Ok(())
+	// 	}
 	}
 }
 
-// impl<T: Config> Pallet<T> {
-// 	fn initialize_keys(keys: &BTreeMap<T::AccountId, T::AuthorityId>) {
-// 		if !keys.is_empty() {
-// 			assert!(KeyMap::<T>::get().is_empty(), "Keys are already initialized!");
-// 			KeyMap::<T>::put(keys);
-// 		}
-// 	}
-// }
+impl<T: Config> Pallet<T> {
+
+	fn account_id() -> T::AccountId {
+		PALLET_ID.into_account_truncating()
+	}
+
+	fn native_token_id() -> TokenId {
+		<T as Config>::NativeCurrencyId::get()
+	}
+
+	fn initialize_keys(keys: &BTreeMap<T::AccountId, T::AuthorityId>) {
+		if !keys.is_empty() {
+			assert!(KeyMap::<T>::get().is_empty(), "Keys are already initialized!");
+			KeyMap::<T>::put(keys);
+		}
+	}
+}
 //
 // impl<T: Config> sp_runtime::BoundToRuntimeAppPublic for Pallet<T> {
 // 	type Public = T::AuthorityId;

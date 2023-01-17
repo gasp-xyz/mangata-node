@@ -159,17 +159,18 @@ impl orml_tokens::Config for Test {
 parameter_types!(
 	pub const DoublyEncryptedCallMaxLength: u32 = 10000;
 	pub const Fee: Balance = 10000;
+	pub const NativeCurrencyId: u32 = 0;
 );
 
 // NOTE: use PoolCreateApi mock for unit testing purposes
 impl pallet_encrypted_tx::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
-	type Fee = Fee;
-	type Treasury = OnDustRemoval;
+	// type Treasury = OnDustRemoval;
 	type Call = RuntimeCall;
 	type DoublyEncryptedCallMaxLength = DoublyEncryptedCallMaxLength;
 	type AuthorityId = UintAuthorityId;
+	type NativeCurrencyId = NativeCurrencyId;
 }
 
 parameter_types! {
@@ -182,7 +183,7 @@ parameter_types! {
 	pub const MaxDecimals: u32 = 255;
 }
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
+pub type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
 
@@ -208,15 +209,53 @@ construct_runtime!(
 	}
 );
 
-
-// This function basically just builds a genesis storage key/value store according to
-// our desired mockup.
-pub fn new_test_ext() -> sp_io::TestExternalities {
-	let t = frame_system::GenesisConfig::default()
-		.build_storage::<Test>()
-		.expect("Frame system builds valid default genesis config");
-
-	let mut ext = sp_io::TestExternalities::new(t);
-	ext.execute_with(|| System::set_block_number(1));
-	ext
+pub struct ExtBuilder{
+	ext: sp_io::TestExternalities,
 }
+
+impl ExtBuilder{
+	pub fn new() -> Self {
+		let t = frame_system::GenesisConfig::default()
+			.build_storage::<Test>()
+			.expect("Frame system builds valid default genesis config");
+
+		let mut ext = sp_io::TestExternalities::new(t);
+		ext.execute_with(|| System::set_block_number(1));
+		Self {ext}
+	}
+
+	pub fn create_token(mut self, token_id: TokenId) -> Self{
+		self.ext
+			.execute_with(|| 
+						  {
+							  while token_id >= OrmlTokens::next_asset_id(){
+								  OrmlTokens::create(
+									  RuntimeOrigin::root(),
+									  0,
+									  0
+									  ).unwrap();
+							  }
+						  }
+						 );
+		return self
+	}
+
+	pub fn mint(mut self, who: AccountId, token_id: TokenId, balance: Balance) -> Self{
+		self.ext
+			.execute_with(|| 
+						  OrmlTokens::mint(
+							  RuntimeOrigin::root(),
+							  token_id,
+							  who,
+							  balance,
+							  ).unwrap()
+		);
+		return self
+	}
+
+	pub fn build(self) -> sp_io::TestExternalities {
+		self.ext
+	}
+}
+
+

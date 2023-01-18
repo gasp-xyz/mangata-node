@@ -11,6 +11,7 @@ const ALICE: u128 = 1;
 const BUILDER: u128 = 100;
 const EXECUTOR: u128 = 101;
 const MILLION: Balance = 1_000_000;
+const ZERO_WEIGHT: Weight = Weight::from_ref_time(0);
 
 #[test]
 #[serial]
@@ -18,13 +19,24 @@ fn test_submit_double_encrypted_tx() {
 	ExtBuilder::new()
 	.build()
 	.execute_with(|| {
+
+		assert!(DoublyEncryptedQueue::<Test>::try_get(ALICE).is_err());
+		let cnt = UniqueId::<Test>::get();
+
+		let dummy_call = b"dummy data".to_vec();
 		EncryptedTx::submit_doubly_encrypted_transaction( RuntimeOrigin::signed(ALICE),
-			RuntimeCall::EncryptedTx(crate::Call::dummy_tx { data: Default::default() }).encode(),
+			dummy_call.clone(),
 			0,
-			Weight::from_ref_time(0u64),
+			ZERO_WEIGHT,
 			BUILDER,
 			EXECUTOR
 		).unwrap();
+
+
+		let identifier = EncryptedTx::calculate_unique_id(&ALICE, cnt, &dummy_call);
+		let doubly_encrypted_txs = DoublyEncryptedQueue::<Test>::try_get(BUILDER).expect("dummy_call is stored");
+		assert_eq!(doubly_encrypted_txs, vec![(Encryption::Double, identifier)]);
+
 	});
 }
 
@@ -36,9 +48,9 @@ fn test_submit_double_encrypted_tx_multiple_times() {
 	.execute_with(|| {
 		for _ in 1..10 {
 			EncryptedTx::submit_doubly_encrypted_transaction( RuntimeOrigin::signed(ALICE),
-				RuntimeCall::EncryptedTx(crate::Call::dummy_tx { data: Default::default() }).encode(),
+				b"dummy data".to_vec(),
 				0,
-				Weight::from_ref_time(0u64),
+				ZERO_WEIGHT,
 				BUILDER,
 				EXECUTOR
 			).unwrap();
@@ -60,9 +72,9 @@ fn test_cannot_submit_tx_with_not_enought_tokens_to_pay_declared_fee() {
 		assert_err!(
 			EncryptedTx::submit_doubly_encrypted_transaction(
 				RuntimeOrigin::signed(ALICE),
-				RuntimeCall::EncryptedTx(crate::Call::dummy_tx { data: Default::default() }).encode(),
-				100,
-				Weight::from_ref_time(0u64),
+				b"dummy data".to_vec(),
+				fee,
+				ZERO_WEIGHT,
 				BUILDER,
 				EXECUTOR)
 			,
@@ -70,3 +82,28 @@ fn test_cannot_submit_tx_with_not_enought_tokens_to_pay_declared_fee() {
 		);
 	});
 }
+//
+// #[test]
+// #[serial]
+// fn test_cannot_submit_tx_with_not_enought_tokens_to_pay_declared_fee() {
+// 	ExtBuilder::new()
+// 	.create_token(NativeCurrencyId::get())
+// 	.build()
+// 	.execute_with(|| {
+// 		let fee = 100_u128;
+//
+// 		assert!(fee > OrmlTokens::accounts(ALICE, NativeCurrencyId::get()).free);
+//
+// 		assert_err!(
+// 			EncryptedTx::submit_doubly_encrypted_transaction(
+// 				RuntimeOrigin::signed(ALICE),
+// 				b"dummy data".to_vec(),
+// 				fee,
+// 				ZERO_WEIGHT,
+// 				BUILDER,
+// 				EXECUTOR)
+// 			,
+// 			Error::<Test>::NotEnoughtBalance
+// 		);
+// 	});
+// }

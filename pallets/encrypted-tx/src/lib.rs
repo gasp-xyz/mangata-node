@@ -34,6 +34,13 @@ mod tests;
 
 pub const XXTX_KEY_TYPE_ID: KeyTypeId = KeyTypeId(*b"xxtx");
 
+#[derive(Encode, Decode, TypeInfo, Debug, PartialEq)]
+pub enum Encryption{
+	None,
+	Single,
+	Double,
+}
+
 pub mod ecdsa {
 	pub mod app_ecdsa {
 		use sp_application_crypto::{app_crypto, ed25519};
@@ -153,7 +160,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn doubly_encrypted_queue)]
 	pub type DoublyEncryptedQueue<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::AccountId, Vec<T::Hash>, ValueQuery>;
+		StorageMap<_, Blake2_128Concat, T::AccountId, Vec<(Encryption, T::Hash)>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn singly_encrypted_queue)]
@@ -200,10 +207,6 @@ pub mod pallet {
 			executor: T::AccountId,
 		) -> DispatchResult {
 			let user = ensure_signed(origin)?;
-			let nonce = UniqueId::<T>::mutate(|id| {
-				*id+=1;
-				*id
-			});
 
 			ensure!(
 				doubly_encrypted_call.len() <= T::DoublyEncryptedCallMaxLength::get() as usize,
@@ -213,12 +216,13 @@ pub mod pallet {
 			T::Tokens::transfer(Self::native_token_id().into(), &user, &Self::account_id(), fee.into(), ExistenceRequirement::KeepAlive)
 				.map_err(|_| Error::<T>::NotEnoughtBalance)?;
 
-			let mut identifier_vec: Vec<u8> = Vec::<u8>::new();
-			identifier_vec.extend_from_slice(&doubly_encrypted_call[..]);
-			identifier_vec.extend_from_slice(&Encode::encode(&user)[..]);
-			identifier_vec.extend_from_slice(&Encode::encode(&nonce)[..]);
+			let cnt = UniqueId::<T>::mutate(|id| {
+				let prev = *id;
+				*id+=1;
+				prev		
+			});
 
-			let identifier: T::Hash = T::Hashing::hash_of(&identifier_vec);
+			let identifier: T::Hash = Self::calculate_unique_id(&user, cnt, &doubly_encrypted_call);
 
 			let txn_registry_details = TxnRegistryDetails {
 				doubly_encrypted_call,
@@ -231,7 +235,7 @@ pub mod pallet {
 			};
 
 			TxnRegistry::<T>::insert(identifier, Some(txn_registry_details));
-			DoublyEncryptedQueue::<T>::mutate(&builder, |vec_hash| vec_hash.push(identifier));
+			DoublyEncryptedQueue::<T>::mutate(&builder, |vec_hash| vec_hash.push((Encryption::Double, identifier)));
 			// TxnRecord::<T>::mutate(
 			// 	T::Index::from(<pallet_session::Pallet<T>>::current_index()),
 			// 	&user,
@@ -258,31 +262,32 @@ pub mod pallet {
 			singly_encrypted_call: Vec<u8>,
 		) -> DispatchResult {
 			ensure_none(origin)?;
-			TxnRegistry::<T>::try_mutate(
-				identifier,
-				|txn_registry_details_option| -> DispatchResult {
-					if let Some(ref mut txn_registry_details) = txn_registry_details_option {
-						DoublyEncryptedQueue::<T>::mutate(
-							&txn_registry_details.builder,
-							|vec_hash| vec_hash.retain(|x| *x != identifier),
-						);
-						SinglyEncryptedQueue::<T>::mutate(
-							&txn_registry_details.executor,
-							|vec_hash| vec_hash.push(identifier),
-						);
-						txn_registry_details.singly_encrypted_call = Some(singly_encrypted_call);
-
-						Self::deposit_event(Event::SinglyEncryptedTxnSubmitted(
-							txn_registry_details.user.clone(),
-							identifier,
-						));
-
-						Ok(())
-					} else {
-						Err(DispatchError::from(Error::<T>::TxnDoesNotExistsInRegistry))
-					}
-				},
-			)
+			// TxnRegistry::<T>::try_mutate(
+			// 	identifier,
+			// 	|txn_registry_details_option| -> DispatchResult {
+			// 		if let Some(ref mut txn_registry_details) = txn_registry_details_option {
+			// 			DoublyEncryptedQueue::<T>::mutate(
+			// 				&txn_registry_details.builder,
+			// 				|vec_hash| vec_hash.retain(|x| *x != identifier),
+			// 			);
+			// 			SinglyEncryptedQueue::<T>::mutate(
+			// 				&txn_registry_details.executor,
+			// 				|vec_hash| vec_hash.push(identifier),
+			// 			);
+			// 			txn_registry_details.singly_encrypted_call = Some(singly_encrypted_call);
+            //
+			// 			Self::deposit_event(Event::SinglyEncryptedTxnSubmitted(
+			// 				txn_registry_details.user.clone(),
+			// 				identifier,
+			// 			));
+            //
+			// 			Ok(())
+			// 		} else {
+			// 			Err(DispatchError::from(Error::<T>::TxnDoesNotExistsInRegistry))
+			// 		}
+			// 	},
+			// )
+			Ok(())
 		}
 
 		#[pallet::weight(10_000)]
@@ -424,6 +429,16 @@ impl<T: Config> Pallet<T> {
 			assert!(KeyMap::<T>::get().is_empty(), "Keys are already initialized!");
 			KeyMap::<T>::put(keys);
 		}
+	}
+
+	fn calculate_unique_id(account: &T::AccountId, cnt: u128, call: &Vec<u8>) -> T::Hash{
+
+			T::Hashing::hash_of(
+				&[&call[..],
+				&Encode::encode(account)[..],
+				&Encode::encode(&cnt)
+				]
+			)
 	}
 }
 //

@@ -18,15 +18,21 @@ const EXECUTOR: u128 = 101;
 const MILLION: Balance = 1_000_000;
 const ZERO_WEIGHT: Weight = Weight::from_ref_time(0);
 
-fn encrypt_data(keystore: & dyn SyncCryptoStore, public_key: sp_core::sr25519::Public, input: Vec<u8>) -> (Vec<u8>, (Vec<u8>, Vec<u8>)) {
+fn encrypt_data(input: &[u8]) -> (Vec<u8>, VRFSignatureWrapper) {
+	let secret_uri = "//Alice";
+	let key_pair = sp_core::sr25519::Pair::from_string(secret_uri, None).expect("Generates key pair");
+	let keystore = sp_keystore::testing::KeyStore::new();
+	keystore
+		.insert_unknown(sp_core::crypto::KeyTypeId(*b"aura"), secret_uri, key_pair.public().as_ref())
+		.unwrap();
+
 	let transcript = VRFTranscriptData {
 		label: b"ved",
-		items: vec![("input", VRFTranscriptValue::Bytes(input.clone()))],
+		items: vec![("input", VRFTranscriptValue::Bytes(input.to_vec()))],
 	};
+	let signature = keystore.sr25519_vrf_sign(sp_core::crypto::KeyTypeId(*b"aura"), &key_pair.public(), transcript.clone()).unwrap().unwrap();
 
-	let signature = SyncCryptoStore::sr25519_vrf_sign(&*keystore, sp_core::crypto::KeyTypeId(*b"aura"), &public_key, transcript.clone()).unwrap().unwrap();
-
-	(input, (signature.output.as_bytes().to_vec(), signature.proof.to_bytes().to_vec()))
+	(input.to_vec(), signature.into())
 }
 
 
@@ -40,11 +46,12 @@ fn test_submit_double_encrypted_tx() {
 		assert!(DoublyEncryptedQueue::<Test>::try_get(ALICE).is_err());
 		let cnt = UniqueId::<Test>::get();
 
-		let dummy_call = b"dummy data".to_vec();
-		let dummy_proof = (b"dummy proof".to_vec(), b"dummy proof".to_vec());
+		let (encypted_call,signature) = encrypt_data(b"dummy data");
+
+		let identifier = EncryptedTx::calculate_unique_id(&ALICE, cnt, &encypted_call);
 		EncryptedTx::submit_doubly_encrypted_transaction( RuntimeOrigin::signed(ALICE),
-			dummy_call.clone(),
-			dummy_proof.clone() ,
+			encypted_call.clone(),
+			signature,
 			0,
 			ZERO_WEIGHT,
 			BUILDER,
@@ -52,7 +59,6 @@ fn test_submit_double_encrypted_tx() {
 		).unwrap();
 
 
-		let identifier = EncryptedTx::calculate_unique_id(&ALICE, cnt, &dummy_call);
 		let doubly_encrypted_txs = DoublyEncryptedQueue::<Test>::try_get(BUILDER).expect("dummy_call is stored");
 		assert_eq!(doubly_encrypted_txs, vec![(Encryption::Double, identifier)]);
 		
@@ -60,8 +66,8 @@ fn test_submit_double_encrypted_tx() {
 
 		assert_eq!(
 		TxnRegistryDetails{
-			doubly_encrypted_call: dummy_call,
-			doubly_encrypted_call_proof: dummy_proof,
+			doubly_encrypted_call: encypted_call,
+			doubly_encrypted_call_signature: signature,
 			user: ALICE,
 			weight: ZERO_WEIGHT,
 			builder: BUILDER,
@@ -79,9 +85,10 @@ fn test_submit_double_encrypted_tx_multiple_times() {
 	.build()
 	.execute_with(|| {
 		for _ in 1..10 {
+			let (encypted_call,signature) = encrypt_data(b"dummy data");
 			EncryptedTx::submit_doubly_encrypted_transaction( RuntimeOrigin::signed(ALICE),
-				b"dummy data".to_vec(),
-				Default::default(),
+				encypted_call,
+				signature,
 				0,
 				ZERO_WEIGHT,
 				BUILDER,
@@ -101,11 +108,12 @@ fn test_cannot_submit_tx_with_not_enought_tokens_to_pay_declared_fee() {
 
 		assert!(fee > OrmlTokens::accounts(ALICE, NativeCurrencyId::get()).free);
 
+		let (encypted_call,signature) = encrypt_data(b"dummy data");
 		assert_err!(
 			EncryptedTx::submit_doubly_encrypted_transaction(
 				RuntimeOrigin::signed(ALICE),
-				b"dummy data".to_vec(),
-				Default::default(),
+				encypted_call,
+				signature,
 				fee,
 				ZERO_WEIGHT,
 				BUILDER,
@@ -142,13 +150,13 @@ fn test_submit_encrypted_call_error_because_of_bad_account() {
 	.create_token(NativeCurrencyId::get())
 	.build()
 	.execute_with(|| {
-		let dummy_call = b"dummy data".to_vec();
-		let identifier = EncryptedTx::calculate_unique_id(&ALICE, UniqueId::<Test>::get(), &dummy_call);
+		let (encypted_call,signature) = encrypt_data(b"dummy data");
+		let identifier = EncryptedTx::calculate_unique_id(&ALICE, UniqueId::<Test>::get(), &encypted_call);
 
 		EncryptedTx::submit_doubly_encrypted_transaction(
 			RuntimeOrigin::signed(ALICE),
-			b"dummy data".to_vec(),
-				Default::default(),
+			encypted_call,
+			signature,
 			0,
 			ZERO_WEIGHT,
 			BUILDER,
@@ -180,18 +188,17 @@ fn test_submit_encrypted_call_error_because_of_bad_proof() {
 			.insert_unknown(sp_core::crypto::KeyTypeId(*b"aura"), secret_uri, key_pair.public().as_ref())
 			.unwrap();
 
-		let (encrypted, proof) = encrypt_data(&keystore, key_pair.public(), input.clone());
-		let identifier = EncryptedTx::calculate_unique_id(&ALICE, UniqueId::<Test>::get(), &encrypted);
+		let (encypted_call,signature) = encrypt_data(&input);
+		let identifier = EncryptedTx::calculate_unique_id(&ALICE, UniqueId::<Test>::get(), &encypted_call);
 
 		EncryptedTx::submit_doubly_encrypted_transaction(
 			RuntimeOrigin::signed(ALICE),
-			encrypted,
-			proof,
+			encypted_call,
+			signature,
 			0,
 			ZERO_WEIGHT,
 			BUILDER,
 			EXECUTOR).unwrap();
-
 
 		assert_err!(
 		EncryptedTx::submit_singly_encrypted_transaction(

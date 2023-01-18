@@ -29,6 +29,7 @@ sp-arithmetic= { git = "https://github.com/mangata-finance/substrate", default-f
 orml-tokens = { default-features = false, version="0.4.1-dev" , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
 schnorrkel = { version = "0.9.1", features = ["preaudit_deprecated", "u64_backend"], default-features = false}
 merlin = { version = "2.0", default-features = false }
+sp-keystore = { version = "0.12.0", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev", default-features = false }
 
 
 [dev-dependencies]

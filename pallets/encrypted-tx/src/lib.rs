@@ -26,7 +26,9 @@ use scale_info::TypeInfo;
 
 use sp_runtime::{traits::{Hash, AccountIdConversion}, KeyTypeId, RuntimeAppPublic};
 use sp_std::{boxed::Box, collections::btree_map::BTreeMap, vec::Vec};
-use schnorrkel::vrf::{VRFOutput, VRFProof};
+use schnorrkel::vrf::{VRFOutput, VRFProof, VRF_PROOF_LENGTH};
+use schnorrkel::keys::{PUBLIC_KEY_LENGTH};
+use sp_keystore::vrf::VRFSignature;
 
 
 #[cfg(test)]
@@ -41,6 +43,32 @@ pub enum Encryption{
 	None,
 	Single,
 	Double,
+}
+
+#[derive(Copy, Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, TypeInfo)]
+pub struct VRFSignatureWrapper{
+	proof: [u8; VRF_PROOF_LENGTH],
+	output: [u8; PUBLIC_KEY_LENGTH],
+}
+
+impl From<VRFSignature> for VRFSignatureWrapper {
+    fn from(sig: VRFSignature) -> Self {
+        Self {
+			proof: sig.proof.to_bytes(),
+			output: sig.output.to_bytes(),
+		}
+    }
+}
+
+impl Into<VRFSignature> for VRFSignatureWrapper {
+    fn into(self) -> VRFSignature {
+        VRFSignature {
+			// VVRFSignatureWrapper can only be created from VRFSignature instance
+			// so its safe to unwrap here
+			proof: VRFProof::from_bytes(&self.proof).unwrap(),
+			output: VRFOutput::from_bytes(&self.output).unwrap(),
+		}
+    }
 }
 
 pub mod ecdsa {
@@ -78,7 +106,7 @@ const PALLET_ID: PalletId = PalletId(*b"encry_tx");
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub struct TxnRegistryDetails<AccountId: Parameter> {
 	pub doubly_encrypted_call: Vec<u8>,
-	pub doubly_encrypted_call_proof: (Vec<u8>, Vec<u8>),
+	pub doubly_encrypted_call_signature: VRFSignatureWrapper,
 	pub user: AccountId,
 	pub weight: Weight,
 	pub builder: AccountId,
@@ -152,6 +180,10 @@ pub mod pallet {
 	pub type KeyMap<T: Config> =
 		StorageValue<_, BTreeMap<T::AccountId, T::AuthorityId>, ValueQuery>;
 
+	// #[pallet::storage]
+	// pub type Foo<T: Config> =
+	// 	StorageValue<_, VRFProof, ValueQuery>;
+
 	#[pallet::storage]
 	#[pallet::getter(fn txn_registry)]
 	pub type TxnRegistry<T: Config> = StorageMap<
@@ -206,7 +238,7 @@ pub mod pallet {
 		pub fn submit_doubly_encrypted_transaction(
 			origin: OriginFor<T>,
 			doubly_encrypted_call: Vec<u8>,
-			doubly_encrypted_call_proof: (Vec<u8>, Vec<u8>),
+			doubly_encrypted_call_signature: VRFSignatureWrapper,
 			fee: Balance,
 			weight: Weight,
 			builder: T::AccountId,
@@ -232,7 +264,7 @@ pub mod pallet {
 
 			let txn_registry_details = TxnRegistryDetails {
 				doubly_encrypted_call,
-				doubly_encrypted_call_proof,
+				doubly_encrypted_call_signature,
 				user: user.clone(),
 				weight,
 				builder: builder.clone(),
@@ -273,10 +305,7 @@ pub mod pallet {
 			let details = TxnRegistry::<T>::get(identifier).ok_or(Error::<T>::TxnDoesNotExistsInRegistry)?;
 			ensure!(details.builder == builder, Error::<T>::WrongAccount);
 
-			let output = VRFOutput::from_bytes(&details.doubly_encrypted_call_proof.0)
-				.expect("cannot parse shuffling seed");
-			let proof = VRFProof::from_bytes(&details.doubly_encrypted_call_proof.1)
-				.expect("cannot parse shuffling seed proof");
+			let signature: VRFSignature = details.doubly_encrypted_call_signature.into();
 
 			let mut transcript = merlin::Transcript::new(b"ved");
 			let hardcoded_alice_pub_key = [212, 53, 147, 199, 21, 253, 211, 28, 97, 20, 26, 189, 4, 169, 159, 214, 130, 44, 133, 88, 133, 76, 205, 227, 154, 86, 132 , 231, 165, 109, 162, 125];
@@ -286,7 +315,7 @@ pub mod pallet {
 			let pub_key = schnorrkel::PublicKey::from_bytes(&hardcoded_alice_pub_key).expect("cannot build public");
 
 			pub_key
-				.vrf_verify(transcript, &output, &proof)
+				.vrf_verify(transcript, &signature.output, &signature.proof)
 				.or(Err(Error::<T>::ProofError))?;
 
 

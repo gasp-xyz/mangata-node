@@ -26,6 +26,8 @@ use scale_info::TypeInfo;
 
 use sp_runtime::{traits::{Hash, AccountIdConversion}, KeyTypeId, RuntimeAppPublic};
 use sp_std::{boxed::Box, collections::btree_map::BTreeMap, vec::Vec};
+use schnorrkel::vrf::{VRFOutput, VRFProof};
+
 
 #[cfg(test)]
 mod mock;
@@ -74,8 +76,9 @@ macro_rules! log {
 const PALLET_ID: PalletId = PalletId(*b"encry_tx");
 
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
-pub struct TxnRegistryDetails<AccountId> {
+pub struct TxnRegistryDetails<AccountId: Parameter> {
 	pub doubly_encrypted_call: Vec<u8>,
+	pub doubly_encrypted_call_proof: (Vec<u8>, Vec<u8>),
 	pub user: AccountId,
 	pub weight: Weight,
 	pub builder: AccountId,
@@ -116,6 +119,8 @@ pub mod pallet {
 		CallDeserilizationFailed,
 		DoublyEncryptedCallMaxLengthExceeded,
 		NotEnoughtBalance,
+		WrongAccount,
+		ProofError,
 		TxnDoesNotExistsInRegistry,
 		UnexpectedError,
 	}
@@ -153,8 +158,8 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		T::Hash,
-		Option<TxnRegistryDetails<T::AccountId>>,
-		ValueQuery,
+		TxnRegistryDetails<T::AccountId>,
+		OptionQuery,
 	>;
 
 	#[pallet::storage]
@@ -201,6 +206,7 @@ pub mod pallet {
 		pub fn submit_doubly_encrypted_transaction(
 			origin: OriginFor<T>,
 			doubly_encrypted_call: Vec<u8>,
+			doubly_encrypted_call_proof: (Vec<u8>, Vec<u8>),
 			fee: Balance,
 			weight: Weight,
 			builder: T::AccountId,
@@ -226,6 +232,7 @@ pub mod pallet {
 
 			let txn_registry_details = TxnRegistryDetails {
 				doubly_encrypted_call,
+				doubly_encrypted_call_proof,
 				user: user.clone(),
 				weight,
 				builder: builder.clone(),
@@ -234,7 +241,7 @@ pub mod pallet {
 				decrypted_call: None,
 			};
 
-			TxnRegistry::<T>::insert(identifier, Some(txn_registry_details));
+			TxnRegistry::<T>::insert(identifier, txn_registry_details);
 			DoublyEncryptedQueue::<T>::mutate(&builder, |vec_hash| vec_hash.push((Encryption::Double, identifier)));
 			// TxnRecord::<T>::mutate(
 			// 	T::Index::from(<pallet_session::Pallet<T>>::current_index()),
@@ -261,7 +268,28 @@ pub mod pallet {
 			identifier: T::Hash,
 			singly_encrypted_call: Vec<u8>,
 		) -> DispatchResult {
-			ensure_none(origin)?;
+			let builder = ensure_signed(origin)?;
+
+			let details = TxnRegistry::<T>::get(identifier).ok_or(Error::<T>::TxnDoesNotExistsInRegistry)?;
+			ensure!(details.builder == builder, Error::<T>::WrongAccount);
+
+			let output = VRFOutput::from_bytes(&details.doubly_encrypted_call_proof.0)
+				.expect("cannot parse shuffling seed");
+			let proof = VRFProof::from_bytes(&details.doubly_encrypted_call_proof.1)
+				.expect("cannot parse shuffling seed proof");
+
+			let mut transcript = merlin::Transcript::new(b"ved");
+			let hardcoded_alice_pub_key = [212, 53, 147, 199, 21, 253, 211, 28, 97, 20, 26, 189, 4, 169, 159, 214, 130, 44, 133, 88, 133, 76, 205, 227, 154, 86, 132 , 231, 165, 109, 162, 125];
+
+			transcript.append_message(b"input", &singly_encrypted_call);
+
+			let pub_key = schnorrkel::PublicKey::from_bytes(&hardcoded_alice_pub_key).expect("cannot build public");
+
+			pub_key
+				.vrf_verify(transcript, &output, &proof)
+				.or(Err(Error::<T>::ProofError))?;
+
+
 			// TxnRegistry::<T>::try_mutate(
 			// 	identifier,
 			// 	|txn_registry_details_option| -> DispatchResult {
@@ -315,7 +343,7 @@ pub mod pallet {
 
 			txn_registry_details.decrypted_call = Some(decrypted_call.clone());
 
-			TxnRegistry::<T>::insert(identifier, Some(txn_registry_details.clone()));
+			TxnRegistry::<T>::insert(identifier, txn_registry_details.clone());
 
 			Self::deposit_event(Event::DecryptedTransactionSubmitted(
 				txn_registry_details.user.clone(),

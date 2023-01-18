@@ -27,11 +27,16 @@ sp-std = { default-features = false, version = '4.0.0-dev' , git = "https://gith
 mangata-types = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 sp-arithmetic= { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 orml-tokens = { default-features = false, version="0.4.1-dev" , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
+schnorrkel = { version = "0.9.1", features = ["preaudit_deprecated", "u64_backend"], default-features = false}
+merlin = { version = "2.0", default-features = false }
+
 
 [dev-dependencies]
 orml-traits = { version="0.4.1-dev" , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
 pallet-session = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 serial_test = { version = "0.6.0", default-features = false }
+sp-keystore = { version = "0.12.0", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+
 
 [features]
 default = ['std']
@@ -50,4 +55,6 @@ std = [
     'mangata-types/std',
     'sp-arithmetic/std',
     'orml-tokens/std',
+    'merlin/std',
+    'schnorrkel/std',
 ]

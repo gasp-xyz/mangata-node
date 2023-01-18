@@ -10,6 +10,7 @@ on:
     types: [labeled, opened, synchronize, unlabeled, closed]
     branches:
       - develop
+      - feature/release-branch
   push:
     branches: [develop]
 

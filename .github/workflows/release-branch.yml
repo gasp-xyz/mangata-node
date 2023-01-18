@@ -74,8 +74,7 @@ jobs:
     name: Deploy fungible environment
     needs: [init,build-and-test]
     if: |
-      (github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == ':rocket: deploy') ||
-      (github.event_name == 'pull_request' && github.event.action != 'labeled' && contains(github.event.pull_request.labels.*.name, ':rocket: deploy'))
+      (github.event_name == 'pull_request')
     uses: ./.github/workflows/deploy.yml
     secrets: inherit
     with:
@@ -85,8 +84,7 @@ jobs:
   clean-up-fungible:
     name: Delete fungible environment
     if: |
-      (github.event_name == 'pull_request' && github.event.action == 'unlabeled' && github.event.label.name == ':rocket: deploy') ||
-      (github.event_name == 'pull_request' && github.event.action == 'closed' && contains(github.event.pull_request.labels.*.name, ':rocket: deploy'))
+      (github.event_name == 'pull_request' && github.event.action == 'closed')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -114,7 +112,7 @@ jobs:
   e2e-test-matrix:
     strategy:
       matrix:
-        command: ["yarn test-parallel --max-workers=32", "yarn test-sequential-e2e"]
+        command: ["yarn test-parallel --max-workers=32", "yarn test-sequential-no-bootstrap"]
     needs: [init, build-and-test]
     runs-on: [self-hosted, compile]
     timeout-minutes: 180

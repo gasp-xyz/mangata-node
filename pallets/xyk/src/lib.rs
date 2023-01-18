@@ -3338,6 +3338,13 @@ impl<T: Config> Valuate for Pallet<T> {
 
 		Some((mga_token_reserve, liquidity_token_reserve))
 	}
+
+	pub fn get_reserves(
+		first_asset_id: TokenId,
+		second_asset_id: TokenId,
+	) -> Result<(Balance, Balance), DispatchError> {
+		Pallet::<T>::get_reserves(first_asset_id, second_asset_id)
+	}
 }
 
 impl<T: Config> PoolCreateApi for Pallet<T> {

@@ -1,7 +1,7 @@
 [package]
 authors = ['Mangata team']
 edition = '2018'
-name = 'pallet-token-timeout'
+name = 'pallet-fee-lock'
 version = '0.1.0'
 
 [package.metadata.docs.rs]
@@ -23,7 +23,7 @@ sp-core = { default-features = false, version = '6.0.0' , git = "https://github.
 sp-std = { version = "4.0.0-dev", default-features = false , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 mangata-types = { default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 orml-tokens = {  default-features = false, version = '0.4.1-dev' , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
-
+pallet-xyk = { path = '../xyk/', default-features = false}
 mp-traits = { path = '../../primitives/traits', default-features = false}
 
 [dev-dependencies]

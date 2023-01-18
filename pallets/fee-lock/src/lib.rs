@@ -1,0 +1,343 @@
+#![cfg_attr(not(feature = "std"), no_std)]
+
+use frame_support::{
+	dispatch::DispatchResult,
+	ensure,
+	pallet_prelude::*,
+	storage::bounded_btree_map::BoundedBTreeSet,
+	traits::{Get, StorageVersion},
+	transactional,
+};
+use frame_system::{ensure_signed, pallet_prelude::*};
+use mangata_types::{Balance, TokenId};
+use mp_traits::FeeLockTriggerTrait;
+use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
+use pallet_xyk::Valuate;
+use sp_arithmetic::per_things::Rounding;
+use sp_runtime::{helpers_128bit::multiply_by_rational_with_rounding};
+
+use sp_runtime::traits::{CheckedDiv, Zero};
+use sp_std::{convert::TryInto, prelude::*};
+
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
+
+mod benchmarking;
+
+pub mod weights;
+pub use weights::WeightInfo;
+
+pub(crate) const LOG_TARGET: &'static str = "fee-lock";
+
+// syntactic sugar for logging.
+#[macro_export]
+macro_rules! log {
+	($level:tt, $patter:expr $(, $values:expr)* $(,)?) => {
+		log::$level!(
+			target: crate::LOG_TARGET,
+			concat!("[{:?}] 💸 ", $patter), <frame_system::Pallet<T>>::block_number() $(, $values)*
+		)
+	};
+}
+
+pub use pallet::*;
+
+#[frame_support::pallet]
+pub mod pallet {
+
+	use super::*;
+
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
+
+	#[pallet::pallet]
+	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::storage_version(STORAGE_VERSION)]
+	pub struct Pallet<T>(PhantomData<T>);
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
+
+	#[derive(
+		Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, MaxEncodedLen, TypeInfo, Default,
+	)]
+	#[codec(mel_bound(T: Config))]
+	#[scale_info(skip_type_params(T))]
+	pub struct FeeLockMetadataInfo<T: Config> {
+		pub period_length: T::BlockNumber,
+		pub fee_lock_amount: Balance,
+		pub swap_value_threshold: Balance,
+		pub whitelisted_tokens: BoundedBTreeSet<TokenId, T::MaxCuratedTokens>,
+	}
+
+	#[pallet::storage]
+	#[pallet::getter(fn get_fee_lock_metadata)]
+	pub type FeeLockMetadata<T: Config> = StorageValue<_, FeeLockMetadataInfo<T>, OptionQuery>;
+
+	#[derive(
+		Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo, Default,
+	)]
+	pub struct AccountFeeLockDataInfo<BlockNumber: Default> {
+		pub total_fee_lock_amount: Balance,
+		pub last_fee_lock_block: BlockNumber,
+	}
+
+	#[pallet::storage]
+	#[pallet::getter(fn get_account_fee_lock_data)]
+	pub type AccountFeeLockData<T: Config> =
+		StorageMap<_, Blake2_256, T::AccountId, AccountFeeLockDataInfo<T::BlockNumber>, ValueQuery>;
+
+	#[pallet::event]
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
+	pub enum Event<T: Config> {
+		FeeLockMetadataUpdated,
+		FeeLockUnlocked(T::AccountId, Balance),
+	}
+
+	#[pallet::error]
+	/// Errors
+	pub enum Error<T> {
+		/// Locks were incorrectly initialized
+		FeeLocksIncorrectlyInitialzed,
+		/// Lock metadata is invalid
+		InvalidFeeLockMetadata,
+		/// Locks have not been initialzed
+		FeeLocksNotInitialized,
+		/// No tokens of the user are fee-locked
+		NotFeeLocked,
+		/// The lock cannot be unlocked yet
+		CantUnlockFeeYet,
+		/// The limit on the maximum curated tokens for which there is a swap threshold is exceeded
+		MaxCuratedTokensLimitExceeded,
+		/// An unexpected failure has occured
+		UnexpectedFailure,
+	}
+
+	#[pallet::config]
+	pub trait Config: frame_system::Config {
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+		#[pallet::constant]
+		type MaxCuratedTokens: Get<u32>;
+		type Tokens: MultiTokenCurrencyExtended<Self::AccountId>
+			+ MultiTokenReservableCurrency<Self::AccountId>;
+		type PoolReservesProvider: Valuate;
+		#[pallet::constant]
+		type NativeTokenId: Get<TokenId>;
+		type WeightInfo: WeightInfo;
+	}
+
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {
+		// The weight is calculated using MaxCuratedTokens so it is the worst case weight
+		#[transactional]
+		#[pallet::weight(T::WeightInfo::update_fee_lock_metadata())]
+		pub fn update_fee_lock_metadata(
+			origin: OriginFor<T>,
+			period_length: Option<T::BlockNumber>,
+			fee_lock_amount: Option<Balance>,
+			swap_value_threshold: Option<Balance>,
+			should_be_whitelisted: Option<Vec<(TokenId, bool)>>,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+
+			let mut fee_lock_metadata =
+				Self::get_fee_lock_metadata().unwrap_or(FeeLockMetadataInfo {
+					period_length: Default::default(),
+					fee_lock_amount: Default::default(),
+					swap_value_threshold: Default::default(),
+					whitelisted_tokens: Default::default(),
+				});
+
+				fee_lock_metadata.period_length =
+				period_length.unwrap_or(fee_lock_metadata.period_length);
+				fee_lock_metadata.fee_lock_amount =
+				fee_lock_amount.unwrap_or(fee_lock_metadata.fee_lock_amount);
+				fee_lock_metadata.swap_value_threshold =
+				swap_value_threshold.unwrap_or(fee_lock_metadata.swap_value_threshold);
+
+			ensure!(!fee_lock_metadata.fee_lock_amount.is_zero(), Error::<T>::InvalidFeeLockMetadata);
+			ensure!(!fee_lock_metadata.period_length.is_zero(), Error::<T>::InvalidFeeLockMetadata);
+			ensure!(!fee_lock_metadata.swap_value_threshold.is_zero(), Error::<T>::InvalidFeeLockMetadata);
+
+			if let Some(should_be_whitelisted) = should_be_whitelisted {
+				for (token_id, should_be_whitelisted) in should_be_whitelisted.iter(){
+					match should_be_whitelisted {
+						true => {let _ = fee_lock_metadata.whitelisted_tokens.try_insert(*token_id).map_err(|_| Error::<T>::MaxCuratedTokensLimitExceeded)?;}
+						false => {let _ = fee_lock_metadata.whitelisted_tokens.remove(token_id);}
+					}
+				}
+			}
+
+			FeeLockMetadata::<T>::put(fee_lock_metadata);
+
+			Pallet::<T>::deposit_event(Event::FeeLockMetadataUpdated);
+
+			Ok(().into())
+		}
+
+		#[transactional]
+		#[pallet::weight(T::WeightInfo::unlock_fee())]
+		pub fn unlock_fee(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+
+			<Self as FeeLockTriggerTrait>::unlock_fee(who).into()
+		}
+	}
+}
+
+impl<T: Config> FeeLockTriggerTrait<T::AccountId> for Pallet<T> {
+
+	fn is_whitelisted(token_id: TokenId) -> DispatchResult {
+		Pallet::<T>::get_fee_lock_metadata().unwrap_or_default().contains(&token_id)
+	}
+
+	fn get_swap_valuation_for_token(valuating_token_id: TokenId, valuating_token_amount: Balance) -> Option<Balance> {
+		(native_token_pool_reserve, valuating_token_pool_reserve)
+			= <T::PoolReservesProvider as Valuate>::get_reserves(NativeTokenId::get(), valuating_token_id).ok()?;
+		if native_token_pool_reserve.is_zero() || valuating_token_pool_reserve.is_zero() {
+			return None
+		}
+		Some(multiply_by_rational_with_rounding(valuating_token_amount, native_token_pool_reserve, valuating_token_pool_reserve, Rounding::Down)
+			.unwrap_or(Balance::max_value()))
+	}
+
+	fn process_fee_lock(who: &T::AccountId) -> DispatchResult {
+		let fee_lock_metadata =
+			Self::get_fee_lock_metadata().ok_or(Error::<T>::FeeLocksNotInitialized)?;
+		let mut account_fee_lock_data = Self::get_account_fee_lock_data(who);
+		let now = <frame_system::Pallet<T>>::block_number();
+
+		let current_period = now
+			.checked_div(&fee_lock_metadata.period_length)
+			.ok_or(Error::<T>::FeeLocksIncorrectlyInitialzed)?;
+		let last_fee_lock_block_period = account_fee_lock_data
+			.last_fee_lock_block
+			.checked_div(&fee_lock_metadata.period_length)
+			.ok_or(Error::<T>::FeeLocksIncorrectlyInitialzed)?;
+
+		// This is cause now >= last_fee_lock_block
+		ensure!(current_period >= last_fee_lock_block_period, Error::<T>::UnexpectedFailure);
+
+		if current_period == last_fee_lock_block_period {
+			// First storage edit
+			// Cannot fail beyond this point
+			// Rerserve additional fee_lock_amount
+			<T as pallet::Config>::Tokens::reserve(
+				<T as pallet::Config>::NativeTokenId::get().into(),
+				who,
+				fee_lock_metadata.fee_lock_amount.into(),
+			)?;
+
+			// Insert updated account_lock_info into storage
+			// This is not expected to fail
+			account_fee_lock_data.total_fee_lock_amount = account_fee_lock_data
+				.total_fee_lock_amount
+				.saturating_add(fee_lock_metadata.fee_lock_amount);
+			account_fee_lock_data.last_fee_lock_block = now;
+			AccountFeeLockData::<T>::insert(who, account_fee_lock_data);
+		} else {
+			// We must either reserve more or unreserve
+			match (fee_lock_metadata.fee_lock_amount, account_fee_lock_data.total_fee_lock_amount) {
+				(x, y) if x > y => <T as pallet::Config>::Tokens::reserve(
+					<T as pallet::Config>::NativeTokenId::get().into(),
+					who,
+					x.saturating_sub(y).into(),
+				)?,
+				(x, y) if x < y => {
+					let unreserve_result = <T as pallet::Config>::Tokens::unreserve(
+						<T as pallet::Config>::NativeTokenId::get().into(),
+						who,
+						y.saturating_sub(x).into(),
+					);
+					if !unreserve_result.is_zero() {
+						log::warn!(
+							"Process fee lock unreserve resulted in non-zero unreserve_result {:?}",
+							unreserve_result
+						);
+					}
+				},
+				_ => {},
+			}
+			// Insert updated account_lock_info into storage
+			// This is not expected to fail
+			account_fee_lock_data.total_fee_lock_amount = fee_lock_metadata.fee_lock_amount;
+			account_fee_lock_data.last_fee_lock_block = now;
+			AccountFeeLockData::<T>::insert(who, account_fee_lock_data);
+		}
+
+		Ok(())
+	}
+
+	fn can_unlock_fee(who: &T::AccountId) -> DispatchResult {
+		// Check if total_fee_lock_amount is non-zero
+		// THEN Check is period is greater than last
+
+		let account_fee_lock_data = Self::get_account_fee_lock_data(&who);
+
+		ensure!(!account_fee_lock_data.total_fee_lock_amount.is_zero(), Error::<T>::NotFeeLocked);
+
+		let fee_lock_metadata =
+			Self::get_fee_lock_metadata().ok_or(Error::<T>::FeeLocksNotInitialized)?;
+
+		let now = <frame_system::Pallet<T>>::block_number();
+
+		let current_period = now
+			.checked_div(&fee_lock_metadata.period_length)
+			.ok_or(Error::<T>::FeeLocksIncorrectlyInitialzed)?;
+		let last_fee_lock_block_period = account_fee_lock_data
+			.last_fee_lock_block
+			.checked_div(&fee_lock_metadata.period_length)
+			.ok_or(Error::<T>::FeeLocksIncorrectlyInitialzed)?;
+
+		ensure!(current_period > last_fee_lock_block_period, Error::<T>::CantUnlockFeeYet);
+
+		Ok(())
+	}
+
+	pub fn unlock_fee(who: AccountId) -> DispatchResult {
+
+		// Check if total_fee_lock_amount is non-zero
+		// THEN Check is period is greater than last
+
+		let account_fee_lock_data = Self::get_account_fee_lock_data(&who);
+
+		ensure!(!account_fee_lock_data.total_fee_lock_amount.is_zero(), Error::<T>::NotFeeLocked);
+
+		let fee_lock_metadata =
+			Self::get_fee_lock_metadata().ok_or(Error::<T>::FeeLocksNotInitialized)?;
+
+		let now = <frame_system::Pallet<T>>::block_number();
+
+		let current_period = now
+			.checked_div(&fee_lock_metadata.period_length)
+			.ok_or(Error::<T>::FeeLocksIncorrectlyInitialzed)?;
+		let last_fee_lock_block_period = account_fee_lock_data
+			.last_fee_lock_block
+			.checked_div(&fee_lock_metadata.period_length)
+			.ok_or(Error::<T>::FeeLocksIncorrectlyInitialzed)?;
+
+		ensure!(current_period > last_fee_lock_block_period, Error::<T>::CantUnlockFeeYet);
+
+		let unreserve_result = <T as pallet::Config>::Tokens::unreserve(
+			<T as pallet::Config>::NativeTokenId::get().into(),
+			&who,
+			account_fee_lock_data.total_fee_lock_amount.into(),
+		);
+		if !unreserve_result.is_zero() {
+			log::warn!(
+				"Unlock lock unreserve resulted in non-zero unreserve_result {:?}",
+				unreserve_result
+			);
+		}
+
+		AccountFeeLockData::<T>::remove(who.clone());
+
+		Pallet::<T>::deposit_event(Event::FeeLockUnlocked(
+			who,
+			account_fee_lock_data.total_fee_lock_amount,
+		));
+
+		Ok(())
+	}
+}

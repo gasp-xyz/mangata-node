@@ -222,8 +222,14 @@ pub trait PreValidateSwaps {
 	>;
 }
 
-pub trait TimeoutTriggerTrait<AccountId> {
-	fn process_timeout(who: &AccountId) -> DispatchResult;
+pub trait FeeLockTriggerTrait<AccountId> {
+	fn process_fee_lock(who: &AccountId) -> DispatchResult;
 
-	fn can_release_timeout(who: &AccountId) -> DispatchResult;
+	fn can_unlock_fee(who: &AccountId) -> DispatchResult;
+
+	fn is_whitelisted(token_id: TokenId) -> bool;
+
+	fn get_swap_valuation_for_token(valuating_token_id: TokenId, valuating_token_amount: Balance) -> Option<Balance>;
+
+	fn unlock_fee(who: &AccountId) -> DispatchResult;
 }

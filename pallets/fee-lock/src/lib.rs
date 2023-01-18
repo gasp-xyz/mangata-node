@@ -4,7 +4,7 @@ use frame_support::{
 	dispatch::DispatchResult,
 	ensure,
 	pallet_prelude::*,
-	storage::bounded_btree_map::BoundedBTreeSet,
+	storage::bounded_btree_set::BoundedBTreeSet,
 	traits::{Get, StorageVersion},
 	transactional,
 };
@@ -60,7 +60,7 @@ pub mod pallet {
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
 
 	#[derive(
-		Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, MaxEncodedLen, TypeInfo, Default,
+		Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, MaxEncodedLen, TypeInfo,
 	)]
 	#[codec(mel_bound(T: Config))]
 	#[scale_info(skip_type_params(T))]
@@ -69,6 +69,16 @@ pub mod pallet {
 		pub fee_lock_amount: Balance,
 		pub swap_value_threshold: Balance,
 		pub whitelisted_tokens: BoundedBTreeSet<TokenId, T::MaxCuratedTokens>,
+	}
+
+	impl<T:Config> Default for FeeLockMetadataInfo<T>{
+		fn default() -> Self {
+		Self {
+			period_length: Default::default(),
+			fee_lock_amount: Default::default(),
+			swap_value_threshold: Default::default(),
+			whitelisted_tokens: Default::default(),
+		}}
 	}
 
 	#[pallet::storage]
@@ -181,20 +191,20 @@ pub mod pallet {
 		pub fn unlock_fee(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 
-			<Self as FeeLockTriggerTrait>::unlock_fee(who).into()
+			Ok(<Self as FeeLockTriggerTrait<T::AccountId>>::unlock_fee(&who)?.into())
 		}
 	}
 }
 
 impl<T: Config> FeeLockTriggerTrait<T::AccountId> for Pallet<T> {
 
-	fn is_whitelisted(token_id: TokenId) -> DispatchResult {
-		Pallet::<T>::get_fee_lock_metadata().unwrap_or_default().contains(&token_id)
+	fn is_whitelisted(token_id: TokenId) -> bool {
+		Self::get_fee_lock_metadata().unwrap_or_default().whitelisted_tokens.contains(&token_id)
 	}
 
 	fn get_swap_valuation_for_token(valuating_token_id: TokenId, valuating_token_amount: Balance) -> Option<Balance> {
-		(native_token_pool_reserve, valuating_token_pool_reserve)
-			= <T::PoolReservesProvider as Valuate>::get_reserves(NativeTokenId::get(), valuating_token_id).ok()?;
+		let (native_token_pool_reserve, valuating_token_pool_reserve)
+			= <T::PoolReservesProvider as Valuate>::get_reserves(T::NativeTokenId::get(), valuating_token_id).ok()?;
 		if native_token_pool_reserve.is_zero() || valuating_token_pool_reserve.is_zero() {
 			return None
 		}
@@ -295,7 +305,7 @@ impl<T: Config> FeeLockTriggerTrait<T::AccountId> for Pallet<T> {
 		Ok(())
 	}
 
-	pub fn unlock_fee(who: AccountId) -> DispatchResult {
+	fn unlock_fee(who: &T::AccountId) -> DispatchResult {
 
 		// Check if total_fee_lock_amount is non-zero
 		// THEN Check is period is greater than last
@@ -333,8 +343,8 @@ impl<T: Config> FeeLockTriggerTrait<T::AccountId> for Pallet<T> {
 
 		AccountFeeLockData::<T>::remove(who.clone());
 
-		Pallet::<T>::deposit_event(Event::FeeLockUnlocked(
-			who,
+		Self::deposit_event(Event::FeeLockUnlocked(
+			who.clone(),
 			account_fee_lock_data.total_fee_lock_amount,
 		));
 

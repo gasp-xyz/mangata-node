@@ -16,7 +16,7 @@ pub mod pallet_issuance;
 pub mod pallet_multipurpose_liquidity;
 pub mod pallet_session;
 pub mod pallet_timestamp;
-pub mod pallet_token_timeout;
+pub mod pallet_fee_lock;
 pub mod pallet_treasury;
 pub mod pallet_utility;
 pub mod pallet_vesting_mangata;
@@ -31,7 +31,7 @@ pub use self::{
 	pallet_issuance as pallet_issuance_weights,
 	pallet_multipurpose_liquidity as pallet_multipurpose_liquidity_weights,
 	pallet_session as pallet_session_weights, pallet_timestamp as pallet_timestamp_weights,
-	pallet_token_timeout as pallet_token_timeout_weights,
+	pallet_fee_lock as pallet_fee_lock_weights,
 	pallet_treasury as pallet_treasury_weights, pallet_utility as pallet_utility_weights,
 	pallet_vesting_mangata as pallet_vesting_mangata_weights, pallet_xyk as pallet_xyk_weights,
 	parachain_staking as parachain_staking_weights,

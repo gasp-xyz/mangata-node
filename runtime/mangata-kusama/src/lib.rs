@@ -691,7 +691,7 @@ where
 				// Check if fee locks are initiazed or not
 				if let Some(fee_lock_metadata) = FeeLock::get_fee_lock_metadata() {
 					// Check if either of the tokens are whitelisted or not
-					if FeeLock::is_whitelisted(sold_asset_id) || FeeLock::is_whitelisted(bought_asset_id)
+					if FeeLock::is_whitelisted(*sold_asset_id) || FeeLock::is_whitelisted(*bought_asset_id)
 					{
 						// ensure swap cannot fail
 						// This is to ensure that xyk swap fee is always charged
@@ -711,14 +711,12 @@ where
 
 						let mut is_high_value = false;
 
-						if FeeLock::is_whitelisted(sold_asset_id) && let Some(value) = OTA::get_swap_valuation_for_token(sold_asset_id, sold_asset_amount){
-							if value >= fee_lock_metadata.swap_value_threshold{
-								is_high_value = true;
-							}
-						} else if FeeLock::is_whitelisted(bought_asset_id) && let Some(value) = OTA::get_swap_valuation_for_token(bought_asset_id,bought_asset_amount) {
-							if value >= fee_lock_metadata.swap_value_threshold{
-								is_high_value = true;
-							}
+						match (FeeLock::is_whitelisted(*sold_asset_id), OTA::get_swap_valuation_for_token(*sold_asset_id, *sold_asset_amount)){
+							(true, Some(value)) if value >= fee_lock_metadata.swap_value_threshold => {is_high_value = true;},
+							_ => { match (FeeLock::is_whitelisted(*bought_asset_id), OTA::get_swap_valuation_for_token(*bought_asset_id,bought_asset_amount)){
+								(true, Some(value)) if value >= fee_lock_metadata.swap_value_threshold => {is_high_value = true;}
+								_ => {}
+							}}
 						}
 
 						if is_high_value {
@@ -762,7 +760,7 @@ where
 				// Check if fee locks are initiazed or not
 				if let Some(fee_lock_metadata) = FeeLock::get_fee_lock_metadata() {
 					// Check if either of the tokens are whitelisted or not
-					if FeeLock::is_whitelisted(sold_asset_id) || FeeLock::is_whitelisted(bought_asset_id)
+					if FeeLock::is_whitelisted(*sold_asset_id) || FeeLock::is_whitelisted(*bought_asset_id)
 					{
 						// ensure swap cannot fail
 						// This is to ensure that xyk swap fee is always charged
@@ -789,14 +787,12 @@ where
 
 						let mut is_high_value = false;
 
-						if FeeLock::is_whitelisted(sold_asset_id) && let Some(value) = OTA::get_swap_valuation_for_token(sold_asset_id, sold_asset_amount){
-							if value >= fee_lock_metadata.swap_value_threshold{
-								is_high_value = true;
-							}
-						} else if FeeLock::is_whitelisted(bought_asset_id) && let Some(value) = OTA::get_swap_valuation_for_token(bought_asset_id,bought_asset_amount) {
-							if value >= fee_lock_metadata.swap_value_threshold{
-								is_high_value = true;
-							}
+						match (FeeLock::is_whitelisted(*sold_asset_id), OTA::get_swap_valuation_for_token(*sold_asset_id, sold_asset_amount)){
+							(true, Some(value)) if value >= fee_lock_metadata.swap_value_threshold => {is_high_value = true;},
+							_ => { match (FeeLock::is_whitelisted(*bought_asset_id), OTA::get_swap_valuation_for_token(*bought_asset_id,*bought_asset_amount)){
+								(true, Some(value)) if value >= fee_lock_metadata.swap_value_threshold => {is_high_value = true;}
+								_ => {}
+							}}
 						}
 
 						if is_high_value {
@@ -1036,6 +1032,7 @@ impl pallet_fee_lock::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type MaxCuratedTokens = MaxCuratedTokens;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	type PoolReservesProvider = Xyk;
 	type NativeTokenId = MgxTokenId;
 	type WeightInfo = weights::pallet_fee_lock_weights::ModuleWeight<Runtime>;
 }

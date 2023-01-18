@@ -72,7 +72,7 @@ pub use mangata_types::{
 	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
 };
 use mp_bootstrap::AssetRegistryApi;
-use mp_traits::{PreValidateSwaps, TimeoutTriggerTrait};
+use mp_traits::{PreValidateSwaps, FeeLockTriggerTrait};
 pub use pallet_issuance::{IssuanceInfo, PoolPromoteApi};
 pub use pallet_sudo_origin;
 pub use pallet_xyk;
@@ -618,7 +618,7 @@ impl OnMultiTokenUnbalanced<ORMLCurrencyAdapterNegativeImbalance> for ToAuthor {
 #[derive(Encode, Decode, TypeInfo)]
 pub enum LiquidityInfoEnum<C: MultiTokenCurrency<T::AccountId>, T: frame_system::Config> {
 	Imbalance((TokenId, NegativeImbalanceOf<C, T>)),
-	Timeout,
+	FeeLock,
 }
 
 #[derive(Encode, Decode, Clone, TypeInfo)]
@@ -650,7 +650,7 @@ where
 		LiquidityInfo = Option<LiquidityInfoEnum<C, T>>,
 		Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
 	>,
-	OTA: TimeoutTriggerTrait<<T as frame_system::Config>::AccountId>,
+	OTA: FeeLockTriggerTrait<<T as frame_system::Config>::AccountId>,
 	T: frame_system::Config<RuntimeCall = RuntimeCall>,
 	T::AccountId: From<sp_runtime::AccountId32> + Into<sp_runtime::AccountId32>,
 {
@@ -679,16 +679,15 @@ where
 			}) => {
 				// If else tree for easy edits
 
-				// Check if timeouts are initiazed or not
-				if let Some(timeout_metadata) = TokenTimeout::get_timeout_metadata() {
-					// Check if curated token or not
-					if let Some(threshold) =
-						timeout_metadata.swap_value_threshold.get(sold_asset_id)
+				// Check if fee locks are initiazed or not
+				if let Some(fee_lock_metadata) = FeeLock::get_fee_lock_metadata() {
+					// Check if either of the tokens are whitelisted or not
+					if FeeLock::is_whitelisted(*sold_asset_id) || FeeLock::is_whitelisted(*bought_asset_id)
 					{
 						// ensure swap cannot fail
 						// This is to ensure that xyk swap fee is always charged
 						// We also ensure that the user has enough funds to transact
-						let _ = <Xyk as PreValidateSwaps>::pre_validate_sell_asset(
+						let (_,_,_,_,_,bought_asset_amount) = <Xyk as PreValidateSwaps>::pre_validate_sell_asset(
 							&who.clone().into(),
 							*sold_asset_id,
 							*bought_asset_id,
@@ -697,33 +696,45 @@ where
 						)
 						.map_err(|_| {
 							TransactionValidityError::Invalid(
-								InvalidTransaction::Custom(66u8).into(),
+								InvalidTransaction::SwapPrevalidation.into(),
 							)
 						})?;
 
-						if sold_asset_amount > threshold {
+						let mut is_high_value = false;
+
+						match (FeeLock::is_whitelisted(*sold_asset_id), OTA::get_swap_valuation_for_token(*sold_asset_id, *sold_asset_amount)){
+							(true, Some(value)) if value >= fee_lock_metadata.swap_value_threshold => {is_high_value = true;},
+							_ => { match (FeeLock::is_whitelisted(*bought_asset_id), OTA::get_swap_valuation_for_token(*bought_asset_id,bought_asset_amount)){
+								(true, Some(value)) if value >= fee_lock_metadata.swap_value_threshold => {is_high_value = true;}
+								_ => {}
+							}}
+						}
+
+						if is_high_value {
 							// This is the "high value swap on curated token" branch
-							Ok(None)
+							// Attempt to unlock fee, do not return if fails
+							let _ = OTA::unlock_fee(who);
+							Ok(Some(LiquidityInfoEnum::FeeLock))
 						} else {
 							// This is the "low value swap on curated token" branch
-							OTA::process_timeout(who).map_err(|_| {
+							OTA::process_fee_lock(who).map_err(|_| {
 								TransactionValidityError::Invalid(
-									InvalidTransaction::Custom(67u8).into(),
+									InvalidTransaction::ProcessFeeLock.into(),
 								)
 							})?;
-							Ok(Some(LiquidityInfoEnum::Timeout))
+							Ok(Some(LiquidityInfoEnum::FeeLock))
 						}
 					} else {
-						// "swap on non-curated token" branch
-						OTA::process_timeout(who).map_err(|_| {
+						// "swap on non-whitelisted tokens" branch
+						OTA::process_fee_lock(who).map_err(|_| {
 							TransactionValidityError::Invalid(
-								InvalidTransaction::Custom(67u8).into(),
+								InvalidTransaction::ProcessFeeLock.into(),
 							)
 						})?;
-						Ok(Some(LiquidityInfoEnum::Timeout))
+						Ok(Some(LiquidityInfoEnum::FeeLock))
 					}
 				} else {
-					// Timeouts are not activated branch
+					// FeeLocks are not activated branch
 					OCA::withdraw_fee(who, call, info, fee, tip)
 				}
 			},
@@ -737,11 +748,10 @@ where
 			}) => {
 				// If else tree for easy edits
 
-				// Check if timeouts are initiazed or not
-				if let Some(timeout_metadata) = TokenTimeout::get_timeout_metadata() {
-					// Check if curated token or not
-					if let Some(threshold) =
-						timeout_metadata.swap_value_threshold.get(sold_asset_id)
+				// Check if fee locks are initiazed or not
+				if let Some(fee_lock_metadata) = FeeLock::get_fee_lock_metadata() {
+					// Check if either of the tokens are whitelisted or not
+					if FeeLock::is_whitelisted(*sold_asset_id) || FeeLock::is_whitelisted(*bought_asset_id)
 					{
 						// ensure swap cannot fail
 						// This is to ensure that xyk swap fee is always charged
@@ -762,41 +772,53 @@ where
 						)
 						.map_err(|_| {
 							TransactionValidityError::Invalid(
-								InvalidTransaction::Custom(66u8).into(),
+								InvalidTransaction::SwapPrevalidation.into(),
 							)
 						})?;
 
-						if sold_asset_amount > *threshold {
+						let mut is_high_value = false;
+
+						match (FeeLock::is_whitelisted(*sold_asset_id), OTA::get_swap_valuation_for_token(*sold_asset_id, sold_asset_amount)){
+							(true, Some(value)) if value >= fee_lock_metadata.swap_value_threshold => {is_high_value = true;},
+							_ => { match (FeeLock::is_whitelisted(*bought_asset_id), OTA::get_swap_valuation_for_token(*bought_asset_id,*bought_asset_amount)){
+								(true, Some(value)) if value >= fee_lock_metadata.swap_value_threshold => {is_high_value = true;}
+								_ => {}
+							}}
+						}
+
+						if is_high_value {
 							// This is the "high value swap on curated token" branch
-							Ok(None)
+							// Attempt to unlock fee, do not return if fails
+							let _ = OTA::unlock_fee(who);
+							Ok(Some(LiquidityInfoEnum::FeeLock))
 						} else {
 							// This is the "low value swap on curated token" branch
-							OTA::process_timeout(who).map_err(|_| {
+							OTA::process_fee_lock(who).map_err(|_| {
 								TransactionValidityError::Invalid(
-									InvalidTransaction::Custom(67u8).into(),
+									InvalidTransaction::ProcessFeeLock.into(),
 								)
 							})?;
-							Ok(Some(LiquidityInfoEnum::Timeout))
+							Ok(Some(LiquidityInfoEnum::FeeLock))
 						}
 					} else {
 						// "swap on non-curated token" branch
-						OTA::process_timeout(who).map_err(|_| {
+						OTA::process_fee_lock(who).map_err(|_| {
 							TransactionValidityError::Invalid(
-								InvalidTransaction::Custom(67u8).into(),
+								InvalidTransaction::ProcessFeeLock.into(),
 							)
 						})?;
-						Ok(Some(LiquidityInfoEnum::Timeout))
+						Ok(Some(LiquidityInfoEnum::FeeLock))
 					}
 				} else {
-					// Timeouts are not activated branch
+					// FeeLocks are not activated branch
 					OCA::withdraw_fee(who, call, info, fee, tip)
 				}
 			},
-			RuntimeCall::TokenTimeout(pallet_token_timeout::Call::release_timeout { .. }) => {
-				OTA::can_release_timeout(who).map_err(|_| {
-					TransactionValidityError::Invalid(InvalidTransaction::Custom(68u8).into())
+			RuntimeCall::FeeLock(pallet_fee_lock::Call::unlock_fee { .. }) => {
+				OTA::can_unlock_fee(who).map_err(|_| {
+					TransactionValidityError::Invalid(InvalidTransaction::UnlockFee.into())
 				})?;
-				Ok(Some(LiquidityInfoEnum::Timeout))
+				Ok(Some(LiquidityInfoEnum::FeeLock))
 			},
 			_ => OCA::withdraw_fee(who, call, info, fee, tip),
 		}
@@ -824,7 +846,7 @@ where
 				tip,
 				already_withdrawn,
 			),
-			Some(LiquidityInfoEnum::Timeout) => Ok(()),
+			Some(LiquidityInfoEnum::FeeLock) => Ok(()),
 			None => Ok(()),
 		}
 	}
@@ -985,7 +1007,7 @@ impl pallet_transaction_payment::Config for Runtime {
 			frame_support::traits::ConstU128<ROC_MGR_SCALE_FACTOR>,
 			frame_support::traits::ConstU128<TUR_MGR_SCALE_FACTOR>,
 		>,
-		TokenTimeout,
+		FeeLock,
 	>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = WeightToFee;
@@ -997,12 +1019,13 @@ parameter_types! {
 	pub const MaxCuratedTokens: u32 = 100;
 }
 
-impl pallet_token_timeout::Config for Runtime {
+impl pallet_fee_lock::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type MaxCuratedTokens = MaxCuratedTokens;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	type PoolReservesProvider = Xyk;
 	type NativeTokenId = MgrTokenId;
-	type WeightInfo = weights::pallet_token_timeout_weights::ModuleWeight<Runtime>;
+	type WeightInfo = weights::pallet_fee_lock_weights::ModuleWeight<Runtime>;
 }
 
 parameter_types! {
@@ -1419,8 +1442,8 @@ construct_runtime!(
 		// Xyk stuff
 		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>} = 13,
 
-		// Token Timeouts
-		TokenTimeout: pallet_token_timeout::{Pallet, Storage, Call, Event<T>} = 14,
+		// Fee Locks
+		FeeLock: pallet_fee_lock::{Pallet, Storage, Call, Event<T>} = 14,
 
 		// Vesting
 		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>} = 17,
@@ -1489,7 +1512,7 @@ mod benches {
 		[pallet_vesting_mangata, Vesting]
 		[pallet_issuance, Issuance]
 		[pallet_multipurpose_liquidity, MultiPurposeLiquidity]
-		[pallet_token_timeout, TokenTimeout]
+		[pallet_fee_lock, FeeLock]
 	);
 }
 

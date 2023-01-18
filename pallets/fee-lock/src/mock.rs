@@ -123,6 +123,7 @@ impl pallet_token_timeout::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type MaxCuratedTokens = MaxCuratedTokens;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
+	type PoolReservesProvider = MockPoolReservesProvider;
 	type NativeTokenId = NativeCurrencyId;
 	type WeightInfo = ();
 }

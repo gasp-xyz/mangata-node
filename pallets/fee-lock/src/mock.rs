@@ -10,7 +10,7 @@ use sp_runtime::{
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
 };
 
-use crate as pallet_token_timeout;
+use crate as pallet_fee_lock;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{ConstU32, Contains, Everything},
@@ -35,7 +35,7 @@ construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>},
-		TokenTimeout: pallet_token_timeout::{Pallet, Storage, Call, Event<T>},
+		FeeLock: pallet_fee_lock::{Pallet, Storage, Call, Event<T>},
 	}
 );
 
@@ -114,7 +114,9 @@ parameter_types! {
 	pub const BnbTreasurySubAccDerive: [u8; 4] = *b"bnbt";
 }
 
-impl Valuate for MockPoolReservesProvider {
+pub struct MockPoolReservesProvider<T>(PhantomData<T>);
+
+impl<T: pallet_fee_lock::Config> Valuate for MockPoolReservesProvider<T> {
 	type Balance = Balance;
 
 	type CurrencyId = TokenId;
@@ -157,7 +159,13 @@ impl Valuate for MockPoolReservesProvider {
 		first_asset_id: TokenId,
 		second_asset_id: TokenId,
 	) -> Result<(Balance, Balance), DispatchError> {
-		unimplemented!()
+		match(first_asset_id, second_asset_id){
+			(0,1)=> Ok((5000,10000)),
+			(0,2)=> Ok((10000,5000)),
+			(0,3)=> Ok((0,10000)),
+			(0,4)=> Ok((5000,0)),
+			_ => Err(pallet_fee_lock::Error::<T>::UnexpectedFailure.into())
+		}
 	}
 }
 
@@ -166,11 +174,11 @@ parameter_types! {
 	pub const MaxCuratedTokens: u32 = 100;
 }
 
-impl pallet_token_timeout::Config for Test {
+impl pallet_fee_lock::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type MaxCuratedTokens = MaxCuratedTokens;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
-	type PoolReservesProvider = MockPoolReservesProvider;
+	type PoolReservesProvider = MockPoolReservesProvider<Test>;
 	type NativeTokenId = NativeCurrencyId;
 	type WeightInfo = ();
 }

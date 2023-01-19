@@ -199,10 +199,20 @@ pub mod pallet {
 impl<T: Config> FeeLockTriggerTrait<T::AccountId> for Pallet<T> {
 
 	fn is_whitelisted(token_id: TokenId) -> bool {
-		Self::get_fee_lock_metadata().unwrap_or_default().whitelisted_tokens.contains(&token_id)
+		if let Some(fee_lock_metadata) = Self::get_fee_lock_metadata(){
+			if T::NativeTokenId::get() == token_id{
+				return true
+			}
+			fee_lock_metadata.whitelisted_tokens.contains(&token_id)
+		} else {
+			false
+		}
 	}
 
 	fn get_swap_valuation_for_token(valuating_token_id: TokenId, valuating_token_amount: Balance) -> Option<Balance> {
+		if T::NativeTokenId::get() == valuating_token_id{
+			return Some(valuating_token_amount)
+		}
 		let (native_token_pool_reserve, valuating_token_pool_reserve)
 			= <T::PoolReservesProvider as Valuate>::get_reserves(T::NativeTokenId::get(), valuating_token_id).ok()?;
 		if native_token_pool_reserve.is_zero() || valuating_token_pool_reserve.is_zero() {

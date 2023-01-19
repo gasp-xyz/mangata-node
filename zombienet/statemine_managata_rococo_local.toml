@@ -26,8 +26,8 @@ cumulus_based = true
 	name = "alice"
 	validator = true
 	command = "../parity/cumulus/target/release/polkadot-parachain"
-	args = ["-lparachain=debug"]
-	ws_port = 9945
+	args = ["-lxcm=trace"]
+	ws_port = 9948
 
 	# run bob as parachain collator
 	[[parachains.collators]]
@@ -44,6 +44,7 @@ cumulus_based = true
 	[[parachains.collators]]
 	name = "alice"
 	command = "./target/release/mangata-node"
+	args = ["-lxcm=trace"]
 	ws_port = 9946
 
 	[[parachains.collators]]

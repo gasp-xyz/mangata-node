@@ -262,9 +262,7 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 				// Initial relay account
 				get_account_id_from_seed::<sr25519::Public>("Relay"),
 				// Sudo account
-				"0xec00ad0ec6eeb271a9689888f644d9262016a26a25314ff4ff5d756404c44112"
-					.parse()
-					.unwrap(),
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				// Tokens endowment
 				vec![
 					// MGA
@@ -275,13 +273,6 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 					),
 					// ETH
 					(1u32, 0u128, get_account_id_from_seed::<sr25519::Public>("Alice")),
-					(
-						0u32,
-						400_000_000__000_000_000_000_000_000u128,
-						"0xec00ad0ec6eeb271a9689888f644d9262016a26a25314ff4ff5d756404c44112"
-							.parse()
-							.unwrap(),
-					),
 					(
 						0u32,
 						100_000_000__000_000_000_000_000_000u128,

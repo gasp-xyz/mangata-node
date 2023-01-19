@@ -1,0 +1,15 @@
+environment: {{ requiredEnv "ENVIRONMENT" | quote }}
+image:
+  tag: {{ requiredEnv "IMAGE_TAG" | quote }}
+remoteCluster: true
+customChainspecUrl: {{ .Values | get "nodeCustomChainspecUrl" "" }}
+storageClass: {{ .Values.storageClass }}
+storageSize: {{ .Values.storageSize }}
+parachainRegisterSidecar:
+  enable: false
+relaychain:
+  storageSize: {{ .Values.relaychainStorageSize }}
+  customChainspecUrl: {{ .Values | get "relaychainCustomChainspecUrl" "" }}
+  bootnodeAddr: {{ .Values | get "relaychainBootnodeAddr" "" }}
+  kubernetesVolumeSnapshot: {{ .Values | get "relaychainKubernetesVolumeSnapshot" "" }}
+resources: {{ toYaml .Values.resources | nindent 10 }}

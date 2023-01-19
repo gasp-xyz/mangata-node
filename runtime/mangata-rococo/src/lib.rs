@@ -72,7 +72,7 @@ pub use mangata_types::{
 	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
 };
 use mp_bootstrap::AssetRegistryApi;
-use mp_traits::{PreValidateSwaps, FeeLockTriggerTrait};
+use mp_traits::{FeeLockTriggerTrait, PreValidateSwaps};
 pub use pallet_issuance::{IssuanceInfo, PoolPromoteApi};
 pub use pallet_sudo_origin;
 pub use pallet_xyk;
@@ -682,32 +682,53 @@ where
 				// Check if fee locks are initiazed or not
 				if let Some(fee_lock_metadata) = FeeLock::get_fee_lock_metadata() {
 					// Check if either of the tokens are whitelisted or not
-					if FeeLock::is_whitelisted(*sold_asset_id) || FeeLock::is_whitelisted(*bought_asset_id)
+					if FeeLock::is_whitelisted(*sold_asset_id) ||
+						FeeLock::is_whitelisted(*bought_asset_id)
 					{
 						// ensure swap cannot fail
 						// This is to ensure that xyk swap fee is always charged
 						// We also ensure that the user has enough funds to transact
-						let (_,_,_,_,_,bought_asset_amount) = <Xyk as PreValidateSwaps>::pre_validate_sell_asset(
-							&who.clone().into(),
-							*sold_asset_id,
-							*bought_asset_id,
-							*sold_asset_amount,
-							*min_amount_out,
-						)
-						.map_err(|_| {
-							TransactionValidityError::Invalid(
-								InvalidTransaction::SwapPrevalidation.into(),
+						let (_, _, _, _, _, bought_asset_amount) =
+							<Xyk as PreValidateSwaps>::pre_validate_sell_asset(
+								&who.clone().into(),
+								*sold_asset_id,
+								*bought_asset_id,
+								*sold_asset_amount,
+								*min_amount_out,
 							)
-						})?;
+							.map_err(|_| {
+								TransactionValidityError::Invalid(
+									InvalidTransaction::SwapPrevalidation.into(),
+								)
+							})?;
 
 						let mut is_high_value = false;
 
-						match (FeeLock::is_whitelisted(*sold_asset_id), OTA::get_swap_valuation_for_token(*sold_asset_id, *sold_asset_amount)){
-							(true, Some(value)) if value >= fee_lock_metadata.swap_value_threshold => {is_high_value = true;},
-							_ => { match (FeeLock::is_whitelisted(*bought_asset_id), OTA::get_swap_valuation_for_token(*bought_asset_id,bought_asset_amount)){
-								(true, Some(value)) if value >= fee_lock_metadata.swap_value_threshold => {is_high_value = true;}
-								_ => {}
-							}}
+						match (
+							FeeLock::is_whitelisted(*sold_asset_id),
+							OTA::get_swap_valuation_for_token(*sold_asset_id, *sold_asset_amount),
+						) {
+							(true, Some(value))
+								if value >= fee_lock_metadata.swap_value_threshold =>
+							{
+								is_high_value = true;
+							},
+							_ => {
+								match (
+									FeeLock::is_whitelisted(*bought_asset_id),
+									OTA::get_swap_valuation_for_token(
+										*bought_asset_id,
+										bought_asset_amount,
+									),
+								) {
+									(true, Some(value))
+										if value >= fee_lock_metadata.swap_value_threshold =>
+									{
+										is_high_value = true;
+									},
+									_ => {},
+								}
+							},
 						}
 
 						if is_high_value {
@@ -751,7 +772,8 @@ where
 				// Check if fee locks are initiazed or not
 				if let Some(fee_lock_metadata) = FeeLock::get_fee_lock_metadata() {
 					// Check if either of the tokens are whitelisted or not
-					if FeeLock::is_whitelisted(*sold_asset_id) || FeeLock::is_whitelisted(*bought_asset_id)
+					if FeeLock::is_whitelisted(*sold_asset_id) ||
+						FeeLock::is_whitelisted(*bought_asset_id)
 					{
 						// ensure swap cannot fail
 						// This is to ensure that xyk swap fee is always charged
@@ -778,12 +800,31 @@ where
 
 						let mut is_high_value = false;
 
-						match (FeeLock::is_whitelisted(*sold_asset_id), OTA::get_swap_valuation_for_token(*sold_asset_id, sold_asset_amount)){
-							(true, Some(value)) if value >= fee_lock_metadata.swap_value_threshold => {is_high_value = true;},
-							_ => { match (FeeLock::is_whitelisted(*bought_asset_id), OTA::get_swap_valuation_for_token(*bought_asset_id,*bought_asset_amount)){
-								(true, Some(value)) if value >= fee_lock_metadata.swap_value_threshold => {is_high_value = true;}
-								_ => {}
-							}}
+						match (
+							FeeLock::is_whitelisted(*sold_asset_id),
+							OTA::get_swap_valuation_for_token(*sold_asset_id, sold_asset_amount),
+						) {
+							(true, Some(value))
+								if value >= fee_lock_metadata.swap_value_threshold =>
+							{
+								is_high_value = true;
+							},
+							_ => {
+								match (
+									FeeLock::is_whitelisted(*bought_asset_id),
+									OTA::get_swap_valuation_for_token(
+										*bought_asset_id,
+										*bought_asset_amount,
+									),
+								) {
+									(true, Some(value))
+										if value >= fee_lock_metadata.swap_value_threshold =>
+									{
+										is_high_value = true;
+									},
+									_ => {},
+								}
+							},
 						}
 
 						if is_high_value {

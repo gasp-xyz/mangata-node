@@ -10,22 +10,46 @@ use sp_std::collections::btree_set::BTreeSet;
 fn update_fee_lock_metadata_works() {
 	new_test_ext().execute_with(|| {
 		assert_noop!(
-			FeeLock::update_fee_lock_metadata(RuntimeOrigin::root(), Some(500), Some(0), Some(1000), None,),
+			FeeLock::update_fee_lock_metadata(
+				RuntimeOrigin::root(),
+				Some(500),
+				Some(0),
+				Some(1000),
+				None,
+			),
 			Error::<Test>::InvalidFeeLockMetadata
 		);
 
 		assert_noop!(
-			FeeLock::update_fee_lock_metadata(RuntimeOrigin::root(), Some(500), None, Some(1000), None,),
+			FeeLock::update_fee_lock_metadata(
+				RuntimeOrigin::root(),
+				Some(500),
+				None,
+				Some(1000),
+				None,
+			),
 			Error::<Test>::InvalidFeeLockMetadata
 		);
 
 		assert_noop!(
-			FeeLock::update_fee_lock_metadata(RuntimeOrigin::root(), Some(0), Some(500), Some(1000), None,),
+			FeeLock::update_fee_lock_metadata(
+				RuntimeOrigin::root(),
+				Some(0),
+				Some(500),
+				Some(1000),
+				None,
+			),
 			Error::<Test>::InvalidFeeLockMetadata
 		);
 
 		assert_noop!(
-			FeeLock::update_fee_lock_metadata(RuntimeOrigin::root(), None, Some(500), Some(1000), None,),
+			FeeLock::update_fee_lock_metadata(
+				RuntimeOrigin::root(),
+				None,
+				Some(500),
+				Some(1000),
+				None,
+			),
 			Error::<Test>::InvalidFeeLockMetadata
 		);
 
@@ -44,9 +68,7 @@ fn update_fee_lock_metadata_works() {
 				swap_value_threshold: 1000,
 				whitelisted_tokens: {
 					BoundedBTreeSet::<TokenId, MaxCuratedTokens>::try_from(
-						vec![0, 1]
-							.into_iter()
-							.collect::<BTreeSet<TokenId>>(),
+						vec![0, 1].into_iter().collect::<BTreeSet<TokenId>>(),
 					)
 					.unwrap()
 				}
@@ -68,9 +90,7 @@ fn update_fee_lock_metadata_works() {
 				swap_value_threshold: 3000,
 				whitelisted_tokens: {
 					BoundedBTreeSet::<TokenId, MaxCuratedTokens>::try_from(
-						vec![1, 2]
-							.into_iter()
-							.collect::<BTreeSet<TokenId>>(),
+						vec![1, 2].into_iter().collect::<BTreeSet<TokenId>>(),
 					)
 					.unwrap()
 				}
@@ -102,9 +122,7 @@ fn update_fee_lock_metadata_works() {
 				swap_value_threshold: 3000,
 				whitelisted_tokens: {
 					BoundedBTreeSet::<TokenId, MaxCuratedTokens>::try_from(
-						vec![1, 2]
-							.into_iter()
-							.collect::<BTreeSet<TokenId>>(),
+						vec![1, 2].into_iter().collect::<BTreeSet<TokenId>>(),
 					)
 					.unwrap()
 				}
@@ -144,9 +162,7 @@ fn process_fee_lock_trigger_works() {
 				swap_value_threshold,
 				whitelisted_tokens: {
 					BoundedBTreeSet::<TokenId, MaxCuratedTokens>::try_from(
-						vec![]
-							.into_iter()
-							.collect::<BTreeSet<TokenId>>(),
+						vec![].into_iter().collect::<BTreeSet<TokenId>>(),
 					)
 					.unwrap()
 				}
@@ -349,9 +365,7 @@ fn unlock_fee_works() {
 				swap_value_threshold,
 				whitelisted_tokens: {
 					BoundedBTreeSet::<TokenId, MaxCuratedTokens>::try_from(
-						vec![]
-							.into_iter()
-							.collect::<BTreeSet<TokenId>>(),
+						vec![].into_iter().collect::<BTreeSet<TokenId>>(),
 					)
 					.unwrap()
 				}
@@ -610,7 +624,6 @@ fn unlock_fee_works() {
 #[test]
 fn whitelist_and_valuation_works() {
 	new_test_ext().execute_with(|| {
-
 		assert_ok!(FeeLock::update_fee_lock_metadata(
 			RuntimeOrigin::root(),
 			Some(1000),
@@ -626,9 +639,7 @@ fn whitelist_and_valuation_works() {
 				swap_value_threshold: 1000,
 				whitelisted_tokens: {
 					BoundedBTreeSet::<TokenId, MaxCuratedTokens>::try_from(
-						vec![1, 2]
-							.into_iter()
-							.collect::<BTreeSet<TokenId>>(),
+						vec![1, 2].into_iter().collect::<BTreeSet<TokenId>>(),
 					)
 					.unwrap()
 				}
@@ -643,25 +654,69 @@ fn whitelist_and_valuation_works() {
 
 		assert!(!<FeeLock as FeeLockTriggerTrait<_>>::is_whitelisted(3));
 
+		assert_eq!(
+			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(0, 1000),
+			Some(1000)
+		);
+		assert_eq!(
+			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(0, 0),
+			Some(0)
+		);
+		assert_eq!(
+			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(0, u128::max_value()),
+			Some(u128::max_value())
+		);
 
-		assert_eq!(<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(0, 1000), Some(1000));
-		assert_eq!(<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(0, 0), Some(0));
-		assert_eq!(<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(0, u128::max_value()), Some(u128::max_value()));
-
-		assert_eq!(<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(1, 1000), Some(500));
-		assert_eq!(<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(1, 0), Some(0));
-		assert_eq!(<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(1, u128::max_value()), Some(u128::max_value()/2));
-		assert_eq!(<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(2, 1000), Some(2000));
-		assert_eq!(<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(2, 0), Some(0));
-		assert_eq!(<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(2, u128::max_value()), Some(u128::max_value()));
-		assert_eq!(<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(3, 1000), None);
+		assert_eq!(
+			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(1, 1000),
+			Some(500)
+		);
+		assert_eq!(
+			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(1, 0),
+			Some(0)
+		);
+		assert_eq!(
+			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(1, u128::max_value()),
+			Some(u128::max_value() / 2)
+		);
+		assert_eq!(
+			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(2, 1000),
+			Some(2000)
+		);
+		assert_eq!(
+			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(2, 0),
+			Some(0)
+		);
+		assert_eq!(
+			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(2, u128::max_value()),
+			Some(u128::max_value())
+		);
+		assert_eq!(
+			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(3, 1000),
+			None
+		);
 		assert_eq!(<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(3, 0), None);
-		assert_eq!(<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(3, u128::max_value()), None);
-		assert_eq!(<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(4, 1000), None);
+		assert_eq!(
+			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(3, u128::max_value()),
+			None
+		);
+		assert_eq!(
+			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(4, 1000),
+			None
+		);
 		assert_eq!(<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(4, 0), None);
-		assert_eq!(<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(4, u128::max_value()), None);
-		assert_eq!(<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(5, 1000), None);
+		assert_eq!(
+			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(4, u128::max_value()),
+			None
+		);
+		assert_eq!(
+			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(5, 1000),
+			None
+		);
 		assert_eq!(<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(5, 0), None);
-		assert_eq!(<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(5, u128::max_value()), None);
+		assert_eq!(
+			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(5, u128::max_value()),
+			None
+		);
 	})
 }

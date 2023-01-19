@@ -14,7 +14,7 @@ use mp_traits::FeeLockTriggerTrait;
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_xyk::Valuate;
 use sp_arithmetic::per_things::Rounding;
-use sp_runtime::{helpers_128bit::multiply_by_rational_with_rounding};
+use sp_runtime::helpers_128bit::multiply_by_rational_with_rounding;
 
 use sp_runtime::traits::{CheckedDiv, Zero};
 use sp_std::{convert::TryInto, prelude::*};
@@ -59,9 +59,7 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
 
-	#[derive(
-		Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, MaxEncodedLen, TypeInfo,
-	)]
+	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, MaxEncodedLen, TypeInfo)]
 	#[codec(mel_bound(T: Config))]
 	#[scale_info(skip_type_params(T))]
 	pub struct FeeLockMetadataInfo<T: Config> {
@@ -71,14 +69,15 @@ pub mod pallet {
 		pub whitelisted_tokens: BoundedBTreeSet<TokenId, T::MaxCuratedTokens>,
 	}
 
-	impl<T:Config> Default for FeeLockMetadataInfo<T>{
+	impl<T: Config> Default for FeeLockMetadataInfo<T> {
 		fn default() -> Self {
-		Self {
-			period_length: Default::default(),
-			fee_lock_amount: Default::default(),
-			swap_value_threshold: Default::default(),
-			whitelisted_tokens: Default::default(),
-		}}
+			Self {
+				period_length: Default::default(),
+				fee_lock_amount: Default::default(),
+				swap_value_threshold: Default::default(),
+				whitelisted_tokens: Default::default(),
+			}
+		}
 	}
 
 	#[pallet::storage]
@@ -159,22 +158,35 @@ pub mod pallet {
 					whitelisted_tokens: Default::default(),
 				});
 
-				fee_lock_metadata.period_length =
+			fee_lock_metadata.period_length =
 				period_length.unwrap_or(fee_lock_metadata.period_length);
-				fee_lock_metadata.fee_lock_amount =
+			fee_lock_metadata.fee_lock_amount =
 				fee_lock_amount.unwrap_or(fee_lock_metadata.fee_lock_amount);
-				fee_lock_metadata.swap_value_threshold =
+			fee_lock_metadata.swap_value_threshold =
 				swap_value_threshold.unwrap_or(fee_lock_metadata.swap_value_threshold);
 
-			ensure!(!fee_lock_metadata.fee_lock_amount.is_zero(), Error::<T>::InvalidFeeLockMetadata);
+			ensure!(
+				!fee_lock_metadata.fee_lock_amount.is_zero(),
+				Error::<T>::InvalidFeeLockMetadata
+			);
 			ensure!(!fee_lock_metadata.period_length.is_zero(), Error::<T>::InvalidFeeLockMetadata);
-			ensure!(!fee_lock_metadata.swap_value_threshold.is_zero(), Error::<T>::InvalidFeeLockMetadata);
+			ensure!(
+				!fee_lock_metadata.swap_value_threshold.is_zero(),
+				Error::<T>::InvalidFeeLockMetadata
+			);
 
 			if let Some(should_be_whitelisted) = should_be_whitelisted {
-				for (token_id, should_be_whitelisted) in should_be_whitelisted.iter(){
+				for (token_id, should_be_whitelisted) in should_be_whitelisted.iter() {
 					match should_be_whitelisted {
-						true => {let _ = fee_lock_metadata.whitelisted_tokens.try_insert(*token_id).map_err(|_| Error::<T>::MaxCuratedTokensLimitExceeded)?;}
-						false => {let _ = fee_lock_metadata.whitelisted_tokens.remove(token_id);}
+						true => {
+							let _ = fee_lock_metadata
+								.whitelisted_tokens
+								.try_insert(*token_id)
+								.map_err(|_| Error::<T>::MaxCuratedTokensLimitExceeded)?;
+						},
+						false => {
+							let _ = fee_lock_metadata.whitelisted_tokens.remove(token_id);
+						},
 					}
 				}
 			}
@@ -197,10 +209,9 @@ pub mod pallet {
 }
 
 impl<T: Config> FeeLockTriggerTrait<T::AccountId> for Pallet<T> {
-
 	fn is_whitelisted(token_id: TokenId) -> bool {
-		if let Some(fee_lock_metadata) = Self::get_fee_lock_metadata(){
-			if T::NativeTokenId::get() == token_id{
+		if let Some(fee_lock_metadata) = Self::get_fee_lock_metadata() {
+			if T::NativeTokenId::get() == token_id {
 				return true
 			}
 			fee_lock_metadata.whitelisted_tokens.contains(&token_id)
@@ -209,17 +220,31 @@ impl<T: Config> FeeLockTriggerTrait<T::AccountId> for Pallet<T> {
 		}
 	}
 
-	fn get_swap_valuation_for_token(valuating_token_id: TokenId, valuating_token_amount: Balance) -> Option<Balance> {
-		if T::NativeTokenId::get() == valuating_token_id{
+	fn get_swap_valuation_for_token(
+		valuating_token_id: TokenId,
+		valuating_token_amount: Balance,
+	) -> Option<Balance> {
+		if T::NativeTokenId::get() == valuating_token_id {
 			return Some(valuating_token_amount)
 		}
-		let (native_token_pool_reserve, valuating_token_pool_reserve)
-			= <T::PoolReservesProvider as Valuate>::get_reserves(T::NativeTokenId::get(), valuating_token_id).ok()?;
+		let (native_token_pool_reserve, valuating_token_pool_reserve) =
+			<T::PoolReservesProvider as Valuate>::get_reserves(
+				T::NativeTokenId::get(),
+				valuating_token_id,
+			)
+			.ok()?;
 		if native_token_pool_reserve.is_zero() || valuating_token_pool_reserve.is_zero() {
 			return None
 		}
-		Some(multiply_by_rational_with_rounding(valuating_token_amount, native_token_pool_reserve, valuating_token_pool_reserve, Rounding::Down)
-			.unwrap_or(Balance::max_value()))
+		Some(
+			multiply_by_rational_with_rounding(
+				valuating_token_amount,
+				native_token_pool_reserve,
+				valuating_token_pool_reserve,
+				Rounding::Down,
+			)
+			.unwrap_or(Balance::max_value()),
+		)
 	}
 
 	fn process_fee_lock(who: &T::AccountId) -> DispatchResult {
@@ -316,7 +341,6 @@ impl<T: Config> FeeLockTriggerTrait<T::AccountId> for Pallet<T> {
 	}
 
 	fn unlock_fee(who: &T::AccountId) -> DispatchResult {
-
 		// Check if total_fee_lock_amount is non-zero
 		// THEN Check is period is greater than last
 

@@ -159,12 +159,12 @@ impl<T: pallet_fee_lock::Config> Valuate for MockPoolReservesProvider<T> {
 		first_asset_id: TokenId,
 		second_asset_id: TokenId,
 	) -> Result<(Balance, Balance), DispatchError> {
-		match(first_asset_id, second_asset_id){
-			(0,1)=> Ok((5000,10000)),
-			(0,2)=> Ok((10000,5000)),
-			(0,3)=> Ok((0,10000)),
-			(0,4)=> Ok((5000,0)),
-			_ => Err(pallet_fee_lock::Error::<T>::UnexpectedFailure.into())
+		match (first_asset_id, second_asset_id) {
+			(0, 1) => Ok((5000, 10000)),
+			(0, 2) => Ok((10000, 5000)),
+			(0, 3) => Ok((0, 10000)),
+			(0, 4) => Ok((5000, 0)),
+			_ => Err(pallet_fee_lock::Error::<T>::UnexpectedFailure.into()),
 		}
 	}
 }

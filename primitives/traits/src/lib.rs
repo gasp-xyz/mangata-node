@@ -229,7 +229,10 @@ pub trait FeeLockTriggerTrait<AccountId> {
 
 	fn is_whitelisted(token_id: TokenId) -> bool;
 
-	fn get_swap_valuation_for_token(valuating_token_id: TokenId, valuating_token_amount: Balance) -> Option<Balance>;
+	fn get_swap_valuation_for_token(
+		valuating_token_id: TokenId,
+		valuating_token_amount: Balance,
+	) -> Option<Balance>;
 
 	fn unlock_fee(who: &AccountId) -> DispatchResult;
 }

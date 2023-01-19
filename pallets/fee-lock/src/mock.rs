@@ -114,6 +114,53 @@ parameter_types! {
 	pub const BnbTreasurySubAccDerive: [u8; 4] = *b"bnbt";
 }
 
+impl Valuate for MockPoolReservesProvider {
+	type Balance = Balance;
+
+	type CurrencyId = TokenId;
+
+	fn get_liquidity_asset(
+		first_asset_id: Self::CurrencyId,
+		second_asset_id: Self::CurrencyId,
+	) -> Result<TokenId, DispatchError> {
+		unimplemented!()
+	}
+
+	fn get_liquidity_token_mga_pool(
+		liquidity_token_id: Self::CurrencyId,
+	) -> Result<(Self::CurrencyId, Self::CurrencyId), DispatchError> {
+		unimplemented!()
+	}
+
+	fn valuate_liquidity_token(
+		liquidity_token_id: Self::CurrencyId,
+		liquidity_token_amount: Self::Balance,
+	) -> Self::Balance {
+		unimplemented!()
+	}
+
+	fn scale_liquidity_by_mga_valuation(
+		mga_valuation: Self::Balance,
+		liquidity_token_amount: Self::Balance,
+		mga_token_amount: Self::Balance,
+	) -> Self::Balance {
+		unimplemented!()
+	}
+
+	fn get_pool_state(
+		liquidity_token_id: Self::CurrencyId,
+	) -> Option<(Self::Balance, Self::Balance)> {
+		unimplemented!()
+	}
+
+	fn get_reserves(
+		first_asset_id: TokenId,
+		second_asset_id: TokenId,
+	) -> Result<(Balance, Balance), DispatchError> {
+		unimplemented!()
+	}
+}
+
 parameter_types! {
 	#[derive(PartialEq)]
 	pub const MaxCuratedTokens: u32 = 100;

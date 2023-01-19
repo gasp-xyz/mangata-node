@@ -25,7 +25,7 @@ use frame_system::{pallet_prelude::*, RawOrigin};
 use scale_info::TypeInfo;
 
 use sp_runtime::{traits::{Hash, AccountIdConversion}, KeyTypeId, RuntimeAppPublic};
-use sp_std::{boxed::Box, collections::btree_map::BTreeMap, vec::Vec};
+use sp_std::{boxed::Box, collections::btree_map::BTreeMap, vec::Vec, collections::vec_deque::VecDeque};
 use schnorrkel::vrf::{VRFOutput, VRFProof, VRF_PROOF_LENGTH};
 use schnorrkel::keys::{PUBLIC_KEY_LENGTH};
 use sp_keystore::vrf::VRFSignature;
@@ -38,7 +38,7 @@ mod tests;
 
 pub const XXTX_KEY_TYPE_ID: KeyTypeId = KeyTypeId(*b"xxtx");
 
-#[derive(Encode, Decode, TypeInfo, Debug, PartialEq)]
+#[derive(Encode, Eq, Clone, Copy, Decode, TypeInfo, Debug, PartialEq)]
 pub enum Encryption{
 	None,
 	Single,
@@ -105,15 +105,13 @@ const PALLET_ID: PalletId = PalletId(*b"encry_tx");
 
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub struct TxnRegistryDetails<AccountId: Parameter, Hash: Parameter> {
-	pub doubly_encrypted_call: Vec<u8>,
-	pub singly_encrypted_call_signature: Hash,
-	pub call_signature: Hash,
+	pub id: Hash,
+	pub data: Vec<u8>,
+	pub encryption: Encryption,
 	pub user: AccountId,
 	pub weight: Weight,
 	pub builder: AccountId,
 	pub executor: AccountId,
-	pub singly_encrypted_call: Option<Vec<u8>>,
-	pub decrypted_call: Option<Vec<u8>>,
 }
 
 pub use pallet::*;
@@ -152,6 +150,9 @@ pub mod pallet {
 		ProofError,
 		TxnDoesNotExistsInRegistry,
 		UnexpectedError,
+		WrongIdentifier,
+		Unauthorized,
+		EmptyQueue,
 	}
 
 	#[pallet::event]
@@ -181,32 +182,21 @@ pub mod pallet {
 	pub type KeyMap<T: Config> =
 		StorageValue<_, BTreeMap<T::AccountId, T::AuthorityId>, ValueQuery>;
 
-	// #[pallet::storage]
-	// pub type Foo<T: Config> =
-	// 	StorageValue<_, VRFProof, ValueQuery>;
-
-	#[pallet::storage]
-	#[pallet::getter(fn txn_registry)]
-	pub type TxnRegistry<T: Config> = StorageMap<
-		_,
-		Blake2_128Concat,
-		T::Hash,
-		TxnRegistryDetails<T::AccountId, T::Hash>,
-		OptionQuery,
-	>;
-
 	#[pallet::storage]
 	#[pallet::getter(fn doubly_encrypted_queue)]
-	pub type DoublyEncryptedQueue<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::AccountId, Vec<(Encryption, T::Hash)>, ValueQuery>;
-
-	#[pallet::storage]
-	#[pallet::getter(fn singly_encrypted_queue)]
-	pub type SinglyEncryptedQueue<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::AccountId, Vec<T::Hash>, ValueQuery>;
+	pub type EnqueuedTxs<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AccountId, VecDeque<TxnRegistryDetails<T::AccountId, T::Hash>>, ValueQuery>;
 
 	#[pallet::storage]
 	pub type UniqueId<T: Config> = StorageValue<_, u128, ValueQuery>;
+
+	// stores new data
+	#[pallet::storage]
+	pub type ProcessedTx<T: Config> = StorageValue<_, Vec<u8>, ValueQuery>;
+
+	// stores proof for new data
+	#[pallet::storage]
+	pub type Proof<T: Config> = StorageValue<_,  VRFSignatureWrapper, OptionQuery>;
 
 	// #[pallet::storage]
 	// #[pallet::getter(fn txn_record)]
@@ -232,6 +222,25 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		/// dummy `on_initialize` to return the weight used in `on_finalize`.
+		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
+			// weight of `on_finalize`
+			// T::WeightInfo::on_finalize()
+			Default::default()
+		}
+
+		/// # <weight>
+		/// - `O(1)`
+		/// - 1 storage deletion (codec `O(1)`).
+		/// # </weight>
+		fn on_finalize(_n: BlockNumberFor<T>) {
+			// assert if block builder did not use any
+		}
+	}
+
+
 	// XYK extrinsics.
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -239,7 +248,6 @@ pub mod pallet {
 		pub fn submit_doubly_encrypted_transaction(
 			origin: OriginFor<T>,
 			doubly_encrypted_call: Vec<u8>,
-			signatures: (T::Hash, T::Hash),
 			fee: Balance,
 			weight: Weight,
 			builder: T::AccountId,
@@ -264,19 +272,16 @@ pub mod pallet {
 			let identifier: T::Hash = Self::calculate_unique_id(&user, cnt, &doubly_encrypted_call);
 
 			let txn_registry_details = TxnRegistryDetails {
-				doubly_encrypted_call,
-				singly_encrypted_call_signature: signatures.0,
-				call_signature: signatures.1,
+				id: identifier.clone(),
+				data: doubly_encrypted_call,
+				encryption: Encryption::Double,
 				user: user.clone(),
 				weight,
 				builder: builder.clone(),
 				executor,
-				singly_encrypted_call: None,
-				decrypted_call: None,
 			};
 
-			TxnRegistry::<T>::insert(identifier, txn_registry_details);
-			DoublyEncryptedQueue::<T>::mutate(&builder, |vec_hash| vec_hash.push((Encryption::Double, identifier)));
+			EnqueuedTxs::<T>::mutate(&builder, |queue| queue.push_back(txn_registry_details));
 			// TxnRecord::<T>::mutate(
 			// 	T::Index::from(<pallet_session::Pallet<T>>::current_index()),
 			// 	&user,
@@ -304,39 +309,20 @@ pub mod pallet {
 		) -> DispatchResult {
 			let builder = ensure_signed(origin)?;
 
-			let details = TxnRegistry::<T>::get(identifier).ok_or(Error::<T>::TxnDoesNotExistsInRegistry)?;
-			ensure!(details.builder == builder, Error::<T>::WrongAccount);
+			//asset builder is actually block builder
+			// ensure!(details.id == identifier, Error::<T>::Unauthorized);
 
-			ensure!(
-				T::Hashing::hash(&singly_encrypted_call) == details.singly_encrypted_call_signature,
-				Error::<T>::ProofError
-				);
+			let mut txs = EnqueuedTxs::<T>::get(&builder);
+			let mut details = txs.pop_front().ok_or(Error::<T>::EmptyQueue)?;
 
-			// TxnRegistry::<T>::try_mutate(
-			// 	identifier,
-			// 	|txn_registry_details_option| -> DispatchResult {
-			// 		if let Some(ref mut txn_registry_details) = txn_registry_details_option {
-			// 			DoublyEncryptedQueue::<T>::mutate(
-			// 				&txn_registry_details.builder,
-			// 				|vec_hash| vec_hash.retain(|x| *x != identifier),
-			// 			);
-			// 			SinglyEncryptedQueue::<T>::mutate(
-			// 				&txn_registry_details.executor,
-			// 				|vec_hash| vec_hash.push(identifier),
-			// 			);
-			// 			txn_registry_details.singly_encrypted_call = Some(singly_encrypted_call);
-            //
-			// 			Self::deposit_event(Event::SinglyEncryptedTxnSubmitted(
-			// 				txn_registry_details.user.clone(),
-			// 				identifier,
-			// 			));
-            //
-			// 			Ok(())
-			// 		} else {
-			// 			Err(DispatchError::from(Error::<T>::TxnDoesNotExistsInRegistry))
-			// 		}
-			// 	},
-			// )
+			ensure!(details.id == identifier, Error::<T>::WrongIdentifier);
+			ensure!(details.encryption == Encryption::Double, Error::<T>::WrongAccount);
+
+			ProcessedTx::<T>::mutate(|data| data.extend_from_slice(&singly_encrypted_call) );
+
+			details.encryption = Encryption::Single;
+			details.data = singly_encrypted_call;
+			txs.push_back(details);
 
 			Ok(())
 		}
@@ -352,38 +338,38 @@ pub mod pallet {
 		) -> DispatchResult {
 			ensure_none(origin)?;
 
-			let mut txn_registry_details = TxnRegistry::<T>::get(identifier)
-				.ok_or_else(|| Error::<T>::TxnDoesNotExistsInRegistry)?;
-			SinglyEncryptedQueue::<T>::mutate(&txn_registry_details.executor, |vec_hash| {
-				vec_hash.retain(|x| *x != identifier)
-			});
-
-			ExecutedTxnRecord::<T>::mutate(
-				T::Index::from(<pallet_session::Pallet<T>>::current_index()),
-				&txn_registry_details.user,
-				|vec_hash| vec_hash.push(identifier),
-			);
-
-			txn_registry_details.decrypted_call = Some(decrypted_call.clone());
-
-			TxnRegistry::<T>::insert(identifier, txn_registry_details.clone());
-
-			Self::deposit_event(Event::DecryptedTransactionSubmitted(
-				txn_registry_details.user.clone(),
-				identifier,
-			));
-
-			let calls: Vec<Box<<T as Config>::Call>> = Decode::decode(&mut &decrypted_call[..])
-				.map_err(|_| DispatchError::from(Error::<T>::CallDeserilizationFailed))?;
-
-			Pallet::<T>::execute_calls(
-				RawOrigin::Root.into(),
-				calls,
-				txn_registry_details.user,
-				identifier,
-				txn_registry_details.weight,
-			)?;
-
+			// let mut txn_registry_details = TxnRegistry::<T>::get(identifier)
+			// 	.ok_or_else(|| Error::<T>::TxnDoesNotExistsInRegistry)?;
+			// SinglyEncryptedQueue::<T>::mutate(&txn_registry_details.executor, |vec_hash| {
+			// 	vec_hash.retain(|x| *x != identifier)
+			// });
+            //
+			// ExecutedTxnRecord::<T>::mutate(
+			// 	T::Index::from(<pallet_session::Pallet<T>>::current_index()),
+			// 	&txn_registry_details.user,
+			// 	|vec_hash| vec_hash.push(identifier),
+			// );
+            //
+			// txn_registry_details.decrypted_call = Some(decrypted_call.clone());
+            //
+			// TxnRegistry::<T>::insert(identifier, txn_registry_details.clone());
+            //
+			// Self::deposit_event(Event::DecryptedTransactionSubmitted(
+			// 	txn_registry_details.user.clone(),
+			// 	identifier,
+			// ));
+            //
+			// let calls: Vec<Box<<T as Config>::Call>> = Decode::decode(&mut &decrypted_call[..])
+			// 	.map_err(|_| DispatchError::from(Error::<T>::CallDeserilizationFailed))?;
+            //
+			// Pallet::<T>::execute_calls(
+			// 	RawOrigin::Root.into(),
+			// 	calls,
+			// 	txn_registry_details.user,
+			// 	identifier,
+			// 	txn_registry_details.weight,
+			// )?;
+            //
 			Ok(())
 		}
 
@@ -483,13 +469,16 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn calculate_unique_id(account: &T::AccountId, cnt: u128, call: &Vec<u8>) -> T::Hash{
-
 			T::Hashing::hash_of(
 				&[&call[..],
 				&Encode::encode(account)[..],
 				&Encode::encode(&cnt)
 				]
 			)
+	}
+
+	fn set_proof(sig: VRFSignature) {
+		Proof::<T>::set(Some(sig.into()))
 	}
 }
 //

@@ -37,7 +37,7 @@ benchmarks! {
 		let period_length: T::BlockNumber = 1000u32.into();
 		let fee_lock_amount: Balance = 1000;
 		let swap_value_threshold: Balance = 1000;
-		let mut whitelisted_tokens: Vec<(TokenId, Option<Balance>)> = Vec::new();
+		let mut whitelisted_tokens: Vec<(TokenId, bool)> = Vec::new();
 		for i in 0..<T as Config>::MaxCuratedTokens::get() {
 			whitelisted_tokens.push((i, true));
 		}

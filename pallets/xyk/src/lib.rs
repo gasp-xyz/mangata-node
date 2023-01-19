@@ -843,6 +843,9 @@ pub mod pallet {
 				Error::<T>::FunctionNotAvailableForThisToken
 			);
 
+			let rewards_id: TokenId = Self::native_token_id();
+			ensure!(first_asset_id == rewards_id || second_asset_id == rewards_id, Error::<T>::FunctionNotAvailableForThisToken);
+
 			let rewards_claimed = <Self as XykFunctionsTrait<T::AccountId>>::claim_rewards_all_v2(
 				sender.clone(),
 				liquidity_asset_id,
@@ -858,7 +861,7 @@ pub mod pallet {
 				sender,
 				first_asset_id,
 				second_asset_id,
-				first_asset_id,
+				rewards_id,
 				rewards,
 				true,
 			)?;

@@ -104,9 +104,10 @@ macro_rules! log {
 const PALLET_ID: PalletId = PalletId(*b"encry_tx");
 
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
-pub struct TxnRegistryDetails<AccountId: Parameter> {
+pub struct TxnRegistryDetails<AccountId: Parameter, Hash: Parameter> {
 	pub doubly_encrypted_call: Vec<u8>,
-	pub doubly_encrypted_call_signature: VRFSignatureWrapper,
+	pub singly_encrypted_call_signature: Hash,
+	pub call_signature: Hash,
 	pub user: AccountId,
 	pub weight: Weight,
 	pub builder: AccountId,
@@ -190,7 +191,7 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		T::Hash,
-		TxnRegistryDetails<T::AccountId>,
+		TxnRegistryDetails<T::AccountId, T::Hash>,
 		OptionQuery,
 	>;
 
@@ -238,7 +239,7 @@ pub mod pallet {
 		pub fn submit_doubly_encrypted_transaction(
 			origin: OriginFor<T>,
 			doubly_encrypted_call: Vec<u8>,
-			doubly_encrypted_call_signature: VRFSignatureWrapper,
+			signatures: (T::Hash, T::Hash),
 			fee: Balance,
 			weight: Weight,
 			builder: T::AccountId,
@@ -264,7 +265,8 @@ pub mod pallet {
 
 			let txn_registry_details = TxnRegistryDetails {
 				doubly_encrypted_call,
-				doubly_encrypted_call_signature,
+				singly_encrypted_call_signature: signatures.0,
+				call_signature: signatures.1,
 				user: user.clone(),
 				weight,
 				builder: builder.clone(),
@@ -305,19 +307,10 @@ pub mod pallet {
 			let details = TxnRegistry::<T>::get(identifier).ok_or(Error::<T>::TxnDoesNotExistsInRegistry)?;
 			ensure!(details.builder == builder, Error::<T>::WrongAccount);
 
-			let signature: VRFSignature = details.doubly_encrypted_call_signature.into();
-
-			let mut transcript = merlin::Transcript::new(b"ved");
-			let hardcoded_alice_pub_key = [212, 53, 147, 199, 21, 253, 211, 28, 97, 20, 26, 189, 4, 169, 159, 214, 130, 44, 133, 88, 133, 76, 205, 227, 154, 86, 132 , 231, 165, 109, 162, 125];
-
-			transcript.append_message(b"input", &singly_encrypted_call);
-
-			let pub_key = schnorrkel::PublicKey::from_bytes(&hardcoded_alice_pub_key).expect("cannot build public");
-
-			pub_key
-				.vrf_verify(transcript, &signature.output, &signature.proof)
-				.or(Err(Error::<T>::ProofError))?;
-
+			ensure!(
+				T::Hashing::hash(&singly_encrypted_call) == details.singly_encrypted_call_signature,
+				Error::<T>::ProofError
+				);
 
 			// TxnRegistry::<T>::try_mutate(
 			// 	identifier,
@@ -344,6 +337,7 @@ pub mod pallet {
 			// 		}
 			// 	},
 			// )
+
 			Ok(())
 		}
 

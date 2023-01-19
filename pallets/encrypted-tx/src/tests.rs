@@ -6,6 +6,8 @@ use serial_test::serial;
 use frame_support::{assert_err, assert_ok};
 use sp_application_crypto::Pair;
 use sp_core::hexdisplay::AsBytesRef;
+use sp_core::crypto::CryptoTypePublicPair;
+use sp_core::sr25519;
 use sp_runtime::traits::BadOrigin;
 use frame_support::weights::Weight;
 use sp_keystore::vrf::{VRFTranscriptData, VRFTranscriptValue};
@@ -18,23 +20,30 @@ const EXECUTOR: u128 = 101;
 const MILLION: Balance = 1_000_000;
 const ZERO_WEIGHT: Weight = Weight::from_ref_time(0);
 
-fn encrypt_data(input: &[u8]) -> (Vec<u8>, VRFSignatureWrapper) {
+fn encrypt_data(input: &[u8]) -> (Vec<u8>, Vec<u8>) {
 	let secret_uri = "//Alice";
+	let key_type = sp_core::crypto::KeyTypeId(*b"aura");
 	let key_pair = sp_core::sr25519::Pair::from_string(secret_uri, None).expect("Generates key pair");
 	let keystore = sp_keystore::testing::KeyStore::new();
 	keystore
-		.insert_unknown(sp_core::crypto::KeyTypeId(*b"aura"), secret_uri, key_pair.public().as_ref())
+		.insert_unknown(key_type, secret_uri, key_pair.public().as_ref())
 		.unwrap();
 
 	let transcript = VRFTranscriptData {
 		label: b"ved",
 		items: vec![("input", VRFTranscriptValue::Bytes(input.to_vec()))],
 	};
-	let signature = keystore.sr25519_vrf_sign(sp_core::crypto::KeyTypeId(*b"aura"), &key_pair.public(), transcript.clone()).unwrap().unwrap();
+	let pub_key = CryptoTypePublicPair(sr25519::CRYPTO_ID, key_pair.public().to_vec());
 
-	(input.to_vec(), signature.into())
+	let singly_encrypted_call = keystore.sign_with( key_type, &pub_key, input).unwrap().unwrap();
+	let doubly_encrypted_call = keystore.sign_with( key_type, &pub_key, &singly_encrypted_call).unwrap().unwrap();
+
+	(doubly_encrypted_call, singly_encrypted_call)
 }
 
+fn hash(input: &Vec<u8>) -> <Test as frame_system::Config>::Hash {
+	<Test as frame_system::Config>::Hashing::hash(input) 
+}
 
 
 #[test]
@@ -46,12 +55,14 @@ fn test_submit_double_encrypted_tx() {
 		assert!(DoublyEncryptedQueue::<Test>::try_get(ALICE).is_err());
 		let cnt = UniqueId::<Test>::get();
 
-		let (encypted_call,signature) = encrypt_data(b"dummy data");
+		let input = b"dummy_data".to_vec();
+		let (doubly_enc,singly_enc) = encrypt_data(&input);
+		let hashes = (hash(&singly_enc), hash(&input));
 
-		let identifier = EncryptedTx::calculate_unique_id(&ALICE, cnt, &encypted_call);
+		let identifier = EncryptedTx::calculate_unique_id(&ALICE, cnt, &doubly_enc);
 		EncryptedTx::submit_doubly_encrypted_transaction( RuntimeOrigin::signed(ALICE),
-			encypted_call.clone(),
-			signature,
+			doubly_enc.clone(),
+			hashes,
 			0,
 			ZERO_WEIGHT,
 			BUILDER,
@@ -66,8 +77,9 @@ fn test_submit_double_encrypted_tx() {
 
 		assert_eq!(
 		TxnRegistryDetails{
-			doubly_encrypted_call: encypted_call,
-			doubly_encrypted_call_signature: signature,
+			doubly_encrypted_call: doubly_enc,
+			singly_encrypted_call_signature: hash(&singly_enc),
+			call_signature: hash(&input),
 			user: ALICE,
 			weight: ZERO_WEIGHT,
 			builder: BUILDER,
@@ -85,10 +97,13 @@ fn test_submit_double_encrypted_tx_multiple_times() {
 	.build()
 	.execute_with(|| {
 		for _ in 1..10 {
-			let (encypted_call,signature) = encrypt_data(b"dummy data");
+			let input = b"dummy_data".to_vec();
+			let (doubly_enc,singly_enc) = encrypt_data(&input);
+			let hashes = (hash(&singly_enc), hash(&input));
+
 			EncryptedTx::submit_doubly_encrypted_transaction( RuntimeOrigin::signed(ALICE),
-				encypted_call,
-				signature,
+				doubly_enc,
+				hashes,
 				0,
 				ZERO_WEIGHT,
 				BUILDER,
@@ -108,12 +123,15 @@ fn test_cannot_submit_tx_with_not_enought_tokens_to_pay_declared_fee() {
 
 		assert!(fee > OrmlTokens::accounts(ALICE, NativeCurrencyId::get()).free);
 
-		let (encypted_call,signature) = encrypt_data(b"dummy data");
+		let input = b"dummy_data".to_vec();
+		let (doubly_enc,singly_enc) = encrypt_data(&input);
+		let hashes = (hash(&singly_enc), hash(&input));
+
 		assert_err!(
 			EncryptedTx::submit_doubly_encrypted_transaction(
 				RuntimeOrigin::signed(ALICE),
-				encypted_call,
-				signature,
+				doubly_enc,
+				hashes,
 				fee,
 				ZERO_WEIGHT,
 				BUILDER,
@@ -130,7 +148,7 @@ fn test_submit_encrypted_call_error_because_of_unknown_tx() {
 	.create_token(NativeCurrencyId::get())
 	.build()
 	.execute_with(|| {
-		let dummy_call = b"dummy data".to_vec();
+		let dummy_call = b"dummy_data".to_vec();
 		let identifier = EncryptedTx::calculate_unique_id(&ALICE, UniqueId::<Test>::get(), &dummy_call);
 		assert_err!(
 		EncryptedTx::submit_singly_encrypted_transaction(
@@ -150,13 +168,15 @@ fn test_submit_encrypted_call_error_because_of_bad_account() {
 	.create_token(NativeCurrencyId::get())
 	.build()
 	.execute_with(|| {
-		let (encypted_call,signature) = encrypt_data(b"dummy data");
-		let identifier = EncryptedTx::calculate_unique_id(&ALICE, UniqueId::<Test>::get(), &encypted_call);
+		let input = b"dummy_data".to_vec();
+		let (doubly_enc,singly_enc) = encrypt_data(&input);
+		let hashes = (hash(&singly_enc), hash(&input));
+		let identifier = EncryptedTx::calculate_unique_id(&ALICE, UniqueId::<Test>::get(), &doubly_enc);
 
 		EncryptedTx::submit_doubly_encrypted_transaction(
 			RuntimeOrigin::signed(ALICE),
-			encypted_call,
-			signature,
+			doubly_enc,
+			hashes,
 			0,
 			ZERO_WEIGHT,
 			BUILDER,
@@ -180,21 +200,15 @@ fn test_submit_encrypted_call_error_because_of_bad_proof() {
 	.create_token(NativeCurrencyId::get())
 	.build()
 	.execute_with(|| {
-		let input = b"dummy data".to_vec();
-		let secret_uri = "//Alice";
-		let key_pair = sp_core::sr25519::Pair::from_string(secret_uri, None).expect("Generates key pair");
-		let keystore = sp_keystore::testing::KeyStore::new();
-		keystore
-			.insert_unknown(sp_core::crypto::KeyTypeId(*b"aura"), secret_uri, key_pair.public().as_ref())
-			.unwrap();
-
-		let (encypted_call,signature) = encrypt_data(&input);
-		let identifier = EncryptedTx::calculate_unique_id(&ALICE, UniqueId::<Test>::get(), &encypted_call);
+		let input = b"dummy_data".to_vec();
+		let (doubly_enc,singly_enc) = encrypt_data(&input);
+		let hashes = (hash(&singly_enc), hash(&input));
+		let identifier = EncryptedTx::calculate_unique_id(&ALICE, UniqueId::<Test>::get(), &doubly_enc);
 
 		EncryptedTx::submit_doubly_encrypted_transaction(
 			RuntimeOrigin::signed(ALICE),
-			encypted_call,
-			signature,
+			doubly_enc,
+			hashes,
 			0,
 			ZERO_WEIGHT,
 			BUILDER,

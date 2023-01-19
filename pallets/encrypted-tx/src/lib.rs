@@ -18,7 +18,7 @@ use frame_support::{
 	pallet_prelude::*,
 	traits::{
 		tokens::currency::MultiTokenCurrency, ExistenceRequirement, UnfilteredDispatchable,
-		WithdrawReasons,
+		WithdrawReasons, FindAuthor
 	},
 };
 use frame_system::{pallet_prelude::*, RawOrigin};
@@ -126,7 +126,7 @@ pub mod pallet {
 	pub struct Pallet<T>(PhantomData<T>);
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_session::Config {
+	pub trait Config: frame_system::Config + pallet_aura::Config + pallet_session::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		type Tokens: MultiTokenCurrency<Self::AccountId>;
 		type AuthorityId: Member + Parameter + RuntimeAppPublic + Default + Ord;
@@ -180,7 +180,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn keys)]
 	pub type KeyMap<T: Config> =
-		StorageValue<_, BTreeMap<T::AccountId, T::AuthorityId>, ValueQuery>;
+		StorageValue<_, BTreeMap<T::AccountId, <T as crate::Config>::AuthorityId>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn doubly_encrypted_queue)]
@@ -461,7 +461,7 @@ impl<T: Config> Pallet<T> {
 		<T as Config>::NativeCurrencyId::get()
 	}
 
-	fn initialize_keys(keys: &BTreeMap<T::AccountId, T::AuthorityId>) {
+	fn initialize_keys(keys: &BTreeMap<T::AccountId, <T as crate::Config>::AuthorityId>) {
 		if !keys.is_empty() {
 			assert!(KeyMap::<T>::get().is_empty(), "Keys are already initialized!");
 			KeyMap::<T>::put(keys);

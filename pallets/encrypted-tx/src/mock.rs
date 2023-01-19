@@ -93,6 +93,31 @@ impl pallet_session::Config for Test {
 	type WeightInfo = ();
 }
 
+
+parameter_types!(
+	pub const MaxAuthorities: u32 = 1_000_000;
+);
+
+impl pallet_aura::Config for Test {
+	type AuthorityId = UintAuthorityId;
+	type DisabledValidators = ();
+	type MaxAuthorities = MaxAuthorities;
+}
+
+
+parameter_types! {
+	pub const MinimumPeriod: u64 = 1;
+}
+
+impl pallet_timestamp::Config for Test {
+	/// A timestamp: milliseconds since the unix epoch.
+	type Moment = u64;
+	type OnTimestampSet = ();
+	type MinimumPeriod = MinimumPeriod;
+	type WeightInfo = ();
+}
+
+
 impl frame_system::Config for Test {
 	type BaseCallFilter = Everything;
 	type RuntimeOrigin = RuntimeOrigin;
@@ -206,6 +231,7 @@ construct_runtime!(
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
 		EncryptedTx: pallet_encrypted_tx::{Pallet, Call, Storage, Event<T>},
 		OrmlTokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>},
+		Aura: pallet_aura::{Pallet, Storage, Config<T>},
 	}
 );
 

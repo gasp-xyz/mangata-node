@@ -1,4 +1,4 @@
-name: e2e tests
+name: Reusable e2e tests workflow
 
 on:
   workflow_call:

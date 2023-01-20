@@ -1,4 +1,4 @@
-name: Release branch workflow
+name: Continous Integration
 
 # available flags:
 ## skip-e2e-tests: skip running e2e tests
@@ -7,9 +7,12 @@ name: Release branch workflow
 
 on:
   pull_request:
-    types: [ labeled, opened, synchronize, unlabeled, closed ]
+    types: [labeled, opened, synchronize, unlabeled, closed]
     branches:
-      - main
+      - develop
+      - "release/**"
+  push:
+    branches: [develop]
 
   workflow_dispatch:
     # For manually trigger
@@ -22,6 +25,11 @@ on:
         description: "Name of the parachain docker reference"
         required: false
         default: "mangatasolutions/mangata-node:latest"
+      skipBuild:
+        description: "Skip build phase"
+        type: boolean
+        required: true
+        default: false
 
 permissions:
   contents: write
@@ -29,22 +37,20 @@ permissions:
   deployments: write
   checks: write
 
-env:
-  RELEASE_BRANCH_PATTERN: 'release/'
-
 # The following concurrency group cancels in-progress jobs or runs on pull_request events only
 # https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
 concurrency: 
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   init:
     name: Global init
+    if: github.event.action != 'unlabeled' && github.event.action != 'closed'
     runs-on: ubuntu-latest
     outputs:
       GLOBAL_VERSION: ${{ steps.set_vars.outputs.GLOBAL_VERSION }}
       GIT_BRANCH: ${{ steps.set_vars.outputs.GIT_BRANCH }}
-      RELEASE_BRANCH_PATTERN: ${{ steps.set_vars.outputs.RELEASE_BRANCH_PATTERN }}
     steps:
       - name: Get branch name
         id: branch-name
@@ -53,20 +59,11 @@ jobs:
         id: set_vars
         run: |
           echo "GLOBAL_VERSION=${{ github.sha }}" >> $GITHUB_OUTPUT
-          echo "RELEASE_BRANCH_PATTERN=${{ env.RELEASE_BRANCH_PATTERN }}" >> $GITHUB_OUTPUT
           echo "GIT_BRANCH=${{ steps.branch-name.outputs.current_branch }}" | sed "s@/@-@g" >> $GITHUB_OUTPUT
 
-  validate-branch-name:
-    name: Validate release branch name
-    runs-on: ubuntu-latest
-    if: startsWith(github.head_ref, needs.init.outputs.RELEASE_BRANCH_PATTERN)
-    needs: [ init ]
-    steps:
-      - name: Branch name is not correct
-        run: exit 0
-
   build-and-test:
-    needs: [init, validate-branch-name]
+    if: ${{ github.event.inputs.skipBuild != 'true' }}
+    needs: [init]
     name: Build
     uses: ./.github/workflows/reusable-build-and-test.yml
     secrets: inherit
@@ -76,7 +73,10 @@ jobs:
 
   deploy-fungible:
     name: Deploy fungible environment
-    needs: [init, validate-branch-name,build-and-test]
+    needs: [init,build-and-test]
+    if: |
+      (github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == ':rocket: deploy') ||
+      (github.event_name == 'pull_request' && github.event.action != 'labeled' && contains(github.event.pull_request.labels.*.name, ':rocket: deploy'))
     uses: ./.github/workflows/reusable-deploy.yml
     secrets: inherit
     with:
@@ -85,8 +85,9 @@ jobs:
   
   clean-up-fungible:
     name: Delete fungible environment
-    needs: [init, validate-branch-name]
-    if: github.event.action == 'closed'
+    if: |
+      (github.event_name == 'pull_request' && github.event.action == 'unlabeled' && github.event.label.name == ':rocket: deploy') ||
+      (github.event_name == 'pull_request' && github.event.action == 'closed' && contains(github.event.pull_request.labels.*.name, ':rocket: deploy'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -111,6 +112,16 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           env: pr-${{ github.event.number }}
 
+  deploy-dev:
+    needs: [init,build-and-test]
+    if: github.event_name == 'push' && github.ref_name == 'develop'
+    name: Deploy `dev` environment
+    uses: ./.github/workflows/reusable-deploy.yml
+    secrets: inherit
+    with:
+      env: dev
+      version: ${{ needs.init.outputs.GLOBAL_VERSION }}
+
   run-e2e-test:
     name: Run e2e tests
     needs: [init, validate-branch-name, build-and-test]
@@ -119,5 +130,5 @@ jobs:
     with:
       e2eBranch: ${{ github.event.inputs.e2eBranch }}
       parachainDocker: ${{ github.event.inputs.parachainDocker }}
-      skipBuild: 'false'
+      skipBuild: ${{ github.event.inputs.skipBuild }}
       globalVersion: ${{ needs.init.outputs.GLOBAL_VERSION }}

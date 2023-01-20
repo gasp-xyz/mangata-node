@@ -5,10 +5,12 @@ on:
     inputs:
       e2eBranch:
         description: "Name of the e2e target branch"
+        type: string
         required: false
         default: "main"
       parachainDocker:
         description: "Name of the parachain docker reference"
+        type: string
         required: false
         default: "mangatasolutions/mangata-node:latest"
       skipBuild:

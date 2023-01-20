@@ -54,6 +54,7 @@ jobs:
         run: |
           echo "GLOBAL_VERSION=${{ github.sha }}" >> $GITHUB_OUTPUT
           echo "GIT_BRANCH=${{ steps.branch-name.outputs.current_branch }}" | sed "s@/@-@g" >> $GITHUB_OUTPUT
+          echo "RELEASE_BRANCH_PATTERN=${{ env.RELEASE_BRANCH_PATTERN }}" | sed "s@/@-@g" >> $GITHUB_OUTPUT
 
   build-and-test:
     if: startsWith(github.head_ref, env.RELEASE_BRANCH_PATTERN)

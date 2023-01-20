@@ -15,7 +15,7 @@ on:
         default: "mangatasolutions/mangata-node:latest"
       skipBuild:
         description: "Skip build phase"
-        type: boolean
+        type: string
         required: false
         default: false
       globalVersion:

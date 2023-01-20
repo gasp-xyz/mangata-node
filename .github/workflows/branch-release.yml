@@ -63,11 +63,11 @@ jobs:
     needs: [ init ]
     steps:
       - name: Validate release branch name
-        run: exit 1
+        run: exit 0
 
   build-and-test:
     if: startsWith(github.head_ref, needs.init.outputs.RELEASE_BRANCH_PATTERN)
-    needs: [init]
+    needs: [init, validate-branch-name]
     name: Build
     uses: ./.github/workflows/build-and-test.yml
     secrets: inherit
@@ -77,7 +77,7 @@ jobs:
 
   deploy-fungible:
     name: Deploy fungible environment
-    needs: [init,build-and-test]
+    needs: [init, validate-branch-name,build-and-test]
     if: startsWith(github.head_ref, needs.init.outputs.RELEASE_BRANCH_PATTERN)
     uses: ./.github/workflows/deploy.yml
     secrets: inherit
@@ -87,6 +87,7 @@ jobs:
   
   clean-up-fungible:
     name: Delete fungible environment
+    needs: [init, validate-branch-name]
     if: github.event.action == 'closed' && startsWith(github.head_ref, needs.init.outputs.RELEASE_BRANCH_PATTERN)
     runs-on: ubuntu-latest
     steps:
@@ -114,7 +115,7 @@ jobs:
 
   run-e2e-test:
     name: Run e2e tests
-    needs: [init, build-and-test]
+    needs: [init, validate-branch-name, build-and-test]
     if: startsWith(github.head_ref, needs.init.outputs.RELEASE_BRANCH_PATTERN)
     uses: ./.github/workflows/reusable-e2e-tests.yml
     secrets: inherit

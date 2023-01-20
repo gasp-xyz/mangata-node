@@ -6,8 +6,10 @@ name: Release branch workflow
 ## skip-publish: skip publish
 
 on:
-  push:
-    branches: [feature/release-branch]
+  pull_request:
+    types: [ labeled, opened, synchronize, unlabeled, closed ]
+    branches:
+      - feature/release-branch-main-placeholder
 
   workflow_dispatch:
     # For manually trigger
@@ -20,17 +22,15 @@ on:
         description: "Name of the parachain docker reference"
         required: false
         default: "mangatasolutions/mangata-node:latest"
-      skipBuild:
-        description: "Skip build phase"
-        type: boolean
-        required: true
-        default: false
 
 permissions:
   contents: write
   id-token: write
   deployments: write
   checks: write
+
+env:
+  RELEASE_BRANCH_PATTERN: 'feature/release'
 
 # The following concurrency group cancels in-progress jobs or runs on pull_request events only
 # https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
@@ -40,7 +40,7 @@ concurrency:
 jobs:
   init:
     name: Global init
-    if: github.event.action != 'unlabeled' && github.event.action != 'closed'
+    if:  startsWith(github.head_ref, env.RELEASE_BRANCH_PATTERN)
     runs-on: ubuntu-latest
     outputs:
       GLOBAL_VERSION: ${{ steps.set_vars.outputs.GLOBAL_VERSION }}
@@ -56,7 +56,7 @@ jobs:
           echo "GIT_BRANCH=${{ steps.branch-name.outputs.current_branch }}" | sed "s@/@-@g" >> $GITHUB_OUTPUT
 
   build-and-test:
-    if: ${{ github.event.inputs.skipBuild != 'true' }}
+    if: startsWith(github.head_ref, env.RELEASE_BRANCH_PATTERN)
     needs: [init]
     name: Build
     uses: ./.github/workflows/build-and-test.yml
@@ -68,8 +68,7 @@ jobs:
   deploy-fungible:
     name: Deploy fungible environment
     needs: [init,build-and-test]
-    if: |
-      (github.event_name == 'pull_request')
+    if: startsWith(github.head_ref, env.RELEASE_BRANCH_PATTERN)
     uses: ./.github/workflows/deploy.yml
     secrets: inherit
     with:
@@ -78,8 +77,7 @@ jobs:
   
   clean-up-fungible:
     name: Delete fungible environment
-    if: |
-      (github.event_name == 'pull_request' && github.event.action == 'closed')
+    if: github.event.action == 'closed' && startsWith(github.head_ref, env.RELEASE_BRANCH_PATTERN)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -107,11 +105,11 @@ jobs:
   run-e2e-test:
     name: Run e2e tests
     needs: [init, build-and-test]
-    if: ${{ (!cancelled() && (success() || github.event.inputs.skipBuild == 'true')) && !contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests') }}
+    if: startsWith(github.head_ref, env.RELEASE_BRANCH_PATTERN)
     uses: ./.github/workflows/reusable-e2e-tests.yml
     secrets: inherit
     with:
       e2eBranch: ${{ github.event.inputs.e2eBranch }}
       parachainDocker: ${{ github.event.inputs.parachainDocker }}
-      skipBuild: ${{ github.event.inputs.skipBuild }}
+      skipBuild: 'false'
       globalVersion: ${{ needs.init.outputs.GLOBAL_VERSION }}

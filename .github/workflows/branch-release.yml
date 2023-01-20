@@ -40,7 +40,6 @@ concurrency:
 jobs:
   init:
     name: Global init
-    if:  startsWith(github.head_ref, env.RELEASE_BRANCH_PATTERN)
     runs-on: ubuntu-latest
     outputs:
       GLOBAL_VERSION: ${{ steps.set_vars.outputs.GLOBAL_VERSION }}
@@ -56,6 +55,8 @@ jobs:
           echo "GLOBAL_VERSION=${{ github.sha }}" >> $GITHUB_OUTPUT
           echo "GIT_BRANCH=${{ steps.branch-name.outputs.current_branch }}" | sed "s@/@-@g" >> $GITHUB_OUTPUT
           echo "RELEASE_BRANCH_PATTERN=${{ env.RELEASE_BRANCH_PATTERN }}" | sed "s@/@-@g" >> $GITHUB_OUTPUT
+
+# TODO always fail if different branch name
 
   build-and-test:
     if: startsWith(github.head_ref, needs.init.outputs.RELEASE_BRANCH_PATTERN)

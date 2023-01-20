@@ -15,7 +15,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! TokenTimeout pallet benchmarking.
+//! FeeLock pallet benchmarking.
 
 #![cfg(feature = "runtime-benchmarks")]
 
@@ -25,33 +25,36 @@ use frame_benchmarking::{benchmarks, whitelisted_caller};
 use frame_support::{assert_err, assert_ok, traits::tokens::currency::MultiTokenCurrency};
 use frame_system::RawOrigin;
 use orml_tokens::MultiTokenCurrencyExtended;
-use sp_std::collections::btree_map::BTreeMap;
+use sp_std::collections::btree_set::BTreeSet;
 
-use crate::Pallet as TokenTimeout;
+use crate::Pallet as FeeLock;
 
 const MGA_TOKEN_ID: TokenId = 0;
 
 benchmarks! {
 
-	update_timeout_metadata{
+	update_fee_lock_metadata{
 		let period_length: T::BlockNumber = 1000u32.into();
-		let timeout_amount: Balance = 1000;
-		let mut swap_value_thresholds_vec: Vec<(TokenId, Option<Balance>)> = Vec::new();
+		let fee_lock_amount: Balance = 1000;
+		let swap_value_threshold: Balance = 1000;
+		let mut whitelisted_tokens: Vec<(TokenId, bool)> = Vec::new();
 		for i in 0..<T as Config>::MaxCuratedTokens::get() {
-			swap_value_thresholds_vec.push((i, Some(i.into())));
+			whitelisted_tokens.push((i, true));
 		}
-	}: {assert_ok!(TokenTimeout::<T>::update_timeout_metadata(RawOrigin::Root.into(), Some(period_length), Some(timeout_amount), Some(swap_value_thresholds_vec)));}
+	}: {assert_ok!(FeeLock::<T>::update_fee_lock_metadata(RawOrigin::Root.into(), Some(period_length), Some(fee_lock_amount), Some(swap_value_threshold), Some(whitelisted_tokens)));}
 	verify{
-		assert_eq!(TokenTimeout::<T>::get_timeout_metadata().unwrap().period_length, period_length);
-		assert_eq!(TokenTimeout::<T>::get_timeout_metadata().unwrap().timeout_amount, timeout_amount);
-		assert_eq!(TokenTimeout::<T>::get_timeout_metadata().unwrap().swap_value_threshold.len(), <T as Config>::MaxCuratedTokens::get() as usize);
+		assert_eq!(FeeLock::<T>::get_fee_lock_metadata().unwrap().period_length, period_length);
+		assert_eq!(FeeLock::<T>::get_fee_lock_metadata().unwrap().fee_lock_amount, fee_lock_amount);
+		assert_eq!(FeeLock::<T>::get_fee_lock_metadata().unwrap().swap_value_threshold, swap_value_threshold);
+		assert_eq!(FeeLock::<T>::get_fee_lock_metadata().unwrap().whitelisted_tokens.len(), <T as Config>::MaxCuratedTokens::get() as usize);
 	}
 
-	release_timeout{
+	unlock_fee{
 
 		let caller: T::AccountId = whitelisted_caller();
 		let period_length: T::BlockNumber = 10u32.into();
-		let timeout_amount: Balance = 1000;
+		let fee_lock_amount: Balance = 1000;
+		let swap_value_threshold: Balance = 1000;
 
 		let now= <frame_system::Pallet<T>>::block_number();
 		let token_id = MGA_TOKEN_ID;
@@ -66,31 +69,32 @@ benchmarks! {
 		let initial_user_reserved_balance:Balance = <T as Config>::Tokens::reserved_balance(token_id.into(), &caller.clone()).into();
 		let initial_user_locked_balance:Balance = <T as Config>::Tokens::locked_balance(token_id.into(), &caller.clone()).into();
 
-		assert_ok!(TokenTimeout::<T>::update_timeout_metadata(RawOrigin::Root.into(), Some(period_length), Some(timeout_amount), None));
+		assert_ok!(FeeLock::<T>::update_fee_lock_metadata(RawOrigin::Root.into(), Some(period_length), Some(fee_lock_amount), Some(swap_value_threshold), None));
 
-		assert_eq!(TokenTimeout::<T>::get_timeout_metadata().unwrap().period_length, period_length);
-		assert_eq!(TokenTimeout::<T>::get_timeout_metadata().unwrap().timeout_amount, timeout_amount);
-		assert_eq!(TokenTimeout::<T>::get_timeout_metadata().unwrap().swap_value_threshold.len(), 0u32 as usize);
+		assert_eq!(FeeLock::<T>::get_fee_lock_metadata().unwrap().period_length, period_length);
+		assert_eq!(FeeLock::<T>::get_fee_lock_metadata().unwrap().fee_lock_amount, fee_lock_amount);
+		assert_eq!(FeeLock::<T>::get_fee_lock_metadata().unwrap().swap_value_threshold, swap_value_threshold);
+		assert_eq!(FeeLock::<T>::get_fee_lock_metadata().unwrap().whitelisted_tokens.len(), 0u32 as usize);
 
 		assert_ok!(
-			<TokenTimeout<T> as TimeoutTriggerTrait<_>>::process_timeout(&caller)
+			<FeeLock<T> as FeeLockTriggerTrait<_>>::process_fee_lock(&caller)
 		);
 
 		assert_eq!(<T as Config>::Tokens::free_balance(token_id.into(), &caller.clone()).into(),
-			initial_user_free_balance - timeout_amount);
+			initial_user_free_balance - fee_lock_amount);
 		assert_eq!(<T as Config>::Tokens::reserved_balance(token_id.into(), &caller.clone()).into(),
-			initial_user_reserved_balance + timeout_amount);
+			initial_user_reserved_balance + fee_lock_amount);
 		assert_eq!(<T as Config>::Tokens::locked_balance(token_id.into(), &caller.clone()).into(),
 			initial_user_locked_balance);
 
-		assert_eq!(TokenTimeout::<T>::get_account_timeout_data(caller.clone()), AccountTimeoutDataInfo{
-			total_timeout_amount: timeout_amount,
-			last_timeout_block: now,
+		assert_eq!(FeeLock::<T>::get_account_fee_lock_data(caller.clone()), AccountFeeLockDataInfo{
+			total_fee_lock_amount: fee_lock_amount,
+			last_fee_lock_block: now,
 		});
 
 		frame_system::Pallet::<T>::set_block_number(now + period_length);
 
-	}: {assert_ok!(TokenTimeout::<T>::release_timeout(RawOrigin::Signed(caller.clone().into()).into()));}
+	}: {assert_ok!(FeeLock::<T>::unlock_fee(RawOrigin::Signed(caller.clone().into()).into()));}
 	verify{
 		assert_eq!(<T as Config>::Tokens::free_balance(token_id.into(), &caller.clone()).into(),
 			initial_user_free_balance);
@@ -99,12 +103,12 @@ benchmarks! {
 		assert_eq!(<T as Config>::Tokens::locked_balance(token_id.into(), &caller.clone()).into(),
 			initial_user_locked_balance);
 
-		assert_eq!(TokenTimeout::<T>::get_account_timeout_data(caller.clone()), AccountTimeoutDataInfo{
-			total_timeout_amount: 0,
-			last_timeout_block: 0u32.into(),
+		assert_eq!(FeeLock::<T>::get_account_fee_lock_data(caller.clone()), AccountFeeLockDataInfo{
+			total_fee_lock_amount: 0,
+			last_fee_lock_block: 0u32.into(),
 		});
 	}
 
 
-	impl_benchmark_test_suite!(TokenTimeout, crate::mock::new_test_ext(), crate::mock::Test)
+	impl_benchmark_test_suite!(FeeLock, crate::mock::new_test_ext(), crate::mock::Test)
 }

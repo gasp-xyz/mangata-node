@@ -10,7 +10,7 @@ use sp_runtime::{
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
 };
 
-use crate as pallet_token_timeout;
+use crate as pallet_fee_lock;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{ConstU32, Contains, Everything},
@@ -35,7 +35,7 @@ construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>},
-		TokenTimeout: pallet_token_timeout::{Pallet, Storage, Call, Event<T>},
+		FeeLock: pallet_fee_lock::{Pallet, Storage, Call, Event<T>},
 	}
 );
 
@@ -114,15 +114,71 @@ parameter_types! {
 	pub const BnbTreasurySubAccDerive: [u8; 4] = *b"bnbt";
 }
 
+pub struct MockPoolReservesProvider<T>(PhantomData<T>);
+
+impl<T: pallet_fee_lock::Config> Valuate for MockPoolReservesProvider<T> {
+	type Balance = Balance;
+
+	type CurrencyId = TokenId;
+
+	fn get_liquidity_asset(
+		first_asset_id: Self::CurrencyId,
+		second_asset_id: Self::CurrencyId,
+	) -> Result<TokenId, DispatchError> {
+		unimplemented!()
+	}
+
+	fn get_liquidity_token_mga_pool(
+		liquidity_token_id: Self::CurrencyId,
+	) -> Result<(Self::CurrencyId, Self::CurrencyId), DispatchError> {
+		unimplemented!()
+	}
+
+	fn valuate_liquidity_token(
+		liquidity_token_id: Self::CurrencyId,
+		liquidity_token_amount: Self::Balance,
+	) -> Self::Balance {
+		unimplemented!()
+	}
+
+	fn scale_liquidity_by_mga_valuation(
+		mga_valuation: Self::Balance,
+		liquidity_token_amount: Self::Balance,
+		mga_token_amount: Self::Balance,
+	) -> Self::Balance {
+		unimplemented!()
+	}
+
+	fn get_pool_state(
+		liquidity_token_id: Self::CurrencyId,
+	) -> Option<(Self::Balance, Self::Balance)> {
+		unimplemented!()
+	}
+
+	fn get_reserves(
+		first_asset_id: TokenId,
+		second_asset_id: TokenId,
+	) -> Result<(Balance, Balance), DispatchError> {
+		match (first_asset_id, second_asset_id) {
+			(0, 1) => Ok((5000, 10000)),
+			(0, 2) => Ok((10000, 5000)),
+			(0, 3) => Ok((0, 10000)),
+			(0, 4) => Ok((5000, 0)),
+			_ => Err(pallet_fee_lock::Error::<T>::UnexpectedFailure.into()),
+		}
+	}
+}
+
 parameter_types! {
 	#[derive(PartialEq)]
 	pub const MaxCuratedTokens: u32 = 100;
 }
 
-impl pallet_token_timeout::Config for Test {
+impl pallet_fee_lock::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type MaxCuratedTokens = MaxCuratedTokens;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
+	type PoolReservesProvider = MockPoolReservesProvider<Test>;
 	type NativeTokenId = NativeCurrencyId;
 	type WeightInfo = ();
 }

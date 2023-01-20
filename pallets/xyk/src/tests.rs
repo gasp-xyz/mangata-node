@@ -2567,3 +2567,55 @@ fn test_compound_rewards(amount: u128, part_permille: u32, surplus: u128) {
 		assert_eq!(XykStorage::balance(1, 2), balance_before_1);
 	});
 }
+
+#[test]
+#[serial]
+fn test_compound_rewards_pool_assets_order_swapped() {
+	new_test_ext().execute_with(|| {
+		let amount = 2_000_000_u128;
+		let amount_permille = Permill::from_parts(1_000_000);
+		System::set_block_number(1);
+		MockPromotedPoolApi::instance().lock().unwrap().clear();
+
+		XykStorage::create_new_token(&2, amount);
+		XykStorage::create_new_token(&2, amount);
+		XykStorage::create_pool(RuntimeOrigin::signed(2), 1, amount / 2, 0, amount / 2).unwrap();
+		XykStorage::update_pool_promotion(RuntimeOrigin::root(), 2, Some(1)).unwrap();
+		XykStorage::activate_liquidity_v2(RuntimeOrigin::signed(2), 2, amount / 2, None).unwrap();
+
+		MockPromotedPoolApi::instance().lock().unwrap().insert(2, U256::from(u128::MAX));
+
+		System::set_block_number(10);
+
+		let amount = XykStorage::calculate_rewards_amount_v2(2, 2).unwrap();
+		XykStorage::transfer(0, 2, <Test as Config>::LiquidityMiningIssuanceVault::get(), amount)
+			.unwrap();
+
+		let balance_before_0 = XykStorage::balance(0, 2);
+		let balance_before_1 = XykStorage::balance(1, 2);
+		let balance_not_compounded: u128 = (Permill::one() - amount_permille) * amount;
+		XykStorage::compound_rewards(RuntimeOrigin::signed(2), 2, amount_permille).unwrap();
+
+		assert_eq!(XykStorage::balance(0, 2), balance_before_0 + balance_not_compounded);
+		assert_eq!(XykStorage::balance(1, 2), balance_before_1);
+	});
+}
+
+#[test]
+fn test_compound_rewards_error_on_non_native_pool() {
+	new_test_ext().execute_with(|| {
+		XykStorage::create_new_token(&2, 2_000_000_u128);
+		XykStorage::create_new_token(&2, 2_000_000_u128);
+		XykStorage::create_new_token(&2, 2_000_000_u128);
+		XykStorage::create_pool(RuntimeOrigin::signed(2), 1, 1000, 2, 1000).unwrap();
+
+		assert_err!(
+			XykStorage::compound_rewards(
+				RuntimeOrigin::signed(2),
+				3,
+				Permill::from_parts(1_000_000)
+			),
+			Error::<Test>::FunctionNotAvailableForThisToken
+		);
+	});
+}

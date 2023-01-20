@@ -38,7 +38,6 @@ jobs:
         command: ["yarn test-parallel --max-workers=32", "yarn test-sequential-no-bootstrap"]
     runs-on: [self-hosted, compile]
     timeout-minutes: 180
-    if: ${{ (!cancelled() && (success() || github.event.inputs.skipBuild == 'true')) && !contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests') }}
     env:
       API_URL: "ws://127.0.0.1:9946"
       TEST_PALLET_ADDRESS: ${{ secrets.E2E_TEST_PALLET_ADDRESS }}

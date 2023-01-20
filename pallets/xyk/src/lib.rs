@@ -3236,6 +3236,11 @@ pub trait Valuate {
 	) -> Self::Balance;
 
 	fn get_pool_state(liquidity_token_id: Self::CurrencyId) -> Option<(Balance, Balance)>;
+
+	fn get_reserves(
+		first_asset_id: TokenId,
+		second_asset_id: TokenId,
+	) -> Result<(Balance, Balance), DispatchError>;
 }
 
 pub trait AssetMetadataMutationTrait {
@@ -3343,6 +3348,13 @@ impl<T: Config> Valuate for Pallet<T> {
 		}
 
 		Some((mga_token_reserve, liquidity_token_reserve))
+	}
+
+	fn get_reserves(
+		first_asset_id: TokenId,
+		second_asset_id: TokenId,
+	) -> Result<(Balance, Balance), DispatchError> {
+		Pallet::<T>::get_reserves(first_asset_id, second_asset_id)
 	}
 }
 

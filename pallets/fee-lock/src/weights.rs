@@ -53,20 +53,20 @@
 use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
-/// Weight functions needed for pallet_token_timeout.
+/// Weight functions needed for pallet_fee_lock.
 pub trait WeightInfo {
-	fn update_timeout_metadata() -> Weight;
-	fn release_timeout() -> Weight;
+	fn update_fee_lock_metadata() -> Weight;
+	fn unlock_fee() -> Weight;
 }
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
-	fn update_timeout_metadata() -> Weight {
+	fn update_fee_lock_metadata() -> Weight {
 		(Weight::from_ref_time(44_245_000))
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
-	fn release_timeout() -> Weight {
+	fn unlock_fee() -> Weight {
 		(Weight::from_ref_time(50_286_000))
 			.saturating_add(RocksDbWeight::get().reads(3 as u64))
 			.saturating_add(RocksDbWeight::get().writes(2 as u64))

@@ -32,12 +32,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-
   e2e-test-matrix:
     strategy:
       matrix:
         command: ["yarn test-parallel --max-workers=32", "yarn test-sequential-no-bootstrap"]
-    needs: [init, build-and-test]
     runs-on: [self-hosted, compile]
     timeout-minutes: 180
     if: ${{ (!cancelled() && (success() || github.event.inputs.skipBuild == 'true')) && !contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests') }}

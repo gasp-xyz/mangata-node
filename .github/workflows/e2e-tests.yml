@@ -18,6 +18,10 @@ on:
         type: boolean
         required: false
         default: false
+      globalVersion:
+        description: "Set Mangata node version."
+        type: string
+        required: true
 
 permissions:
   contents: write
@@ -46,15 +50,15 @@ jobs:
       E2E_TREASURY_BURN_PALLET_ADDRESS: ${{ secrets.E2E_TREASURY_BURN_PALLET_ADDRESS }}
       #      TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
       TEST_SUDO_NAME: "//Alice"
-      MANGATA_NODE_VERSION: ${{ needs.init.outputs.GLOBAL_VERSION }}
+      MANGATA_NODE_VERSION: ${{ inputs.globalVersion }}
       E2EBRANCHNAME: "main"
-      PARACHAIN_DOCKER_IMAGE: ${{ github.event.inputs.parachainDocker || format('mangatasolutions/mangata-node:{0}', needs.init.outputs.GLOBAL_VERSION) }}
+      PARACHAIN_DOCKER_IMAGE: ${{ inputs.parachainDocker || format('mangatasolutions/mangata-node:{0}', inputs.globalVersion) }}
     steps:
       ####IDK, but this is neccesary for reports
       - uses: actions/checkout@v3
 
       - name: Download node Docker image
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && github.event.inputs.skipBuild != 'true' }}
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && inputs.skipBuild != 'true' }}
         run: docker pull ${{ env.PARACHAIN_DOCKER_IMAGE }}
 
       - name: E2E- Get branch name
@@ -74,7 +78,7 @@ jobs:
       - name: Decide if main - branch or parameter
         # if we have something in e2eBranch - override E2EBranchName, else -> E2EBRANCHNAME , that
         # by default will be main.
-        run: echo "E2EBRANCHNAME=${{ github.event.inputs.e2eBranch || env.E2EBRANCHNAME }}" >> $GITHUB_ENV
+        run: echo "E2EBRANCHNAME=${{ inputs.e2eBranch || env.E2EBRANCHNAME }}" >> $GITHUB_ENV
 
       - name: E2E- Get target branch.
         run: |

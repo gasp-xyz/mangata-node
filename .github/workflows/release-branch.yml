@@ -114,3 +114,4 @@ jobs:
       e2eBranch: ${{ github.event.inputs.e2eBranch }}
       parachainDocker: ${{ github.event.inputs.parachainDocker }}
       skipBuild: ${{ github.event.inputs.skipBuild }}
+      globalVersion: ${{ needs.init.outputs.GLOBAL_VERSION }}

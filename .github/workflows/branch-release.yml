@@ -56,7 +56,11 @@ jobs:
           echo "RELEASE_BRANCH_PATTERN=${{ env.RELEASE_BRANCH_PATTERN }}" >> $GITHUB_OUTPUT
           echo "GIT_BRANCH=${{ steps.branch-name.outputs.current_branch }}" | sed "s@/@-@g" >> $GITHUB_OUTPUT
 
-# TODO always fail if different branch name
+  validate-branch-name:
+    if: startsWith(github.head_ref, needs.init.outputs.RELEASE_BRANCH_PATTERN)
+    needs: [ init ]
+    name: Validate release branch name
+    run: exit 1
 
   build-and-test:
     if: startsWith(github.head_ref, needs.init.outputs.RELEASE_BRANCH_PATTERN)

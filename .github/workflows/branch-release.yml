@@ -57,6 +57,8 @@ jobs:
           echo "GIT_BRANCH=${{ steps.branch-name.outputs.current_branch }}" | sed "s@/@-@g" >> $GITHUB_OUTPUT
 
   validate-branch-name:
+    name: Init validations
+    runs-on: ubuntu-latest
     if: startsWith(github.head_ref, needs.init.outputs.RELEASE_BRANCH_PATTERN)
     needs: [ init ]
     steps:

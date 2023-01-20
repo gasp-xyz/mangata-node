@@ -45,6 +45,7 @@ jobs:
     outputs:
       GLOBAL_VERSION: ${{ steps.set_vars.outputs.GLOBAL_VERSION }}
       GIT_BRANCH: ${{ steps.set_vars.outputs.GIT_BRANCH }}
+      RELEASE_BRANCH_PATTERN: ${{ steps.set_vars.outputs.RELEASE_BRANCH_PATTERN }}
     steps:
       - name: Get branch name
         id: branch-name
@@ -57,7 +58,7 @@ jobs:
           echo "RELEASE_BRANCH_PATTERN=${{ env.RELEASE_BRANCH_PATTERN }}" | sed "s@/@-@g" >> $GITHUB_OUTPUT
 
   build-and-test:
-    if: startsWith(github.head_ref, env.RELEASE_BRANCH_PATTERN)
+    if: startsWith(github.head_ref, needs.init.outputs.RELEASE_BRANCH_PATTERN)
     needs: [init]
     name: Build
     uses: ./.github/workflows/build-and-test.yml
@@ -69,7 +70,7 @@ jobs:
   deploy-fungible:
     name: Deploy fungible environment
     needs: [init,build-and-test]
-    if: startsWith(github.head_ref, env.RELEASE_BRANCH_PATTERN)
+    if: startsWith(github.head_ref, needs.init.outputs.RELEASE_BRANCH_PATTERN)
     uses: ./.github/workflows/deploy.yml
     secrets: inherit
     with:
@@ -78,7 +79,7 @@ jobs:
   
   clean-up-fungible:
     name: Delete fungible environment
-    if: github.event.action == 'closed' && startsWith(github.head_ref, env.RELEASE_BRANCH_PATTERN)
+    if: github.event.action == 'closed' && startsWith(github.head_ref, needs.init.outputs.RELEASE_BRANCH_PATTERN)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -106,7 +107,7 @@ jobs:
   run-e2e-test:
     name: Run e2e tests
     needs: [init, build-and-test]
-    if: startsWith(github.head_ref, env.RELEASE_BRANCH_PATTERN)
+    if: startsWith(github.head_ref, needs.init.outputs.RELEASE_BRANCH_PATTERN)
     uses: ./.github/workflows/reusable-e2e-tests.yml
     secrets: inherit
     with:

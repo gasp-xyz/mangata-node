@@ -1,4 +1,4 @@
-name: Continous Integration
+name: Develop branch workflow
 
 # available flags:
 ## skip-e2e-tests: skip running e2e tests

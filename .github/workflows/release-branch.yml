@@ -107,8 +107,6 @@ jobs:
 
   e2e-test-matrix:
     needs: [init, build-and-test]
-    runs-on: [self-hosted, compile]
-    timeout-minutes: 180
     if: ${{ (!cancelled() && (success() || github.event.inputs.skipBuild == 'true')) && !contains(github.event.pull_request.labels.*.name, 'skip-e2e-tests') }}
     uses: ./.github/workflows/e2e-tests.yml
     secrets: inherit

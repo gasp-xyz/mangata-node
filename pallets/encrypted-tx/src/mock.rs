@@ -31,20 +31,9 @@ use mangata_types::{Amount, Balance, TokenId};
 use sp_runtime::{Perbill, Percent, impl_opaque_keys, traits::ConvertInto, testing::UintAuthorityId};
 use sp_runtime::traits::OpaqueKeys;
 use sp_std::convert::TryFrom;
+use sp_api::impl_runtime_apis;
 
 pub(crate) type AccountId = u128;
-
-impl_opaque_keys! {
-	pub struct MockSessionKeys {
-		pub dummy: UintAuthorityId,
-	}
-}
-
-impl From<UintAuthorityId> for MockSessionKeys{
-    fn from(value: UintAuthorityId) -> Self {
-        Self {dummy: value}
-    }
-}
 
 parameter_types!(
 	pub const SomeConst: u64 = 10;
@@ -89,7 +78,7 @@ impl pallet_session::Config for Test {
 	type SessionManager = ();
 	// Essentially just Aura, but lets be pedantic.
 	type SessionHandler = MockSessionHandler;
-	type Keys = MockSessionKeys;
+	type Keys = UintAuthorityId;
 	type WeightInfo = ();
 }
 
@@ -194,7 +183,6 @@ impl pallet_encrypted_tx::Config for Test {
 	// type Treasury = OnDustRemoval;
 	type Call = RuntimeCall;
 	type DoublyEncryptedCallMaxLength = DoublyEncryptedCallMaxLength;
-	type AuthorityId = UintAuthorityId;
 	type NativeCurrencyId = NativeCurrencyId;
 }
 
@@ -234,6 +222,26 @@ construct_runtime!(
 		Aura: pallet_aura::{Pallet, Storage, Config<T>},
 	}
 );
+
+// sp_api::_impl_runtime_apis! {
+// 	impl ved_runtime_api::VedRuntimeApi<Block> for Test {
+// 		fn decrypt_txs(
+// 			public: [u8; 32],
+// 			private: [u8; 64],
+// 		) -> Option<sp_std::vec::Vec<u8>>{
+// 			Default::default()
+// 			// if let Some(sig) = tx.signature.clone(){
+// 			// 	let nonce: frame_system::CheckNonce<_> = sig.2.4;
+// 			// 	<Runtime as frame_system::Config>::Lookup::lookup(sig.0)
+// 			// 		.ok()
+// 			// 		.and_then(|addr| Some((addr, nonce.0)))
+// 			// }else{
+// 			// 	None
+// 			// }
+// 		}
+// 	}
+//
+// }
 
 pub struct ExtBuilder{
 	ext: sp_io::TestExternalities,

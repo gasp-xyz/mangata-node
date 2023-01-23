@@ -24,7 +24,8 @@ use frame_support::{
 use frame_system::{pallet_prelude::*, RawOrigin};
 use scale_info::TypeInfo;
 
-use sp_runtime::{traits::{Hash, AccountIdConversion}, KeyTypeId, RuntimeAppPublic};
+use sp_core::crypto::Pair as PairT;
+use sp_runtime::{traits::{Hash, AccountIdConversion, OpaqueKeys}, KeyTypeId, RuntimeAppPublic};
 use sp_std::{boxed::Box, collections::btree_map::BTreeMap, vec::Vec, collections::vec_deque::VecDeque};
 use schnorrkel::vrf::{VRFOutput, VRFProof, VRF_PROOF_LENGTH};
 use schnorrkel::keys::{PUBLIC_KEY_LENGTH};
@@ -129,7 +130,6 @@ pub mod pallet {
 	pub trait Config: frame_system::Config + pallet_aura::Config + pallet_session::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		type Tokens: MultiTokenCurrency<Self::AccountId>;
-		type AuthorityId: Member + Parameter + RuntimeAppPublic + Default + Ord;
 		type Call: Parameter
 			+ UnfilteredDispatchable<RuntimeOrigin = Self::RuntimeOrigin>
 			+ GetDispatchInfo;
@@ -153,6 +153,7 @@ pub mod pallet {
 		WrongIdentifier,
 		Unauthorized,
 		EmptyQueue,
+		UnknownBlockAuthor,
 	}
 
 	#[pallet::event]
@@ -180,7 +181,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn keys)]
 	pub type KeyMap<T: Config> =
-		StorageValue<_, BTreeMap<T::AccountId, <T as crate::Config>::AuthorityId>, ValueQuery>;
+		StorageValue<_, BTreeMap<T::AccountId, T::AuthorityId>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn doubly_encrypted_queue)]
@@ -196,7 +197,17 @@ pub mod pallet {
 
 	// stores proof for new data
 	#[pallet::storage]
-	pub type Proof<T: Config> = StorageValue<_,  VRFSignatureWrapper, OptionQuery>;
+	pub type Proof<T: Config> = StorageValue<_,  <sp_core::sr25519::Pair as PairT>::Signature, OptionQuery>;
+	
+	// stores proof for new data
+	#[pallet::storage]
+	pub type BlockAuthor<T: Config> = StorageValue<_,  <T as pallet_aura::Config>::AuthorityId, OptionQuery>;
+
+	#[pallet::storage]
+	pub type Authorities<T:Config> = StorageValue<_,
+	BoundedVec<T::AuthorityId, <T as pallet_aura::Config>::MaxAuthorities>,
+	ValueQuery
+	>; 
 
 	// #[pallet::storage]
 	// #[pallet::getter(fn txn_record)]
@@ -225,7 +236,17 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		/// dummy `on_initialize` to return the weight used in `on_finalize`.
-		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
+		fn on_initialize(_n: BlockNumberFor<T>) -> Weight
+		{
+
+			let digest = frame_system::Pallet::<T>::digest();
+			let author = pallet_aura::Pallet::<T>::find_author(
+				digest.logs().iter().filter_map(|d| d.as_pre_runtime()),
+			).expect("Could not find AuRa author index!");
+			let authorities = pallet_aura::Pallet::<T>::authorities();
+			let authority_id = authorities.get(author as usize).expect("authority with given id exists");
+			BlockAuthor::<T>::put(authority_id);
+				
 			// weight of `on_finalize`
 			// T::WeightInfo::on_finalize()
 			Default::default()
@@ -236,6 +257,21 @@ pub mod pallet {
 		/// - 1 storage deletion (codec `O(1)`).
 		/// # </weight>
 		fn on_finalize(_n: BlockNumberFor<T>) {
+			let data = ProcessedTx::<T>::take();
+			let maybe_proof = Proof::<T>::get();
+
+			if !data.is_empty() {
+				let proof = maybe_proof.expect("proof is provided when txs are being processed");
+				let author = BlockAuthor::<T>::get().expect("block author is known");
+				let public_key = author.to_raw_vec();
+
+				let signature = schnorrkel::Signature::from_bytes(proof.as_ref()).unwrap();
+				let pub_key = schnorrkel::PublicKey::from_bytes(public_key.as_ref()).unwrap();
+				pub_key.verify_simple(b"substrate", data.as_ref(), &signature).expect("proof has been passed");
+
+			}
+			
+
 			// assert if block builder did not use any
 		}
 	}
@@ -461,7 +497,7 @@ impl<T: Config> Pallet<T> {
 		<T as Config>::NativeCurrencyId::get()
 	}
 
-	fn initialize_keys(keys: &BTreeMap<T::AccountId, <T as crate::Config>::AuthorityId>) {
+	fn initialize_keys(keys: &BTreeMap<T::AccountId, T::AuthorityId>) {
 		if !keys.is_empty() {
 			assert!(KeyMap::<T>::get().is_empty(), "Keys are already initialized!");
 			KeyMap::<T>::put(keys);
@@ -477,8 +513,39 @@ impl<T: Config> Pallet<T> {
 			)
 	}
 
-	fn set_proof(sig: VRFSignature) {
-		Proof::<T>::set(Some(sig.into()))
+	fn set_proof(sig: <sp_core::sr25519::Pair as PairT>::Signature) {
+		Proof::<T>::set(Some(sig))
+	}
+
+	fn decrypt_txs(who: &T::AccountId, pub_key: [u8; 32], priv_key: [u8; 64]) -> Result<(), Error<T>>{
+
+		if BlockAuthor::<T>::get().is_none() {
+			return Err(Error::<T>::UnknownBlockAuthor);
+		}
+
+		if matches!(BlockAuthor::<T>::get(), Some(public) if public.to_raw_vec() != pub_key.to_vec()) {
+			return Err(Error::<T>::WrongAccount);
+		}
+
+		let pair = schnorrkel::Keypair{
+			secret: schnorrkel::SecretKey::from_bytes(&priv_key[..]).expect("that should not fail"),
+			public: schnorrkel::PublicKey::from_bytes(&pub_key[..]).expect("that should not fail"),
+		};
+
+		let pair = sp_core::sr25519::Pair::from(pair);
+		let mut queue = EnqueuedTxs::<T>::get(who);
+
+		let first = queue.pop_front().ok_or(Error::<T>::EmptyQueue)?;
+
+		if &first.builder !=  who {
+			return Err(Error::<T>::EmptyQueue);
+		}
+
+		let signature = pair.sign(&first.data[..]);
+		
+
+		Ok(())
+
 	}
 }
 //

@@ -20,7 +20,7 @@ sp-application-crypto = { version = "6.0.0-dev", default-features = false, git =
 frame-support = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 frame-system = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-runtime = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
-sp-core = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-core = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev", features=["full_crypto"] }
 sp-io = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-std = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 mangata-types = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
@@ -33,11 +33,12 @@ pallet-aura = { default-features = false, version = '4.0.0-dev' , git = "https:/
 pallet-session = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 pallet-timestamp = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
-
 [dev-dependencies]
 orml-traits = { version="0.4.1-dev" , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
 serial_test = { version = "0.6.0", default-features = false }
 sp-keystore = { version = "0.12.0", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+ved-runtime-api = { path = './runtime-api', default-features = false, version = '2.0.0' }
+sp-api = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
 
 [features]

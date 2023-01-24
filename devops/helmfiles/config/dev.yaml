@@ -1,17 +1,5 @@
 enableLocalRelaychain: true
-followerBootnodeAddr: /dns4/node-01/tcp/30333/p2p/12D3KooWSCufgHzV4fCwRijfH2k3abrpAJxTKxEvN1FDuRXA2U9x
+enableParachainRegisterSidecar: true
 storageSize: 200Gi
 relaychainStorageSize: 200Gi
-
-node01:
-  accountKeySeed: ref+gcpsecrets://direct-pixel-353917/node-01-key-seed-dev
-  nodeKey: '0000000000000000000000000000000000000000000000000000000000000003'
-
-node02:
-  accountKeySeed: ref+gcpsecrets://direct-pixel-353917/node-02-key-seed-dev
-  nodeKey: '0000000000000000000000000000000000000000000000000000000000000004'
-
-node03:
-  enabled: false
-  nodeKey: '0000000000000000000000000000000000000000000000000000000000000005'
-  accountKeySeed: ref+gcpsecrets://direct-pixel-353917/node-01-key-seed-dev
+relaychainBootnodeAddr: /dns/relaychain-alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp

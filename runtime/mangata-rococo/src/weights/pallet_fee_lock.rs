@@ -56,15 +56,15 @@ use sp_std::marker::PhantomData;
 
 /// Weight functions needed for pallet_token_timeout.
 pub trait WeightInfo {
-	fn update_timeout_metadata() -> Weight;
-	fn release_timeout() -> Weight;
+	fn update_fee_lock_metadata() -> Weight;
+	fn unlock_fee() -> Weight;
 }
 
 /// Weights for pallet_token_timeout using the Mangata node and recommended hardware.
 pub struct ModuleWeight<T>(PhantomData<T>);
-impl<T: frame_system::Config> pallet_token_timeout::WeightInfo for ModuleWeight<T> {
+impl<T: frame_system::Config> pallet_fee_lock::WeightInfo for ModuleWeight<T> {
 	// Storage: TokenTimeout TimeoutMetadata (r:1 w:1)
-	fn update_timeout_metadata() -> Weight {
+	fn update_fee_lock_metadata() -> Weight {
 		(Weight::from_ref_time(36_140_000))
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
@@ -72,7 +72,7 @@ impl<T: frame_system::Config> pallet_token_timeout::WeightInfo for ModuleWeight<
 	// Storage: TokenTimeout AccountTimeoutData (r:1 w:1)
 	// Storage: TokenTimeout TimeoutMetadata (r:1 w:0)
 	// Storage: Tokens Accounts (r:1 w:1)
-	fn release_timeout() -> Weight {
+	fn unlock_fee() -> Weight {
 		(Weight::from_ref_time(53_240_000))
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
@@ -82,7 +82,7 @@ impl<T: frame_system::Config> pallet_token_timeout::WeightInfo for ModuleWeight<
 // For backwards compatibility and tests
 impl WeightInfo for () {
 	// Storage: TokenTimeout TimeoutMetadata (r:1 w:1)
-	fn update_timeout_metadata() -> Weight {
+	fn update_fee_lock_metadata() -> Weight {
 		(Weight::from_ref_time(36_140_000))
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
@@ -90,7 +90,7 @@ impl WeightInfo for () {
 	// Storage: TokenTimeout AccountTimeoutData (r:1 w:1)
 	// Storage: TokenTimeout TimeoutMetadata (r:1 w:0)
 	// Storage: Tokens Accounts (r:1 w:1)
-	fn release_timeout() -> Weight {
+	fn unlock_fee() -> Weight {
 		(Weight::from_ref_time(53_240_000))
 			.saturating_add(RocksDbWeight::get().reads(3 as u64))
 			.saturating_add(RocksDbWeight::get().writes(2 as u64))

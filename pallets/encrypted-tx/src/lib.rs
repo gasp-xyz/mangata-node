@@ -513,9 +513,6 @@ impl<T: Config> Pallet<T> {
 			)
 	}
 
-	fn set_proof(sig: <sp_core::sr25519::Pair as PairT>::Signature) {
-		Proof::<T>::set(Some(sig))
-	}
 
 	fn decrypt_txs(who: &T::AccountId, pub_key: [u8; 32], priv_key: [u8; 64]) -> Result<(), Error<T>>{
 
@@ -534,15 +531,20 @@ impl<T: Config> Pallet<T> {
 
 		let pair = sp_core::sr25519::Pair::from(pair);
 		let mut queue = EnqueuedTxs::<T>::get(who);
+		let len = queue.len();
 
-		let first = queue.pop_front().ok_or(Error::<T>::EmptyQueue)?;
+		let mut processed_data : Vec<u8> = Default::default();
 
-		if &first.builder !=  who {
-			return Err(Error::<T>::EmptyQueue);
+		while len > 0 {
+			let tx = queue.pop_front().ok_or(Error::<T>::EmptyQueue)?;
+			if &tx.builder !=  who {
+				return Err(Error::<T>::EmptyQueue);
+			}
+			processed_data.extend_from_slice(&tx.data);
 		}
 
-		let signature = pair.sign(&first.data[..]);
-		
+		let signature = pair.sign(&processed_data[..]);
+		Proof::<T>::set(Some(signature));
 
 		Ok(())
 

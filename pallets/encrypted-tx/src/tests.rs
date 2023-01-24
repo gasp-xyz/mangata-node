@@ -52,7 +52,7 @@ fn test_submit_double_encrypted_tx() {
 		let cnt = UniqueId::<Test>::get();
 
 		let input = b"dummy_data".to_vec();
-		let (doubly_enc,singly_enc) = encrypt_data(&input);
+		let (doubly_enc, singly_enc) = encrypt_data(&input);
 
 		let id = EncryptedTx::calculate_unique_id(&ALICE, cnt, &doubly_enc);
 		EncryptedTx::submit_doubly_encrypted_transaction( RuntimeOrigin::signed(ALICE),

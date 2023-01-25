@@ -53,25 +53,25 @@ jobs:
       - name: Tag and push image [kusama]
         uses: akhilerm/tag-push-action@v2.0.0
         with:
-          src: docker.io/mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_VERSION }}
+          src: docker.io/mangatasolutions/mangata-node:release-${{ needs.init.outputs.RELEASE_VERSION }}
           dst: ${{ steps.meta_kusama.outputs.tags }}
 
       - name: Tag and push image [rococo]
         uses: akhilerm/tag-push-action@v2.0.0
         with:
-          src: docker.io/mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_VERSION }}
+          src: docker.io/mangatasolutions/mangata-node:release-${{ needs.init.outputs.RELEASE_VERSION }}
           dst: ${{ steps.meta_rococo.outputs.tags }}
 
       - name: Export docker image
         run: |
-          docker pull mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_VERSION }}
-          docker save mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_VERSION }} -o docker-${{ github.ref_name }}.tar
+          docker pull mangatasolutions/mangata-node:release-${{ needs.init.outputs.RELEASE_VERSION }}
+          docker save mangatasolutions/mangata-node:release-${{ needs.init.outputs.RELEASE_VERSION }} -o docker-${{ github.ref_name }}.tar
           zip -r docker-${{ github.ref_name }}.zip docker-${{ github.ref_name }}.tar
 
       - name: Extract wasms
         run: |
-          docker run --entrypoint="" --rm mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_VERSION }} cat /mangata/mangata_kusama_runtime.compact.compressed.wasm > kusama.wasm
-          docker run --entrypoint="" --rm mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_VERSION }} cat /mangata/mangata_rococo_runtime.compact.compressed.wasm > rococo.wasm
+          docker run --entrypoint="" --rm mangatasolutions/mangata-node:release-${{ needs.init.outputs.RELEASE_VERSION }} cat /mangata/mangata_kusama_runtime.compact.compressed.wasm > kusama.wasm
+          docker run --entrypoint="" --rm mangatasolutions/mangata-node:release-${{ needs.init.outputs.RELEASE_VERSION }} cat /mangata/mangata_rococo_runtime.compact.compressed.wasm > rococo.wasm
 
       - name: Calculate Blake2 hashes
         working-directory: scripts/blake2-hash

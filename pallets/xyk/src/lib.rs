@@ -480,6 +480,7 @@ pub mod pallet {
 		CalculateCumulativeWorkMaxRatioMathError,
 		CalculateRewardsAllMathError,
 		NoRights,
+		NonSlippageMultiSwapFailure,
 	}
 
 	#[pallet::event]
@@ -2022,7 +2023,7 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 		sold_asset_amount: Self::Balance,
 		_min_amount_out: Self::Balance,
 	) -> Result<
-		(),
+	(Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::TokenId, Self::TokenId),
 		DispatchError,
 	> {
 
@@ -2077,7 +2078,7 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 		// Get token reserves
 
 		// MAX: 2R
-		let (input_reserve, _) =
+		let (input_reserve, output_reserve) =
 			Pallet::<T>::get_reserves(sold_asset_id, bought_asset_id)?;
 
 		ensure!(input_reserve.checked_add(pool_fee_amount).is_some(), Error::<T>::MathOverflow);
@@ -2093,7 +2094,15 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 		)
 		.or(Err(Error::<T>::NotEnoughAssets))?;
 
-		Ok(())
+		Ok((
+			buy_and_burn_amount,
+			treasury_amount,
+			pool_fee_amount,
+			input_reserve,
+			output_reserve,
+			sold_asset_id,
+			bought_asset_id
+		))
 	}
 
 	fn pre_validate_buy_asset(
@@ -2194,7 +2203,7 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 		final_bought_asset_amount: Self::Balance,
 		max_amount_in: Self::Balance,
 	) -> Result<
-		(),
+		(Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::TokenId, Self::TokenId),
 		DispatchError,
 	> {
 
@@ -2213,14 +2222,11 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 		);
 
 		// Get token reserves
-		let (input_reserve, _) =
+		let (input_reserve, output_reserve) =
 			Pallet::<T>::get_reserves(sold_asset_id, bought_asset_id)?;
 
-		
-		let sold_asset_amount = max_amount_in;
-
 		let buy_and_burn_amount = multiply_by_rational_with_rounding(
-			sold_asset_amount,
+			max_amount_in,
 			T::BuyAndBurnFeePercentage::get(),
 			10000,
 			Rounding::Down,
@@ -2230,7 +2236,7 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 		.ok_or(Error::<T>::MathOverflow)?;
 
 		let treasury_amount = multiply_by_rational_with_rounding(
-			sold_asset_amount,
+			max_amount_in,
 			T::TreasuryFeePercentage::get(),
 			10000,
 			Rounding::Down,
@@ -2240,7 +2246,7 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 		.ok_or(Error::<T>::MathOverflow)?;
 
 		let pool_fee_amount = multiply_by_rational_with_rounding(
-			sold_asset_amount,
+			max_amount_in,
 			T::PoolFeePercentage::get(),
 			10000,
 			Rounding::Down,
@@ -2267,6 +2273,13 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 		.or(Err(Error::<T>::NotEnoughAssets))?;
 
 		Ok((
+			buy_and_burn_amount,
+			treasury_amount,
+			pool_fee_amount,
+			input_reserve,
+			output_reserve,
+			sold_asset_id,
+			bought_asset_id
 		))
 	}
 }
@@ -2571,6 +2584,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 					bought_asset_amount,
 					min_amount_out,
 				));
+				return Ok(Default::default())
 			}
 		}
 
@@ -2583,161 +2597,151 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		sold_asset_amount: Self::Balance,
 		min_amount_out: Self::Balance,
 		err_upon_bad_slippage: bool,
+		err_upon_non_slippage_fail: bool
 	) -> Result<Balance, DispatchError> {
+
+		let (
+			first_swap_buy_and_burn_amount,
+			first_swap_treasury_amount,
+			first_swap_pool_fee_amount,
+			first_swap_input_reserve,
+			first_swap_output_reserve,
+			first_swap_sold_asset_id,
+			first_swap_bought_asset_id
+		) = <Pallet<T> as PreValidateSwaps>::pre_validate_multiswap_sell_asset(
+			&sender,
+			swap_token_list,
+			sold_asset_amount,
+			min_amount_out
+		)?;
 
 		// First execute all atomic swaps in a storage layer
 		// And then the finally bought amount
-		let _ = frame_support::storage::with_storage_layer(|| -> Result<>);
+		// The bool in error represents if the fail is due to bad final slippage
+		let res_multiswap = frame_support::storage::with_storage_layer(|| -> Result<Balance, (DispatchError, bool)> {
 
-		// If 
-		let (
-			buy_and_burn_amount,
-			treasury_amount,
-			pool_fee_amount,
-			input_reserve,
-			output_reserve,
-			bought_asset_amount,
-		) = <Pallet<T> as PreValidateSwaps>::pre_validate_sell_asset(
-			&sender,
-			sold_asset_id,
-			bought_asset_id,
-			sold_asset_amount,
-			min_amount_out,
-		)?;
+			// pre_validate has already confirmed that swap_token_list.len()>1
+			let mut pair_sold_assets = swap_token_list.clone();
+			let _ = pair_sold_assets.pop();
 
-		let vault = Pallet::<T>::account_id();
-		let treasury_account: T::AccountId = Self::treasury_account_id();
-		let bnb_treasury_account: T::AccountId = Self::bnb_treasury_account_id();
+			let pair_bought_assets = swap_token_list.clone()[1..];
 
-		// Transfer of fees, before tx can fail on min amount out
-		<T as Config>::Currency::transfer(
-			sold_asset_id.into(),
-			&sender,
-			&vault,
-			pool_fee_amount.into(),
-			ExistenceRequirement::KeepAlive,
-		)?;
+			let atomic_pairs = pair_sold_assets.iter().zip(pair_bought_assets.iter());
 
-		<T as Config>::Currency::transfer(
-			sold_asset_id.into(),
-			&sender,
-			&treasury_account,
-			treasury_amount.into(),
-			ExistenceRequirement::KeepAlive,
-		)?;
+			let mut atomic_sold_asset_amount = sold_asset_amount;
+			let mut atomic_bought_asset_amount = Balance::zero();
 
-		<T as Config>::Currency::transfer(
-			sold_asset_id.into(),
-			&sender,
-			&bnb_treasury_account,
-			buy_and_burn_amount.into(),
-			ExistenceRequirement::KeepAlive,
-		)?;
-
-		// Add pool fee to pool
-		// 2R 1W
-		Pallet::<T>::set_reserves(
-			sold_asset_id,
-			input_reserve.saturating_add(pool_fee_amount),
-			bought_asset_id,
-			output_reserve,
-		)?;
-
-		// Ensure bought token amount is higher then requested minimal amount
-		if bought_asset_amount >= min_amount_out {
-			// Transfer the rest of sold token amount from user to vault and bought token amount from vault to user
-			<T as Config>::Currency::transfer(
-				sold_asset_id.into(),
-				&sender,
-				&vault,
-				(sold_asset_amount
-					.checked_sub(
-						buy_and_burn_amount
-							.checked_add(treasury_amount)
-							.and_then(|v| v.checked_add(pool_fee_amount))
-							.ok_or_else(|| DispatchError::from(Error::<T>::SoldAmountTooLow))?,
-					)
-					.ok_or_else(|| DispatchError::from(Error::<T>::SoldAmountTooLow))?)
-				.into(),
-				ExistenceRequirement::KeepAlive,
-			)?;
-			<T as Config>::Currency::transfer(
-				bought_asset_id.into(),
-				&vault,
-				&sender,
-				bought_asset_amount.into(),
-				ExistenceRequirement::KeepAlive,
-			)?;
-
-			// Apply changes in token pools, adding sold amount and removing bought amount
-			// Neither should fall to zero let alone underflow, due to how pool destruction works
-			// Won't overflow due to earlier ensure
-			let input_reserve_updated = input_reserve.saturating_add(
-				sold_asset_amount
-					.checked_sub(treasury_amount)
-					.and_then(|v| v.checked_sub(buy_and_burn_amount))
-					.ok_or_else(|| DispatchError::from(Error::<T>::SoldAmountTooLow))?,
-			);
-			let output_reserve_updated = output_reserve.saturating_sub(bought_asset_amount);
-
-			// MAX 2R 1W
-			Pallet::<T>::set_reserves(
-				sold_asset_id,
-				input_reserve_updated,
-				bought_asset_id,
-				output_reserve_updated,
-			)?;
-
-			log!(
-				info,
-				"sell_asset: ({:?}, {}, {}, {}, {}) -> {}",
-				sender,
-				sold_asset_id,
-				bought_asset_id,
-				sold_asset_amount,
-				min_amount_out,
-				bought_asset_amount
-			);
-
-			log!(
-				info,
-				"pool-state: [({}, {}) -> {}, ({}, {}) -> {}]",
-				sold_asset_id,
-				bought_asset_id,
-				input_reserve_updated,
-				bought_asset_id,
-				sold_asset_id,
-				output_reserve_updated
-			);
-
-			Pallet::<T>::deposit_event(Event::AssetsSwapped(
-				sender.clone(),
-				sold_asset_id,
-				sold_asset_amount,
-				bought_asset_id,
-				bought_asset_amount,
-			));
-		}
-
-		// Settle tokens which goes to treasury and for buy and burn purpose
-		Pallet::<T>::settle_treasury_and_burn(sold_asset_id, buy_and_burn_amount, treasury_amount)?;
-
-		if bought_asset_amount < min_amount_out {
-			if err_upon_bad_slippage {
-				return Err(DispatchError::from(Error::<T>::InsufficientOutputAmount))
-			} else {
-				Pallet::<T>::deposit_event(Event::SellAssetFailedDueToSlippage(
+			for (atomic_sold_asset, atomic_bought_asset) in atomic_pairs.iter(){
+				atomic_bought_asset_amount = <Self as XykFunctionsTrait<T::AccountId>>::sell_asset(
 					sender,
-					sold_asset_id,
+					atomic_sold_asset,
+					atomic_bought_asset,
+					atomic_sold_asset_amount,
+					Balance::zero(),
+					// We using most possible slippage so this should be irrelevant
+					true,
+				).map_err(|e| Err(e, false))?;
+
+				// Prep the next loop
+				atomic_sold_asset_amount = atomic_bought_asset_amount;
+
+			}
+
+			// fail/error and revert if bad final slippage
+			if atomic_bought_asset_amount < min_amount_out{
+				return Err(Error::<T>::InsufficientOutputAmount, true)
+			} else {
+				return Ok(atomic_bought_asset_amount)
+			}
+		});
+
+		// if res_multiswap is_ok then return Ok(()) otherwise charge fee for first swap and then return Ok(())
+		// if err_upon_bad_slippage then just return res_multiswap
+
+		if let Ok(bought_asset_amount) = res_multiswap{
+			Pallet::<T>::deposit_event(Event::AssetsMultiSwapped(
+				sender.clone(),
+				swap_token_list,
+				sold_asset_amount,
+			));
+			return Ok(bought_asset_amount)
+		} else {
+			// Charge fee
+
+			let vault = Pallet::<T>::account_id();
+			let treasury_account: T::AccountId = Self::treasury_account_id();
+			let bnb_treasury_account: T::AccountId = Self::bnb_treasury_account_id();
+
+			// Transfer of fees, before tx can fail on min amount out
+			<T as Config>::Currency::transfer(
+				first_swap_sold_asset_id.into(),
+				&sender,
+				&vault,
+				first_swap_pool_fee_amount.into(),
+				ExistenceRequirement::KeepAlive,
+			)?;
+
+			<T as Config>::Currency::transfer(
+				first_swap_sold_asset_id.into(),
+				&sender,
+				&treasury_account,
+				first_swap_treasury_amount.into(),
+				ExistenceRequirement::KeepAlive,
+			)?;
+
+			<T as Config>::Currency::transfer(
+				first_swap_sold_asset_id.into(),
+				&sender,
+				&bnb_treasury_account,
+				first_swap_buy_and_burn_amount.into(),
+				ExistenceRequirement::KeepAlive,
+			)?;
+
+			// Add pool fee to pool
+			// 2R 1W
+			Pallet::<T>::set_reserves(
+				first_swap_sold_asset_id,
+				first_swap_input_reserve.saturating_add(first_swap_pool_fee_amount),
+				first_swap_bought_asset_id,
+				first_swap_output_reserve,
+			)?;
+
+			// Settle tokens which goes to treasury and for buy and burn purpose
+			Pallet::<T>::settle_treasury_and_burn(first_swap_sold_asset_id, first_swap_buy_and_burn_amount, first_swap_treasury_amount)?;
+
+			// Emit event or return error
+			match (err_upon_bad_slippage, err_upon_non_slippage_fail, res_multiswap){
+				(true, _, Err(_, true)) => {Pallet::<T>::deposit_event(Event::MultiSellAssetFailedDueToSlippage(
+					sender.clone(),
+					swap_token_list,
 					sold_asset_amount,
-					bought_asset_id,
-					bought_asset_amount,
-					min_amount_out,
 				));
+				return Err(DispatchError::from(Error::<T>::InsufficientOutputAmount))},
+				(_, true, Err(_, false)) => {Pallet::<T>::deposit_event(Event::MultiSellAssetFailedOnAtomicSwap(
+					sender.clone(),
+					swap_token_list,
+					sold_asset_amount,
+				));
+				return Err(DispatchError::from(Error::<T>::NonSlippageMultiSwapFailure))},
+				(false, false, Err(_, true)) => {
+					Pallet::<T>::deposit_event(Event::MultiSellAssetFailedDueToSlippage(
+						sender.clone(),
+						swap_token_list,
+						sold_asset_amount,
+					));
+					return Ok(Default::default())
+				}
+				(false, false, Err(_, false)) => {
+					Pallet::<T>::deposit_event(Event::MultiSellAssetFailedOnAtomicSwap(
+						sender.clone(),
+						swap_token_list,
+						sold_asset_amount,
+					));
+					return Ok(Default::default())
+				}
 			}
 		}
 
-		Ok(bought_asset_amount)
 	}
 
 	// To put it comprehensively the only reason that the user should lose out on swap fee

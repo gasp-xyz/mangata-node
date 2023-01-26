@@ -604,7 +604,10 @@ impl CliConfiguration<Self> for RelayChainCli {
 	}
 
 	fn base_path(&self) -> Result<Option<BasePath>> {
-		self.shared_params().base_path()
+		Ok(self
+			.shared_params()
+			.base_path()?
+			.or_else(|| self.base_path.clone().map(Into::into)))
 	}
 
 	fn role(&self, is_dev: bool) -> Result<sc_service::Role> {

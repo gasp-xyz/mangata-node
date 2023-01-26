@@ -11,6 +11,10 @@ environments:
     values:
       - ./config/default.yaml
       - ./config/fungible.yaml
+  release:
+    values:
+      - ./config/default.yaml
+      - ./config/release.yaml
 
 helmDefaults:
   wait: true

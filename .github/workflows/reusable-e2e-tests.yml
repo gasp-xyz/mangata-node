@@ -58,6 +58,10 @@ jobs:
       ####IDK, but this is neccesary for reports
       - uses: actions/checkout@v3
 
+      - name: debug fast?
+        run: |
+          echo "Fast: ${{ matrix.fast == 'true' }}"
+
       - name: Adapt if fast runtime
         if:  ${{  !contains(env.PARACHAIN_DOCKER_IMAGE, 'fast') && matrix.fast == 'true' }}
         run: echo "PARACHAIN_DOCKER_IMAGE=${{ env.PARACHAIN_DOCKER_IMAGE }}-fast" >> $GITHUB_ENV

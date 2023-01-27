@@ -38,7 +38,7 @@ jobs:
             fast: false
           - command: "yarn test-sequential-no-bootstrap"
             fast: false
-          - command: "export JEST_HTML_REPORTERS_PUBLIC_PATH=reports/html-report-parallel;rm nonce.db ; rm sudo.lock; jest --verbose --ci --group=autocompound"
+          - command: "yarn test-sequential-autocompound"
             fast: true
 
     runs-on: [self-hosted, compile]

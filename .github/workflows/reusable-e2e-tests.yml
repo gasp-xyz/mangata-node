@@ -33,7 +33,14 @@ jobs:
   e2e-test-matrix:
     strategy:
       matrix:
-        command: ["yarn test-parallel --max-workers=32", "yarn test-sequential-no-bootstrap"]
+        include:
+          - command: "yarn test-parallel --max-workers=32"
+            fast: false
+          - command: "yarn test-sequential-no-bootstrap"
+            fast: false
+          - command: "export JEST_HTML_REPORTERS_PUBLIC_PATH=reports/html-report-parallel;rm nonce.db ; rm sudo.lock; jest --verbose --ci --group=autocompound"
+            fast: true
+
     runs-on: [self-hosted, compile]
     timeout-minutes: 180
     env:
@@ -51,6 +58,10 @@ jobs:
       ####IDK, but this is neccesary for reports
       - uses: actions/checkout@v3
 
+      - name: Adapt if fast runtime
+        if: ${{ !contains(${{ env.PARACHAIN_DOCKER_IMAGE }}, 'fast') && ${{ matrix.fast }} == 'true' }}
+        run: echo "PARACHAIN_DOCKER_IMAGE=${{ env.PARACHAIN_DOCKER_IMAGE }}-fast" >> $GITHUB_ENV
+      
       - name: Download node Docker image
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && inputs.skipBuild != 'true' }}
         run: docker pull ${{ env.PARACHAIN_DOCKER_IMAGE }}

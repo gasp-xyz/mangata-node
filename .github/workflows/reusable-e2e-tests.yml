@@ -60,7 +60,7 @@ jobs:
 
       - name: debug fast?
         run: |
-          echo "Fast: ${{ matrix.fast == 'true' }}"
+          echo "Fast: ${{ matrix.fast == true }}  ${{ matrix.fast }}"
 
       - name: Adapt if fast runtime
         if:  ${{  !contains(env.PARACHAIN_DOCKER_IMAGE, 'fast') && matrix.fast == 'true' }}

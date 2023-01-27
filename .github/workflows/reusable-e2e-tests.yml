@@ -125,7 +125,7 @@ jobs:
         run: yarn
 
       - name: Docker ps
-        run: docker ps
+        run: docker ps --no-trunc
 
       - name: Sleep for 2 minutes
         run: sleep 120s #close buffers of videos.

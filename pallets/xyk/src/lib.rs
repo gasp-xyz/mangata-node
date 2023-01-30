@@ -484,7 +484,8 @@ pub mod pallet {
 		NonSlippageMultiSwapFailure,
 		MultiswapShouldBeAtleastTwoHops,
 		MultiBuyAssetCantHaveSamePoolAtomicSwaps,
-		MultiSwapFailedOnBadSlippage
+		MultiSwapFailedOnBadSlippage,
+		MultiSwapNotEnoughAssets
 	}
 
 	#[pallet::event]
@@ -506,6 +507,7 @@ pub mod pallet {
 		MultiBuyAssetFailedDueToSlippage(T::AccountId, Vec<TokenId>, Balance),
 		MultiSellAssetFailedOnAtomicSwap(T::AccountId, Vec<TokenId>, Balance),
 		MultiBuyAssetFailedOnAtomicSwap(T::AccountId, Vec<TokenId>, Balance),
+		MultiSwapFailedDueToNotEnoughAssets(T::AccountId, Vec<TokenId>, Balance),
 	}
 
 	#[pallet::storage]
@@ -2663,6 +2665,17 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		// The bool in error represents if the fail is due to bad final slippage
 		let res_multiswap = frame_support::storage::with_storage_layer(|| -> Result<Balance, DispatchError> {
 
+			// Ensure user has enough tokens to sell
+			<T as Config>::Currency::ensure_can_withdraw(
+				// Naked unwrap is fine due to pre validation len check
+				{*swap_token_list.get(0).unwrap()}.into(),
+				&sender,
+				sold_asset_amount.into(),
+				WithdrawReasons::all(),
+				Default::default(),
+			)
+			.or(Err(Error::<T>::MultiSwapNotEnoughAssets))?;
+
 			// pre_validate has already confirmed that swap_token_list.len()>1
 			let mut pair_sold_assets = swap_token_list.clone();
 			let _ = pair_sold_assets.pop();
@@ -2755,6 +2768,14 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 			// Emit event or return error
 			match (err_upon_bad_slippage, err_upon_non_slippage_fail, res_multiswap){
+				(_, _, Err(e)) if e == Error::<T>::MultiSwapNotEnoughAssets.into() => {
+					Pallet::<T>::deposit_event(Event::MultiSwapFailedDueToNotEnoughAssets(
+						sender.clone(),
+						swap_token_list.clone(),
+						sold_asset_amount,
+					));
+					return Ok(Default::default())
+				},
 				(true, _, Err(e)) if e == Error::<T>::MultiSwapFailedOnBadSlippage.into() => {Pallet::<T>::deposit_event(Event::MultiSellAssetFailedDueToSlippage(
 					sender.clone(),
 					swap_token_list.clone(),
@@ -3008,11 +3029,18 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 			}
 
+			ensure!(atomic_sold_asset_amount <= max_amount_in, Error::<T>::MultiSwapFailedOnBadSlippage);
 
-			// fail/error and revert if bad final slippage
-			if atomic_sold_asset_amount > max_amount_in{
-				return Err(Error::<T>::MultiSwapFailedOnBadSlippage.into())
-			}
+			// Ensure user has enough tokens to sell
+			<T as Config>::Currency::ensure_can_withdraw(
+				// Naked unwrap is fine due to pre validation len check
+				{*swap_token_list.get(0).unwrap()}.into(),
+				&sender,
+				atomic_sold_asset_amount.into(),
+				WithdrawReasons::all(),
+				Default::default(),
+			)
+			.or(Err(Error::<T>::MultiSwapNotEnoughAssets))?;
 
 			// Execute here
 			for ((atomic_sold_asset, atomic_bought_asset), atomic_swap_buy_amount) in atomic_pairs.iter().zip(atomic_swap_buy_amounts_rev.iter().rev()){
@@ -3087,6 +3115,14 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 			// Emit event or return error
 			match (err_upon_bad_slippage, err_upon_non_slippage_fail, res_multiswap){
+				(_, _, Err(e)) if e == Error::<T>::MultiSwapNotEnoughAssets.into() => {
+					Pallet::<T>::deposit_event(Event::MultiSwapFailedDueToNotEnoughAssets(
+						sender.clone(),
+						swap_token_list.clone(),
+						bought_asset_amount,
+					));
+					return Ok(Default::default())
+				},
 				(true, _, Err(e)) if e == Error::<T>::MultiSwapFailedOnBadSlippage.into() => {Pallet::<T>::deposit_event(Event::MultiBuyAssetFailedDueToSlippage(
 					sender.clone(),
 					swap_token_list.clone(),

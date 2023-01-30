@@ -2991,17 +2991,18 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			let mut atomic_sold_asset_amount = Balance::zero();
 			let mut atomic_bought_asset_amount = bought_asset_amount;
 
+			let mut atomic_swap_buy_amounts_rev: Vec<Balance> = vec![];
 			// Calc
 			// We can do this using calculate_buy_price_id chain due to the check in pre_validation
 			// that ensures that no pool is touched twice. So the reserves in question are consistent
 			for (atomic_sold_asset, atomic_bought_asset) in atomic_pairs.iter().rev(){
 				atomic_sold_asset_amount = Self::calculate_buy_price_id(
-					// sender,
 					*atomic_sold_asset,
 					*atomic_bought_asset,
 					atomic_bought_asset_amount,
 				)?;
 
+				atomic_swap_buy_amounts_rev.push(atomic_bought_asset_amount);
 				// Prep the next loop
 				atomic_bought_asset_amount = atomic_sold_asset_amount;
 
@@ -3014,33 +3015,16 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			}
 
 			// Execute here
-			atomic_sold_asset_amount = atomic_sold_asset_amount; // FYI :)
-			atomic_bought_asset_amount = Balance::zero();
-
-			for (atomic_sold_asset, atomic_bought_asset) in atomic_pairs.iter(){
-				atomic_bought_asset_amount = <Self as XykFunctionsTrait<T::AccountId>>::sell_asset(
+			for ((atomic_sold_asset, atomic_bought_asset), atomic_swap_buy_amount) in atomic_pairs.iter().zip(atomic_swap_buy_amounts_rev.iter().rev()){
+				let _ = <Self as XykFunctionsTrait<T::AccountId>>::buy_asset(
 					sender.clone(),
 					*atomic_sold_asset,
 					*atomic_bought_asset,
-					atomic_sold_asset_amount,
-					Balance::zero(),
+					*atomic_swap_buy_amount,
+					Balance::max_value(),
 					// We using most possible slippage so this should be irrelevant
 					true,
 				)?;
-
-				// Prep the next loop
-				atomic_sold_asset_amount = atomic_bought_asset_amount;
-			}
-
-			if atomic_bought_asset_amount < bought_asset_amount {
-				log!(
-					warn,
-					"multiswap_buy_asset did not yeild atleast the bought_asset_amount: ({:?}, {:?}, {}, {})",
-					sender.clone(),
-					swap_token_list.clone(),
-					bought_asset_amount,
-					max_amount_in,
-				);
 			}
 			
 			return Ok(atomic_sold_asset_amount)

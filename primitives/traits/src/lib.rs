@@ -4,7 +4,7 @@ use frame_support::pallet_prelude::*;
 use mangata_types::{Balance, TokenId};
 use mp_multipurpose_liquidity::{ActivateKind, BondKind};
 use sp_runtime::traits::{AtLeast32BitUnsigned, MaybeDisplay};
-use sp_std::fmt::Debug;
+use sp_std::{fmt::Debug, vec::Vec};
 
 pub trait StakingReservesProviderTrait {
 	type AccountId: Parameter
@@ -97,7 +97,16 @@ pub trait XykFunctionsTrait<AccountId> {
 		sold_asset_amount: Self::Balance,
 		min_amount_out: Self::Balance,
 		err_upon_bad_slippage: bool,
-	) -> DispatchResult;
+	) -> Result<Self::Balance, DispatchError>;
+
+	fn multiswap_sell_asset(
+		sender: AccountId,
+		swap_token_list: Vec<Self::CurrencyId>,
+		sold_asset_amount: Self::Balance,
+		min_amount_out: Self::Balance,
+		err_upon_bad_slippage: bool,
+		err_upon_non_slippage_fail: bool
+	) -> Result<Self::Balance, DispatchError>;
 
 	fn buy_asset(
 		sender: AccountId,
@@ -106,7 +115,16 @@ pub trait XykFunctionsTrait<AccountId> {
 		bought_asset_amount: Self::Balance,
 		max_amount_in: Self::Balance,
 		err_upon_bad_slippage: bool,
-	) -> DispatchResult;
+	) -> Result<Self::Balance, DispatchError>;
+
+	fn multiswap_buy_asset(
+		sender: AccountId,
+		swap_token_list: Vec<Self::CurrencyId>,
+		bought_asset_amount: Self::Balance,
+		max_amount_in: Self::Balance,
+		err_upon_bad_slippage: bool,
+		err_upon_non_slippage_fail: bool
+	) -> Result<Self::Balance, DispatchError>;
 
 	fn mint_liquidity(
 		sender: AccountId,
@@ -210,6 +228,16 @@ pub trait PreValidateSwaps {
 		DispatchError,
 	>;
 
+	fn pre_validate_multiswap_sell_asset(
+		sender: &Self::AccountId,
+		swap_token_list: Vec<Self::CurrencyId>,
+		sold_asset_amount: Self::Balance,
+		min_amount_out: Self::Balance,
+	) -> Result<
+	(Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::CurrencyId, Self::CurrencyId),
+		DispatchError,
+	>;
+
 	fn pre_validate_buy_asset(
 		sender: &Self::AccountId,
 		sold_asset_id: Self::CurrencyId,
@@ -218,6 +246,16 @@ pub trait PreValidateSwaps {
 		max_amount_in: Self::Balance,
 	) -> Result<
 		(Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance),
+		DispatchError,
+	>;
+
+	fn pre_validate_multiswap_buy_asset(
+		sender: &Self::AccountId,
+		swap_token_list: Vec<Self::CurrencyId>,
+		final_bought_asset_amount: Self::Balance,
+		max_amount_in: Self::Balance,
+	) -> Result<
+		(Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::CurrencyId, Self::CurrencyId),
 		DispatchError,
 	>;
 }

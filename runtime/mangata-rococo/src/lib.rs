@@ -776,7 +776,7 @@ where
 						let _ =
 							<Xyk as PreValidateSwaps>::pre_validate_multiswap_sell_asset(
 								&who.clone().into(),
-								*swap_token_list,
+								swap_token_list.clone(),
 								*sold_asset_amount,
 								*min_amount_out,
 							)
@@ -912,7 +912,7 @@ where
 						let _ =
 							<Xyk as PreValidateSwaps>::pre_validate_multiswap_buy_asset(
 								&who.clone().into(),
-								*swap_token_list,
+								swap_token_list.clone(),
 								*bought_asset_amount,
 								*max_amount_in,
 							)

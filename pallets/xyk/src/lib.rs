@@ -314,7 +314,7 @@ use sp_arithmetic::{helpers_128bit::multiply_by_rational_with_rounding, per_thin
 use sp_runtime::{
 	traits::{
 		AccountIdConversion, AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member,
-		SaturatedConversion, Zero,
+		SaturatedConversion, Zero, One
 	},
 	Permill,
 };
@@ -323,6 +323,7 @@ use sp_std::{
 	fmt::Debug,
 	ops::Div,
 	prelude::*,
+	vec::Vec
 };
 
 #[cfg(test)]
@@ -481,6 +482,9 @@ pub mod pallet {
 		CalculateRewardsAllMathError,
 		NoRights,
 		NonSlippageMultiSwapFailure,
+		MultiswapShouldBeAtleastTwoHops,
+		MultiBuyAssetCantHaveSamePoolAtomicSwaps,
+		MultiSwapFailedOnBadSlippage
 	}
 
 	#[pallet::event]
@@ -496,6 +500,12 @@ pub mod pallet {
 		LiquidityActivated(T::AccountId, TokenId, Balance),
 		LiquidityDeactivated(T::AccountId, TokenId, Balance),
 		RewardsClaimed(T::AccountId, TokenId, Balance),
+		AssetsMultiSellSwapped(T::AccountId, Vec<TokenId>, Balance),
+		AssetsMultiBuySwapped(T::AccountId, Vec<TokenId>, Balance),
+		MultiSellAssetFailedDueToSlippage(T::AccountId, Vec<TokenId>, Balance),
+		MultiBuyAssetFailedDueToSlippage(T::AccountId, Vec<TokenId>, Balance),
+		MultiSellAssetFailedOnAtomicSwap(T::AccountId, Vec<TokenId>, Balance),
+		MultiBuyAssetFailedOnAtomicSwap(T::AccountId, Vec<TokenId>, Balance),
 	}
 
 	#[pallet::storage]
@@ -676,7 +686,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(<<T as Config>::WeightInfo>::multiswap_sell_asset())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::sell_asset().saturating_mul(swap_token_list.len() as u64))]
 		pub fn multiswap_sell_asset(
 			origin: OriginFor<T>,
 			swap_token_list: Vec<TokenId>,
@@ -691,6 +701,7 @@ pub mod pallet {
 				sold_asset_amount,
 				min_amount_out,
 				false,
+				false
 			)?;
 			Ok(().into())
 		}
@@ -716,7 +727,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(<<T as Config>::WeightInfo>::multiswap_buy_asset())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::buy_asset().saturating_mul(swap_token_list.len() as u64))]
 		pub fn multiswap_buy_asset(
 			origin: OriginFor<T>,
 			swap_token_list: Vec<TokenId>,
@@ -731,6 +742,7 @@ pub mod pallet {
 				bought_asset_amount,
 				max_amount_in,
 				false,
+				false
 			)?;
 			Ok(().into())
 		}
@@ -2019,18 +2031,18 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 	/// We only validate the first atomic swap's ability to accept fees
 	fn pre_validate_multiswap_sell_asset(
 		sender: &Self::AccountId,
-		swap_token_list: Vec<TokenId>,
+		swap_token_list: Vec<Self::CurrencyId>,
 		sold_asset_amount: Self::Balance,
 		_min_amount_out: Self::Balance,
 	) -> Result<
-	(Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::TokenId, Self::TokenId),
+	(Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::CurrencyId, Self::CurrencyId),
 		DispatchError,
 	> {
 
-		ensure!( swap_token_list.len() > One::one() , MultiswapShouldBeAtleastTwoHops);
+		ensure!( swap_token_list.len() > usize::one() , Error::<T>::MultiswapShouldBeAtleastTwoHops);
 		// Unwraps are fine due to above ensure
-		let sold_asset_id = swap_token_list.get(0).unwrap();
-		let bought_asset_id = swap_token_list.get(1).unwrap();
+		let sold_asset_id = *swap_token_list.get(0).unwrap();
+		let bought_asset_id = *swap_token_list.get(1).unwrap();
 
 		// Ensure not selling zero amount
 		ensure!(!sold_asset_amount.is_zero(), Error::<T>::ZeroAmount,);
@@ -2199,15 +2211,21 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 	/// We only validate the first atomic swap's ability to accept fees
 	fn pre_validate_multiswap_buy_asset(
 		sender: &Self::AccountId,
-		swap_token_list: Vec<TokenId>,
+		swap_token_list: Vec<Self::CurrencyId>,
 		final_bought_asset_amount: Self::Balance,
 		max_amount_in: Self::Balance,
 	) -> Result<
-		(Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::TokenId, Self::TokenId),
+		(Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::CurrencyId, Self::CurrencyId),
 		DispatchError,
 	> {
 		// Ensure not buying zero amount
 		ensure!(!final_bought_asset_amount.is_zero(), Error::<T>::ZeroAmount,);
+
+
+		ensure!( swap_token_list.len() > usize::one() , Error::<T>::MultiswapShouldBeAtleastTwoHops);
+		// Unwraps are fine due to above ensure
+		let sold_asset_id = *swap_token_list.get(0).unwrap();
+		let bought_asset_id = *swap_token_list.get(1).unwrap();
 
 		ensure!(
 			!T::DisabledTokens::contains(&sold_asset_id) &&
@@ -2215,28 +2233,25 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 			Error::<T>::FunctionNotAvailableForThisToken
 		);
 
-		ensure!( swap_token_list.len() > One::one() , Error::<T>::MultiswapShouldBeAtleastTwoHops);
-		// Unwraps are fine due to above ensure
-		let sold_asset_id = swap_token_list.get(0).unwrap();
-		let bought_asset_id = swap_token_list.get(1).unwrap();
-
 		// Cannot use multiswap twice on the same pool 
 		let mut pair_sold_assets = swap_token_list.clone();
 		let _ = pair_sold_assets.pop();
 
-		let pair_bought_assets = swap_token_list.clone()[1..];
+		let mut pair_bought_assets = swap_token_list.clone();
+		let _ = pair_bought_assets.remove(0);
 
-		let atomic_pairs = pair_sold_assets.iter().zip(pair_bought_assets.iter());
+		let atomic_pairs: Vec<(TokenId, TokenId)> = pair_sold_assets.into_iter().zip(pair_bought_assets.into_iter()).collect();
 
-		let mut filtered_atomic_pairs = atomic_pairs.filter_map(|x, y| {
+		let mut filtered_atomic_pairs: Vec<(TokenId, TokenId)> = atomic_pairs.into_iter().filter_map(|(x, y)| {
 			if x == y{
 				None
-			} else if x > y{
-				Some (x, y)
-			} else if (x < y){
-				Some (y,x)
+			} else if x > y {
+				Some((x, y))
+			} else // x < y  
+			{
+				Some((y,x))
 			}
-		})
+		}).collect();
 
 		// Not failing upon x==y to maintain parity with multiswap_sell_asset
 
@@ -2638,7 +2653,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			fee_swap_bought_asset_id
 		) = <Pallet<T> as PreValidateSwaps>::pre_validate_multiswap_sell_asset(
 			&sender,
-			swap_token_list,
+			swap_token_list.clone(),
 			sold_asset_amount,
 			min_amount_out
 		)?;
@@ -2646,29 +2661,30 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		// First execute all atomic swaps in a storage layer
 		// And then the finally bought amount is compared
 		// The bool in error represents if the fail is due to bad final slippage
-		let res_multiswap = frame_support::storage::with_storage_layer(|| -> Result<Balance, (DispatchError, bool)> {
+		let res_multiswap = frame_support::storage::with_storage_layer(|| -> Result<Balance, DispatchError> {
 
 			// pre_validate has already confirmed that swap_token_list.len()>1
 			let mut pair_sold_assets = swap_token_list.clone();
 			let _ = pair_sold_assets.pop();
 
-			let pair_bought_assets = swap_token_list.clone()[1..];
+			let mut pair_bought_assets = swap_token_list.clone();
+			let _ = pair_bought_assets.remove(0);
 
-			let atomic_pairs = pair_sold_assets.iter().zip(pair_bought_assets.iter());
+			let atomic_pairs: Vec<(TokenId, TokenId)> = pair_sold_assets.into_iter().zip(pair_bought_assets.into_iter()).collect();
 
 			let mut atomic_sold_asset_amount = sold_asset_amount;
 			let mut atomic_bought_asset_amount = Balance::zero();
 
 			for (atomic_sold_asset, atomic_bought_asset) in atomic_pairs.iter(){
 				atomic_bought_asset_amount = <Self as XykFunctionsTrait<T::AccountId>>::sell_asset(
-					sender,
-					atomic_sold_asset,
-					atomic_bought_asset,
+					sender.clone(),
+					*atomic_sold_asset,
+					*atomic_bought_asset,
 					atomic_sold_asset_amount,
 					Balance::zero(),
 					// We using most possible slippage so this should be irrelevant
 					true,
-				).map_err(|e| Err(e, false))?;
+				)?;
 
 				// Prep the next loop
 				atomic_sold_asset_amount = atomic_bought_asset_amount;
@@ -2677,7 +2693,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 			// fail/error and revert if bad final slippage
 			if atomic_bought_asset_amount < min_amount_out{
-				return Err(Error::<T>::InsufficientOutputAmount, true)
+				return Err(Error::<T>::MultiSwapFailedOnBadSlippage.into())
 			} else {
 				return Ok(atomic_bought_asset_amount)
 			}
@@ -2689,7 +2705,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		if let Ok(bought_asset_amount) = res_multiswap{
 			Pallet::<T>::deposit_event(Event::AssetsMultiSellSwapped(
 				sender.clone(),
-				swap_token_list,
+				swap_token_list.clone(),
 				sold_asset_amount,
 			));
 			return Ok(bought_asset_amount)
@@ -2739,34 +2755,35 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 			// Emit event or return error
 			match (err_upon_bad_slippage, err_upon_non_slippage_fail, res_multiswap){
-				(true, _, Err(_, true)) => {Pallet::<T>::deposit_event(Event::MultiSellAssetFailedDueToSlippage(
+				(true, _, Err(e)) if e == Error::<T>::MultiSwapFailedOnBadSlippage.into() => {Pallet::<T>::deposit_event(Event::MultiSellAssetFailedDueToSlippage(
 					sender.clone(),
-					swap_token_list,
+					swap_token_list.clone(),
 					sold_asset_amount,
 				));
-				return Err(DispatchError::from(Error::<T>::InsufficientOutputAmount))},
-				(_, true, Err(_, false)) => {Pallet::<T>::deposit_event(Event::MultiSellAssetFailedOnAtomicSwap(
+				return Err(DispatchError::from(Error::<T>::MultiSwapFailedOnBadSlippage))},
+				(_, true, Err(e)) if e != Error::<T>::MultiSwapFailedOnBadSlippage.into() => {Pallet::<T>::deposit_event(Event::MultiSellAssetFailedOnAtomicSwap(
 					sender.clone(),
-					swap_token_list,
+					swap_token_list.clone(),
 					sold_asset_amount,
 				));
 				return Err(DispatchError::from(Error::<T>::NonSlippageMultiSwapFailure))},
-				(false, false, Err(_, true)) => {
+				(false, false, Err(e)) if e == Error::<T>::MultiSwapFailedOnBadSlippage.into() => {
 					Pallet::<T>::deposit_event(Event::MultiSellAssetFailedDueToSlippage(
 						sender.clone(),
-						swap_token_list,
+						swap_token_list.clone(),
 						sold_asset_amount,
 					));
 					return Ok(Default::default())
 				}
-				(false, false, Err(_, false)) => {
+				(false, false, Err(e)) if e != Error::<T>::MultiSwapFailedOnBadSlippage.into() => {
 					Pallet::<T>::deposit_event(Event::MultiSellAssetFailedOnAtomicSwap(
 						sender.clone(),
-						swap_token_list,
+						swap_token_list.clone(),
 						sold_asset_amount,
 					));
 					return Ok(Default::default())
-				}
+				},
+				(_,_,_) => {return Err(DispatchError::from(Error::<T>::UnexpectedFailure))}
 			}
 		}
 
@@ -2952,7 +2969,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			fee_swap_bought_asset_id
 		) = <Pallet<T> as PreValidateSwaps>::pre_validate_multiswap_buy_asset(
 			&sender,
-			swap_token_list,
+			swap_token_list.clone(),
 			bought_asset_amount,
 			max_amount_in
 		)?;
@@ -2960,15 +2977,16 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		// First execute all atomic swaps in a storage layer
 		// And then the finally sold amount is compared
 		// The bool in error represents if the fail is due to bad final slippage
-		let res_multiswap = frame_support::storage::with_storage_layer(|| -> Result<Balance, (DispatchError, bool)> {
+		let res_multiswap = frame_support::storage::with_storage_layer(|| -> Result<Balance, DispatchError> {
 
 			// pre_validate has already confirmed that swap_token_list.len()>1
 			let mut pair_sold_assets = swap_token_list.clone();
 			let _ = pair_sold_assets.pop();
 
-			let pair_bought_assets = swap_token_list.clone()[1..];
+			let mut pair_bought_assets = swap_token_list.clone();
+			let _ = pair_bought_assets.remove(0);
 
-			let atomic_pairs = pair_sold_assets.iter().zip(pair_bought_assets.iter());
+			let atomic_pairs: Vec<(TokenId, TokenId)> = pair_sold_assets.into_iter().zip(pair_bought_assets.into_iter()).collect();
 
 			let mut atomic_sold_asset_amount = Balance::zero();
 			let mut atomic_bought_asset_amount = bought_asset_amount;
@@ -2977,12 +2995,12 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			// We can do this using calculate_buy_price_id chain due to the check in pre_validation
 			// that ensures that no pool is touched twice. So the reserves in question are consistent
 			for (atomic_sold_asset, atomic_bought_asset) in atomic_pairs.iter().rev(){
-				atomic_sold_asset_amount = <Self as XykFunctionsTrait<T::AccountId>>::calculate_buy_price_id(
+				atomic_sold_asset_amount = Self::calculate_buy_price_id(
 					// sender,
-					atomic_sold_asset,
-					atomic_bought_asset,
+					*atomic_sold_asset,
+					*atomic_bought_asset,
 					atomic_bought_asset_amount,
-				).map_err(|e| Err(e, false))?;
+				)?;
 
 				// Prep the next loop
 				atomic_bought_asset_amount = atomic_sold_asset_amount;
@@ -2992,7 +3010,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 			// fail/error and revert if bad final slippage
 			if atomic_sold_asset_amount > max_amount_in{
-				return Err(Error::<T>::InsufficientOutputAmount, true)
+				return Err(Error::<T>::MultiSwapFailedOnBadSlippage.into())
 			}
 
 			// Execute here
@@ -3001,14 +3019,14 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 			for (atomic_sold_asset, atomic_bought_asset) in atomic_pairs.iter(){
 				atomic_bought_asset_amount = <Self as XykFunctionsTrait<T::AccountId>>::sell_asset(
-					sender,
-					atomic_sold_asset,
-					atomic_bought_asset,
+					sender.clone(),
+					*atomic_sold_asset,
+					*atomic_bought_asset,
 					atomic_sold_asset_amount,
 					Balance::zero(),
 					// We using most possible slippage so this should be irrelevant
 					true,
-				).map_err(|e| Err(e, false))?;
+				)?;
 
 				// Prep the next loop
 				atomic_sold_asset_amount = atomic_bought_asset_amount;
@@ -3018,8 +3036,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				log!(
 					warn,
 					"multiswap_buy_asset did not yeild atleast the bought_asset_amount: ({:?}, {:?}, {}, {})",
-					sender,
-					swap_token_list,
+					sender.clone(),
+					swap_token_list.clone(),
 					bought_asset_amount,
 					max_amount_in,
 				);
@@ -3035,7 +3053,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		if let Ok(sold_asset_amount) = res_multiswap{
 			Pallet::<T>::deposit_event(Event::AssetsMultiBuySwapped(
 				sender.clone(),
-				swap_token_list,
+				swap_token_list.clone(),
 				bought_asset_amount,
 			));
 			return Ok(sold_asset_amount)
@@ -3085,34 +3103,35 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 			// Emit event or return error
 			match (err_upon_bad_slippage, err_upon_non_slippage_fail, res_multiswap){
-				(true, _, Err(_, true)) => {Pallet::<T>::deposit_event(Event::MultiBuyAssetFailedDueToSlippage(
+				(true, _, Err(e)) if e == Error::<T>::MultiSwapFailedOnBadSlippage.into() => {Pallet::<T>::deposit_event(Event::MultiBuyAssetFailedDueToSlippage(
 					sender.clone(),
-					swap_token_list,
+					swap_token_list.clone(),
 					bought_asset_amount,
 				));
 				return Err(DispatchError::from(Error::<T>::InsufficientOutputAmount))},
-				(_, true, Err(_, false)) => {Pallet::<T>::deposit_event(Event::MultiBuyAssetFailedOnAtomicSwap(
+				(_, true, Err(e)) if e != Error::<T>::MultiSwapFailedOnBadSlippage.into() => {Pallet::<T>::deposit_event(Event::MultiBuyAssetFailedOnAtomicSwap(
 					sender.clone(),
-					swap_token_list,
+					swap_token_list.clone(),
 					bought_asset_amount,
 				));
 				return Err(DispatchError::from(Error::<T>::NonSlippageMultiSwapFailure))},
-				(false, false, Err(_, true)) => {
+				(false, false, Err(e)) if e == Error::<T>::MultiSwapFailedOnBadSlippage.into() => {
 					Pallet::<T>::deposit_event(Event::MultiBuyAssetFailedDueToSlippage(
 						sender.clone(),
-						swap_token_list,
+						swap_token_list.clone(),
 						bought_asset_amount,
 					));
 					return Ok(Default::default())
 				}
-				(false, false, Err(_, false)) => {
+				(false, false, Err(e)) if e != Error::<T>::MultiSwapFailedOnBadSlippage.into() => {
 					Pallet::<T>::deposit_event(Event::MultiBuyAssetFailedOnAtomicSwap(
 						sender.clone(),
-						swap_token_list,
+						swap_token_list.clone(),
 						bought_asset_amount,
 					));
 					return Ok(Default::default())
-				}
+				},
+				(_,_,_) => {return Err(DispatchError::from(Error::<T>::UnexpectedFailure))}
 			}
 		}
 	}

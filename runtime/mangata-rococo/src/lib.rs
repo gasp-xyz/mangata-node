@@ -770,30 +770,26 @@ where
 
 				// Check if fee locks are initiazed or not
 				if let Some(fee_lock_metadata) = FeeLock::get_fee_lock_metadata() {
-						// ensure swap cannot fail
-						// This is to ensure that xyk swap fee is always charged
-						// We also ensure that the user has enough funds to transact
-						let _ =
-							<Xyk as PreValidateSwaps>::pre_validate_multiswap_sell_asset(
-								&who.clone().into(),
-								swap_token_list.clone(),
-								*sold_asset_amount,
-								*min_amount_out,
-							)
-							.map_err(|_| {
-								TransactionValidityError::Invalid(
-									InvalidTransaction::SwapPrevalidation.into(),
-								)
-							})?;
+					// ensure swap cannot fail
+					// This is to ensure that xyk swap fee is always charged
+					// We also ensure that the user has enough funds to transact
+					let _ = <Xyk as PreValidateSwaps>::pre_validate_multiswap_sell_asset(
+						&who.clone().into(),
+						swap_token_list.clone(),
+						*sold_asset_amount,
+						*min_amount_out,
+					)
+					.map_err(|_| {
+						TransactionValidityError::Invalid(
+							InvalidTransaction::SwapPrevalidation.into(),
+						)
+					})?;
 
-							// This is the "low value swap on curated token" branch
-							OFLA::process_fee_lock(who).map_err(|_| {
-								TransactionValidityError::Invalid(
-									InvalidTransaction::ProcessFeeLock.into(),
-								)
-							})?;
-							Ok(Some(LiquidityInfoEnum::FeeLock))
-						
+					// This is the "low value swap on curated token" branch
+					OFLA::process_fee_lock(who).map_err(|_| {
+						TransactionValidityError::Invalid(InvalidTransaction::ProcessFeeLock.into())
+					})?;
+					Ok(Some(LiquidityInfoEnum::FeeLock))
 				} else {
 					// FeeLocks are not activated branch
 					OCA::withdraw_fee(who, call, info, fee, tip)
@@ -906,30 +902,26 @@ where
 
 				// Check if fee locks are initiazed or not
 				if let Some(fee_lock_metadata) = FeeLock::get_fee_lock_metadata() {
-						// ensure swap cannot fail
-						// This is to ensure that xyk swap fee is always charged
-						// We also ensure that the user has enough funds to transact
-						let _ =
-							<Xyk as PreValidateSwaps>::pre_validate_multiswap_buy_asset(
-								&who.clone().into(),
-								swap_token_list.clone(),
-								*bought_asset_amount,
-								*max_amount_in,
-							)
-							.map_err(|_| {
-								TransactionValidityError::Invalid(
-									InvalidTransaction::SwapPrevalidation.into(),
-								)
-							})?;
+					// ensure swap cannot fail
+					// This is to ensure that xyk swap fee is always charged
+					// We also ensure that the user has enough funds to transact
+					let _ = <Xyk as PreValidateSwaps>::pre_validate_multiswap_buy_asset(
+						&who.clone().into(),
+						swap_token_list.clone(),
+						*bought_asset_amount,
+						*max_amount_in,
+					)
+					.map_err(|_| {
+						TransactionValidityError::Invalid(
+							InvalidTransaction::SwapPrevalidation.into(),
+						)
+					})?;
 
-							// This is the "low value swap on curated token" branch
-							OFLA::process_fee_lock(who).map_err(|_| {
-								TransactionValidityError::Invalid(
-									InvalidTransaction::ProcessFeeLock.into(),
-								)
-							})?;
-							Ok(Some(LiquidityInfoEnum::FeeLock))
-						
+					// This is the "low value swap on curated token" branch
+					OFLA::process_fee_lock(who).map_err(|_| {
+						TransactionValidityError::Invalid(InvalidTransaction::ProcessFeeLock.into())
+					})?;
+					Ok(Some(LiquidityInfoEnum::FeeLock))
 				} else {
 					// FeeLocks are not activated branch
 					OCA::withdraw_fee(who, call, info, fee, tip)

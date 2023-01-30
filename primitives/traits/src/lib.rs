@@ -105,7 +105,7 @@ pub trait XykFunctionsTrait<AccountId> {
 		sold_asset_amount: Self::Balance,
 		min_amount_out: Self::Balance,
 		err_upon_bad_slippage: bool,
-		err_upon_non_slippage_fail: bool
+		err_upon_non_slippage_fail: bool,
 	) -> Result<Self::Balance, DispatchError>;
 
 	fn buy_asset(
@@ -123,7 +123,7 @@ pub trait XykFunctionsTrait<AccountId> {
 		bought_asset_amount: Self::Balance,
 		max_amount_in: Self::Balance,
 		err_upon_bad_slippage: bool,
-		err_upon_non_slippage_fail: bool
+		err_upon_non_slippage_fail: bool,
 	) -> Result<Self::Balance, DispatchError>;
 
 	fn mint_liquidity(
@@ -234,7 +234,15 @@ pub trait PreValidateSwaps {
 		sold_asset_amount: Self::Balance,
 		min_amount_out: Self::Balance,
 	) -> Result<
-	(Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::CurrencyId, Self::CurrencyId),
+		(
+			Self::Balance,
+			Self::Balance,
+			Self::Balance,
+			Self::Balance,
+			Self::Balance,
+			Self::CurrencyId,
+			Self::CurrencyId,
+		),
 		DispatchError,
 	>;
 
@@ -255,7 +263,15 @@ pub trait PreValidateSwaps {
 		final_bought_asset_amount: Self::Balance,
 		max_amount_in: Self::Balance,
 	) -> Result<
-		(Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::CurrencyId, Self::CurrencyId),
+		(
+			Self::Balance,
+			Self::Balance,
+			Self::Balance,
+			Self::Balance,
+			Self::Balance,
+			Self::CurrencyId,
+			Self::CurrencyId,
+		),
 		DispatchError,
 	>;
 }

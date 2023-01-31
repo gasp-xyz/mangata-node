@@ -85,8 +85,7 @@ jobs:
 
   performance-tests:
     name: performance tests
-    needs: [init]
-    # needs: [deploy-fungible]
+    needs: [init, deploy-fungible]
     if: |
       (github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == ':rocket: deploy') ||
       (github.event_name == 'pull_request' && github.event.action != 'labeled' && contains(github.event.pull_request.labels.*.name, ':rocket: deploy'))

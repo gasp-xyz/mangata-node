@@ -14,7 +14,6 @@ jobs:
     timeout-minutes: 180
     env:
       ENV_REF: ${{ inputs.env == 'fungible' && format('pr-{0}', github.event.number) || inputs.env }}
-      TEST_SUDO_NAME: "//Alice"
     steps:
       ####IDK, but this is neccesary for reports
       - uses: actions/checkout@v3
@@ -23,6 +22,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           token: ${{ secrets.DEV_TOOLS_REPO_ACCESS_TOKEN }}
+          ref: f44493bbea3d42d5d2b479184d3ce002f11f6c97
           repository: mangata-finance/dev-tools
           path: dev-tools
 
@@ -39,12 +39,12 @@ jobs:
           --count 800 \
           --workers_count 8 \
           --timeout 300 \
-          --output report.png \
-          --min 300
+          --output ../../performance-benchmark.png \
+          --expected_throughput 300 \
+          --number_of_blocks 50
 
       - name: Upload reports
-        if: ${{ contains(github.event.pull_request.labels.*.name, 'full-benchmarks') }}
         uses: actions/upload-artifact@v3.1.1
         with:
-          name: benchmarks
-          path: ./dev-tools/fill-block-with-txs/report.png
+          name: performance-benchmark
+          path: ./performance-benchmark.png

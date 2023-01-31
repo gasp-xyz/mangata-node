@@ -13,7 +13,7 @@ jobs:
     runs-on: [self-hosted, compile]
     timeout-minutes: 180
     env:
-      ENV_REF: ${{ inputs.env == 'fungible' && format('pr-{0}', github.event.number) || inputs.env }}
+      ENV_REF: ${{ format('pr-{0}', github.event.number) }}
     steps:
       ####IDK, but this is neccesary for reports
       - uses: actions/checkout@v3
@@ -33,8 +33,7 @@ jobs:
       - name: Run performance tests
         working-directory: dev-tools/fill-block-with-txs
         run: |
-          ./index.js -u wss://node-01-ws-pr-398.mangata.online \
-          --url "wss://node-01-ws-${{ env.ENV_REF }}.mangata.online" \
+          ./index.js --url "wss://node-01-ws-${{ env.ENV_REF }}.mangata.online" \
           --mnemonic ${{ secrets.E2E_TEST_SUDO_NAME }} \
           --count 800 \
           --workers_count 8 \

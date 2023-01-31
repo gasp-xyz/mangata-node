@@ -87,8 +87,8 @@ jobs:
     name: performance tests
     needs: [init, deploy-fungible]
     if: |
-      (github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == ':rocket: deploy') ||
-      (github.event_name == 'pull_request' && github.event.action != 'labeled' && contains(github.event.pull_request.labels.*.name, ':rocket: deploy'))
+      (github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == ':rocket: deploy' && contains(github.event.pull_request.labels.*.name, 'full-benchmarks')) ||
+      (github.event_name == 'pull_request' && github.event.action != 'labeled' && contains(github.event.pull_request.labels.*.name, ':rocket: deploy') && contains(github.event.pull_request.labels.*.name, 'full-benchmarks'))
     uses: ./.github/workflows/reusable-perfomance-tests.yml
     secrets: inherit
   

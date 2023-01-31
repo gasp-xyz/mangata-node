@@ -35,7 +35,7 @@ jobs:
         run: |
           ./index.js --url "wss://node-01-ws-${{ env.ENV_REF }}.mangata.online" \
           --mnemonic ${{ secrets.E2E_TEST_SUDO_NAME }} \
-          --count 800 \
+          --txs_count 800 \
           --workers_count 8 \
           --timeout 300 \
           --output ../../performance-benchmark.png \

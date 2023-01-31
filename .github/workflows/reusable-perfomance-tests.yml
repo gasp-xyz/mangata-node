@@ -22,12 +22,29 @@ jobs:
       - name: Checkout performance-tests
         uses: actions/checkout@v3
         with:
-          token: ${ secrets.DEV_TOOLS_REPO_ACCESS_TOKEN }
+          token: ${{ secrets.DEV_TOOLS_REPO_ACCESS_TOKEN }}
           repository: mangata-finance/dev-tools
           path: dev-tools
 
       - name: Install parachain launch
-        working-directory: dev-tools/fill-txs
+        working-directory: dev-tools/fill-block-with-txs
         run: npm install
 
-          # "https://polkadot.js.org/apps/?rpc=wss://node-01-ws-${{ env.ENV_REF }}.mangata.online#/explorer"
+      - name: Run performance tests
+        working-directory: dev-tools/fill-block-with-txs
+        run: |
+          ./index.js -u wss://node-01-ws-pr-398.mangata.online \
+          --url "wss://node-01-ws-${{ env.ENV_REF }}.mangata.online" \
+          --mnemonic ${{ secrets.E2E_TEST_SUDO_NAME }} \
+          --count 800 \
+          --workers_count 8 \
+          --timeout 300 \
+          --output report.png \
+          --min 300
+
+      - name: Upload reports
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'full-benchmarks') }}
+        uses: actions/upload-artifact@v3.1.1
+        with:
+          name: benchmarks
+          path: ./dev-tools/fill-block-with-txs/report.png

@@ -342,7 +342,7 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
  sp-storage = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.36" }
  sp-std = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.36" }
  sp-finality-grandpa = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.36" }
- sp-beefy = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.36" }
+ beefy-primitives = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.36", package = "sp-beefy" }
  sp-version-proc-macro = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.36" }
  sp-version = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.36" }
  sp-transaction-pool = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.36" }
@@ -527,7 +527,7 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
  sp-storage = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.36" }
  sp-std = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.36" }
  sp-finality-grandpa = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.36" }
- sp-beefy = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.36" }
+ beefy-primitives = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.36",  package = "sp-beefy" }
  sp-version-proc-macro = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.36" }
  sp-version = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.36" }
  sp-transaction-pool = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.36" }
@@ -710,7 +710,7 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
  sp-storage = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.36" }
  sp-std = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.36" }
  sp-finality-grandpa = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.36" }
- sp-beefy = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.36" }
+ beefy-primitives = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.36",  package = "sp-beefy" }
  sp-version-proc-macro = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.36" }
  sp-version = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.36" }
  sp-transaction-pool = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev-v0.9.36" }

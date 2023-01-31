@@ -8,3 +8,11 @@ node01:
 
 node02:
   accountKeySeed: '0x398f0c28f98885e046333d4a41c19cee4c37368a9832c6502f6cfd182e2aef89'
+
+resources:
+  requests:
+    cpu: '8.0'
+    memory: 16Gi
+  limits:
+    cpu: '8.0'
+    memory: 16Gi

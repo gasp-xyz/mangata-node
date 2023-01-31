@@ -22,7 +22,6 @@ jobs:
         uses: actions/checkout@v3
         with:
           token: ${{ secrets.DEV_TOOLS_REPO_ACCESS_TOKEN }}
-          ref: f44493bbea3d42d5d2b479184d3ce002f11f6c97
           repository: mangata-finance/dev-tools
           path: dev-tools
 

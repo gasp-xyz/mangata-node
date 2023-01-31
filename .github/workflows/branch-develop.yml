@@ -82,6 +82,16 @@ jobs:
     with:
       env: fungible
       version: ${{ needs.init.outputs.GLOBAL_VERSION }}
+
+  performance-tests:
+    name: performance tests
+    needs: [init]
+    # needs: [deploy-fungible]
+    if: |
+      (github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == ':rocket: deploy') ||
+      (github.event_name == 'pull_request' && github.event.action != 'labeled' && contains(github.event.pull_request.labels.*.name, ':rocket: deploy'))
+    uses: ./.github/workflows/reusable-perfomance-tests.yml
+    secrets: inherit
   
   clean-up-fungible:
     name: Delete fungible environment

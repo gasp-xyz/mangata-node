@@ -22,6 +22,7 @@ jobs:
       - name: Checkout performance-tests
         uses: actions/checkout@v3
         with:
+          token: ${ secrets.DEV_TOOLS_REPO_ACCESS_TOKEN }
           repository: mangata-finance/dev-tools
           path: dev-tools
 

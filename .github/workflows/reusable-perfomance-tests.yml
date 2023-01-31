@@ -34,6 +34,7 @@ jobs:
         working-directory: dev-tools/fill-block-with-txs
         run: |
           ./index.js --url "wss://node-01-ws-${{ env.ENV_REF }}.mangata.online" \
+          --url "wss://node-02-ws-${{ env.ENV_REF }}.mangata.online" \
           --mnemonic ${{ secrets.E2E_TEST_SUDO_NAME }} \
           --txs_count 800 \
           --workers_count 8 \

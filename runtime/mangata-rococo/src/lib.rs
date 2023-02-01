@@ -566,11 +566,41 @@ impl pallet_bootstrap::Config for Runtime {
 	type AssetRegistryApi = EnableAssetPoolApi;
 }
 
-impl pallet_utility::Config for Runtime {
+
+#[derive(
+	Copy,
+	Clone,
+	Eq,
+	PartialEq,
+	Ord,
+	PartialOrd,
+	Encode,
+	Decode,
+	RuntimeDebug,
+	MaxEncodedLen,
+	TypeInfo,
+)]
+pub struct DisallowedInBatch;
+
+impl Contains<RuntimeCall> for DisallowedInBatch {
+	fn contains(c: &RuntimeCall) -> bool {
+		match c {
+			RuntimeCall::Xyk(pallet_xyk::Call::sell_asset {..})
+			 |  RuntimeCall::Xyk(pallet_xyk::Call::buy_asset {..})
+			 |  RuntimeCall::Xyk(pallet_xyk::Call::multiswap_sell_asset {..})
+			 |  RuntimeCall::Xyk(pallet_xyk::Call::multiswap_buy_asset {..})=> true,
+			_ => false
+		}
+	}
+
+}
+
+impl pallet_utility_mangata::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
+	type DisallowedInBatch = DisallowedInBatch;
 	type PalletsOrigin = OriginCaller;
-	type WeightInfo = weights::pallet_utility_weights::ModuleWeight<Runtime>;
+	type WeightInfo = weights::pallet_utility_mangata_weights::ModuleWeight<Runtime>;
 }
 
 type ORMLCurrencyAdapterNegativeImbalance =
@@ -1598,7 +1628,7 @@ construct_runtime!(
 
 		// Bootstrap
 		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>} = 53,
-		Utility: pallet_utility::{Pallet, Call, Event} = 54,
+		Utility: pallet_utility_mangata::{Pallet, Call, Event} = 54,
 
 		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 55,
 	}
@@ -1622,7 +1652,7 @@ mod benches {
 		[pallet_collective_mangata, Council]
 		[pallet_bootstrap, Bootstrap]
 		[pallet_crowdloan_rewards, Crowdloan]
-		[pallet_utility, Utility]
+		[pallet_utility_mangata, Utility]
 		[pallet_vesting_mangata, Vesting]
 		[pallet_issuance, Issuance]
 		[pallet_multipurpose_liquidity, MultiPurposeLiquidity]

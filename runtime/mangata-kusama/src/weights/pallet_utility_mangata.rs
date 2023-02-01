@@ -65,7 +65,7 @@ pub trait WeightInfo {
 
 /// Weights for pallet_utility using the Mangata node and recommended hardware.
 pub struct ModuleWeight<T>(PhantomData<T>);
-impl<T: frame_system::Config> pallet_utility::WeightInfo for ModuleWeight<T> {
+impl<T: frame_system::Config> pallet_utility_mangata::WeightInfo for ModuleWeight<T> {
 	fn batch(c: u32, ) -> Weight {
 		(Weight::from_ref_time(20_194_974))
 			// Standard Error: 2_172

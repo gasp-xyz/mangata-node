@@ -95,7 +95,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn get_account_fee_lock_data)]
 	pub type AccountFeeLockData<T: Config> =
-		StorageMap<_, Blake2_256, T::AccountId, AccountFeeLockDataInfo<T::BlockNumber>, ValueQuery>;
+		StorageMap<_, Twox64Concat, T::AccountId, AccountFeeLockDataInfo<T::BlockNumber>, ValueQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]

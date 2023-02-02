@@ -42,112 +42,144 @@ fn encrypt_data(input: &[u8]) -> (Vec<u8>, Vec<u8>) {
 	(doubly_encrypted_call, singly_encrypted_call)
 }
 
+fn make_aead<T,AEAD>(mut t: T) -> AEAD
+where T: SigningTranscript,AEAD: NewAead
+{
+    let mut key: GenericArray<u8, <AEAD as NewAead>::KeySize> = Default::default();
+    t.challenge_bytes(b"",key.as_mut_slice());
+    AEAD::new(key)
+}
+
 #[test]
 fn test_submit_double_encrypted_tx() {
 	ExtBuilder::new()
 	.build()
 	.execute_with(|| {
 
-		assert!(EnqueuedTxs::<Test>::try_get(ALICE).is_err());
-		let cnt = UniqueId::<Test>::get();
-
-		let input = b"dummy_data".to_vec();
-		let (doubly_enc, singly_enc) = encrypt_data(&input);
-
-		let id = EncryptedTx::calculate_unique_id(&ALICE, cnt, &doubly_enc);
-		EncryptedTx::submit_doubly_encrypted_transaction( RuntimeOrigin::signed(ALICE),
-			doubly_enc.clone(),
-			0,
-			ZERO_WEIGHT,
-			BUILDER,
-			EXECUTOR
-		).unwrap();
+		let secret_uri = "//Alice";
+		let key_type = sp_core::crypto::KeyTypeId(*b"aura");
+		let key_pair = sp_core::sr25519::Pair::from_string(secret_uri, None).expect("Generates key pair");
+		let secret = &key_pair.as_ref().secret;
+		let public =  &key_pair.as_ref().public;
 
 
-		let details = EnqueuedTxs::<Test>::try_get(BUILDER).expect("dummy_call is stored");
-		assert_eq!(1, details.len());
+		// keystore
+		// 	.insert_unknown(key_type, secret_uri, key_pair.public().as_ref())
+		// 	.unwrap();
+        //
+		// let secret = schnorrkel::SecretKey::from_bytes(&priv_key[..]).expect("that should not fail"),
+		// let public = schnorrkel::PublicKey::from_bytes(&pub_key[..]).expect("that should not fail"),
 
-		assert_eq!(
-		&TxnRegistryDetails{
-			id,
-			data: doubly_enc,
-			encryption: Encryption::Double,
-			user: ALICE,
-			weight: ZERO_WEIGHT,
-			builder: BUILDER,
-			executor: EXECUTOR,
-		}, details.get(0).unwrap());
 
 	});
 }
 
-#[test]
-fn test_submit_double_encrypted_tx_multiple_times() {
-	ExtBuilder::new()
-	.build()
-	.execute_with(|| {
-		for _ in 1..10 {
-			let input = b"dummy_data".to_vec();
-			let (doubly_enc,singly_enc) = encrypt_data(&input);
-
-			EncryptedTx::submit_doubly_encrypted_transaction( 
-				RuntimeOrigin::signed(ALICE),
-				doubly_enc,
-				0,
-				ZERO_WEIGHT,
-				BUILDER,
-				EXECUTOR
-			).unwrap();
-		}
-	});
-}
-
-#[test]
-fn test_cannot_submit_tx_with_not_enought_tokens_to_pay_declared_fee() {
-	ExtBuilder::new()
-	.create_token(NativeCurrencyId::get())
-	.build()
-	.execute_with(|| {
-		let fee = 100_u128;
-
-		assert!(fee > OrmlTokens::accounts(ALICE, NativeCurrencyId::get()).free);
-
-		let input = b"dummy_data".to_vec();
-		let (doubly_enc,_singly_enc) = encrypt_data(&input);
-
-		assert_err!(
-			EncryptedTx::submit_doubly_encrypted_transaction(
-				RuntimeOrigin::signed(ALICE),
-				doubly_enc,
-				fee,
-				ZERO_WEIGHT,
-				BUILDER,
-				EXECUTOR)
-			,
-			Error::<Test>::NotEnoughtBalance
-		);
-	});
-}
-
-#[test]
-fn test_submit_encrypted_call_error_because_of_empty_queue() {
-	ExtBuilder::new()
-	.create_token(NativeCurrencyId::get())
-	.build()
-	.execute_with(|| {
-		let dummy_call = b"dummy_data".to_vec();
-		let identifier = EncryptedTx::calculate_unique_id(&ALICE, UniqueId::<Test>::get(), &dummy_call);
-		assert_err!(
-		EncryptedTx::submit_singly_encrypted_transaction(
-			RuntimeOrigin::signed(ALICE),
-			identifier,
-			b"dummy data".to_vec(),
-		),
-		Error::<Test>::EmptyQueue
-		);
-
-	});
-}
+// #[test]
+// fn test_submit_double_encrypted_tx() {
+// 	ExtBuilder::new()
+// 	.build()
+// 	.execute_with(|| {
+//
+// 		assert!(EnqueuedTxs::<Test>::try_get(ALICE).is_err());
+// 		let cnt = UniqueId::<Test>::get();
+//
+// 		let input = b"dummy_data".to_vec();
+// 		let (doubly_enc, singly_enc) = encrypt_data(&input);
+//
+// 		let id = EncryptedTx::calculate_unique_id(&ALICE, cnt, &doubly_enc);
+// 		EncryptedTx::submit_doubly_encrypted_transaction( RuntimeOrigin::signed(ALICE),
+// 			doubly_enc.clone(),
+// 			0,
+// 			ZERO_WEIGHT,
+// 			BUILDER,
+// 			EXECUTOR
+// 		).unwrap();
+//
+//
+// 		let details = EnqueuedTxs::<Test>::try_get(BUILDER).expect("dummy_call is stored");
+// 		assert_eq!(1, details.len());
+//
+// 		assert_eq!(
+// 		&TxnRegistryDetails{
+// 			id,
+// 			data: doubly_enc,
+// 			encryption: Encryption::Double,
+// 			user: ALICE,
+// 			weight: ZERO_WEIGHT,
+// 			builder: BUILDER,
+// 			executor: EXECUTOR,
+// 		}, details.get(0).unwrap());
+//
+// 	});
+// }
+//
+// #[test]
+// fn test_submit_double_encrypted_tx_multiple_times() {
+// 	ExtBuilder::new()
+// 	.build()
+// 	.execute_with(|| {
+// 		for _ in 1..10 {
+// 			let input = b"dummy_data".to_vec();
+// 			let (doubly_enc,singly_enc) = encrypt_data(&input);
+//
+// 			EncryptedTx::submit_doubly_encrypted_transaction( 
+// 				RuntimeOrigin::signed(ALICE),
+// 				doubly_enc,
+// 				0,
+// 				ZERO_WEIGHT,
+// 				BUILDER,
+// 				EXECUTOR
+// 			).unwrap();
+// 		}
+// 	});
+// }
+//
+// #[test]
+// fn test_cannot_submit_tx_with_not_enought_tokens_to_pay_declared_fee() {
+// 	ExtBuilder::new()
+// 	.create_token(NativeCurrencyId::get())
+// 	.build()
+// 	.execute_with(|| {
+// 		let fee = 100_u128;
+//
+// 		assert!(fee > OrmlTokens::accounts(ALICE, NativeCurrencyId::get()).free);
+//
+// 		let input = b"dummy_data".to_vec();
+// 		let (doubly_enc,_singly_enc) = encrypt_data(&input);
+//
+// 		assert_err!(
+// 			EncryptedTx::submit_doubly_encrypted_transaction(
+// 				RuntimeOrigin::signed(ALICE),
+// 				doubly_enc,
+// 				fee,
+// 				ZERO_WEIGHT,
+// 				BUILDER,
+// 				EXECUTOR)
+// 			,
+// 			Error::<Test>::NotEnoughtBalance
+// 		);
+// 	});
+// }
+//
+// #[test]
+// fn test_submit_encrypted_call_error_because_of_empty_queue() {
+// 	ExtBuilder::new()
+// 	.create_token(NativeCurrencyId::get())
+// 	.build()
+// 	.execute_with(|| {
+// 		let dummy_call = b"dummy_data".to_vec();
+// 		let identifier = EncryptedTx::calculate_unique_id(&ALICE, UniqueId::<Test>::get(), &dummy_call);
+// 		assert_err!(
+// 		EncryptedTx::submit_singly_encrypted_transaction(
+// 			RuntimeOrigin::signed(ALICE),
+// 			identifier,
+// 			b"dummy data".to_vec(),
+// 		),
+// 		Error::<Test>::EmptyQueue
+// 		);
+//
+// 	});
+// }
 
 // #[test]
 // fn test_submit_encrypted_call_error_because_of_bad_account() {

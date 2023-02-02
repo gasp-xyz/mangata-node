@@ -49,6 +49,7 @@ sp-transaction-pool = { git = "https://github.com/mangata-finance/substrate", de
 pallet-utility = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.36" }
 sp-ver = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.36" }
 sp-version = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.36" }
+sp-weights = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev-v0.9.36" }
 
 ## Substrate FRAME Dependencies
 frame-benchmarking = { git = "https://github.com/mangata-finance/substrate", default-features = false, optional = true, branch = "mangata-dev-v0.9.36" }

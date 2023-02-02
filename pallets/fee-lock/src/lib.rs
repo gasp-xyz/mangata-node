@@ -46,7 +46,6 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-
 	use super::*;
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
@@ -57,7 +56,22 @@ pub mod pallet {
 	pub struct Pallet<T>(PhantomData<T>);
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
+	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
+		fn on_idle(now: T::BlockNumber, remaining_weight: Weight) -> Weight {
+			// process only up to 80% or remaining weight
+			let txs_to_process =
+				remaining_weight.ref_time() / T::WeightInfo::unlock_fee().ref_time() * 8 / 10;
+
+			for (key, _) in AccountFeeLockData::<T>::iter()
+				.filter(|(_, val)| val.last_fee_lock_block < now)
+				.take(txs_to_process as usize)
+			{
+				let _ = <Self as FeeLockTriggerTrait<T::AccountId>>::unlock_fee(&key);
+			}
+
+			T::WeightInfo::unlock_fee() * txs_to_process
+		}
+	}
 
 	#[derive(Eq, PartialEq, RuntimeDebug, Clone, Encode, Decode, MaxEncodedLen, TypeInfo)]
 	#[codec(mel_bound(T: Config))]
@@ -94,8 +108,13 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_account_fee_lock_data)]
-	pub type AccountFeeLockData<T: Config> =
-		StorageMap<_, Twox64Concat, T::AccountId, AccountFeeLockDataInfo<T::BlockNumber>, ValueQuery>;
+	pub type AccountFeeLockData<T: Config> = StorageMap<
+		_,
+		Twox64Concat,
+		T::AccountId,
+		AccountFeeLockDataInfo<T::BlockNumber>,
+		ValueQuery,
+	>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -205,6 +224,12 @@ pub mod pallet {
 
 			Ok(<Self as FeeLockTriggerTrait<T::AccountId>>::unlock_fee(&who)?.into())
 		}
+	}
+}
+
+impl<T: Config> Pallet<T> {
+	fn do_on_idle(remaining_weight: Weight) -> Weight {
+		Weight::from_ref_time(0 as u64)
 	}
 }
 

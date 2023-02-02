@@ -17,7 +17,6 @@ pub trait WeightInfo {
 	fn claim_rewards_all_v2() -> Weight;
 	fn activate_liquidity_v2() -> Weight;
 	fn deactivate_liquidity_v2() -> Weight;
-	fn rewards_migrate_v1_to_v2() -> Weight;
 	fn provide_liquidity_with_conversion() -> Weight;
 	fn compound_rewards() -> Weight;
 }
@@ -80,16 +79,9 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(6 as u64))
 			.saturating_add(RocksDbWeight::get().writes(5 as u64))
 	}
-	
-	//TODO retest
-	fn deactivate_liquidity_v2() -> Weight {
-		Weight::from_ref_time(133_607_000)
-			.saturating_add(RocksDbWeight::get().reads(7 as u64))
-			.saturating_add(RocksDbWeight::get().writes(7 as u64))
-	}
 
 	//TODO retest
-	fn rewards_migrate_v1_to_v2() -> Weight {
+	fn deactivate_liquidity_v2() -> Weight {
 		Weight::from_ref_time(133_607_000)
 			.saturating_add(RocksDbWeight::get().reads(7 as u64))
 			.saturating_add(RocksDbWeight::get().writes(7 as u64))

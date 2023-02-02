@@ -67,7 +67,6 @@ pub trait WeightInfo {
 	fn update_pool_promotion() -> Weight;
 	fn activate_liquidity_v2() -> Weight;
 	fn deactivate_liquidity_v2() -> Weight;
-	fn rewards_migrate_v1_to_v2() -> Weight;
 	fn provide_liquidity_with_conversion() -> Weight;
 	fn compound_rewards() -> Weight;
 }
@@ -191,23 +190,6 @@ impl<T: frame_system::Config> pallet_xyk::WeightInfo for ModuleWeight<T> {
 		(Weight::from_ref_time(91_000_000))
 			.saturating_add(T::DbWeight::get().reads(5 as u64))
 			.saturating_add(T::DbWeight::get().writes(4 as u64))
-	}
-	// Storage: Issuance PromotedPoolsRewards (r:1 w:1)
-	// Storage: Issuance PromotedPoolsRewardsV2 (r:1 w:0)
-	// Storage: Xyk LiquidityMiningActiveUser (r:1 w:1)
-	// Storage: Xyk LiquidityMiningActivePool (r:1 w:1)
-	// Storage: Xyk LiquidityMiningUserToBeClaimed (r:1 w:1)
-	// Storage: Xyk LiquidityMiningUserClaimed (r:1 w:1)
-	// Storage: Xyk LiquidityMiningUser (r:1 w:1)
-	// Storage: Xyk LiquidityMiningPool (r:1 w:1)
-	// Storage: Tokens Accounts (r:2 w:2)
-	// Storage: System Account (r:1 w:1)
-	// Storage: Xyk LiquidityMiningActivePoolV2 (r:1 w:1)
-	// Storage: Xyk RewardsInfo (r:0 w:1)
-	fn rewards_migrate_v1_to_v2() -> Weight {
-		(Weight::from_ref_time(135_540_000))
-			.saturating_add(T::DbWeight::get().reads(12 as u64))
-			.saturating_add(T::DbWeight::get().writes(12 as u64))
 	}
 	// Storage: Xyk LiquidityPools (r:1 w:0)
 	// Storage: AssetRegistry Metadata (r:2 w:0)
@@ -360,23 +342,6 @@ impl WeightInfo for () {
 		(Weight::from_ref_time(91_000_000))
 			.saturating_add(RocksDbWeight::get().reads(5 as u64))
 			.saturating_add(RocksDbWeight::get().writes(4 as u64))
-	}
-	// Storage: Issuance PromotedPoolsRewards (r:1 w:1)
-	// Storage: Issuance PromotedPoolsRewardsV2 (r:1 w:0)
-	// Storage: Xyk LiquidityMiningActiveUser (r:1 w:1)
-	// Storage: Xyk LiquidityMiningActivePool (r:1 w:1)
-	// Storage: Xyk LiquidityMiningUserToBeClaimed (r:1 w:1)
-	// Storage: Xyk LiquidityMiningUserClaimed (r:1 w:1)
-	// Storage: Xyk LiquidityMiningUser (r:1 w:1)
-	// Storage: Xyk LiquidityMiningPool (r:1 w:1)
-	// Storage: Tokens Accounts (r:2 w:2)
-	// Storage: System Account (r:1 w:1)
-	// Storage: Xyk LiquidityMiningActivePoolV2 (r:1 w:1)
-	// Storage: Xyk RewardsInfo (r:0 w:1)
-	fn rewards_migrate_v1_to_v2() -> Weight {
-		(Weight::from_ref_time(135_540_000))
-			.saturating_add(RocksDbWeight::get().reads(12 as u64))
-			.saturating_add(RocksDbWeight::get().writes(12 as u64))
 	}
 	// Storage: Xyk LiquidityPools (r:1 w:0)
 	// Storage: AssetRegistry Metadata (r:2 w:0)

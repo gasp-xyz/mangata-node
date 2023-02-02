@@ -3,6 +3,7 @@ image:
   tag: {{ requiredEnv "IMAGE_TAG" | quote }}
 remoteCluster: true
 customChainspecUrl: {{ .Values | get "nodeCustomChainspecUrl" "" }}
+chain: {{ .Values | get "nodeChain" "" }}
 storageClass: {{ .Values.storageClass }}
 storageSize: {{ .Values.storageSize }}
 parachainRegisterSidecar:

@@ -73,6 +73,9 @@ jobs:
       - run: |
           export ENVIRONMENT=${{ env.ENV_REF }}
           export IMAGE_TAG=${{ inputs.version }}
+          
+          # https://dev.to/derlin/helmfile-difference-between-sync-and-apply-helm-3-28o1
+          export HELM_DIFF_THREE_WAY_MERGE=true
           helmfile apply -e ${{ inputs.env }}
         working-directory: devops/helmfiles
       

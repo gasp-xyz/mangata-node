@@ -501,8 +501,8 @@ pub mod pallet {
 		LiquidityActivated(T::AccountId, TokenId, Balance),
 		LiquidityDeactivated(T::AccountId, TokenId, Balance),
 		RewardsClaimed(T::AccountId, TokenId, Balance),
-		AssetsMultiSellSwapped(T::AccountId, Vec<TokenId>, Balance),
-		AssetsMultiBuySwapped(T::AccountId, Vec<TokenId>, Balance),
+		AssetsMultiSellSwapped(T::AccountId, Vec<TokenId>, Balance, Balance),
+		AssetsMultiBuySwapped(T::AccountId, Vec<TokenId>, Balance, Balance),
 		MultiSellAssetFailedDueToSlippage(T::AccountId, Vec<TokenId>, Balance),
 		MultiBuyAssetFailedDueToSlippage(T::AccountId, Vec<TokenId>, Balance),
 		MultiSellAssetFailedOnAtomicSwap(T::AccountId, Vec<TokenId>, Balance),
@@ -2048,7 +2048,7 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 		),
 		DispatchError,
 	> {
-		ensure!(swap_token_list.len() > usize::one(), Error::<T>::MultiswapShouldBeAtleastTwoHops);
+		ensure!(swap_token_list.len() > 2_usize, Error::<T>::MultiswapShouldBeAtleastTwoHops);
 		// Unwraps are fine due to above ensure
 		let sold_asset_id = *swap_token_list.get(0).unwrap();
 		let bought_asset_id = *swap_token_list.get(1).unwrap();
@@ -2238,8 +2238,9 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 	> {
 		// Ensure not buying zero amount
 		ensure!(!final_bought_asset_amount.is_zero(), Error::<T>::ZeroAmount,);
+		ensure!(!max_amount_in.is_zero(), Error::<T>::ZeroAmount,);
 
-		ensure!(swap_token_list.len() > usize::one(), Error::<T>::MultiswapShouldBeAtleastTwoHops);
+		ensure!(swap_token_list.len() > 2_usize, Error::<T>::MultiswapShouldBeAtleastTwoHops);
 		// Unwraps are fine due to above ensure
 		let sold_asset_id = *swap_token_list.get(0).unwrap();
 		let bought_asset_id = *swap_token_list.get(1).unwrap();
@@ -2744,6 +2745,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				sender.clone(),
 				swap_token_list.clone(),
 				sold_asset_amount,
+				bought_asset_amount
 			));
 			return Ok(bought_asset_amount)
 		} else {
@@ -3059,6 +3061,10 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 					atomic_bought_asset_amount = atomic_sold_asset_amount;
 				}
 
+
+					println!("{}", atomic_bought_asset_amount);
+
+
 				ensure!(
 					atomic_sold_asset_amount <= max_amount_in,
 					Error::<T>::MultiSwapFailedOnBadSlippage
@@ -3100,6 +3106,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			Pallet::<T>::deposit_event(Event::AssetsMultiBuySwapped(
 				sender.clone(),
 				swap_token_list.clone(),
+				sold_asset_amount,
 				bought_asset_amount,
 			));
 			return Ok(sold_asset_amount)

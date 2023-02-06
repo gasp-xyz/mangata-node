@@ -2,6 +2,7 @@ use super::*;
 use crate::mock::*;
 use frame_support::{assert_noop, assert_ok};
 use sp_std::convert::TryFrom;
+use test_case::test_case;
 
 use orml_tokens::AccountData;
 use sp_std::collections::btree_set::BTreeSet;
@@ -719,4 +720,153 @@ fn whitelist_and_valuation_works() {
 			None
 		);
 	})
+}
+
+const PERIOD_LENGTH: u64 = 10;
+const FEE_LOCK_AMOUNT: u128 = 1000;
+const SWAP_VALUE_THRESHOLD: u128 = 1000;
+const ALICE: u128 = 0u128;
+const BOB: u128 = 1u128;
+const INITIAL_AMOUNT: Balance = 2_000_000__u128;
+
+fn calculate_estimated_weight(unlock_fee_calls: u64, reads: u64) -> Weight {
+	<Test as frame_system::Config>::DbWeight::get().reads(reads) +
+		(<Test as Config>::WeightInfo::unlock_fee() * unlock_fee_calls)
+}
+
+#[test_case(
+	Weight::from_ref_time(u64::MAX),
+	calculate_estimated_weight(1, 3),
+	AccountData{
+		free:INITIAL_AMOUNT - 0 * FEE_LOCK_AMOUNT,
+		reserved: 0 * FEE_LOCK_AMOUNT,
+		frozen: 0u128,
+	}; "unlocks tokens for an user")]
+#[test_case(
+	Weight::from_ref_time(0),
+	Weight::from_ref_time(0),
+	AccountData{
+		free:INITIAL_AMOUNT - 1 * FEE_LOCK_AMOUNT,
+		reserved: 1 * FEE_LOCK_AMOUNT,
+		frozen: 0u128,
+	}; "does not unlock tokens when weigh is zero")]
+#[test_case(
+	calculate_estimated_weight(1, 2),
+	calculate_estimated_weight(1, 2),
+	AccountData{
+		free:INITIAL_AMOUNT - 0 * FEE_LOCK_AMOUNT,
+		reserved: 0 * FEE_LOCK_AMOUNT,
+		frozen: 0u128,
+	}; "unlock tokens using exact amount of weight required")]
+#[test_case(
+	calculate_estimated_weight(1, 1),
+	Weight::from_ref_time(0),
+	AccountData{
+		free:INITIAL_AMOUNT - 1 * FEE_LOCK_AMOUNT,
+		reserved: 1 * FEE_LOCK_AMOUNT,
+		frozen: 0u128,
+	}; "unlock tokens using a too small weight that required")]
+#[test_case(
+	calculate_estimated_weight(1, 4),
+	calculate_estimated_weight(1, 2),
+	AccountData{
+		free:INITIAL_AMOUNT - 0 * FEE_LOCK_AMOUNT,
+		reserved: 0 * FEE_LOCK_AMOUNT,
+		frozen: 0u128,
+	}; "unlock tokens using a bit more weight that required")]
+fn test_on_idle_unlock_for_single_user(
+	availabe_weight: Weight,
+	consumed_weight: Weight,
+	expected_account_data: AccountData<Balance>,
+) {
+	ExtBuilder::new()
+		.create_token(NativeCurrencyId::get())
+		.mint(ALICE, NativeCurrencyId::get(), INITIAL_AMOUNT)
+		.initialize_fee_locks(PERIOD_LENGTH, FEE_LOCK_AMOUNT, SWAP_VALUE_THRESHOLD)
+		.build()
+		.execute_with(|| {
+			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&ALICE).unwrap();
+			fast_forward_blocks(PERIOD_LENGTH + 1);
+
+			// assert
+			assert_ok!(<FeeLock as FeeLockTriggerTrait<_>>::can_unlock_fee(&ALICE));
+			assert_eq!(
+				Tokens::accounts(ALICE, NativeCurrencyId::get()),
+				AccountData {
+					free: INITIAL_AMOUNT - FEE_LOCK_AMOUNT,
+					reserved: 1 * FEE_LOCK_AMOUNT,
+					frozen: 0__u128,
+				}
+			);
+
+			assert_eq!(FeeLock::on_idle(System::block_number(), availabe_weight), consumed_weight);
+
+			assert_eq!(Tokens::accounts(ALICE, NativeCurrencyId::get()), expected_account_data);
+		});
+}
+
+#[test_case(
+	Weight::from_ref_time(u64::MAX),
+	calculate_estimated_weight(2, 4),
+	vec![
+	(ALICE, AccountData{
+		free:INITIAL_AMOUNT - 0 * FEE_LOCK_AMOUNT,
+		reserved: 0 * FEE_LOCK_AMOUNT,
+		frozen: 0u128}),
+	(BOB, AccountData{
+		free:INITIAL_AMOUNT - 0 * FEE_LOCK_AMOUNT,
+		reserved: 0 * FEE_LOCK_AMOUNT,
+		frozen: 0u128}),
+	]; "unlocks tokens for both users with unlimited input weight")]
+#[test_case(
+	calculate_estimated_weight(2, 3),
+	calculate_estimated_weight(2, 3),
+	vec![
+	(ALICE, AccountData{
+		free:INITIAL_AMOUNT - 0 * FEE_LOCK_AMOUNT,
+		reserved: 0 * FEE_LOCK_AMOUNT,
+		frozen: 0u128}),
+	(BOB, AccountData{
+		free:INITIAL_AMOUNT - 0 * FEE_LOCK_AMOUNT,
+		reserved: 0 * FEE_LOCK_AMOUNT,
+		frozen: 0u128}),
+	]; "unlocks tokens for both users using exact required weight ")]
+#[test_case(
+	calculate_estimated_weight(1, 2),
+	calculate_estimated_weight(1, 2),
+	vec![
+	(ALICE, AccountData{
+		free:INITIAL_AMOUNT - 1 * FEE_LOCK_AMOUNT,
+		reserved: 1 * FEE_LOCK_AMOUNT,
+		frozen: 0u128}),
+	(BOB, AccountData{
+		free:INITIAL_AMOUNT - 0 * FEE_LOCK_AMOUNT,
+		reserved: 0 * FEE_LOCK_AMOUNT,
+		frozen: 0u128}),
+	]; "unlocks tokens for single account only with limited weight")]
+fn test_on_idle_unlock_multiple_users(
+	availabe_weight: Weight,
+	consumed_weight: Weight,
+	expected_account_data: Vec<(<Test as frame_system::Config>::AccountId, AccountData<Balance>)>,
+) {
+	ExtBuilder::new()
+		.create_token(NativeCurrencyId::get())
+		.mint(ALICE, NativeCurrencyId::get(), INITIAL_AMOUNT)
+		.mint(BOB, NativeCurrencyId::get(), INITIAL_AMOUNT)
+		.initialize_fee_locks(PERIOD_LENGTH, FEE_LOCK_AMOUNT, SWAP_VALUE_THRESHOLD)
+		.build()
+		.execute_with(|| {
+			for (account, _) in expected_account_data.iter() {
+				<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(account).unwrap();
+			}
+			fast_forward_blocks(PERIOD_LENGTH + 1);
+
+			let consumed = FeeLock::on_idle(System::block_number(), availabe_weight);
+
+			for data in expected_account_data {
+				assert_eq!(Tokens::accounts(data.0, NativeCurrencyId::get()), data.1);
+			}
+
+			assert_eq!(consumed_weight, consumed);
+		});
 }

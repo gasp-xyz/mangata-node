@@ -1,4 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+#![feature(custom_test_frameworks)]
 
 use frame_support::{
 	dispatch::DispatchResult,
@@ -58,18 +59,46 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_idle(now: T::BlockNumber, remaining_weight: Weight) -> Weight {
-			// process only up to 80% or remaining weight
-			let txs_to_process =
-				remaining_weight.ref_time() / T::WeightInfo::unlock_fee().ref_time() * 8 / 10;
+			let mut consumed_weight: Weight = Default::default();
 
-			for (key, _) in AccountFeeLockData::<T>::iter()
-				.filter(|(_, val)| val.last_fee_lock_block < now)
-				.take(txs_to_process as usize)
-			{
-				let _ = <Self as FeeLockTriggerTrait<T::AccountId>>::unlock_fee(&key);
+			// process only up to 80% or remaining weight
+			let cost_of_single_unlock = T::WeightInfo::unlock_fee() // cost of unlock action
+				+ T::DbWeight::get().reads(1)   // Self::get_fee_lock_metadata
+				+ T::DbWeight::get().reads(1); // single iteration
+
+			let cost_of_single_unlock_iteration = T::WeightInfo::unlock_fee() // cost of unlock action
+				+ T::DbWeight::get().reads(1); // iteration
+
+			if cost_of_single_unlock.ref_time() > remaining_weight.ref_time() {
+				return Weight::from_ref_time(0)
 			}
 
-			T::WeightInfo::unlock_fee() * txs_to_process
+			consumed_weight += T::DbWeight::get().reads(1);
+			let metadata = Self::get_fee_lock_metadata();
+			let period_length = metadata.map(|meta| meta.period_length);
+			let current_period = period_length.and_then(|period| now.checked_div(&period));
+
+			loop {
+				consumed_weight += T::DbWeight::get().reads(1);
+				match (period_length, current_period, AccountFeeLockData::<T>::iter().next()) {
+					(Some(period_lenght), Some(current_period), Some((who, lock))) => {
+						let unlock_period = lock.last_fee_lock_block.checked_div(&period_lenght);
+
+						if matches!(unlock_period, Some(unlock) if unlock < current_period) {
+							consumed_weight += T::WeightInfo::unlock_fee();
+							let _ = <Self as FeeLockTriggerTrait<T::AccountId>>::unlock_fee(&who);
+						}
+					},
+					_ => break,
+				};
+
+				if cost_of_single_unlock_iteration.ref_time() >
+					(remaining_weight.ref_time() - consumed_weight.ref_time())
+				{
+					break
+				}
+			}
+			consumed_weight
 		}
 	}
 

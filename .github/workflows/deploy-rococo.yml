@@ -23,5 +23,4 @@ jobs:
           ref: feat/mgx-241-rococo-gha-workflow
           token: ${{ secrets.DEV_TOOLS_REPO_ACCESS_TOKEN }}
           repost-logs: true
-          # inputs: ${{ format('{0}', toJSON("version" : inputs.version)) }}
-          inputs: '{ "version": "rococo-0.27.2" }'
+          inputs: '${{ toJSON(inputs) }}'

@@ -31,7 +31,8 @@ pub use self::{
 	pallet_fee_lock as pallet_fee_lock_weights, pallet_issuance as pallet_issuance_weights,
 	pallet_multipurpose_liquidity as pallet_multipurpose_liquidity_weights,
 	pallet_session as pallet_session_weights, pallet_timestamp as pallet_timestamp_weights,
-	pallet_treasury as pallet_treasury_weights, pallet_utility_mangata as pallet_utility_mangata_weights,
+	pallet_treasury as pallet_treasury_weights,
+	pallet_utility_mangata as pallet_utility_mangata_weights,
 	pallet_vesting_mangata as pallet_vesting_mangata_weights, pallet_xyk as pallet_xyk_weights,
 	parachain_staking as parachain_staking_weights,
 };

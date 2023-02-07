@@ -566,7 +566,6 @@ impl pallet_bootstrap::Config for Runtime {
 	type AssetRegistryApi = EnableAssetPoolApi;
 }
 
-
 #[derive(
 	Copy,
 	Clone,
@@ -585,14 +584,13 @@ pub struct DisallowedInBatch;
 impl Contains<RuntimeCall> for DisallowedInBatch {
 	fn contains(c: &RuntimeCall) -> bool {
 		match c {
-			RuntimeCall::Xyk(pallet_xyk::Call::sell_asset {..})
-			 |  RuntimeCall::Xyk(pallet_xyk::Call::buy_asset {..})
-			 |  RuntimeCall::Xyk(pallet_xyk::Call::multiswap_sell_asset {..})
-			 |  RuntimeCall::Xyk(pallet_xyk::Call::multiswap_buy_asset {..})=> true,
-			_ => false
+			RuntimeCall::Xyk(pallet_xyk::Call::sell_asset { .. }) |
+			RuntimeCall::Xyk(pallet_xyk::Call::buy_asset { .. }) |
+			RuntimeCall::Xyk(pallet_xyk::Call::multiswap_sell_asset { .. }) |
+			RuntimeCall::Xyk(pallet_xyk::Call::multiswap_buy_asset { .. }) => true,
+			_ => false,
 		}
 	}
-
 }
 
 impl pallet_utility_mangata::Config for Runtime {

@@ -115,7 +115,7 @@ benchmarks! {
 
    multiswap_sell_asset {
 
-		// NOTE: All atomic swaps in the chain involve sold tokens that are pooled with the native token for bnb, which is the worst case 
+		// NOTE: All atomic swaps in the chain involve sold tokens that are pooled with the native token for bnb, which is the worst case
 
 		// liquidity tokens
 		let x in 3..100;
@@ -191,7 +191,7 @@ benchmarks! {
 
    multiswap_buy_asset {
 
-		// NOTE: All atomic swaps in the chain involve sold tokens that are pooled with the native token for bnb, which is the worst case 
+		// NOTE: All atomic swaps in the chain involve sold tokens that are pooled with the native token for bnb, which is the worst case
 
 		// liquidity tokens
 		let x in 3..100;

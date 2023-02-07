@@ -2745,7 +2745,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				sender.clone(),
 				swap_token_list.clone(),
 				sold_asset_amount,
-				bought_asset_amount
+				bought_asset_amount,
 			));
 			return Ok(bought_asset_amount)
 		} else {

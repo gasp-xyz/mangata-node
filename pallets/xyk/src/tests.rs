@@ -1379,7 +1379,6 @@ fn multiswap_sell_W() {
 		System::set_block_number(1);
 		multi_initialize();
 
-
 		assert_eq!(XykStorage::balance(1, TRADER_ID), 1000000000000000000000);
 		assert_eq!(XykStorage::balance(2, TRADER_ID), 1000000000000000000000);
 		assert_eq!(XykStorage::balance(3, TRADER_ID), 1000000000000000000000);
@@ -1396,7 +1395,12 @@ fn multiswap_sell_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		assert_ok!(XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(TRADER_ID), vec![1, 2, 3, 4, 5], 20000000000000000000, 0));
+		assert_ok!(XykStorage::multiswap_sell_asset(
+			RuntimeOrigin::signed(TRADER_ID),
+			vec![1, 2, 3, 4, 5],
+			20000000000000000000,
+			0
+		));
 
 		assert_eq!(XykStorage::balance(1, TRADER_ID), 980000000000000000000);
 		assert_eq!(XykStorage::balance(2, TRADER_ID), 1000000000000000000000);
@@ -1448,7 +1452,12 @@ fn multiswap_sell_bad_slippage_charges_fee_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		assert_ok!(XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(TRADER_ID), vec![1, 2, 3, 4, 5], 20000000000000000000, 20000000000000000000));
+		assert_ok!(XykStorage::multiswap_sell_asset(
+			RuntimeOrigin::signed(TRADER_ID),
+			vec![1, 2, 3, 4, 5],
+			20000000000000000000,
+			20000000000000000000
+		));
 
 		assert_eq!(XykStorage::balance(1, TRADER_ID), 999939999999999999997);
 		assert_eq!(XykStorage::balance(2, TRADER_ID), 1000000000000000000000);
@@ -1466,12 +1475,13 @@ fn multiswap_sell_bad_slippage_charges_fee_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		let assets_swapped_event =
-			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::MultiSellAssetFailedDueToSlippage(
+		let assets_swapped_event = crate::mock::RuntimeEvent::XykStorage(
+			crate::Event::<Test>::MultiSellAssetFailedDueToSlippage(
 				TRADER_ID,
 				vec![1, 2, 3, 4, 5],
 				20000000000000000000,
-			));
+			),
+		);
 
 		assert!(System::events().iter().any(|record| record.event == assets_swapped_event));
 	});
@@ -1499,7 +1509,12 @@ fn multiswap_sell_bad_atomic_swap_charges_fee_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		assert_ok!(XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(TRADER_ID), vec![1, 2, 3, 6, 5], 20000000000000000000, 20000000000000000000));
+		assert_ok!(XykStorage::multiswap_sell_asset(
+			RuntimeOrigin::signed(TRADER_ID),
+			vec![1, 2, 3, 6, 5],
+			20000000000000000000,
+			20000000000000000000
+		));
 
 		assert_eq!(XykStorage::balance(1, TRADER_ID), 999939999999999999997);
 		assert_eq!(XykStorage::balance(2, TRADER_ID), 1000000000000000000000);
@@ -1517,12 +1532,13 @@ fn multiswap_sell_bad_atomic_swap_charges_fee_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		let assets_swapped_event =
-			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::MultiSellAssetFailedOnAtomicSwap(
+		let assets_swapped_event = crate::mock::RuntimeEvent::XykStorage(
+			crate::Event::<Test>::MultiSellAssetFailedOnAtomicSwap(
 				TRADER_ID,
 				vec![1, 2, 3, 6, 5],
 				20000000000000000000,
-			));
+			),
+		);
 
 		assert!(System::events().iter().any(|record| record.event == assets_swapped_event));
 	});
@@ -1550,8 +1566,15 @@ fn multiswap_sell_not_enough_assets_pay_fees_fails_early_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		assert_err!(XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(TRADER_ID), vec![1, 2, 3, 6, 5], 2000000000000000000000000, 0),
-			Error::<Test>::NotEnoughAssets);
+		assert_err!(
+			XykStorage::multiswap_sell_asset(
+				RuntimeOrigin::signed(TRADER_ID),
+				vec![1, 2, 3, 6, 5],
+				2000000000000000000000000,
+				0
+			),
+			Error::<Test>::NotEnoughAssets
+		);
 
 		assert_eq!(XykStorage::balance(1, TRADER_ID), 1000000000000000000000);
 		assert_eq!(XykStorage::balance(2, TRADER_ID), 1000000000000000000000);
@@ -1568,7 +1591,6 @@ fn multiswap_sell_not_enough_assets_pay_fees_fails_early_W() {
 		assert_eq!(XykStorage::balance(3, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
-
 	});
 }
 
@@ -1594,7 +1616,12 @@ fn multiswap_sell_just_enough_assets_pay_fee_but_not_to_swap_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		assert_ok!(XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(TRADER_ID), vec![1, 2, 3, 4, 5], 2000000000000000000000, 0));
+		assert_ok!(XykStorage::multiswap_sell_asset(
+			RuntimeOrigin::signed(TRADER_ID),
+			vec![1, 2, 3, 4, 5],
+			2000000000000000000000,
+			0
+		));
 
 		assert_eq!(XykStorage::balance(1, TRADER_ID), 993999999999999999997);
 		assert_eq!(XykStorage::balance(2, TRADER_ID), 1000000000000000000000);
@@ -1612,12 +1639,13 @@ fn multiswap_sell_just_enough_assets_pay_fee_but_not_to_swap_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		let assets_swapped_event =
-			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::MultiSwapFailedDueToNotEnoughAssets(
+		let assets_swapped_event = crate::mock::RuntimeEvent::XykStorage(
+			crate::Event::<Test>::MultiSwapFailedDueToNotEnoughAssets(
 				TRADER_ID,
 				vec![1, 2, 3, 4, 5],
 				2000000000000000000000,
-			));
+			),
+		);
 
 		assert!(System::events().iter().any(|record| record.event == assets_swapped_event));
 	});
@@ -1629,14 +1657,19 @@ fn multiswap_sell_with_two_hops_W() {
 		System::set_block_number(1);
 		multi_initialize();
 
-		assert_ok!(XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(TRADER_ID), vec![1, 2, 3], 20000000000000000000, 0));
+		assert_ok!(XykStorage::multiswap_sell_asset(
+			RuntimeOrigin::signed(TRADER_ID),
+			vec![1, 2, 3],
+			20000000000000000000,
+			0
+		));
 
 		let assets_swapped_event =
 			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsMultiSellSwapped(
 				TRADER_ID,
 				vec![1, 2, 3],
 				20000000000000000000,
-				19933275601777935827
+				19933275601777935827,
 			));
 
 		assert!(System::events().iter().any(|record| record.event == assets_swapped_event));
@@ -1649,9 +1682,15 @@ fn multiswap_sell_with_less_than_two_hops_fails_W() {
 		System::set_block_number(1);
 		multi_initialize();
 
-		assert_err!(XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(TRADER_ID), vec![1, 2], 20000000000000000000, 0),
-			Error::<Test>::MultiswapShouldBeAtleastTwoHops);
-
+		assert_err!(
+			XykStorage::multiswap_sell_asset(
+				RuntimeOrigin::signed(TRADER_ID),
+				vec![1, 2],
+				20000000000000000000,
+				0
+			),
+			Error::<Test>::MultiswapShouldBeAtleastTwoHops
+		);
 	});
 }
 
@@ -1661,7 +1700,6 @@ fn multiswap_sell_same_pool_works_W() {
 		System::set_block_number(1);
 		multi_initialize();
 
-
 		assert_eq!(XykStorage::balance(1, TRADER_ID), 1000000000000000000000);
 		assert_eq!(XykStorage::balance(2, TRADER_ID), 1000000000000000000000);
 
@@ -1669,7 +1707,12 @@ fn multiswap_sell_same_pool_works_W() {
 		assert_eq!(XykStorage::balance(1, XykStorage::account_id()), 40000000000000000000);
 		assert_eq!(XykStorage::balance(2, XykStorage::account_id()), 100000000000000000000);
 
-		assert_ok!(XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(TRADER_ID), vec![1, 2, 1], 20000000000000000000, 0));
+		assert_ok!(XykStorage::multiswap_sell_asset(
+			RuntimeOrigin::signed(TRADER_ID),
+			vec![1, 2, 1],
+			20000000000000000000,
+			0
+		));
 
 		assert_eq!(XykStorage::balance(1, TRADER_ID), 999913320173720252676);
 		assert_eq!(XykStorage::balance(2, TRADER_ID), 1000000000000000000000);
@@ -1696,7 +1739,6 @@ fn multiswap_sell_loop_works_W() {
 		System::set_block_number(1);
 		multi_initialize();
 
-
 		assert_eq!(XykStorage::balance(1, TRADER_ID), 1000000000000000000000);
 		assert_eq!(XykStorage::balance(2, TRADER_ID), 1000000000000000000000);
 		assert_eq!(XykStorage::balance(3, TRADER_ID), 1000000000000000000000);
@@ -1707,7 +1749,12 @@ fn multiswap_sell_loop_works_W() {
 		assert_eq!(XykStorage::balance(2, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(3, XykStorage::account_id()), 100000000000000000000);
 
-		assert_ok!(XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(TRADER_ID), vec![1, 2, 3, 2, 1, 2], 20000000000000000000, 0));
+		assert_ok!(XykStorage::multiswap_sell_asset(
+			RuntimeOrigin::signed(TRADER_ID),
+			vec![1, 2, 3, 2, 1, 2],
+			20000000000000000000,
+			0
+		));
 
 		assert_eq!(XykStorage::balance(1, TRADER_ID), 980000000000000000000);
 		assert_eq!(XykStorage::balance(2, TRADER_ID), 1019787116737807948784);
@@ -1737,9 +1784,15 @@ fn multiswap_sell_zero_amount_does_not_work_N() {
 		System::set_block_number(1);
 		multi_initialize();
 
-		assert_err!(XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(TRADER_ID), vec![1, 2, 3], 0, 20000000000000000000),
-		Error::<Test>::ZeroAmount);
-
+		assert_err!(
+			XykStorage::multiswap_sell_asset(
+				RuntimeOrigin::signed(TRADER_ID),
+				vec![1, 2, 3],
+				0,
+				20000000000000000000
+			),
+			Error::<Test>::ZeroAmount
+		);
 	});
 }
 
@@ -1926,7 +1979,6 @@ fn multiswap_buy_W() {
 		System::set_block_number(1);
 		multi_initialize();
 
-
 		assert_eq!(XykStorage::balance(1, TRADER_ID), 1000000000000000000000);
 		assert_eq!(XykStorage::balance(2, TRADER_ID), 1000000000000000000000);
 		assert_eq!(XykStorage::balance(3, TRADER_ID), 1000000000000000000000);
@@ -1943,7 +1995,12 @@ fn multiswap_buy_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		assert_ok!(XykStorage::multiswap_buy_asset(RuntimeOrigin::signed(TRADER_ID), vec![1, 2, 3, 4, 5], 20000000000000000000, 200000000000000000000));
+		assert_ok!(XykStorage::multiswap_buy_asset(
+			RuntimeOrigin::signed(TRADER_ID),
+			vec![1, 2, 3, 4, 5],
+			20000000000000000000,
+			200000000000000000000
+		));
 
 		assert_eq!(XykStorage::balance(1, TRADER_ID), 979503362184986098460);
 		assert_eq!(XykStorage::balance(2, TRADER_ID), 1000000000000000000000);
@@ -1995,7 +2052,12 @@ fn multiswap_buy_bad_slippage_charges_fee_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		assert_ok!(XykStorage::multiswap_buy_asset(RuntimeOrigin::signed(TRADER_ID), vec![1, 2, 3, 4, 5], 20000000000000000000, 200000000000000000));
+		assert_ok!(XykStorage::multiswap_buy_asset(
+			RuntimeOrigin::signed(TRADER_ID),
+			vec![1, 2, 3, 4, 5],
+			20000000000000000000,
+			200000000000000000
+		));
 
 		assert_eq!(XykStorage::balance(1, TRADER_ID), 999999399999999999997);
 		assert_eq!(XykStorage::balance(2, TRADER_ID), 1000000000000000000000);
@@ -2013,12 +2075,13 @@ fn multiswap_buy_bad_slippage_charges_fee_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		let assets_swapped_event =
-			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::MultiBuyAssetFailedDueToSlippage(
+		let assets_swapped_event = crate::mock::RuntimeEvent::XykStorage(
+			crate::Event::<Test>::MultiBuyAssetFailedDueToSlippage(
 				TRADER_ID,
 				vec![1, 2, 3, 4, 5],
 				20000000000000000000,
-			));
+			),
+		);
 
 		assert!(System::events().iter().any(|record| record.event == assets_swapped_event));
 	});
@@ -2046,7 +2109,12 @@ fn multiswap_buy_bad_atomic_swap_charges_fee_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		assert_ok!(XykStorage::multiswap_buy_asset(RuntimeOrigin::signed(TRADER_ID), vec![1, 2, 3, 6, 5], 20000000000000000000, 200000000000000000));
+		assert_ok!(XykStorage::multiswap_buy_asset(
+			RuntimeOrigin::signed(TRADER_ID),
+			vec![1, 2, 3, 6, 5],
+			20000000000000000000,
+			200000000000000000
+		));
 
 		assert_eq!(XykStorage::balance(1, TRADER_ID), 999999399999999999997);
 		assert_eq!(XykStorage::balance(2, TRADER_ID), 1000000000000000000000);
@@ -2064,12 +2132,13 @@ fn multiswap_buy_bad_atomic_swap_charges_fee_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		let assets_swapped_event =
-			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::MultiBuyAssetFailedOnAtomicSwap(
+		let assets_swapped_event = crate::mock::RuntimeEvent::XykStorage(
+			crate::Event::<Test>::MultiBuyAssetFailedOnAtomicSwap(
 				TRADER_ID,
 				vec![1, 2, 3, 6, 5],
 				20000000000000000000,
-			));
+			),
+		);
 
 		assert!(System::events().iter().any(|record| record.event == assets_swapped_event));
 	});
@@ -2097,8 +2166,15 @@ fn multiswap_buy_not_enough_assets_pay_fees_fails_early_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		assert_err!(XykStorage::multiswap_buy_asset(RuntimeOrigin::signed(TRADER_ID), vec![1, 2, 3, 6, 5], 2000000000000000000000000, 2000000000000000000000000),
-			Error::<Test>::NotEnoughAssets);
+		assert_err!(
+			XykStorage::multiswap_buy_asset(
+				RuntimeOrigin::signed(TRADER_ID),
+				vec![1, 2, 3, 6, 5],
+				2000000000000000000000000,
+				2000000000000000000000000
+			),
+			Error::<Test>::NotEnoughAssets
+		);
 
 		assert_eq!(XykStorage::balance(1, TRADER_ID), 1000000000000000000000);
 		assert_eq!(XykStorage::balance(2, TRADER_ID), 1000000000000000000000);
@@ -2115,7 +2191,6 @@ fn multiswap_buy_not_enough_assets_pay_fees_fails_early_W() {
 		assert_eq!(XykStorage::balance(3, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
-
 	});
 }
 
@@ -2125,7 +2200,13 @@ fn multiswap_buy_just_enough_assets_pay_fee_but_not_to_swap_W() {
 		System::set_block_number(1);
 		multi_initialize();
 
-		assert_ok!(<Test as Config>::Currency::transfer(1u32.into(), &TRADER_ID, &DUMMY_USER_ID, (1000000000000000000000u128 - 1000000u128).into(), ExistenceRequirement::KeepAlive));
+		assert_ok!(<Test as Config>::Currency::transfer(
+			1u32.into(),
+			&TRADER_ID,
+			&DUMMY_USER_ID,
+			(1000000000000000000000u128 - 1000000u128).into(),
+			ExistenceRequirement::KeepAlive
+		));
 
 		assert_eq!(XykStorage::balance(1, TRADER_ID), 1000000);
 		assert_eq!(XykStorage::balance(2, TRADER_ID), 1000000000000000000000);
@@ -2143,9 +2224,12 @@ fn multiswap_buy_just_enough_assets_pay_fee_but_not_to_swap_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-
-
-		assert_ok!(XykStorage::multiswap_buy_asset(RuntimeOrigin::signed(TRADER_ID), vec![1, 2, 3, 4, 5], 100000000, 20000000));
+		assert_ok!(XykStorage::multiswap_buy_asset(
+			RuntimeOrigin::signed(TRADER_ID),
+			vec![1, 2, 3, 4, 5],
+			100000000,
+			20000000
+		));
 
 		assert_eq!(XykStorage::balance(1, TRADER_ID), 939997);
 		assert_eq!(XykStorage::balance(2, TRADER_ID), 1000000000000000000000);
@@ -2163,12 +2247,13 @@ fn multiswap_buy_just_enough_assets_pay_fee_but_not_to_swap_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		let assets_swapped_event =
-			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::MultiSwapFailedDueToNotEnoughAssets(
+		let assets_swapped_event = crate::mock::RuntimeEvent::XykStorage(
+			crate::Event::<Test>::MultiSwapFailedDueToNotEnoughAssets(
 				TRADER_ID,
 				vec![1, 2, 3, 4, 5],
 				100000000,
-			));
+			),
+		);
 
 		assert!(System::events().iter().any(|record| record.event == assets_swapped_event));
 	});
@@ -2180,7 +2265,12 @@ fn multiswap_buy_with_two_hops_W() {
 		System::set_block_number(1);
 		multi_initialize();
 
-		assert_ok!(XykStorage::multiswap_buy_asset(RuntimeOrigin::signed(TRADER_ID), vec![1, 2, 3], 20000000000000000000, 2000000000000000000000));
+		assert_ok!(XykStorage::multiswap_buy_asset(
+			RuntimeOrigin::signed(TRADER_ID),
+			vec![1, 2, 3],
+			20000000000000000000,
+			2000000000000000000000
+		));
 
 		let assets_swapped_event =
 			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsMultiBuySwapped(
@@ -2200,9 +2290,15 @@ fn multiswap_buy_with_less_than_two_hops_fails_W() {
 		System::set_block_number(1);
 		multi_initialize();
 
-		assert_err!(XykStorage::multiswap_buy_asset(RuntimeOrigin::signed(TRADER_ID), vec![1, 2], 20000000000000000000, 2000000000000000000000),
-			Error::<Test>::MultiswapShouldBeAtleastTwoHops);
-
+		assert_err!(
+			XykStorage::multiswap_buy_asset(
+				RuntimeOrigin::signed(TRADER_ID),
+				vec![1, 2],
+				20000000000000000000,
+				2000000000000000000000
+			),
+			Error::<Test>::MultiswapShouldBeAtleastTwoHops
+		);
 	});
 }
 
@@ -2212,9 +2308,15 @@ fn multiswap_buy_same_pool_does_not_work_N() {
 		System::set_block_number(1);
 		multi_initialize();
 
-		assert_err!(XykStorage::multiswap_buy_asset(RuntimeOrigin::signed(TRADER_ID), vec![1, 2, 1], 20000000000000000000, 20000000000000000000),
-			Error::<Test>::MultiBuyAssetCantHaveSamePoolAtomicSwaps);
-
+		assert_err!(
+			XykStorage::multiswap_buy_asset(
+				RuntimeOrigin::signed(TRADER_ID),
+				vec![1, 2, 1],
+				20000000000000000000,
+				20000000000000000000
+			),
+			Error::<Test>::MultiBuyAssetCantHaveSamePoolAtomicSwaps
+		);
 	});
 }
 
@@ -2224,9 +2326,15 @@ fn multiswap_buy_loop_does_not_work_N() {
 		System::set_block_number(1);
 		multi_initialize();
 
-		assert_err!(XykStorage::multiswap_buy_asset(RuntimeOrigin::signed(TRADER_ID), vec![1, 2, 3, 2, 1, 2], 20000000000000000000, 20000000000000000000),
-		Error::<Test>::MultiBuyAssetCantHaveSamePoolAtomicSwaps);
-
+		assert_err!(
+			XykStorage::multiswap_buy_asset(
+				RuntimeOrigin::signed(TRADER_ID),
+				vec![1, 2, 3, 2, 1, 2],
+				20000000000000000000,
+				20000000000000000000
+			),
+			Error::<Test>::MultiBuyAssetCantHaveSamePoolAtomicSwaps
+		);
 	});
 }
 
@@ -2236,11 +2344,24 @@ fn multiswap_buy_zero_amount_does_not_work_N() {
 		System::set_block_number(1);
 		multi_initialize();
 
-		assert_err!(XykStorage::multiswap_buy_asset(RuntimeOrigin::signed(TRADER_ID), vec![1, 2, 3], 0, 20000000000000000000),
-		Error::<Test>::ZeroAmount);
-		assert_err!(XykStorage::multiswap_buy_asset(RuntimeOrigin::signed(TRADER_ID), vec![1, 2, 3], 20000000000000000000, 0),
-		Error::<Test>::ZeroAmount);
-
+		assert_err!(
+			XykStorage::multiswap_buy_asset(
+				RuntimeOrigin::signed(TRADER_ID),
+				vec![1, 2, 3],
+				0,
+				20000000000000000000
+			),
+			Error::<Test>::ZeroAmount
+		);
+		assert_err!(
+			XykStorage::multiswap_buy_asset(
+				RuntimeOrigin::signed(TRADER_ID),
+				vec![1, 2, 3],
+				20000000000000000000,
+				0
+			),
+			Error::<Test>::ZeroAmount
+		);
 	});
 }
 

@@ -1,0 +1,16 @@
+name: Deploy mangata-node to `rococo`
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to be assigned to the built image"
+        required: true
+        type: string
+        default: 'rococo-0.27.1'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo new

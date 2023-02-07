@@ -7,10 +7,21 @@ on:
         description: "Version to be assigned to the built image"
         required: true
         type: string
-        default: 'rococo-0.27.1'
+        default: 'rococo-0.27.2'
+  push:
+    branches: [feat/add-rococo-deployment-workflow-mgx-241]
 
 jobs:
-  deploy:
+  deploy_rococo:
     runs-on: ubuntu-latest
     steps:
-      - run: echo new
+      - name: Invoke workflow without inputs. Wait for result
+        uses: jonas-schievink/workflow-proxy@v1
+        with:
+          workflow: rococo.yml
+          repo: mangata-finance/gitops
+          ref: feat/mgx-241-rococo-gha-workflow
+          token: ${{ secrets.DEV_TOOLS_REPO_ACCESS_TOKEN }}
+          repost-logs: true
+          # inputs: ${{ format('{0}', toJSON("version" : inputs.version)) }}
+          inputs: '{ "version": "rococo-0.27.2" }'

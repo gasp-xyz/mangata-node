@@ -113,6 +113,60 @@ benchmarks! {
 
    }
 
+   multiswap_sell_asset {
+
+		// NOTE: All atomic swaps in the chain involve sold tokens that are pooled with the native token for bnb, which is the worst case 
+
+		// liquidity tokens
+		let x in 3..100;
+
+		init!();
+		let caller: T::AccountId = whitelisted_caller();
+
+		let mint_amount: mangata_types::Balance = 1000000000000000000;
+		let pool_creation_amount: mangata_types::Balance = 10000000000000000;
+		let trade_amount: mangata_types::Balance = 1000000000000;
+
+		let mut initial_asset_id: mangata_types::TokenId = <T as Config>::Currency::get_next_currency_id().into();
+		let native_asset_id : mangata_types::TokenId = <T as Config>::NativeCurrencyId::get().into();
+
+		if initial_asset_id == native_asset_id {
+			assert_eq!(<T as Config>::Currency::create(&caller, (mint_amount * x as u128).into()).unwrap().into(), native_asset_id);
+			initial_asset_id = initial_asset_id + 1;
+		} else {
+			assert_ok!(<T as Config>::Currency::mint(native_asset_id.into(), &caller, (mint_amount * x as u128).into()));
+		}
+
+		// Create all the non-native tokens we will need
+		for i in 0..x{
+			assert_eq!(<T as Config>::Currency::create(&caller, (mint_amount).into()).unwrap().into(), initial_asset_id + i);
+		}
+
+		// Create all pool with the subsequent non-native tokens
+		for i in 0.. (x - 1){
+			assert_ok!(Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), {initial_asset_id + i}.into(), pool_creation_amount, {initial_asset_id + i+1}.into(), pool_creation_amount));
+		}
+
+		// Create all pool with the subsequent non-native tokens
+		for i in 0..x{
+			assert_ok!(Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), native_asset_id.into(), pool_creation_amount, {initial_asset_id + i}.into(), pool_creation_amount));
+		}
+
+		let mut swap_token_list: Vec<TokenId> = vec![];
+
+		for i in 0..x{
+			swap_token_list.push({initial_asset_id + i}.into());
+		}
+
+		assert_eq!(<T as Config>::Currency::free_balance({initial_asset_id + x - 1}.into(), &caller).into(), mint_amount - 2 * pool_creation_amount);
+
+	}: multiswap_sell_asset(RawOrigin::Signed(caller.clone().into()), swap_token_list.into(), trade_amount, 0)
+	verify {
+		// verify only trading result as rest of the assertion is in unit test
+		assert!(<T as Config>::Currency::free_balance({initial_asset_id + x - 1}.into(), &caller).into() > mint_amount - 2 * pool_creation_amount);
+
+	}
+
    buy_asset {
 	   // NOTE: duplicates test case XYK::buy_and_burn_buy_where_sold_has_mangata_pair
 
@@ -135,7 +189,58 @@ benchmarks! {
 	   assert_eq!(<T as Config>::Currency::free_balance(non_native_asset_id2.into(), &caller).into(), 850000000000001);
    }
 
+   multiswap_buy_asset {
 
+		// NOTE: All atomic swaps in the chain involve sold tokens that are pooled with the native token for bnb, which is the worst case 
+
+		// liquidity tokens
+		let x in 3..100;
+
+		init!();
+		let caller: T::AccountId = whitelisted_caller();
+
+		let mint_amount: mangata_types::Balance = 1000000000000000000;
+		let pool_creation_amount: mangata_types::Balance = 10000000000000000;
+		let trade_amount: mangata_types::Balance = 1000000000000;
+
+		let mut initial_asset_id: mangata_types::TokenId = <T as Config>::Currency::get_next_currency_id().into();
+		let native_asset_id : mangata_types::TokenId = <T as Config>::NativeCurrencyId::get().into();
+
+		if initial_asset_id == native_asset_id {
+			assert_eq!(<T as Config>::Currency::create(&caller, (mint_amount * x as u128).into()).unwrap().into(), native_asset_id);
+			initial_asset_id = initial_asset_id + 1;
+		} else {
+			assert_ok!(<T as Config>::Currency::mint(native_asset_id.into(), &caller, (mint_amount * x as u128).into()));
+		}
+
+		// Create all the non-native tokens we will need
+		for i in 0..x{
+			assert_eq!(<T as Config>::Currency::create(&caller, (mint_amount).into()).unwrap().into(), initial_asset_id + i);
+		}
+
+		// Create all pool with the subsequent non-native tokens
+		for i in 0.. (x - 1){
+			assert_ok!(Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), {initial_asset_id + i}.into(), pool_creation_amount, {initial_asset_id + i+1}.into(), pool_creation_amount));
+		}
+
+		// Create all pool with the subsequent non-native tokens
+		for i in 0..x{
+			assert_ok!(Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), native_asset_id.into(), pool_creation_amount, {initial_asset_id + i}.into(), pool_creation_amount));
+		}
+
+		let mut swap_token_list: Vec<TokenId> = vec![];
+
+		for i in 0..x{
+			swap_token_list.push({initial_asset_id + i}.into());
+		}
+
+		assert_eq!(<T as Config>::Currency::free_balance({initial_asset_id + x - 1}.into(), &caller).into(), mint_amount - 2 * pool_creation_amount);
+
+	}: multiswap_buy_asset(RawOrigin::Signed(caller.clone().into()), swap_token_list.into(), trade_amount, trade_amount*10)
+	verify {
+		// verify only trading result as rest of the assertion is in unit test
+		assert!(<T as Config>::Currency::free_balance({initial_asset_id + x - 1}.into(), &caller).into() > mint_amount - 2 * pool_creation_amount);
+	}
 
    mint_liquidity {
 	   // 1. create,

@@ -688,7 +688,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(<<T as Config>::WeightInfo>::sell_asset().saturating_mul(swap_token_list.len() as u64))]
+		#[pallet::weight(<<T as Config>::WeightInfo>::multiswap_sell_asset(swap_token_list.len() as u32))]
 		pub fn multiswap_sell_asset(
 			origin: OriginFor<T>,
 			swap_token_list: Vec<TokenId>,
@@ -729,7 +729,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(<<T as Config>::WeightInfo>::buy_asset().saturating_mul(swap_token_list.len() as u64))]
+		#[pallet::weight(<<T as Config>::WeightInfo>::multiswap_buy_asset(swap_token_list.len() as u32))]
 		pub fn multiswap_buy_asset(
 			origin: OriginFor<T>,
 			swap_token_list: Vec<TokenId>,
@@ -3060,10 +3060,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 					// Prep the next loop
 					atomic_bought_asset_amount = atomic_sold_asset_amount;
 				}
-
-
-					println!("{}", atomic_bought_asset_amount);
-
 
 				ensure!(
 					atomic_sold_asset_amount <= max_amount_in,

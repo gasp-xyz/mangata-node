@@ -1,0 +1,49 @@
+name: Performance tests workflow
+on:
+  workflow_call:
+
+permissions:
+  contents: write
+  id-token: write
+  deployments: write
+  checks: write
+
+jobs:
+  performance-tests:
+    runs-on: [self-hosted, compile]
+    timeout-minutes: 180
+    env:
+      ENV_REF: ${{ format('pr-{0}', github.event.number) }}
+    steps:
+      ####IDK, but this is neccesary for reports
+      - uses: actions/checkout@v3
+
+      - name: Checkout performance-tests
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.DEV_TOOLS_REPO_ACCESS_TOKEN }}
+          repository: mangata-finance/dev-tools
+          path: dev-tools
+
+      - name: Install parachain launch
+        working-directory: dev-tools/fill-block-with-txs
+        run: npm install
+
+      - name: Run performance tests
+        working-directory: dev-tools/fill-block-with-txs
+        run: |
+          ./index.js --url "wss://node-01-ws-${{ env.ENV_REF }}.mangata.online" \
+          --url "wss://node-02-ws-${{ env.ENV_REF }}.mangata.online" \
+          --mnemonic ${{ secrets.E2E_TEST_SUDO_NAME }} \
+          --txs_count 800 \
+          --workers_count 8 \
+          --timeout 300 \
+          --output ../../performance-benchmark.png \
+          --expected_throughput 300 \
+          --number_of_blocks 50
+
+      - name: Upload reports
+        uses: actions/upload-artifact@v3.1.1
+        with:
+          name: performance-benchmark
+          path: ./performance-benchmark.png

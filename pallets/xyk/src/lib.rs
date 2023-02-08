@@ -319,6 +319,7 @@ use sp_runtime::{
 	Permill,
 };
 use sp_std::{
+	collections::btree_set::BTreeSet,
 	convert::{TryFrom, TryInto},
 	fmt::Debug,
 	ops::Div,
@@ -486,6 +487,7 @@ pub mod pallet {
 		MultiBuyAssetCantHaveSamePoolAtomicSwaps,
 		MultiSwapFailedOnBadSlippage,
 		MultiSwapNotEnoughAssets,
+		MultiSwapCantHaveSameTokenConsequetively,
 	}
 
 	#[pallet::event]
@@ -2050,11 +2052,25 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 	> {
 		ensure!(swap_token_list.len() > 2_usize, Error::<T>::MultiswapShouldBeAtleastTwoHops);
 		// Unwraps are fine due to above ensure
-		let sold_asset_id = *swap_token_list.get(0).unwrap();
-		let bought_asset_id = *swap_token_list.get(1).unwrap();
+		let sold_asset_id =
+			*swap_token_list.get(0).ok_or(Error::<T>::MultiswapShouldBeAtleastTwoHops)?;
+		let bought_asset_id =
+			*swap_token_list.get(1).ok_or(Error::<T>::MultiswapShouldBeAtleastTwoHops)?;
 
 		// Ensure not selling zero amount
 		ensure!(!sold_asset_amount.is_zero(), Error::<T>::ZeroAmount,);
+
+		let atomic_pairs: Vec<(TokenId, TokenId)> = swap_token_list
+			.clone()
+			.into_iter()
+			.zip(swap_token_list.clone().into_iter().skip(1))
+			.collect();
+
+		for (x, y) in atomic_pairs.iter() {
+			if x == y {
+				return Err(Error::<T>::MultiSwapCantHaveSameTokenConsequetively.into())
+			}
+		}
 
 		ensure!(
 			!T::DisabledTokens::contains(&sold_asset_id) &&
@@ -2242,8 +2258,10 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 
 		ensure!(swap_token_list.len() > 2_usize, Error::<T>::MultiswapShouldBeAtleastTwoHops);
 		// Unwraps are fine due to above ensure
-		let sold_asset_id = *swap_token_list.get(0).unwrap();
-		let bought_asset_id = *swap_token_list.get(1).unwrap();
+		let sold_asset_id =
+			*swap_token_list.get(0).ok_or(Error::<T>::MultiswapShouldBeAtleastTwoHops)?;
+		let bought_asset_id =
+			*swap_token_list.get(1).ok_or(Error::<T>::MultiswapShouldBeAtleastTwoHops)?;
 
 		ensure!(
 			!T::DisabledTokens::contains(&sold_asset_id) &&
@@ -2252,43 +2270,29 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 		);
 
 		// Cannot use multiswap twice on the same pool
-		let mut pair_sold_assets = swap_token_list.clone();
-		let _ = pair_sold_assets.pop();
-
-		let mut pair_bought_assets = swap_token_list.clone();
-		let _ = pair_bought_assets.remove(0);
-
-		let atomic_pairs: Vec<(TokenId, TokenId)> =
-			pair_sold_assets.into_iter().zip(pair_bought_assets.into_iter()).collect();
-
-		let mut filtered_atomic_pairs: Vec<(TokenId, TokenId)> = atomic_pairs
+		let atomic_pairs: Vec<(TokenId, TokenId)> = swap_token_list
+			.clone()
 			.into_iter()
-			.filter_map(|(x, y)| {
-				if x == y {
-					None
-				} else if x > y {
-					Some((x, y))
-				} else
-				// x < y
-				{
-					Some((y, x))
-				}
-			})
+			.zip(swap_token_list.clone().into_iter().skip(1))
 			.collect();
 
-		// Not failing upon x==y to maintain parity with multiswap_sell_asset
+		let mut atomic_pairs_hashset = BTreeSet::new();
 
-		let atomic_pairs_len_before = filtered_atomic_pairs.len();
-
-		filtered_atomic_pairs.sort();
-		filtered_atomic_pairs.dedup();
-
-		let atomic_pairs_len_after = filtered_atomic_pairs.len();
-
-		ensure!(
-			atomic_pairs_len_after == atomic_pairs_len_before,
-			Error::<T>::MultiBuyAssetCantHaveSamePoolAtomicSwaps
-		);
+		for (x, y) in atomic_pairs.iter() {
+			if x == y {
+				return Err(Error::<T>::MultiSwapCantHaveSameTokenConsequetively.into())
+			} else if x > y {
+				if !atomic_pairs_hashset.insert((x, y)) {
+					return Err(Error::<T>::MultiBuyAssetCantHaveSamePoolAtomicSwaps.into())
+				};
+			} else
+			// x < y
+			{
+				if !atomic_pairs_hashset.insert((y, x)) {
+					return Err(Error::<T>::MultiBuyAssetCantHaveSamePoolAtomicSwaps.into())
+				};
+			}
+		}
 
 		// Get token reserves
 		let (input_reserve, output_reserve) =
@@ -2701,14 +2705,11 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				.or(Err(Error::<T>::MultiSwapNotEnoughAssets))?;
 
 				// pre_validate has already confirmed that swap_token_list.len()>1
-				let mut pair_sold_assets = swap_token_list.clone();
-				let _ = pair_sold_assets.pop();
-
-				let mut pair_bought_assets = swap_token_list.clone();
-				let _ = pair_bought_assets.remove(0);
-
-				let atomic_pairs: Vec<(TokenId, TokenId)> =
-					pair_sold_assets.into_iter().zip(pair_bought_assets.into_iter()).collect();
+				let atomic_pairs: Vec<(TokenId, TokenId)> = swap_token_list
+					.clone()
+					.into_iter()
+					.zip(swap_token_list.clone().into_iter().skip(1))
+					.collect();
 
 				let mut atomic_sold_asset_amount = sold_asset_amount;
 				let mut atomic_bought_asset_amount = Balance::zero();
@@ -3033,14 +3034,11 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		let res_multiswap =
 			frame_support::storage::with_storage_layer(|| -> Result<Balance, DispatchError> {
 				// pre_validate has already confirmed that swap_token_list.len()>1
-				let mut pair_sold_assets = swap_token_list.clone();
-				let _ = pair_sold_assets.pop();
-
-				let mut pair_bought_assets = swap_token_list.clone();
-				let _ = pair_bought_assets.remove(0);
-
-				let atomic_pairs: Vec<(TokenId, TokenId)> =
-					pair_sold_assets.into_iter().zip(pair_bought_assets.into_iter()).collect();
+				let atomic_pairs: Vec<(TokenId, TokenId)> = swap_token_list
+					.clone()
+					.into_iter()
+					.zip(swap_token_list.clone().into_iter().skip(1))
+					.collect();
 
 				let mut atomic_sold_asset_amount = Balance::zero();
 				let mut atomic_bought_asset_amount = bought_asset_amount;

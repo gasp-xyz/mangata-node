@@ -163,7 +163,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for MockXyk<T> {
 		sold_asset_amount: Self::Balance,
 		min_amount_out: Self::Balance,
 		err_upon_bad_slippage: bool,
-	) -> DispatchResult {
+	) -> Result<Self::Balance, DispatchError> {
 		unimplemented!()
 	}
 
@@ -174,7 +174,29 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for MockXyk<T> {
 		bought_asset_amount: Self::Balance,
 		max_amount_in: Self::Balance,
 		err_upon_bad_slippage: bool,
-	) -> DispatchResult {
+	) -> Result<Self::Balance, DispatchError> {
+		unimplemented!()
+	}
+
+	fn multiswap_sell_asset(
+		sender: T::AccountId,
+		swap_token_list: Vec<Self::CurrencyId>,
+		sold_asset_amount: Self::Balance,
+		min_amount_out: Self::Balance,
+		err_upon_bad_slippage: bool,
+		err_upon_non_slippage_fail: bool,
+	) -> Result<Self::Balance, DispatchError> {
+		unimplemented!()
+	}
+
+	fn multiswap_buy_asset(
+		sender: T::AccountId,
+		swap_token_list: Vec<Self::CurrencyId>,
+		bought_asset_amount: Self::Balance,
+		max_amount_in: Self::Balance,
+		err_upon_bad_slippage: bool,
+		err_upon_non_slippage_fail: bool,
+	) -> Result<Self::Balance, DispatchError> {
 		unimplemented!()
 	}
 

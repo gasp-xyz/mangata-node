@@ -2665,6 +2665,59 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		Ok(bought_asset_amount)
 	}
 
+	fn do_multiswap_sell_asset(
+		sender: T::AccountId,
+		swap_token_list: Vec<TokenId>,
+		sold_asset_amount: Self::Balance,
+		min_amount_out: Self::Balance,
+	) -> Result<Balance, DispatchError> {
+		frame_support::storage::with_storage_layer(|| -> Result<Balance, DispatchError> {
+			// Ensure user has enough tokens to sell
+			<T as Config>::Currency::ensure_can_withdraw(
+				// Naked unwrap is fine due to pre validation len check
+				{ *swap_token_list.get(0).ok_or(Error::<T>::MultiswapShouldBeAtleastTwoHops)? }
+					.into(),
+				&sender,
+				sold_asset_amount.into(),
+				WithdrawReasons::all(),
+				Default::default(),
+			)
+			.or(Err(Error::<T>::MultiSwapNotEnoughAssets))?;
+
+			// pre_validate has already confirmed that swap_token_list.len()>1
+			let atomic_pairs: Vec<(TokenId, TokenId)> = swap_token_list
+				.clone()
+				.into_iter()
+				.zip(swap_token_list.clone().into_iter().skip(1))
+				.collect();
+
+			let mut atomic_sold_asset_amount = sold_asset_amount;
+			let mut atomic_bought_asset_amount = Balance::zero();
+
+			for (atomic_sold_asset, atomic_bought_asset) in atomic_pairs.iter() {
+				atomic_bought_asset_amount = <Self as XykFunctionsTrait<T::AccountId>>::sell_asset(
+					sender.clone(),
+					*atomic_sold_asset,
+					*atomic_bought_asset,
+					atomic_sold_asset_amount,
+					Balance::zero(),
+					// We using most possible slippage so this should be irrelevant
+					true,
+				)?;
+
+				// Prep the next loop
+				atomic_sold_asset_amount = atomic_bought_asset_amount;
+			}
+
+			// fail/error and revert if bad final slippage
+			if atomic_bought_asset_amount < min_amount_out {
+				return Err(Error::<T>::MultiSwapFailedOnBadSlippage.into())
+			} else {
+				return Ok(atomic_bought_asset_amount)
+			}
+		})
+	}
+
 	fn multiswap_sell_asset(
 		sender: T::AccountId,
 		swap_token_list: Vec<TokenId>,
@@ -2691,52 +2744,12 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		// First execute all atomic swaps in a storage layer
 		// And then the finally bought amount is compared
 		// The bool in error represents if the fail is due to bad final slippage
-		let res_multiswap =
-			frame_support::storage::with_storage_layer(|| -> Result<Balance, DispatchError> {
-				// Ensure user has enough tokens to sell
-				<T as Config>::Currency::ensure_can_withdraw(
-					// Naked unwrap is fine due to pre validation len check
-					{ *swap_token_list.get(0).unwrap() }.into(),
-					&sender,
-					sold_asset_amount.into(),
-					WithdrawReasons::all(),
-					Default::default(),
-				)
-				.or(Err(Error::<T>::MultiSwapNotEnoughAssets))?;
-
-				// pre_validate has already confirmed that swap_token_list.len()>1
-				let atomic_pairs: Vec<(TokenId, TokenId)> = swap_token_list
-					.clone()
-					.into_iter()
-					.zip(swap_token_list.clone().into_iter().skip(1))
-					.collect();
-
-				let mut atomic_sold_asset_amount = sold_asset_amount;
-				let mut atomic_bought_asset_amount = Balance::zero();
-
-				for (atomic_sold_asset, atomic_bought_asset) in atomic_pairs.iter() {
-					atomic_bought_asset_amount =
-						<Self as XykFunctionsTrait<T::AccountId>>::sell_asset(
-							sender.clone(),
-							*atomic_sold_asset,
-							*atomic_bought_asset,
-							atomic_sold_asset_amount,
-							Balance::zero(),
-							// We using most possible slippage so this should be irrelevant
-							true,
-						)?;
-
-					// Prep the next loop
-					atomic_sold_asset_amount = atomic_bought_asset_amount;
-				}
-
-				// fail/error and revert if bad final slippage
-				if atomic_bought_asset_amount < min_amount_out {
-					return Err(Error::<T>::MultiSwapFailedOnBadSlippage.into())
-				} else {
-					return Ok(atomic_bought_asset_amount)
-				}
-			});
+		let res_multiswap = <Self as XykFunctionsTrait<T::AccountId>>::do_multiswap_sell_asset(
+			sender.clone(),
+			swap_token_list.clone(),
+			sold_asset_amount,
+			min_amount_out,
+		);
 
 		// if res_multiswap is_ok then return Ok(()) otherwise charge fee for first swap and then return Ok(())
 		// if err_upon_bad_slippage then just return res_multiswap
@@ -3005,6 +3018,75 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		Ok(sold_asset_amount)
 	}
 
+	fn do_multiswap_buy_asset(
+		sender: T::AccountId,
+		swap_token_list: Vec<TokenId>,
+		bought_asset_amount: Self::Balance,
+		max_amount_in: Self::Balance,
+	) -> Result<Balance, DispatchError> {
+		frame_support::storage::with_storage_layer(|| -> Result<Balance, DispatchError> {
+			// pre_validate has already confirmed that swap_token_list.len()>1
+			let atomic_pairs: Vec<(TokenId, TokenId)> = swap_token_list
+				.clone()
+				.into_iter()
+				.zip(swap_token_list.clone().into_iter().skip(1))
+				.collect();
+
+			let mut atomic_sold_asset_amount = Balance::zero();
+			let mut atomic_bought_asset_amount = bought_asset_amount;
+
+			let mut atomic_swap_buy_amounts_rev: Vec<Balance> = vec![];
+			// Calc
+			// We can do this using calculate_buy_price_id chain due to the check in pre_validation
+			// that ensures that no pool is touched twice. So the reserves in question are consistent
+			for (atomic_sold_asset, atomic_bought_asset) in atomic_pairs.iter().rev() {
+				atomic_sold_asset_amount = Self::calculate_buy_price_id(
+					*atomic_sold_asset,
+					*atomic_bought_asset,
+					atomic_bought_asset_amount,
+				)?;
+
+				atomic_swap_buy_amounts_rev.push(atomic_bought_asset_amount);
+				// Prep the next loop
+				atomic_bought_asset_amount = atomic_sold_asset_amount;
+			}
+
+			ensure!(
+				atomic_sold_asset_amount <= max_amount_in,
+				Error::<T>::MultiSwapFailedOnBadSlippage
+			);
+
+			// Ensure user has enough tokens to sell
+			<T as Config>::Currency::ensure_can_withdraw(
+				// Naked unwrap is fine due to pre validation len check
+				{ *swap_token_list.get(0).ok_or(Error::<T>::MultiswapShouldBeAtleastTwoHops)? }
+					.into(),
+				&sender,
+				atomic_sold_asset_amount.into(),
+				WithdrawReasons::all(),
+				Default::default(),
+			)
+			.or(Err(Error::<T>::MultiSwapNotEnoughAssets))?;
+
+			// Execute here
+			for ((atomic_sold_asset, atomic_bought_asset), atomic_swap_buy_amount) in
+				atomic_pairs.iter().zip(atomic_swap_buy_amounts_rev.iter().rev())
+			{
+				let _ = <Self as XykFunctionsTrait<T::AccountId>>::buy_asset(
+					sender.clone(),
+					*atomic_sold_asset,
+					*atomic_bought_asset,
+					*atomic_swap_buy_amount,
+					Balance::max_value(),
+					// We using most possible slippage so this should be irrelevant
+					true,
+				)?;
+			}
+
+			return Ok(atomic_sold_asset_amount)
+		})
+	}
+
 	fn multiswap_buy_asset(
 		sender: T::AccountId,
 		swap_token_list: Vec<TokenId>,
@@ -3031,67 +3113,12 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		// First execute all atomic swaps in a storage layer
 		// And then the finally sold amount is compared
 		// The bool in error represents if the fail is due to bad final slippage
-		let res_multiswap =
-			frame_support::storage::with_storage_layer(|| -> Result<Balance, DispatchError> {
-				// pre_validate has already confirmed that swap_token_list.len()>1
-				let atomic_pairs: Vec<(TokenId, TokenId)> = swap_token_list
-					.clone()
-					.into_iter()
-					.zip(swap_token_list.clone().into_iter().skip(1))
-					.collect();
-
-				let mut atomic_sold_asset_amount = Balance::zero();
-				let mut atomic_bought_asset_amount = bought_asset_amount;
-
-				let mut atomic_swap_buy_amounts_rev: Vec<Balance> = vec![];
-				// Calc
-				// We can do this using calculate_buy_price_id chain due to the check in pre_validation
-				// that ensures that no pool is touched twice. So the reserves in question are consistent
-				for (atomic_sold_asset, atomic_bought_asset) in atomic_pairs.iter().rev() {
-					atomic_sold_asset_amount = Self::calculate_buy_price_id(
-						*atomic_sold_asset,
-						*atomic_bought_asset,
-						atomic_bought_asset_amount,
-					)?;
-
-					atomic_swap_buy_amounts_rev.push(atomic_bought_asset_amount);
-					// Prep the next loop
-					atomic_bought_asset_amount = atomic_sold_asset_amount;
-				}
-
-				ensure!(
-					atomic_sold_asset_amount <= max_amount_in,
-					Error::<T>::MultiSwapFailedOnBadSlippage
-				);
-
-				// Ensure user has enough tokens to sell
-				<T as Config>::Currency::ensure_can_withdraw(
-					// Naked unwrap is fine due to pre validation len check
-					{ *swap_token_list.get(0).unwrap() }.into(),
-					&sender,
-					atomic_sold_asset_amount.into(),
-					WithdrawReasons::all(),
-					Default::default(),
-				)
-				.or(Err(Error::<T>::MultiSwapNotEnoughAssets))?;
-
-				// Execute here
-				for ((atomic_sold_asset, atomic_bought_asset), atomic_swap_buy_amount) in
-					atomic_pairs.iter().zip(atomic_swap_buy_amounts_rev.iter().rev())
-				{
-					let _ = <Self as XykFunctionsTrait<T::AccountId>>::buy_asset(
-						sender.clone(),
-						*atomic_sold_asset,
-						*atomic_bought_asset,
-						*atomic_swap_buy_amount,
-						Balance::max_value(),
-						// We using most possible slippage so this should be irrelevant
-						true,
-					)?;
-				}
-
-				return Ok(atomic_sold_asset_amount)
-			});
+		let res_multiswap = <Self as XykFunctionsTrait<T::AccountId>>::do_multiswap_buy_asset(
+			sender.clone(),
+			swap_token_list.clone(),
+			bought_asset_amount,
+			max_amount_in,
+		);
 
 		// if res_multiswap is_ok then return Ok(()) otherwise charge fee for first swap and then return Ok(())
 		// if err_upon_bad_slippage then just return res_multiswap

@@ -108,6 +108,19 @@ pub trait XykFunctionsTrait<AccountId> {
 		err_upon_non_slippage_fail: bool,
 	) -> Result<Self::Balance, DispatchError>;
 
+	fn do_multiswap_sell_asset(
+		sender: AccountId,
+		swap_token_list: Vec<Self::CurrencyId>,
+		sold_asset_amount: Self::Balance,
+		min_amount_out: Self::Balance,
+	) -> Result<Self::Balance, DispatchError>;
+	fn do_multiswap_buy_asset(
+		sender: AccountId,
+		swap_token_list: Vec<Self::CurrencyId>,
+		bought_asset_amount: Self::Balance,
+		max_amount_in: Self::Balance,
+	) -> Result<Self::Balance, DispatchError>;
+
 	fn buy_asset(
 		sender: AccountId,
 		sold_asset_id: Self::CurrencyId,

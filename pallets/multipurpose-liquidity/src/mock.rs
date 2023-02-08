@@ -167,6 +167,23 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for MockXyk<T> {
 		unimplemented!()
 	}
 
+	fn do_multiswap_sell_asset(
+		sender: T::AccountId,
+		swap_token_list: Vec<Self::CurrencyId>,
+		sold_asset_amount: Self::Balance,
+		min_amount_out: Self::Balance,
+	) -> Result<Self::Balance, DispatchError> {
+		unimplemented!()
+	}
+	fn do_multiswap_buy_asset(
+		sender: T::AccountId,
+		swap_token_list: Vec<Self::CurrencyId>,
+		bought_asset_amount: Self::Balance,
+		max_amount_in: Self::Balance,
+	) -> Result<Self::Balance, DispatchError> {
+		unimplemented!()
+	}
+
 	fn buy_asset(
 		sender: T::AccountId,
 		sold_asset_id: Self::CurrencyId,

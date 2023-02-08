@@ -1,6 +1,8 @@
 repositories:
-  - name: mangata
-    url: git+https://github.com/mangata-finance/helm-charts@charts?ref=main
+  - name: mangata-node
+    url: git+https://github.com/mangata-finance/helm-charts@charts?ref=node-v0.2.0
+  - name: mangata-relaychain
+    url: git+https://github.com/mangata-finance/helm-charts@charts?ref=relaychain-testnet-v0.2.0
 
 environments:
   dev:
@@ -21,14 +23,14 @@ helmDefaults:
 
 templates:
   nodeDefault: &nodeDefault
-    chart: mangata/node
+    chart: mangata-node/node
     namespace: '{{ requiredEnv "ENVIRONMENT" }}'
 
 releases:
   - name: relaychain
     installed: {{ .Values.enableLocalRelaychain | toYaml }}
     namespace: '{{ requiredEnv "ENVIRONMENT" }}'
-    chart: mangata/relaychain-testnet
+    chart: mangata-relaychain/relaychain-testnet
     values:
       - env: {{ requiredEnv "ENVIRONMENT" | quote }}
         storageClass: regional-ssd

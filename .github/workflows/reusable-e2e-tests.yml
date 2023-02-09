@@ -1,6 +1,27 @@
 name: Reusable e2e tests workflow
 
 on:
+  workflow_dispatch:
+    inputs:
+      e2eBranch:
+        description: "Name of the e2e target branch"
+        type: string
+        required: false
+        default: "main"
+      parachainDocker:
+        description: "Name of the parachain docker reference"
+        type: string
+        required: false
+        default: "mangatasolutions/mangata-node:latest"
+      skipBuild:
+        description: "Skip build phase"
+        type: string
+        required: false
+        default: false
+      globalVersion:
+        description: "Set Mangata node version."
+        type: string
+        required: true
   workflow_call:
     inputs:
       e2eBranch:

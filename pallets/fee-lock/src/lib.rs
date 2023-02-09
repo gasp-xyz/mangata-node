@@ -79,7 +79,6 @@ pub mod pallet {
 			consumed_weight += T::DbWeight::get().reads(1);
 			let metadata = Self::get_fee_lock_metadata();
 			let period_length = metadata.map(|meta| meta.period_length);
-			// let current_period = period_length.and_then(|period| now.checked_div(&period));
 			let mut accounts_it = AccountFeeLockData::<T>::iter();
 
 			loop {

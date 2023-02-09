@@ -40,6 +40,10 @@ jobs:
             fast: false
           - command: "yarn test-sequential-autocompound"
             fast: true
+          - command: "yarn test-seqgasless"
+            fast: false
+          - command: "yarn test-paralgasless"
+            fast: false
 
     runs-on: [self-hosted, compile]
     timeout-minutes: 180

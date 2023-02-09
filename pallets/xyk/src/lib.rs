@@ -690,6 +690,20 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		/// Executes a multiswap sell asset in a series of sell asset atomic swaps.
+		///
+		/// Multiswaps must fee lock instead of paying transaction fees.
+		///
+		/// First the multiswap is prevalidated, if it is successful then the extrinsic is accepted
+		/// and the exchange commission will be charged upon execution on the **first** swap using **sold_asset_amount**.
+		///
+		/// Upon failure of an atomic swap or bad slippage, all the atomic swaps are reverted and the exchange commission is charged.
+		/// Upon such a failure, the extrinsic is marked "successful", but an event for the failure is emitted
+		///
+		/// # Args:
+		/// - `swap_token_list` - This list of tokens is the route of the atomic swaps, starting with the asset sold and ends with the asset finally bought  
+		/// - `sold_asset_amount`: The amount of the first asset sold
+		/// - `min_amount_out` - The minimum amount of last asset that must be bought in order to not fail on slippage. Slippage failures still charge exchange commission.
 		#[pallet::weight(<<T as Config>::WeightInfo>::multiswap_sell_asset(swap_token_list.len() as u32))]
 		pub fn multiswap_sell_asset(
 			origin: OriginFor<T>,
@@ -731,6 +745,23 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		/// Executes a multiswap buy asset in a series of buy asset atomic swaps.
+		///
+		/// Multiswaps must fee lock instead of paying transaction fees.
+		///
+		/// First the multiswap is prevalidated, if it is successful then the extrinsic is accepted
+		/// and the exchange commission will be charged upon execution on the *first* swap using *max_amount_in*.
+		/// multiswap_buy_asset cannot have two (or more) atomic swaps on the same pool.
+		/// multiswap_buy_asset prevaildation only checks for whether there are enough funds to pay for the exchange commission.
+		/// Failure to have the required amount of first asset funds will result in failure (and charging of the exchange commission).
+		///
+		/// Upon failure of an atomic swap or bad slippage, all the atomic swaps are reverted and the exchange commission is charged.
+		/// Upon such a failure, the extrinsic is marked "successful", but an event for the failure is emitted
+		///
+		/// # Args:
+		/// - `swap_token_list` - This list of tokens is the route of the atomic swaps, starting with the asset sold and ends with the asset finally bought  
+		/// - `bought_asset_amount`: The amount of the last asset bought
+		/// - `max_amount_in` - The maximum amount of first asset that can be sold in order to not fail on slippage. Slippage failures still charge exchange commission.
 		#[pallet::weight(<<T as Config>::WeightInfo>::multiswap_buy_asset(swap_token_list.len() as u32))]
 		pub fn multiswap_buy_asset(
 			origin: OriginFor<T>,

@@ -69,8 +69,7 @@ jobs:
             fast: false
           - command: "yarn test-sequential-autocompound"
             fast: true
-    # Use bigger GitHub-hosted runners with 4vCPU and 16Gb of RAM to run tests
-    runs-on: mangata-node-e2e-runners
+    runs-on: [self-hosted, compile]
     timeout-minutes: 180
     env:
       API_URL: "ws://127.0.0.1:9946"
@@ -139,8 +138,12 @@ jobs:
         working-directory: launch
         run: sed -i 's+mangatasolutions/mangata-node:dev+${{ env.PARACHAIN_DOCKER_IMAGE }}+g' config.yml
 
-      - name: Install parachain launch
+      - name: Install parachain launch dependencies
         working-directory: launch
+        run: yarn
+      
+      - name: Install e2e tests dependencies
+        working-directory: e2eTests
         run: yarn
 
       - name: Generate parachain launch config
@@ -154,10 +157,6 @@ jobs:
       - name: Start mangata-node parachain
         working-directory: launch
         run: yarn up
-
-      - name: Install dependencies
-        working-directory: e2eTests
-        run: yarn
 
       - name: Docker ps
         run: docker ps --no-trunc

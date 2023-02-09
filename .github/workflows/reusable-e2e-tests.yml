@@ -120,9 +120,9 @@ jobs:
         working-directory: launch
         run: yarn gen
 
-      # - name: Stop previous parachain if running
-      #  working-directory: launch
-      #  run: yarn down
+      - name: Stop previous parachain if running
+        working-directory: launch
+        run: yarn down
 
       - name: Start mangata-node parachain
         working-directory: launch

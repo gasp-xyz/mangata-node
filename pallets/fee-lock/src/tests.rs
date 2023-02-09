@@ -876,11 +876,13 @@ fn test_unlock_happens_not_sooner_but_after_period() {
 	ExtBuilder::new()
 		.create_token(NativeCurrencyId::get())
 		.mint(ALICE, NativeCurrencyId::get(), INITIAL_AMOUNT)
-		.mint(BOB, NativeCurrencyId::get(), INITIAL_AMOUNT)
 		.initialize_fee_locks(PERIOD_LENGTH, FEE_LOCK_AMOUNT, SWAP_VALUE_THRESHOLD)
 		.build()
 		.execute_with(|| {
 			const UNLIMITED_WEIGHT: Weight = Weight::from_ref_time(u64::MAX);
+
+			// lets move to some block that is not aligned with period start
+			fast_forward_blocks(7);
 			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&ALICE).unwrap();
 
 			for _ in 0..PERIOD_LENGTH - 1 {

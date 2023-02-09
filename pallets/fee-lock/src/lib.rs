@@ -18,7 +18,7 @@ use sp_arithmetic::per_things::Rounding;
 use sp_runtime::helpers_128bit::multiply_by_rational_with_rounding;
 
 use sp_runtime::{
-	traits::{CheckedDiv, Zero},
+	traits::{CheckedAdd, Zero},
 	Saturating,
 };
 use sp_std::{convert::TryInto, prelude::*};
@@ -79,16 +79,16 @@ pub mod pallet {
 			consumed_weight += T::DbWeight::get().reads(1);
 			let metadata = Self::get_fee_lock_metadata();
 			let period_length = metadata.map(|meta| meta.period_length);
-			let current_period = period_length.and_then(|period| now.checked_div(&period));
+			// let current_period = period_length.and_then(|period| now.checked_div(&period));
 			let mut accounts_it = AccountFeeLockData::<T>::iter();
 
 			loop {
 				consumed_weight += T::DbWeight::get().reads(1);
-				match (period_length, current_period, accounts_it.next()) {
-					(Some(period_lenght), Some(current_period), Some((who, lock))) => {
-						let unlock_period = lock.last_fee_lock_block.checked_div(&period_lenght);
+				match (period_length, accounts_it.next()) {
+					(Some(period_lenght), Some((who, lock))) => {
+						let unlock_block = lock.last_fee_lock_block.checked_add(&period_lenght);
 
-						if matches!(unlock_period, Some(unlock) if unlock < current_period) {
+						if matches!(unlock_block, Some(unlock) if unlock <= now) {
 							consumed_weight += T::WeightInfo::unlock_fee();
 							let _ = <Self as FeeLockTriggerTrait<T::AccountId>>::unlock_fee(&who);
 						}
@@ -257,12 +257,6 @@ pub mod pallet {
 
 			Ok(<Self as FeeLockTriggerTrait<T::AccountId>>::unlock_fee(&who)?.into())
 		}
-	}
-}
-
-impl<T: Config> Pallet<T> {
-	fn do_on_idle(remaining_weight: Weight) -> Weight {
-		Weight::from_ref_time(0 as u64)
 	}
 }
 

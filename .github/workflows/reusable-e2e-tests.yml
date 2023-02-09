@@ -69,8 +69,8 @@ jobs:
             fast: false
           - command: "yarn test-sequential-autocompound"
             fast: true
-
-    runs-on: [self-hosted, compile]
+    # Use bigger GitHub-hosted runners with 4vCPU and 16Gb of RAM to run tests
+    runs-on: mangata-node-e2e-runners
     timeout-minutes: 180
     env:
       API_URL: "ws://127.0.0.1:9946"

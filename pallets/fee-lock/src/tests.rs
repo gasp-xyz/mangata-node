@@ -786,7 +786,7 @@ fn test_on_idle_unlock_for_single_user(
 		.build()
 		.execute_with(|| {
 			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&ALICE).unwrap();
-			fast_forward_blocks(PERIOD_LENGTH + 1);
+			fast_forward_blocks(PERIOD_LENGTH);
 
 			// assert
 			assert_ok!(<FeeLock as FeeLockTriggerTrait<_>>::can_unlock_fee(&ALICE));
@@ -859,7 +859,7 @@ fn test_on_idle_unlock_multiple_users(
 			for (account, _) in expected_account_data.iter() {
 				<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(account).unwrap();
 			}
-			fast_forward_blocks(PERIOD_LENGTH + 1);
+			fast_forward_blocks(PERIOD_LENGTH);
 
 			let consumed = FeeLock::on_idle(System::block_number(), availabe_weight);
 
@@ -868,5 +868,45 @@ fn test_on_idle_unlock_multiple_users(
 			}
 
 			assert_eq!(consumed_weight, consumed);
+		});
+}
+
+#[test]
+fn test_unlock_happens_not_sooner_but_after_period() {
+	ExtBuilder::new()
+		.create_token(NativeCurrencyId::get())
+		.mint(ALICE, NativeCurrencyId::get(), INITIAL_AMOUNT)
+		.mint(BOB, NativeCurrencyId::get(), INITIAL_AMOUNT)
+		.initialize_fee_locks(PERIOD_LENGTH, FEE_LOCK_AMOUNT, SWAP_VALUE_THRESHOLD)
+		.build()
+		.execute_with(|| {
+			const UNLIMITED_WEIGHT: Weight = Weight::from_ref_time(u64::MAX);
+			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&ALICE).unwrap();
+
+			for _ in 0..PERIOD_LENGTH - 1 {
+				fast_forward_blocks(1);
+				FeeLock::on_idle(System::block_number(), UNLIMITED_WEIGHT);
+				assert_eq!(
+					Tokens::accounts(ALICE, NativeCurrencyId::get()),
+					AccountData {
+						free: INITIAL_AMOUNT - 1 * FEE_LOCK_AMOUNT,
+						reserved: 1 * FEE_LOCK_AMOUNT,
+						frozen: 0u128
+					}
+				);
+			}
+
+			// lock period ends now
+			fast_forward_blocks(1);
+
+			FeeLock::on_idle(System::block_number(), UNLIMITED_WEIGHT);
+			assert_eq!(
+				Tokens::accounts(ALICE, NativeCurrencyId::get()),
+				AccountData {
+					free: INITIAL_AMOUNT - 0 * FEE_LOCK_AMOUNT,
+					reserved: 0 * FEE_LOCK_AMOUNT,
+					frozen: 0u128
+				}
+			);
 		});
 }

@@ -241,6 +241,6 @@ impl ExtBuilder {
 pub fn fast_forward_blocks(count: u64) {
 	let now = System::block_number();
 	for i in 0..count {
-		System::set_block_number(now + i);
+		System::set_block_number(now + i + 1);
 	}
 }

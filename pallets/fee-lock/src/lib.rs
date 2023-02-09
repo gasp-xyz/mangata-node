@@ -77,10 +77,11 @@ pub mod pallet {
 			let metadata = Self::get_fee_lock_metadata();
 			let period_length = metadata.map(|meta| meta.period_length);
 			let current_period = period_length.and_then(|period| now.checked_div(&period));
+			let mut accounts_it = AccountFeeLockData::<T>::iter();
 
 			loop {
 				consumed_weight += T::DbWeight::get().reads(1);
-				match (period_length, current_period, AccountFeeLockData::<T>::iter().next()) {
+				match (period_length, current_period, accounts_it.next()) {
 					(Some(period_lenght), Some(current_period), Some((who, lock))) => {
 						let unlock_period = lock.last_fee_lock_block.checked_div(&period_lenght);
 

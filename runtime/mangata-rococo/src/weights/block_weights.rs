@@ -1,4 +1,3 @@
-
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2023-02-09 (Y/M/D)
 //! HOSTNAME: `bf8bbc0d8927`, CPU: `AMD EPYC 7B13`
@@ -22,8 +21,10 @@
 //   --base-path
 //   .
 
-use sp_core::parameter_types;
-use sp_weights::{constants::WEIGHT_PER_NANOS, Weight};
+use frame_support::{
+	parameter_types,
+	weights::{constants::WEIGHT_PER_NANOS, Weight},
+};
 
 parameter_types! {
 	/// Time to execute an empty block.
@@ -44,7 +45,7 @@ parameter_types! {
 
 #[cfg(test)]
 mod test_weights {
-	use sp_weights::constants;
+	use frame_support::weights::constants;
 
 	/// Checks that the weight exists and is sane.
 	// NOTE: If this test fails but you are sure that the generated values are fine,

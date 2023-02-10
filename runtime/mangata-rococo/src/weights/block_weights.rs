@@ -1,6 +1,6 @@
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
-//! DATE: 2023-01-02 (Y/M/D)
-//! HOSTNAME: `6b0c83a231cd`, CPU: `AMD EPYC 7B13`
+//! DATE: 2023-02-09 (Y/M/D)
+//! HOSTNAME: `bf8bbc0d8927`, CPU: `AMD EPYC 7B13`
 //!
 //! SHORT-NAME: `block`, LONG-NAME: `BlockExecution`, RUNTIME: `Mangata Development`
 //! WARMUPS: `10`, REPEAT: `100`
@@ -16,6 +16,8 @@
 //   --chain
 //   dev
 //   -lblock_builder=debug
+//   --max-ext-per-block
+//   50000
 //   --base-path
 //   .
 
@@ -29,16 +31,16 @@ parameter_types! {
 	/// Calculated by multiplying the *Average* with `1.0` and adding `0`.
 	///
 	/// Stats nanoseconds:
-	///   Min, Max: 7_965_169, 8_157_708
-	///   Average:  8_012_576
-	///   Median:   8_010_819
-	///   Std-Dev:  26739.71
+	///   Min, Max: 7_480_699, 7_685_740
+	///   Average:  7_527_048
+	///   Median:   7_522_429
+	///   Std-Dev:  29109.3
 	///
 	/// Percentiles nanoseconds:
-	///   99th: 8_120_089
-	///   95th: 8_045_149
-	///   75th: 8_020_858
-	pub const BlockExecutionWeight: Weight = WEIGHT_PER_NANOS.saturating_mul(8_012_576);
+	///   99th: 7_632_399
+	///   95th: 7_574_759
+	///   75th: 7_534_609
+	pub const BlockExecutionWeight: Weight = WEIGHT_PER_NANOS.saturating_mul(7_527_048);
 }
 
 #[cfg(test)]

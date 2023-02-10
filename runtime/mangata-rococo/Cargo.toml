@@ -46,7 +46,7 @@ sp-runtime = { git = "https://github.com/mangata-finance/substrate", default-fea
 sp-session = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 sp-std = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 sp-transaction-pool = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
-pallet-utility = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+pallet-utility-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 sp-ver = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 sp-version = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 
@@ -145,7 +145,7 @@ std = [
 	"pallet-timestamp/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-transaction-payment/std",
-	"pallet-utility/std",
+	"pallet-utility-mangata/std",
 	"cumulus-pallet-aura-ext/std",
 	"cumulus-pallet-parachain-system/std",
 	"cumulus-pallet-xcm/std",
@@ -222,7 +222,7 @@ try-runtime = [
 	"pallet-sudo-origin/try-runtime",
 	"pallet-collective-mangata/try-runtime",
 	"pallet-bootstrap/try-runtime",
-	"pallet-utility/try-runtime",
+	"pallet-utility-mangata/try-runtime",
 	"pallet-proxy/try-runtime",
 	"pallet-fee-lock/try-runtime",
 ]
@@ -253,7 +253,7 @@ runtime-benchmarks = [
 	"pallet-treasury/runtime-benchmarks",
 	"pallet-collective-mangata/runtime-benchmarks",
 	"pallet-crowdloan-rewards/runtime-benchmarks",
-	"pallet-utility/runtime-benchmarks",
+	"pallet-utility-mangata/runtime-benchmarks",
 	"pallet-vesting-mangata/runtime-benchmarks",
 	"pallet-issuance/runtime-benchmarks",
 	"pallet-bootstrap/runtime-benchmarks",

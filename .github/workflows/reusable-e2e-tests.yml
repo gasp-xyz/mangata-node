@@ -49,7 +49,6 @@ jobs:
       E2E_TREASURY_PALLET_ADDRESS: ${{ secrets.E2E_TREASURY_PALLET_ADDRESS }}
       E2E_XYK_PALLET_ADDRESS: ${{ secrets.E2E_XYK_PALLET_ADDRESS }}
       E2E_TREASURY_BURN_PALLET_ADDRESS: ${{ secrets.E2E_TREASURY_BURN_PALLET_ADDRESS }}
-      #      TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
       TEST_SUDO_NAME: "//Alice"
       MANGATA_NODE_VERSION: ${{ inputs.globalVersion }}
       E2EBRANCHNAME: "main"
@@ -102,7 +101,7 @@ jobs:
 
       - name: Replace parachain docker image reference in config
         working-directory: launch
-        run: sed -i 's+mangatasolutions/mangata-node:dev+${{ env.PARACHAIN_DOCKER_IMAGE }}+g' config.yml
+        run: sed -i 's+mangatasolutions/mangata-node:.*+${{ env.PARACHAIN_DOCKER_IMAGE }}+g' config.yml
 
       - name: Install parachain launch
         working-directory: launch

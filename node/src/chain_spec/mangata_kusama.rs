@@ -256,9 +256,9 @@ pub fn mangata_kusama_local_config() -> ChainSpec {
 
 	ChainSpec::from_genesis(
 		// Name
-		"Mangata Local",
+		"Mangata Kusama Local",
 		// ID
-		"mangata_local",
+		"mangata_kusama_local",
 		ChainType::Local,
 		move || {
 			mangata_genesis(
@@ -442,14 +442,14 @@ pub fn mangata_kusama_local_config() -> ChainSpec {
 		// Telemetry
 		None,
 		// Protocol ID
-		Some("mangata-local"),
+		Some("kusama-local"),
 		// ForkId
 		None,
 		// Properties
 		Some(properties),
 		// Extensions
 		Extensions {
-			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
+			relay_chain: "kusama-local".into(), // You MUST set this to the correct network!
 			para_id: parachains::mangata::ID,
 		},
 	)

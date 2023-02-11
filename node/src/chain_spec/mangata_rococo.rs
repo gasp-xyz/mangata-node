@@ -63,7 +63,7 @@ pub fn mangata_session_keys(keys: AuraId) -> mangata_rococo_runtime::SessionKeys
 	mangata_rococo_runtime::SessionKeys { aura: keys }
 }
 
-pub fn public_testnet_config() -> ChainSpec {
+pub fn mangata_rococo_prod_config() -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
 	properties.insert("tokenSymbol".into(), "MGAT".into());

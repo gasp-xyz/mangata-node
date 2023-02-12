@@ -16,10 +16,7 @@ use pallet_xyk::Valuate;
 use sp_arithmetic::per_things::Rounding;
 use sp_runtime::helpers_128bit::multiply_by_rational_with_rounding;
 
-use sp_runtime::{
-	traits::{CheckedDiv, Zero},
-	Saturating,
-};
+use sp_runtime::{traits::Zero, Saturating};
 use sp_std::{convert::TryInto, prelude::*};
 
 #[cfg(test)]
@@ -127,7 +124,7 @@ pub mod pallet {
 		type NativeTokenId: Get<TokenId>;
 		type WeightInfo: WeightInfo;
 	}
-	
+
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub period_length: Option<T::BlockNumber>,
@@ -137,9 +134,9 @@ pub mod pallet {
 	}
 
 	#[cfg(feature = "std")]
-	impl<T:Config> Default for GenesisConfig<T>{
+	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			GenesisConfig{
+			GenesisConfig {
 				period_length: Default::default(),
 				fee_lock_amount: Default::default(),
 				swap_value_threshold: Default::default(),
@@ -148,30 +145,33 @@ pub mod pallet {
 		}
 	}
 
-
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
-			match(self.period_length, self.fee_lock_amount, self.swap_value_threshold) {
+			match (self.period_length, self.fee_lock_amount, self.swap_value_threshold) {
 				(Some(period), Some(amount), Some(threshold)) => {
-					let mut tokens: BoundedBTreeSet<TokenId, T::MaxCuratedTokens> = Default::default();
+					let mut tokens: BoundedBTreeSet<TokenId, T::MaxCuratedTokens> =
+						Default::default();
 					for t in self.whitelisted_tokens.iter() {
-						tokens.try_insert(*t).expect("list of tokens is <= than T::MaxCuratedTokens");
+						tokens
+							.try_insert(*t)
+							.expect("list of tokens is <= than T::MaxCuratedTokens");
 					}
 
-					FeeLockMetadata::<T>::put(FeeLockMetadataInfo{
+					FeeLockMetadata::<T>::put(FeeLockMetadataInfo {
 						period_length: period,
 						fee_lock_amount: amount,
 						swap_value_threshold: threshold,
 						whitelisted_tokens: tokens,
 					});
 				},
-				(None, None, None) => {}
-				_ => { panic!("either all or non config parameters should be set"); }
+				(None, None, None) => {},
+				_ => {
+					panic!("either all or non config parameters should be set");
+				},
 			};
 		}
 	}
-
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {

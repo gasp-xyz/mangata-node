@@ -538,6 +538,13 @@ fn mangata_genesis(
 				})
 				.collect(),
 		},
+		fee_lock: mangata_rococo_runtime::FeeLockConfig {
+			period_length: Some(10),
+			fee_lock_amount: Some(50__000_000_000_000_000_000u128),
+			swap_value_threshold: Some(1000__000_000_000_000_000_000u128),
+			whitelisted_tokens: Default::default(),
+			whitelisted_tokens: Default::default(),
+		},
 		council: Default::default(),
 		sudo: mangata_rococo_runtime::SudoConfig {
 			// Assign network admin rights.

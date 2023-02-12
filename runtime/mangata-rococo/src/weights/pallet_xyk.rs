@@ -58,7 +58,9 @@ use sp_std::marker::PhantomData;
 pub trait WeightInfo {
 	fn create_pool() -> Weight;
 	fn sell_asset() -> Weight;
+	fn multiswap_sell_asset(x: u32, ) -> Weight;
 	fn buy_asset() -> Weight;
+	fn multiswap_buy_asset(x: u32, ) -> Weight;
 	fn mint_liquidity() -> Weight;
 	fn mint_liquidity_using_vesting_native_tokens() -> Weight;
 	fn burn_liquidity() -> Weight;
@@ -97,6 +99,20 @@ impl<T: frame_system::Config> pallet_xyk::WeightInfo for ModuleWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(13 as u64))
 			.saturating_add(T::DbWeight::get().writes(9 as u64))
 	}
+	// Storage: AssetRegistry Metadata (r:3 w:0)
+	// Storage: Xyk Pools (r:6 w:4)
+	// Storage: Tokens Accounts (r:12 w:12)
+	// Storage: System Account (r:2 w:2)
+	// Storage: Tokens TotalIssuance (r:1 w:1)
+	fn multiswap_sell_asset(x: u32, ) -> Weight {
+		(Weight::from_ref_time(501_840_000))
+			// Standard Error: 238_647
+			.saturating_add((Weight::from_ref_time(191_025_097)).saturating_mul(x as u64))
+			.saturating_add(T::DbWeight::get().reads(24 as u64))
+			.saturating_add(T::DbWeight::get().reads((8 as u64).saturating_mul(x as u64)))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
+			.saturating_add(T::DbWeight::get().writes((6 as u64).saturating_mul(x as u64)))
+	}
 	// Storage: AssetRegistry Metadata (r:2 w:0)
 	// Storage: Xyk Pools (r:4 w:1)
 	// Storage: Tokens Accounts (r:6 w:6)
@@ -105,6 +121,20 @@ impl<T: frame_system::Config> pallet_xyk::WeightInfo for ModuleWeight<T> {
 		(Weight::from_ref_time(198_420_000))
 			.saturating_add(T::DbWeight::get().reads(14 as u64))
 			.saturating_add(T::DbWeight::get().writes(9 as u64))
+	}
+	// Storage: AssetRegistry Metadata (r:3 w:0)
+	// Storage: Xyk Pools (r:6 w:4)
+	// Storage: Tokens Accounts (r:12 w:12)
+	// Storage: System Account (r:2 w:2)
+	// Storage: Tokens TotalIssuance (r:1 w:1)
+	fn multiswap_buy_asset(x: u32, ) -> Weight {
+		(Weight::from_ref_time(514_820_000))
+			// Standard Error: 237_432
+			.saturating_add((Weight::from_ref_time(196_435_381)).saturating_mul(x as u64))
+			.saturating_add(T::DbWeight::get().reads(24 as u64))
+			.saturating_add(T::DbWeight::get().reads((8 as u64).saturating_mul(x as u64)))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
+			.saturating_add(T::DbWeight::get().writes((6 as u64).saturating_mul(x as u64)))
 	}
 	// Storage: AssetRegistry Metadata (r:2 w:0)
 	// Storage: Xyk LiquidityAssets (r:1 w:0)
@@ -249,6 +279,20 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(13 as u64))
 			.saturating_add(RocksDbWeight::get().writes(9 as u64))
 	}
+	// Storage: AssetRegistry Metadata (r:3 w:0)
+	// Storage: Xyk Pools (r:6 w:4)
+	// Storage: Tokens Accounts (r:12 w:12)
+	// Storage: System Account (r:2 w:2)
+	// Storage: Tokens TotalIssuance (r:1 w:1)
+	fn multiswap_sell_asset(x: u32, ) -> Weight {
+		(Weight::from_ref_time(501_840_000))
+			// Standard Error: 238_647
+			.saturating_add((Weight::from_ref_time(191_025_097)).saturating_mul(x as u64))
+			.saturating_add(RocksDbWeight::get().reads(24 as u64))
+			.saturating_add(RocksDbWeight::get().reads((8 as u64).saturating_mul(x as u64)))
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
+			.saturating_add(RocksDbWeight::get().writes((6 as u64).saturating_mul(x as u64)))
+	}
 	// Storage: AssetRegistry Metadata (r:2 w:0)
 	// Storage: Xyk Pools (r:4 w:1)
 	// Storage: Tokens Accounts (r:6 w:6)
@@ -257,6 +301,20 @@ impl WeightInfo for () {
 		(Weight::from_ref_time(198_420_000))
 			.saturating_add(RocksDbWeight::get().reads(14 as u64))
 			.saturating_add(RocksDbWeight::get().writes(9 as u64))
+	}
+	// Storage: AssetRegistry Metadata (r:3 w:0)
+	// Storage: Xyk Pools (r:6 w:4)
+	// Storage: Tokens Accounts (r:12 w:12)
+	// Storage: System Account (r:2 w:2)
+	// Storage: Tokens TotalIssuance (r:1 w:1)
+	fn multiswap_buy_asset(x: u32, ) -> Weight {
+		(Weight::from_ref_time(514_820_000))
+			// Standard Error: 237_432
+			.saturating_add((Weight::from_ref_time(196_435_381)).saturating_mul(x as u64))
+			.saturating_add(RocksDbWeight::get().reads(24 as u64))
+			.saturating_add(RocksDbWeight::get().reads((8 as u64).saturating_mul(x as u64)))
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
+			.saturating_add(RocksDbWeight::get().writes((6 as u64).saturating_mul(x as u64)))
 	}
 	// Storage: AssetRegistry Metadata (r:2 w:0)
 	// Storage: Xyk LiquidityAssets (r:1 w:0)

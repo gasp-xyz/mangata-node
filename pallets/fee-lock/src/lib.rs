@@ -72,17 +72,6 @@ pub mod pallet {
 		pub whitelisted_tokens: BoundedBTreeSet<TokenId, T::MaxCuratedTokens>,
 	}
 
-	impl<T: Config> Default for FeeLockMetadataInfo<T> {
-		fn default() -> Self {
-			Self {
-				period_length: Default::default(),
-				fee_lock_amount: Default::default(),
-				swap_value_threshold: Default::default(),
-				whitelisted_tokens: Default::default(),
-			}
-		}
-	}
-
 	#[pallet::storage]
 	#[pallet::getter(fn get_fee_lock_metadata)]
 	pub type FeeLockMetadata<T: Config> = StorageValue<_, FeeLockMetadataInfo<T>, OptionQuery>;
@@ -138,6 +127,51 @@ pub mod pallet {
 		type NativeTokenId: Get<TokenId>;
 		type WeightInfo: WeightInfo;
 	}
+	
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		pub period_length: Option<T::BlockNumber>,
+		pub fee_lock_amount: Option<Balance>,
+		pub swap_value_threshold: Option<Balance>,
+		pub whitelisted_tokens: Vec<TokenId>,
+	}
+
+	#[cfg(feature = "std")]
+	impl<T:Config> Default for GenesisConfig<T>{
+		fn default() -> Self {
+			GenesisConfig{
+				period_length: Default::default(),
+				fee_lock_amount: Default::default(),
+				swap_value_threshold: Default::default(),
+				whitelisted_tokens: Default::default(),
+			}
+		}
+	}
+
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			match(self.period_length, self.fee_lock_amount, self.swap_value_threshold) {
+				(Some(period), Some(amount), Some(threshold)) => {
+					let mut tokens: BoundedBTreeSet<TokenId, T::MaxCuratedTokens> = Default::default();
+					for t in self.whitelisted_tokens.iter() {
+						tokens.try_insert(*t).expect("list of tokens is <= than T::MaxCuratedTokens");
+					}
+
+					FeeLockMetadata::<T>::put(FeeLockMetadataInfo{
+						period_length: period,
+						fee_lock_amount: amount,
+						swap_value_threshold: threshold,
+						whitelisted_tokens: tokens,
+					});
+				},
+				(None, None, None) => {}
+				_ => { panic!("either all or non config parameters should be set"); }
+			};
+		}
+	}
+
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {

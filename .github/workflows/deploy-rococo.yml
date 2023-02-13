@@ -55,11 +55,8 @@ jobs:
       - name: Watch deployment workflow run
         if: steps.version.outputs.changed == 'true'
         run: |
-          # wget -O gh.tgz https://github.com/cli/cli/releases/download/v2.23.0/gh_2.23.0_linux_arm64.tar.gz
-          # tar xzf gh.tgz && sudo cp gh_2.23.0_linux_arm64/bin/gh /usr/local/bin/gh
-          sleep 2
-          gh run list
-          export RUN_ID=$(gh run list -u mangatafinance -L1 --json databaseId --jq '.[].databaseId')
+          sleep 2 && gh run list -L10 -w rococo.yml
+          export RUN_ID=$(gh run list -w rococo.yml -L1 --json databaseId --jq '.[].databaseId')
           
           if [[ $(gh run view "$RUN_ID" --json headSha --jq '.headSha') != $(git rev-parse HEAD) ]]; then
             echo "Commited git SHA doesn't match with the SHA of the retrieved Run ID"
@@ -67,4 +64,4 @@ jobs:
           fi
           
           echo Deployment workflow URL: $(gh run view "$RUN_ID" --json url --jq '.url')
-          gh run watch "$RUN_ID" -i1 --exit-status
+          gh run watch "$RUN_ID" --exit-status

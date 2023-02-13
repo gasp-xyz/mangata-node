@@ -57,6 +57,7 @@ jobs:
         run: |
           # wget -O gh.tgz https://github.com/cli/cli/releases/download/v2.23.0/gh_2.23.0_linux_arm64.tar.gz
           # tar xzf gh.tgz && sudo cp gh_2.23.0_linux_arm64/bin/gh /usr/local/bin/gh
+          sleep 2
           gh run list
           export RUN_ID=$(gh run list -u mangatafinance -L1 --json databaseId --jq '.[].databaseId')
           

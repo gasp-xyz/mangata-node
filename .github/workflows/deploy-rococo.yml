@@ -1,13 +1,66 @@
 name: Deploy mangata-node to `rococo`
 
 on:
-  push:
-    branches: [feat/add-rococo-deployment-workflow-mgx-241]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to be assigned to the built image"
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      version:
+        description: "Version to be assigned to the built image"
+        required: true
+        type: string
 
 jobs:
-  deploy_prod:
-    name: Deploy `rococo` environment
-    uses: ./.github/workflows/reusable-deploy-prod.yml
-    secrets: inherit
-    with:
-      version: rococo-0.27.2
+  deploy_rococo:
+    runs-on: ubuntu-latest
+    environment: rococo
+    env:
+      version_file: helmfiles/rococo/.version
+      GH_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
+    steps:
+      - name: Checkout `mangata-finance/gitops` repository
+        uses: actions/checkout@v3
+        with:
+          repository:  mangata-finance/gitops
+          ref: feat/mgx-241-rococo-gha-workflow
+          token: ${{ secrets.BOT_GITHUB_TOKEN }}
+      
+      - name: Update version file in `gitops` repository
+        id: version
+        run: |
+          echo -n '${{ inputs.version }}' > ${{ env.version_file }}
+
+          if output=$(git status --porcelain) && [ -z "$output" ]; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else 
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Push updated version to `gitops` repository
+        if: steps.version.outputs.changed == 'true'
+        run: |
+          git config user.name mangatafinance
+          git config user.email solutions@mangata.finance
+          git add .
+          git commit -m 'chore: Update rococo image version to ${{ inputs.version }}'
+          git push
+      
+      - name: Watch deployment workflow run
+        if: steps.version.outputs.changed == 'true'
+        run: |
+          # wget -O gh.tgz https://github.com/cli/cli/releases/download/v2.23.0/gh_2.23.0_linux_arm64.tar.gz
+          # tar xzf gh.tgz && sudo cp gh_2.23.0_linux_arm64/bin/gh /usr/local/bin/gh
+          gh run list
+          export RUN_ID=$(gh run list -u mangatafinance -L1 --json databaseId --jq '.[].databaseId')
+          
+          if [[ $(gh run view "$RUN_ID" --json headSha --jq '.headSha') != $(git rev-parse HEAD) ]]; then
+            echo "Commited git SHA doesn't match with the SHA of the retrieved Run ID"
+            exit 1
+          fi
+          
+          echo Deployment workflow URL: $(gh run view "$RUN_ID" --json url --jq '.url')
+          gh run watch "$RUN_ID" -i1 --exit-status

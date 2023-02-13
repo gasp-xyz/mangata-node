@@ -28,6 +28,9 @@ jobs:
           repository:  mangata-finance/gitops
           ref: feat/mgx-241-rococo-gha-workflow
           token: ${{ secrets.BOT_GITHUB_TOKEN }}
+
+      - name: Verify specified version exists
+        run: docker pull mangatasolutions/mangata-node:${{ inputs.version }}
       
       - name: Update version file in `gitops` repository
         id: version

@@ -1,0 +1,37 @@
+name: Deploy mangata-node to `rococo`
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to be assigned to the built image"
+        required: true
+        type: string
+        default: 'rococo-0.27.1'
+  workflow_call:
+    inputs:
+      version:
+        description: "Version to be assigned to the built image"
+        required: true
+        type: string
+        default: 'rococo-0.27.1'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # env:
+    #   version: 'rococo-0.27.2'
+    steps:
+      # - name: Set global version
+      #   id: set_version
+      #   run: echo "version=${{ env.version }}" >> $GITHUB_OUTPUT
+      # - run: echo '${{ toJSON(steps.set_version.outputs) }}'
+      - name: Invoke workflow in `gitops` repository
+        uses: jonas-schievink/workflow-proxy@v1
+        with:
+          workflow: rococo.yml
+          repo: mangata-finance/gitops
+          ref: feat/mgx-241-rococo-gha-workflow
+          token: ${{ secrets.DEV_TOOLS_REPO_ACCESS_TOKEN }}
+          repost-logs: true
+          inputs: '${{ toJSON(inputs) }}'

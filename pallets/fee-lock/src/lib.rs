@@ -16,10 +16,7 @@ use pallet_xyk::Valuate;
 use sp_arithmetic::per_things::Rounding;
 use sp_runtime::helpers_128bit::multiply_by_rational_with_rounding;
 
-use sp_runtime::{
-	traits::Zero,
-	Saturating,
-};
+use sp_runtime::{traits::Zero, Saturating};
 use sp_std::{convert::TryInto, prelude::*};
 
 #[cfg(test)]

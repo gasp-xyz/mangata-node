@@ -5,9 +5,8 @@ on:
     branches: [feat/add-rococo-deployment-workflow-mgx-241]
 
 jobs:
-  deploy_rococo:
+  deploy_prod:
     name: Deploy `rococo` environment
-    environment: rococo
     uses: ./.github/workflows/reusable-deploy-prod.yml
     secrets: inherit
     with:

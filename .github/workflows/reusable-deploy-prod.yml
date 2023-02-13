@@ -17,8 +17,9 @@ on:
         default: 'rococo-0.27.1'
 
 jobs:
-  deploy:
+  deploy_rococo:
     runs-on: ubuntu-latest
+    environment: rococo
     # env:
     #   version: 'rococo-0.27.2'
     steps:

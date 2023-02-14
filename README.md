@@ -43,7 +43,7 @@ You can use `build-image.sh` script to build & generate docker image
 ./scripts/build-image.sh
 ```
 
-of you can use already compiled build atributes generated in previous step
+or you can use already compiled build atributes generated in previous step
 
 ```
 SKIP_BUILD=1 BUILD_DIR=./docker-cargo/release ./scripts/build-image.sh

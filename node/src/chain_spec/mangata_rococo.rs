@@ -221,7 +221,7 @@ pub fn mangata_rococo_prod_config() -> ChainSpec {
 		Vec::new(),
 		None,
 		// Protocol ID
-		Some("mangata-public-testnet"),
+		Some("mangata-rococo-testnet"),
 		// ForkId
 		None,
 		// Properties

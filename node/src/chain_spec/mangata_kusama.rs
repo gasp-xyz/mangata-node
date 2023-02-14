@@ -241,7 +241,7 @@ pub fn mangata_kusama_prod_config() -> ChainSpec {
 		// Properties
 		Some(properties),
 		Extensions {
-			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
+			relay_chain: "kusama-local".into(), // You MUST set this to the correct network!
 			para_id: parachains::mangata::ID,
 		},
 	)
@@ -442,7 +442,7 @@ pub fn mangata_kusama_local_config() -> ChainSpec {
 		// Telemetry
 		None,
 		// Protocol ID
-		Some("kusama-local"),
+		Some("mangata-kusama-local"),
 		// ForkId
 		None,
 		// Properties

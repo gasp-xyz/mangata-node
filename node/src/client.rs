@@ -258,15 +258,12 @@ impl sc_client_api::UsageProvider<Block> for Client {
 impl sc_client_api::BlockBackend<Block> for Client {
 	fn block_body(
 		&self,
-		id: &BlockId<Block>,
+		hash: <Block as BlockT>::Hash,
 	) -> sp_blockchain::Result<Option<Vec<<Block as BlockT>::Extrinsic>>> {
-		match_client!(self, block_body(id))
+		match_client!(self, block_body(hash))
 	}
 
-	fn block_indexed_body(
-		&self,
-		id: &BlockId<Block>,
-	) -> sp_blockchain::Result<Option<Vec<Vec<u8>>>> {
+	fn block_indexed_body(&self, id: H256) -> sp_blockchain::Result<Option<Vec<Vec<u8>>>> {
 		match_client!(self, block_indexed_body(id))
 	}
 
@@ -278,7 +275,7 @@ impl sc_client_api::BlockBackend<Block> for Client {
 		match_client!(self, block_status(id))
 	}
 
-	fn justifications(&self, id: &BlockId<Block>) -> sp_blockchain::Result<Option<Justifications>> {
+	fn justifications(&self, id: H256) -> sp_blockchain::Result<Option<Justifications>> {
 		match_client!(self, justifications(id))
 	}
 
@@ -291,14 +288,14 @@ impl sc_client_api::BlockBackend<Block> for Client {
 
 	fn indexed_transaction(
 		&self,
-		hash: &<Block as BlockT>::Hash,
+		hash: <Block as BlockT>::Hash,
 	) -> sp_blockchain::Result<Option<Vec<u8>>> {
 		match_client!(self, indexed_transaction(hash))
 	}
 
 	fn has_indexed_transaction(
 		&self,
-		hash: &<Block as BlockT>::Hash,
+		hash: <Block as BlockT>::Hash,
 	) -> sp_blockchain::Result<bool> {
 		match_client!(self, has_indexed_transaction(hash))
 	}
@@ -309,13 +306,13 @@ impl sc_client_api::BlockBackend<Block> for Client {
 }
 
 impl sc_client_api::StorageProvider<Block, crate::service::FullBackend> for Client {
-	fn storage(&self, id: &H256, key: &StorageKey) -> sp_blockchain::Result<Option<StorageData>> {
+	fn storage(&self, id: H256, key: &StorageKey) -> sp_blockchain::Result<Option<StorageData>> {
 		match_client!(self, storage(id, key))
 	}
 
 	fn storage_keys(
 		&self,
-		id: &H256,
+		id: H256,
 		key_prefix: &StorageKey,
 	) -> sp_blockchain::Result<Vec<StorageKey>> {
 		match_client!(self, storage_keys(id, key_prefix))
@@ -323,7 +320,7 @@ impl sc_client_api::StorageProvider<Block, crate::service::FullBackend> for Clie
 
 	fn storage_hash(
 		&self,
-		id: &H256,
+		id: H256,
 		key: &StorageKey,
 	) -> sp_blockchain::Result<Option<<Block as BlockT>::Hash>> {
 		match_client!(self, storage_hash(id, key))
@@ -331,7 +328,7 @@ impl sc_client_api::StorageProvider<Block, crate::service::FullBackend> for Clie
 
 	fn storage_pairs(
 		&self,
-		id: &H256,
+		id: H256,
 		key_prefix: &StorageKey,
 	) -> sp_blockchain::Result<Vec<(StorageKey, StorageData)>> {
 		match_client!(self, storage_pairs(id, key_prefix))
@@ -339,7 +336,7 @@ impl sc_client_api::StorageProvider<Block, crate::service::FullBackend> for Clie
 
 	fn storage_keys_iter<'a>(
 		&self,
-		id: &H256,
+		id: H256,
 		prefix: Option<&'a StorageKey>,
 		start_key: Option<&StorageKey>,
 	) -> sp_blockchain::Result<
@@ -354,7 +351,7 @@ impl sc_client_api::StorageProvider<Block, crate::service::FullBackend> for Clie
 
 	fn child_storage(
 		&self,
-		id: &H256,
+		id: H256,
 		child_info: &ChildInfo,
 		key: &StorageKey,
 	) -> sp_blockchain::Result<Option<StorageData>> {
@@ -363,7 +360,7 @@ impl sc_client_api::StorageProvider<Block, crate::service::FullBackend> for Clie
 
 	fn child_storage_keys(
 		&self,
-		id: &H256,
+		id: H256,
 		child_info: &ChildInfo,
 		key_prefix: &StorageKey,
 	) -> sp_blockchain::Result<Vec<StorageKey>> {
@@ -372,7 +369,7 @@ impl sc_client_api::StorageProvider<Block, crate::service::FullBackend> for Clie
 
 	fn child_storage_keys_iter<'a>(
 		&self,
-		id: &H256,
+		id: H256,
 		child_info: ChildInfo,
 		prefix: Option<&'a StorageKey>,
 		start_key: Option<&StorageKey>,
@@ -388,7 +385,7 @@ impl sc_client_api::StorageProvider<Block, crate::service::FullBackend> for Clie
 
 	fn child_storage_hash(
 		&self,
-		id: &H256,
+		id: H256,
 		child_info: &ChildInfo,
 		key: &StorageKey,
 	) -> sp_blockchain::Result<Option<<Block as BlockT>::Hash>> {

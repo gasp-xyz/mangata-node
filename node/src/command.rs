@@ -9,21 +9,20 @@ use codec::Encode;
 use cumulus_client_cli::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
 use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
+use futures::executor::block_on;
 use log::info;
+pub use mangata_types::Block;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
 	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
 };
-use sc_service::{
-	config::{BasePath, PrometheusConfig},
-	PartialComponents,
-};
-use std::{cell::RefCell, rc::Rc, sync::Mutex};
+use sc_service::config::{BasePath, PrometheusConfig};
+use std::{cell::RefCell, rc::Rc};
 
 use sp_core::hexdisplay::HexDisplay;
 
 use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
-use std::{convert::TryInto, io::Write, net::SocketAddr, sync::Arc, time::Duration};
+use std::{convert::TryInto, io::Write, net::SocketAddr, time::Duration};
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
@@ -364,18 +363,19 @@ pub fn run() -> Result<()> {
 							config.runtime_cache_size,
 						);
 
-						let (c, backend, _, _) = sc_service::new_full_parts::<
+						let (c, _, _, _) = sc_service::new_full_parts::<
 							mangata_types::Block,
 							service::mangata_kusama_runtime::RuntimeApi,
 							_,
 						>(&config, None, executor)?;
 
-						let mut client = Rc::new(RefCell::new(c));
+						let client = Rc::new(RefCell::new(c));
 
 						let ext_builder = BenchmarkExtrinsicBuilder::new(client.clone());
 
 						let first_block_inherent =
-							inherent_benchmark_data([0u8; 32], Duration::from_millis(0))?;
+							block_on(inherent_benchmark_data([0u8; 32], Duration::from_millis(0)))
+								.unwrap();
 
 						let first_block_seed = sp_ver::extract_inherent_data(&first_block_inherent)
 							.map_err(|_| {
@@ -384,10 +384,11 @@ pub fn run() -> Result<()> {
 								))
 							})?;
 
-						let second_block_inherent = inherent_benchmark_data(
+						let second_block_inherent = block_on(inherent_benchmark_data(
 							first_block_seed.seed.as_bytes().try_into().unwrap(),
 							Duration::from_millis(12000),
-						)?;
+						))
+						.unwrap();
 
 						cmd.run_ver(
 							config,
@@ -446,47 +447,40 @@ pub fn run() -> Result<()> {
 				_ => panic!("invalid chain spec"),
 			}
 		},
-		Some(Subcommand::TryRuntime(cmd)) =>
-			if cfg!(feature = "try-runtime") {
-				let runner = cli.create_runner(cmd)?;
-				let chain_spec = &runner.config().chain_spec;
+		#[cfg(feature = "try-runtime")]
+		Some(Subcommand::TryRuntime(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			let chain_spec = &runner.config().chain_spec;
+			use sc_executor::{sp_wasm_interface::ExtendedHostFunctions, NativeExecutionDispatch};
+			type HostFunctionsOf<E> = ExtendedHostFunctions<
+				sp_io::SubstrateHostFunctions,
+				<E as NativeExecutionDispatch>::ExtendHostFunctions,
+			>;
+			let registry = &runner.config().prometheus_config.as_ref().map(|cfg| &cfg.registry);
+			let task_manager =
+				sc_service::TaskManager::new(runner.config().tokio_handle.clone(), *registry)
+					.map_err(|e| format!("Error: {:?}", e))?;
 
-				match chain_spec {
-					#[cfg(feature = "mangata-kusama")]
-					spec if spec.is_mangata_kusama() => runner.async_run(|config| {
-						let registry = config.prometheus_config.as_ref().map(|cfg| &cfg.registry);
-						let task_manager =
-							sc_service::TaskManager::new(config.tokio_handle.clone(), registry)
-								.map_err(|e| {
-									sc_cli::Error::Service(sc_service::Error::Prometheus(e))
-								})?;
-
-						Ok((
-								cmd.run::<service::mangata_kusama_runtime::Block, service::MangataKusamaRuntimeExecutor>(config),
+			match chain_spec {
+				#[cfg(feature = "mangata-kusama")]
+				spec if spec.is_mangata_kusama() => runner.async_run(|_| {
+					Ok((cmd.run::<mangata_kusama_runtime::Block, HostFunctionsOf<service::MangataKusamaRuntimeExecutor>>(),
 								task_manager,
 							))
-					}),
-					#[cfg(feature = "mangata-rococo")]
-					spec if spec.is_mangata_rococo() => runner.async_run(|config| {
-						let registry = config.prometheus_config.as_ref().map(|cfg| &cfg.registry);
-						let task_manager =
-							sc_service::TaskManager::new(config.tokio_handle.clone(), registry)
-								.map_err(|e| {
-									sc_cli::Error::Service(sc_service::Error::Prometheus(e))
-								})?;
-
-						Ok((
-								cmd.run::<service::mangata_rococo_runtime::Block, service::MangataRococoRuntimeExecutor>(
-									config,
-								),
+				}),
+				#[cfg(feature = "mangata-rococo")]
+				spec if spec.is_mangata_rococo() => runner.async_run(|_| {
+					Ok((cmd.run::<mangata_rococo_runtime::Block, HostFunctionsOf<service::MangataRococoRuntimeExecutor>>() ,
 								task_manager,
 							))
-					}),
-					_ => panic!("invalid chain spec"),
-				}
-			} else {
-				Err("Try-runtime must be enabled by `--features try-runtime`.".into())
-			},
+				}),
+				_ => panic!("invalid chain spec"),
+			}
+		},
+		#[cfg(not(feature = "try-runtime"))]
+		Some(Subcommand::TryRuntime) => Err("TryRuntime wasn't enabled when building the node. \
+				You can enable it with `--features try-runtime`."
+			.into()),
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 			let collator_options = cli.run.collator_options();

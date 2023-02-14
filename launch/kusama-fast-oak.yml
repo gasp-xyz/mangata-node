@@ -55,9 +55,9 @@ parachains:
       - --alice
     - flags:
       - --bob
-  - image: oaknetwork/neumann:1.7.0
+  - image: oaknetwork/turing-dev:latest
     chain:
-        base: dev
+        base: turing-dev
         collators:
           - alice
           - bob

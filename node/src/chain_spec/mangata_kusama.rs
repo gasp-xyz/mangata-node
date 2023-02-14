@@ -2,7 +2,6 @@ use crate::chain_spec::Extensions;
 use codec::Encode;
 use cumulus_primitives_core::ParaId;
 use hex::FromHex;
-use hex_literal::hex;
 
 use mangata_kusama_runtime::{
 	constants::parachains, ksm_per_second, AccountId, AssetMetadataOf, AuraId, CustomMetadata,
@@ -10,7 +9,7 @@ use mangata_kusama_runtime::{
 	TUR_TOKEN_ID, X1, X2,
 };
 use sc_service::ChainType;
-use sp_core::{sr25519, ByteArray, Pair, Public, H160};
+use sp_core::{sr25519, ByteArray, Pair, Public};
 use sp_runtime::{
 	traits::{ConstU32, IdentifyAccount, Verify},
 	WeakBoundedVec,

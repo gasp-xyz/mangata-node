@@ -1,6 +1,27 @@
 name: Reusable e2e tests workflow
 
 on:
+  workflow_dispatch:
+    inputs:
+      e2eBranch:
+        description: "Name of the e2e target branch"
+        type: string
+        required: false
+        default: "main"
+      parachainDocker:
+        description: "Name of the parachain docker reference"
+        type: string
+        required: false
+        default: "mangatasolutions/mangata-node:latest"
+      skipBuild:
+        description: "Skip build phase"
+        type: string
+        required: false
+        default: false
+      globalVersion:
+        description: "Set Mangata node version."
+        type: string
+        required: true
   workflow_call:
     inputs:
       e2eBranch:
@@ -38,9 +59,16 @@ jobs:
             fast: false
           - command: "yarn test-sequential-no-bootstrap"
             fast: false
+          - command: "yarn test-seqgasless"
+            fast: false
+          - command: "yarn test-paralgasless"
+            fast: false
+          - command: "yarn test-bootstrap"
+            fast: false
+          - command: "yarn test-rewards-bootstrap"
+            fast: false
           - command: "yarn test-sequential-autocompound"
             fast: true
-
     runs-on: [self-hosted, compile]
     timeout-minutes: 180
     env:
@@ -95,6 +123,12 @@ jobs:
           repository: mangata-finance/mangata-e2e
           ref: "${{ env.E2EBRANCHNAME }}"
           path: e2eTests
+      
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'yarn'
+          cache-dependency-path: '**/yarn.lock'
 
       - name: Print parachain docker image reference
         run: |
@@ -104,8 +138,12 @@ jobs:
         working-directory: launch
         run: sed -i 's+mangatasolutions/mangata-node:dev+${{ env.PARACHAIN_DOCKER_IMAGE }}+g' config.yml
 
-      - name: Install parachain launch
+      - name: Install parachain launch dependencies
         working-directory: launch
+        run: yarn
+      
+      - name: Install e2e tests dependencies
+        working-directory: e2eTests
         run: yarn
 
       - name: Generate parachain launch config
@@ -119,10 +157,6 @@ jobs:
       - name: Start mangata-node parachain
         working-directory: launch
         run: yarn up
-
-      - name: Install dependencies
-        working-directory: e2eTests
-        run: yarn
 
       - name: Docker ps
         run: docker ps --no-trunc

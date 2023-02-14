@@ -10,12 +10,11 @@ use frame_support::{
 	traits::{
 		tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
 		Contains, EnsureOrigin, EnsureOriginWithArg, Everything, ExistenceRequirement, Get,
-		Imbalance, InstanceFilter, LockIdentifier, Nothing, OnRuntimeUpgrade, U128CurrencyToVote,
-		WithdrawReasons,
+		Imbalance, InstanceFilter, WithdrawReasons,
 	},
 	unsigned::TransactionValidityError,
 	weights::{
-		constants::{RocksDbWeight, WEIGHT_PER_MICROS, WEIGHT_PER_MILLIS, WEIGHT_PER_SECOND},
+		constants::{RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND},
 		ConstantMultiplier, Weight,
 	},
 	PalletId,
@@ -23,11 +22,11 @@ use frame_support::{
 #[cfg(any(feature = "std", test))]
 pub use frame_system::Call as SystemCall;
 use frame_system::{
-	limits::{BlockLength, BlockWeights, BlockWeightsBuilder},
+	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
 };
 pub use orml_tokens;
-use orml_tokens::{MultiTokenCurrencyExtended, TransferDust};
+use orml_tokens::MultiTokenCurrencyExtended;
 use orml_traits::{
 	asset_registry::{AssetMetadata, AssetProcessor},
 	parameter_type_with_key,
@@ -50,7 +49,7 @@ use sp_runtime::{
 		DispatchInfoOf, PostDispatchInfoOf, Saturating, StaticLookup, Zero,
 	},
 	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, DispatchError, FixedPointNumber, Percent, Perquintill, RuntimeDebug,
+	ApplyExtrinsicResult, DispatchError, FixedPointNumber, Percent, RuntimeDebug,
 };
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
 use sp_std::{
@@ -161,11 +160,11 @@ impl_opaque_keys! {
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
-	authoring_version: 12,
-	spec_version: 12,
+	authoring_version: 13,
+	spec_version: 13,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 12,
+	transaction_version: 13,
 	state_version: 0,
 };
 
@@ -174,11 +173,12 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
-	authoring_version: 13,
-	spec_version: 13,
+
+	authoring_version: 14,
+	spec_version: 14,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 13,
+	transaction_version: 14,
 	state_version: 0,
 };
 
@@ -232,9 +232,8 @@ const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 /// so there is room for new extrinsics in the next block
 // const MAXIMUM_BLOCK_WEIGHT: Weight =
 // 	WEIGHT_PER_SECOND.saturating_div(4).set_proof_size((cumulus_primitives_core::relay_chain::v2::MAX_POV_SIZE as u64).saturating_div(2));
-const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND
-	.saturating_div(4)
-	.set_proof_size((u64::max_value()).saturating_div(2));
+const MAXIMUM_BLOCK_WEIGHT: Weight =
+	Weight::from_parts(WEIGHT_REF_TIME_PER_SECOND.saturating_mul(2), u64::MAX);
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
@@ -433,15 +432,10 @@ impl orml_tokens::Config for Runtime {
 	type CurrencyId = TokenId;
 	type WeightInfo = weights::orml_tokens_weights::ModuleWeight<Runtime>;
 	type ExistentialDeposits = ExistentialDeposits;
-	type OnDust = TransferDust<Runtime, TreasuryAccount>;
 	type MaxLocks = MaxLocks;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
-	type OnSlash = ();
-	type OnDeposit = ();
-	type OnTransfer = ();
+	type CurrencyHooks = ();
 	type MaxReserves = ();
-	type OnNewTokenAccount = ();
-	type OnKilledTokenAccount = ();
 	type ReserveIdentifier = [u8; 8];
 }
 
@@ -566,11 +560,39 @@ impl pallet_bootstrap::Config for Runtime {
 	type AssetRegistryApi = EnableAssetPoolApi;
 }
 
-impl pallet_utility::Config for Runtime {
+#[derive(
+	Copy,
+	Clone,
+	Eq,
+	PartialEq,
+	Ord,
+	PartialOrd,
+	Encode,
+	Decode,
+	RuntimeDebug,
+	MaxEncodedLen,
+	TypeInfo,
+)]
+pub struct DisallowedInBatch;
+
+impl Contains<RuntimeCall> for DisallowedInBatch {
+	fn contains(c: &RuntimeCall) -> bool {
+		match c {
+			RuntimeCall::Xyk(pallet_xyk::Call::sell_asset { .. }) |
+			RuntimeCall::Xyk(pallet_xyk::Call::buy_asset { .. }) |
+			RuntimeCall::Xyk(pallet_xyk::Call::multiswap_sell_asset { .. }) |
+			RuntimeCall::Xyk(pallet_xyk::Call::multiswap_buy_asset { .. }) => true,
+			_ => false,
+		}
+	}
+}
+
+impl pallet_utility_mangata::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
+	type DisallowedInBatch = DisallowedInBatch;
 	type PalletsOrigin = OriginCaller;
-	type WeightInfo = weights::pallet_utility_weights::ModuleWeight<Runtime>;
+	type WeightInfo = weights::pallet_utility_mangata_weights::ModuleWeight<Runtime>;
 }
 
 type ORMLCurrencyAdapterNegativeImbalance =
@@ -622,15 +644,15 @@ pub enum LiquidityInfoEnum<C: MultiTokenCurrency<T::AccountId>, T: frame_system:
 }
 
 #[derive(Encode, Decode, Clone, TypeInfo)]
-pub struct OnChargeHandler<C, OCA, OTA>(PhantomData<(C, OCA, OTA)>);
+pub struct OnChargeHandler<C, OCA, OFLA>(PhantomData<(C, OCA, OFLA)>);
 
-impl<C, OCA, OTA> OnChargeHandler<C, OCA, OTA> {}
+impl<C, OCA, OFLA> OnChargeHandler<C, OCA, OFLA> {}
 
 /// Default implementation for a Currency and an OnUnbalanced handler.
 ///
 /// The unbalance handler is given 2 unbalanceds in [`OnUnbalanced::on_unbalanceds`]: fee and
 /// then tip.
-impl<T, C, OCA, OTA> OnChargeTransaction<T> for OnChargeHandler<C, OCA, OTA>
+impl<T, C, OCA, OFLA> OnChargeTransaction<T> for OnChargeHandler<C, OCA, OFLA>
 where
 	T: pallet_transaction_payment::Config + pallet_xyk::Config,
 	T::LengthToFee: frame_support::weights::WeightToFee<
@@ -650,7 +672,7 @@ where
 		LiquidityInfo = Option<LiquidityInfoEnum<C, T>>,
 		Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
 	>,
-	OTA: FeeLockTriggerTrait<<T as frame_system::Config>::AccountId>,
+	OFLA: FeeLockTriggerTrait<<T as frame_system::Config>::AccountId>,
 	T: frame_system::Config<RuntimeCall = RuntimeCall>,
 	T::AccountId: From<sp_runtime::AccountId32> + Into<sp_runtime::AccountId32>,
 {
@@ -671,10 +693,10 @@ where
 		// Also ugly implementation to keep it maleable for now
 		match call {
 			RuntimeCall::Xyk(pallet_xyk::Call::sell_asset {
-				sold_asset_id: sold_asset_id,
-				sold_asset_amount: sold_asset_amount,
-				bought_asset_id: bought_asset_id,
-				min_amount_out: min_amount_out,
+				sold_asset_id,
+				sold_asset_amount,
+				bought_asset_id,
+				min_amount_out,
 				..
 			}) => {
 				// If else tree for easy edits
@@ -706,7 +728,7 @@ where
 
 						match (
 							FeeLock::is_whitelisted(*sold_asset_id),
-							OTA::get_swap_valuation_for_token(*sold_asset_id, *sold_asset_amount),
+							OFLA::get_swap_valuation_for_token(*sold_asset_id, *sold_asset_amount),
 						) {
 							(true, Some(value))
 								if value >= fee_lock_metadata.swap_value_threshold =>
@@ -716,7 +738,7 @@ where
 							_ => {
 								match (
 									FeeLock::is_whitelisted(*bought_asset_id),
-									OTA::get_swap_valuation_for_token(
+									OFLA::get_swap_valuation_for_token(
 										*bought_asset_id,
 										bought_asset_amount,
 									),
@@ -734,11 +756,11 @@ where
 						if is_high_value {
 							// This is the "high value swap on curated token" branch
 							// Attempt to unlock fee, do not return if fails
-							let _ = OTA::unlock_fee(who);
+							let _ = OFLA::unlock_fee(who);
 							Ok(Some(LiquidityInfoEnum::FeeLock))
 						} else {
 							// This is the "low value swap on curated token" branch
-							OTA::process_fee_lock(who).map_err(|_| {
+							OFLA::process_fee_lock(who).map_err(|_| {
 								TransactionValidityError::Invalid(
 									InvalidTransaction::ProcessFeeLock.into(),
 								)
@@ -747,7 +769,7 @@ where
 						}
 					} else {
 						// "swap on non-whitelisted tokens" branch
-						OTA::process_fee_lock(who).map_err(|_| {
+						OFLA::process_fee_lock(who).map_err(|_| {
 							TransactionValidityError::Invalid(
 								InvalidTransaction::ProcessFeeLock.into(),
 							)
@@ -760,11 +782,47 @@ where
 				}
 			},
 
+			RuntimeCall::Xyk(pallet_xyk::Call::multiswap_sell_asset {
+				swap_token_list: swap_token_list,
+				sold_asset_amount: sold_asset_amount,
+				min_amount_out: min_amount_out,
+				..
+			}) => {
+				// If else tree for easy edits
+
+				// Check if fee locks are initiazed or not
+				if let Some(fee_lock_metadata) = FeeLock::get_fee_lock_metadata() {
+					// ensure swap cannot fail
+					// This is to ensure that xyk swap fee is always charged
+					// We also ensure that the user has enough funds to transact
+					let _ = <Xyk as PreValidateSwaps>::pre_validate_multiswap_sell_asset(
+						&who.clone().into(),
+						swap_token_list.clone(),
+						*sold_asset_amount,
+						*min_amount_out,
+					)
+					.map_err(|_| {
+						TransactionValidityError::Invalid(
+							InvalidTransaction::SwapPrevalidation.into(),
+						)
+					})?;
+
+					// This is the "low value swap on curated token" branch
+					OFLA::process_fee_lock(who).map_err(|_| {
+						TransactionValidityError::Invalid(InvalidTransaction::ProcessFeeLock.into())
+					})?;
+					Ok(Some(LiquidityInfoEnum::FeeLock))
+				} else {
+					// FeeLocks are not activated branch
+					OCA::withdraw_fee(who, call, info, fee, tip)
+				}
+			},
+
 			RuntimeCall::Xyk(pallet_xyk::Call::buy_asset {
-				sold_asset_id: sold_asset_id,
-				bought_asset_amount: bought_asset_amount,
-				bought_asset_id: bought_asset_id,
-				max_amount_in: max_amount_in,
+				sold_asset_id,
+				bought_asset_amount,
+				bought_asset_id,
+				max_amount_in,
 				..
 			}) => {
 				// If else tree for easy edits
@@ -802,7 +860,7 @@ where
 
 						match (
 							FeeLock::is_whitelisted(*sold_asset_id),
-							OTA::get_swap_valuation_for_token(*sold_asset_id, sold_asset_amount),
+							OFLA::get_swap_valuation_for_token(*sold_asset_id, sold_asset_amount),
 						) {
 							(true, Some(value))
 								if value >= fee_lock_metadata.swap_value_threshold =>
@@ -812,7 +870,7 @@ where
 							_ => {
 								match (
 									FeeLock::is_whitelisted(*bought_asset_id),
-									OTA::get_swap_valuation_for_token(
+									OFLA::get_swap_valuation_for_token(
 										*bought_asset_id,
 										*bought_asset_amount,
 									),
@@ -830,11 +888,11 @@ where
 						if is_high_value {
 							// This is the "high value swap on curated token" branch
 							// Attempt to unlock fee, do not return if fails
-							let _ = OTA::unlock_fee(who);
+							let _ = OFLA::unlock_fee(who);
 							Ok(Some(LiquidityInfoEnum::FeeLock))
 						} else {
 							// This is the "low value swap on curated token" branch
-							OTA::process_fee_lock(who).map_err(|_| {
+							OFLA::process_fee_lock(who).map_err(|_| {
 								TransactionValidityError::Invalid(
 									InvalidTransaction::ProcessFeeLock.into(),
 								)
@@ -843,7 +901,7 @@ where
 						}
 					} else {
 						// "swap on non-curated token" branch
-						OTA::process_fee_lock(who).map_err(|_| {
+						OFLA::process_fee_lock(who).map_err(|_| {
 							TransactionValidityError::Invalid(
 								InvalidTransaction::ProcessFeeLock.into(),
 							)
@@ -855,8 +913,45 @@ where
 					OCA::withdraw_fee(who, call, info, fee, tip)
 				}
 			},
+
+			RuntimeCall::Xyk(pallet_xyk::Call::multiswap_buy_asset {
+				swap_token_list: swap_token_list,
+				bought_asset_amount: bought_asset_amount,
+				max_amount_in: max_amount_in,
+				..
+			}) => {
+				// If else tree for easy edits
+
+				// Check if fee locks are initiazed or not
+				if let Some(fee_lock_metadata) = FeeLock::get_fee_lock_metadata() {
+					// ensure swap cannot fail
+					// This is to ensure that xyk swap fee is always charged
+					// We also ensure that the user has enough funds to transact
+					let _ = <Xyk as PreValidateSwaps>::pre_validate_multiswap_buy_asset(
+						&who.clone().into(),
+						swap_token_list.clone(),
+						*bought_asset_amount,
+						*max_amount_in,
+					)
+					.map_err(|_| {
+						TransactionValidityError::Invalid(
+							InvalidTransaction::SwapPrevalidation.into(),
+						)
+					})?;
+
+					// This is the "low value swap on curated token" branch
+					OFLA::process_fee_lock(who).map_err(|_| {
+						TransactionValidityError::Invalid(InvalidTransaction::ProcessFeeLock.into())
+					})?;
+					Ok(Some(LiquidityInfoEnum::FeeLock))
+				} else {
+					// FeeLocks are not activated branch
+					OCA::withdraw_fee(who, call, info, fee, tip)
+				}
+			},
+
 			RuntimeCall::FeeLock(pallet_fee_lock::Call::unlock_fee { .. }) => {
-				OTA::can_unlock_fee(who).map_err(|_| {
+				OFLA::can_unlock_fee(who).map_err(|_| {
 					TransactionValidityError::Invalid(InvalidTransaction::UnlockFee.into())
 				})?;
 				Ok(Some(LiquidityInfoEnum::FeeLock))
@@ -1525,7 +1620,7 @@ construct_runtime!(
 
 		// Bootstrap
 		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>} = 53,
-		Utility: pallet_utility::{Pallet, Call, Event} = 54,
+		Utility: pallet_utility_mangata::{Pallet, Call, Event} = 54,
 
 		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 55,
 	}
@@ -1549,7 +1644,7 @@ mod benches {
 		[pallet_collective_mangata, Council]
 		[pallet_bootstrap, Bootstrap]
 		[pallet_crowdloan_rewards, Crowdloan]
-		[pallet_utility, Utility]
+		[pallet_utility_mangata, Utility]
 		[pallet_vesting_mangata, Vesting]
 		[pallet_issuance, Issuance]
 		[pallet_multipurpose_liquidity, MultiPurposeLiquidity]
@@ -1879,17 +1974,18 @@ impl_runtime_apis! {
 
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
-		fn on_runtime_upgrade() -> (Weight, Weight) {
+		fn on_runtime_upgrade(checks: bool) -> (Weight, Weight) {
 			// NOTE: intentional unwrap: we don't want to propagate the error backwards, and want to
 			// have a backtrace here. If any of the pre/post migration checks fail, we shall stop
 			// right here and right now.
-			let weight = Executive::try_runtime_upgrade().unwrap();
+			let weight = Executive::try_runtime_upgrade(checks).unwrap();
 			(weight, RuntimeBlockWeights::get().max_block)
 		}
 
 		fn execute_block(
 			block: Block,
 			state_root_check: bool,
+			signature_check: bool,
 			select: frame_try_runtime::TryStateSelect
 		) -> Weight {
 			log::info!(
@@ -1901,7 +1997,7 @@ impl_runtime_apis! {
 			);
 			// NOTE: intentional unwrap: we don't want to propagate the error backwards, and want to
 			// have a backtrace here.
-			Executive::try_execute_block(block, state_root_check, select).unwrap()
+			Executive::try_execute_block(block, state_root_check, signature_check, select).unwrap()
 		}
 	}
 

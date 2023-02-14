@@ -177,16 +177,11 @@ impl orml_tokens::Config for Test {
 	type CurrencyId = TokenId;
 	type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
-	type OnDust = ();
 	type MaxLocks = MaxLocks;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
-	type OnSlash = ();
-	type OnDeposit = ();
-	type OnTransfer = ();
 	type MaxReserves = ();
-	type OnNewTokenAccount = ();
-	type OnKilledTokenAccount = ();
 	type ReserveIdentifier = [u8; 8];
+	type CurrencyHooks = ();
 }
 
 parameter_types! {
@@ -451,6 +446,11 @@ impl<T: Config> Pallet<T> {
 		<T as Config>::Currency::create(who, amount.into())
 			.expect("Token creation failed")
 			.into()
+	}
+
+	pub fn mint_token(token_id: TokenId, who: &T::AccountId, amount: Balance) {
+		<T as Config>::Currency::mint(token_id.into(), who, amount.into())
+			.expect("Token minting failed")
 	}
 }
 

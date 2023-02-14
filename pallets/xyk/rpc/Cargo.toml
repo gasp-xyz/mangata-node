@@ -8,7 +8,7 @@ license = "GPL-3.0-or-later"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0" }
-jsonrpsee = { version = "0.15.1", features = ["server", "macros"] }
+jsonrpsee = { version = "0.16.2", features = ["server", "macros"] }
 serde = { version = "1.0.126", features = ["derive"], optional = true }
 
 # Substrate packages
@@ -16,9 +16,9 @@ serde = { version = "1.0.126", features = ["derive"], optional = true }
 sp-api = { version = '4.0.0-dev', default-features = false , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-blockchain = { version = '4.0.0-dev', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-rpc = { version = '6.0.0', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-core = { version = '6.0.0', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-std = { version = '4.0.0-dev', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-runtime = { version = '6.0.0', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-core = { version = '7.0.0', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-std = { version = '5.0.0', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-runtime = { version = '7.0.0', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
 # local packages
 

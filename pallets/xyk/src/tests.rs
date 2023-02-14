@@ -1407,7 +1407,6 @@ fn sell_N_zero_amount() {
 }
 
 #[test]
-<<<<<<< HEAD
 fn multiswap_sell_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -2020,7 +2019,6 @@ fn buy_N_zero_amount() {
 }
 
 #[test]
-<<<<<<< HEAD
 fn multiswap_buy_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);

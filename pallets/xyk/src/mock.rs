@@ -452,6 +452,11 @@ impl<T: Config> Pallet<T> {
 			.expect("Token creation failed")
 			.into()
 	}
+
+	pub fn mint_token(token_id: TokenId, who: &T::AccountId, amount: Balance) {
+		<T as Config>::Currency::mint(token_id.into(), who, amount.into())
+			.expect("Token minting failed")
+	}
 }
 
 // This function basically just builds a genesis storage key/value store according to

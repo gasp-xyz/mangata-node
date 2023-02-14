@@ -8,9 +8,9 @@ ${REPO_ROOT}/target/release/mangata-node benchmark pallet \
     --execution wasm \
     --wasm-execution compiled \
     --pallet $1 \
-    --extrinsic '*' \
-    --steps 50 \
-    --repeat 20 \
+    --extrinsic 'multiswap_sell_asset,multiswap_buy_asset' \
+    --steps 20 \
+    --repeat 5 \
     --output ./benchmarks/$1_weights.rs \
     --template ./templates/module-weight-template.hbs \
     &> ./benchmarks/benchmark_$1.txt

@@ -259,6 +259,7 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
  pallet-im-online = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  pallet-treasury = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  pallet-utility = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
+ pallet-utility-mangata = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  pallet-sudo = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  pallet-offences = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  pallet-democracy = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
@@ -444,6 +445,7 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
  pallet-im-online = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  pallet-treasury = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  pallet-utility = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
+ pallet-utility-mangata = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  pallet-sudo = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  pallet-offences = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  pallet-democracy = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
@@ -628,6 +630,7 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
  pallet-im-online = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  pallet-treasury = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  pallet-utility = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
+ pallet-utility-mangata = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  pallet-sudo = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  pallet-offences = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  pallet-democracy = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
@@ -830,6 +833,7 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
 # pallet-mmr-rpc = { path = "../substrate/frame/merkle-mountain-range/rpc" }
 # pallet-mmr = { path = "../substrate/frame/merkle-mountain-range" }
 # pallet-utility = { path = "../substrate/frame/utility" }
+# pallet-utility-mangata = { path = "../substrate/frame/utility-mangata" }
 # pallet-session = { path = "../substrate/frame/session" }
 # pallet-ranked-collective = { path = "../substrate/frame/ranked-collective" }
 # pallet-collective-mangata = { path = "../substrate/frame/collective-mangata" }
@@ -1015,6 +1019,7 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
 # pallet-mmr-rpc = { path = "../substrate/frame/merkle-mountain-range/rpc" }
 # pallet-mmr = { path = "../substrate/frame/merkle-mountain-range" }
 # pallet-utility = { path = "../substrate/frame/utility" }
+# pallet-utility-mangata = { path = "../substrate/frame/utility-mangata" }
 # pallet-session = { path = "../substrate/frame/session" }
 # pallet-ranked-collective = { path = "../substrate/frame/ranked-collective" }
 # pallet-collective-mangata = { path = "../substrate/frame/collective-mangata" }
@@ -1200,6 +1205,7 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
 # pallet-mmr-rpc = { path = "../substrate/frame/merkle-mountain-range/rpc" }
 # pallet-mmr = { path = "../substrate/frame/merkle-mountain-range" }
 # pallet-utility = { path = "../substrate/frame/utility" }
+# pallet-utility-mangata = { path = "../substrate/frame/utility-mangata" }
 # pallet-session = { path = "../substrate/frame/session" }
 # pallet-ranked-collective = { path = "../substrate/frame/ranked-collective" }
 # pallet-collective-mangata = { path = "../substrate/frame/collective-mangata" }

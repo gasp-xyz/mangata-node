@@ -3573,7 +3573,6 @@ fn sell_N_maintenance_mode() {
 	});
 }
 
-
 #[test]
 #[serial]
 fn test_compound_rewards_error_on_non_native_pool() {
@@ -3594,9 +3593,8 @@ fn test_compound_rewards_error_on_non_native_pool() {
 	});
 }
 
-
-			#[test]
-			#[serial]
+#[test]
+#[serial]
 fn buy_W_maintenance_mode() {
 	new_test_ext().execute_with(|| {
 		initialize();

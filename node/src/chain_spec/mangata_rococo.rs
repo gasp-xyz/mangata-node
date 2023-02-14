@@ -543,7 +543,6 @@ fn mangata_genesis(
 			fee_lock_amount: Some(50__000_000_000_000_000_000u128),
 			swap_value_threshold: Some(1000__000_000_000_000_000_000u128),
 			whitelisted_tokens: Default::default(),
-			whitelisted_tokens: Default::default(),
 		},
 		council: Default::default(),
 		sudo: mangata_rococo_runtime::SudoConfig {

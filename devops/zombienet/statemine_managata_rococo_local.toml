@@ -24,17 +24,16 @@ cumulus_based = true
 	# run alice as parachain collator
 	[[parachains.collators]]
 	name = "alice"
-	validator = true
 	command = "../parity/cumulus/target/release/polkadot-parachain"
 	args = ["-lxcm=trace"]
 	ws_port = 9948
 
 	# run bob as parachain collator
-	[[parachains.collators]]
-	name = "bob"
-	validator = true
-	command = "../parity/cumulus/target/release/polkadot-parachain"
-	args = ["-lparachain=debug"]
+	# [[parachains.collators]]
+	# name = "bob"
+	# validator = true
+	# command = "../parity/cumulus/target/release/polkadot-parachain"
+	# args = ["-lparachain=debug"]
 
 [[parachains]]
 id = 2110
@@ -44,12 +43,12 @@ cumulus_based = true
 	[[parachains.collators]]
 	name = "alice"
 	command = "./target/release/mangata-node"
-	args = ["-lxcm=trace"]
+	args = ["-lxcm=trace --force-authoring"]
 	ws_port = 9946
 
-	[[parachains.collators]]
-	name = "bob"
-	command = "./target/release/mangata-node"
+	# [[parachains.collators]]
+	# name = "bob"
+	# command = "./target/release/mangata-node"
 
 [[hrmp_channels]]
 sender = 1000

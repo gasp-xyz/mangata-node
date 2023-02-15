@@ -88,7 +88,6 @@ pub mod pallet {
 			consumed_weight += base_cost;
 
 			for i in begin..end {
-
 				consumed_weight += T::DbWeight::get().reads(3); // UnlockQueue, AccountFeeLockData FeeLockMetadataQeueuePosition
 				UnlockQueueBegin::<T>::put(i);
 				consumed_weight += T::DbWeight::get().writes(1);
@@ -119,7 +118,7 @@ pub mod pallet {
 				} else {
 					UnlockQueueBegin::<T>::put(i + 1);
 				}
-			
+
 				if cost_of_single_unlock_iteration.ref_time() >
 					(remaining_weight.ref_time() - consumed_weight.ref_time())
 				{
@@ -228,6 +227,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		// The weight is calculated using MaxCuratedTokens so it is the worst case weight
+		#[pallet::call_index(0)]
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::update_fee_lock_metadata())]
 		pub fn update_fee_lock_metadata(
@@ -287,6 +287,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		#[pallet::call_index(1)]
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::unlock_fee())]
 		pub fn unlock_fee(origin: OriginFor<T>) -> DispatchResultWithPostInfo {

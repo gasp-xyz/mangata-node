@@ -97,16 +97,11 @@ impl orml_tokens::Config for Test {
 	type CurrencyId = TokenId;
 	type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
-	type OnDust = ();
 	type MaxLocks = MaxLocks;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
-	type OnSlash = ();
-	type OnDeposit = ();
-	type OnTransfer = ();
 	type MaxReserves = ();
-	type OnNewTokenAccount = ();
-	type OnKilledTokenAccount = ();
 	type ReserveIdentifier = [u8; 8];
+	type CurrencyHooks = ();
 }
 
 parameter_types! {
@@ -134,7 +129,6 @@ lazy_static::lazy_static! {
 	};
 }
 
-pub struct MockPromotedPoolApi;
 pub struct MockActivedPoolQueryApi;
 
 #[cfg(test)]

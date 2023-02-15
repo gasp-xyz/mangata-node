@@ -5,7 +5,6 @@ use cumulus_primitives_core::ParaId;
 use frame_support::{
 	match_types, parameter_types,
 	traits::{Everything, Get, Nothing},
-	weights::Weight,
 };
 use frame_system::EnsureRoot;
 use orml_asset_registry::{AssetRegistryTrader, FixedRateAssetRegistryTrader};

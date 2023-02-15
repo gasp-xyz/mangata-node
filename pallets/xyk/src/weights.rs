@@ -107,7 +107,7 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(6 as u64))
 			.saturating_add(RocksDbWeight::get().writes(5 as u64))
 	}
-	
+
 	//TODO retest
 	fn deactivate_liquidity_v2() -> Weight {
 		Weight::from_ref_time(133_607_000)

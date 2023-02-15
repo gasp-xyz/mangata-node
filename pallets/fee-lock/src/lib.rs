@@ -65,36 +65,61 @@ pub mod pallet {
 			let mut consumed_weight: Weight = Default::default();
 
 			// process only up to 80% or remaining weight
-			let cost_of_single_unlock = T::WeightInfo::unlock_fee() // cost of unlock action
-				+ T::DbWeight::get().reads(1)   // Self::get_fee_lock_metadata
-				+ T::DbWeight::get().reads(1); // single iteration
+			let base_cost = T::DbWeight::get().reads(1)   // UnlockQueueBegin
+				+ T::DbWeight::get().reads(1)   // UnlockQueueEnd
+				+ T::DbWeight::get().reads(1); // FeeLockMetadata
 
 			let cost_of_single_unlock_iteration = T::WeightInfo::unlock_fee() // cost of unlock action
-				+ T::DbWeight::get().reads(1); // iteration
+				+ T::DbWeight::get().reads(1)   // FeeLockMetadataQeueuePosition
+				+ T::DbWeight::get().reads(1)   // AccountFeeLockData
+				+ T::DbWeight::get().reads(1)   // UnlockQueue
+				+ T::DbWeight::get().writes(1); // UnlockQueueBegin
 
-			if cost_of_single_unlock.ref_time() > remaining_weight.ref_time() {
+			if (base_cost + cost_of_single_unlock_iteration).ref_time() >
+				remaining_weight.ref_time()
+			{
 				return Weight::from_ref_time(0)
 			}
 
-			consumed_weight += T::DbWeight::get().reads(1);
 			let metadata = Self::get_fee_lock_metadata();
 			let period_length = metadata.map(|meta| meta.period_length);
-			let mut accounts_it = AccountFeeLockData::<T>::iter();
+			let begin = UnlockQueueBegin::<T>::get();
+			let end = UnlockQueueEnd::<T>::get();
+			consumed_weight += base_cost;
 
-			loop {
-				consumed_weight += T::DbWeight::get().reads(1);
-				match (period_length, accounts_it.next()) {
-					(Some(period_lenght), Some((who, lock))) => {
-						let unlock_block = lock.last_fee_lock_block.checked_add(&period_lenght);
+			for i in begin..end {
 
-						if matches!(unlock_block, Some(unlock) if unlock <= now) {
-							consumed_weight += T::WeightInfo::unlock_fee();
-							let _ = <Self as FeeLockTriggerTrait<T::AccountId>>::unlock_fee(&who);
-						}
-					},
-					_ => break,
-				};
+				consumed_weight += T::DbWeight::get().reads(3); // UnlockQueue, AccountFeeLockData FeeLockMetadataQeueuePosition
+				UnlockQueueBegin::<T>::put(i);
+				consumed_weight += T::DbWeight::get().writes(1);
+				let who = UnlockQueue::<T>::get(i);
+				let queue_pos =
+					who.as_ref().and_then(|acc| FeeLockMetadataQeueuePosition::<T>::get(acc));
 
+				if matches!(queue_pos, Some(id) if id == i) {
+					let lock_info = who.and_then(|who| {
+						AccountFeeLockData::<T>::try_get(&who).map(|lock| (who.clone(), lock)).ok()
+					});
+
+					match (period_length, lock_info) {
+						(Some(period_length), Some((who, lock))) => {
+							let unlock_block = lock.last_fee_lock_block.checked_add(&period_length);
+
+							if matches!(unlock_block, Some(unlock) if unlock <= now) {
+								UnlockQueueBegin::<T>::put(i + 1);
+								consumed_weight += T::WeightInfo::unlock_fee();
+								let _ =
+									<Self as FeeLockTriggerTrait<T::AccountId>>::unlock_fee(&who);
+							} else {
+								break
+							}
+						},
+						_ => break,
+					};
+				} else {
+					UnlockQueueBegin::<T>::put(i + 1);
+				}
+			
 				if cost_of_single_unlock_iteration.ref_time() >
 					(remaining_weight.ref_time() - consumed_weight.ref_time())
 				{
@@ -129,6 +154,19 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn get_fee_lock_metadata)]
 	pub type FeeLockMetadata<T: Config> = StorageValue<_, FeeLockMetadataInfo<T>, OptionQuery>;
+
+	#[pallet::storage]
+	pub type FeeLockMetadataQeueuePosition<T: Config> =
+		StorageMap<_, Twox64Concat, T::AccountId, u128, OptionQuery>;
+
+	#[pallet::storage]
+	pub type UnlockQueue<T: Config> = StorageMap<_, Twox64Concat, u128, T::AccountId, OptionQuery>;
+
+	#[pallet::storage]
+	pub type UnlockQueueBegin<T: Config> = StorageValue<_, u128, ValueQuery>;
+
+	#[pallet::storage]
+	pub type UnlockQueueEnd<T: Config> = StorageValue<_, u128, ValueQuery>;
 
 	#[derive(
 		Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo, Default,
@@ -258,6 +296,27 @@ pub mod pallet {
 		}
 	}
 }
+impl<T: Config> Pallet<T> {
+	pub(crate) fn push_to_the_end_of_unlock_queue(who: &T::AccountId) {
+		let mut id = Default::default();
+		let id_ref = &mut id;
+		UnlockQueueEnd::<T>::mutate(|id| {
+			*id_ref = *id;
+			*id = *id + 1
+		});
+		UnlockQueue::<T>::insert(id, who);
+		FeeLockMetadataQeueuePosition::<T>::set(who, Some(id));
+	}
+
+	pub(crate) fn move_to_the_end_of_unlock_queue(who: &T::AccountId) {
+		if let Ok(id) = FeeLockMetadataQeueuePosition::<T>::try_get(who) {
+			UnlockQueue::<T>::take(id);
+			Self::push_to_the_end_of_unlock_queue(who);
+		} else {
+			Self::push_to_the_end_of_unlock_queue(who);
+		}
+	}
+}
 
 impl<T: Config> FeeLockTriggerTrait<T::AccountId> for Pallet<T> {
 	fn is_whitelisted(token_id: TokenId) -> bool {
@@ -328,19 +387,20 @@ impl<T: Config> FeeLockTriggerTrait<T::AccountId> for Pallet<T> {
 				.saturating_add(fee_lock_metadata.fee_lock_amount);
 			account_fee_lock_data.last_fee_lock_block = now;
 			AccountFeeLockData::<T>::insert(who, account_fee_lock_data);
+			Self::move_to_the_end_of_unlock_queue(who);
 		} else {
 			// We must either reserve more or unreserve
 			match (fee_lock_metadata.fee_lock_amount, account_fee_lock_data.total_fee_lock_amount) {
-				(x, y) if x > y => <T as pallet::Config>::Tokens::reserve(
+				(lock, user_lock) if lock > user_lock => <T as pallet::Config>::Tokens::reserve(
 					<T as pallet::Config>::NativeTokenId::get().into(),
 					who,
-					x.saturating_sub(y).into(),
+					lock.saturating_sub(user_lock).into(),
 				)?,
-				(x, y) if x < y => {
+				(lock, user_lock) if lock < user_lock => {
 					let unreserve_result = <T as pallet::Config>::Tokens::unreserve(
 						<T as pallet::Config>::NativeTokenId::get().into(),
 						who,
-						y.saturating_sub(x).into(),
+						user_lock.saturating_sub(lock).into(),
 					);
 					if !unreserve_result.is_zero() {
 						log::warn!(
@@ -356,6 +416,7 @@ impl<T: Config> FeeLockTriggerTrait<T::AccountId> for Pallet<T> {
 			account_fee_lock_data.total_fee_lock_amount = fee_lock_metadata.fee_lock_amount;
 			account_fee_lock_data.last_fee_lock_block = now;
 			AccountFeeLockData::<T>::insert(who, account_fee_lock_data);
+			Self::move_to_the_end_of_unlock_queue(who);
 		}
 
 		Ok(())
@@ -416,7 +477,8 @@ impl<T: Config> FeeLockTriggerTrait<T::AccountId> for Pallet<T> {
 			);
 		}
 
-		AccountFeeLockData::<T>::remove(who.clone());
+		FeeLockMetadataQeueuePosition::<T>::take(&who);
+		AccountFeeLockData::<T>::remove(&who);
 
 		Self::deposit_event(Event::FeeLockUnlocked(
 			who.clone(),

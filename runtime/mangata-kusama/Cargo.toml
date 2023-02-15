@@ -188,6 +188,7 @@ std = [
 	"mp-bootstrap/std",
 	"pallet-vesting-mangata-rpc-runtime-api/std",
 	"pallet-fee-lock/std",
+	"pallet-identity/std",
 ]
 
 try-runtime = [
@@ -227,6 +228,7 @@ try-runtime = [
 	"pallet-utility-mangata/try-runtime",
 	"pallet-proxy/try-runtime",
 	"pallet-fee-lock/try-runtime",
+	"pallet-identity/try-runtime",
 ]
 
 fast-runtime = []
@@ -262,4 +264,5 @@ runtime-benchmarks = [
 	"pallet-multipurpose-liquidity/runtime-benchmarks",
 	"pallet-proxy/runtime-benchmarks",
 	"pallet-fee-lock/runtime-benchmarks",
+	"pallet-identity/runtime-benchmarks",
 ]

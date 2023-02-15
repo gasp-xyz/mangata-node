@@ -1650,7 +1650,7 @@ construct_runtime!(
 
 		// Bootstrap
 		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>} = 53,
-		
+
 		Utility: pallet_utility_mangata::{Pallet, Call, Event} = 54,
 		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 55,
 		Identity: pallet_identity::{Pallet, Call, Storage, Event<T>} = 56,

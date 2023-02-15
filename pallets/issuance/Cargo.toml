@@ -19,16 +19,16 @@ frame-executive = { git = "https://github.com/mangata-finance/substrate", defaul
 frame-try-runtime = { git = "https://github.com/mangata-finance/substrate", default-features = false, optional = true , branch = "mangata-dev" }
 orml-tokens = { default-features = false, version="0.4.1-dev" , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
 mangata-types = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
-sp-std = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-std = { default-features = false, version = '5.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-runtime = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-vesting-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 frame-benchmarking = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev", optional = true, default-features = false }
 cfg-if = "1.0.0"
-sp-core = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-core = { default-features = false, version = '7.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
 
 [dev-dependencies]
-sp-io = { default-features = false, version = '6.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-io = { default-features = false, version = '7.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 orml-traits = { default-features = false, version="0.4.1-dev" , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
 lazy_static = "1.1.1"
 

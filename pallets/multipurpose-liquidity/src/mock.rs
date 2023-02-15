@@ -3,6 +3,7 @@
 use super::*;
 
 use sp_core::H256;
+use sp_std::convert::TryFrom;
 
 use sp_runtime::{
 	testing::Header,
@@ -12,12 +13,12 @@ use sp_runtime::{
 use crate as pallet_multipurpose_liquidity;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{tokens::currency::MultiTokenCurrency, ConstU128, ConstU32, Contains, Everything},
+	traits::{ConstU32, Contains, Everything},
 	PalletId,
 };
 use frame_system as system;
 use mangata_types::{Amount, Balance, TokenId};
-use orml_tokens::{MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
+use orml_tokens::MultiTokenCurrencyAdapter;
 use orml_traits::parameter_type_with_key;
 
 pub const NATIVE_CURRENCY_ID: u32 = 0;
@@ -97,16 +98,11 @@ impl orml_tokens::Config for Test {
 	type CurrencyId = TokenId;
 	type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
-	type OnDust = ();
 	type MaxLocks = MaxLocks;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
-	type OnSlash = ();
-	type OnDeposit = ();
-	type OnTransfer = ();
 	type MaxReserves = ();
-	type OnNewTokenAccount = ();
-	type OnKilledTokenAccount = ();
 	type ReserveIdentifier = [u8; 8];
+	type CurrencyHooks = ();
 }
 
 parameter_types! {

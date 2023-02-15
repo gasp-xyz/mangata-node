@@ -16,10 +16,7 @@ use pallet_xyk::Valuate;
 use sp_arithmetic::per_things::Rounding;
 use sp_runtime::helpers_128bit::multiply_by_rational_with_rounding;
 
-use sp_runtime::{
-	traits::{CheckedDiv, Zero},
-	Saturating,
-};
+use sp_runtime::{traits::Zero, Saturating};
 use sp_std::{convert::TryInto, prelude::*};
 
 #[cfg(test)]
@@ -97,8 +94,13 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_account_fee_lock_data)]
-	pub type AccountFeeLockData<T: Config> =
-		StorageMap<_, Blake2_256, T::AccountId, AccountFeeLockDataInfo<T::BlockNumber>, ValueQuery>;
+	pub type AccountFeeLockData<T: Config> = StorageMap<
+		_,
+		Twox64Concat,
+		T::AccountId,
+		AccountFeeLockDataInfo<T::BlockNumber>,
+		ValueQuery,
+	>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -142,6 +144,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		// The weight is calculated using MaxCuratedTokens so it is the worst case weight
+		#[pallet::call_index(0)]
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::update_fee_lock_metadata())]
 		pub fn update_fee_lock_metadata(
@@ -201,6 +204,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		#[pallet::call_index(1)]
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::unlock_fee())]
 		pub fn unlock_fee(origin: OriginFor<T>) -> DispatchResultWithPostInfo {

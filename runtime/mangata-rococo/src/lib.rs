@@ -10,12 +10,11 @@ use frame_support::{
 	traits::{
 		tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
 		Contains, EnsureOrigin, EnsureOriginWithArg, Everything, ExistenceRequirement, Get,
-		Imbalance, InstanceFilter, LockIdentifier, Nothing, OnRuntimeUpgrade, U128CurrencyToVote,
-		WithdrawReasons,
+		Imbalance, InstanceFilter, WithdrawReasons,
 	},
 	unsigned::TransactionValidityError,
 	weights::{
-		constants::{RocksDbWeight, WEIGHT_PER_MICROS, WEIGHT_PER_MILLIS, WEIGHT_PER_SECOND},
+		constants::{RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND},
 		ConstantMultiplier, Weight,
 	},
 	PalletId,
@@ -23,11 +22,11 @@ use frame_support::{
 #[cfg(any(feature = "std", test))]
 pub use frame_system::Call as SystemCall;
 use frame_system::{
-	limits::{BlockLength, BlockWeights, BlockWeightsBuilder},
+	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
 };
 pub use orml_tokens;
-use orml_tokens::{MultiTokenCurrencyExtended, TransferDust};
+use orml_tokens::MultiTokenCurrencyExtended;
 use orml_traits::{
 	asset_registry::{AssetMetadata, AssetProcessor},
 	parameter_type_with_key,
@@ -50,7 +49,7 @@ use sp_runtime::{
 		DispatchInfoOf, PostDispatchInfoOf, Saturating, StaticLookup, Zero,
 	},
 	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, DispatchError, FixedPointNumber, Percent, Perquintill, RuntimeDebug,
+	ApplyExtrinsicResult, DispatchError, FixedPointNumber, Percent, RuntimeDebug,
 };
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
 use sp_std::{
@@ -174,6 +173,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
+
 	authoring_version: 14,
 	spec_version: 14,
 	impl_version: 0,
@@ -232,9 +232,8 @@ const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 /// so there is room for new extrinsics in the next block
 // const MAXIMUM_BLOCK_WEIGHT: Weight =
 // 	WEIGHT_PER_SECOND.saturating_div(4).set_proof_size((cumulus_primitives_core::relay_chain::v2::MAX_POV_SIZE as u64).saturating_div(2));
-const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND
-	.saturating_div(4)
-	.set_proof_size((u64::max_value()).saturating_div(2));
+const MAXIMUM_BLOCK_WEIGHT: Weight =
+	Weight::from_parts(WEIGHT_REF_TIME_PER_SECOND.saturating_mul(2), u64::MAX);
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
@@ -433,15 +432,10 @@ impl orml_tokens::Config for Runtime {
 	type CurrencyId = TokenId;
 	type WeightInfo = weights::orml_tokens_weights::ModuleWeight<Runtime>;
 	type ExistentialDeposits = ExistentialDeposits;
-	type OnDust = TransferDust<Runtime, TreasuryAccount>;
 	type MaxLocks = MaxLocks;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
-	type OnSlash = ();
-	type OnDeposit = ();
-	type OnTransfer = ();
+	type CurrencyHooks = ();
 	type MaxReserves = ();
-	type OnNewTokenAccount = ();
-	type OnKilledTokenAccount = ();
 	type ReserveIdentifier = [u8; 8];
 }
 
@@ -699,10 +693,10 @@ where
 		// Also ugly implementation to keep it maleable for now
 		match call {
 			RuntimeCall::Xyk(pallet_xyk::Call::sell_asset {
-				sold_asset_id: sold_asset_id,
-				sold_asset_amount: sold_asset_amount,
-				bought_asset_id: bought_asset_id,
-				min_amount_out: min_amount_out,
+				sold_asset_id,
+				sold_asset_amount,
+				bought_asset_id,
+				min_amount_out,
 				..
 			}) => {
 				// If else tree for easy edits
@@ -825,10 +819,10 @@ where
 			},
 
 			RuntimeCall::Xyk(pallet_xyk::Call::buy_asset {
-				sold_asset_id: sold_asset_id,
-				bought_asset_amount: bought_asset_amount,
-				bought_asset_id: bought_asset_id,
-				max_amount_in: max_amount_in,
+				sold_asset_id,
+				bought_asset_amount,
+				bought_asset_id,
+				max_amount_in,
 				..
 			}) => {
 				// If else tree for easy edits
@@ -1980,17 +1974,18 @@ impl_runtime_apis! {
 
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
-		fn on_runtime_upgrade() -> (Weight, Weight) {
+		fn on_runtime_upgrade(checks: bool) -> (Weight, Weight) {
 			// NOTE: intentional unwrap: we don't want to propagate the error backwards, and want to
 			// have a backtrace here. If any of the pre/post migration checks fail, we shall stop
 			// right here and right now.
-			let weight = Executive::try_runtime_upgrade().unwrap();
+			let weight = Executive::try_runtime_upgrade(checks).unwrap();
 			(weight, RuntimeBlockWeights::get().max_block)
 		}
 
 		fn execute_block(
 			block: Block,
 			state_root_check: bool,
+			signature_check: bool,
 			select: frame_try_runtime::TryStateSelect
 		) -> Weight {
 			log::info!(
@@ -2002,7 +1997,7 @@ impl_runtime_apis! {
 			);
 			// NOTE: intentional unwrap: we don't want to propagate the error backwards, and want to
 			// have a backtrace here.
-			Executive::try_execute_block(block, state_root_check, select).unwrap()
+			Executive::try_execute_block(block, state_root_check, signature_check, select).unwrap()
 		}
 	}
 

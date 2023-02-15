@@ -74,6 +74,7 @@ pallet-treasury = { git = "https://github.com/mangata-finance/substrate", defaul
 pallet-collective-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-vesting-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-proxy = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+pallet-identity = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 
 # Open-Runtime-Module-Library Dependencies
 orml-tokens = { default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }

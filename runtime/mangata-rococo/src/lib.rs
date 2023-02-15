@@ -1556,6 +1556,36 @@ impl pallet_proxy::Config for Runtime {
 	type AnnouncementDepositFactor = AnnouncementDepositFactor;
 }
 
+parameter_types! {
+	// Add one item in storage and take 258 bytes
+	pub const BasicDeposit: Balance = deposit(1, 256);
+	// No item in storage but takes 66 bytes
+	pub const FieldDeposit: Balance = deposit(0, 66);
+	// No item in storage but takes 53 bytes
+	pub const SubAccountDeposit: Balance = deposit(0, 53);
+	pub const MaxSubAccounts: u32 = 100;
+	pub const MaxAdditionalFields: u32 = 100;
+	pub const MaxRegistrars: u32 = 20;
+}
+
+type IdentityForceOrigin = EnsureRoot<AccountId>;
+type IdentityRegistrarOrigin = EnsureRoot<AccountId>;
+
+impl pallet_identity::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgrTokenId>;
+	type BasicDeposit = BasicDeposit;
+	type FieldDeposit = FieldDeposit;
+	type SubAccountDeposit = SubAccountDeposit;
+	type MaxSubAccounts = MaxSubAccounts;
+	type MaxAdditionalFields = MaxAdditionalFields;
+	type MaxRegistrars = MaxRegistrars;
+	type ForceOrigin = IdentityForceOrigin;
+	type RegistrarOrigin = IdentityRegistrarOrigin;
+	type Slashed = Treasury;
+	type WeightInfo = pallet_identity::weights::SubstrateWeight<Runtime>;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -1620,9 +1650,10 @@ construct_runtime!(
 
 		// Bootstrap
 		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>} = 53,
+		
 		Utility: pallet_utility_mangata::{Pallet, Call, Event} = 54,
-
 		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 55,
+		Identity: pallet_identity::{Pallet, Call, Storage, Event<T>} = 56,
 	}
 );
 

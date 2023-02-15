@@ -31,29 +31,17 @@ jobs:
 
       - name: Verify specified version exists
         run: docker pull mangatasolutions/mangata-node:${{ inputs.version }}
-      
-      - name: Update version file in `gitops` repository
-        id: version
-        run: |
-          echo -n '${{ inputs.version }}' > ${{ env.version_file }}
-
-          if output=$(git status --porcelain) && [ -z "$output" ]; then
-            echo "changed=false" >> $GITHUB_OUTPUT
-          else 
-            echo "changed=true" >> $GITHUB_OUTPUT
-          fi
 
       - name: Push updated version to `gitops` repository
-        if: steps.version.outputs.changed == 'true'
         run: |
+          echo -n '${{ inputs.version }}' > ${{ env.version_file }}
           git config user.name mangatafinance
           git config user.email solutions@mangata.finance
           git add .
-          git commit -m 'chore: Update rococo image version to ${{ inputs.version }}'
+          git commit -m --allow-empty 'chore: deploy ${{ inputs.version }} to rococo environment'
           git push
       
       - name: Watch deployment workflow run
-        if: steps.version.outputs.changed == 'true'
         run: |
           sleep 2 && gh run list -L10 -w rococo.yml
           export RUN_ID=$(gh run list -w rococo.yml -L1 --json databaseId --jq '.[].databaseId')

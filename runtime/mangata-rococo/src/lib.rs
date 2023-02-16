@@ -173,7 +173,6 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
-
 	authoring_version: 14,
 	spec_version: 14,
 	impl_version: 0,

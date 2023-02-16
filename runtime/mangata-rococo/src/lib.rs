@@ -1568,12 +1568,15 @@ impl<T: frame_system::Config> Get<Vec<T::AccountId>> for FoundationAccountsProvi
 			hex_literal::hex!["fc741134c82b81b7ab7efbf334b0c90ff8dbf22c42ad705ea7c04bf27ed4161a"],
 		];
 
-		accounts.into_iter().map(|acc| {
-			T::AccountId::decode(&mut sp_runtime::AccountId32::as_ref(
-				&sp_runtime::AccountId32::from(acc),
-			))
-			.unwrap()
-		}).collect()
+		accounts
+			.into_iter()
+			.map(|acc| {
+				T::AccountId::decode(&mut sp_runtime::AccountId32::as_ref(
+					&sp_runtime::AccountId32::from(acc),
+				))
+				.unwrap()
+			})
+			.collect()
 	}
 }
 

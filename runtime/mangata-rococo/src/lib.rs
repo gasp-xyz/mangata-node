@@ -1562,8 +1562,18 @@ impl pallet_proxy::Config for Runtime {
 pub struct FoundationAccountsProvider<T: frame_system::Config>(PhantomData<T>);
 impl<T: frame_system::Config> Get<Vec<T::AccountId>> for FoundationAccountsProvider<T> {
 	fn get() -> Vec<T::AccountId> {
-		// TODO - Add foundation accounts
-		vec![]
+		let accounts = vec![
+			hex_literal::hex!["c8d02dfbff5ce2fda651c7dd7719bc5b17b9c1043fded805bfc86296c5909871"],
+			hex_literal::hex!["c4690c56c36cec7ed5f6ed5d5eebace0c317073a962ebea1d00f1a304974897b"],
+			hex_literal::hex!["fc741134c82b81b7ab7efbf334b0c90ff8dbf22c42ad705ea7c04bf27ed4161a"],
+		];
+
+		accounts.into_iter().map(|acc| {
+			T::AccountId::decode(&mut sp_runtime::AccountId32::as_ref(
+				&sp_runtime::AccountId32::from(acc),
+			))
+			.unwrap()
+		}).collect()
 	}
 }
 

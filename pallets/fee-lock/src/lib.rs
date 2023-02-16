@@ -392,16 +392,16 @@ impl<T: Config> FeeLockTriggerTrait<T::AccountId> for Pallet<T> {
 		} else {
 			// We must either reserve more or unreserve
 			match (fee_lock_metadata.fee_lock_amount, account_fee_lock_data.total_fee_lock_amount) {
-				(lock, user_lock) if lock > user_lock => <T as pallet::Config>::Tokens::reserve(
+				(x, y) if x > y => <T as pallet::Config>::Tokens::reserve(
 					<T as pallet::Config>::NativeTokenId::get().into(),
 					who,
-					lock.saturating_sub(user_lock).into(),
+					x.saturating_sub(y).into(),
 				)?,
-				(lock, user_lock) if lock < user_lock => {
+				(x, y) if x < y => {
 					let unreserve_result = <T as pallet::Config>::Tokens::unreserve(
 						<T as pallet::Config>::NativeTokenId::get().into(),
 						who,
-						user_lock.saturating_sub(lock).into(),
+						y.saturating_sub(x).into(),
 					);
 					if !unreserve_result.is_zero() {
 						log::warn!(

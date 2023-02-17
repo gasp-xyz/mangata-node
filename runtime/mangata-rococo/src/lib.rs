@@ -489,6 +489,7 @@ type SessionLenghtOf<T> = <T as parachain_staking::Config>::BlocksPerRound;
 
 impl pallet_xyk::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type MaintenanceStatusProvider = Maintenance;
 	type ActivationReservesProvider = MultiPurposeLiquidity;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type NativeCurrencyId = MgrTokenId;
@@ -549,6 +550,7 @@ impl pallet_bootstrap::BootstrapBenchmarkingConfig for Runtime {}
 
 impl pallet_bootstrap::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type MaintenanceStatusProvider = Maintenance;
 	type PoolCreateApi = Xyk;
 	type DefaultBootstrapPromotedPoolWeight = DefaultBootstrapPromotedPoolWeight;
 	type BootstrapUpdateBuffer = BootstrapUpdateBuffer;
@@ -1171,6 +1173,7 @@ parameter_types! {
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type MaintenanceStatusProvider = Maintenance;
 	type OnSystemEvent = ();
 	type SelfParaId = ParachainInfo;
 	type DmpMessageHandler = DmpQueue;
@@ -1556,6 +1559,32 @@ impl pallet_proxy::Config for Runtime {
 	type AnnouncementDepositFactor = AnnouncementDepositFactor;
 }
 
+pub struct FoundationAccountsProvider<T: frame_system::Config>(PhantomData<T>);
+impl<T: frame_system::Config> Get<Vec<T::AccountId>> for FoundationAccountsProvider<T> {
+	fn get() -> Vec<T::AccountId> {
+		let accounts = vec![
+			hex_literal::hex!["c8d02dfbff5ce2fda651c7dd7719bc5b17b9c1043fded805bfc86296c5909871"],
+			hex_literal::hex!["c4690c56c36cec7ed5f6ed5d5eebace0c317073a962ebea1d00f1a304974897b"],
+			hex_literal::hex!["fc741134c82b81b7ab7efbf334b0c90ff8dbf22c42ad705ea7c04bf27ed4161a"],
+		];
+
+		accounts
+			.into_iter()
+			.map(|acc| {
+				T::AccountId::decode(&mut sp_runtime::AccountId32::as_ref(
+					&sp_runtime::AccountId32::from(acc),
+				))
+				.unwrap()
+			})
+			.collect()
+	}
+}
+
+impl pallet_maintenance::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type FoundationAccountsProvider = FoundationAccountsProvider<Runtime>;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -1623,6 +1652,8 @@ construct_runtime!(
 		Utility: pallet_utility_mangata::{Pallet, Call, Event} = 54,
 
 		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 55,
+
+		Maintenance: pallet_maintenance::{Pallet, Call, Storage, Event<T>} = 60,
 	}
 );
 

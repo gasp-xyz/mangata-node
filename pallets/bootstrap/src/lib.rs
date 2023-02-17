@@ -134,7 +134,7 @@ use frame_support::{
 	transactional, PalletId,
 };
 use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
-use mangata_types::{Balance, TokenId};
+use mangata_types::{traits::GetMaintenanceStatusTrait, Balance, TokenId};
 use mp_bootstrap::{AssetRegistryApi, PoolCreateApi, RewardsApi};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
@@ -279,6 +279,8 @@ pub mod pallet {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
+		type MaintenanceStatusProvider: GetMaintenanceStatusTrait;
+
 		/// tokens
 		type Currency: MultiTokenCurrencyExtended<Self::AccountId>
 			+ MultiTokenReservableCurrency<Self::AccountId>;
@@ -386,6 +388,9 @@ pub mod pallet {
 		// 	amount: Balance,
 		// ) -> DispatchResult {
 		// 	let sender = ensure_signed(origin)?;
+		//
+		// ensure!(!T::MaintenanceStatusProvider::is_maintenance(), Error::<T>::ProvisioningBlockedByMaintenanceMode);
+		//
 		// 	let (vesting_starting_block, vesting_ending_block_as_balance) =
 		// 		<<T as Config>::VestingProvider>::unlock_tokens(
 		// 			&sender,
@@ -425,6 +430,12 @@ pub mod pallet {
 			amount: Balance,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
+
+			ensure!(
+				!T::MaintenanceStatusProvider::is_maintenance(),
+				Error::<T>::ProvisioningBlockedByMaintenanceMode
+			);
+
 			Self::do_provision(&sender, token_id, amount, ProvisionKind::Regular)?;
 			ProvisionAccounts::<T>::insert(&sender, ());
 			Self::deposit_event(Event::Provisioned(token_id, amount));
@@ -790,6 +801,8 @@ pub mod pallet {
 		/// Bootstrap can only be updated or cancelled
 		/// BootstrapUpdateBuffer blocks or more before bootstrap start
 		TooLateToUpdateBootstrap,
+		/// Bootstrap provisioning blocked by maintenance mode
+		ProvisioningBlockedByMaintenanceMode,
 	}
 
 	#[pallet::event]

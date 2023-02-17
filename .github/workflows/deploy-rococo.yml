@@ -48,12 +48,12 @@ jobs:
       - name: Watch deployment workflow run
         run: |
           # Rerun previous workflow if version didn't change
-          [ -z '${{ steps.version.outputs.changed }}' ] && gh run rerun $(gh run list -w deploy-rococo.yml -L1 --json databaseId --jq '.[].databaseId')
+          [ -n '${{ steps.version.outputs.changed }}' ] && gh run rerun $(gh run list -w deploy-rococo.yml -L1 --json databaseId --jq '.[].databaseId')
           
           sleep 5 && gh run list -L10 -w deploy-rococo.yml
           export RUN_ID=$(gh run list -w deploy-rococo.yml -L1 --json databaseId --jq '.[].databaseId')
           
-          if [[ ($(gh run view "$RUN_ID" --json headSha --jq '.headSha') != $(git rev-parse HEAD)) && -n '${{ steps.version.outputs.changed }}' ]]; then
+          if [[ ($(gh run view "$RUN_ID" --json headSha --jq '.headSha') != $(git rev-parse HEAD)) && -z '${{ steps.version.outputs.changed }}' ]]; then
             echo "Commited git SHA doesn't match with the SHA of the retrieved Run ID"
             exit 1
           fi

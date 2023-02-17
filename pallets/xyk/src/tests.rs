@@ -805,6 +805,7 @@ fn liquidity_rewards_transfer_not_working() {
 }
 
 #[test]
+#[serial]
 fn set_info_should_work() {
 	new_test_ext().execute_with(|| {
 		// creating asset with assetId 0 and minting to accountId 2
@@ -837,6 +838,7 @@ fn set_info_should_work() {
 }
 
 #[test]
+#[serial]
 fn set_info_should_work_with_small_numbers() {
 	new_test_ext().execute_with(|| {
 		// creating asset with assetId 0 and minting to accountId 2
@@ -872,6 +874,7 @@ fn set_info_should_work_with_small_numbers() {
 }
 
 #[test]
+#[serial]
 #[ignore]
 fn set_info_should_work_with_large_numbers() {
 	new_test_ext().execute_with(|| {
@@ -908,9 +911,11 @@ fn set_info_should_work_with_large_numbers() {
 }
 
 #[test]
+#[serial]
 fn buy_and_burn_sell_mangata() {
 	new_test_ext().execute_with(|| {
 		initialize_buy_and_burn();
+
 		XykStorage::sell_asset(RuntimeOrigin::signed(2), 0, 1, 50000000000000, 0).unwrap();
 
 		assert_eq!(XykStorage::asset_pool((0, 1)), (149949999999998, 66733400066734));
@@ -926,9 +931,11 @@ fn buy_and_burn_sell_mangata() {
 }
 
 #[test]
+#[serial]
 fn buy_and_burn_sell_has_mangata_pair() {
 	new_test_ext().execute_with(|| {
 		initialize_buy_and_burn();
+
 		XykStorage::sell_asset(RuntimeOrigin::signed(2), 1, 4, 50000000000000, 0).unwrap();
 
 		assert_eq!(XykStorage::asset_pool((0, 1)), (99950024987505, 100050000000002));
@@ -946,9 +953,11 @@ fn buy_and_burn_sell_has_mangata_pair() {
 }
 
 #[test]
+#[serial]
 fn buy_and_burn_sell_none_have_mangata_pair() {
 	new_test_ext().execute_with(|| {
 		initialize_buy_and_burn();
+
 		XykStorage::sell_asset(RuntimeOrigin::signed(2), 4, 1, 50000000000000, 0).unwrap();
 
 		assert_eq!(XykStorage::asset_pool((0, 1)), (100000000000000, 100000000000000));
@@ -966,9 +975,11 @@ fn buy_and_burn_sell_none_have_mangata_pair() {
 }
 
 #[test]
+#[serial]
 fn buy_and_burn_buy_where_sold_is_mangata() {
 	new_test_ext().execute_with(|| {
 		initialize_buy_and_burn();
+
 		XykStorage::buy_asset(RuntimeOrigin::signed(2), 0, 1, 33266599933266, 50000000000001)
 			.unwrap();
 
@@ -986,9 +997,11 @@ fn buy_and_burn_buy_where_sold_is_mangata() {
 }
 
 #[test]
+#[serial]
 fn buy_and_burn_buy_where_sold_has_mangata_pair() {
 	new_test_ext().execute_with(|| {
 		initialize_buy_and_burn();
+
 		XykStorage::buy_asset(RuntimeOrigin::signed(2), 1, 4, 33266599933266, 50000000000001)
 			.unwrap();
 
@@ -1007,9 +1020,11 @@ fn buy_and_burn_buy_where_sold_has_mangata_pair() {
 }
 
 #[test]
+#[serial]
 fn buy_and_burn_buy_none_have_mangata_pair() {
 	new_test_ext().execute_with(|| {
 		initialize_buy_and_burn();
+
 		XykStorage::buy_asset(RuntimeOrigin::signed(2), 4, 1, 33266599933266, 50000000000001)
 			.unwrap();
 
@@ -1028,6 +1043,7 @@ fn buy_and_burn_buy_none_have_mangata_pair() {
 }
 
 #[test]
+#[serial]
 fn multi() {
 	new_test_ext().execute_with(|| {
 		let acc_id: u128 = 2;
@@ -1131,6 +1147,7 @@ fn multi() {
 }
 
 #[test]
+#[serial]
 fn create_pool_W() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -1149,6 +1166,7 @@ fn create_pool_W() {
 }
 
 #[test]
+#[serial]
 fn create_pool_N_already_exists() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -1161,6 +1179,7 @@ fn create_pool_N_already_exists() {
 }
 
 #[test]
+#[serial]
 fn create_pool_N_already_exists_other_way() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -1173,6 +1192,7 @@ fn create_pool_N_already_exists_other_way() {
 }
 
 #[test]
+#[serial]
 fn create_pool_N_not_enough_first_asset() {
 	new_test_ext().execute_with(|| {
 		let acc_id: u128 = 2;
@@ -1188,6 +1208,7 @@ fn create_pool_N_not_enough_first_asset() {
 }
 
 #[test]
+#[serial]
 fn create_pool_N_not_enough_second_asset() {
 	new_test_ext().execute_with(|| {
 		let acc_id: u128 = 2;
@@ -1203,6 +1224,7 @@ fn create_pool_N_not_enough_second_asset() {
 }
 
 #[test]
+#[serial]
 fn create_pool_N_same_asset() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -1215,6 +1237,7 @@ fn create_pool_N_same_asset() {
 }
 
 #[test]
+#[serial]
 fn create_pool_N_zero_first_amount() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -1227,6 +1250,7 @@ fn create_pool_N_zero_first_amount() {
 }
 
 #[test]
+#[serial]
 fn create_pool_N_zero_second_amount() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -1239,10 +1263,12 @@ fn create_pool_N_zero_second_amount() {
 }
 
 #[test]
+#[serial]
 fn sell_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
 		initialize();
+
 		XykStorage::sell_asset(RuntimeOrigin::signed(2), 1, 4, 20000000000000000000, 0).unwrap(); // selling 20000000000000000000 assetId 0 of pool 0 1
 
 		assert_eq!(XykStorage::balance(1, 2), 940000000000000000000); // amount in user acc after selling
@@ -1268,6 +1294,7 @@ fn sell_W() {
 }
 
 #[test]
+#[serial]
 fn sell_W_other_way() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -1288,6 +1315,7 @@ fn sell_W_other_way() {
 }
 
 #[test]
+#[serial]
 fn sell_N_no_such_pool() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -1299,6 +1327,7 @@ fn sell_N_no_such_pool() {
 	});
 }
 #[test]
+#[serial]
 fn sell_N_not_enough_selling_assset() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -1311,6 +1340,7 @@ fn sell_N_not_enough_selling_assset() {
 }
 
 #[test]
+#[serial]
 fn sell_W_insufficient_output_amount() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -1339,6 +1369,7 @@ fn sell_W_insufficient_output_amount() {
 }
 
 #[test]
+#[serial]
 fn sell_N_insufficient_output_amount_inner_function_error_upon_bad_slippage() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -1351,6 +1382,7 @@ fn sell_N_insufficient_output_amount_inner_function_error_upon_bad_slippage() {
 }
 
 #[test]
+#[serial]
 fn sell_W_insufficient_output_amount_inner_function_NO_error_upon_bad_slippage() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -1362,6 +1394,7 @@ fn sell_W_insufficient_output_amount_inner_function_NO_error_upon_bad_slippage()
 }
 
 #[test]
+#[serial]
 fn sell_N_zero_amount() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -1779,6 +1812,7 @@ fn multiswap_sell_loop_works_W() {
 }
 
 #[test]
+#[serial]
 fn multiswap_sell_zero_amount_does_not_work_N() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1797,10 +1831,12 @@ fn multiswap_sell_zero_amount_does_not_work_N() {
 }
 
 #[test]
+#[serial]
 fn buy_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
 		initialize();
+
 		// buying 30000000000000000000 assetId 1 of pool 0 1
 		XykStorage::buy_asset(
 			RuntimeOrigin::signed(2),
@@ -1832,9 +1868,11 @@ fn buy_W() {
 }
 
 #[test]
+#[serial]
 fn buy_W_other_way() {
 	new_test_ext().execute_with(|| {
 		initialize();
+
 		// buying 30000000000000000000 assetId 0 of pool 0 1
 		XykStorage::buy_asset(
 			RuntimeOrigin::signed(2),
@@ -1858,6 +1896,7 @@ fn buy_W_other_way() {
 }
 
 #[test]
+#[serial]
 fn buy_N_no_such_pool() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -1871,6 +1910,7 @@ fn buy_N_no_such_pool() {
 }
 
 #[test]
+#[serial]
 fn buy_N_not_enough_reserve() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -1890,6 +1930,7 @@ fn buy_N_not_enough_reserve() {
 }
 
 #[test]
+#[serial]
 fn buy_N_not_enough_selling_assset() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -1909,6 +1950,7 @@ fn buy_N_not_enough_selling_assset() {
 }
 
 #[test]
+#[serial]
 fn buy_W_insufficient_input_amount() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -1937,6 +1979,7 @@ fn buy_W_insufficient_input_amount() {
 }
 
 #[test]
+#[serial]
 fn buy_N_insufficient_input_amount_inner_function_error_upon_bad_slippage() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -1950,6 +1993,7 @@ fn buy_N_insufficient_input_amount_inner_function_error_upon_bad_slippage() {
 }
 
 #[test]
+#[serial]
 fn buy_W_insufficient_input_amount_inner_function_NO_error_upon_bad_slippage() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -1962,6 +2006,7 @@ fn buy_W_insufficient_input_amount_inner_function_NO_error_upon_bad_slippage() {
 }
 
 #[test]
+#[serial]
 fn buy_N_zero_amount() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -2339,6 +2384,7 @@ fn multiswap_buy_loop_does_not_work_N() {
 }
 
 #[test]
+#[serial]
 fn multiswap_buy_zero_amount_does_not_work_N() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -2366,6 +2412,7 @@ fn multiswap_buy_zero_amount_does_not_work_N() {
 }
 
 #[test]
+#[serial]
 fn mint_W() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -2402,6 +2449,7 @@ fn mint_W() {
 }
 
 #[test]
+#[serial]
 fn mint_W_other_way() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -2427,6 +2475,7 @@ fn mint_W_other_way() {
 }
 
 #[test]
+#[serial]
 fn mint_N_no_such_pool() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -2438,6 +2487,7 @@ fn mint_N_no_such_pool() {
 }
 
 #[test]
+#[serial]
 fn mint_N_not_enough_first_asset() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -2455,6 +2505,7 @@ fn mint_N_not_enough_first_asset() {
 }
 
 #[test]
+#[serial]
 fn mint_N_not_enough_second_asset() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -2472,6 +2523,7 @@ fn mint_N_not_enough_second_asset() {
 }
 
 #[test]
+#[serial]
 fn min_N_zero_amount() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -2483,6 +2535,7 @@ fn min_N_zero_amount() {
 }
 
 #[test]
+#[serial]
 fn mint_N_second_asset_amount_exceeded_expectations() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -2494,6 +2547,7 @@ fn mint_N_second_asset_amount_exceeded_expectations() {
 }
 
 #[test]
+#[serial]
 fn burn_W() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -2522,6 +2576,7 @@ fn burn_W() {
 }
 
 #[test]
+#[serial]
 fn burn_W_other_way() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -2538,6 +2593,7 @@ fn burn_W_other_way() {
 }
 
 #[test]
+#[serial]
 fn burn_N_not_enough_liquidity_asset() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -2550,6 +2606,7 @@ fn burn_N_not_enough_liquidity_asset() {
 }
 
 #[test]
+#[serial]
 fn burn_N_no_such_pool() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -2562,6 +2619,7 @@ fn burn_N_no_such_pool() {
 }
 
 #[test]
+#[serial]
 fn burn_N_zero_amount() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -2574,6 +2632,7 @@ fn burn_N_zero_amount() {
 
 // TODO https://trello.com/c/rEygIR7t/428-fix-panic-in-xyksellasset
 #[test]
+#[serial]
 #[ignore]
 fn buy_assets_with_small_expected_amount_does_not_cause_panic() {
 	new_test_ext().execute_with(|| {
@@ -2584,6 +2643,7 @@ fn buy_assets_with_small_expected_amount_does_not_cause_panic() {
 }
 
 #[test]
+#[serial]
 #[ignore]
 fn successful_buy_assets_does_not_charge_fee() {
 	new_test_ext().execute_with(|| {
@@ -2597,6 +2657,7 @@ fn successful_buy_assets_does_not_charge_fee() {
 }
 
 #[test]
+#[serial]
 #[ignore]
 fn unsuccessful_buy_assets_charges_fee() {
 	new_test_ext().execute_with(|| {
@@ -2610,6 +2671,7 @@ fn unsuccessful_buy_assets_charges_fee() {
 }
 
 #[test]
+#[serial]
 #[ignore]
 fn successful_sell_assets_does_not_charge_fee() {
 	new_test_ext().execute_with(|| {
@@ -2622,9 +2684,11 @@ fn successful_sell_assets_does_not_charge_fee() {
 }
 
 #[test]
+#[serial]
 fn unsuccessful_sell_assets_charges_fee() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
+
 		//try to sell non owned, non existing tokens
 		let post_info = XykStorage::sell_asset(RuntimeOrigin::signed(2), 100, 200, 0, 0)
 			.unwrap_err()
@@ -2634,6 +2698,7 @@ fn unsuccessful_sell_assets_charges_fee() {
 }
 
 #[test]
+#[serial]
 fn PoolCreateApi_test_pool_exists_return_false_for_non_existing_pool() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -2642,6 +2707,7 @@ fn PoolCreateApi_test_pool_exists_return_false_for_non_existing_pool() {
 }
 
 #[test]
+#[serial]
 fn PoolCreateApi_pool_exists_return_true_for_existing_pool() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -2652,6 +2718,7 @@ fn PoolCreateApi_pool_exists_return_true_for_existing_pool() {
 }
 
 #[test]
+#[serial]
 fn PoolCreateApi_pool_create_creates_a_pool() {
 	new_test_ext().execute_with(|| {
 		initialize();
@@ -2684,6 +2751,7 @@ fn PoolCreateApi_pool_create_creates_a_pool() {
 }
 
 #[test]
+#[serial]
 fn test_create_blacklisted_pool() {
 	new_test_ext().execute_with(|| {
 		let blaclisted_first_asset_id = 1;
@@ -3371,9 +3439,11 @@ fn rewards_storage_right_amounts_start3() {
 #[test_case(200_000_000_000_000_000_000_u128, 1_000_000_000_000_u128, 1_u128 ; "swap plus 1 leftover")]
 #[test_case(2_000_u128, 100_u128, 2_u128 ; "swap plus 2 leftover")]
 #[test_case(1_000_000_000_000_000_000_000_000_000, 135_463_177_684_253_389, 2_u128 ; "benchmark case")]
+#[serial]
 fn test_compound_calculate_balanced_swap_for_liquidity(amount: u128, reward: u128, surplus: u128) {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
+
 		let acc_id: u128 = 2;
 		let pool = amount / 2;
 		XykStorage::create_new_token(&acc_id, amount);
@@ -3399,9 +3469,11 @@ fn test_compound_calculate_balanced_swap_for_liquidity(amount: u128, reward: u12
 #[test_case(100_000_000_000, 1_000, 2, 1 ; "large reserve, surplus of 1")]
 #[test_case(100_000_000_000, 1_000_000_000, 1_000_000, 52815 ; "small pool, large surplus")]
 #[test_case(1_000_000_000, 100_000, 2, 2 ; "benchmark precision test")]
+#[serial]
 fn test_compound_provide_liquidity(amount: u128, reward: u128, pool_r: u128, surplus: u128) {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
+
 		let acc_id: u128 = 2;
 		let pool = amount / pool_r;
 		XykStorage::create_new_token(&acc_id, amount);
@@ -3426,6 +3498,7 @@ fn test_compound_rewards(amount: u128, part_permille: u32, surplus: u128) {
 	new_test_ext().execute_with(|| {
 		let amount_permille = Permill::from_parts(part_permille);
 		System::set_block_number(1);
+
 		MockPromotedPoolApi::instance().lock().unwrap().clear();
 
 		XykStorage::create_new_token(&2, amount);
@@ -3486,6 +3559,22 @@ fn test_compound_rewards_pool_assets_order_swapped() {
 }
 
 #[test]
+#[serial]
+fn sell_N_maintenance_mode() {
+	new_test_ext().execute_with(|| {
+		initialize();
+
+		MockMaintenanceStatusProvider::set_maintenance(true);
+
+		assert_err!(
+			XykStorage::sell_asset(RuntimeOrigin::signed(2), 1, 4, 20000000, 0),
+			Error::<Test>::TradingBlockedByMaintenanceMode,
+		);
+	});
+}
+
+#[test]
+#[serial]
 fn test_compound_rewards_error_on_non_native_pool() {
 	new_test_ext().execute_with(|| {
 		XykStorage::create_new_token(&2, 2_000_000_u128);
@@ -3500,6 +3589,28 @@ fn test_compound_rewards_error_on_non_native_pool() {
 				Permill::from_parts(1_000_000)
 			),
 			Error::<Test>::FunctionNotAvailableForThisToken
+		);
+	});
+}
+
+#[test]
+#[serial]
+fn buy_W_maintenance_mode() {
+	new_test_ext().execute_with(|| {
+		initialize();
+
+		MockMaintenanceStatusProvider::set_maintenance(true);
+
+		assert_err!(
+			// buying 30000000000000000000 assetId 1 of pool 0 1
+			XykStorage::buy_asset(
+				RuntimeOrigin::signed(2),
+				1,
+				4,
+				30000000000000000000,
+				3000000000000000000000,
+			),
+			Error::<Test>::TradingBlockedByMaintenanceMode,
 		);
 	});
 }

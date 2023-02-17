@@ -22,15 +22,15 @@ jobs:
       version_file: helmfiles/rococo/.version
       GH_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
     steps:
+      - name: Verify specified version exists
+        run: docker pull mangatasolutions/mangata-node:${{ inputs.version }}
+      
       - name: Checkout `mangata-finance/gitops` repository
         uses: actions/checkout@v3
         with:
           repository:  mangata-finance/gitops
-          ref: feat/mgx-241-rococo-gha-workflow
+          ref: main
           token: ${{ secrets.BOT_GITHUB_TOKEN }}
-
-      - name: Verify specified version exists
-        run: docker pull mangatasolutions/mangata-node:${{ inputs.version }}
 
       - name: Push updated version to `gitops` repository
         run: |
@@ -43,8 +43,8 @@ jobs:
       
       - name: Watch deployment workflow run
         run: |
-          sleep 2 && gh run list -L10 -w rococo.yml
-          export RUN_ID=$(gh run list -w rococo.yml -L1 --json databaseId --jq '.[].databaseId')
+          sleep 5 && gh run list -L10 -w deploy-rococo.yml
+          export RUN_ID=$(gh run list -w deploy-rococo.yml -L1 --json databaseId --jq '.[].databaseId')
           
           if [[ $(gh run view "$RUN_ID" --json headSha --jq '.headSha') != $(git rev-parse HEAD) ]]; then
             echo "Commited git SHA doesn't match with the SHA of the retrieved Run ID"

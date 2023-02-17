@@ -52,8 +52,12 @@ mp-bootstrap = { path = '../../primitives/bootstrap' }
 env_logger = "0.9.1"
 log = "0.4.17"
 sp-io = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+
+kusama-runtime = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev" }
+kusama-runtime-constants = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev" }
+
 xcm-executor = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev" }
-xcm-emulator = { git = "https://github.com/shaunxw/xcm-simulator", rev = "6c02911a3eeb04c342e4eb273d2ffbedd45dabff" }
+xcm-emulator = { git = "https://github.com/shaunxw/xcm-simulator", rev = "64d8822f6ebc1af50092677a80a9bdb74860e9a9" }
 
 [features]
 default = ["with-kusama-runtime"]

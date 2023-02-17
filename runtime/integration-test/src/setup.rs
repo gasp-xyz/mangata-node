@@ -5,18 +5,21 @@ pub use frame_support::{assert_err, assert_noop, assert_ok, dispatch::DispatchRe
 pub use orml_traits::currency::{MultiCurrency, MultiCurrencyExtended};
 pub use sp_io::TestExternalities;
 pub use sp_runtime::{codec::Encode, MultiAddress, Permill};
+pub use xcm::latest::prelude::*;
 
 #[cfg(feature = "with-kusama-runtime")]
 pub use kusama_imports::*;
 
 #[cfg(feature = "with-kusama-runtime")]
 mod kusama_imports {
+	pub use mangata_kusama_runtime::xcm_config::*;
 	pub use mangata_kusama_runtime::{
 		AccountId, AssetMetadataOf, Balance, Bootstrap, CustomMetadata, Proxy, ProxyType, Runtime,
 		RuntimeCall, RuntimeOrigin, System, TokenId, Tokens, Xyk, XykMetadata, UNIT,
 	};
 
 	pub const NATIVE_ASSET_ID: TokenId = mangata_kusama_runtime::MGX_TOKEN_ID;
+	pub const RELAY_ASSET_ID: TokenId = mangata_kusama_runtime::KSM_TOKEN_ID;
 }
 
 /// Accounts
@@ -38,6 +41,17 @@ impl Default for ExtBuilder {
 }
 
 impl ExtBuilder {
+	pub fn balances(mut self, balances: Vec<(AccountId, TokenId, Balance)>) -> Self {
+		self.balances = balances;
+		self
+	}
+
+	#[allow(dead_code)]
+	pub fn parachain_id(mut self, parachain_id: u32) -> Self {
+		self.parachain_id = parachain_id;
+		self
+	}
+
 	pub fn build(self) -> sp_io::TestExternalities {
 		let _ = env_logger::builder().is_test(true).try_init();
 

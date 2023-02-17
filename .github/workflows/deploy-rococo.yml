@@ -40,7 +40,7 @@ jobs:
           git config user.name mangatafinance
           git config user.email solutions@mangata.finance
           git add .
-          git commit -m --allow-empty 'chore: deploy ${{ inputs.version }} to rococo environment'
+          git commit --allow-empty -m 'chore: deploy ${{ inputs.version }} to rococo environment'
           git push
       
       - name: Watch deployment workflow run

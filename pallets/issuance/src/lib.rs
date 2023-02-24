@@ -236,12 +236,14 @@ pub mod pallet {
 	// XYK extrinsics.
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		#[pallet::call_index(0)]
 		#[pallet::weight(T::WeightInfo::init_issuance_config())]
 		pub fn init_issuance_config(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 			Self::do_init_issuance_config()
 		}
 
+		#[pallet::call_index(1)]
 		#[pallet::weight(T::WeightInfo::finalize_tge())]
 		pub fn finalize_tge(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
@@ -255,6 +257,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		#[pallet::call_index(2)]
 		#[pallet::weight(T::WeightInfo::execute_tge(tge_infos.len() as u32))]
 		pub fn execute_tge(
 			origin: OriginFor<T>,
@@ -552,16 +555,12 @@ impl<T: Config> Pallet<T> {
 				},
 			);
 
-			let activated_pools_len = activated_pools.len() as u128;
-
 			for (token_id, weight, rewards, activated_amount) in activated_pools {
 				let liquidity_mining_issuance_for_pool = match maybe_total_weight {
 					Some(total_weight) if !total_weight.is_zero() =>
 						Perbill::from_rational(weight.into(), total_weight)
 							.mul_floor(liquidity_mining_issuance),
-					_ => liquidity_mining_issuance
-						.checked_div(activated_pools_len)
-						.unwrap_or(liquidity_mining_issuance),
+					_ => Balance::zero(),
 				};
 
 				let rewards_for_liquidity: U256 = U256::from(liquidity_mining_issuance_for_pool)

@@ -16,7 +16,7 @@ use pallet_xyk::Valuate;
 use sp_arithmetic::per_things::Rounding;
 use sp_runtime::helpers_128bit::multiply_by_rational_with_rounding;
 
-use sp_runtime::traits::{CheckedDiv, Zero};
+use sp_runtime::{traits::Zero, Saturating};
 use sp_std::{convert::TryInto, prelude::*};
 
 #[cfg(test)]
@@ -144,6 +144,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		// The weight is calculated using MaxCuratedTokens so it is the worst case weight
+		#[pallet::call_index(0)]
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::update_fee_lock_metadata())]
 		pub fn update_fee_lock_metadata(
@@ -203,6 +204,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		#[pallet::call_index(1)]
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::unlock_fee())]
 		pub fn unlock_fee(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
@@ -258,18 +260,14 @@ impl<T: Config> FeeLockTriggerTrait<T::AccountId> for Pallet<T> {
 		let mut account_fee_lock_data = Self::get_account_fee_lock_data(who);
 		let now = <frame_system::Pallet<T>>::block_number();
 
-		let current_period = now
-			.checked_div(&fee_lock_metadata.period_length)
-			.ok_or(Error::<T>::FeeLocksIncorrectlyInitialzed)?;
-		let last_fee_lock_block_period = account_fee_lock_data
-			.last_fee_lock_block
-			.checked_div(&fee_lock_metadata.period_length)
-			.ok_or(Error::<T>::FeeLocksIncorrectlyInitialzed)?;
-
 		// This is cause now >= last_fee_lock_block
-		ensure!(current_period >= last_fee_lock_block_period, Error::<T>::UnexpectedFailure);
+		ensure!(now >= account_fee_lock_data.last_fee_lock_block, Error::<T>::UnexpectedFailure);
 
-		if current_period == last_fee_lock_block_period {
+		if now <
+			account_fee_lock_data
+				.last_fee_lock_block
+				.saturating_add(fee_lock_metadata.period_length)
+		{
 			// First storage edit
 			// Cannot fail beyond this point
 			// Rerserve additional fee_lock_amount
@@ -332,15 +330,12 @@ impl<T: Config> FeeLockTriggerTrait<T::AccountId> for Pallet<T> {
 
 		let now = <frame_system::Pallet<T>>::block_number();
 
-		let current_period = now
-			.checked_div(&fee_lock_metadata.period_length)
-			.ok_or(Error::<T>::FeeLocksIncorrectlyInitialzed)?;
-		let last_fee_lock_block_period = account_fee_lock_data
-			.last_fee_lock_block
-			.checked_div(&fee_lock_metadata.period_length)
-			.ok_or(Error::<T>::FeeLocksIncorrectlyInitialzed)?;
-
-		ensure!(current_period > last_fee_lock_block_period, Error::<T>::CantUnlockFeeYet);
+		ensure!(
+			now >= account_fee_lock_data
+				.last_fee_lock_block
+				.saturating_add(fee_lock_metadata.period_length),
+			Error::<T>::CantUnlockFeeYet
+		);
 
 		Ok(())
 	}
@@ -358,15 +353,12 @@ impl<T: Config> FeeLockTriggerTrait<T::AccountId> for Pallet<T> {
 
 		let now = <frame_system::Pallet<T>>::block_number();
 
-		let current_period = now
-			.checked_div(&fee_lock_metadata.period_length)
-			.ok_or(Error::<T>::FeeLocksIncorrectlyInitialzed)?;
-		let last_fee_lock_block_period = account_fee_lock_data
-			.last_fee_lock_block
-			.checked_div(&fee_lock_metadata.period_length)
-			.ok_or(Error::<T>::FeeLocksIncorrectlyInitialzed)?;
-
-		ensure!(current_period > last_fee_lock_block_period, Error::<T>::CantUnlockFeeYet);
+		ensure!(
+			now >= account_fee_lock_data
+				.last_fee_lock_block
+				.saturating_add(fee_lock_metadata.period_length),
+			Error::<T>::CantUnlockFeeYet
+		);
 
 		let unreserve_result = <T as pallet::Config>::Tokens::unreserve(
 			<T as pallet::Config>::NativeTokenId::get().into(),

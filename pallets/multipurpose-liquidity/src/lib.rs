@@ -1,20 +1,12 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::{
-	dispatch::{DispatchError, DispatchResult},
-	ensure, PalletId,
-};
+use frame_support::{dispatch::DispatchResult, ensure};
 use frame_system::ensure_signed;
-use sp_core::U256;
 // TODO documentation!
-use codec::FullCodec;
 use frame_support::{
 	pallet_prelude::*,
-	traits::{
-		tokens::currency::MultiTokenCurrency, ExistenceRequirement, Get, StorageVersion,
-		WithdrawReasons,
-	},
-	transactional, Parameter,
+	traits::{tokens::currency::MultiTokenCurrency, Get, StorageVersion, WithdrawReasons},
+	transactional,
 };
 use frame_system::pallet_prelude::*;
 use mangata_types::{Balance, BlockNumber, TokenId};
@@ -22,15 +14,8 @@ use mp_multipurpose_liquidity::{ActivateKind, BondKind};
 use mp_traits::{ActivationReservesProviderTrait, StakingReservesProviderTrait, XykFunctionsTrait};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
-use sp_runtime::traits::{
-	AccountIdConversion, AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member,
-	SaturatedConversion, Zero,
-};
-use sp_std::{
-	convert::{TryFrom, TryInto},
-	fmt::Debug,
-	prelude::*,
-};
+use sp_runtime::traits::{SaturatedConversion, Zero};
+use sp_std::{convert::TryInto, prelude::*};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -60,7 +45,6 @@ macro_rules! log {
 
 pub use pallet::*;
 
-type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 #[frame_support::pallet]
 pub mod pallet {
 
@@ -162,6 +146,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[transactional]
+		#[pallet::call_index(0)]
 		#[pallet::weight(T::WeightInfo::reserve_vesting_liquidity_tokens())]
 		// This extrinsic has to be transactional
 		pub fn reserve_vesting_liquidity_tokens_by_vesting_index(
@@ -222,6 +207,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
+		#[pallet::call_index(1)]
 		#[pallet::weight(T::WeightInfo::reserve_vesting_liquidity_tokens())]
 		// This extrinsic has to be transactional
 		pub fn reserve_vesting_liquidity_tokens(
@@ -277,6 +263,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
+		#[pallet::call_index(2)]
 		#[pallet::weight(T::WeightInfo::unreserve_and_relock_instance())]
 		// This extrinsic has to be transactional
 		pub fn unreserve_and_relock_instance(

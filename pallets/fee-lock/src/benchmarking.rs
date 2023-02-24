@@ -22,9 +22,10 @@
 use super::*;
 
 use frame_benchmarking::{benchmarks, whitelisted_caller};
-use frame_support::{assert_err, assert_ok, traits::tokens::currency::MultiTokenCurrency};
+use frame_support::{assert_ok, traits::tokens::currency::MultiTokenCurrency};
 use frame_system::RawOrigin;
 use orml_tokens::MultiTokenCurrencyExtended;
+
 use sp_std::collections::btree_set::BTreeSet;
 
 use crate::Pallet as FeeLock;

@@ -2409,3 +2409,38 @@ fn test_pool_bootstrap_finalize_continues_if_asset_metadata_update_fails() {
 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
 	});
 }
+
+#[test]
+#[serial]
+fn provisions_not_allowed_in_maintenance_mode() {
+	new_test_ext().execute_with(|| {
+		// ARRANGE - USER provides vested MGA tokens, ANOTHER_USER provides KSM tokens
+		set_up();
+		jump_to_public_phase();
+
+		MockMaintenanceStatusProvider::set_maintenance(true);
+
+		assert_err!(
+			Bootstrap::provision(RuntimeOrigin::signed(0), 0, 10000),
+			Error::<Test>::ProvisioningBlockedByMaintenanceMode
+		);
+	});
+}
+
+// #[test]
+// #[serial]
+// fn vested_provisions_not_allowed_in_maintenance_mode() {
+// 	new_test_ext().execute_with(|| {
+// 		// ARRANGE - USER provides vested MGA tokens, ANOTHER_USER provides KSM tokens
+// 		set_up();
+// 		jump_to_public_phase();
+
+// 		MockMaintenanceStatusProvider::set_maintenance(true);
+
+// 		assert_err!(
+// 			Bootstrap::provision_vested(RuntimeOrigin::signed(0), 0, 10000),
+// 			Error::<Test>::ProvisioningBlockedByMaintenanceMode
+// 		);
+
+// 	});
+// }

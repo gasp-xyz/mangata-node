@@ -27,6 +27,7 @@ xyk-runtime-api = { path = '../../pallets/xyk/runtime-api', default-features = f
 pallet-sudo-origin = { path = '../../pallets/sudo-origin', default-features = false }
 pallet-issuance = { path = '../../pallets/issuance', default-features = false }
 pallet-multipurpose-liquidity = { path = '../../pallets/multipurpose-liquidity', default-features = false }
+pallet-maintenance = { path = '../../pallets/maintenance', default-features = false }
 mp-multipurpose-liquidity = { path = '../../primitives/multipurpose-liquidity', default-features = false }
 pallet-fee-lock = { path = '../../pallets/fee-lock', default-features = false}
 mp-traits = { path = '../../primitives/traits', default-features = false }
@@ -187,6 +188,7 @@ std = [
 	"mp-bootstrap/std",
 	"pallet-vesting-mangata-rpc-runtime-api/std",
 	"pallet-fee-lock/std",
+	"pallet-maintenance/std",
 ]
 
 try-runtime = [
@@ -226,6 +228,7 @@ try-runtime = [
 	"pallet-utility-mangata/try-runtime",
 	"pallet-proxy/try-runtime",
 	"pallet-fee-lock/try-runtime",
+	"pallet-maintenance/try-runtime"
 ]
 
 fast-runtime = []

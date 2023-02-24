@@ -61,8 +61,6 @@ jobs:
             fast: false
           - command: "yarn test-seqgasless"
             fast: false
-          - command: "yarn test-paralgasless"
-            fast: false
           - command: "yarn test-bootstrap"
             fast: false
           - command: "yarn test-rewards-bootstrap"

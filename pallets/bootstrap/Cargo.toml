@@ -40,6 +40,7 @@ mockall = "0.11.0"
 serial_test = "0.6.0"
 mp-traits = { path = "../../primitives/traits" }
 mp-multipurpose-liquidity = { path = "../../primitives/multipurpose-liquidity" }
+lazy_static = "1.1.1"
 
 
 [features]

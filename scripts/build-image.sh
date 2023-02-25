@@ -1,11 +1,12 @@
 #!/bin/bash -xe
 REPO_ROOT=$(readlink -f $(dirname $(dirname $(readlink -f $0))))
+
 if [ -z "${SKIP_BUILD}" ]; then
-  ${REPO_ROOT}/docker-cargo.sh build --release --features mangata-rococo
+  ${REPO_ROOT}/docker-cargo.sh build --release --features=mangata-rococo,mangata-kusama
 else
   echo "build skipped because SKIP_BUILD flag is set"
 fi
-BUILD_DIR=docker-cargo/release
+BUILD_DIR=${BUILD_DIR:-${REPO_ROOT}/docker-cargo/release}
 GIT_REV=$(git -C ${REPO_ROOT} rev-parse HEAD)
 
 if git -C ${REPO_ROOT} diff --quiet HEAD; then

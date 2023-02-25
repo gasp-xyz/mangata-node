@@ -216,10 +216,10 @@ jobs:
           key: cargo-try-runtime-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
 
       - name: Run try-runtime Rococo testnet
-        run: cargo run --release --features=try-runtime,mangata-rococo try-runtime --chain=public-testnet --runtime=target/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.wasm on-runtime-upgrade live --uri wss://roccoco-testnet-collator-01.mangatafinance.cloud:443
+        run: cargo run --release --features=try-runtime,mangata-rococo try-runtime --chain=rococo --runtime=target/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.wasm on-runtime-upgrade live --uri wss://roccoco-testnet-collator-01.mangatafinance.cloud:443
 
       - name: Run try-runtime Kusama Mainnet
-        run: cargo run --release --features=try-runtime try-runtime --chain=kusama-mainnet --runtime=target/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.wasm on-runtime-upgrade live --uri wss://prod-kusama-collator-01.mangatafinance.cloud:443
+        run: cargo run --release --features=try-runtime try-runtime --chain=kusama --runtime=target/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.wasm on-runtime-upgrade live --uri wss://prod-kusama-collator-01.mangatafinance.cloud:443
 
       - name: Fix permissions on self-hosted runner
         if: always()
@@ -265,7 +265,7 @@ jobs:
         run: |
           mkdir ./benchmarks && target/release/mangata-node benchmark pallet \
           -l=info,xyk=error,collective-mangata=warn,bootstrap=warn \
-          --chain dev \
+          --chain kusama \
           --execution wasm \
           --wasm-execution compiled \
           --pallet '*' \
@@ -277,7 +277,7 @@ jobs:
 
       - name: Run block & extrinsic overhead benchmarks
         run: |
-          target/release/mangata-node benchmark overhead --execution native --chain dev -lblock_builder=debug --max-ext-per-block 50000 --base-path .
+          target/release/mangata-node benchmark overhead --execution native --chain kusama-local -lblock_builder=debug --max-ext-per-block 50000 --base-path .
           cp block_weights.rs extrinsic_weights.rs ./benchmarks
 
       - name: Fix permissions on self-hosted runner

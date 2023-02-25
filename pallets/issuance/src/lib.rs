@@ -555,16 +555,12 @@ impl<T: Config> Pallet<T> {
 				},
 			);
 
-			let activated_pools_len = activated_pools.len() as u128;
-
 			for (token_id, weight, rewards, activated_amount) in activated_pools {
 				let liquidity_mining_issuance_for_pool = match maybe_total_weight {
 					Some(total_weight) if !total_weight.is_zero() =>
 						Perbill::from_rational(weight.into(), total_weight)
 							.mul_floor(liquidity_mining_issuance),
-					_ => liquidity_mining_issuance
-						.checked_div(activated_pools_len)
-						.unwrap_or(liquidity_mining_issuance),
+					_ => Balance::zero(),
 				};
 
 				let rewards_for_liquidity: U256 = U256::from(liquidity_mining_issuance_for_pool)

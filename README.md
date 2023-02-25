@@ -40,7 +40,7 @@ build artifacts will be placed in `<REPO ROOT>/docker-cargo/release`
 You can use `build-image.sh` script to build & generate docker image
 
 ```
-./scripts/build-image.sh
+./scripts/build-image.sh mangatasolutions/mangata-node:dev
 ```
 
 or you can use already compiled build atributes generated in previous step

@@ -11,6 +11,7 @@ frame-support = { default-features = false, version = '4.0.0-dev' , git = "https
 mangata-types = { default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 mp-multipurpose-liquidity = { path = "../../primitives/multipurpose-liquidity" , default-features= false}
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
+sp-core = { default-features = false, version = '7.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
 [features]
 default = ["std"]
@@ -20,5 +21,6 @@ std = [
     'frame-support/std',
     'mangata-types/std',
     "mp-multipurpose-liquidity/std",
-    "codec/std"
+    "codec/std",
+    "sp-core/std"
 ]

@@ -3,8 +3,9 @@ use codec::FullCodec;
 use frame_support::pallet_prelude::*;
 use mangata_types::{Balance, TokenId};
 use mp_multipurpose_liquidity::{ActivateKind, BondKind};
-use sp_runtime::traits::{AtLeast32BitUnsigned, MaybeDisplay};
+use sp_runtime::{traits::{AtLeast32BitUnsigned, MaybeDisplay}, Permill};
 use sp_std::{fmt::Debug, vec::Vec};
+use sp_core::U256;
 
 pub trait StakingReservesProviderTrait {
 	type AccountId: Parameter
@@ -169,6 +170,37 @@ pub trait XykFunctionsTrait<AccountId> {
 		liquidity_token_amount: Self::Balance,
 	) -> Result<(Self::CurrencyId, Self::Balance, Self::CurrencyId, Self::Balance), DispatchError>;
 
+	fn do_compound_rewards(
+		sender: AccountId,
+		liquidity_asset_id: Self::CurrencyId,
+		amount_permille: Permill,
+	) -> DispatchResult;
+
+
+	fn is_liquidity_token(liquidity_asset_id: TokenId) -> bool;
+}
+
+pub trait ProofOfStakeRewardsApi<AccountId> {
+	type Balance: AtLeast32BitUnsigned
+		+ FullCodec
+		+ Copy
+		+ MaybeSerializeDeserialize
+		+ Debug
+		+ Default
+		+ From<Balance>
+		+ Into<Balance>;
+
+	type CurrencyId: Parameter
+		+ Member
+		+ Copy
+		+ MaybeSerializeDeserialize
+		+ Ord
+		+ Default
+		+ AtLeast32BitUnsigned
+		+ FullCodec
+		+ From<TokenId>
+		+ Into<TokenId>;
+
 	fn claim_rewards_v2(
 		sender: AccountId,
 		liquidity_token_id: Self::CurrencyId,
@@ -198,7 +230,55 @@ pub trait XykFunctionsTrait<AccountId> {
 		amount: Self::Balance,
 	) -> DispatchResult;
 
-	fn is_liquidity_token(liquidity_asset_id: TokenId) -> bool;
+	fn current_rewards_time() -> Option<u32>;
+
+	fn calculate_rewards_amount_v2(
+		user: AccountId,
+		liquidity_asset_id: Self::CurrencyId,
+	) -> Result<Balance, DispatchError>;
+
+	fn set_liquidity_minting_checkpoint_v2(
+		user: AccountId,
+		liquidity_asset_id: Self::CurrencyId,
+		liquidity_assets_added: Self::Balance,
+		use_balance_from: Option<ActivateKind>,
+	) -> DispatchResult;
+
+	fn set_liquidity_burning_checkpoint_v2(
+		user: AccountId,
+		liquidity_asset_id: Self::CurrencyId,
+		liquidity_assets_burned: Self::Balance,
+	) -> DispatchResult;
+}
+
+pub trait XykRewardsApi {
+	type AccountId: Parameter
+		+ Member
+		+ MaybeSerializeDeserialize
+		+ Debug
+		+ MaybeDisplay
+		+ Ord
+		+ MaxEncodedLen;
+
+	fn get_pool_rewards_v2(liquidity_asset_id: TokenId) -> Option<U256>;
+
+	fn claim_rewards_all_v2(
+		user: Self::AccountId,
+		liquidity_asset_id: TokenId,
+	) -> Result<Balance, DispatchError>;
+	
+	fn set_liquidity_minting_checkpoint_v2(
+		user: Self::AccountId,
+		liquidity_asset_id: TokenId,
+		liquidity_assets_added: Balance,
+		use_balance_from: Option<ActivateKind>,
+	) -> DispatchResult;
+
+	fn set_liquidity_burning_checkpoint_v2(
+		user: Self::AccountId,
+		liquidity_asset_id: TokenId,
+		liquidity_assets_burned: Balance,
+	) -> DispatchResult;
 }
 
 pub trait PreValidateSwaps {

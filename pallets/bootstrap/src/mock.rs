@@ -245,7 +245,7 @@ impl pallet_issuance::Config for Test {
 	type TGEReleasePeriod = TGEReleasePeriod;
 	type TGEReleaseBegin = TGEReleaseBegin;
 	type VestingProvider = Vesting;
-	type ActivedPoolQueryApiType = Xyk;
+	type ActivatedPoolQueryApiType = Xyk;
 	type WeightInfo = ();
 }
 

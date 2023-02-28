@@ -22,6 +22,7 @@ static_assertions = "1.1.0"
 
 # Local Dependencies
 pallet-xyk = { path = '../../pallets/xyk', default-features = false, version = '0.1.0' }
+pallet-proof-of-stake = { path = '../../pallets/proof-of-stake', default-features = false, version = '0.1.0' }
 pallet-bootstrap = { path = '../../pallets/bootstrap', default-features = false, version = '0.1.0' }
 xyk-runtime-api = { path = '../../pallets/xyk/runtime-api', default-features = false, version = '2.0.0' }
 pallet-sudo-origin = { path = '../../pallets/sudo-origin', default-features = false }
@@ -168,6 +169,7 @@ std = [
 	"orml-tokens/std",
 	"pallet-treasury/std",
 	"pallet-xyk/std",
+	"pallet-proof-of-stake/std",
 	"pallet-bootstrap/std",
   	"xyk-runtime-api/std",
 	"parachain-staking/std",
@@ -204,6 +206,7 @@ try-runtime = [
 	"orml-tokens/try-runtime",
 	"pallet-transaction-payment/try-runtime",
 	"pallet-xyk/try-runtime",
+	"pallet-proof-of-stake/try-runtime",
 	"pallet-vesting-mangata/try-runtime",
 	"pallet-crowdloan-rewards/try-runtime",
 	"pallet-issuance/try-runtime",
@@ -253,6 +256,7 @@ runtime-benchmarks = [
 	"cumulus-pallet-parachain-system/runtime-benchmarks",
 	"cumulus-pallet-xcmp-queue/runtime-benchmarks",
 	"pallet-xyk/runtime-benchmarks",
+	"pallet-proof-of-stake/runtime-benchmarks",
 	"parachain-staking/runtime-benchmarks",
 	"pallet-treasury/runtime-benchmarks",
 	"pallet-collective-mangata/runtime-benchmarks",

@@ -105,7 +105,7 @@ impl WeightInfo for () {
 	}
 }
 
-pub trait ActivedPoolQueryApi {
+pub trait ActivatedPoolQueryApi {
 	fn get_pool_activate_amount(liquidity_token_id: TokenId) -> Option<Balance>;
 }
 
@@ -177,7 +177,7 @@ pub mod pallet {
 		>;
 		type WeightInfo: WeightInfo;
 
-		type ActivedPoolQueryApiType: ActivedPoolQueryApi;
+		type ActivatedPoolQueryApiType: ActivatedPoolQueryApi;
 	}
 
 	#[pallet::storage]
@@ -540,7 +540,7 @@ impl<T: Config> Pallet<T> {
 				.clone()
 				.into_iter()
 				.filter_map(|(token_id, info)| {
-					match T::ActivedPoolQueryApiType::get_pool_activate_amount(token_id) {
+					match T::ActivatedPoolQueryApiType::get_pool_activate_amount(token_id) {
 						Some(activated_amount) if !activated_amount.is_zero() =>
 							Some((token_id, info.weight, info.rewards, activated_amount)),
 						_ => None,

@@ -173,11 +173,12 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
+
 	authoring_version: 14,
-	spec_version: 14,
+	spec_version: 2800,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 14,
+	transaction_version: 2800,
 	state_version: 0,
 };
 
@@ -582,9 +583,7 @@ impl Contains<RuntimeCall> for DisallowedInBatch {
 			RuntimeCall::Xyk(pallet_xyk::Call::sell_asset { .. }) |
 			RuntimeCall::Xyk(pallet_xyk::Call::buy_asset { .. }) |
 			RuntimeCall::Xyk(pallet_xyk::Call::multiswap_sell_asset { .. }) |
-			RuntimeCall::Xyk(pallet_xyk::Call::multiswap_buy_asset { .. }) |
-			RuntimeCall::Xyk(pallet_xyk::Call::compound_rewards { .. }) |
-			RuntimeCall::Xyk(pallet_xyk::Call::provide_liquidity_with_conversion { .. }) => true,
+			RuntimeCall::Xyk(pallet_xyk::Call::multiswap_buy_asset { .. }) => true,
 			_ => false,
 		}
 	}
@@ -1609,7 +1608,7 @@ construct_runtime!(
 		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>} = 13,
 
 		// Fee Locks
-		FeeLock: pallet_fee_lock::{Pallet, Storage, Call, Event<T>} = 14,
+		FeeLock: pallet_fee_lock::{Pallet, Storage, Call, Event<T>, Config<T>} = 14,
 
 		// Vesting
 		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>} = 17,

@@ -1,14 +1,18 @@
 #[cfg(feature = "with-kusama-runtime")]
 pub mod kusama_test_net;
 
-pub use fee_test::{relay_per_second_as_fee, native_per_second_as_fee, asset_unit_cost};
+#[cfg(feature = "with-kusama-runtime")]
+pub mod kusama_xcm_transfer;
+
+pub use fee_test::{asset_unit_cost, native_per_second_as_fee, relay_per_second_as_fee};
 use frame_support::weights::{constants::WEIGHT_REF_TIME_PER_SECOND, Weight};
 use sp_runtime::{FixedPointNumber, FixedU128};
 
 // N * unit_weight * (weight/10^12) * per_second
 fn asset_weight(instruction_count: u32, unit_weight: Weight, per_second: u128) -> u128 {
 	let weight = unit_weight.saturating_mul(instruction_count as u64);
-	let weight_ratio = FixedU128::saturating_from_rational(weight.ref_time(), WEIGHT_REF_TIME_PER_SECOND);
+	let weight_ratio =
+		FixedU128::saturating_from_rational(weight.ref_time(), WEIGHT_REF_TIME_PER_SECOND);
 	weight_ratio.saturating_mul_int(per_second)
 }
 
@@ -18,7 +22,8 @@ mod fee_test {
 
 	pub fn asset_unit_cost(instruction_count: u32, per_second: u128) -> u128 {
 		#[cfg(feature = "with-kusama-runtime")]
-		let unit_weight: Weight = Weight::from_ref_time(mangata_kusama_runtime::xcm_config::UnitWeightCost::get());
+		let unit_weight: Weight =
+			Weight::from_ref_time(mangata_kusama_runtime::xcm_config::UnitWeightCost::get());
 		#[cfg(feature = "with-kusama-runtime")]
 		assert_eq!(unit_weight, Weight::from_ref_time(150_000_000));
 
@@ -61,7 +66,8 @@ fn weight_to_fee_works() {
 	{
 		use kusama_runtime_constants::fee::WeightToFee;
 
-		let base_weight: Weight = Weight::from_ref_time(kusama_runtime::xcm_config::BaseXcmWeight::get());
+		let base_weight: Weight =
+			Weight::from_ref_time(kusama_runtime::xcm_config::BaseXcmWeight::get());
 		assert_eq!(base_weight, Weight::from_ref_time(1_000_000_000));
 
 		let weight: Weight = base_weight.saturating_mul(4);
@@ -74,15 +80,17 @@ fn weight_to_fee_works() {
 		assert_eq!(103_334_130, fee);
 	}
 
-    // Mangata
+	// Mangata
 	#[cfg(feature = "with-kusama-runtime")]
 	{
 		use mangata_kusama_runtime::constants::fee::WeightToFee;
 
-		let base_weight: Weight = Weight::from_ref_time(mangata_kusama_runtime::xcm_config::BaseXcmWeight::get());
+		let base_weight: Weight =
+			Weight::from_ref_time(mangata_kusama_runtime::xcm_config::BaseXcmWeight::get());
 		assert_eq!(base_weight, Weight::from_ref_time(100_000_000));
 
-		let unit_weight: Weight = Weight::from_ref_time(mangata_kusama_runtime::xcm_config::UnitWeightCost::get());
+		let unit_weight: Weight =
+			Weight::from_ref_time(mangata_kusama_runtime::xcm_config::UnitWeightCost::get());
 		assert_eq!(unit_weight, Weight::from_ref_time(150_000_000));
 
 		let weight: Weight = base_weight.saturating_mul(4);

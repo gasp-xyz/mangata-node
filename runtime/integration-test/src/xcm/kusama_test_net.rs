@@ -87,9 +87,7 @@ fn default_parachains_host_configuration() -> HostConfiguration<BlockNumber> {
 pub fn kusama_ext() -> sp_io::TestExternalities {
 	use kusama_runtime::{Runtime, System};
 
-	let mut t = frame_system::GenesisConfig::default()
-		.build_storage::<Runtime>()
-		.unwrap();
+	let mut t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
 
 	pallet_balances::GenesisConfig::<Runtime> {
 		balances: vec![
@@ -107,9 +105,7 @@ pub fn kusama_ext() -> sp_io::TestExternalities {
 	.unwrap();
 
 	<pallet_xcm::GenesisConfig as GenesisBuild<Runtime>>::assimilate_storage(
-		&pallet_xcm::GenesisConfig {
-			safe_xcm_version: Some(2),
-		},
+		&pallet_xcm::GenesisConfig { safe_xcm_version: Some(2) },
 		&mut t,
 	)
 	.unwrap();
@@ -122,8 +118,14 @@ pub fn kusama_ext() -> sp_io::TestExternalities {
 pub fn para_ext(parachain_id: u32) -> sp_io::TestExternalities {
 	ExtBuilder::default()
 		.balances(vec![
-			(AccountId::from(ALICE), RELAY_ASSET_ID, 100_000_000_000_000),
+			(AccountId::from(ALICE), NATIVE_ASSET_ID, 100 * unit(18)),
+			// fill empty assets until RELAY_ASSET_ID == 4
+			(AccountId::from(ALICE), 1, 0),
+			(AccountId::from(ALICE), 2, 0),
+			(AccountId::from(ALICE), 3, 0),
+			(AccountId::from(ALICE), RELAY_ASSET_ID, 100 * unit(12)),
 		])
+		.assets(vec![])
 		.parachain_id(parachain_id)
 		.build()
 }

@@ -4,7 +4,7 @@ use frame_support::traits::GenesisBuild;
 pub use frame_support::{assert_err, assert_noop, assert_ok, dispatch::DispatchResultWithPostInfo};
 pub use orml_traits::currency::{MultiCurrency, MultiCurrencyExtended};
 pub use sp_io::TestExternalities;
-pub use sp_runtime::{codec::Encode, MultiAddress, Permill};
+pub use sp_runtime::{codec::Encode, traits::BadOrigin, MultiAddress, Permill};
 pub use xcm::latest::prelude::*;
 
 #[cfg(feature = "with-kusama-runtime")]
@@ -12,11 +12,13 @@ pub use kusama_imports::*;
 
 #[cfg(feature = "with-kusama-runtime")]
 mod kusama_imports {
-	pub use mangata_kusama_runtime::xcm_config::*;
 	pub use mangata_kusama_runtime::{
-		AccountId, AssetMetadataOf, Balance, Bootstrap, CustomMetadata, Proxy, ProxyType, Runtime,
-		RuntimeCall, RuntimeOrigin, System, TokenId, Tokens, Xyk, XykMetadata, UNIT,
+		mgx_per_second, xcm_config::*, AccountId, AssetMetadataOf, AssetRegistry, Balance,
+		Bootstrap, CustomMetadata, PolkadotXcm, Proxy, ProxyType, Runtime, RuntimeCall,
+		RuntimeOrigin, System, TokenId, Tokens, VersionedMultiLocation, XTokens, XcmMetadata, Xyk,
+		XykMetadata, UNIT,
 	};
+	pub use xcm::latest::Weight as XcmWeight;
 
 	pub const NATIVE_ASSET_ID: TokenId = mangata_kusama_runtime::MGX_TOKEN_ID;
 	pub const RELAY_ASSET_ID: TokenId = mangata_kusama_runtime::KSM_TOKEN_ID;
@@ -25,6 +27,22 @@ mod kusama_imports {
 /// Accounts
 pub const ALICE: [u8; 32] = [4u8; 32];
 pub const BOB: [u8; 32] = [5u8; 32];
+
+pub fn unit(decimals: u32) -> Balance {
+	10u128.saturating_pow(decimals)
+}
+
+pub fn cent(decimals: u32) -> Balance {
+	unit(decimals) / 100
+}
+
+pub fn millicent(decimals: u32) -> Balance {
+	cent(decimals) / 1000
+}
+
+pub fn microcent(decimals: u32) -> Balance {
+	millicent(decimals) / 1000
+}
 
 const PARA_ID: u32 = 2110;
 
@@ -41,6 +59,11 @@ impl Default for ExtBuilder {
 }
 
 impl ExtBuilder {
+	pub fn assets(mut self, assets: Vec<(TokenId, AssetMetadataOf)>) -> Self {
+		self.assets = assets;
+		self
+	}
+
 	pub fn balances(mut self, balances: Vec<(AccountId, TokenId, Balance)>) -> Self {
 		self.balances = balances;
 		self

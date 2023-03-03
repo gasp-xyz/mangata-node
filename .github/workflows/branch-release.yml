@@ -45,6 +45,7 @@ jobs:
       GLOBAL_VERSION: ${{ steps.set_vars.outputs.GLOBAL_VERSION }}
       GIT_BRANCH: ${{ steps.set_vars.outputs.GIT_BRANCH }}
       RELEASE_BRANCH_PATTERN: ${{ steps.set_vars.outputs.RELEASE_BRANCH_PATTERN }}
+      RELEASE_TAG: ${{ steps.set_vars.outputs.RELEASE_TAG }}
     steps:
       - name: Get branch name
         id: branch-name
@@ -55,6 +56,7 @@ jobs:
           echo "GLOBAL_VERSION=${{ github.sha }}" >> $GITHUB_OUTPUT
           echo "RELEASE_BRANCH_PATTERN=${{ env.RELEASE_BRANCH_PATTERN }}" >> $GITHUB_OUTPUT
           echo "GIT_BRANCH=${{ steps.branch-name.outputs.current_branch }}" | sed "s@/@-@g" >> $GITHUB_OUTPUT
+          echo "RELEASE_TAG=${{ steps.branch-name.outputs.current_branch }}" | sed "release/@@g" >> $GITHUB_OUTPUT
 
   validate-branch-name:
     name: Validate release branch name
@@ -121,3 +123,14 @@ jobs:
       parachainDocker: ${{ github.event.inputs.parachainDocker }}
       skipBuild: 'false'
       globalVersion: ${{ needs.init.outputs.GLOBAL_VERSION }}
+
+  deploy_release_to_rococo:
+    name: Deploy release to rococo on merge to `main`
+    if: |
+      startsWith(github.head_ref, needs.init.outputs.RELEASE_BRANCH_PATTERN) &&
+      github.event.action == 'closed' && github.event.pull_request.merged == 'true'
+    needs: [ init ]
+    uses: ./.github/workflows/deploy-rococo.yml
+    secrets: inherit
+    with:
+      version: rococo-${{ needs.init.outputs.RELEASE_TAG }}

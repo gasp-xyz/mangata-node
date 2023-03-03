@@ -80,9 +80,7 @@ jobs:
       E2EBRANCHNAME: "main"
       PARACHAIN_DOCKER_IMAGE: ${{ inputs.parachainDocker || format('mangatasolutions/mangata-node:{0}', inputs.globalVersion) }}
     steps:
-      ####IDK, but this is neccesary for reports
-      - uses: actions/checkout@v3
-
+      - uses: actions/checkout@v3 ####IDK, but this is neccesary for reports
       - name: Adapt if fast runtime
         if:  ${{  !contains(env.PARACHAIN_DOCKER_IMAGE, 'fast') && matrix.fast == true }}
         run: echo "PARACHAIN_DOCKER_IMAGE=${{ env.PARACHAIN_DOCKER_IMAGE }}-fast" >> $GITHUB_ENV
@@ -205,3 +203,7 @@ jobs:
         if: always()
         working-directory: launch
         run: yarn down
+      
+      - name: Clean workspace directory
+        if: always()
+        run: rm -rf * .* || echo "All files in workspace directory were deleted"

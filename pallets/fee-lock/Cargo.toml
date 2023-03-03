@@ -34,6 +34,7 @@ sp-io = { default-features = false, version = '7.0.0' , git = "https://github.co
 lazy_static = "1.1.1"
 env_logger = "0.9.0"
 serial_test = { version = "0.6.0", default-features = false }
+test-case = "2.0.2"
 
 [features]
 default = ['std']

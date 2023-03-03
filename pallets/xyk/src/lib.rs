@@ -3095,7 +3095,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			let mut atomic_sold_asset_amount = Balance::zero();
 			let mut atomic_bought_asset_amount = bought_asset_amount;
 
-			let mut atomic_swap_buy_amounts_rev: Vec<Balance> = vec![];
+			let mut atomic_swap_buy_amounts_rev: Vec<Balance> = Default::default();
 			// Calc
 			// We can do this using calculate_buy_price_id chain due to the check in pre_validation
 			// that ensures that no pool is touched twice. So the reserves in question are consistent

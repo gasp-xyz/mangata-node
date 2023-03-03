@@ -47,3 +47,7 @@ jobs:
         with:
           name: performance-benchmark
           path: ./performance-benchmark.png
+      
+      - name: Clean workspace directory
+        if: always()
+        run: rm -rf * .* || echo "All files in workspace directory were deleted"

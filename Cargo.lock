@@ -6785,6 +6785,7 @@ dependencies = [
  "orml-traits",
  "pallet-bootstrap",
  "pallet-issuance",
+ "pallet-proof-of-stake",
  "pallet-vesting-mangata",
  "parity-scale-codec",
  "rustc-hex",

@@ -1,4 +1,3 @@
-
 // TODO
 // Migrations
 // Cyclic deps
@@ -31,7 +30,10 @@ use frame_system::pallet_prelude::*;
 use mangata_types::{traits::GetMaintenanceStatusTrait, Balance, TokenId};
 use mp_bootstrap::PoolCreateApi;
 use mp_multipurpose_liquidity::ActivateKind;
-use mp_traits::{ActivationReservesProviderTrait, PreValidateSwaps, XykFunctionsTrait, ProofOfStakeRewardsApi, XykRewardsApi};
+use mp_traits::{
+	ActivationReservesProviderTrait, CumulativeWorkRewardsApi, PreValidateSwaps,
+	ProofOfStakeRewardsApi, XykFunctionsTrait,
+};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_issuance::{ActivatedPoolQueryApi, ComputeIssuance, PoolPromoteApi};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
@@ -180,118 +182,119 @@ pub mod pallet {
 	// XYK extrinsics.
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		#[pallet::call_index(0)]
+		#[pallet::weight(<<T as Config>::WeightInfo>::compound_rewards())]
+		#[transactional]
+		pub fn compound_rewards(
+			origin: OriginFor<T>,
+			liquidity_asset_id: TokenId,
+			amount_permille: Permill,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
 
-	#[pallet::call_index(0)]
-	#[pallet::weight(<<T as Config>::WeightInfo>::compound_rewards())]
-	#[transactional]
-	pub fn compound_rewards(
-		origin: OriginFor<T>,
-		liquidity_asset_id: TokenId,
-		amount_permille: Permill,
-	) -> DispatchResultWithPostInfo {
-		let sender = ensure_signed(origin)?;
+			<T::Xyk as XykFunctionsTrait<T::AccountId>>::do_compound_rewards(
+				sender,
+				liquidity_asset_id.into(),
+				amount_permille,
+			)?;
 
-		<T::Xyk as XykFunctionsTrait<T::AccountId>>::do_compound_rewards(sender, liquidity_asset_id.into(), amount_permille)?;
+			Ok(().into())
+		}
 
-		Ok(().into())
-	}
+		#[transactional]
+		#[pallet::call_index(1)]
+		#[pallet::weight(<<T as Config>::WeightInfo>::claim_rewards_v2())]
+		pub fn claim_rewards_v2(
+			origin: OriginFor<T>,
+			liquidity_token_id: TokenId,
+			amount: Balance,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
 
+			<Self as ProofOfStakeRewardsApi<T::AccountId>>::claim_rewards_v2(
+				sender,
+				liquidity_token_id,
+				amount,
+			)?;
 
-	#[transactional]
-	#[pallet::call_index(1)]
-	#[pallet::weight(<<T as Config>::WeightInfo>::claim_rewards_v2())]
-	pub fn claim_rewards_v2(
-		origin: OriginFor<T>,
-		liquidity_token_id: TokenId,
-		amount: Balance,
-	) -> DispatchResult {
-		let sender = ensure_signed(origin)?;
+			Ok(())
+		}
 
-		<Self as ProofOfStakeRewardsApi<T::AccountId>>::claim_rewards_v2(
-			sender,
-			liquidity_token_id,
-			amount,
-		)?;
+		#[transactional]
+		#[pallet::call_index(2)]
+		#[pallet::weight(<<T as Config>::WeightInfo>::claim_rewards_v2())]
+		pub fn claim_rewards_all_v2(
+			origin: OriginFor<T>,
+			liquidity_token_id: TokenId,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
 
-		Ok(())
-	}
+			<Self as ProofOfStakeRewardsApi<T::AccountId>>::claim_rewards_all_v2(
+				sender,
+				liquidity_token_id,
+			)?;
 
-	#[transactional]
-	#[pallet::call_index(2)]
-	#[pallet::weight(<<T as Config>::WeightInfo>::claim_rewards_v2())]
-	pub fn claim_rewards_all_v2(
-		origin: OriginFor<T>,
-		liquidity_token_id: TokenId,
-	) -> DispatchResult {
-		let sender = ensure_signed(origin)?;
+			Ok(())
+		}
 
-		<Self as ProofOfStakeRewardsApi<T::AccountId>>::claim_rewards_all_v2(
-			sender,
-			liquidity_token_id,
-		)?;
+		// Disabled pool demotion
+		#[pallet::call_index(3)]
+		#[pallet::weight(<<T as Config>::WeightInfo>::update_pool_promotion())]
+		pub fn update_pool_promotion(
+			origin: OriginFor<T>,
+			liquidity_token_id: TokenId,
+			liquidity_mining_issuance_weight: u8,
+		) -> DispatchResult {
+			ensure_root(origin)?;
 
-		Ok(())
-	}
+			<Self as ProofOfStakeRewardsApi<T::AccountId>>::update_pool_promotion(
+				liquidity_token_id,
+				Some(liquidity_mining_issuance_weight),
+			)
+		}
 
-	// Disabled pool demotion
-	#[pallet::call_index(3)]
-	#[pallet::weight(<<T as Config>::WeightInfo>::update_pool_promotion())]
-	pub fn update_pool_promotion(
-		origin: OriginFor<T>,
-		liquidity_token_id: TokenId,
-		liquidity_mining_issuance_weight: u8,
-	) -> DispatchResult {
-		ensure_root(origin)?;
+		#[transactional]
+		#[pallet::call_index(4)]
+		#[pallet::weight(<<T as Config>::WeightInfo>::activate_liquidity_v2())]
+		pub fn activate_liquidity_v2(
+			origin: OriginFor<T>,
+			liquidity_token_id: TokenId,
+			amount: Balance,
+			use_balance_from: Option<ActivateKind>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
 
-		<Self as ProofOfStakeRewardsApi<T::AccountId>>::update_pool_promotion(
-			liquidity_token_id,
-			Some(liquidity_mining_issuance_weight),
-		)
-	}
+			<Self as ProofOfStakeRewardsApi<T::AccountId>>::activate_liquidity_v2(
+				sender,
+				liquidity_token_id,
+				amount,
+				use_balance_from,
+			)
+		}
 
-	#[transactional]
-	#[pallet::call_index(4)]
-	#[pallet::weight(<<T as Config>::WeightInfo>::activate_liquidity_v2())]
-	pub fn activate_liquidity_v2(
-		origin: OriginFor<T>,
-		liquidity_token_id: TokenId,
-		amount: Balance,
-		use_balance_from: Option<ActivateKind>,
-	) -> DispatchResult {
-		let sender = ensure_signed(origin)?;
+		#[transactional]
+		#[pallet::call_index(5)]
+		#[pallet::weight(<<T as Config>::WeightInfo>::deactivate_liquidity_v2())]
+		pub fn deactivate_liquidity_v2(
+			origin: OriginFor<T>,
+			liquidity_token_id: TokenId,
+			amount: Balance,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
 
-		<Self as ProofOfStakeRewardsApi<T::AccountId>>::activate_liquidity_v2(
-			sender,
-			liquidity_token_id,
-			amount,
-			use_balance_from,
-		)
-	}
-
-	#[transactional]
-	#[pallet::call_index(5)]
-	#[pallet::weight(<<T as Config>::WeightInfo>::deactivate_liquidity_v2())]
-	pub fn deactivate_liquidity_v2(
-		origin: OriginFor<T>,
-		liquidity_token_id: TokenId,
-		amount: Balance,
-	) -> DispatchResult {
-		let sender = ensure_signed(origin)?;
-
-		<Self as ProofOfStakeRewardsApi<T::AccountId>>::deactivate_liquidity_v2(
-			sender,
-			liquidity_token_id,
-			amount,
-		)
-	}
+			<Self as ProofOfStakeRewardsApi<T::AccountId>>::deactivate_liquidity_v2(
+				sender,
+				liquidity_token_id,
+				amount,
+			)
+		}
 	}
 }
 
-impl<T: Config> Pallet<T>{
+impl<T: Config> Pallet<T> {
 	fn native_token_id() -> TokenId {
 		<T as Config>::NativeCurrencyId::get()
 	}
-
 
 	fn calculate_rewards_v2(
 		liquidity_assets_amount: u128,
@@ -306,8 +309,9 @@ impl<T: Config> Pallet<T>{
 			Error::<T>::NotAPromotedPool
 		);
 
-		let current_time: u32 = <Self as ProofOfStakeRewardsApi<T::AccountId>>::current_rewards_time()
-			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError))?;
+		let current_time: u32 =
+			<Self as ProofOfStakeRewardsApi<T::AccountId>>::current_rewards_time()
+				.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError))?;
 
 		let time_passed = current_time
 			.checked_sub(last_checkpoint)
@@ -324,7 +328,7 @@ impl<T: Config> Pallet<T>{
 			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError))?;
 
 		let (cumulative_work, cummulative_work_max_possible) =
-		Self::calculate_cumulative_work_max_ratio(
+			Self::calculate_cumulative_work_max_ratio(
 				liquidity_assets_amount,
 				time_passed,
 				missing_at_last_checkpoint,
@@ -410,7 +414,6 @@ impl<T: Config> Pallet<T>{
 
 		Ok(missing_at_checkpoint)
 	}
-
 }
 
 impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
@@ -426,7 +429,10 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 	) -> DispatchResult {
 		let mangata_id: TokenId = Self::native_token_id();
 		let claimable_rewards =
-			<Self as ProofOfStakeRewardsApi<T::AccountId>>::calculate_rewards_amount_v2(user.clone(), liquidity_asset_id)?;
+			<Self as ProofOfStakeRewardsApi<T::AccountId>>::calculate_rewards_amount_v2(
+				user.clone(),
+				liquidity_asset_id,
+			)?;
 
 		ensure!(mangata_amount <= claimable_rewards, Error::<T>::NotEnoughRewardsEarned);
 
@@ -598,13 +604,16 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 
 		ensure!(rewards_info.activated_amount >= amount, Error::<T>::NotEnoughAssets);
 
-		<Self as ProofOfStakeRewardsApi<T::AccountId>>::set_liquidity_burning_checkpoint_v2(user.clone(), liquidity_asset_id, amount)?;
+		<Self as ProofOfStakeRewardsApi<T::AccountId>>::set_liquidity_burning_checkpoint_v2(
+			user.clone(),
+			liquidity_asset_id,
+			amount,
+		)?;
 
 		Pallet::<T>::deposit_event(Event::LiquidityDeactivated(user, liquidity_asset_id, amount));
 
 		Ok(())
 	}
-
 
 	fn current_rewards_time() -> Option<u32> {
 		<frame_system::Pallet<T>>::block_number()
@@ -661,8 +670,9 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		liquidity_assets_added: Balance,
 		use_balance_from: Option<ActivateKind>,
 	) -> DispatchResult {
-		let current_time: u32 = <Self as ProofOfStakeRewardsApi<T::AccountId>>::current_rewards_time()
-			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError))?;
+		let current_time: u32 =
+			<Self as ProofOfStakeRewardsApi<T::AccountId>>::current_rewards_time()
+				.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError))?;
 		let mut pool_ratio_current =
 			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id)
 				.ok_or_else(|| DispatchError::from(Error::<T>::NotAPromotedPool))?;
@@ -758,8 +768,9 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		liquidity_asset_id: TokenId,
 		liquidity_assets_burned: Balance,
 	) -> DispatchResult {
-		let current_time: u32 = <Self as ProofOfStakeRewardsApi<T::AccountId>>::current_rewards_time()
-			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError))?;
+		let current_time: u32 =
+			<Self as ProofOfStakeRewardsApi<T::AccountId>>::current_rewards_time()
+				.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError))?;
 
 		let mut pool_ratio_current =
 			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id)
@@ -781,7 +792,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		}
 
 		let missing_at_checkpoint_new =
-		Self::calculate_missing_at_checkpoint_v2(time_passed, missing_at_last_checkpoint)?;
+			Self::calculate_missing_at_checkpoint_v2(time_passed, missing_at_last_checkpoint)?;
 
 		let user_current_rewards = Self::calculate_rewards_v2(
 			liquidity_assets_amount,
@@ -841,7 +852,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 	}
 }
 
-impl<T: Config> XykRewardsApi for Pallet<T> {
+impl<T: Config> CumulativeWorkRewardsApi for Pallet<T> {
 	type AccountId = T::AccountId;
 
 	fn get_pool_rewards_v2(liquidity_asset_id: TokenId) -> Option<U256> {
@@ -852,7 +863,10 @@ impl<T: Config> XykRewardsApi for Pallet<T> {
 		user: Self::AccountId,
 		liquidity_asset_id: TokenId,
 	) -> Result<Balance, DispatchError> {
-		<Self as ProofOfStakeRewardsApi<T::AccountId>>::claim_rewards_all_v2(user, liquidity_asset_id)
+		<Self as ProofOfStakeRewardsApi<T::AccountId>>::claim_rewards_all_v2(
+			user,
+			liquidity_asset_id,
+		)
 	}
 
 	fn set_liquidity_minting_checkpoint_v2(
@@ -861,7 +875,12 @@ impl<T: Config> XykRewardsApi for Pallet<T> {
 		liquidity_assets_added: Balance,
 		use_balance_from: Option<ActivateKind>,
 	) -> DispatchResult {
-		<Self as ProofOfStakeRewardsApi<T::AccountId>>::set_liquidity_minting_checkpoint_v2(user, liquidity_asset_id, liquidity_assets_added, use_balance_from)
+		<Self as ProofOfStakeRewardsApi<T::AccountId>>::set_liquidity_minting_checkpoint_v2(
+			user,
+			liquidity_asset_id,
+			liquidity_assets_added,
+			use_balance_from,
+		)
 	}
 
 	fn set_liquidity_burning_checkpoint_v2(
@@ -869,7 +888,11 @@ impl<T: Config> XykRewardsApi for Pallet<T> {
 		liquidity_asset_id: TokenId,
 		liquidity_assets_burned: Balance,
 	) -> DispatchResult {
-		<Self as ProofOfStakeRewardsApi<T::AccountId>>::set_liquidity_burning_checkpoint_v2(user, liquidity_asset_id, liquidity_assets_burned)
+		<Self as ProofOfStakeRewardsApi<T::AccountId>>::set_liquidity_burning_checkpoint_v2(
+			user,
+			liquidity_asset_id,
+			liquidity_assets_burned,
+		)
 	}
 }
 

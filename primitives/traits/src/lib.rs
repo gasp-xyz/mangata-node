@@ -3,9 +3,12 @@ use codec::FullCodec;
 use frame_support::pallet_prelude::*;
 use mangata_types::{Balance, TokenId};
 use mp_multipurpose_liquidity::{ActivateKind, BondKind};
-use sp_runtime::{traits::{AtLeast32BitUnsigned, MaybeDisplay}, Permill};
-use sp_std::{fmt::Debug, vec::Vec};
 use sp_core::U256;
+use sp_runtime::{
+	traits::{AtLeast32BitUnsigned, MaybeDisplay},
+	Permill,
+};
+use sp_std::{fmt::Debug, vec::Vec};
 
 pub trait StakingReservesProviderTrait {
 	type AccountId: Parameter
@@ -176,7 +179,6 @@ pub trait XykFunctionsTrait<AccountId> {
 		amount_permille: Permill,
 	) -> DispatchResult;
 
-
 	fn is_liquidity_token(liquidity_asset_id: TokenId) -> bool;
 }
 
@@ -251,7 +253,7 @@ pub trait ProofOfStakeRewardsApi<AccountId> {
 	) -> DispatchResult;
 }
 
-pub trait XykRewardsApi {
+pub trait CumulativeWorkRewardsApi {
 	type AccountId: Parameter
 		+ Member
 		+ MaybeSerializeDeserialize
@@ -266,7 +268,7 @@ pub trait XykRewardsApi {
 		user: Self::AccountId,
 		liquidity_asset_id: TokenId,
 	) -> Result<Balance, DispatchError>;
-	
+
 	fn set_liquidity_minting_checkpoint_v2(
 		user: Self::AccountId,
 		liquidity_asset_id: TokenId,

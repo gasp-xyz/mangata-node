@@ -89,6 +89,7 @@ pub const KAR_TOKEN_ID: TokenId = 6;
 pub const TUR_TOKEN_ID: TokenId = 7;
 
 pub mod constants;
+mod migration;
 mod weights;
 pub mod xcm_config;
 
@@ -127,7 +128,8 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	(),
+	(migration::XykRefactorMigration),
+	// ()
 >;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
@@ -512,7 +514,7 @@ impl pallet_proof_of_stake::Config for Runtime {
 	type ActivationReservesProvider = MultiPurposeLiquidity;
 	type NativeCurrencyId = MgrTokenId;
 	type Xyk = Xyk;
-	type PoolPromoteApi= Issuance;
+	type PoolPromoteApi = Issuance;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = SessionLenghtOf<Runtime>;

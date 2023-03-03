@@ -203,7 +203,3 @@ jobs:
         if: always()
         working-directory: launch
         run: yarn down
-      
-      - name: Clean workspace directory
-        if: always()
-        run: rm -rf * .* || echo "All files in workspace directory were deleted"

@@ -47,3 +47,7 @@ jobs:
         with:
           name: performance-benchmark
           path: ./performance-benchmark.png
+      
+      - name: Clean workspace directory
+        if: always()
+        run: set -e; shopt -s dotglob; rm -rf *

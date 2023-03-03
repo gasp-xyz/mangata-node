@@ -50,5 +50,4 @@ jobs:
       
       - name: Clean workspace directory
         if: always()
-        run: set -e; shopt -s dotglob; rm -rf *
-        shell: bash
+        run: rm -rf * .*

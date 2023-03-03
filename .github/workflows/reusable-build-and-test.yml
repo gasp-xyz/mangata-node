@@ -105,8 +105,7 @@ jobs:
 
       - name: Clean workspace directory
         if: always()
-        run: set -e; shopt -s dotglob; rm -rf *
-        shell: bash
+        run: rm -rf * .*
 
   rustfmt-check:
     name: Formatting check
@@ -167,8 +166,7 @@ jobs:
         run: cargo test -j2
       - name: Clean workspace directory
         if: always()
-        run: set -e; shopt -s dotglob; rm -rf *
-        shell: bash
+        run: rm -rf * .*
 
   run-benchmarks-tests:
     name: Run benchmark tests
@@ -225,8 +223,7 @@ jobs:
 
       - name: Clean workspace directory
         if: always()
-        run: set -e; shopt -s dotglob; rm -rf *
-        shell: bash
+        run: rm -rf * .*
 
   run-benchmarks:
     name: Run runtime benchmarks
@@ -292,6 +289,5 @@ jobs:
       
       - name: Clean workspace directory
         if: always()
-        run: set -e; shopt -s dotglob; rm -rf *
-        shell: bash
+        run: rm -rf * .*
 

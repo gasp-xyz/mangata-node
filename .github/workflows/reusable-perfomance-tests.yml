@@ -8,6 +8,10 @@ permissions:
   deployments: write
   checks: write
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   performance-tests:
     runs-on: [self-hosted, compile]

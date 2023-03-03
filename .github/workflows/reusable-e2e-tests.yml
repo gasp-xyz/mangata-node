@@ -50,6 +50,10 @@ permissions:
   deployments: write
   checks: write
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   e2e-test-matrix:
     strategy:

@@ -27,6 +27,10 @@ permissions:
   contents: read
   id-token: write
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build-node-image:
     name: Build Docker image

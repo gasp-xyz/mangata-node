@@ -43,7 +43,7 @@ where
 		+ Send
 		+ Sync
 		+ 'static,
-	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
+	C::Api: pallet_transaction_payment_mangata_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
 	C::Api: xyk_rpc::XykRuntimeApi<Block, Balance, TokenId, AccountId>,
 	C::Api: pallet_vesting_mangata_rpc::VestingMangataRuntimeApi<
@@ -57,7 +57,7 @@ where
 	C::Api: VerNonceApi<Block, AccountId>,
 	P: TransactionPool + Sync + Send + 'static,
 {
-	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
+	use pallet_transaction_payment_mangata_rpc::{TransactionPayment, TransactionPaymentApiServer};
 	use pallet_vesting_mangata_rpc::{VestingMangata, VestingMangataApiServer};
 	use substrate_frame_rpc_system::{System, SystemApiServer};
 	use xyk_rpc::{Xyk, XykApiServer};

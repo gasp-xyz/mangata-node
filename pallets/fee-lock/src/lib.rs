@@ -179,6 +179,7 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		FeeLockMetadataUpdated,
 		FeeLockUnlocked(T::AccountId, Balance),
+		FeeLocked { who: T::AccountId, lock_amount: Balance, total_locked: Balance },
 	}
 
 	#[pallet::error]
@@ -424,8 +425,13 @@ impl<T: Config> FeeLockTriggerTrait<T::AccountId> for Pallet<T> {
 				.total_fee_lock_amount
 				.saturating_add(fee_lock_metadata.fee_lock_amount);
 			account_fee_lock_data.last_fee_lock_block = now;
-			AccountFeeLockData::<T>::insert(who, account_fee_lock_data);
+			AccountFeeLockData::<T>::insert(who.clone(), account_fee_lock_data.clone());
 			Self::move_to_the_end_of_unlock_queue(who);
+			Self::deposit_event(Event::FeeLocked {
+				who: who.clone(),
+				lock_amount: fee_lock_metadata.fee_lock_amount,
+				total_locked: account_fee_lock_data.total_fee_lock_amount,
+			});
 		} else {
 			// We must either reserve more or unreserve
 			match (fee_lock_metadata.fee_lock_amount, account_fee_lock_data.total_fee_lock_amount) {
@@ -453,8 +459,13 @@ impl<T: Config> FeeLockTriggerTrait<T::AccountId> for Pallet<T> {
 			// This is not expected to fail
 			account_fee_lock_data.total_fee_lock_amount = fee_lock_metadata.fee_lock_amount;
 			account_fee_lock_data.last_fee_lock_block = now;
-			AccountFeeLockData::<T>::insert(who, account_fee_lock_data);
+			AccountFeeLockData::<T>::insert(who.clone(), account_fee_lock_data.clone());
 			Self::move_to_the_end_of_unlock_queue(who);
+			Self::deposit_event(Event::FeeLocked {
+				who: who.clone(),
+				lock_amount: fee_lock_metadata.fee_lock_amount,
+				total_locked: account_fee_lock_data.total_fee_lock_amount,
+			});
 		}
 
 		Ok(())

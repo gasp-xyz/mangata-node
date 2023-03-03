@@ -80,8 +80,9 @@ jobs:
       E2EBRANCHNAME: "main"
       PARACHAIN_DOCKER_IMAGE: ${{ inputs.parachainDocker || format('mangatasolutions/mangata-node:{0}', inputs.globalVersion) }}
     steps:
-      ####IDK, but this is neccesary for reports
-      - uses: actions/checkout@v3
+      - name: Clean Workspace directory
+        run: set -e; shopt -s dotglob; rm -rf *
+      - uses: actions/checkout@v3 ####IDK, but this is neccesary for reports
 
       - name: Adapt if fast runtime
         if:  ${{  !contains(env.PARACHAIN_DOCKER_IMAGE, 'fast') && matrix.fast == true }}

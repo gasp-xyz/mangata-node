@@ -27,10 +27,6 @@ permissions:
   contents: read
   id-token: write
 
-defaults:
-  run:
-    shell: bash
-
 jobs:
   build-node-image:
     name: Build Docker image
@@ -110,6 +106,7 @@ jobs:
       - name: Clean workspace directory
         if: always()
         run: set -e; shopt -s dotglob; rm -rf *
+        shell: bash
 
   rustfmt-check:
     name: Formatting check
@@ -171,6 +168,7 @@ jobs:
       - name: Clean workspace directory
         if: always()
         run: set -e; shopt -s dotglob; rm -rf *
+        shell: bash
 
   run-benchmarks-tests:
     name: Run benchmark tests
@@ -228,6 +226,7 @@ jobs:
       - name: Clean workspace directory
         if: always()
         run: set -e; shopt -s dotglob; rm -rf *
+        shell: bash
 
   run-benchmarks:
     name: Run runtime benchmarks
@@ -294,4 +293,5 @@ jobs:
       - name: Clean workspace directory
         if: always()
         run: set -e; shopt -s dotglob; rm -rf *
+        shell: bash
 

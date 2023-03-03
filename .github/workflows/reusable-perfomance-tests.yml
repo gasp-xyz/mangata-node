@@ -8,10 +8,6 @@ permissions:
   deployments: write
   checks: write
 
-defaults:
-  run:
-    shell: bash
-
 jobs:
   performance-tests:
     runs-on: [self-hosted, compile]
@@ -55,3 +51,4 @@ jobs:
       - name: Clean workspace directory
         if: always()
         run: set -e; shopt -s dotglob; rm -rf *
+        shell: bash

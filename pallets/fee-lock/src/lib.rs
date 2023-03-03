@@ -69,17 +69,6 @@ pub mod pallet {
 		pub whitelisted_tokens: BoundedBTreeSet<TokenId, T::MaxCuratedTokens>,
 	}
 
-	impl<T: Config> Default for FeeLockMetadataInfo<T> {
-		fn default() -> Self {
-			Self {
-				period_length: Default::default(),
-				fee_lock_amount: Default::default(),
-				swap_value_threshold: Default::default(),
-				whitelisted_tokens: Default::default(),
-			}
-		}
-	}
-
 	#[pallet::storage]
 	#[pallet::getter(fn get_fee_lock_metadata)]
 	pub type FeeLockMetadata<T: Config> = StorageValue<_, FeeLockMetadataInfo<T>, OptionQuery>;
@@ -107,6 +96,7 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		FeeLockMetadataUpdated,
 		FeeLockUnlocked(T::AccountId, Balance),
+		FeeLocked { who: T::AccountId, lock_amount: Balance, total_locked: Balance },
 	}
 
 	#[pallet::error]
@@ -139,6 +129,54 @@ pub mod pallet {
 		#[pallet::constant]
 		type NativeTokenId: Get<TokenId>;
 		type WeightInfo: WeightInfo;
+	}
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		pub period_length: Option<T::BlockNumber>,
+		pub fee_lock_amount: Option<Balance>,
+		pub swap_value_threshold: Option<Balance>,
+		pub whitelisted_tokens: Vec<TokenId>,
+	}
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			GenesisConfig {
+				period_length: Default::default(),
+				fee_lock_amount: Default::default(),
+				swap_value_threshold: Default::default(),
+				whitelisted_tokens: Default::default(),
+			}
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			match (self.period_length, self.fee_lock_amount, self.swap_value_threshold) {
+				(Some(period), Some(amount), Some(threshold)) => {
+					let mut tokens: BoundedBTreeSet<TokenId, T::MaxCuratedTokens> =
+						Default::default();
+					for t in self.whitelisted_tokens.iter() {
+						tokens
+							.try_insert(*t)
+							.expect("list of tokens is <= than T::MaxCuratedTokens");
+					}
+
+					FeeLockMetadata::<T>::put(FeeLockMetadataInfo {
+						period_length: period,
+						fee_lock_amount: amount,
+						swap_value_threshold: threshold,
+						whitelisted_tokens: tokens,
+					});
+				},
+				(None, None, None) => {},
+				_ => {
+					panic!("either all or non config parameters should be set");
+				},
+			};
+		}
 	}
 
 	#[pallet::call]
@@ -283,7 +321,13 @@ impl<T: Config> FeeLockTriggerTrait<T::AccountId> for Pallet<T> {
 				.total_fee_lock_amount
 				.saturating_add(fee_lock_metadata.fee_lock_amount);
 			account_fee_lock_data.last_fee_lock_block = now;
-			AccountFeeLockData::<T>::insert(who, account_fee_lock_data);
+			AccountFeeLockData::<T>::insert(who.clone(), account_fee_lock_data.clone());
+
+			Self::deposit_event(Event::FeeLocked {
+				who: who.clone(),
+				lock_amount: fee_lock_metadata.fee_lock_amount,
+				total_locked: account_fee_lock_data.total_fee_lock_amount,
+			});
 		} else {
 			// We must either reserve more or unreserve
 			match (fee_lock_metadata.fee_lock_amount, account_fee_lock_data.total_fee_lock_amount) {
@@ -311,7 +355,13 @@ impl<T: Config> FeeLockTriggerTrait<T::AccountId> for Pallet<T> {
 			// This is not expected to fail
 			account_fee_lock_data.total_fee_lock_amount = fee_lock_metadata.fee_lock_amount;
 			account_fee_lock_data.last_fee_lock_block = now;
-			AccountFeeLockData::<T>::insert(who, account_fee_lock_data);
+			AccountFeeLockData::<T>::insert(who.clone(), account_fee_lock_data.clone());
+
+			Self::deposit_event(Event::FeeLocked {
+				who: who.clone(),
+				lock_amount: fee_lock_metadata.fee_lock_amount,
+				total_locked: account_fee_lock_data.total_fee_lock_amount,
+			});
 		}
 
 		Ok(())

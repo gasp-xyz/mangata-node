@@ -1057,18 +1057,19 @@ pub mod pallet {
 			Ok(())
 		}
 
+		// Disabled pool demotion
 		#[pallet::call_index(13)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::update_pool_promotion())]
 		pub fn update_pool_promotion(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
-			liquidity_mining_issuance_weight: Option<u8>,
+			liquidity_mining_issuance_weight: u8,
 		) -> DispatchResult {
 			ensure_root(origin)?;
 
 			<Self as XykFunctionsTrait<T::AccountId>>::update_pool_promotion(
 				liquidity_token_id,
-				liquidity_mining_issuance_weight,
+				Some(liquidity_mining_issuance_weight),
 			)
 		}
 

@@ -105,7 +105,7 @@ jobs:
 
       - name: Clean workspace directory
         if: always()
-        run: rm -rf * .*
+        run: rm -rf * .* || echo "All files in workspace directory were deleted"
 
   rustfmt-check:
     name: Formatting check
@@ -166,7 +166,7 @@ jobs:
         run: cargo test -j2
       - name: Clean workspace directory
         if: always()
-        run: rm -rf * .*
+        run: rm -rf * .* || echo "All files in workspace directory were deleted"
 
   run-benchmarks-tests:
     name: Run benchmark tests
@@ -223,7 +223,7 @@ jobs:
 
       - name: Clean workspace directory
         if: always()
-        run: rm -rf * .*
+        run: rm -rf * .* || echo "All files in workspace directory were deleted"
 
   run-benchmarks:
     name: Run runtime benchmarks
@@ -289,5 +289,4 @@ jobs:
       
       - name: Clean workspace directory
         if: always()
-        run: rm -rf * .*
-
+        run: rm -rf * .* || echo "All files in workspace directory were deleted"

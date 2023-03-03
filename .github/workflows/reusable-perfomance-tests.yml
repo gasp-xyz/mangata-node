@@ -50,4 +50,4 @@ jobs:
       
       - name: Clean workspace directory
         if: always()
-        run: rm -rf * .*
+        run: rm -rf * .* || echo "All files in workspace directory were deleted"

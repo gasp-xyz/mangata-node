@@ -1568,12 +1568,12 @@ impl pallet_proxy::Config for Runtime {
 	type AnnouncementDepositFactor = AnnouncementDepositFactor;
 }
 parameter_types! {
-	// Add one item in storage and take 258 bytes
-	pub const BasicDeposit: Balance = deposit(1, 256);
-	// No item in storage but takes 66 bytes
+	// Add item in storage and take 270 bytes, Registry { [], Balance, Info { [], [u8,32] * 7, [u8,20] }}
+	pub const BasicDeposit: Balance = deposit(1, 270);
+	// No item in storage, extra field takes 66 bytes, ([u8,32], [u8,32])
 	pub const FieldDeposit: Balance = deposit(0, 66);
-	// No item in storage but takes 53 bytes
-	pub const SubAccountDeposit: Balance = deposit(0, 53);
+	// Add item in storage, and takes 97 bytes, AccountId + (AccountId, [u8,32])
+	pub const SubAccountDeposit: Balance = deposit(1, 97);
 	pub const MaxSubAccounts: u32 = 100;
 	pub const MaxAdditionalFields: u32 = 100;
 	pub const MaxRegistrars: u32 = 20;
@@ -1637,6 +1637,9 @@ construct_runtime!(
 		} = 1,
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 2,
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 3,
+		Utility: pallet_utility_mangata::{Pallet, Call, Event} = 4,
+		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 5,
+		Maintenance: pallet_maintenance::{Pallet, Call, Storage, Event<T>} = 6,
 
 		// Monetary stuff.
 		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>} = 10,
@@ -1657,41 +1660,37 @@ construct_runtime!(
 		// Issuance
 		Issuance: pallet_issuance::{Pallet, Event<T>, Storage, Call} = 19,
 
-		// Collator support. The order of these 4 are important and shall not change.
-		Authorship: pallet_authorship::{Pallet, Call, Storage} = 20,
-		ParachainStaking: parachain_staking::{Pallet, Call, Storage, Event<T>, Config<T>} = 21,
-		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 22,
-		Aura: pallet_aura::{Pallet, Storage, Config<T>} = 23,
-		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config} = 24,
-
 		// MultiPurposeLiquidity
-		MultiPurposeLiquidity: pallet_multipurpose_liquidity::{Pallet, Call, Storage, Event<T>} = 25,
-
-		// XCM helpers.
-		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 30,
-		PolkadotXcm: pallet_xcm::{Pallet, Storage, Call, Event<T>, Origin, Config} = 31,
-		CumulusXcm: cumulus_pallet_xcm::{Pallet, Event<T>, Origin} = 32,
-		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 33,
-
-		// ORML XCM
-		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 35,
-		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 36,
-		OrmlXcm: orml_xcm::{Pallet, Call, Event<T>} = 37,
-		AssetRegistry: orml_asset_registry::{Pallet, Call, Storage, Event<T>, Config<T>} = 38,
-
-		// Governance stuff
-		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 41,
-		Sudo: pallet_sudo_mangata::{Pallet, Call, Config<T>, Storage, Event<T>} = 49,
-		SudoOrigin: pallet_sudo_origin::{Pallet, Call, Event<T>} = 50,
-		Council: pallet_collective_mangata::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 51,
-		Identity: pallet_identity::{Pallet, Call, Storage, Event<T>} = 56,
+		MultiPurposeLiquidity: pallet_multipurpose_liquidity::{Pallet, Call, Storage, Event<T>} = 20,
 
 		// Bootstrap
-		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>} = 53,
+		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>} = 21,
 
-		Utility: pallet_utility_mangata::{Pallet, Call, Event} = 54,
-		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 55,
-		Maintenance: pallet_maintenance::{Pallet, Call, Storage, Event<T>} = 60,
+		// Collator support. The order of these 4 are important and shall not change.
+		Authorship: pallet_authorship::{Pallet, Call, Storage} = 30,
+		ParachainStaking: parachain_staking::{Pallet, Call, Storage, Event<T>, Config<T>} = 31,
+		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 32,
+		Aura: pallet_aura::{Pallet, Storage, Config<T>} = 33,
+		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config} = 34,
+
+		// XCM helpers.
+		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 40,
+		PolkadotXcm: pallet_xcm::{Pallet, Storage, Call, Event<T>, Origin, Config} = 41,
+		CumulusXcm: cumulus_pallet_xcm::{Pallet, Event<T>, Origin} = 42,
+		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
+
+		// ORML XCM
+		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 50,
+		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 51,
+		OrmlXcm: orml_xcm::{Pallet, Call, Event<T>} = 52,
+		AssetRegistry: orml_asset_registry::{Pallet, Call, Storage, Event<T>, Config<T>} = 53,
+
+		// Governance stuff
+		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 60,
+		Sudo: pallet_sudo_mangata::{Pallet, Call, Config<T>, Storage, Event<T>} = 61,
+		SudoOrigin: pallet_sudo_origin::{Pallet, Call, Event<T>} = 62,
+		Council: pallet_collective_mangata::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 63,
+		Identity: pallet_identity::{Pallet, Call, Storage, Event<T>} = 64,
 	}
 );
 

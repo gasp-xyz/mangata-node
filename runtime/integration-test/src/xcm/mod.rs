@@ -34,7 +34,7 @@ mod fee_test {
 		#[cfg(feature = "with-kusama-runtime")]
 		let relay_per_second = mangata_kusama_runtime::ksm_per_second();
 		#[cfg(feature = "with-kusama-runtime")]
-		assert_eq!(879_500_000_000, relay_per_second);
+		assert_eq!(8_795 * 10 * millicent(12), relay_per_second);
 
 		asset_unit_cost(instruction_count, relay_per_second)
 	}
@@ -43,7 +43,7 @@ mod fee_test {
 		#[cfg(feature = "with-kusama-runtime")]
 		let native_per_second = mangata_kusama_runtime::mgx_per_second();
 		#[cfg(feature = "with-kusama-runtime")]
-		assert_eq!(8_795_000_000_000_000_000_000, native_per_second);
+		assert_eq!(8_795 * unit(18), native_per_second);
 
 		asset_unit_cost(instruction_count, native_per_second)
 	}
@@ -51,8 +51,8 @@ mod fee_test {
 	#[cfg(feature = "with-kusama-runtime")]
 	#[test]
 	fn mangata_kusama_per_second_works() {
-		assert_eq!(527_700_000, relay_per_second_as_fee(4));
-		assert_eq!(5_277_000_000_000_000_000, native_per_second_as_fee(4));
+		assert_eq!(52_770 * microcent(12), relay_per_second_as_fee(4));
+		assert_eq!(52_770 * 10 * millicent(18), native_per_second_as_fee(4));
 	}
 }
 

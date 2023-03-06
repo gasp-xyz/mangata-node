@@ -54,12 +54,6 @@ use sp_std::{
 	vec::Vec,
 };
 
-// #[cfg(test)]
-// mod mock;
-
-// #[cfg(test)]
-// mod tests;
-
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 pub struct RewardInfo {
 	pub activated_amount: u128,
@@ -90,7 +84,6 @@ const REWARDS_PRECISION: u32 = 10000;
 
 pub use pallet::*;
 
-// mod benchmarking;
 pub mod weights;
 pub use weights::WeightInfo;
 
@@ -106,12 +99,6 @@ pub mod pallet {
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
-
-	#[cfg(feature = "runtime-benchmarks")]
-	pub trait XykBenchmarkingConfig: pallet_issuance::Config {}
-
-	#[cfg(not(feature = "runtime-benchmarks"))]
-	pub trait XykBenchmarkingConfig {}
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -183,7 +170,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::compound_rewards())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::proof_of_stake_compound_rewards())]
 		#[transactional]
 		pub fn compound_rewards(
 			origin: OriginFor<T>,

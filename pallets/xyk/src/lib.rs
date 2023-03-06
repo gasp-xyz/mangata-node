@@ -390,7 +390,10 @@ pub mod pallet {
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
 
 	#[cfg(feature = "runtime-benchmarks")]
-	pub trait XykBenchmarkingConfig: pallet_issuance::Config {}
+	pub trait XykBenchmarkingConfig:
+		pallet_issuance::Config + pallet_proof_of_stake::Config
+	{
+	}
 
 	#[cfg(not(feature = "runtime-benchmarks"))]
 	pub trait XykBenchmarkingConfig {}
@@ -999,7 +1002,10 @@ impl<T: Config> Pallet<T> {
 		user: &AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
 	) -> Balance {
-		T::ActivationReservesProvider::get_max_instant_unreserve_amount(liquidity_asset_id, user)
+		<T as pallet::Config>::ActivationReservesProvider::get_max_instant_unreserve_amount(
+			liquidity_asset_id,
+			user,
+		)
 	}
 
 	// Sets the liquidity token's info
@@ -3102,7 +3108,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 		// First let's check how much we can actually burn
 		let max_instant_unreserve_amount =
-			T::ActivationReservesProvider::get_max_instant_unreserve_amount(
+			<T as pallet::Config>::ActivationReservesProvider::get_max_instant_unreserve_amount(
 				liquidity_asset_id,
 				&sender,
 			);

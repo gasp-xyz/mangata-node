@@ -41,7 +41,7 @@
 // --repeat
 // 2
 // --output
-// ./benchmarks/pallet_xyk_weights.rs
+// ./benchmarks/crate::weights::pallet_xyk_weights.rs
 // --template
 // ./templates/module-weight-template.hbs
 
@@ -52,6 +52,7 @@
 
 use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
+use pallet_xyk::WeightInfo as XykWeightInfo;
 
 /// Weight functions needed for pallet_xyk.
 pub trait WeightInfo {
@@ -63,29 +64,24 @@ pub trait WeightInfo {
 	fn proof_of_stake_compound_rewards() -> Weight;
 }
 
-// For backwards compatibility and tests
-impl WeightInfo for () {
+/// Weights for pallet_xyk using the Mangata node and recommended hardware.
+pub struct ModuleWeight<T>(PhantomData<T>);
+impl<T: frame_system::Config> pallet_proof_of_stake::WeightInfo for ModuleWeight<T> {
 	// Storage: ProofOfStake RewardsInfo (r:1 w:1)
 	// Storage: Issuance PromotedPoolsRewardsV2 (r:1 w:0)
 	// Storage: Tokens Accounts (r:2 w:2)
 	fn claim_rewards_v2() -> Weight {
-		(Weight::from_ref_time(140_902_000))
-			.saturating_add(RocksDbWeight::get().reads(4 as u64))
-			.saturating_add(RocksDbWeight::get().writes(3 as u64))
+		crate::weights::pallet_xyk_weights::ModuleWeight::<T>::claim_rewards_v2()
 	}
 	// Storage: ProofOfStake RewardsInfo (r:1 w:1)
 	// Storage: Issuance PromotedPoolsRewardsV2 (r:1 w:0)
 	// Storage: Tokens Accounts (r:2 w:2)
 	fn claim_rewards_all_v2() -> Weight {
-		(Weight::from_ref_time(93_614_000))
-			.saturating_add(RocksDbWeight::get().reads(4 as u64))
-			.saturating_add(RocksDbWeight::get().writes(3 as u64))
+		crate::weights::pallet_xyk_weights::ModuleWeight::<T>::claim_rewards_all_v2()
 	}
 	// Storage: Issuance PromotedPoolsRewardsV2 (r:1 w:1)
 	fn update_pool_promotion() -> Weight {
-		(Weight::from_ref_time(27_200_000))
-			.saturating_add(RocksDbWeight::get().reads(1 as u64))
-			.saturating_add(RocksDbWeight::get().writes(1 as u64))
+		crate::weights::pallet_xyk_weights::ModuleWeight::<T>::update_pool_promotion()
 	}
 	// Storage: Issuance PromotedPoolsRewardsV2 (r:1 w:0)
 	// Storage: MultiPurposeLiquidity ReserveStatus (r:1 w:1)
@@ -93,9 +89,7 @@ impl WeightInfo for () {
 	// Storage: ProofOfStake RewardsInfo (r:1 w:1)
 	// Storage: ProofOfStake LiquidityMiningActivePoolV2 (r:1 w:1)
 	fn activate_liquidity_v2() -> Weight {
-		(Weight::from_ref_time(94_737_000))
-			.saturating_add(RocksDbWeight::get().reads(5 as u64))
-			.saturating_add(RocksDbWeight::get().writes(4 as u64))
+		crate::weights::pallet_xyk_weights::ModuleWeight::<T>::activate_liquidity_v2()
 	}
 	// Storage: Issuance PromotedPoolsRewardsV2 (r:1 w:0)
 	// Storage: ProofOfStake RewardsInfo (r:1 w:1)
@@ -103,9 +97,7 @@ impl WeightInfo for () {
 	// Storage: MultiPurposeLiquidity ReserveStatus (r:1 w:1)
 	// Storage: Tokens Accounts (r:1 w:1)
 	fn deactivate_liquidity_v2() -> Weight {
-		(Weight::from_ref_time(94_215_000))
-			.saturating_add(RocksDbWeight::get().reads(5 as u64))
-			.saturating_add(RocksDbWeight::get().writes(4 as u64))
+		crate::weights::pallet_xyk_weights::ModuleWeight::<T>::deactivate_liquidity_v2()
 	}
 	// Storage: Xyk LiquidityPools (r:1 w:0)
 	// Storage: AssetRegistry Metadata (r:2 w:0)
@@ -121,8 +113,6 @@ impl WeightInfo for () {
 	// Storage: ProofOfStake LiquidityMiningActivePoolV2 (r:1 w:1)
 	// Storage: MultiPurposeLiquidity ReserveStatus (r:1 w:1)
 	fn proof_of_stake_compound_rewards() -> Weight {
-		(Weight::from_ref_time(496_664_000))
-			.saturating_add(RocksDbWeight::get().reads(25 as u64))
-			.saturating_add(RocksDbWeight::get().writes(16 as u64))
+		crate::weights::pallet_xyk_weights::ModuleWeight::<T>::proof_of_stake_compound_rewards()
 	}
 }

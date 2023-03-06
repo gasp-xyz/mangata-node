@@ -518,7 +518,7 @@ impl pallet_proof_of_stake::Config for Runtime {
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = SessionLenghtOf<Runtime>;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_proof_of_stake_weights::ModuleWeight<Runtime>;
 }
 
 pub struct EnableAssetPoolApi;

@@ -30,8 +30,9 @@ use xcm_executor::{traits::DropAssets, Assets, XcmExecutor};
 
 use super::{
 	constants::fee::*, AccountId, AssetMetadataOf, Balance, Convert, ExistentialDeposits,
-	ParachainInfo, ParachainSystem, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin,
-	TokenId, Tokens, TreasuryAccount, UnknownTokens, XcmpQueue, KSM_TOKEN_ID, MGX_TOKEN_ID,
+	Maintenance, ParachainInfo, ParachainSystem, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent,
+	RuntimeOrigin, TokenId, Tokens, TreasuryAccount, UnknownTokens, XcmpQueue, KSM_TOKEN_ID,
+	MGX_TOKEN_ID,
 };
 
 // Make the WASM binary available.
@@ -235,6 +236,7 @@ pub type XcmOriginToTransactDispatchOrigin = (
 
 impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type MaintenanceStatusProvider = Maintenance;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type ChannelInfo = ParachainSystem;
 	type VersionWrapper = ();
@@ -246,6 +248,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type MaintenanceStatusProvider = Maintenance;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
 }

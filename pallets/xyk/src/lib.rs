@@ -303,7 +303,7 @@ use frame_support::{
 	transactional, Parameter,
 };
 use frame_system::pallet_prelude::*;
-use mangata_types::{Balance, TokenId};
+use mangata_types::{traits::GetMaintenanceStatusTrait, Balance, TokenId};
 use mp_bootstrap::PoolCreateApi;
 use mp_multipurpose_liquidity::ActivateKind;
 use mp_traits::{ActivationReservesProviderTrait, PreValidateSwaps, XykFunctionsTrait};
@@ -396,6 +396,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config + XykBenchmarkingConfig {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+		type MaintenanceStatusProvider: GetMaintenanceStatusTrait;
 		type ActivationReservesProvider: ActivationReservesProviderTrait<
 			AccountId = Self::AccountId,
 		>;
@@ -488,6 +489,8 @@ pub mod pallet {
 		MultiSwapFailedOnBadSlippage,
 		MultiSwapNotEnoughAssets,
 		MultiSwapCantHaveSameTokenConsequetively,
+		/// Trading blocked by maintenance mode
+		TradingBlockedByMaintenanceMode,
 	}
 
 	#[pallet::event]
@@ -1054,18 +1057,19 @@ pub mod pallet {
 			Ok(())
 		}
 
+		// Disabled pool demotion
 		#[pallet::call_index(13)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::update_pool_promotion())]
 		pub fn update_pool_promotion(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
-			liquidity_mining_issuance_weight: Option<u8>,
+			liquidity_mining_issuance_weight: u8,
 		) -> DispatchResult {
 			ensure_root(origin)?;
 
 			<Self as XykFunctionsTrait<T::AccountId>>::update_pool_promotion(
 				liquidity_token_id,
-				liquidity_mining_issuance_weight,
+				Some(liquidity_mining_issuance_weight),
 			)
 		}
 
@@ -1998,6 +2002,11 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 		(Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance),
 		DispatchError,
 	> {
+		ensure!(
+			!T::MaintenanceStatusProvider::is_maintenance(),
+			Error::<T>::TradingBlockedByMaintenanceMode
+		);
+
 		// Ensure not selling zero amount
 		ensure!(!sold_asset_amount.is_zero(), Error::<T>::ZeroAmount,);
 
@@ -2199,6 +2208,11 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 		(Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance, Self::Balance),
 		DispatchError,
 	> {
+		ensure!(
+			!T::MaintenanceStatusProvider::is_maintenance(),
+			Error::<T>::TradingBlockedByMaintenanceMode
+		);
+
 		ensure!(
 			!T::DisabledTokens::contains(&sold_asset_id) &&
 				!T::DisabledTokens::contains(&bought_asset_id),
@@ -3081,7 +3095,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			let mut atomic_sold_asset_amount = Balance::zero();
 			let mut atomic_bought_asset_amount = bought_asset_amount;
 
-			let mut atomic_swap_buy_amounts_rev: Vec<Balance> = vec![];
+			let mut atomic_swap_buy_amounts_rev: Vec<Balance> = Default::default();
 			// Calc
 			// We can do this using calculate_buy_price_id chain due to the check in pre_validation
 			// that ensures that no pool is touched twice. So the reserves in question are consistent

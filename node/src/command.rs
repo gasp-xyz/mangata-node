@@ -27,18 +27,13 @@ use std::{convert::TryInto, io::Write, net::SocketAddr, time::Duration};
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
 		#[cfg(feature = "mangata-kusama")]
-		"dev" => Box::new(chain_spec::mangata_kusama::development_config()),
+		"kusama" => Box::new(chain_spec::mangata_kusama::mangata_kusama_prod_config()),
 		#[cfg(feature = "mangata-kusama")]
-		"" | "local" => Box::new(chain_spec::mangata_kusama::local_config()),
-		#[cfg(feature = "mangata-kusama")]
-		"kusama-mainnet" => Box::new(chain_spec::mangata_kusama::kusama_mainnet_config()),
-
+		"kusama-local" => Box::new(chain_spec::mangata_kusama::mangata_kusama_local_config()),
 		#[cfg(feature = "mangata-rococo")]
-		"public-testnet" => Box::new(chain_spec::mangata_rococo::public_testnet_config()),
-
+		"rococo" => Box::new(chain_spec::mangata_rococo::mangata_rococo_prod_config()),
 		#[cfg(feature = "mangata-rococo")]
-		"mangata-rococo-local-testnet" =>
-			Box::new(chain_spec::mangata_rococo::mangata_rococo_local_config()),
+		"rococo-local" => Box::new(chain_spec::mangata_rococo::mangata_rococo_local_config()),
 
 		path => {
 			let path = std::path::PathBuf::from(path);

@@ -20,6 +20,7 @@ members = [
 pallet-xyk = { path = "./pallets/xyk" }
 pallet-issuance = {path = "./pallets/issuance/"}
 pallet-multipurpose-liquidity = { path = './pallets/multipurpose-liquidity'}
+pallet-maintenance = { path = './pallets/maintenance'}
 mp-multipurpose-liquidity = { path = './primitives/multipurpose-liquidity'}
 mp-traits = { path = './primitives/traits'}
 
@@ -239,6 +240,9 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
  pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  pallet-transaction-payment-rpc = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  pallet-transaction-payment = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
+ pallet-transaction-payment-mangata-rpc-runtime-api = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
+ pallet-transaction-payment-mangata-rpc = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
+ pallet-transaction-payment-mangata = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  frame-try-runtime = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  frame-system-rpc-runtime-api = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  frame-system = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
@@ -423,6 +427,9 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
  pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  pallet-transaction-payment-rpc = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  pallet-transaction-payment = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
+ pallet-transaction-payment-mangata-rpc-runtime-api = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
+ pallet-transaction-payment-mangata-rpc = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
+ pallet-transaction-payment-mangata = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  frame-try-runtime = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  frame-system-rpc-runtime-api = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  frame-system = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
@@ -607,6 +614,9 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
  pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  pallet-transaction-payment-rpc = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  pallet-transaction-payment = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
+ pallet-transaction-payment-mangata-rpc-runtime-api = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
+ pallet-transaction-payment-mangata-rpc = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
+ pallet-transaction-payment-mangata = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  frame-try-runtime = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  frame-system-rpc-runtime-api = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
  frame-system = { git = "https://github.com/mangata-finance//substrate", branch = "mangata-dev" }
@@ -766,6 +776,8 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
 # [patch."https://github.com/mangata-finance/substrate"]
 # sc-offchain = { path = "../substrate/client/offchain" }
 # sc-keystore = { path = "../substrate/client/keystore" }
+# mmr-rpc = { path = "../substrate/client/merkle-mountain-range/rpc" }
+# mmr-gadget = { path = "../substrate/client/merkle-mountain-range" }
 # sc-informant = { path = "../substrate/client/informant" }
 # sc-client-db = { path = "../substrate/client/db" }
 # sc-rpc-api = { path = "../substrate/client/rpc-api" }
@@ -817,7 +829,7 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
 # sc-service = { path = "../substrate/client/service" }
 # substrate-wasm-builder = { path = "../substrate/utils/wasm-builder" }
 # fork-tree = { path = "../substrate/utils/fork-tree" }
-# remote-externalities = { path = "../substrate/utils/frame/remote-externalities" }
+# frame-remote-externalities = { path = "../substrate/utils/frame/remote-externalities" }
 # try-runtime-cli = { path = "../substrate/utils/frame/try-runtime/cli" }
 # frame-benchmarking-cli = { path = "../substrate/utils/frame/benchmarking-cli" }
 # substrate-state-trie-migration-rpc = { path = "../substrate/utils/frame/rpc/state-trie-migration-rpc" }
@@ -827,11 +839,8 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
 # substrate-build-script-utils = { path = "../substrate/utils/build-script-utils" }
 # pallet-referenda = { path = "../substrate/frame/referenda" }
 # pallet-fast-unstake = { path = "../substrate/frame/fast-unstake" }
-# pallet-gilt = { path = "../substrate/frame/gilt" }
-# pallet-mmr-rpc = { path = "../substrate/frame/merkle-mountain-range/rpc" }
 # pallet-mmr = { path = "../substrate/frame/merkle-mountain-range" }
 # pallet-utility = { path = "../substrate/frame/utility" }
-# pallet-utility-mangata = { path = "../substrate/frame/utility-mangata" }
 # pallet-session = { path = "../substrate/frame/session" }
 # pallet-ranked-collective = { path = "../substrate/frame/ranked-collective" }
 # pallet-collective-mangata = { path = "../substrate/frame/collective-mangata" }
@@ -866,15 +875,20 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
 # pallet-multisig = { path = "../substrate/frame/multisig" }
 # pallet-offences = { path = "../substrate/frame/offences" }
 # pallet-scheduler = { path = "../substrate/frame/scheduler" }
+# pallet-nis = { path = "../substrate/frame/nis" }
 # frame-system-rpc-runtime-api = { path = "../substrate/frame/system/rpc/runtime-api" }
 # frame-system = { path = "../substrate/frame/system" }
 # frame-benchmarking = { path = "../substrate/frame/benchmarking" }
 # pallet-transaction-payment-rpc-runtime-api = { path = "../substrate/frame/transaction-payment/rpc/runtime-api" }
 # pallet-transaction-payment-rpc = { path = "../substrate/frame/transaction-payment/rpc" }
 # pallet-transaction-payment = { path = "../substrate/frame/transaction-payment" }
+# pallet-transaction-payment-mangata-rpc-runtime-api = { path = "../substrate/frame/transaction-payment-mangata/rpc/runtime-api" }
+# pallet-transaction-payment-mangata-rpc = { path = "../substrate/frame/transaction-payment-mangata/rpc" }
+# pallet-transaction-payment-mangata = { path = "../substrate/frame/transaction-payment-mangata" }
 # pallet-proxy = { path = "../substrate/frame/proxy" }
 # pallet-whitelist = { path = "../substrate/frame/whitelist" }
 # pallet-bags-list = { path = "../substrate/frame/bags-list" }
+# pallet-utility-mangata = { path = "../substrate/frame/utility-mangata" }
 # frame-support = { path = "../substrate/frame/support" }
 # frame-support-procedural-tools-derive = { path = "../substrate/frame/support/procedural/tools/derive" }
 # frame-support-procedural-tools = { path = "../substrate/frame/support/procedural/tools" }
@@ -913,7 +927,6 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
 # sp-tracing = { path = "../substrate/primitives/tracing" }
 # sp-wasm-interface = { path = "../substrate/primitives/wasm-interface" }
 # sp-authority-discovery = { path = "../substrate/primitives/authority-discovery" }
-# sp-tasks = { path = "../substrate/primitives/tasks" }
 # sp-runtime-interface-proc-macro = { path = "../substrate/primitives/runtime-interface/proc-macro" }
 # sp-runtime-interface = { path = "../substrate/primitives/runtime-interface" }
 # sp-consensus-babe = { path = "../substrate/primitives/consensus/babe" }
@@ -928,7 +941,6 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
 # sp-core = { path = "../substrate/primitives/core" }
 # sp-panic-handler = { path = "../substrate/primitives/panic-handler" }
 # sp-database = { path = "../substrate/primitives/database" }
-# sp-sandbox = { path = "../substrate/primitives/sandbox" }
 # sp-version-proc-macro = { path = "../substrate/primitives/version/proc-macro" }
 # sp-version = { path = "../substrate/primitives/version" }
 # extrinsic-shuffler = { path = "../substrate/primitives/shuffler" }
@@ -943,15 +955,17 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
 # sp-weights = { path = "../substrate/primitives/weights" }
 # sp-arithmetic = { path = "../substrate/primitives/arithmetic" }
 # sp-npos-elections = { path = "../substrate/primitives/npos-elections" }
-# beefy-primitives = { path = "../substrate/primitives/beefy" }
+# sp-beefy = { path = "../substrate/primitives/beefy" }
 # sp-authorship = { path = "../substrate/primitives/authorship" }
 # sp-storage = { path = "../substrate/primitives/storage" }
 # sp-inherents = { path = "../substrate/primitives/inherents" }
-#
+
 # # patch generated by ./scripts/dev_manifest.sh
 # [patch."https://github.com/paritytech/substrate"]
 # sc-offchain = { path = "../substrate/client/offchain" }
 # sc-keystore = { path = "../substrate/client/keystore" }
+# mmr-rpc = { path = "../substrate/client/merkle-mountain-range/rpc" }
+# mmr-gadget = { path = "../substrate/client/merkle-mountain-range" }
 # sc-informant = { path = "../substrate/client/informant" }
 # sc-client-db = { path = "../substrate/client/db" }
 # sc-rpc-api = { path = "../substrate/client/rpc-api" }
@@ -1003,7 +1017,7 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
 # sc-service = { path = "../substrate/client/service" }
 # substrate-wasm-builder = { path = "../substrate/utils/wasm-builder" }
 # fork-tree = { path = "../substrate/utils/fork-tree" }
-# remote-externalities = { path = "../substrate/utils/frame/remote-externalities" }
+# frame-remote-externalities = { path = "../substrate/utils/frame/remote-externalities" }
 # try-runtime-cli = { path = "../substrate/utils/frame/try-runtime/cli" }
 # frame-benchmarking-cli = { path = "../substrate/utils/frame/benchmarking-cli" }
 # substrate-state-trie-migration-rpc = { path = "../substrate/utils/frame/rpc/state-trie-migration-rpc" }
@@ -1013,11 +1027,8 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
 # substrate-build-script-utils = { path = "../substrate/utils/build-script-utils" }
 # pallet-referenda = { path = "../substrate/frame/referenda" }
 # pallet-fast-unstake = { path = "../substrate/frame/fast-unstake" }
-# pallet-gilt = { path = "../substrate/frame/gilt" }
-# pallet-mmr-rpc = { path = "../substrate/frame/merkle-mountain-range/rpc" }
 # pallet-mmr = { path = "../substrate/frame/merkle-mountain-range" }
 # pallet-utility = { path = "../substrate/frame/utility" }
-# pallet-utility-mangata = { path = "../substrate/frame/utility-mangata" }
 # pallet-session = { path = "../substrate/frame/session" }
 # pallet-ranked-collective = { path = "../substrate/frame/ranked-collective" }
 # pallet-collective-mangata = { path = "../substrate/frame/collective-mangata" }
@@ -1052,15 +1063,20 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
 # pallet-multisig = { path = "../substrate/frame/multisig" }
 # pallet-offences = { path = "../substrate/frame/offences" }
 # pallet-scheduler = { path = "../substrate/frame/scheduler" }
+# pallet-nis = { path = "../substrate/frame/nis" }
 # frame-system-rpc-runtime-api = { path = "../substrate/frame/system/rpc/runtime-api" }
 # frame-system = { path = "../substrate/frame/system" }
 # frame-benchmarking = { path = "../substrate/frame/benchmarking" }
 # pallet-transaction-payment-rpc-runtime-api = { path = "../substrate/frame/transaction-payment/rpc/runtime-api" }
 # pallet-transaction-payment-rpc = { path = "../substrate/frame/transaction-payment/rpc" }
 # pallet-transaction-payment = { path = "../substrate/frame/transaction-payment" }
+# pallet-transaction-payment-mangata-rpc-runtime-api = { path = "../substrate/frame/transaction-payment-mangata/rpc/runtime-api" }
+# pallet-transaction-payment-mangata-rpc = { path = "../substrate/frame/transaction-payment-mangata/rpc" }
+# pallet-transaction-payment-mangata = { path = "../substrate/frame/transaction-payment-mangata" }
 # pallet-proxy = { path = "../substrate/frame/proxy" }
 # pallet-whitelist = { path = "../substrate/frame/whitelist" }
 # pallet-bags-list = { path = "../substrate/frame/bags-list" }
+# pallet-utility-mangata = { path = "../substrate/frame/utility-mangata" }
 # frame-support = { path = "../substrate/frame/support" }
 # frame-support-procedural-tools-derive = { path = "../substrate/frame/support/procedural/tools/derive" }
 # frame-support-procedural-tools = { path = "../substrate/frame/support/procedural/tools" }
@@ -1099,7 +1115,6 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
 # sp-tracing = { path = "../substrate/primitives/tracing" }
 # sp-wasm-interface = { path = "../substrate/primitives/wasm-interface" }
 # sp-authority-discovery = { path = "../substrate/primitives/authority-discovery" }
-# sp-tasks = { path = "../substrate/primitives/tasks" }
 # sp-runtime-interface-proc-macro = { path = "../substrate/primitives/runtime-interface/proc-macro" }
 # sp-runtime-interface = { path = "../substrate/primitives/runtime-interface" }
 # sp-consensus-babe = { path = "../substrate/primitives/consensus/babe" }
@@ -1114,7 +1129,6 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
 # sp-core = { path = "../substrate/primitives/core" }
 # sp-panic-handler = { path = "../substrate/primitives/panic-handler" }
 # sp-database = { path = "../substrate/primitives/database" }
-# sp-sandbox = { path = "../substrate/primitives/sandbox" }
 # sp-version-proc-macro = { path = "../substrate/primitives/version/proc-macro" }
 # sp-version = { path = "../substrate/primitives/version" }
 # extrinsic-shuffler = { path = "../substrate/primitives/shuffler" }
@@ -1129,15 +1143,17 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
 # sp-weights = { path = "../substrate/primitives/weights" }
 # sp-arithmetic = { path = "../substrate/primitives/arithmetic" }
 # sp-npos-elections = { path = "../substrate/primitives/npos-elections" }
-# beefy-primitives = { path = "../substrate/primitives/beefy" }
+# sp-beefy = { path = "../substrate/primitives/beefy" }
 # sp-authorship = { path = "../substrate/primitives/authorship" }
 # sp-storage = { path = "../substrate/primitives/storage" }
 # sp-inherents = { path = "../substrate/primitives/inherents" }
-#
+
 # # patch generated by ./scripts/dev_manifest.sh
 # [patch."https://github.com/PureStake/substrate"]
 # sc-offchain = { path = "../substrate/client/offchain" }
 # sc-keystore = { path = "../substrate/client/keystore" }
+# mmr-rpc = { path = "../substrate/client/merkle-mountain-range/rpc" }
+# mmr-gadget = { path = "../substrate/client/merkle-mountain-range" }
 # sc-informant = { path = "../substrate/client/informant" }
 # sc-client-db = { path = "../substrate/client/db" }
 # sc-rpc-api = { path = "../substrate/client/rpc-api" }
@@ -1189,7 +1205,7 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
 # sc-service = { path = "../substrate/client/service" }
 # substrate-wasm-builder = { path = "../substrate/utils/wasm-builder" }
 # fork-tree = { path = "../substrate/utils/fork-tree" }
-# remote-externalities = { path = "../substrate/utils/frame/remote-externalities" }
+# frame-remote-externalities = { path = "../substrate/utils/frame/remote-externalities" }
 # try-runtime-cli = { path = "../substrate/utils/frame/try-runtime/cli" }
 # frame-benchmarking-cli = { path = "../substrate/utils/frame/benchmarking-cli" }
 # substrate-state-trie-migration-rpc = { path = "../substrate/utils/frame/rpc/state-trie-migration-rpc" }
@@ -1199,11 +1215,8 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
 # substrate-build-script-utils = { path = "../substrate/utils/build-script-utils" }
 # pallet-referenda = { path = "../substrate/frame/referenda" }
 # pallet-fast-unstake = { path = "../substrate/frame/fast-unstake" }
-# pallet-gilt = { path = "../substrate/frame/gilt" }
-# pallet-mmr-rpc = { path = "../substrate/frame/merkle-mountain-range/rpc" }
 # pallet-mmr = { path = "../substrate/frame/merkle-mountain-range" }
 # pallet-utility = { path = "../substrate/frame/utility" }
-# pallet-utility-mangata = { path = "../substrate/frame/utility-mangata" }
 # pallet-session = { path = "../substrate/frame/session" }
 # pallet-ranked-collective = { path = "../substrate/frame/ranked-collective" }
 # pallet-collective-mangata = { path = "../substrate/frame/collective-mangata" }
@@ -1238,15 +1251,20 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
 # pallet-multisig = { path = "../substrate/frame/multisig" }
 # pallet-offences = { path = "../substrate/frame/offences" }
 # pallet-scheduler = { path = "../substrate/frame/scheduler" }
+# pallet-nis = { path = "../substrate/frame/nis" }
 # frame-system-rpc-runtime-api = { path = "../substrate/frame/system/rpc/runtime-api" }
 # frame-system = { path = "../substrate/frame/system" }
 # frame-benchmarking = { path = "../substrate/frame/benchmarking" }
 # pallet-transaction-payment-rpc-runtime-api = { path = "../substrate/frame/transaction-payment/rpc/runtime-api" }
 # pallet-transaction-payment-rpc = { path = "../substrate/frame/transaction-payment/rpc" }
 # pallet-transaction-payment = { path = "../substrate/frame/transaction-payment" }
+# pallet-transaction-payment-mangata-rpc-runtime-api = { path = "../substrate/frame/transaction-payment-mangata/rpc/runtime-api" }
+# pallet-transaction-payment-mangata-rpc = { path = "../substrate/frame/transaction-payment-mangata/rpc" }
+# pallet-transaction-payment-mangata = { path = "../substrate/frame/transaction-payment-mangata" }
 # pallet-proxy = { path = "../substrate/frame/proxy" }
 # pallet-whitelist = { path = "../substrate/frame/whitelist" }
 # pallet-bags-list = { path = "../substrate/frame/bags-list" }
+# pallet-utility-mangata = { path = "../substrate/frame/utility-mangata" }
 # frame-support = { path = "../substrate/frame/support" }
 # frame-support-procedural-tools-derive = { path = "../substrate/frame/support/procedural/tools/derive" }
 # frame-support-procedural-tools = { path = "../substrate/frame/support/procedural/tools" }
@@ -1285,7 +1303,6 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
 # sp-tracing = { path = "../substrate/primitives/tracing" }
 # sp-wasm-interface = { path = "../substrate/primitives/wasm-interface" }
 # sp-authority-discovery = { path = "../substrate/primitives/authority-discovery" }
-# sp-tasks = { path = "../substrate/primitives/tasks" }
 # sp-runtime-interface-proc-macro = { path = "../substrate/primitives/runtime-interface/proc-macro" }
 # sp-runtime-interface = { path = "../substrate/primitives/runtime-interface" }
 # sp-consensus-babe = { path = "../substrate/primitives/consensus/babe" }
@@ -1300,7 +1317,6 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
 # sp-core = { path = "../substrate/primitives/core" }
 # sp-panic-handler = { path = "../substrate/primitives/panic-handler" }
 # sp-database = { path = "../substrate/primitives/database" }
-# sp-sandbox = { path = "../substrate/primitives/sandbox" }
 # sp-version-proc-macro = { path = "../substrate/primitives/version/proc-macro" }
 # sp-version = { path = "../substrate/primitives/version" }
 # extrinsic-shuffler = { path = "../substrate/primitives/shuffler" }
@@ -1315,7 +1331,8 @@ polkadot-erasure-coding = { git = "https://github.com/mangata-finance//polkadot"
 # sp-weights = { path = "../substrate/primitives/weights" }
 # sp-arithmetic = { path = "../substrate/primitives/arithmetic" }
 # sp-npos-elections = { path = "../substrate/primitives/npos-elections" }
-# beefy-primitives = { path = "../substrate/primitives/beefy" }
+# sp-beefy = { path = "../substrate/primitives/beefy" }
 # sp-authorship = { path = "../substrate/primitives/authorship" }
 # sp-storage = { path = "../substrate/primitives/storage" }
 # sp-inherents = { path = "../substrate/primitives/inherents" }
+

@@ -14,6 +14,7 @@ use crate as pallet_fee_lock;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{ConstU32, Contains, Everything},
+	weights::{constants::RocksDbWeight, Weight},
 	PalletId,
 };
 use frame_system as system;
@@ -55,7 +56,7 @@ impl system::Config for Test {
 	type Header = Header;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
-	type DbWeight = ();
+	type DbWeight = RocksDbWeight;
 	type Version = ();
 	type AccountData = ();
 	type OnNewAccount = ();
@@ -117,35 +118,35 @@ impl<T: pallet_fee_lock::Config> Valuate for MockPoolReservesProvider<T> {
 	type CurrencyId = TokenId;
 
 	fn get_liquidity_asset(
-		first_asset_id: Self::CurrencyId,
-		second_asset_id: Self::CurrencyId,
+		_first_asset_id: Self::CurrencyId,
+		_second_asset_id: Self::CurrencyId,
 	) -> Result<TokenId, DispatchError> {
 		unimplemented!()
 	}
 
 	fn get_liquidity_token_mga_pool(
-		liquidity_token_id: Self::CurrencyId,
+		_liquidity_token_id: Self::CurrencyId,
 	) -> Result<(Self::CurrencyId, Self::CurrencyId), DispatchError> {
 		unimplemented!()
 	}
 
 	fn valuate_liquidity_token(
-		liquidity_token_id: Self::CurrencyId,
-		liquidity_token_amount: Self::Balance,
+		_liquidity_token_id: Self::CurrencyId,
+		_liquidity_token_amount: Self::Balance,
 	) -> Self::Balance {
 		unimplemented!()
 	}
 
 	fn scale_liquidity_by_mga_valuation(
-		mga_valuation: Self::Balance,
-		liquidity_token_amount: Self::Balance,
-		mga_token_amount: Self::Balance,
+		_mga_valuation: Self::Balance,
+		_liquidity_token_amount: Self::Balance,
+		_mga_token_amount: Self::Balance,
 	) -> Self::Balance {
 		unimplemented!()
 	}
 
 	fn get_pool_state(
-		liquidity_token_id: Self::CurrencyId,
+		_liquidity_token_id: Self::CurrencyId,
 	) -> Option<(Self::Balance, Self::Balance)> {
 		unimplemented!()
 	}
@@ -182,4 +183,59 @@ impl pallet_fee_lock::Config for Test {
 // our desired mockup.
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+}
+
+pub struct ExtBuilder {
+	ext: sp_io::TestExternalities,
+}
+
+impl ExtBuilder {
+	pub fn new() -> Self {
+		let t = frame_system::GenesisConfig::default()
+			.build_storage::<Test>()
+			.expect("Frame system builds valid default genesis config");
+
+		let mut ext = sp_io::TestExternalities::new(t);
+		Self { ext }
+	}
+
+	pub fn create_token(mut self, token_id: TokenId) -> Self {
+		self.ext.execute_with(|| {
+			while token_id >= Tokens::next_asset_id() {
+				Tokens::create(RuntimeOrigin::root(), 0, 0).unwrap();
+			}
+		});
+		return self
+	}
+
+	pub fn mint(mut self, who: AccountId, token_id: TokenId, balance: Balance) -> Self {
+		self.ext
+			.execute_with(|| Tokens::mint(RuntimeOrigin::root(), token_id, who, balance).unwrap());
+		return self
+	}
+
+	pub fn initialize_fee_locks(mut self, period: u64, lock_amount: u128, threshold: u128) -> Self {
+		self.ext.execute_with(|| {
+			FeeLock::update_fee_lock_metadata(
+				RuntimeOrigin::root(),
+				Some(period),
+				Some(lock_amount),
+				Some(threshold),
+				None,
+			)
+			.unwrap()
+		});
+		return self
+	}
+
+	pub fn build(self) -> sp_io::TestExternalities {
+		self.ext
+	}
+}
+
+pub fn fast_forward_blocks(count: u64) {
+	let now = System::block_number();
+	for i in 0..count {
+		System::set_block_number(now + i + 1);
+	}
 }

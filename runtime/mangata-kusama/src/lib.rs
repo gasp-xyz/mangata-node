@@ -6,7 +6,7 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
 	construct_runtime,
 	dispatch::{DispatchClass, DispatchResult},
-	parameter_types,
+	ensure, parameter_types,
 	traits::{
 		tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
 		Contains, EnsureOrigin, EnsureOriginWithArg, Everything, ExistenceRequirement, Get,
@@ -32,7 +32,7 @@ use orml_traits::{
 	parameter_type_with_key,
 };
 pub use pallet_sudo_mangata;
-use pallet_transaction_payment::{ConstFeeMultiplier, Multiplier, OnChargeTransaction};
+use pallet_transaction_payment_mangata::{ConstFeeMultiplier, Multiplier, OnChargeTransaction};
 use pallet_vesting_mangata_rpc_runtime_api::VestingInfosWithLockedAt;
 // Polkadot Imports
 pub use polkadot_runtime_common::BlockHashCount;
@@ -108,7 +108,7 @@ pub type SignedExtra = (
 	frame_system::CheckEra<Runtime>,
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
-	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
+	pallet_transaction_payment_mangata::ChargeTransactionPayment<Runtime>,
 );
 /// The payload being signed in transactions.
 pub type SignedPayload = generic::SignedPayload<RuntimeCall, SignedExtra>;
@@ -174,10 +174,10 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
 	authoring_version: 15,
-	spec_version: 15,
+	spec_version: 2800,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 15,
+	transaction_version: 2800,
 	state_version: 0,
 };
 
@@ -497,6 +497,7 @@ type SessionLenghtOf<T> = <T as parachain_staking::Config>::BlocksPerRound;
 
 impl pallet_xyk::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type MaintenanceStatusProvider = Maintenance;
 	type ActivationReservesProvider = MultiPurposeLiquidity;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type NativeCurrencyId = MgxTokenId;
@@ -557,6 +558,7 @@ impl pallet_bootstrap::BootstrapBenchmarkingConfig for Runtime {}
 
 impl pallet_bootstrap::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type MaintenanceStatusProvider = Maintenance;
 	type PoolCreateApi = Xyk;
 	type DefaultBootstrapPromotedPoolWeight = DefaultBootstrapPromotedPoolWeight;
 	type BootstrapUpdateBuffer = BootstrapUpdateBuffer;
@@ -652,17 +654,17 @@ pub enum LiquidityInfoEnum<C: MultiTokenCurrency<T::AccountId>, T: frame_system:
 }
 
 #[derive(Encode, Decode, Clone, TypeInfo)]
-pub struct OnChargeHandler<C, OCA, OFLA>(PhantomData<(C, OCA, OFLA)>);
+pub struct OnChargeHandler<C, OU, OCA, OFLA>(PhantomData<(C, OU, OCA, OFLA)>);
 
-impl<C, OCA, OFLA> OnChargeHandler<C, OCA, OFLA> {}
+impl<C, OU, OCA, OFLA> OnChargeHandler<C, OU, OCA, OFLA> {}
 
 /// Default implementation for a Currency and an OnUnbalanced handler.
 ///
 /// The unbalance handler is given 2 unbalanceds in [`OnUnbalanced::on_unbalanceds`]: fee and
 /// then tip.
-impl<T, C, OCA, OFLA> OnChargeTransaction<T> for OnChargeHandler<C, OCA, OFLA>
+impl<T, C, OU, OCA, OFLA> OnChargeTransaction<T> for OnChargeHandler<C, OU, OCA, OFLA>
 where
-	T: pallet_transaction_payment::Config + pallet_xyk::Config,
+	T: pallet_transaction_payment_mangata::Config + pallet_xyk::Config,
 	T::LengthToFee: frame_support::weights::WeightToFee<
 		Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
 	>,
@@ -675,6 +677,8 @@ where
 		<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
 		Opposite = C::PositiveImbalance,
 	>,
+	OU: OnMultiTokenUnbalanced<NegativeImbalanceOf<C, T>>,
+	NegativeImbalanceOf<C, T>: MultiTokenImbalanceWithZeroTrait<TokenId>,
 	OCA: OnChargeTransaction<
 		T,
 		LiquidityInfo = Option<LiquidityInfoEnum<C, T>>,
@@ -683,6 +687,8 @@ where
 	OFLA: FeeLockTriggerTrait<<T as frame_system::Config>::AccountId>,
 	T: frame_system::Config<RuntimeCall = RuntimeCall>,
 	T::AccountId: From<sp_runtime::AccountId32> + Into<sp_runtime::AccountId32>,
+	Balance: From<<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance>,
+	sp_runtime::AccountId32: From<<T as frame_system::Config>::AccountId>,
 {
 	type LiquidityInfo = Option<LiquidityInfoEnum<C, T>>;
 	type Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -707,6 +713,13 @@ where
 				min_amount_out,
 				..
 			}) => {
+				ensure!(
+					tip.is_zero(),
+					TransactionValidityError::Invalid(
+						InvalidTransaction::TippingNotAllowedForSwaps.into(),
+					)
+				);
+
 				// If else tree for easy edits
 
 				// Check if fee locks are initiazed or not
@@ -796,6 +809,13 @@ where
 				min_amount_out: min_amount_out,
 				..
 			}) => {
+				ensure!(
+					tip.is_zero(),
+					TransactionValidityError::Invalid(
+						InvalidTransaction::TippingNotAllowedForSwaps.into(),
+					)
+				);
+
 				// If else tree for easy edits
 
 				// Check if fee locks are initiazed or not
@@ -833,6 +853,13 @@ where
 				max_amount_in,
 				..
 			}) => {
+				ensure!(
+					tip.is_zero(),
+					TransactionValidityError::Invalid(
+						InvalidTransaction::TippingNotAllowedForSwaps.into(),
+					)
+				);
+
 				// If else tree for easy edits
 
 				// Check if fee locks are initiazed or not
@@ -928,6 +955,13 @@ where
 				max_amount_in: max_amount_in,
 				..
 			}) => {
+				ensure!(
+					tip.is_zero(),
+					TransactionValidityError::Invalid(
+						InvalidTransaction::TippingNotAllowedForSwaps.into(),
+					)
+				);
+
 				// If else tree for easy edits
 
 				// Check if fee locks are initiazed or not
@@ -959,6 +993,26 @@ where
 			},
 
 			RuntimeCall::FeeLock(pallet_fee_lock::Call::unlock_fee { .. }) => {
+				let imb = C::withdraw(
+					MgxTokenId::get().into(),
+					who,
+					Balance::from(tip).into(),
+					WithdrawReasons::TIP,
+					ExistenceRequirement::KeepAlive,
+				)
+				.map_err(|_| {
+					TransactionValidityError::Invalid(InvalidTransaction::Payment.into())
+				})?;
+
+				OU::on_unbalanceds(MgxTokenId::get().into(), Some(imb).into_iter());
+				TransactionPayment::deposit_event(pallet_transaction_payment_mangata::Event::<
+					Runtime,
+				>::TransactionFeePaid {
+					who: sp_runtime::AccountId32::from(who.clone()),
+					actual_fee: Balance::zero().into(),
+					tip: Balance::from(tip),
+				});
+
 				OFLA::can_unlock_fee(who).map_err(|_| {
 					TransactionValidityError::Invalid(InvalidTransaction::UnlockFee.into())
 				})?;
@@ -1016,7 +1070,7 @@ type NegativeImbalanceOf<C, T> =
 impl<T, C, OU, T1, T2, T3, SF2, SF3> OnChargeTransaction<T>
 	for ThreeCurrencyOnChargeAdapter<C, OU, T1, T2, T3, SF2, SF3>
 where
-	T: pallet_transaction_payment::Config,
+	T: pallet_transaction_payment_mangata::Config,
 	T::LengthToFee: frame_support::weights::WeightToFee<
 		Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
 	>,
@@ -1038,6 +1092,8 @@ where
 	T3: Get<TokenId>,
 	SF2: Get<u128>,
 	SF3: Get<u128>,
+	Balance: From<<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance>,
+	sp_runtime::AccountId32: From<<T as frame_system::Config>::AccountId>,
 {
 	type LiquidityInfo = Option<LiquidityInfoEnum<C, T>>;
 	type Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -1127,8 +1183,15 @@ where
 				.same()
 				.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Payment))?;
 			// Call someone else to handle the imbalance (fee and tip separately)
-			let (tip, fee) = adjusted_paid.split(tip);
-			OU::on_unbalanceds(token_id, Some(fee).into_iter().chain(Some(tip)));
+			let (tip_imb, fee) = adjusted_paid.split(tip);
+			OU::on_unbalanceds(token_id, Some(fee).into_iter().chain(Some(tip_imb)));
+			TransactionPayment::deposit_event(
+				pallet_transaction_payment_mangata::Event::<Runtime>::TransactionFeePaid {
+					who: sp_runtime::AccountId32::from(who.clone()),
+					actual_fee: corrected_fee.into(),
+					tip: Balance::from(tip),
+				},
+			);
 		}
 		Ok(())
 	}
@@ -1138,10 +1201,11 @@ parameter_types! {
 	pub ConstFeeMultiplierValue: Multiplier = Multiplier::saturating_from_rational(1, 1);
 }
 
-impl pallet_transaction_payment::Config for Runtime {
+impl pallet_transaction_payment_mangata::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction = OnChargeHandler<
 		orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
+		ToAuthor,
 		ThreeCurrencyOnChargeAdapter<
 			orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
 			ToAuthor,
@@ -1179,6 +1243,7 @@ parameter_types! {
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type MaintenanceStatusProvider = Maintenance;
 	type OnSystemEvent = ();
 	type SelfParaId = ParachainInfo;
 	type DmpMessageHandler = DmpQueue;
@@ -1565,6 +1630,32 @@ impl pallet_proxy::Config for Runtime {
 	type AnnouncementDepositFactor = AnnouncementDepositFactor;
 }
 
+pub struct FoundationAccountsProvider<T: frame_system::Config>(PhantomData<T>);
+impl<T: frame_system::Config> Get<Vec<T::AccountId>> for FoundationAccountsProvider<T> {
+	fn get() -> Vec<T::AccountId> {
+		let accounts = vec![
+			hex_literal::hex!["c8d02dfbff5ce2fda651c7dd7719bc5b17b9c1043fded805bfc86296c5909871"],
+			hex_literal::hex!["c4690c56c36cec7ed5f6ed5d5eebace0c317073a962ebea1d00f1a304974897b"],
+			hex_literal::hex!["fc741134c82b81b7ab7efbf334b0c90ff8dbf22c42ad705ea7c04bf27ed4161a"],
+		];
+
+		accounts
+			.into_iter()
+			.map(|acc| {
+				T::AccountId::decode(&mut sp_runtime::AccountId32::as_ref(
+					&sp_runtime::AccountId32::from(acc),
+				))
+				.unwrap()
+			})
+			.collect()
+	}
+}
+
+impl pallet_maintenance::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type FoundationAccountsProvider = FoundationAccountsProvider<Runtime>;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -1582,13 +1673,13 @@ construct_runtime!(
 
 		// Monetary stuff.
 		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>} = 10,
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<Runtime>} = 11,
+		TransactionPayment: pallet_transaction_payment_mangata::{Pallet, Storage, Event<Runtime>} = 11,
 
 		// Xyk stuff
 		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>} = 13,
 
 		// Fee Locks
-		FeeLock: pallet_fee_lock::{Pallet, Storage, Call, Event<T>} = 14,
+		FeeLock: pallet_fee_lock::{Pallet, Storage, Call, Event<T>, Config<T>} = 14,
 
 		// Vesting
 		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>} = 17,
@@ -1632,6 +1723,8 @@ construct_runtime!(
 		Utility: pallet_utility_mangata::{Pallet, Call, Event} = 54,
 
 		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 55,
+
+		Maintenance: pallet_maintenance::{Pallet, Call, Storage, Event<T>} = 60,
 	}
 );
 
@@ -1956,17 +2049,17 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance> for Runtime {
+	impl pallet_transaction_payment_mangata_rpc_runtime_api::TransactionPaymentApi<Block, Balance> for Runtime {
 		fn query_info(
 			uxt: <Block as BlockT>::Extrinsic,
 			len: u32,
-		) -> pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo<Balance> {
+		) -> pallet_transaction_payment_mangata_rpc_runtime_api::RuntimeDispatchInfo<Balance> {
 			TransactionPayment::query_info(uxt, len)
 		}
 		fn query_fee_details(
 			uxt: <Block as BlockT>::Extrinsic,
 			len: u32,
-		) -> pallet_transaction_payment::FeeDetails<Balance> {
+		) -> pallet_transaction_payment_mangata::FeeDetails<Balance> {
 			TransactionPayment::query_fee_details(uxt, len)
 		}
 	}

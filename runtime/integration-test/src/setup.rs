@@ -32,18 +32,6 @@ pub fn unit(decimals: u32) -> Balance {
 	10u128.saturating_pow(decimals)
 }
 
-pub fn cent(decimals: u32) -> Balance {
-	unit(decimals) / 100
-}
-
-pub fn millicent(decimals: u32) -> Balance {
-	cent(decimals) / 1000
-}
-
-pub fn microcent(decimals: u32) -> Balance {
-	millicent(decimals) / 1000
-}
-
 const PARA_ID: u32 = 2110;
 
 pub struct ExtBuilder {
@@ -69,7 +57,6 @@ impl ExtBuilder {
 		self
 	}
 
-	#[allow(dead_code)]
 	pub fn parachain_id(mut self, parachain_id: u32) -> Self {
 		self.parachain_id = parachain_id;
 		self

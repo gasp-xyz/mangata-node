@@ -1,3 +1,4 @@
+blah
 <p align="center">
     <a href="https://https://mangata.finance/">
     <img width="132" height="101" src="https://mangata.finance/images/logo-without-text.svg" class="attachment-full size-full" alt="Mangata brand" loading="lazy" /></a>

@@ -25,9 +25,9 @@ sp-runtime = { git = "https://github.com/mangata-finance/substrate", default-fea
 sp-io = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 sp-arithmetic= { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 frame-benchmarking = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-mp-bootstrap = { path = "../../primitives/bootstrap", default-features=false }
 pallet-vesting-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-issuance = { path = "../issuance", default-features = false}
+mangata-support = { default-features = false , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
 [dev-dependencies]
 test-case = "2.0.2"
@@ -38,8 +38,7 @@ pallet-xyk = { path = "../xyk" }
 pallet-issuance = { path = "../issuance", default-features = false}
 mockall = "0.11.0"
 serial_test = "0.6.0"
-mp-traits = { path = "../../primitives/traits" }
-mp-multipurpose-liquidity = { path = "../../primitives/multipurpose-liquidity" }
+mangata-support = { default-features = false , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 lazy_static = "1.1.1"
 
 
@@ -51,7 +50,6 @@ std = [
 	'codec/std',
 	'sp-std/std',
 	'sp-runtime/std',
-	'mp-bootstrap/std',
 	'sp-io/std',
 	'frame-support/std',
 	'frame-system/std',
@@ -59,6 +57,7 @@ std = [
 	"frame-benchmarking/std",
 	'pallet-vesting-mangata/std',
 	'pallet-issuance/std',
+	"mangata-support/std"
 ]
 try-runtime = [
 	"frame-support/try-runtime",

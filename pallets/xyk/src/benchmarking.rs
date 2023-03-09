@@ -23,9 +23,8 @@ use super::*;
 
 use frame_benchmarking::{account, benchmarks, whitelisted_caller};
 use frame_system::RawOrigin;
-use mp_traits::ProofOfStakeRewardsApi;
+use mangata_support::traits::{ProofOfStakeRewardsApi,ComputeIssuance};
 use orml_tokens::MultiTokenCurrencyExtended;
-use pallet_issuance::ComputeIssuance;
 use sp_runtime::Permill;
 
 use crate::Pallet as Xyk;

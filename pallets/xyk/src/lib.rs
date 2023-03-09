@@ -303,14 +303,11 @@ use frame_support::{
 	transactional, Parameter,
 };
 use frame_system::pallet_prelude::*;
-use mangata_types::{traits::GetMaintenanceStatusTrait, Balance, TokenId};
-use mp_bootstrap::PoolCreateApi;
-use mp_multipurpose_liquidity::ActivateKind;
-use mp_traits::{
-	ActivationReservesProviderTrait, CumulativeWorkRewardsApi, PreValidateSwaps, XykFunctionsTrait,
+use mangata_types::{Balance, TokenId, multipurpose_liquidity::ActivateKind};
+use mangata_support::traits::{GetMaintenanceStatusTrait,Valuate,ComputeIssuance,PoolCreateApi,ActivationReservesProviderTrait, CumulativeWorkRewardsApi, PreValidateSwaps, XykFunctionsTrait,
 };
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
-use pallet_issuance::{ActivatedPoolQueryApi, ComputeIssuance};
+use pallet_issuance::{ActivatedPoolQueryApi, };
 use pallet_vesting_mangata::MultiTokenVestingLocks;
 use sp_arithmetic::{helpers_128bit::multiply_by_rational_with_rounding, per_things::Rounding};
 use sp_runtime::{
@@ -3320,55 +3317,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 	fn is_liquidity_token(liquidity_asset_id: TokenId) -> bool {
 		LiquidityPools::<T>::get(liquidity_asset_id).is_some()
 	}
-}
-
-pub trait Valuate {
-	type Balance: AtLeast32BitUnsigned
-		+ FullCodec
-		+ Copy
-		+ MaybeSerializeDeserialize
-		+ Debug
-		+ Default
-		+ From<Balance>
-		+ Into<Balance>;
-
-	type CurrencyId: Parameter
-		+ Member
-		+ Copy
-		+ MaybeSerializeDeserialize
-		+ Ord
-		+ Default
-		+ AtLeast32BitUnsigned
-		+ FullCodec
-		+ From<TokenId>
-		+ Into<TokenId>;
-
-	fn get_liquidity_asset(
-		first_asset_id: Self::CurrencyId,
-		second_asset_id: Self::CurrencyId,
-	) -> Result<TokenId, DispatchError>;
-
-	fn get_liquidity_token_mga_pool(
-		liquidity_token_id: Self::CurrencyId,
-	) -> Result<(Self::CurrencyId, Self::CurrencyId), DispatchError>;
-
-	fn valuate_liquidity_token(
-		liquidity_token_id: Self::CurrencyId,
-		liquidity_token_amount: Self::Balance,
-	) -> Self::Balance;
-
-	fn scale_liquidity_by_mga_valuation(
-		mga_valuation: Self::Balance,
-		liquidity_token_amount: Self::Balance,
-		mga_token_amount: Self::Balance,
-	) -> Self::Balance;
-
-	fn get_pool_state(liquidity_token_id: Self::CurrencyId) -> Option<(Balance, Balance)>;
-
-	fn get_reserves(
-		first_asset_id: TokenId,
-		second_asset_id: TokenId,
-	) -> Result<(Balance, Balance), DispatchError>;
 }
 
 pub trait AssetMetadataMutationTrait {

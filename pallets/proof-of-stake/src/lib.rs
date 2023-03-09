@@ -27,15 +27,12 @@ use frame_support::{
 	transactional, Parameter,
 };
 use frame_system::pallet_prelude::*;
-use mangata_types::{traits::GetMaintenanceStatusTrait, Balance, TokenId};
-use mp_bootstrap::PoolCreateApi;
-use mp_multipurpose_liquidity::ActivateKind;
-use mp_traits::{
-	ActivationReservesProviderTrait, CumulativeWorkRewardsApi, PreValidateSwaps,
-	ProofOfStakeRewardsApi, XykFunctionsTrait,
+use mangata_types::{Balance, TokenId,multipurpose_liquidity::ActivateKind};
+use mangata_support::traits::{GetMaintenanceStatusTrait,PoolCreateApi,ActivationReservesProviderTrait, CumulativeWorkRewardsApi, PreValidateSwaps,
+	ProofOfStakeRewardsApi, XykFunctionsTrait, ComputeIssuance
 };
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
-use pallet_issuance::{ActivatedPoolQueryApi, ComputeIssuance, PoolPromoteApi};
+use pallet_issuance::{ActivatedPoolQueryApi, PoolPromoteApi};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
 use sp_arithmetic::{helpers_128bit::multiply_by_rational_with_rounding, per_things::Rounding};
 use sp_runtime::{
@@ -889,7 +886,7 @@ impl<T: Config> ActivatedPoolQueryApi for Pallet<T> {
 	}
 }
 
-impl<T: Config> mp_bootstrap::RewardsApi for Pallet<T> {
+impl<T: Config> mangata_support::traits::RewardsApi for Pallet<T> {
 	type AccountId = T::AccountId;
 
 	fn can_activate(liquidity_asset_id: TokenId) -> bool {

@@ -29,10 +29,8 @@ pallet-sudo-origin = { path = '../../pallets/sudo-origin', default-features = fa
 pallet-issuance = { path = '../../pallets/issuance', default-features = false }
 pallet-multipurpose-liquidity = { path = '../../pallets/multipurpose-liquidity', default-features = false }
 pallet-maintenance = { path = '../../pallets/maintenance', default-features = false }
-mp-multipurpose-liquidity = { path = '../../primitives/multipurpose-liquidity', default-features = false }
 pallet-fee-lock = { path = '../../pallets/fee-lock', default-features = false}
-mp-traits = { path = '../../primitives/traits', default-features = false }
-mp-bootstrap = { path = '../../primitives/bootstrap', default-features = false }
+mangata-support = { default-features = false , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
 # Substrate Dependencies
 ## Substrate Primitive Dependencies
@@ -184,9 +182,7 @@ std = [
 	"frame-system-rpc-runtime-api/std",
 	"pallet-collective-mangata/std",
 	"pallet-multipurpose-liquidity/std",
-	"mp-multipurpose-liquidity/std",
-	"mp-traits/std",
-	"mp-bootstrap/std",
+	"mangata-support/std",
 	"pallet-vesting-mangata-rpc-runtime-api/std",
 	"pallet-fee-lock/std",
 	"pallet-maintenance/std",

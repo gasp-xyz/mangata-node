@@ -10,6 +10,7 @@ use frame_support::{
 	traits::{tokens::currency::MultiTokenCurrency, Get, Imbalance},
 };
 use mangata_types::{Balance, TokenId};
+use mangata_support::traits::{ComputeIssuance, GetIssuance};
 use orml_tokens::MultiTokenCurrencyExtended;
 use pallet_vesting_mangata::MultiTokenVestingSchedule;
 use scale_info::TypeInfo;
@@ -333,11 +334,6 @@ pub mod pallet {
 	}
 }
 
-pub trait ComputeIssuance {
-	fn initialize() {}
-	fn compute_issuance(n: u32);
-}
-
 impl<T: Config> ComputeIssuance for Pallet<T> {
 	fn initialize() {
 		IsTGEFinalized::<T>::put(true);
@@ -412,12 +408,6 @@ impl<T: Config> ProvideTotalCrowdloanRewardAllocation for Pallet<T> {
 		IssuanceConfigStore::<T>::get()
 			.map(|issuance_config| issuance_config.total_crowdloan_allocation)
 	}
-}
-
-pub trait GetIssuance {
-	fn get_all_issuance(n: u32) -> Option<(Balance, Balance)>;
-	fn get_liquidity_mining_issuance(n: u32) -> Option<Balance>;
-	fn get_staking_issuance(n: u32) -> Option<Balance>;
 }
 
 impl<T: Config> GetIssuance for Pallet<T> {

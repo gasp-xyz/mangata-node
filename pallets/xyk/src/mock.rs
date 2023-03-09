@@ -20,7 +20,7 @@ use frame_support::{
 
 use frame_system as system;
 use mangata_types::{assets::CustomMetadata, Amount, Balance, TokenId};
-pub use mp_traits::ProofOfStakeRewardsApi;
+pub use mangata_support::traits::ProofOfStakeRewardsApi;
 use orml_tokens::{MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
 use orml_traits::{asset_registry::AssetMetadata, parameter_type_with_key};
 pub use pallet_issuance::PoolPromoteApi;
@@ -67,7 +67,7 @@ impl MockPromotedPoolApi {
 	}
 }
 
-impl pallet_issuance::ComputeIssuance for MockPromotedPoolApi {
+impl mangata_support::traits::ComputeIssuance for MockPromotedPoolApi {
 	fn compute_issuance(_n: u32) {
 		todo!()
 	}

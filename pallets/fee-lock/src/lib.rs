@@ -10,9 +10,8 @@ use frame_support::{
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use mangata_types::{Balance, TokenId};
-use mp_traits::FeeLockTriggerTrait;
+use mangata_support::traits::{FeeLockTriggerTrait, Valuate};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
-use pallet_xyk::Valuate;
 use sp_arithmetic::per_things::Rounding;
 use sp_runtime::helpers_128bit::multiply_by_rational_with_rounding;
 

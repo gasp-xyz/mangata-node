@@ -25,9 +25,8 @@ use frame_support::{
 		tokens::currency::MultiTokenCurrency, ConstU128, ConstU32, Contains, Everything, Nothing,
 	},
 };
-use mangata_types::{Amount, Balance, TokenId};
-use mp_multipurpose_liquidity::ActivateKind;
-use mp_traits::ActivationReservesProviderTrait;
+use mangata_types::{Amount, Balance, TokenId, multipurpose_liquidity::ActivateKind};
+use mangata_support::traits::ActivationReservesProviderTrait;
 use orml_tokens::MultiTokenCurrencyAdapter;
 use orml_traits::parameter_type_with_key;
 use pallet_xyk::AssetMetadataMutationTrait;

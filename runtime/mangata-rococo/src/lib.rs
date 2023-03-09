@@ -70,8 +70,7 @@ pub use mangata_types::{
 	assets::{CustomMetadata, XcmMetadata, XykMetadata},
 	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
 };
-use mp_bootstrap::AssetRegistryApi;
-use mp_traits::{FeeLockTriggerTrait, PreValidateSwaps, ProofOfStakeRewardsApi};
+use mangata_support::traits::{AssetRegistryApi,FeeLockTriggerTrait, PreValidateSwaps, ProofOfStakeRewardsApi};
 pub use pallet_issuance::{IssuanceInfo, PoolPromoteApi};
 pub use pallet_sudo_origin;
 pub use pallet_xyk;
@@ -1346,7 +1345,9 @@ impl parachain_staking::Config for Runtime {
 }
 
 impl pallet_xyk::XykBenchmarkingConfig for Runtime {}
-impl parachain_staking::StakingBenchmarkConfig for Runtime {}
+impl parachain_staking::StakingBenchmarkConfig for Runtime {
+	type PoolCreateApi = Xyk;
+}
 
 parameter_types! {
 	pub const HistoryLimit: u32 = 10u32;

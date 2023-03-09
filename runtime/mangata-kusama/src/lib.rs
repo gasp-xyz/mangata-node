@@ -1353,6 +1353,7 @@ impl parachain_staking::Config for Runtime {
 }
 
 impl parachain_staking::StakingBenchmarkConfig for Runtime {
+	#[cfg(feature = "runtime-benchmarks")]
 	type PoolCreateApi = Xyk;
 }
 

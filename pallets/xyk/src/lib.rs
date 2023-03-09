@@ -526,37 +526,6 @@ pub mod pallet {
 	pub type LiquidityPools<T: Config> =
 		StorageMap<_, Blake2_256, TokenId, Option<(TokenId, TokenId)>, ValueQuery>;
 
-	// REWARDS V1 to be removed
-	#[pallet::storage]
-	#[pallet::getter(fn liquidity_mining_user)]
-	pub type LiquidityMiningUser<T: Config> =
-		StorageMap<_, Blake2_256, (AccountIdOf<T>, TokenId), (u32, U256, U256), ValueQuery>;
-	// REWARDS V1 to be removed
-	#[pallet::storage]
-	#[pallet::getter(fn liquidity_mining_pool)]
-	pub type LiquidityMiningPool<T: Config> =
-		StorageMap<_, Blake2_256, TokenId, (u32, U256, U256), ValueQuery>;
-	// REWARDS V1 to be removed
-	#[pallet::storage]
-	#[pallet::getter(fn liquidity_mining_user_to_be_claimed)]
-	pub type LiquidityMiningUserToBeClaimed<T: Config> =
-		StorageMap<_, Blake2_256, (AccountIdOf<T>, TokenId), u128, ValueQuery>;
-	// REWARDS V1 to be removed
-	#[pallet::storage]
-	#[pallet::getter(fn liquidity_mining_active_user)]
-	pub type LiquidityMiningActiveUser<T: Config> =
-		StorageMap<_, Twox64Concat, (AccountIdOf<T>, TokenId), u128, ValueQuery>;
-	// REWARDS V1 to be removed
-	#[pallet::storage]
-	#[pallet::getter(fn liquidity_mining_active_pool)]
-	pub type LiquidityMiningActivePool<T: Config> =
-		StorageMap<_, Twox64Concat, TokenId, u128, ValueQuery>;
-	// REWARDS V1 to be removed
-	#[pallet::storage]
-	#[pallet::getter(fn liquidity_mining_user_claimed)]
-	pub type LiquidityMiningUserClaimed<T: Config> =
-		StorageMap<_, Twox64Concat, (AccountIdOf<T>, TokenId), u128, ValueQuery>;
-
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub created_pools_for_staking:
@@ -651,7 +620,20 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		// you will sell your sold_asset_amount of sold_asset_id to get some amount of bought_asset_id
+		/// Executes sell_asset swap.
+		/// First the swap is prevalidated, if it is successful then the extrinsic is accepted. Beyond this point the exchange commission will be charged.
+		/// The sold amount of the sold asset is used to determine the bought asset amount.
+		/// If the bought asset amount is lower than the min_amount_out then it will fail on slippage.
+		/// The percentage exchange commission is still charged even if the swap fails on slippage. Though the swap itself will be a no-op.
+		/// The slippage is calculated based upon the sold_asset_amount.
+		/// Upon slippage failure, the extrinsic is marked "successful", but an event for the failure is emitted
+		///
+		///
+		/// # Args:
+		/// - `sold_asset_id` - The token being sold
+		/// - `bought_asset_id` - The token being bought
+		/// - `sold_asset_amount`: The amount of the sold token being sold
+		/// - `min_amount_out` - The minimum amount of bought asset that must be bought in order to not fail on slippage. Slippage failures still charge exchange commission.
 		#[pallet::call_index(1)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::sell_asset())]
 		pub fn sell_asset(
@@ -708,6 +690,22 @@ pub mod pallet {
 			)?;
 			Ok(().into())
 		}
+
+
+		/// Executes buy_asset swap.
+		/// First the swap is prevalidated, if it is successful then the extrinsic is accepted. Beyond this point the exchange commission will be charged.
+		/// The bought of the bought asset is used to determine the sold asset amount.
+		/// If the sold asset amount is higher than the max_amount_in then it will fail on slippage.
+		/// The percentage exchange commission is still charged even if the swap fails on slippage. Though the swap itself will be a no-op.
+		/// The slippage is calculated based upon the sold asset amount.
+		/// Upon slippage failure, the extrinsic is marked "successful", but an event for the failure is emitted
+		///
+		///
+		/// # Args:
+		/// - `sold_asset_id` - The token being sold
+		/// - `bought_asset_id` - The token being bought
+		/// - `bought_asset_amount`: The amount of the bought token being bought
+		/// - `max_amount_in` - The maximum amount of sold asset that must be sold in order to not fail on slippage. Slippage failures still charge exchange commission.
 		#[pallet::call_index(3)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::buy_asset())]
 		pub fn buy_asset(

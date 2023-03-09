@@ -1,13 +1,3 @@
-// TODO
-// Migrations
-// Cyclic deps
-// New pallet
-// New pallet tightly coupled?
-// New pallet config in runtime
-// Hooks to new pallet
-// v1 storage cleanup
-// v1 code cleanup
-
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_support::{

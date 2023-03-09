@@ -154,18 +154,28 @@ impl pallet_xyk::Config for Test {
 	type NativeCurrencyId = NativeCurrencyId;
 	type TreasuryPalletId = TreasuryPalletId;
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
-	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
-	type PoolPromoteApi = Issuance;
+	type XykRewards = ProofOfStake;
 	type PoolFeePercentage = ConstU128<20>;
 	type TreasuryFeePercentage = ConstU128<5>;
 	type BuyAndBurnFeePercentage = ConstU128<5>;
-	type RewardsDistributionPeriod = ConstU32<10000>;
 	type WeightInfo = ();
 	type DisallowedPools = Bootstrap;
 	type DisabledTokens = Nothing;
 	type VestingProvider = Vesting;
 	type AssetMetadataMutation = AssetMetadataMutation;
 	type RewardsMigrateAccount = RewardsMigrateAccountProvider<Test>;
+}
+
+impl pallet_proof_of_stake::Config for Test{
+	type RuntimeEvent = RuntimeEvent;
+	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
+	type NativeCurrencyId = NativeCurrencyId;
+	type Xyk = Xyk;
+	type PoolPromoteApi = Issuance;
+	type Currency = MultiTokenCurrencyAdapter<Test>;
+	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
+	type RewardsDistributionPeriod = ConstU32<10000>;
+	type WeightInfo = ();
 }
 
 impl BootstrapBenchmarkingConfig for Test {}
@@ -181,7 +191,7 @@ where
 	where
 		<T as frame_system::Config>::AccountId: EncodeLike<AccountId>,
 	{
-		Xyk::liquidity_mining_active_user((account_id.clone(), token_id))
+		ProofOfStake::get_rewards_info(account_id.clone(), token_id).activated_amount
 	}
 
 	fn can_activate(
@@ -244,7 +254,7 @@ impl pallet_issuance::Config for Test {
 	type TGEReleasePeriod = TGEReleasePeriod;
 	type TGEReleaseBegin = TGEReleaseBegin;
 	type VestingProvider = Vesting;
-	type ActivatedPoolQueryApiType = Xyk;
+	type ActivatedPoolQueryApiType = ProofOfStake;
 	type WeightInfo = ();
 }
 
@@ -389,6 +399,7 @@ construct_runtime!(
 		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>},
 		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>},
 		Issuance: pallet_issuance::{Pallet, Event<T>, Storage},
+		ProofOfStake: pallet_proof_of_stake::{Pallet, Call, Storage, Event<T>},
 	}
 );
 

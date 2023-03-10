@@ -68,8 +68,8 @@ pallet-authorship = { git = "https://github.com/mangata-finance/substrate", defa
 pallet-session = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-sudo-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-timestamp = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
-pallet-transaction-payment = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
-pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+pallet-transaction-payment-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+pallet-transaction-payment-mangata-rpc-runtime-api = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-treasury = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-collective-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-vesting-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
@@ -145,8 +145,8 @@ std = [
 	"pallet-sudo-mangata/std",
 	"pallet-sudo-origin/std",
 	"pallet-timestamp/std",
-	"pallet-transaction-payment-rpc-runtime-api/std",
-	"pallet-transaction-payment/std",
+	"pallet-transaction-payment-mangata-rpc-runtime-api/std",
+	"pallet-transaction-payment-mangata/std",
 	"pallet-utility-mangata/std",
 	"cumulus-pallet-aura-ext/std",
 	"cumulus-pallet-parachain-system/std",
@@ -200,7 +200,7 @@ try-runtime = [
 	"pallet-timestamp/try-runtime",
 	"parachain-info/try-runtime",
 	"orml-tokens/try-runtime",
-	"pallet-transaction-payment/try-runtime",
+	"pallet-transaction-payment-mangata/try-runtime",
 	"pallet-xyk/try-runtime",
 	"pallet-proof-of-stake/try-runtime",
 	"pallet-vesting-mangata/try-runtime",

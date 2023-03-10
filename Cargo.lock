@@ -4474,8 +4474,8 @@ dependencies = [
  "pallet-sudo-mangata",
  "pallet-sudo-origin",
  "pallet-timestamp",
- "pallet-transaction-payment",
- "pallet-transaction-payment-rpc-runtime-api",
+ "pallet-transaction-payment-mangata",
+ "pallet-transaction-payment-mangata-rpc-runtime-api",
  "pallet-treasury",
  "pallet-utility-mangata",
  "pallet-vesting-mangata",
@@ -4548,8 +4548,8 @@ dependencies = [
  "mangata-rpc-nonce",
  "mangata-types",
  "pallet-timestamp",
- "pallet-transaction-payment",
- "pallet-transaction-payment-rpc",
+ "pallet-transaction-payment-mangata",
+ "pallet-transaction-payment-mangata-rpc",
  "pallet-vesting-mangata-rpc",
  "pallet-vesting-mangata-rpc-runtime-api",
  "parity-scale-codec",
@@ -4660,8 +4660,8 @@ dependencies = [
  "pallet-sudo-mangata",
  "pallet-sudo-origin",
  "pallet-timestamp",
- "pallet-transaction-payment",
- "pallet-transaction-payment-rpc-runtime-api",
+ "pallet-transaction-payment-mangata",
+ "pallet-transaction-payment-mangata-rpc-runtime-api",
  "pallet-treasury",
  "pallet-utility-mangata",
  "pallet-vesting-mangata",
@@ -5890,6 +5890,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "test-case",
 ]
 
 [[package]]
@@ -6547,6 +6548,50 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-transaction-payment-mangata"
+version = "4.0.0-dev"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#5e9b877075d8f8dc196b0ede1f4dbf97427cdde8"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-transaction-payment-mangata-rpc"
+version = "4.0.0-dev"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#5e9b877075d8f8dc196b0ede1f4dbf97427cdde8"
+dependencies = [
+ "jsonrpsee",
+ "pallet-transaction-payment-mangata-rpc-runtime-api",
+ "parity-scale-codec",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-rpc",
+ "sp-runtime",
+ "sp-weights",
+]
+
+[[package]]
+name = "pallet-transaction-payment-mangata-rpc-runtime-api"
+version = "4.0.0-dev"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#5e9b877075d8f8dc196b0ede1f4dbf97427cdde8"
+dependencies = [
+ "pallet-transaction-payment-mangata",
+ "parity-scale-codec",
+ "sp-api",
+ "sp-runtime",
+ "sp-weights",
 ]
 
 [[package]]

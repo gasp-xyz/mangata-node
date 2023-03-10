@@ -875,6 +875,9 @@ mangata-support = { git = "https://github.com/mangata-finance//substrate", branc
 # pallet-transaction-payment-rpc-runtime-api = { path = "../substrate/frame/transaction-payment/rpc/runtime-api" }
 # pallet-transaction-payment-rpc = { path = "../substrate/frame/transaction-payment/rpc" }
 # pallet-transaction-payment = { path = "../substrate/frame/transaction-payment" }
+# pallet-transaction-payment-mangata-rpc-runtime-api = { path = "../substrate/frame/transaction-payment-mangata/rpc/runtime-api" }
+# pallet-transaction-payment-mangata-rpc = { path = "../substrate/frame/transaction-payment-mangata/rpc" }
+# pallet-transaction-payment-mangata = { path = "../substrate/frame/transaction-payment-mangata" }
 # pallet-proxy = { path = "../substrate/frame/proxy" }
 # pallet-whitelist = { path = "../substrate/frame/whitelist" }
 # pallet-state-trie-migration = { path = "../substrate/frame/state-trie-migration" }
@@ -1062,6 +1065,9 @@ mangata-support = { git = "https://github.com/mangata-finance//substrate", branc
 # pallet-transaction-payment-rpc-runtime-api = { path = "../substrate/frame/transaction-payment/rpc/runtime-api" }
 # pallet-transaction-payment-rpc = { path = "../substrate/frame/transaction-payment/rpc" }
 # pallet-transaction-payment = { path = "../substrate/frame/transaction-payment" }
+# pallet-transaction-payment-mangata-rpc-runtime-api = { path = "../substrate/frame/transaction-payment-mangata/rpc/runtime-api" }
+# pallet-transaction-payment-mangata-rpc = { path = "../substrate/frame/transaction-payment-mangata/rpc" }
+# pallet-transaction-payment-mangata = { path = "../substrate/frame/transaction-payment-mangata" }
 # pallet-proxy = { path = "../substrate/frame/proxy" }
 # pallet-whitelist = { path = "../substrate/frame/whitelist" }
 # pallet-state-trie-migration = { path = "../substrate/frame/state-trie-migration" }
@@ -1249,6 +1255,9 @@ mangata-support = { git = "https://github.com/mangata-finance//substrate", branc
 # pallet-transaction-payment-rpc-runtime-api = { path = "../substrate/frame/transaction-payment/rpc/runtime-api" }
 # pallet-transaction-payment-rpc = { path = "../substrate/frame/transaction-payment/rpc" }
 # pallet-transaction-payment = { path = "../substrate/frame/transaction-payment" }
+# pallet-transaction-payment-mangata-rpc-runtime-api = { path = "../substrate/frame/transaction-payment-mangata/rpc/runtime-api" }
+# pallet-transaction-payment-mangata-rpc = { path = "../substrate/frame/transaction-payment-mangata/rpc" }
+# pallet-transaction-payment-mangata = { path = "../substrate/frame/transaction-payment-mangata" }
 # pallet-proxy = { path = "../substrate/frame/proxy" }
 # pallet-whitelist = { path = "../substrate/frame/whitelist" }
 # pallet-state-trie-migration = { path = "../substrate/frame/state-trie-migration" }

@@ -105,7 +105,7 @@ jobs:
 
       - name: Fix permissions on self-hosted runner
         if: always()
-        run: chown -R 1003:1004 $GITHUB_WORKSPACE
+        run: chown -R 1004:1005 $GITHUB_WORKSPACE
 
   rustfmt-check:
     name: Formatting check
@@ -166,7 +166,7 @@ jobs:
         run: cargo test -j2
       - name: Fix permissions on self-hosted runner
         if: always()
-        run: chown -R 1003:1004 $GITHUB_WORKSPACE
+        run: chown -R 1004:1005 $GITHUB_WORKSPACE
 
   run-benchmarks-tests:
     name: Run benchmark tests
@@ -223,7 +223,7 @@ jobs:
 
       - name: Fix permissions on self-hosted runner
         if: always()
-        run: chown -R 1003:1004 $GITHUB_WORKSPACE
+        run: chown -R 1004:1005 $GITHUB_WORKSPACE
 
   run-benchmarks:
     name: Run runtime benchmarks
@@ -282,12 +282,11 @@ jobs:
 
       - name: Fix permissions on self-hosted runner
         if: always()
-        run: chown -R 1003:1004 $GITHUB_WORKSPACE
-
-      - name: Upload logs  and docker images to GitHub
+        run: chown -R 1004:1005 $GITHUB_WORKSPACE
+      
+      - name: Upload logs and docker images to GitHub
         if: ${{ contains(github.event.pull_request.labels.*.name, 'full-benchmarks') }}
         uses: actions/upload-artifact@v3.1.1
         with:
           name: benchmarks
           path: ./benchmarks
-

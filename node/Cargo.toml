@@ -58,9 +58,9 @@ frame-benchmarking = { git = "https://github.com/mangata-finance/substrate", bra
 frame-benchmarking-cli = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 try-runtime-cli = { git = "https://github.com/mangata-finance/substrate", optional = true, branch = "mangata-dev" }
 frame-system = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-pallet-transaction-payment = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+pallet-transaction-payment-mangata = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
-pallet-transaction-payment-rpc = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+pallet-transaction-payment-mangata-rpc = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
 substrate-frame-rpc-system = { package = "mangata-rpc-nonce", path = "../rpc/nonce" }
 substrate-prometheus-endpoint = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
@@ -151,7 +151,7 @@ tokio = { version = "1.15", features = ["macros", "time"] }
 pallet-timestamp = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 sp-tracing = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 frame-system = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-pallet-transaction-payment = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+pallet-transaction-payment-mangata = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 frame-system-rpc-runtime-api = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 cumulus-pallet-parachain-system = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.36'}
 cumulus-test-relay-sproof-builder = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.36'}

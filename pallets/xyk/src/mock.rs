@@ -267,7 +267,7 @@ impl pallet_issuance::Config for Test {
 	type TGEReleaseBegin = TGEReleaseBegin;
 	type VestingProvider = Vesting;
 	type WeightInfo = ();
-	type ActivatedPoolQueryApiType = XykStorage;
+	type ActivatedPoolQueryApiType = ProofOfStake;
 }
 
 impl XykBenchmarkingConfig for Test {}

@@ -17,10 +17,12 @@ use frame_support::{
 	transactional, Parameter,
 };
 use frame_system::pallet_prelude::*;
-use mangata_types::{Balance, TokenId,multipurpose_liquidity::ActivateKind};
-use mangata_support::traits::{GetMaintenanceStatusTrait,PoolCreateApi,ActivationReservesProviderTrait, CumulativeWorkRewardsApi, PreValidateSwaps,
-	ProofOfStakeRewardsApi, XykFunctionsTrait, ComputeIssuance
+use mangata_support::traits::{
+	ActivationReservesProviderTrait, ComputeIssuance, CumulativeWorkRewardsApi,
+	GetMaintenanceStatusTrait, PoolCreateApi, PreValidateSwaps, ProofOfStakeRewardsApi,
+	XykFunctionsTrait,
 };
+use mangata_types::{multipurpose_liquidity::ActivateKind, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_issuance::{ActivatedPoolQueryApi, PoolPromoteApi};
 use pallet_vesting_mangata::MultiTokenVestingLocks;

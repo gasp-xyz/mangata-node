@@ -9,8 +9,13 @@ use frame_support::{
 	transactional,
 };
 use frame_system::pallet_prelude::*;
-use mangata_types::{Balance, BlockNumber, TokenId,multipurpose_liquidity::{ActivateKind, BondKind}};
-use mangata_support::traits::{ActivationReservesProviderTrait, StakingReservesProviderTrait, XykFunctionsTrait};
+use mangata_support::traits::{
+	ActivationReservesProviderTrait, StakingReservesProviderTrait, XykFunctionsTrait,
+};
+use mangata_types::{
+	multipurpose_liquidity::{ActivateKind, BondKind},
+	Balance, BlockNumber, TokenId,
+};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
 use sp_runtime::traits::{SaturatedConversion, Zero};

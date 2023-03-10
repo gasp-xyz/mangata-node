@@ -9,8 +9,8 @@ use frame_support::{
 	codec::{Decode, Encode},
 	traits::{tokens::currency::MultiTokenCurrency, Get, Imbalance},
 };
-use mangata_types::{Balance, TokenId};
 use mangata_support::traits::{ComputeIssuance, GetIssuance};
+use mangata_types::{Balance, TokenId};
 use orml_tokens::MultiTokenCurrencyExtended;
 use pallet_vesting_mangata::MultiTokenVestingSchedule;
 use scale_info::TypeInfo;

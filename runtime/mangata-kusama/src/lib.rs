@@ -66,11 +66,13 @@ pub use xcm::{latest::prelude::*, VersionedMultiLocation};
 
 pub use constants::{fee::*, parachains::*};
 pub use currency::*;
+use mangata_support::traits::{
+	AssetRegistryApi, FeeLockTriggerTrait, PreValidateSwaps, ProofOfStakeRewardsApi,
+};
 pub use mangata_types::{
 	assets::{CustomMetadata, XcmMetadata, XykMetadata},
 	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
 };
-use mangata_support::traits::{AssetRegistryApi,FeeLockTriggerTrait, PreValidateSwaps, ProofOfStakeRewardsApi};
 pub use pallet_issuance::{IssuanceInfo, PoolPromoteApi};
 pub use pallet_sudo_origin;
 pub use pallet_xyk;

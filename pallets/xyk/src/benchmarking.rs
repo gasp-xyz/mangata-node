@@ -23,7 +23,7 @@ use super::*;
 
 use frame_benchmarking::{account, benchmarks, whitelisted_caller};
 use frame_system::RawOrigin;
-use mangata_support::traits::{ProofOfStakeRewardsApi,ComputeIssuance};
+use mangata_support::traits::{ComputeIssuance, ProofOfStakeRewardsApi};
 use orml_tokens::MultiTokenCurrencyExtended;
 use sp_runtime::Permill;
 

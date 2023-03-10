@@ -19,8 +19,8 @@ use frame_support::{
 };
 
 use frame_system as system;
-use mangata_types::{assets::CustomMetadata, Amount, Balance, TokenId};
 pub use mangata_support::traits::ProofOfStakeRewardsApi;
+use mangata_types::{assets::CustomMetadata, Amount, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
 use orml_traits::{asset_registry::AssetMetadata, parameter_type_with_key};
 pub use pallet_issuance::PoolPromoteApi;

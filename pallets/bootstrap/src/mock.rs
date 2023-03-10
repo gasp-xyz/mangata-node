@@ -25,8 +25,8 @@ use frame_support::{
 		tokens::currency::MultiTokenCurrency, ConstU128, ConstU32, Contains, Everything, Nothing,
 	},
 };
-use mangata_types::{Amount, Balance, TokenId, multipurpose_liquidity::ActivateKind};
 use mangata_support::traits::ActivationReservesProviderTrait;
+use mangata_types::{multipurpose_liquidity::ActivateKind, Amount, Balance, TokenId};
 use orml_tokens::MultiTokenCurrencyAdapter;
 use orml_traits::parameter_type_with_key;
 use pallet_xyk::AssetMetadataMutationTrait;
@@ -166,7 +166,7 @@ impl pallet_xyk::Config for Test {
 	type RewardsMigrateAccount = RewardsMigrateAccountProvider<Test>;
 }
 
-impl pallet_proof_of_stake::Config for Test{
+impl pallet_proof_of_stake::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
 	type NativeCurrencyId = NativeCurrencyId;

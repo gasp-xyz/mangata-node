@@ -303,11 +303,14 @@ use frame_support::{
 	transactional, Parameter,
 };
 use frame_system::pallet_prelude::*;
-use mangata_types::{Balance, TokenId, multipurpose_liquidity::ActivateKind};
-use mangata_support::traits::{ProofOfStakeRewardsApi, GetMaintenanceStatusTrait,Valuate,ComputeIssuance,PoolCreateApi,ActivationReservesProviderTrait, CumulativeWorkRewardsApi, PreValidateSwaps, XykFunctionsTrait,
+use mangata_support::traits::{
+	ActivationReservesProviderTrait, ComputeIssuance, CumulativeWorkRewardsApi,
+	GetMaintenanceStatusTrait, PoolCreateApi, PreValidateSwaps, ProofOfStakeRewardsApi, Valuate,
+	XykFunctionsTrait,
 };
+use mangata_types::{multipurpose_liquidity::ActivateKind, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
-use pallet_issuance::{ActivatedPoolQueryApi, };
+use pallet_issuance::ActivatedPoolQueryApi;
 use pallet_vesting_mangata::MultiTokenVestingLocks;
 use sp_arithmetic::{helpers_128bit::multiply_by_rational_with_rounding, per_things::Rounding};
 use sp_runtime::{
@@ -407,7 +410,8 @@ pub mod pallet {
 		type NativeCurrencyId: Get<TokenId>;
 		type TreasuryPalletId: Get<PalletId>;
 		type BnbTreasurySubAccDerive: Get<[u8; 4]>;
-		type XykRewards: CumulativeWorkRewardsApi<AccountId = Self::AccountId> + ProofOfStakeRewardsApi<Self::AccountId, Balance = Balance, CurrencyId = TokenId>;
+		type XykRewards: CumulativeWorkRewardsApi<AccountId = Self::AccountId>
+			+ ProofOfStakeRewardsApi<Self::AccountId, Balance = Balance, CurrencyId = TokenId>;
 		#[pallet::constant]
 		type PoolFeePercentage: Get<u128>;
 		#[pallet::constant]
@@ -690,7 +694,6 @@ pub mod pallet {
 			)?;
 			Ok(().into())
 		}
-
 
 		/// Executes buy_asset swap.
 		/// First the swap is prevalidated, if it is successful then the extrinsic is accepted. Beyond this point the exchange commission will be charged.

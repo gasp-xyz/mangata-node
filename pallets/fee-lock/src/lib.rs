@@ -9,8 +9,8 @@ use frame_support::{
 	transactional,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
-use mangata_types::{Balance, TokenId};
 use mangata_support::traits::{FeeLockTriggerTrait, Valuate};
+use mangata_types::{Balance, TokenId};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use sp_arithmetic::per_things::Rounding;
 use sp_runtime::helpers_128bit::multiply_by_rational_with_rounding;

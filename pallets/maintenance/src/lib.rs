@@ -9,8 +9,8 @@ use frame_support::{
 	transactional,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
+use mangata_support::traits::GetMaintenanceStatusTrait;
 use mangata_types::{Balance, TokenId};
-use mangata_support::traits::{GetMaintenanceStatusTrait};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 
 use sp_runtime::traits::{CheckedDiv, Zero};

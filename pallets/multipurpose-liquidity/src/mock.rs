@@ -6,9 +6,9 @@ use sp_core::H256;
 use sp_std::convert::TryFrom;
 
 use sp_runtime::{
-	Permill,
 	testing::Header,
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
+	Permill,
 };
 
 use crate as pallet_multipurpose_liquidity;

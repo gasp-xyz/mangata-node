@@ -304,7 +304,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use mangata_types::{Balance, TokenId, multipurpose_liquidity::ActivateKind};
-use mangata_support::traits::{GetMaintenanceStatusTrait,Valuate,ComputeIssuance,PoolCreateApi,ActivationReservesProviderTrait, CumulativeWorkRewardsApi, PreValidateSwaps, XykFunctionsTrait,
+use mangata_support::traits::{ProofOfStakeRewardsApi, GetMaintenanceStatusTrait,Valuate,ComputeIssuance,PoolCreateApi,ActivationReservesProviderTrait, CumulativeWorkRewardsApi, PreValidateSwaps, XykFunctionsTrait,
 };
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_issuance::{ActivatedPoolQueryApi, };
@@ -407,7 +407,7 @@ pub mod pallet {
 		type NativeCurrencyId: Get<TokenId>;
 		type TreasuryPalletId: Get<PalletId>;
 		type BnbTreasurySubAccDerive: Get<[u8; 4]>;
-		type XykRewards: CumulativeWorkRewardsApi<AccountId = Self::AccountId>;
+		type XykRewards: CumulativeWorkRewardsApi<AccountId = Self::AccountId> + ProofOfStakeRewardsApi<Self::AccountId, Balance = Balance, CurrencyId = TokenId>;
 		#[pallet::constant]
 		type PoolFeePercentage: Get<u128>;
 		#[pallet::constant]
@@ -973,6 +973,94 @@ pub mod pallet {
 			)?;
 
 			Ok(().into())
+		}
+
+		#[transactional]
+		#[pallet::call_index(11)]
+		#[pallet::weight(<<T as Config>::WeightInfo>::claim_rewards_v2())]
+		pub fn claim_rewards_v2(
+			origin: OriginFor<T>,
+			liquidity_token_id: TokenId,
+			amount: Balance,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			<T::XykRewards as ProofOfStakeRewardsApi<T::AccountId>>::claim_rewards_v2(
+				sender,
+				liquidity_token_id,
+				amount,
+			)?;
+
+			Ok(())
+		}
+
+		#[transactional]
+		#[pallet::call_index(12)]
+		#[pallet::weight(<<T as Config>::WeightInfo>::claim_rewards_v2())]
+		pub fn claim_rewards_all_v2(
+			origin: OriginFor<T>,
+			liquidity_token_id: TokenId,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			<T::XykRewards as ProofOfStakeRewardsApi<T::AccountId>>::claim_rewards_all_v2(
+				sender,
+				liquidity_token_id,
+			)?;
+
+			Ok(())
+		}
+
+		// Disabled pool demotion
+		#[pallet::call_index(13)]
+		#[pallet::weight(<<T as Config>::WeightInfo>::update_pool_promotion())]
+		pub fn update_pool_promotion(
+			origin: OriginFor<T>,
+			liquidity_token_id: TokenId,
+			liquidity_mining_issuance_weight: u8,
+		) -> DispatchResult {
+			ensure_root(origin)?;
+
+			<T::XykRewards as ProofOfStakeRewardsApi<T::AccountId>>::update_pool_promotion(
+				liquidity_token_id,
+				Some(liquidity_mining_issuance_weight),
+			)
+		}
+
+		#[transactional]
+		#[pallet::call_index(14)]
+		#[pallet::weight(<<T as Config>::WeightInfo>::activate_liquidity_v2())]
+		pub fn activate_liquidity_v2(
+			origin: OriginFor<T>,
+			liquidity_token_id: TokenId,
+			amount: Balance,
+			use_balance_from: Option<ActivateKind>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			<T::XykRewards as ProofOfStakeRewardsApi<T::AccountId>>::activate_liquidity_v2(
+				sender,
+				liquidity_token_id,
+				amount,
+				use_balance_from,
+			)
+		}
+
+		#[transactional]
+		#[pallet::call_index(15)]
+		#[pallet::weight(<<T as Config>::WeightInfo>::deactivate_liquidity_v2())]
+		pub fn deactivate_liquidity_v2(
+			origin: OriginFor<T>,
+			liquidity_token_id: TokenId,
+			amount: Balance,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			<T::XykRewards as ProofOfStakeRewardsApi<T::AccountId>>::deactivate_liquidity_v2(
+				sender,
+				liquidity_token_id,
+				amount,
+			)
 		}
 	}
 }

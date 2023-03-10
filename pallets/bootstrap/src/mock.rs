@@ -369,7 +369,7 @@ impl pallet_bootstrap::Config for Test {
 	type TreasuryPalletId = TreasuryPalletId;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type VestingProvider = Vesting;
-	type RewardsApi = Xyk;
+	type RewardsApi = ProofOfStake;
 	type WeightInfo = ();
 	type AssetRegistryApi = AssetRegistry;
 }

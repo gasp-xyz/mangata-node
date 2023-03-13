@@ -16,6 +16,7 @@ relaychain:
     - name: alice
     - name: bob
 
+
 parachains:
 - image: mangatasolutions/mangata-node:dev
   chain:

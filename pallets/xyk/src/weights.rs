@@ -17,9 +17,10 @@ pub trait WeightInfo {
 	fn claim_rewards_all_v2() -> Weight;
 	fn activate_liquidity_v2() -> Weight;
 	fn deactivate_liquidity_v2() -> Weight;
-	fn rewards_migrate_v1_to_v2() -> Weight;
 	fn provide_liquidity_with_conversion() -> Weight;
 	fn compound_rewards() -> Weight;
+	fn multiswap_sell_asset(x: u32, ) -> Weight;
+	fn multiswap_buy_asset(x: u32, ) -> Weight;
 }
 
 // For backwards compatibility and tests
@@ -38,6 +39,32 @@ impl WeightInfo for () {
 		Weight::from_ref_time(274_407_000)
 			.saturating_add(RocksDbWeight::get().reads(12 as u64))
 			.saturating_add(RocksDbWeight::get().writes(9 as u64))
+	}
+	// Storage: AssetRegistry Metadata (r:3 w:0)
+	// Storage: Xyk Pools (r:6 w:4)
+	// Storage: Tokens Accounts (r:12 w:12)
+	// Storage: System Account (r:2 w:2)
+	// Storage: Tokens TotalIssuance (r:1 w:1)
+	fn multiswap_sell_asset(x: u32, ) -> Weight {
+		(Weight::from_ref_time(426_792_000))
+			// Standard Error: 1_264_113
+			.saturating_add((Weight::from_ref_time(182_232_707)).saturating_mul(x as u64))
+			.saturating_add(RocksDbWeight::get().reads((8 as u64).saturating_mul(x as u64)))
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
+			.saturating_add(RocksDbWeight::get().writes((6 as u64).saturating_mul(x as u64)))
+	}
+	// Storage: AssetRegistry Metadata (r:3 w:0)
+	// Storage: Xyk Pools (r:6 w:4)
+	// Storage: Tokens Accounts (r:12 w:12)
+	// Storage: System Account (r:2 w:2)
+	// Storage: Tokens TotalIssuance (r:1 w:1)
+	fn multiswap_buy_asset(x: u32, ) -> Weight {
+		(Weight::from_ref_time(463_541_000))
+			// Standard Error: 873_994
+			.saturating_add((Weight::from_ref_time(183_908_548)).saturating_mul(x as u64))
+			.saturating_add(RocksDbWeight::get().reads((8 as u64).saturating_mul(x as u64)))
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
+			.saturating_add(RocksDbWeight::get().writes((6 as u64).saturating_mul(x as u64)))
 	}
 	fn mint_liquidity() -> Weight {
 		Weight::from_ref_time(270_706_000)
@@ -80,16 +107,9 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(6 as u64))
 			.saturating_add(RocksDbWeight::get().writes(5 as u64))
 	}
-	
-	//TODO retest
-	fn deactivate_liquidity_v2() -> Weight {
-		Weight::from_ref_time(133_607_000)
-			.saturating_add(RocksDbWeight::get().reads(7 as u64))
-			.saturating_add(RocksDbWeight::get().writes(7 as u64))
-	}
 
 	//TODO retest
-	fn rewards_migrate_v1_to_v2() -> Weight {
+	fn deactivate_liquidity_v2() -> Weight {
 		Weight::from_ref_time(133_607_000)
 			.saturating_add(RocksDbWeight::get().reads(7 as u64))
 			.saturating_add(RocksDbWeight::get().writes(7 as u64))

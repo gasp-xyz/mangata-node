@@ -1,6 +1,6 @@
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
-//! DATE: 2023-01-02 (Y/M/D)
-//! HOSTNAME: `6b0c83a231cd`, CPU: `AMD EPYC 7B13`
+//! DATE: 2023-02-13 (Y/M/D)
+//! HOSTNAME: `a98b08ce8d61`, CPU: `AMD EPYC 7B13`
 //!
 //! SHORT-NAME: `block`, LONG-NAME: `BlockExecution`, RUNTIME: `Mangata Development`
 //! WARMUPS: `10`, REPEAT: `100`
@@ -16,34 +16,35 @@
 //   --chain
 //   dev
 //   -lblock_builder=debug
+//   --max-ext-per-block
+//   50000
 //   --base-path
 //   .
 
-use frame_support::{
-	parameter_types,
-	weights::{constants::WEIGHT_PER_NANOS, Weight},
-};
+use sp_core::parameter_types;
+use sp_weights::{constants::WEIGHT_REF_TIME_PER_NANOS, Weight};
 
 parameter_types! {
 	/// Time to execute an empty block.
 	/// Calculated by multiplying the *Average* with `1.0` and adding `0`.
 	///
 	/// Stats nanoseconds:
-	///   Min, Max: 7_965_169, 8_157_708
-	///   Average:  8_012_576
-	///   Median:   8_010_819
-	///   Std-Dev:  26739.71
+	///   Min, Max: 24_538_095, 29_060_874
+	///   Average:  25_125_903
+	///   Median:   24_803_895
+	///   Std-Dev:  864846.94
 	///
 	/// Percentiles nanoseconds:
-	///   99th: 8_120_089
-	///   95th: 8_045_149
-	///   75th: 8_020_858
-	pub const BlockExecutionWeight: Weight = WEIGHT_PER_NANOS.saturating_mul(8_012_576);
+	///   99th: 28_244_704
+	///   95th: 27_189_485
+	///   75th: 25_071_715
+	pub const BlockExecutionWeight: Weight =
+		Weight::from_ref_time(WEIGHT_REF_TIME_PER_NANOS.saturating_mul(25_125_903));
 }
 
 #[cfg(test)]
 mod test_weights {
-	use frame_support::weights::constants;
+	use sp_weights::constants;
 
 	/// Checks that the weight exists and is sane.
 	// NOTE: If this test fails but you are sure that the generated values are fine,
@@ -54,12 +55,12 @@ mod test_weights {
 
 		// At least 100 µs.
 		assert!(
-			w.ref_time() >= 100u64 * constants::WEIGHT_PER_MICROS.ref_time(),
+			w.ref_time() >= 100u64 * constants::WEIGHT_REF_TIME_PER_MICROS,
 			"Weight should be at least 100 µs."
 		);
 		// At most 50 ms.
 		assert!(
-			w.ref_time() <= 50u64 * constants::WEIGHT_PER_MILLIS.ref_time(),
+			w.ref_time() <= 50u64 * constants::WEIGHT_REF_TIME_PER_MILLIS,
 			"Weight should be at most 50 ms."
 		);
 	}

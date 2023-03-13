@@ -134,7 +134,7 @@ use frame_support::{
 	transactional, PalletId,
 };
 use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
-use mangata_types::{Balance, TokenId};
+use mangata_types::{traits::GetMaintenanceStatusTrait, Balance, TokenId};
 use mp_bootstrap::{AssetRegistryApi, PoolCreateApi, RewardsApi};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
@@ -279,6 +279,8 @@ pub mod pallet {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
+		type MaintenanceStatusProvider: GetMaintenanceStatusTrait;
+
 		/// tokens
 		type Currency: MultiTokenCurrencyExtended<Self::AccountId>
 			+ MultiTokenReservableCurrency<Self::AccountId>;
@@ -386,6 +388,9 @@ pub mod pallet {
 		// 	amount: Balance,
 		// ) -> DispatchResult {
 		// 	let sender = ensure_signed(origin)?;
+		//
+		// ensure!(!T::MaintenanceStatusProvider::is_maintenance(), Error::<T>::ProvisioningBlockedByMaintenanceMode);
+		//
 		// 	let (vesting_starting_block, vesting_ending_block_as_balance) =
 		// 		<<T as Config>::VestingProvider>::unlock_tokens(
 		// 			&sender,
@@ -416,6 +421,7 @@ pub mod pallet {
 		/// # Args:
 		///  - `token_id` - id of the token to provision (should be one of the currently bootstraped pair([`ActivePair`]))
 		///  - `amount` - amount of the token to provision
+		#[pallet::call_index(0)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::provision())]
 		#[transactional]
 		pub fn provision(
@@ -424,6 +430,12 @@ pub mod pallet {
 			amount: Balance,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
+
+			ensure!(
+				!T::MaintenanceStatusProvider::is_maintenance(),
+				Error::<T>::ProvisioningBlockedByMaintenanceMode
+			);
+
 			Self::do_provision(&sender, token_id, amount, ProvisionKind::Regular)?;
 			ProvisionAccounts::<T>::insert(&sender, ());
 			Self::deposit_event(Event::Provisioned(token_id, amount));
@@ -432,6 +444,7 @@ pub mod pallet {
 
 		/// Allows for whitelisting accounts, so they can participate in during whitelist phase. The list of
 		/// account is extended with every subsequent call
+		#[pallet::call_index(1)]
 		#[pallet::weight(T::DbWeight::get().writes(1) * (accounts.len() as u64))]
 		#[transactional]
 		pub fn whitelist_accounts(
@@ -500,6 +513,7 @@ pub mod pallet {
 		/// ----------------------------------------------------------------------- <= ------------------
 		/// all previous second token participations + second token participations            1
 		/// ```
+		#[pallet::call_index(2)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::schedule_bootstrap())]
 		#[transactional]
 		pub fn schedule_bootstrap(
@@ -577,6 +591,7 @@ pub mod pallet {
 		}
 
 		/// Used to cancel active bootstrap. Can only be called before bootstrap is actually started
+		#[pallet::call_index(3)]
 		#[pallet::weight(T::DbWeight::get().reads_writes(3, 4).saturating_add(Weight::from_ref_time(1_000_000)))]
 		#[transactional]
 		pub fn cancel_bootstrap(origin: OriginFor<T>) -> DispatchResult {
@@ -603,6 +618,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		#[pallet::call_index(4)]
 		#[pallet::weight(T::DbWeight::get().reads_writes(2, 1).saturating_add(Weight::from_ref_time(1_000_000)))]
 		#[transactional]
 		// can be used to enable or disable automatic pool promotion of liquidity pool. Updates [`PromoteBootstrapPool`]
@@ -624,6 +640,7 @@ pub mod pallet {
 		}
 
 		/// When bootstrap is in [`BootstrapPhase::Finished`] state user can claim his part of liquidity tokens.
+		#[pallet::call_index(5)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::claim_and_activate_liquidity_tokens())]
 		#[transactional]
 		pub fn claim_liquidity_tokens(origin: OriginFor<T>) -> DispatchResult {
@@ -632,6 +649,7 @@ pub mod pallet {
 		}
 
 		/// When bootstrap is in [`BootstrapPhase::Finished`] state user can claim his part of liquidity tokens comparing to `claim_liquidity_tokens` when calling `claim_and_activate_liquidity_tokens` tokens will be automatically activated.
+		#[pallet::call_index(6)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::claim_and_activate_liquidity_tokens())]
 		#[transactional]
 		pub fn claim_and_activate_liquidity_tokens(origin: OriginFor<T>) -> DispatchResult {
@@ -648,6 +666,7 @@ pub mod pallet {
 		///
 		/// **!!! Cleaning up storage is complex operation and pruning all storage items related to particular
 		/// bootstrap might not fit in a single block. As a result tx can be rejected !!!**
+		#[pallet::call_index(7)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::finalize().saturating_add(T::DbWeight::get().reads_writes(1, 1).saturating_mul(Into::<u64>::into(*limit).saturating_add(u64::one()))))]
 		#[transactional]
 		pub fn finalize(origin: OriginFor<T>, mut limit: u32) -> DispatchResult {
@@ -723,6 +742,7 @@ pub mod pallet {
 		/// calling [`Pallet::claim_liquidity_tokens_for_account`] by some other account and calling [`Pallet::claim_liquidity_tokens`] directly by that account is account that will be charged for transaction fee.
 		/// # Args:
 		/// - `other` - account in behalf of which liquidity tokens should be claimed
+		#[pallet::call_index(8)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::claim_and_activate_liquidity_tokens())]
 		#[transactional]
 		pub fn claim_liquidity_tokens_for_account(
@@ -781,6 +801,8 @@ pub mod pallet {
 		/// Bootstrap can only be updated or cancelled
 		/// BootstrapUpdateBuffer blocks or more before bootstrap start
 		TooLateToUpdateBootstrap,
+		/// Bootstrap provisioning blocked by maintenance mode
+		ProvisioningBlockedByMaintenanceMode,
 	}
 
 	#[pallet::event]

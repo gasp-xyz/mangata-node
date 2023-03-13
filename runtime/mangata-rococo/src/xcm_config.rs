@@ -5,7 +5,6 @@ use cumulus_primitives_core::ParaId;
 use frame_support::{
 	match_types, parameter_types,
 	traits::{Everything, Get, Nothing},
-	weights::Weight,
 };
 use frame_system::EnsureRoot;
 use orml_asset_registry::{AssetRegistryTrader, FixedRateAssetRegistryTrader};
@@ -30,7 +29,7 @@ use xcm_executor::{traits::DropAssets, Assets, XcmExecutor};
 
 use super::{
 	constants::{fee::*, parachains},
-	AccountId, AssetMetadataOf, Balance, Convert, ExistentialDeposits, ParachainInfo,
+	AccountId, AssetMetadataOf, Balance, Convert, ExistentialDeposits, Maintenance, ParachainInfo,
 	ParachainSystem, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, TokenId,
 	Tokens, TreasuryAccount, UnknownTokens, XcmpQueue, MGR_TOKEN_ID, ROC_TOKEN_ID,
 };
@@ -335,6 +334,7 @@ pub type XcmOriginToTransactDispatchOrigin = (
 
 impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type MaintenanceStatusProvider = Maintenance;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type ChannelInfo = ParachainSystem;
 	type VersionWrapper = ();
@@ -346,6 +346,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type MaintenanceStatusProvider = Maintenance;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
 }

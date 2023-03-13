@@ -177,16 +177,11 @@ impl orml_tokens::Config for Test {
 	type CurrencyId = TokenId;
 	type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
-	type OnDust = ();
 	type MaxLocks = MaxLocks;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
-	type OnSlash = ();
-	type OnDeposit = ();
-	type OnTransfer = ();
 	type MaxReserves = ();
-	type OnNewTokenAccount = ();
-	type OnKilledTokenAccount = ();
 	type ReserveIdentifier = [u8; 8];
+	type CurrencyHooks = ();
 }
 
 parameter_types! {
@@ -338,9 +333,44 @@ impl AssetMetadataMutationTrait for MockAssetRegister {
 	}
 }
 
+pub struct MockMaintenanceStatusProvider;
+
+lazy_static::lazy_static! {
+	static ref MAINTENANCE_STATUS: Mutex<bool> = {
+		let m: bool = false;
+		Mutex::new(m)
+	};
+}
+
+#[cfg(test)]
+impl MockMaintenanceStatusProvider {
+	pub fn instance() -> &'static Mutex<bool> {
+		&MAINTENANCE_STATUS
+	}
+}
+
+impl MockMaintenanceStatusProvider {
+	pub fn set_maintenance(value: bool) {
+		let mut mutex = Self::instance().lock().unwrap();
+		*mutex = value;
+	}
+}
+
+impl GetMaintenanceStatusTrait for MockMaintenanceStatusProvider {
+	fn is_maintenance() -> bool {
+		let mutex = Self::instance().lock().unwrap();
+		*mutex
+	}
+
+	fn is_upgradable() -> bool {
+		unimplemented!()
+	}
+}
+
 #[cfg(not(feature = "runtime-benchmarks"))]
 impl Config for Test {
 	type RuntimeEvent = RuntimeEvent;
+	type MaintenanceStatusProvider = MockMaintenanceStatusProvider;
 	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
 	type Currency = MultiTokenCurrencyAdapter<Test>;
 	type NativeCurrencyId = NativeCurrencyId;
@@ -363,6 +393,7 @@ impl Config for Test {
 #[cfg(feature = "runtime-benchmarks")]
 impl Config for Test {
 	type RuntimeEvent = RuntimeEvent;
+	type MaintenanceStatusProvider = MockMaintenanceStatusProvider;
 	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
 	type Currency = MultiTokenCurrencyAdapter<Test>;
 	type NativeCurrencyId = NativeCurrencyId;
@@ -452,6 +483,11 @@ impl<T: Config> Pallet<T> {
 			.expect("Token creation failed")
 			.into()
 	}
+
+	pub fn mint_token(token_id: TokenId, who: &T::AccountId, amount: Balance) {
+		<T as Config>::Currency::mint(token_id.into(), who, amount.into())
+			.expect("Token minting failed")
+	}
 }
 
 // This function basically just builds a genesis storage key/value store according to
@@ -459,7 +495,10 @@ impl<T: Config> Pallet<T> {
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut ext: sp_io::TestExternalities =
 		system::GenesisConfig::default().build_storage::<Test>().unwrap().into();
-	ext.execute_with(|| System::set_block_number(1));
+	ext.execute_with(|| {
+		System::set_block_number(1);
+		MockMaintenanceStatusProvider::set_maintenance(false);
+	});
 	ext
 }
 

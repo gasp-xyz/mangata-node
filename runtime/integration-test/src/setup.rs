@@ -12,8 +12,8 @@ pub use kusama_imports::*;
 #[cfg(feature = "with-kusama-runtime")]
 mod kusama_imports {
 	pub use mangata_kusama_runtime::{
-		AccountId, AssetMetadataOf, Balance, Bootstrap, CustomMetadata, Proxy, ProxyType, Runtime,
-		RuntimeCall, RuntimeOrigin, System, TokenId, Tokens, Xyk, XykMetadata, UNIT,
+		AccountId, AssetMetadataOf, Balance, Bootstrap, CustomMetadata, Identity, Proxy, ProxyType,
+		Runtime, RuntimeCall, RuntimeOrigin, System, TokenId, Tokens, Xyk, XykMetadata, UNIT,
 	};
 
 	pub const NATIVE_ASSET_ID: TokenId = mangata_kusama_runtime::MGX_TOKEN_ID;

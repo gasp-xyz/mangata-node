@@ -12,9 +12,9 @@ pallet-balances = { git = "https://github.com/mangata-finance/substrate", branch
 sp-io = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-runtime = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 pallet-proxy = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+pallet-identity = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
 # Polkadot
-#kusama-runtime = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev" }
 pallet-xcm = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev" }
 polkadot-parachain = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev" }
 polkadot-primitives = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev" }

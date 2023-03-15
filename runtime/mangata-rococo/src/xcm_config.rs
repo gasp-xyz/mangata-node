@@ -28,15 +28,11 @@ use xcm_builder::{
 use xcm_executor::{traits::DropAssets, Assets, XcmExecutor};
 
 use super::{
-	constants::{fee::*, parachains},
-	AccountId, AssetMetadataOf, Balance, Convert, ExistentialDeposits, Maintenance, ParachainInfo,
-	ParachainSystem, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, TokenId,
-	Tokens, TreasuryAccount, UnknownTokens, XcmpQueue, MGR_TOKEN_ID, ROC_TOKEN_ID,
+	constants::fee::*, AccountId, AssetMetadataOf, Balance, Convert, ExistentialDeposits,
+	Maintenance, ParachainInfo, ParachainSystem, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent,
+	RuntimeOrigin, TokenId, Tokens, TreasuryAccount, UnknownTokens, XcmpQueue, MGR_TOKEN_ID,
+	ROC_TOKEN_ID,
 };
-
-// Make the WASM binary available.
-#[cfg(feature = "std")]
-include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 parameter_types! {
 	pub RocLocation: MultiLocation = MultiLocation::parent();

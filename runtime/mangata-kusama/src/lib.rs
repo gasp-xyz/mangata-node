@@ -591,7 +591,9 @@ impl Contains<RuntimeCall> for DisallowedInBatch {
 			RuntimeCall::Xyk(pallet_xyk::Call::sell_asset { .. }) |
 			RuntimeCall::Xyk(pallet_xyk::Call::buy_asset { .. }) |
 			RuntimeCall::Xyk(pallet_xyk::Call::multiswap_sell_asset { .. }) |
-			RuntimeCall::Xyk(pallet_xyk::Call::multiswap_buy_asset { .. }) => true,
+			RuntimeCall::Xyk(pallet_xyk::Call::multiswap_buy_asset { .. }) |
+			RuntimeCall::Xyk(pallet_xyk::Call::compound_rewards { .. }) |
+			RuntimeCall::Xyk(pallet_xyk::Call::provide_liquidity_with_conversion { .. }) => true,
 			_ => false,
 		}
 	}

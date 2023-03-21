@@ -85,6 +85,10 @@ jobs:
         if:  ${{  !contains(env.PARACHAIN_DOCKER_IMAGE, 'fast') && matrix.fast == true }}
         run: echo "PARACHAIN_DOCKER_IMAGE=${{ env.PARACHAIN_DOCKER_IMAGE }}-fast" >> $GITHUB_ENV
       
+      - name: Adapt if fast runtime
+        if:  ${{  !contains(env.PARACHAIN_DOCKER_IMAGE, 'fast') && matrix.fast == true }}
+        run: echo "PARACHAIN_DOCKER_IMAGE=${{ env.PARACHAIN_DOCKER_IMAGE }}-fast" >> $GITHUB_ENV
+      
       - name: Download node Docker image
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && inputs.skipBuild != 'true' }}
         run: docker pull ${{ env.PARACHAIN_DOCKER_IMAGE }}

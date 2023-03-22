@@ -9108,6 +9108,8 @@ dependencies = [
  "env_logger 0.9.3",
  "frame-support",
  "frame-system",
+ "kusama-runtime",
+ "kusama-runtime-constants",
  "log",
  "mangata-kusama-runtime",
  "mangata-types",
@@ -13469,7 +13471,7 @@ dependencies = [
 [[package]]
 name = "xcm-emulator"
 version = "0.1.0"
-source = "git+https://github.com/shaunxw/xcm-simulator?rev=6c02911a3eeb04c342e4eb273d2ffbedd45dabff#6c02911a3eeb04c342e4eb273d2ffbedd45dabff"
+source = "git+https://github.com/shaunxw/xcm-simulator?rev=64d8822f6ebc1af50092677a80a9bdb74860e9a9#64d8822f6ebc1af50092677a80a9bdb74860e9a9"
 dependencies = [
  "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
@@ -13485,6 +13487,7 @@ dependencies = [
  "polkadot-primitives",
  "polkadot-runtime-parachains",
  "quote",
+ "sp-arithmetic",
  "sp-io",
  "sp-std",
  "xcm",

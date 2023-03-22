@@ -6775,7 +6775,7 @@ dependencies = [
 [[package]]
 name = "parachain-staking"
 version = "3.0.0"
-source = "git+https://github.com/mangata-finance//moonbeam?branch=mangata-dev#7388e3677b8e58843630515e503d9c0ab52f5c01"
+source = "git+https://github.com/mangata-finance//moonbeam?tag=v0.28.2#9fbefa7da975e902288eb284e370bf6011650107"
 dependencies = [
  "frame-benchmarking",
  "frame-support",

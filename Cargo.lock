@@ -4465,6 +4465,7 @@ dependencies = [
  "pallet-collective-mangata",
  "pallet-crowdloan-rewards",
  "pallet-fee-lock",
+ "pallet-identity",
  "pallet-issuance",
  "pallet-maintenance",
  "pallet-multipurpose-liquidity",
@@ -4651,6 +4652,7 @@ dependencies = [
  "pallet-collective-mangata",
  "pallet-crowdloan-rewards",
  "pallet-fee-lock",
+ "pallet-identity",
  "pallet-issuance",
  "pallet-maintenance",
  "pallet-multipurpose-liquidity",
@@ -6553,7 +6555,7 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment-mangata"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#5e9b877075d8f8dc196b0ede1f4dbf97427cdde8"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#0aa4ef874ca053c23c402408330b93fbe7052bd3"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -6569,7 +6571,7 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment-mangata-rpc"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#5e9b877075d8f8dc196b0ede1f4dbf97427cdde8"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#0aa4ef874ca053c23c402408330b93fbe7052bd3"
 dependencies = [
  "jsonrpsee",
  "pallet-transaction-payment-mangata-rpc-runtime-api",
@@ -6585,7 +6587,7 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment-mangata-rpc-runtime-api"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#5e9b877075d8f8dc196b0ede1f4dbf97427cdde8"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#0aa4ef874ca053c23c402408330b93fbe7052bd3"
 dependencies = [
  "pallet-transaction-payment-mangata",
  "parity-scale-codec",
@@ -9115,6 +9117,8 @@ dependencies = [
  "env_logger 0.9.3",
  "frame-support",
  "frame-system",
+ "kusama-runtime",
+ "kusama-runtime-constants",
  "log",
  "mangata-kusama-runtime",
  "mangata-support",
@@ -9128,6 +9132,7 @@ dependencies = [
  "orml-xtokens",
  "pallet-balances",
  "pallet-bootstrap",
+ "pallet-identity",
  "pallet-issuance",
  "pallet-multipurpose-liquidity",
  "pallet-proxy",

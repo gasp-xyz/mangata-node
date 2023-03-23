@@ -73,6 +73,7 @@ pallet-treasury = { git = "https://github.com/mangata-finance/substrate", defaul
 pallet-collective-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-vesting-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-proxy = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+pallet-identity = { git = "https://github.com/mangata-finance//substrate", default-features = false, branch = "mangata-dev" }
 
 # Open-Runtime-Module-Library Dependencies
 orml-tokens = { default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
@@ -185,6 +186,7 @@ std = [
 	"mangata-support/std",
 	"pallet-vesting-mangata-rpc-runtime-api/std",
 	"pallet-fee-lock/std",
+	"pallet-identity/std",
 	"pallet-maintenance/std",
 ]
 
@@ -227,6 +229,7 @@ try-runtime = [
 	"pallet-utility-mangata/try-runtime",
 	"pallet-proxy/try-runtime",
 	"pallet-fee-lock/try-runtime",
+	"pallet-identity/try-runtime",
 	"pallet-maintenance/try-runtime"
 ]
 
@@ -264,4 +267,5 @@ runtime-benchmarks = [
 	"pallet-multipurpose-liquidity/runtime-benchmarks",
 	"pallet-proxy/runtime-benchmarks",
 	"pallet-fee-lock/runtime-benchmarks",
+	"pallet-identity/runtime-benchmarks",
 ]

@@ -16,7 +16,8 @@ jobs:
         id: set_vars
         run: |
           RELEASE_NAME=${{ github.event.release.name }}
-          echo "RELEASE_VERSION=${RELEASE_NAME#v}" >> $GITHUB_OUTPUT
+          echo "RELEASE_VERSION=${RELEASE_NAME}" >> $GITHUB_OUTPUT
+
   publish:
     needs: [init]
     runs-on: ubuntu-latest
@@ -40,7 +41,7 @@ jobs:
           flavor: |
             latest=false
 
-      - name: Tag and push image [rococo]
+      - name: Tag and push image
         uses: akhilerm/tag-push-action@v2.0.0
         with:
           src: docker.io/mangatasolutions/mangata-node:release-${{ needs.init.outputs.RELEASE_VERSION }}

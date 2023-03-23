@@ -4,7 +4,8 @@ timeout = 1000
 
 [relaychain]
 default_command = "../parity/polkadot/target/release/polkadot"
-chain = "westend-local"
+# chain = "westend-local"
+chain = "rococo-local"
 
     [[relaychain.nodes]]
     name = "alice"
@@ -24,6 +25,6 @@ chain = "mangata-rococo-local-testnet"
     ws_port = 9946
     rpc_port = 8866
 
-    # [[parachains.collators]]
-    # name = "bob"
-    # command = "./target/release/mangata-node"
+    [[parachains.collators]]
+    name = "bob"
+    command = "./target/release/mangata-node"

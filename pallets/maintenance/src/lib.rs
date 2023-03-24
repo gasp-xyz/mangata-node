@@ -204,7 +204,6 @@ pub mod pallet {
 
 			MaintenanceStatus::<T>::put(maintenance_status);
 
-			Pallet::<T>::deposit_event(Event::UpgradabilityInMaintenanceModeSwitchedOff(caller));
 
 			Ok(().into())
 		}

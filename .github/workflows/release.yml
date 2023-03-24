@@ -16,7 +16,7 @@ jobs:
         id: set_vars
         run: |
           RELEASE_NAME=${{ github.event.release.name }}
-          echo "RELEASE_VERSION=${RELEASE_NAME#v}" >> $GITHUB_OUTPUT
+          echo "RELEASE_VERSION=${RELEASE_NAME}" >> $GITHUB_OUTPUT
 
   publish:
     needs: [init]

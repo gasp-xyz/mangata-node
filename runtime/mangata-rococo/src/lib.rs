@@ -163,11 +163,11 @@ impl_opaque_keys! {
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
-	authoring_version: 13,
-	spec_version: 13,
+	authoring_version: 14,
+	spec_version: 14,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 13,
+	transaction_version: 14,
 	state_version: 0,
 };
 
@@ -178,10 +178,10 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("mangata-parachain"),
 
 	authoring_version: 14,
-	spec_version: 2800,
+	spec_version: 002802,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 2800,
+	transaction_version: 002802,
 	state_version: 0,
 };
 
@@ -233,10 +233,10 @@ const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
 /// NOTE: reduced by half comparing to origin impl as we want to fill block only up to 50%
 /// so there is room for new extrinsics in the next block
-// const MAXIMUM_BLOCK_WEIGHT: Weight =
-// 	WEIGHT_PER_SECOND.saturating_div(4).set_proof_size((cumulus_primitives_core::relay_chain::v2::MAX_POV_SIZE as u64).saturating_div(2));
-const MAXIMUM_BLOCK_WEIGHT: Weight =
-	Weight::from_parts(WEIGHT_REF_TIME_PER_SECOND.saturating_mul(2), u64::MAX);
+const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
+	WEIGHT_REF_TIME_PER_SECOND.saturating_div(4),
+	cumulus_primitives_core::relay_chain::v2::MAX_POV_SIZE as u64,
+);
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
@@ -1360,7 +1360,7 @@ parameter_types! {
 	/// Minimum collators selected per round, default at genesis and minimum forever after
 	pub const MinSelectedCandidates: u32 = 25;
 	/// Maximum collator candidates allowed
-	pub const MaxCollatorCandidates: u32 = 35;
+	pub const MaxCollatorCandidates: u32 = 50;
 	/// Maximum delegators allowed per candidate
 	pub const MaxTotalDelegatorsPerCandidate: u32 = 25;
 	/// Maximum delegators counted per candidate
@@ -1372,7 +1372,7 @@ parameter_types! {
 	/// Minimum stake required to become a collator
 	pub const MinCollatorStk: u128 = 10 * DOLLARS;
 	/// Minimum stake required to be reserved to be a candidate
-	pub const MinCandidateStk: u128 = 1 * DOLLARS;
+	pub const MinCandidateStk: u128 = 1_500_000 * DOLLARS;
 	/// Minimum stake required to be reserved to be a delegator
 	pub const MinDelegatorStk: u128 = 1 * CENTS;
 }

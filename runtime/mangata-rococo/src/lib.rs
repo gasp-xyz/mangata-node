@@ -1372,7 +1372,13 @@ parameter_types! {
 	/// Minimum stake required to become a collator
 	pub const MinCollatorStk: u128 = 10 * DOLLARS;
 	/// Minimum stake required to be reserved to be a candidate
-	pub const MinCandidateStk: u128 = 1_500_000 * DOLLARS;
+	pub const MinCandidateStk: u128 = if cfg!(feature = "runtime-benchmarks") {
+		// For benchmarking
+		1 * DOLLARS
+	} else {
+		// ACTUAL
+		1_500_000 * DOLLARS
+	};
 	/// Minimum stake required to be reserved to be a delegator
 	pub const MinDelegatorStk: u128 = 1 * CENTS;
 }

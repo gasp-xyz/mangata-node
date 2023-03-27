@@ -392,9 +392,9 @@ fn promote_pool_api_works() {
 // fn mock_use_demo() {
 // 	new_test_ext().execute_with(|| {
 // 		// sets to some value
-// 		mock::MockActivedPoolQueryApi::instance().lock().unwrap().replace(1_u128);
+// 		mock::MockActivatedPoolQueryApi::instance().lock().unwrap().replace(1_u128);
 
 // 		// sets to none
-// 		mock::MockActivedPoolQueryApi::instance().lock().unwrap().take();
+// 		mock::MockActivatedPoolQueryApi::instance().lock().unwrap().take();
 // 	});
 // }

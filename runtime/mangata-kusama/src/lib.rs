@@ -66,12 +66,13 @@ pub use xcm::{latest::prelude::*, VersionedMultiLocation};
 
 pub use constants::{fee::*, parachains::*};
 pub use currency::*;
+use mangata_support::traits::{
+	AssetRegistryApi, FeeLockTriggerTrait, PreValidateSwaps, ProofOfStakeRewardsApi,
+};
 pub use mangata_types::{
 	assets::{CustomMetadata, XcmMetadata, XykMetadata},
 	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
 };
-use mp_bootstrap::AssetRegistryApi;
-use mp_traits::{FeeLockTriggerTrait, PreValidateSwaps};
 pub use pallet_issuance::{IssuanceInfo, PoolPromoteApi};
 pub use pallet_sudo_origin;
 pub use pallet_xyk;
@@ -89,6 +90,7 @@ pub const KAR_TOKEN_ID: TokenId = 6;
 pub const TUR_TOKEN_ID: TokenId = 7;
 
 pub mod constants;
+mod migration;
 mod weights;
 pub mod xcm_config;
 
@@ -127,7 +129,8 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	(),
+	(migration::XykRefactorMigration),
+	// ()
 >;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
@@ -503,18 +506,28 @@ impl pallet_xyk::Config for Runtime {
 	type NativeCurrencyId = MgxTokenId;
 	type TreasuryPalletId = TreasuryPalletId;
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
-	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
-	type PoolPromoteApi = Issuance;
 	type PoolFeePercentage = frame_support::traits::ConstU128<20>;
 	type TreasuryFeePercentage = frame_support::traits::ConstU128<5>;
 	type BuyAndBurnFeePercentage = frame_support::traits::ConstU128<5>;
-	type RewardsDistributionPeriod = SessionLenghtOf<Runtime>;
+	type XykRewards = ProofOfStake;
 	type VestingProvider = Vesting;
 	type DisallowedPools = Bootstrap;
 	type DisabledTokens = (TestTokensFilter, AssetRegisterFilter);
 	type AssetMetadataMutation = AssetMetadataMutation;
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
 	type RewardsMigrateAccount = RewardsMigrationAccountProvider<Self>;
+}
+
+impl pallet_proof_of_stake::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type ActivationReservesProvider = MultiPurposeLiquidity;
+	type NativeCurrencyId = MgxTokenId;
+	type Xyk = Xyk;
+	type PoolPromoteApi = Issuance;
+	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
+	type RewardsDistributionPeriod = SessionLenghtOf<Runtime>;
+	type WeightInfo = weights::pallet_proof_of_stake_weights::ModuleWeight<Runtime>;
 }
 
 pub struct EnableAssetPoolApi;
@@ -565,7 +578,7 @@ impl pallet_bootstrap::Config for Runtime {
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type VestingProvider = Vesting;
 	type TreasuryPalletId = TreasuryPalletId;
-	type RewardsApi = Xyk;
+	type RewardsApi = ProofOfStake;
 	type WeightInfo = weights::pallet_bootstrap_weights::ModuleWeight<Runtime>;
 	type AssetRegistryApi = EnableAssetPoolApi;
 }
@@ -1367,7 +1380,13 @@ parameter_types! {
 	/// Minimum stake required to become a collator
 	pub const MinCollatorStk: u128 = 10 * DOLLARS;
 	/// Minimum stake required to be reserved to be a candidate
-	pub const MinCandidateStk: u128 = 1_500_000 * DOLLARS;
+	pub const MinCandidateStk: u128 = if cfg!(feature = "runtime-benchmarks") {
+		// For benchmarking
+		1 * DOLLARS
+	} else {
+		// ACTUAL
+		1_500_000 * DOLLARS
+	};
 	/// Minimum stake required to be reserved to be a delegator
 	pub const MinDelegatorStk: u128 = 1 * CENTS;
 }
@@ -1405,7 +1424,10 @@ impl parachain_staking::Config for Runtime {
 	type WeightInfo = weights::parachain_staking_weights::ModuleWeight<Runtime>;
 }
 
-impl parachain_staking::StakingBenchmarkConfig for Runtime {}
+impl parachain_staking::StakingBenchmarkConfig for Runtime {
+	#[cfg(feature = "runtime-benchmarks")]
+	type PoolCreateApi = Xyk;
+}
 
 impl pallet_xyk::XykBenchmarkingConfig for Runtime {}
 
@@ -1448,7 +1470,7 @@ impl pallet_issuance::Config for Runtime {
 	type TGEReleaseBegin = TGEReleaseBegin;
 	type VestingProvider = Vesting;
 	type WeightInfo = weights::pallet_issuance_weights::ModuleWeight<Runtime>;
-	type ActivedPoolQueryApiType = Xyk;
+	type ActivatedPoolQueryApiType = ProofOfStake;
 }
 
 parameter_types! {
@@ -1711,9 +1733,10 @@ construct_runtime!(
 
 		// Xyk stuff
 		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>} = 13,
+		ProofOfStake: pallet_proof_of_stake::{Pallet, Call, Storage, Event<T>} = 14,
 
 		// Fee Locks
-		FeeLock: pallet_fee_lock::{Pallet, Storage, Call, Event<T>, Config<T>} = 14,
+		FeeLock: pallet_fee_lock::{Pallet, Storage, Call, Event<T>, Config<T>} = 15,
 
 		// Vesting
 		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>} = 17,
@@ -1951,7 +1974,7 @@ impl_runtime_apis! {
 			user: AccountId,
 			liquidity_asset_id: TokenId,
 		) -> XYKRpcResult<Balance> {
-			match Xyk::calculate_rewards_amount_v2(user, liquidity_asset_id){
+			match ProofOfStake::calculate_rewards_amount_v2(user, liquidity_asset_id){
 				Ok(claimable_rewards) => XYKRpcResult{
 					price:claimable_rewards
 				},

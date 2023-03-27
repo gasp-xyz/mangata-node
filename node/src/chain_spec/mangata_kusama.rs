@@ -5,7 +5,7 @@ use hex::FromHex;
 
 use mangata_kusama_runtime::{
 	constants::parachains, ksm_per_second, AccountId, AssetMetadataOf, AuraId, CustomMetadata,
-	GeneralKey, MinCandidateStk, MultiLocation, Parachain, Signature, XcmMetadata, KAR_TOKEN_ID,
+	GeneralKey, MultiLocation, Parachain, Signature, XcmMetadata, KAR_TOKEN_ID,
 	KSM_TOKEN_ID, TUR_TOKEN_ID, X1, X2,
 };
 use sc_service::ChainType;
@@ -162,15 +162,15 @@ pub fn mangata_kusama_prod_config() -> ChainSpec {
 						// Id of MGA token,
 						0u32,
 						// How much mangata they pool
-						10 * MinCandidateStk::get(),
+						100_000_000__000_000_000_000_000_000_u128,
 						// Id of the dummy token,
 						2u32,
 						// How many dummy tokens they pool,
-						20 * MinCandidateStk::get(),
+						200_000_000__000_000_000_000_000_000_u128,
 						// Id of the liquidity token that is generated
 						3u32,
 						// How many liquidity tokens they stake,
-						10 * MinCandidateStk::get(),
+						100_000_000__000_000_000_000_000_000_u128,
 					),
 					(
 						// Who gets to stake initially
@@ -178,15 +178,15 @@ pub fn mangata_kusama_prod_config() -> ChainSpec {
 						// Id of MGA token,
 						0u32,
 						// How much mangata they pool
-						8 * MinCandidateStk::get(),
+						80_000_000__000_000_000_000_000_000_u128,
 						// Id of the dummy token,
 						2u32,
 						// How many dummy tokens they pool,
-						20 * MinCandidateStk::get(),
+						200_000_000__000_000_000_000_000_000_u128,
 						// Id of the liquidity token that is generated
 						3u32,
 						// How many liquidity tokens they stake,
-						5 * MinCandidateStk::get(),
+						50_000_000__000_000_000_000_000_000_u128,
 					),
 				],
 				vec![
@@ -311,15 +311,15 @@ pub fn mangata_kusama_local_config() -> ChainSpec {
 						// Id of MGA token,
 						0u32,
 						// How much mangata they pool
-						10 * MinCandidateStk::get(),
+						100_000_000__000_000_000_000_000_000_u128,
 						// Id of the dummy token,
 						2u32,
 						// How many dummy tokens they pool,
-						20 * MinCandidateStk::get(),
+						200_000_000__000_000_000_000_000_000_u128,
 						// Id of the liquidity token that is generated
 						3u32,
 						// How many liquidity tokens they stake,
-						10 * MinCandidateStk::get(),
+						100_000_000__000_000_000_000_000_000_u128,
 					),
 					(
 						// Who gets to stake initially
@@ -327,15 +327,15 @@ pub fn mangata_kusama_local_config() -> ChainSpec {
 						// Id of MGA token,
 						0u32,
 						// How much mangata they pool
-						8 * MinCandidateStk::get(),
+						80_000_000__000_000_000_000_000_000_u128,
 						// Id of the dummy token,
 						2u32,
 						// How many dummy tokens they pool,
-						20 * MinCandidateStk::get(),
+						200_000_000__000_000_000_000_000_000_u128,
 						// Id of the liquidity token that is generated
 						3u32,
 						// How many liquidity tokens they stake,
-						5 * MinCandidateStk::get(),
+						50_000_000__000_000_000_000_000_000_u128,
 					),
 				],
 				vec![

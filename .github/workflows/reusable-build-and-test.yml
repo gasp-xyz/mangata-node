@@ -265,7 +265,7 @@ jobs:
         run: |
           mkdir ./benchmarks && target/release/mangata-node benchmark pallet \
           -l=info,xyk=error,collective-mangata=warn,bootstrap=warn \
-          --chain dev \
+          --chain kusama \
           --execution wasm \
           --wasm-execution compiled \
           --pallet '*' \
@@ -277,7 +277,7 @@ jobs:
 
       - name: Run block & extrinsic overhead benchmarks
         run: |
-          target/release/mangata-node benchmark overhead --execution native --chain dev -lblock_builder=debug --max-ext-per-block 50000 --base-path .
+          target/release/mangata-node benchmark overhead --execution native --chain kusama-local -lblock_builder=debug --max-ext-per-block 50000 --base-path .
           cp block_weights.rs extrinsic_weights.rs ./benchmarks
 
       - name: Fix permissions on self-hosted runner

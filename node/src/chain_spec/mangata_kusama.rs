@@ -76,7 +76,7 @@ pub fn mangata_session_keys(keys: AuraId) -> mangata_kusama_runtime::SessionKeys
 	mangata_kusama_runtime::SessionKeys { aura: keys }
 }
 
-pub fn kusama_mainnet_config() -> ChainSpec {
+pub fn mangata_kusama_prod_config() -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
 	properties.insert("tokenSymbol".into(), "MGX".into());
@@ -240,7 +240,7 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 		// Properties
 		Some(properties),
 		Extensions {
-			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
+			relay_chain: "kusama-local".into(), // You MUST set this to the correct network!
 			para_id: parachains::mangata::ID,
 		},
 	)
@@ -411,9 +411,9 @@ pub fn local_config() -> ChainSpec {
 
 	ChainSpec::from_genesis(
 		// Name
-		"Mangata Local",
+		"Mangata Kusama Local",
 		// ID
-		"mangata_local",
+		"mangata_kusama_local",
 		ChainType::Local,
 		move || {
 			mangata_genesis(
@@ -431,9 +431,7 @@ pub fn local_config() -> ChainSpec {
 				// Initial relay account
 				get_account_id_from_seed::<sr25519::Public>("Relay"),
 				// Sudo account
-				"0xec00ad0ec6eeb271a9689888f644d9262016a26a25314ff4ff5d756404c44112"
-					.parse()
-					.unwrap(),
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				// Tokens endowment
 				vec![
 					// MGA
@@ -444,13 +442,6 @@ pub fn local_config() -> ChainSpec {
 					),
 					// ETH
 					(1u32, 0u128, get_account_id_from_seed::<sr25519::Public>("Alice")),
-					(
-						0u32,
-						400_000_000__000_000_000_000_000_000u128,
-						"0xec00ad0ec6eeb271a9689888f644d9262016a26a25314ff4ff5d756404c44112"
-							.parse()
-							.unwrap(),
-					),
 					(
 						0u32,
 						100_000_000__000_000_000_000_000_000u128,
@@ -606,14 +597,14 @@ pub fn local_config() -> ChainSpec {
 		// Telemetry
 		None,
 		// Protocol ID
-		Some("mangata-local"),
+		Some("mangata-kusama-local"),
 		// ForkId
 		None,
 		// Properties
 		Some(properties),
 		// Extensions
 		Extensions {
-			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
+			relay_chain: "kusama-local".into(), // You MUST set this to the correct network!
 			para_id: parachains::mangata::ID,
 		},
 	)
@@ -715,6 +706,12 @@ fn mangata_genesis(
 					)
 				})
 				.collect(),
+		},
+		fee_lock: mangata_kusama_runtime::FeeLockConfig {
+			period_length: Some(10),
+			fee_lock_amount: Some(50__000_000_000_000_000_000u128),
+			swap_value_threshold: Some(1000__000_000_000_000_000_000u128),
+			whitelisted_tokens: Default::default(),
 		},
 		council: Default::default(),
 		sudo: mangata_kusama_runtime::SudoConfig {

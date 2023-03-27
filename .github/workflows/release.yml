@@ -32,12 +32,12 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Docker meta [kusama]
-        id: meta_kusama
+      - name: Docker meta
+        id: meta
         uses: docker/metadata-action@v4.1.1
         with:
           images: docker.io/mangatasolutions/mangata-node
-          tags: type=semver,prefix=kusama-,pattern={{ version }}
+          tags: type=semver,pattern={{ version }}
           flavor: |
             latest=false
 

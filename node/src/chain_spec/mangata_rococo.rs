@@ -62,7 +62,7 @@ pub fn mangata_session_keys(keys: AuraId) -> mangata_rococo_runtime::SessionKeys
 	mangata_rococo_runtime::SessionKeys { aura: keys }
 }
 
-pub fn public_testnet_config() -> ChainSpec {
+pub fn mangata_rococo_prod_config() -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
 	properties.insert("tokenSymbol".into(), "MGAT".into());
@@ -220,7 +220,7 @@ pub fn public_testnet_config() -> ChainSpec {
 		Vec::new(),
 		None,
 		// Protocol ID
-		Some("mangata-public-testnet"),
+		Some("mangata-rococo-testnet"),
 		// ForkId
 		None,
 		// Properties
@@ -536,6 +536,12 @@ fn mangata_genesis(
 					)
 				})
 				.collect(),
+		},
+		fee_lock: mangata_rococo_runtime::FeeLockConfig {
+			period_length: Some(10),
+			fee_lock_amount: Some(50__000_000_000_000_000_000u128),
+			swap_value_threshold: Some(1000__000_000_000_000_000_000u128),
+			whitelisted_tokens: Default::default(),
 		},
 		council: Default::default(),
 		sudo: mangata_rococo_runtime::SudoConfig {

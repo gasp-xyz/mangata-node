@@ -8,6 +8,7 @@ use sp_std::convert::TryFrom;
 use sp_runtime::{
 	testing::Header,
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
+	Permill,
 };
 
 use crate as pallet_multipurpose_liquidity;
@@ -251,45 +252,14 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for MockXyk<T> {
 		unimplemented!()
 	}
 
-	fn update_pool_promotion(
-		liquidity_token_id: TokenId,
-		liquidity_mining_issuance_weight: Option<u8>,
-	) -> DispatchResult {
-		unimplemented!()
-	}
-
 	fn is_liquidity_token(liquidity_asset_id: TokenId) -> bool {
 		true
 	}
 
-	fn claim_rewards_v2(
+	fn do_compound_rewards(
 		sender: T::AccountId,
-		liquidity_token_id: Self::CurrencyId,
-		amount: Self::Balance,
-	) -> DispatchResult {
-		unimplemented!()
-	}
-
-	fn claim_rewards_all_v2(
-		sender: T::AccountId,
-		liquidity_token_id: Self::CurrencyId,
-	) -> Result<Self::Balance, DispatchError> {
-		unimplemented!()
-	}
-
-	fn activate_liquidity_v2(
-		sender: T::AccountId,
-		liquidity_token_id: Self::CurrencyId,
-		amount: Self::Balance,
-		use_balance_from: Option<ActivateKind>,
-	) -> DispatchResult {
-		unimplemented!()
-	}
-
-	fn deactivate_liquidity_v2(
-		sender: T::AccountId,
-		liquidity_token_id: Self::CurrencyId,
-		amount: Self::Balance,
+		liquidity_asset_id: TokenId,
+		amount_permille: Permill,
 	) -> DispatchResult {
 		unimplemented!()
 	}

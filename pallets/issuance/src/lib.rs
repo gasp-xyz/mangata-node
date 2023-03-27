@@ -9,6 +9,7 @@ use frame_support::{
 	codec::{Decode, Encode},
 	traits::{tokens::currency::MultiTokenCurrency, Get, Imbalance},
 };
+use mangata_support::traits::{ComputeIssuance, GetIssuance};
 use mangata_types::{Balance, TokenId};
 use orml_tokens::MultiTokenCurrencyExtended;
 use pallet_vesting_mangata::MultiTokenVestingSchedule;
@@ -105,7 +106,7 @@ impl WeightInfo for () {
 	}
 }
 
-pub trait ActivedPoolQueryApi {
+pub trait ActivatedPoolQueryApi {
 	fn get_pool_activate_amount(liquidity_token_id: TokenId) -> Option<Balance>;
 }
 
@@ -177,7 +178,7 @@ pub mod pallet {
 		>;
 		type WeightInfo: WeightInfo;
 
-		type ActivedPoolQueryApiType: ActivedPoolQueryApi;
+		type ActivatedPoolQueryApiType: ActivatedPoolQueryApi;
 	}
 
 	#[pallet::storage]
@@ -333,11 +334,6 @@ pub mod pallet {
 	}
 }
 
-pub trait ComputeIssuance {
-	fn initialize() {}
-	fn compute_issuance(n: u32);
-}
-
 impl<T: Config> ComputeIssuance for Pallet<T> {
 	fn initialize() {
 		IsTGEFinalized::<T>::put(true);
@@ -412,12 +408,6 @@ impl<T: Config> ProvideTotalCrowdloanRewardAllocation for Pallet<T> {
 		IssuanceConfigStore::<T>::get()
 			.map(|issuance_config| issuance_config.total_crowdloan_allocation)
 	}
-}
-
-pub trait GetIssuance {
-	fn get_all_issuance(n: u32) -> Option<(Balance, Balance)>;
-	fn get_liquidity_mining_issuance(n: u32) -> Option<Balance>;
-	fn get_staking_issuance(n: u32) -> Option<Balance>;
 }
 
 impl<T: Config> GetIssuance for Pallet<T> {
@@ -540,7 +530,7 @@ impl<T: Config> Pallet<T> {
 				.clone()
 				.into_iter()
 				.filter_map(|(token_id, info)| {
-					match T::ActivedPoolQueryApiType::get_pool_activate_amount(token_id) {
+					match T::ActivatedPoolQueryApiType::get_pool_activate_amount(token_id) {
 						Some(activated_amount) if !activated_amount.is_zero() =>
 							Some((token_id, info.weight, info.rewards, activated_amount)),
 						_ => None,

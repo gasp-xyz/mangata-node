@@ -15,6 +15,7 @@ pub mod pallet_crowdloan_rewards;
 pub mod pallet_fee_lock;
 pub mod pallet_issuance;
 pub mod pallet_multipurpose_liquidity;
+pub mod pallet_proof_of_stake;
 pub mod pallet_session;
 pub mod pallet_timestamp;
 pub mod pallet_treasury;
@@ -30,6 +31,7 @@ pub use self::{
 	pallet_crowdloan_rewards as pallet_crowdloan_rewards_weights,
 	pallet_fee_lock as pallet_fee_lock_weights, pallet_issuance as pallet_issuance_weights,
 	pallet_multipurpose_liquidity as pallet_multipurpose_liquidity_weights,
+	pallet_proof_of_stake as pallet_proof_of_stake_weights,
 	pallet_session as pallet_session_weights, pallet_timestamp as pallet_timestamp_weights,
 	pallet_treasury as pallet_treasury_weights,
 	pallet_utility_mangata as pallet_utility_mangata_weights,

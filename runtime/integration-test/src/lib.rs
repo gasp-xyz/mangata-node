@@ -11,3 +11,9 @@ mod bootstrap;
 
 #[cfg(any(feature = "with-kusama-runtime",))]
 mod proxy;
+
+#[cfg(any(feature = "with-kusama-runtime",))]
+mod identity;
+
+#[cfg(any(feature = "with-kusama-runtime",))]
+mod xcm;

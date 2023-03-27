@@ -1,7 +1,7 @@
 enableLocalRelaychain: true
 enableParachainRegisterSidecar: true
 relaychainBootnodeAddr: /dns/relaychain-alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
-nodeChain: mangata-rococo-local-testnet
+nodeChain: rococo-local
 
 node01:
   accountKeySeed: '0xe5be9a5092b81bca64be81d212e7f2f9eba183bb7a90954f7b76361f6edb5c0a'

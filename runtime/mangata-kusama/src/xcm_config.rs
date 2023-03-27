@@ -2,9 +2,10 @@
 
 use codec::{Decode, Encode};
 use cumulus_primitives_core::ParaId;
-use frame_support::{
+pub use frame_support::{
 	match_types, parameter_types,
 	traits::{Everything, Get, Nothing},
+	weights::Weight,
 };
 use frame_system::EnsureRoot;
 use orml_asset_registry::{AssetRegistryTrader, FixedRateAssetRegistryTrader};
@@ -28,15 +29,11 @@ use xcm_builder::{
 use xcm_executor::{traits::DropAssets, Assets, XcmExecutor};
 
 use super::{
-	constants::{fee::*, parachains},
-	AccountId, AssetMetadataOf, Balance, Convert, ExistentialDeposits, ParachainInfo,
-	ParachainSystem, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, TokenId,
-	Tokens, TreasuryAccount, UnknownTokens, XcmpQueue, KSM_TOKEN_ID, MGX_TOKEN_ID,
+	constants::fee::*, AccountId, AssetMetadataOf, Balance, Convert, ExistentialDeposits,
+	Maintenance, ParachainInfo, ParachainSystem, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent,
+	RuntimeOrigin, TokenId, Tokens, TreasuryAccount, UnknownTokens, XcmpQueue, KSM_TOKEN_ID,
+	MGX_TOKEN_ID,
 };
-
-// Make the WASM binary available.
-#[cfg(feature = "std")]
-include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 parameter_types! {
 	pub KsmLocation: MultiLocation = MultiLocation::parent();
@@ -128,101 +125,6 @@ parameter_types! {
 		).into(),
 		mgx_per_second()
 	);
-	pub KarPerSecond: (AssetId, u128) = (
-		MultiLocation::new(
-			1,
-			X2(Parachain(parachains::karura::ID), GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
-			parachains::karura::KAR_KEY.to_vec(),
-			None,
-		))),
-		).into(),
-		// KAR:KSM 100:1
-		ksm_per_second() * 100
-	);
-	pub KusdPerSecond: (AssetId, u128) = (
-		MultiLocation::new(
-			1,
-			X2(Parachain(parachains::karura::ID), GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
-			parachains::karura::KUSD_KEY.to_vec(),
-			None,
-		))),
-		).into(),
-		// KUSD:KSM 50:1
-		ksm_per_second() * 50
-	);
-	pub LksmPerSecond: (AssetId, u128) = (
-		MultiLocation::new(
-			1,
-			X2(Parachain(parachains::karura::ID), GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
-			parachains::karura::LKSM_KEY.to_vec(),
-			None,
-		))),
-		).into(),
-		// LKSM:KSM 10:1
-		ksm_per_second() * 10
-	);
-	pub TurPerSecond: (AssetId, u128) = (
-		MultiLocation::new(
-			1,
-			X1(Parachain(parachains::turing::ID)),
-		).into(),
-		// TUR:KSM 100:1 & 10:12 decimals
-		ksm_per_second()
-	);
-	pub ImbuPerSecond: (AssetId, u128) = (
-		MultiLocation::new(
-			1,
-			X2(Parachain(parachains::imbue::ID), GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
-			parachains::imbue::IMBU_KEY.to_vec(),
-			None,
-		))),
-		).into(),
-		// IMBU:KSM 50:1
-		ksm_per_second() * 50
-	);
-	pub PhaPerSecond: (AssetId, u128) = (
-		MultiLocation::new(
-			1,
-			X1(Parachain(parachains::phala::ID)),
-		).into(),
-		// PHA:KSM = 400:1
-		ksm_per_second() * 400
-	);
-	pub BncPerSecond: (AssetId, u128) = (
-		MultiLocation::new(
-			1,
-			X2(Parachain(parachains::bifrost::ID), GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
-			parachains::bifrost::BNC_KEY.to_vec(),
-			None,
-		))),
-		).into(),
-		// BNC:KSM = 80:1
-		ksm_per_second() * 80
-	);
-	pub VsksmPerSecond: (AssetId, u128) = (
-		MultiLocation::new(
-			1,
-			X2(Parachain(parachains::bifrost::ID), GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
-			parachains::bifrost::VSKSM_KEY.to_vec(),
-			None,
-		))),
-		).into(),
-		// VSKSM:KSM = 1:1
-		ksm_per_second()
-	);
-	pub VksmPerSecond: (AssetId, u128) = (
-		MultiLocation::new(
-			1,
-			X2(Parachain(parachains::bifrost::ID), GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
-			parachains::bifrost::VKSM_KEY.to_vec(),
-			None,
-		))),
-		).into(),
-		// VKSM:KSM = 1:1
-		ksm_per_second()
-	);
-
-	pub BaseRate: u128 = mgx_per_second();
 }
 
 type AssetRegistryOf<T> = orml_asset_registry::Pallet<T>;
@@ -250,10 +152,6 @@ pub type Trader = (
 	FixedRateOfFungible<MgxPerSecond, ToTreasury>,
 	AssetRegistryTrader<FixedRateAssetRegistryTrader<FeePerSecondProvider>, ToTreasury>,
 	FixedRateOfFungible<KsmPerSecond, ToTreasury>,
-	FixedRateOfFungible<KarPerSecond, ToTreasury>,
-	FixedRateOfFungible<KusdPerSecond, ToTreasury>,
-	FixedRateOfFungible<TurPerSecond, ToTreasury>,
-	FixedRateOfFungible<BncPerSecond, ToTreasury>,
 );
 
 pub struct XcmConfig;
@@ -291,7 +189,7 @@ pub type XcmRouter = (
 
 impl pallet_xcm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type SendXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
+	type SendXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, ()>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
 	type XcmExecuteFilter = Nothing;
@@ -334,6 +232,7 @@ pub type XcmOriginToTransactDispatchOrigin = (
 
 impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type MaintenanceStatusProvider = Maintenance;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type ChannelInfo = ParachainSystem;
 	type VersionWrapper = ();
@@ -345,6 +244,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type MaintenanceStatusProvider = Maintenance;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
 }
@@ -437,35 +337,49 @@ where
 pub struct TokenIdConvert;
 impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
 	fn convert(id: TokenId) -> Option<MultiLocation> {
+		// allow relay asset
 		if id == KSM_TOKEN_ID {
 			return Some(MultiLocation::parent())
 		}
-
-		match AssetRegistryOf::<Runtime>::multilocation(&id) {
-			Ok(Some(multi_location)) => Some(multi_location),
-			_ => Some(MultiLocation::new(
+		// allow native asset
+		if id == MGX_TOKEN_ID {
+			return Some(MultiLocation::new(
 				1,
 				X2(
 					Parachain(ParachainInfo::get().into()),
 					GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(id.encode(), None)),
 				),
-			)),
+			))
 		}
+		// allow assets in registry with location set
+		AssetRegistryOf::<Runtime>::multilocation(&id).unwrap_or(None)
 	}
 }
+
 impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 	fn convert(location: MultiLocation) -> Option<TokenId> {
+		// allow relay asset
 		if location == MultiLocation::parent() {
 			return Some(KSM_TOKEN_ID)
 		}
 
 		match location {
+			// allow native asset
 			MultiLocation { parents: 1, interior: X2(Parachain(para_id), GeneralKey(key)) }
 				if ParaId::from(para_id) == ParachainInfo::get() =>
-				TokenId::decode(&mut &(*key)[..]).ok(),
+				match TokenId::decode(&mut &(*key)[..]) {
+					Ok(MGX_TOKEN_ID) => Some(MGX_TOKEN_ID),
+					_ => None,
+				},
 
+			// allow native asset
 			MultiLocation { parents: 0, interior: X1(GeneralKey(key)) } =>
-				TokenId::decode(&mut &(*key)[..]).ok(),
+				match TokenId::decode(&mut &(*key)[..]) {
+					Ok(MGX_TOKEN_ID) => Some(MGX_TOKEN_ID),
+					_ => None,
+				},
+
+			// allow assets in registry with location set
 			_ => AssetRegistryOf::<Runtime>::location_to_asset_id(location.clone()),
 		}
 	}

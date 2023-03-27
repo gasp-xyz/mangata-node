@@ -76,7 +76,7 @@ pub fn mangata_session_keys(keys: AuraId) -> mangata_kusama_runtime::SessionKeys
 	mangata_kusama_runtime::SessionKeys { aura: keys }
 }
 
-pub fn kusama_mainnet_config() -> ChainSpec {
+pub fn mangata_kusama_prod_config() -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
 	properties.insert("tokenSymbol".into(), "MGX".into());
@@ -162,15 +162,15 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 						// Id of MGA token,
 						0u32,
 						// How much mangata they pool
-						10_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000_u128,
 						// Id of the dummy token,
 						2u32,
 						// How many dummy tokens they pool,
-						20_000__000_000_000_000_000_000u128,
+						200_000_000__000_000_000_000_000_000_u128,
 						// Id of the liquidity token that is generated
 						3u32,
 						// How many liquidity tokens they stake,
-						10_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000_u128,
 					),
 					(
 						// Who gets to stake initially
@@ -178,15 +178,15 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 						// Id of MGA token,
 						0u32,
 						// How much mangata they pool
-						8_000__000_000_000_000_000_000u128,
+						80_000_000__000_000_000_000_000_000_u128,
 						// Id of the dummy token,
 						2u32,
 						// How many dummy tokens they pool,
-						20_000__000_000_000_000_000_000u128,
+						200_000_000__000_000_000_000_000_000_u128,
 						// Id of the liquidity token that is generated
 						3u32,
 						// How many liquidity tokens they stake,
-						5_000__000_000_000_000_000_000u128,
+						50_000_000__000_000_000_000_000_000_u128,
 					),
 				],
 				vec![
@@ -240,169 +240,13 @@ pub fn kusama_mainnet_config() -> ChainSpec {
 		// Properties
 		Some(properties),
 		Extensions {
-			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
+			relay_chain: "kusama-local".into(), // You MUST set this to the correct network!
 			para_id: parachains::mangata::ID,
 		},
 	)
 }
 
-pub fn development_config() -> ChainSpec {
-	// Give your base currency a unit name and decimal places
-	let mut properties = sc_chain_spec::Properties::new();
-	properties.insert("tokenSymbol".into(), "MGAD".into());
-	properties.insert("tokenDecimals".into(), 18.into());
-	properties.insert("ss58Format".into(), 42.into());
-
-	ChainSpec::from_genesis(
-		// Name
-		"Mangata Development",
-		// ID
-		"mangata_dev",
-		ChainType::Development,
-		move || {
-			mangata_genesis(
-				// initial collators.
-				vec![
-					(
-						get_account_id_from_seed::<sr25519::Public>("Alice"),
-						get_collator_keys_from_seed("Alice"),
-					),
-					(
-						get_account_id_from_seed::<sr25519::Public>("Bob"),
-						get_collator_keys_from_seed("Bob"),
-					),
-				],
-				// Initial relay account
-				get_account_id_from_seed::<sr25519::Public>("Relay"),
-				// Sudo account
-				"0xec00ad0ec6eeb271a9689888f644d9262016a26a25314ff4ff5d756404c44112"
-					.parse()
-					.unwrap(),
-				// Tokens endowment
-				vec![
-					(
-						0u32,
-						300_000_000__000_000_000_000_000_000u128,
-						get_account_id_from_seed::<sr25519::Public>("Alice"),
-					),
-					(1u32, 0u128, get_account_id_from_seed::<sr25519::Public>("Alice")),
-					(
-						0u32,
-						400_000_000__000_000_000_000_000_000u128,
-						"0xec00ad0ec6eeb271a9689888f644d9262016a26a25314ff4ff5d756404c44112"
-							.parse()
-							.unwrap(),
-					),
-					(
-						0u32,
-						100_000_000__000_000_000_000_000_000u128,
-						get_account_id_from_seed::<sr25519::Public>("Relay"),
-					),
-					(
-						0u32,
-						100_000_000__000_000_000_000_000_000u128,
-						get_account_id_from_seed::<sr25519::Public>("Bob"),
-					),
-					(
-						0u32,
-						100_000_000__000_000_000_000_000_000u128,
-						get_account_id_from_seed::<sr25519::Public>("Charlie"),
-					),
-				],
-				// Config for Staking
-				// Make sure it works with initial-authorities as staking uses both
-				vec![
-					(
-						// Who gets to stake initially
-						get_account_id_from_seed::<sr25519::Public>("Alice"),
-						// Id of MGA token,
-						0u32,
-						// How much mangata they pool
-						10_000__000_000_000_000_000_000u128,
-						// Id of the dummy token,
-						2u32,
-						// How many dummy tokens they pool,
-						20_000__000_000_000_000_000_000u128,
-						// Id of the liquidity token that is generated
-						3u32,
-						// How many liquidity tokens they stake,
-						10_000__000_000_000_000_000_000u128,
-					),
-					(
-						// Who gets to stake initially
-						get_account_id_from_seed::<sr25519::Public>("Bob"),
-						// Id of MGA token,
-						0u32,
-						// How much mangata they pool
-						8_000__000_000_000_000_000_000u128,
-						// Id of the dummy token,
-						2u32,
-						// How many dummy tokens they pool,
-						20_000__000_000_000_000_000_000u128,
-						// Id of the liquidity token that is generated
-						3u32,
-						// How many liquidity tokens they stake,
-						5_000__000_000_000_000_000_000u128,
-					),
-				],
-				vec![
-					(
-						0,
-						AssetMetadataOf {
-							decimals: 18,
-							name: b"Mangata".to_vec(),
-							symbol: b"MGR".to_vec(),
-							additional: Default::default(),
-							existential_deposit: Default::default(),
-							location: None,
-						},
-					),
-					(
-						1,
-						AssetMetadataOf {
-							decimals: 18,
-							name: b"Ether".to_vec(),
-							symbol: b"ETH".to_vec(),
-							additional: Default::default(),
-							existential_deposit: Default::default(),
-							location: None,
-						},
-					),
-					(
-						KSM_TOKEN_ID,
-						AssetMetadataOf {
-							decimals: 12,
-							name: b"Kusama Native".to_vec(),
-							symbol: b"KSM".to_vec(),
-							additional: CustomMetadata {
-								// 10_000:1 MGX:KSM
-								xcm: Some(XcmMetadata { fee_per_second: ksm_per_second() }),
-								xyk: None,
-							},
-							existential_deposit: Default::default(),
-							location: None,
-						},
-					),
-				],
-				parachains::mangata::ID.into(),
-			)
-		},
-		Vec::new(),
-		None,
-		// Protocol ID
-		Some("mangata-dev"),
-		// ForkId
-		None,
-		// Properties
-		Some(properties),
-		Extensions {
-			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
-			para_id: parachains::mangata::ID,
-		},
-	)
-}
-
-pub fn local_config() -> ChainSpec {
+pub fn mangata_kusama_local_config() -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
 	properties.insert("tokenSymbol".into(), "MGAL".into());
@@ -411,9 +255,9 @@ pub fn local_config() -> ChainSpec {
 
 	ChainSpec::from_genesis(
 		// Name
-		"Mangata Local",
+		"Mangata Kusama Local",
 		// ID
-		"mangata_local",
+		"mangata_kusama_local",
 		ChainType::Local,
 		move || {
 			mangata_genesis(
@@ -431,9 +275,7 @@ pub fn local_config() -> ChainSpec {
 				// Initial relay account
 				get_account_id_from_seed::<sr25519::Public>("Relay"),
 				// Sudo account
-				"0xec00ad0ec6eeb271a9689888f644d9262016a26a25314ff4ff5d756404c44112"
-					.parse()
-					.unwrap(),
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				// Tokens endowment
 				vec![
 					// MGA
@@ -444,13 +286,6 @@ pub fn local_config() -> ChainSpec {
 					),
 					// ETH
 					(1u32, 0u128, get_account_id_from_seed::<sr25519::Public>("Alice")),
-					(
-						0u32,
-						400_000_000__000_000_000_000_000_000u128,
-						"0xec00ad0ec6eeb271a9689888f644d9262016a26a25314ff4ff5d756404c44112"
-							.parse()
-							.unwrap(),
-					),
 					(
 						0u32,
 						100_000_000__000_000_000_000_000_000u128,
@@ -476,15 +311,15 @@ pub fn local_config() -> ChainSpec {
 						// Id of MGA token,
 						0u32,
 						// How much mangata they pool
-						10_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000_u128,
 						// Id of the dummy token,
 						2u32,
 						// How many dummy tokens they pool,
-						20_000__000_000_000_000_000_000u128,
+						200_000_000__000_000_000_000_000_000_u128,
 						// Id of the liquidity token that is generated
 						3u32,
 						// How many liquidity tokens they stake,
-						10_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000_u128,
 					),
 					(
 						// Who gets to stake initially
@@ -492,15 +327,15 @@ pub fn local_config() -> ChainSpec {
 						// Id of MGA token,
 						0u32,
 						// How much mangata they pool
-						8_000__000_000_000_000_000_000u128,
+						80_000_000__000_000_000_000_000_000_u128,
 						// Id of the dummy token,
 						2u32,
 						// How many dummy tokens they pool,
-						20_000__000_000_000_000_000_000u128,
+						200_000_000__000_000_000_000_000_000_u128,
 						// Id of the liquidity token that is generated
 						3u32,
 						// How many liquidity tokens they stake,
-						5_000__000_000_000_000_000_000u128,
+						50_000_000__000_000_000_000_000_000_u128,
 					),
 				],
 				vec![
@@ -606,14 +441,14 @@ pub fn local_config() -> ChainSpec {
 		// Telemetry
 		None,
 		// Protocol ID
-		Some("mangata-local"),
+		Some("mangata-kusama-local"),
 		// ForkId
 		None,
 		// Properties
 		Some(properties),
 		// Extensions
 		Extensions {
-			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
+			relay_chain: "kusama-local".into(), // You MUST set this to the correct network!
 			para_id: parachains::mangata::ID,
 		},
 	)
@@ -715,6 +550,12 @@ fn mangata_genesis(
 					)
 				})
 				.collect(),
+		},
+		fee_lock: mangata_kusama_runtime::FeeLockConfig {
+			period_length: Some(10),
+			fee_lock_amount: Some(50__000_000_000_000_000_000u128),
+			swap_value_threshold: Some(1000__000_000_000_000_000_000u128),
+			whitelisted_tokens: Default::default(),
 		},
 		council: Default::default(),
 		sudo: mangata_kusama_runtime::SudoConfig {

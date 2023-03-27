@@ -5,8 +5,8 @@ use hex::FromHex;
 
 use mangata_kusama_runtime::{
 	constants::parachains, ksm_per_second, AccountId, AssetMetadataOf, AuraId, CustomMetadata,
-	GeneralKey, MultiLocation, Parachain, Signature, XcmMetadata, KAR_TOKEN_ID,
-	KSM_TOKEN_ID, TUR_TOKEN_ID, X1, X2,
+	GeneralKey, MultiLocation, Parachain, Signature, XcmMetadata, KAR_TOKEN_ID, KSM_TOKEN_ID,
+	TUR_TOKEN_ID, X1, X2,
 };
 use sc_service::ChainType;
 use sp_core::{sr25519, ByteArray, Pair, Public};

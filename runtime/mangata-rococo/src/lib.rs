@@ -1328,6 +1328,7 @@ impl pallet_collective_mangata::Config<CouncilCollective> for Runtime {
 	type ProposalCloseDelay = CouncilProposalCloseDelay;
 	type MaxProposals = CouncilMaxProposals;
 	type MaxMembers = CouncilMaxMembers;
+	type FoundationAccountsProvider = FoundationAccountsProvider<Runtime>;
 	type DefaultVote = pallet_collective_mangata::PrimeDefaultVote;
 	type WeightInfo = weights::pallet_collective_mangata_weights::ModuleWeight<Runtime>;
 }

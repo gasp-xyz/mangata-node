@@ -44,9 +44,7 @@ xyk-runtime-api = { path = '../../pallets/xyk/runtime-api', version = '2.0.0' }
 pallet-sudo-origin = { path = '../../pallets/sudo-origin' }
 pallet-issuance = { path = '../../pallets/issuance' }
 pallet-multipurpose-liquidity = { path = '../../pallets/multipurpose-liquidity' }
-mp-multipurpose-liquidity = { path = '../../primitives/multipurpose-liquidity' }
-mp-traits = { path = '../../primitives/traits' }
-mp-bootstrap = { path = '../../primitives/bootstrap' }
+mangata-support = { default-features = false , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
 [dev-dependencies]
 env_logger = "0.9.1"

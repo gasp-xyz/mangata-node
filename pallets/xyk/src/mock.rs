@@ -19,10 +19,11 @@ use frame_support::{
 };
 
 use frame_system as system;
+pub use mangata_support::traits::ProofOfStakeRewardsApi;
 use mangata_types::{assets::CustomMetadata, Amount, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
 use orml_traits::{asset_registry::AssetMetadata, parameter_type_with_key};
-use pallet_issuance::PoolPromoteApi;
+pub use pallet_issuance::PoolPromoteApi;
 use sp_runtime::{Perbill, Percent};
 use std::{collections::HashMap, sync::Mutex};
 
@@ -42,6 +43,7 @@ construct_runtime!(
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>},
 		XykStorage: xyk::{Pallet, Call, Storage, Event<T>, Config<T>},
+		ProofOfStake: pallet_proof_of_stake::{Pallet, Call, Storage, Event<T>},
 		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>},
 		Issuance: pallet_issuance::{Pallet, Event<T>, Storage},
 	}
@@ -55,7 +57,7 @@ lazy_static::lazy_static! {
 }
 
 pub struct MockPromotedPoolApi;
-pub struct MockActivedPoolQueryApi;
+pub struct MockActivatedPoolQueryApi;
 
 #[cfg(test)]
 #[cfg(not(feature = "runtime-benchmarks"))]
@@ -65,19 +67,19 @@ impl MockPromotedPoolApi {
 	}
 }
 
-impl pallet_issuance::ComputeIssuance for MockPromotedPoolApi {
+impl mangata_support::traits::ComputeIssuance for MockPromotedPoolApi {
 	fn compute_issuance(_n: u32) {
 		todo!()
 	}
 }
 
-impl MockActivedPoolQueryApi {
+impl MockActivatedPoolQueryApi {
 	pub fn instance() -> &'static Mutex<HashMap<TokenId, U256>> {
 		&PROMOTED_POOLS
 	}
 }
 
-impl ActivedPoolQueryApi for MockActivedPoolQueryApi {
+impl ActivatedPoolQueryApi for MockActivatedPoolQueryApi {
 	fn get_pool_activate_amount(_liquidity_token_id: TokenId) -> Option<u128> {
 		Some(1_u128)
 	}
@@ -243,7 +245,7 @@ impl pallet_issuance::Config for Test {
 	type TGEReleaseBegin = TGEReleaseBegin;
 	type VestingProvider = Vesting;
 	type WeightInfo = ();
-	type ActivedPoolQueryApiType = MockActivedPoolQueryApi;
+	type ActivatedPoolQueryApiType = MockActivatedPoolQueryApi;
 }
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -265,7 +267,7 @@ impl pallet_issuance::Config for Test {
 	type TGEReleaseBegin = TGEReleaseBegin;
 	type VestingProvider = Vesting;
 	type WeightInfo = ();
-	type ActivedPoolQueryApiType = XykStorage;
+	type ActivatedPoolQueryApiType = ProofOfStake;
 }
 
 impl XykBenchmarkingConfig for Test {}
@@ -376,12 +378,10 @@ impl Config for Test {
 	type NativeCurrencyId = NativeCurrencyId;
 	type TreasuryPalletId = TreasuryPalletId;
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
-	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
-	type PoolPromoteApi = MockPromotedPoolApi;
 	type PoolFeePercentage = ConstU128<20>;
 	type TreasuryFeePercentage = ConstU128<5>;
 	type BuyAndBurnFeePercentage = ConstU128<5>;
-	type RewardsDistributionPeriod = ConstU32<10>;
+	type XykRewards = ProofOfStake;
 	type WeightInfo = ();
 	type VestingProvider = Vesting;
 	type DisallowedPools = DummyBlacklistedPool;
@@ -399,18 +399,42 @@ impl Config for Test {
 	type NativeCurrencyId = NativeCurrencyId;
 	type TreasuryPalletId = TreasuryPalletId;
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
-	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
-	type PoolPromoteApi = Issuance;
 	type PoolFeePercentage = ConstU128<20>;
 	type TreasuryFeePercentage = ConstU128<5>;
 	type BuyAndBurnFeePercentage = ConstU128<5>;
-	type RewardsDistributionPeriod = ConstU32<1200>;
+	type XykRewards = ProofOfStake;
 	type WeightInfo = ();
 	type VestingProvider = Vesting;
 	type DisallowedPools = Nothing;
 	type DisabledTokens = Nothing;
 	type RewardsMigrateAccount = RewardsMigrateAccountProvider<Self>;
 	type AssetMetadataMutation = MockAssetRegister;
+}
+
+#[cfg(not(feature = "runtime-benchmarks"))]
+impl pallet_proof_of_stake::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
+	type NativeCurrencyId = NativeCurrencyId;
+	type Xyk = XykStorage;
+	type PoolPromoteApi = MockPromotedPoolApi;
+	type Currency = MultiTokenCurrencyAdapter<Test>;
+	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
+	type RewardsDistributionPeriod = ConstU32<10>;
+	type WeightInfo = ();
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+impl pallet_proof_of_stake::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
+	type NativeCurrencyId = NativeCurrencyId;
+	type Xyk = XykStorage;
+	type PoolPromoteApi = Issuance;
+	type Currency = MultiTokenCurrencyAdapter<Test>;
+	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
+	type RewardsDistributionPeriod = ConstU32<1200>;
+	type WeightInfo = ();
 }
 
 pub struct TokensActivationPassthrough<T: Config>(PhantomData<T>);
@@ -427,7 +451,7 @@ where
 	) -> Balance {
 		let account_id: u128 = (account_id.clone()).into();
 		let token_id: u32 = token_id;
-		XykStorage::get_rewards_info(account_id, token_id).activated_amount
+		ProofOfStake::get_rewards_info(account_id, token_id).activated_amount
 	}
 
 	fn can_activate(

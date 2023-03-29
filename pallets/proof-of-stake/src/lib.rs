@@ -43,13 +43,21 @@ use sp_std::{
 	vec::Vec,
 };
 
+/// Stores all the information required for non iterative rewards calculation between
+/// last_checkpoint and particular subsequent block ('now' in most cases)
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 pub struct RewardInfo {
+	// amount of activated token
 	pub activated_amount: u128,
+	// ??
 	pub rewards_not_yet_claimed: u128,
+	// ??
 	pub rewards_already_claimed: u128,
+	// block number of last checkpoint
 	pub last_checkpoint: u32,
+	// ??
 	pub pool_ratio_at_last_checkpoint: U256,
+	// ??
 	pub missing_at_last_checkpoint: U256,
 }
 
@@ -755,8 +763,6 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		let rewards_info: RewardInfo = Self::get_rewards_info(user.clone(), liquidity_asset_id);
 
 		let last_checkpoint = rewards_info.last_checkpoint;
-		let pool_ratio_at_last_checkpoint = rewards_info.pool_ratio_at_last_checkpoint;
-		let missing_at_last_checkpoint = rewards_info.missing_at_last_checkpoint;
 		let liquidity_assets_amount: Balance = rewards_info.activated_amount;
 
 		let time_passed = current_time

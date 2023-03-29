@@ -49,15 +49,15 @@ use sp_std::{
 pub struct RewardInfo {
 	// amount of activated token
 	pub activated_amount: u128,
-	// ??
+	// when doing checkpoint we need to store rewards up to this point
 	pub rewards_not_yet_claimed: u128,
-	// ??
+	// there is no checkpoint during for claim_rewards
 	pub rewards_already_claimed: u128,
 	// block number of last checkpoint
 	pub last_checkpoint: u32,
-	// ??
+	// ration betwen rewards : liquidity (as in table)
 	pub pool_ratio_at_last_checkpoint: U256,
-	// ??
+	// related to the table in the doc
 	pub missing_at_last_checkpoint: U256,
 }
 

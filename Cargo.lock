@@ -4372,7 +4372,7 @@ dependencies = [
  "pallet-crowdloan-rewards",
  "pallet-fee-lock",
  "pallet-identity",
- "pallet-issuance",
+ "pallet-issuance 2.0.0",
  "pallet-maintenance",
  "pallet-multipurpose-liquidity",
  "pallet-proof-of-stake",
@@ -4559,7 +4559,7 @@ dependencies = [
  "pallet-crowdloan-rewards",
  "pallet-fee-lock",
  "pallet-identity",
- "pallet-issuance",
+ "pallet-issuance 2.0.0",
  "pallet-maintenance",
  "pallet-multipurpose-liquidity",
  "pallet-proof-of-stake",
@@ -5554,7 +5554,7 @@ dependencies = [
  "mockall",
  "orml-tokens",
  "orml-traits",
- "pallet-issuance",
+ "pallet-issuance 2.0.0",
  "pallet-proof-of-stake",
  "pallet-vesting-mangata",
  "pallet-xyk",
@@ -5917,6 +5917,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-issuance"
+version = "2.0.0"
+source = "git+https://github.com/mangata-finance/mangata-node?branch=develop#5bc58dc7ccc34283f078c132558e597614738ece"
+dependencies = [
+ "cfg-if",
+ "frame-executive",
+ "frame-support",
+ "frame-system",
+ "log",
+ "mangata-support",
+ "mangata-types",
+ "orml-tokens",
+ "pallet-vesting-mangata",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-maintenance"
 version = "0.1.0"
 dependencies = [
@@ -6161,7 +6182,7 @@ dependencies = [
  "orml-tokens",
  "orml-traits",
  "pallet-bootstrap",
- "pallet-issuance",
+ "pallet-issuance 2.0.0",
  "pallet-vesting-mangata",
  "parity-scale-codec",
  "rustc-hex",
@@ -6721,7 +6742,7 @@ dependencies = [
  "orml-tokens",
  "orml-traits",
  "pallet-bootstrap",
- "pallet-issuance",
+ "pallet-issuance 2.0.0",
  "pallet-proof-of-stake",
  "pallet-vesting-mangata",
  "parity-scale-codec",
@@ -6753,17 +6774,19 @@ dependencies = [
 [[package]]
 name = "parachain-staking"
 version = "3.0.0"
-source = "git+https://github.com/mangata-finance//moonbeam?branch=mangata-dev#66d6bf7e9a9df089a530b387e38f73f2afb89d98"
+source = "git+https://github.com/mangata-finance//moonbeam?branch=feature/aggregation-and-manual-payouts#2de84eee7272c8db2efc67c823bf98e3363c1583"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "itertools 0.10.5",
  "log",
  "mangata-support",
  "mangata-types",
  "orml-tokens",
  "pallet-authorship",
  "pallet-collective-mangata",
+ "pallet-issuance 2.0.0 (git+https://github.com/mangata-finance/mangata-node?branch=develop)",
  "pallet-session",
  "parity-scale-codec",
  "scale-info",
@@ -9052,7 +9075,7 @@ dependencies = [
  "pallet-balances",
  "pallet-bootstrap",
  "pallet-identity",
- "pallet-issuance",
+ "pallet-issuance 2.0.0",
  "pallet-multipurpose-liquidity",
  "pallet-proxy",
  "pallet-sudo-origin",

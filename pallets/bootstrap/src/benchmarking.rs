@@ -24,6 +24,7 @@ use super::*;
 use frame_benchmarking::{benchmarks, whitelisted_caller};
 use frame_system::RawOrigin;
 use orml_tokens::MultiTokenCurrencyExtended;
+use frame_support::assert_ok;
 
 use crate::Pallet as BootstrapPallet;
 
@@ -169,7 +170,8 @@ benchmarks! {
 		BootstrapPallet::<T>::claim_liquidity_tokens(RawOrigin::Signed(caller.clone().into()).into()).unwrap();
 		assert_eq!(BootstrapPallet::<T>::phase(), BootstrapPhase::Finished);
 
-	}: finalize(RawOrigin::Root, 200)
+		assert_ok!(BootstrapPallet::<T>::pre_finalize(RawOrigin::Signed(caller.clone().into()).into()));
+	}: finalize(RawOrigin::Signed(caller.clone().into()))
 	verify {
 		assert_eq!(BootstrapPallet::<T>::phase(), BootstrapPhase::BeforeStart);
 	}

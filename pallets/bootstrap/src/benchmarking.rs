@@ -22,9 +22,9 @@
 use super::*;
 
 use frame_benchmarking::{benchmarks, whitelisted_caller};
+use frame_support::assert_ok;
 use frame_system::RawOrigin;
 use orml_tokens::MultiTokenCurrencyExtended;
-use frame_support::assert_ok;
 
 use crate::Pallet as BootstrapPallet;
 

@@ -726,7 +726,6 @@ pub mod pallet {
 		#[pallet::weight(<<T as Config>::WeightInfo>::finalize())]
 		#[transactional]
 		pub fn finalize(origin: OriginFor<T>) -> DispatchResult {
-			
 			let _ = ensure_signed(origin)?;
 
 			ensure!(Self::phase() == BootstrapPhase::Finished, Error::<T>::NotFinishedYet);
@@ -849,7 +848,7 @@ pub mod pallet {
 		/// Bootstrap provisioning blocked by maintenance mode
 		ProvisioningBlockedByMaintenanceMode,
 		/// Bootstrap must be pre finalized before it can be finalized
-		BootstrapMustBePreFinalized
+		BootstrapMustBePreFinalized,
 	}
 
 	#[pallet::event]

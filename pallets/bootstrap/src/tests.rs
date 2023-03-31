@@ -1839,7 +1839,10 @@ fn test_restart_bootstrap() {
 		)
 		.unwrap();
 
-		assert_err!(Bootstrap::pre_finalize(RuntimeOrigin::signed(YET_ANOTHER_USER_ID)), Error::<Test>::NotFinishedYet);
+		assert_err!(
+			Bootstrap::pre_finalize(RuntimeOrigin::signed(YET_ANOTHER_USER_ID)),
+			Error::<Test>::NotFinishedYet
+		);
 
 		Bootstrap::on_initialize(120_u32.into());
 

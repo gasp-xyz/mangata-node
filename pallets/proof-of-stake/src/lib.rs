@@ -660,9 +660,8 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		let current_time: u32 = Self::get_current_rewards_time()?;
 
 		let mut pool_ratio_current = Self::get_pool_rewards(liquidity_asset_id)?;
-
 		let rewards_info = RewardsInfo::<T>::try_get(user.clone(), liquidity_asset_id)
-			.unwrap_or_else(|_| RewardInfo {
+			.unwrap_or(RewardInfo {
 				activated_amount: 0_u128,
 				rewards_not_yet_claimed: 0_u128,
 				rewards_already_claimed: 0_u128,
@@ -674,7 +673,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		let last_checkpoint = rewards_info.last_checkpoint;
 		let pool_ratio_at_last_checkpoint = rewards_info.pool_ratio_at_last_checkpoint;
 		let missing_at_last_checkpoint = rewards_info.missing_at_last_checkpoint;
-		let liquidity_assets_amount: Balance = rewards_info.activated_amount;
+		let activated_amount: Balance = rewards_info.activated_amount;
 
 		let time_passed = current_time
 			.checked_sub(last_checkpoint)
@@ -684,7 +683,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 			pool_ratio_current = pool_ratio_at_last_checkpoint;
 		}
 
-		let missing_at_checkpoint_new = if liquidity_assets_amount == 0 {
+		let missing_at_checkpoint_new = if activated_amount == 0 {
 			U256::from(liquidity_assets_added)
 		} else {
 			Self::calculate_missing_at_checkpoint_v2(time_passed, missing_at_last_checkpoint)?
@@ -692,11 +691,11 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 				.ok_or_else(|| DispatchError::from(Error::<T>::LiquidityCheckpointMathError))?
 		};
 
-		let user_current_rewards = if liquidity_assets_amount == 0 {
+		let user_current_rewards = if activated_amount == 0 {
 			0
 		} else {
 			Self::calculate_rewards_v2(
-				liquidity_assets_amount,
+				activated_amount,
 				liquidity_asset_id,
 				last_checkpoint,
 				pool_ratio_at_last_checkpoint,
@@ -705,7 +704,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 			)?
 		};
 
-		let activated_amount_new = liquidity_assets_amount
+		let activated_amount_new = activated_amount
 			.checked_add(liquidity_assets_added)
 			.ok_or_else(|| DispatchError::from(Error::<T>::LiquidityCheckpointMathError))?;
 

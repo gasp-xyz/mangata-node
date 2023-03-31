@@ -280,6 +280,19 @@ impl<T: Config> Pallet<T> {
 		<T as Config>::NativeCurrencyId::get()
 	}
 
+	fn get_pool_rewards(liquidity_asset_id: TokenId) -> Result<U256, sp_runtime::DispatchError> {
+		<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id)
+				.ok_or( DispatchError::from(Error::<T>::NotAPromotedPool))
+	}
+
+	fn get_current_rewards_time() -> Result<u32, sp_runtime::DispatchError>{
+		<frame_system::Pallet<T>>::block_number()
+			.saturated_into::<u32>()
+			.checked_add(1)
+			.and_then(|v| v.checked_div(T::RewardsDistributionPeriod::get()))
+			.ok_or(DispatchError::from(Error::<T>::CalculateRewardsMathError))
+	}
+
 	fn calculate_rewards_v2(
 		liquidity_assets_amount: u128,
 		liquidity_asset_id: TokenId,
@@ -289,13 +302,11 @@ impl<T: Config> Pallet<T> {
 		pool_rewards_ratio_current: U256,
 	) -> Result<Balance, DispatchError> {
 		ensure!(
-			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).is_some(),
+			Self::get_pool_rewards(liquidity_asset_id).is_ok(),
 			Error::<T>::NotAPromotedPool
 		);
 
-		let current_time: u32 =
-			<Self as ProofOfStakeRewardsApi<T::AccountId>>::current_rewards_time()
-				.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError))?;
+		let current_time: u32 = Self::get_current_rewards_time()?;
 
 		let time_passed = current_time
 			.checked_sub(last_checkpoint)
@@ -473,10 +484,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		let mangata_id: TokenId = Self::native_token_id();
 
 		let rewards_info: RewardInfo = Self::get_rewards_info(user.clone(), liquidity_asset_id);
-
-		let pool_rewards_ratio_current =
-			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id)
-				.ok_or_else(|| DispatchError::from(Error::<T>::NotAPromotedPool))?;
+		let pool_rewards_ratio_current = Self::get_pool_rewards(liquidity_asset_id)?;
 
 		let current_rewards = Self::calculate_rewards_v2(
 			rewards_info.activated_amount,
@@ -548,7 +556,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		use_balance_from: Option<ActivateKind>,
 	) -> DispatchResult {
 		ensure!(
-			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).is_some(),
+			Self::get_pool_rewards(liquidity_asset_id).is_ok(),
 			Error::<T>::NotAPromotedPool
 		);
 
@@ -580,7 +588,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		amount: Self::Balance,
 	) -> DispatchResult {
 		ensure!(
-			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).is_some(),
+			Self::get_pool_rewards(liquidity_asset_id).is_ok(),
 			Error::<T>::NotAPromotedPool
 		);
 
@@ -600,10 +608,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 	}
 
 	fn current_rewards_time() -> Option<u32> {
-		<frame_system::Pallet<T>>::block_number()
-			.saturated_into::<u32>()
-			.checked_add(1)
-			.and_then(|v| v.checked_div(T::RewardsDistributionPeriod::get()))
+		Self::get_current_rewards_time().ok()	
 	}
 
 	fn calculate_rewards_amount_v2(
@@ -617,9 +622,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		let mut current_rewards = 0;
 
 		if liquidity_assets_amount != 0 {
-			let pool_rewards_ratio_current =
-				<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id)
-					.ok_or_else(|| DispatchError::from(Error::<T>::NotAPromotedPool))?;
+			let pool_rewards_ratio_current = Self::get_pool_rewards(liquidity_asset_id)?;
 
 			let last_checkpoint = rewards_info.last_checkpoint;
 			let pool_ratio_at_last_checkpoint = rewards_info.pool_ratio_at_last_checkpoint;
@@ -654,12 +657,9 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		liquidity_assets_added: Balance,
 		use_balance_from: Option<ActivateKind>,
 	) -> DispatchResult {
-		let current_time: u32 =
-			<Self as ProofOfStakeRewardsApi<T::AccountId>>::current_rewards_time()
-				.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError))?;
-		let mut pool_ratio_current =
-			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id)
-				.ok_or_else(|| DispatchError::from(Error::<T>::NotAPromotedPool))?;
+		let current_time: u32 = Self::get_current_rewards_time()?;
+
+		let mut pool_ratio_current = Self::get_pool_rewards(liquidity_asset_id)?;
 
 		let rewards_info = RewardsInfo::<T>::try_get(user.clone(), liquidity_asset_id)
 			.unwrap_or_else(|_| RewardInfo {
@@ -752,17 +752,14 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		liquidity_asset_id: TokenId,
 		liquidity_assets_burned: Balance,
 	) -> DispatchResult {
-		let current_time: u32 =
-			<Self as ProofOfStakeRewardsApi<T::AccountId>>::current_rewards_time()
-				.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError))?;
-
-		let mut pool_ratio_current =
-			<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id)
-				.ok_or_else(|| DispatchError::from(Error::<T>::NotAPromotedPool))?;
+		let current_time: u32 = Self::get_current_rewards_time()?;
+		let mut pool_ratio_current = Self::get_pool_rewards(liquidity_asset_id)?;
 
 		let rewards_info: RewardInfo = Self::get_rewards_info(user.clone(), liquidity_asset_id);
 
 		let last_checkpoint = rewards_info.last_checkpoint;
+		let pool_ratio_at_last_checkpoint = rewards_info.pool_ratio_at_last_checkpoint;
+		let missing_at_last_checkpoint = rewards_info.missing_at_last_checkpoint;
 		let liquidity_assets_amount: Balance = rewards_info.activated_amount;
 
 		let time_passed = current_time
@@ -838,7 +835,7 @@ impl<T: Config> CumulativeWorkRewardsApi for Pallet<T> {
 	type AccountId = T::AccountId;
 
 	fn get_pool_rewards_v2(liquidity_asset_id: TokenId) -> Option<U256> {
-		<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id)
+		Self::get_pool_rewards(liquidity_asset_id).ok()
 	}
 
 	fn claim_rewards_all_v2(
@@ -888,7 +885,7 @@ impl<T: Config> mangata_support::traits::RewardsApi for Pallet<T> {
 	type AccountId = T::AccountId;
 
 	fn can_activate(liquidity_asset_id: TokenId) -> bool {
-		<T as Config>::PoolPromoteApi::get_pool_rewards_v2(liquidity_asset_id).is_some()
+		Self::get_pool_rewards(liquidity_asset_id).is_ok()
 	}
 
 	fn activate_liquidity_tokens(

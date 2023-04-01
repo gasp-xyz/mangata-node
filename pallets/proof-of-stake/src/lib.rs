@@ -61,6 +61,10 @@ pub struct RewardInfo {
 	pub missing_at_last_checkpoint: U256,
 }
 
+impl RewardInfo{
+ fn activate_more
+}
+
 pub(crate) const LOG_TARGET: &str = "proof-of-stake";
 
 // syntactic sugar for logging.
@@ -660,7 +664,14 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		let current_time: u32 = Self::get_current_rewards_time()?;
 
 		let mut pool_ratio_current = Self::get_pool_rewards(liquidity_asset_id)?;
-		let rewards_info = RewardsInfo::<T>::try_get(user.clone(), liquidity_asset_id)
+		let RewardInfo {
+			last_checkpoint,
+			pool_ratio_at_last_checkpoint,
+			missing_at_last_checkpoint,
+			activated_amount,
+			rewards_not_yet_claimed,
+			rewards_already_claimed,
+		} = RewardsInfo::<T>::try_get(user.clone(), liquidity_asset_id)
 			.unwrap_or(RewardInfo {
 				activated_amount: 0_u128,
 				rewards_not_yet_claimed: 0_u128,
@@ -670,15 +681,12 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 				missing_at_last_checkpoint: U256::from(liquidity_assets_added),
 			});
 
-		let last_checkpoint = rewards_info.last_checkpoint;
-		let pool_ratio_at_last_checkpoint = rewards_info.pool_ratio_at_last_checkpoint;
-		let missing_at_last_checkpoint = rewards_info.missing_at_last_checkpoint;
-		let activated_amount: Balance = rewards_info.activated_amount;
 
 		let time_passed = current_time
 			.checked_sub(last_checkpoint)
 			.ok_or_else(|| DispatchError::from(Error::<T>::PastTimeCalculation))?;
 
+		// TODO: do we need it?
 		if time_passed == 0 {
 			pool_ratio_current = pool_ratio_at_last_checkpoint;
 		}
@@ -709,9 +717,9 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 			.ok_or_else(|| DispatchError::from(Error::<T>::LiquidityCheckpointMathError))?;
 
 		let total_available_rewards = user_current_rewards
-			.checked_add(rewards_info.rewards_not_yet_claimed)
+			.checked_add(rewards_not_yet_claimed)
 			.ok_or_else(|| DispatchError::from(Error::<T>::LiquidityCheckpointMathError))?
-			.checked_sub(rewards_info.rewards_already_claimed)
+			.checked_sub(rewards_already_claimed)
 			.ok_or_else(|| DispatchError::from(Error::<T>::LiquidityCheckpointMathError))?;
 
 		let rewards_info_new: RewardInfo = RewardInfo {

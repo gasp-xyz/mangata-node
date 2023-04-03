@@ -67,6 +67,9 @@ jobs:
             fast: false
           - command: "yarn test-sequential-autocompound"
             fast: true
+          - command: "yarn test-poolliquidity"
+            fast: true
+
     runs-on: [self-hosted, compile]
     timeout-minutes: 180
     env:

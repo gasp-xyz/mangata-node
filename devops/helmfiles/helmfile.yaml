@@ -24,7 +24,6 @@ helmDefaults:
 templates:
   nodeDefault: &nodeDefault
     chart: mangata-node/node
-    # chart: /Users/tenequm/Projects/helm-charts-m/charts/node
     namespace: '{{ requiredEnv "ENVIRONMENT" }}'
 
 releases:
@@ -32,7 +31,6 @@ releases:
     installed: {{ .Values.enableLocalRelaychain | toYaml }}
     namespace: '{{ requiredEnv "ENVIRONMENT" }}'
     chart: mangata-relaychain/relaychain-testnet
-    # chart: /Users/tenequm/Projects/helm-charts-m/charts/relaychain-testnet
     values:
       - env: {{ requiredEnv "ENVIRONMENT" | quote }}
         storageClass: regional-ssd

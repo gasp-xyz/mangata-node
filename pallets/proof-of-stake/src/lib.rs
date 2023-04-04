@@ -62,7 +62,7 @@ pub struct RewardInfo {
 }
 
 impl RewardInfo{
- fn activate_more
+    // fn activate_more()
 }
 
 pub(crate) const LOG_TARGET: &str = "proof-of-stake";
@@ -297,18 +297,22 @@ impl<T: Config> Pallet<T> {
 			.ok_or(DispatchError::from(Error::<T>::CalculateRewardsMathError))
 	}
 
+	fn ensure_is_promoted_pool(liquidity_asset_id: TokenId) -> Result<(), DispatchError> {
+		if Self::get_pool_rewards(liquidity_asset_id).is_ok(){
+			Ok(())
+		}else{
+			Err(DispatchError::from(Error::<T>::NotAPromotedPool))
+		}
+	}
+
+	// remove   liquidity_asset_id
 	fn calculate_rewards_v2(
 		liquidity_assets_amount: u128,
-		liquidity_asset_id: TokenId,
 		last_checkpoint: u32,
 		pool_rewards_ratio: U256,
 		missing_at_last_checkpoint: U256,
 		pool_rewards_ratio_current: U256,
 	) -> Result<Balance, DispatchError> {
-		ensure!(
-			Self::get_pool_rewards(liquidity_asset_id).is_ok(),
-			Error::<T>::NotAPromotedPool
-		);
 
 		let current_time: u32 = Self::get_current_rewards_time()?;
 
@@ -490,9 +494,9 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		let rewards_info: RewardInfo = Self::get_rewards_info(user.clone(), liquidity_asset_id);
 		let pool_rewards_ratio_current = Self::get_pool_rewards(liquidity_asset_id)?;
 
+		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
 		let current_rewards = Self::calculate_rewards_v2(
 			rewards_info.activated_amount,
-			liquidity_asset_id,
 			rewards_info.last_checkpoint,
 			rewards_info.pool_ratio_at_last_checkpoint,
 			rewards_info.missing_at_last_checkpoint,
@@ -632,9 +636,9 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 			let pool_ratio_at_last_checkpoint = rewards_info.pool_ratio_at_last_checkpoint;
 			let missing_at_checkpoint = rewards_info.missing_at_last_checkpoint;
 
+			Self::ensure_is_promoted_pool(liquidity_asset_id)?;
 			current_rewards = Self::calculate_rewards_v2(
 				liquidity_assets_amount,
-				liquidity_asset_id,
 				last_checkpoint,
 				pool_ratio_at_last_checkpoint,
 				missing_at_checkpoint,
@@ -661,9 +665,12 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		liquidity_assets_added: Balance,
 		use_balance_from: Option<ActivateKind>,
 	) -> DispatchResult {
+		// last_checkpoint
 		let current_time: u32 = Self::get_current_rewards_time()?;
 
-		let mut pool_ratio_current = Self::get_pool_rewards(liquidity_asset_id)?;
+		// pool_ratio_current
+		let pool_ratio_current = Self::get_pool_rewards(liquidity_asset_id)?;
+
 		let RewardInfo {
 			last_checkpoint,
 			pool_ratio_at_last_checkpoint,
@@ -678,60 +685,43 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 				rewards_already_claimed: 0_u128,
 				last_checkpoint: current_time,
 				pool_ratio_at_last_checkpoint: pool_ratio_current,
-				missing_at_last_checkpoint: U256::from(liquidity_assets_added),
+				missing_at_last_checkpoint: U256::from(0u128),
 			});
 
 
+		// ACTIVATED
+		let activated_amount_new = activated_amount
+			.checked_add(liquidity_assets_added)
+			.ok_or(Error::<T>::LiquidityCheckpointMathError)?;
+
 		let time_passed = current_time
 			.checked_sub(last_checkpoint)
-			.ok_or_else(|| DispatchError::from(Error::<T>::PastTimeCalculation))?;
-
-		// TODO: do we need it?
-		if time_passed == 0 {
-			pool_ratio_current = pool_ratio_at_last_checkpoint;
-		}
-
-		let missing_at_checkpoint_new = if activated_amount == 0 {
-			U256::from(liquidity_assets_added)
-		} else {
-			Self::calculate_missing_at_checkpoint_v2(time_passed, missing_at_last_checkpoint)?
+			.ok_or(DispatchError::from(Error::<T>::PastTimeCalculation))?;
+		let missing_at_checkpoint_new = Self::calculate_missing_at_checkpoint_v2(time_passed, missing_at_last_checkpoint)?
 				.checked_add(U256::from(liquidity_assets_added))
-				.ok_or_else(|| DispatchError::from(Error::<T>::LiquidityCheckpointMathError))?
-		};
+				.ok_or(Error::<T>::LiquidityCheckpointMathError)?;
 
-		let user_current_rewards = if activated_amount == 0 {
-			0
-		} else {
-			Self::calculate_rewards_v2(
+		let user_current_rewards = Self::calculate_rewards_v2(
 				activated_amount,
-				liquidity_asset_id,
 				last_checkpoint,
 				pool_ratio_at_last_checkpoint,
 				missing_at_last_checkpoint,
 				pool_ratio_current,
-			)?
-		};
-
-		let activated_amount_new = activated_amount
-			.checked_add(liquidity_assets_added)
-			.ok_or_else(|| DispatchError::from(Error::<T>::LiquidityCheckpointMathError))?;
+		)?;
 
 		let total_available_rewards = user_current_rewards
 			.checked_add(rewards_not_yet_claimed)
-			.ok_or_else(|| DispatchError::from(Error::<T>::LiquidityCheckpointMathError))?
-			.checked_sub(rewards_already_claimed)
-			.ok_or_else(|| DispatchError::from(Error::<T>::LiquidityCheckpointMathError))?;
+			.and_then(|v| v.checked_sub(rewards_already_claimed))
+			.ok_or(Error::<T>::LiquidityCheckpointMathError)?;
 
-		let rewards_info_new: RewardInfo = RewardInfo {
-			activated_amount: activated_amount_new,
-			rewards_not_yet_claimed: total_available_rewards,
-			rewards_already_claimed: 0_u128,
-			last_checkpoint: current_time,
+		RewardsInfo::<T>::insert(user.clone(), liquidity_asset_id, RewardInfo {
 			pool_ratio_at_last_checkpoint: pool_ratio_current,
+			activated_amount: activated_amount_new,
+			rewards_already_claimed: 0_u128,
 			missing_at_last_checkpoint: missing_at_checkpoint_new,
-		};
-
-		RewardsInfo::<T>::insert(user.clone(), liquidity_asset_id, rewards_info_new);
+			rewards_not_yet_claimed: total_available_rewards,
+			last_checkpoint: current_time,
+		});
 
 		LiquidityMiningActivePoolV2::<T>::try_mutate(liquidity_asset_id, |active_amount| {
 			if let Some(val) = active_amount.checked_add(liquidity_assets_added) {
@@ -780,9 +770,9 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		let missing_at_checkpoint_new =
 			Self::calculate_missing_at_checkpoint_v2(time_passed, missing_at_last_checkpoint)?;
 
+		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
 		let user_current_rewards = Self::calculate_rewards_v2(
 			liquidity_assets_amount,
-			liquidity_asset_id,
 			last_checkpoint,
 			pool_ratio_at_last_checkpoint,
 			missing_at_last_checkpoint,

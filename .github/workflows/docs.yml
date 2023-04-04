@@ -3,7 +3,6 @@ name: Deploy docs
 on:
   push:
     branches: [ develop ]
-  pull_request:
 
 jobs:
   docs:

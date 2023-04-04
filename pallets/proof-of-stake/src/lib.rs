@@ -563,10 +563,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		amount: Self::Balance,
 		use_balance_from: Option<ActivateKind>,
 	) -> DispatchResult {
-		ensure!(
-			Self::get_pool_rewards(liquidity_asset_id).is_ok(),
-			Error::<T>::NotAPromotedPool
-		);
+		ensure_is_promoted_pool(liquidity_asset_id)?;
 
 		ensure!(
 			<T as Config>::ActivationReservesProvider::can_activate(
@@ -595,10 +592,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		liquidity_asset_id: Self::CurrencyId,
 		amount: Self::Balance,
 	) -> DispatchResult {
-		ensure!(
-			Self::get_pool_rewards(liquidity_asset_id).is_ok(),
-			Error::<T>::NotAPromotedPool
-		);
+		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
 
 		let rewards_info: RewardInfo = Self::get_rewards_info(user.clone(), liquidity_asset_id);
 

@@ -37,6 +37,7 @@ jobs:
             ~/.cache/sccache
           key: node-docs-cache-0-${{ hashFiles('Cargo.lock') }}
       
+      - uses: mxschmitt/action-tmate@v3
       - name: Build docs
         run: cargo doc
       

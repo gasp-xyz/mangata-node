@@ -1,8 +1,8 @@
 repositories:
   - name: mangata-node
-    url: git+https://github.com/mangata-finance/helm-charts@charts?ref=node-v0.4.3
+    url: git+https://github.com/mangata-finance/helm-charts@charts?ref=node-v0.4.4
   - name: mangata-relaychain
-    url: git+https://github.com/mangata-finance/helm-charts@charts?ref=relaychain-testnet-v0.3.1
+    url: git+https://github.com/mangata-finance/helm-charts@charts?ref=relaychain-testnet-v0.3.2
 
 environments:
   dev:

@@ -3,6 +3,13 @@ name: Deploy docs
 on:
   push:
     branches: [ develop ]
+  pull_request:
+
+# The following concurrency group cancels in-progress jobs or runs on pull_request events only
+# https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
+concurrency: 
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   docs:
@@ -10,6 +17,8 @@ jobs:
       contents: write
       id-token: write
     runs-on: ubuntu-latest
+    container:
+      image: mangatasolutions/node-builder:multi-nightly-2022-11-15
     steps:
       - uses: actions/checkout@v3
       - uses: google-github-actions/auth@v1
@@ -17,18 +26,23 @@ jobs:
           workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
           service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
 
-      - name: Pull builder image
-        run: docker pull mangatasolutions/node-builder:0.2
+      - name: Cache the Cargo dependencies
+        uses: mansagroup/gcs-cache-action@v1.0.3
+        with:
+          bucket: mangata-node-ci-cache
+          path: |
+            ${{ github.workspace }}/target
+            /usr/local/cargo/git
+            /usr/local/cargo/registry
+            ~/.cache/sccache
+          key: node-docs-cache-0-${{ hashFiles('Cargo.lock') }}
+      
       - name: Build docs
-        run: |
-          ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch || ./docker-cargo.sh fetch
-          ./docker-cargo.sh doc
-        env:
-          DISABLE_TTY: 1
+        run: cargo doc
       
       - name: Deploy to GCP
         uses: google-github-actions/upload-cloud-storage@v0.10.4
         with:
-          path: ./docker-cargo/doc/
+          path: ./target/doc/
           destination: mangata-docs-node
           parent: false

@@ -1,46 +1,37 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_support::{
-	assert_ok,
 	dispatch::{DispatchError, DispatchResult},
 	ensure,
-	traits::Contains,
-	PalletId,
 };
 use frame_system::ensure_signed;
 use sp_core::U256;
 // TODO documentation!
-use codec::FullCodec;
+
 use frame_support::{
 	pallet_prelude::*,
-	traits::{tokens::currency::MultiTokenCurrency, ExistenceRequirement, Get, WithdrawReasons},
-	transactional, Parameter,
+	traits::{tokens::currency::MultiTokenCurrency, ExistenceRequirement, Get},
+	transactional,
 };
 use frame_system::pallet_prelude::*;
 use mangata_support::traits::{
-	ActivationReservesProviderTrait, ComputeIssuance, CumulativeWorkRewardsApi,
-	GetMaintenanceStatusTrait, PoolCreateApi, PreValidateSwaps, ProofOfStakeRewardsApi,
+	ActivationReservesProviderTrait, ComputeIssuance, CumulativeWorkRewardsApi, ProofOfStakeRewardsApi,
 	XykFunctionsTrait,
 };
 use mangata_types::{multipurpose_liquidity::ActivateKind, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_issuance::{ActivatedPoolQueryApi, PoolPromoteApi};
-use pallet_vesting_mangata::MultiTokenVestingLocks;
-use sp_arithmetic::{helpers_128bit::multiply_by_rational_with_rounding, per_things::Rounding};
+
+
 use sp_runtime::{
 	traits::{
-		AccountIdConversion, AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member,
-		SaturatedConversion, Zero,
+		SaturatedConversion,
 	},
 	Permill,
 };
 use sp_std::{
-	collections::btree_set::BTreeSet,
-	convert::{TryFrom, TryInto},
-	fmt::Debug,
-	ops::Div,
+	convert::{TryInto},
 	prelude::*,
-	vec::Vec,
 };
 
 /// Stores all the information required for non iterative rewards calculation between
@@ -159,10 +150,6 @@ impl RewardInfo {
 		pool_rewards_ratio_current: U256,
 		) -> Option<Balance> {
 
-		let time_passed = current_time
-			.checked_sub(self.last_checkpoint)
-			.unwrap();
-			// .ok_or(Error::<T>::PastTimeCalculation)?;
 
 		let pool_rewards_ratio_new = pool_rewards_ratio_current
 			.checked_sub(self.pool_ratio_at_last_checkpoint)?;
@@ -470,9 +457,9 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 
 	// MAX: 3R 2W
 	fn claim_rewards_v2(
-		user: T::AccountId,
-		liquidity_asset_id: Self::CurrencyId,
-		mangata_amount: Self::Balance,
+		_user: T::AccountId,
+		_liquidity_asset_id: Self::CurrencyId,
+		_mangata_amount: Self::Balance,
 	) -> DispatchResult {
 		Err(DispatchError::from(Error::<T>::DeprecatedExtrinsic))
 	}

@@ -61,95 +61,22 @@ pub struct RewardInfo {
 	pub missing_at_last_checkpoint: U256,
 }
 
-enum RewardsCalculationError{
-	PastTimeCalculation,
-	CalculateRewardsMathError,
-}
-
-fn calculate_rewards_v2(
-	time_passed: u32,
-	liquidity_assets_amount: u128,
-	pool_rewards_ratio: U256,
-	missing_at_last_checkpoint: U256,
-	pool_rewards_ratio_current: U256,
-) -> Option<Balance> {
-
-	let pool_rewards_ratio_new = pool_rewards_ratio_current
-		.checked_sub(pool_rewards_ratio)?;
-		// .ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsMathError))?;
-
-	let user_rewards_base: U256 = U256::from(liquidity_assets_amount)
-		.checked_mul(pool_rewards_ratio_new)? // TODO: please add UT and link it in this comment
-		.checked_div(U256::from(u128::MAX))?; // always fit into u128
-
-	let (cumulative_work, cummulative_work_max_possible) =
-		calculate_cumulative_work_max_ratio(
-			liquidity_assets_amount,
-			time_passed,
-			missing_at_last_checkpoint,
-		)?;
-
-	user_rewards_base
-		.checked_mul(cumulative_work)?
-		.checked_div(cummulative_work_max_possible)?
-		.try_into().ok()
-}
-
-// MAX: 0R 0W
-
-fn calculate_cumulative_work_max_ratio(
-	liquidity_assets_amount: u128,
-	time_passed: u32,
-	missing_at_last_checkpoint: U256,
-) -> Option<(U256, U256)> {
-	let mut cummulative_work = U256::from(0);
-	let mut cummulative_work_max_possible_for_ratio = U256::from(1);
-
-	if time_passed != 0 && liquidity_assets_amount != 0 {
-		let liquidity_assets_amount_u256: U256 = liquidity_assets_amount.into();
-
-		// whole formula: 	missing_at_last_checkpoint*106/6 - missing_at_last_checkpoint*106*precision/6/q_pow
-		// q_pow is multiplied by precision, thus there needs to be *precision in numenator as well
-
-		cummulative_work_max_possible_for_ratio =
-			liquidity_assets_amount_u256.checked_mul(U256::from(time_passed))?;
-
-		// whole formula: 	missing_at_last_checkpoint*Q*100/(Q*100-100) - missing_at_last_checkpoint*Q*100/(Q*100-100)*REWARDS_PRECISION/q_pow
-		// q_pow is multiplied by precision, thus there needs to be *precision in numenator as well
-		let base = missing_at_last_checkpoint
-			.checked_mul(U256::from(libm::floor(Q * 100_f64) as u128))?
-			.checked_div(U256::from(libm::floor(Q * 100_f64 - 100_f64) as u128))?;
-
-		let q_pow = calculate_q_pow( Q, time_passed.checked_add(1)?);
-
-		let cummulative_missing_new =
-			base - base * U256::from(REWARDS_PRECISION) / q_pow - missing_at_last_checkpoint;
-
-		cummulative_work = cummulative_work_max_possible_for_ratio
-			.checked_sub(cummulative_missing_new)?;
-	}
-
-	Some((cummulative_work, cummulative_work_max_possible_for_ratio))
-}
 
 fn calculate_q_pow(q: f64, pow: u32) -> u128 {
 	libm::floor(libm::pow(q, pow as f64) * REWARDS_PRECISION as f64) as u128
 }
 
-fn calculate_missing_at_checkpoint_v2(
-	time_passed: u32,
-	missing_at_last_checkpoint: U256,
-) -> Result<U256, DispatchError> {
-	let q_pow = calculate_q_pow(Q, time_passed);
-
-	let missing_at_checkpoint: U256 =
-		missing_at_last_checkpoint * U256::from(REWARDS_PRECISION) / q_pow;
-
-	Ok(missing_at_checkpoint)
-}
-
 
 impl RewardInfo {
+	fn calculate_missing_at_checkpoint_v2(
+		&self,
+		current_time: u32,
+	) -> Option<U256> {
+		let time_passed = current_time.checked_sub(self.last_checkpoint).unwrap();
+		let q_pow = calculate_q_pow(Q, time_passed);
+		Some(self.missing_at_last_checkpoint * U256::from(REWARDS_PRECISION) / q_pow)
+	}
+
 	fn activate_more<T: Config>(
 		&mut self,
 		current_time: u32,
@@ -161,22 +88,12 @@ impl RewardInfo {
 			.checked_add(liquidity_assets_added)
 			.ok_or(Error::<T>::LiquidityCheckpointMathError)?;
 
-		let time_passed = current_time
-			.checked_sub(self.last_checkpoint)
-			.ok_or(Error::<T>::PastTimeCalculation)?;
-
-		let missing_at_last_checkpoint = calculate_missing_at_checkpoint_v2(
-			time_passed,
-			self.missing_at_last_checkpoint,
-		)?
-		.checked_add(U256::from(liquidity_assets_added))
+		let missing_at_last_checkpoint = self.calculate_missing_at_checkpoint_v2(current_time)
+		.and_then(|v| v.checked_add(U256::from(liquidity_assets_added)))
 		.ok_or(Error::<T>::LiquidityCheckpointMathError)?;
 
-		let user_current_rewards = calculate_rewards_v2(
-			time_passed,
-			self.activated_amount,
-			self.pool_ratio_at_last_checkpoint,
-			self.missing_at_last_checkpoint,
+		let user_current_rewards = self.calculate_rewards_v2(
+			current_time,
 			pool_ratio_current,
 		).ok_or(Error::<T>::CalculateRewardsMathError)?;
 
@@ -205,14 +122,9 @@ impl RewardInfo {
 			.checked_sub(liquidity_assets_removed)
 			.ok_or(Error::<T>::LiquidityCheckpointMathError)?;
 
-		let time_passed = current_time
-			.checked_sub(self.last_checkpoint)
-			.ok_or(Error::<T>::PastTimeCalculation)?;
-
-		let missing_at_checkpoint_new = calculate_missing_at_checkpoint_v2(
-			time_passed,
-			self.missing_at_last_checkpoint,
-		)?;
+		let missing_at_checkpoint_new = self.calculate_missing_at_checkpoint_v2(
+			current_time,
+		).ok_or(Error::<T>::LiquidityCheckpointMathError)?;
 
 		let activated_amount_new = self
 			.activated_amount
@@ -223,11 +135,8 @@ impl RewardInfo {
 			.and_then(|v| v.checked_div(self.activated_amount.into()))
 			.ok_or(Error::<T>::LiquidityCheckpointMathError)?;
 
-		let user_current_rewards = calculate_rewards_v2(
-			time_passed,
-			self.activated_amount,
-			self.pool_ratio_at_last_checkpoint,
-			self.missing_at_last_checkpoint,
+		let user_current_rewards = self.calculate_rewards_v2(
+			current_time,
 			pool_ratio_current,
 		).ok_or(Error::<T>::CalculateRewardsMathError)?;
 		let total_available_rewards = user_current_rewards
@@ -242,6 +151,73 @@ impl RewardInfo {
 		self.rewards_not_yet_claimed = total_available_rewards;
 		self.last_checkpoint = current_time;
 		Ok(())
+	}
+
+	fn calculate_rewards_v2(
+		&self,
+		current_time: u32,
+		pool_rewards_ratio_current: U256,
+		) -> Option<Balance> {
+
+		let time_passed = current_time
+			.checked_sub(self.last_checkpoint)
+			.unwrap();
+			// .ok_or(Error::<T>::PastTimeCalculation)?;
+
+		let pool_rewards_ratio_new = pool_rewards_ratio_current
+			.checked_sub(self.pool_ratio_at_last_checkpoint)?;
+
+		let user_rewards_base: U256 = U256::from(self.activated_amount)
+			.checked_mul(pool_rewards_ratio_new)? // TODO: please add UT and link it in this comment
+			.checked_div(U256::from(u128::MAX))?; // always fit into u128
+
+		let (cumulative_work, cummulative_work_max_possible) =
+			self.calculate_cumulative_work_max_ratio(
+				current_time,
+				)?;
+
+		user_rewards_base
+			.checked_mul(cumulative_work)?
+			.checked_div(cummulative_work_max_possible)?
+			.try_into().ok()
+	}
+
+	fn calculate_cumulative_work_max_ratio(
+		&self,
+		current_time: u32,
+		) -> Option<(U256, U256)> {
+		let time_passed = current_time
+			.checked_sub(self.last_checkpoint)
+			.unwrap();
+		// .ok_or(Error::<T>::PastTimeCalculation)?;
+		let mut cummulative_work = U256::from(0);
+		let mut cummulative_work_max_possible_for_ratio = U256::from(1);
+
+		if time_passed != 0 && self.activated_amount != 0 {
+			let liquidity_assets_amount_u256: U256 = self.activated_amount.into();
+
+			// whole formula: 	missing_at_last_checkpoint*106/6 - missing_at_last_checkpoint*106*precision/6/q_pow
+			// q_pow is multiplied by precision, thus there needs to be *precision in numenator as well
+
+			cummulative_work_max_possible_for_ratio =
+				liquidity_assets_amount_u256.checked_mul(U256::from(time_passed))?;
+
+			// whole formula: 	missing_at_last_checkpoint*Q*100/(Q*100-100) - missing_at_last_checkpoint*Q*100/(Q*100-100)*REWARDS_PRECISION/q_pow
+			// q_pow is multiplied by precision, thus there needs to be *precision in numenator as well
+			let base = self.missing_at_last_checkpoint
+				.checked_mul(U256::from(libm::floor(Q * 100_f64) as u128))?
+				.checked_div(U256::from(libm::floor(Q * 100_f64 - 100_f64) as u128))?;
+
+			let q_pow = calculate_q_pow( Q, time_passed.checked_add(1)?);
+
+			let cummulative_missing_new =
+				base - base * U256::from(REWARDS_PRECISION) / q_pow - self.missing_at_last_checkpoint;
+
+			cummulative_work = cummulative_work_max_possible_for_ratio
+				.checked_sub(cummulative_missing_new)?;
+		}
+
+		Some((cummulative_work, cummulative_work_max_possible_for_ratio))
 	}
 
 }
@@ -282,6 +258,7 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
 
+
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
@@ -306,8 +283,6 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// Not enought assets
 		NotEnoughAssets,
-		/// Division by zero
-		DivisionByZero,
 		/// Math overflow
 		MathOverflow,
 		/// Not enough rewards earned
@@ -318,9 +293,9 @@ pub mod pallet {
 		PastTimeCalculation,
 		LiquidityCheckpointMathError,
 		CalculateRewardsMathError,
-		CalculateCumulativeWorkMaxRatioMathError,
 		CalculateRewardsAllMathError,
 		MissingRewardsInfoError,
+		DeprecatedExtrinsic,
 	}
 
 	#[pallet::event]
@@ -486,9 +461,6 @@ impl<T: Config> Pallet<T> {
 			Err(DispatchError::from(Error::<T>::NotAPromotedPool))
 		}
 	}
-
-	// remove   liquidity_asset_id
-
 }
 
 impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
@@ -502,111 +474,40 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		liquidity_asset_id: Self::CurrencyId,
 		mangata_amount: Self::Balance,
 	) -> DispatchResult {
-		let mangata_id: TokenId = Self::native_token_id();
-		let claimable_rewards =
-			<Self as ProofOfStakeRewardsApi<T::AccountId>>::calculate_rewards_amount_v2(
-				user.clone(),
-				liquidity_asset_id,
-			)?;
-
-		ensure!(mangata_amount <= claimable_rewards, Error::<T>::NotEnoughRewardsEarned);
-
-		let rewards_info: RewardInfo = Self::get_rewards_info(user.clone(), liquidity_asset_id);
-
-		let mut not_yet_claimed_rewards = rewards_info.rewards_not_yet_claimed;
-		let mut already_claimed_rewards = rewards_info.rewards_already_claimed;
-
-		if mangata_amount <= not_yet_claimed_rewards {
-			not_yet_claimed_rewards = not_yet_claimed_rewards
-				.checked_sub(mangata_amount)
-				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
-		}
-		// user is taking out more rewards then rewards from LP which was already removed from pool, additional work needs to be removed from pool and user
-		else {
-			// rewards to claim on top of rewards from LP which was already removed from pool
-			let rewards_to_claim = mangata_amount
-				.checked_sub(not_yet_claimed_rewards)
-				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
-			already_claimed_rewards = already_claimed_rewards
-				.checked_add(rewards_to_claim)
-				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
-			not_yet_claimed_rewards = 0_u128;
-		}
-
-		let rewards_info_new: RewardInfo = RewardInfo {
-			activated_amount: rewards_info.activated_amount,
-			rewards_not_yet_claimed: not_yet_claimed_rewards,
-			rewards_already_claimed: already_claimed_rewards,
-			last_checkpoint: rewards_info.last_checkpoint,
-			pool_ratio_at_last_checkpoint: rewards_info.pool_ratio_at_last_checkpoint,
-			missing_at_last_checkpoint: rewards_info.missing_at_last_checkpoint,
-		};
-
-		<T as Config>::Currency::transfer(
-			mangata_id.into(),
-			&<T as Config>::LiquidityMiningIssuanceVault::get(),
-			&user,
-			mangata_amount.into(),
-			ExistenceRequirement::KeepAlive,
-		)?;
-
-		RewardsInfo::<T>::insert(user.clone(), liquidity_asset_id, rewards_info_new);
-
-		Pallet::<T>::deposit_event(Event::RewardsClaimed(user, liquidity_asset_id, mangata_amount));
-
-		Ok(())
+		Err(DispatchError::from(Error::<T>::DeprecatedExtrinsic))
 	}
 
 	fn claim_rewards_all_v2(
 		user: T::AccountId,
 		liquidity_asset_id: Self::CurrencyId,
 	) -> Result<Self::Balance, DispatchError> {
-		let mangata_id: TokenId = Self::native_token_id();
-
-		let rewards_info: RewardInfo = Self::get_rewards_info(user.clone(), liquidity_asset_id);
+		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
+		let mut rewards_info = RewardsInfo::<T>::try_get(user.clone(), liquidity_asset_id)
+			.or(Err(DispatchError::from(Error::<T>::MissingRewardsInfoError)))?;
 		let pool_rewards_ratio_current = Self::get_pool_rewards(liquidity_asset_id)?;
 
-		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
-
-		let time_passed = Self::get_current_rewards_time()?
-			.checked_sub(rewards_info.last_checkpoint)
-			.ok_or(Error::<T>::PastTimeCalculation)?;
-
-		let current_rewards = calculate_rewards_v2(
-			time_passed,
-			rewards_info.activated_amount,
-			rewards_info.pool_ratio_at_last_checkpoint,
-			rewards_info.missing_at_last_checkpoint,
+		let current_rewards = rewards_info.calculate_rewards_v2(
+			Self::get_current_rewards_time()?,
 			pool_rewards_ratio_current,
 		).ok_or(Error::<T>::CalculateRewardsMathError)?;
 
-		let rewards_not_yet_claimed = rewards_info.rewards_not_yet_claimed;
-		let rewards_already_claimed = rewards_info.rewards_already_claimed;
-
 		let total_available_rewards = current_rewards
-			.checked_add(rewards_not_yet_claimed)
-			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsAllMathError))?
-			.checked_sub(rewards_already_claimed)
-			.ok_or_else(|| DispatchError::from(Error::<T>::CalculateRewardsAllMathError))?;
+			.checked_add(rewards_info.rewards_not_yet_claimed)
+			.and_then(|v| v.checked_sub(rewards_info.rewards_already_claimed))
+			.ok_or(Error::<T>::CalculateRewardsAllMathError)?;
 
-		let rewards_info_new: RewardInfo = RewardInfo {
-			activated_amount: rewards_info.activated_amount,
-			rewards_not_yet_claimed: 0_u128,
-			rewards_already_claimed: current_rewards,
-			last_checkpoint: rewards_info.last_checkpoint,
-			pool_ratio_at_last_checkpoint: rewards_info.pool_ratio_at_last_checkpoint,
-			missing_at_last_checkpoint: rewards_info.missing_at_last_checkpoint,
-		};
+		rewards_info.rewards_not_yet_claimed = 0_u128;
+		rewards_info.rewards_already_claimed = current_rewards;
 
 		<T as Config>::Currency::transfer(
-			mangata_id.into(),
+			Self::native_token_id().into(),
 			&<T as Config>::LiquidityMiningIssuanceVault::get(),
 			&user,
 			total_available_rewards.into(),
 			ExistenceRequirement::KeepAlive,
 		)?;
 
-		RewardsInfo::<T>::insert(user.clone(), liquidity_asset_id, rewards_info_new);
+		RewardsInfo::<T>::insert(user.clone(), liquidity_asset_id, rewards_info);
 
 		Pallet::<T>::deposit_event(Event::RewardsClaimed(
 			user,
@@ -670,19 +571,17 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		amount: Self::Balance,
 	) -> DispatchResult {
 		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
-
-		let rewards_info: RewardInfo = Self::get_rewards_info(user.clone(), liquidity_asset_id);
-
+		let rewards_info = RewardsInfo::<T>::try_get(user.clone(), liquidity_asset_id)
+			.or(Err(DispatchError::from(Error::<T>::MissingRewardsInfoError)))?;
 		ensure!(rewards_info.activated_amount >= amount, Error::<T>::NotEnoughAssets);
+
 
 		<Self as ProofOfStakeRewardsApi<T::AccountId>>::set_liquidity_burning_checkpoint_v2(
 			user.clone(),
 			liquidity_asset_id,
 			amount,
 		)?;
-
 		Pallet::<T>::deposit_event(Event::LiquidityDeactivated(user, liquidity_asset_id, amount));
-
 		Ok(())
 	}
 
@@ -694,31 +593,19 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
 	) -> Result<Balance, DispatchError> {
-		let rewards_info: RewardInfo = Self::get_rewards_info(user, liquidity_asset_id);
-
-		let liquidity_assets_amount: Balance = rewards_info.activated_amount;
-
-		let mut current_rewards = 0;
-
-		if liquidity_assets_amount != 0 {
-			let pool_rewards_ratio_current = Self::get_pool_rewards(liquidity_asset_id)?;
-
-			let last_checkpoint = rewards_info.last_checkpoint;
-			let pool_ratio_at_last_checkpoint = rewards_info.pool_ratio_at_last_checkpoint;
-			let missing_at_checkpoint = rewards_info.missing_at_last_checkpoint;
-
-			Self::ensure_is_promoted_pool(liquidity_asset_id)?;
-			let time_passed = Self::get_current_rewards_time()?
-				.checked_sub(last_checkpoint)
-				.ok_or(Error::<T>::PastTimeCalculation)?;
-			current_rewards = calculate_rewards_v2(
-				time_passed,
-				liquidity_assets_amount,
-				pool_ratio_at_last_checkpoint,
-				missing_at_checkpoint,
-				pool_rewards_ratio_current,
-			).ok_or(Error::<T>::CalculateRewardsMathError)?;
-		}
+		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
+		let rewards_info = RewardsInfo::<T>::try_get(user.clone(), liquidity_asset_id)
+			.or(Err(DispatchError::from(Error::<T>::MissingRewardsInfoError)))?;
+		let current_rewards = match rewards_info.activated_amount {
+			0 => 0u128,
+			_ => {
+				rewards_info.calculate_rewards_v2(
+					Self::get_current_rewards_time()?,
+					Self::get_pool_rewards(liquidity_asset_id)?
+				)
+				.ok_or(Error::<T>::CalculateRewardsMathError)?
+			}
+		};
 
 		Ok(current_rewards
 			.checked_add(rewards_info.rewards_not_yet_claimed)

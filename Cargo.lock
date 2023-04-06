@@ -4372,7 +4372,7 @@ dependencies = [
  "pallet-crowdloan-rewards",
  "pallet-fee-lock",
  "pallet-identity",
- "pallet-issuance 2.0.0",
+ "pallet-issuance",
  "pallet-maintenance",
  "pallet-multipurpose-liquidity",
  "pallet-proof-of-stake",
@@ -4559,7 +4559,7 @@ dependencies = [
  "pallet-crowdloan-rewards",
  "pallet-fee-lock",
  "pallet-identity",
- "pallet-issuance 2.0.0",
+ "pallet-issuance",
  "pallet-maintenance",
  "pallet-multipurpose-liquidity",
  "pallet-proof-of-stake",
@@ -5554,7 +5554,7 @@ dependencies = [
  "mockall",
  "orml-tokens",
  "orml-traits",
- "pallet-issuance 2.0.0",
+ "pallet-issuance",
  "pallet-proof-of-stake",
  "pallet-vesting-mangata",
  "pallet-xyk",
@@ -5917,27 +5917,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-issuance"
-version = "2.0.0"
-source = "git+https://github.com/mangata-finance/mangata-node?branch=develop#5bc58dc7ccc34283f078c132558e597614738ece"
-dependencies = [
- "cfg-if",
- "frame-executive",
- "frame-support",
- "frame-system",
- "log",
- "mangata-support",
- "mangata-types",
- "orml-tokens",
- "pallet-vesting-mangata",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-maintenance"
 version = "0.1.0"
 dependencies = [
@@ -6182,7 +6161,7 @@ dependencies = [
  "orml-tokens",
  "orml-traits",
  "pallet-bootstrap",
- "pallet-issuance 2.0.0",
+ "pallet-issuance",
  "pallet-vesting-mangata",
  "parity-scale-codec",
  "rustc-hex",
@@ -6742,7 +6721,7 @@ dependencies = [
  "orml-tokens",
  "orml-traits",
  "pallet-bootstrap",
- "pallet-issuance 2.0.0",
+ "pallet-issuance",
  "pallet-proof-of-stake",
  "pallet-vesting-mangata",
  "parity-scale-codec",
@@ -6786,7 +6765,7 @@ dependencies = [
  "orml-tokens",
  "pallet-authorship",
  "pallet-collective-mangata",
- "pallet-issuance 2.0.0 (git+https://github.com/mangata-finance/mangata-node?branch=develop)",
+ "pallet-issuance",
  "pallet-session",
  "parity-scale-codec",
  "scale-info",
@@ -9075,7 +9054,7 @@ dependencies = [
  "pallet-balances",
  "pallet-bootstrap",
  "pallet-identity",
- "pallet-issuance 2.0.0",
+ "pallet-issuance",
  "pallet-multipurpose-liquidity",
  "pallet-proxy",
  "pallet-sudo-origin",

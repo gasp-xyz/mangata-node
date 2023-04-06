@@ -374,6 +374,7 @@ parameter_types! {
 	pub const BountyCuratorDeposit: Permill = Permill::from_percent(50);
 	pub const BountyValueMinimum: Balance = 5 * DOLLARS;
 	pub const MaxApprovals: u32 = 100;
+	pub const DefaultPayoutLimit: u32 = 3;
 }
 
 impl pallet_treasury::Config for Runtime {
@@ -1423,6 +1424,7 @@ impl parachain_staking::Config for Runtime {
 	type StakingIssuanceVault = StakingIssuanceVault;
 	type FallbackProvider = Council;
 	type WeightInfo = weights::parachain_staking_weights::ModuleWeight<Runtime>;
+	type DefaultPayoutLimit = DefaultPayoutLimit;
 }
 
 impl parachain_staking::StakingBenchmarkConfig for Runtime {

@@ -544,8 +544,7 @@ fn liquidity_rewards_promote_pool_already_promoted_NW() {
 		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 5000, 1, 5000).unwrap();
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
 
-		assert!(<Test as pallet_proof_of_stake::Config>::PoolPromoteApi::get_pool_rewards_v2(4)
-			.is_some());
+		assert!(<Test as Config>::ProofOfStakeRewardsApi::is_enabled(4));
 	});
 }
 

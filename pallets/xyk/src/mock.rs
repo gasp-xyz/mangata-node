@@ -23,7 +23,6 @@ pub use mangata_support::traits::ProofOfStakeRewardsApi;
 use mangata_types::{assets::CustomMetadata, Amount, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
 use orml_traits::{asset_registry::AssetMetadata, parameter_type_with_key};
-pub use pallet_issuance::PoolPromoteApi;
 use sp_runtime::{Perbill, Percent};
 use std::{collections::HashMap, sync::Mutex};
 
@@ -57,41 +56,11 @@ lazy_static::lazy_static! {
 }
 
 pub struct MockPromotedPoolApi;
-pub struct MockActivatedPoolQueryApi;
 
-#[cfg(test)]
-#[cfg(not(feature = "runtime-benchmarks"))]
-impl MockPromotedPoolApi {
-	pub fn instance() -> &'static Mutex<HashMap<TokenId, U256>> {
-		&PROMOTED_POOLS
-	}
-}
-
-impl mangata_support::traits::ComputeIssuance for MockPromotedPoolApi {
-	fn compute_issuance(_n: u32) {
-		todo!()
-	}
-}
-
-impl MockActivatedPoolQueryApi {
-	pub fn instance() -> &'static Mutex<HashMap<TokenId, U256>> {
-		&PROMOTED_POOLS
-	}
-}
-
-impl ActivatedPoolQueryApi for MockActivatedPoolQueryApi {
-	fn get_pool_activate_amount(_liquidity_token_id: TokenId) -> Option<u128> {
-		Some(1_u128)
-	}
-}
-
-impl PoolPromoteApi for MockPromotedPoolApi {
-	fn update_pool_promotion(liquidity_token_id: TokenId, weight: Option<u8>) {
+impl ProofOfStakeRewardsApi for MockPromotedPoolApi {
+	fn enable(liquidity_token_id: TokenId, weight: u8) {
 		let mut pools = PROMOTED_POOLS.lock().unwrap();
-		match weight {
-			Some(_) => pools.insert(liquidity_token_id, 0_u128.into()),
-			None => pools.remove(&liquidity_token_id),
-		};
+		pools.insert(liquidity_token_id, 0_u128.into()),
 	}
 
 	fn get_pool_rewards(liquidity_token_id: TokenId) -> Option<Balance> {
@@ -245,7 +214,6 @@ impl pallet_issuance::Config for Test {
 	type TGEReleaseBegin = TGEReleaseBegin;
 	type VestingProvider = Vesting;
 	type WeightInfo = ();
-	type ActivatedPoolQueryApiType = MockActivatedPoolQueryApi;
 }
 
 #[cfg(feature = "runtime-benchmarks")]

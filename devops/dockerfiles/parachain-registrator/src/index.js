@@ -106,7 +106,7 @@ async function main() {
 			{
 				genesisHead: genesis,
 				validationCode: wasm,
-				parachain: true,
+				paraKind: true,
 			}
 		);
 

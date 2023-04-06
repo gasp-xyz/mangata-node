@@ -134,8 +134,10 @@ use frame_support::{
 	transactional, PalletId,
 };
 use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
-use mangata_types::{traits::GetMaintenanceStatusTrait, Balance, TokenId};
-use mp_bootstrap::{AssetRegistryApi, PoolCreateApi, RewardsApi};
+use mangata_support::traits::{
+	AssetRegistryApi, GetMaintenanceStatusTrait, PoolCreateApi, RewardsApi,
+};
+use mangata_types::{Balance, TokenId};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
 use scale_info::TypeInfo;

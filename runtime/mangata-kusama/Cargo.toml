@@ -22,16 +22,15 @@ static_assertions = "1.1.0"
 
 # Local Dependencies
 pallet-xyk = { path = '../../pallets/xyk', default-features = false, version = '0.1.0' }
+pallet-proof-of-stake = { path = '../../pallets/proof-of-stake', default-features = false, version = '0.1.0' }
 pallet-bootstrap = { path = '../../pallets/bootstrap', default-features = false, version = '0.1.0' }
 xyk-runtime-api = { path = '../../pallets/xyk/runtime-api', default-features = false, version = '2.0.0' }
 pallet-sudo-origin = { path = '../../pallets/sudo-origin', default-features = false }
 pallet-issuance = { path = '../../pallets/issuance', default-features = false }
 pallet-multipurpose-liquidity = { path = '../../pallets/multipurpose-liquidity', default-features = false }
 pallet-maintenance = { path = '../../pallets/maintenance', default-features = false }
-mp-multipurpose-liquidity = { path = '../../primitives/multipurpose-liquidity', default-features = false }
 pallet-fee-lock = { path = '../../pallets/fee-lock', default-features = false}
-mp-traits = { path = '../../primitives/traits', default-features = false }
-mp-bootstrap = { path = '../../primitives/bootstrap', default-features = false }
+mangata-support = { default-features = false , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
 # Substrate Dependencies
 ## Substrate Primitive Dependencies
@@ -170,6 +169,7 @@ std = [
 	"orml-tokens/std",
 	"pallet-treasury/std",
 	"pallet-xyk/std",
+	"pallet-proof-of-stake/std",
 	"pallet-bootstrap/std",
 	"xyk-runtime-api/std",
 	"parachain-staking/std",
@@ -184,9 +184,7 @@ std = [
 	"pallet-collective-mangata/std",
 	"frame-system-rpc-runtime-api/std",
 	"pallet-multipurpose-liquidity/std",
-	"mp-multipurpose-liquidity/std",
-	"mp-traits/std",
-	"mp-bootstrap/std",
+	"mangata-support/std",
 	"pallet-vesting-mangata-rpc-runtime-api/std",
 	"pallet-fee-lock/std",
 	"pallet-identity/std",
@@ -206,6 +204,7 @@ try-runtime = [
 	"orml-tokens/try-runtime",
 	"pallet-transaction-payment-mangata/try-runtime",
 	"pallet-xyk/try-runtime",
+	"pallet-proof-of-stake/try-runtime",
 	"pallet-vesting-mangata/try-runtime",
 	"pallet-crowdloan-rewards/try-runtime",
 	"pallet-issuance/try-runtime",
@@ -257,6 +256,7 @@ runtime-benchmarks = [
 	"cumulus-pallet-parachain-system/runtime-benchmarks",
 	"cumulus-pallet-xcmp-queue/runtime-benchmarks",
 	"pallet-xyk/runtime-benchmarks",
+	"pallet-proof-of-stake/runtime-benchmarks",
 	"parachain-staking/runtime-benchmarks",
 	"pallet-treasury/runtime-benchmarks",
 	"pallet-crowdloan-rewards/runtime-benchmarks",

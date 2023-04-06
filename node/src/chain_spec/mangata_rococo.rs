@@ -148,15 +148,15 @@ pub fn mangata_rococo_prod_config() -> ChainSpec {
 						// Id of MGA token,
 						0u32,
 						// How much mangata they pool
-						10_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000_u128,
 						// Id of the dummy token,
 						2u32,
 						// How many dummy tokens they pool,
-						20_000__000_000_000_000_000_000u128,
+						200_000_000__000_000_000_000_000_000_u128,
 						// Id of the liquidity token that is generated
 						3u32,
 						// How many liquidity tokens they stake,
-						10_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000_u128,
 					),
 					(
 						// Who gets to stake initially
@@ -164,15 +164,15 @@ pub fn mangata_rococo_prod_config() -> ChainSpec {
 						// Id of MGA token,
 						0u32,
 						// How much mangata they pool
-						8_000__000_000_000_000_000_000u128,
+						80_000_000__000_000_000_000_000_000_u128,
 						// Id of the dummy token,
 						2u32,
 						// How many dummy tokens they pool,
-						20_000__000_000_000_000_000_000u128,
+						200_000_000__000_000_000_000_000_000_u128,
 						// Id of the liquidity token that is generated
 						3u32,
 						// How many liquidity tokens they stake,
-						5_000__000_000_000_000_000_000u128,
+						50_000_000__000_000_000_000_000_000_u128,
 					),
 				],
 				vec![
@@ -297,15 +297,15 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 						// Id of MGA token,
 						0u32,
 						// How much mangata they pool
-						10_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000_u128,
 						// Id of the dummy token,
 						2u32,
 						// How many dummy tokens they pool,
-						20_000__000_000_000_000_000_000u128,
+						200_000_000__000_000_000_000_000_000_u128,
 						// Id of the liquidity token that is generated
 						3u32,
 						// How many liquidity tokens they stake,
-						10_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000_u128,
 					),
 					(
 						// Who gets to stake initially
@@ -313,15 +313,15 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 						// Id of MGA token,
 						0u32,
 						// How much mangata they pool
-						8_000__000_000_000_000_000_000u128,
+						80_000_000__000_000_000_000_000_000_u128,
 						// Id of the dummy token,
 						2u32,
 						// How many dummy tokens they pool,
-						20_000__000_000_000_000_000_000u128,
+						200_000_000__000_000_000_000_000_000_u128,
 						// Id of the liquidity token that is generated
 						3u32,
 						// How many liquidity tokens they stake,
-						5_000__000_000_000_000_000_000u128,
+						50_000_000__000_000_000_000_000_000_u128,
 					),
 				],
 				vec![

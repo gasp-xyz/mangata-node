@@ -243,68 +243,68 @@ fn liquidity_rewards_single_user_mint_W() {
 
 		System::set_block_number(10);
 		MockPromotedPoolApi::instance().lock().unwrap().insert(4, U256::from(0));
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 0);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 0);
 		System::set_block_number(10);
 
 		MockPromotedPoolApi::instance()
 			.lock()
 			.unwrap()
 			.insert(4, U256::from(u128::MAX * 1));
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 291);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 291);
 		System::set_block_number(20);
 		MockPromotedPoolApi::instance()
 			.lock()
 			.unwrap()
 			.insert(4, U256::from(u128::MAX) * 2);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 873);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 873);
 		System::set_block_number(30);
 		MockPromotedPoolApi::instance()
 			.lock()
 			.unwrap()
 			.insert(4, U256::from(u128::MAX) * 3);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 1716);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 1716);
 		System::set_block_number(40);
 		MockPromotedPoolApi::instance()
 			.lock()
 			.unwrap()
 			.insert(4, U256::from(u128::MAX) * 4);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 2847);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 2847);
 		System::set_block_number(50);
 		MockPromotedPoolApi::instance()
 			.lock()
 			.unwrap()
 			.insert(4, U256::from(u128::MAX) * 5);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 4215);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 4215);
 		System::set_block_number(60);
 		MockPromotedPoolApi::instance()
 			.lock()
 			.unwrap()
 			.insert(4, U256::from(u128::MAX) * 6);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 5844);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 5844);
 		System::set_block_number(70);
 		MockPromotedPoolApi::instance()
 			.lock()
 			.unwrap()
 			.insert(4, U256::from(u128::MAX) * 7);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 7712);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 7712);
 		System::set_block_number(80);
 		MockPromotedPoolApi::instance()
 			.lock()
 			.unwrap()
 			.insert(4, U256::from(u128::MAX) * 8);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 9817);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 9817);
 		System::set_block_number(90);
 		MockPromotedPoolApi::instance()
 			.lock()
 			.unwrap()
 			.insert(4, U256::from(u128::MAX) * 9);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 12142);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 12142);
 		System::set_block_number(100);
 		MockPromotedPoolApi::instance()
 			.lock()
 			.unwrap()
 			.insert(4, U256::from(u128::MAX) * 10);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 14704);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 14704);
 	});
 }
 
@@ -353,7 +353,7 @@ fn liquidity_rewards_three_users_mint_W() {
 			.lock()
 			.unwrap()
 			.insert(4, U256::from(u128::MAX) * 100000 / 10000);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 14704);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 14704);
 
 		XykStorage::mint_liquidity(RuntimeOrigin::signed(3), 0, 1, 10000, 10010).unwrap();
 
@@ -377,9 +377,9 @@ fn liquidity_rewards_three_users_mint_W() {
 			.unwrap()
 			.insert(4, U256::from(u128::MAX) * 203300 / 10000);
 
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 85820);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(3, 4).unwrap(), 35810);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(4, 4).unwrap(), 21647);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 85820);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(3, 4).unwrap(), 35810);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(4, 4).unwrap(), 21647);
 	});
 }
 
@@ -419,7 +419,7 @@ fn liquidity_rewards_three_users_burn_W() {
 			.lock()
 			.unwrap()
 			.insert(4, U256::from(u128::MAX) * 100000 / 10000);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 14704);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 14704);
 
 		XykStorage::mint_liquidity(RuntimeOrigin::signed(3), 0, 1, 10000, 10010).unwrap();
 
@@ -443,9 +443,9 @@ fn liquidity_rewards_three_users_burn_W() {
 			.unwrap()
 			.insert(4, U256::from(u128::MAX) * 227300 / 10000);
 
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 95951);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(3, 4).unwrap(), 44130);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(4, 4).unwrap(), 10628);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 95951);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(3, 4).unwrap(), 44130);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(4, 4).unwrap(), 10628);
 	});
 }
 
@@ -497,7 +497,7 @@ fn liquidity_rewards_claim_W() {
 			.unwrap()
 			.insert(4, U256::from(u128::MAX) * 90000 / 10000);
 
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 12142);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 12142);
 		ProofOfStake::claim_rewards_v2(RuntimeOrigin::signed(2), 4, 12141).unwrap();
 
 		MockPromotedPoolApi::instance()
@@ -505,7 +505,7 @@ fn liquidity_rewards_claim_W() {
 			.unwrap()
 			.insert(4, U256::from(u128::MAX) * 100000 / 10000);
 		System::set_block_number(100);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 2563);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 2563);
 	});
 }
 
@@ -560,7 +560,7 @@ fn liquidity_rewards_claim_more_NW() {
 			.unwrap()
 			.insert(4, U256::from(u128::MAX) * 100000 / 10000);
 
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), (14704));
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), (14704));
 
 		assert_err!(
 			ProofOfStake::claim_rewards_v2(RuntimeOrigin::signed(2), 4, 15000),
@@ -605,7 +605,7 @@ fn liquidity_rewards_work_after_burn_W() {
 			.lock()
 			.unwrap()
 			.insert(4, U256::from(u128::MAX) * 100000 / 10000);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 14704);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 14704);
 
 		XykStorage::mint_liquidity(RuntimeOrigin::signed(3), 0, 1, 10000, 10010).unwrap();
 
@@ -630,7 +630,7 @@ fn liquidity_rewards_work_after_burn_W() {
 			.unwrap()
 			.insert(4, U256::from(u128::MAX) * 243300 / 10000);
 
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(4, 4).unwrap(), 946);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(4, 4).unwrap(), 946);
 
 		XykStorage::mint_liquidity(RuntimeOrigin::signed(4), 0, 1, 20000, 20010).unwrap();
 
@@ -639,7 +639,7 @@ fn liquidity_rewards_work_after_burn_W() {
 			.lock()
 			.unwrap()
 			.insert(4, U256::from(u128::MAX) * 268300 / 10000);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(4, 4).unwrap(), 8297);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(4, 4).unwrap(), 8297);
 	});
 }
 
@@ -677,12 +677,12 @@ fn liquidity_rewards_deactivate_transfer_controled_W() {
 			.lock()
 			.unwrap()
 			.insert(4, U256::from(u128::MAX) * 100000 / 10000);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 14704);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 14704);
 
 		ProofOfStake::deactivate_liquidity_v2(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned)
 			.unwrap();
 		XykStorage::transfer(4, 2, 3, 10).unwrap();
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 14704);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 14704);
 	});
 }
 
@@ -771,7 +771,7 @@ fn liquidity_rewards_calculate_rewards_pool_not_promoted() {
 		XykStorage::create_new_token(&acc_id, amount);
 
 		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 10000, 1, 10000).unwrap();
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 0);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 0);
 	});
 }
 
@@ -2846,7 +2846,7 @@ fn liquidity_rewards_transfered_liq_tokens_produce_rewards_W() {
 			.unwrap()
 			.insert(4, U256::from(u128::MAX) * 100000 / 10000);
 
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(3, 4).unwrap(), 14704);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(3, 4).unwrap(), 14704);
 		ProofOfStake::claim_rewards_v2(RuntimeOrigin::signed(3), 4, 14704).unwrap();
 	});
 }
@@ -2934,7 +2934,7 @@ fn liquidity_rewards_not_yet_claimed_already_claimed_W() {
 			.unwrap()
 			.insert(4, U256::from(u128::MAX) * 10000 / 10000);
 
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 291);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 291);
 		ProofOfStake::deactivate_liquidity_v2(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned)
 			.unwrap();
 
@@ -2954,7 +2954,7 @@ fn liquidity_rewards_not_yet_claimed_already_claimed_W() {
 			.unwrap()
 			.insert(4, U256::from(u128::MAX) * 100000 / 10000);
 
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 12433);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 12433);
 		ProofOfStake::claim_rewards_v2(RuntimeOrigin::signed(2), 4, 12432).unwrap();
 
 		let rewards_info = ProofOfStake::get_rewards_info(2, 4);
@@ -2993,7 +2993,7 @@ fn extreme_case_pool_ratio() {
 
 		System::set_block_number(10000);
 		assert_eq!(
-			ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(),
+			ProofOfStake::calculate_rewards_amount(2, 4).unwrap(),
 			329053048812547494169083245386519860476
 		);
 	});
@@ -3071,8 +3071,8 @@ fn rewards_rounding_during_often_mint() {
 				)
 				.unwrap();
 				log::info!("----------------------------");
-				let rew_non_minter = ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap();
-				let rew_minter = ProofOfStake::calculate_rewards_amount_v2(3, 4).unwrap();
+				let rew_non_minter = ProofOfStake::calculate_rewards_amount(2, 4).unwrap();
+				let rew_minter = ProofOfStake::calculate_rewards_amount(3, 4).unwrap();
 				log::info!("rew        {} {}", n, rew_non_minter);
 				log::info!("rew minter {} {}", n, rew_minter);
 
@@ -3170,11 +3170,11 @@ fn rewards_storage_right_amounts_start1() {
 			.unwrap()
 			.insert(4, U256::from(u128::MAX) * U256::from(20));
 
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 36530);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(3, 4).unwrap(), 36530);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(4, 4).unwrap(), 36530);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(5, 4).unwrap(), 36530);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(6, 4).unwrap(), 36530);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 36530);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(3, 4).unwrap(), 36530);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(4, 4).unwrap(), 36530);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(5, 4).unwrap(), 36530);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(6, 4).unwrap(), 36530);
 
 		// starting point for blue cases
 
@@ -3186,7 +3186,7 @@ fn rewards_storage_right_amounts_start1() {
 
 		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
 		assert_eq!(rewards_info.rewards_already_claimed, 51234);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 0);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 0);
 		assert_eq!(user_balance_after - user_balance_before, 36530);
 
 		// usecase 6 burn some
@@ -3197,7 +3197,7 @@ fn rewards_storage_right_amounts_start1() {
 
 		assert_eq!(rewards_info.rewards_not_yet_claimed, 36530); // total rewards 51234, while 14704 were already claimed. Burning puts all rewards to not_yet_claimed, but zeroes the already_claimed. 51234 - 14704 = 36530
 		assert_eq!(rewards_info.rewards_already_claimed, 0);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(3, 4).unwrap(), 36530);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(3, 4).unwrap(), 36530);
 		assert_eq!(user_balance_after - user_balance_before, 0);
 
 		// usecase 7 mint some
@@ -3208,7 +3208,7 @@ fn rewards_storage_right_amounts_start1() {
 
 		assert_eq!(rewards_info.rewards_not_yet_claimed, 36530);
 		assert_eq!(rewards_info.rewards_already_claimed, 0);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(4, 4).unwrap(), 36530);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(4, 4).unwrap(), 36530);
 		assert_eq!(user_balance_after - user_balance_before, 0);
 
 		// usecase 8 deactivate some
@@ -3219,7 +3219,7 @@ fn rewards_storage_right_amounts_start1() {
 
 		assert_eq!(rewards_info.rewards_not_yet_claimed, 36530);
 		assert_eq!(rewards_info.rewards_already_claimed, 0);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(5, 4).unwrap(), 36530);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(5, 4).unwrap(), 36530);
 		assert_eq!(user_balance_after - user_balance_before, 0);
 
 		// usecase 16 claim some
@@ -3230,7 +3230,7 @@ fn rewards_storage_right_amounts_start1() {
 
 		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
 		assert_eq!(rewards_info.rewards_already_claimed, 34704);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(6, 4).unwrap(), 16530);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(6, 4).unwrap(), 16530);
 		assert_eq!(user_balance_after - user_balance_before, 20000);
 	});
 }
@@ -3309,10 +3309,10 @@ fn rewards_storage_right_amounts_start2() {
 		assert_eq!(rewards_info.rewards_not_yet_claimed, 14704);
 		assert_eq!(rewards_info.rewards_already_claimed, 0);
 
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 32973);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(3, 4).unwrap(), 32973);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(4, 4).unwrap(), 32973);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(5, 4).unwrap(), 32973);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 32973);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(3, 4).unwrap(), 32973);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(4, 4).unwrap(), 32973);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(5, 4).unwrap(), 32973);
 
 		// starting point for blue cases
 
@@ -3324,7 +3324,7 @@ fn rewards_storage_right_amounts_start2() {
 
 		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
 		assert_eq!(rewards_info.rewards_already_claimed, 18269);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 0);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 0);
 		assert_eq!(user_balance_after - user_balance_before, 32973);
 
 		// usecase 9 burn some
@@ -3335,7 +3335,7 @@ fn rewards_storage_right_amounts_start2() {
 
 		assert_eq!(rewards_info.rewards_not_yet_claimed, 32973);
 		assert_eq!(rewards_info.rewards_already_claimed, 0);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(3, 4).unwrap(), 32973);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(3, 4).unwrap(), 32973);
 		assert_eq!(user_balance_after - user_balance_before, 0);
 
 		// usecase 10 mint some
@@ -3346,7 +3346,7 @@ fn rewards_storage_right_amounts_start2() {
 
 		assert_eq!(rewards_info.rewards_not_yet_claimed, 32973);
 		assert_eq!(rewards_info.rewards_already_claimed, 0);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(4, 4).unwrap(), 32973);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(4, 4).unwrap(), 32973);
 		assert_eq!(user_balance_after - user_balance_before, 0);
 
 		// usecase 11 deactivate some
@@ -3357,7 +3357,7 @@ fn rewards_storage_right_amounts_start2() {
 
 		assert_eq!(rewards_info.rewards_not_yet_claimed, 32973);
 		assert_eq!(rewards_info.rewards_already_claimed, 0);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(5, 4).unwrap(), 32973);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(5, 4).unwrap(), 32973);
 		assert_eq!(user_balance_after - user_balance_before, 0);
 	});
 }
@@ -3415,8 +3415,8 @@ fn rewards_storage_right_amounts_start3() {
 		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
 		assert_eq!(rewards_info.rewards_already_claimed, 0);
 
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 14704);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(3, 4).unwrap(), 14704);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 14704);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(3, 4).unwrap(), 14704);
 
 		// starting point for blue cases
 
@@ -3428,7 +3428,7 @@ fn rewards_storage_right_amounts_start3() {
 
 		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
 		assert_eq!(rewards_info.rewards_already_claimed, 14704);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 0);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 0);
 		assert_eq!(user_balance_after - user_balance_before, 14704);
 
 		// usecase 17 claim some
@@ -3439,7 +3439,7 @@ fn rewards_storage_right_amounts_start3() {
 
 		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
 		assert_eq!(rewards_info.rewards_already_claimed, 10000);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(3, 4).unwrap(), 4704);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(3, 4).unwrap(), 4704);
 		assert_eq!(user_balance_after - user_balance_before, 10000);
 	});
 }
@@ -3519,7 +3519,7 @@ fn test_compound_rewards(amount: u128, part_permille: u32, surplus: u128) {
 
 		System::set_block_number(10);
 
-		let amount = ProofOfStake::calculate_rewards_amount_v2(2, 2).unwrap();
+		let amount = ProofOfStake::calculate_rewards_amount(2, 2).unwrap();
 		XykStorage::transfer(
 			0,
 			2,
@@ -3557,7 +3557,7 @@ fn test_compound_rewards_pool_assets_order_swapped() {
 
 		System::set_block_number(10);
 
-		let amount = ProofOfStake::calculate_rewards_amount_v2(2, 2).unwrap();
+		let amount = ProofOfStake::calculate_rewards_amount(2, 2).unwrap();
 		XykStorage::transfer(
 			0,
 			2,

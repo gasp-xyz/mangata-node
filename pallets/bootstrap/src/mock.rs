@@ -171,7 +171,6 @@ impl pallet_proof_of_stake::Config for Test {
 	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
 	type NativeCurrencyId = NativeCurrencyId;
 	type Xyk = Xyk;
-	type PoolPromoteApi = Issuance;
 	type Currency = MultiTokenCurrencyAdapter<Test>;
 	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = ConstU32<10000>;
@@ -237,26 +236,26 @@ parameter_types! {
 	pub const HistoryLimit: u32 = 10u32;
 }
 
-impl pallet_issuance::Config for Test {
-	type RuntimeEvent = RuntimeEvent;
-	type NativeCurrencyId = MgaTokenId;
-	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
-	type BlocksPerRound = BlocksPerRound;
-	type HistoryLimit = HistoryLimit;
-	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
-	type StakingIssuanceVault = StakingIssuanceVault;
-	type TotalCrowdloanAllocation = TotalCrowdloanAllocation;
-	type IssuanceCap = IssuanceCap;
-	type LinearIssuanceBlocks = LinearIssuanceBlocks;
-	type LiquidityMiningSplit = LiquidityMiningSplit;
-	type StakingSplit = StakingSplit;
-	type ImmediateTGEReleasePercent = ImmediateTGEReleasePercent;
-	type TGEReleasePeriod = TGEReleasePeriod;
-	type TGEReleaseBegin = TGEReleaseBegin;
-	type VestingProvider = Vesting;
-	type ActivatedPoolQueryApiType = ProofOfStake;
-	type WeightInfo = ();
-}
+// impl pallet_issuance::Config for Test {
+// 	type RuntimeEvent = RuntimeEvent;
+// 	type NativeCurrencyId = MgaTokenId;
+// 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
+// 	type BlocksPerRound = BlocksPerRound;
+// 	type HistoryLimit = HistoryLimit;
+// 	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
+// 	type StakingIssuanceVault = StakingIssuanceVault;
+// 	type TotalCrowdloanAllocation = TotalCrowdloanAllocation;
+// 	type IssuanceCap = IssuanceCap;
+// 	type LinearIssuanceBlocks = LinearIssuanceBlocks;
+// 	type LiquidityMiningSplit = LiquidityMiningSplit;
+// 	type StakingSplit = StakingSplit;
+// 	type ImmediateTGEReleasePercent = ImmediateTGEReleasePercent;
+// 	type TGEReleasePeriod = TGEReleasePeriod;
+// 	type TGEReleaseBegin = TGEReleaseBegin;
+// 	type VestingProvider = Vesting;
+// 	type ActivatedPoolQueryApiType = ProofOfStake;
+// 	type WeightInfo = ();
+// }
 
 mockall::mock! {
 	pub PoolCreateApi {}
@@ -273,18 +272,43 @@ mockall::mock! {
 mockall::mock! {
 	pub RewardsApi {}
 
-	impl RewardsApi for RewardsApi {
-		type AccountId = u128;
+	impl ProofOfStakeRewardsApi<AccountId> for RewardsApi {
+		type Balance = <Test as orml_tokens::Config>::Balance;
+		type CurrencyId = <Test as orml_tokens::Config>::CurrencyId;
 
-		fn can_activate(liquidity_asset_id: TokenId) -> bool;
+	fn enable(liquidity_token_id: <mock::MockRewardsApi as ProofOfStakeRewardsApi<AccountId>>::CurrencyId, weight: u8);
 
-		fn activate_liquidity_tokens(
-			user: &u128,
-			liquidity_asset_id: TokenId,
-			amount: Balance,
-		) -> DispatchResult;
+	fn disable(liquidity_token_id: <mock::MockRewardsApi as ProofOfStakeRewardsApi<AccountId>>::CurrencyId);
 
-		fn update_pool_promotion(liquidity_token_id: TokenId, liquidity_mining_issuance_weight: Option<u8>);
+	fn is_enabled(
+		liquidity_token_id: <mock::MockRewardsApi as ProofOfStakeRewardsApi<AccountId>>::CurrencyId,
+	) -> bool;
+
+	fn claim_rewards_all(
+		sender: AccountId,
+		liquidity_token_id: <mock::MockRewardsApi as ProofOfStakeRewardsApi<AccountId>>::CurrencyId,
+	) -> Result<<mock::MockRewardsApi as ProofOfStakeRewardsApi<AccountId>>::Balance, DispatchError>;
+
+	// Activation & deactivation should happen in PoS
+	fn activate_liquidity(
+		sender: AccountId,
+		liquidity_token_id: <mock::MockRewardsApi as ProofOfStakeRewardsApi<AccountId>>::CurrencyId,
+		amount: <mock::MockRewardsApi as ProofOfStakeRewardsApi<AccountId>>::Balance,
+		use_balance_from: Option<ActivateKind>,
+	) -> DispatchResult;
+
+	// Activation & deactivation should happen in PoS
+	fn deactivate_liquidity(
+		sender: AccountId,
+		liquidity_token_id: <mock::MockRewardsApi as ProofOfStakeRewardsApi<AccountId>>::CurrencyId,
+		amount: <mock::MockRewardsApi as ProofOfStakeRewardsApi<AccountId>>::Balance,
+	) -> DispatchResult;
+
+	fn calculate_rewards_amount(
+		user: AccountId,
+		liquidity_asset_id: <mock::MockRewardsApi as ProofOfStakeRewardsApi<AccountId>>::CurrencyId,
+	) -> Result<Balance, DispatchError>;
+
 	}
 }
 
@@ -398,7 +422,7 @@ construct_runtime!(
 		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>},
 		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>},
 		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>},
-		Issuance: pallet_issuance::{Pallet, Event<T>, Storage},
+		// Issuance: pallet_issuance::{Pallet, Event<T>, Storage},
 		ProofOfStake: pallet_proof_of_stake::{Pallet, Call, Storage, Event<T>},
 	}
 );

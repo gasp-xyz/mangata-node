@@ -1,3 +1,4 @@
+
 // Copyright (C) 2020 Mangata team
 
 use super::*;
@@ -9,7 +10,7 @@ use sp_runtime::{
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
 };
 
-use crate as xyk;
+use crate as pos;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
@@ -32,6 +33,7 @@ pub(crate) type AccountId = u128;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
+use core::convert::TryFrom;
 
 construct_runtime!(
 	pub enum Test where
@@ -41,68 +43,10 @@ construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>},
-		XykStorage: xyk::{Pallet, Call, Storage, Event<T>, Config<T>},
-		ProofOfStake: pallet_proof_of_stake::{Pallet, Call, Storage, Event<T>},
+		ProofOfStake: pos::{Pallet, Call, Storage, Event<T>},
 		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>},
-		// Issuance: pallet_issuance::{Pallet, Event<T>, Storage},
 	}
 );
-
-// lazy_static::lazy_static! {
-// 	static ref PROMOTED_POOLS: Mutex<HashMap<TokenId, U256>> = {
-// 		let m = HashMap::new();
-// 		Mutex::new(m)
-// 	};
-// }
-
-// pub struct MockPromotedPoolApi;
-//
-// impl ProofOfStakeRewardsApi<AccountId> for MockPromotedPoolApi {
-// 	type Balance = <Test as orml_tokens::Config>::Balance;
-// 	type CurrencyId = <Test as orml_tokens::Config>::CurrencyId;
-//
-// 	fn enable(liquidity_token_id: TokenId, _weight: u8) {
-// 		let mut pools = PROMOTED_POOLS.lock().unwrap();
-// 		pools.insert(liquidity_token_id, 0_u128.into()),
-// 	}
-//
-// 	fn disable(liquidity_token_id: TokenId) {
-// 		unimplemented!()
-// 	}
-//
-// 	fn is_enabled(liquidity_token_id: TokenId) -> bool {
-// 		let mut pools = PROMOTED_POOLS.lock().unwrap();
-// 		pools.get(&liquidity_token_id).is_some()
-// 	}
-//
-// 	fn claim_rewards_all(liquidity_token_id: TokenId, amount: Balance) -> Result<Self::Balance, DispatchError> {
-// 		unimplemented!()
-// 	}
-//
-// 	fn calculate_rewards_amount(liquidity_token_id: TokenId) -> Result<Balance, DispatchError> {
-// 		unimplemented!()
-// 	}
-//
-// 	fn activate_liquidity(
-// 		sender: AccountId,
-// 		liquidity_token_id: Self::CurrencyId,
-// 		amount: Self::Balance,
-// 		use_balance_from: Option<ActivateKind>,
-// 		) -> DispatchResult {
-// 		let mut pools = PROMOTED_POOLS.lock().unwrap();
-// 		pools.entry(liquidity_token_id).unwrap()
-// 			.and_modify(|v| v.rew
-// 			insert(liquidity_token_id, 0_u128.into()),
-// 	}
-//
-// 	fn deactivate_liquidity(
-// 		sender: AccountId,
-// 		liquidity_token_id: Self::CurrencyId,
-// 		amount: Self::Balance,
-// 		) -> DispatchResult {
-// 		todo!()
-// 	}
-// }
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
@@ -208,50 +152,6 @@ parameter_types! {
 	pub const HistoryLimit: u32 = 10u32;
 }
 
-// #[cfg(not(feature = "runtime-benchmarks"))]
-// impl pallet_issuance::Config for Test {
-// 	type RuntimeEvent = RuntimeEvent;
-// 	type NativeCurrencyId = MgaTokenId;
-// 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
-// 	type BlocksPerRound = BlocksPerRound;
-// 	type HistoryLimit = HistoryLimit;
-// 	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
-// 	type StakingIssuanceVault = StakingIssuanceVault;
-// 	type TotalCrowdloanAllocation = TotalCrowdloanAllocation;
-// 	type IssuanceCap = IssuanceCap;
-// 	type LinearIssuanceBlocks = LinearIssuanceBlocks;
-// 	type LiquidityMiningSplit = LiquidityMiningSplit;
-// 	type StakingSplit = StakingSplit;
-// 	type ImmediateTGEReleasePercent = ImmediateTGEReleasePercent;
-// 	type TGEReleasePeriod = TGEReleasePeriod;
-// 	type TGEReleaseBegin = TGEReleaseBegin;
-// 	type VestingProvider = Vesting;
-// 	type WeightInfo = ();
-// }
-//
-// #[cfg(feature = "runtime-benchmarks")]
-// impl pallet_issuance::Config for Test {
-// 	type RuntimeEvent = RuntimeEvent;
-// 	type NativeCurrencyId = MgaTokenId;
-// 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
-// 	type BlocksPerRound = BlocksPerRound;
-// 	type HistoryLimit = HistoryLimit;
-// 	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
-// 	type StakingIssuanceVault = StakingIssuanceVault;
-// 	type TotalCrowdloanAllocation = TotalCrowdloanAllocation;
-// 	type IssuanceCap = IssuanceCap;
-// 	type LinearIssuanceBlocks = LinearIssuanceBlocks;
-// 	type LiquidityMiningSplit = LiquidityMiningSplit;
-// 	type StakingSplit = StakingSplit;
-// 	type ImmediateTGEReleasePercent = ImmediateTGEReleasePercent;
-// 	type TGEReleasePeriod = TGEReleasePeriod;
-// 	type TGEReleaseBegin = TGEReleaseBegin;
-// 	type VestingProvider = Vesting;
-// 	type WeightInfo = ();
-// 	type ActivatedPoolQueryApiType = ProofOfStake;
-// }
-
-impl XykBenchmarkingConfig for Test {}
 
 parameter_types! {
 	pub const LiquidityMiningIssuanceVaultId: PalletId = PalletId(*b"py/lqmiv");
@@ -288,34 +188,6 @@ lazy_static::lazy_static! {
 	};
 }
 
-#[cfg(test)]
-impl MockAssetRegister {
-	pub fn instance() -> &'static Mutex<HashMap<TokenId, AssetMetadata<Balance, CustomMetadata>>> {
-		&ASSET_REGISTER
-	}
-}
-
-impl AssetMetadataMutationTrait for MockAssetRegister {
-	fn set_asset_info(
-		asset: TokenId,
-		name: Vec<u8>,
-		symbol: Vec<u8>,
-		decimals: u32,
-	) -> DispatchResult {
-		let meta = AssetMetadata {
-			name,
-			symbol,
-			decimals,
-			location: None,
-			additional: Default::default(),
-			existential_deposit: 0,
-		};
-		let mut register = ASSET_REGISTER.lock().unwrap();
-		register.insert(asset, meta);
-		Ok(())
-	}
-}
-
 pub struct MockMaintenanceStatusProvider;
 
 lazy_static::lazy_static! {
@@ -325,91 +197,11 @@ lazy_static::lazy_static! {
 	};
 }
 
-#[cfg(test)]
-impl MockMaintenanceStatusProvider {
-	pub fn instance() -> &'static Mutex<bool> {
-		&MAINTENANCE_STATUS
-	}
-}
 
-impl MockMaintenanceStatusProvider {
-	pub fn set_maintenance(value: bool) {
-		let mut mutex = Self::instance().lock().unwrap();
-		*mutex = value;
-	}
-}
-
-impl GetMaintenanceStatusTrait for MockMaintenanceStatusProvider {
-	fn is_maintenance() -> bool {
-		let mutex = Self::instance().lock().unwrap();
-		*mutex
-	}
-
-	fn is_upgradable() -> bool {
-		unimplemented!()
-	}
-}
-
-#[cfg(not(feature = "runtime-benchmarks"))]
-impl Config for Test {
-	type RuntimeEvent = RuntimeEvent;
-	type MaintenanceStatusProvider = MockMaintenanceStatusProvider;
-	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
-	type Currency = MultiTokenCurrencyAdapter<Test>;
-	type NativeCurrencyId = NativeCurrencyId;
-	type TreasuryPalletId = TreasuryPalletId;
-	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
-	type PoolFeePercentage = ConstU128<20>;
-	type TreasuryFeePercentage = ConstU128<5>;
-	type BuyAndBurnFeePercentage = ConstU128<5>;
-	type LiquidityMiningRewards = ProofOfStake;
-	type WeightInfo = ();
-	type VestingProvider = Vesting;
-	type DisallowedPools = DummyBlacklistedPool;
-	type DisabledTokens = Nothing;
-	type RewardsMigrateAccount = RewardsMigrateAccountProvider<Self>;
-	type AssetMetadataMutation = MockAssetRegister;
-}
-
-#[cfg(feature = "runtime-benchmarks")]
-impl Config for Test {
-	type RuntimeEvent = RuntimeEvent;
-	type MaintenanceStatusProvider = MockMaintenanceStatusProvider;
-	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
-	type Currency = MultiTokenCurrencyAdapter<Test>;
-	type NativeCurrencyId = NativeCurrencyId;
-	type TreasuryPalletId = TreasuryPalletId;
-	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
-	type PoolFeePercentage = ConstU128<20>;
-	type TreasuryFeePercentage = ConstU128<5>;
-	type BuyAndBurnFeePercentage = ConstU128<5>;
-	type LiquidityMiningRewards = ProofOfStake;
-	type WeightInfo = ();
-	type VestingProvider = Vesting;
-	type DisallowedPools = Nothing;
-	type DisabledTokens = Nothing;
-	type RewardsMigrateAccount = RewardsMigrateAccountProvider<Self>;
-	type AssetMetadataMutation = MockAssetRegister;
-}
-
-#[cfg(not(feature = "runtime-benchmarks"))]
-impl pallet_proof_of_stake::Config for Test {
+impl pos::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
 	type NativeCurrencyId = NativeCurrencyId;
-	type Xyk = XykStorage;
-	type Currency = MultiTokenCurrencyAdapter<Test>;
-	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
-	type RewardsDistributionPeriod = ConstU32<10>;
-	type WeightInfo = ();
-}
-
-#[cfg(feature = "runtime-benchmarks")]
-impl pallet_proof_of_stake::Config for Test {
-	type RuntimeEvent = RuntimeEvent;
-	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
-	type NativeCurrencyId = NativeCurrencyId;
-	type Xyk = XykStorage;
 	type Currency = MultiTokenCurrencyAdapter<Test>;
 	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = ConstU32<1200>;
@@ -500,17 +292,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		system::GenesisConfig::default().build_storage::<Test>().unwrap().into();
 	ext.execute_with(|| {
 		System::set_block_number(1);
-		MockMaintenanceStatusProvider::set_maintenance(false);
 	});
 	ext
-}
-
-pub(crate) fn events() -> Vec<pallet::Event<Test>> {
-	System::events()
-		.into_iter()
-		.map(|r| r.event)
-		.filter_map(|e| if let RuntimeEvent::XykStorage(inner) = e { Some(inner) } else { None })
-		.collect::<Vec<_>>()
 }
 
 /// Compares the system events with passed in events

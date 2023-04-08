@@ -369,7 +369,7 @@ fn test_bootstrap_promotion_can_be_updated() {
 		let pool_create_mock = MockPoolCreateApi::pool_create_context();
 		pool_create_mock.expect().times(1).return_const(POOL_CREATE_DUMMY_RETURN_VALUE);
 
-		let mock = MockRewardsApi::update_pool_promotion_context();
+		let mock = MockRewardsApi::enable_context();
 		mock.expect().times(1).return_const(());
 
 		set_up();
@@ -2098,11 +2098,11 @@ fn test_activate_liq_tokens_is_called_with_all_liq_tokens_when_pool_is_promoted_
 		let expected_liq_tokens_amount = (mga_provision + ksm_provision) / 2;
 		let expected_activated_tokens_amount = expected_liq_tokens_amount / 2;
 
-		let can_activate_mock = MockRewardsApi::can_activate_context();
-		can_activate_mock.expect().return_const(true);
+		let is_enabled_mock = MockRewardsApi::is_enabled_context();
+		is_enabled_mock.expect().return_const(true);
 
-		let activate_liquidity_tokens = MockRewardsApi::activate_liquidity_tokens_context();
-		activate_liquidity_tokens.expect().returning(move |_, _, activated_amount| {
+		let activate_liquidity = MockRewardsApi::activate_liquidity_context();
+		activate_liquidity.expect().returning(move |_, _, activated_amount, _| {
 			assert_eq!(expected_activated_tokens_amount, activated_amount);
 			Ok(())
 		});
@@ -2138,11 +2138,11 @@ fn test_activate_liq_tokens_is_called_with_all_liq_tokens_when_pool_is_promoted_
 // 		let mga_provision = 1_000_000_u128;
 // 		let ksm_provision = 100_u128;
 
-// 		let can_activate_mock = MockRewardsApi::can_activate_context();
-// 		can_activate_mock.expect().return_const(true);
+// 		let is_enabled_mock = MockRewardsApi::is_enabled_context();
+// 		is_enabled_mock.expect().return_const(true);
 
-// 		let activate_liquidity_tokens = MockRewardsApi::activate_liquidity_tokens_context();
-// 		activate_liquidity_tokens.expect().times(0);
+// 		let activate_liquidity = MockRewardsApi::activate_liquidity_context();
+// 		activate_liquidity.expect().times(0);
 
 // 		// ACT
 // 		provisions(vec![
@@ -2153,13 +2153,13 @@ fn test_activate_liq_tokens_is_called_with_all_liq_tokens_when_pool_is_promoted_
 // 		Bootstrap::on_initialize(100_u32.into());
 // 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
 
-// 		Bootstrap::claim_and_activate_liquidity_tokens(RuntimeOrigin::signed(PROVISION_USER2_ID)).unwrap();
+// 		Bootstrap::claim_and_activate_liquidity(RuntimeOrigin::signed(PROVISION_USER2_ID)).unwrap();
 // 	});
 // }
 
 // #[test]
 // #[serial]
-// fn test_activate_liquidity_tokens_is_called_only_with_non_vested_liq_tokens_when_pool_is_promoted()
+// fn test_activate_liquidity_is_called_only_with_non_vested_liq_tokens_when_pool_is_promoted()
 // {
 // 	new_test_ext().execute_with(|| {
 // 		// ARRANGE - USER provides vested MGA tokens, ANOTHER_USER provides KSM tokens
@@ -2174,11 +2174,11 @@ fn test_activate_liq_tokens_is_called_with_all_liq_tokens_when_pool_is_promoted_
 // 		let expected_non_vested_liq_tokens_amount_per_user =
 // 			expected_liq_tokens_amount_per_user / 2;
 
-// 		let can_activate_mock = MockRewardsApi::can_activate_context();
-// 		can_activate_mock.expect().return_const(true);
+// 		let is_enabled_mock = MockRewardsApi::is_enabled_context();
+// 		is_enabled_mock.expect().return_const(true);
 
-// 		let activate_liquidity_tokens = MockRewardsApi::activate_liquidity_tokens_context();
-// 		activate_liquidity_tokens.expect().returning(move |_, _, activated_amount| {
+// 		let activate_liquidity = MockRewardsApi::activate_liquidity_context();
+// 		activate_liquidity.expect().returning(move |_, _, activated_amount| {
 // 			assert_eq!(expected_non_vested_liq_tokens_amount_per_user, activated_amount);
 // 			Ok(().into())
 // 		});
@@ -2193,13 +2193,13 @@ fn test_activate_liq_tokens_is_called_with_all_liq_tokens_when_pool_is_promoted_
 // 		Bootstrap::on_initialize(100_u32.into());
 // 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());
 
-// 		Bootstrap::claim_and_activate_liquidity_tokens(RuntimeOrigin::signed(PROVISION_USER2_ID)).unwrap();
+// 		Bootstrap::claim_and_activate_liquidity(RuntimeOrigin::signed(PROVISION_USER2_ID)).unwrap();
 // 	});
 // }
 
 #[test]
 #[serial]
-fn test_dont_activate_liquidity_tokens_when_pool_is_not_promoted_and_provisions_are_not_vested() {
+fn test_dont_activate_liquidity_when_pool_is_not_promoted_and_provisions_are_not_vested() {
 	new_test_ext().execute_with(|| {
 		// ARRANGE - USER provides vested MGA tokens, ANOTHER_USER provides KSM tokens
 		set_up();
@@ -2212,11 +2212,11 @@ fn test_dont_activate_liquidity_tokens_when_pool_is_not_promoted_and_provisions_
 		let enable_pool_creation_mock = MockAssetRegistryApi::enable_pool_creation_context();
 		enable_pool_creation_mock.expect().return_const(true);
 
-		let can_activate_mock = MockRewardsApi::can_activate_context();
-		can_activate_mock.expect().return_const(false);
+		let is_enabled_mock = MockRewardsApi::is_enabled_context();
+		is_enabled_mock.expect().return_const(false);
 
-		let activate_liquidity_tokens = MockRewardsApi::activate_liquidity_tokens_context();
-		activate_liquidity_tokens.expect().times(0);
+		let activate_liquidity = MockRewardsApi::activate_liquidity_context();
+		activate_liquidity.expect().times(0);
 
 		// ACT
 		provisions(vec![
@@ -2249,14 +2249,14 @@ fn test_claim_and_activate_doesnt_fail_when_tokens_activations_fails() {
 		let mga_provision = 1_000_000_u128;
 		let ksm_provision = 100_u128;
 
-		let can_activate_mock = MockRewardsApi::can_activate_context();
-		can_activate_mock.expect().return_const(true);
+		let is_enabled_mock = MockRewardsApi::is_enabled_context();
+		is_enabled_mock.expect().return_const(true);
 
-		let activate_liquidity_tokens = MockRewardsApi::activate_liquidity_tokens_context();
-		activate_liquidity_tokens
+		let activate_liquidity = MockRewardsApi::activate_liquidity_context();
+		activate_liquidity
 			.expect()
 			// inject any error
-			.returning(move |_, _, _| Err(Error::<Test>::NotEnoughAssets.into()));
+			.returning(move |_, _, _, _| Err(Error::<Test>::NotEnoughAssets.into()));
 
 		// ACT
 		provisions(vec![
@@ -2299,7 +2299,7 @@ fn test_pool_is_promoted_if_scheduled_to() {
 				Some((id, issuance))
 			});
 
-		let mock = MockRewardsApi::update_pool_promotion_context();
+		let mock = MockRewardsApi::enable_context();
 		mock.expect().times(1).return_const(());
 
 		Bootstrap::schedule_bootstrap(
@@ -2352,7 +2352,7 @@ fn test_pool_is_not_promoted_if_not_scheduled_to() {
 				Some((id, issuance))
 			});
 
-		let mock = MockRewardsApi::update_pool_promotion_context();
+		let mock = MockRewardsApi::enable_context();
 		mock.expect().times(0).return_const(());
 
 		Bootstrap::schedule_bootstrap(

@@ -28,6 +28,12 @@ use sp_std::{convert::TryInto, prelude::*};
 mod reward_info;
 use reward_info::RewardInfo;
 
+#[cfg(test)]
+mod mock;
+
+#[cfg(test)]
+mod tests;
+
 pub(crate) const LOG_TARGET: &str = "proof-of-stake";
 
 // syntactic sugar for logging.
@@ -67,7 +73,6 @@ pub mod pallet {
 			AccountId = Self::AccountId,
 		>;
 		type NativeCurrencyId: Get<TokenId>;
-		type Xyk: XykFunctionsTrait<Self::AccountId>;
 		type Currency: MultiTokenCurrencyExtended<Self::AccountId>
 			+ MultiTokenReservableCurrency<Self::AccountId>;
 		#[pallet::constant]
@@ -149,11 +154,12 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
-			<T::Xyk as XykFunctionsTrait<T::AccountId>>::do_compound_rewards(
-				sender,
-				liquidity_asset_id.into(),
-				amount_permille,
-			)?;
+			//TODO: uncomment and maybe move compound logic to PoS
+			// <T::Xyk as XykFunctionsTrait<T::AccountId>>::do_compound_rewards(
+			// 	sender,
+			// 	liquidity_asset_id.into(),
+			// 	amount_permille,
+			// )?;
 
 			Ok(().into())
 		}
@@ -490,6 +496,8 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 	}
 }
 
+//TODO: add unit test and migrate impl from issuance
 impl<T: Config> LiquidityMiningApi for Pallet<T> {
-	fn distribute_rewards(liquidity_mining_rewards: Balance) {}
+	fn distribute_rewards(liquidity_mining_rewards: Balance) {
+	}
 }

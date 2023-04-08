@@ -370,6 +370,7 @@ const TOKEN_SYMBOL: &[u8] = b"TKN";
 const TOKEN_SYMBOL_SEPARATOR: &[u8] = b"-";
 const DEFAULT_DECIMALS: u32 = 18u32;
 
+
 pub use pallet::*;
 
 mod benchmarking;
@@ -377,6 +378,8 @@ pub mod weights;
 pub use weights::WeightInfo;
 
 type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
+// type LiquidityMiningRewardsOf<T> = <T as ::Config>::AccountId;
+
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
@@ -409,7 +412,7 @@ pub mod pallet {
 		type NativeCurrencyId: Get<TokenId>;
 		type TreasuryPalletId: Get<PalletId>;
 		type BnbTreasurySubAccDerive: Get<[u8; 4]>;
-		type XykRewards: ProofOfStakeRewardsApi<Self::AccountId, Balance = Balance, CurrencyId = TokenId>;
+		type LiquidityMiningRewards: ProofOfStakeRewardsApi<Self::AccountId, Balance = Balance, CurrencyId = TokenId>;
 		#[pallet::constant]
 		type PoolFeePercentage: Get<u128>;
 		#[pallet::constant]
@@ -783,7 +786,7 @@ pub mod pallet {
 				Pallet::<T>::get_liquidity_asset(Self::native_token_id(), second_asset_id)?;
 
 			ensure!(
-				<T::XykRewards as ProofOfStakeRewardsApi<T::AccountId>>::is_enabled(
+				<T::LiquidityMiningRewards as ProofOfStakeRewardsApi<T::AccountId>>::is_enabled(
 					liquidity_asset_id
 				),
 				Error::<T>::NotAPromotedPool
@@ -837,7 +840,7 @@ pub mod pallet {
 				Pallet::<T>::get_liquidity_asset(Self::native_token_id(), second_asset_id)?;
 
 			ensure!(
-				<T::XykRewards as ProofOfStakeRewardsApi<T::AccountId>>::is_enabled(
+				<T::LiquidityMiningRewards as ProofOfStakeRewardsApi<T::AccountId>>::is_enabled(
 					liquidity_asset_id
 				),
 				Error::<T>::NotAPromotedPool
@@ -984,7 +987,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			<T::XykRewards as ProofOfStakeRewardsApi<T::AccountId>>::claim_rewards_all(
+			<T::LiquidityMiningRewards as ProofOfStakeRewardsApi<T::AccountId>>::claim_rewards_all(
 				sender,
 				liquidity_token_id,
 			)?;
@@ -1001,7 +1004,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			<T::XykRewards as ProofOfStakeRewardsApi<T::AccountId>>::claim_rewards_all(
+			<T::LiquidityMiningRewards as ProofOfStakeRewardsApi<T::AccountId>>::claim_rewards_all(
 				sender,
 				liquidity_token_id,
 			)?;
@@ -1019,7 +1022,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			ensure_root(origin)?;
 
-			<T::XykRewards as ProofOfStakeRewardsApi<T::AccountId>>::enable(
+			<T::LiquidityMiningRewards as ProofOfStakeRewardsApi<T::AccountId>>::enable(
 				liquidity_token_id,
 				liquidity_mining_issuance_weight,
 			);
@@ -1037,7 +1040,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			<T::XykRewards as ProofOfStakeRewardsApi<T::AccountId>>::activate_liquidity(
+			<T::LiquidityMiningRewards as ProofOfStakeRewardsApi<T::AccountId>>::activate_liquidity(
 				sender,
 				liquidity_token_id,
 				amount,
@@ -1055,7 +1058,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			<T::XykRewards as ProofOfStakeRewardsApi<T::AccountId>>::deactivate_liquidity(
+			<T::LiquidityMiningRewards as ProofOfStakeRewardsApi<T::AccountId>>::deactivate_liquidity(
 				sender,
 				liquidity_token_id,
 				amount,
@@ -2992,11 +2995,11 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			liquidity_assets_minted.into(),
 		)?;
 
-		if <T::XykRewards as ProofOfStakeRewardsApi<T::AccountId>>::is_enabled(liquidity_asset_id)
+		if <T::LiquidityMiningRewards as ProofOfStakeRewardsApi<T::AccountId>>::is_enabled(liquidity_asset_id)
 			&& activate_minted_liquidity
 		{
 			// The reserve from free_balance will not fail the asset were just minted into free_balance
-			<T::XykRewards as ProofOfStakeRewardsApi<T::AccountId>>::activate_liquidity(
+			<T::LiquidityMiningRewards as ProofOfStakeRewardsApi<T::AccountId>>::activate_liquidity(
 				sender.clone(),
 				liquidity_asset_id,
 				liquidity_assets_minted,
@@ -3071,7 +3074,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			Error::<T>::FunctionNotAvailableForThisToken
 		);
 
-		let rewards_claimed = <T::XykRewards as ProofOfStakeRewardsApi<T::AccountId>>::claim_rewards_all(
+		let rewards_claimed = <T::LiquidityMiningRewards as ProofOfStakeRewardsApi<T::AccountId>>::claim_rewards_all(
 			sender.clone(),
 			liquidity_asset_id,
 		)?;
@@ -3219,7 +3222,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			liquidity_asset_amount.saturating_sub(liquidity_token_available_balance);
 
 		// deactivate liquidity
-		<T::XykRewards as ProofOfStakeRewardsApi<T::AccountId>>::deactivate_liquidity(
+		<T::LiquidityMiningRewards as ProofOfStakeRewardsApi<T::AccountId>>::deactivate_liquidity(
 			sender.clone(),
 			liquidity_asset_id,
 			to_be_deactivated,

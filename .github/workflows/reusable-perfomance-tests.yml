@@ -75,7 +75,7 @@ jobs:
         with:
           name: performance-benchmarks-report
           path: |
-            ./report.html
-            ./enqueued.txt
-            ./executed.txt
-            ./pending.txt
+            ./e2e/performance/report.html
+            ./e2e/performance/enqueued.txt
+            ./e2e/performance/executed.txt
+            ./e2e/performance/pending.txt

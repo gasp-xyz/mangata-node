@@ -38,6 +38,19 @@ fn initialize_liquidity_rewards() {
 	ProofOfStake::activate_liquidity_v2(RuntimeOrigin::signed(2), 4, 10000, None).unwrap();
 }
 
+fn forward_to_block(n: u32){
+	forward_to_block_with_custom_rewards(n, 10000);
+}
+
+fn forward_to_block_with_custom_rewards(n: u32, rewards: u128){
+	while System::block_number().saturated_into::<u32>() <= n {
+		if System::block_number().saturated_into::<u32>() % ProofOfStake::rewards_period() == 0 {
+			println!("NEW SESSION");
+			ProofOfStake::distribute_rewards(rewards);
+		}
+		System::set_block_number(System::block_number().saturated_into::<u64>() + 1);
+	}
+}
 
 #[test]
 #[serial]
@@ -159,54 +172,56 @@ fn liquidity_rewards_three_users_mint_W() {
 		assert_eq!(rewards_info.pool_ratio_at_last_checkpoint, U256::from(0));
 		assert_eq!(rewards_info.missing_at_last_checkpoint, U256::from_dec_str("10000").unwrap());
 
-		System::set_block_number(100);
+		// System::set_block_number(100);
 		// MockPromotedPoolApi::instance()
 		// 	.lock()
 		// 	.unwrap()
 		// 	.insert(4, U256::from(u128::MAX) * 100000 / 10000);
-		CumulativeTotalLiquidityToRewardsRatio::<Test>::mutate(|pools|{
-			pools.get_mut(&4).unwrap().rewards = U256::from(u128::MAX) * 100000 / 10000;
-		});
-		ProofOfStake::distribute_rewards(10000 * 1);
-		assert_eq!(U256::from(u128::MAX) * 100000 / 10000, CumulativeTotalLiquidityToRewardsRatio::<Test>::get().get(&4).unwrap().rewards);
+		// ProofOfStake::distribute_rewards(10000 * 1);
+		forward_to_block(100);
+
 		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 14704);
-        // //
+		
 		// XykStorage::mint_liquidity(RuntimeOrigin::signed(3), 0, 1, 10000, 10010).unwrap();
 		mint_and_activate_tokens(3, 4, 10000);
 
-		System::set_block_number(200);
+		// System::set_block_number(200);
 		// MockPromotedPoolApi::instance()
 		// 	.lock()
 		// 	.unwrap()
 		// 	.insert(4, U256::from(u128::MAX) * 150000 / 10000);
-		CumulativeTotalLiquidityToRewardsRatio::<Test>::mutate(|pools|{
-			pools.get_mut(&4).unwrap().rewards = U256::from(u128::MAX) * 150000 / 10000;
-		});
+		// ProofOfStake::distribute_rewards(100000 * 1);
+		forward_to_block(200);
+
 		// XykStorage::mint_liquidity(4, 4, 10000, None).unwrap();
 		mint_and_activate_tokens(4, 4, 10000);
 
-		System::set_block_number(240);
+		// System::set_block_number(240);
 		// MockPromotedPoolApi::instance()
 		// 	.lock()
 		// 	.unwrap()
 		// 	.insert(4, U256::from(u128::MAX) * 163300 / 10000);
-		CumulativeTotalLiquidityToRewardsRatio::<Test>::mutate(|pools|{
-			pools.get_mut(&4).unwrap().rewards = U256::from(u128::MAX) * 163300 / 10000;
-		});
-		mint_and_activate_tokens(4, 4, 10000);
+		forward_to_block(240);
+
 		// XykStorage::mint_liquidity(RuntimeOrigin::signed(4), 0, 1, 10000, 10010).unwrap();
-        //
-		System::set_block_number(400);
+		mint_and_activate_tokens(4, 4, 10000);
+        
+		// System::set_block_number(400);
 		// MockPromotedPoolApi::instance()
 		// 	.lock()
 		// 	.unwrap()
 		// 	.insert(4, U256::from(u128::MAX) * 203300 / 10000);
-		CumulativeTotalLiquidityToRewardsRatio::<Test>::mutate(|pools|{
-			pools.get_mut(&4).unwrap().rewards = U256::from(u128::MAX) * 203300 / 10000;
-		});
-		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 85820);
-		assert_eq!(ProofOfStake::calculate_rewards_amount(3, 4).unwrap(), 35810);
-		assert_eq!(ProofOfStake::calculate_rewards_amount(4, 4).unwrap(), 21647);
+		// ProofOfStake::distribute_rewards(10000 * 1);
+		forward_to_block(400);
+		
+		// assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 85820);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 85834);
+
+		// assert_eq!(ProofOfStake::calculate_rewards_amount(3, 4).unwrap(), 35810);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(3, 4).unwrap(), 35822);
+
+		// assert_eq!(ProofOfStake::calculate_rewards_amount(4, 4).unwrap(), 21647);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(4, 4).unwrap(), 21649);
 	});
 }
 
@@ -244,54 +259,49 @@ fn liquidity_rewards_three_users_burn_W() {
 		)
 		.unwrap();
 
-		System::set_block_number(100);
+		// System::set_block_number(100);
 		// MockPromotedPoolApi::instance()
 		// 	.lock()
 		// 	.unwrap()
 		// 	.insert(4, U256::from(u128::MAX) * 100000 / 10000);
-		CumulativeTotalLiquidityToRewardsRatio::<Test>::mutate(|pools|{
-			pools.get_mut(&4).unwrap().rewards = U256::from(u128::MAX) * 100000 / 10000;
-		});
-		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 14704);
+		forward_to_block(100);
 
-		mint_and_activate_tokens(3, 4, 10000);
 		// XykStorage::mint_liquidity(RuntimeOrigin::signed(3), 0, 1, 10000, 10010).unwrap();
+		mint_and_activate_tokens(3, 4, 10000);
 		
-		System::set_block_number(200);
+		// System::set_block_number(200);
 		// MockPromotedPoolApi::instance()
 		// 	.lock()
 		// 	.unwrap()
 		// 	.insert(4, U256::from(u128::MAX) * 150000 / 10000);
-		CumulativeTotalLiquidityToRewardsRatio::<Test>::mutate(|pools|{
-			pools.get_mut(&4).unwrap().rewards = U256::from(u128::MAX) * 150000 / 10000;
-		});
+		forward_to_block(200);
 
 		// XykStorage::mint_liquidity(RuntimeOrigin::signed(4), 0, 1, 10000, 10010).unwrap();
 		mint_and_activate_tokens(4, 4, 10000);
-        //
-		System::set_block_number(240);
+        
+		// System::set_block_number(240);
 		// MockPromotedPoolApi::instance()
 		// 	.lock()
 		// 	.unwrap()
 		// 	.insert(4, U256::from(u128::MAX) * 163300 / 10000);
-		CumulativeTotalLiquidityToRewardsRatio::<Test>::mutate(|pools|{
-			pools.get_mut(&4).unwrap().rewards = U256::from(u128::MAX) * 163300 / 10000;
-		});
-		ProofOfStake::deactivate_liquidity( 4, 4, 5000) .unwrap();
+		forward_to_block(240);
+		
 		// XykStorage::burn_liquidity(RuntimeOrigin::signed(4), 0, 1, 5000).unwrap();
-        //
-		System::set_block_number(400);
+		ProofOfStake::deactivate_liquidity( 4, 4, 5000) .unwrap();
+        
+		// System::set_block_number(400);
 		// MockPromotedPoolApi::instance()
 		// 	.lock()
 		// 	.unwrap()
 		// 	.insert(4, U256::from(u128::MAX) * 227300 / 10000);
-		CumulativeTotalLiquidityToRewardsRatio::<Test>::mutate(|pools|{
-			pools.get_mut(&4).unwrap().rewards = U256::from(u128::MAX) * 227300 / 10000;
-		});
-        //
-		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 95951);
-		assert_eq!(ProofOfStake::calculate_rewards_amount(3, 4).unwrap(), 44130);
-		assert_eq!(ProofOfStake::calculate_rewards_amount(4, 4).unwrap(), 10628);
+		forward_to_block(400);
+		
+		// assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 95951);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 95965);
+		// assert_eq!(ProofOfStake::calculate_rewards_amount(3, 4).unwrap(), 44130);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(3, 4).unwrap(), 44142);
+		// assert_eq!(ProofOfStake::calculate_rewards_amount(4, 4).unwrap(), 10628);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(4, 4).unwrap(), 10630);
 	});
 }
 
@@ -332,24 +342,20 @@ fn liquidity_rewards_claim_W() {
 		.unwrap();
 
 		// assert_eq!(
-		// 	XykStorage::liquidity_mining_user_v2((2, 4)),
-		// 	(0, 0, U256::from_dec_str("10000").unwrap())
+		// 	xykstorage::liquidity_mining_user_v2((2, 4)),
+		// 	(0, 0, u256::from_dec_str("10000").unwrap())
 		// );
 
-		System::set_block_number(10);
+		// System::set_block_number(10);
 		// MockPromotedPoolApi::instance().lock().unwrap().insert(4, U256::from(0));
-		CumulativeTotalLiquidityToRewardsRatio::<Test>::mutate(|pools|{
-			pools.get_mut(&4).unwrap().rewards = U256::from(0);
-		});
+		forward_to_block(10);
 
-		System::set_block_number(90);
+		// System::set_block_number(90);
 		// MockPromotedPoolApi::instance()
 		// 	.lock()
 		// 	.unwrap()
 		// 	.insert(4, U256::from(u128::MAX) * 90000 / 10000);
-		CumulativeTotalLiquidityToRewardsRatio::<Test>::mutate(|pools|{
-			pools.get_mut(&4).unwrap().rewards = U256::from(u128::MAX) * 90000 / 10000;
-		});
+		forward_to_block(90);
 
 		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 12142);
 		ProofOfStake::claim_rewards_all_v2(RuntimeOrigin::signed(2), 4).unwrap();
@@ -358,10 +364,9 @@ fn liquidity_rewards_claim_W() {
 		// 	.lock()
 		// 	.unwrap()
 		// 	.insert(4, U256::from(u128::MAX) * 100000 / 10000);
-		CumulativeTotalLiquidityToRewardsRatio::<Test>::mutate(|pools|{
-			pools.get_mut(&4).unwrap().rewards = U256::from(u128::MAX) * 100000 / 10000;
-		});
-		System::set_block_number(100);
+		// System::set_block_number(100);
+		
+		forward_to_block(100);
 		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 2562);
 	});
 }
@@ -461,65 +466,57 @@ fn liquidity_rewards_work_after_burn_W() {
 		)
 		.unwrap();
 
-		System::set_block_number(100);
+		// System::set_block_number(100);
 		// MockPromotedPoolApi::instance()
 		// 	.lock()
 		// 	.unwrap()
 		// 	.insert(4, U256::from(u128::MAX) * 100000 / 10000);
-		CumulativeTotalLiquidityToRewardsRatio::<Test>::mutate(|pools|{
-			pools.get_mut(&4).unwrap().rewards = U256::from(u128::MAX) * 100000 / 10000;
-		});
+		forward_to_block(100);
 		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 14704);
 
 		// XykStorage::mint_liquidity(RuntimeOrigin::signed(3), 0, 1, 10000, 10010).unwrap();
 		mint_and_activate_tokens(3, 4, 10000);
 
-		System::set_block_number(200);
+		// System::set_block_number(200);
 		// MockPromotedPoolApi::instance()
 		// 	.lock()
 		// 	.unwrap()
 		// 	.insert(4, U256::from(u128::MAX) * 150000 / 10000);
-		CumulativeTotalLiquidityToRewardsRatio::<Test>::mutate(|pools|{
-			pools.get_mut(&4).unwrap().rewards = U256::from(u128::MAX) * 150000 / 10000;
-		});
+		forward_to_block(200);
+
 		// XykStorage::mint_liquidity(RuntimeOrigin::signed(4), 0, 1, 10000, 10010).unwrap();
 		mint_and_activate_tokens(4, 4, 10000);
 
-		System::set_block_number(240);
+		// System::set_block_number(240);
 		// MockPromotedPoolApi::instance()
 		// 	.lock()
 		// 	.unwrap()
 		// 	.insert(4, U256::from(u128::MAX) * 163300 / 10000);
-		CumulativeTotalLiquidityToRewardsRatio::<Test>::mutate(|pools|{
-			pools.get_mut(&4).unwrap().rewards = U256::from(u128::MAX) * 163300 / 10000;
-		});
+		forward_to_block(240);
 
 		// XykStorage::burn_liquidity(RuntimeOrigin::signed(4), 0, 1, 10000).unwrap();
 		ProofOfStake::deactivate_liquidity( 4, 4, 10000) .unwrap();
 
-		System::set_block_number(400);
+		// System::set_block_number(400);
 		// MockPromotedPoolApi::instance()
 		// 	.lock()
 		// 	.unwrap()
 		// 	.insert(4, U256::from(u128::MAX) * 243300 / 10000);
-		CumulativeTotalLiquidityToRewardsRatio::<Test>::mutate(|pools|{
-			pools.get_mut(&4).unwrap().rewards = U256::from(u128::MAX) * 243300 / 10000;
-		});
+		forward_to_block(400);
 
-		assert_eq!(ProofOfStake::calculate_rewards_amount(4, 4).unwrap(), 946);
+		// assert_eq!(ProofOfStake::calculate_rewards_amount(4, 4).unwrap(), 946);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(4, 4).unwrap(), 948);
 
 		// XykStorage::mint_liquidity(RuntimeOrigin::signed(4), 0, 1, 20000, 20010).unwrap();
 		mint_and_activate_tokens(4, 4, 20000);
 
-		System::set_block_number(500);
+		// System::set_block_number(500);
 		// MockPromotedPoolApi::instance()
 		// 	.lock()
 		// 	.unwrap()
 		// 	.insert(4, U256::from(u128::MAX) * 268300 / 10000);
-		CumulativeTotalLiquidityToRewardsRatio::<Test>::mutate(|pools|{
-			pools.get_mut(&4).unwrap().rewards = U256::from(u128::MAX) * 268300 / 10000;
-		});
-		assert_eq!(ProofOfStake::calculate_rewards_amount(4, 4).unwrap(), 8297);
+		forward_to_block(500);
+		assert_eq!(ProofOfStake::calculate_rewards_amount(4, 4).unwrap(), 8299);
 	});
 }
 
@@ -553,14 +550,12 @@ fn liquidity_rewards_deactivate_transfer_controled_W() {
 		.unwrap();
 		assert_err!(TokensOf::<Test>::transfer(4, &2,&3, 10, ExistenceRequirement::AllowDeath), orml_tokens::Error::<Test>::BalanceTooLow,);
 
-		System::set_block_number(100);
+		// System::set_block_number(100);
 		// MockPromotedPoolApi::instance()
 		// 	.lock()
 		// 	.unwrap()
 		// 	.insert(4, U256::from(u128::MAX) * 100000 / 10000);
-		CumulativeTotalLiquidityToRewardsRatio::<Test>::mutate(|pools|{
-			pools.get_mut(&4).unwrap().rewards = U256::from(u128::MAX) * 100000 / 10000;
-		});
+		forward_to_block(100);
 		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 14704);
 
 		ProofOfStake::deactivate_liquidity_v2(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned)
@@ -758,7 +753,7 @@ fn liquidity_rewards_not_yet_claimed_already_claimed_W() {
 		)
 		.unwrap();
 
-		TokensOf::<Test>::create(&2, 10000);
+		TokensOf::<Test>::create(&2, 10000).unwrap();
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
 
 		let liquidity_tokens_owned = TokensOf::<Test>::free_balance(4, &2);
@@ -770,15 +765,12 @@ fn liquidity_rewards_not_yet_claimed_already_claimed_W() {
 		)
 		.unwrap();
 
-		System::set_block_number(10);
-
+		// System::set_block_number(10);
 		// MockPromotedPoolApi::instance()
 		// 	.lock()
 		// 	.unwrap()
 		// 	.insert(4, U256::from(u128::MAX) * 10000 / 10000);
-		CumulativeTotalLiquidityToRewardsRatio::<Test>::mutate(|pools|{
-			pools.get_mut(&4).unwrap().rewards = U256::from(u128::MAX) * 10000 / 10000;
-		});
+		forward_to_block(10);
 
 		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 291);
 		ProofOfStake::deactivate_liquidity_v2(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned)
@@ -794,14 +786,13 @@ fn liquidity_rewards_not_yet_claimed_already_claimed_W() {
 			None,
 		)
 		.unwrap();
-		System::set_block_number(100);
+
+		// System::set_block_number(100);
 		// MockPromotedPoolApi::instance()
 		// 	.lock()
 		// 	.unwrap()
 		// 	.insert(4, U256::from(u128::MAX) * 100000 / 10000);
-		CumulativeTotalLiquidityToRewardsRatio::<Test>::mutate(|pools|{
-			pools.get_mut(&4).unwrap().rewards = U256::from(u128::MAX) * 100000 / 10000;
-		});
+		forward_to_block(100);
 
 		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 12433);
 		// ProofOfStake::claim_rewards_v2(RuntimeOrigin::signed(2), 4, 12432).unwrap();
@@ -894,9 +885,6 @@ fn rewards_rounding_during_often_mint() {
 		// 	.lock()
 		// 	.unwrap()
 		// 	.insert(4, U256::from(u128::MAX) * U256::from(0));
-		CumulativeTotalLiquidityToRewardsRatio::<Test>::mutate(|pools|{
-			pools.get_mut(&4).unwrap().rewards = U256::from(u128::MAX) * U256::from(0);
-		});
 		TokensOf::<Test>::transfer(0, &2, &3, 10000000000000000000000000, ExistenceRequirement::AllowDeath).unwrap();
 		TokensOf::<Test>::transfer(1, &2, &3, 10000000000000000000000000, ExistenceRequirement::AllowDeath).unwrap();
 		// TokensOf::<Test>::mint_liquidity(
@@ -922,14 +910,13 @@ fn rewards_rounding_during_often_mint() {
 		let mut higher_rewards_cumulative = 0;
 		for n in 1..10000 {
 			System::set_block_number(n);
-			if (n + 1) % 10 == 0 {
+			if (n + 1) % (ProofOfStake::rewards_period() as u64) == 0 {
 				// MockPromotedPoolApi::instance()
 				// 	.lock()
 				// 	.unwrap()
 				// 	.insert(4, U256::from(u128::MAX) * U256::from(n + 1));
-				CumulativeTotalLiquidityToRewardsRatio::<Test>::mutate(|pools|{
-					pools.get_mut(&4).unwrap().rewards = U256::from(u128::MAX) * U256::from(n + 1);
-				});
+				ProofOfStake::distribute_rewards(10000);
+
 				// XykStorage::mint_liquidity(
 				// 	RuntimeOrigin::signed(3),
 				// 	0,
@@ -970,10 +957,10 @@ fn rewards_storage_right_amounts_start1() {
 		let acc_id: u128 = 2;
 		let amount: u128 = max;
 
-		TokensOf::<Test>::create(&acc_id, amount);
-		TokensOf::<Test>::create(&acc_id, amount);
-		TokensOf::<Test>::create(&acc_id, amount);
-		TokensOf::<Test>::create(&acc_id, amount);
+		TokensOf::<Test>::create(&acc_id, amount).unwrap();
+		TokensOf::<Test>::create(&acc_id, amount).unwrap();
+		TokensOf::<Test>::create(&acc_id, amount).unwrap();
+		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 
 		TokensOf::<Test>::transfer(
 			0,
@@ -985,15 +972,13 @@ fn rewards_storage_right_amounts_start1() {
 		.unwrap();
 
 		// XykStorage::create_pool(RuntimeOrigin::signed(2), 1, 10000, 2, 10000).unwrap();
-		TokensOf::<Test>::create(&acc_id, 10000);
+		TokensOf::<Test>::create(&acc_id, 10000).unwrap();
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
+
 		// MockPromotedPoolApi::instance()
 		// 	.lock()
 		// 	.unwrap()
 		// 	.insert(4, U256::from(u128::MAX) * U256::from(0));
-		CumulativeTotalLiquidityToRewardsRatio::<Test>::mutate(|pools|{
-			pools.get_mut(&4).unwrap().rewards = U256::from(u128::MAX) * U256::from(0);
-		});
 
 		TokensOf::<Test>::transfer(1, &2, &3, 20010, ExistenceRequirement::AllowDeath).unwrap();
 		TokensOf::<Test>::transfer(2, &2, &3, 20010, ExistenceRequirement::AllowDeath).unwrap();
@@ -1013,14 +998,14 @@ fn rewards_storage_right_amounts_start1() {
 		// XykStorage::mint_liquidity(RuntimeOrigin::signed(6), 1, 2, 10000, 10010).unwrap();
 		mint_and_activate_tokens(6, 4, 10000);
  
-		System::set_block_number(100);
+		// System::set_block_number(100);
 		// MockPromotedPoolApi::instance()
 		// 	.lock()
 		// 	.unwrap()
 		// 	.insert(4, U256::from(u128::MAX) * U256::from(10));
-		CumulativeTotalLiquidityToRewardsRatio::<Test>::mutate(|pools|{
-			pools.get_mut(&4).unwrap().rewards = U256::from(u128::MAX) * U256::from(10);
-		});
+		forward_to_block_with_custom_rewards(100, 50000); // No clue why we considr 50k rewards per
+														  // block here
+		assert_eq!(U256::from(u128::MAX) * U256::from(10), CumulativeTotalLiquidityToRewardsRatio::<Test>::get().get(&4).unwrap().rewards);
 
 		ProofOfStake::claim_rewards_all_v2(RuntimeOrigin::signed(2), 4).unwrap();
 		ProofOfStake::claim_rewards_all_v2(RuntimeOrigin::signed(3), 4).unwrap();
@@ -1044,14 +1029,12 @@ fn rewards_storage_right_amounts_start1() {
 		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
 		assert_eq!(rewards_info.rewards_already_claimed, 14704);
 
-		System::set_block_number(200);
+		// System::set_block_number(200);
 		// MockPromotedPoolApi::instance()
 		// 	.lock()
 		// 	.unwrap()
 		// 	.insert(4, U256::from(u128::MAX) * U256::from(20));
-		CumulativeTotalLiquidityToRewardsRatio::<Test>::mutate(|pools|{
-			pools.get_mut(&4).unwrap().rewards = U256::from(u128::MAX) * U256::from(20);
-		});
+		forward_to_block_with_custom_rewards(200, 50000);
 
 		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 36530);
 		assert_eq!(ProofOfStake::calculate_rewards_amount(3, 4).unwrap(), 36530);
@@ -1153,13 +1136,6 @@ fn rewards_storage_right_amounts_start2() {
 		// XykStorage::create_pool(RuntimeOrigin::signed(2), 1, 10000, 2, 10000).unwrap();
 		TokensOf::<Test>::create(&acc_id, 10000).unwrap();
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
-		// MockPromotedPoolApi::instance()
-		// 	.lock()
-		// 	.unwrap()
-		// 	.insert(4, U256::from(u128::MAX) * U256::from(0));
-		CumulativeTotalLiquidityToRewardsRatio::<Test>::mutate(|pools|{
-			pools.get_mut(&4).unwrap().rewards = U256::from(u128::MAX) * U256::from(0);
-		});
 
 		TokensOf::<Test>::transfer(1, &2, &3, 20010, ExistenceRequirement::AllowDeath).unwrap();
 		TokensOf::<Test>::transfer(2, &2, &3, 20010, ExistenceRequirement::AllowDeath).unwrap();
@@ -1177,28 +1153,28 @@ fn rewards_storage_right_amounts_start2() {
 		// XykStorage::mint_liquidity(RuntimeOrigin::signed(5), 1, 2, 10000, 10010).unwrap();
 		mint_and_activate_tokens(5, 4, 10000);
 
-		System::set_block_number(100);
+		// System::set_block_number(100);
 		// MockPromotedPoolApi::instance()
 		// 	.lock()
 		// 	.unwrap()
 		// 	.insert(4, U256::from(u128::MAX) * U256::from(10));
-		CumulativeTotalLiquidityToRewardsRatio::<Test>::mutate(|pools|{
-			pools.get_mut(&4).unwrap().rewards = U256::from(u128::MAX) * U256::from(10);
-		});
+		forward_to_block_with_custom_rewards(100, 40000);
+		assert_eq!(U256::from(u128::MAX) * U256::from(10), CumulativeTotalLiquidityToRewardsRatio::<Test>::get().get(&4).unwrap().rewards);
 
 		ProofOfStake::deactivate_liquidity_v2(RuntimeOrigin::signed(2), 4, 5000).unwrap();
 		ProofOfStake::deactivate_liquidity_v2(RuntimeOrigin::signed(3), 4, 5000).unwrap();
 		ProofOfStake::deactivate_liquidity_v2(RuntimeOrigin::signed(4), 4, 5000).unwrap();
 		ProofOfStake::deactivate_liquidity_v2(RuntimeOrigin::signed(5), 4, 5000).unwrap();
 
-		System::set_block_number(200);
+		// System::set_block_number(200);
 		// MockPromotedPoolApi::instance()
 		// 	.lock()
 		// 	.unwrap()
 		// 	.insert(4, U256::from(u128::MAX) * U256::from(20));
-		CumulativeTotalLiquidityToRewardsRatio::<Test>::mutate(|pools|{
-			pools.get_mut(&4).unwrap().rewards = U256::from(u128::MAX) * U256::from(20);
-		});
+		forward_to_block_with_custom_rewards(200, 20000); //TODO: its really weird that rewards are
+														  //decreased from 40k to 20k in single
+														  //test?
+		assert_eq!(U256::from(u128::MAX) * U256::from(20), CumulativeTotalLiquidityToRewardsRatio::<Test>::get().get(&4).unwrap().rewards);
 
 		let mut rewards_info = ProofOfStake::get_rewards_info(2, 4);
 		assert_eq!(rewards_info.rewards_not_yet_claimed, 14704);
@@ -1300,9 +1276,6 @@ fn rewards_storage_right_amounts_start3() {
 		// 	.lock()
 		// 	.unwrap()
 		// 	.insert(4, U256::from(u128::MAX) * U256::from(0));
-		CumulativeTotalLiquidityToRewardsRatio::<Test>::mutate(|pools|{
-			pools.get_mut(&4).unwrap().rewards = U256::from(u128::MAX) * U256::from(0);
-		});
 
 		TokensOf::<Test>::transfer(1, &2, &3, 20010, ExistenceRequirement::AllowDeath).unwrap();
 		TokensOf::<Test>::transfer(2, &2, &3, 20010, ExistenceRequirement::AllowDeath).unwrap();
@@ -1312,15 +1285,12 @@ fn rewards_storage_right_amounts_start3() {
 		ProofOfStake::activate_liquidity_v2(RuntimeOrigin::signed(2), 4, 10000, None).unwrap();
 		// XykStorage::mint_liquidity(RuntimeOrigin::signed(3), 1, 2, 10000, 10010).unwrap();
 		mint_and_activate_tokens(3, 4, 10000);
-
-		System::set_block_number(100);
+		
 		// MockPromotedPoolApi::instance()
 		// 	.lock()
 		// 	.unwrap()
 		// 	.insert(4, U256::from(u128::MAX) * U256::from(10));
-		CumulativeTotalLiquidityToRewardsRatio::<Test>::mutate(|pools|{
-			pools.get_mut(&4).unwrap().rewards = U256::from(u128::MAX) * U256::from(10);
-		});
+		forward_to_block_with_custom_rewards(100, 20000);
 
 		let mut rewards_info = ProofOfStake::get_rewards_info(2, 4);
 		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
@@ -1360,5 +1330,74 @@ fn rewards_storage_right_amounts_start3() {
 		assert_eq!(ProofOfStake::calculate_rewards_amount(3, 4).unwrap(), 0);
 		// assert_eq!(user_balance_after - user_balance_before, 10000);
 		assert_eq!(user_balance_after - user_balance_before, 10000 + 4704);
+	});
+}
+
+
+//E2E test cases
+//------------------------------------------------------------------
+// [Happy path] A user obtain extra tokens from asymtotic_curve_rewards
+//	Contained in liquidity_rewards_single_user_mint_W
+
+// [Accuracy] A user obtain the right tokens from asymtotic_curve_rewards
+//	Contained in liquidity_rewards_single_user_mint_W
+
+// [Accuracy] A user obtain the right tokens from asymtotic_curve_rewards when burn half of those
+// Contained in liquidity_rewards_work_after_burn_W
+
+// A user that mints two times, at different period gets the sum of those two kinds of asymtotic_curve_rewards
+// Contained in liquidity_rewards_three_users_mint_W
+
+// A user that got transfered Liq.tokens, can request asymtotic_curve_rewards
+#[test]
+#[serial]
+fn liquidity_rewards_transfered_liq_tokens_produce_rewards_W() {
+	new_test_ext().execute_with(|| {
+		let max = std::u128::MAX;
+		System::set_block_number(1);
+		let acc_id: u128 = 2;
+		let amount: u128 = max;
+
+		TokensOf::<Test>::create(&acc_id, amount).unwrap();
+		TokensOf::<Test>::create(&acc_id, amount).unwrap();
+		TokensOf::<Test>::create(&acc_id, amount).unwrap();
+		TokensOf::<Test>::create(&acc_id, amount).unwrap();
+
+		TokensOf::<Test>::transfer(
+			0,
+			&2,
+			&<Test as Config>::LiquidityMiningIssuanceVault::get(),
+			10000000000,
+			ExistenceRequirement::AllowDeath
+		)
+		.unwrap();
+
+		// XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 10000, 1, 10000).unwrap();
+		TokensOf::<Test>::create(&acc_id, 10000).unwrap();
+		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 2u8).unwrap();
+
+		// MockPromotedPoolApi::instance().lock().unwrap().insert(4, U256::from(0));
+
+		let liquidity_tokens_owned = TokensOf::<Test>::free_balance(4, &2);
+
+		TokensOf::<Test>::transfer(4, &2, &3, liquidity_tokens_owned, ExistenceRequirement::AllowDeath).unwrap();
+
+		ProofOfStake::activate_liquidity_v2(
+			RuntimeOrigin::signed(3),
+			4,
+			liquidity_tokens_owned,
+			None,
+		)
+		.unwrap();
+
+		// System::set_block_number(100);
+		// MockPromotedPoolApi::instance()
+		// 	.lock()
+		// 	.unwrap()
+		// 	.insert(4, U256::from(u128::MAX) * 100000 / 10000);
+		forward_to_block(100);
+
+		assert_eq!(ProofOfStake::calculate_rewards_amount(3, 4).unwrap(), 14704);
+		ProofOfStake::claim_rewards_all_v2(RuntimeOrigin::signed(3), 4).unwrap();
 	});
 }

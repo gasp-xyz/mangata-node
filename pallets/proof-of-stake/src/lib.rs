@@ -252,6 +252,10 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
+	fn rewards_period() -> u32 {
+		<T as Config>::RewardsDistributionPeriod::get()
+	}
+
 	fn native_token_id() -> TokenId {
 		<T as Config>::NativeCurrencyId::get()
 	}
@@ -541,11 +545,15 @@ impl<T: Config> LiquidityMiningApi for Pallet<T> {
 					_ => Balance::zero(),
 				};
 				println!("liquidity_mining_issuance_for_pool {}", liquidity_mining_issuance_for_pool);
+				println!("activated_amount {}", activated_amount);
 
 				let rewards_for_liquidity: U256 = U256::from(liquidity_mining_issuance_for_pool)
 					.checked_mul(U256::from(u128::MAX))
 					.and_then(|x| x.checked_div(activated_amount.into()))
-					.and_then(|x| x.checked_add(rewards))
+					.and_then(|x| {
+						println!("THIS ROUND TOKENS PER 1 LIQ {}", x / U256::from(u128::MAX));
+						x.checked_add(rewards)
+					})
 					.ok_or(Error::<T>::MathError)?;
 
 				println!("liquidity_mining_issuance_for_pool {}", rewards_for_liquidity);

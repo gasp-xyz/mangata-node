@@ -397,7 +397,6 @@ impl pallet_proof_of_stake::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
 	type NativeCurrencyId = NativeCurrencyId;
-	type Xyk = XykStorage;
 	type Currency = MultiTokenCurrencyAdapter<Test>;
 	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = ConstU32<10>;
@@ -409,7 +408,6 @@ impl pallet_proof_of_stake::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
 	type NativeCurrencyId = NativeCurrencyId;
-	type Xyk = XykStorage;
 	type Currency = MultiTokenCurrencyAdapter<Test>;
 	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = ConstU32<1200>;

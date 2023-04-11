@@ -75,15 +75,16 @@ jobs:
       E2E_TREASURY_PALLET_ADDRESS: ${{ secrets.E2E_TREASURY_PALLET_ADDRESS }}
       E2E_XYK_PALLET_ADDRESS: ${{ secrets.E2E_XYK_PALLET_ADDRESS }}
       E2E_TREASURY_BURN_PALLET_ADDRESS: ${{ secrets.E2E_TREASURY_BURN_PALLET_ADDRESS }}
-      #      TEST_SUDO_NAME: ${{ secrets.E2E_TEST_SUDO_NAME }}
       TEST_SUDO_NAME: "//Alice"
       MANGATA_NODE_VERSION: ${{ inputs.globalVersion }}
       E2EBRANCHNAME: "main"
       PARACHAIN_DOCKER_IMAGE: ${{ inputs.parachainDocker || format('mangatasolutions/mangata-node:{0}', inputs.globalVersion) }}
     steps:
-      ####IDK, but this is neccesary for reports
-      - uses: actions/checkout@v3
-
+      - uses: actions/checkout@v3 ####IDK, but this is neccesary for reports
+      - name: Adapt if fast runtime
+        if:  ${{  !contains(env.PARACHAIN_DOCKER_IMAGE, 'fast') && matrix.fast == true }}
+        run: echo "PARACHAIN_DOCKER_IMAGE=${{ env.PARACHAIN_DOCKER_IMAGE }}-fast" >> $GITHUB_ENV
+      
       - name: Adapt if fast runtime
         if:  ${{  !contains(env.PARACHAIN_DOCKER_IMAGE, 'fast') && matrix.fast == true }}
         run: echo "PARACHAIN_DOCKER_IMAGE=${{ env.PARACHAIN_DOCKER_IMAGE }}-fast" >> $GITHUB_ENV
@@ -134,7 +135,7 @@ jobs:
 
       - name: Replace parachain docker image reference in config
         working-directory: launch
-        run: sed -i 's+mangatasolutions/mangata-node:dev+${{ env.PARACHAIN_DOCKER_IMAGE }}+g' config.yml
+        run: sed -i 's+mangatasolutions/mangata-node:.*+${{ env.PARACHAIN_DOCKER_IMAGE }}+g' config.yml
 
       - name: Install parachain launch dependencies
         working-directory: launch

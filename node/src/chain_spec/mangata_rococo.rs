@@ -62,7 +62,7 @@ pub fn mangata_session_keys(keys: AuraId) -> mangata_rococo_runtime::SessionKeys
 	mangata_rococo_runtime::SessionKeys { aura: keys }
 }
 
-pub fn public_testnet_config() -> ChainSpec {
+pub fn mangata_rococo_prod_config() -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
 	properties.insert("tokenSymbol".into(), "MGAT".into());
@@ -148,15 +148,15 @@ pub fn public_testnet_config() -> ChainSpec {
 						// Id of MGA token,
 						0u32,
 						// How much mangata they pool
-						10_000_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000_u128,
 						// Id of the dummy token,
 						2u32,
 						// How many dummy tokens they pool,
-						20_000_000__000_000_000_000_000_000u128,
+						200_000_000__000_000_000_000_000_000_u128,
 						// Id of the liquidity token that is generated
 						3u32,
 						// How many liquidity tokens they stake,
-						10_000_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000_u128,
 					),
 					(
 						// Who gets to stake initially
@@ -164,15 +164,15 @@ pub fn public_testnet_config() -> ChainSpec {
 						// Id of MGA token,
 						0u32,
 						// How much mangata they pool
-						8_000_000__000_000_000_000_000_000u128,
+						80_000_000__000_000_000_000_000_000_u128,
 						// Id of the dummy token,
 						2u32,
 						// How many dummy tokens they pool,
-						20_000_000__000_000_000_000_000_000u128,
+						200_000_000__000_000_000_000_000_000_u128,
 						// Id of the liquidity token that is generated
 						3u32,
 						// How many liquidity tokens they stake,
-						5_000_000__000_000_000_000_000_000u128,
+						50_000_000__000_000_000_000_000_000_u128,
 					),
 				],
 				vec![
@@ -220,7 +220,7 @@ pub fn public_testnet_config() -> ChainSpec {
 		Vec::new(),
 		None,
 		// Protocol ID
-		Some("mangata-public-testnet"),
+		Some("mangata-rococo-testnet"),
 		// ForkId
 		None,
 		// Properties
@@ -297,15 +297,15 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 						// Id of MGA token,
 						0u32,
 						// How much mangata they pool
-						10_000_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000_u128,
 						// Id of the dummy token,
 						2u32,
 						// How many dummy tokens they pool,
-						20_000_000__000_000_000_000_000_000u128,
+						200_000_000__000_000_000_000_000_000_u128,
 						// Id of the liquidity token that is generated
 						3u32,
 						// How many liquidity tokens they stake,
-						10_000_000__000_000_000_000_000_000u128,
+						100_000_000__000_000_000_000_000_000_u128,
 					),
 					(
 						// Who gets to stake initially
@@ -313,15 +313,15 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 						// Id of MGA token,
 						0u32,
 						// How much mangata they pool
-						8_000_000__000_000_000_000_000_000u128,
+						80_000_000__000_000_000_000_000_000_u128,
 						// Id of the dummy token,
 						2u32,
 						// How many dummy tokens they pool,
-						20_000_000__000_000_000_000_000_000u128,
+						200_000_000__000_000_000_000_000_000_u128,
 						// Id of the liquidity token that is generated
 						3u32,
 						// How many liquidity tokens they stake,
-						5_000_000__000_000_000_000_000_000u128,
+						50_000_000__000_000_000_000_000_000_u128,
 					),
 				],
 				vec![
@@ -536,6 +536,12 @@ fn mangata_genesis(
 					)
 				})
 				.collect(),
+		},
+		fee_lock: mangata_rococo_runtime::FeeLockConfig {
+			period_length: Some(10),
+			fee_lock_amount: Some(50__000_000_000_000_000_000u128),
+			swap_value_threshold: Some(1000__000_000_000_000_000_000u128),
+			whitelisted_tokens: Default::default(),
 		},
 		council: Default::default(),
 		sudo: mangata_rococo_runtime::SudoConfig {

@@ -2,6 +2,7 @@ use super::*;
 use crate::mock::*;
 use frame_support::{assert_noop, assert_ok};
 use sp_std::convert::TryFrom;
+use test_case::test_case;
 
 use orml_tokens::AccountData;
 use sp_std::collections::btree_set::BTreeSet;
@@ -719,4 +720,442 @@ fn whitelist_and_valuation_works() {
 			None
 		);
 	})
+}
+
+const PERIOD_LENGTH: u64 = 10;
+const FEE_LOCK_AMOUNT: u128 = 1000;
+const SWAP_VALUE_THRESHOLD: u128 = 1000;
+const ALICE: u128 = 0u128;
+const BOB: u128 = 1u128;
+const CHARLIE: u128 = 2u128;
+const INITIAL_AMOUNT: Balance = 2_000_000__u128;
+const UNLIMITED_WEIGHT: Weight = Weight::from_ref_time(u64::MAX);
+const ACCOUNT_WITHOUT_LOCKED_TOKENS: orml_tokens::AccountData<u128> = AccountData {
+	free: INITIAL_AMOUNT - 0 * FEE_LOCK_AMOUNT,
+	reserved: 0 * FEE_LOCK_AMOUNT,
+	frozen: 0u128,
+};
+const ACCOUNT_WITH_LOCKED_TOKENS: orml_tokens::AccountData<u128> = AccountData {
+	free: INITIAL_AMOUNT - 1 * FEE_LOCK_AMOUNT,
+	reserved: 1 * FEE_LOCK_AMOUNT,
+	frozen: 0u128,
+};
+
+fn calculate_estimated_weight(unlock_fee_calls: u64, reads: u64, writes: u64) -> Weight {
+	<Test as frame_system::Config>::DbWeight::get().reads(reads) +
+		<Test as frame_system::Config>::DbWeight::get().writes(writes) +
+		(<Test as Config>::WeightInfo::unlock_fee() * unlock_fee_calls)
+}
+
+#[test_case(
+	UNLIMITED_WEIGHT,
+	calculate_estimated_weight(1, 6, 1),
+	ACCOUNT_WITHOUT_LOCKED_TOKENS; "unlocks tokens for an user")]
+#[test_case(
+	Weight::from_ref_time(0),
+	Weight::from_ref_time(0),
+	ACCOUNT_WITH_LOCKED_TOKENS; "does not unlock tokens when weigh is zero")]
+#[test_case(
+	calculate_estimated_weight(1, 6, 1),
+	calculate_estimated_weight(1, 6, 1),
+	ACCOUNT_WITHOUT_LOCKED_TOKENS; "unlock tokens using exact amount of weight required")]
+#[test_case(
+	calculate_estimated_weight(1, 4, 1),
+	Weight::from_ref_time(0),
+	ACCOUNT_WITH_LOCKED_TOKENS; "unlock tokens using a too small weight that required")]
+#[test_case(
+	calculate_estimated_weight(1, 7, 1),
+	calculate_estimated_weight(1, 6, 1),
+	ACCOUNT_WITHOUT_LOCKED_TOKENS; "unlock tokens using a bit more weight that required")]
+fn test_on_idle_unlock_for_single_user(
+	availabe_weight: Weight,
+	consumed_weight: Weight,
+	expected_account_data: AccountData<Balance>,
+) {
+	ExtBuilder::new()
+		.create_token(NativeCurrencyId::get())
+		.mint(ALICE, NativeCurrencyId::get(), INITIAL_AMOUNT)
+		.initialize_fee_locks(PERIOD_LENGTH, FEE_LOCK_AMOUNT, SWAP_VALUE_THRESHOLD)
+		.build()
+		.execute_with(|| {
+			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&ALICE).unwrap();
+			fast_forward_blocks(PERIOD_LENGTH);
+
+			// assert
+			assert_ok!(<FeeLock as FeeLockTriggerTrait<_>>::can_unlock_fee(&ALICE));
+			assert_eq!(
+				Tokens::accounts(ALICE, NativeCurrencyId::get()),
+				AccountData {
+					free: INITIAL_AMOUNT - FEE_LOCK_AMOUNT,
+					reserved: 1 * FEE_LOCK_AMOUNT,
+					frozen: 0__u128,
+				}
+			);
+
+			assert_eq!(FeeLock::on_idle(System::block_number(), availabe_weight), consumed_weight);
+
+			assert_eq!(Tokens::accounts(ALICE, NativeCurrencyId::get()), expected_account_data);
+		});
+}
+
+#[test_case(
+	Weight::from_ref_time(u64::MAX),
+	calculate_estimated_weight(2, 9, 2),
+	vec![
+	(ALICE, ACCOUNT_WITHOUT_LOCKED_TOKENS),
+	(BOB, ACCOUNT_WITHOUT_LOCKED_TOKENS),
+	]; "unlocks tokens for both users with unlimited input weight")]
+#[test_case(
+	calculate_estimated_weight(2, 9, 2),
+	calculate_estimated_weight(2, 9, 2),
+	vec![
+	(ALICE, ACCOUNT_WITHOUT_LOCKED_TOKENS),
+	(BOB, ACCOUNT_WITHOUT_LOCKED_TOKENS),
+	]; "unlocks tokens for both users using exact required weight ")]
+#[test_case(
+	calculate_estimated_weight(1, 6, 1),
+	calculate_estimated_weight(1, 6, 1),
+	vec![
+	(ALICE, ACCOUNT_WITHOUT_LOCKED_TOKENS),
+	(BOB, ACCOUNT_WITH_LOCKED_TOKENS),
+	]; "unlocks tokens for single account only with limited weight")]
+fn test_on_idle_unlock_multiple_users(
+	availabe_weight: Weight,
+	consumed_weight: Weight,
+	expected_account_data: Vec<(<Test as frame_system::Config>::AccountId, AccountData<Balance>)>,
+) {
+	ExtBuilder::new()
+		.create_token(NativeCurrencyId::get())
+		.mint(ALICE, NativeCurrencyId::get(), INITIAL_AMOUNT)
+		.mint(BOB, NativeCurrencyId::get(), INITIAL_AMOUNT)
+		.initialize_fee_locks(PERIOD_LENGTH, FEE_LOCK_AMOUNT, SWAP_VALUE_THRESHOLD)
+		.build()
+		.execute_with(|| {
+			for (account, _) in expected_account_data.iter() {
+				<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(account).unwrap();
+			}
+			fast_forward_blocks(PERIOD_LENGTH);
+
+			let consumed = FeeLock::on_idle(System::block_number(), availabe_weight);
+
+			for data in expected_account_data {
+				assert_eq!(Tokens::accounts(data.0, NativeCurrencyId::get()), data.1);
+			}
+
+			assert_eq!(consumed_weight, consumed);
+		});
+}
+
+#[test]
+fn test_unlock_happens_not_sooner_but_after_period() {
+	ExtBuilder::new()
+		.create_token(NativeCurrencyId::get())
+		.mint(ALICE, NativeCurrencyId::get(), INITIAL_AMOUNT)
+		.initialize_fee_locks(PERIOD_LENGTH, FEE_LOCK_AMOUNT, SWAP_VALUE_THRESHOLD)
+		.build()
+		.execute_with(|| {
+			// lets move to some block that is not aligned with period start
+			fast_forward_blocks(7);
+			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&ALICE).unwrap();
+
+			for _ in 0..PERIOD_LENGTH - 1 {
+				fast_forward_blocks(1);
+				FeeLock::on_idle(System::block_number(), UNLIMITED_WEIGHT);
+				assert_eq!(
+					Tokens::accounts(ALICE, NativeCurrencyId::get()),
+					ACCOUNT_WITH_LOCKED_TOKENS
+				);
+			}
+
+			// lock period ends now
+			fast_forward_blocks(1);
+
+			FeeLock::on_idle(System::block_number(), UNLIMITED_WEIGHT);
+			assert_eq!(
+				Tokens::accounts(ALICE, NativeCurrencyId::get()),
+				ACCOUNT_WITHOUT_LOCKED_TOKENS
+			);
+		});
+}
+
+#[test]
+fn test_unlock_stops_after_single_iteration_without_consuming_unnecessary_weight() {
+	ExtBuilder::new()
+		.create_token(NativeCurrencyId::get())
+		.mint(ALICE, NativeCurrencyId::get(), INITIAL_AMOUNT)
+		.mint(BOB, NativeCurrencyId::get(), INITIAL_AMOUNT)
+		.mint(CHARLIE, NativeCurrencyId::get(), INITIAL_AMOUNT)
+		.initialize_fee_locks(PERIOD_LENGTH, FEE_LOCK_AMOUNT, SWAP_VALUE_THRESHOLD)
+		.build()
+		.execute_with(|| {
+			// lets move to some block that is not aligned with period start
+			fast_forward_blocks(3);
+			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&ALICE).unwrap();
+			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&BOB).unwrap();
+			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&CHARLIE).unwrap();
+
+			fast_forward_blocks(3);
+			let consumed_weight = FeeLock::on_idle(System::block_number(), UNLIMITED_WEIGHT);
+			assert_eq!(consumed_weight, calculate_estimated_weight(0, 6, 1));
+
+			assert_eq!(
+				Tokens::accounts(ALICE, NativeCurrencyId::get()),
+				ACCOUNT_WITH_LOCKED_TOKENS
+			);
+		});
+}
+
+#[test]
+fn test_autounlock_on_empty_unlock_queue() {
+	ExtBuilder::new()
+		.initialize_fee_locks(PERIOD_LENGTH, FEE_LOCK_AMOUNT, SWAP_VALUE_THRESHOLD)
+		.build()
+		.execute_with(|| {
+			FeeLock::on_idle(System::block_number(), UNLIMITED_WEIGHT);
+		});
+}
+
+#[test]
+fn test_maintain_queue_with_subsequent_fee_locks_on_single_account() {
+	ExtBuilder::new()
+		.create_token(NativeCurrencyId::get())
+		.mint(ALICE, NativeCurrencyId::get(), INITIAL_AMOUNT)
+		.mint(BOB, NativeCurrencyId::get(), INITIAL_AMOUNT)
+		.mint(CHARLIE, NativeCurrencyId::get(), INITIAL_AMOUNT)
+		.initialize_fee_locks(PERIOD_LENGTH, FEE_LOCK_AMOUNT, SWAP_VALUE_THRESHOLD)
+		.build()
+		.execute_with(|| {
+			fast_forward_blocks(3);
+			assert_eq!(UnlockQueue::<Test>::get(0), None);
+			assert_eq!(UnlockQueue::<Test>::get(1), None);
+			assert_eq!(UnlockQueue::<Test>::get(2), None);
+			assert_eq!(FeeLockMetadataQeueuePosition::<Test>::get(ALICE), None);
+			assert_eq!(FeeLockMetadataQeueuePosition::<Test>::get(BOB), None);
+			assert_eq!(UnlockQueueBegin::<Test>::get(), 0);
+			assert_eq!(UnlockQueueEnd::<Test>::get(), 0);
+			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&ALICE).unwrap();
+
+			assert_eq!(UnlockQueue::<Test>::get(0), Some(ALICE));
+			assert_eq!(UnlockQueue::<Test>::get(1), None);
+			assert_eq!(UnlockQueue::<Test>::get(2), None);
+			assert_eq!(FeeLockMetadataQeueuePosition::<Test>::get(ALICE), Some(0));
+			assert_eq!(FeeLockMetadataQeueuePosition::<Test>::get(BOB), None);
+			assert_eq!(UnlockQueueBegin::<Test>::get(), 0);
+			assert_eq!(UnlockQueueEnd::<Test>::get(), 1);
+
+			fast_forward_blocks(1);
+			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&BOB).unwrap();
+			assert_eq!(UnlockQueue::<Test>::get(0), Some(ALICE));
+			assert_eq!(UnlockQueue::<Test>::get(1), Some(BOB));
+			assert_eq!(UnlockQueue::<Test>::get(2), None);
+			assert_eq!(FeeLockMetadataQeueuePosition::<Test>::get(ALICE), Some(0));
+			assert_eq!(FeeLockMetadataQeueuePosition::<Test>::get(BOB), Some(1));
+			assert_eq!(UnlockQueueBegin::<Test>::get(), 0);
+			assert_eq!(UnlockQueueEnd::<Test>::get(), 2);
+
+			fast_forward_blocks(1);
+			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&ALICE).unwrap();
+			assert_eq!(UnlockQueue::<Test>::get(0), None);
+			assert_eq!(UnlockQueue::<Test>::get(1), Some(BOB));
+			assert_eq!(UnlockQueue::<Test>::get(2), Some(ALICE));
+			assert_eq!(FeeLockMetadataQeueuePosition::<Test>::get(ALICE), Some(2));
+			assert_eq!(FeeLockMetadataQeueuePosition::<Test>::get(BOB), Some(1));
+			assert_eq!(UnlockQueueBegin::<Test>::get(), 0);
+			assert_eq!(UnlockQueueEnd::<Test>::get(), 3);
+		});
+}
+
+#[test]
+fn test_process_queue_and_ignore_outdated_items_in_unlock_queue_because_of_subsequent_process_fee_lock_calls(
+) {
+	ExtBuilder::new()
+		.create_token(NativeCurrencyId::get())
+		.mint(ALICE, NativeCurrencyId::get(), INITIAL_AMOUNT)
+		.mint(BOB, NativeCurrencyId::get(), INITIAL_AMOUNT)
+		.mint(CHARLIE, NativeCurrencyId::get(), INITIAL_AMOUNT)
+		.initialize_fee_locks(PERIOD_LENGTH, FEE_LOCK_AMOUNT, SWAP_VALUE_THRESHOLD)
+		.build()
+		.execute_with(|| {
+			fast_forward_blocks(3);
+			assert_eq!(UnlockQueueBegin::<Test>::get(), 0);
+			assert_eq!(UnlockQueueEnd::<Test>::get(), 0);
+
+			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&ALICE).unwrap();
+			assert_eq!(UnlockQueueBegin::<Test>::get(), 0);
+			assert_eq!(UnlockQueueEnd::<Test>::get(), 1);
+			fast_forward_blocks(1);
+
+			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&BOB).unwrap();
+			assert_eq!(UnlockQueueBegin::<Test>::get(), 0);
+			assert_eq!(UnlockQueueEnd::<Test>::get(), 2);
+			fast_forward_blocks(1);
+
+			FeeLock::on_idle(System::block_number(), UNLIMITED_WEIGHT);
+			assert_eq!(UnlockQueueBegin::<Test>::get(), 0);
+			assert_eq!(UnlockQueueEnd::<Test>::get(), 2);
+
+			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&ALICE).unwrap();
+			assert_eq!(UnlockQueueBegin::<Test>::get(), 0);
+			assert_eq!(UnlockQueueEnd::<Test>::get(), 3);
+
+			// outdated queue item was consumed
+			FeeLock::on_idle(System::block_number(), UNLIMITED_WEIGHT);
+			assert_eq!(UnlockQueueBegin::<Test>::get(), 1);
+			assert_eq!(UnlockQueueEnd::<Test>::get(), 3);
+		});
+}
+
+#[test]
+fn test_process_queue_and_ignore_outdated_items_in_unlock_queue_because_of_manual_unlock() {
+	ExtBuilder::new()
+		.create_token(NativeCurrencyId::get())
+		.mint(ALICE, NativeCurrencyId::get(), INITIAL_AMOUNT)
+		.mint(BOB, NativeCurrencyId::get(), INITIAL_AMOUNT)
+		.mint(CHARLIE, NativeCurrencyId::get(), INITIAL_AMOUNT)
+		.initialize_fee_locks(PERIOD_LENGTH, FEE_LOCK_AMOUNT, SWAP_VALUE_THRESHOLD)
+		.build()
+		.execute_with(|| {
+			fast_forward_blocks(3);
+			assert_eq!(UnlockQueueBegin::<Test>::get(), 0);
+			assert_eq!(UnlockQueueEnd::<Test>::get(), 0);
+
+			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&ALICE).unwrap();
+			assert_eq!(UnlockQueueBegin::<Test>::get(), 0);
+			assert_eq!(UnlockQueueEnd::<Test>::get(), 1);
+			fast_forward_blocks(PERIOD_LENGTH / 2);
+
+			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&BOB).unwrap();
+			assert_eq!(UnlockQueueBegin::<Test>::get(), 0);
+			assert_eq!(UnlockQueueEnd::<Test>::get(), 2);
+
+			FeeLock::on_idle(System::block_number(), UNLIMITED_WEIGHT);
+			assert_eq!(UnlockQueueBegin::<Test>::get(), 0);
+			assert_eq!(UnlockQueueEnd::<Test>::get(), 2);
+
+			fast_forward_blocks(PERIOD_LENGTH / 2);
+			FeeLock::unlock_fee(RuntimeOrigin::signed(ALICE).into()).unwrap();
+			assert_eq!(UnlockQueueBegin::<Test>::get(), 0);
+			assert_eq!(UnlockQueueEnd::<Test>::get(), 2);
+			assert_eq!(
+				Tokens::accounts(ALICE, NativeCurrencyId::get()),
+				ACCOUNT_WITHOUT_LOCKED_TOKENS
+			);
+
+			// nothing to unlock, but increment UnlockQueueBegin counter
+			FeeLock::on_idle(System::block_number(), UNLIMITED_WEIGHT);
+			assert_eq!(UnlockQueueBegin::<Test>::get(), 1);
+			assert_eq!(UnlockQueueEnd::<Test>::get(), 2);
+
+			assert_eq!(Tokens::accounts(BOB, NativeCurrencyId::get()), ACCOUNT_WITH_LOCKED_TOKENS);
+		});
+}
+
+#[test]
+fn test_unlock_happens_in_order() {
+	ExtBuilder::new()
+		.create_token(NativeCurrencyId::get())
+		.mint(ALICE, NativeCurrencyId::get(), INITIAL_AMOUNT)
+		.mint(BOB, NativeCurrencyId::get(), INITIAL_AMOUNT)
+		.mint(CHARLIE, NativeCurrencyId::get(), INITIAL_AMOUNT)
+		.initialize_fee_locks(PERIOD_LENGTH, FEE_LOCK_AMOUNT, SWAP_VALUE_THRESHOLD)
+		.build()
+		.execute_with(|| {
+			let weight_for_single_unlock: Weight = calculate_estimated_weight(1, 6, 1);
+
+			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&ALICE).unwrap();
+			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&BOB).unwrap();
+			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&CHARLIE).unwrap();
+			assert_eq!(
+				Tokens::accounts(ALICE, NativeCurrencyId::get()),
+				ACCOUNT_WITH_LOCKED_TOKENS
+			);
+			assert_eq!(Tokens::accounts(BOB, NativeCurrencyId::get()), ACCOUNT_WITH_LOCKED_TOKENS);
+			assert_eq!(
+				Tokens::accounts(CHARLIE, NativeCurrencyId::get()),
+				ACCOUNT_WITH_LOCKED_TOKENS
+			);
+
+			fast_forward_blocks(PERIOD_LENGTH);
+			FeeLock::on_idle(System::block_number(), weight_for_single_unlock);
+
+			assert_eq!(
+				Tokens::accounts(ALICE, NativeCurrencyId::get()),
+				ACCOUNT_WITHOUT_LOCKED_TOKENS
+			);
+			assert_eq!(Tokens::accounts(BOB, NativeCurrencyId::get()), ACCOUNT_WITH_LOCKED_TOKENS);
+			assert_eq!(
+				Tokens::accounts(CHARLIE, NativeCurrencyId::get()),
+				ACCOUNT_WITH_LOCKED_TOKENS
+			);
+
+			FeeLock::on_idle(System::block_number(), weight_for_single_unlock);
+			assert_eq!(
+				Tokens::accounts(ALICE, NativeCurrencyId::get()),
+				ACCOUNT_WITHOUT_LOCKED_TOKENS
+			);
+			assert_eq!(
+				Tokens::accounts(BOB, NativeCurrencyId::get()),
+				ACCOUNT_WITHOUT_LOCKED_TOKENS
+			);
+			assert_eq!(
+				Tokens::accounts(CHARLIE, NativeCurrencyId::get()),
+				ACCOUNT_WITH_LOCKED_TOKENS
+			);
+
+			FeeLock::on_idle(System::block_number(), weight_for_single_unlock);
+			assert_eq!(
+				Tokens::accounts(ALICE, NativeCurrencyId::get()),
+				ACCOUNT_WITHOUT_LOCKED_TOKENS
+			);
+			assert_eq!(
+				Tokens::accounts(BOB, NativeCurrencyId::get()),
+				ACCOUNT_WITHOUT_LOCKED_TOKENS
+			);
+			assert_eq!(
+				Tokens::accounts(CHARLIE, NativeCurrencyId::get()),
+				ACCOUNT_WITHOUT_LOCKED_TOKENS
+			);
+		});
+}
+
+#[test]
+fn test_queue_storage_is_cleaned_up() {
+	ExtBuilder::new()
+		.create_token(NativeCurrencyId::get())
+		.mint(ALICE, NativeCurrencyId::get(), INITIAL_AMOUNT)
+		.mint(BOB, NativeCurrencyId::get(), INITIAL_AMOUNT)
+		.initialize_fee_locks(PERIOD_LENGTH, FEE_LOCK_AMOUNT, SWAP_VALUE_THRESHOLD)
+		.build()
+		.execute_with(|| {
+			assert_eq!(UnlockQueue::<Test>::get(0), None);
+			assert_eq!(UnlockQueue::<Test>::get(1), None);
+
+			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&ALICE).unwrap();
+			assert_eq!(UnlockQueue::<Test>::get(0), Some(ALICE));
+			assert_eq!(UnlockQueue::<Test>::get(1), None);
+			assert_eq!(
+				Tokens::accounts(ALICE, NativeCurrencyId::get()),
+				ACCOUNT_WITH_LOCKED_TOKENS
+			);
+
+			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&BOB).unwrap();
+			assert_eq!(UnlockQueue::<Test>::get(0), Some(ALICE));
+			assert_eq!(UnlockQueue::<Test>::get(1), Some(BOB));
+			assert_eq!(Tokens::accounts(BOB, NativeCurrencyId::get()), ACCOUNT_WITH_LOCKED_TOKENS);
+
+			fast_forward_blocks(PERIOD_LENGTH);
+			FeeLock::on_idle(System::block_number(), Weight::from_ref_time(u64::MAX));
+
+			assert_eq!(
+				Tokens::accounts(ALICE, NativeCurrencyId::get()),
+				ACCOUNT_WITHOUT_LOCKED_TOKENS
+			);
+			assert_eq!(
+				Tokens::accounts(BOB, NativeCurrencyId::get()),
+				ACCOUNT_WITHOUT_LOCKED_TOKENS
+			);
+
+			assert_eq!(UnlockQueue::<Test>::get(0), None);
+			assert_eq!(UnlockQueue::<Test>::get(1), None);
+		});
 }

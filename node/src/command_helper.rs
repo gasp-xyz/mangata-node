@@ -57,9 +57,9 @@ pub fn create_extrinsic(
 		)),
 		frame_system::CheckNonce::<mangata_kusama_runtime::Runtime>::from(nonce),
 		frame_system::CheckWeight::<mangata_kusama_runtime::Runtime>::new(),
-		pallet_transaction_payment::ChargeTransactionPayment::<mangata_kusama_runtime::Runtime>::from(
-			tip
-		),
+		pallet_transaction_payment_mangata::ChargeTransactionPayment::<
+			mangata_kusama_runtime::Runtime,
+		>::from(tip),
 	);
 
 	let raw_payload = mangata_kusama_runtime::SignedPayload::from_raw(

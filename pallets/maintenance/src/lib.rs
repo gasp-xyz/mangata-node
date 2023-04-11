@@ -9,7 +9,8 @@ use frame_support::{
 	transactional,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
-use mangata_types::{traits::GetMaintenanceStatusTrait, Balance, TokenId};
+use mangata_support::traits::GetMaintenanceStatusTrait;
+use mangata_types::{Balance, TokenId};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 
 use sp_runtime::traits::{CheckedDiv, Zero};
@@ -204,7 +205,7 @@ pub mod pallet {
 
 			MaintenanceStatus::<T>::put(maintenance_status);
 
-			Pallet::<T>::deposit_event(Event::UpgradabilityInMaintenanceModeSwitchedOn(caller));
+			Pallet::<T>::deposit_event(Event::UpgradabilityInMaintenanceModeSwitchedOff(caller));
 
 			Ok(().into())
 		}

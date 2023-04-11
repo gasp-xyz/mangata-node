@@ -24,101 +24,78 @@ Reliable decentralized exchange (DEX) blockchain - interoperable with other bloc
 The design of the blockchain guarantees fixed-fees that provides greater control of trading costs and higher arbitrage opportunity.
 Assets on the exchange will serve multiple purposes- at the first iteration, they are the block producer’s stake and exchange liquidity at the same time, and more comes later.
 
-## Local Development
+## Build mangata-node locally
+- Install [docker](https://docs.docker.com/engine/install/ubuntu/) 
 
-Follow these steps to prepare a local Substrate development environment :hammer_and_wrench:
+### Compilie mangata-node binary and wasms artifacts
+- use docker wrapper for cargo to build `mangata-node`
 
-### Simple Setup
-
-Install all the required dependencies with a single command (be patient, this can take up to 30
-minutes).
-
-```bash
-curl https://getsubstrate.io -sSf | bash -s -- --fast
+```
+./docker-cargo.sh build --release -p mangata-node
 ```
 
-### Manual Setup
+build artifacts will be placed in `<REPO ROOT>/docker-cargo/release`
 
-Find manual setup instructions at the
-[Substrate Developer Hub](https://substrate.dev/docs/en/knowledgebase/getting-started/#manual-installation).
+### Generate docker image
+You can use `build-image.sh` script to build & generate docker image
 
-## Build
-### Local target
-
-Recommended rustc version for the build is `nightly-2021-10-19`
-
-Environment variables for ethereum apps should be set up before the build:
-
-```bash
-ETH_APP_ID=0xdd514baa317bf095ddba2c0a847765feb389c6a0
-ERC20_APP_ID=0x00e392c04743359e39f00cd268a5390d27ef6b44
+```
+./scripts/build-image.sh mangatasolutions/mangata-node:dev
 ```
 
-build node:
+or you can use already compiled build atributes generated in previous step
 
-```bash
-rustup target add wasm32-unknown-unknown
-cargo build --release
+```
+SKIP_BUILD=1 BUILD_DIR=./docker-cargo/release ./scripts/build-image.sh
 ```
 
-### Docker container
-
-```bash
-./scripts/build-mangata-node-docker-image.sh
-```
+This will generate new local docker image `mangatasolutions/mangata-node:dev`
 
 ## Run
 
-### Single Node Development Chain
+In order to run mangata-parachain locally one need to set up both:
+- local relay network
+- local parachain network
 
-Purge any existing dev chain state:
+Because of number of parameters is quite troublesome thats why we came up with dedicated dockerized environment.
 
-```bash
-./target/release/mangata-node purge-chain --dev
-```
+### Set up network using parachain-launch
 
-Start a dev chain:
+Dockerized setup requires you to build development docker image [mangatasolutions/mangata-node:dev](#generate-docker-image).
 
-```bash
-./target/release/mangata-node --dev
-```
-
-### Two-Nodes Dockerized Testnet
+Start docker environment using, you need to 
 
 ```bash
-cd ./devops
-docker-compose up
+cd ./launch
+yarn install
+yarn gen
+yarn up
 ```
 
-### Two-Nodes Multi-Validator Dockerized Testnet
+once started, you can access nodes using port forwards
+- [127.0.0.1:9944](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9946#/explorer) - relaychain 1st collator
+- [127.0.0.1:9945](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9946#/explorer) - relaychain 2nd collator
+- [127.0.0.1:9946](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9946#/explorer) - parachain 1st collator
+- [127.0.0.1:9947](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9946#/explorer) - parachain 2nd collator
+
+Docker setup can be stopped using 
 
 ```bash
-sh scripts/build-multi-validator-mangata-node-docker-image.sh
-docker-compose  -f devops/multi-validator-docker-compose.yml up
+cd ./launch
+yarn down
 ```
 
-## Debug Single Node
+### Sudo access
+`Alice` is set as sudo account for parachain-launch docker setup
 
-### VS code
+## Managata node configuration
 
-Export RUSTFLAGS
+There is number of chain configurations available for both development and production environements:
 
-```bash
-export RUSTFLAGS="-g"
-```
+| chainspec (`--chain`)         |      Sudo      |  Description                     |
+|-------------------------------|----------------|----------------------------------|
+| `kusama`                      |    *******     | production kusama public mainnet |
+| `kusama-local`                |     Alice      | development kusama local testnet |
+| `rococo`                      |    *******     | production rococo public testnet |
+| `rococo-local`                |     Alice      | development rococo local testnet |
 
-Build node:
-
-```bash
-cargo build --release
-```
-
-Run node:
-
-```bash
-RUSTFLAGS="-g" cargo run -j12 --release -- --tmp --dev
-```
-
-Go to VS code and attach the process!
-
-# Mangata Substrate Cumulus Parachain

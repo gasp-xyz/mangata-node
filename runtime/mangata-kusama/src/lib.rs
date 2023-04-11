@@ -6,7 +6,7 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
 	construct_runtime,
 	dispatch::{DispatchClass, DispatchResult},
-	parameter_types,
+	ensure, parameter_types,
 	traits::{
 		tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
 		Contains, EnsureOrigin, EnsureOriginWithArg, Everything, ExistenceRequirement, Get,
@@ -32,7 +32,7 @@ use orml_traits::{
 	parameter_type_with_key,
 };
 pub use pallet_sudo_mangata;
-use pallet_transaction_payment::{ConstFeeMultiplier, Multiplier, OnChargeTransaction};
+use pallet_transaction_payment_mangata::{ConstFeeMultiplier, Multiplier, OnChargeTransaction};
 use pallet_vesting_mangata_rpc_runtime_api::VestingInfosWithLockedAt;
 // Polkadot Imports
 pub use polkadot_runtime_common::BlockHashCount;
@@ -66,12 +66,13 @@ pub use xcm::{latest::prelude::*, VersionedMultiLocation};
 
 pub use constants::{fee::*, parachains::*};
 pub use currency::*;
+use mangata_support::traits::{
+	AssetRegistryApi, FeeLockTriggerTrait, PreValidateSwaps, ProofOfStakeRewardsApi,
+};
 pub use mangata_types::{
 	assets::{CustomMetadata, XcmMetadata, XykMetadata},
 	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
 };
-use mp_bootstrap::AssetRegistryApi;
-use mp_traits::{FeeLockTriggerTrait, PreValidateSwaps};
 pub use pallet_issuance::{IssuanceInfo, PoolPromoteApi};
 pub use pallet_sudo_origin;
 pub use pallet_xyk;
@@ -89,6 +90,7 @@ pub const KAR_TOKEN_ID: TokenId = 6;
 pub const TUR_TOKEN_ID: TokenId = 7;
 
 pub mod constants;
+mod migration;
 mod weights;
 pub mod xcm_config;
 
@@ -108,7 +110,7 @@ pub type SignedExtra = (
 	frame_system::CheckEra<Runtime>,
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
-	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
+	pallet_transaction_payment_mangata::ChargeTransactionPayment<Runtime>,
 );
 /// The payload being signed in transactions.
 pub type SignedPayload = generic::SignedPayload<RuntimeCall, SignedExtra>;
@@ -127,7 +129,8 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	(),
+	(migration::XykRefactorMigration),
+	// ()
 >;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
@@ -161,10 +164,10 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
 	authoring_version: 15,
-	spec_version: 15,
+	spec_version: 2802,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 15,
+	transaction_version: 2802,
 	state_version: 0,
 };
 
@@ -174,10 +177,10 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
 	authoring_version: 15,
-	spec_version: 002802,
+	spec_version: 002900,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 002802,
+	transaction_version: 002900,
 	state_version: 0,
 };
 
@@ -503,18 +506,28 @@ impl pallet_xyk::Config for Runtime {
 	type NativeCurrencyId = MgxTokenId;
 	type TreasuryPalletId = TreasuryPalletId;
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
-	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
-	type PoolPromoteApi = Issuance;
 	type PoolFeePercentage = frame_support::traits::ConstU128<20>;
 	type TreasuryFeePercentage = frame_support::traits::ConstU128<5>;
 	type BuyAndBurnFeePercentage = frame_support::traits::ConstU128<5>;
-	type RewardsDistributionPeriod = SessionLenghtOf<Runtime>;
+	type XykRewards = ProofOfStake;
 	type VestingProvider = Vesting;
 	type DisallowedPools = Bootstrap;
 	type DisabledTokens = (TestTokensFilter, AssetRegisterFilter);
 	type AssetMetadataMutation = AssetMetadataMutation;
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
 	type RewardsMigrateAccount = RewardsMigrationAccountProvider<Self>;
+}
+
+impl pallet_proof_of_stake::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type ActivationReservesProvider = MultiPurposeLiquidity;
+	type NativeCurrencyId = MgxTokenId;
+	type Xyk = Xyk;
+	type PoolPromoteApi = Issuance;
+	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
+	type RewardsDistributionPeriod = SessionLenghtOf<Runtime>;
+	type WeightInfo = weights::pallet_proof_of_stake_weights::ModuleWeight<Runtime>;
 }
 
 pub struct EnableAssetPoolApi;
@@ -565,7 +578,7 @@ impl pallet_bootstrap::Config for Runtime {
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type VestingProvider = Vesting;
 	type TreasuryPalletId = TreasuryPalletId;
-	type RewardsApi = Xyk;
+	type RewardsApi = ProofOfStake;
 	type WeightInfo = weights::pallet_bootstrap_weights::ModuleWeight<Runtime>;
 	type AssetRegistryApi = EnableAssetPoolApi;
 }
@@ -656,17 +669,17 @@ pub enum LiquidityInfoEnum<C: MultiTokenCurrency<T::AccountId>, T: frame_system:
 }
 
 #[derive(Encode, Decode, Clone, TypeInfo)]
-pub struct OnChargeHandler<C, OCA, OFLA>(PhantomData<(C, OCA, OFLA)>);
+pub struct OnChargeHandler<C, OU, OCA, OFLA>(PhantomData<(C, OU, OCA, OFLA)>);
 
-impl<C, OCA, OFLA> OnChargeHandler<C, OCA, OFLA> {}
+impl<C, OU, OCA, OFLA> OnChargeHandler<C, OU, OCA, OFLA> {}
 
 /// Default implementation for a Currency and an OnUnbalanced handler.
 ///
 /// The unbalance handler is given 2 unbalanceds in [`OnUnbalanced::on_unbalanceds`]: fee and
 /// then tip.
-impl<T, C, OCA, OFLA> OnChargeTransaction<T> for OnChargeHandler<C, OCA, OFLA>
+impl<T, C, OU, OCA, OFLA> OnChargeTransaction<T> for OnChargeHandler<C, OU, OCA, OFLA>
 where
-	T: pallet_transaction_payment::Config + pallet_xyk::Config,
+	T: pallet_transaction_payment_mangata::Config + pallet_xyk::Config,
 	T::LengthToFee: frame_support::weights::WeightToFee<
 		Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
 	>,
@@ -679,6 +692,8 @@ where
 		<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
 		Opposite = C::PositiveImbalance,
 	>,
+	OU: OnMultiTokenUnbalanced<NegativeImbalanceOf<C, T>>,
+	NegativeImbalanceOf<C, T>: MultiTokenImbalanceWithZeroTrait<TokenId>,
 	OCA: OnChargeTransaction<
 		T,
 		LiquidityInfo = Option<LiquidityInfoEnum<C, T>>,
@@ -687,6 +702,8 @@ where
 	OFLA: FeeLockTriggerTrait<<T as frame_system::Config>::AccountId>,
 	T: frame_system::Config<RuntimeCall = RuntimeCall>,
 	T::AccountId: From<sp_runtime::AccountId32> + Into<sp_runtime::AccountId32>,
+	Balance: From<<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance>,
+	sp_runtime::AccountId32: From<<T as frame_system::Config>::AccountId>,
 {
 	type LiquidityInfo = Option<LiquidityInfoEnum<C, T>>;
 	type Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -711,6 +728,13 @@ where
 				min_amount_out,
 				..
 			}) => {
+				ensure!(
+					tip.is_zero(),
+					TransactionValidityError::Invalid(
+						InvalidTransaction::TippingNotAllowedForSwaps.into(),
+					)
+				);
+
 				// If else tree for easy edits
 
 				// Check if fee locks are initiazed or not
@@ -800,6 +824,13 @@ where
 				min_amount_out: min_amount_out,
 				..
 			}) => {
+				ensure!(
+					tip.is_zero(),
+					TransactionValidityError::Invalid(
+						InvalidTransaction::TippingNotAllowedForSwaps.into(),
+					)
+				);
+
 				// If else tree for easy edits
 
 				// Check if fee locks are initiazed or not
@@ -837,6 +868,13 @@ where
 				max_amount_in,
 				..
 			}) => {
+				ensure!(
+					tip.is_zero(),
+					TransactionValidityError::Invalid(
+						InvalidTransaction::TippingNotAllowedForSwaps.into(),
+					)
+				);
+
 				// If else tree for easy edits
 
 				// Check if fee locks are initiazed or not
@@ -932,6 +970,13 @@ where
 				max_amount_in: max_amount_in,
 				..
 			}) => {
+				ensure!(
+					tip.is_zero(),
+					TransactionValidityError::Invalid(
+						InvalidTransaction::TippingNotAllowedForSwaps.into(),
+					)
+				);
+
 				// If else tree for easy edits
 
 				// Check if fee locks are initiazed or not
@@ -963,6 +1008,26 @@ where
 			},
 
 			RuntimeCall::FeeLock(pallet_fee_lock::Call::unlock_fee { .. }) => {
+				let imb = C::withdraw(
+					MgxTokenId::get().into(),
+					who,
+					Balance::from(tip).into(),
+					WithdrawReasons::TIP,
+					ExistenceRequirement::KeepAlive,
+				)
+				.map_err(|_| {
+					TransactionValidityError::Invalid(InvalidTransaction::Payment.into())
+				})?;
+
+				OU::on_unbalanceds(MgxTokenId::get().into(), Some(imb).into_iter());
+				TransactionPayment::deposit_event(pallet_transaction_payment_mangata::Event::<
+					Runtime,
+				>::TransactionFeePaid {
+					who: sp_runtime::AccountId32::from(who.clone()),
+					actual_fee: Balance::zero().into(),
+					tip: Balance::from(tip),
+				});
+
 				OFLA::can_unlock_fee(who).map_err(|_| {
 					TransactionValidityError::Invalid(InvalidTransaction::UnlockFee.into())
 				})?;
@@ -1020,7 +1085,7 @@ type NegativeImbalanceOf<C, T> =
 impl<T, C, OU, T1, T2, T3, SF2, SF3> OnChargeTransaction<T>
 	for ThreeCurrencyOnChargeAdapter<C, OU, T1, T2, T3, SF2, SF3>
 where
-	T: pallet_transaction_payment::Config,
+	T: pallet_transaction_payment_mangata::Config,
 	T::LengthToFee: frame_support::weights::WeightToFee<
 		Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
 	>,
@@ -1042,6 +1107,8 @@ where
 	T3: Get<TokenId>,
 	SF2: Get<u128>,
 	SF3: Get<u128>,
+	Balance: From<<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance>,
+	sp_runtime::AccountId32: From<<T as frame_system::Config>::AccountId>,
 {
 	type LiquidityInfo = Option<LiquidityInfoEnum<C, T>>;
 	type Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -1131,8 +1198,15 @@ where
 				.same()
 				.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Payment))?;
 			// Call someone else to handle the imbalance (fee and tip separately)
-			let (tip, fee) = adjusted_paid.split(tip);
-			OU::on_unbalanceds(token_id, Some(fee).into_iter().chain(Some(tip)));
+			let (tip_imb, fee) = adjusted_paid.split(tip);
+			OU::on_unbalanceds(token_id, Some(fee).into_iter().chain(Some(tip_imb)));
+			TransactionPayment::deposit_event(
+				pallet_transaction_payment_mangata::Event::<Runtime>::TransactionFeePaid {
+					who: sp_runtime::AccountId32::from(who.clone()),
+					actual_fee: corrected_fee.into(),
+					tip: Balance::from(tip),
+				},
+			);
 		}
 		Ok(())
 	}
@@ -1142,10 +1216,11 @@ parameter_types! {
 	pub ConstFeeMultiplierValue: Multiplier = Multiplier::saturating_from_rational(1, 1);
 }
 
-impl pallet_transaction_payment::Config for Runtime {
+impl pallet_transaction_payment_mangata::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction = OnChargeHandler<
 		orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
+		ToAuthor,
 		ThreeCurrencyOnChargeAdapter<
 			orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
 			ToAuthor,
@@ -1261,6 +1336,7 @@ impl pallet_collective_mangata::Config<CouncilCollective> for Runtime {
 	type ProposalCloseDelay = CouncilProposalCloseDelay;
 	type MaxProposals = CouncilMaxProposals;
 	type MaxMembers = CouncilMaxMembers;
+	type FoundationAccountsProvider = FoundationAccountsProvider<Runtime>;
 	type DefaultVote = pallet_collective_mangata::PrimeDefaultVote;
 	type WeightInfo = weights::pallet_collective_mangata_weights::ModuleWeight<Runtime>;
 }
@@ -1305,7 +1381,13 @@ parameter_types! {
 	/// Minimum stake required to become a collator
 	pub const MinCollatorStk: u128 = 10 * DOLLARS;
 	/// Minimum stake required to be reserved to be a candidate
-	pub const MinCandidateStk: u128 = 1_500_000 * DOLLARS;
+	pub const MinCandidateStk: u128 = if cfg!(feature = "runtime-benchmarks") {
+		// For benchmarking
+		1 * DOLLARS
+	} else {
+		// ACTUAL
+		1_500_000 * DOLLARS
+	};
 	/// Minimum stake required to be reserved to be a delegator
 	pub const MinDelegatorStk: u128 = 1 * CENTS;
 }
@@ -1343,7 +1425,10 @@ impl parachain_staking::Config for Runtime {
 	type WeightInfo = weights::parachain_staking_weights::ModuleWeight<Runtime>;
 }
 
-impl parachain_staking::StakingBenchmarkConfig for Runtime {}
+impl parachain_staking::StakingBenchmarkConfig for Runtime {
+	#[cfg(feature = "runtime-benchmarks")]
+	type PoolCreateApi = Xyk;
+}
 
 impl pallet_xyk::XykBenchmarkingConfig for Runtime {}
 
@@ -1386,7 +1471,7 @@ impl pallet_issuance::Config for Runtime {
 	type TGEReleaseBegin = TGEReleaseBegin;
 	type VestingProvider = Vesting;
 	type WeightInfo = weights::pallet_issuance_weights::ModuleWeight<Runtime>;
-	type ActivedPoolQueryApiType = Xyk;
+	type ActivatedPoolQueryApiType = ProofOfStake;
 }
 
 parameter_types! {
@@ -1569,6 +1654,35 @@ impl pallet_proxy::Config for Runtime {
 	type AnnouncementDepositBase = AnnouncementDepositBase;
 	type AnnouncementDepositFactor = AnnouncementDepositFactor;
 }
+parameter_types! {
+	// Add item in storage and take 270 bytes, Registry { [], Balance, Info { [], [u8,32] * 7, [u8,20] }}
+	pub const BasicDeposit: Balance = deposit(1, 270);
+	// No item in storage, extra field takes 66 bytes, ([u8,32], [u8,32])
+	pub const FieldDeposit: Balance = deposit(0, 66);
+	// Add item in storage, and takes 97 bytes, AccountId + (AccountId, [u8,32])
+	pub const SubAccountDeposit: Balance = deposit(1, 97);
+	pub const MaxSubAccounts: u32 = 100;
+	pub const MaxAdditionalFields: u32 = 100;
+	pub const MaxRegistrars: u32 = 20;
+}
+
+type IdentityForceOrigin = EnsureRoot<AccountId>;
+type IdentityRegistrarOrigin = EnsureRoot<AccountId>;
+
+impl pallet_identity::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgxTokenId>;
+	type BasicDeposit = BasicDeposit;
+	type FieldDeposit = FieldDeposit;
+	type SubAccountDeposit = SubAccountDeposit;
+	type MaxSubAccounts = MaxSubAccounts;
+	type MaxAdditionalFields = MaxAdditionalFields;
+	type MaxRegistrars = MaxRegistrars;
+	type ForceOrigin = IdentityForceOrigin;
+	type RegistrarOrigin = IdentityRegistrarOrigin;
+	type Slashed = Treasury;
+	type WeightInfo = pallet_identity::weights::SubstrateWeight<Runtime>;
+}
 
 pub struct FoundationAccountsProvider<T: frame_system::Config>(PhantomData<T>);
 impl<T: frame_system::Config> Get<Vec<T::AccountId>> for FoundationAccountsProvider<T> {
@@ -1610,16 +1724,20 @@ construct_runtime!(
 		} = 1,
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 2,
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 3,
+		Utility: pallet_utility_mangata::{Pallet, Call, Event} = 4,
+		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 5,
+		Maintenance: pallet_maintenance::{Pallet, Call, Storage, Event<T>} = 6,
 
 		// Monetary stuff.
 		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>} = 10,
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<Runtime>} = 11,
+		TransactionPayment: pallet_transaction_payment_mangata::{Pallet, Storage, Event<Runtime>} = 11,
 
 		// Xyk stuff
 		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>} = 13,
+		ProofOfStake: pallet_proof_of_stake::{Pallet, Call, Storage, Event<T>} = 14,
 
 		// Fee Locks
-		FeeLock: pallet_fee_lock::{Pallet, Storage, Call, Event<T>} = 14,
+		FeeLock: pallet_fee_lock::{Pallet, Storage, Call, Event<T>, Config<T>} = 15,
 
 		// Vesting
 		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>} = 17,
@@ -1630,41 +1748,37 @@ construct_runtime!(
 		// Issuance
 		Issuance: pallet_issuance::{Pallet, Event<T>, Storage, Call} = 19,
 
-		// Collator support. The order of these 4 are important and shall not change.
-		Authorship: pallet_authorship::{Pallet, Call, Storage} = 20,
-		ParachainStaking: parachain_staking::{Pallet, Call, Storage, Event<T>, Config<T>} = 21,
-		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 22,
-		Aura: pallet_aura::{Pallet, Storage, Config<T>} = 23,
-		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config} = 24,
-
 		// MultiPurposeLiquidity
-		MultiPurposeLiquidity: pallet_multipurpose_liquidity::{Pallet, Call, Storage, Event<T>} = 25,
-
-		// XCM helpers.
-		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 30,
-		PolkadotXcm: pallet_xcm::{Pallet, Storage, Call, Event<T>, Origin, Config} = 31,
-		CumulusXcm: cumulus_pallet_xcm::{Pallet, Event<T>, Origin} = 32,
-		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 33,
-
-		// ORML XCM
-		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 35,
-		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 36,
-		OrmlXcm: orml_xcm::{Pallet, Call, Event<T>} = 37,
-		AssetRegistry: orml_asset_registry::{Pallet, Call, Storage, Event<T>, Config<T>} = 38,
-
-		// Governance stuff
-		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 41,
-		Sudo: pallet_sudo_mangata::{Pallet, Call, Config<T>, Storage, Event<T>} = 49,
-		SudoOrigin: pallet_sudo_origin::{Pallet, Call, Event<T>} = 50,
-		Council: pallet_collective_mangata::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 51,
+		MultiPurposeLiquidity: pallet_multipurpose_liquidity::{Pallet, Call, Storage, Event<T>} = 20,
 
 		// Bootstrap
-		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>} = 53,
-		Utility: pallet_utility_mangata::{Pallet, Call, Event} = 54,
+		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>} = 21,
 
-		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 55,
+		// Collator support. The order of these 4 are important and shall not change.
+		Authorship: pallet_authorship::{Pallet, Call, Storage} = 30,
+		ParachainStaking: parachain_staking::{Pallet, Call, Storage, Event<T>, Config<T>} = 31,
+		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 32,
+		Aura: pallet_aura::{Pallet, Storage, Config<T>} = 33,
+		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config} = 34,
 
-		Maintenance: pallet_maintenance::{Pallet, Call, Storage, Event<T>} = 60,
+		// XCM helpers.
+		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 40,
+		PolkadotXcm: pallet_xcm::{Pallet, Storage, Call, Event<T>, Origin, Config} = 41,
+		CumulusXcm: cumulus_pallet_xcm::{Pallet, Event<T>, Origin} = 42,
+		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
+
+		// ORML XCM
+		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 50,
+		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 51,
+		OrmlXcm: orml_xcm::{Pallet, Call, Event<T>} = 52,
+		AssetRegistry: orml_asset_registry::{Pallet, Call, Storage, Event<T>, Config<T>} = 53,
+
+		// Governance stuff
+		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 60,
+		Sudo: pallet_sudo_mangata::{Pallet, Call, Config<T>, Storage, Event<T>} = 61,
+		SudoOrigin: pallet_sudo_origin::{Pallet, Call, Event<T>} = 62,
+		Council: pallet_collective_mangata::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 63,
+		Identity: pallet_identity::{Pallet, Call, Storage, Event<T>} = 64,
 	}
 );
 
@@ -1861,7 +1975,7 @@ impl_runtime_apis! {
 			user: AccountId,
 			liquidity_asset_id: TokenId,
 		) -> XYKRpcResult<Balance> {
-			match Xyk::calculate_rewards_amount_v2(user, liquidity_asset_id){
+			match ProofOfStake::calculate_rewards_amount_v2(user, liquidity_asset_id){
 				Ok(claimable_rewards) => XYKRpcResult{
 					price:claimable_rewards
 				},
@@ -1989,17 +2103,17 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance> for Runtime {
+	impl pallet_transaction_payment_mangata_rpc_runtime_api::TransactionPaymentApi<Block, Balance> for Runtime {
 		fn query_info(
 			uxt: <Block as BlockT>::Extrinsic,
 			len: u32,
-		) -> pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo<Balance> {
+		) -> pallet_transaction_payment_mangata_rpc_runtime_api::RuntimeDispatchInfo<Balance> {
 			TransactionPayment::query_info(uxt, len)
 		}
 		fn query_fee_details(
 			uxt: <Block as BlockT>::Extrinsic,
 			len: u32,
-		) -> pallet_transaction_payment::FeeDetails<Balance> {
+		) -> pallet_transaction_payment_mangata::FeeDetails<Balance> {
 			TransactionPayment::query_fee_details(uxt, len)
 		}
 	}

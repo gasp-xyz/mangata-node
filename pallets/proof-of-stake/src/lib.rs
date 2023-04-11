@@ -1,5 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use frame_benchmarking::Zero;
 use frame_support::{
 	dispatch::{DispatchError, DispatchResult},
 	ensure,
@@ -22,7 +23,7 @@ use mangata_types::{multipurpose_liquidity::ActivateKind, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use sp_std::collections::btree_map::BTreeMap;
 
-use sp_runtime::{traits::SaturatedConversion, Permill};
+use sp_runtime::{traits::SaturatedConversion, Permill, Perbill};
 use sp_std::{convert::TryInto, prelude::*};
 
 mod reward_info;
@@ -98,6 +99,7 @@ pub mod pallet {
 		PastTimeCalculation,
 		LiquidityCheckpointMathError,
 		CalculateRewardsMathError,
+		MathError,
 		CalculateRewardsAllMathError,
 		MissingRewardsInfoError,
 		DeprecatedExtrinsic,
@@ -136,7 +138,7 @@ pub mod pallet {
 	}
 
 	#[pallet::storage]
-	#[pallet::getter(fn liquidity_mining_active_pool_v2)]
+	#[pallet::getter(fn total_activated_amount)]
 	// Total activated liquidity
 	pub type LiquidityMiningActivePoolV2<T: Config> =
 		StorageMap<_, Twox64Concat, TokenId, u128, ValueQuery>;
@@ -302,6 +304,7 @@ impl<T: Config> Pallet<T> {
 
 		RewardsInfo::<T>::insert(user.clone(), liquidity_asset_id, rewards_info);
 
+		//TODO: refactor storage name
 		LiquidityMiningActivePoolV2::<T>::try_mutate(liquidity_asset_id, |active_amount| {
 			if let Some(val) = active_amount.checked_add(liquidity_assets_added) {
 				*active_amount = val;
@@ -479,6 +482,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
 		let rewards_info = RewardsInfo::<T>::try_get(user.clone(), liquidity_asset_id)
 			.or(Err(DispatchError::from(Error::<T>::MissingRewardsInfoError)))?;
+		println!("RATIO: {}", Self::get_pool_rewards(liquidity_asset_id)?);
 		let current_rewards = match rewards_info.activated_amount {
 			0 => 0u128,
 			_ => rewards_info
@@ -499,5 +503,58 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 //TODO: add unit test and migrate impl from issuance
 impl<T: Config> LiquidityMiningApi for Pallet<T> {
 	fn distribute_rewards(liquidity_mining_rewards: Balance) {
+		//TODO: is that correct ?
+		let _ = CumulativeTotalLiquidityToRewardsRatio::<T>::try_mutate(|promoted_pools| -> DispatchResult {
+			// benchmark with max of X prom pools
+			let activated_pools: Vec<_> = promoted_pools
+				.clone()
+				.into_iter()
+				.filter_map(|(token_id, info)| {
+					let activated_amount = Self::total_activated_amount(token_id);
+					if activated_amount > 0 {
+						Some((token_id, info.weight, info.rewards, activated_amount))
+					}else{
+						None
+					}
+				})
+				.collect();
+
+			let maybe_total_weight = activated_pools.iter().try_fold(
+				0u64,
+				|acc, &(_token_id, weight, _rewards, _activated_amount)| {
+					acc.checked_add(weight.into())
+				},
+			);
+
+			for (token_id, weight, rewards, activated_amount) in activated_pools {
+				let liquidity_mining_issuance_for_pool = match maybe_total_weight {
+
+
+					Some(total_weight) if !total_weight.is_zero() =>{
+						println!("weight {}", weight);
+						println!("total_weight {}", total_weight);
+						println!("liquidity_mining_rewards {}", liquidity_mining_rewards);
+						println!("liquidity_mining_rewards {}", Perbill::from_rational(1u32, 1u32).mul_floor(liquidity_mining_rewards));
+						Perbill::from_rational(weight.into(), total_weight)
+							.mul_floor(liquidity_mining_rewards)
+					},
+					_ => Balance::zero(),
+				};
+				println!("liquidity_mining_issuance_for_pool {}", liquidity_mining_issuance_for_pool);
+
+				let rewards_for_liquidity: U256 = U256::from(liquidity_mining_issuance_for_pool)
+					.checked_mul(U256::from(u128::MAX))
+					.and_then(|x| x.checked_div(activated_amount.into()))
+					.and_then(|x| x.checked_add(rewards))
+					.ok_or(Error::<T>::MathError)?;
+
+				println!("liquidity_mining_issuance_for_pool {}", rewards_for_liquidity);
+
+				promoted_pools
+					.entry(token_id.clone())
+					.and_modify(|info| info.rewards = rewards_for_liquidity);
+			}
+			Ok(())
+		});
 	}
 }

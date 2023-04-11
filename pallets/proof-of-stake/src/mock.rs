@@ -204,7 +204,7 @@ impl pos::Config for Test {
 	type NativeCurrencyId = NativeCurrencyId;
 	type Currency = MultiTokenCurrencyAdapter<Test>;
 	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
-	type RewardsDistributionPeriod = ConstU32<1200>;
+	type RewardsDistributionPeriod = ConstU32<10>;
 	type WeightInfo = ();
 }
 

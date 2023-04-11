@@ -1384,6 +1384,7 @@ parameter_types! {
 	};
 	/// Minimum stake required to be reserved to be a delegator
 	pub const MinDelegatorStk: u128 = 1 * CENTS;
+	pub const DefaultPayoutLimit: u32 = 3;
 }
 
 // To ensure that BlocksPerRound is not zero, breaking issuance calculations
@@ -1417,6 +1418,7 @@ impl parachain_staking::Config for Runtime {
 	type StakingIssuanceVault = StakingIssuanceVault;
 	type FallbackProvider = Council;
 	type WeightInfo = weights::parachain_staking_weights::ModuleWeight<Runtime>;
+	type DefaultPayoutLimit = DefaultPayoutLimit;
 }
 
 impl pallet_xyk::XykBenchmarkingConfig for Runtime {}

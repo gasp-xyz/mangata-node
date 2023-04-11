@@ -9,6 +9,7 @@ storageSize: {{ .Values.storageSize }}
 parachainRegisterSidecar:
   enable: false
 relaychain:
+  forceUseCustomChainspecPath: true
   storageSize: {{ .Values.relaychainStorageSize }}
   customChainspecUrl: {{ .Values | get "relaychainCustomChainspecUrl" "" }}
   bootnodeAddr: {{ .Values | get "relaychainBootnodeAddr" "" }}

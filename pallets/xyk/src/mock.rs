@@ -44,65 +44,8 @@ construct_runtime!(
 		XykStorage: xyk::{Pallet, Call, Storage, Event<T>, Config<T>},
 		ProofOfStake: pallet_proof_of_stake::{Pallet, Call, Storage, Event<T>},
 		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>},
-		// Issuance: pallet_issuance::{Pallet, Event<T>, Storage},
 	}
 );
-
-// lazy_static::lazy_static! {
-// 	static ref PROMOTED_POOLS: Mutex<HashMap<TokenId, U256>> = {
-// 		let m = HashMap::new();
-// 		Mutex::new(m)
-// 	};
-// }
-
-// pub struct MockPromotedPoolApi;
-//
-// impl ProofOfStakeRewardsApi<AccountId> for MockPromotedPoolApi {
-// 	type Balance = <Test as orml_tokens::Config>::Balance;
-// 	type CurrencyId = <Test as orml_tokens::Config>::CurrencyId;
-//
-// 	fn enable(liquidity_token_id: TokenId, _weight: u8) {
-// 		let mut pools = PROMOTED_POOLS.lock().unwrap();
-// 		pools.insert(liquidity_token_id, 0_u128.into()),
-// 	}
-//
-// 	fn disable(liquidity_token_id: TokenId) {
-// 		unimplemented!()
-// 	}
-//
-// 	fn is_enabled(liquidity_token_id: TokenId) -> bool {
-// 		let mut pools = PROMOTED_POOLS.lock().unwrap();
-// 		pools.get(&liquidity_token_id).is_some()
-// 	}
-//
-// 	fn claim_rewards_all(liquidity_token_id: TokenId, amount: Balance) -> Result<Self::Balance, DispatchError> {
-// 		unimplemented!()
-// 	}
-//
-// 	fn calculate_rewards_amount(liquidity_token_id: TokenId) -> Result<Balance, DispatchError> {
-// 		unimplemented!()
-// 	}
-//
-// 	fn activate_liquidity(
-// 		sender: AccountId,
-// 		liquidity_token_id: Self::CurrencyId,
-// 		amount: Self::Balance,
-// 		use_balance_from: Option<ActivateKind>,
-// 		) -> DispatchResult {
-// 		let mut pools = PROMOTED_POOLS.lock().unwrap();
-// 		pools.entry(liquidity_token_id).unwrap()
-// 			.and_modify(|v| v.rew
-// 			insert(liquidity_token_id, 0_u128.into()),
-// 	}
-//
-// 	fn deactivate_liquidity(
-// 		sender: AccountId,
-// 		liquidity_token_id: Self::CurrencyId,
-// 		amount: Self::Balance,
-// 		) -> DispatchResult {
-// 		todo!()
-// 	}
-// }
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;

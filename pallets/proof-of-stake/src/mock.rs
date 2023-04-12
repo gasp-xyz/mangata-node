@@ -14,7 +14,7 @@ use crate as pos;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		tokens::currency::MultiTokenCurrency, ConstU128, ConstU32, Contains, Everything, Nothing,
+		tokens::currency::MultiTokenCurrency, ConstU32, Contains, Everything,
 	},
 	PalletId,
 };

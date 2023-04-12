@@ -101,7 +101,7 @@ fn initialize() {
 fn multi_initialize() {
 	// creating asset with assetId 0 and minting to accountId 2
 	System::set_block_number(1);
-	let acc_id: u128 = 2;
+	let _acc_id: u128 = 2;
 	let amount: u128 = 1000000000000000000000;
 	// creates token with ID = 0;
 	XykStorage::create_new_token(&DUMMY_USER_ID, amount);

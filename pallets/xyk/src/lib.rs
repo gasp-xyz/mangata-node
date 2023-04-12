@@ -296,11 +296,11 @@ use frame_support::{
 use frame_system::ensure_signed;
 use sp_core::U256;
 // TODO documentation!
-use codec::FullCodec;
+
 use frame_support::{
 	pallet_prelude::*,
 	traits::{tokens::currency::MultiTokenCurrency, ExistenceRequirement, Get, WithdrawReasons},
-	transactional, Parameter,
+	transactional,
 };
 use frame_system::pallet_prelude::*;
 use mangata_support::traits::{
@@ -314,15 +314,13 @@ use pallet_vesting_mangata::MultiTokenVestingLocks;
 use sp_arithmetic::{helpers_128bit::multiply_by_rational_with_rounding, per_things::Rounding};
 use sp_runtime::{
 	traits::{
-		AccountIdConversion, AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member,
-		SaturatedConversion, Zero,
+		AccountIdConversion, Zero,
 	},
 	Permill,
 };
 use sp_std::{
 	collections::btree_set::BTreeSet,
 	convert::{TryFrom, TryInto},
-	fmt::Debug,
 	ops::Div,
 	prelude::*,
 	vec::Vec,
@@ -983,7 +981,7 @@ pub mod pallet {
 		pub fn claim_rewards_v2(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
-			amount: Balance,
+			_amount: Balance,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 

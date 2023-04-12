@@ -2,13 +2,13 @@
 #![cfg(not(feature = "runtime-benchmarks"))]
 #![allow(non_snake_case)]
 
-use super::{Event, *};
+use super::{*};
 use crate::mock::*;
 use frame_support::assert_err;
-use mangata_types::assets::CustomMetadata;
-use orml_traits::asset_registry::AssetMetadata;
+
+
 use serial_test::serial;
-use sp_runtime::Permill;
+
 
 type TokensOf<Test> = <Test as Config>::Currency;
 

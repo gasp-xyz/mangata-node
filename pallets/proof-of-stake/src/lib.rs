@@ -16,8 +16,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use mangata_support::traits::{
-	ActivationReservesProviderTrait, ComputeIssuance, LiquidityMiningApi, ProofOfStakeRewardsApi,
-	XykFunctionsTrait,
+	ActivationReservesProviderTrait, LiquidityMiningApi, ProofOfStakeRewardsApi,
 };
 use mangata_types::{multipurpose_liquidity::ActivateKind, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
@@ -151,10 +150,10 @@ pub mod pallet {
 		#[transactional]
 		pub fn compound_rewards(
 			origin: OriginFor<T>,
-			liquidity_asset_id: TokenId,
-			amount_permille: Permill,
+			_liquidity_asset_id: TokenId,
+			_amount_permille: Permill,
 		) -> DispatchResultWithPostInfo {
-			let sender = ensure_signed(origin)?;
+			let _sender = ensure_signed(origin)?;
 
 			//TODO: uncomment and maybe move compound logic to PoS
 			// <T::Xyk as XykFunctionsTrait<T::AccountId>>::do_compound_rewards(
@@ -171,10 +170,10 @@ pub mod pallet {
 		#[pallet::weight(<<T as Config>::WeightInfo>::claim_rewards_v2())]
 		pub fn claim_rewards_v2(
 			origin: OriginFor<T>,
-			liquidity_token_id: TokenId,
-			amount: Balance,
+			_liquidity_token_id: TokenId,
+			_amount: Balance,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin)?;
+			let _sender = ensure_signed(origin)?;
 			Err(DispatchError::from(Error::<T>::DeprecatedExtrinsic))
 		}
 

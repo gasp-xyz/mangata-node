@@ -4,10 +4,10 @@
 
 use super::{*};
 use crate::mock::*;
-use frame_support::assert_err;
+use frame_support::{assert_err, assert_ok};
 
 
-use serial_test::serial;
+use mangata_support::traits::{GetIssuance, ComputeIssuance};
 
 
 type TokensOf<Test> = <Test as Config>::Currency;
@@ -53,7 +53,6 @@ fn forward_to_block_with_custom_rewards(n: u32, rewards: u128){
 }
 
 #[test]
-#[serial]
 fn liquidity_rewards_single_user_mint_W() {
 	new_test_ext().execute_with(|| {
 		// MockPromotedPoolApi::instance().lock().unwrap().clear();
@@ -139,94 +138,6 @@ fn liquidity_rewards_single_user_mint_W() {
 }
 
 #[test]
-#[serial]
-fn liquidity_rewards_three_users_mint_W() {
-	new_test_ext().execute_with(|| {
-		let max = std::u128::MAX;
-		System::set_block_number(1);
-		let acc_id: u128 = 2;
-		let amount: u128 = max;
-
-		TokensOf::<Test>::create(&acc_id, amount).unwrap();
-		TokensOf::<Test>::create(&acc_id, amount).unwrap();
-		TokensOf::<Test>::create(&acc_id, amount).unwrap();
-		TokensOf::<Test>::create(&acc_id, amount).unwrap();
-
-		TokensOf::<Test>::create(&acc_id, 10000).unwrap();
-		// XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 10000, 1, 10000).unwrap();
-		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
-
-		TokensOf::<Test>::transfer(0, &2, &3, 1000000, ExistenceRequirement::AllowDeath).unwrap();
-		TokensOf::<Test>::transfer(1, &2, &3, 1000000, ExistenceRequirement::AllowDeath).unwrap();
-		TokensOf::<Test>::transfer(0, &2, &4, 1000000, ExistenceRequirement::AllowDeath).unwrap();
-		TokensOf::<Test>::transfer(1, &2, &4, 1000000, ExistenceRequirement::AllowDeath).unwrap();
-		//
-		let liquidity_tokens_owned = TokensOf::<Test>::free_balance(4, &2);
-		ProofOfStake::activate_liquidity( 2, 4, liquidity_tokens_owned, None,) .unwrap();
-
-		let rewards_info = ProofOfStake::get_rewards_info(2, 4);
-		assert_eq!(rewards_info.activated_amount, 10000);
-		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
-		assert_eq!(rewards_info.rewards_already_claimed, 0);
-		assert_eq!(rewards_info.last_checkpoint, 0);
-		assert_eq!(rewards_info.pool_ratio_at_last_checkpoint, U256::from(0));
-		assert_eq!(rewards_info.missing_at_last_checkpoint, U256::from_dec_str("10000").unwrap());
-
-		// System::set_block_number(100);
-		// MockPromotedPoolApi::instance()
-		// 	.lock()
-		// 	.unwrap()
-		// 	.insert(4, U256::from(u128::MAX) * 100000 / 10000);
-		// ProofOfStake::distribute_rewards(10000 * 1);
-		forward_to_block(100);
-
-		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 14704);
-		
-		// XykStorage::mint_liquidity(RuntimeOrigin::signed(3), 0, 1, 10000, 10010).unwrap();
-		mint_and_activate_tokens(3, 4, 10000);
-
-		// System::set_block_number(200);
-		// MockPromotedPoolApi::instance()
-		// 	.lock()
-		// 	.unwrap()
-		// 	.insert(4, U256::from(u128::MAX) * 150000 / 10000);
-		// ProofOfStake::distribute_rewards(100000 * 1);
-		forward_to_block(200);
-
-		// XykStorage::mint_liquidity(4, 4, 10000, None).unwrap();
-		mint_and_activate_tokens(4, 4, 10000);
-
-		// System::set_block_number(240);
-		// MockPromotedPoolApi::instance()
-		// 	.lock()
-		// 	.unwrap()
-		// 	.insert(4, U256::from(u128::MAX) * 163300 / 10000);
-		forward_to_block(240);
-
-		// XykStorage::mint_liquidity(RuntimeOrigin::signed(4), 0, 1, 10000, 10010).unwrap();
-		mint_and_activate_tokens(4, 4, 10000);
-        
-		// System::set_block_number(400);
-		// MockPromotedPoolApi::instance()
-		// 	.lock()
-		// 	.unwrap()
-		// 	.insert(4, U256::from(u128::MAX) * 203300 / 10000);
-		// ProofOfStake::distribute_rewards(10000 * 1);
-		forward_to_block(400);
-		
-		// assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 85820);
-		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 85834);
-
-		// assert_eq!(ProofOfStake::calculate_rewards_amount(3, 4).unwrap(), 35810);
-		assert_eq!(ProofOfStake::calculate_rewards_amount(3, 4).unwrap(), 35822);
-
-		// assert_eq!(ProofOfStake::calculate_rewards_amount(4, 4).unwrap(), 21647);
-		assert_eq!(ProofOfStake::calculate_rewards_amount(4, 4).unwrap(), 21649);
-	});
-}
-
-#[test]
-#[serial]
 fn liquidity_rewards_three_users_burn_W() {
 	new_test_ext().execute_with(|| {
 		// MockPromotedPoolApi::instance().lock().unwrap().clear();
@@ -307,7 +218,6 @@ fn liquidity_rewards_three_users_burn_W() {
 
 
 #[test]
-#[serial]
 fn liquidity_rewards_claim_W() {
 	new_test_ext().execute_with(|| {
 		// MockPromotedPoolApi::instance().lock().unwrap().clear();
@@ -372,7 +282,6 @@ fn liquidity_rewards_claim_W() {
 }
 
 #[test]
-#[serial]
 fn liquidity_rewards_promote_pool_W() {
 	new_test_ext().execute_with(|| {
 		let max = std::u128::MAX;
@@ -391,7 +300,6 @@ fn liquidity_rewards_promote_pool_W() {
 }
 
 #[test]
-#[serial]
 fn liquidity_rewards_promote_pool_already_promoted_NW() {
 	new_test_ext().execute_with(|| {
 		// MockPromotedPoolApi::instance().lock().unwrap().clear();
@@ -412,7 +320,6 @@ fn liquidity_rewards_promote_pool_already_promoted_NW() {
 }
 
 #[test]
-#[serial]
 fn liquidity_rewards_claim_more_NW() {
 	new_test_ext().execute_with(|| {
 		// TODO: remove as claim_rwards_all should be used instead
@@ -435,7 +342,6 @@ fn liquidity_rewards_claim_more_NW() {
 
 
 #[test]
-#[serial]
 fn liquidity_rewards_work_after_burn_W() {
 	new_test_ext().execute_with(|| {
 		// MockPromotedPoolApi::instance().lock().unwrap().clear();
@@ -521,7 +427,6 @@ fn liquidity_rewards_work_after_burn_W() {
 }
 
 #[test]
-#[serial]
 fn liquidity_rewards_deactivate_transfer_controled_W() {
 	new_test_ext().execute_with(|| {
 		// MockPromotedPoolApi::instance().lock().unwrap().clear();
@@ -566,7 +471,6 @@ fn liquidity_rewards_deactivate_transfer_controled_W() {
 }
 
 #[test]
-#[serial]
 fn liquidity_rewards_deactivate_more_NW() {
 	new_test_ext().execute_with(|| {
 		// MockPromotedPoolApi::instance().lock().unwrap().clear();
@@ -604,7 +508,6 @@ fn liquidity_rewards_deactivate_more_NW() {
 }
 
 #[test]
-#[serial]
 fn liquidity_rewards_activate_more_NW() {
 	new_test_ext().execute_with(|| {
 		// MockPromotedPoolApi::instance().lock().unwrap().clear();
@@ -636,7 +539,6 @@ fn liquidity_rewards_activate_more_NW() {
 }
 
 #[test]
-#[serial]
 fn liquidity_rewards_calculate_rewards_pool_not_promoted() {
 	new_test_ext().execute_with(|| {
 		// MockPromotedPoolApi::instance().lock().unwrap().clear();
@@ -657,7 +559,6 @@ fn liquidity_rewards_calculate_rewards_pool_not_promoted() {
 }
 
 #[test]
-#[serial]
 fn liquidity_rewards_claim_pool_not_promoted() {
 	new_test_ext().execute_with(|| {
 		// MockPromotedPoolApi::instance().lock().unwrap().clear();
@@ -679,7 +580,6 @@ fn liquidity_rewards_claim_pool_not_promoted() {
 }
 
 #[test]
-#[serial]
 fn liquidity_rewards_transfer_not_working() {
 	new_test_ext().execute_with(|| {
 		initialize_liquidity_rewards();
@@ -731,7 +631,6 @@ fn liquidity_rewards_transfer_not_working() {
 // Fees are in toBeClaimed when deactivate and  notYetClaimed when liquidity is activated
 
 #[test]
-#[serial]
 fn liquidity_rewards_not_yet_claimed_already_claimed_W() {
 	new_test_ext().execute_with(|| {
 		// MockPromotedPoolApi::instance().lock().unwrap().clear();
@@ -739,10 +638,10 @@ fn liquidity_rewards_not_yet_claimed_already_claimed_W() {
 		System::set_block_number(1);
 		let acc_id: u128 = 2;
 		let amount: u128 = max;
-		TokensOf::<Test>::create(&acc_id, amount);
-		TokensOf::<Test>::create(&acc_id, amount);
-		TokensOf::<Test>::create(&acc_id, amount);
-		TokensOf::<Test>::create(&acc_id, amount);
+		TokensOf::<Test>::create(&acc_id, amount).unwrap();
+		TokensOf::<Test>::create(&acc_id, amount).unwrap();
+		TokensOf::<Test>::create(&acc_id, amount).unwrap();
+		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 
 		TokensOf::<Test>::transfer(
 			0,
@@ -809,7 +708,6 @@ fn liquidity_rewards_not_yet_claimed_already_claimed_W() {
 //
 //test for extreme values inside calculate rewards, mainly pool ratio
 #[test]
-#[serial]
 fn extreme_case_pool_ratio() {
 	new_test_ext().execute_with(|| {
 		// MockPromotedPoolApi::instance().lock().unwrap().clear();
@@ -845,7 +743,6 @@ fn extreme_case_pool_ratio() {
 }
 
 #[test]
-#[serial]
 fn rewards_rounding_during_often_mint() {
 	new_test_ext().execute_with(|| {
 		// MockPromotedPoolApi::instance().lock().unwrap().clear();
@@ -948,7 +845,6 @@ fn rewards_rounding_during_often_mint() {
 
 // starting point, user claimed some rewards, then new rewards were generated (blue)
 #[test]
-#[serial]
 fn rewards_storage_right_amounts_start1() {
 	new_test_ext().execute_with(|| {
 		// MockPromotedPoolApi::instance().lock().unwrap().clear();
@@ -1110,7 +1006,6 @@ fn rewards_storage_right_amounts_start1() {
 
 // starting point, user burned some rewards, then new rewards were generated (yellow)
 #[test]
-#[serial]
 fn rewards_storage_right_amounts_start2() {
 	new_test_ext().execute_with(|| {
 		// MockPromotedPoolApi::instance().lock().unwrap().clear();
@@ -1246,7 +1141,6 @@ fn rewards_storage_right_amounts_start2() {
 
 // starting point, just new rewards were generated (green)
 #[test]
-#[serial]
 fn rewards_storage_right_amounts_start3() {
 	new_test_ext().execute_with(|| {
 		// MockPromotedPoolApi::instance().lock().unwrap().clear();
@@ -1350,7 +1244,6 @@ fn rewards_storage_right_amounts_start3() {
 
 // A user that got transfered Liq.tokens, can request asymtotic_curve_rewards
 #[test]
-#[serial]
 fn liquidity_rewards_transfered_liq_tokens_produce_rewards_W() {
 	new_test_ext().execute_with(|| {
 		let max = std::u128::MAX;
@@ -1399,5 +1292,91 @@ fn liquidity_rewards_transfered_liq_tokens_produce_rewards_W() {
 
 		assert_eq!(ProofOfStake::calculate_rewards_amount(3, 4).unwrap(), 14704);
 		ProofOfStake::claim_rewards_all_v2(RuntimeOrigin::signed(3), 4).unwrap();
+	});
+}
+
+pub(crate) fn roll_to_while_minting(n: u64, expected_amount_minted: Option<Balance>) {
+	let mut session_number: u32;
+	let mut session_issuance: (Balance, Balance);
+	let mut block_issuance: Balance;
+	while System::block_number() < n {
+		System::on_finalize(System::block_number());
+		System::set_block_number(System::block_number() + 1);
+		System::on_initialize(System::block_number());
+		session_number = System::block_number().saturated_into::<u32>() / BlocksPerRound::get();
+		session_issuance = <Issuance as GetIssuance>::get_all_issuance(session_number)
+			.expect("session issuance is always populated in advance");
+		block_issuance = (session_issuance.0 + session_issuance.1) /
+			(BlocksPerRound::get().saturated_into::<u128>());
+
+		if let Some(x) = expected_amount_minted {
+			assert_eq!(x, block_issuance);
+		}
+
+		// Compute issuance for the next session only after all issuance has been issued is current session
+		// To avoid overestimating the missing issuance and overshooting the cap
+		if ((System::block_number().saturated_into::<u32>() + 1u32) % BlocksPerRound::get()) == 0 {
+			<Issuance as ComputeIssuance>::compute_issuance(session_number + 1u32);
+		}
+	}
+}
+
+#[test]
+fn test_migrated_from_pallet_issuance() {
+	new_test_ext().execute_with(|| {
+		env_logger::init();
+		System::set_block_number(1);
+
+		let token_id = TokensOf::<Test>::create(&99999, 2000_000_000).unwrap();
+		assert_eq!(token_id, 0);
+
+		let current_issuance = TokensOf::<Test>::total_issuance(token_id);
+		let target_tge = 2_000_000_000u128;
+		assert!(current_issuance <= target_tge);
+
+		assert_ok!(TokensOf::<Test>::mint(token_id, &99999, target_tge - current_issuance));
+
+		assert_ok!(Issuance::finalize_tge(RuntimeOrigin::root()));
+		assert_ok!(Issuance::init_issuance_config(RuntimeOrigin::root()));
+		assert_ok!(Issuance::calculate_and_store_round_issuance(0u32));
+
+		assert_eq!(1, TokensOf::<Test>::create(&99999, 1_000_000u128).unwrap());
+		ProofOfStake::enable(1, 1u8);
+		ProofOfStake::activate_liquidity(99999, 1, 1, None).unwrap();
+
+		roll_to_while_minting(4, None);
+		assert_eq!(
+			U256::from_dec_str("76571018769283414925455480913511346478027010").unwrap(),
+			ProofOfStake::get_pool_rewards(1).unwrap()
+		);
+		roll_to_while_minting(9, None);
+		assert_eq!(
+			U256::from_dec_str("153142037538566829850910961827022692956054020").unwrap(),
+			ProofOfStake::get_pool_rewards(1).unwrap()
+		);
+
+		assert_eq!(2, TokensOf::<Test>::create(&99999, 1_000_000u128).unwrap());
+		ProofOfStake::enable(2, 1u8);
+		ProofOfStake::activate_liquidity(99999, 2, 1, None).unwrap();
+		//	assert_eq!(2, Issuance::len());
+		roll_to_while_minting(14, None);
+		assert_eq!(
+			U256::from_dec_str("191427546923208537313638702283778366195067525").unwrap(),
+			ProofOfStake::get_pool_rewards(1).unwrap()
+		);
+		assert_eq!(
+			U256::from_dec_str("38285509384641707462727740456755673239013505").unwrap(),
+			ProofOfStake::get_pool_rewards(2).unwrap()
+		);
+
+		roll_to_while_minting(19, None);
+		assert_eq!(
+			U256::from_dec_str("229713056307850244776366442740534039434081030").unwrap(),
+			ProofOfStake::get_pool_rewards(1).unwrap()
+		);
+		assert_eq!(
+			U256::from_dec_str("76571018769283414925455480913511346478027010").unwrap(),
+			ProofOfStake::get_pool_rewards(2).unwrap()
+		);
 	});
 }

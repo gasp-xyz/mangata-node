@@ -70,7 +70,6 @@ jobs:
           throughput=300
 
       - name: Upload reports
-        working-directory: e2e/performance
         uses: actions/upload-artifact@v3.1.1
         with:
           name: performance-benchmarks-report

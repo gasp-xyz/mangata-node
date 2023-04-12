@@ -7,7 +7,6 @@ use frame_support::{
 };
 use frame_system::ensure_signed;
 use sp_core::U256;
-// TODO documentation!
 
 use frame_support::{
 	pallet_prelude::*,
@@ -27,6 +26,7 @@ use sp_std::{convert::TryInto, prelude::*};
 
 mod reward_info;
 use reward_info::RewardInfo;
+mod benchmarking;
 
 #[cfg(test)]
 mod mock;
@@ -66,8 +66,22 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
 
+	#[cfg(feature = "runtime-benchmarks")]
+	pub trait PoSBenchmarkingConfig:
+		pallet_issuance::Config
+	{
+	}
+	#[cfg(feature = "runtime-benchmarks")]
+	impl<T: pallet_issuance::Config> PoSBenchmarkingConfig for T {}
+
+	#[cfg(not(feature = "runtime-benchmarks"))]
+	pub trait PoSBenchmarkingConfig {}
+
+	#[cfg(not(feature = "runtime-benchmarks"))]
+	impl<T> PoSBenchmarkingConfig for T {}
+
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + PoSBenchmarkingConfig{
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		type ActivationReservesProvider: ActivationReservesProviderTrait<
 			AccountId = Self::AccountId,
@@ -152,7 +166,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			_liquidity_asset_id: TokenId,
 			_amount_permille: Permill,
-		) -> DispatchResultWithPostInfo {
+		) -> DispatchResult {
 			let _sender = ensure_signed(origin)?;
 
 			//TODO: uncomment and maybe move compound logic to PoS
@@ -162,7 +176,8 @@ pub mod pallet {
 			// 	amount_permille,
 			// )?;
 
-			Ok(().into())
+			// Ok(().into())
+			Err(DispatchError::from(Error::<T>::DeprecatedExtrinsic))
 		}
 
 		#[transactional]
@@ -251,7 +266,7 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-	fn rewards_period() -> u32 {
+	pub fn rewards_period() -> u32 {
 		<T as Config>::RewardsDistributionPeriod::get()
 	}
 
@@ -437,6 +452,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		use_balance_from: Option<ActivateKind>,
 	) -> DispatchResult {
 		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
+		//TODO: check if pool is actually liquidity token
 		ensure!(
 			<T as Config>::ActivationReservesProvider::can_activate(
 				liquidity_asset_id,
@@ -485,7 +501,6 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
 		let rewards_info = RewardsInfo::<T>::try_get(user.clone(), liquidity_asset_id)
 			.or(Err(DispatchError::from(Error::<T>::MissingRewardsInfoError)))?;
-		println!("RATIO: {}", Self::get_pool_rewards(liquidity_asset_id)?);
 		let current_rewards = match rewards_info.activated_amount {
 			0 => 0u128,
 			_ => rewards_info
@@ -534,28 +549,20 @@ impl<T: Config> LiquidityMiningApi for Pallet<T> {
 
 
 					Some(total_weight) if !total_weight.is_zero() =>{
-						println!("weight {}", weight);
-						println!("total_weight {}", total_weight);
-						println!("liquidity_mining_rewards {}", liquidity_mining_rewards);
-						println!("liquidity_mining_rewards {}", Perbill::from_rational(1u32, 1u32).mul_floor(liquidity_mining_rewards));
 						Perbill::from_rational(weight.into(), total_weight)
 							.mul_floor(liquidity_mining_rewards)
 					},
 					_ => Balance::zero(),
 				};
-				println!("liquidity_mining_issuance_for_pool {}", liquidity_mining_issuance_for_pool);
-				println!("activated_amount {}", activated_amount);
 
 				let rewards_for_liquidity: U256 = U256::from(liquidity_mining_issuance_for_pool)
 					.checked_mul(U256::from(u128::MAX))
 					.and_then(|x| x.checked_div(activated_amount.into()))
 					.and_then(|x| {
-						println!("THIS ROUND TOKENS PER 1 LIQ {}", x / U256::from(u128::MAX));
 						x.checked_add(rewards)
 					})
 					.ok_or(Error::<T>::MathError)?;
 
-				println!("liquidity_mining_issuance_for_pool {}", rewards_for_liquidity);
 
 				promoted_pools
 					.entry(token_id.clone())

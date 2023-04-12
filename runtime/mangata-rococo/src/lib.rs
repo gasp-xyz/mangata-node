@@ -396,15 +396,9 @@ impl pallet_treasury::Config for Runtime {
 	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<u128>;
 }
 
-// TODO: discuiss existential deposit feature
-// https://trello.com/c/P5rYYQcS/424-discuiss-orml-tokens-existential-deposit
 parameter_type_with_key! {
 	pub ExistentialDeposits: |_currency_id: TokenId| -> Balance {
 		0
-		// match currency_id {
-		// 	&MGR_TOKEN_ID => 100,
-		// 	_ => 0,
-		// }
 	};
 }
 

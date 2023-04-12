@@ -295,7 +295,6 @@ use frame_support::{
 };
 use frame_system::ensure_signed;
 use sp_core::U256;
-// TODO documentation!
 
 use frame_support::{
 	pallet_prelude::*,
@@ -304,6 +303,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use mangata_support::traits::{
+	LiquidityMiningApi,
 	ActivationReservesProviderTrait,
 	GetMaintenanceStatusTrait, PoolCreateApi, PreValidateSwaps, ProofOfStakeRewardsApi, Valuate,
 	XykFunctionsTrait,
@@ -391,12 +391,32 @@ pub mod pallet {
 
 	#[cfg(feature = "runtime-benchmarks")]
 	pub trait XykBenchmarkingConfig:
-		pallet_issuance::Config + pallet_proof_of_stake::Config
+		pallet_issuance::Config +
+		pallet_proof_of_stake::Config
 	{
 	}
 
 	#[cfg(not(feature = "runtime-benchmarks"))]
 	pub trait XykBenchmarkingConfig {}
+
+	// #[cfg(feature = "runtime-benchmarks")]
+	// pub trait XykRewardsApi<AccountIdT>: ProofOfStakeRewardsApi<AccountIdT, Balance = Balance, CurrencyId = TokenId> + LiquidityMiningApi{}
+	// #[cfg(feature = "runtime-benchmarks")]
+	// impl<K,AccountIdT> XykRewardsApi<AccountIdT> for K where
+	// 	K: ProofOfStakeRewardsApi<AccountIdT, Balance = Balance, CurrencyId = TokenId>,
+	// 	K: LiquidityMiningApi,
+	// {
+	// }
+    //
+	// #[cfg(not(feature = "runtime-benchmarks"))]
+	// pub trait XykRewardsApi<AccountIdT>: ProofOfStakeRewardsApi<AccountIdT, Balance = Balance, CurrencyId = TokenId>{}
+	// #[cfg(not(feature = "runtime-benchmarks"))]
+	// impl<K,AccountIdT> XykRewardsApi<AccountIdT> for K where
+	// 	K: ProofOfStakeRewardsApi<AccountIdT, Balance = Balance, CurrencyId = TokenId>,
+	// {
+	// }
+
+
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + XykBenchmarkingConfig {
@@ -1467,7 +1487,6 @@ impl<T: Config> Pallet<T> {
 		Ok((first_asset_amount, second_asset_amount))
 	}
 
-	//TODO if pool contains key !
 	fn settle_treasury_and_burn(
 		sold_asset_id: TokenId,
 		burn_amount: Balance,
@@ -2908,7 +2927,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			Error::<T>::NoSuchPool,
 		);
 
-		// TODO move ensure in get_liq_asset ?
 		// Get liquidity token id
 		let liquidity_asset_id = Pallet::<T>::get_liquidity_asset(first_asset_id, second_asset_id)?;
 

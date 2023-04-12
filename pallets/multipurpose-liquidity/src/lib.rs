@@ -2,7 +2,6 @@
 
 use frame_support::{dispatch::DispatchResult, ensure};
 use frame_system::ensure_signed;
-// TODO documentation!
 use frame_support::{
 	pallet_prelude::*,
 	traits::{tokens::currency::MultiTokenCurrency, Get, StorageVersion, WithdrawReasons},

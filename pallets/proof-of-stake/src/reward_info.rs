@@ -120,20 +120,15 @@ impl RewardInfo {
 		current_time: u32,
 		pool_rewards_ratio_current: U256,
 	) -> Option<Balance> {
-		println!("pool_rewards_ratio_current:{}", pool_rewards_ratio_current);
 		let pool_rewards_ratio_new =
 			pool_rewards_ratio_current.checked_sub(self.pool_ratio_at_last_checkpoint)?;
 
 		let user_rewards_base: U256 = U256::from(self.activated_amount)
-			.checked_mul(pool_rewards_ratio_new)? // TODO: please add UT and link it in this comment
+			.checked_mul(pool_rewards_ratio_new)?
 			.checked_div(U256::from(u128::MAX))?; // always fit into u128
-		println!("pool_rewards_ratio_new:{}", pool_rewards_ratio_new);
-		println!("user_rewards_base:{}", user_rewards_base);
 
 		let (cumulative_work, cummulative_work_max_possible) =
 			self.calculate_cumulative_work_max_ratio(current_time)?;
-		println!("cumulative_work:{}", cumulative_work);
-		println!("cummulative_work_max_possible:{}", cummulative_work_max_possible);
 
 		user_rewards_base
 			.checked_mul(cumulative_work)?

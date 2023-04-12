@@ -154,7 +154,7 @@ impl pallet_xyk::Config for Test {
 	type NativeCurrencyId = NativeCurrencyId;
 	type TreasuryPalletId = TreasuryPalletId;
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
-	type XykRewards = ProofOfStake;
+	type LiquidityMiningRewards = ProofOfStake;
 	type PoolFeePercentage = ConstU128<20>;
 	type TreasuryFeePercentage = ConstU128<5>;
 	type BuyAndBurnFeePercentage = ConstU128<5>;
@@ -170,7 +170,6 @@ impl pallet_proof_of_stake::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
 	type NativeCurrencyId = NativeCurrencyId;
-	type Xyk = Xyk;
 	type Currency = MultiTokenCurrencyAdapter<Test>;
 	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = ConstU32<10000>;
@@ -235,27 +234,6 @@ parameter_types! {
 	pub const BlocksPerRound: u32 = 5u32;
 	pub const HistoryLimit: u32 = 10u32;
 }
-
-// impl pallet_issuance::Config for Test {
-// 	type RuntimeEvent = RuntimeEvent;
-// 	type NativeCurrencyId = MgaTokenId;
-// 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
-// 	type BlocksPerRound = BlocksPerRound;
-// 	type HistoryLimit = HistoryLimit;
-// 	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
-// 	type StakingIssuanceVault = StakingIssuanceVault;
-// 	type TotalCrowdloanAllocation = TotalCrowdloanAllocation;
-// 	type IssuanceCap = IssuanceCap;
-// 	type LinearIssuanceBlocks = LinearIssuanceBlocks;
-// 	type LiquidityMiningSplit = LiquidityMiningSplit;
-// 	type StakingSplit = StakingSplit;
-// 	type ImmediateTGEReleasePercent = ImmediateTGEReleasePercent;
-// 	type TGEReleasePeriod = TGEReleasePeriod;
-// 	type TGEReleaseBegin = TGEReleaseBegin;
-// 	type VestingProvider = Vesting;
-// 	type ActivatedPoolQueryApiType = ProofOfStake;
-// 	type WeightInfo = ();
-// }
 
 mockall::mock! {
 	pub PoolCreateApi {}
@@ -367,7 +345,6 @@ parameter_types! {
 }
 
 #[cfg(not(feature = "runtime-benchmarks"))]
-// NOTE: use PoolCreateApi mock for unit testing purposes
 impl pallet_bootstrap::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type MaintenanceStatusProvider = MockMaintenanceStatusProvider;
@@ -383,7 +360,6 @@ impl pallet_bootstrap::Config for Test {
 }
 
 #[cfg(feature = "runtime-benchmarks")]
-// NOTE: use Xyk as PoolCreateApi for benchmarking purposes
 impl pallet_bootstrap::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type MaintenanceStatusProvider = MockMaintenanceStatusProvider;
@@ -422,7 +398,6 @@ construct_runtime!(
 		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>},
 		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>},
 		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>},
-		// Issuance: pallet_issuance::{Pallet, Event<T>, Storage},
 		ProofOfStake: pallet_proof_of_stake::{Pallet, Call, Storage, Event<T>},
 	}
 );

@@ -273,7 +273,7 @@ pub mod pallet {
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
-	pub trait BootstrapBenchmarkingConfig: pallet_issuance::Config {}
+	pub trait BootstrapBenchmarkingConfig{}
 
 	#[cfg(not(feature = "runtime-benchmarks"))]
 	pub trait BootstrapBenchmarkingConfig {}

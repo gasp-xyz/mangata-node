@@ -44,6 +44,7 @@ construct_runtime!(
 		XykStorage: xyk::{Pallet, Call, Storage, Event<T>, Config<T>},
 		ProofOfStake: pallet_proof_of_stake::{Pallet, Call, Storage, Event<T>},
 		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>},
+		Issuance: pallet_issuance::{Pallet, Event<T>, Storage},
 	}
 );
 
@@ -172,27 +173,26 @@ parameter_types! {
 // 	type WeightInfo = ();
 // }
 //
-// #[cfg(feature = "runtime-benchmarks")]
-// impl pallet_issuance::Config for Test {
-// 	type RuntimeEvent = RuntimeEvent;
-// 	type NativeCurrencyId = MgaTokenId;
-// 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
-// 	type BlocksPerRound = BlocksPerRound;
-// 	type HistoryLimit = HistoryLimit;
-// 	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
-// 	type StakingIssuanceVault = StakingIssuanceVault;
-// 	type TotalCrowdloanAllocation = TotalCrowdloanAllocation;
-// 	type IssuanceCap = IssuanceCap;
-// 	type LinearIssuanceBlocks = LinearIssuanceBlocks;
-// 	type LiquidityMiningSplit = LiquidityMiningSplit;
-// 	type StakingSplit = StakingSplit;
-// 	type ImmediateTGEReleasePercent = ImmediateTGEReleasePercent;
-// 	type TGEReleasePeriod = TGEReleasePeriod;
-// 	type TGEReleaseBegin = TGEReleaseBegin;
-// 	type VestingProvider = Vesting;
-// 	type WeightInfo = ();
-// 	type ActivatedPoolQueryApiType = ProofOfStake;
-// }
+impl pallet_issuance::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type NativeCurrencyId = MgaTokenId;
+	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
+	type BlocksPerRound = BlocksPerRound;
+	type HistoryLimit = HistoryLimit;
+	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
+	type StakingIssuanceVault = StakingIssuanceVault;
+	type TotalCrowdloanAllocation = TotalCrowdloanAllocation;
+	type IssuanceCap = IssuanceCap;
+	type LinearIssuanceBlocks = LinearIssuanceBlocks;
+	type LiquidityMiningSplit = LiquidityMiningSplit;
+	type StakingSplit = StakingSplit;
+	type ImmediateTGEReleasePercent = ImmediateTGEReleasePercent;
+	type TGEReleasePeriod = TGEReleasePeriod;
+	type TGEReleaseBegin = TGEReleaseBegin;
+	type VestingProvider = Vesting;
+	type WeightInfo = ();
+	type LiquidityMiningApi = ProofOfStake;
+}
 
 impl XykBenchmarkingConfig for Test {}
 

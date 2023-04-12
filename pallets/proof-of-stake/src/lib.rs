@@ -152,8 +152,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn total_activated_amount)]
-	// Total activated liquidity
-	pub type LiquidityMiningActivePoolV2<T: Config> =
+	pub type TotalActivatedLiquidity<T: Config> =
 		StorageMap<_, Twox64Concat, TokenId, u128, ValueQuery>;
 
 	// XYK extrinsics.
@@ -303,7 +302,7 @@ impl<T: Config> Pallet<T> {
 		RewardsInfo::<T>::insert(user.clone(), liquidity_asset_id, rewards_info);
 
 		//TODO: refactor storage name
-		LiquidityMiningActivePoolV2::<T>::try_mutate(liquidity_asset_id, |active_amount| {
+		TotalActivatedLiquidity::<T>::try_mutate(liquidity_asset_id, |active_amount| {
 			if let Some(val) = active_amount.checked_add(liquidity_assets_added) {
 				*active_amount = val;
 				Ok(())
@@ -339,7 +338,7 @@ impl<T: Config> Pallet<T> {
 		)?;
 		RewardsInfo::<T>::insert(user.clone(), liquidity_asset_id, rewards_info);
 
-		LiquidityMiningActivePoolV2::<T>::try_mutate(liquidity_asset_id, |active_amount| {
+		TotalActivatedLiquidity::<T>::try_mutate(liquidity_asset_id, |active_amount| {
 			if let Some(val) = active_amount.checked_sub(liquidity_assets_burned) {
 				*active_amount = val;
 				Ok(())

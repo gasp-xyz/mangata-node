@@ -339,8 +339,6 @@ fn liquidity_rewards_claim_more_NW() {
 	});
 }
 
-
-
 #[test]
 fn liquidity_rewards_work_after_burn_W() {
 	new_test_ext().execute_with(|| {
@@ -1066,9 +1064,8 @@ fn rewards_storage_right_amounts_start2() {
 		// 	.lock()
 		// 	.unwrap()
 		// 	.insert(4, U256::from(u128::MAX) * U256::from(20));
-		forward_to_block_with_custom_rewards(200, 20000); //TODO: its really weird that rewards are
+		forward_to_block_with_custom_rewards(200, 20000); //its really weird that rewards are
 														  //decreased from 40k to 20k in single
-														  //test?
 		assert_eq!(U256::from(u128::MAX) * U256::from(20), CumulativeTotalLiquidityToRewardsRatio::<Test>::get().get(&4).unwrap().rewards);
 
 		let mut rewards_info = ProofOfStake::get_rewards_info(2, 4);

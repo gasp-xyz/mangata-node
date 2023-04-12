@@ -159,29 +159,9 @@ pub mod pallet {
 	// XYK extrinsics.
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+
+		#[transactional]
 		#[pallet::call_index(0)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::proof_of_stake_compound_rewards())]
-		#[transactional]
-		pub fn compound_rewards(
-			origin: OriginFor<T>,
-			_liquidity_asset_id: TokenId,
-			_amount_permille: Permill,
-		) -> DispatchResult {
-			let _sender = ensure_signed(origin)?;
-
-			//TODO: uncomment and maybe move compound logic to PoS
-			// <T::Xyk as XykFunctionsTrait<T::AccountId>>::do_compound_rewards(
-			// 	sender,
-			// 	liquidity_asset_id.into(),
-			// 	amount_permille,
-			// )?;
-
-			// Ok(().into())
-			Err(DispatchError::from(Error::<T>::DeprecatedExtrinsic))
-		}
-
-		#[transactional]
-		#[pallet::call_index(1)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::claim_rewards_v2())]
 		pub fn claim_rewards_v2(
 			origin: OriginFor<T>,
@@ -193,7 +173,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		#[pallet::call_index(2)]
+		#[pallet::call_index(1)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::claim_rewards_v2())]
 		pub fn claim_rewards_all_v2(
 			origin: OriginFor<T>,
@@ -210,7 +190,7 @@ pub mod pallet {
 		}
 
 		// Disabled pool demotion
-		#[pallet::call_index(3)]
+		#[pallet::call_index(2)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::update_pool_promotion())]
 		pub fn update_pool_promotion(
 			origin: OriginFor<T>,
@@ -219,7 +199,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			ensure_root(origin)?;
 
-			//TODO what about disabling ??
+			// enabling with weight == 0 results with disabling, we could refactor it though
 			<Self as ProofOfStakeRewardsApi<T::AccountId>>::enable(
 				liquidity_token_id,
 				liquidity_mining_issuance_weight,
@@ -228,7 +208,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		#[pallet::call_index(4)]
+		#[pallet::call_index(3)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::activate_liquidity_v2())]
 		pub fn activate_liquidity_v2(
 			origin: OriginFor<T>,
@@ -247,7 +227,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		#[pallet::call_index(5)]
+		#[pallet::call_index(4)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::deactivate_liquidity_v2())]
 		pub fn deactivate_liquidity_v2(
 			origin: OriginFor<T>,
@@ -452,7 +432,6 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		use_balance_from: Option<ActivateKind>,
 	) -> DispatchResult {
 		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
-		//TODO: check if pool is actually liquidity token
 		ensure!(
 			<T as Config>::ActivationReservesProvider::can_activate(
 				liquidity_asset_id,
@@ -518,10 +497,8 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 	}
 }
 
-//TODO: add unit test and migrate impl from issuance
 impl<T: Config> LiquidityMiningApi for Pallet<T> {
 	fn distribute_rewards(liquidity_mining_rewards: Balance) {
-		//TODO: is that correct ?
 		let _ = CumulativeTotalLiquidityToRewardsRatio::<T>::try_mutate(|promoted_pools| -> DispatchResult {
 			// benchmark with max of X prom pools
 			let activated_pools: Vec<_> = promoted_pools

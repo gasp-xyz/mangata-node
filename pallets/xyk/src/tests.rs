@@ -53,14 +53,6 @@ use test_case::test_case;
 
 //liquidity assets after trade, after burn, after mint
 
-// pub trait Trait: frame_system::Trait {
-//     // TODO: Add other types and constants required configure this module.
-//     // type Hashing = BlakeTwo256;
-
-//     // The overarching event type.
-//     type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
-// }
-
 // W - should work
 // N - should not work
 const DUMMY_USER_ID: u128 = 2;
@@ -2010,15 +2002,13 @@ fn burn_N_zero_amount() {
 	});
 }
 
-// TODO https://trello.com/c/rEygIR7t/428-fix-panic-in-xyksellasset
 #[test]
 #[serial]
-#[ignore]
 fn buy_assets_with_small_expected_amount_does_not_cause_panic() {
 	new_test_ext().execute_with(|| {
 		initialize();
 		let first_token_balance = XykStorage::balance(1, DUMMY_USER_ID);
-		XykStorage::buy_asset(RuntimeOrigin::signed(2), 1, 4, 1, first_token_balance).unwrap();
+		let	_ = XykStorage::buy_asset(RuntimeOrigin::signed(2), 1, 4, 1, first_token_balance);
 	});
 }
 

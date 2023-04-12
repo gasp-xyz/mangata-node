@@ -180,18 +180,6 @@ pub mod pallet {
 	pub type PromotedPoolsRewards<T: Config> =
 		StorageMap<_, Twox64Concat, TokenId, Balance, ValueQuery>;
 
-	// TODO: migrate
-	// #[pallet::storage]
-	// #[pallet::getter(fn get_promoted_pools_rewards_v2)]
-	// pub type PromotedPoolsRewardsV2<T: Config> =
-	// 	StorageValue<_, BTreeMap<TokenId, PromotedPoolsRewardsInfo>, ValueQuery>;
-	//
-	// #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq, TypeInfo)]
-	// pub struct PromotedPoolsRewardsInfo {
-	// 	pub weight: u8,
-	// 	pub rewards: U256,
-	// }
-
 	#[pallet::error]
 	/// Errors
 	pub enum Error<T> {

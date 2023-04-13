@@ -1402,7 +1402,9 @@ impl pallet_xyk::XykBenchmarkingConfig for Runtime {}
 
 impl parachain_staking::StakingBenchmarkConfig for Runtime {
 	#[cfg(feature = "runtime-benchmarks")]
-	type PoolCreateApi = Xyk;
+	type RewardsApi = ProofOfStake;
+	#[cfg(feature = "runtime-benchmarks")]
+	type Xyk = Xyk;
 }
 
 parameter_types! {

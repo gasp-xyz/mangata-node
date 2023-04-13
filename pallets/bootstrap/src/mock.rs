@@ -342,6 +342,7 @@ impl GetMaintenanceStatusTrait for MockMaintenanceStatusProvider {
 parameter_types! {
 	pub const BootstrapUpdateBuffer: <Test as frame_system::Config>::BlockNumber = 10;
 	pub const DefaultBootstrapPromotedPoolWeight: u8 = 1u8;
+	pub const ClearStorageLimit: u32 = 10u32;
 }
 
 #[cfg(not(feature = "runtime-benchmarks"))]
@@ -355,6 +356,7 @@ impl pallet_bootstrap::Config for Test {
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type VestingProvider = Vesting;
 	type RewardsApi = MockRewardsApi;
+	type ClearStorageLimit = ClearStorageLimit;
 	type WeightInfo = ();
 	type AssetRegistryApi = MockAssetRegistryApi;
 }
@@ -370,6 +372,7 @@ impl pallet_bootstrap::Config for Test {
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Test>;
 	type VestingProvider = Vesting;
 	type RewardsApi = ProofOfStake;
+	type ClearStorageLimit = ClearStorageLimit;
 	type WeightInfo = ();
 	type AssetRegistryApi = AssetRegistry;
 }

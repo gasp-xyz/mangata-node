@@ -157,30 +157,15 @@ impl_opaque_keys! {
 	}
 }
 
-// match curently deployed versions
-#[cfg(feature = "try-runtime")]
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
 	authoring_version: 15,
-	spec_version: 15,
+	spec_version: 003000,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 15,
-	state_version: 0,
-};
-
-#[cfg(not(feature = "try-runtime"))]
-#[sp_version::runtime_version]
-pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("mangata-parachain"),
-	impl_name: create_runtime_str!("mangata-parachain"),
-	authoring_version: 15,
-	spec_version: 002802,
-	impl_version: 0,
-	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 002802,
+	transaction_version: 003000,
 	state_version: 0,
 };
 
@@ -2122,11 +2107,11 @@ impl_runtime_apis! {
 
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
-		fn on_runtime_upgrade(checks: bool) -> (Weight, Weight) {
+		fn on_runtime_upgrade(_checks: bool) -> (Weight, Weight) {
 			// NOTE: intentional unwrap: we don't want to propagate the error backwards, and want to
 			// have a backtrace here. If any of the pre/post migration checks fail, we shall stop
 			// right here and right now.
-			let weight = Executive::try_runtime_upgrade(checks).unwrap();
+			let weight = Executive::try_runtime_upgrade(true).unwrap();
 			(weight, RuntimeBlockWeights::get().max_block)
 		}
 

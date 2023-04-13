@@ -300,6 +300,8 @@ pub mod pallet {
 
 		type VestingProvider: MultiTokenVestingLocks<Self::AccountId, Self::BlockNumber>;
 
+		type ClearStorageLimit: Get<u32>;
+
 		type WeightInfo: WeightInfo;
 
 		type RewardsApi: RewardsApi<AccountId = Self::AccountId>;
@@ -659,20 +661,18 @@ pub mod pallet {
 			Self::do_claim_liquidity_tokens(&sender, true)
 		}
 
-		/// Used to reset Bootstrap state and prepare it for running another bootstrap.
-		/// It should be called multiple times until it produces [`Event::BootstrapFinalized`] event.
-		///
-		/// # Args:
-		/// * `limit` - limit of storage entries to be removed in single call. Should be set to some
-		/// reasonable balue like `100`.
+		/// Used to reset Bootstrap state of large storages and prepare it for running another bootstrap.
+		/// It should be called multiple times until it produces [`Event::BootstrapReadyToBeFinalized`] event.
 		///
 		/// **!!! Cleaning up storage is complex operation and pruning all storage items related to particular
 		/// bootstrap might not fit in a single block. As a result tx can be rejected !!!**
 		#[pallet::call_index(7)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::finalize().saturating_add(T::DbWeight::get().reads_writes(1, 1).saturating_mul(Into::<u64>::into(*limit).saturating_add(u64::one()))))]
+		#[pallet::weight(Weight::from_ref_time(40_000_000)
+							.saturating_add(T::DbWeight::get().reads_writes(6, 0)
+								.saturating_add(T::DbWeight::get().reads_writes(1, 1).saturating_mul(Into::<u64>::into(T::ClearStorageLimit::get())))))]
 		#[transactional]
-		pub fn finalize(origin: OriginFor<T>, mut limit: u32) -> DispatchResult {
-			ensure_root(origin)?;
+		pub fn pre_finalize(origin: OriginFor<T>) -> DispatchResult {
+			let _ = ensure_signed(origin)?;
 
 			ensure!(Self::phase() == BootstrapPhase::Finished, Error::<T>::NotFinishedYet);
 
@@ -681,10 +681,12 @@ pub mod pallet {
 				Error::<T>::BootstrapNotReadyToBeFinished
 			);
 
+			let mut limit = T::ClearStorageLimit::get();
+
 			match VestedProvisions::<T>::clear(limit, None).into() {
 				KillStorageResult::AllRemoved(num_iter) => limit = limit.saturating_sub(num_iter),
 				KillStorageResult::SomeRemaining(_) => {
-					Self::deposit_event(Event::BootstrapParitallyFinalized);
+					Self::deposit_event(Event::BootstrapParitallyPreFinalized);
 					return Ok(())
 				},
 			}
@@ -692,7 +694,7 @@ pub mod pallet {
 			match WhitelistedAccount::<T>::clear(limit, None).into() {
 				KillStorageResult::AllRemoved(num_iter) => limit = limit.saturating_sub(num_iter),
 				KillStorageResult::SomeRemaining(_) => {
-					Self::deposit_event(Event::BootstrapParitallyFinalized);
+					Self::deposit_event(Event::BootstrapParitallyPreFinalized);
 					return Ok(())
 				},
 			}
@@ -700,7 +702,7 @@ pub mod pallet {
 			match ClaimedRewards::<T>::clear(limit, None).into() {
 				KillStorageResult::AllRemoved(num_iter) => limit = limit.saturating_sub(num_iter),
 				KillStorageResult::SomeRemaining(_) => {
-					Self::deposit_event(Event::BootstrapParitallyFinalized);
+					Self::deposit_event(Event::BootstrapParitallyPreFinalized);
 					return Ok(())
 				},
 			}
@@ -708,10 +710,50 @@ pub mod pallet {
 			match Provisions::<T>::clear(limit, None).into() {
 				KillStorageResult::AllRemoved(num_iter) => limit = limit.saturating_sub(num_iter),
 				KillStorageResult::SomeRemaining(_) => {
-					Self::deposit_event(Event::BootstrapParitallyFinalized);
+					Self::deposit_event(Event::BootstrapParitallyPreFinalized);
 					return Ok(())
 				},
 			}
+
+			Self::deposit_event(Event::BootstrapReadyToBeFinalized);
+
+			Ok(())
+		}
+
+		/// Used to complete resetting Bootstrap state and prepare it for running another bootstrap.
+		/// It should be called after pre_finalize has produced the [`Event::BootstrapReadyToBeFinalized`] event.
+		#[pallet::call_index(8)]
+		#[pallet::weight(<<T as Config>::WeightInfo>::finalize())]
+		#[transactional]
+		pub fn finalize(origin: OriginFor<T>) -> DispatchResult {
+			let _ = ensure_signed(origin)?;
+
+			ensure!(Self::phase() == BootstrapPhase::Finished, Error::<T>::NotFinishedYet);
+
+			ensure!(
+				ProvisionAccounts::<T>::iter_keys().next().is_none(),
+				Error::<T>::BootstrapNotReadyToBeFinished
+			);
+
+			ensure!(
+				VestedProvisions::<T>::iter_keys().next().is_none(),
+				Error::<T>::BootstrapMustBePreFinalized
+			);
+
+			ensure!(
+				WhitelistedAccount::<T>::iter_keys().next().is_none(),
+				Error::<T>::BootstrapMustBePreFinalized
+			);
+
+			ensure!(
+				ClaimedRewards::<T>::iter_keys().next().is_none(),
+				Error::<T>::BootstrapMustBePreFinalized
+			);
+
+			ensure!(
+				Provisions::<T>::iter_keys().next().is_none(),
+				Error::<T>::BootstrapMustBePreFinalized
+			);
 
 			Phase::<T>::put(BootstrapPhase::BeforeStart);
 			let (liq_token_id, _) = MintedLiquidity::<T>::take();
@@ -744,7 +786,7 @@ pub mod pallet {
 		/// calling [`Pallet::claim_liquidity_tokens_for_account`] by some other account and calling [`Pallet::claim_liquidity_tokens`] directly by that account is account that will be charged for transaction fee.
 		/// # Args:
 		/// - `other` - account in behalf of which liquidity tokens should be claimed
-		#[pallet::call_index(8)]
+		#[pallet::call_index(9)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::claim_and_activate_liquidity_tokens())]
 		#[transactional]
 		pub fn claim_liquidity_tokens_for_account(
@@ -805,6 +847,8 @@ pub mod pallet {
 		TooLateToUpdateBootstrap,
 		/// Bootstrap provisioning blocked by maintenance mode
 		ProvisioningBlockedByMaintenanceMode,
+		/// Bootstrap must be pre finalized before it can be finalized
+		BootstrapMustBePreFinalized,
 	}
 
 	#[pallet::event]
@@ -820,8 +864,10 @@ pub mod pallet {
 		RewardsClaimed(TokenId, Balance),
 		/// account whitelisted
 		AccountsWhitelisted,
-		/// finalization process tarted
-		BootstrapParitallyFinalized,
+		/// bootstrap pre finalization has completed partially
+		BootstrapParitallyPreFinalized,
+		/// bootstrap pre finalization has completed, and the bootstrap can now be finalized
+		BootstrapReadyToBeFinalized,
 		/// finalization process finished
 		BootstrapFinalized,
 	}

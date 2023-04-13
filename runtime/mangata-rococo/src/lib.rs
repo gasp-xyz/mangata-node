@@ -557,6 +557,7 @@ impl AssetRegistryApi for EnableAssetPoolApi {
 parameter_types! {
 	pub const BootstrapUpdateBuffer: BlockNumber = 300;
 	pub const DefaultBootstrapPromotedPoolWeight: u8 = 0u8;
+	pub const ClearStorageLimit: u32 = 100u32;
 }
 
 impl pallet_bootstrap::BootstrapBenchmarkingConfig for Runtime {}
@@ -571,6 +572,7 @@ impl pallet_bootstrap::Config for Runtime {
 	type VestingProvider = Vesting;
 	type TreasuryPalletId = TreasuryPalletId;
 	type RewardsApi = ProofOfStake;
+	type ClearStorageLimit = ClearStorageLimit;
 	type WeightInfo = weights::pallet_bootstrap_weights::ModuleWeight<Runtime>;
 	type AssetRegistryApi = EnableAssetPoolApi;
 }

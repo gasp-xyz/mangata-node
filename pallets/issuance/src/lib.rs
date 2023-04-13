@@ -174,12 +174,6 @@ pub mod pallet {
 	pub type SessionIssuance<T: Config> =
 		StorageMap<_, Twox64Concat, u32, Option<(Balance, Balance)>, ValueQuery>;
 
-	//to be removed
-	#[pallet::storage]
-	#[pallet::getter(fn get_promoted_pools_rewards)]
-	pub type PromotedPoolsRewards<T: Config> =
-		StorageMap<_, Twox64Concat, TokenId, Balance, ValueQuery>;
-
 	#[pallet::error]
 	/// Errors
 	pub enum Error<T> {

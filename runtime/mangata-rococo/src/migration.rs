@@ -71,8 +71,8 @@ impl OnRuntimeUpgrade for XykRefactorMigration {
 		)
 		.count();
 
-		log::info!(target: "migration", b"PRE ProofOfStake::LiquidityMiningActivePoolV2 count  :{}", pos__liquidity_mining_avitvate_pool_v2_count);
-		log::info!(target: "migration", b"PRE Issuance::PromotedPoolRewardsV2           count  :{}", issuance__promoted_pool_reards_v2);
+		log::info!(target: "migration", "PRE ProofOfStake::LiquidityMiningActivePoolV2 count  :{}", pos__liquidity_mining_avitvate_pool_v2_count);
+		log::info!(target: "migration", "PRE Issuance::PromotedPoolRewardsV2           count  :{}", issuance__promoted_pool_reards_v2);
 
 		assert!(pos__liquidity_mining_avitvate_pool_v2_count >= 1);
 		assert!(issuance__promoted_pool_reards_v2 >= 1);
@@ -116,10 +116,10 @@ impl OnRuntimeUpgrade for XykRefactorMigration {
 		)
 		.count();
 
-		log::info!(target: "migration", b"POST ProofOfStake::LiquidityMiningActivePoolV2 count :{}", pos__liquidity_mining_avitvate_pool_v2_count);
-		log::info!(target: "migration", b"POST Issuance::PromotedPoolRewardsV2 count           :{}", issuance__promoted_pool_reards_v2);
-		log::info!(target: "migration", b"POST ProofOfStake::RewardsInfo count                 :{}", pos__rewards_info_count);
-		log::info!(target: "migration", b"POST Issuance::PromotedPoolRewards count             :{}", pos__promoted_pool_rewards_count);
+		log::info!(target: "migration", "POST ProofOfStake::LiquidityMiningActivePoolV2 count :{}", pos__liquidity_mining_avitvate_pool_v2_count);
+		log::info!(target: "migration", "POST Issuance::PromotedPoolRewardsV2 count           :{}", issuance__promoted_pool_reards_v2);
+		log::info!(target: "migration", "POST ProofOfStake::RewardsInfo count                 :{}", pos__rewards_info_count);
+		log::info!(target: "migration", "POST Issuance::PromotedPoolRewards count             :{}", pos__promoted_pool_rewards_count);
 
 		assert!(pos__liquidity_mining_avitvate_pool_v2_count >= 1);
 		assert!(issuance__promoted_pool_reards_v2 >= 1);

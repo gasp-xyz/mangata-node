@@ -347,4 +347,3 @@ fn issuance_after_linear_period_never_execeeds_linear() {
 		assert_eq!(3902430240, Tokens::total_issuance(0u32) as Balance);
 	});
 }
-

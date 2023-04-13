@@ -25,8 +25,7 @@ use frame_benchmarking::{account, benchmarks, whitelisted_caller};
 use frame_system::RawOrigin;
 use mangata_support::traits::{ComputeIssuance, ProofOfStakeRewardsApi};
 use orml_tokens::MultiTokenCurrencyExtended;
-use sp_runtime::Permill;
-use sp_runtime::SaturatedConversion;
+use sp_runtime::{Permill, SaturatedConversion};
 
 use crate::Pallet as Xyk;
 
@@ -45,8 +44,7 @@ macro_rules! forward_to_next_session {
 	() => {
 		let current_block: u32 = frame_system::Pallet::<T>::block_number().saturated_into::<u32>();
 
-		let blocks_per_session: u32 =
-			pallet_proof_of_stake::Pallet::<T>::rewards_period();
+		let blocks_per_session: u32 = pallet_proof_of_stake::Pallet::<T>::rewards_period();
 		let target_block_nr: u32;
 		let target_session_nr: u32;
 

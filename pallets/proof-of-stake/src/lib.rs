@@ -21,7 +21,7 @@ use mangata_types::{multipurpose_liquidity::ActivateKind, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use sp_std::collections::btree_map::BTreeMap;
 
-use sp_runtime::{traits::SaturatedConversion, Permill, Perbill};
+use sp_runtime::{traits::SaturatedConversion, Perbill, Permill};
 use sp_std::{convert::TryInto, prelude::*};
 
 mod reward_info;
@@ -67,10 +67,7 @@ pub mod pallet {
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
 
 	#[cfg(feature = "runtime-benchmarks")]
-	pub trait PoSBenchmarkingConfig:
-		pallet_issuance::Config
-	{
-	}
+	pub trait PoSBenchmarkingConfig: pallet_issuance::Config {}
 	#[cfg(feature = "runtime-benchmarks")]
 	impl<T: pallet_issuance::Config> PoSBenchmarkingConfig for T {}
 
@@ -81,7 +78,7 @@ pub mod pallet {
 	impl<T> PoSBenchmarkingConfig for T {}
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + PoSBenchmarkingConfig{
+	pub trait Config: frame_system::Config + PoSBenchmarkingConfig {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		type ActivationReservesProvider: ActivationReservesProviderTrait<
 			AccountId = Self::AccountId,
@@ -140,13 +137,18 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn get_cumulative_liquidity_to_rewards_ratio)]
-	pub type CumulativeTotalLiquidityToRewardsRatio<T: Config> =
-		StorageValue<_, BTreeMap<TokenId, PromotedPoolsRewardsInfo>, ValueQuery>;
+	/// Stores information about pool weight and accumulated rewards
+	pub type PromotedPoolRewards<T: Config> =
+		StorageValue<_, BTreeMap<TokenId, PromotedPools>, ValueQuery>;
 
 	#[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq, TypeInfo)]
-	pub struct PromotedPoolsRewardsInfo {
+	/// Information about single token rewards
+	pub struct PromotedPools {
+		// Weight of the pool, each of the activated tokens has its weight assignedd
+		// Liquidityt Mining Rewards are distributed based on that weight
 		pub weight: u8,
+		/// **Cumulative** number of rewards amount that can be claimed for single
+		/// activted liquidity token
 		pub rewards: U256,
 	}
 
@@ -155,10 +157,8 @@ pub mod pallet {
 	pub type TotalActivatedLiquidity<T: Config> =
 		StorageMap<_, Twox64Concat, TokenId, u128, ValueQuery>;
 
-	// XYK extrinsics.
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-
 		#[transactional]
 		#[pallet::call_index(0)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::claim_rewards_v2())]
@@ -254,7 +254,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn get_pool_rewards(liquidity_asset_id: TokenId) -> Result<U256, sp_runtime::DispatchError> {
-		Ok(CumulativeTotalLiquidityToRewardsRatio::<T>::get()
+		Ok(PromotedPoolRewards::<T>::get()
 			.get(&liquidity_asset_id)
 			.map(|v| v.rewards)
 			.ok_or(Error::<T>::NotAPromotedPool)?)
@@ -276,7 +276,7 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	fn set_liquidity_minting_checkpoint_v2(
+	fn set_liquidity_minting_checkpoint(
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
 		liquidity_assets_added: Balance,
@@ -315,7 +315,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	fn set_liquidity_burning_checkpoint_v2(
+	fn set_liquidity_burning_checkpoint(
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
 		liquidity_assets_burned: Balance,
@@ -364,24 +364,24 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 	type CurrencyId = TokenId;
 
 	fn enable(liquidity_token_id: TokenId, weight: u8) {
-		CumulativeTotalLiquidityToRewardsRatio::<T>::mutate(|promoted_pools| {
+		PromotedPoolRewards::<T>::mutate(|promoted_pools| {
 			promoted_pools
 				.entry(liquidity_token_id)
 				.and_modify(|info| info.weight = weight)
-				.or_insert(PromotedPoolsRewardsInfo { weight, rewards: U256::zero() });
+				.or_insert(PromotedPools { weight, rewards: U256::zero() });
 		});
 		Pallet::<T>::deposit_event(Event::PoolPromotionUpdated(liquidity_token_id, Some(weight)));
 	}
 
 	fn disable(liquidity_token_id: TokenId) {
-		CumulativeTotalLiquidityToRewardsRatio::<T>::mutate(|promoted_pools| {
+		PromotedPoolRewards::<T>::mutate(|promoted_pools| {
 			let _ = promoted_pools.remove(&liquidity_token_id);
 		});
 		Pallet::<T>::deposit_event(Event::PoolPromotionUpdated(liquidity_token_id, None));
 	}
 
 	fn is_enabled(liquidity_token_id: TokenId) -> bool {
-		CumulativeTotalLiquidityToRewardsRatio::<T>::get().contains_key(&liquidity_token_id)
+		PromotedPoolRewards::<T>::get().contains_key(&liquidity_token_id)
 	}
 
 	fn claim_rewards_all(
@@ -441,7 +441,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 			Error::<T>::NotEnoughAssets
 		);
 
-		Self::set_liquidity_minting_checkpoint_v2(user.clone(), liquidity_asset_id, amount)?;
+		Self::set_liquidity_minting_checkpoint(user.clone(), liquidity_asset_id, amount)?;
 
 		// This must not fail due storage edits above
 		<T as Config>::ActivationReservesProvider::activate(
@@ -461,7 +461,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		amount: Self::Balance,
 	) -> DispatchResult {
 		if amount > 0 {
-			Self::set_liquidity_burning_checkpoint_v2(user.clone(), liquidity_asset_id, amount)?;
+			Self::set_liquidity_burning_checkpoint(user.clone(), liquidity_asset_id, amount)?;
 			Pallet::<T>::deposit_event(Event::LiquidityDeactivated(
 				user,
 				liquidity_asset_id,
@@ -498,7 +498,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 
 impl<T: Config> LiquidityMiningApi for Pallet<T> {
 	fn distribute_rewards(liquidity_mining_rewards: Balance) {
-		let _ = CumulativeTotalLiquidityToRewardsRatio::<T>::try_mutate(|promoted_pools| -> DispatchResult {
+		let _ = PromotedPoolRewards::<T>::try_mutate(|promoted_pools| -> DispatchResult {
 			// benchmark with max of X prom pools
 			let activated_pools: Vec<_> = promoted_pools
 				.clone()
@@ -507,7 +507,7 @@ impl<T: Config> LiquidityMiningApi for Pallet<T> {
 					let activated_amount = Self::total_activated_amount(token_id);
 					if activated_amount > 0 {
 						Some((token_id, info.weight, info.rewards, activated_amount))
-					}else{
+					} else {
 						None
 					}
 				})
@@ -522,23 +522,17 @@ impl<T: Config> LiquidityMiningApi for Pallet<T> {
 
 			for (token_id, weight, rewards, activated_amount) in activated_pools {
 				let liquidity_mining_issuance_for_pool = match maybe_total_weight {
-
-
-					Some(total_weight) if !total_weight.is_zero() =>{
+					Some(total_weight) if !total_weight.is_zero() =>
 						Perbill::from_rational(weight.into(), total_weight)
-							.mul_floor(liquidity_mining_rewards)
-					},
+							.mul_floor(liquidity_mining_rewards),
 					_ => Balance::zero(),
 				};
 
 				let rewards_for_liquidity: U256 = U256::from(liquidity_mining_issuance_for_pool)
 					.checked_mul(U256::from(u128::MAX))
 					.and_then(|x| x.checked_div(activated_amount.into()))
-					.and_then(|x| {
-						x.checked_add(rewards)
-					})
+					.and_then(|x| x.checked_add(rewards))
 					.ok_or(Error::<T>::MathError)?;
-
 
 				promoted_pools
 					.entry(token_id.clone())

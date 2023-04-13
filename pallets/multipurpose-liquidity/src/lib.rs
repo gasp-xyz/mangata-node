@@ -1,13 +1,13 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::{dispatch::DispatchResult, ensure};
-use frame_system::ensure_signed;
 use frame_support::{
+	dispatch::DispatchResult,
+	ensure,
 	pallet_prelude::*,
 	traits::{tokens::currency::MultiTokenCurrency, Get, StorageVersion, WithdrawReasons},
 	transactional,
 };
-use frame_system::pallet_prelude::*;
+use frame_system::{ensure_signed, pallet_prelude::*};
 use mangata_support::traits::{
 	ActivationReservesProviderTrait, StakingReservesProviderTrait, XykFunctionsTrait,
 };

@@ -1,4 +1,3 @@
-
 // Copyright (C) 2020 Mangata team
 
 use super::*;
@@ -13,9 +12,7 @@ use sp_runtime::{
 use crate as pos;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{
-		tokens::currency::MultiTokenCurrency, ConstU32, Contains, Everything,
-	},
+	traits::{tokens::currency::MultiTokenCurrency, ConstU32, Contains, Everything},
 	PalletId,
 };
 
@@ -99,7 +96,6 @@ parameter_types! {
 	pub const MaxLocks: u32 = 50;
 }
 
-
 impl pallet_issuance::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type NativeCurrencyId = MgaTokenId;
@@ -175,7 +171,6 @@ parameter_types! {
 	pub const HistoryLimit: u32 = 10u32;
 }
 
-
 parameter_types! {
 	pub const LiquidityMiningIssuanceVaultId: PalletId = PalletId(*b"py/lqmiv");
 	pub FakeLiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account_truncating();
@@ -219,7 +214,6 @@ lazy_static::lazy_static! {
 		Mutex::new(m)
 	};
 }
-
 
 impl pos::Config for Test {
 	type RuntimeEvent = RuntimeEvent;

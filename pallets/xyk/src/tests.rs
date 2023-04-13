@@ -175,7 +175,6 @@ fn initialize_buy_and_burn() {
 		.unwrap();
 }
 
-
 #[test]
 #[serial]
 fn set_info_should_work() {
@@ -2008,7 +2007,7 @@ fn buy_assets_with_small_expected_amount_does_not_cause_panic() {
 	new_test_ext().execute_with(|| {
 		initialize();
 		let first_token_balance = XykStorage::balance(1, DUMMY_USER_ID);
-		let	_ = XykStorage::buy_asset(RuntimeOrigin::signed(2), 1, 4, 1, first_token_balance);
+		let _ = XykStorage::buy_asset(RuntimeOrigin::signed(2), 1, 4, 1, first_token_balance);
 	});
 }
 

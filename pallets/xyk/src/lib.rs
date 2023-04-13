@@ -303,19 +303,15 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use mangata_support::traits::{
-	LiquidityMiningApi,
-	ActivationReservesProviderTrait,
-	GetMaintenanceStatusTrait, PoolCreateApi, PreValidateSwaps, ProofOfStakeRewardsApi, Valuate,
-	XykFunctionsTrait,
+	ActivationReservesProviderTrait, GetMaintenanceStatusTrait, LiquidityMiningApi, PoolCreateApi,
+	PreValidateSwaps, ProofOfStakeRewardsApi, Valuate, XykFunctionsTrait,
 };
 use mangata_types::{multipurpose_liquidity::ActivateKind, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
 use sp_arithmetic::{helpers_128bit::multiply_by_rational_with_rounding, per_things::Rounding};
 use sp_runtime::{
-	traits::{
-		AccountIdConversion, Zero,
-	},
+	traits::{AccountIdConversion, Zero},
 	Permill,
 };
 use sp_std::{
@@ -368,7 +364,6 @@ const TOKEN_SYMBOL: &[u8] = b"TKN";
 const TOKEN_SYMBOL_SEPARATOR: &[u8] = b"-";
 const DEFAULT_DECIMALS: u32 = 18u32;
 
-
 pub use pallet::*;
 
 mod benchmarking;
@@ -391,8 +386,7 @@ pub mod pallet {
 
 	#[cfg(feature = "runtime-benchmarks")]
 	pub trait XykBenchmarkingConfig:
-		pallet_issuance::Config +
-		pallet_proof_of_stake::Config
+		pallet_issuance::Config + pallet_proof_of_stake::Config
 	{
 	}
 
@@ -407,7 +401,7 @@ pub mod pallet {
 	// 	K: LiquidityMiningApi,
 	// {
 	// }
-    //
+	//
 	// #[cfg(not(feature = "runtime-benchmarks"))]
 	// pub trait XykRewardsApi<AccountIdT>: ProofOfStakeRewardsApi<AccountIdT, Balance = Balance, CurrencyId = TokenId>{}
 	// #[cfg(not(feature = "runtime-benchmarks"))]
@@ -415,8 +409,6 @@ pub mod pallet {
 	// 	K: ProofOfStakeRewardsApi<AccountIdT, Balance = Balance, CurrencyId = TokenId>,
 	// {
 	// }
-
-
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + XykBenchmarkingConfig {
@@ -430,7 +422,11 @@ pub mod pallet {
 		type NativeCurrencyId: Get<TokenId>;
 		type TreasuryPalletId: Get<PalletId>;
 		type BnbTreasurySubAccDerive: Get<[u8; 4]>;
-		type LiquidityMiningRewards: ProofOfStakeRewardsApi<Self::AccountId, Balance = Balance, CurrencyId = TokenId>;
+		type LiquidityMiningRewards: ProofOfStakeRewardsApi<
+			Self::AccountId,
+			Balance = Balance,
+			CurrencyId = TokenId,
+		>;
 		#[pallet::constant]
 		type PoolFeePercentage: Get<u128>;
 		#[pallet::constant]
@@ -3011,8 +3007,9 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			liquidity_assets_minted.into(),
 		)?;
 
-		if <T::LiquidityMiningRewards as ProofOfStakeRewardsApi<T::AccountId>>::is_enabled(liquidity_asset_id)
-			&& activate_minted_liquidity
+		if <T::LiquidityMiningRewards as ProofOfStakeRewardsApi<T::AccountId>>::is_enabled(
+			liquidity_asset_id,
+		) && activate_minted_liquidity
 		{
 			// The reserve from free_balance will not fail the asset were just minted into free_balance
 			<T::LiquidityMiningRewards as ProofOfStakeRewardsApi<T::AccountId>>::activate_liquidity(
@@ -3090,10 +3087,9 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			Error::<T>::FunctionNotAvailableForThisToken
 		);
 
-		let rewards_claimed = <T::LiquidityMiningRewards as ProofOfStakeRewardsApi<T::AccountId>>::claim_rewards_all(
-			sender.clone(),
-			liquidity_asset_id,
-		)?;
+		let rewards_claimed = <T::LiquidityMiningRewards as ProofOfStakeRewardsApi<
+			T::AccountId,
+		>>::claim_rewards_all(sender.clone(), liquidity_asset_id)?;
 
 		let rewards_256 = Into::<U256>::into(rewards_claimed)
 			.saturating_mul(amount_permille.deconstruct().into())

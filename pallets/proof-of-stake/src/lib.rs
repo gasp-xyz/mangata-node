@@ -394,7 +394,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		let pool_rewards_ratio_current = Self::get_pool_rewards(liquidity_asset_id)?;
 
 		let current_rewards = rewards_info
-			.calculate_rewards_v2(Self::get_current_rewards_time()?, pool_rewards_ratio_current)
+			.calculate_rewards(Self::get_current_rewards_time()?, pool_rewards_ratio_current)
 			.ok_or(Error::<T>::CalculateRewardsMathError)?;
 
 		let total_available_rewards = current_rewards
@@ -482,7 +482,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		let current_rewards = match rewards_info.activated_amount {
 			0 => 0u128,
 			_ => rewards_info
-				.calculate_rewards_v2(
+				.calculate_rewards(
 					Self::get_current_rewards_time()?,
 					Self::get_pool_rewards(liquidity_asset_id)?,
 				)

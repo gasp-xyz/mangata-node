@@ -57,7 +57,7 @@ impl RewardInfo {
 			.ok_or(Error::<T>::LiquidityCheckpointMathError)?;
 
 		let user_current_rewards = self
-			.calculate_rewards_v2(current_time, pool_ratio_current)
+			.calculate_rewards(current_time, pool_ratio_current)
 			.ok_or(Error::<T>::CalculateRewardsMathError)?;
 
 		let rewards_not_yet_claimed = user_current_rewards
@@ -99,7 +99,7 @@ impl RewardInfo {
 			.ok_or(Error::<T>::LiquidityCheckpointMathError)?;
 
 		let user_current_rewards = self
-			.calculate_rewards_v2(current_time, pool_ratio_current)
+			.calculate_rewards(current_time, pool_ratio_current)
 			.ok_or(Error::<T>::CalculateRewardsMathError)?;
 		let total_available_rewards = user_current_rewards
 			.checked_add(self.rewards_not_yet_claimed)
@@ -115,7 +115,7 @@ impl RewardInfo {
 		Ok(())
 	}
 
-	pub fn calculate_rewards_v2(
+	pub fn calculate_rewards(
 		&self,
 		current_time: u32,
 		pool_rewards_ratio_current: U256,

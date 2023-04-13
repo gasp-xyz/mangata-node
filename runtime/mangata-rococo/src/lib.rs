@@ -73,7 +73,7 @@ pub use mangata_types::{
 	assets::{CustomMetadata, XcmMetadata, XykMetadata},
 	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
 };
-pub use pallet_issuance::{IssuanceInfo};
+pub use pallet_issuance::IssuanceInfo;
 pub use pallet_sudo_origin;
 pub use pallet_xyk;
 // XCM Imports

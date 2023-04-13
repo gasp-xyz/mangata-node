@@ -11,6 +11,7 @@ const USER_ID: u128 = 0;
 const PROVISION_USER1_ID: u128 = 200;
 const PROVISION_USER2_ID: u128 = 201;
 const ANOTHER_USER_ID: u128 = 100;
+const YET_ANOTHER_USER_ID: u128 = 900;
 const INITIAL_AMOUNT: u128 = 1_000_000;
 const DUMMY_ID: u32 = 2;
 const LIQ_TOKEN_ID: TokenId = 10_u32;
@@ -1838,7 +1839,10 @@ fn test_restart_bootstrap() {
 		)
 		.unwrap();
 
-		assert_err!(Bootstrap::finalize(RuntimeOrigin::root(), 200), Error::<Test>::NotFinishedYet);
+		assert_err!(
+			Bootstrap::pre_finalize(RuntimeOrigin::signed(YET_ANOTHER_USER_ID)),
+			Error::<Test>::NotFinishedYet
+		);
 
 		Bootstrap::on_initialize(120_u32.into());
 
@@ -1849,7 +1853,7 @@ fn test_restart_bootstrap() {
 
 		// not all rewards claimed
 		assert_err!(
-			Bootstrap::finalize(RuntimeOrigin::root(), 200),
+			Bootstrap::pre_finalize(RuntimeOrigin::signed(YET_ANOTHER_USER_ID)),
 			Error::<Test>::BootstrapNotReadyToBeFinished
 		);
 
@@ -1863,7 +1867,8 @@ fn test_restart_bootstrap() {
 		assert_ne!(0, Bootstrap::balance(liq_token_id, USER_ID));
 		assert_ne!(0, Bootstrap::balance(liq_token_id, ANOTHER_USER_ID));
 
-		Bootstrap::finalize(RuntimeOrigin::root(), 200).unwrap();
+		Bootstrap::pre_finalize(RuntimeOrigin::signed(YET_ANOTHER_USER_ID)).unwrap();
+		Bootstrap::finalize(RuntimeOrigin::signed(YET_ANOTHER_USER_ID)).unwrap();
 		assert!(Provisions::<Test>::iter_keys().next().is_none());
 		assert!(VestedProvisions::<Test>::iter_keys().next().is_none());
 		assert!(WhitelistedAccount::<Test>::iter_keys().next().is_none());
@@ -2022,7 +2027,8 @@ fn transfer_dust_to_treasury() {
 			<mock::Test as Config>::TreasuryPalletId::get().into_account_truncating(),
 		);
 
-		Bootstrap::finalize(RuntimeOrigin::root(), 200).unwrap();
+		Bootstrap::pre_finalize(RuntimeOrigin::signed(YET_ANOTHER_USER_ID)).unwrap();
+		Bootstrap::finalize(RuntimeOrigin::signed(YET_ANOTHER_USER_ID)).unwrap();
 
 		let after_finalize = Bootstrap::balance(
 			liq_token_id,
@@ -2073,7 +2079,8 @@ fn archive_previous_bootstrap_schedules() {
 		Bootstrap::on_initialize(120_u32.into());
 		Bootstrap::claim_liquidity_tokens(RuntimeOrigin::signed(USER_ID)).unwrap();
 		assert_eq!(0, Bootstrap::archived().len());
-		Bootstrap::finalize(RuntimeOrigin::root(), 1).unwrap();
+		Bootstrap::pre_finalize(RuntimeOrigin::signed(YET_ANOTHER_USER_ID)).unwrap();
+		Bootstrap::finalize(RuntimeOrigin::signed(YET_ANOTHER_USER_ID)).unwrap();
 		assert_eq!(0, Bootstrap::provisions(USER_ID, KSMId::get()));
 
 		assert_eq!(1, Bootstrap::archived().len());

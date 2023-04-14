@@ -164,10 +164,10 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
 	authoring_version: 14,
-	spec_version: 14,
+	spec_version: 002900,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 14,
+	transaction_version: 002900,
 	state_version: 0,
 };
 
@@ -178,10 +178,10 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("mangata-parachain"),
 
 	authoring_version: 14,
-	spec_version: 002802,
+	spec_version: 002901,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 002802,
+	transaction_version: 002901,
 	state_version: 0,
 };
 

@@ -2219,7 +2219,7 @@ fn test_compound_rewards(amount: u128, part_permille: u32, surplus: u128) {
 		XykStorage::create_new_token(&2, amount);
 		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, amount / 2, 1, amount / 2).unwrap();
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 2, 1u8).unwrap();
-		ProofOfStake::activate_liquidity_v2(RuntimeOrigin::signed(2), 2, amount / 2, None).unwrap();
+		ProofOfStake::activate_liquidity(RuntimeOrigin::signed(2), 2, amount / 2, None).unwrap();
 
 		// MockPromotedPoolApi::instance().lock().unwrap().insert(2, U256::from(u128::MAX));
 		ProofOfStake::distribute_rewards(amount / 2);
@@ -2257,7 +2257,7 @@ fn test_compound_rewards_pool_assets_order_swapped() {
 		XykStorage::create_new_token(&2, amount);
 		XykStorage::create_pool(RuntimeOrigin::signed(2), 1, amount / 2, 0, amount / 2).unwrap();
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 2, 1u8).unwrap();
-		ProofOfStake::activate_liquidity_v2(RuntimeOrigin::signed(2), 2, amount / 2, None).unwrap();
+		ProofOfStake::activate_liquidity(RuntimeOrigin::signed(2), 2, amount / 2, None).unwrap();
 
 		// MockPromotedPoolApi::instance().lock().unwrap().insert(2, U256::from(u128::MAX));
 		ProofOfStake::distribute_rewards(amount / 2);

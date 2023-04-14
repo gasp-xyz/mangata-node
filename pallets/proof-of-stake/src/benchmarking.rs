@@ -45,7 +45,7 @@ macro_rules! forward_to_next_session {
 }
 
 benchmarks! {
-	claim_rewards_all_v2 {
+	claim_rewards_all{
 		// 1. create
 		// 2. promote
 		// 3. mint
@@ -75,14 +75,14 @@ benchmarks! {
 
 		forward_to_next_session!();
 
-		PoS::<T>::activate_liquidity(caller.clone(), liquidity_asset_id.into(), quater_of_minted_liquidity, None).unwrap();
+		PoS::<T>::activate_liquidity(RawOrigin::Signed(caller.clone()).into(), liquidity_asset_id.into(), quater_of_minted_liquidity, None).unwrap();
 
 		forward_to_next_session!();
 		forward_to_next_session!();
 
 		assert!(PoS::<T>::calculate_rewards_amount(caller.clone(), liquidity_asset_id).unwrap() > 0);
 
-	}: claim_rewards_all_v2(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id)
+	}: claim_rewards_all(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id)
 	verify {
 
 		assert_eq!(
@@ -106,7 +106,7 @@ benchmarks! {
 		 );
 	}
 
-	activate_liquidity_v2 {
+	activate_liquidity{
 		// activate :
 		// 1 crate pool
 		// 2 promote pool
@@ -135,7 +135,7 @@ benchmarks! {
 		let half_of_minted_liquidity = total_minted_liquidity / 2_u128;
 		let quater_of_minted_liquidity = total_minted_liquidity / 4_u128;
 
-		PoS::<T>::activate_liquidity(caller.clone(), liquidity_asset_id.into(), quater_of_minted_liquidity, None).unwrap();
+		PoS::<T>::activate_liquidity(RawOrigin::Signed(caller.clone()).into(), liquidity_asset_id.into(), quater_of_minted_liquidity, None).unwrap();
 
 		assert_eq!(
 			PoS::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).activated_amount,
@@ -144,7 +144,7 @@ benchmarks! {
 
 		forward_to_next_session!();
 
-	}: activate_liquidity_v2(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), quater_of_minted_liquidity, None)
+	}: activate_liquidity(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), quater_of_minted_liquidity, None)
 	verify {
 
 		assert_eq!(
@@ -153,7 +153,7 @@ benchmarks! {
 		)
 	}
 
-	deactivate_liquidity_v2 {
+	deactivate_liquidity{
 		// deactivate
 		// 1 crate pool
 		// 2 promote pool
@@ -180,7 +180,8 @@ benchmarks! {
 		let half_of_minted_liquidity = total_minted_liquidity.into() / 2_u128;
 		let quater_of_minted_liquidity = total_minted_liquidity.into() / 4_u128;
 
-		PoS::<T>::activate_liquidity(caller.clone(), liquidity_asset_id.into(), half_of_minted_liquidity, None).unwrap();
+		PoS::<T>::activate_liquidity(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id.into(), half_of_minted_liquidity, None).unwrap();
+
 		assert_eq!(
 		 PoS::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).activated_amount,
 			half_of_minted_liquidity
@@ -188,7 +189,7 @@ benchmarks! {
 
 		forward_to_next_session!();
 
-	}: deactivate_liquidity_v2(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), quater_of_minted_liquidity.into())
+	}: deactivate_liquidity(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), quater_of_minted_liquidity.into())
 	verify {
 		assert_eq!(
 		 PoS::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).activated_amount,

@@ -162,19 +162,7 @@ pub mod pallet {
 		#[transactional]
 		#[pallet::call_index(0)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::claim_rewards_v2())]
-		pub fn claim_rewards_v2(
-			origin: OriginFor<T>,
-			_liquidity_token_id: TokenId,
-			_amount: Balance,
-		) -> DispatchResult {
-			let _sender = ensure_signed(origin)?;
-			Err(DispatchError::from(Error::<T>::DeprecatedExtrinsic))
-		}
-
-		#[transactional]
-		#[pallet::call_index(1)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::claim_rewards_v2())]
-		pub fn claim_rewards_all_v2(
+		pub fn claim_rewards_all(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
 		) -> DispatchResult {
@@ -189,7 +177,7 @@ pub mod pallet {
 		}
 
 		// Disabled pool demotion
-		#[pallet::call_index(2)]
+		#[pallet::call_index(1)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::update_pool_promotion())]
 		pub fn update_pool_promotion(
 			origin: OriginFor<T>,
@@ -198,18 +186,21 @@ pub mod pallet {
 		) -> DispatchResult {
 			ensure_root(origin)?;
 
-			// enabling with weight == 0 results with disabling, we could refactor it though
-			<Self as ProofOfStakeRewardsApi<T::AccountId>>::enable(
-				liquidity_token_id,
-				liquidity_mining_issuance_weight,
-			);
+			if liquidity_mining_issuance_weight > 0 {
+				<Self as ProofOfStakeRewardsApi<T::AccountId>>::enable(
+					liquidity_token_id,
+					liquidity_mining_issuance_weight,
+				);
+			} else {
+				<Self as ProofOfStakeRewardsApi<T::AccountId>>::disable(liquidity_token_id);
+			}
 			Ok(())
 		}
 
 		#[transactional]
-		#[pallet::call_index(3)]
+		#[pallet::call_index(2)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::activate_liquidity_v2())]
-		pub fn activate_liquidity_v2(
+		pub fn activate_liquidity(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
 			amount: Balance,
@@ -226,9 +217,9 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		#[pallet::call_index(4)]
+		#[pallet::call_index(3)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::deactivate_liquidity_v2())]
-		pub fn deactivate_liquidity_v2(
+		pub fn deactivate_liquidity(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
 			amount: Balance,

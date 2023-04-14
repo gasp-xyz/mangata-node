@@ -34,7 +34,7 @@ pub struct RewardInfo {
 }
 
 impl RewardInfo {
-	pub fn calculate_missing_at_checkpoint_v2(&self, current_time: u32) -> Option<U256> {
+	pub fn calculate_missing_at_checkpoint(&self, current_time: u32) -> Option<U256> {
 		let time_passed = current_time.checked_sub(self.last_checkpoint).unwrap();
 		let q_pow = calculate_q_pow(Q, time_passed);
 		Some(self.missing_at_last_checkpoint * U256::from(REWARDS_PRECISION) / q_pow)
@@ -52,7 +52,7 @@ impl RewardInfo {
 			.ok_or(Error::<T>::LiquidityCheckpointMathError)?;
 
 		let missing_at_last_checkpoint = self
-			.calculate_missing_at_checkpoint_v2(current_time)
+			.calculate_missing_at_checkpoint(current_time)
 			.and_then(|v| v.checked_add(U256::from(liquidity_assets_added)))
 			.ok_or(Error::<T>::LiquidityCheckpointMathError)?;
 
@@ -86,7 +86,7 @@ impl RewardInfo {
 			.ok_or(Error::<T>::LiquidityCheckpointMathError)?;
 
 		let missing_at_checkpoint_new = self
-			.calculate_missing_at_checkpoint_v2(current_time)
+			.calculate_missing_at_checkpoint(current_time)
 			.ok_or(Error::<T>::LiquidityCheckpointMathError)?;
 
 		let activated_amount_new = self

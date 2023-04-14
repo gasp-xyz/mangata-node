@@ -243,7 +243,7 @@ benchmarks! {
    mint_liquidity {
 	   // 1. create,
 	   // 2. promote,
-	   // 3. mint/activate_v2,
+	   // 3. mint/activate,
 	   // 4. wait some,
 	   // 5. mint – second mint is prob harder then 1st, as there are some data in
 

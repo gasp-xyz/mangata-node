@@ -146,6 +146,10 @@ jobs:
         working-directory: launch
         run: yarn
       
+      - name: Clean cache
+        working-directory: e2eTests
+        run: yarn cache clean
+
       - name: Install e2e tests dependencies
         working-directory: e2eTests
         run: yarn

@@ -157,30 +157,15 @@ impl_opaque_keys! {
 	}
 }
 
-// match curently deployed versions
-#[cfg(feature = "try-runtime")]
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
 	authoring_version: 15,
-	spec_version: 15,
+	spec_version: 003000,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 15,
-	state_version: 0,
-};
-
-#[cfg(not(feature = "try-runtime"))]
-#[sp_version::runtime_version]
-pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("mangata-parachain"),
-	impl_name: create_runtime_str!("mangata-parachain"),
-	authoring_version: 15,
-	spec_version: 002802,
-	impl_version: 0,
-	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 002802,
+	transaction_version: 003000,
 	state_version: 0,
 };
 
@@ -374,6 +359,7 @@ parameter_types! {
 	pub const BountyCuratorDeposit: Permill = Permill::from_percent(50);
 	pub const BountyValueMinimum: Balance = 5 * DOLLARS;
 	pub const MaxApprovals: u32 = 100;
+	pub const DefaultPayoutLimit: u32 = 3;
 }
 
 impl pallet_treasury::Config for Runtime {
@@ -565,6 +551,7 @@ impl AssetRegistryApi for EnableAssetPoolApi {
 parameter_types! {
 	pub const BootstrapUpdateBuffer: BlockNumber = 300;
 	pub const DefaultBootstrapPromotedPoolWeight: u8 = 0u8;
+	pub const ClearStorageLimit: u32 = 100u32;
 }
 
 impl pallet_bootstrap::BootstrapBenchmarkingConfig for Runtime {}
@@ -579,6 +566,7 @@ impl pallet_bootstrap::Config for Runtime {
 	type VestingProvider = Vesting;
 	type TreasuryPalletId = TreasuryPalletId;
 	type RewardsApi = ProofOfStake;
+	type ClearStorageLimit = ClearStorageLimit;
 	type WeightInfo = weights::pallet_bootstrap_weights::ModuleWeight<Runtime>;
 	type AssetRegistryApi = EnableAssetPoolApi;
 }
@@ -1423,6 +1411,7 @@ impl parachain_staking::Config for Runtime {
 	type StakingIssuanceVault = StakingIssuanceVault;
 	type FallbackProvider = Council;
 	type WeightInfo = weights::parachain_staking_weights::ModuleWeight<Runtime>;
+	type DefaultPayoutLimit = DefaultPayoutLimit;
 }
 
 impl parachain_staking::StakingBenchmarkConfig for Runtime {

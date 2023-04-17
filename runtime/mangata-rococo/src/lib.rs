@@ -157,31 +157,16 @@ impl_opaque_keys! {
 	}
 }
 
-// match curently deployed versions
-#[cfg(feature = "try-runtime")]
-#[sp_version::runtime_version]
-pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("mangata-parachain"),
-	impl_name: create_runtime_str!("mangata-parachain"),
-	authoring_version: 14,
-	spec_version: 14,
-	impl_version: 0,
-	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 14,
-	state_version: 0,
-};
-
-#[cfg(not(feature = "try-runtime"))]
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
 
 	authoring_version: 14,
-	spec_version: 002802,
+	spec_version: 003000,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 002802,
+	transaction_version: 003000,
 	state_version: 0,
 };
 
@@ -557,6 +542,7 @@ impl AssetRegistryApi for EnableAssetPoolApi {
 parameter_types! {
 	pub const BootstrapUpdateBuffer: BlockNumber = 300;
 	pub const DefaultBootstrapPromotedPoolWeight: u8 = 0u8;
+	pub const ClearStorageLimit: u32 = 100u32;
 }
 
 impl pallet_bootstrap::BootstrapBenchmarkingConfig for Runtime {}
@@ -571,6 +557,7 @@ impl pallet_bootstrap::Config for Runtime {
 	type VestingProvider = Vesting;
 	type TreasuryPalletId = TreasuryPalletId;
 	type RewardsApi = ProofOfStake;
+	type ClearStorageLimit = ClearStorageLimit;
 	type WeightInfo = weights::pallet_bootstrap_weights::ModuleWeight<Runtime>;
 	type AssetRegistryApi = EnableAssetPoolApi;
 }
@@ -1382,6 +1369,7 @@ parameter_types! {
 	};
 	/// Minimum stake required to be reserved to be a delegator
 	pub const MinDelegatorStk: u128 = 1 * CENTS;
+	pub const DefaultPayoutLimit: u32 = 3;
 }
 
 // To ensure that BlocksPerRound is not zero, breaking issuance calculations
@@ -1415,6 +1403,7 @@ impl parachain_staking::Config for Runtime {
 	type StakingIssuanceVault = StakingIssuanceVault;
 	type FallbackProvider = Council;
 	type WeightInfo = weights::parachain_staking_weights::ModuleWeight<Runtime>;
+	type DefaultPayoutLimit = DefaultPayoutLimit;
 }
 
 impl pallet_xyk::XykBenchmarkingConfig for Runtime {}

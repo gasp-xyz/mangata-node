@@ -741,12 +741,6 @@ const ACCOUNT_WITH_LOCKED_TOKENS: orml_tokens::AccountData<u128> = AccountData {
 	frozen: 0u128,
 };
 
-const ACCOUNT_WITH_LOCKED_TOKENS_TWICE: orml_tokens::AccountData<u128> = AccountData {
-	free: INITIAL_AMOUNT - 2 * FEE_LOCK_AMOUNT,
-	reserved: 2 * FEE_LOCK_AMOUNT,
-	frozen: 0u128,
-};
-
 fn calculate_estimated_weight(unlock_fee_calls: u64, reads: u64, writes: u64) -> Weight {
 	<Test as frame_system::Config>::DbWeight::get().reads(reads) +
 		<Test as frame_system::Config>::DbWeight::get().writes(writes) +
@@ -1121,5 +1115,47 @@ fn test_unlock_happens_in_order() {
 				Tokens::accounts(CHARLIE, NativeCurrencyId::get()),
 				ACCOUNT_WITHOUT_LOCKED_TOKENS
 			);
+		});
+}
+
+#[test]
+fn test_queue_storage_is_cleaned_up() {
+	ExtBuilder::new()
+		.create_token(NativeCurrencyId::get())
+		.mint(ALICE, NativeCurrencyId::get(), INITIAL_AMOUNT)
+		.mint(BOB, NativeCurrencyId::get(), INITIAL_AMOUNT)
+		.initialize_fee_locks(PERIOD_LENGTH, FEE_LOCK_AMOUNT, SWAP_VALUE_THRESHOLD)
+		.build()
+		.execute_with(|| {
+			assert_eq!(UnlockQueue::<Test>::get(0), None);
+			assert_eq!(UnlockQueue::<Test>::get(1), None);
+
+			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&ALICE).unwrap();
+			assert_eq!(UnlockQueue::<Test>::get(0), Some(ALICE));
+			assert_eq!(UnlockQueue::<Test>::get(1), None);
+			assert_eq!(
+				Tokens::accounts(ALICE, NativeCurrencyId::get()),
+				ACCOUNT_WITH_LOCKED_TOKENS
+			);
+
+			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&BOB).unwrap();
+			assert_eq!(UnlockQueue::<Test>::get(0), Some(ALICE));
+			assert_eq!(UnlockQueue::<Test>::get(1), Some(BOB));
+			assert_eq!(Tokens::accounts(BOB, NativeCurrencyId::get()), ACCOUNT_WITH_LOCKED_TOKENS);
+
+			fast_forward_blocks(PERIOD_LENGTH);
+			FeeLock::on_idle(System::block_number(), Weight::from_ref_time(u64::MAX));
+
+			assert_eq!(
+				Tokens::accounts(ALICE, NativeCurrencyId::get()),
+				ACCOUNT_WITHOUT_LOCKED_TOKENS
+			);
+			assert_eq!(
+				Tokens::accounts(BOB, NativeCurrencyId::get()),
+				ACCOUNT_WITHOUT_LOCKED_TOKENS
+			);
+
+			assert_eq!(UnlockQueue::<Test>::get(0), None);
+			assert_eq!(UnlockQueue::<Test>::get(1), None);
 		});
 }

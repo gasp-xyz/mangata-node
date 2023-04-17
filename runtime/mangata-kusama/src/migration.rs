@@ -82,8 +82,7 @@ impl OnRuntimeUpgrade for XykRefactorMigration {
 		log::info!(target: "migration", "PRE ProofOfStake::RewardsInfo                count  :{}", pos__total_activated_liquidity);
 		log::info!(target: "migration", "PRE Issuance::PromotedPoolRewards           exists  :{}", pos__promoted_pool_rewards_exists);
 
-		// update once .29 is released on kusama
-		assert!(pos__liquidity_mining_avitvate_pool_v2_count == 0);
+		assert!(pos__liquidity_mining_avitvate_pool_v2_count > 0);
 		assert!(issuance__promoted_pool_reards_v2_exists);
 		assert!(pos__total_activated_liquidity == 0);
 		assert!(!pos__promoted_pool_rewards_exists);
@@ -126,8 +125,7 @@ impl OnRuntimeUpgrade for XykRefactorMigration {
 
 		assert!(pos__liquidity_mining_avitvate_pool_v2_count == 0);
 		assert!(!issuance__promoted_pool_reards_v2_exists);
-		// update once .29 is released on kusama
-		assert!(pos__total_activated_liquidity == 0);
+		assert!(pos__total_activated_liquidity > 0);
 		assert!(pos__promoted_pool_rewards_exists);
 
 		Ok(())

@@ -525,7 +525,9 @@ impl<T: Config> FeeLockTriggerTrait<T::AccountId> for Pallet<T> {
 			);
 		}
 
-		FeeLockMetadataQeueuePosition::<T>::take(&who);
+		if let Some(pos) = FeeLockMetadataQeueuePosition::<T>::take(&who) {
+			UnlockQueue::<T>::take(pos);
+		}
 		AccountFeeLockData::<T>::remove(&who);
 
 		Self::deposit_event(Event::FeeLockUnlocked(

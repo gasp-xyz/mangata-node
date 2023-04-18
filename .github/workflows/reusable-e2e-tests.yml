@@ -85,15 +85,6 @@ jobs:
       E2EBRANCHNAME: "main"
       PARACHAIN_DOCKER_IMAGE: ${{ inputs.parachainDocker || format('mangatasolutions/mangata-node:{0}', inputs.globalVersion) }}
     steps:
-      - name: Explicitely add GitHub's RSA key if it's not added to known_hosts
-        run: |
-          [ -d ~/.ssh ] || mkdir ~/.ssh
-          [ -f ~/.ssh/known_hosts ] || touch ~/.ssh/known_hosts
-          # Check if the github.com host key is already in known_hosts
-          if ! ssh-keygen -F github.com &>/dev/null; then
-            # If it's not present, add it to known_hosts
-            ssh-keyscan github.com >> ~/.ssh/known_hosts
-          fi
      
       - uses: actions/checkout@v3.5.2 ####IDK, but this is neccesary for reports
       - name: Adapt if fast runtime
@@ -137,7 +128,18 @@ jobs:
           repository: mangata-finance/mangata-e2e
           ref: "${{ env.E2EBRANCHNAME }}"
           path: e2eTests
+          ssh-strict: false
       
+      # - name: Explicitely add GitHub's RSA key if it's not added to known_hosts
+      #   run: |
+      #     [ -d ~/.ssh ] || mkdir ~/.ssh
+      #     [ -f ~/.ssh/known_hosts ] || touch ~/.ssh/known_hosts
+      #     # Check if the github.com host key is already in known_hosts
+      #     if ! ssh-keygen -F github.com &>/dev/null; then
+      #       # If it's not present, add it to known_hosts
+      #       ssh-keyscan github.com >> ~/.ssh/known_hosts
+      #     fi
+
       - uses: actions/setup-node@v3
         with:
           node-version: '16'
@@ -156,9 +158,9 @@ jobs:
         working-directory: launch
         run: yarn
       
-      - name: Clean cache
-        working-directory: e2eTests
-        run: yarn cache clean
+      # - name: Clean cache
+      #   working-directory: e2eTests
+      #   run: yarn cache clean
       
       - name: Install e2e tests dependencies
         working-directory: e2eTests

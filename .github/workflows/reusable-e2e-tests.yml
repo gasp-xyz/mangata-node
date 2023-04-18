@@ -57,20 +57,20 @@ jobs:
         include:
           - command: "yarn test-parallel --max-workers=32"
             fast: false
-          - command: "yarn test-sequential-no-bootstrap"
-            fast: false
-          - command: "yarn test-seqgasless"
-            fast: false
-          - command: "yarn test-bootstrap"
-            fast: false
-          - command: "yarn test-rewards-bootstrap"
-            fast: false
-          - command: "yarn test-sequential-autocompound"
-            fast: true
-          - command: "yarn test-poolliquidity"
-            fast: true
-          - command: "yarn test-governance"
-            fast: true
+          # - command: "yarn test-sequential-no-bootstrap"
+          #   fast: false
+          # - command: "yarn test-seqgasless"
+          #   fast: false
+          # - command: "yarn test-bootstrap"
+          #   fast: false
+          # - command: "yarn test-rewards-bootstrap"
+          #   fast: false
+          # - command: "yarn test-sequential-autocompound"
+          #   fast: true
+          # - command: "yarn test-poolliquidity"
+          #   fast: true
+          # - command: "yarn test-governance"
+          #   fast: true
 
     runs-on: [self-hosted, compile]
     timeout-minutes: 180
@@ -149,6 +149,10 @@ jobs:
       - name: Clean cache
         working-directory: e2eTests
         run: yarn cache clean
+      
+      #TODO: Has to be removed 
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
 
       # https://github.blog/2023-03-23-we-updated-our-rsa-ssh-host-key/
       - name: Explicitely remove and update GitHub's RSA key

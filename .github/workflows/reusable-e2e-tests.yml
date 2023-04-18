@@ -87,6 +87,8 @@ jobs:
     steps:
       - name: Explicitely add GitHub's RSA key if it's not added to known_hosts
         run: |
+          [ -d ~/.ssh ] || mkdir ~/.ssh
+          [ -f ~/.ssh/known_hosts ] || touch ~/.ssh/known_hosts
           # Check if the github.com host key is already in known_hosts
           if ! ssh-keygen -F github.com &>/dev/null; then
             # If it's not present, add it to known_hosts

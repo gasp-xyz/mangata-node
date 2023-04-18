@@ -111,7 +111,7 @@ jobs:
     secrets: inherit
     with:
       e2eBranch: ${{ github.event.inputs.e2eBranch }}
-      targetWs: "dev"
+      targetEnv: "dev"
   
   clean-up-fungible:
     name: Delete fungible environment

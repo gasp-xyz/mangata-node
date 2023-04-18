@@ -24,7 +24,7 @@ jobs:
     runs-on: [self-hosted, compile]
     timeout-minutes: 180
     env:
-      ENV_REF: ${{ inputs.targetWs || format('pr-{0}', github.event.number) }}
+      ENV_REF: ${{ inputs.targetEnv || format('pr-{0}', github.event.number) }}
       E2EBRANCHNAME: "main"
     steps:
       ####IDK, but this is neccesary for reports

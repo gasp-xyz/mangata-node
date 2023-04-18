@@ -151,8 +151,11 @@ jobs:
         run: yarn cache clean
 
       # https://github.blog/2023-03-23-we-updated-our-rsa-ssh-host-key/
-      - name: Explicitely remote and update GitHub's RSA key
-        run: ssh-keygen -R github.com && curl -L https://api.github.com/meta | jq -r '.ssh_keys | .[]' | sed -e 's/^/github.com /' >> ~/.ssh/known_hosts
+      - name: Explicitely remove and update GitHub's RSA key
+        run: |
+          ssh-keygen -R github.com
+          mkdir -p ~/.ssh && touch ~/.ssh/known_hosts
+          curl -L https://api.github.com/meta | jq -r '.ssh_keys | .[]' | sed -e 's/^/github.com /' >> ~/.ssh/known_hosts
       
       - name: Install e2e tests dependencies
         working-directory: e2eTests

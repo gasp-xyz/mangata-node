@@ -57,20 +57,20 @@ jobs:
         include:
           - command: "yarn test-parallel --max-workers=32"
             fast: false
-          # - command: "yarn test-sequential-no-bootstrap"
-          #   fast: false
-          # - command: "yarn test-seqgasless"
-          #   fast: false
-          # - command: "yarn test-bootstrap"
-          #   fast: false
-          # - command: "yarn test-rewards-bootstrap"
-          #   fast: false
-          # - command: "yarn test-sequential-autocompound"
-          #   fast: true
-          # - command: "yarn test-poolliquidity"
-          #   fast: true
-          # - command: "yarn test-governance"
-          #   fast: true
+          - command: "yarn test-sequential-no-bootstrap"
+            fast: false
+          - command: "yarn test-seqgasless"
+            fast: false
+          - command: "yarn test-bootstrap"
+            fast: false
+          - command: "yarn test-rewards-bootstrap"
+            fast: false
+          - command: "yarn test-sequential-autocompound"
+            fast: true
+          - command: "yarn test-poolliquidity"
+            fast: true
+          - command: "yarn test-governance"
+            fast: true
 
     runs-on: [self-hosted, compile]
     timeout-minutes: 180
@@ -86,7 +86,7 @@ jobs:
       PARACHAIN_DOCKER_IMAGE: ${{ inputs.parachainDocker || format('mangatasolutions/mangata-node:{0}', inputs.globalVersion) }}
     steps:
      
-      - uses: actions/checkout@v3.5.2 ####IDK, but this is neccesary for reports
+      - uses: actions/checkout@v3 ####IDK, but this is neccesary for reports
       - name: Adapt if fast runtime
         if:  ${{  !contains(env.PARACHAIN_DOCKER_IMAGE, 'fast') && matrix.fast == true }}
         run: echo "PARACHAIN_DOCKER_IMAGE=${{ env.PARACHAIN_DOCKER_IMAGE }}-fast" >> $GITHUB_ENV
@@ -123,28 +123,17 @@ jobs:
           echo "${{ env.E2EBRANCHNAME }}"
 
       - name: Checkout tests
-        uses: actions/checkout@v3.5.2
+        uses: actions/checkout@v3
         with:
           repository: mangata-finance/mangata-e2e
           ref: "${{ env.E2EBRANCHNAME }}"
           path: e2eTests
-          ssh-strict: false
-      
-      - name: Explicitely add GitHub's RSA key if it's not added to known_hosts
-        run: |
-          [ -d ${HOME}/.ssh ] || mkdir ${HOME}/.ssh
-          [ -f ${HOME}/.ssh/known_hosts ] || touch ${HOME}/.ssh/known_hosts
-          # Check if the github.com host key is already in known_hosts
-          if ! ssh-keygen -F github.com &>/dev/null; then
-            # If it's not present, add it to known_hosts
-            ssh-keyscan github.com >> ${HOME}/.ssh/known_hosts
-          fi
 
       - uses: actions/setup-node@v3
         with:
           node-version: '16'
-          # cache: 'yarn'
-          # cache-dependency-path: '**/yarn.lock'
+          cache: 'yarn'
+          cache-dependency-path: '**/yarn.lock'
 
       - name: Print parachain docker image reference
         run: |
@@ -157,10 +146,6 @@ jobs:
       - name: Install parachain launch dependencies
         working-directory: launch
         run: yarn
-      
-      # - name: Clean cache
-      #   working-directory: e2eTests
-      #   run: yarn cache clean
       
       - name: Install e2e tests dependencies
         working-directory: e2eTests

@@ -153,6 +153,8 @@ jobs:
       #TODO: Has to be removed 
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
+        with:
+          sudo: false
 
       # https://github.blog/2023-03-23-we-updated-our-rsa-ssh-host-key/
       - name: Explicitely remove and update GitHub's RSA key

@@ -7,8 +7,8 @@ on:
         type: string
         required: false
         default: "main"
-      targetWs:
-        description: "full ws path"
+      targetEnv:
+        description: "env name"
         type: string
         required: false
         default: "dev"

@@ -130,15 +130,15 @@ jobs:
           path: e2eTests
           ssh-strict: false
       
-      # - name: Explicitely add GitHub's RSA key if it's not added to known_hosts
-      #   run: |
-      #     [ -d ~/.ssh ] || mkdir ~/.ssh
-      #     [ -f ~/.ssh/known_hosts ] || touch ~/.ssh/known_hosts
-      #     # Check if the github.com host key is already in known_hosts
-      #     if ! ssh-keygen -F github.com &>/dev/null; then
-      #       # If it's not present, add it to known_hosts
-      #       ssh-keyscan github.com >> ~/.ssh/known_hosts
-      #     fi
+      - name: Explicitely add GitHub's RSA key if it's not added to known_hosts
+        run: |
+          [ -d ${HOME}/.ssh ] || mkdir ${HOME}/.ssh
+          [ -f ${HOME}/.ssh/known_hosts ] || touch ${HOME}/.ssh/known_hosts
+          # Check if the github.com host key is already in known_hosts
+          if ! ssh-keygen -F github.com &>/dev/null; then
+            # If it's not present, add it to known_hosts
+            ssh-keyscan github.com >> ${HOME}/.ssh/known_hosts
+          fi
 
       - uses: actions/setup-node@v3
         with:

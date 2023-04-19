@@ -20,7 +20,8 @@ permissions:
 
 jobs:
   performance-tests:
-    runs-on: ubuntu-latest
+    # Test self-hosted
+    runs-on: [self-hosted, compile]
     timeout-minutes: 180
     env:
       ENV_REF: ${{ inputs.targetEnv || format('pr-{0}', github.event.number) }}

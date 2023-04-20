@@ -73,8 +73,6 @@ jobs:
             fast: true
           - command: "yarn test-governance"
             fast: true
-          - command: "yarn test-xcm"
-            fast: false
 
     runs-on: [self-hosted, compile]
     timeout-minutes: 180

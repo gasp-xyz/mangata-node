@@ -34,7 +34,7 @@ jobs:
         uses: tj-actions/branch-names@v4.9
 
       - name: Set Configuration - Develop
-        if: contains(github.event.inputs.targetEnv, 'dev')
+        if: "${{ github.event.inputs.targetEnv == 'dev' }}"
         run:  |
           echo 'TEST_SUDO_NAME=${{ secrets.DEV_SUDO_NAME }}' >> $GITHUB_ENV
 

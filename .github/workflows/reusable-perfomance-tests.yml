@@ -7,6 +7,10 @@ on:
         type: string
         required: false
         default: "main"
+      targetEnv:
+        description: "env name"
+        type: string
+        required: false
 
 permissions:
   contents: write
@@ -19,7 +23,7 @@ jobs:
     runs-on: [self-hosted, compile]
     timeout-minutes: 180
     env:
-      ENV_REF: ${{ format('pr-{0}', github.event.number) }}
+      ENV_REF: ${{ inputs.targetEnv || format('pr-{0}', github.event.number) }}
       E2EBRANCHNAME: "main"
     steps:
       ####IDK, but this is neccesary for reports
@@ -28,6 +32,11 @@ jobs:
       - name: E2E- Get branch name
         id: branch-name
         uses: tj-actions/branch-names@v4.9
+
+      - name: Set Configuration - Develop
+        if: "${{ inputs.targetEnv == 'dev' }}"
+        run:  |
+          echo 'TEST_SUDO_NAME=${{ secrets.DEV_SUDO_NAME }}' >> $GITHUB_ENV
 
       - name: E2E- Calculate if run e2e feature branch or main.
         run: |
@@ -78,3 +87,7 @@ jobs:
             ./e2e/performance/enqueued.txt
             ./e2e/performance/executed.txt
             ./e2e/performance/pending.txt
+
+      - name: Fix permissions on self-hosted runner
+        if: always()
+        run: chown -R 1004:1005 $GITHUB_WORKSPACE

@@ -176,6 +176,7 @@ jobs:
 
       - name: Test Report
         uses: dorny/test-reporter@v1.6.0
+        continue-on-error: true
         if: success() || failure() # run this step even if previous step failed
         with:
           name: E2E report ${{ matrix.command }} # Name of the check run which will be created
@@ -214,3 +215,7 @@ jobs:
         if: always()
         working-directory: launch
         run: yarn down
+
+      - name: Fix permissions on self-hosted runner
+        if: always()
+        run: chown -R 1004:1005 $GITHUB_WORKSPACE

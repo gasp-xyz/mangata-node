@@ -6753,7 +6753,7 @@ dependencies = [
 [[package]]
 name = "parachain-staking"
 version = "3.0.0"
-source = "git+https://github.com/mangata-finance//moonbeam?branch=fix/delegator-reward-event#cb9f9fa458c40e606e80f3d1605adfc14b1b6e45"
+source = "git+https://github.com/mangata-finance//moonbeam?branch=mangata-dev#ad9630465bb706276d1d7c2b998d66e9095a23c4"
 dependencies = [
  "frame-benchmarking",
  "frame-support",

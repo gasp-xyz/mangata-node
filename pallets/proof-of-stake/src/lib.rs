@@ -159,6 +159,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// Claims liquidity mining rewards
 		#[transactional]
 		#[pallet::call_index(0)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::claim_rewards_v2())]
@@ -176,7 +177,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		// Disabled pool demotion
+		/// Enables/disables pool for liquidity mining rewards
 		#[pallet::call_index(1)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::update_pool_promotion())]
 		pub fn update_pool_promotion(
@@ -197,6 +198,12 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Increases number of tokens used for liquidity mining purposes.
+		///
+		/// Parameters:
+		/// - liquidity_token_id - id of the token
+		/// - amount - amount of the token
+		/// - use_balance_from - where from tokens should be used
 		#[transactional]
 		#[pallet::call_index(2)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::activate_liquidity_v2())]
@@ -216,6 +223,7 @@ pub mod pallet {
 			)
 		}
 
+		/// Decreases number of tokens used for liquidity mining purposes
 		#[transactional]
 		#[pallet::call_index(3)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::deactivate_liquidity_v2())]
@@ -488,6 +496,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 }
 
 impl<T: Config> LiquidityMiningApi for Pallet<T> {
+	/// Distributs liquidity mining rewards between all the activated tokens based on their weight
 	fn distribute_rewards(liquidity_mining_rewards: Balance) {
 		let _ = PromotedPoolRewards::<T>::try_mutate(|promoted_pools| -> DispatchResult {
 			// benchmark with max of X prom pools

@@ -12,49 +12,6 @@ use serial_test::serial;
 use sp_runtime::Permill;
 use test_case::test_case;
 
-//fn create_pool_W(): create_pool working assert (maps,acocounts values)  //DONE
-//fn create_pool_N_already_exists(): create_pool not working if pool already exists  //DONE
-//fn create_pool_N_already_exists_other_way(): create_pool not working if pool already exists other way around (create pool X-Y, but pool Y-X exists) //DONE
-//fn create_pool_N_not_enough_first_asset(): create_pool not working if account has not enough first asset for initial mint //DONE
-//fn create_pool_N_not_enough_second_asset(): create_pool not working if account has not enough second asset for initial mint //DONE
-//fn create_pool_N_same_asset(): create_pool not working if creating pool with same asset on both sides //DONE
-//fn create_pool_N_zero_first_amount(): create_pool not working if creating with 0 amount of first asset
-//fn create_pool_N_zero_second_amount(): create_pool not working if creating with 0 amount of first asset
-
-//fn sell_W(): sell working assert (maps,acocounts values) //DONE
-//fn sell_W_other_way(): sell working if sell order in different order as pool (sell pool X-Y, but pool Y-X exists), assert (maps,acocounts values) //DONE
-//fn sell_N_not_enough_selling_assset(): sell not working if not enough asset to sell //DONE
-//fn sell_N_no_such_pool(): sell not working if pool does not exist //DONE
-//fn sell_N_insufficient_output_amount(): sell not working if insufficient_output_amount //DONE
-//fn sell_N_zero_amount(): sell not working if trying to sell 0 asset
-
-//fn buy_W(): buy working assert (maps,acocounts values) //DONE
-//fn buy_W_other_way(): buy working if buy order in different order as pool (buy pool X-Y, but pool Y-X exists), assert (maps,acocounts values) //DONE
-//fn buy_N_not_enough_selling_assset(): buy not working if not enough asset to sell //DONE
-//fn buy_N_not_enough_reserve(): buy not working if not enough liquidity in pool //DONE
-//fn buy_N_no_such_pool(): buy not working if pool does not exist //DONE
-//fn buy_N_insufficient_input_amount(): sell not working if insufficient_output_amount
-//fn buy_N_zero_amount(): buy not working if trying to buy 0 asset
-
-//fn mint_W(): mint working assert (maps,acocounts values) //DONE
-//fn mint_W_other_way(): mint working if mint order in different order as pool (mint pool X-Y, but pool Y-X exists), assert (maps,acocounts values) //DONE
-//fn mint_N_no_such_pool(): mint not working if pool does not exist //DONE
-//fn mint_N_not_enough_first_asset(): mint not working, not enough first asset to mint with //DONE
-//fn mint_N_not_enough_second_asset(): mint not working, not enough second asset to mint with //DONE
-//fn mint_N_second_token_amount_exceeded_expectations:  mint not working, required more second token amount then expected // DONE
-//fn mint_W_no_expected_argument:  mint works when providing only 3 arguments // DONE
-//fn min_N_zero_amount(): mint not working if trying to mint 0 asset
-
-//fn burn_W(): burn working assert (maps,acocounts values) //DONE
-//fn burn_W_other_way(): burn working if burn order in different order as pool (burn pool X-Y, but pool Y-X exists), assert (maps,acocounts values) //DONE
-//fn burn_N_no_such_pool(): burn not working if pool does not exist //DONE
-//fn burn_N_not_enough_liquidity_asset(): burn not enough liquidity asset in liquidity pool to burn //DONE
-//fn burn_N_zero_amount(): burn not working if trying to burn 0 asset
-
-//liquidity assets after trade, after burn, after mint
-
-// W - should work
-// N - should not work
 const DUMMY_USER_ID: u128 = 2;
 const TRADER_ID: u128 = 3;
 

@@ -60,7 +60,6 @@ benchmarks! {
 		let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 		let non_native_asset_id2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 
-	   // Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), 40000000000000000000, non_native_asset_id2.into(), 60000000000000000000).unwrap();
 		let liquidity_asset_id : TokenId= <T as Config>::Currency::create(&caller, ((40000000000000000000_u128/2_u128) + (60000000000000000000_u128/2_u128)).into()).unwrap().into();
 	   PoS::<T>::update_pool_promotion(RawOrigin::Root.into(), liquidity_asset_id, 1u8).unwrap();
 
@@ -122,7 +121,6 @@ benchmarks! {
 		let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 		let non_native_asset_id2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 
-	   // Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), 40000000000000000000, non_native_asset_id2.into(), 60000000000000000000).unwrap();
 		let liquidity_asset_id : TokenId= <T as Config>::Currency::create(&caller, ((40000000000000000000_u128/2_u128) + (60000000000000000000_u128/2_u128)).into()).unwrap().into();
 	   PoS::<T>::update_pool_promotion(RawOrigin::Root.into(), liquidity_asset_id, 1u8).unwrap();
 
@@ -167,7 +165,6 @@ benchmarks! {
 		let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 		let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 		let non_native_asset_id2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-	   // Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), non_native_asset_id1.into(), 40000000000000000000, non_native_asset_id2.into(), 60000000000000000000).unwrap();
 		let liquidity_asset_id : TokenId= <T as Config>::Currency::create(&caller, ((40000000000000000000_u128/2_u128) + (60000000000000000000_u128/2_u128)).into()).unwrap().into();
 		PoS::<T>::enable(liquidity_asset_id, 1u8);
 
@@ -197,73 +194,5 @@ benchmarks! {
 		);
 	}
 
-	// proof_of_stake_compound_rewards {
-	// 	 let other: T::AccountId = account("caller1", 0, 0);
-	// 	 let caller: T::AccountId = whitelisted_caller();
-	// 	 let reward_ratio = 1_000_000;
-	// 	 let initial_amount:mangata_types::Balance = 1_000_000_000;
-	// 	 let pool_amount:mangata_types::Balance = initial_amount / 2;
-	//
-	// 	 let next_asset_id: TokenId = <T as Config>::Currency::get_next_currency_id().into();
-	// 	 let asset_id_1: TokenId;
-	// 	 let asset_id_2: TokenId;
-	// 	 if next_asset_id == 0 {
-	// 		 // in test there is no other currencies created
-	// 		 asset_id_1 = <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-	// 		 <T as Config>::Currency::mint(asset_id_1.into(), &other, (initial_amount * reward_ratio).into()).unwrap();
-	// 		 asset_id_2 = <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-	// 		 <T as Config>::Currency::mint(asset_id_2.into(), &other, (initial_amount * reward_ratio).into()).unwrap();
-	// 	 } else {
-	// 		 // in bench the genesis sets up the assets
-	// 		 asset_id_1 = <T as Config>::NativeCurrencyId::get().into();
-	// 		 <T as Config>::Currency::mint(asset_id_1.into(), &caller, initial_amount.into()).unwrap();
-	// 		 <T as Config>::Currency::mint(asset_id_1.into(), &other, (initial_amount * reward_ratio).into()).unwrap();
-	// 		 asset_id_2 = <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-	// 		 <T as Config>::Currency::mint(asset_id_2.into(), &other, (initial_amount * reward_ratio).into()).unwrap();
-	// 	 }
-	//
-	// 	 let liquidity_asset_id = asset_id_2 + 1;
-	// 	 <pallet_issuance::Pallet<T> as ComputeIssuance>::initialize();
-	//
-	// 	 Xyk::<T>::create_pool(RawOrigin::Signed(caller.clone().into()).into(), asset_id_1.into(), pool_amount, asset_id_2.into(), pool_amount).unwrap();
-	// 	 <pallet_proof_of_stake::Pallet<T>>::update_pool_promotion(RawOrigin::Root.into(), liquidity_asset_id, 1u8).unwrap();
-	// 	 <pallet_proof_of_stake::Pallet<T>>::activate_liquidity_v2(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id, pool_amount, None).unwrap();
-	// 	 // mint for other to split the rewards rewards_ratio:1
-	// 	 Xyk::<T>::mint_liquidity(
-	// 		 RawOrigin::Signed(other.clone().into()).into(),
-	// 		 asset_id_1,
-	// 		 asset_id_2,
-	// 		 pool_amount * reward_ratio,
-	// 		 pool_amount * reward_ratio + 1,
-	// 	 ).unwrap();
-	//
-	// 	 frame_system::Pallet::<T>::set_block_number(50_000u32.into());
-	// 	 <pallet_issuance::Pallet<T> as ComputeIssuance>::compute_issuance(1);
-	//
-	// 	 let mut pre_pool_balance =Xyk::<T>::asset_pool((asset_id_1, asset_id_2));
-	// 	 let rewards_to_claim =<pallet_proof_of_stake::Pallet<T> as ProofOfStakeRewardsApi<T::AccountId>>::calculate_rewards_amount_v2(caller.clone(), liquidity_asset_id).unwrap();
-	// 	 let swap_amount =Xyk::<T>::calculate_balanced_sell_amount(rewards_to_claim, pre_pool_balance.0).unwrap();
-	// 	 let balance_native_before = <T as Config>::Currency::free_balance(<T as Config>::NativeCurrencyId::get().into(), &caller).into();
-	// 	 let balance_asset_before = <T as Config>::Currency::free_balance(liquidity_asset_id.into(), &caller).into();
-	// 	 pre_pool_balance =Xyk::<T>::asset_pool((asset_id_1, asset_id_2));
-	//
-	//  }: {<pallet_proof_of_stake::Pallet<T>>::compound_rewards(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id.into(), Permill::one())}
-	//  verify {
-	//
-	// 	 assert_eq!(
-	// 		 <pallet_proof_of_stake::Pallet<T> as ProofOfStakeRewardsApi<T::AccountId>>::calculate_rewards_amount_v2(caller.clone(), liquidity_asset_id).unwrap(),
-	// 		 (0_u128)
-	// 	 );
-	//
-	// 	 let balance_native_after = <T as Config>::Currency::free_balance(<T as Config>::NativeCurrencyId::get().into(), &caller).into();
-	// 	 let balance_asset_after = <T as Config>::Currency::free_balance(liquidity_asset_id.into(), &caller).into();
-	// 	 // surplus asset amount
-	// 	 assert!(balance_native_before < balance_native_after);
-	// 	 assert_eq!(balance_asset_before, balance_asset_after);
-	//
-	// 	 let post_pool_balance =Xyk::<T>::asset_pool((asset_id_1, asset_id_2));
-	// 	 assert!( pre_pool_balance.0 < post_pool_balance.0);
-	// 	 assert!( pre_pool_balance.1 >= post_pool_balance.1);
-	//  }
 	impl_benchmark_test_suite!(PoS, crate::mock::new_test_ext(), crate::mock::Test)
 }

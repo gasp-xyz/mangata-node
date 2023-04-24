@@ -13,12 +13,12 @@ serde = { version = "1.0.126", features = ["derive"], optional = true }
 
 # Substrate packages
 
-sp-api = { version = '4.0.0-dev', default-features = false , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-blockchain = { version = '4.0.0-dev', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-rpc = { version = '6.0.0', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-core = { version = '7.0.0', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-std = { version = '5.0.0', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-runtime = { version = '7.0.0', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-api = { version = '4.0.0-dev', default-features = false , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.40" }
+sp-blockchain = { version = '4.0.0-dev', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.40" }
+sp-rpc = { version = '6.0.0', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.40" }
+sp-core = { version = '7.0.0', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.40" }
+sp-std = { version = '5.0.0', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.40" }
+sp-runtime = { version = '7.0.0', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.40" }
 
 # local packages
 

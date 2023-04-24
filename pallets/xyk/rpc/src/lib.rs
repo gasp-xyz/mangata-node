@@ -164,12 +164,10 @@ where
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<XYKRpcResult<Balance>> {
 		let api = self.client.runtime_api();
-		let at = BlockId::<Block>::hash(at.unwrap_or_else(||
-            // If the block hash is not supplied assume the best block.
-            self.client.info().best_hash));
+		let at = self.client.info().best_hash;
 
 		let runtime_api_result = api.calculate_sell_price(
-			&at,
+			at,
 			input_reserve.try_into_balance()?,
 			output_reserve.try_into_balance()?,
 			sell_amount.try_into_balance()?,
@@ -191,12 +189,10 @@ where
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<XYKRpcResult<Balance>> {
 		let api = self.client.runtime_api();
-		let at = BlockId::<Block>::hash(at.unwrap_or_else(||
-            // If the block hash is not supplied assume the best block.
-            self.client.info().best_hash));
+		let at = self.client.info().best_hash;
 
 		let runtime_api_result = api.calculate_buy_price(
-			&at,
+			at,
 			input_reserve.try_into_balance()?,
 			output_reserve.try_into_balance()?,
 			buy_amount.try_into_balance()?,
@@ -218,12 +214,10 @@ where
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<XYKRpcResult<Balance>> {
 		let api = self.client.runtime_api();
-		let at = BlockId::<Block>::hash(at.unwrap_or_else(||
-            // If the block hash is not supplied assume the best block.
-            self.client.info().best_hash));
+		let at = self.client.info().best_hash;
 
 		let runtime_api_result = api.calculate_sell_price_id(
-			&at,
+			at,
 			sold_token_id,
 			bought_token_id,
 			sell_amount.try_into_balance()?,
@@ -245,12 +239,10 @@ where
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<XYKRpcResult<Balance>> {
 		let api = self.client.runtime_api();
-		let at = BlockId::<Block>::hash(at.unwrap_or_else(||
-            // If the block hash is not supplied assume the best block.
-            self.client.info().best_hash));
+		let at = self.client.info().best_hash;
 
 		let runtime_api_result = api.calculate_buy_price_id(
-			&at,
+			at,
 			sold_token_id,
 			bought_token_id,
 			buy_amount.try_into_balance()?,
@@ -272,12 +264,10 @@ where
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<RpcAmountsResult<Balance>> {
 		let api = self.client.runtime_api();
-		let at = BlockId::<Block>::hash(at.unwrap_or_else(||
-            // If the block hash is not supplied assume the best block.
-            self.client.info().best_hash));
+		let at = self.client.info().best_hash;
 
 		let runtime_api_result = api.get_burn_amount(
-			&at,
+			at,
 			first_asset_id,
 			second_asset_id,
 			liquidity_asset_amount.try_into_balance()?,
@@ -298,11 +288,9 @@ where
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<XYKRpcResult<Balance>> {
 		let api = self.client.runtime_api();
-		let at = BlockId::<Block>::hash(at.unwrap_or_else(||
-            // If the block hash is not supplied assume the best block.
-            self.client.info().best_hash));
+		let at = self.client.info().best_hash;
 
-		api.get_max_instant_burn_amount(&at, user, liquidity_asset_id).map_err(|e| {
+		api.get_max_instant_burn_amount(at, user, liquidity_asset_id).map_err(|e| {
 			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
 				1,
 				"Unable to serve the request",
@@ -318,11 +306,9 @@ where
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<XYKRpcResult<Balance>> {
 		let api = self.client.runtime_api();
-		let at = BlockId::<Block>::hash(at.unwrap_or_else(||
-            // If the block hash is not supplied assume the best block.
-            self.client.info().best_hash));
+		let at = self.client.info().best_hash;
 
-		api.get_max_instant_unreserve_amount(&at, user, liquidity_asset_id)
+		api.get_max_instant_unreserve_amount(at, user, liquidity_asset_id)
 			.map_err(|e| {
 				JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
 					1,
@@ -339,11 +325,9 @@ where
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<XYKRpcResult<Balance>> {
 		let api = self.client.runtime_api();
-		let at = BlockId::<Block>::hash(at.unwrap_or_else(||
-            // If the block hash is not supplied assume the best block.
-            self.client.info().best_hash));
+		let at = self.client.info().best_hash;
 
-		let runtime_api_result = api.calculate_rewards_amount(&at, user, liquidity_asset_id);
+		let runtime_api_result = api.calculate_rewards_amount(at, user, liquidity_asset_id);
 
 		runtime_api_result.map_err(|e| {
 			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
@@ -361,12 +345,10 @@ where
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<XYKRpcResult<Balance>> {
 		let api = self.client.runtime_api();
-		let at = BlockId::<Block>::hash(at.unwrap_or_else(||
-            // If the block hash is not supplied assume the best block.
-            self.client.info().best_hash));
+		let at = self.client.info().best_hash;
 
 		api.calculate_balanced_sell_amount(
-			&at,
+			at,
 			total_amount.try_into_balance()?,
 			reserve_amount.try_into_balance()?,
 		)

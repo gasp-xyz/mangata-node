@@ -1654,15 +1654,10 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 		.checked_add(1)
 		.ok_or(Error::<T>::MathOverflow)?;
 
-		// for future implementation of min fee if necessary
-		// let min_fee: u128 = 0;
-		// if buy_and_burn_amount + treasury_amount + pool_fee_amount < min_fee {
-		//     buy_and_burn_amount = min_fee * Self::total_fee() / T::BuyAndBurnFeePercentage::get();
-		//     treasury_amount = min_fee * Self::total_fee() / T::TreasuryFeePercentage::get();
-		//     pool_fee_amount = min_fee - buy_and_burn_amount - treasury_amount;
-		// }
-
-		// Get token reserves
+		let total_fees = buy_and_burn_amount
+			.checked_add(treasury_amount)
+			.and_then(|v| v.checked_add(pool_fee_amount))
+			.ok_or(Error::<T>::MathOverflow)?;
 
 		// MAX: 2R
 		let (input_reserve, output_reserve) =
@@ -1674,11 +1669,12 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 		let bought_asset_amount =
 			Pallet::<T>::calculate_sell_price(input_reserve, output_reserve, sold_asset_amount)?;
 
+		println!("pre_validate_sell_asset::sold_asset_amount: {}", sold_asset_amount);
 		// Ensure user has enough tokens to sell
 		<T as Config>::Currency::ensure_can_withdraw(
 			sold_asset_id.into(),
 			sender,
-			sold_asset_amount.into(),
+			total_fees.into(),
 			WithdrawReasons::all(),
 			// Does not fail due to earlier ensure
 			Default::default(),
@@ -1713,8 +1709,10 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 		),
 		DispatchError,
 	> {
-		ensure!(swap_token_list.len() > 2_usize, Error::<T>::MultiswapShouldBeAtleastTwoHops);
-		// Unwraps are fine due to above ensure
+		ensure!(
+			!T::MaintenanceStatusProvider::is_maintenance(),
+			Error::<T>::TradingBlockedByMaintenanceMode
+		);
 		let sold_asset_id =
 			*swap_token_list.get(0).ok_or(Error::<T>::MultiswapShouldBeAtleastTwoHops)?;
 		let bought_asset_id =
@@ -1920,12 +1918,14 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 		),
 		DispatchError,
 	> {
+		ensure!(
+			!T::MaintenanceStatusProvider::is_maintenance(),
+			Error::<T>::TradingBlockedByMaintenanceMode
+		);
 		// Ensure not buying zero amount
 		ensure!(!final_bought_asset_amount.is_zero(), Error::<T>::ZeroAmount,);
 		ensure!(!max_amount_in.is_zero(), Error::<T>::ZeroAmount,);
 
-		ensure!(swap_token_list.len() > 2_usize, Error::<T>::MultiswapShouldBeAtleastTwoHops);
-		// Unwraps are fine due to above ensure
 		let sold_asset_id =
 			*swap_token_list.get(0).ok_or(Error::<T>::MultiswapShouldBeAtleastTwoHops)?;
 		let bought_asset_id =
@@ -2253,6 +2253,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				.into(),
 				ExistenceRequirement::KeepAlive,
 			)?;
+
+
 			<T as Config>::Currency::transfer(
 				bought_asset_id.into(),
 				&vault,
@@ -2268,7 +2270,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				sold_asset_amount
 					.checked_sub(treasury_amount)
 					.and_then(|v| v.checked_sub(buy_and_burn_amount))
-					.ok_or_else(|| DispatchError::from(Error::<T>::SoldAmountTooLow))?,
+				.ok_or_else(|| DispatchError::from(Error::<T>::SoldAmountTooLow))?,
 			);
 			let output_reserve_updated = output_reserve.saturating_sub(bought_asset_amount);
 

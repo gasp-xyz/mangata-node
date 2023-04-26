@@ -917,7 +917,7 @@ fn buy_and_burn_sell_mangata() {
 	new_test_ext().execute_with(|| {
 		initialize_buy_and_burn();
 
-		XykStorage::sell_asset(RuntimeOrigin::signed(2), 0, 1, 50000000000000, 0).unwrap();
+		XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(2), vec![0, 1], 50000000000000, 0).unwrap();
 
 		assert_eq!(XykStorage::asset_pool((0, 1)), (149949999999998, 66733400066734));
 		assert_eq!(XykStorage::balance(0, 2), 850000000000000);
@@ -937,7 +937,7 @@ fn buy_and_burn_sell_has_mangata_pair() {
 	new_test_ext().execute_with(|| {
 		initialize_buy_and_burn();
 
-		XykStorage::sell_asset(RuntimeOrigin::signed(2), 1, 4, 50000000000000, 0).unwrap();
+		XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(2), vec![1, 4], 50000000000000, 0).unwrap();
 
 		assert_eq!(XykStorage::asset_pool((0, 1)), (99950024987505, 100050000000002));
 		assert_eq!(XykStorage::asset_pool((1, 4)), (149949999999998, 66733400066734));
@@ -959,7 +959,7 @@ fn buy_and_burn_sell_none_have_mangata_pair() {
 	new_test_ext().execute_with(|| {
 		initialize_buy_and_burn();
 
-		XykStorage::sell_asset(RuntimeOrigin::signed(2), 4, 1, 50000000000000, 0).unwrap();
+		XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(2), vec![4, 1], 50000000000000, 0).unwrap();
 
 		assert_eq!(XykStorage::asset_pool((0, 1)), (100000000000000, 100000000000000));
 		assert_eq!(XykStorage::asset_pool((1, 4)), (66733400066734, 149949999999998));
@@ -1270,7 +1270,7 @@ fn sell_W() {
 		System::set_block_number(1);
 		initialize();
 
-		XykStorage::sell_asset(RuntimeOrigin::signed(2), 1, 4, 20000000000000000000, 0).unwrap(); // selling 20000000000000000000 assetId 0 of pool 0 1
+		XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(2), vec![1, 4], 20000000000000000000, 0).unwrap(); // selling 20000000000000000000 assetId 0 of pool 0 1
 
 		assert_eq!(XykStorage::balance(1, 2), 940000000000000000000); // amount in user acc after selling
 		assert_eq!(XykStorage::balance(4, 2), 959959959959959959959); // amount in user acc after buying
@@ -1300,7 +1300,7 @@ fn sell_W_other_way() {
 	new_test_ext().execute_with(|| {
 		initialize();
 
-		XykStorage::sell_asset(RuntimeOrigin::signed(2), 4, 1, 30000000000000000000, 0).unwrap(); // selling 30000000000000000000 assetId 1 of pool 0 1
+		XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(2), vec![4, 1], 30000000000000000000, 0).unwrap(); // selling 30000000000000000000 assetId 1 of pool 0 1
 
 		assert_eq!(XykStorage::balance(1, 2), 973306639973306639973); // amount of asset 0 in user acc after selling
 		assert_eq!(XykStorage::balance(4, 2), 910000000000000000000); // amount of asset 1 in user acc after buying
@@ -1322,7 +1322,7 @@ fn sell_N_no_such_pool() {
 		initialize();
 
 		assert_err!(
-			XykStorage::sell_asset(RuntimeOrigin::signed(2), 0, 10, 250000, 0),
+			XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(2), vec![0, 10], 250000, 0),
 			Error::<Test>::NoSuchPool,
 		); // selling 250000 assetId 0 of pool 0 10 (only pool 0 1 exists)
 	});
@@ -1332,11 +1332,10 @@ fn sell_N_no_such_pool() {
 fn sell_N_not_enough_selling_assset() {
 	new_test_ext().execute_with(|| {
 		initialize();
+		// selling 1000000000000000000000 assetId 0 of pool 0 1 (user has only 960000000000000000000)
+		assert_ok!(XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(2), vec![1, 4], 1000000000000000000000, 0));
+		assert_event_emitted!(Event::MultiSwapFailedDueToNotEnoughAssets(2, vec![1, 4], 1000000000000000000000));
 
-		assert_err!(
-			XykStorage::sell_asset(RuntimeOrigin::signed(2), 1, 4, 1000000000000000000000, 0),
-			Error::<Test>::NotEnoughAssets,
-		); // selling 1000000000000000000000 assetId 0 of pool 0 1 (user has only 960000000000000000000)
 	});
 }
 
@@ -1353,10 +1352,10 @@ fn sell_W_insufficient_output_amount() {
 			vec![Event::PoolCreated(2, 1, 40000000000000000000, 4, 60000000000000000000)];
 		assert_eq_events!(expected_events.clone());
 
-		assert_ok!(XykStorage::sell_asset(RuntimeOrigin::signed(2), 1, 4, 250000, 500000)); // selling 250000 assetId 0 of pool 0 1, by the formula user should get 166333 asset 1, but is requesting 500000
+		assert_ok!(XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(2), vec![1, 4], 250000, 500000)); // selling 250000 assetId 0 of pool 0 1, by the formula user should get 166333 asset 1, but is requesting 500000
 
 		let mut new_events_0 =
-			vec![Event::SellAssetFailedDueToSlippage(2, 1, 250000, 4, 373874, 500000)];
+			vec![Event::MultiSellAssetFailedDueToSlippage(2, vec![1,4], 250000)];
 
 		expected_events.append(&mut new_events_0);
 		assert_eq_events!(expected_events.clone());
@@ -1401,7 +1400,7 @@ fn sell_N_zero_amount() {
 		initialize();
 
 		assert_err!(
-			XykStorage::sell_asset(RuntimeOrigin::signed(2), 1, 4, 0, 500000),
+			XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(2), vec![1, 4], 0, 500000),
 			Error::<Test>::ZeroAmount,
 		); // selling 0 assetId 0 of pool 0 1
 	});
@@ -1711,19 +1710,17 @@ fn multiswap_sell_with_two_hops_W() {
 }
 
 #[test]
-fn multiswap_sell_with_less_than_two_hops_fails_W() {
+fn multiswap_sell_with_single_hops_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
 		multi_initialize();
-
-		assert_err!(
+		assert_ok!(
 			XykStorage::multiswap_sell_asset(
 				RuntimeOrigin::signed(TRADER_ID),
 				vec![1, 2],
 				20000000000000000000,
 				0
 			),
-			Error::<Test>::MultiswapShouldBeAtleastTwoHops
 		);
 	});
 }
@@ -2331,19 +2328,17 @@ fn multiswap_buy_with_two_hops_W() {
 }
 
 #[test]
-fn multiswap_buy_with_less_than_two_hops_fails_W() {
+fn multiswap_buy_with_single_hops_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
 		multi_initialize();
-
-		assert_err!(
+		assert_ok!(
 			XykStorage::multiswap_buy_asset(
 				RuntimeOrigin::signed(TRADER_ID),
-				vec![1, 2],
+				vec![2, 1],
 				20000000000000000000,
-				2000000000000000000000
+				40000000000000000000,
 			),
-			Error::<Test>::MultiswapShouldBeAtleastTwoHops
 		);
 	});
 }
@@ -2679,7 +2674,7 @@ fn successful_sell_assets_does_not_charge_fee() {
 		initialize();
 		let first_token_balance = XykStorage::balance(1, DUMMY_USER_ID);
 		let post_info =
-			XykStorage::sell_asset(RuntimeOrigin::signed(2), 1, 4, first_token_balance, 0).unwrap();
+			XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(2), vec![1, 4], first_token_balance, 0).unwrap();
 		assert_eq!(post_info.pays_fee, Pays::No);
 	});
 }
@@ -2691,7 +2686,7 @@ fn unsuccessful_sell_assets_charges_fee() {
 		System::set_block_number(1);
 
 		//try to sell non owned, non existing tokens
-		let post_info = XykStorage::sell_asset(RuntimeOrigin::signed(2), 100, 200, 0, 0)
+		let post_info = XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(2), vec![100, 200], 0, 0)
 			.unwrap_err()
 			.post_info;
 		assert_eq!(post_info.pays_fee, Pays::Yes);
@@ -3456,7 +3451,7 @@ fn test_compound_calculate_balanced_swap_for_liquidity(amount: u128, reward: u12
 		let swap_amount = XykStorage::calculate_balanced_sell_amount(reward, pool).unwrap();
 		let swapped_amount = XykStorage::calculate_sell_price(pool, pool, swap_amount).unwrap();
 
-		XykStorage::sell_asset(RuntimeOrigin::signed(2), 0, 1, swap_amount, 0).unwrap();
+		XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(2), vec![0, 1], swap_amount, 0).unwrap();
 
 		XykStorage::mint_liquidity(RuntimeOrigin::signed(2), 1, 0, swapped_amount, u128::MAX)
 			.unwrap();
@@ -3578,7 +3573,7 @@ fn sell_N_maintenance_mode() {
 		MockMaintenanceStatusProvider::set_maintenance(true);
 
 		assert_err!(
-			XykStorage::sell_asset(RuntimeOrigin::signed(2), 1, 4, 20000000, 0),
+			XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(2), vec![1, 4], 20000000, 0),
 			Error::<Test>::TradingBlockedByMaintenanceMode,
 		);
 	});

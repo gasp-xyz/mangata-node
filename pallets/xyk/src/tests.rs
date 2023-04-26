@@ -981,8 +981,7 @@ fn buy_and_burn_buy_where_sold_is_mangata() {
 	new_test_ext().execute_with(|| {
 		initialize_buy_and_burn();
 
-		XykStorage::buy_asset(RuntimeOrigin::signed(2), 0, 1, 33266599933266, 50000000000001)
-			.unwrap();
+		XykStorage::buy_asset(RuntimeOrigin::signed(2), 0, 1, 33266599933266, 50000000000001).unwrap();
 
 		assert_eq!(XykStorage::asset_pool((0, 1)), (149949999999999, 66733400066734));
 		assert_eq!(XykStorage::balance(0, 2), 850000000000001);
@@ -1003,8 +1002,7 @@ fn buy_and_burn_buy_where_sold_has_mangata_pair() {
 	new_test_ext().execute_with(|| {
 		initialize_buy_and_burn();
 
-		XykStorage::buy_asset(RuntimeOrigin::signed(2), 1, 4, 33266599933266, 50000000000001)
-			.unwrap();
+		XykStorage::buy_asset(RuntimeOrigin::signed(2), 1, 4, 33266599933266, 50000000000001).unwrap();
 
 		assert_eq!(XykStorage::asset_pool((0, 1)), (99950024987507, 100050000000000));
 		assert_eq!(XykStorage::asset_pool((1, 4)), (149949999999999, 66733400066734));
@@ -1026,8 +1024,7 @@ fn buy_and_burn_buy_none_have_mangata_pair() {
 	new_test_ext().execute_with(|| {
 		initialize_buy_and_burn();
 
-		XykStorage::buy_asset(RuntimeOrigin::signed(2), 4, 1, 33266599933266, 50000000000001)
-			.unwrap();
+		XykStorage::buy_asset(RuntimeOrigin::signed(2), 4, 1, 33266599933266, 50000000000001).unwrap();
 
 		assert_eq!(XykStorage::asset_pool((0, 1)), (100000000000000, 100000000000000));
 		assert_eq!(XykStorage::asset_pool((1, 4)), (66733400066734, 149949999999999));
@@ -1836,14 +1833,7 @@ fn buy_W() {
 		initialize();
 
 		// buying 30000000000000000000 assetId 1 of pool 0 1
-		XykStorage::buy_asset(
-			RuntimeOrigin::signed(2),
-			1,
-			4,
-			30000000000000000000,
-			3000000000000000000000,
-		)
-		.unwrap();
+		XykStorage::buy_asset( RuntimeOrigin::signed(2), 1, 4, 30000000000000000000, 3000000000000000000000,) .unwrap();
 		assert_eq!(XykStorage::balance(1, 2), 919879638916750250752); // amount in user acc after selling
 		assert_eq!(XykStorage::balance(4, 2), 970000000000000000000); // amount in user acc after buying
 		assert_eq!(XykStorage::asset_pool((1, 4)), (80080240722166499498, 30000000000000000000));
@@ -1872,14 +1862,7 @@ fn buy_W_other_way() {
 		initialize();
 
 		// buying 30000000000000000000 assetId 0 of pool 0 1
-		XykStorage::buy_asset(
-			RuntimeOrigin::signed(2),
-			4,
-			1,
-			30000000000000000000,
-			3000000000000000000000,
-		)
-		.unwrap();
+		XykStorage::buy_asset( RuntimeOrigin::signed(2), 4, 1, 30000000000000000000, 3000000000000000000000,) .unwrap();
 		assert_eq!(XykStorage::balance(1, XykStorage::account_id()), 10000000000000000000); // amount of asset 1 in vault acc after creating pool
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 240361083249749247743); // amount of asset 2 in vault acc after creating pool
 		assert_eq!(XykStorage::balance(1, 2), 990000000000000000000); // amount in user acc after selling
@@ -1915,13 +1898,7 @@ fn buy_N_not_enough_reserve() {
 
 		// buying 70000000000000000000 assetId 0 of pool 0 1 , only 60000000000000000000 in reserve
 		assert_err!(
-			XykStorage::buy_asset(
-				RuntimeOrigin::signed(2),
-				1,
-				4,
-				70000000000000000000,
-				5000000000000000000000
-			),
+			XykStorage::buy_asset( RuntimeOrigin::signed(2), 1, 4, 70000000000000000000, 5000000000000000000000),
 			Error::<Test>::NotEnoughReserve,
 		);
 	});
@@ -1997,9 +1974,7 @@ fn buy_W_insufficient_input_amount_inner_function_NO_error_upon_bad_slippage() {
 		initialize();
 
 		// buying 150000 liquidity assetId 1 of pool 0 1
-		assert_ok!(<XykStorage as XykFunctionsTrait<AccountId>>::buy_asset(
-			2, 1, 4, 150000, 10, false
-		));
+		assert_ok!(<XykStorage as XykFunctionsTrait<AccountId>>::buy_asset( 2, 1, 4, 150000, 10, false));
 	});
 }
 
@@ -2095,12 +2070,7 @@ fn multiswap_buy_bad_slippage_charges_fee_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		assert_ok!(XykStorage::multiswap_buy_asset(
-			RuntimeOrigin::signed(TRADER_ID),
-			vec![1, 2, 3, 4, 5],
-			20000000000000000000,
-			200000000000000000
-		));
+		assert_ok!(XykStorage::multiswap_buy_asset( RuntimeOrigin::signed(TRADER_ID), vec![1, 2, 3, 4, 5], 20000000000000000000, 200000000000000000));
 
 		assert_eq!(XykStorage::balance(1, TRADER_ID), 999999399999999999997);
 		assert_eq!(XykStorage::balance(2, TRADER_ID), 1000000000000000000000);
@@ -2152,12 +2122,7 @@ fn multiswap_buy_bad_atomic_swap_charges_fee_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		assert_ok!(XykStorage::multiswap_buy_asset(
-			RuntimeOrigin::signed(TRADER_ID),
-			vec![1, 2, 3, 6, 5],
-			20000000000000000000,
-			200000000000000000
-		));
+		assert_ok!(XykStorage::multiswap_buy_asset( RuntimeOrigin::signed(TRADER_ID), vec![1, 2, 3, 6, 5], 20000000000000000000, 200000000000000000));
 
 		assert_eq!(XykStorage::balance(1, TRADER_ID), 999999399999999999997);
 		assert_eq!(XykStorage::balance(2, TRADER_ID), 1000000000000000000000);
@@ -2210,11 +2175,7 @@ fn multiswap_buy_not_enough_assets_pay_fees_fails_early_W() {
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
 		assert_err!(
-			XykStorage::multiswap_buy_asset(
-				RuntimeOrigin::signed(TRADER_ID),
-				vec![1, 2, 3, 6, 5],
-				2000000000000000000000000,
-				2000000000000000000000000
+			XykStorage::multiswap_buy_asset( RuntimeOrigin::signed(TRADER_ID), vec![1, 2, 3, 6, 5], 2000000000000000000000000, 2000000000000000000000000
 			),
 			Error::<Test>::NotEnoughAssets
 		);
@@ -2267,12 +2228,7 @@ fn multiswap_buy_just_enough_assets_pay_fee_but_not_to_swap_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		assert_ok!(XykStorage::multiswap_buy_asset(
-			RuntimeOrigin::signed(TRADER_ID),
-			vec![1, 2, 3, 4, 5],
-			100000000,
-			20000000
-		));
+		assert_ok!(XykStorage::multiswap_buy_asset( RuntimeOrigin::signed(TRADER_ID), vec![1, 2, 3, 4, 5], 100000000, 20000000));
 
 		assert_eq!(XykStorage::balance(1, TRADER_ID), 939997);
 		assert_eq!(XykStorage::balance(2, TRADER_ID), 1000000000000000000000);
@@ -3609,13 +3565,7 @@ fn buy_W_maintenance_mode() {
 
 		assert_err!(
 			// buying 30000000000000000000 assetId 1 of pool 0 1
-			XykStorage::buy_asset(
-				RuntimeOrigin::signed(2),
-				1,
-				4,
-				30000000000000000000,
-				3000000000000000000000,
-			),
+			XykStorage::buy_asset( RuntimeOrigin::signed(2), 1, 4, 30000000000000000000, 3000000000000000000000,),
 			Error::<Test>::TradingBlockedByMaintenanceMode,
 		);
 	});

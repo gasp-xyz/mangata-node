@@ -314,6 +314,7 @@ use pallet_issuance::ActivatedPoolQueryApi;
 use pallet_vesting_mangata::MultiTokenVestingLocks;
 use sp_arithmetic::{helpers_128bit::multiply_by_rational_with_rounding, per_things::Rounding};
 use sp_runtime::{
+	ModuleError,
 	traits::{
 		AccountIdConversion, AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member,
 		SaturatedConversion, Zero,
@@ -510,7 +511,7 @@ pub mod pallet {
 		AssetsMultiBuySwapped(T::AccountId, Vec<TokenId>, Balance, Balance),
 		MultiSellAssetFailedDueToSlippage(T::AccountId, Vec<TokenId>, Balance),
 		MultiBuyAssetFailedDueToSlippage(T::AccountId, Vec<TokenId>, Balance),
-		MultiSellAssetFailedOnAtomicSwap(T::AccountId, Vec<TokenId>, Balance),
+		MultiSellAssetFailedOnAtomicSwap(T::AccountId, Vec<TokenId>, Balance, ModuleError),
 		MultiBuyAssetFailedOnAtomicSwap(T::AccountId, Vec<TokenId>, Balance),
 		MultiSwapFailedDueToNotEnoughAssets(T::AccountId, Vec<TokenId>, Balance),
 	}
@@ -2499,11 +2500,16 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 					return Err(DispatchError::from(Error::<T>::MultiSwapFailedOnBadSlippage))
 				},
 				(_, true, Err(e)) if e != Error::<T>::MultiSwapFailedOnBadSlippage.into() => {
-					Pallet::<T>::deposit_event(Event::MultiSellAssetFailedOnAtomicSwap(
-						sender.clone(),
-						swap_token_list.clone(),
-						sold_asset_amount,
-					));
+					if let DispatchError::Module(module_err) = e.stripped(){
+						Pallet::<T>::deposit_event(Event::MultiSellAssetFailedOnAtomicSwap(
+							sender.clone(),
+							swap_token_list.clone(),
+							sold_asset_amount,
+							module_err,
+						));
+					}else{
+						panic!("blah blah blah")
+					}
 					return Err(DispatchError::from(Error::<T>::NonSlippageMultiSwapFailure))
 				},
 				(false, false, Err(e)) if e == Error::<T>::MultiSwapFailedOnBadSlippage.into() => {
@@ -2515,11 +2521,16 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 					return Ok(Default::default())
 				},
 				(false, false, Err(e)) if e != Error::<T>::MultiSwapFailedOnBadSlippage.into() => {
-					Pallet::<T>::deposit_event(Event::MultiSellAssetFailedOnAtomicSwap(
-						sender.clone(),
-						swap_token_list.clone(),
-						sold_asset_amount,
-					));
+					if let DispatchError::Module(module_err) = e{
+						Pallet::<T>::deposit_event(Event::MultiSellAssetFailedOnAtomicSwap(
+							sender.clone(),
+							swap_token_list.clone(),
+							sold_asset_amount,
+							module_err,
+						));
+					}else{
+						panic!("blah blah blah")
+					}
 					return Ok(Default::default())
 				},
 				(_, _, _) => return Err(DispatchError::from(Error::<T>::UnexpectedFailure)),
@@ -2868,11 +2879,16 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 					return Err(DispatchError::from(Error::<T>::InsufficientOutputAmount))
 				},
 				(_, true, Err(e)) if e != Error::<T>::MultiSwapFailedOnBadSlippage.into() => {
-					Pallet::<T>::deposit_event(Event::MultiBuyAssetFailedOnAtomicSwap(
-						sender.clone(),
-						swap_token_list.clone(),
-						bought_asset_amount,
-					));
+					if let DispatchError::Module(module_err) = e{
+						Pallet::<T>::deposit_event(Event::MultiSellAssetFailedOnAtomicSwap(
+							sender.clone(),
+							swap_token_list.clone(),
+							bought_asset_amount,
+							module_err,
+						));
+					}else{
+						panic!("blah blah blah")
+					}
 					return Err(DispatchError::from(Error::<T>::NonSlippageMultiSwapFailure))
 				},
 				(false, false, Err(e)) if e == Error::<T>::MultiSwapFailedOnBadSlippage.into() => {
@@ -2884,11 +2900,16 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 					return Ok(Default::default())
 				},
 				(false, false, Err(e)) if e != Error::<T>::MultiSwapFailedOnBadSlippage.into() => {
-					Pallet::<T>::deposit_event(Event::MultiBuyAssetFailedOnAtomicSwap(
-						sender.clone(),
-						swap_token_list.clone(),
-						bought_asset_amount,
-					));
+					if let DispatchError::Module(module_err) = e{
+						Pallet::<T>::deposit_event(Event::MultiSellAssetFailedOnAtomicSwap(
+							sender.clone(),
+							swap_token_list.clone(),
+							bought_asset_amount,
+							module_err,
+						));
+					}else{
+						panic!("blah blah blah")
+					}
 					return Ok(Default::default())
 				},
 				(_, _, _) => return Err(DispatchError::from(Error::<T>::UnexpectedFailure)),

@@ -651,6 +651,7 @@ pub mod pallet {
 		/// - `min_amount_out` - The minimum amount of bought asset that must be bought in order to not fail on slippage. Slippage failures still charge exchange commission.
 		#[pallet::call_index(1)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::sell_asset())]
+		#[deprecated(note = "multiswap_sell_asset should be used instead")]
 		pub fn sell_asset(
 			origin: OriginFor<T>,
 			sold_asset_id: TokenId,
@@ -722,6 +723,7 @@ pub mod pallet {
 		/// - `max_amount_in` - The maximum amount of sold asset that must be sold in order to not fail on slippage. Slippage failures still charge exchange commission.
 		#[pallet::call_index(3)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::buy_asset())]
+		#[deprecated(note = "multiswap_buy_asset should be used instead")]
 		pub fn buy_asset(
 			origin: OriginFor<T>,
 			sold_asset_id: TokenId,
@@ -1589,7 +1591,6 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 		let bought_asset_amount =
 			Pallet::<T>::calculate_sell_price(input_reserve, output_reserve, sold_asset_amount)?;
 
-		println!("pre_validate_sell_asset::sold_asset_amount: {}", sold_asset_amount);
 		// Ensure user has enough tokens to sell
 		<T as Config>::Currency::ensure_can_withdraw(
 			sold_asset_id.into(),

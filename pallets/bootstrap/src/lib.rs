@@ -134,9 +134,12 @@ use frame_support::{
 	transactional, PalletId,
 };
 use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
+
 use mangata_support::traits::{
-	AssetRegistryApi, GetMaintenanceStatusTrait, PoolCreateApi, RewardsApi,
+	AssetRegistryApi, GetMaintenanceStatusTrait, PoolCreateApi, ProofOfStakeRewardsApi,
 };
+use mangata_types::multipurpose_liquidity::ActivateKind;
+
 use mangata_types::{Balance, TokenId};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
@@ -234,9 +237,9 @@ pub mod pallet {
 					) {
 						MintedLiquidity::<T>::put((liq_asset_id, issuance)); // W:1
 						if PromoteBootstrapPool::<T>::get() {
-							T::RewardsApi::update_pool_promotion(
+							T::RewardsApi::enable(
 								liq_asset_id,
-								Some(T::DefaultBootstrapPromotedPoolWeight::get()),
+								T::DefaultBootstrapPromotedPoolWeight::get(),
 							);
 						}
 					} else {
@@ -270,7 +273,7 @@ pub mod pallet {
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
-	pub trait BootstrapBenchmarkingConfig: pallet_issuance::Config {}
+	pub trait BootstrapBenchmarkingConfig {}
 
 	#[cfg(not(feature = "runtime-benchmarks"))]
 	pub trait BootstrapBenchmarkingConfig {}
@@ -304,7 +307,11 @@ pub mod pallet {
 
 		type WeightInfo: WeightInfo;
 
-		type RewardsApi: RewardsApi<AccountId = Self::AccountId>;
+		type RewardsApi: ProofOfStakeRewardsApi<
+			Self::AccountId,
+			Balance = Balance,
+			CurrencyId = TokenId,
+		>;
 
 		type AssetRegistryApi: AssetRegistryApi;
 	}
@@ -1155,15 +1162,16 @@ impl<T: Config> Pallet<T> {
 
 		ProvisionAccounts::<T>::remove(who);
 
-		if activate_rewards && <T as Config>::RewardsApi::can_activate(liq_token_id) {
+		if activate_rewards && <T as Config>::RewardsApi::is_enabled(liq_token_id) {
 			let non_vested_rewards = second_token_rewards
 				.checked_add(first_token_rewards)
 				.ok_or(Error::<T>::MathOverflow)?;
 			if non_vested_rewards > 0 {
-				let activate_result = <T as Config>::RewardsApi::activate_liquidity_tokens(
-					who,
+				let activate_result = <T as Config>::RewardsApi::activate_liquidity(
+					who.clone(),
 					liq_token_id,
 					non_vested_rewards,
+					Some(ActivateKind::AvailableBalance),
 				);
 				if let Err(err) = activate_result {
 					log!(

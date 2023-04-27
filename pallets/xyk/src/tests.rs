@@ -1249,7 +1249,13 @@ fn buy_N_not_enough_selling_assset_mat() {
 		assert_ok!(
 			XykStorage::multiswap_buy_asset( RuntimeOrigin::signed(2), vec![1, 4], 59000000000000000000, 59000000000000000000000)
 		);
-		assert_event_emitted!(Event::MultiSwapFailedDueToNotEnoughAssets(2, vec![1, 4], 59000000000000000000));
+			Event::<Test>::MultiBuyAssetFailedOnAtomicSwap(
+				2,
+				vec![1, 4],
+				59000000000000000000,
+				module_err(Error::<Test>::MultiSwapNotEnoughAssets)
+			)
+		);
 	});
 }
 
@@ -1269,7 +1275,7 @@ fn buy_W_insufficient_input_amount() {
 		// buying 150000 liquidity assetId 1 of pool 0 1
 		assert_ok!(XykStorage::multiswap_buy_asset(RuntimeOrigin::signed(2), vec![1, 4], 150000, 10));
 		let mut new_events_0 =
-			vec![Event::MultiBuyAssetFailedDueToSlippage(2, vec![1, 4], 150000)];
+			vec![Event::MultiBuyAssetFailedOnAtomicSwap(2, vec![1, 4], 150000, module_err(Error::<Test>::MultiSwapFailedOnBadSlippage))];
 
 		expected_events.append(&mut new_events_0);
 		assert_eq_events!(expected_events.clone());
@@ -1417,11 +1423,14 @@ fn multiswap_buy_bad_slippage_charges_fee_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
+			// vec![Event::MultiBuyAssetFailedOnAtomicSwap(2, vec![1, 4], 150000, )];
+
 		let assets_swapped_event = crate::mock::RuntimeEvent::XykStorage(
-			crate::Event::<Test>::MultiBuyAssetFailedDueToSlippage(
+			crate::Event::<Test>::MultiBuyAssetFailedOnAtomicSwap(
 				TRADER_ID,
 				vec![1, 2, 3, 4, 5],
 				20000000000000000000,
+				module_err(Error::<Test>::MultiSwapFailedOnBadSlippage)
 			),
 		);
 
@@ -1575,15 +1584,14 @@ fn multiswap_buy_just_enough_assets_pay_fee_but_not_to_swap_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		let assets_swapped_event = crate::mock::RuntimeEvent::XykStorage(
-			crate::Event::<Test>::MultiSwapFailedDueToNotEnoughAssets(
+		assert_event_emitted!(
+			Event::<Test>::MultiBuyAssetFailedOnAtomicSwap(
 				TRADER_ID,
 				vec![1, 2, 3, 4, 5],
 				100000000,
-			),
+				module_err(Error::<Test>::MultiSwapNotEnoughAssets)
+			)
 		);
-
-		assert!(System::events().iter().any(|record| record.event == assets_swapped_event));
 	});
 }
 

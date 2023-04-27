@@ -525,7 +525,7 @@ pub mod pallet {
 		AssetsMultiSellSwapped(T::AccountId, Vec<TokenId>, Balance, Balance),
 		AssetsMultiBuySwapped(T::AccountId, Vec<TokenId>, Balance, Balance),
 		MultiSellAssetFailedDueToSlippage(T::AccountId, Vec<TokenId>, Balance),
-		MultiBuyAssetFailedDueToSlippage(T::AccountId, Vec<TokenId>, Balance),
+		// MultiBuyAssetFailedDueToSlippage(T::AccountId, Vec<TokenId>, Balance),
 		MultiSellAssetFailedOnAtomicSwap(T::AccountId, Vec<TokenId>, Balance, ModuleError),
 		MultiBuyAssetFailedOnAtomicSwap(T::AccountId, Vec<TokenId>, Balance, ModuleError),
 		MultiSwapFailedDueToNotEnoughAssets(T::AccountId, Vec<TokenId>, Balance),
@@ -2697,8 +2697,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		swap_token_list: Vec<TokenId>,
 		bought_asset_amount: Self::Balance,
 		max_amount_in: Self::Balance,
-		err_upon_bad_slippage: bool,
-		err_upon_non_slippage_fail: bool,
+		_err_upon_bad_slippage: bool,
+		_err_upon_non_slippage_fail: bool,
 	) -> Result<Balance, DispatchError> {
 		let (
 			fee_swap_buy_and_burn_amount,
@@ -2718,125 +2718,80 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		// First execute all atomic swaps in a storage layer
 		// And then the finally sold amount is compared
 		// The bool in error represents if the fail is due to bad final slippage
-		let res_multiswap = <Self as XykFunctionsTrait<T::AccountId>>::do_multiswap_buy_asset(
+		match <Self as XykFunctionsTrait<T::AccountId>>::do_multiswap_buy_asset(
 			sender.clone(),
 			swap_token_list.clone(),
 			bought_asset_amount,
 			max_amount_in,
-		);
-
-		// if res_multiswap is_ok then return Ok(()) otherwise charge fee for first swap and then return Ok(())
-		// if err_upon_bad_slippage then just return res_multiswap
-
-		if let Ok(sold_asset_amount) = res_multiswap {
-			Pallet::<T>::deposit_event(Event::AssetsMultiBuySwapped(
-				sender.clone(),
-				swap_token_list.clone(),
-				sold_asset_amount,
-				bought_asset_amount,
-			));
-			return Ok(sold_asset_amount)
-		} else {
-			// Charge fee
-
-			let vault = Pallet::<T>::account_id();
-			let treasury_account: T::AccountId = Self::treasury_account_id();
-			let bnb_treasury_account: T::AccountId = Self::bnb_treasury_account_id();
-
-			// Transfer of fees, before tx can fail on min amount out
-			<T as Config>::Currency::transfer(
-				fee_swap_sold_asset_id.into(),
-				&sender,
-				&vault,
-				fee_swap_pool_fee_amount.into(),
-				ExistenceRequirement::KeepAlive,
-			)?;
-
-			<T as Config>::Currency::transfer(
-				fee_swap_sold_asset_id.into(),
-				&sender,
-				&treasury_account,
-				fee_swap_treasury_amount.into(),
-				ExistenceRequirement::KeepAlive,
-			)?;
-
-			<T as Config>::Currency::transfer(
-				fee_swap_sold_asset_id.into(),
-				&sender,
-				&bnb_treasury_account,
-				fee_swap_buy_and_burn_amount.into(),
-				ExistenceRequirement::KeepAlive,
-			)?;
-
-			// Add pool fee to pool
-			// 2R 1W
-			Pallet::<T>::set_reserves(
-				fee_swap_sold_asset_id,
-				fee_swap_input_reserve.saturating_add(fee_swap_pool_fee_amount),
-				fee_swap_bought_asset_id,
-				fee_swap_output_reserve,
-			)?;
-
-			// Settle tokens which goes to treasury and for buy and burn purpose
-			Pallet::<T>::settle_treasury_and_burn(
-				fee_swap_sold_asset_id,
-				fee_swap_buy_and_burn_amount,
-				fee_swap_treasury_amount,
-			)?;
-
-			// Emit event or return error
-			match (err_upon_bad_slippage, err_upon_non_slippage_fail, res_multiswap) {
-				(_, _, Err(e)) if e == Error::<T>::MultiSwapNotEnoughAssets.into() => {
-					Pallet::<T>::deposit_event(Event::MultiSwapFailedDueToNotEnoughAssets(
+			)
+		{
+			Ok(sold_asset_amount) => {
+				Pallet::<T>::deposit_event(Event::AssetsMultiBuySwapped(
 						sender.clone(),
 						swap_token_list.clone(),
+						sold_asset_amount,
 						bought_asset_amount,
-					));
-					return Ok(Default::default())
-				},
-				(true, _, Err(e)) if e == Error::<T>::MultiSwapFailedOnBadSlippage.into() => {
-					Pallet::<T>::deposit_event(Event::MultiBuyAssetFailedDueToSlippage(
-						sender.clone(),
-						swap_token_list.clone(),
-						bought_asset_amount,
-					));
-					return Err(DispatchError::from(Error::<T>::InsufficientOutputAmount))
-				},
-				(_, true, Err(e)) if e != Error::<T>::MultiSwapFailedOnBadSlippage.into() => {
-					if let DispatchError::Module(module_err) = e{
-						Pallet::<T>::deposit_event(Event::MultiBuyAssetFailedOnAtomicSwap(
+						));
+				Ok(sold_asset_amount)
+			},
+			Err(e) => {
+				let vault = Pallet::<T>::account_id();
+				let treasury_account: T::AccountId = Self::treasury_account_id();
+				let bnb_treasury_account: T::AccountId = Self::bnb_treasury_account_id();
+
+				// Transfer of fees, before tx can fail on min amount out
+				<T as Config>::Currency::transfer(
+					fee_swap_sold_asset_id.into(),
+					&sender,
+					&vault,
+					fee_swap_pool_fee_amount.into(),
+					ExistenceRequirement::KeepAlive,
+					)?;
+
+				<T as Config>::Currency::transfer(
+					fee_swap_sold_asset_id.into(),
+					&sender,
+					&treasury_account,
+					fee_swap_treasury_amount.into(),
+					ExistenceRequirement::KeepAlive,
+					)?;
+
+				<T as Config>::Currency::transfer(
+					fee_swap_sold_asset_id.into(),
+					&sender,
+					&bnb_treasury_account,
+					fee_swap_buy_and_burn_amount.into(),
+					ExistenceRequirement::KeepAlive,
+					)?;
+
+				// Add pool fee to pool
+				// 2R 1W
+				Pallet::<T>::set_reserves(
+					fee_swap_sold_asset_id,
+					fee_swap_input_reserve.saturating_add(fee_swap_pool_fee_amount),
+					fee_swap_bought_asset_id,
+					fee_swap_output_reserve,
+					)?;
+
+				// Settle tokens which goes to treasury and for buy and burn purpose
+				Pallet::<T>::settle_treasury_and_burn(
+					fee_swap_sold_asset_id,
+					fee_swap_buy_and_burn_amount,
+					fee_swap_treasury_amount,
+					)?;
+
+
+				if let DispatchError::Module(module_err) = e{
+					Pallet::<T>::deposit_event(Event::MultiBuyAssetFailedOnAtomicSwap(
 							sender.clone(),
 							swap_token_list.clone(),
 							bought_asset_amount,
 							module_err,
-						));
-					}else{
-						panic!("blah blah blah")
-					}
-					return Err(DispatchError::from(Error::<T>::NonSlippageMultiSwapFailure))
-				},
-				(false, false, Err(e)) if e == Error::<T>::MultiSwapFailedOnBadSlippage.into() => {
-					Pallet::<T>::deposit_event(Event::MultiBuyAssetFailedDueToSlippage(
-						sender.clone(),
-						swap_token_list.clone(),
-						bought_asset_amount,
-					));
-					return Ok(Default::default())
-				},
-				(false, false, Err(e)) if e != Error::<T>::MultiSwapFailedOnBadSlippage.into() => {
-					if let DispatchError::Module(module_err) = e{
-						Pallet::<T>::deposit_event(Event::MultiBuyAssetFailedOnAtomicSwap(
-							sender.clone(),
-							swap_token_list.clone(),
-							bought_asset_amount,
-							module_err,
-						));
-					}else{
-						panic!("blah blah blah")
-					}
-					return Ok(Default::default())
-				},
-				(_, _, _) => return Err(DispatchError::from(Error::<T>::UnexpectedFailure)),
+							));
+					Ok(Default::default())
+				}else{
+					Err(DispatchError::from(Error::<T>::UnexpectedFailure))
+				}
 			}
 		}
 	}

@@ -512,7 +512,7 @@ pub mod pallet {
 		MultiSellAssetFailedDueToSlippage(T::AccountId, Vec<TokenId>, Balance),
 		MultiBuyAssetFailedDueToSlippage(T::AccountId, Vec<TokenId>, Balance),
 		MultiSellAssetFailedOnAtomicSwap(T::AccountId, Vec<TokenId>, Balance, ModuleError),
-		MultiBuyAssetFailedOnAtomicSwap(T::AccountId, Vec<TokenId>, Balance),
+		MultiBuyAssetFailedOnAtomicSwap(T::AccountId, Vec<TokenId>, Balance, ModuleError),
 		MultiSwapFailedDueToNotEnoughAssets(T::AccountId, Vec<TokenId>, Balance),
 	}
 
@@ -2880,7 +2880,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				},
 				(_, true, Err(e)) if e != Error::<T>::MultiSwapFailedOnBadSlippage.into() => {
 					if let DispatchError::Module(module_err) = e{
-						Pallet::<T>::deposit_event(Event::MultiSellAssetFailedOnAtomicSwap(
+						Pallet::<T>::deposit_event(Event::MultiBuyAssetFailedOnAtomicSwap(
 							sender.clone(),
 							swap_token_list.clone(),
 							bought_asset_amount,
@@ -2901,7 +2901,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				},
 				(false, false, Err(e)) if e != Error::<T>::MultiSwapFailedOnBadSlippage.into() => {
 					if let DispatchError::Module(module_err) = e{
-						Pallet::<T>::deposit_event(Event::MultiSellAssetFailedOnAtomicSwap(
+						Pallet::<T>::deposit_event(Event::MultiBuyAssetFailedOnAtomicSwap(
 							sender.clone(),
 							swap_token_list.clone(),
 							bought_asset_amount,

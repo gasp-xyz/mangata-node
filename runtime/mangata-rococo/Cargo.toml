@@ -97,6 +97,7 @@ parachain-info = { git = 'https://github.com/mangata-finance/cumulus', branch = 
 cumulus-pallet-session-benchmarking = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.36', default-features = false, optional = true }
 
 # Polkadot Dependencies
+polkadot-primitives = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v0.9.40", default-features = false }
 pallet-xcm = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "mangata-dev-v0.9.40" }
 polkadot-parachain = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "mangata-dev-v0.9.40" }
 polkadot-runtime-common = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "mangata-dev-v0.9.40" }

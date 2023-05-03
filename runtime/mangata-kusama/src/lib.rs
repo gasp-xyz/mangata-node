@@ -73,7 +73,7 @@ pub use mangata_types::{
 	assets::{CustomMetadata, XcmMetadata, XykMetadata},
 	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
 };
-pub use pallet_issuance::{IssuanceInfo, PoolPromoteApi};
+pub use pallet_issuance::IssuanceInfo;
 pub use pallet_sudo_origin;
 pub use pallet_xyk;
 // XCM Imports
@@ -379,15 +379,9 @@ impl pallet_treasury::Config for Runtime {
 	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<u128>;
 }
 
-// TODO: discuiss existential deposit feature
-// https://trello.com/c/P5rYYQcS/424-discuiss-orml-tokens-existential-deposit
 parameter_type_with_key! {
 	pub ExistentialDeposits: |_currency_id: TokenId| -> Balance {
 		0
-		// match currency_id {
-		// 	&MGX_TOKEN_ID => 100,
-		// 	_ => 0,
-		// }
 	};
 }
 
@@ -493,7 +487,7 @@ impl pallet_xyk::Config for Runtime {
 	type PoolFeePercentage = frame_support::traits::ConstU128<20>;
 	type TreasuryFeePercentage = frame_support::traits::ConstU128<5>;
 	type BuyAndBurnFeePercentage = frame_support::traits::ConstU128<5>;
-	type XykRewards = ProofOfStake;
+	type LiquidityMiningRewards = ProofOfStake;
 	type VestingProvider = Vesting;
 	type DisallowedPools = Bootstrap;
 	type DisabledTokens = (TestTokensFilter, AssetRegisterFilter);
@@ -506,8 +500,6 @@ impl pallet_proof_of_stake::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type ActivationReservesProvider = MultiPurposeLiquidity;
 	type NativeCurrencyId = MgxTokenId;
-	type Xyk = Xyk;
-	type PoolPromoteApi = Issuance;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = SessionLenghtOf<Runtime>;
@@ -1414,7 +1406,9 @@ impl parachain_staking::Config for Runtime {
 
 impl parachain_staking::StakingBenchmarkConfig for Runtime {
 	#[cfg(feature = "runtime-benchmarks")]
-	type PoolCreateApi = Xyk;
+	type RewardsApi = ProofOfStake;
+	#[cfg(feature = "runtime-benchmarks")]
+	type Xyk = Xyk;
 }
 
 impl pallet_xyk::XykBenchmarkingConfig for Runtime {}
@@ -1458,7 +1452,7 @@ impl pallet_issuance::Config for Runtime {
 	type TGEReleaseBegin = TGEReleaseBegin;
 	type VestingProvider = Vesting;
 	type WeightInfo = weights::pallet_issuance_weights::ModuleWeight<Runtime>;
-	type ActivatedPoolQueryApiType = ProofOfStake;
+	type LiquidityMiningApi = ProofOfStake;
 }
 
 parameter_types! {
@@ -1962,7 +1956,7 @@ impl_runtime_apis! {
 			user: AccountId,
 			liquidity_asset_id: TokenId,
 		) -> XYKRpcResult<Balance> {
-			match ProofOfStake::calculate_rewards_amount_v2(user, liquidity_asset_id){
+			match ProofOfStake::calculate_rewards_amount(user, liquidity_asset_id){
 				Ok(claimable_rewards) => XYKRpcResult{
 					price:claimable_rewards
 				},
@@ -2113,11 +2107,11 @@ impl_runtime_apis! {
 
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
-		fn on_runtime_upgrade(checks: bool) -> (Weight, Weight) {
+		fn on_runtime_upgrade(_checks: bool) -> (Weight, Weight) {
 			// NOTE: intentional unwrap: we don't want to propagate the error backwards, and want to
 			// have a backtrace here. If any of the pre/post migration checks fail, we shall stop
 			// right here and right now.
-			let weight = Executive::try_runtime_upgrade(checks).unwrap();
+			let weight = Executive::try_runtime_upgrade(true).unwrap();
 			(weight, RuntimeBlockWeights::get().max_block)
 		}
 

@@ -9,12 +9,10 @@ use sp_runtime::{
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
 };
 
-use crate as xyk;
+use crate as pos;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{
-		tokens::currency::MultiTokenCurrency, ConstU128, ConstU32, Contains, Everything, Nothing,
-	},
+	traits::{tokens::currency::MultiTokenCurrency, ConstU32, Contains, Everything},
 	PalletId,
 };
 
@@ -32,6 +30,7 @@ pub(crate) type AccountId = u128;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
+use core::convert::TryFrom;
 
 construct_runtime!(
 	pub enum Test where
@@ -41,8 +40,7 @@ construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>},
-		XykStorage: xyk::{Pallet, Call, Storage, Event<T>, Config<T>},
-		ProofOfStake: pallet_proof_of_stake::{Pallet, Call, Storage, Event<T>},
+		ProofOfStake: pos::{Pallet, Call, Storage, Event<T>},
 		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>},
 		Issuance: pallet_issuance::{Pallet, Event<T>, Storage},
 	}
@@ -98,6 +96,27 @@ parameter_types! {
 	pub const MaxLocks: u32 = 50;
 }
 
+impl pallet_issuance::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type NativeCurrencyId = MgaTokenId;
+	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
+	type BlocksPerRound = BlocksPerRound;
+	type HistoryLimit = HistoryLimit;
+	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
+	type StakingIssuanceVault = StakingIssuanceVault;
+	type TotalCrowdloanAllocation = TotalCrowdloanAllocation;
+	type IssuanceCap = IssuanceCap;
+	type LinearIssuanceBlocks = LinearIssuanceBlocks;
+	type LiquidityMiningSplit = LiquidityMiningSplit;
+	type StakingSplit = StakingSplit;
+	type ImmediateTGEReleasePercent = ImmediateTGEReleasePercent;
+	type TGEReleasePeriod = TGEReleasePeriod;
+	type TGEReleaseBegin = TGEReleaseBegin;
+	type VestingProvider = Vesting;
+	type WeightInfo = ();
+	type LiquidityMiningApi = ProofOfStake;
+}
+
 impl orml_tokens::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
@@ -141,7 +160,7 @@ parameter_types! {
 
 
 	pub const TotalCrowdloanAllocation: Balance = 200_000_000;
-	pub const IssuanceCap: Balance = 100_000_000_000_000_000;
+	pub const IssuanceCap: Balance = 4_000_000_000;
 	pub const LinearIssuanceBlocks: u32 = 22_222u32;
 	pub const LiquidityMiningSplit: Perbill = Perbill::from_parts(555555556);
 	pub const StakingSplit: Perbill = Perbill::from_parts(444444444);
@@ -151,50 +170,6 @@ parameter_types! {
 	pub const BlocksPerRound: u32 = 5u32;
 	pub const HistoryLimit: u32 = 10u32;
 }
-
-// #[cfg(not(feature = "runtime-benchmarks"))]
-// impl pallet_issuance::Config for Test {
-// 	type RuntimeEvent = RuntimeEvent;
-// 	type NativeCurrencyId = MgaTokenId;
-// 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
-// 	type BlocksPerRound = BlocksPerRound;
-// 	type HistoryLimit = HistoryLimit;
-// 	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
-// 	type StakingIssuanceVault = StakingIssuanceVault;
-// 	type TotalCrowdloanAllocation = TotalCrowdloanAllocation;
-// 	type IssuanceCap = IssuanceCap;
-// 	type LinearIssuanceBlocks = LinearIssuanceBlocks;
-// 	type LiquidityMiningSplit = LiquidityMiningSplit;
-// 	type StakingSplit = StakingSplit;
-// 	type ImmediateTGEReleasePercent = ImmediateTGEReleasePercent;
-// 	type TGEReleasePeriod = TGEReleasePeriod;
-// 	type TGEReleaseBegin = TGEReleaseBegin;
-// 	type VestingProvider = Vesting;
-// 	type WeightInfo = ();
-// }
-//
-impl pallet_issuance::Config for Test {
-	type RuntimeEvent = RuntimeEvent;
-	type NativeCurrencyId = MgaTokenId;
-	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
-	type BlocksPerRound = BlocksPerRound;
-	type HistoryLimit = HistoryLimit;
-	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
-	type StakingIssuanceVault = StakingIssuanceVault;
-	type TotalCrowdloanAllocation = TotalCrowdloanAllocation;
-	type IssuanceCap = IssuanceCap;
-	type LinearIssuanceBlocks = LinearIssuanceBlocks;
-	type LiquidityMiningSplit = LiquidityMiningSplit;
-	type StakingSplit = StakingSplit;
-	type ImmediateTGEReleasePercent = ImmediateTGEReleasePercent;
-	type TGEReleasePeriod = TGEReleasePeriod;
-	type TGEReleaseBegin = TGEReleaseBegin;
-	type VestingProvider = Vesting;
-	type WeightInfo = ();
-	type LiquidityMiningApi = ProofOfStake;
-}
-
-impl XykBenchmarkingConfig for Test {}
 
 parameter_types! {
 	pub const LiquidityMiningIssuanceVaultId: PalletId = PalletId(*b"py/lqmiv");
@@ -231,34 +206,6 @@ lazy_static::lazy_static! {
 	};
 }
 
-#[cfg(test)]
-impl MockAssetRegister {
-	pub fn instance() -> &'static Mutex<HashMap<TokenId, AssetMetadata<Balance, CustomMetadata>>> {
-		&ASSET_REGISTER
-	}
-}
-
-impl AssetMetadataMutationTrait for MockAssetRegister {
-	fn set_asset_info(
-		asset: TokenId,
-		name: Vec<u8>,
-		symbol: Vec<u8>,
-		decimals: u32,
-	) -> DispatchResult {
-		let meta = AssetMetadata {
-			name,
-			symbol,
-			decimals,
-			location: None,
-			additional: Default::default(),
-			existential_deposit: 0,
-		};
-		let mut register = ASSET_REGISTER.lock().unwrap();
-		register.insert(asset, meta);
-		Ok(())
-	}
-}
-
 pub struct MockMaintenanceStatusProvider;
 
 lazy_static::lazy_static! {
@@ -268,92 +215,13 @@ lazy_static::lazy_static! {
 	};
 }
 
-#[cfg(test)]
-impl MockMaintenanceStatusProvider {
-	pub fn instance() -> &'static Mutex<bool> {
-		&MAINTENANCE_STATUS
-	}
-}
-
-impl MockMaintenanceStatusProvider {
-	pub fn set_maintenance(value: bool) {
-		let mut mutex = Self::instance().lock().unwrap();
-		*mutex = value;
-	}
-}
-
-impl GetMaintenanceStatusTrait for MockMaintenanceStatusProvider {
-	fn is_maintenance() -> bool {
-		let mutex = Self::instance().lock().unwrap();
-		*mutex
-	}
-
-	fn is_upgradable() -> bool {
-		unimplemented!()
-	}
-}
-
-#[cfg(not(feature = "runtime-benchmarks"))]
-impl Config for Test {
-	type RuntimeEvent = RuntimeEvent;
-	type MaintenanceStatusProvider = MockMaintenanceStatusProvider;
-	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
-	type Currency = MultiTokenCurrencyAdapter<Test>;
-	type NativeCurrencyId = NativeCurrencyId;
-	type TreasuryPalletId = TreasuryPalletId;
-	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
-	type PoolFeePercentage = ConstU128<20>;
-	type TreasuryFeePercentage = ConstU128<5>;
-	type BuyAndBurnFeePercentage = ConstU128<5>;
-	type LiquidityMiningRewards = ProofOfStake;
-	type WeightInfo = ();
-	type VestingProvider = Vesting;
-	type DisallowedPools = DummyBlacklistedPool;
-	type DisabledTokens = Nothing;
-	type RewardsMigrateAccount = RewardsMigrateAccountProvider<Self>;
-	type AssetMetadataMutation = MockAssetRegister;
-}
-
-#[cfg(feature = "runtime-benchmarks")]
-impl Config for Test {
-	type RuntimeEvent = RuntimeEvent;
-	type MaintenanceStatusProvider = MockMaintenanceStatusProvider;
-	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
-	type Currency = MultiTokenCurrencyAdapter<Test>;
-	type NativeCurrencyId = NativeCurrencyId;
-	type TreasuryPalletId = TreasuryPalletId;
-	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
-	type PoolFeePercentage = ConstU128<20>;
-	type TreasuryFeePercentage = ConstU128<5>;
-	type BuyAndBurnFeePercentage = ConstU128<5>;
-	type LiquidityMiningRewards = ProofOfStake;
-	type WeightInfo = ();
-	type VestingProvider = Vesting;
-	type DisallowedPools = Nothing;
-	type DisabledTokens = Nothing;
-	type RewardsMigrateAccount = RewardsMigrateAccountProvider<Self>;
-	type AssetMetadataMutation = MockAssetRegister;
-}
-
-#[cfg(not(feature = "runtime-benchmarks"))]
-impl pallet_proof_of_stake::Config for Test {
+impl pos::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
 	type NativeCurrencyId = NativeCurrencyId;
 	type Currency = MultiTokenCurrencyAdapter<Test>;
 	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = ConstU32<10>;
-	type WeightInfo = ();
-}
-
-#[cfg(feature = "runtime-benchmarks")]
-impl pallet_proof_of_stake::Config for Test {
-	type RuntimeEvent = RuntimeEvent;
-	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
-	type NativeCurrencyId = NativeCurrencyId;
-	type Currency = MultiTokenCurrencyAdapter<Test>;
-	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
-	type RewardsDistributionPeriod = ConstU32<1200>;
 	type WeightInfo = ();
 }
 
@@ -441,17 +309,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		system::GenesisConfig::default().build_storage::<Test>().unwrap().into();
 	ext.execute_with(|| {
 		System::set_block_number(1);
-		MockMaintenanceStatusProvider::set_maintenance(false);
 	});
 	ext
-}
-
-pub(crate) fn events() -> Vec<pallet::Event<Test>> {
-	System::events()
-		.into_iter()
-		.map(|r| r.event)
-		.filter_map(|e| if let RuntimeEvent::XykStorage(inner) = e { Some(inner) } else { None })
-		.collect::<Vec<_>>()
 }
 
 /// Compares the system events with passed in events

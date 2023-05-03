@@ -126,8 +126,7 @@ benchmarks! {
 		// assert_eq!(BootstrapPallet::<T>::vested_provisions(caller.clone(), second_token_id), (mga_vested_provision_amount, 1, lock + 1));
 
 		// promote pool
-		pallet_issuance::PromotedPoolsRewards::<T>::insert(liquidity_asset_id, 0_u128);
-
+		T::RewardsApi::enable(liquidity_asset_id, 1_u8);
 	}: claim_and_activate_liquidity_tokens(RawOrigin::Signed(caller.clone().into()))
 	verify {
 		let (total_mga_provision, total_ksm_provision) = BootstrapPallet::<T>::valuations();

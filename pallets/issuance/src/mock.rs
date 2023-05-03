@@ -129,20 +129,10 @@ lazy_static::lazy_static! {
 	};
 }
 
-pub struct MockActivatedPoolQueryApi;
+pub struct MockLiquidityMiningApi;
 
-#[cfg(test)]
-
-// impl MockActivatedPoolQueryApi {
-// 	pub fn instance() -> &'static Mutex<HashMap<TokenId, U256>> {
-// 		&ACTIVATED_POOL
-// 	}
-// }
-
-impl ActivatedPoolQueryApi for MockActivatedPoolQueryApi {
-	fn get_pool_activate_amount(_liquidity_token_id: TokenId) -> Option<Balance> {
-		Some(1_u128)
-	}
+impl LiquidityMiningApi for MockLiquidityMiningApi {
+	fn distribute_rewards(_liquidity_mining_rewards: Balance) {}
 }
 
 impl pallet_issuance::Config for Test {
@@ -163,8 +153,7 @@ impl pallet_issuance::Config for Test {
 	type TGEReleaseBegin = TGEReleaseBegin;
 	type VestingProvider = Vesting;
 	type WeightInfo = ();
-	// TODO implement unit tests using mock
-	type ActivatedPoolQueryApiType = MockActivatedPoolQueryApi;
+	type LiquidityMiningApi = MockLiquidityMiningApi;
 }
 
 parameter_types! {

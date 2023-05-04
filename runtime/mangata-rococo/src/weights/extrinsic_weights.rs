@@ -1,8 +1,9 @@
+
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
-//! DATE: 2023-02-13 (Y/M/D)
-//! HOSTNAME: `a98b08ce8d61`, CPU: `AMD EPYC 7B13`
+//! DATE: 2023-05-04 (Y/M/D)
+//! HOSTNAME: `d68d31b0cbe3`, CPU: `AMD EPYC 7B13`
 //!
-//! SHORT-NAME: `extrinsic`, LONG-NAME: `ExtrinsicBase`, RUNTIME: `Mangata Development`
+//! SHORT-NAME: `extrinsic`, LONG-NAME: `ExtrinsicBase`, RUNTIME: `Mangata Kusama Local`
 //! WARMUPS: `10`, REPEAT: `100`
 //! WEIGHT-PATH: ``
 //! WEIGHT-METRIC: `Average`, WEIGHT-MUL: `1.0`, WEIGHT-ADD: `0`
@@ -14,7 +15,7 @@
 //   --execution
 //   native
 //   --chain
-//   dev
+//   kusama-local
 //   -lblock_builder=debug
 //   --max-ext-per-block
 //   50000
@@ -29,17 +30,17 @@ parameter_types! {
 	/// Calculated by multiplying the *Average* with `1.0` and adding `0`.
 	///
 	/// Stats nanoseconds:
-	///   Min, Max: 112_987, 114_635
-	///   Average:  113_696
-	///   Median:   113_696
-	///   Std-Dev:  363.05
+	///   Min, Max: 114_088, 115_583
+	///   Average:  114_454
+	///   Median:   114_388
+	///   Std-Dev:  266.71
 	///
 	/// Percentiles nanoseconds:
-	///   99th: 114_565
-	///   95th: 114_203
-	///   75th: 113_964
+	///   99th: 115_350
+	///   95th: 114_959
+	///   75th: 114_576
 	pub const ExtrinsicBaseWeight: Weight =
-		Weight::from_ref_time(WEIGHT_REF_TIME_PER_NANOS.saturating_mul(113_696));
+		Weight::from_ref_time(WEIGHT_REF_TIME_PER_NANOS.saturating_mul(114_454));
 }
 
 #[cfg(test)]

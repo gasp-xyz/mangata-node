@@ -16,24 +16,30 @@ use orml_traits::{
 use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use sp_runtime::{traits::ConstU32, WeakBoundedVec};
+use sp_runtime::traits::ConstU32;
 use sp_std::{marker::PhantomData, prelude::*};
-use xcm::latest::prelude::*;
+use xcm::latest::{prelude::*, Weight as XcmWeight};
 use xcm_builder::{
 	Account32Hash, AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
 	AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, EnsureXcmOrigin, FixedRateOfFungible,
-	FixedWeightBounds, ParentIsPreset, RelayChainAsNative,
-	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
-	SignedToAccountId32, SovereignSignedViaLocation, TakeRevenue, TakeWeightCredit
+	FixedWeightBounds, ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative,
+	SiblingParachainConvertsVia, SignedAccountId32AsNative, SignedToAccountId32,
+	SovereignSignedViaLocation, TakeRevenue, TakeWeightCredit,
 };
 use xcm_executor::{traits::DropAssets, Assets, XcmExecutor};
 
 use super::{
-	constants::fee::*, AccountId, AssetMetadataOf, Balance, Convert, ExistentialDeposits,
-	Maintenance, ParachainInfo, ParachainSystem, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent,
-	RuntimeOrigin, TokenId, Tokens, TreasuryAccount, UnknownTokens, XcmpQueue, KSM_TOKEN_ID,
-	MGX_TOKEN_ID,
+	constants::fee::*, AccountId, AllPalletsWithSystem, AssetMetadataOf, Balance, Convert,
+	ExistentialDeposits, Maintenance, ParachainInfo, ParachainSystem, PolkadotXcm, Runtime,
+	RuntimeCall, RuntimeEvent, RuntimeOrigin, TokenId, Tokens, TreasuryAccount, UnknownTokens,
+	XcmpQueue, KSM_TOKEN_ID, MGX_TOKEN_ID,
 };
+
+pub fn general_key(key: &[u8]) -> Junction {
+	let mut data = [0u8; 32];
+	data[..key.len()].copy_from_slice(&key[..]);
+	GeneralKey { length: key.len() as u8, data }
+}
 
 parameter_types! {
 	pub KsmLocation: MultiLocation = MultiLocation::parent();
@@ -111,20 +117,19 @@ impl TakeRevenue for ToTreasury {
 
 parameter_types! {
 	// regular transfer is ~400M weight, xcm transfer weight is ~4*UnitWeightCost
-	pub UnitWeightCost: u64 = 150_000_000;
+	pub UnitWeightCost: XcmWeight = XcmWeight::from_ref_time(150_000_000);
 	pub const MaxInstructions: u32 = 100;
 
-	pub KsmPerSecond: (AssetId, u128) = (MultiLocation::parent().into(), ksm_per_second());
-	pub MgxPerSecond: (AssetId, u128) = (
+	pub KsmPerSecond: (AssetId, u128, u128) = (MultiLocation::parent().into(), ksm_per_second(), ksm_per_second());
+	pub MgxPerSecond: (AssetId, u128, u128) = (
 		MultiLocation::new(
 			0,
-			X1(GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
-			MGX_TOKEN_ID.encode(),
-			None,
-		))),
+			X1(general_key(&MGX_TOKEN_ID.encode())),
 		).into(),
-		mgx_per_second()
+		mgx_per_second(),
+		mgx_per_second(),
 	);
+	pub const MaxAssetsIntoHolding: u32 = 64;
 }
 
 type AssetRegistryOf<T> = orml_asset_registry::Pallet<T>;
@@ -173,6 +178,15 @@ impl xcm_executor::Config for XcmConfig {
 		MangataDropAssets<PolkadotXcm, ToTreasury, TokenIdConvert, ExistentialDeposits>;
 	type AssetClaims = PolkadotXcm;
 	type SubscriptionService = PolkadotXcm;
+	type AssetLocker = ();
+	type AssetExchanger = ();
+	type PalletInstancesInfo = AllPalletsWithSystem;
+	type MaxAssetsIntoHolding = MaxAssetsIntoHolding;
+	type FeeManager = ();
+	type MessageExporter = ();
+	type UniversalAliases = ();
+	type CallDispatcher = RuntimeCall;
+	type SafeCallFilter = Everything;
 }
 
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
@@ -186,6 +200,10 @@ pub type XcmRouter = (
 	// ..and XCMP to communicate with the sibling chains.
 	XcmpQueue,
 );
+
+parameter_types! {
+	pub const MgxTokenId: TokenId = MGX_TOKEN_ID;
+}
 
 impl pallet_xcm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -202,6 +220,12 @@ impl pallet_xcm::Config for Runtime {
 	type RuntimeCall = RuntimeCall;
 	const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
 	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
+	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgxTokenId>;
+	type CurrencyMatcher = ();
+	type TrustedLockers = ();
+	type SovereignAccountOf = LocationToAccountId;
+	type MaxLockers = ConstU32<8>;
+	type WeightInfo = pallet_xcm::TestWeightInfo;
 }
 
 impl cumulus_pallet_xcm::Config for Runtime {
@@ -240,6 +264,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type ControllerOrigin = EnsureRoot<AccountId>;
 	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
 	type WeightInfo = ();
+	type PriceForSiblingDelivery = ();
 }
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {
@@ -252,13 +277,13 @@ impl cumulus_pallet_dmp_queue::Config for Runtime {
 pub struct AccountIdToMultiLocation;
 impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 	fn convert(account: AccountId) -> MultiLocation {
-		X1(AccountId32 { network: NetworkId::Any, id: account.into() }).into()
+		X1(AccountId32 { network: None, id: account.into() }).into()
 	}
 }
 
 parameter_types! {
 	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
-	pub const BaseXcmWeight: u64 = 100_000_000; // TODO: recheck this
+	pub const BaseXcmWeight: XcmWeight = XcmWeight::from_ref_time(100_000_000); // TODO: recheck this
 	pub const MaxAssetsForTransfer:usize = 2;
 }
 
@@ -310,7 +335,11 @@ where
 	C: Convert<MultiLocation, Option<TokenId>>,
 	GK: GetByKey<TokenId, Balance>,
 {
-	fn drop_assets(origin: &MultiLocation, assets: Assets) -> u64 {
+	fn drop_assets(
+		origin: &MultiLocation,
+		assets: Assets,
+		context: &XcmContext,
+	) -> sp_weights::Weight {
 		let multi_assets: Vec<MultiAsset> = assets.into();
 		let mut asset_traps: Vec<MultiAsset> = vec![];
 		for asset in multi_assets {
@@ -328,9 +357,9 @@ where
 			}
 		}
 		if !asset_traps.is_empty() {
-			X::drop_assets(origin, asset_traps.into());
+			X::drop_assets(origin, asset_traps.into(), context);
 		}
-		0
+		XcmWeight::from_ref_time(0)
 	}
 }
 
@@ -345,10 +374,7 @@ impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
 		if id == MGX_TOKEN_ID {
 			return Some(MultiLocation::new(
 				1,
-				X2(
-					Parachain(ParachainInfo::get().into()),
-					GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(id.encode(), None)),
-				),
+				X2(Parachain(ParachainInfo::get().into()), general_key(&id.encode())),
 			))
 		}
 		// allow assets in registry with location set
@@ -365,16 +391,18 @@ impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 
 		match location {
 			// allow native asset
-			MultiLocation { parents: 1, interior: X2(Parachain(para_id), GeneralKey(key)) }
-				if ParaId::from(para_id) == ParachainInfo::get() =>
-				match TokenId::decode(&mut &(*key)[..]) {
+			MultiLocation {
+				parents: 1,
+				interior: X2(Parachain(para_id), GeneralKey { length, data }),
+			} if ParaId::from(para_id) == ParachainInfo::get() =>
+				match TokenId::decode(&mut &data[..(length as usize)]) {
 					Ok(MGX_TOKEN_ID) => Some(MGX_TOKEN_ID),
 					_ => None,
 				},
 
 			// allow native asset
-			MultiLocation { parents: 0, interior: X1(GeneralKey(key)) } =>
-				match TokenId::decode(&mut &(*key)[..]) {
+			MultiLocation { parents: 0, interior: X1(GeneralKey { length, data }) } =>
+				match TokenId::decode(&mut &data[..(length as usize)]) {
 					Ok(MGX_TOKEN_ID) => Some(MGX_TOKEN_ID),
 					_ => None,
 				},

@@ -1806,11 +1806,12 @@ impl_runtime_apis! {
 		}
 
 		fn is_storage_migration_scheduled() -> bool{
-			System::read_events_no_consensus()
-				.iter()
-				.any(|record|
-					matches!(record.event,
-						RuntimeEvent::ParachainSystem( cumulus_pallet_parachain_system::Event::<Runtime>::ValidationFunctionApplied{relay_chain_block_num: _})))
+			false
+			// System::read_events_no_consensus()
+			// 	.iter()
+			// 	.any(|record|
+			// 		matches!(record.event,
+			// 			RuntimeEvent::ParachainSystem( cumulus_pallet_parachain_system::Event::<Runtime>::ValidationFunctionApplied{relay_chain_block_num: _})))
 		}
 
 		fn store_seed(seed: sp_core::H256){
@@ -2218,12 +2219,21 @@ mod parachain_validate_block {
 
 	#[no_mangle]
 	#[cfg(not(feature = "std"))]
-	unsafe fn validate_block(arguments: *const u8, arguments_len: usize) -> u64 {
-		let params =
-			cumulus_pallet_parachain_system::validate_block::polkadot_parachain::load_params(
+	unsafe fn validate_block(arguments: *mut u8, arguments_len: usize) -> u64 {
+		let args = cumulus_pallet_parachain_system::validate_block::sp_std::boxed::Box::from_raw(
+			cumulus_pallet_parachain_system::validate_block::sp_std::slice::from_raw_parts_mut(
 				arguments,
 				arguments_len,
-			);
+			),
+		);
+		let args = cumulus_pallet_parachain_system::validate_block::bytes::Bytes::from(args);
+
+		// Then we decode from these bytes the `MemoryOptimizedValidationParams`.
+		let params = cumulus_pallet_parachain_system::validate_block::decode_from_bytes::<
+			cumulus_pallet_parachain_system::validate_block::MemoryOptimizedValidationParams,
+		>(args)
+		.expect("Invalid arguments to `validate_block`.");
+
 		let res =
             cumulus_pallet_parachain_system::validate_block::implementation::validate_block::<<Runtime
                                                                                               as

@@ -22,8 +22,7 @@ mod fee_test {
 
 	pub fn asset_unit_cost(instruction_count: u32, per_second: u128) -> u128 {
 		#[cfg(feature = "with-kusama-runtime")]
-		let unit_weight: Weight =
-			Weight::from_ref_time(mangata_kusama_runtime::xcm_config::UnitWeightCost::get());
+		let unit_weight: Weight = mangata_kusama_runtime::xcm_config::UnitWeightCost::get();
 		#[cfg(feature = "with-kusama-runtime")]
 		assert_eq!(unit_weight, Weight::from_ref_time(150_000_000));
 
@@ -66,18 +65,17 @@ fn weight_to_fee_works() {
 	{
 		use kusama_runtime_constants::fee::WeightToFee;
 
-		let base_weight: Weight =
-			Weight::from_ref_time(kusama_runtime::xcm_config::BaseXcmWeight::get());
-		assert_eq!(base_weight, Weight::from_ref_time(1_000_000_000));
+		let base_weight: Weight = kusama_runtime::xcm_config::BaseXcmWeight::get();
+		assert_eq!(base_weight, Weight::from_parts(1_000_000_000, 65536));
 
 		let weight: Weight = base_weight.saturating_mul(4);
 		let fee = WeightToFee::weight_to_fee(&weight);
-		assert_eq!(1_385_324_560, fee);
+		assert_eq!(1_257_707_380, fee);
 
 		// transfer_to_relay_chain weight in KusamaRelay
-		let weight: Weight = Weight::from_ref_time(298_368_000);
+		let weight: Weight = Weight::from_ref_time(299_506_000);
 		let fee = WeightToFee::weight_to_fee(&weight);
-		assert_eq!(103_334_130, fee);
+		assert_eq!(94_172_727, fee);
 	}
 
 	// Mangata
@@ -85,12 +83,10 @@ fn weight_to_fee_works() {
 	{
 		use mangata_kusama_runtime::constants::fee::WeightToFee;
 
-		let base_weight: Weight =
-			Weight::from_ref_time(mangata_kusama_runtime::xcm_config::BaseXcmWeight::get());
+		let base_weight: Weight = mangata_kusama_runtime::xcm_config::BaseXcmWeight::get();
 		assert_eq!(base_weight, Weight::from_ref_time(100_000_000));
 
-		let unit_weight: Weight =
-			Weight::from_ref_time(mangata_kusama_runtime::xcm_config::UnitWeightCost::get());
+		let unit_weight: Weight = mangata_kusama_runtime::xcm_config::UnitWeightCost::get();
 		assert_eq!(unit_weight, Weight::from_ref_time(150_000_000));
 
 		let weight: Weight = base_weight.saturating_mul(4);

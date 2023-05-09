@@ -17,7 +17,8 @@ use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset}
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 use sp_runtime::traits::ConstU32;
-use sp_std::{marker::PhantomData, prelude::*, Weight as XcmWeight};
+use sp_std::{marker::PhantomData, prelude::*};
+use xcm::v3::{prelude::*, Weight as XcmWeight};
 use xcm::latest::prelude::*;
 use xcm_builder::{
 	Account32Hash, AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
@@ -202,7 +203,7 @@ pub type XcmRouter = (
 );
 
 parameter_types! {
-	pub const MgxTokenId: TokenId = MGX_TOKEN_ID;
+	pub const MgxTokenId: TokenId = MGR_TOKEN_ID;
 }
 
 impl pallet_xcm::Config for Runtime {

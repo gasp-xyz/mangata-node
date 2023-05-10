@@ -17,7 +17,7 @@ use crate::service::AuraId;
 pub use mangata_types::{
 	AccountId, Balance, Block, BlockNumber, Hash, Header, Index as Nonce, TokenId,
 };
-use sc_client_api::{Backend as BackendT, BlockchainEvents, KeyIterator};
+use sc_client_api::{Backend as BackendT, BlockchainEvents};
 use sp_api::{CallApiAt, NumberFor, ProvideRuntimeApi};
 use sp_blockchain::HeaderBackend;
 use sp_consensus::BlockStatus;
@@ -334,21 +334,6 @@ impl sc_client_api::StorageProvider<Block, crate::service::FullBackend> for Clie
 		match_client!(self, storage_pairs(id, key_prefix))
 	}
 
-	fn storage_keys_iter<'a>(
-		&self,
-		id: H256,
-		prefix: Option<&'a StorageKey>,
-		start_key: Option<&StorageKey>,
-	) -> sp_blockchain::Result<
-		KeyIterator<
-			'a,
-			<crate::service::FullBackend as sc_client_api::Backend<Block>>::State,
-			Block,
-		>,
-	> {
-		match_client!(self, storage_keys_iter(id, prefix, start_key))
-	}
-
 	fn child_storage(
 		&self,
 		id: H256,
@@ -365,22 +350,6 @@ impl sc_client_api::StorageProvider<Block, crate::service::FullBackend> for Clie
 		key_prefix: &StorageKey,
 	) -> sp_blockchain::Result<Vec<StorageKey>> {
 		match_client!(self, child_storage_keys(id, child_info, key_prefix))
-	}
-
-	fn child_storage_keys_iter<'a>(
-		&self,
-		id: H256,
-		child_info: ChildInfo,
-		prefix: Option<&'a StorageKey>,
-		start_key: Option<&StorageKey>,
-	) -> sp_blockchain::Result<
-		KeyIterator<
-			'a,
-			<crate::service::FullBackend as sc_client_api::Backend<Block>>::State,
-			Block,
-		>,
-	> {
-		match_client!(self, child_storage_keys_iter(id, child_info, prefix, start_key))
 	}
 
 	fn child_storage_hash(

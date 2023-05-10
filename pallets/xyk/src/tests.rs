@@ -876,7 +876,7 @@ fn multiswap_sell_bad_slippage_charges_fee_W() {
 			TRADER_ID,
 			vec![1, 2, 3, 4, 5],
 			20000000000000000000,
-			module_err(Error::<Test>::MultiSwapFailedOnBadSlippage)
+			module_err(Error::<Test>::InsufficientOutputAmount)
 		));
 	});
 }
@@ -1038,7 +1038,7 @@ fn multiswap_sell_just_enough_assets_pay_fee_but_not_to_swap_W() {
 			TRADER_ID,
 			vec![1, 2, 3, 4, 5],
 			2000000000000000000000,
-			module_err(Error::<Test>::MultiSwapNotEnoughAssets)
+			module_err(Error::<Test>::NotEnoughAssets)
 		));
 	});
 }
@@ -1488,7 +1488,7 @@ fn multiswap_buy_bad_slippage_charges_fee_W() {
 			TRADER_ID,
 			vec![1, 2, 3, 4, 5],
 			20000000000000000000,
-			module_err(Error::<Test>::MultiSwapFailedOnBadSlippage)
+			module_err(Error::<Test>::InsufficientInputAmount)
 		));
 	});
 }
@@ -1657,7 +1657,7 @@ fn multiswap_buy_just_enough_assets_pay_fee_but_not_to_swap_W() {
 			TRADER_ID,
 			vec![1, 2, 3, 4, 5],
 			100000000,
-			module_err(Error::<Test>::MultiSwapNotEnoughAssets)
+			module_err(Error::<Test>::NotEnoughAssets)
 		));
 	});
 }

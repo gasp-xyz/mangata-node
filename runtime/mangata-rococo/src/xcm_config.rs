@@ -18,8 +18,7 @@ use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 use sp_runtime::traits::ConstU32;
 use sp_std::{marker::PhantomData, prelude::*};
-use xcm::v3::{prelude::*, Weight as XcmWeight};
-use xcm::latest::prelude::*;
+use xcm::latest::{prelude::*, Weight as XcmWeight};
 use xcm_builder::{
 	Account32Hash, AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
 	AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, EnsureXcmOrigin, FixedRateOfFungible,
@@ -203,7 +202,7 @@ pub type XcmRouter = (
 );
 
 parameter_types! {
-	pub const MgxTokenId: TokenId = MGR_TOKEN_ID;
+	pub const MgrTokenId: TokenId = MGR_TOKEN_ID;
 }
 
 impl pallet_xcm::Config for Runtime {
@@ -221,7 +220,7 @@ impl pallet_xcm::Config for Runtime {
 	type RuntimeCall = RuntimeCall;
 	const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
 	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
-	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgxTokenId>;
+	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgrTokenId>;
 	type CurrencyMatcher = ();
 	type TrustedLockers = ();
 	type SovereignAccountOf = LocationToAccountId;

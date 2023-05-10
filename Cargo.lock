@@ -4936,7 +4936,7 @@ dependencies = [
  "sc-client-api",
  "sc-consensus",
  "sc-consensus-aura",
- "sc-consensus-grandpa",
+ "sc-consensus-grandpa 0.10.0-dev (git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v0.9.40)",
  "sc-executor",
  "sc-keystore",
  "sc-network",
@@ -8424,7 +8424,7 @@ dependencies = [
  "sc-consensus-beefy",
  "sc-consensus-beefy-rpc",
  "sc-consensus-epochs",
- "sc-consensus-grandpa",
+ "sc-consensus-grandpa 0.10.0-dev (git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.40)",
  "sc-consensus-grandpa-rpc",
  "sc-rpc",
  "sc-sync-state-rpc",
@@ -8715,7 +8715,7 @@ dependencies = [
  "sc-consensus",
  "sc-consensus-babe",
  "sc-consensus-beefy",
- "sc-consensus-grandpa",
+ "sc-consensus-grandpa 0.10.0-dev (git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.40)",
  "sc-consensus-slots",
  "sc-executor",
  "sc-keystore",
@@ -8878,7 +8878,7 @@ dependencies = [
  "sc-client-api",
  "sc-consensus",
  "sc-consensus-babe",
- "sc-consensus-grandpa",
+ "sc-consensus-grandpa 0.10.0-dev (git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.40)",
  "sc-executor",
  "sc-network",
  "sc-service",
@@ -10367,6 +10367,46 @@ dependencies = [
 ]
 
 [[package]]
+name = "sc-consensus-grandpa"
+version = "0.10.0-dev"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev-v0.9.40#f555f67fafb5f255f24df05367d9db27b1a11ff0"
+dependencies = [
+ "ahash 0.8.3",
+ "array-bytes 4.2.0",
+ "async-trait",
+ "dyn-clone",
+ "finality-grandpa",
+ "fork-tree",
+ "futures",
+ "futures-timer",
+ "log",
+ "parity-scale-codec",
+ "parking_lot 0.12.1",
+ "rand 0.8.5",
+ "sc-block-builder",
+ "sc-chain-spec",
+ "sc-client-api",
+ "sc-consensus",
+ "sc-network",
+ "sc-network-common",
+ "sc-network-gossip",
+ "sc-telemetry",
+ "sc-utils",
+ "serde_json",
+ "sp-api",
+ "sp-application-crypto",
+ "sp-arithmetic",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-consensus-grandpa",
+ "sp-core",
+ "sp-keystore",
+ "sp-runtime",
+ "substrate-prometheus-endpoint",
+ "thiserror",
+]
+
+[[package]]
 name = "sc-consensus-grandpa-rpc"
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.40#98f2e3451c9143278ec53c6718940aeabcd3b68a"
@@ -10377,7 +10417,7 @@ dependencies = [
  "log",
  "parity-scale-codec",
  "sc-client-api",
- "sc-consensus-grandpa",
+ "sc-consensus-grandpa 0.10.0-dev (git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.40)",
  "sc-rpc",
  "serde",
  "sp-blockchain",
@@ -10969,7 +11009,7 @@ dependencies = [
  "sc-client-api",
  "sc-consensus-babe",
  "sc-consensus-epochs",
- "sc-consensus-grandpa",
+ "sc-consensus-grandpa 0.10.0-dev (git+https://github.com/mangata-finance//substrate?branch=mangata-dev-v0.9.40)",
  "serde",
  "serde_json",
  "sp-blockchain",

@@ -696,14 +696,27 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
-			<Self as XykFunctionsTrait<T::AccountId>>::multiswap_sell_asset(
-				sender,
-				swap_token_list,
-				sold_asset_amount,
-				min_amount_out,
-				false,
-				false,
-			)?;
+			if let (Some(sold_asset_id), Some(bought_asset_id), 2) =
+				(swap_token_list.get(0), swap_token_list.get(1), swap_token_list.len())
+			{
+				let _ = <Self as XykFunctionsTrait<T::AccountId>>::sell_asset(
+					sender,
+					*sold_asset_id,
+					*bought_asset_id,
+					sold_asset_amount,
+					min_amount_out,
+					false,
+				)?;
+			} else {
+				<Self as XykFunctionsTrait<T::AccountId>>::multiswap_sell_asset(
+					sender,
+					swap_token_list,
+					sold_asset_amount,
+					min_amount_out,
+					false,
+					false,
+				)?;
+			}
 			Ok(().into())
 		}
 
@@ -771,14 +784,27 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
-			<Self as XykFunctionsTrait<T::AccountId>>::multiswap_buy_asset(
-				sender,
-				swap_token_list,
-				bought_asset_amount,
-				max_amount_in,
-				false,
-				false,
-			)?;
+			if let (Some(sold_asset_id), Some(bought_asset_id), 2) =
+				(swap_token_list.get(0), swap_token_list.get(1), swap_token_list.len())
+			{
+				let _ = <Self as XykFunctionsTrait<T::AccountId>>::buy_asset(
+					sender,
+					*sold_asset_id,
+					*bought_asset_id,
+					bought_asset_amount,
+					max_amount_in,
+					false,
+				)?;
+			} else {
+				<Self as XykFunctionsTrait<T::AccountId>>::multiswap_buy_asset(
+					sender,
+					swap_token_list,
+					bought_asset_amount,
+					max_amount_in,
+					false,
+					false,
+				)?;
+			}
 			Ok(().into())
 		}
 
@@ -1634,6 +1660,7 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 			!T::MaintenanceStatusProvider::is_maintenance(),
 			Error::<T>::TradingBlockedByMaintenanceMode
 		);
+		ensure!(swap_token_list.len() > 2_usize, Error::<T>::MultiswapShouldBeAtleastTwoHops);
 		let sold_asset_id =
 			*swap_token_list.get(0).ok_or(Error::<T>::MultiswapShouldBeAtleastTwoHops)?;
 		let bought_asset_id =
@@ -1843,10 +1870,12 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 			!T::MaintenanceStatusProvider::is_maintenance(),
 			Error::<T>::TradingBlockedByMaintenanceMode
 		);
+		ensure!(swap_token_list.len() > 2_usize, Error::<T>::MultiswapShouldBeAtleastTwoHops);
 		// Ensure not buying zero amount
 		ensure!(!final_bought_asset_amount.is_zero(), Error::<T>::ZeroAmount,);
 		ensure!(!max_amount_in.is_zero(), Error::<T>::ZeroAmount,);
 
+		// Unwraps are fine due to above ensure
 		let sold_asset_id =
 			*swap_token_list.get(0).ok_or(Error::<T>::MultiswapShouldBeAtleastTwoHops)?;
 		let bought_asset_id =

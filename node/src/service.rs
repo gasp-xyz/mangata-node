@@ -34,6 +34,8 @@ use crate::{
 use sc_consensus::ImportQueue;
 use sc_executor::NativeElseWasmExecutor;
 use sc_network::NetworkService;
+use sc_network::NetworkBlock;
+use sc_network_sync::SyncingService;
 pub use sc_service::ChainSpec;
 use sc_service::{Configuration, PartialComponents, TFullBackend, TFullClient, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
@@ -328,17 +330,23 @@ where
 		+ Send
 		+ 'static,
 	BIC: FnOnce(
-Arc<ParachainClient<RuntimeApi>>,
-ParachainBlockImport<RuntimeApi>,
-Option<&Registry>,
-Option<TelemetryHandle>,
-&TaskManager,
-Arc<dyn RelayChainInterface>,
-Arc<sc_transaction_pool::FullPool<Block, ParachainClient<RuntimeApi>>>,
-Arc<NetworkService<Block, Hash>>,
-SyncCryptoStorePtr,
-bool,
-) -> Result<Box<dyn ParachainConsensus<Block>>, sc_service::Error>,
+		Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>>,
+		ParachainBlockImport<RuntimeApi, Executor>,
+		Option<&Registry>,
+		Option<TelemetryHandle>,
+		&TaskManager,
+		Arc<dyn RelayChainInterface>,
+		Arc<
+			sc_transaction_pool::FullPool<
+				Block,
+				TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>,
+			>,
+		>,
+		Arc<SyncingService<Block>>,
+		SyncCryptoStorePtr,
+		bool,
+		ParaId
+	) -> Result<Box<dyn ParachainConsensus<Block>>, sc_service::Error>,
 {
 	let parachain_config = prepare_node_config(parachain_config);
 
@@ -463,7 +471,7 @@ bool,
 			sync_service,
 			params.keystore_container.sync_keystore(),
 			force_authoring,
-			para_id
+			id
 		)?;
 
 		let spawner = task_manager.spawn_handle();
@@ -558,7 +566,8 @@ where
 		 transaction_pool,
 		 sync_oracle,
 		 keystore,
-		 force_authoring| {
+		 force_authoring,
+		 id| {
 			let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 
 			let proposer_factory = sc_basic_authorship_ver::ProposerFactory::with_proof_recording(

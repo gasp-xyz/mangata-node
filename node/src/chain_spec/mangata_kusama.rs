@@ -6,8 +6,9 @@ use hex::FromHex;
 use mangata_kusama_runtime::{
 	constants::parachains, ksm_per_second, AccountId, AssetMetadataOf, AuraId, CustomMetadata,
 	GeneralKey, MultiLocation, Parachain, Signature, XcmMetadata, KAR_TOKEN_ID, KSM_TOKEN_ID,
-	TUR_TOKEN_ID, X1, X2,
+	TUR_TOKEN_ID, X1, X2, xcm_config::general_key
 };
+
 use sc_service::ChainType;
 use sp_core::{sr25519, ByteArray, Pair, Public};
 use sp_runtime::{
@@ -405,10 +406,7 @@ pub fn mangata_kusama_local_config() -> ChainSpec {
 									1,
 									X2(
 										Parachain(parachains::karura::ID),
-										GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
-											parachains::karura::KAR_KEY.to_vec(),
-											None,
-										)),
+										general_key(parachains::karura::KAR_KEY),
 									),
 								)
 								.into(),

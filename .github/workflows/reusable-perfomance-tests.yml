@@ -79,6 +79,7 @@ jobs:
           throughput=300
 
       - name: Upload reports
+        if: always()
         uses: actions/upload-artifact@v3.1.1
         with:
           name: performance-benchmarks-report

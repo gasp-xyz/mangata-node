@@ -24,6 +24,7 @@ xcm-builder = { git = "https://github.com/mangata-finance/polkadot", branch = "m
 
 # Cumulus
 cumulus-primitives-core = { git = "https://github.com/mangata-finance/cumulus", branch = "mangata-dev-v0.9.40" }
+cumulus-pallet-xcmp-queue = { git = "https://github.com/mangata-finance/cumulus", branch = "mangata-dev-v0.9.40" }
 parachain-info = { git = "https://github.com/mangata-finance/cumulus", branch = "mangata-dev-v0.9.40" }
 
 # Open-Runtime-Module-Library Dependencies

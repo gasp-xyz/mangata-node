@@ -303,8 +303,8 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use mangata_support::traits::{
-	ActivationReservesProviderTrait, GetMaintenanceStatusTrait, PoolCreateApi,
-	PreValidateSwaps, ProofOfStakeRewardsApi, Valuate, XykFunctionsTrait,
+	ActivationReservesProviderTrait, GetMaintenanceStatusTrait, PoolCreateApi, PreValidateSwaps,
+	ProofOfStakeRewardsApi, Valuate, XykFunctionsTrait,
 };
 use mangata_types::{multipurpose_liquidity::ActivateKind, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};

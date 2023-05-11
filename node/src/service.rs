@@ -16,18 +16,18 @@ use cumulus_client_consensus_common::{
 	ParachainBlockImport as TParachainBlockImport, ParachainConsensus,
 };
 use cumulus_client_service::{
-	prepare_node_config, start_collator, start_full_node, StartCollatorParams, StartFullNodeParams,
-	BuildNetworkParams, build_network, build_relay_chain_interface
+	build_network, build_relay_chain_interface, prepare_node_config, start_collator,
+	start_full_node, BuildNetworkParams, StartCollatorParams, StartFullNodeParams,
 };
 use cumulus_primitives_core::ParaId;
 use cumulus_relay_chain_interface::RelayChainInterface;
 
 // Substrate Imports
-use frame_benchmarking_cli::SUBSTRATE_REFERENCE_HARDWARE;
 use crate::{
 	client::{Client, RuntimeApiCollection},
 	command::IdentifyVariant,
 };
+use frame_benchmarking_cli::SUBSTRATE_REFERENCE_HARDWARE;
 use sc_consensus::ImportQueue;
 use sc_executor::NativeElseWasmExecutor;
 use sc_network::NetworkBlock;
@@ -339,7 +339,7 @@ where
 		Arc<SyncingService<Block>>,
 		SyncCryptoStorePtr,
 		bool,
-		ParaId
+		ParaId,
 	) -> Result<Box<dyn ParachainConsensus<Block>>, sc_service::Error>,
 {
 	let parachain_config = prepare_node_config(parachain_config);
@@ -363,8 +363,8 @@ where
 		collator_options.clone(),
 		hwbench.clone(),
 	)
-		.await
-		.map_err(|e| sc_service::Error::Application(Box::new(e) as Box<_>))?;
+	.await
+	.map_err(|e| sc_service::Error::Application(Box::new(e) as Box<_>))?;
 
 	let force_authoring = parachain_config.force_authoring;
 	let validator = parachain_config.role.is_authority();
@@ -380,7 +380,8 @@ where
 			spawn_handle: task_manager.spawn_handle(),
 			relay_chain_interface: relay_chain_interface.clone(),
 			import_queue: params.import_queue,
-		}).await?;
+		})
+		.await?;
 
 	if parachain_config.offchain_worker.enabled {
 		sc_service::build_offchain_workers(
@@ -465,7 +466,7 @@ where
 			sync_service,
 			params.keystore_container.sync_keystore(),
 			force_authoring,
-			id
+			id,
 		)?;
 
 		let spawner = task_manager.spawn_handle();
@@ -482,7 +483,7 @@ where
 			import_queue: import_queue_service,
 			collator_key: collator_key.expect("Command line arguments do not allow this. qed"),
 			relay_chain_slot_duration,
-			recovery_handle: Box::new(overseer_handle)
+			recovery_handle: Box::new(overseer_handle),
 		};
 
 		start_collator(params).await?;

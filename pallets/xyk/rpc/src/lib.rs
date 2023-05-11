@@ -10,9 +10,7 @@ use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_core::U256;
 use sp_rpc::number::NumberOrHex;
-use sp_runtime::{
-	traits::{Block as BlockT, MaybeDisplay, MaybeFromStr},
-};
+use sp_runtime::traits::{Block as BlockT, MaybeDisplay, MaybeFromStr};
 use sp_std::convert::{TryFrom, TryInto};
 use std::sync::Arc;
 pub use xyk_runtime_api::XykApi as XykRuntimeApi;
@@ -307,14 +305,13 @@ where
 		let api = self.client.runtime_api();
 		let at = self.client.info().best_hash;
 
-		api.get_max_instant_unreserve_amount(at, user, liquidity_asset_id)
-			.map_err(|e| {
-				JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
-					1,
-					"Unable to serve the request",
-					Some(format!("{:?}", e)),
-				)))
-			})
+		api.get_max_instant_unreserve_amount(at, user, liquidity_asset_id).map_err(|e| {
+			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+				1,
+				"Unable to serve the request",
+				Some(format!("{:?}", e)),
+			)))
+		})
 	}
 
 	fn calculate_rewards_amount(

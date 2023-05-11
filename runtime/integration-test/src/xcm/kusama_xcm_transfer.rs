@@ -60,7 +60,11 @@ fn transfer_to_relay_chain() {
 			RuntimeOrigin::signed(ALICE.into()),
 			RELAY_ASSET_ID,
 			unit(12),
-			Box::new(Junction::AccountId32 { id: BOB, network: None }.into_exterior(1).into_versioned()),
+			Box::new(
+				Junction::AccountId32 { id: BOB, network: None }
+					.into_exterior(1)
+					.into_versioned()
+			),
 			WeightLimit::Limited(weight)
 		));
 	});

@@ -1,10 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 use super::*;
 use frame_support::{
-	storage::{
-		migration::{move_prefix},
-		storage_prefix, unhashed,
-	},
+	storage::{migration::move_prefix, storage_prefix, unhashed},
 	traits::OnRuntimeUpgrade,
 };
 

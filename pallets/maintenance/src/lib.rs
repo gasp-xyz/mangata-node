@@ -3,7 +3,7 @@
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
-	traits::{Get, StorageVersion}
+	traits::{Get, StorageVersion},
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use mangata_support::traits::GetMaintenanceStatusTrait;

@@ -267,7 +267,10 @@ impl sc_client_api::BlockBackend<Block> for Client {
 		match_client!(self, block_indexed_body(id))
 	}
 
-	fn block(&self, hash: <Block as BlockT>::Hash) -> sp_blockchain::Result<Option<SignedBlock<Block>>> {
+	fn block(
+		&self,
+		hash: <Block as BlockT>::Hash,
+	) -> sp_blockchain::Result<Option<SignedBlock<Block>>> {
 		match_client!(self, block(hash))
 	}
 
@@ -306,7 +309,11 @@ impl sc_client_api::BlockBackend<Block> for Client {
 }
 
 impl sc_client_api::StorageProvider<Block, crate::service::FullBackend> for Client {
-	fn storage(&self, hash: <Block as BlockT>::Hash, key: &StorageKey) -> sp_blockchain::Result<Option<StorageData>> {
+	fn storage(
+		&self,
+		hash: <Block as BlockT>::Hash,
+		key: &StorageKey,
+	) -> sp_blockchain::Result<Option<StorageData>> {
 		match_client!(self, storage(hash, key))
 	}
 
@@ -315,7 +322,9 @@ impl sc_client_api::StorageProvider<Block, crate::service::FullBackend> for Clie
 		hash: <Block as BlockT>::Hash,
 		key_prefix: Option<&StorageKey>,
 		start_key: Option<&StorageKey>,
-	) -> sp_blockchain::Result<KeysIter<<crate::service::FullBackend as sc_client_api::Backend<Block>>::State, Block>> {
+	) -> sp_blockchain::Result<
+		KeysIter<<crate::service::FullBackend as sc_client_api::Backend<Block>>::State, Block>,
+	> {
 		match_client!(self, storage_keys(hash, key_prefix, start_key))
 	}
 
@@ -332,7 +341,9 @@ impl sc_client_api::StorageProvider<Block, crate::service::FullBackend> for Clie
 		hash: <Block as BlockT>::Hash,
 		key_prefix: Option<&StorageKey>,
 		start_key: Option<&StorageKey>,
-	) -> sp_blockchain::Result<PairsIter<<crate::service::FullBackend as sc_client_api::Backend<Block>>::State, Block>> {
+	) -> sp_blockchain::Result<
+		PairsIter<<crate::service::FullBackend as sc_client_api::Backend<Block>>::State, Block>,
+	> {
 		match_client!(self, storage_pairs(hash, key_prefix, start_key))
 	}
 
@@ -350,8 +361,10 @@ impl sc_client_api::StorageProvider<Block, crate::service::FullBackend> for Clie
 		hash: <Block as BlockT>::Hash,
 		child_info: ChildInfo,
 		key_prefix: Option<&StorageKey>,
-		start_key: Option<&StorageKey>
-	) -> sp_blockchain::Result<KeysIter<<crate::service::FullBackend as sc_client_api::Backend<Block>>::State, Block>> {
+		start_key: Option<&StorageKey>,
+	) -> sp_blockchain::Result<
+		KeysIter<<crate::service::FullBackend as sc_client_api::Backend<Block>>::State, Block>,
+	> {
 		match_client!(self, child_storage_keys(hash, child_info, key_prefix, start_key))
 	}
 

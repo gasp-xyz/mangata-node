@@ -31,7 +31,7 @@ use sc_transaction_pool_api::{InPoolTransaction, TransactionPool};
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::HeaderBackend;
 use sp_core::{hexdisplay::HexDisplay, Bytes};
-use sp_runtime::{generic::BlockId, traits};
+use sp_runtime::{traits};
 
 pub use frame_system_rpc_runtime_api::AccountNonceApi;
 use sc_client_api::BlockBackend;

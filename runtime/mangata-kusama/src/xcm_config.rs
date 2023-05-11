@@ -117,7 +117,7 @@ impl TakeRevenue for ToTreasury {
 
 parameter_types! {
 	// regular transfer is ~400M weight, xcm transfer weight is ~4*UnitWeightCost
-	pub UnitWeightCost: XcmWeight = XcmWeight::from_ref_time(150_000_000);
+	pub UnitWeightCost: XcmWeight = XcmWeight::from_parts(150_000_000, 0);
 	pub const MaxInstructions: u32 = 100;
 
 	pub KsmPerSecond: (AssetId, u128, u128) = (MultiLocation::parent().into(), ksm_per_second(), ksm_per_second());
@@ -283,7 +283,7 @@ impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 
 parameter_types! {
 	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
-	pub const BaseXcmWeight: XcmWeight = XcmWeight::from_ref_time(100_000_000); // TODO: recheck this
+	pub const BaseXcmWeight: XcmWeight = XcmWeight::from_parts(100_000_000, 0); // TODO: recheck this
 	pub const MaxAssetsForTransfer:usize = 2;
 }
 
@@ -359,7 +359,7 @@ where
 		if !asset_traps.is_empty() {
 			X::drop_assets(origin, asset_traps.into(), context);
 		}
-		XcmWeight::from_ref_time(0)
+		XcmWeight::from_parts(0, 0)
 	}
 }
 

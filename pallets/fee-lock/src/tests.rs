@@ -752,8 +752,8 @@ fn calculate_estimated_weight(unlock_fee_calls: u64, reads: u64, writes: u64) ->
 	calculate_estimated_weight(1, 6, 1),
 	ACCOUNT_WITHOUT_LOCKED_TOKENS; "unlocks tokens for an user")]
 #[test_case(
-	Weight::from_ref_time(0),
-	Weight::from_ref_time(0),
+	Weight::from_parts(0, 0),
+	Weight::from_parts(0, 0),
 	ACCOUNT_WITH_LOCKED_TOKENS; "does not unlock tokens when weigh is zero")]
 #[test_case(
 	calculate_estimated_weight(1, 6, 1),
@@ -761,7 +761,7 @@ fn calculate_estimated_weight(unlock_fee_calls: u64, reads: u64, writes: u64) ->
 	ACCOUNT_WITHOUT_LOCKED_TOKENS; "unlock tokens using exact amount of weight required")]
 #[test_case(
 	calculate_estimated_weight(1, 4, 1),
-	Weight::from_ref_time(0),
+	Weight::from_parts(0, 0),
 	ACCOUNT_WITH_LOCKED_TOKENS; "unlock tokens using a too small weight that required")]
 #[test_case(
 	calculate_estimated_weight(1, 7, 1),

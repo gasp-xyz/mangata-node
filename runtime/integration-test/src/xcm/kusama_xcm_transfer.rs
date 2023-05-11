@@ -108,7 +108,7 @@ fn transfer_asset() {
 					)
 					.into()
 				),
-				WeightLimit::Limited(Weight::from_ref_time(600_000_000)),
+				WeightLimit::Limited(Weight::from_parts(600_000_000, 0)),
 			),
 			orml_xtokens::Error::<Runtime>::NotCrossChainTransferableCurrency
 		);
@@ -137,7 +137,7 @@ fn transfer_asset() {
 				)
 				.into()
 			),
-			WeightLimit::Limited(Weight::from_ref_time(600_000_000)),
+			WeightLimit::Limited(Weight::from_parts(600_000_000, 0)),
 		));
 
 		assert_eq!(Tokens::free_balance(registered_asset_id, &AccountId::from(ALICE)), 80 * unit);
@@ -161,7 +161,7 @@ fn transfer_asset() {
 				)
 				.into()
 			),
-			WeightLimit::Limited(Weight::from_ref_time(600_000_000)),
+			WeightLimit::Limited(Weight::from_parts(600_000_000, 0)),
 		));
 
 		assert_eq!(Tokens::free_balance(NATIVE_ASSET_ID, &AccountId::from(BOB)), 10 * unit - fee);

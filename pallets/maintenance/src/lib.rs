@@ -1,19 +1,13 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_support::{
-	dispatch::DispatchResult,
 	ensure,
 	pallet_prelude::*,
-	storage::bounded_btree_map::BoundedBTreeMap,
-	traits::{Get, StorageVersion},
-	transactional,
+	traits::{Get, StorageVersion}
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use mangata_support::traits::GetMaintenanceStatusTrait;
-use mangata_types::{Balance, TokenId};
-use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 
-use sp_runtime::traits::{CheckedDiv, Zero};
 use sp_std::{convert::TryInto, prelude::*};
 
 #[cfg(test)]
@@ -44,7 +38,6 @@ pub mod pallet {
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(PhantomData<T>);
 
@@ -99,7 +92,8 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_ref_time(40_000_000)))]
+		#[pallet::call_index(0)]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		pub fn switch_maintenance_mode_on(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
 
@@ -125,7 +119,8 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_ref_time(40_000_000)))]
+		#[pallet::call_index(1)]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		pub fn switch_maintenance_mode_off(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
 
@@ -150,7 +145,8 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_ref_time(40_000_000)))]
+		#[pallet::call_index(2)]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		pub fn switch_upgradability_in_maintenance_mode_on(
 			origin: OriginFor<T>,
 		) -> DispatchResultWithPostInfo {
@@ -180,7 +176,8 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_ref_time(40_000_000)))]
+		#[pallet::call_index(3)]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		pub fn switch_upgradability_in_maintenance_mode_off(
 			origin: OriginFor<T>,
 		) -> DispatchResultWithPostInfo {

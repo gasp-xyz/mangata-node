@@ -68,13 +68,13 @@ impl<T: frame_system::Config> pallet_issuance::WeightInfo for ModuleWeight<T> {
 	// Storage: Issuance IsTGEFinalized (r:1 w:0)
 	// Storage: Tokens TotalIssuance (r:1 w:0)
 	fn init_issuance_config() -> Weight {
-		(Weight::from_ref_time(31_560_000))
+		(Weight::from_parts(31_560_000, 0))
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Issuance IsTGEFinalized (r:1 w:1)
 	fn finalize_tge() -> Weight {
-		(Weight::from_ref_time(22_440_000))
+		(Weight::from_parts(22_440_000, 0))
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -86,9 +86,9 @@ impl<T: frame_system::Config> pallet_issuance::WeightInfo for ModuleWeight<T> {
 	// Storage: Tokens Locks (r:3 w:3)
 	// Storage: Issuance TGETotal (r:1 w:1)
 	fn execute_tge(x: u32, ) -> Weight {
-		(Weight::from_ref_time(29_941_757))
+		(Weight::from_parts(29_941_757, 0))
 			// Standard Error: 30_728
-			.saturating_add((Weight::from_ref_time(61_997_015)).saturating_mul(x as u64))
+			.saturating_add((Weight::from_parts(61_997_015, 0)).saturating_mul(x as u64))
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().reads((4 as u64).saturating_mul(x as u64)))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
@@ -102,13 +102,13 @@ impl WeightInfo for () {
 	// Storage: Issuance IsTGEFinalized (r:1 w:0)
 	// Storage: Tokens TotalIssuance (r:1 w:0)
 	fn init_issuance_config() -> Weight {
-		(Weight::from_ref_time(31_560_000))
+		(Weight::from_parts(31_560_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(3 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: Issuance IsTGEFinalized (r:1 w:1)
 	fn finalize_tge() -> Weight {
-		(Weight::from_ref_time(22_440_000))
+		(Weight::from_parts(22_440_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
@@ -120,9 +120,9 @@ impl WeightInfo for () {
 	// Storage: Tokens Locks (r:3 w:3)
 	// Storage: Issuance TGETotal (r:1 w:1)
 	fn execute_tge(x: u32, ) -> Weight {
-		(Weight::from_ref_time(29_941_757))
+		(Weight::from_parts(29_941_757, 0))
 			// Standard Error: 30_728
-			.saturating_add((Weight::from_ref_time(61_997_015)).saturating_mul(x as u64))
+			.saturating_add((Weight::from_parts(61_997_015, 0)).saturating_mul(x as u64))
 			.saturating_add(RocksDbWeight::get().reads(3 as u64))
 			.saturating_add(RocksDbWeight::get().reads((4 as u64).saturating_mul(x as u64)))
 			.saturating_add(RocksDbWeight::get().writes(2 as u64))

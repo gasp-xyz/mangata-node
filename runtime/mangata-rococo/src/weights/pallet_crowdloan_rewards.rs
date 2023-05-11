@@ -70,7 +70,7 @@ pub struct ModuleWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_crowdloan_rewards::WeightInfo for ModuleWeight<T> {
 	// Storage: Crowdloan CrowdloanAllocation (r:0 w:1)
 	fn set_crowdloan_allocation() -> Weight {
-		(Weight::from_ref_time(7_660_000))
+		(Weight::from_parts(7_660_000, 0))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Crowdloan Initialized (r:1 w:0)
@@ -85,9 +85,9 @@ impl<T: frame_system::Config> pallet_crowdloan_rewards::WeightInfo for ModuleWei
 	// Storage: System Account (r:1 w:1)
 	// Storage: Crowdloan AccountsPayable (r:1 w:1)
 	fn initialize_reward_vec(x: u32, ) -> Weight {
-		(Weight::from_ref_time(285_559_831))
+		(Weight::from_parts(285_559_831, 0))
 			// Standard Error: 112_312
-			.saturating_add((Weight::from_ref_time(59_501_876)).saturating_mul(x as u64))
+			.saturating_add((Weight::from_parts(59_501_876, 0)).saturating_mul(x as u64))
 			.saturating_add(T::DbWeight::get().reads(6 as u64))
 			.saturating_add(T::DbWeight::get().reads((5 as u64).saturating_mul(x as u64)))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
@@ -100,7 +100,7 @@ impl<T: frame_system::Config> pallet_crowdloan_rewards::WeightInfo for ModuleWei
 	// Storage: Crowdloan TotalContributors (r:1 w:0)
 	// Storage: Crowdloan EndRelayBlock (r:0 w:1)
 	fn complete_initialization() -> Weight {
-		(Weight::from_ref_time(20_990_000))
+		(Weight::from_parts(20_990_000, 0))
 			.saturating_add(T::DbWeight::get().reads(5 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
@@ -112,13 +112,13 @@ impl<T: frame_system::Config> pallet_crowdloan_rewards::WeightInfo for ModuleWei
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: Tokens TotalIssuance (r:1 w:1)
 	fn claim() -> Weight {
-		(Weight::from_ref_time(66_150_000))
+		(Weight::from_parts(66_150_000, 0))
 			.saturating_add(T::DbWeight::get().reads(7 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 	// Storage: Crowdloan AccountsPayable (r:2 w:2)
 	fn update_reward_address() -> Weight {
-		(Weight::from_ref_time(36_970_000))
+		(Weight::from_parts(36_970_000, 0))
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
@@ -129,15 +129,15 @@ impl<T: frame_system::Config> pallet_crowdloan_rewards::WeightInfo for ModuleWei
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: Tokens TotalIssuance (r:1 w:1)
 	fn associate_native_identity() -> Weight {
-		(Weight::from_ref_time(141_790_000))
+		(Weight::from_parts(141_790_000, 0))
 			.saturating_add(T::DbWeight::get().reads(6 as u64))
 			.saturating_add(T::DbWeight::get().writes(5 as u64))
 	}
 	// Storage: Crowdloan AccountsPayable (r:2 w:2)
 	fn change_association_with_relay_keys(x: u32, ) -> Weight {
-		(Weight::from_ref_time(36_263_441))
+		(Weight::from_parts(36_263_441, 0))
 			// Standard Error: 18_040
-			.saturating_add((Weight::from_ref_time(63_156_881)).saturating_mul(x as u64))
+			.saturating_add((Weight::from_parts(63_156_881, 0)).saturating_mul(x as u64))
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
@@ -147,7 +147,7 @@ impl<T: frame_system::Config> pallet_crowdloan_rewards::WeightInfo for ModuleWei
 impl WeightInfo for () {
 	// Storage: Crowdloan CrowdloanAllocation (r:0 w:1)
 	fn set_crowdloan_allocation() -> Weight {
-		(Weight::from_ref_time(7_660_000))
+		(Weight::from_parts(7_660_000, 0))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: Crowdloan Initialized (r:1 w:0)
@@ -162,9 +162,9 @@ impl WeightInfo for () {
 	// Storage: System Account (r:1 w:1)
 	// Storage: Crowdloan AccountsPayable (r:1 w:1)
 	fn initialize_reward_vec(x: u32, ) -> Weight {
-		(Weight::from_ref_time(285_559_831))
+		(Weight::from_parts(285_559_831, 0))
 			// Standard Error: 112_312
-			.saturating_add((Weight::from_ref_time(59_501_876)).saturating_mul(x as u64))
+			.saturating_add((Weight::from_parts(59_501_876, 0)).saturating_mul(x as u64))
 			.saturating_add(RocksDbWeight::get().reads(6 as u64))
 			.saturating_add(RocksDbWeight::get().reads((5 as u64).saturating_mul(x as u64)))
 			.saturating_add(RocksDbWeight::get().writes(3 as u64))
@@ -177,7 +177,7 @@ impl WeightInfo for () {
 	// Storage: Crowdloan TotalContributors (r:1 w:0)
 	// Storage: Crowdloan EndRelayBlock (r:0 w:1)
 	fn complete_initialization() -> Weight {
-		(Weight::from_ref_time(20_990_000))
+		(Weight::from_parts(20_990_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(5 as u64))
 			.saturating_add(RocksDbWeight::get().writes(2 as u64))
 	}
@@ -189,13 +189,13 @@ impl WeightInfo for () {
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: Tokens TotalIssuance (r:1 w:1)
 	fn claim() -> Weight {
-		(Weight::from_ref_time(66_150_000))
+		(Weight::from_parts(66_150_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(7 as u64))
 			.saturating_add(RocksDbWeight::get().writes(3 as u64))
 	}
 	// Storage: Crowdloan AccountsPayable (r:2 w:2)
 	fn update_reward_address() -> Weight {
-		(Weight::from_ref_time(36_970_000))
+		(Weight::from_parts(36_970_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(2 as u64))
 	}
@@ -206,15 +206,15 @@ impl WeightInfo for () {
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: Tokens TotalIssuance (r:1 w:1)
 	fn associate_native_identity() -> Weight {
-		(Weight::from_ref_time(141_790_000))
+		(Weight::from_parts(141_790_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(6 as u64))
 			.saturating_add(RocksDbWeight::get().writes(5 as u64))
 	}
 	// Storage: Crowdloan AccountsPayable (r:2 w:2)
 	fn change_association_with_relay_keys(x: u32, ) -> Weight {
-		(Weight::from_ref_time(36_263_441))
+		(Weight::from_parts(36_263_441, 0))
 			// Standard Error: 18_040
-			.saturating_add((Weight::from_ref_time(63_156_881)).saturating_mul(x as u64))
+			.saturating_add((Weight::from_parts(63_156_881, 0)).saturating_mul(x as u64))
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(2 as u64))
 	}

@@ -72,9 +72,9 @@ impl<T: frame_system::Config> pallet_vesting_mangata::WeightInfo for ModuleWeigh
 	// Storage: Tokens Locks (r:1 w:1)
 	// Storage: Tokens Accounts (r:1 w:1)
 	fn vest_locked(_l: u32, s: u32, ) -> Weight {
-		(Weight::from_ref_time(55_253_850))
+		(Weight::from_parts(55_253_850, 0))
 			// Standard Error: 6_193
-			.saturating_add((Weight::from_ref_time(181_187)).saturating_mul(s as u64))
+			.saturating_add((Weight::from_parts(181_187, 0)).saturating_mul(s as u64))
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
@@ -82,9 +82,9 @@ impl<T: frame_system::Config> pallet_vesting_mangata::WeightInfo for ModuleWeigh
 	// Storage: Tokens Locks (r:1 w:1)
 	// Storage: Tokens Accounts (r:1 w:1)
 	fn vest_unlocked(_l: u32, s: u32, ) -> Weight {
-		(Weight::from_ref_time(64_355_206))
+		(Weight::from_parts(64_355_206, 0))
 			// Standard Error: 4_243
-			.saturating_add((Weight::from_ref_time(101_142)).saturating_mul(s as u64))
+			.saturating_add((Weight::from_parts(101_142, 0)).saturating_mul(s as u64))
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
@@ -92,9 +92,9 @@ impl<T: frame_system::Config> pallet_vesting_mangata::WeightInfo for ModuleWeigh
 	// Storage: Tokens Locks (r:1 w:1)
 	// Storage: Tokens Accounts (r:1 w:1)
 	fn vest_other_locked(_l: u32, s: u32, ) -> Weight {
-		(Weight::from_ref_time(55_010_059))
+		(Weight::from_parts(55_010_059, 0))
 			// Standard Error: 6_845
-			.saturating_add((Weight::from_ref_time(198_043)).saturating_mul(s as u64))
+			.saturating_add((Weight::from_parts(198_043, 0)).saturating_mul(s as u64))
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
@@ -103,9 +103,9 @@ impl<T: frame_system::Config> pallet_vesting_mangata::WeightInfo for ModuleWeigh
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn vest_other_unlocked(_l: u32, s: u32, ) -> Weight {
-		(Weight::from_ref_time(63_694_757))
+		(Weight::from_parts(63_694_757, 0))
 			// Standard Error: 3_801
-			.saturating_add((Weight::from_ref_time(110_767)).saturating_mul(s as u64))
+			.saturating_add((Weight::from_parts(110_767, 0)).saturating_mul(s as u64))
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
@@ -114,9 +114,9 @@ impl<T: frame_system::Config> pallet_vesting_mangata::WeightInfo for ModuleWeigh
 	// Storage: System Account (r:1 w:0)
 	// Storage: Tokens Locks (r:1 w:1)
 	fn force_vested_transfer(_l: u32, s: u32, ) -> Weight {
-		(Weight::from_ref_time(84_539_270))
+		(Weight::from_parts(84_539_270, 0))
 			// Standard Error: 6_263
-			.saturating_add((Weight::from_ref_time(193_327)).saturating_mul(s as u64))
+			.saturating_add((Weight::from_parts(193_327, 0)).saturating_mul(s as u64))
 			.saturating_add(T::DbWeight::get().reads(5 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
@@ -124,9 +124,9 @@ impl<T: frame_system::Config> pallet_vesting_mangata::WeightInfo for ModuleWeigh
 	// Storage: Tokens Locks (r:1 w:1)
 	// Storage: Tokens Accounts (r:1 w:1)
 	fn not_unlocking_merge_schedules(_l: u32, s: u32, ) -> Weight {
-		(Weight::from_ref_time(56_297_385))
+		(Weight::from_parts(56_297_385, 0))
 			// Standard Error: 5_967
-			.saturating_add((Weight::from_ref_time(192_784)).saturating_mul(s as u64))
+			.saturating_add((Weight::from_parts(192_784, 0)).saturating_mul(s as u64))
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
@@ -134,9 +134,9 @@ impl<T: frame_system::Config> pallet_vesting_mangata::WeightInfo for ModuleWeigh
 	// Storage: Tokens Locks (r:1 w:1)
 	// Storage: Tokens Accounts (r:1 w:1)
 	fn unlocking_merge_schedules(_l: u32, s: u32, ) -> Weight {
-		(Weight::from_ref_time(56_029_139))
+		(Weight::from_parts(56_029_139, 0))
 			// Standard Error: 6_257
-			.saturating_add((Weight::from_ref_time(198_422)).saturating_mul(s as u64))
+			.saturating_add((Weight::from_parts(198_422, 0)).saturating_mul(s as u64))
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
@@ -148,9 +148,9 @@ impl WeightInfo for () {
 	// Storage: Tokens Locks (r:1 w:1)
 	// Storage: Tokens Accounts (r:1 w:1)
 	fn vest_locked(_l: u32, s: u32, ) -> Weight {
-		(Weight::from_ref_time(55_253_850))
+		(Weight::from_parts(55_253_850, 0))
 			// Standard Error: 6_193
-			.saturating_add((Weight::from_ref_time(181_187)).saturating_mul(s as u64))
+			.saturating_add((Weight::from_parts(181_187, 0)).saturating_mul(s as u64))
 			.saturating_add(RocksDbWeight::get().reads(3 as u64))
 			.saturating_add(RocksDbWeight::get().writes(2 as u64))
 	}
@@ -158,9 +158,9 @@ impl WeightInfo for () {
 	// Storage: Tokens Locks (r:1 w:1)
 	// Storage: Tokens Accounts (r:1 w:1)
 	fn vest_unlocked(_l: u32, s: u32, ) -> Weight {
-		(Weight::from_ref_time(64_355_206))
+		(Weight::from_parts(64_355_206, 0))
 			// Standard Error: 4_243
-			.saturating_add((Weight::from_ref_time(101_142)).saturating_mul(s as u64))
+			.saturating_add((Weight::from_parts(101_142, 0)).saturating_mul(s as u64))
 			.saturating_add(RocksDbWeight::get().reads(3 as u64))
 			.saturating_add(RocksDbWeight::get().writes(3 as u64))
 	}
@@ -168,9 +168,9 @@ impl WeightInfo for () {
 	// Storage: Tokens Locks (r:1 w:1)
 	// Storage: Tokens Accounts (r:1 w:1)
 	fn vest_other_locked(_l: u32, s: u32, ) -> Weight {
-		(Weight::from_ref_time(55_010_059))
+		(Weight::from_parts(55_010_059, 0))
 			// Standard Error: 6_845
-			.saturating_add((Weight::from_ref_time(198_043)).saturating_mul(s as u64))
+			.saturating_add((Weight::from_parts(198_043, 0)).saturating_mul(s as u64))
 			.saturating_add(RocksDbWeight::get().reads(3 as u64))
 			.saturating_add(RocksDbWeight::get().writes(2 as u64))
 	}
@@ -179,9 +179,9 @@ impl WeightInfo for () {
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn vest_other_unlocked(_l: u32, s: u32, ) -> Weight {
-		(Weight::from_ref_time(63_694_757))
+		(Weight::from_parts(63_694_757, 0))
 			// Standard Error: 3_801
-			.saturating_add((Weight::from_ref_time(110_767)).saturating_mul(s as u64))
+			.saturating_add((Weight::from_parts(110_767, 0)).saturating_mul(s as u64))
 			.saturating_add(RocksDbWeight::get().reads(3 as u64))
 			.saturating_add(RocksDbWeight::get().writes(3 as u64))
 	}
@@ -190,9 +190,9 @@ impl WeightInfo for () {
 	// Storage: System Account (r:1 w:0)
 	// Storage: Tokens Locks (r:1 w:1)
 	fn force_vested_transfer(_l: u32, s: u32, ) -> Weight {
-		(Weight::from_ref_time(84_539_270))
+		(Weight::from_parts(84_539_270, 0))
 			// Standard Error: 6_263
-			.saturating_add((Weight::from_ref_time(193_327)).saturating_mul(s as u64))
+			.saturating_add((Weight::from_parts(193_327, 0)).saturating_mul(s as u64))
 			.saturating_add(RocksDbWeight::get().reads(5 as u64))
 			.saturating_add(RocksDbWeight::get().writes(3 as u64))
 	}
@@ -200,9 +200,9 @@ impl WeightInfo for () {
 	// Storage: Tokens Locks (r:1 w:1)
 	// Storage: Tokens Accounts (r:1 w:1)
 	fn not_unlocking_merge_schedules(_l: u32, s: u32, ) -> Weight {
-		(Weight::from_ref_time(56_297_385))
+		(Weight::from_parts(56_297_385, 0))
 			// Standard Error: 5_967
-			.saturating_add((Weight::from_ref_time(192_784)).saturating_mul(s as u64))
+			.saturating_add((Weight::from_parts(192_784, 0)).saturating_mul(s as u64))
 			.saturating_add(RocksDbWeight::get().reads(3 as u64))
 			.saturating_add(RocksDbWeight::get().writes(2 as u64))
 	}
@@ -210,9 +210,9 @@ impl WeightInfo for () {
 	// Storage: Tokens Locks (r:1 w:1)
 	// Storage: Tokens Accounts (r:1 w:1)
 	fn unlocking_merge_schedules(_l: u32, s: u32, ) -> Weight {
-		(Weight::from_ref_time(56_029_139))
+		(Weight::from_parts(56_029_139, 0))
 			// Standard Error: 6_257
-			.saturating_add((Weight::from_ref_time(198_422)).saturating_mul(s as u64))
+			.saturating_add((Weight::from_parts(198_422, 0)).saturating_mul(s as u64))
 			.saturating_add(RocksDbWeight::get().reads(3 as u64))
 			.saturating_add(RocksDbWeight::get().writes(2 as u64))
 	}

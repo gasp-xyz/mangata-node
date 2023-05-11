@@ -69,7 +69,7 @@ impl WeightInfo for () {
 	// Storage: Issuance PromotedPoolsRewardsV2 (r:1 w:0)
 	// Storage: Tokens Accounts (r:2 w:2)
 	fn claim_rewards_v2() -> Weight {
-		(Weight::from_ref_time(140_902_000))
+		(Weight::from_parts(140_902_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(4 as u64))
 			.saturating_add(RocksDbWeight::get().writes(3 as u64))
 	}
@@ -77,13 +77,13 @@ impl WeightInfo for () {
 	// Storage: Issuance PromotedPoolsRewardsV2 (r:1 w:0)
 	// Storage: Tokens Accounts (r:2 w:2)
 	fn claim_rewards_all_v2() -> Weight {
-		(Weight::from_ref_time(93_614_000))
+		(Weight::from_parts(93_614_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(4 as u64))
 			.saturating_add(RocksDbWeight::get().writes(3 as u64))
 	}
 	// Storage: Issuance PromotedPoolsRewardsV2 (r:1 w:1)
 	fn update_pool_promotion() -> Weight {
-		(Weight::from_ref_time(27_200_000))
+		(Weight::from_parts(27_200_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
@@ -93,7 +93,7 @@ impl WeightInfo for () {
 	// Storage: ProofOfStake RewardsInfo (r:1 w:1)
 	// Storage: ProofOfStake LiquidityMiningActivePoolV2 (r:1 w:1)
 	fn activate_liquidity_v2() -> Weight {
-		(Weight::from_ref_time(94_737_000))
+		(Weight::from_parts(94_737_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(5 as u64))
 			.saturating_add(RocksDbWeight::get().writes(4 as u64))
 	}
@@ -103,7 +103,7 @@ impl WeightInfo for () {
 	// Storage: MultiPurposeLiquidity ReserveStatus (r:1 w:1)
 	// Storage: Tokens Accounts (r:1 w:1)
 	fn deactivate_liquidity_v2() -> Weight {
-		(Weight::from_ref_time(94_215_000))
+		(Weight::from_parts(94_215_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(5 as u64))
 			.saturating_add(RocksDbWeight::get().writes(4 as u64))
 	}
@@ -121,7 +121,7 @@ impl WeightInfo for () {
 	// Storage: ProofOfStake LiquidityMiningActivePoolV2 (r:1 w:1)
 	// Storage: MultiPurposeLiquidity ReserveStatus (r:1 w:1)
 	fn proof_of_stake_compound_rewards() -> Weight {
-		(Weight::from_ref_time(496_664_000))
+		(Weight::from_parts(496_664_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(25 as u64))
 			.saturating_add(RocksDbWeight::get().writes(16 as u64))
 	}

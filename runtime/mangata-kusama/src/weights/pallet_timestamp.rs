@@ -65,12 +65,12 @@ pub struct ModuleWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_timestamp::WeightInfo for ModuleWeight<T> {
 	// Storage: Timestamp Now (r:1 w:1)
 	fn set() -> Weight {
-		(Weight::from_ref_time(12_030_000))
+		(Weight::from_parts(12_030_000, 0))
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	fn on_finalize() -> Weight {
-		(Weight::from_ref_time(5_610_000))
+		(Weight::from_parts(5_610_000, 0))
 	}
 }
 
@@ -78,11 +78,11 @@ impl<T: frame_system::Config> pallet_timestamp::WeightInfo for ModuleWeight<T> {
 impl WeightInfo for () {
 	// Storage: Timestamp Now (r:1 w:1)
 	fn set() -> Weight {
-		(Weight::from_ref_time(12_030_000))
+		(Weight::from_parts(12_030_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	fn on_finalize() -> Weight {
-		(Weight::from_ref_time(5_610_000))
+		(Weight::from_parts(5_610_000, 0))
 	}
 }

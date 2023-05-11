@@ -4,14 +4,13 @@ use cumulus_primitives_core::ParaId;
 use hex::FromHex;
 use mangata_rococo_runtime::{
 	constants::parachains, roc_per_second, AccountId, AssetMetadataOf, AuraId, CustomMetadata,
-	GeneralKey, MultiLocation, Parachain, Signature, XcmMetadata, KAR_TOKEN_ID, ROC_TOKEN_ID,
+	MultiLocation, Parachain, Signature, XcmMetadata, KAR_TOKEN_ID, ROC_TOKEN_ID,
 	TUR_TOKEN_ID, X1, X2, xcm_config::general_key
 };
 use sc_service::ChainType;
 use sp_core::{sr25519, ByteArray, Pair, Public};
 use sp_runtime::{
-	traits::{ConstU32, IdentifyAccount, Verify},
-	WeakBoundedVec,
+	traits::{IdentifyAccount, Verify}
 };
 
 pub mod public_testnet_keys {

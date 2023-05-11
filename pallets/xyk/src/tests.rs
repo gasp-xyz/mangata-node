@@ -689,19 +689,12 @@ fn sell_N_no_such_pool() {
 fn sell_N_not_enough_selling_assset() {
 	new_test_ext().execute_with(|| {
 		initialize();
-		// selling 1000000000000000000000 assetId 0 of pool 0 1 (user has only 960000000000000000000)
-		assert_ok!(XykStorage::multiswap_sell_asset(
-			RuntimeOrigin::signed(2),
-			vec![1, 4],
-			1000000000000000000000,
-			0
-		));
-		assert_event_emitted!(crate::Event::<Test>::MultiSellAssetFailedOnAtomicSwap(
-			2,
-			vec![1, 4],
-			1000000000000000000000,
-			module_err(Error::<Test>::MultiSwapNotEnoughAssets)
-		));
+
+		assert_err!(
+			// XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(2), vec![1, 4], 1000000000000000000000, 0),
+			XykStorage::sell_asset(RuntimeOrigin::signed(2), 1, 4, 1000000000000000000000, 0),
+			orml_tokens::Error::<Test>::BalanceTooLow,
+		); // selling 1000000000000000000000 assetId 0 of pool 0 1 (user has only 960000000000000000000)
 	});
 }
 
@@ -725,12 +718,8 @@ fn sell_W_insufficient_output_amount() {
 			500000
 		)); // selling 250000 assetId 0 of pool 0 1, by the formula user should get 166333 asset 1, but is requesting 500000
 
-		let mut new_events_0 = vec![Event::MultiSellAssetFailedOnAtomicSwap(
-			2,
-			vec![1, 4],
-			250000,
-			module_err(Error::<Test>::MultiSwapFailedOnBadSlippage),
-		)];
+		let mut new_events_0 =
+			vec![Event::SellAssetFailedDueToSlippage(2, 1, 250000, 4, 373874, 500000)];
 
 		expected_events.append(&mut new_events_0);
 		assert_eq_events!(expected_events.clone());
@@ -887,7 +876,7 @@ fn multiswap_sell_bad_slippage_charges_fee_W() {
 			TRADER_ID,
 			vec![1, 2, 3, 4, 5],
 			20000000000000000000,
-			module_err(Error::<Test>::MultiSwapFailedOnBadSlippage)
+			module_err(Error::<Test>::InsufficientOutputAmount)
 		));
 	});
 }
@@ -1049,7 +1038,7 @@ fn multiswap_sell_just_enough_assets_pay_fee_but_not_to_swap_W() {
 			TRADER_ID,
 			vec![1, 2, 3, 4, 5],
 			2000000000000000000000,
-			module_err(Error::<Test>::MultiSwapNotEnoughAssets)
+			module_err(Error::<Test>::NotEnoughAssets)
 		));
 	});
 }
@@ -1286,18 +1275,17 @@ fn module_err(e: Error<Test>) -> ModuleError {
 fn buy_N_not_enough_reserve() {
 	new_test_ext().execute_with(|| {
 		initialize();
-		assert_ok!(XykStorage::multiswap_buy_asset(
-			RuntimeOrigin::signed(2),
-			vec![1, 4],
-			70000000000000000000,
-			5000000000000000000000
-		),);
-		assert_event_emitted!(Event::MultiBuyAssetFailedOnAtomicSwap(
-			2,
-			vec![1, 4],
-			70000000000000000000,
-			module_err(Error::<Test>::NotEnoughReserve)
-		));
+
+		// buying 70000000000000000000 assetId 0 of pool 0 1 , only 60000000000000000000 in reserve
+		assert_err!(
+			XykStorage::multiswap_buy_asset(
+				RuntimeOrigin::signed(2),
+				vec![1, 4],
+				70000000000000000000,
+				5000000000000000000000
+			),
+			Error::<Test>::NotEnoughReserve,
+		);
 	});
 }
 
@@ -1308,19 +1296,15 @@ fn buy_N_not_enough_selling_assset() {
 		initialize();
 
 		// buying 59000000000000000000 assetId 1 of pool 0 1 should sell 2.36E+21 assetId 0, only 9.6E+20 in acc
-		assert_ok!(XykStorage::multiswap_buy_asset(
-			RuntimeOrigin::signed(2),
-			vec![1, 4],
-			59000000000000000000,
-			59000000000000000000000
-		));
-
-		assert_event_emitted!(Event::<Test>::MultiBuyAssetFailedOnAtomicSwap(
-			2,
-			vec![1, 4],
-			59000000000000000000,
-			module_err(Error::<Test>::MultiSwapNotEnoughAssets)
-		));
+		assert_err!(
+			XykStorage::multiswap_buy_asset(
+				RuntimeOrigin::signed(2),
+				vec![1, 4],
+				59000000000000000000,
+				59000000000000000000000
+			),
+			Error::<Test>::NotEnoughAssets,
+		);
 	});
 }
 
@@ -1344,12 +1328,8 @@ fn buy_W_insufficient_input_amount() {
 			150000,
 			10
 		));
-		let mut new_events_0 = vec![Event::MultiBuyAssetFailedOnAtomicSwap(
-			2,
-			vec![1, 4],
-			150000,
-			module_err(Error::<Test>::MultiSwapFailedOnBadSlippage),
-		)];
+		let mut new_events_0 =
+			vec![Event::BuyAssetFailedDueToSlippage(2, 1, 100301, 4, 150000, 10)];
 
 		expected_events.append(&mut new_events_0);
 		assert_eq_events!(expected_events.clone());
@@ -1508,7 +1488,7 @@ fn multiswap_buy_bad_slippage_charges_fee_W() {
 			TRADER_ID,
 			vec![1, 2, 3, 4, 5],
 			20000000000000000000,
-			module_err(Error::<Test>::MultiSwapFailedOnBadSlippage)
+			module_err(Error::<Test>::InsufficientInputAmount)
 		));
 	});
 }
@@ -1677,7 +1657,7 @@ fn multiswap_buy_just_enough_assets_pay_fee_but_not_to_swap_W() {
 			TRADER_ID,
 			vec![1, 2, 3, 4, 5],
 			100000000,
-			module_err(Error::<Test>::MultiSwapNotEnoughAssets)
+			module_err(Error::<Test>::NotEnoughAssets)
 		));
 	});
 }

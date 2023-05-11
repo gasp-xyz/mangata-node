@@ -500,8 +500,6 @@ pub mod pallet {
 		NoRights,
 		MultiswapShouldBeAtleastTwoHops,
 		MultiBuyAssetCantHaveSamePoolAtomicSwaps,
-		MultiSwapFailedOnBadSlippage,
-		MultiSwapNotEnoughAssets,
 		MultiSwapCantHaveSameTokenConsequetively,
 		/// Trading blocked by maintenance mode
 		TradingBlockedByMaintenanceMode,
@@ -696,14 +694,27 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
-			<Self as XykFunctionsTrait<T::AccountId>>::multiswap_sell_asset(
-				sender,
-				swap_token_list,
-				sold_asset_amount,
-				min_amount_out,
-				false,
-				false,
-			)?;
+			if let (Some(sold_asset_id), Some(bought_asset_id), 2) =
+				(swap_token_list.get(0), swap_token_list.get(1), swap_token_list.len())
+			{
+				let _ = <Self as XykFunctionsTrait<T::AccountId>>::sell_asset(
+					sender,
+					*sold_asset_id,
+					*bought_asset_id,
+					sold_asset_amount,
+					min_amount_out,
+					false,
+				)?;
+			} else {
+				<Self as XykFunctionsTrait<T::AccountId>>::multiswap_sell_asset(
+					sender,
+					swap_token_list,
+					sold_asset_amount,
+					min_amount_out,
+					false,
+					false,
+				)?;
+			}
 			Ok(().into())
 		}
 
@@ -771,14 +782,27 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
-			<Self as XykFunctionsTrait<T::AccountId>>::multiswap_buy_asset(
-				sender,
-				swap_token_list,
-				bought_asset_amount,
-				max_amount_in,
-				false,
-				false,
-			)?;
+			if let (Some(sold_asset_id), Some(bought_asset_id), 2) =
+				(swap_token_list.get(0), swap_token_list.get(1), swap_token_list.len())
+			{
+				let _ = <Self as XykFunctionsTrait<T::AccountId>>::buy_asset(
+					sender,
+					*sold_asset_id,
+					*bought_asset_id,
+					bought_asset_amount,
+					max_amount_in,
+					false,
+				)?;
+			} else {
+				<Self as XykFunctionsTrait<T::AccountId>>::multiswap_buy_asset(
+					sender,
+					swap_token_list,
+					bought_asset_amount,
+					max_amount_in,
+					false,
+					false,
+				)?;
+			}
 			Ok(().into())
 		}
 
@@ -1634,6 +1658,7 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 			!T::MaintenanceStatusProvider::is_maintenance(),
 			Error::<T>::TradingBlockedByMaintenanceMode
 		);
+		ensure!(swap_token_list.len() > 2_usize, Error::<T>::MultiswapShouldBeAtleastTwoHops);
 		let sold_asset_id =
 			*swap_token_list.get(0).ok_or(Error::<T>::MultiswapShouldBeAtleastTwoHops)?;
 		let bought_asset_id =
@@ -1843,10 +1868,12 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 			!T::MaintenanceStatusProvider::is_maintenance(),
 			Error::<T>::TradingBlockedByMaintenanceMode
 		);
+		ensure!(swap_token_list.len() > 2_usize, Error::<T>::MultiswapShouldBeAtleastTwoHops);
 		// Ensure not buying zero amount
 		ensure!(!final_bought_asset_amount.is_zero(), Error::<T>::ZeroAmount,);
 		ensure!(!max_amount_in.is_zero(), Error::<T>::ZeroAmount,);
 
+		// Unwraps are fine due to above ensure
 		let sold_asset_id =
 			*swap_token_list.get(0).ok_or(Error::<T>::MultiswapShouldBeAtleastTwoHops)?;
 		let bought_asset_id =
@@ -2272,7 +2299,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				WithdrawReasons::all(),
 				Default::default(),
 			)
-			.or(Err(Error::<T>::MultiSwapNotEnoughAssets))?;
+			.or(Err(Error::<T>::NotEnoughAssets))?;
 
 			// pre_validate has already confirmed that swap_token_list.len()>1
 			let atomic_pairs: Vec<(TokenId, TokenId)> = swap_token_list
@@ -2301,7 +2328,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 			// fail/error and revert if bad final slippage
 			if atomic_bought_asset_amount < min_amount_out {
-				return Err(Error::<T>::MultiSwapFailedOnBadSlippage.into())
+				return Err(Error::<T>::InsufficientOutputAmount.into())
 			} else {
 				return Ok(atomic_bought_asset_amount)
 			}
@@ -2606,10 +2633,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				atomic_bought_asset_amount = atomic_sold_asset_amount;
 			}
 
-			ensure!(
-				atomic_sold_asset_amount <= max_amount_in,
-				Error::<T>::MultiSwapFailedOnBadSlippage
-			);
+			ensure!(atomic_sold_asset_amount <= max_amount_in, Error::<T>::InsufficientInputAmount);
 
 			// Ensure user has enough tokens to sell
 			<T as Config>::Currency::ensure_can_withdraw(
@@ -2621,7 +2645,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				WithdrawReasons::all(),
 				Default::default(),
 			)
-			.or(Err(Error::<T>::MultiSwapNotEnoughAssets))?;
+			.or(Err(Error::<T>::NotEnoughAssets))?;
 
 			// Execute here
 			for ((atomic_sold_asset, atomic_bought_asset), atomic_swap_buy_amount) in

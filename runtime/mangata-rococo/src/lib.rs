@@ -1510,6 +1510,8 @@ impl orml_xcm::Config for Runtime {
 	type SovereignOrigin = EnsureRoot<AccountId>;
 }
 
+impl pallet_root_testing::Config for Runtime {}
+
 pub type AssetMetadataOf = AssetMetadata<Balance, CustomMetadata>;
 type CurrencyAdapter = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 
@@ -1703,6 +1705,7 @@ construct_runtime!(
 		Utility: pallet_utility_mangata::{Pallet, Call, Event} = 4,
 		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 5,
 		Maintenance: pallet_maintenance::{Pallet, Call, Storage, Event<T>} = 6,
+		RootTesting: pallet_root_testing::{Pallet, Call, Storage} = 9,
 
 		// Monetary stuff.
 		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>} = 10,

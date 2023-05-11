@@ -2683,7 +2683,7 @@ dependencies = [
 [[package]]
 name = "frame-system-benchmarking"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#5e9b877075d8f8dc196b0ede1f4dbf97427cdde8"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#b711c0b17cc95cae27fd469f88cfd19343417b98"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -4564,6 +4564,7 @@ dependencies = [
  "pallet-multipurpose-liquidity",
  "pallet-proof-of-stake",
  "pallet-proxy",
+ "pallet-root-testing",
  "pallet-session",
  "pallet-sudo-mangata",
  "pallet-sudo-origin",
@@ -6239,6 +6240,21 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-arithmetic",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-root-testing"
+version = "1.0.0-dev"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#b711c0b17cc95cae27fd469f88cfd19343417b98"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std",

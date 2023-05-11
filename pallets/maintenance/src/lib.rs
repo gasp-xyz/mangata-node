@@ -109,7 +109,7 @@ pub mod pallet {
 				Error::<T>::AlreadyInMaintenanceMode
 			);
 
-			let mut maintenance_status =
+			let maintenance_status =
 				MaintenanceStatusInfo { is_maintenance: true, is_upgradable_in_maintenance: false };
 
 			MaintenanceStatus::<T>::put(maintenance_status);
@@ -133,7 +133,7 @@ pub mod pallet {
 
 			ensure!(current_maintenance_status.is_maintenance, Error::<T>::NotInMaintenanceMode);
 
-			let mut maintenance_status = MaintenanceStatusInfo {
+			let maintenance_status = MaintenanceStatusInfo {
 				is_maintenance: false,
 				is_upgradable_in_maintenance: false,
 			};
@@ -166,7 +166,7 @@ pub mod pallet {
 				Error::<T>::AlreadyUpgradableInMaintenanceMode
 			);
 
-			let mut maintenance_status =
+			let maintenance_status =
 				MaintenanceStatusInfo { is_maintenance: true, is_upgradable_in_maintenance: true };
 
 			MaintenanceStatus::<T>::put(maintenance_status);
@@ -197,7 +197,7 @@ pub mod pallet {
 				Error::<T>::AlreadyNotUpgradableInMaintenanceMode
 			);
 
-			let mut maintenance_status =
+			let maintenance_status =
 				MaintenanceStatusInfo { is_maintenance: true, is_upgradable_in_maintenance: false };
 
 			MaintenanceStatus::<T>::put(maintenance_status);

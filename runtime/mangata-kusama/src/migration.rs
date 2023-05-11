@@ -2,7 +2,7 @@
 use super::*;
 use frame_support::{
 	storage::{
-		migration::{move_prefix, move_storage_from_pallet, storage_key_iter},
+		migration::{move_prefix, storage_key_iter},
 		storage_prefix, unhashed,
 	},
 	traits::OnRuntimeUpgrade,

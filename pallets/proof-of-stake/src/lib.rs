@@ -21,7 +21,7 @@ use mangata_types::{multipurpose_liquidity::ActivateKind, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use sp_std::collections::btree_map::BTreeMap;
 
-use sp_runtime::{traits::SaturatedConversion, Perbill, Permill};
+use sp_runtime::{traits::SaturatedConversion, Perbill};
 use sp_std::{convert::TryInto, prelude::*};
 
 mod reward_info;
@@ -59,7 +59,6 @@ pub mod pallet {
 	use super::*;
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(PhantomData<T>);
 

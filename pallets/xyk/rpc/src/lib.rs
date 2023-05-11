@@ -11,7 +11,6 @@ use sp_blockchain::HeaderBackend;
 use sp_core::U256;
 use sp_rpc::number::NumberOrHex;
 use sp_runtime::{
-	generic::BlockId,
 	traits::{Block as BlockT, MaybeDisplay, MaybeFromStr},
 };
 use sp_std::convert::{TryFrom, TryInto};

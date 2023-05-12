@@ -237,6 +237,9 @@ mod tests {
 			let new_multilocation_1 = MultiLocation::try_from(old_multilocation_1.clone()).unwrap();
 			let new_multilocation_2 = MultiLocation::try_from(old_multilocation_2.clone()).unwrap();
 
+			// assert location without general key is the same when encoded
+			assert_eq!(old_multilocation_2.encode(), new_multilocation_2.encode());
+
 			let mut meta_0 = meta.clone();
 			meta_0.location = Some(old_multilocation_0.clone().versioned());
 			let mut meta_1 = meta.clone();
@@ -298,7 +301,7 @@ mod tests {
 				get_storage_value::<TokenId>(
 					location_to_asset_id_module_prefix,
 					location_to_asset_id_storage_prefix,
-					&Twox64Concat::hash(&old_multilocation_0.encode()),
+					&Twox64Concat::hash(&old_multilocation_1.encode()),
 				),
 				Some(asset_id_1)
 			);
@@ -306,16 +309,12 @@ mod tests {
 				get_storage_value::<TokenId>(
 					location_to_asset_id_module_prefix,
 					location_to_asset_id_storage_prefix,
-					&Twox64Concat::hash(&old_multilocation_0.encode()),
+					&Twox64Concat::hash(&old_multilocation_2.encode()),
 				),
 				Some(asset_id_2)
 			);
 
-			// Assert the v3 multilocation value does not exist
-			// assert!(AssetRegistry::metadata(asset_id_0).unwrap().location.unwrap());
-			// assert_eq!(AssetRegistry::metadata(asset_id_1).location, None);
-
-			// Assert v3 multilocation key does not exist in LocationToCurrencyIds
+			// Assert v3 multilocation key does not exist in LocationToAssetId
 			assert_eq!(AssetRegistry::location_to_asset_id(new_multilocation_0), None);
 			assert_eq!(AssetRegistry::location_to_asset_id(new_multilocation_1), None);
 
@@ -328,7 +327,7 @@ mod tests {
 				.reads_writes(6, 6)
 			);
 
-			// Assert the value type of ForeignAssetLocations has been migrated to v3 MultiLocation
+			// Assert the location been migrated to v3 MultiLocation
 			assert_eq!(
 				AssetRegistry::metadata(asset_id_0).unwrap().location.unwrap(),
 				new_multilocation_0.into_versioned()
@@ -342,12 +341,12 @@ mod tests {
 				new_multilocation_2.into_versioned()
 			);
 
-			// Assert the key type of LocationToCurrencyIds has been migrated to v3 MultiLocation
+			// Assert the key type of LocationToAssetId has been migrated to v3 MultiLocation
 			assert_eq!(AssetRegistry::location_to_asset_id(new_multilocation_0), Some(asset_id_0));
 			assert_eq!(AssetRegistry::location_to_asset_id(new_multilocation_1), Some(asset_id_1));
 			assert_eq!(AssetRegistry::location_to_asset_id(new_multilocation_2), Some(asset_id_2));
 
-			// Assert the old key does not exist anymore
+			// Assert the old key does not exist anymore, except location n2 which is the same
 			assert_eq!(
 				get_storage_value::<TokenId>(
 					location_to_asset_id_module_prefix,
@@ -361,14 +360,6 @@ mod tests {
 					location_to_asset_id_module_prefix,
 					location_to_asset_id_storage_prefix,
 					&Twox64Concat::hash(&old_multilocation_1.encode()),
-				),
-				None
-			);
-			assert_eq!(
-				get_storage_value::<TokenId>(
-					location_to_asset_id_module_prefix,
-					location_to_asset_id_storage_prefix,
-					&Twox64Concat::hash(&old_multilocation_2.encode()),
 				),
 				None
 			);

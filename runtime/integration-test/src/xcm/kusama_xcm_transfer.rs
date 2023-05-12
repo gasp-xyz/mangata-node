@@ -17,7 +17,7 @@ fn mgx_location() -> VersionedMultiLocation {
 fn asset_location(para: u32, key: Vec<u8>) -> VersionedMultiLocation {
 	MultiLocation::new(
 		1,
-		X2(Parachain(para), GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(key, None))),
+		X2(Parachain(para), general_key(&key)),
 	)
 	.into()
 }
@@ -205,12 +205,12 @@ fn receive_asset() {
 					1,
 					X2(
 						Parachain(MANGATA_ID),
-						Junction::AccountId32 { network: NetworkId::Any, id: BOB.into() }
+						Junction::AccountId32 { network: None, id: BOB.into() }
 					)
 				)
 				.into()
 			),
-			WeightLimit::Limited(600_000_000),
+			WeightLimit::Limited(Weight::from_parts(600_000_000, 0)),
 		));
 
 		assert_eq!(Tokens::free_balance(NATIVE_ASSET_ID, &AccountId::from(ALICE)), 80 * unit);
@@ -251,12 +251,12 @@ fn receive_asset() {
 					1,
 					X2(
 						Parachain(MANGATA_ID),
-						Junction::AccountId32 { network: NetworkId::Any, id: BOB.into() }
+						Junction::AccountId32 { network: None, id: BOB.into() }
 					)
 				)
 				.into()
 			),
-			WeightLimit::Limited(600_000_000),
+			WeightLimit::Limited(Weight::from_parts(600_000_000, 0)),
 		));
 
 		assert_eq!(Tokens::free_balance(NATIVE_ASSET_ID, &AccountId::from(ALICE)), 60 * unit);
@@ -298,12 +298,12 @@ fn receive_asset() {
 					1,
 					X2(
 						Parachain(MANGATA_ID),
-						Junction::AccountId32 { network: NetworkId::Any, id: BOB.into() }
+						Junction::AccountId32 { network: None, id: BOB.into() }
 					)
 				)
 				.into()
 			),
-			WeightLimit::Limited(600_000_000),
+			WeightLimit::Limited(Weight::from_parts(600_000_000, 0)),
 		));
 
 		assert_eq!(Tokens::free_balance(NATIVE_ASSET_ID, &AccountId::from(ALICE)), 40 * unit);

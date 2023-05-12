@@ -1784,6 +1784,7 @@ mod benches {
 		[pallet_issuance, Issuance]
 		[pallet_multipurpose_liquidity, MultiPurposeLiquidity]
 		[pallet_fee_lock, FeeLock]
+		[pallet_proof_of_stake, ProofOfStake]
 	);
 }
 

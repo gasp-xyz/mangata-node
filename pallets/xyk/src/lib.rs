@@ -3224,8 +3224,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				second_asset_id,
 				first_asset_id,
 			);
-			Pools::<T>::remove((first_asset_id, second_asset_id));
-			Pools::<T>::remove((second_asset_id, first_asset_id));
+			// Pools::<T>::remove((first_asset_id, second_asset_id));
+			// Pools::<T>::remove((second_asset_id, first_asset_id));
 			LiquidityAssets::<T>::remove((first_asset_id, second_asset_id));
 			LiquidityAssets::<T>::remove((second_asset_id, first_asset_id));
 			LiquidityPools::<T>::remove(liquidity_asset_id);

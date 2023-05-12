@@ -378,4 +378,15 @@ where
 			)))
 		})
 	}
+
+
+	fn list_liq_tokens(
+		&self,
+		total_amount: NumberOrHex,
+		reserve_amount: NumberOrHex,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> RpcResult<XYKRpcResult<Balance>> {
+
+	}
+
 }

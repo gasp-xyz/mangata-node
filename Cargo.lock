@@ -7307,8 +7307,9 @@ dependencies = [
 [[package]]
 name = "parachain-staking"
 version = "3.0.0"
-source = "git+https://github.com/mangata-finance//moonbeam?branch=mangata-dev-v0.9.40#e17391dbdda4e42e7d89ba41b98f5d6ead914177"
+source = "git+https://github.com/mangata-finance//moonbeam?branch=mangata-dev-v0.9.40#99d3bedafd63a82409216969dbffed60cd63f884"
 dependencies = [
+ "aquamarine",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -7319,6 +7320,7 @@ dependencies = [
  "orml-tokens",
  "pallet-authorship",
  "pallet-collective-mangata",
+ "pallet-issuance",
  "pallet-session",
  "parity-scale-codec",
  "scale-info",

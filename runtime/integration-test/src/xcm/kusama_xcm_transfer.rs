@@ -15,11 +15,7 @@ fn mgx_location() -> VersionedMultiLocation {
 }
 
 fn asset_location(para: u32, key: Vec<u8>) -> VersionedMultiLocation {
-	MultiLocation::new(
-		1,
-		X2(Parachain(para), general_key(&key)),
-	)
-	.into()
+	MultiLocation::new(1, X2(Parachain(para), general_key(&key))).into()
 }
 
 fn reserve_account(id: u32) -> AccountId {

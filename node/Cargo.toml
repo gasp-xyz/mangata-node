@@ -71,7 +71,6 @@ pallet-transaction-payment-mangata-rpc = { git = "https://github.com/mangata-fin
 
 substrate-frame-rpc-system = { package = "mangata-rpc-nonce", path = "../rpc/nonce" }
 substrate-prometheus-endpoint = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.40" }
-kitchensink-runtime = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.40" }
 
 ## Substrate Client Dependencies
 sc-basic-authorship-ver = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev-v0.9.40" }

@@ -458,7 +458,6 @@ pub fn run() -> Result<()> {
 				sc_service::TaskManager::new(runner.config().tokio_handle.clone(), *registry)
 					.map_err(|e| format!("Error: {:?}", e))?;
 
-
 			match chain_spec {
 				#[cfg(feature = "mangata-kusama")]
 				spec if spec.is_mangata_kusama() => runner.async_run(|_| {

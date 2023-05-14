@@ -85,16 +85,16 @@ orml-xcm = { default-features = false, version = "0.4.1-dev", git = "https://git
 orml-asset-registry = { default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev-v0.9.40" }
 
 # Cumulus dependencies
-cumulus-pallet-aura-ext = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.36', default-features = false }
-cumulus-pallet-dmp-queue = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.36', default-features = false }
-cumulus-pallet-parachain-system = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.36', default-features = false }
-cumulus-pallet-xcm = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.36', default-features = false }
-cumulus-pallet-xcmp-queue = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.36', default-features = false }
-cumulus-primitives-core = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.36', default-features = false }
-cumulus-primitives-timestamp = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.36', default-features = false }
-cumulus-primitives-utility = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.36', default-features = false }
-parachain-info = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.36', default-features = false }
-cumulus-pallet-session-benchmarking = { git = 'https://github.com/mangata-finance/cumulus', branch = 'mangata-dev-v0.9.36', default-features = false, optional = true }
+cumulus-pallet-aura-ext = { git = 'https://github.com/mangata-finance/cumulus', branch = "mangata-dev-v0.9.40", default-features = false }
+cumulus-pallet-dmp-queue = { git = 'https://github.com/mangata-finance/cumulus', branch = "mangata-dev-v0.9.40", default-features = false }
+cumulus-pallet-parachain-system = { git = 'https://github.com/mangata-finance/cumulus', branch = "mangata-dev-v0.9.40", default-features = false }
+cumulus-pallet-xcm = { git = 'https://github.com/mangata-finance/cumulus', branch = "mangata-dev-v0.9.40", default-features = false }
+cumulus-pallet-xcmp-queue = { git = 'https://github.com/mangata-finance/cumulus', branch = "mangata-dev-v0.9.40", default-features = false }
+cumulus-primitives-core = { git = 'https://github.com/mangata-finance/cumulus', branch = "mangata-dev-v0.9.40", default-features = false }
+cumulus-primitives-timestamp = { git = 'https://github.com/mangata-finance/cumulus', branch = "mangata-dev-v0.9.40", default-features = false }
+cumulus-primitives-utility = { git = 'https://github.com/mangata-finance/cumulus', branch = "mangata-dev-v0.9.40", default-features = false }
+parachain-info = { git = 'https://github.com/mangata-finance/cumulus', branch = "mangata-dev-v0.9.40", default-features = false }
+cumulus-pallet-session-benchmarking = { git = 'https://github.com/mangata-finance/cumulus', branch = "mangata-dev-v0.9.40", default-features = false, optional = true }
 
 # Polkadot Dependencies
 polkadot-primitives = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev-v0.9.40", default-features = false }
@@ -106,7 +106,7 @@ xcm-builder = { git = "https://github.com/mangata-finance/polkadot", default-fea
 xcm-executor = { git = "https://github.com/mangata-finance/polkadot", default-features = false, branch = "mangata-dev-v0.9.40" }
 
 # Staking dependencies
-parachain-staking = { default-features = false, git = "https://github.com/mangata-finance/moonbeam.git", branch = "mangata-dev-v0.9.40" }
+parachain-staking = { default-features = false, git = "https://github.com/mangata-finance/moonbeam", branch = "mangata-dev-v0.9.40" }
 
 # Crowdloan dependencies
 pallet-crowdloan-rewards = { default-features = false, git = "https://github.com/mangata-finance/crowdloan-rewards", branch = "mangata-dev-v0.9.40" }
@@ -157,6 +157,12 @@ std = [
 	"cumulus-primitives-timestamp/std",
 	"cumulus-primitives-utility/std",
 	"cumulus-pallet-dmp-queue/std",
+	"cumulus-pallet-session-benchmarking/std",
+	"frame-benchmarking/std",
+	"frame-system-benchmarking/std",
+	"frame-try-runtime/std",
+	"polkadot-primitives/std",
+	"sp-weights/std",
 	"parachain-info/std",
 	"polkadot-parachain/std",
 	"polkadot-runtime-common/std",
@@ -193,6 +199,7 @@ std = [
 
 
 try-runtime = [
+	"sp-runtime/try-runtime",
 	"frame-support/try-runtime",
 	"frame-try-runtime",
 	"frame-executive/try-runtime",
@@ -237,6 +244,8 @@ try-runtime = [
 fast-runtime = []
 
 runtime-benchmarks = [
+	"polkadot-primitives/runtime-benchmarks",
+	"pallet-maintenance/runtime-benchmarks",
 	"polkadot-parachain/runtime-benchmarks",
 	"polkadot-runtime-common/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",

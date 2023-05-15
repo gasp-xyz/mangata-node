@@ -161,56 +161,35 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 
 			ensure!(T::Xyk::is_liquidity_token(liquidity_token_id), Error::<T>::NotALiquidityToken);
-
-			let (unlocked_amount, vesting_starting_block, vesting_ending_block_as_balance): (
-				Balance,
-				BlockNumber,
-				Balance,
-			) = T::VestingProvider::unlock_tokens_by_vesting_index(
-				&sender,
-				liquidity_token_id.into(),
-				liquidity_token_vesting_index,
-				liquidity_token_unlock_some_amount_or_all.map(Into::into),
-			)
-			.map(|x| (x.0.into(), x.1.saturated_into(), x.2.into()))?;
-
-			let mut reserve_status = Pallet::<T>::get_reserve_status(&sender, liquidity_token_id);
-
-			reserve_status.relock_amount = reserve_status
-				.relock_amount
-				.checked_add(unlocked_amount)
-				.ok_or(Error::<T>::MathError)?;
-			reserve_status.unspent_reserves = reserve_status
-				.unspent_reserves
-				.checked_add(unlocked_amount)
-				.ok_or(Error::<T>::MathError)?;
-
-			ReserveStatus::<T>::insert(&sender, liquidity_token_id, reserve_status);
-
-			RelockStatus::<T>::try_append(
-				&sender,
-				liquidity_token_id,
-				RelockStatusInfo {
-					amount: unlocked_amount,
-					starting_block: vesting_starting_block,
-					ending_block_as_balance: vesting_ending_block_as_balance,
-				},
-			)
-			.map_err(|_| Error::<T>::RelockCountLimitExceeded)?;
-
-			T::Tokens::reserve(liquidity_token_id.into(), &sender, unlocked_amount.into())?;
-
-			Pallet::<T>::deposit_event(Event::VestingTokensReserved(
+			Self::do_reserve_tokens_by_vesting_index(
 				sender,
 				liquidity_token_id,
-				unlocked_amount,
-			));
-
-			Ok(().into())
+				liquidity_token_vesting_index,
+				liquidity_token_unlock_some_amount_or_all,
+			)
 		}
 
 		#[transactional]
 		#[pallet::call_index(1)]
+		#[pallet::weight(T::WeightInfo::reserve_vesting_liquidity_tokens())]
+		// This extrinsic has to be transactional
+		pub fn reserve_vesting_native_tokens_by_vesting_index(
+			origin: OriginFor<T>,
+			liquidity_token_vesting_index: u32,
+			liquidity_token_unlock_some_amount_or_all: Option<Balance>,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+
+			Self::do_reserve_tokens_by_vesting_index(
+				sender,
+				T::NativeCurrencyId::get(),
+				liquidity_token_vesting_index,
+				liquidity_token_unlock_some_amount_or_all,
+			)
+		}
+
+		#[transactional]
+		#[pallet::call_index(2)]
 		#[pallet::weight(T::WeightInfo::reserve_vesting_liquidity_tokens())]
 		// This extrinsic has to be transactional
 		pub fn reserve_vesting_liquidity_tokens(
@@ -266,7 +245,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		#[pallet::call_index(2)]
+		#[pallet::call_index(3)]
 		#[pallet::weight(T::WeightInfo::unreserve_and_relock_instance())]
 		// This extrinsic has to be transactional
 		pub fn unreserve_and_relock_instance(
@@ -636,5 +615,59 @@ impl<T: Config> ActivationReservesProviderTrait for Pallet<T> {
 
 		ReserveStatus::<T>::insert(account_id, token_id, reserve_status);
 		working_amount.saturating_add(unreserve_result)
+	}
+}
+
+impl<T: Config> Pallet<T> {
+	fn do_reserve_tokens_by_vesting_index(
+		account: T::AccountId,
+		liquidity_token_id: TokenId,
+		liquidity_token_vesting_index: u32,
+		liquidity_token_unlock_some_amount_or_all: Option<Balance>,
+	) -> DispatchResultWithPostInfo {
+		let (unlocked_amount, vesting_starting_block, vesting_ending_block_as_balance): (
+			Balance,
+			BlockNumber,
+			Balance,
+		) = T::VestingProvider::unlock_tokens_by_vesting_index(
+			&account,
+			liquidity_token_id.into(),
+			liquidity_token_vesting_index,
+			liquidity_token_unlock_some_amount_or_all.map(Into::into),
+		)
+		.map(|x| (x.0.into(), x.1.saturated_into(), x.2.into()))?;
+
+		let mut reserve_status = Pallet::<T>::get_reserve_status(&account, liquidity_token_id);
+
+		reserve_status.relock_amount = reserve_status
+			.relock_amount
+			.checked_add(unlocked_amount)
+			.ok_or(Error::<T>::MathError)?;
+		reserve_status.unspent_reserves = reserve_status
+			.unspent_reserves
+			.checked_add(unlocked_amount)
+			.ok_or(Error::<T>::MathError)?;
+
+		ReserveStatus::<T>::insert(&account, liquidity_token_id, reserve_status);
+
+		RelockStatus::<T>::try_append(
+			&account,
+			liquidity_token_id,
+			RelockStatusInfo {
+				amount: unlocked_amount,
+				starting_block: vesting_starting_block,
+				ending_block_as_balance: vesting_ending_block_as_balance,
+			},
+		)
+		.map_err(|_| Error::<T>::RelockCountLimitExceeded)?;
+
+		T::Tokens::reserve(liquidity_token_id.into(), &account, unlocked_amount.into())?;
+
+		Pallet::<T>::deposit_event(Event::VestingTokensReserved(
+			account,
+			liquidity_token_id,
+			unlocked_amount,
+		));
+		Ok(().into())
 	}
 }

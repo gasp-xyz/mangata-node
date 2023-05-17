@@ -76,7 +76,7 @@ jobs:
           pending=2000 \
           threadNumber=12 \
           duration=50 \
-          throughput=300
+          throughput=250
 
       - name: Upload reports
         if: always()

@@ -74,6 +74,7 @@ pallet-collective-mangata = { git = "https://github.com/mangata-finance/substrat
 pallet-vesting-mangata = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-proxy = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 pallet-identity = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
+pallet-root-testing = { git = "https://github.com/mangata-finance/substrate", default-features = false, branch = "mangata-dev" }
 
 # Open-Runtime-Module-Library Dependencies
 orml-tokens = { default-features = false, version = "0.4.1-dev", git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
@@ -230,7 +231,8 @@ try-runtime = [
 	"pallet-proxy/try-runtime",
 	"pallet-fee-lock/try-runtime",
 	"pallet-identity/try-runtime",
-	"pallet-maintenance/try-runtime"
+	"pallet-maintenance/try-runtime",
+	"pallet-root-testing/try-runtime"
 ]
 
 fast-runtime = []

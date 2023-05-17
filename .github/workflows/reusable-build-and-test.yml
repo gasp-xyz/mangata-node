@@ -53,7 +53,7 @@ jobs:
           key: node-cache-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
 
       - name: Compile mangata-node code
-        run: cargo build --release --no-default-features --features=mangata-rococo,mangata-kusama
+        run: cargo build --frozen --release --no-default-features --features=mangata-rococo,mangata-kusama
 
       - name: Rename wasms
         run: |

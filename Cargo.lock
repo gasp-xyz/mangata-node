@@ -6769,7 +6769,7 @@ dependencies = [
 [[package]]
 name = "parachain-staking"
 version = "3.0.0"
-source = "git+https://github.com/mangata-finance//moonbeam?branch=feature/update-staking-benchmarks#3db4b4460e9019d21bb85d01fe9c2bacb2f0839b"
+source = "git+https://github.com/mangata-finance//moonbeam?branch=mangata-dev#d1a078f32dfcbccca8bcaac737e3f5ec8a1889d2"
 dependencies = [
  "aquamarine",
  "frame-benchmarking",

@@ -2,6 +2,7 @@ use super::*;
 use crate::mock::*;
 use frame_support::assert_ok;
 use frame_system::RawOrigin;
+use pallet_vesting_mangata::VestingInfo;
 
 #[test]
 fn reserve_vesting_liquidity_tokens_works() {
@@ -769,5 +770,61 @@ fn deactivate_works() {
 			135_000__u128 - 35_000__u128
 		);
 		assert_eq!(Vesting::vesting(caller.clone(), asset_id as TokenId), None);
+	})
+}
+
+type TokensOf<Test> = <Test as Config>::Tokens;
+
+#[test]
+fn vested_mpl_vested_transition_works_for_native_tokens() {
+	new_test_ext().execute_with(|| {
+		const MGX: u32 = <Test as Config>::NativeCurrencyId::get();
+		const ALICE: u128 = 0u128;
+		const MILLION: u128 = 1_000_000__000_000_000_000_000_000u128;
+		const PER_BLOCK: u128 = 1;
+		const STARTING_BLOCK: u64 = 10;
+
+		let token_id = <Test as Config>::Tokens::create(&ALICE, MILLION.into()).unwrap();
+		assert_eq!(token_id, MGX);
+		assert_eq!(TokensOf::<Test>::free_balance(MGX.into(), &ALICE), MILLION);
+		assert_eq!(orml_tokens::Accounts::<Test>::get(ALICE, MGX).frozen, 0u128);
+
+		// vest tokens
+		pallet_vesting_mangata::Pallet::<Test>::force_vested_transfer(
+			RawOrigin::Root.into(),
+			MGX.into(),
+			ALICE,
+			ALICE,
+			VestingInfo::new(MILLION, PER_BLOCK, STARTING_BLOCK),
+		)
+		.unwrap();
+		let infos = pallet_vesting_mangata::Pallet::<Test>::vesting(ALICE, MGX).unwrap();
+		assert_eq!(infos.get(0).unwrap().locked(), MILLION);
+		assert_eq!(infos.get(0).unwrap().per_block(), PER_BLOCK);
+		assert_eq!(infos.get(0).unwrap().starting_block(), STARTING_BLOCK);
+		assert_eq!(orml_tokens::Accounts::<Test>::get(ALICE, MGX).frozen, MILLION);
+
+		// move vested tokens to MPL
+		Pallet::<Test>::reserve_vesting_native_tokens_by_vesting_index(
+			RawOrigin::Signed(ALICE.into()).into(),
+			0,
+			MILLION.into(),
+		)
+		.unwrap();
+		assert_eq!(orml_tokens::Accounts::<Test>::get(ALICE, MGX).frozen, 0u128);
+		assert!(pallet_vesting_mangata::Pallet::<Test>::vesting(ALICE, MGX).is_none());
+
+		// move tokens from MPL to vested
+		Pallet::<Test>::unreserve_and_relock_instance(
+			RawOrigin::Signed(ALICE.into()).into(),
+			MGX,
+			0,
+		)
+		.unwrap();
+		let infos = pallet_vesting_mangata::Pallet::<Test>::vesting(ALICE, MGX).unwrap();
+		assert_eq!(infos.get(0).unwrap().locked(), MILLION);
+		assert_eq!(infos.get(0).unwrap().per_block(), PER_BLOCK);
+		assert_eq!(infos.get(0).unwrap().starting_block(), STARTING_BLOCK);
+		assert_eq!(orml_tokens::Accounts::<Test>::get(ALICE, MGX).frozen, MILLION);
 	})
 }

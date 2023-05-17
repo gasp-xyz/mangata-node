@@ -151,7 +151,9 @@ pub mod pallet {
 		#[transactional]
 		#[pallet::call_index(0)]
 		#[pallet::weight(T::WeightInfo::reserve_vesting_liquidity_tokens())]
-		// This extrinsic has to be transactional
+		/// Migrates vested liquidity tokens from Vested pallet to MPL. Information about
+		/// unlock schedule is preserved, so whenever one decides to move tokens back to
+		/// Vested pallet tokens can be unlocked.
 		pub fn reserve_vesting_liquidity_tokens_by_vesting_index(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
@@ -172,7 +174,9 @@ pub mod pallet {
 		#[transactional]
 		#[pallet::call_index(1)]
 		#[pallet::weight(T::WeightInfo::reserve_vesting_liquidity_tokens())]
-		// This extrinsic has to be transactional
+		/// Migrates vested MGX from Vested pallet to MPL. Information about unlock schedule is
+		/// preserved, so whenever one decides to move tokens back to Vested pallet tokens can be
+		/// unlocked.
 		pub fn reserve_vesting_native_tokens_by_vesting_index(
 			origin: OriginFor<T>,
 			liquidity_token_vesting_index: u32,

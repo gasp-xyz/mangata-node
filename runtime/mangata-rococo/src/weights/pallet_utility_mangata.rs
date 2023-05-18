@@ -67,49 +67,49 @@ pub trait WeightInfo {
 pub struct ModuleWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_utility_mangata::WeightInfo for ModuleWeight<T> {
 	fn batch(c: u32, ) -> Weight {
-		(Weight::from_ref_time(22_360_744))
+		(Weight::from_parts(22_360_744, 0))
 			// Standard Error: 3_966
-			.saturating_add((Weight::from_ref_time(7_163_920)).saturating_mul(c as u64))
+			.saturating_add((Weight::from_parts(7_163_920, 0)).saturating_mul(c as u64))
 	}
 	fn as_derivative() -> Weight {
-		(Weight::from_ref_time(10_710_000))
+		(Weight::from_parts(10_710_000, 0))
 	}
 	fn batch_all(c: u32, ) -> Weight {
-		(Weight::from_ref_time(24_703_103))
+		(Weight::from_parts(24_703_103, 0))
 			// Standard Error: 2_290
-			.saturating_add((Weight::from_ref_time(7_399_576)).saturating_mul(c as u64))
+			.saturating_add((Weight::from_parts(7_399_576, 0)).saturating_mul(c as u64))
 	}
 	fn dispatch_as() -> Weight {
-		(Weight::from_ref_time(22_080_000))
+		(Weight::from_parts(22_080_000, 0))
 	}
 	fn force_batch(c: u32, ) -> Weight {
-		(Weight::from_ref_time(20_876_453))
+		(Weight::from_parts(20_876_453, 0))
 			// Standard Error: 2_199
-			.saturating_add((Weight::from_ref_time(7_151_762)).saturating_mul(c as u64))
+			.saturating_add((Weight::from_parts(7_151_762, 0)).saturating_mul(c as u64))
 	}
 }
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
 	fn batch(c: u32, ) -> Weight {
-		(Weight::from_ref_time(22_360_744))
+		(Weight::from_parts(22_360_744, 0))
 			// Standard Error: 3_966
-			.saturating_add((Weight::from_ref_time(7_163_920)).saturating_mul(c as u64))
+			.saturating_add((Weight::from_parts(7_163_920, 0)).saturating_mul(c as u64))
 	}
 	fn as_derivative() -> Weight {
-		(Weight::from_ref_time(10_710_000))
+		(Weight::from_parts(10_710_000, 0))
 	}
 	fn batch_all(c: u32, ) -> Weight {
-		(Weight::from_ref_time(24_703_103))
+		(Weight::from_parts(24_703_103, 0))
 			// Standard Error: 2_290
-			.saturating_add((Weight::from_ref_time(7_399_576)).saturating_mul(c as u64))
+			.saturating_add((Weight::from_parts(7_399_576, 0)).saturating_mul(c as u64))
 	}
 	fn dispatch_as() -> Weight {
-		(Weight::from_ref_time(22_080_000))
+		(Weight::from_parts(22_080_000, 0))
 	}
 	fn force_batch(c: u32, ) -> Weight {
-		(Weight::from_ref_time(20_876_453))
+		(Weight::from_parts(20_876_453, 0))
 			// Standard Error: 2_199
-			.saturating_add((Weight::from_ref_time(7_151_762)).saturating_mul(c as u64))
+			.saturating_add((Weight::from_parts(7_151_762, 0)).saturating_mul(c as u64))
 	}
 }

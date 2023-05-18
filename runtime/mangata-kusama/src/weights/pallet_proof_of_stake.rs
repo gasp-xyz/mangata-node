@@ -68,13 +68,13 @@ impl<T: frame_system::Config> pallet_proof_of_stake::WeightInfo for ModuleWeight
 	// Storage: ProofOfStake RewardsInfo (r:1 w:1)
 	// Storage: Tokens Accounts (r:2 w:2)
 	fn claim_rewards_all() -> Weight {
-		(Weight::from_ref_time(97_590_000))
+		(Weight::from_parts(97_590_000, 0))
 			.saturating_add(T::DbWeight::get().reads(4 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 	// Storage: ProofOfStake PromotedPoolRewards (r:1 w:1)
 	fn update_pool_promotion() -> Weight {
-		(Weight::from_ref_time(52_090_000))
+		(Weight::from_parts(52_090_000, 0))
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -84,7 +84,7 @@ impl<T: frame_system::Config> pallet_proof_of_stake::WeightInfo for ModuleWeight
 	// Storage: ProofOfStake RewardsInfo (r:1 w:1)
 	// Storage: ProofOfStake TotalActivatedLiquidity (r:1 w:1)
 	fn activate_liquidity() -> Weight {
-		(Weight::from_ref_time(116_150_000))
+		(Weight::from_parts(116_150_000, 0))
 			.saturating_add(T::DbWeight::get().reads(5 as u64))
 			.saturating_add(T::DbWeight::get().writes(4 as u64))
 	}
@@ -94,7 +94,7 @@ impl<T: frame_system::Config> pallet_proof_of_stake::WeightInfo for ModuleWeight
 	// Storage: MultiPurposeLiquidity ReserveStatus (r:1 w:1)
 	// Storage: Tokens Accounts (r:1 w:1)
 	fn deactivate_liquidity() -> Weight {
-		(Weight::from_ref_time(118_250_000))
+		(Weight::from_parts(118_250_000, 0))
 			.saturating_add(T::DbWeight::get().reads(5 as u64))
 			.saturating_add(T::DbWeight::get().writes(4 as u64))
 	}
@@ -106,13 +106,13 @@ impl WeightInfo for () {
 	// Storage: ProofOfStake RewardsInfo (r:1 w:1)
 	// Storage: Tokens Accounts (r:2 w:2)
 	fn claim_rewards_all() -> Weight {
-		(Weight::from_ref_time(97_590_000))
+		(Weight::from_parts(97_590_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(4 as u64))
 			.saturating_add(RocksDbWeight::get().writes(3 as u64))
 	}
 	// Storage: ProofOfStake PromotedPoolRewards (r:1 w:1)
 	fn update_pool_promotion() -> Weight {
-		(Weight::from_ref_time(52_090_000))
+		(Weight::from_parts(52_090_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
@@ -122,7 +122,7 @@ impl WeightInfo for () {
 	// Storage: ProofOfStake RewardsInfo (r:1 w:1)
 	// Storage: ProofOfStake TotalActivatedLiquidity (r:1 w:1)
 	fn activate_liquidity() -> Weight {
-		(Weight::from_ref_time(116_150_000))
+		(Weight::from_parts(116_150_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(5 as u64))
 			.saturating_add(RocksDbWeight::get().writes(4 as u64))
 	}
@@ -132,7 +132,7 @@ impl WeightInfo for () {
 	// Storage: MultiPurposeLiquidity ReserveStatus (r:1 w:1)
 	// Storage: Tokens Accounts (r:1 w:1)
 	fn deactivate_liquidity() -> Weight {
-		(Weight::from_ref_time(118_250_000))
+		(Weight::from_parts(118_250_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(5 as u64))
 			.saturating_add(RocksDbWeight::get().writes(4 as u64))
 	}

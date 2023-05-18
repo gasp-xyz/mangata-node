@@ -98,13 +98,13 @@ pub struct ModuleWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> parachain_staking::WeightInfo for ModuleWeight<T> {
 	// Storage: ParachainStaking TotalSelected (r:1 w:1)
 	fn set_total_selected() -> Weight {
-		(Weight::from_ref_time(24_030_000))
+		(Weight::from_parts(24_030_000, 0))
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: ParachainStaking CollatorCommission (r:1 w:1)
 	fn set_collator_commission() -> Weight {
-		(Weight::from_ref_time(24_670_000))
+		(Weight::from_parts(24_670_000, 0))
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -120,11 +120,11 @@ impl<T: frame_system::Config> parachain_staking::WeightInfo for ModuleWeight<T> 
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: ParachainStaking Total (r:1 w:1)
 	fn join_candidates(x: u32, y: u32, ) -> Weight {
-		(Weight::from_ref_time(117_566_150))
+		(Weight::from_parts(117_566_150, 0))
 			// Standard Error: 6_131
-			.saturating_add((Weight::from_ref_time(192_014)).saturating_mul(x as u64))
+			.saturating_add((Weight::from_parts(192_014, 0)).saturating_mul(x as u64))
 			// Standard Error: 2_922
-			.saturating_add((Weight::from_ref_time(201_244)).saturating_mul(y as u64))
+			.saturating_add((Weight::from_parts(201_244, 0)).saturating_mul(y as u64))
 			.saturating_add(T::DbWeight::get().reads(11 as u64))
 			.saturating_add(T::DbWeight::get().writes(5 as u64))
 	}
@@ -132,9 +132,9 @@ impl<T: frame_system::Config> parachain_staking::WeightInfo for ModuleWeight<T> 
 	// Storage: ParachainStaking Round (r:1 w:0)
 	// Storage: ParachainStaking CandidatePool (r:1 w:1)
 	fn schedule_leave_candidates(x: u32, ) -> Weight {
-		(Weight::from_ref_time(44_654_360))
+		(Weight::from_parts(44_654_360, 0))
 			// Standard Error: 4_514
-			.saturating_add((Weight::from_ref_time(245_384)).saturating_mul(x as u64))
+			.saturating_add((Weight::from_parts(245_384, 0)).saturating_mul(x as u64))
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
@@ -146,9 +146,9 @@ impl<T: frame_system::Config> parachain_staking::WeightInfo for ModuleWeight<T> 
 	// Storage: ParachainStaking CandidateAggregator (r:1 w:0)
 	// Storage: ParachainStaking Total (r:1 w:1)
 	fn execute_leave_candidates(x: u32, ) -> Weight {
-		(Weight::from_ref_time(68_197_243))
+		(Weight::from_parts(68_197_243, 0))
 			// Standard Error: 23_683
-			.saturating_add((Weight::from_ref_time(25_290_044)).saturating_mul(x as u64))
+			.saturating_add((Weight::from_parts(25_290_044, 0)).saturating_mul(x as u64))
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().reads((3 as u64).saturating_mul(x as u64)))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
@@ -157,9 +157,9 @@ impl<T: frame_system::Config> parachain_staking::WeightInfo for ModuleWeight<T> 
 	// Storage: ParachainStaking CandidateState (r:1 w:1)
 	// Storage: ParachainStaking CandidatePool (r:1 w:1)
 	fn cancel_leave_candidates(x: u32, ) -> Weight {
-		(Weight::from_ref_time(43_118_926))
+		(Weight::from_parts(43_118_926, 0))
 			// Standard Error: 4_061
-			.saturating_add((Weight::from_ref_time(225_186)).saturating_mul(x as u64))
+			.saturating_add((Weight::from_parts(225_186, 0)).saturating_mul(x as u64))
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
@@ -167,7 +167,7 @@ impl<T: frame_system::Config> parachain_staking::WeightInfo for ModuleWeight<T> 
 	// Storage: ParachainStaking CandidatePool (r:1 w:1)
 	// Storage: ParachainStaking Round (r:1 w:0)
 	fn go_offline() -> Weight {
-		(Weight::from_ref_time(44_190_000))
+		(Weight::from_parts(44_190_000, 0))
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
@@ -175,7 +175,7 @@ impl<T: frame_system::Config> parachain_staking::WeightInfo for ModuleWeight<T> 
 	// Storage: ParachainStaking CandidatePool (r:1 w:1)
 	// Storage: ParachainStaking Round (r:1 w:0)
 	fn go_online() -> Weight {
-		(Weight::from_ref_time(44_110_000))
+		(Weight::from_parts(44_110_000, 0))
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
@@ -184,7 +184,7 @@ impl<T: frame_system::Config> parachain_staking::WeightInfo for ModuleWeight<T> 
 	// Storage: Tokens Accounts (r:1 w:0)
 	// Storage: ParachainStaking Round (r:1 w:0)
 	fn schedule_candidate_bond_more() -> Weight {
-		(Weight::from_ref_time(58_710_000))
+		(Weight::from_parts(58_710_000, 0))
 			.saturating_add(T::DbWeight::get().reads(4 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -194,7 +194,7 @@ impl<T: frame_system::Config> parachain_staking::WeightInfo for ModuleWeight<T> 
 	// Storage: Tokens TotalIssuance (r:1 w:0)
 	// Storage: ParachainStaking Round (r:1 w:0)
 	fn schedule_candidate_bond_less() -> Weight {
-		(Weight::from_ref_time(61_470_000))
+		(Weight::from_parts(61_470_000, 0))
 			.saturating_add(T::DbWeight::get().reads(5 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -205,7 +205,7 @@ impl<T: frame_system::Config> parachain_staking::WeightInfo for ModuleWeight<T> 
 	// Storage: ParachainStaking Total (r:1 w:1)
 	// Storage: ParachainStaking CandidatePool (r:1 w:1)
 	fn execute_candidate_bond_more() -> Weight {
-		(Weight::from_ref_time(93_260_000))
+		(Weight::from_parts(93_260_000, 0))
 			.saturating_add(T::DbWeight::get().reads(6 as u64))
 			.saturating_add(T::DbWeight::get().writes(5 as u64))
 	}
@@ -216,19 +216,19 @@ impl<T: frame_system::Config> parachain_staking::WeightInfo for ModuleWeight<T> 
 	// Storage: ParachainStaking Total (r:1 w:1)
 	// Storage: ParachainStaking CandidatePool (r:1 w:1)
 	fn execute_candidate_bond_less() -> Weight {
-		(Weight::from_ref_time(88_240_000))
+		(Weight::from_parts(88_240_000, 0))
 			.saturating_add(T::DbWeight::get().reads(6 as u64))
 			.saturating_add(T::DbWeight::get().writes(5 as u64))
 	}
 	// Storage: ParachainStaking CandidateState (r:1 w:1)
 	fn cancel_candidate_bond_more() -> Weight {
-		(Weight::from_ref_time(35_690_000))
+		(Weight::from_parts(35_690_000, 0))
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: ParachainStaking CandidateState (r:1 w:1)
 	fn cancel_candidate_bond_less() -> Weight {
-		(Weight::from_ref_time(35_320_000))
+		(Weight::from_parts(35_320_000, 0))
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -243,18 +243,18 @@ impl<T: frame_system::Config> parachain_staking::WeightInfo for ModuleWeight<T> 
 	// Storage: ParachainStaking CandidatePool (r:1 w:1)
 	// Storage: ParachainStaking Total (r:1 w:1)
 	fn delegate(x: u32, y: u32, ) -> Weight {
-		(Weight::from_ref_time(118_190_257))
+		(Weight::from_parts(118_190_257, 0))
 			// Standard Error: 7_491
-			.saturating_add((Weight::from_ref_time(373_438)).saturating_mul(x as u64))
+			.saturating_add((Weight::from_parts(373_438, 0)).saturating_mul(x as u64))
 			// Standard Error: 19_597
-			.saturating_add((Weight::from_ref_time(471_225)).saturating_mul(y as u64))
+			.saturating_add((Weight::from_parts(471_225, 0)).saturating_mul(y as u64))
 			.saturating_add(T::DbWeight::get().reads(10 as u64))
 			.saturating_add(T::DbWeight::get().writes(6 as u64))
 	}
 	// Storage: ParachainStaking DelegatorState (r:1 w:1)
 	// Storage: ParachainStaking Round (r:1 w:0)
 	fn schedule_leave_delegators() -> Weight {
-		(Weight::from_ref_time(38_040_000))
+		(Weight::from_parts(38_040_000, 0))
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -266,9 +266,9 @@ impl<T: frame_system::Config> parachain_staking::WeightInfo for ModuleWeight<T> 
 	// Storage: ParachainStaking CandidatePool (r:1 w:1)
 	// Storage: ParachainStaking Total (r:1 w:1)
 	fn execute_leave_delegators(x: u32, ) -> Weight {
-		(Weight::from_ref_time(39_761_656))
+		(Weight::from_parts(39_761_656, 0))
 			// Standard Error: 18_379
-			.saturating_add((Weight::from_ref_time(30_110_901)).saturating_mul(x as u64))
+			.saturating_add((Weight::from_parts(30_110_901, 0)).saturating_mul(x as u64))
 			.saturating_add(T::DbWeight::get().reads(5 as u64))
 			.saturating_add(T::DbWeight::get().reads((1 as u64).saturating_mul(x as u64)))
 			.saturating_add(T::DbWeight::get().writes(4 as u64))
@@ -276,14 +276,14 @@ impl<T: frame_system::Config> parachain_staking::WeightInfo for ModuleWeight<T> 
 	}
 	// Storage: ParachainStaking DelegatorState (r:1 w:1)
 	fn cancel_leave_delegators() -> Weight {
-		(Weight::from_ref_time(35_660_000))
+		(Weight::from_parts(35_660_000, 0))
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: ParachainStaking DelegatorState (r:1 w:1)
 	// Storage: ParachainStaking Round (r:1 w:0)
 	fn schedule_revoke_delegation() -> Weight {
-		(Weight::from_ref_time(39_450_000))
+		(Weight::from_parts(39_450_000, 0))
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -292,14 +292,14 @@ impl<T: frame_system::Config> parachain_staking::WeightInfo for ModuleWeight<T> 
 	// Storage: Tokens Accounts (r:1 w:0)
 	// Storage: ParachainStaking Round (r:1 w:0)
 	fn schedule_delegator_bond_more() -> Weight {
-		(Weight::from_ref_time(57_880_000))
+		(Weight::from_parts(57_880_000, 0))
 			.saturating_add(T::DbWeight::get().reads(4 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: ParachainStaking DelegatorState (r:1 w:1)
 	// Storage: ParachainStaking Round (r:1 w:0)
 	fn schedule_delegator_bond_less() -> Weight {
-		(Weight::from_ref_time(38_330_000))
+		(Weight::from_parts(38_330_000, 0))
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -311,7 +311,7 @@ impl<T: frame_system::Config> parachain_staking::WeightInfo for ModuleWeight<T> 
 	// Storage: ParachainStaking CandidatePool (r:1 w:1)
 	// Storage: ParachainStaking Total (r:1 w:1)
 	fn execute_revoke_delegation() -> Weight {
-		(Weight::from_ref_time(110_411_000))
+		(Weight::from_parts(110_411_000, 0))
 			.saturating_add(T::DbWeight::get().reads(7 as u64))
 			.saturating_add(T::DbWeight::get().writes(6 as u64))
 	}
@@ -323,7 +323,7 @@ impl<T: frame_system::Config> parachain_staking::WeightInfo for ModuleWeight<T> 
 	// Storage: ParachainStaking CandidatePool (r:1 w:1)
 	// Storage: ParachainStaking Total (r:1 w:1)
 	fn execute_delegator_bond_more() -> Weight {
-		(Weight::from_ref_time(102_830_000))
+		(Weight::from_parts(102_830_000, 0))
 			.saturating_add(T::DbWeight::get().reads(7 as u64))
 			.saturating_add(T::DbWeight::get().writes(6 as u64))
 	}
@@ -335,42 +335,42 @@ impl<T: frame_system::Config> parachain_staking::WeightInfo for ModuleWeight<T> 
 	// Storage: ParachainStaking CandidatePool (r:1 w:1)
 	// Storage: ParachainStaking Total (r:1 w:1)
 	fn execute_delegator_bond_less() -> Weight {
-		(Weight::from_ref_time(100_890_000))
+		(Weight::from_parts(100_890_000, 0))
 			.saturating_add(T::DbWeight::get().reads(7 as u64))
 			.saturating_add(T::DbWeight::get().writes(6 as u64))
 	}
 	// Storage: ParachainStaking DelegatorState (r:1 w:1)
 	fn cancel_revoke_delegation() -> Weight {
-		(Weight::from_ref_time(36_960_000))
+		(Weight::from_parts(36_960_000, 0))
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: ParachainStaking DelegatorState (r:1 w:1)
 	fn cancel_delegator_bond_more() -> Weight {
-		(Weight::from_ref_time(46_300_000))
+		(Weight::from_parts(46_300_000, 0))
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: ParachainStaking DelegatorState (r:1 w:1)
 	fn cancel_delegator_bond_less() -> Weight {
-		(Weight::from_ref_time(45_880_000))
+		(Weight::from_parts(45_880_000, 0))
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Xyk LiquidityPools (r:1 w:0)
 	// Storage: ParachainStaking StakingLiquidityTokens (r:1 w:1)
 	fn add_staking_liquidity_token(x: u32, ) -> Weight {
-		(Weight::from_ref_time(29_204_369))
+		(Weight::from_parts(29_204_369, 0))
 			// Standard Error: 2_699
-			.saturating_add((Weight::from_ref_time(185_931)).saturating_mul(x as u64))
+			.saturating_add((Weight::from_parts(185_931, 0)).saturating_mul(x as u64))
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: ParachainStaking StakingLiquidityTokens (r:1 w:1)
 	fn remove_staking_liquidity_token(x: u32, ) -> Weight {
-		(Weight::from_ref_time(22_061_636))
+		(Weight::from_parts(22_061_636, 0))
 			// Standard Error: 1_709
-			.saturating_add((Weight::from_ref_time(166_679)).saturating_mul(x as u64))
+			.saturating_add((Weight::from_parts(166_679, 0)).saturating_mul(x as u64))
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -379,7 +379,7 @@ impl<T: frame_system::Config> parachain_staking::WeightInfo for ModuleWeight<T> 
 	// Storage: ParachainStaking AggregatorMetadata (r:1 w:1)
 	// Storage: ParachainStaking CandidateAggregator (r:1 w:1)
 	fn aggregator_update_metadata() -> Weight {
-		(Weight::from_ref_time(599_580_000))
+		(Weight::from_parts(599_580_000, 0))
 			.saturating_add(T::DbWeight::get().reads(52 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
@@ -387,7 +387,7 @@ impl<T: frame_system::Config> parachain_staking::WeightInfo for ModuleWeight<T> 
 	// Storage: ParachainStaking CandidateAggregator (r:1 w:1)
 	// Storage: ParachainStaking AggregatorMetadata (r:2 w:2)
 	fn update_candidate_aggregator() -> Weight {
-		(Weight::from_ref_time(98_020_000))
+		(Weight::from_parts(98_020_000, 0))
 			.saturating_add(T::DbWeight::get().reads(4 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
@@ -395,7 +395,7 @@ impl<T: frame_system::Config> parachain_staking::WeightInfo for ModuleWeight<T> 
 	// Storage: Tokens Accounts (r:14 w:14)
 	// Storage: System Account (r:14 w:13)
 	fn payout_collator_rewards() -> Weight {
-		(Weight::from_ref_time(536_300_000))
+		(Weight::from_parts(536_300_000, 0))
 			.saturating_add(T::DbWeight::get().reads(30 as u64))
 			.saturating_add(T::DbWeight::get().writes(28 as u64))
 	}
@@ -403,13 +403,13 @@ impl<T: frame_system::Config> parachain_staking::WeightInfo for ModuleWeight<T> 
 	// Storage: Tokens Accounts (r:2 w:2)
 	// Storage: System Account (r:2 w:1)
 	fn payout_delegator_reward() -> Weight {
-		(Weight::from_ref_time(78_700_000))
+		(Weight::from_parts(78_700_000, 0))
 			.saturating_add(T::DbWeight::get().reads(5 as u64))
 			.saturating_add(T::DbWeight::get().writes(4 as u64))
 	}
 	// Storage: ParachainStaking Round (r:1 w:0)
 	fn passive_session_change() -> Weight {
-		(Weight::from_ref_time(10_411_000))
+		(Weight::from_parts(10_411_000, 0))
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
 	// Storage: ParachainStaking Round (r:1 w:1)
@@ -441,13 +441,13 @@ impl<T: frame_system::Config> parachain_staking::WeightInfo for ModuleWeight<T> 
 	// Storage: ParachainStaking RoundCollatorRewardInfo (r:0 w:26)
 	// Storage: Session Validators (r:0 w:1)
 	fn active_session_change(x: u32, y: u32, z: u32, ) -> Weight {
-		(Weight::from_ref_time(819_648_670))
+		(Weight::from_parts(819_648_670, 0))
 			// Standard Error: 16_309
-			.saturating_add((Weight::from_ref_time(15_337_752)).saturating_mul(x as u64))
+			.saturating_add((Weight::from_parts(15_337_752, 0)).saturating_mul(x as u64))
 			// Standard Error: 70_621
-			.saturating_add((Weight::from_ref_time(6_320_523)).saturating_mul(y as u64))
+			.saturating_add((Weight::from_parts(6_320_523, 0)).saturating_mul(y as u64))
 			// Standard Error: 166_526
-			.saturating_add((Weight::from_ref_time(32_822_119)).saturating_mul(z as u64))
+			.saturating_add((Weight::from_parts(32_822_119, 0)).saturating_mul(z as u64))
 			.saturating_add(T::DbWeight::get().reads(124 as u64))
 			.saturating_add(T::DbWeight::get().reads((4 as u64).saturating_mul(x as u64)))
 			.saturating_add(T::DbWeight::get().writes(119 as u64))
@@ -458,13 +458,13 @@ impl<T: frame_system::Config> parachain_staking::WeightInfo for ModuleWeight<T> 
 impl WeightInfo for () {
 	// Storage: ParachainStaking TotalSelected (r:1 w:1)
 	fn set_total_selected() -> Weight {
-		(Weight::from_ref_time(24_030_000))
+		(Weight::from_parts(24_030_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: ParachainStaking CollatorCommission (r:1 w:1)
 	fn set_collator_commission() -> Weight {
-		(Weight::from_ref_time(24_670_000))
+		(Weight::from_parts(24_670_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
@@ -480,11 +480,11 @@ impl WeightInfo for () {
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: ParachainStaking Total (r:1 w:1)
 	fn join_candidates(x: u32, y: u32, ) -> Weight {
-		(Weight::from_ref_time(117_566_150))
+		(Weight::from_parts(117_566_150, 0))
 			// Standard Error: 6_131
-			.saturating_add((Weight::from_ref_time(192_014)).saturating_mul(x as u64))
+			.saturating_add((Weight::from_parts(192_014, 0)).saturating_mul(x as u64))
 			// Standard Error: 2_922
-			.saturating_add((Weight::from_ref_time(201_244)).saturating_mul(y as u64))
+			.saturating_add((Weight::from_parts(201_244, 0)).saturating_mul(y as u64))
 			.saturating_add(RocksDbWeight::get().reads(11 as u64))
 			.saturating_add(RocksDbWeight::get().writes(5 as u64))
 	}
@@ -492,9 +492,9 @@ impl WeightInfo for () {
 	// Storage: ParachainStaking Round (r:1 w:0)
 	// Storage: ParachainStaking CandidatePool (r:1 w:1)
 	fn schedule_leave_candidates(x: u32, ) -> Weight {
-		(Weight::from_ref_time(44_654_360))
+		(Weight::from_parts(44_654_360, 0))
 			// Standard Error: 4_514
-			.saturating_add((Weight::from_ref_time(245_384)).saturating_mul(x as u64))
+			.saturating_add((Weight::from_parts(245_384, 0)).saturating_mul(x as u64))
 			.saturating_add(RocksDbWeight::get().reads(3 as u64))
 			.saturating_add(RocksDbWeight::get().writes(2 as u64))
 	}
@@ -506,9 +506,9 @@ impl WeightInfo for () {
 	// Storage: ParachainStaking CandidateAggregator (r:1 w:0)
 	// Storage: ParachainStaking Total (r:1 w:1)
 	fn execute_leave_candidates(x: u32, ) -> Weight {
-		(Weight::from_ref_time(68_197_243))
+		(Weight::from_parts(68_197_243, 0))
 			// Standard Error: 23_683
-			.saturating_add((Weight::from_ref_time(25_290_044)).saturating_mul(x as u64))
+			.saturating_add((Weight::from_parts(25_290_044, 0)).saturating_mul(x as u64))
 			.saturating_add(RocksDbWeight::get().reads(3 as u64))
 			.saturating_add(RocksDbWeight::get().reads((3 as u64).saturating_mul(x as u64)))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
@@ -517,9 +517,9 @@ impl WeightInfo for () {
 	// Storage: ParachainStaking CandidateState (r:1 w:1)
 	// Storage: ParachainStaking CandidatePool (r:1 w:1)
 	fn cancel_leave_candidates(x: u32, ) -> Weight {
-		(Weight::from_ref_time(43_118_926))
+		(Weight::from_parts(43_118_926, 0))
 			// Standard Error: 4_061
-			.saturating_add((Weight::from_ref_time(225_186)).saturating_mul(x as u64))
+			.saturating_add((Weight::from_parts(225_186, 0)).saturating_mul(x as u64))
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(2 as u64))
 	}
@@ -527,7 +527,7 @@ impl WeightInfo for () {
 	// Storage: ParachainStaking CandidatePool (r:1 w:1)
 	// Storage: ParachainStaking Round (r:1 w:0)
 	fn go_offline() -> Weight {
-		(Weight::from_ref_time(44_190_000))
+		(Weight::from_parts(44_190_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(3 as u64))
 			.saturating_add(RocksDbWeight::get().writes(2 as u64))
 	}
@@ -535,7 +535,7 @@ impl WeightInfo for () {
 	// Storage: ParachainStaking CandidatePool (r:1 w:1)
 	// Storage: ParachainStaking Round (r:1 w:0)
 	fn go_online() -> Weight {
-		(Weight::from_ref_time(44_110_000))
+		(Weight::from_parts(44_110_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(3 as u64))
 			.saturating_add(RocksDbWeight::get().writes(2 as u64))
 	}
@@ -544,7 +544,7 @@ impl WeightInfo for () {
 	// Storage: Tokens Accounts (r:1 w:0)
 	// Storage: ParachainStaking Round (r:1 w:0)
 	fn schedule_candidate_bond_more() -> Weight {
-		(Weight::from_ref_time(58_710_000))
+		(Weight::from_parts(58_710_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(4 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
@@ -554,7 +554,7 @@ impl WeightInfo for () {
 	// Storage: Tokens TotalIssuance (r:1 w:0)
 	// Storage: ParachainStaking Round (r:1 w:0)
 	fn schedule_candidate_bond_less() -> Weight {
-		(Weight::from_ref_time(61_470_000))
+		(Weight::from_parts(61_470_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(5 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
@@ -565,7 +565,7 @@ impl WeightInfo for () {
 	// Storage: ParachainStaking Total (r:1 w:1)
 	// Storage: ParachainStaking CandidatePool (r:1 w:1)
 	fn execute_candidate_bond_more() -> Weight {
-		(Weight::from_ref_time(93_260_000))
+		(Weight::from_parts(93_260_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(6 as u64))
 			.saturating_add(RocksDbWeight::get().writes(5 as u64))
 	}
@@ -576,19 +576,19 @@ impl WeightInfo for () {
 	// Storage: ParachainStaking Total (r:1 w:1)
 	// Storage: ParachainStaking CandidatePool (r:1 w:1)
 	fn execute_candidate_bond_less() -> Weight {
-		(Weight::from_ref_time(88_240_000))
+		(Weight::from_parts(88_240_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(6 as u64))
 			.saturating_add(RocksDbWeight::get().writes(5 as u64))
 	}
 	// Storage: ParachainStaking CandidateState (r:1 w:1)
 	fn cancel_candidate_bond_more() -> Weight {
-		(Weight::from_ref_time(35_690_000))
+		(Weight::from_parts(35_690_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: ParachainStaking CandidateState (r:1 w:1)
 	fn cancel_candidate_bond_less() -> Weight {
-		(Weight::from_ref_time(35_320_000))
+		(Weight::from_parts(35_320_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
@@ -603,18 +603,18 @@ impl WeightInfo for () {
 	// Storage: ParachainStaking CandidatePool (r:1 w:1)
 	// Storage: ParachainStaking Total (r:1 w:1)
 	fn delegate(x: u32, y: u32, ) -> Weight {
-		(Weight::from_ref_time(118_190_257))
+		(Weight::from_parts(118_190_257, 0))
 			// Standard Error: 7_491
-			.saturating_add((Weight::from_ref_time(373_438)).saturating_mul(x as u64))
+			.saturating_add((Weight::from_parts(373_438, 0)).saturating_mul(x as u64))
 			// Standard Error: 19_597
-			.saturating_add((Weight::from_ref_time(471_225)).saturating_mul(y as u64))
+			.saturating_add((Weight::from_parts(471_225, 0)).saturating_mul(y as u64))
 			.saturating_add(RocksDbWeight::get().reads(10 as u64))
 			.saturating_add(RocksDbWeight::get().writes(6 as u64))
 	}
 	// Storage: ParachainStaking DelegatorState (r:1 w:1)
 	// Storage: ParachainStaking Round (r:1 w:0)
 	fn schedule_leave_delegators() -> Weight {
-		(Weight::from_ref_time(38_040_000))
+		(Weight::from_parts(38_040_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
@@ -626,9 +626,9 @@ impl WeightInfo for () {
 	// Storage: ParachainStaking CandidatePool (r:1 w:1)
 	// Storage: ParachainStaking Total (r:1 w:1)
 	fn execute_leave_delegators(x: u32, ) -> Weight {
-		(Weight::from_ref_time(39_761_656))
+		(Weight::from_parts(39_761_656, 0))
 			// Standard Error: 18_379
-			.saturating_add((Weight::from_ref_time(30_110_901)).saturating_mul(x as u64))
+			.saturating_add((Weight::from_parts(30_110_901, 0)).saturating_mul(x as u64))
 			.saturating_add(RocksDbWeight::get().reads(5 as u64))
 			.saturating_add(RocksDbWeight::get().reads((1 as u64).saturating_mul(x as u64)))
 			.saturating_add(RocksDbWeight::get().writes(4 as u64))
@@ -636,14 +636,14 @@ impl WeightInfo for () {
 	}
 	// Storage: ParachainStaking DelegatorState (r:1 w:1)
 	fn cancel_leave_delegators() -> Weight {
-		(Weight::from_ref_time(35_660_000))
+		(Weight::from_parts(35_660_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: ParachainStaking DelegatorState (r:1 w:1)
 	// Storage: ParachainStaking Round (r:1 w:0)
 	fn schedule_revoke_delegation() -> Weight {
-		(Weight::from_ref_time(39_450_000))
+		(Weight::from_parts(39_450_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
@@ -652,14 +652,14 @@ impl WeightInfo for () {
 	// Storage: Tokens Accounts (r:1 w:0)
 	// Storage: ParachainStaking Round (r:1 w:0)
 	fn schedule_delegator_bond_more() -> Weight {
-		(Weight::from_ref_time(57_880_000))
+		(Weight::from_parts(57_880_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(4 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: ParachainStaking DelegatorState (r:1 w:1)
 	// Storage: ParachainStaking Round (r:1 w:0)
 	fn schedule_delegator_bond_less() -> Weight {
-		(Weight::from_ref_time(38_330_000))
+		(Weight::from_parts(38_330_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
@@ -671,7 +671,7 @@ impl WeightInfo for () {
 	// Storage: ParachainStaking CandidatePool (r:1 w:1)
 	// Storage: ParachainStaking Total (r:1 w:1)
 	fn execute_revoke_delegation() -> Weight {
-		(Weight::from_ref_time(110_411_000))
+		(Weight::from_parts(110_411_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(7 as u64))
 			.saturating_add(RocksDbWeight::get().writes(6 as u64))
 	}
@@ -683,7 +683,7 @@ impl WeightInfo for () {
 	// Storage: ParachainStaking CandidatePool (r:1 w:1)
 	// Storage: ParachainStaking Total (r:1 w:1)
 	fn execute_delegator_bond_more() -> Weight {
-		(Weight::from_ref_time(102_830_000))
+		(Weight::from_parts(102_830_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(7 as u64))
 			.saturating_add(RocksDbWeight::get().writes(6 as u64))
 	}
@@ -695,42 +695,42 @@ impl WeightInfo for () {
 	// Storage: ParachainStaking CandidatePool (r:1 w:1)
 	// Storage: ParachainStaking Total (r:1 w:1)
 	fn execute_delegator_bond_less() -> Weight {
-		(Weight::from_ref_time(100_890_000))
+		(Weight::from_parts(100_890_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(7 as u64))
 			.saturating_add(RocksDbWeight::get().writes(6 as u64))
 	}
 	// Storage: ParachainStaking DelegatorState (r:1 w:1)
 	fn cancel_revoke_delegation() -> Weight {
-		(Weight::from_ref_time(36_960_000))
+		(Weight::from_parts(36_960_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: ParachainStaking DelegatorState (r:1 w:1)
 	fn cancel_delegator_bond_more() -> Weight {
-		(Weight::from_ref_time(46_300_000))
+		(Weight::from_parts(46_300_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: ParachainStaking DelegatorState (r:1 w:1)
 	fn cancel_delegator_bond_less() -> Weight {
-		(Weight::from_ref_time(45_880_000))
+		(Weight::from_parts(45_880_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: Xyk LiquidityPools (r:1 w:0)
 	// Storage: ParachainStaking StakingLiquidityTokens (r:1 w:1)
 	fn add_staking_liquidity_token(x: u32, ) -> Weight {
-		(Weight::from_ref_time(29_204_369))
+		(Weight::from_parts(29_204_369, 0))
 			// Standard Error: 2_699
-			.saturating_add((Weight::from_ref_time(185_931)).saturating_mul(x as u64))
+			.saturating_add((Weight::from_parts(185_931, 0)).saturating_mul(x as u64))
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: ParachainStaking StakingLiquidityTokens (r:1 w:1)
 	fn remove_staking_liquidity_token(x: u32, ) -> Weight {
-		(Weight::from_ref_time(22_061_636))
+		(Weight::from_parts(22_061_636, 0))
 			// Standard Error: 1_709
-			.saturating_add((Weight::from_ref_time(166_679)).saturating_mul(x as u64))
+			.saturating_add((Weight::from_parts(166_679, 0)).saturating_mul(x as u64))
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
@@ -739,7 +739,7 @@ impl WeightInfo for () {
 	// Storage: ParachainStaking AggregatorMetadata (r:1 w:1)
 	// Storage: ParachainStaking CandidateAggregator (r:1 w:1)
 	fn aggregator_update_metadata() -> Weight {
-		(Weight::from_ref_time(599_580_000))
+		(Weight::from_parts(599_580_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(52 as u64))
 			.saturating_add(RocksDbWeight::get().writes(2 as u64))
 	}
@@ -747,7 +747,7 @@ impl WeightInfo for () {
 	// Storage: ParachainStaking CandidateAggregator (r:1 w:1)
 	// Storage: ParachainStaking AggregatorMetadata (r:2 w:2)
 	fn update_candidate_aggregator() -> Weight {
-		(Weight::from_ref_time(98_020_000))
+		(Weight::from_parts(98_020_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(4 as u64))
 			.saturating_add(RocksDbWeight::get().writes(3 as u64))
 	}
@@ -755,7 +755,7 @@ impl WeightInfo for () {
 	// Storage: Tokens Accounts (r:14 w:14)
 	// Storage: System Account (r:14 w:13)
 	fn payout_collator_rewards() -> Weight {
-		(Weight::from_ref_time(536_300_000))
+		(Weight::from_parts(536_300_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(30 as u64))
 			.saturating_add(RocksDbWeight::get().writes(28 as u64))
 	}
@@ -763,13 +763,13 @@ impl WeightInfo for () {
 	// Storage: Tokens Accounts (r:2 w:2)
 	// Storage: System Account (r:2 w:1)
 	fn payout_delegator_reward() -> Weight {
-		(Weight::from_ref_time(78_700_000))
+		(Weight::from_parts(78_700_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(5 as u64))
 			.saturating_add(RocksDbWeight::get().writes(4 as u64))
 	}
 	// Storage: ParachainStaking Round (r:1 w:0)
 	fn passive_session_change() -> Weight {
-		(Weight::from_ref_time(10_411_000))
+		(Weight::from_parts(10_411_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 	}
 	// Storage: ParachainStaking Round (r:1 w:1)
@@ -801,13 +801,13 @@ impl WeightInfo for () {
 	// Storage: ParachainStaking RoundCollatorRewardInfo (r:0 w:26)
 	// Storage: Session Validators (r:0 w:1)
 	fn active_session_change(x: u32, y: u32, z: u32, ) -> Weight {
-		(Weight::from_ref_time(819_648_670))
+		(Weight::from_parts(819_648_670, 0))
 			// Standard Error: 16_309
-			.saturating_add((Weight::from_ref_time(15_337_752)).saturating_mul(x as u64))
+			.saturating_add((Weight::from_parts(15_337_752, 0)).saturating_mul(x as u64))
 			// Standard Error: 70_621
-			.saturating_add((Weight::from_ref_time(6_320_523)).saturating_mul(y as u64))
+			.saturating_add((Weight::from_parts(6_320_523, 0)).saturating_mul(y as u64))
 			// Standard Error: 166_526
-			.saturating_add((Weight::from_ref_time(32_822_119)).saturating_mul(z as u64))
+			.saturating_add((Weight::from_parts(32_822_119, 0)).saturating_mul(z as u64))
 			.saturating_add(RocksDbWeight::get().reads(124 as u64))
 			.saturating_add(RocksDbWeight::get().reads((4 as u64).saturating_mul(x as u64)))
 			.saturating_add(RocksDbWeight::get().writes(119 as u64))

@@ -72,7 +72,7 @@ impl<T: frame_system::Config> pallet_bootstrap::WeightInfo for ModuleWeight<T> {
 	// Storage: Bootstrap PromoteBootstrapPool (r:0 w:1)
 	// Storage: Bootstrap ActivePair (r:0 w:1)
 	fn schedule_bootstrap() -> Weight {
-		(Weight::from_ref_time(36_980_000))
+		(Weight::from_parts(36_980_000, 0))
 			.saturating_add(T::DbWeight::get().reads(5 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
@@ -87,7 +87,7 @@ impl<T: frame_system::Config> pallet_bootstrap::WeightInfo for ModuleWeight<T> {
 	// Storage: Bootstrap Valuations (r:1 w:1)
 	// Storage: Bootstrap ProvisionAccounts (r:0 w:1)
 	fn provision() -> Weight {
-		(Weight::from_ref_time(102_250_000))
+		(Weight::from_parts(102_250_000, 0))
 			.saturating_add(T::DbWeight::get().reads(10 as u64))
 			.saturating_add(T::DbWeight::get().writes(6 as u64))
 	}
@@ -106,7 +106,7 @@ impl<T: frame_system::Config> pallet_bootstrap::WeightInfo for ModuleWeight<T> {
 	// Storage: ProofOfStake TotalActivatedLiquidity (r:1 w:1)
 	// Storage: Bootstrap ProvisionAccounts (r:0 w:1)
 	fn claim_and_activate_liquidity_tokens() -> Weight {
-		(Weight::from_ref_time(198_130_000))
+		(Weight::from_parts(198_130_000, 0))
 			.saturating_add(T::DbWeight::get().reads(17 as u64))
 			.saturating_add(T::DbWeight::get().writes(8 as u64))
 	}
@@ -124,7 +124,7 @@ impl<T: frame_system::Config> pallet_bootstrap::WeightInfo for ModuleWeight<T> {
 	// Storage: Bootstrap PromoteBootstrapPool (r:0 w:1)
 	// Storage: Bootstrap ActivePair (r:0 w:1)
 	fn finalize() -> Weight {
-		(Weight::from_ref_time(81_329_000))
+		(Weight::from_parts(81_329_000, 0))
 			.saturating_add(T::DbWeight::get().reads(10 as u64))
 			.saturating_add(T::DbWeight::get().writes(7 as u64))
 	}
@@ -139,7 +139,7 @@ impl WeightInfo for () {
 	// Storage: Bootstrap PromoteBootstrapPool (r:0 w:1)
 	// Storage: Bootstrap ActivePair (r:0 w:1)
 	fn schedule_bootstrap() -> Weight {
-		(Weight::from_ref_time(36_980_000))
+		(Weight::from_parts(36_980_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(5 as u64))
 			.saturating_add(RocksDbWeight::get().writes(3 as u64))
 	}
@@ -154,7 +154,7 @@ impl WeightInfo for () {
 	// Storage: Bootstrap Valuations (r:1 w:1)
 	// Storage: Bootstrap ProvisionAccounts (r:0 w:1)
 	fn provision() -> Weight {
-		(Weight::from_ref_time(102_250_000))
+		(Weight::from_parts(102_250_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(10 as u64))
 			.saturating_add(RocksDbWeight::get().writes(6 as u64))
 	}
@@ -173,7 +173,7 @@ impl WeightInfo for () {
 	// Storage: ProofOfStake TotalActivatedLiquidity (r:1 w:1)
 	// Storage: Bootstrap ProvisionAccounts (r:0 w:1)
 	fn claim_and_activate_liquidity_tokens() -> Weight {
-		(Weight::from_ref_time(198_130_000))
+		(Weight::from_parts(198_130_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(17 as u64))
 			.saturating_add(RocksDbWeight::get().writes(8 as u64))
 	}
@@ -191,7 +191,7 @@ impl WeightInfo for () {
 	// Storage: Bootstrap PromoteBootstrapPool (r:0 w:1)
 	// Storage: Bootstrap ActivePair (r:0 w:1)
 	fn finalize() -> Weight {
-		(Weight::from_ref_time(81_329_000))
+		(Weight::from_parts(81_329_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(10 as u64))
 			.saturating_add(RocksDbWeight::get().writes(7 as u64))
 	}

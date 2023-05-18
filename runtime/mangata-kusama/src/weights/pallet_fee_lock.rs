@@ -65,7 +65,7 @@ pub struct ModuleWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_fee_lock::WeightInfo for ModuleWeight<T> {
 	// Storage: FeeLock FeeLockMetadata (r:1 w:1)
 	fn update_fee_lock_metadata() -> Weight {
-		(Weight::from_ref_time(36_270_000))
+		(Weight::from_parts(36_270_000, 0))
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -75,7 +75,7 @@ impl<T: frame_system::Config> pallet_fee_lock::WeightInfo for ModuleWeight<T> {
 	// Storage: FeeLock FeeLockMetadataQeueuePosition (r:1 w:1)
 	// Storage: FeeLock UnlockQueue (r:1 w:1)
 	fn unlock_fee() -> Weight {
-		(Weight::from_ref_time(57_590_000))
+		(Weight::from_parts(57_590_000, 0))
 			.saturating_add(T::DbWeight::get().reads(5 as u64))
 			.saturating_add(T::DbWeight::get().writes(4 as u64))
 	}
@@ -85,7 +85,7 @@ impl<T: frame_system::Config> pallet_fee_lock::WeightInfo for ModuleWeight<T> {
 impl WeightInfo for () {
 	// Storage: FeeLock FeeLockMetadata (r:1 w:1)
 	fn update_fee_lock_metadata() -> Weight {
-		(Weight::from_ref_time(36_270_000))
+		(Weight::from_parts(36_270_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
@@ -95,7 +95,7 @@ impl WeightInfo for () {
 	// Storage: FeeLock FeeLockMetadataQeueuePosition (r:1 w:1)
 	// Storage: FeeLock UnlockQueue (r:1 w:1)
 	fn unlock_fee() -> Weight {
-		(Weight::from_ref_time(57_590_000))
+		(Weight::from_parts(57_590_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(5 as u64))
 			.saturating_add(RocksDbWeight::get().writes(4 as u64))
 	}

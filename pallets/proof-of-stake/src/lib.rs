@@ -161,7 +161,7 @@ pub mod pallet {
 		/// Claims liquidity mining rewards
 		#[transactional]
 		#[pallet::call_index(0)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::claim_rewards_v2())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::claim_rewards_all())]
 		pub fn claim_rewards_all(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
@@ -205,7 +205,7 @@ pub mod pallet {
 		/// - use_balance_from - where from tokens should be used
 		#[transactional]
 		#[pallet::call_index(2)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::activate_liquidity_v2())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::activate_liquidity())]
 		pub fn activate_liquidity(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
@@ -225,7 +225,7 @@ pub mod pallet {
 		/// Decreases number of tokens used for liquidity mining purposes
 		#[transactional]
 		#[pallet::call_index(3)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::deactivate_liquidity_v2())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::deactivate_liquidity())]
 		pub fn deactivate_liquidity(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,

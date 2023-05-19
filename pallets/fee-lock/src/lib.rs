@@ -138,7 +138,7 @@ pub mod pallet {
 		pub whitelisted_tokens: BoundedBTreeSet<TokenId, T::MaxCuratedTokens>,
 	}
 
-	impl<T:Config> FeeLockMetadataInfo<T> {
+	impl<T: Config> FeeLockMetadataInfo<T> {
 		pub fn is_whitelisted(&self, token_id: TokenId) -> bool {
 			if T::NativeTokenId::get() == token_id {
 				return true

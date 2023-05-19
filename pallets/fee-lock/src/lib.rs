@@ -138,6 +138,15 @@ pub mod pallet {
 		pub whitelisted_tokens: BoundedBTreeSet<TokenId, T::MaxCuratedTokens>,
 	}
 
+	impl<T:Config> FeeLockMetadataInfo<T> {
+		pub fn is_whitelisted(&self, token_id: TokenId) -> bool {
+			if T::NativeTokenId::get() == token_id {
+				return true
+			}
+			self.whitelisted_tokens.contains(&token_id)
+		}
+	}
+
 	#[pallet::storage]
 	#[pallet::getter(fn get_fee_lock_metadata)]
 	pub type FeeLockMetadata<T: Config> = StorageValue<_, FeeLockMetadataInfo<T>, OptionQuery>;
@@ -359,10 +368,7 @@ impl<T: Config> Pallet<T> {
 impl<T: Config> FeeLockTriggerTrait<T::AccountId> for Pallet<T> {
 	fn is_whitelisted(token_id: TokenId) -> bool {
 		if let Some(fee_lock_metadata) = Self::get_fee_lock_metadata() {
-			if T::NativeTokenId::get() == token_id {
-				return true
-			}
-			fee_lock_metadata.whitelisted_tokens.contains(&token_id)
+			fee_lock_metadata.is_whitelisted(token_id)
 		} else {
 			false
 		}

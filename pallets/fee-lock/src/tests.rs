@@ -729,7 +729,7 @@ const ALICE: u128 = 0u128;
 const BOB: u128 = 1u128;
 const CHARLIE: u128 = 2u128;
 const INITIAL_AMOUNT: Balance = 2_000_000__u128;
-const UNLIMITED_WEIGHT: Weight = Weight::from_ref_time(u64::MAX);
+const UNLIMITED_WEIGHT: Weight = Weight::from_parts(u64::MAX, 0);
 const ACCOUNT_WITHOUT_LOCKED_TOKENS: orml_tokens::AccountData<u128> = AccountData {
 	free: INITIAL_AMOUNT - 0 * FEE_LOCK_AMOUNT,
 	reserved: 0 * FEE_LOCK_AMOUNT,
@@ -799,7 +799,7 @@ fn test_on_idle_unlock_for_single_user(
 }
 
 #[test_case(
-	Weight::from_ref_time(u64::MAX),
+	Weight::from_parts(u64::MAX, 0),
 	calculate_estimated_weight(2, 9, 2),
 	vec![
 	(ALICE, ACCOUNT_WITHOUT_LOCKED_TOKENS),
@@ -1144,7 +1144,7 @@ fn test_queue_storage_is_cleaned_up() {
 			assert_eq!(Tokens::accounts(BOB, NativeCurrencyId::get()), ACCOUNT_WITH_LOCKED_TOKENS);
 
 			fast_forward_blocks(PERIOD_LENGTH);
-			FeeLock::on_idle(System::block_number(), Weight::from_ref_time(u64::MAX));
+			FeeLock::on_idle(System::block_number(), Weight::from_parts(u64::MAX, 0));
 
 			assert_eq!(
 				Tokens::accounts(ALICE, NativeCurrencyId::get()),

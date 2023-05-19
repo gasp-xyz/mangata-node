@@ -33,7 +33,7 @@ mod fee_test {
 		#[cfg(feature = "with-kusama-runtime")]
 		let relay_per_second = mangata_kusama_runtime::ksm_per_second();
 		#[cfg(feature = "with-kusama-runtime")]
-		assert_eq!(8_795 * 10 * millicent(12), relay_per_second);
+		assert_eq!(8_714 * 10 * millicent(12), relay_per_second);
 
 		asset_unit_cost(instruction_count, relay_per_second)
 	}
@@ -42,7 +42,7 @@ mod fee_test {
 		#[cfg(feature = "with-kusama-runtime")]
 		let native_per_second = mangata_kusama_runtime::mgx_per_second();
 		#[cfg(feature = "with-kusama-runtime")]
-		assert_eq!(8_795 * unit(18), native_per_second);
+		assert_eq!(8_714 * unit(18), native_per_second);
 
 		asset_unit_cost(instruction_count, native_per_second)
 	}
@@ -50,8 +50,8 @@ mod fee_test {
 	#[cfg(feature = "with-kusama-runtime")]
 	#[test]
 	fn mangata_kusama_per_second_works() {
-		assert_eq!(52_770 * microcent(12), relay_per_second_as_fee(4));
-		assert_eq!(52_770 * 10 * millicent(18), native_per_second_as_fee(4));
+		assert_eq!(52_284 * microcent(12), relay_per_second_as_fee(4));
+		assert_eq!(52_284 * 10 * millicent(18), native_per_second_as_fee(4));
 	}
 }
 
@@ -91,10 +91,10 @@ fn weight_to_fee_works() {
 
 		let weight: Weight = base_weight.saturating_mul(4);
 		let fee = WeightToFee::weight_to_fee(&weight);
-		assert_eq!(3_518_153_672_952_434_562, fee);
+		assert_eq!(3_485_656_523_406_183_554, fee);
 
 		let weight: Weight = unit_weight.saturating_mul(4);
 		let fee = WeightToFee::weight_to_fee(&weight);
-		assert_eq!(5_277_230_509_428_651_843, fee);
+		assert_eq!(5_228_484_785_109_275_332, fee);
 	}
 }

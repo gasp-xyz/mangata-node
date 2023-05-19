@@ -651,7 +651,151 @@ pub enum LiquidityInfoEnum<C: MultiTokenCurrency<T::AccountId>, T: frame_system:
 #[derive(Encode, Decode, Clone, TypeInfo)]
 pub struct OnChargeHandler<C, OU, OCA, OFLA>(PhantomData<(C, OU, OCA, OFLA)>);
 
-impl<C, OU, OCA, OFLA> OnChargeHandler<C, OU, OCA, OFLA> {}
+
+// impl T
+pub trait Fake<T> {
+	fn pre_validate();
+}
+
+impl<C, OU, OCA, OFLA, T> Fake<T> for OnChargeHandler<C, OU, OCA, OFLA>
+where
+	T: pallet_transaction_payment_mangata::Config + pallet_xyk::Config,
+	T::LengthToFee: frame_support::weights::WeightToFee<
+		Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
+	>,
+	C: MultiTokenCurrency<<T as frame_system::Config>::AccountId>,
+	C::PositiveImbalance: Imbalance<
+		<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
+		Opposite = C::NegativeImbalance,
+	>,
+	C::NegativeImbalance: Imbalance<
+		<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
+		Opposite = C::PositiveImbalance,
+	>,
+	OU: OnMultiTokenUnbalanced<NegativeImbalanceOf<C, T>>,
+	NegativeImbalanceOf<C, T>: MultiTokenImbalanceWithZeroTrait<TokenId>,
+	OCA: OnChargeTransaction<
+		T,
+		LiquidityInfo = Option<LiquidityInfoEnum<C, T>>,
+		Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
+	>,
+	OFLA: FeeLockTriggerTrait<<T as frame_system::Config>::AccountId>,
+	T: frame_system::Config<RuntimeCall = RuntimeCall>,
+	T::AccountId: From<sp_runtime::AccountId32> + Into<sp_runtime::AccountId32>,
+	Balance: From<<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance>,
+	sp_runtime::AccountId32: From<<T as frame_system::Config>::AccountId>,
+{
+	fn pre_validate(
+		// who: &T::AccountId,
+		// call: &T::RuntimeCall,
+		// info: &DispatchInfoOf<T::RuntimeCall>,
+		// fee: Balance,
+		// tip: Balance,
+	// ) -> Result<Option<LiquidityInfoEnum<C, T>>, TransactionValidityError> {
+	) {
+		// THIS IS NOT PROXY PALLET COMPATIBLE, YET
+		// Also ugly implementation to keep it maleable for now
+		// match call {
+		// 	RuntimeCall::Xyk(pallet_xyk::Call::sell_asset {
+		// 		sold_asset_id,
+		// 		sold_asset_amount,
+		// 		bought_asset_id,
+		// 		min_amount_out,
+		// 		..
+		// 	}) => {
+		// 		ensure!(
+		// 			tip.is_zero(),
+		// 			TransactionValidityError::Invalid(
+		// 				InvalidTransaction::TippingNotAllowedForSwaps.into(),
+		// 			)
+		// 		);
+        //
+		// 		if let Some(fee_lock_metadata) = FeeLock::get_fee_lock_metadata() {
+		// 			// Check if either of the tokens are whitelisted or not
+		// 		// 	if FeeLock::is_whitelisted(*sold_asset_id) ||
+		// 		// 		FeeLock::is_whitelisted(*bought_asset_id)
+		// 		// 	{
+		// 		// 		// ensure swap cannot fail
+		// 		// 		// This is to ensure that xyk swap fee is always charged
+		// 		// 		// We also ensure that the user has enough funds to transact
+		// 		// 		let (_, _, _, _, _, bought_asset_amount) =
+		// 		// 			<Xyk as PreValidateSwaps>::pre_validate_sell_asset(
+		// 		// 				&who.clone().into(),
+		// 		// 				*sold_asset_id,
+		// 		// 				*bought_asset_id,
+		// 		// 				*sold_asset_amount,
+		// 		// 				*min_amount_out,
+		// 		// 			)
+		// 		// 			.map_err(|_| {
+		// 		// 				TransactionValidityError::Invalid(
+		// 		// 					InvalidTransaction::SwapPrevalidation.into(),
+		// 		// 				)
+		// 		// 			})?;
+        //         //
+		// 		// 		let mut is_high_value = false;
+        //         //
+		// 		// 		match (
+		// 		// 			FeeLock::is_whitelisted(*sold_asset_id),
+		// 		// 			OFLA::get_swap_valuation_for_token(*sold_asset_id, *sold_asset_amount),
+		// 		// 		) {
+		// 		// 			(true, Some(value))
+		// 		// 				if value >= fee_lock_metadata.swap_value_threshold =>
+		// 		// 			{
+		// 		// 				is_high_value = true;
+		// 		// 			},
+		// 		// 			_ => {
+		// 		// 				match (
+		// 		// 					FeeLock::is_whitelisted(*bought_asset_id),
+		// 		// 					OFLA::get_swap_valuation_for_token(
+		// 		// 						*bought_asset_id,
+		// 		// 						bought_asset_amount,
+		// 		// 					),
+		// 		// 				) {
+		// 		// 					(true, Some(value))
+		// 		// 						if value >= fee_lock_metadata.swap_value_threshold =>
+		// 		// 					{
+		// 		// 						is_high_value = true;
+		// 		// 					},
+		// 		// 					_ => {},
+		// 		// 				}
+		// 		// 			},
+		// 		// 		}
+        //         //
+		// 		// 		if is_high_value {
+		// 		// 			// This is the "high value swap on curated token" branch
+		// 		// 			// Attempt to unlock fee, do not return if fails
+		// 		// 			let _ = OFLA::unlock_fee(who);
+		// 		// 			Ok(Some(LiquidityInfoEnum::FeeLock))
+		// 		// 		} else {
+		// 		// 			// This is the "low value swap on curated token" branch
+		// 		// 			OFLA::process_fee_lock(who).map_err(|_| {
+		// 		// 				TransactionValidityError::Invalid(
+		// 		// 					InvalidTransaction::ProcessFeeLock.into(),
+		// 		// 				)
+		// 		// 			})?;
+		// 		// 			Ok(Some(LiquidityInfoEnum::FeeLock))
+		// 		// 		}
+		// 		// 	} else {
+		// 		// 		// "swap on non-whitelisted tokens" branch
+		// 		// 		OFLA::process_fee_lock(who).map_err(|_| {
+		// 		// 			TransactionValidityError::Invalid(
+		// 		// 				InvalidTransaction::ProcessFeeLock.into(),
+		// 		// 			)
+		// 		// 		})?;
+		// 		// 		Ok(Some(LiquidityInfoEnum::FeeLock))
+		// 		// 	}
+		// 		} else {
+		// 			// FeeLocks are not activated branch
+		// 			OCA::withdraw_fee(who, call, info, fee, tip)
+		// 		}
+		// 	},
+        //
+		// 	_ => OCA::withdraw_fee(who, call, info, fee, tip),
+		// }
+	}
+}
+
+
 
 /// Default implementation for a Currency and an OnUnbalanced handler.
 ///
@@ -698,6 +842,7 @@ where
 		fee: Self::Balance,
 		tip: Self::Balance,
 	) -> Result<Self::LiquidityInfo, TransactionValidityError> {
+		<Self as Fake<T>>::pre_validate();
 		// THIS IS NOT PROXY PALLET COMPATIBLE, YET
 		// Also ugly implementation to keep it maleable for now
 		match call {

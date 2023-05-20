@@ -897,106 +897,129 @@ where
 		// THIS IS NOT PROXY PALLET COMPATIBLE, YET
 		// Also ugly implementation to keep it maleable for now
 		match (call, pallet_fee_lock::FeeLockMetadata::<T>::get()) {
-			(RuntimeCall::Xyk(xyk_call), Some(fee_lock_metadata)) => {
-				match xyk_call {
-					pallet_xyk::Call::sell_asset {
-						sold_asset_id,
-						sold_asset_amount,
-						bought_asset_id,
-						min_amount_out,
-						..
-					} => FeeHelpers::<T, C, OU, OCA, OFLA>::handle_sell_asset(
-						// <Self as Fake<C, T>>::handle_sell_asset(
-						who,
-						fee_lock_metadata,
-						*sold_asset_id,
-						*sold_asset_amount,
-						*bought_asset_id,
-						*min_amount_out,
-					),
+			(RuntimeCall::Xyk(xyk_call), Some(fee_lock_metadata)) => match xyk_call {
+				pallet_xyk::Call::sell_asset {
+					sold_asset_id,
+					sold_asset_amount,
+					bought_asset_id,
+					min_amount_out,
+					..
+				} => FeeHelpers::<T, C, OU, OCA, OFLA>::handle_sell_asset(
+					who,
+					fee_lock_metadata,
+					*sold_asset_id,
+					*sold_asset_amount,
+					*bought_asset_id,
+					*min_amount_out,
+				),
 
-					pallet_xyk::Call::buy_asset {
-						sold_asset_id,
-						bought_asset_amount,
-						bought_asset_id,
-						max_amount_in,
-						..
-					} => FeeHelpers::<T, C, OU, OCA, OFLA>::handle_buy_asset(
-						who,
-						fee_lock_metadata,
-						*sold_asset_id,
-						*bought_asset_amount,
-						*bought_asset_id,
-						*max_amount_in,
-					),
+				pallet_xyk::Call::buy_asset {
+					sold_asset_id,
+					bought_asset_amount,
+					bought_asset_id,
+					max_amount_in,
+					..
+				} => FeeHelpers::<T, C, OU, OCA, OFLA>::handle_buy_asset(
+					who,
+					fee_lock_metadata,
+					*sold_asset_id,
+					*bought_asset_amount,
+					*bought_asset_id,
+					*max_amount_in,
+				),
 
-					pallet_xyk::Call::multiswap_buy_asset {
-						swap_token_list,
-						bought_asset_amount,
-						max_amount_in,
-						..
-					} =>
-						if swap_token_list.len() == SINGLE_HOP_MULTISWAP {
-							let sold_asset_id =
-								swap_token_list.get(0).ok_or(TransactionValidityError::Invalid(
-									InvalidTransaction::SwapPrevalidation.into(),
-								))?;
-							let bought_asset_id =
-								swap_token_list.get(1).ok_or(TransactionValidityError::Invalid(
-									InvalidTransaction::SwapPrevalidation.into(),
-								))?;
-							FeeHelpers::<T, C, OU, OCA, OFLA>::handle_buy_asset(
-								who,
-								fee_lock_metadata,
-								*sold_asset_id,
-								*bought_asset_amount,
-								*bought_asset_id,
-								*max_amount_in,
-							)
-						} else {
-							FeeHelpers::<T, C, OU, OCA, OFLA>::handle_multiswap_buy_asset(
-								who,
-								fee_lock_metadata,
-								swap_token_list.clone(),
-								*bought_asset_amount,
-								*max_amount_in,
-							)
-						},
+				pallet_xyk::Call::multiswap_buy_asset {
+					swap_token_list,
+					bought_asset_amount,
+					max_amount_in,
+					..
+				} =>
+					if swap_token_list.len() == SINGLE_HOP_MULTISWAP {
+						let sold_asset_id =
+							swap_token_list.get(0).ok_or(TransactionValidityError::Invalid(
+								InvalidTransaction::SwapPrevalidation.into(),
+							))?;
+						let bought_asset_id =
+							swap_token_list.get(1).ok_or(TransactionValidityError::Invalid(
+								InvalidTransaction::SwapPrevalidation.into(),
+							))?;
+						FeeHelpers::<T, C, OU, OCA, OFLA>::handle_buy_asset(
+							who,
+							fee_lock_metadata,
+							*sold_asset_id,
+							*bought_asset_amount,
+							*bought_asset_id,
+							*max_amount_in,
+						)
+					} else {
+						FeeHelpers::<T, C, OU, OCA, OFLA>::handle_multiswap_buy_asset(
+							who,
+							fee_lock_metadata,
+							swap_token_list.clone(),
+							*bought_asset_amount,
+							*max_amount_in,
+						)
+					},
 
-					pallet_xyk::Call::multiswap_sell_asset {
-						swap_token_list,
-						sold_asset_amount,
-						min_amount_out,
-						..
-					} =>
-						if swap_token_list.len() == SINGLE_HOP_MULTISWAP {
-							let sold_asset_id =
-								swap_token_list.get(0).ok_or(TransactionValidityError::Invalid(
-									InvalidTransaction::SwapPrevalidation.into(),
-								))?;
-							let bought_asset_id =
-								swap_token_list.get(1).ok_or(TransactionValidityError::Invalid(
-									InvalidTransaction::SwapPrevalidation.into(),
-								))?;
-							FeeHelpers::<T, C, OU, OCA, OFLA>::handle_sell_asset(
-								who,
-								fee_lock_metadata,
-								*sold_asset_id,
-								*sold_asset_amount,
-								*bought_asset_id,
-								*min_amount_out,
-							)
-						} else {
-							FeeHelpers::<T, C, OU, OCA, OFLA>::handle_multiswap_sell_asset(
-								who,
-								fee_lock_metadata,
-								swap_token_list.clone(),
-								*sold_asset_amount,
-								*min_amount_out,
-							)
-						},
-					_ => OCA::withdraw_fee(who, call, info, fee, tip),
-				}
+				pallet_xyk::Call::multiswap_sell_asset {
+					swap_token_list,
+					sold_asset_amount,
+					min_amount_out,
+					..
+				} =>
+					if swap_token_list.len() == SINGLE_HOP_MULTISWAP {
+						let sold_asset_id =
+							swap_token_list.get(0).ok_or(TransactionValidityError::Invalid(
+								InvalidTransaction::SwapPrevalidation.into(),
+							))?;
+						let bought_asset_id =
+							swap_token_list.get(1).ok_or(TransactionValidityError::Invalid(
+								InvalidTransaction::SwapPrevalidation.into(),
+							))?;
+						FeeHelpers::<T, C, OU, OCA, OFLA>::handle_sell_asset(
+							who,
+							fee_lock_metadata,
+							*sold_asset_id,
+							*sold_asset_amount,
+							*bought_asset_id,
+							*min_amount_out,
+						)
+					} else {
+						FeeHelpers::<T, C, OU, OCA, OFLA>::handle_multiswap_sell_asset(
+							who,
+							fee_lock_metadata,
+							swap_token_list.clone(),
+							*sold_asset_amount,
+							*min_amount_out,
+						)
+					},
+				_ => OCA::withdraw_fee(who, call, info, fee, tip),
+			},
+			(RuntimeCall::FeeLock(pallet_fee_lock::Call::unlock_fee { .. }), _) => {
+				let imb = C::withdraw(
+					MgxTokenId::get().into(),
+					who,
+					Balance::from(tip).into(),
+					WithdrawReasons::TIP,
+					ExistenceRequirement::KeepAlive,
+				)
+				.map_err(|_| {
+					TransactionValidityError::Invalid(InvalidTransaction::Payment.into())
+				})?;
+
+				OU::on_unbalanceds(MgxTokenId::get().into(), Some(imb).into_iter());
+				TransactionPayment::deposit_event(pallet_transaction_payment_mangata::Event::<
+					Runtime,
+				>::TransactionFeePaid {
+					who: sp_runtime::AccountId32::from(who.clone()),
+					actual_fee: Balance::zero().into(),
+					tip: Balance::from(tip),
+				});
+
+				OFLA::can_unlock_fee(who).map_err(|_| {
+					TransactionValidityError::Invalid(InvalidTransaction::UnlockFee.into())
+				})?;
+				Ok(Some(LiquidityInfoEnum::FeeLock))
 			},
 			_ => OCA::withdraw_fee(who, call, info, fee, tip),
 		}

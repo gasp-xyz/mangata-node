@@ -986,6 +986,32 @@ where
 					},
 				_ => OCA::withdraw_fee(who, call, info, fee, tip),
 			},
+			(RuntimeCall::FeeLock(pallet_fee_lock::Call::unlock_fee { .. }), _) => {
+				let imb = C::withdraw(
+					MgrTokenId::get().into(),
+					who,
+					Balance::from(tip).into(),
+					WithdrawReasons::TIP,
+					ExistenceRequirement::KeepAlive,
+				)
+				.map_err(|_| {
+					TransactionValidityError::Invalid(InvalidTransaction::Payment.into())
+				})?;
+
+				OU::on_unbalanceds(MgrTokenId::get().into(), Some(imb).into_iter());
+				TransactionPayment::deposit_event(pallet_transaction_payment_mangata::Event::<
+					Runtime,
+				>::TransactionFeePaid {
+					who: sp_runtime::AccountId32::from(who.clone()),
+					actual_fee: Balance::zero().into(),
+					tip: Balance::from(tip),
+				});
+
+				OFLA::can_unlock_fee(who).map_err(|_| {
+					TransactionValidityError::Invalid(InvalidTransaction::UnlockFee.into())
+				})?;
+				Ok(Some(LiquidityInfoEnum::FeeLock))
+			},
 			_ => OCA::withdraw_fee(who, call, info, fee, tip),
 		}
 	}

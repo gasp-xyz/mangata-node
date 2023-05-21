@@ -509,7 +509,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		PoolCreated(T::AccountId, TokenId, Balance, TokenId, Balance),
-		AssetsSwapped(T::AccountId, TokenId, Balance, TokenId, Balance),
+		AssetsSwapped(T::AccountId, Vec<TokenId>, Balance, Balance),
 		SellAssetFailedDueToSlippage(T::AccountId, TokenId, Balance, TokenId, Balance, Balance),
 		BuyAssetFailedDueToSlippage(T::AccountId, TokenId, Balance, TokenId, Balance, Balance),
 		LiquidityMinted(T::AccountId, TokenId, Balance, TokenId, Balance, TokenId, Balance),
@@ -518,10 +518,7 @@ pub mod pallet {
 		LiquidityActivated(T::AccountId, TokenId, Balance),
 		LiquidityDeactivated(T::AccountId, TokenId, Balance),
 		RewardsClaimed(T::AccountId, TokenId, Balance),
-		AssetsMultiSellSwapped(T::AccountId, Vec<TokenId>, Balance, Balance),
-		AssetsMultiBuySwapped(T::AccountId, Vec<TokenId>, Balance, Balance),
-		MultiSellAssetFailedOnAtomicSwap(T::AccountId, Vec<TokenId>, Balance, ModuleError),
-		MultiBuyAssetFailedOnAtomicSwap(T::AccountId, Vec<TokenId>, Balance, ModuleError),
+		MultiSwapAssetFailedOnAtomicSwap(T::AccountId, Vec<TokenId>, Balance, ModuleError),
 	}
 
 	#[pallet::storage]
@@ -2253,9 +2250,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 			Pallet::<T>::deposit_event(Event::AssetsSwapped(
 				sender.clone(),
-				sold_asset_id,
+				vec![sold_asset_id, bought_asset_id],
 				sold_asset_amount,
-				bought_asset_id,
 				bought_asset_amount,
 			));
 		}
@@ -2368,7 +2364,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			min_amount_out,
 		) {
 			Ok(bought_asset_amount) => {
-				Pallet::<T>::deposit_event(Event::AssetsMultiSellSwapped(
+				Pallet::<T>::deposit_event(Event::AssetsSwapped(
 					sender.clone(),
 					swap_token_list.clone(),
 					sold_asset_amount,
@@ -2425,7 +2421,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				)?;
 
 				if let DispatchError::Module(module_err) = e {
-					Pallet::<T>::deposit_event(Event::MultiSellAssetFailedOnAtomicSwap(
+					Pallet::<T>::deposit_event(Event::MultiSwapAssetFailedOnAtomicSwap(
 						sender.clone(),
 						swap_token_list.clone(),
 						sold_asset_amount,
@@ -2573,9 +2569,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 			Pallet::<T>::deposit_event(Event::AssetsSwapped(
 				sender.clone(),
-				sold_asset_id,
+				vec![sold_asset_id, bought_asset_id],
 				sold_asset_amount,
-				bought_asset_id,
 				bought_asset_amount,
 			));
 		}
@@ -2699,7 +2694,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			max_amount_in,
 		) {
 			Ok(sold_asset_amount) => {
-				Pallet::<T>::deposit_event(Event::AssetsMultiBuySwapped(
+				Pallet::<T>::deposit_event(Event::AssetsSwapped(
 					sender.clone(),
 					swap_token_list.clone(),
 					sold_asset_amount,
@@ -2754,7 +2749,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				)?;
 
 				if let DispatchError::Module(module_err) = e {
-					Pallet::<T>::deposit_event(Event::MultiBuyAssetFailedOnAtomicSwap(
+					Pallet::<T>::deposit_event(Event::MultiSwapAssetFailedOnAtomicSwap(
 						sender.clone(),
 						swap_token_list.clone(),
 						bought_asset_amount,

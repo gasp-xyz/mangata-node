@@ -635,9 +635,8 @@ fn sell_W() {
 		let assets_swapped_event =
 			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsSwapped(
 				2,
-				1,
+				vec![1_u32, 4_u32],
 				20000000000000000000,
-				4,
 				19959959959959959959,
 			));
 
@@ -816,7 +815,7 @@ fn multiswap_sell_W() {
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 40096414600183441950);
 
 		let assets_swapped_event =
-			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsMultiSellSwapped(
+			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsSwapped(
 				TRADER_ID,
 				vec![1, 2, 3, 4, 5],
 				20000000000000000000,
@@ -872,7 +871,7 @@ fn multiswap_sell_bad_slippage_charges_fee_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		assert_event_emitted!(crate::Event::<Test>::MultiSellAssetFailedOnAtomicSwap(
+		assert_event_emitted!(crate::Event::<Test>::MultiSwapAssetFailedOnAtomicSwap(
 			TRADER_ID,
 			vec![1, 2, 3, 4, 5],
 			20000000000000000000,
@@ -1034,7 +1033,7 @@ fn multiswap_sell_just_enough_assets_pay_fee_but_not_to_swap_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		assert_event_emitted!(crate::Event::<Test>::MultiSellAssetFailedOnAtomicSwap(
+		assert_event_emitted!(crate::Event::<Test>::MultiSwapAssetFailedOnAtomicSwap(
 			TRADER_ID,
 			vec![1, 2, 3, 4, 5],
 			2000000000000000000000,
@@ -1057,7 +1056,7 @@ fn multiswap_sell_with_two_hops_W() {
 		));
 
 		let assets_swapped_event =
-			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsMultiSellSwapped(
+			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsSwapped(
 				TRADER_ID,
 				vec![1, 2, 3],
 				20000000000000000000,
@@ -1110,7 +1109,7 @@ fn multiswap_sell_same_pool_works_W() {
 		assert_eq!(XykStorage::balance(2, XykStorage::account_id()), 99980040040040040040);
 
 		let assets_swapped_event =
-			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsMultiSellSwapped(
+			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsSwapped(
 				TRADER_ID,
 				vec![1, 2, 1],
 				20000000000000000000,
@@ -1155,7 +1154,7 @@ fn multiswap_sell_loop_works_W() {
 		assert_eq!(XykStorage::balance(3, XykStorage::account_id()), 99980066724398222064);
 
 		let assets_swapped_event =
-			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsMultiSellSwapped(
+			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsSwapped(
 				TRADER_ID,
 				vec![1, 2, 3, 2, 1, 2],
 				20000000000000000000,
@@ -1211,9 +1210,8 @@ fn buy_W() {
 		let assets_swapped_event =
 			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsSwapped(
 				2,
-				1,
+				vec![1_u32, 4_u32],
 				40120361083249749248,
-				4,
 				30000000000000000000,
 			));
 
@@ -1428,7 +1426,7 @@ fn multiswap_buy_W() {
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 40000000000000000000);
 
 		let assets_swapped_event =
-			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsMultiBuySwapped(
+			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsSwapped(
 				TRADER_ID,
 				vec![1, 2, 3, 4, 5],
 				20496637815013901540,
@@ -1484,7 +1482,7 @@ fn multiswap_buy_bad_slippage_charges_fee_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		assert_event_emitted!(crate::Event::<Test>::MultiBuyAssetFailedOnAtomicSwap(
+		assert_event_emitted!(crate::Event::<Test>::MultiSwapAssetFailedOnAtomicSwap(
 			TRADER_ID,
 			vec![1, 2, 3, 4, 5],
 			20000000000000000000,
@@ -1653,7 +1651,7 @@ fn multiswap_buy_just_enough_assets_pay_fee_but_not_to_swap_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		assert_event_emitted!(Event::<Test>::MultiBuyAssetFailedOnAtomicSwap(
+		assert_event_emitted!(Event::<Test>::MultiSwapAssetFailedOnAtomicSwap(
 			TRADER_ID,
 			vec![1, 2, 3, 4, 5],
 			100000000,
@@ -1676,7 +1674,7 @@ fn multiswap_buy_with_two_hops_W() {
 		));
 
 		let assets_swapped_event =
-			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsMultiBuySwapped(
+			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsSwapped(
 				TRADER_ID,
 				vec![1, 2, 3],
 				20150859408965218106,

@@ -56,6 +56,8 @@ jobs:
     outputs:
       testmo-run-id: ${{ steps.setTestRun.outputs.testmo-run-id }}
     steps:
+      - name: Install testmo
+        run: npm i -g @testmo/testmo-cli
       - name: Add url
         run: |
           npx testmo automation:resources:add-field --name git --type string \
@@ -119,7 +121,9 @@ jobs:
       E2EBRANCHNAME: "main"
       PARACHAIN_DOCKER_IMAGE: ${{ inputs.parachainDocker || format('mangatasolutions/mangata-node:{0}', inputs.globalVersion) }}
     steps:
-     
+      - name: Install testmo
+        run: npm i -g @testmo/testmo-cli
+  
       - uses: actions/checkout@v3 ####IDK, but this is neccesary for reports
       - name: Adapt if fast runtime
         if:  ${{  !contains(env.PARACHAIN_DOCKER_IMAGE, 'fast') && matrix.fast == true }}

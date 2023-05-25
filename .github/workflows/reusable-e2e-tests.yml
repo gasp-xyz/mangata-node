@@ -265,7 +265,7 @@ jobs:
         if: always()
         run: chown -R 1004:1005 $GITHUB_WORKSPACE
   test-complete:
-    needs: [e2e-test-matrix]
+    needs: [setup-report, e2e-test-matrix]
     if: always()
     runs-on: ubuntu-latest
 

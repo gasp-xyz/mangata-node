@@ -91,4 +91,4 @@ jobs:
 
       - name: Fix permissions on self-hosted runner
         if: always()
-        run: chown -R 1004:1005 $GITHUB_WORKSPACE
+        run: chown -R 1100:1100 $GITHUB_WORKSPACE

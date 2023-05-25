@@ -265,7 +265,7 @@ jobs:
         run: yarn down          
       - name: Fix permissions on self-hosted runner
         if: always()
-        run: chown -R 1004:1005 $GITHUB_WORKSPACE
+        run: chown -R 1100:1100 $GITHUB_WORKSPACE
   test-complete:
     needs: [setup-report, e2e-test-matrix]
     if: always()
@@ -283,4 +283,3 @@ jobs:
         env:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
-        

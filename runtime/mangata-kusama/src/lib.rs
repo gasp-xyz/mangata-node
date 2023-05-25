@@ -129,7 +129,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	migration::XykRefactorMigration,
+	(migration::XykRefactorMigration, migration::AssetRegistryMigration),
 	// ()
 >;
 
@@ -1815,12 +1815,10 @@ impl_runtime_apis! {
 		}
 
 		fn is_storage_migration_scheduled() -> bool{
-			false
-			// System::read_events_no_consensus()
-			// 	.iter()
-			// 	.any(|record|
-			// 		matches!(record.event,
-			// 			RuntimeEvent::ParachainSystem( cumulus_pallet_parachain_system::Event::<Runtime>::ValidationFunctionApplied{relay_chain_block_num: _})))
+			System::read_events_no_consensus()
+				.any(|record|
+					matches!(record.event,
+						RuntimeEvent::ParachainSystem( cumulus_pallet_parachain_system::Event::<Runtime>::ValidationFunctionApplied{relay_chain_block_num: _})))
 		}
 
 		fn store_seed(seed: sp_core::H256){

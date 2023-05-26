@@ -52,7 +52,7 @@ permissions:
 
 jobs:
   setup-report:
-    runs-on: [self-hosted, compile]
+    runs-on: [ubuntu-latest, self-hosted, compile]
     outputs:
       testmo-run-id: ${{ steps.setTestRun.outputs.testmo-run-id }}
     steps:

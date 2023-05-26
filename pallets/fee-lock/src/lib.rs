@@ -54,7 +54,6 @@ pub mod pallet {
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(PhantomData<T>);
 
@@ -77,7 +76,7 @@ pub mod pallet {
 			if (base_cost + cost_of_single_unlock_iteration).ref_time() >
 				remaining_weight.ref_time()
 			{
-				return Weight::from_ref_time(0)
+				return Weight::from_parts(0, 0)
 			}
 
 			let metadata = Self::get_fee_lock_metadata();

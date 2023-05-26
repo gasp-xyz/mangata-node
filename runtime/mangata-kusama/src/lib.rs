@@ -129,7 +129,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	(migration::XykRefactorMigration),
+	(migration::XykRefactorMigration, migration::AssetRegistryMigration),
 	// ()
 >;
 
@@ -219,7 +219,7 @@ const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 /// so there is room for new extrinsics in the next block
 const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
 	WEIGHT_REF_TIME_PER_SECOND.saturating_div(4),
-	cumulus_primitives_core::relay_chain::v2::MAX_POV_SIZE as u64,
+	polkadot_primitives::v2::MAX_POV_SIZE as u64,
 );
 
 /// The version information used to identify this runtime when compiled natively.
@@ -335,8 +335,6 @@ parameter_types! {
 
 impl pallet_authorship::Config for Runtime {
 	type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Aura>;
-	type UncleGenerations = UncleGenerations;
-	type FilterUncle = ();
 	type EventHandler = ParachainStaking;
 }
 
@@ -1563,8 +1561,8 @@ impl EnsureOriginWithArg<RuntimeOrigin, Option<u32>> for AssetAuthority {
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
-	fn successful_origin(_asset_id: &Option<u32>) -> RuntimeOrigin {
-		EnsureRoot::successful_origin()
+	fn try_successful_origin(_asset_id: &Option<u32>) -> Result<RuntimeOrigin, ()> {
+		Ok(RuntimeOrigin::root())
 	}
 }
 
@@ -1746,7 +1744,7 @@ construct_runtime!(
 		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>} = 21,
 
 		// Collator support. The order of these 4 are important and shall not change.
-		Authorship: pallet_authorship::{Pallet, Call, Storage} = 30,
+		Authorship: pallet_authorship::{Pallet, Storage} = 30,
 		ParachainStaking: parachain_staking::{Pallet, Call, Storage, Event<T>, Config<T>} = 31,
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 32,
 		Aura: pallet_aura::{Pallet, Storage, Config<T>} = 33,
@@ -1818,7 +1816,6 @@ impl_runtime_apis! {
 
 		fn is_storage_migration_scheduled() -> bool{
 			System::read_events_no_consensus()
-				.iter()
 				.any(|record|
 					matches!(record.event,
 						RuntimeEvent::ParachainSystem( cumulus_pallet_parachain_system::Event::<Runtime>::ValidationFunctionApplied{relay_chain_block_num: _})))
@@ -2118,11 +2115,11 @@ impl_runtime_apis! {
 
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
-		fn on_runtime_upgrade(_checks: bool) -> (Weight, Weight) {
+		fn on_runtime_upgrade(checks: frame_try_runtime::UpgradeCheckSelect) -> (Weight, Weight) {
 			// NOTE: intentional unwrap: we don't want to propagate the error backwards, and want to
 			// have a backtrace here. If any of the pre/post migration checks fail, we shall stop
 			// right here and right now.
-			let weight = Executive::try_runtime_upgrade(true).unwrap();
+			let weight = Executive::try_runtime_upgrade(checks).unwrap();
 			(weight, RuntimeBlockWeights::get().max_block)
 		}
 
@@ -2229,12 +2226,21 @@ mod parachain_validate_block {
 
 	#[no_mangle]
 	#[cfg(not(feature = "std"))]
-	unsafe fn validate_block(arguments: *const u8, arguments_len: usize) -> u64 {
-		let params =
-			cumulus_pallet_parachain_system::validate_block::polkadot_parachain::load_params(
+	unsafe fn validate_block(arguments: *mut u8, arguments_len: usize) -> u64 {
+		let args = cumulus_pallet_parachain_system::validate_block::sp_std::boxed::Box::from_raw(
+			cumulus_pallet_parachain_system::validate_block::sp_std::slice::from_raw_parts_mut(
 				arguments,
 				arguments_len,
-			);
+			),
+		);
+		let args = cumulus_pallet_parachain_system::validate_block::bytes::Bytes::from(args);
+
+		// Then we decode from these bytes the `MemoryOptimizedValidationParams`.
+		let params = cumulus_pallet_parachain_system::validate_block::decode_from_bytes::<
+			cumulus_pallet_parachain_system::validate_block::MemoryOptimizedValidationParams,
+		>(args)
+		.expect("Invalid arguments to `validate_block`.");
+
 		let res =
             cumulus_pallet_parachain_system::validate_block::implementation::validate_block::<<Runtime
                                                                                               as

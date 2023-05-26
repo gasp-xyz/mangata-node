@@ -995,7 +995,7 @@ pub(crate) fn roll_to_while_minting(n: u64, expected_amount_minted: Option<Balan
 #[test]
 fn test_migrated_from_pallet_issuance() {
 	new_test_ext().execute_with(|| {
-		env_logger::init();
+		env_logger::try_init();
 		System::set_block_number(1);
 
 		let token_id = TokensOf::<Test>::create(&99999, 2000_000_000).unwrap();

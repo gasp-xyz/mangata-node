@@ -23,6 +23,8 @@ use sp_core::hexdisplay::HexDisplay;
 
 use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
 use std::{convert::TryInto, io::Write, net::SocketAddr, time::Duration};
+#[cfg(feature = "try-runtime")]
+use try_runtime_cli::block_building_info::substrate_info;
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
@@ -451,10 +453,6 @@ pub fn run() -> Result<()> {
 			let runner = cli.create_runner(cmd)?;
 			let chain_spec = &runner.config().chain_spec;
 			use sc_executor::{sp_wasm_interface::ExtendedHostFunctions, NativeExecutionDispatch};
-			type HostFunctionsOf<E> = ExtendedHostFunctions<
-				sp_io::SubstrateHostFunctions,
-				<E as NativeExecutionDispatch>::ExtendHostFunctions,
-			>;
 			let registry = &runner.config().prometheus_config.as_ref().map(|cfg| &cfg.registry);
 			let task_manager =
 				sc_service::TaskManager::new(runner.config().tokio_handle.clone(), *registry)
@@ -463,15 +461,25 @@ pub fn run() -> Result<()> {
 			match chain_spec {
 				#[cfg(feature = "mangata-kusama")]
 				spec if spec.is_mangata_kusama() => runner.async_run(|_| {
-					Ok((cmd.run::<mangata_kusama_runtime::Block, HostFunctionsOf<service::MangataKusamaRuntimeExecutor>>(),
-								task_manager,
-							))
+					let info_provider = substrate_info::<mangata_kusama_runtime::Block>(6000);
+					Ok((
+						cmd.run::<mangata_kusama_runtime::Block, ExtendedHostFunctions<
+							sp_io::SubstrateHostFunctions,
+							<service::MangataKusamaRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions,
+						>, _>(Some(info_provider)),
+						task_manager,
+					))
 				}),
 				#[cfg(feature = "mangata-rococo")]
 				spec if spec.is_mangata_rococo() => runner.async_run(|_| {
-					Ok((cmd.run::<mangata_rococo_runtime::Block, HostFunctionsOf<service::MangataRococoRuntimeExecutor>>() ,
-								task_manager,
-							))
+					let info_provider = substrate_info::<mangata_rococo_runtime::Block>(6000);
+					Ok((
+						cmd.run::<mangata_rococo_runtime::Block, ExtendedHostFunctions<
+							sp_io::SubstrateHostFunctions,
+							<service::MangataRococoRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions,
+						>, _>(Some(info_provider)),
+						task_manager,
+					))
 				}),
 				_ => panic!("invalid chain spec"),
 			}

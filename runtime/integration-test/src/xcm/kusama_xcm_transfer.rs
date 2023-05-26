@@ -3,8 +3,7 @@ use crate::{
 	xcm::{fee_test::*, kusama_test_net::*},
 };
 
-use frame_support::WeakBoundedVec;
-use sp_runtime::traits::{AccountIdConversion, ConstU32};
+use sp_runtime::traits::AccountIdConversion;
 use xcm::VersionedXcm;
 use xcm_emulator::TestExt;
 
@@ -16,11 +15,7 @@ fn mgx_location() -> VersionedMultiLocation {
 }
 
 fn asset_location(para: u32, key: Vec<u8>) -> VersionedMultiLocation {
-	MultiLocation::new(
-		1,
-		X2(Parachain(para), GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(key, None))),
-	)
-	.into()
+	MultiLocation::new(1, X2(Parachain(para), general_key(&key))).into()
 }
 
 fn reserve_account(id: u32) -> AccountId {
@@ -32,8 +27,8 @@ fn transfer_from_relay_chain() {
 	KusamaRelay::execute_with(|| {
 		assert_ok!(kusama_runtime::XcmPallet::reserve_transfer_assets(
 			kusama_runtime::RuntimeOrigin::signed(ALICE.into()),
-			Box::new(Parachain(MANGATA_ID).into().into()),
-			Box::new(Junction::AccountId32 { id: BOB, network: NetworkId::Any }.into().into()),
+			Box::new(Parachain(MANGATA_ID).into_versioned()),
+			Box::new(Junction::AccountId32 { id: BOB, network: None }.into_versioned()),
 			Box::new((Here, unit(12)).into()),
 			0
 		));
@@ -52,9 +47,9 @@ fn transfer_to_relay_chain() {
 	use frame_support::weights::{Weight, WeightToFee as WeightToFeeT};
 	use kusama_runtime_constants::fee::WeightToFee;
 
-	let weight: XcmWeight = 298_368_000;
-	let fee = WeightToFee::weight_to_fee(&Weight::from_ref_time(weight));
-	assert_eq!(103_334_130, fee);
+	let weight: XcmWeight = Weight::from_parts(299_506_000, 0);
+	let fee = WeightToFee::weight_to_fee(&weight);
+	assert_eq!(94_172_727, fee);
 
 	Mangata::execute_with(|| {
 		assert_ok!(XTokens::transfer(
@@ -62,11 +57,9 @@ fn transfer_to_relay_chain() {
 			RELAY_ASSET_ID,
 			unit(12),
 			Box::new(
-				MultiLocation::new(
-					1,
-					X1(Junction::AccountId32 { id: BOB, network: NetworkId::Any })
-				)
-				.into()
+				Junction::AccountId32 { id: BOB, network: None }
+					.into_exterior(1)
+					.into_versioned()
 			),
 			WeightLimit::Limited(weight)
 		));
@@ -118,12 +111,12 @@ fn transfer_asset() {
 						1,
 						X2(
 							Parachain(MANGATA_ID),
-							Junction::AccountId32 { network: NetworkId::Any, id: BOB.into() }
+							Junction::AccountId32 { network: None, id: BOB.into() }
 						)
 					)
 					.into()
 				),
-				WeightLimit::Limited(600_000_000),
+				WeightLimit::Limited(Weight::from_parts(600_000_000, 0)),
 			),
 			orml_xtokens::Error::<Runtime>::NotCrossChainTransferableCurrency
 		);
@@ -147,12 +140,12 @@ fn transfer_asset() {
 					1,
 					X2(
 						Parachain(MANGATA_ID),
-						Junction::AccountId32 { network: NetworkId::Any, id: BOB.into() }
+						Junction::AccountId32 { network: None, id: BOB.into() }
 					)
 				)
 				.into()
 			),
-			WeightLimit::Limited(600_000_000),
+			WeightLimit::Limited(Weight::from_parts(600_000_000, 0)),
 		));
 
 		assert_eq!(Tokens::free_balance(registered_asset_id, &AccountId::from(ALICE)), 80 * unit);
@@ -171,12 +164,12 @@ fn transfer_asset() {
 					1,
 					X2(
 						Parachain(SIBLING_ID),
-						Junction::AccountId32 { network: NetworkId::Any, id: ALICE.into() }
+						Junction::AccountId32 { network: None, id: ALICE.into() }
 					)
 				)
 				.into()
 			),
-			WeightLimit::Limited(600_000_000),
+			WeightLimit::Limited(Weight::from_parts(600_000_000, 0)),
 		));
 
 		assert_eq!(Tokens::free_balance(NATIVE_ASSET_ID, &AccountId::from(BOB)), 10 * unit - fee);
@@ -208,12 +201,12 @@ fn receive_asset() {
 					1,
 					X2(
 						Parachain(MANGATA_ID),
-						Junction::AccountId32 { network: NetworkId::Any, id: BOB.into() }
+						Junction::AccountId32 { network: None, id: BOB.into() }
 					)
 				)
 				.into()
 			),
-			WeightLimit::Limited(600_000_000),
+			WeightLimit::Limited(Weight::from_parts(600_000_000, 0)),
 		));
 
 		assert_eq!(Tokens::free_balance(NATIVE_ASSET_ID, &AccountId::from(ALICE)), 80 * unit);
@@ -254,12 +247,12 @@ fn receive_asset() {
 					1,
 					X2(
 						Parachain(MANGATA_ID),
-						Junction::AccountId32 { network: NetworkId::Any, id: BOB.into() }
+						Junction::AccountId32 { network: None, id: BOB.into() }
 					)
 				)
 				.into()
 			),
-			WeightLimit::Limited(600_000_000),
+			WeightLimit::Limited(Weight::from_parts(600_000_000, 0)),
 		));
 
 		assert_eq!(Tokens::free_balance(NATIVE_ASSET_ID, &AccountId::from(ALICE)), 60 * unit);
@@ -301,12 +294,12 @@ fn receive_asset() {
 					1,
 					X2(
 						Parachain(MANGATA_ID),
-						Junction::AccountId32 { network: NetworkId::Any, id: BOB.into() }
+						Junction::AccountId32 { network: None, id: BOB.into() }
 					)
 				)
 				.into()
 			),
-			WeightLimit::Limited(600_000_000),
+			WeightLimit::Limited(Weight::from_parts(600_000_000, 0)),
 		));
 
 		assert_eq!(Tokens::free_balance(NATIVE_ASSET_ID, &AccountId::from(ALICE)), 40 * unit);

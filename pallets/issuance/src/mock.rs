@@ -25,6 +25,7 @@ use frame_support::{
 };
 use mangata_types::{Amount, Balance, TokenId};
 use orml_traits::parameter_type_with_key;
+use sp_core::U256;
 use sp_runtime::{
 	traits::{AccountIdConversion, ConvertInto},
 	SaturatedConversion,

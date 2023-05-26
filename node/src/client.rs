@@ -17,13 +17,13 @@ use crate::service::AuraId;
 pub use mangata_types::{
 	AccountId, Balance, Block, BlockNumber, Hash, Header, Index as Nonce, TokenId,
 };
-use sc_client_api::{Backend as BackendT, BlockchainEvents, KeyIterator};
+use sc_client_api::{Backend as BackendT, BlockchainEvents, KeysIter, PairsIter};
 use sp_api::{CallApiAt, NumberFor, ProvideRuntimeApi};
 use sp_blockchain::HeaderBackend;
 use sp_consensus::BlockStatus;
 use sp_core::H256;
 use sp_runtime::{
-	generic::{BlockId, SignedBlock},
+	generic::SignedBlock,
 	traits::{BlakeTwo256, Block as BlockT},
 	Justifications,
 };
@@ -267,12 +267,15 @@ impl sc_client_api::BlockBackend<Block> for Client {
 		match_client!(self, block_indexed_body(id))
 	}
 
-	fn block(&self, id: &BlockId<Block>) -> sp_blockchain::Result<Option<SignedBlock<Block>>> {
-		match_client!(self, block(id))
+	fn block(
+		&self,
+		hash: <Block as BlockT>::Hash,
+	) -> sp_blockchain::Result<Option<SignedBlock<Block>>> {
+		match_client!(self, block(hash))
 	}
 
-	fn block_status(&self, id: &BlockId<Block>) -> sp_blockchain::Result<BlockStatus> {
-		match_client!(self, block_status(id))
+	fn block_status(&self, hash: <Block as BlockT>::Hash) -> sp_blockchain::Result<BlockStatus> {
+		match_client!(self, block_status(hash))
 	}
 
 	fn justifications(&self, id: H256) -> sp_blockchain::Result<Option<Justifications>> {
@@ -306,96 +309,77 @@ impl sc_client_api::BlockBackend<Block> for Client {
 }
 
 impl sc_client_api::StorageProvider<Block, crate::service::FullBackend> for Client {
-	fn storage(&self, id: H256, key: &StorageKey) -> sp_blockchain::Result<Option<StorageData>> {
-		match_client!(self, storage(id, key))
+	fn storage(
+		&self,
+		hash: <Block as BlockT>::Hash,
+		key: &StorageKey,
+	) -> sp_blockchain::Result<Option<StorageData>> {
+		match_client!(self, storage(hash, key))
 	}
 
 	fn storage_keys(
 		&self,
-		id: H256,
-		key_prefix: &StorageKey,
-	) -> sp_blockchain::Result<Vec<StorageKey>> {
-		match_client!(self, storage_keys(id, key_prefix))
+		hash: <Block as BlockT>::Hash,
+		key_prefix: Option<&StorageKey>,
+		start_key: Option<&StorageKey>,
+	) -> sp_blockchain::Result<
+		KeysIter<<crate::service::FullBackend as sc_client_api::Backend<Block>>::State, Block>,
+	> {
+		match_client!(self, storage_keys(hash, key_prefix, start_key))
 	}
 
 	fn storage_hash(
 		&self,
-		id: H256,
+		hash: <Block as BlockT>::Hash,
 		key: &StorageKey,
 	) -> sp_blockchain::Result<Option<<Block as BlockT>::Hash>> {
-		match_client!(self, storage_hash(id, key))
+		match_client!(self, storage_hash(hash, key))
 	}
 
 	fn storage_pairs(
 		&self,
-		id: H256,
-		key_prefix: &StorageKey,
-	) -> sp_blockchain::Result<Vec<(StorageKey, StorageData)>> {
-		match_client!(self, storage_pairs(id, key_prefix))
-	}
-
-	fn storage_keys_iter<'a>(
-		&self,
-		id: H256,
-		prefix: Option<&'a StorageKey>,
+		hash: <Block as BlockT>::Hash,
+		key_prefix: Option<&StorageKey>,
 		start_key: Option<&StorageKey>,
 	) -> sp_blockchain::Result<
-		KeyIterator<
-			'a,
-			<crate::service::FullBackend as sc_client_api::Backend<Block>>::State,
-			Block,
-		>,
+		PairsIter<<crate::service::FullBackend as sc_client_api::Backend<Block>>::State, Block>,
 	> {
-		match_client!(self, storage_keys_iter(id, prefix, start_key))
+		match_client!(self, storage_pairs(hash, key_prefix, start_key))
 	}
 
 	fn child_storage(
 		&self,
-		id: H256,
+		hash: <Block as BlockT>::Hash,
 		child_info: &ChildInfo,
 		key: &StorageKey,
 	) -> sp_blockchain::Result<Option<StorageData>> {
-		match_client!(self, child_storage(id, child_info, key))
+		match_client!(self, child_storage(hash, child_info, key))
 	}
 
 	fn child_storage_keys(
 		&self,
-		id: H256,
-		child_info: &ChildInfo,
-		key_prefix: &StorageKey,
-	) -> sp_blockchain::Result<Vec<StorageKey>> {
-		match_client!(self, child_storage_keys(id, child_info, key_prefix))
-	}
-
-	fn child_storage_keys_iter<'a>(
-		&self,
-		id: H256,
+		hash: <Block as BlockT>::Hash,
 		child_info: ChildInfo,
-		prefix: Option<&'a StorageKey>,
+		key_prefix: Option<&StorageKey>,
 		start_key: Option<&StorageKey>,
 	) -> sp_blockchain::Result<
-		KeyIterator<
-			'a,
-			<crate::service::FullBackend as sc_client_api::Backend<Block>>::State,
-			Block,
-		>,
+		KeysIter<<crate::service::FullBackend as sc_client_api::Backend<Block>>::State, Block>,
 	> {
-		match_client!(self, child_storage_keys_iter(id, child_info, prefix, start_key))
+		match_client!(self, child_storage_keys(hash, child_info, key_prefix, start_key))
 	}
 
 	fn child_storage_hash(
 		&self,
-		id: H256,
+		hash: <Block as BlockT>::Hash,
 		child_info: &ChildInfo,
 		key: &StorageKey,
 	) -> sp_blockchain::Result<Option<<Block as BlockT>::Hash>> {
-		match_client!(self, child_storage_hash(id, child_info, key))
+		match_client!(self, child_storage_hash(hash, child_info, key))
 	}
 }
 
 impl sp_blockchain::HeaderBackend<Block> for Client {
-	fn header(&self, id: BlockId<Block>) -> sp_blockchain::Result<Option<Header>> {
-		let id = &id;
+	fn header(&self, id: H256) -> sp_blockchain::Result<Option<Header>> {
 		match_client!(self, header(id))
 	}
 
@@ -403,7 +387,7 @@ impl sp_blockchain::HeaderBackend<Block> for Client {
 		match_client!(self, info())
 	}
 
-	fn status(&self, id: BlockId<Block>) -> sp_blockchain::Result<sp_blockchain::BlockStatus> {
+	fn status(&self, id: H256) -> sp_blockchain::Result<sp_blockchain::BlockStatus> {
 		match_client!(self, status(id))
 	}
 

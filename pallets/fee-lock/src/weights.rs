@@ -62,12 +62,12 @@ pub trait WeightInfo {
 // For backwards compatibility and tests
 impl WeightInfo for () {
 	fn update_fee_lock_metadata() -> Weight {
-		(Weight::from_ref_time(44_245_000))
+		(Weight::from_parts(44_245_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	fn unlock_fee() -> Weight {
-		(Weight::from_ref_time(50_286_000))
+		(Weight::from_parts(50_286_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(3 as u64))
 			.saturating_add(RocksDbWeight::get().writes(2 as u64))
 	}

@@ -61,12 +61,12 @@ pub trait WeightInfo {
 // For backwards compatibility and tests
 impl WeightInfo for () {
 	fn reserve_vesting_liquidity_tokens() -> Weight {
-		Weight::from_ref_time(82_618_000)
+		Weight::from_parts(82_618_000, 0)
 			.saturating_add(RocksDbWeight::get().reads(6 as u64))
 			.saturating_add(RocksDbWeight::get().writes(5 as u64))
 	}
 	fn unreserve_and_relock_instance() -> Weight {
-		Weight::from_ref_time(68_582_000)
+		Weight::from_parts(68_582_000, 0)
 			.saturating_add(RocksDbWeight::get().reads(5 as u64))
 			.saturating_add(RocksDbWeight::get().writes(5 as u64))
 	}

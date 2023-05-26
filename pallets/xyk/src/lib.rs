@@ -303,8 +303,8 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use mangata_support::traits::{
-	ActivationReservesProviderTrait, GetMaintenanceStatusTrait, LiquidityMiningApi, PoolCreateApi,
-	PreValidateSwaps, ProofOfStakeRewardsApi, Valuate, XykFunctionsTrait,
+	ActivationReservesProviderTrait, GetMaintenanceStatusTrait, PoolCreateApi, PreValidateSwaps,
+	ProofOfStakeRewardsApi, Valuate, XykFunctionsTrait,
 };
 use mangata_types::{multipurpose_liquidity::ActivateKind, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
@@ -352,10 +352,6 @@ macro_rules! log {
 }
 
 const PALLET_ID: PalletId = PalletId(*b"79b14c96");
-// Quocient ratio in which liquidity minting curve is rising
-const Q: f64 = 1.03;
-// Precision used in rewards calculation rounding
-const REWARDS_PRECISION: u32 = 10000;
 
 // Keywords for asset_info
 const LIQUIDITY_TOKEN_IDENTIFIER: &[u8] = b"LiquidityPoolToken";
@@ -378,7 +374,6 @@ pub mod pallet {
 	use super::*;
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(PhantomData<T>);
 
 	#[pallet::hooks]

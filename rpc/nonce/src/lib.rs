@@ -31,7 +31,7 @@ use sc_transaction_pool_api::{InPoolTransaction, TransactionPool};
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::HeaderBackend;
 use sp_core::{hexdisplay::HexDisplay, Bytes};
-use sp_runtime::{generic::BlockId, traits};
+use sp_runtime::traits;
 
 pub use frame_system_rpc_runtime_api::AccountNonceApi;
 use sc_client_api::BlockBackend;
@@ -106,10 +106,9 @@ where
 {
 	async fn nonce(&self, account: AccountId) -> RpcResult<Index> {
 		let api = self.client.runtime_api();
-		let best = self.client.info().best_hash;
-		let at = BlockId::hash(best);
+		let at = self.client.info().best_hash;
 
-		let mut nonce = api.account_nonce(&at, account.clone()).map_err(|e| {
+		let mut nonce = api.account_nonce(at, account.clone()).map_err(|e| {
 			CallError::Custom(ErrorObject::owned(
 				Error::RuntimeError.into(),
 				"Unable to query nonce.",
@@ -117,11 +116,11 @@ where
 			))
 		})?;
 
-		let txs_in_queue = api.enqueued_txs_count(&at, account.clone()).unwrap();
+		let txs_in_queue = api.enqueued_txs_count(at, account.clone()).unwrap();
 		for _ in 0..txs_in_queue {
 			nonce += traits::One::one();
 		}
-		log::debug!(target: "rpc::nonce", "nonce for {} at block {} => {} ({} in queue)", account, best, nonce, txs_in_queue);
+		log::debug!(target: "rpc::nonce", "nonce for {} at block {} => {} ({} in queue)", account, at, nonce, txs_in_queue);
 
 		Ok(adjust_nonce(&*self.pool, account, nonce))
 	}
@@ -133,9 +132,7 @@ where
 	) -> RpcResult<Bytes> {
 		self.deny_unsafe.check_if_safe()?;
 		let api = self.client.runtime_api();
-		let at = BlockId::<Block>::hash(at.unwrap_or_else(||
-			// If the block hash is not supplied assume the best block.
-			self.client.info().best_hash));
+		let at = self.client.info().best_hash;
 
 		let uxt: <Block as traits::Block>::Extrinsic =
 			Decode::decode(&mut &*extrinsic).map_err(|e| {
@@ -146,7 +143,7 @@ where
 				))
 			})?;
 
-		let result = api.apply_extrinsic(&at, uxt).map_err(|e| {
+		let result = api.apply_extrinsic(at, uxt).map_err(|e| {
 			CallError::Custom(ErrorObject::owned(
 				Error::RuntimeError.into(),
 				"Unable to dry run extrinsic.",

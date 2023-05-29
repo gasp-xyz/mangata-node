@@ -1,0 +1,49 @@
+name: Test Code
+
+on:
+  pull_request:
+    branches:
+    - main
+  push:
+    branches:
+    - main
+
+jobs:
+  test-code:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+    - name: Install Protoc
+      uses: arduino/setup-protoc@v1
+
+      # Steps taken from https://github.com/actions/cache/blob/master/examples.md#rust---cargo
+    - name: Cache cargo registry
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: nightly
+        components: rustfmt, clippy
+        target: wasm32-unknown-unknown
+        override: true
+        default: true
+
+    # Enable this for clippy linting.
+    # - name: Check and Lint Code
+    #   run: cargo +nightly clippy -- -D warnings
+
+    - name: Check Code
+      run: cargo check
+
+    - name: Test Code
+      run: cargo test

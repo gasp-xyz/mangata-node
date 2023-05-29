@@ -1,5 +1,5 @@
 use cumulus_primitives_core::ParaId;
-use parachain_template_runtime::{AccountId, AuraId, Signature, EXISTENTIAL_DEPOSIT};
+use mangata_polkadot_runtime::{AccountId, AuraId, Signature, EXISTENTIAL_DEPOSIT};
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
@@ -8,7 +8,7 @@ use sp_runtime::traits::{IdentifyAccount, Verify};
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec =
-	sc_service::GenericChainSpec<parachain_template_runtime::GenesisConfig, Extensions>;
+	sc_service::GenericChainSpec<mangata_polkadot_runtime::GenesisConfig, Extensions>;
 
 /// The default XCM version to set in genesis config.
 const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
@@ -57,11 +57,11 @@ where
 /// Generate the session keys from individual elements.
 ///
 /// The input must be a tuple of individual keys (a single arg for now since we have just one key).
-pub fn template_session_keys(keys: AuraId) -> parachain_template_runtime::SessionKeys {
-	parachain_template_runtime::SessionKeys { aura: keys }
+pub fn template_session_keys(keys: AuraId) -> mangata_polkadot_runtime::SessionKeys {
+	mangata_polkadot_runtime::SessionKeys { aura: keys }
 }
 
-pub fn development_config() -> ChainSpec {
+pub fn mainnet_config() -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
 	properties.insert("tokenSymbol".into(), "UNIT".into());
@@ -70,12 +70,12 @@ pub fn development_config() -> ChainSpec {
 
 	ChainSpec::from_genesis(
 		// Name
-		"Development",
+		"Mangata Polkadot Mainnet",
 		// ID
-		"dev",
+		"mangata_polkadot_mainnet",
 		ChainType::Development,
 		move || {
-			testnet_genesis(
+			mangata_genesis(
 				// initial collators.
 				vec![
 					(
@@ -101,7 +101,7 @@ pub fn development_config() -> ChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
 					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 				],
-				1000.into(),
+				2100.into(),
 			)
 		},
 		Vec::new(),
@@ -110,8 +110,8 @@ pub fn development_config() -> ChainSpec {
 		None,
 		None,
 		Extensions {
-			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
-			para_id: 1000,
+			relay_chain: "polkadot".into(), // You MUST set this to the correct network!
+			para_id: 2100,
 		},
 	)
 }
@@ -119,18 +119,18 @@ pub fn development_config() -> ChainSpec {
 pub fn local_testnet_config() -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
-	properties.insert("tokenSymbol".into(), "UNIT".into());
-	properties.insert("tokenDecimals".into(), 12.into());
+	properties.insert("tokenSymbol".into(), "MGA".into());
+	properties.insert("tokenDecimals".into(), 18.into());
 	properties.insert("ss58Format".into(), 42.into());
 
 	ChainSpec::from_genesis(
 		// Name
-		"Local Testnet",
+		"Mangata Polkadot Local",
 		// ID
-		"local_testnet",
+		"mangata_polkadot_local",
 		ChainType::Local,
 		move || {
-			testnet_genesis(
+			mangata_genesis(
 				// initial collators.
 				vec![
 					(
@@ -156,7 +156,7 @@ pub fn local_testnet_config() -> ChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
 					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 				],
-				1000.into(),
+				2100.into(),
 			)
 		},
 		// Bootnodes
@@ -164,40 +164,51 @@ pub fn local_testnet_config() -> ChainSpec {
 		// Telemetry
 		None,
 		// Protocol ID
-		Some("template-local"),
+		Some("mangata-polkadot-testnet"),
 		// Fork ID
 		None,
 		// Properties
 		Some(properties),
 		// Extensions
 		Extensions {
-			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
-			para_id: 1000,
+			relay_chain: "polkadot-local".into(), // You MUST set this to the correct network!
+			para_id: 2100,
 		},
 	)
 }
 
-fn testnet_genesis(
+fn mangata_genesis(
 	invulnerables: Vec<(AccountId, AuraId)>,
 	endowed_accounts: Vec<AccountId>,
 	id: ParaId,
-) -> parachain_template_runtime::GenesisConfig {
-	parachain_template_runtime::GenesisConfig {
-		system: parachain_template_runtime::SystemConfig {
-			code: parachain_template_runtime::WASM_BINARY
+) -> mangata_polkadot_runtime::GenesisConfig {
+	mangata_polkadot_runtime::GenesisConfig {
+		system: mangata_polkadot_runtime::SystemConfig {
+			code: mangata_polkadot_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
 		},
-		balances: parachain_template_runtime::BalancesConfig {
-			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
-		},
-		parachain_info: parachain_template_runtime::ParachainInfoConfig { parachain_id: id },
-		collator_selection: parachain_template_runtime::CollatorSelectionConfig {
+		parachain_info: mangata_polkadot_runtime::ParachainInfoConfig { parachain_id: id },
+		collator_selection: mangata_polkadot_runtime::CollatorSelectionConfig {
 			invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
 			candidacy_bond: EXISTENTIAL_DEPOSIT * 16,
 			..Default::default()
 		},
-		session: parachain_template_runtime::SessionConfig {
+		tokens: mangata_polkadot_runtime::TokensConfig {
+			balances: endowed_accounts
+				.iter()
+				.cloned()
+				.map(|account|
+					 [
+						 (0_u32,1_000_000_000__000000000_000000000_u128),
+						 (1_u32,0_u128),
+						 (2_u32,0_u128),
+						 (3_u32,0_u128),
+						 (4_u32,1_000_000_000__000000000_000000000_u128),
+					 ].iter().map(|(token, amount)| (account.clone(), *token, *amount)).collect::<Vec<_>>()
+				 ).flatten().collect(),
+		},
+		session: mangata_polkadot_runtime::SessionConfig {
 			keys: invulnerables
 				.into_iter()
 				.map(|(acc, aura)| {
@@ -214,7 +225,7 @@ fn testnet_genesis(
 		aura: Default::default(),
 		aura_ext: Default::default(),
 		parachain_system: Default::default(),
-		polkadot_xcm: parachain_template_runtime::PolkadotXcmConfig {
+		polkadot_xcm: mangata_polkadot_runtime::PolkadotXcmConfig {
 			safe_xcm_version: Some(SAFE_XCM_VERSION),
 		},
 		transaction_payment: Default::default(),

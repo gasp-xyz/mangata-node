@@ -163,10 +163,10 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("mangata-parachain"),
 
 	authoring_version: 14,
-	spec_version: 003000,
+	spec_version: 003100,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 003000,
+	transaction_version: 003100,
 	state_version: 0,
 };
 

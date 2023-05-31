@@ -21,6 +21,13 @@ pub struct XYKRpcResult<Balance> {
 #[derive(Eq, PartialEq, Encode, Decode, Default)]
 #[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
+pub struct XYKLiqAssetIdsResult {
+	pub liq_asset_ids: Vec<i32>,
+}
+
+#[derive(Eq, PartialEq, Encode, Decode, Default)]
+#[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
+#[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
 pub struct RpcAmountsResult<Balance> {
 	#[cfg_attr(feature = "std", serde(bound(serialize = "Balance: std::fmt::Display")))]
 	#[cfg_attr(feature = "std", serde(serialize_with = "serialize_as_string"))]
@@ -96,5 +103,7 @@ sp_api::decl_runtime_apis! {
 			total_amount: Balance,
 			reserve_amount: Balance,
 		) -> XYKRpcResult<Balance>;
+		fn get_liq_tokens_for_trading(
+		) -> XYKLiqAssetIdsResult;
 	}
 }

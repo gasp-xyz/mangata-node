@@ -1980,6 +1980,18 @@ impl_runtime_apis! {
 					).unwrap_or_default()
 			}
 		}
+
+		fn get_liq_tokens_for_trading() -> XYKLiqAssetIdsResult {
+			XYKLiqAssetIdsResult {
+				liq_asset_ids: Xyk::get_liq_tokens_for_trading()
+					.map_err(|e|
+						{
+							log::warn!(target:"xyk", "rpc 'XYK::get_liq_tokens_for_trading' error: '{:?}', returning default value instead", e);
+							e
+						}
+					).unwrap_or_default()
+			}
+		}
 	}
 
 	impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {

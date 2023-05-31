@@ -17,7 +17,7 @@ use sp_runtime::{
 use sp_std::convert::{TryFrom, TryInto};
 use std::sync::Arc;
 pub use xyk_runtime_api::XykApi as XykRuntimeApi;
-use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
+use xyk_runtime_api::{RpcAmountsResult, XYKLiqAssetIdsResult, XYKRpcResult};
 
 #[rpc(client, server)]
 pub trait XykApi<
@@ -28,6 +28,7 @@ pub trait XykApi<
 	ResponseTypePrice,
 	ResponseTypeAmounts,
 	BalanceOutput,
+	LiquidityTokens,
 >
 {
 	#[method(name = "xyk_calculate_sell_price")]
@@ -106,6 +107,12 @@ pub trait XykApi<
 		reserve_amount: Balance,
 		at: Option<BlockHash>,
 	) -> RpcResult<ResponseTypePrice>;
+
+	#[method(name = "xyk_get_liq_tokens_for_trading")]
+	fn get_liq_tokens_for_trading(
+		&self,
+		at: Option<BlockHash>,
+	) -> RpcResult<LiquidityTokens>;
 }
 
 pub struct Xyk<C, M> {
@@ -379,14 +386,23 @@ where
 		})
 	}
 
-
-	fn list_liq_tokens(
+	fn get_liq_tokens_for_trading(
 		&self,
-		total_amount: NumberOrHex,
-		reserve_amount: NumberOrHex,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<XYKRpcResult<Balance>> {
+	) -> RpcResult<XYKLiqAssetIdsResult> {
+		let api = self.client.runtime_api();
+		let at = BlockId::<Block>::hash(at.unwrap_or_else(||
+			// If the block hash is not supplied assume the best block.
+			self.client.info().best_hash));
 
+		api.get_liq_tokens_for_trading(&at)
+			.map_err(|e| {
+				JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+					1,
+					"Unable to serve the request",
+					Some(format!("{:?}", e)),
+				)))
+			})
 	}
 
 }

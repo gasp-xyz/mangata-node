@@ -54,7 +54,6 @@ pub mod pallet {
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(PhantomData<T>);
 
@@ -77,7 +76,7 @@ pub mod pallet {
 			if (base_cost + cost_of_single_unlock_iteration).ref_time() >
 				remaining_weight.ref_time()
 			{
-				return Weight::from_ref_time(0)
+				return Weight::from_parts(0, 0)
 			}
 
 			let metadata = Self::get_fee_lock_metadata();
@@ -136,6 +135,15 @@ pub mod pallet {
 		pub fee_lock_amount: Balance,
 		pub swap_value_threshold: Balance,
 		pub whitelisted_tokens: BoundedBTreeSet<TokenId, T::MaxCuratedTokens>,
+	}
+
+	impl<T: Config> FeeLockMetadataInfo<T> {
+		pub fn is_whitelisted(&self, token_id: TokenId) -> bool {
+			if T::NativeTokenId::get() == token_id {
+				return true
+			}
+			self.whitelisted_tokens.contains(&token_id)
+		}
 	}
 
 	#[pallet::storage]
@@ -359,10 +367,7 @@ impl<T: Config> Pallet<T> {
 impl<T: Config> FeeLockTriggerTrait<T::AccountId> for Pallet<T> {
 	fn is_whitelisted(token_id: TokenId) -> bool {
 		if let Some(fee_lock_metadata) = Self::get_fee_lock_metadata() {
-			if T::NativeTokenId::get() == token_id {
-				return true
-			}
-			fee_lock_metadata.whitelisted_tokens.contains(&token_id)
+			fee_lock_metadata.is_whitelisted(token_id)
 		} else {
 			false
 		}

@@ -14,12 +14,11 @@ use mangata_types::{Balance, TokenId};
 use orml_tokens::MultiTokenCurrencyExtended;
 use pallet_vesting_mangata::MultiTokenVestingSchedule;
 use scale_info::TypeInfo;
-use sp_core::U256;
 use sp_runtime::{
 	traits::{CheckedAdd, CheckedSub, One, Zero},
 	Perbill, Percent, RuntimeDebug,
 };
-use sp_std::{collections::btree_map::BTreeMap, convert::TryInto, prelude::*};
+use sp_std::{convert::TryInto, prelude::*};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -70,20 +69,20 @@ impl WeightInfo for () {
 	// Storage: Vesting Vesting (r:1 w:1)
 	// Storage: Balances Locks (r:1 w:1)
 	fn init_issuance_config() -> Weight {
-		Weight::from_ref_time(50_642_000)
+		Weight::from_parts(50_642_000, 0)
 	}
 	// Storage: Vesting Vesting (r:1 w:1)
 	// Storage: Balances Locks (r:1 w:1)
 	fn finalize_tge() -> Weight {
-		Weight::from_ref_time(50_830_000)
+		Weight::from_parts(50_830_000, 0)
 	}
 	// Storage: Vesting Vesting (r:1 w:1)
 	// Storage: Balances Locks (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn execute_tge(l: u32) -> Weight {
-		Weight::from_ref_time(52_151_000)
+		Weight::from_parts(52_151_000, 0)
 			// Standard Error: 1_000
-			.saturating_add((Weight::from_ref_time(130_000)).saturating_mul(l as u64))
+			.saturating_add((Weight::from_parts(130_000, 0)).saturating_mul(l as u64))
 	}
 }
 
@@ -95,7 +94,6 @@ pub mod pallet {
 	use super::*;
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(PhantomData<T>);
 

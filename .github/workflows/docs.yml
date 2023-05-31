@@ -34,7 +34,7 @@ jobs:
         run: cargo doc
       
       - name: Deploy to GCP
-        uses: google-github-actions/upload-cloud-storage@v0.10.4
+        uses: google-github-actions/upload-cloud-storage@v1.0.3
         with:
           path: ./target/doc/
           destination: mangata-docs-node
@@ -42,4 +42,4 @@ jobs:
       
       - name: Fix permissions on self-hosted runner
         if: always()
-        run: chown -R 1004:1005 $GITHUB_WORKSPACE
+        run: chown -R 1100:1100 $GITHUB_WORKSPACE

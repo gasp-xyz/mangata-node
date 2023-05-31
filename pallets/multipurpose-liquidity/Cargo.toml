@@ -57,11 +57,15 @@ std = [
     "parachain-staking/std",
 ]
 
-runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
+runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks", "parachain-staking/runtime-benchmarks"]
 
 try-runtime = [
 	"frame-support/try-runtime",
 	"frame-try-runtime",
 	"frame-executive/try-runtime",
 	"frame-system/try-runtime",
+	"orml-tokens/try-runtime",
+	"pallet-vesting-mangata/try-runtime",
+	"parachain-staking/try-runtime",
+	"sp-runtime/try-runtime"
 ]

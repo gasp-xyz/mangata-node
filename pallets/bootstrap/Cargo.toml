@@ -65,4 +65,7 @@ try-runtime = [
 	"frame-try-runtime",
 	"frame-executive/try-runtime",
 	"frame-system/try-runtime",
+	"orml-tokens/try-runtime",
+	"pallet-vesting-mangata/try-runtime",
+	"sp-runtime/try-runtime"
 ]

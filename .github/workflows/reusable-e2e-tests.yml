@@ -51,7 +51,41 @@ permissions:
   checks: write
 
 jobs:
+  setup-report:
+    runs-on: [ubuntu-latest]
+    outputs:
+      testmo-run-id: ${{ steps.setTestRun.outputs.testmo-run-id }}
+    steps:
+      - name: Install testmo
+        run: npm install --no-save @testmo/testmo-cli
+      - name: Add url
+        run: |
+          npx testmo automation:resources:add-field --name git --type string \
+            --value ${GITHUB_SHA:0:7} --resources resources.json
+          RUN_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          npx testmo automation:resources:add-link --name build \
+            --url $RUN_URL --resources resources.json
+
+      - name: Create test run
+        run: |
+          npx testmo automation:run:create \
+            --instance https://mangata-finance.testmo.net  \
+            --project-id 2 \
+            --name "BE tests from node-repo" \
+            --resources resources.json \
+            --source "unit-tests" > testmo-run-id.txt
+          ID=$(cat testmo-run-id.txt)
+          echo "testmo-run-id=$ID" >> $GITHUB_OUTPUT
+          echo "ID=$ID" >> $GITHUB_ENV
+          
+        env:
+          TESTMO_URL: ${{ secrets.TESTMO_URL }}
+          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
+        id: setTestRun
+        
+        
   e2e-test-matrix:
+    needs: [setup-report]
     strategy:
       matrix:
         include:
@@ -67,6 +101,8 @@ jobs:
             fast: false
           - command: "yarn test-rewards-bootstrap"
             fast: false
+          - command: "yarn test-parallel-autocompound"
+            fast: true
           - command: "yarn test-sequential-autocompound"
             fast: true
           - command: "yarn test-poolliquidity"
@@ -86,8 +122,7 @@ jobs:
       MANGATA_NODE_VERSION: ${{ inputs.globalVersion }}
       E2EBRANCHNAME: "main"
       PARACHAIN_DOCKER_IMAGE: ${{ inputs.parachainDocker || format('mangatasolutions/mangata-node:{0}', inputs.globalVersion) }}
-    steps:
-     
+    steps:  
       - uses: actions/checkout@v3 ####IDK, but this is neccesary for reports
       - name: Adapt if fast runtime
         if:  ${{  !contains(env.PARACHAIN_DOCKER_IMAGE, 'fast') && matrix.fast == true }}
@@ -183,6 +218,18 @@ jobs:
           name: E2E report ${{ matrix.command }} # Name of the check run which will be created
           path: e2eTests/reports/junit-*.xml # Path to test results
           reporter: jest-junit # Format of test results
+      - name: Install testmo
+        run: npm install --no-save @testmo/testmo-cli
+      - name: Submit results to the testmo-run
+        if: always()
+        run: |
+            npx testmo automation:run:submit-thread \
+              --instance https://mangata-finance.testmo.net \
+              --run-id ${{needs.setup-report.outputs.testmo-run-id}} \
+              --results e2eTests/reports/*.xml 
+        env:
+          TESTMO_URL: ${{ secrets.TESTMO_URL }}
+          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
 
       - name: Collect docker logs on failure
         if: failure()
@@ -215,8 +262,24 @@ jobs:
       - name: Stop mangata-node parachain
         if: always()
         working-directory: launch
-        run: yarn down
-
+        run: yarn down          
       - name: Fix permissions on self-hosted runner
         if: always()
-        run: chown -R 1004:1005 $GITHUB_WORKSPACE
+        run: chown -R 1100:1100 $GITHUB_WORKSPACE
+  test-complete:
+    needs: [setup-report, e2e-test-matrix]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install testmo
+        run: npm install --no-save @testmo/testmo-cli
+        
+      - name: Complete test run
+        run: |
+            npx testmo automation:run:complete \
+              --instance https://mangata-finance.testmo.net \
+              --run-id ${{needs.setup-report.outputs.testmo-run-id}} \
+        env:
+          TESTMO_URL: ${{ secrets.TESTMO_URL }}
+          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}

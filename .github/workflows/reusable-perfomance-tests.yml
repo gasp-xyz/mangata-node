@@ -35,7 +35,7 @@ jobs:
 
       - name: Set Configuration - Develop
         if: "${{ inputs.targetEnv == 'dev' }}"
-        run:  |
+        run: |
           echo 'TEST_SUDO_NAME=${{ secrets.DEV_SUDO_NAME }}' >> $GITHUB_ENV
 
       - name: E2E- Calculate if run e2e feature branch or main.
@@ -58,9 +58,9 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: '16'
-          cache: 'yarn'
-          cache-dependency-path: '**/yarn.lock'
+          node-version: "16"
+          cache: "yarn"
+          cache-dependency-path: "**/yarn.lock"
 
       - name: Install e2e tests dependencies
         working-directory: e2e
@@ -76,9 +76,10 @@ jobs:
           pending=2000 \
           threadNumber=12 \
           duration=50 \
-          throughput=300
+          throughput=200
 
       - name: Upload reports
+        if: always()
         uses: actions/upload-artifact@v3.1.1
         with:
           name: performance-benchmarks-report
@@ -90,4 +91,4 @@ jobs:
 
       - name: Fix permissions on self-hosted runner
         if: always()
-        run: chown -R 1004:1005 $GITHUB_WORKSPACE
+        run: chown -R 1100:1100 $GITHUB_WORKSPACE

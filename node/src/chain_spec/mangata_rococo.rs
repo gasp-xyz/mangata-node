@@ -3,16 +3,13 @@ use codec::Encode;
 use cumulus_primitives_core::ParaId;
 use hex::FromHex;
 use mangata_rococo_runtime::{
-	constants::parachains, roc_per_second, AccountId, AssetMetadataOf, AuraId, CustomMetadata,
-	GeneralKey, MultiLocation, Parachain, Signature, XcmMetadata, KAR_TOKEN_ID, ROC_TOKEN_ID,
-	TUR_TOKEN_ID, X1, X2,
+	constants::parachains, roc_per_second, xcm_config::general_key, AccountId, AssetMetadataOf,
+	AuraId, CustomMetadata, MultiLocation, Parachain, Signature, XcmMetadata, KAR_TOKEN_ID,
+	ROC_TOKEN_ID, TUR_TOKEN_ID, X1, X2,
 };
 use sc_service::ChainType;
 use sp_core::{sr25519, ByteArray, Pair, Public};
-use sp_runtime::{
-	traits::{ConstU32, IdentifyAccount, Verify},
-	WeakBoundedVec,
-};
+use sp_runtime::traits::{IdentifyAccount, Verify};
 
 pub mod public_testnet_keys {
 	pub const ALICE_SR25519: &str =
@@ -391,10 +388,7 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 									1,
 									X2(
 										Parachain(parachains::karura::ID),
-										GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
-											parachains::karura::KAR_KEY.to_vec(),
-											None,
-										)),
+										general_key(parachains::karura::KAR_KEY),
 									),
 								)
 								.into(),

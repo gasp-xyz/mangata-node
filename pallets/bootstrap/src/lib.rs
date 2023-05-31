@@ -191,7 +191,6 @@ pub mod pallet {
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(2);
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	#[pallet::without_storage_info]
 	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(PhantomData<T>);
@@ -603,7 +602,7 @@ pub mod pallet {
 
 		/// Used to cancel active bootstrap. Can only be called before bootstrap is actually started
 		#[pallet::call_index(3)]
-		#[pallet::weight(T::DbWeight::get().reads_writes(3, 4).saturating_add(Weight::from_ref_time(1_000_000)))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(3, 4).saturating_add(Weight::from_parts(1_000_000, 0)))]
 		#[transactional]
 		pub fn cancel_bootstrap(origin: OriginFor<T>) -> DispatchResult {
 			ensure_root(origin)?;
@@ -630,7 +629,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(4)]
-		#[pallet::weight(T::DbWeight::get().reads_writes(2, 1).saturating_add(Weight::from_ref_time(1_000_000)))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(2, 1).saturating_add(Weight::from_parts(1_000_000, 0)))]
 		#[transactional]
 		// can be used to enable or disable automatic pool promotion of liquidity pool. Updates [`PromoteBootstrapPool`]
 		pub fn update_promote_bootstrap_pool(
@@ -674,7 +673,7 @@ pub mod pallet {
 		/// **!!! Cleaning up storage is complex operation and pruning all storage items related to particular
 		/// bootstrap might not fit in a single block. As a result tx can be rejected !!!**
 		#[pallet::call_index(7)]
-		#[pallet::weight(Weight::from_ref_time(40_000_000)
+		#[pallet::weight(Weight::from_parts(40_000_000, 0)
 							.saturating_add(T::DbWeight::get().reads_writes(6, 0)
 								.saturating_add(T::DbWeight::get().reads_writes(1, 1).saturating_mul(Into::<u64>::into(T::ClearStorageLimit::get())))))]
 		#[transactional]

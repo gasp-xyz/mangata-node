@@ -148,6 +148,24 @@ impl WeightToFeePolynomial for WeightToFee {
 	}
 }
 
+pub const DOT_MGX_SCALE_FACTOR_UNADJUSTED: u128 = 10_000_000_000_u128; // 10_000 as DOT/MGX, with 6 decimals accounted for (12 - DOT, 18 - MGX)
+
+
+pub fn base_tx_in_mgx() -> Balance {
+	UNIT
+}
+
+pub fn mgx_per_second() -> u128 {
+	let base_weight = Balance::from(ExtrinsicBaseWeight::get().ref_time());
+	let base_per_second = (WEIGHT_REF_TIME_PER_SECOND / base_weight as u64) as u128;
+	base_per_second * base_tx_in_mgx()
+}
+
+pub fn dot_per_second() -> u128 {
+	mgx_per_second() / DOT_MGX_SCALE_FACTOR_UNADJUSTED as u128
+}
+
+
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
 /// of data like extrinsics, allowing for them to continue syncing the network through upgrades
@@ -330,13 +348,12 @@ parameter_types! {
 parameter_types! {
 	/// Relay Chain `TransactionByteFee` / 10
 	pub const TransactionByteFee: Balance = 10 * MICROUNIT;
-	pub const KSMTokenId: u32 = 4;
+	pub const DOTTokenId: u32 = 4;
 }
-type OrmlCurrencyAdapter = orml_tokens::CurrencyAdapter<Runtime, KSMTokenId>;
+type OrmlCurrencyAdapter = orml_tokens::CurrencyAdapter<Runtime, DOTTokenId>;
 
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	// type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<orml_tokens::CurrencyAdapter<Tokens, KSMTokenId>, ()>;
 	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<OrmlCurrencyAdapter, ()>;
 	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;

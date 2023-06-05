@@ -4,5 +4,6 @@ panic = "unwind"
 [workspace]
 members = [
 	"node",
-	"runtime",
+	"runtime/mangata-polkadot",
+	"runtime/integration-test",
 ]

@@ -18,7 +18,7 @@ use xcm_builder::{
 	CreateMatcher, CurrencyAdapter, EnsureXcmOrigin, FixedWeightBounds, IsConcrete, MatchXcm,
 	NativeAsset, ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative,
 	SiblingParachainConvertsVia, SignedAccountId32AsNative, SignedToAccountId32,
-	SovereignSignedViaLocation, TakeWeightCredit, UsingComponents, WithComputedOrigin, AllowKnownQueryResponses, AllowSubscriptionsFrom, AllowUnpaidExecutionFrom,
+	SovereignSignedViaLocation, TakeWeightCredit, UsingComponents, WithComputedOrigin, AllowKnownQueryResponses, AllowSubscriptionsFrom, AllowUnpaidExecutionFrom, FixedRateOfFungible,
 };
 use xcm_executor::{traits::ShouldExecute, XcmExecutor};
 
@@ -185,6 +185,9 @@ pub type Barrier = (
 	AllowSubscriptionsFrom<Everything>,
 );
 
+parameter_types! {
+	pub DotPerSecondPerByte: (AssetId, u128, u128) = (Concrete(Parent.into()), 1, 1);
+}
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
@@ -201,13 +204,12 @@ impl xcm_executor::Config for XcmConfig {
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
 	//TODO: check
-	// pub type Trader = (
-	// 	FixedRateOfFungible<MgrPerSecond, ToTreasury>,
-	// 	AssetRegistryTrader<FixedRateAssetRegistryTrader<FeePerSecondProvider>, ToTreasury>,
-	// 	FixedRateOfFungible<RocPerSecond, ToTreasury>,
+	type Trader = FixedRateOfFungible<DotPerSecondPerByte, ()>;
+		// AssetRegistryTrader<FixedRateAssetRegistryTrader<FeePerSecondProvider>, ToTreasury>,
+		// FixedRateOfFungible<RocPerSecond, ToTreasury>,
 	// );
 	// type Trader = UsingComponents<WeightToFee, RelayLocation, AccountId, Balances, ToAuthor<Runtime>>;
-	type Trader = ();
+	// type Trader = ();
 	type ResponseHandler = PolkadotXcm;
 	// TODO: check
 	// type AssetTrap =

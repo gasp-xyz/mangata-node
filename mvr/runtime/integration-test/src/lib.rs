@@ -5,6 +5,37 @@ use xcm_emulator::TestExt;
 use orml_traits::currency::MultiCurrency;
 use networks::*;
 
+pub type RelayChainPalletXcm = pallet_xcm::Pallet<polkadot_runtime::Runtime>;
+pub type ParachainPalletXcm = pallet_xcm::Pallet<mangata_polkadot_runtime::Runtime>;
+pub const INITIAL_BALANCE: u128 = 1_000_000_000;
+
+#[test]
+fn pallet_xcm_reserve_transfer_works() {
+	env_logger::try_init();
+	TestNet::reset();
+
+	let withdraw_amount = 123 * unit(12);
+
+	networks::PolkadotRelay::execute_with(|| {
+		assert_ok!(RelayChainPalletXcm::reserve_transfer_assets(
+				polkadot_runtime::RuntimeOrigin::signed(ALICE),
+				Box::new(Parachain(2110).into()),
+				Box::new(Junction::AccountId32 { network: None, id: BOB.into() }.into()),
+				Box::new((Here, withdraw_amount).into()),
+				0,
+				));
+	});
+
+	networks::Mangata::execute_with(|| {
+		assert_eq!(
+			mangata_polkadot_runtime::Tokens::free_balance(RELAY_ASSET_ID, &BOB),
+			withdraw_amount
+			);
+	});
+
+}
+
+
 // pub(crate) fn events() -> Vec<pallet::Event<Test>> {
 // 	System::events()
 // 		.into_iter()
@@ -20,7 +51,7 @@ fn transfer_from_relay_chain() {
 
 		let assets = MultiAssets::from_sorted_and_deduplicated_skip_checks(vec![MultiAsset{
 			id: AssetId::Concrete( MultiLocation { parents: 0, interior: Here }),
-			fun: Fungible(1_000_000_000_000) }]
+			fun: Fungible(1_000__000_000_000_000) }]
 		);
 
 		let mut xcm = Xcm(vec![
@@ -32,14 +63,14 @@ fn transfer_from_relay_chain() {
 								  )
 								  , xcm: Xcm(vec![
 											 BuyExecution {
-												 fees: MultiAsset { id: AssetId::Concrete(MultiLocation { parents: 1, interior: Here }), fun: Fungible(1_000_000_000_000) },
+												 fees: MultiAsset { id: AssetId::Concrete(MultiLocation { parents: 1, interior: Here }), fun: Fungible(1_000__000_000_000_000) },
 												 weight_limit: Unlimited
 											 },
 											 DepositAsset {
 												 assets: Wild(WildMultiAsset::All),
 												 beneficiary: MultiLocation {
 													 parents: 0,
-													 interior: X1(Junction::AccountId32 { network: None, id: BOB })
+													 interior: X1(Junction::AccountId32 { network: None, id: BOB_RAW })
 												 }
 											 }
 								  ])
@@ -53,20 +84,24 @@ fn transfer_from_relay_chain() {
 					// let versioned_dest = Box::new(cumulus_primitives_core::Junction::Parachain(2110).into_versioned());
 					// let dest = MultiLocation::try_from(*versioned_dest).expect("convertable");
 
-					let versioned_dest = Box::new(cumulus_primitives_core::Junction::Parachain(2110).into_versioned());
-					let versioned_message = Box::new(xcm::VersionedXcm::from(xcm.clone()));
+				// 	let versioned_dest = Box::new(cumulus_primitives_core::Junction::Parachain(2110).into_versioned());
+				// 	let versioned_message = Box::new(xcm::VersionedXcm::from(xcm.clone()));
+                //
+				// polkadot_runtime::RuntimeOrigin::signed(ALICE),
+				// Box::new(Junction::AccountId32 { network: None, id: ALICE.into() }.into()),
+				// Box::new((Here, withdraw_amount).into()),
+				// 	assert_ok!(polkadot_runtime::XcmPallet::send(
+				// 			polkadot_runtime::RuntimeOrigin::root(),
+				// 			versioned_dest,
+				// 			versioned_message
+				// 			));
+                //
 
-					assert_ok!(polkadot_runtime::XcmPallet::send(
-							polkadot_runtime::RuntimeOrigin::root(),
-							versioned_dest,
-							versioned_message
-							));
-
-					assert_ok!(polkadot_runtime::XcmPallet::send(
-							polkadot_runtime::RuntimeOrigin::root(),
-							versioned_dest,
-							versioned_message
-							));
+					assert_ok!(pallet_xcm::Pallet::<polkadot_runtime::Runtime>::send_xcm(
+							Here,
+							Parachain(2110),
+							xcm
+					));
 
 
 

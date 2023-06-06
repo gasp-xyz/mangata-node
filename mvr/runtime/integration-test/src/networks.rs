@@ -7,10 +7,11 @@ use polkadot_runtime_parachains::configuration::HostConfiguration;
 use sp_runtime::traits::AccountIdConversion;
 use frame_support::weights::Weight;
 
-pub const ALICE: [u8; 32] = [4u8; 32];
-pub const BOB: [u8; 32] = [5u8; 32];
-pub const RELAY_ACCOUNT: [u8; 32] = [100u8; 32];
-pub const MANGATAX_ACCOUNT: [u8; 32] = [100u8; 32];
+pub const ALICE_RAW: [u8; 32] = [4u8; 32];
+pub const BOB_RAW: [u8; 32] = [5u8; 32];
+pub const ALICE: sp_runtime::AccountId32 = sp_runtime::AccountId32::new(ALICE_RAW);
+pub const BOB: sp_runtime::AccountId32 = sp_runtime::AccountId32::new(BOB_RAW);
+
 pub const RELAY_ASSET_ID:u32 = 4_u32;
 
 pub type Balance = u128;
@@ -118,8 +119,7 @@ pub fn polkadot_ext() -> sp_io::TestExternalities {
 
 	pallet_balances::GenesisConfig::<Runtime> {
 		balances: vec![
-			(sp_runtime::AccountId32::from(ALICE), 1_000 * unit(12)),
-			(sp_runtime::AccountId32::from(RELAY_ACCOUNT), 10 * unit(12)),
+			(ALICE, 1_000_000_000_000 * unit(12)),
 		],
 	}
 	.assimilate_storage(&mut t)
@@ -132,7 +132,7 @@ pub fn polkadot_ext() -> sp_io::TestExternalities {
 	.unwrap();
 
 	<pallet_xcm::GenesisConfig as GenesisBuild<Runtime>>::assimilate_storage(
-		&pallet_xcm::GenesisConfig { safe_xcm_version: Some(2) },
+		&pallet_xcm::GenesisConfig { safe_xcm_version: Some(3) },
 		&mut t,
 	)
 	.unwrap();
@@ -150,11 +150,11 @@ pub fn para_ext(parachain_id: u32) -> sp_io::TestExternalities {
 
 		orml_tokens::GenesisConfig::<Runtime> {
 			balances: vec![
-			(sp_runtime::AccountId32::from(ALICE), 0, 100 * unit(18)),
-			(sp_runtime::AccountId32::from(ALICE), 1, 0),
-			(sp_runtime::AccountId32::from(ALICE), 2, 0),
-			(sp_runtime::AccountId32::from(ALICE), 3, 0),
-			(sp_runtime::AccountId32::from(ALICE), mangata_polkadot_runtime::DOTTokenId::get(), 100 * unit(12)),
+			(ALICE, 0, 100 * unit(18)),
+			(ALICE, 1, 0),
+			(ALICE, 2, 0),
+			(ALICE, 3, 0),
+			(ALICE, mangata_polkadot_runtime::DOTTokenId::get(), 100 * unit(12)),
 
 			],
 		}
@@ -177,6 +177,4 @@ pub fn para_ext(parachain_id: u32) -> sp_io::TestExternalities {
 		let mut ext = sp_io::TestExternalities::new(t);
 		ext.execute_with(|| System::set_block_number(1));
 		ext
-
-
 }

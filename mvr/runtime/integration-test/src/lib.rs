@@ -1,5 +1,6 @@
 pub mod networks;
-use cumulus_primitives_core::{Instruction::{TransferReserveAsset, BuyExecution, DepositAsset, ClearOrigin, ReserveAssetDeposited}, MultiAssets, MultiAsset, AssetId, MultiLocation, Junctions::{X2, Here, X1}, Junction::{Parachain, self}, Xcm, WeightLimit::Unlimited, Parent, WildMultiAsset::{All, self}, Fungibility::Fungible, NetworkId, MultiAssetFilter::Wild};
+use cumulus_primitives_core::{Instruction::{TransferReserveAsset, BuyExecution, DepositAsset, ClearOrigin, ReserveAssetDeposited}, MultiAssets, MultiAsset, AssetId, MultiLocation, Junctions::{X2, Here, X1}, Junction::{Parachain, self}, Xcm, WeightLimit::Unlimited, Parent, WildMultiAsset::{All, self}, Fungibility::Fungible, NetworkId::{self, Polkadot}, MultiAssetFilter::Wild};
+use xcm::IntoVersion;
 use frame_support::assert_ok;
 use xcm_emulator::TestExt;
 use orml_traits::currency::MultiCurrency;
@@ -11,12 +12,12 @@ pub const INITIAL_BALANCE: u128 = 1_000_000_000;
 
 #[test]
 fn pallet_xcm_reserve_transfer_works() {
-	env_logger::try_init();
 	TestNet::reset();
 
 	let withdraw_amount = 123 * unit(12);
 
 	networks::PolkadotRelay::execute_with(|| {
+		sp_tracing::try_init_simple();
 		assert_ok!(RelayChainPalletXcm::reserve_transfer_assets(
 				polkadot_runtime::RuntimeOrigin::signed(ALICE),
 				Box::new(Parachain(2110).into()),
@@ -27,34 +28,34 @@ fn pallet_xcm_reserve_transfer_works() {
 	});
 
 	networks::Mangata::execute_with(|| {
+		sp_tracing::try_init_simple();
 		assert_eq!(
 			mangata_polkadot_runtime::Tokens::free_balance(RELAY_ASSET_ID, &BOB),
 			withdraw_amount
 			);
 	});
+}
 
+fn wrap_version<RuntimeCall>(
+	xcm: impl Into<xcm::VersionedXcm<RuntimeCall>>,
+) -> Result<xcm::VersionedXcm<RuntimeCall>, ()> {
+	xcm.into().into_version(3)
 }
 
 
-// pub(crate) fn events() -> Vec<pallet::Event<Test>> {
-// 	System::events()
-// 		.into_iter()
-// 		.map(|r| r.event)
-// 		.filter_map(|e| if let mangata_polkadot_runtime::RuntimeEvent::XykStorage(inner) = e { Some(inner) } else { None })
-// 		.collect::<Vec<_>>()
-// }
-//
 #[test]
-fn transfer_from_relay_chain() {
-	let _ = env_logger::try_init();
+fn reserve_transfer_asserts_build_from_scratch_works() {
+	TestNet::reset();
 	networks::PolkadotRelay::execute_with(|| {
-
+		sp_tracing::try_init_simple();
+		log::info!("     <<< RELAY >>>");
+		let withdraw_amount = 123 * unit(12);
 		let assets = MultiAssets::from_sorted_and_deduplicated_skip_checks(vec![MultiAsset{
 			id: AssetId::Concrete( MultiLocation { parents: 0, interior: Here }),
-			fun: Fungible(1_000__000_000_000_000) }]
+			fun: Fungible(withdraw_amount) }]
 		);
 
-		let mut xcm = Xcm(vec![
+		let xcm = Xcm(vec![
 						  TransferReserveAsset {
 								  assets: assets.clone(),
 								  dest: MultiLocation::new(
@@ -63,11 +64,11 @@ fn transfer_from_relay_chain() {
 								  )
 								  , xcm: Xcm(vec![
 											 BuyExecution {
-												 fees: MultiAsset { id: AssetId::Concrete(MultiLocation { parents: 1, interior: Here }), fun: Fungible(1_000__000_000_000_000) },
+												 fees: MultiAsset { id: AssetId::Concrete(MultiLocation { parents: 1, interior: Here }), fun: Fungible(withdraw_amount) },
 												 weight_limit: Unlimited
 											 },
 											 DepositAsset {
-												 assets: Wild(WildMultiAsset::All),
+												 assets: Wild(WildMultiAsset::AllCounted(1)),
 												 beneficiary: MultiLocation {
 													 parents: 0,
 													 interior: X1(Junction::AccountId32 { network: None, id: BOB_RAW })
@@ -79,13 +80,16 @@ fn transfer_from_relay_chain() {
 							ClearOrigin
 		]);
 
+		// let x = wrap_version::<polkadot_runtime::RuntimeCall>(xcm).unwrap();
+// ::<xcm::VersionedXcm>::().into_versioned(3);
+
 					// let mut message = vec![ReserveAssetDeposited(assets), ClearOrigin];
 					// message.extend(xcm.0.into_iter());
 					// let versioned_dest = Box::new(cumulus_primitives_core::Junction::Parachain(2110).into_versioned());
 					// let dest = MultiLocation::try_from(*versioned_dest).expect("convertable");
 
-				// 	let versioned_dest = Box::new(cumulus_primitives_core::Junction::Parachain(2110).into_versioned());
-				// 	let versioned_message = Box::new(xcm::VersionedXcm::from(xcm.clone()));
+					// let versioned_dest = Box::new(cumulus_primitives_core::Junction::Parachain(2110).into_versioned());
+					// let versioned_message = Box::new(xcm::VersionedXcm::from(xcm.clone()));
                 //
 				// polkadot_runtime::RuntimeOrigin::signed(ALICE),
 				// Box::new(Junction::AccountId32 { network: None, id: ALICE.into() }.into()),
@@ -95,14 +99,16 @@ fn transfer_from_relay_chain() {
 				// 			versioned_dest,
 				// 			versioned_message
 				// 			));
-                //
+                // //
+
+		// <polkadot_runtime::Runtime as pallet_xcm::Config>::XcmExecutor::
 
 					assert_ok!(pallet_xcm::Pallet::<polkadot_runtime::Runtime>::send_xcm(
-							Here,
+							Junction::AccountId32 { network: None, id: ALICE_RAW },
 							Parachain(2110),
 							xcm
 					));
-
+                    //
 
 
 					// polkadot_runtime::XcmPallet::send_xcm(Here, dest, xcm.clone()).unwrap();
@@ -115,14 +121,23 @@ fn transfer_from_relay_chain() {
 					// 		Box::new((cumulus_primitives_core::Junctions::Here, unit(12)).into()),
 					// 		0
 					// 		));
-					println!("BOB: {}", sp_runtime::AccountId32::from(BOB));
-					for e in polkadot_runtime::System::events(){
-						println!("{e:?}");
-					}
+					// println!("BOB: {}", sp_runtime::AccountId32::from(BOB));
+					// println!("BOB: {}", sp_runtime::AccountId32::from(BOB));
+					// println!("BOB: {}", sp_runtime::AccountId32::from(BOB));
+                    //
+					// assert_eq!(
+					// 	mangata_polkadot_runtime::Tokens::free_balance(RELAY_ASSET_ID, &BOB),
+					// 	withdraw_amount
+					// 	);
+					// for e in polkadot_runtime::System::events(){
+					// 	println!("{e:?}");
+					// }
 
 	});
 
 	networks::Mangata::execute_with(|| {
+		sp_tracing::try_init_simple();
+		log::info!("   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  <<< PARACHAIN >>>");
 		assert_eq!(
 			mangata_polkadot_runtime::Tokens::free_balance(RELAY_ASSET_ID, &sp_runtime::AccountId32::from(BOB)),
 			unit(12) /*- relay_per_second_as_fee(4)*/

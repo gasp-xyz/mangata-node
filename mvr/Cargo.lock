@@ -8964,6 +8964,7 @@ dependencies = [
  "polkadot-runtime",
  "polkadot-runtime-constants",
  "polkadot-runtime-parachains",
+ "sc-tracing",
  "sp-io",
  "sp-runtime",
  "sp-tracing",

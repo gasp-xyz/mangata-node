@@ -14,7 +14,7 @@ use sp_runtime::traits::{Block as BlockT, MaybeDisplay, MaybeFromStr};
 use sp_std::convert::{TryFrom, TryInto};
 use std::sync::Arc;
 pub use xyk_runtime_api::XykApi as XykRuntimeApi;
-use xyk_runtime_api::{RpcAmountsResult, XYKLiqAssetIdsResult, XYKRpcResult};
+use xyk_runtime_api::{RpcAmountsResult, GenericXYKRpcResult, XYKRpcResult};
 
 #[rpc(client, server)]
 pub trait XykApi<
@@ -367,7 +367,7 @@ where
 	fn get_liq_tokens_for_trading(
 		&self,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<XYKLiqAssetIdsResult> {
+	) -> RpcResult<GenericXYKRpcResult<Vec<TokenId>>> {
 		let api = self.client.runtime_api();
 		let at = BlockId::<Block>::hash(at.unwrap_or_else(||
 			// If the block hash is not supplied assume the best block.

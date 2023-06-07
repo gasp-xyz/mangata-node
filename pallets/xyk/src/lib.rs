@@ -1274,9 +1274,9 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn get_liq_tokens_for_trading() -> Result<Vec<TokenId>, DispatchError> {
-		return LiquidityAssets::<T>::iter().values().collect()
-			.ok_or_else(|| Error::<T>::UnexpectedFailure.into())
-			.filter(|v| (!<T as Config>::Currency::total_issuance(v.into()).into().is_zero()));
+		return LiquidityPools::<T>::iter_keys().collect()
+			.ok_or(Error::<T>::UnexpectedFailure.into())
+			.filter(|v| !<T as Config>::Currency::total_issuance(v.into()).into().is_zero());
 	}
 
 	// MAX: 2R
@@ -1538,6 +1538,25 @@ impl<T: Config> Pallet<T> {
 	fn native_token_id() -> TokenId {
 		<T as Config>::NativeCurrencyId::get()
 	}
+
+	fn calculate_initial_liquidity(first_asset_amount: Balance, second_asset_amount: Balance) -> Result<u128, DispatchError> {
+		let mut initial_liquidity = first_asset_amount
+			.checked_div(2)
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+			.checked_add(
+				second_asset_amount
+					.checked_div(2)
+					.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?,
+			)
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+
+		return Ok(if initial_liquidity == 0 {
+			1
+		} else {
+			initial_liquidity
+		})
+	}
+
 }
 
 impl<T: Config> PreValidateSwaps for Pallet<T> {
@@ -2033,19 +2052,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		ensure!(first_asset_id != second_asset_id, Error::<T>::SameAsset,);
 
 		// Liquidity token amount calculation
-		let mut initial_liquidity = first_asset_amount
-			.checked_div(2)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
-			.checked_add(
-				second_asset_amount
-					.checked_div(2)
-					.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?,
-			)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
-
-		if initial_liquidity == 0 {
-			initial_liquidity = 1
-		}
+		let initial_liquidity = Pallet::<T>::calculate_initial_liquidity(first_asset_amount, second_asset_amount)?;
 
 		Pools::<T>::insert(
 			(first_asset_id, second_asset_id),
@@ -2812,13 +2819,13 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
                 second_asset_amount <= expected_second_asset_amount,
                 Error::<T>::SecondAssetAmountExceededExpectations,
             );
-		}
 
-		// Ensure minting amounts are not zero
-		ensure!(
-			!first_asset_amount.is_zero() && !second_asset_amount.is_zero(),
-			Error::<T>::ZeroAmount,
-		);
+			// Ensure minting amounts are not zero
+			ensure!(
+				!first_asset_amount.is_zero() && !second_asset_amount.is_zero(),
+				Error::<T>::ZeroAmount,
+			);
+		}
 
 		// Ensure user has enough withdrawable tokens to create pool in amounts required
 
@@ -2858,12 +2865,16 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			ExistenceRequirement::KeepAlive,
 		)?;
 
-		let liquidity_assets_minted = multiply_by_rational_with_rounding(
-			first_asset_amount,
-			total_liquidity_assets,
-			first_asset_reserve,
-			Rounding::Down,
-		).ok_or(Error::<T>::UnexpectedFailure)?;
+		let liquidity_assets_minted = if total_liquidity_assets.is_zero() {
+			Pallet::<T>::calculate_initial_liquidity(first_asset_amount, second_asset_amount)?;
+		} else {
+			multiply_by_rational_with_rounding(
+				first_asset_amount,
+				total_liquidity_assets,
+				first_asset_reserve,
+				Rounding::Down,
+			).ok_or(Error::<T>::UnexpectedFailure)?;
+		};
 
 		// Creating new liquidity tokens to user
 		<T as Config>::Currency::mint(

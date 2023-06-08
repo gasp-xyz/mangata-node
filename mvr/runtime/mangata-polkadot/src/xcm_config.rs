@@ -158,31 +158,15 @@ impl ShouldExecute for DenyReserveTransferToRelayChain {
 	}
 }
 
-// pub type Barrier = DenyThenTry<
-// 	DenyReserveTransferToRelayChain,
-// 	(
-// 		TakeWeightCredit,
-// 		WithComputedOrigin<
-// 			(
-// 				AllowTopLevelPaidExecutionFrom<Everything>,
-// 				AllowExplicitUnpaidExecutionFrom<ParentOrParentsExecutivePlurality>,
-// 				// ^^^ Parent and its exec plurality get free execution
-// 			),
-// 			UniversalLocation,
-// 			ConstU32<8>,
-// 		>,
-// 	),
-// >;
-
 pub type Barrier = (
 	TakeWeightCredit,
-	// AllowTopLevelPaidExecutionFrom<Everything>,
-	// AllowUnpaidExecutionFrom<ParentOrParentsExecutivePlurality>,
-	// // ^^^ Parent and its exec plurality get free execution
-	// // Expected responses are OK.
-	// AllowKnownQueryResponses<PolkadotXcm>,
-	// // Subscriptions for version tracking are OK.
-	// AllowSubscriptionsFrom<Everything>,
+	AllowTopLevelPaidExecutionFrom<Everything>,
+	AllowUnpaidExecutionFrom<ParentOrParentsExecutivePlurality>,
+	// ^^^ Parent and its exec plurality get free execution
+	// Expected responses are OK.
+	AllowKnownQueryResponses<PolkadotXcm>,
+	// Subscriptions for version tracking are OK.
+	AllowSubscriptionsFrom<Everything>,
 );
 
 parameter_types! {
@@ -203,17 +187,9 @@ impl xcm_executor::Config for XcmConfig {
 	type UniversalLocation = UniversalLocation;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
-	//TODO: check
+	//TODO: fine tune parameter
 	type Trader = FixedRateOfFungible<DotPerSecondPerByte, ()>;
-		// AssetRegistryTrader<FixedRateAssetRegistryTrader<FeePerSecondProvider>, ToTreasury>,
-		// FixedRateOfFungible<RocPerSecond, ToTreasury>,
-	// );
-	// type Trader = UsingComponents<WeightToFee, RelayLocation, AccountId, Balances, ToAuthor<Runtime>>;
-	// type Trader = ();
 	type ResponseHandler = PolkadotXcm;
-	// TODO: check
-	// type AssetTrap =
-	// 	MangataDropAssets<PolkadotXcm, ToTreasury, TokenIdConvert, ExistentialDeposits>;
 	type AssetTrap = PolkadotXcm;
 	type AssetClaims = PolkadotXcm;
 	type SubscriptionService = PolkadotXcm;
@@ -247,18 +223,15 @@ parameter_types! {
 
 impl pallet_xcm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	// TODO: check
-	// type SendXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, ()>;
 	type SendXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
+	// TODO: CHANGE ME, enable any xcm execution
 	type XcmExecuteFilter = Everything;
-	// ^ Disable dispatchable execute on the XCM pallet.
-	// Needs to be `Everything` for local testing.
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type XcmTeleportFilter = Everything;
-	// TODO: check!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	type XcmReserveTransferFilter = Everything;
+	// disable any reserve transfers from parachain
+	type XcmReserveTransferFilter = Nothing;
 	type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
 	// TODO: check
 	// type LocationInverter = LocationInverter<Ancestry>;

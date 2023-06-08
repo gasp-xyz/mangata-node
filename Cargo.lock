@@ -9756,6 +9756,7 @@ dependencies = [
  "polkadot-runtime-parachains",
  "sp-io",
  "sp-runtime",
+ "sp-tracing",
  "xcm",
  "xcm-builder",
  "xcm-emulator",

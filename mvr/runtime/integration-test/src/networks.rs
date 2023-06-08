@@ -1,10 +1,11 @@
 // use crate::setup::*;
 
-use cumulus_primitives_core::ParaId;
+use cumulus_primitives_core::{ParaId, Parent, Parachain};
 use frame_support::traits::GenesisBuild;
 use polkadot_primitives::v4::{BlockNumber, MAX_CODE_SIZE, MAX_POV_SIZE};
 use polkadot_runtime_parachains::configuration::HostConfiguration;
 use sp_runtime::traits::AccountIdConversion;
+use xcm_executor::traits::Convert;
 use frame_support::weights::Weight;
 
 pub const ALICE_RAW: [u8; 32] = [4u8; 32];
@@ -112,6 +113,17 @@ fn default_parachains_host_configuration() -> HostConfiguration<BlockNumber> {
 	}
 }
 
+pub fn parent_account_id() -> mangata_polkadot_runtime::AccountId {
+	let location = (Parent,);
+	mangata_polkadot_runtime::xcm_config::LocationToAccountId::convert(location.into()).unwrap()
+}
+
+pub fn child_account_id(para: u32) -> <polkadot_runtime::Runtime as frame_system::Config>::AccountId {
+    let location = (Parachain(para),);
+    polkadot_runtime::xcm_config::SovereignAccountOf::convert(location.into()).unwrap()
+}
+
+
 pub fn polkadot_ext() -> sp_io::TestExternalities {
 	use polkadot_runtime::{Runtime, System};
 
@@ -120,6 +132,7 @@ pub fn polkadot_ext() -> sp_io::TestExternalities {
 	pallet_balances::GenesisConfig::<Runtime> {
 		balances: vec![
 			(ALICE, 1_000_000_000_000 * unit(12)),
+			(child_account_id(2110), 1_000_000_000_000 * unit(12)),
 		],
 	}
 	.assimilate_storage(&mut t)
@@ -154,8 +167,8 @@ pub fn para_ext(parachain_id: u32) -> sp_io::TestExternalities {
 			(ALICE, 1, 0),
 			(ALICE, 2, 0),
 			(ALICE, 3, 0),
-			(ALICE, mangata_polkadot_runtime::DOTTokenId::get(), 100 * unit(12)),
-
+			(ALICE, mangata_polkadot_runtime::DOTTokenId::get(), 1_000_000_000 * unit(12)),
+			(parent_account_id(), mangata_polkadot_runtime::DOTTokenId::get(), 1_000_000_000_000 * unit(12)),
 			],
 		}
 		.assimilate_storage(&mut t)

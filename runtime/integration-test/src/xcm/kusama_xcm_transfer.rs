@@ -52,6 +52,7 @@ fn transfer_to_relay_chain() {
 	assert_eq!(94_172_727, fee);
 
 	Mangata::execute_with(|| {
+		sp_tracing::try_init_simple();
 		assert_ok!(XTokens::transfer(
 			RuntimeOrigin::signed(ALICE.into()),
 			RELAY_ASSET_ID,
@@ -66,6 +67,7 @@ fn transfer_to_relay_chain() {
 	});
 
 	KusamaRelay::execute_with(|| {
+		sp_tracing::try_init_simple();
 		assert_eq!(kusama_runtime::Balances::free_balance(&AccountId::from(BOB)), unit(12) - fee);
 	});
 }

@@ -176,13 +176,13 @@ impl ShouldExecute for DenyReserveTransferToRelayChain {
 
 pub type Barrier = (
 	TakeWeightCredit,
-	AllowTopLevelPaidExecutionFrom<Everything>,
-	AllowUnpaidExecutionFrom<ParentOrParentsExecutivePlurality>,
-	// ^^^ Parent and its exec plurality get free execution
-	// Expected responses are OK.
-	AllowKnownQueryResponses<PolkadotXcm>,
-	// Subscriptions for version tracking are OK.
-	AllowSubscriptionsFrom<Everything>,
+	// AllowTopLevelPaidExecutionFrom<Everything>,
+	// AllowUnpaidExecutionFrom<ParentOrParentsExecutivePlurality>,
+	// // ^^^ Parent and its exec plurality get free execution
+	// // Expected responses are OK.
+	// AllowKnownQueryResponses<PolkadotXcm>,
+	// // Subscriptions for version tracking are OK.
+	// AllowSubscriptionsFrom<Everything>,
 );
 
 parameter_types! {
@@ -252,12 +252,13 @@ impl pallet_xcm::Config for Runtime {
 	type SendXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
-	type XcmExecuteFilter = Nothing;
+	type XcmExecuteFilter = Everything;
 	// ^ Disable dispatchable execute on the XCM pallet.
 	// Needs to be `Everything` for local testing.
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type XcmTeleportFilter = Everything;
-	type XcmReserveTransferFilter = Nothing;
+	// TODO: check!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	type XcmReserveTransferFilter = Everything;
 	type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
 	// TODO: check
 	// type LocationInverter = LocationInverter<Ancestry>;

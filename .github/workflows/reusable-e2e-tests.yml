@@ -240,6 +240,7 @@ jobs:
         env:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
+        continue-on-error: true
 
       - name: Collect docker logs on failure
         if: failure()
@@ -293,4 +294,5 @@ jobs:
         env:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
+        continue-on-error: true
 

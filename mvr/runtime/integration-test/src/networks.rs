@@ -1,24 +1,21 @@
-// use crate::setup::*;
-
-use cumulus_primitives_core::{ParaId, Parent, Parachain};
-use cumulus_primitives_core::Junction;
-use frame_support::traits::GenesisBuild;
+use cumulus_primitives_core::{Junction, Parachain, Parent};
+use frame_support::{traits::GenesisBuild, weights::Weight};
 use polkadot_primitives::v4::{BlockNumber, MAX_CODE_SIZE, MAX_POV_SIZE};
 use polkadot_runtime_parachains::configuration::HostConfiguration;
 use sp_runtime::traits::AccountIdConversion;
 use xcm_executor::traits::Convert;
-use frame_support::weights::Weight;
 
 pub const ALICE_RAW: [u8; 32] = [4u8; 32];
 pub const BOB_RAW: [u8; 32] = [5u8; 32];
 pub const ALICE: sp_runtime::AccountId32 = sp_runtime::AccountId32::new(ALICE_RAW);
 pub const BOB: sp_runtime::AccountId32 = sp_runtime::AccountId32::new(BOB_RAW);
 
-pub const RELAY_ASSET_ID:u32 = 4_u32;
+pub const RELAY_ASSET_ID: u32 = 4_u32;
+pub const INITIAL_BALANCE: u128 = 100 * unit(12);
 
 pub type Balance = u128;
 
-pub fn unit(decimals: u32) -> Balance {
+pub const fn unit(decimals: u32) -> Balance {
 	10u128.saturating_pow(decimals)
 }
 
@@ -33,8 +30,6 @@ pub fn millicent(decimals: u32) -> Balance {
 pub fn microcent(decimals: u32) -> Balance {
 	millicent(decimals) / 1000
 }
-
-
 
 use xcm_emulator::{decl_test_network, decl_test_parachain, decl_test_relay_chain};
 
@@ -119,21 +114,25 @@ pub fn parent_account_id() -> mangata_polkadot_runtime::AccountId {
 	mangata_polkadot_runtime::xcm_config::LocationToAccountId::convert(location.into()).unwrap()
 }
 
-pub fn child_account_id(para: u32) -> <polkadot_runtime::Runtime as frame_system::Config>::AccountId {
-    let location = (Parachain(para),);
-    polkadot_runtime::xcm_config::SovereignAccountOf::convert(location.into()).unwrap()
+pub fn child_account_id(
+	para: u32,
+) -> <polkadot_runtime::Runtime as frame_system::Config>::AccountId {
+	let location = (Parachain(para),);
+	polkadot_runtime::xcm_config::SovereignAccountOf::convert(location.into()).unwrap()
 }
 
-
-pub fn sibling_account_account_id(para: u32, who: sp_runtime::AccountId32) -> mangata_polkadot_runtime::AccountId {
-	let location = (Parent, Parachain(para), Junction::AccountId32 { network: None, id: who.into() });
+pub fn sibling_account_account_id(
+	para: u32,
+	who: sp_runtime::AccountId32,
+) -> mangata_polkadot_runtime::AccountId {
+	let location =
+		(Parent, Parachain(para), Junction::AccountId32 { network: None, id: who.into() });
 	mangata_polkadot_runtime::xcm_config::LocationToAccountId::convert(location.into()).unwrap()
 }
 
-fn reserve_account(id: u32) -> mangata_polkadot_runtime::AccountId {
+pub fn reserve_account(id: u32) -> mangata_polkadot_runtime::AccountId {
 	polkadot_parachain::primitives::Sibling::from(id).into_account_truncating()
 }
-
 
 pub fn polkadot_ext() -> sp_io::TestExternalities {
 	use polkadot_runtime::{Runtime, System};
@@ -143,8 +142,8 @@ pub fn polkadot_ext() -> sp_io::TestExternalities {
 	pallet_balances::GenesisConfig::<Runtime> {
 		balances: vec![
 			(ALICE, 1_000_000_000_000 * unit(12)),
-			(child_account_id(2110), 1_000_000_000_000 * unit(12)),
-			(child_account_id(2000), 1_000_000_000_000 * unit(12)),
+			(child_account_id(2110), INITIAL_BALANCE),
+			(child_account_id(2000), INITIAL_BALANCE),
 		],
 	}
 	.assimilate_storage(&mut t)
@@ -167,43 +166,39 @@ pub fn polkadot_ext() -> sp_io::TestExternalities {
 	ext
 }
 
-
 pub fn para_ext(parachain_id: u32) -> sp_io::TestExternalities {
 	use mangata_polkadot_runtime::{Runtime, System};
 
-		let mut t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
+	let mut t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
 
-		orml_tokens::GenesisConfig::<Runtime> {
-			balances: vec![
+	orml_tokens::GenesisConfig::<Runtime> {
+		balances: vec![
 			(ALICE, 0, 100 * unit(18)),
 			(ALICE, 1, 0),
 			(ALICE, 2, 0),
 			(ALICE, 3, 0),
 			(ALICE, mangata_polkadot_runtime::DOTTokenId::get(), 1_000_000_000 * unit(12)),
-			(parent_account_id(), mangata_polkadot_runtime::DOTTokenId::get(), 1_000_000_000_000 * unit(12)),
-			(reserve_account(2000), mangata_polkadot_runtime::DOTTokenId::get(), 1_000_000_000_000 * unit(12)),
-			(reserve_account(2110), mangata_polkadot_runtime::DOTTokenId::get(), 1_000_000_000_000 * unit(12)),
-			// (sibling_account_account_id(2110, ALICE), mangata_polkadot_runtime::DOTTokenId::get(), 1_000_000_000_000 * unit(12)),
-			// (sibling_account_account_id(2000, ALICE), mangata_polkadot_runtime::DOTTokenId::get(), 1_000_000_000_000 * unit(12)),
-			],
-		}
-		.assimilate_storage(&mut t)
-		.unwrap();
+			(parent_account_id(), mangata_polkadot_runtime::DOTTokenId::get(), INITIAL_BALANCE),
+			(reserve_account(2000), mangata_polkadot_runtime::DOTTokenId::get(), INITIAL_BALANCE),
+			(reserve_account(2110), mangata_polkadot_runtime::DOTTokenId::get(), INITIAL_BALANCE),
+		],
+	}
+	.assimilate_storage(&mut t)
+	.unwrap();
 
+	<parachain_info::GenesisConfig as GenesisBuild<Runtime>>::assimilate_storage(
+		&parachain_info::GenesisConfig { parachain_id: parachain_id.into() },
+		&mut t,
+	)
+	.unwrap();
 
-		<parachain_info::GenesisConfig as GenesisBuild<Runtime>>::assimilate_storage(
-			&parachain_info::GenesisConfig { parachain_id: parachain_id.into() },
-			&mut t,
-		)
-		.unwrap();
+	<pallet_xcm::GenesisConfig as GenesisBuild<Runtime>>::assimilate_storage(
+		&pallet_xcm::GenesisConfig { safe_xcm_version: Some(3) },
+		&mut t,
+	)
+	.unwrap();
 
-		<pallet_xcm::GenesisConfig as GenesisBuild<Runtime>>::assimilate_storage(
-			&pallet_xcm::GenesisConfig { safe_xcm_version: Some(3) },
-			&mut t,
-		)
-		.unwrap();
-
-		let mut ext = sp_io::TestExternalities::new(t);
-		ext.execute_with(|| System::set_block_number(1));
-		ext
+	let mut ext = sp_io::TestExternalities::new(t);
+	ext.execute_with(|| System::set_block_number(1));
+	ext
 }

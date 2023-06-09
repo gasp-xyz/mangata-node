@@ -2827,6 +2827,18 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			);
 		}
 
+		// We calculate the required liquidity token amount and also validate asset amounts
+		let liquidity_assets_minted = if total_liquidity_assets.is_zero() {
+			Pallet::<T>::calculate_initial_liquidity(first_asset_amount, second_asset_amount)?;
+		} else {
+			multiply_by_rational_with_rounding(
+				first_asset_amount,
+				total_liquidity_assets,
+				first_asset_reserve,
+				Rounding::Down,
+			).ok_or(Error::<T>::UnexpectedFailure)?;
+		};
+
 		// Ensure user has enough withdrawable tokens to create pool in amounts required
 
 		<T as Config>::Currency::ensure_can_withdraw(
@@ -2864,17 +2876,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			second_asset_amount.into(),
 			ExistenceRequirement::KeepAlive,
 		)?;
-
-		let liquidity_assets_minted = if total_liquidity_assets.is_zero() {
-			Pallet::<T>::calculate_initial_liquidity(first_asset_amount, second_asset_amount)?;
-		} else {
-			multiply_by_rational_with_rounding(
-				first_asset_amount,
-				total_liquidity_assets,
-				first_asset_reserve,
-				Rounding::Down,
-			).ok_or(Error::<T>::UnexpectedFailure)?;
-		};
 
 		// Creating new liquidity tokens to user
 		<T as Config>::Currency::mint(

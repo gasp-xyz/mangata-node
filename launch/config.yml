@@ -17,7 +17,7 @@ relaychain:
     - name: bob
 
 parachains:
-- image: mangatasolutions/mangata-node:dev
+- image: mangatasolutions/mangata-node:develop
   chain:
     base: rococo-local
     collators:

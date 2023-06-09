@@ -24,6 +24,10 @@ Reliable decentralized exchange (DEX) blockchain - interoperable with other bloc
 The design of the blockchain guarantees fixed-fees that provides greater control of trading costs and higher arbitrage opportunity.
 Assets on the exchange will serve multiple purposes- at the first iteration, they are the block producer’s stake and exchange liquidity at the same time, and more comes later.
 
+## API
+
+[Mangata API Docs](https://mangata-finance.notion.site/Mangata-API-Docs-06f68bc6ba004416ae5c6686163b0468)
+
 ## Build mangata-node locally
 - Install [docker](https://docs.docker.com/engine/install/ubuntu/) 
 

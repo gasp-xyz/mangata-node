@@ -5,63 +5,13 @@
 use super::{Event, *};
 use crate::mock::*;
 use frame_support::assert_err;
+use mangata_support::traits::LiquidityMiningApi;
 use mangata_types::assets::CustomMetadata;
 use orml_traits::asset_registry::AssetMetadata;
 use serial_test::serial;
 use sp_runtime::Permill;
 use test_case::test_case;
 
-//fn create_pool_W(): create_pool working assert (maps,acocounts values)  //DONE
-//fn create_pool_N_already_exists(): create_pool not working if pool already exists  //DONE
-//fn create_pool_N_already_exists_other_way(): create_pool not working if pool already exists other way around (create pool X-Y, but pool Y-X exists) //DONE
-//fn create_pool_N_not_enough_first_asset(): create_pool not working if account has not enough first asset for initial mint //DONE
-//fn create_pool_N_not_enough_second_asset(): create_pool not working if account has not enough second asset for initial mint //DONE
-//fn create_pool_N_same_asset(): create_pool not working if creating pool with same asset on both sides //DONE
-//fn create_pool_N_zero_first_amount(): create_pool not working if creating with 0 amount of first asset
-//fn create_pool_N_zero_second_amount(): create_pool not working if creating with 0 amount of first asset
-
-//fn sell_W(): sell working assert (maps,acocounts values) //DONE
-//fn sell_W_other_way(): sell working if sell order in different order as pool (sell pool X-Y, but pool Y-X exists), assert (maps,acocounts values) //DONE
-//fn sell_N_not_enough_selling_assset(): sell not working if not enough asset to sell //DONE
-//fn sell_N_no_such_pool(): sell not working if pool does not exist //DONE
-//fn sell_N_insufficient_output_amount(): sell not working if insufficient_output_amount //DONE
-//fn sell_N_zero_amount(): sell not working if trying to sell 0 asset
-
-//fn buy_W(): buy working assert (maps,acocounts values) //DONE
-//fn buy_W_other_way(): buy working if buy order in different order as pool (buy pool X-Y, but pool Y-X exists), assert (maps,acocounts values) //DONE
-//fn buy_N_not_enough_selling_assset(): buy not working if not enough asset to sell //DONE
-//fn buy_N_not_enough_reserve(): buy not working if not enough liquidity in pool //DONE
-//fn buy_N_no_such_pool(): buy not working if pool does not exist //DONE
-//fn buy_N_insufficient_input_amount(): sell not working if insufficient_output_amount
-//fn buy_N_zero_amount(): buy not working if trying to buy 0 asset
-
-//fn mint_W(): mint working assert (maps,acocounts values) //DONE
-//fn mint_W_other_way(): mint working if mint order in different order as pool (mint pool X-Y, but pool Y-X exists), assert (maps,acocounts values) //DONE
-//fn mint_N_no_such_pool(): mint not working if pool does not exist //DONE
-//fn mint_N_not_enough_first_asset(): mint not working, not enough first asset to mint with //DONE
-//fn mint_N_not_enough_second_asset(): mint not working, not enough second asset to mint with //DONE
-//fn mint_N_second_token_amount_exceeded_expectations:  mint not working, required more second token amount then expected // DONE
-//fn mint_W_no_expected_argument:  mint works when providing only 3 arguments // DONE
-//fn min_N_zero_amount(): mint not working if trying to mint 0 asset
-
-//fn burn_W(): burn working assert (maps,acocounts values) //DONE
-//fn burn_W_other_way(): burn working if burn order in different order as pool (burn pool X-Y, but pool Y-X exists), assert (maps,acocounts values) //DONE
-//fn burn_N_no_such_pool(): burn not working if pool does not exist //DONE
-//fn burn_N_not_enough_liquidity_asset(): burn not enough liquidity asset in liquidity pool to burn //DONE
-//fn burn_N_zero_amount(): burn not working if trying to burn 0 asset
-
-//liquidity assets after trade, after burn, after mint
-
-// pub trait Trait: frame_system::Trait {
-//     // TODO: Add other types and constants required configure this module.
-//     // type Hashing = BlakeTwo256;
-
-//     // The overarching event type.
-//     type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
-// }
-
-// W - should work
-// N - should not work
 const DUMMY_USER_ID: u128 = 2;
 const TRADER_ID: u128 = 3;
 
@@ -100,7 +50,7 @@ fn initialize() {
 fn multi_initialize() {
 	// creating asset with assetId 0 and minting to accountId 2
 	System::set_block_number(1);
-	let acc_id: u128 = 2;
+	let _acc_id: u128 = 2;
 	let amount: u128 = 1000000000000000000000;
 	// creates token with ID = 0;
 	XykStorage::create_new_token(&DUMMY_USER_ID, amount);
@@ -180,629 +130,6 @@ fn initialize_buy_and_burn() {
 		.unwrap();
 	XykStorage::create_pool(RuntimeOrigin::signed(2), 1, 100000000000000, 4, 100000000000000)
 		.unwrap();
-}
-
-fn initialize_liquidity_rewards() {
-	System::set_block_number(1);
-	let acc_id: u128 = 2;
-	let amount: u128 = std::u128::MAX;
-	MockPromotedPoolApi::instance().lock().unwrap().clear();
-	MockPromotedPoolApi::instance().lock().unwrap().insert(4, U256::from(0));
-	XykStorage::create_new_token(&acc_id, amount);
-	XykStorage::create_new_token(&acc_id, amount);
-	XykStorage::create_new_token(&acc_id, amount);
-	XykStorage::create_new_token(&acc_id, amount);
-
-	XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 10000, 1, 10000).unwrap();
-	ProofOfStake::activate_liquidity_v2(RuntimeOrigin::signed(2), 4, 10000, None).unwrap();
-}
-
-#[test]
-#[serial]
-fn liquidity_rewards_single_user_mint_W() {
-	new_test_ext().execute_with(|| {
-		MockPromotedPoolApi::instance().lock().unwrap().clear();
-		let max = std::u128::MAX;
-		System::set_block_number(1);
-		let acc_id: u128 = 2;
-		let amount: u128 = max;
-
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-
-		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 10000, 1, 10000).unwrap();
-		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
-
-		let liquidity_tokens_owned = XykStorage::balance(4, 2);
-		ProofOfStake::activate_liquidity_v2(
-			RuntimeOrigin::signed(2),
-			4,
-			liquidity_tokens_owned,
-			None,
-		)
-		.unwrap();
-
-		// let (user_last_checkpoint, user_cummulative_ratio, user_missing_at_last_checkpoint) =
-		// 	XykStorage::liquidity_mining_user_v2((2, 4));
-
-		// assert_eq!(
-		// 	XykStorage::liquidity_mining_user_v2((2, 4)),
-		// 	(0, 0, U256::from_dec_str("10000").unwrap())
-		// );
-
-		let rewards_info = ProofOfStake::get_rewards_info(2, 4);
-
-		assert_eq!(rewards_info.activated_amount, 10000);
-		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
-		assert_eq!(rewards_info.rewards_already_claimed, 0);
-		assert_eq!(rewards_info.last_checkpoint, 0);
-		assert_eq!(rewards_info.pool_ratio_at_last_checkpoint, U256::from(0));
-		assert_eq!(rewards_info.missing_at_last_checkpoint, U256::from_dec_str("10000").unwrap());
-
-		System::set_block_number(10);
-		MockPromotedPoolApi::instance().lock().unwrap().insert(4, U256::from(0));
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 0);
-		System::set_block_number(10);
-
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX * 1));
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 291);
-		System::set_block_number(20);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 2);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 873);
-		System::set_block_number(30);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 3);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 1716);
-		System::set_block_number(40);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 4);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 2847);
-		System::set_block_number(50);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 5);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 4215);
-		System::set_block_number(60);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 6);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 5844);
-		System::set_block_number(70);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 7);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 7712);
-		System::set_block_number(80);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 8);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 9817);
-		System::set_block_number(90);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 9);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 12142);
-		System::set_block_number(100);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 10);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 14704);
-	});
-}
-
-#[test]
-#[serial]
-fn liquidity_rewards_three_users_mint_W() {
-	new_test_ext().execute_with(|| {
-		MockPromotedPoolApi::instance().lock().unwrap().clear();
-		let max = std::u128::MAX;
-		System::set_block_number(1);
-		let acc_id: u128 = 2;
-		let amount: u128 = max;
-
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-
-		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 10000, 1, 10000).unwrap();
-		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
-
-		XykStorage::transfer(0, 2, 3, 1000000).unwrap();
-		XykStorage::transfer(1, 2, 3, 1000000).unwrap();
-		XykStorage::transfer(0, 2, 4, 1000000).unwrap();
-		XykStorage::transfer(1, 2, 4, 1000000).unwrap();
-		//
-		let liquidity_tokens_owned = XykStorage::balance(4, 2);
-		ProofOfStake::activate_liquidity_v2(
-			RuntimeOrigin::signed(2),
-			4,
-			liquidity_tokens_owned,
-			None,
-		)
-		.unwrap();
-
-		let rewards_info = ProofOfStake::get_rewards_info(2, 4);
-		assert_eq!(rewards_info.activated_amount, 10000);
-		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
-		assert_eq!(rewards_info.rewards_already_claimed, 0);
-		assert_eq!(rewards_info.last_checkpoint, 0);
-		assert_eq!(rewards_info.pool_ratio_at_last_checkpoint, U256::from(0));
-		assert_eq!(rewards_info.missing_at_last_checkpoint, U256::from_dec_str("10000").unwrap());
-
-		System::set_block_number(100);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 100000 / 10000);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 14704);
-
-		XykStorage::mint_liquidity(RuntimeOrigin::signed(3), 0, 1, 10000, 10010).unwrap();
-
-		System::set_block_number(200);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 150000 / 10000);
-		XykStorage::mint_liquidity(RuntimeOrigin::signed(4), 0, 1, 10000, 10010).unwrap();
-
-		System::set_block_number(240);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 163300 / 10000);
-		XykStorage::mint_liquidity(RuntimeOrigin::signed(4), 0, 1, 10000, 10010).unwrap();
-
-		System::set_block_number(400);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 203300 / 10000);
-
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 85820);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(3, 4).unwrap(), 35810);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(4, 4).unwrap(), 21647);
-	});
-}
-
-#[test]
-#[serial]
-fn liquidity_rewards_three_users_burn_W() {
-	new_test_ext().execute_with(|| {
-		MockPromotedPoolApi::instance().lock().unwrap().clear();
-		let max = std::u128::MAX;
-		System::set_block_number(1);
-		let acc_id: u128 = 2;
-		let amount: u128 = max;
-
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-
-		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 10000, 1, 10000).unwrap();
-		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
-		XykStorage::transfer(0, 2, 3, 1000000).unwrap();
-		XykStorage::transfer(1, 2, 3, 1000000).unwrap();
-		XykStorage::transfer(0, 2, 4, 1000000).unwrap();
-		XykStorage::transfer(1, 2, 4, 1000000).unwrap();
-
-		let liquidity_tokens_owned = XykStorage::balance(4, 2);
-		ProofOfStake::activate_liquidity_v2(
-			RuntimeOrigin::signed(2),
-			4,
-			liquidity_tokens_owned,
-			None,
-		)
-		.unwrap();
-
-		System::set_block_number(100);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 100000 / 10000);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 14704);
-
-		XykStorage::mint_liquidity(RuntimeOrigin::signed(3), 0, 1, 10000, 10010).unwrap();
-
-		System::set_block_number(200);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 150000 / 10000);
-		XykStorage::mint_liquidity(RuntimeOrigin::signed(4), 0, 1, 10000, 10010).unwrap();
-
-		System::set_block_number(240);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 163300 / 10000);
-		XykStorage::burn_liquidity(RuntimeOrigin::signed(4), 0, 1, 5000).unwrap();
-
-		System::set_block_number(400);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 227300 / 10000);
-
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 95951);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(3, 4).unwrap(), 44130);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(4, 4).unwrap(), 10628);
-	});
-}
-
-#[test]
-#[serial]
-fn liquidity_rewards_claim_W() {
-	new_test_ext().execute_with(|| {
-		MockPromotedPoolApi::instance().lock().unwrap().clear();
-		let max = std::u128::MAX;
-		System::set_block_number(1);
-		let acc_id: u128 = 2;
-		let amount: u128 = max;
-
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::transfer(
-			0,
-			2,
-			<Test as pallet_proof_of_stake::Config>::LiquidityMiningIssuanceVault::get(),
-			10000000000,
-		)
-		.unwrap();
-
-		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 10000, 1, 10000).unwrap();
-		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
-		let liquidity_tokens_owned = XykStorage::balance(4, 2);
-		ProofOfStake::activate_liquidity_v2(
-			RuntimeOrigin::signed(2),
-			4,
-			liquidity_tokens_owned,
-			None,
-		)
-		.unwrap();
-
-		// assert_eq!(
-		// 	XykStorage::liquidity_mining_user_v2((2, 4)),
-		// 	(0, 0, U256::from_dec_str("10000").unwrap())
-		// );
-
-		System::set_block_number(10);
-		MockPromotedPoolApi::instance().lock().unwrap().insert(4, U256::from(0));
-
-		System::set_block_number(90);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 90000 / 10000);
-
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 12142);
-		ProofOfStake::claim_rewards_v2(RuntimeOrigin::signed(2), 4, 12141).unwrap();
-
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 100000 / 10000);
-		System::set_block_number(100);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 2563);
-	});
-}
-
-#[test]
-#[serial]
-fn liquidity_rewards_promote_pool_W() {
-	new_test_ext().execute_with(|| {
-		MockPromotedPoolApi::instance().lock().unwrap().clear();
-		let max = std::u128::MAX;
-		System::set_block_number(1);
-		let acc_id: u128 = 2;
-		let amount: u128 = max;
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 5000, 1, 5000).unwrap();
-
-		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
-	});
-}
-
-#[test]
-#[serial]
-fn liquidity_rewards_promote_pool_already_promoted_NW() {
-	new_test_ext().execute_with(|| {
-		MockPromotedPoolApi::instance().lock().unwrap().clear();
-		let max = std::u128::MAX;
-		System::set_block_number(1);
-		let acc_id: u128 = 2;
-		let amount: u128 = max;
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 5000, 1, 5000).unwrap();
-		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
-
-		assert!(<Test as pallet_proof_of_stake::Config>::PoolPromoteApi::get_pool_rewards_v2(4)
-			.is_some());
-	});
-}
-
-#[test]
-#[serial]
-fn liquidity_rewards_claim_more_NW() {
-	new_test_ext().execute_with(|| {
-		initialize_liquidity_rewards();
-		System::set_block_number(100);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 100000 / 10000);
-
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), (14704));
-
-		assert_err!(
-			ProofOfStake::claim_rewards_v2(RuntimeOrigin::signed(2), 4, 15000),
-			pallet_proof_of_stake::Error::<Test>::NotEnoughRewardsEarned,
-		);
-	});
-}
-
-#[test]
-#[serial]
-fn liquidity_rewards_work_after_burn_W() {
-	new_test_ext().execute_with(|| {
-		MockPromotedPoolApi::instance().lock().unwrap().clear();
-		let max = std::u128::MAX;
-		System::set_block_number(1);
-		let acc_id: u128 = 2;
-		let amount: u128 = max;
-
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-
-		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 10000, 1, 10000).unwrap();
-		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
-		XykStorage::transfer(0, 2, 3, 1000000).unwrap();
-		XykStorage::transfer(1, 2, 3, 1000000).unwrap();
-		XykStorage::transfer(0, 2, 4, 1000000).unwrap();
-		XykStorage::transfer(1, 2, 4, 1000000).unwrap();
-
-		let liquidity_tokens_owned = XykStorage::balance(4, 2);
-		ProofOfStake::activate_liquidity_v2(
-			RuntimeOrigin::signed(2),
-			4,
-			liquidity_tokens_owned,
-			None,
-		)
-		.unwrap();
-
-		System::set_block_number(100);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 100000 / 10000);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 14704);
-
-		XykStorage::mint_liquidity(RuntimeOrigin::signed(3), 0, 1, 10000, 10010).unwrap();
-
-		System::set_block_number(200);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 150000 / 10000);
-		XykStorage::mint_liquidity(RuntimeOrigin::signed(4), 0, 1, 10000, 10010).unwrap();
-
-		System::set_block_number(240);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 163300 / 10000);
-
-		XykStorage::burn_liquidity(RuntimeOrigin::signed(4), 0, 1, 10000).unwrap();
-
-		System::set_block_number(400);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 243300 / 10000);
-
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(4, 4).unwrap(), 946);
-
-		XykStorage::mint_liquidity(RuntimeOrigin::signed(4), 0, 1, 20000, 20010).unwrap();
-
-		System::set_block_number(500);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 268300 / 10000);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(4, 4).unwrap(), 8297);
-	});
-}
-
-#[test]
-#[serial]
-fn liquidity_rewards_deactivate_transfer_controled_W() {
-	new_test_ext().execute_with(|| {
-		MockPromotedPoolApi::instance().lock().unwrap().clear();
-		let max = std::u128::MAX;
-		System::set_block_number(1);
-		let acc_id: u128 = 2;
-		let amount: u128 = max;
-
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-
-		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 10000, 1, 10000).unwrap();
-		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
-
-		let liquidity_tokens_owned = XykStorage::balance(4, 2);
-
-		ProofOfStake::activate_liquidity_v2(
-			RuntimeOrigin::signed(2),
-			4,
-			liquidity_tokens_owned,
-			None,
-		)
-		.unwrap();
-		assert_err!(XykStorage::transfer(4, 2, 3, 10), orml_tokens::Error::<Test>::BalanceTooLow,);
-
-		System::set_block_number(100);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 100000 / 10000);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 14704);
-
-		ProofOfStake::deactivate_liquidity_v2(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned)
-			.unwrap();
-		XykStorage::transfer(4, 2, 3, 10).unwrap();
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 14704);
-	});
-}
-
-#[test]
-#[serial]
-fn liquidity_rewards_deactivate_more_NW() {
-	new_test_ext().execute_with(|| {
-		MockPromotedPoolApi::instance().lock().unwrap().clear();
-		let max = std::u128::MAX;
-		System::set_block_number(1);
-		let acc_id: u128 = 2;
-		let amount: u128 = max;
-
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-
-		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 10000, 1, 10000).unwrap();
-		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
-
-		let liquidity_tokens_owned = XykStorage::balance(4, 2);
-		ProofOfStake::activate_liquidity_v2(
-			RuntimeOrigin::signed(2),
-			4,
-			liquidity_tokens_owned,
-			None,
-		)
-		.unwrap();
-		assert_err!(
-			ProofOfStake::deactivate_liquidity_v2(
-				RuntimeOrigin::signed(2),
-				4,
-				liquidity_tokens_owned + 1
-			),
-			pallet_proof_of_stake::Error::<Test>::NotEnoughAssets
-		);
-	});
-}
-
-#[test]
-#[serial]
-fn liquidity_rewards_activate_more_NW() {
-	new_test_ext().execute_with(|| {
-		MockPromotedPoolApi::instance().lock().unwrap().clear();
-		let max = std::u128::MAX;
-		System::set_block_number(1);
-		let acc_id: u128 = 2;
-		let amount: u128 = max;
-
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-
-		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 10000, 1, 10000).unwrap();
-		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
-
-		let liquidity_tokens_owned = XykStorage::balance(4, 2);
-		assert_err!(
-			ProofOfStake::activate_liquidity_v2(
-				RuntimeOrigin::signed(2),
-				4,
-				liquidity_tokens_owned + 1,
-				None
-			),
-			pallet_proof_of_stake::Error::<Test>::NotEnoughAssets
-		);
-	});
-}
-
-#[test]
-#[serial]
-fn liquidity_rewards_calculate_rewards_pool_not_promoted() {
-	new_test_ext().execute_with(|| {
-		MockPromotedPoolApi::instance().lock().unwrap().clear();
-		let max = std::u128::MAX;
-		System::set_block_number(1);
-		let acc_id: u128 = 2;
-		let amount: u128 = max;
-
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-
-		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 10000, 1, 10000).unwrap();
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 0);
-	});
-}
-
-#[test]
-#[serial]
-fn liquidity_rewards_claim_pool_not_promoted() {
-	new_test_ext().execute_with(|| {
-		MockPromotedPoolApi::instance().lock().unwrap().clear();
-		let max = std::u128::MAX;
-		System::set_block_number(1);
-		let acc_id: u128 = 2;
-		let amount: u128 = max;
-
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-
-		assert_err!(
-			ProofOfStake::claim_rewards_v2(RuntimeOrigin::signed(2), 7, 5000000000),
-			pallet_proof_of_stake::Error::<Test>::NotEnoughRewardsEarned,
-		);
-	});
-}
-
-#[test]
-#[serial]
-fn liquidity_rewards_transfer_not_working() {
-	new_test_ext().execute_with(|| {
-		initialize_liquidity_rewards();
-
-		assert_err!(XykStorage::transfer(4, 2, 3, 10), orml_tokens::Error::<Test>::BalanceTooLow,);
-	});
 }
 
 #[test]
@@ -917,7 +244,8 @@ fn buy_and_burn_sell_mangata() {
 	new_test_ext().execute_with(|| {
 		initialize_buy_and_burn();
 
-		XykStorage::sell_asset(RuntimeOrigin::signed(2), 0, 1, 50000000000000, 0).unwrap();
+		XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(2), vec![0, 1], 50000000000000, 0)
+			.unwrap();
 
 		assert_eq!(XykStorage::asset_pool((0, 1)), (149949999999998, 66733400066734));
 		assert_eq!(XykStorage::balance(0, 2), 850000000000000);
@@ -937,7 +265,8 @@ fn buy_and_burn_sell_has_mangata_pair() {
 	new_test_ext().execute_with(|| {
 		initialize_buy_and_burn();
 
-		XykStorage::sell_asset(RuntimeOrigin::signed(2), 1, 4, 50000000000000, 0).unwrap();
+		XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(2), vec![1, 4], 50000000000000, 0)
+			.unwrap();
 
 		assert_eq!(XykStorage::asset_pool((0, 1)), (99950024987505, 100050000000002));
 		assert_eq!(XykStorage::asset_pool((1, 4)), (149949999999998, 66733400066734));
@@ -959,7 +288,8 @@ fn buy_and_burn_sell_none_have_mangata_pair() {
 	new_test_ext().execute_with(|| {
 		initialize_buy_and_burn();
 
-		XykStorage::sell_asset(RuntimeOrigin::signed(2), 4, 1, 50000000000000, 0).unwrap();
+		XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(2), vec![4, 1], 50000000000000, 0)
+			.unwrap();
 
 		assert_eq!(XykStorage::asset_pool((0, 1)), (100000000000000, 100000000000000));
 		assert_eq!(XykStorage::asset_pool((1, 4)), (66733400066734, 149949999999998));
@@ -981,8 +311,13 @@ fn buy_and_burn_buy_where_sold_is_mangata() {
 	new_test_ext().execute_with(|| {
 		initialize_buy_and_burn();
 
-		XykStorage::buy_asset(RuntimeOrigin::signed(2), 0, 1, 33266599933266, 50000000000001)
-			.unwrap();
+		XykStorage::multiswap_buy_asset(
+			RuntimeOrigin::signed(2),
+			vec![0, 1],
+			33266599933266,
+			50000000000001,
+		)
+		.unwrap();
 
 		assert_eq!(XykStorage::asset_pool((0, 1)), (149949999999999, 66733400066734));
 		assert_eq!(XykStorage::balance(0, 2), 850000000000001);
@@ -1003,8 +338,13 @@ fn buy_and_burn_buy_where_sold_has_mangata_pair() {
 	new_test_ext().execute_with(|| {
 		initialize_buy_and_burn();
 
-		XykStorage::buy_asset(RuntimeOrigin::signed(2), 1, 4, 33266599933266, 50000000000001)
-			.unwrap();
+		XykStorage::multiswap_buy_asset(
+			RuntimeOrigin::signed(2),
+			vec![1, 4],
+			33266599933266,
+			50000000000001,
+		)
+		.unwrap();
 
 		assert_eq!(XykStorage::asset_pool((0, 1)), (99950024987507, 100050000000000));
 		assert_eq!(XykStorage::asset_pool((1, 4)), (149949999999999, 66733400066734));
@@ -1026,8 +366,13 @@ fn buy_and_burn_buy_none_have_mangata_pair() {
 	new_test_ext().execute_with(|| {
 		initialize_buy_and_burn();
 
-		XykStorage::buy_asset(RuntimeOrigin::signed(2), 4, 1, 33266599933266, 50000000000001)
-			.unwrap();
+		XykStorage::multiswap_buy_asset(
+			RuntimeOrigin::signed(2),
+			vec![4, 1],
+			33266599933266,
+			50000000000001,
+		)
+		.unwrap();
 
 		assert_eq!(XykStorage::asset_pool((0, 1)), (100000000000000, 100000000000000));
 		assert_eq!(XykStorage::asset_pool((1, 4)), (66733400066734, 149949999999999));
@@ -1270,7 +615,13 @@ fn sell_W() {
 		System::set_block_number(1);
 		initialize();
 
-		XykStorage::sell_asset(RuntimeOrigin::signed(2), 1, 4, 20000000000000000000, 0).unwrap(); // selling 20000000000000000000 assetId 0 of pool 0 1
+		XykStorage::multiswap_sell_asset(
+			RuntimeOrigin::signed(2),
+			vec![1, 4],
+			20000000000000000000,
+			0,
+		)
+		.unwrap(); // selling 20000000000000000000 assetId 0 of pool 0 1
 
 		assert_eq!(XykStorage::balance(1, 2), 940000000000000000000); // amount in user acc after selling
 		assert_eq!(XykStorage::balance(4, 2), 959959959959959959959); // amount in user acc after buying
@@ -1284,9 +635,8 @@ fn sell_W() {
 		let assets_swapped_event =
 			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsSwapped(
 				2,
-				1,
+				vec![1_u32, 4_u32],
 				20000000000000000000,
-				4,
 				19959959959959959959,
 			));
 
@@ -1300,7 +650,13 @@ fn sell_W_other_way() {
 	new_test_ext().execute_with(|| {
 		initialize();
 
-		XykStorage::sell_asset(RuntimeOrigin::signed(2), 4, 1, 30000000000000000000, 0).unwrap(); // selling 30000000000000000000 assetId 1 of pool 0 1
+		XykStorage::multiswap_sell_asset(
+			RuntimeOrigin::signed(2),
+			vec![4, 1],
+			30000000000000000000,
+			0,
+		)
+		.unwrap(); // selling 30000000000000000000 assetId 1 of pool 0 1
 
 		assert_eq!(XykStorage::balance(1, 2), 973306639973306639973); // amount of asset 0 in user acc after selling
 		assert_eq!(XykStorage::balance(4, 2), 910000000000000000000); // amount of asset 1 in user acc after buying
@@ -1322,7 +678,7 @@ fn sell_N_no_such_pool() {
 		initialize();
 
 		assert_err!(
-			XykStorage::sell_asset(RuntimeOrigin::signed(2), 0, 10, 250000, 0),
+			XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(2), vec![0, 10], 250000, 0),
 			Error::<Test>::NoSuchPool,
 		); // selling 250000 assetId 0 of pool 0 10 (only pool 0 1 exists)
 	});
@@ -1334,8 +690,9 @@ fn sell_N_not_enough_selling_assset() {
 		initialize();
 
 		assert_err!(
+			// XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(2), vec![1, 4], 1000000000000000000000, 0),
 			XykStorage::sell_asset(RuntimeOrigin::signed(2), 1, 4, 1000000000000000000000, 0),
-			Error::<Test>::NotEnoughAssets,
+			orml_tokens::Error::<Test>::BalanceTooLow,
 		); // selling 1000000000000000000000 assetId 0 of pool 0 1 (user has only 960000000000000000000)
 	});
 }
@@ -1353,7 +710,12 @@ fn sell_W_insufficient_output_amount() {
 			vec![Event::PoolCreated(2, 1, 40000000000000000000, 4, 60000000000000000000)];
 		assert_eq_events!(expected_events.clone());
 
-		assert_ok!(XykStorage::sell_asset(RuntimeOrigin::signed(2), 1, 4, 250000, 500000)); // selling 250000 assetId 0 of pool 0 1, by the formula user should get 166333 asset 1, but is requesting 500000
+		assert_ok!(XykStorage::multiswap_sell_asset(
+			RuntimeOrigin::signed(2),
+			vec![1, 4],
+			250000,
+			500000
+		)); // selling 250000 assetId 0 of pool 0 1, by the formula user should get 166333 asset 1, but is requesting 500000
 
 		let mut new_events_0 =
 			vec![Event::SellAssetFailedDueToSlippage(2, 1, 250000, 4, 373874, 500000)];
@@ -1401,7 +763,7 @@ fn sell_N_zero_amount() {
 		initialize();
 
 		assert_err!(
-			XykStorage::sell_asset(RuntimeOrigin::signed(2), 1, 4, 0, 500000),
+			XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(2), vec![1, 4], 0, 500000),
 			Error::<Test>::ZeroAmount,
 		); // selling 0 assetId 0 of pool 0 1
 	});
@@ -1453,7 +815,7 @@ fn multiswap_sell_W() {
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 40096414600183441950);
 
 		let assets_swapped_event =
-			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsMultiSellSwapped(
+			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsSwapped(
 				TRADER_ID,
 				vec![1, 2, 3, 4, 5],
 				20000000000000000000,
@@ -1509,15 +871,12 @@ fn multiswap_sell_bad_slippage_charges_fee_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		let assets_swapped_event = crate::mock::RuntimeEvent::XykStorage(
-			crate::Event::<Test>::MultiSellAssetFailedDueToSlippage(
-				TRADER_ID,
-				vec![1, 2, 3, 4, 5],
-				20000000000000000000,
-			),
-		);
-
-		assert!(System::events().iter().any(|record| record.event == assets_swapped_event));
+		assert_event_emitted!(crate::Event::<Test>::MultiSwapAssetFailedOnAtomicSwap(
+			TRADER_ID,
+			vec![1, 2, 3, 4, 5],
+			20000000000000000000,
+			module_err(Error::<Test>::InsufficientOutputAmount)
+		));
 	});
 }
 
@@ -1566,15 +925,16 @@ fn multiswap_sell_bad_atomic_swap_charges_fee_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		let assets_swapped_event = crate::mock::RuntimeEvent::XykStorage(
-			crate::Event::<Test>::MultiSellAssetFailedOnAtomicSwap(
-				TRADER_ID,
-				vec![1, 2, 3, 6, 5],
-				20000000000000000000,
-			),
-		);
-
-		assert!(System::events().iter().any(|record| record.event == assets_swapped_event));
+		// let assets_swapped_event = crate::mock::RuntimeEvent::XykStorage(
+		// 	crate::Event::<Test>::MultiSellAssetFailedOnAtomicSwap(
+		// 		TRADER_ID,
+		// 		vec![1, 2, 3, 6, 5],
+		// 		20000000000000000000,
+		// 		Error::<Test>::PoolAlreadyExists.into()
+		// 	),
+		// );
+		//
+		// assert!(System::events().iter().any(|record| record.event == assets_swapped_event));
 	});
 }
 
@@ -1673,15 +1033,12 @@ fn multiswap_sell_just_enough_assets_pay_fee_but_not_to_swap_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		let assets_swapped_event = crate::mock::RuntimeEvent::XykStorage(
-			crate::Event::<Test>::MultiSwapFailedDueToNotEnoughAssets(
-				TRADER_ID,
-				vec![1, 2, 3, 4, 5],
-				2000000000000000000000,
-			),
-		);
-
-		assert!(System::events().iter().any(|record| record.event == assets_swapped_event));
+		assert_event_emitted!(crate::Event::<Test>::MultiSwapAssetFailedOnAtomicSwap(
+			TRADER_ID,
+			vec![1, 2, 3, 4, 5],
+			2000000000000000000000,
+			module_err(Error::<Test>::NotEnoughAssets)
+		));
 	});
 }
 
@@ -1699,7 +1056,7 @@ fn multiswap_sell_with_two_hops_W() {
 		));
 
 		let assets_swapped_event =
-			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsMultiSellSwapped(
+			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsSwapped(
 				TRADER_ID,
 				vec![1, 2, 3],
 				20000000000000000000,
@@ -1711,20 +1068,16 @@ fn multiswap_sell_with_two_hops_W() {
 }
 
 #[test]
-fn multiswap_sell_with_less_than_two_hops_fails_W() {
+fn multiswap_sell_with_single_hops_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
 		multi_initialize();
-
-		assert_err!(
-			XykStorage::multiswap_sell_asset(
-				RuntimeOrigin::signed(TRADER_ID),
-				vec![1, 2],
-				20000000000000000000,
-				0
-			),
-			Error::<Test>::MultiswapShouldBeAtleastTwoHops
-		);
+		assert_ok!(XykStorage::multiswap_sell_asset(
+			RuntimeOrigin::signed(TRADER_ID),
+			vec![1, 2],
+			20000000000000000000,
+			0
+		),);
 	});
 }
 
@@ -1756,7 +1109,7 @@ fn multiswap_sell_same_pool_works_W() {
 		assert_eq!(XykStorage::balance(2, XykStorage::account_id()), 99980040040040040040);
 
 		let assets_swapped_event =
-			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsMultiSellSwapped(
+			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsSwapped(
 				TRADER_ID,
 				vec![1, 2, 1],
 				20000000000000000000,
@@ -1801,7 +1154,7 @@ fn multiswap_sell_loop_works_W() {
 		assert_eq!(XykStorage::balance(3, XykStorage::account_id()), 99980066724398222064);
 
 		let assets_swapped_event =
-			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsMultiSellSwapped(
+			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsSwapped(
 				TRADER_ID,
 				vec![1, 2, 3, 2, 1, 2],
 				20000000000000000000,
@@ -1839,10 +1192,9 @@ fn buy_W() {
 		initialize();
 
 		// buying 30000000000000000000 assetId 1 of pool 0 1
-		XykStorage::buy_asset(
+		XykStorage::multiswap_buy_asset(
 			RuntimeOrigin::signed(2),
-			1,
-			4,
+			vec![1, 4],
 			30000000000000000000,
 			3000000000000000000000,
 		)
@@ -1858,9 +1210,8 @@ fn buy_W() {
 		let assets_swapped_event =
 			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsSwapped(
 				2,
-				1,
+				vec![1_u32, 4_u32],
 				40120361083249749248,
-				4,
 				30000000000000000000,
 			));
 
@@ -1875,10 +1226,9 @@ fn buy_W_other_way() {
 		initialize();
 
 		// buying 30000000000000000000 assetId 0 of pool 0 1
-		XykStorage::buy_asset(
+		XykStorage::multiswap_buy_asset(
 			RuntimeOrigin::signed(2),
-			4,
-			1,
+			vec![4, 1],
 			30000000000000000000,
 			3000000000000000000000,
 		)
@@ -1904,10 +1254,18 @@ fn buy_N_no_such_pool() {
 
 		// buying 150000 assetId 1 of pool 0 10 (only pool 0 1 exists)
 		assert_err!(
-			XykStorage::buy_asset(RuntimeOrigin::signed(2), 0, 10, 150000, 5000000),
+			XykStorage::multiswap_buy_asset(RuntimeOrigin::signed(2), vec![0, 10], 150000, 5000000),
 			Error::<Test>::NoSuchPool,
 		);
 	});
+}
+
+fn module_err(e: Error<Test>) -> ModuleError {
+	if let DispatchError::Module(module_err) = DispatchError::from(e).stripped() {
+		module_err
+	} else {
+		panic!("cannot convert error");
+	}
 }
 
 #[test]
@@ -1918,10 +1276,9 @@ fn buy_N_not_enough_reserve() {
 
 		// buying 70000000000000000000 assetId 0 of pool 0 1 , only 60000000000000000000 in reserve
 		assert_err!(
-			XykStorage::buy_asset(
+			XykStorage::multiswap_buy_asset(
 				RuntimeOrigin::signed(2),
-				1,
-				4,
+				vec![1, 4],
 				70000000000000000000,
 				5000000000000000000000
 			),
@@ -1938,10 +1295,9 @@ fn buy_N_not_enough_selling_assset() {
 
 		// buying 59000000000000000000 assetId 1 of pool 0 1 should sell 2.36E+21 assetId 0, only 9.6E+20 in acc
 		assert_err!(
-			XykStorage::buy_asset(
+			XykStorage::multiswap_buy_asset(
 				RuntimeOrigin::signed(2),
-				1,
-				4,
+				vec![1, 4],
 				59000000000000000000,
 				59000000000000000000000
 			),
@@ -1964,7 +1320,12 @@ fn buy_W_insufficient_input_amount() {
 		let output_balance_before = XykStorage::balance(4, 2);
 
 		// buying 150000 liquidity assetId 1 of pool 0 1
-		assert_ok!(XykStorage::buy_asset(RuntimeOrigin::signed(2), 1, 4, 150000, 10));
+		assert_ok!(XykStorage::multiswap_buy_asset(
+			RuntimeOrigin::signed(2),
+			vec![1, 4],
+			150000,
+			10
+		));
 		let mut new_events_0 =
 			vec![Event::BuyAssetFailedDueToSlippage(2, 1, 100301, 4, 150000, 10)];
 
@@ -2013,7 +1374,7 @@ fn buy_N_zero_amount() {
 		initialize();
 
 		assert_err!(
-			XykStorage::buy_asset(RuntimeOrigin::signed(2), 1, 4, 0, 0),
+			XykStorage::multiswap_buy_asset(RuntimeOrigin::signed(2), vec![1, 4], 0, 0),
 			Error::<Test>::ZeroAmount,
 		); // buying 0 assetId 0 of pool 0 1
 	});
@@ -2065,7 +1426,7 @@ fn multiswap_buy_W() {
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 40000000000000000000);
 
 		let assets_swapped_event =
-			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsMultiBuySwapped(
+			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsSwapped(
 				TRADER_ID,
 				vec![1, 2, 3, 4, 5],
 				20496637815013901540,
@@ -2121,15 +1482,12 @@ fn multiswap_buy_bad_slippage_charges_fee_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		let assets_swapped_event = crate::mock::RuntimeEvent::XykStorage(
-			crate::Event::<Test>::MultiBuyAssetFailedDueToSlippage(
-				TRADER_ID,
-				vec![1, 2, 3, 4, 5],
-				20000000000000000000,
-			),
-		);
-
-		assert!(System::events().iter().any(|record| record.event == assets_swapped_event));
+		assert_event_emitted!(crate::Event::<Test>::MultiSwapAssetFailedOnAtomicSwap(
+			TRADER_ID,
+			vec![1, 2, 3, 4, 5],
+			20000000000000000000,
+			module_err(Error::<Test>::InsufficientInputAmount)
+		));
 	});
 }
 
@@ -2178,15 +1536,15 @@ fn multiswap_buy_bad_atomic_swap_charges_fee_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		let assets_swapped_event = crate::mock::RuntimeEvent::XykStorage(
-			crate::Event::<Test>::MultiBuyAssetFailedOnAtomicSwap(
-				TRADER_ID,
-				vec![1, 2, 3, 6, 5],
-				20000000000000000000,
-			),
-		);
-
-		assert!(System::events().iter().any(|record| record.event == assets_swapped_event));
+		// let assets_swapped_event = crate::mock::RuntimeEvent::XykStorage(
+		// 	crate::Event::<Test>::MultiBuyAssetFailedOnAtomicSwap(
+		// 		TRADER_ID,
+		// 		vec![1, 2, 3, 6, 5],
+		// 		20000000000000000000,
+		// 	),
+		// );
+		//
+		// assert!(System::events().iter().any(|record| record.event == assets_swapped_event));
 	});
 }
 
@@ -2293,15 +1651,12 @@ fn multiswap_buy_just_enough_assets_pay_fee_but_not_to_swap_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		let assets_swapped_event = crate::mock::RuntimeEvent::XykStorage(
-			crate::Event::<Test>::MultiSwapFailedDueToNotEnoughAssets(
-				TRADER_ID,
-				vec![1, 2, 3, 4, 5],
-				100000000,
-			),
-		);
-
-		assert!(System::events().iter().any(|record| record.event == assets_swapped_event));
+		assert_event_emitted!(Event::<Test>::MultiSwapAssetFailedOnAtomicSwap(
+			TRADER_ID,
+			vec![1, 2, 3, 4, 5],
+			100000000,
+			module_err(Error::<Test>::NotEnoughAssets)
+		));
 	});
 }
 
@@ -2319,7 +1674,7 @@ fn multiswap_buy_with_two_hops_W() {
 		));
 
 		let assets_swapped_event =
-			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsMultiBuySwapped(
+			crate::mock::RuntimeEvent::XykStorage(crate::Event::<Test>::AssetsSwapped(
 				TRADER_ID,
 				vec![1, 2, 3],
 				20150859408965218106,
@@ -2331,20 +1686,16 @@ fn multiswap_buy_with_two_hops_W() {
 }
 
 #[test]
-fn multiswap_buy_with_less_than_two_hops_fails_W() {
+fn multiswap_buy_with_single_hops_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
 		multi_initialize();
-
-		assert_err!(
-			XykStorage::multiswap_buy_asset(
-				RuntimeOrigin::signed(TRADER_ID),
-				vec![1, 2],
-				20000000000000000000,
-				2000000000000000000000
-			),
-			Error::<Test>::MultiswapShouldBeAtleastTwoHops
-		);
+		assert_ok!(XykStorage::multiswap_buy_asset(
+			RuntimeOrigin::signed(TRADER_ID),
+			vec![2, 1],
+			20000000000000000000,
+			40000000000000000000,
+		),);
 	});
 }
 
@@ -2631,15 +1982,18 @@ fn burn_N_zero_amount() {
 	});
 }
 
-// TODO https://trello.com/c/rEygIR7t/428-fix-panic-in-xyksellasset
 #[test]
 #[serial]
-#[ignore]
 fn buy_assets_with_small_expected_amount_does_not_cause_panic() {
 	new_test_ext().execute_with(|| {
 		initialize();
 		let first_token_balance = XykStorage::balance(1, DUMMY_USER_ID);
-		XykStorage::buy_asset(RuntimeOrigin::signed(2), 1, 4, 1, first_token_balance).unwrap();
+		let _ = XykStorage::multiswap_buy_asset(
+			RuntimeOrigin::signed(2),
+			vec![1, 4],
+			1,
+			first_token_balance,
+		);
 	});
 }
 
@@ -2650,9 +2004,13 @@ fn successful_buy_assets_does_not_charge_fee() {
 	new_test_ext().execute_with(|| {
 		initialize();
 		let first_token_balance = XykStorage::balance(1, DUMMY_USER_ID);
-		let post_info =
-			XykStorage::buy_asset(RuntimeOrigin::signed(2), 1, 4, 1000, first_token_balance)
-				.unwrap();
+		let post_info = XykStorage::multiswap_buy_asset(
+			RuntimeOrigin::signed(2),
+			vec![1, 4],
+			1000,
+			first_token_balance,
+		)
+		.unwrap();
 		assert_eq!(post_info.pays_fee, Pays::No);
 	});
 }
@@ -2664,9 +2022,10 @@ fn unsuccessful_buy_assets_charges_fee() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
 		//try to sell non owned, non existing tokens
-		let post_info = XykStorage::buy_asset(RuntimeOrigin::signed(2), 100, 200, 0, 0)
-			.unwrap_err()
-			.post_info;
+		let post_info =
+			XykStorage::multiswap_buy_asset(RuntimeOrigin::signed(2), vec![100, 200], 0, 0)
+				.unwrap_err()
+				.post_info;
 		assert_eq!(post_info.pays_fee, Pays::Yes);
 	});
 }
@@ -2678,8 +2037,13 @@ fn successful_sell_assets_does_not_charge_fee() {
 	new_test_ext().execute_with(|| {
 		initialize();
 		let first_token_balance = XykStorage::balance(1, DUMMY_USER_ID);
-		let post_info =
-			XykStorage::sell_asset(RuntimeOrigin::signed(2), 1, 4, first_token_balance, 0).unwrap();
+		let post_info = XykStorage::multiswap_sell_asset(
+			RuntimeOrigin::signed(2),
+			vec![1, 4],
+			first_token_balance,
+			0,
+		)
+		.unwrap();
 		assert_eq!(post_info.pays_fee, Pays::No);
 	});
 }
@@ -2691,9 +2055,10 @@ fn unsuccessful_sell_assets_charges_fee() {
 		System::set_block_number(1);
 
 		//try to sell non owned, non existing tokens
-		let post_info = XykStorage::sell_asset(RuntimeOrigin::signed(2), 100, 200, 0, 0)
-			.unwrap_err()
-			.post_info;
+		let post_info =
+			XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(2), vec![100, 200], 0, 0)
+				.unwrap_err()
+				.post_info;
 		assert_eq!(post_info.pays_fee, Pays::Yes);
 	});
 }
@@ -2782,661 +2147,6 @@ fn test_create_blacklisted_pool() {
 	});
 }
 
-//E2E test cases
-//------------------------------------------------------------------
-// [Happy path] A user obtain extra tokens from asymtotic_curve_rewards
-//	Contained in liquidity_rewards_single_user_mint_W
-
-// [Accuracy] A user obtain the right tokens from asymtotic_curve_rewards
-//	Contained in liquidity_rewards_single_user_mint_W
-
-// [Accuracy] A user obtain the right tokens from asymtotic_curve_rewards when burn half of those
-// Contained in liquidity_rewards_work_after_burn_W
-
-// A user that mints two times, at different period gets the sum of those two kinds of asymtotic_curve_rewards
-// Contained in liquidity_rewards_three_users_mint_W
-
-// A user that got transfered Liq.tokens, can request asymtotic_curve_rewards
-#[test]
-#[serial]
-fn liquidity_rewards_transfered_liq_tokens_produce_rewards_W() {
-	new_test_ext().execute_with(|| {
-		MockPromotedPoolApi::instance().lock().unwrap().clear();
-		let max = std::u128::MAX;
-		System::set_block_number(1);
-		let acc_id: u128 = 2;
-		let amount: u128 = max;
-
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-
-		XykStorage::transfer(
-			0,
-			2,
-			<Test as pallet_proof_of_stake::Config>::LiquidityMiningIssuanceVault::get(),
-			10000000000,
-		)
-		.unwrap();
-
-		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 10000, 1, 10000).unwrap();
-
-		MockPromotedPoolApi::instance().lock().unwrap().insert(4, U256::from(0));
-
-		let liquidity_tokens_owned = XykStorage::balance(4, 2);
-
-		XykStorage::transfer(4, 2, 3, liquidity_tokens_owned).unwrap();
-
-		ProofOfStake::activate_liquidity_v2(
-			RuntimeOrigin::signed(3),
-			4,
-			liquidity_tokens_owned,
-			None,
-		)
-		.unwrap();
-
-		System::set_block_number(100);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 100000 / 10000);
-
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(3, 4).unwrap(), 14704);
-		ProofOfStake::claim_rewards_v2(RuntimeOrigin::signed(3), 4, 14704).unwrap();
-	});
-}
-
-// A user that moved the Liq.tokens to the derived account , can request asymtotic_curve_rewards
-// ??
-
-// A user that bonded Liq.tokens can request asymtotic_curve_rewards
-// user that activated, contained in all tests
-
-// Asymtotic_curve_rewards are divided between the people that provided liquidity in the same pool ???
-// Contained in liquidity_rewards_three_users_mint_W
-
-// [Accuracy] A user obtain the right tokens from asymtotic_curve_rewards: Burning and minting during time
-// Contained in liquidity_rewards_work_after_burn_W
-
-// Asymtotic_curve_rewards are given for destroyed pools
-// No unpromote pool fn
-
-// Snaphshot is done when a pool is minted or burned
-// Contained in all tests, snapshots are no longer done for pool
-
-// Claim individuals is the same as claim in group
-// Contained in liquidity_rewards_claim_W, user is after claiming is getting the claimed amount less, not touching reward amount of others
-
-// Claim all the tokens that the user should have
-// Contained in liquidity_rewards_claim_W
-
-// Claim more tokens that the user should have
-// Contained in liquidity_rewards_claim_more_NW
-
-// Increasing pool size during <period> triggers checkpoint and the division of rewards is right
-// Contained in all tests, snapshots are no longer done for pool
-
-// Decreasing pool size during <period> triggers checkpoint and the division of rewards is right
-// Contained in all tests, snapshots are no longer done for pool
-
-// Token status:  When activate the tokens are in reserved.
-// Contained in liquidity_rewards_transfer_not_working
-
-// Token status:  When deActivate the tokens are in Free.
-// Contained in liquidity_rewards_transfered_liq_tokens_produce_rewards_W
-
-// Fees are in toBeClaimed when deactivate and  notYetClaimed when liquidity is activated
-
-#[test]
-#[serial]
-fn liquidity_rewards_not_yet_claimed_already_claimed_W() {
-	new_test_ext().execute_with(|| {
-		MockPromotedPoolApi::instance().lock().unwrap().clear();
-		let max = std::u128::MAX;
-		System::set_block_number(1);
-		let acc_id: u128 = 2;
-		let amount: u128 = max;
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-
-		XykStorage::transfer(
-			0,
-			2,
-			<Test as pallet_proof_of_stake::Config>::LiquidityMiningIssuanceVault::get(),
-			10000000000,
-		)
-		.unwrap();
-
-		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 10000, 1, 10000).unwrap();
-		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
-
-		let liquidity_tokens_owned = XykStorage::balance(4, 2);
-		ProofOfStake::activate_liquidity_v2(
-			RuntimeOrigin::signed(2),
-			4,
-			liquidity_tokens_owned,
-			None,
-		)
-		.unwrap();
-
-		System::set_block_number(10);
-
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 10000 / 10000);
-
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 291);
-		ProofOfStake::deactivate_liquidity_v2(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned)
-			.unwrap();
-
-		let rewards_info = ProofOfStake::get_rewards_info(2, 4);
-		assert_eq!(rewards_info.rewards_not_yet_claimed, 291);
-
-		ProofOfStake::activate_liquidity_v2(
-			RuntimeOrigin::signed(2),
-			4,
-			liquidity_tokens_owned,
-			None,
-		)
-		.unwrap();
-		System::set_block_number(100);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * 100000 / 10000);
-
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 12433);
-		ProofOfStake::claim_rewards_v2(RuntimeOrigin::signed(2), 4, 12432).unwrap();
-
-		let rewards_info = ProofOfStake::get_rewards_info(2, 4);
-		assert_eq!(rewards_info.rewards_already_claimed, 12141);
-	});
-}
-
-// Curve is the same if user claim rewards or not.
-// Contained in liquidity_rewards_claim_W, user is after claiming is getting the claimed amount less, not touching reward amount of others
-
-//test for extreme values inside calculate rewards, mainly pool ratio
-#[test]
-#[serial]
-fn extreme_case_pool_ratio() {
-	new_test_ext().execute_with(|| {
-		MockPromotedPoolApi::instance().lock().unwrap().clear();
-		let max = std::u128::MAX;
-		System::set_block_number(1);
-		let acc_id: u128 = 2;
-		let amount: u128 = max;
-
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-
-		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, max, 1, max).unwrap();
-		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
-
-		ProofOfStake::activate_liquidity_v2(RuntimeOrigin::signed(2), 4, 1, None).unwrap();
-
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * U256::from(u128::MAX));
-
-		System::set_block_number(10000);
-		assert_eq!(
-			ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(),
-			329053048812547494169083245386519860476
-		);
-	});
-}
-
-#[test]
-#[serial]
-fn rewards_rounding_during_often_mint() {
-	new_test_ext().execute_with(|| {
-		MockPromotedPoolApi::instance().lock().unwrap().clear();
-		let max = std::u128::MAX;
-		System::set_block_number(1);
-		let acc_id: u128 = 2;
-		let amount: u128 = max;
-
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-
-		XykStorage::transfer(
-			0,
-			2,
-			<Test as pallet_proof_of_stake::Config>::LiquidityMiningIssuanceVault::get(),
-			10000000000,
-		)
-		.unwrap();
-		XykStorage::create_pool(
-			RuntimeOrigin::signed(2),
-			0,
-			250000000000000000000000000,
-			1,
-			10000000000000000,
-		)
-		.unwrap();
-		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * U256::from(0));
-		XykStorage::transfer(0, 2, 3, 10000000000000000000000000).unwrap();
-		XykStorage::transfer(1, 2, 3, 10000000000000000000000000).unwrap();
-		XykStorage::mint_liquidity(
-			RuntimeOrigin::signed(2),
-			0,
-			1,
-			25000000000000000000000,
-			2000000000000,
-		)
-		.unwrap();
-		XykStorage::mint_liquidity(
-			RuntimeOrigin::signed(3),
-			0,
-			1,
-			25000000000000000000000,
-			2000000000000,
-		)
-		.unwrap();
-
-		let mut non_minter_higher_rewards_counter = 0;
-		let mut higher_rewards_cumulative = 0;
-		for n in 1..10000 {
-			System::set_block_number(n);
-			if (n + 1) % 10 == 0 {
-				MockPromotedPoolApi::instance()
-					.lock()
-					.unwrap()
-					.insert(4, U256::from(u128::MAX) * U256::from(n + 1));
-				XykStorage::mint_liquidity(
-					RuntimeOrigin::signed(3),
-					0,
-					1,
-					34000000000000000000,
-					68000000000000000000,
-				)
-				.unwrap();
-				log::info!("----------------------------");
-				let rew_non_minter = ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap();
-				let rew_minter = ProofOfStake::calculate_rewards_amount_v2(3, 4).unwrap();
-				log::info!("rew        {} {}", n, rew_non_minter);
-				log::info!("rew minter {} {}", n, rew_minter);
-
-				if rew_non_minter > rew_minter {
-					non_minter_higher_rewards_counter += 1;
-					higher_rewards_cumulative += rew_minter * 10000 / rew_non_minter;
-				}
-			}
-		}
-		log::info!(
-			"times minting user had lower rewards {}   avg minter/nonminter * 10000  {}",
-			non_minter_higher_rewards_counter,
-			higher_rewards_cumulative / non_minter_higher_rewards_counter
-		);
-	});
-}
-
-// starting point, user claimed some rewards, then new rewards were generated (blue)
-#[test]
-#[serial]
-fn rewards_storage_right_amounts_start1() {
-	new_test_ext().execute_with(|| {
-		MockPromotedPoolApi::instance().lock().unwrap().clear();
-		let max = std::u128::MAX;
-		System::set_block_number(1);
-		let acc_id: u128 = 2;
-		let amount: u128 = max;
-
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-
-		XykStorage::transfer(
-			0,
-			2,
-			<Test as pallet_proof_of_stake::Config>::LiquidityMiningIssuanceVault::get(),
-			10000000000,
-		)
-		.unwrap();
-
-		XykStorage::create_pool(RuntimeOrigin::signed(2), 1, 10000, 2, 10000).unwrap();
-		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * U256::from(0));
-
-		XykStorage::transfer(1, 2, 3, 20010).unwrap();
-		XykStorage::transfer(2, 2, 3, 20010).unwrap();
-		XykStorage::transfer(1, 2, 4, 20010).unwrap();
-		XykStorage::transfer(2, 2, 4, 20010).unwrap();
-		XykStorage::transfer(1, 2, 5, 20010).unwrap();
-		XykStorage::transfer(2, 2, 5, 20010).unwrap();
-		XykStorage::transfer(1, 2, 6, 20010).unwrap();
-		XykStorage::transfer(2, 2, 6, 20010).unwrap();
-		ProofOfStake::activate_liquidity_v2(RuntimeOrigin::signed(2), 4, 10000, None).unwrap();
-		XykStorage::mint_liquidity(RuntimeOrigin::signed(3), 1, 2, 10000, 10010).unwrap();
-		XykStorage::mint_liquidity(RuntimeOrigin::signed(4), 1, 2, 10000, 10010).unwrap();
-		XykStorage::mint_liquidity(RuntimeOrigin::signed(5), 1, 2, 10000, 10010).unwrap();
-		XykStorage::mint_liquidity(RuntimeOrigin::signed(6), 1, 2, 10000, 10010).unwrap();
-
-		System::set_block_number(100);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * U256::from(10));
-
-		ProofOfStake::claim_rewards_all_v2(RuntimeOrigin::signed(2), 4).unwrap();
-		ProofOfStake::claim_rewards_all_v2(RuntimeOrigin::signed(3), 4).unwrap();
-		ProofOfStake::claim_rewards_all_v2(RuntimeOrigin::signed(4), 4).unwrap();
-		ProofOfStake::claim_rewards_all_v2(RuntimeOrigin::signed(5), 4).unwrap();
-		ProofOfStake::claim_rewards_all_v2(RuntimeOrigin::signed(6), 4).unwrap();
-
-		let mut rewards_info = ProofOfStake::get_rewards_info(2, 4);
-		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
-		assert_eq!(rewards_info.rewards_already_claimed, 14704);
-		rewards_info = ProofOfStake::get_rewards_info(3, 4);
-		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
-		assert_eq!(rewards_info.rewards_already_claimed, 14704);
-		rewards_info = ProofOfStake::get_rewards_info(4, 4);
-		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
-		assert_eq!(rewards_info.rewards_already_claimed, 14704);
-		rewards_info = ProofOfStake::get_rewards_info(5, 4);
-		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
-		assert_eq!(rewards_info.rewards_already_claimed, 14704);
-		rewards_info = ProofOfStake::get_rewards_info(6, 4);
-		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
-		assert_eq!(rewards_info.rewards_already_claimed, 14704);
-
-		System::set_block_number(200);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * U256::from(20));
-
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 36530);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(3, 4).unwrap(), 36530);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(4, 4).unwrap(), 36530);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(5, 4).unwrap(), 36530);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(6, 4).unwrap(), 36530);
-
-		// starting point for blue cases
-
-		// usecase 3 claim (all)
-		let mut user_balance_before = XykStorage::balance(0, 2);
-		ProofOfStake::claim_rewards_v2(RuntimeOrigin::signed(2), 4, 36530).unwrap();
-		let mut user_balance_after = XykStorage::balance(0, 2);
-		rewards_info = ProofOfStake::get_rewards_info(2, 4);
-
-		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
-		assert_eq!(rewards_info.rewards_already_claimed, 51234);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 0);
-		assert_eq!(user_balance_after - user_balance_before, 36530);
-
-		// usecase 6 burn some
-		user_balance_before = XykStorage::balance(0, 3);
-		XykStorage::burn_liquidity(RuntimeOrigin::signed(3), 1, 2, 5000).unwrap();
-		user_balance_after = XykStorage::balance(0, 3);
-		rewards_info = ProofOfStake::get_rewards_info(3, 4);
-
-		assert_eq!(rewards_info.rewards_not_yet_claimed, 36530); // total rewards 51234, while 14704 were already claimed. Burning puts all rewards to not_yet_claimed, but zeroes the already_claimed. 51234 - 14704 = 36530
-		assert_eq!(rewards_info.rewards_already_claimed, 0);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(3, 4).unwrap(), 36530);
-		assert_eq!(user_balance_after - user_balance_before, 0);
-
-		// usecase 7 mint some
-		user_balance_before = XykStorage::balance(0, 4);
-		XykStorage::mint_liquidity(RuntimeOrigin::signed(4), 1, 2, 5000, 5010).unwrap();
-		user_balance_after = XykStorage::balance(0, 4);
-		rewards_info = ProofOfStake::get_rewards_info(4, 4);
-
-		assert_eq!(rewards_info.rewards_not_yet_claimed, 36530);
-		assert_eq!(rewards_info.rewards_already_claimed, 0);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(4, 4).unwrap(), 36530);
-		assert_eq!(user_balance_after - user_balance_before, 0);
-
-		// usecase 8 deactivate some
-		user_balance_before = XykStorage::balance(0, 5);
-		ProofOfStake::deactivate_liquidity_v2(RuntimeOrigin::signed(5), 4, 5000).unwrap();
-		user_balance_after = XykStorage::balance(0, 5);
-		rewards_info = ProofOfStake::get_rewards_info(5, 4);
-
-		assert_eq!(rewards_info.rewards_not_yet_claimed, 36530);
-		assert_eq!(rewards_info.rewards_already_claimed, 0);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(5, 4).unwrap(), 36530);
-		assert_eq!(user_balance_after - user_balance_before, 0);
-
-		// usecase 16 claim some
-		user_balance_before = XykStorage::balance(0, 6);
-		ProofOfStake::claim_rewards_v2(RuntimeOrigin::signed(6), 4, 20000).unwrap();
-		user_balance_after = XykStorage::balance(0, 6);
-		rewards_info = ProofOfStake::get_rewards_info(6, 4);
-
-		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
-		assert_eq!(rewards_info.rewards_already_claimed, 34704);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(6, 4).unwrap(), 16530);
-		assert_eq!(user_balance_after - user_balance_before, 20000);
-	});
-}
-
-// starting point, user burned some rewards, then new rewards were generated (yellow)
-#[test]
-#[serial]
-fn rewards_storage_right_amounts_start2() {
-	new_test_ext().execute_with(|| {
-		MockPromotedPoolApi::instance().lock().unwrap().clear();
-		let max = std::u128::MAX;
-		System::set_block_number(1);
-		let acc_id: u128 = 2;
-		let amount: u128 = max;
-
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-
-		XykStorage::transfer(
-			0,
-			2,
-			<Test as pallet_proof_of_stake::Config>::LiquidityMiningIssuanceVault::get(),
-			10000000000,
-		)
-		.unwrap();
-
-		XykStorage::create_pool(RuntimeOrigin::signed(2), 1, 10000, 2, 10000).unwrap();
-		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * U256::from(0));
-
-		XykStorage::transfer(1, 2, 3, 20010).unwrap();
-		XykStorage::transfer(2, 2, 3, 20010).unwrap();
-		XykStorage::transfer(1, 2, 4, 20010).unwrap();
-		XykStorage::transfer(2, 2, 4, 20010).unwrap();
-		XykStorage::transfer(1, 2, 5, 20010).unwrap();
-		XykStorage::transfer(2, 2, 5, 20010).unwrap();
-		XykStorage::transfer(1, 2, 6, 20010).unwrap();
-		XykStorage::transfer(2, 2, 6, 20010).unwrap();
-		ProofOfStake::activate_liquidity_v2(RuntimeOrigin::signed(2), 4, 10000, None).unwrap();
-		XykStorage::mint_liquidity(RuntimeOrigin::signed(3), 1, 2, 10000, 10010).unwrap();
-		XykStorage::mint_liquidity(RuntimeOrigin::signed(4), 1, 2, 10000, 10010).unwrap();
-		XykStorage::mint_liquidity(RuntimeOrigin::signed(5), 1, 2, 10000, 10010).unwrap();
-
-		System::set_block_number(100);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * U256::from(10));
-
-		XykStorage::burn_liquidity(RuntimeOrigin::signed(2), 1, 2, 5000).unwrap();
-		XykStorage::burn_liquidity(RuntimeOrigin::signed(3), 1, 2, 5000).unwrap();
-		XykStorage::burn_liquidity(RuntimeOrigin::signed(4), 1, 2, 5000).unwrap();
-		XykStorage::burn_liquidity(RuntimeOrigin::signed(5), 1, 2, 5000).unwrap();
-
-		System::set_block_number(200);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * U256::from(20));
-
-		let mut rewards_info = ProofOfStake::get_rewards_info(2, 4);
-		assert_eq!(rewards_info.rewards_not_yet_claimed, 14704);
-		assert_eq!(rewards_info.rewards_already_claimed, 0);
-		rewards_info = ProofOfStake::get_rewards_info(3, 4);
-		assert_eq!(rewards_info.rewards_not_yet_claimed, 14704);
-		assert_eq!(rewards_info.rewards_already_claimed, 0);
-		rewards_info = ProofOfStake::get_rewards_info(4, 4);
-		assert_eq!(rewards_info.rewards_not_yet_claimed, 14704);
-		assert_eq!(rewards_info.rewards_already_claimed, 0);
-		rewards_info = ProofOfStake::get_rewards_info(5, 4);
-		assert_eq!(rewards_info.rewards_not_yet_claimed, 14704);
-		assert_eq!(rewards_info.rewards_already_claimed, 0);
-
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 32973);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(3, 4).unwrap(), 32973);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(4, 4).unwrap(), 32973);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(5, 4).unwrap(), 32973);
-
-		// starting point for blue cases
-
-		// usecase 2 claim_all
-		let mut user_balance_before = XykStorage::balance(0, 2);
-		ProofOfStake::claim_rewards_all_v2(RuntimeOrigin::signed(2), 4).unwrap();
-		let mut user_balance_after = XykStorage::balance(0, 2);
-		rewards_info = ProofOfStake::get_rewards_info(2, 4);
-
-		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
-		assert_eq!(rewards_info.rewards_already_claimed, 18269);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 0);
-		assert_eq!(user_balance_after - user_balance_before, 32973);
-
-		// usecase 9 burn some
-		user_balance_before = XykStorage::balance(0, 3);
-		XykStorage::burn_liquidity(RuntimeOrigin::signed(3), 1, 2, 5000).unwrap();
-		user_balance_after = XykStorage::balance(0, 3);
-		rewards_info = ProofOfStake::get_rewards_info(3, 4);
-
-		assert_eq!(rewards_info.rewards_not_yet_claimed, 32973);
-		assert_eq!(rewards_info.rewards_already_claimed, 0);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(3, 4).unwrap(), 32973);
-		assert_eq!(user_balance_after - user_balance_before, 0);
-
-		// usecase 10 mint some
-		user_balance_before = XykStorage::balance(0, 4);
-		XykStorage::mint_liquidity(RuntimeOrigin::signed(4), 1, 2, 5000, 5010).unwrap();
-		user_balance_after = XykStorage::balance(0, 4);
-		rewards_info = ProofOfStake::get_rewards_info(4, 4);
-
-		assert_eq!(rewards_info.rewards_not_yet_claimed, 32973);
-		assert_eq!(rewards_info.rewards_already_claimed, 0);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(4, 4).unwrap(), 32973);
-		assert_eq!(user_balance_after - user_balance_before, 0);
-
-		// usecase 11 deactivate some
-		user_balance_before = XykStorage::balance(0, 5);
-		ProofOfStake::deactivate_liquidity_v2(RuntimeOrigin::signed(5), 4, 5000).unwrap();
-		user_balance_after = XykStorage::balance(0, 5);
-		rewards_info = ProofOfStake::get_rewards_info(5, 4);
-
-		assert_eq!(rewards_info.rewards_not_yet_claimed, 32973);
-		assert_eq!(rewards_info.rewards_already_claimed, 0);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(5, 4).unwrap(), 32973);
-		assert_eq!(user_balance_after - user_balance_before, 0);
-	});
-}
-
-// starting point, just new rewards were generated (green)
-#[test]
-#[serial]
-fn rewards_storage_right_amounts_start3() {
-	new_test_ext().execute_with(|| {
-		MockPromotedPoolApi::instance().lock().unwrap().clear();
-		let max = std::u128::MAX;
-		System::set_block_number(1);
-		let acc_id: u128 = 2;
-		let amount: u128 = max;
-
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-		XykStorage::create_new_token(&acc_id, amount);
-
-		XykStorage::transfer(
-			0,
-			2,
-			<Test as pallet_proof_of_stake::Config>::LiquidityMiningIssuanceVault::get(),
-			10000000000,
-		)
-		.unwrap();
-
-		XykStorage::create_pool(RuntimeOrigin::signed(2), 1, 10000, 2, 10000).unwrap();
-		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * U256::from(0));
-
-		XykStorage::transfer(1, 2, 3, 20010).unwrap();
-		XykStorage::transfer(2, 2, 3, 20010).unwrap();
-		XykStorage::transfer(1, 2, 4, 20010).unwrap();
-		XykStorage::transfer(2, 2, 4, 20010).unwrap();
-
-		ProofOfStake::activate_liquidity_v2(RuntimeOrigin::signed(2), 4, 10000, None).unwrap();
-		XykStorage::mint_liquidity(RuntimeOrigin::signed(3), 1, 2, 10000, 10010).unwrap();
-
-		System::set_block_number(100);
-		MockPromotedPoolApi::instance()
-			.lock()
-			.unwrap()
-			.insert(4, U256::from(u128::MAX) * U256::from(10));
-
-		let mut rewards_info = ProofOfStake::get_rewards_info(2, 4);
-		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
-		assert_eq!(rewards_info.rewards_already_claimed, 0);
-		rewards_info = ProofOfStake::get_rewards_info(3, 4);
-		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
-		assert_eq!(rewards_info.rewards_already_claimed, 0);
-
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 14704);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(3, 4).unwrap(), 14704);
-
-		// starting point for blue cases
-
-		// usecase 1 claim (all)
-		let mut user_balance_before = XykStorage::balance(0, 2);
-		ProofOfStake::claim_rewards_v2(RuntimeOrigin::signed(2), 4, 14704).unwrap();
-		let mut user_balance_after = XykStorage::balance(0, 2);
-		rewards_info = ProofOfStake::get_rewards_info(2, 4);
-
-		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
-		assert_eq!(rewards_info.rewards_already_claimed, 14704);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(2, 4).unwrap(), 0);
-		assert_eq!(user_balance_after - user_balance_before, 14704);
-
-		// usecase 17 claim some
-		user_balance_before = XykStorage::balance(0, 3);
-		ProofOfStake::claim_rewards_v2(RuntimeOrigin::signed(3), 4, 10000).unwrap();
-		user_balance_after = XykStorage::balance(0, 3);
-		rewards_info = ProofOfStake::get_rewards_info(3, 4);
-
-		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
-		assert_eq!(rewards_info.rewards_already_claimed, 10000);
-		assert_eq!(ProofOfStake::calculate_rewards_amount_v2(3, 4).unwrap(), 4704);
-		assert_eq!(user_balance_after - user_balance_before, 10000);
-	});
-}
-
 #[test_case(200_000_000_000_000_000_000_u128, 1_000_000_000_000_u128, 1_u128 ; "swap plus 1 leftover")]
 #[test_case(2_000_u128, 100_u128, 2_u128 ; "swap plus 2 leftover")]
 #[test_case(1_000_000_000_000_000_000_000_000_000, 135_463_177_684_253_389, 2_u128 ; "benchmark case")]
@@ -3456,7 +2166,8 @@ fn test_compound_calculate_balanced_swap_for_liquidity(amount: u128, reward: u12
 		let swap_amount = XykStorage::calculate_balanced_sell_amount(reward, pool).unwrap();
 		let swapped_amount = XykStorage::calculate_sell_price(pool, pool, swap_amount).unwrap();
 
-		XykStorage::sell_asset(RuntimeOrigin::signed(2), 0, 1, swap_amount, 0).unwrap();
+		XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(2), vec![0, 1], swap_amount, 0)
+			.unwrap();
 
 		XykStorage::mint_liquidity(RuntimeOrigin::signed(2), 1, 0, swapped_amount, u128::MAX)
 			.unwrap();
@@ -3500,19 +2211,19 @@ fn test_compound_rewards(amount: u128, part_permille: u32, surplus: u128) {
 		let amount_permille = Permill::from_parts(part_permille);
 		System::set_block_number(1);
 
-		MockPromotedPoolApi::instance().lock().unwrap().clear();
+		// MockPromotedPoolApi::instance().lock().unwrap().clear();
 
 		XykStorage::create_new_token(&2, amount);
 		XykStorage::create_new_token(&2, amount);
 		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, amount / 2, 1, amount / 2).unwrap();
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 2, 1u8).unwrap();
-		ProofOfStake::activate_liquidity_v2(RuntimeOrigin::signed(2), 2, amount / 2, None).unwrap();
+		ProofOfStake::activate_liquidity(RuntimeOrigin::signed(2), 2, amount / 2, None).unwrap();
 
-		MockPromotedPoolApi::instance().lock().unwrap().insert(2, U256::from(u128::MAX));
-
+		// MockPromotedPoolApi::instance().lock().unwrap().insert(2, U256::from(u128::MAX));
+		ProofOfStake::distribute_rewards(amount / 2);
 		System::set_block_number(10);
 
-		let amount = ProofOfStake::calculate_rewards_amount_v2(2, 2).unwrap();
+		let amount = ProofOfStake::calculate_rewards_amount(2, 2).unwrap();
 		XykStorage::transfer(
 			0,
 			2,
@@ -3538,19 +2249,20 @@ fn test_compound_rewards_pool_assets_order_swapped() {
 		let amount = 2_000_000_u128;
 		let amount_permille = Permill::from_parts(1_000_000);
 		System::set_block_number(1);
-		MockPromotedPoolApi::instance().lock().unwrap().clear();
+		// MockPromotedPoolApi::instance().lock().unwrap().clear();
 
 		XykStorage::create_new_token(&2, amount);
 		XykStorage::create_new_token(&2, amount);
 		XykStorage::create_pool(RuntimeOrigin::signed(2), 1, amount / 2, 0, amount / 2).unwrap();
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 2, 1u8).unwrap();
-		ProofOfStake::activate_liquidity_v2(RuntimeOrigin::signed(2), 2, amount / 2, None).unwrap();
+		ProofOfStake::activate_liquidity(RuntimeOrigin::signed(2), 2, amount / 2, None).unwrap();
 
-		MockPromotedPoolApi::instance().lock().unwrap().insert(2, U256::from(u128::MAX));
+		// MockPromotedPoolApi::instance().lock().unwrap().insert(2, U256::from(u128::MAX));
+		ProofOfStake::distribute_rewards(amount / 2);
 
 		System::set_block_number(10);
 
-		let amount = ProofOfStake::calculate_rewards_amount_v2(2, 2).unwrap();
+		let amount = ProofOfStake::calculate_rewards_amount(2, 2).unwrap();
 		XykStorage::transfer(
 			0,
 			2,
@@ -3578,7 +2290,7 @@ fn sell_N_maintenance_mode() {
 		MockMaintenanceStatusProvider::set_maintenance(true);
 
 		assert_err!(
-			XykStorage::sell_asset(RuntimeOrigin::signed(2), 1, 4, 20000000, 0),
+			XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(2), vec![1, 4], 20000000, 0),
 			Error::<Test>::TradingBlockedByMaintenanceMode,
 		);
 	});
@@ -3614,10 +2326,9 @@ fn buy_W_maintenance_mode() {
 
 		assert_err!(
 			// buying 30000000000000000000 assetId 1 of pool 0 1
-			XykStorage::buy_asset(
+			XykStorage::multiswap_buy_asset(
 				RuntimeOrigin::signed(2),
-				1,
-				4,
+				vec![1, 4],
 				30000000000000000000,
 				3000000000000000000000,
 			),

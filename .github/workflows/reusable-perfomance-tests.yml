@@ -1,6 +1,16 @@
 name: Performance tests workflow
 on:
   workflow_call:
+    inputs:
+      e2eBranch:
+        description: "Name of the e2e target branch"
+        type: string
+        required: false
+        default: "main"
+      targetEnv:
+        description: "env name"
+        type: string
+        required: false
 
 permissions:
   contents: write
@@ -13,37 +23,72 @@ jobs:
     runs-on: [self-hosted, compile]
     timeout-minutes: 180
     env:
-      ENV_REF: ${{ format('pr-{0}', github.event.number) }}
+      ENV_REF: ${{ inputs.targetEnv || format('pr-{0}', github.event.number) }}
+      E2EBRANCHNAME: "main"
     steps:
       ####IDK, but this is neccesary for reports
       - uses: actions/checkout@v3
 
+      - name: E2E- Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v4.9
+
+      - name: Set Configuration - Develop
+        if: "${{ inputs.targetEnv == 'dev' }}"
+        run: |
+          echo 'TEST_SUDO_NAME=${{ secrets.DEV_SUDO_NAME }}' >> $GITHUB_ENV
+
+      - name: E2E- Calculate if run e2e feature branch or main.
+        run: |
+          echo DEFAULT: E2E test will run with: $E2EBRANCHNAME
+          echo "Running on: ${{ steps.branch-name.outputs.current_branch }}"
+          if [ -n "$(git ls-remote --heads https://github.com/mangata-finance/mangata-e2e.git ${{ steps.branch-name.outputs.current_branch }} --force --quiet)" ]; then echo "E2EBRANCHNAME=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_ENV; echo "MATCH - OK" ; elif [ -n "$(git ls-remote --heads https://github.com/mangata-finance/mangata-e2e.git ${{ github.base_ref }} --force --quiet)" ]; then echo "E2EBRANCHNAME=${{ github.base_ref }}" >> $GITHUB_ENV; echo "MATCH - OK" ;  fi
+
+      - name: Decide if main - branch or parameter
+        # if we have something in e2eBranch - override E2EBranchName, else -> E2EBRANCHNAME , that
+        # by default will be main.
+        run: echo "E2EBRANCHNAME=${{ inputs.e2eBranch || env.E2EBRANCHNAME }}" >> $GITHUB_ENV
+
       - name: Checkout performance-tests
         uses: actions/checkout@v3
         with:
-          token: ${{ secrets.DEV_TOOLS_REPO_ACCESS_TOKEN }}
-          repository: mangata-finance/dev-tools
-          path: dev-tools
+          repository: mangata-finance/mangata-e2e
+          ref: "${{ env.E2EBRANCHNAME }}"
+          path: e2e
 
-      - name: Install parachain launch
-        working-directory: dev-tools/fill-block-with-txs
-        run: npm install
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+          cache: "yarn"
+          cache-dependency-path: "**/yarn.lock"
+
+      - name: Install e2e tests dependencies
+        working-directory: e2e
+        run: yarn
 
       - name: Run performance tests
-        working-directory: dev-tools/fill-block-with-txs
+        working-directory: e2e/performance
         run: |
-          ./index.js --url "wss://node-01-ws-${{ env.ENV_REF }}.mangata.online" \
-          --url "wss://node-02-ws-${{ env.ENV_REF }}.mangata.online" \
-          --mnemonic ${{ secrets.E2E_TEST_SUDO_NAME }} \
-          --txs_count 800 \
-          --workers_count 8 \
-          --timeout 300 \
-          --output ../../performance-benchmark.png \
-          --expected_throughput 300 \
-          --number_of_blocks 50
+          npx ts-node index.ts \
+          transfer \
+          nodes="wss://node-01-ws-${{ env.ENV_REF }}.mangata.online" \
+          testCaseName=ConcurrentTest \
+          pending=2000 \
+          threadNumber=12 \
+          duration=50 \
+          throughput=200
 
       - name: Upload reports
+        if: always()
         uses: actions/upload-artifact@v3.1.1
         with:
-          name: performance-benchmark
-          path: ./performance-benchmark.png
+          name: performance-benchmarks-report
+          path: |
+            ./e2e/performance/report.html
+            ./e2e/performance/enqueued.txt
+            ./e2e/performance/executed.txt
+            ./e2e/performance/pending.txt
+
+      - name: Fix permissions on self-hosted runner
+        if: always()
+        run: chown -R 1100:1100 $GITHUB_WORKSPACE

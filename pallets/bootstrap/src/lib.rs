@@ -134,9 +134,12 @@ use frame_support::{
 	transactional, PalletId,
 };
 use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
+
 use mangata_support::traits::{
-	AssetRegistryApi, GetMaintenanceStatusTrait, PoolCreateApi, RewardsApi,
+	AssetRegistryApi, GetMaintenanceStatusTrait, PoolCreateApi, ProofOfStakeRewardsApi,
 };
+use mangata_types::multipurpose_liquidity::ActivateKind;
+
 use mangata_types::{Balance, TokenId};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use pallet_vesting_mangata::MultiTokenVestingLocks;
@@ -188,7 +191,6 @@ pub mod pallet {
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(2);
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	#[pallet::without_storage_info]
 	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(PhantomData<T>);
@@ -234,9 +236,9 @@ pub mod pallet {
 					) {
 						MintedLiquidity::<T>::put((liq_asset_id, issuance)); // W:1
 						if PromoteBootstrapPool::<T>::get() {
-							T::RewardsApi::update_pool_promotion(
+							T::RewardsApi::enable(
 								liq_asset_id,
-								Some(T::DefaultBootstrapPromotedPoolWeight::get()),
+								T::DefaultBootstrapPromotedPoolWeight::get(),
 							);
 						}
 					} else {
@@ -270,7 +272,7 @@ pub mod pallet {
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
-	pub trait BootstrapBenchmarkingConfig: pallet_issuance::Config {}
+	pub trait BootstrapBenchmarkingConfig {}
 
 	#[cfg(not(feature = "runtime-benchmarks"))]
 	pub trait BootstrapBenchmarkingConfig {}
@@ -300,9 +302,15 @@ pub mod pallet {
 
 		type VestingProvider: MultiTokenVestingLocks<Self::AccountId, Self::BlockNumber>;
 
+		type ClearStorageLimit: Get<u32>;
+
 		type WeightInfo: WeightInfo;
 
-		type RewardsApi: RewardsApi<AccountId = Self::AccountId>;
+		type RewardsApi: ProofOfStakeRewardsApi<
+			Self::AccountId,
+			Balance = Balance,
+			CurrencyId = TokenId,
+		>;
 
 		type AssetRegistryApi: AssetRegistryApi;
 	}
@@ -594,7 +602,7 @@ pub mod pallet {
 
 		/// Used to cancel active bootstrap. Can only be called before bootstrap is actually started
 		#[pallet::call_index(3)]
-		#[pallet::weight(T::DbWeight::get().reads_writes(3, 4).saturating_add(Weight::from_ref_time(1_000_000)))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(3, 4).saturating_add(Weight::from_parts(1_000_000, 0)))]
 		#[transactional]
 		pub fn cancel_bootstrap(origin: OriginFor<T>) -> DispatchResult {
 			ensure_root(origin)?;
@@ -621,7 +629,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(4)]
-		#[pallet::weight(T::DbWeight::get().reads_writes(2, 1).saturating_add(Weight::from_ref_time(1_000_000)))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(2, 1).saturating_add(Weight::from_parts(1_000_000, 0)))]
 		#[transactional]
 		// can be used to enable or disable automatic pool promotion of liquidity pool. Updates [`PromoteBootstrapPool`]
 		pub fn update_promote_bootstrap_pool(
@@ -659,20 +667,18 @@ pub mod pallet {
 			Self::do_claim_liquidity_tokens(&sender, true)
 		}
 
-		/// Used to reset Bootstrap state and prepare it for running another bootstrap.
-		/// It should be called multiple times until it produces [`Event::BootstrapFinalized`] event.
-		///
-		/// # Args:
-		/// * `limit` - limit of storage entries to be removed in single call. Should be set to some
-		/// reasonable balue like `100`.
+		/// Used to reset Bootstrap state of large storages and prepare it for running another bootstrap.
+		/// It should be called multiple times until it produces [`Event::BootstrapReadyToBeFinalized`] event.
 		///
 		/// **!!! Cleaning up storage is complex operation and pruning all storage items related to particular
 		/// bootstrap might not fit in a single block. As a result tx can be rejected !!!**
 		#[pallet::call_index(7)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::finalize().saturating_add(T::DbWeight::get().reads_writes(1, 1).saturating_mul(Into::<u64>::into(*limit).saturating_add(u64::one()))))]
+		#[pallet::weight(Weight::from_parts(40_000_000, 0)
+							.saturating_add(T::DbWeight::get().reads_writes(6, 0)
+								.saturating_add(T::DbWeight::get().reads_writes(1, 1).saturating_mul(Into::<u64>::into(T::ClearStorageLimit::get())))))]
 		#[transactional]
-		pub fn finalize(origin: OriginFor<T>, mut limit: u32) -> DispatchResult {
-			ensure_root(origin)?;
+		pub fn pre_finalize(origin: OriginFor<T>) -> DispatchResult {
+			let _ = ensure_signed(origin)?;
 
 			ensure!(Self::phase() == BootstrapPhase::Finished, Error::<T>::NotFinishedYet);
 
@@ -681,10 +687,12 @@ pub mod pallet {
 				Error::<T>::BootstrapNotReadyToBeFinished
 			);
 
+			let mut limit = T::ClearStorageLimit::get();
+
 			match VestedProvisions::<T>::clear(limit, None).into() {
 				KillStorageResult::AllRemoved(num_iter) => limit = limit.saturating_sub(num_iter),
 				KillStorageResult::SomeRemaining(_) => {
-					Self::deposit_event(Event::BootstrapParitallyFinalized);
+					Self::deposit_event(Event::BootstrapParitallyPreFinalized);
 					return Ok(())
 				},
 			}
@@ -692,7 +700,7 @@ pub mod pallet {
 			match WhitelistedAccount::<T>::clear(limit, None).into() {
 				KillStorageResult::AllRemoved(num_iter) => limit = limit.saturating_sub(num_iter),
 				KillStorageResult::SomeRemaining(_) => {
-					Self::deposit_event(Event::BootstrapParitallyFinalized);
+					Self::deposit_event(Event::BootstrapParitallyPreFinalized);
 					return Ok(())
 				},
 			}
@@ -700,7 +708,7 @@ pub mod pallet {
 			match ClaimedRewards::<T>::clear(limit, None).into() {
 				KillStorageResult::AllRemoved(num_iter) => limit = limit.saturating_sub(num_iter),
 				KillStorageResult::SomeRemaining(_) => {
-					Self::deposit_event(Event::BootstrapParitallyFinalized);
+					Self::deposit_event(Event::BootstrapParitallyPreFinalized);
 					return Ok(())
 				},
 			}
@@ -708,10 +716,50 @@ pub mod pallet {
 			match Provisions::<T>::clear(limit, None).into() {
 				KillStorageResult::AllRemoved(num_iter) => limit = limit.saturating_sub(num_iter),
 				KillStorageResult::SomeRemaining(_) => {
-					Self::deposit_event(Event::BootstrapParitallyFinalized);
+					Self::deposit_event(Event::BootstrapParitallyPreFinalized);
 					return Ok(())
 				},
 			}
+
+			Self::deposit_event(Event::BootstrapReadyToBeFinalized);
+
+			Ok(())
+		}
+
+		/// Used to complete resetting Bootstrap state and prepare it for running another bootstrap.
+		/// It should be called after pre_finalize has produced the [`Event::BootstrapReadyToBeFinalized`] event.
+		#[pallet::call_index(8)]
+		#[pallet::weight(<<T as Config>::WeightInfo>::finalize())]
+		#[transactional]
+		pub fn finalize(origin: OriginFor<T>) -> DispatchResult {
+			let _ = ensure_signed(origin)?;
+
+			ensure!(Self::phase() == BootstrapPhase::Finished, Error::<T>::NotFinishedYet);
+
+			ensure!(
+				ProvisionAccounts::<T>::iter_keys().next().is_none(),
+				Error::<T>::BootstrapNotReadyToBeFinished
+			);
+
+			ensure!(
+				VestedProvisions::<T>::iter_keys().next().is_none(),
+				Error::<T>::BootstrapMustBePreFinalized
+			);
+
+			ensure!(
+				WhitelistedAccount::<T>::iter_keys().next().is_none(),
+				Error::<T>::BootstrapMustBePreFinalized
+			);
+
+			ensure!(
+				ClaimedRewards::<T>::iter_keys().next().is_none(),
+				Error::<T>::BootstrapMustBePreFinalized
+			);
+
+			ensure!(
+				Provisions::<T>::iter_keys().next().is_none(),
+				Error::<T>::BootstrapMustBePreFinalized
+			);
 
 			Phase::<T>::put(BootstrapPhase::BeforeStart);
 			let (liq_token_id, _) = MintedLiquidity::<T>::take();
@@ -744,7 +792,7 @@ pub mod pallet {
 		/// calling [`Pallet::claim_liquidity_tokens_for_account`] by some other account and calling [`Pallet::claim_liquidity_tokens`] directly by that account is account that will be charged for transaction fee.
 		/// # Args:
 		/// - `other` - account in behalf of which liquidity tokens should be claimed
-		#[pallet::call_index(8)]
+		#[pallet::call_index(9)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::claim_and_activate_liquidity_tokens())]
 		#[transactional]
 		pub fn claim_liquidity_tokens_for_account(
@@ -805,6 +853,8 @@ pub mod pallet {
 		TooLateToUpdateBootstrap,
 		/// Bootstrap provisioning blocked by maintenance mode
 		ProvisioningBlockedByMaintenanceMode,
+		/// Bootstrap must be pre finalized before it can be finalized
+		BootstrapMustBePreFinalized,
 	}
 
 	#[pallet::event]
@@ -820,8 +870,10 @@ pub mod pallet {
 		RewardsClaimed(TokenId, Balance),
 		/// account whitelisted
 		AccountsWhitelisted,
-		/// finalization process tarted
-		BootstrapParitallyFinalized,
+		/// bootstrap pre finalization has completed partially
+		BootstrapParitallyPreFinalized,
+		/// bootstrap pre finalization has completed, and the bootstrap can now be finalized
+		BootstrapReadyToBeFinalized,
 		/// finalization process finished
 		BootstrapFinalized,
 	}
@@ -1109,15 +1161,16 @@ impl<T: Config> Pallet<T> {
 
 		ProvisionAccounts::<T>::remove(who);
 
-		if activate_rewards && <T as Config>::RewardsApi::can_activate(liq_token_id) {
+		if activate_rewards && <T as Config>::RewardsApi::is_enabled(liq_token_id) {
 			let non_vested_rewards = second_token_rewards
 				.checked_add(first_token_rewards)
 				.ok_or(Error::<T>::MathOverflow)?;
 			if non_vested_rewards > 0 {
-				let activate_result = <T as Config>::RewardsApi::activate_liquidity_tokens(
-					who,
+				let activate_result = <T as Config>::RewardsApi::activate_liquidity(
+					who.clone(),
 					liq_token_id,
 					non_vested_rewards,
+					Some(ActivateKind::AvailableBalance),
 				);
 				if let Err(err) = activate_result {
 					log!(

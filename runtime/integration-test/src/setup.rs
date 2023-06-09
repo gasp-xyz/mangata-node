@@ -15,8 +15,8 @@ mod kusama_imports {
 	pub use mangata_kusama_runtime::{
 		mgx_per_second, xcm_config::*, AccountId, AssetMetadataOf, AssetRegistry, Balance,
 		Bootstrap, CustomMetadata, Identity, PolkadotXcm, Proxy, ProxyType, Runtime, RuntimeCall,
-		RuntimeOrigin, System, TokenId, Tokens, VersionedMultiLocation, XTokens, XcmMetadata, Xyk,
-		XykMetadata, UNIT,
+		RuntimeOrigin, System, TokenId, Tokens, VersionedMultiLocation, XTokens, XcmMetadata,
+		XcmpQueue, Xyk, XykMetadata, UNIT,
 	};
 	pub use xcm::latest::Weight as XcmWeight;
 

@@ -1,19 +1,13 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_support::{
-	dispatch::DispatchResult,
 	ensure,
 	pallet_prelude::*,
-	storage::bounded_btree_map::BoundedBTreeMap,
 	traits::{Get, StorageVersion},
-	transactional,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use mangata_support::traits::GetMaintenanceStatusTrait;
-use mangata_types::{Balance, TokenId};
-use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 
-use sp_runtime::traits::{CheckedDiv, Zero};
 use sp_std::{convert::TryInto, prelude::*};
 
 #[cfg(test)]
@@ -44,7 +38,6 @@ pub mod pallet {
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(PhantomData<T>);
 
@@ -99,7 +92,8 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_ref_time(40_000_000)))]
+		#[pallet::call_index(0)]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		pub fn switch_maintenance_mode_on(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
 
@@ -115,7 +109,7 @@ pub mod pallet {
 				Error::<T>::AlreadyInMaintenanceMode
 			);
 
-			let mut maintenance_status =
+			let maintenance_status =
 				MaintenanceStatusInfo { is_maintenance: true, is_upgradable_in_maintenance: false };
 
 			MaintenanceStatus::<T>::put(maintenance_status);
@@ -125,7 +119,8 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_ref_time(40_000_000)))]
+		#[pallet::call_index(1)]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		pub fn switch_maintenance_mode_off(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
 
@@ -138,7 +133,7 @@ pub mod pallet {
 
 			ensure!(current_maintenance_status.is_maintenance, Error::<T>::NotInMaintenanceMode);
 
-			let mut maintenance_status = MaintenanceStatusInfo {
+			let maintenance_status = MaintenanceStatusInfo {
 				is_maintenance: false,
 				is_upgradable_in_maintenance: false,
 			};
@@ -150,7 +145,8 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_ref_time(40_000_000)))]
+		#[pallet::call_index(2)]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		pub fn switch_upgradability_in_maintenance_mode_on(
 			origin: OriginFor<T>,
 		) -> DispatchResultWithPostInfo {
@@ -170,7 +166,7 @@ pub mod pallet {
 				Error::<T>::AlreadyUpgradableInMaintenanceMode
 			);
 
-			let mut maintenance_status =
+			let maintenance_status =
 				MaintenanceStatusInfo { is_maintenance: true, is_upgradable_in_maintenance: true };
 
 			MaintenanceStatus::<T>::put(maintenance_status);
@@ -180,7 +176,8 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_ref_time(40_000_000)))]
+		#[pallet::call_index(3)]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1, 1).saturating_add(Weight::from_parts(40_000_000, 0)))]
 		pub fn switch_upgradability_in_maintenance_mode_off(
 			origin: OriginFor<T>,
 		) -> DispatchResultWithPostInfo {
@@ -200,7 +197,7 @@ pub mod pallet {
 				Error::<T>::AlreadyNotUpgradableInMaintenanceMode
 			);
 
-			let mut maintenance_status =
+			let maintenance_status =
 				MaintenanceStatusInfo { is_maintenance: true, is_upgradable_in_maintenance: false };
 
 			MaintenanceStatus::<T>::put(maintenance_status);

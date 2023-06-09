@@ -34,6 +34,7 @@ use orml_traits::{
 pub use pallet_sudo_mangata;
 use pallet_transaction_payment_mangata::{ConstFeeMultiplier, Multiplier, OnChargeTransaction};
 use pallet_vesting_mangata_rpc_runtime_api::VestingInfosWithLockedAt;
+use xyk_runtime_api::SwapKind;
 // Polkadot Imports
 pub use polkadot_runtime_common::BlockHashCount;
 use scale_info::TypeInfo;
@@ -1202,20 +1203,22 @@ parameter_types! {
 	pub ConstFeeMultiplierValue: Multiplier = Multiplier::saturating_from_rational(1, 1);
 }
 
+pub type OnChargeTransactionHandler = ThreeCurrencyOnChargeAdapter<
+	orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
+	ToAuthor,
+	MgxTokenId,
+	KsmTokenId,
+	TurTokenId,
+	frame_support::traits::ConstU128<KSM_MGX_SCALE_FACTOR>,
+	frame_support::traits::ConstU128<TUR_MGX_SCALE_FACTOR>,
+>;
+
 impl pallet_transaction_payment_mangata::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction = OnChargeHandler<
 		orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
 		ToAuthor,
-		ThreeCurrencyOnChargeAdapter<
-			orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
-			ToAuthor,
-			MgxTokenId,
-			KsmTokenId,
-			TurTokenId,
-			frame_support::traits::ConstU128<KSM_MGX_SCALE_FACTOR>,
-			frame_support::traits::ConstU128<TUR_MGX_SCALE_FACTOR>,
-		>,
+		OnChargeTransactionHandler,
 		FeeLock,
 	>;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
@@ -1987,6 +1990,51 @@ impl_runtime_apis! {
 							e
 						}
 					).unwrap_or_default()
+			}
+		}
+
+		fn is_lock_free_swap(
+			path: Vec<TokenId>,
+			input_amount: Balance,
+			operation: SwapKind,
+			) -> Option<bool>{
+			match (path.len(), operation, pallet_fee_lock::FeeLockMetadata::<Runtime>::get()) {
+				(length, _,_) if length < 2 => {
+					None
+				}
+				(2, operation, Some(feelock)) => {
+					let input = path.get(0)?;
+					let output = path.get(1)?;
+					let output_amount = if operation == SwapKind::Buy {
+						Xyk::calculate_buy_price_id(*input, *output, input_amount).ok()?
+					} else {
+						Xyk::calculate_sell_price_id(*input, *output, input_amount).ok()?
+					};
+
+					Some(
+					FeeHelpers::<
+								Runtime,
+								orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
+								ToAuthor,
+								OnChargeTransactionHandler,
+								FeeLock,
+								>::is_high_value_swap(&feelock, *input, input_amount)
+									||
+					FeeHelpers::<
+								Runtime,
+								orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
+								ToAuthor,
+								OnChargeTransactionHandler,
+								FeeLock,
+								>::is_high_value_swap(&feelock, *output, output_amount)
+								)
+				}
+				(_, _, None) => {
+					Some(false)
+				}
+				(_, _, Some(_)) => {
+					Some(true)
+				}
 			}
 		}
 	}

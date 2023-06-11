@@ -50,12 +50,6 @@ fn deserialize_from_string<'de, D: Deserializer<'de>, T: std::str::FromStr>(
 	s.parse::<T>().map_err(|_| serde::de::Error::custom("Parse from string failed"))
 }
 
-#[derive(Eq, PartialEq, Encode, Decode)]
-pub enum SwapKind {
-	Sell,
-	Buy,
-}
-
 sp_api::decl_runtime_apis! {
 	pub trait XykApi<Balance, TokenId, AccountId> where
 		Balance: Codec + MaybeDisplay + MaybeFromStr,
@@ -103,10 +97,14 @@ sp_api::decl_runtime_apis! {
 			reserve_amount: Balance,
 		) -> XYKRpcResult<Balance>;
 
-		fn is_lock_free_swap(
+		fn is_buy_asset_lock_free(
 			path: sp_std::vec::Vec<TokenId>,
 			input_amount: Balance,
-			peration: SwapKind,
+		) -> Option<bool>;
+
+		fn is_sell_asset_lock_free(
+			path: sp_std::vec::Vec<TokenId>,
+			input_amount: Balance,
 		) -> Option<bool>;
 	}
 }

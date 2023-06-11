@@ -368,6 +368,11 @@ pub use weights::WeightInfo;
 
 type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 // type LiquidityMiningRewardsOf<T> = <T as ::Config>::AccountId;
+#[derive(Eq, PartialEq, Encode, Decode)]
+pub enum SwapKind {
+	Sell,
+	Buy,
+}
 
 #[frame_support::pallet]
 pub mod pallet {

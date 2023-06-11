@@ -34,7 +34,6 @@ use orml_traits::{
 pub use pallet_sudo_mangata;
 use pallet_transaction_payment_mangata::{ConstFeeMultiplier, Multiplier, OnChargeTransaction};
 use pallet_vesting_mangata_rpc_runtime_api::VestingInfosWithLockedAt;
-use xyk_runtime_api::SwapKind;
 // Polkadot Imports
 pub use polkadot_runtime_common::BlockHashCount;
 use scale_info::TypeInfo;
@@ -1993,24 +1992,18 @@ impl_runtime_apis! {
 			}
 		}
 
-		fn is_lock_free_swap(
+		fn is_sell_asset_lock_free(
 			path: Vec<TokenId>,
 			input_amount: Balance,
-			operation: SwapKind,
 			) -> Option<bool>{
-			match (path.len(), operation, pallet_fee_lock::FeeLockMetadata::<Runtime>::get()) {
-				(length, _,_) if length < 2 => {
+			match (path.len(), pallet_fee_lock::FeeLockMetadata::<Runtime>::get()) {
+				(length, _) if length < 2 => {
 					None
 				}
-				(2, operation, Some(feelock)) => {
+				(2, Some(feelock)) => {
 					let input = path.get(0)?;
 					let output = path.get(1)?;
-					let output_amount = if operation == SwapKind::Buy {
-						Xyk::calculate_buy_price_id(*input, *output, input_amount).ok()?
-					} else {
-						Xyk::calculate_sell_price_id(*input, *output, input_amount).ok()?
-					};
-
+					let output_amount = Xyk::calculate_sell_price_id(*input, *output, input_amount).ok()?;
 					Some(
 					FeeHelpers::<
 								Runtime,
@@ -2029,10 +2022,49 @@ impl_runtime_apis! {
 								>::is_high_value_swap(&feelock, *output, output_amount)
 								)
 				}
-				(_, _, None) => {
+				(_,  None) => {
 					Some(false)
 				}
-				(_, _, Some(_)) => {
+				(_,  Some(_)) => {
+					Some(true)
+				}
+			}
+		}
+
+		fn is_buy_asset_lock_free(
+			path: Vec<TokenId>,
+			input_amount: Balance,
+			) -> Option<bool>{
+			match (path.len(), pallet_fee_lock::FeeLockMetadata::<Runtime>::get()) {
+				(length, _) if length < 2 => {
+					None
+				}
+				(2, Some(feelock)) => {
+					let input = path.get(0)?;
+					let output = path.get(1)?;
+					let output_amount = Xyk::calculate_buy_price_id(*input, *output, input_amount).ok()?;
+					Some(
+					FeeHelpers::<
+								Runtime,
+								orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
+								ToAuthor,
+								OnChargeTransactionHandler,
+								FeeLock,
+								>::is_high_value_swap(&feelock, *input, input_amount)
+									||
+					FeeHelpers::<
+								Runtime,
+								orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
+								ToAuthor,
+								OnChargeTransactionHandler,
+								FeeLock,
+								>::is_high_value_swap(&feelock, *output, output_amount)
+								)
+				}
+				(_, None) => {
+					Some(false)
+				}
+				(_, Some(_)) => {
 					Some(true)
 				}
 			}

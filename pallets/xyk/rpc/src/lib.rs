@@ -103,6 +103,22 @@ pub trait XykApi<
 		reserve_amount: Balance,
 		at: Option<BlockHash>,
 	) -> RpcResult<ResponseTypePrice>;
+
+	#[method(name = "xyk_is_buy_asset_lock_free")]
+	fn is_buy_asset_lock_free(
+		&self,
+		path: sp_std::vec::Vec<TokenId>,
+		input_amount: Balance,
+		at: Option<BlockHash>,
+	) -> RpcResult<Option<bool>>;
+
+	#[method(name = "xyk_is_sell_asset_lock_free")]
+	fn is_sell_asset_lock_free(
+		&self,
+		path: sp_std::vec::Vec<TokenId>,
+		input_amount: Balance,
+		at: Option<BlockHash>,
+	) -> RpcResult<Option<bool>>;
 }
 
 pub struct Xyk<C, M> {
@@ -355,5 +371,42 @@ where
 				Some(format!("{:?}", e)),
 			)))
 		})
+	}
+
+	fn is_buy_asset_lock_free(
+		&self,
+		path: sp_std::vec::Vec<TokenId>,
+		input_amount: NumberOrHex,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> RpcResult<Option<bool>> {
+		let api = self.client.runtime_api();
+		let at = self.client.info().best_hash;
+
+		api.is_buy_asset_lock_free(at, path, input_amount.try_into_balance()?)
+			.map_err(|e| {
+				JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+					1,
+					"Unable to serve the request",
+					Some(format!("{:?}", e)),
+				)))
+			})
+	}
+	fn is_sell_asset_lock_free(
+		&self,
+		path: sp_std::vec::Vec<TokenId>,
+		input_amount: NumberOrHex,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> RpcResult<Option<bool>> {
+		let api = self.client.runtime_api();
+		let at = self.client.info().best_hash;
+
+		api.is_sell_asset_lock_free(at, path, input_amount.try_into_balance()?)
+			.map_err(|e| {
+				JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+					1,
+					"Unable to serve the request",
+					Some(format!("{:?}", e)),
+				)))
+			})
 	}
 }

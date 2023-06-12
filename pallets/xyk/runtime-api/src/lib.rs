@@ -96,5 +96,15 @@ sp_api::decl_runtime_apis! {
 			total_amount: Balance,
 			reserve_amount: Balance,
 		) -> XYKRpcResult<Balance>;
+
+		fn is_buy_asset_lock_free(
+			path: sp_std::vec::Vec<TokenId>,
+			input_amount: Balance,
+		) -> Option<bool>;
+
+		fn is_sell_asset_lock_free(
+			path: sp_std::vec::Vec<TokenId>,
+			input_amount: Balance,
+		) -> Option<bool>;
 	}
 }

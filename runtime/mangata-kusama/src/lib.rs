@@ -1202,20 +1202,22 @@ parameter_types! {
 	pub ConstFeeMultiplierValue: Multiplier = Multiplier::saturating_from_rational(1, 1);
 }
 
+pub type OnChargeTransactionHandler = ThreeCurrencyOnChargeAdapter<
+	orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
+	ToAuthor,
+	MgxTokenId,
+	KsmTokenId,
+	TurTokenId,
+	frame_support::traits::ConstU128<KSM_MGX_SCALE_FACTOR>,
+	frame_support::traits::ConstU128<TUR_MGX_SCALE_FACTOR>,
+>;
+
 impl pallet_transaction_payment_mangata::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction = OnChargeHandler<
 		orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
 		ToAuthor,
-		ThreeCurrencyOnChargeAdapter<
-			orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
-			ToAuthor,
-			MgxTokenId,
-			KsmTokenId,
-			TurTokenId,
-			frame_support::traits::ConstU128<KSM_MGX_SCALE_FACTOR>,
-			frame_support::traits::ConstU128<TUR_MGX_SCALE_FACTOR>,
-		>,
+		OnChargeTransactionHandler,
 		FeeLock,
 	>;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
@@ -1987,6 +1989,84 @@ impl_runtime_apis! {
 							e
 						}
 					).unwrap_or_default()
+			}
+		}
+
+		fn is_sell_asset_lock_free(
+			path: Vec<TokenId>,
+			input_amount: Balance,
+			) -> Option<bool>{
+			match (path.len(), pallet_fee_lock::FeeLockMetadata::<Runtime>::get()) {
+				(length, _) if length < 2 => {
+					None
+				}
+				(2, Some(feelock)) => {
+					let input = path.get(0)?;
+					let output = path.get(1)?;
+					let output_amount = Xyk::calculate_sell_price_id(*input, *output, input_amount).ok()?;
+					Some(
+					FeeHelpers::<
+								Runtime,
+								orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
+								ToAuthor,
+								OnChargeTransactionHandler,
+								FeeLock,
+								>::is_high_value_swap(&feelock, *input, input_amount)
+									||
+					FeeHelpers::<
+								Runtime,
+								orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
+								ToAuthor,
+								OnChargeTransactionHandler,
+								FeeLock,
+								>::is_high_value_swap(&feelock, *output, output_amount)
+								)
+				}
+				(_,  None) => {
+					Some(false)
+				}
+				(_,  Some(_)) => {
+					Some(true)
+				}
+			}
+		}
+
+		fn is_buy_asset_lock_free(
+			path: Vec<TokenId>,
+			input_amount: Balance,
+			) -> Option<bool>{
+			match (path.len(), pallet_fee_lock::FeeLockMetadata::<Runtime>::get()) {
+				(length, _) if length < 2 => {
+					None
+				}
+				(2, Some(feelock)) => {
+					let input = path.get(0)?;
+					let output = path.get(1)?;
+					let output_amount = Xyk::calculate_buy_price_id(*input, *output, input_amount).ok()?;
+					Some(
+					FeeHelpers::<
+								Runtime,
+								orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
+								ToAuthor,
+								OnChargeTransactionHandler,
+								FeeLock,
+								>::is_high_value_swap(&feelock, *input, input_amount)
+									||
+					FeeHelpers::<
+								Runtime,
+								orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
+								ToAuthor,
+								OnChargeTransactionHandler,
+								FeeLock,
+								>::is_high_value_swap(&feelock, *output, output_amount)
+								)
+				}
+				(_, None) => {
+					Some(false)
+				}
+				(_, Some(_)) => {
+					Some(true)
+				}
 			}
 		}
 	}

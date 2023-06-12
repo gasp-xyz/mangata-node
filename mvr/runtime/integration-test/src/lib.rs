@@ -35,6 +35,9 @@ fn dmp() {
 
 	networks::PolkadotRelay::execute_with(|| {
 		sp_tracing::try_init_simple();
+
+		assert_eq!(polkadot_runtime::Balances::free_balance(&child_account_id(2110)), 0);
+
 		assert_ok!(RelayChainPalletXcm::reserve_transfer_assets(
 			polkadot_runtime::RuntimeOrigin::signed(ALICE),
 			Box::new(Parachain(2110).into()),
@@ -42,6 +45,8 @@ fn dmp() {
 			Box::new((Here, TRANSFER_AMOUNT).into()),
 			0,
 		));
+
+		assert_eq!(polkadot_runtime::Balances::free_balance(&child_account_id(2110)), TRANSFER_AMOUNT);
 	});
 
 	networks::Mangata::execute_with(|| {
@@ -57,16 +62,24 @@ fn dmp() {
 fn ump() {
 	TestNet::reset();
 
+	// deposit funds to sovereign account
+	networks::PolkadotRelay::execute_with(|| {
+		sp_tracing::try_init_simple();
+		assert_ok!(RelayChainPalletXcm::reserve_transfer_assets(
+			polkadot_runtime::RuntimeOrigin::signed(ALICE),
+			Box::new(Parachain(2110).into()),
+			Box::new(Junction::AccountId32 { network: None, id: BOB.into() }.into()),
+			Box::new((Here, TRANSFER_AMOUNT).into()),
+			0,
+		));
+		assert_eq!(polkadot_runtime::Balances::free_balance(&child_account_id(2110)), TRANSFER_AMOUNT);
+	});
+
 	let assets = MultiAssets::from_sorted_and_deduplicated(vec![MultiAsset {
 		id: AssetId::Concrete(MultiLocation { parents: 1, interior: Here }),
 		fun: Fungible(TRANSFER_AMOUNT),
 	}])
 	.unwrap();
-
-	networks::PolkadotRelay::execute_with(|| {
-		sp_tracing::try_init_simple();
-		assert_eq!(polkadot_runtime::Balances::free_balance(&BOB), 0);
-	});
 
 	networks::Mangata::execute_with(|| {
 		sp_tracing::try_init_simple();
@@ -102,6 +115,7 @@ fn ump() {
 	networks::PolkadotRelay::execute_with(|| {
 		sp_tracing::try_init_simple();
 		assert!(polkadot_runtime::Balances::free_balance(&BOB) > TRANSFER_AMOUNT * 99 / 100,);
+		assert_eq!(polkadot_runtime::Balances::free_balance(&child_account_id(2110)), 0);
 	});
 }
 

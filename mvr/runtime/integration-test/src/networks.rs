@@ -142,8 +142,6 @@ pub fn polkadot_ext() -> sp_io::TestExternalities {
 	pallet_balances::GenesisConfig::<Runtime> {
 		balances: vec![
 			(ALICE, 1_000_000_000_000 * unit(12)),
-			(child_account_id(2110), INITIAL_BALANCE),
-			(child_account_id(2000), INITIAL_BALANCE),
 		],
 	}
 	.assimilate_storage(&mut t)
@@ -178,9 +176,6 @@ pub fn para_ext(parachain_id: u32) -> sp_io::TestExternalities {
 			(ALICE, 2, 0),
 			(ALICE, 3, 0),
 			(ALICE, mangata_polkadot_runtime::DOTTokenId::get(), 1_000_000_000 * unit(12)),
-			(parent_account_id(), mangata_polkadot_runtime::DOTTokenId::get(), INITIAL_BALANCE),
-			(reserve_account(2000), mangata_polkadot_runtime::DOTTokenId::get(), INITIAL_BALANCE),
-			(reserve_account(2110), mangata_polkadot_runtime::DOTTokenId::get(), INITIAL_BALANCE),
 		],
 	}
 	.assimilate_storage(&mut t)

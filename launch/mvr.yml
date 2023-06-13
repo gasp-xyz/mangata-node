@@ -1,0 +1,47 @@
+relaychain:
+  image: mangatasolutions/polkadot:0.9.42-fast
+  chain: polkadot-local
+  runtimeGenesisConfig:
+    configuration:
+      config:
+        validation_upgrade_cooldown: 10
+        validation_upgrade_delay: 10
+  env:
+    RUST_LOG: parachain::candidate-backing=trace,parachain::candidate-selection=trace,parachain::pvf=trace,parachain::collator-protocol=trace,parachain::provisioner=trace
+  flags:
+    - --rpc-methods=unsafe
+    - --wasm-execution=compiled
+    - --execution=wasm
+  nodes:
+    - name: alice
+    - name: bob
+
+parachains:
+- image: mangatasolutions/mangata-node:polkadot
+  chain:
+    base: polkadot-local
+    collators:
+      - alice
+      - bob
+    sudo: alice
+    disablePallets:
+      - balances
+  id: 2110
+  parachain: true
+  flags:
+    - --rpc-methods=unsafe
+    - --force-authoring
+    - --wasm-execution=compiled
+    - --execution=wasm
+  relaychainFlags:
+    - --wasm-execution=compiled
+    - --execution=wasm
+  env:
+    # RUST_LOG: info,block_builder=trace,block_shuffler=trace,runtime::ver=trace,txpool=trace,rpc::nonce=trace
+    RUST_LOG: info,block_builder=trace,rpc=debug,txpool=debug
+  volumePath: /mangata/data
+  nodes:
+  - flags:
+    - --alice
+  - flags:
+    - --bob

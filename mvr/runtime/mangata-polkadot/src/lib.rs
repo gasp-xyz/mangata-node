@@ -40,12 +40,12 @@ use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
 };
+use orml_tokens::CurrencyAdapter;
+use orml_traits::parameter_type_with_key;
 use pallet_xcm::{EnsureXcm, IsVoiceOfBody};
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
 use xcm_config::{RelayLocation, XcmConfig, XcmOriginToTransactDispatchOrigin};
-use orml_traits::parameter_type_with_key;
-use orml_tokens::CurrencyAdapter;
 
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -150,7 +150,6 @@ impl WeightToFeePolynomial for WeightToFee {
 
 pub const DOT_MGX_SCALE_FACTOR_UNADJUSTED: u128 = 10_000_000_000_u128; // 10_000 as DOT/MGX, with 6 decimals accounted for (12 - DOT, 18 - MGX)
 
-
 pub fn base_tx_in_mgx() -> Balance {
 	UNIT
 }
@@ -164,7 +163,6 @@ pub fn mgx_per_second() -> u128 {
 pub fn dot_per_second() -> u128 {
 	mgx_per_second() / DOT_MGX_SCALE_FACTOR_UNADJUSTED as u128
 }
-
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -350,7 +348,7 @@ parameter_types! {
 	pub const TransactionByteFee: Balance = 10 * MICROUNIT;
 	pub const DOTTokenId: u32 = 4;
 }
-type OrmlCurrencyAdapter = orml_tokens::CurrencyAdapter<Runtime, DOTTokenId>;
+pub type OrmlCurrencyAdapter = orml_tokens::CurrencyAdapter<Runtime, DOTTokenId>;
 
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -457,31 +455,29 @@ impl pallet_collator_selection::Config for Runtime {
 	type WeightInfo = ();
 }
 
-
 parameter_type_with_key! {
 	pub ExistentialDeposits: |_token_id: u32| -> u128 {
 		0_u128
 	};
 }
 
-parameter_types!{
+parameter_types! {
 	pub const MaxLocks:u32 = 50;
 }
 
 impl orml_tokens::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type Balance = u128;
-    type Amount = i128;
-    type CurrencyId = u32;
-    type WeightInfo = ();
-    type ExistentialDeposits = ExistentialDeposits;
-    type MaxLocks = MaxLocks;
-    type DustRemovalWhitelist = Nothing;
-    type CurrencyHooks = ();
-    type MaxReserves = ();
-    type ReserveIdentifier = [u8; 8];
+	type RuntimeEvent = RuntimeEvent;
+	type Balance = u128;
+	type Amount = i128;
+	type CurrencyId = u32;
+	type WeightInfo = ();
+	type ExistentialDeposits = ExistentialDeposits;
+	type MaxLocks = MaxLocks;
+	type DustRemovalWhitelist = Nothing;
+	type CurrencyHooks = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
 }
-
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(

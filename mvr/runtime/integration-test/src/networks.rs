@@ -140,9 +140,7 @@ pub fn polkadot_ext() -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
 
 	pallet_balances::GenesisConfig::<Runtime> {
-		balances: vec![
-			(ALICE, 1_000_000_000_000 * unit(12)),
-		],
+		balances: vec![(ALICE, 1_000_000_000_000 * unit(12))],
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();

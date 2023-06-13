@@ -198,15 +198,20 @@ fn mangata_genesis(
 			balances: endowed_accounts
 				.iter()
 				.cloned()
-				.map(|account|
-					 [
-						 (0_u32,1_000_000_000__000000000_000000000_u128),
-						 (1_u32,0_u128),
-						 (2_u32,0_u128),
-						 (3_u32,0_u128),
-						 (4_u32,1_000_000_000__000000000_000000000_u128),
-					 ].iter().map(|(token, amount)| (account.clone(), *token, *amount)).collect::<Vec<_>>()
-				 ).flatten().collect(),
+				.map(|account| {
+					[
+						(0_u32, 1_000_000_000__000000000_000000000_u128),
+						(1_u32, 0_u128),
+						(2_u32, 0_u128),
+						(3_u32, 0_u128),
+						(4_u32, 1_000_000_000__000000000_000000000_u128),
+					]
+					.iter()
+					.map(|(token, amount)| (account.clone(), *token, *amount))
+					.collect::<Vec<_>>()
+				})
+				.flatten()
+				.collect(),
 		},
 		session: mangata_polkadot_runtime::SessionConfig {
 			keys: invulnerables

@@ -13,7 +13,7 @@ use cumulus_primitives_core::{
 	WildMultiAsset::{self, AllCounted},
 	Xcm,
 };
-use frame_support::assert_ok;
+use frame_support::{assert_ok, traits::Currency};
 use orml_traits::currency::MultiCurrency;
 use xcm::VersionedXcm;
 use xcm_emulator::TestExt;
@@ -46,7 +46,10 @@ fn dmp() {
 			0,
 		));
 
-		assert_eq!(polkadot_runtime::Balances::free_balance(&child_account_id(2110)), TRANSFER_AMOUNT);
+		assert_eq!(
+			polkadot_runtime::Balances::free_balance(&child_account_id(2110)),
+			TRANSFER_AMOUNT
+		);
 	});
 
 	networks::Mangata::execute_with(|| {
@@ -72,7 +75,10 @@ fn ump() {
 			Box::new((Here, TRANSFER_AMOUNT).into()),
 			0,
 		));
-		assert_eq!(polkadot_runtime::Balances::free_balance(&child_account_id(2110)), TRANSFER_AMOUNT);
+		assert_eq!(
+			polkadot_runtime::Balances::free_balance(&child_account_id(2110)),
+			TRANSFER_AMOUNT
+		);
 	});
 
 	let assets = MultiAssets::from_sorted_and_deduplicated(vec![MultiAsset {
@@ -129,27 +135,32 @@ fn xcmp() {
 	}])
 	.unwrap();
 
+	// arrange
 	networks::Mangata::execute_with(|| {
 		sp_tracing::try_init_simple();
 		assert_eq!(
-			mangata_polkadot_runtime::Tokens::free_balance(
-				RELAY_ASSET_ID,
+			mangata_polkadot_runtime::OrmlCurrencyAdapter::free_balance(
+				&networks::reserve_account(2000)
+			),
+			0
+		);
+		assert_eq!(mangata_polkadot_runtime::OrmlCurrencyAdapter::free_balance(&BOB), 0);
+		// provide reserves to sovereign accoun
+		mangata_polkadot_runtime::OrmlCurrencyAdapter::deposit_creating(
+			&networks::reserve_account(2000),
+			INITIAL_BALANCE,
+		);
+		assert_eq!(
+			mangata_polkadot_runtime::OrmlCurrencyAdapter::free_balance(
 				&networks::reserve_account(2000)
 			),
 			INITIAL_BALANCE
 		);
-		assert_eq!(mangata_polkadot_runtime::Tokens::free_balance(RELAY_ASSET_ID, &BOB), 0);
 	});
 
+	// act
 	networks::Sibling::execute_with(|| {
 		sp_tracing::try_init_simple();
-		assert_eq!(
-			mangata_polkadot_runtime::Tokens::free_balance(
-				RELAY_ASSET_ID,
-				&networks::reserve_account(2000)
-			),
-			INITIAL_BALANCE
-		);
 
 		assert_ok!(ParachainPalletXcm::execute(
 			mangata_polkadot_runtime::RuntimeOrigin::signed(ALICE),
@@ -180,6 +191,7 @@ fn xcmp() {
 		));
 	});
 
+	// asset
 	networks::Mangata::execute_with(|| {
 		sp_tracing::try_init_simple();
 		assert_eq!(

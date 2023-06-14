@@ -1,5 +1,6 @@
 #!/bin/bash -x
 REPO_ROOT=$(readlink -f $(dirname $(readlink -f $0)))
+CODE_ROOT=${CODE_ROOT:-${REPO_ROOT}}
 OUTPUT_DIR=docker-cargo/
 CARGO_HOME=${CARGO_HOME:-$HOME/.cargo}
 
@@ -78,7 +79,7 @@ docker run \
   --rm \
   --name=${DOCKER_JOB_NAME} \
   --user $DOCKER_USER \
-  -v ${REPO_ROOT}:/code \
+  -v ${CODE_ROOT}:/code \
   ${DOCKER_MOUNT_CACHE_VOLUMES} \
   ${DOCKER_RUN_EXTRA_ARGS} \
   -e CARGO_TARGET_DIR="/code/${OUTPUT_DIR}" \

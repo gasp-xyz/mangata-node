@@ -43,12 +43,25 @@ pub type LocationToAccountId = (
 	AccountId32Aliases<RelayNetwork, AccountId>,
 );
 
+use xcm_executor::traits::{MatchesFungible};
+pub struct AllowAll;
+
+//TODO fix
+impl MatchesFungible<u128> for AllowAll {
+	fn matches_fungible(a: &MultiAsset) -> Option<u128> {
+		match a.fun {
+			Fungible(amount) => Some(amount),
+			NonFungible(_) => None,
+		}
+	}
+}
+
 /// Means for transacting assets on this chain.
 pub type LocalAssetTransactor = CurrencyAdapter<
 	// Use this currency:
 	OrmlCurrencyAdapter,
 	// Use this currency when it is a fungible asset matching the given location or name:
-	IsConcrete<RelayLocation>,
+	AllowAll, // IsConcrete<RelayLocation>,
 	// Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
 	LocationToAccountId,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
@@ -179,11 +192,8 @@ pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
 	type RuntimeCall = RuntimeCall;
 	type XcmSender = XcmRouter;
-	// How to withdraw and deposit an asset.
 	type AssetTransactor = LocalAssetTransactor;
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
-	//TODO: check
-	// type IsReserve = MultiNativeAsset<AbsoluteReserveProvider>;
 	type IsReserve = NativeAsset;
 	type IsTeleporter = (); // Teleporting is disabled.
 	type UniversalLocation = UniversalLocation;

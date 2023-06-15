@@ -173,7 +173,7 @@ pub fn para_ext(parachain_id: u32) -> sp_io::TestExternalities {
 			(ALICE, 1, 0),
 			(ALICE, 2, 0),
 			(ALICE, 3, 0),
-			(ALICE, mangata_polkadot_runtime::DOTTokenId::get(), 1_000_000_000 * unit(12)),
+			(ALICE, mangata_polkadot_runtime::DOTTokenId::get(), INITIAL_BALANCE),
 		],
 	}
 	.assimilate_storage(&mut t)

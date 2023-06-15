@@ -207,3 +207,107 @@ fn xcmp() {
 		);
 	});
 }
+
+
+#[test]
+fn transfer_local_assets() {
+	TestNet::reset();
+
+	// arrange
+	networks::Mangata::execute_with(|| {
+		sp_tracing::try_init_simple();
+		// assert_eq!(
+		// 	mangata_polkadot_runtime::OrmlCurrencyAdapter::free_balance(
+		// 		&networks::reserve_account(2000)
+		// 	),
+		// 	0
+		// );
+		// assert_eq!(mangata_polkadot_runtime::OrmlCurrencyAdapter::free_balance(&BOB), 0);
+		// provide reserves to sovereign accoun
+		mangata_polkadot_runtime::OrmlCurrencyAdapter::deposit_creating(
+			&networks::reserve_account(2000),
+			INITIAL_BALANCE,
+		);
+		assert_eq!(
+			mangata_polkadot_runtime::OrmlCurrencyAdapter::free_balance(
+				&networks::reserve_account(2000)
+			),
+			INITIAL_BALANCE
+		);
+	});
+
+	// act
+	networks::Sibling::execute_with(|| {
+		sp_tracing::try_init_simple();
+
+
+		assert_eq!(
+			mangata_polkadot_runtime::OrmlCurrencyAdapter::free_balance(
+				&ALICE
+			),
+			INITIAL_BALANCE
+		);
+
+		let assets = MultiAssets::from_sorted_and_deduplicated(vec![MultiAsset {
+			id: AssetId::Concrete(MultiLocation { parents: 0, interior: Here }),
+			fun: Fungible(TRANSFER_AMOUNT),
+		}])
+		.unwrap();
+
+		assert_ok!(ParachainPalletXcm::execute(
+			mangata_polkadot_runtime::RuntimeOrigin::signed(ALICE),
+			Box::new(VersionedXcm::from(Xcm(vec![
+				WithdrawAsset(assets),
+				InitiateReserveWithdraw {
+					assets: Wild(WildMultiAsset::All),
+					reserve: MultiLocation { parents: 1, interior: X1(Parachain(2110)) }, // where to send message
+					xcm: (
+						Xcm(
+							vec![
+						BuyExecution {
+							fees: MultiAsset {
+								id: AssetId::Concrete(MultiLocation { parents: 1, interior: X1(Parachain(2000)) }),
+								fun: Fungible(1)
+							},
+							weight_limit: Unlimited
+						},
+						DepositAsset {
+							assets: Wild(AllCounted(1)),
+							beneficiary: MultiLocation {
+								parents: 0,
+								interior: X1(Junction::AccountId32 { id: BOB_RAW, network: None })
+							}
+						}
+					]
+					)),
+				}
+			]))),
+			frame_support::weights::Weight::from_parts(u64::MAX, u64::MAX)
+		));
+
+		assert_eq!(
+			mangata_polkadot_runtime::OrmlCurrencyAdapter::free_balance(
+				&ALICE
+			),
+			INITIAL_BALANCE - TRANSFER_AMOUNT
+		);
+
+	});
+
+	// asset
+	networks::Mangata::execute_with(|| {
+		sp_tracing::try_init_simple();
+
+		assert_eq!(
+			mangata_polkadot_runtime::OrmlCurrencyAdapter::free_balance(
+				&networks::reserve_account(2000)
+			),
+			INITIAL_BALANCE - TRANSFER_AMOUNT
+		);
+
+		assert_eq!(
+			mangata_polkadot_runtime::OrmlCurrencyAdapter::free_balance(&BOB),
+			TRANSFER_AMOUNT
+		);
+	});
+}

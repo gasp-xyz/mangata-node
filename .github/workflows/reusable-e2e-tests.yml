@@ -89,7 +89,11 @@ jobs:
     strategy:
       matrix:
         include:
-          - command: "yarn test-parallel --max-workers=10"
+          - command: "yarn test-parallel-1 --max-workers=10"
+            fast: false
+          - command: "yarn test-parallel-2 --max-workers=10"
+            fast: false
+          - command: "yarn test-parallel-3 --max-workers=10"
             fast: false
           - command: "yarn test-sequential-no-bootstrap"
             fast: false

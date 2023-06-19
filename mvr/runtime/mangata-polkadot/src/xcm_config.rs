@@ -2,6 +2,7 @@ use super::{
 	AccountId, AllPalletsWithSystem, OrmlCurrencyAdapter, ParachainInfo, ParachainSystem,
 	PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, Tokens, WeightToFee, XcmpQueue,
 };
+use codec::Encode;
 use core::{marker::PhantomData, ops::ControlFlow};
 use frame_support::{
 	log, match_types, parameter_types,
@@ -12,7 +13,7 @@ use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 use polkadot_runtime_common::impls::ToAuthor;
-use xcm::latest::prelude::*;
+use xcm::{latest::prelude::*, v2::Instruction::WithdrawAsset};
 use xcm_builder::{
 	AccountId32Aliases, AllowExplicitUnpaidExecutionFrom, AllowKnownQueryResponses,
 	AllowSubscriptionsFrom, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom,
@@ -23,6 +24,7 @@ use xcm_builder::{
 	WithComputedOrigin,
 };
 use xcm_executor::{traits::ShouldExecute, XcmExecutor};
+use cumulus_primitives_core::MultiLocation;
 
 parameter_types! {
 	pub const RelayLocation: MultiLocation = MultiLocation::parent();
@@ -173,9 +175,46 @@ impl ShouldExecute for DenyReserveTransferToRelayChain {
 	}
 }
 
+pub struct AllowAllCalls;
+impl ShouldExecute for AllowAllCalls
+{
+	fn should_execute<RuntimeCall>(
+		_origin: &MultiLocation,
+		message: &mut [Instruction<RuntimeCall>],
+		_max_weight: Weight,
+		_weight_credit: &mut Weight,
+	) -> Result<(), ProcessMessageError> {
+		if let Some(Instruction::<RuntimeCall>::WithdrawAsset(_)) = message.iter_mut().next() {
+			todo!()
+		}
+		if let Some(Instruction::<RuntimeCall>::WithdrawAsset(_)) = message.iter_mut().next() {
+			todo!()
+		}
+		// let mut msg: Vec<Instruction<RuntimeCall>> = vec![
+		// 	WithdrawAsset(
+		// 		MultiAssets::from_sorted_and_deduplicated(
+		// 			vec![MultiAsset {
+		// 				id: AssetId::Concrete(MultiLocation { parents: 1, interior: Here }),
+		// 				fun: Fungible(1_000_000_000_000),
+		// 			}]
+		// 		).unwrap()
+		// 	),
+		// ];
+		// msg.extend_from_slice(message);
+		// message = [];
+		// std::mem::drop(msg);
+		// message = msg.as_mut();
+		Ok(())
+	}
+}
+
+
+
 pub type Barrier = (
 	TakeWeightCredit,
 	AllowTopLevelPaidExecutionFrom<Everything>,
+	AllowAllCalls,
+	// ^^^ TODO: just for testing
 	AllowUnpaidExecutionFrom<ParentOrParentsExecutivePlurality>,
 	// ^^^ Parent and its exec plurality get free execution
 	// Expected responses are OK.
@@ -232,6 +271,78 @@ pub type XcmRouter = (
 parameter_types! {
 	pub ReachableDest: Option<MultiLocation> = Some(Parent.into());
 }
+
+pub struct ExecutorWrapper<Executor>(PhantomData<Executor>);
+
+impl<Executor, RCall> ExecuteXcm<RCall> for ExecutorWrapper<Executor> where
+	Executor: ExecuteXcm<RCall>
+{
+    type Prepared = Executor::Prepared;
+
+    fn prepare(message: Xcm<RCall>) -> core::result::Result<Self::Prepared, Xcm<RCall>> {
+        Executor::prepare(message)
+    }
+
+    fn execute(
+		    origin: impl Into<MultiLocation>,
+		    pre: Self::Prepared,
+		    hash: XcmHash,
+		    weight_credit: Weight,
+	    ) -> Outcome {
+        Executor::execute( origin, pre, hash, weight_credit,)
+    }
+
+    fn charge_fees(location: impl Into<MultiLocation>, fees: MultiAssets) -> XcmResult {
+        Executor::charge_fees(location, fees)
+    }
+
+    fn execute_xcm(
+		    origin: impl Into<MultiLocation>,
+		    message: Xcm<RCall>,
+		    hash: XcmHash,
+		    weight_limit: Weight,
+	    ) -> Outcome {
+
+			let remark = crate::RuntimeCall::System(
+				frame_system::Call::<crate::Runtime>::remark_with_event { remark: vec![1, 2, 3] },
+			);
+
+			let mut msg = vec![
+				Transact{
+					origin_kind: OriginKind::SovereignAccount,
+					require_weight_at_most: Weight::from_parts(1_000_000_000_000, 1024 * 1024),
+					call: remark.encode().into(),
+				}
+			];
+			msg.extend(message.0.into_iter());
+
+			if let Some(Instruction::<RCall>::WithdrawAsset(assets)) = msg.get_mut(0) {
+				assets.push(MultiAsset {
+					id: AssetId::Concrete(MultiLocation { parents: 1, interior: Here }),
+					fun: Fungible( 20 * 1_000_000_000_000),
+				});
+			}
+
+			if let Some(Instruction::<RCall>::BuyExecution{fees, weight_limit}) = msg.get_mut(2) {
+				fees.id = AssetId::Concrete(MultiLocation { parents: 1, interior: Here });
+			}
+
+			Executor::execute_xcm(origin, Xcm(msg), hash, weight_limit)
+	    }
+
+    fn execute_xcm_in_credit(
+		    origin: impl Into<MultiLocation>,
+		    message: Xcm<RCall>,
+		    hash: XcmHash,
+		    weight_limit: Weight,
+		    weight_credit: Weight,
+	    ) -> Outcome {
+			Executor::execute_xcm_in_credit(origin, message, hash, weight_limit, weight_credit)
+	}
+
+}
+
+
 
 impl pallet_xcm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;

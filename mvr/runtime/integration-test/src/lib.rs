@@ -216,14 +216,6 @@ fn transfer_local_assets() {
 	// arrange
 	networks::Mangata::execute_with(|| {
 		sp_tracing::try_init_simple();
-		// assert_eq!(
-		// 	mangata_polkadot_runtime::OrmlCurrencyAdapter::free_balance(
-		// 		&networks::reserve_account(2000)
-		// 	),
-		// 	0
-		// );
-		// assert_eq!(mangata_polkadot_runtime::OrmlCurrencyAdapter::free_balance(&BOB), 0);
-		// provide reserves to sovereign accoun
 		mangata_polkadot_runtime::OrmlCurrencyAdapter::deposit_creating(
 			&networks::reserve_account(2000),
 			INITIAL_BALANCE,
@@ -267,7 +259,7 @@ fn transfer_local_assets() {
 						BuyExecution {
 							fees: MultiAsset {
 								id: AssetId::Concrete(MultiLocation { parents: 1, interior: X1(Parachain(2000)) }),
-								fun: Fungible(1)
+								fun: Fungible(10)
 							},
 							weight_limit: Unlimited
 						},
@@ -292,6 +284,8 @@ fn transfer_local_assets() {
 			INITIAL_BALANCE - TRANSFER_AMOUNT
 		);
 
+
+
 	});
 
 	// asset
@@ -309,5 +303,10 @@ fn transfer_local_assets() {
 			mangata_polkadot_runtime::OrmlCurrencyAdapter::free_balance(&BOB),
 			TRANSFER_AMOUNT
 		);
+		println!("EVENTS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+		for e in mangata_polkadot_runtime::System::events().iter() {
+			println!("EVENT: {e:?}");
+		}
+		println!("EVENTS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 	});
 }

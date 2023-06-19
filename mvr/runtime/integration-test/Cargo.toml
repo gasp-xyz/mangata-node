@@ -12,6 +12,7 @@ frame-support = { git = "https://github.com/paritytech/substrate", branch = "pol
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 sc-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
@@ -37,6 +38,7 @@ orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 
 # Local
 mangata-polkadot-runtime = { path = "../mangata-polkadot", optional = true }
+xtokens-parachain = { path = "../xtokens-parachain", optional = true }
 
 # Xcm simulator
 xcm-executor = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.42" }
@@ -48,4 +50,5 @@ xcm-emulator = { git = "https://github.com/mangata-finance/xcm-simulator", branc
 default = ["mangata-polkadot"]
 mangata-polkadot = [
     "mangata-polkadot-runtime",
+    "xtokens-parachain",
 ]

@@ -1,5 +1,6 @@
 #![cfg(test)]
 pub mod networks;
+pub mod xparachain;
 use cumulus_primitives_core::{
 	AssetId,
 	Fungibility::Fungible,

@@ -3,10 +3,11 @@ use super::{
 	PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, Tokens, WeightToFee, XcmpQueue,
 };
 use codec::Encode;
+use sp_runtime::traits::Convert;
 use core::{marker::PhantomData, ops::ControlFlow};
 use frame_support::{
 	log, match_types, parameter_types,
-	traits::{ConstU32, Everything, Nothing, ProcessMessageError},
+	traits::{ConstU32, ConstU64, Everything, Nothing, ProcessMessageError},
 	weights::Weight,
 };
 use frame_system::EnsureRoot;
@@ -21,11 +22,10 @@ use xcm_builder::{
 	IsConcrete, MatchXcm, NativeAsset, ParentIsPreset, RelayChainAsNative,
 	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
 	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
-	WithComputedOrigin,
+	WithComputedOrigin
 };
+use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
 use xcm_executor::{traits::ShouldExecute, XcmExecutor};
-use cumulus_primitives_core::MultiLocation;
-
 parameter_types! {
 	pub const RelayLocation: MultiLocation = MultiLocation::parent();
 	pub const RelayNetwork: Option<NetworkId> = None;
@@ -94,8 +94,8 @@ pub type XcmOriginToTransactDispatchOrigin = (
 );
 
 parameter_types! {
-	// One XCM operation is 1_000_000_000 weight - almost certainly a conservative estimate.
-	pub UnitWeightCost: Weight = Weight::from_parts(1_000_000_000, 64 * 1024);
+	pub const UnitWeightCost: Weight = Weight::from_parts(10, 10);
+	pub const BaseXcmWeight: Weight = Weight::from_parts(100_000_000, 100_000_000);
 	pub const MaxInstructions: u32 = 100;
 	pub const MaxAssetsIntoHolding: u32 = 64;
 }
@@ -272,78 +272,6 @@ parameter_types! {
 	pub ReachableDest: Option<MultiLocation> = Some(Parent.into());
 }
 
-pub struct ExecutorWrapper<Executor>(PhantomData<Executor>);
-
-impl<Executor, RCall> ExecuteXcm<RCall> for ExecutorWrapper<Executor> where
-	Executor: ExecuteXcm<RCall>
-{
-    type Prepared = Executor::Prepared;
-
-    fn prepare(message: Xcm<RCall>) -> core::result::Result<Self::Prepared, Xcm<RCall>> {
-        Executor::prepare(message)
-    }
-
-    fn execute(
-		    origin: impl Into<MultiLocation>,
-		    pre: Self::Prepared,
-		    hash: XcmHash,
-		    weight_credit: Weight,
-	    ) -> Outcome {
-        Executor::execute( origin, pre, hash, weight_credit,)
-    }
-
-    fn charge_fees(location: impl Into<MultiLocation>, fees: MultiAssets) -> XcmResult {
-        Executor::charge_fees(location, fees)
-    }
-
-    fn execute_xcm(
-		    origin: impl Into<MultiLocation>,
-		    message: Xcm<RCall>,
-		    hash: XcmHash,
-		    weight_limit: Weight,
-	    ) -> Outcome {
-
-			let remark = crate::RuntimeCall::System(
-				frame_system::Call::<crate::Runtime>::remark_with_event { remark: vec![1, 2, 3] },
-			);
-
-			let mut msg = vec![
-				Transact{
-					origin_kind: OriginKind::SovereignAccount,
-					require_weight_at_most: Weight::from_parts(1_000_000_000_000, 1024 * 1024),
-					call: remark.encode().into(),
-				}
-			];
-			msg.extend(message.0.into_iter());
-
-			if let Some(Instruction::<RCall>::WithdrawAsset(assets)) = msg.get_mut(0) {
-				assets.push(MultiAsset {
-					id: AssetId::Concrete(MultiLocation { parents: 1, interior: Here }),
-					fun: Fungible( 20 * 1_000_000_000_000),
-				});
-			}
-
-			if let Some(Instruction::<RCall>::BuyExecution{fees, weight_limit}) = msg.get_mut(2) {
-				fees.id = AssetId::Concrete(MultiLocation { parents: 1, interior: Here });
-			}
-
-			Executor::execute_xcm(origin, Xcm(msg), hash, weight_limit)
-	    }
-
-    fn execute_xcm_in_credit(
-		    origin: impl Into<MultiLocation>,
-		    message: Xcm<RCall>,
-		    hash: XcmHash,
-		    weight_limit: Weight,
-		    weight_credit: Weight,
-	    ) -> Outcome {
-			Executor::execute_xcm_in_credit(origin, message, hash, weight_limit, weight_credit)
-	}
-
-}
-
-
-
 impl pallet_xcm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type SendXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
@@ -378,3 +306,66 @@ impl cumulus_pallet_xcm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 }
+
+impl orml_xcm::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type SovereignOrigin = EnsureRoot<AccountId>;
+}
+
+parameter_types! {
+	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(2001)));
+	pub const MaxAssetsForTransfer: usize = 3;
+}
+
+match_types! {
+	pub type ParentOrParachains: impl Contains<MultiLocation> = {
+		MultiLocation { parents: 0, interior: X1(Junction::AccountId32 { .. }) } |
+		MultiLocation { parents: 1, interior: X1(Junction::AccountId32 { .. }) } |
+		MultiLocation { parents: 1, interior: X2(Parachain(1), Junction::AccountId32 { .. }) } |
+		MultiLocation { parents: 1, interior: X2(Parachain(2), Junction::AccountId32 { .. }) } |
+		MultiLocation { parents: 1, interior: X2(Parachain(3), Junction::AccountId32 { .. }) } |
+		MultiLocation { parents: 1, interior: X2(Parachain(4), Junction::AccountId32 { .. }) } |
+		MultiLocation { parents: 1, interior: X2(Parachain(100), Junction::AccountId32 { .. }) }
+	};
+}
+
+
+pub struct AccountIdToMultiLocation;
+impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
+	fn convert(account: AccountId) -> MultiLocation {
+		X1(Junction::AccountId32 {
+			network: None,
+			id: account.into(),
+		})
+		.into()
+	}
+}
+
+parameter_type_with_key! {
+	pub ParachainMinFee: |location: MultiLocation| -> Option<u128> {
+		#[allow(clippy::match_ref_pats)] // false positive
+		match (location.parents, location.first_interior()) {
+			(1, Some(Parachain(3))) => Some(40),
+			_ => None,
+		}
+	};
+}
+
+impl orml_xtokens::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Balance = crate::Balance;
+	type CurrencyId = crate::CurrencyId;
+	type CurrencyIdConvert = crate::CurrencyIdConvert;
+	type AccountIdToMultiLocation = AccountIdToMultiLocation;
+	type SelfLocation = SelfLocation;
+	type MultiLocationsFilter = ParentOrParachains;
+	type MinXcmFee = ParachainMinFee;
+	type XcmExecutor = XcmExecutor<XcmConfig>;
+	type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
+	type BaseXcmWeight = BaseXcmWeight;
+	type UniversalLocation = UniversalLocation;
+	type MaxAssetsForTransfer = MaxAssetsForTransfer;
+	type ReserveProvider = AbsoluteReserveProvider;
+}
+
+

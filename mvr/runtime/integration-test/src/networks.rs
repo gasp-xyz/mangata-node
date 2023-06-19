@@ -12,6 +12,7 @@ pub const BOB: sp_runtime::AccountId32 = sp_runtime::AccountId32::new(BOB_RAW);
 
 pub const RELAY_ASSET_ID: u32 = 4_u32;
 pub const INITIAL_BALANCE: u128 = 100 * unit(12);
+use crate::xparachain;
 
 pub type Balance = u128;
 
@@ -61,11 +62,24 @@ decl_test_parachain! {
 	}
 }
 
+// decl_test_parachain! {
+// 	// Parachain that uses XTokens
+// 	pub struct XParachain {
+// 		Runtime = xparachain::Runtime,
+// 		RuntimeOrigin = xparachain::RuntimeOrigin,
+// 		XcmpMessageHandler = xparachain::XcmpQueue,
+// 		DmpMessageHandler = xparachain::DmpQueue,
+// 		new_ext = xparachain::para_ext(2001),
+// 	}
+// }
+
+
 decl_test_network! {
 	pub struct TestNet {
 		relay_chain = PolkadotRelay,
 		parachains = vec![
 			(2000, Sibling),
+			// (2001, XParachain),
 			(2110, Mangata),
 		],
 	}

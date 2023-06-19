@@ -1,8 +1,11 @@
 enableLocalRelaychain: false
 enableParachainRegisterSidecar: false
-storageSize: 100Gi
-relaychainStorageSize: 100Gi
-storageClass: regional-ssd
+storageSize: 5Gi
+relaychainStorageSize: 5Gi
+
+# Correspond to `pd-balanced` storage type in GCP
+# Will delete volume on PVC resource deletion
+storageClass: node-data-volume
 
 node01:
   isCollator: true

@@ -69,7 +69,7 @@ jobs:
       - name: Run performance tests
         working-directory: e2e/performance
         run: |
-          npx ts-node index.ts \
+          node --experimental-specifier-resolution=node --loader ts-node/esm --experimental-vm-modules index.ts \
           transfer \
           nodes="wss://node-01-ws-${{ env.ENV_REF }}.mangata.online" \
           testCaseName=ConcurrentTest \

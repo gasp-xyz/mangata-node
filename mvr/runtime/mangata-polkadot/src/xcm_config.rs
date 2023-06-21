@@ -126,52 +126,8 @@ where
 	}
 }
 
-// See issue <https://github.com/paritytech/polkadot/issues/5233>
-pub struct DenyReserveTransferToRelayChain;
-impl ShouldExecute for DenyReserveTransferToRelayChain {
-	fn should_execute<RuntimeCall>(
-		origin: &MultiLocation,
-		message: &mut [Instruction<RuntimeCall>],
-		_max_weight: Weight,
-		_weight_credit: &mut Weight,
-	) -> Result<(), ProcessMessageError> {
-		message.matcher().match_next_inst_while(
-			|_| true,
-			|inst| match inst {
-				InitiateReserveWithdraw {
-					reserve: MultiLocation { parents: 1, interior: Here },
-					..
-				} |
-				DepositReserveAsset {
-					dest: MultiLocation { parents: 1, interior: Here }, ..
-				} |
-				TransferReserveAsset {
-					dest: MultiLocation { parents: 1, interior: Here }, ..
-				} => {
-					Err(ProcessMessageError::Unsupported) // Deny
-				},
-				// An unexpected reserve transfer has arrived from the Relay Chain. Generally,
-				// `IsReserve` should not allow this, but we just log it here.
-				ReserveAssetDeposited { .. }
-					if matches!(origin, MultiLocation { parents: 1, interior: Here }) =>
-				{
-					log::warn!(
-						target: "xcm::barrier",
-						"Unexpected ReserveAssetDeposited from the Relay Chain",
-					);
-					Ok(ControlFlow::Continue(()))
-				},
-				_ => Ok(ControlFlow::Continue(())),
-			},
-		)?;
-
-		// Permit everything else
-		Ok(())
-	}
-}
-
-pub struct AllowForeighParachainTopLevelPaidExecutionFrom<T>(PhantomData<T>);
-impl<T: Contains<MultiLocation>> ShouldExecute for AllowForeighParachainTopLevelPaidExecutionFrom<T> {
+pub struct AllowSiblingParachainReserveTransferAssetTrap<T>(PhantomData<T>);
+impl<T: Contains<MultiLocation>> ShouldExecute for AllowSiblingParachainReserveTransferAssetTrap<T> {
 	fn should_execute<RuntimeCall>(
 		origin: &MultiLocation,
 		instructions: &mut [Instruction<RuntimeCall>],
@@ -180,15 +136,11 @@ impl<T: Contains<MultiLocation>> ShouldExecute for AllowForeighParachainTopLevel
 	) -> Result<(), ProcessMessageError> {
 		log::trace!(
 			target: "xcm::barriers",
-			"AllowForeighParachainTopLevelPaidExecutionFrom origin: {:?}, instructions: {:?}, max_weight: {:?}, weight_credit: {:?}",
+			"AllowSiblingParachainReserveTransferAssetTrap origin: {:?}, instructions: {:?}, max_weight: {:?}, weight_credit: {:?}",
 			origin, instructions, max_weight, _weight_credit,
-		);
-
+			);
 		frame_support::ensure!(T::contains(origin), ProcessMessageError::Unsupported);
-		// We will read up to 5 instructions. This allows up to 3 `ClearOrigin` instructions. We
-		// allow for more than one since anything beyond the first is a no-op and it's conceivable
-		// that composition of operations might result in more than one being appended.
-		let end = instructions.len().min(5);
+		let end = instructions.len().min(4);
 		instructions[..end]
 			.matcher()
 			.match_next_inst(|inst| match inst {
@@ -199,17 +151,9 @@ impl<T: Contains<MultiLocation>> ShouldExecute for AllowForeighParachainTopLevel
 				WithdrawAsset(..) => Ok(()),
 				_ => Err(ProcessMessageError::BadFormat),
 			})?
-			// TODO: make more precise
-			.skip_inst_while(|inst| matches!(inst, ClearOrigin | Transact { .. }))?
+			.skip_inst_while(|inst| matches!(inst, ClearOrigin))?
 			.match_next_inst(|inst| match inst {
-				BuyExecution { weight_limit: Limited(ref mut weight), .. }
-					if weight.all_gte(max_weight) =>
-				{
-					*weight = max_weight;
-					Ok(())
-				},
-				BuyExecution { ref mut weight_limit, .. } if weight_limit == &Unlimited => {
-					*weight_limit = Limited(max_weight);
+				BuyExecution { weight_limit, .. } if *weight_limit == Unlimited => {
 					Ok(())
 				},
 				_ => Err(ProcessMessageError::Overweight(max_weight)),
@@ -232,19 +176,26 @@ match_types! {
 
 pub type Barrier = (
 	TakeWeightCredit,
-	// AllowTopLevelPaidExecutionFrom<Everything>,
-	// ^^^ TODO: just for testing
 	AllowUnpaidExecutionFrom<RelayNetworkOnly>,
-	AllowForeighParachainTopLevelPaidExecutionFrom<SibilingParachain>,
-	// ^^^ Parent and its exec plurality get free execution
+	AllowSiblingParachainReserveTransferAssetTrap<SibilingParachain>,
 	// Expected responses are OK.
 	AllowKnownQueryResponses<PolkadotXcm>,
 	// Subscriptions for version tracking are OK.
 	AllowSubscriptionsFrom<Everything>,
 );
 
+
+use frame_support::weights::constants::WEIGHT_REF_TIME_PER_SECOND;
+use frame_support::weights::constants::ExtrinsicBaseWeight;
+
+pub fn dot_per_second() -> u128 {
+	let base_weight = crate::Balance::from(ExtrinsicBaseWeight::get().ref_time());
+	let base_per_second = (WEIGHT_REF_TIME_PER_SECOND / base_weight as u64) as u128;
+	base_per_second * 1_000_000_000_000_u128 / 100 // 0.01 DOT
+}
+
 parameter_types! {
-	pub DotPerSecondPerByte: (AssetId, u128, u128) = (Concrete(Parent.into()), 1, 1);
+	pub DotPerSecondPerByte: (AssetId, u128, u128) = (MultiLocation::parent().into(), dot_per_second(), dot_per_second());
 }
 
 pub struct XcmConfig;
@@ -258,7 +209,6 @@ impl xcm_executor::Config for XcmConfig {
 	type UniversalLocation = UniversalLocation;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
-	//TODO: fine tune parameter
 	type Trader = FixedRateOfFungible<DotPerSecondPerByte, ()>;
 	type ResponseHandler = PolkadotXcm;
 	type AssetTrap = PolkadotXcm;
@@ -318,11 +268,7 @@ impl<Executor, RCall, FeeAmount> ExecuteXcm<RCall> for ExecutorWrapper<Executor,
 		    hash: XcmHash,
 		    weight_limit: Weight,
 	    ) -> Outcome {
-
-
 			let mut it = message.0.iter();
-
-			//allow in barrier todo move to barrier
 			let msg = if let (
 				Some(ReserveAssetDeposited(deposited_assets)),
 				Some(ClearOrigin),
@@ -363,6 +309,25 @@ impl<Executor, RCall, FeeAmount> ExecuteXcm<RCall> for ExecutorWrapper<Executor,
 
 }
 
+/// allow for InitiateReserveWithdraw transfers to relay network
+pub struct StrictXcmExecuteFilter;
+impl Contains<(MultiLocation, Xcm<RuntimeCall>)> for StrictXcmExecuteFilter {
+    fn contains(t: &(MultiLocation, Xcm<RuntimeCall>)) -> bool {
+		match t {
+			(MultiLocation { parents: 1 , interior: Here }, msg) => {
+				// TODO: restrict further
+				// let mut it = msg.inner().iter();
+				// if let (Some(WithdrawAsset(..)), Some(InitiateReserveWithdraw{..})) = (it.next(), it.next()) {
+				// 	true
+				// } else {
+				// 	false
+				// }
+				true
+			},
+			_ => false
+		}
+    }
+}
 
 
 impl pallet_xcm::Config for Runtime {
@@ -370,11 +335,10 @@ impl pallet_xcm::Config for Runtime {
 	type SendXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
-	// TODO: CHANGE ME, enable any xcm execution
+	// type XcmExecuteFilter = StrictXcmExecuteFilter;
 	type XcmExecuteFilter = Everything;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type XcmTeleportFilter = Everything;
-	// disable any reserve transfers from parachain
+	type XcmTeleportFilter = Nothing;
 	type XcmReserveTransferFilter = Nothing;
 	type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
 	type UniversalLocation = UniversalLocation;

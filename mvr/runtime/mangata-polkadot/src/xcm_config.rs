@@ -10,10 +10,11 @@ use frame_support::{
 	weights::Weight,
 };
 use frame_system::EnsureRoot;
+use frame_support::traits::Contains;
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 use polkadot_runtime_common::impls::ToAuthor;
-use xcm::{latest::prelude::*, v2::Instruction::WithdrawAsset};
+use xcm::{latest::prelude::*};
 use xcm_builder::{
 	AccountId32Aliases, AllowExplicitUnpaidExecutionFrom, AllowKnownQueryResponses,
 	AllowSubscriptionsFrom, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom,
@@ -25,6 +26,7 @@ use xcm_builder::{
 };
 use xcm_executor::{traits::ShouldExecute, XcmExecutor};
 use cumulus_primitives_core::MultiLocation;
+// use cumulus_primitives_core::Instruction::*;
 
 parameter_types! {
 	pub const RelayLocation: MultiLocation = MultiLocation::parent();
@@ -168,54 +170,72 @@ impl ShouldExecute for DenyReserveTransferToRelayChain {
 	}
 }
 
-pub struct AllowAllCalls;
-impl ShouldExecute for AllowAllCalls
-{
+pub struct AllowForeighParachainTopLevelPaidExecutionFrom<T>(PhantomData<T>);
+impl<T: Contains<MultiLocation>> ShouldExecute for AllowForeighParachainTopLevelPaidExecutionFrom<T> {
 	fn should_execute<RuntimeCall>(
-		_origin: &MultiLocation,
-		message: &mut [Instruction<RuntimeCall>],
-		_max_weight: Weight,
+		origin: &MultiLocation,
+		instructions: &mut [Instruction<RuntimeCall>],
+		max_weight: Weight,
 		_weight_credit: &mut Weight,
 	) -> Result<(), ProcessMessageError> {
-		if let Some(Instruction::<RuntimeCall>::WithdrawAsset(_)) = message.iter_mut().next() {
-			todo!()
-		}
-		if let Some(Instruction::<RuntimeCall>::WithdrawAsset(_)) = message.iter_mut().next() {
-			todo!()
-		}
-		// let mut msg: Vec<Instruction<RuntimeCall>> = vec![
-		// 	WithdrawAsset(
-		// 		MultiAssets::from_sorted_and_deduplicated(
-		// 			vec![MultiAsset {
-		// 				id: AssetId::Concrete(MultiLocation { parents: 1, interior: Here }),
-		// 				fun: Fungible(1_000_000_000_000),
-		// 			}]
-		// 		).unwrap()
-		// 	),
-		// ];
-		// msg.extend_from_slice(message);
-		// message = [];
-		// std::mem::drop(msg);
-		// message = msg.as_mut();
-		Ok(())
+		log::trace!(
+			target: "xcm::barriers",
+			"AllowForeighParachainTopLevelPaidExecutionFrom origin: {:?}, instructions: {:?}, max_weight: {:?}, weight_credit: {:?}",
+			origin, instructions, max_weight, _weight_credit,
+		);
+
+		frame_support::ensure!(T::contains(origin), ProcessMessageError::Unsupported);
+		// We will read up to 5 instructions. This allows up to 3 `ClearOrigin` instructions. We
+		// allow for more than one since anything beyond the first is a no-op and it's conceivable
+		// that composition of operations might result in more than one being appended.
+		let end = instructions.len().min(5);
+		instructions[..end]
+			.matcher()
+			.match_next_inst(|inst| match inst {
+				ReserveAssetDeposited(..) => Ok(()), // to be trapped
+				_ => Err(ProcessMessageError::BadFormat),
+			})?
+			.match_next_inst(|inst| match inst {
+				WithdrawAsset(..) => Ok(()),
+				_ => Err(ProcessMessageError::BadFormat),
+			})?
+			// TODO: make more precise
+			.skip_inst_while(|inst| matches!(inst, ClearOrigin | Transact { .. }))?
+			.match_next_inst(|inst| match inst {
+				BuyExecution { weight_limit: Limited(ref mut weight), .. }
+					if weight.all_gte(max_weight) =>
+				{
+					*weight = max_weight;
+					Ok(())
+				},
+				BuyExecution { ref mut weight_limit, .. } if weight_limit == &Unlimited => {
+					*weight_limit = Limited(max_weight);
+					Ok(())
+				},
+				_ => Err(ProcessMessageError::Overweight(max_weight)),
+			})?;
+	Ok(())
 	}
 }
 
-
+match_types! {
+	pub type RelayNetworkOnly: impl Contains<MultiLocation> = {
+		MultiLocation { parents: 1, interior: Here }
+	};
+}
 
 match_types! {
-	pub type ParentOrParentsExecutivePlurality: impl Contains<MultiLocation> = {
-		MultiLocation { parents: 1, interior: Here } |
-		MultiLocation { parents: 1, interior: X1(Plurality { id: BodyId::Executive, .. }) }
+	pub type SibilingParachain: impl Contains<MultiLocation> = {
+		MultiLocation { parents: 1, interior: X1(Parachain (_) )}
 	};
 }
 
 pub type Barrier = (
 	TakeWeightCredit,
-	AllowTopLevelPaidExecutionFrom<Everything>,
-	AllowAllCalls,
+	// AllowTopLevelPaidExecutionFrom<Everything>,
 	// ^^^ TODO: just for testing
-	AllowUnpaidExecutionFrom<ParentOrParentsExecutivePlurality>,
+	AllowUnpaidExecutionFrom<RelayNetworkOnly>,
+	AllowForeighParachainTopLevelPaidExecutionFrom<SibilingParachain>,
 	// ^^^ Parent and its exec plurality get free execution
 	// Expected responses are OK.
 	AllowKnownQueryResponses<PolkadotXcm>,
@@ -267,15 +287,11 @@ pub type XcmRouter = (
 	XcmpQueue,
 );
 
-#[cfg(feature = "runtime-benchmarks")]
-parameter_types! {
-	pub ReachableDest: Option<MultiLocation> = Some(Parent.into());
-}
+pub struct ExecutorWrapper<Executor, FeeAmount>(PhantomData<(Executor,FeeAmount)>);
 
-pub struct ExecutorWrapper<Executor>(PhantomData<Executor>);
-
-impl<Executor, RCall> ExecuteXcm<RCall> for ExecutorWrapper<Executor> where
-	Executor: ExecuteXcm<RCall>
+impl<Executor, RCall, FeeAmount> ExecuteXcm<RCall> for ExecutorWrapper<Executor, FeeAmount> where
+	Executor: ExecuteXcm<RCall>,
+	FeeAmount: sp_runtime::traits::Get<u128>
 {
     type Prepared = Executor::Prepared;
 
@@ -303,31 +319,36 @@ impl<Executor, RCall> ExecuteXcm<RCall> for ExecutorWrapper<Executor> where
 		    weight_limit: Weight,
 	    ) -> Outcome {
 
-			let remark = crate::RuntimeCall::System(
-				frame_system::Call::<crate::Runtime>::remark_with_event { remark: vec![1, 2, 3] },
-			);
 
-			let mut msg = vec![
-				Transact{
-					origin_kind: OriginKind::SovereignAccount,
-					require_weight_at_most: Weight::from_parts(1_000_000_000_000, 1024 * 1024),
-					call: remark.encode().into(),
-				}
-			];
-			msg.extend(message.0.into_iter());
+			let mut it = message.0.iter();
 
-			if let Some(Instruction::<RCall>::WithdrawAsset(assets)) = msg.get_mut(0) {
-				assets.push(MultiAsset {
-					id: AssetId::Concrete(MultiLocation { parents: 1, interior: Here }),
-					fun: Fungible( 20 * 1_000_000_000_000),
-				});
-			}
+			//allow in barrier todo move to barrier
+			let msg = if let (
+				Some(ReserveAssetDeposited(deposited_assets)),
+				Some(ClearOrigin),
+				Some(BuyExecution { fees, weight_limit}),
+				Some(DepositAsset { assets, beneficiary })
+			) =  (it.next(), it.next(), it.next(), it.next()) {
 
-			if let Some(Instruction::<RCall>::BuyExecution{fees, weight_limit}) = msg.get_mut(2) {
-				fees.id = AssetId::Concrete(MultiLocation { parents: 1, interior: Here });
-			}
+				let amount = FeeAmount::get();
+				let location = MultiLocation { parents: 1, interior: Here };
+				let fee_asset = MultiAsset {
+					id: AssetId::Concrete(location),
+					fun: Fungible(amount),
+				};
+				let withdraw_assets = MultiAssets::from_sorted_and_deduplicated_skip_checks(vec![fee_asset.clone()]);
 
-			Executor::execute_xcm(origin, Xcm(msg), hash, weight_limit)
+				Xcm(vec![
+					ReserveAssetDeposited(deposited_assets.clone()),
+					WithdrawAsset(withdraw_assets),
+					ClearOrigin,
+					BuyExecution { fees: fee_asset, weight_limit: Unlimited},
+				])
+			} else {
+				message
+			};
+
+			Executor::execute_xcm(origin, msg, hash, weight_limit)
 	    }
 
     fn execute_xcm_in_credit(
@@ -377,4 +398,8 @@ impl pallet_xcm::Config for Runtime {
 impl cumulus_pallet_xcm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
+}
+
+impl crate::event_logger::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
 }

@@ -323,10 +323,10 @@ fn xtokens_transfer_triggers_remark() {
 	// arrange
 	networks::Mangata::execute_with(|| {
 		sp_tracing::try_init_simple();
-		// mangata_polkadot_runtime::OrmlCurrencyAdapter::deposit_creating(
-		// 	&networks::reserve_account(2001),
-		// 	INITIAL_BALANCE,
-		// );
+		mangata_polkadot_runtime::OrmlCurrencyAdapter::deposit_creating(
+			&networks::reserve_account(2001),
+			INITIAL_BALANCE,
+		);
 		// assert_eq!(
 		// 	mangata_polkadot_runtime::OrmlCurrencyAdapter::free_balance(
 		// 		&networks::reserve_account(2001)
@@ -382,8 +382,8 @@ fn xtokens_transfer_triggers_remark() {
 				.map(|e| e.event)
 				.find(|e| matches!(
 					e,
-					mangata_polkadot_runtime::RuntimeEvent::System(
-						frame_system::Event::<mangata_polkadot_runtime::Runtime>::Remarked{..}
+					mangata_polkadot_runtime::RuntimeEvent::PolkadotXcm(
+						pallet_xcm::Event::<mangata_polkadot_runtime::Runtime>::AssetsTrapped(..)
 						)
 					)).is_some());
 

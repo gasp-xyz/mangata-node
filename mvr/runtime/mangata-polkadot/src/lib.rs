@@ -7,6 +7,8 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 mod weights;
+mod event_logger;
+
 pub mod xcm_config;
 
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
@@ -380,9 +382,16 @@ impl parachain_info::Config for Runtime {}
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
+
+
+
+parameter_types! {
+	pub const FixedReserveAssetTransferTrapCost : Balance = 10_000_000_000; // 0.01 DOT
+}
+
 impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type XcmExecutor = xcm_config::ExecutorWrapper<XcmExecutor<XcmConfig>>;
+	type XcmExecutor = xcm_config::ExecutorWrapper<XcmExecutor<XcmConfig>, FixedReserveAssetTransferTrapCost>;
 	type ChannelInfo = ParachainSystem;
 	type VersionWrapper = ();
 	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
@@ -491,6 +500,8 @@ construct_runtime!(
 		ParachainSystem: cumulus_pallet_parachain_system = 1,
 		Timestamp: pallet_timestamp = 2,
 		ParachainInfo: parachain_info = 3,
+		XcmLogger: event_logger::pallet::{Pallet, Storage, Call, Event<T>} = 4,
+
 
 		// Monetary stuff.
 		Tokens: orml_tokens = 10,

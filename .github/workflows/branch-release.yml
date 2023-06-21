@@ -130,7 +130,7 @@ jobs:
       startsWith(github.head_ref, needs.init.outputs.RELEASE_BRANCH_PATTERN) &&
       github.event.action == 'closed' && github.event.pull_request.merged == 'true'
     needs: [ init ]
-    uses: ./.github/workflows/deploy-rococo.yml
+    uses: ./.github/workflows/reusable-deploy-rococo.yml
     secrets: inherit
     with:
       version: rococo-${{ needs.init.outputs.RELEASE_TAG }}

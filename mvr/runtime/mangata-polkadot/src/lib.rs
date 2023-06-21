@@ -7,7 +7,6 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 mod weights;
-mod event_logger;
 
 pub mod xcm_config;
 
@@ -500,7 +499,6 @@ construct_runtime!(
 		ParachainSystem: cumulus_pallet_parachain_system = 1,
 		Timestamp: pallet_timestamp = 2,
 		ParachainInfo: parachain_info = 3,
-		XcmLogger: event_logger::pallet::{Pallet, Storage, Call, Event<T>} = 4,
 
 
 		// Monetary stuff.

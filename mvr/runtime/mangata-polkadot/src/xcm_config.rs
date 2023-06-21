@@ -363,7 +363,3 @@ impl cumulus_pallet_xcm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 }
-
-impl crate::event_logger::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-}

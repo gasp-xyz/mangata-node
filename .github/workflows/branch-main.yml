@@ -35,6 +35,7 @@ jobs:
     secrets: inherit
     with:
       globalVersion: ${{ needs.init.outputs.RELEASE_VERSION }}
+      parachainDocker: docker.io/mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_VERSION }}
 
   
   publish-rococo-image:

@@ -132,7 +132,7 @@ fn xtokens_transfer_triggers_asset_trap() {
 	// arrange
 	networks::Mangata::execute_with(|| {
 		sp_tracing::try_init_simple();
-		mangata_polkadot_runtime::OrmlCurrencyAdapter::deposit_creating(
+		let _ = mangata_polkadot_runtime::OrmlCurrencyAdapter::deposit_creating(
 			&networks::reserve_account(2001),
 			INITIAL_BALANCE,
 		);
@@ -141,14 +141,6 @@ fn xtokens_transfer_triggers_asset_trap() {
 	// act
 	networks::XParachain::execute_with(|| {
 		sp_tracing::try_init_simple();
-
-
-		let assets = MultiAssets::from_sorted_and_deduplicated(vec![MultiAsset {
-			id: AssetId::Concrete(MultiLocation { parents: 0, interior: Here }),
-			fun: Fungible(TRANSFER_AMOUNT),
-		}])
-		.unwrap();
-
 
 		XParachainPalletXTokens::transfer_multiasset(
 			xtokens_parachain::RuntimeOrigin::signed(ALICE),

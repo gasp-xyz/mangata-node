@@ -12,55 +12,42 @@ use scale_info::TypeInfo;
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use sp_runtime::traits::Convert;
 use smallvec::smallvec;
-use sp_api::impl_runtime_apis;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+
+
 use sp_runtime::{
-	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify},
-	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, MultiSignature,
+	generic,
+	traits::{AccountIdLookup, BlakeTwo256, IdentifyAccount, Verify}, MultiSignature,
 };
 
 use sp_std::prelude::*;
-#[cfg(feature = "std")]
-use sp_version::NativeVersion;
-use sp_version::RuntimeVersion;
+
+
 
 use frame_support::{
 	construct_runtime,
-	dispatch::DispatchClass,
 	parameter_types,
-	traits::{ConstU32, ConstU64, ConstU8, EitherOfDiverse, Everything, Nothing},
+	traits::{Everything, Nothing},
 	weights::{
-		constants::WEIGHT_REF_TIME_PER_SECOND, ConstantMultiplier, Weight, WeightToFeeCoefficient,
+		constants::WEIGHT_REF_TIME_PER_SECOND, Weight, WeightToFeeCoefficient,
 		WeightToFeeCoefficients, WeightToFeePolynomial,
 	},
-	PalletId,
 };
 use frame_system::{
-	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
 };
-use orml_tokens::CurrencyAdapter;
+
 use orml_traits::parameter_type_with_key;
-use pallet_xcm::{EnsureXcm, IsVoiceOfBody};
+
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
-use xcm_config::{RelayLocation, XcmConfig, XcmOriginToTransactDispatchOrigin};
+use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 use cumulus_primitives_core::{
 	Concrete,
 	GeneralKey,
 	Parent,
-	AssetId,
 	Fungibility::Fungible,
-	Instruction::{BuyExecution, DepositAsset, InitiateReserveWithdraw, WithdrawAsset},
 	Junction::{self, Parachain},
-	Junctions::{Here, X1, X2},
-	MultiAsset,
-	MultiAssetFilter::Wild,
-	MultiAssets, MultiLocation,
-	WeightLimit::Unlimited,
-	WildMultiAsset::{self, AllCounted},
-	Xcm,
+	Junctions::{X1, X2},
+	MultiAsset, MultiLocation,
 };
 
 
@@ -68,12 +55,12 @@ use cumulus_primitives_core::{
 pub use sp_runtime::BuildStorage;
 
 // Polkadot imports
-use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
+use polkadot_runtime_common::{BlockHashCount};
 
-use weights::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight};
+use weights::{ExtrinsicBaseWeight, RocksDbWeight};
 
 // XCM Imports
-use xcm::latest::prelude::BodyId;
+
 use xcm_executor::XcmExecutor;
 
 /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
@@ -206,13 +193,6 @@ pub const MICROUNIT: Balance = 1_000_000_000_000;
 /// The existential deposit. Set to 1/10 of the Connected Relay Chain.
 pub const EXISTENTIAL_DEPOSIT: Balance = MILLIUNIT;
 
-/// We assume that ~5% of the block weight is consumed by `on_initialize` handlers. This is
-/// used to limit the maximal weight of a single extrinsic.
-const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(5);
-
-/// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used by
-/// `Operational` extrinsics.
-const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
 const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(

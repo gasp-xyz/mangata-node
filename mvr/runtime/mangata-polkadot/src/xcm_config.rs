@@ -1,9 +1,9 @@
 use super::{
 	AccountId, AllPalletsWithSystem, OrmlCurrencyAdapter, ParachainInfo, ParachainSystem,
-	PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, Tokens, WeightToFee, XcmpQueue,
+	PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, XcmpQueue,
 };
-use codec::Encode;
-use core::{marker::PhantomData, ops::ControlFlow};
+
+use core::{marker::PhantomData};
 use frame_support::{
 	log, match_types, parameter_types,
 	traits::{ConstU32, Everything, Nothing, ProcessMessageError},
@@ -13,16 +13,15 @@ use frame_system::EnsureRoot;
 use frame_support::traits::Contains;
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use polkadot_runtime_common::impls::ToAuthor;
+
 use xcm::{latest::prelude::*};
 use xcm_builder::{
-	AccountId32Aliases, AllowExplicitUnpaidExecutionFrom, AllowKnownQueryResponses,
-	AllowSubscriptionsFrom, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom,
+	AccountId32Aliases, AllowKnownQueryResponses,
+	AllowSubscriptionsFrom, AllowUnpaidExecutionFrom,
 	CreateMatcher, CurrencyAdapter, EnsureXcmOrigin, FixedRateOfFungible, FixedWeightBounds,
 	IsConcrete, MatchXcm, NativeAsset, ParentIsPreset, RelayChainAsNative,
 	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
-	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
-	WithComputedOrigin,
+	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
 };
 use xcm_executor::{traits::ShouldExecute, XcmExecutor};
 use cumulus_primitives_core::MultiLocation;
@@ -47,25 +46,12 @@ pub type LocationToAccountId = (
 	AccountId32Aliases<RelayNetwork, AccountId>,
 );
 
-use xcm_executor::traits::{MatchesFungible};
-pub struct AllowAll;
-
-//TODO fix
-impl MatchesFungible<u128> for AllowAll {
-	fn matches_fungible(a: &MultiAsset) -> Option<u128> {
-		match a.fun {
-			Fungible(amount) => Some(amount),
-			NonFungible(_) => None,
-		}
-	}
-}
-
 /// Means for transacting assets on this chain.
 pub type LocalAssetTransactor = CurrencyAdapter<
 	// Use this currency:
 	OrmlCurrencyAdapter,
 	// Use this currency when it is a fungible asset matching the given location or name:
-	AllowAll, // IsConcrete<RelayLocation>,
+	IsConcrete<RelayLocation>,
 	// Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
 	LocationToAccountId,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
@@ -100,30 +86,6 @@ parameter_types! {
 	pub UnitWeightCost: Weight = Weight::from_parts(1_000_000_000, 64 * 1024);
 	pub const MaxInstructions: u32 = 100;
 	pub const MaxAssetsIntoHolding: u32 = 64;
-}
-
-//TODO: move DenyThenTry to polkadot's xcm module.
-/// Deny executing the xcm message if it matches any of the Deny filter regardless of anything else.
-/// If it passes the Deny, and matches one of the Allow cases then it is let through.
-pub struct DenyThenTry<Deny, Allow>(PhantomData<Deny>, PhantomData<Allow>)
-where
-	Deny: ShouldExecute,
-	Allow: ShouldExecute;
-
-impl<Deny, Allow> ShouldExecute for DenyThenTry<Deny, Allow>
-where
-	Deny: ShouldExecute,
-	Allow: ShouldExecute,
-{
-	fn should_execute<RuntimeCall>(
-		origin: &MultiLocation,
-		message: &mut [Instruction<RuntimeCall>],
-		max_weight: Weight,
-		weight_credit: &mut Weight,
-	) -> Result<(), ProcessMessageError> {
-		Deny::should_execute(origin, message, max_weight, weight_credit)?;
-		Allow::should_execute(origin, message, max_weight, weight_credit)
-	}
 }
 
 pub struct AllowSiblingParachainReserveTransferAssetTrap<T>(PhantomData<T>);
@@ -222,7 +184,7 @@ impl xcm_executor::Config for XcmConfig {
 	type MessageExporter = ();
 	type UniversalAliases = Nothing;
 	type CallDispatcher = RuntimeCall;
-	type SafeCallFilter = Everything;
+	type SafeCallFilter = Nothing;
 }
 
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
@@ -272,8 +234,8 @@ impl<Executor, RCall, FeeAmount> ExecuteXcm<RCall> for ExecutorWrapper<Executor,
 			let msg = if let (
 				Some(ReserveAssetDeposited(deposited_assets)),
 				Some(ClearOrigin),
-				Some(BuyExecution { fees, weight_limit}),
-				Some(DepositAsset { assets, beneficiary })
+				Some(BuyExecution { fees: _, weight_limit: _}),
+				Some(DepositAsset { assets: _, beneficiary: _ })
 			) =  (it.next(), it.next(), it.next(), it.next()) {
 
 				let amount = FeeAmount::get();
@@ -314,15 +276,13 @@ pub struct StrictXcmExecuteFilter;
 impl Contains<(MultiLocation, Xcm<RuntimeCall>)> for StrictXcmExecuteFilter {
     fn contains(t: &(MultiLocation, Xcm<RuntimeCall>)) -> bool {
 		match t {
-			(MultiLocation { parents: 1 , interior: Here }, msg) => {
-				// TODO: restrict further
-				// let mut it = msg.inner().iter();
-				// if let (Some(WithdrawAsset(..)), Some(InitiateReserveWithdraw{..})) = (it.next(), it.next()) {
-				// 	true
-				// } else {
-				// 	false
-				// }
-				true
+			(MultiLocation { parents: 0 , interior: X1(AccountId32{..}) }, msg) if msg.len() == 2 => {
+				let mut it = msg.inner().iter();
+				if let (Some(WithdrawAsset(..)), Some(InitiateReserveWithdraw{..})) = (it.next(), it.next()) {
+					true
+				} else {
+					false
+				}
 			},
 			_ => false
 		}
@@ -335,8 +295,7 @@ impl pallet_xcm::Config for Runtime {
 	type SendXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
-	// type XcmExecuteFilter = StrictXcmExecuteFilter;
-	type XcmExecuteFilter = Everything;
+	type XcmExecuteFilter = StrictXcmExecuteFilter;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type XcmTeleportFilter = Nothing;
 	type XcmReserveTransferFilter = Nothing;

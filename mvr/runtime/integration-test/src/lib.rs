@@ -1,12 +1,11 @@
 #![cfg(test)]
 pub mod networks;
-pub mod xparachain;
 use cumulus_primitives_core::{
 	AssetId,
 	Fungibility::Fungible,
 	Instruction::{BuyExecution, DepositAsset, InitiateReserveWithdraw, WithdrawAsset},
 	Junction::{self, Parachain},
-	Junctions::{Here, X1},
+	Junctions::{Here, X1, X2},
 	MultiAsset,
 	MultiAssetFilter::Wild,
 	MultiAssets, MultiLocation,
@@ -23,6 +22,7 @@ use networks::*;
 
 pub type RelayChainPalletXcm = pallet_xcm::Pallet<polkadot_runtime::Runtime>;
 pub type ParachainPalletXcm = pallet_xcm::Pallet<mangata_polkadot_runtime::Runtime>;
+pub type XParachainPalletXTokens = orml_xtokens::Pallet<xtokens_parachain::Runtime>;
 pub const TRANSFER_AMOUNT: u128 = 20 * unit(12);
 
 #[test]
@@ -304,10 +304,88 @@ fn transfer_local_assets() {
 			mangata_polkadot_runtime::OrmlCurrencyAdapter::free_balance(&BOB),
 			TRANSFER_AMOUNT
 		);
+
+		assert!(mangata_polkadot_runtime::System::events().into_iter()
+				.map(|e| e.event)
+				.find(|e| matches!(
+					e,
+					mangata_polkadot_runtime::RuntimeEvent::System(
+						frame_system::Event::<mangata_polkadot_runtime::Runtime>::Remarked{..}
+						)
+					)).is_some());
+	});
+}
+
+#[test]
+fn xtokens_transfer_triggers_remark() {
+	TestNet::reset();
+
+	// arrange
+	networks::Mangata::execute_with(|| {
+		sp_tracing::try_init_simple();
+		// mangata_polkadot_runtime::OrmlCurrencyAdapter::deposit_creating(
+		// 	&networks::reserve_account(2001),
+		// 	INITIAL_BALANCE,
+		// );
+		// assert_eq!(
+		// 	mangata_polkadot_runtime::OrmlCurrencyAdapter::free_balance(
+		// 		&networks::reserve_account(2001)
+		// 	),
+		// 	INITIAL_BALANCE
+		// );
+	});
+
+	// act
+	networks::XParachain::execute_with(|| {
+		sp_tracing::try_init_simple();
+
+
+		let assets = MultiAssets::from_sorted_and_deduplicated(vec![MultiAsset {
+			id: AssetId::Concrete(MultiLocation { parents: 0, interior: Here }),
+			fun: Fungible(TRANSFER_AMOUNT),
+		}])
+		.unwrap();
+
+
+		XParachainPalletXTokens::transfer_multiasset(
+			xtokens_parachain::RuntimeOrigin::signed(ALICE),
+			Box::new(MultiAsset {
+			id: AssetId::Concrete(MultiLocation { parents: 1, interior: X1(Parachain(2001)) }),
+			fun: Fungible(TRANSFER_AMOUNT),
+			}.into()),
+			Box::new(
+					MultiLocation::new(
+						1,
+						X2(
+							Parachain(2110),
+							Junction::AccountId32 { network: None, id: BOB.into() }
+						)
+					)
+					.into()
+				),
+				Unlimited
+		).unwrap();
+
+
+	});
+
+	// asset
+	networks::Mangata::execute_with(|| {
+		sp_tracing::try_init_simple();
 		println!("EVENTS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 		for e in mangata_polkadot_runtime::System::events().iter() {
 			println!("EVENT: {e:?}");
 		}
 		println!("EVENTS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+
+		assert!(mangata_polkadot_runtime::System::events().into_iter()
+				.map(|e| e.event)
+				.find(|e| matches!(
+					e,
+					mangata_polkadot_runtime::RuntimeEvent::System(
+						frame_system::Event::<mangata_polkadot_runtime::Runtime>::Remarked{..}
+						)
+					)).is_some());
+
 	});
 }

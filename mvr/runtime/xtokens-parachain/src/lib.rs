@@ -348,10 +348,10 @@ pub enum CurrencyId {
 parameter_types! {
 	/// Relay Chain `TransactionByteFee` / 10
 	pub const TransactionByteFee: Balance = 10 * MICROUNIT;
-	pub const DOTTokenId: CurrencyId = CurrencyId::R;
+	pub const ParachainTokenId: CurrencyId = CurrencyId::A;
 }
 
-pub type OrmlCurrencyAdapter = orml_tokens::CurrencyAdapter<Runtime, DOTTokenId>;
+pub type OrmlCurrencyAdapter = orml_tokens::CurrencyAdapter<Runtime, ParachainTokenId>;
 
 pub struct CurrencyIdConvert;
 impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {

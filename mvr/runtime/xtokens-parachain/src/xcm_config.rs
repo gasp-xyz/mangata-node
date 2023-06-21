@@ -358,7 +358,7 @@ impl orml_xtokens::Config for Runtime {
 	type CurrencyIdConvert = crate::CurrencyIdConvert;
 	type AccountIdToMultiLocation = AccountIdToMultiLocation;
 	type SelfLocation = SelfLocation;
-	type MultiLocationsFilter = ParentOrParachains;
+	type MultiLocationsFilter = Everything;
 	type MinXcmFee = ParachainMinFee;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;

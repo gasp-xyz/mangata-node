@@ -100,13 +100,6 @@ parameter_types! {
 	pub const MaxAssetsIntoHolding: u32 = 64;
 }
 
-match_types! {
-	pub type ParentOrParentsExecutivePlurality: impl Contains<MultiLocation> = {
-		MultiLocation { parents: 1, interior: Here } |
-		MultiLocation { parents: 1, interior: X1(Plurality { id: BodyId::Executive, .. }) }
-	};
-}
-
 //TODO: move DenyThenTry to polkadot's xcm module.
 /// Deny executing the xcm message if it matches any of the Deny filter regardless of anything else.
 /// If it passes the Deny, and matches one of the Allow cases then it is let through.
@@ -209,6 +202,13 @@ impl ShouldExecute for AllowAllCalls
 }
 
 
+
+match_types! {
+	pub type ParentOrParentsExecutivePlurality: impl Contains<MultiLocation> = {
+		MultiLocation { parents: 1, interior: Here } |
+		MultiLocation { parents: 1, interior: X1(Plurality { id: BodyId::Executive, .. }) }
+	};
+}
 
 pub type Barrier = (
 	TakeWeightCredit,

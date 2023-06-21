@@ -12,7 +12,6 @@ pub const BOB: sp_runtime::AccountId32 = sp_runtime::AccountId32::new(BOB_RAW);
 
 pub const RELAY_ASSET_ID: u32 = 4_u32;
 pub const INITIAL_BALANCE: u128 = 100 * unit(12);
-use crate::xparachain;
 
 pub type Balance = u128;
 
@@ -62,24 +61,24 @@ decl_test_parachain! {
 	}
 }
 
-// decl_test_parachain! {
-// 	// Parachain that uses XTokens
-// 	pub struct XParachain {
-// 		Runtime = xparachain::Runtime,
-// 		RuntimeOrigin = xparachain::RuntimeOrigin,
-// 		XcmpMessageHandler = xparachain::XcmpQueue,
-// 		DmpMessageHandler = xparachain::DmpQueue,
-// 		new_ext = xparachain::para_ext(2001),
-// 	}
-// }
+decl_test_parachain! {
+	// Parachain that uses XTokens
+	pub struct XParachain {
+		Runtime = xtokens_parachain::Runtime,
+		RuntimeOrigin = xtokens_parachain::RuntimeOrigin,
+		XcmpMessageHandler = xtokens_parachain::XcmpQueue,
+		DmpMessageHandler = xtokens_parachain::DmpQueue,
+		new_ext = xpara_ext(2001),
+	}
+}
 
 
 decl_test_network! {
 	pub struct TestNet {
 		relay_chain = PolkadotRelay,
 		parachains = vec![
-			(2000, Sibling),
-			// (2001, XParachain),
+			// (2000, Sibling),
+			(2001, XParachain),
 			(2110, Mangata),
 		],
 	}
@@ -188,6 +187,40 @@ pub fn para_ext(parachain_id: u32) -> sp_io::TestExternalities {
 			(ALICE, 2, 0),
 			(ALICE, 3, 0),
 			(ALICE, mangata_polkadot_runtime::DOTTokenId::get(), INITIAL_BALANCE),
+		],
+	}
+	.assimilate_storage(&mut t)
+	.unwrap();
+
+	<parachain_info::GenesisConfig as GenesisBuild<Runtime>>::assimilate_storage(
+		&parachain_info::GenesisConfig { parachain_id: parachain_id.into() },
+		&mut t,
+	)
+	.unwrap();
+
+	<pallet_xcm::GenesisConfig as GenesisBuild<Runtime>>::assimilate_storage(
+		&pallet_xcm::GenesisConfig { safe_xcm_version: Some(3) },
+		&mut t,
+	)
+	.unwrap();
+
+	let mut ext = sp_io::TestExternalities::new(t);
+	ext.execute_with(|| System::set_block_number(1));
+	ext
+}
+
+pub fn xpara_ext(parachain_id: u32) -> sp_io::TestExternalities {
+	use xtokens_parachain::{Runtime, System};
+
+	let mut t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
+
+	orml_tokens::GenesisConfig::<Runtime> {
+		balances: vec![
+			(ALICE, xtokens_parachain::CurrencyId::A, 100 * unit(18)),
+			// (ALICE, 1, 0),
+			// (ALICE, 2, 0),
+			// (ALICE, 3, 0),
+			// (ALICE, xtokens_parachain::DOTTokenId::get(), INITIAL_BALANCE),
 		],
 	}
 	.assimilate_storage(&mut t)

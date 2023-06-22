@@ -56,7 +56,8 @@ fn dmp() {
 	networks::Mangata::execute_with(|| {
 		sp_tracing::try_init_simple();
 		assert!(
-			mangata_polkadot_runtime::Tokens::free_balance(RELAY_ASSET_ID, &BOB) > TRANSFER_AMOUNT * 90 / 100
+			mangata_polkadot_runtime::Tokens::free_balance(RELAY_ASSET_ID, &BOB) >
+				TRANSFER_AMOUNT * 90 / 100
 		);
 	});
 }
@@ -144,37 +145,40 @@ fn xtokens_transfer_triggers_asset_trap() {
 
 		XParachainPalletXTokens::transfer_multiasset(
 			xtokens_parachain::RuntimeOrigin::signed(ALICE),
-			Box::new(MultiAsset {
-			id: AssetId::Concrete(MultiLocation { parents: 1, interior: X1(Parachain(2001)) }),
-			fun: Fungible(TRANSFER_AMOUNT),
-			}.into()),
 			Box::new(
-					MultiLocation::new(
-						1,
-						X2(
-							Parachain(2110),
-							Junction::AccountId32 { network: None, id: BOB.into() }
-						)
-					)
-					.into()
-				),
-				Unlimited
-		).unwrap();
-
-
+				MultiAsset {
+					id: AssetId::Concrete(MultiLocation {
+						parents: 1,
+						interior: X1(Parachain(2001)),
+					}),
+					fun: Fungible(TRANSFER_AMOUNT),
+				}
+				.into(),
+			),
+			Box::new(
+				MultiLocation::new(
+					1,
+					X2(Parachain(2110), Junction::AccountId32 { network: None, id: BOB.into() }),
+				)
+				.into(),
+			),
+			Unlimited,
+		)
+		.unwrap();
 	});
 
 	// asset
 	networks::Mangata::execute_with(|| {
 		sp_tracing::try_init_simple();
-		assert!(mangata_polkadot_runtime::System::events().into_iter()
-				.map(|e| e.event)
-				.find(|e| matches!(
-					e,
-					mangata_polkadot_runtime::RuntimeEvent::PolkadotXcm(
-						pallet_xcm::Event::<mangata_polkadot_runtime::Runtime>::AssetsTrapped(..)
-						)
-					)).is_some());
-
+		assert!(mangata_polkadot_runtime::System::events()
+			.into_iter()
+			.map(|e| e.event)
+			.find(|e| matches!(
+				e,
+				mangata_polkadot_runtime::RuntimeEvent::PolkadotXcm(pallet_xcm::Event::<
+					mangata_polkadot_runtime::Runtime,
+				>::AssetsTrapped(..))
+			))
+			.is_some());
 	});
 }

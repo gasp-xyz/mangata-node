@@ -3,7 +3,6 @@ use super::{
 	PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, XcmpQueue,
 };
 
-use sp_runtime::traits::Convert;
 use core::{marker::PhantomData, ops::ControlFlow};
 use frame_support::{
 	log, match_types, parameter_types,
@@ -13,16 +12,17 @@ use frame_support::{
 use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
+use sp_runtime::traits::Convert;
 
-use xcm::{latest::prelude::*};
-use xcm_builder::{
-	AccountId32Aliases, AllowKnownQueryResponses,
-	AllowSubscriptionsFrom, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom,
-	CreateMatcher, CurrencyAdapter, EnsureXcmOrigin, FixedRateOfFungible, FixedWeightBounds, MatchXcm, NativeAsset, ParentIsPreset, RelayChainAsNative,
-	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
-	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit
-};
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
+use xcm::latest::prelude::*;
+use xcm_builder::{
+	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
+	AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, CreateMatcher, CurrencyAdapter,
+	EnsureXcmOrigin, FixedRateOfFungible, FixedWeightBounds, MatchXcm, NativeAsset, ParentIsPreset,
+	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
+	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
+};
 use xcm_executor::{traits::ShouldExecute, XcmExecutor};
 parameter_types! {
 	pub const RelayLocation: MultiLocation = MultiLocation::parent();
@@ -43,7 +43,7 @@ pub type LocationToAccountId = (
 	AccountId32Aliases<RelayNetwork, AccountId>,
 );
 
-use xcm_executor::traits::{MatchesFungible};
+use xcm_executor::traits::MatchesFungible;
 pub struct AllowAll;
 
 //TODO fix
@@ -174,8 +174,7 @@ impl ShouldExecute for DenyReserveTransferToRelayChain {
 }
 
 pub struct AllowAllCalls;
-impl ShouldExecute for AllowAllCalls
-{
+impl ShouldExecute for AllowAllCalls {
 	fn should_execute<RuntimeCall>(
 		_origin: &MultiLocation,
 		message: &mut [Instruction<RuntimeCall>],
@@ -205,8 +204,6 @@ impl ShouldExecute for AllowAllCalls
 		Ok(())
 	}
 }
-
-
 
 pub type Barrier = (
 	TakeWeightCredit,
@@ -327,15 +324,10 @@ match_types! {
 	};
 }
 
-
 pub struct AccountIdToMultiLocation;
 impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 	fn convert(account: AccountId) -> MultiLocation {
-		X1(Junction::AccountId32 {
-			network: None,
-			id: account.into(),
-		})
-		.into()
+		X1(Junction::AccountId32 { network: None, id: account.into() }).into()
 	}
 }
 
@@ -365,5 +357,3 @@ impl orml_xtokens::Config for Runtime {
 	type MaxAssetsForTransfer = MaxAssetsForTransfer;
 	type ReserveProvider = AbsoluteReserveProvider;
 }
-
-

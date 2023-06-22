@@ -72,7 +72,6 @@ decl_test_parachain! {
 	}
 }
 
-
 decl_test_network! {
 	pub struct TestNet {
 		relay_chain = PolkadotRelay,

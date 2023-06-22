@@ -381,16 +381,14 @@ impl parachain_info::Config for Runtime {}
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
-
-
-
 parameter_types! {
 	pub const FixedReserveAssetTransferTrapCost : Balance = 10_000_000_000; // 0.01 DOT
 }
 
 impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type XcmExecutor = xcm_config::ExecutorWrapper<XcmExecutor<XcmConfig>, FixedReserveAssetTransferTrapCost>;
+	type XcmExecutor =
+		xcm_config::ExecutorWrapper<XcmExecutor<XcmConfig>, FixedReserveAssetTransferTrapCost>;
 	type ChannelInfo = ParachainSystem;
 	type VersionWrapper = ();
 	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;

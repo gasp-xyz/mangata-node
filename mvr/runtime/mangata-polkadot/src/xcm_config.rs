@@ -3,28 +3,26 @@ use super::{
 	PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, XcmpQueue,
 };
 
-use core::{marker::PhantomData};
+use core::marker::PhantomData;
 use frame_support::{
 	log, match_types, parameter_types,
-	traits::{ConstU32, Everything, Nothing, ProcessMessageError},
+	traits::{ConstU32, Contains, Everything, Nothing, ProcessMessageError},
 	weights::Weight,
 };
 use frame_system::EnsureRoot;
-use frame_support::traits::Contains;
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 
-use xcm::{latest::prelude::*};
+use cumulus_primitives_core::MultiLocation;
+use xcm::latest::prelude::*;
 use xcm_builder::{
-	AccountId32Aliases, AllowKnownQueryResponses,
-	AllowSubscriptionsFrom, AllowUnpaidExecutionFrom,
+	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom, AllowUnpaidExecutionFrom,
 	CreateMatcher, CurrencyAdapter, EnsureXcmOrigin, FixedRateOfFungible, FixedWeightBounds,
 	IsConcrete, MatchXcm, NativeAsset, ParentIsPreset, RelayChainAsNative,
 	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
 	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
 };
 use xcm_executor::{traits::ShouldExecute, XcmExecutor};
-use cumulus_primitives_core::MultiLocation;
 // use cumulus_primitives_core::Instruction::*;
 
 parameter_types! {
@@ -89,7 +87,9 @@ parameter_types! {
 }
 
 pub struct AllowSiblingParachainReserveTransferAssetTrap<T>(PhantomData<T>);
-impl<T: Contains<MultiLocation>> ShouldExecute for AllowSiblingParachainReserveTransferAssetTrap<T> {
+impl<T: Contains<MultiLocation>> ShouldExecute
+	for AllowSiblingParachainReserveTransferAssetTrap<T>
+{
 	fn should_execute<RuntimeCall>(
 		origin: &MultiLocation,
 		instructions: &mut [Instruction<RuntimeCall>],
@@ -97,10 +97,10 @@ impl<T: Contains<MultiLocation>> ShouldExecute for AllowSiblingParachainReserveT
 		_weight_credit: &mut Weight,
 	) -> Result<(), ProcessMessageError> {
 		log::trace!(
-			target: "xcm::barriers",
-			"AllowSiblingParachainReserveTransferAssetTrap origin: {:?}, instructions: {:?}, max_weight: {:?}, weight_credit: {:?}",
-			origin, instructions, max_weight, _weight_credit,
-			);
+		target: "xcm::barriers",
+		"AllowSiblingParachainReserveTransferAssetTrap origin: {:?}, instructions: {:?}, max_weight: {:?}, weight_credit: {:?}",
+		origin, instructions, max_weight, _weight_credit,
+		);
 		frame_support::ensure!(T::contains(origin), ProcessMessageError::Unsupported);
 		let end = instructions.len().min(4);
 		instructions[..end]
@@ -115,12 +115,10 @@ impl<T: Contains<MultiLocation>> ShouldExecute for AllowSiblingParachainReserveT
 			})?
 			.skip_inst_while(|inst| matches!(inst, ClearOrigin))?
 			.match_next_inst(|inst| match inst {
-				BuyExecution { weight_limit, .. } if *weight_limit == Unlimited => {
-					Ok(())
-				},
+				BuyExecution { weight_limit, .. } if *weight_limit == Unlimited => Ok(()),
 				_ => Err(ProcessMessageError::Overweight(max_weight)),
 			})?;
-	Ok(())
+		Ok(())
 	}
 }
 
@@ -146,9 +144,7 @@ pub type Barrier = (
 	AllowSubscriptionsFrom<Everything>,
 );
 
-
-use frame_support::weights::constants::WEIGHT_REF_TIME_PER_SECOND;
-use frame_support::weights::constants::ExtrinsicBaseWeight;
+use frame_support::weights::constants::{ExtrinsicBaseWeight, WEIGHT_REF_TIME_PER_SECOND};
 
 pub fn dot_per_second() -> u128 {
 	let base_weight = crate::Balance::from(ExtrinsicBaseWeight::get().ref_time());
@@ -199,96 +195,97 @@ pub type XcmRouter = (
 	XcmpQueue,
 );
 
-pub struct ExecutorWrapper<Executor, FeeAmount>(PhantomData<(Executor,FeeAmount)>);
+pub struct ExecutorWrapper<Executor, FeeAmount>(PhantomData<(Executor, FeeAmount)>);
 
-impl<Executor, RCall, FeeAmount> ExecuteXcm<RCall> for ExecutorWrapper<Executor, FeeAmount> where
+impl<Executor, RCall, FeeAmount> ExecuteXcm<RCall> for ExecutorWrapper<Executor, FeeAmount>
+where
 	Executor: ExecuteXcm<RCall>,
-	FeeAmount: sp_runtime::traits::Get<u128>
+	FeeAmount: sp_runtime::traits::Get<u128>,
 {
-    type Prepared = Executor::Prepared;
+	type Prepared = Executor::Prepared;
 
-    fn prepare(message: Xcm<RCall>) -> core::result::Result<Self::Prepared, Xcm<RCall>> {
-        Executor::prepare(message)
-    }
-
-    fn execute(
-		    origin: impl Into<MultiLocation>,
-		    pre: Self::Prepared,
-		    hash: XcmHash,
-		    weight_credit: Weight,
-	    ) -> Outcome {
-        Executor::execute( origin, pre, hash, weight_credit,)
-    }
-
-    fn charge_fees(location: impl Into<MultiLocation>, fees: MultiAssets) -> XcmResult {
-        Executor::charge_fees(location, fees)
-    }
-
-    fn execute_xcm(
-		    origin: impl Into<MultiLocation>,
-		    message: Xcm<RCall>,
-		    hash: XcmHash,
-		    weight_limit: Weight,
-	    ) -> Outcome {
-			let mut it = message.0.iter();
-			let msg = if let (
-				Some(ReserveAssetDeposited(deposited_assets)),
-				Some(ClearOrigin),
-				Some(BuyExecution { fees: _, weight_limit: _}),
-				Some(DepositAsset { assets: _, beneficiary: _ })
-			) =  (it.next(), it.next(), it.next(), it.next()) {
-
-				let amount = FeeAmount::get();
-				let location = MultiLocation { parents: 1, interior: Here };
-				let fee_asset = MultiAsset {
-					id: AssetId::Concrete(location),
-					fun: Fungible(amount),
-				};
-				let withdraw_assets = MultiAssets::from_sorted_and_deduplicated_skip_checks(vec![fee_asset.clone()]);
-
-				Xcm(vec![
-					ReserveAssetDeposited(deposited_assets.clone()),
-					WithdrawAsset(withdraw_assets),
-					ClearOrigin,
-					BuyExecution { fees: fee_asset, weight_limit: Unlimited},
-				])
-			} else {
-				message
-			};
-
-			Executor::execute_xcm(origin, msg, hash, weight_limit)
-	    }
-
-    fn execute_xcm_in_credit(
-		    origin: impl Into<MultiLocation>,
-		    message: Xcm<RCall>,
-		    hash: XcmHash,
-		    weight_limit: Weight,
-		    weight_credit: Weight,
-	    ) -> Outcome {
-			Executor::execute_xcm_in_credit(origin, message, hash, weight_limit, weight_credit)
+	fn prepare(message: Xcm<RCall>) -> core::result::Result<Self::Prepared, Xcm<RCall>> {
+		Executor::prepare(message)
 	}
 
+	fn execute(
+		origin: impl Into<MultiLocation>,
+		pre: Self::Prepared,
+		hash: XcmHash,
+		weight_credit: Weight,
+	) -> Outcome {
+		Executor::execute(origin, pre, hash, weight_credit)
+	}
+
+	fn charge_fees(location: impl Into<MultiLocation>, fees: MultiAssets) -> XcmResult {
+		Executor::charge_fees(location, fees)
+	}
+
+	fn execute_xcm(
+		origin: impl Into<MultiLocation>,
+		message: Xcm<RCall>,
+		hash: XcmHash,
+		weight_limit: Weight,
+	) -> Outcome {
+		let mut it = message.0.iter();
+		let msg = if let (
+			Some(ReserveAssetDeposited(deposited_assets)),
+			Some(ClearOrigin),
+			Some(BuyExecution { fees: _, weight_limit: _ }),
+			Some(DepositAsset { assets: _, beneficiary: _ }),
+		) = (it.next(), it.next(), it.next(), it.next())
+		{
+			let amount = FeeAmount::get();
+			let location = MultiLocation { parents: 1, interior: Here };
+			let fee_asset = MultiAsset { id: AssetId::Concrete(location), fun: Fungible(amount) };
+			let withdraw_assets =
+				MultiAssets::from_sorted_and_deduplicated_skip_checks(vec![fee_asset.clone()]);
+
+			Xcm(vec![
+				ReserveAssetDeposited(deposited_assets.clone()),
+				WithdrawAsset(withdraw_assets),
+				ClearOrigin,
+				BuyExecution { fees: fee_asset, weight_limit: Unlimited },
+			])
+		} else {
+			message
+		};
+
+		Executor::execute_xcm(origin, msg, hash, weight_limit)
+	}
+
+	fn execute_xcm_in_credit(
+		origin: impl Into<MultiLocation>,
+		message: Xcm<RCall>,
+		hash: XcmHash,
+		weight_limit: Weight,
+		weight_credit: Weight,
+	) -> Outcome {
+		Executor::execute_xcm_in_credit(origin, message, hash, weight_limit, weight_credit)
+	}
 }
 
 /// allow for InitiateReserveWithdraw transfers to relay network
 pub struct StrictXcmExecuteFilter;
 impl Contains<(MultiLocation, Xcm<RuntimeCall>)> for StrictXcmExecuteFilter {
-    fn contains(t: &(MultiLocation, Xcm<RuntimeCall>)) -> bool {
+	fn contains(t: &(MultiLocation, Xcm<RuntimeCall>)) -> bool {
 		match t {
-			(MultiLocation { parents: 0 , interior: X1(AccountId32{..}) }, msg) if msg.len() == 2 => {
+			(MultiLocation { parents: 0, interior: X1(AccountId32 { .. }) }, msg)
+				if msg.len() == 2 =>
+			{
 				let mut it = msg.inner().iter();
-				if let (Some(WithdrawAsset(..)), Some(InitiateReserveWithdraw{..})) = (it.next(), it.next()) {
+				if let (Some(WithdrawAsset(..)), Some(InitiateReserveWithdraw { .. })) =
+					(it.next(), it.next())
+				{
 					true
 				} else {
 					false
 				}
 			},
-			_ => false
+			_ => false,
 		}
-    }
+	}
 }
-
 
 impl pallet_xcm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;

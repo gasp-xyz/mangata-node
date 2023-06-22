@@ -5,57 +5,50 @@
 mod weights;
 pub mod xcm_config;
 
-use codec::{Encode, Decode};
-use serde::{Serialize, Deserialize};
+use codec::{Decode, Encode};
+use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use frame_support::{BoundedVec, RuntimeDebug};
 use scale_info::TypeInfo;
-use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
-use sp_runtime::traits::Convert;
+use serde::{Deserialize, Serialize};
 use smallvec::smallvec;
-
+use sp_runtime::traits::Convert;
 
 use sp_runtime::{
 	generic,
-	traits::{AccountIdLookup, BlakeTwo256, IdentifyAccount, Verify}, MultiSignature,
+	traits::{AccountIdLookup, BlakeTwo256, IdentifyAccount, Verify},
+	MultiSignature,
 };
 
 use sp_std::prelude::*;
 
-
-
 use frame_support::{
-	construct_runtime,
-	parameter_types,
+	construct_runtime, parameter_types,
 	traits::{Everything, Nothing},
 	weights::{
 		constants::WEIGHT_REF_TIME_PER_SECOND, Weight, WeightToFeeCoefficient,
 		WeightToFeeCoefficients, WeightToFeePolynomial,
 	},
 };
-use frame_system::{
-	EnsureRoot,
-};
+use frame_system::EnsureRoot;
 
 use orml_traits::parameter_type_with_key;
 
-pub use sp_runtime::{MultiAddress, Perbill, Permill};
-use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 use cumulus_primitives_core::{
 	Concrete,
-	GeneralKey,
-	Parent,
 	Fungibility::Fungible,
+	GeneralKey,
 	Junction::{self, Parachain},
 	Junctions::{X1, X2},
-	MultiAsset, MultiLocation,
+	MultiAsset, MultiLocation, Parent,
 };
-
+pub use sp_runtime::{MultiAddress, Perbill, Permill};
+use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 
 // Polkadot imports
-use polkadot_runtime_common::{BlockHashCount};
+use polkadot_runtime_common::BlockHashCount;
 
 use weights::{ExtrinsicBaseWeight, RocksDbWeight};
 
@@ -167,7 +160,6 @@ pub fn dot_per_second() -> u128 {
 	mgx_per_second() / DOT_MGX_SCALE_FACTOR_UNADJUSTED as u128
 }
 
-
 /// This determines the average expected block time that we are targeting.
 /// Blocks will be produced at a minimum duration defined by `SLOT_DURATION`.
 /// `SLOT_DURATION` is picked up by `pallet_timestamp` which is in turn picked
@@ -192,7 +184,6 @@ pub const MICROUNIT: Balance = 1_000_000_000_000;
 
 /// The existential deposit. Set to 1/10 of the Connected Relay Chain.
 pub const EXISTENTIAL_DEPOSIT: Balance = MILLIUNIT;
-
 
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
 const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
@@ -250,8 +241,6 @@ impl frame_system::Config for Runtime {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-
-
 parameter_types! {
 	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
 	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
@@ -304,7 +293,19 @@ parameter_types! {
 	pub const MaxLocks:u32 = 50;
 }
 
-#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, codec::MaxEncodedLen, TypeInfo)]
+#[derive(
+	Encode,
+	Decode,
+	Eq,
+	PartialEq,
+	Copy,
+	Clone,
+	RuntimeDebug,
+	PartialOrd,
+	Ord,
+	codec::MaxEncodedLen,
+	TypeInfo,
+)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum CurrencyId {
 	/// Relay chain token.
@@ -414,17 +415,24 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 		let mut d: Vec<u8> = "D".into();
 		d.resize(32, 0);
 		if l == MultiLocation::parent() {
-			return Some(CurrencyId::R);
+			return Some(CurrencyId::R)
 		}
 		match l {
 			MultiLocation { parents, interior } if parents == 1 => match interior {
-				X2(Parachain(1), GeneralKey { data, .. }) if data.to_vec() == a => Some(CurrencyId::A),
-				X2(Parachain(1), GeneralKey { data, .. }) if data.to_vec() == a1 => Some(CurrencyId::A1),
-				X2(Parachain(2), GeneralKey { data, .. }) if data.to_vec() == b => Some(CurrencyId::B),
-				X2(Parachain(2), GeneralKey { data, .. }) if data.to_vec() == b1 => Some(CurrencyId::B1),
-				X2(Parachain(2), GeneralKey { data, .. }) if data.to_vec() == b2 => Some(CurrencyId::B2),
-				X2(Parachain(3), GeneralKey { data, .. }) if data.to_vec() == c => Some(CurrencyId::C),
-				X2(Parachain(4), GeneralKey { data, .. }) if data.to_vec() == d => Some(CurrencyId::D),
+				X2(Parachain(1), GeneralKey { data, .. }) if data.to_vec() == a =>
+					Some(CurrencyId::A),
+				X2(Parachain(1), GeneralKey { data, .. }) if data.to_vec() == a1 =>
+					Some(CurrencyId::A1),
+				X2(Parachain(2), GeneralKey { data, .. }) if data.to_vec() == b =>
+					Some(CurrencyId::B),
+				X2(Parachain(2), GeneralKey { data, .. }) if data.to_vec() == b1 =>
+					Some(CurrencyId::B1),
+				X2(Parachain(2), GeneralKey { data, .. }) if data.to_vec() == b2 =>
+					Some(CurrencyId::B2),
+				X2(Parachain(3), GeneralKey { data, .. }) if data.to_vec() == c =>
+					Some(CurrencyId::C),
+				X2(Parachain(4), GeneralKey { data, .. }) if data.to_vec() == d =>
+					Some(CurrencyId::D),
 				_ => None,
 			},
 			MultiLocation { parents, interior } if parents == 0 => match interior {
@@ -443,18 +451,13 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 }
 impl Convert<MultiAsset, Option<CurrencyId>> for CurrencyIdConvert {
 	fn convert(a: MultiAsset) -> Option<CurrencyId> {
-		if let MultiAsset {
-			fun: Fungible(_),
-			id: Concrete(id),
-		} = a
-		{
+		if let MultiAsset { fun: Fungible(_), id: Concrete(id) } = a {
 			Self::convert(id)
 		} else {
 			Option::None
 		}
 	}
 }
-
 
 impl orml_tokens::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;

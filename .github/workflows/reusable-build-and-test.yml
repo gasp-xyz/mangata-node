@@ -38,8 +38,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
 
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
@@ -127,8 +127,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
         with:
@@ -151,8 +151,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
         with:
@@ -178,8 +178,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
         with:
@@ -204,8 +204,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
         with:
@@ -221,7 +221,7 @@ jobs:
         run: cargo run --release --features=try-runtime,mangata-rococo try-runtime --chain=rococo --runtime=target/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.wasm on-runtime-upgrade live --uri wss://collator-01-ws-rococo.mangata.online:443
 
       - name: Run try-runtime Kusama Mainnet
-        run: cargo run --release --features=try-runtime try-runtime --chain=kusama --runtime=target/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.wasm on-runtime-upgrade live --uri wss://prod-kusama-collator-01.mangatafinance.cloud:443
+        run: cargo run --release --features=try-runtime try-runtime --chain=kusama --runtime=target/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.wasm on-runtime-upgrade live --uri wss://kusama-rpc.mangata.online:443
 
       - name: Fix permissions on self-hosted runner
         if: always()
@@ -240,8 +240,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
 
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
@@ -281,7 +281,7 @@ jobs:
         run: |
           target/release/mangata-node benchmark overhead --execution native --chain kusama-local -lblock_builder=debug --max-ext-per-block 50000 --base-path .
           cp block_weights.rs extrinsic_weights.rs ./benchmarks
-      
+
       - name: Upload logs and docker images to GitHub
         if: ${{ contains(github.event.pull_request.labels.*.name, 'full-benchmarks') }}
         uses: actions/upload-artifact@v3.1.1

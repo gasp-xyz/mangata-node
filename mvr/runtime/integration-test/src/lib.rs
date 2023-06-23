@@ -137,6 +137,11 @@ fn xtokens_transfer_triggers_asset_trap() {
 			&networks::reserve_account(2001),
 			INITIAL_BALANCE,
 		);
+
+		assert_eq!(
+			mangata_polkadot_runtime::Tokens::free_balance(RELAY_ASSET_ID, &networks::reserve_account(2001)),
+			INITIAL_BALANCE
+		);
 	});
 
 	// act
@@ -180,5 +185,9 @@ fn xtokens_transfer_triggers_asset_trap() {
 				>::AssetsTrapped(..))
 			))
 			.is_some());
+
+		assert!(
+			mangata_polkadot_runtime::Tokens::free_balance(RELAY_ASSET_ID, &networks::reserve_account(2001)) > INITIAL_BALANCE * 9 / 10
+		);
 	});
 }

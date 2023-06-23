@@ -163,10 +163,10 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("mangata-parachain"),
 
 	authoring_version: 14,
-	spec_version: 003000,
+	spec_version: 003100,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 003000,
+	transaction_version: 003100,
 	state_version: 0,
 };
 
@@ -1193,20 +1193,22 @@ parameter_types! {
 	pub ConstFeeMultiplierValue: Multiplier = Multiplier::saturating_from_rational(1, 1);
 }
 
+pub type OnChargeTransactionHandler = ThreeCurrencyOnChargeAdapter<
+	orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
+	ToAuthor,
+	MgrTokenId,
+	RocTokenId,
+	TurTokenId,
+	frame_support::traits::ConstU128<ROC_MGR_SCALE_FACTOR>,
+	frame_support::traits::ConstU128<TUR_MGR_SCALE_FACTOR>,
+>;
+
 impl pallet_transaction_payment_mangata::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction = OnChargeHandler<
 		orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
 		ToAuthor,
-		ThreeCurrencyOnChargeAdapter<
-			orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
-			ToAuthor,
-			MgrTokenId,
-			RocTokenId,
-			TurTokenId,
-			frame_support::traits::ConstU128<ROC_MGR_SCALE_FACTOR>,
-			frame_support::traits::ConstU128<TUR_MGR_SCALE_FACTOR>,
-		>,
+		OnChargeTransactionHandler,
 		FeeLock,
 	>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
@@ -1942,6 +1944,20 @@ impl_runtime_apis! {
 			}
 		}
 
+		fn get_max_instant_burn_amount(
+			user: AccountId,
+			liquidity_asset_id: TokenId,
+		) -> XYKRpcResult<Balance> {
+			XYKRpcResult { price: Xyk::get_max_instant_burn_amount(&user, liquidity_asset_id) }
+		}
+
+		fn get_max_instant_unreserve_amount(
+			user: AccountId,
+			liquidity_asset_id: TokenId,
+		) -> XYKRpcResult<Balance> {
+			XYKRpcResult { price: Xyk::get_max_instant_unreserve_amount(&user, liquidity_asset_id) }
+		}
+
 		fn calculate_rewards_amount(
 			user: AccountId,
 			liquidity_asset_id: TokenId,
@@ -1951,27 +1967,9 @@ impl_runtime_apis! {
 					price:claimable_rewards
 				},
 				Err(e) => {
-						log::warn!(target:"xyk", "rpc 'XYK::calculate_rewards_amount_v2' error: '{:?}', returning default value instead", e);
+						log::warn!(target:"xyk", "rpc 'XYK::calculate_rewards_amount' error: '{:?}', returning default value instead", e);
 						Default::default()
 				},
-			}
-		}
-
-		fn get_max_instant_burn_amount(
-			user: AccountId,
-			liquidity_asset_id: TokenId,
-		) -> XYKRpcResult<Balance> {
-			XYKRpcResult {
-				price: Xyk::get_max_instant_burn_amount(&user, liquidity_asset_id)
-			}
-		}
-
-		fn get_max_instant_unreserve_amount(
-			user: AccountId,
-			liquidity_asset_id: TokenId,
-		) -> XYKRpcResult<Balance> {
-			XYKRpcResult {
-				price: Xyk::get_max_instant_unreserve_amount(&user, liquidity_asset_id)
 			}
 		}
 
@@ -1987,6 +1985,84 @@ impl_runtime_apis! {
 							e
 						}
 					).unwrap_or_default()
+			}
+		}
+
+		fn is_sell_asset_lock_free(
+			path: Vec<TokenId>,
+			input_amount: Balance,
+			) -> Option<bool>{
+			match (path.len(), pallet_fee_lock::FeeLockMetadata::<Runtime>::get()) {
+				(length, _) if length < 2 => {
+					None
+				}
+				(2, Some(feelock)) => {
+					let input = path.get(0)?;
+					let output = path.get(1)?;
+					let output_amount = Xyk::calculate_sell_price_id(*input, *output, input_amount).ok()?;
+					Some(
+					FeeHelpers::<
+								Runtime,
+								orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
+								ToAuthor,
+								OnChargeTransactionHandler,
+								FeeLock,
+								>::is_high_value_swap(&feelock, *input, input_amount)
+									||
+					FeeHelpers::<
+								Runtime,
+								orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
+								ToAuthor,
+								OnChargeTransactionHandler,
+								FeeLock,
+								>::is_high_value_swap(&feelock, *output, output_amount)
+								)
+				}
+				(_,  None) => {
+					Some(false)
+				}
+				(_,  Some(_)) => {
+					Some(true)
+				}
+			}
+		}
+
+		fn is_buy_asset_lock_free(
+			path: Vec<TokenId>,
+			input_amount: Balance,
+			) -> Option<bool>{
+			match (path.len(), pallet_fee_lock::FeeLockMetadata::<Runtime>::get()) {
+				(length, _) if length < 2 => {
+					None
+				}
+				(2, Some(feelock)) => {
+					let input = path.get(0)?;
+					let output = path.get(1)?;
+					let output_amount = Xyk::calculate_buy_price_id(*input, *output, input_amount).ok()?;
+					Some(
+					FeeHelpers::<
+								Runtime,
+								orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
+								ToAuthor,
+								OnChargeTransactionHandler,
+								FeeLock,
+								>::is_high_value_swap(&feelock, *input, input_amount)
+									||
+					FeeHelpers::<
+								Runtime,
+								orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
+								ToAuthor,
+								OnChargeTransactionHandler,
+								FeeLock,
+								>::is_high_value_swap(&feelock, *output, output_amount)
+								)
+				}
+				(_, None) => {
+					Some(false)
+				}
+				(_, Some(_)) => {
+					Some(true)
+				}
 			}
 		}
 	}

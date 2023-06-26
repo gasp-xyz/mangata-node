@@ -232,44 +232,35 @@ impl pallet_authorship::Config for Runtime {
 	type EventHandler = ParachainStaking;
 }
 
+
 parameter_types! {
-	pub const ProposalBond: Permill = Permill::from_percent(5);
-	pub const ProposalBondMinimum: Balance = 1 * DOLLARS;
-	pub const ProposalBondMaximum: Option<Balance> = None;
-	pub const SpendPeriod: BlockNumber = 1 * DAYS;
-	pub const Burn: Permill = Permill::from_percent(0);
-	pub const TipCountdown: BlockNumber = 1 * DAYS;
-	pub const TipFindersFee: Percent = Percent::from_percent(20);
-	pub const TipReportDepositBase: Balance = 1 * DOLLARS;
-	pub const DataDepositPerByte: Balance = 1 * CENTS;
-	pub const BountyDepositBase: Balance = 1 * DOLLARS;
-	pub const BountyDepositPayoutDelay: BlockNumber = 1 * DAYS;
-	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
+	// pub const ProposalBond: Permill = Permill::from_percent(5);
+	// pub const ProposalBondMinimum: Balance = 1 * DOLLARS;
+	// pub const ProposalBondMaximum: Option<Balance> = None;
+	// pub const SpendPeriod: BlockNumber = 1 * DAYS;
+	// pub const Burn: Permill = Permill::from_percent(0);
+	// pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
+	// pub const MaxApprovals: u32 = 100;
 	pub const BnbTreasurySubAccDerive: [u8; 4] = *b"bnbt";
-	pub const BountyUpdatePeriod: BlockNumber = 14 * DAYS;
-	pub const MaximumReasonLength: u32 = 16384;
-	pub const BountyCuratorDeposit: Permill = Permill::from_percent(50);
-	pub const BountyValueMinimum: Balance = 5 * DOLLARS;
-	pub const MaxApprovals: u32 = 100;
 	pub const DefaultPayoutLimit: u32 = 3;
 }
 
 impl pallet_treasury::Config for Runtime {
-	type PalletId = TreasuryPalletId;
+	type PalletId = cfg::common::TreasuryPalletId;
 	type Currency = orml_tokens::CurrencyAdapter<Runtime, tokens::MgxTokenId>;
 	type ApproveOrigin = EnsureRoot<AccountId>;
 	type RejectOrigin = EnsureRoot<AccountId>;
 	type RuntimeEvent = RuntimeEvent;
 	type OnSlash = ();
-	type ProposalBond = ProposalBond;
-	type ProposalBondMinimum = ProposalBondMinimum;
-	type ProposalBondMaximum = ProposalBondMaximum;
-	type SpendPeriod = SpendPeriod;
-	type Burn = Burn;
+	type ProposalBond = cfg::pallet_treasury::ProposalBond;
+	type ProposalBondMinimum = cfg::pallet_treasury::ProposalBondMinimum;
+	type ProposalBondMaximum = cfg::pallet_treasury::ProposalBondMaximum;
+	type SpendPeriod = cfg::pallet_treasury::SpendPeriod;
+	type Burn = cfg::pallet_treasury::Burn;
 	type BurnDestination = ();
 	type SpendFunds = ();
 	type WeightInfo = weights::pallet_treasury_weights::ModuleWeight<Runtime>;
-	type MaxApprovals = MaxApprovals;
+	type MaxApprovals = cfg::pallet_treasury::MaxApprovals;
 	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<u128>;
 }
 
@@ -280,7 +271,7 @@ parameter_type_with_key! {
 }
 
 parameter_types! {
-	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
+	pub TreasuryAccount: AccountId = cfg::common::TreasuryPalletId::get().into_account_truncating();
 	pub const MaxLocks: u32 = 50;
 }
 
@@ -376,7 +367,7 @@ impl pallet_xyk::Config for Runtime {
 	type ActivationReservesProvider = MultiPurposeLiquidity;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type NativeCurrencyId = tokens::MgxTokenId;
-	type TreasuryPalletId = TreasuryPalletId;
+	type TreasuryPalletId = cfg::common::TreasuryPalletId;
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
 	type PoolFeePercentage = frame_support::traits::ConstU128<20>;
 	type TreasuryFeePercentage = frame_support::traits::ConstU128<5>;
@@ -448,7 +439,7 @@ impl pallet_bootstrap::Config for Runtime {
 	type BootstrapUpdateBuffer = BootstrapUpdateBuffer;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type VestingProvider = Vesting;
-	type TreasuryPalletId = TreasuryPalletId;
+	type TreasuryPalletId = cfg::common::TreasuryPalletId;
 	type RewardsApi = ProofOfStake;
 	type ClearStorageLimit = ClearStorageLimit;
 	type WeightInfo = weights::pallet_bootstrap_weights::ModuleWeight<Runtime>;

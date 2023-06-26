@@ -84,7 +84,7 @@ pub mod constants;
 mod weights;
 // pub mod xcm_config;
 
-mod currency {
+pub mod currency {
 	use super::Balance;
 
 	pub const MILLICENTS: Balance = CENTS / 1000;

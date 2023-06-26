@@ -65,7 +65,7 @@ use static_assertions::const_assert;
 pub use xcm::{latest::prelude::*, VersionedMultiLocation};
 
 pub use constants::{fee::*, parachains::*};
-pub use currency::*;
+pub use common_runtime::{currency::*, deposit};
 use mangata_support::traits::{
 	AssetRegistryApi, FeeLockTriggerTrait, PreValidateSwaps, ProofOfStakeRewardsApi,
 };
@@ -170,17 +170,6 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	state_version: 0,
 };
 
-mod currency {
-	use super::Balance;
-
-	pub const MILLICENTS: Balance = CENTS / 1000;
-	pub const CENTS: Balance = DOLLARS / 100; // assume this is worth about a cent.
-	pub const DOLLARS: Balance = super::UNIT;
-
-	pub const fn deposit(items: u32, bytes: u32) -> Balance {
-		items as Balance * 5000 * DOLLARS + (bytes as Balance) * 60 * CENTS
-	}
-}
 
 /// This determines the average expected block time that we are targeting.
 /// Blocks will be produced at a minimum duration defined by `SLOT_DURATION`.

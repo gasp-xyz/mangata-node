@@ -187,6 +187,7 @@ pub mod config {
 
 	pub type ExistentialDepositsOf<T> = <T as ::orml_tokens::Config>::ExistentialDeposits;
 	pub type MaxLocksOf<T> = <T as ::orml_tokens::Config>::MaxLocks;
+	pub type SessionLenghtOf<T> = <T as ::parachain_staking::Config>::BlocksPerRound;
 
 pub mod frame_system{
 	use super::*;
@@ -279,5 +280,15 @@ pub mod orml_tokens {
 
 	pub type ReserveIdentifier = [u8; 8];
 
+}
+
+pub mod pallet_xyk {
+	use super::*;
+parameter_types! {
+	pub const BnbTreasurySubAccDerive: [u8; 4] = *b"bnbt";
+}
+	pub type PoolFeePercentage = frame_support::traits::ConstU128<20>;
+	pub type TreasuryFeePercentage = frame_support::traits::ConstU128<5>;
+	pub type BuyAndBurnFeePercentage = frame_support::traits::ConstU128<5>;
 }
 }

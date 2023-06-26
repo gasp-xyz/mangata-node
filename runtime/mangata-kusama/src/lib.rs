@@ -234,7 +234,6 @@ impl pallet_authorship::Config for Runtime {
 
 
 parameter_types! {
-	pub const BnbTreasurySubAccDerive: [u8; 4] = *b"bnbt";
 	pub const DefaultPayoutLimit: u32 = 3;
 }
 
@@ -339,7 +338,6 @@ impl AssetMetadataMutationTrait for AssetMetadataMutation {
 	}
 }
 
-type SessionLenghtOf<T> = <T as parachain_staking::Config>::BlocksPerRound;
 
 impl pallet_xyk::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -348,17 +346,16 @@ impl pallet_xyk::Config for Runtime {
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type NativeCurrencyId = tokens::MgxTokenId;
 	type TreasuryPalletId = cfg::TreasuryPalletIdOf<Runtime>;
-	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
-	type PoolFeePercentage = frame_support::traits::ConstU128<20>;
-	type TreasuryFeePercentage = frame_support::traits::ConstU128<5>;
-	type BuyAndBurnFeePercentage = frame_support::traits::ConstU128<5>;
+	type BnbTreasurySubAccDerive = cfg::pallet_xyk::BnbTreasurySubAccDerive;
+	type PoolFeePercentage = cfg::pallet_xyk::PoolFeePercentage;
+	type TreasuryFeePercentage = cfg::pallet_xyk::TreasuryFeePercentage;
+	type BuyAndBurnFeePercentage = cfg::pallet_xyk::BuyAndBurnFeePercentage;
 	type LiquidityMiningRewards = ProofOfStake;
 	type VestingProvider = Vesting;
 	type DisallowedPools = Bootstrap;
 	type DisabledTokens = (TestTokensFilter, AssetRegisterFilter);
 	type AssetMetadataMutation = AssetMetadataMutation;
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
-	type RewardsMigrateAccount = RewardsMigrationAccountProvider<Self>;
 }
 
 impl pallet_proof_of_stake::Config for Runtime {
@@ -367,7 +364,7 @@ impl pallet_proof_of_stake::Config for Runtime {
 	type NativeCurrencyId = tokens::MgxTokenId;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
-	type RewardsDistributionPeriod = SessionLenghtOf<Runtime>;
+	type RewardsDistributionPeriod = cfg::SessionLenghtOf<Runtime>;
 	type WeightInfo = weights::pallet_proof_of_stake_weights::ModuleWeight<Runtime>;
 }
 

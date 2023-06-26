@@ -65,7 +65,7 @@ use static_assertions::const_assert;
 pub use xcm::{latest::prelude::*, VersionedMultiLocation};
 
 pub use constants::{fee::*, parachains::*};
-pub use common_runtime::{currency::*, deposit, tokens};
+pub use common_runtime::{currency::*, deposit, tokens, runtime_types};
 
 use mangata_support::traits::{
 	AssetRegistryApi, FeeLockTriggerTrait, PreValidateSwaps, ProofOfStakeRewardsApi,
@@ -91,32 +91,22 @@ mod weights;
 pub mod xcm_config;
 
 /// Block header type as expected by this runtime.
-pub type Header = generic::HeaderVer<BlockNumber, BlakeTwo256>;
+pub type Header = runtime_types::Header;
 /// Block type as expected by this runtime.
-pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+pub type Block = runtime_types::Block<Runtime, RuntimeCall>;
 /// A Block signed with a Justification
-pub type SignedBlock = generic::SignedBlock<Block>;
+pub type SignedBlock = runtime_types::SignedBlock<Runtime, RuntimeCall>;
 /// BlockId type as expected by this runtime.
-pub type BlockId = generic::BlockId<Block>;
+pub type BlockId = runtime_types::BlockId<Runtime, RuntimeCall>;
 /// The SignedExtension to the basic transaction logic.
-pub type SignedExtra = (
-	frame_system::CheckSpecVersion<Runtime>,
-	frame_system::CheckTxVersion<Runtime>,
-	frame_system::CheckGenesis<Runtime>,
-	frame_system::CheckEra<Runtime>,
-	frame_system::CheckNonce<Runtime>,
-	frame_system::CheckWeight<Runtime>,
-	pallet_transaction_payment_mangata::ChargeTransactionPayment<Runtime>,
-);
+pub type SignedExtra = runtime_types::SignedExtra<Runtime>;
 /// The payload being signed in transactions.
-pub type SignedPayload = generic::SignedPayload<RuntimeCall, SignedExtra>;
-
+pub type SignedPayload = runtime_types::SignedPayload<Runtime, RuntimeCall>;
 /// Unchecked extrinsic type as expected by this runtime.
-pub type UncheckedExtrinsic =
-	generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
-
+pub type UncheckedExtrinsic = runtime_types::UncheckedExtrinsic<Runtime, RuntimeCall>;
 /// Extrinsic type that has already been checked.
-pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, RuntimeCall, SignedExtra>;
+pub type CheckedExtrinsic = runtime_types::CheckedExtrinsic<Runtime, RuntimeCall>;
+
 
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
@@ -134,17 +124,13 @@ pub type Executive = frame_executive::Executive<
 /// of data like extrinsics, allowing for them to continue syncing the network through upgrades
 /// to even the core data structures.
 pub mod opaque {
-	pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
-	use sp_runtime::{generic, traits::BlakeTwo256};
-
 	use super::*;
-
 	/// Opaque block header type.
-	pub type Header = generic::HeaderVer<BlockNumber, BlakeTwo256>;
+	pub type Header = runtime_types::Header;
 	/// Opaque block type.
-	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+	pub type Block = runtime_types::OpaqueBlock;
 	/// Opaque block identifier type.
-	pub type BlockId = generic::BlockId<Block>;
+	pub type BlockId = runtime_types::OpaqueBlockId;
 }
 
 impl_opaque_keys! {

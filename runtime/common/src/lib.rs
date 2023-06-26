@@ -142,3 +142,31 @@ pub mod tokens {
 		pub const TurTokenId: TokenId = TUR_TOKEN_ID;
 	}
 }
+
+
+
+pub mod runtime_types {
+	use super::*;
+
+	pub type SignedExtra<Runtime> = (
+		frame_system::CheckSpecVersion<Runtime>,
+		frame_system::CheckTxVersion<Runtime>,
+		frame_system::CheckGenesis<Runtime>,
+		frame_system::CheckEra<Runtime>,
+		frame_system::CheckNonce<Runtime>,
+		frame_system::CheckWeight<Runtime>,
+		pallet_transaction_payment_mangata::ChargeTransactionPayment<Runtime>,
+	);
+
+	pub type SignedPayload<Runtime, RuntimeCall> = generic::SignedPayload<RuntimeCall, SignedExtra<Runtime>>;
+	pub type UncheckedExtrinsic<Runtime, RuntimeCall> = generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra<Runtime>>;
+	pub type CheckedExtrinsic<Runtime, RuntimeCall> = generic::CheckedExtrinsic<AccountId, RuntimeCall, SignedExtra<Runtime>>;
+	pub type Header = generic::HeaderVer<BlockNumber, BlakeTwo256>;
+	pub type Block<Runtime, RuntimeCall> = generic::Block<Header, UncheckedExtrinsic<Runtime, RuntimeCall>>;
+	pub type SignedBlock<Runtime, RuntimeCall> = generic::SignedBlock<Block<Runtime, RuntimeCall>>;
+	pub type BlockId<Runtime, RuntimeCall> = generic::BlockId<Block<Runtime, RuntimeCall>>;
+
+	pub type OpaqueBlock = generic::Block<Header, sp_runtime::OpaqueExtrinsic>;
+	pub type OpaqueBlockId = generic::BlockId<OpaqueBlock>;
+
+}

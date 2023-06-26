@@ -177,6 +177,17 @@ pub mod config {
 
 	pub type TreasuryPalletIdOf<T> = <T as ::pallet_treasury::Config>::PalletId;
 
+
+	pub struct TreasuryAccountIdOf<T: ::pallet_treasury::Config>(PhantomData<T>);
+	impl<T : ::pallet_treasury::Config> Get<AccountId> for TreasuryAccountIdOf<T>{
+		fn get() -> AccountId {
+			TreasuryPalletIdOf::<T>::get().into_account_truncating()
+		}
+	}
+
+	pub type ExistentialDepositsOf<T> = <T as ::orml_tokens::Config>::ExistentialDeposits;
+	pub type MaxLocksOf<T> = <T as ::orml_tokens::Config>::MaxLocks;
+
 pub mod frame_system{
 	use super::*;
 
@@ -244,6 +255,29 @@ pub mod pallet_treasury {
 		pub const Burn: Permill = Permill::from_percent(0);
 		pub const MaxApprovals: u32 = 100;
 	}
+
+}
+
+pub mod orml_tokens {
+	use super::*;
+	parameter_types! {
+		pub const MaxLocks: u32 = 50;
+	}
+
+	parameter_type_with_key! {
+		pub ExistentialDeposits: |_currency_id: TokenId| -> Balance {
+			0
+		};
+	}
+
+	pub struct DustRemovalWhitelist<T: Get<AccountId>>(PhantomData<T>);
+	impl<T : Get<AccountId>> Contains<AccountId> for DustRemovalWhitelist<T> {
+		fn contains(a: &AccountId) -> bool {
+			*a == T::get()
+		}
+	}
+
+	pub type ReserveIdentifier = [u8; 8];
 
 }
 }

@@ -7,6 +7,7 @@ pub use frame_support::{
 	traits::{Everything, Get, Nothing},
 	weights::Weight,
 };
+use common_runtime::config as cfg;
 use common_runtime::tokens;
 use frame_system::EnsureRoot;
 use orml_asset_registry::{AssetRegistryTrader, FixedRateAssetRegistryTrader};
@@ -31,7 +32,7 @@ use xcm_executor::{traits::DropAssets, Assets, XcmExecutor};
 
 use super::{
 	constants::fee::*, AccountId, AllPalletsWithSystem, AssetMetadataOf, Balance, Convert,
-	ExistentialDeposits, Maintenance, ParachainInfo, ParachainSystem, PolkadotXcm, Runtime,
+	Maintenance, ParachainInfo, ParachainSystem, PolkadotXcm, Runtime,
 	RuntimeCall, RuntimeEvent, RuntimeOrigin, TokenId, Tokens, TreasuryAccount, UnknownTokens,
 	XcmpQueue,
 };
@@ -176,7 +177,7 @@ impl xcm_executor::Config for XcmConfig {
 	type Trader = Trader;
 	type ResponseHandler = PolkadotXcm;
 	type AssetTrap =
-		MangataDropAssets<PolkadotXcm, ToTreasury, TokenIdConvert, ExistentialDeposits>;
+		MangataDropAssets<PolkadotXcm, ToTreasury, TokenIdConvert, cfg::ExistentialDepositsOf<Runtime>>;
 	type AssetClaims = PolkadotXcm;
 	type SubscriptionService = PolkadotXcm;
 	type AssetLocker = ();

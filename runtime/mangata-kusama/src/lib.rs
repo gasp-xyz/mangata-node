@@ -257,15 +257,8 @@ impl pallet_treasury::Config for Runtime {
 	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<u128>;
 }
 
-parameter_type_with_key! {
-	pub ExistentialDeposits: |_currency_id: TokenId| -> Balance {
-		0
-	};
-}
-
 parameter_types! {
 	pub TreasuryAccount: AccountId = cfg::TreasuryPalletIdOf::<Runtime>::get().into_account_truncating();
-	pub const MaxLocks: u32 = 50;
 }
 
 // The MaxLocks (on a who-token_id pair) that is allowed by orml_tokens
@@ -273,15 +266,9 @@ parameter_types! {
 // This is because orml_tokens uses BoundedVec for Locks storage item and does not inform on failure
 // Balances uses WeakBoundedVec and so does not fail
 const_assert!(
-	MaxLocks::get() >= <Runtime as pallet_vesting_mangata::Config>::MAX_VESTING_SCHEDULES
+	cfg::orml_tokens::MaxLocks::get() >= <Runtime as pallet_vesting_mangata::Config>::MAX_VESTING_SCHEDULES
 );
 
-pub struct DustRemovalWhitelist;
-impl Contains<AccountId> for DustRemovalWhitelist {
-	fn contains(a: &AccountId) -> bool {
-		*a == TreasuryAccount::get()
-	}
-}
 
 impl orml_tokens::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -289,12 +276,12 @@ impl orml_tokens::Config for Runtime {
 	type Amount = Amount;
 	type CurrencyId = TokenId;
 	type WeightInfo = weights::orml_tokens_weights::ModuleWeight<Runtime>;
-	type ExistentialDeposits = ExistentialDeposits;
-	type MaxLocks = MaxLocks;
-	type DustRemovalWhitelist = DustRemovalWhitelist;
+	type ExistentialDeposits = cfg::orml_tokens::ExistentialDeposits;
+	type MaxLocks = cfg::orml_tokens::MaxLocks;
+	type DustRemovalWhitelist = cfg::orml_tokens::DustRemovalWhitelist<cfg::TreasuryAccountIdOf<Runtime>>;
 	type CurrencyHooks = ();
 	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
+	type ReserveIdentifier = cfg::orml_tokens::ReserveIdentifier;
 }
 
 pub struct TestTokensFilter;
@@ -1387,7 +1374,7 @@ impl pallet_crowdloan_rewards::Config for Runtime {
 
 impl pallet_multipurpose_liquidity::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type MaxRelocks = MaxLocks;
+	type MaxRelocks = cfg::MaxLocksOf<Runtime>;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type NativeCurrencyId = tokens::MgxTokenId;
 	type VestingProvider = Vesting;

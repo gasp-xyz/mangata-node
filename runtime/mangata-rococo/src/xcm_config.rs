@@ -2,6 +2,7 @@
 
 use codec::{Decode, Encode};
 use cumulus_primitives_core::ParaId;
+use common_runtime::config as cfg;
 pub use frame_support::{
 	match_types, parameter_types,
 	traits::{Everything, Get, Nothing},
@@ -31,7 +32,7 @@ use common_runtime::tokens;
 
 use super::{
 	constants::fee::*, AccountId, AllPalletsWithSystem, AssetMetadataOf, Balance, Convert,
-	ExistentialDeposits, Maintenance, ParachainInfo, ParachainSystem, PolkadotXcm, Runtime,
+	Maintenance, ParachainInfo, ParachainSystem, PolkadotXcm, Runtime,
 	RuntimeCall, RuntimeEvent, RuntimeOrigin, TokenId, Tokens, TreasuryAccount, UnknownTokens,
 	XcmpQueue
 };
@@ -176,7 +177,7 @@ impl xcm_executor::Config for XcmConfig {
 	type Trader = Trader;
 	type ResponseHandler = PolkadotXcm;
 	type AssetTrap =
-		MangataDropAssets<PolkadotXcm, ToTreasury, TokenIdConvert, ExistentialDeposits>;
+		MangataDropAssets<PolkadotXcm, ToTreasury, TokenIdConvert, cfg::ExistentialDepositsOf<Runtime>>;
 	type AssetClaims = PolkadotXcm;
 	type SubscriptionService = PolkadotXcm;
 	type AssetLocker = ();

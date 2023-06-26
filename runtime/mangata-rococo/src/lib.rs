@@ -65,7 +65,7 @@ use static_assertions::const_assert;
 pub use xcm::{latest::prelude::*, VersionedMultiLocation};
 
 pub use constants::{fee::*, parachains::*};
-pub use common_runtime::{currency::*, deposit};
+pub use common_runtime::{currency::*, deposit, tokens};
 use mangata_support::traits::{
 	AssetRegistryApi, FeeLockTriggerTrait, PreValidateSwaps, ProofOfStakeRewardsApi,
 };
@@ -84,10 +84,6 @@ use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-pub const MGR_TOKEN_ID: TokenId = 0;
-pub const ROC_TOKEN_ID: TokenId = 4;
-pub const KAR_TOKEN_ID: TokenId = 6;
-pub const TUR_TOKEN_ID: TokenId = 7;
 
 pub mod constants;
 mod migration;
@@ -248,12 +244,6 @@ parameter_types! {
 	pub const SS58Prefix: u16 = 42;
 }
 
-parameter_types! {
-	pub const MgrTokenId: TokenId = MGR_TOKEN_ID;
-	pub const RocTokenId: TokenId = ROC_TOKEN_ID;
-	pub const TurTokenId: TokenId = TUR_TOKEN_ID;
-}
-
 // Configure FRAME pallets to include in runtime.
 
 impl frame_system::Config for Runtime {
@@ -351,7 +341,7 @@ parameter_types! {
 
 impl pallet_treasury::Config for Runtime {
 	type PalletId = TreasuryPalletId;
-	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgrTokenId>;
+	type Currency = orml_tokens::CurrencyAdapter<Runtime, tokens::MgxTokenId>;
 	type ApproveOrigin = EnsureRoot<AccountId>;
 	type RejectOrigin = EnsureRoot<AccountId>;
 	type RuntimeEvent = RuntimeEvent;
@@ -461,7 +451,7 @@ impl pallet_xyk::Config for Runtime {
 	type MaintenanceStatusProvider = Maintenance;
 	type ActivationReservesProvider = MultiPurposeLiquidity;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-	type NativeCurrencyId = MgrTokenId;
+	type NativeCurrencyId = tokens::MgxTokenId;
 	type TreasuryPalletId = TreasuryPalletId;
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
 	type PoolFeePercentage = frame_support::traits::ConstU128<20>;
@@ -479,7 +469,7 @@ impl pallet_xyk::Config for Runtime {
 impl pallet_proof_of_stake::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type ActivationReservesProvider = MultiPurposeLiquidity;
-	type NativeCurrencyId = MgrTokenId;
+	type NativeCurrencyId = tokens::MgxTokenId;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = SessionLenghtOf<Runtime>;
@@ -975,7 +965,7 @@ where
 			},
 			(RuntimeCall::FeeLock(pallet_fee_lock::Call::unlock_fee { .. }), _) => {
 				let imb = C::withdraw(
-					MgrTokenId::get().into(),
+					tokens::MgxTokenId::get().into(),
 					who,
 					Balance::from(tip).into(),
 					WithdrawReasons::TIP,
@@ -985,7 +975,7 @@ where
 					TransactionValidityError::Invalid(InvalidTransaction::Payment.into())
 				})?;
 
-				OU::on_unbalanceds(MgrTokenId::get().into(), Some(imb).into_iter());
+				OU::on_unbalanceds(tokens::MgxTokenId::get().into(), Some(imb).into_iter());
 				TransactionPayment::deposit_event(pallet_transaction_payment_mangata::Event::<
 					Runtime,
 				>::TransactionFeePaid {
@@ -1185,9 +1175,9 @@ parameter_types! {
 pub type OnChargeTransactionHandler = ThreeCurrencyOnChargeAdapter<
 	orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
 	ToAuthor,
-	MgrTokenId,
-	RocTokenId,
-	TurTokenId,
+	tokens::MgxTokenId,
+	tokens::RelayTokenId,
+	tokens::TurTokenId,
 	frame_support::traits::ConstU128<ROC_MGR_SCALE_FACTOR>,
 	frame_support::traits::ConstU128<TUR_MGR_SCALE_FACTOR>,
 >;
@@ -1215,7 +1205,7 @@ impl pallet_fee_lock::Config for Runtime {
 	type MaxCuratedTokens = MaxCuratedTokens;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type PoolReservesProvider = Xyk;
-	type NativeTokenId = MgrTokenId;
+	type NativeTokenId = tokens::MgxTokenId;
 	type WeightInfo = weights::pallet_fee_lock_weights::ModuleWeight<Runtime>;
 }
 
@@ -1386,7 +1376,7 @@ impl parachain_staking::Config for Runtime {
 	type MinCollatorStk = MinCollatorStk;
 	type MinCandidateStk = MinCandidateStk;
 	type MinDelegation = MinDelegatorStk;
-	type NativeTokenId = MgrTokenId;
+	type NativeTokenId = tokens::MgxTokenId;
 	type StakingLiquidityTokenValuator = Xyk;
 	type Issuance = Issuance;
 	type StakingIssuanceVault = StakingIssuanceVault;
@@ -1427,7 +1417,7 @@ const_assert!(RewardPaymentDelay::get() <= HistoryLimit::get());
 
 impl pallet_issuance::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type NativeCurrencyId = MgrTokenId;
+	type NativeCurrencyId = tokens::MgxTokenId;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type BlocksPerRound = BlocksPerRound;
 	type HistoryLimit = HistoryLimit;
@@ -1477,7 +1467,7 @@ impl pallet_crowdloan_rewards::Config for Runtime {
 	type MaxInitContributors = MaxInitContributorsBatchSizes;
 	type MinimumReward = MinimumReward;
 	type RewardAddressRelayVoteThreshold = RelaySignaturesThreshold;
-	type NativeTokenId = MgrTokenId;
+	type NativeTokenId = tokens::MgxTokenId;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type RelayChainAccountId = sp_runtime::AccountId32;
 	type RewardAddressChangeOrigin = EnsureRoot<AccountId>;
@@ -1492,7 +1482,7 @@ impl pallet_multipurpose_liquidity::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type MaxRelocks = MaxLocks;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-	type NativeCurrencyId = MgrTokenId;
+	type NativeCurrencyId = tokens::MgxTokenId;
 	type VestingProvider = Vesting;
 	type Xyk = Xyk;
 	type WeightInfo = weights::pallet_multipurpose_liquidity_weights::ModuleWeight<Runtime>;
@@ -1617,7 +1607,7 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 impl pallet_proxy::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
-	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgrTokenId>;
+	type Currency = orml_tokens::CurrencyAdapter<Runtime, tokens::MgxTokenId>;
 	type ProxyType = ProxyType;
 	type ProxyDepositBase = ProxyDepositBase;
 	type ProxyDepositFactor = ProxyDepositFactor;
@@ -1646,7 +1636,7 @@ type IdentityRegistrarOrigin = EnsureRoot<AccountId>;
 
 impl pallet_identity::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgrTokenId>;
+	type Currency = orml_tokens::CurrencyAdapter<Runtime, tokens::MgxTokenId>;
 	type BasicDeposit = BasicDeposit;
 	type FieldDeposit = FieldDeposit;
 	type SubAccountDeposit = SubAccountDeposit;

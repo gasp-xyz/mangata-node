@@ -27,12 +27,13 @@ use xcm_builder::{
 	SovereignSignedViaLocation, TakeRevenue, TakeWeightCredit,
 };
 use xcm_executor::{traits::DropAssets, Assets, XcmExecutor};
+use common_runtime::tokens;
 
 use super::{
 	constants::fee::*, AccountId, AllPalletsWithSystem, AssetMetadataOf, Balance, Convert,
 	ExistentialDeposits, Maintenance, ParachainInfo, ParachainSystem, PolkadotXcm, Runtime,
 	RuntimeCall, RuntimeEvent, RuntimeOrigin, TokenId, Tokens, TreasuryAccount, UnknownTokens,
-	XcmpQueue, MGR_TOKEN_ID, ROC_TOKEN_ID,
+	XcmpQueue
 };
 
 pub fn general_key(key: &[u8]) -> Junction {
@@ -124,7 +125,7 @@ parameter_types! {
 	pub MgrPerSecond: (AssetId, u128, u128) = (
 		MultiLocation::new(
 			0,
-			X1(general_key(&MGR_TOKEN_ID.encode())),
+			X1(general_key(&tokens::MgxTokenId::get().encode())),
 		).into(),
 		mgr_per_second(),
 		mgr_per_second(),
@@ -201,9 +202,6 @@ pub type XcmRouter = (
 	XcmpQueue,
 );
 
-parameter_types! {
-	pub const MgrTokenId: TokenId = MGR_TOKEN_ID;
-}
 
 #[cfg(feature = "runtime-benchmarks")]
 parameter_types! {
@@ -225,7 +223,7 @@ impl pallet_xcm::Config for Runtime {
 	type RuntimeCall = RuntimeCall;
 	const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
 	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
-	type Currency = orml_tokens::CurrencyAdapter<Runtime, MgrTokenId>;
+	type Currency = orml_tokens::CurrencyAdapter<Runtime, tokens::MgxTokenId>;
 	type CurrencyMatcher = ();
 	type TrustedLockers = ();
 	type SovereignAccountOf = LocationToAccountId;
@@ -374,11 +372,11 @@ pub struct TokenIdConvert;
 impl Convert<TokenId, Option<MultiLocation>> for TokenIdConvert {
 	fn convert(id: TokenId) -> Option<MultiLocation> {
 		// allow relay asset
-		if id == ROC_TOKEN_ID {
+		if id == tokens::MgxTokenId::get() {
 			return Some(MultiLocation::parent())
 		}
 		// allow native asset
-		if id == MGR_TOKEN_ID {
+		if id == tokens::MgxTokenId::get() {
 			return Some(MultiLocation::new(
 				1,
 				X2(Parachain(ParachainInfo::get().into()), general_key(&id.encode())),
@@ -392,7 +390,7 @@ impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 	fn convert(location: MultiLocation) -> Option<TokenId> {
 		// allow relay asset
 		if location == MultiLocation::parent() {
-			return Some(ROC_TOKEN_ID)
+			return Some(tokens::RelayTokenId::get())
 		}
 
 		match location {
@@ -402,13 +400,13 @@ impl Convert<MultiLocation, Option<TokenId>> for TokenIdConvert {
 				interior: X2(Parachain(para_id), GeneralKey { length, data }),
 			} if ParaId::from(para_id) == ParachainInfo::get() =>
 				match TokenId::decode(&mut &data[..(length as usize)]) {
-					Ok(MGR_TOKEN_ID) => Some(MGR_TOKEN_ID),
+					Ok(tokens::MGX_TOKEN_ID) => Some(tokens::MgxTokenId::get()),
 					_ => None,
 				},
 			// allow native asset
 			MultiLocation { parents: 0, interior: X1(GeneralKey { length, data }) } =>
 				match TokenId::decode(&mut &data[..(length as usize)]) {
-					Ok(MGR_TOKEN_ID) => Some(MGR_TOKEN_ID),
+					Ok(tokens::MGX_TOKEN_ID) => Some(tokens::MgxTokenId::get()),
 					_ => None,
 				},
 

@@ -131,3 +131,14 @@ const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
 	polkadot_primitives::v2::MAX_POV_SIZE as u64,
 );
 
+pub mod tokens {
+	use super::*;
+	pub const MGX_TOKEN_ID: TokenId = 0;
+	pub const RELAY_TOKEN_ID: TokenId = 4;
+	pub const TUR_TOKEN_ID: TokenId = 7;
+	parameter_types! {
+		pub const MgxTokenId: TokenId = MGX_TOKEN_ID;
+		pub const RelayTokenId: TokenId = RELAY_TOKEN_ID;
+		pub const TurTokenId: TokenId = TUR_TOKEN_ID;
+	}
+}

@@ -23,8 +23,9 @@ jobs:
         run: |
           # TODO: uncomment when we are ready to merge
           # echo "RELEASE_VERSION=${GITHUB_HEAD_REF#rc/}" >> $GITHUB_OUTPUT
+          # echo "RELEASE_CANDIDATE_VERSION=${GITHUB_HEAD_REF#rc/}-rc" >> $GITHUB_OUTPUT
           echo "RELEASE_VERSION=0.0.0" >> $GITHUB_OUTPUT
-          echo "RELEASE_CANDIDATE_VERSION=${GITHUB_HEAD_REF#rc/}-rc" >> $GITHUB_OUTPUT
+          echo "RELEASE_CANDIDATE_VERSION=0.0.0-rc" >> $GITHUB_OUTPUT
   
   build-and-test:
     needs: [init]
@@ -53,6 +54,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      DOCKER_IMAGE_DIGEST: ${{ steps.export_docker_image.outputs.DOCKER_IMAGE_DIGEST }}
     steps:
       - uses: actions/checkout@v3
       - name: Login to Docker Hub
@@ -60,6 +63,16 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Export docker image
+        id: export_docker_image
+        run: |
+          docker pull mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_CANDIDATE_VERSION }}
+          docker save mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_CANDIDATE_VERSION }} -o docker-${{ github.ref_name }}.tar
+          zip -r docker-${{ github.ref_name }}.zip docker-${{ github.ref_name }}.tar
+          # Save docker image SHA256 digest as an output variable
+          echo "DOCKER_IMAGE_DIGEST=$(docker inspect mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_CANDIDATE_VERSION }} --format='{{index .RepoDigests 0}}')" >> $GITHUB_OUTPUT
+      
       - name: Tag and push image rococo and kusama specific images
         uses: akhilerm/tag-push-action@v2.0.0
         with:
@@ -67,12 +80,6 @@ jobs:
           dst: |
             docker.io/mangatasolutions/mangata-node:rococo-${{ needs.init.outputs.RELEASE_VERSION }}
             docker.io/mangatasolutions/mangata-node:kusama-${{ needs.init.outputs.RELEASE_VERSION }}
-      
-      - name: Export docker image
-        run: |
-          docker pull mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_CANDIDATE_VERSION }}
-          docker save mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_CANDIDATE_VERSION }} -o docker-${{ github.ref_name }}.tar
-          zip -r docker-${{ github.ref_name }}.zip docker-${{ github.ref_name }}.tar
 
       - name: Extract wasms
         run: |
@@ -131,7 +138,7 @@ jobs:
       # version: kusama-${{ needs.init.outputs.RELEASE_VERSION }}
   
   publish-release:
-    needs: [init,deploy-kusama]
+    needs: [init,deploy-kusama,create-draft-release-and-publish-docker-images]
     # TODO: change when we are ready to merge
     if: false
     runs-on: ubuntu-latest
@@ -147,7 +154,7 @@ jobs:
       - name: Tag and push image
         uses: akhilerm/tag-push-action@v2.0.0
         with:
-          src: docker.io/mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_CANDIDATE_VERSION }}
+          src: ${{ needs.create-draft-release-and-publish-docker-images.outputs.DOCKER_IMAGE_DIGEST }}
           dst: docker.io/mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_VERSION }}
 
       - name: Upload wasms to release page

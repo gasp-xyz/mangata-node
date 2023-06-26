@@ -363,6 +363,7 @@ impl pallet_proof_of_stake::Config for Runtime {
 	type ActivationReservesProvider = MultiPurposeLiquidity;
 	type NativeCurrencyId = tokens::MgxTokenId;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+	//TODO: fix
 	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = cfg::SessionLenghtOf<Runtime>;
 	type WeightInfo = weights::pallet_proof_of_stake_weights::ModuleWeight<Runtime>;
@@ -400,11 +401,6 @@ impl AssetRegistryApi for EnableAssetPoolApi {
 	}
 }
 
-parameter_types! {
-	pub const BootstrapUpdateBuffer: BlockNumber = 300;
-	pub const DefaultBootstrapPromotedPoolWeight: u8 = 0u8;
-	pub const ClearStorageLimit: u32 = 100u32;
-}
 
 impl pallet_bootstrap::BootstrapBenchmarkingConfig for Runtime {}
 
@@ -412,13 +408,13 @@ impl pallet_bootstrap::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type MaintenanceStatusProvider = Maintenance;
 	type PoolCreateApi = Xyk;
-	type DefaultBootstrapPromotedPoolWeight = DefaultBootstrapPromotedPoolWeight;
-	type BootstrapUpdateBuffer = BootstrapUpdateBuffer;
+	type DefaultBootstrapPromotedPoolWeight = cfg::pallet_bootstrap::DefaultBootstrapPromotedPoolWeight;
+	type BootstrapUpdateBuffer = cfg::pallet_bootstrap::BootstrapUpdateBuffer;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type VestingProvider = Vesting;
 	type TreasuryPalletId = cfg::TreasuryPalletIdOf<Runtime>;
 	type RewardsApi = ProofOfStake;
-	type ClearStorageLimit = ClearStorageLimit;
+	type ClearStorageLimit = cfg::pallet_bootstrap::ClearStorageLimit;
 	type WeightInfo = weights::pallet_bootstrap_weights::ModuleWeight<Runtime>;
 	type AssetRegistryApi = EnableAssetPoolApi;
 }

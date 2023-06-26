@@ -291,4 +291,14 @@ parameter_types! {
 	pub type TreasuryFeePercentage = frame_support::traits::ConstU128<5>;
 	pub type BuyAndBurnFeePercentage = frame_support::traits::ConstU128<5>;
 }
+
+pub mod pallet_bootstrap {
+	use super::*;
+
+parameter_types! {
+	pub const BootstrapUpdateBuffer: BlockNumber = 300;
+	pub const DefaultBootstrapPromotedPoolWeight: u8 = 0u8;
+	pub const ClearStorageLimit: u32 = 100u32;
+}
+}
 }

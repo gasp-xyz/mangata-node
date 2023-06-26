@@ -8,6 +8,11 @@ on:
   #   branches: [main]
   #   types: [closed]
 
+# https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
+concurrency: 
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+
+
 jobs:
   init:
     name: Global init
@@ -49,6 +54,7 @@ jobs:
   #     parachainDocker: docker.io/mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_CANDIDATE_VERSION }}
 
   create-draft-release-and-publish-docker-images:
+    name: Create Draft Release and Publish Docker Images
     needs: [init,build-and-test]
     environment: kusama
     runs-on: ubuntu-latest
@@ -138,6 +144,7 @@ jobs:
       # version: kusama-${{ needs.init.outputs.RELEASE_VERSION }}
   
   publish-release:
+    name: Publish release
     needs: [init,deploy-kusama,create-draft-release-and-publish-docker-images]
     # TODO: change when we are ready to merge
     if: false

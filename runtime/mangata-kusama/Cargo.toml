@@ -21,6 +21,7 @@ smallvec = "1.6.1"
 static_assertions = "1.1.0"
 
 # Local Dependencies
+common-runtime = { path = '../common', default-features = false, version = '4.0.0' }
 pallet-xyk = { path = '../../pallets/xyk', default-features = false, version = '0.1.0' }
 pallet-proof-of-stake = { path = '../../pallets/proof-of-stake', default-features = false, version = '0.1.0' }
 pallet-bootstrap = { path = '../../pallets/bootstrap', default-features = false, version = '0.1.0' }

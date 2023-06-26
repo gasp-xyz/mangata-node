@@ -175,12 +175,7 @@ pub mod consts {
 pub mod config {
 	use super::*;
 
-	pub mod common {
-		use super::*;
-		parameter_types! {
-		pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
-		}
-	}
+	pub type TreasuryPalletIdOf<T> = <T as ::pallet_treasury::Config>::PalletId;
 
 pub mod frame_system{
 	use super::*;
@@ -237,6 +232,9 @@ pub mod pallet_timestamp{
 
 pub mod pallet_treasury {
 	use super::*;
+		parameter_types! {
+		pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
+		}
 
 	parameter_types! {
 		pub const ProposalBond: Permill = Permill::from_percent(5);

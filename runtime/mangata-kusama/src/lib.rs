@@ -234,19 +234,12 @@ impl pallet_authorship::Config for Runtime {
 
 
 parameter_types! {
-	// pub const ProposalBond: Permill = Permill::from_percent(5);
-	// pub const ProposalBondMinimum: Balance = 1 * DOLLARS;
-	// pub const ProposalBondMaximum: Option<Balance> = None;
-	// pub const SpendPeriod: BlockNumber = 1 * DAYS;
-	// pub const Burn: Permill = Permill::from_percent(0);
-	// pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
-	// pub const MaxApprovals: u32 = 100;
 	pub const BnbTreasurySubAccDerive: [u8; 4] = *b"bnbt";
 	pub const DefaultPayoutLimit: u32 = 3;
 }
 
 impl pallet_treasury::Config for Runtime {
-	type PalletId = cfg::common::TreasuryPalletId;
+	type PalletId = cfg::pallet_treasury::TreasuryPalletId;
 	type Currency = orml_tokens::CurrencyAdapter<Runtime, tokens::MgxTokenId>;
 	type ApproveOrigin = EnsureRoot<AccountId>;
 	type RejectOrigin = EnsureRoot<AccountId>;
@@ -271,7 +264,7 @@ parameter_type_with_key! {
 }
 
 parameter_types! {
-	pub TreasuryAccount: AccountId = cfg::common::TreasuryPalletId::get().into_account_truncating();
+	pub TreasuryAccount: AccountId = cfg::TreasuryPalletIdOf::<Runtime>::get().into_account_truncating();
 	pub const MaxLocks: u32 = 50;
 }
 
@@ -367,7 +360,7 @@ impl pallet_xyk::Config for Runtime {
 	type ActivationReservesProvider = MultiPurposeLiquidity;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type NativeCurrencyId = tokens::MgxTokenId;
-	type TreasuryPalletId = cfg::common::TreasuryPalletId;
+	type TreasuryPalletId = cfg::TreasuryPalletIdOf<Runtime>;
 	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
 	type PoolFeePercentage = frame_support::traits::ConstU128<20>;
 	type TreasuryFeePercentage = frame_support::traits::ConstU128<5>;
@@ -439,7 +432,7 @@ impl pallet_bootstrap::Config for Runtime {
 	type BootstrapUpdateBuffer = BootstrapUpdateBuffer;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type VestingProvider = Vesting;
-	type TreasuryPalletId = cfg::common::TreasuryPalletId;
+	type TreasuryPalletId = cfg::TreasuryPalletIdOf<Runtime>;
 	type RewardsApi = ProofOfStake;
 	type ClearStorageLimit = ClearStorageLimit;
 	type WeightInfo = weights::pallet_bootstrap_weights::ModuleWeight<Runtime>;

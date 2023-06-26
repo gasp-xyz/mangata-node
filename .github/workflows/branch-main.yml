@@ -1,22 +1,30 @@
 name: Production Release Workflow
 
 on:
-  pull_request:
-    # branches: [main]
-    # types: [closed]
+  push:
+    branches: [ci/update-release-workflow-MGX-325]
+  # TODO: uncomment when we are ready to merge
+  # pull_request:
+  #   branches: [main]
+  #   types: [closed]
 
 jobs:
   init:
     name: Global init
+    # TODO: uncomment when we are ready to merge
     # if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'rc/')
     runs-on: ubuntu-latest
     outputs:
       RELEASE_VERSION: ${{ steps.set_vars.outputs.RELEASE_VERSION }}
+      RELEASE_CANDIDATE_VERSION: ${{ steps.set_vars.outputs.RELEASE_CANDIDATE_VERSION }}
     steps:
       - name: Set release version
         id: set_vars
-        run: echo "RELEASE_VERSION=0.0.0" >> $GITHUB_OUTPUT
-        # run: echo "RELEASE_VERSION=${GITHUB_HEAD_REF#rc/}" >> $GITHUB_OUTPUT
+        run: |
+          # TODO: uncomment when we are ready to merge
+          # echo "RELEASE_VERSION=${GITHUB_HEAD_REF#rc/}" >> $GITHUB_OUTPUT
+          echo "RELEASE_VERSION=0.0.0" >> $GITHUB_OUTPUT
+          echo "RELEASE_CANDIDATE_VERSION=${GITHUB_HEAD_REF#rc/}-rc" >> $GITHUB_OUTPUT
   
   build-and-test:
     needs: [init]
@@ -24,23 +32,108 @@ jobs:
     uses: ./.github/workflows/reusable-build-and-test.yml
     secrets: inherit
     with:
-      version: ${{ needs.init.outputs.RELEASE_VERSION }}
-      # branch: 'main'
-      branch: 'test'
+      version: ${{ needs.init.outputs.RELEASE_CANDIDATE_VERSION }}
+      # TODO: uncomment when we are ready to merge
+      # branch: main
+      branch: test
   
-  run-e2e-tests:
-    name: Run e2e tests
-    needs: [init,build-and-test]
-    uses: ./.github/workflows/reusable-e2e-tests.yml
-    secrets: inherit
-    with:
-      globalVersion: ${{ needs.init.outputs.RELEASE_VERSION }}
-      parachainDocker: docker.io/mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_VERSION }}
+  # TODO: uncomment when we are ready to merge
+  # run-e2e-tests:
+  #   name: Run e2e tests
+  #   needs: [init,build-and-test]
+  #   uses: ./.github/workflows/reusable-e2e-tests.yml
+  #   secrets: inherit
+  #   with:
+  #     globalVersion: ${{ needs.init.outputs.RELEASE_CANDIDATE_VERSION }}
+  #     parachainDocker: docker.io/mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_CANDIDATE_VERSION }}
 
-  
-  publish-rococo-image:
+  create-draft-release-and-publish-docker-images:
     needs: [init,build-and-test]
-    environment: rococo
+    environment: kusama
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2.1.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Tag and push image rococo and kusama specific images
+        uses: akhilerm/tag-push-action@v2.0.0
+        with:
+          src: docker.io/mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_CANDIDATE_VERSION }}
+          dst: |
+            docker.io/mangatasolutions/mangata-node:rococo-${{ needs.init.outputs.RELEASE_VERSION }}
+            docker.io/mangatasolutions/mangata-node:kusama-${{ needs.init.outputs.RELEASE_VERSION }}
+      
+      - name: Export docker image
+        run: |
+          docker pull mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_CANDIDATE_VERSION }}
+          docker save mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_CANDIDATE_VERSION }} -o docker-${{ github.ref_name }}.tar
+          zip -r docker-${{ github.ref_name }}.zip docker-${{ github.ref_name }}.tar
+
+      - name: Extract wasms
+        run: |
+          docker run --entrypoint="" --rm mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_CANDIDATE_VERSION }} cat /mangata/mangata_kusama_runtime.compact.compressed.wasm > kusama.wasm
+          docker run --entrypoint="" --rm mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_CANDIDATE_VERSION }} cat /mangata/mangata_rococo_runtime.compact.compressed.wasm > rococo.wasm
+
+      - name: Calculate Blake2 hashes
+        working-directory: scripts/blake2-hash
+        run: |
+          npm install
+          echo -n "kusama-${{ github.ref_name }}.wasm [blake2]: " > hashes.txt
+          node index.js -i ../../kusama.wasm  >> hashes.txt
+          echo -n "kusama-${{ github.ref_name }}.wasm [md5sum]: " >> hashes.txt
+          md5sum ../../kusama.wasm | awk '{ print $1 }' >> hashes.txt
+          echo -n "kusama-${{ github.ref_name }} spec version : " >> hashes.txt
+          grep -oE "spec_version:.*" ../../runtime/mangata-kusama/src/lib.rs | grep -oE "[0-9]+" | sort | tail -1 >> hashes.txt
+          echo -n "rococo-${{ github.ref_name }}.wasm [blake2]: " >> hashes.txt
+          node index.js -i ../../rococo.wasm  >> hashes.txt
+          echo -n "rococo-${{ github.ref_name }}.wasm [md5sum]: " >> hashes.txt
+          md5sum ../../rococo.wasm | awk '{ print $1 }' >> hashes.txt
+          echo -n "rococo-${{ github.ref_name }} spec version : " >> hashes.txt
+          grep -oE "spec_version:.*" ../../runtime/mangata-rococo/src/lib.rs | grep -oE "[0-9]+" | sort | tail -1 >> hashes.txt
+
+
+      - name: Rename artifacts
+        run: |
+          mv kusama.wasm kusama-${{ github.ref_name }}.wasm
+          mv rococo.wasm rococo-${{ github.ref_name }}.wasm
+          mv ./scripts/blake2-hash/hashes.txt hashes-and-versions-${{ github.ref_name }}.txt
+
+      - name: Upload wasms to release page
+        uses: ncipollo/release-action@v1
+        with:
+          tag: v${{ needs.init.outputs.RELEASE_VERSION }}
+          allowUpdates: false
+          generateReleaseNotes: true
+          draft: true
+          artifacts: "kusama-${{ github.ref_name }}.wasm,rococo-${{ github.ref_name }}.wasm,hashes-and-versions-${{ github.ref_name }}.txt,docker-${{ github.ref_name }}.zip"
+
+  deploy-rococo:
+    needs: [init,create-draft-release-and-publish-docker-images]
+    name: Deploy to Rococo
+    uses: ./.github/workflows/reusable-deploy-rococo.yml
+    with:
+      version: release-v0.30.0
+      # TODO: uncomment when we are ready to merge
+      # version: rococo-${{ needs.init.outputs.RELEASE_VERSION }}
+
+  deploy-kusama:
+    needs: [init,deploy-rococo]
+    name: Deploy to Kusama
+    uses: ./.github/workflows/reusable-deploy-kusama.yml
+    with:
+      version: release-v0.30.0
+      # TODO: uncomment when we are ready to merge
+      # version: kusama-${{ needs.init.outputs.RELEASE_VERSION }}
+  
+  publish-release:
+    needs: [init,deploy-kusama]
+    # TODO: change when we are ready to merge
+    if: false
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -54,37 +147,13 @@ jobs:
       - name: Tag and push image
         uses: akhilerm/tag-push-action@v2.0.0
         with:
-          src: docker.io/mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_VERSION }}
-          dst: docker.io/mangatasolutions/mangata-node:rococo-${{ needs.init.outputs.RELEASE_VERSION }}
+          src: docker.io/mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_CANDIDATE_VERSION }}
+          dst: docker.io/mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_VERSION }}
 
-  deploy-rococo:
-    needs: [init,publish-rococo-image]
-    if: false
-    name: Deploy to Rococo
-    uses: ./.github/workflows/reusable-deploy-rococo.yml
-    with:
-      version: rococo-${{ needs.init.outputs.RELEASE_VERSION }}
-  
-  publish-kusama-image:
-    needs: [init,deploy-rococo]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2.1.0
+      - name: Upload wasms to release page
+        uses: ncipollo/release-action@v1
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Tag and push image
-        uses: akhilerm/tag-push-action@v2.0.0
-        with:
-          src: docker.io/mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_VERSION }}
-          dst: docker.io/mangatasolutions/mangata-node:kusama-${{ needs.init.outputs.RELEASE_VERSION }}
-
-  deploy-kusama:
-    needs: [init,publish-kusama-image]
-    name: Deploy to Kusama
-    uses: ./.github/workflows/reusable-deploy-kusama.yml
-    with:
-      version: kusama-${{ needs.init.outputs.RELEASE_VERSION }}
-
+          tag: v${{ needs.init.outputs.RELEASE_VERSION }}
+          allowUpdates: true
+          omitBodyDuringUpdate: true
+          updateOnlyUnreleased: true

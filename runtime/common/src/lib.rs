@@ -161,8 +161,22 @@ pub mod consts {
 	pub const MILLIUNIT: Balance = 1_000_000_000_000_000;
 	pub const MICROUNIT: Balance = 1_000_000_000_000;
 
+
+	/// We allow for 0.5 of a second of compute with a 12 second average block time.
+	/// NOTE: reduced by half comparing to origin impl as we want to fill block only up to 50%
+	/// so there is room for new extrinsics in the next block
+	pub const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
+		WEIGHT_REF_TIME_PER_SECOND.saturating_div(4),
+		polkadot_primitives::v2::MAX_POV_SIZE as u64,
+		);
+
 	/// The existential deposit. Set to 1/10 of the Connected Relay Chain.
 	pub const EXISTENTIAL_DEPOSIT: Balance = MILLIUNIT;
+
+}
+
+pub mod frame_system_consts {
+	use super::*;
 
 	/// We assume that ~5% of the block weight is consumed by `on_initialize` handlers. This is
 	/// used to limit the maximal weight of a single extrinsic.
@@ -172,11 +186,33 @@ pub mod consts {
 	/// `Operational` extrinsics.
 	pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 
-	/// We allow for 0.5 of a second of compute with a 12 second average block time.
-	/// NOTE: reduced by half comparing to origin impl as we want to fill block only up to 50%
-	/// so there is room for new extrinsics in the next block
-	pub const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
-		WEIGHT_REF_TIME_PER_SECOND.saturating_div(4),
-		polkadot_primitives::v2::MAX_POV_SIZE as u64,
-		);
+parameter_types! {
+
+	// This part is copied from Substrate's `bin/node/runtime/src/lib.rs`.
+	//  The `RuntimeBlockLength` and `RuntimeBlockWeights` exist here because the
+	// `DeletionWeightLimit` and `DeletionQueueDepth` depend on those to parameterize
+	// the lazy contract deletion.
+	pub RuntimeBlockLength: BlockLength =
+		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
+	pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
+		.base_block(weights::VerBlockExecutionWeight::get())
+		.for_class(DispatchClass::all(), |weights| {
+			weights.base_extrinsic = weights::VerExtrinsicBaseWeight::get();
+		})
+		.for_class(DispatchClass::Normal, |weights| {
+			weights.max_total = Some(NORMAL_DISPATCH_RATIO * consts::MAXIMUM_BLOCK_WEIGHT);
+		})
+		.for_class(DispatchClass::Operational, |weights| {
+			weights.max_total = Some(consts::MAXIMUM_BLOCK_WEIGHT);
+			// Operational transactions have some extra reserved space, so that they
+			// are included even if block reached `MAXIMUM_BLOCK_WEIGHT`.
+			weights.reserved = Some(
+				consts::MAXIMUM_BLOCK_WEIGHT - NORMAL_DISPATCH_RATIO * consts::MAXIMUM_BLOCK_WEIGHT
+			);
+		})
+		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
+		.build_or_panic();
+	pub const SS58Prefix: u16 = 42;
+}
+
 }

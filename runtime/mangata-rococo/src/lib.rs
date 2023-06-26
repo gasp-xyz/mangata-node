@@ -153,7 +153,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 };
 
 
-use common_runtime::consts::{DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, SLOT_DURATION, MILLIUNIT, UNIT};
+use common_runtime::consts::{DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLIUNIT, UNIT};
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
@@ -165,8 +165,7 @@ parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 }
 
-// Configure FRAME pallets to include in runtime.
-use common_runtime::frame_system_consts;
+use common_runtime::config as cfg;
 
 impl frame_system::Config for Runtime {
 	/// The identifier used to distinguish between accounts.
@@ -208,31 +207,25 @@ impl frame_system::Config for Runtime {
 	/// Weight information for the extrinsics of this pallet.
 	type SystemWeightInfo = weights::frame_system_weights::ModuleWeight<Runtime>;
 	/// Block & extrinsics weights: base values and limits.
-	type BlockWeights = frame_system_consts::RuntimeBlockWeights;
+	type BlockWeights = cfg::frame_system::RuntimeBlockWeights;
 	/// The maximum length of a block (in bytes).
-	type BlockLength = frame_system_consts::RuntimeBlockLength;
+	type BlockLength = cfg::frame_system::RuntimeBlockLength;
 	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
-	type SS58Prefix = frame_system_consts::SS58Prefix;
+	type SS58Prefix = cfg::frame_system::SS58Prefix;
 	/// The action to take on a Runtime Upgrade
 	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
 	/// The maximum number of consumers allowed on a single account.
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-parameter_types! {
-	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
-}
+
 
 impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
 	type Moment = u64;
 	type OnTimestampSet = ();
-	type MinimumPeriod = MinimumPeriod;
+	type MinimumPeriod = cfg::pallet_timestamp::MinimumPeriod;
 	type WeightInfo = weights::pallet_timestamp_weights::ModuleWeight<Runtime>;
-}
-
-parameter_types! {
-	pub const UncleGenerations: u32 = 0;
 }
 
 impl pallet_authorship::Config for Runtime {

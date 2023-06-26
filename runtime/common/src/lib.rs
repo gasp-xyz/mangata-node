@@ -147,9 +147,6 @@ pub mod consts {
 	/// Change this to adjust the block time.
 	pub const MILLISECS_PER_BLOCK: u64 = 12000;
 
-	// NOTE: Currently it is not possible to change the slot duration after the chain has started.
-	//       Attempting to do so will brick block production.
-	pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
 	// Time is measured by number of blocks.
 	pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
@@ -175,7 +172,10 @@ pub mod consts {
 
 }
 
-pub mod frame_system_consts {
+pub mod config {
+	use super::*;
+
+pub mod frame_system{
 	use super::*;
 
 	/// We assume that ~5% of the block weight is consumed by `on_initialize` handlers. This is
@@ -213,6 +213,19 @@ parameter_types! {
 		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
 		.build_or_panic();
 	pub const SS58Prefix: u16 = 42;
+}
+
+
+}
+
+pub mod pallet_timestamp{
+	use super::*;
+
+	// NOTE: Currently it is not possible to change the slot duration after the chain has started.
+	//       Attempting to do so will brick block production.
+	parameter_types! {
+		pub const MinimumPeriod: u64 = consts::MILLISECS_PER_BLOCK / 2;
+	}
 }
 
 }

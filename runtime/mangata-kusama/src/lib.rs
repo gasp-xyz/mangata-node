@@ -315,39 +315,6 @@ impl pallet_proof_of_stake::Config for Runtime {
 	type WeightInfo = weights::pallet_proof_of_stake_weights::ModuleWeight<Runtime>;
 }
 
-pub struct EnableAssetPoolApi;
-impl AssetRegistryApi for EnableAssetPoolApi {
-	fn enable_pool_creation(assets: (TokenId, TokenId)) -> bool {
-		for &asset in [assets.0, assets.1].iter() {
-			let meta_maybe: Option<AssetMetadataOf> =
-				orml_asset_registry::Metadata::<Runtime>::get(asset);
-			if let Some(xyk) = meta_maybe.clone().and_then(|m| m.additional.xyk) {
-				let mut additional = meta_maybe.unwrap().additional;
-				if xyk.operations_disabled {
-					additional.xyk = Some(XykMetadata { operations_disabled: false });
-					match orml_asset_registry::Pallet::<Runtime>::do_update_asset(
-						asset,
-						None,
-						None,
-						None,
-						None,
-						None,
-						Some(additional),
-					) {
-						Ok(_) => {},
-						Err(e) => {
-							log::error!(target: "bootstrap", "cannot modify {} asset: {:?}!", asset, e);
-							return false
-						},
-					}
-				}
-			}
-		}
-		true
-	}
-}
-
-
 impl pallet_bootstrap::BootstrapBenchmarkingConfig for Runtime {}
 
 impl pallet_bootstrap::Config for Runtime {
@@ -362,7 +329,7 @@ impl pallet_bootstrap::Config for Runtime {
 	type RewardsApi = ProofOfStake;
 	type ClearStorageLimit = cfg::pallet_bootstrap::ClearStorageLimit;
 	type WeightInfo = weights::pallet_bootstrap_weights::ModuleWeight<Runtime>;
-	type AssetRegistryApi = EnableAssetPoolApi;
+	type AssetRegistryApi = cfg::pallet_bootstrap::EnableAssetPoolApi<Runtime>;
 }
 
 #[derive(

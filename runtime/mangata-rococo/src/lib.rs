@@ -215,7 +215,7 @@ impl frame_system::Config for Runtime {
 	/// The action to take on a Runtime Upgrade
 	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
 	/// The maximum number of consumers allowed on a single account.
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type MaxConsumers = cfg::frame_system::MaxConsumers;
 }
 
 
@@ -294,40 +294,6 @@ impl<T: frame_system::Config> Get<T::AccountId> for RewardsMigrateAccountProvide
 	}
 }
 
-pub struct AssetRegisterFilter;
-impl Contains<TokenId> for AssetRegisterFilter {
-	fn contains(t: &TokenId) -> bool {
-		let meta: Option<AssetMetadataOf> = orml_asset_registry::Metadata::<Runtime>::get(t);
-		if let Some(xyk) = meta.and_then(|m| m.additional.xyk) {
-			return xyk.operations_disabled
-		}
-		return false
-	}
-}
-
-pub struct AssetMetadataMutation;
-impl AssetMetadataMutationTrait for AssetMetadataMutation {
-	fn set_asset_info(
-		asset: TokenId,
-		name: Vec<u8>,
-		symbol: Vec<u8>,
-		decimals: u32,
-	) -> DispatchResult {
-		let metadata = AssetMetadata {
-			name,
-			symbol,
-			decimals,
-			existential_deposit: Default::default(),
-			additional: Default::default(),
-			location: None,
-		};
-		orml_asset_registry::Pallet::<Runtime>::do_register_asset_without_asset_processor(
-			metadata, asset,
-		)?;
-		Ok(())
-	}
-}
-
 impl pallet_xyk::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type MaintenanceStatusProvider = Maintenance;
@@ -342,8 +308,8 @@ impl pallet_xyk::Config for Runtime {
 	type LiquidityMiningRewards = ProofOfStake;
 	type VestingProvider = Vesting;
 	type DisallowedPools = Bootstrap;
-	type DisabledTokens = AssetRegisterFilter;
-	type AssetMetadataMutation = AssetMetadataMutation;
+	type DisabledTokens = cfg::pallet_xyk::AssetRegisterFilter<Runtime>;
+	type AssetMetadataMutation = cfg::pallet_xyk::AssetMetadataMutation<Runtime>;
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
 }
 

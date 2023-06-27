@@ -134,6 +134,7 @@ pub mod runtime_types {
 	pub type OpaqueBlock = generic::Block<Header, sp_runtime::OpaqueExtrinsic>;
 	pub type OpaqueBlockId = generic::BlockId<OpaqueBlock>;
 
+
 }
 
 
@@ -199,6 +200,8 @@ pub mod frame_system{
 	/// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used by
 	/// `Operational` extrinsics.
 	pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
+
+	pub type MaxConsumers = frame_support::traits::ConstU32<16>;
 
 parameter_types! {
 
@@ -283,13 +286,64 @@ pub mod orml_tokens {
 }
 
 pub mod pallet_xyk {
+	use codec::EncodeLike;
+
 	use super::*;
-parameter_types! {
-	pub const BnbTreasurySubAccDerive: [u8; 4] = *b"bnbt";
-}
+	parameter_types! {
+		pub const BnbTreasurySubAccDerive: [u8; 4] = *b"bnbt";
+	}
 	pub type PoolFeePercentage = frame_support::traits::ConstU128<20>;
 	pub type TreasuryFeePercentage = frame_support::traits::ConstU128<5>;
 	pub type BuyAndBurnFeePercentage = frame_support::traits::ConstU128<5>;
+
+	pub struct TestTokensFilter;
+	impl Contains<TokenId> for TestTokensFilter {
+		fn contains(token_id: &TokenId) -> bool {
+			// we dont want to allow doing anything with dummy assets previously
+			// used for testing
+			*token_id == 2 || *token_id == 3
+		}
+	}
+
+	pub struct AssetRegisterFilter<Runtime>(PhantomData<Runtime>);
+	impl<T> Contains<TokenId> for AssetRegisterFilter<T> where
+		T : ::orml_asset_registry::Config<CustomMetadata=CustomMetadata, AssetId=TokenId, Balance=Balance>,
+		{
+			fn contains(t: &TokenId) -> bool {
+				let meta: Option<_> = ::orml_asset_registry::Metadata::<T>::get(*t);
+				if let Some(xyk) = meta.and_then(|m| m.additional.xyk) {
+					return xyk.operations_disabled
+				}
+				return false
+			}
+		}
+
+pub struct AssetMetadataMutation<Runtime>(PhantomData<Runtime>);
+
+impl<T> AssetMetadataMutationTrait for AssetMetadataMutation<T> where
+		T : ::orml_asset_registry::Config<CustomMetadata=CustomMetadata, AssetId=TokenId, Balance=Balance>,
+{
+	fn set_asset_info(
+		asset: TokenId,
+		name: Vec<u8>,
+		symbol: Vec<u8>,
+		decimals: u32,
+	) -> DispatchResult {
+		let metadata = AssetMetadata {
+			name,
+			symbol,
+			decimals,
+			existential_deposit: Default::default(),
+			additional: Default::default(),
+			location: None,
+		};
+		orml_asset_registry::Pallet::<T>::do_register_asset_without_asset_processor(
+			metadata, asset,
+		)?;
+		Ok(())
+	}
+}
+
 }
 
 pub mod pallet_bootstrap {

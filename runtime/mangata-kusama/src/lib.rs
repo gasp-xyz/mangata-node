@@ -215,7 +215,7 @@ impl frame_system::Config for Runtime {
 	/// The action to take on a Runtime Upgrade
 	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
 	/// The maximum number of consumers allowed on a single account.
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type MaxConsumers = cfg::frame_system::MaxConsumers;
 }
 
 
@@ -283,60 +283,6 @@ impl orml_tokens::Config for Runtime {
 	type ReserveIdentifier = cfg::orml_tokens::ReserveIdentifier;
 }
 
-pub struct TestTokensFilter;
-impl Contains<TokenId> for TestTokensFilter {
-	fn contains(token_id: &TokenId) -> bool {
-		// we dont want to allow doing anything with dummy assets previously
-		// used for testing
-		*token_id == 2 || *token_id == 3
-	}
-}
-
-pub struct RewardsMigrationAccountProvider<T: frame_system::Config>(PhantomData<T>);
-impl<T: frame_system::Config> Get<T::AccountId> for RewardsMigrationAccountProvider<T> {
-	fn get() -> T::AccountId {
-		let account32: sp_runtime::AccountId32 =
-			hex_literal::hex!["0e33df23356eb2e9e3baf0e8a5faae15bc70a6a5cce88f651a9faf6e8e937324"]
-				.into();
-		let mut init_account32 = sp_runtime::AccountId32::as_ref(&account32);
-		let init_account = T::AccountId::decode(&mut init_account32).unwrap();
-		init_account
-	}
-}
-
-pub struct AssetRegisterFilter;
-impl Contains<TokenId> for AssetRegisterFilter {
-	fn contains(t: &TokenId) -> bool {
-		let meta: Option<AssetMetadataOf> = orml_asset_registry::Metadata::<Runtime>::get(t);
-		if let Some(xyk) = meta.and_then(|m| m.additional.xyk) {
-			return xyk.operations_disabled
-		}
-		return false
-	}
-}
-
-pub struct AssetMetadataMutation;
-impl AssetMetadataMutationTrait for AssetMetadataMutation {
-	fn set_asset_info(
-		asset: TokenId,
-		name: Vec<u8>,
-		symbol: Vec<u8>,
-		decimals: u32,
-	) -> DispatchResult {
-		let metadata = AssetMetadata {
-			name,
-			symbol,
-			decimals,
-			existential_deposit: Default::default(),
-			additional: Default::default(),
-			location: None,
-		};
-		orml_asset_registry::Pallet::<Runtime>::do_register_asset_without_asset_processor(
-			metadata, asset,
-		)?;
-		Ok(())
-	}
-}
 
 
 impl pallet_xyk::Config for Runtime {
@@ -353,8 +299,8 @@ impl pallet_xyk::Config for Runtime {
 	type LiquidityMiningRewards = ProofOfStake;
 	type VestingProvider = Vesting;
 	type DisallowedPools = Bootstrap;
-	type DisabledTokens = (TestTokensFilter, AssetRegisterFilter);
-	type AssetMetadataMutation = AssetMetadataMutation;
+	type DisabledTokens = (cfg::pallet_xyk::TestTokensFilter, cfg::pallet_xyk::AssetRegisterFilter<Runtime>);
+	type AssetMetadataMutation = cfg::pallet_xyk::AssetMetadataMutation<Runtime>;
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
 }
 

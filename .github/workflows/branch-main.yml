@@ -1,23 +1,23 @@
 name: Production Release Workflow
 
 on:
-  push:
-    branches: [ci/update-release-workflow-MGX-325]
-  # TODO: uncomment when we are ready to merge
-  # pull_request:
-  #   branches: [main]
-  #   types: [closed]
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Release version in the format `vX.X.X`'
+        required: true
+  pull_request:
+    branches: [main]
+    types: [closed]
 
 # https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
 concurrency: 
   group: ${{ github.workflow }}
 
-
 jobs:
   init:
     name: Global init
-    # TODO: uncomment when we are ready to merge
-    # if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'rc/')
+    if: ( github.event.pull_request.merged == true && startsWith(github.head_ref, 'rc/') || github.event_name == 'workflow_dispatch' )
     runs-on: ubuntu-latest
     outputs:
       RELEASE_VERSION: ${{ steps.set_vars.outputs.RELEASE_VERSION }}
@@ -26,11 +26,8 @@ jobs:
       - name: Set release version
         id: set_vars
         run: |
-          # TODO: uncomment when we are ready to merge
-          # echo "RELEASE_VERSION=${GITHUB_HEAD_REF#rc/}" >> $GITHUB_OUTPUT
-          # echo "RELEASE_CANDIDATE_VERSION=${GITHUB_HEAD_REF#rc/}-rc" >> $GITHUB_OUTPUT
-          echo "RELEASE_VERSION=0.0.0" >> $GITHUB_OUTPUT
-          echo "RELEASE_CANDIDATE_VERSION=0.0.0-rc" >> $GITHUB_OUTPUT
+          echo "RELEASE_VERSION=v${GITHUB_HEAD_REF#rc/}" >> $GITHUB_OUTPUT
+          echo "RELEASE_CANDIDATE_VERSION=v${GITHUB_HEAD_REF#rc/}-rc" >> $GITHUB_OUTPUT
   
   build-and-test:
     needs: [init]
@@ -39,23 +36,20 @@ jobs:
     secrets: inherit
     with:
       version: ${{ needs.init.outputs.RELEASE_CANDIDATE_VERSION }}
-      # TODO: uncomment when we are ready to merge
-      # branch: main
-      branch: test
+      branch: main
   
-  # TODO: uncomment when we are ready to merge
-  # run-e2e-tests:
-  #   name: Run e2e tests
-  #   needs: [init,build-and-test]
-  #   uses: ./.github/workflows/reusable-e2e-tests.yml
-  #   secrets: inherit
-  #   with:
-  #     globalVersion: ${{ needs.init.outputs.RELEASE_CANDIDATE_VERSION }}
-  #     parachainDocker: docker.io/mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_CANDIDATE_VERSION }}
+  run-e2e-tests:
+    name: Run e2e tests
+    needs: [init,build-and-test]
+    uses: ./.github/workflows/reusable-e2e-tests.yml
+    secrets: inherit
+    with:
+      globalVersion: ${{ needs.init.outputs.RELEASE_CANDIDATE_VERSION }}
+      parachainDocker: docker.io/mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_CANDIDATE_VERSION }}
 
   create-draft-release-and-publish-docker-images:
     name: Create Draft Release and Publish Docker Images
-    needs: [init,build-and-test]
+    needs: [init,run-e2e-tests,build-and-test]
     environment: kusama
     runs-on: ubuntu-latest
     permissions:
@@ -119,7 +113,7 @@ jobs:
       - name: Upload wasms to release page
         uses: ncipollo/release-action@v1
         with:
-          tag: v${{ needs.init.outputs.RELEASE_VERSION }}
+          tag: ${{ needs.init.outputs.RELEASE_VERSION }}
           allowUpdates: false
           generateReleaseNotes: true
           draft: true
@@ -131,9 +125,7 @@ jobs:
     uses: ./.github/workflows/reusable-deploy-rococo.yml
     secrets: inherit
     with:
-      version: release-v0.30.0
-      # TODO: uncomment when we are ready to merge
-      # version: rococo-${{ needs.init.outputs.RELEASE_VERSION }}
+      version: rococo-${{ needs.init.outputs.RELEASE_VERSION }}
 
   deploy-kusama:
     needs: [init,deploy-rococo]
@@ -141,15 +133,11 @@ jobs:
     uses: ./.github/workflows/reusable-deploy-kusama.yml
     secrets: inherit
     with:
-      version: release-v0.30.0
-      # TODO: uncomment when we are ready to merge
-      # version: kusama-${{ needs.init.outputs.RELEASE_VERSION }}
+      version: kusama-${{ needs.init.outputs.RELEASE_VERSION }}
   
   publish-release:
     name: Publish release
     needs: [init,deploy-kusama,create-draft-release-and-publish-docker-images]
-    # TODO: change when we are ready to merge
-    if: false
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -169,7 +157,7 @@ jobs:
       - name: Upload wasms to release page
         uses: ncipollo/release-action@v1
         with:
-          tag: v${{ needs.init.outputs.RELEASE_VERSION }}
+          tag: ${{ needs.init.outputs.RELEASE_VERSION }}
           allowUpdates: true
           omitBodyDuringUpdate: true
           updateOnlyUnreleased: true

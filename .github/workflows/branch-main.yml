@@ -129,6 +129,7 @@ jobs:
     needs: [init,create-draft-release-and-publish-docker-images]
     name: Deploy to Rococo
     uses: ./.github/workflows/reusable-deploy-rococo.yml
+    secrets: inherit
     with:
       version: release-v0.30.0
       # TODO: uncomment when we are ready to merge
@@ -138,6 +139,7 @@ jobs:
     needs: [init,deploy-rococo]
     name: Deploy to Kusama
     uses: ./.github/workflows/reusable-deploy-kusama.yml
+    secrets: inherit
     with:
       version: release-v0.30.0
       # TODO: uncomment when we are ready to merge

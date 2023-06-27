@@ -90,7 +90,6 @@ pub const KAR_TOKEN_ID: TokenId = 6;
 pub const TUR_TOKEN_ID: TokenId = 7;
 
 pub mod constants;
-mod migration;
 mod weights;
 pub mod xcm_config;
 
@@ -129,8 +128,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	(migration::XykRefactorMigration, migration::AssetRegistryMigration),
-	// ()
+	()
 >;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
@@ -162,10 +160,10 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
 	impl_name: create_runtime_str!("mangata-parachain"),
 	authoring_version: 15,
-	spec_version: 003000,
+	spec_version: 003001,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 003000,
+	transaction_version: 003001,
 	state_version: 0,
 };
 

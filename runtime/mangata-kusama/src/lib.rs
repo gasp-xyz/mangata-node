@@ -368,19 +368,18 @@ impl pallet_utility_mangata::Config for Runtime {
 	type WeightInfo = weights::pallet_utility_mangata_weights::ModuleWeight<Runtime>;
 }
 
-type ORMLCurrencyAdapterNegativeImbalance =
-	<orml_tokens::MultiTokenCurrencyAdapter<Runtime> as MultiTokenCurrency<
-		AccountId,
-	>>::NegativeImbalance;
+type ORMLCurrencyAdapterNegativeImbalance<Runtime> =
+	<orml_tokens::MultiTokenCurrencyAdapter<Runtime> as MultiTokenCurrency< <Runtime as frame_system::Config>::AccountId, >>::NegativeImbalance;
 
 pub trait OnMultiTokenUnbalanced<
-	Imbalance: frame_support::traits::TryDrop + MultiTokenImbalanceWithZeroTrait<TokenId>,
+	TokenIdType,
+	Imbalance: frame_support::traits::TryDrop + MultiTokenImbalanceWithZeroTrait<TokenIdType>,
 >
 {
 	/// Handler for some imbalances. The different imbalances might have different origins or
 	/// meanings, dependent on the context. Will default to simply calling on_unbalanced for all
 	/// of them. Infallible.
-	fn on_unbalanceds<B>(token_id: TokenId, amounts: impl Iterator<Item = Imbalance>)
+	fn on_unbalanceds<B>(token_id: TokenIdType, amounts: impl Iterator<Item = Imbalance>)
 	where
 		Imbalance: frame_support::traits::Imbalance<B>,
 	{
@@ -399,12 +398,12 @@ pub trait OnMultiTokenUnbalanced<
 	}
 }
 
-pub struct ToAuthor;
-impl OnMultiTokenUnbalanced<ORMLCurrencyAdapterNegativeImbalance> for ToAuthor {
-	fn on_nonzero_unbalanced(amount: ORMLCurrencyAdapterNegativeImbalance) {
-		if let Some(author) = Authorship::author() {
-			<orml_tokens::MultiTokenCurrencyAdapter<Runtime> as MultiTokenCurrency<
-				AccountId,
+pub struct ToAuthor<Runtime>(PhantomData<Runtime>);
+impl<T: orml_tokens::Config + pallet_authorship::Config> OnMultiTokenUnbalanced<T::CurrencyId, ORMLCurrencyAdapterNegativeImbalance<T>> for ToAuthor<T> {
+	fn on_nonzero_unbalanced(amount: ORMLCurrencyAdapterNegativeImbalance<T>) {
+		if let Some(author) = pallet_authorship::Pallet::<T>::author() {
+			<orml_tokens::MultiTokenCurrencyAdapter<T> as MultiTokenCurrency<
+				<T as frame_system::Config>::AccountId,
 			>>::resolve_creating(amount.0, &author, amount);
 		}
 	}
@@ -412,7 +411,7 @@ impl OnMultiTokenUnbalanced<ORMLCurrencyAdapterNegativeImbalance> for ToAuthor {
 
 #[derive(Encode, Decode, TypeInfo)]
 pub enum LiquidityInfoEnum<C: MultiTokenCurrency<T::AccountId>, T: frame_system::Config> {
-	Imbalance((TokenId, NegativeImbalanceOf<C, T>)),
+	Imbalance((C::CurrencyId, NegativeImbalanceOf<C, T>)),
 	FeeLock,
 }
 
@@ -432,8 +431,8 @@ where
 		<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
 		Opposite = C::PositiveImbalance,
 	>,
-	OU: OnMultiTokenUnbalanced<NegativeImbalanceOf<C, T>>,
-	NegativeImbalanceOf<C, T>: MultiTokenImbalanceWithZeroTrait<TokenId>,
+	OU: OnMultiTokenUnbalanced<C::CurrencyId ,NegativeImbalanceOf<C, T>>,
+	NegativeImbalanceOf<C, T>: MultiTokenImbalanceWithZeroTrait<C::CurrencyId>,
 	OCA: OnChargeTransaction<
 		T,
 		LiquidityInfo = Option<LiquidityInfoEnum<C, T>>,
@@ -623,7 +622,7 @@ where
 		<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
 		Opposite = C::PositiveImbalance,
 	>,
-	OU: OnMultiTokenUnbalanced<NegativeImbalanceOf<C, T>>,
+	OU: OnMultiTokenUnbalanced<C::CurrencyId, NegativeImbalanceOf<C, T>>,
 	NegativeImbalanceOf<C, T>: MultiTokenImbalanceWithZeroTrait<TokenId>,
 	OCA: OnChargeTransaction<
 		T,
@@ -849,16 +848,17 @@ where
 		<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
 		Opposite = C::PositiveImbalance,
 	>,
-	OU: OnMultiTokenUnbalanced<NegativeImbalanceOf<C, T>>,
+	OU: OnMultiTokenUnbalanced<C::CurrencyId, NegativeImbalanceOf<C, T>>,
 	NegativeImbalanceOf<C, T>: MultiTokenImbalanceWithZeroTrait<TokenId>,
 	<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance:
 		scale_info::TypeInfo,
-	T1: Get<TokenId>,
-	T2: Get<TokenId>,
-	T3: Get<TokenId>,
-	SF2: Get<u128>,
-	SF3: Get<u128>,
+	T1: Get<C::CurrencyId>,
+	T2: Get<C::CurrencyId>,
+	T3: Get<C::CurrencyId>,
+	SF2: Get<C::Balance>,
+	SF3: Get<C::Balance>,
 	Balance: From<<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance>,
+	Balance: From<TokenId>,
 	sp_runtime::AccountId32: From<<T as frame_system::Config>::AccountId>,
 {
 	type LiquidityInfo = Option<LiquidityInfoEnum<C, T>>;
@@ -885,7 +885,7 @@ where
 		};
 
 		match C::withdraw(
-			T1::get().into(),
+			T1::get(),
 			who,
 			fee,
 			withdraw_reason,
@@ -894,17 +894,17 @@ where
 			Ok(imbalance) => Ok(Some(LiquidityInfoEnum::Imbalance((T1::get(), imbalance)))),
 			// TODO make sure atleast 1 planck KSM is charged
 			Err(_) => match C::withdraw(
-				T2::get().into(),
+				T2::get(),
 				who,
-				fee / SF2::get().into(),
+				fee / SF2::get(),
 				withdraw_reason,
 				ExistenceRequirement::KeepAlive,
 			) {
 				Ok(imbalance) => Ok(Some(LiquidityInfoEnum::Imbalance((T2::get(), imbalance)))),
 				Err(_) => match C::withdraw(
-					T3::get().into(),
+					T3::get(),
 					who,
-					fee / SF3::get().into(),
+					fee / SF3::get(),
 					withdraw_reason,
 					ExistenceRequirement::KeepAlive,
 				) {
@@ -930,9 +930,9 @@ where
 	) -> Result<(), TransactionValidityError> {
 		if let Some(LiquidityInfoEnum::Imbalance((token_id, paid))) = already_withdrawn {
 			let (corrected_fee, tip) = if token_id == T3::get() {
-				(corrected_fee / SF3::get().into(), tip / SF3::get().into())
+				(corrected_fee / SF3::get(), tip / SF3::get())
 			} else if token_id == T2::get() {
-				(corrected_fee / SF2::get().into(), tip / SF2::get().into())
+				(corrected_fee / SF2::get(), tip / SF2::get())
 			} else {
 				(corrected_fee, tip)
 			};
@@ -941,8 +941,8 @@ where
 			// refund to the the account that paid the fees. If this fails, the
 			// account might have dropped below the existential balance. In
 			// that case we don't refund anything.
-			let refund_imbalance = C::deposit_into_existing(token_id.into(), &who, refund_amount)
-				.unwrap_or_else(|_| C::PositiveImbalance::from_zero(token_id.into()));
+			let refund_imbalance = C::deposit_into_existing(token_id, &who, refund_amount)
+				.unwrap_or_else(|_| C::PositiveImbalance::from_zero(token_id));
 			// merge the imbalance caused by paying the fees and refunding parts of it again.
 			let adjusted_paid = paid
 				.offset(refund_imbalance)
@@ -951,21 +951,25 @@ where
 			// Call someone else to handle the imbalance (fee and tip separately)
 			let (tip_imb, fee) = adjusted_paid.split(tip);
 			OU::on_unbalanceds(token_id, Some(fee).into_iter().chain(Some(tip_imb)));
-			TransactionPayment::deposit_event(
-				pallet_transaction_payment_mangata::Event::<Runtime>::TransactionFeePaid {
-					who: sp_runtime::AccountId32::from(who.clone()),
-					actual_fee: corrected_fee.into(),
-					tip: Balance::from(tip),
-				},
-			);
+			// pallet_transaction_payment_mangata::Pallet::<T>::deposit_event(
+				pallet_transaction_payment_mangata::Event::<T>::TransactionFeePaid {
+        who: who.clone(),
+        actual_fee: todo!(),
+        tip: tip.into().into(),
+					// who: sp_runtime::AccountId32::from(who.clone()),
+					// actual_fee: corrected_fee.into(),
+					// // tip: Balance::from(tip),
+					// tip,
+				};
+			// );
 		}
 		Ok(())
 	}
 }
 
-pub type OnChargeTransactionHandler = ThreeCurrencyOnChargeAdapter<
-	orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
-	ToAuthor,
+pub type OnChargeTransactionHandler<T> = ThreeCurrencyOnChargeAdapter<
+	orml_tokens::MultiTokenCurrencyAdapter<T>,
+	ToAuthor<T>,
 	tokens::MgxTokenId,
 	tokens::RelayTokenId,
 	tokens::TurTokenId,
@@ -975,12 +979,13 @@ pub type OnChargeTransactionHandler = ThreeCurrencyOnChargeAdapter<
 
 impl pallet_transaction_payment_mangata::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type OnChargeTransaction = OnChargeHandler<
-		orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
-		ToAuthor,
-		OnChargeTransactionHandler,
-		FeeLock,
-	>;
+	// type OnChargeTransaction = OnChargeHandler<
+	// 	orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
+	// 	ToAuthor<Runtime>,
+	// 	OnChargeTransactionHandler<Runtime>,
+	// 	FeeLock,
+	// >;
+	type OnChargeTransaction = OnChargeTransactionHandler<Runtime>;
 	type LengthToFee = cfg::pallet_transaction_payment_mangata::LengthToFee;
 	type WeightToFee = WeightToFee;
 	type FeeMultiplierUpdate = cfg::pallet_transaction_payment_mangata::FeeMultiplierUpdate;
@@ -1769,16 +1774,16 @@ impl_runtime_apis! {
 					FeeHelpers::<
 								Runtime,
 								orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
-								ToAuthor,
-								OnChargeTransactionHandler,
+								ToAuthor<Runtime>,
+								OnChargeTransactionHandler<Runtime>,
 								FeeLock,
 								>::is_high_value_swap(&feelock, *input, input_amount)
 									||
 					FeeHelpers::<
 								Runtime,
 								orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
-								ToAuthor,
-								OnChargeTransactionHandler,
+								ToAuthor<Runtime>,
+								OnChargeTransactionHandler<Runtime>,
 								FeeLock,
 								>::is_high_value_swap(&feelock, *output, output_amount)
 								)
@@ -1808,16 +1813,16 @@ impl_runtime_apis! {
 					FeeHelpers::<
 								Runtime,
 								orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
-								ToAuthor,
-								OnChargeTransactionHandler,
+								ToAuthor<Runtime>,
+								OnChargeTransactionHandler<Runtime>,
 								FeeLock,
 								>::is_high_value_swap(&feelock, *input, input_amount)
 									||
 					FeeHelpers::<
 								Runtime,
 								orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
-								ToAuthor,
-								OnChargeTransactionHandler,
+								ToAuthor<Runtime>,
+								OnChargeTransactionHandler<Runtime>,
 								FeeLock,
 								>::is_high_value_swap(&feelock, *output, output_amount)
 								)

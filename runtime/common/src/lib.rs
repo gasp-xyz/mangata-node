@@ -349,45 +349,59 @@ impl<T> AssetMetadataMutationTrait for AssetMetadataMutation<T> where
 pub mod pallet_bootstrap {
 	use super::*;
 
-parameter_types! {
-	pub const BootstrapUpdateBuffer: BlockNumber = 300;
-	pub const DefaultBootstrapPromotedPoolWeight: u8 = 0u8;
-	pub const ClearStorageLimit: u32 = 100u32;
-}
+	parameter_types! {
+		pub const BootstrapUpdateBuffer: BlockNumber = 300;
+		pub const DefaultBootstrapPromotedPoolWeight: u8 = 0u8;
+		pub const ClearStorageLimit: u32 = 100u32;
+	}
 
-pub struct EnableAssetPoolApi<Runtime>(PhantomData<Runtime>);
-impl<T> AssetRegistryApi for EnableAssetPoolApi<T> where
-T : ::orml_asset_registry::Config<CustomMetadata=CustomMetadata, AssetId=TokenId, Balance=Balance>,
-{
-	fn enable_pool_creation(assets: (TokenId, TokenId)) -> bool {
-		for &asset in [assets.0, assets.1].iter() {
-			let meta_maybe: Option<_> =
-				orml_asset_registry::Metadata::<T>::get(asset);
-			if let Some(xyk) = meta_maybe.clone().and_then(|m| m.additional.xyk) {
-				let mut additional = meta_maybe.unwrap().additional;
-				if xyk.operations_disabled {
-					additional.xyk = Some(XykMetadata { operations_disabled: false });
-					match orml_asset_registry::Pallet::<T>::do_update_asset(
-						asset,
-						None,
-						None,
-						None,
-						None,
-						None,
-						Some(additional),
-					) {
-						Ok(_) => {},
-						Err(e) => {
-							log::error!(target: "bootstrap", "cannot modify {} asset: {:?}!", asset, e);
-							return false
-						},
+	pub struct EnableAssetPoolApi<Runtime>(PhantomData<Runtime>);
+	impl<T> AssetRegistryApi for EnableAssetPoolApi<T> where
+		T : ::orml_asset_registry::Config<CustomMetadata=CustomMetadata, AssetId=TokenId, Balance=Balance>,
+	{
+		fn enable_pool_creation(assets: (TokenId, TokenId)) -> bool {
+			for &asset in [assets.0, assets.1].iter() {
+				let meta_maybe: Option<_> =
+					orml_asset_registry::Metadata::<T>::get(asset);
+				if let Some(xyk) = meta_maybe.clone().and_then(|m| m.additional.xyk) {
+					let mut additional = meta_maybe.unwrap().additional;
+					if xyk.operations_disabled {
+						additional.xyk = Some(XykMetadata { operations_disabled: false });
+						match orml_asset_registry::Pallet::<T>::do_update_asset(
+							asset,
+							None,
+							None,
+							None,
+							None,
+							None,
+							Some(additional),
+							) {
+							Ok(_) => {},
+							Err(e) => {
+								log::error!(target: "bootstrap", "cannot modify {} asset: {:?}!", asset, e);
+								return false
+							},
+						}
 					}
 				}
 			}
+			true
 		}
-		true
 	}
-}
 
 }
+
+pub mod pallet_transaction_payment_mangata{
+	use super::*;
+
+	parameter_types! {
+		pub const OperationalFeeMultiplier: u8 = 5;
+		pub const TransactionByteFee: Balance = 5 * consts::MILLIUNIT;
+	pub ConstFeeMultiplierValue: Multiplier = Multiplier::saturating_from_rational(1, 1);
+	}
+
+	pub type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
+	pub type FeeMultiplierUpdate = ConstFeeMultiplier<ConstFeeMultiplierValue>;
+}
+
 }

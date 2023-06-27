@@ -830,10 +830,6 @@ where
 	}
 }
 
-parameter_types! {
-	pub const TransactionByteFee: Balance = 5 * MILLIUNIT;
-	pub const OperationalFeeMultiplier: u8 = 5;
-}
 
 #[derive(Encode, Decode, Clone, TypeInfo)]
 pub struct ThreeCurrencyOnChargeAdapter<C, OU, T1, T2, T3, SF2, SF3>(
@@ -977,10 +973,6 @@ where
 	}
 }
 
-parameter_types! {
-	pub ConstFeeMultiplierValue: Multiplier = Multiplier::saturating_from_rational(1, 1);
-}
-
 pub type OnChargeTransactionHandler = ThreeCurrencyOnChargeAdapter<
 	orml_tokens::MultiTokenCurrencyAdapter<Runtime>,
 	ToAuthor,
@@ -999,10 +991,10 @@ impl pallet_transaction_payment_mangata::Config for Runtime {
 		OnChargeTransactionHandler,
 		FeeLock,
 	>;
-	type OperationalFeeMultiplier = OperationalFeeMultiplier;
+	type OperationalFeeMultiplier = cfg::pallet_transaction_payment_mangata::OperationalFeeMultiplier;
 	type WeightToFee = WeightToFee;
-	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
-	type FeeMultiplierUpdate = ConstFeeMultiplier<ConstFeeMultiplierValue>;
+	type LengthToFee = cfg::pallet_transaction_payment_mangata::LengthToFee;
+	type FeeMultiplierUpdate = cfg::pallet_transaction_payment_mangata::FeeMultiplierUpdate;
 }
 
 parameter_types! {

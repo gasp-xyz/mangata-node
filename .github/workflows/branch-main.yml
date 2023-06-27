@@ -74,8 +74,8 @@ jobs:
         id: export_docker_image
         run: |
           docker pull mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_CANDIDATE_VERSION }}
-          docker save mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_CANDIDATE_VERSION }} -o docker-${{ github.ref_name }}.tar
-          zip -r docker-${{ github.ref_name }}.zip docker-${{ github.ref_name }}.tar
+          docker save mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_CANDIDATE_VERSION }} -o docker-${{ needs.init.outputs.RELEASE_VERSION }}.tar
+          zip -r docker-${{ needs.init.outputs.RELEASE_VERSION }}.zip docker-${{ needs.init.outputs.RELEASE_VERSION }}.tar
           # Save docker image SHA256 digest as an output variable
           echo "DOCKER_IMAGE_DIGEST=$(docker inspect mangatasolutions/mangata-node:${{ needs.init.outputs.RELEASE_CANDIDATE_VERSION }} --format='{{index .RepoDigests 0}}')" >> $GITHUB_OUTPUT
       
@@ -96,25 +96,25 @@ jobs:
         working-directory: scripts/blake2-hash
         run: |
           npm install
-          echo -n "kusama-${{ github.ref_name }}.wasm [blake2]: " > hashes.txt
+          echo -n "kusama-${{ needs.init.outputs.RELEASE_VERSION }}.wasm [blake2]: " > hashes.txt
           node index.js -i ../../kusama.wasm  >> hashes.txt
-          echo -n "kusama-${{ github.ref_name }}.wasm [md5sum]: " >> hashes.txt
+          echo -n "kusama-${{ needs.init.outputs.RELEASE_VERSION }}.wasm [md5sum]: " >> hashes.txt
           md5sum ../../kusama.wasm | awk '{ print $1 }' >> hashes.txt
-          echo -n "kusama-${{ github.ref_name }} spec version : " >> hashes.txt
+          echo -n "kusama-${{ needs.init.outputs.RELEASE_VERSION }} spec version : " >> hashes.txt
           grep -oE "spec_version:.*" ../../runtime/mangata-kusama/src/lib.rs | grep -oE "[0-9]+" | sort | tail -1 >> hashes.txt
-          echo -n "rococo-${{ github.ref_name }}.wasm [blake2]: " >> hashes.txt
+          echo -n "rococo-${{ needs.init.outputs.RELEASE_VERSION }}.wasm [blake2]: " >> hashes.txt
           node index.js -i ../../rococo.wasm  >> hashes.txt
-          echo -n "rococo-${{ github.ref_name }}.wasm [md5sum]: " >> hashes.txt
+          echo -n "rococo-${{ needs.init.outputs.RELEASE_VERSION }}.wasm [md5sum]: " >> hashes.txt
           md5sum ../../rococo.wasm | awk '{ print $1 }' >> hashes.txt
-          echo -n "rococo-${{ github.ref_name }} spec version : " >> hashes.txt
+          echo -n "rococo-${{ needs.init.outputs.RELEASE_VERSION }} spec version : " >> hashes.txt
           grep -oE "spec_version:.*" ../../runtime/mangata-rococo/src/lib.rs | grep -oE "[0-9]+" | sort | tail -1 >> hashes.txt
 
 
       - name: Rename artifacts
         run: |
-          mv kusama.wasm kusama-${{ github.ref_name }}.wasm
-          mv rococo.wasm rococo-${{ github.ref_name }}.wasm
-          mv ./scripts/blake2-hash/hashes.txt hashes-and-versions-${{ github.ref_name }}.txt
+          mv kusama.wasm kusama-${{ needs.init.outputs.RELEASE_VERSION }}.wasm
+          mv rococo.wasm rococo-${{ needs.init.outputs.RELEASE_VERSION }}.wasm
+          mv ./scripts/blake2-hash/hashes.txt hashes-and-versions-${{ needs.init.outputs.RELEASE_VERSION }}.txt
 
       - name: Upload wasms to release page
         uses: ncipollo/release-action@v1
@@ -123,7 +123,7 @@ jobs:
           allowUpdates: false
           generateReleaseNotes: true
           draft: true
-          artifacts: "kusama-${{ github.ref_name }}.wasm,rococo-${{ github.ref_name }}.wasm,hashes-and-versions-${{ github.ref_name }}.txt,docker-${{ github.ref_name }}.zip"
+          artifacts: "kusama-${{ needs.init.outputs.RELEASE_VERSION }}.wasm,rococo-${{ needs.init.outputs.RELEASE_VERSION }}.wasm,hashes-and-versions-${{ needs.init.outputs.RELEASE_VERSION }}.txt,docker-${{ needs.init.outputs.RELEASE_VERSION }}.zip"
 
   deploy-rococo:
     needs: [init,create-draft-release-and-publish-docker-images]

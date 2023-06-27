@@ -6,12 +6,11 @@ name: Develop branch workflow
 ## skip-publish: skip publish
 
 on:
-  # TODO: uncomment when we are ready to merge
-  # pull_request:
-  #   types: [labeled, opened, synchronize, unlabeled, closed]
-  #   branches:
-  #     - develop
-  #     - "release/**"
+  pull_request:
+    types: [labeled, opened, synchronize, unlabeled, closed]
+    branches:
+      - develop
+      - "release/**"
   push:
     branches: [develop]
 

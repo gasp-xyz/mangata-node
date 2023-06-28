@@ -24,8 +24,9 @@ parachains:
       - alice
       - bob
     sudo: alice
-    skipCollatorSelection: true
-    skipBalances: true
+    disablePallets:
+      - balances
+      - collatorSelection
   id: 2110
   parachain: true
   flags:

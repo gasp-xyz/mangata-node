@@ -1,0 +1,24 @@
+{
+  "name": "mangata-launch",
+  "version": "1.0.1",
+  "main": "",
+  "license": "GPL-3.0",
+  "scripts": {
+    "rm": "rm -Rf output",
+    "gen": "yarn rm && parachain-launch generate",
+    "gen-karura": "yarn rm -Rf output && parachain-launch generate --config=karura-mangata.yml",
+    "gen-kusama-fast": "yarn rm -Rf output && parachain-launch generate --config=kusama-fast.yml",
+    "up": "docker-compose -f output/docker-compose.yml up -d --build",
+    "logs-para": "docker-compose -f output/docker-compose.yml logs parachain-2110-1 parachain-2110-0",
+    "logs-para0": "docker-compose -f output/docker-compose.yml logs -f parachain-2110-0",
+    "logs-para1": "docker-compose -f output/docker-compose.yml logs -f parachain-2110-1",
+    "logs-relay": "docker-compose -f output/docker-compose.yml logs -f relaychain-alice relaychain-bob",
+    "logs-relay-alice": "docker-compose -f output/docker-compose.yml logs -f relaychain-alice",
+    "logs-relay-bob": "docker-compose -f output/docker-compose.yml logs -f relaychain-bob",
+    "stop": "docker-compose -f output/docker-compose.yml stop",
+    "down": "docker-compose -f output/docker-compose.yml down -v"
+  },
+  "dependencies": {
+    "parachain-launch": "mangata-finance/parachain-launch#mangata"
+  }
+}

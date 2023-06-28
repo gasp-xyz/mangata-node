@@ -13,6 +13,8 @@ relaychain:
       preopenHrmpChannels: [
         [ 2114, 2110, 1000, 102400 ], # oak -> mangata
         [ 2110, 2114, 1000, 102400 ], # mangata -> oak
+        [ 2000, 2114, 1000, 102400 ], # karura -> oak
+        [ 2114, 2000, 1000, 102400 ]  # oak -> karura
       ]
 
   env:
@@ -22,8 +24,10 @@ relaychain:
     - --wasm-execution=compiled
     - --execution=wasm
   nodes:
+    #   need 3 relays for 3 paras, otherwise last para not building blocks
     - name: alice
     - name: bob
+    - name: charlie
 
 parachains:
   - image: mangatasolutions/mangata-node:dev
@@ -33,8 +37,9 @@ parachains:
         - alice
         - bob
       sudo: alice
-    skipCollatorSelection: true
-    skipBalances: true
+      disablePallets:
+        - balances
+        - collatorSelection
     id: 2110
     parachain: true
     flags:
@@ -54,14 +59,21 @@ parachains:
       - flags:
           - --bob
 
-  - image: oaknetwork/neumann:1.7.0
+  #  local build with:
+  #  comment docker/turing/build.sh:17 to skip adding a versioned tag to image
+  #  cargo build --release --features turing-node --features dev-queue
+  #  cp target/release/oak-collator ./
+  #  ./docker/turing/build.sh
+  - image: oaknetwork/turing:latest
+    #  - image: oaknetwork/turing:1.7.0
     chain:
       base: dev
       collators:
         - alice
         - bob
       sudo: alice
-    skipCollatorSelection: true
+      disablePallets:
+        - collatorSelection
     id: 2114
     parachain: true
     flags:
@@ -75,6 +87,32 @@ parachains:
     env:
       RUST_LOG: x_tokens=trace,xcm=trace,xcmp_queue=trace,runtime=trace
     volumePath: /data
+    nodes:
+      - flags:
+          - --alice
+      - flags:
+          - --bob
+
+  - image: acala/karura-node:2.8.0
+    chain:
+      base: karura-dev
+      collators:
+        - alice
+        - bob
+      sudo: alice
+    id: 2000
+    parachain: true
+    flags:
+      - --rpc-methods=unsafe
+      - --force-authoring
+      - --wasm-execution=compiled
+      - --execution=wasm
+    relaychainFlags:
+      - --wasm-execution=compiled
+      - --execution=wasm
+    env:
+      RUST_LOG: x_tokens=trace,xcm=trace,xcmp_queue=trace,runtime=trace
+    volumePath: /acala/data
     nodes:
       - flags:
           - --alice

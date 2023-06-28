@@ -16,7 +16,7 @@ relaychain:
           ]
 
     env:
-        RUST_LOG: parachain::candidate-backing=trace,parachain::candidate-selection=trace,parachain::pvf=trace,parachain::collator-protocol=trace,parachain::provisioner=trace
+        RUST_LOG: parachain::candidate-backing=trace,parachain::candidate-selection=trace,parachain::pvf=trace,parachain::collator-protocol=trace,parachain::provisioner=trace 
     flags:
         - --rpc-methods=unsafe
         - --wasm-execution=compiled
@@ -33,8 +33,9 @@ parachains:
         - alice
         - bob
       sudo: alice
-    skipCollatorSelection: true
-    skipBalances: true
+      disablePallets:
+        - balances
+        - collatorSelection
     id: 2110
     parachain: true
     flags:

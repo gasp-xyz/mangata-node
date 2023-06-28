@@ -51,45 +51,11 @@ permissions:
   checks: write
 
 jobs:
-  setup-report:
-    runs-on: [ubuntu-latest]
-    outputs:
-      testmo-run-id: ${{ steps.setTestRun.outputs.testmo-run-id }}
-    steps:
-      - name: Install testmo
-        run: npm install --no-save @testmo/testmo-cli
-      - name: Add url
-        run: |
-          npx testmo automation:resources:add-field --name git --type string \
-            --value ${GITHUB_SHA:0:7} --resources resources.json
-          RUN_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
-          npx testmo automation:resources:add-link --name build \
-            --url $RUN_URL --resources resources.json
-
-      - name: Create test run
-        run: |
-          npx testmo automation:run:create \
-            --instance https://mangata-finance.testmo.net  \
-            --project-id 2 \
-            --name "BE tests from node-repo" \
-            --resources resources.json \
-            --source "unit-tests" > testmo-run-id.txt
-          ID=$(cat testmo-run-id.txt)
-          echo "testmo-run-id=$ID" >> $GITHUB_OUTPUT
-          echo "ID=$ID" >> $GITHUB_ENV
-
-        env:
-          TESTMO_URL: ${{ secrets.TESTMO_URL }}
-          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
-        id: setTestRun
-
-
   e2e-test-matrix:
-    needs: [setup-report]
     strategy:
       matrix:
         include:
-          - command: "yarn test-parallel --max-workers=10"
+          - command: "yarn test-parallel --max-workers=32"
             fast: false
           - command: "yarn test-sequential-no-bootstrap"
             fast: false
@@ -109,10 +75,6 @@ jobs:
             fast: true
           - command: "yarn test-governance"
             fast: true
-          - command: "yarn test-multiswap"
-            fast: false
-          - command: "yarn test-experimentalStaking"
-            fast: true
 
     runs-on: [self-hosted, compile]
     timeout-minutes: 180
@@ -127,15 +89,16 @@ jobs:
       E2EBRANCHNAME: "main"
       PARACHAIN_DOCKER_IMAGE: ${{ inputs.parachainDocker || format('mangatasolutions/mangata-node:{0}', inputs.globalVersion) }}
     steps:
+     
       - uses: actions/checkout@v3 ####IDK, but this is neccesary for reports
       - name: Adapt if fast runtime
         if:  ${{  !contains(env.PARACHAIN_DOCKER_IMAGE, 'fast') && matrix.fast == true }}
         run: echo "PARACHAIN_DOCKER_IMAGE=${{ env.PARACHAIN_DOCKER_IMAGE }}-fast" >> $GITHUB_ENV
-
+      
       - name: Adapt if fast runtime
         if:  ${{  !contains(env.PARACHAIN_DOCKER_IMAGE, 'fast') && matrix.fast == true }}
         run: echo "PARACHAIN_DOCKER_IMAGE=${{ env.PARACHAIN_DOCKER_IMAGE }}-fast" >> $GITHUB_ENV
-
+      
       - name: Download node Docker image
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && inputs.skipBuild != 'true' }}
         run: docker pull ${{ env.PARACHAIN_DOCKER_IMAGE }}
@@ -181,24 +144,28 @@ jobs:
           echo ${{ env.PARACHAIN_DOCKER_IMAGE }}
 
       - name: Replace parachain docker image reference in config
-        working-directory: devops/parachain-launch
+        working-directory: launch
         run: sed -i 's+mangatasolutions/mangata-node:.*+${{ env.PARACHAIN_DOCKER_IMAGE }}+g' config.yml
 
+      - name: Install parachain launch dependencies
+        working-directory: launch
+        run: yarn
+      
       - name: Install e2e tests dependencies
         working-directory: e2eTests
         run: yarn
 
-      - name: Run parachain launch
-        working-directory: devops/parachain-launch
-        run: npx @open-web3/parachain-launch generate config.yml
+      - name: Generate parachain launch config
+        working-directory: launch
+        run: yarn gen
 
       - name: Stop previous parachain if running
-        working-directory: devops/parachain-launch/output
-        run: docker-compose down -v
+        working-directory: launch
+        run: yarn down
 
       - name: Start mangata-node parachain
-        working-directory: devops/parachain-launch/output
-        run: docker-compose up -d --build
+        working-directory: launch
+        run: yarn up
 
       - name: Docker ps
         run: docker ps --no-trunc
@@ -218,19 +185,6 @@ jobs:
           name: E2E report ${{ matrix.command }} # Name of the check run which will be created
           path: e2eTests/reports/junit-*.xml # Path to test results
           reporter: jest-junit # Format of test results
-      - name: Install testmo
-        run: npm install --no-save @testmo/testmo-cli
-      - name: Submit results to the testmo-run
-        if: always()
-        run: |
-            npx testmo automation:run:submit-thread \
-              --instance https://mangata-finance.testmo.net \
-              --run-id ${{needs.setup-report.outputs.testmo-run-id}} \
-              --results e2eTests/reports/*.xml
-        env:
-          TESTMO_URL: ${{ secrets.TESTMO_URL }}
-          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
-        continue-on-error: true
 
       - name: Collect docker logs on failure
         if: failure()
@@ -262,27 +216,9 @@ jobs:
 
       - name: Stop mangata-node parachain
         if: always()
-        working-directory: devops/parachain-launch/output
-        run: docker-compose down -v
+        working-directory: launch
+        run: yarn down
+
       - name: Fix permissions on self-hosted runner
         if: always()
         run: chown -R 1100:1100 $GITHUB_WORKSPACE
-  test-complete:
-    needs: [setup-report, e2e-test-matrix]
-    if: always()
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Install testmo
-        run: npm install --no-save @testmo/testmo-cli
-
-      - name: Complete test run
-        run: |
-            npx testmo automation:run:complete \
-              --instance https://mangata-finance.testmo.net \
-              --run-id ${{needs.setup-report.outputs.testmo-run-id}} \
-        env:
-          TESTMO_URL: ${{ secrets.TESTMO_URL }}
-          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
-        continue-on-error: true
-

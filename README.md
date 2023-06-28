@@ -40,7 +40,7 @@ Assets on the exchange will serve multiple purposes- at the first iteration, the
 
 build artifacts will be placed in `<REPO ROOT>/docker-cargo/release`
 
-### Generate docker image
+### Generate a docker image
 You can use `build-image.sh` script to build & generate docker image
 
 ```

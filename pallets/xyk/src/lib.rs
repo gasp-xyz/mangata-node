@@ -1274,7 +1274,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn get_liq_tokens_for_trading() -> Result<Vec<TokenId>, DispatchError> {
-		return LiquidityPools::<T>::iter_keys().collect()
+		return LiquidityPools::<T>::iter_keys()
 			.ok_or(Error::<T>::UnexpectedFailure.into())
 			.filter(|v| !<T as Config>::Currency::total_issuance(v.into()).into().is_zero());
 	}
@@ -2829,14 +2829,14 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 
 		// We calculate the required liquidity token amount and also validate asset amounts
 		let liquidity_assets_minted = if total_liquidity_assets.is_zero() {
-			Pallet::<T>::calculate_initial_liquidity(first_asset_amount, second_asset_amount)?;
+			Pallet::<T>::calculate_initial_liquidity(first_asset_amount, second_asset_amount)?
 		} else {
 			multiply_by_rational_with_rounding(
 				first_asset_amount,
 				total_liquidity_assets,
 				first_asset_reserve,
 				Rounding::Down,
-			).ok_or(Error::<T>::UnexpectedFailure)?;
+			).ok_or(Error::<T>::UnexpectedFailure)?
 		};
 
 		// Ensure user has enough withdrawable tokens to create pool in amounts required

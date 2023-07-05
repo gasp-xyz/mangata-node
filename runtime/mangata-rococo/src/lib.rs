@@ -711,57 +711,18 @@ impl orml_xcm::Config for Runtime {
 
 impl pallet_root_testing::Config for Runtime {}
 
-pub type AssetMetadataOf = AssetMetadata<Balance, CustomMetadata>;
-type CurrencyAdapter = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-
-pub struct SequentialIdWithCreation<T>(PhantomData<T>);
-impl<T: orml_asset_registry::Config> AssetProcessor<TokenId, AssetMetadataOf>
-	for SequentialIdWithCreation<T>
-{
-	fn pre_register(
-		id: Option<TokenId>,
-		asset_metadata: AssetMetadataOf,
-	) -> Result<(TokenId, AssetMetadataOf), DispatchError> {
-		let next_id = CurrencyAdapter::get_next_currency_id();
-		let asset_id = id.unwrap_or(next_id);
-		match asset_id.cmp(&next_id) {
-			Ordering::Equal => CurrencyAdapter::create(&TreasuryAccount::get(), Default::default())
-				.and_then(|created_asset_id| match created_asset_id.cmp(&asset_id) {
-					Ordering::Equal => Ok((asset_id, asset_metadata)),
-					_ => Err(orml_asset_registry::Error::<T>::InvalidAssetId.into()),
-				}),
-			Ordering::Less => Ok((asset_id, asset_metadata)),
-			_ => Err(orml_asset_registry::Error::<T>::InvalidAssetId.into()),
-		}
-	}
-}
-
-pub struct AssetAuthority;
-impl EnsureOriginWithArg<RuntimeOrigin, Option<u32>> for AssetAuthority {
-	type Success = ();
-
-	fn try_origin(
-		origin: RuntimeOrigin,
-		_asset_id: &Option<u32>,
-	) -> Result<Self::Success, RuntimeOrigin> {
-		EnsureRoot::try_origin(origin)
-	}
-
-	#[cfg(feature = "runtime-benchmarks")]
-	fn try_successful_origin(_asset_id: &Option<u32>) -> Result<RuntimeOrigin, ()> {
-		Ok(RuntimeOrigin::root())
-	}
-}
+use common_runtime::config::orml_asset_registry::AssetMetadataOf;
 
 impl orml_asset_registry::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type CustomMetadata = CustomMetadata;
 	type AssetId = TokenId;
-	type AuthorityOrigin = AssetAuthority;
-	type AssetProcessor = SequentialIdWithCreation<Runtime>;
+	type AuthorityOrigin = cfg::orml_asset_registry::AssetAuthority<Runtime>;
+	type AssetProcessor = cfg::orml_asset_registry::SequentialIdWithCreation<Runtime>;
 	type Balance = Balance;
 	type WeightInfo = weights::orml_asset_registry_weights::ModuleWeight<Runtime>;
 }
+
 
 // Proxy Pallet
 /// The type used to represent the kinds of proxying allowed.

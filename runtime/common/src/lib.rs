@@ -108,8 +108,6 @@ pub mod tokens {
 	}
 }
 
-
-
 pub mod runtime_types {
 	use super::*;
 
@@ -123,20 +121,21 @@ pub mod runtime_types {
 		pallet_transaction_payment_mangata::ChargeTransactionPayment<Runtime>,
 	);
 
-	pub type SignedPayload<Runtime, RuntimeCall> = generic::SignedPayload<RuntimeCall, SignedExtra<Runtime>>;
-	pub type UncheckedExtrinsic<Runtime, RuntimeCall> = generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra<Runtime>>;
-	pub type CheckedExtrinsic<Runtime, RuntimeCall> = generic::CheckedExtrinsic<AccountId, RuntimeCall, SignedExtra<Runtime>>;
+	pub type SignedPayload<Runtime, RuntimeCall> =
+		generic::SignedPayload<RuntimeCall, SignedExtra<Runtime>>;
+	pub type UncheckedExtrinsic<Runtime, RuntimeCall> =
+		generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra<Runtime>>;
+	pub type CheckedExtrinsic<Runtime, RuntimeCall> =
+		generic::CheckedExtrinsic<AccountId, RuntimeCall, SignedExtra<Runtime>>;
 	pub type Header = generic::HeaderVer<BlockNumber, BlakeTwo256>;
-	pub type Block<Runtime, RuntimeCall> = generic::Block<Header, UncheckedExtrinsic<Runtime, RuntimeCall>>;
+	pub type Block<Runtime, RuntimeCall> =
+		generic::Block<Header, UncheckedExtrinsic<Runtime, RuntimeCall>>;
 	pub type SignedBlock<Runtime, RuntimeCall> = generic::SignedBlock<Block<Runtime, RuntimeCall>>;
 	pub type BlockId<Runtime, RuntimeCall> = generic::BlockId<Block<Runtime, RuntimeCall>>;
 
 	pub type OpaqueBlock = generic::Block<Header, sp_runtime::OpaqueExtrinsic>;
 	pub type OpaqueBlockId = generic::BlockId<OpaqueBlock>;
-
-
 }
-
 
 pub mod consts {
 	use super::*;
@@ -148,7 +147,6 @@ pub mod consts {
 	/// Change this to adjust the block time.
 	pub const MILLISECS_PER_BLOCK: u64 = 12000;
 
-
 	// Time is measured by number of blocks.
 	pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 	pub const HOURS: BlockNumber = MINUTES * 60;
@@ -159,39 +157,37 @@ pub mod consts {
 	pub const MILLIUNIT: Balance = 1_000_000_000_000_000;
 	pub const MICROUNIT: Balance = 1_000_000_000_000;
 
-
 	/// We allow for 0.5 of a second of compute with a 12 second average block time.
 	/// NOTE: reduced by half comparing to origin impl as we want to fill block only up to 50%
 	/// so there is room for new extrinsics in the next block
 	pub const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
 		WEIGHT_REF_TIME_PER_SECOND.saturating_div(4),
 		polkadot_primitives::v2::MAX_POV_SIZE as u64,
-		);
+	);
 
 	/// The existential deposit. Set to 1/10 of the Connected Relay Chain.
 	pub const EXISTENTIAL_DEPOSIT: Balance = MILLIUNIT;
-
 }
 
 pub enum CallType {
-	AtomicSell{
+	AtomicSell {
 		sold_asset_id: TokenId,
 		sold_asset_amount: Balance,
 		bought_asset_id: TokenId,
 		min_amount_out: Balance,
 	},
-	AtomicBuy{
+	AtomicBuy {
 		sold_asset_id: TokenId,
 		bought_asset_amount: Balance,
 		bought_asset_id: TokenId,
 		max_amount_in: Balance,
 	},
-	MultiSell{
+	MultiSell {
 		swap_token_list: Vec<TokenId>,
 		sold_asset_amount: Balance,
 		min_amount_out: Balance,
 	},
-	MultiBuy{
+	MultiBuy {
 		swap_token_list: Vec<TokenId>,
 		bought_asset_amount: Balance,
 		max_amount_in: Balance,
@@ -208,9 +204,8 @@ pub mod config {
 
 	pub type TreasuryPalletIdOf<T> = <T as ::pallet_treasury::Config>::PalletId;
 
-
 	pub struct TreasuryAccountIdOf<T: ::pallet_treasury::Config>(PhantomData<T>);
-	impl<T : ::pallet_treasury::Config> Get<AccountId> for TreasuryAccountIdOf<T>{
+	impl<T: ::pallet_treasury::Config> Get<AccountId> for TreasuryAccountIdOf<T> {
 		fn get() -> AccountId {
 			TreasuryPalletIdOf::<T>::get().into_account_truncating()
 		}
@@ -220,124 +215,125 @@ pub mod config {
 	pub type MaxLocksOf<T> = <T as ::orml_tokens::Config>::MaxLocks;
 	pub type SessionLenghtOf<T> = <T as ::parachain_staking::Config>::BlocksPerRound;
 
-pub mod frame_system{
-	use super::*;
+	pub mod frame_system {
+		use super::*;
 
-	/// We assume that ~5% of the block weight is consumed by `on_initialize` handlers. This is
-	/// used to limit the maximal weight of a single extrinsic.
-	pub const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(5);
+		/// We assume that ~5% of the block weight is consumed by `on_initialize` handlers. This is
+		/// used to limit the maximal weight of a single extrinsic.
+		pub const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(5);
 
-	/// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used by
-	/// `Operational` extrinsics.
-	pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
+		/// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used by
+		/// `Operational` extrinsics.
+		pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 
-	pub type MaxConsumers = frame_support::traits::ConstU32<16>;
+		pub type MaxConsumers = frame_support::traits::ConstU32<16>;
 
-parameter_types! {
+		parameter_types! {
 
-	// This part is copied from Substrate's `bin/node/runtime/src/lib.rs`.
-	//  The `RuntimeBlockLength` and `RuntimeBlockWeights` exist here because the
-	// `DeletionWeightLimit` and `DeletionQueueDepth` depend on those to parameterize
-	// the lazy contract deletion.
-	pub RuntimeBlockLength: BlockLength =
-		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
-	pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
-		.base_block(weights::VerBlockExecutionWeight::get())
-		.for_class(DispatchClass::all(), |weights| {
-			weights.base_extrinsic = weights::VerExtrinsicBaseWeight::get();
-		})
-		.for_class(DispatchClass::Normal, |weights| {
-			weights.max_total = Some(NORMAL_DISPATCH_RATIO * consts::MAXIMUM_BLOCK_WEIGHT);
-		})
-		.for_class(DispatchClass::Operational, |weights| {
-			weights.max_total = Some(consts::MAXIMUM_BLOCK_WEIGHT);
-			// Operational transactions have some extra reserved space, so that they
-			// are included even if block reached `MAXIMUM_BLOCK_WEIGHT`.
-			weights.reserved = Some(
-				consts::MAXIMUM_BLOCK_WEIGHT - NORMAL_DISPATCH_RATIO * consts::MAXIMUM_BLOCK_WEIGHT
-			);
-		})
-		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
-		.build_or_panic();
-	pub const SS58Prefix: u16 = 42;
-}
-
-
-}
-
-pub mod pallet_timestamp{
-	use super::*;
-
-	// NOTE: Currently it is not possible to change the slot duration after the chain has started.
-	//       Attempting to do so will brick block production.
-	parameter_types! {
-		pub const MinimumPeriod: u64 = consts::MILLISECS_PER_BLOCK / 2;
+			// This part is copied from Substrate's `bin/node/runtime/src/lib.rs`.
+			//  The `RuntimeBlockLength` and `RuntimeBlockWeights` exist here because the
+			// `DeletionWeightLimit` and `DeletionQueueDepth` depend on those to parameterize
+			// the lazy contract deletion.
+			pub RuntimeBlockLength: BlockLength =
+				BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
+			pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
+				.base_block(weights::VerBlockExecutionWeight::get())
+				.for_class(DispatchClass::all(), |weights| {
+					weights.base_extrinsic = weights::VerExtrinsicBaseWeight::get();
+				})
+				.for_class(DispatchClass::Normal, |weights| {
+					weights.max_total = Some(NORMAL_DISPATCH_RATIO * consts::MAXIMUM_BLOCK_WEIGHT);
+				})
+				.for_class(DispatchClass::Operational, |weights| {
+					weights.max_total = Some(consts::MAXIMUM_BLOCK_WEIGHT);
+					// Operational transactions have some extra reserved space, so that they
+					// are included even if block reached `MAXIMUM_BLOCK_WEIGHT`.
+					weights.reserved = Some(
+						consts::MAXIMUM_BLOCK_WEIGHT - NORMAL_DISPATCH_RATIO * consts::MAXIMUM_BLOCK_WEIGHT
+					);
+				})
+				.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
+				.build_or_panic();
+			pub const SS58Prefix: u16 = 42;
+		}
 	}
-}
 
-pub mod pallet_treasury {
-	use super::*;
+	pub mod pallet_timestamp {
+		use super::*;
+
+		// NOTE: Currently it is not possible to change the slot duration after the chain has started.
+		//       Attempting to do so will brick block production.
+		parameter_types! {
+			pub const MinimumPeriod: u64 = consts::MILLISECS_PER_BLOCK / 2;
+		}
+	}
+
+	pub mod pallet_treasury {
+		use super::*;
 		parameter_types! {
 		pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
 		}
 
-	parameter_types! {
-		pub const ProposalBond: Permill = Permill::from_percent(5);
-		pub const ProposalBondMinimum: Balance = 1 * currency::DOLLARS;
-		pub const ProposalBondMaximum: Option<Balance> = None;
-		pub const SpendPeriod: BlockNumber = 1 * consts::DAYS;
-		pub const Burn: Permill = Permill::from_percent(0);
-		pub const MaxApprovals: u32 = 100;
-	}
-
-}
-
-pub mod orml_tokens {
-	use super::*;
-	parameter_types! {
-		pub const MaxLocks: u32 = 50;
-	}
-
-	parameter_type_with_key! {
-		pub ExistentialDeposits: |_currency_id: TokenId| -> Balance {
-			0
-		};
-	}
-
-	pub struct DustRemovalWhitelist<T: Get<AccountId>>(PhantomData<T>);
-	impl<T : Get<AccountId>> Contains<AccountId> for DustRemovalWhitelist<T> {
-		fn contains(a: &AccountId) -> bool {
-			*a == T::get()
+		parameter_types! {
+			pub const ProposalBond: Permill = Permill::from_percent(5);
+			pub const ProposalBondMinimum: Balance = 1 * currency::DOLLARS;
+			pub const ProposalBondMaximum: Option<Balance> = None;
+			pub const SpendPeriod: BlockNumber = 1 * consts::DAYS;
+			pub const Burn: Permill = Permill::from_percent(0);
+			pub const MaxApprovals: u32 = 100;
 		}
 	}
 
-	pub type ReserveIdentifier = [u8; 8];
-
-}
-
-pub mod pallet_xyk {
-	use codec::EncodeLike;
-
-	use super::*;
-	parameter_types! {
-		pub const BnbTreasurySubAccDerive: [u8; 4] = *b"bnbt";
-	}
-	pub type PoolFeePercentage = frame_support::traits::ConstU128<20>;
-	pub type TreasuryFeePercentage = frame_support::traits::ConstU128<5>;
-	pub type BuyAndBurnFeePercentage = frame_support::traits::ConstU128<5>;
-
-	pub struct TestTokensFilter;
-	impl Contains<TokenId> for TestTokensFilter {
-		fn contains(token_id: &TokenId) -> bool {
-			// we dont want to allow doing anything with dummy assets previously
-			// used for testing
-			*token_id == 2 || *token_id == 3
+	pub mod orml_tokens {
+		use super::*;
+		parameter_types! {
+			pub const MaxLocks: u32 = 50;
 		}
+
+		parameter_type_with_key! {
+			pub ExistentialDeposits: |_currency_id: TokenId| -> Balance {
+				0
+			};
+		}
+
+		pub struct DustRemovalWhitelist<T: Get<AccountId>>(PhantomData<T>);
+		impl<T: Get<AccountId>> Contains<AccountId> for DustRemovalWhitelist<T> {
+			fn contains(a: &AccountId) -> bool {
+				*a == T::get()
+			}
+		}
+
+		pub type ReserveIdentifier = [u8; 8];
 	}
 
-	pub struct AssetRegisterFilter<Runtime>(PhantomData<Runtime>);
-	impl<T> Contains<TokenId> for AssetRegisterFilter<T> where
-		T : ::orml_asset_registry::Config<CustomMetadata=CustomMetadata, AssetId=TokenId, Balance=Balance>,
+	pub mod pallet_xyk {
+		use codec::EncodeLike;
+
+		use super::*;
+		parameter_types! {
+			pub const BnbTreasurySubAccDerive: [u8; 4] = *b"bnbt";
+		}
+		pub type PoolFeePercentage = frame_support::traits::ConstU128<20>;
+		pub type TreasuryFeePercentage = frame_support::traits::ConstU128<5>;
+		pub type BuyAndBurnFeePercentage = frame_support::traits::ConstU128<5>;
+
+		pub struct TestTokensFilter;
+		impl Contains<TokenId> for TestTokensFilter {
+			fn contains(token_id: &TokenId) -> bool {
+				// we dont want to allow doing anything with dummy assets previously
+				// used for testing
+				*token_id == 2 || *token_id == 3
+			}
+		}
+
+		pub struct AssetRegisterFilter<Runtime>(PhantomData<Runtime>);
+		impl<T> Contains<TokenId> for AssetRegisterFilter<T>
+		where
+			T: ::orml_asset_registry::Config<
+				CustomMetadata = CustomMetadata,
+				AssetId = TokenId,
+				Balance = Balance,
+			>,
 		{
 			fn contains(t: &TokenId) -> bool {
 				let meta: Option<_> = ::orml_asset_registry::Metadata::<T>::get(*t);
@@ -348,140 +344,151 @@ pub mod pallet_xyk {
 			}
 		}
 
-pub struct AssetMetadataMutation<Runtime>(PhantomData<Runtime>);
+		pub struct AssetMetadataMutation<Runtime>(PhantomData<Runtime>);
 
-impl<T> AssetMetadataMutationTrait for AssetMetadataMutation<T> where
-		T : ::orml_asset_registry::Config<CustomMetadata=CustomMetadata, AssetId=TokenId, Balance=Balance>,
-{
-	fn set_asset_info(
-		asset: TokenId,
-		name: Vec<u8>,
-		symbol: Vec<u8>,
-		decimals: u32,
-	) -> DispatchResult {
-		let metadata = AssetMetadata {
-			name,
-			symbol,
-			decimals,
-			existential_deposit: Default::default(),
-			additional: Default::default(),
-			location: None,
-		};
-		::orml_asset_registry::Pallet::<T>::do_register_asset_without_asset_processor(
-			metadata, asset,
-		)?;
-		Ok(())
-	}
-}
-
-}
-
-pub mod pallet_bootstrap {
-	use super::*;
-
-	parameter_types! {
-		pub const BootstrapUpdateBuffer: BlockNumber = 300;
-		pub const DefaultBootstrapPromotedPoolWeight: u8 = 0u8;
-		pub const ClearStorageLimit: u32 = 100u32;
+		impl<T> AssetMetadataMutationTrait for AssetMetadataMutation<T>
+		where
+			T: ::orml_asset_registry::Config<
+				CustomMetadata = CustomMetadata,
+				AssetId = TokenId,
+				Balance = Balance,
+			>,
+		{
+			fn set_asset_info(
+				asset: TokenId,
+				name: Vec<u8>,
+				symbol: Vec<u8>,
+				decimals: u32,
+			) -> DispatchResult {
+				let metadata = AssetMetadata {
+					name,
+					symbol,
+					decimals,
+					existential_deposit: Default::default(),
+					additional: Default::default(),
+					location: None,
+				};
+				::orml_asset_registry::Pallet::<T>::do_register_asset_without_asset_processor(
+					metadata, asset,
+				)?;
+				Ok(())
+			}
+		}
 	}
 
-	pub struct EnableAssetPoolApi<Runtime>(PhantomData<Runtime>);
-	impl<T> AssetRegistryApi for EnableAssetPoolApi<T> where
-		T : ::orml_asset_registry::Config<CustomMetadata=CustomMetadata, AssetId=TokenId, Balance=Balance>,
-	{
-		fn enable_pool_creation(assets: (TokenId, TokenId)) -> bool {
-			for &asset in [assets.0, assets.1].iter() {
-				let meta_maybe: Option<_> =
-					::orml_asset_registry::Metadata::<T>::get(asset);
-				if let Some(xyk) = meta_maybe.clone().and_then(|m| m.additional.xyk) {
-					let mut additional = meta_maybe.unwrap().additional;
-					if xyk.operations_disabled {
-						additional.xyk = Some(XykMetadata { operations_disabled: false });
-						match ::orml_asset_registry::Pallet::<T>::do_update_asset(
-							asset,
-							None,
-							None,
-							None,
-							None,
-							None,
-							Some(additional),
+	pub mod pallet_bootstrap {
+		use super::*;
+
+		parameter_types! {
+			pub const BootstrapUpdateBuffer: BlockNumber = 300;
+			pub const DefaultBootstrapPromotedPoolWeight: u8 = 0u8;
+			pub const ClearStorageLimit: u32 = 100u32;
+		}
+
+		pub struct EnableAssetPoolApi<Runtime>(PhantomData<Runtime>);
+		impl<T> AssetRegistryApi for EnableAssetPoolApi<T>
+		where
+			T: ::orml_asset_registry::Config<
+				CustomMetadata = CustomMetadata,
+				AssetId = TokenId,
+				Balance = Balance,
+			>,
+		{
+			fn enable_pool_creation(assets: (TokenId, TokenId)) -> bool {
+				for &asset in [assets.0, assets.1].iter() {
+					let meta_maybe: Option<_> = ::orml_asset_registry::Metadata::<T>::get(asset);
+					if let Some(xyk) = meta_maybe.clone().and_then(|m| m.additional.xyk) {
+						let mut additional = meta_maybe.unwrap().additional;
+						if xyk.operations_disabled {
+							additional.xyk = Some(XykMetadata { operations_disabled: false });
+							match ::orml_asset_registry::Pallet::<T>::do_update_asset(
+								asset,
+								None,
+								None,
+								None,
+								None,
+								None,
+								Some(additional),
 							) {
-							Ok(_) => {},
-							Err(e) => {
-								log::error!(target: "bootstrap", "cannot modify {} asset: {:?}!", asset, e);
-								return false
-							},
+								Ok(_) => {},
+								Err(e) => {
+									log::error!(target: "bootstrap", "cannot modify {} asset: {:?}!", asset, e);
+									return false
+								},
+							}
 						}
 					}
 				}
+				true
 			}
-			true
 		}
 	}
 
-}
+	pub mod pallet_transaction_payment_mangata {
+		use crate::*;
 
-pub mod pallet_transaction_payment_mangata{
-	use crate::*;
-
-	parameter_types! {
-		pub const OperationalFeeMultiplier: u8 = 5;
-		pub const TransactionByteFee: Balance = 5 * consts::MILLIUNIT;
-	pub ConstFeeMultiplierValue: Multiplier = Multiplier::saturating_from_rational(1, 1);
-	}
-
-	pub type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
-	pub type FeeMultiplierUpdate = ConstFeeMultiplier<ConstFeeMultiplierValue>;
-
-pub type ORMLCurrencyAdapterNegativeImbalance<Runtime> =
-	<::orml_tokens::MultiTokenCurrencyAdapter<Runtime> as MultiTokenCurrency< <Runtime as ::frame_system::Config>::AccountId, >>::NegativeImbalance;
-
-pub trait OnMultiTokenUnbalanced<
-	TokenIdType,
-	Imbalance: ::frame_support::traits::TryDrop + MultiTokenImbalanceWithZeroTrait<TokenIdType>,
->
-{
-	/// Handler for some imbalances. The different imbalances might have different origins or
-	/// meanings, dependent on the context. Will default to simply calling on_unbalanced for all
-	/// of them. Infallible.
-	fn on_unbalanceds<B>(token_id: TokenIdType, amounts: impl Iterator<Item = Imbalance>)
-	where
-		Imbalance: ::frame_support::traits::Imbalance<B>,
-	{
-		Self::on_unbalanced(amounts.fold(Imbalance::from_zero(token_id), |i, x| x.merge(i)))
-	}
-
-	/// Handler for some imbalance. Infallible.
-	fn on_unbalanced(amount: Imbalance) {
-		amount.try_drop().unwrap_or_else(Self::on_nonzero_unbalanced)
-	}
-
-	/// Actually handle a non-zero imbalance. You probably want to implement this rather than
-	/// `on_unbalanced`.
-	fn on_nonzero_unbalanced(amount: Imbalance) {
-		drop(amount);
-	}
-}
-
-pub struct ToAuthor<Runtime>(PhantomData<Runtime>);
-impl<T: ::orml_tokens::Config + ::pallet_authorship::Config> OnMultiTokenUnbalanced<T::CurrencyId, ORMLCurrencyAdapterNegativeImbalance<T>> for ToAuthor<T> {
-	fn on_nonzero_unbalanced(amount: ORMLCurrencyAdapterNegativeImbalance<T>) {
-		if let Some(author) = ::pallet_authorship::Pallet::<T>::author() {
-			<::orml_tokens::MultiTokenCurrencyAdapter<T> as MultiTokenCurrency<
-				<T as ::frame_system::Config>::AccountId,
-			>>::resolve_creating(amount.0, &author, amount);
+		parameter_types! {
+			pub const OperationalFeeMultiplier: u8 = 5;
+			pub const TransactionByteFee: Balance = 5 * consts::MILLIUNIT;
+		pub ConstFeeMultiplierValue: Multiplier = Multiplier::saturating_from_rational(1, 1);
 		}
-	}
-}
 
-#[derive(Encode, Decode, TypeInfo)]
-pub enum LiquidityInfoEnum<C: MultiTokenCurrency<T::AccountId>, T: frame_system::Config> {
-	Imbalance((C::CurrencyId, NegativeImbalanceOf<C, T>)),
-	FeeLock,
-}
+		pub type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
+		pub type FeeMultiplierUpdate = ConstFeeMultiplier<ConstFeeMultiplierValue>;
 
-pub struct FeeHelpers<T, C, OU, OCA, OFLA>(PhantomData<(T, C, OU, OCA, OFLA)>);
-impl<T, C, OU, OCA, OFLA> FeeHelpers<T, C, OU, OCA, OFLA>
+		pub type ORMLCurrencyAdapterNegativeImbalance<Runtime> =
+			<::orml_tokens::MultiTokenCurrencyAdapter<Runtime> as MultiTokenCurrency<
+				<Runtime as ::frame_system::Config>::AccountId,
+			>>::NegativeImbalance;
+
+		pub trait OnMultiTokenUnbalanced<
+			TokenIdType,
+			Imbalance: ::frame_support::traits::TryDrop + MultiTokenImbalanceWithZeroTrait<TokenIdType>,
+		>
+		{
+			/// Handler for some imbalances. The different imbalances might have different origins or
+			/// meanings, dependent on the context. Will default to simply calling on_unbalanced for all
+			/// of them. Infallible.
+			fn on_unbalanceds<B>(token_id: TokenIdType, amounts: impl Iterator<Item = Imbalance>)
+			where
+				Imbalance: ::frame_support::traits::Imbalance<B>,
+			{
+				Self::on_unbalanced(amounts.fold(Imbalance::from_zero(token_id), |i, x| x.merge(i)))
+			}
+
+			/// Handler for some imbalance. Infallible.
+			fn on_unbalanced(amount: Imbalance) {
+				amount.try_drop().unwrap_or_else(Self::on_nonzero_unbalanced)
+			}
+
+			/// Actually handle a non-zero imbalance. You probably want to implement this rather than
+			/// `on_unbalanced`.
+			fn on_nonzero_unbalanced(amount: Imbalance) {
+				drop(amount);
+			}
+		}
+
+		pub struct ToAuthor<Runtime>(PhantomData<Runtime>);
+		impl<T: ::orml_tokens::Config + ::pallet_authorship::Config>
+			OnMultiTokenUnbalanced<T::CurrencyId, ORMLCurrencyAdapterNegativeImbalance<T>> for ToAuthor<T>
+		{
+			fn on_nonzero_unbalanced(amount: ORMLCurrencyAdapterNegativeImbalance<T>) {
+				if let Some(author) = ::pallet_authorship::Pallet::<T>::author() {
+					<::orml_tokens::MultiTokenCurrencyAdapter<T> as MultiTokenCurrency<
+						<T as ::frame_system::Config>::AccountId,
+					>>::resolve_creating(amount.0, &author, amount);
+				}
+			}
+		}
+
+		#[derive(Encode, Decode, TypeInfo)]
+		pub enum LiquidityInfoEnum<C: MultiTokenCurrency<T::AccountId>, T: frame_system::Config> {
+			Imbalance((C::CurrencyId, NegativeImbalanceOf<C, T>)),
+			FeeLock,
+		}
+
+		pub struct FeeHelpers<T, C, OU, OCA, OFLA>(PhantomData<(T, C, OU, OCA, OFLA)>);
+		impl<T, C, OU, OCA, OFLA> FeeHelpers<T, C, OU, OCA, OFLA>
 where
 	T: pallet_transaction_payment_mangata::Config + pallet_xyk::Config + pallet_fee_lock::Config,
 	T::LengthToFee: frame_support::weights::WeightToFee<
@@ -664,16 +671,15 @@ where
 	}
 }
 
-const SINGLE_HOP_MULTISWAP: usize = 2;
-#[derive(Encode, Decode, Clone, TypeInfo)]
-pub struct OnChargeHandler<C, OU, OCA, OFLA>(PhantomData<(C, OU, OCA, OFLA)>);
+		const SINGLE_HOP_MULTISWAP: usize = 2;
+		#[derive(Encode, Decode, Clone, TypeInfo)]
+		pub struct OnChargeHandler<C, OU, OCA, OFLA>(PhantomData<(C, OU, OCA, OFLA)>);
 
-
-/// Default implementation for a Currency and an OnUnbalanced handler.
-///
-/// The unbalance handler is given 2 unbalanceds in [`OnUnbalanced::on_unbalanceds`]: fee and
-/// then tip.
-impl<T, C, OU, OCA, OFLA> OnChargeTransaction<T> for OnChargeHandler<C, OU, OCA, OFLA>
+		/// Default implementation for a Currency and an OnUnbalanced handler.
+		///
+		/// The unbalance handler is given 2 unbalanceds in [`OnUnbalanced::on_unbalanceds`]: fee and
+		/// then tip.
+		impl<T, C, OU, OCA, OFLA> OnChargeTransaction<T> for OnChargeHandler<C, OU, OCA, OFLA>
 where
 	T: pallet_transaction_payment_mangata::Config + pallet_xyk::Config + pallet_fee_lock::Config,
 	<T as frame_system::Config>::RuntimeCall: Into<crate::CallType>,
@@ -889,23 +895,23 @@ where
 	}
 }
 
-#[derive(Encode, Decode, Clone, TypeInfo)]
-pub struct ThreeCurrencyOnChargeAdapter<C, OU, T1, T2, T3, SF2, SF3, TE>(
-	PhantomData<(C, OU, T1, T2, T3, SF2, SF3, TE)>,
-);
+		#[derive(Encode, Decode, Clone, TypeInfo)]
+		pub struct ThreeCurrencyOnChargeAdapter<C, OU, T1, T2, T3, SF2, SF3, TE>(
+			PhantomData<(C, OU, T1, T2, T3, SF2, SF3, TE)>,
+		);
 
-type NegativeImbalanceOf<C, T> =
-	<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
+		type NegativeImbalanceOf<C, T> =
+			<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
 
-pub trait TriggerEvent<AccountIdT> {
-	fn trigger(who: AccountIdT, fee: u128, tip: u128);
-}
+		pub trait TriggerEvent<AccountIdT> {
+			fn trigger(who: AccountIdT, fee: u128, tip: u128);
+		}
 
-/// Default implementation for a Currency and an OnUnbalanced handler.
-///
-/// The unbalance handler is given 2 unbalanceds in [`OnUnbalanced::on_unbalanceds`]: fee and
-/// then tip.
-impl<T, C, OU, T1, T2, T3, SF2, SF3, TE> OnChargeTransaction<T>
+		/// Default implementation for a Currency and an OnUnbalanced handler.
+		///
+		/// The unbalance handler is given 2 unbalanceds in [`OnUnbalanced::on_unbalanceds`]: fee and
+		/// then tip.
+		impl<T, C, OU, T1, T2, T3, SF2, SF3, TE> OnChargeTransaction<T>
 	for ThreeCurrencyOnChargeAdapter<C, OU, T1, T2, T3, SF2, SF3, TE>
 where
 	T: pallet_transaction_payment_mangata::Config,
@@ -1041,332 +1047,331 @@ where
 		Ok(())
 	}
 }
-
-
-}
-
-pub mod pallet_fee_lock{
-	use crate::*;
-	parameter_types! {
-		pub const MaxCuratedTokens: u32 = 100;
 	}
 
-}
-
-pub mod cumulus_pallet_parachain_system{
-	use crate::*;
-	parameter_types! {
-		pub const ReservedXcmpWeight: Weight = consts::MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
-		pub const ReservedDmpWeight: Weight = consts::MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
+	pub mod pallet_fee_lock {
+		use crate::*;
+		parameter_types! {
+			pub const MaxCuratedTokens: u32 = 100;
+		}
 	}
 
-}
-
-pub mod pallet_aura {
-	use crate::*;
-	parameter_types! {
-		pub const MaxAuthorities: u32 = 100_000;
-	}
-}
-
-pub mod pallet_sudo_origin {
-	use crate::*;
-	pub type SudoOrigin<CouncilCollective> = pallet_collective_mangata::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>;
-}
-
-pub mod pallet_collective_mangata {
-	use crate::*;
-#[cfg(not(feature = "fast-runtime"))]
-	parameter_types! {
-		pub const CouncilProposalCloseDelay: BlockNumber = 3 * consts::DAYS;
+	pub mod cumulus_pallet_parachain_system {
+		use crate::*;
+		parameter_types! {
+			pub const ReservedXcmpWeight: Weight = consts::MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
+			pub const ReservedDmpWeight: Weight = consts::MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
+		}
 	}
 
-#[cfg(feature = "fast-runtime")]
-	parameter_types! {
-		pub const CouncilProposalCloseDelay: BlockNumber = 6 * MINUTES;
+	pub mod pallet_aura {
+		use crate::*;
+		parameter_types! {
+			pub const MaxAuthorities: u32 = 100_000;
+		}
 	}
 
-	parameter_types! {
-		pub const CouncilMotionDuration: BlockNumber = 5 * consts::DAYS;
-		pub const CouncilMaxProposals: u32 = 100;
-		pub const CouncilMaxMembers: u32 = 100;
+	pub mod pallet_sudo_origin {
+		use crate::*;
+		pub type SudoOrigin<CouncilCollective> =
+			pallet_collective_mangata::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>;
 	}
-}
 
-pub mod pallet_maintenance {
-	use crate::*;
-	pub struct FoundationAccountsProvider<T: frame_system::Config>(PhantomData<T>);
-	impl<T: frame_system::Config> Get<Vec<T::AccountId>> for FoundationAccountsProvider<T> {
-		fn get() -> Vec<T::AccountId> {
-			let accounts = vec![
-				hex_literal::hex!["c8d02dfbff5ce2fda651c7dd7719bc5b17b9c1043fded805bfc86296c5909871"],
-				hex_literal::hex!["c4690c56c36cec7ed5f6ed5d5eebace0c317073a962ebea1d00f1a304974897b"],
-				hex_literal::hex!["fc741134c82b81b7ab7efbf334b0c90ff8dbf22c42ad705ea7c04bf27ed4161a"],
-			];
+	pub mod pallet_collective_mangata {
+		use crate::*;
+		#[cfg(not(feature = "fast-runtime"))]
+		parameter_types! {
+			pub const CouncilProposalCloseDelay: BlockNumber = 3 * consts::DAYS;
+		}
+
+		#[cfg(feature = "fast-runtime")]
+		parameter_types! {
+			pub const CouncilProposalCloseDelay: BlockNumber = 6 * MINUTES;
+		}
+
+		parameter_types! {
+			pub const CouncilMotionDuration: BlockNumber = 5 * consts::DAYS;
+			pub const CouncilMaxProposals: u32 = 100;
+			pub const CouncilMaxMembers: u32 = 100;
+		}
+	}
+
+	pub mod pallet_maintenance {
+		use crate::*;
+		pub struct FoundationAccountsProvider<T: frame_system::Config>(PhantomData<T>);
+		impl<T: frame_system::Config> Get<Vec<T::AccountId>> for FoundationAccountsProvider<T> {
+			fn get() -> Vec<T::AccountId> {
+				let accounts = vec![
+					hex_literal::hex![
+						"c8d02dfbff5ce2fda651c7dd7719bc5b17b9c1043fded805bfc86296c5909871"
+					],
+					hex_literal::hex![
+						"c4690c56c36cec7ed5f6ed5d5eebace0c317073a962ebea1d00f1a304974897b"
+					],
+					hex_literal::hex![
+						"fc741134c82b81b7ab7efbf334b0c90ff8dbf22c42ad705ea7c04bf27ed4161a"
+					],
+				];
 
 				accounts
 					.into_iter()
 					.map(|acc| {
 						T::AccountId::decode(&mut sp_runtime::AccountId32::as_ref(
-								&sp_runtime::AccountId32::from(acc),
-								))
-							.unwrap()
+							&sp_runtime::AccountId32::from(acc),
+						))
+						.unwrap()
 					})
-				.collect()
+					.collect()
+			}
 		}
 	}
-}
 
-pub mod parachain_staking {
-	use crate::*;
+	pub mod parachain_staking {
+		use crate::*;
 
-	pub type StakingIssuanceVaultOf<Runtime> = <Runtime as pallet_issuance::Config>::StakingIssuanceVault;
-#[cfg(feature = "fast-runtime")]
-parameter_types! {
-	/// Default SessionLenght is every 2 minutes (10 * 12 second block times)
-	pub const BlocksPerRound: u32 = 2 * MINUTES;
-}
+		pub type StakingIssuanceVaultOf<Runtime> =
+			<Runtime as pallet_issuance::Config>::StakingIssuanceVault;
+		#[cfg(feature = "fast-runtime")]
+		parameter_types! {
+			/// Default SessionLenght is every 2 minutes (10 * 12 second block times)
+			pub const BlocksPerRound: u32 = 2 * MINUTES;
+		}
 
-#[cfg(not(feature = "fast-runtime"))]
-parameter_types! {
-	/// Default SessionLenght is every 4 hours (1200 * 12 second block times)
-	pub const BlocksPerRound: u32 = 4 * consts::HOURS;
-}
+		#[cfg(not(feature = "fast-runtime"))]
+		parameter_types! {
+			/// Default SessionLenght is every 4 hours (1200 * 12 second block times)
+			pub const BlocksPerRound: u32 = 4 * consts::HOURS;
+		}
 
-parameter_types! {
-	pub const DefaultPayoutLimit: u32 = 3;
-	/// Collator candidate exit delay (number of rounds)
-	pub const LeaveCandidatesDelay: u32 = 2;
-	/// Collator candidate bond increases/decreases delay (number of rounds)
-	pub const CandidateBondDelay: u32 = 2;
-	/// Delegator exit delay (number of rounds)
-	pub const LeaveDelegatorsDelay: u32 = 2;
-	/// Delegation revocations delay (number of rounds)
-	pub const RevokeDelegationDelay: u32 = 2;
-	/// Delegation bond increases/decreases delay (number of rounds)
-	pub const DelegationBondDelay: u32 = 2;
-	/// Reward payments delay (number of rounds)
-	pub const RewardPaymentDelay: u32 = 2;
-	/// Minimum collators selected per round, default at genesis and minimum forever after
-	pub const MinSelectedCandidates: u32 = 25;
-	/// Maximum collator candidates allowed
-	pub const MaxCollatorCandidates: u32 = 50;
-	/// Maximum delegators allowed per candidate
-	pub const MaxTotalDelegatorsPerCandidate: u32 = 25;
-	/// Maximum delegators counted per candidate
-	pub const MaxDelegatorsPerCandidate: u32 = 12;
-	/// Maximum delegations per delegator
-	pub const MaxDelegationsPerDelegator: u32 = 30;
-	/// Default fixed percent a collator takes off the top of due rewards
-	pub const DefaultCollatorCommission: Perbill = Perbill::from_percent(20);
-	/// Minimum stake required to become a collator
-	pub const MinCollatorStk: u128 = 10 * currency::DOLLARS;
-	/// Minimum stake required to be reserved to be a candidate
-	pub const MinCandidateStk: u128 = if cfg!(feature = "runtime-benchmarks") {
-		// For benchmarking
-		1 * currency::DOLLARS
-	} else {
-		// ACTUAL
-		1_500_000 * currency::DOLLARS
-	};
-	/// Minimum stake required to be reserved to be a delegator
-	pub const MinDelegatorStk: u128 = 1 * currency::CENTS;
-}
-}
+		parameter_types! {
+			pub const DefaultPayoutLimit: u32 = 3;
+			/// Collator candidate exit delay (number of rounds)
+			pub const LeaveCandidatesDelay: u32 = 2;
+			/// Collator candidate bond increases/decreases delay (number of rounds)
+			pub const CandidateBondDelay: u32 = 2;
+			/// Delegator exit delay (number of rounds)
+			pub const LeaveDelegatorsDelay: u32 = 2;
+			/// Delegation revocations delay (number of rounds)
+			pub const RevokeDelegationDelay: u32 = 2;
+			/// Delegation bond increases/decreases delay (number of rounds)
+			pub const DelegationBondDelay: u32 = 2;
+			/// Reward payments delay (number of rounds)
+			pub const RewardPaymentDelay: u32 = 2;
+			/// Minimum collators selected per round, default at genesis and minimum forever after
+			pub const MinSelectedCandidates: u32 = 25;
+			/// Maximum collator candidates allowed
+			pub const MaxCollatorCandidates: u32 = 50;
+			/// Maximum delegators allowed per candidate
+			pub const MaxTotalDelegatorsPerCandidate: u32 = 25;
+			/// Maximum delegators counted per candidate
+			pub const MaxDelegatorsPerCandidate: u32 = 12;
+			/// Maximum delegations per delegator
+			pub const MaxDelegationsPerDelegator: u32 = 30;
+			/// Default fixed percent a collator takes off the top of due rewards
+			pub const DefaultCollatorCommission: Perbill = Perbill::from_percent(20);
+			/// Minimum stake required to become a collator
+			pub const MinCollatorStk: u128 = 10 * currency::DOLLARS;
+			/// Minimum stake required to be reserved to be a candidate
+			pub const MinCandidateStk: u128 = if cfg!(feature = "runtime-benchmarks") {
+				// For benchmarking
+				1 * currency::DOLLARS
+			} else {
+				// ACTUAL
+				1_500_000 * currency::DOLLARS
+			};
+			/// Minimum stake required to be reserved to be a delegator
+			pub const MinDelegatorStk: u128 = 1 * currency::CENTS;
+		}
+	}
 
-pub mod pallet_issuance {
-	use crate::*;
-parameter_types! {
-	pub const HistoryLimit: u32 = 10u32;
+	pub mod pallet_issuance {
+		use crate::*;
+		parameter_types! {
+			pub const HistoryLimit: u32 = 10u32;
 
-	pub const LiquidityMiningIssuanceVaultId: PalletId = PalletId(*b"py/lqmiv");
-	pub LiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account_truncating();
-	pub const StakingIssuanceVaultId: PalletId = PalletId(*b"py/stkiv");
-	pub StakingIssuanceVault: AccountId = StakingIssuanceVaultId::get().into_account_truncating();
+			pub const LiquidityMiningIssuanceVaultId: PalletId = PalletId(*b"py/lqmiv");
+			pub LiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account_truncating();
+			pub const StakingIssuanceVaultId: PalletId = PalletId(*b"py/stkiv");
+			pub StakingIssuanceVault: AccountId = StakingIssuanceVaultId::get().into_account_truncating();
 
-	pub const TotalCrowdloanAllocation: Balance = 330_000_000 * DOLLARS;
-	pub const IssuanceCap: Balance = 4_000_000_000 * DOLLARS;
-	pub const LinearIssuanceBlocks: u32 = 13_140_000u32; // 5 years
-	pub const LiquidityMiningSplit: Perbill = Perbill::from_parts(555555556);
-	pub const StakingSplit: Perbill = Perbill::from_parts(444444444);
-	pub const ImmediateTGEReleasePercent: Percent = Percent::from_percent(20);
-	pub const TGEReleasePeriod: u32 = 5_256_000u32; // 2 years
-	pub const TGEReleaseBegin: u32 = 100_800u32; // Two weeks into chain start
-}
-}
+			pub const TotalCrowdloanAllocation: Balance = 330_000_000 * DOLLARS;
+			pub const IssuanceCap: Balance = 4_000_000_000 * DOLLARS;
+			pub const LinearIssuanceBlocks: u32 = 13_140_000u32; // 5 years
+			pub const LiquidityMiningSplit: Perbill = Perbill::from_parts(555555556);
+			pub const StakingSplit: Perbill = Perbill::from_parts(444444444);
+			pub const ImmediateTGEReleasePercent: Percent = Percent::from_percent(20);
+			pub const TGEReleasePeriod: u32 = 5_256_000u32; // 2 years
+			pub const TGEReleaseBegin: u32 = 100_800u32; // Two weeks into chain start
+		}
+	}
 
-pub mod orml_asset_registry {
-	use crate::*;
+	pub mod orml_asset_registry {
+		use crate::*;
 
-	pub type AssetMetadataOf = AssetMetadata<Balance, CustomMetadata>;
-	type CurrencyAdapter<Runtime> = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
+		pub type AssetMetadataOf = AssetMetadata<Balance, CustomMetadata>;
+		type CurrencyAdapter<Runtime> = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 
-pub struct SequentialIdWithCreation<T>(PhantomData<T>);
-impl<T> AssetProcessor<TokenId, AssetMetadataOf>
-	for SequentialIdWithCreation<T> where
-T : ::orml_asset_registry::Config,
-T : ::orml_tokens::Config,
-T : ::pallet_treasury::Config,
-{
-	fn pre_register(
-		id: Option<TokenId>,
-		asset_metadata: AssetMetadataOf,
-	) -> Result<(TokenId, AssetMetadataOf), DispatchError> {
-		let next_id = CurrencyAdapter::<T>::get_next_currency_id();
-		let asset_id = id.unwrap_or(next_id.into());
-		let treasury_account = config::TreasuryPalletIdOf::<T>::get().into_account_truncating();
+		pub struct SequentialIdWithCreation<T>(PhantomData<T>);
+		impl<T> AssetProcessor<TokenId, AssetMetadataOf> for SequentialIdWithCreation<T>
+		where
+			T: ::orml_asset_registry::Config,
+			T: ::orml_tokens::Config,
+			T: ::pallet_treasury::Config,
+		{
+			fn pre_register(
+				id: Option<TokenId>,
+				asset_metadata: AssetMetadataOf,
+			) -> Result<(TokenId, AssetMetadataOf), DispatchError> {
+				let next_id = CurrencyAdapter::<T>::get_next_currency_id();
+				let asset_id = id.unwrap_or(next_id.into());
+				let treasury_account =
+					config::TreasuryPalletIdOf::<T>::get().into_account_truncating();
 
-		match asset_id.cmp(&next_id.into()) {
-			Ordering::Equal => CurrencyAdapter::<T>::create(&treasury_account, Default::default())
-				.and_then(|created_asset_id| match created_asset_id.cmp(&asset_id.into()) {
-					Ordering::Equal => Ok((asset_id, asset_metadata)),
+				match asset_id.cmp(&next_id.into()) {
+					Ordering::Equal =>
+						CurrencyAdapter::<T>::create(&treasury_account, Default::default())
+							.and_then(|created_asset_id| {
+								match created_asset_id.cmp(&asset_id.into()) {
+									Ordering::Equal => Ok((asset_id, asset_metadata)),
+									_ =>
+										Err(orml_asset_registry::Error::<T>::InvalidAssetId.into()),
+								}
+							}),
+					Ordering::Less => Ok((asset_id, asset_metadata)),
 					_ => Err(orml_asset_registry::Error::<T>::InvalidAssetId.into()),
-				}),
-			Ordering::Less => Ok((asset_id, asset_metadata)),
-			_ => Err(orml_asset_registry::Error::<T>::InvalidAssetId.into()),
+				}
+			}
 		}
-	}
-}
 
-pub struct AssetAuthority<T>(PhantomData<T>);
-impl<T> EnsureOriginWithArg<T::RuntimeOrigin, Option<u32>> for AssetAuthority<T> where
-T: frame_system::Config
-{
-	type Success = ();
+		pub struct AssetAuthority<T>(PhantomData<T>);
+		impl<T> EnsureOriginWithArg<T::RuntimeOrigin, Option<u32>> for AssetAuthority<T>
+		where
+			T: frame_system::Config,
+		{
+			type Success = ();
 
-	fn try_origin(
-		origin: T::RuntimeOrigin,
-		_asset_id: &Option<u32>,
-	) -> Result<Self::Success, T::RuntimeOrigin> {
-		EnsureRoot::try_origin(origin)
-	}
+			fn try_origin(
+				origin: T::RuntimeOrigin,
+				_asset_id: &Option<u32>,
+			) -> Result<Self::Success, T::RuntimeOrigin> {
+				EnsureRoot::try_origin(origin)
+			}
 
-	#[cfg(feature = "runtime-benchmarks")]
-	fn try_successful_origin(_asset_id: &Option<u32>) -> Result<T::RuntimeOrigin, ()> {
-		Ok(T::RuntimeOrigin::root())
-	}
-}
-
-
-
-}
-
-pub mod pallet_identity{
-	use crate::*;
-parameter_types! {
-	// Add item in storage and take 270 bytes, Registry { [], Balance, Info { [], [u8,32] * 7, [u8,20] }}
-	pub const BasicDeposit: Balance = deposit(1, 270);
-	// No item in storage, extra field takes 66 bytes, ([u8,32], [u8,32])
-	pub const FieldDeposit: Balance = deposit(0, 66);
-	// Add item in storage, and takes 97 bytes, AccountId + (AccountId, [u8,32])
-	pub const SubAccountDeposit: Balance = deposit(1, 97);
-	pub const MaxSubAccounts: u32 = 100;
-	pub const MaxAdditionalFields: u32 = 100;
-	pub const MaxRegistrars: u32 = 20;
-}
-
-pub type IdentityForceOrigin = EnsureRoot<AccountId>;
-pub type IdentityRegistrarOrigin = EnsureRoot<AccountId>;
-}
-
-pub mod pallet_utility_mangata {
-	use super::*;
-
-#[derive(
-	Copy,
-	Clone,
-	Eq,
-	PartialEq,
-	Ord,
-	PartialOrd,
-	Encode,
-	Decode,
-	RuntimeDebug,
-	MaxEncodedLen,
-	TypeInfo,
-	)]
-	pub struct DisallowedInBatch<Runtime>(PhantomData<Runtime>);
-
-impl<T> Contains<T::RuntimeCall> for DisallowedInBatch<T> where
-	T: ::frame_system::Config,
-	<T as ::frame_system::Config>::RuntimeCall: Into<crate::CallType>,
-{
-
-	fn contains(c: &T::RuntimeCall) -> bool {
-		let call: crate::CallType = (c.clone()).into();
-
-		match call {
-			CallType::MultiSell{..} |
-			CallType::MultiBuy{..} |
-			CallType::AtomicBuy{..} |
-			CallType::AtomicSell{..}  |
-			CallType::CompoundRewards |
-			CallType::ProvideLiquidityWithConversion  => true,
-			_ => false,
-		}
-	}
-}
-}
-
-pub mod pallet_vesting_mangata {
-	use super::*;
-	parameter_types! {
-		pub const MinVestedTransfer: Balance = 100 * currency::DOLLARS;
-	}
-
-}
-
-pub mod pallet_crowdloan_rewards {
-	use super::*;
-parameter_types! {
-	pub const Initialized: bool = false;
-	pub const InitializationPayment: Perbill = Perbill::from_parts(214285700);
-	pub const MaxInitContributorsBatchSizes: u32 = 100;
-	pub const MinimumReward: Balance = 0;
-	pub const RelaySignaturesThreshold: Perbill = Perbill::from_percent(100);
-	pub const SigantureNetworkIdentifier: &'static [u8] = b"mangata-";
-}
-
-}
-
-pub mod pallet_proxy {
-	use super::*;
-	// Proxy Pallet
-	/// The type used to represent the kinds of proxying allowed.
-#[derive(
-	Copy,
-	Clone,
-	Eq,
-	PartialEq,
-	Ord,
-	PartialOrd,
-	Encode,
-	Decode,
-	RuntimeDebug,
-	MaxEncodedLen,
-	TypeInfo,
-	)]
-	pub enum ProxyType
-	{
-		AutoCompound,
-	}
-
-impl Default for ProxyType
-	{
-		fn default() -> Self {
-			Self::AutoCompound
+			#[cfg(feature = "runtime-benchmarks")]
+			fn try_successful_origin(_asset_id: &Option<u32>) -> Result<T::RuntimeOrigin, ()> {
+				Ok(T::RuntimeOrigin::root())
+			}
 		}
 	}
 
-parameter_types! {
-	pub const ProxyDepositBase: Balance = deposit(1, 16);
-	pub const ProxyDepositFactor: Balance = deposit(0, 33);
-	pub const AnnouncementDepositBase: Balance = deposit(1, 16);
-	pub const AnnouncementDepositFactor: Balance = deposit(0, 68);
-}
+	pub mod pallet_identity {
+		use crate::*;
+		parameter_types! {
+			// Add item in storage and take 270 bytes, Registry { [], Balance, Info { [], [u8,32] * 7, [u8,20] }}
+			pub const BasicDeposit: Balance = deposit(1, 270);
+			// No item in storage, extra field takes 66 bytes, ([u8,32], [u8,32])
+			pub const FieldDeposit: Balance = deposit(0, 66);
+			// Add item in storage, and takes 97 bytes, AccountId + (AccountId, [u8,32])
+			pub const SubAccountDeposit: Balance = deposit(1, 97);
+			pub const MaxSubAccounts: u32 = 100;
+			pub const MaxAdditionalFields: u32 = 100;
+			pub const MaxRegistrars: u32 = 20;
+		}
 
+		pub type IdentityForceOrigin = EnsureRoot<AccountId>;
+		pub type IdentityRegistrarOrigin = EnsureRoot<AccountId>;
+	}
 
+	pub mod pallet_utility_mangata {
+		use super::*;
 
-}
+		#[derive(
+			Copy,
+			Clone,
+			Eq,
+			PartialEq,
+			Ord,
+			PartialOrd,
+			Encode,
+			Decode,
+			RuntimeDebug,
+			MaxEncodedLen,
+			TypeInfo,
+		)]
+		pub struct DisallowedInBatch<Runtime>(PhantomData<Runtime>);
 
+		impl<T> Contains<T::RuntimeCall> for DisallowedInBatch<T>
+		where
+			T: ::frame_system::Config,
+			<T as ::frame_system::Config>::RuntimeCall: Into<crate::CallType>,
+		{
+			fn contains(c: &T::RuntimeCall) -> bool {
+				let call: crate::CallType = (c.clone()).into();
+
+				match call {
+					CallType::MultiSell { .. } |
+					CallType::MultiBuy { .. } |
+					CallType::AtomicBuy { .. } |
+					CallType::AtomicSell { .. } |
+					CallType::CompoundRewards |
+					CallType::ProvideLiquidityWithConversion => true,
+					_ => false,
+				}
+			}
+		}
+	}
+
+	pub mod pallet_vesting_mangata {
+		use super::*;
+		parameter_types! {
+			pub const MinVestedTransfer: Balance = 100 * currency::DOLLARS;
+		}
+	}
+
+	pub mod pallet_crowdloan_rewards {
+		use super::*;
+		parameter_types! {
+			pub const Initialized: bool = false;
+			pub const InitializationPayment: Perbill = Perbill::from_parts(214285700);
+			pub const MaxInitContributorsBatchSizes: u32 = 100;
+			pub const MinimumReward: Balance = 0;
+			pub const RelaySignaturesThreshold: Perbill = Perbill::from_percent(100);
+			pub const SigantureNetworkIdentifier: &'static [u8] = b"mangata-";
+		}
+	}
+
+	pub mod pallet_proxy {
+		use super::*;
+		// Proxy Pallet
+		/// The type used to represent the kinds of proxying allowed.
+		#[derive(
+			Copy,
+			Clone,
+			Eq,
+			PartialEq,
+			Ord,
+			PartialOrd,
+			Encode,
+			Decode,
+			RuntimeDebug,
+			MaxEncodedLen,
+			TypeInfo,
+		)]
+		pub enum ProxyType {
+			AutoCompound,
+		}
+
+		impl Default for ProxyType {
+			fn default() -> Self {
+				Self::AutoCompound
+			}
+		}
+
+		parameter_types! {
+			pub const ProxyDepositBase: Balance = deposit(1, 16);
+			pub const ProxyDepositFactor: Balance = deposit(0, 33);
+			pub const AnnouncementDepositBase: Balance = deposit(1, 16);
+			pub const AnnouncementDepositFactor: Balance = deposit(0, 68);
+		}
+	}
 }

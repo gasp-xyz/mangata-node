@@ -64,8 +64,8 @@ use sp_version::RuntimeVersion;
 use static_assertions::const_assert;
 pub use xcm::{latest::prelude::*, VersionedMultiLocation};
 
+pub use common_runtime::{currency::*, deposit, runtime_types, tokens, CallType};
 pub use constants::{fee::*, parachains::*};
-pub use common_runtime::{currency::*, deposit, tokens, runtime_types, CallType};
 
 use mangata_support::traits::{
 	AssetRegistryApi, FeeLockTriggerTrait, PreValidateSwaps, ProofOfStakeRewardsApi,
@@ -106,7 +106,6 @@ pub type SignedPayload = runtime_types::SignedPayload<Runtime, RuntimeCall>;
 pub type UncheckedExtrinsic = runtime_types::UncheckedExtrinsic<Runtime, RuntimeCall>;
 /// Extrinsic type that has already been checked.
 pub type CheckedExtrinsic = runtime_types::CheckedExtrinsic<Runtime, RuntimeCall>;
-
 
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
@@ -163,7 +162,6 @@ parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 }
 
-
 // Configure FRAME pallets to include in runtime.
 use common_runtime::config as cfg;
 
@@ -218,7 +216,6 @@ impl frame_system::Config for Runtime {
 	type MaxConsumers = cfg::frame_system::MaxConsumers;
 }
 
-
 impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
 	type Moment = u64;
@@ -260,9 +257,9 @@ parameter_types! {
 // This is because orml_tokens uses BoundedVec for Locks storage item and does not inform on failure
 // Balances uses WeakBoundedVec and so does not fail
 const_assert!(
-	<Runtime as orml_tokens::Config>::MaxLocks::get() >= <Runtime as pallet_vesting_mangata::Config>::MAX_VESTING_SCHEDULES
+	<Runtime as orml_tokens::Config>::MaxLocks::get() >=
+		<Runtime as pallet_vesting_mangata::Config>::MAX_VESTING_SCHEDULES
 );
-
 
 impl orml_tokens::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -272,13 +269,12 @@ impl orml_tokens::Config for Runtime {
 	type WeightInfo = weights::orml_tokens_weights::ModuleWeight<Runtime>;
 	type ExistentialDeposits = cfg::orml_tokens::ExistentialDeposits;
 	type MaxLocks = cfg::orml_tokens::MaxLocks;
-	type DustRemovalWhitelist = cfg::orml_tokens::DustRemovalWhitelist<cfg::TreasuryAccountIdOf<Runtime>>;
+	type DustRemovalWhitelist =
+		cfg::orml_tokens::DustRemovalWhitelist<cfg::TreasuryAccountIdOf<Runtime>>;
 	type CurrencyHooks = ();
 	type MaxReserves = ();
 	type ReserveIdentifier = cfg::orml_tokens::ReserveIdentifier;
 }
-
-
 
 impl pallet_xyk::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -294,7 +290,8 @@ impl pallet_xyk::Config for Runtime {
 	type LiquidityMiningRewards = ProofOfStake;
 	type VestingProvider = Vesting;
 	type DisallowedPools = Bootstrap;
-	type DisabledTokens = (cfg::pallet_xyk::TestTokensFilter, cfg::pallet_xyk::AssetRegisterFilter<Runtime>);
+	type DisabledTokens =
+		(cfg::pallet_xyk::TestTokensFilter, cfg::pallet_xyk::AssetRegisterFilter<Runtime>);
 	type AssetMetadataMutation = cfg::pallet_xyk::AssetMetadataMutation<Runtime>;
 	type WeightInfo = weights::pallet_xyk_weights::ModuleWeight<Runtime>;
 }
@@ -316,7 +313,8 @@ impl pallet_bootstrap::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type MaintenanceStatusProvider = Maintenance;
 	type PoolCreateApi = Xyk;
-	type DefaultBootstrapPromotedPoolWeight = cfg::pallet_bootstrap::DefaultBootstrapPromotedPoolWeight;
+	type DefaultBootstrapPromotedPoolWeight =
+		cfg::pallet_bootstrap::DefaultBootstrapPromotedPoolWeight;
 	type BootstrapUpdateBuffer = cfg::pallet_bootstrap::BootstrapUpdateBuffer;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type VestingProvider = Vesting;
@@ -327,8 +325,6 @@ impl pallet_bootstrap::Config for Runtime {
 	type AssetRegistryApi = cfg::pallet_bootstrap::EnableAssetPoolApi<Runtime>;
 }
 
-
-
 impl pallet_utility_mangata::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
@@ -338,26 +334,24 @@ impl pallet_utility_mangata::Config for Runtime {
 }
 
 use cfg::pallet_transaction_payment_mangata::{
-	OnMultiTokenUnbalanced, ToAuthor, ORMLCurrencyAdapterNegativeImbalance,
-	LiquidityInfoEnum, FeeHelpers, OnChargeHandler, ThreeCurrencyOnChargeAdapter,
-	TriggerEvent
+	FeeHelpers, LiquidityInfoEnum, ORMLCurrencyAdapterNegativeImbalance, OnChargeHandler,
+	OnMultiTokenUnbalanced, ThreeCurrencyOnChargeAdapter, ToAuthor, TriggerEvent,
 };
-
 
 // TODO: renaming foo causes compiler error
 pub struct Foo<T>(PhantomData<T>);
 impl<T> TriggerEvent<T::AccountId> for Foo<T>
 where
-	T: frame_system::Config<AccountId = sp_runtime::AccountId32>
+	T: frame_system::Config<AccountId = sp_runtime::AccountId32>,
 {
-	fn trigger(who: T::AccountId, fee: u128, tip: u128){
-			TransactionPayment::deposit_event(
-				pallet_transaction_payment_mangata::Event::<Runtime>::TransactionFeePaid {
-					who,
-					actual_fee: fee,
-					tip,
-				},
-			);
+	fn trigger(who: T::AccountId, fee: u128, tip: u128) {
+		TransactionPayment::deposit_event(
+			pallet_transaction_payment_mangata::Event::<Runtime>::TransactionFeePaid {
+				who,
+				actual_fee: fee,
+				tip,
+			},
+		);
 	}
 }
 
@@ -374,7 +368,7 @@ impl Into<CallType> for RuntimeCall {
 				sold_asset_id,
 				sold_asset_amount,
 				bought_asset_id,
-				min_amount_out
+				min_amount_out,
 			},
 			RuntimeCall::Xyk(pallet_xyk::Call::buy_asset {
 				sold_asset_id,
@@ -386,30 +380,22 @@ impl Into<CallType> for RuntimeCall {
 				sold_asset_id,
 				bought_asset_amount,
 				bought_asset_id,
-				max_amount_in
+				max_amount_in,
 			},
 			RuntimeCall::Xyk(pallet_xyk::Call::multiswap_sell_asset {
 				swap_token_list,
 				sold_asset_amount,
 				min_amount_out,
 				..
-			}) => CallType::MultiSell {
-				swap_token_list,
-				sold_asset_amount,
-				min_amount_out,
-			},
+			}) => CallType::MultiSell { swap_token_list, sold_asset_amount, min_amount_out },
 			RuntimeCall::Xyk(pallet_xyk::Call::multiswap_buy_asset {
 				swap_token_list,
 				bought_asset_amount,
 				max_amount_in,
 				..
-			}) => CallType::MultiBuy {
-				swap_token_list,
-				bought_asset_amount,
-				max_amount_in,
-			},
+			}) => CallType::MultiBuy { swap_token_list, bought_asset_amount, max_amount_in },
 			RuntimeCall::FeeLock(pallet_fee_lock::Call::unlock_fee { .. }) => CallType::UnlockFee,
-			_ => CallType::Other
+			_ => CallType::Other,
 		}
 	}
 }
@@ -420,9 +406,9 @@ pub type OnChargeTransactionHandler<T> = ThreeCurrencyOnChargeAdapter<
 	tokens::MgxTokenId,
 	tokens::RelayTokenId,
 	tokens::TurTokenId,
-	frame_support::traits::ConstU128<{common_runtime::constants::fee::RELAY_MGX_SCALE_FACTOR}>,
-	frame_support::traits::ConstU128<{common_runtime::constants::fee::TUR_MGR_SCALE_FACTOR}>,
-	Foo<T>
+	frame_support::traits::ConstU128<{ common_runtime::constants::fee::RELAY_MGX_SCALE_FACTOR }>,
+	frame_support::traits::ConstU128<{ common_runtime::constants::fee::TUR_MGR_SCALE_FACTOR }>,
+	Foo<T>,
 >;
 
 impl pallet_transaction_payment_mangata::Config for Runtime {
@@ -436,7 +422,8 @@ impl pallet_transaction_payment_mangata::Config for Runtime {
 	type LengthToFee = cfg::pallet_transaction_payment_mangata::LengthToFee;
 	type WeightToFee = WeightToFee;
 	type FeeMultiplierUpdate = cfg::pallet_transaction_payment_mangata::FeeMultiplierUpdate;
-	type OperationalFeeMultiplier = cfg::pallet_transaction_payment_mangata::OperationalFeeMultiplier;
+	type OperationalFeeMultiplier =
+		cfg::pallet_transaction_payment_mangata::OperationalFeeMultiplier;
 }
 
 parameter_types! {
@@ -451,7 +438,6 @@ impl pallet_fee_lock::Config for Runtime {
 	type NativeTokenId = tokens::MgxTokenId;
 	type WeightInfo = weights::pallet_fee_lock_weights::ModuleWeight<Runtime>;
 }
-
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -469,7 +455,6 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 impl parachain_info::Config for Runtime {}
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
-
 
 impl pallet_session::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -516,7 +501,6 @@ impl pallet_collective_mangata::Config<CouncilCollective> for Runtime {
 	type WeightInfo = weights::pallet_collective_mangata_weights::ModuleWeight<Runtime>;
 }
 
-
 // To ensure that BlocksPerRound is not zero, breaking issuance calculations
 // Also since 1 block is used for session change, atleast 1 block more needed for extrinsics to work
 const_assert!(<Runtime as parachain_staking::Config>::BlocksPerRound::get() >= 2);
@@ -561,7 +545,10 @@ impl parachain_staking::StakingBenchmarkConfig for Runtime {
 impl pallet_xyk::XykBenchmarkingConfig for Runtime {}
 
 // Issuance history must be kept for atleast the staking reward delay
-const_assert!(<Runtime as parachain_staking::Config>::RewardPaymentDelay::get() <= <Runtime as pallet_issuance::Config>::HistoryLimit::get() );
+const_assert!(
+	<Runtime as parachain_staking::Config>::RewardPaymentDelay::get() <=
+		<Runtime as pallet_issuance::Config>::HistoryLimit::get()
+);
 
 impl pallet_issuance::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -584,7 +571,6 @@ impl pallet_issuance::Config for Runtime {
 	type WeightInfo = weights::pallet_issuance_weights::ModuleWeight<Runtime>;
 	type LiquidityMiningApi = ProofOfStake;
 }
-
 
 impl pallet_vesting_mangata::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;

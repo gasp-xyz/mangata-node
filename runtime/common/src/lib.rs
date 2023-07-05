@@ -1112,6 +1112,8 @@ pub mod pallet_maintenance {
 
 pub mod parachain_staking {
 	use crate::*;
+
+	pub type StakingIssuanceVaultOf<Runtime> = <Runtime as pallet_issuance::Config>::StakingIssuanceVault;
 #[cfg(feature = "fast-runtime")]
 parameter_types! {
 	/// Default SessionLenght is every 2 minutes (10 * 12 second block times)
@@ -1161,6 +1163,27 @@ parameter_types! {
 	};
 	/// Minimum stake required to be reserved to be a delegator
 	pub const MinDelegatorStk: u128 = 1 * currency::CENTS;
+}
+}
+
+pub mod pallet_issuance {
+	use crate::*;
+parameter_types! {
+	pub const HistoryLimit: u32 = 10u32;
+
+	pub const LiquidityMiningIssuanceVaultId: PalletId = PalletId(*b"py/lqmiv");
+	pub LiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account_truncating();
+	pub const StakingIssuanceVaultId: PalletId = PalletId(*b"py/stkiv");
+	pub StakingIssuanceVault: AccountId = StakingIssuanceVaultId::get().into_account_truncating();
+
+	pub const TotalCrowdloanAllocation: Balance = 330_000_000 * DOLLARS;
+	pub const IssuanceCap: Balance = 4_000_000_000 * DOLLARS;
+	pub const LinearIssuanceBlocks: u32 = 13_140_000u32; // 5 years
+	pub const LiquidityMiningSplit: Perbill = Perbill::from_parts(555555556);
+	pub const StakingSplit: Perbill = Perbill::from_parts(444444444);
+	pub const ImmediateTGEReleasePercent: Percent = Percent::from_percent(20);
+	pub const TGEReleasePeriod: u32 = 5_256_000u32; // 2 years
+	pub const TGEReleaseBegin: u32 = 100_800u32; // Two weeks into chain start
 }
 }
 

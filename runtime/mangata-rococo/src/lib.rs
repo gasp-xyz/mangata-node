@@ -318,7 +318,7 @@ impl pallet_proof_of_stake::Config for Runtime {
 	type ActivationReservesProvider = MultiPurposeLiquidity;
 	type NativeCurrencyId = tokens::MgxTokenId;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
+	type LiquidityMiningIssuanceVault = cfg::pallet_issuance::LiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = cfg::SessionLenghtOf<Runtime>;
 	type WeightInfo = weights::pallet_proof_of_stake_weights::ModuleWeight<Runtime>;
 }
@@ -608,7 +608,7 @@ impl parachain_staking::Config for Runtime {
 	type NativeTokenId = tokens::MgxTokenId;
 	type StakingLiquidityTokenValuator = Xyk;
 	type Issuance = Issuance;
-	type StakingIssuanceVault = StakingIssuanceVault;
+	type StakingIssuanceVault = cfg::parachain_staking::StakingIssuanceVaultOf<Runtime>;
 	type FallbackProvider = Council;
 	type WeightInfo = weights::parachain_staking_weights::ModuleWeight<Runtime>;
 	type DefaultPayoutLimit = DefaultPayoutLimit;
@@ -623,43 +623,26 @@ impl parachain_staking::StakingBenchmarkConfig for Runtime {
 	type Xyk = Xyk;
 }
 
-parameter_types! {
-	pub const HistoryLimit: u32 = 10u32;
-
-	pub const LiquidityMiningIssuanceVaultId: PalletId = PalletId(*b"py/lqmiv");
-	pub LiquidityMiningIssuanceVault: AccountId = LiquidityMiningIssuanceVaultId::get().into_account_truncating();
-	pub const StakingIssuanceVaultId: PalletId = PalletId(*b"py/stkiv");
-	pub StakingIssuanceVault: AccountId = StakingIssuanceVaultId::get().into_account_truncating();
-
-	pub const TotalCrowdloanAllocation: Balance = 330_000_000 * DOLLARS;
-	pub const IssuanceCap: Balance = 4_000_000_000 * DOLLARS;
-	pub const LinearIssuanceBlocks: u32 = 13_140_000u32; // 5 years
-	pub const LiquidityMiningSplit: Perbill = Perbill::from_parts(555555556);
-	pub const StakingSplit: Perbill = Perbill::from_parts(444444444);
-	pub const ImmediateTGEReleasePercent: Percent = Percent::from_percent(20);
-	pub const TGEReleasePeriod: u32 = 5_256_000u32; // 2 years
-	pub const TGEReleaseBegin: u32 = 100_800u32; // Two weeks into chain start
-}
 
 // Issuance history must be kept for atleast the staking reward delay
-const_assert!(cfg::parachain_staking::RewardPaymentDelay::get() <= HistoryLimit::get());
+const_assert!(<Runtime as parachain_staking::Config>::RewardPaymentDelay::get() <= cfg::pallet_issuance::HistoryLimit::get());
 
 impl pallet_issuance::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type NativeCurrencyId = tokens::MgxTokenId;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type BlocksPerRound = cfg::parachain_staking::BlocksPerRound;
-	type HistoryLimit = HistoryLimit;
-	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
-	type StakingIssuanceVault = StakingIssuanceVault;
-	type TotalCrowdloanAllocation = TotalCrowdloanAllocation;
-	type IssuanceCap = IssuanceCap;
-	type LinearIssuanceBlocks = LinearIssuanceBlocks;
-	type LiquidityMiningSplit = LiquidityMiningSplit;
-	type StakingSplit = StakingSplit;
-	type ImmediateTGEReleasePercent = ImmediateTGEReleasePercent;
-	type TGEReleasePeriod = TGEReleasePeriod;
-	type TGEReleaseBegin = TGEReleaseBegin;
+	type HistoryLimit = cfg::pallet_issuance::HistoryLimit;
+	type LiquidityMiningIssuanceVault = cfg::pallet_issuance::LiquidityMiningIssuanceVault;
+	type StakingIssuanceVault = cfg::pallet_issuance::StakingIssuanceVault;
+	type TotalCrowdloanAllocation = cfg::pallet_issuance::TotalCrowdloanAllocation;
+	type IssuanceCap = cfg::pallet_issuance::IssuanceCap;
+	type LinearIssuanceBlocks = cfg::pallet_issuance::LinearIssuanceBlocks;
+	type LiquidityMiningSplit = cfg::pallet_issuance::LiquidityMiningSplit;
+	type StakingSplit = cfg::pallet_issuance::StakingSplit;
+	type ImmediateTGEReleasePercent = cfg::pallet_issuance::ImmediateTGEReleasePercent;
+	type TGEReleasePeriod = cfg::pallet_issuance::TGEReleasePeriod;
+	type TGEReleaseBegin = cfg::pallet_issuance::TGEReleaseBegin;
 	type VestingProvider = Vesting;
 	type WeightInfo = weights::pallet_issuance_weights::ModuleWeight<Runtime>;
 	type LiquidityMiningApi = ProofOfStake;

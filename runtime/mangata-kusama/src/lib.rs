@@ -590,7 +590,7 @@ impl parachain_staking::Config for Runtime {
 	type NativeTokenId = tokens::MgxTokenId;
 	type StakingLiquidityTokenValuator = Xyk;
 	type Issuance = Issuance;
-	type StakingIssuanceVault = StakingIssuanceVault;
+	type StakingIssuanceVault = cfg::parachain_staking::StakingIssuanceVaultOf<Runtime>;
 	type FallbackProvider = Council;
 	type WeightInfo = weights::parachain_staking_weights::ModuleWeight<Runtime>;
 	type DefaultPayoutLimit = DefaultPayoutLimit;

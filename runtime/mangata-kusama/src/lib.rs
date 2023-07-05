@@ -561,82 +561,32 @@ impl pallet_collective_mangata::Config<CouncilCollective> for Runtime {
 	type WeightInfo = weights::pallet_collective_mangata_weights::ModuleWeight<Runtime>;
 }
 
-#[cfg(feature = "fast-runtime")]
-parameter_types! {
-	/// Default SessionLenght is every 2 minutes (10 * 12 second block times)
-	pub const BlocksPerRound: u32 = 2 * MINUTES;
-}
-
-#[cfg(not(feature = "fast-runtime"))]
-parameter_types! {
-	/// Default SessionLenght is every 4 hours (1200 * 12 second block times)
-	pub const BlocksPerRound: u32 = 4 * HOURS;
-}
-
-parameter_types! {
-	/// Collator candidate exit delay (number of rounds)
-	pub const LeaveCandidatesDelay: u32 = 2;
-	/// Collator candidate bond increases/decreases delay (number of rounds)
-	pub const CandidateBondDelay: u32 = 2;
-	/// Delegator exit delay (number of rounds)
-	pub const LeaveDelegatorsDelay: u32 = 2;
-	/// Delegation revocations delay (number of rounds)
-	pub const RevokeDelegationDelay: u32 = 2;
-	/// Delegation bond increases/decreases delay (number of rounds)
-	pub const DelegationBondDelay: u32 = 2;
-	/// Reward payments delay (number of rounds)
-	pub const RewardPaymentDelay: u32 = 2;
-	/// Minimum collators selected per round, default at genesis and minimum forever after
-	pub const MinSelectedCandidates: u32 = 25;
-	/// Maximum collator candidates allowed
-	pub const MaxCollatorCandidates: u32 = 50;
-	/// Maximum delegators allowed per candidate
-	pub const MaxTotalDelegatorsPerCandidate: u32 = 25;
-	/// Maximum delegators counted per candidate
-	pub const MaxDelegatorsPerCandidate: u32 = 12;
-	/// Maximum delegations per delegator
-	pub const MaxDelegationsPerDelegator: u32 = 30;
-	/// Default fixed percent a collator takes off the top of due rewards
-	pub const DefaultCollatorCommission: Perbill = Perbill::from_percent(20);
-	/// Minimum stake required to become a collator
-	pub const MinCollatorStk: u128 = 10 * DOLLARS;
-	/// Minimum stake required to be reserved to be a candidate
-	pub const MinCandidateStk: u128 = if cfg!(feature = "runtime-benchmarks") {
-		// For benchmarking
-		1 * DOLLARS
-	} else {
-		// ACTUAL
-		1_500_000 * DOLLARS
-	};
-	/// Minimum stake required to be reserved to be a delegator
-	pub const MinDelegatorStk: u128 = 1 * CENTS;
-}
 
 // To ensure that BlocksPerRound is not zero, breaking issuance calculations
 // Also since 1 block is used for session change, atleast 1 block more needed for extrinsics to work
-const_assert!(BlocksPerRound::get() >= 2);
+const_assert!(cfg::parachain_staking::BlocksPerRound::get() >= 2);
 
 impl parachain_staking::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type StakingReservesProvider = MultiPurposeLiquidity;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type MonetaryGovernanceOrigin = EnsureRoot<AccountId>;
-	type BlocksPerRound = BlocksPerRound;
-	type LeaveCandidatesDelay = LeaveCandidatesDelay;
-	type CandidateBondDelay = CandidateBondDelay;
-	type LeaveDelegatorsDelay = LeaveDelegatorsDelay;
-	type RevokeDelegationDelay = RevokeDelegationDelay;
-	type DelegationBondDelay = DelegationBondDelay;
-	type RewardPaymentDelay = RewardPaymentDelay;
-	type MinSelectedCandidates = MinSelectedCandidates;
-	type MaxCollatorCandidates = MaxCollatorCandidates;
-	type MaxTotalDelegatorsPerCandidate = MaxTotalDelegatorsPerCandidate;
-	type MaxDelegatorsPerCandidate = MaxDelegatorsPerCandidate;
-	type MaxDelegationsPerDelegator = MaxDelegationsPerDelegator;
-	type DefaultCollatorCommission = DefaultCollatorCommission;
-	type MinCollatorStk = MinCollatorStk;
-	type MinCandidateStk = MinCandidateStk;
-	type MinDelegation = MinDelegatorStk;
+	type BlocksPerRound = cfg::parachain_staking::BlocksPerRound;
+	type LeaveCandidatesDelay = cfg::parachain_staking::LeaveCandidatesDelay;
+	type CandidateBondDelay = cfg::parachain_staking::CandidateBondDelay;
+	type LeaveDelegatorsDelay = cfg::parachain_staking::LeaveDelegatorsDelay;
+	type RevokeDelegationDelay = cfg::parachain_staking::RevokeDelegationDelay;
+	type DelegationBondDelay = cfg::parachain_staking::DelegationBondDelay;
+	type RewardPaymentDelay = cfg::parachain_staking::RewardPaymentDelay;
+	type MinSelectedCandidates = cfg::parachain_staking::MinSelectedCandidates;
+	type MaxCollatorCandidates = cfg::parachain_staking::MaxCollatorCandidates;
+	type MaxTotalDelegatorsPerCandidate = cfg::parachain_staking::MaxTotalDelegatorsPerCandidate;
+	type MaxDelegatorsPerCandidate = cfg::parachain_staking::MaxDelegatorsPerCandidate;
+	type MaxDelegationsPerDelegator = cfg::parachain_staking::MaxDelegationsPerDelegator;
+	type DefaultCollatorCommission = cfg::parachain_staking::DefaultCollatorCommission;
+	type MinCollatorStk = cfg::parachain_staking::MinCollatorStk;
+	type MinCandidateStk = cfg::parachain_staking::MinCandidateStk;
+	type MinDelegation = cfg::parachain_staking::MinDelegatorStk;
 	type NativeTokenId = tokens::MgxTokenId;
 	type StakingLiquidityTokenValuator = Xyk;
 	type Issuance = Issuance;

@@ -1110,4 +1110,8 @@ pub mod pallet_maintenance {
 	}
 }
 
+pub mod parachain_staking {
+	use crate::*;
+}
+
 }

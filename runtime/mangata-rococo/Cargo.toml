@@ -244,7 +244,7 @@ try-runtime = [
 	"pallet-root-testing/try-runtime"
 ]
 
-fast-runtime = []
+fast-runtime = ["common-runtime/fast-runtime"]
 
 runtime-benchmarks = [
 	"polkadot-primitives/runtime-benchmarks",

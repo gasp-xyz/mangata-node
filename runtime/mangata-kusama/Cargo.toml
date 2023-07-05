@@ -236,7 +236,7 @@ try-runtime = [
 	"sp-runtime/try-runtime"
 ]
 
-fast-runtime = []
+fast-runtime = ["common-runtime/fast-runtime"]
 
 runtime-benchmarks = [
 	"polkadot-primitives/runtime-benchmarks",

@@ -390,7 +390,7 @@ use cfg::pallet_transaction_payment_mangata::{
 
 
 // TODO: renaming foo causes compiler error
-pub struct Trigger<T>(PhantomData<T>);
+pub struct Foo<T>(PhantomData<T>);
 impl<T> TriggerEvent<T::AccountId> for Foo<T>
 where
 	T: frame_system::Config<AccountId = sp_runtime::AccountId32>
@@ -490,17 +490,13 @@ parameter_types! {
 
 impl pallet_fee_lock::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type MaxCuratedTokens = MaxCuratedTokens;
+	type MaxCuratedTokens = cfg::pallet_fee_lock::MaxCuratedTokens;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type PoolReservesProvider = Xyk;
 	type NativeTokenId = tokens::MgxTokenId;
 	type WeightInfo = weights::pallet_fee_lock_weights::ModuleWeight<Runtime>;
 }
 
-parameter_types! {
-	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
-	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
-}
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -508,10 +504,10 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type OnSystemEvent = ();
 	type SelfParaId = ParachainInfo;
 	type DmpMessageHandler = DmpQueue;
-	type ReservedDmpWeight = ReservedDmpWeight;
+	type ReservedDmpWeight = cfg::cumulus_pallet_parachain_system::ReservedDmpWeight;
 	type OutboundXcmpMessageSource = XcmpQueue;
 	type XcmpMessageHandler = XcmpQueue;
-	type ReservedXcmpWeight = ReservedXcmpWeight;
+	type ReservedXcmpWeight = cfg::cumulus_pallet_parachain_system::ReservedXcmpWeight;
 	type CheckAssociatedRelayNumber = cumulus_pallet_parachain_system::AnyRelayNumber;
 }
 
@@ -519,11 +515,6 @@ impl parachain_info::Config for Runtime {}
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
-parameter_types! {
-	pub const Period: u32 = 6 * HOURS;
-	pub const Offset: u32 = 0;
-	pub const MaxAuthorities: u32 = 100_000;
-}
 
 impl pallet_session::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -542,7 +533,7 @@ impl pallet_session::Config for Runtime {
 impl pallet_aura::Config for Runtime {
 	type AuthorityId = AuraId;
 	type DisabledValidators = ();
-	type MaxAuthorities = MaxAuthorities;
+	type MaxAuthorities = cfg::pallet_aura::MaxAuthorities;
 }
 
 impl pallet_sudo_mangata::Config for Runtime {
@@ -553,24 +544,7 @@ impl pallet_sudo_mangata::Config for Runtime {
 impl pallet_sudo_origin::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
-	type SudoOrigin =
-		pallet_collective_mangata::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>;
-}
-
-#[cfg(not(feature = "fast-runtime"))]
-parameter_types! {
-	pub const CouncilProposalCloseDelay: BlockNumber = 3 * DAYS;
-}
-
-#[cfg(feature = "fast-runtime")]
-parameter_types! {
-	pub const CouncilProposalCloseDelay: BlockNumber = 6 * MINUTES;
-}
-
-parameter_types! {
-	pub const CouncilMotionDuration: BlockNumber = 5 * DAYS;
-	pub const CouncilMaxProposals: u32 = 100;
-	pub const CouncilMaxMembers: u32 = 100;
+	type SudoOrigin = cfg::pallet_sudo_origin::SudoOrigin<CouncilCollective>;
 }
 
 type CouncilCollective = pallet_collective_mangata::Instance1;
@@ -578,11 +552,11 @@ impl pallet_collective_mangata::Config<CouncilCollective> for Runtime {
 	type RuntimeOrigin = RuntimeOrigin;
 	type Proposal = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
-	type MotionDuration = CouncilMotionDuration;
-	type ProposalCloseDelay = CouncilProposalCloseDelay;
-	type MaxProposals = CouncilMaxProposals;
-	type MaxMembers = CouncilMaxMembers;
-	type FoundationAccountsProvider = FoundationAccountsProvider<Runtime>;
+	type MotionDuration = cfg::pallet_collective_mangata::CouncilMotionDuration;
+	type ProposalCloseDelay = cfg::pallet_collective_mangata::CouncilProposalCloseDelay;
+	type MaxProposals = cfg::pallet_collective_mangata::CouncilMaxProposals;
+	type MaxMembers = cfg::pallet_collective_mangata::CouncilMaxMembers;
+	type FoundationAccountsProvider = cfg::pallet_maintenance::FoundationAccountsProvider<Runtime>;
 	type DefaultVote = pallet_collective_mangata::PrimeDefaultVote;
 	type WeightInfo = weights::pallet_collective_mangata_weights::ModuleWeight<Runtime>;
 }
@@ -933,30 +907,9 @@ impl pallet_identity::Config for Runtime {
 	type WeightInfo = pallet_identity::weights::SubstrateWeight<Runtime>;
 }
 
-pub struct FoundationAccountsProvider<T: frame_system::Config>(PhantomData<T>);
-impl<T: frame_system::Config> Get<Vec<T::AccountId>> for FoundationAccountsProvider<T> {
-	fn get() -> Vec<T::AccountId> {
-		let accounts = vec![
-			hex_literal::hex!["c8d02dfbff5ce2fda651c7dd7719bc5b17b9c1043fded805bfc86296c5909871"],
-			hex_literal::hex!["c4690c56c36cec7ed5f6ed5d5eebace0c317073a962ebea1d00f1a304974897b"],
-			hex_literal::hex!["fc741134c82b81b7ab7efbf334b0c90ff8dbf22c42ad705ea7c04bf27ed4161a"],
-		];
-
-		accounts
-			.into_iter()
-			.map(|acc| {
-				T::AccountId::decode(&mut sp_runtime::AccountId32::as_ref(
-					&sp_runtime::AccountId32::from(acc),
-				))
-				.unwrap()
-			})
-			.collect()
-	}
-}
-
 impl pallet_maintenance::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type FoundationAccountsProvider = FoundationAccountsProvider<Runtime>;
+	type FoundationAccountsProvider = cfg::pallet_maintenance::FoundationAccountsProvider<Runtime>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

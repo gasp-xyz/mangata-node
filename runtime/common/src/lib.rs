@@ -1038,4 +1038,76 @@ where
 
 }
 
+pub mod pallet_fee_lock{
+	use crate::*;
+	parameter_types! {
+		pub const MaxCuratedTokens: u32 = 100;
+	}
+
+}
+
+pub mod cumulus_pallet_parachain_system{
+	use crate::*;
+	parameter_types! {
+		pub const ReservedXcmpWeight: Weight = consts::MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
+		pub const ReservedDmpWeight: Weight = consts::MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
+	}
+
+}
+
+pub mod pallet_aura {
+	use crate::*;
+	parameter_types! {
+		pub const MaxAuthorities: u32 = 100_000;
+	}
+}
+
+pub mod pallet_sudo_origin {
+	use crate::*;
+	pub type SudoOrigin<CouncilCollective> = pallet_collective_mangata::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>;
+}
+
+pub mod pallet_collective_mangata {
+	use crate::*;
+#[cfg(not(feature = "fast-runtime"))]
+	parameter_types! {
+		pub const CouncilProposalCloseDelay: BlockNumber = 3 * consts::DAYS;
+	}
+
+#[cfg(feature = "fast-runtime")]
+	parameter_types! {
+		pub const CouncilProposalCloseDelay: BlockNumber = 6 * MINUTES;
+	}
+
+	parameter_types! {
+		pub const CouncilMotionDuration: BlockNumber = 5 * consts::DAYS;
+		pub const CouncilMaxProposals: u32 = 100;
+		pub const CouncilMaxMembers: u32 = 100;
+	}
+}
+
+pub mod pallet_maintenance {
+	use crate::*;
+	pub struct FoundationAccountsProvider<T: frame_system::Config>(PhantomData<T>);
+	impl<T: frame_system::Config> Get<Vec<T::AccountId>> for FoundationAccountsProvider<T> {
+		fn get() -> Vec<T::AccountId> {
+			let accounts = vec![
+				hex_literal::hex!["c8d02dfbff5ce2fda651c7dd7719bc5b17b9c1043fded805bfc86296c5909871"],
+				hex_literal::hex!["c4690c56c36cec7ed5f6ed5d5eebace0c317073a962ebea1d00f1a304974897b"],
+				hex_literal::hex!["fc741134c82b81b7ab7efbf334b0c90ff8dbf22c42ad705ea7c04bf27ed4161a"],
+			];
+
+				accounts
+					.into_iter()
+					.map(|acc| {
+						T::AccountId::decode(&mut sp_runtime::AccountId32::as_ref(
+								&sp_runtime::AccountId32::from(acc),
+								))
+							.unwrap()
+					})
+				.collect()
+		}
+	}
+}
+
 }

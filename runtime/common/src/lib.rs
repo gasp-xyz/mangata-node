@@ -1112,6 +1112,56 @@ pub mod pallet_maintenance {
 
 pub mod parachain_staking {
 	use crate::*;
+#[cfg(feature = "fast-runtime")]
+parameter_types! {
+	/// Default SessionLenght is every 2 minutes (10 * 12 second block times)
+	pub const BlocksPerRound: u32 = 2 * MINUTES;
+}
+
+#[cfg(not(feature = "fast-runtime"))]
+parameter_types! {
+	/// Default SessionLenght is every 4 hours (1200 * 12 second block times)
+	pub const BlocksPerRound: u32 = 4 * consts::HOURS;
+}
+
+parameter_types! {
+	/// Collator candidate exit delay (number of rounds)
+	pub const LeaveCandidatesDelay: u32 = 2;
+	/// Collator candidate bond increases/decreases delay (number of rounds)
+	pub const CandidateBondDelay: u32 = 2;
+	/// Delegator exit delay (number of rounds)
+	pub const LeaveDelegatorsDelay: u32 = 2;
+	/// Delegation revocations delay (number of rounds)
+	pub const RevokeDelegationDelay: u32 = 2;
+	/// Delegation bond increases/decreases delay (number of rounds)
+	pub const DelegationBondDelay: u32 = 2;
+	/// Reward payments delay (number of rounds)
+	pub const RewardPaymentDelay: u32 = 2;
+	/// Minimum collators selected per round, default at genesis and minimum forever after
+	pub const MinSelectedCandidates: u32 = 25;
+	/// Maximum collator candidates allowed
+	pub const MaxCollatorCandidates: u32 = 50;
+	/// Maximum delegators allowed per candidate
+	pub const MaxTotalDelegatorsPerCandidate: u32 = 25;
+	/// Maximum delegators counted per candidate
+	pub const MaxDelegatorsPerCandidate: u32 = 12;
+	/// Maximum delegations per delegator
+	pub const MaxDelegationsPerDelegator: u32 = 30;
+	/// Default fixed percent a collator takes off the top of due rewards
+	pub const DefaultCollatorCommission: Perbill = Perbill::from_percent(20);
+	/// Minimum stake required to become a collator
+	pub const MinCollatorStk: u128 = 10 * currency::DOLLARS;
+	/// Minimum stake required to be reserved to be a candidate
+	pub const MinCandidateStk: u128 = if cfg!(feature = "runtime-benchmarks") {
+		// For benchmarking
+		1 * currency::DOLLARS
+	} else {
+		// ACTUAL
+		1_500_000 * currency::DOLLARS
+	};
+	/// Minimum stake required to be reserved to be a delegator
+	pub const MinDelegatorStk: u128 = 1 * currency::CENTS;
+}
 }
 
 }

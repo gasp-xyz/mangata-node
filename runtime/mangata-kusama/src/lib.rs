@@ -624,13 +624,14 @@ parameter_types! {
 }
 
 // Issuance history must be kept for atleast the staking reward delay
-const_assert!(RewardPaymentDelay::get() <= HistoryLimit::get());
+const_assert!(cfg::parachain_staking::RewardPaymentDelay::get() <= HistoryLimit::get());
 
 impl pallet_issuance::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type NativeCurrencyId = tokens::MgxTokenId;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-	type BlocksPerRound = BlocksPerRound;
+	//TODO
+	type BlocksPerRound = cfg::parachain_staking::BlocksPerRound;
 	type HistoryLimit = HistoryLimit;
 	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
 	type StakingIssuanceVault = StakingIssuanceVault;

@@ -1185,6 +1185,15 @@ parameter_types! {
 	pub const TGEReleasePeriod: u32 = 5_256_000u32; // 2 years
 	pub const TGEReleaseBegin: u32 = 100_800u32; // Two weeks into chain start
 }
+
+
+	// pub struct TreasuryAccountIdOf<T: ::pallet_issuance::Config>(PhantomData<T>);
+	// impl<T : ::pallet_issuance::Config> Get<AccountId> for IssuanceVaultAccountIdOf<T>{
+	// 	fn get() -> AccountId {
+	// 		TreasuryPalletIdOf::<T>::get().into_account_truncating()
+	// 	}
+	// }
+
 }
 
 }

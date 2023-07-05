@@ -582,7 +582,7 @@ impl pallet_collective_mangata::Config<CouncilCollective> for Runtime {
 
 // To ensure that BlocksPerRound is not zero, breaking issuance calculations
 // Also since 1 block is used for session change, atleast 1 block more needed for extrinsics to work
-const_assert!(cfg::parachain_staking::BlocksPerRound::get() >= 2);
+const_assert!(<Runtime as parachain_staking::Config>::BlocksPerRound::get() >= 2);
 
 impl parachain_staking::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -625,7 +625,7 @@ impl parachain_staking::StakingBenchmarkConfig for Runtime {
 
 
 // Issuance history must be kept for atleast the staking reward delay
-const_assert!(<Runtime as parachain_staking::Config>::RewardPaymentDelay::get() <= cfg::pallet_issuance::HistoryLimit::get());
+const_assert!(<Runtime as parachain_staking::Config>::RewardPaymentDelay::get() <= <Runtime as pallet_issuance::Config>::HistoryLimit::get() );
 
 impl pallet_issuance::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;

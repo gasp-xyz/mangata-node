@@ -173,6 +173,36 @@ pub mod consts {
 
 }
 
+pub enum CallType {
+	AtomicSell{
+		sold_asset_id: TokenId,
+		sold_asset_amount: Balance,
+		bought_asset_id: TokenId,
+		min_amount_out: Balance,
+	},
+	AtomicBuy{
+		sold_asset_id: TokenId,
+		bought_asset_amount: Balance,
+		bought_asset_id: TokenId,
+		max_amount_in: Balance,
+	},
+	MultiSell{
+		swap_token_list: Vec<TokenId>,
+		sold_asset_amount: Balance,
+		min_amount_out: Balance,
+	},
+	MultiBuy{
+		swap_token_list: Vec<TokenId>,
+		bought_asset_amount: Balance,
+		max_amount_in: Balance,
+	},
+	CompoundRewards,
+	ProvideLiquidityWithConversion,
+	UnlockFee,
+	UtilityInnerCall,
+	Other,
+}
+
 pub mod config {
 	use super::*;
 
@@ -444,9 +474,6 @@ impl<T: ::orml_tokens::Config + ::pallet_authorship::Config> OnMultiTokenUnbalan
 	}
 }
 
-pub trait TippingCheck {
-	fn can_be_tipped(&self) -> bool;
-}
 #[derive(Encode, Decode, TypeInfo)]
 pub enum LiquidityInfoEnum<C: MultiTokenCurrency<T::AccountId>, T: frame_system::Config> {
 	Imbalance((C::CurrencyId, NegativeImbalanceOf<C, T>)),
@@ -641,32 +668,6 @@ const SINGLE_HOP_MULTISWAP: usize = 2;
 #[derive(Encode, Decode, Clone, TypeInfo)]
 pub struct OnChargeHandler<C, OU, OCA, OFLA>(PhantomData<(C, OU, OCA, OFLA)>);
 
-pub enum CallType {
-	AtomicSell{
-		sold_asset_id: TokenId,
-		sold_asset_amount: Balance,
-		bought_asset_id: TokenId,
-		min_amount_out: Balance,
-	},
-	AtomicBuy{
-		sold_asset_id: TokenId,
-		bought_asset_amount: Balance,
-		bought_asset_id: TokenId,
-		max_amount_in: Balance,
-	},
-	MultiSell{
-		swap_token_list: Vec<TokenId>,
-		sold_asset_amount: Balance,
-		min_amount_out: Balance,
-	},
-	MultiBuy{
-		swap_token_list: Vec<TokenId>,
-		bought_asset_amount: Balance,
-		max_amount_in: Balance,
-	},
-	UnlockFee,
-	Other,
-}
 
 /// Default implementation for a Currency and an OnUnbalanced handler.
 ///
@@ -675,8 +676,7 @@ pub enum CallType {
 impl<T, C, OU, OCA, OFLA> OnChargeTransaction<T> for OnChargeHandler<C, OU, OCA, OFLA>
 where
 	T: pallet_transaction_payment_mangata::Config + pallet_xyk::Config + pallet_fee_lock::Config,
-	<T as frame_system::Config>::RuntimeCall: TippingCheck,
-	<T as frame_system::Config>::RuntimeCall: Into<CallType>,
+	<T as frame_system::Config>::RuntimeCall: Into<crate::CallType>,
 	T::LengthToFee: frame_support::weights::WeightToFee<
 		Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
 	>,
@@ -715,22 +715,29 @@ where
 		fee: Self::Balance,
 		tip: Self::Balance,
 	) -> Result<Self::LiquidityInfo, TransactionValidityError> {
-		if !call.can_be_tipped() {
-			ensure!(
-				tip.is_zero(),
-				TransactionValidityError::Invalid(
-					InvalidTransaction::TippingNotAllowedForSwaps.into(),
-				)
-			);
-		}
+		let call_type: crate::CallType = (*call).clone().into();
+
+		match call_type{
+			crate::CallType::MultiSell{..} |
+				crate::CallType::MultiBuy{..} |
+				crate::CallType::AtomicBuy{..} |
+				crate::CallType::AtomicSell{..}  => {
+					ensure!(
+						tip.is_zero(),
+						TransactionValidityError::Invalid(
+							InvalidTransaction::TippingNotAllowedForSwaps.into(),
+							)
+						);
+				}
+			_ => {}
+		};
 
 		// call.is_unlock_fee();
 
 		// THIS IS NOT PROXY PALLET COMPATIBLE, YET
 		// Also ugly implementation to keep it maleable for now
-		let call_type: CallType = (*call).clone().into();
 		match (call_type, pallet_fee_lock::FeeLockMetadata::<T>::get()) {
-			(CallType::AtomicSell{sold_asset_id,
+			(crate::CallType::AtomicSell{sold_asset_id,
 					sold_asset_amount,
 					bought_asset_id,
 					min_amount_out},
@@ -745,7 +752,7 @@ where
 					min_amount_out,
 				)
 			},
-			(CallType::AtomicBuy{
+			(crate::CallType::AtomicBuy{
 				sold_asset_id,
 				bought_asset_amount,
 				bought_asset_id,
@@ -761,7 +768,7 @@ where
 					max_amount_in,
 				)
 			},
-			(CallType::MultiBuy{
+			(crate::CallType::MultiBuy{
 				swap_token_list,
 				bought_asset_amount,
 				max_amount_in},
@@ -784,7 +791,7 @@ where
 							max_amount_in,
 						)
 			},
-			(CallType::MultiBuy{
+			(crate::CallType::MultiBuy{
 				swap_token_list,
 				bought_asset_amount,
 				max_amount_in},
@@ -797,7 +804,7 @@ where
 					bought_asset_amount,
 					max_amount_in)
 			},
-			(CallType::MultiSell{
+			(crate::CallType::MultiSell{
 				swap_token_list,
 				sold_asset_amount,
 				min_amount_out},
@@ -819,7 +826,7 @@ where
 							min_amount_out,
 						)
 			},
-			(CallType::MultiSell{
+			(crate::CallType::MultiSell{
 				swap_token_list,
 				sold_asset_amount,
 				min_amount_out},
@@ -832,7 +839,7 @@ where
 					min_amount_out,
 					)
 			},
-			(CallType::UnlockFee, _) => {
+			(crate::CallType::UnlockFee, _) => {
 				let imb = C::withdraw(
 					tokens::MgxTokenId::get().into(),
 					who,
@@ -1127,6 +1134,7 @@ parameter_types! {
 }
 
 parameter_types! {
+	pub const DefaultPayoutLimit: u32 = 3;
 	/// Collator candidate exit delay (number of rounds)
 	pub const LeaveCandidatesDelay: u32 = 2;
 	/// Collator candidate bond increases/decreases delay (number of rounds)
@@ -1237,6 +1245,124 @@ T: frame_system::Config
 	fn try_successful_origin(_asset_id: &Option<u32>) -> Result<T::RuntimeOrigin, ()> {
 		Ok(T::RuntimeOrigin::root())
 	}
+}
+
+
+
+}
+
+pub mod pallet_identity{
+	use crate::*;
+parameter_types! {
+	// Add item in storage and take 270 bytes, Registry { [], Balance, Info { [], [u8,32] * 7, [u8,20] }}
+	pub const BasicDeposit: Balance = deposit(1, 270);
+	// No item in storage, extra field takes 66 bytes, ([u8,32], [u8,32])
+	pub const FieldDeposit: Balance = deposit(0, 66);
+	// Add item in storage, and takes 97 bytes, AccountId + (AccountId, [u8,32])
+	pub const SubAccountDeposit: Balance = deposit(1, 97);
+	pub const MaxSubAccounts: u32 = 100;
+	pub const MaxAdditionalFields: u32 = 100;
+	pub const MaxRegistrars: u32 = 20;
+}
+
+pub type IdentityForceOrigin = EnsureRoot<AccountId>;
+pub type IdentityRegistrarOrigin = EnsureRoot<AccountId>;
+}
+
+pub mod pallet_utility_mangata {
+	use super::*;
+
+#[derive(
+	Copy,
+	Clone,
+	Eq,
+	PartialEq,
+	Ord,
+	PartialOrd,
+	Encode,
+	Decode,
+	RuntimeDebug,
+	MaxEncodedLen,
+	TypeInfo,
+	)]
+	pub struct DisallowedInBatch<Runtime>(PhantomData<Runtime>);
+
+impl<T> Contains<T::RuntimeCall> for DisallowedInBatch<T> where
+	T: ::frame_system::Config,
+	<T as ::frame_system::Config>::RuntimeCall: Into<crate::CallType>,
+{
+
+	fn contains(c: &T::RuntimeCall) -> bool {
+		let call: crate::CallType = (c.clone()).into();
+
+		match call {
+			CallType::MultiSell{..} |
+			CallType::MultiBuy{..} |
+			CallType::AtomicBuy{..} |
+			CallType::AtomicSell{..}  |
+			CallType::CompoundRewards |
+			CallType::ProvideLiquidityWithConversion  => true,
+			_ => false,
+		}
+	}
+}
+}
+
+pub mod pallet_vesting_mangata {
+	use super::*;
+	parameter_types! {
+		pub const MinVestedTransfer: Balance = 100 * currency::DOLLARS;
+	}
+
+}
+
+pub mod pallet_crowdloan_rewards {
+	use super::*;
+parameter_types! {
+	pub const Initialized: bool = false;
+	pub const InitializationPayment: Perbill = Perbill::from_parts(214285700);
+	pub const MaxInitContributorsBatchSizes: u32 = 100;
+	pub const MinimumReward: Balance = 0;
+	pub const RelaySignaturesThreshold: Perbill = Perbill::from_percent(100);
+	pub const SigantureNetworkIdentifier: &'static [u8] = b"mangata-";
+}
+
+}
+
+pub mod pallet_proxy {
+	use super::*;
+	// Proxy Pallet
+	/// The type used to represent the kinds of proxying allowed.
+#[derive(
+	Copy,
+	Clone,
+	Eq,
+	PartialEq,
+	Ord,
+	PartialOrd,
+	Encode,
+	Decode,
+	RuntimeDebug,
+	MaxEncodedLen,
+	TypeInfo,
+	)]
+	pub enum ProxyType
+	{
+		AutoCompound,
+	}
+
+impl Default for ProxyType
+	{
+		fn default() -> Self {
+			Self::AutoCompound
+		}
+	}
+
+parameter_types! {
+	pub const ProxyDepositBase: Balance = deposit(1, 16);
+	pub const ProxyDepositFactor: Balance = deposit(0, 33);
+	pub const AnnouncementDepositBase: Balance = deposit(1, 16);
+	pub const AnnouncementDepositFactor: Balance = deposit(0, 68);
 }
 
 

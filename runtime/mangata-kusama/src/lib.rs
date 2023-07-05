@@ -65,7 +65,7 @@ use static_assertions::const_assert;
 pub use xcm::{latest::prelude::*, VersionedMultiLocation};
 
 pub use constants::{fee::*, parachains::*};
-pub use common_runtime::{currency::*, deposit, tokens, runtime_types};
+pub use common_runtime::{currency::*, deposit, tokens, runtime_types, CallType};
 
 use mangata_support::traits::{
 	AssetRegistryApi, FeeLockTriggerTrait, PreValidateSwaps, ProofOfStakeRewardsApi,
@@ -232,11 +232,6 @@ impl pallet_authorship::Config for Runtime {
 	type EventHandler = ParachainStaking;
 }
 
-
-parameter_types! {
-	pub const DefaultPayoutLimit: u32 = 3;
-}
-
 impl pallet_treasury::Config for Runtime {
 	type PalletId = cfg::pallet_treasury::TreasuryPalletId;
 	type Currency = orml_tokens::CurrencyAdapter<Runtime, tokens::MgxTokenId>;
@@ -333,60 +328,20 @@ impl pallet_bootstrap::Config for Runtime {
 }
 
 
-impl TippingCheck for RuntimeCall {
-	fn can_be_tipped(&self, ) -> bool {
-		match self {
-			RuntimeCall::Xyk(pallet_xyk::Call::sell_asset { .. }) |
-			RuntimeCall::Xyk(pallet_xyk::Call::buy_asset { .. }) |
-			RuntimeCall::Xyk(pallet_xyk::Call::multiswap_sell_asset { .. }) |
-			RuntimeCall::Xyk(pallet_xyk::Call::multiswap_buy_asset { .. }) => false,
-			_ => true,
-		}
-	}
-}
-
-#[derive(
-	Copy,
-	Clone,
-	Eq,
-	PartialEq,
-	Ord,
-	PartialOrd,
-	Encode,
-	Decode,
-	RuntimeDebug,
-	MaxEncodedLen,
-	TypeInfo,
-)]
-pub struct DisallowedInBatch;
-impl Contains<RuntimeCall> for DisallowedInBatch {
-	fn contains(c: &RuntimeCall) -> bool {
-		match c {
-			RuntimeCall::Xyk(pallet_xyk::Call::sell_asset { .. }) |
-			RuntimeCall::Xyk(pallet_xyk::Call::buy_asset { .. }) |
-			RuntimeCall::Xyk(pallet_xyk::Call::multiswap_sell_asset { .. }) |
-			RuntimeCall::Xyk(pallet_xyk::Call::multiswap_buy_asset { .. }) |
-			RuntimeCall::Xyk(pallet_xyk::Call::compound_rewards { .. }) |
-			RuntimeCall::Xyk(pallet_xyk::Call::provide_liquidity_with_conversion { .. }) => true,
-			_ => false,
-		}
-	}
-}
 
 impl pallet_utility_mangata::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
-	type DisallowedInBatch = DisallowedInBatch;
+	type DisallowedInBatch = cfg::pallet_utility_mangata::DisallowedInBatch<Runtime>;
 	type PalletsOrigin = OriginCaller;
 	type WeightInfo = weights::pallet_utility_mangata_weights::ModuleWeight<Runtime>;
 }
 
 use cfg::pallet_transaction_payment_mangata::{
 	OnMultiTokenUnbalanced, ToAuthor, ORMLCurrencyAdapterNegativeImbalance,
-	LiquidityInfoEnum, FeeHelpers, OnChargeHandler, ThreeCurrencyOnChargeAdapter, TippingCheck,
-	TriggerEvent, CallType
+	LiquidityInfoEnum, FeeHelpers, OnChargeHandler, ThreeCurrencyOnChargeAdapter,
+	TriggerEvent
 };
-
 
 
 // TODO: renaming foo causes compiler error
@@ -593,7 +548,7 @@ impl parachain_staking::Config for Runtime {
 	type StakingIssuanceVault = cfg::parachain_staking::StakingIssuanceVaultOf<Runtime>;
 	type FallbackProvider = Council;
 	type WeightInfo = weights::parachain_staking_weights::ModuleWeight<Runtime>;
-	type DefaultPayoutLimit = DefaultPayoutLimit;
+	type DefaultPayoutLimit = cfg::parachain_staking::DefaultPayoutLimit;
 }
 
 impl parachain_staking::StakingBenchmarkConfig for Runtime {
@@ -630,42 +585,30 @@ impl pallet_issuance::Config for Runtime {
 	type LiquidityMiningApi = ProofOfStake;
 }
 
-parameter_types! {
-	pub const MinVestedTransfer: Balance = 100 * DOLLARS;
-}
 
 impl pallet_vesting_mangata::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type BlockNumberToBalance = ConvertInto;
-	type MinVestedTransfer = MinVestedTransfer;
+	type MinVestedTransfer = cfg::pallet_vesting_mangata::MinVestedTransfer;
 	type WeightInfo = weights::pallet_vesting_mangata_weights::ModuleWeight<Runtime>;
 	// `VestingInfo` encode length is 36bytes. 28 schedules gets encoded as 1009 bytes, which is the
 	// highest number of schedules that encodes less than 2^10.
 	const MAX_VESTING_SCHEDULES: u32 = 50;
 }
 
-parameter_types! {
-	pub const Initialized: bool = false;
-	pub const InitializationPayment: Perbill = Perbill::from_parts(214285700);
-	pub const MaxInitContributorsBatchSizes: u32 = 100;
-	pub const MinimumReward: Balance = 0;
-	pub const RelaySignaturesThreshold: Perbill = Perbill::from_percent(100);
-	pub const SigantureNetworkIdentifier: &'static [u8] = b"mangata-";
-}
-
 impl pallet_crowdloan_rewards::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type Initialized = Initialized;
-	type InitializationPayment = InitializationPayment;
-	type MaxInitContributors = MaxInitContributorsBatchSizes;
-	type MinimumReward = MinimumReward;
-	type RewardAddressRelayVoteThreshold = RelaySignaturesThreshold;
+	type Initialized = cfg::pallet_crowdloan_rewards::Initialized;
+	type InitializationPayment = cfg::pallet_crowdloan_rewards::InitializationPayment;
+	type MaxInitContributors = cfg::pallet_crowdloan_rewards::MaxInitContributorsBatchSizes;
+	type MinimumReward = cfg::pallet_crowdloan_rewards::MinimumReward;
+	type RewardAddressRelayVoteThreshold = cfg::pallet_crowdloan_rewards::RelaySignaturesThreshold;
 	type NativeTokenId = tokens::MgxTokenId;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 	type RelayChainAccountId = sp_runtime::AccountId32;
 	type RewardAddressChangeOrigin = EnsureRoot<AccountId>;
-	type SignatureNetworkIdentifier = SigantureNetworkIdentifier;
+	type SignatureNetworkIdentifier = cfg::pallet_crowdloan_rewards::SigantureNetworkIdentifier;
 	type RewardAddressAssociateOrigin = EnsureRoot<AccountId>;
 	type VestingBlockNumber = BlockNumber;
 	type VestingBlockProvider = System;
@@ -703,37 +646,7 @@ impl orml_asset_registry::Config for Runtime {
 	type WeightInfo = weights::orml_asset_registry_weights::ModuleWeight<Runtime>;
 }
 
-// Proxy Pallet
-/// The type used to represent the kinds of proxying allowed.
-#[derive(
-	Copy,
-	Clone,
-	Eq,
-	PartialEq,
-	Ord,
-	PartialOrd,
-	Encode,
-	Decode,
-	RuntimeDebug,
-	MaxEncodedLen,
-	TypeInfo,
-)]
-pub enum ProxyType {
-	AutoCompound,
-}
-
-impl Default for ProxyType {
-	fn default() -> Self {
-		Self::AutoCompound
-	}
-}
-
-parameter_types! {
-	pub const ProxyDepositBase: Balance = deposit(1, 16);
-	pub const ProxyDepositFactor: Balance = deposit(0, 33);
-	pub const AnnouncementDepositBase: Balance = deposit(1, 16);
-	pub const AnnouncementDepositFactor: Balance = deposit(0, 68);
-}
+use cfg::pallet_proxy::ProxyType;
 
 impl InstanceFilter<RuntimeCall> for ProxyType {
 	fn filter(&self, c: &RuntimeCall) -> bool {
@@ -760,42 +673,28 @@ impl pallet_proxy::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
 	type Currency = orml_tokens::CurrencyAdapter<Runtime, tokens::MgxTokenId>;
-	type ProxyType = ProxyType;
-	type ProxyDepositBase = ProxyDepositBase;
-	type ProxyDepositFactor = ProxyDepositFactor;
+	type ProxyType = cfg::pallet_proxy::ProxyType;
+	type ProxyDepositBase = cfg::pallet_proxy::ProxyDepositBase;
+	type ProxyDepositFactor = cfg::pallet_proxy::ProxyDepositFactor;
 	type MaxProxies = frame_support::traits::ConstU32<32>;
 	type WeightInfo = pallet_proxy::weights::SubstrateWeight<Runtime>;
 	type MaxPending = frame_support::traits::ConstU32<32>;
 	type CallHasher = BlakeTwo256;
-	type AnnouncementDepositBase = AnnouncementDepositBase;
-	type AnnouncementDepositFactor = AnnouncementDepositFactor;
+	type AnnouncementDepositBase = cfg::pallet_proxy::AnnouncementDepositBase;
+	type AnnouncementDepositFactor = cfg::pallet_proxy::AnnouncementDepositFactor;
 }
-parameter_types! {
-	// Add item in storage and take 270 bytes, Registry { [], Balance, Info { [], [u8,32] * 7, [u8,20] }}
-	pub const BasicDeposit: Balance = deposit(1, 270);
-	// No item in storage, extra field takes 66 bytes, ([u8,32], [u8,32])
-	pub const FieldDeposit: Balance = deposit(0, 66);
-	// Add item in storage, and takes 97 bytes, AccountId + (AccountId, [u8,32])
-	pub const SubAccountDeposit: Balance = deposit(1, 97);
-	pub const MaxSubAccounts: u32 = 100;
-	pub const MaxAdditionalFields: u32 = 100;
-	pub const MaxRegistrars: u32 = 20;
-}
-
-type IdentityForceOrigin = EnsureRoot<AccountId>;
-type IdentityRegistrarOrigin = EnsureRoot<AccountId>;
 
 impl pallet_identity::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = orml_tokens::CurrencyAdapter<Runtime, tokens::MgxTokenId>;
-	type BasicDeposit = BasicDeposit;
-	type FieldDeposit = FieldDeposit;
-	type SubAccountDeposit = SubAccountDeposit;
-	type MaxSubAccounts = MaxSubAccounts;
-	type MaxAdditionalFields = MaxAdditionalFields;
-	type MaxRegistrars = MaxRegistrars;
-	type ForceOrigin = IdentityForceOrigin;
-	type RegistrarOrigin = IdentityRegistrarOrigin;
+	type BasicDeposit = cfg::pallet_identity::BasicDeposit;
+	type FieldDeposit = cfg::pallet_identity::FieldDeposit;
+	type SubAccountDeposit = cfg::pallet_identity::SubAccountDeposit;
+	type MaxSubAccounts = cfg::pallet_identity::MaxSubAccounts;
+	type MaxAdditionalFields = cfg::pallet_identity::MaxAdditionalFields;
+	type MaxRegistrars = cfg::pallet_identity::MaxRegistrars;
+	type ForceOrigin = cfg::pallet_identity::IdentityForceOrigin;
+	type RegistrarOrigin = cfg::pallet_identity::IdentityRegistrarOrigin;
 	type Slashed = Treasury;
 	type WeightInfo = pallet_identity::weights::SubstrateWeight<Runtime>;
 }

@@ -384,13 +384,13 @@ impl pallet_utility_mangata::Config for Runtime {
 use cfg::pallet_transaction_payment_mangata::{
 	OnMultiTokenUnbalanced, ToAuthor, ORMLCurrencyAdapterNegativeImbalance,
 	LiquidityInfoEnum, FeeHelpers, OnChargeHandler, ThreeCurrencyOnChargeAdapter, TippingCheck,
-	TriggerEvent, SingleSwapCallParams, SwapType, IsUnlockFee
+	TriggerEvent, CallType
 };
 
 
 
 // TODO: renaming foo causes compiler error
-pub struct Foo<T>(PhantomData<T>);
+pub struct Trigger<T>(PhantomData<T>);
 impl<T> TriggerEvent<T::AccountId> for Foo<T>
 where
 	T: frame_system::Config<AccountId = sp_runtime::AccountId32>
@@ -406,19 +406,55 @@ where
 	}
 }
 
-impl TryInto<SingleSwapCallParams> for RuntimeCall {
-	type Error = ();
-	fn try_into(self) -> Result<SingleSwapCallParams, Self::Error> {
-		Err(())
-	}
-}
-
-impl IsUnlockFee for RuntimeCall {
-	fn is_unlock_fee(&self) -> bool{
+impl Into<CallType> for RuntimeCall {
+	fn into(self) -> CallType {
 		match self {
-			RuntimeCall::FeeLock(pallet_fee_lock::Call::unlock_fee { .. }) => true ,
-			_ => false
-
+			RuntimeCall::Xyk(pallet_xyk::Call::sell_asset {
+				sold_asset_id,
+				sold_asset_amount,
+				bought_asset_id,
+				min_amount_out,
+				..
+			}) => CallType::AtomicSell {
+				sold_asset_id,
+				sold_asset_amount,
+				bought_asset_id,
+				min_amount_out
+			},
+			RuntimeCall::Xyk(pallet_xyk::Call::buy_asset {
+				sold_asset_id,
+				bought_asset_amount,
+				bought_asset_id,
+				max_amount_in,
+				..
+			}) => CallType::AtomicBuy {
+				sold_asset_id,
+				bought_asset_amount,
+				bought_asset_id,
+				max_amount_in
+			},
+			RuntimeCall::Xyk(pallet_xyk::Call::multiswap_sell_asset {
+				swap_token_list,
+				sold_asset_amount,
+				min_amount_out,
+				..
+			}) => CallType::MultiSell {
+				swap_token_list,
+				sold_asset_amount,
+				min_amount_out,
+			},
+			RuntimeCall::Xyk(pallet_xyk::Call::multiswap_buy_asset {
+				swap_token_list,
+				bought_asset_amount,
+				max_amount_in,
+				..
+			}) => CallType::MultiBuy {
+				swap_token_list,
+				bought_asset_amount,
+				max_amount_in,
+			},
+			RuntimeCall::FeeLock(pallet_fee_lock::Call::unlock_fee { .. }) => CallType::UnlockFee,
+			_ => CallType::Other
 		}
 	}
 }
@@ -429,8 +465,8 @@ pub type OnChargeTransactionHandler<T> = ThreeCurrencyOnChargeAdapter<
 	tokens::MgxTokenId,
 	tokens::RelayTokenId,
 	tokens::TurTokenId,
-	frame_support::traits::ConstU128<KSM_MGX_SCALE_FACTOR>,
-	frame_support::traits::ConstU128<TUR_MGX_SCALE_FACTOR>,
+	frame_support::traits::ConstU128<{common_runtime::constants::fee::RELAY_MGX_SCALE_FACTOR}>,
+	frame_support::traits::ConstU128<{common_runtime::constants::fee::TUR_MGR_SCALE_FACTOR}>,
 	Foo<T>
 >;
 

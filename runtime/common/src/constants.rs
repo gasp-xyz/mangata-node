@@ -8,12 +8,12 @@ pub mod fee {
 	use smallvec::smallvec;
 	use sp_runtime::Perbill;
 
-	pub const ROC_MGR_SCALE_FACTOR_UNADJUSTED: u128 = 10_000_000_000_u128; // 10_000 as KSM/MGX, with 6 decimals accounted for (12 - KSM, 18 - MGR)
+	pub const RELAY_LOCAL_SCALE_FACTOR_UNADJUSTED: u128 = 10_000_000_000_u128; // 10_000 as KSM/MGX, with 6 decimals accounted for (12 - KSM, 18 - MGR)
 
 	// on-chain fees are 10x more expensive then ~real rate
-	pub const ROC_MGR_SCALE_FACTOR: u128 = 1000_000_000_u128; // 1000 as KSM/MGR, with 6 decimals accounted for (12 - KSM, 18 - MGR)
-	pub const KAR_MGR_SCALE_FACTOR: u128 = ROC_MGR_SCALE_FACTOR / 100; // 100 as KAR/ROC
-	pub const TUR_MGR_SCALE_FACTOR: u128 = ROC_MGR_SCALE_FACTOR; // 100 as TUR/ROC, with 2 decimals accounted for (10 - TUR, 12 - ROC)
+	pub const RELAY_MGX_SCALE_FACTOR: u128 = 1000_000_000_u128; // 1000 as KSM/MGR, with 6 decimals accounted for (12 - KSM, 18 - MGR)
+	pub const KAR_MGR_SCALE_FACTOR: u128 = RELAY_MGX_SCALE_FACTOR / 100; // 100 as KAR/ROC
+	pub const TUR_MGR_SCALE_FACTOR: u128 = RELAY_MGX_SCALE_FACTOR; // 100 as TUR/ROC, with 2 decimals accounted for (10 - TUR, 12 - ROC)
 
 	/// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
 	/// node's balance type.
@@ -53,7 +53,7 @@ pub mod fee {
 	}
 
 	pub fn roc_per_second() -> u128 {
-		mgr_per_second() / ROC_MGR_SCALE_FACTOR_UNADJUSTED as u128
+		mgr_per_second() / RELAY_LOCAL_SCALE_FACTOR_UNADJUSTED as u128
 	}
 }
 

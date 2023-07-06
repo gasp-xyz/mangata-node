@@ -81,6 +81,7 @@ use pallet_xyk::AssetMetadataMutationTrait;
 use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
 
 pub mod constants;
+pub mod xcm_config;
 mod weights;
 // pub mod xcm_config;
 

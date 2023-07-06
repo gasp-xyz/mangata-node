@@ -134,7 +134,19 @@ T: orml_asset_registry::Config,
 <T as orml_asset_registry::Config>::AssetId: From<u32>
 {
 	fn convert(id: T::AssetId) -> Option<MultiLocation> {
-		None
+		// allow relay asset
+		if id == crate::tokens::RelayTokenId::get().into() {
+			return Some(MultiLocation::parent())
+		}
+		// allow native asset
+		if id == crate::tokens::MgxTokenId::get().into() {
+			return Some(MultiLocation::new(
+				1,
+				X2(Parachain(parachain_info::Pallet::<T>::get().into()), general_key(&id.encode())),
+			))
+		}
+		// allow assets in registry with location set
+		AssetRegistryOf::<T>::multilocation(&id).unwrap_or(None)
 	}
 }
 
@@ -143,10 +155,34 @@ T: parachain_info::Config,
 T: orml_asset_registry::Config,
 <T as orml_asset_registry::Config>::AssetId: From<u32>{
 	fn convert(location: MultiLocation) -> Option<TokenId> {
-		None
+		// allow relay asset
+		if location == MultiLocation::parent() {
+			return Some(crate::tokens::RelayTokenId::get())
+		}
+
+		match location {
+			// allow native asset
+			MultiLocation {
+				parents: 1,
+				interior: X2(Parachain(para_id), GeneralKey { length, data }),
+			} if ParaId::from(para_id) == parachain_info::Pallet::<T>::get() =>
+				match TokenId::decode(&mut &data[..(length as usize)]) {
+					Ok(crate::tokens::MGX_TOKEN_ID) => Some(crate::tokens::MgxTokenId::get()),
+					_ => None,
+				},
+
+			// allow native asset
+			MultiLocation { parents: 0, interior: X1(GeneralKey { length, data }) } =>
+				match TokenId::decode(&mut &data[..(length as usize)]) {
+					Ok(crate::tokens::MGX_TOKEN_ID) => Some(crate::tokens::MgxTokenId::get()),
+					_ => None,
+				},
+
+			// allow assets in registry with location set
+			_ => AssetRegistryOf::<T>::location_to_asset_id(location.clone()),
+		}
 	}
 }
-
 // impl Convert<MultiAsset, Option<TokenId>> for TokenIdConvert {
 // 	fn convert(asset: MultiAsset) -> Option<TokenId> {
 // 		if let MultiAsset { id: Concrete(location), .. } = asset {

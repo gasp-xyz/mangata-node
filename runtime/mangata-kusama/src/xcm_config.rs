@@ -14,6 +14,7 @@ use orml_traits::{
 	location::AbsoluteReserveProvider, parameter_type_with_key, FixedConversionRateProvider,
 	GetByKey, MultiCurrency,
 };
+use common_runtime::constants::fee::{ksm_per_second, mgx_per_second};
 use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
@@ -30,7 +31,7 @@ use xcm_builder::{
 use xcm_executor::{traits::DropAssets, Assets, XcmExecutor};
 
 use super::{
-	constants::fee::*, AccountId, AllPalletsWithSystem, AssetMetadataOf, Balance, Convert,
+	AccountId, AllPalletsWithSystem, AssetMetadataOf, Balance, Convert,
 	Maintenance, ParachainInfo, ParachainSystem, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent,
 	RuntimeOrigin, TokenId, Tokens, TreasuryAccount, UnknownTokens, XcmpQueue,
 };

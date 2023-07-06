@@ -65,7 +65,7 @@ use static_assertions::const_assert;
 pub use xcm::{latest::prelude::*, VersionedMultiLocation};
 
 pub use common_runtime::{currency::*, deposit, runtime_types, tokens, CallType};
-pub use constants::{fee::*, parachains::*};
+// pub use constants::{fee::*, parachains::*};
 use mangata_support::traits::{
 	AssetRegistryApi, FeeLockTriggerTrait, PreValidateSwaps, ProofOfStakeRewardsApi,
 };
@@ -84,7 +84,7 @@ use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-pub mod constants;
+// pub mod constants;
 mod migration;
 mod weights;
 pub mod xcm_config;
@@ -431,7 +431,7 @@ impl pallet_transaction_payment_mangata::Config for Runtime {
 	>;
 	type OperationalFeeMultiplier =
 		cfg::pallet_transaction_payment_mangata::OperationalFeeMultiplier;
-	type WeightToFee = WeightToFee;
+	type WeightToFee = common_runtime::constants::fee::WeightToFee;
 	type LengthToFee = cfg::pallet_transaction_payment_mangata::LengthToFee;
 	type FeeMultiplierUpdate = cfg::pallet_transaction_payment_mangata::FeeMultiplierUpdate;
 }

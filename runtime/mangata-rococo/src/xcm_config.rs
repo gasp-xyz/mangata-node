@@ -3,6 +3,7 @@
 use codec::{Decode, Encode};
 use common_runtime::{config as cfg, tokens};
 use cumulus_primitives_core::ParaId;
+use common_runtime::constants::fee::{ksm_per_second, mgx_per_second};
 pub use frame_support::{
 	match_types, parameter_types,
 	traits::{Everything, Get, Nothing},
@@ -30,7 +31,7 @@ use xcm_builder::{
 use xcm_executor::{traits::DropAssets, Assets, XcmExecutor};
 
 use super::{
-	constants::fee::*, AccountId, AllPalletsWithSystem, AssetMetadataOf, Balance, Convert,
+	AccountId, AllPalletsWithSystem, AssetMetadataOf, Balance, Convert,
 	Maintenance, ParachainInfo, ParachainSystem, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent,
 	RuntimeOrigin, TokenId, Tokens, TreasuryAccount, UnknownTokens, XcmpQueue,
 };
@@ -120,14 +121,14 @@ parameter_types! {
 	pub UnitWeightCost: XcmWeight = XcmWeight::from_parts(150_000_000, 0);
 	pub const MaxInstructions: u32 = 100;
 
-	pub RocPerSecond: (AssetId, u128, u128) = (MultiLocation::parent().into(), roc_per_second(), roc_per_second());
+	pub RocPerSecond: (AssetId, u128, u128) = (MultiLocation::parent().into(), ksm_per_second(), ksm_per_second());
 	pub MgrPerSecond: (AssetId, u128, u128) = (
 		MultiLocation::new(
 			0,
 			X1(general_key(&tokens::MgxTokenId::get().encode())),
 		).into(),
-		mgr_per_second(),
-		mgr_per_second(),
+		mgx_per_second(),
+		mgx_per_second(),
 	);
 	pub const MaxAssetsIntoHolding: u32 = 64;
 }

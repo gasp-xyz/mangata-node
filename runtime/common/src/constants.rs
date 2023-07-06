@@ -31,7 +31,7 @@ pub mod fee {
 		fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
 			// in Rococo, extrinsic base weight (smallest non-zero weight) is mapped to 1 MILLIUNIT:
 			// in mangata, we map to 1/10 of that, or 1/10 MILLIUNIT
-			let p = base_tx_in_mgr();
+			let p = base_tx_in_mgx();
 			let q = Balance::from(VerExtrinsicBaseWeight::get().ref_time());
 			smallvec![WeightToFeeCoefficient {
 				degree: 1,
@@ -42,18 +42,18 @@ pub mod fee {
 		}
 	}
 
-	pub fn base_tx_in_mgr() -> Balance {
+	pub fn base_tx_in_mgx() -> Balance {
 		UNIT
 	}
 
-	pub fn mgr_per_second() -> u128 {
+	pub fn mgx_per_second() -> u128 {
 		let base_weight = Balance::from(VerExtrinsicBaseWeight::get().ref_time());
 		let base_per_second = (WEIGHT_REF_TIME_PER_SECOND / base_weight as u64) as u128;
-		base_per_second * base_tx_in_mgr()
+		base_per_second * base_tx_in_mgx()
 	}
 
-	pub fn roc_per_second() -> u128 {
-		mgr_per_second() / RELAY_LOCAL_SCALE_FACTOR_UNADJUSTED as u128
+	pub fn ksm_per_second() -> u128 {
+		mgx_per_second() / RELAY_LOCAL_SCALE_FACTOR_UNADJUSTED as u128
 	}
 }
 

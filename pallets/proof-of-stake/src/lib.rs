@@ -136,7 +136,10 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	/// Stores information about pool weight and accumulated rewards
+	/// Stores information about pool weight and accumulated rewards. The accumulated 
+	/// rewards amount is the number of rewards that can be claimed per liquidity 
+	/// token. Here is tracked the number of rewards per liquidity token relationship. 
+	/// Expect larger values when the number of liquidity tokens are smaller.
 	pub type PromotedPoolRewards<T: Config> =
 		StorageValue<_, BTreeMap<TokenId, PromotedPools>, ValueQuery>;
 

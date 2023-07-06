@@ -44,7 +44,7 @@ pub fn general_key(key: &[u8]) -> Junction {
 
 use common_runtime::xcm_config::{
 	RelayChainOrigin, KsmLocation, RelayNetwork, UniversalLocation, LocationToAccountId, RuntimeOriginOf,
-	ParentOrParentsExecutivePlurality, Barrier,
+	ParentOrParentsExecutivePlurality, Barrier
 };
 
 
@@ -251,7 +251,7 @@ impl orml_xtokens::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type CurrencyId = TokenId;
-	type CurrencyIdConvert = common_runtime::xcm_config::TokenIdConvert<Runtime>;
+	type CurrencyIdConvert = TokenIdConvert;
 	type AccountIdToMultiLocation = AccountIdToMultiLocation;
 	type SelfLocation = SelfLocation;
 	type MinXcmFee = ParachainMinFee;

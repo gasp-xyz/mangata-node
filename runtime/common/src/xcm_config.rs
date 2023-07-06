@@ -120,15 +120,14 @@ pub type Barrier<T> = (
 	// ^^^ Parent and its exec plurality get free execution
 	// Expected responses are OK.
 	AllowKnownQueryResponses<pallet_xcm::Pallet<T>>,
-	// Subscriptions for version tracking are OK.
 	AllowSubscriptionsFrom<Everything>,
 );
 type AssetRegistryOf<T> = orml_asset_registry::Pallet<T>;
 
 use sp_runtime::traits::Convert;
 
-pub struct TokenIdConvert<T>(PhantomData<T>);
-impl<T> Convert<T::AssetId, Option<MultiLocation>> for TokenIdConvert<T> where
+pub struct TokenToMultiLocation<T>(PhantomData<T>);
+impl<T> Convert<T::AssetId, Option<MultiLocation>> for TokenToMultiLocation<T> where
 T: parachain_info::Config,
 T: orml_asset_registry::Config,
 <T as orml_asset_registry::Config>::AssetId: From<u32>
@@ -150,14 +149,17 @@ T: orml_asset_registry::Config,
 	}
 }
 
-impl<T> Convert<MultiLocation, Option<T::AssetId>> for TokenIdConvert<T> where
+pub struct MultiLocationToToken<T>(PhantomData<T>);
+impl<T> Convert<MultiLocation, Option<T::AssetId>> for MultiLocationToToken<T> where
 T: parachain_info::Config,
 T: orml_asset_registry::Config,
-<T as orml_asset_registry::Config>::AssetId: From<u32>{
-	fn convert(location: MultiLocation) -> Option<TokenId> {
+<T as orml_asset_registry::Config>::AssetId: From<u32>
+{
+	fn convert(location: MultiLocation) -> Option<T::AssetId> {
 		// allow relay asset
+		let MGX: T::AssetId = crate::tokens::MGX_TOKEN_ID.into();
 		if location == MultiLocation::parent() {
-			return Some(crate::tokens::RelayTokenId::get())
+			return Some(crate::tokens::RelayTokenId::get().into())
 		}
 
 		match location {
@@ -166,15 +168,15 @@ T: orml_asset_registry::Config,
 				parents: 1,
 				interior: X2(Parachain(para_id), GeneralKey { length, data }),
 			} if ParaId::from(para_id) == parachain_info::Pallet::<T>::get() =>
-				match TokenId::decode(&mut &data[..(length as usize)]) {
-					Ok(crate::tokens::MGX_TOKEN_ID) => Some(crate::tokens::MgxTokenId::get()),
+				match T::AssetId::decode(&mut &data[..(length as usize)]) {
+					Ok(MGX) => Some(crate::tokens::MgxTokenId::get().into()),
 					_ => None,
 				},
 
 			// allow native asset
 			MultiLocation { parents: 0, interior: X1(GeneralKey { length, data }) } =>
-				match TokenId::decode(&mut &data[..(length as usize)]) {
-					Ok(crate::tokens::MGX_TOKEN_ID) => Some(crate::tokens::MgxTokenId::get()),
+				match T::AssetId::decode(&mut &data[..(length as usize)]) {
+					Ok(MGX) => Some(crate::tokens::MgxTokenId::get().into()),
 					_ => None,
 				},
 
@@ -183,25 +185,3 @@ T: orml_asset_registry::Config,
 		}
 	}
 }
-// impl Convert<MultiAsset, Option<TokenId>> for TokenIdConvert {
-// 	fn convert(asset: MultiAsset) -> Option<TokenId> {
-// 		if let MultiAsset { id: Concrete(location), .. } = asset {
-// 			Self::convert(location)
-// 		} else {
-// 			None
-// 		}
-// 	}
-// }
-// // pub struct ToTreasury;
-// // impl TakeRevenue for ToTreasury {
-// // 	fn take_revenue(revenue: MultiAsset) {
-// // 		if let MultiAsset { id: Concrete(location), fun: Fungible(amount) } = revenue {
-// // 			if let Some(currency_id) = TokenIdConvert::convert(location) {
-// // 				// Ensure AcalaTreasuryAccount have ed requirement for native asset, but don't need
-// // 				// ed requirement for cross-chain asset because it's one of whitelist accounts.
-// // 				// Ignore the result.
-// // 				let _ = Tokens::deposit(currency_id, &TreasuryAccount::get(), amount);
-// // 			}
-// // 		}
-// // 	}
-// // }

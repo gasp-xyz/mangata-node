@@ -8,14 +8,11 @@ use frame_support::{
 	ensure, parameter_types,
 	traits::{
 		tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
-		Contains, EnsureOrigin, EnsureOriginWithArg, ExistenceRequirement, Get,
-		Imbalance, WithdrawReasons,
+		Contains, EnsureOrigin, EnsureOriginWithArg, ExistenceRequirement, Get, Imbalance,
+		WithdrawReasons,
 	},
 	unsigned::TransactionValidityError,
-	weights::{
-		constants::{WEIGHT_REF_TIME_PER_SECOND},
-		ConstantMultiplier, Weight,
-	},
+	weights::{constants::WEIGHT_REF_TIME_PER_SECOND, ConstantMultiplier, Weight},
 	PalletId,
 };
 #[cfg(any(feature = "std", test))]
@@ -44,27 +41,19 @@ pub use sp_runtime::BuildStorage;
 use sp_runtime::{
 	generic,
 	traits::{
-		AccountIdConversion, BlakeTwo256,
-		DispatchInfoOf, PostDispatchInfoOf, Saturating, Zero,
+		AccountIdConversion, BlakeTwo256, DispatchInfoOf, PostDispatchInfoOf, Saturating, Zero,
 	},
-	transaction_validity::{InvalidTransaction}, DispatchError, FixedPointNumber, Percent, RuntimeDebug,
+	transaction_validity::InvalidTransaction,
+	DispatchError, FixedPointNumber, Percent, RuntimeDebug,
 };
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
-use sp_std::{
-	cmp::Ordering,
-	marker::PhantomData,
-	prelude::*,
-};
-
-
+use sp_std::{cmp::Ordering, marker::PhantomData, prelude::*};
 
 pub use xcm::{latest::prelude::*, VersionedMultiLocation};
 
 pub use constants::{fee::*, parachains::*};
 pub use currency::*;
-use mangata_support::traits::{
-	AssetRegistryApi, FeeLockTriggerTrait, PreValidateSwaps,
-};
+use mangata_support::traits::{AssetRegistryApi, FeeLockTriggerTrait, PreValidateSwaps};
 pub use mangata_types::{
 	assets::{CustomMetadata, XcmMetadata, XykMetadata},
 	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
@@ -75,10 +64,9 @@ pub use pallet_xyk;
 // XCM Imports
 use pallet_xyk::AssetMetadataMutationTrait;
 
-
 pub mod constants;
-pub mod xcm_config;
 mod weights;
+pub mod xcm_config;
 // pub mod xcm_config;
 
 pub mod currency {
@@ -304,7 +292,6 @@ pub mod config {
 	}
 
 	pub mod pallet_xyk {
-
 
 		use super::*;
 		parameter_types! {

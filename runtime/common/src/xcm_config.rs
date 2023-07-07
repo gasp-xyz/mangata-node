@@ -9,10 +9,7 @@ pub use frame_support::{
 };
 
 use orml_asset_registry::{AssetRegistryTrader, FixedRateAssetRegistryTrader};
-use orml_traits::{
-	parameter_type_with_key, FixedConversionRateProvider,
-	GetByKey, MultiCurrency,
-};
+use orml_traits::{parameter_type_with_key, FixedConversionRateProvider, GetByKey, MultiCurrency};
 use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter};
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
@@ -49,9 +46,10 @@ parameter_types! {
 }
 
 pub struct RelayChainOrigin<T>(PhantomData<T>);
-impl<T> Get<T::RuntimeOrigin> for RelayChainOrigin<T> where
-T: frame_system::Config,
-<T as frame_system::Config>::RuntimeOrigin: From<cumulus_pallet_xcm::Origin>
+impl<T> Get<T::RuntimeOrigin> for RelayChainOrigin<T>
+where
+	T: frame_system::Config,
+	<T as frame_system::Config>::RuntimeOrigin: From<cumulus_pallet_xcm::Origin>,
 {
 	fn get() -> T::RuntimeOrigin {
 		cumulus_pallet_xcm::Origin::Relay.into()
@@ -59,11 +57,15 @@ T: frame_system::Config,
 }
 
 pub struct UniversalLocation<T>(PhantomData<T>);
-impl<T> Get<InteriorMultiLocation> for UniversalLocation<T> where
-T: parachain_info::Config,
+impl<T> Get<InteriorMultiLocation> for UniversalLocation<T>
+where
+	T: parachain_info::Config,
 {
 	fn get() -> InteriorMultiLocation {
-		X2(GlobalConsensus(RelayNetwork::get()), Parachain(parachain_info::Pallet::<T>::parachain_id().into()))
+		X2(
+			GlobalConsensus(RelayNetwork::get()),
+			Parachain(parachain_info::Pallet::<T>::parachain_id().into()),
+		)
 	}
 }
 
@@ -106,7 +108,6 @@ pub type XcmOriginToCallOrigin<T, RuntimeOrigin> = (
 	XcmPassthrough<RuntimeOrigin>,
 );
 
-
 match_types! {
 	pub type ParentOrParentsExecutivePlurality: impl Contains<MultiLocation> = {
 		MultiLocation { parents: 1, interior: Here } |
@@ -128,10 +129,11 @@ type AssetRegistryOf<T> = orml_asset_registry::Pallet<T>;
 use sp_runtime::traits::Convert;
 
 pub struct TokenToMultiLocation<T>(PhantomData<T>);
-impl<T> Convert<T::AssetId, Option<MultiLocation>> for TokenToMultiLocation<T> where
-T: parachain_info::Config,
-T: orml_asset_registry::Config,
-<T as orml_asset_registry::Config>::AssetId: From<u32>
+impl<T> Convert<T::AssetId, Option<MultiLocation>> for TokenToMultiLocation<T>
+where
+	T: parachain_info::Config,
+	T: orml_asset_registry::Config,
+	<T as orml_asset_registry::Config>::AssetId: From<u32>,
 {
 	fn convert(id: T::AssetId) -> Option<MultiLocation> {
 		// allow relay asset
@@ -151,10 +153,11 @@ T: orml_asset_registry::Config,
 }
 
 pub struct MultiLocationToToken<T>(PhantomData<T>);
-impl<T> Convert<MultiLocation, Option<T::AssetId>> for MultiLocationToToken<T> where
-T: parachain_info::Config,
-T: orml_asset_registry::Config,
-<T as orml_asset_registry::Config>::AssetId: From<u32>
+impl<T> Convert<MultiLocation, Option<T::AssetId>> for MultiLocationToToken<T>
+where
+	T: parachain_info::Config,
+	T: orml_asset_registry::Config,
+	<T as orml_asset_registry::Config>::AssetId: From<u32>,
 {
 	fn convert(location: MultiLocation) -> Option<T::AssetId> {
 		// allow relay asset
@@ -171,8 +174,7 @@ T: orml_asset_registry::Config,
 				let token_id = T::AssetId::decode(&mut &data[..(length as usize)]).ok();
 				token_id.filter(|tid| *tid == crate::tokens::MGX_TOKEN_ID.into())
 			},
-			MultiLocation { parents: 0, interior: X1(GeneralKey { length, data }) } =>
-			{
+			MultiLocation { parents: 0, interior: X1(GeneralKey { length, data }) } => {
 				let token_id = T::AssetId::decode(&mut &data[..(length as usize)]).ok();
 				token_id.filter(|tid| *tid == crate::tokens::MGX_TOKEN_ID.into())
 			},
@@ -184,10 +186,11 @@ T: orml_asset_registry::Config,
 }
 
 pub struct MultiAssetToToken<T>(PhantomData<T>);
-impl<T> Convert<MultiAsset, Option<T::AssetId>> for MultiAssetToToken<T> where
-T: parachain_info::Config,
-T: orml_asset_registry::Config,
-<T as orml_asset_registry::Config>::AssetId: From<u32>
+impl<T> Convert<MultiAsset, Option<T::AssetId>> for MultiAssetToToken<T>
+where
+	T: parachain_info::Config,
+	T: orml_asset_registry::Config,
+	<T as orml_asset_registry::Config>::AssetId: From<u32>,
 {
 	fn convert(asset: MultiAsset) -> Option<T::AssetId> {
 		if let MultiAsset { id: Concrete(location), .. } = asset {
@@ -198,7 +201,6 @@ T: orml_asset_registry::Config,
 	}
 }
 
-
 pub type LocalAssetTransactor<Runtime> = MultiCurrencyAdapter<
 	orml_tokens::Pallet<Runtime>,
 	orml_unknown_tokens::Pallet<Runtime>,
@@ -207,17 +209,26 @@ pub type LocalAssetTransactor<Runtime> = MultiCurrencyAdapter<
 	LocationToAccountId<Runtime>,
 	TokensIdOf<Runtime>,
 	MultiAssetToToken<Runtime>,
-	orml_xcm_support::DepositToAlternative<crate::config::TreasuryAccountIdOf<Runtime>, orml_tokens::Pallet<Runtime>, TokensIdOf<Runtime>, AccountIdOf<Runtime>, <Runtime as orml_tokens::Config>::Balance>,
+	orml_xcm_support::DepositToAlternative<
+		crate::config::TreasuryAccountIdOf<Runtime>,
+		orml_tokens::Pallet<Runtime>,
+		TokensIdOf<Runtime>,
+		AccountIdOf<Runtime>,
+		<Runtime as orml_tokens::Config>::Balance,
+	>,
 >;
-
 
 pub struct ToTreasury<T>(PhantomData<T>);
 
-impl<T> TakeRevenue for ToTreasury<T> where
-T: orml_tokens::Config<AccountId = sp_runtime::AccountId32, CurrencyId = mangata_types::TokenId>,
-T: pallet_treasury::Config,
-T: parachain_info::Config,
-T: orml_asset_registry::Config<AssetId=mangata_types::TokenId>,
+impl<T> TakeRevenue for ToTreasury<T>
+where
+	T: orml_tokens::Config<
+		AccountId = sp_runtime::AccountId32,
+		CurrencyId = mangata_types::TokenId,
+	>,
+	T: pallet_treasury::Config,
+	T: parachain_info::Config,
+	T: orml_asset_registry::Config<AssetId = mangata_types::TokenId>,
 {
 	fn take_revenue(revenue: MultiAsset) {
 		if let MultiAsset { id: Concrete(location), fun: Fungible(amount) } = revenue {
@@ -225,7 +236,11 @@ T: orml_asset_registry::Config<AssetId=mangata_types::TokenId>,
 				// Ensure AcalaTreasuryAccount have ed requirement for native asset, but don't need
 				// ed requirement for cross-chain asset because it's one of whitelist accounts.
 				// Ignore the result.
-				let _ = orml_tokens::Pallet::<T>::deposit(currency_id.into(), &crate::config::TreasuryAccountIdOf::<T>::get(), amount.into());
+				let _ = orml_tokens::Pallet::<T>::deposit(
+					currency_id.into(),
+					&crate::config::TreasuryAccountIdOf::<T>::get(),
+					amount.into(),
+				);
 			}
 		}
 	}
@@ -250,10 +265,10 @@ parameter_types! {
 	pub const MaxAssetsIntoHolding: u32 = 64;
 }
 
-
 pub struct FeePerSecondProvider<T>(PhantomData<T>);
-impl<T> FixedConversionRateProvider for FeePerSecondProvider<T> where
-T: orml_asset_registry::Config<CustomMetadata = mangata_types::assets::CustomMetadata>,
+impl<T> FixedConversionRateProvider for FeePerSecondProvider<T>
+where
+	T: orml_asset_registry::Config<CustomMetadata = mangata_types::assets::CustomMetadata>,
 {
 	fn get_fee_per_second(location: &MultiLocation) -> Option<u128> {
 		if let Some(asset_id) = AssetRegistryOf::<T>::location_to_asset_id(location) {
@@ -272,10 +287,12 @@ T: orml_asset_registry::Config<CustomMetadata = mangata_types::assets::CustomMet
 	}
 }
 
-
 pub type Trader<Runtime> = (
 	FixedRateOfFungible<MgxPerSecond, ToTreasury<Runtime>>,
-	AssetRegistryTrader<FixedRateAssetRegistryTrader<FeePerSecondProvider<Runtime>>, ToTreasury<Runtime>>,
+	AssetRegistryTrader<
+		FixedRateAssetRegistryTrader<FeePerSecondProvider<Runtime>>,
+		ToTreasury<Runtime>,
+	>,
 	FixedRateOfFungible<KsmPerSecond, ToTreasury<Runtime>>,
 );
 
@@ -285,7 +302,11 @@ pub type Weigher<RuntimeCall> = FixedWeightBounds<UnitWeightCost, RuntimeCall, M
 /// queues.
 pub type XcmRouter<Runtime> = (
 	// Two routers - use UMP to communicate with the relay chain:
-	cumulus_primitives_utility::ParentAsUmp<cumulus_pallet_parachain_system::Pallet<Runtime>, pallet_xcm::Pallet<Runtime>, ()>,
+	cumulus_primitives_utility::ParentAsUmp<
+		cumulus_pallet_parachain_system::Pallet<Runtime>,
+		pallet_xcm::Pallet<Runtime>,
+		(),
+	>,
 	// ..and XCMP to communicate with the sibling chains.
 	cumulus_pallet_xcmp_queue::Pallet<Runtime>,
 );
@@ -332,7 +353,6 @@ where
 	}
 }
 
-
 pub type DropAssetsHandler<T> = MangataDropAssets<
 	pallet_xcm::Pallet<T>,
 	ToTreasury<T>,
@@ -361,7 +381,6 @@ pub type XcmOriginToTransactDispatchOrigin<Runtime, RuntimeOrigin> = (
 	XcmPassthrough<RuntimeOrigin>,
 );
 
-
 parameter_type_with_key! {
 	pub ParachainMinFee: |_location: MultiLocation| -> Option<u128> {
 		None
@@ -381,8 +400,9 @@ parameter_types! {
 }
 
 pub struct SelfLocation<T>(PhantomData<T>);
-impl<T> Get<MultiLocation> for SelfLocation<T> where
-T: parachain_info::Config,
+impl<T> Get<MultiLocation> for SelfLocation<T>
+where
+	T: parachain_info::Config,
 {
 	fn get() -> MultiLocation {
 		MultiLocation::new(1, X1(Parachain(parachain_info::Pallet::<T>::get().into())))
@@ -390,4 +410,5 @@ T: parachain_info::Config,
 }
 
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
-pub type LocalOriginToLocation<RuntimeOrigin> = SignedToAccountId32<RuntimeOrigin, mangata_types::AccountId, RelayNetwork>;
+pub type LocalOriginToLocation<RuntimeOrigin> =
+	SignedToAccountId32<RuntimeOrigin, mangata_types::AccountId, RelayNetwork>;

@@ -5,21 +5,13 @@
 use codec::{Decode, Encode};
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{
-		Everything, Get,
-		InstanceFilter,
-	},
-	weights::{
-		constants::{RocksDbWeight}, Weight,
-	},
+	traits::{Everything, Get, InstanceFilter},
+	weights::{constants::RocksDbWeight, Weight},
 };
 #[cfg(any(feature = "std", test))]
 pub use frame_system::Call as SystemCall;
-use frame_system::{
-	EnsureRoot,
-};
+use frame_system::EnsureRoot;
 pub use orml_tokens;
-
 
 pub use pallet_sudo_mangata;
 
@@ -35,7 +27,8 @@ pub use sp_runtime::BuildStorage;
 use sp_runtime::{
 	create_runtime_str, impl_opaque_keys,
 	traits::{
-		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, StaticLookup,
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto,
+		StaticLookup,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
@@ -54,9 +47,7 @@ pub use xcm::{latest::prelude::*, VersionedMultiLocation};
 
 pub use common_runtime::{currency::*, deposit, runtime_types, tokens, CallType};
 // pub use constants::{fee::*, parachains::*};
-use mangata_support::traits::{
-	ProofOfStakeRewardsApi,
-};
+use mangata_support::traits::ProofOfStakeRewardsApi;
 pub use mangata_types::{
 	assets::{CustomMetadata, XcmMetadata, XykMetadata},
 	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
@@ -125,7 +116,6 @@ impl_opaque_keys! {
 	}
 }
 
-// TODO: move to common
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("mangata-parachain"),
@@ -139,7 +129,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	state_version: 0,
 };
 
-use common_runtime::consts::{DAYS};
+use common_runtime::consts::DAYS;
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
@@ -1302,7 +1292,6 @@ impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
 // replace validate block function with its expanded version
 #[doc(hidden)]
 mod parachain_validate_block {
-
 
 	#[no_mangle]
 	#[cfg(not(feature = "std"))]

@@ -7,26 +7,26 @@ pub use frame_support::{
 	traits::{Everything, Get, Nothing},
 	weights::Weight,
 };
-use frame_system::EnsureRoot;
+
 use orml_asset_registry::{AssetRegistryTrader, FixedRateAssetRegistryTrader};
 use orml_traits::{
-	location::AbsoluteReserveProvider, parameter_type_with_key, FixedConversionRateProvider,
+	parameter_type_with_key, FixedConversionRateProvider,
 	GetByKey, MultiCurrency,
 };
-use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
+use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter};
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use sp_runtime::traits::ConstU32;
+
 use sp_std::{marker::PhantomData, prelude::*};
 use xcm::latest::{prelude::*, Weight as XcmWeight};
 use xcm_builder::{
 	Account32Hash, AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
-	AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, EnsureXcmOrigin, FixedRateOfFungible,
+	AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, FixedRateOfFungible,
 	FixedWeightBounds, ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative,
 	SiblingParachainConvertsVia, SignedAccountId32AsNative, SignedToAccountId32,
 	SovereignSignedViaLocation, TakeRevenue, TakeWeightCredit,
 };
-use xcm_executor::{traits::DropAssets, Assets, XcmExecutor};
+use xcm_executor::{traits::DropAssets, Assets};
 
 // use super::{
 // 	constants::fee::*, AccountId, AllPalletsWithSystem, AssetMetadataOf, Balance, Convert,
@@ -158,7 +158,6 @@ T: orml_asset_registry::Config,
 {
 	fn convert(location: MultiLocation) -> Option<T::AssetId> {
 		// allow relay asset
-		let MGX: T::AssetId = crate::tokens::MGX_TOKEN_ID.into();
 		if location == MultiLocation::parent() {
 			return Some(crate::tokens::RelayTokenId::get().into())
 		}
@@ -168,18 +167,15 @@ T: orml_asset_registry::Config,
 			MultiLocation {
 				parents: 1,
 				interior: X2(Parachain(para_id), GeneralKey { length, data }),
-			} if ParaId::from(para_id) == parachain_info::Pallet::<T>::get() =>
-				match T::AssetId::decode(&mut &data[..(length as usize)]) {
-					Ok(MGX) => Some(crate::tokens::MgxTokenId::get().into()),
-					_ => None,
-				},
-
-			// allow native asset
+			} if ParaId::from(para_id) == parachain_info::Pallet::<T>::get() => {
+				let token_id = T::AssetId::decode(&mut &data[..(length as usize)]).ok();
+				token_id.filter(|tid| *tid == crate::tokens::MGX_TOKEN_ID.into())
+			},
 			MultiLocation { parents: 0, interior: X1(GeneralKey { length, data }) } =>
-				match T::AssetId::decode(&mut &data[..(length as usize)]) {
-					Ok(MGX) => Some(crate::tokens::MgxTokenId::get().into()),
-					_ => None,
-				},
+			{
+				let token_id = T::AssetId::decode(&mut &data[..(length as usize)]).ok();
+				token_id.filter(|tid| *tid == crate::tokens::MGX_TOKEN_ID.into())
+			},
 
 			// allow assets in registry with location set
 			_ => AssetRegistryOf::<T>::location_to_asset_id(location.clone()),
@@ -253,7 +249,7 @@ parameter_types! {
 	);
 	pub const MaxAssetsIntoHolding: u32 = 64;
 }
-use crate::config::orml_asset_registry::AssetMetadataOf;
+
 
 pub struct FeePerSecondProvider<T>(PhantomData<T>);
 impl<T> FixedConversionRateProvider for FeePerSecondProvider<T> where

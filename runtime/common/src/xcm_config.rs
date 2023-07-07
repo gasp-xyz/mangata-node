@@ -25,13 +25,6 @@ use xcm_builder::{
 };
 use xcm_executor::{traits::DropAssets, Assets};
 
-// use super::{
-// 	constants::fee::*, AccountId, AllPalletsWithSystem, AssetMetadataOf, Balance, Convert,
-// 	ExistentialDeposits, Maintenance, ParachainInfo, ParachainSystem, PolkadotXcm, Runtime,
-// 	RuntimeCall, RuntimeEvent, RuntimeOrigin, TokenId, Tokens, TreasuryAccount, UnknownTokens,
-// 	XcmpQueue, MGR_TOKEN_ID, ROC_TOKEN_ID,
-// };
-
 pub fn general_key(key: &[u8]) -> Junction {
 	let mut data = [0u8; 32];
 	data[..key.len()].copy_from_slice(&key[..]);

@@ -4977,6 +4977,7 @@ version = "0.1.0"
 dependencies = [
  "cfg-if",
  "clap",
+ "common-runtime",
  "cumulus-client-cli",
  "cumulus-client-consensus-aura",
  "cumulus-client-consensus-common",

@@ -85,7 +85,9 @@ pub mod tokens {
 	use super::*;
 	pub const MGX_TOKEN_ID: TokenId = 0;
 	pub const RELAY_TOKEN_ID: TokenId = 4;
+	pub const KAR_TOKEN_ID: TokenId = 6;
 	pub const TUR_TOKEN_ID: TokenId = 7;
+
 	parameter_types! {
 		pub const MgxTokenId: TokenId = MGX_TOKEN_ID;
 		pub const RelayTokenId: TokenId = RELAY_TOKEN_ID;

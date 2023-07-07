@@ -3,10 +3,16 @@ use codec::Encode;
 use cumulus_primitives_core::ParaId;
 use hex::FromHex;
 
+use common_runtime::{
+	config::orml_asset_registry::AssetMetadataOf,
+	constants::parachains,
+	ksm_per_second,
+	tokens::{KAR_TOKEN_ID, MGX_TOKEN_ID, RELAY_TOKEN_ID, TUR_TOKEN_ID},
+	xcm_config::general_key,
+};
+
 use mangata_kusama_runtime::{
-	constants::parachains, ksm_per_second, xcm_config::general_key, AccountId, AssetMetadataOf,
-	AuraId, CustomMetadata, MultiLocation, Parachain, Signature, XcmMetadata, KAR_TOKEN_ID,
-	KSM_TOKEN_ID, TUR_TOKEN_ID, X1, X2,
+	AccountId, AuraId, CustomMetadata, MultiLocation, Parachain, Signature, XcmMetadata, X1, X2,
 };
 
 use sc_service::ChainType;
@@ -189,7 +195,7 @@ pub fn mangata_kusama_prod_config() -> ChainSpec {
 				],
 				vec![
 					(
-						0,
+						MGX_TOKEN_ID,
 						AssetMetadataOf {
 							decimals: 18,
 							name: b"Mangata".to_vec(),
@@ -211,7 +217,7 @@ pub fn mangata_kusama_prod_config() -> ChainSpec {
 						},
 					),
 					(
-						KSM_TOKEN_ID,
+						RELAY_TOKEN_ID,
 						AssetMetadataOf {
 							decimals: 12,
 							name: b"Kusama Native".to_vec(),
@@ -338,7 +344,7 @@ pub fn mangata_kusama_local_config() -> ChainSpec {
 				],
 				vec![
 					(
-						0,
+						MGX_TOKEN_ID,
 						AssetMetadataOf {
 							decimals: 18,
 							name: b"Mangata".to_vec(),
@@ -360,7 +366,7 @@ pub fn mangata_kusama_local_config() -> ChainSpec {
 						},
 					),
 					(
-						KSM_TOKEN_ID,
+						RELAY_TOKEN_ID,
 						AssetMetadataOf {
 							decimals: 12,
 							name: b"Kusama Native".to_vec(),

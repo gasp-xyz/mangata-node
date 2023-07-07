@@ -1274,9 +1274,12 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn get_liq_tokens_for_trading() -> Result<Vec<TokenId>, DispatchError> {
-		return LiquidityPools::<T>::iter_keys()
-			.ok_or(Error::<T>::UnexpectedFailure.into())
-			.filter(|v| !<T as Config>::Currency::total_issuance(v.into()).into().is_zero());
+		let result = LiquidityAssets::<T>::iter_values()
+			.filter_map(|v| v)
+			.filter(|v| !<T as Config>::Currency::total_issuance((*v).into()).is_zero())
+			.collect();
+
+		Ok(result)
 	}
 
 	// MAX: 2R
@@ -2801,31 +2804,32 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			<T as Config>::Currency::total_issuance(liquidity_asset_id.into()).into();
 
 		// The pool is empty and we are basically creating a new pool and reusing the existing one
-		if !(first_asset_reserve.is_zero() && second_asset_reserve.is_zero()) && !total_liquidity_assets.is_zero() {
-
+		let second_asset_amount = if !(first_asset_reserve.is_zero() && second_asset_reserve.is_zero()) && !total_liquidity_assets.is_zero() {
 			// Calculation of required second asset amount and received liquidity token amount
 			ensure!(!first_asset_reserve.is_zero(), Error::<T>::DivisionByZero);
 
-			let second_asset_amount = multiply_by_rational_with_rounding(
+			multiply_by_rational_with_rounding(
 				first_asset_amount,
 				second_asset_reserve,
 				first_asset_reserve,
 				Rounding::Down,
 			).ok_or(Error::<T>::UnexpectedFailure)?
                 .checked_add(1)
-				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+		} else {
+			expected_second_asset_amount
+		};
 
-			ensure!(
-                second_asset_amount <= expected_second_asset_amount,
-                Error::<T>::SecondAssetAmountExceededExpectations,
-            );
+		ensure!(
+			second_asset_amount <= expected_second_asset_amount,
+			Error::<T>::SecondAssetAmountExceededExpectations,
+		);
 
-			// Ensure minting amounts are not zero
-			ensure!(
-				!first_asset_amount.is_zero() && !second_asset_amount.is_zero(),
-				Error::<T>::ZeroAmount,
-			);
-		}
+		// Ensure minting amounts are not zero
+		ensure!(
+			!first_asset_amount.is_zero() && !second_asset_amount.is_zero(),
+			Error::<T>::ZeroAmount,
+		);
 
 		// We calculate the required liquidity token amount and also validate asset amounts
 		let liquidity_assets_minted = if total_liquidity_assets.is_zero() {

@@ -1265,6 +1265,7 @@ impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
 // replace validate block function with its expanded version
 #[doc(hidden)]
 mod parachain_validate_block {
+	use crate::Runtime;
 
 	#[no_mangle]
 	#[cfg(not(feature = "std"))]
@@ -1284,12 +1285,12 @@ mod parachain_validate_block {
 		.expect("Invalid arguments to `validate_block`.");
 
 		let res =
-            cumulus_pallet_parachain_system::validate_block::implementation::validate_block::<<Runtime
+            cumulus_pallet_parachain_system::validate_block::implementation::validate_block::<<crate::Runtime
                                                                                               as
                                                                                               cumulus_pallet_parachain_system::validate_block::GetRuntimeBlockType>::RuntimeBlock,
-                                                                                              cumulus_pallet_aura_ext::BlockExecutorVer<Runtime, Executive>,
-                                                                                              Runtime,
-                                                                                              CheckInherents>(params);
+                                                                                              cumulus_pallet_aura_ext::BlockExecutorVer<crate::Runtime, crate::Executive>,
+                                                                                              crate::Runtime,
+                                                                                              crate::CheckInherents>(params);
 		cumulus_pallet_parachain_system::validate_block::polkadot_parachain::write_result(&res)
 	}
 }

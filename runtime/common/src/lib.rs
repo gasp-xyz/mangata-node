@@ -1087,7 +1087,7 @@ where
 		pub struct FoundationAccountsProvider<T: frame_system::Config>(PhantomData<T>);
 		impl<T: frame_system::Config> Get<Vec<T::AccountId>> for FoundationAccountsProvider<T> {
 			fn get() -> Vec<T::AccountId> {
-				let accounts = vec![
+				let accounts: Vec<_> = [
 					hex_literal::hex![
 						"c8d02dfbff5ce2fda651c7dd7719bc5b17b9c1043fded805bfc86296c5909871"
 					],
@@ -1097,15 +1097,20 @@ where
 					hex_literal::hex![
 						"fc741134c82b81b7ab7efbf334b0c90ff8dbf22c42ad705ea7c04bf27ed4161a"
 					],
-				];
+				]
+				.iter()
+				.map(|acc| sp_runtime::AccountId32::from(*acc))
+				.collect();
 
 				accounts
 					.into_iter()
 					.map(|acc| {
-						T::AccountId::decode(&mut sp_runtime::AccountId32::as_ref(
-							&sp_runtime::AccountId32::from(acc),
-						))
-						.unwrap()
+						T::AccountId::decode(&mut acc.as_ref())
+							// &mut sp_runtime::AccountId32::as_ref(
+							// &sp_runtime::AccountId32::from(acc),
+							// )
+							// )
+							.unwrap()
 					})
 					.collect()
 			}

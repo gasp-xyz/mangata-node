@@ -9814,6 +9814,7 @@ dependencies = [
 name = "runtime-integration-test"
 version = "0.1.0"
 dependencies = [
+ "common-runtime",
  "cumulus-pallet-xcmp-queue",
  "cumulus-primitives-core",
  "env_logger 0.9.3",

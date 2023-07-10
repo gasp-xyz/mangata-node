@@ -324,7 +324,7 @@ where
 		context: &XcmContext,
 	) -> sp_weights::Weight {
 		let multi_assets: Vec<MultiAsset> = assets.into();
-		let mut asset_traps: Vec<MultiAsset> = vec![];
+		let mut asset_traps: Vec<MultiAsset> = Default::default();
 		for asset in multi_assets {
 			if let MultiAsset { id: Concrete(location), fun: Fungible(amount) } = asset.clone() {
 				let currency_id = C::convert(location);

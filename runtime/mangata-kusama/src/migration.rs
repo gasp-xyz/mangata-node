@@ -8,6 +8,7 @@ use frame_support::{
 	traits::OnRuntimeUpgrade,
 	StoragePrefixedMap, Twox64Concat,
 };
+use sp_runtime::traits::Get;
 use xcm::IntoVersion;
 
 pub fn move_storage_from_pallet_with_rename(

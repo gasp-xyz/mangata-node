@@ -63,9 +63,9 @@ fn weight_to_fee_works() {
 	// Kusama
 	#[cfg(feature = "with-kusama-runtime")]
 	{
-		use common_runtime::constants::fee::WeightToFee;
+		use kusama_runtime_constants::fee::WeightToFee;
 
-		let base_weight: Weight = common_runtime::xcm_config::BaseXcmWeight::get();
+		let base_weight: Weight = kusama_runtime::xcm_config::BaseXcmWeight::get();
 		assert_eq!(base_weight, Weight::from_parts(1_000_000_000, 65536));
 
 		let weight: Weight = base_weight.saturating_mul(4);

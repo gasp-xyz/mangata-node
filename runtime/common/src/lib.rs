@@ -1072,7 +1072,7 @@ where
 
 		#[cfg(feature = "fast-runtime")]
 		parameter_types! {
-			pub const CouncilProposalCloseDelay: BlockNumber = 6 * MINUTES;
+			pub const CouncilProposalCloseDelay: BlockNumber = 6 * consts::MINUTES;
 		}
 
 		parameter_types! {
@@ -1125,7 +1125,7 @@ where
 		#[cfg(feature = "fast-runtime")]
 		parameter_types! {
 			/// Default SessionLenght is every 2 minutes (10 * 12 second block times)
-			pub const BlocksPerRound: u32 = 2 * MINUTES;
+			pub const BlocksPerRound: u32 = 2 * consts::MINUTES;
 		}
 
 		#[cfg(not(feature = "fast-runtime"))]

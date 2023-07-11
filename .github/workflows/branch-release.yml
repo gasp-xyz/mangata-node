@@ -30,7 +30,7 @@ permissions:
   checks: write
 
 env:
-  RELEASE_BRANCH_PATTERN: 'release/'
+  RELEASE_BRANCH_PATTERN: 'rc/'
 
 # The following concurrency group cancels in-progress jobs or runs on pull_request events only
 # https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
@@ -56,7 +56,7 @@ jobs:
           echo "GLOBAL_VERSION=${{ github.sha }}" >> $GITHUB_OUTPUT
           echo "RELEASE_BRANCH_PATTERN=${{ env.RELEASE_BRANCH_PATTERN }}" >> $GITHUB_OUTPUT
           echo "GIT_BRANCH=${{ steps.branch-name.outputs.current_branch }}" | sed "s@/@-@g" >> $GITHUB_OUTPUT
-          echo "RELEASE_TAG=${{ steps.branch-name.outputs.current_branch }}" | sed "release/@@g" >> $GITHUB_OUTPUT
+          echo "RELEASE_TAG=${{ steps.branch-name.outputs.current_branch }}" | sed "rc/@@g" >> $GITHUB_OUTPUT
 
   validate-branch-name:
     name: Validate release branch name
@@ -130,7 +130,7 @@ jobs:
       startsWith(github.head_ref, needs.init.outputs.RELEASE_BRANCH_PATTERN) &&
       github.event.action == 'closed' && github.event.pull_request.merged == 'true'
     needs: [ init ]
-    uses: ./.github/workflows/deploy-rococo.yml
+    uses: ./.github/workflows/reusable-deploy-rococo.yml
     secrets: inherit
     with:
       version: rococo-${{ needs.init.outputs.RELEASE_TAG }}

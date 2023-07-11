@@ -23,6 +23,9 @@ use super::{
 	RuntimeCall, RuntimeEvent, RuntimeOrigin, TokenId,
 };
 
+#[cfg(feature = "runtime-benchmarks")]
+use cumulus_primitives_core::{MultiLocation, Parent};
+
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
 	type RuntimeCall = RuntimeCall;

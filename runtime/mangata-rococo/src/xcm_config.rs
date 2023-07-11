@@ -21,6 +21,7 @@ use super::{
 	AccountId, AllPalletsWithSystem, Balance, Maintenance, ParachainSystem, PolkadotXcm, Runtime,
 	RuntimeCall, RuntimeEvent, RuntimeOrigin, TokenId,
 };
+use cumulus_primitives_core::{MultiLocation, Parent};
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {

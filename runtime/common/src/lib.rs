@@ -9,7 +9,7 @@ use frame_support::{
 	traits::{
 		tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
 		Contains, EnsureOrigin, EnsureOriginWithArg, ExistenceRequirement, Get, Imbalance,
-		WithdrawReasons,
+		OriginTrait, WithdrawReasons,
 	},
 	unsigned::TransactionValidityError,
 	weights::{constants::WEIGHT_REF_TIME_PER_SECOND, ConstantMultiplier, Weight},
@@ -1249,7 +1249,7 @@ where
 			}
 
 			#[cfg(feature = "runtime-benchmarks")]
-			fn try_successful_origin(_asset_id: &Option<u32>) -> Result<T::RuntimeOrigin, ()> {
+			fn try_successful_origin(_: &Option<u32>) -> Result<T::RuntimeOrigin, ()> {
 				Ok(T::RuntimeOrigin::root())
 			}
 		}

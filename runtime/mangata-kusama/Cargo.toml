@@ -239,6 +239,7 @@ try-runtime = [
 fast-runtime = ["common-runtime/fast-runtime"]
 
 runtime-benchmarks = [
+	"common-runtime/runtime-benchmarks",
 	"polkadot-primitives/runtime-benchmarks",
 	"pallet-maintenance/runtime-benchmarks",
 	"polkadot-parachain/runtime-benchmarks",

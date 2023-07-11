@@ -158,7 +158,7 @@ fn transfer_asset() {
 	// 	sp_tracing::try_init_simple();
 	// 	assert_eq!(Tokens::free_balance(NATIVE_ASSET_ID, &AccountId::from(BOB)), 20 * unit - fee);
 	// 	assert_eq!(Tokens::free_balance(NATIVE_ASSET_ID, &reserve_account(SIBLING_ID)), 30 * unit);
-    //
+	//
 	// 	assert_ok!(XTokens::transfer(
 	// 		RuntimeOrigin::signed(BOB.into()),
 	// 		NATIVE_ASSET_ID,
@@ -175,11 +175,11 @@ fn transfer_asset() {
 	// 		),
 	// 		WeightLimit::Limited(Weight::from_parts(600_000_000, 0)),
 	// 	));
-    //
+	//
 	// 	assert_eq!(Tokens::free_balance(NATIVE_ASSET_ID, &AccountId::from(BOB)), 10 * unit - fee);
 	// 	assert_eq!(Tokens::free_balance(NATIVE_ASSET_ID, &reserve_account(SIBLING_ID)), 40 * unit);
 	// });
-    //
+	//
 	// Sibling::execute_with(|| {
 	// 	sp_tracing::try_init_simple();
 	// 	assert_eq!(
@@ -187,7 +187,6 @@ fn transfer_asset() {
 	// 		90 * unit - fee
 	// 	);
 	// });
-
 }
 
 #[test]

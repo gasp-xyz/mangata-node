@@ -465,7 +465,7 @@ parameter_types! {
 
 #[cfg(feature = "fast-runtime")]
 parameter_types! {
-	pub const CouncilProposalCloseDelay: BlockNumber = 6 * MINUTES;
+	pub const CouncilProposalCloseDelay: BlockNumber = 6 * consts::MINUTES;
 }
 
 parameter_types! {

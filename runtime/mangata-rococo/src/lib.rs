@@ -63,8 +63,6 @@ use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-// pub mod constants;
-mod migration;
 mod weights;
 pub mod xcm_config;
 
@@ -92,8 +90,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	(migration::XykRefactorMigration, migration::AssetRegistryMigration),
-	// ()
+	(),
 >;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know

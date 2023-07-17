@@ -184,6 +184,10 @@ jobs:
         working-directory: devops/parachain-launch
         run: sed -i 's+mangatasolutions/mangata-node:.*+${{ env.PARACHAIN_DOCKER_IMAGE }}+g' config.yml
 
+      - name: Stop previous parachain if running
+        working-directory: devops/parachain-launch/output
+        run: docker-compose down -v
+
       - name: Install e2e tests dependencies
         working-directory: e2eTests
         run: yarn
@@ -191,10 +195,6 @@ jobs:
       - name: Run parachain launch
         working-directory: devops/parachain-launch
         run: npx @open-web3/parachain-launch generate config.yml
-
-      - name: Stop previous parachain if running
-        working-directory: devops/parachain-launch/output
-        run: docker-compose down -v
 
       - name: Start mangata-node parachain
         working-directory: devops/parachain-launch/output
@@ -218,6 +218,7 @@ jobs:
           name: E2E report ${{ matrix.command }} # Name of the check run which will be created
           path: e2eTests/reports/junit-*.xml # Path to test results
           reporter: jest-junit # Format of test results
+
       - name: Install testmo
         run: npm install --no-save @testmo/testmo-cli
       - name: Submit results to the testmo-run
@@ -264,9 +265,11 @@ jobs:
         if: always()
         working-directory: devops/parachain-launch/output
         run: docker-compose down -v
+
       - name: Fix permissions on self-hosted runner
         if: always()
         run: chown -R 1100:1100 $GITHUB_WORKSPACE
+
   test-complete:
     needs: [setup-report, e2e-test-matrix]
     if: always()

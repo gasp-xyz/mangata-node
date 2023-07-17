@@ -200,7 +200,7 @@ jobs:
 
       - name: Stop previous parachain if running
         working-directory: devops/parachain-launch/output
-        run:|
+        run: |
           docker kill $(docker ps -q) 2>/dev/null && echo $?
           docker-compose down -v
 
@@ -270,7 +270,7 @@ jobs:
 
       - name: Stop previous parachain if running
         working-directory: devops/parachain-launch/output
-        run:|
+        run: |
           docker kill $(docker ps -q) 2>/dev/null && echo $?
           docker-compose down -v
 

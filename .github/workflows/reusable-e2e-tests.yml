@@ -192,6 +192,12 @@ jobs:
         working-directory: devops/parachain-launch
         run: npx @open-web3/parachain-launch generate config.yml
 
+      - name: Docker ps
+        run: docker ps --no-trunc
+
+      - name: Docker network ls
+        run: docker network ls
+
       - name: Stop previous parachain if running
         working-directory: devops/parachain-launch/output
         run: docker-compose down -v

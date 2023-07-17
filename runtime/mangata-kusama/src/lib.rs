@@ -2067,6 +2067,13 @@ impl_runtime_apis! {
 				}
 			}
 		}
+
+		fn get_tradeable_tokens() -> Vec<u32> {
+			let mut my_vec: Vec<u32> = Vec::new();
+			my_vec.push(10u32);
+			my_vec.push(11u32);
+			my_vec
+		}
 	}
 
 	impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {

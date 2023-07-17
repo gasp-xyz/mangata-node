@@ -3,6 +3,7 @@
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::unnecessary_mut_passed)]
 use codec::{Codec, Decode, Encode};
+use sp_std::vec::Vec;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sp_runtime::traits::{MaybeDisplay, MaybeFromStr};
@@ -106,5 +107,7 @@ sp_api::decl_runtime_apis! {
 			path: sp_std::vec::Vec<TokenId>,
 			input_amount: Balance,
 		) -> Option<bool>;
+
+		fn get_tradeable_tokens() -> Vec<u32>;
 	}
 }

@@ -119,6 +119,9 @@ pub trait XykApi<
 		input_amount: Balance,
 		at: Option<BlockHash>,
 	) -> RpcResult<Option<bool>>;
+
+	#[method(name = "xyk_get_tradeable_tokens")]
+	fn get_tradeable_tokens(&self, at: Option<BlockHash>) -> RpcResult<Vec<u32>>;
 }
 
 pub struct Xyk<C, M> {
@@ -408,5 +411,17 @@ where
 					Some(format!("{:?}", e)),
 				)))
 			})
+	}
+
+	fn get_tradeable_tokens(&self, at: Option<<Block as BlockT>::Hash>) -> RpcResult<Vec<u32>> {
+		let api = self.client.runtime_api();
+		let at =  self.client.info().best_hash;
+		api.get_tradeable_tokens(at).map_err(|e| {
+			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+				1,
+				"Unable to serve the request",
+				Some(format!("{:?}", e)),
+			)))
+		})
 	}
 }

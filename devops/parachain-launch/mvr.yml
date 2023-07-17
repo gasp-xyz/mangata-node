@@ -1,5 +1,5 @@
 relaychain:
-  image: mangatasolutions/polkadot:0.9.42-fast
+  image: mangatasolutions/polkadot:v0.9.42-fast-runtime
   chain: polkadot-local
   runtimeGenesisConfig:
     configuration:
@@ -17,15 +17,14 @@ relaychain:
     - name: bob
 
 parachains:
-- image: mangatasolutions/mangata-node:polkadot
+- image: mangatasolutions/mangata-node:polkadot-mvr
   chain:
     base: polkadot-local
     collators:
       - alice
       - bob
     sudo: alice
-    disablePallets:
-      - balances
+    skipBalances: true
   id: 2110
   parachain: true
   flags:

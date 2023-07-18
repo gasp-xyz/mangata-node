@@ -2068,11 +2068,10 @@ impl_runtime_apis! {
 			}
 		}
 
-		fn get_tradeable_tokens() -> Vec<u32> {
-			let mut my_vec: Vec<u32> = Vec::new();
-			my_vec.push(10u32);
-			my_vec.push(11u32);
-			my_vec
+		fn get_tradeable_tokens() -> Vec<mangata_types::TokenId> {
+			orml_asset_registry::Metadata::<Runtime>::iter()
+			  .map(|(token_id, _)| token_id)
+			  .collect::<Vec<_>>()
 		}
 	}
 

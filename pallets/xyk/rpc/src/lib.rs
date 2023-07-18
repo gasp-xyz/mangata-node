@@ -121,7 +121,7 @@ pub trait XykApi<
 	) -> RpcResult<Option<bool>>;
 
 	#[method(name = "xyk_get_tradeable_tokens")]
-	fn get_tradeable_tokens(&self, at: Option<BlockHash>) -> RpcResult<Vec<u32>>;
+	fn get_tradeable_tokens(&self, at: Option<BlockHash>) -> RpcResult<Vec<TokenId>>;
 }
 
 pub struct Xyk<C, M> {
@@ -413,7 +413,7 @@ where
 			})
 	}
 
-	fn get_tradeable_tokens(&self, at: Option<<Block as BlockT>::Hash>) -> RpcResult<Vec<u32>> {
+	fn get_tradeable_tokens(&self, at: Option<<Block as BlockT>::Hash>) -> RpcResult<Vec<TokenId>> {
 		let api = self.client.runtime_api();
 		let at =  self.client.info().best_hash;
 		api.get_tradeable_tokens(at).map_err(|e| {

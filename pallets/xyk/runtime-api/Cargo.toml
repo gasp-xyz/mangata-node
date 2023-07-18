@@ -14,6 +14,7 @@ frame-support = { default-features = false, version = '4.0.0-dev' , git = "https
 frame-system = { default-features = false, version = '4.0.0-dev' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-core = { default-features = false, version = '7.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
+mangata-types = { default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
 [dev-dependencies]
 serde_json = "1.0.68"
@@ -27,4 +28,5 @@ std = [
     "sp-runtime/std",
     "frame-support/std",
     'frame-system/std',
+	"mangata-types/std"
 ]

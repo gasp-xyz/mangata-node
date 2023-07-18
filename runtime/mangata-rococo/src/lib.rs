@@ -2064,9 +2064,9 @@ impl_runtime_apis! {
 			}
 		}
 
-		fn get_tradeable_tokens() -> Vec<mangata_types::TokenId> {
+		fn get_tradeable_tokens() -> Vec<(mangata_types::TokenId, u32)> {
 			orml_asset_registry::Metadata::<Runtime>::iter()
-			  .map(|(token_id, k)| token_id)
+			  .map(|(token_id, k)| (token_id, k.decimals))
 			  .collect::<Vec<_>>()
 		}
 	}

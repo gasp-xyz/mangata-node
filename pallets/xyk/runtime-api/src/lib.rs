@@ -108,6 +108,6 @@ sp_api::decl_runtime_apis! {
 			input_amount: Balance,
 		) -> Option<bool>;
 
-		fn get_tradeable_tokens() -> Vec<TokenId>;
+		fn get_tradeable_tokens() -> Vec<(TokenId, u32)>;
 	}
 }

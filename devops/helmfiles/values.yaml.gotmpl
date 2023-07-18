@@ -15,3 +15,4 @@ relaychain:
   bootnodeAddr: {{ .Values | get "relaychainBootnodeAddr" "" }}
   kubernetesVolumeSnapshot: {{ .Values | get "relaychainKubernetesVolumeSnapshot" "" }}
 resources: {{ toYaml .Values.resources | nindent 10 }}
+role: collator

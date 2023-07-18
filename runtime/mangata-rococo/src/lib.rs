@@ -366,6 +366,10 @@ impl Into<CallType> for RuntimeCall {
 				max_amount_in,
 				..
 			}) => CallType::MultiBuy { swap_token_list, bought_asset_amount, max_amount_in },
+			RuntimeCall::Xyk(pallet_xyk::Call::compound_rewards { .. }) =>
+				CallType::CompoundRewards,
+			RuntimeCall::Xyk(pallet_xyk::Call::provide_liquidity_with_conversion { .. }) =>
+				CallType::ProvideLiquidityWithConversion,
 			RuntimeCall::FeeLock(pallet_fee_lock::Call::unlock_fee { .. }) => CallType::UnlockFee,
 			_ => CallType::Other,
 		}

@@ -1,5 +1,5 @@
 pub mod fee {
-	use crate::{weights::VerExtrinsicBaseWeight, UNIT};
+	use crate::{consts::UNIT, weights::VerExtrinsicBaseWeight};
 	use frame_support::weights::{
 		constants::WEIGHT_REF_TIME_PER_SECOND, WeightToFeeCoefficient, WeightToFeeCoefficients,
 		WeightToFeePolynomial,
@@ -8,12 +8,12 @@ pub mod fee {
 	use smallvec::smallvec;
 	use sp_runtime::Perbill;
 
-	pub const KSM_MGX_SCALE_FACTOR_UNADJUSTED: u128 = 10_000_000_000_u128; // 10_000 as KSM/MGX, with 6 decimals accounted for (12 - KSM, 18 - MGX)
+	pub const RELAY_LOCAL_SCALE_FACTOR_UNADJUSTED: u128 = 10_000_000_000_u128; // 10_000 as KSM/MGX, with 6 decimals accounted for (12 - KSM, 18 - MGR)
 
 	// on-chain fees are 10x more expensive then ~real rate
-	pub const KSM_MGX_SCALE_FACTOR: u128 = 1000_000_000_u128; // 1000 as KSM/MGX, with 6 decimals accounted for (12 - KSM, 18 - MGX)
-	pub const KAR_MGX_SCALE_FACTOR: u128 = KSM_MGX_SCALE_FACTOR / 100; // 100 as KAR/KSM
-	pub const TUR_MGX_SCALE_FACTOR: u128 = KSM_MGX_SCALE_FACTOR; // 100 as TUR/KSM, with 2 decimals accounted for (10 - TUR, 12 - KSM)
+	pub const RELAY_MGX_SCALE_FACTOR: u128 = 1000_000_000_u128; // 1000 as KSM/MGR, with 6 decimals accounted for (12 - KSM, 18 - MGR)
+	pub const KAR_MGR_SCALE_FACTOR: u128 = RELAY_MGX_SCALE_FACTOR / 100; // 100 as KAR/ROC
+	pub const TUR_MGR_SCALE_FACTOR: u128 = RELAY_MGX_SCALE_FACTOR; // 100 as TUR/ROC, with 2 decimals accounted for (10 - TUR, 12 - ROC)
 
 	/// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
 	/// node's balance type.
@@ -53,7 +53,7 @@ pub mod fee {
 	}
 
 	pub fn ksm_per_second() -> u128 {
-		mgx_per_second() / KSM_MGX_SCALE_FACTOR_UNADJUSTED as u128
+		mgx_per_second() / RELAY_LOCAL_SCALE_FACTOR_UNADJUSTED as u128
 	}
 }
 

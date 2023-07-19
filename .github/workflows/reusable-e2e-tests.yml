@@ -192,9 +192,17 @@ jobs:
         working-directory: devops/parachain-launch
         run: npx @open-web3/parachain-launch generate config.yml
 
+      - name: Docker ps
+        run: docker ps --no-trunc
+
+      - name: Docker network ls
+        run: docker network ls
+
       - name: Stop previous parachain if running
         working-directory: devops/parachain-launch/output
-        run: docker-compose down -v
+        run: |
+          docker kill $(docker ps -q) 2>/dev/null && echo $?
+          docker-compose down -v
 
       - name: Start mangata-node parachain
         working-directory: devops/parachain-launch/output
@@ -260,10 +268,12 @@ jobs:
             /tmp/mangata_bob_1.tar
             /tmp/mangata_alice_1.tar
 
-      - name: Stop mangata-node parachain
-        if: always()
+      - name: Stop previous parachain if running
         working-directory: devops/parachain-launch/output
-        run: docker-compose down -v
+        run: |
+          docker kill $(docker ps -q) 2>/dev/null && echo $?
+          docker-compose down -v
+
       - name: Fix permissions on self-hosted runner
         if: always()
         run: chown -R 1100:1100 $GITHUB_WORKSPACE

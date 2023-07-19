@@ -50,6 +50,12 @@ fn deserialize_from_string<'de, D: Deserializer<'de>, T: std::str::FromStr>(
 	let s = String::deserialize(deserializer)?;
 	s.parse::<T>().map_err(|_| serde::de::Error::custom("Parse from string failed"))
 }
+#[derive(Eq, PartialEq, Encode, Decode, Default)]
+#[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
+#[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
+pub struct RpcMeta {
+	pub decimals: u32
+}
 
 sp_api::decl_runtime_apis! {
 	pub trait XykApi<Balance, TokenId, AccountId> where
@@ -108,6 +114,6 @@ sp_api::decl_runtime_apis! {
 			input_amount: Balance,
 		) -> Option<bool>;
 
-		fn get_tradeable_tokens() -> Vec<(TokenId, u32)>;
+		fn get_tradeable_tokens() -> Vec<(TokenId, RpcMeta)>;
 	}
 }

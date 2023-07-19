@@ -14,7 +14,7 @@ use sp_runtime::traits::{Block as BlockT, MaybeDisplay, MaybeFromStr};
 use sp_std::convert::{TryFrom, TryInto};
 use std::sync::Arc;
 pub use xyk_runtime_api::XykApi as XykRuntimeApi;
-use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
+use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult, RpcMeta};
 
 #[rpc(client, server)]
 pub trait XykApi<
@@ -121,7 +121,7 @@ pub trait XykApi<
 	) -> RpcResult<Option<bool>>;
 
 	#[method(name = "xyk_get_tradeable_tokens")]
-	fn get_tradeable_tokens(&self, at: Option<BlockHash>) -> RpcResult<Vec<(TokenId, u32)>>;
+	fn get_tradeable_tokens(&self, at: Option<BlockHash>) -> RpcResult<Vec<(TokenId, RpcMeta)>>;
 }
 
 pub struct Xyk<C, M> {
@@ -413,7 +413,7 @@ where
 			})
 	}
 
-	fn get_tradeable_tokens(&self, at: Option<<Block as BlockT>::Hash>) -> RpcResult<Vec<(TokenId, u32)>> {
+	fn get_tradeable_tokens(&self, at: Option<<Block as BlockT>::Hash>) -> RpcResult<Vec<(TokenId, RpcMeta)>> {
 		let api = self.client.runtime_api();
 		let at =  self.client.info().best_hash;
 		api.get_tradeable_tokens(at).map_err(|e| {

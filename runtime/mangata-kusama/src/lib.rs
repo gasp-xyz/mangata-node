@@ -57,7 +57,7 @@ pub use pallet_sudo_origin;
 pub use pallet_xyk;
 // XCM Imports
 
-use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult, RpcAssetMetadata};
+use xyk_runtime_api::{RpcAmountsResult, RpcAssetMetadata, XYKRpcResult};
 
 // Make the WASM binary available.
 #[cfg(feature = "std")]
@@ -1037,14 +1037,14 @@ impl_runtime_apis! {
 
 		fn get_tradeable_tokens() -> Vec<(mangata_types::TokenId, RpcAssetMetadata)> {
 			orml_asset_registry::Metadata::<Runtime>::iter()
-			.filter(|(_, k)| !k.name.is_empty() && !k.symbol.is_empty())
-			.map(|(token_id, k)| {
-				let meta = RpcAssetMetadata {
-								decimals: k.decimals,
-					name: k.name,
-					symbol: k.symbol,
-							};
-				(token_id, meta)
+			.filter(|(_, metadata)| !metadata.name.is_empty() && !metadata.symbol.is_empty())
+			.map(|(token_id, metadata)| {
+				let rpc_metadata = RpcAssetMetadata {
+					decimals: metadata.decimals,
+					name: metadata.name,
+					symbol: metadata.symbol,
+				};
+				(token_id, rpc_metadata)
 			})
 			.collect::<Vec<_>>()
 		}

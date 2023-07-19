@@ -6,6 +6,7 @@ use codec::{Codec, Decode, Encode};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sp_runtime::traits::{MaybeDisplay, MaybeFromStr};
+use sp_std::vec::Vec;
 // Workaround for substrate/serde issue
 #[derive(Eq, PartialEq, Encode, Decode, Default)]
 #[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
@@ -32,6 +33,15 @@ pub struct RpcAmountsResult<Balance> {
 	#[cfg_attr(feature = "std", serde(bound(deserialize = "Balance: std::str::FromStr")))]
 	#[cfg_attr(feature = "std", serde(deserialize_with = "deserialize_from_string"))]
 	pub second_asset_amount: Balance,
+}
+
+#[derive(Eq, PartialEq, Encode, Decode, Default)]
+#[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
+#[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
+pub struct RpcAssetMetadata {
+	pub decimals: u32,
+	pub name: Vec<u8>,
+	pub symbol: Vec<u8>,
 }
 
 #[cfg(feature = "std")]
@@ -106,5 +116,7 @@ sp_api::decl_runtime_apis! {
 			path: sp_std::vec::Vec<TokenId>,
 			input_amount: Balance,
 		) -> Option<bool>;
+
+		fn get_tradeable_tokens() -> Vec<(TokenId, RpcAssetMetadata)>;
 	}
 }

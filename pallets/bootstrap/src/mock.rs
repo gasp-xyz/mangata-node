@@ -124,14 +124,6 @@ impl pallet_vesting_mangata::Config for Test {
 	const MAX_VESTING_SCHEDULES: u32 = 28;
 }
 
-pub struct RewardsMigrateAccountProvider<T: frame_system::Config>(PhantomData<T>);
-impl<T: frame_system::Config> Get<T::AccountId> for RewardsMigrateAccountProvider<T> {
-	fn get() -> T::AccountId {
-		T::AccountId::decode(&mut sp_runtime::traits::TrailingZeroInput::zeroes())
-			.expect("Infinite input; no dead input space; qed")
-	}
-}
-
 impl pallet_xyk::XykBenchmarkingConfig for Test {}
 
 pub struct AssetMetadataMutation;
@@ -163,7 +155,6 @@ impl pallet_xyk::Config for Test {
 	type DisabledTokens = Nothing;
 	type VestingProvider = Vesting;
 	type AssetMetadataMutation = AssetMetadataMutation;
-	type RewardsMigrateAccount = RewardsMigrateAccountProvider<Test>;
 }
 
 impl pallet_proof_of_stake::Config for Test {

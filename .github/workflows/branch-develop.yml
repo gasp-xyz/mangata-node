@@ -82,6 +82,7 @@ jobs:
     with:
       env: fungible
       version: ${{ needs.init.outputs.GLOBAL_VERSION }}
+      cluster_name: mangata-dev-alpha
 
   run-perf-tests-branch:
     runs-on: ubuntu-latest
@@ -128,7 +129,7 @@ jobs:
       - name: Set up GKE credentials
         uses: google-github-actions/get-gke-credentials@v0.8.2
         with:
-          cluster_name: mangata-dev
+          cluster_name: mangata-dev-alpha
           location: europe-west1
 
       - name: Delete Kubernetes namespace with resources for fungible environment
@@ -151,6 +152,7 @@ jobs:
     with:
       env: dev
       version: ${{ needs.init.outputs.GLOBAL_VERSION }}
+      cluster_name: mangata-dev-alpha
 
   run-e2e-test:
     name: Run e2e tests

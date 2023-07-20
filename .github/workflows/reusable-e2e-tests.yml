@@ -73,7 +73,7 @@ jobs:
             --project-id 2 \
             --name "BE tests from node-repo" \
             --resources resources.json \
-            --source "unit-tests" > testmo-run-id.txt
+            --source "BE-e2e-regression" > testmo-run-id.txt
           ID=$(cat testmo-run-id.txt)
           echo "testmo-run-id=$ID" >> $GITHUB_OUTPUT
           echo "ID=$ID" >> $GITHUB_ENV
@@ -227,6 +227,7 @@ jobs:
           path: e2eTests/reports/junit-*.xml # Path to test results
           reporter: jest-junit # Format of test results
       - name: Install testmo
+        if: always()
         run: npm install --no-save @testmo/testmo-cli
       - name: Submit results to the testmo-run
         if: always()

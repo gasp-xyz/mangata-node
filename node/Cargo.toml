@@ -32,7 +32,7 @@ mangata-rococo = [
 ]
 #disable-execution = ['mangata-kusama-runtime/disable-execution']
 runtime-benchmarks = ["mangata-kusama-runtime/runtime-benchmarks", "polkadot-cli/runtime-benchmarks", "polkadot-test-service/runtime-benchmarks"]
-fast-runtime = ["mangata-kusama-runtime/fast-runtime", "mangata-kusama-runtime/fast-runtime"]
+fast-runtime = ["common-runtime/fast-runtime", "mangata-kusama-runtime/fast-runtime", "mangata-kusama-runtime/fast-runtime"]
 try-runtime = [
 	"mangata-kusama-runtime/try-runtime",
 	"mangata-rococo-runtime/try-runtime",
@@ -56,6 +56,7 @@ hex = "0.4.0"
 jsonrpsee = { version = "0.16.2", features = ["server"] }
 
 # Local Dependencies
+common-runtime = { path = '../runtime/common', default-features = false, version = '4.0.0' }
 mangata-kusama-runtime = { path = "../runtime/mangata-kusama", optional = true }
 mangata-rococo-runtime = { path = "../runtime/mangata-rococo", optional = true }
 

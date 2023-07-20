@@ -57,8 +57,6 @@ pub use pallet_sudo_origin;
 pub use pallet_xyk;
 // XCM Imports
 
-use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
-
 // Make the WASM binary available.
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
@@ -849,25 +847,22 @@ impl_runtime_apis! {
 			input_reserve: Balance,
 			output_reserve: Balance,
 			sell_amount: Balance
-		) -> XYKRpcResult<Balance> {
-			XYKRpcResult {
-				price: Xyk::calculate_sell_price(input_reserve, output_reserve, sell_amount)
-					.map_err(|e|
-						{
-							log::warn!(target:"xyk", "rpc 'XYK::calculate_sell_price' error: '{:?}', returning default value instead", e);
-							e
-						}
-					).unwrap_or_default()
-			}
+		) -> Balance {
+			Xyk::calculate_sell_price(input_reserve, output_reserve, sell_amount)
+				.map_err(|e|
+						 {
+							 log::warn!(target:"xyk", "rpc 'XYK::calculate_sell_price' error: '{:?}', returning default value instead", e);
+							 e
+						 }
+						).unwrap_or_default()
 		}
 
 		fn calculate_buy_price(
 			input_reserve: Balance,
 			output_reserve: Balance,
 			buy_amount: Balance
-		) -> XYKRpcResult<Balance> {
-			XYKRpcResult {
-				price: Xyk::calculate_buy_price(input_reserve, output_reserve, buy_amount)
+		) -> Balance {
+				Xyk::calculate_buy_price(input_reserve, output_reserve, buy_amount)
 					.map_err(|e|
 						{
 							log::warn!(target:"xyk", "rpc 'XYK::calculate_buy_price' error: '{:?}', returning default value instead", e);
@@ -875,100 +870,88 @@ impl_runtime_apis! {
 						}
 					).unwrap_or_default()
 
-			}
 		}
 
 		fn calculate_sell_price_id(
 			sold_token_id: TokenId,
 			bought_token_id: TokenId,
 			sell_amount: Balance
-		) -> XYKRpcResult<Balance> {
-			XYKRpcResult {
-				price: Xyk::calculate_sell_price_id(sold_token_id, bought_token_id, sell_amount)
+		) -> Balance {
+				 Xyk::calculate_sell_price_id(sold_token_id, bought_token_id, sell_amount)
 					.map_err(|e|
 						{
 							log::warn!(target:"xyk", "rpc 'XYK::calculate_sell_price_id' error: '{:?}', returning default value instead", e);
 							e
 						}
 					).unwrap_or_default()
-			}
 		}
 
 		fn calculate_buy_price_id(
 			sold_token_id: TokenId,
 			bought_token_id: TokenId,
 			buy_amount: Balance
-		) -> XYKRpcResult<Balance> {
-			XYKRpcResult {
-				price: Xyk::calculate_buy_price_id(sold_token_id, bought_token_id, buy_amount)
+		) -> Balance {
+				Xyk::calculate_buy_price_id(sold_token_id, bought_token_id, buy_amount)
 					.map_err(|e|
 						{
 							log::warn!(target:"xyk", "rpc 'XYK::calculate_buy_price_id' error: '{:?}', returning default value instead", e);
 							e
 						}
 					).unwrap_or_default()
-			}
 		}
 
 		fn get_burn_amount(
 			first_asset_id: TokenId,
 			second_asset_id: TokenId,
 			liquidity_asset_amount: Balance
-		) -> RpcAmountsResult<Balance> {
-			match Xyk::get_burn_amount(first_asset_id, second_asset_id, liquidity_asset_amount){
-				Ok((first_asset_amount, second_asset_amount)) => RpcAmountsResult{
-																	first_asset_amount,
-																	second_asset_amount
-																},
-				Err(e) => {
-					log::warn!(target:"xyk", "rpc 'XYK::get_burn_amount' error: '{:?}', returning default value instead", e);
-					Default::default()
-				},
-			}
+		) -> (Balance, Balance) {
+			Xyk::get_burn_amount(first_asset_id, second_asset_id, liquidity_asset_amount)
+					.map_err(|e|
+						{
+							log::warn!(target:"xyk", "rpc 'XYK::calculate_buy_price_id' error: '{:?}', returning default value instead", e);
+							e
+						}
+					).unwrap_or_default()
 		}
 
 		fn get_max_instant_burn_amount(
 			user: AccountId,
 			liquidity_asset_id: TokenId,
-		) -> XYKRpcResult<Balance> {
-			XYKRpcResult { price: Xyk::get_max_instant_burn_amount(&user, liquidity_asset_id) }
+		) -> Balance {
+			Xyk::get_max_instant_burn_amount(&user, liquidity_asset_id)
 		}
 
 		fn get_max_instant_unreserve_amount(
 			user: AccountId,
 			liquidity_asset_id: TokenId,
-		) -> XYKRpcResult<Balance> {
-			XYKRpcResult { price: Xyk::get_max_instant_unreserve_amount(&user, liquidity_asset_id) }
+		) -> Balance {
+			 Xyk::get_max_instant_unreserve_amount(&user, liquidity_asset_id)
 		}
 
 		fn calculate_rewards_amount(
 			user: AccountId,
 			liquidity_asset_id: TokenId,
-		) -> XYKRpcResult<Balance> {
-			match ProofOfStake::calculate_rewards_amount(user, liquidity_asset_id){
-				Ok(claimable_rewards) => XYKRpcResult{
-					price:claimable_rewards
-				},
-				Err(e) => {
-						log::warn!(target:"xyk", "rpc 'XYK::calculate_rewards_amount' error: '{:?}', returning default value instead", e);
-						Default::default()
-				},
-			}
+		) -> Balance {
+			ProofOfStake::calculate_rewards_amount(user, liquidity_asset_id)
+					.map_err(|e|
+						{
+							log::warn!(target:"xyk", "rpc 'XYK::calculate_buy_price_id' error: '{:?}', returning default value instead", e);
+							e
+						}
+					).unwrap_or_default()
 		}
 
 		fn calculate_balanced_sell_amount(
 			total_amount: Balance,
 			reserve_amount: Balance,
-		) -> XYKRpcResult<Balance> {
-			XYKRpcResult {
-				price: Xyk::calculate_balanced_sell_amount(total_amount, reserve_amount)
+		) -> Balance {
+				 Xyk::calculate_balanced_sell_amount(total_amount, reserve_amount)
 					.map_err(|e|
 						{
 							log::warn!(target:"xyk", "rpc 'XYK::calculate_balanced_sell_amount' error: '{:?}', returning default value instead", e);
 							e
 						}
 					).unwrap_or_default()
-			}
 		}
 
 		fn is_sell_asset_lock_free(

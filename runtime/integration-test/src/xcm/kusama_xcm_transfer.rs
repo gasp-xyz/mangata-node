@@ -52,7 +52,6 @@ fn transfer_to_relay_chain() {
 	assert_eq!(94_172_727, fee);
 
 	Mangata::execute_with(|| {
-		sp_tracing::try_init_simple();
 		assert_ok!(XTokens::transfer(
 			RuntimeOrigin::signed(ALICE.into()),
 			RELAY_ASSET_ID,
@@ -67,7 +66,6 @@ fn transfer_to_relay_chain() {
 	});
 
 	KusamaRelay::execute_with(|| {
-		sp_tracing::try_init_simple();
 		assert_eq!(kusama_runtime::Balances::free_balance(&AccountId::from(BOB)), unit(12) - fee);
 	});
 }
@@ -84,7 +82,6 @@ fn transfer_asset() {
 	});
 
 	Sibling::execute_with(|| {
-		sp_tracing::try_init_simple();
 		assert_ok!(AssetRegistry::register_asset(
 			RuntimeOrigin::root(),
 			AssetMetadataOf {
@@ -104,25 +101,25 @@ fn transfer_asset() {
 		assert_ok!(Tokens::deposit(registered_asset_id, &AccountId::from(ALICE), 100 * unit));
 
 		// no location for asset -> NotCrossChainTransferableCurrency
-		// assert_noop!(
-		// 	XTokens::transfer(
-		// 		RuntimeOrigin::signed(ALICE.into()),
-		// 		registered_asset_id,
-		// 		20 * unit,
-		// 		Box::new(
-		// 			MultiLocation::new(
-		// 				1,
-		// 				X2(
-		// 					Parachain(MANGATA_ID),
-		// 					Junction::AccountId32 { network: None, id: BOB.into() }
-		// 				)
-		// 			)
-		// 			.into()
-		// 		),
-		// 		WeightLimit::Limited(Weight::from_parts(600_000_000, 0)),
-		// 	),
-		// 	orml_xtokens::Error::<Runtime>::NotCrossChainTransferableCurrency
-		// );
+		assert_noop!(
+			XTokens::transfer(
+				RuntimeOrigin::signed(ALICE.into()),
+				registered_asset_id,
+				20 * unit,
+				Box::new(
+					MultiLocation::new(
+						1,
+						X2(
+							Parachain(MANGATA_ID),
+							Junction::AccountId32 { network: None, id: BOB.into() }
+						)
+					)
+					.into()
+				),
+				WeightLimit::Limited(Weight::from_parts(600_000_000, 0)),
+			),
+			orml_xtokens::Error::<Runtime>::NotCrossChainTransferableCurrency
+		);
 		assert_ok!(AssetRegistry::update_asset(
 			RuntimeOrigin::root(),
 			registered_asset_id,
@@ -154,39 +151,37 @@ fn transfer_asset() {
 		assert_eq!(Tokens::free_balance(registered_asset_id, &AccountId::from(ALICE)), 80 * unit);
 	});
 
-	// Mangata::execute_with(|| {
-	// 	sp_tracing::try_init_simple();
-	// 	assert_eq!(Tokens::free_balance(NATIVE_ASSET_ID, &AccountId::from(BOB)), 20 * unit - fee);
-	// 	assert_eq!(Tokens::free_balance(NATIVE_ASSET_ID, &reserve_account(SIBLING_ID)), 30 * unit);
-	//
-	// 	assert_ok!(XTokens::transfer(
-	// 		RuntimeOrigin::signed(BOB.into()),
-	// 		NATIVE_ASSET_ID,
-	// 		10 * unit,
-	// 		Box::new(
-	// 			MultiLocation::new(
-	// 				1,
-	// 				X2(
-	// 					Parachain(SIBLING_ID),
-	// 					Junction::AccountId32 { network: None, id: ALICE.into() }
-	// 				)
-	// 			)
-	// 			.into()
-	// 		),
-	// 		WeightLimit::Limited(Weight::from_parts(600_000_000, 0)),
-	// 	));
-	//
-	// 	assert_eq!(Tokens::free_balance(NATIVE_ASSET_ID, &AccountId::from(BOB)), 10 * unit - fee);
-	// 	assert_eq!(Tokens::free_balance(NATIVE_ASSET_ID, &reserve_account(SIBLING_ID)), 40 * unit);
-	// });
-	//
-	// Sibling::execute_with(|| {
-	// 	sp_tracing::try_init_simple();
-	// 	assert_eq!(
-	// 		Tokens::free_balance(registered_asset_id, &AccountId::from(ALICE)),
-	// 		90 * unit - fee
-	// 	);
-	// });
+	Mangata::execute_with(|| {
+		assert_eq!(Tokens::free_balance(NATIVE_ASSET_ID, &AccountId::from(BOB)), 20 * unit - fee);
+		assert_eq!(Tokens::free_balance(NATIVE_ASSET_ID, &reserve_account(SIBLING_ID)), 30 * unit);
+
+		assert_ok!(XTokens::transfer(
+			RuntimeOrigin::signed(BOB.into()),
+			NATIVE_ASSET_ID,
+			10 * unit,
+			Box::new(
+				MultiLocation::new(
+					1,
+					X2(
+						Parachain(SIBLING_ID),
+						Junction::AccountId32 { network: None, id: ALICE.into() }
+					)
+				)
+				.into()
+			),
+			WeightLimit::Limited(Weight::from_parts(600_000_000, 0)),
+		));
+
+		assert_eq!(Tokens::free_balance(NATIVE_ASSET_ID, &AccountId::from(BOB)), 10 * unit - fee);
+		assert_eq!(Tokens::free_balance(NATIVE_ASSET_ID, &reserve_account(SIBLING_ID)), 40 * unit);
+	});
+
+	Sibling::execute_with(|| {
+		assert_eq!(
+			Tokens::free_balance(registered_asset_id, &AccountId::from(ALICE)),
+			90 * unit - fee
+		);
+	});
 }
 
 #[test]

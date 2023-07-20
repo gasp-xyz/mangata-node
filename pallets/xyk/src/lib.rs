@@ -438,8 +438,6 @@ pub mod pallet {
 		type VestingProvider: MultiTokenVestingLocks<Self::AccountId, Self::BlockNumber>;
 		type AssetMetadataMutation: AssetMetadataMutationTrait;
 		type WeightInfo: WeightInfo;
-		#[pallet::constant]
-		type RewardsMigrateAccount: Get<Self::AccountId>;
 	}
 
 	#[pallet::error]

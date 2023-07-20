@@ -1,5 +1,5 @@
 [package]
-name = "mangata-rococo-runtime"
+name = "common-runtime"
 version = "4.0.0"
 authors = ["Mangata Team"]
 edition = "2018"
@@ -21,7 +21,6 @@ smallvec = "1.6.1"
 static_assertions = "1.1.0"
 
 # Local Dependencies
-common-runtime = { path = '../common', default-features = false, version = '4.0.0' }
 pallet-xyk = { path = '../../pallets/xyk', default-features = false, version = '0.1.0' }
 pallet-proof-of-stake = { path = '../../pallets/proof-of-stake', default-features = false, version = '0.1.0' }
 pallet-bootstrap = { path = '../../pallets/bootstrap', default-features = false, version = '0.1.0' }
@@ -244,10 +243,9 @@ try-runtime = [
 	"pallet-root-testing/try-runtime"
 ]
 
-fast-runtime = ["common-runtime/fast-runtime"]
+fast-runtime = []
 
 runtime-benchmarks = [
-	"common-runtime/runtime-benchmarks",
 	"polkadot-primitives/runtime-benchmarks",
 	"pallet-maintenance/runtime-benchmarks",
 	"polkadot-parachain/runtime-benchmarks",

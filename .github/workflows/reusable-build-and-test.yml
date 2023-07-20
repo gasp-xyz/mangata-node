@@ -294,7 +294,7 @@ jobs:
         run: chown -R 1100:1100 $GITHUB_WORKSPACE
 
   build-wasms:
-    name: Run runtime benchmarks
+    name: Export wasm artifacts
     runs-on: [self-hosted, performance]
     env:
       STEPS: 2
@@ -325,14 +325,14 @@ jobs:
 
       - name: Export wasms
         run: |
-          target/release/mangata-node --chain=kusama export-genesis-state -l=info,xyk=error
-          target/release/mangata-node --chain=kusama export-genesis-wasm -l=info,xyk=error
-          target/release/mangata-node --chain=kusama-local export-genesis-state -l=info,xyk=error
-          target/release/mangata-node --chain=kusama-local export-genesis-wasm -l=info,xyk=error
-          target/release/mangata-node --chain=rococo export-genesis-state -l=info,xyk=error
-          target/release/mangata-node --chain=rococo export-genesis-wasm -l=info,xyk=error
-          target/release/mangata-node --chain=rococo-local export-genesis-state -l=info,xyk=error
-          target/release/mangata-node --chain=rococo-local export-genesis-wasm -l=info,xyk=error
+          target/release/mangata-node export-genesis-state --chain=kusama -l=info,xyk=error
+          target/release/mangata-node export-genesis-wasm --chain=kusama -l=info,xyk=error
+          target/release/mangata-node export-genesis-state --chain=kusama-local -l=info,xyk=error
+          target/release/mangata-node export-genesis-wasm --chain=kusama-local -l=info,xyk=error
+          target/release/mangata-node export-genesis-state --chain=rococo -l=info,xyk=error
+          target/release/mangata-node export-genesis-wasm --chain=rococo -l=info,xyk=error
+          target/release/mangata-node export-genesis-state --chain=rococo-local -l=info,xyk=error
+          target/release/mangata-node export-genesis-wasm --chain=rococo-local -l=info,xyk=error
 
       - name: Fix permissions on self-hosted runner
         if: always()

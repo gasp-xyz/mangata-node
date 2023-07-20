@@ -1035,7 +1035,7 @@ impl_runtime_apis! {
 			}
 		}
 
-		fn get_tradeable_tokens() -> Vec<(mangata_types::TokenId, RpcAssetMetadata)> {
+		fn get_tradeable_tokens() -> Vec<RpcAssetMetadata<mangata_types::TokenId>> {
 			orml_asset_registry::Metadata::<Runtime>::iter()
 			.filter_map(|(token_id, metadata)| {
 				if !metadata.name.is_empty()
@@ -1043,11 +1043,12 @@ impl_runtime_apis! {
 					&& metadata.additional.xyk.as_ref().map_or(true, |xyk| !xyk.operations_disabled)
 				{
 					let rpc_metadata = RpcAssetMetadata {
+						token_id: token_id,
 						decimals: metadata.decimals,
 						name: metadata.name.clone(),
 						symbol: metadata.symbol.clone(),
 					};
-					Some((token_id, rpc_metadata))
+					Some(rpc_metadata)
 				} else {
 					None
 				}

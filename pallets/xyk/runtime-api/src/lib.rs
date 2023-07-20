@@ -38,7 +38,8 @@ pub struct RpcAmountsResult<Balance> {
 #[derive(Eq, PartialEq, Encode, Decode, Default)]
 #[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
-pub struct RpcAssetMetadata {
+pub struct RpcAssetMetadata<TokenId> {
+	pub token_id: TokenId,
 	pub decimals: u32,
 	pub name: Vec<u8>,
 	pub symbol: Vec<u8>,
@@ -117,6 +118,6 @@ sp_api::decl_runtime_apis! {
 			input_amount: Balance,
 		) -> Option<bool>;
 
-		fn get_tradeable_tokens() -> Vec<(TokenId, RpcAssetMetadata)>;
+		fn get_tradeable_tokens() -> Vec<RpcAssetMetadata<TokenId>>;
 	}
 }

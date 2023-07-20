@@ -124,7 +124,7 @@ pub trait XykApi<
 	fn get_tradeable_tokens(
 		&self,
 		at: Option<BlockHash>,
-	) -> RpcResult<sp_std::vec::Vec<(TokenId, RpcAssetMetadata)>>;
+	) -> RpcResult<sp_std::vec::Vec<RpcAssetMetadata<TokenId>>>;
 }
 
 pub struct Xyk<C, M> {
@@ -418,7 +418,7 @@ where
 	fn get_tradeable_tokens(
 		&self,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<Vec<(TokenId, RpcAssetMetadata)>> {
+	) -> RpcResult<Vec<RpcAssetMetadata<TokenId>>> {
 		let api = self.client.runtime_api();
 		let at = self.client.info().best_hash;
 

@@ -295,7 +295,7 @@ jobs:
 
   build-wasms:
     name: Export wasm artifacts
-    runs-on: [compile]
+    runs-on: [self-hosted, compile]
     env:
       STEPS: 2
       REPEATS: 1

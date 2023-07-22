@@ -325,14 +325,14 @@ jobs:
 
       - name: Export wasms
         run: |
-          target/release/mangata-node export-genesis-state --chain=kusama -l=info,xyk=error
-          target/release/mangata-node export-genesis-wasm --chain=kusama -l=info,xyk=error
-          target/release/mangata-node export-genesis-state --chain=kusama-local -l=info,xyk=error
-          target/release/mangata-node export-genesis-wasm --chain=kusama-local -l=info,xyk=error
-          target/release/mangata-node export-genesis-state --chain=rococo -l=info,xyk=error
-          target/release/mangata-node export-genesis-wasm --chain=rococo -l=info,xyk=error
-          target/release/mangata-node export-genesis-state --chain=rococo-local -l=info,xyk=error
-          target/release/mangata-node export-genesis-wasm --chain=rococo-local -l=info,xyk=error
+          /bin/bash -c 'target/release/mangata-node export-genesis-state --chain=kusama -l=info,xyk=error > /dev/null'
+          /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=kusama -l=info,xyk=error > /dev/null'
+          /bin/bash -c 'target/release/mangata-node export-genesis-state --chain=kusama-local -l=info,xyk=error > /dev/null'
+          /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=kusama-local -l=info,xyk=error > /dev/null'
+          /bin/bash -c 'target/release/mangata-node export-genesis-state --chain=rococo -l=info,xyk=error > /dev/null'
+          /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=rococo -l=info,xyk=error > /dev/null'
+          /bin/bash -c 'target/release/mangata-node export-genesis-state --chain=rococo-local -l=info,xyk=error > /dev/null'
+          /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=rococo-local -l=info,xyk=error > /dev/null'
 
       - name: Fix permissions on self-hosted runner
         if: always()

@@ -73,7 +73,7 @@ jobs:
             --project-id 2 \
             --name "BE tests from node-repo" \
             --resources resources.json \
-            --source "unit-tests" > testmo-run-id.txt
+            --source "BE-e2e-regression" > testmo-run-id.txt
           ID=$(cat testmo-run-id.txt)
           echo "testmo-run-id=$ID" >> $GITHUB_OUTPUT
           echo "ID=$ID" >> $GITHUB_ENV
@@ -227,6 +227,7 @@ jobs:
           path: e2eTests/reports/junit-*.xml # Path to test results
           reporter: jest-junit # Format of test results
       - name: Install testmo
+        if: always()
         run: npm install --no-save @testmo/testmo-cli
       - name: Submit results to the testmo-run
         if: always()
@@ -277,6 +278,7 @@ jobs:
       - name: Fix permissions on self-hosted runner
         if: always()
         run: chown -R 1100:1100 $GITHUB_WORKSPACE
+        
   test-complete:
     needs: [setup-report, e2e-test-matrix]
     if: always()
@@ -295,3 +297,18 @@ jobs:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
         continue-on-error: true
+        
+  slack-notify-nook:
+    needs: [e2e-test-matrix]
+    if: failure()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Slack Notification - Error
+        uses: bryannice/gitactions-slack-notification@2.0.0
+        env:
+          SLACK_INCOMING_WEBHOOK: ${{ secrets.BNB_E2E_NOTIFICATION_WEBHOOK }}
+          SLACK_TITLE: 'bnb e2e test execution - NOOK'
+          SLACK_COLOR: "#ff0011"
+          SLACK_MESSAGE: 'Test failures [ ${{ env.E2EBRANCHNAME }} - ${{ env.PARACHAIN_DOCKER_IMAGE }} ] testmo report: https://mangata-finance.testmo.net/automation/runs/view/${{needs.setup-report.outputs.testmo-run-id}}'
+          GITHUB_REF: 'https://mangata-finance.github.io/mangata-node/${{ github.run_number }}'

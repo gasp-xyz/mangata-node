@@ -7,6 +7,7 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 mod weights;
+
 pub mod xcm_config;
 
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
@@ -40,12 +41,12 @@ use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
 };
+
+use orml_traits::parameter_type_with_key;
 use pallet_xcm::{EnsureXcm, IsVoiceOfBody};
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
 use xcm_config::{RelayLocation, XcmConfig, XcmOriginToTransactDispatchOrigin};
-use orml_traits::parameter_type_with_key;
-use orml_tokens::CurrencyAdapter;
 
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -146,6 +147,22 @@ impl WeightToFeePolynomial for WeightToFee {
 			coeff_integer: p / q,
 		}]
 	}
+}
+
+pub const DOT_MGX_SCALE_FACTOR_UNADJUSTED: u128 = 10_000_000_000_u128; // 10_000 as DOT/MGX, with 6 decimals accounted for (12 - DOT, 18 - MGX)
+
+pub fn base_tx_in_mgx() -> Balance {
+	UNIT
+}
+
+pub fn mgx_per_second() -> u128 {
+	let base_weight = Balance::from(ExtrinsicBaseWeight::get().ref_time());
+	let base_per_second = (WEIGHT_REF_TIME_PER_SECOND / base_weight as u64) as u128;
+	base_per_second * base_tx_in_mgx()
+}
+
+pub fn dot_per_second() -> u128 {
+	mgx_per_second() / DOT_MGX_SCALE_FACTOR_UNADJUSTED as u128
 }
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
@@ -330,13 +347,12 @@ parameter_types! {
 parameter_types! {
 	/// Relay Chain `TransactionByteFee` / 10
 	pub const TransactionByteFee: Balance = 10 * MICROUNIT;
-	pub const KSMTokenId: u32 = 4;
+	pub const DOTTokenId: u32 = 4;
 }
-type OrmlCurrencyAdapter = orml_tokens::CurrencyAdapter<Runtime, KSMTokenId>;
+pub type OrmlCurrencyAdapter = orml_tokens::CurrencyAdapter<Runtime, DOTTokenId>;
 
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	// type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<orml_tokens::CurrencyAdapter<Tokens, KSMTokenId>, ()>;
 	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<OrmlCurrencyAdapter, ()>;
 	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
@@ -365,9 +381,14 @@ impl parachain_info::Config for Runtime {}
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
+parameter_types! {
+	pub const FixedReserveAssetTransferTrapCost : Balance = 10_000_000_000; // 0.01 DOT
+}
+
 impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type XcmExecutor = XcmExecutor<XcmConfig>;
+	type XcmExecutor =
+		xcm_config::ExecutorWrapper<XcmExecutor<XcmConfig>, FixedReserveAssetTransferTrapCost>;
 	type ChannelInfo = ParachainSystem;
 	type VersionWrapper = ();
 	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
@@ -440,36 +461,34 @@ impl pallet_collator_selection::Config for Runtime {
 	type WeightInfo = ();
 }
 
-
 parameter_type_with_key! {
 	pub ExistentialDeposits: |_token_id: u32| -> u128 {
 		0_u128
 	};
 }
 
-parameter_types!{
+parameter_types! {
 	pub const MaxLocks:u32 = 50;
 }
 
 impl orml_tokens::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type Balance = u128;
-    type Amount = i128;
-    type CurrencyId = u32;
-    type WeightInfo = ();
-    type ExistentialDeposits = ExistentialDeposits;
-    type MaxLocks = MaxLocks;
-    type DustRemovalWhitelist = Nothing;
-    type CurrencyHooks = ();
-    type MaxReserves = ();
-    type ReserveIdentifier = [u8; 8];
+	type RuntimeEvent = RuntimeEvent;
+	type Balance = u128;
+	type Amount = i128;
+	type CurrencyId = u32;
+	type WeightInfo = ();
+	type ExistentialDeposits = ExistentialDeposits;
+	type MaxLocks = MaxLocks;
+	type DustRemovalWhitelist = Nothing;
+	type CurrencyHooks = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
 }
 
 impl pallet_sudo::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type RuntimeCall = RuntimeCall;
 }
-
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where

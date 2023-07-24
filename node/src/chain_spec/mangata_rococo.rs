@@ -180,7 +180,7 @@ pub fn mangata_rococo_prod_config() -> ChainSpec {
 				],
 				vec![
 					(
-						0,
+						MGX_TOKEN_ID,
 						AssetMetadataOf {
 							decimals: 18,
 							name: b"Mangata".to_vec(),
@@ -202,7 +202,7 @@ pub fn mangata_rococo_prod_config() -> ChainSpec {
 						},
 					),
 					(
-						MGX_TOKEN_ID,
+						RELAY_TOKEN_ID,
 						AssetMetadataOf {
 							decimals: 12,
 							name: b"Rococo Native".to_vec(),

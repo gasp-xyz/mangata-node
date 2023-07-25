@@ -238,15 +238,16 @@ where
 			let amount = FeeAmount::get();
 			let location = MultiLocation { parents: 1, interior: Here };
 			let fee_asset = MultiAsset { id: AssetId::Concrete(location), fun: Fungible(amount) };
-			let withdraw_assets =
-				MultiAssets::from_sorted_and_deduplicated_skip_checks(vec![fee_asset.clone()]);
+			let mut withdraw_assets = MultiAssets::new();
+			withdraw_assets.push(fee_asset.clone());
 
-			Xcm(vec![
-				ReserveAssetDeposited(deposited_assets.clone()),
-				WithdrawAsset(withdraw_assets),
-				ClearOrigin,
-				BuyExecution { fees: fee_asset, weight_limit: Unlimited },
-			])
+			let mut xcm: sp_std::vec::Vec<_> = Default::default();
+			xcm.push(ReserveAssetDeposited(deposited_assets.clone()));
+			xcm.push(WithdrawAsset(withdraw_assets));
+			xcm.push(ClearOrigin);
+			xcm.push(BuyExecution { fees: fee_asset, weight_limit: Unlimited });
+
+			Xcm(xcm)
 		} else {
 			message
 		};

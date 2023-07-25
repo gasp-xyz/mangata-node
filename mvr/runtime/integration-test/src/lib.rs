@@ -139,7 +139,10 @@ fn xtokens_transfer_triggers_asset_trap() {
 		);
 
 		assert_eq!(
-			mangata_polkadot_runtime::Tokens::free_balance(RELAY_ASSET_ID, &networks::reserve_account(2001)),
+			mangata_polkadot_runtime::Tokens::free_balance(
+				RELAY_ASSET_ID,
+				&networks::reserve_account(2001)
+			),
 			INITIAL_BALANCE
 		);
 	});
@@ -187,7 +190,10 @@ fn xtokens_transfer_triggers_asset_trap() {
 			.is_some());
 
 		assert!(
-			mangata_polkadot_runtime::Tokens::free_balance(RELAY_ASSET_ID, &networks::reserve_account(2001)) > INITIAL_BALANCE * 9 / 10
+			mangata_polkadot_runtime::Tokens::free_balance(
+				RELAY_ASSET_ID,
+				&networks::reserve_account(2001)
+			) > INITIAL_BALANCE * 9 / 10
 		);
 	});
 }

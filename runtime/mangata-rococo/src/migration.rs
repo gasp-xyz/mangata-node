@@ -1,7 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 use super::*;
-use log::info;
-use sp_runtime::traits::Zero;
 use frame_support::{
 	storage::{
 		migration::{move_prefix, storage_key_iter},
@@ -10,6 +8,8 @@ use frame_support::{
 	traits::OnRuntimeUpgrade,
 	StoragePrefixedMap, Twox64Concat,
 };
+use log::info;
+use sp_runtime::traits::Zero;
 use xcm::IntoVersion;
 
 pub struct AssetRegistryMigration;
@@ -21,7 +21,6 @@ impl OnRuntimeUpgrade for AssetRegistryMigration {
 		);
 
 		let mut weight: Weight = Weight::zero();
-
 
 		orml_asset_registry::Metadata::<Runtime>::translate(
 			|_key, mut old_meta: AssetMetadataOf| {

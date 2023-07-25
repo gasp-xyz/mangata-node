@@ -63,9 +63,9 @@ use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+mod migration;
 mod weights;
 pub mod xcm_config;
-mod migration;
 
 /// Block header type as expected by this runtime.
 pub type Header = runtime_types::Header;
@@ -91,7 +91,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	(migration::AssetRegistryMigration)
+	(migration::AssetRegistryMigration),
 >;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know

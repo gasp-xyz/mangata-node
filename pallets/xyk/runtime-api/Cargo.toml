@@ -24,9 +24,7 @@ std = [
     "serde",
     "sp-api/std",
     "codec/std",
-	"sp-std/std",
     "sp-runtime/std",
-	"sp-core/std",
     "frame-support/std",
     'frame-system/std'
 ]

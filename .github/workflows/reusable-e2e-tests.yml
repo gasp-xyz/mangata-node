@@ -87,7 +87,9 @@ jobs:
   e2e-test-matrix:
     needs: [setup-report]
     strategy:
+      fail-fast: false
       matrix:
+        experimental: [true]
         include:
           - command: "yarn test-parallel --max-workers=10"
             fast: false

@@ -2,7 +2,10 @@
 panic = "unwind"
 
 [workspace]
+resolver = "2"
 members = [
 	"node",
-	"runtime",
+	"runtime/mangata-polkadot",
+	"runtime/xtokens-parachain",
+	"runtime/integration-test",
 ]

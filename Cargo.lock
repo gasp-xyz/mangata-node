@@ -3011,7 +3011,7 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural-tools"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#be366f657442f821c71d04694daa0f979bba1851"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#5002c089a660699d21a3ed7b26a0a66778d32266"
 dependencies = [
  "frame-support-procedural-tools-derive",
  "proc-macro-crate",
@@ -3023,7 +3023,7 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural-tools-derive"
 version = "3.0.0"
-source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#be366f657442f821c71d04694daa0f979bba1851"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#5002c089a660699d21a3ed7b26a0a66778d32266"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -6292,7 +6292,7 @@ dependencies = [
 [[package]]
 name = "pallet-crowdloan-rewards"
 version = "0.6.0"
-source = "git+https://github.com/mangata-finance//crowdloan-rewards?branch=mangata-dev#d91f563a7ada44c9b51631640ed6765900f7a05d"
+source = "git+https://github.com/mangata-finance//crowdloan-rewards?branch=mangata-dev#dade0a5299b00bf7f89fe8eaeba640a06a957cf3"
 dependencies = [
  "ed25519-dalek",
  "frame-benchmarking",
@@ -12260,7 +12260,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime-interface-proc-macro"
 version = "6.0.0"
-source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#be366f657442f821c71d04694daa0f979bba1851"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#5002c089a660699d21a3ed7b26a0a66778d32266"
 dependencies = [
  "Inflector",
  "proc-macro-crate",
@@ -12446,7 +12446,7 @@ dependencies = [
 [[package]]
 name = "sp-version-proc-macro"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#be366f657442f821c71d04694daa0f979bba1851"
+source = "git+https://github.com/mangata-finance//substrate?branch=mangata-dev#5002c089a660699d21a3ed7b26a0a66778d32266"
 dependencies = [
  "parity-scale-codec",
  "proc-macro2",

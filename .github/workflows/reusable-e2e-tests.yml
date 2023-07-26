@@ -89,7 +89,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        experimental: [true]
         include:
           - command: "yarn test-parallel --max-workers=10"
             fast: false

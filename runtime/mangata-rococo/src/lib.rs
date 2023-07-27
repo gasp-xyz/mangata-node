@@ -585,6 +585,7 @@ impl pallet_crowdloan_rewards::Config for Runtime {
 	type RewardAddressAssociateOrigin = EnsureRoot<AccountId>;
 	type VestingBlockNumber = BlockNumber;
 	type VestingBlockProvider = System;
+	type VestingProvider = Vesting;
 	type WeightInfo = weights::pallet_crowdloan_rewards_weights::ModuleWeight<Runtime>;
 }
 

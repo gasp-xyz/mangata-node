@@ -1,16 +1,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 use super::*;
-use frame_support::{
-	storage::{
-		migration::{move_prefix, storage_key_iter},
-		storage_prefix, unhashed,
-	},
-	traits::OnRuntimeUpgrade,
-	StoragePrefixedMap, Twox64Concat,
-};
+use frame_support::traits::OnRuntimeUpgrade;
 use log::info;
 use sp_runtime::traits::Zero;
-use xcm::IntoVersion;
 
 pub struct AssetRegistryMigration;
 impl OnRuntimeUpgrade for AssetRegistryMigration {
@@ -23,19 +15,19 @@ impl OnRuntimeUpgrade for AssetRegistryMigration {
 		let mut weight: Weight = Weight::zero();
 
 		orml_asset_registry::Metadata::<Runtime>::translate(
-			|_key, mut old_meta: AssetMetadataOf| {
+			|token_id, meta: AssetMetadataOf| {
 				weight.saturating_accrue(
 					<Runtime as frame_system::Config>::DbWeight::get().reads_writes(1, 1),
 				);
 
-				let issuance = orml_tokens::Pallet::<Runtime>::total_issuance(_key);
-				let name = sp_std::str::from_utf8(&old_meta.name);
+				let issuance = orml_tokens::Pallet::<Runtime>::total_issuance(token_id);
+				let name = sp_std::str::from_utf8(&meta.name);
 				if issuance.is_zero() && name.map_or(false, |n| n.starts_with("Liquidity")) {
 					// By returning None from f for an element, we’ll remove it from the map.
 					// Based on the docs of translate method
 					None
 				} else {
-					Some(old_meta)
+					Some(meta)
 				}
 			},
 		);
@@ -45,6 +37,21 @@ impl OnRuntimeUpgrade for AssetRegistryMigration {
 
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
+		info!(
+			target: "asset_registry",
+			"pre_upgrade: checks"
+		);
+		let mut has_zero_issuance: Vec<u32> = vec![];
+		orml_asset_registry::Metadata::<Runtime>::iter().for_each(|(token_id, meta)| {
+			let issuance = orml_tokens::Pallet::<Runtime>::total_issuance(token_id);
+			let name = sp_std::str::from_utf8(&meta.name);
+			if issuance.is_zero() && name.map_or(false, |n| n.starts_with("Liquidity")) {
+				has_zero_issuance.push(token_id);
+			}
+		});
+
+		assert!(!has_zero_issuance.is_empty(), "No migration is required as we have identified only those liquidity assets with non-zero issuance.");
+
 		Ok(Vec::new())
 	}
 

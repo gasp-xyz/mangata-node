@@ -45,7 +45,7 @@ use sp_version::RuntimeVersion;
 use static_assertions::const_assert;
 pub use xcm::{latest::prelude::*, VersionedMultiLocation};
 
-pub use common_runtime::{currency::*, deposit, runtime_types, tokens, CallType};
+pub use common_runtime::{currency::*, config::migration::AssetRegistryMigration, deposit, runtime_types, tokens, CallType};
 
 use mangata_support::traits::ProofOfStakeRewardsApi;
 pub use mangata_types::{
@@ -63,7 +63,6 @@ use xyk_runtime_api::{RpcAmountsResult, RpcAssetMetadata, XYKRpcResult};
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-mod migration;
 mod weights;
 pub mod xcm_config;
 
@@ -91,7 +90,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	migration::AssetRegistryMigration,
+	AssetRegistryMigration<Runtime>,
 >;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know

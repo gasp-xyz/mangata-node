@@ -45,7 +45,7 @@ use sp_version::RuntimeVersion;
 use static_assertions::const_assert;
 pub use xcm::{latest::prelude::*, VersionedMultiLocation};
 
-pub use common_runtime::{currency::*, deposit, runtime_types, tokens, CallType};
+pub use common_runtime::{currency::*, config::migration::AssetRegistryMigration, deposit, runtime_types, tokens, CallType};
 // pub use constants::{fee::*, parachains::*};
 use mangata_support::traits::ProofOfStakeRewardsApi;
 pub use mangata_types::{
@@ -83,8 +83,6 @@ pub type UncheckedExtrinsic = runtime_types::UncheckedExtrinsic<Runtime, Runtime
 /// Extrinsic type that has already been checked.
 pub type CheckedExtrinsic = runtime_types::CheckedExtrinsic<Runtime, RuntimeCall>;
 
-mod migration;
-
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
 	Runtime,
@@ -92,7 +90,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	migration::AssetRegistryMigration,
+	AssetRegistryMigration<Runtime>,
 >;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know

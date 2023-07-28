@@ -3,7 +3,6 @@
 #![recursion_limit = "256"]
 
 use codec::{Decode, Encode, MaxEncodedLen};
-use log::info;
 use frame_support::{
 	dispatch::{DispatchClass, DispatchResult},
 	ensure, parameter_types,
@@ -22,6 +21,7 @@ use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
 };
+use log::info;
 pub use orml_tokens;
 use orml_tokens::MultiTokenCurrencyExtended;
 use orml_traits::{
@@ -303,28 +303,29 @@ pub mod config {
 		impl<T> OnRuntimeUpgrade for AssetRegistryMigration<T>
 		where
 			T: ::orml_asset_registry::Config<
-				CustomMetadata = CustomMetadata,
-				AssetId = TokenId,
-				Balance = Balance,
-			> + ::orml_tokens::Config<CurrencyId = TokenId>,
+					CustomMetadata = CustomMetadata,
+					AssetId = TokenId,
+					Balance = Balance,
+				> + ::orml_tokens::Config<CurrencyId = TokenId>,
 		{
 			fn on_runtime_upgrade() -> Weight {
 				info!(
 					target: "asset_registry",
 					"on_runtime_upgrade: Attempted to apply AssetRegistry migration"
 				);
-		
+
 				let mut weight: Weight = Weight::zero();
-		
+
 				::orml_asset_registry::Metadata::<T>::translate(
 					|token_id, meta: AssetMetadataOf| {
 						weight.saturating_accrue(
 							<T as ::frame_system::Config>::DbWeight::get().reads_writes(1, 1),
 						);
-		
+
 						let issuance = ::orml_tokens::Pallet::<T>::total_issuance(token_id);
 						let name = sp_std::str::from_utf8(&meta.name);
-						if issuance.is_zero() && name.map_or(false, |n| n.starts_with("Liquidity")) {
+						if issuance.is_zero() && name.map_or(false, |n| n.starts_with("Liquidity"))
+						{
 							// By returning None from f for an element, we’ll remove it from the map.
 							// Based on the docs of translate method
 							None
@@ -333,7 +334,7 @@ pub mod config {
 						}
 					},
 				);
-		
+
 				weight
 			}
 
@@ -373,8 +374,6 @@ pub mod config {
 
 				Ok(())
 			}
-
-
 		}
 	}
 

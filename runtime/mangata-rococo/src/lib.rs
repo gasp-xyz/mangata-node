@@ -45,7 +45,10 @@ use sp_version::RuntimeVersion;
 use static_assertions::const_assert;
 pub use xcm::{latest::prelude::*, VersionedMultiLocation};
 
-pub use common_runtime::{currency::*, config::migration::AssetRegistryMigration, deposit, runtime_types, tokens, CallType};
+pub use common_runtime::{
+	config::migration::AssetRegistryMigration, currency::*, deposit, runtime_types, tokens,
+	CallType,
+};
 // pub use constants::{fee::*, parachains::*};
 use mangata_support::traits::ProofOfStakeRewardsApi;
 pub use mangata_types::{

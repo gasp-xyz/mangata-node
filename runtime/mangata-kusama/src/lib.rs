@@ -45,10 +45,7 @@ use sp_version::RuntimeVersion;
 use static_assertions::const_assert;
 pub use xcm::{latest::prelude::*, VersionedMultiLocation};
 
-pub use common_runtime::{
-	config::migration::AssetRegistryMigration, currency::*, deposit, runtime_types, tokens,
-	CallType,
-};
+pub use common_runtime::{currency::*, deposit, runtime_types, tokens, CallType};
 
 use mangata_support::traits::ProofOfStakeRewardsApi;
 pub use mangata_types::{
@@ -93,7 +90,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	AssetRegistryMigration<Runtime>,
+	common_runtime::migration::AssetRegistryMigration<Runtime>,
 >;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know

@@ -19,6 +19,7 @@ use pallet_vesting_mangata_rpc_runtime_api::VestingInfosWithLockedAt;
 // Polkadot Imports
 pub use polkadot_runtime_common::BlockHashCount;
 
+pub use common_runtime::{currency::*, deposit, runtime_types, tokens, CallType};
 use sp_api::impl_runtime_apis;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -44,11 +45,6 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 use static_assertions::const_assert;
 pub use xcm::{latest::prelude::*, VersionedMultiLocation};
-
-pub use common_runtime::{
-	config::migration::AssetRegistryMigration, currency::*, deposit, runtime_types, tokens,
-	CallType,
-};
 // pub use constants::{fee::*, parachains::*};
 use mangata_support::traits::ProofOfStakeRewardsApi;
 pub use mangata_types::{
@@ -93,7 +89,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	AssetRegistryMigration<Runtime>,
+	common_runtime::migration::AssetRegistryMigration<Runtime>,
 >;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know

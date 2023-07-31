@@ -6,6 +6,17 @@ use codec::{Codec, Decode, Encode};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sp_runtime::traits::{MaybeDisplay, MaybeFromStr};
+use sp_std::vec::Vec;
+}
+
+#[derive(Eq, PartialEq, Encode, Decode, Default)]
+#[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
+#[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
+pub struct RpcAssetMetadata<TokenId> {
+	pub token_id: TokenId,
+	pub decimals: u32,
+	pub name: Vec<u8>,
+	pub symbol: Vec<u8>,
 
 sp_api::decl_runtime_apis! {
 	pub trait XykApi<Balance, TokenId, AccountId> where
@@ -63,5 +74,7 @@ sp_api::decl_runtime_apis! {
 			path: sp_std::vec::Vec<TokenId>,
 			input_amount: Balance,
 		) -> Option<bool>;
+
+		fn get_tradeable_tokens() -> Vec<RpcAssetMetadata<TokenId>>;
 	}
 }

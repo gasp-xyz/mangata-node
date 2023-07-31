@@ -7,7 +7,6 @@ use codec::{Codec, Decode, Encode};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sp_runtime::traits::{MaybeDisplay, MaybeFromStr};
 use sp_std::vec::Vec;
-}
 
 #[derive(Eq, PartialEq, Encode, Decode, Default)]
 #[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
@@ -17,6 +16,7 @@ pub struct RpcAssetMetadata<TokenId> {
 	pub decimals: u32,
 	pub name: Vec<u8>,
 	pub symbol: Vec<u8>,
+}
 
 sp_api::decl_runtime_apis! {
 	pub trait XykApi<Balance, TokenId, AccountId> where

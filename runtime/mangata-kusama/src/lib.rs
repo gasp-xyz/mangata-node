@@ -57,7 +57,7 @@ pub use pallet_sudo_origin;
 pub use pallet_xyk;
 // XCM Imports
 
-use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
+use xyk_runtime_api::RpcAssetMetadata;
 // Make the WASM binary available.
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));

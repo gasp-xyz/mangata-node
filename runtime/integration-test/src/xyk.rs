@@ -54,3 +54,82 @@ fn create_pool_disabled_meta_disabled() {
 		assert_err!(create_pool(), pallet_xyk::Error::<Runtime>::FunctionNotAvailableForThisToken);
 	});
 }
+
+
+#[test]
+fn swap_tx_does_not_charge_fee() {
+	test_env(Some(XykMetadata { operations_disabled: true })).execute_with(|| {
+		let call = RuntimeCall::Xyk(XykCall::sell_assset {
+			sold_asset_id: 0u32,
+			bought_asset_id: 4u32,
+			sold_asset_amount: 1u128,
+			min_amount_out: 0u128,
+		});
+		// assert_err!(create_pool(), pallet_xyk::Error::<Runtime>::FunctionNotAvailableForThisToken);
+	// 	let xt = TestXt::new(call.clone(), Some((origin, extra)));
+	});
+}
+
+
+	// fn query_info_and_fee_details_works() {
+	// 	let call = RuntimeCall::Balances(BalancesCall::transfer { dest: 2, value: 69 });
+	// 	let origin = 111111;
+	// 	let extra = ();
+	// 	let xt = TestXt::new(call.clone(), Some((origin, extra)));
+	// 	let info = xt.get_dispatch_info();
+	// 	let ext = xt.encode();
+	// 	let len = ext.len() as u32;
+    //
+	// 	let unsigned_xt = TestXt::<_, ()>::new(call, None);
+	// 	let unsigned_xt_info = unsigned_xt.get_dispatch_info();
+    //
+	// 	ExtBuilder::default()
+	// 		.base_weight(Weight::from_parts(5, 0))
+	// 		.weight_fee(2)
+	// 		.build()
+	// 		.execute_with(|| {
+	// 			// all fees should be x1.5
+	// 			<NextFeeMultiplier<Runtime>>::put(Multiplier::saturating_from_rational(3, 2));
+    //
+	// 			assert_eq!(
+	// 				TransactionPayment::query_info(xt.clone(), len),
+	// 				RuntimeDispatchInfo {
+	// 					weight: info.weight,
+	// 					class: info.class,
+	// 					partial_fee: 5 * 2 /* base * weight_fee */
+	// 					+ len as u64  /* len * 1 */
+	// 					+ info.weight.min(BlockWeights::get().max_block).ref_time() as u64 * 2 * 3 / 2 /* weight */
+	// 				},
+	// 			);
+    //
+	// 			assert_eq!(
+	// 				TransactionPayment::query_info(unsigned_xt.clone(), len),
+	// 				RuntimeDispatchInfo {
+	// 					weight: unsigned_xt_info.weight,
+	// 					class: unsigned_xt_info.class,
+	// 					partial_fee: 0,
+	// 				},
+	// 			);
+    //
+	// 			assert_eq!(
+	// 				TransactionPayment::query_fee_details(xt, len),
+	// 				FeeDetails {
+	// 					inclusion_fee: Some(InclusionFee {
+	// 						base_fee: 5 * 2,
+	// 						len_fee: len as u64,
+	// 						adjusted_weight_fee: info
+	// 							.weight
+	// 							.min(BlockWeights::get().max_block)
+	// 							.ref_time() as u64 * 2 * 3 / 2
+	// 					}),
+	// 					tip: 0,
+	// 				},
+	// 			);
+    //
+	// 			assert_eq!(
+	// 				TransactionPayment::query_fee_details(unsigned_xt, len),
+	// 				FeeDetails { inclusion_fee: None, tip: 0 },
+	// 			);
+	// 		});
+	// }
+

@@ -662,7 +662,7 @@ pub mod pallet {
 				min_amount_out,
 				false,
 			)?;
-			Ok(().into())
+			Ok(Pays::No.into())
 		}
 
 		/// Executes a multiswap sell asset in a series of sell asset atomic swaps.

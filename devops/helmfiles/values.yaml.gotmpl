@@ -1,18 +1,18 @@
+role: collator
+remoteCluster: true
 environment: {{ requiredEnv "ENVIRONMENT" | quote }}
 image:
   tag: {{ requiredEnv "IMAGE_TAG" | quote }}
-remoteCluster: true
 customChainspecUrl: {{ .Values | get "nodeCustomChainspecUrl" "" }}
 chain: {{ .Values | get "nodeChain" "rococo" }}
 storageClass: {{ .Values.storageClass }}
 storageSize: {{ .Values.storageSize }}
-parachainRegisterSidecar:
-  enable: false
 relaychain:
   forceUseCustomChainspecPath: true
   storageSize: {{ .Values.relaychainStorageSize }}
   customChainspecUrl: {{ .Values | get "relaychainCustomChainspecUrl" "" }}
   bootnodeAddr: {{ .Values | get "relaychainBootnodeAddr" "" }}
   kubernetesVolumeSnapshot: {{ .Values | get "relaychainKubernetesVolumeSnapshot" "" }}
+  extraArgs: {{ .Values | get "relaychainExtraArgs" "" }}
 resources: {{ toYaml .Values.resources | nindent 10 }}
-role: collator
+enableServiceMonitorCollectors: {{ .Values.enableServiceMonitorCollectors | toYaml }}

@@ -8,11 +8,11 @@ chain: {{ .Values | get "nodeChain" "rococo" }}
 storageClass: {{ .Values.storageClass }}
 storageSize: {{ .Values.storageSize }}
 relaychain:
+  image: {{ .Values.relaychainImage }}
   forceUseCustomChainspecPath: true
   storageSize: {{ .Values.relaychainStorageSize }}
   customChainspecUrl: {{ .Values | get "relaychainCustomChainspecUrl" "" }}
   bootnodeAddr: {{ .Values | get "relaychainBootnodeAddr" "" }}
   kubernetesVolumeSnapshot: {{ .Values | get "relaychainKubernetesVolumeSnapshot" "" }}
-  extraArgs: {{ .Values | get "relaychainExtraArgs" "" }}
 resources: {{ toYaml .Values.resources | nindent 10 }}
 enableServiceMonitorCollectors: {{ .Values.enableServiceMonitorCollectors | toYaml }}

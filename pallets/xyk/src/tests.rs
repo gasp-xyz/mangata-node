@@ -4,9 +4,11 @@
 
 use super::{Event, *};
 use crate::mock::*;
-use frame_support::assert_err;
+use frame_support::{assert_err, assert_err_ignore_postinfo};
 use mangata_support::traits::LiquidityMiningApi;
 use mangata_types::assets::CustomMetadata;
+use frame_support::dispatch::GetDispatchInfo;
+use sp_runtime::traits::Dispatchable;
 use orml_traits::asset_registry::AssetMetadata;
 use serial_test::serial;
 use sp_runtime::Permill;
@@ -677,7 +679,7 @@ fn sell_N_no_such_pool() {
 	new_test_ext().execute_with(|| {
 		initialize();
 
-		assert_err!(
+		assert_err_ignore_postinfo!(
 			XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(2), vec![0, 10], 250000, 0),
 			Error::<Test>::NoSuchPool,
 		); // selling 250000 assetId 0 of pool 0 10 (only pool 0 1 exists)
@@ -1999,31 +2001,145 @@ fn buy_assets_with_small_expected_amount_does_not_cause_panic() {
 
 #[test]
 #[serial]
-#[ignore]
-fn successful_buy_assets_does_not_charge_fee() {
+fn swaps_are_annotated_as_PaysNo() {
 	new_test_ext().execute_with(|| {
-		initialize();
-		let first_token_balance = XykStorage::balance(1, DUMMY_USER_ID);
-		let post_info = XykStorage::multiswap_buy_asset(
-			RuntimeOrigin::signed(2),
-			vec![1, 4],
-			1000,
-			first_token_balance,
-		)
-		.unwrap();
-		assert_eq!(post_info.pays_fee, Pays::No);
+		let calls = [
+			mock::RuntimeCall::XykStorage(Call::sell_asset {
+				sold_asset_id: 0u32,
+				bought_asset_id: 1u32,
+				sold_asset_amount: 10u128,
+				min_amount_out: 1u128,
+			}),
+			mock::RuntimeCall::XykStorage(Call::buy_asset {
+				sold_asset_id: 0u32,
+				bought_asset_id: 1u32,
+				bought_asset_amount: 10u128,
+				max_amount_in: 1u128,
+			}),
+			mock::RuntimeCall::XykStorage(Call::multiswap_buy_asset {
+				swap_token_list: vec![0,2],
+				bought_asset_amount: 10u128,
+				max_amount_in: 1u128,
+			}),
+			mock::RuntimeCall::XykStorage(Call::multiswap_sell_asset {
+				swap_token_list: vec![0,2],
+				sold_asset_amount: 10,
+				min_amount_out: 0,
+			}),
+		];
+
+
+		assert!( calls.iter()
+			.map(|call| call.get_dispatch_info())
+			.all(|dispatch| dispatch.pays_fee == Pays::No)
+		);
 	});
 }
 
 #[test]
 #[serial]
-#[ignore]
+fn successful_swaps_are_free() {
+	new_test_ext().execute_with(|| {
+		initialize();
+		XykStorage::create_pool(RuntimeOrigin::signed(2), 1, 1000, 0, 1000).unwrap();
+
+		let calls = [
+			mock::RuntimeCall::XykStorage(Call::sell_asset {
+				sold_asset_id: 0u32,
+				bought_asset_id: 1u32,
+				sold_asset_amount: 10u128,
+				min_amount_out: 1u128,
+			}),
+			mock::RuntimeCall::XykStorage(Call::buy_asset {
+				sold_asset_id: 0u32,
+				bought_asset_id: 1u32,
+				bought_asset_amount: 10u128,
+				max_amount_in: 1u128,
+			}),
+			mock::RuntimeCall::XykStorage(Call::multiswap_buy_asset {
+				swap_token_list: vec![0,1],
+				bought_asset_amount: 10u128,
+				max_amount_in: 1u128,
+			}),
+			mock::RuntimeCall::XykStorage(Call::multiswap_sell_asset {
+				swap_token_list: vec![0,1],
+				sold_asset_amount: 10,
+				min_amount_out: 0,
+			}),
+		];
+
+
+		assert!( calls.iter()
+			.all(|call|
+				matches!(
+					call.clone().dispatch(RuntimeOrigin::signed(2)),
+					Ok(post_info) if post_info.pays_fee == Pays::No
+				)
+			)
+		);
+	});
+}
+
+#[test]
+#[serial]
+fn unsuccessful_swaps_are_not_free() {
+	new_test_ext().execute_with(|| {
+		initialize();
+		// XykStorage::create_pool(RuntimeOrigin::signed(2), 1, 1000, 0, 1000).unwrap();
+
+		let calls = [
+			mock::RuntimeCall::XykStorage(Call::sell_asset {
+				sold_asset_id: 0u32,
+				bought_asset_id: 1u32,
+				sold_asset_amount: 10u128,
+				min_amount_out: 1u128,
+			}),
+			mock::RuntimeCall::XykStorage(Call::buy_asset {
+				sold_asset_id: 0u32,
+				bought_asset_id: 1u32,
+				bought_asset_amount: 10u128,
+				max_amount_in: 1u128,
+			}),
+			mock::RuntimeCall::XykStorage(Call::multiswap_buy_asset {
+				swap_token_list: vec![0,1],
+				bought_asset_amount: 10u128,
+				max_amount_in: 1u128,
+			}),
+			mock::RuntimeCall::XykStorage(Call::multiswap_sell_asset {
+				swap_token_list: vec![0,1],
+				sold_asset_amount: 10,
+				min_amount_out: 0,
+			}),
+		];
+
+
+		assert!( calls.iter()
+			.all(|call|{
+				matches!(
+					call.clone().dispatch(RuntimeOrigin::signed(2)),
+					Err(err) if err.post_info.pays_fee == Pays::Yes
+					&& err.post_info.actual_weight.unwrap().ref_time() > 0
+				)
+				}
+			)
+		);
+	});
+}
+
+#[test]
+#[serial]
 fn unsuccessful_buy_assets_charges_fee() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
-		//try to sell non owned, non existing tokens
+
 		let post_info =
 			XykStorage::multiswap_buy_asset(RuntimeOrigin::signed(2), vec![100, 200], 0, 0)
+				.unwrap_err()
+				.post_info;
+		assert_eq!(post_info.pays_fee, Pays::Yes);
+
+		let post_info =
+			XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(2), vec![100, 200], 0, 0)
 				.unwrap_err()
 				.post_info;
 		assert_eq!(post_info.pays_fee, Pays::Yes);

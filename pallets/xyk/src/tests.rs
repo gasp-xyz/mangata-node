@@ -691,7 +691,7 @@ fn sell_N_not_enough_selling_assset() {
 	new_test_ext().execute_with(|| {
 		initialize();
 
-		assert_err!(
+		assert_err_ignore_postinfo!(
 			// XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(2), vec![1, 4], 1000000000000000000000, 0),
 			XykStorage::sell_asset(RuntimeOrigin::signed(2), 1, 4, 1000000000000000000000, 0),
 			orml_tokens::Error::<Test>::BalanceTooLow,
@@ -764,7 +764,7 @@ fn sell_N_zero_amount() {
 	new_test_ext().execute_with(|| {
 		initialize();
 
-		assert_err!(
+		assert_err_ignore_postinfo!(
 			XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(2), vec![1, 4], 0, 500000),
 			Error::<Test>::ZeroAmount,
 		); // selling 0 assetId 0 of pool 0 1
@@ -962,7 +962,7 @@ fn multiswap_sell_not_enough_assets_pay_fees_fails_early_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		assert_err!(
+		assert_err_ignore_postinfo!(
 			XykStorage::multiswap_sell_asset(
 				RuntimeOrigin::signed(TRADER_ID),
 				vec![1, 2, 3, 6, 5],
@@ -1174,7 +1174,7 @@ fn multiswap_sell_zero_amount_does_not_work_N() {
 		System::set_block_number(1);
 		multi_initialize();
 
-		assert_err!(
+		assert_err_ignore_postinfo!(
 			XykStorage::multiswap_sell_asset(
 				RuntimeOrigin::signed(TRADER_ID),
 				vec![1, 2, 3],
@@ -1255,7 +1255,7 @@ fn buy_N_no_such_pool() {
 		initialize();
 
 		// buying 150000 assetId 1 of pool 0 10 (only pool 0 1 exists)
-		assert_err!(
+		assert_err_ignore_postinfo!(
 			XykStorage::multiswap_buy_asset(RuntimeOrigin::signed(2), vec![0, 10], 150000, 5000000),
 			Error::<Test>::NoSuchPool,
 		);
@@ -1277,7 +1277,7 @@ fn buy_N_not_enough_reserve() {
 		initialize();
 
 		// buying 70000000000000000000 assetId 0 of pool 0 1 , only 60000000000000000000 in reserve
-		assert_err!(
+		assert_err_ignore_postinfo!(
 			XykStorage::multiswap_buy_asset(
 				RuntimeOrigin::signed(2),
 				vec![1, 4],
@@ -1296,7 +1296,7 @@ fn buy_N_not_enough_selling_assset() {
 		initialize();
 
 		// buying 59000000000000000000 assetId 1 of pool 0 1 should sell 2.36E+21 assetId 0, only 9.6E+20 in acc
-		assert_err!(
+		assert_err_ignore_postinfo!(
 			XykStorage::multiswap_buy_asset(
 				RuntimeOrigin::signed(2),
 				vec![1, 4],
@@ -1375,7 +1375,7 @@ fn buy_N_zero_amount() {
 	new_test_ext().execute_with(|| {
 		initialize();
 
-		assert_err!(
+		assert_err_ignore_postinfo!(
 			XykStorage::multiswap_buy_asset(RuntimeOrigin::signed(2), vec![1, 4], 0, 0),
 			Error::<Test>::ZeroAmount,
 		); // buying 0 assetId 0 of pool 0 1
@@ -1572,7 +1572,7 @@ fn multiswap_buy_not_enough_assets_pay_fees_fails_early_W() {
 		assert_eq!(XykStorage::balance(4, XykStorage::account_id()), 100000000000000000000);
 		assert_eq!(XykStorage::balance(5, XykStorage::account_id()), 60000000000000000000);
 
-		assert_err!(
+		assert_err_ignore_postinfo!(
 			XykStorage::multiswap_buy_asset(
 				RuntimeOrigin::signed(TRADER_ID),
 				vec![1, 2, 3, 6, 5],
@@ -1707,7 +1707,7 @@ fn multiswap_buy_same_pool_does_not_work_N() {
 		System::set_block_number(1);
 		multi_initialize();
 
-		assert_err!(
+		assert_err_ignore_postinfo!(
 			XykStorage::multiswap_buy_asset(
 				RuntimeOrigin::signed(TRADER_ID),
 				vec![1, 2, 1],
@@ -1725,7 +1725,7 @@ fn multiswap_buy_loop_does_not_work_N() {
 		System::set_block_number(1);
 		multi_initialize();
 
-		assert_err!(
+		assert_err_ignore_postinfo!(
 			XykStorage::multiswap_buy_asset(
 				RuntimeOrigin::signed(TRADER_ID),
 				vec![1, 2, 3, 2, 1, 2],
@@ -1744,7 +1744,7 @@ fn multiswap_buy_zero_amount_does_not_work_N() {
 		System::set_block_number(1);
 		multi_initialize();
 
-		assert_err!(
+		assert_err_ignore_postinfo!(
 			XykStorage::multiswap_buy_asset(
 				RuntimeOrigin::signed(TRADER_ID),
 				vec![1, 2, 3],
@@ -1753,7 +1753,7 @@ fn multiswap_buy_zero_amount_does_not_work_N() {
 			),
 			Error::<Test>::ZeroAmount
 		);
-		assert_err!(
+		assert_err_ignore_postinfo!(
 			XykStorage::multiswap_buy_asset(
 				RuntimeOrigin::signed(TRADER_ID),
 				vec![1, 2, 3],
@@ -2405,7 +2405,7 @@ fn sell_N_maintenance_mode() {
 
 		MockMaintenanceStatusProvider::set_maintenance(true);
 
-		assert_err!(
+		assert_err_ignore_postinfo!(
 			XykStorage::multiswap_sell_asset(RuntimeOrigin::signed(2), vec![1, 4], 20000000, 0),
 			Error::<Test>::TradingBlockedByMaintenanceMode,
 		);
@@ -2440,7 +2440,7 @@ fn buy_W_maintenance_mode() {
 
 		MockMaintenanceStatusProvider::set_maintenance(true);
 
-		assert_err!(
+		assert_err_ignore_postinfo!(
 			// buying 30000000000000000000 assetId 1 of pool 0 1
 			XykStorage::multiswap_buy_asset(
 				RuntimeOrigin::signed(2),

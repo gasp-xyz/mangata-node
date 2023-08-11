@@ -288,7 +288,7 @@
 
 use frame_support::{
 	assert_ok,
-	dispatch::{DispatchError,DispatchErrorWithPostInfo , DispatchResult, PostDispatchInfo},
+	dispatch::{DispatchError, DispatchErrorWithPostInfo, DispatchResult, PostDispatchInfo},
 	ensure,
 	traits::Contains,
 	PalletId,
@@ -662,16 +662,16 @@ pub mod pallet {
 				sold_asset_amount,
 				min_amount_out,
 				false,
-            ).map_err(|err|
-                    DispatchErrorWithPostInfo{
-                        post_info: PostDispatchInfo{
-                            actual_weight: Some(<<T as Config>::WeightInfo>::sell_asset()),
-                            pays_fee: Pays::Yes
-                        },
-                        error: err,
-                    })?;
+			)
+			.map_err(|err| DispatchErrorWithPostInfo {
+				post_info: PostDispatchInfo {
+					actual_weight: Some(<<T as Config>::WeightInfo>::sell_asset()),
+					pays_fee: Pays::Yes,
+				},
+				error: err,
+			})?;
 			Ok(Pays::No.into())
-        }
+		}
 
 		/// Executes a multiswap sell asset in a series of sell asset atomic swaps.
 		///
@@ -699,32 +699,34 @@ pub mod pallet {
 
 			if let (Some(sold_asset_id), Some(bought_asset_id), 2) =
 				(swap_token_list.get(0), swap_token_list.get(1), swap_token_list.len())
-				{
-					<Self as XykFunctionsTrait<T::AccountId>>::sell_asset(
-						sender,
-						*sold_asset_id,
-						*bought_asset_id,
-						sold_asset_amount,
-						min_amount_out,
-						false,
-					)
-				} else {
-					<Self as XykFunctionsTrait<T::AccountId>>::multiswap_sell_asset(
-						sender,
-						swap_token_list.clone(),
-						sold_asset_amount,
-						min_amount_out,
-						false,
+			{
+				<Self as XykFunctionsTrait<T::AccountId>>::sell_asset(
+					sender,
+					*sold_asset_id,
+					*bought_asset_id,
+					sold_asset_amount,
+					min_amount_out,
 					false,
-					)
-				}.map_err(|err|
-					DispatchErrorWithPostInfo{
-						post_info: PostDispatchInfo{
-							actual_weight: Some(<<T as Config>::WeightInfo>::multiswap_sell_asset(swap_token_list.len() as u32)),
-							pays_fee: Pays::Yes
-						},
-						error: err,
-					})?;
+				)
+			} else {
+				<Self as XykFunctionsTrait<T::AccountId>>::multiswap_sell_asset(
+					sender,
+					swap_token_list.clone(),
+					sold_asset_amount,
+					min_amount_out,
+					false,
+					false,
+				)
+			}
+			.map_err(|err| DispatchErrorWithPostInfo {
+				post_info: PostDispatchInfo {
+					actual_weight: Some(<<T as Config>::WeightInfo>::multiswap_sell_asset(
+						swap_token_list.len() as u32,
+					)),
+					pays_fee: Pays::Yes,
+				},
+				error: err,
+			})?;
 			Ok(Pays::No.into())
 		}
 
@@ -761,14 +763,14 @@ pub mod pallet {
 				bought_asset_amount,
 				max_amount_in,
 				false,
-            ).map_err(|err|
-                    DispatchErrorWithPostInfo{
-                        post_info: PostDispatchInfo{
-                            actual_weight: Some(<<T as Config>::WeightInfo>::buy_asset()),
-                            pays_fee: Pays::Yes
-                        },
-                        error: err,
-                    })?;
+			)
+			.map_err(|err| DispatchErrorWithPostInfo {
+				post_info: PostDispatchInfo {
+					actual_weight: Some(<<T as Config>::WeightInfo>::buy_asset()),
+					pays_fee: Pays::Yes,
+				},
+				error: err,
+			})?;
 			Ok(Pays::No.into())
 		}
 
@@ -820,14 +822,15 @@ pub mod pallet {
 					false,
 				)
 			}
-            .map_err(|err|
-                    DispatchErrorWithPostInfo{
-                        post_info: PostDispatchInfo{
-                            actual_weight: Some(<<T as Config>::WeightInfo>::multiswap_buy_asset(swap_token_list.len() as u32)),
-                            pays_fee: Pays::Yes
-                        },
-                        error: err,
-                    })?;
+			.map_err(|err| DispatchErrorWithPostInfo {
+				post_info: PostDispatchInfo {
+					actual_weight: Some(<<T as Config>::WeightInfo>::multiswap_buy_asset(
+						swap_token_list.len() as u32,
+					)),
+					pays_fee: Pays::Yes,
+				},
+				error: err,
+			})?;
 			Ok(Pays::No.into())
 		}
 

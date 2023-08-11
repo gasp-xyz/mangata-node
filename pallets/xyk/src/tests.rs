@@ -4,14 +4,12 @@
 
 use super::{Event, *};
 use crate::mock::*;
-use frame_support::{assert_err, assert_err_ignore_postinfo};
+use frame_support::{assert_err, assert_err_ignore_postinfo, dispatch::GetDispatchInfo};
 use mangata_support::traits::LiquidityMiningApi;
 use mangata_types::assets::CustomMetadata;
-use frame_support::dispatch::GetDispatchInfo;
-use sp_runtime::traits::Dispatchable;
 use orml_traits::asset_registry::AssetMetadata;
 use serial_test::serial;
-use sp_runtime::Permill;
+use sp_runtime::{traits::Dispatchable, Permill};
 use test_case::test_case;
 
 const DUMMY_USER_ID: u128 = 2;
@@ -2017,22 +2015,21 @@ fn swaps_are_annotated_as_PaysNo() {
 				max_amount_in: 1u128,
 			}),
 			mock::RuntimeCall::XykStorage(Call::multiswap_buy_asset {
-				swap_token_list: vec![0,2],
+				swap_token_list: vec![0, 2],
 				bought_asset_amount: 10u128,
 				max_amount_in: 1u128,
 			}),
 			mock::RuntimeCall::XykStorage(Call::multiswap_sell_asset {
-				swap_token_list: vec![0,2],
+				swap_token_list: vec![0, 2],
 				sold_asset_amount: 10,
 				min_amount_out: 0,
 			}),
 		];
 
-
-		assert!( calls.iter()
+		assert!(calls
+			.iter()
 			.map(|call| call.get_dispatch_info())
-			.all(|dispatch| dispatch.pays_fee == Pays::No)
-		);
+			.all(|dispatch| dispatch.pays_fee == Pays::No));
 	});
 }
 
@@ -2057,26 +2054,21 @@ fn successful_swaps_are_free() {
 				max_amount_in: 1u128,
 			}),
 			mock::RuntimeCall::XykStorage(Call::multiswap_buy_asset {
-				swap_token_list: vec![0,1],
+				swap_token_list: vec![0, 1],
 				bought_asset_amount: 10u128,
 				max_amount_in: 1u128,
 			}),
 			mock::RuntimeCall::XykStorage(Call::multiswap_sell_asset {
-				swap_token_list: vec![0,1],
+				swap_token_list: vec![0, 1],
 				sold_asset_amount: 10,
 				min_amount_out: 0,
 			}),
 		];
 
-
-		assert!( calls.iter()
-			.all(|call|
-				matches!(
-					call.clone().dispatch(RuntimeOrigin::signed(2)),
-					Ok(post_info) if post_info.pays_fee == Pays::No
-				)
-			)
-		);
+		assert!(calls.iter().all(|call| matches!(
+			call.clone().dispatch(RuntimeOrigin::signed(2)),
+			Ok(post_info) if post_info.pays_fee == Pays::No
+		)));
 	});
 }
 
@@ -2101,28 +2093,24 @@ fn unsuccessful_swaps_are_not_free() {
 				max_amount_in: 1u128,
 			}),
 			mock::RuntimeCall::XykStorage(Call::multiswap_buy_asset {
-				swap_token_list: vec![0,1],
+				swap_token_list: vec![0, 1],
 				bought_asset_amount: 10u128,
 				max_amount_in: 1u128,
 			}),
 			mock::RuntimeCall::XykStorage(Call::multiswap_sell_asset {
-				swap_token_list: vec![0,1],
+				swap_token_list: vec![0, 1],
 				sold_asset_amount: 10,
 				min_amount_out: 0,
 			}),
 		];
 
-
-		assert!( calls.iter()
-			.all(|call|{
-				matches!(
-					call.clone().dispatch(RuntimeOrigin::signed(2)),
-					Err(err) if err.post_info.pays_fee == Pays::Yes
-					&& err.post_info.actual_weight.unwrap().ref_time() > 0
-				)
-				}
+		assert!(calls.iter().all(|call| {
+			matches!(
+				call.clone().dispatch(RuntimeOrigin::signed(2)),
+				Err(err) if err.post_info.pays_fee == Pays::Yes
+				&& err.post_info.actual_weight.unwrap().ref_time() > 0
 			)
-		);
+		}));
 	});
 }
 

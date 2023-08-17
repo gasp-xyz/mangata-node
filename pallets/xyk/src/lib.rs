@@ -3184,6 +3184,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			second_asset_amount
 		);
 
+		// Is liquidity asset amount empty?
 		if liquidity_asset_amount == total_liquidity_assets {
 			log!(
 				info,
@@ -3195,6 +3196,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			);
 			LiquidityAssets::<T>::remove((first_asset_id, second_asset_id));
 			LiquidityAssets::<T>::remove((second_asset_id, first_asset_id));
+			Pallet::<T>::set_reserves(first_asset_id, 0, second_asset_id, 0)?;
 		} else {
 			// Apply changes in token pools, removing withdrawn amounts
 			// Cannot underflow due to earlier ensure

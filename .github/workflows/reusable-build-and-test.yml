@@ -146,6 +146,7 @@ jobs:
     runs-on: [self-hosted, compile]
     container:
       image: ${{ inputs.builder_image }}
+      options: --security-opt seccomp=unconfined
     steps:
       - uses: actions/checkout@v3
       - name: Authenticate to Google Cloud

@@ -171,6 +171,7 @@ impl<C, Block, Balance, TokenId, AccountId>
 		XYKRpcResult<Balance>,
 		RpcAmountsResult<Balance>,
 		Balance,
+		GenericXYKRpcResult<T>,
 	> for Xyk<C, Block>
 where
 	Block: BlockT,

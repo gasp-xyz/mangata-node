@@ -1809,6 +1809,20 @@ fn burn_all_liq_and_mint_it_again() {
 		assert_eq!(empty_asset_value_1, 0);
 		assert_eq!(empty_asset_value_4, 0);
 		assert_eq!(empty_total_issuance_of_liq_amount, 0);
+
+		// XykStorage::mint_liquidity(
+		// 	RuntimeOrigin::signed(2),
+		// 	4,
+		// 	1,
+		// 	asset_value_1,
+		// 	asset_value_4,
+		// ).unwrap();
+		//
+		// let liq_token_idaa = XykStorage::liquidity_asset((1, 4));
+		//
+		// let total_issuance_of_liq_amount: u128 =
+		// 	<Test as Config>::Currency::total_issuance(liq_token_idaa.unwrap()).into();
+
 	});
 }
 

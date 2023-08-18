@@ -73,23 +73,24 @@ jobs:
             --project-id 2 \
             --name "BE tests from node-repo" \
             --resources resources.json \
-            --source "unit-tests" > testmo-run-id.txt
+            --source "BE-e2e-regression" > testmo-run-id.txt
           ID=$(cat testmo-run-id.txt)
           echo "testmo-run-id=$ID" >> $GITHUB_OUTPUT
           echo "ID=$ID" >> $GITHUB_ENV
-          
+
         env:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
         id: setTestRun
-        
-        
+
+
   e2e-test-matrix:
     needs: [setup-report]
     strategy:
+      fail-fast: false
       matrix:
         include:
-          - command: "yarn test-parallel --max-workers=32"
+          - command: "yarn test-parallel --max-workers=10"
             fast: false
           - command: "yarn test-sequential-no-bootstrap"
             fast: false
@@ -109,6 +110,10 @@ jobs:
             fast: true
           - command: "yarn test-governance"
             fast: true
+          - command: "yarn test-multiswap"
+            fast: false
+          - command: "yarn test-experimentalStaking"
+            fast: true
 
     runs-on: [self-hosted, compile]
     timeout-minutes: 180
@@ -122,16 +127,16 @@ jobs:
       MANGATA_NODE_VERSION: ${{ inputs.globalVersion }}
       E2EBRANCHNAME: "main"
       PARACHAIN_DOCKER_IMAGE: ${{ inputs.parachainDocker || format('mangatasolutions/mangata-node:{0}', inputs.globalVersion) }}
-    steps:  
+    steps:
       - uses: actions/checkout@v3 ####IDK, but this is neccesary for reports
       - name: Adapt if fast runtime
         if:  ${{  !contains(env.PARACHAIN_DOCKER_IMAGE, 'fast') && matrix.fast == true }}
         run: echo "PARACHAIN_DOCKER_IMAGE=${{ env.PARACHAIN_DOCKER_IMAGE }}-fast" >> $GITHUB_ENV
-      
+
       - name: Adapt if fast runtime
         if:  ${{  !contains(env.PARACHAIN_DOCKER_IMAGE, 'fast') && matrix.fast == true }}
         run: echo "PARACHAIN_DOCKER_IMAGE=${{ env.PARACHAIN_DOCKER_IMAGE }}-fast" >> $GITHUB_ENV
-      
+
       - name: Download node Docker image
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && inputs.skipBuild != 'true' }}
         run: docker pull ${{ env.PARACHAIN_DOCKER_IMAGE }}
@@ -177,28 +182,32 @@ jobs:
           echo ${{ env.PARACHAIN_DOCKER_IMAGE }}
 
       - name: Replace parachain docker image reference in config
-        working-directory: launch
+        working-directory: devops/parachain-launch
         run: sed -i 's+mangatasolutions/mangata-node:.*+${{ env.PARACHAIN_DOCKER_IMAGE }}+g' config.yml
 
-      - name: Install parachain launch dependencies
-        working-directory: launch
-        run: yarn
-      
       - name: Install e2e tests dependencies
         working-directory: e2eTests
         run: yarn
 
-      - name: Generate parachain launch config
-        working-directory: launch
-        run: yarn gen
+      - name: Run parachain launch
+        working-directory: devops/parachain-launch
+        run: npx @open-web3/parachain-launch generate config.yml
+
+      - name: Docker ps
+        run: docker ps --no-trunc
+
+      - name: Docker network ls
+        run: docker network ls
 
       - name: Stop previous parachain if running
-        working-directory: launch
-        run: yarn down
+        working-directory: devops/parachain-launch/output
+        run: |
+          docker kill $(docker ps -q) 2>/dev/null && echo $?
+          docker-compose down -v
 
       - name: Start mangata-node parachain
-        working-directory: launch
-        run: yarn up
+        working-directory: devops/parachain-launch/output
+        run: docker-compose up -d --build
 
       - name: Docker ps
         run: docker ps --no-trunc
@@ -219,6 +228,7 @@ jobs:
           path: e2eTests/reports/junit-*.xml # Path to test results
           reporter: jest-junit # Format of test results
       - name: Install testmo
+        if: always()
         run: npm install --no-save @testmo/testmo-cli
       - name: Submit results to the testmo-run
         if: always()
@@ -226,10 +236,11 @@ jobs:
             npx testmo automation:run:submit-thread \
               --instance https://mangata-finance.testmo.net \
               --run-id ${{needs.setup-report.outputs.testmo-run-id}} \
-              --results e2eTests/reports/*.xml 
+              --results e2eTests/reports/*.xml
         env:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
+        continue-on-error: true
 
       - name: Collect docker logs on failure
         if: failure()
@@ -259,13 +270,16 @@ jobs:
             /tmp/mangata_bob_1.tar
             /tmp/mangata_alice_1.tar
 
-      - name: Stop mangata-node parachain
-        if: always()
-        working-directory: launch
-        run: yarn down          
+      - name: Stop previous parachain if running
+        working-directory: devops/parachain-launch/output
+        run: |
+          docker kill $(docker ps -q) 2>/dev/null && echo $?
+          docker-compose down -v
+
       - name: Fix permissions on self-hosted runner
         if: always()
         run: chown -R 1100:1100 $GITHUB_WORKSPACE
+        
   test-complete:
     needs: [setup-report, e2e-test-matrix]
     if: always()
@@ -274,7 +288,7 @@ jobs:
     steps:
       - name: Install testmo
         run: npm install --no-save @testmo/testmo-cli
-        
+
       - name: Complete test run
         run: |
             npx testmo automation:run:complete \
@@ -283,3 +297,19 @@ jobs:
         env:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
+        continue-on-error: true
+        
+  slack-notify-nook:
+    needs: [e2e-test-matrix]
+    if: failure()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Slack Notification - Error
+        uses: bryannice/gitactions-slack-notification@2.0.0
+        env:
+          SLACK_INCOMING_WEBHOOK: ${{ secrets.BNB_E2E_NOTIFICATION_WEBHOOK }}
+          SLACK_TITLE: 'bnb e2e test execution - NOOK'
+          SLACK_COLOR: "#ff0011"
+          SLACK_MESSAGE: 'Test failures [ ${{ env.E2EBRANCHNAME }} - ${{ env.PARACHAIN_DOCKER_IMAGE }} ] testmo report: https://mangata-finance.testmo.net/automation/runs/view/${{needs.setup-report.outputs.testmo-run-id}}'
+          GITHUB_REF: 'https://mangata-finance.github.io/mangata-node/${{ github.run_number }}'

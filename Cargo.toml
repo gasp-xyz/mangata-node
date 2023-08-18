@@ -10,10 +10,12 @@ lto = true
 codegen-units = 1
 
 [workspace]
+resolver = "2"
 members = [
 	'node',
 	'pallets/*',
 	'rpc/nonce',
+	'runtime/common',
 	'runtime/mangata-kusama',
 	'runtime/mangata-rococo',
 	'runtime/integration-test',

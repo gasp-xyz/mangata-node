@@ -1,12 +1,18 @@
 use crate::chain_spec::Extensions;
 use codec::Encode;
+use common_runtime::{
+	config::orml_asset_registry::AssetMetadataOf,
+	constants::parachains,
+	ksm_per_second,
+	tokens::{KAR_TOKEN_ID, MGX_TOKEN_ID, RELAY_TOKEN_ID, TUR_TOKEN_ID},
+	xcm_config::general_key,
+};
 use cumulus_primitives_core::ParaId;
 use hex::FromHex;
 use mangata_rococo_runtime::{
-	constants::parachains, roc_per_second, xcm_config::general_key, AccountId, AssetMetadataOf,
-	AuraId, CustomMetadata, MultiLocation, Parachain, Signature, XcmMetadata, KAR_TOKEN_ID,
-	ROC_TOKEN_ID, TUR_TOKEN_ID, X1, X2,
+	AccountId, AuraId, CustomMetadata, MultiLocation, Parachain, Signature, XcmMetadata, X1, X2,
 };
+
 use sc_service::ChainType;
 use sp_core::{sr25519, ByteArray, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
@@ -174,7 +180,7 @@ pub fn mangata_rococo_prod_config() -> ChainSpec {
 				],
 				vec![
 					(
-						0,
+						MGX_TOKEN_ID,
 						AssetMetadataOf {
 							decimals: 18,
 							name: b"Mangata".to_vec(),
@@ -196,14 +202,14 @@ pub fn mangata_rococo_prod_config() -> ChainSpec {
 						},
 					),
 					(
-						ROC_TOKEN_ID,
+						RELAY_TOKEN_ID,
 						AssetMetadataOf {
 							decimals: 12,
 							name: b"Rococo Native".to_vec(),
 							symbol: b"ROC".to_vec(),
 							additional: CustomMetadata {
 								// 10_000:1 MGR:ROC
-								xcm: Some(XcmMetadata { fee_per_second: roc_per_second() }),
+								xcm: Some(XcmMetadata { fee_per_second: ksm_per_second() }),
 								xyk: None,
 							},
 							existential_deposit: Default::default(),
@@ -345,14 +351,14 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 						},
 					),
 					(
-						ROC_TOKEN_ID,
+						RELAY_TOKEN_ID,
 						AssetMetadataOf {
 							decimals: 12,
 							name: b"Rococo Native".to_vec(),
 							symbol: b"ROC".to_vec(),
 							additional: CustomMetadata {
 								// 10_000:1 MGR:ROC
-								xcm: Some(XcmMetadata { fee_per_second: roc_per_second() }),
+								xcm: Some(XcmMetadata { fee_per_second: ksm_per_second() }),
 								xyk: None,
 							},
 							existential_deposit: Default::default(),
@@ -379,7 +385,7 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 							symbol: b"KAR".to_vec(),
 							additional: CustomMetadata {
 								// 100:1 MGR:KAR
-								xcm: Some(XcmMetadata { fee_per_second: roc_per_second() * 100 }),
+								xcm: Some(XcmMetadata { fee_per_second: ksm_per_second() * 100 }),
 								xyk: None,
 							},
 							existential_deposit: Default::default(),
@@ -403,7 +409,7 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 							symbol: b"TUR".to_vec(),
 							additional: CustomMetadata {
 								// 100:1 TUR:ROC, 10/12 decimals
-								xcm: Some(XcmMetadata { fee_per_second: roc_per_second() }),
+								xcm: Some(XcmMetadata { fee_per_second: ksm_per_second() }),
 								xyk: None,
 							},
 							existential_deposit: Default::default(),

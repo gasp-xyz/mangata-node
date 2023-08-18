@@ -1,9 +1,3 @@
-repositories:
-  - name: mangata-node
-    url: git+https://github.com/mangata-finance/helm-charts@charts?ref=node-v0.4.4
-  - name: mangata-relaychain
-    url: git+https://github.com/mangata-finance/helm-charts@charts?ref=relaychain-testnet-v0.3.2
-
 environments:
   dev:
     values:
@@ -17,6 +11,13 @@ environments:
     values:
       - ./config/default.yaml
       - ./config/release.yaml
+---
+repositories:
+  - name: mangata-node
+    url: git+https://github.com/mangata-finance/helm-charts@charts?ref=node-v1.2.0
+  - name: mangata-relaychain
+    url: git+https://github.com/mangata-finance/helm-charts@charts?ref=relaychain-testnet-v1.0.0
+
 
 helmDefaults:
   wait: true
@@ -33,7 +34,8 @@ releases:
     chart: mangata-relaychain/relaychain-testnet
     values:
       - env: {{ requiredEnv "ENVIRONMENT" | quote }}
-        storageClass: regional-ssd
+        image: {{ .Values.relaychainImage }}
+        storageClass: node-data-volume
         storageSize: {{ .Values.relaychainStorageSize }}
         remoteCluster: true
   - name: node-01

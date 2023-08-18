@@ -1,0 +1,11 @@
+[profile.release]
+panic = "unwind"
+
+[workspace]
+resolver = "2"
+members = [
+	"node",
+	"runtime/mangata-polkadot",
+	"runtime/xtokens-parachain",
+	"runtime/integration-test",
+]

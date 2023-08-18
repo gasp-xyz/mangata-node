@@ -1,6 +1,3 @@
-enableLocalRelaychain: true
-enableParachainRegisterSidecar: true
-relaychainBootnodeAddr: /dns/relaychain-alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
 nodeChain: rococo-local
 
 node01:
@@ -11,8 +8,8 @@ node02:
 
 resources:
   requests:
-    cpu: '2.0'
-    memory: 8Gi
+    cpu: 200m
+    memory: 500Mi
   limits:
-    cpu: '2.0'
-    memory: 8Gi
+    cpu: 1000m
+    memory: 4Gi

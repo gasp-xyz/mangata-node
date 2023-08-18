@@ -13,8 +13,9 @@ use sp_rpc::number::NumberOrHex;
 use sp_runtime::traits::{Block as BlockT, MaybeDisplay, MaybeFromStr};
 use sp_std::convert::{TryFrom, TryInto};
 use std::sync::Arc;
+use sp_runtime::generic::BlockId;
 pub use xyk_runtime_api::XykApi as XykRuntimeApi;
-use xyk_runtime_api::{RpcAmountsResult, GenericXYKRpcResult, XYKRpcResult};
+use xyk_runtime_api::{GenericXYKRpcResult, RpcAmountsResult, RpcAssetMetadata, XYKRpcResult};
 
 #[rpc(client, server)]
 pub trait XykApi<
@@ -110,6 +111,28 @@ pub trait XykApi<
 		&self,
 		at: Option<BlockHash>,
 	) -> RpcResult<LiquidityTokens>;
+
+	#[method(name = "xyk_is_buy_asset_lock_free")]
+	fn is_buy_asset_lock_free(
+		&self,
+		path: sp_std::vec::Vec<TokenId>,
+		input_amount: Balance,
+		at: Option<BlockHash>,
+	) -> RpcResult<Option<bool>>;
+
+	#[method(name = "xyk_is_sell_asset_lock_free")]
+	fn is_sell_asset_lock_free(
+		&self,
+		path: sp_std::vec::Vec<TokenId>,
+		input_amount: Balance,
+		at: Option<BlockHash>,
+	) -> RpcResult<Option<bool>>;
+
+	#[method(name = "xyk_get_tradeable_tokens")]
+	fn get_tradeable_tokens(
+		&self,
+		at: Option<BlockHash>,
+	) -> RpcResult<sp_std::vec::Vec<RpcAssetMetadata<TokenId>>>;
 }
 
 pub struct Xyk<C, M> {
@@ -383,4 +406,57 @@ where
 			})
 	}
 
+	fn is_buy_asset_lock_free(
+		&self,
+		path: sp_std::vec::Vec<TokenId>,
+		input_amount: NumberOrHex,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> RpcResult<Option<bool>> {
+		let api = self.client.runtime_api();
+		let at = self.client.info().best_hash;
+
+		api.is_buy_asset_lock_free(at, path, input_amount.try_into_balance()?)
+			.map_err(|e| {
+				JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+					1,
+					"Unable to serve the request",
+					Some(format!("{:?}", e)),
+				)))
+			})
+	}
+
+	fn is_sell_asset_lock_free(
+		&self,
+		path: sp_std::vec::Vec<TokenId>,
+		input_amount: NumberOrHex,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> RpcResult<Option<bool>> {
+		let api = self.client.runtime_api();
+		let at = self.client.info().best_hash;
+
+		api.is_sell_asset_lock_free(at, path, input_amount.try_into_balance()?)
+			.map_err(|e| {
+				JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+					1,
+					"Unable to serve the request",
+					Some(format!("{:?}", e)),
+				)))
+			})
+	}
+
+	fn get_tradeable_tokens(
+		&self,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> RpcResult<Vec<RpcAssetMetadata<TokenId>>> {
+		let api = self.client.runtime_api();
+		let at = self.client.info().best_hash;
+
+		api.get_tradeable_tokens(at).map_err(|e| {
+			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+				1,
+				"Unable to serve the request",
+				Some(format!("{:?}", e)),
+			)))
+		})
+	}
 }

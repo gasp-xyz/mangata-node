@@ -38,6 +38,7 @@ orml-asset-registry = { version = "0.4.1-dev", git = "https://github.com/mangata
 
 # Local
 mangata-kusama-runtime = { path = "../mangata-kusama", optional = true }
+common-runtime = { path = "../common"}
 
 pallet-xyk = { path = '../../pallets/xyk', version = '0.1.0' }
 pallet-bootstrap = { path = '../../pallets/bootstrap', version = '0.1.0' }

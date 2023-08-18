@@ -12,16 +12,21 @@ pub use kusama_imports::*;
 
 #[cfg(feature = "with-kusama-runtime")]
 mod kusama_imports {
+	pub use common_runtime::{
+		config::{orml_asset_registry::AssetMetadataOf, pallet_proxy::ProxyType},
+		consts::UNIT,
+		mgx_per_second,
+		xcm_config::general_key,
+	};
 	pub use mangata_kusama_runtime::{
-		mgx_per_second, xcm_config::*, AccountId, AssetMetadataOf, AssetRegistry, Balance,
-		Bootstrap, CustomMetadata, Identity, PolkadotXcm, Proxy, ProxyType, Runtime, RuntimeCall,
-		RuntimeOrigin, System, TokenId, Tokens, VersionedMultiLocation, XTokens, XcmMetadata,
-		XcmpQueue, Xyk, XykMetadata, UNIT,
+		xcm_config::*, AccountId, AssetRegistry, Balance, Bootstrap, CustomMetadata, Identity,
+		PolkadotXcm, Proxy, Runtime, RuntimeCall, RuntimeOrigin, System, TokenId, Tokens,
+		VersionedMultiLocation, XTokens, XcmMetadata, XcmpQueue, Xyk, XykMetadata,
 	};
 	pub use xcm::latest::Weight as XcmWeight;
 
-	pub const NATIVE_ASSET_ID: TokenId = mangata_kusama_runtime::MGX_TOKEN_ID;
-	pub const RELAY_ASSET_ID: TokenId = mangata_kusama_runtime::KSM_TOKEN_ID;
+	pub const NATIVE_ASSET_ID: TokenId = common_runtime::tokens::MGX_TOKEN_ID;
+	pub const RELAY_ASSET_ID: TokenId = common_runtime::tokens::RELAY_TOKEN_ID;
 }
 
 /// Accounts

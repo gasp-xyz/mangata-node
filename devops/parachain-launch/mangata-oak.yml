@@ -26,7 +26,7 @@ relaychain:
     - name: bob
 
 parachains:
-  - image: mangatasolutions/mangata-node:dev
+  - image: mangatasolutions/mangata-node:develop
     chain:
       base: rococo-local
       collators:
@@ -54,14 +54,13 @@ parachains:
       - flags:
           - --bob
 
-  - image: oaknetwork/neumann:1.7.0
+  - image: oaknetwork/turing-dev
     chain:
-      base: dev
+      base: turing-dev
       collators:
         - alice
         - bob
       sudo: alice
-    skipCollatorSelection: true
     id: 2114
     parachain: true
     flags:

@@ -1765,7 +1765,6 @@ fn multiswap_buy_zero_amount_does_not_work_N() {
 	});
 }
 
-
 #[test]
 #[serial]
 fn burn_all_liq_and_mint_it_again() {
@@ -1774,23 +1773,38 @@ fn burn_all_liq_and_mint_it_again() {
 
 		let (asset_value_1, asset_value_4) = XykStorage::asset_pool((1, 4));
 		let liq_token_id = XykStorage::liquidity_asset((1, 4));
-		let total_issuance_of_liq_amount: u128 = <Test as Config>::Currency::total_issuance(liq_token_id.unwrap()).into();
+		let total_issuance_of_liq_amount: u128 =
+			<Test as Config>::Currency::total_issuance(liq_token_id.unwrap()).into();
 
 		//burn half of the liquidity
-		XykStorage::burn_liquidity(RuntimeOrigin::signed(2), 1, 4, total_issuance_of_liq_amount / 2).unwrap();
+		XykStorage::burn_liquidity(
+			RuntimeOrigin::signed(2),
+			1,
+			4,
+			total_issuance_of_liq_amount / 2,
+		)
+		.unwrap();
 
 		let (divided_asset_value_1, divided_asset_value_4) = XykStorage::asset_pool((1, 4));
-		let divided_total_issuance_of_liq_amount: u128 = <Test as Config>::Currency::total_issuance(liq_token_id.unwrap()).into();
+		let divided_total_issuance_of_liq_amount: u128 =
+			<Test as Config>::Currency::total_issuance(liq_token_id.unwrap()).into();
 
 		assert_eq!(divided_asset_value_1, asset_value_1 / 2);
 		assert_eq!(divided_asset_value_4, asset_value_4 / 2);
 		assert_eq!(divided_total_issuance_of_liq_amount, total_issuance_of_liq_amount / 2);
 
 		//burn second half of liquidity
-		XykStorage::burn_liquidity(RuntimeOrigin::signed(2), 1, 4, total_issuance_of_liq_amount / 2).unwrap();
+		XykStorage::burn_liquidity(
+			RuntimeOrigin::signed(2),
+			1,
+			4,
+			total_issuance_of_liq_amount / 2,
+		)
+		.unwrap();
 
 		let (empty_asset_value_1, empty_asset_value_4) = XykStorage::asset_pool((1, 4));
-		let empty_total_issuance_of_liq_amount: u128 = <Test as Config>::Currency::total_issuance(liq_token_id.unwrap()).into();
+		let empty_total_issuance_of_liq_amount: u128 =
+			<Test as Config>::Currency::total_issuance(liq_token_id.unwrap()).into();
 
 		assert_eq!(empty_asset_value_1, 0);
 		assert_eq!(empty_asset_value_4, 0);

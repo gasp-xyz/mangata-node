@@ -1578,7 +1578,10 @@ impl<T: Config> Pallet<T> {
 		<T as Config>::NativeCurrencyId::get()
 	}
 
-	fn calculate_initial_liquidity(first_asset_amount: Balance, second_asset_amount: Balance) -> Result<u128, DispatchError> {
+	fn calculate_initial_liquidity(
+		first_asset_amount: Balance,
+		second_asset_amount: Balance,
+	) -> Result<u128, DispatchError> {
 		let mut initial_liquidity = first_asset_amount
 			.checked_div(2)
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
@@ -1589,13 +1592,8 @@ impl<T: Config> Pallet<T> {
 			)
 			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
 
-		return Ok(if initial_liquidity == 0 {
-			1
-		} else {
-			initial_liquidity
-		})
+		return Ok(if initial_liquidity == 0 { 1 } else { initial_liquidity })
 	}
-
 }
 
 impl<T: Config> PreValidateSwaps for Pallet<T> {
@@ -2091,7 +2089,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		ensure!(first_asset_id != second_asset_id, Error::<T>::SameAsset,);
 
 		// Liquidity token amount calculation
-		let initial_liquidity = Pallet::<T>::calculate_initial_liquidity(first_asset_amount, second_asset_amount)?;
+		let initial_liquidity =
+			Pallet::<T>::calculate_initial_liquidity(first_asset_amount, second_asset_amount)?;
 
 		Pools::<T>::insert(
 			(first_asset_id, second_asset_id),
@@ -2840,7 +2839,10 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			<T as Config>::Currency::total_issuance(liquidity_asset_id.into()).into();
 
 		// The pool is empty and we are basically creating a new pool and reusing the existing one
-		let second_asset_amount = if !(first_asset_reserve.is_zero() && second_asset_reserve.is_zero()) && !total_liquidity_assets.is_zero() {
+		let second_asset_amount = if !(first_asset_reserve.is_zero() &&
+			second_asset_reserve.is_zero()) &&
+			!total_liquidity_assets.is_zero()
+		{
 			// Calculation of required second asset amount and received liquidity token amount
 			ensure!(!first_asset_reserve.is_zero(), Error::<T>::DivisionByZero);
 
@@ -2849,9 +2851,10 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				second_asset_reserve,
 				first_asset_reserve,
 				Rounding::Down,
-			).ok_or(Error::<T>::UnexpectedFailure)?
-                .checked_add(1)
-				.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+			)
+			.ok_or(Error::<T>::UnexpectedFailure)?
+			.checked_add(1)
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
 		} else {
 			expected_second_asset_amount
 		};
@@ -2876,7 +2879,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				total_liquidity_assets,
 				first_asset_reserve,
 				Rounding::Down,
-			).ok_or(Error::<T>::UnexpectedFailure)?
+			)
+			.ok_or(Error::<T>::UnexpectedFailure)?
 		};
 
 		// Ensure user has enough withdrawable tokens to create pool in amounts required

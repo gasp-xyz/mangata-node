@@ -10,10 +10,12 @@ use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_core::U256;
 use sp_rpc::number::NumberOrHex;
-use sp_runtime::traits::{Block as BlockT, MaybeDisplay, MaybeFromStr};
+use sp_runtime::{
+	generic::BlockId,
+	traits::{Block as BlockT, MaybeDisplay, MaybeFromStr},
+};
 use sp_std::convert::{TryFrom, TryInto};
 use std::sync::Arc;
-use sp_runtime::generic::BlockId;
 pub use xyk_runtime_api::XykApi as XykRuntimeApi;
 use xyk_runtime_api::{GenericXYKRpcResult, RpcAmountsResult, RpcAssetMetadata, XYKRpcResult};
 
@@ -107,10 +109,7 @@ pub trait XykApi<
 	) -> RpcResult<ResponseTypePrice>;
 
 	#[method(name = "xyk_get_liq_tokens_for_trading")]
-	fn get_liq_tokens_for_trading(
-		&self,
-		at: Option<BlockHash>,
-	) -> RpcResult<LiquidityTokens>;
+	fn get_liq_tokens_for_trading(&self, at: Option<BlockHash>) -> RpcResult<LiquidityTokens>;
 
 	#[method(name = "xyk_is_buy_asset_lock_free")]
 	fn is_buy_asset_lock_free(
@@ -396,14 +395,13 @@ where
 			// If the block hash is not supplied assume the best block.
 			self.client.info().best_hash));
 
-		api.get_liq_tokens_for_trading(&at)
-			.map_err(|e| {
-				JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
-					1,
-					"Unable to serve the request",
-					Some(format!("{:?}", e)),
-				)))
-			})
+		api.get_liq_tokens_for_trading(&at).map_err(|e| {
+			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+				1,
+				"Unable to serve the request",
+				Some(format!("{:?}", e)),
+			)))
+		})
 	}
 
 	fn is_buy_asset_lock_free(

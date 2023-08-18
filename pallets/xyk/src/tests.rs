@@ -1822,7 +1822,6 @@ fn burn_all_liq_and_mint_it_again() {
 		//
 		// let total_issuance_of_liq_amount: u128 =
 		// 	<Test as Config>::Currency::total_issuance(liq_token_idaa.unwrap()).into();
-
 	});
 }
 

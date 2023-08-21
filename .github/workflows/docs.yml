@@ -9,9 +9,9 @@ jobs:
     permissions:
       contents: write
       id-token: write
-    runs-on: [self-hosted, compile]
+    runs-on: ubuntu-latest
     container:
-      image: mangatasolutions/node-builder:multi-nightly-2022-11-21
+      image: mangatasolutions/node-builder:multi-nightly-2022-11-15
     steps:
       - uses: actions/checkout@v3
       - uses: google-github-actions/auth@v1
@@ -28,7 +28,7 @@ jobs:
             /usr/local/cargo/git
             /usr/local/cargo/registry
             ~/.cache/sccache
-          key: node-docs-cache-0-${{ hashFiles('Cargo.lock') }}
+          key: node-docs-cache-1-${{ hashFiles('Cargo.lock') }}
       
       - name: Build docs
         run: cargo doc
@@ -40,7 +40,6 @@ jobs:
           destination: mangata-docs-node
           parent: false
           concurrency: 50
-          gzip: false
           process_gcloudignore: false
       
       - name: Fix permissions on self-hosted runner

@@ -80,10 +80,8 @@ docker run \
   --name=${DOCKER_JOB_NAME} \
   --user $DOCKER_USER \
   -v ${CODE_ROOT}:/code \
-  --workdir /code \
   ${DOCKER_MOUNT_CACHE_VOLUMES} \
   ${DOCKER_RUN_EXTRA_ARGS} \
   -e CARGO_TARGET_DIR="/code/${OUTPUT_DIR}" \
   ${ALLOCATE_TTY_OR_NOT} ${DOCKER_BUILDER_IMAGE} \
-  /bin/bash -c "cargo ${CARGO_COMMAND} ${CARGO_ARGS} && sccache --show-stats"
-  # /bin/bash -c "cargo ${CARGO_COMMAND} --manifest-path=/code/Cargo.toml ${CARGO_ARGS} && sccache --show-stats"
+  /bin/bash -c "cargo ${CARGO_COMMAND} --manifest-path=/code/Cargo.toml ${CARGO_ARGS} && sccache --show-stats"

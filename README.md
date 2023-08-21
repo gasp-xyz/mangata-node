@@ -40,6 +40,17 @@ Assets on the exchange will serve multiple purposes- at the first iteration, the
 
 build artifacts will be placed in `<REPO ROOT>/docker-cargo/release`
 
+### Run tests and generate code coverage report
+Run unit tests only:
+```bash
+cargo test
+```
+Run unit tests and generat code coverage report in html format:
+```bash
+cargo install cargo-tarpaulin
+cargo tarpaulin --timeout 120 --workspace -e runtime-integration-test mangata-node common-runtime mangata-kusama-runtime mangata-rococo-runtime --exclude-files **/mock.rs **/weights.rs **/weights/* --out Html 
+```
+
 ### Generate docker image
 You can use `build-image.sh` script to build & generate docker image
 

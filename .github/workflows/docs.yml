@@ -9,7 +9,7 @@ jobs:
     permissions:
       contents: write
       id-token: write
-    runs-on: ubuntu-latest
+    runs-on: mangata-node-e2e-runners
     container:
       image: mangatasolutions/node-builder:multi-nightly-2022-11-15
     steps:

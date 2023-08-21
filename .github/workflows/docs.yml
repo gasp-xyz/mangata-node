@@ -2,7 +2,7 @@ name: Deploy docs
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ develop, 'ci/fix-docs-workflow-MGX-664' ]
 
 jobs:
   docs:
@@ -39,6 +39,9 @@ jobs:
           path: ./target/doc/
           destination: mangata-docs-node
           parent: false
+          concurrency: 50
+          gzip: false
+          process_gcloudignore: false
       
       - name: Fix permissions on self-hosted runner
         if: always()

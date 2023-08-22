@@ -9,7 +9,7 @@ jobs:
     permissions:
       contents: write
       id-token: write
-    runs-on: [self-hosted, compile]
+    runs-on: mangata-node-e2e-runners
     container:
       image: mangatasolutions/node-builder:multi-nightly-2022-11-21
     steps:
@@ -28,7 +28,7 @@ jobs:
             /usr/local/cargo/git
             /usr/local/cargo/registry
             ~/.cache/sccache
-          key: node-docs-cache-0-${{ hashFiles('Cargo.lock') }}
+          key: node-docs-cache-1-${{ hashFiles('Cargo.lock') }}
       
       - name: Build docs
         run: cargo doc
@@ -39,6 +39,8 @@ jobs:
           path: ./target/doc/
           destination: mangata-docs-node
           parent: false
+          concurrency: 50
+          process_gcloudignore: false
       
       - name: Fix permissions on self-hosted runner
         if: always()

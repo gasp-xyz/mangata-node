@@ -56,7 +56,7 @@ pub use pallet_sudo_origin;
 pub use pallet_xyk;
 // XCM Imports
 
-use xyk_runtime_api::{GenericXYKRpcResult, RpcAmountsResult, RpcAssetMetadata, XYKRpcResult};
+use xyk_runtime_api::{RpcAmountsResult, RpcAssetMetadata, XYKRpcResult};
 
 // Make the WASM binary available.
 #[cfg(feature = "std")]
@@ -971,16 +971,14 @@ impl_runtime_apis! {
 			}
 		}
 
-		fn get_liq_tokens_for_trading() -> GenericXYKRpcResult<Vec<TokenId>> {
-			GenericXYKRpcResult {
-				result: Xyk::get_liq_tokens_for_trading()
-					.map_err(|e|
-						{
-							log::warn!(target:"xyk", "rpc 'XYK::get_liq_tokens_for_trading' error: '{:?}', returning default value instead", e);
-							e
-						}
-					).unwrap_or_default()
-			}
+		fn get_liq_tokens_for_trading() -> Vec<TokenId> {
+			Xyk::get_liq_tokens_for_trading()
+				.map_err(|e|
+					{
+						log::warn!(target:"xyk", "rpc 'XYK::get_liq_tokens_for_trading' error: '{:?}', returning default value instead", e);
+						e
+					}
+				).unwrap_or_default()
 		}
 
 		fn is_sell_asset_lock_free(

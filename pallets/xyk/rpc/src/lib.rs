@@ -17,7 +17,7 @@ use sp_runtime::{
 use sp_std::convert::{TryFrom, TryInto};
 use std::sync::Arc;
 pub use xyk_runtime_api::XykApi as XykRuntimeApi;
-use xyk_runtime_api::{GenericXYKRpcResult, RpcAmountsResult, RpcAssetMetadata, XYKRpcResult};
+use xyk_runtime_api::{RpcAmountsResult, RpcAssetMetadata, XYKRpcResult};
 
 #[rpc(client, server)]
 pub trait XykApi<
@@ -28,7 +28,6 @@ pub trait XykApi<
 	ResponseTypePrice,
 	ResponseTypeAmounts,
 	BalanceOutput,
-	LiquidityTokens,
 >
 {
 	#[method(name = "xyk_calculate_sell_price")]
@@ -112,7 +111,7 @@ pub trait XykApi<
 	fn get_liq_tokens_for_trading(
 		&self,
 		at: Option<BlockHash>,
-	) -> RpcResult<GenericXYKRpcResult<Vec<TokenId>>>;
+	) -> RpcResult<Vec<TokenId>>;
 
 	#[method(name = "xyk_is_buy_asset_lock_free")]
 	fn is_buy_asset_lock_free(
@@ -165,7 +164,7 @@ impl<T: TryFrom<U256>> TryIntoBalance<T> for NumberOrHex {
 }
 
 #[async_trait]
-impl<C, Block, Balance, TokenId, AccountId, T>
+impl<C, Block, Balance, TokenId, AccountId>
 	XykApiServer<
 		<Block as BlockT>::Hash,
 		NumberOrHex,
@@ -174,7 +173,6 @@ impl<C, Block, Balance, TokenId, AccountId, T>
 		XYKRpcResult<Balance>,
 		RpcAmountsResult<Balance>,
 		Balance,
-		GenericXYKRpcResult<T>,
 	> for Xyk<C, Block>
 where
 	Block: BlockT,
@@ -393,7 +391,7 @@ where
 	fn get_liq_tokens_for_trading(
 		&self,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<GenericXYKRpcResult<Vec<TokenId>>> {
+	) -> RpcResult<Vec<TokenId>> {
 		let api = self.client.runtime_api();
 		let at = self.client.info().best_hash;
 

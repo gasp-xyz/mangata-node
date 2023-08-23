@@ -22,13 +22,6 @@ pub struct XYKRpcResult<Balance> {
 #[derive(Eq, PartialEq, Encode, Decode, Default)]
 #[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
-pub struct GenericXYKRpcResult<T> {
-	pub result: T,
-}
-
-#[derive(Eq, PartialEq, Encode, Decode, Default)]
-#[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
-#[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
 pub struct RpcAmountsResult<Balance> {
 	#[cfg_attr(feature = "std", serde(bound(serialize = "Balance: std::fmt::Display")))]
 	#[cfg_attr(feature = "std", serde(serialize_with = "serialize_as_string"))]
@@ -115,7 +108,7 @@ sp_api::decl_runtime_apis! {
 			reserve_amount: Balance,
 		) -> XYKRpcResult<Balance>;
 		fn get_liq_tokens_for_trading(
-		) -> GenericXYKRpcResult<Vec<TokenId>>;
+		) -> Vec<TokenId>;
 		fn is_buy_asset_lock_free(
 			path: sp_std::vec::Vec<TokenId>,
 			input_amount: Balance,

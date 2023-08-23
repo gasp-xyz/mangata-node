@@ -1816,24 +1816,21 @@ fn burn_all_liq_and_mint_it_again() {
 			Error::<Test>::PoolAlreadyExists,
 		);
 
-		XykStorage::mint_liquidity(
-			RuntimeOrigin::signed(2),
-			1,
-			4,
-			asset_value_1,
-			asset_value_4,
-		).unwrap();
+		XykStorage::mint_liquidity(RuntimeOrigin::signed(2), 1, 4, asset_value_1, asset_value_4)
+			.unwrap();
 
 		let liq_token_id_after_burn_and_mint = XykStorage::liquidity_asset((1, 4));
 
 		assert_eq!(liq_token_id, liq_token_id_after_burn_and_mint);
 
 		let total_issuance_after_burn_and_mint: u128 =
-			<Test as Config>::Currency::total_issuance(liq_token_id_after_burn_and_mint.unwrap()).into();
+			<Test as Config>::Currency::total_issuance(liq_token_id_after_burn_and_mint.unwrap())
+				.into();
 
 		assert_eq!(total_issuance_of_liq_amount, total_issuance_after_burn_and_mint);
 
-		let (asset_value_1_after_burn_and_mint, asset_value_4_after_burn_and_mint) = XykStorage::asset_pool((1, 4));
+		let (asset_value_1_after_burn_and_mint, asset_value_4_after_burn_and_mint) =
+			XykStorage::asset_pool((1, 4));
 
 		assert_eq!(asset_value_1, asset_value_1_after_burn_and_mint);
 		assert_eq!(asset_value_4, asset_value_4_after_burn_and_mint);

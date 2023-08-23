@@ -3234,8 +3234,6 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				second_asset_id,
 				first_asset_id,
 			);
-			LiquidityAssets::<T>::remove((first_asset_id, second_asset_id));
-			LiquidityAssets::<T>::remove((second_asset_id, first_asset_id));
 			Pallet::<T>::set_reserves(first_asset_id, 0, second_asset_id, 0)?;
 		} else {
 			// Apply changes in token pools, removing withdrawn amounts

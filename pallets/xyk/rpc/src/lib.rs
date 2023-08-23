@@ -109,7 +109,9 @@ pub trait XykApi<
 	) -> RpcResult<ResponseTypePrice>;
 
 	#[method(name = "xyk_get_liq_tokens_for_trading")]
-	fn get_liq_tokens_for_trading(&self, at: Option<BlockHash>) -> RpcResult<LiquidityTokens>;
+	fn get_liq_tokens_for_trading(
+		&self, at: Option<BlockHash>
+	) -> RpcResult<GenericXYKRpcResult<Vec<TokenId>>>;
 
 	#[method(name = "xyk_is_buy_asset_lock_free")]
 	fn is_buy_asset_lock_free(
@@ -162,7 +164,7 @@ impl<T: TryFrom<U256>> TryIntoBalance<T> for NumberOrHex {
 }
 
 #[async_trait]
-impl<C, Block, Balance, TokenId, AccountId>
+impl<C, Block, Balance, TokenId, AccountId, T>
 	XykApiServer<
 		<Block as BlockT>::Hash,
 		NumberOrHex,
@@ -392,11 +394,9 @@ where
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<GenericXYKRpcResult<Vec<TokenId>>> {
 		let api = self.client.runtime_api();
-		let at = BlockId::<Block>::hash(at.unwrap_or_else(||
-			// If the block hash is not supplied assume the best block.
-			self.client.info().best_hash));
+		let at = self.client.info().best_hash;
 
-		api.get_liq_tokens_for_trading(&at).map_err(|e| {
+		api.get_liq_tokens_for_trading(at).map_err(|e| {
 			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
 				1,
 				"Unable to serve the request",

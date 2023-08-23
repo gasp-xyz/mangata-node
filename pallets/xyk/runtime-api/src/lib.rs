@@ -23,10 +23,6 @@ pub struct XYKRpcResult<Balance> {
 #[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
 pub struct GenericXYKRpcResult<T> {
-	#[cfg_attr(feature = "std", serde(bound(serialize = "T: std::fmt::Display")))]
-	#[cfg_attr(feature = "std", serde(serialize_with = "serialize_as_string"))]
-	#[cfg_attr(feature = "std", serde(bound(deserialize = "T: std::str::FromStr")))]
-	#[cfg_attr(feature = "std", serde(deserialize_with = "deserialize_from_string"))]
 	pub result: T,
 }
 

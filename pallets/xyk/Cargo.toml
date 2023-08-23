@@ -40,7 +40,7 @@ pallet-proof-of-stake = {path = "../proof-of-stake"}
 orml-traits = { default-features = false, version="0.4.1-dev" , git = "https://github.com/mangata-finance/open-runtime-module-library", branch = "mangata-dev" }
 sp-io = { default-features = false, version = '7.0.0' , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 lazy_static = "1.1.1"
-env_logger = "0.9.0"
+env_logger = "0.10.0"
 serial_test = { version = "0.6.0", default-features = false }
 test-case = "2.0.2"
 

@@ -168,6 +168,41 @@ jobs:
         if: always()
         run: chown -R 1100:1100 $GITHUB_WORKSPACE
 
+  coverage-report:
+    name: Coverage report
+    runs-on: [self-hosted, compile]
+    container:
+      image: ${{ inputs.builder_image }}
+      options: --security-opt seccomp=unconfined
+    steps:
+      - uses: actions/checkout@v3
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
+          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+      - name: Cache the Cargo dependencies
+        uses: mansagroup/gcs-cache-action@v1.0.3
+        with:
+          bucket: mangata-node-ci-cache
+          path: |
+            ${{ github.workspace }}/target
+            /usr/local/cargo/git
+            /usr/local/cargo/registry
+          key: cargo-coverage-cache-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
+      - name: Install cargo-tarpaulin
+        run: cargo install cargo-tarpaulin
+      - name: Generate coverage report with cargo-tarpaulin
+        run: cargo tarpaulin --timeout 120 --workspace -e runtime-integration-test mangata-node common-runtime mangata-kusama-runtime mangata-rococo-runtime --exclude-files **/mock.rs **/weights.rs **/weights/* --out Xml
+      - name: Upload to codecov.io
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.ORG_CODECOV_TOKEN }}
+          fail_ci_if_error: true
+      - name: Fix permissions on self-hosted runner
+        if: always()
+        run: chown -R 1100:1100 $GITHUB_WORKSPACE
+
   run-benchmarks-tests:
     name: Run benchmark tests
     runs-on: ubuntu-latest

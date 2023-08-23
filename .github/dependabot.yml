@@ -1,0 +1,169 @@
+# To get started with Dependabot version updates, you'll need to specify which
+# package ecosystems to update and where the package manifests are located.
+# Please see the documentation for all configuration options:
+# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+
+version: 2
+updates:
+  - package-ecosystem: "cargo"
+    directory: "/node"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "majusko"
+    commit-message:
+      prefix: "[mangata-node] "
+  
+  - package-ecosystem: "cargo"
+    directory: "/pallets/bootstrap"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "majusko"
+    commit-message:
+      prefix: "[pallet-bootstrap] "
+  
+  - package-ecosystem: "cargo"
+    directory: "/pallets/fee-lock"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "majusko"
+    commit-message:
+      prefix: "[pallet-fee-lock] "
+        
+  - package-ecosystem: "cargo"
+    directory: "/pallets/issuance"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "majusko"
+    commit-message:
+      prefix: "[pallet-issuance] "
+        
+  - package-ecosystem: "cargo"
+    directory: "/pallets/maintenance"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "majusko"
+    commit-message:
+      prefix: "[pallet-maintenance] "
+        
+  - package-ecosystem: "cargo"
+    directory: "/pallets/multipurpose-liquidity"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "majusko"
+    commit-message:
+      prefix: "[pallet-multipurpose-liquidity] "
+        
+  - package-ecosystem: "cargo"
+    directory: "/pallets/proof-of-stake"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "majusko"
+    commit-message:
+      prefix: "[pallet-proof-of-stake] "
+        
+  - package-ecosystem: "cargo"
+    directory: "/pallets/sudo-origin"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "majusko"
+    commit-message:
+      prefix: "[pallet-sudo-origin] "
+        
+  - package-ecosystem: "cargo"
+    directory: "/pallets/xyk"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "majusko"
+    commit-message:
+      prefix: "[pallet-xyk] "
+        
+  - package-ecosystem: "cargo"
+    directory: "/rpc/nonce"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "majusko"
+    commit-message:
+      prefix: "[rpc-nonce] "
+        
+  - package-ecosystem: "cargo"
+    directory: "/runtime/common"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "majusko"
+    commit-message:
+      prefix: "[runtime-common] "
+              
+  - package-ecosystem: "cargo"
+    directory: "/runtime/integration-test"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "majusko"
+    commit-message:
+      prefix: "[runtime-integration-test] "
+              
+  - package-ecosystem: "cargo"
+    directory: "/runtime/mangata-kusama"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "majusko"
+    commit-message:
+      prefix: "[runtime-mangata-kusama] "
+              
+  - package-ecosystem: "cargo"
+    directory: "/runtime/mangata-rococo"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "majusko"
+    commit-message:
+      prefix: "[runtime-mangata-rococo] "
+              
+  - package-ecosystem: "cargo"
+    directory: "/mvr/node"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "majusko"
+    commit-message:
+      prefix: "[mvr-node] "
+              
+  - package-ecosystem: "cargo"
+    directory: "/mvr/runtime/integration-test"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "majusko"
+    commit-message:
+      prefix: "[mvr-runtime-integration-test] "
+                    
+  - package-ecosystem: "cargo"
+    directory: "/mvr/runtime/mangata-polkadot"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "majusko"
+    commit-message:
+      prefix: "[mvr-runtime-mangata-polkadot] "
+                    
+  - package-ecosystem: "cargo"
+    directory: "/mvr/runtime/xtokens-parachain"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "majusko"
+    commit-message:
+      prefix: "[mvr-runtime-xtokens-parachain] "
+

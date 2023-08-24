@@ -25,7 +25,7 @@ pub trait XykApi<BlockHash, Balance, TokenId, AccountId> {
 		output_reserve: NumberOrHex,
 		sell_amount: NumberOrHex,
 		at: Option<BlockHash>,
-	) -> RpcResult<Balance>;
+	) -> RpcResult<NumberOrHex>;
 
 	#[method(name = "xyk_calculate_buy_price")]
 	fn calculate_buy_price(
@@ -34,7 +34,7 @@ pub trait XykApi<BlockHash, Balance, TokenId, AccountId> {
 		output_reserve: NumberOrHex,
 		buy_amount: NumberOrHex,
 		at: Option<BlockHash>,
-	) -> RpcResult<Balance>;
+	) -> RpcResult<NumberOrHex>;
 
 	#[method(name = "xyk_calculate_sell_price_id")]
 	fn calculate_sell_price_id(
@@ -43,7 +43,7 @@ pub trait XykApi<BlockHash, Balance, TokenId, AccountId> {
 		bought_token_id: TokenId,
 		sell_amount: NumberOrHex,
 		at: Option<BlockHash>,
-	) -> RpcResult<Balance>;
+	) -> RpcResult<NumberOrHex>;
 
 	#[method(name = "xyk_calculate_buy_price_id")]
 	fn calculate_buy_price_id(
@@ -52,7 +52,7 @@ pub trait XykApi<BlockHash, Balance, TokenId, AccountId> {
 		bought_token_id: TokenId,
 		buy_amount: NumberOrHex,
 		at: Option<BlockHash>,
-	) -> RpcResult<Balance>;
+	) -> RpcResult<NumberOrHex>;
 
 	#[method(name = "xyk_get_burn_amount")]
 	fn get_burn_amount(
@@ -61,7 +61,7 @@ pub trait XykApi<BlockHash, Balance, TokenId, AccountId> {
 		second_asset_id: TokenId,
 		liquidity_asset_amount: NumberOrHex,
 		at: Option<BlockHash>,
-	) -> RpcResult<(Balance, Balance)>;
+	) -> RpcResult<(NumberOrHex, NumberOrHex)>;
 
 	#[method(name = "xyk_get_max_instant_burn_amount")]
 	fn get_max_instant_burn_amount(
@@ -69,7 +69,7 @@ pub trait XykApi<BlockHash, Balance, TokenId, AccountId> {
 		user: AccountId,
 		liquidity_asset_id: TokenId,
 		at: Option<BlockHash>,
-	) -> RpcResult<Balance>;
+	) -> RpcResult<NumberOrHex>;
 
 	#[method(name = "xyk_get_max_instant_unreserve_amount")]
 	fn get_max_instant_unreserve_amount(
@@ -77,7 +77,7 @@ pub trait XykApi<BlockHash, Balance, TokenId, AccountId> {
 		user: AccountId,
 		liquidity_asset_id: TokenId,
 		at: Option<BlockHash>,
-	) -> RpcResult<Balance>;
+	) -> RpcResult<NumberOrHex>;
 
 	#[method(name = "xyk_calculate_rewards_amount")]
 	fn calculate_rewards_amount(
@@ -85,7 +85,7 @@ pub trait XykApi<BlockHash, Balance, TokenId, AccountId> {
 		user: AccountId,
 		liquidity_asset_id: TokenId,
 		at: Option<BlockHash>,
-	) -> RpcResult<Balance>;
+	) -> RpcResult<NumberOrHex>;
 
 	#[method(name = "xyk_calculate_balanced_sell_amount")]
 	fn calculate_balanced_sell_amount(
@@ -93,7 +93,7 @@ pub trait XykApi<BlockHash, Balance, TokenId, AccountId> {
 		total_amount: NumberOrHex,
 		reserve_amount: NumberOrHex,
 		at: Option<BlockHash>,
-	) -> RpcResult<Balance>;
+	) -> RpcResult<NumberOrHex>;
 
 	#[method(name = "xyk_is_buy_asset_lock_free")]
 	fn is_buy_asset_lock_free(
@@ -154,7 +154,7 @@ where
 	C: ProvideRuntimeApi<Block>,
 	C: HeaderBackend<Block>,
 	C::Api: XykRuntimeApi<Block, Balance, TokenId, AccountId>,
-	Balance: Codec + MaybeDisplay + MaybeFromStr + TryFrom<U256>,
+	Balance: Codec + MaybeDisplay + MaybeFromStr + TryFrom<U256> + Into<NumberOrHex>,
 	TokenId: Codec + MaybeDisplay + MaybeFromStr,
 	AccountId: Codec + MaybeDisplay + MaybeFromStr,
 {
@@ -164,7 +164,7 @@ where
 		output_reserve: NumberOrHex,
 		sell_amount: NumberOrHex,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<Balance> {
+	) -> RpcResult<NumberOrHex> {
 		let api = self.client.runtime_api();
 		let at = self.client.info().best_hash;
 
@@ -174,6 +174,7 @@ where
 			output_reserve.try_into_balance()?,
 			sell_amount.try_into_balance()?,
 		)
+		.map(Into::<NumberOrHex>::into)
 		.map_err(|e| {
 			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
 				1,
@@ -189,7 +190,7 @@ where
 		output_reserve: NumberOrHex,
 		buy_amount: NumberOrHex,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<Balance> {
+	) -> RpcResult<NumberOrHex> {
 		let api = self.client.runtime_api();
 		let at = self.client.info().best_hash;
 
@@ -199,6 +200,7 @@ where
 			output_reserve.try_into_balance()?,
 			buy_amount.try_into_balance()?,
 		)
+		.map(Into::<NumberOrHex>::into)
 		.map_err(|e| {
 			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
 				1,
@@ -214,7 +216,7 @@ where
 		bought_token_id: TokenId,
 		sell_amount: NumberOrHex,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<Balance> {
+	) -> RpcResult<NumberOrHex> {
 		let api = self.client.runtime_api();
 		let at = self.client.info().best_hash;
 
@@ -224,6 +226,7 @@ where
 			bought_token_id,
 			sell_amount.try_into_balance()?,
 		)
+		.map(Into::<NumberOrHex>::into)
 		.map_err(|e| {
 			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
 				1,
@@ -239,7 +242,7 @@ where
 		bought_token_id: TokenId,
 		buy_amount: NumberOrHex,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<Balance> {
+	) -> RpcResult<NumberOrHex> {
 		let api = self.client.runtime_api();
 		let at = self.client.info().best_hash;
 
@@ -249,6 +252,7 @@ where
 			bought_token_id,
 			buy_amount.try_into_balance()?,
 		)
+		.map(Into::<NumberOrHex>::into)
 		.map_err(|e| {
 			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
 				1,
@@ -264,7 +268,7 @@ where
 		second_asset_id: TokenId,
 		liquidity_asset_amount: NumberOrHex,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<(Balance, Balance)> {
+	) -> RpcResult<(NumberOrHex, NumberOrHex)> {
 		let api = self.client.runtime_api();
 		let at = self.client.info().best_hash;
 
@@ -274,6 +278,7 @@ where
 			second_asset_id,
 			liquidity_asset_amount.try_into_balance()?,
 		)
+		.map(|(val1, val2)| (val1.into(), val2.into()))
 		.map_err(|e| {
 			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
 				1,
@@ -288,17 +293,19 @@ where
 		user: AccountId,
 		liquidity_asset_id: TokenId,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<Balance> {
+	) -> RpcResult<NumberOrHex> {
 		let api = self.client.runtime_api();
 		let at = self.client.info().best_hash;
 
-		api.get_max_instant_burn_amount(at, user, liquidity_asset_id).map_err(|e| {
-			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
-				1,
-				"Unable to serve the request",
-				Some(format!("{:?}", e)),
-			)))
-		})
+		api.get_max_instant_burn_amount(at, user, liquidity_asset_id)
+			.map(Into::<NumberOrHex>::into)
+			.map_err(|e| {
+				JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+					1,
+					"Unable to serve the request",
+					Some(format!("{:?}", e)),
+				)))
+			})
 	}
 
 	fn get_max_instant_unreserve_amount(
@@ -306,17 +313,19 @@ where
 		user: AccountId,
 		liquidity_asset_id: TokenId,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<Balance> {
+	) -> RpcResult<NumberOrHex> {
 		let api = self.client.runtime_api();
 		let at = self.client.info().best_hash;
 
-		api.get_max_instant_unreserve_amount(at, user, liquidity_asset_id).map_err(|e| {
-			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
-				1,
-				"Unable to serve the request",
-				Some(format!("{:?}", e)),
-			)))
-		})
+		api.get_max_instant_unreserve_amount(at, user, liquidity_asset_id)
+			.map(Into::<NumberOrHex>::into)
+			.map_err(|e| {
+				JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+					1,
+					"Unable to serve the request",
+					Some(format!("{:?}", e)),
+				)))
+			})
 	}
 
 	fn calculate_rewards_amount(
@@ -324,17 +333,19 @@ where
 		user: AccountId,
 		liquidity_asset_id: TokenId,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<Balance> {
+	) -> RpcResult<NumberOrHex> {
 		let api = self.client.runtime_api();
 		let at = self.client.info().best_hash;
 
-		api.calculate_rewards_amount(at, user, liquidity_asset_id).map_err(|e| {
-			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
-				1,
-				"Unable to serve the request",
-				Some(format!("{:?}", e)),
-			)))
-		})
+		api.calculate_rewards_amount(at, user, liquidity_asset_id)
+			.map(Into::<NumberOrHex>::into)
+			.map_err(|e| {
+				JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+					1,
+					"Unable to serve the request",
+					Some(format!("{:?}", e)),
+				)))
+			})
 	}
 
 	fn calculate_balanced_sell_amount(
@@ -342,7 +353,7 @@ where
 		total_amount: NumberOrHex,
 		reserve_amount: NumberOrHex,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<Balance> {
+	) -> RpcResult<NumberOrHex> {
 		let api = self.client.runtime_api();
 		let at = self.client.info().best_hash;
 
@@ -351,6 +362,7 @@ where
 			total_amount.try_into_balance()?,
 			reserve_amount.try_into_balance()?,
 		)
+		.map(Into::<NumberOrHex>::into)
 		.map_err(|e| {
 			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
 				1,

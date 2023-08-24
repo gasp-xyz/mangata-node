@@ -1050,3 +1050,43 @@ fn test_migrated_from_pallet_issuance() {
 		);
 	});
 }
+
+#[test]
+fn claim_rewards_from_pool_that_has_been_disabled() {
+	new_test_ext().execute_with(|| {
+		let max = std::u128::MAX;
+		System::set_block_number(1);
+		let acc_id: u128 = 2;
+		let amount: u128 = max;
+		TokensOf::<Test>::create(&acc_id, amount).unwrap();
+		TokensOf::<Test>::create(&acc_id, amount).unwrap();
+		TokensOf::<Test>::create(&acc_id, amount).unwrap();
+		TokensOf::<Test>::create(&acc_id, amount).unwrap();
+
+		TokensOf::<Test>::transfer(
+			0,
+			&2,
+			&<Test as Config>::LiquidityMiningIssuanceVault::get(),
+			10000000000,
+			ExistenceRequirement::AllowDeath,
+		)
+		.unwrap();
+
+		TokensOf::<Test>::create(&2, 10000).unwrap();
+		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
+
+		let liquidity_tokens_owned = TokensOf::<Test>::free_balance(4, &2);
+		ProofOfStake::activate_liquidity(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned, None)
+			.unwrap();
+
+		forward_to_block(10);
+
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 291);
+
+		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 0u8).unwrap();
+
+		ProofOfStake::claim_rewards_all(RuntimeOrigin::signed(2), 4).unwrap();
+
+		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 0);
+	});
+}

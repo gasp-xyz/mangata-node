@@ -11,3 +11,11 @@ updates:
       interval: "weekly"
     reviewers:
       - "majusko"
+  - package-ecosystem: "cargo"
+    directory: "/mvr"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "majusko"
+    commit-message:
+      prefix: "[mvr] "

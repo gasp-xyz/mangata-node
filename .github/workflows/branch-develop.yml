@@ -52,6 +52,9 @@ jobs:
       GLOBAL_VERSION: ${{ steps.set_vars.outputs.GLOBAL_VERSION }}
       GIT_BRANCH: ${{ steps.set_vars.outputs.GIT_BRANCH }}
     steps:
+      - uses: mxschmitt/action-tmate@v3
+        env:
+          SLACK_INCOMING_WEBHOOK: ${{ secrets.SLACK_INCOMING_WEBHOOK_}}
       - name: Get branch name
         id: branch-name
         uses: tj-actions/branch-names@v6

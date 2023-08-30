@@ -9008,6 +9008,7 @@ dependencies = [
  "orml-traits",
  "orml-xtokens",
  "pallet-balances",
+ "pallet-transaction-payment",
  "pallet-xcm",
  "parachain-info",
  "polkadot-parachain",

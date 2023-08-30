@@ -146,8 +146,8 @@ impl WeightToFeePolynomial for WeightToFee {
 	type Balance = Balance;
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
 		// in MVR, extrinsic base weight (smallest non-zero weight) is mapped to 1/10 DOT CENT:
-		let p = dot_currency::MILLICENTS;
-		let q = Balance::from(ExtrinsicBaseWeight::get().ref_time());
+		let p = dot_currency::CENTS / 10;
+		let q = 10 * Balance::from(ExtrinsicBaseWeight::get().ref_time());
 		smallvec![WeightToFeeCoefficient {
 			degree: 1,
 			negative: false,
@@ -354,7 +354,7 @@ parameter_types! {
 
 parameter_types! {
 	/// Relay Chain `TransactionByteFee` / 10
-	pub const TransactionByteFee: Balance = 10 * MICROUNIT;
+	pub const TransactionByteFee: Balance = 10 * dot_currency::MILLICENTS;
 	pub const DOTTokenId: u32 = 4;
 }
 pub type OrmlCurrencyAdapter = orml_tokens::CurrencyAdapter<Runtime, DOTTokenId>;

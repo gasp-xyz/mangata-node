@@ -15,7 +15,7 @@ pub use orml_tokens;
 
 pub use pallet_sudo_mangata;
 
-use pallet_vesting_mangata_rpc_runtime_api::VestingInfosWithLockedAt;
+use pallet_vesting_mangata::VestingInfo;
 // Polkadot Imports
 pub use polkadot_runtime_common::BlockHashCount;
 
@@ -1082,11 +1082,11 @@ impl_runtime_apis! {
 	}
 
 	impl pallet_vesting_mangata_rpc_runtime_api::VestingMangataApi<Block, AccountId, TokenId, Balance, BlockNumber> for Runtime {
-		fn get_vesting_locked_at(who: AccountId, token_id: TokenId, at_block_number: Option<BlockNumber>) -> VestingInfosWithLockedAt<Balance, BlockNumber>
+		fn get_vesting_locked_at(who: AccountId, token_id: TokenId, at_block_number: Option<BlockNumber>) -> Vec<(VestingInfo<Balance, BlockNumber>, Balance)>
 		{
 			match Vesting::get_vesting_locked_at(&who, token_id, at_block_number){
-				Ok(vesting_infos_with_locked_at) => VestingInfosWithLockedAt{
-					vesting_infos_with_locked_at: vesting_infos_with_locked_at
+				Ok(vesting_infos_with_locked_at) => {
+					vesting_infos_with_locked_at
 				},
 				Err(e) => {
 						log::warn!(target:"vesting", "rpc 'Vesting::get_vesting_locked_at' error: '{:?}', returning default value instead", e);

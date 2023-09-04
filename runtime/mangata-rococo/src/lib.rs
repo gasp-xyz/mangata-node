@@ -1081,21 +1081,6 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl pallet_vesting_mangata_rpc_runtime_api::VestingMangataApi<Block, AccountId, TokenId, Balance, BlockNumber> for Runtime {
-		fn get_vesting_locked_at(who: AccountId, token_id: TokenId, at_block_number: Option<BlockNumber>) -> Vec<Balance>
-		{
-			match Vesting::get_vesting_locked_at(&who, token_id, at_block_number){
-				Ok(vesting_infos_with_locked_at) => {
-					vesting_infos_with_locked_at
-				},
-				Err(e) => {
-						log::warn!(target:"vesting", "rpc 'Vesting::get_vesting_locked_at' error: '{:?}', returning default value instead", e);
-						Default::default()
-				},
-			}
-		}
-	}
-
 	impl sp_api::Core<Block> for Runtime {
 		fn version() -> RuntimeVersion {
 			VERSION

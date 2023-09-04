@@ -487,8 +487,6 @@ frame-support = { git = "https://github.com/mangata-finance//substrate", branch 
 frame-support-procedural-tools-derive = { git = "https://github.com/mangata-finance//substrate", branch = "fix/rpc-vesting" }
 frame-support-procedural-tools = { git = "https://github.com/mangata-finance//substrate", branch = "fix/rpc-vesting" }
 frame-support-procedural = { git = "https://github.com/mangata-finance//substrate", branch = "fix/rpc-vesting" }
-pallet-vesting-mangata-rpc-runtime-api = { git = "https://github.com/mangata-finance//substrate", branch = "fix/rpc-vesting" }
-pallet-vesting-mangata-rpc = { git = "https://github.com/mangata-finance//substrate", branch = "fix/rpc-vesting" }
 pallet-vesting-mangata = { git = "https://github.com/mangata-finance//substrate", branch = "fix/rpc-vesting" }
 pallet-staking-reward-curve = { git = "https://github.com/mangata-finance//substrate", branch = "fix/rpc-vesting" }
 pallet-staking-reward-fn = { git = "https://github.com/mangata-finance//substrate", branch = "fix/rpc-vesting" }
@@ -672,8 +670,6 @@ frame-support = { git = "https://github.com/mangata-finance//substrate", branch 
 frame-support-procedural-tools-derive = { git = "https://github.com/mangata-finance//substrate", branch = "fix/rpc-vesting" }
 frame-support-procedural-tools = { git = "https://github.com/mangata-finance//substrate", branch = "fix/rpc-vesting" }
 frame-support-procedural = { git = "https://github.com/mangata-finance//substrate", branch = "fix/rpc-vesting" }
-pallet-vesting-mangata-rpc-runtime-api = { git = "https://github.com/mangata-finance//substrate", branch = "fix/rpc-vesting" }
-pallet-vesting-mangata-rpc = { git = "https://github.com/mangata-finance//substrate", branch = "fix/rpc-vesting" }
 pallet-vesting-mangata = { git = "https://github.com/mangata-finance//substrate", branch = "fix/rpc-vesting" }
 pallet-staking-reward-curve = { git = "https://github.com/mangata-finance//substrate", branch = "fix/rpc-vesting" }
 pallet-staking-reward-fn = { git = "https://github.com/mangata-finance//substrate", branch = "fix/rpc-vesting" }
@@ -858,8 +854,6 @@ frame-support = { git = "https://github.com/mangata-finance//substrate", branch 
 frame-support-procedural-tools-derive = { git = "https://github.com/mangata-finance//substrate", branch = "fix/rpc-vesting" }
 frame-support-procedural-tools = { git = "https://github.com/mangata-finance//substrate", branch = "fix/rpc-vesting" }
 frame-support-procedural = { git = "https://github.com/mangata-finance//substrate", branch = "fix/rpc-vesting" }
-pallet-vesting-mangata-rpc-runtime-api = { git = "https://github.com/mangata-finance//substrate", branch = "fix/rpc-vesting" }
-pallet-vesting-mangata-rpc = { git = "https://github.com/mangata-finance//substrate", branch = "fix/rpc-vesting" }
 pallet-vesting-mangata = { git = "https://github.com/mangata-finance//substrate", branch = "fix/rpc-vesting" }
 pallet-staking-reward-curve = { git = "https://github.com/mangata-finance//substrate", branch = "fix/rpc-vesting" }
 pallet-staking-reward-fn = { git = "https://github.com/mangata-finance//substrate", branch = "fix/rpc-vesting" }
@@ -1045,8 +1039,6 @@ sc-consensus-grandpa =  { git = "https://github.com/mangata-finance//substrate",
 # frame-support-procedural-tools-derive = { path = "../substrate/frame/support/procedural/tools/derive" }
 # frame-support-procedural-tools = { path = "../substrate/frame/support/procedural/tools" }
 # frame-support-procedural = { path = "../substrate/frame/support/procedural" }
-# pallet-vesting-mangata-rpc-runtime-api = { path = "../substrate/frame/vesting-mangata/rpc/runtime-api" }
-# pallet-vesting-mangata-rpc = { path = "../substrate/frame/vesting-mangata/rpc" }
 # pallet-vesting-mangata = { path = "../substrate/frame/vesting-mangata" }
 # pallet-staking-reward-curve = { path = "../substrate/frame/staking/reward-curve" }
 # pallet-staking-reward-fn = { path = "../substrate/frame/staking/reward-fn" }
@@ -1228,8 +1220,6 @@ sc-consensus-grandpa =  { git = "https://github.com/mangata-finance//substrate",
 # frame-support-procedural-tools-derive = { path = "../substrate/frame/support/procedural/tools/derive" }
 # frame-support-procedural-tools = { path = "../substrate/frame/support/procedural/tools" }
 # frame-support-procedural = { path = "../substrate/frame/support/procedural" }
-# pallet-vesting-mangata-rpc-runtime-api = { path = "../substrate/frame/vesting-mangata/rpc/runtime-api" }
-# pallet-vesting-mangata-rpc = { path = "../substrate/frame/vesting-mangata/rpc" }
 # pallet-vesting-mangata = { path = "../substrate/frame/vesting-mangata" }
 # pallet-staking-reward-curve = { path = "../substrate/frame/staking/reward-curve" }
 # pallet-staking-reward-fn = { path = "../substrate/frame/staking/reward-fn" }
@@ -1411,8 +1401,6 @@ sc-consensus-grandpa =  { git = "https://github.com/mangata-finance//substrate",
 # frame-support-procedural-tools-derive = { path = "../substrate/frame/support/procedural/tools/derive" }
 # frame-support-procedural-tools = { path = "../substrate/frame/support/procedural/tools" }
 # frame-support-procedural = { path = "../substrate/frame/support/procedural" }
-# pallet-vesting-mangata-rpc-runtime-api = { path = "../substrate/frame/vesting-mangata/rpc/runtime-api" }
-# pallet-vesting-mangata-rpc = { path = "../substrate/frame/vesting-mangata/rpc" }
 # pallet-vesting-mangata = { path = "../substrate/frame/vesting-mangata" }
 # pallet-staking-reward-curve = { path = "../substrate/frame/staking/reward-curve" }
 # pallet-staking-reward-fn = { path = "../substrate/frame/staking/reward-fn" }

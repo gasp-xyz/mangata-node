@@ -13,16 +13,20 @@ use cumulus_primitives_core::{
 	WildMultiAsset::{self, AllCounted},
 	Xcm,
 };
-use frame_support::{assert_ok, traits::Currency};
+use frame_support::{assert_ok, traits::Currency, weights::WeightToFee};
 use orml_traits::currency::MultiCurrency;
 use xcm::VersionedXcm;
 use xcm_emulator::TestExt;
+use orml_tokens::WeightInfo as OrmlWeightInfoT;
 
 use networks::*;
 
 pub type RelayChainPalletXcm = pallet_xcm::Pallet<polkadot_runtime::Runtime>;
 pub type ParachainPalletXcm = pallet_xcm::Pallet<mangata_polkadot_runtime::Runtime>;
 pub type XParachainPalletXTokens = orml_xtokens::Pallet<xtokens_parachain::Runtime>;
+pub type OrmlWeights = <mangata_polkadot_runtime::Runtime as orml_tokens::Config>::WeightInfo;
+pub type MangataWeightToFee = <mangata_polkadot_runtime::Runtime as pallet_transaction_payment::Config>::WeightToFee;
+
 pub const TRANSFER_AMOUNT: u128 = 50 * unit(12);
 
 #[test]
@@ -196,4 +200,29 @@ fn xtokens_transfer_triggers_asset_trap() {
 			) > INITIAL_BALANCE * 9 / 10
 		);
 	});
+}
+
+#[test]
+fn transfer_fee_is_reasonable() {
+	TestNet::reset();
+
+	// arrange
+	networks::Mangata::execute_with(|| {
+		sp_tracing::try_init_simple();
+
+		let transfer_weight = <OrmlWeights as OrmlWeightInfoT>::transfer();
+
+		let bytes_cost = mangata_polkadot_runtime::TransactionPayment::weight_to_fee(transfer_weight);
+		let weight_cost = mangata_polkadot_runtime::TransactionPayment::length_to_fee(145);
+		let cost = bytes_cost + weight_cost;
+
+        assert!(
+            cost > mangata_polkadot_runtime::dot_currency::CENTS / 10
+        );
+        assert!(
+            cost < 10 * mangata_polkadot_runtime::dot_currency::CENTS
+        );
+
+	});
+
 }

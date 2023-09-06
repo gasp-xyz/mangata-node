@@ -17,7 +17,7 @@ sc-client-api = { version = "4.0.0-dev", git = "https://github.com/mangata-finan
 codec = { package = "parity-scale-codec", version = "3.0.0" }
 futures = "0.3.21"
 jsonrpsee = { version = "0.16.2", features = ["server"] }
-log = "0.4.17"
+log = "0.4.20"
 sp-runtime = { version = "7.0.0", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-api = { version = "4.0.0-dev", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 frame-system-rpc-runtime-api ={ version = "4.0.0-dev", git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }

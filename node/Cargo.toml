@@ -43,7 +43,7 @@ try-runtime = [
 [dependencies]
 derive_more = "0.99.2"
 futures = "0.3.9"
-log = "0.4.17"
+log = "0.4.20"
 codec = { package = "parity-scale-codec", version = "3.0.0" }
 clap = { version = "4.0.29", features = ["derive"] }
 serde = { version = "1.0.137", features = ["derive"] }

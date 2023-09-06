@@ -50,7 +50,7 @@ mangata-support = { default-features = false , git = "https://github.com/mangata
 
 [dev-dependencies]
 env_logger = "0.9.1"
-log = "0.4.17"
+log = "0.4.20"
 sp-io = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 
 kusama-runtime = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev" }

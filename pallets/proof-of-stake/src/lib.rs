@@ -25,7 +25,7 @@ use sp_runtime::{traits::SaturatedConversion, Perbill};
 use sp_std::{convert::TryInto, prelude::*};
 
 mod reward_info;
-use reward_info::RewardInfo;
+use reward_info::{AsymptoticCurveRewards, RewardInfo, RewardsCalculator};
 mod benchmarking;
 
 #[cfg(test)]
@@ -294,11 +294,14 @@ impl<T: Config> Pallet<T> {
 				pool_ratio_at_last_checkpoint: pool_ratio_current,
 				missing_at_last_checkpoint: U256::from(0u128),
 			});
-		rewards_info.activate_more::<T>(
-			current_time,
-			pool_ratio_current,
-			liquidity_assets_added,
+
+		let calc = RewardsCalculator::<AsymptoticCurveRewards>::new::<T>(
+			liquidity_asset_id,
+			rewards_info,
 		)?;
+		let rewards_info = calc
+			.activate_more(liquidity_assets_added)
+			.map_err(|err| Into::<Error<T>>::into(err))?;
 
 		RewardsInfo::<T>::insert(user.clone(), liquidity_asset_id, rewards_info);
 
@@ -332,11 +335,14 @@ impl<T: Config> Pallet<T> {
 			Error::<T>::NotEnoughAssets
 		);
 
-		rewards_info.activate_less::<T>(
-			current_time,
-			pool_ratio_current,
-			liquidity_assets_burned,
+		let calc = RewardsCalculator::<AsymptoticCurveRewards>::new::<T>(
+			liquidity_asset_id,
+			rewards_info,
 		)?;
+		let rewards_info = calc
+			.activate_less(liquidity_assets_burned)
+			.map_err(|err| Into::<Error<T>>::into(err))?;
+
 		RewardsInfo::<T>::insert(user.clone(), liquidity_asset_id, rewards_info);
 
 		TotalActivatedLiquidity::<T>::try_mutate(liquidity_asset_id, |active_amount| {
@@ -395,11 +401,13 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 
 		let mut rewards_info = RewardsInfo::<T>::try_get(user.clone(), liquidity_asset_id)
 			.or(Err(DispatchError::from(Error::<T>::MissingRewardsInfoError)))?;
-		let pool_rewards_ratio_current = Self::get_pool_rewards(liquidity_asset_id)?;
 
-		let current_rewards = rewards_info
-			.calculate_rewards(Self::get_current_rewards_time()?, pool_rewards_ratio_current)
-			.ok_or(Error::<T>::CalculateRewardsMathError)?;
+		let calc = RewardsCalculator::<AsymptoticCurveRewards>::new::<T>(
+			liquidity_asset_id,
+			rewards_info.clone(),
+		)?;
+		let current_rewards =
+			calc.calculate_rewards().map_err(|err| Into::<Error<T>>::into(err))?;
 
 		let total_available_rewards = current_rewards
 			.checked_add(rewards_info.rewards_not_yet_claimed)
@@ -483,14 +491,16 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
 		let rewards_info = RewardsInfo::<T>::try_get(user.clone(), liquidity_asset_id)
 			.or(Err(DispatchError::from(Error::<T>::MissingRewardsInfoError)))?;
+
 		let current_rewards = match rewards_info.activated_amount {
 			0 => 0u128,
-			_ => rewards_info
-				.calculate_rewards(
-					Self::get_current_rewards_time()?,
-					Self::get_pool_rewards(liquidity_asset_id)?,
-				)
-				.ok_or(Error::<T>::CalculateRewardsMathError)?,
+			_ => {
+				let calc = RewardsCalculator::<AsymptoticCurveRewards>::new::<T>(
+					liquidity_asset_id,
+					rewards_info.clone(),
+				)?;
+				calc.calculate_rewards().map_err(|err| Into::<Error<T>>::into(err))?
+			},
 		};
 
 		Ok(current_rewards

@@ -19,10 +19,7 @@
 
 ## Description
 
-Reliable decentralized exchange (DEX) blockchain - interoperable with other blockchains using Polkadot. The exchange is using a consensus algorithm that solves MEV/frontrunning problems and makes all participants' access to trading opportunities equal.
-
-The design of the blockchain guarantees fixed-fees that provides greater control of trading costs and higher arbitrage opportunity.
-Assets on the exchange will serve multiple purposes- at the first iteration, they are the block producer’s stake and exchange liquidity at the same time, and more comes later.
+Mangata operates as a cross-chain liquidity protocol, facilitating seamless transactions between Ethereum and various other blockchains through a Multirollup Interchain Infrastructure. We leverage the power of ZK-rollup, a second-layer (L2) solution, to ensure universal connectivity with first-layer (L1) blockchains. Additionally, our decentralized exchange platform is designed to provide robust protection against Miner Extractable Value (MEV) and frontrunning attempts, thereby safeguarding the interests of our users.
 
 ## API
 

@@ -505,6 +505,7 @@ pub mod pallet {
 		MultiSwapCantHaveSameTokenConsequetively,
 		/// Trading blocked by maintenance mode
 		TradingBlockedByMaintenanceMode,
+		PoolIsEmpty,
 	}
 
 	#[pallet::event]
@@ -1594,6 +1595,17 @@ impl<T: Config> Pallet<T> {
 
 		return Ok(if initial_liquidity == 0 { 1 } else { initial_liquidity })
 	}
+
+	fn is_pool_empty(
+		first_asset_id: TokenId,
+		second_asset_id: TokenId,
+	) -> Result<bool, DispatchError> {
+		let liquidity_asset_id = Pallet::<T>::get_liquidity_asset(first_asset_id, second_asset_id)?;
+		let total_liquidity_assets: Balance =
+			<T as Config>::Currency::total_issuance(liquidity_asset_id.into()).into();
+
+		return Ok(total_liquidity_assets.is_zero())
+	}
 }
 
 impl<T: Config> PreValidateSwaps for Pallet<T> {
@@ -1625,6 +1637,11 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 			!T::DisabledTokens::contains(&sold_asset_id) &&
 				!T::DisabledTokens::contains(&bought_asset_id),
 			Error::<T>::FunctionNotAvailableForThisToken
+		);
+
+		ensure!(
+			!(Self::is_pool_empty(sold_asset_id, bought_asset_id)?),
+			Error::<T>::PoolIsEmpty
 		);
 
 		let buy_and_burn_amount = multiply_by_rational_with_rounding(
@@ -1731,6 +1748,8 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 			.collect();
 
 		for (x, y) in atomic_pairs.iter() {
+			ensure!(!(Self::is_pool_empty(*x, *y)?), Error::<T>::PoolIsEmpty);
+
 			if x == y {
 				return Err(Error::<T>::MultiSwapCantHaveSameTokenConsequetively.into())
 			}

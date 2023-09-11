@@ -906,7 +906,7 @@ fn multiswap_sell_bad_atomic_swap_charges_fee_W() {
 
 		assert_ok!(XykStorage::multiswap_sell_asset(
 			RuntimeOrigin::signed(TRADER_ID),
-			vec![1, 2, 3, 6, 5],
+			vec![1, 2, 3, 4, 5],
 			20000000000000000000,
 			20000000000000000000
 		));
@@ -965,7 +965,7 @@ fn multiswap_sell_not_enough_assets_pay_fees_fails_early_W() {
 		assert_err_ignore_postinfo!(
 			XykStorage::multiswap_sell_asset(
 				RuntimeOrigin::signed(TRADER_ID),
-				vec![1, 2, 3, 6, 5],
+				vec![1, 2, 3, 4, 5],
 				2000000000000000000000000,
 				0
 			),
@@ -1816,8 +1816,44 @@ fn burn_all_liq_and_mint_it_again() {
 			Error::<Test>::PoolAlreadyExists,
 		);
 
-		XykStorage::mint_liquidity(RuntimeOrigin::signed(2), 1, 4, asset_value_1, asset_value_4)
-			.unwrap();
+		// we will try to sell assets but it needs to fail
+		let user_assets_1_value = XykStorage::balance(1, DUMMY_USER_ID);
+		let user_assets_4_value = XykStorage::balance(4, DUMMY_USER_ID);
+
+		assert_eq!(user_assets_1_value, 1000000000000000000000);
+		assert_eq!(user_assets_4_value, 1000000000000000000000);
+
+		// selling the assets should fail due to empty pools
+		assert_err_ignore_postinfo!(
+			XykStorage::multiswap_sell_asset(
+				RuntimeOrigin::signed(DUMMY_USER_ID),
+				vec![1, 4],
+				20000000000000000000,
+				1
+			),
+			Error::<Test>::PoolIsEmpty,
+		);
+
+		// selling the assets should fail also for multiswap due to empty pools
+		assert_err_ignore_postinfo!(
+			XykStorage::multiswap_sell_asset(
+				RuntimeOrigin::signed(DUMMY_USER_ID),
+				vec![1, 4, 1, 4],
+				20000000000000000000,
+				1
+			),
+			Error::<Test>::PoolIsEmpty,
+		);
+
+		let user_assets_1_value_after_sell = XykStorage::balance(1, DUMMY_USER_ID);
+		let user_assets_4_value_after_sell = XykStorage::balance(4, DUMMY_USER_ID);
+
+		//check that no asset sold
+		assert_eq!(user_assets_1_value_after_sell, 1000000000000000000000);
+		assert_eq!(user_assets_4_value_after_sell, 1000000000000000000000);
+
+		// minting liq again and checking if the liq. asset is generated
+		XykStorage::mint_liquidity(RuntimeOrigin::signed(2), 1, 4, asset_value_1, asset_value_4);
 
 		let liq_token_id_after_burn_and_mint = XykStorage::liquidity_asset((1, 4));
 

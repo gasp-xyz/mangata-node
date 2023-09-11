@@ -3052,7 +3052,7 @@ dependencies = [
 [[package]]
 name = "frame-system-benchmarking"
 version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#afd05d5ed525572ed1b6d6a19aeac2465f552e1f"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#462977d15a851a441fe542f68e06b286f059dbfe"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6875,7 +6875,7 @@ dependencies = [
 [[package]]
 name = "pallet-root-testing"
 version = "1.0.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#afd05d5ed525572ed1b6d6a19aeac2465f552e1f"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#462977d15a851a441fe542f68e06b286f059dbfe"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -10446,7 +10446,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-grandpa"
 version = "0.10.0-dev"
-source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#afd05d5ed525572ed1b6d6a19aeac2465f552e1f"
+source = "git+https://github.com/mangata-finance/substrate?branch=mangata-dev#462977d15a851a441fe542f68e06b286f059dbfe"
 dependencies = [
  "ahash 0.8.3",
  "array-bytes 4.2.0",

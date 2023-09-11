@@ -1639,10 +1639,7 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 			Error::<T>::FunctionNotAvailableForThisToken
 		);
 
-		ensure!(
-			!(Self::is_pool_empty(sold_asset_id, bought_asset_id)?),
-			Error::<T>::PoolIsEmpty
-		);
+		ensure!(!(Self::is_pool_empty(sold_asset_id, bought_asset_id)?), Error::<T>::PoolIsEmpty);
 
 		let buy_and_burn_amount = multiply_by_rational_with_rounding(
 			sold_asset_amount,

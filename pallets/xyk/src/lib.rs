@@ -1844,6 +1844,8 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 			Error::<T>::FunctionNotAvailableForThisToken
 		);
 
+		ensure!(!(Self::is_pool_empty(sold_asset_id, bought_asset_id)?), Error::<T>::PoolIsEmpty);
+
 		// Get token reserves
 		let (input_reserve, output_reserve) =
 			Pallet::<T>::get_reserves(sold_asset_id, bought_asset_id)?;
@@ -1968,6 +1970,8 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 		let mut atomic_pairs_hashset = BTreeSet::new();
 
 		for (x, y) in atomic_pairs.iter() {
+			ensure!(!(Self::is_pool_empty(*x, *y)?), Error::<T>::PoolIsEmpty);
+
 			if x == y {
 				return Err(Error::<T>::MultiSwapCantHaveSameTokenConsequetively.into())
 			} else if x > y {

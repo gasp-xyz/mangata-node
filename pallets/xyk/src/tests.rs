@@ -1517,7 +1517,7 @@ fn multiswap_buy_bad_atomic_swap_charges_fee_W() {
 
 		assert_ok!(XykStorage::multiswap_buy_asset(
 			RuntimeOrigin::signed(TRADER_ID),
-			vec![1, 2, 3, 6, 5],
+			vec![1, 2, 3, 4, 5],
 			20000000000000000000,
 			200000000000000000
 		));
@@ -1575,7 +1575,7 @@ fn multiswap_buy_not_enough_assets_pay_fees_fails_early_W() {
 		assert_err_ignore_postinfo!(
 			XykStorage::multiswap_buy_asset(
 				RuntimeOrigin::signed(TRADER_ID),
-				vec![1, 2, 3, 6, 5],
+				vec![1, 2, 3, 4, 5],
 				2000000000000000000000000,
 				2000000000000000000000000
 			),
@@ -1837,6 +1837,28 @@ fn burn_all_liq_and_mint_it_again() {
 		// selling the assets should fail also for multiswap due to empty pools
 		assert_err_ignore_postinfo!(
 			XykStorage::multiswap_sell_asset(
+				RuntimeOrigin::signed(DUMMY_USER_ID),
+				vec![1, 4, 1, 4],
+				20000000000000000000,
+				1
+			),
+			Error::<Test>::PoolIsEmpty,
+		);
+
+		// buy asset should fail due to empty pools
+		assert_err_ignore_postinfo!(
+			XykStorage::multiswap_buy_asset(
+				RuntimeOrigin::signed(DUMMY_USER_ID),
+				vec![1, 4],
+				20000000000000000000,
+				1
+			),
+			Error::<Test>::PoolIsEmpty,
+		);
+
+		// buy asset should fail also for multiswap due to empty pools
+		assert_err_ignore_postinfo!(
+			XykStorage::multiswap_buy_asset(
 				RuntimeOrigin::signed(DUMMY_USER_ID),
 				vec![1, 4, 1, 4],
 				20000000000000000000,

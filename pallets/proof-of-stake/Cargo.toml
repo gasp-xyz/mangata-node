@@ -41,6 +41,7 @@ lazy_static = "1.1.1"
 env_logger = "0.9.0"
 serial_test = { version = "0.6.0", default-features = false }
 test-case = "2.0.2"
+mockall = "0.11.0"
 
 [features]
 default = ['std']

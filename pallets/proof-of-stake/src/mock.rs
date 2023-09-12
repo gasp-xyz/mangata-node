@@ -12,7 +12,7 @@ use sp_runtime::{
 use crate as pos;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{tokens::currency::MultiTokenCurrency, ConstU32, Contains, Everything},
+	traits::{tokens::currency::MultiTokenCurrency, ConstU32, ConstU128, Contains, Everything},
 	PalletId,
 };
 
@@ -202,6 +202,45 @@ lazy_static::lazy_static! {
 	};
 }
 
+mockall::mock! {
+	pub ValuationApi {}
+
+	impl Valuate for ValuationApi {
+	type Balance = Balance;
+	type CurrencyId = TokenId;
+
+	fn get_liquidity_asset(
+	first_asset_id: TokenId,
+	second_asset_id: TokenId,
+	) -> Result<TokenId, DispatchError>;
+
+	fn get_liquidity_token_mga_pool(
+	liquidity_token_id: TokenId,
+	) -> Result<(TokenId, TokenId), DispatchError>;
+
+	fn valuate_liquidity_token(
+	liquidity_token_id: TokenId,
+	liquidity_token_amount: Balance,
+	) -> Balance;
+
+	fn scale_liquidity_by_mga_valuation(
+	mga_valuation: Balance,
+	liquidity_token_amount: Balance,
+	mga_token_amount: Balance,
+	) -> Balance;
+
+	fn get_pool_state(liquidity_token_id: TokenId) -> Option<(Balance, Balance)>;
+
+	fn get_reserves(
+	first_asset_id: TokenId,
+	second_asset_id: TokenId,
+	) -> Result<(Balance, Balance), DispatchError>;
+
+
+
+	}
+}
+
 impl pos::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
@@ -209,7 +248,10 @@ impl pos::Config for Test {
 	type Currency = MultiTokenCurrencyAdapter<Test>;
 	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = ConstU32<10>;
+	type RewardsSchedulesLimit =  ConstU32<10>;
+	type MinRewardsPerSession = ConstU128<10>;
 	type WeightInfo = ();
+	type ValuationApi = MockValuationApi;
 }
 
 pub struct TokensActivationPassthrough<T: Config>(PhantomData<T>);
@@ -327,3 +369,4 @@ macro_rules! assert_event_emitted {
 		}
 	};
 }
+

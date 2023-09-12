@@ -1150,13 +1150,13 @@ where
 			/// Reward payments delay (number of rounds)
 			pub const RewardPaymentDelay: u32 = 2;
 			/// Minimum collators selected per round, default at genesis and minimum forever after
-			pub const MinSelectedCandidates: u32 = 25;
+			pub const MinSelectedCandidates: u32 = 50;
 			/// Maximum collator candidates allowed
-			pub const MaxCollatorCandidates: u32 = 50;
+			pub const MaxCollatorCandidates: u32 = 100;
 			/// Maximum delegators allowed per candidate
-			pub const MaxTotalDelegatorsPerCandidate: u32 = 25;
+			pub const MaxTotalDelegatorsPerCandidate: u32 = 30;
 			/// Maximum delegators counted per candidate
-			pub const MaxDelegatorsPerCandidate: u32 = 12;
+			pub const MaxDelegatorsPerCandidate: u32 = 30;
 			/// Maximum delegations per delegator
 			pub const MaxDelegationsPerDelegator: u32 = 30;
 			/// Default fixed percent a collator takes off the top of due rewards

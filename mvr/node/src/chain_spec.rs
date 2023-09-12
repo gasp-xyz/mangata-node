@@ -102,6 +102,7 @@ pub fn mainnet_config() -> ChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 				],
 				2100.into(),
+				None,
 			)
 		},
 		Vec::new(),
@@ -157,6 +158,7 @@ pub fn local_testnet_config() -> ChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 				],
 				2100.into(),
+				Some(get_account_id_from_seed::<sr25519::Public>("Alice")),
 			)
 		},
 		// Bootnodes
@@ -181,6 +183,7 @@ fn mangata_genesis(
 	invulnerables: Vec<(AccountId, AuraId)>,
 	endowed_accounts: Vec<AccountId>,
 	id: ParaId,
+	sudo: Option<AccountId>,
 ) -> mangata_polkadot_runtime::GenesisConfig {
 	mangata_polkadot_runtime::GenesisConfig {
 		system: mangata_polkadot_runtime::SystemConfig {
@@ -198,15 +201,20 @@ fn mangata_genesis(
 			balances: endowed_accounts
 				.iter()
 				.cloned()
-				.map(|account|
-					 [
-						 (0_u32,1_000_000_000__000000000_000000000_u128),
-						 (1_u32,0_u128),
-						 (2_u32,0_u128),
-						 (3_u32,0_u128),
-						 (4_u32,1_000_000_000__000000000_000000000_u128),
-					 ].iter().map(|(token, amount)| (account.clone(), *token, *amount)).collect::<Vec<_>>()
-				 ).flatten().collect(),
+				.map(|account| {
+					[
+						(0_u32, 1_000_000_000__000000000_000000000_u128),
+						(1_u32, 0_u128),
+						(2_u32, 0_u128),
+						(3_u32, 0_u128),
+						(4_u32, 1_000_000_000__000000000_000000000_u128),
+					]
+					.iter()
+					.map(|(token, amount)| (account.clone(), *token, *amount))
+					.collect::<Vec<_>>()
+				})
+				.flatten()
+				.collect(),
 		},
 		session: mangata_polkadot_runtime::SessionConfig {
 			keys: invulnerables
@@ -220,6 +228,7 @@ fn mangata_genesis(
 				})
 				.collect(),
 		},
+		sudo: mangata_polkadot_runtime::SudoConfig { key: sudo },
 		// no need to pass anything to aura, in fact it will panic if we do. Session will take care
 		// of this.
 		aura: Default::default(),

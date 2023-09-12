@@ -15,10 +15,11 @@ pub use orml_tokens;
 
 pub use pallet_sudo_mangata;
 
-use pallet_vesting_mangata_rpc_runtime_api::VestingInfosWithLockedAt;
+use pallet_vesting_mangata::VestingInfo;
 // Polkadot Imports
 pub use polkadot_runtime_common::BlockHashCount;
 
+pub use common_runtime::{currency::*, deposit, runtime_types, tokens, CallType};
 use sp_api::impl_runtime_apis;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -44,8 +45,6 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 use static_assertions::const_assert;
 pub use xcm::{latest::prelude::*, VersionedMultiLocation};
-
-pub use common_runtime::{currency::*, deposit, runtime_types, tokens, CallType};
 // pub use constants::{fee::*, parachains::*};
 use mangata_support::traits::ProofOfStakeRewardsApi;
 pub use mangata_types::{
@@ -57,7 +56,7 @@ pub use pallet_sudo_origin;
 pub use pallet_xyk;
 // XCM Imports
 
-use xyk_runtime_api::{RpcAmountsResult, XYKRpcResult};
+use xyk_runtime_api::{RpcAmountsResult, RpcAssetMetadata, XYKRpcResult};
 
 // Make the WASM binary available.
 #[cfg(feature = "std")]
@@ -90,7 +89,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	(),
+	common_runtime::migration::AssetRegistryMigration<Runtime>,
 >;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
@@ -585,6 +584,7 @@ impl pallet_crowdloan_rewards::Config for Runtime {
 	type RewardAddressAssociateOrigin = EnsureRoot<AccountId>;
 	type VestingBlockNumber = BlockNumber;
 	type VestingBlockProvider = System;
+	type VestingProvider = Vesting;
 	type WeightInfo = weights::pallet_crowdloan_rewards_weights::ModuleWeight<Runtime>;
 }
 
@@ -1048,6 +1048,27 @@ impl_runtime_apis! {
 				}
 			}
 		}
+
+		fn get_tradeable_tokens() -> Vec<RpcAssetMetadata<mangata_types::TokenId>> {
+			orml_asset_registry::Metadata::<Runtime>::iter()
+			.filter_map(|(token_id, metadata)| {
+				if !metadata.name.is_empty()
+					&& !metadata.symbol.is_empty()
+					&& metadata.additional.xyk.as_ref().map_or(true, |xyk| !xyk.operations_disabled)
+				{
+					let rpc_metadata = RpcAssetMetadata {
+						token_id: token_id,
+						decimals: metadata.decimals,
+						name: metadata.name.clone(),
+						symbol: metadata.symbol.clone(),
+					};
+					Some(rpc_metadata)
+				} else {
+					None
+				}
+			})
+			.collect::<Vec<_>>()
+		}
 	}
 
 	impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
@@ -1057,21 +1078,6 @@ impl_runtime_apis! {
 
 		fn authorities() -> Vec<AuraId> {
 			Aura::authorities().into_inner()
-		}
-	}
-
-	impl pallet_vesting_mangata_rpc_runtime_api::VestingMangataApi<Block, AccountId, TokenId, Balance, BlockNumber> for Runtime {
-		fn get_vesting_locked_at(who: AccountId, token_id: TokenId, at_block_number: Option<BlockNumber>) -> VestingInfosWithLockedAt<Balance, BlockNumber>
-		{
-			match Vesting::get_vesting_locked_at(&who, token_id, at_block_number){
-				Ok(vesting_infos_with_locked_at) => VestingInfosWithLockedAt{
-					vesting_infos_with_locked_at: vesting_infos_with_locked_at
-				},
-				Err(e) => {
-						log::warn!(target:"vesting", "rpc 'Vesting::get_vesting_locked_at' error: '{:?}', returning default value instead", e);
-						Default::default()
-				},
-			}
 		}
 	}
 
@@ -1174,11 +1180,11 @@ impl_runtime_apis! {
 
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
-		fn on_runtime_upgrade(checks: frame_try_runtime::UpgradeCheckSelect) -> (Weight, Weight) {
+		fn on_runtime_upgrade(_checks: frame_try_runtime::UpgradeCheckSelect) -> (Weight, Weight) {
 			// NOTE: intentional unwrap: we don't want to propagate the error backwards, and want to
 			// have a backtrace here. If any of the pre/post migration checks fail, we shall stop
 			// right here and right now.
-			let weight = Executive::try_runtime_upgrade(checks).unwrap();
+			let weight = Executive::try_runtime_upgrade(frame_try_runtime::UpgradeCheckSelect::All).unwrap();
 			(weight, cfg::frame_system::RuntimeBlockWeights::get().max_block)
 		}
 

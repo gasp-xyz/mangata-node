@@ -113,9 +113,6 @@ parachain-staking = { default-features = false, git = "https://github.com/mangat
 # Crowdloan dependencies
 pallet-crowdloan-rewards = { default-features = false, git = "https://github.com/mangata-finance/crowdloan-rewards", branch = "mangata-dev" }
 
-# Custom substrate RPC dependencies
-pallet-vesting-mangata-rpc-runtime-api = { default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-
 [features]
 default = [
 	"std",
@@ -193,7 +190,6 @@ std = [
 	"pallet-collective-mangata/std",
 	"pallet-multipurpose-liquidity/std",
 	"mangata-support/std",
-	"pallet-vesting-mangata-rpc-runtime-api/std",
 	"pallet-fee-lock/std",
 	"pallet-identity/std",
 	"pallet-maintenance/std",

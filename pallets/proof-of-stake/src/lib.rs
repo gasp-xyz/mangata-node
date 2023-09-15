@@ -28,7 +28,7 @@ use sp_runtime::{traits::SaturatedConversion, Perbill};
 use sp_std::{convert::TryInto, prelude::*};
 
 mod reward_info;
-use reward_info::{AsymptoticCurveRewards, RewardInfo, RewardsCalculator};
+use reward_info::{AsymptoticCurveRewards, ConstCurveRewards, RewardInfo, RewardsCalculator};
 mod benchmarking;
 
 #[cfg(test)]
@@ -100,6 +100,7 @@ use super::*;
 		type RewardsDistributionPeriod: Get<u32>;
 		type RewardsSchedulesLimit: Get<u32>;
 		type MinRewardsPerSession: Get<u128>;
+		type MaxRewardTokensPerPool: Get<u32>;
 		type WeightInfo: WeightInfo;
 		type ValuationApi: Valuate<Balance = mangata_types::Balance, CurrencyId = mangata_types::TokenId>;
 	}
@@ -127,6 +128,7 @@ use super::*;
 		PoolDoesNotExist,
 		TooManySchedules,
 		TooLittleRewardsPerSession,
+		PoolRewardTokensLimitExceeded,
 	}
 
 	#[pallet::event]
@@ -150,16 +152,16 @@ use super::*;
 		ValueQuery,
 	>;
 
-	// #[pallet::storage]
-	// pub type UserRewards3rdPartyInfo<T: Config> = StorageDoubleMap<
-	// 	_,
-	// 	Twox64Concat,
-	// 	AccountIdOf<T>,
-	// 	Twox64Concat,
-	// 	(TokenId, TokenId),
-	// 	RewardInfo,
-	// 	ValueQuery,
-	// >;
+	#[pallet::storage]
+	pub type UserRewards3rdPartyInfo<T: Config> = StorageDoubleMap<
+		_,
+		Twox64Concat,
+		AccountIdOf<T>,
+		Twox64Concat,
+		(TokenId, TokenId),
+		RewardInfo,
+		ValueQuery,
+	>;
 
 	#[pallet::storage]
 	/// Stores information about pool weight and accumulated rewards. The accumulated
@@ -170,12 +172,17 @@ use super::*;
 		StorageValue<_, BTreeMap<TokenId, PromotedPools>, ValueQuery>;
 
 	#[pallet::storage]
-	pub type PromotedPoolRewards3rdParty<T: Config> = StorageValue<_, BTreeMap<TokenId, U256>, ValueQuery>;
+	pub type PromotedPoolRewards3rdParty<T: Config> = StorageValue<_, BTreeMap<(TokenId, TokenId), U256>, ValueQuery>;
+
+	// pub type PromotedPoolRewards3rdParty<T: Config> = StorageValue<_, BTreeMap<(TokenId), U256>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn schedules)]
 	pub type RewardsSchedules<T: Config> =
 		StorageValue<_, BoundedBTreeMap<(T::BlockNumber, TokenId, TokenId, Balance, u64), (), T::RewardsSchedulesLimit>, ValueQuery>;
+
+	#[pallet::storage]
+	pub type RewardTokensPerPool<T: Config> = StorageMap<_, Twox64Concat, TokenId, BoundedBTreeMap<TokenId, (), T::MaxRewardTokensPerPool>, ValueQuery>;
 
 	#[pallet::storage]
 	pub type ScheduleId<T: Config> = StorageValue<_, u64, ValueQuery>;
@@ -322,7 +329,14 @@ use super::*;
 
 			// TODO: use valuation instead amount directly
 			ensure!(amount_per_session >= T::MinRewardsPerSession::get(), Error::<T>::TooLittleRewardsPerSession);
+			println!("hello worldd!!!!");
 
+			RewardTokensPerPool::<T>::try_mutate(rewarded_token, |tokens| {
+				println!("{tokens:?}");
+				tokens.try_insert(token_id,())
+			}).or(Err(Error::<T>::PoolRewardTokensLimitExceeded))?;
+
+			println!("{rewarded_token} =>>> {:?}",RewardTokensPerPool::<T>::get(rewarded_token));
 
 			T::Currency::transfer(
 				token_id.into(),
@@ -359,6 +373,50 @@ use super::*;
 }
 
 impl<T: Config> Pallet<T> {
+
+	fn calculate_rewards_amount_3rdparty(
+		user: AccountIdOf<T>,
+		liquidity_asset_id: TokenId,
+	) -> Result<Vec<(TokenId, Balance)>, DispatchError> {
+		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
+
+		let mut result: sp_std::vec::Vec<_> = Default::default();
+
+		// TODO: get rid of collect
+		let reward_tokens = RewardTokensPerPool::<T>::get(liquidity_asset_id)
+			.iter()
+			.map(|(x,_)| *x)
+			.collect::<Vec<_>>();
+
+
+		for i in reward_tokens{
+			println!(";iittititiitititit");
+
+			let rewards_info = UserRewards3rdPartyInfo::<T>::try_get(user.clone(), (liquidity_asset_id, i));
+			println!("REWARDS INFO {rewards_info:?}");
+			if let Ok(info) = rewards_info{
+				let current_rewards = match info.activated_amount {
+					0 => 0u128,
+					_ => {
+						let calc = RewardsCalculator::<ConstCurveRewards>::new2::<T>(
+							user.clone(),
+							liquidity_asset_id,
+							i
+						)?;
+						calc.calculate_rewards().map_err(|err| Into::<Error<T>>::into(err))?
+					},
+				};
+
+				let total_rewards = current_rewards
+					.checked_add(info.rewards_not_yet_claimed)
+					.and_then(|v| v.checked_sub(info.rewards_already_claimed))
+					.ok_or(Error::<T>::CalculateRewardsMathError)?;
+				result.push((i, total_rewards));
+			}
+		}
+		Ok(result)
+
+	}
 	fn pallet_account() -> T::AccountId {
 		PALLET_ID.into_account_truncating()
 	}
@@ -385,6 +443,15 @@ impl<T: Config> Pallet<T> {
 			.ok_or(Error::<T>::NotAPromotedPool)?)
 	}
 
+	fn get_pool_rewards_3rdparty(liquidity_asset_id: TokenId, reward_asset_id: TokenId) -> Result<U256, sp_runtime::DispatchError> {
+		println!("ret_pool_rewards_3rdparty {liquidity_asset_id} {reward_asset_id}");
+		Ok(*PromotedPoolRewards3rdParty::<T>::get()
+			.get(&(liquidity_asset_id, reward_asset_id))
+			//TODO: no error or some dedicated error
+			.ok_or(Error::<T>::NotAPromotedPool)?)
+	}
+
+
 	fn get_current_rewards_time() -> Result<u32, sp_runtime::DispatchError> {
 		<frame_system::Pallet<T>>::block_number()
 			.saturated_into::<u32>()
@@ -394,9 +461,12 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn ensure_is_promoted_pool(liquidity_asset_id: TokenId) -> Result<(), DispatchError> {
-		if Self::get_pool_rewards(liquidity_asset_id).is_ok() {
+		println!("ensure_is_promoted_pool {liquidity_asset_id}");
+		if Self::get_pool_rewards(liquidity_asset_id).is_ok() || !RewardTokensPerPool::<T>::get(liquidity_asset_id).is_empty() {
+			println!("ensure_is_promoted_pool ok");
 			Ok(())
 		} else {
+			println!("ensure_is_promoted_pool err");
 			Err(DispatchError::from(Error::<T>::NotAPromotedPool))
 		}
 	}
@@ -407,25 +477,37 @@ impl<T: Config> Pallet<T> {
 		liquidity_assets_added: Balance,
 	) -> DispatchResult {
 		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
-		let current_time: u32 = Self::get_current_rewards_time()?;
-		let pool_ratio_current = Self::get_pool_rewards(liquidity_asset_id)?;
-		let default_rewards = RewardInfo {
-				activated_amount: 0_u128,
-				rewards_not_yet_claimed: 0_u128,
-				rewards_already_claimed: 0_u128,
-				last_checkpoint: current_time,
-				pool_ratio_at_last_checkpoint: pool_ratio_current,
-				missing_at_last_checkpoint: U256::from(0u128),
-			};
 
+		println!("set_liquidity_minting_checkpoint1");
 
-		// Curved rewards
 		{
-			let mut rewards_info = RewardsInfo::<T>::try_get(user.clone(), liquidity_asset_id)
-				.unwrap_or(default_rewards);
+			let reward_tokens = RewardTokensPerPool::<T>::get(liquidity_asset_id)
+				.iter()
+				.map(|(x,_)| *x)
+				// NOTE: get rid of collect
+				.collect::<Vec<_>>();
+
+
+			for i in reward_tokens{
+				let calc = RewardsCalculator::<ConstCurveRewards>::new2::<T>(
+					user.clone(),
+					liquidity_asset_id,
+					i
+				)?;
+
+				let rewards_info = calc
+					.activate_more(liquidity_assets_added)
+					.map_err(|err| Into::<Error<T>>::into(err))?;
+
+				UserRewards3rdPartyInfo::<T>::insert(user.clone(), (liquidity_asset_id,i), rewards_info);
+			}
+		}
+		println!("set_liquidity_minting_checkpoint2");
+
+		{
 			let calc = RewardsCalculator::<AsymptoticCurveRewards>::new::<T>(
+				user.clone(),
 				liquidity_asset_id,
-				rewards_info,
 			)?;
 			let rewards_info = calc
 				.activate_more(liquidity_assets_added)
@@ -435,11 +517,15 @@ impl<T: Config> Pallet<T> {
 		}
 
 
+		println!("set_liquidity_minting_checkpoint3");
+
 		TotalActivatedLiquidity::<T>::try_mutate(liquidity_asset_id, |active_amount| {
 			if let Some(val) = active_amount.checked_add(liquidity_assets_added) {
+				println!("!!!!!!!!!!!!!!!!!!!!!!!!!");
 				*active_amount = val;
 				Ok(())
 			} else {
+				println!("$$$$$$$$$$$$$$$$$$$$$$$$$");
 				Err(())
 			}
 		})
@@ -465,8 +551,8 @@ impl<T: Config> Pallet<T> {
 		);
 
 		let calc = RewardsCalculator::<AsymptoticCurveRewards>::new::<T>(
+			user.clone(),
 			liquidity_asset_id,
-			rewards_info,
 		)?;
 		let rewards_info = calc
 			.activate_less(liquidity_assets_burned)
@@ -532,8 +618,8 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 			.or(Err(DispatchError::from(Error::<T>::MissingRewardsInfoError)))?;
 
 		let calc = RewardsCalculator::<AsymptoticCurveRewards>::new::<T>(
+			user.clone(),
 			liquidity_asset_id,
-			rewards_info.clone(),
 		)?;
 		let current_rewards =
 			calc.calculate_rewards().map_err(|err| Into::<Error<T>>::into(err))?;
@@ -572,6 +658,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		use_balance_from: Option<ActivateKind>,
 	) -> DispatchResult {
 		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
+		println!("activate_liquidity");
 		ensure!(
 			<T as Config>::ActivationReservesProvider::can_activate(
 				liquidity_asset_id,
@@ -613,6 +700,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		Ok(())
 	}
 
+
 	fn calculate_rewards_amount(
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
@@ -625,8 +713,8 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 			0 => 0u128,
 			_ => {
 				let calc = RewardsCalculator::<AsymptoticCurveRewards>::new::<T>(
+					user.clone(),
 					liquidity_asset_id,
-					rewards_info.clone(),
 				)?;
 				calc.calculate_rewards().map_err(|err| Into::<Error<T>>::into(err))?
 			},
@@ -649,7 +737,7 @@ impl<T: Config> LiquidityMiningApi for Pallet<T> {
 		let it = schedules
 			.iter()
 			.filter_map(|((session, rewarded_token, tokenid, amount, _),())|{
-				if (*session).saturated_into::<u32>() <= Self::session_index() {
+				if (*session).saturated_into::<u32>() > Self::session_index() {
 					Some((rewarded_token, tokenid, amount))
 				} else {
 					None
@@ -657,17 +745,23 @@ impl<T: Config> LiquidityMiningApi for Pallet<T> {
 		});
 
 		for (staked_token, token, amount) in it {
-			let activated_amount = Self::total_activated_amount(token);
-			let rewards = pools.get(token).cloned().unwrap_or_default();
+			println!("STAKED TOKEN: {staked_token} TOKEN: {token} AMOUNT: {amount}");
+
+			let activated_amount = Self::total_activated_amount(staked_token);
+			println!("ACTIVATED AMOUNT: {activated_amount}");
+			// NOTE: fix
+			let rewards = pools.get(&(*staked_token, *token)).cloned().unwrap_or_default();
 			let rewards_for_liquidity = U256::from(*amount)
 				.checked_mul(U256::from(u128::MAX))
 				.and_then(|x| x.checked_div(activated_amount.into()))
 				.and_then(|x| x.checked_add(rewards));
 
 				if let Some(val) = rewards_for_liquidity {
-					pools.insert(*token, val);
+					pools.insert((*staked_token,*token), val);
 				}
 		}
+		println!("STORING POOLS: {pools:?}");
+		PromotedPoolRewards3rdParty::<T>::put(pools);
 
 
 		let _ = PromotedPoolRewards::<T>::try_mutate(|promoted_pools| -> DispatchResult {

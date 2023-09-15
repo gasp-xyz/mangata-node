@@ -44,27 +44,78 @@ pub struct RewardsCalculator<Curve> {
 	_curve: sp_std::marker::PhantomData<Curve>,
 }
 
-impl<Curve> RewardsCalculator<Curve> {
+impl<AsymptoticCurveRewards> RewardsCalculator<AsymptoticCurveRewards> {
 	pub fn new<T: Config>(
+		user: T::AccountId,
 		asset_id: TokenId,
-		rewards_info: RewardInfo,
 	) -> sp_std::result::Result<Self, DispatchError> {
+		let current_time: u32 = Pallet::<T>::get_current_rewards_time()?;
+		let pool_ratio_current = Pallet::<T>::get_pool_rewards(asset_id)?;
+		let default_rewards = RewardInfo {
+				activated_amount: 0_u128,
+				rewards_not_yet_claimed: 0_u128,
+				rewards_already_claimed: 0_u128,
+				last_checkpoint: current_time,
+				pool_ratio_at_last_checkpoint: pool_ratio_current,
+				missing_at_last_checkpoint: U256::from(0u128),
+			};
+
+		let rewards_info = crate::RewardsInfo::<T>::try_get(user.clone(), asset_id)
+			.unwrap_or(default_rewards);
+
 		Ok(Self {
 			rewards_context: RewardsContext {
 				current_time: Pallet::<T>::get_current_rewards_time()?,
 				pool_ratio_current: Pallet::<T>::get_pool_rewards(asset_id)?,
 			},
 			rewards_info,
-			_curve: PhantomData::<Curve>,
+			_curve: PhantomData::<AsymptoticCurveRewards>,
 		})
 	}
 }
+
+impl<ConstCurveRewards> RewardsCalculator<ConstCurveRewards> {
+	pub fn new2<T: Config>(
+		user: T::AccountId,
+		asset_id: TokenId,
+		reward_asset_id: TokenId,
+	) -> sp_std::result::Result<Self, DispatchError> {
+
+		let current_time: u32 = Pallet::<T>::get_current_rewards_time()?;
+
+		// TODO: do not ignore error
+		let pool_ratio_current = Pallet::<T>::get_pool_rewards_3rdparty(asset_id, reward_asset_id).unwrap_or_default();
+		let default_rewards = RewardInfo {
+				activated_amount: 0_u128,
+				rewards_not_yet_claimed: 0_u128,
+				rewards_already_claimed: 0_u128,
+				last_checkpoint: current_time,
+				pool_ratio_at_last_checkpoint: pool_ratio_current,
+				missing_at_last_checkpoint: U256::from(0u128),
+			};
+
+		let rewards_info = crate::RewardsInfo::<T>::try_get(user.clone(), asset_id)
+			.unwrap_or(default_rewards);
+
+		Ok(Self {
+			rewards_context: RewardsContext {
+				current_time: Pallet::<T>::get_current_rewards_time()?,
+				pool_ratio_current,
+			},
+			rewards_info,
+			_curve: PhantomData::<ConstCurveRewards>,
+		})
+
+	}
+}
+
 
 pub trait CurveRewards {
 	fn calculate_curve_position(ctx: &RewardsContext, user_info: &RewardInfo) -> Option<U256>;
 	fn calculate_curve_rewards(ctx: &RewardsContext, user_info: &RewardInfo) -> Option<Balance>;
 }
 
+pub struct ConstCurveRewards(RewardsContext, RewardInfo);
 pub struct AsymptoticCurveRewards(RewardsContext, RewardInfo);
 
 impl CurveRewards for AsymptoticCurveRewards {
@@ -116,6 +167,26 @@ impl CurveRewards for AsymptoticCurveRewards {
 		rewards_base
 			.checked_mul(cummulative_work)?
 			.checked_div(cummulative_work_max_possible_for_ratio)?
+			.try_into()
+			.ok()
+	}
+}
+
+impl CurveRewards for ConstCurveRewards  {
+	fn calculate_curve_position(ctx: &RewardsContext, user_info: &RewardInfo) -> Option<U256> {
+		Some( U256::from(0) )
+	}
+
+	fn calculate_curve_rewards(ctx: &RewardsContext, user_info: &RewardInfo) -> Option<Balance> {
+		println!("context: {:?}", ctx.pool_ratio_current);
+		let pool_rewards_ratio_new =
+			ctx.pool_ratio_current.checked_sub(user_info.pool_ratio_at_last_checkpoint)?;
+		let rewards_base: U256 = U256::from(user_info.activated_amount)
+			.checked_mul(pool_rewards_ratio_new)?
+			.checked_div(U256::from(u128::MAX))?; // always fit into u128
+		println!("BASE : {rewards_base}");
+
+		rewards_base
 			.try_into()
 			.ok()
 	}

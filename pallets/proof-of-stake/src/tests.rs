@@ -1105,6 +1105,8 @@ fn claim_rewards_from_pool_that_has_been_disabled() {
 const MILLION: u128 = 1_000_000;
 const ALICE: u128 = 2;
 const BOB: u128 = 3;
+const CHARLIE: u128 = 4;
+const EVE: u128 = 5;
 
 #[test]
 #[serial]
@@ -1310,23 +1312,78 @@ fn reject_schedule_with_too_little_rewards_per_session() {
 	});
 }
 
+#[test]
+#[serial]
+fn number_of_reward_tokens_per_pool_is_limited() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		let valuation_mock = MockValuationApi::get_liquidity_asset_context();
+		valuation_mock.expect().return_const(Ok(10u32));
+
+		let pair: (TokenId, TokenId) = (0u32.into(), 4u32.into());
+		let amount = 10_000u128;
+
+		for _ in 0..<<Test as Config>::MaxRewardTokensPerPool as sp_core::Get<u32>>::get() {
+			let token_id = TokensOf::<Test>::create(&ALICE, MILLION).unwrap();
+			assert_ok!(
+				ProofOfStake::reward_pool(RuntimeOrigin::signed(ALICE), pair, token_id, amount, 5u32.into())
+			);
+		}
+
+		let token_id = TokensOf::<Test>::create(&ALICE, MILLION).unwrap();
+		assert_err!(
+			ProofOfStake::reward_pool(RuntimeOrigin::signed(ALICE), pair, token_id, amount, 5u32.into()),
+			Error::<Test>::PoolRewardTokensLimitExceeded
+		);
+
+
+
+	});
+}
+
 
 #[test]
 #[serial]
 fn user_can_claim_3rdparty_rewards() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
+		const LIQUIDITY_TOKEN : u32 = 5;
 		let valuation_mock = MockValuationApi::get_liquidity_asset_context();
-		valuation_mock.expect().return_const(Ok(10u32));
+		valuation_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+
+		assert_eq!(0, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+		assert_eq!(1, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+		assert_eq!(2, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+		assert_eq!(3, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+		assert_eq!(4, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+		assert_eq!(5, TokensOf::<Test>::create(&ALICE, 0).unwrap());
 
 		let token_id = TokensOf::<Test>::create(&ALICE, MILLION).unwrap();
+		TokensOf::<Test>::mint(LIQUIDITY_TOKEN, &BOB, 100).unwrap();
+		TokensOf::<Test>::mint(LIQUIDITY_TOKEN, &CHARLIE, 100).unwrap();
+		TokensOf::<Test>::mint(LIQUIDITY_TOKEN, &EVE, 100).unwrap();
+
 		let pair: (TokenId, TokenId) = (0u32.into(), 4u32.into());
 		let amount = 10_000u128;
 
+		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 1u8).unwrap();
+		ProofOfStake::reward_pool(RuntimeOrigin::signed(ALICE), pair, token_id, amount, 10u32.into()).unwrap();
+		ProofOfStake::activate_liquidity(RuntimeOrigin::signed(BOB), LIQUIDITY_TOKEN, 100, None).unwrap();
 
-		assert_ok!(
-			ProofOfStake::reward_pool(RuntimeOrigin::signed(ALICE), pair, token_id, amount, 5u32.into())
+		roll_to_session(1);
+		assert_eq!(
+			ProofOfStake::calculate_rewards_amount_3rdparty(BOB, LIQUIDITY_TOKEN, ),
+			Ok(vec![(token_id, 1000)])
 		);
+
+		roll_to_session(2);
+		assert_eq!(
+			ProofOfStake::calculate_rewards_amount_3rdparty(BOB, LIQUIDITY_TOKEN, ),
+			Ok(vec![(token_id, 2000)])
+		);
+
+
+
 
 	});
 }

@@ -14,7 +14,7 @@ serde = { version = "1.0.160", features = ["derive"] }
 jsonrpsee = { version = "0.16.2", features = ["server"] }
 
 # Local
-mangata-polkadot-runtime = { path = "../runtime" }
+mangata-polkadot-runtime = { path = "../runtime/mangata-polkadot" }
 
 # Substrate
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }

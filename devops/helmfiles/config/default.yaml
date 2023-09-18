@@ -1,7 +1,10 @@
-enableLocalRelaychain: false
-enableParachainRegisterSidecar: false
+enableLocalRelaychain: true
+enableParachainRegisterSidecar: true
+enableServiceMonitorCollectors: false
 storageSize: 5Gi
+relaychainImage: parity/polkadot:v0.9.38
 relaychainStorageSize: 5Gi
+relaychainBootnodeAddr: /dns/relaychain-alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
 
 # Correspond to `pd-balanced` storage type in GCP
 # Will delete volume on PVC resource deletion

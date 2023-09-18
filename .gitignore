@@ -20,3 +20,6 @@ docker-cargo
 node_modules
 output/
 devops/parachain/config/state
+tarpaulin-report.html
+cobertura.xml
+build_rs_cov.profraw

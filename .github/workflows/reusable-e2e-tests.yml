@@ -87,6 +87,7 @@ jobs:
   e2e-test-matrix:
     needs: [setup-report]
     strategy:
+      fail-fast: false
       matrix:
         include:
           - command: "yarn test-parallel --max-workers=10"
@@ -113,6 +114,8 @@ jobs:
             fast: false
           - command: "yarn test-experimentalStaking"
             fast: true
+          - command: "yarn test-crowdloan"
+            fast: false            
 
             
     runs-on: [self-hosted, compile]

@@ -21,6 +21,7 @@ use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
 };
+use log::info;
 pub use orml_tokens;
 use orml_tokens::MultiTokenCurrencyExtended;
 use orml_traits::{
@@ -65,9 +66,9 @@ pub use pallet_xyk;
 use pallet_xyk::AssetMetadataMutationTrait;
 
 pub mod constants;
+pub mod migration;
 mod weights;
 pub mod xcm_config;
-// pub mod xcm_config;
 
 pub mod currency {
 	use super::Balance;

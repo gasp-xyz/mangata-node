@@ -376,7 +376,9 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 
 	fn disable(liquidity_token_id: TokenId) {
 		PromotedPoolRewards::<T>::mutate(|promoted_pools| {
-			let _ = promoted_pools.remove(&liquidity_token_id);
+			if let Some(info) = promoted_pools.get_mut(&liquidity_token_id) {
+				info.weight = 0;
+			}
 		});
 		Pallet::<T>::deposit_event(Event::PoolPromotionUpdated(liquidity_token_id, None));
 	}
@@ -390,6 +392,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		liquidity_asset_id: Self::CurrencyId,
 	) -> Result<Self::Balance, DispatchError> {
 		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
+
 		let mut rewards_info = RewardsInfo::<T>::try_get(user.clone(), liquidity_asset_id)
 			.or(Err(DispatchError::from(Error::<T>::MissingRewardsInfoError)))?;
 		let pool_rewards_ratio_current = Self::get_pool_rewards(liquidity_asset_id)?;
@@ -507,7 +510,7 @@ impl<T: Config> LiquidityMiningApi for Pallet<T> {
 				.into_iter()
 				.filter_map(|(token_id, info)| {
 					let activated_amount = Self::total_activated_amount(token_id);
-					if activated_amount > 0 {
+					if activated_amount > 0 && info.weight > 0 {
 						Some((token_id, info.weight, info.rewards, activated_amount))
 					} else {
 						None

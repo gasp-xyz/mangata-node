@@ -288,7 +288,7 @@
 
 use frame_support::{
 	assert_ok,
-	dispatch::{DispatchError, DispatchResult},
+	dispatch::{DispatchError, DispatchErrorWithPostInfo, DispatchResult, PostDispatchInfo},
 	ensure,
 	traits::Contains,
 	PalletId,
@@ -377,6 +377,7 @@ pub enum SwapKind {
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
+	use frame_support::dispatch::DispatchClass;
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(PhantomData<T>);
@@ -643,7 +644,7 @@ pub mod pallet {
 		/// - `sold_asset_amount`: The amount of the sold token being sold
 		/// - `min_amount_out` - The minimum amount of bought asset that must be bought in order to not fail on slippage. Slippage failures still charge exchange commission.
 		#[pallet::call_index(1)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::sell_asset())]
+		#[pallet::weight((<<T as Config>::WeightInfo>::sell_asset(), DispatchClass::Operational, Pays::No))]
 		#[deprecated(note = "multiswap_sell_asset should be used instead")]
 		pub fn sell_asset(
 			origin: OriginFor<T>,
@@ -654,15 +655,22 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
-			let _ = <Self as XykFunctionsTrait<T::AccountId>>::sell_asset(
+			<Self as XykFunctionsTrait<T::AccountId>>::sell_asset(
 				sender,
 				sold_asset_id,
 				bought_asset_id,
 				sold_asset_amount,
 				min_amount_out,
 				false,
-			)?;
-			Ok(().into())
+			)
+			.map_err(|err| DispatchErrorWithPostInfo {
+				post_info: PostDispatchInfo {
+					actual_weight: Some(<<T as Config>::WeightInfo>::sell_asset()),
+					pays_fee: Pays::Yes,
+				},
+				error: err,
+			})?;
+			Ok(Pays::No.into())
 		}
 
 		/// Executes a multiswap sell asset in a series of sell asset atomic swaps.
@@ -680,7 +688,7 @@ pub mod pallet {
 		/// - `sold_asset_amount`: The amount of the first asset sold
 		/// - `min_amount_out` - The minimum amount of last asset that must be bought in order to not fail on slippage. Slippage failures still charge exchange commission.
 		#[pallet::call_index(2)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::multiswap_sell_asset(swap_token_list.len() as u32))]
+		#[pallet::weight((<<T as Config>::WeightInfo>::multiswap_sell_asset(swap_token_list.len() as u32), DispatchClass::Operational, Pays::No))]
 		pub fn multiswap_sell_asset(
 			origin: OriginFor<T>,
 			swap_token_list: Vec<TokenId>,
@@ -692,25 +700,34 @@ pub mod pallet {
 			if let (Some(sold_asset_id), Some(bought_asset_id), 2) =
 				(swap_token_list.get(0), swap_token_list.get(1), swap_token_list.len())
 			{
-				let _ = <Self as XykFunctionsTrait<T::AccountId>>::sell_asset(
+				<Self as XykFunctionsTrait<T::AccountId>>::sell_asset(
 					sender,
 					*sold_asset_id,
 					*bought_asset_id,
 					sold_asset_amount,
 					min_amount_out,
 					false,
-				)?;
+				)
 			} else {
 				<Self as XykFunctionsTrait<T::AccountId>>::multiswap_sell_asset(
 					sender,
-					swap_token_list,
+					swap_token_list.clone(),
 					sold_asset_amount,
 					min_amount_out,
 					false,
 					false,
-				)?;
+				)
 			}
-			Ok(().into())
+			.map_err(|err| DispatchErrorWithPostInfo {
+				post_info: PostDispatchInfo {
+					actual_weight: Some(<<T as Config>::WeightInfo>::multiswap_sell_asset(
+						swap_token_list.len() as u32,
+					)),
+					pays_fee: Pays::Yes,
+				},
+				error: err,
+			})?;
+			Ok(Pays::No.into())
 		}
 
 		/// Executes buy_asset swap.
@@ -728,7 +745,7 @@ pub mod pallet {
 		/// - `bought_asset_amount`: The amount of the bought token being bought
 		/// - `max_amount_in` - The maximum amount of sold asset that must be sold in order to not fail on slippage. Slippage failures still charge exchange commission.
 		#[pallet::call_index(3)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::buy_asset())]
+		#[pallet::weight((<<T as Config>::WeightInfo>::buy_asset(), DispatchClass::Operational, Pays::No))]
 		#[deprecated(note = "multiswap_buy_asset should be used instead")]
 		pub fn buy_asset(
 			origin: OriginFor<T>,
@@ -739,15 +756,22 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
-			let _ = <Self as XykFunctionsTrait<T::AccountId>>::buy_asset(
+			<Self as XykFunctionsTrait<T::AccountId>>::buy_asset(
 				sender,
 				sold_asset_id,
 				bought_asset_id,
 				bought_asset_amount,
 				max_amount_in,
 				false,
-			)?;
-			Ok(().into())
+			)
+			.map_err(|err| DispatchErrorWithPostInfo {
+				post_info: PostDispatchInfo {
+					actual_weight: Some(<<T as Config>::WeightInfo>::buy_asset()),
+					pays_fee: Pays::Yes,
+				},
+				error: err,
+			})?;
+			Ok(Pays::No.into())
 		}
 
 		/// Executes a multiswap buy asset in a series of buy asset atomic swaps.
@@ -768,7 +792,7 @@ pub mod pallet {
 		/// - `bought_asset_amount`: The amount of the last asset bought
 		/// - `max_amount_in` - The maximum amount of first asset that can be sold in order to not fail on slippage. Slippage failures still charge exchange commission.
 		#[pallet::call_index(4)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::multiswap_buy_asset(swap_token_list.len() as u32))]
+		#[pallet::weight((<<T as Config>::WeightInfo>::multiswap_buy_asset(swap_token_list.len() as u32), DispatchClass::Operational, Pays::No))]
 		pub fn multiswap_buy_asset(
 			origin: OriginFor<T>,
 			swap_token_list: Vec<TokenId>,
@@ -780,25 +804,34 @@ pub mod pallet {
 			if let (Some(sold_asset_id), Some(bought_asset_id), 2) =
 				(swap_token_list.get(0), swap_token_list.get(1), swap_token_list.len())
 			{
-				let _ = <Self as XykFunctionsTrait<T::AccountId>>::buy_asset(
+				<Self as XykFunctionsTrait<T::AccountId>>::buy_asset(
 					sender,
 					*sold_asset_id,
 					*bought_asset_id,
 					bought_asset_amount,
 					max_amount_in,
 					false,
-				)?;
+				)
 			} else {
 				<Self as XykFunctionsTrait<T::AccountId>>::multiswap_buy_asset(
 					sender,
-					swap_token_list,
+					swap_token_list.clone(),
 					bought_asset_amount,
 					max_amount_in,
 					false,
 					false,
-				)?;
+				)
 			}
-			Ok(().into())
+			.map_err(|err| DispatchErrorWithPostInfo {
+				post_info: PostDispatchInfo {
+					actual_weight: Some(<<T as Config>::WeightInfo>::multiswap_buy_asset(
+						swap_token_list.len() as u32,
+					)),
+					pays_fee: Pays::Yes,
+				},
+				error: err,
+			})?;
+			Ok(Pays::No.into())
 		}
 
 		#[pallet::call_index(5)]

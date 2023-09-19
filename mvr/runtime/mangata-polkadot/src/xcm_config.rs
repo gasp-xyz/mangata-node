@@ -1,26 +1,29 @@
 use super::{
-	AccountId, OrmlCurrencyAdapter, AllPalletsWithSystem, Tokens, ParachainInfo, ParachainSystem, PolkadotXcm,
-	Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, WeightToFee, XcmpQueue,
+	AccountId, AllPalletsWithSystem, OrmlCurrencyAdapter, ParachainInfo, ParachainSystem,
+	PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, XcmpQueue,
 };
-use core::{marker::PhantomData, ops::ControlFlow};
+
+use core::marker::PhantomData;
 use frame_support::{
 	log, match_types, parameter_types,
-	traits::{ConstU32, Everything, Nothing, ProcessMessageError},
+	traits::{ConstU32, Contains, Everything, Nothing, ProcessMessageError},
 	weights::Weight,
 };
 use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use polkadot_runtime_common::impls::ToAuthor;
+
+use cumulus_primitives_core::MultiLocation;
 use xcm::latest::prelude::*;
 use xcm_builder::{
-	AccountId32Aliases, AllowExplicitUnpaidExecutionFrom, AllowTopLevelPaidExecutionFrom,
-	CreateMatcher, CurrencyAdapter, EnsureXcmOrigin, FixedWeightBounds, IsConcrete, MatchXcm,
-	NativeAsset, ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative,
-	SiblingParachainConvertsVia, SignedAccountId32AsNative, SignedToAccountId32,
-	SovereignSignedViaLocation, TakeWeightCredit, UsingComponents, WithComputedOrigin,
+	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom, AllowUnpaidExecutionFrom,
+	CreateMatcher, CurrencyAdapter, EnsureXcmOrigin, FixedRateOfFungible, FixedWeightBounds,
+	IsConcrete, MatchXcm, NativeAsset, ParentIsPreset, RelayChainAsNative,
+	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
+	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
 };
 use xcm_executor::{traits::ShouldExecute, XcmExecutor};
+// use cumulus_primitives_core::Instruction::*;
 
 parameter_types! {
 	pub const RelayLocation: MultiLocation = MultiLocation::parent();
@@ -83,123 +86,89 @@ parameter_types! {
 	pub const MaxAssetsIntoHolding: u32 = 64;
 }
 
-match_types! {
-	pub type ParentOrParentsExecutivePlurality: impl Contains<MultiLocation> = {
-		MultiLocation { parents: 1, interior: Here } |
-		MultiLocation { parents: 1, interior: X1(Plurality { id: BodyId::Executive, .. }) }
-	};
-}
-
-//TODO: move DenyThenTry to polkadot's xcm module.
-/// Deny executing the xcm message if it matches any of the Deny filter regardless of anything else.
-/// If it passes the Deny, and matches one of the Allow cases then it is let through.
-pub struct DenyThenTry<Deny, Allow>(PhantomData<Deny>, PhantomData<Allow>)
-where
-	Deny: ShouldExecute,
-	Allow: ShouldExecute;
-
-impl<Deny, Allow> ShouldExecute for DenyThenTry<Deny, Allow>
-where
-	Deny: ShouldExecute,
-	Allow: ShouldExecute,
+pub struct AllowSiblingParachainReserveTransferAssetTrap<T>(PhantomData<T>);
+impl<T: Contains<MultiLocation>> ShouldExecute
+	for AllowSiblingParachainReserveTransferAssetTrap<T>
 {
 	fn should_execute<RuntimeCall>(
 		origin: &MultiLocation,
-		message: &mut [Instruction<RuntimeCall>],
+		instructions: &mut [Instruction<RuntimeCall>],
 		max_weight: Weight,
-		weight_credit: &mut Weight,
-	) -> Result<(), ProcessMessageError> {
-		Deny::should_execute(origin, message, max_weight, weight_credit)?;
-		Allow::should_execute(origin, message, max_weight, weight_credit)
-	}
-}
-
-// See issue <https://github.com/paritytech/polkadot/issues/5233>
-pub struct DenyReserveTransferToRelayChain;
-impl ShouldExecute for DenyReserveTransferToRelayChain {
-	fn should_execute<RuntimeCall>(
-		origin: &MultiLocation,
-		message: &mut [Instruction<RuntimeCall>],
-		_max_weight: Weight,
 		_weight_credit: &mut Weight,
 	) -> Result<(), ProcessMessageError> {
-		message.matcher().match_next_inst_while(
-			|_| true,
-			|inst| match inst {
-				InitiateReserveWithdraw {
-					reserve: MultiLocation { parents: 1, interior: Here },
-					..
-				} |
-				DepositReserveAsset {
-					dest: MultiLocation { parents: 1, interior: Here }, ..
-				} |
-				TransferReserveAsset {
-					dest: MultiLocation { parents: 1, interior: Here }, ..
-				} => {
-					Err(ProcessMessageError::Unsupported) // Deny
-				},
-				// An unexpected reserve transfer has arrived from the Relay Chain. Generally,
-				// `IsReserve` should not allow this, but we just log it here.
-				ReserveAssetDeposited { .. }
-					if matches!(origin, MultiLocation { parents: 1, interior: Here }) =>
-				{
-					log::warn!(
-						target: "xcm::barrier",
-						"Unexpected ReserveAssetDeposited from the Relay Chain",
-					);
-					Ok(ControlFlow::Continue(()))
-				},
-				_ => Ok(ControlFlow::Continue(())),
-			},
-		)?;
-
-		// Permit everything else
+		log::trace!(
+		target: "xcm::barriers",
+		"AllowSiblingParachainReserveTransferAssetTrap origin: {:?}, instructions: {:?}, max_weight: {:?}, weight_credit: {:?}",
+		origin, instructions, max_weight, _weight_credit,
+		);
+		frame_support::ensure!(T::contains(origin), ProcessMessageError::Unsupported);
+		let end = instructions.len().min(4);
+		instructions[..end]
+			.matcher()
+			.match_next_inst(|inst| match inst {
+				ReserveAssetDeposited(..) => Ok(()), // to be trapped
+				_ => Err(ProcessMessageError::BadFormat),
+			})?
+			.match_next_inst(|inst| match inst {
+				WithdrawAsset(..) => Ok(()),
+				_ => Err(ProcessMessageError::BadFormat),
+			})?
+			.skip_inst_while(|inst| matches!(inst, ClearOrigin))?
+			.match_next_inst(|inst| match inst {
+				BuyExecution { weight_limit, .. } if *weight_limit == Unlimited => Ok(()),
+				_ => Err(ProcessMessageError::Overweight(max_weight)),
+			})?;
 		Ok(())
 	}
 }
 
-pub type Barrier = DenyThenTry<
-	DenyReserveTransferToRelayChain,
-	(
-		TakeWeightCredit,
-		WithComputedOrigin<
-			(
-				AllowTopLevelPaidExecutionFrom<Everything>,
-				AllowExplicitUnpaidExecutionFrom<ParentOrParentsExecutivePlurality>,
-				// ^^^ Parent and its exec plurality get free execution
-			),
-			UniversalLocation,
-			ConstU32<8>,
-		>,
-	),
->;
+match_types! {
+	pub type RelayNetworkOnly: impl Contains<MultiLocation> = {
+		MultiLocation { parents: 1, interior: Here }
+	};
+}
+
+match_types! {
+	pub type SibilingParachain: impl Contains<MultiLocation> = {
+		MultiLocation { parents: 1, interior: X1(Parachain (_) )}
+	};
+}
+
+pub type Barrier = (
+	TakeWeightCredit,
+	AllowUnpaidExecutionFrom<RelayNetworkOnly>,
+	AllowSiblingParachainReserveTransferAssetTrap<SibilingParachain>,
+	// Expected responses are OK.
+	AllowKnownQueryResponses<PolkadotXcm>,
+	// Subscriptions for version tracking are OK.
+	AllowSubscriptionsFrom<Everything>,
+);
+
+use frame_support::weights::constants::{ExtrinsicBaseWeight, WEIGHT_REF_TIME_PER_SECOND};
+
+pub fn dot_per_second() -> u128 {
+	let base_weight = crate::Balance::from(ExtrinsicBaseWeight::get().ref_time());
+	let base_per_second = (WEIGHT_REF_TIME_PER_SECOND / base_weight as u64) as u128;
+	base_per_second * 1_000_000_000_000_u128 / 100 // 0.01 DOT
+}
+
+parameter_types! {
+	pub DotPerSecondPerByte: (AssetId, u128, u128) = (MultiLocation::parent().into(), dot_per_second(), dot_per_second());
+}
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
 	type RuntimeCall = RuntimeCall;
 	type XcmSender = XcmRouter;
-	// How to withdraw and deposit an asset.
 	type AssetTransactor = LocalAssetTransactor;
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
-	//TODO: check
-	// type IsReserve = MultiNativeAsset<AbsoluteReserveProvider>;
 	type IsReserve = NativeAsset;
 	type IsTeleporter = (); // Teleporting is disabled.
 	type UniversalLocation = UniversalLocation;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
-	//TODO: check
-	// pub type Trader = (
-	// 	FixedRateOfFungible<MgrPerSecond, ToTreasury>,
-	// 	AssetRegistryTrader<FixedRateAssetRegistryTrader<FeePerSecondProvider>, ToTreasury>,
-	// 	FixedRateOfFungible<RocPerSecond, ToTreasury>,
-	// );
-	// type Trader = UsingComponents<WeightToFee, RelayLocation, AccountId, Balances, ToAuthor<Runtime>>;
-	type Trader = ();
+	type Trader = FixedRateOfFungible<DotPerSecondPerByte, ()>;
 	type ResponseHandler = PolkadotXcm;
-	// TODO: check
-	// type AssetTrap =
-	// 	MangataDropAssets<PolkadotXcm, ToTreasury, TokenIdConvert, ExistentialDeposits>;
 	type AssetTrap = PolkadotXcm;
 	type AssetClaims = PolkadotXcm;
 	type SubscriptionService = PolkadotXcm;
@@ -211,7 +180,7 @@ impl xcm_executor::Config for XcmConfig {
 	type MessageExporter = ();
 	type UniversalAliases = Nothing;
 	type CallDispatcher = RuntimeCall;
-	type SafeCallFilter = Everything;
+	type SafeCallFilter = Nothing;
 }
 
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
@@ -226,27 +195,109 @@ pub type XcmRouter = (
 	XcmpQueue,
 );
 
-#[cfg(feature = "runtime-benchmarks")]
-parameter_types! {
-	pub ReachableDest: Option<MultiLocation> = Some(Parent.into());
+pub struct ExecutorWrapper<Executor, FeeAmount>(PhantomData<(Executor, FeeAmount)>);
+
+impl<Executor, RCall, FeeAmount> ExecuteXcm<RCall> for ExecutorWrapper<Executor, FeeAmount>
+where
+	Executor: ExecuteXcm<RCall>,
+	FeeAmount: sp_runtime::traits::Get<u128>,
+{
+	type Prepared = Executor::Prepared;
+
+	fn prepare(message: Xcm<RCall>) -> core::result::Result<Self::Prepared, Xcm<RCall>> {
+		Executor::prepare(message)
+	}
+
+	fn execute(
+		origin: impl Into<MultiLocation>,
+		pre: Self::Prepared,
+		hash: XcmHash,
+		weight_credit: Weight,
+	) -> Outcome {
+		Executor::execute(origin, pre, hash, weight_credit)
+	}
+
+	fn charge_fees(location: impl Into<MultiLocation>, fees: MultiAssets) -> XcmResult {
+		Executor::charge_fees(location, fees)
+	}
+
+	fn execute_xcm(
+		origin: impl Into<MultiLocation>,
+		message: Xcm<RCall>,
+		hash: XcmHash,
+		weight_limit: Weight,
+	) -> Outcome {
+		let mut it = message.0.iter();
+		let msg = if let (
+			Some(ReserveAssetDeposited(deposited_assets)),
+			Some(ClearOrigin),
+			Some(BuyExecution { fees: _, weight_limit: _ }),
+			Some(DepositAsset { assets: _, beneficiary: _ }),
+		) = (it.next(), it.next(), it.next(), it.next())
+		{
+			let amount = FeeAmount::get();
+			let location = MultiLocation { parents: 1, interior: Here };
+			let fee_asset = MultiAsset { id: AssetId::Concrete(location), fun: Fungible(amount) };
+			let mut withdraw_assets = MultiAssets::new();
+			withdraw_assets.push(fee_asset.clone());
+
+			let mut xcm: sp_std::vec::Vec<_> = Default::default();
+			xcm.push(ReserveAssetDeposited(deposited_assets.clone()));
+			xcm.push(WithdrawAsset(withdraw_assets));
+			xcm.push(ClearOrigin);
+			xcm.push(BuyExecution { fees: fee_asset, weight_limit: Unlimited });
+
+			Xcm(xcm)
+		} else {
+			message
+		};
+
+		Executor::execute_xcm(origin, msg, hash, weight_limit)
+	}
+
+	fn execute_xcm_in_credit(
+		origin: impl Into<MultiLocation>,
+		message: Xcm<RCall>,
+		hash: XcmHash,
+		weight_limit: Weight,
+		weight_credit: Weight,
+	) -> Outcome {
+		Executor::execute_xcm_in_credit(origin, message, hash, weight_limit, weight_credit)
+	}
+}
+
+/// allow for InitiateReserveWithdraw transfers to relay network
+pub struct StrictXcmExecuteFilter;
+impl Contains<(MultiLocation, Xcm<RuntimeCall>)> for StrictXcmExecuteFilter {
+	fn contains(t: &(MultiLocation, Xcm<RuntimeCall>)) -> bool {
+		match t {
+			(MultiLocation { parents: 0, interior: X1(AccountId32 { .. }) }, msg)
+				if msg.len() == 2 =>
+			{
+				let mut it = msg.inner().iter();
+				if let (Some(WithdrawAsset(..)), Some(InitiateReserveWithdraw { .. })) =
+					(it.next(), it.next())
+				{
+					true
+				} else {
+					false
+				}
+			},
+			_ => false,
+		}
+	}
 }
 
 impl pallet_xcm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	// TODO: check
-	// type SendXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, ()>;
 	type SendXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
-	type XcmExecuteFilter = Nothing;
-	// ^ Disable dispatchable execute on the XCM pallet.
-	// Needs to be `Everything` for local testing.
+	type XcmExecuteFilter = StrictXcmExecuteFilter;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type XcmTeleportFilter = Everything;
+	type XcmTeleportFilter = Nothing;
 	type XcmReserveTransferFilter = Nothing;
 	type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
-	// TODO: check
-	// type LocationInverter = LocationInverter<Ancestry>;
 	type UniversalLocation = UniversalLocation;
 	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeCall = RuntimeCall;

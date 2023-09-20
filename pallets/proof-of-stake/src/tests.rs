@@ -1368,22 +1368,190 @@ fn user_can_claim_3rdparty_rewards() {
 
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 1u8).unwrap();
 		ProofOfStake::reward_pool(RuntimeOrigin::signed(ALICE), pair, token_id, amount, 10u32.into()).unwrap();
-		ProofOfStake::activate_liquidity(RuntimeOrigin::signed(BOB), LIQUIDITY_TOKEN, 100, None).unwrap();
 
 		roll_to_session(1);
+		ProofOfStake::activate_liquidity_for_rewards_schedule(RuntimeOrigin::signed(BOB), LIQUIDITY_TOKEN, 100, token_id, None).unwrap();
 		assert_eq!(
-			ProofOfStake::calculate_rewards_amount_3rdparty(BOB, LIQUIDITY_TOKEN, ),
-			Ok(vec![(token_id, 1000)])
+			ProofOfStake::calculate_rewards_amount_3rdparty(BOB, LIQUIDITY_TOKEN, token_id),
+			Ok(0)
 		);
+
 
 		roll_to_session(2);
+		ProofOfStake::activate_liquidity_for_rewards_schedule(RuntimeOrigin::signed(CHARLIE), LIQUIDITY_TOKEN, 100, token_id, None).unwrap();
 		assert_eq!(
-			ProofOfStake::calculate_rewards_amount_3rdparty(BOB, LIQUIDITY_TOKEN, ),
-			Ok(vec![(token_id, 2000)])
+			ProofOfStake::calculate_rewards_amount_3rdparty(CHARLIE, LIQUIDITY_TOKEN, token_id),
+			Ok(0)
+		);
+		assert_eq!(
+			ProofOfStake::calculate_rewards_amount_3rdparty(BOB, LIQUIDITY_TOKEN, token_id),
+			Ok(1000)
 		);
 
+		roll_to_session(3);
+		assert_eq!(
+			ProofOfStake::calculate_rewards_amount_3rdparty(BOB, LIQUIDITY_TOKEN, token_id),
+			Ok(1500)
+		);
+		assert_eq!(
+			ProofOfStake::calculate_rewards_amount_3rdparty(CHARLIE, LIQUIDITY_TOKEN, token_id),
+			Ok(500)
+		);
+	});
+}
 
+#[test]
+#[serial]
+fn overlapping_3rdparty_rewards_works() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		const LIQUIDITY_TOKEN : u32 = 5;
+		let valuation_mock = MockValuationApi::get_liquidity_asset_context();
+		valuation_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
 
+		assert_eq!(0, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+		assert_eq!(1, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+		assert_eq!(2, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+		assert_eq!(3, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+		assert_eq!(4, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+		assert_eq!(5, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+
+		let first_reward_token = TokensOf::<Test>::create(&ALICE, MILLION).unwrap();
+		TokensOf::<Test>::mint(LIQUIDITY_TOKEN, &BOB, 200).unwrap();
+
+		let pair: (TokenId, TokenId) = (0u32.into(), 4u32.into());
+		let amount = 10_000u128;
+
+		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 1u8).unwrap();
+		ProofOfStake::reward_pool(RuntimeOrigin::signed(ALICE), pair, first_reward_token, amount, 10u32.into()).unwrap();
+
+		roll_to_session(1);
+		ProofOfStake::activate_liquidity_for_rewards_schedule(RuntimeOrigin::signed(BOB), LIQUIDITY_TOKEN, 100, first_reward_token, None).unwrap();
+
+		roll_to_session(5);
+		let second_reward_token_id = TokensOf::<Test>::create(&ALICE, MILLION).unwrap();
+		ProofOfStake::reward_pool(RuntimeOrigin::signed(ALICE), pair, second_reward_token_id, 100_000, 15u32.into()).unwrap();
+		ProofOfStake::activate_liquidity_for_rewards_schedule(RuntimeOrigin::signed(BOB), LIQUIDITY_TOKEN, 100, second_reward_token_id, None).unwrap();
+
+		roll_to_session(6);
+
+		assert_eq!(
+			ProofOfStake::calculate_rewards_amount_3rdparty(BOB, LIQUIDITY_TOKEN, second_reward_token_id),
+			Ok(10000)
+		);
+
+		assert_eq!(
+			ProofOfStake::calculate_rewards_amount_3rdparty(BOB, LIQUIDITY_TOKEN, first_reward_token),
+			Ok(5000)
+		);
 
 	});
 }
+
+
+#[test]
+#[serial]
+fn reuse_activated_liquiddity_tokens_for_multiple_3rdparty_schedules() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		const LIQUIDITY_TOKEN : u32 = 5;
+		let valuation_mock = MockValuationApi::get_liquidity_asset_context();
+		valuation_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+
+		assert_eq!(0, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+		assert_eq!(1, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+		assert_eq!(2, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+		assert_eq!(3, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+		assert_eq!(4, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+		assert_eq!(5, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+
+		let first_reward_token = TokensOf::<Test>::create(&ALICE, MILLION).unwrap();
+		TokensOf::<Test>::mint(LIQUIDITY_TOKEN, &BOB, 100).unwrap();
+
+		let pair: (TokenId, TokenId) = (0u32.into(), 4u32.into());
+		let amount = 10_000u128;
+
+		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 1u8).unwrap();
+		ProofOfStake::reward_pool(RuntimeOrigin::signed(ALICE), pair, first_reward_token, amount, 10u32.into()).unwrap();
+
+		roll_to_session(1);
+		ProofOfStake::activate_liquidity_for_rewards_schedule(RuntimeOrigin::signed(BOB), LIQUIDITY_TOKEN, 100, first_reward_token, None).unwrap();
+
+		roll_to_session(5);
+		let second_reward_token_id = TokensOf::<Test>::create(&ALICE, MILLION).unwrap();
+		ProofOfStake::reward_pool(RuntimeOrigin::signed(ALICE), pair, second_reward_token_id, 100_000, 15u32.into()).unwrap();
+		ProofOfStake::activate_liquidity_for_rewards_schedule(RuntimeOrigin::signed(BOB), LIQUIDITY_TOKEN, 100, second_reward_token_id, Some(ScheduleActivationKind::ActivatedLiquidity(first_reward_token)) ).unwrap();
+
+		roll_to_session(6);
+
+		assert_eq!(
+			ProofOfStake::calculate_rewards_amount_3rdparty(BOB, LIQUIDITY_TOKEN, second_reward_token_id),
+			Ok(10000)
+		);
+
+		assert_eq!(
+			ProofOfStake::calculate_rewards_amount_3rdparty(BOB, LIQUIDITY_TOKEN, first_reward_token),
+			Ok(5000)
+		);
+	});
+}
+
+
+#[test]
+#[serial]
+fn deactivate_3rdparty_rewards() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		const LIQUIDITY_TOKEN : u32 = 5;
+		let valuation_mock = MockValuationApi::get_liquidity_asset_context();
+		valuation_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+
+		assert_eq!(0, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+		assert_eq!(1, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+		assert_eq!(2, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+		assert_eq!(3, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+		assert_eq!(4, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+		assert_eq!(5, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+
+		let token_id = TokensOf::<Test>::create(&ALICE, MILLION).unwrap();
+		TokensOf::<Test>::mint(LIQUIDITY_TOKEN, &BOB, 100).unwrap();
+		TokensOf::<Test>::mint(LIQUIDITY_TOKEN, &CHARLIE, 100).unwrap();
+
+		let pair: (TokenId, TokenId) = (0u32.into(), 4u32.into());
+		let amount = 10_000u128;
+
+		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 1u8).unwrap();
+		ProofOfStake::reward_pool(RuntimeOrigin::signed(ALICE), pair, token_id, amount, 10u32.into()).unwrap();
+
+		roll_to_session(1);
+		ProofOfStake::activate_liquidity_for_rewards_schedule(RuntimeOrigin::signed(BOB), LIQUIDITY_TOKEN, 100, token_id, None).unwrap();
+		ProofOfStake::activate_liquidity_for_rewards_schedule(RuntimeOrigin::signed(CHARLIE), LIQUIDITY_TOKEN, 100, token_id, None).unwrap();
+
+		roll_to_session(2);
+
+		assert_eq!(
+			ProofOfStake::calculate_rewards_amount_3rdparty(BOB, LIQUIDITY_TOKEN, token_id),
+			Ok(500)
+		);
+
+		assert_eq!(
+			ProofOfStake::calculate_rewards_amount_3rdparty(CHARLIE, LIQUIDITY_TOKEN, token_id),
+			Ok(500)
+		);
+		ProofOfStake::deactivate_liquidity_for_rewards_schedule(RuntimeOrigin::signed(CHARLIE), LIQUIDITY_TOKEN, 100, token_id).unwrap();
+
+		roll_to_session(3);
+
+		assert_eq!(
+			ProofOfStake::calculate_rewards_amount_3rdparty(BOB, LIQUIDITY_TOKEN, token_id),
+			Ok(1500)
+		);
+
+		assert_eq!(
+			ProofOfStake::calculate_rewards_amount_3rdparty(CHARLIE, LIQUIDITY_TOKEN, token_id),
+			Ok(500)
+		);
+
+	});
+}
+

@@ -189,7 +189,8 @@ jobs:
 
       - name: Install e2e tests dependencies
         working-directory: e2eTests
-        run: yarn
+        # TODO: remove cache clean later
+        run: yarn cache clean; yarn
 
       - name: Run parachain launch
         working-directory: devops/parachain-launch

@@ -5,12 +5,14 @@
 use super::{Event, *};
 use crate::mock::*;
 use frame_support::{assert_err, assert_err_ignore_postinfo, dispatch::GetDispatchInfo};
-use mangata_support::traits::LiquidityMiningApi;
+use mangata_support::traits::{ComputeIssuance, GetIssuance, LiquidityMiningApi};
 use mangata_types::assets::CustomMetadata;
 use orml_traits::asset_registry::AssetMetadata;
 use serial_test::serial;
 use sp_runtime::{traits::Dispatchable, Permill};
 use test_case::test_case;
+
+type TokensOf<T> = <T as Config>::Currency;
 
 const DUMMY_USER_ID: u128 = 2;
 const TRADER_ID: u128 = 3;
@@ -904,7 +906,7 @@ fn multiswap_sell_bad_atomic_swap_charges_fee_W() {
 
 		assert_ok!(XykStorage::multiswap_sell_asset(
 			RuntimeOrigin::signed(TRADER_ID),
-			vec![1, 2, 3, 6, 5],
+			vec![1, 2, 3, 4, 5],
 			20000000000000000000,
 			20000000000000000000
 		));
@@ -963,7 +965,7 @@ fn multiswap_sell_not_enough_assets_pay_fees_fails_early_W() {
 		assert_err_ignore_postinfo!(
 			XykStorage::multiswap_sell_asset(
 				RuntimeOrigin::signed(TRADER_ID),
-				vec![1, 2, 3, 6, 5],
+				vec![1, 2, 3, 4, 5],
 				2000000000000000000000000,
 				0
 			),
@@ -1515,7 +1517,7 @@ fn multiswap_buy_bad_atomic_swap_charges_fee_W() {
 
 		assert_ok!(XykStorage::multiswap_buy_asset(
 			RuntimeOrigin::signed(TRADER_ID),
-			vec![1, 2, 3, 6, 5],
+			vec![1, 2, 3, 4, 5],
 			20000000000000000000,
 			200000000000000000
 		));
@@ -1573,7 +1575,7 @@ fn multiswap_buy_not_enough_assets_pay_fees_fails_early_W() {
 		assert_err_ignore_postinfo!(
 			XykStorage::multiswap_buy_asset(
 				RuntimeOrigin::signed(TRADER_ID),
-				vec![1, 2, 3, 6, 5],
+				vec![1, 2, 3, 4, 5],
 				2000000000000000000000000,
 				2000000000000000000000000
 			),
@@ -1760,6 +1762,136 @@ fn multiswap_buy_zero_amount_does_not_work_N() {
 			),
 			Error::<Test>::ZeroAmount
 		);
+	});
+}
+
+#[test]
+#[serial]
+fn burn_all_liq_and_mint_it_again() {
+	new_test_ext().execute_with(|| {
+		initialize();
+
+		let (asset_value_1, asset_value_4) = XykStorage::asset_pool((1, 4));
+		let liq_token_id = XykStorage::liquidity_asset((1, 4));
+		let total_issuance_of_liq_amount: u128 =
+			<Test as Config>::Currency::total_issuance(liq_token_id.unwrap()).into();
+
+		//burn half of the liquidity
+		XykStorage::burn_liquidity(
+			RuntimeOrigin::signed(2),
+			1,
+			4,
+			total_issuance_of_liq_amount / 2,
+		)
+		.unwrap();
+
+		let (divided_asset_value_1, divided_asset_value_4) = XykStorage::asset_pool((1, 4));
+		let divided_total_issuance_of_liq_amount: u128 =
+			<Test as Config>::Currency::total_issuance(liq_token_id.unwrap()).into();
+
+		assert_eq!(divided_asset_value_1, asset_value_1 / 2);
+		assert_eq!(divided_asset_value_4, asset_value_4 / 2);
+		assert_eq!(divided_total_issuance_of_liq_amount, total_issuance_of_liq_amount / 2);
+
+		//burn second half of liquidity
+		XykStorage::burn_liquidity(
+			RuntimeOrigin::signed(2),
+			1,
+			4,
+			total_issuance_of_liq_amount / 2,
+		)
+		.unwrap();
+
+		let (empty_asset_value_1, empty_asset_value_4) = XykStorage::asset_pool((1, 4));
+		let empty_total_issuance_of_liq_amount: u128 =
+			<Test as Config>::Currency::total_issuance(liq_token_id.unwrap()).into();
+
+		assert_eq!(empty_asset_value_1, 0);
+		assert_eq!(empty_asset_value_4, 0);
+		assert_eq!(empty_total_issuance_of_liq_amount, 0);
+
+		// we will try to create a new pool but it needs to fail.
+		assert_err!(
+			XykStorage::create_pool(RuntimeOrigin::signed(2), 1, asset_value_1, 4, asset_value_4),
+			Error::<Test>::PoolAlreadyExists,
+		);
+
+		// we will try to sell assets but it needs to fail
+		let user_assets_1_value = XykStorage::balance(1, DUMMY_USER_ID);
+		let user_assets_4_value = XykStorage::balance(4, DUMMY_USER_ID);
+
+		assert_eq!(user_assets_1_value, 1000000000000000000000);
+		assert_eq!(user_assets_4_value, 1000000000000000000000);
+
+		// selling the assets should fail due to empty pools
+		assert_err_ignore_postinfo!(
+			XykStorage::multiswap_sell_asset(
+				RuntimeOrigin::signed(DUMMY_USER_ID),
+				vec![1, 4],
+				20000000000000000000,
+				1
+			),
+			Error::<Test>::PoolIsEmpty,
+		);
+
+		// selling the assets should fail also for multiswap due to empty pools
+		assert_err_ignore_postinfo!(
+			XykStorage::multiswap_sell_asset(
+				RuntimeOrigin::signed(DUMMY_USER_ID),
+				vec![1, 4, 1, 4],
+				20000000000000000000,
+				1
+			),
+			Error::<Test>::PoolIsEmpty,
+		);
+
+		// buy asset should fail due to empty pools
+		assert_err_ignore_postinfo!(
+			XykStorage::multiswap_buy_asset(
+				RuntimeOrigin::signed(DUMMY_USER_ID),
+				vec![1, 4],
+				20000000000000000000,
+				1
+			),
+			Error::<Test>::PoolIsEmpty,
+		);
+
+		// buy asset should fail also for multiswap due to empty pools
+		assert_err_ignore_postinfo!(
+			XykStorage::multiswap_buy_asset(
+				RuntimeOrigin::signed(DUMMY_USER_ID),
+				vec![1, 4, 1, 4],
+				20000000000000000000,
+				1
+			),
+			Error::<Test>::PoolIsEmpty,
+		);
+
+		let user_assets_1_value_after_sell = XykStorage::balance(1, DUMMY_USER_ID);
+		let user_assets_4_value_after_sell = XykStorage::balance(4, DUMMY_USER_ID);
+
+		//check that no asset sold
+		assert_eq!(user_assets_1_value_after_sell, 1000000000000000000000);
+		assert_eq!(user_assets_4_value_after_sell, 1000000000000000000000);
+
+		// minting liq again and checking if the liq. asset is generated
+		XykStorage::mint_liquidity(RuntimeOrigin::signed(2), 1, 4, asset_value_1, asset_value_4);
+
+		let liq_token_id_after_burn_and_mint = XykStorage::liquidity_asset((1, 4));
+
+		assert_eq!(liq_token_id, liq_token_id_after_burn_and_mint);
+
+		let total_issuance_after_burn_and_mint: u128 =
+			<Test as Config>::Currency::total_issuance(liq_token_id_after_burn_and_mint.unwrap())
+				.into();
+
+		assert_eq!(total_issuance_of_liq_amount, total_issuance_after_burn_and_mint);
+
+		let (asset_value_1_after_burn_and_mint, asset_value_4_after_burn_and_mint) =
+			XykStorage::asset_pool((1, 4));
+
+		assert_eq!(asset_value_1, asset_value_1_after_burn_and_mint);
+		assert_eq!(asset_value_4, asset_value_4_after_burn_and_mint);
 	});
 }
 

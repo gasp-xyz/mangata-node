@@ -64,17 +64,16 @@ sp_api::decl_runtime_apis! {
 			total_amount: Balance,
 			reserve_amount: Balance,
 		) -> Balance;
-
+		fn get_liq_tokens_for_trading(
+		) -> Vec<TokenId>;
 		fn is_buy_asset_lock_free(
 			path: sp_std::vec::Vec<TokenId>,
 			input_amount: Balance,
 		) -> Option<bool>;
-
 		fn is_sell_asset_lock_free(
 			path: sp_std::vec::Vec<TokenId>,
 			input_amount: Balance,
 		) -> Option<bool>;
-
 		fn get_tradeable_tokens() -> Vec<RpcAssetMetadata<TokenId>>;
 	}
 }

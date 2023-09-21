@@ -15,7 +15,7 @@ pub use orml_tokens;
 
 pub use pallet_sudo_mangata;
 
-use pallet_vesting_mangata_rpc_runtime_api::VestingInfosWithLockedAt;
+use pallet_vesting_mangata::VestingInfo;
 // Polkadot Imports
 pub use polkadot_runtime_common::BlockHashCount;
 
@@ -955,6 +955,16 @@ impl_runtime_apis! {
 					).unwrap_or_default()
 		}
 
+		fn get_liq_tokens_for_trading() -> Vec<TokenId> {
+			Xyk::get_liq_tokens_for_trading()
+				.map_err(|e|
+					{
+						log::warn!(target:"xyk", "rpc 'XYK::get_liq_tokens_for_trading' error: '{:?}', returning default value instead", e);
+						e
+					}
+				).unwrap_or_default()
+		}
+
 		fn is_sell_asset_lock_free(
 			path: Vec<TokenId>,
 			input_amount: Balance,
@@ -1062,21 +1072,6 @@ impl_runtime_apis! {
 
 		fn authorities() -> Vec<AuraId> {
 			Aura::authorities().into_inner()
-		}
-	}
-
-	impl pallet_vesting_mangata_rpc_runtime_api::VestingMangataApi<Block, AccountId, TokenId, Balance, BlockNumber> for Runtime {
-		fn get_vesting_locked_at(who: AccountId, token_id: TokenId, at_block_number: Option<BlockNumber>) -> VestingInfosWithLockedAt<Balance, BlockNumber>
-		{
-			match Vesting::get_vesting_locked_at(&who, token_id, at_block_number){
-				Ok(vesting_infos_with_locked_at) => VestingInfosWithLockedAt{
-					vesting_infos_with_locked_at: vesting_infos_with_locked_at
-				},
-				Err(e) => {
-						log::warn!(target:"vesting", "rpc 'Vesting::get_vesting_locked_at' error: '{:?}', returning default value instead", e);
-						Default::default()
-				},
-			}
 		}
 	}
 

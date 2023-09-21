@@ -309,13 +309,7 @@ where
 		+ ver_api::VerApi<Block>
 		+ ver_api::VerNonceApi<Block, AccountId>
 		+ xyk_rpc::XykRuntimeApi<Block, Balance, TokenId, AccountId>
-		+ pallet_vesting_mangata_rpc::VestingMangataRuntimeApi<
-			Block,
-			AccountId,
-			TokenId,
-			Balance,
-			BlockNumber,
-		> + sp_consensus_aura::AuraApi<Block, AuraId>,
+		+ sp_consensus_aura::AuraApi<Block, AuraId>,
 	sc_client_api::StateBackendFor<TFullBackend<Block>, Block>: sp_api::StateBackend<BlakeTwo256>,
 	Executor: sc_executor::NativeExecutionDispatch + 'static,
 	RB: Fn(
@@ -538,13 +532,7 @@ where
 		+ ver_api::VerApi<Block>
 		+ ver_api::VerNonceApi<Block, AccountId>
 		+ xyk_rpc::XykRuntimeApi<Block, Balance, TokenId, AccountId>
-		+ pallet_vesting_mangata_rpc::VestingMangataRuntimeApi<
-			Block,
-			AccountId,
-			TokenId,
-			Balance,
-			BlockNumber,
-		> + sp_consensus_aura::AuraApi<Block, AuraId>,
+		+ sp_consensus_aura::AuraApi<Block, AuraId>,
 {
 	start_node_impl::<RuntimeApi, Executor, _, _>(
 		parachain_config,

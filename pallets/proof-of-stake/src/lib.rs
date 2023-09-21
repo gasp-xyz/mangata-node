@@ -55,13 +55,19 @@ pub use pallet::*;
 pub mod weights;
 pub use weights::WeightInfo;
 
+type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
+
+
+/// Wrapper over origin ActivateKind that is used in [`Pallet::activat_liquidity`]
+/// with extension that allows activating liquidity that was already used for:
+/// - `ActivatedLiquidity` - already activated liquidity (for scheduled rewards)
+/// - `LiquidityMining` - already activated liquidity (for liquidity mining rewards)
 #[derive(Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum ScheduleActivationKind {
 	ActivateKind(Option<ActivateKind>),
-	ActivatedLiquidity(TokenId)
+	ActivatedLiquidity(TokenId),
+	LiquidityMining,
 }
-
-type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 
 const PALLET_ID: frame_support::PalletId = frame_support::PalletId(*b"rewards!");
 
@@ -104,8 +110,11 @@ use super::*;
 		type LiquidityMiningIssuanceVault: Get<Self::AccountId>;
 		#[pallet::constant]
 		type RewardsDistributionPeriod: Get<u32>;
+		/// The maximum number of schedules that can be active at one moment
 		type RewardsSchedulesLimit: Get<u32>;
+		/// The minimum number of rewards per session for schedule rewards
 		type MinRewardsPerSession: Get<u128>;
+		/// The maximum number of reward tokens per pool
 		type MaxRewardTokensPerPool: Get<u32>;
 		type WeightInfo: WeightInfo;
 		type ValuationApi: Valuate<Balance = mangata_types::Balance, CurrencyId = mangata_types::TokenId>;
@@ -130,11 +139,14 @@ use super::*;
 		CalculateRewardsAllMathError,
 		MissingRewardsInfoError,
 		DeprecatedExtrinsic,
+		/// Cannot schedule rewards in past
 		CannotScheduleRewardsInPast,
+		/// Pool does not exist
 		PoolDoesNotExist,
+		/// Too many schedules
 		TooManySchedules,
+		/// Too little rewards per session
 		TooLittleRewardsPerSession,
-		PoolRewardTokensLimitExceeded,
 	}
 
 	#[pallet::event]
@@ -159,48 +171,12 @@ use super::*;
 	>;
 
 	#[pallet::storage]
-	pub type UserRewards3rdPartyInfo<T: Config> = StorageDoubleMap<
-		_,
-		Twox64Concat,
-		AccountIdOf<T>,
-		Twox64Concat,
-		(TokenId, TokenId),
-		RewardInfo,
-		ValueQuery,
-	>;
-
-	#[pallet::storage]
 	/// Stores information about pool weight and accumulated rewards. The accumulated
 	/// rewards amount is the number of rewards that can be claimed per liquidity
 	/// token. Here is tracked the number of rewards per liquidity token relationship.
 	/// Expect larger values when the number of liquidity tokens are smaller.
 	pub type PromotedPoolRewards<T: Config> =
 		StorageValue<_, BTreeMap<TokenId, PromotedPools>, ValueQuery>;
-
-	#[pallet::storage]
-	pub type PromotedPoolRewards3rdParty<T: Config> = StorageValue<_, BTreeMap<(TokenId, TokenId), U256>, ValueQuery>;
-
-	// pub type PromotedPoolRewards3rdParty<T: Config> = StorageValue<_, BTreeMap<(TokenId), U256>, ValueQuery>;
-
-	#[pallet::storage]
-	#[pallet::getter(fn schedules)]
-	pub type RewardsSchedules<T: Config> =
-		StorageValue<_, BoundedBTreeMap<(T::BlockNumber, TokenId, TokenId, Balance, u64), (), T::RewardsSchedulesLimit>, ValueQuery>;
-
-	#[pallet::storage]
-	pub type RewardTokensPerPool<T: Config> = StorageMap<_, Twox64Concat, TokenId, BoundedBTreeMap<TokenId, (), T::MaxRewardTokensPerPool>, ValueQuery>;
-
-	#[pallet::storage]
-	pub type ScheduleId<T: Config> = StorageValue<_, u64, ValueQuery>;
-
-
-	// #[pallet::storage]
-	// pub type Rewards3rdParty<T: Config> =
-	// 	StorageValue<_, BTreeMap<TokenId, (TokenId, Balance)>, ValueQuery>;
-	//
-	// #[pallet::storage]
-	// pub type Rewards3rdParty<T: Config> =
-	// 	StorageValue<_, BTreeMap<TokenId, (TokenId, Balance)>, ValueQuery>;
 
 	#[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq, TypeInfo)]
 	/// Information about single token rewards
@@ -218,10 +194,76 @@ use super::*;
 	pub type TotalActivatedLiquidity<T: Config> =
 		StorageMap<_, Twox64Concat, TokenId, u128, ValueQuery>;
 
-	// NOTE: possibly merge with above
+	// //////////////////////////////////////////////////////////////////////////////////////////////
+	// 3rd Party Rewards
+	// //////////////////////////////////////////////////////////////////////////////////////////////
+
+	/// Stores information about pool weight and accumulated rewards
 	#[pallet::storage]
-	pub type TotalActivatedLiquidity3rdParty<T: Config> =
+	pub type RewardsInfoForScheduleRewards<T: Config> = StorageDoubleMap<
+		_,
+		Twox64Concat,
+		AccountIdOf<T>,
+		Twox64Concat,
+		(TokenId, TokenId),
+		RewardInfo,
+		ValueQuery,
+	>;
+
+	/// How much scheduled rewards per single liquidty_token should be distribute_rewards
+	/// the **value is multiplied by u128::MAX** to avoid floating point arithmetic
+	#[pallet::storage]
+	pub type ScheduleRewardsPerSingleLiquidity<T: Config> = StorageValue<_, BTreeMap<(TokenId, TokenId), U256>, ValueQuery>;
+
+	/// List of activated schedules sorted by expiry date
+	#[pallet::storage]
+	#[pallet::getter(fn schedules)]
+	pub type RewardsSchedules<T: Config> =
+		StorageValue<_, BoundedBTreeMap<(T::BlockNumber, TokenId, TokenId, Balance, u64), (), T::RewardsSchedulesLimit>, ValueQuery>;
+
+	/// Unique id of the schedule
+	#[pallet::storage]
+	pub type ScheduleId<T: Config> = StorageValue<_, u64, ValueQuery>;
+
+	/// Maps liquidity token to list of tokens that it ever was rewarded with
+	#[pallet::storage]
+	pub type RewardTokensPerPool<T: Config> = StorageDoubleMap<_, Twox64Concat, TokenId, Twox64Concat, TokenId, (), ValueQuery>;
+
+	/// Total amount of activated liquidity for each schedule
+	/// `BTreeMap` is used because of storage reads write optiomization in `distribute_rewards`
+	#[pallet::storage]
+	pub type TotalActivatedLiquidityForSchedules<T: Config> =
 		StorageMap<_, Twox64Concat, TokenId, BTreeMap<TokenId, u128>, ValueQuery>;
+
+	/// Tracks how much liquidity user activated for particular (liq token, reward token) pair
+	/// StorageNMap was used because it only require single read to know if user deactivated all
+	/// liquidity associated with particular liquidity_token that is rewarded. If so part of the
+	/// liquididty tokens can be unlocked.
+	#[pallet::storage]
+	pub type ActivatedLiquidityForSchedules<T> = StorageNMap<
+        _,
+		(
+            NMapKey<Twox64Concat, AccountIdOf<T>>,
+            NMapKey<Twox64Concat, TokenId>,
+            NMapKey<Twox64Concat, TokenId>
+        ),
+		u128,
+        OptionQuery,
+	>;
+
+	/// Tracks how much of the liquidity was activated for schedule rewards and not yet
+	/// liquidity mining rewards. That information is essential to properly handle tocken unlcocks
+	/// when liquidity is deactivated.
+	#[pallet::storage]
+	pub type ActivatedLockedLiquidityForSchedules<T: Config> = StorageDoubleMap<
+		_,
+		Twox64Concat,
+		AccountIdOf<T>,
+		Twox64Concat,
+		TokenId,
+		u128,
+		ValueQuery,
+	>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -310,10 +352,11 @@ use super::*;
 		/// Schedules rewards for selected liquidity token
 		/// - tokens - pair of tokens
 		/// - amount - amount of the token
-		/// - schedule_end - till when the rewards should be distributed, rewards are
-		/// distributed starting from the *next* session till
+		/// - schedule_end - id of the last rewarded seession. Rewards will be distributedd equally between sessions in range (now ..
+		/// schedule_end). Distribution starts from the *next* session till `schedule_end`.
 		#[transactional]
 		#[pallet::call_index(4)]
+		// NOTE: implement benchmark
 		#[pallet::weight(<<T as Config>::WeightInfo>::claim_rewards_all())]
 		pub fn reward_pool(
 			origin: OriginFor<T>,
@@ -342,12 +385,7 @@ use super::*;
 			ensure!(amount_per_session >= T::MinRewardsPerSession::get(), Error::<T>::TooLittleRewardsPerSession);
 
 
-			RewardTokensPerPool::<T>::try_mutate(rewarded_token, |tokens| {
-
-				tokens.try_insert(token_id,())
-			}).or(Err(Error::<T>::PoolRewardTokensLimitExceeded))?;
-
-
+			RewardTokensPerPool::<T>::insert(rewarded_token, token_id, ());
 
 			T::Currency::transfer(
 				token_id.into(),
@@ -386,7 +424,8 @@ use super::*;
 		/// Parameters:
 		/// - liquidity_token_id - id of the token
 		/// - amount - amount of the token
-		/// - use_balance_from - where from tokens should be used
+		/// - use_balance_from - where from tokens should be used. If set to `None` then tokens will
+		/// be taken from available balance
 		#[transactional]
 		#[pallet::call_index(5)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::activate_liquidity())]
@@ -443,59 +482,6 @@ pub enum RewardsKind{
 
 impl<T: Config> Pallet<T> {
 
-	fn activate_liquidity_for_schedule(
-		user: AccountIdOf<T>,
-		liquidity_asset_id: TokenId,
-		amount: Balance,
-		use_balance_from: ScheduleActivationKind,
-		reward_token: TokenId
-	) -> DispatchResult {
-		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
-
-		match use_balance_from{
-			ScheduleActivationKind::ActivateKind(ref use_balance_from) => {
-				ensure!(
-					<T as Config>::ActivationReservesProvider::can_activate(
-						liquidity_asset_id,
-						&user,
-						amount,
-						use_balance_from.clone(),
-					),
-					Error::<T>::NotEnoughAssets
-				);
-			},
-			ScheduleActivationKind::ActivatedLiquidity(token_id) => {
-				let already_activated_amount =
-					UserRewards3rdPartyInfo::<T>::get(user.clone(), (liquidity_asset_id, reward_token)).activated_amount;
-				let available_amount =
-					UserRewards3rdPartyInfo::<T>::get(user.clone(), (liquidity_asset_id, token_id)).activated_amount;
-				println!("already_activated_amount : {already_activated_amount:?}");
-				println!("available_amount : {available_amount:?}");
-
-				ensure!(
-					already_activated_amount + amount <= available_amount ,
-					Error::<T>::NotEnoughAssets
-				);
-			}
-		}
-
-		Self::set_liquidity_minting_checkpoint_3rdparty(user.clone(), liquidity_asset_id, amount, reward_token)?;
-
-		if let ScheduleActivationKind::ActivateKind(use_balance_from) = use_balance_from {
-			<T as Config>::ActivationReservesProvider::activate(
-				liquidity_asset_id,
-				&user,
-				amount,
-				use_balance_from,
-			)?;
-		}
-
-		Pallet::<T>::deposit_event(Event::LiquidityActivated(user, liquidity_asset_id, amount));
-
-		Ok(())
-	}
-
-
 	fn activate_liquidity_for_liquidity_minting(
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
@@ -516,7 +502,6 @@ impl<T: Config> Pallet<T> {
 
 		Self::set_liquidity_minting_checkpoint(user.clone(), liquidity_asset_id, amount)?;
 
-		// This must not fail due storage edits above
 		<T as Config>::ActivationReservesProvider::activate(
 			liquidity_asset_id,
 			&user,
@@ -545,6 +530,73 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 
 	}
+
+	fn activate_liquidity_for_schedule(
+		user: AccountIdOf<T>,
+		liquidity_asset_id: TokenId,
+		amount: Balance,
+		use_balance_from: ScheduleActivationKind,
+		reward_token: TokenId
+	) -> DispatchResult {
+		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
+
+		match use_balance_from{
+			ScheduleActivationKind::ActivateKind(ref use_balance_from) => {
+				ensure!(
+					<T as Config>::ActivationReservesProvider::can_activate(
+						liquidity_asset_id,
+						&user,
+						amount,
+						use_balance_from.clone(),
+					),
+					Error::<T>::NotEnoughAssets
+				);
+				ActivatedLockedLiquidityForSchedules::<T>::mutate(user.clone(), liquidity_asset_id, |val| *val += amount);
+			},
+			ScheduleActivationKind::ActivatedLiquidity(token_id) => {
+				let already_activated_amount =
+					RewardsInfoForScheduleRewards::<T>::get(user.clone(), (liquidity_asset_id, reward_token)).activated_amount;
+				let available_amount =
+					RewardsInfoForScheduleRewards::<T>::get(user.clone(), (liquidity_asset_id, token_id)).activated_amount;
+				ensure!(
+					already_activated_amount + amount <= available_amount ,
+					Error::<T>::NotEnoughAssets
+				);
+			}
+			ScheduleActivationKind::LiquidityMining => {
+				let already_activated_amount =
+					RewardsInfoForScheduleRewards::<T>::get(user.clone(), (liquidity_asset_id, reward_token)).activated_amount;
+				let available_amount =
+					RewardsInfo::<T>::get(user.clone(), liquidity_asset_id).activated_amount;
+				ensure!(
+					already_activated_amount + amount <= available_amount ,
+					Error::<T>::NotEnoughAssets
+				);
+			},
+		}
+
+		Self::set_liquidity_minting_checkpoint_3rdparty(user.clone(), liquidity_asset_id, amount, reward_token)?;
+
+		match use_balance_from {
+			ScheduleActivationKind::ActivateKind(use_balance_from) => {
+				<T as Config>::ActivationReservesProvider::activate(
+					liquidity_asset_id,
+					&user,
+					amount,
+					use_balance_from,
+				)?;
+			},
+			ScheduleActivationKind::LiquidityMining => {
+			},
+			_ => {}
+
+		}
+
+		Pallet::<T>::deposit_event(Event::LiquidityActivated(user, liquidity_asset_id, amount));
+
+		Ok(())
+	}
+
 
 	fn deactivate_liquidity_for_schedule(
 		user: AccountIdOf<T>,
@@ -575,31 +627,11 @@ impl<T: Config> Pallet<T> {
 	) -> Result<Balance, DispatchError> {
 		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
 
-		// let mut result: sp_std::vec::vec<_> = default::default();
-		//
-		// // todo: get rid of collect
-		// let reward_tokens = rewardtokensperpool::<t>::get(liquidity_asset_id)
-		// 	.iter()
-		// 	.filter_map(|(token_id,_)|
-		// 		userrewards3rdpartyinfo::<t>::try_get(user.clone(), (liquidity_asset_id, token_id))
-		// 	)
-		// 	.map(|info| (info.last_checkpoint, info.activated_amount)
-		// 	.sort()
-		// 	.first
-		// 	.collect::<vec<_>>();
-		//
-		//
-
-
-		// let rewards_info = UserRewards3rdPartyInfo::<T>::try_get(user.clone(), (liquidity_asset_id, rewards_asset_id));
-	//
-		println!("hello world 0000");
-		if let Ok(info) = UserRewards3rdPartyInfo::<T>::try_get(user.clone(), (liquidity_asset_id, rewards_asset_id)){
-			println!("hello world");
+		if let Ok(info) = RewardsInfoForScheduleRewards::<T>::try_get(user.clone(), (liquidity_asset_id, rewards_asset_id)){
 			let current_rewards = match info.activated_amount {
 				0 => 0u128,
 				_ => {
-					let calc = RewardsCalculator::<ConstCurveRewards>::new2::<T>(
+					let calc = RewardsCalculator::schedule_rewards::<T>(
 						user.clone(),
 						liquidity_asset_id,
 						rewards_asset_id
@@ -644,15 +676,6 @@ impl<T: Config> Pallet<T> {
 			.ok_or(Error::<T>::NotAPromotedPool)?)
 	}
 
-	fn get_pool_rewards_3rdparty(liquidity_asset_id: TokenId, reward_asset_id: TokenId) -> Result<U256, sp_runtime::DispatchError> {
-
-		Ok(*PromotedPoolRewards3rdParty::<T>::get()
-			.get(&(liquidity_asset_id, reward_asset_id))
-			//TODO: no error or some dedicated error
-			.ok_or(Error::<T>::NotAPromotedPool)?)
-	}
-
-
 	fn get_current_rewards_time() -> Result<u32, sp_runtime::DispatchError> {
 		<frame_system::Pallet<T>>::block_number()
 			.saturated_into::<u32>()
@@ -662,12 +685,9 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn ensure_is_promoted_pool(liquidity_asset_id: TokenId) -> Result<(), DispatchError> {
-
-		if Self::get_pool_rewards(liquidity_asset_id).is_ok() || !RewardTokensPerPool::<T>::get(liquidity_asset_id).is_empty() {
-
+		if Self::get_pool_rewards(liquidity_asset_id).is_ok() || RewardTokensPerPool::<T>::iter_prefix_values(liquidity_asset_id).next().is_some() {
 			Ok(())
 		} else {
-
 			Err(DispatchError::from(Error::<T>::NotAPromotedPool))
 		}
 	}
@@ -680,14 +700,13 @@ impl<T: Config> Pallet<T> {
 		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
 
 		{
-			let calc = RewardsCalculator::<AsymptoticCurveRewards>::new::<T>(
+			let calc = RewardsCalculator::mining_rewards::<T>(
 				user.clone(),
 				liquidity_asset_id,
 			)?;
 			let rewards_info = calc
 				.activate_more(liquidity_assets_added)
 				.map_err(|err| Into::<Error<T>>::into(err))?;
-			println!("liq minting rewards_info : {rewards_info:?}");
 
 			RewardsInfo::<T>::insert(user.clone(), liquidity_asset_id, rewards_info);
 		}
@@ -716,7 +735,7 @@ impl<T: Config> Pallet<T> {
 		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
 
 		{
-			let calc = RewardsCalculator::<ConstCurveRewards>::new2::<T>(
+			let calc = RewardsCalculator::schedule_rewards::<T>(
 				user.clone(),
 				liquidity_asset_id,
 				liquidity_assets_reward
@@ -724,12 +743,26 @@ impl<T: Config> Pallet<T> {
 			let rewards_info = calc
 				.activate_more(liquidity_assets_added)
 				.map_err(|err| Into::<Error<T>>::into(err))?;
-
-			UserRewards3rdPartyInfo::<T>::insert(user.clone(), (liquidity_asset_id, liquidity_assets_reward), rewards_info);
+			RewardsInfoForScheduleRewards::<T>::insert(user.clone(), (liquidity_asset_id, liquidity_assets_reward), rewards_info);
 		}
 
+        ActivatedLiquidityForSchedules::<T>::try_mutate_exists(
+            (user.clone(), liquidity_asset_id, liquidity_assets_reward ),
+            |v|
+			{
+				match v {
+					Some(x) => {
+						v.as_mut().map(|a| *a += liquidity_assets_added);
+					},
+					None => {
+							*v = Some(liquidity_assets_added);
+						},
+				};
+				Ok::<(),Error<T>>(())
+			}
+		)?;
 
-		TotalActivatedLiquidity3rdParty::<T>::mutate(liquidity_asset_id, |activations| {
+		TotalActivatedLiquidityForSchedules::<T>::mutate(liquidity_asset_id, |activations| {
 			activations
 				.entry(liquidity_assets_reward)
 				// NOTE: handle overflow
@@ -757,7 +790,7 @@ impl<T: Config> Pallet<T> {
 			Error::<T>::NotEnoughAssets
 		);
 
-		let calc = RewardsCalculator::<AsymptoticCurveRewards>::new::<T>(
+		let calc = RewardsCalculator::mining_rewards::<T>(
 			user.clone(),
 			liquidity_asset_id,
 		)?;
@@ -795,7 +828,7 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
 
-		let calc = RewardsCalculator::<ConstCurveRewards>::new2::<T>(
+		let calc = RewardsCalculator::schedule_rewards::<T>(
 			user.clone(),
 			liquidity_asset_id,
 			reward_token,
@@ -805,19 +838,48 @@ impl<T: Config> Pallet<T> {
 			.activate_less(liquidity_assets_burned)
 			.map_err(|err| Into::<Error<T>>::into(err))?;
 
-		UserRewards3rdPartyInfo::<T>::insert(user.clone(), (liquidity_asset_id, reward_token), rewards_info);
+		RewardsInfoForScheduleRewards::<T>::insert(user.clone(), (liquidity_asset_id, reward_token), rewards_info);
 
-		TotalActivatedLiquidity3rdParty::<T>::mutate(liquidity_asset_id, |activations| {
+		TotalActivatedLiquidityForSchedules::<T>::mutate(liquidity_asset_id, |activations| {
 			activations
 				.entry(reward_token)
 				.and_modify(|val| *val -= liquidity_assets_burned);
 		});
 
-		<T as Config>::ActivationReservesProvider::deactivate(
-			liquidity_asset_id,
-			&user,
-			liquidity_assets_burned,
-		);
+        ActivatedLiquidityForSchedules::<T>::try_mutate_exists(
+            (user.clone(), liquidity_asset_id, reward_token),
+            |v|
+			{
+				v.and_then(|a| a.checked_sub(liquidity_assets_burned)
+					.and_then(|val| {
+						if val > 0 {
+							*v = Some(val);
+						}else{
+							*v = None;
+						}
+						Some(val)
+					})
+				).ok_or(Error::<T>::MathOverflow)
+			}
+		)?;
+
+
+
+        if let None = ActivatedLiquidityForSchedules::<T>::iter_prefix_values( (user.clone(), liquidity_asset_id),
+		).next(){
+
+			let amount = ActivatedLockedLiquidityForSchedules::<T>::mutate(user.clone(), liquidity_asset_id, |val| {
+				let prev = *val;
+				*val = 0;
+				prev
+			});
+
+			<T as Config>::ActivationReservesProvider::deactivate(
+				liquidity_asset_id,
+				&user,
+				amount,
+			);
+		}
 
 		Ok(())
 	}
@@ -860,7 +922,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		let mut rewards_info = RewardsInfo::<T>::try_get(user.clone(), liquidity_asset_id)
 			.or(Err(DispatchError::from(Error::<T>::MissingRewardsInfoError)))?;
 
-		let calc = RewardsCalculator::<AsymptoticCurveRewards>::new::<T>(
+		let calc = RewardsCalculator::mining_rewards::<T>(
 			user.clone(),
 			liquidity_asset_id,
 		)?;
@@ -932,7 +994,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		let current_rewards = match rewards_info.activated_amount {
 			0 => 0u128,
 			_ => {
-				let calc = RewardsCalculator::<AsymptoticCurveRewards>::new::<T>(
+				let calc = RewardsCalculator::mining_rewards::<T>(
 					user.clone(),
 					liquidity_asset_id,
 				)?;
@@ -952,7 +1014,7 @@ impl<T: Config> LiquidityMiningApi for Pallet<T> {
 	fn distribute_rewards(liquidity_mining_rewards: Balance) {
 
 		let schedules = RewardsSchedules::<T>::get();
-		let mut pools = PromotedPoolRewards3rdParty::<T>::get();
+		let mut pools = ScheduleRewardsPerSingleLiquidity::<T>::get();
 
 		let it = schedules
 			.iter()
@@ -966,7 +1028,7 @@ impl<T: Config> LiquidityMiningApi for Pallet<T> {
 
 		for (staked_token, token, amount) in it {
 
-			let activated_3rdparty_rewards = TotalActivatedLiquidity3rdParty::<T>::get(staked_token);
+			let activated_3rdparty_rewards = TotalActivatedLiquidityForSchedules::<T>::get(staked_token);
 
 			if let Some(activated_amount) = activated_3rdparty_rewards.get(&token){
 				let activated_amount = U256::from(*activated_amount);
@@ -985,8 +1047,7 @@ impl<T: Config> LiquidityMiningApi for Pallet<T> {
 			}
 		}
 
-		println!("POOLS : {:?}", pools);
-		PromotedPoolRewards3rdParty::<T>::put(pools);
+		ScheduleRewardsPerSingleLiquidity::<T>::put(pools);
 
 
 		let _ = PromotedPoolRewards::<T>::try_mutate(|promoted_pools| -> DispatchResult {

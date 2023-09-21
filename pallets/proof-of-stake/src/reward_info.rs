@@ -44,8 +44,8 @@ pub struct RewardsCalculator<Curve> {
 	_curve: sp_std::marker::PhantomData<Curve>,
 }
 
-impl<AsymptoticCurveRewards> RewardsCalculator<AsymptoticCurveRewards> {
-	pub fn new<T: Config>(
+impl RewardsCalculator<AsymptoticCurveRewards> {
+	pub fn mining_rewards<T: Config>(
 		user: T::AccountId,
 		asset_id: TokenId,
 	) -> sp_std::result::Result<Self, DispatchError> {
@@ -74,17 +74,27 @@ impl<AsymptoticCurveRewards> RewardsCalculator<AsymptoticCurveRewards> {
 	}
 }
 
-impl<ConstCurveRewards> RewardsCalculator<ConstCurveRewards> {
-	pub fn new2<T: Config>(
+impl RewardsCalculator<ConstCurveRewards> {
+	pub fn schedule_rewards<T: Config>(
 		user: T::AccountId,
 		asset_id: TokenId,
 		reward_asset_id: TokenId,
 	) -> sp_std::result::Result<Self, DispatchError> {
 
 		let current_time: u32 = Pallet::<T>::get_current_rewards_time()?;
+		ensure!(
+			crate::RewardTokensPerPool::<T>::try_get(asset_id, reward_asset_id).is_ok(),
+			crate::Error::<T>::NotAPromotedPool
+		);
 
-		// TODO: do not ignore error
-		let pool_ratio_current = Pallet::<T>::get_pool_rewards_3rdparty(asset_id, reward_asset_id).unwrap_or_default();
+		let pool_map = crate::ScheduleRewardsPerSingleLiquidity::<T>::get();
+
+		let pool_ratio_current = pool_map.get(&(asset_id, reward_asset_id))
+			.cloned()
+			.unwrap_or(U256::from(0));
+
+
+
 		let default_rewards = RewardInfo {
 				activated_amount: 0_u128,
 				rewards_not_yet_claimed: 0_u128,
@@ -95,7 +105,7 @@ impl<ConstCurveRewards> RewardsCalculator<ConstCurveRewards> {
 			};
 
 
-		let rewards_info = crate::UserRewards3rdPartyInfo::<T>::try_get(
+		let rewards_info = crate::RewardsInfoForScheduleRewards::<T>::try_get(
 			user.clone(),
 			(asset_id, reward_asset_id)
 		).unwrap_or(default_rewards);

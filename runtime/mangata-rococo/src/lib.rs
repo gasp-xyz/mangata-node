@@ -971,6 +971,16 @@ impl_runtime_apis! {
 			}
 		}
 
+		fn get_liq_tokens_for_trading() -> Vec<TokenId> {
+			Xyk::get_liq_tokens_for_trading()
+				.map_err(|e|
+					{
+						log::warn!(target:"xyk", "rpc 'XYK::get_liq_tokens_for_trading' error: '{:?}', returning default value instead", e);
+						e
+					}
+				).unwrap_or_default()
+		}
+
 		fn is_sell_asset_lock_free(
 			path: Vec<TokenId>,
 			input_amount: Balance,

@@ -391,7 +391,8 @@ benchmarks! {
 
    }: burn_liquidity(RawOrigin::Signed(caller.clone().into()), non_native_asset_id1.into(), non_native_asset_id2.into(), total_liquidity_after_minting)
    verify {
-	   assert!(Xyk::<T>::liquidity_pool(liquidity_asset_id).is_none());
+		assert_eq!(Xyk::<T>::liquidity_pool(liquidity_asset_id), Some((non_native_asset_id1.into(), non_native_asset_id2.into())));
+		assert_eq!(<T as Config>::Currency::total_issuance(liquidity_asset_id.into()).into(), 0);
    }
 
 	provide_liquidity_with_conversion {

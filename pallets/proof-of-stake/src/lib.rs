@@ -333,10 +333,9 @@ pub mod pallet {
 		StorageDoubleMap<_, Twox64Concat, TokenId, Twox64Concat, TokenId, (), ValueQuery>;
 
 	/// Total amount of activated liquidity for each schedule
-	/// `BTreeMap` is used because of storage reads write optiomization in `distribute_rewards`
 	#[pallet::storage]
 	pub type TotalActivatedLiquidityForSchedules<T: Config> =
-		StorageMap<_, Twox64Concat, TokenId, BTreeMap<TokenId, u128>, ValueQuery>;
+		StorageDoubleMap<_, Twox64Concat, TokenId, Twox64Concat, TokenId, u128, ValueQuery>;
 
 	/// Tracks how much liquidity user activated for particular (liq token, reward token) pair
 	/// StorageNMap was used because it only require single read to know if user deactivated all
@@ -894,13 +893,10 @@ impl<T: Config> Pallet<T> {
 			},
 		)?;
 
-		TotalActivatedLiquidityForSchedules::<T>::mutate(liquidity_asset_id, |activations| {
-			activations
-				.entry(liquidity_assets_reward)
-				// NOTE: handle overflow
-				.and_modify(|val| *val += liquidity_assets_added)
-				.or_insert(liquidity_assets_added);
-		});
+		TotalActivatedLiquidityForSchedules::<T>::mutate(liquidity_asset_id, liquidity_assets_reward, |amount| -> DispatchResult {
+            *amount = amount.checked_add(liquidity_assets_added).ok_or(Error::<T>::MathOverflow)?;
+            Ok(())
+		})?;
 
 		Ok(())
 	}
@@ -971,11 +967,10 @@ impl<T: Config> Pallet<T> {
 			rewards_info,
 		);
 
-		TotalActivatedLiquidityForSchedules::<T>::mutate(liquidity_asset_id, |activations| {
-			activations
-				.entry(reward_token)
-				.and_modify(|val| *val -= liquidity_assets_burned);
-		});
+		TotalActivatedLiquidityForSchedules::<T>::try_mutate(liquidity_asset_id, reward_token, |amount| -> DispatchResult{
+            *amount = amount.checked_sub(liquidity_assets_burned).ok_or(Error::<T>::MathOverflow)?;
+            Ok(())
+		})?;
 
 		ActivatedLiquidityForSchedules::<T>::try_mutate_exists(
 			(user.clone(), liquidity_asset_id, reward_token),
@@ -1183,26 +1178,25 @@ impl<T: Config> LiquidityMiningApi for Pallet<T> {
 					}
 				});
 
-		for (staked_token, token, amount) in it {
+		for (staked_token, rewarded_token, amount) in it {
             // R: T::RewardsSchedulesLimit - in most pesimistic case
-			let activated_3rdparty_rewards = TotalActivatedLiquidityForSchedules::<T>::get(staked_token);
+            match TotalActivatedLiquidityForSchedules::<T>::get(staked_token, rewarded_token) {
+                0 => {},
+                activated_amount => {
+                    let activated_amount = U256::from(activated_amount);
+                    let rewards = pools.get(&(*staked_token, *rewarded_token)).cloned().unwrap_or_default();
+                    let rewards_for_liquidity = U256::from(*amount)
+                        .checked_mul(U256::from(u128::MAX))
+                        .and_then(|x| x.checked_div(activated_amount))
+                        .and_then(|x| x.checked_add(rewards));
 
-			if let Some(activated_amount) = activated_3rdparty_rewards.get(&token) {
-				let activated_amount = U256::from(*activated_amount);
-				// NOTE: fix
-				let rewards = pools.get(&(*staked_token, *token)).cloned().unwrap_or_default();
-				let rewards_for_liquidity = U256::from(*amount)
-					.checked_mul(U256::from(u128::MAX))
-					.and_then(|x| x.checked_div(activated_amount))
-					.and_then(|x| x.checked_add(rewards));
-
-				if let Some(val) = rewards_for_liquidity {
-					pools.insert((*staked_token, *token), val);
-				}
-			}
+                    if let Some(val) = rewards_for_liquidity {
+                        pools.insert((*staked_token, *rewarded_token), val);
+                    }
+                },
+            }
 		}
 
-        // single write
 		ScheduleRewardsPerSingleLiquidity::<T>::put(pools);
 
 		let _ = PromotedPoolRewards::<T>::try_mutate(|promoted_pools| -> DispatchResult {

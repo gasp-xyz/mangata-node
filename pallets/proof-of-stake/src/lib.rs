@@ -1165,7 +1165,11 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 impl<T: Config> LiquidityMiningApi for Pallet<T> {
 	/// Distributs liquidity mining rewards between all the activated tokens based on their weight
 	fn distribute_rewards(liquidity_mining_rewards: Balance) {
+
+        // R:1 W:0
 		let schedules = RewardsSchedules::<T>::get();
+
+        // R:1 W:0
 		let mut pools = ScheduleRewardsPerSingleLiquidity::<T>::get();
 
 		let it =
@@ -1180,8 +1184,8 @@ impl<T: Config> LiquidityMiningApi for Pallet<T> {
 				});
 
 		for (staked_token, token, amount) in it {
-			let activated_3rdparty_rewards =
-				TotalActivatedLiquidityForSchedules::<T>::get(staked_token);
+            // R: T::RewardsSchedulesLimit - in most pesimistic case
+			let activated_3rdparty_rewards = TotalActivatedLiquidityForSchedules::<T>::get(staked_token);
 
 			if let Some(activated_amount) = activated_3rdparty_rewards.get(&token) {
 				let activated_amount = U256::from(*activated_amount);
@@ -1198,6 +1202,7 @@ impl<T: Config> LiquidityMiningApi for Pallet<T> {
 			}
 		}
 
+        // single write
 		ScheduleRewardsPerSingleLiquidity::<T>::put(pools);
 
 		let _ = PromotedPoolRewards::<T>::try_mutate(|promoted_pools| -> DispatchResult {

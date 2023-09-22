@@ -193,16 +193,12 @@ impl CurveRewards for ConstCurveRewards  {
 
 	fn calculate_curve_rewards(ctx: &RewardsContext, user_info: &RewardInfo) -> Option<Balance> {
 
-		println!("pool_ratio_at_last_checkpoint {}", user_info.pool_ratio_at_last_checkpoint);
-		println!("pool_ratio now                {}", ctx.pool_ratio_current);
 		let pool_rewards_ratio_new =
 			ctx.pool_ratio_current.checked_sub(user_info.pool_ratio_at_last_checkpoint)?;
 
 		let rewards_base: U256 = U256::from(user_info.activated_amount)
 			.checked_mul(pool_rewards_ratio_new)?
 			.checked_div(U256::from(u128::MAX))?; // always fit into u128
-
-		println!("BASE : {rewards_base}");
 
 		rewards_base
 			.try_into()
@@ -294,6 +290,21 @@ impl<T: CurveRewards> RewardsCalculator<T> {
 			rewards_not_yet_claimed: total_available_rewards,
 			last_checkpoint: self.rewards_context.current_time,
 		})
+	}
+
+	pub fn claim_rewards(self) -> sp_std::result::Result<(RewardInfo, Balance), RewardsCalcError>{
+		let current_rewards = self.calculate_rewards_impl()?;
+
+		let total_available_rewards = current_rewards
+			.checked_add(self.rewards_info.rewards_not_yet_claimed)
+			.and_then(|v| v.checked_sub(self.rewards_info.rewards_already_claimed))
+			.ok_or(RewardsCalcError::CheckpointMathError)?;
+
+		let mut info = self.rewards_info.clone();
+
+		info.rewards_not_yet_claimed = 0_u128;
+		info.rewards_already_claimed = current_rewards;
+		Ok((info, total_available_rewards))
 	}
 
 	pub fn calculate_rewards(self) -> sp_std::result::Result<Balance, RewardsCalcError> {

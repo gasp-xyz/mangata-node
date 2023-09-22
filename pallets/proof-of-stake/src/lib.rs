@@ -447,7 +447,7 @@ use super::*;
 			)
 		}
 
-		/// Increases number of tokens used for liquidity mining purposes.
+		/// Decreases number of tokens used for liquidity mining purposes.
 		///
 		/// Parameters:
 		/// - liquidity_token_id - id of the token
@@ -470,6 +470,28 @@ use super::*;
 				amount,
 				reward_token,
 			)
+		}
+
+		/// Claims liquidity mining rewards
+		/// - tokens - pair of tokens
+		/// - amount - amount of the token
+		/// - reward_token - id of the token that is rewarded
+		#[transactional]
+		#[pallet::call_index(7)]
+		#[pallet::weight(<<T as Config>::WeightInfo>::activate_liquidity())]
+		pub fn claim_schedule_rewards_all(
+			origin: OriginFor<T>,
+			liquidity_token_id: TokenId,
+			reward_token: TokenId,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			Self::claim_schedule_rewards_all_impl(
+				sender,
+				liquidity_token_id,
+				reward_token,
+			)?;
+			Ok(())
 		}
 
 	}
@@ -883,6 +905,41 @@ impl<T: Config> Pallet<T> {
 
 		Ok(())
 	}
+
+	fn claim_schedule_rewards_all_impl(
+		user: T::AccountId,
+		liquidity_asset_id: TokenId,
+		reward_token: TokenId,
+	) -> Result<Balance, DispatchError> {
+		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
+
+		let calc = RewardsCalculator::schedule_rewards::<T>(
+			user.clone(),
+			liquidity_asset_id,
+			reward_token,
+		)?;
+		let (rewards_info, total_available_rewards) = calc.claim_rewards()
+			.map_err(|err| Into::<Error<T>>::into(err))?;
+
+		<T as Config>::Currency::transfer(
+			reward_token.into(),
+			&Self::pallet_account(),
+			&user,
+			total_available_rewards.into(),
+			ExistenceRequirement::KeepAlive,
+		)?;
+
+		RewardsInfoForScheduleRewards::<T>::insert(user.clone(), (liquidity_asset_id, reward_token), rewards_info);
+
+		Pallet::<T>::deposit_event(Event::RewardsClaimed(
+			user,
+			liquidity_asset_id,
+			total_available_rewards,
+		));
+
+		Ok(total_available_rewards)
+	}
+
 }
 
 impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
@@ -913,29 +970,19 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		PromotedPoolRewards::<T>::get().contains_key(&liquidity_token_id)
 	}
 
+
 	fn claim_rewards_all(
 		user: T::AccountId,
 		liquidity_asset_id: Self::CurrencyId,
 	) -> Result<Self::Balance, DispatchError> {
 		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
 
-		let mut rewards_info = RewardsInfo::<T>::try_get(user.clone(), liquidity_asset_id)
-			.or(Err(DispatchError::from(Error::<T>::MissingRewardsInfoError)))?;
-
 		let calc = RewardsCalculator::mining_rewards::<T>(
 			user.clone(),
 			liquidity_asset_id,
 		)?;
-		let current_rewards =
-			calc.calculate_rewards().map_err(|err| Into::<Error<T>>::into(err))?;
-
-		let total_available_rewards = current_rewards
-			.checked_add(rewards_info.rewards_not_yet_claimed)
-			.and_then(|v| v.checked_sub(rewards_info.rewards_already_claimed))
-			.ok_or(Error::<T>::CalculateRewardsAllMathError)?;
-
-		rewards_info.rewards_not_yet_claimed = 0_u128;
-		rewards_info.rewards_already_claimed = current_rewards;
+		let (rewards_info, total_available_rewards) = calc.claim_rewards()
+			.map_err(|err| Into::<Error<T>>::into(err))?;
 
 		<T as Config>::Currency::transfer(
 			Self::native_token_id().into(),
@@ -955,6 +1002,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 
 		Ok(total_available_rewards)
 	}
+
 
 	fn activate_liquidity(
 		user: T::AccountId,

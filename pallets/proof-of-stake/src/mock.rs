@@ -12,7 +12,7 @@ use sp_runtime::{
 use crate as pos;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{tokens::currency::MultiTokenCurrency, ConstU32, ConstU128, Contains, Everything},
+	traits::{tokens::currency::MultiTokenCurrency, ConstU128, ConstU32, Contains, Everything},
 	PalletId,
 };
 
@@ -248,7 +248,7 @@ impl pos::Config for Test {
 	type Currency = MultiTokenCurrencyAdapter<Test>;
 	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = ConstU32<10>;
-	type RewardsSchedulesLimit =  ConstU32<10>;
+	type RewardsSchedulesLimit = ConstU32<10>;
 	type MinRewardsPerSession = ConstU128<10>;
 	type MaxRewardTokensPerPool = ConstU32<5>;
 	type WeightInfo = ();
@@ -370,4 +370,3 @@ macro_rules! assert_event_emitted {
 		}
 	};
 }
-

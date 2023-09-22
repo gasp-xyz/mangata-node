@@ -52,16 +52,16 @@ impl RewardsCalculator<AsymptoticCurveRewards> {
 		let current_time: u32 = Pallet::<T>::get_current_rewards_time()?;
 		let pool_ratio_current = Pallet::<T>::get_pool_rewards(asset_id)?;
 		let default_rewards = RewardInfo {
-				activated_amount: 0_u128,
-				rewards_not_yet_claimed: 0_u128,
-				rewards_already_claimed: 0_u128,
-				last_checkpoint: current_time,
-				pool_ratio_at_last_checkpoint: pool_ratio_current,
-				missing_at_last_checkpoint: U256::from(0u128),
-			};
+			activated_amount: 0_u128,
+			rewards_not_yet_claimed: 0_u128,
+			rewards_already_claimed: 0_u128,
+			last_checkpoint: current_time,
+			pool_ratio_at_last_checkpoint: pool_ratio_current,
+			missing_at_last_checkpoint: U256::from(0u128),
+		};
 
-		let rewards_info = crate::RewardsInfo::<T>::try_get(user.clone(), asset_id)
-			.unwrap_or(default_rewards);
+		let rewards_info =
+			crate::RewardsInfo::<T>::try_get(user.clone(), asset_id).unwrap_or(default_rewards);
 
 		Ok(Self {
 			rewards_context: RewardsContext {
@@ -80,7 +80,6 @@ impl RewardsCalculator<ConstCurveRewards> {
 		asset_id: TokenId,
 		reward_asset_id: TokenId,
 	) -> sp_std::result::Result<Self, DispatchError> {
-
 		let current_time: u32 = Pallet::<T>::get_current_rewards_time()?;
 		ensure!(
 			crate::RewardTokensPerPool::<T>::try_get(asset_id, reward_asset_id).is_ok(),
@@ -89,27 +88,23 @@ impl RewardsCalculator<ConstCurveRewards> {
 
 		let pool_map = crate::ScheduleRewardsPerSingleLiquidity::<T>::get();
 
-		let pool_ratio_current = pool_map.get(&(asset_id, reward_asset_id))
-			.cloned()
-			.unwrap_or(U256::from(0));
-
-
+		let pool_ratio_current =
+			pool_map.get(&(asset_id, reward_asset_id)).cloned().unwrap_or(U256::from(0));
 
 		let default_rewards = RewardInfo {
-				activated_amount: 0_u128,
-				rewards_not_yet_claimed: 0_u128,
-				rewards_already_claimed: 0_u128,
-				last_checkpoint: current_time,
-				pool_ratio_at_last_checkpoint: pool_ratio_current,
-				missing_at_last_checkpoint: U256::from(0u128),
-			};
-
+			activated_amount: 0_u128,
+			rewards_not_yet_claimed: 0_u128,
+			rewards_already_claimed: 0_u128,
+			last_checkpoint: current_time,
+			pool_ratio_at_last_checkpoint: pool_ratio_current,
+			missing_at_last_checkpoint: U256::from(0u128),
+		};
 
 		let rewards_info = crate::RewardsInfoForScheduleRewards::<T>::try_get(
 			user.clone(),
-			(asset_id, reward_asset_id)
-		).unwrap_or(default_rewards);
-
+			(asset_id, reward_asset_id),
+		)
+		.unwrap_or(default_rewards);
 
 		Ok(Self {
 			rewards_context: RewardsContext {
@@ -119,10 +114,8 @@ impl RewardsCalculator<ConstCurveRewards> {
 			rewards_info,
 			_curve: PhantomData::<ConstCurveRewards>,
 		})
-
 	}
 }
-
 
 pub trait CurveRewards {
 	fn calculate_curve_position(ctx: &RewardsContext, user_info: &RewardInfo) -> Option<U256>;
@@ -186,13 +179,12 @@ impl CurveRewards for AsymptoticCurveRewards {
 	}
 }
 
-impl CurveRewards for ConstCurveRewards  {
+impl CurveRewards for ConstCurveRewards {
 	fn calculate_curve_position(ctx: &RewardsContext, user_info: &RewardInfo) -> Option<U256> {
-		Some( U256::from(0) )
+		Some(U256::from(0))
 	}
 
 	fn calculate_curve_rewards(ctx: &RewardsContext, user_info: &RewardInfo) -> Option<Balance> {
-
 		let pool_rewards_ratio_new =
 			ctx.pool_ratio_current.checked_sub(user_info.pool_ratio_at_last_checkpoint)?;
 
@@ -200,9 +192,7 @@ impl CurveRewards for ConstCurveRewards  {
 			.checked_mul(pool_rewards_ratio_new)?
 			.checked_div(U256::from(u128::MAX))?; // always fit into u128
 
-		rewards_base
-			.try_into()
-			.ok()
+		rewards_base.try_into().ok()
 	}
 }
 
@@ -292,7 +282,7 @@ impl<T: CurveRewards> RewardsCalculator<T> {
 		})
 	}
 
-	pub fn claim_rewards(self) -> sp_std::result::Result<(RewardInfo, Balance), RewardsCalcError>{
+	pub fn claim_rewards(self) -> sp_std::result::Result<(RewardInfo, Balance), RewardsCalcError> {
 		let current_rewards = self.calculate_rewards_impl()?;
 
 		let total_available_rewards = current_rewards

@@ -12,37 +12,41 @@ use crate::Pallet as PoS;
 
 const MILION: u128 = 1_000__000_000__000_000;
 
-#[macro_export]
-macro_rules! init {
-	() => {
-		frame_system::Pallet::<T>::set_block_number(1_u32.into());
-		pallet_issuance::Pallet::<T>::initialize();
-	};
+fn init<T>() where
+	T: frame_system::Config,
+	T: pallet_issuance::Config,
+{
+	frame_system::Pallet::<T>::set_block_number(1_u32.into());
+	pallet_issuance::Pallet::<T>::initialize();
 }
 
-#[macro_export]
-macro_rules! forward_to_next_session {
-	() => {
+
+
+fn forward_to_next_session<T>() where
+	T: frame_system::Config,
+	T: pallet_issuance::Config,
+	T: Config
+{
 		let current_block: u32 = frame_system::Pallet::<T>::block_number().saturated_into::<u32>();
 
 		let blocks_per_session: u32 = PoS::<T>::rewards_period();
 		let target_block_nr: u32;
 		let target_session_nr: u32;
 
-		if (current_block == 0_u32 || current_block == 1_u32) {
+		if current_block == 0_u32 || current_block == 1_u32 {
 			target_session_nr = 1_u32;
 			target_block_nr = blocks_per_session;
 		} else {
 			// to fail on user trying to manage block nr on its own
 			assert!(current_block % blocks_per_session == 0);
 			target_session_nr = (current_block / blocks_per_session) + 1_u32;
-			target_block_nr = (target_session_nr * blocks_per_session);
+			target_block_nr = target_session_nr * blocks_per_session;
 		}
 
 		frame_system::Pallet::<T>::set_block_number(target_block_nr.into());
 		pallet_issuance::Pallet::<T>::compute_issuance(target_session_nr);
-	};
 }
+
 
 benchmarks! {
 	claim_rewards_all{
@@ -52,7 +56,7 @@ benchmarks! {
 		// 4. wait some
 		// 5. claim all
 
-		init!();
+		init::<T>();
 		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
 		let initial_amount:mangata_types::Balance = 1000000000000000000000;
 		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
@@ -72,12 +76,12 @@ benchmarks! {
 		let half_of_minted_liquidity = total_minted_liquidity.into() / 2_u128;
 		let quater_of_minted_liquidity = total_minted_liquidity.into() / 4_u128;
 
-		forward_to_next_session!();
+		forward_to_next_session::<T>();
 
 		PoS::<T>::activate_liquidity(RawOrigin::Signed(caller.clone()).into(), liquidity_asset_id.into(), quater_of_minted_liquidity, None).unwrap();
 
-		forward_to_next_session!();
-		forward_to_next_session!();
+		forward_to_next_session::<T>();
+		forward_to_next_session::<T>();
 
 		assert!(PoS::<T>::calculate_rewards_amount(caller.clone(), liquidity_asset_id).unwrap() > 0);
 
@@ -113,7 +117,7 @@ benchmarks! {
 		// 4 wait some time
 		// 5 mint some
 
-		init!();
+		init::<T>();
 		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
 		let initial_amount:mangata_types::Balance = 1000000000000000000000;
 		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
@@ -140,7 +144,7 @@ benchmarks! {
 			quater_of_minted_liquidity
 		);
 
-		forward_to_next_session!();
+		forward_to_next_session::<T>();
 
 	}: activate_liquidity(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), quater_of_minted_liquidity, None)
 	verify {
@@ -158,7 +162,7 @@ benchmarks! {
 		// 3 mint some tokens
 		// deactivate some tokens (all or some - to be checked)
 
-		init!();
+		init::<T>();
 		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
 		let initial_amount:mangata_types::Balance = 1000000000000000000000;
 		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
@@ -184,7 +188,7 @@ benchmarks! {
 			half_of_minted_liquidity
 		);
 
-		forward_to_next_session!();
+		forward_to_next_session::<T>();
 
 	}: deactivate_liquidity(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), quater_of_minted_liquidity.into())
 	verify {
@@ -193,6 +197,27 @@ benchmarks! {
 			quater_of_minted_liquidity
 		);
 	}
+
+	// reward_pool{
+	// 	// 1 crate pool
+	// 	// 2 promote pool
+	// 	// 3 mint some tokens
+	// 	// deactivate some tokens (all or some - to be checked)
+	//
+	// 	init::<T>();
+	// 	let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
+	// 	let initial_amount:mangata_types::Balance = 1000000000000000000000;
+	// 	let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
+	// 	let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+	// 	let non_native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+	// 	let reward_asset_id : TokenId= <T as Config>::Currency::create(&caller, ((40000000000000000000_u128/2_u128) + (60000000000000000000_u128/2_u128)).into()).unwrap().into();
+	//
+	// 	forward_to_next_session::<T>();
+	//
+	// }: reward_pool(RawOrigin::Signed(caller.clone().into()), (native_asset_id,non_native_asset_id), reward_asset_id.into(), 10000, 10u32.into())
+	// verify {
+	// 	//
+	// }
 
 	impl_benchmark_test_suite!(PoS, crate::mock::new_test_ext(), crate::mock::Test)
 }

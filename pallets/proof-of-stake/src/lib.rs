@@ -177,7 +177,7 @@ pub mod pallet {
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
 
 	#[cfg(feature = "runtime-benchmarks")]
-	pub trait PoSBenchmarkingConrfig: pallet_issuance::Config {}
+	pub trait PoSBenchmarkingConfig: pallet_issuance::Config {}
 	#[cfg(feature = "runtime-benchmarks")]
 	impl<T: pallet_issuance::Config> PoSBenchmarkingConfig for T {}
 
@@ -241,6 +241,8 @@ pub mod pallet {
 		TooManySchedules,
 		/// Too little rewards per session
 		TooLittleRewardsPerSession,
+		/// Reward token not paired with native token
+		RewardTokenNotPairdWithNativeToken,
 	}
 
 	#[pallet::event]
@@ -462,8 +464,9 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			let rewarded_token = <T as Config>::ValuationApi::get_liquidity_asset(pool.0, pool.1)
-				.map_err(|_| Error::<T>::PoolDoesNotExist)?;
+			let liquidity_token_id =
+				<T as Config>::ValuationApi::get_liquidity_asset(pool.0, pool.1)
+					.map_err(|_| Error::<T>::PoolDoesNotExist)?;
 
 			let current_session = Self::session_index();
 			ensure!(
@@ -477,13 +480,18 @@ pub mod pallet {
 				.and_then(|v| amount.checked_div(v.into()))
 				.ok_or(Error::<T>::MathOverflow)?;
 
-			// TODO: use valuation instead amount directly
 			ensure!(
-				amount_per_session >= T::MinRewardsPerSession::get(),
+				pool.0 == Self::native_token_id() || pool.1 == Self::native_token_id(),
+				Error::<T>::RewardTokenNotPairdWithNativeToken
+			);
+
+			ensure!(
+				<T as Config>::ValuationApi::valuate_liquidity_token(liquidity_token_id, amount) >=
+					T::MinRewardsPerSession::get(),
 				Error::<T>::TooLittleRewardsPerSession
 			);
 
-			RewardTokensPerPool::<T>::insert(rewarded_token, token_id, ());
+			RewardTokensPerPool::<T>::insert(liquidity_token_id, token_id, ());
 
 			T::Currency::transfer(
 				token_id.into(),
@@ -506,7 +514,7 @@ pub mod pallet {
 				}
 
 				map.try_insert(
-					(schedule_end, rewarded_token, token_id, amount_per_session, schedule_id),
+					(schedule_end, liquidity_token_id, token_id, amount_per_session, schedule_id),
 					(),
 				)
 			})
@@ -893,10 +901,15 @@ impl<T: Config> Pallet<T> {
 			},
 		)?;
 
-		TotalActivatedLiquidityForSchedules::<T>::mutate(liquidity_asset_id, liquidity_assets_reward, |amount| -> DispatchResult {
-            *amount = amount.checked_add(liquidity_assets_added).ok_or(Error::<T>::MathOverflow)?;
-            Ok(())
-		})?;
+		TotalActivatedLiquidityForSchedules::<T>::mutate(
+			liquidity_asset_id,
+			liquidity_assets_reward,
+			|amount| -> DispatchResult {
+				*amount =
+					amount.checked_add(liquidity_assets_added).ok_or(Error::<T>::MathOverflow)?;
+				Ok(())
+			},
+		)?;
 
 		Ok(())
 	}
@@ -967,10 +980,15 @@ impl<T: Config> Pallet<T> {
 			rewards_info,
 		);
 
-		TotalActivatedLiquidityForSchedules::<T>::try_mutate(liquidity_asset_id, reward_token, |amount| -> DispatchResult{
-            *amount = amount.checked_sub(liquidity_assets_burned).ok_or(Error::<T>::MathOverflow)?;
-            Ok(())
-		})?;
+		TotalActivatedLiquidityForSchedules::<T>::try_mutate(
+			liquidity_asset_id,
+			reward_token,
+			|amount| -> DispatchResult {
+				*amount =
+					amount.checked_sub(liquidity_assets_burned).ok_or(Error::<T>::MathOverflow)?;
+				Ok(())
+			},
+		)?;
 
 		ActivatedLiquidityForSchedules::<T>::try_mutate_exists(
 			(user.clone(), liquidity_asset_id, reward_token),
@@ -1160,11 +1178,10 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 impl<T: Config> LiquidityMiningApi for Pallet<T> {
 	/// Distributs liquidity mining rewards between all the activated tokens based on their weight
 	fn distribute_rewards(liquidity_mining_rewards: Balance) {
-
-        // R:1 W:0
+		// R:1 W:0
 		let schedules = RewardsSchedules::<T>::get();
 
-        // R:1 W:0
+		// R:1 W:0
 		let mut pools = ScheduleRewardsPerSingleLiquidity::<T>::get();
 
 		let it =
@@ -1179,22 +1196,23 @@ impl<T: Config> LiquidityMiningApi for Pallet<T> {
 				});
 
 		for (staked_token, rewarded_token, amount) in it {
-            // R: T::RewardsSchedulesLimit - in most pesimistic case
-            match TotalActivatedLiquidityForSchedules::<T>::get(staked_token, rewarded_token) {
-                0 => {},
-                activated_amount => {
-                    let activated_amount = U256::from(activated_amount);
-                    let rewards = pools.get(&(*staked_token, *rewarded_token)).cloned().unwrap_or_default();
-                    let rewards_for_liquidity = U256::from(*amount)
-                        .checked_mul(U256::from(u128::MAX))
-                        .and_then(|x| x.checked_div(activated_amount))
-                        .and_then(|x| x.checked_add(rewards));
+			// R: T::RewardsSchedulesLimit - in most pesimistic case
+			match TotalActivatedLiquidityForSchedules::<T>::get(staked_token, rewarded_token) {
+				0 => {},
+				activated_amount => {
+					let activated_amount = U256::from(activated_amount);
+					let rewards =
+						pools.get(&(*staked_token, *rewarded_token)).cloned().unwrap_or_default();
+					let rewards_for_liquidity = U256::from(*amount)
+						.checked_mul(U256::from(u128::MAX))
+						.and_then(|x| x.checked_div(activated_amount))
+						.and_then(|x| x.checked_add(rewards));
 
-                    if let Some(val) = rewards_for_liquidity {
-                        pools.insert((*staked_token, *rewarded_token), val);
-                    }
-                },
-            }
+					if let Some(val) = rewards_for_liquidity {
+						pools.insert((*staked_token, *rewarded_token), val);
+					}
+				},
+			}
 		}
 
 		ScheduleRewardsPerSingleLiquidity::<T>::put(pools);

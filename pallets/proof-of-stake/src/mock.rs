@@ -255,7 +255,6 @@ impl GetMaintenanceStatusTrait for MockMaintenanceStatusProvider {
 	}
 }
 
-
 impl pallet_xyk::XykBenchmarkingConfig for Test {}
 
 impl pallet_xyk::Config for Test {
@@ -291,7 +290,6 @@ impl pos::Config for Test {
 	type WeightInfo = ();
 	type ValuationApi = MockValuationApi;
 }
-
 
 #[cfg(feature = "runtime-benchmarks")]
 impl pos::Config for Test {

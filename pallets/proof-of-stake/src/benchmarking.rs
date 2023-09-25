@@ -270,6 +270,54 @@ benchmarks! {
 
 	}
 
+	activate_liquidity_for_rewards_schedule{
+		// 1 create pool that can be rewarded
+		// 2 create token that is githeven as reward
+		// 3 create new schedule that will replace the expired one
+
+		init::<T>();
+
+		let schedules_limit = <T as Config>::RewardsSchedulesLimit::get();
+		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
+		let native_asset_id = <T as Config>::NativeCurrencyId::get();
+
+		loop {
+			let token_id = TokensOf::<T>::create(&caller, MILION.into()).unwrap().into();
+			if token_id > native_asset_id {
+				break;
+			}
+		}
+
+		let native_asset_amount: u128 = MILION * Into::<u128>::into(schedules_limit);
+		TokensOf::<T>::mint(native_asset_id.into(), &caller, native_asset_amount.into()).unwrap();
+
+		let first_token_id = TokensOf::<T>::create(&caller, MILION.into()).unwrap().into();
+		XykOf::<T>::create_pool(caller.clone(), native_asset_id.into(), MILION.into(), first_token_id.into(), MILION.into()).unwrap();
+		let liquidity_asset_id = first_token_id + 1;
+
+		let second_token_id = TokensOf::<T>::create(&caller, MILION.into()).unwrap().into();
+		XykOf::<T>::create_pool(caller.clone(), native_asset_id.into(), MILION.into(), second_token_id.into(), MILION.into()).unwrap();
+		let reward_token_id = second_token_id + 1;
+
+		let rewards_amount = 20_000u128;
+
+		PoS::<T>::reward_pool(
+			RawOrigin::Signed(caller.clone().into()).into(),
+			(native_asset_id, first_token_id),
+			reward_token_id.into(),
+			rewards_amount,
+			2u32.into(),
+		).unwrap();
+
+	}: activate_liquidity_for_rewards_schedule(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id, 10_000u128, reward_token_id, None)
+	verify {
+		forward_to_next_session::<T>();
+		assert_eq!(
+			PoS::<T>::calculate_rewards_amount_3rdparty(caller, liquidity_asset_id, reward_token_id).unwrap(),
+		   rewards_amount/2
+		)
+	}
+
 
 
 	impl_benchmark_test_suite!(PoS, crate::mock::new_test_ext(), crate::mock::Test)

@@ -390,7 +390,7 @@ pub mod pallet {
 	>;
 
 	/// Tracks how much of the liquidity was activated for schedule rewards and not yet
-	/// liquidity mining rewards. That information is essential to properly handle tocken unlcocks
+	/// liquidity mining rewards. That information is essential to properly handle token unlcocks
 	/// when liquidity is deactivated.
 	#[pallet::storage]
 	pub type ActivatedLockedLiquidityForSchedules<T: Config> =
@@ -695,6 +695,7 @@ impl<T: Config> Pallet<T> {
 		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
 
 		match use_balance_from {
+			// 1R 1W
 			ScheduleActivationKind::ActivateKind(ref use_balance_from) => {
 				ensure!(
 					<T as Config>::ActivationReservesProvider::can_activate(
@@ -711,6 +712,7 @@ impl<T: Config> Pallet<T> {
 					|val| *val += amount,
 				);
 			},
+			// 2R
 			ScheduleActivationKind::ActivatedLiquidity(token_id) => {
 				let already_activated_amount = RewardsInfoForScheduleRewards::<T>::get(
 					user.clone(),
@@ -856,6 +858,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn ensure_is_promoted_pool(liquidity_asset_id: TokenId) -> Result<(), DispatchError> {
+		//NOTE: 2 separate functions for separate rewards
 		if Self::get_pool_rewards(liquidity_asset_id).is_ok() ||
 			RewardTokensPerPool::<T>::iter_prefix_values(liquidity_asset_id)
 				.next()
@@ -1295,3 +1298,6 @@ impl<T: Config> LiquidityMiningApi for Pallet<T> {
 		});
 	}
 }
+
+// TODO: valuate rewards in MGX
+// TODO: dedicated ensures for every activation kind

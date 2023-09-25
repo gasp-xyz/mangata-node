@@ -6792,6 +6792,7 @@ dependencies = [
  "pallet-bootstrap",
  "pallet-issuance",
  "pallet-vesting-mangata",
+ "pallet-xyk",
  "parity-scale-codec",
  "rustc-hex",
  "scale-info",

@@ -1,9 +1,11 @@
 // Copyright (C) 2020 Mangata team
 
 use super::*;
+use mangata_support::traits::GetMaintenanceStatusTrait;
 
 use sp_core::H256;
 
+use pallet_xyk::AssetMetadataMutationTrait;
 use sp_runtime::{
 	testing::Header,
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
@@ -43,6 +45,7 @@ construct_runtime!(
 		ProofOfStake: pos::{Pallet, Call, Storage, Event<T>},
 		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>},
 		Issuance: pallet_issuance::{Pallet, Event<T>, Storage},
+		Xyk: pallet_xyk::{Pallet, Event<T>, Storage},
 	}
 );
 
@@ -193,15 +196,6 @@ lazy_static::lazy_static! {
 	};
 }
 
-pub struct MockMaintenanceStatusProvider;
-
-lazy_static::lazy_static! {
-	static ref MAINTENANCE_STATUS: Mutex<bool> = {
-		let m: bool = false;
-		Mutex::new(m)
-	};
-}
-
 mockall::mock! {
 	pub ValuationApi {}
 
@@ -235,12 +229,55 @@ mockall::mock! {
 	first_asset_id: TokenId,
 	second_asset_id: TokenId,
 	) -> Result<(Balance, Balance), DispatchError>;
-
-
-
 	}
 }
 
+pub struct AssetMetadataMutation;
+impl AssetMetadataMutationTrait for AssetMetadataMutation {
+	fn set_asset_info(
+		_asset: TokenId,
+		_name: Vec<u8>,
+		_symbol: Vec<u8>,
+		_decimals: u32,
+	) -> DispatchResult {
+		Ok(())
+	}
+}
+
+pub struct MockMaintenanceStatusProvider;
+impl GetMaintenanceStatusTrait for MockMaintenanceStatusProvider {
+	fn is_maintenance() -> bool {
+		false
+	}
+
+	fn is_upgradable() -> bool {
+		true
+	}
+}
+
+
+impl pallet_xyk::XykBenchmarkingConfig for Test {}
+
+impl pallet_xyk::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type MaintenanceStatusProvider = MockMaintenanceStatusProvider;
+	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
+	type Currency = MultiTokenCurrencyAdapter<Test>;
+	type NativeCurrencyId = NativeCurrencyId;
+	type TreasuryPalletId = TreasuryPalletId;
+	type BnbTreasurySubAccDerive = BnbTreasurySubAccDerive;
+	type LiquidityMiningRewards = ProofOfStake;
+	type PoolFeePercentage = ConstU128<20>;
+	type TreasuryFeePercentage = ConstU128<5>;
+	type BuyAndBurnFeePercentage = ConstU128<5>;
+	type WeightInfo = ();
+	type DisallowedPools = ();
+	type DisabledTokens = Nothing;
+	type VestingProvider = Vesting;
+	type AssetMetadataMutation = AssetMetadataMutation;
+}
+
+#[cfg(not(feature = "runtime-benchmarks"))]
 impl pos::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
@@ -253,6 +290,22 @@ impl pos::Config for Test {
 	type MaxRewardTokensPerPool = ConstU32<5>;
 	type WeightInfo = ();
 	type ValuationApi = MockValuationApi;
+}
+
+
+#[cfg(feature = "runtime-benchmarks")]
+impl pos::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type ActivationReservesProvider = TokensActivationPassthrough<Test>;
+	type NativeCurrencyId = NativeCurrencyId;
+	type Currency = MultiTokenCurrencyAdapter<Test>;
+	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
+	type RewardsDistributionPeriod = ConstU32<10>;
+	type RewardsSchedulesLimit = ConstU32<10>;
+	type MinRewardsPerSession = ConstU128<10>;
+	type MaxRewardTokensPerPool = ConstU32<5>;
+	type WeightInfo = ();
+	type ValuationApi = Xyk;
 }
 
 pub struct TokensActivationPassthrough<T: Config>(PhantomData<T>);

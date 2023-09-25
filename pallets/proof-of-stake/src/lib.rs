@@ -93,6 +93,7 @@
 use frame_support::pallet_prelude::*;
 
 use frame_benchmarking::Zero;
+use frame_support::traits::Nothing;
 use frame_support::{
 	dispatch::{DispatchError, DispatchResult},
 	ensure,
@@ -110,7 +111,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use mangata_support::traits::{
-	ActivationReservesProviderTrait, LiquidityMiningApi, ProofOfStakeRewardsApi,
+	ActivationReservesProviderTrait, LiquidityMiningApi, ProofOfStakeRewardsApi, XykFunctionsTrait
 };
 use mangata_types::{multipurpose_liquidity::ActivateKind, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
@@ -183,9 +184,44 @@ pub mod pallet {
 
 	#[cfg(not(feature = "runtime-benchmarks"))]
 	pub trait PoSBenchmarkingConfig {}
-
 	#[cfg(not(feature = "runtime-benchmarks"))]
 	impl<T> PoSBenchmarkingConfig for T {}
+
+
+	#[cfg(not(feature = "runtime-benchmarks"))]
+	pub trait ValutationApiTrait: Valuate<
+			Balance = mangata_types::Balance,
+			CurrencyId = mangata_types::TokenId,
+	>{}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	pub trait ValutationApiTrait<T: Config>: Valuate<
+			Balance = mangata_types::Balance,
+			CurrencyId = mangata_types::TokenId,
+	> + XykFunctionsTrait<T::AccountId>{}
+
+
+	#[cfg(not(feature = "runtime-benchmarks"))]
+	impl<T, C> ValutationApiTrait<C> for T where
+		C: Config,
+		T: Valuate<
+			Balance = mangata_types::Balance,
+			CurrencyId = mangata_types::TokenId,
+		>,
+	{
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	impl<T, C> ValutationApiTrait<C> for T where
+		C: Config,
+		T: Valuate<
+			Balance = mangata_types::Balance,
+			CurrencyId = mangata_types::TokenId,
+		>,
+		T : XykFunctionsTrait<C::AccountId>
+	{
+	}
+
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + PoSBenchmarkingConfig {
@@ -208,10 +244,14 @@ pub mod pallet {
 		/// The maximum number of reward tokens per pool
 		type MaxRewardTokensPerPool: Get<u32>;
 		type WeightInfo: WeightInfo;
-		type ValuationApi: Valuate<
-			Balance = mangata_types::Balance,
-			CurrencyId = mangata_types::TokenId,
-		>;
+		type ValuationApi: ValutationApiTrait<Self>;
+
+		// type ValuationApi: Valuate<
+		// 	Balance = mangata_types::Balance,
+		// 	CurrencyId = mangata_types::TokenId,
+		// >;
+		// #[cfg(feature = "runtime-benchmarks")]
+		// type Xyk: XykFunctionsTrait<Self::AccountId>;
 	}
 
 	#[pallet::error]

@@ -198,26 +198,26 @@ benchmarks! {
 		);
 	}
 
-	// reward_pool{
-	// 	// 1 crate pool
-	// 	// 2 promote pool
-	// 	// 3 mint some tokens
-	// 	// deactivate some tokens (all or some - to be checked)
-	//
-	// 	init::<T>();
-	// 	let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
-	// 	let initial_amount:mangata_types::Balance = 1000000000000000000000;
-	// 	let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
-	// 	let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-	// 	let non_native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-	// 	let reward_asset_id : TokenId= <T as Config>::Currency::create(&caller, ((40000000000000000000_u128/2_u128) + (60000000000000000000_u128/2_u128)).into()).unwrap().into();
-	//
-	// 	forward_to_next_session::<T>();
-	//
-	// }: reward_pool(RawOrigin::Signed(caller.clone().into()), (native_asset_id,non_native_asset_id), reward_asset_id.into(), 10000, 10u32.into())
-	// verify {
-	// 	//
-	// }
+	reward_pool{
+		// 1 crate pool
+		// 2 promote pool
+		// 3 mint some tokens
+		// deactivate some tokens (all or some - to be checked)
+
+		init::<T>();
+		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
+		let initial_amount:mangata_types::Balance = 1000000000000000000000;
+		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
+		let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+		let non_native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+		let reward_asset_id : TokenId= <T as Config>::Currency::create(&caller, ((40000000000000000000_u128/2_u128) + (60000000000000000000_u128/2_u128)).into()).unwrap().into();
+
+		forward_to_next_session::<T>();
+
+	}: reward_pool(RawOrigin::Signed(caller.clone().into()), (native_asset_id,non_native_asset_id), reward_asset_id.into(), 10000, 10u32.into())
+	verify {
+		//
+	}
 
 	impl_benchmark_test_suite!(PoS, crate::mock::new_test_ext(), crate::mock::Test)
 }

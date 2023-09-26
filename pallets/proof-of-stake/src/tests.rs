@@ -1442,7 +1442,6 @@ fn user_can_claim_3rdparty_rewards() {
 		let pair: (TokenId, TokenId) = (0u32.into(), 4u32.into());
 		let amount = 10_000u128;
 
-		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 1u8).unwrap();
 		ProofOfStake::reward_pool(
 			RuntimeOrigin::signed(ALICE),
 			pair,
@@ -1520,7 +1519,6 @@ fn overlapping_3rdparty_rewards_works() {
 		let pair: (TokenId, TokenId) = (0u32.into(), 4u32.into());
 		let amount = 10_000u128;
 
-		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 1u8).unwrap();
 		ProofOfStake::reward_pool(
 			RuntimeOrigin::signed(ALICE),
 			pair,
@@ -1605,7 +1603,6 @@ fn reuse_activated_liquiddity_tokens_for_multiple_3rdparty_schedules() {
 		let pair: (TokenId, TokenId) = (0u32.into(), 4u32.into());
 		let amount = 10_000u128;
 
-		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 1u8).unwrap();
 		ProofOfStake::reward_pool(
 			RuntimeOrigin::signed(ALICE),
 			pair,
@@ -1691,7 +1688,6 @@ fn deactivate_3rdparty_rewards() {
 		let pair: (TokenId, TokenId) = (0u32.into(), 4u32.into());
 		let amount = 10_000u128;
 
-		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 1u8).unwrap();
 		ProofOfStake::reward_pool(
 			RuntimeOrigin::signed(ALICE),
 			pair,
@@ -1777,7 +1773,6 @@ fn claim_rewards_from_multiple_schedules_using_single_liquidity() {
 		let pair: (TokenId, TokenId) = (0u32.into(), 4u32.into());
 		let amount = 10_000u128;
 
-		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 1u8).unwrap();
 		ProofOfStake::reward_pool(
 			RuntimeOrigin::signed(ALICE),
 			pair,

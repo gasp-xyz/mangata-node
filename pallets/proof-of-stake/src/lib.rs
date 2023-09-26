@@ -1309,4 +1309,3 @@ impl<T: Config> LiquidityMiningApi for Pallet<T> {
 
 // TODO: dedicated ensures for every activation kind
 // TODO: clean up test setup
-// TODO: test schedule rewards without liquidity mining rewards

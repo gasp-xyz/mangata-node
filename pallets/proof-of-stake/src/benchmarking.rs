@@ -3,6 +3,7 @@
 use super::*;
 
 use frame_benchmarking::{account, benchmarks, whitelisted_caller};
+use frame_support::traits::WithdrawReasons;
 use frame_system::RawOrigin;
 use mangata_support::traits::{ComputeIssuance, ProofOfStakeRewardsApi};
 use orml_tokens::MultiTokenCurrencyExtended;
@@ -272,8 +273,8 @@ benchmarks! {
 
 	activate_liquidity_for_rewards_schedule{
 		// 1 create pool that can be rewarded
-		// 2 create token that is githeven as reward
-		// 3 create new schedule that will replace the expired one
+		// 2 create token that is used as reward
+		// 3 activate rewards
 
 		init::<T>();
 
@@ -318,7 +319,86 @@ benchmarks! {
 		)
 	}
 
+	deactivate_liquidity_for_rewards_schedule{
+		// 1 create pool that can be rewarded
+		// 2 create token that is used as reward
+		// 3 activate rewards
+		// 4 deactivate rewards and unlock them
 
+		init::<T>();
+
+		let schedules_limit = <T as Config>::RewardsSchedulesLimit::get();
+		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
+		let native_asset_id = <T as Config>::NativeCurrencyId::get();
+
+		loop {
+			let token_id = TokensOf::<T>::create(&caller, MILION.into()).unwrap().into();
+			if token_id > native_asset_id {
+				break;
+			}
+		}
+
+		let native_asset_amount: u128 = MILION * Into::<u128>::into(schedules_limit);
+		TokensOf::<T>::mint(native_asset_id.into(), &caller, native_asset_amount.into()).unwrap();
+
+		let first_token_id = TokensOf::<T>::create(&caller, MILION.into()).unwrap().into();
+		XykOf::<T>::create_pool(caller.clone(), native_asset_id.into(), MILION.into(), first_token_id.into(), MILION.into()).unwrap();
+		let liquidity_asset_id = first_token_id + 1;
+
+		let second_token_id = TokensOf::<T>::create(&caller, MILION.into()).unwrap().into();
+		XykOf::<T>::create_pool(caller.clone(), native_asset_id.into(), MILION.into(), second_token_id.into(), MILION.into()).unwrap();
+		let reward_token_id = second_token_id + 1;
+
+		let rewards_amount = 20_000u128;
+
+		PoS::<T>::reward_pool(
+			RawOrigin::Signed(caller.clone().into()).into(),
+			(native_asset_id, first_token_id),
+			reward_token_id.into(),
+			rewards_amount,
+			2u32.into(),
+		).unwrap();
+
+			// println!("{:?}", TokensOf::<T>::free_balance(reward_token_id.into(), &caller));
+
+		assert!(TokensOf::<T>::ensure_can_withdraw(
+			liquidity_asset_id.into(),
+			&caller,
+			MILION.into(),
+			WithdrawReasons::all(),
+			Default::default(),
+		).is_ok());
+
+		PoS::<T>::activate_liquidity_for_rewards_schedule(
+			RawOrigin::Signed(caller.clone().into()).into(),
+			liquidity_asset_id,
+			10_000u128,
+			reward_token_id,
+			None
+		).unwrap();
+
+		assert!(
+			TokensOf::<T>::ensure_can_withdraw(
+			liquidity_asset_id.into(),
+			&caller,
+			MILION.into(),
+			WithdrawReasons::all(),
+			Default::default(),
+			).is_err()
+		);
+
+
+	}: deactivate_liquidity_for_rewards_schedule(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id, 10_000u128, reward_token_id)
+	verify {
+
+		assert!(TokensOf::<T>::ensure_can_withdraw(
+			liquidity_asset_id.into(),
+			&caller,
+			MILION.into(),
+			WithdrawReasons::all(),
+			Default::default(),
+		).is_ok());
+	}
 
 	impl_benchmark_test_suite!(PoS, crate::mock::new_test_ext(), crate::mock::Test)
 }

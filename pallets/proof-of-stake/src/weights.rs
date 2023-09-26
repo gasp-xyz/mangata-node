@@ -59,6 +59,9 @@ pub trait WeightInfo {
 	fn update_pool_promotion() -> Weight;
 	fn activate_liquidity() -> Weight;
 	fn deactivate_liquidity() -> Weight;
+	fn deactivate_liquidity_for_rewards_schedule() -> Weight;
+	fn activate_liquidity_for_rewards_schedule() -> Weight;
+	fn reward_pool() -> Weight;
 }
 
 // For backwards compatibility and tests
@@ -93,6 +96,24 @@ impl WeightInfo for () {
 	// Storage: MultiPurposeLiquidity ReserveStatus (r:1 w:1)
 	// Storage: Tokens Accounts (r:1 w:1)
 	fn deactivate_liquidity() -> Weight {
+		(Weight::from_parts(118_250_000, 0))
+			.saturating_add(RocksDbWeight::get().reads(5 as u64))
+			.saturating_add(RocksDbWeight::get().writes(4 as u64))
+	}
+
+	fn deactivate_liquidity_for_rewards_schedule() -> Weight {
+		(Weight::from_parts(118_250_000, 0))
+			.saturating_add(RocksDbWeight::get().reads(5 as u64))
+			.saturating_add(RocksDbWeight::get().writes(4 as u64))
+	}
+
+	fn activate_liquidity_for_rewards_schedule() -> Weight {
+		(Weight::from_parts(118_250_000, 0))
+			.saturating_add(RocksDbWeight::get().reads(5 as u64))
+			.saturating_add(RocksDbWeight::get().writes(4 as u64))
+	}
+
+	fn reward_pool() -> Weight {
 		(Weight::from_parts(118_250_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(5 as u64))
 			.saturating_add(RocksDbWeight::get().writes(4 as u64))

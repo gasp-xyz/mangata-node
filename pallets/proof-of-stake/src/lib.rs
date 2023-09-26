@@ -488,7 +488,7 @@ pub mod pallet {
 		#[transactional]
 		#[pallet::call_index(4)]
 		// NOTE: implement benchmark
-		#[pallet::weight(<<T as Config>::WeightInfo>::claim_rewards_all())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::reward_pool())]
 		pub fn reward_pool(
 			origin: OriginFor<T>,
 			pool: (TokenId, TokenId),
@@ -568,7 +568,7 @@ pub mod pallet {
 		/// be taken from available balance
 		#[transactional]
 		#[pallet::call_index(5)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::activate_liquidity())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::activate_liquidity_for_rewards_schedule())]
 		pub fn activate_liquidity_for_rewards_schedule(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
@@ -595,7 +595,7 @@ pub mod pallet {
 		/// - use_balance_from - where from tokens should be used
 		#[transactional]
 		#[pallet::call_index(6)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::activate_liquidity())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::deactivate_liquidity_for_rewards_schedule())]
 		pub fn deactivate_liquidity_for_rewards_schedule(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,

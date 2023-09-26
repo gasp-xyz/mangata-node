@@ -1389,6 +1389,35 @@ fn reject_schedule_with_too_little_rewards_per_session() {
 
 #[test]
 #[serial]
+fn accept_schedule_valuated_in_native_token() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
+		get_liquidity_asset_mock.expect().return_const(Ok(10u32));
+		let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
+		valuate_liquidity_token_mock.expect().return_const(1u128);
+
+		let token_id = TokensOf::<Test>::create(&ALICE, MILLION).unwrap();
+		TokensOf::<Test>::mint(ProofOfStake::native_token_id(), &ALICE, 10).unwrap();
+		let pair: (TokenId, TokenId) = (0u32.into(), 4u32.into());
+
+		roll_to_session(4);
+
+		assert_ok!(
+			ProofOfStake::reward_pool(
+				RuntimeOrigin::signed(ALICE),
+				pair,
+				ProofOfStake::native_token_id(),
+				10,
+				5u32.into()
+			),
+			// Error::<Test>::TooLittleRewardsPerSession
+		);
+	});
+}
+
+#[test]
+#[serial]
 fn user_can_claim_3rdparty_rewards() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);

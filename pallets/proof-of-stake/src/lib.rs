@@ -188,7 +188,7 @@ pub mod pallet {
 	impl<T> PoSBenchmarkingConfig for T {}
 
 	#[cfg(not(feature = "runtime-benchmarks"))]
-	pub trait ValutationApiTrait:
+	pub trait ValutationApiTrait<T: Config>:
 		Valuate<Balance = mangata_types::Balance, CurrencyId = mangata_types::TokenId>
 	{
 	}
@@ -521,7 +521,9 @@ pub mod pallet {
 
 			ensure!(
 				<T as Config>::ValuationApi::valuate_liquidity_token(liquidity_token_id, amount) >=
-					T::MinRewardsPerSession::get(),
+					T::MinRewardsPerSession::get() ||
+					((token_id == Into::<u32>::into(Self::native_token_id())) &&
+						amount_per_session >= T::MinRewardsPerSession::get()),
 				Error::<T>::TooLittleRewardsPerSession
 			);
 
@@ -1305,5 +1307,6 @@ impl<T: Config> LiquidityMiningApi for Pallet<T> {
 	}
 }
 
-// TODO: valuate rewards in MGX
 // TODO: dedicated ensures for every activation kind
+// TODO: clean up test setup
+// TODO: test schedule rewards without liquidity mining rewards

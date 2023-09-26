@@ -394,6 +394,40 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	ext
 }
 
+pub struct ExtBuilder {
+	ext: sp_io::TestExternalities,
+}
+
+impl ExtBuilder {
+	pub fn new() -> Self {
+		let t = frame_system::GenesisConfig::default()
+			.build_storage::<Test>()
+			.expect("Frame system builds valid default genesis config");
+
+		let mut ext = sp_io::TestExternalities::new(t);
+		Self { ext }
+	}
+
+	fn create_if_does_not_exists(&mut self, token_id: TokenId) {
+		self.ext.execute_with(|| {
+			while token_id >= Tokens::next_asset_id() {
+				Tokens::create(RuntimeOrigin::root(), 0, 0).unwrap();
+			}
+		});
+	}
+
+	pub fn issue(mut self, who: AccountId, token_id: TokenId, balance: Balance) -> Self {
+        self.create_if_does_not_exists(token_id);
+		self.ext
+			.execute_with(|| Tokens::mint(RuntimeOrigin::root(), token_id, who, balance).unwrap());
+		return self
+	}
+
+	pub fn build(self) -> sp_io::TestExternalities {
+		self.ext
+	}
+}
+
 /// Compares the system events with passed in events
 /// Prints highlighted diff iff assert_eq fails
 #[macro_export]

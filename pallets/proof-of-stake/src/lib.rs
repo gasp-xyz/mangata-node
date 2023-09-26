@@ -764,7 +764,6 @@ impl<T: Config> Pallet<T> {
 					use_balance_from,
 				)?;
 			},
-			ScheduleActivationKind::LiquidityMining => {},
 			_ => {},
 		}
 
@@ -927,7 +926,6 @@ impl<T: Config> Pallet<T> {
 			);
 		}
 
-		println!("MINTING : {user:?} {liquidity_asset_id} {liquidity_assets_reward}");
 		ActivatedLiquidityForSchedules::<T>::try_mutate_exists(
 			(user.clone(), liquidity_asset_id, liquidity_assets_reward),
 			|v| {
@@ -1307,5 +1305,5 @@ impl<T: Config> LiquidityMiningApi for Pallet<T> {
 	}
 }
 
-// TODO: dedicated ensures for every activation kind
 // TODO: clean up test setup
+// TODO: dedicated 3rdparty rewards api

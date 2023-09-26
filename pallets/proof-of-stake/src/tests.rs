@@ -1101,6 +1101,10 @@ fn claim_rewards_from_pool_that_has_been_disabled() {
 }
 
 const MILLION: u128 = 1_000_000;
+const REWARDED_PAIR: (TokenId, TokenId) = (0u32, 4u32);
+const REWARD_AMOUNT: u128 = 10_000u128;
+const REWARD_TOKEN: u32 = 5u32;
+const LIQUIDITY_TOKEN: u32 = 10;
 const ALICE: u128 = 2;
 const BOB: u128 = 3;
 const CHARLIE: u128 = 4;
@@ -1109,32 +1113,31 @@ const EVE: u128 = 5;
 #[test]
 #[serial]
 fn user_can_provide_3rdparty_rewards() {
-	new_test_ext().execute_with(|| {
+    ExtBuilder::new()
+        .issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
+        .build()
+	    .execute_with(|| {
 		let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-		get_liquidity_asset_mock.expect().return_const(Ok(10u32));
+		get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
 		let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
 		valuate_liquidity_token_mock.expect().return_const(11u128);
 
 		System::set_block_number(1);
-		let pair: (TokenId, TokenId) = (0u32.into(), 4u32.into());
-		let amount = 10_000u128;
-
-		let token_id = TokensOf::<Test>::create(&ALICE, MILLION).unwrap();
-
 		ProofOfStake::reward_pool(
 			RuntimeOrigin::signed(ALICE),
-			pair,
-			token_id,
-			amount,
+			REWARDED_PAIR,
+			REWARD_TOKEN,
+			REWARD_AMOUNT/2,
 			10u32.into(),
 		)
 		.unwrap();
+
 		roll_to_session(5);
 		ProofOfStake::reward_pool(
 			RuntimeOrigin::signed(ALICE),
-			pair,
-			token_id,
-			amount,
+			REWARDED_PAIR,
+			REWARD_TOKEN,
+			REWARD_AMOUNT/2,
 			6u32.into(),
 		)
 		.unwrap();
@@ -1144,24 +1147,23 @@ fn user_can_provide_3rdparty_rewards() {
 #[test]
 #[serial]
 fn cant_schedule_rewards_in_past() {
-	new_test_ext().execute_with(|| {
+    ExtBuilder::new()
+        .issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
+        .build()
+	    .execute_with(|| {
 		System::set_block_number(1);
 		let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
 		get_liquidity_asset_mock.expect().return_const(Ok(10u32));
 		let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
 		valuate_liquidity_token_mock.expect().return_const(11u128);
 
-		let token_id = TokensOf::<Test>::create(&ALICE, MILLION).unwrap();
-		let pair: (TokenId, TokenId) = (0u32.into(), 4u32.into());
-		let amount = 10_000u128;
-
 		roll_to_session(5);
 		assert_err!(
 			ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
-				pair,
-				token_id,
-				amount,
+                REWARDED_PAIR,
+                REWARD_TOKEN,
+                REWARD_AMOUNT,
 				1u32.into()
 			),
 			Error::<Test>::CannotScheduleRewardsInPast
@@ -1169,9 +1171,9 @@ fn cant_schedule_rewards_in_past() {
 		assert_err!(
 			ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
-				pair,
-				token_id,
-				amount,
+                REWARDED_PAIR,
+                REWARD_TOKEN,
+                REWARD_AMOUNT,
 				4u32.into()
 			),
 			Error::<Test>::CannotScheduleRewardsInPast
@@ -1179,9 +1181,9 @@ fn cant_schedule_rewards_in_past() {
 		assert_err!(
 			ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
-				pair,
-				token_id,
-				amount,
+                REWARDED_PAIR,
+                REWARD_TOKEN,
+                REWARD_AMOUNT,
 				5u32.into()
 			),
 			Error::<Test>::CannotScheduleRewardsInPast
@@ -1192,24 +1194,23 @@ fn cant_schedule_rewards_in_past() {
 #[test]
 #[serial]
 fn cannot_reward_unexisting_pool() {
-	new_test_ext().execute_with(|| {
+    ExtBuilder::new()
+        .issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
+        .build()
+	    .execute_with(|| {
 		let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
 		get_liquidity_asset_mock
 			.expect()
 			.return_const(Err(Error::<Test>::PoolDoesNotExist.into()));
 		let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
 		valuate_liquidity_token_mock.expect().return_const(11u128);
-		let token_id = TokensOf::<Test>::create(&ALICE, MILLION).unwrap();
-
-		let pair: (TokenId, TokenId) = (0u32.into(), 4u32.into());
-		let amount = 10_000u128;
 
 		assert_err!(
 			ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
-				pair,
-				token_id,
-				amount,
+                REWARDED_PAIR,
+                REWARD_TOKEN,
+                REWARD_AMOUNT,
 				5u32.into()
 			),
 			Error::<Test>::PoolDoesNotExist
@@ -1220,32 +1221,32 @@ fn cannot_reward_unexisting_pool() {
 #[test]
 #[serial]
 fn rewards_are_stored_in_pallet_account() {
-	new_test_ext().execute_with(|| {
+    ExtBuilder::new()
+        .issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
+        .build()
+	    .execute_with(|| {
+
 		System::set_block_number(1);
 		let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
 		get_liquidity_asset_mock.expect().return_const(Ok(10u32));
 		let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
 		valuate_liquidity_token_mock.expect().return_const(11u128);
 
-		let token_id = TokensOf::<Test>::create(&ALICE, MILLION).unwrap();
-		let pair: (TokenId, TokenId) = (0u32.into(), 4u32.into());
-		let amount = 10_000u128;
-
-		assert_eq!(TokensOf::<Test>::free_balance(token_id, &Pallet::<Test>::pallet_account()), 0);
-		assert_eq!(TokensOf::<Test>::free_balance(token_id, &ALICE), MILLION);
+		assert_eq!(TokensOf::<Test>::free_balance(REWARD_TOKEN, &Pallet::<Test>::pallet_account()), 0);
+		assert_eq!(TokensOf::<Test>::free_balance(REWARD_TOKEN, &ALICE), REWARD_AMOUNT);
 
 		assert_ok!(ProofOfStake::reward_pool(
 			RuntimeOrigin::signed(ALICE),
-			pair,
-			token_id,
-			amount,
+            REWARDED_PAIR,
+            REWARD_TOKEN,
+            REWARD_AMOUNT,
 			5u32.into()
 		),);
 
-		assert_eq!(TokensOf::<Test>::free_balance(token_id, &ALICE), MILLION - amount);
+		assert_eq!(TokensOf::<Test>::free_balance(REWARD_TOKEN, &ALICE), 0);
 		assert_eq!(
-			TokensOf::<Test>::free_balance(token_id, &Pallet::<Test>::pallet_account()),
-			amount
+			TokensOf::<Test>::free_balance(REWARD_TOKEN, &Pallet::<Test>::pallet_account()),
+			REWARD_AMOUNT
 		);
 	});
 }
@@ -2183,4 +2184,91 @@ fn can_claim_schedule_rewards() {
 			Ok(0)
 		);
 	});
+}
+
+#[test]
+#[serial]
+fn can_not_provide_liquidity_for_schedule_rewards_when_its_only_activated_for_liq_minting() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(1);
+        const LIQUIDITY_TOKEN: u32 = 5;
+        let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
+        get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+        let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
+        valuate_liquidity_token_mock.expect().return_const(11u128);
+
+        assert_eq!(0, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+        assert_eq!(1, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+        assert_eq!(2, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+        assert_eq!(3, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+        assert_eq!(4, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+        assert_eq!(5, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+
+        let first_token_id = TokensOf::<Test>::create(&ALICE, MILLION).unwrap();
+        let second_token_id = TokensOf::<Test>::create(&ALICE, MILLION).unwrap();
+        TokensOf::<Test>::mint(LIQUIDITY_TOKEN, &BOB, 100).unwrap();
+
+        let pair: (TokenId, TokenId) = (0u32.into(), 4u32.into());
+        let amount = 10_000u128;
+
+        ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 1u8).unwrap();
+
+        assert_err!(
+            ProofOfStake::activate_liquidity_for_rewards_schedule(
+            RuntimeOrigin::signed(BOB),
+            LIQUIDITY_TOKEN,
+            100,
+            first_token_id,
+            None,
+            ),
+            Error::<Test>::NotAPromotedPool
+        );
+    });
+}
+
+
+#[test]
+#[serial]
+fn can_not_provide_liquidity_for_mining_rewards_when_its_only_activated_for_schedule_rewards() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(1);
+        const LIQUIDITY_TOKEN: u32 = 5;
+        let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
+        get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+        let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
+        valuate_liquidity_token_mock.expect().return_const(11u128);
+
+        assert_eq!(0, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+        assert_eq!(1, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+        assert_eq!(2, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+        assert_eq!(3, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+        assert_eq!(4, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+        assert_eq!(5, TokensOf::<Test>::create(&ALICE, 0).unwrap());
+
+        let first_token_id = TokensOf::<Test>::create(&ALICE, MILLION).unwrap();
+        let second_token_id = TokensOf::<Test>::create(&ALICE, MILLION).unwrap();
+        TokensOf::<Test>::mint(LIQUIDITY_TOKEN, &BOB, 100).unwrap();
+
+        let pair: (TokenId, TokenId) = (0u32.into(), 4u32.into());
+        let amount = 10_000u128;
+
+		ProofOfStake::reward_pool(
+			RuntimeOrigin::signed(ALICE),
+			pair,
+			first_token_id,
+			amount,
+			10u32.into(),
+		)
+		.unwrap();
+
+        assert_err!(
+            ProofOfStake::activate_liquidity(
+            RuntimeOrigin::signed(BOB),
+            LIQUIDITY_TOKEN,
+            100,
+            None,
+            ),
+            Error::<Test>::NotAPromotedPool
+        );
+    });
 }

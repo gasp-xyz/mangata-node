@@ -417,7 +417,7 @@ impl ExtBuilder {
 	}
 
 	pub fn issue(mut self, who: AccountId, token_id: TokenId, balance: Balance) -> Self {
-        self.create_if_does_not_exists(token_id);
+		self.create_if_does_not_exists(token_id);
 		self.ext
 			.execute_with(|| Tokens::mint(RuntimeOrigin::root(), token_id, who, balance).unwrap());
 		return self

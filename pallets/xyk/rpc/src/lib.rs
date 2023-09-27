@@ -10,7 +10,10 @@ use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_core::U256;
 use sp_rpc::number::NumberOrHex;
-use sp_runtime::traits::{Block as BlockT, MaybeDisplay, MaybeFromStr};
+use sp_runtime::{
+	generic::BlockId,
+	traits::{Block as BlockT, MaybeDisplay, MaybeFromStr},
+};
 use sp_std::convert::{TryFrom, TryInto};
 use std::sync::Arc;
 pub use xyk_runtime_api::XykApi as XykRuntimeApi;
@@ -103,6 +106,9 @@ pub trait XykApi<
 		reserve_amount: Balance,
 		at: Option<BlockHash>,
 	) -> RpcResult<ResponseTypePrice>;
+
+	#[method(name = "xyk_get_liq_tokens_for_trading")]
+	fn get_liq_tokens_for_trading(&self, at: Option<BlockHash>) -> RpcResult<Vec<TokenId>>;
 
 	#[method(name = "xyk_is_buy_asset_lock_free")]
 	fn is_buy_asset_lock_free(
@@ -379,6 +385,22 @@ where
 		})
 	}
 
+	fn get_liq_tokens_for_trading(
+		&self,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> RpcResult<Vec<TokenId>> {
+		let api = self.client.runtime_api();
+		let at = self.client.info().best_hash;
+
+		api.get_liq_tokens_for_trading(at).map_err(|e| {
+			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+				1,
+				"Unable to serve the request",
+				Some(format!("{:?}", e)),
+			)))
+		})
+	}
+
 	fn is_buy_asset_lock_free(
 		&self,
 		path: sp_std::vec::Vec<TokenId>,
@@ -397,6 +419,7 @@ where
 				)))
 			})
 	}
+
 	fn is_sell_asset_lock_free(
 		&self,
 		path: sp_std::vec::Vec<TokenId>,
@@ -415,6 +438,7 @@ where
 				)))
 			})
 	}
+
 	fn get_tradeable_tokens(
 		&self,
 		at: Option<<Block as BlockT>::Hash>,

@@ -277,6 +277,9 @@ impl pallet_proof_of_stake::Config for Runtime {
 	type LiquidityMiningIssuanceVault = cfg::pallet_issuance::LiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = cfg::SessionLenghtOf<Runtime>;
 	type WeightInfo = weights::pallet_proof_of_stake_weights::ModuleWeight<Runtime>;
+	type RewardsSchedulesLimit = cfg::pallet_proof_of_stake::RewardsSchedulesLimit;
+	type Min3rdPartyRewards = cfg::pallet_proof_of_stake::Min3rdPartyRewards;
+	type ValuationApi = Xyk;
 }
 
 impl pallet_bootstrap::BootstrapBenchmarkingConfig for Runtime {}
@@ -780,6 +783,34 @@ mod benches {
 }
 
 impl_runtime_apis! {
+
+	impl proof_of_stake_runtime_api::ProofOfStakeApi<Block, Balance , TokenId,  AccountId> for Runtime{
+		fn calculate_native_rewards_amount(
+			user: AccountId,
+			liquidity_asset_id: TokenId,
+		) -> Balance{
+			ProofOfStake::calculate_native_rewards_amount(user, liquidity_asset_id)
+				.unwrap_or_default()
+		}
+
+		fn calculate_3rdparty_rewards_amount(
+			user: AccountId,
+			liquidity_asset_id: TokenId,
+			reward_asset_id: TokenId,
+		) -> Balance{
+			ProofOfStake::calculate_rewards_amount_3rdparty(user, liquidity_asset_id, reward_asset_id)
+				.unwrap_or_default()
+		}
+
+		fn calculate_3rdparty_rewards_all(
+			user: AccountId,
+			liquidity_asset_id: TokenId,
+		) -> Vec<(TokenId, Balance)>{
+			ProofOfStake::calculate_3rdparty_rewards_all(user, liquidity_asset_id)
+				.unwrap_or_default()
+		}
+	}
+
 
 	impl ver_api::VerApi<Block> for Runtime {
 		fn get_signer(

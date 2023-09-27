@@ -235,7 +235,7 @@ pub mod pallet {
 		/// The maximum number of schedules that can be active at one moment
 		type RewardsSchedulesLimit: Get<u32>;
 		/// The minimum number of rewards per session for schedule rewards
-		type MinRewardsPerSession: Get<u128>;
+		type Min3rdPartyRewards: Get<u128>;
 		type WeightInfo: WeightInfo;
 		type ValuationApi: ValutationApiTrait<Self>;
 	}
@@ -266,7 +266,7 @@ pub mod pallet {
 		/// Too many schedules
 		TooManySchedules,
 		/// Too little rewards per session
-		TooLittleRewardsPerSession,
+		TooLittleRewards,
 		/// Reward token not paired with native token
 		RewardTokenNotPairdWithNativeToken,
 	}
@@ -515,10 +515,10 @@ pub mod pallet {
 
 			ensure!(
 				<T as Config>::ValuationApi::valuate_liquidity_token(liquidity_token_id, amount) >=
-					T::MinRewardsPerSession::get() ||
+					T::Min3rdPartyRewards::get() ||
 					((token_id == Into::<u32>::into(Self::native_token_id())) &&
-						amount_per_session >= T::MinRewardsPerSession::get()),
-				Error::<T>::TooLittleRewardsPerSession
+						amount_per_session >= T::Min3rdPartyRewards::get()),
+				Error::<T>::TooLittleRewards
 			);
 
 			RewardTokensPerPool::<T>::insert(liquidity_token_id, token_id, ());
@@ -1381,4 +1381,4 @@ impl<T: Config> LiquidityMiningApi for Pallet<T> {
 }
 
 // benchmark for claim 3rdparty rewards
-// limit min total amount of rewards not per session
+// move runtime configs to common runtime

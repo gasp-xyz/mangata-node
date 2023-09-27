@@ -277,9 +277,8 @@ impl pallet_proof_of_stake::Config for Runtime {
 	type LiquidityMiningIssuanceVault = cfg::pallet_issuance::LiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = cfg::SessionLenghtOf<Runtime>;
 	type WeightInfo = weights::pallet_proof_of_stake_weights::ModuleWeight<Runtime>;
-	// TODO: allign
-	type RewardsSchedulesLimit = frame_support::traits::ConstU32<10>;
-	type MinRewardsPerSession = frame_support::traits::ConstU128<10>;
+	type RewardsSchedulesLimit = cfg::pallet_proof_of_stake::RewardsSchedulesLimit;
+	type Min3rdPartyRewards = cfg::pallet_proof_of_stake::Min3rdPartyRewards;
 	type ValuationApi = Xyk;
 }
 

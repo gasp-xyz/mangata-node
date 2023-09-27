@@ -32,6 +32,7 @@ pallet-multipurpose-liquidity = { path = '../../pallets/multipurpose-liquidity',
 pallet-maintenance = { path = '../../pallets/maintenance', default-features = false }
 pallet-fee-lock = { path = '../../pallets/fee-lock', default-features = false}
 mangata-support = { default-features = false , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+proof-of-stake-runtime-api = { path = '../../pallets/proof-of-stake/runtime-api', default-features = false}
 
 # Substrate Dependencies
 ## Substrate Primitive Dependencies
@@ -175,6 +176,7 @@ std = [
 	"pallet-treasury/std",
 	"pallet-xyk/std",
 	"pallet-proof-of-stake/std",
+	"proof-of-stake-runtime-api/std",
 	"pallet-bootstrap/std",
   	"xyk-runtime-api/std",
 	"parachain-staking/std",

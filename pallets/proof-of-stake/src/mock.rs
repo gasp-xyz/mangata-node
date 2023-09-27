@@ -285,7 +285,7 @@ impl pos::Config for Test {
 	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = ConstU32<10>;
 	type RewardsSchedulesLimit = ConstU32<10>;
-	type MinRewardsPerSession = ConstU128<10>;
+	type Min3rdPartyRewards = ConstU128<10>;
 	type WeightInfo = ();
 	type ValuationApi = MockValuationApi;
 }
@@ -299,8 +299,7 @@ impl pos::Config for Test {
 	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = ConstU32<10>;
 	type RewardsSchedulesLimit = ConstU32<10>;
-	type MinRewardsPerSession = ConstU128<10>;
-	type MaxRewardTokensPerPool = ConstU32<5>;
+	type Min3rdPartyRewards = ConstU128<10>;
 	type WeightInfo = ();
 	type ValuationApi = Xyk;
 }

@@ -1366,4 +1366,15 @@ where
 			pub const AnnouncementDepositFactor: Balance = deposit(0, 68);
 		}
 	}
+
+	pub mod pallet_proof_of_stake {
+		use super::*;
+
+		parameter_types! {
+			pub const RewardsSchedulesLimit: u32 = 150;
+			// TODO: allign properly
+			pub const Min3rdPartyRewards: u128 = 100 * 30_000 * currency::DOLLARS;
+		}
+	}
+
 }

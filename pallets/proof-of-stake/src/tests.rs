@@ -1389,7 +1389,7 @@ fn reject_schedule_with_too_little_rewards_per_session() {
 					1,
 					5u32.into()
 				),
-				Error::<Test>::TooLittleRewardsPerSession
+				Error::<Test>::TooLittleRewards
 			);
 		});
 }

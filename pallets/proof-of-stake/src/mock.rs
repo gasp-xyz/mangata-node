@@ -286,7 +286,6 @@ impl pos::Config for Test {
 	type RewardsDistributionPeriod = ConstU32<10>;
 	type RewardsSchedulesLimit = ConstU32<10>;
 	type MinRewardsPerSession = ConstU128<10>;
-	type MaxRewardTokensPerPool = ConstU32<5>;
 	type WeightInfo = ();
 	type ValuationApi = MockValuationApi;
 }

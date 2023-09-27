@@ -274,10 +274,14 @@ impl pallet_proof_of_stake::Config for Runtime {
 	type ActivationReservesProvider = MultiPurposeLiquidity;
 	type NativeCurrencyId = tokens::MgxTokenId;
 	type Currency = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-	//TODO: fix
 	type LiquidityMiningIssuanceVault = cfg::pallet_issuance::LiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = cfg::SessionLenghtOf<Runtime>;
 	type WeightInfo = weights::pallet_proof_of_stake_weights::ModuleWeight<Runtime>;
+	// TODO: allign
+	type RewardsSchedulesLimit = frame_support::traits::ConstU32<10>;
+	type MinRewardsPerSession = frame_support::traits::ConstU128<10>;
+	type MaxRewardTokensPerPool = frame_support::traits::ConstU32<5>;
+	type ValuationApi = Xyk;
 }
 
 impl pallet_bootstrap::BootstrapBenchmarkingConfig for Runtime {}
@@ -767,6 +771,30 @@ mod benches {
 }
 
 impl_runtime_apis! {
+
+	impl proof_of_stake_runtime_api::ProofOfStakeApi<Block, Balance , TokenId,  AccountId> for Runtime{
+		fn calculate_native_rewards_amount(
+			user: AccountId,
+			liquidity_asset_id: TokenId,
+		) -> Balance{
+			todo!();
+		}
+
+		fn calculate_3rdparty_rewards_amount(
+			user: AccountId,
+			liquidity_asset_id: TokenId,
+			reward_asset_id: TokenId,
+		) -> Balance{
+			todo!();
+		}
+
+		fn calculate_3rdparty_rewards_amount_all(
+			user: AccountId,
+			liquidity_asset_id: TokenId,
+		) -> Vec<(TokenId, Balance)>{
+			todo!();
+		}
+	}
 
 	impl ver_api::VerApi<Block> for Runtime {
 		fn get_signer(

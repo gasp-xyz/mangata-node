@@ -30,13 +30,13 @@
 //! - [`PromotedPoolRewards`] - Stores information about the total amount of rewards for each liquidity
 //! token.
 //! - [`RewardsInfo`] - Stores information about rewards for liquidity mining.
-//! - [`ScheduleActivationKind`] - Wrapper over origin ActivateKind that is used in
+//! - [`ThirdPartyActivationKind`] - Wrapper over origin ActivateKind that is used in
 //!
 //! #### Extrinsics
 //!
 //! - [`Pallet::activate_liquidity`] - Activates liquidity for liquidity mining rewards.
-//! - [`Pallet::deactivate_liquidity`] - Deactivates liquidity for liquidity mining rewards.
-//! - [`Pallet::claim_rewards_all`] - Claims all rewards for all liquidity tokens.
+//! - [`Pallet::deactivate_liquidity_for_native_rewards`] - Deactivates liquidity for liquidity mining rewards.
+//! - [`Pallet::claim_native_rewards`] - Claims all rewards for all liquidity tokens.
 //! - [`Pallet::update_pool_promotion`] - Enables/disables the pool for liquidity mining rewards.
 //!
 //! ### Scheduled Rewards
@@ -66,9 +66,9 @@
 //! #### Extrinsics
 //!
 //! - [`Pallet::reward_pool`] - Schedules rewards for the selected liquidity token.
-//! - [`Pallet::activate_liquidity_for_rewards_schedule`] - Activates liquidity for scheduled rewards.
-//! - [`Pallet::deactivate_liquidity_for_rewards_schedule`] - Deactivates liquidity for scheduled rewards.
-//! - [`Pallet::claim_schedule_rewards_all`] - Claims all scheduled rewards for all liquidity tokens.
+//! - [`Pallet::activate_liquidity_for_3rdparty_rewards`] - Activates liquidity for scheduled rewards.
+//! - [`Pallet::deactivate_liquidity_for_3rdparty_rewards`] - Deactivates liquidity for scheduled rewards.
+//! - [`Pallet::claim_3rdparty_rewards`] - Claims all scheduled rewards for all liquidity tokens.
 //!
 //! ## Reusing a Single Liquidity Token for Multiple Rewards
 //!
@@ -81,14 +81,15 @@
 //! several options to do that:
 //!
 //! - The user can reuse liquidity used for liquidity mining rewards to claim scheduled rewards. In
-//!   this case, [`Pallet::activate_liquidity_for_rewards_schedule`] should be used with [`ActivateKind::LiquidityMining`].
+//!   this case, [`Pallet::activate_liquidity_for_3rdparty_rewards`] should be used with [`ActivateKind::LiquidityMining`].
 //!
-//! - The user can reuse liquidity used for scheduled rewards (X) to sign up for rewards from other tokens (provided by Bob). In that case, [`Pallet::activate_liquidity_for_rewards_schedule`] should be used with [`ActivateKind::ActivatedLiquidity(X)`].
+//! - The user can reuse liquidity used for scheduled rewards (X) to sign up for rewards from other tokens (provided by Bob). In that case, [`Pallet::activate_liquidity_for_3rdparty_rewards`] should be used with [`ActivateKind::ActivatedLiquidity(X)`].
 //!
 //! - The user can't directly provide liquidity activated for scheduled rewards to activate it for liquidity mining rewards. Instead:
-//!     * Liquidity used for schedule rewards can be deactivated [`Pallet::deactivate_liquidity_for_rewards_schedule`].
+//!     * Liquidity used for schedule rewards can be deactivated
+//!     [`Pallet::deactivate_liquidity_for_3rdparty_rewards`].
 //!     * Liquidity can be activated for liquidity mining rewards [`Pallet::activate_liquidity`].
-//!     * Liquidity can be activated for scheduled rewards [`Pallet::activate_liquidity_for_rewards_schedule`] with [`ScheduleActivationKind::Mining`].
+//!     * Liquidity can be activated for scheduled rewards [`Pallet::activate_liquidity_for_3rdparty_rewards`] with [`ThirdPartyActivationKind::Mining`].
 
 use frame_support::pallet_prelude::*;
 
@@ -155,7 +156,7 @@ type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 /// - `ActivatedLiquidity` - already activated liquidity (for scheduled rewards)
 /// - `LiquidityMining` - already activated liquidity (for liquidity mining rewards)
 #[derive(Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
-pub enum ScheduleActivationKind {
+pub enum ThirdPartyActivationKind {
 	ActivateKind(Option<ActivateKind>),
 	ActivatedLiquidity(TokenId),
 	LiquidityMining,
@@ -235,17 +236,8 @@ pub mod pallet {
 		type RewardsSchedulesLimit: Get<u32>;
 		/// The minimum number of rewards per session for schedule rewards
 		type MinRewardsPerSession: Get<u128>;
-		/// The maximum number of reward tokens per pool
-		type MaxRewardTokensPerPool: Get<u32>;
 		type WeightInfo: WeightInfo;
 		type ValuationApi: ValutationApiTrait<Self>;
-
-		// type ValuationApi: Valuate<
-		// 	Balance = mangata_types::Balance,
-		// 	CurrencyId = mangata_types::TokenId,
-		// >;
-		// #[cfg(feature = "runtime-benchmarks")]
-		// type Xyk: XykFunctionsTrait<Self::AccountId>;
 	}
 
 	#[pallet::error]
@@ -401,7 +393,8 @@ pub mod pallet {
 		/// Claims liquidity mining rewards
 		#[transactional]
 		#[pallet::call_index(0)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::claim_rewards_all())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::claim_native_rewards())]
+        #[deprecated(note = "claim_native_rewards should be used instead")]
 		pub fn claim_rewards_all(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
@@ -446,6 +439,7 @@ pub mod pallet {
 		#[transactional]
 		#[pallet::call_index(2)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::activate_liquidity())]
+		#[deprecated(note = "activate_liquidity_for_native_rewards should be used instead")]
 		pub fn activate_liquidity(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
@@ -454,7 +448,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			Self::activate_liquidity_for_liquidity_minting(
+			Self::activate_liquidity_for_native_rewards_impl(
 				sender,
 				liquidity_token_id,
 				amount,
@@ -465,7 +459,8 @@ pub mod pallet {
 		/// Decreases number of tokens used for liquidity mining purposes
 		#[transactional]
 		#[pallet::call_index(3)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::deactivate_liquidity())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::deactivate_liquidity_for_native_rewards())]
+		#[deprecated(note = "deactivate_liquidity_for_native_rewards should be used instead")]
 		pub fn deactivate_liquidity(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
@@ -473,7 +468,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			<Self as ProofOfStakeRewardsApi<T::AccountId>>::deactivate_liquidity(
+			Self::deactivate_liquidity_for_native_rewards_impl(
 				sender,
 				liquidity_token_id,
 				amount,
@@ -487,7 +482,6 @@ pub mod pallet {
 		/// schedule_end). Distribution starts from the *next* session till `schedule_end`.
 		#[transactional]
 		#[pallet::call_index(4)]
-		// NOTE: implement benchmark
 		#[pallet::weight(<<T as Config>::WeightInfo>::reward_pool())]
 		pub fn reward_pool(
 			origin: OriginFor<T>,
@@ -570,21 +564,21 @@ pub mod pallet {
 		/// be taken from available balance
 		#[transactional]
 		#[pallet::call_index(5)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::activate_liquidity_for_rewards_schedule())]
-		pub fn activate_liquidity_for_rewards_schedule(
+		#[pallet::weight(<<T as Config>::WeightInfo>::activate_liquidity_for_3rdparty_rewards())]
+		pub fn activate_liquidity_for_3rdparty_rewards(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
 			amount: Balance,
 			reward_token: TokenId,
-			use_balance_from: Option<ScheduleActivationKind>,
+			use_balance_from: Option<ThirdPartyActivationKind>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			Self::activate_liquidity_for_schedule(
+			Self::activate_liquidity_for_3rdparty_rewards_impl(
 				sender,
 				liquidity_token_id,
 				amount,
-				use_balance_from.unwrap_or(ScheduleActivationKind::ActivateKind(None)),
+				use_balance_from.unwrap_or(ThirdPartyActivationKind::ActivateKind(None)),
 				reward_token,
 			)
 		}
@@ -597,8 +591,8 @@ pub mod pallet {
 		/// - use_balance_from - where from tokens should be used
 		#[transactional]
 		#[pallet::call_index(6)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::deactivate_liquidity_for_rewards_schedule())]
-		pub fn deactivate_liquidity_for_rewards_schedule(
+		#[pallet::weight(<<T as Config>::WeightInfo>::deactivate_liquidity_for_3rdparty_rewards())]
+		pub fn deactivate_liquidity_for_3rdparty_rewards(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
 			amount: Balance,
@@ -606,7 +600,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			Self::deactivate_liquidity_for_schedule(
+			Self::deactivate_liquidity_for_3rdparty_rewards_impl(
 				sender,
 				liquidity_token_id,
 				amount,
@@ -620,8 +614,8 @@ pub mod pallet {
 		/// - reward_token - id of the token that is rewarded
 		#[transactional]
 		#[pallet::call_index(7)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::activate_liquidity())]
-		pub fn claim_schedule_rewards_all(
+		#[pallet::weight(<<T as Config>::WeightInfo>::claim_3rdparty_rewards())]
+		pub fn claim_3rdparty_rewards(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
 			reward_token: TokenId,
@@ -631,6 +625,68 @@ pub mod pallet {
 			Self::claim_schedule_rewards_all_impl(sender, liquidity_token_id, reward_token)?;
 			Ok(())
 		}
+
+		/// Increases number of tokens used for liquidity mining purposes.
+		///
+		/// Parameters:
+		/// - liquidity_token_id - id of the token
+		/// - amount - amount of the token
+		/// - use_balance_from - where from tokens should be used
+		#[transactional]
+		#[pallet::call_index(8)]
+		#[pallet::weight(<<T as Config>::WeightInfo>::activate_liquidity())]
+		pub fn activate_liquidity_for_native_rewards(
+			origin: OriginFor<T>,
+			liquidity_token_id: TokenId,
+			amount: Balance,
+			use_balance_from: Option<ActivateKind>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			Self::activate_liquidity_for_native_rewards_impl(
+				sender,
+				liquidity_token_id,
+				amount,
+				use_balance_from,
+			)
+		}
+
+		/// Decreases number of tokens used for liquidity mining purposes
+		#[transactional]
+		#[pallet::call_index(9)]
+		#[pallet::weight(<<T as Config>::WeightInfo>::deactivate_liquidity_for_native_rewards())]
+		pub fn deactivate_liquidity_for_native_rewards(
+			origin: OriginFor<T>,
+			liquidity_token_id: TokenId,
+			amount: Balance,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			Self::deactivate_liquidity_for_native_rewards_impl(
+				sender,
+				liquidity_token_id,
+				amount,
+			)
+		}
+
+		#[transactional]
+		#[pallet::call_index(10)]
+		#[pallet::weight(<<T as Config>::WeightInfo>::claim_native_rewards())]
+        #[deprecated(note = "claim_native_rewards should be used instead")]
+		pub fn claim_native_rewards(
+			origin: OriginFor<T>,
+			liquidity_token_id: TokenId,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+
+			<Self as ProofOfStakeRewardsApi<T::AccountId>>::claim_rewards_all(
+				sender,
+				liquidity_token_id,
+			)?;
+
+			Ok(())
+		}
+
 	}
 }
 
@@ -640,7 +696,7 @@ pub enum RewardsKind {
 }
 
 impl<T: Config> Pallet<T> {
-	fn activate_liquidity_for_liquidity_minting(
+	fn activate_liquidity_for_native_rewards_impl(
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
 		amount: Balance,
@@ -672,7 +728,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	fn deactivate_liquidity_for_liquidity_minting(
+	fn deactivate_liquidity_for_native_rewards_impl(
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
 		amount: Balance,
@@ -688,18 +744,18 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	fn activate_liquidity_for_schedule(
+	fn activate_liquidity_for_3rdparty_rewards_impl(
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
 		amount: Balance,
-		use_balance_from: ScheduleActivationKind,
+		use_balance_from: ThirdPartyActivationKind,
 		reward_token: TokenId,
 	) -> DispatchResult {
 		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
 
 		match use_balance_from {
 			// 1R 1W
-			ScheduleActivationKind::ActivateKind(ref use_balance_from) => {
+			ThirdPartyActivationKind::ActivateKind(ref use_balance_from) => {
 				ensure!(
 					<T as Config>::ActivationReservesProvider::can_activate(
 						liquidity_asset_id,
@@ -716,7 +772,7 @@ impl<T: Config> Pallet<T> {
 				);
 			},
 			// 2R
-			ScheduleActivationKind::ActivatedLiquidity(token_id) => {
+			ThirdPartyActivationKind::ActivatedLiquidity(token_id) => {
 				let already_activated_amount = RewardsInfoForScheduleRewards::<T>::get(
 					user.clone(),
 					(liquidity_asset_id, reward_token),
@@ -732,7 +788,7 @@ impl<T: Config> Pallet<T> {
 					Error::<T>::NotEnoughAssets
 				);
 			},
-			ScheduleActivationKind::LiquidityMining => {
+			ThirdPartyActivationKind::LiquidityMining => {
 				let already_activated_amount = RewardsInfoForScheduleRewards::<T>::get(
 					user.clone(),
 					(liquidity_asset_id, reward_token),
@@ -755,7 +811,7 @@ impl<T: Config> Pallet<T> {
 		)?;
 
 		match use_balance_from {
-			ScheduleActivationKind::ActivateKind(use_balance_from) => {
+			ThirdPartyActivationKind::ActivateKind(use_balance_from) => {
 				println!("activate");
 				<T as Config>::ActivationReservesProvider::activate(
 					liquidity_asset_id,
@@ -772,7 +828,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	fn deactivate_liquidity_for_schedule(
+	fn deactivate_liquidity_for_3rdparty_rewards_impl(
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
 		amount: Balance,
@@ -1178,7 +1234,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		amount: Self::Balance,
 		use_balance_from: Option<ActivateKind>,
 	) -> DispatchResult {
-		Self::activate_liquidity_for_liquidity_minting(
+		Self::activate_liquidity_for_native_rewards_impl(
 			user,
 			liquidity_asset_id,
 			amount,
@@ -1191,7 +1247,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		liquidity_asset_id: Self::CurrencyId,
 		amount: Self::Balance,
 	) -> DispatchResult {
-		Self::deactivate_liquidity_for_liquidity_minting(user, liquidity_asset_id, amount)
+		Self::deactivate_liquidity_for_native_rewards_impl(user, liquidity_asset_id, amount)
 	}
 
 	fn calculate_rewards_amount(
@@ -1307,3 +1363,4 @@ impl<T: Config> LiquidityMiningApi for Pallet<T> {
 
 // TODO: clean up test setup
 // TODO: dedicated 3rdparty rewards api
+// benchmark for claim 3rdparty rewards

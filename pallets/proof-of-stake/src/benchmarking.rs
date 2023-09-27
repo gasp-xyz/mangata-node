@@ -159,7 +159,7 @@ benchmarks! {
 		)
 	}
 
-	deactivate_liquidity{
+	deactivate_liquidity_for_native_rewards{
 		// deactivate
 		// 1 crate pool
 		// 2 promote pool
@@ -194,7 +194,7 @@ benchmarks! {
 
 		forward_to_next_session::<T>();
 
-	}: deactivate_liquidity(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), quater_of_minted_liquidity.into())
+	}: deactivate_liquidity_for_native_rewards(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), quater_of_minted_liquidity.into())
 	verify {
 		assert_eq!(
 		 PoS::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).activated_amount,
@@ -319,7 +319,7 @@ benchmarks! {
 		)
 	}
 
-	deactivate_liquidity_for_rewards_schedule{
+	deactivate_liquidity_for_native_rewards_for_rewards_schedule{
 		// 1 create pool that can be rewarded
 		// 2 create token that is used as reward
 		// 3 activate rewards
@@ -388,7 +388,7 @@ benchmarks! {
 		);
 
 
-	}: deactivate_liquidity_for_rewards_schedule(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id, 10_000u128, reward_token_id)
+	}: deactivate_liquidity_for_native_rewards_for_rewards_schedule(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id, 10_000u128, reward_token_id)
 	verify {
 
 		assert!(TokensOf::<T>::ensure_can_withdraw(

@@ -5031,6 +5031,7 @@ dependencies = [
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-runtime-common",
+ "proof-of-stake-runtime-api",
  "scale-info",
  "serde",
  "smallvec",

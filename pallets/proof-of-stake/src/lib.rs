@@ -438,7 +438,7 @@ pub mod pallet {
 		/// - use_balance_from - where from tokens should be used
 		#[transactional]
 		#[pallet::call_index(2)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::activate_liquidity())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::activate_liquidity_for_native_rewards())]
 		#[deprecated(note = "activate_liquidity_for_native_rewards should be used instead")]
 		pub fn activate_liquidity(
 			origin: OriginFor<T>,
@@ -634,7 +634,7 @@ pub mod pallet {
 		/// - use_balance_from - where from tokens should be used
 		#[transactional]
 		#[pallet::call_index(8)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::activate_liquidity())]
+		#[pallet::weight(<<T as Config>::WeightInfo>::activate_liquidity_for_native_rewards())]
 		pub fn activate_liquidity_for_native_rewards(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
@@ -727,6 +727,30 @@ impl<T: Config> Pallet<T> {
 
 		Ok(())
 	}
+
+	pub fn calculate_native_rewards_amount(
+		user: AccountIdOf<T>,
+		liquidity_asset_id: TokenId,
+	) -> Result<Balance, DispatchError> {
+		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
+		let rewards_info = RewardsInfo::<T>::try_get(user.clone(), liquidity_asset_id)
+			.or(Err(DispatchError::from(Error::<T>::MissingRewardsInfoError)))?;
+
+		let current_rewards = match rewards_info.activated_amount {
+			0 => 0u128,
+			_ => {
+				let calc =
+					RewardsCalculator::mining_rewards::<T>(user.clone(), liquidity_asset_id)?;
+				calc.calculate_rewards().map_err(|err| Into::<Error<T>>::into(err))?
+			},
+		};
+
+		Ok(current_rewards
+			.checked_add(rewards_info.rewards_not_yet_claimed)
+			.and_then(|v| v.checked_sub(rewards_info.rewards_already_claimed))
+			.ok_or(Error::<T>::CalculateRewardsMathError)?)
+	}
+
 
 	fn deactivate_liquidity_for_native_rewards_impl(
 		user: AccountIdOf<T>,
@@ -850,7 +874,16 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	fn calculate_rewards_amount_3rdparty(
+	pub fn calculate_3rdparty_rewards_all(
+		user: AccountIdOf<T>,
+		liquidity_asset_id: TokenId,
+	) -> Result<Vec<(TokenId, Balance)>, DispatchError> {
+		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
+		todo!();
+
+	}
+
+	pub fn calculate_rewards_amount_3rdparty(
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
 		rewards_asset_id: TokenId,
@@ -1254,23 +1287,9 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
 	) -> Result<Balance, DispatchError> {
-		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
-		let rewards_info = RewardsInfo::<T>::try_get(user.clone(), liquidity_asset_id)
-			.or(Err(DispatchError::from(Error::<T>::MissingRewardsInfoError)))?;
 
-		let current_rewards = match rewards_info.activated_amount {
-			0 => 0u128,
-			_ => {
-				let calc =
-					RewardsCalculator::mining_rewards::<T>(user.clone(), liquidity_asset_id)?;
-				calc.calculate_rewards().map_err(|err| Into::<Error<T>>::into(err))?
-			},
-		};
+		Self::calculate_native_rewards_amount(user, liquidity_asset_id)
 
-		Ok(current_rewards
-			.checked_add(rewards_info.rewards_not_yet_claimed)
-			.and_then(|v| v.checked_sub(rewards_info.rewards_already_claimed))
-			.ok_or(Error::<T>::CalculateRewardsMathError)?)
 	}
 }
 
@@ -1361,6 +1380,5 @@ impl<T: Config> LiquidityMiningApi for Pallet<T> {
 	}
 }
 
-// TODO: clean up test setup
-// TODO: dedicated 3rdparty rewards api
 // benchmark for claim 3rdparty rewards
+// limit min total amount of rewards not per session

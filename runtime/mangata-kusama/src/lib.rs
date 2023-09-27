@@ -280,7 +280,6 @@ impl pallet_proof_of_stake::Config for Runtime {
 	// TODO: allign
 	type RewardsSchedulesLimit = frame_support::traits::ConstU32<10>;
 	type MinRewardsPerSession = frame_support::traits::ConstU128<10>;
-	type MaxRewardTokensPerPool = frame_support::traits::ConstU32<5>;
 	type ValuationApi = Xyk;
 }
 
@@ -534,7 +533,6 @@ impl pallet_issuance::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type NativeCurrencyId = tokens::MgxTokenId;
 	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
-	//TODO
 	type BlocksPerRound = cfg::parachain_staking::BlocksPerRound;
 	type HistoryLimit = cfg::pallet_issuance::HistoryLimit;
 	type LiquidityMiningIssuanceVault = cfg::pallet_issuance::LiquidityMiningIssuanceVault;
@@ -777,7 +775,8 @@ impl_runtime_apis! {
 			user: AccountId,
 			liquidity_asset_id: TokenId,
 		) -> Balance{
-			todo!();
+			ProofOfStake::calculate_native_rewards_amount(user, liquidity_asset_id)
+				.unwrap_or_default()
 		}
 
 		fn calculate_3rdparty_rewards_amount(
@@ -785,14 +784,16 @@ impl_runtime_apis! {
 			liquidity_asset_id: TokenId,
 			reward_asset_id: TokenId,
 		) -> Balance{
-			todo!();
+			ProofOfStake::calculate_rewards_amount_3rdparty(user, liquidity_asset_id, reward_asset_id)
+				.unwrap_or_default()
 		}
 
-		fn calculate_3rdparty_rewards_amount_all(
+		fn calculate_3rdparty_rewards_all(
 			user: AccountId,
 			liquidity_asset_id: TokenId,
 		) -> Vec<(TokenId, Balance)>{
-			todo!();
+			ProofOfStake::calculate_3rdparty_rewards_all(user, liquidity_asset_id)
+				.unwrap_or_default()
 		}
 	}
 

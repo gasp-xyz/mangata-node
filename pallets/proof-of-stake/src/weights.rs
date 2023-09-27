@@ -55,11 +55,10 @@ use sp_std::marker::PhantomData;
 
 /// Weight functions needed for pallet_proof_of_stake.
 pub trait WeightInfo {
-	fn claim_rewards_all() -> Weight;
 	fn claim_native_rewards() -> Weight;
 	fn claim_3rdparty_rewards() -> Weight;
 	fn update_pool_promotion() -> Weight;
-	fn activate_liquidity() -> Weight;
+	fn activate_liquidity_for_native_rewards() -> Weight;
 	fn deactivate_liquidity_for_native_rewards() -> Weight;
 	fn deactivate_liquidity_for_3rdparty_rewards() -> Weight;
 	fn activate_liquidity_for_3rdparty_rewards() -> Weight;
@@ -68,14 +67,6 @@ pub trait WeightInfo {
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
-	// Storage: ProofOfStake PromotedPoolRewards (r:1 w:0)
-	// Storage: ProofOfStake RewardsInfo (r:1 w:1)
-	// Storage: Tokens Accounts (r:2 w:2)
-	fn claim_rewards_all() -> Weight {
-		(Weight::from_parts(97_590_000, 0))
-			.saturating_add(RocksDbWeight::get().reads(4 as u64))
-			.saturating_add(RocksDbWeight::get().writes(3 as u64))
-	}
 	// Storage: ProofOfStake PromotedPoolRewards (r:1 w:1)
 	fn update_pool_promotion() -> Weight {
 		(Weight::from_parts(52_090_000, 0))
@@ -87,7 +78,7 @@ impl WeightInfo for () {
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: ProofOfStake RewardsInfo (r:1 w:1)
 	// Storage: ProofOfStake TotalActivatedLiquidity (r:1 w:1)
-	fn activate_liquidity() -> Weight {
+	fn activate_liquidity_for_native_rewards() -> Weight {
 		(Weight::from_parts(116_150_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(5 as u64))
 			.saturating_add(RocksDbWeight::get().writes(4 as u64))

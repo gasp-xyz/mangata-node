@@ -56,12 +56,13 @@ use sp_std::marker::PhantomData;
 
 /// Weight functions needed for pallet_proof_of_stake.
 pub trait WeightInfo {
-	fn claim_rewards_all() -> Weight;
+	fn claim_native_rewards() -> Weight;
+	fn claim_3rdparty_rewards() -> Weight;
 	fn update_pool_promotion() -> Weight;
-	fn activate_liquidity() -> Weight;
-	fn deactivate_liquidity() -> Weight;
-	fn deactivate_liquidity_for_rewards_schedule() -> Weight;
-	fn activate_liquidity_for_rewards_schedule() -> Weight;
+	fn activate_liquidity_for_native_rewards() -> Weight;
+	fn deactivate_liquidity_for_native_rewards() -> Weight;
+	fn deactivate_liquidity_for_3rdparty_rewards() -> Weight;
+	fn activate_liquidity_for_3rdparty_rewards() -> Weight;
 	fn reward_pool() -> Weight;
 }
 
@@ -74,7 +75,13 @@ impl<T: frame_system::Config> pallet_proof_of_stake::WeightInfo for ModuleWeight
 	// Proof Skipped: ProofOfStake RewardsInfo (max_values: None, max_size: None, mode: Measured)
 	// Storage: Tokens Accounts (r:2 w:2)
 	// Proof: Tokens Accounts (max_values: None, max_size: Some(108), added: 2583, mode: MaxEncodedLen)
-	fn claim_rewards_all() -> Weight {
+	fn claim_native_rewards() -> Weight {
+		(Weight::from_parts(81_410_000, 0))
+			.saturating_add(T::DbWeight::get().reads(4 as u64))
+			.saturating_add(T::DbWeight::get().writes(3 as u64))
+	}
+
+	fn claim_3rdparty_rewards() -> Weight {
 		(Weight::from_parts(81_410_000, 0))
 			.saturating_add(T::DbWeight::get().reads(4 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
@@ -96,7 +103,7 @@ impl<T: frame_system::Config> pallet_proof_of_stake::WeightInfo for ModuleWeight
 	// Proof Skipped: ProofOfStake RewardsInfo (max_values: None, max_size: None, mode: Measured)
 	// Storage: ProofOfStake TotalActivatedLiquidity (r:1 w:1)
 	// Proof Skipped: ProofOfStake TotalActivatedLiquidity (max_values: None, max_size: None, mode: Measured)
-	fn activate_liquidity() -> Weight {
+	fn activate_liquidity_for_native_rewards() -> Weight {
 		(Weight::from_parts(94_130_000, 0))
 			.saturating_add(T::DbWeight::get().reads(5 as u64))
 			.saturating_add(T::DbWeight::get().writes(4 as u64))
@@ -111,20 +118,20 @@ impl<T: frame_system::Config> pallet_proof_of_stake::WeightInfo for ModuleWeight
 	// Proof: MultiPurposeLiquidity ReserveStatus (max_values: None, max_size: Some(124), added: 2599, mode: MaxEncodedLen)
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Proof: Tokens Accounts (max_values: None, max_size: Some(108), added: 2583, mode: MaxEncodedLen)
-	fn deactivate_liquidity() -> Weight {
+	fn deactivate_liquidity_for_native_rewards() -> Weight {
 		(Weight::from_parts(82_600_000, 0))
 			.saturating_add(T::DbWeight::get().reads(5 as u64))
 			.saturating_add(T::DbWeight::get().writes(4 as u64))
 	}
 
 
-	fn deactivate_liquidity_for_rewards_schedule() -> Weight {
+	fn deactivate_liquidity_for_3rdparty_rewards() -> Weight {
 		(Weight::from_parts(118_250_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(5 as u64))
 			.saturating_add(RocksDbWeight::get().writes(4 as u64))
 	}
 
-	fn activate_liquidity_for_rewards_schedule() -> Weight {
+	fn activate_liquidity_for_3rdparty_rewards() -> Weight {
 		(Weight::from_parts(118_250_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(5 as u64))
 			.saturating_add(RocksDbWeight::get().writes(4 as u64))
@@ -145,11 +152,24 @@ impl WeightInfo for () {
 	// Proof Skipped: ProofOfStake RewardsInfo (max_values: None, max_size: None, mode: Measured)
 	// Storage: Tokens Accounts (r:2 w:2)
 	// Proof: Tokens Accounts (max_values: None, max_size: Some(108), added: 2583, mode: MaxEncodedLen)
-	fn claim_rewards_all() -> Weight {
+	fn claim_native_rewards() -> Weight {
 		(Weight::from_parts(81_410_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(4 as u64))
 			.saturating_add(RocksDbWeight::get().writes(3 as u64))
 	}
+
+	// Storage: ProofOfStake PromotedPoolRewards (r:1 w:0)
+	// Proof Skipped: ProofOfStake PromotedPoolRewards (max_values: Some(1), max_size: None, mode: Measured)
+	// Storage: ProofOfStake RewardsInfo (r:1 w:1)
+	// Proof Skipped: ProofOfStake RewardsInfo (max_values: None, max_size: None, mode: Measured)
+	// Storage: Tokens Accounts (r:2 w:2)
+	// Proof: Tokens Accounts (max_values: None, max_size: Some(108), added: 2583, mode: MaxEncodedLen)
+	fn claim_3rdparty_rewards() -> Weight {
+		(Weight::from_parts(81_410_000, 0))
+			.saturating_add(RocksDbWeight::get().reads(4 as u64))
+			.saturating_add(RocksDbWeight::get().writes(3 as u64))
+	}
+
 	// Storage: ProofOfStake PromotedPoolRewards (r:1 w:1)
 	// Proof Skipped: ProofOfStake PromotedPoolRewards (max_values: Some(1), max_size: None, mode: Measured)
 	fn update_pool_promotion() -> Weight {
@@ -167,7 +187,7 @@ impl WeightInfo for () {
 	// Proof Skipped: ProofOfStake RewardsInfo (max_values: None, max_size: None, mode: Measured)
 	// Storage: ProofOfStake TotalActivatedLiquidity (r:1 w:1)
 	// Proof Skipped: ProofOfStake TotalActivatedLiquidity (max_values: None, max_size: None, mode: Measured)
-	fn activate_liquidity() -> Weight {
+	fn activate_liquidity_for_native_rewards() -> Weight {
 		(Weight::from_parts(94_130_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(5 as u64))
 			.saturating_add(RocksDbWeight::get().writes(4 as u64))
@@ -182,19 +202,19 @@ impl WeightInfo for () {
 	// Proof: MultiPurposeLiquidity ReserveStatus (max_values: None, max_size: Some(124), added: 2599, mode: MaxEncodedLen)
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Proof: Tokens Accounts (max_values: None, max_size: Some(108), added: 2583, mode: MaxEncodedLen)
-	fn deactivate_liquidity() -> Weight {
+	fn deactivate_liquidity_for_native_rewards() -> Weight {
 		(Weight::from_parts(82_600_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(5 as u64))
 			.saturating_add(RocksDbWeight::get().writes(4 as u64))
 	}
 
-	fn deactivate_liquidity_for_rewards_schedule() -> Weight {
+	fn deactivate_liquidity_for_3rdparty_rewards() -> Weight {
 		(Weight::from_parts(118_250_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(5 as u64))
 			.saturating_add(RocksDbWeight::get().writes(4 as u64))
 	}
 
-	fn activate_liquidity_for_rewards_schedule() -> Weight {
+	fn activate_liquidity_for_3rdparty_rewards() -> Weight {
 		(Weight::from_parts(118_250_000, 0))
 			.saturating_add(RocksDbWeight::get().reads(5 as u64))
 			.saturating_add(RocksDbWeight::get().writes(4 as u64))

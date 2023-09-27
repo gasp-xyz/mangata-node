@@ -6,7 +6,7 @@
 //!
 //! ## Types of Rewards
 //!
-//! ### Liquidity Mining Rewards
+//! ### Native Rewards
 //!
 //! As described in Mangata tokenomics, during each session, some of the rewards are minted and distributed
 //! among promoted pools. The council decides which pool to promote, and each promoted pool has a weight
@@ -39,7 +39,7 @@
 //! - [`Pallet::claim_native_rewards`] - Claims all rewards for all liquidity tokens.
 //! - [`Pallet::update_pool_promotion`] - Enables/disables the pool for liquidity mining rewards.
 //!
-//! ### Scheduled Rewards
+//! ### 3rd Party Rewards
 //!
 //! Anyone can provide tokens to reward people who store a particular liquidity token. Any
 //! liquidity token can be rewarded with any other token provided by the user. Liquidity can be
@@ -690,11 +690,6 @@ pub mod pallet {
 	}
 }
 
-pub enum RewardsKind {
-	RewardsLiquidityMinting,
-	Rewards3rdParty(TokenId),
-}
-
 impl<T: Config> Pallet<T> {
 	fn activate_liquidity_for_native_rewards_impl(
 		user: AccountIdOf<T>,
@@ -876,11 +871,12 @@ impl<T: Config> Pallet<T> {
 
 	pub fn calculate_3rdparty_rewards_all(
 		user: AccountIdOf<T>,
-		liquidity_asset_id: TokenId,
-	) -> Result<Vec<(TokenId, Balance)>, DispatchError> {
-		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
-		todo!();
-
+	) -> Result<Vec<(TokenId, TokenId, Balance)>, DispatchError> {
+		RewardsInfoForScheduleRewards::<T>::iter_prefix(user.clone())
+			.map(|((liq_token, reward_token), _)|
+			Self::calculate_rewards_amount_3rdparty(user.clone(), liq_token, reward_token)
+				.map(|amount| (liq_token, reward_token, amount))
+		).collect::<Result<Vec<_>, _>>()
 	}
 
 	pub fn calculate_rewards_amount_3rdparty(
@@ -1381,4 +1377,4 @@ impl<T: Config> LiquidityMiningApi for Pallet<T> {
 }
 
 // benchmark for claim 3rdparty rewards
-// move runtime configs to common runtime
+// test for calculate_3rdparty_rewards_all

@@ -805,8 +805,8 @@ impl_runtime_apis! {
 		fn calculate_3rdparty_rewards_all(
 			user: AccountId,
 			liquidity_asset_id: TokenId,
-		) -> Vec<(TokenId, Balance)>{
-			ProofOfStake::calculate_3rdparty_rewards_all(user, liquidity_asset_id)
+		) -> Vec<(TokenId, TokenId, Balance)>{
+			ProofOfStake::calculate_3rdparty_rewards_all(user)
 				.unwrap_or_default()
 		}
 	}

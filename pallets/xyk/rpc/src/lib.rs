@@ -101,9 +101,6 @@ pub trait XykApi<BlockHash, Balance, TokenId, AccountId> {
 	#[method(name = "xyk_get_liq_tokens_for_trading")]
 	fn get_liq_tokens_for_trading(&self, at: Option<BlockHash>) -> RpcResult<Vec<TokenId>>;
 
-	#[method(name = "xyk_get_liq_tokens_for_trading")]
-	fn get_liq_tokens_for_trading(&self, at: Option<BlockHash>) -> RpcResult<Vec<TokenId>>;
-
 	#[method(name = "xyk_is_buy_asset_lock_free")]
 	fn is_buy_asset_lock_free(
 		&self,

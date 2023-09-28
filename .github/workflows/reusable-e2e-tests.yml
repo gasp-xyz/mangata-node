@@ -175,7 +175,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: '18.16.1'
           cache: 'yarn'
           cache-dependency-path: '**/yarn.lock'
 
@@ -189,7 +189,8 @@ jobs:
 
       - name: Install e2e tests dependencies
         working-directory: e2eTests
-        run: yarn
+        # TODO: remove cache clean later
+        run: yarn cache clean; yarn
 
       - name: Run parachain launch
         working-directory: devops/parachain-launch

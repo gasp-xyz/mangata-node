@@ -702,7 +702,6 @@ impl<T: Config> Pallet<T> {
 
 		Self::set_liquidity_minting_checkpoint(user.clone(), liquidity_asset_id, amount)?;
 
-		println!("activate");
 		<T as Config>::ActivationReservesProvider::activate(
 			liquidity_asset_id,
 			&user,
@@ -821,7 +820,6 @@ impl<T: Config> Pallet<T> {
 
 		match use_balance_from {
 			ThirdPartyActivationKind::ActivateKind(use_balance_from) => {
-				println!("activate");
 				<T as Config>::ActivationReservesProvider::activate(
 					liquidity_asset_id,
 					&user,
@@ -1108,12 +1106,10 @@ impl<T: Config> Pallet<T> {
 			},
 		)?;
 
-		println!("BURNING : {user} {liquidity_asset_id} {reward_token}");
 		ActivatedLiquidityForSchedules::<T>::try_mutate_exists(
 			(user.clone(), liquidity_asset_id, reward_token),
 			|v| {
 				v.and_then(|a| {
-					println!("{a} {liquidity_assets_burned}");
 					a.checked_sub(liquidity_assets_burned).and_then(|val| {
 						if val > 0 {
 							*v = Some(val);
@@ -1143,7 +1139,6 @@ impl<T: Config> Pallet<T> {
 				},
 			);
 
-			println!("deactivate");
 			<T as Config>::ActivationReservesProvider::deactivate(
 				liquidity_asset_id,
 				&user,

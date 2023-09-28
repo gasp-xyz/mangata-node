@@ -230,7 +230,6 @@ impl<T: CurveRewards> RewardsCalculator<T> {
 			.and_then(|v| v.checked_sub(self.rewards_info.rewards_already_claimed))
 			.ok_or(RewardsCalcError::CheckpointMathError)?;
 
-		println!("STORING {}", self.rewards_context.pool_ratio_current);
 		Ok(RewardInfo {
 			activated_amount,
 			pool_ratio_at_last_checkpoint: self.rewards_context.pool_ratio_current,

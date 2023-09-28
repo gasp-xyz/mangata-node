@@ -774,7 +774,7 @@ impl_runtime_apis! {
 			user: AccountId,
 			liquidity_asset_id: TokenId,
 		) -> Balance{
-			ProofOfStake::calculate_native_rewards_amount(user, liquidity_asset_id)
+			pallet_proof_of_stake::Pallet::<Runtime>::calculate_native_rewards_amount(user, liquidity_asset_id)
 				.unwrap_or_default()
 		}
 
@@ -783,7 +783,7 @@ impl_runtime_apis! {
 			liquidity_asset_id: TokenId,
 			reward_asset_id: TokenId,
 		) -> Balance{
-			ProofOfStake::calculate_rewards_amount_3rdparty(user, liquidity_asset_id, reward_asset_id)
+			pallet_proof_of_stake::Pallet::<Runtime>::calculate_3rdparty_rewards_amount(user, liquidity_asset_id, reward_asset_id)
 				.unwrap_or_default()
 		}
 
@@ -791,7 +791,7 @@ impl_runtime_apis! {
 			user: AccountId,
 			liquidity_asset_id: TokenId,
 		) -> Vec<(TokenId, TokenId, Balance)>{
-			ProofOfStake::calculate_3rdparty_rewards_all(user)
+			pallet_proof_of_stake::Pallet::<Runtime>::calculate_3rdparty_rewards_all(user)
 				.unwrap_or_default()
 		}
 	}

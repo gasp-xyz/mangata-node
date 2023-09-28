@@ -308,6 +308,7 @@ where
 		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
 		+ ver_api::VerApi<Block>
 		+ ver_api::VerNonceApi<Block, AccountId>
+		+ proof_of_stake_rpc::ProofOfStakeRuntimeApi<Block, Balance, TokenId, AccountId>
 		+ xyk_rpc::XykRuntimeApi<Block, Balance, TokenId, AccountId>
 		+ sp_consensus_aura::AuraApi<Block, AuraId>,
 	sc_client_api::StateBackendFor<TFullBackend<Block>, Block>: sp_api::StateBackend<BlakeTwo256>,
@@ -532,6 +533,7 @@ where
 		+ ver_api::VerApi<Block>
 		+ ver_api::VerNonceApi<Block, AccountId>
 		+ xyk_rpc::XykRuntimeApi<Block, Balance, TokenId, AccountId>
+		+ proof_of_stake_rpc::ProofOfStakeRuntimeApi<Block, Balance, TokenId, AccountId>
 		+ sp_consensus_aura::AuraApi<Block, AuraId>,
 {
 	start_node_impl::<RuntimeApi, Executor, _, _>(

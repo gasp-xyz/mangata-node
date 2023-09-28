@@ -728,10 +728,8 @@ fn test_bootstrap_state_transitions() {
 		Bootstrap::on_initialize(BOOTSTRAP_PUBLIC_START);
 		assert_eq!(Bootstrap::phase(), BootstrapPhase::Public);
 
-		println!("{:?}", Bootstrap::phase());
 		for i in BOOTSTRAP_PUBLIC_START..BOOTSTRAP_FINISH {
 			Bootstrap::on_initialize(i);
-			println!("{:?}", Bootstrap::phase());
 			assert_eq!(Bootstrap::phase(), BootstrapPhase::Public);
 		}
 

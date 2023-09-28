@@ -46,6 +46,7 @@ where
 	C::Api: pallet_transaction_payment_mangata_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
 	C::Api: xyk_rpc::XykRuntimeApi<Block, Balance, TokenId, AccountId>,
+	C::Api: proof_of_stake_rpc::ProofOfStakeRuntimeApi<Block, Balance, TokenId, AccountId>,
 	C::Api: BlockBuilder<Block>,
 	C::Api: VerNonceApi<Block, AccountId>,
 	P: TransactionPool + Sync + Send + 'static,

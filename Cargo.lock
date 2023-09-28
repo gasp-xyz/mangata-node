@@ -9282,6 +9282,7 @@ name = "proof-of-stake-rpc"
 version = "2.0.0"
 dependencies = [
  "jsonrpsee",
+ "mangata-types",
  "parity-scale-codec",
  "proof-of-stake-runtime-api",
  "serde",

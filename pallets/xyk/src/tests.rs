@@ -1867,6 +1867,36 @@ fn burn_all_liq_and_mint_it_again() {
 			Error::<Test>::PoolIsEmpty,
 		);
 
+		// calculate_buy_price_id should fail as pool is empty
+		assert_err!(
+			XykStorage::calculate_buy_price_id(
+				1,
+				4,
+				20000
+			),
+			Error::<Test>::PoolIsEmpty,
+		);
+
+		// calculate_sell_price_id should fail as pool is empty
+		assert_err!(
+			XykStorage::calculate_sell_price_id(
+				1,
+				4,
+				20000
+			),
+			Error::<Test>::PoolIsEmpty,
+		);
+
+		// get_burn_amount should fail as pool is empty
+		assert_err!(
+			XykStorage::get_burn_amount(
+				1,
+				4,
+				20000
+			),
+			Error::<Test>::PoolIsEmpty,
+		);
+
 		let user_assets_1_value_after_sell = XykStorage::balance(1, DUMMY_USER_ID);
 		let user_assets_4_value_after_sell = XykStorage::balance(4, DUMMY_USER_ID);
 

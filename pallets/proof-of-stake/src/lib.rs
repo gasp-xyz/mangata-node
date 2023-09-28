@@ -394,7 +394,7 @@ pub mod pallet {
 		#[transactional]
 		#[pallet::call_index(0)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::claim_native_rewards())]
-        #[deprecated(note = "claim_native_rewards should be used instead")]
+		#[deprecated(note = "claim_native_rewards should be used instead")]
 		pub fn claim_rewards_all(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
@@ -468,11 +468,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			Self::deactivate_liquidity_for_native_rewards_impl(
-				sender,
-				liquidity_token_id,
-				amount,
-			)
+			Self::deactivate_liquidity_for_native_rewards_impl(sender, liquidity_token_id, amount)
 		}
 
 		/// Schedules rewards for selected liquidity token
@@ -662,17 +658,13 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			Self::deactivate_liquidity_for_native_rewards_impl(
-				sender,
-				liquidity_token_id,
-				amount,
-			)
+			Self::deactivate_liquidity_for_native_rewards_impl(sender, liquidity_token_id, amount)
 		}
 
 		#[transactional]
 		#[pallet::call_index(10)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::claim_native_rewards())]
-        #[deprecated(note = "claim_native_rewards should be used instead")]
+		#[deprecated(note = "claim_native_rewards should be used instead")]
 		pub fn claim_native_rewards(
 			origin: OriginFor<T>,
 			liquidity_token_id: TokenId,
@@ -686,7 +678,6 @@ pub mod pallet {
 
 			Ok(())
 		}
-
 	}
 }
 
@@ -745,7 +736,6 @@ impl<T: Config> Pallet<T> {
 			.and_then(|v| v.checked_sub(rewards_info.rewards_already_claimed))
 			.ok_or(Error::<T>::CalculateRewardsMathError)?)
 	}
-
 
 	fn deactivate_liquidity_for_native_rewards_impl(
 		user: AccountIdOf<T>,
@@ -872,11 +862,14 @@ impl<T: Config> Pallet<T> {
 	pub fn calculate_3rdparty_rewards_all(
 		user: AccountIdOf<T>,
 	) -> Result<Vec<(TokenId, TokenId, Balance)>, DispatchError> {
-		RewardsInfoForScheduleRewards::<T>::iter_prefix(user.clone())
-			.map(|((liq_token, reward_token), _)|
-			Self::calculate_3rdparty_rewards_amount(user.clone(), liq_token, reward_token)
-				.map(|amount| (liq_token, reward_token, amount))
-		).collect::<Result<Vec<_>, _>>()
+		let mut result = RewardsInfoForScheduleRewards::<T>::iter_prefix(user.clone())
+			.map(|((liq_token, reward_token), _)| {
+				Self::calculate_3rdparty_rewards_amount(user.clone(), liq_token, reward_token)
+					.map(|amount| (liq_token, reward_token, amount))
+			})
+			.collect::<Result<Vec<_>, _>>();
+		result.as_mut().map(|v| v.sort());
+		result
 	}
 
 	pub fn calculate_3rdparty_rewards_amount(
@@ -1283,9 +1276,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
 	) -> Result<Balance, DispatchError> {
-
 		Self::calculate_native_rewards_amount(user, liquidity_asset_id)
-
 	}
 }
 
@@ -1376,5 +1367,4 @@ impl<T: Config> LiquidityMiningApi for Pallet<T> {
 	}
 }
 
-// benchmark for claim 3rdparty rewards
 // test for calculate_3rdparty_rewards_all

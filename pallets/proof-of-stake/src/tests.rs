@@ -5,6 +5,7 @@
 use super::*;
 use crate::mock::*;
 use frame_support::{assert_err, assert_ok};
+use mockall::predicate::eq;
 use serial_test::serial;
 
 use mangata_support::traits::{ComputeIssuance, GetIssuance};
@@ -13,7 +14,13 @@ type TokensOf<Test> = <Test as Config>::Currency;
 
 fn mint_and_activate_tokens(who: AccountId, token_id: TokenId, amount: Balance) {
 	TokensOf::<Test>::mint(token_id, &who, amount).unwrap();
-	ProofOfStake::activate_liquidity_for_native_rewards(RuntimeOrigin::signed(who), token_id, amount, None).unwrap();
+	ProofOfStake::activate_liquidity_for_native_rewards(
+		RuntimeOrigin::signed(who),
+		token_id,
+		amount,
+		None,
+	)
+	.unwrap();
 }
 
 fn initialize_liquidity_rewards() {
@@ -32,7 +39,8 @@ fn initialize_liquidity_rewards() {
 		pools.get_mut(&4).unwrap().rewards = U256::from(0);
 	});
 
-	ProofOfStake::activate_liquidity_for_native_rewards(RuntimeOrigin::signed(2), 4, 10000, None).unwrap();
+	ProofOfStake::activate_liquidity_for_native_rewards(RuntimeOrigin::signed(2), 4, 10000, None)
+		.unwrap();
 }
 
 pub(crate) fn roll_to_session(n: u32) {
@@ -75,8 +83,13 @@ fn liquidity_rewards_single_user_mint_W() {
 		let liquidity_tokens_owned = TokensOf::<Test>::free_balance(4, &2);
 
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 2u8).unwrap();
-		ProofOfStake::activate_liquidity_for_native_rewards(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned, None)
-			.unwrap();
+		ProofOfStake::activate_liquidity_for_native_rewards(
+			RuntimeOrigin::signed(2),
+			4,
+			liquidity_tokens_owned,
+			None,
+		)
+		.unwrap();
 
 		let rewards_info = ProofOfStake::get_rewards_info(2, 4);
 
@@ -144,8 +157,13 @@ fn liquidity_rewards_three_users_burn_W() {
 		TokensOf::<Test>::transfer(1, &2, &4, 1000000, ExistenceRequirement::AllowDeath).unwrap();
 
 		let liquidity_tokens_owned = TokensOf::<Test>::free_balance(4, &2);
-		ProofOfStake::activate_liquidity_for_native_rewards(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned, None)
-			.unwrap();
+		ProofOfStake::activate_liquidity_for_native_rewards(
+			RuntimeOrigin::signed(2),
+			4,
+			liquidity_tokens_owned,
+			None,
+		)
+		.unwrap();
 
 		forward_to_block(100);
 
@@ -156,7 +174,8 @@ fn liquidity_rewards_three_users_burn_W() {
 		mint_and_activate_tokens(4, 4, 10000);
 		forward_to_block(240);
 
-		ProofOfStake::deactivate_liquidity_for_native_rewards(RuntimeOrigin::signed(4), 4, 5000).unwrap();
+		ProofOfStake::deactivate_liquidity_for_native_rewards(RuntimeOrigin::signed(4), 4, 5000)
+			.unwrap();
 		forward_to_block(400);
 
 		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 95965);
@@ -189,8 +208,13 @@ fn liquidity_rewards_claim_W() {
 		TokensOf::<Test>::create(&acc_id, 10000).unwrap();
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
 		let liquidity_tokens_owned = TokensOf::<Test>::free_balance(4, &2);
-		ProofOfStake::activate_liquidity_for_native_rewards(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned, None)
-			.unwrap();
+		ProofOfStake::activate_liquidity_for_native_rewards(
+			RuntimeOrigin::signed(2),
+			4,
+			liquidity_tokens_owned,
+			None,
+		)
+		.unwrap();
 
 		forward_to_block(10);
 		forward_to_block(90);
@@ -260,8 +284,13 @@ fn liquidity_rewards_work_after_burn_W() {
 		TokensOf::<Test>::transfer(1, &2, &4, 1000000, ExistenceRequirement::AllowDeath).unwrap();
 
 		let liquidity_tokens_owned = TokensOf::<Test>::free_balance(4, &2);
-		ProofOfStake::activate_liquidity_for_native_rewards(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned, None)
-			.unwrap();
+		ProofOfStake::activate_liquidity_for_native_rewards(
+			RuntimeOrigin::signed(2),
+			4,
+			liquidity_tokens_owned,
+			None,
+		)
+		.unwrap();
 
 		forward_to_block(100);
 		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 14704);
@@ -272,7 +301,8 @@ fn liquidity_rewards_work_after_burn_W() {
 		mint_and_activate_tokens(4, 4, 10000);
 		forward_to_block(240);
 
-		ProofOfStake::deactivate_liquidity_for_native_rewards(RuntimeOrigin::signed(4), 4, 10000).unwrap();
+		ProofOfStake::deactivate_liquidity_for_native_rewards(RuntimeOrigin::signed(4), 4, 10000)
+			.unwrap();
 		forward_to_block(400);
 
 		assert_eq!(ProofOfStake::calculate_rewards_amount(4, 4).unwrap(), 948);
@@ -301,8 +331,13 @@ fn liquidity_rewards_deactivate_transfer_controled_W() {
 
 		let liquidity_tokens_owned = TokensOf::<Test>::free_balance(4, &2);
 
-		ProofOfStake::activate_liquidity_for_native_rewards(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned, None)
-			.unwrap();
+		ProofOfStake::activate_liquidity_for_native_rewards(
+			RuntimeOrigin::signed(2),
+			4,
+			liquidity_tokens_owned,
+			None,
+		)
+		.unwrap();
 		assert_err!(
 			TokensOf::<Test>::transfer(4, &2, &3, 10, ExistenceRequirement::AllowDeath),
 			orml_tokens::Error::<Test>::BalanceTooLow,
@@ -311,8 +346,12 @@ fn liquidity_rewards_deactivate_transfer_controled_W() {
 		forward_to_block(100);
 		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 14704);
 
-		ProofOfStake::deactivate_liquidity_for_native_rewards(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned)
-			.unwrap();
+		ProofOfStake::deactivate_liquidity_for_native_rewards(
+			RuntimeOrigin::signed(2),
+			4,
+			liquidity_tokens_owned,
+		)
+		.unwrap();
 		TokensOf::<Test>::transfer(4, &2, &3, 10, ExistenceRequirement::AllowDeath).unwrap();
 		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 14704);
 	});
@@ -335,8 +374,13 @@ fn liquidity_rewards_deactivate_more_NW() {
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
 
 		let liquidity_tokens_owned = TokensOf::<Test>::free_balance(4, &2);
-		ProofOfStake::activate_liquidity_for_native_rewards(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned, None)
-			.unwrap();
+		ProofOfStake::activate_liquidity_for_native_rewards(
+			RuntimeOrigin::signed(2),
+			4,
+			liquidity_tokens_owned,
+			None,
+		)
+		.unwrap();
 		assert_err!(
 			ProofOfStake::deactivate_liquidity_for_native_rewards(
 				RuntimeOrigin::signed(2),
@@ -452,20 +496,34 @@ fn liquidity_rewards_not_yet_claimed_already_claimed_W() {
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
 
 		let liquidity_tokens_owned = TokensOf::<Test>::free_balance(4, &2);
-		ProofOfStake::activate_liquidity_for_native_rewards(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned, None)
-			.unwrap();
+		ProofOfStake::activate_liquidity_for_native_rewards(
+			RuntimeOrigin::signed(2),
+			4,
+			liquidity_tokens_owned,
+			None,
+		)
+		.unwrap();
 
 		forward_to_block(10);
 
 		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 291);
-		ProofOfStake::deactivate_liquidity_for_native_rewards(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned)
-			.unwrap();
+		ProofOfStake::deactivate_liquidity_for_native_rewards(
+			RuntimeOrigin::signed(2),
+			4,
+			liquidity_tokens_owned,
+		)
+		.unwrap();
 
 		let rewards_info = ProofOfStake::get_rewards_info(2, 4);
 		assert_eq!(rewards_info.rewards_not_yet_claimed, 291);
 
-		ProofOfStake::activate_liquidity_for_native_rewards(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned, None)
-			.unwrap();
+		ProofOfStake::activate_liquidity_for_native_rewards(
+			RuntimeOrigin::signed(2),
+			4,
+			liquidity_tokens_owned,
+			None,
+		)
+		.unwrap();
 
 		forward_to_block(100);
 
@@ -493,7 +551,8 @@ fn extreme_case_pool_ratio() {
 		TokensOf::<Test>::create(&acc_id, max).unwrap();
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
 
-		ProofOfStake::activate_liquidity_for_native_rewards(RuntimeOrigin::signed(2), 4, 1, None).unwrap();
+		ProofOfStake::activate_liquidity_for_native_rewards(RuntimeOrigin::signed(2), 4, 1, None)
+			.unwrap();
 
 		PromotedPoolRewards::<Test>::mutate(|pools| {
 			pools.get_mut(&4).unwrap().rewards = U256::from(u128::MAX) * U256::from(u128::MAX);
@@ -630,7 +689,13 @@ fn rewards_storage_right_amounts_start1() {
 		TokensOf::<Test>::transfer(2, &2, &5, 20010, ExistenceRequirement::AllowDeath).unwrap();
 		TokensOf::<Test>::transfer(1, &2, &6, 20010, ExistenceRequirement::AllowDeath).unwrap();
 		TokensOf::<Test>::transfer(2, &2, &6, 20010, ExistenceRequirement::AllowDeath).unwrap();
-		ProofOfStake::activate_liquidity_for_native_rewards(RuntimeOrigin::signed(2), 4, 10000, None).unwrap();
+		ProofOfStake::activate_liquidity_for_native_rewards(
+			RuntimeOrigin::signed(2),
+			4,
+			10000,
+			None,
+		)
+		.unwrap();
 		mint_and_activate_tokens(3, 4, 10000);
 		mint_and_activate_tokens(4, 4, 10000);
 		mint_and_activate_tokens(5, 4, 10000);
@@ -687,7 +752,8 @@ fn rewards_storage_right_amounts_start1() {
 
 		// usecase 6 burn some
 		user_balance_before = TokensOf::<Test>::free_balance(0, &3);
-		ProofOfStake::deactivate_liquidity_for_native_rewards(RuntimeOrigin::signed(3), 4, 5000).unwrap();
+		ProofOfStake::deactivate_liquidity_for_native_rewards(RuntimeOrigin::signed(3), 4, 5000)
+			.unwrap();
 
 		user_balance_after = TokensOf::<Test>::free_balance(0, &3);
 		rewards_info = ProofOfStake::get_rewards_info(3, 4);
@@ -710,7 +776,8 @@ fn rewards_storage_right_amounts_start1() {
 
 		// usecase 8 deactivate some
 		user_balance_before = TokensOf::<Test>::free_balance(0, &5);
-		ProofOfStake::deactivate_liquidity_for_native_rewards(RuntimeOrigin::signed(5), 4, 5000).unwrap();
+		ProofOfStake::deactivate_liquidity_for_native_rewards(RuntimeOrigin::signed(5), 4, 5000)
+			.unwrap();
 		user_balance_after = TokensOf::<Test>::free_balance(0, &5);
 		rewards_info = ProofOfStake::get_rewards_info(5, 4);
 
@@ -767,7 +834,13 @@ fn rewards_storage_right_amounts_start2() {
 		TokensOf::<Test>::transfer(2, &2, &5, 20010, ExistenceRequirement::AllowDeath).unwrap();
 		TokensOf::<Test>::transfer(1, &2, &6, 20010, ExistenceRequirement::AllowDeath).unwrap();
 		TokensOf::<Test>::transfer(2, &2, &6, 20010, ExistenceRequirement::AllowDeath).unwrap();
-		ProofOfStake::activate_liquidity_for_native_rewards(RuntimeOrigin::signed(2), 4, 10000, None).unwrap();
+		ProofOfStake::activate_liquidity_for_native_rewards(
+			RuntimeOrigin::signed(2),
+			4,
+			10000,
+			None,
+		)
+		.unwrap();
 		mint_and_activate_tokens(3, 4, 10000);
 		mint_and_activate_tokens(4, 4, 10000);
 		mint_and_activate_tokens(5, 4, 10000);
@@ -778,10 +851,14 @@ fn rewards_storage_right_amounts_start2() {
 			PromotedPoolRewards::<Test>::get().get(&4).unwrap().rewards
 		);
 
-		ProofOfStake::deactivate_liquidity_for_native_rewards(RuntimeOrigin::signed(2), 4, 5000).unwrap();
-		ProofOfStake::deactivate_liquidity_for_native_rewards(RuntimeOrigin::signed(3), 4, 5000).unwrap();
-		ProofOfStake::deactivate_liquidity_for_native_rewards(RuntimeOrigin::signed(4), 4, 5000).unwrap();
-		ProofOfStake::deactivate_liquidity_for_native_rewards(RuntimeOrigin::signed(5), 4, 5000).unwrap();
+		ProofOfStake::deactivate_liquidity_for_native_rewards(RuntimeOrigin::signed(2), 4, 5000)
+			.unwrap();
+		ProofOfStake::deactivate_liquidity_for_native_rewards(RuntimeOrigin::signed(3), 4, 5000)
+			.unwrap();
+		ProofOfStake::deactivate_liquidity_for_native_rewards(RuntimeOrigin::signed(4), 4, 5000)
+			.unwrap();
+		ProofOfStake::deactivate_liquidity_for_native_rewards(RuntimeOrigin::signed(5), 4, 5000)
+			.unwrap();
 
 		forward_to_block_with_custom_rewards(200, 20000); //its really weird that rewards are
 												  //decreased from 40k to 20k in single
@@ -823,7 +900,8 @@ fn rewards_storage_right_amounts_start2() {
 
 		// usecase 9 burn some
 		user_balance_before = TokensOf::<Test>::free_balance(0, &3);
-		ProofOfStake::deactivate_liquidity_for_native_rewards(RuntimeOrigin::signed(3), 4, 5000).unwrap();
+		ProofOfStake::deactivate_liquidity_for_native_rewards(RuntimeOrigin::signed(3), 4, 5000)
+			.unwrap();
 		user_balance_after = TokensOf::<Test>::free_balance(0, &3);
 		rewards_info = ProofOfStake::get_rewards_info(3, 4);
 
@@ -845,7 +923,8 @@ fn rewards_storage_right_amounts_start2() {
 
 		// usecase 11 deactivate some
 		user_balance_before = TokensOf::<Test>::free_balance(0, &5);
-		ProofOfStake::deactivate_liquidity_for_native_rewards(RuntimeOrigin::signed(5), 4, 5000).unwrap();
+		ProofOfStake::deactivate_liquidity_for_native_rewards(RuntimeOrigin::signed(5), 4, 5000)
+			.unwrap();
 		user_balance_after = TokensOf::<Test>::free_balance(0, &5);
 		rewards_info = ProofOfStake::get_rewards_info(5, 4);
 
@@ -888,7 +967,13 @@ fn rewards_storage_right_amounts_start3() {
 		TokensOf::<Test>::transfer(1, &2, &4, 20010, ExistenceRequirement::AllowDeath).unwrap();
 		TokensOf::<Test>::transfer(2, &2, &4, 20010, ExistenceRequirement::AllowDeath).unwrap();
 
-		ProofOfStake::activate_liquidity_for_native_rewards(RuntimeOrigin::signed(2), 4, 10000, None).unwrap();
+		ProofOfStake::activate_liquidity_for_native_rewards(
+			RuntimeOrigin::signed(2),
+			4,
+			10000,
+			None,
+		)
+		.unwrap();
 		mint_and_activate_tokens(3, 4, 10000);
 
 		forward_to_block_with_custom_rewards(100, 20000);
@@ -965,8 +1050,13 @@ fn liquidity_rewards_transfered_liq_tokens_produce_rewards_W() {
 		)
 		.unwrap();
 
-		ProofOfStake::activate_liquidity_for_native_rewards(RuntimeOrigin::signed(3), 4, liquidity_tokens_owned, None)
-			.unwrap();
+		ProofOfStake::activate_liquidity_for_native_rewards(
+			RuntimeOrigin::signed(3),
+			4,
+			liquidity_tokens_owned,
+			None,
+		)
+		.unwrap();
 
 		forward_to_block(100);
 
@@ -1022,7 +1112,13 @@ fn test_migrated_from_pallet_issuance() {
 
 		assert_eq!(1, TokensOf::<Test>::create(&99999, 1_000_000u128).unwrap());
 		ProofOfStake::enable(1, 1u8);
-		ProofOfStake::activate_liquidity_for_native_rewards(RuntimeOrigin::signed(99999), 1, 1, None).unwrap();
+		ProofOfStake::activate_liquidity_for_native_rewards(
+			RuntimeOrigin::signed(99999),
+			1,
+			1,
+			None,
+		)
+		.unwrap();
 
 		roll_to_while_minting(4, None);
 		assert_eq!(
@@ -1037,7 +1133,13 @@ fn test_migrated_from_pallet_issuance() {
 
 		assert_eq!(2, TokensOf::<Test>::create(&99999, 1_000_000u128).unwrap());
 		ProofOfStake::enable(2, 1u8);
-		ProofOfStake::activate_liquidity_for_native_rewards(RuntimeOrigin::signed(99999), 2, 1, None).unwrap();
+		ProofOfStake::activate_liquidity_for_native_rewards(
+			RuntimeOrigin::signed(99999),
+			2,
+			1,
+			None,
+		)
+		.unwrap();
 		roll_to_while_minting(14, None);
 		assert_eq!(
 			U256::from_dec_str("191427546923208537313638702283778366195067525").unwrap(),
@@ -1085,8 +1187,13 @@ fn claim_rewards_from_pool_that_has_been_disabled() {
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
 
 		let liquidity_tokens_owned = TokensOf::<Test>::free_balance(4, &2);
-		ProofOfStake::activate_liquidity_for_native_rewards(RuntimeOrigin::signed(2), 4, liquidity_tokens_owned, None)
-			.unwrap();
+		ProofOfStake::activate_liquidity_for_native_rewards(
+			RuntimeOrigin::signed(2),
+			4,
+			liquidity_tokens_owned,
+			None,
+		)
+		.unwrap();
 
 		forward_to_block(10);
 
@@ -1102,11 +1209,15 @@ fn claim_rewards_from_pool_that_has_been_disabled() {
 
 const MILLION: u128 = 1_000_000;
 const REWARDED_PAIR: (TokenId, TokenId) = (0u32, 4u32);
+const FIRST_REWARDED_PAIR: (TokenId, TokenId) = (0u32, 4u32);
+const SECOND_REWARDED_PAIR: (TokenId, TokenId) = (0u32, 5u32);
 const REWARD_AMOUNT: u128 = 10_000u128;
 const REWARD_TOKEN: u32 = 5u32;
 const FIRST_REWARD_TOKEN: u32 = REWARD_TOKEN;
 const SECOND_REWARD_TOKEN: u32 = 6u32;
 const LIQUIDITY_TOKEN: u32 = 10;
+const FIRST_LIQUIDITY_TOKEN: u32 = 10;
+const SECOND_LIQUIDITY_TOKEN: u32 = 11;
 const ALICE: u128 = 2;
 const BOB: u128 = 3;
 const CHARLIE: u128 = 4;
@@ -1744,88 +1855,241 @@ fn deactivate_3rdparty_rewards() {
 
 #[test]
 #[serial]
-fn claim_rewards_from_multiple_schedules_using_single_liquidity() {
+fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() {
 	ExtBuilder::new()
-		.issue(ALICE, FIRST_REWARD_TOKEN, REWARD_AMOUNT)
-		.issue(ALICE, SECOND_REWARD_TOKEN, 100_000u128)
-		.issue(BOB, LIQUIDITY_TOKEN, 100)
+		.issue(ALICE, FIRST_REWARD_TOKEN, 2 * REWARD_AMOUNT)
+		.issue(ALICE, SECOND_REWARD_TOKEN, 4 * REWARD_AMOUNT)
+		.issue(BOB, FIRST_LIQUIDITY_TOKEN, 100)
+		.issue(BOB, SECOND_LIQUIDITY_TOKEN, 100)
 		.build()
 		.execute_with(|| {
 			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+			get_liquidity_asset_mock
+				.expect()
+				.with(eq(FIRST_REWARDED_PAIR.0), eq(FIRST_REWARDED_PAIR.1))
+				.return_const(Ok(FIRST_LIQUIDITY_TOKEN));
+			get_liquidity_asset_mock
+				.expect()
+				.with(eq(SECOND_REWARDED_PAIR.0), eq(SECOND_REWARDED_PAIR.1))
+				.return_const(Ok(SECOND_LIQUIDITY_TOKEN));
+
 			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
 			valuate_liquidity_token_mock.expect().return_const(11u128);
 
 			System::set_block_number(1);
-
 			ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
-				REWARDED_PAIR,
+				FIRST_REWARDED_PAIR,
 				FIRST_REWARD_TOKEN,
 				REWARD_AMOUNT,
 				10u32.into(),
 			)
 			.unwrap();
-			ProofOfStake::reward_pool(
-				RuntimeOrigin::signed(ALICE),
-				REWARDED_PAIR,
-				SECOND_REWARD_TOKEN,
-				2 * REWARD_AMOUNT,
-				10u32.into(),
-			)
-			.unwrap();
-
 			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
 				RuntimeOrigin::signed(BOB),
-				LIQUIDITY_TOKEN,
-				100,
+				FIRST_LIQUIDITY_TOKEN,
+				100u128,
 				FIRST_REWARD_TOKEN,
 				None,
 			)
 			.unwrap();
+
+			roll_to_session(1);
+			assert_eq!(
+				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
+				vec![(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 1 * 1000u128),]
+			);
+			ProofOfStake::reward_pool(
+				RuntimeOrigin::signed(ALICE),
+				FIRST_REWARDED_PAIR,
+				SECOND_REWARD_TOKEN,
+				2 * REWARD_AMOUNT,
+				11u32.into(),
+			)
+			.unwrap();
 			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
 				RuntimeOrigin::signed(BOB),
-				LIQUIDITY_TOKEN,
-				100,
+				FIRST_LIQUIDITY_TOKEN,
+				100u128,
 				SECOND_REWARD_TOKEN,
 				Some(ThirdPartyActivationKind::ActivatedLiquidity(FIRST_REWARD_TOKEN)),
 			)
 			.unwrap();
 
+			roll_to_session(2);
 			assert_eq!(
-				ProofOfStake::calculate_3rdparty_rewards_amount(
-					BOB,
-					LIQUIDITY_TOKEN,
-					FIRST_REWARD_TOKEN
-				),
-				Ok(0)
+				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
+				vec![
+					(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 2 * 1000u128),
+					(FIRST_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 1 * 2000u128),
+				]
 			);
+			ProofOfStake::reward_pool(
+				RuntimeOrigin::signed(ALICE),
+				SECOND_REWARDED_PAIR,
+				FIRST_REWARD_TOKEN,
+				REWARD_AMOUNT,
+				12u32.into(),
+			)
+			.unwrap();
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(BOB),
+				SECOND_LIQUIDITY_TOKEN,
+				100u128,
+				FIRST_REWARD_TOKEN,
+				None,
+			)
+			.unwrap();
+
+			roll_to_session(3);
 			assert_eq!(
-				ProofOfStake::calculate_3rdparty_rewards_amount(
-					BOB,
-					LIQUIDITY_TOKEN,
-					SECOND_REWARD_TOKEN
-				),
-				Ok(0)
+				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
+				vec![
+					(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 3 * 1000u128),
+					(FIRST_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 2 * 2000u128),
+					(SECOND_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 1 * 1000u128),
+				]
+			);
+			ProofOfStake::reward_pool(
+				RuntimeOrigin::signed(ALICE),
+				SECOND_REWARDED_PAIR,
+				SECOND_REWARD_TOKEN,
+				2 * REWARD_AMOUNT,
+				13u32.into(),
+			)
+			.unwrap();
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(BOB),
+				SECOND_LIQUIDITY_TOKEN,
+				100u128,
+				SECOND_REWARD_TOKEN,
+				Some(ThirdPartyActivationKind::ActivatedLiquidity(FIRST_REWARD_TOKEN)),
+			)
+			.unwrap();
+
+			roll_to_session(4);
+			assert_eq!(
+				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
+				vec![
+					(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 4 * 1000u128),
+					(FIRST_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 3 * 2000u128),
+					(SECOND_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 2 * 1000u128),
+					(SECOND_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 1 * 2000u128),
+				]
 			);
 
-			roll_to_session(1);
+			ProofOfStake::claim_3rdparty_rewards(
+				RuntimeOrigin::signed(BOB),
+				FIRST_LIQUIDITY_TOKEN,
+				FIRST_REWARD_TOKEN,
+			)
+			.unwrap();
 
 			assert_eq!(
-				ProofOfStake::calculate_3rdparty_rewards_amount(
-					BOB,
-					LIQUIDITY_TOKEN,
-					FIRST_REWARD_TOKEN
-				),
-				Ok(1000)
+				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
+				vec![
+					(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 0u128),
+					(FIRST_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 3 * 2000u128),
+					(SECOND_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 2 * 1000u128),
+					(SECOND_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 1 * 2000u128),
+				]
 			);
 			assert_eq!(
-				ProofOfStake::calculate_3rdparty_rewards_amount(
-					BOB,
-					LIQUIDITY_TOKEN,
-					SECOND_REWARD_TOKEN
-				),
-				Ok(2000)
+				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
+				vec![
+					(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 0u128),
+					(FIRST_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 3 * 2000u128),
+					(SECOND_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 2 * 1000u128),
+					(SECOND_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 1 * 2000u128),
+				]
+			);
+
+			ProofOfStake::claim_3rdparty_rewards(
+				RuntimeOrigin::signed(BOB),
+				FIRST_LIQUIDITY_TOKEN,
+				SECOND_REWARD_TOKEN,
+			)
+			.unwrap();
+			assert_eq!(
+				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
+				vec![
+					(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 0u128),
+					(FIRST_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 0u128),
+					(SECOND_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 2 * 1000u128),
+					(SECOND_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 1 * 2000u128),
+				]
+			);
+
+			ProofOfStake::claim_3rdparty_rewards(
+				RuntimeOrigin::signed(BOB),
+				SECOND_LIQUIDITY_TOKEN,
+				FIRST_REWARD_TOKEN,
+			)
+			.unwrap();
+			assert_eq!(
+				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
+				vec![
+					(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 0u128),
+					(FIRST_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 0u128),
+					(SECOND_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 0u128),
+					(SECOND_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 1 * 2000u128),
+				]
+			);
+
+			ProofOfStake::claim_3rdparty_rewards(
+				RuntimeOrigin::signed(BOB),
+				SECOND_LIQUIDITY_TOKEN,
+				SECOND_REWARD_TOKEN,
+			)
+			.unwrap();
+
+			assert_eq!(
+				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
+				vec![
+					(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 0u128),
+					(FIRST_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 0u128),
+					(SECOND_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 0u128),
+					(SECOND_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 0u128),
+				]
+			);
+
+			ProofOfStake::deactivate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(BOB),
+				FIRST_LIQUIDITY_TOKEN,
+				100,
+				FIRST_REWARD_TOKEN,
+			)
+			.unwrap();
+			ProofOfStake::deactivate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(BOB),
+				FIRST_LIQUIDITY_TOKEN,
+				100,
+				SECOND_REWARD_TOKEN,
+			)
+			.unwrap();
+
+			ProofOfStake::deactivate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(BOB),
+				SECOND_LIQUIDITY_TOKEN,
+				100,
+				FIRST_REWARD_TOKEN,
+			)
+			.unwrap();
+			ProofOfStake::deactivate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(BOB),
+				SECOND_LIQUIDITY_TOKEN,
+				100,
+				SECOND_REWARD_TOKEN,
+			)
+			.unwrap();
+			assert_eq!(
+				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
+				vec![
+					(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 0u128),
+					(FIRST_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 0u128),
+					(SECOND_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 0u128),
+					(SECOND_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 0u128),
+				]
 			);
 		});
 }

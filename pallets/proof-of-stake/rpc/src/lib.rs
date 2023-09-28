@@ -6,6 +6,8 @@ use jsonrpsee::{
 	proc_macros::rpc,
 	types::error::{CallError, ErrorObject},
 };
+pub use proof_of_stake_runtime_api::XykApi as XykRuntimeApi;
+use proof_of_stake_runtime_api::{RpcAmountsResult, RpcAssetMetadata, XYKRpcResult};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_core::U256;
@@ -16,17 +18,9 @@ use sp_runtime::{
 };
 use sp_std::convert::{TryFrom, TryInto};
 use std::sync::Arc;
-pub use proof_of_stake_runtime_api::XykApi as XykRuntimeApi;
-use proof_of_stake_runtime_api::{RpcAmountsResult, RpcAssetMetadata, XYKRpcResult};
 
 #[rpc(client, server)]
-pub trait ProofOfStakeApi<
-	BlockHash,
-	Balance,
-	TokenId,
-	AccountId
->
-{
+pub trait ProofOfStakeApi<BlockHash, Balance, TokenId, AccountId> {
 	#[method(name = "foo")]
 	fn foo(
 		&self,
@@ -50,12 +44,8 @@ impl<C, P> ProofOfStake<C, P> {
 
 #[async_trait]
 impl<C, Block, Balance, TokenId, AccountId>
-	ProofOfStakeApiServer<
-		<Block as BlockT>::Hash,
-		NumberOrHex,
-		TokenId,
-		AccountId
-	> for ProofOfStake<C, Block>
+	ProofOfStakeApiServer<<Block as BlockT>::Hash, NumberOrHex, TokenId, AccountId>
+	for ProofOfStake<C, Block>
 where
 	Block: BlockT,
 	C: Send + Sync + 'static,
@@ -74,5 +64,4 @@ where
 		at: Option<BlockHash>,
 	) -> RpcResult<XYKRpcResult<Balance>> {
 	}
-
 }

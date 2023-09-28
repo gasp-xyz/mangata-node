@@ -51,9 +51,9 @@ where
 	P: TransactionPool + Sync + Send + 'static,
 {
 	use pallet_transaction_payment_mangata_rpc::{TransactionPayment, TransactionPaymentApiServer};
+	use proof_of_stake_rpc::{ProofOfStake, ProofOfStakeApiServer};
 	use substrate_frame_rpc_system::{System, SystemApiServer};
 	use xyk_rpc::{Xyk, XykApiServer};
-	use proof_of_stake_rpc::{ProofOfStake, ProofOfStakeApiServer};
 
 	let mut module = RpcExtension::new(());
 	let FullDeps { client, pool, deny_unsafe } = deps;

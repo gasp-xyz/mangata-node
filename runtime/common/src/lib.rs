@@ -1376,5 +1376,4 @@ where
 			pub const Min3rdPartyRewards: u128 = 100 * 30_000 * currency::DOLLARS;
 		}
 	}
-
 }

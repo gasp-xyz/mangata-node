@@ -874,12 +874,12 @@ impl<T: Config> Pallet<T> {
 	) -> Result<Vec<(TokenId, TokenId, Balance)>, DispatchError> {
 		RewardsInfoForScheduleRewards::<T>::iter_prefix(user.clone())
 			.map(|((liq_token, reward_token), _)|
-			Self::calculate_rewards_amount_3rdparty(user.clone(), liq_token, reward_token)
+			Self::calculate_3rdparty_rewards_amount(user.clone(), liq_token, reward_token)
 				.map(|amount| (liq_token, reward_token, amount))
 		).collect::<Result<Vec<_>, _>>()
 	}
 
-	pub fn calculate_rewards_amount_3rdparty(
+	pub fn calculate_3rdparty_rewards_amount(
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
 		rewards_asset_id: TokenId,

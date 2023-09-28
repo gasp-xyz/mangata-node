@@ -1461,7 +1461,7 @@ fn user_can_claim_3rdparty_rewards() {
 			)
 			.unwrap();
 			assert_eq!(
-				ProofOfStake::calculate_rewards_amount_3rdparty(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
+				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
 				Ok(0)
 			);
 
@@ -1475,7 +1475,7 @@ fn user_can_claim_3rdparty_rewards() {
 			)
 			.unwrap();
 			assert_eq!(
-				ProofOfStake::calculate_rewards_amount_3rdparty(
+				ProofOfStake::calculate_3rdparty_rewards_amount(
 					CHARLIE,
 					LIQUIDITY_TOKEN,
 					REWARD_TOKEN
@@ -1483,17 +1483,17 @@ fn user_can_claim_3rdparty_rewards() {
 				Ok(0)
 			);
 			assert_eq!(
-				ProofOfStake::calculate_rewards_amount_3rdparty(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
+				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
 				Ok(1000)
 			);
 
 			roll_to_session(3);
 			assert_eq!(
-				ProofOfStake::calculate_rewards_amount_3rdparty(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
+				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
 				Ok(1500)
 			);
 			assert_eq!(
-				ProofOfStake::calculate_rewards_amount_3rdparty(
+				ProofOfStake::calculate_3rdparty_rewards_amount(
 					CHARLIE,
 					LIQUIDITY_TOKEN,
 					REWARD_TOKEN
@@ -1564,7 +1564,7 @@ fn overlapping_3rdparty_rewards_works() {
 			roll_to_session(6);
 
 			assert_eq!(
-				ProofOfStake::calculate_rewards_amount_3rdparty(
+				ProofOfStake::calculate_3rdparty_rewards_amount(
 					BOB,
 					LIQUIDITY_TOKEN,
 					second_reward_token_id
@@ -1573,7 +1573,7 @@ fn overlapping_3rdparty_rewards_works() {
 			);
 
 			assert_eq!(
-				ProofOfStake::calculate_rewards_amount_3rdparty(
+				ProofOfStake::calculate_3rdparty_rewards_amount(
 					BOB,
 					LIQUIDITY_TOKEN,
 					first_reward_token
@@ -1639,7 +1639,7 @@ fn reuse_activated_liquiddity_tokens_for_multiple_3rdparty_schedules() {
 			roll_to_session(6);
 
 			assert_eq!(
-				ProofOfStake::calculate_rewards_amount_3rdparty(
+				ProofOfStake::calculate_3rdparty_rewards_amount(
 					BOB,
 					LIQUIDITY_TOKEN,
 					SECOND_REWARD_TOKEN
@@ -1648,7 +1648,7 @@ fn reuse_activated_liquiddity_tokens_for_multiple_3rdparty_schedules() {
 			);
 
 			assert_eq!(
-				ProofOfStake::calculate_rewards_amount_3rdparty(
+				ProofOfStake::calculate_3rdparty_rewards_amount(
 					BOB,
 					LIQUIDITY_TOKEN,
 					FIRST_REWARD_TOKEN
@@ -1704,12 +1704,12 @@ fn deactivate_3rdparty_rewards() {
 			roll_to_session(2);
 
 			assert_eq!(
-				ProofOfStake::calculate_rewards_amount_3rdparty(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
+				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
 				Ok(500)
 			);
 
 			assert_eq!(
-				ProofOfStake::calculate_rewards_amount_3rdparty(
+				ProofOfStake::calculate_3rdparty_rewards_amount(
 					CHARLIE,
 					LIQUIDITY_TOKEN,
 					REWARD_TOKEN
@@ -1727,12 +1727,12 @@ fn deactivate_3rdparty_rewards() {
 			roll_to_session(3);
 
 			assert_eq!(
-				ProofOfStake::calculate_rewards_amount_3rdparty(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
+				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
 				Ok(1500)
 			);
 
 			assert_eq!(
-				ProofOfStake::calculate_rewards_amount_3rdparty(
+				ProofOfStake::calculate_3rdparty_rewards_amount(
 					CHARLIE,
 					LIQUIDITY_TOKEN,
 					REWARD_TOKEN
@@ -1793,7 +1793,7 @@ fn claim_rewards_from_multiple_schedules_using_single_liquidity() {
 			.unwrap();
 
 			assert_eq!(
-				ProofOfStake::calculate_rewards_amount_3rdparty(
+				ProofOfStake::calculate_3rdparty_rewards_amount(
 					BOB,
 					LIQUIDITY_TOKEN,
 					FIRST_REWARD_TOKEN
@@ -1801,7 +1801,7 @@ fn claim_rewards_from_multiple_schedules_using_single_liquidity() {
 				Ok(0)
 			);
 			assert_eq!(
-				ProofOfStake::calculate_rewards_amount_3rdparty(
+				ProofOfStake::calculate_3rdparty_rewards_amount(
 					BOB,
 					LIQUIDITY_TOKEN,
 					SECOND_REWARD_TOKEN
@@ -1812,7 +1812,7 @@ fn claim_rewards_from_multiple_schedules_using_single_liquidity() {
 			roll_to_session(1);
 
 			assert_eq!(
-				ProofOfStake::calculate_rewards_amount_3rdparty(
+				ProofOfStake::calculate_3rdparty_rewards_amount(
 					BOB,
 					LIQUIDITY_TOKEN,
 					FIRST_REWARD_TOKEN
@@ -1820,7 +1820,7 @@ fn claim_rewards_from_multiple_schedules_using_single_liquidity() {
 				Ok(1000)
 			);
 			assert_eq!(
-				ProofOfStake::calculate_rewards_amount_3rdparty(
+				ProofOfStake::calculate_3rdparty_rewards_amount(
 					BOB,
 					LIQUIDITY_TOKEN,
 					SECOND_REWARD_TOKEN
@@ -1884,7 +1884,7 @@ fn liquidity_minting_liquidity_can_be_resused() {
 
 			assert_eq!(ProofOfStake::calculate_rewards_amount(BOB, LIQUIDITY_TOKEN), Ok(200));
 			assert_eq!(
-				ProofOfStake::calculate_rewards_amount_3rdparty(
+				ProofOfStake::calculate_3rdparty_rewards_amount(
 					BOB,
 					LIQUIDITY_TOKEN,
 					FIRST_REWARD_TOKEN
@@ -2165,7 +2165,7 @@ fn can_claim_schedule_rewards() {
 			assert_eq!(TokensOf::<Test>::free_balance(SECOND_REWARD_TOKEN, &BOB), 1000,);
 
 			assert_eq!(
-				ProofOfStake::calculate_rewards_amount_3rdparty(
+				ProofOfStake::calculate_3rdparty_rewards_amount(
 					BOB,
 					LIQUIDITY_TOKEN,
 					FIRST_REWARD_TOKEN
@@ -2173,7 +2173,7 @@ fn can_claim_schedule_rewards() {
 				Ok(0)
 			);
 			assert_eq!(
-				ProofOfStake::calculate_rewards_amount_3rdparty(
+				ProofOfStake::calculate_3rdparty_rewards_amount(
 					BOB,
 					LIQUIDITY_TOKEN,
 					SECOND_REWARD_TOKEN

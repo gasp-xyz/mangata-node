@@ -62,6 +62,9 @@ jobs:
 
       - name: Build and push Docker image
         run: |
+          # This is needed to fix an issue when running on self-hosted runners in GKE
+          git config --global --add safe.directory /__w/mangata-node/mangata-node
+
           docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
           docker build -f devops/dockerfiles/node/Dockerfile \
           --label="git_rev=$(git rev-parse HEAD)" \

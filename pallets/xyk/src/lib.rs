@@ -1341,6 +1341,8 @@ impl<T: Config> Pallet<T> {
 		let (input_reserve, output_reserve) =
 			Pallet::<T>::get_reserves(sold_token_id, bought_token_id)?;
 
+		ensure!(!(Self::is_pool_empty(sold_token_id, bought_token_id)?), Error::<T>::PoolIsEmpty);
+
 		Self::calculate_sell_price(input_reserve, output_reserve, sell_amount)
 	}
 
@@ -1351,6 +1353,8 @@ impl<T: Config> Pallet<T> {
 	) -> Result<Balance, DispatchError> {
 		let (input_reserve, output_reserve) =
 			Pallet::<T>::get_reserves(sold_token_id, bought_token_id)?;
+
+		ensure!(!(Self::is_pool_empty(sold_token_id, bought_token_id)?), Error::<T>::PoolIsEmpty);
 
 		Self::calculate_buy_price(input_reserve, output_reserve, buy_amount)
 	}
@@ -1406,6 +1410,8 @@ impl<T: Config> Pallet<T> {
 		let liquidity_asset_id = Self::get_liquidity_asset(first_asset_id, second_asset_id)?;
 		let (first_asset_reserve, second_asset_reserve) =
 			Pallet::<T>::get_reserves(first_asset_id, second_asset_id)?;
+
+		ensure!(!(Self::is_pool_empty(first_asset_id, second_asset_id)?), Error::<T>::PoolIsEmpty);
 
 		let (first_asset_amount, second_asset_amount) = Self::get_burn_amount_reserves(
 			first_asset_reserve,
@@ -3060,6 +3066,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 	) -> Result<(Self::CurrencyId, Self::Balance), DispatchError> {
 		// checks
 		ensure!(!provided_asset_amount.is_zero(), Error::<T>::ZeroAmount,);
+
+		ensure!(!(Self::is_pool_empty(first_asset_id, second_asset_id)?), Error::<T>::PoolIsEmpty);
 
 		let (first_reserve, second_reserve) =
 			Pallet::<T>::get_reserves(first_asset_id, second_asset_id)?;

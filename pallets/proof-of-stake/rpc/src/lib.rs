@@ -81,14 +81,14 @@ where
 		let at = self.client.info().best_hash;
 
 		api.calculate_native_rewards_amount(at, account, liquidity_token)
-		.map(Into::<NumberOrHex>::into)
-		.map_err(|e| {
-			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
-				1,
-				"Unable to serve the request",
-				Some(format!("{:?}", e)),
-			)))
-		})
+			.map(Into::<NumberOrHex>::into)
+			.map_err(|e| {
+				JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+					1,
+					"Unable to serve the request",
+					Some(format!("{:?}", e)),
+				)))
+			})
 	}
 
 	fn calculate_3rdparty_rewards_amount(
@@ -102,16 +102,15 @@ where
 		let at = self.client.info().best_hash;
 
 		api.calculate_3rdparty_rewards_amount(at, account, liquidity_token, reward_token)
-		.map(Into::<NumberOrHex>::into)
-		.map_err(|e| {
-			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
-				1,
-				"Unable to serve the request",
-				Some(format!("{:?}", e)),
-			)))
-		})
+			.map(Into::<NumberOrHex>::into)
+			.map_err(|e| {
+				JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+					1,
+					"Unable to serve the request",
+					Some(format!("{:?}", e)),
+				)))
+			})
 	}
-
 
 	fn calculate_3rdparty_rewards_all(
 		&self,
@@ -131,5 +130,4 @@ where
 		// 	)))
 		// })
 	}
-
 }

@@ -329,6 +329,9 @@ impl pallet_proof_of_stake::Config for Test {
 	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = ConstU32<10>;
 	type WeightInfo = ();
+	type RewardsSchedulesLimit = ConstU32<10>;
+	type Min3rdPartyRewards = ConstU128<10>;
+	type ValuationApi = XykStorage;
 }
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -340,6 +343,9 @@ impl pallet_proof_of_stake::Config for Test {
 	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = ConstU32<1200>;
 	type WeightInfo = ();
+	type RewardsSchedulesLimit = ConstU32<10>;
+	type Min3rdPartyRewards = ConstU128<10>;
+	type ValuationApi = XykStorage;
 }
 
 pub struct TokensActivationPassthrough<T: Config>(PhantomData<T>);

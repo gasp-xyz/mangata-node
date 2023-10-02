@@ -115,7 +115,9 @@ jobs:
           - command: "yarn test-experimentalStaking"
             fast: true
           - command: "yarn test-crowdloan"
-            fast: false            
+            fast: false 
+          - command: "yarn test-sdk"
+            fast: true 
 
     runs-on: [self-hosted, compile]
     timeout-minutes: 180

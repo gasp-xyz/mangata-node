@@ -509,6 +509,9 @@ pub mod pallet {
 				Error::<T>::RewardTokenNotPairdWithNativeToken
 			);
 
+			let valutation =
+				<T as Config>::ValuationApi::valuate_liquidity_token(liquidity_token_id, amount);
+
 			ensure!(
 				<T as Config>::ValuationApi::valuate_liquidity_token(liquidity_token_id, amount) >=
 					T::Min3rdPartyRewards::get() ||

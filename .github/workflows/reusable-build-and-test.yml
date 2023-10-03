@@ -33,6 +33,8 @@ jobs:
     runs-on: [actions-runner-scale-set]
     container:
       image: ${{ inputs.builder_image }}
+      volumes:
+        - /run/docker:/run/docker:rw
     steps:
       - uses: actions/checkout@v3
       - name: Authenticate to Google Cloud

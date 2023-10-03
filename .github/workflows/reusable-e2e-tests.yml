@@ -92,32 +92,32 @@ jobs:
         include:
           - command: "yarn test-parallel --max-workers=10"
             fast: false
-          # - command: "yarn test-sequential-no-bootstrap"
-          #   fast: false
-          # - command: "yarn test-seqgasless"
-          #   fast: false
-          # - command: "yarn test-maintenance"
-          #   fast: true
-          # - command: "yarn test-bootstrap"
-          #   fast: false
-          # - command: "yarn test-rewards-bootstrap"
-          #   fast: false
-          # - command: "yarn test-parallel-autocompound"
-          #   fast: true
-          # - command: "yarn test-sequential-autocompound"
-          #   fast: true
-          # - command: "yarn test-poolliquidity"
-          #   fast: true
-          # - command: "yarn test-governance"
-          #   fast: true
-          # - command: "yarn test-multiswap"
-          #   fast: false
-          # - command: "yarn test-experimentalStaking"
-          #   fast: true
-          # - command: "yarn test-crowdloan"
-          #   fast: false 
-          # - command: "yarn test-sdk"
-          #   fast: true 
+          - command: "yarn test-sequential-no-bootstrap"
+            fast: false
+          - command: "yarn test-seqgasless"
+            fast: false
+          - command: "yarn test-maintenance"
+            fast: true
+          - command: "yarn test-bootstrap"
+            fast: false
+          - command: "yarn test-rewards-bootstrap"
+            fast: false
+          - command: "yarn test-parallel-autocompound"
+            fast: true
+          - command: "yarn test-sequential-autocompound"
+            fast: true
+          - command: "yarn test-poolliquidity"
+            fast: true
+          - command: "yarn test-governance"
+            fast: true
+          - command: "yarn test-multiswap"
+            fast: false
+          - command: "yarn test-experimentalStaking"
+            fast: true
+          - command: "yarn test-crowdloan"
+            fast: false 
+          - command: "yarn test-sdk"
+            fast: true 
 
     runs-on: [actions-runner-scale-set]
     timeout-minutes: 180
@@ -175,19 +175,19 @@ jobs:
           ref: "${{ env.E2EBRANCHNAME }}"
           path: e2eTests
 
-      # # Fixing issue with not having yarn installed on self-hosted runners in Kubernetes
-      # - name: Install yarn to fix self-hosted runner issue when running setup-node
-      #   #Ref: https://github.com/actions/setup-node/issues/182
-      #   run: |-
-      #     curl -fsSL --create-dirs -o $HOME/bin/yarn \
-      #     https://github.com/yarnpkg/yarn/releases/download/v1.22.19/yarn-1.22.19.js
-      #     chmod +x $HOME/bin/yarn
-      #     echo "$HOME/bin" >> $GITHUB_PATH
+      # Fixing issue with not having yarn installed on self-hosted runners in Kubernetes
+      - name: Install yarn to fix self-hosted runner issue when running setup-node
+        #Ref: https://github.com/actions/setup-node/issues/182
+        run: |-
+          curl -fsSL --create-dirs -o $HOME/bin/yarn \
+          https://github.com/yarnpkg/yarn/releases/download/v1.22.19/yarn-1.22.19.js
+          chmod +x $HOME/bin/yarn
+          echo "$HOME/bin" >> $GITHUB_PATH
 
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '18.16.1'
-      - run: npm install -g yarn
+      # - uses: actions/setup-node@v3
+      #   with:
+      #     node-version: '18.16.1'
+      # - run: npm install -g yarn
       - uses: actions/setup-node@v3
         with:
           node-version: '18.16.1'
@@ -207,7 +207,6 @@ jobs:
         # TODO: remove cache clean later
         run: yarn cache clean; yarn
 
-      - uses: mxschmitt/action-tmate@v3
       - name: Run parachain launch
         working-directory: devops/parachain-launch
         run: npx @open-web3/parachain-launch generate config.yml

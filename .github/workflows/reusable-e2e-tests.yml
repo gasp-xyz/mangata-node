@@ -119,7 +119,7 @@ jobs:
           - command: "yarn test-sdk"
             fast: true 
 
-    runs-on: [compile]
+    runs-on: [compile-gke]
     timeout-minutes: 180
     env:
       API_URL: "ws://127.0.0.1:9946"

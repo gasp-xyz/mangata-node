@@ -180,13 +180,9 @@ jobs:
         #Ref: https://github.com/actions/setup-node/issues/182
         run: |-
           curl -fsSL --create-dirs -o $HOME/bin/yarn https://github.com/yarnpkg/yarn/releases/download/v1.22.19/yarn-1.22.19.js && chmod +x $HOME/bin/yarn
-          curl -SL https://github.com/docker/compose/releases/download/v2.20.3/docker-compose-linux-x86_64 -o $HOME/bin/docker-compose
+          curl -SL https://github.com/docker/compose/releases/download/v2.20.3/docker-compose-linux-x86_64 -o $HOME/bin/docker-compose && chmod +x $HOME/bin/docker-compose
           echo "$HOME/bin" >> $GITHUB_PATH
 
-      # - uses: actions/setup-node@v3
-      #   with:
-      #     node-version: '18.16.1'
-      # - run: npm install -g yarn
       - uses: actions/setup-node@v3
         with:
           node-version: '18.16.1'

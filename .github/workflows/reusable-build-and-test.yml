@@ -110,10 +110,6 @@ jobs:
             ./mangata_kusama_runtime-${{ inputs.version }}-fast.compact.compressed.wasm
             ./mangata_rococo_runtime-${{ inputs.version }}-fast.compact.compressed.wasm
 
-      - name: Fix permissions on self-hosted runner
-        if: always()
-        run: chown -R 1100:1100 $GITHUB_WORKSPACE
-
   rustfmt-check:
     name: Formatting check
     runs-on: ubuntu-latest
@@ -171,9 +167,6 @@ jobs:
           key: cargo-unit-cache-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
       - name: Run unit tests
         run: cargo test -j2
-      - name: Fix permissions on self-hosted runner
-        if: always()
-        run: chown -R 1100:1100 $GITHUB_WORKSPACE
 
   coverage-report:
     name: Coverage report
@@ -206,9 +199,6 @@ jobs:
         with:
           token: ${{ secrets.ORG_CODECOV_TOKEN }}
           fail_ci_if_error: true
-      - name: Fix permissions on self-hosted runner
-        if: always()
-        run: chown -R 1100:1100 $GITHUB_WORKSPACE
 
   run-benchmarks-tests:
     name: Run benchmark tests
@@ -264,10 +254,6 @@ jobs:
 
       - name: Run try-runtime Kusama Mainnet
         run: cargo run --release --features=try-runtime try-runtime --chain=kusama --runtime=target/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.wasm on-runtime-upgrade live --uri wss://kusama-rpc.mangata.online:443
-
-      - name: Fix permissions on self-hosted runner
-        if: always()
-        run: chown -R 1100:1100 $GITHUB_WORKSPACE
 
   run-benchmarks:
     name: Run runtime benchmarks
@@ -332,9 +318,6 @@ jobs:
           name: benchmarks
           path: ./benchmarks
 
-      - name: Fix permissions on self-hosted runner
-        if: always()
-        run: chown -R 1100:1100 $GITHUB_WORKSPACE
 
   build-wasms:
     name: Export wasm artifacts
@@ -377,6 +360,3 @@ jobs:
           /bin/bash -c 'target/release/mangata-node export-genesis-state --chain=rococo-local -l=info,xyk=error > /dev/null'
           /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=rococo-local -l=info,xyk=error > /dev/null'
 
-      - name: Fix permissions on self-hosted runner
-        if: always()
-        run: chown -R 1100:1100 $GITHUB_WORKSPACE

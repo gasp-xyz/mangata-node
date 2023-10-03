@@ -175,6 +175,8 @@ jobs:
           ref: "${{ env.E2EBRANCHNAME }}"
           path: e2eTests
 
+      # Fixing issue with not having yarn installed on self-hosted runners in Kubernetes
+      - run: npm install -g yarn
       - uses: actions/setup-node@v3
         with:
           node-version: '18.16.1'

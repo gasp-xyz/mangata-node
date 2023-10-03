@@ -176,7 +176,14 @@ jobs:
           path: e2eTests
 
       # Fixing issue with not having yarn installed on self-hosted runners in Kubernetes
-      - run: npm install -g yarn
+      - name: Install yarn to fix self-hosted runner issue when running setup-node
+        #Ref: https://github.com/actions/setup-node/issues/182
+        run: |-
+          curl -fsSL --create-dirs -o $HOME/bin/yarn \
+          https://github.com/yarnpkg/yarn/releases/download/v1.22.19/yarn-1.22.19.js
+          chmod +x $HOME/bin/yarn
+          echo "$HOME/bin" >> $GITHUB_PATH
+
       - uses: actions/setup-node@v3
         with:
           node-version: '18.16.1'

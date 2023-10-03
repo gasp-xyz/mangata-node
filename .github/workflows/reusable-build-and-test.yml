@@ -33,8 +33,10 @@ jobs:
     runs-on: [actions-runner-scale-set]
     container:
       image: ${{ inputs.builder_image }}
+      env:
+        DOCKER_HOST: 'unix:///run/docker/docker.sock'
       volumes:
-        - /run/docker:/run/docker:rw
+        - /run/docker:/run/docker
     steps:
       - uses: actions/checkout@v3
       - name: Authenticate to Google Cloud
@@ -62,7 +64,7 @@ jobs:
           cp target/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm ./mangata_kusama_runtime-${{ inputs.version }}.compact.compressed.wasm
           cp target/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.compact.compressed.wasm ./mangata_rococo_runtime-${{ inputs.version }}.compact.compressed.wasm
 
-      - uses: mxschmitt/action-tmate@v3
+      # - uses: mxschmitt/action-tmate@v3
       - name: Build and push Docker image
         run: |
           # This is needed to fix an issue when running on self-hosted runners in GKE

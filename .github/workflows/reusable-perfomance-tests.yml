@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   performance-tests:
-    runs-on: [self-hosted, compile]
+    runs-on: [compile-gke]
     timeout-minutes: 180
     env:
       ENV_REF: ${{ inputs.targetEnv || format('pr-{0}', github.event.number) }}
@@ -88,7 +88,3 @@ jobs:
             ./e2e/performance/enqueued.txt
             ./e2e/performance/executed.txt
             ./e2e/performance/pending.txt
-
-      - name: Fix permissions on self-hosted runner
-        if: always()
-        run: chown -R 1100:1100 $GITHUB_WORKSPACE

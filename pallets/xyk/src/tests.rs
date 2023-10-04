@@ -772,6 +772,7 @@ fn sell_N_zero_amount() {
 }
 
 #[test]
+#[serial]
 fn multiswap_sell_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);

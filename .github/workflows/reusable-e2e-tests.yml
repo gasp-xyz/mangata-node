@@ -175,14 +175,6 @@ jobs:
           ref: "${{ env.E2EBRANCHNAME }}"
           path: e2eTests
 
-      # Fixing issue with not having yarn installed on self-hosted runners in Kubernetes
-      - name: Install yarn and docker-compose to fix self-hosted runner issue when running setup-node
-        #Ref: https://github.com/actions/setup-node/issues/182
-        run: |-
-          curl -fsSL --create-dirs -o $HOME/bin/yarn https://github.com/yarnpkg/yarn/releases/download/v1.22.19/yarn-1.22.19.js && chmod +x $HOME/bin/yarn
-          curl -SL https://github.com/docker/compose/releases/download/v2.20.3/docker-compose-linux-x86_64 -o $HOME/bin/docker-compose && chmod +x $HOME/bin/docker-compose
-          echo "$HOME/bin" >> $GITHUB_PATH
-
       - uses: actions/setup-node@v3
         with:
           node-version: '18.16.1'

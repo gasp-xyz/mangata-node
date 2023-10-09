@@ -20,6 +20,8 @@ permissions:
 
 jobs:
   performance-tests:
+    # Allows to keep e2e tests jobs running even if performance-tests fail
+    continue-on-error: true
     runs-on: [compile-gke]
     timeout-minutes: 180
     env:

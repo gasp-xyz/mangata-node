@@ -2581,3 +2581,49 @@ fn buy_W_maintenance_mode() {
 		);
 	});
 }
+
+#[test]
+#[serial]
+fn valuate_token_paired_with_mgx() {
+	new_test_ext().execute_with(|| {
+			System::set_block_number(1);
+			let native_token_id = XykStorage::create_new_token(&DUMMY_USER_ID, 2_000_000_u128);
+			assert_eq!(native_token_id, XykStorage::native_token_id());
+
+
+			let first_token = XykStorage::create_new_token(&DUMMY_USER_ID, 1_000_000_u128);
+			let second_token = XykStorage::create_new_token(&DUMMY_USER_ID, 1_000_000_u128);
+			let first_token_pool = second_token + 1;
+			let second_token_pool = second_token + 2;
+
+
+			XykStorage::create_pool(
+				RuntimeOrigin::signed(DUMMY_USER_ID),
+				native_token_id,
+				1_000_000_u128,
+				first_token,
+				500_000_u128,
+			)
+			.unwrap();
+
+			XykStorage::create_pool(
+				RuntimeOrigin::signed(DUMMY_USER_ID),
+				second_token,
+				1_000_000_u128,
+				native_token_id,
+				500_000_u128,
+			)
+			.unwrap();
+
+
+			assert_eq!(
+				<Pallet<Test> as Valuate>::valuate_non_liquidity_token(first_token, 100),
+				199
+			);
+
+			assert_eq!(
+				<Pallet<Test> as Valuate>::valuate_non_liquidity_token(second_token, 100),
+				49
+			);
+		});
+}

@@ -86,17 +86,22 @@ impl RewardsCalculator<ConstCurveRewards> {
 			crate::Error::<T>::NotAPromotedPool
 		);
 
-		let pool_map = crate::ScheduleRewardsPerSingleLiquidity::<T>::get();
+		// NOTE: take into acout previous rewards (prev + rewards/activated)
+		let total_activated = Pallet::<T>::total_activated_liquidity(asset_id, reward_asset_id);
+		let total_rewards = Pallet::<T>::total_activated_liquidity(asset_id, reward_asset_id);
+		let pool_ratio_current =  total_rewards/total_activated;
 
-		let pool_ratio_current =
-			pool_map.get(&(asset_id, reward_asset_id)).cloned().unwrap_or(U256::from(0));
+		// let pool_map = crate::ScheduleRewardsPerSingleLiquidity::<T>::get();
+
+		// let pool_ratio_current =
+		// 	pool_map.get(&(asset_id, reward_asset_id)).cloned().unwrap_or(U256::from(0));
 
 		let default_rewards = RewardInfo {
 			activated_amount: 0_u128,
 			rewards_not_yet_claimed: 0_u128,
 			rewards_already_claimed: 0_u128,
 			last_checkpoint: current_time,
-			pool_ratio_at_last_checkpoint: pool_ratio_current,
+			pool_ratio_at_last_checkpoint: pool_ratio_current.into(),
 			missing_at_last_checkpoint: U256::from(0u128),
 		};
 
@@ -109,7 +114,7 @@ impl RewardsCalculator<ConstCurveRewards> {
 		Ok(Self {
 			rewards_context: RewardsContext {
 				current_time: Pallet::<T>::get_current_rewards_time()?,
-				pool_ratio_current,
+				pool_ratio_current: pool_ratio_current.into(),
 			},
 			rewards_info,
 			_curve: PhantomData::<ConstCurveRewards>,

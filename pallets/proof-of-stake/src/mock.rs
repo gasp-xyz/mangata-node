@@ -217,6 +217,11 @@ mockall::mock! {
 	liquidity_token_amount: Balance,
 	) -> Balance;
 
+	fn valuate_non_liquidity_token(
+	liquidity_token_id: TokenId,
+	liquidity_token_amount: Balance,
+	) -> Balance;
+
 	fn scale_liquidity_by_mga_valuation(
 	mga_valuation: Balance,
 	liquidity_token_amount: Balance,

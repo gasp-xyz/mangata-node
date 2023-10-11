@@ -1371,7 +1371,7 @@ where
 		use super::*;
 
 		parameter_types! {
-			pub const RewardsSchedulesLimit: u32 = 150;
+			pub const RewardsSchedulesLimit: u32 = 200;
 			// TODO: allign properly
 			pub const Min3rdPartyRewards: u128 = 100 * 30_000 * currency::DOLLARS;
 		}

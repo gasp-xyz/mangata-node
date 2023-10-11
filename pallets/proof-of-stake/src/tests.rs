@@ -4,7 +4,7 @@
 
 use super::*;
 use crate::mock::*;
-use frame_support::{assert_err, assert_ok};
+use frame_support::{assert_err, assert_err_ignore_postinfo,assert_ok};
 use mockall::predicate::eq;
 use serial_test::serial;
 
@@ -1218,6 +1218,7 @@ const SECOND_REWARD_TOKEN: u32 = 6u32;
 const LIQUIDITY_TOKEN: u32 = 10;
 const FIRST_LIQUIDITY_TOKEN: u32 = 10;
 const SECOND_LIQUIDITY_TOKEN: u32 = 11;
+const TOKEN_PAIRED_WITH_MGX: u32 = 15;
 const ALICE: u128 = 2;
 const BOB: u128 = 3;
 const CHARLIE: u128 = 4;
@@ -1490,6 +1491,9 @@ fn reject_schedule_with_too_little_rewards_per_session() {
 			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
 			valuate_liquidity_token_mock.expect().return_const(1u128);
 
+			let valuate_non_liquidity_token_mock = MockValuationApi::valuate_non_liquidity_token_context();
+			valuate_non_liquidity_token_mock.expect().return_const(0u128);
+
 			roll_to_session(4);
 
 			assert_err!(
@@ -1516,7 +1520,7 @@ fn accept_schedule_valuated_in_native_token() {
 			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
 			get_liquidity_asset_mock.expect().return_const(Ok(10u32));
 			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(1u128);
+			valuate_liquidity_token_mock.expect().return_const(0u128);
 
 			roll_to_session(4);
 
@@ -1529,6 +1533,37 @@ fn accept_schedule_valuated_in_native_token() {
 			),);
 		});
 }
+
+#[test]
+#[serial]
+fn accept_schedule_valuated_in_token_paired_with_native_token() {
+	ExtBuilder::new()
+		.issue(ALICE, ProofOfStake::native_token_id(), REWARD_AMOUNT)
+		.issue(ALICE, TOKEN_PAIRED_WITH_MGX, REWARD_AMOUNT)
+		.build()
+		.execute_with(|| {
+			System::set_block_number(1);
+			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
+			get_liquidity_asset_mock.expect().return_const(Ok(10u32));
+
+			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
+			valuate_liquidity_token_mock.expect().return_const(0u128);
+
+			let valuate_non_liquidity_token_mock = MockValuationApi::valuate_non_liquidity_token_context();
+			valuate_non_liquidity_token_mock.expect().return_const(10u128);
+
+			roll_to_session(4);
+
+			assert_ok!(ProofOfStake::reward_pool(
+				RuntimeOrigin::signed(ALICE),
+				REWARDED_PAIR,
+				TOKEN_PAIRED_WITH_MGX,
+				REWARD_AMOUNT,
+				5u32.into()
+			),);
+		});
+}
+
 
 #[test]
 #[serial]
@@ -1853,6 +1888,7 @@ fn deactivate_3rdparty_rewards() {
 		});
 }
 
+
 #[test]
 #[serial]
 fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() {
@@ -2155,6 +2191,99 @@ fn liquidity_minting_liquidity_can_be_resused() {
 				),
 				Ok(1000)
 			);
+		});
+}
+
+#[test]
+#[serial]
+fn fail_to_transfer_tokens_that_has_been_partially_deactivated() {
+	// 1. activate tokens for native rewards
+	// 2. re-activate tokens for 3rdparty rewards
+	// 4. deactivate tokens for 3rdparty rewards
+	// 5. fail to transfer assets as they are still locked
+	// 6. deactivate tokens for native rewards
+	// 7. successfully transfer unlocked tokens
+	ExtBuilder::new()
+		.issue(ALICE, FIRST_REWARD_TOKEN, REWARD_AMOUNT)
+		.issue(ALICE, SECOND_REWARD_TOKEN, 100_000u128)
+		.issue(BOB, LIQUIDITY_TOKEN, 100)
+		.build()
+		.execute_with(|| {
+			System::set_block_number(1);
+			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
+			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
+			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+			ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 1u8)
+				.unwrap();
+			ProofOfStake::reward_pool(
+				RuntimeOrigin::signed(ALICE),
+				REWARDED_PAIR,
+				FIRST_REWARD_TOKEN,
+				REWARD_AMOUNT,
+				10u32.into(),
+			).unwrap();
+			ProofOfStake::activate_liquidity_for_native_rewards(
+				RuntimeOrigin::signed(BOB),
+				LIQUIDITY_TOKEN,
+				100,
+				None,
+			)
+			.unwrap();
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(BOB),
+				LIQUIDITY_TOKEN,
+				100,
+				FIRST_REWARD_TOKEN,
+				Some(ThirdPartyActivationKind::LiquidityMining),
+			)
+			.unwrap();
+
+			assert_err!(
+				ProofOfStake::deactivate_liquidity_for_native_rewards(
+					RuntimeOrigin::signed(BOB),
+					LIQUIDITY_TOKEN,
+					100,
+				),
+				Error::<Test>::LiquidityLockedIn3rdpartyRewards
+			);
+
+			assert_err!(
+				TokensOf::<Test>::transfer(
+					LIQUIDITY_TOKEN,
+					&BOB,
+					&CHARLIE,
+					100,
+					ExistenceRequirement::AllowDeath
+				),
+				orml_tokens::Error::<Test>::BalanceTooLow
+			);
+
+			ProofOfStake::deactivate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(BOB),
+				LIQUIDITY_TOKEN,
+				100,
+				FIRST_REWARD_TOKEN,
+			)
+			.unwrap();
+			ProofOfStake::deactivate_liquidity_for_native_rewards(
+				RuntimeOrigin::signed(BOB),
+				LIQUIDITY_TOKEN,
+				100,
+			)
+			.unwrap();
+
+			assert_ok!(
+				TokensOf::<Test>::transfer(
+					LIQUIDITY_TOKEN,
+					&BOB,
+					&CHARLIE,
+					100,
+					ExistenceRequirement::AllowDeath
+				)
+			);
+
 		});
 }
 
@@ -2464,7 +2593,7 @@ fn can_not_provide_liquidity_for_schedule_rewards_when_its_only_activated_for_li
 			ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 1u8)
 				.unwrap();
 
-			assert_err!(
+			assert_err_ignore_postinfo!(
 				ProofOfStake::activate_liquidity_for_3rdparty_rewards(
 					RuntimeOrigin::signed(BOB),
 					LIQUIDITY_TOKEN,
@@ -2509,6 +2638,92 @@ fn can_not_provide_liquidity_for_mining_rewards_when_its_only_activated_for_sche
 					None,
 				),
 				Error::<Test>::NotAPromotedPool
+			);
+		});
+}
+
+use frame_support::dispatch::{GetDispatchInfo, Pays};
+use sp_runtime::{traits::Dispatchable, Permill};
+
+#[test]
+#[serial]
+fn activate_deactivate_calls_are_free_of_charge() {
+	ExtBuilder::new()
+		.build()
+		.execute_with(|| {
+			System::set_block_number(1);
+
+			let activate_call = mock::RuntimeCall::ProofOfStake(
+				Call::activate_liquidity_for_3rdparty_rewards{
+					liquidity_token_id: LIQUIDITY_TOKEN,
+					amount: 100,
+					reward_token: REWARD_TOKEN,
+					use_balance_from: None,
+				}
+			);
+
+			let deactivate_call = mock::RuntimeCall::ProofOfStake(
+				Call::deactivate_liquidity_for_3rdparty_rewards{
+					liquidity_token_id: LIQUIDITY_TOKEN,
+					amount: 100,
+					reward_token: REWARD_TOKEN,
+				}
+			);
+
+			assert_eq!(
+				activate_call.get_dispatch_info().pays_fee,
+				Pays::No
+			);
+
+			assert_eq!(
+				deactivate_call.get_dispatch_info().pays_fee,
+				Pays::No
+			);
+
+		});
+}
+
+#[test]
+#[serial]
+fn unsuccessul_activate_deactivate_calls_charges_fees() {
+	ExtBuilder::new()
+		.issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
+		.issue(BOB, LIQUIDITY_TOKEN, 100)
+		.build()
+		.execute_with(|| {
+			System::set_block_number(1);
+
+			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
+			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
+			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+			let activate_call = mock::RuntimeCall::ProofOfStake(
+				Call::activate_liquidity_for_3rdparty_rewards{
+					liquidity_token_id: LIQUIDITY_TOKEN,
+					amount: 100,
+					reward_token: REWARD_TOKEN,
+					use_balance_from: None,
+				}
+			);
+
+			let deactivate_call = mock::RuntimeCall::ProofOfStake(
+				Call::deactivate_liquidity_for_3rdparty_rewards{
+					liquidity_token_id: LIQUIDITY_TOKEN,
+					amount: 100,
+					reward_token: REWARD_TOKEN,
+				}
+			);
+
+
+			assert_eq!(
+				activate_call.dispatch(RuntimeOrigin::signed(BOB)).unwrap_err().post_info.pays_fee,
+				Pays::Yes
+			);
+
+			assert_eq!(
+				deactivate_call.dispatch(RuntimeOrigin::signed(BOB)).unwrap_err().post_info.pays_fee,
+				Pays::Yes
 			);
 		});
 }

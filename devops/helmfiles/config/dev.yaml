@@ -1,13 +1,3 @@
-enableLocalRelaychain: true
-enableParachainRegisterSidecar: true
-storageSize: 200Gi
-relaychainStorageSize: 200Gi
-relaychainBootnodeAddr: /dns/relaychain-alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
-
-resources:
-  requests:
-    cpu: '2.0'
-    memory: 8Gi
-  limits:
-    cpu: '2.0'
-    memory: 8Gi
+enableServiceMonitorCollectors: true
+storageSize: 10Gi
+relaychainStorageSize: 10Gi

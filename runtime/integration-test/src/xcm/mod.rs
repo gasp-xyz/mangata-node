@@ -22,7 +22,7 @@ mod fee_test {
 
 	pub fn asset_unit_cost(instruction_count: u32, per_second: u128) -> u128 {
 		#[cfg(feature = "with-kusama-runtime")]
-		let unit_weight: Weight = mangata_kusama_runtime::xcm_config::UnitWeightCost::get();
+		let unit_weight: Weight = common_runtime::xcm_config::UnitWeightCost::get();
 		#[cfg(feature = "with-kusama-runtime")]
 		assert_eq!(unit_weight, Weight::from_parts(150_000_000, 0));
 
@@ -31,7 +31,7 @@ mod fee_test {
 
 	pub fn relay_per_second_as_fee(instruction_count: u32) -> u128 {
 		#[cfg(feature = "with-kusama-runtime")]
-		let relay_per_second = mangata_kusama_runtime::ksm_per_second();
+		let relay_per_second = common_runtime::ksm_per_second();
 		#[cfg(feature = "with-kusama-runtime")]
 		assert_eq!(8_714 * 10 * millicent(12), relay_per_second);
 
@@ -40,7 +40,7 @@ mod fee_test {
 
 	pub fn native_per_second_as_fee(instruction_count: u32) -> u128 {
 		#[cfg(feature = "with-kusama-runtime")]
-		let native_per_second = mangata_kusama_runtime::mgx_per_second();
+		let native_per_second = common_runtime::mgx_per_second();
 		#[cfg(feature = "with-kusama-runtime")]
 		assert_eq!(8_714 * unit(18), native_per_second);
 
@@ -81,12 +81,12 @@ fn weight_to_fee_works() {
 	// Mangata
 	#[cfg(feature = "with-kusama-runtime")]
 	{
-		use mangata_kusama_runtime::constants::fee::WeightToFee;
+		use common_runtime::constants::fee::WeightToFee;
 
-		let base_weight: Weight = mangata_kusama_runtime::xcm_config::BaseXcmWeight::get();
+		let base_weight: Weight = common_runtime::xcm_config::BaseXcmWeight::get();
 		assert_eq!(base_weight, Weight::from_parts(100_000_000, 0));
 
-		let unit_weight: Weight = mangata_kusama_runtime::xcm_config::UnitWeightCost::get();
+		let unit_weight: Weight = common_runtime::xcm_config::UnitWeightCost::get();
 		assert_eq!(unit_weight, Weight::from_parts(150_000_000, 0));
 
 		let weight: Weight = base_weight.saturating_mul(4);

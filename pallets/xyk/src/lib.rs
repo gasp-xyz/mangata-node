@@ -21,6 +21,7 @@
 //! - account_id
 //! - settle_treasury_buy_and_burn
 //! - calculate_balanced_sell_amount
+//! - get_liq_tokens_for_trading
 //!
 //! # fn create_pool
 //! -Sets the initial ratio/price of both assets to each other depending on amounts of each assets when creating pool.
@@ -283,12 +284,14 @@
 //! # calculate_balanced_sell_amount
 //! - Supporting public function accessible through rpc call which calculates how much amount x we need to swap from total_amount, so that after `y = swap(x)`, the resulting balance equals `(total_amount - x) / y = pool_x / pool_y`
 //! - the resulting amounts can then be used to `mint_liquidity` with minimal leftover after operation
+//! # get_liq_tokens_for_trading
+//! - Supporting public function accessible through rpc call which lists all of the liquidity pool token ids that are available for trading
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_support::{
 	assert_ok,
-	dispatch::{DispatchError, DispatchResult},
+	dispatch::{DispatchError, DispatchErrorWithPostInfo, DispatchResult, PostDispatchInfo},
 	ensure,
 	traits::Contains,
 	PalletId,
@@ -368,10 +371,16 @@ pub use weights::WeightInfo;
 
 type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 // type LiquidityMiningRewardsOf<T> = <T as ::Config>::AccountId;
+#[derive(Eq, PartialEq, Encode, Decode)]
+pub enum SwapKind {
+	Sell,
+	Buy,
+}
 
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
+	use frame_support::dispatch::DispatchClass;
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(PhantomData<T>);
@@ -433,8 +442,6 @@ pub mod pallet {
 		type VestingProvider: MultiTokenVestingLocks<Self::AccountId, Self::BlockNumber>;
 		type AssetMetadataMutation: AssetMetadataMutationTrait;
 		type WeightInfo: WeightInfo;
-		#[pallet::constant]
-		type RewardsMigrateAccount: Get<Self::AccountId>;
 	}
 
 	#[pallet::error]
@@ -498,6 +505,7 @@ pub mod pallet {
 		MultiSwapCantHaveSameTokenConsequetively,
 		/// Trading blocked by maintenance mode
 		TradingBlockedByMaintenanceMode,
+		PoolIsEmpty,
 	}
 
 	#[pallet::event]
@@ -640,7 +648,7 @@ pub mod pallet {
 		/// - `sold_asset_amount`: The amount of the sold token being sold
 		/// - `min_amount_out` - The minimum amount of bought asset that must be bought in order to not fail on slippage. Slippage failures still charge exchange commission.
 		#[pallet::call_index(1)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::sell_asset())]
+		#[pallet::weight((<<T as Config>::WeightInfo>::sell_asset(), DispatchClass::Operational, Pays::No))]
 		#[deprecated(note = "multiswap_sell_asset should be used instead")]
 		pub fn sell_asset(
 			origin: OriginFor<T>,
@@ -651,15 +659,22 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
-			let _ = <Self as XykFunctionsTrait<T::AccountId>>::sell_asset(
+			<Self as XykFunctionsTrait<T::AccountId>>::sell_asset(
 				sender,
 				sold_asset_id,
 				bought_asset_id,
 				sold_asset_amount,
 				min_amount_out,
 				false,
-			)?;
-			Ok(().into())
+			)
+			.map_err(|err| DispatchErrorWithPostInfo {
+				post_info: PostDispatchInfo {
+					actual_weight: Some(<<T as Config>::WeightInfo>::sell_asset()),
+					pays_fee: Pays::Yes,
+				},
+				error: err,
+			})?;
+			Ok(Pays::No.into())
 		}
 
 		/// Executes a multiswap sell asset in a series of sell asset atomic swaps.
@@ -677,7 +692,7 @@ pub mod pallet {
 		/// - `sold_asset_amount`: The amount of the first asset sold
 		/// - `min_amount_out` - The minimum amount of last asset that must be bought in order to not fail on slippage. Slippage failures still charge exchange commission.
 		#[pallet::call_index(2)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::multiswap_sell_asset(swap_token_list.len() as u32))]
+		#[pallet::weight((<<T as Config>::WeightInfo>::multiswap_sell_asset(swap_token_list.len() as u32), DispatchClass::Operational, Pays::No))]
 		pub fn multiswap_sell_asset(
 			origin: OriginFor<T>,
 			swap_token_list: Vec<TokenId>,
@@ -689,25 +704,34 @@ pub mod pallet {
 			if let (Some(sold_asset_id), Some(bought_asset_id), 2) =
 				(swap_token_list.get(0), swap_token_list.get(1), swap_token_list.len())
 			{
-				let _ = <Self as XykFunctionsTrait<T::AccountId>>::sell_asset(
+				<Self as XykFunctionsTrait<T::AccountId>>::sell_asset(
 					sender,
 					*sold_asset_id,
 					*bought_asset_id,
 					sold_asset_amount,
 					min_amount_out,
 					false,
-				)?;
+				)
 			} else {
 				<Self as XykFunctionsTrait<T::AccountId>>::multiswap_sell_asset(
 					sender,
-					swap_token_list,
+					swap_token_list.clone(),
 					sold_asset_amount,
 					min_amount_out,
 					false,
 					false,
-				)?;
+				)
 			}
-			Ok(().into())
+			.map_err(|err| DispatchErrorWithPostInfo {
+				post_info: PostDispatchInfo {
+					actual_weight: Some(<<T as Config>::WeightInfo>::multiswap_sell_asset(
+						swap_token_list.len() as u32,
+					)),
+					pays_fee: Pays::Yes,
+				},
+				error: err,
+			})?;
+			Ok(Pays::No.into())
 		}
 
 		/// Executes buy_asset swap.
@@ -725,7 +749,7 @@ pub mod pallet {
 		/// - `bought_asset_amount`: The amount of the bought token being bought
 		/// - `max_amount_in` - The maximum amount of sold asset that must be sold in order to not fail on slippage. Slippage failures still charge exchange commission.
 		#[pallet::call_index(3)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::buy_asset())]
+		#[pallet::weight((<<T as Config>::WeightInfo>::buy_asset(), DispatchClass::Operational, Pays::No))]
 		#[deprecated(note = "multiswap_buy_asset should be used instead")]
 		pub fn buy_asset(
 			origin: OriginFor<T>,
@@ -736,15 +760,22 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
-			let _ = <Self as XykFunctionsTrait<T::AccountId>>::buy_asset(
+			<Self as XykFunctionsTrait<T::AccountId>>::buy_asset(
 				sender,
 				sold_asset_id,
 				bought_asset_id,
 				bought_asset_amount,
 				max_amount_in,
 				false,
-			)?;
-			Ok(().into())
+			)
+			.map_err(|err| DispatchErrorWithPostInfo {
+				post_info: PostDispatchInfo {
+					actual_weight: Some(<<T as Config>::WeightInfo>::buy_asset()),
+					pays_fee: Pays::Yes,
+				},
+				error: err,
+			})?;
+			Ok(Pays::No.into())
 		}
 
 		/// Executes a multiswap buy asset in a series of buy asset atomic swaps.
@@ -765,7 +796,7 @@ pub mod pallet {
 		/// - `bought_asset_amount`: The amount of the last asset bought
 		/// - `max_amount_in` - The maximum amount of first asset that can be sold in order to not fail on slippage. Slippage failures still charge exchange commission.
 		#[pallet::call_index(4)]
-		#[pallet::weight(<<T as Config>::WeightInfo>::multiswap_buy_asset(swap_token_list.len() as u32))]
+		#[pallet::weight((<<T as Config>::WeightInfo>::multiswap_buy_asset(swap_token_list.len() as u32), DispatchClass::Operational, Pays::No))]
 		pub fn multiswap_buy_asset(
 			origin: OriginFor<T>,
 			swap_token_list: Vec<TokenId>,
@@ -777,25 +808,34 @@ pub mod pallet {
 			if let (Some(sold_asset_id), Some(bought_asset_id), 2) =
 				(swap_token_list.get(0), swap_token_list.get(1), swap_token_list.len())
 			{
-				let _ = <Self as XykFunctionsTrait<T::AccountId>>::buy_asset(
+				<Self as XykFunctionsTrait<T::AccountId>>::buy_asset(
 					sender,
 					*sold_asset_id,
 					*bought_asset_id,
 					bought_asset_amount,
 					max_amount_in,
 					false,
-				)?;
+				)
 			} else {
 				<Self as XykFunctionsTrait<T::AccountId>>::multiswap_buy_asset(
 					sender,
-					swap_token_list,
+					swap_token_list.clone(),
 					bought_asset_amount,
 					max_amount_in,
 					false,
 					false,
-				)?;
+				)
 			}
-			Ok(().into())
+			.map_err(|err| DispatchErrorWithPostInfo {
+				post_info: PostDispatchInfo {
+					actual_weight: Some(<<T as Config>::WeightInfo>::multiswap_buy_asset(
+						swap_token_list.len() as u32,
+					)),
+					pays_fee: Pays::Yes,
+				},
+				error: err,
+			})?;
+			Ok(Pays::No.into())
 		}
 
 		#[pallet::call_index(5)]
@@ -1270,6 +1310,15 @@ impl<T: Config> Pallet<T> {
 		Ok(result)
 	}
 
+	pub fn get_liq_tokens_for_trading() -> Result<Vec<TokenId>, DispatchError> {
+		let result = LiquidityAssets::<T>::iter_values()
+			.filter_map(|v| v)
+			.filter(|v| !<T as Config>::Currency::total_issuance((*v).into()).is_zero())
+			.collect();
+
+		Ok(result)
+	}
+
 	// MAX: 2R
 	pub fn get_liquidity_asset(
 		first_asset_id: TokenId,
@@ -1292,6 +1341,8 @@ impl<T: Config> Pallet<T> {
 		let (input_reserve, output_reserve) =
 			Pallet::<T>::get_reserves(sold_token_id, bought_token_id)?;
 
+		ensure!(!(Self::is_pool_empty(sold_token_id, bought_token_id)?), Error::<T>::PoolIsEmpty);
+
 		Self::calculate_sell_price(input_reserve, output_reserve, sell_amount)
 	}
 
@@ -1302,6 +1353,8 @@ impl<T: Config> Pallet<T> {
 	) -> Result<Balance, DispatchError> {
 		let (input_reserve, output_reserve) =
 			Pallet::<T>::get_reserves(sold_token_id, bought_token_id)?;
+
+		ensure!(!(Self::is_pool_empty(sold_token_id, bought_token_id)?), Error::<T>::PoolIsEmpty);
 
 		Self::calculate_buy_price(input_reserve, output_reserve, buy_amount)
 	}
@@ -1357,6 +1410,8 @@ impl<T: Config> Pallet<T> {
 		let liquidity_asset_id = Self::get_liquidity_asset(first_asset_id, second_asset_id)?;
 		let (first_asset_reserve, second_asset_reserve) =
 			Pallet::<T>::get_reserves(first_asset_id, second_asset_id)?;
+
+		ensure!(!(Self::is_pool_empty(first_asset_id, second_asset_id)?), Error::<T>::PoolIsEmpty);
 
 		let (first_asset_amount, second_asset_amount) = Self::get_burn_amount_reserves(
 			first_asset_reserve,
@@ -1529,6 +1584,34 @@ impl<T: Config> Pallet<T> {
 	fn native_token_id() -> TokenId {
 		<T as Config>::NativeCurrencyId::get()
 	}
+
+	fn calculate_initial_liquidity(
+		first_asset_amount: Balance,
+		second_asset_amount: Balance,
+	) -> Result<u128, DispatchError> {
+		let mut initial_liquidity = first_asset_amount
+			.checked_div(2)
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+			.checked_add(
+				second_asset_amount
+					.checked_div(2)
+					.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?,
+			)
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
+
+		return Ok(if initial_liquidity == 0 { 1 } else { initial_liquidity })
+	}
+
+	fn is_pool_empty(
+		first_asset_id: TokenId,
+		second_asset_id: TokenId,
+	) -> Result<bool, DispatchError> {
+		let liquidity_asset_id = Pallet::<T>::get_liquidity_asset(first_asset_id, second_asset_id)?;
+		let total_liquidity_assets: Balance =
+			<T as Config>::Currency::total_issuance(liquidity_asset_id.into()).into();
+
+		return Ok(total_liquidity_assets.is_zero())
+	}
 }
 
 impl<T: Config> PreValidateSwaps for Pallet<T> {
@@ -1561,6 +1644,8 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 				!T::DisabledTokens::contains(&bought_asset_id),
 			Error::<T>::FunctionNotAvailableForThisToken
 		);
+
+		ensure!(!(Self::is_pool_empty(sold_asset_id, bought_asset_id)?), Error::<T>::PoolIsEmpty);
 
 		let buy_and_burn_amount = multiply_by_rational_with_rounding(
 			sold_asset_amount,
@@ -1666,6 +1751,8 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 			.collect();
 
 		for (x, y) in atomic_pairs.iter() {
+			ensure!(!(Self::is_pool_empty(*x, *y)?), Error::<T>::PoolIsEmpty);
+
 			if x == y {
 				return Err(Error::<T>::MultiSwapCantHaveSameTokenConsequetively.into())
 			}
@@ -1762,6 +1849,8 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 				!T::DisabledTokens::contains(&bought_asset_id),
 			Error::<T>::FunctionNotAvailableForThisToken
 		);
+
+		ensure!(!(Self::is_pool_empty(sold_asset_id, bought_asset_id)?), Error::<T>::PoolIsEmpty);
 
 		// Get token reserves
 		let (input_reserve, output_reserve) =
@@ -1887,6 +1976,8 @@ impl<T: Config> PreValidateSwaps for Pallet<T> {
 		let mut atomic_pairs_hashset = BTreeSet::new();
 
 		for (x, y) in atomic_pairs.iter() {
+			ensure!(!(Self::is_pool_empty(*x, *y)?), Error::<T>::PoolIsEmpty);
+
 			if x == y {
 				return Err(Error::<T>::MultiSwapCantHaveSameTokenConsequetively.into())
 			} else if x > y {
@@ -2024,19 +2115,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		ensure!(first_asset_id != second_asset_id, Error::<T>::SameAsset,);
 
 		// Liquidity token amount calculation
-		let mut initial_liquidity = first_asset_amount
-			.checked_div(2)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
-			.checked_add(
-				second_asset_amount
-					.checked_div(2)
-					.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?,
-			)
-			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
-
-		if initial_liquidity == 0 {
-			initial_liquidity = 1
-		}
+		let initial_liquidity =
+			Pallet::<T>::calculate_initial_liquidity(first_asset_amount, second_asset_amount)?;
 
 		Pools::<T>::insert(
 			(first_asset_id, second_asset_id),
@@ -2784,24 +2864,26 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 		let total_liquidity_assets: Self::Balance =
 			<T as Config>::Currency::total_issuance(liquidity_asset_id.into()).into();
 
-		// Calculation of required second asset amount and received liquidity token amount
-		ensure!(!first_asset_reserve.is_zero(), Error::<T>::DivisionByZero);
-		let second_asset_amount = multiply_by_rational_with_rounding(
-			first_asset_amount,
-			second_asset_reserve,
-			first_asset_reserve,
-			Rounding::Down,
-		)
-		.ok_or(Error::<T>::UnexpectedFailure)?
-		.checked_add(1)
-		.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?;
-		let liquidity_assets_minted = multiply_by_rational_with_rounding(
-			first_asset_amount,
-			total_liquidity_assets,
-			first_asset_reserve,
-			Rounding::Down,
-		)
-		.ok_or(Error::<T>::UnexpectedFailure)?;
+		// The pool is empty and we are basically creating a new pool and reusing the existing one
+		let second_asset_amount = if !(first_asset_reserve.is_zero() &&
+			second_asset_reserve.is_zero()) &&
+			!total_liquidity_assets.is_zero()
+		{
+			// Calculation of required second asset amount and received liquidity token amount
+			ensure!(!first_asset_reserve.is_zero(), Error::<T>::DivisionByZero);
+
+			multiply_by_rational_with_rounding(
+				first_asset_amount,
+				second_asset_reserve,
+				first_asset_reserve,
+				Rounding::Down,
+			)
+			.ok_or(Error::<T>::UnexpectedFailure)?
+			.checked_add(1)
+			.ok_or_else(|| DispatchError::from(Error::<T>::MathOverflow))?
+		} else {
+			expected_second_asset_amount
+		};
 
 		ensure!(
 			second_asset_amount <= expected_second_asset_amount,
@@ -2813,6 +2895,19 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			!first_asset_amount.is_zero() && !second_asset_amount.is_zero(),
 			Error::<T>::ZeroAmount,
 		);
+
+		// We calculate the required liquidity token amount and also validate asset amounts
+		let liquidity_assets_minted = if total_liquidity_assets.is_zero() {
+			Pallet::<T>::calculate_initial_liquidity(first_asset_amount, second_asset_amount)?
+		} else {
+			multiply_by_rational_with_rounding(
+				first_asset_amount,
+				total_liquidity_assets,
+				first_asset_reserve,
+				Rounding::Down,
+			)
+			.ok_or(Error::<T>::UnexpectedFailure)?
+		};
 
 		// Ensure user has enough withdrawable tokens to create pool in amounts required
 
@@ -2971,6 +3066,8 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 	) -> Result<(Self::CurrencyId, Self::Balance), DispatchError> {
 		// checks
 		ensure!(!provided_asset_amount.is_zero(), Error::<T>::ZeroAmount,);
+
+		ensure!(!(Self::is_pool_empty(first_asset_id, second_asset_id)?), Error::<T>::PoolIsEmpty);
 
 		let (first_reserve, second_reserve) =
 			Pallet::<T>::get_reserves(first_asset_id, second_asset_id)?;
@@ -3155,6 +3252,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 			second_asset_amount
 		);
 
+		// Is liquidity asset amount empty?
 		if liquidity_asset_amount == total_liquidity_assets {
 			log!(
 				info,
@@ -3164,11 +3262,7 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for Pallet<T> {
 				second_asset_id,
 				first_asset_id,
 			);
-			Pools::<T>::remove((first_asset_id, second_asset_id));
-			Pools::<T>::remove((second_asset_id, first_asset_id));
-			LiquidityAssets::<T>::remove((first_asset_id, second_asset_id));
-			LiquidityAssets::<T>::remove((second_asset_id, first_asset_id));
-			LiquidityPools::<T>::remove(liquidity_asset_id);
+			Pallet::<T>::set_reserves(first_asset_id, 0, second_asset_id, 0)?;
 		} else {
 			// Apply changes in token pools, removing withdrawn amounts
 			// Cannot underflow due to earlier ensure

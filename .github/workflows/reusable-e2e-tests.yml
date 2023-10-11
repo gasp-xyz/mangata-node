@@ -73,7 +73,7 @@ jobs:
             --project-id 2 \
             --name "BE tests from node-repo" \
             --resources resources.json \
-            --source "unit-tests" > testmo-run-id.txt
+            --source "BE-e2e-regression" > testmo-run-id.txt
           ID=$(cat testmo-run-id.txt)
           echo "testmo-run-id=$ID" >> $GITHUB_OUTPUT
           echo "ID=$ID" >> $GITHUB_ENV
@@ -87,6 +87,7 @@ jobs:
   e2e-test-matrix:
     needs: [setup-report]
     strategy:
+      fail-fast: false
       matrix:
         include:
           - command: "yarn test-parallel --max-workers=10"
@@ -113,8 +114,12 @@ jobs:
             fast: false
           - command: "yarn test-experimentalStaking"
             fast: true
+          - command: "yarn test-crowdloan"
+            fast: false 
+          - command: "yarn test-sdk"
+            fast: true 
 
-    runs-on: [self-hosted, compile]
+    runs-on: [e2e-gke]
     timeout-minutes: 180
     env:
       API_URL: "ws://127.0.0.1:9946"
@@ -170,9 +175,17 @@ jobs:
           ref: "${{ env.E2EBRANCHNAME }}"
           path: e2eTests
 
+      # Fixing issue with not having yarn installed on self-hosted runners in Kubernetes
+      - name: Install yarn and docker-compose to fix self-hosted runner issue when running setup-node
+        #Ref: https://github.com/actions/setup-node/issues/182
+        run: |-
+          curl -fsSL --create-dirs -o $HOME/bin/yarn https://github.com/yarnpkg/yarn/releases/download/v1.22.19/yarn-1.22.19.js && chmod +x $HOME/bin/yarn
+          curl -SL https://github.com/docker/compose/releases/download/v2.20.3/docker-compose-linux-x86_64 -o $HOME/bin/docker-compose && chmod +x $HOME/bin/docker-compose
+          echo "$HOME/bin" >> $GITHUB_PATH
+
       - uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: '18.16.1'
           cache: 'yarn'
           cache-dependency-path: '**/yarn.lock'
 
@@ -186,15 +199,24 @@ jobs:
 
       - name: Install e2e tests dependencies
         working-directory: e2eTests
-        run: yarn
+        # TODO: remove cache clean later
+        run: yarn cache clean; yarn
 
       - name: Run parachain launch
         working-directory: devops/parachain-launch
         run: npx @open-web3/parachain-launch generate config.yml
 
+      - name: Docker ps
+        run: docker ps --no-trunc
+
+      - name: Docker network ls
+        run: docker network ls
+
       - name: Stop previous parachain if running
         working-directory: devops/parachain-launch/output
-        run: docker-compose down -v
+        run: |
+          docker kill $(docker ps -q) 2>/dev/null && echo $?
+          docker-compose down -v
 
       - name: Start mangata-node parachain
         working-directory: devops/parachain-launch/output
@@ -219,6 +241,7 @@ jobs:
           path: e2eTests/reports/junit-*.xml # Path to test results
           reporter: jest-junit # Format of test results
       - name: Install testmo
+        if: always()
         run: npm install --no-save @testmo/testmo-cli
       - name: Submit results to the testmo-run
         if: always()
@@ -260,13 +283,12 @@ jobs:
             /tmp/mangata_bob_1.tar
             /tmp/mangata_alice_1.tar
 
-      - name: Stop mangata-node parachain
-        if: always()
+      - name: Stop previous parachain if running
         working-directory: devops/parachain-launch/output
-        run: docker-compose down -v
-      - name: Fix permissions on self-hosted runner
-        if: always()
-        run: chown -R 1100:1100 $GITHUB_WORKSPACE
+        run: |
+          docker kill $(docker ps -q) 2>/dev/null && echo $?
+          docker-compose down -v
+        
   test-complete:
     needs: [setup-report, e2e-test-matrix]
     if: always()
@@ -285,4 +307,18 @@ jobs:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
         continue-on-error: true
+        
+  slack-notify-nook:
+    needs: [e2e-test-matrix]
+    if: failure()
+    runs-on: ubuntu-latest
 
+    steps:
+      - name: Slack Notification - Error
+        uses: bryannice/gitactions-slack-notification@2.0.0
+        env:
+          SLACK_INCOMING_WEBHOOK: ${{ secrets.BNB_E2E_NOTIFICATION_WEBHOOK }}
+          SLACK_TITLE: 'bnb e2e test execution - NOOK'
+          SLACK_COLOR: "#ff0011"
+          SLACK_MESSAGE: 'Test failures [ ${{ env.E2EBRANCHNAME }} - ${{ env.PARACHAIN_DOCKER_IMAGE }} ] testmo report: https://mangata-finance.testmo.net/automation/runs/view/${{needs.setup-report.outputs.testmo-run-id}}'
+          GITHUB_REF: 'https://mangata-finance.github.io/mangata-node/${{ github.run_number }}'

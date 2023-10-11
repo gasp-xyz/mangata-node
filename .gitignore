@@ -23,3 +23,7 @@ devops/parachain/config/state
 tarpaulin-report.html
 cobertura.xml
 build_rs_cov.profraw
+
+# nektos/act related files
+/event.json
+.actrc

@@ -3433,11 +3433,13 @@ impl<T: Config> Valuate for Pallet<T> {
 	) -> Self::Balance {
 		let native_token_id = Pallet::<T>::native_token_id();
 
-		let (native_reserves, token_reserves) = match Pallet::<T>::get_reserves(native_token_id, non_liquidity_token_id) {
-			Ok(reserves) => reserves,
-			Err(_) => return Default::default(),
-		};
-		Pallet::<T>::calculate_sell_price_no_fee(token_reserves, native_reserves, amount).unwrap_or_default()
+		let (native_reserves, token_reserves) =
+			match Pallet::<T>::get_reserves(native_token_id, non_liquidity_token_id) {
+				Ok(reserves) => reserves,
+				Err(_) => return Default::default(),
+			};
+		Pallet::<T>::calculate_sell_price_no_fee(token_reserves, native_reserves, amount)
+			.unwrap_or_default()
 	}
 
 	fn scale_liquidity_by_mga_valuation(

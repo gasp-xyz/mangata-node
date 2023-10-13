@@ -199,29 +199,6 @@ pub mod pallet {
 
 
 			// NOTE: 3R
-			let mut prev = None;
-			let mut pos = match (
-				ScheduleListPos::<T>::get(),
-				ScheduleListHead::<T>::get(),
-				ScheduleListTail::<T>::get(),
-				){
-					(None, None, None) => {
-						None
-					},
-					(Some(pos), Some(head), Some(tail)) if pos == tail => {
-						None
-					},
-					(None, Some(head), Some(_tail)) => {
-						Some(head)
-					},
-					(Some(pos), Some(_head), Some(_tail)) => {
-						Some(pos + 1)
-					},
-					_ => {
-						None
-					},
-			};
-
 			println!("ScheduleListPos   : {:?}", ScheduleListPos::<T>::get());
 			println!("ScheduleListHead  : {:?}", ScheduleListHead::<T>::get());
 			println!("ScheduleListTail  : {:?}", ScheduleListTail::<T>::get());
@@ -238,40 +215,37 @@ pub mod pallet {
 			for idx in 0..AMOUNT_PER_BLOCK {
 				println!("iter {}:{}", n, idx);
 				println!("session_id        : {:?}", session_id);
-				println!("prev              : {:?}", prev);
-				println!("pos               : {:?}", pos);
-				match (prev.clone(), pos.clone()) {
-					(prev_val, Some(pos_val)) => {
-						if let Some((schedule, next)) = RewardsSchedulesList::<T>::get(pos_val){
-							ScheduleListPos::<T>::put(pos_val);
 
+                let last_valid = ScheduleListPos::<T>::get();
+                let pos = match ( last_valid, ScheduleListHead::<T>::get() ){
+                        (Some(pos), _) => {
+                            if let Some ((schedule, next)) = RewardsSchedulesList::<T>::get(pos) {
+                                next
+                            }else{
+                                None
+                            }
+                        },
+                        (None, Some(head)) => {
+                            Some(head)
+                        },
+                        _ => { None },
+                };
+				println!("last_valid              : {:?}", last_valid);
+				println!("pos               : {:?}", pos);
+
+                if let Some(pos_val) = pos {
+						if let Some((schedule, next)) = RewardsSchedulesList::<T>::get(pos_val){
 							if schedule.last_session >= session_id{
 								ScheduleRewardsTotal::<T>::mutate((schedule.liq_token, schedule.reward_token, session_id), |val|{
 									*val += schedule.amount_per_session
 								});
-								pos = next;
-								prev = Some(pos_val);
+						                          ScheduleListPos::<T>::put(pos_val);
 							}else{
-
 								match(Self::head(), Self::tail()){
 									(Some(head), Some(tail)) if head == pos_val && head != tail=> {
-                                        //remove first elem
                                         println!("remove first list elem");
-										// move head to next
 										if let Some(next) = next{
 											ScheduleListHead::<T>::put(next);
-										}
-									},
-									(Some(head), Some(tail)) if tail == pos_val && head != tail=> {
-                                        println!("remove last list elem");
-										if let Some(prev) = prev_val{
-											ScheduleListTail::<T>::put(prev);
-											ScheduleListPos::<T>::put(prev);
-											RewardsSchedulesList::<T>::mutate(prev, |data|{
-												if let Some((schedule, next)) = data.as_mut() {
-													*next = None
-												}
-											});
 										}
 									},
 									(Some(head), Some(tail)) if tail == pos_val && head == tail=> {
@@ -279,55 +253,40 @@ pub mod pallet {
 										ScheduleListHead::<T>::kill();
 										ScheduleListPos::<T>::kill();
 									},
+									(Some(head), Some(tail)) if tail == pos_val && head != tail=> {
+                                        println!("remove last list elem");
+										if let Some(last_valid) = last_valid{
+											ScheduleListTail::<T>::put(last_valid);
+											RewardsSchedulesList::<T>::mutate(last_valid, |data|{
+												if let Some((schedule, next)) = data.as_mut() {
+													*next = None
+												}
+											});
+										}
+									},
 									(Some(head), Some(tail))  => {
                                         println!("remove middle elem {}", pos_val);
-										if let Some(prev) = prev_val{
-											RewardsSchedulesList::<T>::mutate(prev, |data|{
+										if let Some(last_valid) = last_valid{
+											RewardsSchedulesList::<T>::mutate(last_valid, |data|{
 												if let Some((schedule, prev_next)) = data.as_mut() {
 													*prev_next = next
 												}
 											});
 										}
-										if let Some(prev) = prev_val{
-                                            ScheduleListPos::<T>::put(prev);
-                                        }
-                                        //remove middle elem
                                     },
 									_ => {}
 
 								}
-								pos = next;
 							}
-						}else{
-							break;
-						}
-					},
-					(Some(pos), None) => {
-						break;
-					},
-					(None, None) => {
-						break;
-					}
 
-				}
-			}
-			Default::default()
-				// if let Some((schedule, next)) = RewardsSchedulesList::<T>::get(pos){
-				// 	ScheduleRewardsTotal::mutate_exists((schedule.liq_token, schedudle.reward_token, session_id), |val|{
-				// 		if schedudle.last_session <= session_id{
-				// 			*val += schedule.amount_per_session;
-				// 			pos = next;
-				// 		}else{
-				// 			None
-				// 		}
-				// 	})
-				// }else{
-				// 	break;
-				//
-				// }
-				//
-		}
-	}
+						}
+                } else{
+                    break;
+                }
+            }
+        Default::default()
+        }
+    }
 
 	#[cfg(feature = "runtime-benchmarks")]
 	pub trait PoSBenchmarkingConfig: pallet_issuance::Config {}
@@ -510,6 +469,9 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn pos)]
 	pub type ScheduleListPos<T: Config> = StorageValue<_, ScheduleId, OptionQuery>;
+
+	#[pallet::storage]
+	pub type ScheduleListPosPrev<T: Config> = StorageValue<_, ScheduleId, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn head)]

@@ -58,9 +58,11 @@ fn forward_to_block(n: u32) {
 
 fn forward_to_block_with_custom_rewards(n: u32, rewards: u128) {
 	while System::block_number().saturated_into::<u32>() <= n {
+		ProofOfStake::on_initialize(System::block_number().saturated_into::<u64>());
 		if System::block_number().saturated_into::<u32>() % ProofOfStake::rewards_period() == 0 {
 			ProofOfStake::distribute_rewards(rewards);
 		}
+		ProofOfStake::on_finalize(n as u64);
 		System::set_block_number(System::block_number().saturated_into::<u64>() + 1);
 	}
 }
@@ -1390,12 +1392,163 @@ fn rewards_schedule_is_stored() {
 
 			let rewards_per_session = REWARD_AMOUNT / 5;
 			assert_eq!(
-				ProofOfStake::schedules().into_inner(),
-				BTreeMap::from([(
-					(5u64, LIQUIDITY_TOKEN, REWARD_TOKEN, rewards_per_session, 0),
-					()
-				)])
+				RewardsSchedulesList::<Test>::get(0).unwrap(),
+				(Schedule{
+					last_session: 5u64,
+					liq_token: LIQUIDITY_TOKEN,
+					reward_token: REWARD_TOKEN,
+					amount_per_session: rewards_per_session,
+				}, None)
 			);
+			assert_eq!(
+				ScheduleListTail::<Test>::get(),
+				Some(0u64)
+			);
+			assert_eq!(
+				ScheduleListHead::<Test>::get(),
+				Some(0u64)
+			);
+		});
+}
+
+
+#[test]
+#[serial]
+fn rewards_linked_list_insert_multiple_schedules() {
+	ExtBuilder::new()
+		.issue(ALICE, REWARD_TOKEN, 2 * REWARD_AMOUNT)
+		.build()
+		.execute_with(|| {
+			System::set_block_number(1);
+			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
+			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
+			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+			assert_ok!(ProofOfStake::reward_pool(
+				RuntimeOrigin::signed(ALICE),
+				REWARDED_PAIR,
+				REWARD_TOKEN,
+				REWARD_AMOUNT,
+				1u32.into()
+			),);
+
+			assert_ok!(ProofOfStake::reward_pool(
+				RuntimeOrigin::signed(ALICE),
+				REWARDED_PAIR,
+				REWARD_TOKEN,
+				REWARD_AMOUNT,
+				2u32.into()
+			),);
+
+
+			assert_eq!(
+				RewardsSchedulesList::<Test>::get(0).unwrap(),
+				(Schedule{
+					last_session: 1u64,
+					liq_token: LIQUIDITY_TOKEN,
+					reward_token: REWARD_TOKEN,
+					amount_per_session: REWARD_AMOUNT / 1,
+				}, Some(1))
+			);
+
+			assert_eq!(
+				RewardsSchedulesList::<Test>::get(1).unwrap(),
+				(Schedule{
+					last_session: 2u64,
+					liq_token: LIQUIDITY_TOKEN,
+					reward_token: REWARD_TOKEN,
+					amount_per_session: REWARD_AMOUNT / 2,
+				}, None)
+			);
+
+			assert_eq!(
+				ScheduleListHead::<Test>::get(),
+				Some(0u64)
+			);
+
+			assert_eq!(
+				ScheduleListTail::<Test>::get(),
+				Some(1u64)
+			);
+		});
+}
+
+
+#[test]
+#[serial]
+fn rewards_linked_list_removes_outdated_schedule_automatically() {
+	ExtBuilder::new()
+		.issue(ALICE, REWARD_TOKEN, 2 * REWARD_AMOUNT)
+		.build()
+		.execute_with(|| {
+			System::set_block_number(1);
+			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
+			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
+			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+			assert_ok!(ProofOfStake::reward_pool(
+				RuntimeOrigin::signed(ALICE),
+				REWARDED_PAIR,
+				REWARD_TOKEN,
+				REWARD_AMOUNT,
+				1u32.into()
+			),);
+
+			assert_ok!(ProofOfStake::reward_pool(
+				RuntimeOrigin::signed(ALICE),
+				REWARDED_PAIR,
+				REWARD_TOKEN,
+				REWARD_AMOUNT,
+				2u32.into()
+			),);
+
+
+			assert_ok!(RewardsSchedulesList::<Test>::get(0).ok_or(()));
+			assert_ok!(RewardsSchedulesList::<Test>::get(1).ok_or(()));
+
+			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!( ScheduleListPos::<Test>::get(), None);
+			assert_eq!( ScheduleListTail::<Test>::get(), Some(1u64));
+
+			forward_to_block(2);
+
+			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!( ScheduleListTail::<Test>::get(), Some(1u64));
+			assert_eq!( ScheduleListPos::<Test>::get(), Some(1u64));
+
+			forward_to_block(5);
+
+			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!( ScheduleListTail::<Test>::get(), Some(1u64));
+			assert_eq!( ScheduleListPos::<Test>::get(), None,);
+
+			forward_to_block(10);
+
+			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!( ScheduleListTail::<Test>::get(), Some(1u64));
+			assert_eq!( ScheduleListPos::<Test>::get(), None,);
+
+			forward_to_block(11);
+
+			assert_eq!( ScheduleListHead::<Test>::get(), Some(1u64));
+			assert_eq!( ScheduleListTail::<Test>::get(), Some(1u64));
+			assert_eq!( ScheduleListPos::<Test>::get(), Some(1u64),);
+
+			forward_to_block(15);
+
+			assert_eq!( ScheduleListHead::<Test>::get(), Some(1u64));
+			assert_eq!( ScheduleListTail::<Test>::get(), Some(1u64));
+			assert_eq!( ScheduleListPos::<Test>::get(), None);
+
+			forward_to_block(16);
+
+			assert_eq!( ScheduleListHead::<Test>::get(), None);
+			assert_eq!( ScheduleListTail::<Test>::get(), None);
+			assert_eq!( ScheduleListPos::<Test>::get(), None);
+
+
 		});
 }
 

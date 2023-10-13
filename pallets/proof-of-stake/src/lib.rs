@@ -188,7 +188,10 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_initialize(n: T::BlockNumber) -> Weight {
+
+			println!("on_initialize {}", n);
 			const AMOUNT_PER_BLOCK: u64 = 5;
+
 
 			// NOTE: 3R
 			let mut prev = None;
@@ -209,7 +212,14 @@ pub mod pallet {
 					(Some(pos), Some(_head), Some(_tail)) => {
 						Some(pos + 1)
 					},
+					_ => {
+						None
+					},
 			};
+
+			println!("ScheduleListPos   : {:?}", ScheduleListPos::<T>::get());
+			println!("ScheduleListHead  : {:?}", ScheduleListHead::<T>::get());
+			println!("ScheduleListTail  : {:?}", ScheduleListTail::<T>::get());
 
 			// 1R 1W 15RW
 
@@ -219,16 +229,26 @@ pub mod pallet {
 			// NOTE: 3R + 1R
 			let session_id = frame_system::Pallet::<T>::block_number().saturated_into::<u64>() / 5u64;
 
-			for _ in 0..AMOUNT_PER_BLOCK {
-				match (prev.as_mut(),pos.as_mut()) {
+			if frame_system::Pallet::<T>::block_number().saturated_into::<u64>() % 5u64 == 0 {
+				ScheduleListPos::<T>::kill();
+				return Default::default();
+			}
+
+			for idx in 0..AMOUNT_PER_BLOCK {
+				println!("iter {}:{}", n, idx);
+				println!("session_id        : {:?}", session_id);
+				println!("prev              : {:?}", prev);
+				println!("pos               : {:?}", pos);
+				match (prev.clone(), pos.clone()) {
 					(Some(prev_val), Some(pos_val)) => {
 						if let Some((schedule, next)) = RewardsSchedulesList::<T>::get(pos_val){
 
-							ScheduleRewardsTotal::mutate((schedule.liq_token, schedule.reward_token, session_id), |val|{
-								if schedule.last_session < session_id{
+							ScheduleListPos::<T>::put(pos_val);
+							ScheduleRewardsTotal::<T>::mutate((schedule.liq_token, schedule.reward_token, session_id), |val|{
+								if schedule.last_session >= session_id{
 									*val += schedule.amount_per_session;
-									*pos = Some(next);
-									*prev = Some(pos_val);
+									pos = next;
+									prev = Some(pos_val);
 								}else{
 									// NOTE: consider removing elements from list
 									RewardsSchedulesList::<T>::mutate(prev_val, |data|{
@@ -236,25 +256,50 @@ pub mod pallet {
 											*prev_next = next;
 										}
 									});
-									ScheduleListTail::<T>::put(prev_val);
+									pos = next;
+									if ScheduleListHead::<T>::get().unwrap() == pos_val{
+										if let Some(next) = next{
+											ScheduleListHead::<T>::put(next);
+										}else{
+											ScheduleListHead::<T>::kill();
+											ScheduleListTail::<T>::kill();
+											ScheduleListPos::<T>::kill();
+										}
+									}
 								}
 							});
+
 
 						}else{
 							break;
 						}
 					},
 					(None, Some(pos_val)) => {
+						println!("hello 0");
 						if let Some((schedule, next)) = RewardsSchedulesList::<T>::get(pos_val){
-							ScheduleRewardsTotal::mutate((schedule.liq_token, schedule.reward_token, session_id), |val|{
-								if schedule.last_session < session_id{
+							println!("hello 1");
+							ScheduleListPos::<T>::put(pos_val);
+							ScheduleRewardsTotal::<T>::mutate((schedule.liq_token, schedule.reward_token, session_id), |val|{
+								if schedule.last_session >= session_id{
+									println!("hello 2");
 									*val += schedule.amount_per_session;
-									*pos = Some(next);
-									*prev = Some(pos_val);
+									pos = next;
+									prev = Some(pos_val);
 								}else{
+									println!("hello 3");
 									// NOTE: consider removing elements from list
-									ScheduleListHead::<T>::kill();
-									ScheduleListTail::<T>::kill();
+									if ScheduleListHead::<T>::get().unwrap() == pos_val{
+										if let Some(next) = next{
+											println!("hello 4");
+											ScheduleListHead::<T>::put(next);
+										}else{
+											println!("hello 5");
+											ScheduleListHead::<T>::kill();
+											ScheduleListTail::<T>::kill();
+											ScheduleListPos::<T>::kill();
+										}
+									}
+									pos = next;
 								}
 							});
 						}else{
@@ -1396,7 +1441,7 @@ impl<T: Config> Pallet<T> {
 					}
 				});
 				RewardsSchedulesList::<T>::insert(tail + 1, (schedule, None::<ScheduleId>));
-				ScheduleListHead::<T>::put(tail + 1);
+				ScheduleListTail::<T>::put(tail + 1);
 			},
 			_ => {} // invariant assures this will never happen
 		}

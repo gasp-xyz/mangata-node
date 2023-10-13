@@ -1857,12 +1857,57 @@ fn remove_random_elements_from_linked_list_over_time() {
 			assert_eq!( RewardsSchedulesList::<Test>::get(4u64).unwrap().1, Some(6u64));
 			assert_eq!( RewardsSchedulesList::<Test>::get(6u64).unwrap().1, None);
 
+			forward_to_block(19);
+
+			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!( ScheduleListTail::<Test>::get(), Some(6u64));
+			assert_eq!( RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(6u64));
+			assert_eq!( RewardsSchedulesList::<Test>::get(6u64).unwrap().1, None);
+
+
 		});
 }
 
 
+#[test]
+#[serial]
+fn remove_lot_of_schedules_from_linked_list_in_single_iteration() {
+	ExtBuilder::new()
+		.issue(ALICE, REWARD_TOKEN, 10 * REWARD_AMOUNT)
+		.build()
+		.execute_with(|| {
+			System::set_block_number(1);
+			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
+			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
+			valuate_liquidity_token_mock.expect().return_const(11u128);
 
+			insert_schedule_ending_at_session(3); // 0
+			insert_schedule_ending_at_session(1); // 1
+			insert_schedule_ending_at_session(1); // 1
+			insert_schedule_ending_at_session(1); // 1
+			insert_schedule_ending_at_session(1); // 2
+			insert_schedule_ending_at_session(1); // 3
+			insert_schedule_ending_at_session(1); // 4
+			insert_schedule_ending_at_session(1); // 5
+			insert_schedule_ending_at_session(3); // 6
 
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!(ScheduleListPos::<Test>::get(), None);
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(8u64));
+
+			forward_to_block(14);
+
+			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!( ScheduleListTail::<Test>::get(), Some(8u64));
+			assert_eq!( RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(8u64));
+			assert_eq!( RewardsSchedulesList::<Test>::get(8u64).unwrap().1, None);
+
+			forward_to_block(100);
+			assert_eq!( ScheduleListHead::<Test>::get(), None);
+			assert_eq!( ScheduleListTail::<Test>::get(), None);
+		});
+}
 
 #[test]
 #[serial]

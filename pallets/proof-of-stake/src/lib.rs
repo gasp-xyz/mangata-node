@@ -252,26 +252,24 @@ pub mod pallet {
 								pos = next;
 								prev = Some(pos_val);
 							}else{
-								// NOTE: consider removing elements from list
-								// RewardsSchedulesList::<T>::mutate(prev_val, |data|{
-								// 	if let Some((schedule, prev_next)) = data{
-								// 		*prev_next = next;
-								// 	}
-								// });
 
 								match(Self::head(), Self::tail()){
 									(Some(head), Some(tail)) if head == pos_val && head != tail=> {
+                                        //remove first elem
+                                        println!("remove first list elem");
 										// move head to next
 										if let Some(next) = next{
 											ScheduleListHead::<T>::put(next);
 										}
 									},
 									(Some(head), Some(tail)) if tail == pos_val && head != tail=> {
+                                        println!("remove last list elem");
 										if let Some(prev) = prev_val{
 											ScheduleListTail::<T>::put(prev);
+											ScheduleListPos::<T>::put(prev);
 											RewardsSchedulesList::<T>::mutate(prev, |data|{
 												if let Some((schedule, next)) = data.as_mut() {
-													*next = Some(prev)
+													*next = None
 												}
 											});
 										}
@@ -281,6 +279,20 @@ pub mod pallet {
 										ScheduleListHead::<T>::kill();
 										ScheduleListPos::<T>::kill();
 									},
+									(Some(head), Some(tail))  => {
+                                        println!("remove middle elem {}", pos_val);
+										if let Some(prev) = prev_val{
+											RewardsSchedulesList::<T>::mutate(prev, |data|{
+												if let Some((schedule, prev_next)) = data.as_mut() {
+													*prev_next = next
+												}
+											});
+										}
+										if let Some(prev) = prev_val{
+                                            ScheduleListPos::<T>::put(prev);
+                                        }
+                                        //remove middle elem
+                                    },
 									_ => {}
 
 								}

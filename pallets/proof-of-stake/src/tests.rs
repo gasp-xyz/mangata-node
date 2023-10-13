@@ -1552,6 +1552,318 @@ fn rewards_linked_list_removes_outdated_schedule_automatically() {
 		});
 }
 
+// rewards_first_schedule_from_linked_list
+// rewards_last_schedule_from_linked_list
+// rewards_middle_schedule_from_linked_list
+// rewards_multipleall_schedule_from_linked_list
+
+fn insert_schedule_ending_at_session(n: u32){
+	assert_ok!(ProofOfStake::reward_pool(
+		RuntimeOrigin::signed(ALICE),
+		REWARDED_PAIR,
+		REWARD_TOKEN,
+		REWARD_AMOUNT,
+		n.into(),
+	),);
+
+}
+
+#[test]
+#[serial]
+fn rewards_first_schedule_from_linked_list_of_four() {
+	ExtBuilder::new()
+		.issue(ALICE, REWARD_TOKEN, 4 * REWARD_AMOUNT)
+		.build()
+		.execute_with(|| {
+			System::set_block_number(1);
+			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
+			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
+			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+			insert_schedule_ending_at_session(1);
+			insert_schedule_ending_at_session(2);
+			insert_schedule_ending_at_session(2);
+			insert_schedule_ending_at_session(2);
+
+			assert_ok!(RewardsSchedulesList::<Test>::get(0).ok_or(()));
+			assert_ok!(RewardsSchedulesList::<Test>::get(1).ok_or(()));
+			assert_ok!(RewardsSchedulesList::<Test>::get(2).ok_or(()));
+			assert_ok!(RewardsSchedulesList::<Test>::get(3).ok_or(()));
+			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!( ScheduleListPos::<Test>::get(), None);
+			assert_eq!( ScheduleListTail::<Test>::get(), Some(3u64));
+
+			forward_to_block(11);
+
+			assert_eq!( ScheduleListHead::<Test>::get(), Some(1u64));
+			assert_eq!( ScheduleListTail::<Test>::get(), Some(3u64));
+			assert_eq!( RewardsSchedulesList::<Test>::get(1u64).unwrap().1, Some(2u64));
+			assert_eq!( RewardsSchedulesList::<Test>::get(2u64).unwrap().1, Some(3u64));
+			assert_eq!( RewardsSchedulesList::<Test>::get(3u64).unwrap().1, None);
+		});
+}
+
+#[test]
+#[serial]
+fn remove_last_schedule_from_linked_list() {
+	ExtBuilder::new()
+		.issue(ALICE, REWARD_TOKEN, 4 * REWARD_AMOUNT)
+		.build()
+		.execute_with(|| {
+			System::set_block_number(1);
+			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
+			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
+			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+			insert_schedule_ending_at_session(2);
+			insert_schedule_ending_at_session(2);
+			insert_schedule_ending_at_session(2);
+			insert_schedule_ending_at_session(1);
+
+			assert_ok!(RewardsSchedulesList::<Test>::get(0).ok_or(()));
+			assert_ok!(RewardsSchedulesList::<Test>::get(1).ok_or(()));
+			assert_ok!(RewardsSchedulesList::<Test>::get(2).ok_or(()));
+			assert_ok!(RewardsSchedulesList::<Test>::get(3).ok_or(()));
+			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!( ScheduleListPos::<Test>::get(), None);
+			assert_eq!( ScheduleListTail::<Test>::get(), Some(3u64));
+
+			forward_to_block(11);
+
+			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!( ScheduleListTail::<Test>::get(), Some(2u64));
+			assert_eq!( RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(1u64));
+			assert_eq!( RewardsSchedulesList::<Test>::get(1u64).unwrap().1, Some(2u64));
+			assert_eq!( RewardsSchedulesList::<Test>::get(2u64).unwrap().1, None);
+
+
+		});
+}
+
+#[test]
+#[serial]
+fn remove_middle_schedule_from_linked_list() {
+	ExtBuilder::new()
+		.issue(ALICE, REWARD_TOKEN, 4 * REWARD_AMOUNT)
+		.build()
+		.execute_with(|| {
+			System::set_block_number(1);
+			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
+			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
+			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+			insert_schedule_ending_at_session(2);
+			insert_schedule_ending_at_session(1);
+			insert_schedule_ending_at_session(2);
+			insert_schedule_ending_at_session(2);
+
+			assert_ok!(RewardsSchedulesList::<Test>::get(0).ok_or(()));
+			assert_ok!(RewardsSchedulesList::<Test>::get(1).ok_or(()));
+			assert_ok!(RewardsSchedulesList::<Test>::get(2).ok_or(()));
+			assert_ok!(RewardsSchedulesList::<Test>::get(3).ok_or(()));
+			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!( ScheduleListPos::<Test>::get(), None);
+			assert_eq!( ScheduleListTail::<Test>::get(), Some(3u64));
+
+			forward_to_block(11);
+
+			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!( ScheduleListTail::<Test>::get(), Some(3u64));
+			assert_eq!( RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(2u64));
+			assert_eq!( RewardsSchedulesList::<Test>::get(2u64).unwrap().1, Some(3u64));
+			assert_eq!( RewardsSchedulesList::<Test>::get(3u64).unwrap().1, None);
+		});
+}
+
+
+#[test]
+#[serial]
+fn remove_first_few_elems_at_once_from_linked_list() {
+	ExtBuilder::new()
+		.issue(ALICE, REWARD_TOKEN, 4 * REWARD_AMOUNT)
+		.build()
+		.execute_with(|| {
+			System::set_block_number(1);
+			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
+			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
+			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+			insert_schedule_ending_at_session(1);
+			insert_schedule_ending_at_session(1);
+			insert_schedule_ending_at_session(2);
+			insert_schedule_ending_at_session(2);
+
+			assert_ok!(RewardsSchedulesList::<Test>::get(0).ok_or(()));
+			assert_ok!(RewardsSchedulesList::<Test>::get(1).ok_or(()));
+			assert_ok!(RewardsSchedulesList::<Test>::get(2).ok_or(()));
+			assert_ok!(RewardsSchedulesList::<Test>::get(3).ok_or(()));
+			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!( ScheduleListPos::<Test>::get(), None);
+			assert_eq!( ScheduleListTail::<Test>::get(), Some(3u64));
+
+			forward_to_block(11);
+
+			assert_eq!( ScheduleListHead::<Test>::get(), Some(2u64));
+			assert_eq!( ScheduleListTail::<Test>::get(), Some(3u64));
+			assert_eq!( RewardsSchedulesList::<Test>::get(2u64).unwrap().1, Some(3u64));
+			assert_eq!( RewardsSchedulesList::<Test>::get(3u64).unwrap().1, None);
+		});
+}
+
+#[test]
+#[serial]
+fn remove_few_last_elems_at_once_from_linked_list() {
+	ExtBuilder::new()
+		.issue(ALICE, REWARD_TOKEN, 4 * REWARD_AMOUNT)
+		.build()
+		.execute_with(|| {
+			System::set_block_number(1);
+			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
+			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
+			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+			insert_schedule_ending_at_session(2);
+			insert_schedule_ending_at_session(2);
+			insert_schedule_ending_at_session(1);
+			insert_schedule_ending_at_session(1);
+
+			assert_ok!(RewardsSchedulesList::<Test>::get(0).ok_or(()));
+			assert_ok!(RewardsSchedulesList::<Test>::get(1).ok_or(()));
+			assert_ok!(RewardsSchedulesList::<Test>::get(2).ok_or(()));
+			assert_ok!(RewardsSchedulesList::<Test>::get(3).ok_or(()));
+			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!( ScheduleListPos::<Test>::get(), None);
+			assert_eq!( ScheduleListTail::<Test>::get(), Some(3u64));
+
+			forward_to_block(11);
+
+			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!( ScheduleListTail::<Test>::get(), Some(1u64));
+			assert_eq!( RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(1u64));
+			assert_eq!( RewardsSchedulesList::<Test>::get(1u64).unwrap().1, None);
+		});
+}
+
+#[test]
+#[serial]
+fn remove_few_middle_elements_from_linkedd_list() {
+	ExtBuilder::new()
+		.issue(ALICE, REWARD_TOKEN, 4 * REWARD_AMOUNT)
+		.build()
+		.execute_with(|| {
+			System::set_block_number(1);
+			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
+			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
+			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+			insert_schedule_ending_at_session(2);
+			insert_schedule_ending_at_session(1);
+			insert_schedule_ending_at_session(1);
+			insert_schedule_ending_at_session(2);
+
+			assert_ok!(RewardsSchedulesList::<Test>::get(0).ok_or(()));
+			assert_ok!(RewardsSchedulesList::<Test>::get(1).ok_or(()));
+			assert_ok!(RewardsSchedulesList::<Test>::get(2).ok_or(()));
+			assert_ok!(RewardsSchedulesList::<Test>::get(3).ok_or(()));
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!(ScheduleListPos::<Test>::get(), None);
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
+
+			forward_to_block(11);
+
+			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!( ScheduleListTail::<Test>::get(), Some(3u64));
+			assert_eq!( RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(3u64));
+			assert_eq!( RewardsSchedulesList::<Test>::get(3u64).unwrap().1, None);
+		});
+}
+
+#[test]
+#[serial]
+fn remove_random_elements_from_linked_list() {
+	ExtBuilder::new()
+		.issue(ALICE, REWARD_TOKEN, 5 * REWARD_AMOUNT)
+		.build()
+		.execute_with(|| {
+			System::set_block_number(1);
+			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
+			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
+			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+			insert_schedule_ending_at_session(2);
+			insert_schedule_ending_at_session(1);
+			insert_schedule_ending_at_session(2);
+			insert_schedule_ending_at_session(1);
+			insert_schedule_ending_at_session(2);
+
+			assert_ok!(RewardsSchedulesList::<Test>::get(0).ok_or(()));
+			assert_ok!(RewardsSchedulesList::<Test>::get(1).ok_or(()));
+			assert_ok!(RewardsSchedulesList::<Test>::get(2).ok_or(()));
+			assert_ok!(RewardsSchedulesList::<Test>::get(3).ok_or(()));
+			assert_ok!(RewardsSchedulesList::<Test>::get(4).ok_or(()));
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!(ScheduleListPos::<Test>::get(), None);
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(4u64));
+
+			forward_to_block(11);
+
+			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!( ScheduleListTail::<Test>::get(), Some(4u64));
+			assert_eq!( RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(2u64));
+			assert_eq!( RewardsSchedulesList::<Test>::get(2u64).unwrap().1, Some(4u64));
+			assert_eq!( RewardsSchedulesList::<Test>::get(4u64).unwrap().1, None);
+		});
+}
+
+#[test]
+#[serial]
+fn remove_random_elements_from_linked_list_over_time() {
+	ExtBuilder::new()
+		.issue(ALICE, REWARD_TOKEN, 7 * REWARD_AMOUNT)
+		.build()
+		.execute_with(|| {
+			System::set_block_number(1);
+			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
+			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
+			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+			insert_schedule_ending_at_session(3); // 0
+			insert_schedule_ending_at_session(2); // 1
+			insert_schedule_ending_at_session(1); // 2
+			insert_schedule_ending_at_session(2); // 3
+			insert_schedule_ending_at_session(2); // 4
+			insert_schedule_ending_at_session(1); // 5
+			insert_schedule_ending_at_session(3); // 6
+
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!(ScheduleListPos::<Test>::get(), None);
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(6u64));
+
+			forward_to_block(14);
+
+			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!( ScheduleListTail::<Test>::get(), Some(6u64));
+			assert_eq!( RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(1u64));
+			assert_eq!( RewardsSchedulesList::<Test>::get(1u64).unwrap().1, Some(3u64));
+			assert_eq!( RewardsSchedulesList::<Test>::get(3u64).unwrap().1, Some(4u64));
+			assert_eq!( RewardsSchedulesList::<Test>::get(4u64).unwrap().1, Some(6u64));
+			assert_eq!( RewardsSchedulesList::<Test>::get(6u64).unwrap().1, None);
+
+		});
+}
+
+
+
+
+
 #[test]
 #[serial]
 fn number_of_active_schedules_is_limited() {

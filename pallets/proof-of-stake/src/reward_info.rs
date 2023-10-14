@@ -92,7 +92,7 @@ impl RewardsCalculator<ConstCurveRewards> {
 		println!("REWARDS CALCULATOR at {} for {}", current_time, user);
 		println!("total_activated : {}", total_activated);
 		println!("total_rewards   : {}", total_rewards);
-		let pool_ratio_current =  total_rewards.checked_div(total_activated).unwrap_or_default();
+		let pool_ratio_current =  U256::from(total_rewards.checked_div(total_activated).unwrap_or_default()) * U256::from(u128::MAX);
 
 		// let pool_map = crate::ScheduleRewardsPerSingleLiquidity::<T>::get();
 

@@ -793,10 +793,10 @@ impl<T: Config> Pallet<T> {
 	fn total_activated_liquidity(liquidity_asset_id: TokenId, liquidity_assets_reward: TokenId) -> Balance{
 		let (pending, idx, cumulative) = TotalActivatedLiquidityForSchedules::<T>::get(liquidity_asset_id, liquidity_assets_reward);
 		if idx == (Self::session_index() as u64){
-			println!("total_activated_liquidity idx: {} amount: {}", idx, cumulative);
+			println!("total_activated_liquidity cumulative idx: {} amount: {}", idx, cumulative);
 			cumulative
 		}else{
-			println!("total_activated_liquidity idx: {} amount: {}", idx, cumulative + pending);
+			println!("total_activated_liquidity cumulative +pending idx: {} amount: {}", idx, cumulative + pending);
 			cumulative + pending
 		}
 	}
@@ -804,10 +804,10 @@ impl<T: Config> Pallet<T> {
 	fn total_schedule_rewards(liquidity_asset_id: TokenId, liquidity_assets_reward: TokenId) -> Balance{
 		let (pending, idx, cumulative) = ScheduleRewardsTotal::<T>::get((liquidity_asset_id, liquidity_assets_reward));
 		if idx == (Self::session_index() as u64){
-			println!("total_activated_liquidity idx: {} amount: {}", idx, cumulative);
+			println!("total_activated_liquidity cumulative idx: {} amount: {}", idx, cumulative);
 			cumulative
 		}else{
-			println!("total_activated_liquidity idx: {} amount: {}", idx, cumulative + pending);
+			println!("total_activated_liquidity cumulative + pending idx: {} amount: {}", idx, cumulative + pending);
 			cumulative + pending
 		}
 	}
@@ -817,6 +817,7 @@ impl<T: Config> Pallet<T> {
 		// TODO: make configurable
 		let session_id = Self::session_index() as u64;
 
+		println!("update_total_activated_liqudity before {:?}", TotalActivatedLiquidityForSchedules::<T>::get(liquidity_asset_id, liquidity_assets_reward));
 		TotalActivatedLiquidityForSchedules::<T>::mutate(liquidity_asset_id, liquidity_assets_reward, |(pending, idx, cumulative)|{
 			if *idx == session_id {
 				let new_amount = if change{
@@ -826,11 +827,14 @@ impl<T: Config> Pallet<T> {
 				};
 				*pending = new_amount;
 			}else{
+				println!("update_total_activated_liqudity swithc {}", diff);
 				// NOTE: handle burn so negative diff
 				*cumulative += *pending;
 				*pending = diff;
+				*idx = session_id;
 			}
 		});
+		println!("update_total_activated_liqudity after {:?}", TotalActivatedLiquidityForSchedules::<T>::get(liquidity_asset_id, liquidity_assets_reward));
 
 
 		// println!("UPDATE_TOTAL_ACTIVATED_LIQUDITY liq: {} reward:{} amount:{}", liquidity_asset_id, liquidity_assets_reward, diff);

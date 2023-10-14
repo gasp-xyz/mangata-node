@@ -3306,19 +3306,19 @@ fn mat() {
 				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
 				Ok(1000)
 			);
-			//
-			// roll_to_session(3);
-			// assert_eq!(
-			// 	ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
-			// 	Ok(1500)
-			// );
-			// assert_eq!(
-			// 	ProofOfStake::calculate_3rdparty_rewards_amount(
-			// 		CHARLIE,
-			// 		LIQUIDITY_TOKEN,
-			// 		REWARD_TOKEN
-			// 	),
-			// 	Ok(500)
-			// );
+
+			roll_to_session(3);
+			assert_eq!(
+				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
+				Ok(1500)
+			);
+			assert_eq!(
+				ProofOfStake::calculate_3rdparty_rewards_amount(
+					CHARLIE,
+					LIQUIDITY_TOKEN,
+					REWARD_TOKEN
+				),
+				Ok(500)
+			);
 		});
 }

@@ -483,6 +483,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
 		let rewards_info = RewardsInfo::<T>::try_get(user.clone(), liquidity_asset_id)
 			.or(Err(DispatchError::from(Error::<T>::MissingRewardsInfoError)))?;
+
 		let current_rewards = match rewards_info.activated_amount {
 			0 => 0u128,
 			_ => rewards_info

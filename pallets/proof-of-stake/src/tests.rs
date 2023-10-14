@@ -41,11 +41,93 @@ fn forward_to_block(n: u32) {
 fn forward_to_block_with_custom_rewards(n: u32, rewards: u128) {
 	while System::block_number().saturated_into::<u32>() <= n {
 		if System::block_number().saturated_into::<u32>() % ProofOfStake::rewards_period() == 0 {
-			println!("NEW SESSION");
 			ProofOfStake::distribute_rewards(rewards);
 		}
 		System::set_block_number(System::block_number().saturated_into::<u64>() + 1);
 	}
+}
+
+#[test]
+fn prove_that_bug_affects_rewards_calculations() {
+	new_test_ext().execute_with(|| {
+		let max = std::u128::MAX;
+		System::set_block_number(1);
+		let alice: u128 = 2;
+		let bob: u128 = 3;
+		let charlie: u128 = 4;
+		let ferdie: u128 = 5;
+		let amount: u128 = max;
+
+		TokensOf::<Test>::create(&alice, amount).unwrap();
+		TokensOf::<Test>::create(&alice, amount).unwrap();
+		TokensOf::<Test>::create(&alice, amount).unwrap();
+		TokensOf::<Test>::create(&alice, amount).unwrap();
+
+		let id = TokensOf::<Test>::create(&alice, 1000000).unwrap();
+		TokensOf::<Test>::mint(id, &bob, 10000000).unwrap();
+		TokensOf::<Test>::mint(id, &charlie, 100000).unwrap();
+		TokensOf::<Test>::mint(id, &ferdie, 10000000).unwrap();
+		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 2u8).unwrap();
+
+		ProofOfStake::activate_liquidity(RuntimeOrigin::signed(alice), 4, 100_000, None).unwrap();
+
+		forward_to_block(15);
+		ProofOfStake::activate_liquidity(RuntimeOrigin::signed(ferdie), 4, 100_000, None).unwrap();
+		ProofOfStake::activate_liquidity(RuntimeOrigin::signed(bob), 4, 100_000, None).unwrap();
+
+
+
+		for i in 2..1000 {
+			forward_to_block(10 * i + 5);
+			ProofOfStake::deactivate_liquidity(RuntimeOrigin::signed(bob), 4, 1).unwrap();
+
+			forward_to_block(10 * i + 8);
+			ProofOfStake::activate_liquidity(RuntimeOrigin::signed(bob), 4, 1, None).unwrap();
+		}
+
+		println!("alice    :{}", ProofOfStake::calculate_rewards_amount(alice, 4).unwrap_or_default());
+		println!("bob      :{}", ProofOfStake::calculate_rewards_amount(bob, 4).unwrap_or_default());
+		println!("ferdie   :{}", ProofOfStake::calculate_rewards_amount(ferdie, 4).unwrap_or_default());
+
+
+		assert!(false);
+	});
+}
+
+#[test]
+fn prove_that_checkpoint_is_calculated_wrong() {
+	new_test_ext().execute_with(|| {
+		let max = std::u128::MAX;
+		System::set_block_number(1);
+		let alice: u128 = 2;
+		let bob: u128 = 3;
+		let charlie: u128 = 4;
+		let ferdie: u128 = 5;
+		let amount: u128 = max;
+
+		TokensOf::<Test>::create(&alice, amount).unwrap();
+		TokensOf::<Test>::create(&alice, amount).unwrap();
+		TokensOf::<Test>::create(&alice, amount).unwrap();
+		TokensOf::<Test>::create(&alice, amount).unwrap();
+
+		let id = TokensOf::<Test>::create(&alice, 1000000).unwrap();
+		TokensOf::<Test>::mint(id, &bob, 10000000).unwrap();
+		TokensOf::<Test>::mint(id, &charlie, 100000).unwrap();
+		TokensOf::<Test>::mint(id, &ferdie, 10000000).unwrap();
+		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 2u8).unwrap();
+
+		ProofOfStake::activate_liquidity(RuntimeOrigin::signed(alice), 4, 100_000, None).unwrap();
+
+		forward_to_block(15);
+		ProofOfStake::activate_liquidity(RuntimeOrigin::signed(ferdie), 4, 100_000, None).unwrap();
+		forward_to_block(18);
+		ProofOfStake::activate_liquidity(RuntimeOrigin::signed(bob), 4, 100_000, None).unwrap();
+
+		println!("ferdie    :{:#?}", ProofOfStake::get_rewards_info(ferdie, 4));
+		println!("bob      :{:#?}", ProofOfStake::get_rewards_info(bob, 4));
+
+		assert_eq!(ProofOfStake::get_rewards_info(ferdie, 4), ProofOfStake::get_rewards_info(bob, 4));
+	});
 }
 
 #[test]

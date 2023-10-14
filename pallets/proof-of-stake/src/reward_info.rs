@@ -127,6 +127,7 @@ impl RewardInfo {
 			.checked_mul(pool_rewards_ratio_new)?
 			.checked_div(U256::from(u128::MAX))?; // always fit into u128
 
+
 		let (cumulative_work, cummulative_work_max_possible) =
 			self.calculate_cumulative_work_max_ratio(current_time)?;
 

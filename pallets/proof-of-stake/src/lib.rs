@@ -189,7 +189,7 @@ pub mod pallet {
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_initialize(n: T::BlockNumber) -> Weight {
 
-			if frame_system::Pallet::<T>::block_number().saturated_into::<u64>() % 5u64 == 0 {
+			if Self::session_index() == 0 {
 				ScheduleListPos::<T>::kill();
 				return Default::default();
 			}
@@ -209,7 +209,7 @@ pub mod pallet {
 
 			// TODO: make configurable
 			// NOTE: 3R + 1R
-			let session_id = frame_system::Pallet::<T>::block_number().saturated_into::<u64>() / 5u64;
+			let session_id = Self::session_index() as u64;
 
 
 			for idx in 0..AMOUNT_PER_BLOCK {
@@ -503,11 +503,11 @@ pub mod pallet {
 	/// Total amount of activated liquidity for each schedule
 	#[pallet::storage]
 	pub type TotalActivatedLiquidityForSchedules<T: Config> =
-		StorageDoubleMap<_, Twox64Concat, TokenId, Twox64Concat, TokenId, (u64, u128), ValueQuery>;
+		StorageDoubleMap<_, Twox64Concat, TokenId, Twox64Concat, TokenId, (u128, u64, u128), ValueQuery>;
 
-	#[pallet::storage]
-	pub type PrevTotalActivatedLiquidityForSchedules<T: Config> =
-		StorageDoubleMap<_, Twox64Concat, TokenId, Twox64Concat, TokenId, u128, ValueQuery>;
+	// #[pallet::storage]
+	// pub type PrevTotalActivatedLiquidityForSchedules<T: Config> =
+	// 	StorageDoubleMap<_, Twox64Concat, TokenId, Twox64Concat, TokenId, u128, ValueQuery>;
 
 	/// Tracks how much liquidity user activated for particular (liq token, reward token) pair
 	/// StorageNMap was used because it only require single read to know if user deactivated all
@@ -791,31 +791,60 @@ pub mod pallet {
 impl<T: Config> Pallet<T> {
 
 	fn total_activated_liquidity(liquidity_asset_id: TokenId, liquidity_assets_reward: TokenId) -> Balance{
-		let (idx, amount) = TotalActivatedLiquidityForSchedules::<T>::get(liquidity_asset_id, liquidity_assets_reward);
-		println!("total_activated_liquidity idx: {} amount: {}", idx, amount);
-		if idx == (frame_system::Pallet::<T>::block_number().saturated_into::<u64>() / 5){
-			amount
+		let (pending, idx, cumulative) = TotalActivatedLiquidityForSchedules::<T>::get(liquidity_asset_id, liquidity_assets_reward);
+		if idx == (Self::session_index() as u64){
+			println!("total_activated_liquidity idx: {} amount: {}", idx, cumulative);
+			cumulative
 		}else{
-			PrevTotalActivatedLiquidityForSchedules::<T>::get(liquidity_asset_id, liquidity_assets_reward)
+			println!("total_activated_liquidity idx: {} amount: {}", idx, cumulative + pending);
+			cumulative + pending
 		}
 	}
 
+	fn total_schedule_rewards(liquidity_asset_id: TokenId, liquidity_assets_reward: TokenId) -> Balance{
+		let (pending, idx, cumulative) = ScheduleRewardsTotal::<T>::get((liquidity_asset_id, liquidity_assets_reward));
+		if idx == (Self::session_index() as u64){
+			println!("total_activated_liquidity idx: {} amount: {}", idx, cumulative);
+			cumulative
+		}else{
+			println!("total_activated_liquidity idx: {} amount: {}", idx, cumulative + pending);
+			cumulative + pending
+		}
+	}
+
+
 	fn update_total_activated_liqudity(liquidity_asset_id: TokenId, liquidity_assets_reward: TokenId, diff: Balance, change: bool) {
 		// TODO: make configurable
-		let session_id = frame_system::Pallet::<T>::block_number().saturated_into::<u64>() / 5;
-		println!("UPDATE_TOTAL_ACTIVATED_LIQUDITY liq: {} reward:{} amount:{}", liquidity_asset_id, liquidity_assets_reward, diff);
-		if let Ok((idx, amount)) = TotalActivatedLiquidityForSchedules::<T>::try_get(liquidity_asset_id, liquidity_assets_reward){
-			let new_amount = if change{
-				amount + diff
-			}else{
-				amount - diff
-			};
+		let session_id = Self::session_index() as u64;
 
-			if session_id > idx {
-				PrevTotalActivatedLiquidityForSchedules::<T>::mutate(liquidity_asset_id, liquidity_assets_reward, |val| *val += amount);
+		TotalActivatedLiquidityForSchedules::<T>::mutate(liquidity_asset_id, liquidity_assets_reward, |(pending, idx, cumulative)|{
+			if *idx == session_id {
+				let new_amount = if change{
+					*pending + diff
+				}else{
+					*pending - diff
+				};
+				*pending = new_amount;
+			}else{
+				// NOTE: handle burn so negative diff
+				*cumulative += *pending;
+				*pending = diff;
 			}
-			TotalActivatedLiquidityForSchedules::<T>::insert(liquidity_asset_id, liquidity_assets_reward, (session_id, new_amount));
-		}
+		});
+
+
+		// println!("UPDATE_TOTAL_ACTIVATED_LIQUDITY liq: {} reward:{} amount:{}", liquidity_asset_id, liquidity_assets_reward, diff);
+		// if let Ok((idx, amount)) = TotalActivatedLiquidityForSchedules::<T>::try_get(liquidity_asset_id, liquidity_assets_reward){
+		//
+		// 	if session_id > idx {
+		// 		PrevTotalActivatedLiquidityForSchedules::<T>::mutate(liquidity_asset_id, liquidity_assets_reward, |val| *val += amount);
+		// 		TotalActivatedLiquidityForSchedules::<T>::insert(liquidity_asset_id, liquidity_assets_reward, (session_id, 0));
+		// 	}else{
+		// 		TotalActivatedLiquidityForSchedules::<T>::mutate(liquidity_asset_id, liquidity_assets_reward, |(session_id, new_amount)| amount += kkj);
+		// 	}
+		// }else{
+		// 	TotalActivatedLiquidityForSchedules::<T>::insert(liquidity_asset_id, liquidity_assets_reward, (session_id, new_amount));
+		// }
 	}
 
 	fn activate_liquidity_for_native_rewards_impl(

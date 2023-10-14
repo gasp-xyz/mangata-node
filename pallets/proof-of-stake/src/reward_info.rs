@@ -88,7 +88,7 @@ impl RewardsCalculator<ConstCurveRewards> {
 
 		// NOTE: take into acout previous rewards (prev + rewards/activated)
 		let total_activated = Pallet::<T>::total_activated_liquidity(asset_id, reward_asset_id);
-		let total_rewards = crate::ScheduleRewardsTotal::<T>::get((asset_id, reward_asset_id)).2;
+		let total_rewards = Pallet::<T>::total_schedule_rewards(asset_id, reward_asset_id);
 		println!("REWARDS CALCULATOR at {} for {}", current_time, user);
 		println!("total_activated : {}", total_activated);
 		println!("total_rewards   : {}", total_rewards);

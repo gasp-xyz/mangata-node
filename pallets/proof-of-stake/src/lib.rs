@@ -236,10 +236,16 @@ pub mod pallet {
                 if let Some(pos_val) = pos {
 						if let Some((schedule, next)) = RewardsSchedulesList::<T>::get(pos_val){
 							if schedule.last_session >= session_id{
-								ScheduleRewardsTotal::<T>::mutate((schedule.liq_token, schedule.reward_token, session_id), |val|{
-									*val += schedule.amount_per_session
+								ScheduleRewardsTotal::<T>::mutate((schedule.liq_token, schedule.reward_token), |(pending, idx, cumulative)|{
+									if *idx >= session_id {
+										*pending += schedule.amount_per_session
+									}else{
+										*cumulative += *pending;
+										*pending = schedule.amount_per_session;
+										*idx = session_id;
+									}
 								});
-						                          ScheduleListPos::<T>::put(pos_val);
+								ScheduleListPos::<T>::put(pos_val);
 							}else{
 								match(Self::head(), Self::tail()){
 									(Some(head), Some(tail)) if head == pos_val && head != tail=> {
@@ -451,7 +457,12 @@ pub mod pallet {
 	/// How much scheduled rewards per single liquidty_token should be distribute_rewards
 	/// the **value is multiplied by u128::MAX** to avoid floating point arithmetic
 	#[pallet::storage]
-	pub type ScheduleRewardsTotal<T: Config> = StorageMap<_, Twox64Concat ,(TokenId, TokenId, u64), u128, ValueQuery>;
+	pub type ScheduleRewardsTotal<T: Config> = StorageMap<_, Twox64Concat ,(TokenId, TokenId), (u128, u64, u128), ValueQuery>;
+
+	/// How much scheduled rewards per single liquidty_token should be distribute_rewards
+	/// the **value is multiplied by u128::MAX** to avoid floating point arithmetic
+	// #[pallet::storage]
+	// pub type ScheduleRewardsCumulative<T: Config> = StorageMap<_, Twox64Concat ,(TokenId, TokenId, u64), u128, ValueQuery>;
 
 	/// List of activated schedules sorted by expiry date
 	#[pallet::storage]
@@ -496,7 +507,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	pub type PrevTotalActivatedLiquidityForSchedules<T: Config> =
-		StorageDoubleMap<_, Twox64Concat, TokenId, Twox64Concat, TokenId, (u64, u128), ValueQuery>;
+		StorageDoubleMap<_, Twox64Concat, TokenId, Twox64Concat, TokenId, u128, ValueQuery>;
 
 	/// Tracks how much liquidity user activated for particular (liq token, reward token) pair
 	/// StorageNMap was used because it only require single read to know if user deactivated all
@@ -781,16 +792,18 @@ impl<T: Config> Pallet<T> {
 
 	fn total_activated_liquidity(liquidity_asset_id: TokenId, liquidity_assets_reward: TokenId) -> Balance{
 		let (idx, amount) = TotalActivatedLiquidityForSchedules::<T>::get(liquidity_asset_id, liquidity_assets_reward);
+		println!("total_activated_liquidity idx: {} amount: {}", idx, amount);
 		if idx == (frame_system::Pallet::<T>::block_number().saturated_into::<u64>() / 5){
 			amount
 		}else{
-			PrevTotalActivatedLiquidityForSchedules::<T>::get(liquidity_asset_id, liquidity_assets_reward).1
+			PrevTotalActivatedLiquidityForSchedules::<T>::get(liquidity_asset_id, liquidity_assets_reward)
 		}
 	}
 
 	fn update_total_activated_liqudity(liquidity_asset_id: TokenId, liquidity_assets_reward: TokenId, diff: Balance, change: bool) {
 		// TODO: make configurable
 		let session_id = frame_system::Pallet::<T>::block_number().saturated_into::<u64>() / 5;
+		println!("UPDATE_TOTAL_ACTIVATED_LIQUDITY liq: {} reward:{} amount:{}", liquidity_asset_id, liquidity_assets_reward, diff);
 		if let Ok((idx, amount)) = TotalActivatedLiquidityForSchedules::<T>::try_get(liquidity_asset_id, liquidity_assets_reward){
 			let new_amount = if change{
 				amount + diff
@@ -799,7 +812,7 @@ impl<T: Config> Pallet<T> {
 			};
 
 			if session_id > idx {
-				PrevTotalActivatedLiquidityForSchedules::<T>::insert(liquidity_asset_id, liquidity_assets_reward, (idx, amount));
+				PrevTotalActivatedLiquidityForSchedules::<T>::mutate(liquidity_asset_id, liquidity_assets_reward, |val| *val += amount);
 			}
 			TotalActivatedLiquidityForSchedules::<T>::insert(liquidity_asset_id, liquidity_assets_reward, (session_id, new_amount));
 		}

@@ -3237,3 +3237,88 @@ fn unsuccessul_activate_deactivate_calls_charges_fees() {
 			);
 		});
 }
+
+#[test]
+#[serial]
+fn mat() {
+	ExtBuilder::new()
+		.issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
+		.issue(BOB, LIQUIDITY_TOKEN, 100)
+		.issue(CHARLIE, LIQUIDITY_TOKEN, 100)
+		.issue(EVE, LIQUIDITY_TOKEN, 100)
+		.build()
+		.execute_with(|| {
+			System::set_block_number(1);
+
+			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
+			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
+			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+			TokensOf::<Test>::mint(LIQUIDITY_TOKEN, &BOB, 100).unwrap();
+			TokensOf::<Test>::mint(LIQUIDITY_TOKEN, &CHARLIE, 100).unwrap();
+			TokensOf::<Test>::mint(LIQUIDITY_TOKEN, &EVE, 100).unwrap();
+
+			let amount = 10_000u128;
+
+			ProofOfStake::reward_pool(
+				RuntimeOrigin::signed(ALICE),
+				REWARDED_PAIR,
+				REWARD_TOKEN,
+				REWARD_AMOUNT,
+				10u32.into(),
+			)
+			.unwrap();
+
+			roll_to_session(1);
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(BOB),
+				LIQUIDITY_TOKEN,
+				100,
+				REWARD_TOKEN,
+				None,
+			)
+			.unwrap();
+			assert_eq!(
+				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
+				Ok(0)
+			);
+
+			roll_to_session(2);
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(CHARLIE),
+				LIQUIDITY_TOKEN,
+				100,
+				REWARD_TOKEN,
+				None,
+			)
+			.unwrap();
+
+			assert_eq!(
+				ProofOfStake::calculate_3rdparty_rewards_amount(
+					CHARLIE,
+					LIQUIDITY_TOKEN,
+					REWARD_TOKEN
+				),
+				Ok(0)
+			);
+			assert_eq!(
+				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
+				Ok(1000)
+			);
+			//
+			// roll_to_session(3);
+			// assert_eq!(
+			// 	ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
+			// 	Ok(1500)
+			// );
+			// assert_eq!(
+			// 	ProofOfStake::calculate_3rdparty_rewards_amount(
+			// 		CHARLIE,
+			// 		LIQUIDITY_TOKEN,
+			// 		REWARD_TOKEN
+			// 	),
+			// 	Ok(500)
+			// );
+		});
+}

@@ -1877,7 +1877,13 @@ fn burn_all_liq_and_mint_it_again() {
 		assert_eq!(user_assets_4_value_after_sell, 1000000000000000000000);
 
 		// minting liq again and checking if the liq. asset is generated
-		let _ = XykStorage::mint_liquidity(RuntimeOrigin::signed(2), 1, 4, asset_value_1, asset_value_4);
+		let _ = XykStorage::mint_liquidity(
+			RuntimeOrigin::signed(2),
+			1,
+			4,
+			asset_value_1,
+			asset_value_4,
+		);
 
 		let liq_token_id_after_burn_and_mint = XykStorage::liquidity_asset((1, 4));
 

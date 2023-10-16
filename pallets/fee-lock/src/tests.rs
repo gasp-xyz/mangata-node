@@ -664,7 +664,10 @@ fn whitelist_and_valuation_works() {
 			Some(0)
 		);
 		assert_eq!(
-			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(0, u128::max_value()),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(
+				0,
+				u128::max_value()
+			),
 			Some(u128::max_value())
 		);
 
@@ -677,7 +680,10 @@ fn whitelist_and_valuation_works() {
 			Some(0)
 		);
 		assert_eq!(
-			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(1, u128::max_value()),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(
+				1,
+				u128::max_value()
+			),
 			Some(u128::max_value() / 2)
 		);
 		assert_eq!(
@@ -689,34 +695,55 @@ fn whitelist_and_valuation_works() {
 			Some(0)
 		);
 		assert_eq!(
-			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(2, u128::max_value()),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(
+				2,
+				u128::max_value()
+			),
 			Some(u128::max_value())
 		);
 		assert_eq!(
 			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(3, 1000),
 			None
 		);
-		assert_eq!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(3, 0), None);
 		assert_eq!(
-			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(3, u128::max_value()),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(3, 0),
+			None
+		);
+		assert_eq!(
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(
+				3,
+				u128::max_value()
+			),
 			None
 		);
 		assert_eq!(
 			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(4, 1000),
 			None
 		);
-		assert_eq!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(4, 0), None);
 		assert_eq!(
-			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(4, u128::max_value()),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(4, 0),
+			None
+		);
+		assert_eq!(
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(
+				4,
+				u128::max_value()
+			),
 			None
 		);
 		assert_eq!(
 			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(5, 1000),
 			None
 		);
-		assert_eq!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(5, 0), None);
 		assert_eq!(
-			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(5, u128::max_value()),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(5, 0),
+			None
+		);
+		assert_eq!(
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(
+				5,
+				u128::max_value()
+			),
 			None
 		);
 	})

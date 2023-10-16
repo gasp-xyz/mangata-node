@@ -10,9 +10,7 @@ use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_core::U256;
 use sp_rpc::number::NumberOrHex;
-use sp_runtime::{
-	traits::{Block as BlockT, MaybeDisplay, MaybeFromStr},
-};
+use sp_runtime::traits::{Block as BlockT, MaybeDisplay, MaybeFromStr};
 use sp_std::convert::{TryFrom, TryInto};
 use std::sync::Arc;
 use xyk_runtime_api::RpcAssetMetadata;

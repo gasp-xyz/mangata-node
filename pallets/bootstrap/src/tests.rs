@@ -1704,11 +1704,7 @@ fn multi_provisions_only_with_non_vested() {
 ]
 #[serial]
 fn test_multi_provisions_only_with_non_vested(
-	provisions_list: Vec<(
-		<Test as frame_system::Config>::AccountId,
-		TokenId,
-		Balance,
-	)>,
+	provisions_list: Vec<(<Test as frame_system::Config>::AccountId, TokenId, Balance)>,
 	user1_rewards: (Balance, Balance),
 	user2_rewards: (Balance, Balance),
 ) {

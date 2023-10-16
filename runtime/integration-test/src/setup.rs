@@ -23,10 +23,10 @@ mod kusama_imports {
 	};
 	pub use mangata_kusama_runtime::{
 		xcm_config::*, AccountId, AssetRegistry, Balance, Bootstrap, CustomMetadata, Identity,
-		PolkadotXcm, Proxy, Runtime, RuntimeCall, RuntimeOrigin, System, TokenId, Tokens,
-		XTokens, XcmMetadata, XcmpQueue, Xyk, XykMetadata,
+		PolkadotXcm, Proxy, Runtime, RuntimeCall, RuntimeOrigin, System, TokenId, Tokens, XTokens,
+		XcmMetadata, XcmpQueue, Xyk, XykMetadata,
 	};
-	pub use xcm::{VersionedMultiLocation, latest::Weight as XcmWeight};
+	pub use xcm::{latest::Weight as XcmWeight, VersionedMultiLocation};
 
 	pub const NATIVE_ASSET_ID: TokenId = common_runtime::tokens::MGX_TOKEN_ID;
 }

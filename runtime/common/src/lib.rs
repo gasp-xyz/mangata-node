@@ -36,6 +36,7 @@ pub use pallet_sudo_mangata;
 pub use pallet_sudo_origin;
 use pallet_transaction_payment_mangata::{ConstFeeMultiplier, Multiplier, OnChargeTransaction};
 pub use pallet_xyk;
+use pallet_xyk::AssetMetadataMutationTrait;
 pub use polkadot_runtime_common::BlockHashCount;
 use scale_info::TypeInfo;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -53,7 +54,6 @@ pub use sp_runtime::{
 };
 use sp_std::{cmp::Ordering, marker::PhantomData, prelude::*};
 pub use types::*;
-use pallet_xyk::AssetMetadataMutationTrait;
 
 pub mod constants;
 pub mod migration;

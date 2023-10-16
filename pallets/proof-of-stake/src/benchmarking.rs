@@ -183,7 +183,7 @@ benchmarks! {
 		PoS::<T>::activate_liquidity(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id, half_of_minted_liquidity, None).unwrap();
 
 		assert_eq!(
-		 	PoS::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).activated_amount,
+			 PoS::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).activated_amount,
 			half_of_minted_liquidity
 		);
 
@@ -192,7 +192,7 @@ benchmarks! {
 	}: deactivate_liquidity(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id, quater_of_minted_liquidity)
 	verify {
 		assert_eq!(
-		 	PoS::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).activated_amount,
+			 PoS::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).activated_amount,
 			quater_of_minted_liquidity
 		);
 	}

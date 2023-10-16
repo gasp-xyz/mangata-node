@@ -526,7 +526,10 @@ impl<T: Config> ActivationReservesProviderTrait<T::AccountId, BalanceOf<T>, Curr
 					WithdrawReasons::all(),
 					Default::default(),
 				)
-				.is_ok() && reserve_status.activated_unstaked_reserves.checked_add(&amount).is_some()
+				.is_ok() && reserve_status
+					.activated_unstaked_reserves
+					.checked_add(&amount)
+					.is_some()
 			},
 			ActivateKind::StakedUnactivatedReserves => {
 				reserve_status.staked_unactivated_reserves.checked_sub(&amount).is_some()

@@ -131,14 +131,14 @@ where
 	fn convert(id: T::AssetId) -> Option<MultiLocation> {
 		// allow relay asset
 		if id == crate::tokens::RelayTokenId::get().into() {
-			return Some(MultiLocation::parent())
+			return Some(MultiLocation::parent());
 		}
 		// allow native asset
 		if id == crate::tokens::MgxTokenId::get().into() {
 			return Some(MultiLocation::new(
 				1,
 				X2(Parachain(parachain_info::Pallet::<T>::get().into()), general_key(&id.encode())),
-			))
+			));
 		}
 		// allow assets in registry with location set
 		AssetRegistryOf::<T>::multilocation(&id).unwrap_or(None)
@@ -155,7 +155,7 @@ where
 	fn convert(location: MultiLocation) -> Option<T::AssetId> {
 		// allow relay asset
 		if location == MultiLocation::parent() {
-			return Some(crate::tokens::RelayTokenId::get().into())
+			return Some(crate::tokens::RelayTokenId::get().into());
 		}
 
 		match location {
@@ -274,7 +274,7 @@ where
 					target: "xcm::weight", "fee_per_second: asset: {:?}, fps:{:?}",
 					asset_id, fee_per_second
 				);
-				return Some(fee_per_second)
+				return Some(fee_per_second);
 			}
 		}
 		None

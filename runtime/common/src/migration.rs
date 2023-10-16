@@ -1,10 +1,13 @@
-use crate::{config::orml_asset_registry::{AssetMetadataOf, StringLimit}, TokenId, Balance};
+use crate::{
+	config::orml_asset_registry::{AssetMetadataOf, StringLimit},
+	Balance, TokenId,
+};
 use frame_support::{
 	traits::{Get, OnRuntimeUpgrade},
 	weights::Weight,
 };
 use log::info;
-use mangata_types::{assets::CustomMetadata};
+use mangata_types::assets::CustomMetadata;
 use sp_runtime::traits::Zero;
 use sp_std::marker::PhantomData;
 

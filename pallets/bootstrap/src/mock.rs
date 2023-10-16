@@ -21,7 +21,8 @@ use crate as pallet_bootstrap;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		tokens::currency::MultiTokenCurrency, ConstU128, ConstU32, Contains, Everything, Nothing, WithdrawReasons,
+		tokens::currency::MultiTokenCurrency, ConstU128, ConstU32, Contains, Everything, Nothing,
+		WithdrawReasons,
 	},
 };
 use mangata_support::traits::ActivationReservesProviderTrait;
@@ -29,7 +30,7 @@ use mangata_types::multipurpose_liquidity::ActivateKind;
 use orml_tokens::MultiTokenCurrencyAdapter;
 use orml_traits::parameter_type_with_key;
 use pallet_xyk::AssetMetadataMutationTrait;
-use sp_runtime::{Perbill, Percent, BuildStorage};
+use sp_runtime::{BuildStorage, Perbill, Percent};
 use sp_std::convert::TryFrom;
 use std::sync::Mutex;
 
@@ -388,7 +389,7 @@ construct_runtime!(
 
 impl<T: Config> Pallet<T>
 where
-	T::Currency: MultiTokenCurrencyExtended<AccountId, Balance = Balance, CurrencyId = TokenId>
+	T::Currency: MultiTokenCurrencyExtended<AccountId, Balance = Balance, CurrencyId = TokenId>,
 {
 	pub fn balance(id: TokenId, who: AccountId) -> Balance {
 		Tokens::accounts(who.clone(), id).free - Tokens::accounts(who, id).frozen
@@ -420,8 +421,7 @@ where
 		)
 	}
 	pub fn create_new_token(who: &AccountId, amount: Balance) -> TokenId {
-		<T as Config>::Currency::create(who, amount)
-			.expect("Token creation failed")
+		<T as Config>::Currency::create(who, amount).expect("Token creation failed")
 	}
 }
 

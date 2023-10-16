@@ -13,7 +13,7 @@ on:
         required: true
         type: string
       builder_image:
-        default: mangatasolutions/node-builder:multi-nightly-2022-11-15
+        default: mangatasolutions/node-builder:multi-stable-2023-10-05
         description: Docker image used for Rust builds
         required: false
         type: string

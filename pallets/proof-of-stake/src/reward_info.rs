@@ -3,7 +3,10 @@ use frame_support::dispatch::DispatchResult;
 use crate::{Config, Error};
 use frame_support::pallet_prelude::*;
 use sp_core::U256;
-use sp_std::{convert::{TryInto, TryFrom}, prelude::*};
+use sp_std::{
+	convert::{TryFrom, TryInto},
+	prelude::*,
+};
 
 // Quocient ratio in which liquidity minting curve is rising
 const Q: f64 = 1.03;
@@ -138,9 +141,7 @@ where
 			.try_into()
 			.ok()?;
 
-		reward
-			.try_into()
-			.ok()
+		reward.try_into().ok()
 	}
 
 	fn calculate_cumulative_work_max_ratio(&self, current_time: u32) -> Option<(U256, U256)> {

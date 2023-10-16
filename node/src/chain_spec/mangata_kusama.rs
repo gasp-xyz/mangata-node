@@ -419,7 +419,7 @@ pub fn mangata_kusama_local_config() -> ChainSpec {
 
 fn mangata_genesis(
 	initial_authorities: Vec<(AccountId, AuraId)>,
-	relay_key: AccountId,
+	_relay_key: AccountId,
 	root_key: AccountId,
 	tokens_endowment: Vec<(u32, u128, AccountId)>,
 	staking_accounts: Vec<(AccountId, u32, u128, u32, u128, u32, u128)>,

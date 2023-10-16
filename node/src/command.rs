@@ -15,20 +15,25 @@
 // along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::{
+	benchmarking::{inherent_benchmark_data, BenchmarkExtrinsicBuilder},
 	chain_spec,
 	cli::{Cli, RelayChainCli, Subcommand},
 	service::{new_partial, Block},
 };
 use cumulus_primitives_core::ParaId;
 use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
+use futures::executor::block_on;
 use log::info;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
 	NetworkParams, Result, SharedParams, SubstrateCli,
 };
+use sc_executor::{WasmExecutor, DEFAULT_HEAP_ALLOC_STRATEGY};
 use sc_service::config::{BasePath, PrometheusConfig};
 use sp_runtime::traits::AccountIdConversion;
-use std::{net::SocketAddr, path::PathBuf};
+use std::{
+	cell::RefCell, convert::TryInto, net::SocketAddr, path::PathBuf, rc::Rc, time::Duration,
+};
 
 /// Helper enum that is used for better distinction of different parachain/runtime configuration
 /// (it is based/calculated on ChainSpec's ID attribute)
@@ -343,6 +348,47 @@ pub fn run() -> Result<()> {
 				}),
 				BenchmarkCmd::Machine(cmd) =>
 					runner.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone())),
+				BenchmarkCmd::Overhead(cmd) => runner.sync_run(|config| {
+					match config.chain_spec.runtime() {
+						Runtime::Rococo | Runtime::Default => Err("Benchmarking sub-command unsupported".into()),
+						Runtime::Kusama => {
+							let executor = WasmExecutor::builder()
+								.with_execution_method(config.wasm_method)
+								.with_onchain_heap_alloc_strategy(DEFAULT_HEAP_ALLOC_STRATEGY)
+								.with_offchain_heap_alloc_strategy(DEFAULT_HEAP_ALLOC_STRATEGY)
+								.with_max_runtime_instances(config.max_runtime_instances)
+								.with_runtime_cache_size(config.runtime_cache_size)
+								.build();
+
+							let (c, _, _, _) = sc_service::new_full_parts::<Block, mangata_kusama_runtime::RuntimeApi, _>(
+									&config,
+									None,
+									executor,
+							)?;
+							let client = Rc::new(RefCell::new(c));
+							let ext_builder = BenchmarkExtrinsicBuilder::new(client.clone());
+
+							let first_block_inherent =
+								block_on(inherent_benchmark_data([0u8; 32], Duration::from_millis(0)))
+								.unwrap();
+
+							let first_block_seed = sp_ver::extract_inherent_data(&first_block_inherent)
+								.map_err(|_| {
+									sp_blockchain::Error::Backend(String::from(
+										"cannot read random seed from inherents data",
+									))
+							})?;
+
+							let second_block_inherent = block_on(inherent_benchmark_data(
+								first_block_seed.seed.as_bytes().try_into().unwrap(),
+								Duration::from_millis(12000),
+							))
+							.unwrap();
+
+							cmd.run_ver(config, client, (first_block_inherent, second_block_inherent), &ext_builder)
+						},
+					}
+				}),
 				// NOTE: this allows the Client to leniently implement
 				// new benchmark commands without requiring a companion MR.
 				#[allow(unreachable_patterns)]

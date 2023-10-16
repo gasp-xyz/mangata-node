@@ -10,24 +10,26 @@ publish = false
 
 [dependencies]
 clap = { version = "4.4.2", features = ["derive"] }
-log = "0.4.20"
 codec = { package = "parity-scale-codec", version = "3.0.0" }
-serde = { version = "1.0.188", features = ["derive"] }
-serde_json = "1.0.105"
-jsonrpsee = { version = "0.16.2", features = ["server"] }
 futures = "0.3.28"
 hex = "0.4.0"
+jsonrpsee = { version = "0.16.2", features = ["server"] }
+log = "0.4.20"
+serde = { version = "1.0.188", features = ["derive"] }
+serde_json = "1.0.105"
 
 # Local
-common-runtime ={ path = "../runtime/common"}
-mangata-kusama-runtime ={ path = "../runtime/mangata-kusama"}
-mangata-rococo-runtime ={ path = "../runtime/mangata-rococo"}
+common-runtime = { path = "../runtime/common"}
+mangata-kusama-runtime = { path = "../runtime/mangata-kusama"}
+mangata-rococo-runtime = { path = "../runtime/mangata-rococo"}
 xyk-rpc = { path = "../pallets/xyk/rpc" }
 xyk-runtime-api = { path = "../pallets/xyk/runtime-api" }
 
 # Substrate
 frame-benchmarking = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 frame-benchmarking-cli = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+frame-system = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+pallet-transaction-payment-mangata = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 pallet-transaction-payment-mangata-rpc = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 sc-basic-authorship-ver = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 sc-chain-spec = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
@@ -51,6 +53,8 @@ sp-blockchain = { git = "https://github.com/mangata-finance/polkadot-sdk", branc
 sp-consensus-aura = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 sp-core = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 sp-io = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sp-inherents = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+sp-keyring = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 sp-keystore = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 sp-offchain = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 sp-runtime = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
@@ -87,8 +91,8 @@ tempfile = "3.8.0"
 substrate-build-script-utils = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 
 [features]
-default = []
-# default = ["mangata-kusama", "mangata-rococo"]
+# default = []
+default = ["mangata-kusama", "mangata-rococo"]
 mangata-kusama = [
 	"mangata-kusama-runtime/std",
 	"xyk-rpc/std",

@@ -154,6 +154,18 @@ jobs:
       version: ${{ needs.init.outputs.GLOBAL_VERSION }}
       cluster_name: mangata-dev-alpha
 
+  generate-types:
+    name: Invoke workflow in mangata-dev-kit repo with inputs
+    needs: [init, build-and-test]
+    secrets: inherit
+    uses: jonas-schievink/workflow-proxy@v1
+    with:
+      ref: ${{ github.event.pull_request.head.ref }}
+      workflow: pre-release-types.yml
+      repo: mangata-finance/mangata-dev-kit
+      token: ${{ secrets.BOT_GITHUB_TOKEN }}
+      inputs: '{"parachainDocker": "${{ github.event.inputs.parachainDocker }}"}'
+
   run-e2e-test:
     name: Run e2e tests
     needs: [init, build-and-test]

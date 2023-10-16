@@ -185,15 +185,6 @@ jobs:
         run: |
           echo ${{ env.PARACHAIN_DOCKER_IMAGE }}
 
-      - name: Invoke workflow in mangata-dev-kit repo with inputs
-        uses: jonas-schievink/workflow-proxy@v1
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          workflow: pre-release-types.yml
-          repo: mangata-finance/mangata-dev-kit
-          token: ${{ secrets.BOT_USER_GITHUB_TOKEN }}
-          inputs: '{"parachainDocker": "${{ env.PARACHAIN_DOCKER_IMAGE }}"}'
-
       - name: Replace parachain docker image reference in config
         working-directory: devops/parachain-launch
         run: sed -i 's+mangatasolutions/mangata-node:.*+${{ env.PARACHAIN_DOCKER_IMAGE }}+g' config.yml

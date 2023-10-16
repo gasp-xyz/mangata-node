@@ -157,7 +157,6 @@ jobs:
   generate-types:
     needs: [init, build-and-test]
     runs-on: ubuntu-latest
-    secrets: inherit
     steps:
       - name: Invoke workflow in mangata-dev-kit repo with inputs
         uses: jonas-schievink/workflow-proxy@v1

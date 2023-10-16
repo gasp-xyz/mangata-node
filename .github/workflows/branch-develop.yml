@@ -162,7 +162,6 @@ jobs:
     with:
       branch: ${{ needs.init.outputs.GIT_BRANCH }}
       parachainDocker: ${{ github.event.inputs.parachainDocker }}
-      skipBuild: ${{ github.event.inputs.skipBuild }}
       globalVersion: ${{ needs.init.outputs.GLOBAL_VERSION }}
 
   run-e2e-test:

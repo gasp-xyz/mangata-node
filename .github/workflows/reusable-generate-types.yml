@@ -63,6 +63,5 @@ jobs:
           workflow: pre-release-types.yml
           repo: mangata-finance/mangata-dev-kit
           token: ${{ secrets.BOT_GITHUB_TOKEN }}
-          inputs: '{"parachainDocker": "${{ env.PARACHAIN_DOCKER_IMAGE }}"}'
-
+          inputs: '{"parachainDocker": "${{ env.PARACHAIN_DOCKER_IMAGE }}", "branch": "${{ env.BRANCH }}"}'
       

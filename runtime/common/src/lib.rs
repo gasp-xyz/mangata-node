@@ -5,6 +5,8 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 pub use constants::{fee::*, parachains::*};
 pub use currency::*;
+#[cfg(feature = "runtime-benchmarks")]
+use frame_support::traits::OriginTrait;
 use frame_support::{
 	dispatch::{DispatchClass, DispatchResult},
 	ensure, parameter_types,

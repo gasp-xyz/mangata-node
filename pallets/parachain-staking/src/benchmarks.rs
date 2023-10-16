@@ -27,12 +27,10 @@ use frame_support::assert_ok;
 use frame_support::traits::{ExistenceRequirement, Get};
 use frame_system::RawOrigin;
 use itertools::Itertools;
-use orml_tokens::MultiTokenCurrencyExtended;
-use orml_tokens::Pallet as Tokens;
-use pallet_authorship::EventHandler;
-// use pallet_issuance::PoolPromoteApi;
 use mangata_support::traits::{ProofOfStakeRewardsApi, XykFunctionsTrait};
-use sp_runtime::{Perbill, Percent};
+use orml_tokens::MultiTokenCurrencyExtended;
+use pallet_authorship::EventHandler;
+use sp_runtime::Perbill;
 use sp_std::vec::Vec;
 
 const DOLLAR: u128 = 1__000_000_000_000_000_000u128;
@@ -613,7 +611,7 @@ benchmarks! {
 			candidate_count,
 			liquidity_token_count,
 		)?;
-		assert_ok!(T::Currency::transfer((created_liquidity_token), &account("funding", 0u32, 0u32), &caller, more, ExistenceRequirement::AllowDeath));
+		assert_ok!(T::Currency::transfer(created_liquidity_token, &account("funding", 0u32, 0u32), &caller, more, ExistenceRequirement::AllowDeath));
 
 		Pallet::<T>::schedule_candidate_bond_more(
 			RawOrigin::Signed(caller.clone()).into(),
@@ -689,7 +687,7 @@ benchmarks! {
 			candidate_count,
 			liquidity_token_count,
 		)?;
-		assert_ok!(T::Currency::transfer((created_liquidity_token), &account("funding", 0u32, 0u32), &caller, more, ExistenceRequirement::AllowDeath));
+		assert_ok!(T::Currency::transfer(created_liquidity_token, &account("funding", 0u32, 0u32), &caller, more, ExistenceRequirement::AllowDeath));
 
 		Pallet::<T>::schedule_candidate_bond_more(
 			RawOrigin::Signed(caller.clone()).into(),

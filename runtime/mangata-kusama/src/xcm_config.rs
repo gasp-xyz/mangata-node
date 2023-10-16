@@ -1,30 +1,24 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use super::{
+	AccountId, AllPalletsWithSystem, Balance, Maintenance, ParachainSystem, PolkadotXcm, Runtime,
+	RuntimeCall, RuntimeEvent, RuntimeOrigin, TokenId,
+};
 use common_runtime::tokens;
-
 pub use frame_support::{
 	match_types, parameter_types,
 	traits::{Everything, Get, Nothing},
 	weights::Weight,
 };
 use frame_system::EnsureRoot;
-
 use orml_traits::location::AbsoluteReserveProvider;
-
 use orml_xcm_support::MultiNativeAsset;
-
 use sp_runtime::traits::ConstU32;
-
 use xcm_builder::EnsureXcmOrigin;
 use xcm_executor::XcmExecutor;
 
-use super::{
-	AccountId, AllPalletsWithSystem, Balance, Maintenance, ParachainSystem, PolkadotXcm, Runtime,
-	RuntimeCall, RuntimeEvent, RuntimeOrigin, TokenId,
-};
-
 #[cfg(feature = "runtime-benchmarks")]
-use cumulus_primitives_core::{MultiLocation, Parent};
+use xcm::prelude::{MultiLocation, Parent};
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {

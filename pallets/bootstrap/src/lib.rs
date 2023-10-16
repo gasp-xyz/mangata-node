@@ -126,28 +126,29 @@
 //!
 use frame_support::pallet_prelude::*;
 
+use codec::{Decode, Encode};
 use frame_support::{
-	codec::{Decode, Encode},
 	traits::{
-		tokens::currency::MultiTokenCurrency, Contains, ExistenceRequirement, Get, StorageVersion,
+		Contains, ExistenceRequirement, Get, MultiTokenCurrency, MultiTokenVestingLocks,
+		StorageVersion,
 	},
 	transactional, PalletId,
 };
-use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
+use frame_system::{ensure_root, ensure_signed, pallet_prelude::*};
 
 use mangata_support::traits::{
 	AssetRegistryApi, GetMaintenanceStatusTrait, PoolCreateApi, ProofOfStakeRewardsApi,
 };
 use mangata_types::multipurpose_liquidity::ActivateKind;
 
-use mangata_types::{Balance, TokenId};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
-use pallet_vesting_mangata::MultiTokenVestingLocks;
 use scale_info::TypeInfo;
 use sp_arithmetic::{helpers_128bit::multiply_by_rational_with_rounding, per_things::Rounding};
 use sp_core::U256;
 use sp_io::KillStorageResult;
-use sp_runtime::traits::{AccountIdConversion, CheckedAdd, One, SaturatedConversion, Saturating};
+use sp_runtime::traits::{
+	AccountIdConversion, Bounded, CheckedAdd, One, SaturatedConversion, Saturating, Zero,
+};
 use sp_std::{convert::TryInto, prelude::*};
 
 #[cfg(test)]
@@ -164,8 +165,6 @@ pub use weights::WeightInfo;
 pub use pallet::*;
 const PALLET_ID: PalletId = PalletId(*b"bootstrp");
 
-use core::fmt::Debug;
-
 #[macro_export]
 macro_rules! log {
 	($level:tt, $patter:expr $(, $values:expr)* $(,)?) => {
@@ -176,16 +175,18 @@ macro_rules! log {
 	};
 }
 
-pub type BlockNrAsBalance = Balance;
+type BalanceOf<T> = <<T as Config>::Currency as MultiTokenCurrency<
+	<T as frame_system::Config>::AccountId,
+>>::Balance;
 
-pub enum ProvisionKind {
-	Regular,
-	Vested(BlockNrAsBalance, BlockNrAsBalance),
-}
+type CurrencyIdOf<T> = <<T as Config>::Currency as MultiTokenCurrency<
+	<T as frame_system::Config>::AccountId,
+>>::CurrencyId;
+
+type BlockNrAsBalance<T> = BalanceOf<T>;
 
 #[frame_support::pallet]
 pub mod pallet {
-
 	use super::*;
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(2);
@@ -196,11 +197,11 @@ pub mod pallet {
 	pub struct Pallet<T>(PhantomData<T>);
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
-		fn on_initialize(n: T::BlockNumber) -> Weight {
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_initialize(n: BlockNumberFor<T>) -> Weight {
 			let phase = Phase::<T>::get(); // R:1
 			if phase == BootstrapPhase::Finished {
-				return T::DbWeight::get().reads(1)
+				return T::DbWeight::get().reads(1);
 			}
 
 			if let Some((start, whitelist_length, public_length, _)) = BootstrapSchedule::<T>::get()
@@ -289,18 +290,22 @@ pub mod pallet {
 		type Currency: MultiTokenCurrencyExtended<Self::AccountId>
 			+ MultiTokenReservableCurrency<Self::AccountId>;
 
-		type PoolCreateApi: PoolCreateApi<AccountId = Self::AccountId>;
+		type PoolCreateApi: PoolCreateApi<Self::AccountId, BalanceOf<Self>, CurrencyIdOf<Self>>;
 
 		#[pallet::constant]
 		type DefaultBootstrapPromotedPoolWeight: Get<u8>;
 
 		#[pallet::constant]
-		type BootstrapUpdateBuffer: Get<Self::BlockNumber>;
+		type BootstrapUpdateBuffer: Get<BlockNumberFor<Self>>;
 
 		#[pallet::constant]
 		type TreasuryPalletId: Get<PalletId>;
 
-		type VestingProvider: MultiTokenVestingLocks<Self::AccountId, Self::BlockNumber>;
+		type VestingProvider: MultiTokenVestingLocks<
+			Self::AccountId,
+			Currency = Self::Currency,
+			Moment = BlockNumberFor<Self>,
+		>;
 
 		type ClearStorageLimit: Get<u32>;
 
@@ -308,20 +313,27 @@ pub mod pallet {
 
 		type RewardsApi: ProofOfStakeRewardsApi<
 			Self::AccountId,
-			Balance = Balance,
-			CurrencyId = TokenId,
+			BalanceOf<Self>,
+			CurrencyIdOf<Self>,
 		>;
 
-		type AssetRegistryApi: AssetRegistryApi;
+		type AssetRegistryApi: AssetRegistryApi<CurrencyIdOf<Self>>;
 	}
 
-	/// maps ([`frame_system::Config::AccountId`], [`TokenId`]) -> [`Balance`] - identifies how much tokens did account provisioned in active bootstrap
+	/// maps ([`frame_system::Config::AccountId`], [`CurrencyId`]) -> [`Balance`] - identifies how much tokens did account provisioned in active bootstrap
 	#[pallet::storage]
 	#[pallet::getter(fn provisions)]
-	pub type Provisions<T: Config> =
-		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, TokenId, Balance, ValueQuery>;
+	pub type Provisions<T: Config> = StorageDoubleMap<
+		_,
+		Twox64Concat,
+		T::AccountId,
+		Twox64Concat,
+		CurrencyIdOf<T>,
+		BalanceOf<T>,
+		ValueQuery,
+	>;
 
-	/// maps ([`frame_system::Config::AccountId`], [`TokenId`]) -> [`Balance`] - identifies how much vested tokens did account provisioned in active bootstrap
+	/// maps ([`frame_system::Config::AccountId`], [`CurrencyId`]) -> [`Balance`] - identifies how much vested tokens did account provisioned in active bootstrap
 	#[pallet::storage]
 	#[pallet::getter(fn vested_provisions)]
 	pub type VestedProvisions<T: Config> = StorageDoubleMap<
@@ -329,8 +341,8 @@ pub mod pallet {
 		Twox64Concat,
 		T::AccountId,
 		Twox64Concat,
-		TokenId,
-		(Balance, BlockNrAsBalance, BlockNrAsBalance),
+		CurrencyIdOf<T>,
+		(BalanceOf<T>, BlockNrAsBalance<T>, BlockNrAsBalance<T>),
 		ValueQuery,
 	>;
 
@@ -348,25 +360,33 @@ pub mod pallet {
 	/// Total sum of provisions of `first` and `second` token in active bootstrap
 	#[pallet::storage]
 	#[pallet::getter(fn valuations)]
-	pub type Valuations<T: Config> = StorageValue<_, (Balance, Balance), ValueQuery>;
+	pub type Valuations<T: Config> = StorageValue<_, (BalanceOf<T>, BalanceOf<T>), ValueQuery>;
 
 	/// Active bootstrap parameters
 	#[pallet::storage]
 	#[pallet::getter(fn config)]
 	pub type BootstrapSchedule<T: Config> =
-		StorageValue<_, (T::BlockNumber, u32, u32, (u128, u128)), OptionQuery>;
+		StorageValue<_, (BlockNumberFor<T>, u32, u32, (BalanceOf<T>, BalanceOf<T>)), OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn minted_liquidity)]
-	pub type MintedLiquidity<T: Config> = StorageValue<_, (TokenId, Balance), ValueQuery>;
+	pub type MintedLiquidity<T: Config> =
+		StorageValue<_, (CurrencyIdOf<T>, BalanceOf<T>), ValueQuery>;
 
-	///  Maps ([`frame_system::Config::AccountId`], [`TokenId`] ) -> [`Balance`] - where [`TokeinId`] is id of the token that user participated with. This storage item is used to identify how much liquidity tokens has been claim by the user. If user participated with 2 tokens there are two entries associated with given account (`Address`, `first_token_id`) and (`Address`, `second_token_id`)
+	///  Maps ([`frame_system::Config::AccountId`], [`CurrencyId`] ) -> [`Balance`] - where [`CurrencyId`] is id of the token that user participated with. This storage item is used to identify how much liquidity tokens has been claim by the user. If user participated with 2 tokens there are two entries associated with given account (`Address`, `first_token_id`) and (`Address`, `second_token_id`)
 	#[pallet::storage]
 	#[pallet::getter(fn claimed_rewards)]
-	pub type ClaimedRewards<T: Config> =
-		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, TokenId, Balance, ValueQuery>;
+	pub type ClaimedRewards<T: Config> = StorageDoubleMap<
+		_,
+		Twox64Concat,
+		T::AccountId,
+		Twox64Concat,
+		CurrencyIdOf<T>,
+		BalanceOf<T>,
+		ValueQuery,
+	>;
 
-	/// List of accouts that provisioned funds to bootstrap and has not claimed liquidity tokens yet
+	/// List of accounts that provisioned funds to bootstrap and has not claimed liquidity tokens yet
 	#[pallet::storage]
 	#[pallet::getter(fn provision_accounts)]
 	pub type ProvisionAccounts<T: Config> =
@@ -375,7 +395,8 @@ pub mod pallet {
 	/// Currently bootstraped pair of tokens representaed as [ `first_token_id`, `second_token_id`]
 	#[pallet::storage]
 	#[pallet::getter(fn pair)]
-	pub type ActivePair<T: Config> = StorageValue<_, (TokenId, TokenId), OptionQuery>;
+	pub type ActivePair<T: Config> =
+		StorageValue<_, (CurrencyIdOf<T>, CurrencyIdOf<T>), OptionQuery>;
 
 	/// Wheter to automatically promote the pool after [`BootstrapPhase::PublicPhase`] or not.
 	#[pallet::storage]
@@ -384,8 +405,11 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn archived)]
-	pub type ArchivedBootstrap<T: Config> =
-		StorageValue<_, Vec<(T::BlockNumber, u32, u32, (u128, u128))>, ValueQuery>;
+	pub type ArchivedBootstrap<T: Config> = StorageValue<
+		_,
+		Vec<(BlockNumberFor<T>, u32, u32, (BalanceOf<T>, BalanceOf<T>))>,
+		ValueQuery,
+	>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -436,8 +460,8 @@ pub mod pallet {
 		#[transactional]
 		pub fn provision(
 			origin: OriginFor<T>,
-			token_id: TokenId,
-			amount: Balance,
+			token_id: CurrencyIdOf<T>,
+			amount: BalanceOf<T>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
@@ -446,7 +470,7 @@ pub mod pallet {
 				Error::<T>::ProvisioningBlockedByMaintenanceMode
 			);
 
-			Self::do_provision(&sender, token_id, amount, ProvisionKind::Regular)?;
+			Self::do_provision(&sender, token_id, amount)?;
 			ProvisionAccounts::<T>::insert(&sender, ());
 			Self::deposit_event(Event::Provisioned(token_id, amount));
 			Ok(())
@@ -528,12 +552,12 @@ pub mod pallet {
 		#[transactional]
 		pub fn schedule_bootstrap(
 			origin: OriginFor<T>,
-			first_token_id: TokenId,
-			second_token_id: TokenId,
-			ido_start: T::BlockNumber,
+			first_token_id: CurrencyIdOf<T>,
+			second_token_id: CurrencyIdOf<T>,
+			ido_start: BlockNumberFor<T>,
 			whitelist_phase_length: Option<u32>,
-			public_phase_lenght: u32,
-			max_first_to_second_ratio: Option<(u128, u128)>,
+			public_phase_length: u32,
+			max_first_to_second_ratio: Option<(BalanceOf<T>, BalanceOf<T>)>,
 			promote_bootstrap_pool: bool,
 		) -> DispatchResult {
 			ensure_root(origin)?;
@@ -559,20 +583,20 @@ pub mod pallet {
 			);
 
 			let whitelist_phase_length = whitelist_phase_length.unwrap_or_default();
-			let max_first_to_second_ratio =
-				max_first_to_second_ratio.unwrap_or((Balance::max_value(), Balance::one()));
+			let max_first_to_second_ratio = max_first_to_second_ratio
+				.unwrap_or((BalanceOf::<T>::max_value(), BalanceOf::<T>::one()));
 
-			ensure!(max_first_to_second_ratio.0 != 0, Error::<T>::WrongRatio);
+			ensure!(max_first_to_second_ratio.0 != BalanceOf::<T>::zero(), Error::<T>::WrongRatio);
 
-			ensure!(max_first_to_second_ratio.1 != 0, Error::<T>::WrongRatio);
+			ensure!(max_first_to_second_ratio.1 != BalanceOf::<T>::zero(), Error::<T>::WrongRatio);
 
-			ensure!(public_phase_lenght > 0, Error::<T>::PhaseLengthCannotBeZero);
+			ensure!(public_phase_length > 0, Error::<T>::PhaseLengthCannotBeZero);
 
 			ensure!(
 				ido_start
 					.checked_add(&whitelist_phase_length.into())
 					.and_then(|whiteslist_start| whiteslist_start
-						.checked_add(&public_phase_lenght.into()))
+						.checked_add(&public_phase_length.into()))
 					.is_some(),
 				Error::<T>::MathOverflow
 			);
@@ -591,7 +615,7 @@ pub mod pallet {
 			BootstrapSchedule::<T>::put((
 				ido_start,
 				whitelist_phase_length,
-				public_phase_lenght,
+				public_phase_length,
 				max_first_to_second_ratio,
 			));
 
@@ -693,7 +717,7 @@ pub mod pallet {
 				KillStorageResult::AllRemoved(num_iter) => limit = limit.saturating_sub(num_iter),
 				KillStorageResult::SomeRemaining(_) => {
 					Self::deposit_event(Event::BootstrapParitallyPreFinalized);
-					return Ok(())
+					return Ok(());
 				},
 			}
 
@@ -701,7 +725,7 @@ pub mod pallet {
 				KillStorageResult::AllRemoved(num_iter) => limit = limit.saturating_sub(num_iter),
 				KillStorageResult::SomeRemaining(_) => {
 					Self::deposit_event(Event::BootstrapParitallyPreFinalized);
-					return Ok(())
+					return Ok(());
 				},
 			}
 
@@ -709,7 +733,7 @@ pub mod pallet {
 				KillStorageResult::AllRemoved(num_iter) => limit = limit.saturating_sub(num_iter),
 				KillStorageResult::SomeRemaining(_) => {
 					Self::deposit_event(Event::BootstrapParitallyPreFinalized);
-					return Ok(())
+					return Ok(());
 				},
 			}
 
@@ -717,7 +741,7 @@ pub mod pallet {
 				KillStorageResult::AllRemoved(num_iter) => limit = limit.saturating_sub(num_iter),
 				KillStorageResult::SomeRemaining(_) => {
 					Self::deposit_event(Event::BootstrapParitallyPreFinalized);
-					return Ok(())
+					return Ok(());
 				},
 			}
 
@@ -764,7 +788,7 @@ pub mod pallet {
 			Phase::<T>::put(BootstrapPhase::BeforeStart);
 			let (liq_token_id, _) = MintedLiquidity::<T>::take();
 			let balance = T::Currency::free_balance(liq_token_id.into(), &Self::vault_address());
-			if balance > 0_u128.into() {
+			if balance > 0_u32.into() {
 				T::Currency::transfer(
 					liq_token_id.into(),
 					&Self::vault_address(),
@@ -861,13 +885,13 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Funds provisioned
-		Provisioned(TokenId, Balance),
+		Provisioned(CurrencyIdOf<T>, BalanceOf<T>),
 		/// Funds provisioned using vested tokens
-		VestedProvisioned(TokenId, Balance),
+		VestedProvisioned(CurrencyIdOf<T>, BalanceOf<T>),
 		/// The activation of the rewards liquidity tokens failed
-		RewardsLiquidityAcitvationFailed(T::AccountId, TokenId, Balance),
+		RewardsLiquidityAcitvationFailed(T::AccountId, CurrencyIdOf<T>, BalanceOf<T>),
 		/// Rewards claimed
-		RewardsClaimed(TokenId, Balance),
+		RewardsClaimed(CurrencyIdOf<T>, BalanceOf<T>),
 		/// account whitelisted
 		AccountsWhitelisted,
 		/// bootstrap pre finalization has completed partially
@@ -908,27 +932,27 @@ impl<T: Config> Pallet<T> {
 
 	fn claim_liquidity_tokens_from_single_currency(
 		who: &T::AccountId,
-		provision_token_id: &TokenId,
-		rewards: Balance,
-		rewards_vested: Balance,
-		lock: (BlockNrAsBalance, BlockNrAsBalance),
+		provision_token_id: &CurrencyIdOf<T>,
+		rewards: BalanceOf<T>,
+		rewards_vested: BalanceOf<T>,
+		lock: (BlockNrAsBalance<T>, BlockNrAsBalance<T>),
 	) -> DispatchResult {
 		let (liq_token_id, _) = Self::minted_liquidity();
-		let total_rewards = rewards.checked_add(rewards_vested).ok_or(Error::<T>::MathOverflow)?;
-		if total_rewards == 0 {
-			return Ok(())
+		let total_rewards = rewards.checked_add(&rewards_vested).ok_or(Error::<T>::MathOverflow)?;
+		if total_rewards == BalanceOf::<T>::zero() {
+			return Ok(());
 		}
 
 		T::Currency::transfer(
 			liq_token_id.into(),
 			&Self::vault_address(),
 			who,
-			total_rewards.into(),
+			total_rewards,
 			ExistenceRequirement::KeepAlive,
 		)?;
 
 		ClaimedRewards::<T>::try_mutate(who, provision_token_id, |rewards| {
-			if let Some(val) = rewards.checked_add(total_rewards) {
+			if let Some(val) = rewards.checked_add(&total_rewards) {
 				*rewards = val;
 				Ok(())
 			} else {
@@ -936,13 +960,13 @@ impl<T: Config> Pallet<T> {
 			}
 		})?;
 
-		if rewards_vested > 0 {
-			<<T as Config>::VestingProvider>::lock_tokens(
+		if rewards_vested > BalanceOf::<T>::zero() {
+			T::VestingProvider::lock_tokens(
 				who,
-				liq_token_id.into(),
-				rewards_vested.into(),
-				Some(lock.0.saturated_into()),
-				lock.1.into(),
+				liq_token_id,
+				rewards_vested,
+				Some(lock.0.into().saturated_into()),
+				lock.1,
 			)?;
 		}
 
@@ -959,18 +983,18 @@ impl<T: Config> Pallet<T> {
 	/// actual_nominator * expected_denominator     expected_nominator * actual_denominator
 	/// ---------------------------------------- <= ----------------------------------------
 	/// actual_denominator * expected_denominator    expected_denominator * actual_nominator
-	fn is_ratio_kept(ratio_nominator: u128, ratio_denominator: u128) -> bool {
+	fn is_ratio_kept(ratio_nominator: BalanceOf<T>, ratio_denominator: BalanceOf<T>) -> bool {
 		let (second_token_valuation, first_token_valuation) = Valuations::<T>::get();
-		let left = U256::from(first_token_valuation) * U256::from(ratio_denominator);
-		let right = U256::from(ratio_nominator) * U256::from(second_token_valuation);
+		let left = U256::from(first_token_valuation.into()) * U256::from(ratio_denominator.into());
+		let right = U256::from(ratio_nominator.into()) * U256::from(second_token_valuation.into());
 		left <= right
 	}
 
 	pub fn do_provision(
 		sender: &T::AccountId,
-		token_id: TokenId,
-		amount: Balance,
-		is_vested: ProvisionKind,
+		token_id: CurrencyIdOf<T>,
+		amount: BalanceOf<T>,
+		// is_vested: ProvisionKind,
 	) -> DispatchResult {
 		let is_first_token = token_id == Self::first_token_id();
 		let is_second_token = token_id == Self::second_token_id();
@@ -993,51 +1017,53 @@ impl<T: Config> Pallet<T> {
 			token_id.into(),
 			sender,
 			&Self::vault_address(),
-			amount.into(),
+			amount,
 			ExistenceRequirement::KeepAlive,
 		)
 		.or(Err(Error::<T>::NotEnoughAssets))?;
 
-		match is_vested {
-			ProvisionKind::Regular => {
-				ensure!(
-					Provisions::<T>::try_mutate(sender, token_id, |provision| {
-						if let Some(val) = provision.checked_add(amount) {
-							*provision = val;
-							Ok(())
-						} else {
-							Err(())
-						}
-					})
-					.is_ok(),
-					Error::<T>::MathOverflow
-				);
-			},
-			ProvisionKind::Vested(provision_start_block, provision_end_block) => {
-				ensure!(
-					VestedProvisions::<T>::try_mutate(
-						sender,
-						token_id,
-						|(provision, start_block, end_block)| {
-							if let Some(val) = provision.checked_add(amount) {
-								*provision = val;
-								*start_block = (*start_block).max(provision_start_block);
-								*end_block = (*end_block).max(provision_end_block);
-								Ok(())
-							} else {
-								Err(())
-							}
-						}
-					)
-					.is_ok(),
-					Error::<T>::MathOverflow
-				);
-			},
-		}
-
+		// match is_vested {
+		// 	ProvisionKind::Regular => {
+		ensure!(
+			Provisions::<T>::try_mutate(sender, token_id, |provision| {
+				if let Some(val) = provision.checked_add(&amount) {
+					*provision = val;
+					Ok(())
+				} else {
+					Err(())
+				}
+			})
+			.is_ok(),
+			Error::<T>::MathOverflow
+		);
+		/*
+					 },
+					ProvisionKind::Vested(provision_start_block, provision_end_block) => {
+						ensure!(
+							VestedProvisions::<T>::try_mutate(
+								sender,
+								token_id,
+								|(provision, start_block, end_block)| {
+									if let Some(val) = provision.checked_add(amount) {
+										*provision = val;
+										*start_block = (*start_block).max(provision_start_block);
+										*end_block = (*end_block).max(provision_end_block);
+										Ok(())
+									} else {
+										Err(())
+									}
+								}
+							)
+							.is_ok(),
+							Error::<T>::MathOverflow
+						);
+					},
+			}
+		*/
 		let (pre_second_token_valuation, _) = Valuations::<T>::get();
 		ensure!(
-			token_id != Self::first_token_id() || pre_second_token_valuation != 0,
+			token_id != Self::first_token_id()
+				|| pre_second_token_valuation != BalanceOf::<T>::zero(),
 			Error::<T>::FirstProvisionInSecondTokenId
 		);
 
@@ -1046,11 +1072,11 @@ impl<T: Config> Pallet<T> {
 				|(second_token_valuation, first_token_valuation)| -> Result<(), ()> {
 					if token_id == Self::second_token_id() {
 						*second_token_valuation =
-							second_token_valuation.checked_add(amount).ok_or(())?;
+							second_token_valuation.checked_add(&amount).ok_or(())?;
 					}
 					if token_id == Self::first_token_id() {
 						*first_token_valuation =
-							first_token_valuation.checked_add(amount).ok_or(())?;
+							first_token_valuation.checked_add(&amount).ok_or(())?;
 					}
 					Ok(())
 				}
@@ -1068,34 +1094,45 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	fn get_valuation(token_id: &TokenId) -> Balance {
+	fn get_valuation(token_id: &CurrencyIdOf<T>) -> BalanceOf<T> {
 		if *token_id == Self::first_token_id() {
 			Self::valuations().1
 		} else if *token_id == Self::second_token_id() {
 			Self::valuations().0
 		} else {
-			0
+			BalanceOf::<T>::zero()
 		}
 	}
 
 	fn calculate_rewards(
 		who: &T::AccountId,
-		token_id: &TokenId,
-	) -> Result<(Balance, Balance, (BlockNrAsBalance, BlockNrAsBalance)), Error<T>> {
+		token_id: &CurrencyIdOf<T>,
+	) -> Result<(BalanceOf<T>, BalanceOf<T>, (BlockNrAsBalance<T>, BlockNrAsBalance<T>)), Error<T>>
+	{
 		let valuation = Self::get_valuation(token_id);
 		let provision = Self::provisions(who, token_id);
 		let (vested_provision, lock_start, lock_end) = Self::vested_provisions(who, token_id);
 		let (_, liquidity) = Self::minted_liquidity();
-		let rewards =
-			multiply_by_rational_with_rounding(liquidity / 2, provision, valuation, Rounding::Down)
-				.ok_or(Error::<T>::MathOverflow)?;
-		let vested_rewards = multiply_by_rational_with_rounding(
-			liquidity / 2,
-			vested_provision,
-			valuation,
+		let rewards = multiply_by_rational_with_rounding(
+			liquidity.into() / 2,
+			provision.into(),
+			valuation.into(),
 			Rounding::Down,
 		)
-		.ok_or(Error::<T>::MathOverflow)?;
+		.ok_or(Error::<T>::MathOverflow)?
+		.try_into()
+		.map_err(|_| Error::<T>::MathOverflow)?;
+
+		let vested_rewards = multiply_by_rational_with_rounding(
+			liquidity.into() / 2,
+			vested_provision.into(),
+			valuation.into(),
+			Rounding::Down,
+		)
+		.ok_or(Error::<T>::MathOverflow)?
+		.try_into()
+		.map_err(|_| Error::<T>::MathOverflow)?;
+
 		Ok((rewards, vested_rewards, (lock_start, lock_end)))
 	}
 
@@ -1124,11 +1161,11 @@ impl<T: Config> Pallet<T> {
 			Self::calculate_rewards(who, &Self::second_token_id())?;
 
 		let total_rewards_claimed = second_token_rewards
-			.checked_add(second_token_rewards_vested)
+			.checked_add(&second_token_rewards_vested)
 			.ok_or(Error::<T>::MathOverflow)?
-			.checked_add(first_token_rewards)
+			.checked_add(&first_token_rewards)
 			.ok_or(Error::<T>::MathOverflow)?
-			.checked_add(first_token_rewards_vested)
+			.checked_add(&first_token_rewards_vested)
 			.ok_or(Error::<T>::MathOverflow)?;
 
 		Self::claim_liquidity_tokens_from_single_currency(
@@ -1140,7 +1177,7 @@ impl<T: Config> Pallet<T> {
 		)?;
 		log!(
 			info,
-			"Second token rewards (non-vested, vested) = ({}, {})",
+			"Second token rewards (non-vested, vested) = ({:?}, {:?})",
 			second_token_rewards,
 			second_token_rewards_vested,
 		);
@@ -1154,7 +1191,7 @@ impl<T: Config> Pallet<T> {
 		)?;
 		log!(
 			info,
-			"First token rewards (non-vested, vested) = ({}, {})",
+			"First token rewards (non-vested, vested) = ({:?}, {:?})",
 			first_token_rewards,
 			first_token_rewards_vested,
 		);
@@ -1163,9 +1200,9 @@ impl<T: Config> Pallet<T> {
 
 		if activate_rewards && <T as Config>::RewardsApi::is_enabled(liq_token_id) {
 			let non_vested_rewards = second_token_rewards
-				.checked_add(first_token_rewards)
+				.checked_add(&first_token_rewards)
 				.ok_or(Error::<T>::MathOverflow)?;
-			if non_vested_rewards > 0 {
+			if non_vested_rewards > BalanceOf::<T>::zero() {
 				let activate_result = <T as Config>::RewardsApi::activate_liquidity(
 					who.clone(),
 					liq_token_id,
@@ -1175,7 +1212,7 @@ impl<T: Config> Pallet<T> {
 				if let Err(err) = activate_result {
 					log!(
 						error,
-						"Activating liquidity tokens failed upon bootstrap claim rewards = ({:?}, {}, {}, {:?})",
+						"Activating liquidity tokens failed upon bootstrap claim rewards = ({:?}, {:?}, {:?}, {:?})",
 						who,
 						liq_token_id,
 						non_vested_rewards,
@@ -1196,18 +1233,18 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	fn first_token_id() -> TokenId {
-		ActivePair::<T>::get().map(|(first, _)| first).unwrap_or(4_u32)
+	fn first_token_id() -> CurrencyIdOf<T> {
+		ActivePair::<T>::get().map(|(first, _)| first).unwrap_or(4_u32.into())
 	}
 
-	fn second_token_id() -> TokenId {
-		ActivePair::<T>::get().map(|(_, second)| second).unwrap_or(0_u32)
+	fn second_token_id() -> CurrencyIdOf<T> {
+		ActivePair::<T>::get().map(|(_, second)| second).unwrap_or(0_u32.into())
 	}
 }
 
-impl<T: Config> Contains<(TokenId, TokenId)> for Pallet<T> {
-	fn contains(pair: &(TokenId, TokenId)) -> bool {
-		pair == &(Self::first_token_id(), Self::second_token_id()) ||
-			pair == &(Self::second_token_id(), Self::first_token_id())
+impl<T: Config> Contains<(CurrencyIdOf<T>, CurrencyIdOf<T>)> for Pallet<T> {
+	fn contains(pair: &(CurrencyIdOf<T>, CurrencyIdOf<T>)) -> bool {
+		pair == &(Self::first_token_id(), Self::second_token_id())
+			|| pair == &(Self::second_token_id(), Self::first_token_id())
 	}
 }

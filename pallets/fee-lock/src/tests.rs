@@ -180,7 +180,7 @@ fn process_fee_lock_trigger_works() {
 		assert_eq!(now, 0);
 
 		// First timeout on empty user state
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&0u128));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u128));
 
 		assert_eq!(
 			Tokens::accounts(0u128, token_id),
@@ -200,7 +200,7 @@ fn process_fee_lock_trigger_works() {
 		);
 
 		// Second timeout on user state
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&0u128));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u128));
 
 		assert_eq!(
 			Tokens::accounts(0u128, token_id),
@@ -220,7 +220,7 @@ fn process_fee_lock_trigger_works() {
 		);
 
 		// Third timeout on user state
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&0u128));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u128));
 
 		assert_eq!(
 			Tokens::accounts(0u128, token_id),
@@ -245,7 +245,7 @@ fn process_fee_lock_trigger_works() {
 		let now = System::block_number();
 
 		// First timeout in current period on Thrice timedout user state
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&0u128));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u128));
 
 		assert_eq!(
 			Tokens::accounts(0u128, token_id),
@@ -270,7 +270,7 @@ fn process_fee_lock_trigger_works() {
 		let now = System::block_number();
 
 		// First timeout in current period on Once timedout user state
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&0u128));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u128));
 
 		assert_eq!(
 			Tokens::accounts(0u128, token_id),
@@ -290,7 +290,7 @@ fn process_fee_lock_trigger_works() {
 		);
 
 		// Second timeout
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&0u128));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u128));
 
 		assert_eq!(
 			Tokens::accounts(0u128, token_id),
@@ -314,7 +314,7 @@ fn process_fee_lock_trigger_works() {
 
 		let now = System::block_number();
 
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&0u128));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u128));
 
 		assert_eq!(
 			Tokens::accounts(0u128, token_id),
@@ -383,7 +383,7 @@ fn unlock_fee_works() {
 		assert_eq!(now, 0);
 
 		assert_noop!(
-			<FeeLock as FeeLockTriggerTrait<_>>::can_unlock_fee(&0u128),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::can_unlock_fee(&0u128),
 			Error::<Test>::NotFeeLocked
 		);
 		assert_noop!(
@@ -392,7 +392,7 @@ fn unlock_fee_works() {
 		);
 
 		// First timeout on empty user state
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&0u128));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u128));
 
 		assert_eq!(
 			Tokens::accounts(0u128, token_id),
@@ -412,7 +412,7 @@ fn unlock_fee_works() {
 		);
 
 		// Second timeout on user state
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&0u128));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u128));
 
 		assert_eq!(
 			Tokens::accounts(0u128, token_id),
@@ -432,7 +432,7 @@ fn unlock_fee_works() {
 		);
 
 		// Third timeout on user state
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&0u128));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u128));
 
 		assert_eq!(
 			Tokens::accounts(0u128, token_id),
@@ -452,7 +452,7 @@ fn unlock_fee_works() {
 		);
 
 		assert_noop!(
-			<FeeLock as FeeLockTriggerTrait<_>>::can_unlock_fee(&0u128),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::can_unlock_fee(&0u128),
 			Error::<Test>::CantUnlockFeeYet
 		);
 		assert_noop!(
@@ -465,7 +465,7 @@ fn unlock_fee_works() {
 
 		let now = System::block_number();
 
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_>>::can_unlock_fee(&0u128));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::can_unlock_fee(&0u128));
 		assert_ok!(FeeLock::unlock_fee(RuntimeOrigin::signed(0u128).into()));
 
 		assert_eq!(
@@ -486,7 +486,7 @@ fn unlock_fee_works() {
 		);
 
 		assert_noop!(
-			<FeeLock as FeeLockTriggerTrait<_>>::can_unlock_fee(&0u128),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::can_unlock_fee(&0u128),
 			Error::<Test>::NotFeeLocked
 		);
 		assert_noop!(
@@ -495,7 +495,7 @@ fn unlock_fee_works() {
 		);
 
 		// First timeout in current period on Thrice timedout user state
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&0u128));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u128));
 
 		assert_eq!(
 			Tokens::accounts(0u128, token_id),
@@ -515,7 +515,7 @@ fn unlock_fee_works() {
 		);
 
 		assert_noop!(
-			<FeeLock as FeeLockTriggerTrait<_>>::can_unlock_fee(&0u128),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::can_unlock_fee(&0u128),
 			Error::<Test>::CantUnlockFeeYet
 		);
 		assert_noop!(
@@ -529,7 +529,7 @@ fn unlock_fee_works() {
 		let now = System::block_number();
 
 		// First timeout in current period on Once timedout user state
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&0u128));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u128));
 
 		assert_eq!(
 			Tokens::accounts(0u128, token_id),
@@ -549,7 +549,7 @@ fn unlock_fee_works() {
 		);
 
 		assert_noop!(
-			<FeeLock as FeeLockTriggerTrait<_>>::can_unlock_fee(&0u128),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::can_unlock_fee(&0u128),
 			Error::<Test>::CantUnlockFeeYet
 		);
 		assert_noop!(
@@ -558,7 +558,7 @@ fn unlock_fee_works() {
 		);
 
 		// Second timeout
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&0u128));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&0u128));
 
 		assert_eq!(
 			Tokens::accounts(0u128, token_id),
@@ -578,7 +578,7 @@ fn unlock_fee_works() {
 		);
 
 		assert_noop!(
-			<FeeLock as FeeLockTriggerTrait<_>>::can_unlock_fee(&0u128),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::can_unlock_fee(&0u128),
 			Error::<Test>::CantUnlockFeeYet
 		);
 		assert_noop!(
@@ -591,7 +591,7 @@ fn unlock_fee_works() {
 
 		let now = System::block_number();
 
-		assert_ok!(<FeeLock as FeeLockTriggerTrait<_>>::can_unlock_fee(&0u128));
+		assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::can_unlock_fee(&0u128));
 		assert_ok!(FeeLock::unlock_fee(RuntimeOrigin::signed(0u128).into()));
 
 		assert_eq!(
@@ -612,7 +612,7 @@ fn unlock_fee_works() {
 		);
 
 		assert_noop!(
-			<FeeLock as FeeLockTriggerTrait<_>>::can_unlock_fee(&0u128),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::can_unlock_fee(&0u128),
 			Error::<Test>::NotFeeLocked
 		);
 		assert_noop!(
@@ -648,75 +648,75 @@ fn whitelist_and_valuation_works() {
 		);
 
 		// Native is always whitelisted
-		assert!(<FeeLock as FeeLockTriggerTrait<_>>::is_whitelisted(0));
+		assert!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::is_whitelisted(0));
 
-		assert!(<FeeLock as FeeLockTriggerTrait<_>>::is_whitelisted(1));
-		assert!(<FeeLock as FeeLockTriggerTrait<_>>::is_whitelisted(2));
+		assert!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::is_whitelisted(1));
+		assert!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::is_whitelisted(2));
 
-		assert!(!<FeeLock as FeeLockTriggerTrait<_>>::is_whitelisted(3));
+		assert!(!<FeeLock as FeeLockTriggerTrait<_, _, _>>::is_whitelisted(3));
 
 		assert_eq!(
-			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(0, 1000),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(0, 1000),
 			Some(1000)
 		);
 		assert_eq!(
-			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(0, 0),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(0, 0),
 			Some(0)
 		);
 		assert_eq!(
-			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(0, u128::max_value()),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(0, u128::max_value()),
 			Some(u128::max_value())
 		);
 
 		assert_eq!(
-			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(1, 1000),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(1, 1000),
 			Some(500)
 		);
 		assert_eq!(
-			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(1, 0),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(1, 0),
 			Some(0)
 		);
 		assert_eq!(
-			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(1, u128::max_value()),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(1, u128::max_value()),
 			Some(u128::max_value() / 2)
 		);
 		assert_eq!(
-			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(2, 1000),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(2, 1000),
 			Some(2000)
 		);
 		assert_eq!(
-			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(2, 0),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(2, 0),
 			Some(0)
 		);
 		assert_eq!(
-			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(2, u128::max_value()),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(2, u128::max_value()),
 			Some(u128::max_value())
 		);
 		assert_eq!(
-			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(3, 1000),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(3, 1000),
 			None
 		);
-		assert_eq!(<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(3, 0), None);
+		assert_eq!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(3, 0), None);
 		assert_eq!(
-			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(3, u128::max_value()),
-			None
-		);
-		assert_eq!(
-			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(4, 1000),
-			None
-		);
-		assert_eq!(<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(4, 0), None);
-		assert_eq!(
-			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(4, u128::max_value()),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(3, u128::max_value()),
 			None
 		);
 		assert_eq!(
-			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(5, 1000),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(4, 1000),
 			None
 		);
-		assert_eq!(<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(5, 0), None);
+		assert_eq!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(4, 0), None);
 		assert_eq!(
-			<FeeLock as FeeLockTriggerTrait<_>>::get_swap_valuation_for_token(5, u128::max_value()),
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(4, u128::max_value()),
+			None
+		);
+		assert_eq!(
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(5, 1000),
+			None
+		);
+		assert_eq!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(5, 0), None);
+		assert_eq!(
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::get_swap_valuation_for_token(5, u128::max_value()),
 			None
 		);
 	})
@@ -742,9 +742,9 @@ const ACCOUNT_WITH_LOCKED_TOKENS: orml_tokens::AccountData<u128> = AccountData {
 };
 
 fn calculate_estimated_weight(unlock_fee_calls: u64, reads: u64, writes: u64) -> Weight {
-	<Test as frame_system::Config>::DbWeight::get().reads(reads) +
-		<Test as frame_system::Config>::DbWeight::get().writes(writes) +
-		(<Test as Config>::WeightInfo::unlock_fee() * unlock_fee_calls)
+	<Test as frame_system::Config>::DbWeight::get().reads(reads)
+		+ <Test as frame_system::Config>::DbWeight::get().writes(writes)
+		+ (<Test as Config>::WeightInfo::unlock_fee() * unlock_fee_calls)
 }
 
 #[test_case(
@@ -778,11 +778,11 @@ fn test_on_idle_unlock_for_single_user(
 		.initialize_fee_locks(PERIOD_LENGTH, FEE_LOCK_AMOUNT, SWAP_VALUE_THRESHOLD)
 		.build()
 		.execute_with(|| {
-			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&ALICE).unwrap();
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&ALICE).unwrap();
 			fast_forward_blocks(PERIOD_LENGTH);
 
 			// assert
-			assert_ok!(<FeeLock as FeeLockTriggerTrait<_>>::can_unlock_fee(&ALICE));
+			assert_ok!(<FeeLock as FeeLockTriggerTrait<_, _, _>>::can_unlock_fee(&ALICE));
 			assert_eq!(
 				Tokens::accounts(ALICE, NativeCurrencyId::get()),
 				AccountData {
@@ -832,7 +832,7 @@ fn test_on_idle_unlock_multiple_users(
 		.build()
 		.execute_with(|| {
 			for (account, _) in expected_account_data.iter() {
-				<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(account).unwrap();
+				<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(account).unwrap();
 			}
 			fast_forward_blocks(PERIOD_LENGTH);
 
@@ -856,7 +856,7 @@ fn test_unlock_happens_not_sooner_but_after_period() {
 		.execute_with(|| {
 			// lets move to some block that is not aligned with period start
 			fast_forward_blocks(7);
-			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&ALICE).unwrap();
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&ALICE).unwrap();
 
 			for _ in 0..PERIOD_LENGTH - 1 {
 				fast_forward_blocks(1);
@@ -890,9 +890,9 @@ fn test_unlock_stops_after_single_iteration_without_consuming_unnecessary_weight
 		.execute_with(|| {
 			// lets move to some block that is not aligned with period start
 			fast_forward_blocks(3);
-			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&ALICE).unwrap();
-			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&BOB).unwrap();
-			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&CHARLIE).unwrap();
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&ALICE).unwrap();
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&BOB).unwrap();
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&CHARLIE).unwrap();
 
 			fast_forward_blocks(3);
 			let consumed_weight = FeeLock::on_idle(System::block_number(), UNLIMITED_WEIGHT);
@@ -933,7 +933,7 @@ fn test_maintain_queue_with_subsequent_fee_locks_on_single_account() {
 			assert_eq!(FeeLockMetadataQeueuePosition::<Test>::get(BOB), None);
 			assert_eq!(UnlockQueueBegin::<Test>::get(), 0);
 			assert_eq!(UnlockQueueEnd::<Test>::get(), 0);
-			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&ALICE).unwrap();
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&ALICE).unwrap();
 
 			assert_eq!(UnlockQueue::<Test>::get(0), Some(ALICE));
 			assert_eq!(UnlockQueue::<Test>::get(1), None);
@@ -944,7 +944,7 @@ fn test_maintain_queue_with_subsequent_fee_locks_on_single_account() {
 			assert_eq!(UnlockQueueEnd::<Test>::get(), 1);
 
 			fast_forward_blocks(1);
-			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&BOB).unwrap();
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&BOB).unwrap();
 			assert_eq!(UnlockQueue::<Test>::get(0), Some(ALICE));
 			assert_eq!(UnlockQueue::<Test>::get(1), Some(BOB));
 			assert_eq!(UnlockQueue::<Test>::get(2), None);
@@ -954,7 +954,7 @@ fn test_maintain_queue_with_subsequent_fee_locks_on_single_account() {
 			assert_eq!(UnlockQueueEnd::<Test>::get(), 2);
 
 			fast_forward_blocks(1);
-			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&ALICE).unwrap();
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&ALICE).unwrap();
 			assert_eq!(UnlockQueue::<Test>::get(0), None);
 			assert_eq!(UnlockQueue::<Test>::get(1), Some(BOB));
 			assert_eq!(UnlockQueue::<Test>::get(2), Some(ALICE));
@@ -980,12 +980,12 @@ fn test_process_queue_and_ignore_outdated_items_in_unlock_queue_because_of_subse
 			assert_eq!(UnlockQueueBegin::<Test>::get(), 0);
 			assert_eq!(UnlockQueueEnd::<Test>::get(), 0);
 
-			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&ALICE).unwrap();
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&ALICE).unwrap();
 			assert_eq!(UnlockQueueBegin::<Test>::get(), 0);
 			assert_eq!(UnlockQueueEnd::<Test>::get(), 1);
 			fast_forward_blocks(1);
 
-			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&BOB).unwrap();
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&BOB).unwrap();
 			assert_eq!(UnlockQueueBegin::<Test>::get(), 0);
 			assert_eq!(UnlockQueueEnd::<Test>::get(), 2);
 			fast_forward_blocks(1);
@@ -994,7 +994,7 @@ fn test_process_queue_and_ignore_outdated_items_in_unlock_queue_because_of_subse
 			assert_eq!(UnlockQueueBegin::<Test>::get(), 0);
 			assert_eq!(UnlockQueueEnd::<Test>::get(), 2);
 
-			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&ALICE).unwrap();
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&ALICE).unwrap();
 			assert_eq!(UnlockQueueBegin::<Test>::get(), 0);
 			assert_eq!(UnlockQueueEnd::<Test>::get(), 3);
 
@@ -1019,12 +1019,12 @@ fn test_process_queue_and_ignore_outdated_items_in_unlock_queue_because_of_manua
 			assert_eq!(UnlockQueueBegin::<Test>::get(), 0);
 			assert_eq!(UnlockQueueEnd::<Test>::get(), 0);
 
-			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&ALICE).unwrap();
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&ALICE).unwrap();
 			assert_eq!(UnlockQueueBegin::<Test>::get(), 0);
 			assert_eq!(UnlockQueueEnd::<Test>::get(), 1);
 			fast_forward_blocks(PERIOD_LENGTH / 2);
 
-			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&BOB).unwrap();
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&BOB).unwrap();
 			assert_eq!(UnlockQueueBegin::<Test>::get(), 0);
 			assert_eq!(UnlockQueueEnd::<Test>::get(), 2);
 
@@ -1062,9 +1062,9 @@ fn test_unlock_happens_in_order() {
 		.execute_with(|| {
 			let weight_for_single_unlock: Weight = calculate_estimated_weight(1, 6, 1);
 
-			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&ALICE).unwrap();
-			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&BOB).unwrap();
-			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&CHARLIE).unwrap();
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&ALICE).unwrap();
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&BOB).unwrap();
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&CHARLIE).unwrap();
 			assert_eq!(
 				Tokens::accounts(ALICE, NativeCurrencyId::get()),
 				ACCOUNT_WITH_LOCKED_TOKENS
@@ -1130,7 +1130,7 @@ fn test_queue_storage_is_cleaned_up() {
 			assert_eq!(UnlockQueue::<Test>::get(0), None);
 			assert_eq!(UnlockQueue::<Test>::get(1), None);
 
-			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&ALICE).unwrap();
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&ALICE).unwrap();
 			assert_eq!(UnlockQueue::<Test>::get(0), Some(ALICE));
 			assert_eq!(UnlockQueue::<Test>::get(1), None);
 			assert_eq!(
@@ -1138,7 +1138,7 @@ fn test_queue_storage_is_cleaned_up() {
 				ACCOUNT_WITH_LOCKED_TOKENS
 			);
 
-			<FeeLock as FeeLockTriggerTrait<_>>::process_fee_lock(&BOB).unwrap();
+			<FeeLock as FeeLockTriggerTrait<_, _, _>>::process_fee_lock(&BOB).unwrap();
 			assert_eq!(UnlockQueue::<Test>::get(0), Some(ALICE));
 			assert_eq!(UnlockQueue::<Test>::get(1), Some(BOB));
 			assert_eq!(Tokens::accounts(BOB, NativeCurrencyId::get()), ACCOUNT_WITH_LOCKED_TOKENS);

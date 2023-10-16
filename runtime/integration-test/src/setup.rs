@@ -1,10 +1,13 @@
 pub use std::default::Default;
 
-use frame_support::traits::GenesisBuild;
-pub use frame_support::{assert_err, assert_noop, assert_ok, dispatch::DispatchResultWithPostInfo};
+pub use frame_support::{
+	assert_err, assert_noop, assert_ok, dispatch::DispatchResultWithPostInfo, error::BadOrigin,
+	traits::OnInitialize,
+};
 pub use orml_traits::currency::{MultiCurrency, MultiCurrencyExtended};
 pub use sp_io::TestExternalities;
-pub use sp_runtime::{codec::Encode, traits::BadOrigin, MultiAddress, Permill};
+pub use sp_runtime::BuildStorage;
+pub use sp_runtime::{codec::Encode, BoundedVec, MultiAddress, Permill};
 pub use xcm::latest::prelude::*;
 
 #[cfg(feature = "with-kusama-runtime")]
@@ -21,12 +24,11 @@ mod kusama_imports {
 	pub use mangata_kusama_runtime::{
 		xcm_config::*, AccountId, AssetRegistry, Balance, Bootstrap, CustomMetadata, Identity,
 		PolkadotXcm, Proxy, Runtime, RuntimeCall, RuntimeOrigin, System, TokenId, Tokens,
-		VersionedMultiLocation, XTokens, XcmMetadata, XcmpQueue, Xyk, XykMetadata,
+		XTokens, XcmMetadata, XcmpQueue, Xyk, XykMetadata,
 	};
-	pub use xcm::latest::Weight as XcmWeight;
+	pub use xcm::{VersionedMultiLocation, latest::Weight as XcmWeight};
 
 	pub const NATIVE_ASSET_ID: TokenId = common_runtime::tokens::MGX_TOKEN_ID;
-	pub const RELAY_ASSET_ID: TokenId = common_runtime::tokens::RELAY_TOKEN_ID;
 }
 
 /// Accounts
@@ -82,7 +84,7 @@ impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
 		let _ = env_logger::builder().is_test(true).try_init();
 
-		let mut t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
+		let mut t = frame_system::GenesisConfig::<Runtime>::default().build_storage().unwrap();
 
 		orml_tokens::GenesisConfig::<Runtime> {
 			tokens_endowment: self.balances,
@@ -104,14 +106,17 @@ impl ExtBuilder {
 			.assimilate_storage(&mut t)
 			.unwrap();
 
-		<parachain_info::GenesisConfig as GenesisBuild<Runtime>>::assimilate_storage(
-			&parachain_info::GenesisConfig { parachain_id: self.parachain_id.into() },
+		<parachain_info::GenesisConfig<Runtime>>::assimilate_storage(
+			&parachain_info::GenesisConfig {
+				parachain_id: self.parachain_id.into(),
+				..Default::default()
+			},
 			&mut t,
 		)
 		.unwrap();
 
-		<pallet_xcm::GenesisConfig as GenesisBuild<Runtime>>::assimilate_storage(
-			&pallet_xcm::GenesisConfig { safe_xcm_version: Some(2) },
+		<pallet_xcm::GenesisConfig<Runtime>>::assimilate_storage(
+			&pallet_xcm::GenesisConfig { safe_xcm_version: Some(3), ..Default::default() },
 			&mut t,
 		)
 		.unwrap();

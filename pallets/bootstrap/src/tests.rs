@@ -332,8 +332,8 @@ fn test_whitelist_account_deposit_event() {
 		set_up();
 		Bootstrap::whitelist_accounts(RuntimeOrigin::root(), vec![USER_ID]).unwrap();
 
-		assert!(System::events().iter().any(|record| record.event ==
-			crate::mock::RuntimeEvent::Bootstrap(crate::Event::<Test>::AccountsWhitelisted)));
+		assert!(System::events().iter().any(|record| record.event
+			== crate::mock::RuntimeEvent::Bootstrap(crate::Event::<Test>::AccountsWhitelisted)));
 	});
 }
 
@@ -1160,10 +1160,10 @@ fn test_rewards_are_distributed_properly_with_multiple_user() {
 			user2_expected_liq_amount
 		);
 
-		assert!(System::events().iter().any(|record| record.event ==
-			rewards_claimed_ev(liquidity_token_id, user_expected_liq_amount)));
-		assert!(System::events().iter().any(|record| record.event ==
-			rewards_claimed_ev(liquidity_token_id, user2_expected_liq_amount)));
+		assert!(System::events().iter().any(|record| record.event
+			== rewards_claimed_ev(liquidity_token_id, user_expected_liq_amount)));
+		assert!(System::events().iter().any(|record| record.event
+			== rewards_claimed_ev(liquidity_token_id, user2_expected_liq_amount)));
 	});
 }
 
@@ -1336,10 +1336,8 @@ macro_rules! init_mocks {
 	};
 }
 
-fn provisions(
-	provisions: Vec<(<Test as frame_system::Config>::AccountId, TokenId, Balance, ProvisionKind)>,
-) {
-	for (user_id, token_id, amount, _lock) in provisions {
+fn provisions(provisions: Vec<(<Test as frame_system::Config>::AccountId, TokenId, Balance)>) {
+	for (user_id, token_id, amount) in provisions {
 		<Test as Config>::Currency::transfer(
 			token_id,
 			&USER_ID,
@@ -1465,10 +1463,10 @@ fn multi_provisions_only_with_non_vested() {
 
 		// ACT
 		provisions(vec![
-			(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Regular),
-			(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Regular),
-			(PROVISION_USER2_ID, MGAId::get(), 300_000, ProvisionKind::Regular),
-			(PROVISION_USER2_ID, KSMId::get(), 30, ProvisionKind::Regular),
+			(PROVISION_USER1_ID, MGAId::get(), 100_000),
+			(PROVISION_USER1_ID, KSMId::get(), 10),
+			(PROVISION_USER2_ID, MGAId::get(), 300_000),
+			(PROVISION_USER2_ID, KSMId::get(), 30),
 		]);
 		let (mga_valuation, ksm_valuation) = Bootstrap::valuations();
 		let liq_token_minted = (mga_valuation + ksm_valuation) / 2;
@@ -1643,10 +1641,10 @@ fn multi_provisions_only_with_non_vested() {
 
 #[test_case(
 			vec![
-				(PROVISION_USER1_ID, MGAId::get(), 100_000,ProvisionKind::Regular),
-				(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Regular),
-				(PROVISION_USER2_ID, MGAId::get(), 300_000, ProvisionKind::Regular),
-				(PROVISION_USER2_ID, KSMId::get(), 30, ProvisionKind::Regular),
+				(PROVISION_USER1_ID, MGAId::get(), 100_000),
+				(PROVISION_USER1_ID, KSMId::get(), 10),
+				(PROVISION_USER2_ID, MGAId::get(), 300_000),
+				(PROVISION_USER2_ID, KSMId::get(), 30),
 			],
 			(50_004, 0),
 			(150014, 0);
@@ -1654,8 +1652,8 @@ fn multi_provisions_only_with_non_vested() {
 ]
 #[test_case(
 			vec![
-				(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Regular),
-				(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Regular),
+				(PROVISION_USER1_ID, MGAId::get(), 100_000),
+				(PROVISION_USER1_ID, KSMId::get(), 10),
 			],
 			(50_004, 0),
 			(0, 0);
@@ -1663,8 +1661,8 @@ fn multi_provisions_only_with_non_vested() {
 ]
 #[test_case(
 			vec![
-				(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Regular),
-				(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Regular),
+				(PROVISION_USER1_ID, MGAId::get(), 100_000),
+				(PROVISION_USER1_ID, KSMId::get(), 10),
 			],
 			(50_004, 0),
 			(0, 0);
@@ -1672,10 +1670,10 @@ fn multi_provisions_only_with_non_vested() {
 ]
 #[test_case(
 			vec![
-				(PROVISION_USER1_ID, MGAId::get(), 100_000, ProvisionKind::Regular),
-				(PROVISION_USER1_ID, KSMId::get(), 10, ProvisionKind::Regular),
-				(PROVISION_USER2_ID, MGAId::get(), 300_000, ProvisionKind::Regular),
-				(PROVISION_USER2_ID, KSMId::get(), 30, ProvisionKind::Regular),
+				(PROVISION_USER1_ID, MGAId::get(), 100_000),
+				(PROVISION_USER1_ID, KSMId::get(), 10),
+				(PROVISION_USER2_ID, MGAId::get(), 300_000),
+				(PROVISION_USER2_ID, KSMId::get(), 30),
 			],
 			(50_004, 0), // 400040 / 2 / 2 * 1 / 4
 			(150014, 0); // 400040 / 2 / 2 * 3 / 4
@@ -1683,22 +1681,22 @@ fn multi_provisions_only_with_non_vested() {
 ]
 #[test_case(
 			vec![
-				(PROVISION_USER1_ID, MGAId::get(), 10_000, ProvisionKind::Regular),
-				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
-				(PROVISION_USER1_ID, MGAId::get(), 20_000, ProvisionKind::Regular),
-				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
-				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
-				(PROVISION_USER1_ID, MGAId::get(), 30_000, ProvisionKind::Regular),
-				(PROVISION_USER1_ID, KSMId::get(), 1, ProvisionKind::Regular),
-				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
-				(PROVISION_USER2_ID, KSMId::get(), 1, ProvisionKind::Regular),
-				(PROVISION_USER1_ID, MGAId::get(), 40_000, ProvisionKind::Regular),
-				(PROVISION_USER2_ID, MGAId::get(), 200_000, ProvisionKind::Regular),
-				(PROVISION_USER2_ID, MGAId::get(), 100_000, ProvisionKind::Regular),
-				(PROVISION_USER2_ID, KSMId::get(), 10, ProvisionKind::Regular),
-				(PROVISION_USER2_ID, KSMId::get(), 15, ProvisionKind::Regular),
-				(PROVISION_USER1_ID, KSMId::get(), 4, ProvisionKind::Regular),
-				(PROVISION_USER1_ID, KSMId::get(), 5, ProvisionKind::Regular),
+				(PROVISION_USER1_ID, MGAId::get(), 10_000),
+				(PROVISION_USER2_ID, KSMId::get(), 1),
+				(PROVISION_USER1_ID, MGAId::get(), 20_000),
+				(PROVISION_USER2_ID, KSMId::get(), 1),
+				(PROVISION_USER2_ID, KSMId::get(), 1),
+				(PROVISION_USER1_ID, MGAId::get(), 30_000),
+				(PROVISION_USER1_ID, KSMId::get(), 1),
+				(PROVISION_USER2_ID, KSMId::get(), 1),
+				(PROVISION_USER2_ID, KSMId::get(), 1),
+				(PROVISION_USER1_ID, MGAId::get(), 40_000),
+				(PROVISION_USER2_ID, MGAId::get(), 200_000),
+				(PROVISION_USER2_ID, MGAId::get(), 100_000),
+				(PROVISION_USER2_ID, KSMId::get(), 10),
+				(PROVISION_USER2_ID, KSMId::get(), 15),
+				(PROVISION_USER1_ID, KSMId::get(), 4),
+				(PROVISION_USER1_ID, KSMId::get(), 5),
 			],
 			(50004, 0),
 			(150014, 0);
@@ -1710,7 +1708,6 @@ fn test_multi_provisions_only_with_non_vested(
 		<Test as frame_system::Config>::AccountId,
 		TokenId,
 		Balance,
-		ProvisionKind,
 	)>,
 	user1_rewards: (Balance, Balance),
 	user2_rewards: (Balance, Balance),
@@ -1725,13 +1722,13 @@ fn test_multi_provisions_only_with_non_vested(
 
 		let liq_token_id = Tokens::next_asset_id();
 		let user1_has_provisions =
-			provisions_list.iter().any(|(who, _, _, _)| *who == PROVISION_USER1_ID);
+			provisions_list.iter().any(|(who, _, _)| *who == PROVISION_USER1_ID);
 		let user2_has_provisions =
-			provisions_list.iter().any(|(who, _, _, _)| *who == PROVISION_USER2_ID);
+			provisions_list.iter().any(|(who, _, _)| *who == PROVISION_USER2_ID);
 		let total_ksm_provision: u128 = provisions_list
 			.iter()
 			.filter_map(
-				|(_, token_id, amount, _)| {
+				|(_, token_id, amount)| {
 					if *token_id == KSMId::get() {
 						Some(amount)
 					} else {
@@ -1743,7 +1740,7 @@ fn test_multi_provisions_only_with_non_vested(
 		let total_mga_provision: u128 = provisions_list
 			.iter()
 			.filter_map(
-				|(_, token_id, amount, _)| {
+				|(_, token_id, amount)| {
 					if *token_id == MGAId::get() {
 						Some(amount)
 					} else {
@@ -2116,8 +2113,8 @@ fn test_activate_liq_tokens_is_called_with_all_liq_tokens_when_pool_is_promoted_
 
 		// ACT
 		provisions(vec![
-			(PROVISION_USER1_ID, MGAId::get(), mga_provision, ProvisionKind::Regular),
-			(PROVISION_USER2_ID, KSMId::get(), ksm_provision, ProvisionKind::Regular),
+			(PROVISION_USER1_ID, MGAId::get(), mga_provision),
+			(PROVISION_USER2_ID, KSMId::get(), ksm_provision),
 		]);
 		let (mga_valuation, ksm_valuation) = Bootstrap::valuations();
 		assert_eq!(mga_valuation, 1_000_000);
@@ -2227,8 +2224,8 @@ fn test_dont_activate_liquidity_when_pool_is_not_promoted_and_provisions_are_not
 
 		// ACT
 		provisions(vec![
-			(PROVISION_USER1_ID, MGAId::get(), mga_provision, ProvisionKind::Regular),
-			(PROVISION_USER2_ID, KSMId::get(), ksm_provision, ProvisionKind::Regular),
+			(PROVISION_USER1_ID, MGAId::get(), mga_provision),
+			(PROVISION_USER2_ID, KSMId::get(), ksm_provision),
 		]);
 
 		Bootstrap::on_initialize(100_u32.into());
@@ -2267,8 +2264,8 @@ fn test_claim_and_activate_doesnt_fail_when_tokens_activations_fails() {
 
 		// ACT
 		provisions(vec![
-			(PROVISION_USER1_ID, MGAId::get(), mga_provision, ProvisionKind::Regular),
-			(PROVISION_USER2_ID, KSMId::get(), ksm_provision, ProvisionKind::Regular),
+			(PROVISION_USER1_ID, MGAId::get(), mga_provision),
+			(PROVISION_USER2_ID, KSMId::get(), ksm_provision),
 		]);
 		Bootstrap::on_initialize(100_u32.into());
 		assert_eq!(BootstrapPhase::Finished, Phase::<Test>::get());

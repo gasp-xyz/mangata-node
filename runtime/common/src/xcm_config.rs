@@ -12,7 +12,7 @@ use orml_asset_registry::{AssetRegistryTrader, FixedRateAssetRegistryTrader};
 use orml_traits::{parameter_type_with_key, FixedConversionRateProvider, GetByKey, MultiCurrency};
 use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter};
 use pallet_xcm::XcmPassthrough;
-use polkadot_parachain::primitives::Sibling;
+use polkadot_parachain_primitives::primitives::Sibling;
 
 use sp_std::{marker::PhantomData, prelude::*};
 use xcm::latest::{prelude::*, Weight as XcmWeight};
@@ -217,11 +217,12 @@ impl<T> TakeRevenue for ToTreasury<T>
 where
 	T: orml_tokens::Config<
 		AccountId = sp_runtime::AccountId32,
-		CurrencyId = mangata_types::TokenId,
+		CurrencyId = crate::TokenId,
+		Balance = crate::Balance,
 	>,
 	T: pallet_treasury::Config,
 	T: parachain_info::Config,
-	T: orml_asset_registry::Config<AssetId = mangata_types::TokenId>,
+	T: orml_asset_registry::Config<AssetId = crate::TokenId>,
 {
 	fn take_revenue(revenue: MultiAsset) {
 		if let MultiAsset { id: Concrete(location), fun: Fungible(amount) } = revenue {
@@ -232,7 +233,7 @@ where
 				let _ = orml_tokens::Pallet::<T>::deposit(
 					currency_id.into(),
 					&crate::config::TreasuryAccountIdOf::<T>::get(),
-					amount.into(),
+					amount,
 				);
 			}
 		}
@@ -315,8 +316,8 @@ impl<X, T, C, GK> DropAssets for MangataDropAssets<X, T, C, GK>
 where
 	X: DropAssets,
 	T: TakeRevenue,
-	C: Convert<MultiLocation, Option<mangata_types::TokenId>>,
-	GK: GetByKey<mangata_types::TokenId, mangata_types::Balance>,
+	C: Convert<MultiLocation, Option<crate::TokenId>>,
+	GK: GetByKey<crate::TokenId, crate::Balance>,
 {
 	fn drop_assets(
 		origin: &MultiLocation,
@@ -381,8 +382,8 @@ parameter_type_with_key! {
 }
 
 pub struct AccountIdToMultiLocation;
-impl Convert<mangata_types::AccountId, MultiLocation> for AccountIdToMultiLocation {
-	fn convert(account: mangata_types::AccountId) -> MultiLocation {
+impl Convert<crate::AccountId, MultiLocation> for AccountIdToMultiLocation {
+	fn convert(account: crate::AccountId) -> MultiLocation {
 		X1(AccountId32 { network: None, id: account.into() }).into()
 	}
 }
@@ -404,4 +405,4 @@ where
 
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
 pub type LocalOriginToLocation<RuntimeOrigin> =
-	SignedToAccountId32<RuntimeOrigin, mangata_types::AccountId, RelayNetwork>;
+	SignedToAccountId32<RuntimeOrigin, crate::AccountId, RelayNetwork>;

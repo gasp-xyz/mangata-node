@@ -1,10 +1,3 @@
-use frame_support::{assert_err, assert_ok, traits::OnInitialize};
-use std::default::Default;
-
-use mangata_types::{
-	assets::{CustomMetadata, XykMetadata},
-	AccountId,
-};
 use pallet_bootstrap::{BootstrapPhase, Phase};
 
 use crate::setup::*;
@@ -22,8 +15,8 @@ fn bootstrap_updates_metadata_and_creates_pool_correctly() {
 			ASSET_ID_1,
 			AssetMetadataOf {
 				decimals: 18,
-				name: b"Asset".to_vec(),
-				symbol: b"Asset".to_vec(),
+				name: BoundedVec::truncate_from(b"Asset".to_vec()),
+				symbol: BoundedVec::truncate_from(b"Asset".to_vec()),
 				location: None,
 				existential_deposit: Default::default(),
 				additional: CustomMetadata {

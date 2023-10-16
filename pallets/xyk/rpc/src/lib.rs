@@ -11,7 +11,6 @@ use sp_blockchain::HeaderBackend;
 use sp_core::U256;
 use sp_rpc::number::NumberOrHex;
 use sp_runtime::{
-	generic::BlockId,
 	traits::{Block as BlockT, MaybeDisplay, MaybeFromStr},
 };
 use sp_std::convert::{TryFrom, TryInto};
@@ -169,7 +168,7 @@ where
 		input_reserve: NumberOrHex,
 		output_reserve: NumberOrHex,
 		sell_amount: NumberOrHex,
-		at: Option<<Block as BlockT>::Hash>,
+		_at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<NumberOrHex> {
 		let api = self.client.runtime_api();
 		let at = self.client.info().best_hash;
@@ -195,7 +194,7 @@ where
 		input_reserve: NumberOrHex,
 		output_reserve: NumberOrHex,
 		buy_amount: NumberOrHex,
-		at: Option<<Block as BlockT>::Hash>,
+		_at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<NumberOrHex> {
 		let api = self.client.runtime_api();
 		let at = self.client.info().best_hash;
@@ -221,7 +220,7 @@ where
 		sold_token_id: TokenId,
 		bought_token_id: TokenId,
 		sell_amount: NumberOrHex,
-		at: Option<<Block as BlockT>::Hash>,
+		_at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<NumberOrHex> {
 		let api = self.client.runtime_api();
 		let at = self.client.info().best_hash;
@@ -247,7 +246,7 @@ where
 		sold_token_id: TokenId,
 		bought_token_id: TokenId,
 		buy_amount: NumberOrHex,
-		at: Option<<Block as BlockT>::Hash>,
+		_at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<NumberOrHex> {
 		let api = self.client.runtime_api();
 		let at = self.client.info().best_hash;
@@ -273,7 +272,7 @@ where
 		first_asset_id: TokenId,
 		second_asset_id: TokenId,
 		liquidity_asset_amount: NumberOrHex,
-		at: Option<<Block as BlockT>::Hash>,
+		_at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<(NumberOrHex, NumberOrHex)> {
 		let api = self.client.runtime_api();
 		let at = self.client.info().best_hash;
@@ -298,7 +297,7 @@ where
 		&self,
 		user: AccountId,
 		liquidity_asset_id: TokenId,
-		at: Option<<Block as BlockT>::Hash>,
+		_at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<NumberOrHex> {
 		let api = self.client.runtime_api();
 		let at = self.client.info().best_hash;
@@ -318,7 +317,7 @@ where
 		&self,
 		user: AccountId,
 		liquidity_asset_id: TokenId,
-		at: Option<<Block as BlockT>::Hash>,
+		_at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<NumberOrHex> {
 		let api = self.client.runtime_api();
 		let at = self.client.info().best_hash;
@@ -338,7 +337,7 @@ where
 		&self,
 		user: AccountId,
 		liquidity_asset_id: TokenId,
-		at: Option<<Block as BlockT>::Hash>,
+		_at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<NumberOrHex> {
 		let api = self.client.runtime_api();
 		let at = self.client.info().best_hash;
@@ -358,7 +357,7 @@ where
 		&self,
 		total_amount: NumberOrHex,
 		reserve_amount: NumberOrHex,
-		at: Option<<Block as BlockT>::Hash>,
+		_at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<NumberOrHex> {
 		let api = self.client.runtime_api();
 		let at = self.client.info().best_hash;
@@ -380,7 +379,7 @@ where
 
 	fn get_liq_tokens_for_trading(
 		&self,
-		at: Option<<Block as BlockT>::Hash>,
+		_at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<Vec<TokenId>> {
 		let api = self.client.runtime_api();
 		let at = self.client.info().best_hash;
@@ -398,7 +397,7 @@ where
 		&self,
 		path: sp_std::vec::Vec<TokenId>,
 		input_amount: NumberOrHex,
-		at: Option<<Block as BlockT>::Hash>,
+		_at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<Option<bool>> {
 		let api = self.client.runtime_api();
 		let at = self.client.info().best_hash;
@@ -417,7 +416,7 @@ where
 		&self,
 		path: sp_std::vec::Vec<TokenId>,
 		input_amount: NumberOrHex,
-		at: Option<<Block as BlockT>::Hash>,
+		_at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<Option<bool>> {
 		let api = self.client.runtime_api();
 		let at = self.client.info().best_hash;
@@ -434,7 +433,7 @@ where
 
 	fn get_tradeable_tokens(
 		&self,
-		at: Option<<Block as BlockT>::Hash>,
+		_at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<Vec<RpcAssetMetadata<TokenId>>> {
 		let api = self.client.runtime_api();
 		let at = self.client.info().best_hash;

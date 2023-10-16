@@ -128,7 +128,7 @@ where
 	async fn dry_run(
 		&self,
 		extrinsic: Bytes,
-		at: Option<<Block as traits::Block>::Hash>,
+		_at: Option<<Block as traits::Block>::Hash>,
 	) -> RpcResult<Bytes> {
 		self.deny_unsafe.check_if_safe()?;
 		let api = self.client.runtime_api();

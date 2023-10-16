@@ -1,10 +1,10 @@
-use crate::config::orml_asset_registry::AssetMetadataOf;
+use crate::{config::orml_asset_registry::{AssetMetadataOf, StringLimit}, TokenId, Balance};
 use frame_support::{
 	traits::{Get, OnRuntimeUpgrade},
 	weights::Weight,
 };
 use log::info;
-use mangata_types::{assets::CustomMetadata, Balance, TokenId};
+use mangata_types::{assets::CustomMetadata};
 use sp_runtime::traits::Zero;
 use sp_std::marker::PhantomData;
 
@@ -16,6 +16,7 @@ where
 			CustomMetadata = CustomMetadata,
 			AssetId = TokenId,
 			Balance = Balance,
+			StringLimit = StringLimit,
 		> + orml_tokens::Config<CurrencyId = TokenId>,
 {
 	fn on_runtime_upgrade() -> Weight {

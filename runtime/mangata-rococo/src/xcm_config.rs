@@ -21,7 +21,6 @@ use super::{
 	AccountId, AllPalletsWithSystem, Balance, Maintenance, ParachainSystem, PolkadotXcm, Runtime,
 	RuntimeCall, RuntimeEvent, RuntimeOrigin, TokenId,
 };
-use cumulus_primitives_core::{MultiLocation, Parent};
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
@@ -51,6 +50,7 @@ impl xcm_executor::Config for XcmConfig {
 	type UniversalAliases = ();
 	type CallDispatcher = RuntimeCall;
 	type SafeCallFilter = Everything;
+	type Aliasers = Nothing;
 }
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -84,6 +84,9 @@ impl pallet_xcm::Config for Runtime {
 	type WeightInfo = pallet_xcm::TestWeightInfo;
 	#[cfg(feature = "runtime-benchmarks")]
 	type ReachableDest = ReachableDest;
+	type AdminOrigin = EnsureRoot<AccountId>;
+	type MaxRemoteLockConsumers = ConstU32<0>;
+	type RemoteLockConsumerIdentifier = ();
 }
 
 impl cumulus_pallet_xcm::Config for Runtime {

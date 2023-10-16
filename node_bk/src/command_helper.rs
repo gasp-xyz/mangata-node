@@ -8,7 +8,7 @@ use sp_api::ProvideRuntimeApi;
 use sp_core::{crypto::key_types::AURA, Pair};
 use sp_inherents::{InherentData, InherentDataProvider};
 use sp_keyring::Sr25519Keyring;
-use sp_keystore::SyncCryptoStore;
+use sp_keystore::KeystorePtr;
 use sp_runtime::{generic, OpaqueExtrinsic, SaturatedConversion};
 use substrate_frame_rpc_system::AccountNonceApi;
 
@@ -128,7 +128,7 @@ pub async fn inherent_benchmark_data(
 	prev_seed: [u8; 32],
 	duration: Duration,
 ) -> Result<InherentData> {
-	let keystore = sp_keystore::testing::KeyStore::new();
+	let keystore = sp_keystore::testing::MemoryKeystore::new();
 	let secret_uri = "//Alice";
 	let key_pair =
 		sp_core::sr25519::Pair::from_string(secret_uri, None).expect("Generates key pair");

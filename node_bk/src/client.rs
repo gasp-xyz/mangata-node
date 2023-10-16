@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 use crate::service::AuraId;
-pub use mangata_types::{
-	AccountId, Balance, Block, BlockNumber, Hash, Header, Index as Nonce, TokenId,
+pub use common_runtime::types::{
+	AccountId, Balance, Block, BlockNumber, Hash, Header, Nonce, TokenId,
 };
 use sc_client_api::{Backend as BackendT, BlockchainEvents, KeysIter, PairsIter};
 use sp_api::{CallApiAt, NumberFor, ProvideRuntimeApi};
@@ -47,8 +47,6 @@ pub trait RuntimeApiCollection:
 	+ ver_api::VerNonceApi<Block, AccountId>
 	+ xyk_rpc::XykRuntimeApi<Block, Balance, TokenId, AccountId>
 	+ sp_consensus_aura::AuraApi<Block, AuraId>
-where
-	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
 {
 }
 
@@ -66,42 +64,37 @@ where
 		+ ver_api::VerNonceApi<Block, AccountId>
 		+ xyk_rpc::XykRuntimeApi<Block, Balance, TokenId, AccountId>
 		+ sp_consensus_aura::AuraApi<Block, AuraId>,
-	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
 {
 }
 
 /// Config that abstracts over all available client implementations.
 ///
 /// For a concrete type there exists [`Client`].
-pub trait AbstractClient<Block, Backend>:
+pub trait AbstractClient<Block>:
 	BlockchainEvents<Block>
 	+ Sized
 	+ Send
 	+ Sync
 	+ ProvideRuntimeApi<Block>
 	+ HeaderBackend<Block>
-	+ CallApiAt<Block, StateBackend = Backend::State>
+	+ CallApiAt<Block>
 where
 	Block: BlockT,
-	Backend: BackendT<Block>,
-	Backend::State: sp_api::StateBackend<BlakeTwo256>,
-	Self::Api: RuntimeApiCollection<StateBackend = Backend::State>,
+	Self::Api: RuntimeApiCollection,
 {
 }
 
-impl<Block, Backend, Client> AbstractClient<Block, Backend> for Client
+impl<Block, Client> AbstractClient<Block> for Client
 where
 	Block: BlockT,
-	Backend: BackendT<Block>,
-	Backend::State: sp_api::StateBackend<BlakeTwo256>,
 	Client: BlockchainEvents<Block>
 		+ ProvideRuntimeApi<Block>
 		+ HeaderBackend<Block>
 		+ Sized
 		+ Send
 		+ Sync
-		+ CallApiAt<Block, StateBackend = Backend::State>,
-	Client::Api: RuntimeApiCollection<StateBackend = Backend::State>,
+		+ CallApiAt<Block>,
+	Client::Api: RuntimeApiCollection,
 {
 }
 
@@ -125,7 +118,6 @@ pub trait ExecuteWithClient {
 	/// Execute whatever should be executed with the given client instance.
 	fn execute_with_client<Client, Api, Backend>(self, client: Arc<Client>) -> Self::Output
 	where
-		<Api as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
 		Backend: sc_client_api::Backend<Block>,
 		Backend::State: sp_api::StateBackend<BlakeTwo256>,
 		Api: RuntimeApiCollection<StateBackend = Backend::State>,

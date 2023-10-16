@@ -3,13 +3,15 @@
 #![recursion_limit = "256"]
 
 use codec::{Decode, Encode, MaxEncodedLen};
+pub use constants::{fee::*, parachains::*};
+pub use currency::*;
 use frame_support::{
 	dispatch::{DispatchClass, DispatchResult},
 	ensure, parameter_types,
 	traits::{
 		tokens::currency::{MultiTokenCurrency, MultiTokenImbalanceWithZeroTrait},
 		Contains, EnsureOrigin, EnsureOriginWithArg, ExistenceRequirement, Get, Imbalance,
-		OriginTrait, WithdrawReasons,
+		WithdrawReasons,
 	},
 	unsigned::TransactionValidityError,
 	weights::{constants::WEIGHT_REF_TIME_PER_SECOND, ConstantMultiplier, Weight},
@@ -21,48 +23,36 @@ use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
 };
-use log::info;
+use mangata_support::traits::{AssetRegistryApi, FeeLockTriggerTrait, PreValidateSwaps};
+pub use mangata_types::assets::{CustomMetadata, XcmMetadata, XykMetadata};
 pub use orml_tokens;
 use orml_tokens::MultiTokenCurrencyExtended;
 use orml_traits::{
 	asset_registry::{AssetMetadata, AssetProcessor},
 	parameter_type_with_key,
 };
+pub use pallet_issuance::IssuanceInfo;
 pub use pallet_sudo_mangata;
+pub use pallet_sudo_origin;
 use pallet_transaction_payment_mangata::{ConstFeeMultiplier, Multiplier, OnChargeTransaction};
-
-// Polkadot Imports
+pub use pallet_xyk;
 pub use polkadot_runtime_common::BlockHashCount;
 use scale_info::TypeInfo;
-
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-use sp_runtime::{
+pub use sp_runtime::{
 	generic,
 	traits::{
-		AccountIdConversion, BlakeTwo256, DispatchInfoOf, PostDispatchInfoOf, Saturating, Zero,
+		AccountIdConversion, BlakeTwo256, DispatchInfoOf, IdentifyAccount, PostDispatchInfoOf,
+		Saturating, Verify, Zero,
 	},
 	transaction_validity::InvalidTransaction,
-	DispatchError, FixedPointNumber, Percent, RuntimeDebug,
+	BoundedVec, DispatchError, FixedPointNumber, MultiAddress, MultiSignature, OpaqueExtrinsic,
+	Perbill, Percent, Permill, RuntimeDebug,
 };
-pub use sp_runtime::{MultiAddress, Perbill, Permill};
 use sp_std::{cmp::Ordering, marker::PhantomData, prelude::*};
-
-pub use xcm::{latest::prelude::*, VersionedMultiLocation};
-
-pub use constants::{fee::*, parachains::*};
-pub use currency::*;
-use mangata_support::traits::{AssetRegistryApi, FeeLockTriggerTrait, PreValidateSwaps};
-pub use mangata_types::{
-	assets::{CustomMetadata, XcmMetadata, XykMetadata},
-	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
-};
-pub use pallet_issuance::IssuanceInfo;
-pub use pallet_sudo_origin;
-pub use pallet_xyk;
-// XCM Imports
+pub use types::*;
 use pallet_xyk::AssetMetadataMutationTrait;
 
 pub mod constants;
@@ -82,6 +72,45 @@ pub mod currency {
 	}
 }
 
+pub mod types {
+	use super::*;
+
+	pub type TokenId = u32;
+	pub type Balance = u128;
+	pub type Amount = i128;
+
+	// /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
+	pub type Signature = MultiSignature;
+
+	// /// Some way of identifying an account on the chain. We intentionally make it equivalent
+	// /// to the public key of our transaction signing scheme.
+	pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+
+	// /// Index of a transaction in the chain.
+	pub type Nonce = u32;
+
+	// /// A hash of some data used by the chain.
+	pub type Hash = sp_core::H256;
+
+	// /// An index to a block.
+	pub type BlockNumber = u32;
+
+	// /// The address format for describing accounts.
+	pub type Address = MultiAddress<AccountId, ()>;
+
+	// /// Block header type as expected by this runtime.
+	pub type Header = generic::HeaderVer<BlockNumber, BlakeTwo256>;
+
+	// /// Block type as expected by this runtime.
+	pub type Block = generic::Block<Header, OpaqueExtrinsic>;
+
+	// /// A Block signed with a Justification
+	pub type SignedBlock = generic::SignedBlock<Block>;
+
+	// /// BlockId type as expected by this runtime.
+	pub type BlockId = generic::BlockId<Block>;
+}
+
 pub mod tokens {
 	use super::*;
 	pub const MGX_TOKEN_ID: TokenId = 0;
@@ -94,6 +123,28 @@ pub mod tokens {
 		pub const RelayTokenId: TokenId = RELAY_TOKEN_ID;
 		pub const TurTokenId: TokenId = TUR_TOKEN_ID;
 	}
+}
+
+/// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
+/// the specifics of the runtime. They can then be made to be agnostic over specific formats
+/// of data like extrinsics, allowing for them to continue syncing the network through upgrades
+/// to even the core data structures.
+pub mod opaque {
+	use super::*;
+	use sp_runtime::{
+		generic,
+		traits::{BlakeTwo256, Hash as HashT},
+	};
+
+	pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
+	/// Opaque block header type.
+	pub type Header = generic::HeaderVer<BlockNumber, BlakeTwo256>;
+	/// Opaque block type.
+	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+	/// Opaque block identifier type.
+	pub type BlockId = generic::BlockId<Block>;
+	/// Opaque block hash type.
+	pub type Hash = <BlakeTwo256 as HashT>::Output;
 }
 
 pub mod runtime_types {
@@ -150,7 +201,7 @@ pub mod consts {
 	/// so there is room for new extrinsics in the next block
 	pub const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
 		WEIGHT_REF_TIME_PER_SECOND.saturating_div(4),
-		polkadot_primitives::v2::MAX_POV_SIZE as u64,
+		polkadot_primitives::v5::MAX_POV_SIZE as u64,
 	);
 
 	/// The existential deposit. Set to 1/10 of the Connected Relay Chain.
@@ -325,20 +376,21 @@ pub mod config {
 			fn contains(t: &TokenId) -> bool {
 				let meta: Option<_> = ::orml_asset_registry::Metadata::<T>::get(*t);
 				if let Some(xyk) = meta.and_then(|m| m.additional.xyk) {
-					return xyk.operations_disabled
+					return xyk.operations_disabled;
 				}
-				return false
+				return false;
 			}
 		}
 
 		pub struct AssetMetadataMutation<Runtime>(PhantomData<Runtime>);
 
-		impl<T> AssetMetadataMutationTrait for AssetMetadataMutation<T>
+		impl<T> AssetMetadataMutationTrait<TokenId> for AssetMetadataMutation<T>
 		where
 			T: ::orml_asset_registry::Config<
 				CustomMetadata = CustomMetadata,
 				AssetId = TokenId,
 				Balance = Balance,
+				StringLimit = orml_asset_registry::StringLimit,
 			>,
 		{
 			fn set_asset_info(
@@ -348,8 +400,8 @@ pub mod config {
 				decimals: u32,
 			) -> DispatchResult {
 				let metadata = AssetMetadata {
-					name,
-					symbol,
+					name: BoundedVec::truncate_from(name),
+					symbol: BoundedVec::truncate_from(symbol),
 					decimals,
 					existential_deposit: Default::default(),
 					additional: Default::default(),
@@ -373,7 +425,7 @@ pub mod config {
 		}
 
 		pub struct EnableAssetPoolApi<Runtime>(PhantomData<Runtime>);
-		impl<T> AssetRegistryApi for EnableAssetPoolApi<T>
+		impl<T> AssetRegistryApi<TokenId> for EnableAssetPoolApi<T>
 		where
 			T: ::orml_asset_registry::Config<
 				CustomMetadata = CustomMetadata,
@@ -400,7 +452,7 @@ pub mod config {
 								Ok(_) => {},
 								Err(e) => {
 									log::error!(target: "bootstrap", "cannot modify {} asset: {:?}!", asset, e);
-									return false
+									return false;
 								},
 							}
 						}
@@ -476,187 +528,222 @@ pub mod config {
 
 		pub struct FeeHelpers<T, C, OU, OCA, OFLA>(PhantomData<(T, C, OU, OCA, OFLA)>);
 		impl<T, C, OU, OCA, OFLA> FeeHelpers<T, C, OU, OCA, OFLA>
-where
-	T: pallet_transaction_payment_mangata::Config + pallet_xyk::Config + pallet_fee_lock::Config,
-	T::LengthToFee: frame_support::weights::WeightToFee<
-		Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
-	>,
-	C: MultiTokenCurrency<<T as frame_system::Config>::AccountId>,
-	C::PositiveImbalance: Imbalance<
-		<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
-		Opposite = C::NegativeImbalance,
-	>,
-	C::NegativeImbalance: Imbalance<
-		<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
-		Opposite = C::PositiveImbalance,
-	>,
-	OU: OnMultiTokenUnbalanced<C::CurrencyId ,NegativeImbalanceOf<C, T>>,
-	NegativeImbalanceOf<C, T>: MultiTokenImbalanceWithZeroTrait<C::CurrencyId>,
-	OCA: OnChargeTransaction<
-		T,
-		LiquidityInfo = Option<LiquidityInfoEnum<C, T>>,
-		Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
-	>,
-	OFLA: FeeLockTriggerTrait<<T as frame_system::Config>::AccountId>,
-	// T: frame_system::Config<RuntimeCall = RuntimeCall>,
-	T::AccountId: From<sp_runtime::AccountId32> + Into<sp_runtime::AccountId32>,
-	Balance: From<<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance>,
-	sp_runtime::AccountId32: From<<T as frame_system::Config>::AccountId>,
-{
-	pub fn handle_sell_asset(
-		who: &T::AccountId,
-		fee_lock_metadata: pallet_fee_lock::FeeLockMetadataInfo<T>,
-		sold_asset_id: u32,
-		sold_asset_amount: u128,
-		bought_asset_id: u32,
-		min_amount_out: u128,
-	) -> Result<Option<LiquidityInfoEnum<C, T>>, TransactionValidityError> {
-		if fee_lock_metadata.is_whitelisted(sold_asset_id) ||
-			fee_lock_metadata.is_whitelisted(bought_asset_id)
+		where
+			T: pallet_transaction_payment_mangata::Config
+				+ pallet_xyk::Config<Currency = C>
+				+ pallet_fee_lock::Config<Tokens = C>,
+			T::LengthToFee: frame_support::weights::WeightToFee<
+				Balance = <C as MultiTokenCurrency<T::AccountId>>::Balance,
+			>,
+			C: MultiTokenCurrency<T::AccountId, Balance = Balance, CurrencyId = TokenId>,
+			C::PositiveImbalance: Imbalance<
+				<C as MultiTokenCurrency<T::AccountId>>::Balance,
+				Opposite = C::NegativeImbalance,
+			>,
+			C::NegativeImbalance: Imbalance<
+				<C as MultiTokenCurrency<T::AccountId>>::Balance,
+				Opposite = C::PositiveImbalance,
+			>,
+			OU: OnMultiTokenUnbalanced<C::CurrencyId, NegativeImbalanceOf<C, T>>,
+			NegativeImbalanceOf<C, T>: MultiTokenImbalanceWithZeroTrait<C::CurrencyId>,
+			OCA: OnChargeTransaction<
+				T,
+				LiquidityInfo = Option<LiquidityInfoEnum<C, T>>,
+				Balance = <C as MultiTokenCurrency<T::AccountId>>::Balance,
+			>,
+			OFLA: FeeLockTriggerTrait<
+				T::AccountId,
+				<C as MultiTokenCurrency<T::AccountId>>::Balance,
+				<C as MultiTokenCurrency<T::AccountId>>::CurrencyId,
+			>,
+			// T: frame_system::Config<RuntimeCall = RuntimeCall>,
+			T::AccountId: From<sp_runtime::AccountId32> + Into<sp_runtime::AccountId32>,
+			sp_runtime::AccountId32: From<T::AccountId>,
 		{
-			let (_, _, _, _, _, bought_asset_amount) =
-				<pallet_xyk::Pallet<T> as PreValidateSwaps>::pre_validate_sell_asset(
-					&who.clone(),
-					sold_asset_id,
-					bought_asset_id,
-					sold_asset_amount,
-					min_amount_out,
-				)
-				.map_err(|_| {
-					TransactionValidityError::Invalid(InvalidTransaction::SwapPrevalidation.into())
-				})?;
-			if Self::is_high_value_swap(&fee_lock_metadata, sold_asset_id, sold_asset_amount) ||
-				Self::is_high_value_swap(
-					&fee_lock_metadata,
-					bought_asset_id,
-					bought_asset_amount,
-				) {
-				let _ = OFLA::unlock_fee(who);
-			} else {
-				OFLA::process_fee_lock(who).map_err(|_| {
-					TransactionValidityError::Invalid(InvalidTransaction::ProcessFeeLock.into())
-				})?;
+			pub fn handle_sell_asset(
+				who: &T::AccountId,
+				fee_lock_metadata: pallet_fee_lock::FeeLockMetadataInfo<T>,
+				sold_asset_id: TokenId,
+				sold_asset_amount: Balance,
+				bought_asset_id: TokenId,
+				min_amount_out: Balance,
+			) -> Result<Option<LiquidityInfoEnum<C, T>>, TransactionValidityError> {
+				if fee_lock_metadata.is_whitelisted(sold_asset_id)
+					|| fee_lock_metadata.is_whitelisted(bought_asset_id)
+				{
+					let (_, _, _, _, _, bought_asset_amount) =
+						<pallet_xyk::Pallet<T> as PreValidateSwaps<
+							T::AccountId,
+							Balance,
+							TokenId,
+						>>::pre_validate_sell_asset(
+							&who.clone(),
+							sold_asset_id,
+							bought_asset_id,
+							sold_asset_amount,
+							min_amount_out,
+						)
+						.map_err(|_| {
+							TransactionValidityError::Invalid(
+								InvalidTransaction::SwapPrevalidation.into(),
+							)
+						})?;
+					if Self::is_high_value_swap(
+						&fee_lock_metadata,
+						sold_asset_id,
+						sold_asset_amount,
+					) || Self::is_high_value_swap(
+						&fee_lock_metadata,
+						bought_asset_id,
+						bought_asset_amount,
+					) {
+						let _ = OFLA::unlock_fee(who);
+					} else {
+						OFLA::process_fee_lock(who).map_err(|_| {
+							TransactionValidityError::Invalid(
+								InvalidTransaction::ProcessFeeLock.into(),
+							)
+						})?;
+					}
+				} else {
+					OFLA::process_fee_lock(who).map_err(|_| {
+						TransactionValidityError::Invalid(InvalidTransaction::ProcessFeeLock.into())
+					})?;
+				}
+				Ok(Some(LiquidityInfoEnum::FeeLock))
 			}
-		} else {
-			OFLA::process_fee_lock(who).map_err(|_| {
-				TransactionValidityError::Invalid(InvalidTransaction::ProcessFeeLock.into())
-			})?;
-		}
-		Ok(Some(LiquidityInfoEnum::FeeLock))
-	}
 
-	pub fn is_high_value_swap(
-		fee_lock_metadata: &pallet_fee_lock::FeeLockMetadataInfo<T>,
-		asset_id: u32,
-		asset_amount: u128,
-	) -> bool {
-		if let (true, Some(valuation)) = (
-			fee_lock_metadata.is_whitelisted(asset_id),
-			OFLA::get_swap_valuation_for_token(asset_id, asset_amount),
-		) {
-			valuation >= fee_lock_metadata.swap_value_threshold
-		} else {
-			false
-		}
-	}
+			pub fn is_high_value_swap(
+				fee_lock_metadata: &pallet_fee_lock::FeeLockMetadataInfo<T>,
+				asset_id: u32,
+				asset_amount: u128,
+			) -> bool {
+				if let (true, Some(valuation)) = (
+					fee_lock_metadata.is_whitelisted(asset_id),
+					OFLA::get_swap_valuation_for_token(asset_id, asset_amount),
+				) {
+					valuation >= fee_lock_metadata.swap_value_threshold
+				} else {
+					false
+				}
+			}
 
-	pub fn handle_buy_asset(
-		who: &T::AccountId,
-		fee_lock_metadata: pallet_fee_lock::FeeLockMetadataInfo<T>,
-		sold_asset_id: u32,
-		bought_asset_amount: u128,
-		bought_asset_id: u32,
-		max_amount_in: u128,
-	) -> Result<Option<LiquidityInfoEnum<C, T>>, TransactionValidityError> {
-		if fee_lock_metadata.is_whitelisted(sold_asset_id) ||
-			fee_lock_metadata.is_whitelisted(bought_asset_id)
-		{
-			let (_, _, _, _, _, sold_asset_amount) =
-				<pallet_xyk::Pallet<T> as PreValidateSwaps>::pre_validate_buy_asset(
+			pub fn handle_buy_asset(
+				who: &T::AccountId,
+				fee_lock_metadata: pallet_fee_lock::FeeLockMetadataInfo<T>,
+				sold_asset_id: TokenId,
+				bought_asset_amount: Balance,
+				bought_asset_id: TokenId,
+				max_amount_in: Balance,
+			) -> Result<Option<LiquidityInfoEnum<C, T>>, TransactionValidityError> {
+				if fee_lock_metadata.is_whitelisted(sold_asset_id)
+					|| fee_lock_metadata.is_whitelisted(bought_asset_id)
+				{
+					let (_, _, _, _, _, sold_asset_amount) =
+						<pallet_xyk::Pallet<T> as PreValidateSwaps<
+							T::AccountId,
+							Balance,
+							TokenId,
+						>>::pre_validate_buy_asset(
+							&who.clone(),
+							sold_asset_id,
+							bought_asset_id,
+							bought_asset_amount,
+							max_amount_in,
+						)
+						.map_err(|_| {
+							TransactionValidityError::Invalid(
+								InvalidTransaction::SwapPrevalidation.into(),
+							)
+						})?;
+					if Self::is_high_value_swap(
+						&fee_lock_metadata,
+						sold_asset_id,
+						sold_asset_amount,
+					) || Self::is_high_value_swap(
+						&fee_lock_metadata,
+						bought_asset_id,
+						bought_asset_amount,
+					) {
+						let _ = OFLA::unlock_fee(who);
+					} else {
+						OFLA::process_fee_lock(who).map_err(|_| {
+							TransactionValidityError::Invalid(
+								InvalidTransaction::ProcessFeeLock.into(),
+							)
+						})?;
+					}
+				} else {
+					// "swap on non-curated token" branch
+					OFLA::process_fee_lock(who).map_err(|_| {
+						TransactionValidityError::Invalid(InvalidTransaction::ProcessFeeLock.into())
+					})?;
+				}
+				Ok(Some(LiquidityInfoEnum::FeeLock))
+			}
+
+			pub fn handle_multiswap_buy_asset(
+				who: &T::AccountId,
+				_fee_lock_metadata: pallet_fee_lock::FeeLockMetadataInfo<T>,
+				swap_token_list: Vec<TokenId>,
+				bought_asset_amount: Balance,
+				max_amount_in: Balance,
+			) -> Result<Option<LiquidityInfoEnum<C, T>>, TransactionValidityError> {
+				// ensure swap cannot fail
+				// This is to ensure that xyk swap fee is always charged
+				// We also ensure that the user has enough funds to transact
+				let _ = <pallet_xyk::Pallet<T> as PreValidateSwaps<
+					T::AccountId,
+					Balance,
+					TokenId,
+				>>::pre_validate_multiswap_buy_asset(
 					&who.clone(),
-					sold_asset_id,
-					bought_asset_id,
+					swap_token_list,
 					bought_asset_amount,
 					max_amount_in,
 				)
 				.map_err(|_| {
 					TransactionValidityError::Invalid(InvalidTransaction::SwapPrevalidation.into())
 				})?;
-			if Self::is_high_value_swap(&fee_lock_metadata, sold_asset_id, sold_asset_amount) ||
-				Self::is_high_value_swap(
-					&fee_lock_metadata,
-					bought_asset_id,
-					bought_asset_amount,
-				) {
-				let _ = OFLA::unlock_fee(who);
-			} else {
+
+				// This is the "low value swap on curated token" branch
 				OFLA::process_fee_lock(who).map_err(|_| {
 					TransactionValidityError::Invalid(InvalidTransaction::ProcessFeeLock.into())
 				})?;
+				Ok(Some(LiquidityInfoEnum::FeeLock))
 			}
-		} else {
-			// "swap on non-curated token" branch
-			OFLA::process_fee_lock(who).map_err(|_| {
-				TransactionValidityError::Invalid(InvalidTransaction::ProcessFeeLock.into())
-			})?;
+
+			pub fn handle_multiswap_sell_asset(
+				who: &<T>::AccountId,
+				_fee_lock_metadata: pallet_fee_lock::FeeLockMetadataInfo<T>,
+				swap_token_list: Vec<TokenId>,
+				sold_asset_amount: Balance,
+				min_amount_out: Balance,
+			) -> Result<Option<LiquidityInfoEnum<C, T>>, TransactionValidityError> {
+				// ensure swap cannot fail
+				// This is to ensure that xyk swap fee is always charged
+				// We also ensure that the user has enough funds to transact
+				let _ = <pallet_xyk::Pallet<T> as PreValidateSwaps<
+					T::AccountId,
+					Balance,
+					TokenId,
+				>>::pre_validate_multiswap_sell_asset(
+					&who.clone(),
+					swap_token_list.clone(),
+					sold_asset_amount,
+					min_amount_out,
+				)
+				.map_err(|_| {
+					TransactionValidityError::Invalid(InvalidTransaction::SwapPrevalidation.into())
+				})?;
+
+				// This is the "low value swap on curated token" branch
+				OFLA::process_fee_lock(who).map_err(|_| {
+					TransactionValidityError::Invalid(InvalidTransaction::ProcessFeeLock.into())
+				})?;
+				Ok(Some(LiquidityInfoEnum::FeeLock))
+			}
 		}
-		Ok(Some(LiquidityInfoEnum::FeeLock))
-	}
-
-	pub fn handle_multiswap_buy_asset(
-		who: &T::AccountId,
-		_fee_lock_metadata: pallet_fee_lock::FeeLockMetadataInfo<T>,
-		swap_token_list: Vec<u32>,
-		bought_asset_amount: u128,
-		max_amount_in: u128,
-	) -> Result<Option<LiquidityInfoEnum<C, T>>, TransactionValidityError> {
-		// ensure swap cannot fail
-		// This is to ensure that xyk swap fee is always charged
-		// We also ensure that the user has enough funds to transact
-		let _ = <pallet_xyk::Pallet<T> as PreValidateSwaps>::pre_validate_multiswap_buy_asset(
-			&who.clone(),
-			swap_token_list,
-			bought_asset_amount,
-			max_amount_in,
-		)
-		.map_err(|_| {
-			TransactionValidityError::Invalid(InvalidTransaction::SwapPrevalidation.into())
-		})?;
-
-		// This is the "low value swap on curated token" branch
-		OFLA::process_fee_lock(who).map_err(|_| {
-			TransactionValidityError::Invalid(InvalidTransaction::ProcessFeeLock.into())
-		})?;
-		Ok(Some(LiquidityInfoEnum::FeeLock))
-	}
-
-	pub fn handle_multiswap_sell_asset(
-		who: &<T>::AccountId,
-		_fee_lock_metadata: pallet_fee_lock::FeeLockMetadataInfo<T>,
-		swap_token_list: Vec<u32>,
-		sold_asset_amount: u128,
-		min_amount_out: u128,
-	) -> Result<Option<LiquidityInfoEnum<C, T>>, TransactionValidityError> {
-		// ensure swap cannot fail
-		// This is to ensure that xyk swap fee is always charged
-		// We also ensure that the user has enough funds to transact
-		let _ = <pallet_xyk::Pallet<T> as PreValidateSwaps>::pre_validate_multiswap_sell_asset(
-			&who.clone(),
-			swap_token_list.clone(),
-			sold_asset_amount,
-			min_amount_out,
-		)
-		.map_err(|_| {
-			TransactionValidityError::Invalid(InvalidTransaction::SwapPrevalidation.into())
-		})?;
-
-		// This is the "low value swap on curated token" branch
-		OFLA::process_fee_lock(who).map_err(|_| {
-			TransactionValidityError::Invalid(InvalidTransaction::ProcessFeeLock.into())
-		})?;
-		Ok(Some(LiquidityInfoEnum::FeeLock))
-	}
-}
 
 		const SINGLE_HOP_MULTISWAP: usize = 2;
 		#[derive(Encode, Decode, Clone, TypeInfo)]
@@ -667,106 +754,115 @@ where
 		/// The unbalance handler is given 2 unbalanceds in [`OnUnbalanced::on_unbalanceds`]: fee and
 		/// then tip.
 		impl<T, C, OU, OCA, OFLA> OnChargeTransaction<T> for OnChargeHandler<C, OU, OCA, OFLA>
-where
-	T: pallet_transaction_payment_mangata::Config + pallet_xyk::Config + pallet_fee_lock::Config,
-	<T as frame_system::Config>::RuntimeCall: Into<crate::CallType>,
-	T::LengthToFee: frame_support::weights::WeightToFee<
-		Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
-	>,
-	C: MultiTokenCurrency<<T as frame_system::Config>::AccountId>,
-	C::PositiveImbalance: Imbalance<
-		<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
-		Opposite = C::NegativeImbalance,
-	>,
-	C::NegativeImbalance: Imbalance<
-		<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
-		Opposite = C::PositiveImbalance,
-	>,
-	OU: OnMultiTokenUnbalanced<C::CurrencyId, NegativeImbalanceOf<C, T>>,
-	NegativeImbalanceOf<C, T>: MultiTokenImbalanceWithZeroTrait<TokenId>,
-	OCA: OnChargeTransaction<
-		T,
-		LiquidityInfo = Option<LiquidityInfoEnum<C, T>>,
-		Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance,
-	>,
-	OFLA: FeeLockTriggerTrait<<T as frame_system::Config>::AccountId>,
-	// T: frame_system::Config<RuntimeCall = RuntimeCall>,
-	T::AccountId: From<sp_runtime::AccountId32> + Into<sp_runtime::AccountId32>,
-	Balance: From<<C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance>,
-	sp_runtime::AccountId32: From<<T as frame_system::Config>::AccountId>,
-{
-	type LiquidityInfo = Option<LiquidityInfoEnum<C, T>>;
-	type Balance = <C as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance;
+		where
+			T: pallet_transaction_payment_mangata::Config
+				+ pallet_xyk::Config<Currency = C>
+				+ pallet_fee_lock::Config<Tokens = C>,
+			<T as frame_system::Config>::RuntimeCall: Into<crate::CallType>,
+			T::LengthToFee: frame_support::weights::WeightToFee<
+				Balance = <C as MultiTokenCurrency<T::AccountId>>::Balance,
+			>,
+			C: MultiTokenCurrency<T::AccountId, Balance = Balance, CurrencyId = TokenId>,
+			C::PositiveImbalance: Imbalance<
+				<C as MultiTokenCurrency<T::AccountId>>::Balance,
+				Opposite = C::NegativeImbalance,
+			>,
+			C::NegativeImbalance: Imbalance<
+				<C as MultiTokenCurrency<T::AccountId>>::Balance,
+				Opposite = C::PositiveImbalance,
+			>,
+			OU: OnMultiTokenUnbalanced<C::CurrencyId, NegativeImbalanceOf<C, T>>,
+			NegativeImbalanceOf<C, T>: MultiTokenImbalanceWithZeroTrait<TokenId>,
+			OCA: OnChargeTransaction<
+				T,
+				LiquidityInfo = Option<LiquidityInfoEnum<C, T>>,
+				Balance = <C as MultiTokenCurrency<T::AccountId>>::Balance,
+			>,
+			OFLA: FeeLockTriggerTrait<
+				T::AccountId,
+				<C as MultiTokenCurrency<T::AccountId>>::Balance,
+				<C as MultiTokenCurrency<T::AccountId>>::CurrencyId,
+			>,
+			// T: frame_system::Config<RuntimeCall = RuntimeCall>,
+			T::AccountId: From<sp_runtime::AccountId32> + Into<sp_runtime::AccountId32>,
+			Balance: From<<C as MultiTokenCurrency<T::AccountId>>::Balance>,
+			sp_runtime::AccountId32: From<T::AccountId>,
+		{
+			type LiquidityInfo = Option<LiquidityInfoEnum<C, T>>;
+			type Balance = <C as MultiTokenCurrency<T::AccountId>>::Balance;
 
-	/// Withdraw the predicted fee from the transaction origin.
-	///
-	/// Note: The `fee` already includes the `tip`.
-	fn withdraw_fee(
-		who: &T::AccountId,
-		call: &T::RuntimeCall,
-		info: &DispatchInfoOf<T::RuntimeCall>,
-		fee: Self::Balance,
-		tip: Self::Balance,
-	) -> Result<Self::LiquidityInfo, TransactionValidityError> {
-		let call_type: crate::CallType = (*call).clone().into();
+			/// Withdraw the predicted fee from the transaction origin.
+			///
+			/// Note: The `fee` already includes the `tip`.
+			fn withdraw_fee(
+				who: &T::AccountId,
+				call: &T::RuntimeCall,
+				info: &DispatchInfoOf<T::RuntimeCall>,
+				fee: Self::Balance,
+				tip: Self::Balance,
+			) -> Result<Self::LiquidityInfo, TransactionValidityError> {
+				let call_type: crate::CallType = (*call).clone().into();
 
-		match call_type{
-			crate::CallType::MultiSell{..} |
-				crate::CallType::MultiBuy{..} |
-				crate::CallType::AtomicBuy{..} |
-				crate::CallType::AtomicSell{..}  => {
-					ensure!(
-						tip.is_zero(),
-						TransactionValidityError::Invalid(
-							InvalidTransaction::TippingNotAllowedForSwaps.into(),
+				match call_type {
+					crate::CallType::MultiSell { .. }
+					| crate::CallType::MultiBuy { .. }
+					| crate::CallType::AtomicBuy { .. }
+					| crate::CallType::AtomicSell { .. } => {
+						ensure!(
+							tip.is_zero(),
+							TransactionValidityError::Invalid(
+								InvalidTransaction::TippingNotAllowedForSwaps.into(),
 							)
 						);
-				}
-			_ => {}
-		};
+					},
+					_ => {},
+				};
 
-		// call.is_unlock_fee();
+				// call.is_unlock_fee();
 
-		// THIS IS NOT PROXY PALLET COMPATIBLE, YET
-		// Also ugly implementation to keep it maleable for now
-		match (call_type, pallet_fee_lock::FeeLockMetadata::<T>::get()) {
-			(crate::CallType::AtomicSell{sold_asset_id,
-					sold_asset_amount,
-					bought_asset_id,
-					min_amount_out},
-			 Some(fee_lock_metadata)) =>
-			{
-				FeeHelpers::<T, C, OU, OCA, OFLA>::handle_sell_asset(
-					who,
-					fee_lock_metadata,
-					sold_asset_id,
-					sold_asset_amount,
-					bought_asset_id,
-					min_amount_out,
-				)
-			},
-			(crate::CallType::AtomicBuy{
-				sold_asset_id,
-				bought_asset_amount,
-				bought_asset_id,
-				max_amount_in},
-				Some(fee_lock_metadata)) =>
-			{
-				FeeHelpers::<T, C, OU, OCA, OFLA>::handle_buy_asset(
-					who,
-					fee_lock_metadata,
-					sold_asset_id,
-					bought_asset_amount,
-					bought_asset_id,
-					max_amount_in,
-				)
-			},
-			(crate::CallType::MultiBuy{
-				swap_token_list,
-				bought_asset_amount,
-				max_amount_in},
-				Some(fee_lock_metadata)) if swap_token_list.len() == SINGLE_HOP_MULTISWAP =>
-			{
+				// THIS IS NOT PROXY PALLET COMPATIBLE, YET
+				// Also ugly implementation to keep it maleable for now
+				match (call_type, pallet_fee_lock::FeeLockMetadata::<T>::get()) {
+					(
+						crate::CallType::AtomicSell {
+							sold_asset_id,
+							sold_asset_amount,
+							bought_asset_id,
+							min_amount_out,
+						},
+						Some(fee_lock_metadata),
+					) => FeeHelpers::<T, C, OU, OCA, OFLA>::handle_sell_asset(
+						who,
+						fee_lock_metadata,
+						sold_asset_id,
+						sold_asset_amount,
+						bought_asset_id,
+						min_amount_out,
+					),
+					(
+						crate::CallType::AtomicBuy {
+							sold_asset_id,
+							bought_asset_amount,
+							bought_asset_id,
+							max_amount_in,
+						},
+						Some(fee_lock_metadata),
+					) => FeeHelpers::<T, C, OU, OCA, OFLA>::handle_buy_asset(
+						who,
+						fee_lock_metadata,
+						sold_asset_id,
+						bought_asset_amount,
+						bought_asset_id,
+						max_amount_in,
+					),
+					(
+						crate::CallType::MultiBuy {
+							swap_token_list,
+							bought_asset_amount,
+							max_amount_in,
+						},
+						Some(fee_lock_metadata),
+					) if swap_token_list.len() == SINGLE_HOP_MULTISWAP => {
 						let sold_asset_id =
 							swap_token_list.get(0).ok_or(TransactionValidityError::Invalid(
 								InvalidTransaction::SwapPrevalidation.into(),
@@ -783,25 +879,29 @@ where
 							*bought_asset_id,
 							max_amount_in,
 						)
-			},
-			(crate::CallType::MultiBuy{
-				swap_token_list,
-				bought_asset_amount,
-				max_amount_in},
-				Some(fee_lock_metadata)) =>
-			{
-				FeeHelpers::<T, C, OU, OCA, OFLA>::handle_multiswap_buy_asset(
-					who,
-					fee_lock_metadata,
-					swap_token_list.clone(),
-					bought_asset_amount,
-					max_amount_in)
-			},
-			(crate::CallType::MultiSell{
-				swap_token_list,
-				sold_asset_amount,
-				min_amount_out},
-				Some(fee_lock_metadata)) if swap_token_list.len() == SINGLE_HOP_MULTISWAP => {
+					},
+					(
+						crate::CallType::MultiBuy {
+							swap_token_list,
+							bought_asset_amount,
+							max_amount_in,
+						},
+						Some(fee_lock_metadata),
+					) => FeeHelpers::<T, C, OU, OCA, OFLA>::handle_multiswap_buy_asset(
+						who,
+						fee_lock_metadata,
+						swap_token_list.clone(),
+						bought_asset_amount,
+						max_amount_in,
+					),
+					(
+						crate::CallType::MultiSell {
+							swap_token_list,
+							sold_asset_amount,
+							min_amount_out,
+						},
+						Some(fee_lock_metadata),
+					) if swap_token_list.len() == SINGLE_HOP_MULTISWAP => {
 						let sold_asset_id =
 							swap_token_list.get(0).ok_or(TransactionValidityError::Invalid(
 								InvalidTransaction::SwapPrevalidation.into(),
@@ -818,69 +918,70 @@ where
 							*bought_asset_id,
 							min_amount_out,
 						)
-			},
-			(crate::CallType::MultiSell{
-				swap_token_list,
-				sold_asset_amount,
-				min_amount_out},
-				Some(fee_lock_metadata)) => {
-				FeeHelpers::<T, C, OU, OCA, OFLA>::handle_multiswap_sell_asset(
-					who,
-					fee_lock_metadata,
-					swap_token_list.clone(),
-					sold_asset_amount,
-					min_amount_out,
-					)
-			},
-			(crate::CallType::UnlockFee, _) => {
-				let imb = C::withdraw(
-					tokens::MgxTokenId::get().into(),
-					who,
-					Balance::from(tip).into(),
-					WithdrawReasons::TIP,
-					ExistenceRequirement::KeepAlive,
-				)
-				.map_err(|_| {
-					TransactionValidityError::Invalid(InvalidTransaction::Payment.into())
-				})?;
+					},
+					(
+						crate::CallType::MultiSell {
+							swap_token_list,
+							sold_asset_amount,
+							min_amount_out,
+						},
+						Some(fee_lock_metadata),
+					) => FeeHelpers::<T, C, OU, OCA, OFLA>::handle_multiswap_sell_asset(
+						who,
+						fee_lock_metadata,
+						swap_token_list.clone(),
+						sold_asset_amount,
+						min_amount_out,
+					),
+					(crate::CallType::UnlockFee, _) => {
+						let imb = C::withdraw(
+							tokens::MgxTokenId::get().into(),
+							who,
+							tip,
+							WithdrawReasons::TIP,
+							ExistenceRequirement::KeepAlive,
+						)
+						.map_err(|_| {
+							TransactionValidityError::Invalid(InvalidTransaction::Payment.into())
+						})?;
 
-				OU::on_unbalanceds(tokens::MgxTokenId::get().into(), Some(imb).into_iter());
-				OFLA::can_unlock_fee(who).map_err(|_| {
-					TransactionValidityError::Invalid(InvalidTransaction::UnlockFee.into())
-				})?;
-				Ok(Some(LiquidityInfoEnum::FeeLock))
-			},
-			_ => OCA::withdraw_fee(who, call, info, fee, tip),
-		}
-	}
+						OU::on_unbalanceds(tokens::MgxTokenId::get().into(), Some(imb).into_iter());
+						OFLA::can_unlock_fee(who).map_err(|_| {
+							TransactionValidityError::Invalid(InvalidTransaction::UnlockFee.into())
+						})?;
+						Ok(Some(LiquidityInfoEnum::FeeLock))
+					},
+					_ => OCA::withdraw_fee(who, call, info, fee, tip),
+				}
+			}
 
-	/// Hand the fee and the tip over to the `[OnUnbalanced]` implementation.
-	/// Since the predicted fee might have been too high, parts of the fee may
-	/// be refunded.
-	///
-	/// Note: The `corrected_fee` already includes the `tip`.
-	fn correct_and_deposit_fee(
-		who: &T::AccountId,
-		dispatch_info: &DispatchInfoOf<T::RuntimeCall>,
-		post_info: &PostDispatchInfoOf<T::RuntimeCall>,
-		corrected_fee: Self::Balance,
-		tip: Self::Balance,
-		already_withdrawn: Self::LiquidityInfo,
-	) -> Result<(), TransactionValidityError> {
-		match already_withdrawn {
-			Some(LiquidityInfoEnum::Imbalance(_)) => OCA::correct_and_deposit_fee(
-				who,
-				dispatch_info,
-				post_info,
-				corrected_fee,
-				tip,
-				already_withdrawn,
-			),
-			Some(LiquidityInfoEnum::FeeLock) => Ok(()),
-			None => Ok(()),
+			/// Hand the fee and the tip over to the `[OnUnbalanced]` implementation.
+			/// Since the predicted fee might have been too high, parts of the fee may
+			/// be refunded.
+			///
+			/// Note: The `corrected_fee` already includes the `tip`.
+			fn correct_and_deposit_fee(
+				who: &T::AccountId,
+				dispatch_info: &DispatchInfoOf<T::RuntimeCall>,
+				post_info: &PostDispatchInfoOf<T::RuntimeCall>,
+				corrected_fee: Self::Balance,
+				tip: Self::Balance,
+				already_withdrawn: Self::LiquidityInfo,
+			) -> Result<(), TransactionValidityError> {
+				match already_withdrawn {
+					Some(LiquidityInfoEnum::Imbalance(_)) => OCA::correct_and_deposit_fee(
+						who,
+						dispatch_info,
+						post_info,
+						corrected_fee,
+						tip,
+						already_withdrawn,
+					),
+					Some(LiquidityInfoEnum::FeeLock) => Ok(()),
+					None => Ok(()),
+				}
+			}
 		}
-	}
-}
 
 		#[derive(Encode, Decode, Clone, TypeInfo)]
 		pub struct ThreeCurrencyOnChargeAdapter<C, OU, T1, T2, T3, SF2, SF3, TE>(
@@ -1080,7 +1181,10 @@ where
 			pub const CouncilMotionDuration: BlockNumber = 5 * consts::DAYS;
 			pub const CouncilMaxProposals: u32 = 100;
 			pub const CouncilMaxMembers: u32 = 100;
+			pub MaxProposalWeight: Weight = Perbill::from_percent(50) * config::frame_system::RuntimeBlockWeights::get().max_block;
 		}
+
+		pub type SetMembersOrigin<AccountId> = EnsureRoot<AccountId>;
 	}
 
 	pub mod pallet_maintenance {
@@ -1200,15 +1304,20 @@ where
 	pub mod orml_asset_registry {
 		use crate::*;
 
-		pub type AssetMetadataOf = AssetMetadata<Balance, CustomMetadata>;
+		parameter_types! {
+			pub const StringLimit: u32 = 50;
+		}
+
+		pub type AssetMetadataOf = AssetMetadata<Balance, CustomMetadata, StringLimit>;
 		type CurrencyAdapter<Runtime> = orml_tokens::MultiTokenCurrencyAdapter<Runtime>;
 
 		pub struct SequentialIdWithCreation<T>(PhantomData<T>);
 		impl<T> AssetProcessor<TokenId, AssetMetadataOf> for SequentialIdWithCreation<T>
 		where
-			T: ::orml_asset_registry::Config,
-			T: ::orml_tokens::Config,
-			T: ::pallet_treasury::Config,
+			T: orml_asset_registry::Config,
+			T: orml_tokens::Config,
+			T: pallet_treasury::Config,
+			TokenId: From<<T as orml_tokens::Config>::CurrencyId>,
 		{
 			fn pre_register(
 				id: Option<TokenId>,
@@ -1220,15 +1329,17 @@ where
 					config::TreasuryPalletIdOf::<T>::get().into_account_truncating();
 
 				match asset_id.cmp(&next_id.into()) {
-					Ordering::Equal =>
+					Ordering::Equal => {
 						CurrencyAdapter::<T>::create(&treasury_account, Default::default())
 							.and_then(|created_asset_id| {
 								match created_asset_id.cmp(&asset_id.into()) {
 									Ordering::Equal => Ok((asset_id, asset_metadata)),
-									_ =>
-										Err(orml_asset_registry::Error::<T>::InvalidAssetId.into()),
+									_ => {
+										Err(orml_asset_registry::Error::<T>::InvalidAssetId.into())
+									},
 								}
-							}),
+							})
+					},
 					Ordering::Less => Ok((asset_id, asset_metadata)),
 					_ => Err(orml_asset_registry::Error::<T>::InvalidAssetId.into()),
 				}
@@ -1246,7 +1357,7 @@ where
 				origin: T::RuntimeOrigin,
 				_asset_id: &Option<u32>,
 			) -> Result<Self::Success, T::RuntimeOrigin> {
-				EnsureRoot::try_origin(origin)
+				<EnsureRoot<_> as EnsureOrigin<T::RuntimeOrigin>>::try_origin(origin)
 			}
 
 			#[cfg(feature = "runtime-benchmarks")]
@@ -1301,12 +1412,12 @@ where
 				let call: crate::CallType = (c.clone()).into();
 
 				match call {
-					CallType::MultiSell { .. } |
-					CallType::MultiBuy { .. } |
-					CallType::AtomicBuy { .. } |
-					CallType::AtomicSell { .. } |
-					CallType::CompoundRewards |
-					CallType::ProvideLiquidityWithConversion => true,
+					CallType::MultiSell { .. }
+					| CallType::MultiBuy { .. }
+					| CallType::AtomicBuy { .. }
+					| CallType::AtomicSell { .. }
+					| CallType::CompoundRewards
+					| CallType::ProvideLiquidityWithConversion => true,
 					_ => false,
 				}
 			}
@@ -1317,6 +1428,8 @@ where
 		use super::*;
 		parameter_types! {
 			pub const MinVestedTransfer: Balance = 100 * currency::DOLLARS;
+			pub UnvestedFundsAllowedWithdrawReasons: WithdrawReasons =
+				WithdrawReasons::except(WithdrawReasons::TRANSFER | WithdrawReasons::RESERVE);
 		}
 	}
 

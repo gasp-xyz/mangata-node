@@ -15,9 +15,9 @@ on:
         default: "mangatasolutions/mangata-node:latest"
       skipBuild:
         description: "Skip build phase"
-        type: boolean
+        type: string
         required: false
-        default: false
+        default: 'false'
       globalVersion:
         description: "Set Mangata node version."
         type: string
@@ -36,9 +36,9 @@ on:
         default: "mangatasolutions/mangata-node:latest"
       skipBuild:
         description: "Skip build phase"
-        type: boolean
+        type: string
         required: false
-        default: false
+        default: 'false'
       globalVersion:
         description: "Set Mangata node version."
         type: string
@@ -138,7 +138,7 @@ jobs:
 
 
       - name: Download node Docker image
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && inputs.skipBuild != true }}
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && inputs.skipBuild != 'true' }}
         run: docker pull ${{ env.PARACHAIN_DOCKER_IMAGE }}
 
       - name: E2E- Get branch name

@@ -155,17 +155,15 @@ jobs:
       cluster_name: mangata-dev-alpha
 
   generate-types:
+    name: Generate types
     needs: [init, build-and-test]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Invoke workflow in mangata-dev-kit repo with inputs
-        uses: jonas-schievink/workflow-proxy@v1
-        with:
-          ref: refs/heads/main
-          workflow: pre-release-types.yml
-          repo: mangata-finance/mangata-dev-kit
-          token: ${{ secrets.BOT_GITHUB_TOKEN }}
-          inputs: '{"parachainDocker": "${{ github.event.inputs.parachainDocker }}"}'
+    uses: ./.github/workflows/reusable-generate-types.yml
+    secrets: inherit
+    with:
+      branch: ${{ needs.init.outputs.GIT_BRANCH }}
+      parachainDocker: ${{ github.event.inputs.parachainDocker }}
+      skipBuild: ${{ github.event.inputs.skipBuild }}
+      globalVersion: ${{ needs.init.outputs.GLOBAL_VERSION }}
 
   run-e2e-test:
     name: Run e2e tests

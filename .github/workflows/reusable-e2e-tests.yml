@@ -246,6 +246,7 @@ jobs:
           docker run -v  output_parachain-2110-1:/volume --rm --log-driver none loomchild/volume-backup backup > ${OUTPUT_DIR}/mangata_bob_1_volume.tar.bz2
 
       - uses: google-github-actions/auth@v1
+        if: failure()
         with:
           workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
           service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'

@@ -54,6 +54,7 @@ jobs:
           repository_owner: mangata-finance
           repository_name: mangata-dev-kit
           new_branch_name: ${{ env.BRANCH }}
+          ignore_branch_exists: true
           access_token: ${{ secrets.BOT_GITHUB_TOKEN }}
 
       - name: Invoke workflow in mangata-dev-kit repo with inputs

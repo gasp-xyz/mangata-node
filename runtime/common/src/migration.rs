@@ -11,6 +11,9 @@ use mangata_types::assets::CustomMetadata;
 use sp_runtime::traits::Zero;
 use sp_std::marker::PhantomData;
 
+#[cfg(feature = "try-runtime")]
+use sp_runtime::TryRuntimeError;
+
 pub struct AssetRegistryMigration<Runtime>(PhantomData<Runtime>);
 
 impl<T> OnRuntimeUpgrade for AssetRegistryMigration<T>
@@ -49,7 +52,7 @@ where
 	}
 
 	#[cfg(feature = "try-runtime")]
-	fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
+	fn pre_upgrade() -> Result<Vec<u8>, TryRuntimeError> {
 		info!(
 			target: "asset_registry",
 			"pre_upgrade: checks"
@@ -69,7 +72,7 @@ where
 	}
 
 	#[cfg(feature = "try-runtime")]
-	fn post_upgrade(_: Vec<u8>) -> Result<(), &'static str> {
+	fn post_upgrade(_: Vec<u8>) -> Result<(), TryRuntimeError> {
 		info!(
 			target: "asset_registry",
 			"post_upgrade: checks"

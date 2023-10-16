@@ -1179,6 +1179,11 @@ where
 			pub const CouncilProposalCloseDelay: BlockNumber = 6 * consts::MINUTES;
 		}
 
+		#[cfg(feature = "runtime-benchamarks")]
+		parameter_types! {
+			pub const CouncilProposalCloseDelay: BlockNumber = 0.into();
+		}
+
 		parameter_types! {
 			pub const CouncilMotionDuration: BlockNumber = 5 * consts::DAYS;
 			pub const CouncilMaxProposals: u32 = 100;

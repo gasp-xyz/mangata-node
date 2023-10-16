@@ -161,7 +161,7 @@ jobs:
       - name: Invoke workflow in mangata-dev-kit repo with inputs
         uses: jonas-schievink/workflow-proxy@v1
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
+          ref: refs/heads/main
           workflow: pre-release-types.yml
           repo: mangata-finance/mangata-dev-kit
           token: ${{ secrets.BOT_GITHUB_TOKEN }}

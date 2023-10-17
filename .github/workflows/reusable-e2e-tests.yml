@@ -251,7 +251,6 @@ jobs:
         with:
           workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
           service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
-      
       - name: Upload node storage data to GCP bucket
         if: failure()
         uses: google-github-actions/upload-cloud-storage@v1.0.3
@@ -259,6 +258,8 @@ jobs:
           process_gcloudignore: false
           path: devops/parachain-launch/output
           destination: mangata-node-ci-cache/${{ github.sha }}/${{ env.MATRIX_COMMAND_PATH }}
+      - name: Add GCP bucket URL link for stored node data on job failure
+        run: echo '[GCP Bucket link](https://console.cloud.google.com/storage/browser/mangata-node-ci-cache/${{ github.sha }}/${{ env.MATRIX_COMMAND_PATH }})' >> $GITHUB_STEP_SUMMARY
       
       - name: Stop previous parachain if running
         working-directory: devops/parachain-launch/output

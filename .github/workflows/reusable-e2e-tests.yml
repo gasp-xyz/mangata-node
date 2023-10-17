@@ -259,6 +259,7 @@ jobs:
           path: devops/parachain-launch/output
           destination: mangata-node-ci-cache/${{ github.sha }}/${{ env.MATRIX_COMMAND_PATH }}
       - name: Add GCP bucket URL link for stored node data on job failure
+        if: failure()
         run: echo '[GCP Bucket link](https://console.cloud.google.com/storage/browser/mangata-node-ci-cache/${{ github.sha }}/${{ env.MATRIX_COMMAND_PATH }})' >> $GITHUB_STEP_SUMMARY
       
       - name: Stop previous parachain if running

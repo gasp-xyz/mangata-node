@@ -772,6 +772,7 @@ fn sell_N_zero_amount() {
 }
 
 #[test]
+#[serial]
 fn multiswap_sell_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1045,6 +1046,7 @@ fn multiswap_sell_just_enough_assets_pay_fee_but_not_to_swap_W() {
 }
 
 #[test]
+#[serial]
 fn multiswap_sell_with_two_hops_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1070,6 +1072,7 @@ fn multiswap_sell_with_two_hops_W() {
 }
 
 #[test]
+#[serial]
 fn multiswap_sell_with_single_hops_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1084,6 +1087,7 @@ fn multiswap_sell_with_single_hops_W() {
 }
 
 #[test]
+#[serial]
 fn multiswap_sell_same_pool_works_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1123,6 +1127,7 @@ fn multiswap_sell_same_pool_works_W() {
 }
 
 #[test]
+#[serial]
 fn multiswap_sell_loop_works_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1385,6 +1390,7 @@ fn buy_N_zero_amount() {
 }
 
 #[test]
+#[serial]
 fn multiswap_buy_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1442,6 +1448,7 @@ fn multiswap_buy_W() {
 }
 
 #[test]
+#[serial]
 fn multiswap_buy_bad_slippage_charges_fee_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1496,6 +1503,7 @@ fn multiswap_buy_bad_slippage_charges_fee_W() {
 }
 
 #[test]
+#[serial]
 fn multiswap_buy_bad_atomic_swap_charges_fee_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1553,6 +1561,7 @@ fn multiswap_buy_bad_atomic_swap_charges_fee_W() {
 }
 
 #[test]
+#[serial]
 fn multiswap_buy_not_enough_assets_pay_fees_fails_early_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1603,6 +1612,7 @@ fn multiswap_buy_not_enough_assets_pay_fees_fails_early_W() {
 }
 
 #[test]
+#[serial]
 fn multiswap_buy_just_enough_assets_pay_fee_but_not_to_swap_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1665,6 +1675,7 @@ fn multiswap_buy_just_enough_assets_pay_fee_but_not_to_swap_W() {
 }
 
 #[test]
+#[serial]
 fn multiswap_buy_with_two_hops_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1690,6 +1701,7 @@ fn multiswap_buy_with_two_hops_W() {
 }
 
 #[test]
+#[serial]
 fn multiswap_buy_with_single_hops_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1704,6 +1716,7 @@ fn multiswap_buy_with_single_hops_W() {
 }
 
 #[test]
+#[serial]
 fn multiswap_buy_same_pool_does_not_work_N() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1722,6 +1735,7 @@ fn multiswap_buy_same_pool_does_not_work_N() {
 }
 
 #[test]
+#[serial]
 fn multiswap_buy_loop_does_not_work_N() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1868,6 +1882,15 @@ fn burn_all_liq_and_mint_it_again() {
 			),
 			Error::<Test>::PoolIsEmpty,
 		);
+
+		// calculate_buy_price_id should fail as pool is empty
+		assert_err!(XykStorage::calculate_buy_price_id(1, 4, 20000), Error::<Test>::PoolIsEmpty,);
+
+		// calculate_sell_price_id should fail as pool is empty
+		assert_err!(XykStorage::calculate_sell_price_id(1, 4, 20000), Error::<Test>::PoolIsEmpty,);
+
+		// get_burn_amount should fail as pool is empty
+		assert_err!(XykStorage::get_burn_amount(1, 4, 20000), Error::<Test>::PoolIsEmpty,);
 
 		let user_assets_1_value_after_sell = XykStorage::balance(1, DUMMY_USER_ID);
 		let user_assets_4_value_after_sell = XykStorage::balance(4, DUMMY_USER_ID);

@@ -79,8 +79,14 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	common_runtime::migration::AssetRegistryMigration<Runtime>,
+	Migrations,
 >;
+
+type Migrations = (
+	common_runtime::migration::AssetRegistryMigration<Runtime>,
+	pallet_xcm::migration::v1::VersionUncheckedMigrateToV1<Runtime>,
+	orml_unknown_tokens::Migration<Runtime>,
+);
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats

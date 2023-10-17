@@ -197,6 +197,7 @@ std = [
 
 
 try-runtime = [
+	"common-runtime/try-runtime",
 	"cumulus-pallet-aura-ext/try-runtime",
 	"cumulus-pallet-dmp-queue/try-runtime",
 	"cumulus-pallet-parachain-system/try-runtime",

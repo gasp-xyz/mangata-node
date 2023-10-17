@@ -3,7 +3,7 @@ use crate::{
 	Balance, TokenId,
 };
 use frame_support::{
-	traits::{Get, OnRuntimeUpgrade},
+	traits::{Get, GetStorageVersion, OnRuntimeUpgrade},
 	weights::Weight,
 };
 use log::info;
@@ -13,6 +13,8 @@ use sp_std::marker::PhantomData;
 
 #[cfg(feature = "try-runtime")]
 use sp_runtime::TryRuntimeError;
+#[cfg(feature = "try-runtime")]
+use sp_std::{vec, vec::Vec};
 
 pub struct AssetRegistryMigration<Runtime>(PhantomData<Runtime>);
 
@@ -48,6 +50,9 @@ where
 			}
 		});
 
+		let current = orml_asset_registry::Pallet::<T>::current_storage_version();
+		current.put::<orml_asset_registry::Pallet<T>>();
+		weight.saturating_accrue(<T as frame_system::Config>::DbWeight::get().reads_writes(1, 1));
 		weight
 	}
 

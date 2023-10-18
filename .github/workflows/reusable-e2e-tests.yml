@@ -22,6 +22,10 @@ on:
         description: "Set Mangata node version."
         type: string
         required: true
+      mangataTypesVersion:
+        description: "Set @mangata-finance/types version"
+        type: string
+        required: true
   workflow_call:
     inputs:
       e2eBranch:
@@ -131,6 +135,7 @@ jobs:
       MANGATA_NODE_VERSION: ${{ inputs.globalVersion }}
       E2EBRANCHNAME: "main"
       PARACHAIN_DOCKER_IMAGE: ${{ inputs.parachainDocker || format('mangatasolutions/mangata-node:{0}', inputs.globalVersion) }}
+      MANGATA_TYPES_VERSION: ${{ inputs.mangataTypesVersion }}
     steps:
       - uses: actions/checkout@v3 ####IDK, but this is neccesary for reports
       - name: Adapt if fast runtime
@@ -152,6 +157,11 @@ jobs:
       - name: E2E- Get target branch.
         run: |
           echo "This job name branch is: ${{ steps.branch-name.outputs.current_branch }}"
+
+      - name: Current branch name for generating types
+        run: |
+          echo "MANGATA_TYPES_VERSION=${{ env.MANGATA_TYPES_VERSION || steps.branch-name.outputs.current_branch }}" | sed "s@/@-@g" >> $GITHUB_ENV
+          echo "Correct branch for types: ${{ env.MANGATA_TYPES_VERSION }}"
 
       - name: E2E- Calculate if run e2e feature branch or main.
         run: |
@@ -192,7 +202,10 @@ jobs:
       - name: Install e2e tests dependencies
         working-directory: e2eTests
         # TODO: remove cache clean later
-        run: yarn cache clean; yarn
+        run: | 
+          yarn cache clean 
+          yarn
+          yarn add @mangata-finance/types@${{ env.MANGATA_TYPES_VERSION }}
 
       - name: Run parachain launch
         working-directory: devops/parachain-launch

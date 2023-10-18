@@ -17,7 +17,7 @@ on:
         description: "Skip build phase"
         type: string
         required: false
-        default: false
+        default: 'false'
       globalVersion:
         description: "Set Mangata node version."
         type: string
@@ -38,7 +38,7 @@ on:
         description: "Skip build phase"
         type: string
         required: false
-        default: false
+        default: 'false'
       globalVersion:
         description: "Set Mangata node version."
         type: string
@@ -118,7 +118,6 @@ jobs:
             fast: false 
           - command: "yarn test-sdk"
             fast: true 
-
     runs-on: [e2e-gke]
     timeout-minutes: 180
     env:
@@ -132,14 +131,11 @@ jobs:
       E2EBRANCHNAME: "main"
       PARACHAIN_DOCKER_IMAGE: ${{ inputs.parachainDocker || format('mangatasolutions/mangata-node:{0}', inputs.globalVersion) }}
     steps:
-      - uses: actions/checkout@v3 ####IDK, but this is neccesary for reports
+      - uses: actions/checkout@v4
       - name: Adapt if fast runtime
         if:  ${{  !contains(env.PARACHAIN_DOCKER_IMAGE, 'fast') && matrix.fast == true }}
         run: echo "PARACHAIN_DOCKER_IMAGE=${{ env.PARACHAIN_DOCKER_IMAGE }}-fast" >> $GITHUB_ENV
 
-      - name: Adapt if fast runtime
-        if:  ${{  !contains(env.PARACHAIN_DOCKER_IMAGE, 'fast') && matrix.fast == true }}
-        run: echo "PARACHAIN_DOCKER_IMAGE=${{ env.PARACHAIN_DOCKER_IMAGE }}-fast" >> $GITHUB_ENV
 
       - name: Download node Docker image
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-build') && inputs.skipBuild != 'true' }}
@@ -147,11 +143,8 @@ jobs:
 
       - name: E2E- Get branch name
         id: branch-name
-        uses: tj-actions/branch-names@v4.9
+        uses: tj-actions/branch-names@v7.0.5
 
-      - name: E2E- Get target branch.
-        run: |
-          echo "This job name branch is: ${{ steps.branch-name.outputs.current_branch }}"
 
       - name: E2E- Calculate if run e2e feature branch or main.
         run: |
@@ -164,24 +157,12 @@ jobs:
         # by default will be main.
         run: echo "E2EBRANCHNAME=${{ inputs.e2eBranch || env.E2EBRANCHNAME }}" >> $GITHUB_ENV
 
-      - name: E2E- Get target branch.
-        run: |
-          echo "${{ env.E2EBRANCHNAME }}"
-
       - name: Checkout tests
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: mangata-finance/mangata-e2e
           ref: "${{ env.E2EBRANCHNAME }}"
           path: e2eTests
-
-      # Fixing issue with not having yarn installed on self-hosted runners in Kubernetes
-      - name: Install yarn and docker-compose to fix self-hosted runner issue when running setup-node
-        #Ref: https://github.com/actions/setup-node/issues/182
-        run: |-
-          curl -fsSL --create-dirs -o $HOME/bin/yarn https://github.com/yarnpkg/yarn/releases/download/v1.22.19/yarn-1.22.19.js && chmod +x $HOME/bin/yarn
-          curl -SL https://github.com/docker/compose/releases/download/v2.20.3/docker-compose-linux-x86_64 -o $HOME/bin/docker-compose && chmod +x $HOME/bin/docker-compose
-          echo "$HOME/bin" >> $GITHUB_PATH
 
       - uses: actions/setup-node@v3
         with:
@@ -189,100 +170,97 @@ jobs:
           cache: 'yarn'
           cache-dependency-path: '**/yarn.lock'
 
-      - name: Print parachain docker image reference
-        run: |
-          echo ${{ env.PARACHAIN_DOCKER_IMAGE }}
-
       - name: Replace parachain docker image reference in config
         working-directory: devops/parachain-launch
         run: sed -i 's+mangatasolutions/mangata-node:.*+${{ env.PARACHAIN_DOCKER_IMAGE }}+g' config.yml
 
       - name: Install e2e tests dependencies
         working-directory: e2eTests
-        # TODO: remove cache clean later
-        run: yarn cache clean; yarn
+        run: yarn
+        # run: yarn cache clean; yarn
 
       - name: Run parachain launch
         working-directory: devops/parachain-launch
         run: npx @open-web3/parachain-launch generate config.yml
 
-      - name: Docker ps
-        run: docker ps --no-trunc
-
-      - name: Docker network ls
-        run: docker network ls
-
-      - name: Stop previous parachain if running
-        working-directory: devops/parachain-launch/output
-        run: |
-          docker kill $(docker ps -q) 2>/dev/null && echo $?
-          docker-compose down -v
-
+      - run: docker ps --no-trunc
       - name: Start mangata-node parachain
         working-directory: devops/parachain-launch/output
         run: docker-compose up -d --build
-
-      - name: Docker ps
-        run: docker ps --no-trunc
+      - run: docker ps --no-trunc
 
       - name: Sleep for 2 minutes
-        run: sleep 120s #close buffers of videos.
+        run: sleep 120s
 
       - name: Run tests
         working-directory: e2eTests
         run: ${{ matrix.command }}
 
       - name: Test Report
-        uses: dorny/test-reporter@v1.6.0
+        uses: dorny/test-reporter@v1.7.0
         continue-on-error: true
         if: success() || failure() # run this step even if previous step failed
         with:
           name: E2E report ${{ matrix.command }} # Name of the check run which will be created
           path: e2eTests/reports/junit-*.xml # Path to test results
           reporter: jest-junit # Format of test results
-      - name: Install testmo
-        if: always()
-        run: npm install --no-save @testmo/testmo-cli
+
       - name: Submit results to the testmo-run
+        continue-on-error: true
         if: always()
+        env:
+          TESTMO_URL: ${{ secrets.TESTMO_URL }}
+          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
         run: |
+            npm install --no-save @testmo/testmo-cli
             npx testmo automation:run:submit-thread \
               --instance https://mangata-finance.testmo.net \
               --run-id ${{needs.setup-report.outputs.testmo-run-id}} \
               --results e2eTests/reports/*.xml
-        env:
-          TESTMO_URL: ${{ secrets.TESTMO_URL }}
-          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
-        continue-on-error: true
 
-      - name: Collect docker logs on failure
+      - name: collect_docker_logs
         if: failure()
         uses: jwalton/gh-docker-logs@v2.2.1
         with:
           dest: "./logs"
 
-      - name: Tar logs
+      - name: Prepare backup snapshots on workflow failure
         if: failure()
-        run: tar cvzf ./logs.tgz ./logs
-
-      - name: Create images snapshots
-        if: failure()
+        env:
+          OUTPUT_DIR: devops/parachain-launch/output
         run: |
-          docker commit  $(docker ps | grep parachain-2110-1 | awk '{print $1}') mangata_test_run/mangata_bob_1
-          docker save  --output=/tmp/mangata_bob_1.tar mangata_test_run/mangata_bob_1
+          # Set MATRIX_COMMAND_PATH to be used as a directory name to store specifc test run snapshots
+          echo "MATRIX_COMMAND_PATH=$(echo ${{ matrix.command }} | sed 's/[^a-zA-Z0-9]/-/g')" >> $GITHUB_ENV
+
+          # Archive logs
+          tar cvzf ${OUTPUT_DIR}/logs.tgz ./logs
+
+          # Generate image snapshots
           docker commit  $(docker ps | grep parachain-2110-0 | awk '{print $1}') mangata_test_run/mangata_alice_1
-          docker save  --output=/tmp/mangata_alice_1.tar mangata_test_run/mangata_alice_1
+          docker save  --output=${OUTPUT_DIR}/mangata_alice_1.tar mangata_test_run/mangata_alice_1
+          docker commit  $(docker ps | grep parachain-2110-1 | awk '{print $1}') mangata_test_run/mangata_bob_1
+          docker save  --output=${OUTPUT_DIR}/mangata_bob_1.tar mangata_test_run/mangata_bob_1
 
-      - name: Upload logs  and docker images to GitHub
+          # Generate volume snapshots
+          docker run -v  output_parachain-2110-0:/volume --rm --log-driver none loomchild/volume-backup backup > ${OUTPUT_DIR}/mangata_alice_1_volume.tar.bz2
+          docker run -v  output_parachain-2110-1:/volume --rm --log-driver none loomchild/volume-backup backup > ${OUTPUT_DIR}/mangata_bob_1_volume.tar.bz2
+
+      - uses: google-github-actions/auth@v1
         if: failure()
-        uses: actions/upload-artifact@v3.1.1
         with:
-          name: logsAndImages
-          path: |
-            ./logs.tgz
-            /tmp/mangata_bob_1.tar
-            /tmp/mangata_alice_1.tar
-
+          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
+          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+      - name: Upload node storage data to GCP bucket
+        if: failure()
+        uses: google-github-actions/upload-cloud-storage@v1.0.3
+        with:
+          process_gcloudignore: false
+          path: devops/parachain-launch/output
+          destination: mangata-node-ci-cache/${{ github.sha }}/${{ env.MATRIX_COMMAND_PATH }}
+      - name: Add GCP bucket URL link for stored node data on job failure
+        if: failure()
+        run: echo '[GCP Bucket link](https://console.cloud.google.com/storage/browser/mangata-node-ci-cache/${{ github.sha }}/${{ env.MATRIX_COMMAND_PATH }})' >> $GITHUB_STEP_SUMMARY
+      
       - name: Stop previous parachain if running
         working-directory: devops/parachain-launch/output
         run: |
@@ -293,7 +271,6 @@ jobs:
     needs: [setup-report, e2e-test-matrix]
     if: always()
     runs-on: ubuntu-latest
-
     steps:
       - name: Install testmo
         run: npm install --no-save @testmo/testmo-cli
@@ -312,7 +289,6 @@ jobs:
     needs: [e2e-test-matrix]
     if: failure()
     runs-on: ubuntu-latest
-
     steps:
       - name: Slack Notification - Error
         uses: bryannice/gitactions-slack-notification@2.0.0

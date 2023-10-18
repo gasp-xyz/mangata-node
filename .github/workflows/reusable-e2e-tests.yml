@@ -161,6 +161,9 @@ jobs:
       - name: Current branch name for generating types
         run: |
           echo "MANGATA_TYPES_VERSION=${{ steps.branch-name.outputs.current_branch }}" | sed "s@/@-@g" >> $GITHUB_ENV
+
+      - name: What version of mangata types will be installed
+        run: | 
           echo "Correct branch for types: ${{ env.MANGATA_TYPES_VERSION }}"
 
       - name: E2E- Calculate if run e2e feature branch or main.

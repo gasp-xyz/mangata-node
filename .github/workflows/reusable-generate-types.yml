@@ -1,0 +1,67 @@
+name: Reusable generate types workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to create in mangata-dev-kit"
+        type: string
+        required: true
+      parachainDocker:
+        description: "Name of the parachain docker reference"
+        type: string
+        required: false
+        default: "mangatasolutions/mangata-node:latest"
+      globalVersion:
+        description: "Set Mangata node version."
+        type: string
+        required: true
+  workflow_call:
+    inputs:
+      branch:
+        description: "Branch to create in mangata-dev-kit"
+        type: string
+        required: true
+      parachainDocker:
+        description: "Name of the parachain docker reference"
+        type: string
+        required: false
+        default: "mangatasolutions/mangata-node:latest"
+      globalVersion:
+        description: "Set Mangata node version."
+        type: string
+        required: true
+
+permissions:
+  contents: write
+  id-token: write
+  deployments: write
+  checks: write
+
+jobs:
+  generate-mangata-types:
+    runs-on: ubuntu-latest
+    env:
+      MANGATA_NODE_VERSION: ${{ inputs.globalVersion }}
+      PARACHAIN_DOCKER_IMAGE: ${{ inputs.parachainDocker || format('mangatasolutions/mangata-node:{0}', inputs.globalVersion) }}
+      BRANCH: ${{ inputs.branch }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Create branch ${{ env.BRANCH }} in mangata-dev-kit
+        uses: GuillaumeFalourd/create-other-repo-branch-action@v1.5
+        with:
+          repository_owner: mangata-finance
+          repository_name: mangata-dev-kit
+          new_branch_name: ${{ env.BRANCH }}
+          ignore_branch_exists: true
+          access_token: ${{ secrets.BOT_GITHUB_TOKEN }}
+
+      - name: Invoke workflow in mangata-dev-kit repo with inputs
+        uses: jonas-schievink/workflow-proxy@v1
+        with:
+          ref: ${{ env.BRANCH }}
+          workflow: pre-release-types.yml
+          repo: mangata-finance/mangata-dev-kit
+          token: ${{ secrets.BOT_GITHUB_TOKEN }}
+          inputs: '{"parachainDocker": "${{ env.PARACHAIN_DOCKER_IMAGE }}", "branch": "${{ env.BRANCH }}"}'

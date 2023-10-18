@@ -20,8 +20,8 @@ jobs:
     if: ( github.event.pull_request.merged == true && startsWith(github.head_ref, 'rc/') || github.event_name == 'workflow_dispatch' )
     runs-on: ubuntu-latest
     outputs:
-      RELEASE_VERSION: ${{ steps.set_vars.outputs.RELEASE_VERSION }}
-      RELEASE_CANDIDATE_VERSION: ${{ steps.set_vars.outputs.RELEASE_CANDIDATE_VERSION }}
+      RELEASE_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.release_version || steps.set_vars.outputs.RELEASE_VERSION }}
+      RELEASE_CANDIDATE_VERSION: ${{  github.event_name == 'workflow_dispatch' && format('{0}-rc', inputs.release_version) || steps.set_vars.outputs.RELEASE_CANDIDATE_VERSION }}
     steps:
       - name: Set release version
         id: set_vars

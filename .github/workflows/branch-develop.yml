@@ -154,9 +154,19 @@ jobs:
       version: ${{ needs.init.outputs.GLOBAL_VERSION }}
       cluster_name: mangata-dev-alpha
 
+  generate-types:
+    name: Generate types
+    needs: [init, build-and-test]
+    uses: ./.github/workflows/reusable-generate-types.yml
+    secrets: inherit
+    with:
+      branch: ${{ needs.init.outputs.GIT_BRANCH }}
+      parachainDocker: ${{ github.event.inputs.parachainDocker }}
+      globalVersion: ${{ needs.init.outputs.GLOBAL_VERSION }}
+
   run-e2e-test:
     name: Run e2e tests
-    needs: [init, build-and-test]
+    needs: [init, build-and-test, generate-types]
     uses: ./.github/workflows/reusable-e2e-tests.yml
     secrets: inherit
     permissions:

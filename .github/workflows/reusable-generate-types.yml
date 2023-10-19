@@ -58,7 +58,7 @@ jobs:
           access_token: ${{ secrets.BOT_GITHUB_TOKEN }}
 
       - name: Invoke workflow in mangata-dev-kit repo with inputs
-        uses: jonas-schievink/workflow-proxy@v1
+        uses: benc-uk/workflow-dispatch@v1
         with:
           ref: ${{ env.BRANCH }}
           workflow: pre-release-types.yml

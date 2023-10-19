@@ -314,7 +314,7 @@ jobs:
 
       - name: Run block & extrinsic overhead benchmarks
         run: |
-          target/release/mangata-node benchmark overhead --execution native --chain kusama-local -lblock_builder=debug --max-ext-per-block 50000 --base-path .
+          target/release/mangata-node benchmark overhead --execution native --chain mangata-kusama-local -lblock_builder=debug --max-ext-per-block 50000 --base-path .
           cp block_weights.rs extrinsic_weights.rs ./benchmarks
 
       - name: Upload logs and docker images to GitHub
@@ -357,12 +357,12 @@ jobs:
 
       - name: Export wasms
         run: |
-          /bin/bash -c 'target/release/mangata-node export-genesis-state --chain=kusama -l=info,xyk=error > /dev/null'
-          /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=kusama -l=info,xyk=error > /dev/null'
-          /bin/bash -c 'target/release/mangata-node export-genesis-state --chain=kusama-local -l=info,xyk=error > /dev/null'
-          /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=kusama-local -l=info,xyk=error > /dev/null'
-          /bin/bash -c 'target/release/mangata-node export-genesis-state --chain=rococo -l=info,xyk=error > /dev/null'
-          /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=rococo -l=info,xyk=error > /dev/null'
-          /bin/bash -c 'target/release/mangata-node export-genesis-state --chain=rococo-local -l=info,xyk=error > /dev/null'
-          /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=rococo-local -l=info,xyk=error > /dev/null'
+          /bin/bash -c 'target/release/mangata-node export-genesis-state --chain=mangata-kusama -l=info,xyk=error > /dev/null'
+          /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=mangata-kusama -l=info,xyk=error > /dev/null'
+          /bin/bash -c 'target/release/mangata-node export-genesis-state --chain=mangata-kusama-local -l=info,xyk=error > /dev/null'
+          /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=mangata-kusama-local -l=info,xyk=error > /dev/null'
+          /bin/bash -c 'target/release/mangata-node export-genesis-state --chain=mangata-rococo -l=info,xyk=error > /dev/null'
+          /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=mangata-rococo -l=info,xyk=error > /dev/null'
+          /bin/bash -c 'target/release/mangata-node export-genesis-state --chain=mangata-rococo-local -l=info,xyk=error > /dev/null'
+          /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=mangata-rococo-local -l=info,xyk=error > /dev/null'
 

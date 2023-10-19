@@ -31,7 +31,7 @@ use sp_runtime::{
 	create_runtime_str, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto,
-		StaticLookup,
+		SignedExtension, StaticLookup,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
@@ -813,11 +813,16 @@ impl_runtime_apis! {
 			System::get_previous_blocks_txs()
 		}
 
-		fn pop_txs(count: u64) -> Vec<Vec<u8>>{
+		fn pop_txs(count: u64) -> Vec<Vec<u8>> {
 			System::pop_txs(count as usize)
 		}
 
-		fn create_enqueue_txs_inherent(txs: Vec<<Block as BlockT>::Extrinsic>) -> <Block as BlockT>::Extrinsic{
+		fn create_enqueue_txs_inherent(txs: Vec<<Block as BlockT>::Extrinsic>) -> <Block as BlockT>::Extrinsic {
+			for t in txs.iter() {
+				if let Some((_, _, extra)) = &t.signature {
+					let _ = extra.additional_signed();
+				}
+			}
 			UncheckedExtrinsic::new_unsigned(
 					RuntimeCall::System(frame_system::Call::enqueue_txs{txs:
 						txs.into_iter()
@@ -829,7 +834,7 @@ impl_runtime_apis! {
 							).collect()}))
 		}
 
-		fn can_enqueue_txs() -> bool{
+		fn can_enqueue_txs() -> bool {
 			System::can_enqueue_txs()
 		}
 
@@ -1286,62 +1291,3 @@ cumulus_pallet_parachain_system::register_validate_block! {
 	Runtime = Runtime,
 	BlockExecutor = cumulus_pallet_aura_ext::BlockExecutorVer::<Runtime, Executive>,
 }
-
-/*
-struct CheckInherents;
-
-impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
-	fn check_inherents(
-		block: &Block,
-		relay_state_proof: &cumulus_pallet_parachain_system::RelayChainStateProof,
-	) -> sp_inherents::CheckInherentsResult {
-		let relay_chain_slot = relay_state_proof
-			.read_slot()
-			.expect("Could not read the relay chain slot from the proof");
-
-		let inherent_data =
-			cumulus_primitives_timestamp::InherentDataProvider::from_relay_chain_slot_and_duration(
-				relay_chain_slot,
-				sp_std::time::Duration::from_secs(6),
-			)
-			.create_inherent_data()
-			.expect("Could not create the timestamp inherent data");
-		inherent_data.check_extrinsics(block)
-	}
-}
-
-// replace validate block function with its expanded version
-#[doc(hidden)]
-mod parachain_validate_block {
-	use crate::Runtime;
-
-	#[no_mangle]
-	#[cfg(not(feature = "std"))]
-	unsafe fn validate_block(arguments: *mut u8, arguments_len: usize) -> u64 {
-		let args = cumulus_pallet_parachain_system::validate_block::sp_std::boxed::Box::from_raw(
-			cumulus_pallet_parachain_system::validate_block::sp_std::slice::from_raw_parts_mut(
-				arguments,
-				arguments_len,
-			),
-		);
-		let args = cumulus_pallet_parachain_system::validate_block::bytes::Bytes::from(args);
-
-		// Then we decode from these bytes the `MemoryOptimizedValidationParams`.
-		let params = cumulus_pallet_parachain_system::validate_block::decode_from_bytes::<
-			cumulus_pallet_parachain_system::validate_block::MemoryOptimizedValidationParams,
-		>(args)
-		.expect("Invalid arguments to `validate_block`.");
-
-		let res =
-			cumulus_pallet_parachain_system::validate_block::implementation::validate_block::<<crate::Runtime
-																							  as
-																							  cumulus_pallet_parachain_system::validate_block::GetRuntimeBlockType>::RuntimeBlock,
-																							  cumulus_pallet_aura_ext::BlockExecutorVer<crate::Runtime, crate::Executive>,
-																							  crate::Runtime,
-																							  crate::CheckInherents>(params);
-		cumulus_pallet_parachain_system::validate_block::polkadot_parachain_primitives::write_result(
-			&res,
-		)
-	}
-}
- */

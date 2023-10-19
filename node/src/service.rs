@@ -31,7 +31,8 @@ use cumulus_relay_chain_interface::{OverseerHandle, RelayChainInterface};
 use sc_transaction_pool_api::OffchainTransactionPoolFactory;
 
 pub use common_runtime::{
-	AccountId, AuraId, Balance, Block, BlockNumber, Hash, Header, Nonce, TokenId,
+	opaque::{Block, Header},
+	AccountId, AuraId, Balance, BlockNumber, Hash, Nonce, TokenId,
 };
 
 use sc_client_api::Backend;

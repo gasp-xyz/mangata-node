@@ -23,3 +23,10 @@ devops/parachain/config/state
 tarpaulin-report.html
 cobertura.xml
 build_rs_cov.profraw
+
+# nektos/act related files
+/event.json
+.actrc
+
+# Ignore generated credentials from google-github-actions/auth
+gha-creds-*.json

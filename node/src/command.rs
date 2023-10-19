@@ -89,10 +89,14 @@ fn runtime(id: &str) -> Runtime {
 fn load_spec(id: &str) -> std::result::Result<Box<dyn ChainSpec>, String> {
 	Ok(match id {
 		// - Rococo based
-		"mangata-rococo-local" => Box::new(chain_spec::mangata_rococo::mangata_rococo_local_config()),
+		"mangata-rococo-local" => {
+			Box::new(chain_spec::mangata_rococo::mangata_rococo_local_config())
+		},
 		"mangata-rococo" => Box::new(chain_spec::mangata_rococo::mangata_rococo_prod_config()),
 		// - Kusama based
-		"mangata-kusama-local" => Box::new(chain_spec::mangata_kusama::mangata_kusama_local_config()),
+		"mangata-kusama-local" => {
+			Box::new(chain_spec::mangata_kusama::mangata_kusama_local_config())
+		},
 		"mangata-kusama" => Box::new(chain_spec::mangata_kusama::mangata_kusama_prod_config()),
 
 		// -- Fallback (generic chainspec)

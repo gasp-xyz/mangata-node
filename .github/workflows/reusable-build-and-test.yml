@@ -302,7 +302,7 @@ jobs:
         run: |
           mkdir ./benchmarks && target/release/mangata-node benchmark pallet \
           -l=info,xyk=error,collective-mangata=warn,bootstrap=warn \
-          --chain kusama \
+          --chain mangata-kusama \
           --execution wasm \
           --wasm-execution compiled \
           --pallet '*' \

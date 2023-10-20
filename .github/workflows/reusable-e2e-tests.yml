@@ -185,7 +185,6 @@ jobs:
       - name: Install e2e tests dependencies
         working-directory: e2eTests
         run: yarn cache clean; yarn
-        # run: yarn cache clean; yarn
 
       - name: Install @mangata-finance/types deps
         run: |

@@ -13,7 +13,7 @@ on:
         required: true
         type: string
       builder_image:
-        default: mangatasolutions/node-builder:multi-stable-2023-10-05
+        default: mangatasolutions/node-builder:multi-nightly-2023-05-22
         description: Docker image used for Rust builds
         required: false
         type: string
@@ -252,14 +252,14 @@ jobs:
       - name: Build try-runtime Rococo testnet
         run: cargo build --release --features=try-runtime,mangata-rococo
 
-      # - name: Run try-runtime Rococo testnet
-        # run: try-runtime --runtime=target/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.wasm on-runtime-upgrade live --uri wss://collator-01-ws-rococo.mangata.online:443
+      - name: Run try-runtime Rococo testnet
+        run: try-runtime --runtime=target/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.wasm on-runtime-upgrade live --uri wss://collator-01-ws-rococo.mangata.online:443
 
       - name: Build try-runtime Kusama Mainnet
         run: cargo build --release --features=try-runtime
 
-      # - name: Run try-runtime Kusama Mainnet
-        # run: try-runtime --runtime=target/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.wasm on-runtime-upgrade live --uri wss://kusama-rpc.mangata.online:443
+      - name: Run try-runtime Kusama Mainnet
+        run: try-runtime --runtime=target/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.wasm on-runtime-upgrade live --uri wss://kusama-rpc.mangata.online:443
 
   run-benchmarks:
     name: Run runtime benchmarks

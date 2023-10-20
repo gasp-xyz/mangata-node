@@ -83,7 +83,6 @@ pub type Executive = frame_executive::Executive<
 >;
 
 type Migrations = (
-	common_runtime::migration::AssetRegistryMigration<Runtime>,
 	pallet_xcm::migration::v1::VersionUncheckedMigrateToV1<Runtime>,
 	orml_unknown_tokens::Migration<Runtime>,
 );
@@ -114,10 +113,10 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("mangata-parachain"),
 
 	authoring_version: 14,
-	spec_version: 003100,
+	spec_version: 003200,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 003100,
+	transaction_version: 003200,
 	state_version: 0,
 };
 

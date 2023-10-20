@@ -23,8 +23,10 @@
 // };
 use crate::*;
 use frame_benchmarking::{account, benchmarks};
-use frame_support::assert_ok;
-use frame_support::traits::{ExistenceRequirement, Get};
+use frame_support::{
+	assert_ok,
+	traits::{ExistenceRequirement, Get},
+};
 use frame_system::RawOrigin;
 use itertools::Itertools;
 use mangata_support::traits::{ProofOfStakeRewardsApi, XykFunctionsTrait};

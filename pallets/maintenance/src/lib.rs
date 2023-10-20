@@ -217,8 +217,8 @@ impl<T: Config> GetMaintenanceStatusTrait for Pallet<T> {
 
 	fn is_upgradable() -> bool {
 		let current_maintenance_status = MaintenanceStatus::<T>::get();
-		(!current_maintenance_status.is_maintenance)
-			|| (current_maintenance_status.is_maintenance
-				&& current_maintenance_status.is_upgradable_in_maintenance)
+		(!current_maintenance_status.is_maintenance) ||
+			(current_maintenance_status.is_maintenance &&
+				current_maintenance_status.is_upgradable_in_maintenance)
 	}
 }

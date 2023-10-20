@@ -80,10 +80,10 @@ pub mod pallet {
 				+ T::DbWeight::get().reads(1)   // UnlockQueue
 				+ T::DbWeight::get().writes(1); // UnlockQueueBegin
 
-			if (base_cost + cost_of_single_unlock_iteration).ref_time()
-				> remaining_weight.ref_time()
+			if (base_cost + cost_of_single_unlock_iteration).ref_time() >
+				remaining_weight.ref_time()
 			{
-				return Weight::from_parts(0, 0);
+				return Weight::from_parts(0, 0)
 			}
 
 			let metadata = Self::get_fee_lock_metadata();
@@ -118,7 +118,7 @@ pub mod pallet {
 									CurrencyIdOf<T>,
 								>>::unlock_fee(&who);
 							} else {
-								break;
+								break
 							}
 						},
 						_ => break,
@@ -127,10 +127,10 @@ pub mod pallet {
 					UnlockQueueBegin::<T>::put(i + 1);
 				}
 
-				if cost_of_single_unlock_iteration.ref_time()
-					> (remaining_weight.ref_time() - consumed_weight.ref_time())
+				if cost_of_single_unlock_iteration.ref_time() >
+					(remaining_weight.ref_time() - consumed_weight.ref_time())
 				{
-					break;
+					break
 				}
 			}
 			consumed_weight
@@ -150,7 +150,7 @@ pub mod pallet {
 	impl<T: Config> FeeLockMetadataInfo<T> {
 		pub fn is_whitelisted(&self, token_id: CurrencyIdOf<T>) -> bool {
 			if T::NativeTokenId::get() == token_id {
-				return true;
+				return true
 			}
 			self.whitelisted_tokens.contains(&token_id)
 		}
@@ -387,7 +387,7 @@ impl<T: Config> FeeLockTriggerTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>>
 		valuating_token_amount: BalanceOf<T>,
 	) -> Option<BalanceOf<T>> {
 		if T::NativeTokenId::get() == valuating_token_id {
-			return Some(valuating_token_amount);
+			return Some(valuating_token_amount)
 		}
 		let (native_token_pool_reserve, valuating_token_pool_reserve) =
 			<T::PoolReservesProvider as Valuate<BalanceOf<T>, CurrencyIdOf<T>>>::get_reserves(
@@ -396,7 +396,7 @@ impl<T: Config> FeeLockTriggerTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>>
 			)
 			.ok()?;
 		if native_token_pool_reserve.is_zero() || valuating_token_pool_reserve.is_zero() {
-			return None;
+			return None
 		}
 		Some(
 			multiply_by_rational_with_rounding(
@@ -419,8 +419,8 @@ impl<T: Config> FeeLockTriggerTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>>
 		// This is cause now >= last_fee_lock_block
 		ensure!(now >= account_fee_lock_data.last_fee_lock_block, Error::<T>::UnexpectedFailure);
 
-		if now
-			< account_fee_lock_data
+		if now <
+			account_fee_lock_data
 				.last_fee_lock_block
 				.saturating_add(fee_lock_metadata.period_length)
 		{

@@ -221,8 +221,8 @@ parameter_types! {
 // This is because orml_tokens uses BoundedVec for Locks storage item and does not inform on failure
 // Balances uses WeakBoundedVec and so does not fail
 const_assert!(
-	<Runtime as orml_tokens::Config>::MaxLocks::get()
-		>= <Runtime as pallet_vesting_mangata::Config>::MAX_VESTING_SCHEDULES
+	<Runtime as orml_tokens::Config>::MaxLocks::get() >=
+		<Runtime as pallet_vesting_mangata::Config>::MAX_VESTING_SCHEDULES
 );
 
 impl orml_tokens::Config for Runtime {
@@ -357,12 +357,10 @@ impl Into<CallType> for RuntimeCall {
 				max_amount_in,
 				..
 			}) => CallType::MultiBuy { swap_token_list, bought_asset_amount, max_amount_in },
-			RuntimeCall::Xyk(pallet_xyk::Call::compound_rewards { .. }) => {
-				CallType::CompoundRewards
-			},
-			RuntimeCall::Xyk(pallet_xyk::Call::provide_liquidity_with_conversion { .. }) => {
-				CallType::ProvideLiquidityWithConversion
-			},
+			RuntimeCall::Xyk(pallet_xyk::Call::compound_rewards { .. }) =>
+				CallType::CompoundRewards,
+			RuntimeCall::Xyk(pallet_xyk::Call::provide_liquidity_with_conversion { .. }) =>
+				CallType::ProvideLiquidityWithConversion,
 			RuntimeCall::FeeLock(pallet_fee_lock::Call::unlock_fee { .. }) => CallType::UnlockFee,
 			_ => CallType::Other,
 		}
@@ -523,8 +521,8 @@ impl pallet_xyk::XykBenchmarkingConfig for Runtime {}
 
 // Issuance history must be kept for atleast the staking reward delay
 const_assert!(
-	<Runtime as parachain_staking::Config>::RewardPaymentDelay::get()
-		<= <Runtime as pallet_issuance::Config>::HistoryLimit::get()
+	<Runtime as parachain_staking::Config>::RewardPaymentDelay::get() <=
+		<Runtime as pallet_issuance::Config>::HistoryLimit::get()
 );
 
 impl pallet_issuance::Config for Runtime {
@@ -621,8 +619,8 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 			ProxyType::AutoCompound => {
 				matches!(
 					c,
-					RuntimeCall::Xyk(pallet_xyk::Call::provide_liquidity_with_conversion { .. })
-						| RuntimeCall::Xyk(pallet_xyk::Call::compound_rewards { .. })
+					RuntimeCall::Xyk(pallet_xyk::Call::provide_liquidity_with_conversion { .. }) |
+						RuntimeCall::Xyk(pallet_xyk::Call::compound_rewards { .. })
 				)
 			},
 		}

@@ -6,8 +6,7 @@ pub use frame_support::{
 };
 pub use orml_traits::currency::{MultiCurrency, MultiCurrencyExtended};
 pub use sp_io::TestExternalities;
-pub use sp_runtime::BuildStorage;
-pub use sp_runtime::{codec::Encode, BoundedVec, MultiAddress, Permill};
+pub use sp_runtime::{codec::Encode, BoundedVec, BuildStorage, MultiAddress, Permill};
 pub use xcm::latest::prelude::*;
 
 #[cfg(feature = "with-kusama-runtime")]

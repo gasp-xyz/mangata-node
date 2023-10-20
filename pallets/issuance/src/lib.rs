@@ -3,9 +3,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
-use frame_support::pallet_prelude::*;
-use frame_support::traits::MultiTokenVestingSchedule;
-use frame_support::traits::{tokens::currency::MultiTokenCurrency, Get, Imbalance};
+use frame_support::{
+	pallet_prelude::*,
+	traits::{tokens::currency::MultiTokenCurrency, Get, Imbalance, MultiTokenVestingSchedule},
+};
 use frame_system::pallet_prelude::*;
 use mangata_support::traits::{ComputeIssuance, GetIssuance, LiquidityMiningApi};
 use orml_tokens::MultiTokenCurrencyExtended;
@@ -355,13 +356,13 @@ impl<T: Config> Pallet<T> {
 			issuance_config
 				.liquidity_mining_split
 				.checked_add(&issuance_config.staking_split)
-				.ok_or(Error::<T>::IssuanceConfigInvalid)?
-				== Perbill::from_percent(100),
+				.ok_or(Error::<T>::IssuanceConfigInvalid)? ==
+				Perbill::from_percent(100),
 			Error::<T>::IssuanceConfigInvalid
 		);
 		ensure!(
-			issuance_config.cap
-				>= issuance_config
+			issuance_config.cap >=
+				issuance_config
 					.issuance_at_init
 					.checked_add(&issuance_config.total_crowdloan_allocation)
 					.ok_or(Error::<T>::IssuanceConfigInvalid)?,

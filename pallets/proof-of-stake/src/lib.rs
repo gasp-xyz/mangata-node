@@ -532,10 +532,9 @@ impl<T: Config> LiquidityMiningApi<BalanceOf<T>> for Pallet<T> {
 
 			for (token_id, weight, rewards, activated_amount) in activated_pools {
 				let liquidity_mining_issuance_for_pool = match maybe_total_weight {
-					Some(total_weight) if !total_weight.is_zero() => {
+					Some(total_weight) if !total_weight.is_zero() =>
 						Perbill::from_rational(weight.into(), total_weight)
-							.mul_floor(liquidity_mining_rewards)
-					},
+							.mul_floor(liquidity_mining_rewards),
 					_ => BalanceOf::<T>::zero(),
 				};
 

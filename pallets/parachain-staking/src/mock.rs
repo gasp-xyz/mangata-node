@@ -16,10 +16,9 @@
 
 //! Test utilities
 use crate as stake;
-use crate::RoundCollatorRewardInfo;
 use crate::{
 	pallet, AwardedPts, BondKind, ComputeIssuance, Config, DispatchError, GetIssuance, Points,
-	StakingReservesProviderTrait, Valuate,
+	RoundCollatorRewardInfo, StakingReservesProviderTrait, Valuate,
 };
 use codec::{Decode, Encode};
 use frame_support::{
@@ -34,11 +33,14 @@ use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use orml_traits::parameter_type_with_key;
 use scale_info::TypeInfo;
 use sp_io;
-use sp_runtime::traits::Zero;
-use sp_runtime::BuildStorage;
-use sp_runtime::{traits::AccountIdConversion, DispatchResult, Perbill, Percent, RuntimeDebug};
-use sp_std::convert::{TryFrom, TryInto};
-use sp_std::marker::PhantomData;
+use sp_runtime::{
+	traits::{AccountIdConversion, Zero},
+	BuildStorage, DispatchResult, Perbill, Percent, RuntimeDebug,
+};
+use sp_std::{
+	convert::{TryFrom, TryInto},
+	marker::PhantomData,
+};
 
 pub(crate) type AccountId = u64;
 pub(crate) type Amount = i128;

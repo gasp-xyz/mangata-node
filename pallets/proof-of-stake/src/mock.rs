@@ -15,8 +15,7 @@ use frame_system as system;
 pub use mangata_support::traits::ProofOfStakeRewardsApi;
 use orml_tokens::{MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
 use orml_traits::parameter_type_with_key;
-use sp_runtime::{traits::AccountIdConversion, BuildStorage};
-use sp_runtime::{Perbill, Percent};
+use sp_runtime::{traits::AccountIdConversion, BuildStorage, Perbill, Percent};
 
 pub const NATIVE_CURRENCY_ID: u32 = 0;
 

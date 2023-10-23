@@ -87,17 +87,13 @@ impl RewardsCalculator<ConstCurveRewards> {
 		);
 
 		// NOTE: take into acout previous rewards (prev + rewards/activated)
-		let total_activated = Pallet::<T>::total_activated_liquidity(asset_id, reward_asset_id);
-		let total_rewards = Pallet::<T>::total_schedule_rewards(asset_id, reward_asset_id);
-		println!("REWARDS CALCULATOR at {} for {}", current_time, user);
-		println!("total_activated : {}", total_activated);
-		println!("total_rewards   : {}", total_rewards);
-		let pool_ratio_current =  U256::from(total_rewards.checked_div(total_activated).unwrap_or_default()) * U256::from(u128::MAX);
-
-		// let pool_map = crate::ScheduleRewardsPerSingleLiquidity::<T>::get();
-
-		// let pool_ratio_current =
-		// 	pool_map.get(&(asset_id, reward_asset_id)).cloned().unwrap_or(U256::from(0));
+		// let total_activated = Pallet::<T>::total_activated_liquidity(asset_id, reward_asset_id);
+		// let total_rewards = Pallet::<T>::total_schedule_rewards(asset_id, reward_asset_id);
+		// println!("REWARDS CALCULATOR at {} for {}", current_time, user);
+		// println!("total_activated : {}", total_activated);
+		// println!("total_rewards   : {}", total_rewards);
+		// let pool_ratio_current =  U256::from(total_rewards.checked_div(total_activated).unwrap_or_default()) * U256::from(u128::MAX);
+		let pool_ratio_current =  Pallet::<T>::total_rewards_for_liquidity(asset_id, reward_asset_id);
 
 		let default_rewards = RewardInfo {
 			activated_amount: 0_u128,

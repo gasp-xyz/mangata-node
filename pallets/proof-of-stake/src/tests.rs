@@ -1394,6 +1394,7 @@ fn rewards_schedule_is_stored() {
 			assert_eq!(
 				RewardsSchedulesList::<Test>::get(0).unwrap(),
 				(Schedule{
+					scheduled_at: 0u64,
 					last_session: 5u64,
 					liq_token: LIQUIDITY_TOKEN,
 					reward_token: REWARD_TOKEN,
@@ -1445,6 +1446,7 @@ fn rewards_linked_list_insert_multiple_schedules() {
 			assert_eq!(
 				RewardsSchedulesList::<Test>::get(0).unwrap(),
 				(Schedule{
+					scheduled_at: 0u64,
 					last_session: 1u64,
 					liq_token: LIQUIDITY_TOKEN,
 					reward_token: REWARD_TOKEN,
@@ -1455,6 +1457,7 @@ fn rewards_linked_list_insert_multiple_schedules() {
 			assert_eq!(
 				RewardsSchedulesList::<Test>::get(1).unwrap(),
 				(Schedule{
+					scheduled_at: 0u64,
 					last_session: 2u64,
 					liq_token: LIQUIDITY_TOKEN,
 					reward_token: REWARD_TOKEN,
@@ -3240,7 +3243,7 @@ fn unsuccessul_activate_deactivate_calls_charges_fees() {
 
 #[test]
 #[serial]
-fn mat() {
+fn matt() {
 	ExtBuilder::new()
 		.issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
 		.issue(BOB, LIQUIDITY_TOKEN, 100)

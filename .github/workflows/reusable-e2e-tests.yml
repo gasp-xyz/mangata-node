@@ -22,6 +22,11 @@ on:
         description: "Set Mangata node version."
         type: string
         required: true
+      mangataTypesVersion:
+        description: "Set @mangata-finance/types version"
+        type: string
+        default: ""
+        required: false
   workflow_call:
     inputs:
       e2eBranch:
@@ -145,6 +150,9 @@ jobs:
         id: branch-name
         uses: tj-actions/branch-names@v7.0.5
 
+      - name: Current branch name for generating types
+        run: |
+          echo "MANGATA_TYPES_VERSION=${{ steps.branch-name.outputs.current_branch }}" | sed "s@/@-@g" >> $GITHUB_ENV
 
       - name: E2E- Calculate if run e2e feature branch or main.
         run: |
@@ -177,8 +185,15 @@ jobs:
 
       - name: Install e2e tests dependencies
         working-directory: e2eTests
-        run: yarn
-        # run: yarn cache clean; yarn
+        run: yarn cache clean; yarn
+
+      - name: Install @mangata-finance/types deps
+        run: |
+          if [[ -n "${{ github.event.inputs.mangataTypesVersion }}" ]]; then
+            yarn add @mangata-finance/types@${{ github.event.inputs.mangataTypesVersion }}
+          else
+            yarn add @mangata-finance/types@${{ env.MANGATA_TYPES_VERSION }}
+          fi
 
       - name: Run parachain launch
         working-directory: devops/parachain-launch

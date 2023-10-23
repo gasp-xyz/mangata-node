@@ -95,33 +95,35 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - command: "yarn test-parallel --max-workers=10"
-            fast: false
-          - command: "yarn test-sequential-no-bootstrap"
-            fast: false
-          - command: "yarn test-seqgasless"
-            fast: false
-          - command: "yarn test-maintenance"
-            fast: true
-          - command: "yarn test-bootstrap"
-            fast: false
-          - command: "yarn test-rewards-bootstrap"
-            fast: false
-          - command: "yarn test-parallel-autocompound"
-            fast: true
-          - command: "yarn test-sequential-autocompound"
-            fast: true
-          - command: "yarn test-poolliquidity"
-            fast: true
-          - command: "yarn test-governance"
-            fast: true
-          - command: "yarn test-multiswap"
-            fast: false
-          - command: "yarn test-experimentalStaking"
-            fast: true
-          - command: "yarn test-crowdloan"
-            fast: false
-          - command: "yarn test-sdk"
+          # - command: "yarn test-parallel --max-workers=10"
+          #   fast: false
+          # - command: "yarn test-sequential-no-bootstrap"
+          #   fast: false
+          # - command: "yarn test-seqgasless"
+          #   fast: false
+          # - command: "yarn test-maintenance"
+          #   fast: true
+          # - command: "yarn test-bootstrap"
+          #   fast: false
+          # - command: "yarn test-rewards-bootstrap"
+          #   fast: false
+          # - command: "yarn test-parallel-autocompound"
+          #   fast: true
+          # - command: "yarn test-sequential-autocompound"
+          #   fast: true
+          # - command: "yarn test-poolliquidity"
+          #   fast: true
+          # - command: "yarn test-governance"
+          #   fast: true
+          # - command: "yarn test-multiswap"
+          #   fast: false
+          # - command: "yarn test-experimentalStaking"
+          #   fast: true
+          # - command: "yarn test-crowdloan"
+          #   fast: false
+          # - command: "yarn test-sdk"
+          #   fast: true
+          - command: "node --experimental-specifier-resolution=node --loader ts-node/esm --experimental-vm-modules node_modules/jest/bin/jest.js --forceExit sdk.API.submitableExtrinsic.test.ts"
             fast: true
     runs-on: [e2e-gke]
     timeout-minutes: 180

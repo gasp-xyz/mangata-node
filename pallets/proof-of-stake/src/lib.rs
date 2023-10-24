@@ -190,33 +190,34 @@ pub mod pallet {
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_initialize(n: T::BlockNumber) -> Weight {
 
+			let session_id = Self::session_index() as u64;
+
+
+			println!("=================> ON_INITIALIZE {} : {}", n, session_id);
 
 			if frame_system::Pallet::<T>::block_number().saturated_into::<u32>() % T::RewardsDistributionPeriod::get() == 0u32 {
 				ScheduleListPos::<T>::kill();
 				return Default::default();
 			}
 
-			println!("on_initialize {}", n);
+			// println!("on_initialize {}", n);
 			const AMOUNT_PER_BLOCK: u64 = 5;
 
 
-			// NOTE: 3R
-			println!("ScheduleListPos   : {:?}", ScheduleListPos::<T>::get());
-			println!("ScheduleListHead  : {:?}", ScheduleListHead::<T>::get());
-			println!("ScheduleListTail  : {:?}", ScheduleListTail::<T>::get());
+			// // NOTE: 3R
+			// println!("ScheduleListPos   : {:?}", ScheduleListPos::<T>::get());
+			// println!("ScheduleListHead  : {:?}", ScheduleListHead::<T>::get());
+			// println!("ScheduleListTail  : {:?}", ScheduleListTail::<T>::get());
 
 			// 1R 1W 15RW
 
 			//NOTE: 5 transfers => 15R 15W
 
-			// TODO: make configurable
 			// NOTE: 3R + 1R
-			let session_id = Self::session_index() as u64;
-
-
+			// TODO: make configurable
 			for idx in 0..AMOUNT_PER_BLOCK {
-				println!("iter {}:{}", n, idx);
-				println!("session_id        : {:?}", session_id);
+				// println!("iter {}:{}", n, idx);
+				// println!("session_id        : {:?}", session_id);
 
                 let last_valid = ScheduleListPos::<T>::get();
                 let pos = match ( last_valid, ScheduleListHead::<T>::get() ){
@@ -232,8 +233,8 @@ pub mod pallet {
                         },
                         _ => { None },
                 };
-				println!("last_valid              : {:?}", last_valid);
-				println!("pos               : {:?}", pos);
+				// println!("last_valid              : {:?}", last_valid);
+				// println!("pos               : {:?}", pos);
 
                 if let Some(pos_val) = pos {
 						if let Some((schedule, next)) = RewardsSchedulesList::<T>::get(pos_val){
@@ -248,7 +249,7 @@ pub mod pallet {
 											*pending = schedule.amount_per_session;
 											*idx = session_id;
 										}
-										println!("=====> SCHEDULEREWARDSTOTAL : cumulative: {} pending: {}", *cumulative, *pending);
+										println!("=====> SCHEDULEREWARDSTOTAL : ({}:{}) cumulative: {} pending: {}", schedule.liq_token, schedule.reward_token ,*cumulative, *pending);
 									});
 								}
 								ScheduleListPos::<T>::put(pos_val);
@@ -293,7 +294,7 @@ pub mod pallet {
 
 						}
                 } else{
-					println!("###############################################");
+					// println!("###############################################");
                     break;
                 }
             }
@@ -735,6 +736,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
+			Self::update_cumulative_rewards(liquidity_token_id, reward_token);
 			Self::claim_schedule_rewards_all_impl(sender, liquidity_token_id, reward_token)?;
 			Ok(())
 		}
@@ -800,18 +802,23 @@ pub mod pallet {
 
 impl<T: Config> Pallet<T> {
 
-	fn update_cumulative_rewards(liquidity_asset_id: TokenId, liquidity_assets_reward: TokenId) -> U256{
+	fn update_cumulative_rewards(liquidity_asset_id: TokenId, liquidity_assets_reward: TokenId) {
 		let (cumulative, idx) = ScheduleRewardsPerLiquidity::<T>::get((liquidity_asset_id, liquidity_assets_reward));
 		if idx == (Self::session_index() as u64){
 			println!("update_cumulative_rewards cumulative idx: {} amount: {}", idx, cumulative.checked_div(U256::from(u128::MAX)).unwrap_or_default());
-			cumulative
 		}else{
 			let total_activated_liquidity = Self::total_activated_liquidity(liquidity_asset_id, liquidity_assets_reward);
+			// let (_, total_schedule_rewards) = Self::total_schedule_rewards_parts(liquidity_asset_id, liquidity_assets_reward);
 			let total_schedule_rewards = Self::total_schedule_rewards(liquidity_asset_id, liquidity_assets_reward);
-			let pending = (U256::from(total_schedule_rewards) * U256::from(u128::MAX)).checked_div(U256::from(total_activated_liquidity)).unwrap_or_default();
-			println!("update_cumulative_rewards cumulative + pending idx: {} amount: {}", idx, (cumulative + pending).checked_div(U256::from(u128::MAX)).unwrap_or_default());
-			ScheduleRewardsPerLiquidity::<T>::insert((liquidity_asset_id, liquidity_assets_reward), (cumulative + pending, (Self::session_index() as u64)));
-			cumulative + pending
+			if total_activated_liquidity > 0 {
+				ScheduleRewardsTotal::<T>::mutate((liquidity_asset_id, liquidity_assets_reward), |(cumulative, _, _)|{
+					*cumulative = 0;
+				});
+				let pending = (U256::from(total_schedule_rewards) * U256::from(u128::MAX)).checked_div(U256::from(total_activated_liquidity)).unwrap_or_default();
+				println!("update_cumulative_rewards cumulative + pending idx: {} RAW amount: {}", idx, cumulative + pending);
+				println!("update_cumulative_rewards cumulative + pending idx: {} amount: {}", idx, (cumulative + pending).checked_div(U256::from(u128::MAX)).unwrap_or_default());
+				ScheduleRewardsPerLiquidity::<T>::insert((liquidity_asset_id, liquidity_assets_reward), (cumulative + pending, (Self::session_index() as u64)));
+			}
 		}
 	}
 
@@ -819,11 +826,13 @@ impl<T: Config> Pallet<T> {
 	fn total_rewards_for_liquidity(liquidity_asset_id: TokenId, liquidity_assets_reward: TokenId) -> U256{
 		let (cumulative, idx) = ScheduleRewardsPerLiquidity::<T>::get((liquidity_asset_id, liquidity_assets_reward));
 		if idx == (Self::session_index() as u64){
+			println!("total_rewards_for_liquidity cumulative idx: {} RAW amount: {}", idx, cumulative);
 			println!("total_rewards_for_liquidity cumulative idx: {} amount: {}", idx, cumulative.checked_div(U256::from(u128::MAX)).unwrap_or_default());
 			cumulative
 		}else{
 			let total_activated_liquidity = Self::total_activated_liquidity(liquidity_asset_id, liquidity_assets_reward);
-			let (_, total_schedule_rewards) = Self::total_schedule_rewards_parts(liquidity_asset_id, liquidity_assets_reward);
+			// let (_, total_schedule_rewards) = Self::total_schedule_rewards_parts(liquidity_asset_id, liquidity_assets_reward);
+			let total_schedule_rewards = Self::total_schedule_rewards(liquidity_asset_id, liquidity_assets_reward);
 			let pending = (U256::from(total_schedule_rewards) * U256::from(u128::MAX)).checked_div(U256::from(total_activated_liquidity)).unwrap_or_default();
 			println!("total_rewards_for_liquidity cumulative + pending idx: {} amount: {}", idx, (cumulative + pending).checked_div(U256::from(u128::MAX)).unwrap_or_default());
 			cumulative + pending

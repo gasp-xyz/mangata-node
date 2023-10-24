@@ -94,6 +94,7 @@ impl RewardsCalculator<ConstCurveRewards> {
 		// println!("total_rewards   : {}", total_rewards);
 		// let pool_ratio_current =  U256::from(total_rewards.checked_div(total_activated).unwrap_or_default()) * U256::from(u128::MAX);
 		let pool_ratio_current =  Pallet::<T>::total_rewards_for_liquidity(asset_id, reward_asset_id);
+		println!("SCHEDULE REWARDS RATIO: {}", pool_ratio_current);
 
 		let default_rewards = RewardInfo {
 			activated_amount: 0_u128,
@@ -195,6 +196,7 @@ impl CurveRewards for ConstCurveRewards {
 		let rewards_base: U256 = U256::from(user_info.activated_amount)
 			.checked_mul(pool_rewards_ratio_new)?
 			.checked_div(U256::from(u128::MAX))?; // always fit into u128
+		println!("REWARDS : {}", rewards_base);
 
 		rewards_base.try_into().ok()
 	}
@@ -288,6 +290,7 @@ impl<T: CurveRewards> RewardsCalculator<T> {
 	pub fn claim_rewards(self) -> sp_std::result::Result<(RewardInfo, Balance), RewardsCalcError> {
 		let current_rewards = self.calculate_rewards_impl()?;
 
+		println!("TOTAL AVAILABLE: {:?}", current_rewards);
 		let total_available_rewards = current_rewards
 			.checked_add(self.rewards_info.rewards_not_yet_claimed)
 			.and_then(|v| v.checked_sub(self.rewards_info.rewards_already_claimed))
@@ -301,6 +304,7 @@ impl<T: CurveRewards> RewardsCalculator<T> {
 	}
 
 	pub fn calculate_rewards(self) -> sp_std::result::Result<Balance, RewardsCalcError> {
+		println!("calculate_rewards !!!!!");
 		self.calculate_rewards_impl()
 	}
 

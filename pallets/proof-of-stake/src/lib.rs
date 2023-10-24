@@ -889,7 +889,11 @@ impl<T: Config> Pallet<T> {
 				println!("update_total_activated_liqudity swithc {}", diff);
 				// NOTE: handle burn so negative diff
 				*cumulative += *pending;
-				*pending = diff;
+				if change {
+					*pending = diff;
+				}else{
+					*pending = -diff;
+				}
 				*idx = session_id;
 			}
 		});
@@ -1321,6 +1325,7 @@ impl<T: Config> Pallet<T> {
 		reward_token: TokenId,
 	) -> DispatchResult {
 		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
+		Self::update_cumulative_rewards(liquidity_asset_id, reward_token);
 
 		let calc = RewardsCalculator::schedule_rewards::<T>(
 			user.clone(),

@@ -2366,11 +2366,7 @@ fn deactivate_3rdparty_rewards() {
 			);
 
 			assert_eq!(
-				ProofOfStake::calculate_3rdparty_rewards_amount(
-					CHARLIE,
-					LIQUIDITY_TOKEN,
-					REWARD_TOKEN
-				),
+				ProofOfStake::calculate_3rdparty_rewards_amount( CHARLIE, LIQUIDITY_TOKEN, REWARD_TOKEN),
 				Ok(500)
 			);
 			ProofOfStake::deactivate_liquidity_for_3rdparty_rewards(
@@ -2441,7 +2437,7 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 			)
 			.unwrap();
 
-			roll_to_session(1);
+			roll_to_session(2);
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
 				vec![(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 1 * 1000u128),]
@@ -2463,7 +2459,7 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 			)
 			.unwrap();
 
-			roll_to_session(2);
+			roll_to_session(3);
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
 				vec![
@@ -2488,7 +2484,7 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 			)
 			.unwrap();
 
-			roll_to_session(3);
+			roll_to_session(4);
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
 				vec![
@@ -2514,7 +2510,7 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 			)
 			.unwrap();
 
-			roll_to_session(4);
+			roll_to_session(5);
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
 				vec![
@@ -3521,6 +3517,66 @@ fn test_all_scheduled_rewards_are_distributed_when_activated_schedule_is_finishe
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
 				Ok(REWARD_AMOUNT)
+			);
+		});
+}
+
+
+#[test]
+#[serial]
+fn test_multiple_activations_in_same_block() {
+	ExtBuilder::new()
+		.issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
+		.issue(BOB, LIQUIDITY_TOKEN, 100)
+		.issue(CHARLIE, LIQUIDITY_TOKEN, 100)
+		.build()
+		.execute_with(|| {
+			System::set_block_number(1);
+
+			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
+			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
+			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+			let amount = 10_000u128;
+
+			ProofOfStake::reward_pool(
+				RuntimeOrigin::signed(ALICE),
+				REWARDED_PAIR,
+				REWARD_TOKEN,
+				REWARD_AMOUNT,
+				10u32.into(),
+			)
+			.unwrap();
+
+
+
+			roll_to_session(1);
+
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(BOB),
+				LIQUIDITY_TOKEN,
+				100,
+				REWARD_TOKEN,
+				None,
+			)
+			.unwrap();
+
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(CHARLIE),
+				LIQUIDITY_TOKEN,
+				100,
+				REWARD_TOKEN,
+				None,
+			)
+			.unwrap();
+
+
+			roll_to_session(2);
+
+			assert_eq!(
+				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
+				Ok(REWARD_AMOUNT/10/2)
 			);
 		});
 }

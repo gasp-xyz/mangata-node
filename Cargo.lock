@@ -6820,6 +6820,7 @@ dependencies = [
  "pallet-vesting-mangata",
  "pallet-xyk",
  "parity-scale-codec",
+ "primitive-types",
  "rustc-hex",
  "scale-info",
  "serde",

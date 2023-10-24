@@ -1525,33 +1525,31 @@ fn rewards_linked_list_removes_outdated_schedule_automatically() {
 
 			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
 			assert_eq!( ScheduleListTail::<Test>::get(), Some(1u64));
-			assert_eq!( ScheduleListPos::<Test>::get(), None,);
-
-			forward_to_block(10);
-
-			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!( ScheduleListTail::<Test>::get(), Some(1u64));
-			assert_eq!( ScheduleListPos::<Test>::get(), None,);
+			assert_eq!( ScheduleListPos::<Test>::get(), Some(1u64));
 
 			forward_to_block(11);
+			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!( ScheduleListTail::<Test>::get(), Some(1u64));
+			assert_eq!( ScheduleListPos::<Test>::get(), Some(1u64));
 
+			forward_to_block(21);
 			assert_eq!( ScheduleListHead::<Test>::get(), Some(1u64));
 			assert_eq!( ScheduleListTail::<Test>::get(), Some(1u64));
-			assert_eq!( ScheduleListPos::<Test>::get(), Some(1u64),);
+			assert_eq!( ScheduleListPos::<Test>::get(), Some(1u64));
 
-			forward_to_block(15);
-
+			forward_to_block(25);
 			assert_eq!( ScheduleListHead::<Test>::get(), Some(1u64));
 			assert_eq!( ScheduleListTail::<Test>::get(), Some(1u64));
-			assert_eq!( ScheduleListPos::<Test>::get(), None);
+			assert_eq!( ScheduleListPos::<Test>::get(), Some(1u64));
 
-			forward_to_block(16);
+			forward_to_block(30);
+			assert_eq!( ScheduleListHead::<Test>::get(), Some(1u64));
+			assert_eq!( ScheduleListTail::<Test>::get(), Some(1u64));
 
+			forward_to_block(31);
 			assert_eq!( ScheduleListHead::<Test>::get(), None);
 			assert_eq!( ScheduleListTail::<Test>::get(), None);
 			assert_eq!( ScheduleListPos::<Test>::get(), None);
-
-
 		});
 }
 
@@ -1597,7 +1595,7 @@ fn rewards_first_schedule_from_linked_list_of_four() {
 			assert_eq!( ScheduleListPos::<Test>::get(), None);
 			assert_eq!( ScheduleListTail::<Test>::get(), Some(3u64));
 
-			forward_to_block(11);
+			forward_to_block(21);
 
 			assert_eq!( ScheduleListHead::<Test>::get(), Some(1u64));
 			assert_eq!( ScheduleListTail::<Test>::get(), Some(3u64));
@@ -1633,7 +1631,7 @@ fn remove_last_schedule_from_linked_list() {
 			assert_eq!( ScheduleListPos::<Test>::get(), None);
 			assert_eq!( ScheduleListTail::<Test>::get(), Some(3u64));
 
-			forward_to_block(11);
+			forward_to_block(21);
 
 			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
 			assert_eq!( ScheduleListTail::<Test>::get(), Some(2u64));
@@ -1671,7 +1669,7 @@ fn remove_middle_schedule_from_linked_list() {
 			assert_eq!( ScheduleListPos::<Test>::get(), None);
 			assert_eq!( ScheduleListTail::<Test>::get(), Some(3u64));
 
-			forward_to_block(11);
+			forward_to_block(21);
 
 			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
 			assert_eq!( ScheduleListTail::<Test>::get(), Some(3u64));
@@ -1708,7 +1706,7 @@ fn remove_first_few_elems_at_once_from_linked_list() {
 			assert_eq!( ScheduleListPos::<Test>::get(), None);
 			assert_eq!( ScheduleListTail::<Test>::get(), Some(3u64));
 
-			forward_to_block(11);
+			forward_to_block(21);
 
 			assert_eq!( ScheduleListHead::<Test>::get(), Some(2u64));
 			assert_eq!( ScheduleListTail::<Test>::get(), Some(3u64));
@@ -1743,7 +1741,7 @@ fn remove_few_last_elems_at_once_from_linked_list() {
 			assert_eq!( ScheduleListPos::<Test>::get(), None);
 			assert_eq!( ScheduleListTail::<Test>::get(), Some(3u64));
 
-			forward_to_block(11);
+			forward_to_block(21);
 
 			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
 			assert_eq!( ScheduleListTail::<Test>::get(), Some(1u64));
@@ -1778,7 +1776,7 @@ fn remove_few_middle_elements_from_linkedd_list() {
 			assert_eq!(ScheduleListPos::<Test>::get(), None);
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
 
-			forward_to_block(11);
+			forward_to_block(21);
 
 			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
 			assert_eq!( ScheduleListTail::<Test>::get(), Some(3u64));
@@ -1815,7 +1813,7 @@ fn remove_random_elements_from_linked_list() {
 			assert_eq!(ScheduleListPos::<Test>::get(), None);
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(4u64));
 
-			forward_to_block(11);
+			forward_to_block(21);
 
 			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
 			assert_eq!( ScheduleListTail::<Test>::get(), Some(4u64));
@@ -1850,7 +1848,7 @@ fn remove_random_elements_from_linked_list_over_time() {
 			assert_eq!(ScheduleListPos::<Test>::get(), None);
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(6u64));
 
-			forward_to_block(14);
+			forward_to_block(24);
 
 			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
 			assert_eq!( ScheduleListTail::<Test>::get(), Some(6u64));
@@ -1860,7 +1858,7 @@ fn remove_random_elements_from_linked_list_over_time() {
 			assert_eq!( RewardsSchedulesList::<Test>::get(4u64).unwrap().1, Some(6u64));
 			assert_eq!( RewardsSchedulesList::<Test>::get(6u64).unwrap().1, None);
 
-			forward_to_block(19);
+			forward_to_block(40);
 
 			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
 			assert_eq!( ScheduleListTail::<Test>::get(), Some(6u64));
@@ -1899,7 +1897,7 @@ fn remove_lot_of_schedules_from_linked_list_in_single_iteration() {
 			assert_eq!(ScheduleListPos::<Test>::get(), None);
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(8u64));
 
-			forward_to_block(14);
+			forward_to_block(24);
 
 			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
 			assert_eq!( ScheduleListTail::<Test>::get(), Some(8u64));

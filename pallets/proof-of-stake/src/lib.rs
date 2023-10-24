@@ -823,13 +823,12 @@ impl<T: Config> Pallet<T> {
 			cumulative
 		}else{
 			let total_activated_liquidity = Self::total_activated_liquidity(liquidity_asset_id, liquidity_assets_reward);
-			let total_schedule_rewards = Self::total_schedule_rewards(liquidity_asset_id, liquidity_assets_reward);
+			let (_, total_schedule_rewards) = Self::total_schedule_rewards_parts(liquidity_asset_id, liquidity_assets_reward);
 			let pending = (U256::from(total_schedule_rewards) * U256::from(u128::MAX)).checked_div(U256::from(total_activated_liquidity)).unwrap_or_default();
 			println!("total_rewards_for_liquidity cumulative + pending idx: {} amount: {}", idx, (cumulative + pending).checked_div(U256::from(u128::MAX)).unwrap_or_default());
 			cumulative + pending
 		}
 	}
-
 
 	fn total_activated_liquidity(liquidity_asset_id: TokenId, liquidity_assets_reward: TokenId) -> Balance{
 		let (pending, idx, cumulative) = TotalActivatedLiquidityForSchedules::<T>::get(liquidity_asset_id, liquidity_assets_reward);
@@ -853,6 +852,16 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
+	fn total_schedule_rewards_parts(liquidity_asset_id: TokenId, liquidity_assets_reward: TokenId) -> (Balance, Balance){
+		let (pending, idx, cumulative) = ScheduleRewardsTotal::<T>::get((liquidity_asset_id, liquidity_assets_reward));
+		if idx == (Self::session_index() as u64){
+			println!("total_schedule_rewards_parts at {}  (cumulative , pending) idx: ({}, {})", idx, cumulative , pending);
+			(cumulative, pending)
+		}else{
+			println!("total_schedule_rewards_parts at {}  (cumulative , pending) idx: ({}, {})", idx, cumulative , pending);
+			(cumulative, pending)
+		}
+	}
 
 	fn update_total_activated_liqudity(liquidity_asset_id: TokenId, liquidity_assets_reward: TokenId, diff: Balance, change: bool) {
 		// TODO: make configurable

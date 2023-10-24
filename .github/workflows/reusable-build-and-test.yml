@@ -249,14 +249,11 @@ jobs:
             ~/.cache/sccache
           key: cargo-try-runtime-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
 
-      - name: Build try-runtime Rococo testnet
-        run: cargo build --release --features=try-runtime,mangata-rococo
+      - name: Build try-runtime Rococo & Kusama node
+        run: cargo build --release --features=try-runtime,mangata-rococo,mangata-kusama
 
       - name: Run try-runtime Rococo testnet
         run: try-runtime --runtime=target/release/wbuild/mangata-rococo-runtime/mangata_rococo_runtime.wasm on-runtime-upgrade live --uri wss://collator-01-ws-rococo.mangata.online:443
-
-      - name: Build try-runtime Kusama Mainnet
-        run: cargo build --release --features=try-runtime
 
       - name: Run try-runtime Kusama Mainnet
         run: try-runtime --runtime=target/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.wasm on-runtime-upgrade live --uri wss://kusama-rpc.mangata.online:443

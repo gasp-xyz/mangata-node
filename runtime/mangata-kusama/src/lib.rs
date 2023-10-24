@@ -81,6 +81,7 @@ pub type Executive = frame_executive::Executive<
 >;
 
 type Migrations = (
+	common_runtime::migration::AssetRegistryMigration<Runtime>,
 	pallet_xcm::migration::v1::VersionUncheckedMigrateToV1<Runtime>,
 	orml_unknown_tokens::Migration<Runtime>,
 );

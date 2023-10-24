@@ -7080,7 +7080,7 @@ dependencies = [
 [[package]]
 name = "pallet-crowdloan-rewards"
 version = "0.6.0"
-source = "git+https://github.com/mangata-finance/crowdloan-rewards?branch=upgrade/v1.1.0#d18c4a7c47482bad5ce5cba094b0c80f9196d2d9"
+source = "git+https://github.com/mangata-finance/crowdloan-rewards?branch=upgrade/v1.1.0#5d3f9554285c7f0df1abd6ece7c9ba0e93942e5e"
 dependencies = [
  "ed25519-dalek 1.0.1",
  "frame-benchmarking",

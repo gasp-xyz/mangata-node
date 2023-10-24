@@ -25,15 +25,12 @@ where
 		);
 
 		let version = orml_asset_registry::Pallet::<T>::on_chain_storage_version();
-		let mut weight: Weight = <T as frame_system::Config>::DbWeight::get().reads(1);
 		if version == 2 {
-			info!(target: "asset-registry", "No migration applied, remove")
+			info!(target: "asset-registry", "No migration applied, remove");
+			T::DbWeight::get().reads(1)
 		} else {
 			StorageVersion::new(2).put::<orml_asset_registry::Pallet<T>>();
-			weight
-				.saturating_accrue(<T as frame_system::Config>::DbWeight::get().reads_writes(0, 1));
+			T::DbWeight::get().reads_writes(1, 1)
 		}
-
-		weight
 	}
 }

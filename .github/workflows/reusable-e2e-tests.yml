@@ -123,7 +123,7 @@ jobs:
             fast: false 
           - command: "yarn test-sdk"
             fast: true 
-    runs-on: [e2e-gke]
+    runs-on: [self-hosted,e2e-gke]
     timeout-minutes: 180
     env:
       API_URL: "ws://127.0.0.1:9946"

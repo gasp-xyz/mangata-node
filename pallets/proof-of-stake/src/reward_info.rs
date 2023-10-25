@@ -290,7 +290,6 @@ impl<T: CurveRewards> RewardsCalculator<T> {
 	pub fn claim_rewards(self) -> sp_std::result::Result<(RewardInfo, Balance), RewardsCalcError> {
 		let current_rewards = self.calculate_rewards_impl()?;
 
-		println!("TOTAL AVAILABLE: {:?}", current_rewards);
 		let total_available_rewards = current_rewards
 			.checked_add(self.rewards_info.rewards_not_yet_claimed)
 			.and_then(|v| v.checked_sub(self.rewards_info.rewards_already_claimed))
@@ -304,7 +303,6 @@ impl<T: CurveRewards> RewardsCalculator<T> {
 	}
 
 	pub fn calculate_rewards(self) -> sp_std::result::Result<Balance, RewardsCalcError> {
-		println!("calculate_rewards !!!!!");
 		self.calculate_rewards_impl()
 	}
 

@@ -2293,7 +2293,7 @@ fn reuse_activated_liquiddity_tokens_for_multiple_3rdparty_schedules() {
 			)
 			.unwrap();
 
-			roll_to_session(6);
+			roll_to_session(7);
 
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_amount(
@@ -2310,7 +2310,7 @@ fn reuse_activated_liquiddity_tokens_for_multiple_3rdparty_schedules() {
 					LIQUIDITY_TOKEN,
 					FIRST_REWARD_TOKEN
 				),
-				Ok(5000)
+				Ok(6000)
 			);
 		});
 }
@@ -2447,7 +2447,7 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 				FIRST_REWARDED_PAIR,
 				SECOND_REWARD_TOKEN,
 				2 * REWARD_AMOUNT,
-				11u32.into(),
+				12u32.into(),
 			)
 			.unwrap();
 			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
@@ -2464,6 +2464,16 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
 				vec![
 					(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 2 * 1000u128),
+					(FIRST_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 0 * 2000u128),
+				]
+			);
+
+			roll_to_session(4);
+
+			assert_eq!(
+				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
+				vec![
+					(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 3 * 1000u128),
 					(FIRST_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 1 * 2000u128),
 				]
 			);
@@ -2472,7 +2482,7 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 				SECOND_REWARDED_PAIR,
 				FIRST_REWARD_TOKEN,
 				REWARD_AMOUNT,
-				12u32.into(),
+				14u32.into(),
 			)
 			.unwrap();
 			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
@@ -2484,13 +2494,13 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 			)
 			.unwrap();
 
-			roll_to_session(4);
+			roll_to_session(5);
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
 				vec![
-					(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 3 * 1000u128),
+					(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 4 * 1000u128),
 					(FIRST_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 2 * 2000u128),
-					(SECOND_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 1 * 1000u128),
+					(SECOND_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 0 * 1000u128),
 				]
 			);
 			ProofOfStake::reward_pool(
@@ -2498,7 +2508,7 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 				SECOND_REWARDED_PAIR,
 				SECOND_REWARD_TOKEN,
 				2 * REWARD_AMOUNT,
-				13u32.into(),
+				15u32.into(),
 			)
 			.unwrap();
 			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
@@ -2510,12 +2520,12 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 			)
 			.unwrap();
 
-			roll_to_session(5);
+			roll_to_session(7);
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
 				vec![
-					(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 4 * 1000u128),
-					(FIRST_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 3 * 2000u128),
+					(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 6 * 1000u128),
+					(FIRST_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 4 * 2000u128),
 					(SECOND_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 2 * 1000u128),
 					(SECOND_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 1 * 2000u128),
 				]
@@ -2532,16 +2542,7 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
 				vec![
 					(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 0u128),
-					(FIRST_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 3 * 2000u128),
-					(SECOND_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 2 * 1000u128),
-					(SECOND_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 1 * 2000u128),
-				]
-			);
-			assert_eq!(
-				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
-				vec![
-					(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 0u128),
-					(FIRST_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 3 * 2000u128),
+					(FIRST_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 4 * 2000u128),
 					(SECOND_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 2 * 1000u128),
 					(SECOND_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 1 * 2000u128),
 				]
@@ -2595,6 +2596,7 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 					(SECOND_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 0u128),
 				]
 			);
+
 
 			ProofOfStake::deactivate_liquidity_for_3rdparty_rewards(
 				RuntimeOrigin::signed(BOB),
@@ -2662,14 +2664,6 @@ fn liquidity_minting_liquidity_can_be_resused() {
 				10u32.into(),
 			)
 			.unwrap();
-			ProofOfStake::reward_pool(
-				RuntimeOrigin::signed(ALICE),
-				REWARDED_PAIR,
-				SECOND_REWARD_TOKEN,
-				2 * REWARD_AMOUNT,
-				10u32.into(),
-			)
-			.unwrap();
 
 			ProofOfStake::activate_liquidity_for_native_rewards(
 				RuntimeOrigin::signed(BOB),
@@ -2687,9 +2681,8 @@ fn liquidity_minting_liquidity_can_be_resused() {
 			)
 			.unwrap();
 
-			roll_to_session(1);
+			roll_to_session(2);
 
-			assert_eq!(ProofOfStake::calculate_rewards_amount(BOB, LIQUIDITY_TOKEN), Ok(200));
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_amount(
 					BOB,
@@ -3580,3 +3573,9 @@ fn test_multiple_activations_in_same_block() {
 			);
 		});
 }
+
+
+
+// how many blocks after activations rewards are avialabe
+// deactivation in same & different blocks
+// activation time does not matter

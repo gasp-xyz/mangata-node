@@ -3294,7 +3294,7 @@ fn claim_rewards_from_multiple_sessions_at_once() {
 
 #[test]
 #[serial]
-fn matt() {
+fn multi_user_rewards_distributeion_scenario() {
 	ExtBuilder::new()
 		.issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
 		.issue(BOB, LIQUIDITY_TOKEN, 100)
@@ -3575,7 +3575,62 @@ fn test_multiple_activations_in_same_block() {
 }
 
 
+#[test]
+#[serial]
+fn rewards_are_available_in_next_session_after_rewards_are_provided() {
+	ExtBuilder::new()
+		.issue(ALICE, REWARD_TOKEN, 10*3*REWARD_AMOUNT)
+		.issue(BOB, LIQUIDITY_TOKEN, 100)
+		.issue(CHARLIE, LIQUIDITY_TOKEN, 100)
+		.issue(EVE, LIQUIDITY_TOKEN, 100)
+		.build()
+		.execute_with(|| {
+			System::set_block_number(1);
+			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
+			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
+			valuate_liquidity_token_mock.expect().return_const(11u128);
 
-// how many blocks after activations rewards are avialabe
+
+			ProofOfStake::reward_pool( RuntimeOrigin::signed(ALICE), REWARDED_PAIR, REWARD_TOKEN, 10 * 3 * REWARD_AMOUNT, 10u32.into(),) .unwrap();
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards( RuntimeOrigin::signed(BOB), LIQUIDITY_TOKEN, 100, REWARD_TOKEN, None,) .unwrap();
+
+
+			assert_eq!(0u128, ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
+			assert_eq!(0u128, ProofOfStake::calculate_3rdparty_rewards_amount(CHARLIE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
+			assert_eq!(0u128, ProofOfStake::calculate_3rdparty_rewards_amount(EVE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
+
+			roll_to_session(1);
+
+			assert_eq!(0u128, ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
+			assert_eq!(0u128, ProofOfStake::calculate_3rdparty_rewards_amount(CHARLIE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
+			assert_eq!(0u128, ProofOfStake::calculate_3rdparty_rewards_amount(EVE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards( RuntimeOrigin::signed(CHARLIE), LIQUIDITY_TOKEN, 100, REWARD_TOKEN, None,) .unwrap();
+			assert_eq!(0u128, ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
+			assert_eq!(0u128, ProofOfStake::calculate_3rdparty_rewards_amount(CHARLIE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
+			assert_eq!(0u128, ProofOfStake::calculate_3rdparty_rewards_amount(EVE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
+
+			roll_to_session(2);
+
+			assert_eq!(15_000u128, ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
+			assert_eq!(15_000u128, ProofOfStake::calculate_3rdparty_rewards_amount(CHARLIE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
+			assert_eq!(0u128, ProofOfStake::calculate_3rdparty_rewards_amount(EVE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards( RuntimeOrigin::signed(EVE), LIQUIDITY_TOKEN, 100, REWARD_TOKEN, None,) .unwrap();
+			assert_eq!(15_000u128, ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
+			assert_eq!(15_000u128, ProofOfStake::calculate_3rdparty_rewards_amount(CHARLIE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
+			assert_eq!(0u128, ProofOfStake::calculate_3rdparty_rewards_amount(EVE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
+
+			roll_to_session(3);
+
+			assert_eq!(15_000u128 + 10_000u128, ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
+			assert_eq!(15_000u128 + 10_000u128, ProofOfStake::calculate_3rdparty_rewards_amount(CHARLIE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
+			assert_eq!(10_000u128, ProofOfStake::calculate_3rdparty_rewards_amount(EVE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
+		});
+}
+
+
+
+
+// multiple activates in same & different blocks
 // deactivation in same & different blocks
 // activation time does not matter

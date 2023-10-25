@@ -2117,7 +2117,6 @@ fn user_can_claim_3rdparty_rewards() {
 			);
 
 			roll_to_session(2);
-			println!("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
 			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
 				RuntimeOrigin::signed(CHARLIE),
 				LIQUIDITY_TOKEN,
@@ -2140,7 +2139,6 @@ fn user_can_claim_3rdparty_rewards() {
 			);
 
 			roll_to_session(3);
-			println!("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
 				Ok(1500)
@@ -2225,7 +2223,6 @@ fn overlapping_3rdparty_rewards_works() {
 				Ok(10000)
 			);
 
-			println!("##############################    ##############################");
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_amount(
 					BOB,
@@ -3016,7 +3013,6 @@ fn can_claim_schedule_rewards() {
 			)
 			.unwrap();
 
-			println!(">>>>>>>>>>>>>>>>>>>>>> ACTIVATE");
 			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
 				RuntimeOrigin::signed(BOB),
 				LIQUIDITY_TOKEN,
@@ -3025,7 +3021,6 @@ fn can_claim_schedule_rewards() {
 				None,
 			)
 			.unwrap();
-			println!(">>>>>>>>>>>>>>>>>>>>>> ACTIVATE");
 			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
 				RuntimeOrigin::signed(BOB),
 				LIQUIDITY_TOKEN,

@@ -4,7 +4,7 @@
 
 use super::*;
 use crate::mock::*;
-use frame_support::{assert_err, assert_err_ignore_postinfo,assert_ok};
+use frame_support::{assert_err, assert_err_ignore_postinfo, assert_ok};
 use mockall::predicate::eq;
 use serial_test::serial;
 
@@ -1393,25 +1393,21 @@ fn rewards_schedule_is_stored() {
 			let rewards_per_session = REWARD_AMOUNT / 5;
 			assert_eq!(
 				RewardsSchedulesList::<Test>::get(0).unwrap(),
-				(Schedule{
-					scheduled_at: 0u64,
-					last_session: 5u64,
-					liq_token: LIQUIDITY_TOKEN,
-					reward_token: REWARD_TOKEN,
-					amount_per_session: rewards_per_session,
-				}, None)
+				(
+					Schedule {
+						scheduled_at: 0u64,
+						last_session: 5u64,
+						liq_token: LIQUIDITY_TOKEN,
+						reward_token: REWARD_TOKEN,
+						amount_per_session: rewards_per_session,
+					},
+					None
+				)
 			);
-			assert_eq!(
-				ScheduleListTail::<Test>::get(),
-				Some(0u64)
-			);
-			assert_eq!(
-				ScheduleListHead::<Test>::get(),
-				Some(0u64)
-			);
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(0u64));
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
 		});
 }
-
 
 #[test]
 #[serial]
@@ -1442,41 +1438,39 @@ fn rewards_linked_list_insert_multiple_schedules() {
 				2u32.into()
 			),);
 
-
 			assert_eq!(
 				RewardsSchedulesList::<Test>::get(0).unwrap(),
-				(Schedule{
-					scheduled_at: 0u64,
-					last_session: 1u64,
-					liq_token: LIQUIDITY_TOKEN,
-					reward_token: REWARD_TOKEN,
-					amount_per_session: REWARD_AMOUNT / 1,
-				}, Some(1))
+				(
+					Schedule {
+						scheduled_at: 0u64,
+						last_session: 1u64,
+						liq_token: LIQUIDITY_TOKEN,
+						reward_token: REWARD_TOKEN,
+						amount_per_session: REWARD_AMOUNT / 1,
+					},
+					Some(1)
+				)
 			);
 
 			assert_eq!(
 				RewardsSchedulesList::<Test>::get(1).unwrap(),
-				(Schedule{
-					scheduled_at: 0u64,
-					last_session: 2u64,
-					liq_token: LIQUIDITY_TOKEN,
-					reward_token: REWARD_TOKEN,
-					amount_per_session: REWARD_AMOUNT / 2,
-				}, None)
+				(
+					Schedule {
+						scheduled_at: 0u64,
+						last_session: 2u64,
+						liq_token: LIQUIDITY_TOKEN,
+						reward_token: REWARD_TOKEN,
+						amount_per_session: REWARD_AMOUNT / 2,
+					},
+					None
+				)
 			);
 
-			assert_eq!(
-				ScheduleListHead::<Test>::get(),
-				Some(0u64)
-			);
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
 
-			assert_eq!(
-				ScheduleListTail::<Test>::get(),
-				Some(1u64)
-			);
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
 		});
 }
-
 
 #[test]
 #[serial]
@@ -1507,49 +1501,48 @@ fn rewards_linked_list_removes_outdated_schedule_automatically() {
 				2u32.into()
 			),);
 
-
 			assert_ok!(RewardsSchedulesList::<Test>::get(0).ok_or(()));
 			assert_ok!(RewardsSchedulesList::<Test>::get(1).ok_or(()));
 
-			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!( ScheduleListPos::<Test>::get(), None);
-			assert_eq!( ScheduleListTail::<Test>::get(), Some(1u64));
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!(ScheduleListPos::<Test>::get(), None);
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
 
 			forward_to_block(2);
 
-			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!( ScheduleListTail::<Test>::get(), Some(1u64));
-			assert_eq!( ScheduleListPos::<Test>::get(), Some(1u64));
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
+			assert_eq!(ScheduleListPos::<Test>::get(), Some(1u64));
 
 			forward_to_block(5);
 
-			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!( ScheduleListTail::<Test>::get(), Some(1u64));
-			assert_eq!( ScheduleListPos::<Test>::get(), Some(1u64));
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
+			assert_eq!(ScheduleListPos::<Test>::get(), Some(1u64));
 
 			forward_to_block(11);
-			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!( ScheduleListTail::<Test>::get(), Some(1u64));
-			assert_eq!( ScheduleListPos::<Test>::get(), Some(1u64));
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
+			assert_eq!(ScheduleListPos::<Test>::get(), Some(1u64));
 
 			forward_to_block(21);
-			assert_eq!( ScheduleListHead::<Test>::get(), Some(1u64));
-			assert_eq!( ScheduleListTail::<Test>::get(), Some(1u64));
-			assert_eq!( ScheduleListPos::<Test>::get(), Some(1u64));
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(1u64));
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
+			assert_eq!(ScheduleListPos::<Test>::get(), Some(1u64));
 
 			forward_to_block(25);
-			assert_eq!( ScheduleListHead::<Test>::get(), Some(1u64));
-			assert_eq!( ScheduleListTail::<Test>::get(), Some(1u64));
-			assert_eq!( ScheduleListPos::<Test>::get(), Some(1u64));
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(1u64));
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
+			assert_eq!(ScheduleListPos::<Test>::get(), Some(1u64));
 
 			forward_to_block(30);
-			assert_eq!( ScheduleListHead::<Test>::get(), Some(1u64));
-			assert_eq!( ScheduleListTail::<Test>::get(), Some(1u64));
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(1u64));
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
 
 			forward_to_block(31);
-			assert_eq!( ScheduleListHead::<Test>::get(), None);
-			assert_eq!( ScheduleListTail::<Test>::get(), None);
-			assert_eq!( ScheduleListPos::<Test>::get(), None);
+			assert_eq!(ScheduleListHead::<Test>::get(), None);
+			assert_eq!(ScheduleListTail::<Test>::get(), None);
+			assert_eq!(ScheduleListPos::<Test>::get(), None);
 		});
 }
 
@@ -1558,7 +1551,7 @@ fn rewards_linked_list_removes_outdated_schedule_automatically() {
 // rewards_middle_schedule_from_linked_list
 // rewards_multipleall_schedule_from_linked_list
 
-fn insert_schedule_ending_at_session(n: u32){
+fn insert_schedule_ending_at_session(n: u32) {
 	assert_ok!(ProofOfStake::reward_pool(
 		RuntimeOrigin::signed(ALICE),
 		REWARDED_PAIR,
@@ -1566,7 +1559,6 @@ fn insert_schedule_ending_at_session(n: u32){
 		REWARD_AMOUNT,
 		n.into(),
 	),);
-
 }
 
 #[test]
@@ -1591,17 +1583,17 @@ fn rewards_first_schedule_from_linked_list_of_four() {
 			assert_ok!(RewardsSchedulesList::<Test>::get(1).ok_or(()));
 			assert_ok!(RewardsSchedulesList::<Test>::get(2).ok_or(()));
 			assert_ok!(RewardsSchedulesList::<Test>::get(3).ok_or(()));
-			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!( ScheduleListPos::<Test>::get(), None);
-			assert_eq!( ScheduleListTail::<Test>::get(), Some(3u64));
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!(ScheduleListPos::<Test>::get(), None);
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
 
 			forward_to_block(21);
 
-			assert_eq!( ScheduleListHead::<Test>::get(), Some(1u64));
-			assert_eq!( ScheduleListTail::<Test>::get(), Some(3u64));
-			assert_eq!( RewardsSchedulesList::<Test>::get(1u64).unwrap().1, Some(2u64));
-			assert_eq!( RewardsSchedulesList::<Test>::get(2u64).unwrap().1, Some(3u64));
-			assert_eq!( RewardsSchedulesList::<Test>::get(3u64).unwrap().1, None);
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(1u64));
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
+			assert_eq!(RewardsSchedulesList::<Test>::get(1u64).unwrap().1, Some(2u64));
+			assert_eq!(RewardsSchedulesList::<Test>::get(2u64).unwrap().1, Some(3u64));
+			assert_eq!(RewardsSchedulesList::<Test>::get(3u64).unwrap().1, None);
 		});
 }
 
@@ -1627,19 +1619,17 @@ fn remove_last_schedule_from_linked_list() {
 			assert_ok!(RewardsSchedulesList::<Test>::get(1).ok_or(()));
 			assert_ok!(RewardsSchedulesList::<Test>::get(2).ok_or(()));
 			assert_ok!(RewardsSchedulesList::<Test>::get(3).ok_or(()));
-			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!( ScheduleListPos::<Test>::get(), None);
-			assert_eq!( ScheduleListTail::<Test>::get(), Some(3u64));
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!(ScheduleListPos::<Test>::get(), None);
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
 
 			forward_to_block(21);
 
-			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!( ScheduleListTail::<Test>::get(), Some(2u64));
-			assert_eq!( RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(1u64));
-			assert_eq!( RewardsSchedulesList::<Test>::get(1u64).unwrap().1, Some(2u64));
-			assert_eq!( RewardsSchedulesList::<Test>::get(2u64).unwrap().1, None);
-
-
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(2u64));
+			assert_eq!(RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(1u64));
+			assert_eq!(RewardsSchedulesList::<Test>::get(1u64).unwrap().1, Some(2u64));
+			assert_eq!(RewardsSchedulesList::<Test>::get(2u64).unwrap().1, None);
 		});
 }
 
@@ -1665,20 +1655,19 @@ fn remove_middle_schedule_from_linked_list() {
 			assert_ok!(RewardsSchedulesList::<Test>::get(1).ok_or(()));
 			assert_ok!(RewardsSchedulesList::<Test>::get(2).ok_or(()));
 			assert_ok!(RewardsSchedulesList::<Test>::get(3).ok_or(()));
-			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!( ScheduleListPos::<Test>::get(), None);
-			assert_eq!( ScheduleListTail::<Test>::get(), Some(3u64));
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!(ScheduleListPos::<Test>::get(), None);
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
 
 			forward_to_block(21);
 
-			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!( ScheduleListTail::<Test>::get(), Some(3u64));
-			assert_eq!( RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(2u64));
-			assert_eq!( RewardsSchedulesList::<Test>::get(2u64).unwrap().1, Some(3u64));
-			assert_eq!( RewardsSchedulesList::<Test>::get(3u64).unwrap().1, None);
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
+			assert_eq!(RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(2u64));
+			assert_eq!(RewardsSchedulesList::<Test>::get(2u64).unwrap().1, Some(3u64));
+			assert_eq!(RewardsSchedulesList::<Test>::get(3u64).unwrap().1, None);
 		});
 }
-
 
 #[test]
 #[serial]
@@ -1702,16 +1691,16 @@ fn remove_first_few_elems_at_once_from_linked_list() {
 			assert_ok!(RewardsSchedulesList::<Test>::get(1).ok_or(()));
 			assert_ok!(RewardsSchedulesList::<Test>::get(2).ok_or(()));
 			assert_ok!(RewardsSchedulesList::<Test>::get(3).ok_or(()));
-			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!( ScheduleListPos::<Test>::get(), None);
-			assert_eq!( ScheduleListTail::<Test>::get(), Some(3u64));
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!(ScheduleListPos::<Test>::get(), None);
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
 
 			forward_to_block(21);
 
-			assert_eq!( ScheduleListHead::<Test>::get(), Some(2u64));
-			assert_eq!( ScheduleListTail::<Test>::get(), Some(3u64));
-			assert_eq!( RewardsSchedulesList::<Test>::get(2u64).unwrap().1, Some(3u64));
-			assert_eq!( RewardsSchedulesList::<Test>::get(3u64).unwrap().1, None);
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(2u64));
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
+			assert_eq!(RewardsSchedulesList::<Test>::get(2u64).unwrap().1, Some(3u64));
+			assert_eq!(RewardsSchedulesList::<Test>::get(3u64).unwrap().1, None);
 		});
 }
 
@@ -1737,16 +1726,16 @@ fn remove_few_last_elems_at_once_from_linked_list() {
 			assert_ok!(RewardsSchedulesList::<Test>::get(1).ok_or(()));
 			assert_ok!(RewardsSchedulesList::<Test>::get(2).ok_or(()));
 			assert_ok!(RewardsSchedulesList::<Test>::get(3).ok_or(()));
-			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!( ScheduleListPos::<Test>::get(), None);
-			assert_eq!( ScheduleListTail::<Test>::get(), Some(3u64));
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!(ScheduleListPos::<Test>::get(), None);
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
 
 			forward_to_block(21);
 
-			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!( ScheduleListTail::<Test>::get(), Some(1u64));
-			assert_eq!( RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(1u64));
-			assert_eq!( RewardsSchedulesList::<Test>::get(1u64).unwrap().1, None);
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
+			assert_eq!(RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(1u64));
+			assert_eq!(RewardsSchedulesList::<Test>::get(1u64).unwrap().1, None);
 		});
 }
 
@@ -1778,10 +1767,10 @@ fn remove_few_middle_elements_from_linkedd_list() {
 
 			forward_to_block(21);
 
-			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!( ScheduleListTail::<Test>::get(), Some(3u64));
-			assert_eq!( RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(3u64));
-			assert_eq!( RewardsSchedulesList::<Test>::get(3u64).unwrap().1, None);
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
+			assert_eq!(RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(3u64));
+			assert_eq!(RewardsSchedulesList::<Test>::get(3u64).unwrap().1, None);
 		});
 }
 
@@ -1815,11 +1804,11 @@ fn remove_random_elements_from_linked_list() {
 
 			forward_to_block(21);
 
-			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!( ScheduleListTail::<Test>::get(), Some(4u64));
-			assert_eq!( RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(2u64));
-			assert_eq!( RewardsSchedulesList::<Test>::get(2u64).unwrap().1, Some(4u64));
-			assert_eq!( RewardsSchedulesList::<Test>::get(4u64).unwrap().1, None);
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(4u64));
+			assert_eq!(RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(2u64));
+			assert_eq!(RewardsSchedulesList::<Test>::get(2u64).unwrap().1, Some(4u64));
+			assert_eq!(RewardsSchedulesList::<Test>::get(4u64).unwrap().1, None);
 		});
 }
 
@@ -1850,25 +1839,22 @@ fn remove_random_elements_from_linked_list_over_time() {
 
 			forward_to_block(24);
 
-			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!( ScheduleListTail::<Test>::get(), Some(6u64));
-			assert_eq!( RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(1u64));
-			assert_eq!( RewardsSchedulesList::<Test>::get(1u64).unwrap().1, Some(3u64));
-			assert_eq!( RewardsSchedulesList::<Test>::get(3u64).unwrap().1, Some(4u64));
-			assert_eq!( RewardsSchedulesList::<Test>::get(4u64).unwrap().1, Some(6u64));
-			assert_eq!( RewardsSchedulesList::<Test>::get(6u64).unwrap().1, None);
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(6u64));
+			assert_eq!(RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(1u64));
+			assert_eq!(RewardsSchedulesList::<Test>::get(1u64).unwrap().1, Some(3u64));
+			assert_eq!(RewardsSchedulesList::<Test>::get(3u64).unwrap().1, Some(4u64));
+			assert_eq!(RewardsSchedulesList::<Test>::get(4u64).unwrap().1, Some(6u64));
+			assert_eq!(RewardsSchedulesList::<Test>::get(6u64).unwrap().1, None);
 
 			forward_to_block(40);
 
-			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!( ScheduleListTail::<Test>::get(), Some(6u64));
-			assert_eq!( RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(6u64));
-			assert_eq!( RewardsSchedulesList::<Test>::get(6u64).unwrap().1, None);
-
-
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(6u64));
+			assert_eq!(RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(6u64));
+			assert_eq!(RewardsSchedulesList::<Test>::get(6u64).unwrap().1, None);
 		});
 }
-
 
 #[test]
 #[serial]
@@ -1899,14 +1885,14 @@ fn remove_lot_of_schedules_from_linked_list_in_single_iteration() {
 
 			forward_to_block(24);
 
-			assert_eq!( ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!( ScheduleListTail::<Test>::get(), Some(8u64));
-			assert_eq!( RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(8u64));
-			assert_eq!( RewardsSchedulesList::<Test>::get(8u64).unwrap().1, None);
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(8u64));
+			assert_eq!(RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(8u64));
+			assert_eq!(RewardsSchedulesList::<Test>::get(8u64).unwrap().1, None);
 
 			forward_to_block(100);
-			assert_eq!( ScheduleListHead::<Test>::get(), None);
-			assert_eq!( ScheduleListTail::<Test>::get(), None);
+			assert_eq!(ScheduleListHead::<Test>::get(), None);
+			assert_eq!(ScheduleListTail::<Test>::get(), None);
 		});
 }
 
@@ -1969,14 +1955,8 @@ fn duplicated_schedules_works() {
 			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
 			valuate_liquidity_token_mock.expect().return_const(11u128);
 
-			assert_eq!(
-				ScheduleListHead::<Test>::get(),
-				None
-			);
-			assert_eq!(
-				ScheduleListTail::<Test>::get(),
-				None
-			);
+			assert_eq!(ScheduleListHead::<Test>::get(), None);
+			assert_eq!(ScheduleListTail::<Test>::get(), None);
 
 			assert_ok!(ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
@@ -1986,14 +1966,8 @@ fn duplicated_schedules_works() {
 				5u32.into()
 			));
 
-			assert_eq!(
-				ScheduleListHead::<Test>::get(),
-				Some(0u64)
-			);
-			assert_eq!(
-				ScheduleListTail::<Test>::get(),
-				Some(0u64)
-			);
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(0u64));
 
 			assert_ok!(ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
@@ -2003,14 +1977,8 @@ fn duplicated_schedules_works() {
 				5u32.into()
 			));
 
-			assert_eq!(
-				ScheduleListHead::<Test>::get(),
-				Some(0u64)
-			);
-			assert_eq!(
-				ScheduleListTail::<Test>::get(),
-				Some(1u64)
-			);
+			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
 		});
 }
 
@@ -2027,7 +1995,8 @@ fn reject_schedule_with_too_little_rewards_per_session() {
 			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
 			valuate_liquidity_token_mock.expect().return_const(1u128);
 
-			let valuate_non_liquidity_token_mock = MockValuationApi::valuate_non_liquidity_token_context();
+			let valuate_non_liquidity_token_mock =
+				MockValuationApi::valuate_non_liquidity_token_context();
 			valuate_non_liquidity_token_mock.expect().return_const(0u128);
 
 			roll_to_session(4);
@@ -2085,7 +2054,8 @@ fn accept_schedule_valuated_in_token_paired_with_native_token() {
 			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
 			valuate_liquidity_token_mock.expect().return_const(0u128);
 
-			let valuate_non_liquidity_token_mock = MockValuationApi::valuate_non_liquidity_token_context();
+			let valuate_non_liquidity_token_mock =
+				MockValuationApi::valuate_non_liquidity_token_context();
 			valuate_non_liquidity_token_mock.expect().return_const(10u128);
 
 			roll_to_session(4);
@@ -2099,7 +2069,6 @@ fn accept_schedule_valuated_in_token_paired_with_native_token() {
 			),);
 		});
 }
-
 
 #[test]
 #[serial]
@@ -2217,28 +2186,56 @@ fn overlapping_3rdparty_rewards_works() {
 			.unwrap();
 
 			roll_to_session(1);
-			ProofOfStake::activate_liquidity_for_3rdparty_rewards( RuntimeOrigin::signed(BOB), LIQUIDITY_TOKEN, 100, first_reward_token, None,) .unwrap();
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(BOB),
+				LIQUIDITY_TOKEN,
+				100,
+				first_reward_token,
+				None,
+			)
+			.unwrap();
 
 			roll_to_session(5);
 			let second_reward_token_id = TokensOf::<Test>::create(&ALICE, MILLION).unwrap();
-			ProofOfStake::reward_pool( RuntimeOrigin::signed(ALICE), pair, second_reward_token_id, 100_000, 15u32.into(),) .unwrap();
-			ProofOfStake::activate_liquidity_for_3rdparty_rewards( RuntimeOrigin::signed(BOB), LIQUIDITY_TOKEN, 100, second_reward_token_id, None,) .unwrap();
+			ProofOfStake::reward_pool(
+				RuntimeOrigin::signed(ALICE),
+				pair,
+				second_reward_token_id,
+				100_000,
+				15u32.into(),
+			)
+			.unwrap();
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(BOB),
+				LIQUIDITY_TOKEN,
+				100,
+				second_reward_token_id,
+				None,
+			)
+			.unwrap();
 
 			roll_to_session(7);
 
 			assert_eq!(
-				ProofOfStake::calculate_3rdparty_rewards_amount( BOB, LIQUIDITY_TOKEN, second_reward_token_id),
+				ProofOfStake::calculate_3rdparty_rewards_amount(
+					BOB,
+					LIQUIDITY_TOKEN,
+					second_reward_token_id
+				),
 				Ok(10000)
 			);
 
 			println!("##############################    ##############################");
 			assert_eq!(
-				ProofOfStake::calculate_3rdparty_rewards_amount( BOB, LIQUIDITY_TOKEN, first_reward_token),
+				ProofOfStake::calculate_3rdparty_rewards_amount(
+					BOB,
+					LIQUIDITY_TOKEN,
+					first_reward_token
+				),
 				Ok(6000)
 			);
 		});
 }
-
 
 #[test]
 #[serial]
@@ -2366,7 +2363,11 @@ fn deactivate_3rdparty_rewards() {
 			);
 
 			assert_eq!(
-				ProofOfStake::calculate_3rdparty_rewards_amount( CHARLIE, LIQUIDITY_TOKEN, REWARD_TOKEN),
+				ProofOfStake::calculate_3rdparty_rewards_amount(
+					CHARLIE,
+					LIQUIDITY_TOKEN,
+					REWARD_TOKEN
+				),
 				Ok(500)
 			);
 			ProofOfStake::deactivate_liquidity_for_3rdparty_rewards(
@@ -2394,7 +2395,6 @@ fn deactivate_3rdparty_rewards() {
 			);
 		});
 }
-
 
 #[test]
 #[serial]
@@ -2597,7 +2597,6 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 				]
 			);
 
-
 			ProofOfStake::deactivate_liquidity_for_3rdparty_rewards(
 				RuntimeOrigin::signed(BOB),
 				FIRST_LIQUIDITY_TOKEN,
@@ -2723,7 +2722,8 @@ fn fail_to_transfer_tokens_that_has_been_partially_deactivated() {
 				FIRST_REWARD_TOKEN,
 				REWARD_AMOUNT,
 				10u32.into(),
-			).unwrap();
+			)
+			.unwrap();
 			ProofOfStake::activate_liquidity_for_native_rewards(
 				RuntimeOrigin::signed(BOB),
 				LIQUIDITY_TOKEN,
@@ -2774,16 +2774,13 @@ fn fail_to_transfer_tokens_that_has_been_partially_deactivated() {
 			)
 			.unwrap();
 
-			assert_ok!(
-				TokensOf::<Test>::transfer(
-					LIQUIDITY_TOKEN,
-					&BOB,
-					&CHARLIE,
-					100,
-					ExistenceRequirement::AllowDeath
-				)
-			);
-
+			assert_ok!(TokensOf::<Test>::transfer(
+				LIQUIDITY_TOKEN,
+				&BOB,
+				&CHARLIE,
+				100,
+				ExistenceRequirement::AllowDeath
+			));
 		});
 }
 
@@ -3043,18 +3040,76 @@ fn can_claim_schedule_rewards() {
 			assert_eq!(TokensOf::<Test>::free_balance(FIRST_REWARD_TOKEN, &BOB), 0,);
 			assert_eq!(TokensOf::<Test>::free_balance(SECOND_REWARD_TOKEN, &BOB), 0,);
 
-			assert_eq!(ProofOfStake::calculate_3rdparty_rewards_amount( BOB, LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN,) .unwrap(), 1000);
-			assert_eq!(ProofOfStake::calculate_3rdparty_rewards_amount( BOB, LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN,) .unwrap(), 1000);
+			assert_eq!(
+				ProofOfStake::calculate_3rdparty_rewards_amount(
+					BOB,
+					LIQUIDITY_TOKEN,
+					FIRST_REWARD_TOKEN,
+				)
+				.unwrap(),
+				1000
+			);
+			assert_eq!(
+				ProofOfStake::calculate_3rdparty_rewards_amount(
+					BOB,
+					LIQUIDITY_TOKEN,
+					SECOND_REWARD_TOKEN,
+				)
+				.unwrap(),
+				1000
+			);
 
-			ProofOfStake::claim_3rdparty_rewards( RuntimeOrigin::signed(BOB), LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN,) .unwrap();
+			ProofOfStake::claim_3rdparty_rewards(
+				RuntimeOrigin::signed(BOB),
+				LIQUIDITY_TOKEN,
+				FIRST_REWARD_TOKEN,
+			)
+			.unwrap();
 
-			assert_eq!(ProofOfStake::calculate_3rdparty_rewards_amount( BOB, LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN,) .unwrap(), 0);
-			assert_eq!(ProofOfStake::calculate_3rdparty_rewards_amount( BOB, LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN,) .unwrap(), 1000);
+			assert_eq!(
+				ProofOfStake::calculate_3rdparty_rewards_amount(
+					BOB,
+					LIQUIDITY_TOKEN,
+					FIRST_REWARD_TOKEN,
+				)
+				.unwrap(),
+				0
+			);
+			assert_eq!(
+				ProofOfStake::calculate_3rdparty_rewards_amount(
+					BOB,
+					LIQUIDITY_TOKEN,
+					SECOND_REWARD_TOKEN,
+				)
+				.unwrap(),
+				1000
+			);
 
-			ProofOfStake::claim_3rdparty_rewards( RuntimeOrigin::signed(BOB), LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN,) .unwrap();
+			ProofOfStake::claim_3rdparty_rewards(
+				RuntimeOrigin::signed(BOB),
+				LIQUIDITY_TOKEN,
+				SECOND_REWARD_TOKEN,
+			)
+			.unwrap();
 
-			assert_eq!( ProofOfStake::calculate_3rdparty_rewards_amount( BOB, LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN,) .unwrap(), 0);
-			assert_eq!( ProofOfStake::calculate_3rdparty_rewards_amount( BOB, LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN,) .unwrap(), 0);
+			assert_eq!(
+				ProofOfStake::calculate_3rdparty_rewards_amount(
+					BOB,
+					LIQUIDITY_TOKEN,
+					FIRST_REWARD_TOKEN,
+				)
+				.unwrap(),
+				0
+			);
+			assert_eq!(
+				ProofOfStake::calculate_3rdparty_rewards_amount(
+					BOB,
+					LIQUIDITY_TOKEN,
+					SECOND_REWARD_TOKEN,
+				)
+				.unwrap(),
+				0
+			);
 
 			assert_eq!(TokensOf::<Test>::free_balance(FIRST_REWARD_TOKEN, &BOB), 1000);
 			assert_eq!(TokensOf::<Test>::free_balance(SECOND_REWARD_TOKEN, &BOB), 1000);
@@ -3151,39 +3206,28 @@ use sp_runtime::{traits::Dispatchable, Permill};
 #[ignore]
 #[serial]
 fn activate_deactivate_calls_are_free_of_charge() {
-	ExtBuilder::new()
-		.build()
-		.execute_with(|| {
-			System::set_block_number(1);
+	ExtBuilder::new().build().execute_with(|| {
+		System::set_block_number(1);
 
-			let activate_call = mock::RuntimeCall::ProofOfStake(
-				Call::activate_liquidity_for_3rdparty_rewards{
-					liquidity_token_id: LIQUIDITY_TOKEN,
-					amount: 100,
-					reward_token: REWARD_TOKEN,
-					use_balance_from: None,
-				}
-			);
+		let activate_call =
+			mock::RuntimeCall::ProofOfStake(Call::activate_liquidity_for_3rdparty_rewards {
+				liquidity_token_id: LIQUIDITY_TOKEN,
+				amount: 100,
+				reward_token: REWARD_TOKEN,
+				use_balance_from: None,
+			});
 
-			let deactivate_call = mock::RuntimeCall::ProofOfStake(
-				Call::deactivate_liquidity_for_3rdparty_rewards{
-					liquidity_token_id: LIQUIDITY_TOKEN,
-					amount: 100,
-					reward_token: REWARD_TOKEN,
-				}
-			);
+		let deactivate_call =
+			mock::RuntimeCall::ProofOfStake(Call::deactivate_liquidity_for_3rdparty_rewards {
+				liquidity_token_id: LIQUIDITY_TOKEN,
+				amount: 100,
+				reward_token: REWARD_TOKEN,
+			});
 
-			assert_eq!(
-				activate_call.get_dispatch_info().pays_fee,
-				Pays::No
-			);
+		assert_eq!(activate_call.get_dispatch_info().pays_fee, Pays::No);
 
-			assert_eq!(
-				deactivate_call.get_dispatch_info().pays_fee,
-				Pays::No
-			);
-
-		});
+		assert_eq!(deactivate_call.get_dispatch_info().pays_fee, Pays::No);
+	});
 }
 
 #[test]
@@ -3201,36 +3245,40 @@ fn unsuccessul_activate_deactivate_calls_charges_fees() {
 			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
 			valuate_liquidity_token_mock.expect().return_const(11u128);
 
-			let activate_call = mock::RuntimeCall::ProofOfStake(
-				Call::activate_liquidity_for_3rdparty_rewards{
+			let activate_call =
+				mock::RuntimeCall::ProofOfStake(Call::activate_liquidity_for_3rdparty_rewards {
 					liquidity_token_id: LIQUIDITY_TOKEN,
 					amount: 100,
 					reward_token: REWARD_TOKEN,
 					use_balance_from: None,
-				}
-			);
+				});
 
-			let deactivate_call = mock::RuntimeCall::ProofOfStake(
-				Call::deactivate_liquidity_for_3rdparty_rewards{
+			let deactivate_call =
+				mock::RuntimeCall::ProofOfStake(Call::deactivate_liquidity_for_3rdparty_rewards {
 					liquidity_token_id: LIQUIDITY_TOKEN,
 					amount: 100,
 					reward_token: REWARD_TOKEN,
-				}
-			);
-
+				});
 
 			assert_eq!(
-				activate_call.dispatch(RuntimeOrigin::signed(BOB)).unwrap_err().post_info.pays_fee,
+				activate_call
+					.dispatch(RuntimeOrigin::signed(BOB))
+					.unwrap_err()
+					.post_info
+					.pays_fee,
 				Pays::Yes
 			);
 
 			assert_eq!(
-				deactivate_call.dispatch(RuntimeOrigin::signed(BOB)).unwrap_err().post_info.pays_fee,
+				deactivate_call
+					.dispatch(RuntimeOrigin::signed(BOB))
+					.unwrap_err()
+					.post_info
+					.pays_fee,
 				Pays::Yes
 			);
 		});
 }
-
 
 #[test]
 #[serial]
@@ -3446,7 +3494,6 @@ fn test_all_scheduled_rewards_are_distributed_when_activated_after_few_sessions(
 			)
 			.unwrap();
 
-
 			roll_to_session(7);
 			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
 				RuntimeOrigin::signed(BOB),
@@ -3492,8 +3539,6 @@ fn test_all_scheduled_rewards_are_distributed_when_activated_schedule_is_finishe
 			)
 			.unwrap();
 
-
-
 			roll_to_session(15);
 
 			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
@@ -3513,7 +3558,6 @@ fn test_all_scheduled_rewards_are_distributed_when_activated_schedule_is_finishe
 			);
 		});
 }
-
 
 #[test]
 #[serial]
@@ -3542,8 +3586,6 @@ fn test_multiple_activations_in_same_block() {
 			)
 			.unwrap();
 
-
-
 			roll_to_session(1);
 
 			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
@@ -3564,22 +3606,20 @@ fn test_multiple_activations_in_same_block() {
 			)
 			.unwrap();
 
-
 			roll_to_session(2);
 
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
-				Ok(REWARD_AMOUNT/10/2)
+				Ok(REWARD_AMOUNT / 10 / 2)
 			);
 		});
 }
-
 
 #[test]
 #[serial]
 fn rewards_are_available_in_next_session_after_rewards_are_provided() {
 	ExtBuilder::new()
-		.issue(ALICE, REWARD_TOKEN, 10*3*REWARD_AMOUNT)
+		.issue(ALICE, REWARD_TOKEN, 10 * 3 * REWARD_AMOUNT)
 		.issue(BOB, LIQUIDITY_TOKEN, 100)
 		.issue(CHARLIE, LIQUIDITY_TOKEN, 100)
 		.issue(EVE, LIQUIDITY_TOKEN, 100)
@@ -3591,40 +3631,162 @@ fn rewards_are_available_in_next_session_after_rewards_are_provided() {
 			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
 			valuate_liquidity_token_mock.expect().return_const(11u128);
 
+			ProofOfStake::reward_pool(
+				RuntimeOrigin::signed(ALICE),
+				REWARDED_PAIR,
+				REWARD_TOKEN,
+				10 * 3 * REWARD_AMOUNT,
+				10u32.into(),
+			)
+			.unwrap();
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(BOB),
+				LIQUIDITY_TOKEN,
+				100,
+				REWARD_TOKEN,
+				None,
+			)
+			.unwrap();
 
-			ProofOfStake::reward_pool( RuntimeOrigin::signed(ALICE), REWARDED_PAIR, REWARD_TOKEN, 10 * 3 * REWARD_AMOUNT, 10u32.into(),) .unwrap();
-			ProofOfStake::activate_liquidity_for_3rdparty_rewards( RuntimeOrigin::signed(BOB), LIQUIDITY_TOKEN, 100, REWARD_TOKEN, None,) .unwrap();
-
-
-			assert_eq!(0u128, ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-			assert_eq!(0u128, ProofOfStake::calculate_3rdparty_rewards_amount(CHARLIE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-			assert_eq!(0u128, ProofOfStake::calculate_3rdparty_rewards_amount(EVE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
+			assert_eq!(
+				0u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN)
+					.unwrap()
+			);
+			assert_eq!(
+				0u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(
+					CHARLIE,
+					LIQUIDITY_TOKEN,
+					REWARD_TOKEN
+				)
+				.unwrap()
+			);
+			assert_eq!(
+				0u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(EVE, LIQUIDITY_TOKEN, REWARD_TOKEN)
+					.unwrap()
+			);
 
 			roll_to_session(1);
 
-			assert_eq!(0u128, ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-			assert_eq!(0u128, ProofOfStake::calculate_3rdparty_rewards_amount(CHARLIE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-			assert_eq!(0u128, ProofOfStake::calculate_3rdparty_rewards_amount(EVE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-			ProofOfStake::activate_liquidity_for_3rdparty_rewards( RuntimeOrigin::signed(CHARLIE), LIQUIDITY_TOKEN, 100, REWARD_TOKEN, None,) .unwrap();
-			assert_eq!(0u128, ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-			assert_eq!(0u128, ProofOfStake::calculate_3rdparty_rewards_amount(CHARLIE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-			assert_eq!(0u128, ProofOfStake::calculate_3rdparty_rewards_amount(EVE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
+			assert_eq!(
+				0u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN)
+					.unwrap()
+			);
+			assert_eq!(
+				0u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(
+					CHARLIE,
+					LIQUIDITY_TOKEN,
+					REWARD_TOKEN
+				)
+				.unwrap()
+			);
+			assert_eq!(
+				0u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(EVE, LIQUIDITY_TOKEN, REWARD_TOKEN)
+					.unwrap()
+			);
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(CHARLIE),
+				LIQUIDITY_TOKEN,
+				100,
+				REWARD_TOKEN,
+				None,
+			)
+			.unwrap();
+			assert_eq!(
+				0u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN)
+					.unwrap()
+			);
+			assert_eq!(
+				0u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(
+					CHARLIE,
+					LIQUIDITY_TOKEN,
+					REWARD_TOKEN
+				)
+				.unwrap()
+			);
+			assert_eq!(
+				0u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(EVE, LIQUIDITY_TOKEN, REWARD_TOKEN)
+					.unwrap()
+			);
 
 			roll_to_session(2);
 
-			assert_eq!(15_000u128, ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-			assert_eq!(15_000u128, ProofOfStake::calculate_3rdparty_rewards_amount(CHARLIE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-			assert_eq!(0u128, ProofOfStake::calculate_3rdparty_rewards_amount(EVE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-			ProofOfStake::activate_liquidity_for_3rdparty_rewards( RuntimeOrigin::signed(EVE), LIQUIDITY_TOKEN, 100, REWARD_TOKEN, None,) .unwrap();
-			assert_eq!(15_000u128, ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-			assert_eq!(15_000u128, ProofOfStake::calculate_3rdparty_rewards_amount(CHARLIE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-			assert_eq!(0u128, ProofOfStake::calculate_3rdparty_rewards_amount(EVE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
+			assert_eq!(
+				15_000u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN)
+					.unwrap()
+			);
+			assert_eq!(
+				15_000u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(
+					CHARLIE,
+					LIQUIDITY_TOKEN,
+					REWARD_TOKEN
+				)
+				.unwrap()
+			);
+			assert_eq!(
+				0u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(EVE, LIQUIDITY_TOKEN, REWARD_TOKEN)
+					.unwrap()
+			);
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(EVE),
+				LIQUIDITY_TOKEN,
+				100,
+				REWARD_TOKEN,
+				None,
+			)
+			.unwrap();
+			assert_eq!(
+				15_000u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN)
+					.unwrap()
+			);
+			assert_eq!(
+				15_000u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(
+					CHARLIE,
+					LIQUIDITY_TOKEN,
+					REWARD_TOKEN
+				)
+				.unwrap()
+			);
+			assert_eq!(
+				0u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(EVE, LIQUIDITY_TOKEN, REWARD_TOKEN)
+					.unwrap()
+			);
 
 			roll_to_session(3);
 
-			assert_eq!(15_000u128 + 10_000u128, ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-			assert_eq!(15_000u128 + 10_000u128, ProofOfStake::calculate_3rdparty_rewards_amount(CHARLIE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-			assert_eq!(10_000u128, ProofOfStake::calculate_3rdparty_rewards_amount(EVE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
+			assert_eq!(
+				15_000u128 + 10_000u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN)
+					.unwrap()
+			);
+			assert_eq!(
+				15_000u128 + 10_000u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(
+					CHARLIE,
+					LIQUIDITY_TOKEN,
+					REWARD_TOKEN
+				)
+				.unwrap()
+			);
+			assert_eq!(
+				10_000u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(EVE, LIQUIDITY_TOKEN, REWARD_TOKEN)
+					.unwrap()
+			);
 		});
 }
 
@@ -3632,7 +3794,7 @@ fn rewards_are_available_in_next_session_after_rewards_are_provided() {
 #[serial]
 fn multiple_activations_and_deactivations_from_multiple_users_on_the_same_schedule() {
 	ExtBuilder::new()
-		.issue(ALICE, REWARD_TOKEN, 10*3*REWARD_AMOUNT)
+		.issue(ALICE, REWARD_TOKEN, 10 * 3 * REWARD_AMOUNT)
 		.issue(ALICE, LIQUIDITY_TOKEN, 100)
 		.issue(BOB, LIQUIDITY_TOKEN, 100)
 		.issue(CHARLIE, LIQUIDITY_TOKEN, 100)
@@ -3645,61 +3807,260 @@ fn multiple_activations_and_deactivations_from_multiple_users_on_the_same_schedu
 			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
 			valuate_liquidity_token_mock.expect().return_const(11u128);
 
-
 			/// 1000 rewards per session
-			ProofOfStake::reward_pool( RuntimeOrigin::signed(ALICE), REWARDED_PAIR, REWARD_TOKEN, REWARD_AMOUNT, 10u32.into(),) .unwrap();
+			ProofOfStake::reward_pool(
+				RuntimeOrigin::signed(ALICE),
+				REWARDED_PAIR,
+				REWARD_TOKEN,
+				REWARD_AMOUNT,
+				10u32.into(),
+			)
+			.unwrap();
 
-
-			ProofOfStake::activate_liquidity_for_3rdparty_rewards( RuntimeOrigin::signed(ALICE), LIQUIDITY_TOKEN, 100, REWARD_TOKEN, None,) .unwrap();
-			ProofOfStake::activate_liquidity_for_3rdparty_rewards( RuntimeOrigin::signed(BOB), LIQUIDITY_TOKEN, 100, REWARD_TOKEN, None,) .unwrap();
-
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(ALICE),
+				LIQUIDITY_TOKEN,
+				100,
+				REWARD_TOKEN,
+				None,
+			)
+			.unwrap();
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(BOB),
+				LIQUIDITY_TOKEN,
+				100,
+				REWARD_TOKEN,
+				None,
+			)
+			.unwrap();
 
 			roll_to_session(2);
 
-			assert_eq!(500u128, ProofOfStake::calculate_3rdparty_rewards_amount(ALICE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-			assert_eq!(500u128, ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-			assert_eq!(0u128, ProofOfStake::calculate_3rdparty_rewards_amount(CHARLIE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-			assert_eq!(0u128, ProofOfStake::calculate_3rdparty_rewards_amount(EVE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
+			assert_eq!(
+				500u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(
+					ALICE,
+					LIQUIDITY_TOKEN,
+					REWARD_TOKEN
+				)
+				.unwrap()
+			);
+			assert_eq!(
+				500u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN)
+					.unwrap()
+			);
+			assert_eq!(
+				0u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(
+					CHARLIE,
+					LIQUIDITY_TOKEN,
+					REWARD_TOKEN
+				)
+				.unwrap()
+			);
+			assert_eq!(
+				0u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(EVE, LIQUIDITY_TOKEN, REWARD_TOKEN)
+					.unwrap()
+			);
 
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(CHARLIE),
+				LIQUIDITY_TOKEN,
+				50,
+				REWARD_TOKEN,
+				None,
+			)
+			.unwrap();
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(EVE),
+				LIQUIDITY_TOKEN,
+				100,
+				REWARD_TOKEN,
+				None,
+			)
+			.unwrap();
+			ProofOfStake::deactivate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(ALICE),
+				LIQUIDITY_TOKEN,
+				50,
+				REWARD_TOKEN,
+			)
+			.unwrap();
+			ProofOfStake::deactivate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(BOB),
+				LIQUIDITY_TOKEN,
+				100,
+				REWARD_TOKEN,
+			)
+			.unwrap();
+			ProofOfStake::deactivate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(EVE),
+				LIQUIDITY_TOKEN,
+				100,
+				REWARD_TOKEN,
+			)
+			.unwrap();
 
-			ProofOfStake::activate_liquidity_for_3rdparty_rewards( RuntimeOrigin::signed(CHARLIE), LIQUIDITY_TOKEN, 50, REWARD_TOKEN, None,) .unwrap();
-			ProofOfStake::activate_liquidity_for_3rdparty_rewards( RuntimeOrigin::signed(EVE), LIQUIDITY_TOKEN, 100, REWARD_TOKEN, None,) .unwrap();
-			ProofOfStake::deactivate_liquidity_for_3rdparty_rewards( RuntimeOrigin::signed(ALICE), LIQUIDITY_TOKEN, 50, REWARD_TOKEN,) .unwrap();
-			ProofOfStake::deactivate_liquidity_for_3rdparty_rewards( RuntimeOrigin::signed(BOB), LIQUIDITY_TOKEN, 100, REWARD_TOKEN,) .unwrap();
-			ProofOfStake::deactivate_liquidity_for_3rdparty_rewards( RuntimeOrigin::signed(EVE), LIQUIDITY_TOKEN, 100, REWARD_TOKEN,) .unwrap();
-
-			assert_eq!(500u128, ProofOfStake::calculate_3rdparty_rewards_amount(ALICE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-			assert_eq!(500u128, ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-			assert_eq!(0u128, ProofOfStake::calculate_3rdparty_rewards_amount(CHARLIE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-			assert_eq!(0u128, ProofOfStake::calculate_3rdparty_rewards_amount(EVE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
+			assert_eq!(
+				500u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(
+					ALICE,
+					LIQUIDITY_TOKEN,
+					REWARD_TOKEN
+				)
+				.unwrap()
+			);
+			assert_eq!(
+				500u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN)
+					.unwrap()
+			);
+			assert_eq!(
+				0u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(
+					CHARLIE,
+					LIQUIDITY_TOKEN,
+					REWARD_TOKEN
+				)
+				.unwrap()
+			);
+			assert_eq!(
+				0u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(EVE, LIQUIDITY_TOKEN, REWARD_TOKEN)
+					.unwrap()
+			);
 
 			roll_to_session(3);
 
-			assert_eq!(1000u128, ProofOfStake::calculate_3rdparty_rewards_amount(ALICE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-			assert_eq!(500u128, ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-			assert_eq!(500u128, ProofOfStake::calculate_3rdparty_rewards_amount(CHARLIE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-			assert_eq!(0u128, ProofOfStake::calculate_3rdparty_rewards_amount(EVE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
+			assert_eq!(
+				1000u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(
+					ALICE,
+					LIQUIDITY_TOKEN,
+					REWARD_TOKEN
+				)
+				.unwrap()
+			);
+			assert_eq!(
+				500u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN)
+					.unwrap()
+			);
+			assert_eq!(
+				500u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(
+					CHARLIE,
+					LIQUIDITY_TOKEN,
+					REWARD_TOKEN
+				)
+				.unwrap()
+			);
+			assert_eq!(
+				0u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(EVE, LIQUIDITY_TOKEN, REWARD_TOKEN)
+					.unwrap()
+			);
 
-			ProofOfStake::deactivate_liquidity_for_3rdparty_rewards( RuntimeOrigin::signed(ALICE), LIQUIDITY_TOKEN, 50, REWARD_TOKEN,) .unwrap();
-			ProofOfStake::activate_liquidity_for_3rdparty_rewards( RuntimeOrigin::signed(ALICE), LIQUIDITY_TOKEN, 100, REWARD_TOKEN, None,) .unwrap();
-			ProofOfStake::activate_liquidity_for_3rdparty_rewards( RuntimeOrigin::signed(BOB), LIQUIDITY_TOKEN, 100, REWARD_TOKEN, None,) .unwrap();
-			ProofOfStake::activate_liquidity_for_3rdparty_rewards( RuntimeOrigin::signed(CHARLIE), LIQUIDITY_TOKEN, 50, REWARD_TOKEN, None,) .unwrap();
-			ProofOfStake::activate_liquidity_for_3rdparty_rewards( RuntimeOrigin::signed(EVE), LIQUIDITY_TOKEN, 100, REWARD_TOKEN, None,) .unwrap();
+			ProofOfStake::deactivate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(ALICE),
+				LIQUIDITY_TOKEN,
+				50,
+				REWARD_TOKEN,
+			)
+			.unwrap();
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(ALICE),
+				LIQUIDITY_TOKEN,
+				100,
+				REWARD_TOKEN,
+				None,
+			)
+			.unwrap();
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(BOB),
+				LIQUIDITY_TOKEN,
+				100,
+				REWARD_TOKEN,
+				None,
+			)
+			.unwrap();
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(CHARLIE),
+				LIQUIDITY_TOKEN,
+				50,
+				REWARD_TOKEN,
+				None,
+			)
+			.unwrap();
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(EVE),
+				LIQUIDITY_TOKEN,
+				100,
+				REWARD_TOKEN,
+				None,
+			)
+			.unwrap();
 
-			assert_eq!(1000u128, ProofOfStake::calculate_3rdparty_rewards_amount(ALICE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-			assert_eq!(500u128, ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-			assert_eq!(500u128, ProofOfStake::calculate_3rdparty_rewards_amount(CHARLIE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-			assert_eq!(0u128, ProofOfStake::calculate_3rdparty_rewards_amount(EVE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-
+			assert_eq!(
+				1000u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(
+					ALICE,
+					LIQUIDITY_TOKEN,
+					REWARD_TOKEN
+				)
+				.unwrap()
+			);
+			assert_eq!(
+				500u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN)
+					.unwrap()
+			);
+			assert_eq!(
+				500u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(
+					CHARLIE,
+					LIQUIDITY_TOKEN,
+					REWARD_TOKEN
+				)
+				.unwrap()
+			);
+			assert_eq!(
+				0u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(EVE, LIQUIDITY_TOKEN, REWARD_TOKEN)
+					.unwrap()
+			);
 
 			roll_to_session(4);
 
-			assert_eq!(1249u128, ProofOfStake::calculate_3rdparty_rewards_amount(ALICE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-			assert_eq!(749u128, ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-			assert_eq!(749u128, ProofOfStake::calculate_3rdparty_rewards_amount(CHARLIE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
-			assert_eq!(249u128, ProofOfStake::calculate_3rdparty_rewards_amount(EVE, LIQUIDITY_TOKEN, REWARD_TOKEN).unwrap());
+			assert_eq!(
+				1249u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(
+					ALICE,
+					LIQUIDITY_TOKEN,
+					REWARD_TOKEN
+				)
+				.unwrap()
+			);
+			assert_eq!(
+				749u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN)
+					.unwrap()
+			);
+			assert_eq!(
+				749u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(
+					CHARLIE,
+					LIQUIDITY_TOKEN,
+					REWARD_TOKEN
+				)
+				.unwrap()
+			);
+			assert_eq!(
+				249u128,
+				ProofOfStake::calculate_3rdparty_rewards_amount(EVE, LIQUIDITY_TOKEN, REWARD_TOKEN)
+					.unwrap()
+			);
 		});
 }
-
-
-

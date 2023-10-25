@@ -96,7 +96,7 @@ use frame_support::pallet_prelude::*;
 pub type ScheduleId = u64;
 
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
-pub struct Schedule{
+pub struct Schedule {
 	scheduled_at: u64,
 	last_session: u64,
 	liq_token: TokenId,
@@ -106,7 +106,7 @@ pub struct Schedule{
 
 use frame_benchmarking::Zero;
 use frame_support::{
-	dispatch::{DispatchError, DispatchErrorWithPostInfo, PostDispatchInfo, DispatchResult},
+	dispatch::{DispatchError, DispatchErrorWithPostInfo, DispatchResult, PostDispatchInfo},
 	ensure,
 	storage::bounded_btree_map::BoundedBTreeMap,
 	traits::Nothing,
@@ -189,20 +189,20 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_initialize(n: T::BlockNumber) -> Weight {
-
 			let session_id = Self::session_index() as u64;
-
 
 			println!("=================> ON_INITIALIZE {} : {}", n, session_id);
 
-			if frame_system::Pallet::<T>::block_number().saturated_into::<u32>() % T::RewardsDistributionPeriod::get() == 0u32 {
+			if frame_system::Pallet::<T>::block_number().saturated_into::<u32>() %
+				T::RewardsDistributionPeriod::get() ==
+				0u32
+			{
 				ScheduleListPos::<T>::kill();
-				return Default::default();
+				return Default::default()
 			}
 
 			// println!("on_initialize {}", n);
 			const AMOUNT_PER_BLOCK: u64 = 5;
-
 
 			// // NOTE: 3R
 			// println!("ScheduleListPos   : {:?}", ScheduleListPos::<T>::get());
@@ -219,90 +219,94 @@ pub mod pallet {
 				// println!("iter {}:{}", n, idx);
 				// println!("session_id        : {:?}", session_id);
 
-                let last_valid = ScheduleListPos::<T>::get();
-                let pos = match ( last_valid, ScheduleListHead::<T>::get() ){
-                        (Some(pos), _) => {
-                            if let Some ((schedule, next)) = RewardsSchedulesList::<T>::get(pos) {
-                                next
-                            }else{
-                                None
-                            }
-                        },
-                        (None, Some(head)) => {
-                            Some(head)
-                        },
-                        _ => { None },
-                };
+				let last_valid = ScheduleListPos::<T>::get();
+				let pos = match (last_valid, ScheduleListHead::<T>::get()) {
+					(Some(pos), _) => {
+						if let Some((schedule, next)) = RewardsSchedulesList::<T>::get(pos) {
+							next
+						} else {
+							None
+						}
+					},
+					(None, Some(head)) => Some(head),
+					_ => None,
+				};
 				// println!("last_valid              : {:?}", last_valid);
 				// println!("pos               : {:?}", pos);
 
-                if let Some(pos_val) = pos {
-						if let Some((schedule, next)) = RewardsSchedulesList::<T>::get(pos_val){
-							if schedule.last_session >= session_id{
-
-								println!("=====> SCHEDULEREWARDSTOTAL BEFORE : ({}:{}) : {:?}", schedule.liq_token, schedule.reward_token, schedule);
-								if schedule.scheduled_at < session_id{
-									ScheduleRewardsTotal::<T>::mutate((schedule.liq_token, schedule.reward_token), |(pending, idx, cumulative)|{
+				if let Some(pos_val) = pos {
+					if let Some((schedule, next)) = RewardsSchedulesList::<T>::get(pos_val) {
+						if schedule.last_session >= session_id {
+							println!(
+								"=====> SCHEDULEREWARDSTOTAL BEFORE : ({}:{}) : {:?}",
+								schedule.liq_token, schedule.reward_token, schedule
+							);
+							if schedule.scheduled_at < session_id {
+								ScheduleRewardsTotal::<T>::mutate(
+									(schedule.liq_token, schedule.reward_token),
+									|(pending, idx, cumulative)| {
 										if *idx >= session_id {
 											*pending += schedule.amount_per_session
-										}else{
+										} else {
 											*cumulative += *pending;
 											*pending = schedule.amount_per_session;
 											*idx = session_id;
 										}
 										println!("=====> SCHEDULEREWARDSTOTAL : ({}:{}) cumulative: {} pending: {}", schedule.liq_token, schedule.reward_token ,*cumulative, *pending);
-									});
-								}
-								println!("=====> SCHEDULEREWARDSTOTAL AFTER : ({}:{}) : {:?}", schedule.liq_token, schedule.reward_token, schedule);
-								ScheduleListPos::<T>::put(pos_val);
-							}else{
-								match(Self::head(), Self::tail()){
-									(Some(head), Some(tail)) if head == pos_val && head != tail=> {
-                                        println!("remove first list elem");
-										if let Some(next) = next{
-											ScheduleListHead::<T>::put(next);
-										}
 									},
-									(Some(head), Some(tail)) if tail == pos_val && head == tail=> {
-										ScheduleListTail::<T>::kill();
-										ScheduleListHead::<T>::kill();
-										ScheduleListPos::<T>::kill();
-									},
-									(Some(head), Some(tail)) if tail == pos_val && head != tail=> {
-                                        println!("remove last list elem");
-										if let Some(last_valid) = last_valid{
-											ScheduleListTail::<T>::put(last_valid);
-											RewardsSchedulesList::<T>::mutate(last_valid, |data|{
-												if let Some((schedule, next)) = data.as_mut() {
-													*next = None
-												}
-											});
-										}
-									},
-									(Some(head), Some(tail))  => {
-                                        println!("remove middle elem {}", pos_val);
-										if let Some(last_valid) = last_valid{
-											RewardsSchedulesList::<T>::mutate(last_valid, |data|{
-												if let Some((schedule, prev_next)) = data.as_mut() {
-													*prev_next = next
-												}
-											});
-										}
-                                    },
-									_ => {}
-
-								}
+								);
 							}
-
+							println!(
+								"=====> SCHEDULEREWARDSTOTAL AFTER : ({}:{}) : {:?}",
+								schedule.liq_token, schedule.reward_token, schedule
+							);
+							ScheduleListPos::<T>::put(pos_val);
+						} else {
+							match (Self::head(), Self::tail()) {
+								(Some(head), Some(tail)) if head == pos_val && head != tail => {
+									println!("remove first list elem");
+									if let Some(next) = next {
+										ScheduleListHead::<T>::put(next);
+									}
+								},
+								(Some(head), Some(tail)) if tail == pos_val && head == tail => {
+									ScheduleListTail::<T>::kill();
+									ScheduleListHead::<T>::kill();
+									ScheduleListPos::<T>::kill();
+								},
+								(Some(head), Some(tail)) if tail == pos_val && head != tail => {
+									println!("remove last list elem");
+									if let Some(last_valid) = last_valid {
+										ScheduleListTail::<T>::put(last_valid);
+										RewardsSchedulesList::<T>::mutate(last_valid, |data| {
+											if let Some((schedule, next)) = data.as_mut() {
+												*next = None
+											}
+										});
+									}
+								},
+								(Some(head), Some(tail)) => {
+									println!("remove middle elem {}", pos_val);
+									if let Some(last_valid) = last_valid {
+										RewardsSchedulesList::<T>::mutate(last_valid, |data| {
+											if let Some((schedule, prev_next)) = data.as_mut() {
+												*prev_next = next
+											}
+										});
+									}
+								},
+								_ => {},
+							}
 						}
-                } else{
+					}
+				} else {
 					// println!("###############################################");
-                    break;
-                }
-            }
-        Default::default()
-        }
-    }
+					break
+				}
+			}
+			Default::default()
+		}
+	}
 
 	#[cfg(feature = "runtime-benchmarks")]
 	pub trait PoSBenchmarkingConfig: pallet_issuance::Config {}
@@ -467,10 +471,12 @@ pub mod pallet {
 	/// How much scheduled rewards per single liquidty_token should be distribute_rewards
 	/// the **value is multiplied by u128::MAX** to avoid floating point arithmetic
 	#[pallet::storage]
-	pub type ScheduleRewardsTotal<T: Config> = StorageMap<_, Twox64Concat ,(TokenId, TokenId), (u128, u64, u128), ValueQuery>;
+	pub type ScheduleRewardsTotal<T: Config> =
+		StorageMap<_, Twox64Concat, (TokenId, TokenId), (u128, u64, u128), ValueQuery>;
 
 	#[pallet::storage]
-	pub type ScheduleRewardsPerLiquidity<T: Config> = StorageMap<_, Twox64Concat ,(TokenId, TokenId), (U256, u64), ValueQuery>;
+	pub type ScheduleRewardsPerLiquidity<T: Config> =
+		StorageMap<_, Twox64Concat, (TokenId, TokenId), (U256, u64), ValueQuery>;
 
 	/// How much scheduled rewards per single liquidty_token should be distribute_rewards
 	/// the **value is multiplied by u128::MAX** to avoid floating point arithmetic
@@ -506,7 +512,8 @@ pub mod pallet {
 	pub type ScheduleListTail<T: Config> = StorageValue<_, ScheduleId, OptionQuery>;
 
 	#[pallet::storage]
-	pub type RewardsSchedulesList<T: Config> = StorageMap<_, Twox64Concat, ScheduleId, (Schedule, Option<ScheduleId>), OptionQuery>;
+	pub type RewardsSchedulesList<T: Config> =
+		StorageMap<_, Twox64Concat, ScheduleId, (Schedule, Option<ScheduleId>), OptionQuery>;
 
 	/// Maps liquidity token to list of tokens that it ever was rewarded with
 	#[pallet::storage]
@@ -515,8 +522,15 @@ pub mod pallet {
 
 	/// Total amount of activated liquidity for each schedule
 	#[pallet::storage]
-	pub type TotalActivatedLiquidityForSchedules<T: Config> =
-		StorageDoubleMap<_, Twox64Concat, TokenId, Twox64Concat, TokenId, (u128, u128, u64, u128), ValueQuery>;
+	pub type TotalActivatedLiquidityForSchedules<T: Config> = StorageDoubleMap<
+		_,
+		Twox64Concat,
+		TokenId,
+		Twox64Concat,
+		TokenId,
+		(u128, u128, u64, u128),
+		ValueQuery,
+	>;
 
 	// #[pallet::storage]
 	// pub type PrevTotalActivatedLiquidityForSchedules<T: Config> =
@@ -683,7 +697,9 @@ pub mod pallet {
 			)
 			.map_err(|err| DispatchErrorWithPostInfo {
 				post_info: PostDispatchInfo {
-					actual_weight: Some(<<T as Config>::WeightInfo>::activate_liquidity_for_3rdparty_rewards()),
+					actual_weight: Some(
+						<<T as Config>::WeightInfo>::activate_liquidity_for_3rdparty_rewards(),
+					),
 					pays_fee: Pays::Yes,
 				},
 				error: err,
@@ -716,7 +732,9 @@ pub mod pallet {
 			)
 			.map_err(|err| DispatchErrorWithPostInfo {
 				post_info: PostDispatchInfo {
-					actual_weight: Some(<<T as Config>::WeightInfo>::activate_liquidity_for_3rdparty_rewards()),
+					actual_weight: Some(
+						<<T as Config>::WeightInfo>::activate_liquidity_for_3rdparty_rewards(),
+					),
 					pays_fee: Pays::Yes,
 				},
 				error: err,
@@ -803,92 +821,171 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-
 	fn update_cumulative_rewards(liquidity_asset_id: TokenId, liquidity_assets_reward: TokenId) {
-		let (cumulative, idx) = ScheduleRewardsPerLiquidity::<T>::get((liquidity_asset_id, liquidity_assets_reward));
-		if idx == (Self::session_index() as u64){
-			println!("update_cumulative_rewards cumulative idx: {} amount: {}", idx, cumulative.checked_div(U256::from(u128::MAX)).unwrap_or_default());
-		}else{
-			let total_activated_liquidity = Self::total_activated_liquidity(liquidity_asset_id, liquidity_assets_reward);
-			let total_schedule_rewards = Self::total_schedule_rewards(liquidity_asset_id, liquidity_assets_reward);
+		let (cumulative, idx) =
+			ScheduleRewardsPerLiquidity::<T>::get((liquidity_asset_id, liquidity_assets_reward));
+		if idx == (Self::session_index() as u64) {
+			println!(
+				"update_cumulative_rewards cumulative idx: {} amount: {}",
+				idx,
+				cumulative.checked_div(U256::from(u128::MAX)).unwrap_or_default()
+			);
+		} else {
+			let total_activated_liquidity =
+				Self::total_activated_liquidity(liquidity_asset_id, liquidity_assets_reward);
+			let total_schedule_rewards =
+				Self::total_schedule_rewards(liquidity_asset_id, liquidity_assets_reward);
 			if total_activated_liquidity > 0 {
-				ScheduleRewardsTotal::<T>::mutate((liquidity_asset_id, liquidity_assets_reward), |(cumulative, _, _)|{
-					*cumulative = 0;
-				});
-				let pending = (U256::from(total_schedule_rewards) * U256::from(u128::MAX)).checked_div(U256::from(total_activated_liquidity)).unwrap_or_default();
-				println!("update_cumulative_rewards cumulative + pending idx: {} RAW amount: {}", idx, cumulative + pending);
-				println!("update_cumulative_rewards cumulative + pending idx: {} amount: {}", idx, (cumulative + pending).checked_div(U256::from(u128::MAX)).unwrap_or_default());
-				ScheduleRewardsPerLiquidity::<T>::insert((liquidity_asset_id, liquidity_assets_reward), (cumulative + pending, (Self::session_index() as u64)));
+				ScheduleRewardsTotal::<T>::mutate(
+					(liquidity_asset_id, liquidity_assets_reward),
+					|(cumulative, _, _)| {
+						*cumulative = 0;
+					},
+				);
+				let pending = (U256::from(total_schedule_rewards) * U256::from(u128::MAX))
+					.checked_div(U256::from(total_activated_liquidity))
+					.unwrap_or_default();
+				println!(
+					"update_cumulative_rewards cumulative + pending idx: {} RAW amount: {}",
+					idx,
+					cumulative + pending
+				);
+				println!(
+					"update_cumulative_rewards cumulative + pending idx: {} amount: {}",
+					idx,
+					(cumulative + pending).checked_div(U256::from(u128::MAX)).unwrap_or_default()
+				);
+				ScheduleRewardsPerLiquidity::<T>::insert(
+					(liquidity_asset_id, liquidity_assets_reward),
+					(cumulative + pending, (Self::session_index() as u64)),
+				);
 			}
 		}
 	}
 
-
-	fn total_rewards_for_liquidity(liquidity_asset_id: TokenId, liquidity_assets_reward: TokenId) -> U256{
-		let (cumulative, idx) = ScheduleRewardsPerLiquidity::<T>::get((liquidity_asset_id, liquidity_assets_reward));
-		if idx == (Self::session_index() as u64){
-			println!("total_rewards_for_liquidity cumulative idx: {} RAW amount: {}", idx, cumulative);
-			println!("total_rewards_for_liquidity cumulative idx: {} amount: {}", idx, cumulative.checked_div(U256::from(u128::MAX)).unwrap_or_default());
+	fn total_rewards_for_liquidity(
+		liquidity_asset_id: TokenId,
+		liquidity_assets_reward: TokenId,
+	) -> U256 {
+		let (cumulative, idx) =
+			ScheduleRewardsPerLiquidity::<T>::get((liquidity_asset_id, liquidity_assets_reward));
+		if idx == (Self::session_index() as u64) {
+			println!(
+				"total_rewards_for_liquidity cumulative idx: {} RAW amount: {}",
+				idx, cumulative
+			);
+			println!(
+				"total_rewards_for_liquidity cumulative idx: {} amount: {}",
+				idx,
+				cumulative.checked_div(U256::from(u128::MAX)).unwrap_or_default()
+			);
 			cumulative
-		}else{
-			let total_activated_liquidity = Self::total_activated_liquidity(liquidity_asset_id, liquidity_assets_reward);
-			let total_schedule_rewards = Self::total_schedule_rewards(liquidity_asset_id, liquidity_assets_reward);
-			let pending = (U256::from(total_schedule_rewards) * U256::from(u128::MAX)).checked_div(U256::from(total_activated_liquidity)).unwrap_or_default();
-			println!("total_rewards_for_liquidity cumulative + pending idx: {} amount: {}", idx, (cumulative + pending).checked_div(U256::from(u128::MAX)).unwrap_or_default());
+		} else {
+			let total_activated_liquidity =
+				Self::total_activated_liquidity(liquidity_asset_id, liquidity_assets_reward);
+			let total_schedule_rewards =
+				Self::total_schedule_rewards(liquidity_asset_id, liquidity_assets_reward);
+			let pending = (U256::from(total_schedule_rewards) * U256::from(u128::MAX))
+				.checked_div(U256::from(total_activated_liquidity))
+				.unwrap_or_default();
+			println!(
+				"total_rewards_for_liquidity cumulative + pending idx: {} amount: {}",
+				idx,
+				(cumulative + pending).checked_div(U256::from(u128::MAX)).unwrap_or_default()
+			);
 			cumulative + pending
 		}
 	}
 
-	fn total_activated_liquidity(liquidity_asset_id: TokenId, liquidity_assets_reward: TokenId) -> Balance{
-		let (pending_negative, pending_positive, idx, cumulative) = TotalActivatedLiquidityForSchedules::<T>::get(liquidity_asset_id, liquidity_assets_reward);
-		if idx == (Self::session_index() as u64){
+	fn total_activated_liquidity(
+		liquidity_asset_id: TokenId,
+		liquidity_assets_reward: TokenId,
+	) -> Balance {
+		let (pending_negative, pending_positive, idx, cumulative) =
+			TotalActivatedLiquidityForSchedules::<T>::get(
+				liquidity_asset_id,
+				liquidity_assets_reward,
+			);
+		if idx == (Self::session_index() as u64) {
 			println!("total_activated_liquidity cumulative idx: {} amount: {}", idx, cumulative);
 			cumulative
-		}else{
-			println!("total_activated_liquidity cumulative + pending idx: {} amount: {}", idx, cumulative + pending_positive - pending_negative);
+		} else {
+			println!(
+				"total_activated_liquidity cumulative + pending idx: {} amount: {}",
+				idx,
+				cumulative + pending_positive - pending_negative
+			);
 			cumulative + pending_positive - pending_negative
 		}
 	}
 
-	fn total_schedule_rewards(liquidity_asset_id: TokenId, liquidity_assets_reward: TokenId) -> Balance{
-		let (pending, idx, cumulative) = ScheduleRewardsTotal::<T>::get((liquidity_asset_id, liquidity_assets_reward));
-		if idx == (Self::session_index() as u64){
+	fn total_schedule_rewards(
+		liquidity_asset_id: TokenId,
+		liquidity_assets_reward: TokenId,
+	) -> Balance {
+		let (pending, idx, cumulative) =
+			ScheduleRewardsTotal::<T>::get((liquidity_asset_id, liquidity_assets_reward));
+		if idx == (Self::session_index() as u64) {
 			println!("total_schedule_rewards    cumulative idx: {} amount: {}", idx, cumulative);
 			cumulative
-		}else{
-			println!("total_schedule_rewards    cumulative + pending idx: {} amount: {}", idx, cumulative + pending);
+		} else {
+			println!(
+				"total_schedule_rewards    cumulative + pending idx: {} amount: {}",
+				idx,
+				cumulative + pending
+			);
 			cumulative + pending
 		}
 	}
 
-	fn update_total_activated_liqudity(liquidity_asset_id: TokenId, liquidity_assets_reward: TokenId, diff: Balance, change: bool) {
+	fn update_total_activated_liqudity(
+		liquidity_asset_id: TokenId,
+		liquidity_assets_reward: TokenId,
+		diff: Balance,
+		change: bool,
+	) {
 		// TODO: make configurable
 		let session_id = Self::session_index() as u64;
 
-		println!("update_total_activated_liqudity BEFORE {:?}", TotalActivatedLiquidityForSchedules::<T>::get(liquidity_asset_id, liquidity_assets_reward));
-		TotalActivatedLiquidityForSchedules::<T>::mutate(liquidity_asset_id, liquidity_assets_reward, |(pending_negative, pending_positive, idx, cumulative)|{
-			if *idx == session_id {
-				if change{
-					*pending_positive += diff;
-				}else{
-					*pending_negative += diff;
-				};
-			}else{
-				println!("update_total_activated_liqudity SWITCH {}", diff);
-				// NOTE: handle burn so negative diff
-				*cumulative = *cumulative + *pending_positive - *pending_negative;
-				if change{
-					*pending_positive = diff;
-					*pending_negative = 0u128;
-				}else{
-					*pending_positive = 0u128;
-					*pending_negative = diff;
-				};
-				*idx = session_id;
-			}
-		});
-		println!("update_total_activated_liqudity AFTER {:?}", TotalActivatedLiquidityForSchedules::<T>::get(liquidity_asset_id, liquidity_assets_reward));
-
+		println!(
+			"update_total_activated_liqudity BEFORE {:?}",
+			TotalActivatedLiquidityForSchedules::<T>::get(
+				liquidity_asset_id,
+				liquidity_assets_reward
+			)
+		);
+		TotalActivatedLiquidityForSchedules::<T>::mutate(
+			liquidity_asset_id,
+			liquidity_assets_reward,
+			|(pending_negative, pending_positive, idx, cumulative)| {
+				if *idx == session_id {
+					if change {
+						*pending_positive += diff;
+					} else {
+						*pending_negative += diff;
+					};
+				} else {
+					println!("update_total_activated_liqudity SWITCH {}", diff);
+					// NOTE: handle burn so negative diff
+					*cumulative = *cumulative + *pending_positive - *pending_negative;
+					if change {
+						*pending_positive = diff;
+						*pending_negative = 0u128;
+					} else {
+						*pending_positive = 0u128;
+						*pending_negative = diff;
+					};
+					*idx = session_id;
+				}
+			},
+		);
+		println!(
+			"update_total_activated_liqudity AFTER {:?}",
+			TotalActivatedLiquidityForSchedules::<T>::get(
+				liquidity_asset_id,
+				liquidity_assets_reward
+			)
+		);
 
 		// println!("UPDATE_TOTAL_ACTIVATED_LIQUDITY liq: {} reward:{} amount:{}", liquidity_asset_id, liquidity_assets_reward, diff);
 		// if let Ok((idx, amount)) = TotalActivatedLiquidityForSchedules::<T>::try_get(liquidity_asset_id, liquidity_assets_reward){
@@ -963,7 +1060,6 @@ impl<T: Config> Pallet<T> {
 		liquidity_asset_id: TokenId,
 		amount: Balance,
 	) -> DispatchResult {
-
 		ensure!(
 			ActivatedNativeRewardsLiq::<T>::get(user.clone(), liquidity_asset_id) == 0,
 			Error::<T>::LiquidityLockedIn3rdpartyRewards
@@ -1036,11 +1132,9 @@ impl<T: Config> Pallet<T> {
 					already_activated_amount + amount <= available_amount,
 					Error::<T>::NotEnoughAssets
 				);
-				ActivatedNativeRewardsLiq::<T>::mutate(
-					user.clone(),
-					liquidity_asset_id,
-					|val| *val += amount,
-				);
+				ActivatedNativeRewardsLiq::<T>::mutate(user.clone(), liquidity_asset_id, |val| {
+					*val += amount
+				});
 			},
 		}
 
@@ -1251,7 +1345,12 @@ impl<T: Config> Pallet<T> {
 			},
 		)?;
 
-		Self::update_total_activated_liqudity(liquidity_asset_id, liquidity_assets_reward, liquidity_assets_added, true);
+		Self::update_total_activated_liqudity(
+			liquidity_asset_id,
+			liquidity_assets_reward,
+			liquidity_assets_added,
+			true,
+		);
 
 		// TotalActivatedLiquidityForSchedules::<T>::mutate(
 		// 	liquidity_asset_id,
@@ -1333,8 +1432,12 @@ impl<T: Config> Pallet<T> {
 			rewards_info,
 		);
 
-
-		Self::update_total_activated_liqudity(liquidity_asset_id, reward_token, liquidity_assets_burned, false);
+		Self::update_total_activated_liqudity(
+			liquidity_asset_id,
+			reward_token,
+			liquidity_assets_burned,
+			false,
+		);
 		// TotalActivatedLiquidityForSchedules::<T>::try_mutate(
 		// 	liquidity_asset_id,
 		// 	reward_token,
@@ -1384,16 +1487,12 @@ impl<T: Config> Pallet<T> {
 				amount,
 			);
 
-			let amount = ActivatedNativeRewardsLiq::<T>::mutate(
-				user.clone(),
-				liquidity_asset_id,
-				|val| {
+			let amount =
+				ActivatedNativeRewardsLiq::<T>::mutate(user.clone(), liquidity_asset_id, |val| {
 					let prev = *val;
 					*val = 0;
 					prev
-				},
-			);
-
+				});
 		}
 
 		Ok(())
@@ -1437,16 +1536,14 @@ impl<T: Config> Pallet<T> {
 		Ok(total_available_rewards)
 	}
 
-	pub (crate) fn reward_pool_impl(
+	pub(crate) fn reward_pool_impl(
 		sender: T::AccountId,
 		pool: (TokenId, TokenId),
 		token_id: TokenId,
 		amount: Balance,
 		schedule_end: T::BlockNumber,
 	) -> DispatchResult {
-
-		let liquidity_token_id =
-		<T as Config>::ValuationApi::get_liquidity_asset(pool.0, pool.1)
+		let liquidity_token_id = <T as Config>::ValuationApi::get_liquidity_asset(pool.0, pool.1)
 			.map_err(|_| Error::<T>::PoolDoesNotExist)?;
 
 		let current_session = Self::session_index();
@@ -1462,10 +1559,14 @@ impl<T: Config> Pallet<T> {
 			.ok_or(Error::<T>::MathOverflow)?;
 
 		ensure!(
-			<T as Config>::ValuationApi::valuate_liquidity_token(token_id, amount_per_session) >= T::Min3rdPartyRewards::get() ||
-			((token_id == Into::<u32>::into(Self::native_token_id())) && amount_per_session >= T::Min3rdPartyRewards::get()) ||
-			<T as Config>::ValuationApi::valuate_non_liquidity_token(token_id, amount_per_session) >= T::Min3rdPartyRewards::get()
-			,
+			<T as Config>::ValuationApi::valuate_liquidity_token(token_id, amount_per_session) >=
+				T::Min3rdPartyRewards::get() ||
+				((token_id == Into::<u32>::into(Self::native_token_id())) &&
+					amount_per_session >= T::Min3rdPartyRewards::get()) ||
+				<T as Config>::ValuationApi::valuate_non_liquidity_token(
+					token_id,
+					amount_per_session
+				) >= T::Min3rdPartyRewards::get(),
 			Error::<T>::TooLittleRewards
 		);
 
@@ -1483,30 +1584,31 @@ impl<T: Config> Pallet<T> {
 
 		let head = ScheduleListHead::<T>::get();
 		let tail = ScheduleListTail::<T>::get();
-		let schedule = Schedule{
+		let schedule = Schedule {
 			scheduled_at: Self::session_index() as u64,
 			last_session: schedule_end.saturated_into::<u64>(),
 			liq_token: liquidity_token_id,
 			reward_token: token_id,
-			amount_per_session: amount_per_session
+			amount_per_session,
 		};
 
-		match (head, tail){
-			(None, None) => { // first schedule
+		match (head, tail) {
+			(None, None) => {
+				// first schedule
 				RewardsSchedulesList::<T>::insert(0, (schedule, None::<ScheduleId>));
 				ScheduleListHead::<T>::put(0);
 				ScheduleListTail::<T>::put(0);
 			},
 			(Some(_head), Some(tail)) => {
 				RewardsSchedulesList::<T>::mutate(tail, |info| {
-					if let Some((_schedule, next)) = info.as_mut(){
+					if let Some((_schedule, next)) = info.as_mut() {
 						*next = Some(tail + 1u64)
 					}
 				});
 				RewardsSchedulesList::<T>::insert(tail + 1, (schedule, None::<ScheduleId>));
 				ScheduleListTail::<T>::put(tail + 1);
 			},
-			_ => {} // invariant assures this will never happen
+			_ => {}, // invariant assures this will never happen
 		}
 
 		Ok(())
@@ -1519,15 +1621,41 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 	type CurrencyId = TokenId;
 
 	#[cfg(feature = "runtime-benchmarks")]
-	fn enable_3rdparty_rewards(account: T::AccountId, pool: (Self::CurrencyId,Self::CurrencyId), reward_token_id: Self::CurrencyId, last_session: u32, amount: Self::Balance){
-		let liquidity_token_id = <T as Config>::ValuationApi::get_liquidity_asset(pool.0, pool.1).expect("pool exist");
+	fn enable_3rdparty_rewards(
+		account: T::AccountId,
+		pool: (Self::CurrencyId, Self::CurrencyId),
+		reward_token_id: Self::CurrencyId,
+		last_session: u32,
+		amount: Self::Balance,
+	) {
+		let liquidity_token_id =
+			<T as Config>::ValuationApi::get_liquidity_asset(pool.0, pool.1).expect("pool exist");
 		log!(info, "XXXX {}", liquidity_token_id);
-		Pallet::<T>::reward_pool_impl(account.clone(), pool, reward_token_id, amount, last_session.into()).expect("call should pass");
+		Pallet::<T>::reward_pool_impl(
+			account.clone(),
+			pool,
+			reward_token_id,
+			amount,
+			last_session.into(),
+		)
+		.expect("call should pass");
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
-	fn activate_liquidity_for_3rdparty_rewards(account: T::AccountId, liquidity_token: Self::CurrencyId, amount: Self::Balance, reward_token_id: Self::CurrencyId){
-		Pallet::<T>::activate_liquidity_for_3rdparty_rewards_impl(account, liquidity_token, amount, ThirdPartyActivationKind::ActivateKind(None), reward_token_id).expect("call should pass")
+	fn activate_liquidity_for_3rdparty_rewards(
+		account: T::AccountId,
+		liquidity_token: Self::CurrencyId,
+		amount: Self::Balance,
+		reward_token_id: Self::CurrencyId,
+	) {
+		Pallet::<T>::activate_liquidity_for_3rdparty_rewards_impl(
+			account,
+			liquidity_token,
+			amount,
+			ThirdPartyActivationKind::ActivateKind(None),
+			reward_token_id,
+		)
+		.expect("call should pass")
 	}
 
 	fn enable(liquidity_token_id: TokenId, weight: u8) {

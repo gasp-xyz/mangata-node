@@ -93,7 +93,8 @@ impl RewardsCalculator<ConstCurveRewards> {
 		// println!("total_activated : {}", total_activated);
 		// println!("total_rewards   : {}", total_rewards);
 		// let pool_ratio_current =  U256::from(total_rewards.checked_div(total_activated).unwrap_or_default()) * U256::from(u128::MAX);
-		let pool_ratio_current =  Pallet::<T>::total_rewards_for_liquidity(asset_id, reward_asset_id);
+		let pool_ratio_current =
+			Pallet::<T>::total_rewards_for_liquidity(asset_id, reward_asset_id);
 		println!("SCHEDULE REWARDS RATIO: {}", pool_ratio_current);
 
 		let default_rewards = RewardInfo {

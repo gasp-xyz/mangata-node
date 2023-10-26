@@ -193,7 +193,7 @@ pub mod pallet {
 			ensure_root(origin)?;
 
 			ensure!(
-				!T::LiquidityTokens::contains(&liquidity_token_id),
+				T::LiquidityTokens::contains(&liquidity_token_id),
 				Error::<T>::SoloTokenForbiddenError
 			);
 

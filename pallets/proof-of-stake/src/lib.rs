@@ -3,8 +3,8 @@
 use frame_benchmarking::Zero;
 use frame_support::{
 	dispatch::{DispatchError, DispatchResult},
-	traits::Contains,
 	ensure,
+	traits::Contains,
 };
 use frame_system::ensure_signed;
 use sp_core::U256;
@@ -114,7 +114,7 @@ pub mod pallet {
 		CalculateRewardsAllMathError,
 		MissingRewardsInfoError,
 		DeprecatedExtrinsic,
-		SoloTokenForbiddenError
+		SoloTokenPromotionForbiddenError,
 	}
 
 	#[pallet::event]
@@ -194,7 +194,7 @@ pub mod pallet {
 
 			ensure!(
 				T::LiquidityTokens::contains(&liquidity_token_id),
-				Error::<T>::SoloTokenForbiddenError
+				Error::<T>::SoloTokenPromotionForbiddenError
 			);
 
 			if liquidity_mining_issuance_weight > 0 {

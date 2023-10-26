@@ -210,6 +210,7 @@ impl pos::Config for Test {
 	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = ConstU32<10>;
 	type WeightInfo = ();
+	type LiquidityTokens = ();
 }
 
 pub struct TokensActivationPassthrough<T: Config>(PhantomData<T>);

@@ -364,7 +364,6 @@ pub mod config {
 	}
 
 	pub mod pallet_proof_of_stake {
-		use mangata_support::traits::XykFunctionsTrait;
 		use super::*;
 
 		pub struct SoloTokensFilter<Runtime>(PhantomData<Runtime>);

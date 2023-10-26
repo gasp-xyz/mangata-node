@@ -365,6 +365,7 @@ pub mod config {
 
 	pub mod pallet_proof_of_stake {
 		use super::*;
+		use mangata_support::traits::XykFunctionsTrait;
 
 		pub struct SoloTokensFilter<Runtime>(PhantomData<Runtime>);
 		impl<T: ::pallet_xyk::Config> Contains<TokenId> for SoloTokensFilter<T> {

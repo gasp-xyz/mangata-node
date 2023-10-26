@@ -363,6 +363,20 @@ pub mod config {
 		}
 	}
 
+	pub mod pallet_proof_of_stake {
+		use mangata_support::traits::XykFunctionsTrait;
+		use super::*;
+
+		pub struct SoloTokensFilter<Runtime>(PhantomData<Runtime>);
+		impl<T: ::pallet_xyk::Config> Contains<TokenId> for SoloTokensFilter<T> {
+			fn contains(token_id: &TokenId) -> bool {
+				// we want to check whether tokenId is liquidity token or solo token
+				// and if it is solo token return false otherwise true
+				::pallet_xyk::Pallet::<T>::is_liquidity_token(*token_id)
+			}
+		}
+	}
+
 	pub mod pallet_bootstrap {
 		use super::*;
 

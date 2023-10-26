@@ -276,6 +276,8 @@ impl pallet_proof_of_stake::Config for Runtime {
 	type LiquidityMiningIssuanceVault = cfg::pallet_issuance::LiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = cfg::SessionLenghtOf<Runtime>;
 	type WeightInfo = weights::pallet_proof_of_stake_weights::ModuleWeight<Runtime>;
+
+	type LiquidityTokens = cfg::pallet_proof_of_stake::SoloTokensFilter<Runtime>;
 }
 
 impl pallet_bootstrap::BootstrapBenchmarkingConfig for Runtime {}

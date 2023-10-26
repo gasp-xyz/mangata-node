@@ -3,6 +3,7 @@
 use frame_benchmarking::Zero;
 use frame_support::{
 	dispatch::{DispatchError, DispatchResult},
+	traits::Contains,
 	ensure,
 };
 use frame_system::ensure_signed;
@@ -91,6 +92,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type RewardsDistributionPeriod: Get<u32>;
 		type WeightInfo: WeightInfo;
+		type LiquidityTokens: Contains<TokenId>;
 	}
 
 	#[pallet::error]
@@ -112,6 +114,7 @@ pub mod pallet {
 		CalculateRewardsAllMathError,
 		MissingRewardsInfoError,
 		DeprecatedExtrinsic,
+		SoloTokenForbiddenError
 	}
 
 	#[pallet::event]
@@ -188,6 +191,11 @@ pub mod pallet {
 			liquidity_mining_issuance_weight: u8,
 		) -> DispatchResult {
 			ensure_root(origin)?;
+
+			ensure!(
+				!T::LiquidityTokens::contains(&liquidity_token_id),
+				Error::<T>::SoloTokenForbiddenError
+			);
 
 			if liquidity_mining_issuance_weight > 0 {
 				<Self as ProofOfStakeRewardsApi<T::AccountId>>::enable(

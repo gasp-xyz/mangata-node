@@ -191,20 +191,35 @@ pub mod pallet {
 		fn on_initialize(n: T::BlockNumber) -> Weight {
 			let session_id = Self::session_index() as u64;
 
-			if frame_system::Pallet::<T>::block_number().saturated_into::<u32>() %
-				T::RewardsDistributionPeriod::get() ==
-				0u32
-			{
+			// NOTE: 1R
+			if n.saturated_into::<u32>() % T::RewardsDistributionPeriod::get() == 0u32 {
 				ScheduleListPos::<T>::kill();
 				return Default::default()
 			}
-
 			const AMOUNT_PER_BLOCK: u64 = 5;
 
-			// NOTE: 3R + 1R
-			// TODO: make configurable
 			for idx in 0..AMOUNT_PER_BLOCK {
+				// READS PER ITERTION
+				//
+				// 			ON VALID SCHEDULE  (AVERAGE)                        ====> 3R + 1 W + N*R + N*W
+				// 				3 x READ HEAD,TAIL,POS            : ALWAYS
+				// 				1 x WRITE ScheduleListPos         : ALWAYS (pesimistic)
+				// 				PER ITER:
+				// 					- READ RewardsSchedulesList   : ALWAYS
+				// 					- WRITE ScheduleRewardsTotal  : ALWAYS (pesemisitic)
+
+				// 			ON OUTDATED SCHEDULE (PESIMITIC)                   =====> 3R + 1W + (N-1)*W + 2W
+				// 				3 x READ HEAD,TAIL,POS                         : ALWAYS
+				// 				1 x WRITE ScheduleListPos `next`               : ONCE (pesemisitic)
+				// 				REMOVE N-1 SCHEDULES IN THE MIDDDLE
+				// 					- 1 x WRITE update previous schedudle `next`  : ALWAYS (pesemisitic)
+				// 				REMOVE LAST ELEM:
+				// 					- 1 x WRITE update list tail
+				// 					- 1 x WRITE update elem before last : ALWAYS (pesemisitic)
+
+				// NOTE: 1R
 				let last_valid = ScheduleListPos::<T>::get();
+				// NOTE: 1R
 				let pos = match (last_valid, ScheduleListHead::<T>::get()) {
 					(Some(pos), _) => {
 						if let Some((schedule, next)) = RewardsSchedulesList::<T>::get(pos) {
@@ -218,9 +233,11 @@ pub mod pallet {
 				};
 
 				if let Some(pos_val) = pos {
+					// NOTE: 1R
 					if let Some((schedule, next)) = RewardsSchedulesList::<T>::get(pos_val) {
 						if schedule.last_session >= session_id {
 							if schedule.scheduled_at < session_id {
+								// NOTE: 1R 1W
 								ScheduleRewardsTotal::<T>::mutate(
 									(schedule.liq_token, schedule.reward_token),
 									|(pending, idx, cumulative)| {
@@ -234,21 +251,27 @@ pub mod pallet {
 									},
 								);
 							}
+							// NOTE: 1W
 							ScheduleListPos::<T>::put(pos_val);
 						} else {
+							// NOTE: 2R
 							match (Self::head(), Self::tail()) {
 								(Some(head), Some(tail)) if head == pos_val && head != tail =>
 									if let Some(next) = next {
+										// NOTE: 1W
 										ScheduleListHead::<T>::put(next);
 									},
 								(Some(head), Some(tail)) if tail == pos_val && head == tail => {
+									// NOTE: 3W
 									ScheduleListTail::<T>::kill();
 									ScheduleListHead::<T>::kill();
 									ScheduleListPos::<T>::kill();
 								},
 								(Some(head), Some(tail)) if tail == pos_val && head != tail =>
 									if let Some(last_valid) = last_valid {
+										// NOTE: 1W
 										ScheduleListTail::<T>::put(last_valid);
+										// NOTE: 1R 1W
 										RewardsSchedulesList::<T>::mutate(last_valid, |data| {
 											if let Some((schedule, next)) = data.as_mut() {
 												*next = None
@@ -257,6 +280,7 @@ pub mod pallet {
 									},
 								(Some(head), Some(tail)) =>
 									if let Some(last_valid) = last_valid {
+										// NOTE: 1R 1W
 										RewardsSchedulesList::<T>::mutate(last_valid, |data| {
 											if let Some((schedule, prev_next)) = data.as_mut() {
 												*prev_next = next

@@ -329,7 +329,7 @@ impl pallet_proof_of_stake::Config for Test {
 	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = ConstU32<10>;
 	type WeightInfo = ();
-	
+
 	type LiquidityTokens = ();
 }
 
@@ -342,7 +342,7 @@ impl pallet_proof_of_stake::Config for Test {
 	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = ConstU32<1200>;
 	type WeightInfo = ();
-	
+
 	type LiquidityTokens = ();
 }
 

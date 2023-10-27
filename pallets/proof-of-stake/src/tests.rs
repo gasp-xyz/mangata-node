@@ -1067,7 +1067,7 @@ fn liquidity_rewards_transfered_liq_tokens_produce_rewards_W() {
 	});
 }
 
-pub(crate) fn roll_to_while_minting(n: u64, expected_amount_minted: Option<Balance>) {
+pub(crate) fn roll_to_while_minting(n: u64) {
 	let mut session_number: u32;
 	let mut session_issuance: (Balance, Balance);
 	let mut block_issuance: Balance;
@@ -1080,10 +1080,6 @@ pub(crate) fn roll_to_while_minting(n: u64, expected_amount_minted: Option<Balan
 			.expect("session issuance is always populated in advance");
 		block_issuance = (session_issuance.0 + session_issuance.1) /
 			(BlocksPerRound::get().saturated_into::<u128>());
-
-		if let Some(x) = expected_amount_minted {
-			assert_eq!(x, block_issuance);
-		}
 
 		// Compute issuance for the next session only after all issuance has been issued is current session
 		// To avoid overestimating the missing issuance and overshooting the cap
@@ -1122,12 +1118,12 @@ fn test_migrated_from_pallet_issuance() {
 		)
 		.unwrap();
 
-		roll_to_while_minting(4, None);
+		roll_to_while_minting(4);
 		assert_eq!(
 			U256::from_dec_str("76571018769283414925455480913511346478027010").unwrap(),
 			ProofOfStake::get_pool_rewards(1).unwrap()
 		);
-		roll_to_while_minting(9, None);
+		roll_to_while_minting(9);
 		assert_eq!(
 			U256::from_dec_str("153142037538566829850910961827022692956054020").unwrap(),
 			ProofOfStake::get_pool_rewards(1).unwrap()
@@ -1142,7 +1138,7 @@ fn test_migrated_from_pallet_issuance() {
 			None,
 		)
 		.unwrap();
-		roll_to_while_minting(14, None);
+		roll_to_while_minting(14);
 		assert_eq!(
 			U256::from_dec_str("191427546923208537313638702283778366195067525").unwrap(),
 			ProofOfStake::get_pool_rewards(1).unwrap()
@@ -1152,7 +1148,7 @@ fn test_migrated_from_pallet_issuance() {
 			ProofOfStake::get_pool_rewards(2).unwrap()
 		);
 
-		roll_to_while_minting(19, None);
+		roll_to_while_minting(19);
 		assert_eq!(
 			U256::from_dec_str("229713056307850244776366442740534039434081030").unwrap(),
 			ProofOfStake::get_pool_rewards(1).unwrap()

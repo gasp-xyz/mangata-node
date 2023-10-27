@@ -6,7 +6,7 @@ use frame_benchmarking::{benchmarks, whitelisted_caller};
 use frame_system::RawOrigin;
 use mangata_support::traits::{ComputeIssuance, ProofOfStakeRewardsApi};
 use orml_tokens::MultiTokenCurrencyExtended;
-use sp_runtime::{SaturatedConversion};
+use sp_runtime::SaturatedConversion;
 
 use crate::Pallet as PoS;
 

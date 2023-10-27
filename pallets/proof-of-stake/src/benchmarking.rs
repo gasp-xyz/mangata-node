@@ -2,11 +2,11 @@
 
 use super::*;
 
-use frame_benchmarking::{account, benchmarks, whitelisted_caller};
+use frame_benchmarking::{benchmarks, whitelisted_caller};
 use frame_system::RawOrigin;
 use mangata_support::traits::{ComputeIssuance, ProofOfStakeRewardsApi};
 use orml_tokens::MultiTokenCurrencyExtended;
-use sp_runtime::{Permill, SaturatedConversion};
+use sp_runtime::{SaturatedConversion};
 
 use crate::Pallet as PoS;
 
@@ -59,8 +59,10 @@ benchmarks! {
 		let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 		let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 		let non_native_asset_id2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+		let non_native_asset_id3 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 
 		let liquidity_asset_id : TokenId= <T as Config>::Currency::create(&caller, ((40000000000000000000_u128/2_u128) + (60000000000000000000_u128/2_u128)).into()).unwrap().into();
+
 	   PoS::<T>::update_pool_promotion(RawOrigin::Root.into(), liquidity_asset_id, 1u8).unwrap();
 
 		assert_eq!(
@@ -95,13 +97,17 @@ benchmarks! {
 	update_pool_promotion {
 		let caller: T::AccountId = whitelisted_caller();
 		let initial_amount:mangata_types::Balance = 1000000000000;
-		let token_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+		let non_native_asset_id0 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+		let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+		let non_native_asset_id2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+		let non_native_asset_id3 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+		let liquidity_token_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 
-	}: update_pool_promotion(RawOrigin::Root, token_id, 1u8)
+	}: update_pool_promotion(RawOrigin::Root, liquidity_token_id, 1u8)
 
 	verify {
 		assert!(
-			PoS::<T>::is_enabled(token_id)
+			PoS::<T>::is_enabled(liquidity_token_id)
 		 );
 	}
 
@@ -120,6 +126,7 @@ benchmarks! {
 		let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 		let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 		let non_native_asset_id2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+		let non_native_asset_id3 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 
 		let liquidity_asset_id : TokenId= <T as Config>::Currency::create(&caller, ((40000000000000000000_u128/2_u128) + (60000000000000000000_u128/2_u128)).into()).unwrap().into();
 	   PoS::<T>::update_pool_promotion(RawOrigin::Root.into(), liquidity_asset_id, 1u8).unwrap();
@@ -165,7 +172,9 @@ benchmarks! {
 		let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 		let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 		let non_native_asset_id2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+		let non_native_asset_id3 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 		let liquidity_asset_id : TokenId= <T as Config>::Currency::create(&caller, ((40000000000000000000_u128/2_u128) + (60000000000000000000_u128/2_u128)).into()).unwrap().into();
+
 		PoS::<T>::enable(liquidity_asset_id, 1u8);
 
 		assert_eq!(

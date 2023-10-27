@@ -371,7 +371,6 @@ pub mod config {
 		impl<T: ::pallet_xyk::Config> Contains<TokenId> for SoloTokensFilter<T> {
 			fn contains(token_id: &TokenId) -> bool {
 				// we want to check whether tokenId is liquidity token or solo token
-				// and if it is solo token return false otherwise true
 				::pallet_xyk::Pallet::<T>::is_liquidity_token(*token_id)
 			}
 		}

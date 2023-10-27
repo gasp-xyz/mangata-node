@@ -209,6 +209,14 @@ impl Contains<(TokenId, TokenId)> for DummyBlacklistedPool {
 	}
 }
 
+pub struct DummyLiquidityTokens;
+
+impl Contains<TokenId> for DummyLiquidityTokens {
+	fn contains(token_id: &TokenId) -> bool {
+		*token_id == 2
+	}
+}
+
 pub struct MockAssetRegister;
 
 lazy_static::lazy_static! {
@@ -330,7 +338,7 @@ impl pallet_proof_of_stake::Config for Test {
 	type RewardsDistributionPeriod = ConstU32<10>;
 	type WeightInfo = ();
 
-	type LiquidityTokens = ();
+	type LiquidityTokens = DummyLiquidityTokens;
 }
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -343,7 +351,7 @@ impl pallet_proof_of_stake::Config for Test {
 	type RewardsDistributionPeriod = ConstU32<1200>;
 	type WeightInfo = ();
 
-	type LiquidityTokens = ();
+	type LiquidityTokens = DummyLiquidityTokens;
 }
 
 pub struct TokensActivationPassthrough<T: Config>(PhantomData<T>);

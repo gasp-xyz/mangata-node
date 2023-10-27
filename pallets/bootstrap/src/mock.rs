@@ -165,6 +165,8 @@ impl pallet_proof_of_stake::Config for Test {
 	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = ConstU32<10000>;
 	type WeightInfo = ();
+
+	type LiquidityTokens = ();
 }
 
 impl BootstrapBenchmarkingConfig for Test {}

@@ -43,13 +43,33 @@ fn initialize_liquidity_rewards() {
 		.unwrap();
 }
 
-pub(crate) fn roll_to_session(n: u32) {
-	let block = n * Pallet::<Test>::rewards_period();
+fn process_all_schedules_in_current_session() {
+	let session = ProofOfStake::session_index();
+	loop {
+		if ProofOfStake::session_index() > session {
+			panic!("couldnt process all schedules within the session");
+		}
 
-	if block < System::block_number().saturated_into::<u32>() {
-		panic!("cannot roll to past block");
+		if !ProofOfStake::is_new_session() && ProofOfStake::pos() == ProofOfStake::tail() {
+			break
+		}
+		roll_to_next_block();
 	}
-	forward_to_block(block);
+}
+
+fn roll_to_next_block() {
+	forward_to_block((System::block_number() + 1).saturated_into::<u32>());
+}
+
+fn roll_to_next_session() {
+	let current_session = ProofOfStake::session_index();
+	roll_to_session(current_session + 1);
+}
+
+pub fn roll_to_session(n: u32) {
+	while ProofOfStake::session_index() < n {
+		roll_to_next_block();
+	}
 }
 
 fn forward_to_block(n: u32) {
@@ -57,13 +77,60 @@ fn forward_to_block(n: u32) {
 }
 
 fn forward_to_block_with_custom_rewards(n: u32, rewards: u128) {
-	while System::block_number().saturated_into::<u32>() <= n {
+	while System::block_number().saturated_into::<u32>() < n {
+		System::set_block_number(System::block_number().saturated_into::<u64>() + 1);
 		ProofOfStake::on_initialize(System::block_number().saturated_into::<u64>());
-		if System::block_number().saturated_into::<u32>() % ProofOfStake::rewards_period() == 0 {
+		if ProofOfStake::is_new_session() {
 			ProofOfStake::distribute_rewards(rewards);
 		}
 		ProofOfStake::on_finalize(n as u64);
-		System::set_block_number(System::block_number().saturated_into::<u64>() + 1);
+	}
+}
+//
+// pub fn roll_to_while_minting(n: u64) {
+// 	let mut session_number: u32;
+// 	let mut session_issuance: (Balance, Balance);
+// 	let mut block_issuance: Balance;
+// 	while System::block_number() < n {
+// 		System::on_finalize(System::block_number());
+//
+// 		System::set_block_number(System::block_number() + 1);
+//
+// 		System::on_initialize(System::block_number());
+// 		session_number = ProofOfStake::session_index();
+// 		session_issuance = <Issuance as GetIssuance>::get_all_issuance(session_number)
+// 			.expect("session issuance is always populated in advance");
+// 		block_issuance = (session_issuance.0 + session_issuance.1) /
+// 			(BlocksPerRound::get().saturated_into::<u128>());
+//
+// 		// Compute issuance for the next session only after all issuance has been issued is current session
+// 		// To avoid overestimating the missing issuance and overshooting the cap
+// 		if ProofOfStake::is_new_session() {
+// 			<Issuance as ComputeIssuance>::compute_issuance(session_number + 1u32);
+// 		}
+// 	}
+// }
+
+pub(crate) fn roll_to_while_minting(n: u64) {
+	let mut session_number: u32;
+	let mut session_issuance: (Balance, Balance);
+	let mut block_issuance: Balance;
+	while System::block_number() < n {
+		System::on_finalize(System::block_number());
+		System::set_block_number(System::block_number() + 1);
+		System::on_initialize(System::block_number());
+		session_number = System::block_number().saturated_into::<u32>() / BlocksPerRound::get();
+		session_issuance = <Issuance as GetIssuance>::get_all_issuance(session_number)
+			.expect("session issuance is always populated in advance");
+		block_issuance = (session_issuance.0 + session_issuance.1) / (BlocksPerRound::get().saturated_into::<u128>());
+
+		// Compute issuance for the next session only after all issuance has been issued is current session
+		// To avoid overestimating the missing issuance and overshooting the cap
+		// if ((System::block_number().saturated_into::<u32>() + 1u32) % BlocksPerRound::get()) == 0 {
+		// if ((System::block_number().saturated_into::<u32>() + 1u32) % BlocksPerRound::get()) == 0 {
+		if ProofOfStake::is_new_session(){
+			<Issuance as ComputeIssuance>::compute_issuance(session_number + 1u32);
+		}
 	}
 }
 
@@ -630,7 +697,7 @@ fn rewards_rounding_during_often_mint() {
 		let mut higher_rewards_cumulative = 0;
 		for n in 1..10000 {
 			System::set_block_number(n);
-			if (n + 1) % (ProofOfStake::rewards_period() as u64) == 0 {
+			if ProofOfStake::is_new_session() {
 				ProofOfStake::distribute_rewards(10000);
 
 				mint_and_activate_tokens(
@@ -1067,28 +1134,6 @@ fn liquidity_rewards_transfered_liq_tokens_produce_rewards_W() {
 	});
 }
 
-pub(crate) fn roll_to_while_minting(n: u64) {
-	let mut session_number: u32;
-	let mut session_issuance: (Balance, Balance);
-	let mut block_issuance: Balance;
-	while System::block_number() < n {
-		System::on_finalize(System::block_number());
-		System::set_block_number(System::block_number() + 1);
-		System::on_initialize(System::block_number());
-		session_number = System::block_number().saturated_into::<u32>() / BlocksPerRound::get();
-		session_issuance = <Issuance as GetIssuance>::get_all_issuance(session_number)
-			.expect("session issuance is always populated in advance");
-		block_issuance = (session_issuance.0 + session_issuance.1) /
-			(BlocksPerRound::get().saturated_into::<u128>());
-
-		// Compute issuance for the next session only after all issuance has been issued is current session
-		// To avoid overestimating the missing issuance and overshooting the cap
-		if ((System::block_number().saturated_into::<u32>() + 1u32) % BlocksPerRound::get()) == 0 {
-			<Issuance as ComputeIssuance>::compute_issuance(session_number + 1u32);
-		}
-	}
-}
-
 #[test]
 fn test_migrated_from_pallet_issuance() {
 	new_test_ext().execute_with(|| {
@@ -1118,14 +1163,14 @@ fn test_migrated_from_pallet_issuance() {
 		)
 		.unwrap();
 
-		roll_to_while_minting(4);
-		assert_eq!(
-			U256::from_dec_str("76571018769283414925455480913511346478027010").unwrap(),
-			ProofOfStake::get_pool_rewards(1).unwrap()
-		);
 		roll_to_while_minting(9);
 		assert_eq!(
-			U256::from_dec_str("153142037538566829850910961827022692956054020").unwrap(),
+			U256::from_dec_str("153142377820933750789374425201630124724265475").unwrap(),
+			ProofOfStake::get_pool_rewards(1).unwrap()
+		);
+		roll_to_while_minting(19);
+		assert_eq!(
+			U256::from_dec_str("306284755641867501578748850403260249448530950").unwrap(),
 			ProofOfStake::get_pool_rewards(1).unwrap()
 		);
 
@@ -1138,23 +1183,23 @@ fn test_migrated_from_pallet_issuance() {
 			None,
 		)
 		.unwrap();
-		roll_to_while_minting(14);
+		roll_to_while_minting(29);
 		assert_eq!(
-			U256::from_dec_str("191427546923208537313638702283778366195067525").unwrap(),
-			ProofOfStake::get_pool_rewards(1).unwrap()
-		);
-		assert_eq!(
-			U256::from_dec_str("38285509384641707462727740456755673239013505").unwrap(),
-			ProofOfStake::get_pool_rewards(2).unwrap()
-		);
-
-		roll_to_while_minting(19);
-		assert_eq!(
-			U256::from_dec_str("229713056307850244776366442740534039434081030").unwrap(),
+			U256::from_dec_str("382855774411150916504204331316771595926557960").unwrap(),
 			ProofOfStake::get_pool_rewards(1).unwrap()
 		);
 		assert_eq!(
 			U256::from_dec_str("76571018769283414925455480913511346478027010").unwrap(),
+			ProofOfStake::get_pool_rewards(2).unwrap()
+		);
+		//
+		roll_to_while_minting(39);
+		assert_eq!(
+			U256::from_dec_str("459426793180434331429659812230282942404584970").unwrap(),
+			ProofOfStake::get_pool_rewards(1).unwrap()
+		);
+		assert_eq!(
+			U256::from_dec_str("153142037538566829850910961827022692956054020").unwrap(),
 			ProofOfStake::get_pool_rewards(2).unwrap()
 		);
 	});
@@ -1531,11 +1576,11 @@ fn rewards_linked_list_removes_outdated_schedule_automatically() {
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
 			assert_eq!(ScheduleListPos::<Test>::get(), Some(1u64));
 
-			forward_to_block(30);
+			forward_to_block(29);
 			assert_eq!(ScheduleListHead::<Test>::get(), Some(1u64));
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
 
-			forward_to_block(31);
+			forward_to_block(30);
 			assert_eq!(ScheduleListHead::<Test>::get(), None);
 			assert_eq!(ScheduleListTail::<Test>::get(), None);
 			assert_eq!(ScheduleListPos::<Test>::get(), None);
@@ -1691,7 +1736,7 @@ fn remove_first_few_elems_at_once_from_linked_list() {
 			assert_eq!(ScheduleListPos::<Test>::get(), None);
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
 
-			forward_to_block(21);
+			forward_to_block(20);
 
 			assert_eq!(ScheduleListHead::<Test>::get(), Some(2u64));
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
@@ -1833,8 +1878,8 @@ fn remove_random_elements_from_linked_list_over_time() {
 			assert_eq!(ScheduleListPos::<Test>::get(), None);
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(6u64));
 
-			forward_to_block(24);
-
+			roll_to_session(2);
+			process_all_schedules_in_current_session();
 			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(6u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(1u64));
@@ -1843,7 +1888,8 @@ fn remove_random_elements_from_linked_list_over_time() {
 			assert_eq!(RewardsSchedulesList::<Test>::get(4u64).unwrap().1, Some(6u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(6u64).unwrap().1, None);
 
-			forward_to_block(40);
+			roll_to_session(3);
+			process_all_schedules_in_current_session();
 
 			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(6u64));

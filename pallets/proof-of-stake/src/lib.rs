@@ -192,10 +192,11 @@ pub mod pallet {
 			let session_id = Self::session_index() as u64;
 
 			// NOTE: 1R
-			if n.saturated_into::<u32>() % T::RewardsDistributionPeriod::get() == 0u32 {
+			if Self::is_new_session() {
 				ScheduleListPos::<T>::kill();
 				return Default::default()
 			}
+
 			const AMOUNT_PER_BLOCK: u64 = 5;
 
 			for idx in 0..AMOUNT_PER_BLOCK {
@@ -1156,14 +1157,16 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn session_index() -> u32 {
-		frame_system::Pallet::<T>::block_number()
-			.saturated_into::<u32>()
-			.checked_div(T::RewardsDistributionPeriod::get())
-			.unwrap_or(0)
+		Self::get_current_rewards_time().unwrap_or_default()
 	}
 
 	pub fn rewards_period() -> u32 {
-		<T as Config>::RewardsDistributionPeriod::get()
+		T::RewardsDistributionPeriod::get()
+	}
+
+	pub fn is_new_session() -> bool {
+		let block_nr = frame_system::Pallet::<T>::block_number().saturated_into::<u32>();
+		(block_nr + 1) % Self::rewards_period() == 0u32
 	}
 
 	fn native_token_id() -> TokenId {

@@ -170,7 +170,7 @@ parameter_types! {
 	pub const ImmediateTGEReleasePercent: Percent = Percent::from_percent(20);
 	pub const TGEReleasePeriod: u32 = 100u32; // 2 years
 	pub const TGEReleaseBegin: u32 = 10u32; // Two weeks into chain start
-	pub const BlocksPerRound: u32 = 5u32;
+	pub const BlocksPerRound: u32 = 10u32;
 	pub const HistoryLimit: u32 = 10u32;
 }
 

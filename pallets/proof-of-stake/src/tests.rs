@@ -4064,3 +4064,66 @@ fn multiple_activations_and_deactivations_from_multiple_users_on_the_same_schedu
 			);
 		});
 }
+
+
+#[test]
+#[serial]
+fn activity_for_schedule_rewards_can_be_activated_only_after_pool_is_rewarded_for_the_first_time() {
+	ExtBuilder::new()
+		.issue(ALICE, REWARD_TOKEN, 10 * 3 * REWARD_AMOUNT)
+		.issue(BOB, LIQUIDITY_TOKEN, 100)
+		.build()
+		.execute_with(|| {
+			System::set_block_number(1);
+			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
+			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
+			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+			assert_err_ignore_postinfo!(
+				ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+					RuntimeOrigin::signed(BOB),
+					LIQUIDITY_TOKEN,
+					100,
+					REWARD_TOKEN,
+					None,
+				),
+				Error::<Test>::NotAPromotedPool
+			);
+
+			ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 2u8).unwrap();
+
+			assert_err_ignore_postinfo!(
+				ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+					RuntimeOrigin::signed(BOB),
+					LIQUIDITY_TOKEN,
+					100,
+					REWARD_TOKEN,
+					None,
+				),
+				Error::<Test>::NotAPromotedPool
+			);
+
+
+			ProofOfStake::reward_pool(
+				RuntimeOrigin::signed(ALICE),
+				REWARDED_PAIR,
+				REWARD_TOKEN,
+				REWARD_AMOUNT / 2,
+				10u32.into(),
+			)
+			.unwrap();
+
+
+			assert_ok!(
+				ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+					RuntimeOrigin::signed(BOB),
+					LIQUIDITY_TOKEN,
+					100,
+					REWARD_TOKEN,
+					None,
+				)
+			);
+
+		});
+}

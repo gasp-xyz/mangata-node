@@ -1,6 +1,7 @@
 use frame_support::dispatch::DispatchResult;
 
 use crate::{Config, Error, Pallet};
+use crate::schedule_rewards_calculator::ScheduleRewardsCalculator;
 use frame_support::pallet_prelude::*;
 use mangata_types::{Balance, TokenId};
 use sp_core::U256;
@@ -94,7 +95,7 @@ impl RewardsCalculator<ConstCurveRewards> {
 		// println!("total_rewards   : {}", total_rewards);
 		// let pool_ratio_current =  U256::from(total_rewards.checked_div(total_activated).unwrap_or_default()) * U256::from(u128::MAX);
 		let pool_ratio_current =
-			Pallet::<T>::total_rewards_for_liquidity(asset_id, reward_asset_id);
+			ScheduleRewardsCalculator::<T>::total_rewards_for_liquidity(asset_id, reward_asset_id);
 		println!("SCHEDULE REWARDS RATIO: {}", pool_ratio_current);
 
 		let default_rewards = RewardInfo {

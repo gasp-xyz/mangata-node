@@ -133,7 +133,11 @@ use sp_runtime::{traits::SaturatedConversion, Perbill};
 use sp_std::{convert::TryInto, prelude::*};
 
 mod reward_info;
-use reward_info::{AsymptoticCurveRewards, ConstCurveRewards, RewardInfo, RewardsCalculator};
+use reward_info::{RewardInfo, RewardsCalculator};
+
+mod schedule_rewards_calculator;
+use schedule_rewards_calculator::ScheduleRewardsCalculator;
+
 mod benchmarking;
 
 #[cfg(test)]
@@ -178,7 +182,6 @@ const PALLET_ID: frame_support::PalletId = frame_support::PalletId(*b"rewards!")
 #[frame_support::pallet]
 pub mod pallet {
 	use frame_support::traits::Currency;
-	use mangata_support::traits::PoolCreateApi;
 
 	use super::*;
 
@@ -186,9 +189,10 @@ pub mod pallet {
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(PhantomData<T>);
 
+
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
-		fn on_initialize(n: T::BlockNumber) -> Weight {
+		fn on_initialize(_n: T::BlockNumber) -> Weight {
 			let session_id = Self::session_index() as u64;
 
 			// NOTE: 1R
@@ -199,7 +203,7 @@ pub mod pallet {
 
 			const AMOUNT_PER_BLOCK: u64 = 5;
 
-			for idx in 0..AMOUNT_PER_BLOCK {
+			for _ in 0..AMOUNT_PER_BLOCK {
 				// READS PER ITERTION
 				//
 				// 			ON VALID SCHEDULE  (AVERAGE)                        ====> 3R + 1 W + N*R + N*W
@@ -223,7 +227,7 @@ pub mod pallet {
 				// NOTE: 1R
 				let pos = match (last_valid, ScheduleListHead::<T>::get()) {
 					(Some(pos), _) => {
-						if let Some((schedule, next)) = RewardsSchedulesList::<T>::get(pos) {
+						if let Some((_schedule, next)) = RewardsSchedulesList::<T>::get(pos) {
 							next
 						} else {
 							None
@@ -274,16 +278,16 @@ pub mod pallet {
 										ScheduleListTail::<T>::put(last_valid);
 										// NOTE: 1R 1W
 										RewardsSchedulesList::<T>::mutate(last_valid, |data| {
-											if let Some((schedule, next)) = data.as_mut() {
+											if let Some((_schedule, next)) = data.as_mut() {
 												*next = None
 											}
 										});
 									},
-								(Some(head), Some(tail)) =>
+								(Some(_head), Some(_tail)) =>
 									if let Some(last_valid) = last_valid {
 										// NOTE: 1R 1W
 										RewardsSchedulesList::<T>::mutate(last_valid, |data| {
-											if let Some((schedule, prev_next)) = data.as_mut() {
+											if let Some((_schedule, prev_next)) = data.as_mut() {
 												*prev_next = next
 											}
 										});
@@ -466,6 +470,7 @@ pub mod pallet {
 	pub type ScheduleRewardsTotal<T: Config> =
 		StorageMap<_, Twox64Concat, (TokenId, TokenId), (u128, u64, u128), ValueQuery>;
 
+
 	#[pallet::storage]
 	pub type ScheduleRewardsPerLiquidity<T: Config> =
 		StorageMap<_, Twox64Concat, (TokenId, TokenId), (U256, u64), ValueQuery>;
@@ -646,7 +651,6 @@ pub mod pallet {
 		/// - amount - amount of the token
 		/// - schedule_end - id of the last rewarded seession. Rewards will be distributedd equally between sessions in range (now ..
 		/// schedule_end). Distribution starts from the *next* session till `schedule_end`.
-		// TODO: delays schedule by 1 session
 		#[transactional]
 		#[pallet::call_index(4)]
 		#[pallet::weight(<<T as Config>::WeightInfo>::reward_pool())]
@@ -748,7 +752,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			Self::update_cumulative_rewards(liquidity_token_id, reward_token);
+			ScheduleRewardsCalculator::<T>::update_cumulative_rewards(liquidity_token_id, reward_token);
 			Self::claim_schedule_rewards_all_impl(sender, liquidity_token_id, reward_token)?;
 			Ok(())
 		}
@@ -813,116 +817,6 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-	fn update_cumulative_rewards(liquidity_asset_id: TokenId, liquidity_assets_reward: TokenId) {
-		let (cumulative, idx) =
-			ScheduleRewardsPerLiquidity::<T>::get((liquidity_asset_id, liquidity_assets_reward));
-		if idx == (Self::session_index() as u64) {
-		} else {
-			let total_activated_liquidity =
-				Self::total_activated_liquidity(liquidity_asset_id, liquidity_assets_reward);
-			let total_schedule_rewards =
-				Self::total_schedule_rewards(liquidity_asset_id, liquidity_assets_reward);
-			if total_activated_liquidity > 0 {
-				ScheduleRewardsTotal::<T>::mutate(
-					(liquidity_asset_id, liquidity_assets_reward),
-					|(cumulative, _, _)| {
-						*cumulative = 0;
-					},
-				);
-				let pending = (U256::from(total_schedule_rewards) * U256::from(u128::MAX))
-					.checked_div(U256::from(total_activated_liquidity))
-					.unwrap_or_default();
-				ScheduleRewardsPerLiquidity::<T>::insert(
-					(liquidity_asset_id, liquidity_assets_reward),
-					(cumulative + pending, (Self::session_index() as u64)),
-				);
-			}
-		}
-	}
-
-	fn total_rewards_for_liquidity(
-		liquidity_asset_id: TokenId,
-		liquidity_assets_reward: TokenId,
-	) -> U256 {
-		let (cumulative, idx) =
-			ScheduleRewardsPerLiquidity::<T>::get((liquidity_asset_id, liquidity_assets_reward));
-		if idx == (Self::session_index() as u64) {
-			cumulative
-		} else {
-			let total_activated_liquidity =
-				Self::total_activated_liquidity(liquidity_asset_id, liquidity_assets_reward);
-			let total_schedule_rewards =
-				Self::total_schedule_rewards(liquidity_asset_id, liquidity_assets_reward);
-			let pending = (U256::from(total_schedule_rewards) * U256::from(u128::MAX))
-				.checked_div(U256::from(total_activated_liquidity))
-				.unwrap_or_default();
-			cumulative + pending
-		}
-	}
-
-	fn total_activated_liquidity(
-		liquidity_asset_id: TokenId,
-		liquidity_assets_reward: TokenId,
-	) -> Balance {
-		let (pending_negative, pending_positive, idx, cumulative) =
-			TotalActivatedLiquidityForSchedules::<T>::get(
-				liquidity_asset_id,
-				liquidity_assets_reward,
-			);
-		if idx == (Self::session_index() as u64) {
-			cumulative
-		} else {
-			cumulative + pending_positive - pending_negative
-		}
-	}
-
-	fn total_schedule_rewards(
-		liquidity_asset_id: TokenId,
-		liquidity_assets_reward: TokenId,
-	) -> Balance {
-		let (pending, idx, cumulative) =
-			ScheduleRewardsTotal::<T>::get((liquidity_asset_id, liquidity_assets_reward));
-		if idx == (Self::session_index() as u64) {
-			cumulative
-		} else {
-			cumulative + pending
-		}
-	}
-
-	fn update_total_activated_liqudity(
-		liquidity_asset_id: TokenId,
-		liquidity_assets_reward: TokenId,
-		diff: Balance,
-		change: bool,
-	) {
-		// TODO: make configurable
-		let session_id = Self::session_index() as u64;
-
-		TotalActivatedLiquidityForSchedules::<T>::mutate(
-			liquidity_asset_id,
-			liquidity_assets_reward,
-			|(pending_negative, pending_positive, idx, cumulative)| {
-				if *idx == session_id {
-					if change {
-						*pending_positive += diff;
-					} else {
-						*pending_negative += diff;
-					};
-				} else {
-					// NOTE: handle burn so negative diff
-					*cumulative = *cumulative + *pending_positive - *pending_negative;
-					if change {
-						*pending_positive = diff;
-						*pending_negative = 0u128;
-					} else {
-						*pending_positive = 0u128;
-						*pending_negative = diff;
-					};
-					*idx = session_id;
-				}
-			},
-		);
-	}
 
 	fn activate_liquidity_for_native_rewards_impl(
 		user: AccountIdOf<T>,
@@ -1189,7 +1083,6 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn ensure_is_promoted_pool(liquidity_asset_id: TokenId) -> Result<(), DispatchError> {
-		//NOTE: 2 separate functions for separate rewards
 		if Self::get_pool_rewards(liquidity_asset_id).is_ok() ||
 			RewardTokensPerPool::<T>::iter_prefix_values(liquidity_asset_id)
 				.next()
@@ -1238,7 +1131,7 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
 
-		Self::update_cumulative_rewards(liquidity_asset_id, liquidity_assets_reward);
+		ScheduleRewardsCalculator::<T>::update_cumulative_rewards(liquidity_asset_id, liquidity_assets_reward);
 		{
 			let calc = RewardsCalculator::schedule_rewards::<T>(
 				user.clone(),
@@ -1270,7 +1163,7 @@ impl<T: Config> Pallet<T> {
 			},
 		)?;
 
-		Self::update_total_activated_liqudity(
+		ScheduleRewardsCalculator::<T>::update_total_activated_liqudity(
 			liquidity_asset_id,
 			liquidity_assets_reward,
 			liquidity_assets_added,
@@ -1329,7 +1222,7 @@ impl<T: Config> Pallet<T> {
 		reward_token: TokenId,
 	) -> DispatchResult {
 		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
-		Self::update_cumulative_rewards(liquidity_asset_id, reward_token);
+		ScheduleRewardsCalculator::<T>::update_cumulative_rewards(liquidity_asset_id, reward_token);
 
 		let calc = RewardsCalculator::schedule_rewards::<T>(
 			user.clone(),
@@ -1347,7 +1240,7 @@ impl<T: Config> Pallet<T> {
 			rewards_info,
 		);
 
-		Self::update_total_activated_liqudity(
+		ScheduleRewardsCalculator::<T>::update_total_activated_liqudity(
 			liquidity_asset_id,
 			reward_token,
 			liquidity_assets_burned,

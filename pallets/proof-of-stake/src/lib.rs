@@ -136,7 +136,7 @@ mod reward_info;
 use reward_info::{RewardInfo, RewardsCalculator};
 
 mod schedule_rewards_calculator;
-use schedule_rewards_calculator::ScheduleRewardsCalculator;
+use schedule_rewards_calculator::{ScheduleRewardsCalculator, ScheduleRewards};
 
 mod benchmarking;
 
@@ -178,6 +178,7 @@ pub enum ThirdPartyActivationKind {
 }
 
 const PALLET_ID: frame_support::PalletId = frame_support::PalletId(*b"rewards!");
+pub type SessionId = u64;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -244,15 +245,7 @@ pub mod pallet {
 								// NOTE: 1R 1W
 								ScheduleRewardsTotal::<T>::mutate(
 									(schedule.liq_token, schedule.reward_token),
-									|(pending, idx, cumulative)| {
-										if *idx >= session_id {
-											*pending += schedule.amount_per_session
-										} else {
-											*cumulative += *pending;
-											*pending = schedule.amount_per_session;
-											*idx = session_id;
-										}
-									},
+									|s| s.provide_rewards(session_id, schedule.amount_per_session)
 								);
 							}
 							// NOTE: 1W
@@ -457,17 +450,12 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
-	/// How much scheduled rewards per single liquidty_token should be distribute_rewards
-	/// the **value is multiplied by u128::MAX** to avoid floating point arithmetic
-	#[pallet::storage]
-	pub type ScheduleRewardsPerSingleLiquidity<T: Config> =
-		StorageValue<_, BTreeMap<(TokenId, TokenId), u128>, ValueQuery>;
 
 	/// How much scheduled rewards per single liquidty_token should be distribute_rewards
 	/// the **value is multiplied by u128::MAX** to avoid floating point arithmetic
 	#[pallet::storage]
-	pub type ScheduleRewardsTotal<T: Config> =
-		StorageMap<_, Twox64Concat, (TokenId, TokenId), (u128, u64, u128), ValueQuery>;
+	// pub type ScheduleRewardsTotal<T: Config> = StorageMap<_, Twox64Concat, (TokenId, TokenId), (u128, u64, u128), ValueQuery>;
+	pub type ScheduleRewardsTotal<T: Config> = StorageMap<_, Twox64Concat, (TokenId, TokenId), ScheduleRewards, ValueQuery>;
 
 	#[pallet::storage]
 	pub type ScheduleRewardsPerLiquidity<T: Config> =

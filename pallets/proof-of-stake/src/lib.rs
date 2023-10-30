@@ -189,7 +189,6 @@ pub mod pallet {
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(PhantomData<T>);
 
-
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_initialize(_n: T::BlockNumber) -> Weight {
@@ -469,7 +468,6 @@ pub mod pallet {
 	#[pallet::storage]
 	pub type ScheduleRewardsTotal<T: Config> =
 		StorageMap<_, Twox64Concat, (TokenId, TokenId), (u128, u64, u128), ValueQuery>;
-
 
 	#[pallet::storage]
 	pub type ScheduleRewardsPerLiquidity<T: Config> =
@@ -752,7 +750,10 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			ScheduleRewardsCalculator::<T>::update_cumulative_rewards(liquidity_token_id, reward_token);
+			ScheduleRewardsCalculator::<T>::update_cumulative_rewards(
+				liquidity_token_id,
+				reward_token,
+			);
 			Self::claim_schedule_rewards_all_impl(sender, liquidity_token_id, reward_token)?;
 			Ok(())
 		}
@@ -817,7 +818,6 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-
 	fn activate_liquidity_for_native_rewards_impl(
 		user: AccountIdOf<T>,
 		liquidity_asset_id: TokenId,
@@ -1131,7 +1131,10 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
 
-		ScheduleRewardsCalculator::<T>::update_cumulative_rewards(liquidity_asset_id, liquidity_assets_reward);
+		ScheduleRewardsCalculator::<T>::update_cumulative_rewards(
+			liquidity_asset_id,
+			liquidity_assets_reward,
+		);
 		{
 			let calc = RewardsCalculator::schedule_rewards::<T>(
 				user.clone(),

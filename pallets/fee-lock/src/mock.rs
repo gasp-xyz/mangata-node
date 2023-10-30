@@ -14,8 +14,8 @@ use crate as pallet_fee_lock;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{ConstU32, Contains, Everything},
+	weights::constants::RocksDbWeight,
 	PalletId,
-	weights::{constants::RocksDbWeight},
 };
 use frame_system as system;
 use mangata_types::Amount;

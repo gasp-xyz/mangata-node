@@ -77,9 +77,7 @@ fn forward_to_block(n: u32) {
 }
 
 fn forward_to_block_with_custom_rewards(n: u32, rewards: u128) {
-
 	while System::block_number().saturated_into::<u32>() < n {
-
 		let new_block_number = System::block_number().saturated_into::<u64>() + 1;
 		System::set_block_number(new_block_number);
 
@@ -94,7 +92,6 @@ fn forward_to_block_with_custom_rewards(n: u32, rewards: u128) {
 		System::on_finalize(new_block_number);
 	}
 }
-
 
 #[test]
 fn liquidity_rewards_single_user_mint_W() {
@@ -4065,7 +4062,6 @@ fn multiple_activations_and_deactivations_from_multiple_users_on_the_same_schedu
 		});
 }
 
-
 #[test]
 #[serial]
 fn activity_for_schedule_rewards_can_be_activated_only_after_pool_is_rewarded_for_the_first_time() {
@@ -4091,7 +4087,8 @@ fn activity_for_schedule_rewards_can_be_activated_only_after_pool_is_rewarded_fo
 				Error::<Test>::NotAPromotedPool
 			);
 
-			ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 2u8).unwrap();
+			ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 2u8)
+				.unwrap();
 
 			assert_err_ignore_postinfo!(
 				ProofOfStake::activate_liquidity_for_3rdparty_rewards(
@@ -4104,7 +4101,6 @@ fn activity_for_schedule_rewards_can_be_activated_only_after_pool_is_rewarded_fo
 				Error::<Test>::NotAPromotedPool
 			);
 
-
 			ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
 				REWARDED_PAIR,
@@ -4114,16 +4110,12 @@ fn activity_for_schedule_rewards_can_be_activated_only_after_pool_is_rewarded_fo
 			)
 			.unwrap();
 
-
-			assert_ok!(
-				ProofOfStake::activate_liquidity_for_3rdparty_rewards(
-					RuntimeOrigin::signed(BOB),
-					LIQUIDITY_TOKEN,
-					100,
-					REWARD_TOKEN,
-					None,
-				)
-			);
-
+			assert_ok!(ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(BOB),
+				LIQUIDITY_TOKEN,
+				100,
+				REWARD_TOKEN,
+				None,
+			));
 		});
 }

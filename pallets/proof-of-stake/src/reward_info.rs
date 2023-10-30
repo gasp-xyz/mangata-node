@@ -1,7 +1,6 @@
 use frame_support::dispatch::DispatchResult;
 
-use crate::{Config, Error, Pallet};
-use crate::schedule_rewards_calculator::ScheduleRewardsCalculator;
+use crate::{schedule_rewards_calculator::ScheduleRewardsCalculator, Config, Error, Pallet};
 use frame_support::pallet_prelude::*;
 use mangata_types::{Balance, TokenId};
 use sp_core::U256;

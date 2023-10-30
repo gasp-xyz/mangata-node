@@ -88,7 +88,6 @@ fn forward_to_block_with_custom_rewards(n: u32, rewards: u128) {
 
 		if ProofOfStake::is_new_session() {
 			ProofOfStake::distribute_rewards(rewards);
-			<Issuance as ComputeIssuance>::compute_issuance(ProofOfStake::session_index() + 1);
 		}
 
 		ProofOfStake::on_finalize(new_block_number);
@@ -96,29 +95,6 @@ fn forward_to_block_with_custom_rewards(n: u32, rewards: u128) {
 	}
 }
 
-
-pub(crate) fn roll_to_while_minting(n: u64) {
-	let mut session_number: u32;
-	let mut session_issuance: (Balance, Balance);
-	let mut block_issuance: Balance;
-	while System::block_number() < n {
-		System::on_finalize(System::block_number());
-		System::set_block_number(System::block_number() + 1);
-		System::on_initialize(System::block_number());
-		session_number = System::block_number().saturated_into::<u32>() / BlocksPerRound::get();
-		session_issuance = <Issuance as GetIssuance>::get_all_issuance(session_number)
-			.expect("session issuance is always populated in advance");
-		block_issuance = (session_issuance.0 + session_issuance.1) / ProofOfStake::rewards_period() as u128;
-
-		// Compute issuance for the next session only after all issuance has been issued is current session
-		// To avoid overestimating the missing issuance and overshooting the cap
-		// if ((System::block_number().saturated_into::<u32>() + 1u32) % BlocksPerRound::get()) == 0 {
-		// if ((System::block_number().saturated_into::<u32>() + 1u32) % BlocksPerRound::get()) == 0 {
-		if ProofOfStake::is_new_session(){
-			<Issuance as ComputeIssuance>::compute_issuance(session_number + 1u32);
-		}
-	}
-}
 
 #[test]
 fn liquidity_rewards_single_user_mint_W() {
@@ -1125,6 +1101,7 @@ fn test_migrated_from_pallet_issuance() {
 	new_test_ext().execute_with(|| {
 		env_logger::try_init();
 		System::set_block_number(1);
+		const LIQUIDITY_ISSUANCE: Balance = 450045;
 
 		let token_id = TokensOf::<Test>::create(&99999, 2000_000_000).unwrap();
 		assert_eq!(token_id, 0);
@@ -1149,45 +1126,45 @@ fn test_migrated_from_pallet_issuance() {
 		)
 		.unwrap();
 
-		forward_to_block(9);
+		forward_to_block_with_custom_rewards(9, LIQUIDITY_ISSUANCE);
 		assert_eq!(
 			U256::from_dec_str("153142377820933750789374425201630124724265475").unwrap(),
 			ProofOfStake::get_pool_rewards(1).unwrap()
 		);
-		// roll_to_while_minting(19);
-		// assert_eq!(
-		// 	U256::from_dec_str("306284755641867501578748850403260249448530950").unwrap(),
-		// 	ProofOfStake::get_pool_rewards(1).unwrap()
-		// );
-		//
-		// assert_eq!(2, TokensOf::<Test>::create(&99999, 1_000_000u128).unwrap());
-		// ProofOfStake::enable(2, 1u8);
-		// ProofOfStake::activate_liquidity_for_native_rewards(
-		// 	RuntimeOrigin::signed(99999),
-		// 	2,
-		// 	1,
-		// 	None,
-		// )
-		// .unwrap();
-		// roll_to_while_minting(29);
-		// assert_eq!(
-		// 	U256::from_dec_str("382855774411150916504204331316771595926557960").unwrap(),
-		// 	ProofOfStake::get_pool_rewards(1).unwrap()
-		// );
-		// assert_eq!(
-		// 	U256::from_dec_str("76571018769283414925455480913511346478027010").unwrap(),
-		// 	ProofOfStake::get_pool_rewards(2).unwrap()
-		// );
-		// //
-		// roll_to_while_minting(39);
-		// assert_eq!(
-		// 	U256::from_dec_str("459426793180434331429659812230282942404584970").unwrap(),
-		// 	ProofOfStake::get_pool_rewards(1).unwrap()
-		// );
-		// assert_eq!(
-		// 	U256::from_dec_str("153142037538566829850910961827022692956054020").unwrap(),
-		// 	ProofOfStake::get_pool_rewards(2).unwrap()
-		// );
+		forward_to_block_with_custom_rewards(19, LIQUIDITY_ISSUANCE);
+		assert_eq!(
+			U256::from_dec_str("306284755641867501578748850403260249448530950").unwrap(),
+			ProofOfStake::get_pool_rewards(1).unwrap()
+		);
+
+		assert_eq!(2, TokensOf::<Test>::create(&99999, 1_000_000u128).unwrap());
+		ProofOfStake::enable(2, 1u8);
+		ProofOfStake::activate_liquidity_for_native_rewards(
+			RuntimeOrigin::signed(99999),
+			2,
+			1,
+			None,
+		)
+		.unwrap();
+		forward_to_block_with_custom_rewards(29, LIQUIDITY_ISSUANCE);
+		assert_eq!(
+			U256::from_dec_str("382855774411150916504204331316771595926557960").unwrap(),
+			ProofOfStake::get_pool_rewards(1).unwrap()
+		);
+		assert_eq!(
+			U256::from_dec_str("76571018769283414925455480913511346478027010").unwrap(),
+			ProofOfStake::get_pool_rewards(2).unwrap()
+		);
+
+		forward_to_block_with_custom_rewards(39, LIQUIDITY_ISSUANCE);
+		assert_eq!(
+			U256::from_dec_str("459426793180434331429659812230282942404584970").unwrap(),
+			ProofOfStake::get_pool_rewards(1).unwrap()
+		);
+		assert_eq!(
+			U256::from_dec_str("153142037538566829850910961827022692956054020").unwrap(),
+			ProofOfStake::get_pool_rewards(2).unwrap()
+		);
 	});
 }
 

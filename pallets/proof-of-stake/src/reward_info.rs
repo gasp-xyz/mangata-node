@@ -85,17 +85,8 @@ impl RewardsCalculator<ConstCurveRewards> {
 			crate::RewardTokensPerPool::<T>::try_get(asset_id, reward_asset_id).is_ok(),
 			crate::Error::<T>::NotAPromotedPool
 		);
-
-		// NOTE: take into acout previous rewards (prev + rewards/activated)
-		// let total_activated = Pallet::<T>::total_activated_liquidity(asset_id, reward_asset_id);
-		// let total_rewards = Pallet::<T>::total_schedule_rewards(asset_id, reward_asset_id);
-		// println!("REWARDS CALCULATOR at {} for {}", current_time, user);
-		// println!("total_activated : {}", total_activated);
-		// println!("total_rewards   : {}", total_rewards);
-		// let pool_ratio_current =  U256::from(total_rewards.checked_div(total_activated).unwrap_or_default()) * U256::from(u128::MAX);
 		let pool_ratio_current =
 			ScheduleRewardsCalculator::<T>::total_rewards_for_liquidity(asset_id, reward_asset_id);
-		println!("SCHEDULE REWARDS RATIO: {}", pool_ratio_current);
 
 		let default_rewards = RewardInfo {
 			activated_amount: 0_u128,
@@ -197,7 +188,6 @@ impl CurveRewards for ConstCurveRewards {
 		let rewards_base: U256 = U256::from(user_info.activated_amount)
 			.checked_mul(pool_rewards_ratio_new)?
 			.checked_div(U256::from(u128::MAX))?; // always fit into u128
-		println!("REWARDS : {}", rewards_base);
 
 		rewards_base.try_into().ok()
 	}

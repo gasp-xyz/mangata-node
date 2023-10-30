@@ -108,6 +108,8 @@ pub struct ScheduleRewardsCalculator<T> {
 /// Class responsible for maintaining and periodically updating cumulative
 /// calculations required for 3rdparty rewards
 impl<T: Config> ScheduleRewardsCalculator<T> {
+	/// updates cumulative number of rewards per 1 liquidity (mulipliedd by u128::MAX) because of
+	/// precision.
 	pub fn update_cumulative_rewards(
 		liquidity_asset_id: TokenId,
 		liquidity_assets_reward: TokenId,
@@ -141,6 +143,8 @@ impl<T: Config> ScheduleRewardsCalculator<T> {
 		}
 	}
 
+	/// returns cumulative number of rewards per 1 liquidity (mulipliedd by u128::MAX) because of
+	/// precision.
 	pub fn total_rewards_for_liquidity(
 		liquidity_asset_id: TokenId,
 		liquidity_assets_reward: TokenId,
@@ -161,6 +165,8 @@ impl<T: Config> ScheduleRewardsCalculator<T> {
 		}
 	}
 
+	/// returns amount of schedule rewards that has been accumulated since last update of `ScheduleRewardsPerLiquidity`
+	/// its beeing tracked only for purpose of `ScheduleRewardsPerLiquidity` calculations
 	pub fn total_schedule_rewards(
 		liquidity_asset_id: TokenId,
 		liquidity_assets_reward: TokenId,
@@ -169,6 +175,8 @@ impl<T: Config> ScheduleRewardsCalculator<T> {
 			.total_rewards(Pallet::<T>::session_index() as u64)
 	}
 
+	/// returns amount of schedule rewards that has been accumulated since last update of `ScheduleRewardsPerLiquidity`
+	/// its beeing tracked only for purpose of `ScheduleRewardsPerLiquidity` calculations
 	pub fn update_total_activated_liqudity(
 		liquidity_asset_id: TokenId,
 		liquidity_assets_reward: TokenId,
@@ -185,6 +193,7 @@ impl<T: Config> ScheduleRewardsCalculator<T> {
 		);
 	}
 
+	/// returns info about total activated liquidity per schedule
 	pub fn total_activated_liquidity(
 		liquidity_asset_id: TokenId,
 		liquidity_assets_reward: TokenId,

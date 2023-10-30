@@ -217,7 +217,7 @@ jobs:
         if: success() || failure() # run this step even if previous step failed
         with:
           name: E2E report ${{ matrix.command }} # Name of the check run which will be created
-          path: e2eTests/reports/junit-*.xml # Path to test results
+          path: e2eTests/reports/*.xml # Path to test results
           reporter: jest-junit # Format of test results
 
       - name: Submit results to the testmo-run

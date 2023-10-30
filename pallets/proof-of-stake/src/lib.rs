@@ -136,7 +136,9 @@ mod reward_info;
 use reward_info::{RewardInfo, RewardsCalculator};
 
 mod schedule_rewards_calculator;
-use schedule_rewards_calculator::{ScheduleRewardsCalculator, ScheduleRewards};
+use schedule_rewards_calculator::{
+	ActivatedLiquidityPerSchedule, ScheduleRewards, ScheduleRewardsCalculator,
+};
 
 mod benchmarking;
 
@@ -245,7 +247,7 @@ pub mod pallet {
 								// NOTE: 1R 1W
 								ScheduleRewardsTotal::<T>::mutate(
 									(schedule.liq_token, schedule.reward_token),
-									|s| s.provide_rewards(session_id, schedule.amount_per_session)
+									|s| s.provide_rewards(session_id, schedule.amount_per_session),
 								);
 							}
 							// NOTE: 1W
@@ -450,21 +452,15 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
-
 	/// How much scheduled rewards per single liquidty_token should be distribute_rewards
 	/// the **value is multiplied by u128::MAX** to avoid floating point arithmetic
 	#[pallet::storage]
-	// pub type ScheduleRewardsTotal<T: Config> = StorageMap<_, Twox64Concat, (TokenId, TokenId), (u128, u64, u128), ValueQuery>;
-	pub type ScheduleRewardsTotal<T: Config> = StorageMap<_, Twox64Concat, (TokenId, TokenId), ScheduleRewards, ValueQuery>;
+	pub type ScheduleRewardsTotal<T: Config> =
+		StorageMap<_, Twox64Concat, (TokenId, TokenId), ScheduleRewards, ValueQuery>;
 
 	#[pallet::storage]
 	pub type ScheduleRewardsPerLiquidity<T: Config> =
 		StorageMap<_, Twox64Concat, (TokenId, TokenId), (U256, u64), ValueQuery>;
-
-	/// How much scheduled rewards per single liquidty_token should be distribute_rewards
-	/// the **value is multiplied by u128::MAX** to avoid floating point arithmetic
-	// #[pallet::storage]
-	// pub type ScheduleRewardsCumulative<T: Config> = StorageMap<_, Twox64Concat ,(TokenId, TokenId, u64), u128, ValueQuery>;
 
 	/// List of activated schedules sorted by expiry date
 	#[pallet::storage]
@@ -484,9 +480,6 @@ pub mod pallet {
 	pub type ScheduleListPos<T: Config> = StorageValue<_, ScheduleId, OptionQuery>;
 
 	#[pallet::storage]
-	pub type ScheduleListPosPrev<T: Config> = StorageValue<_, ScheduleId, OptionQuery>;
-
-	#[pallet::storage]
 	#[pallet::getter(fn head)]
 	pub type ScheduleListHead<T: Config> = StorageValue<_, ScheduleId, OptionQuery>;
 
@@ -503,7 +496,9 @@ pub mod pallet {
 	pub type RewardTokensPerPool<T: Config> =
 		StorageDoubleMap<_, Twox64Concat, TokenId, Twox64Concat, TokenId, (), ValueQuery>;
 
-	/// Total amount of activated liquidity for each schedule
+	/// Tracks number of activated liquidity per schedule. It is used for calculation of
+	/// "cumulative rewrds amount" per 1 liquidity token. Therefore activation/deactivation needs
+	/// to be deffered same way as schedule rewards are delayed.
 	#[pallet::storage]
 	pub type TotalActivatedLiquidityForSchedules<T: Config> = StorageDoubleMap<
 		_,
@@ -511,13 +506,9 @@ pub mod pallet {
 		TokenId,
 		Twox64Concat,
 		TokenId,
-		(u128, u128, u64, u128),
+		ActivatedLiquidityPerSchedule,
 		ValueQuery,
 	>;
-
-	// #[pallet::storage]
-	// pub type PrevTotalActivatedLiquidityForSchedules<T: Config> =
-	// 	StorageDoubleMap<_, Twox64Concat, TokenId, Twox64Concat, TokenId, u128, ValueQuery>;
 
 	/// Tracks how much liquidity user activated for particular (liq token, reward token) pair
 	/// StorageNMap was used because it only require single read to know if user deactivated all

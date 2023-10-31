@@ -174,9 +174,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: '18.16.1'
-          cache: 'yarn'
-          cache-dependency-path: '**/yarn.lock'
+          node-version: '18.18.2'
 
       - name: Replace parachain docker image reference in config
         working-directory: devops/parachain-launch
@@ -184,7 +182,7 @@ jobs:
 
       - name: Install e2e tests dependencies
         working-directory: e2eTests
-        run: yarn cache clean; yarn
+        run: yarn install
 
       - name: Install @mangata-finance/types deps
         run: |
@@ -210,6 +208,8 @@ jobs:
       - name: Run tests
         working-directory: e2eTests
         run: ${{ matrix.command }}
+        env:
+          NODE_OPTIONS: --max_old_space_size=12288
 
       - name: Test Report
         uses: dorny/test-reporter@v1.7.0
@@ -217,7 +217,7 @@ jobs:
         if: success() || failure() # run this step even if previous step failed
         with:
           name: E2E report ${{ matrix.command }} # Name of the check run which will be created
-          path: e2eTests/reports/junit-*.xml # Path to test results
+          path: e2eTests/reports/*.xml # Path to test results
           reporter: jest-junit # Format of test results
 
       - name: Submit results to the testmo-run

@@ -476,3 +476,39 @@ macro_rules! assert_event_emitted {
 		}
 	};
 }
+
+fn roll_to_next_block() {
+	forward_to_block((System::block_number() + 1).saturated_into::<u32>());
+}
+
+pub fn roll_to_next_session() {
+	let current_session = ProofOfStake::session_index();
+	roll_to_session(current_session + 1);
+}
+
+pub fn roll_to_session(n: u32) {
+	while ProofOfStake::session_index() < n {
+		roll_to_next_block();
+	}
+}
+
+pub fn forward_to_block(n: u32) {
+	forward_to_block_with_custom_rewards(n, 10000);
+}
+
+pub fn forward_to_block_with_custom_rewards(n: u32, rewards: u128) {
+	while System::block_number().saturated_into::<u32>() < n {
+		let new_block_number = System::block_number().saturated_into::<u64>() + 1;
+		System::set_block_number(new_block_number);
+
+		System::on_initialize(new_block_number);
+		ProofOfStake::on_initialize(new_block_number);
+
+		if ProofOfStake::is_new_session() {
+			ProofOfStake::distribute_rewards(rewards);
+		}
+
+		ProofOfStake::on_finalize(new_block_number);
+		System::on_finalize(new_block_number);
+	}
+}

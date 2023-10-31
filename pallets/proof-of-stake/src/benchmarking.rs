@@ -209,7 +209,7 @@ benchmarks! {
 
 		init::<T>();
 
-		let schedules_limit = <T as Config>::RewardsSchedulesLimit::get();
+		let schedules_limit = 10u32;
 		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
 		let native_asset_id = <T as Config>::NativeCurrencyId::get();
 
@@ -220,7 +220,7 @@ benchmarks! {
 			}
 		}
 
-		let REWARDS_AMOUNT: u128 = <T as Config>::Min3rdPartyRewardValutationPerSession::get();
+		let REWARDS_AMOUNT: u128 = <T as Config>::Min3rdPartyRewardValutationPerSession::get() * 10u128;
 		let native_asset_amount: u128 = REWARDS_AMOUNT * Into::<u128>::into(schedules_limit + 1);
 		TokensOf::<T>::mint(native_asset_id.into(), &caller, native_asset_amount.into()).unwrap();
 
@@ -235,7 +235,7 @@ benchmarks! {
 				RawOrigin::Signed(caller.clone().into()).into(),
 				(native_asset_id, token_id),
 				reward_token.into(),
-				REWARDS_AMOUNT,
+				(REWARDS_AMOUNT).into(),
 				10u32.into(),
 			).unwrap();
 		}
@@ -260,16 +260,16 @@ benchmarks! {
 		let reward_token = token_id + 1;
 
 		assert_eq!(
-			RewardsSchedules::<T>::get().len() as u32,
-			schedules_limit
+			PoS::<T>::tail().unwrap(),
+			(schedules_limit - 1 ) as u64
 		);
 
 	}: reward_pool(RawOrigin::Signed(caller.clone().into()), (native_asset_id,token_id), reward_token.into(), REWARDS_AMOUNT, 10u32.into())
 	verify {
 
 		assert_eq!(
-			RewardsSchedules::<T>::get().len() as u32,
-			schedules_limit
+			PoS::<T>::tail().unwrap(),
+			schedules_limit as u64
 		);
 
 	}
@@ -281,10 +281,10 @@ benchmarks! {
 
 		init::<T>();
 
-		let schedules_limit = <T as Config>::RewardsSchedulesLimit::get();
+		let schedules_limit = 10u32;
 		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
 		let native_asset_id = <T as Config>::NativeCurrencyId::get();
-		let REWARDS_AMOUNT: u128 = <T as Config>::Min3rdPartyRewardValutationPerSession::get();
+		let REWARDS_AMOUNT: u128 = <T as Config>::Min3rdPartyRewardValutationPerSession::get() * (schedules_limit as u128);
 
 		loop {
 			let token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.into()).unwrap().into();

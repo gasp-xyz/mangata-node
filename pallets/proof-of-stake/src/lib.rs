@@ -148,7 +148,7 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-pub(crate) const LOG_TARGET: &str = "proof-of-stake";
+pub(crate) const LOG_TARGET: &str = "pos";
 
 // syntactic sugar for logging.
 #[macro_export]
@@ -1395,15 +1395,19 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn verify_rewards_min_amount(token_id: TokenId, amount_per_session: Balance) -> bool {
+		log!(info, "blah 1 ");
 		if <T as Config>::ValuationApi::valuate_liquidity_token(token_id, amount_per_session) >= T::Min3rdPartyRewardValutationPerSession::get() {
+			log!(info, "blah 2 ");
 			return true;
 		}
 
 		if token_id == Into::<u32>::into(Self::native_token_id()) && amount_per_session >= T::Min3rdPartyRewardValutationPerSession::get() {
+			log!(info, "blah 3 ");
 			return true;
 		}
 
 		if <T as Config>::ValuationApi::valuate_non_liquidity_token( token_id, amount_per_session) >= T::Min3rdPartyRewardValutationPerSession::get() {
+			log!(info, "blah 4 ");
 			return true;
 		}
 

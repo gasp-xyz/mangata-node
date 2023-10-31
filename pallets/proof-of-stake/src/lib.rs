@@ -388,8 +388,8 @@ pub mod pallet {
 		TooManySchedules,
 		/// Too little rewards per session
 		TooLittleRewards,
-		/// Too little rewards per session
-		TooLittlePoolValuation,
+		/// Too small volume of the pool
+		TooSmallVolume,
 		// Liquidity is reused for 3rdparty rewards
 		LiquidityLockedIn3rdpartyRewards,
 	}
@@ -1349,7 +1349,7 @@ impl<T: Config> Pallet<T> {
 
 		ensure!(
 			Self::verify_rewards_min_volume(token_id),
-			Error::<T>::TooLittlePoolValuation
+			Error::<T>::TooSmallVolume
 		);
 
 		RewardTokensPerPool::<T>::insert(liquidity_token_id, token_id, ());
@@ -1411,13 +1411,18 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn verify_rewards_min_volume(token_id: TokenId) -> bool {
+
 		if token_id == Into::<u32>::into(Self::native_token_id()) {
 			return true;
 		}
 
 		if let Some((mga_reserves, _)) = <T as Config>::ValuationApi::get_pool_state(token_id) {
-            return mga_reserves >= T::Min3rdPartyRewardValutationPerSession::get();
+            return mga_reserves >= T::Min3rdPartyRewardVolume::get();
 		}
+
+        if let Ok((mga_reserves, _)) = <T as Config>::ValuationApi::get_reserves(Self::native_token_id(), token_id){
+            return mga_reserves >= T::Min3rdPartyRewardVolume::get();
+        }
 
 		return false;
 	}

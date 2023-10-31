@@ -403,7 +403,7 @@ pub struct ExtBuilder {
 	ext: sp_io::TestExternalities,
 }
 
-fn min_req_valutation() -> u128 {
+fn min_req_volume() -> u128 {
  <<Test as Config>::Min3rdPartyRewardValutationPerSession as sp_core::Get<u128>>::get()
 }
 
@@ -443,7 +443,7 @@ impl ExtBuilder {
 			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
 			valuate_liquidity_token_mock.expect().return_const(11u128);
 			let get_pool_state_mock = MockValuationApi::get_pool_state_context();
-			get_pool_state_mock.expect().return_const(Some((min_req_valutation(),min_req_valutation())));
+			get_pool_state_mock.expect().return_const(Some((min_req_volume(),min_req_volume())));
 			f()
 		})
 	}

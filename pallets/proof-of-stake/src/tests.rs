@@ -1249,7 +1249,7 @@ const CHARLIE: u128 = 4;
 const EVE: u128 = 5;
 
 
-fn min_req_valutation() -> u128 {
+fn min_req_volume() -> u128 {
  <<Test as Config>::Min3rdPartyRewardValutationPerSession as sp_core::Get<u128>>::get()
 }
 
@@ -2050,7 +2050,7 @@ fn accept_schedule_valuated_in_native_token() {
 			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
 			valuate_liquidity_token_mock.expect().return_const(0u128);
 			let get_pool_state_mock = MockValuationApi::get_pool_state_context();
-			get_pool_state_mock.expect().return_const(Some((min_req_valutation(),min_req_valutation())));
+			get_pool_state_mock.expect().return_const(Some((min_req_volume(),min_req_volume())));
 
 			roll_to_session(4);
 
@@ -2083,7 +2083,7 @@ fn accept_schedule_valuated_in_token_paired_with_native_token() {
 				MockValuationApi::valuate_non_liquidity_token_context();
 			valuate_non_liquidity_token_mock.expect().return_const(10u128);
 			let get_pool_state_mock = MockValuationApi::get_pool_state_context();
-			get_pool_state_mock.expect().return_const(Some((min_req_valutation(),min_req_valutation())));
+			get_pool_state_mock.expect().return_const(Some((min_req_volume(),min_req_volume())));
 
 			roll_to_session(4);
 
@@ -2195,7 +2195,7 @@ fn overlapping_3rdparty_rewards_works() {
 			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
 			valuate_liquidity_token_mock.expect().return_const(11u128);
 			let get_pool_state_mock = MockValuationApi::get_pool_state_context();
-			get_pool_state_mock.expect().return_const(Some((min_req_valutation(),min_req_valutation())));
+			get_pool_state_mock.expect().return_const(Some((min_req_volume(),min_req_volume())));
 
 			let first_reward_token = TokensOf::<Test>::create(&ALICE, MILLION).unwrap();
 			TokensOf::<Test>::mint(LIQUIDITY_TOKEN, &BOB, 200).unwrap();
@@ -2446,7 +2446,7 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 			valuate_liquidity_token_mock.expect().return_const(11u128);
 
 			let get_pool_state_mock = MockValuationApi::get_pool_state_context();
-			get_pool_state_mock.expect().return_const(Some((min_req_valutation(),min_req_valutation())));
+			get_pool_state_mock.expect().return_const(Some((min_req_volume(),min_req_volume())));
 
 			System::set_block_number(1);
 			ProofOfStake::reward_pool(
@@ -4142,5 +4142,152 @@ fn activity_for_schedule_rewards_can_be_activated_only_after_pool_is_rewarded_fo
 				REWARD_TOKEN,
 				None,
 			));
+		});
+}
+
+
+#[test]
+#[serial]
+fn reject_3rdparty_rewards_with_non_liq_token_and_too_small_volume() {
+	ExtBuilder::new()
+		.issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
+		.build()
+		.execute_with(|| {
+			System::set_block_number(1);
+            let too_small_volume = Some((min_req_volume()-1,min_req_volume()-1));
+
+			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
+			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+
+			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
+			valuate_liquidity_token_mock.expect().return_const(0u128);
+
+			let valuate_non_liquidity_token_mock = MockValuationApi::valuate_non_liquidity_token_context();
+			valuate_non_liquidity_token_mock.expect().return_const(10u128);
+
+			let get_pool_state_mock = MockValuationApi::get_pool_state_context();
+			get_pool_state_mock.expect().return_const(too_small_volume);
+
+			roll_to_session(4);
+
+			assert_err!(
+                ProofOfStake::reward_pool(
+                RuntimeOrigin::signed(ALICE),
+                REWARDED_PAIR,
+                REWARD_TOKEN,
+                10,
+                5u32.into()
+                ),
+                Error::<Test>::TooSmallVolume
+            );
+		});
+}
+
+#[test]
+#[serial]
+fn accept_3rdparty_rewards_with_non_liq_token_and_proper_valuation() {
+	ExtBuilder::new()
+		.issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
+		.build()
+		.execute_with(|| {
+			System::set_block_number(1);
+            let min_volume = Some((min_req_volume(),min_req_volume()));
+
+			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
+			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+
+			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
+			valuate_liquidity_token_mock.expect().return_const(0u128);
+
+			let valuate_non_liquidity_token_mock = MockValuationApi::valuate_non_liquidity_token_context();
+			valuate_non_liquidity_token_mock.expect().return_const(10u128);
+
+			let get_pool_state_mock = MockValuationApi::get_pool_state_context();
+			get_pool_state_mock.expect().return_const(min_volume);
+
+			roll_to_session(4);
+
+			assert_ok!(
+                ProofOfStake::reward_pool(
+                RuntimeOrigin::signed(ALICE),
+                REWARDED_PAIR,
+                REWARD_TOKEN,
+                10,
+                5u32.into()
+                ),
+            );
+		});
+}
+
+
+#[test]
+#[serial]
+fn reject_3rdparty_rewards_with_liq_token_and_too_small_volume() {
+	ExtBuilder::new()
+		.issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
+		.build()
+		.execute_with(|| {
+			System::set_block_number(1);
+            let too_small_volume = Some((min_req_volume()-1,min_req_volume()-1));
+
+			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
+			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+
+			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
+			valuate_liquidity_token_mock.expect().return_const(10u128);
+
+			let get_pool_state_mock = MockValuationApi::get_pool_state_context();
+			get_pool_state_mock.expect().return_const(None);
+
+			let get_reserves_mock = MockValuationApi::get_reserves_context();
+			get_reserves_mock.expect().return_const(Ok((9u128, 0u128)));
+
+			roll_to_session(4);
+
+			assert_err!(
+                ProofOfStake::reward_pool(
+                RuntimeOrigin::signed(ALICE),
+                REWARDED_PAIR,
+                REWARD_TOKEN,
+                10,
+                5u32.into()
+                ),
+                Error::<Test>::TooSmallVolume
+            );
+		});
+}
+
+#[test]
+#[serial]
+fn accept_3rdparty_rewards_with_liq_token_and_min_volume() {
+	ExtBuilder::new()
+		.issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
+		.build()
+		.execute_with(|| {
+			System::set_block_number(1);
+
+			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
+			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
+
+			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
+			valuate_liquidity_token_mock.expect().return_const(10u128);
+
+			let get_pool_state_mock = MockValuationApi::get_pool_state_context();
+			get_pool_state_mock.expect().return_const(None);
+
+			let get_reserves_mock = MockValuationApi::get_reserves_context();
+			get_reserves_mock.expect().return_const(Ok((min_req_volume(), 0u128)));
+
+			roll_to_session(4);
+
+			assert_ok!(
+                ProofOfStake::reward_pool(
+                RuntimeOrigin::signed(ALICE),
+                REWARDED_PAIR,
+                REWARD_TOKEN,
+                10,
+                5u32.into()
+                ),
+            );
 		});
 }

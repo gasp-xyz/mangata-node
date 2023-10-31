@@ -290,7 +290,8 @@ impl pos::Config for Test {
 	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = ConstU32<10>;
 	type RewardsSchedulesLimit = ConstU32<10>;
-	type Min3rdPartyRewards = ConstU128<10>;
+	type Min3rdPartyRewardValutationPerSession = ConstU128<10>;
+	type Min3rdPartyRewardVolume = ConstU128<10>;
 	type WeightInfo = ();
 	type ValuationApi = MockValuationApi;
 }
@@ -304,7 +305,8 @@ impl pos::Config for Test {
 	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = ConstU32<10>;
 	type RewardsSchedulesLimit = ConstU32<10>;
-	type Min3rdPartyRewards = ConstU128<100_000>;
+	type Min3rdPartyRewardValutationPerSession = ConstU128<100_000>;
+	type Min3rdPartyRewardVolume = ConstU128<10>;
 	type WeightInfo = ();
 	type ValuationApi = Xyk;
 }
@@ -401,6 +403,10 @@ pub struct ExtBuilder {
 	ext: sp_io::TestExternalities,
 }
 
+fn min_req_valutation() -> u128 {
+ <<Test as Config>::Min3rdPartyRewardValutationPerSession as sp_core::Get<u128>>::get()
+}
+
 impl ExtBuilder {
 	pub fn new() -> Self {
 		let t = frame_system::GenesisConfig::default()
@@ -428,6 +434,18 @@ impl ExtBuilder {
 
 	pub fn build(self) -> sp_io::TestExternalities {
 		self.ext
+	}
+
+	pub fn execute_with_default_mocks<R>(mut self, f: impl FnOnce() -> R) -> R {
+		self.ext.execute_with(|| {
+			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
+			get_liquidity_asset_mock.expect().return_const(Ok(10u32));
+			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
+			valuate_liquidity_token_mock.expect().return_const(11u128);
+			let get_pool_state_mock = MockValuationApi::get_pool_state_context();
+			get_pool_state_mock.expect().return_const(Some((min_req_valutation(),min_req_valutation())));
+			f()
+		})
 	}
 }
 

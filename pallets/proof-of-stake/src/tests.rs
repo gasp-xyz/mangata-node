@@ -94,8 +94,9 @@ fn forward_to_block_with_custom_rewards(n: u32, rewards: u128) {
 }
 
 #[test]
+#[serial]
 fn liquidity_rewards_single_user_mint_W() {
-	new_test_ext().execute_with(|| {
+	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
 		let acc_id: u128 = 2;
@@ -164,8 +165,9 @@ fn liquidity_rewards_single_user_mint_W() {
 }
 
 #[test]
+#[serial]
 fn liquidity_rewards_three_users_burn_W() {
-	new_test_ext().execute_with(|| {
+	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
 		let acc_id: u128 = 2;
@@ -213,8 +215,9 @@ fn liquidity_rewards_three_users_burn_W() {
 }
 
 #[test]
+#[serial]
 fn liquidity_rewards_claim_W() {
-	new_test_ext().execute_with(|| {
+	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
 		let acc_id: u128 = 2;
@@ -256,8 +259,9 @@ fn liquidity_rewards_claim_W() {
 }
 
 #[test]
+#[serial]
 fn liquidity_rewards_promote_pool_W() {
-	new_test_ext().execute_with(|| {
+	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
 		let acc_id: u128 = 2;
@@ -273,8 +277,9 @@ fn liquidity_rewards_promote_pool_W() {
 }
 
 #[test]
+#[serial]
 fn liquidity_rewards_promote_pool_already_promoted_NW() {
-	new_test_ext().execute_with(|| {
+	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
 		let acc_id: u128 = 2;
@@ -292,8 +297,9 @@ fn liquidity_rewards_promote_pool_already_promoted_NW() {
 }
 
 #[test]
+#[serial]
 fn liquidity_rewards_work_after_burn_W() {
-	new_test_ext().execute_with(|| {
+	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
 		let acc_id: u128 = 2;
@@ -342,8 +348,9 @@ fn liquidity_rewards_work_after_burn_W() {
 }
 
 #[test]
+#[serial]
 fn liquidity_rewards_deactivate_transfer_controled_W() {
-	new_test_ext().execute_with(|| {
+	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
 		let acc_id: u128 = 2;
@@ -386,8 +393,9 @@ fn liquidity_rewards_deactivate_transfer_controled_W() {
 }
 
 #[test]
+#[serial]
 fn liquidity_rewards_deactivate_more_NW() {
-	new_test_ext().execute_with(|| {
+	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
 		let acc_id: u128 = 2;
@@ -421,8 +429,9 @@ fn liquidity_rewards_deactivate_more_NW() {
 }
 
 #[test]
+#[serial]
 fn liquidity_rewards_activate_more_NW() {
-	new_test_ext().execute_with(|| {
+	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
 		let acc_id: u128 = 2;
@@ -450,8 +459,9 @@ fn liquidity_rewards_activate_more_NW() {
 }
 
 #[test]
+#[serial]
 fn liquidity_rewards_calculate_rewards_pool_not_promoted() {
-	new_test_ext().execute_with(|| {
+	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
 		let acc_id: u128 = 2;
@@ -468,8 +478,9 @@ fn liquidity_rewards_calculate_rewards_pool_not_promoted() {
 }
 
 #[test]
+#[serial]
 fn liquidity_rewards_claim_pool_not_promoted() {
-	new_test_ext().execute_with(|| {
+	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
 		let acc_id: u128 = 2;
@@ -488,8 +499,9 @@ fn liquidity_rewards_claim_pool_not_promoted() {
 }
 
 #[test]
+#[serial]
 fn liquidity_rewards_transfer_not_working() {
-	new_test_ext().execute_with(|| {
+	ExtBuilder::new().execute_with_default_mocks(|| {
 		initialize_liquidity_rewards();
 
 		assert_err!(
@@ -500,8 +512,9 @@ fn liquidity_rewards_transfer_not_working() {
 }
 
 #[test]
+#[serial]
 fn liquidity_rewards_not_yet_claimed_already_claimed_W() {
-	new_test_ext().execute_with(|| {
+	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
 		let acc_id: u128 = 2;
@@ -564,8 +577,9 @@ fn liquidity_rewards_not_yet_claimed_already_claimed_W() {
 }
 
 #[test]
+#[serial]
 fn extreme_case_pool_ratio() {
-	new_test_ext().execute_with(|| {
+	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
 		let acc_id: u128 = 2;
@@ -595,8 +609,9 @@ fn extreme_case_pool_ratio() {
 }
 
 #[test]
+#[serial]
 fn rewards_rounding_during_often_mint() {
-	new_test_ext().execute_with(|| {
+	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
 		let acc_id: u128 = 2;
@@ -685,8 +700,9 @@ fn rewards_rounding_during_often_mint() {
 }
 
 #[test]
+#[serial]
 fn rewards_storage_right_amounts_start1() {
-	new_test_ext().execute_with(|| {
+	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
 		let acc_id: u128 = 2;
@@ -829,8 +845,9 @@ fn rewards_storage_right_amounts_start1() {
 
 // starting point, user burned some rewards, then new rewards were generated (yellow)
 #[test]
+#[serial]
 fn rewards_storage_right_amounts_start2() {
-	new_test_ext().execute_with(|| {
+	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
 		let acc_id: u128 = 2;
@@ -965,8 +982,9 @@ fn rewards_storage_right_amounts_start2() {
 
 // starting point, just new rewards were generated (green)
 #[test]
+#[serial]
 fn rewards_storage_right_amounts_start3() {
-	new_test_ext().execute_with(|| {
+	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
 		let acc_id: u128 = 2;
@@ -1043,8 +1061,9 @@ fn rewards_storage_right_amounts_start3() {
 }
 
 #[test]
+#[serial]
 fn liquidity_rewards_transfered_liq_tokens_produce_rewards_W() {
-	new_test_ext().execute_with(|| {
+	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
 		let acc_id: u128 = 2;
@@ -1094,8 +1113,9 @@ fn liquidity_rewards_transfered_liq_tokens_produce_rewards_W() {
 }
 
 #[test]
+#[serial]
 fn test_migrated_from_pallet_issuance() {
-	new_test_ext().execute_with(|| {
+	ExtBuilder::new().execute_with_default_mocks(|| {
 		env_logger::try_init();
 		System::set_block_number(1);
 		const LIQUIDITY_ISSUANCE: Balance = 450045;
@@ -1166,8 +1186,9 @@ fn test_migrated_from_pallet_issuance() {
 }
 
 #[test]
+#[serial]
 fn claim_rewards_from_pool_that_has_been_disabled() {
-	new_test_ext().execute_with(|| {
+	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
 		let acc_id: u128 = 2;
@@ -1227,18 +1248,18 @@ const BOB: u128 = 3;
 const CHARLIE: u128 = 4;
 const EVE: u128 = 5;
 
+
+fn min_req_valutation() -> u128 {
+ <<Test as Config>::Min3rdPartyRewardValutationPerSession as sp_core::Get<u128>>::get()
+}
+
+
 #[test]
 #[serial]
 fn user_can_provide_3rdparty_rewards() {
 	ExtBuilder::new()
 		.issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
-		.build()
-		.execute_with(|| {
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
-
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
 			ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
@@ -1266,13 +1287,13 @@ fn user_can_provide_3rdparty_rewards() {
 fn cant_schedule_rewards_in_past() {
 	ExtBuilder::new()
 		.issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(10u32));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			roll_to_session(5);
 			assert_err!(
@@ -1340,13 +1361,13 @@ fn cannot_reward_unexisting_pool() {
 fn rewards_are_stored_in_pallet_account() {
 	ExtBuilder::new()
 		.issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(10u32));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			assert_eq!(
 				TokensOf::<Test>::free_balance(REWARD_TOKEN, &Pallet::<Test>::pallet_account()),
@@ -1375,13 +1396,13 @@ fn rewards_are_stored_in_pallet_account() {
 fn rewards_schedule_is_stored() {
 	ExtBuilder::new()
 		.issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			assert_ok!(ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
@@ -1415,13 +1436,13 @@ fn rewards_schedule_is_stored() {
 fn rewards_linked_list_insert_multiple_schedules() {
 	ExtBuilder::new()
 		.issue(ALICE, REWARD_TOKEN, 2 * REWARD_AMOUNT)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			assert_ok!(ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
@@ -1478,13 +1499,13 @@ fn rewards_linked_list_insert_multiple_schedules() {
 fn rewards_linked_list_removes_outdated_schedule_automatically() {
 	ExtBuilder::new()
 		.issue(ALICE, REWARD_TOKEN, 2 * REWARD_AMOUNT)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			assert_ok!(ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
@@ -1567,13 +1588,13 @@ fn insert_schedule_ending_at_session(n: u32) {
 fn rewards_first_schedule_from_linked_list_of_four() {
 	ExtBuilder::new()
 		.issue(ALICE, REWARD_TOKEN, 4 * REWARD_AMOUNT)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			insert_schedule_ending_at_session(1);
 			insert_schedule_ending_at_session(2);
@@ -1603,13 +1624,13 @@ fn rewards_first_schedule_from_linked_list_of_four() {
 fn remove_last_schedule_from_linked_list() {
 	ExtBuilder::new()
 		.issue(ALICE, REWARD_TOKEN, 4 * REWARD_AMOUNT)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			insert_schedule_ending_at_session(2);
 			insert_schedule_ending_at_session(2);
@@ -1639,13 +1660,13 @@ fn remove_last_schedule_from_linked_list() {
 fn remove_middle_schedule_from_linked_list() {
 	ExtBuilder::new()
 		.issue(ALICE, REWARD_TOKEN, 4 * REWARD_AMOUNT)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			insert_schedule_ending_at_session(2);
 			insert_schedule_ending_at_session(1);
@@ -1675,13 +1696,13 @@ fn remove_middle_schedule_from_linked_list() {
 fn remove_first_few_elems_at_once_from_linked_list() {
 	ExtBuilder::new()
 		.issue(ALICE, REWARD_TOKEN, 4 * REWARD_AMOUNT)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			insert_schedule_ending_at_session(1);
 			insert_schedule_ending_at_session(1);
@@ -1710,13 +1731,13 @@ fn remove_first_few_elems_at_once_from_linked_list() {
 fn remove_few_last_elems_at_once_from_linked_list() {
 	ExtBuilder::new()
 		.issue(ALICE, REWARD_TOKEN, 4 * REWARD_AMOUNT)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			insert_schedule_ending_at_session(2);
 			insert_schedule_ending_at_session(2);
@@ -1745,13 +1766,13 @@ fn remove_few_last_elems_at_once_from_linked_list() {
 fn remove_few_middle_elements_from_linkedd_list() {
 	ExtBuilder::new()
 		.issue(ALICE, REWARD_TOKEN, 4 * REWARD_AMOUNT)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			insert_schedule_ending_at_session(2);
 			insert_schedule_ending_at_session(1);
@@ -1780,13 +1801,13 @@ fn remove_few_middle_elements_from_linkedd_list() {
 fn remove_random_elements_from_linked_list() {
 	ExtBuilder::new()
 		.issue(ALICE, REWARD_TOKEN, 5 * REWARD_AMOUNT)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			insert_schedule_ending_at_session(2);
 			insert_schedule_ending_at_session(1);
@@ -1818,13 +1839,13 @@ fn remove_random_elements_from_linked_list() {
 fn remove_random_elements_from_linked_list_over_time() {
 	ExtBuilder::new()
 		.issue(ALICE, REWARD_TOKEN, 7 * REWARD_AMOUNT)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			insert_schedule_ending_at_session(3); // 0
 			insert_schedule_ending_at_session(2); // 1
@@ -1863,13 +1884,13 @@ fn remove_random_elements_from_linked_list_over_time() {
 fn remove_lot_of_schedules_from_linked_list_in_single_iteration() {
 	ExtBuilder::new()
 		.issue(ALICE, REWARD_TOKEN, 10 * REWARD_AMOUNT)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			insert_schedule_ending_at_session(3); // 0
 			insert_schedule_ending_at_session(1); // 1
@@ -1902,12 +1923,12 @@ fn remove_lot_of_schedules_from_linked_list_in_single_iteration() {
 #[ignore]
 #[serial]
 fn number_of_active_schedules_is_limited() {
-	ExtBuilder::new().issue(ALICE, REWARD_TOKEN, MILLION).build().execute_with(|| {
+	ExtBuilder::new().issue(ALICE, REWARD_TOKEN, MILLION).execute_with_default_mocks(|| {
 		System::set_block_number(1);
-		let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-		get_liquidity_asset_mock.expect().return_const(Ok(10u32));
-		let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-		valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 		let max_schedules: u32 =
 			<<Test as Config>::RewardsSchedulesLimit as sp_core::Get<_>>::get();
@@ -1949,13 +1970,13 @@ fn number_of_active_schedules_is_limited() {
 fn duplicated_schedules_works() {
 	ExtBuilder::new()
 		.issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(10u32));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			assert_eq!(ScheduleListHead::<Test>::get(), None);
 			assert_eq!(ScheduleListTail::<Test>::get(), None);
@@ -2028,6 +2049,8 @@ fn accept_schedule_valuated_in_native_token() {
 			get_liquidity_asset_mock.expect().return_const(Ok(10u32));
 			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
 			valuate_liquidity_token_mock.expect().return_const(0u128);
+			let get_pool_state_mock = MockValuationApi::get_pool_state_context();
+			get_pool_state_mock.expect().return_const(Some((min_req_valutation(),min_req_valutation())));
 
 			roll_to_session(4);
 
@@ -2059,6 +2082,8 @@ fn accept_schedule_valuated_in_token_paired_with_native_token() {
 			let valuate_non_liquidity_token_mock =
 				MockValuationApi::valuate_non_liquidity_token_context();
 			valuate_non_liquidity_token_mock.expect().return_const(10u128);
+			let get_pool_state_mock = MockValuationApi::get_pool_state_context();
+			get_pool_state_mock.expect().return_const(Some((min_req_valutation(),min_req_valutation())));
 
 			roll_to_session(4);
 
@@ -2080,14 +2105,14 @@ fn user_can_claim_3rdparty_rewards() {
 		.issue(BOB, LIQUIDITY_TOKEN, 100)
 		.issue(CHARLIE, LIQUIDITY_TOKEN, 100)
 		.issue(EVE, LIQUIDITY_TOKEN, 100)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
 
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			TokensOf::<Test>::mint(LIQUIDITY_TOKEN, &BOB, 100).unwrap();
 			TokensOf::<Test>::mint(LIQUIDITY_TOKEN, &CHARLIE, 100).unwrap();
@@ -2169,6 +2194,8 @@ fn overlapping_3rdparty_rewards_works() {
 			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
 			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
 			valuate_liquidity_token_mock.expect().return_const(11u128);
+			let get_pool_state_mock = MockValuationApi::get_pool_state_context();
+			get_pool_state_mock.expect().return_const(Some((min_req_valutation(),min_req_valutation())));
 
 			let first_reward_token = TokensOf::<Test>::create(&ALICE, MILLION).unwrap();
 			TokensOf::<Test>::mint(LIQUIDITY_TOKEN, &BOB, 200).unwrap();
@@ -2243,13 +2270,13 @@ fn reuse_activated_liquiddity_tokens_for_multiple_3rdparty_schedules() {
 		.issue(ALICE, FIRST_REWARD_TOKEN, REWARD_AMOUNT)
 		.issue(ALICE, SECOND_REWARD_TOKEN, 100_000u128)
 		.issue(BOB, LIQUIDITY_TOKEN, 200)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
@@ -2318,13 +2345,13 @@ fn deactivate_3rdparty_rewards() {
 		.issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
 		.issue(BOB, LIQUIDITY_TOKEN, 100)
 		.issue(CHARLIE, LIQUIDITY_TOKEN, 100)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
@@ -2417,6 +2444,9 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 
 			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
 			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+			let get_pool_state_mock = MockValuationApi::get_pool_state_context();
+			get_pool_state_mock.expect().return_const(Some((min_req_valutation(),min_req_valutation())));
 
 			System::set_block_number(1);
 			ProofOfStake::reward_pool(
@@ -2644,13 +2674,13 @@ fn liquidity_minting_liquidity_can_be_resused() {
 		.issue(ALICE, FIRST_REWARD_TOKEN, REWARD_AMOUNT)
 		.issue(ALICE, SECOND_REWARD_TOKEN, 100_000u128)
 		.issue(BOB, LIQUIDITY_TOKEN, 100)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 1u8)
 				.unwrap();
@@ -2705,13 +2735,13 @@ fn fail_to_transfer_tokens_that_has_been_partially_deactivated() {
 		.issue(ALICE, FIRST_REWARD_TOKEN, REWARD_AMOUNT)
 		.issue(ALICE, SECOND_REWARD_TOKEN, 100_000u128)
 		.issue(BOB, LIQUIDITY_TOKEN, 100)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 1u8)
 				.unwrap();
@@ -2790,13 +2820,13 @@ fn when_liquidity_mining_is_reused_it_is_unlocked_properly() {
 		.issue(ALICE, FIRST_REWARD_TOKEN, REWARD_AMOUNT)
 		.issue(ALICE, SECOND_REWARD_TOKEN, 100_000u128)
 		.issue(BOB, LIQUIDITY_TOKEN, 100)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 1u8)
 				.unwrap();
@@ -2889,13 +2919,13 @@ fn liquidity_can_be_deactivated_when_all_reward_participation_were_deactivated()
 		.issue(ALICE, FIRST_REWARD_TOKEN, REWARD_AMOUNT)
 		.issue(ALICE, SECOND_REWARD_TOKEN, 100_000u128)
 		.issue(BOB, LIQUIDITY_TOKEN, 100)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 1u8)
 				.unwrap();
@@ -2987,12 +3017,12 @@ fn can_claim_schedule_rewards() {
 		.issue(ALICE, FIRST_REWARD_TOKEN, REWARD_AMOUNT)
 		.issue(ALICE, SECOND_REWARD_TOKEN, 100_000u128)
 		.issue(BOB, LIQUIDITY_TOKEN, 100)
-		.build()
-		.execute_with(|| {
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+		.execute_with_default_mocks(|| {
+
+
+
+
 			System::set_block_number(1);
 
 			ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 1u8)
@@ -3136,12 +3166,12 @@ fn can_not_provide_liquidity_for_schedule_rewards_when_its_only_activated_for_li
 	ExtBuilder::new()
 		.issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
 		.issue(BOB, LIQUIDITY_TOKEN, 100)
-		.build()
-		.execute_with(|| {
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+		.execute_with_default_mocks(|| {
+
+
+
+
 			System::set_block_number(1);
 
 			ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 1u8)
@@ -3166,14 +3196,14 @@ fn can_not_provide_liquidity_for_mining_rewards_when_its_only_activated_for_sche
 	ExtBuilder::new()
 		.issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
 		.issue(BOB, LIQUIDITY_TOKEN, 100)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
 
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
@@ -3203,7 +3233,7 @@ use sp_runtime::{traits::Dispatchable, Permill};
 #[ignore]
 #[serial]
 fn activate_deactivate_calls_are_free_of_charge() {
-	ExtBuilder::new().build().execute_with(|| {
+	ExtBuilder::new().execute_with_default_mocks(|| {
 		System::set_block_number(1);
 
 		let activate_call =
@@ -3233,14 +3263,14 @@ fn unsuccessul_activate_deactivate_calls_charges_fees() {
 	ExtBuilder::new()
 		.issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
 		.issue(BOB, LIQUIDITY_TOKEN, 100)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
 
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			let activate_call =
 				mock::RuntimeCall::ProofOfStake(Call::activate_liquidity_for_3rdparty_rewards {
@@ -3285,14 +3315,14 @@ fn claim_rewards_from_multiple_sessions_at_once() {
 		.issue(BOB, LIQUIDITY_TOKEN, 100)
 		.issue(CHARLIE, LIQUIDITY_TOKEN, 100)
 		.issue(EVE, LIQUIDITY_TOKEN, 100)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
 
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			TokensOf::<Test>::mint(LIQUIDITY_TOKEN, &BOB, 100).unwrap();
 			TokensOf::<Test>::mint(LIQUIDITY_TOKEN, &CHARLIE, 100).unwrap();
@@ -3345,14 +3375,14 @@ fn multi_user_rewards_distributeion_scenario() {
 		.issue(BOB, LIQUIDITY_TOKEN, 100)
 		.issue(CHARLIE, LIQUIDITY_TOKEN, 100)
 		.issue(EVE, LIQUIDITY_TOKEN, 100)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
 
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			TokensOf::<Test>::mint(LIQUIDITY_TOKEN, &BOB, 100).unwrap();
 			TokensOf::<Test>::mint(LIQUIDITY_TOKEN, &CHARLIE, 100).unwrap();
@@ -3428,14 +3458,14 @@ fn test_all_scheduled_rewards_are_distributed_when_activated_instantly() {
 	ExtBuilder::new()
 		.issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
 		.issue(BOB, LIQUIDITY_TOKEN, 100)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
 
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			let amount = 10_000u128;
 
@@ -3471,14 +3501,14 @@ fn test_all_scheduled_rewards_are_distributed_when_activated_after_few_sessions(
 	ExtBuilder::new()
 		.issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
 		.issue(BOB, LIQUIDITY_TOKEN, 100)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
 
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			let amount = 10_000u128;
 
@@ -3516,14 +3546,14 @@ fn test_all_scheduled_rewards_are_distributed_when_activated_schedule_is_finishe
 	ExtBuilder::new()
 		.issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
 		.issue(BOB, LIQUIDITY_TOKEN, 100)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
 
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			let amount = 10_000u128;
 
@@ -3563,14 +3593,14 @@ fn test_multiple_activations_in_same_block() {
 		.issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
 		.issue(BOB, LIQUIDITY_TOKEN, 100)
 		.issue(CHARLIE, LIQUIDITY_TOKEN, 100)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
 
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			let amount = 10_000u128;
 
@@ -3620,13 +3650,13 @@ fn rewards_are_available_in_next_session_after_rewards_are_provided() {
 		.issue(BOB, LIQUIDITY_TOKEN, 100)
 		.issue(CHARLIE, LIQUIDITY_TOKEN, 100)
 		.issue(EVE, LIQUIDITY_TOKEN, 100)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
@@ -3796,13 +3826,13 @@ fn multiple_activations_and_deactivations_from_multiple_users_on_the_same_schedu
 		.issue(BOB, LIQUIDITY_TOKEN, 100)
 		.issue(CHARLIE, LIQUIDITY_TOKEN, 100)
 		.issue(EVE, LIQUIDITY_TOKEN, 100)
-		.build()
-		.execute_with(|| {
+
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
+
+
+
+
 
 			/// 1000 rewards per session
 			ProofOfStake::reward_pool(
@@ -4068,13 +4098,8 @@ fn activity_for_schedule_rewards_can_be_activated_only_after_pool_is_rewarded_fo
 	ExtBuilder::new()
 		.issue(ALICE, REWARD_TOKEN, 10 * 3 * REWARD_AMOUNT)
 		.issue(BOB, LIQUIDITY_TOKEN, 100)
-		.build()
-		.execute_with(|| {
+		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
-			let get_liquidity_asset_mock = MockValuationApi::get_liquidity_asset_context();
-			get_liquidity_asset_mock.expect().return_const(Ok(LIQUIDITY_TOKEN));
-			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
-			valuate_liquidity_token_mock.expect().return_const(11u128);
 
 			assert_err_ignore_postinfo!(
 				ProofOfStake::activate_liquidity_for_3rdparty_rewards(

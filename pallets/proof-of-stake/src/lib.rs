@@ -355,7 +355,8 @@ pub mod pallet {
 		/// The maximum number of schedules that can be active at one moment
 		type RewardsSchedulesLimit: Get<u32>;
 		/// The minimum number of rewards per session for schedule rewards
-		type Min3rdPartyRewards: Get<u128>;
+		type Min3rdPartyRewardValutationPerSession: Get<u128>;
+        type Min3rdPartyRewardVolume : Get<u128>;
 		type WeightInfo: WeightInfo;
 		type ValuationApi: ValutationApiTrait<Self>;
 	}
@@ -387,6 +388,8 @@ pub mod pallet {
 		TooManySchedules,
 		/// Too little rewards per session
 		TooLittleRewards,
+		/// Too little rewards per session
+		TooLittlePoolValuation,
 		// Liquidity is reused for 3rdparty rewards
 		LiquidityLockedIn3rdpartyRewards,
 	}
@@ -1340,15 +1343,13 @@ impl<T: Config> Pallet<T> {
 			.ok_or(Error::<T>::MathOverflow)?;
 
 		ensure!(
-			<T as Config>::ValuationApi::valuate_liquidity_token(token_id, amount_per_session) >=
-				T::Min3rdPartyRewards::get() ||
-				((token_id == Into::<u32>::into(Self::native_token_id())) &&
-					amount_per_session >= T::Min3rdPartyRewards::get()) ||
-				<T as Config>::ValuationApi::valuate_non_liquidity_token(
-					token_id,
-					amount_per_session
-				) >= T::Min3rdPartyRewards::get(),
+			Self::verify_rewards_min_amount(token_id, amount_per_session),
 			Error::<T>::TooLittleRewards
+		);
+
+		ensure!(
+			Self::verify_rewards_min_volume(token_id),
+			Error::<T>::TooLittlePoolValuation
 		);
 
 		RewardTokensPerPool::<T>::insert(liquidity_token_id, token_id, ());
@@ -1360,8 +1361,6 @@ impl<T: Config> Pallet<T> {
 			amount.into(),
 			ExistenceRequirement::KeepAlive,
 		)?;
-
-		let current_session = Self::session_index();
 
 		let head = ScheduleListHead::<T>::get();
 		let tail = ScheduleListTail::<T>::get();
@@ -1393,6 +1392,34 @@ impl<T: Config> Pallet<T> {
 		}
 
 		Ok(())
+	}
+
+	fn verify_rewards_min_amount(token_id: TokenId, amount_per_session: Balance) -> bool {
+		if <T as Config>::ValuationApi::valuate_liquidity_token(token_id, amount_per_session) >= T::Min3rdPartyRewardValutationPerSession::get() {
+			return true;
+		}
+
+		if token_id == Into::<u32>::into(Self::native_token_id()) && amount_per_session >= T::Min3rdPartyRewardValutationPerSession::get() {
+			return true;
+		}
+
+		if <T as Config>::ValuationApi::valuate_non_liquidity_token( token_id, amount_per_session) >= T::Min3rdPartyRewardValutationPerSession::get() {
+			return true;
+		}
+
+		return false;
+	}
+
+	fn verify_rewards_min_volume(token_id: TokenId) -> bool {
+		if token_id == Into::<u32>::into(Self::native_token_id()) {
+			return true;
+		}
+
+		if let Some((mga_reserves, _)) = <T as Config>::ValuationApi::get_pool_state(token_id) {
+            return mga_reserves >= T::Min3rdPartyRewardValutationPerSession::get();
+		}
+
+		return false;
 	}
 }
 

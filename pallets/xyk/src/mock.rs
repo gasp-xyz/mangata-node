@@ -330,7 +330,8 @@ impl pallet_proof_of_stake::Config for Test {
 	type RewardsDistributionPeriod = ConstU32<10>;
 	type WeightInfo = ();
 	type RewardsSchedulesLimit = ConstU32<10>;
-	type Min3rdPartyRewards = ConstU128<10>;
+	type Min3rdPartyRewardValutationPerSession = ConstU128<10>;
+	type Min3rdPartyRewardVolume = ConstU128<10>;
 	type ValuationApi = XykStorage;
 }
 
@@ -344,7 +345,8 @@ impl pallet_proof_of_stake::Config for Test {
 	type RewardsDistributionPeriod = ConstU32<1200>;
 	type WeightInfo = ();
 	type RewardsSchedulesLimit = ConstU32<10>;
-	type Min3rdPartyRewards = ConstU128<10>;
+	type Min3rdPartyRewardValutationPerSession = ConstU128<10>;
+	type Min3rdPartyRewardVolume = ConstU128<10>;
 	type ValuationApi = XykStorage;
 }
 

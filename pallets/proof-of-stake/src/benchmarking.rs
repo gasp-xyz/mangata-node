@@ -220,7 +220,7 @@ benchmarks! {
 			}
 		}
 
-		let REWARDS_AMOUNT: u128 = <T as Config>::Min3rdPartyRewards::get();
+		let REWARDS_AMOUNT: u128 = <T as Config>::Min3rdPartyRewardValutationPerSession::get();
 		let native_asset_amount: u128 = REWARDS_AMOUNT * Into::<u128>::into(schedules_limit + 1);
 		TokensOf::<T>::mint(native_asset_id.into(), &caller, native_asset_amount.into()).unwrap();
 
@@ -284,7 +284,7 @@ benchmarks! {
 		let schedules_limit = <T as Config>::RewardsSchedulesLimit::get();
 		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
 		let native_asset_id = <T as Config>::NativeCurrencyId::get();
-		let REWARDS_AMOUNT: u128 = <T as Config>::Min3rdPartyRewards::get();
+		let REWARDS_AMOUNT: u128 = <T as Config>::Min3rdPartyRewardValutationPerSession::get();
 
 		loop {
 			let token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.into()).unwrap().into();
@@ -333,7 +333,7 @@ benchmarks! {
 		let schedules_limit = <T as Config>::RewardsSchedulesLimit::get();
 		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
 		let native_asset_id = <T as Config>::NativeCurrencyId::get();
-		let REWARDS_AMOUNT: u128 = <T as Config>::Min3rdPartyRewards::get();
+		let REWARDS_AMOUNT: u128 = <T as Config>::Min3rdPartyRewardValutationPerSession::get();
 
 		loop {
 			let token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.into()).unwrap().into();
@@ -413,7 +413,7 @@ benchmarks! {
 		let schedules_limit = <T as Config>::RewardsSchedulesLimit::get();
 		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
 		let native_asset_id = <T as Config>::NativeCurrencyId::get();
-		let REWARDS_AMOUNT: u128 = <T as Config>::Min3rdPartyRewards::get();
+		let REWARDS_AMOUNT: u128 = <T as Config>::Min3rdPartyRewardValutationPerSession::get();
 
 		loop {
 			let token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.into()).unwrap().into();

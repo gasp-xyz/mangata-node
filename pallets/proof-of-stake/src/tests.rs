@@ -53,7 +53,7 @@ fn process_all_schedules_in_current_session() {
 		if !ProofOfStake::is_new_session() && ProofOfStake::pos() == ProofOfStake::tail() {
 			break
 		}
-		roll_to_next_block2::<Test>();
+		roll_to_next_block::<Test>();
 	}
 }
 
@@ -160,18 +160,18 @@ fn liquidity_rewards_three_users_burn_W() {
 		)
 		.unwrap();
 
-		forward_to_block(100);
+		forward_to_block::<Test>(100);
 
 		mint_and_activate_tokens(3, 4, 10000);
 
-		forward_to_block(200);
+		forward_to_block::<Test>(200);
 
 		mint_and_activate_tokens(4, 4, 10000);
-		forward_to_block(240);
+		forward_to_block::<Test>(240);
 
 		ProofOfStake::deactivate_liquidity_for_native_rewards(RuntimeOrigin::signed(4), 4, 5000)
 			.unwrap();
-		forward_to_block(400);
+		forward_to_block::<Test>(400);
 
 		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 95965);
 		assert_eq!(ProofOfStake::calculate_rewards_amount(3, 4).unwrap(), 44142);
@@ -212,13 +212,13 @@ fn liquidity_rewards_claim_W() {
 		)
 		.unwrap();
 
-		forward_to_block(10);
-		forward_to_block(90);
+		forward_to_block::<Test>(10);
+		forward_to_block::<Test>(90);
 
 		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 12142);
 		ProofOfStake::claim_native_rewards(RuntimeOrigin::signed(2), 4).unwrap();
 
-		forward_to_block(100);
+		forward_to_block::<Test>(100);
 		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 2562);
 	});
 }
@@ -291,23 +291,23 @@ fn liquidity_rewards_work_after_burn_W() {
 		)
 		.unwrap();
 
-		forward_to_block(100);
+		forward_to_block::<Test>(100);
 		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 14704);
 
 		mint_and_activate_tokens(3, 4, 10000);
-		forward_to_block(200);
+		forward_to_block::<Test>(200);
 
 		mint_and_activate_tokens(4, 4, 10000);
-		forward_to_block(240);
+		forward_to_block::<Test>(240);
 
 		ProofOfStake::deactivate_liquidity_for_native_rewards(RuntimeOrigin::signed(4), 4, 10000)
 			.unwrap();
-		forward_to_block(400);
+		forward_to_block::<Test>(400);
 
 		assert_eq!(ProofOfStake::calculate_rewards_amount(4, 4).unwrap(), 948);
 
 		mint_and_activate_tokens(4, 4, 20000);
-		forward_to_block(500);
+		forward_to_block::<Test>(500);
 		assert_eq!(ProofOfStake::calculate_rewards_amount(4, 4).unwrap(), 8299);
 	});
 }
@@ -343,7 +343,7 @@ fn liquidity_rewards_deactivate_transfer_controled_W() {
 			orml_tokens::Error::<Test>::BalanceTooLow,
 		);
 
-		forward_to_block(100);
+		forward_to_block::<Test>(100);
 		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 14704);
 
 		ProofOfStake::deactivate_liquidity_for_native_rewards(
@@ -510,7 +510,7 @@ fn liquidity_rewards_not_yet_claimed_already_claimed_W() {
 		)
 		.unwrap();
 
-		forward_to_block(10);
+		forward_to_block::<Test>(10);
 
 		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 291);
 		ProofOfStake::deactivate_liquidity_for_native_rewards(
@@ -531,7 +531,7 @@ fn liquidity_rewards_not_yet_claimed_already_claimed_W() {
 		)
 		.unwrap();
 
-		forward_to_block(100);
+		forward_to_block::<Test>(100);
 
 		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 12433);
 		ProofOfStake::claim_native_rewards(RuntimeOrigin::signed(2), 4).unwrap();
@@ -710,7 +710,7 @@ fn rewards_storage_right_amounts_start1() {
 		mint_and_activate_tokens(5, 4, 10000);
 		mint_and_activate_tokens(6, 4, 10000);
 
-		forward_to_block_with_custom_rewards(100, 50000); // No clue why we considr 50k rewards per
+		forward_to_block_with_custom_rewards::<Test>(100, 50000); // No clue why we considr 50k rewards per
 		assert_eq!(
 			U256::from(u128::MAX) * U256::from(10),
 			PromotedPoolRewards::<Test>::get().get(&4).unwrap().rewards
@@ -738,7 +738,7 @@ fn rewards_storage_right_amounts_start1() {
 		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
 		assert_eq!(rewards_info.rewards_already_claimed, 14704);
 
-		forward_to_block_with_custom_rewards(200, 50000);
+		forward_to_block_with_custom_rewards::<Test>(200, 50000);
 
 		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 36530);
 		assert_eq!(ProofOfStake::calculate_rewards_amount(3, 4).unwrap(), 36530);
@@ -855,7 +855,7 @@ fn rewards_storage_right_amounts_start2() {
 		mint_and_activate_tokens(4, 4, 10000);
 		mint_and_activate_tokens(5, 4, 10000);
 
-		forward_to_block_with_custom_rewards(100, 40000);
+		forward_to_block_with_custom_rewards::<Test>(100, 40000);
 		assert_eq!(
 			U256::from(u128::MAX) * U256::from(10),
 			PromotedPoolRewards::<Test>::get().get(&4).unwrap().rewards
@@ -870,7 +870,7 @@ fn rewards_storage_right_amounts_start2() {
 		ProofOfStake::deactivate_liquidity_for_native_rewards(RuntimeOrigin::signed(5), 4, 5000)
 			.unwrap();
 
-		forward_to_block_with_custom_rewards(200, 20000); //its really weird that rewards are
+		forward_to_block_with_custom_rewards::<Test>(200, 20000); //its really weird that rewards are
 												  //decreased from 40k to 20k in single
 		assert_eq!(
 			U256::from(u128::MAX) * U256::from(20),
@@ -987,7 +987,7 @@ fn rewards_storage_right_amounts_start3() {
 		.unwrap();
 		mint_and_activate_tokens(3, 4, 10000);
 
-		forward_to_block_with_custom_rewards(100, 20000);
+		forward_to_block_with_custom_rewards::<Test>(100, 20000);
 
 		let mut rewards_info = ProofOfStake::get_rewards_info(2, 4);
 		assert_eq!(rewards_info.rewards_not_yet_claimed, 0);
@@ -1070,7 +1070,7 @@ fn liquidity_rewards_transfered_liq_tokens_produce_rewards_W() {
 		)
 		.unwrap();
 
-		forward_to_block(100);
+		forward_to_block::<Test>(100);
 
 		assert_eq!(ProofOfStake::calculate_rewards_amount(3, 4).unwrap(), 14704);
 		ProofOfStake::claim_native_rewards(RuntimeOrigin::signed(3), 4).unwrap();
@@ -1108,12 +1108,12 @@ fn test_migrated_from_pallet_issuance() {
 		)
 		.unwrap();
 
-		forward_to_block_with_custom_rewards(9, LIQUIDITY_ISSUANCE);
+		forward_to_block_with_custom_rewards::<Test>(9, LIQUIDITY_ISSUANCE);
 		assert_eq!(
 			U256::from_dec_str("153142377820933750789374425201630124724265475").unwrap(),
 			ProofOfStake::get_pool_rewards(1).unwrap()
 		);
-		forward_to_block_with_custom_rewards(19, LIQUIDITY_ISSUANCE);
+		forward_to_block_with_custom_rewards::<Test>(19, LIQUIDITY_ISSUANCE);
 		assert_eq!(
 			U256::from_dec_str("306284755641867501578748850403260249448530950").unwrap(),
 			ProofOfStake::get_pool_rewards(1).unwrap()
@@ -1128,7 +1128,7 @@ fn test_migrated_from_pallet_issuance() {
 			None,
 		)
 		.unwrap();
-		forward_to_block_with_custom_rewards(29, LIQUIDITY_ISSUANCE);
+		forward_to_block_with_custom_rewards::<Test>(29, LIQUIDITY_ISSUANCE);
 		assert_eq!(
 			U256::from_dec_str("382855774411150916504204331316771595926557960").unwrap(),
 			ProofOfStake::get_pool_rewards(1).unwrap()
@@ -1138,7 +1138,7 @@ fn test_migrated_from_pallet_issuance() {
 			ProofOfStake::get_pool_rewards(2).unwrap()
 		);
 
-		forward_to_block_with_custom_rewards(39, LIQUIDITY_ISSUANCE);
+		forward_to_block_with_custom_rewards::<Test>(39, LIQUIDITY_ISSUANCE);
 		assert_eq!(
 			U256::from_dec_str("459426793180434331429659812230282942404584970").unwrap(),
 			ProofOfStake::get_pool_rewards(1).unwrap()
@@ -1184,7 +1184,7 @@ fn claim_rewards_from_pool_that_has_been_disabled() {
 		)
 		.unwrap();
 
-		forward_to_block(10);
+		forward_to_block::<Test>(10);
 
 		assert_eq!(ProofOfStake::calculate_rewards_amount(2, 4).unwrap(), 291);
 
@@ -1235,7 +1235,7 @@ fn user_can_provide_3rdparty_rewards() {
 			)
 			.unwrap();
 
-			roll_to_session(5);
+			roll_to_session::<Test>(5);
 			ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
 				REWARDED_PAIR,
@@ -1260,7 +1260,7 @@ fn cant_schedule_rewards_in_past() {
 
 
 
-			roll_to_session(5);
+			roll_to_session::<Test>(5);
 			assert_err!(
 				ProofOfStake::reward_pool(
 					RuntimeOrigin::signed(ALICE),
@@ -1495,38 +1495,38 @@ fn rewards_linked_list_removes_outdated_schedule_automatically() {
 			assert_eq!(ScheduleListPos::<Test>::get(), None);
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
 
-			forward_to_block(2);
+			forward_to_block::<Test>(2);
 
 			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
 			assert_eq!(ScheduleListPos::<Test>::get(), Some(1u64));
 
-			forward_to_block(5);
+			forward_to_block::<Test>(5);
 
 			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
 			assert_eq!(ScheduleListPos::<Test>::get(), Some(1u64));
 
-			forward_to_block(11);
+			forward_to_block::<Test>(11);
 			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
 			assert_eq!(ScheduleListPos::<Test>::get(), Some(1u64));
 
-			forward_to_block(21);
+			forward_to_block::<Test>(21);
 			assert_eq!(ScheduleListHead::<Test>::get(), Some(1u64));
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
 			assert_eq!(ScheduleListPos::<Test>::get(), Some(1u64));
 
-			forward_to_block(25);
+			forward_to_block::<Test>(25);
 			assert_eq!(ScheduleListHead::<Test>::get(), Some(1u64));
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
 			assert_eq!(ScheduleListPos::<Test>::get(), Some(1u64));
 
-			forward_to_block(29);
+			forward_to_block::<Test>(29);
 			assert_eq!(ScheduleListHead::<Test>::get(), Some(1u64));
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
 
-			forward_to_block(30);
+			forward_to_block::<Test>(30);
 			assert_eq!(ScheduleListHead::<Test>::get(), None);
 			assert_eq!(ScheduleListTail::<Test>::get(), None);
 			assert_eq!(ScheduleListPos::<Test>::get(), None);
@@ -1574,7 +1574,7 @@ fn rewards_first_schedule_from_linked_list_of_four() {
 			assert_eq!(ScheduleListPos::<Test>::get(), None);
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
 
-			forward_to_block(21);
+			forward_to_block::<Test>(21);
 
 			assert_eq!(ScheduleListHead::<Test>::get(), Some(1u64));
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
@@ -1610,7 +1610,7 @@ fn remove_last_schedule_from_linked_list() {
 			assert_eq!(ScheduleListPos::<Test>::get(), None);
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
 
-			forward_to_block(21);
+			forward_to_block::<Test>(21);
 
 			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(2u64));
@@ -1646,7 +1646,7 @@ fn remove_middle_schedule_from_linked_list() {
 			assert_eq!(ScheduleListPos::<Test>::get(), None);
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
 
-			forward_to_block(21);
+			forward_to_block::<Test>(21);
 
 			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
@@ -1682,7 +1682,7 @@ fn remove_first_few_elems_at_once_from_linked_list() {
 			assert_eq!(ScheduleListPos::<Test>::get(), None);
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
 
-			forward_to_block(20);
+			forward_to_block::<Test>(20);
 
 			assert_eq!(ScheduleListHead::<Test>::get(), Some(2u64));
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
@@ -1717,7 +1717,7 @@ fn remove_few_last_elems_at_once_from_linked_list() {
 			assert_eq!(ScheduleListPos::<Test>::get(), None);
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
 
-			forward_to_block(21);
+			forward_to_block::<Test>(21);
 
 			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
@@ -1752,7 +1752,7 @@ fn remove_few_middle_elements_from_linkedd_list() {
 			assert_eq!(ScheduleListPos::<Test>::get(), None);
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
 
-			forward_to_block(21);
+			forward_to_block::<Test>(21);
 
 			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
@@ -1789,7 +1789,7 @@ fn remove_random_elements_from_linked_list() {
 			assert_eq!(ScheduleListPos::<Test>::get(), None);
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(4u64));
 
-			forward_to_block(21);
+			forward_to_block::<Test>(21);
 
 			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(4u64));
@@ -1824,7 +1824,7 @@ fn remove_random_elements_from_linked_list_over_time() {
 			assert_eq!(ScheduleListPos::<Test>::get(), None);
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(6u64));
 
-			roll_to_session(2);
+			roll_to_session::<Test>(2);
 			process_all_schedules_in_current_session();
 			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(6u64));
@@ -1834,7 +1834,7 @@ fn remove_random_elements_from_linked_list_over_time() {
 			assert_eq!(RewardsSchedulesList::<Test>::get(4u64).unwrap().1, Some(6u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(6u64).unwrap().1, None);
 
-			roll_to_session(3);
+			roll_to_session::<Test>(3);
 			process_all_schedules_in_current_session();
 
 			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
@@ -1871,14 +1871,14 @@ fn remove_lot_of_schedules_from_linked_list_in_single_iteration() {
 			assert_eq!(ScheduleListPos::<Test>::get(), None);
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(8u64));
 
-			forward_to_block(24);
+			forward_to_block::<Test>(24);
 
 			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
 			assert_eq!(ScheduleListTail::<Test>::get(), Some(8u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(8u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(8u64).unwrap().1, None);
 
-			forward_to_block(100);
+			forward_to_block::<Test>(100);
 			assert_eq!(ScheduleListHead::<Test>::get(), None);
 			assert_eq!(ScheduleListTail::<Test>::get(), None);
 		});
@@ -1918,7 +1918,7 @@ fn number_of_active_schedules_is_limited() {
 			Error::<Test>::TooManySchedules
 		);
 
-		roll_to_session(10);
+		roll_to_session::<Test>(10);
 
 		assert_ok!(ProofOfStake::reward_pool(
 			RuntimeOrigin::signed(ALICE),
@@ -1987,7 +1987,7 @@ fn reject_schedule_with_too_little_rewards_per_session() {
 				MockValuationApi::valuate_non_liquidity_token_context();
 			valuate_non_liquidity_token_mock.expect().return_const(0u128);
 
-			roll_to_session(4);
+			roll_to_session::<Test>(4);
 
 			assert_err!(
 				ProofOfStake::reward_pool(
@@ -2017,7 +2017,7 @@ fn accept_schedule_valuated_in_native_token() {
 			let get_pool_state_mock = MockValuationApi::get_pool_state_context();
 			get_pool_state_mock.expect().return_const(Some((min_req_volume(),min_req_volume())));
 
-			roll_to_session(4);
+			roll_to_session::<Test>(4);
 
 			assert_ok!(ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
@@ -2050,7 +2050,7 @@ fn accept_schedule_valuated_in_token_paired_with_native_token() {
 			let get_pool_state_mock = MockValuationApi::get_pool_state_context();
 			get_pool_state_mock.expect().return_const(Some((min_req_volume(),min_req_volume())));
 
-			roll_to_session(4);
+			roll_to_session::<Test>(4);
 
 			assert_ok!(ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
@@ -2094,7 +2094,7 @@ fn user_can_claim_3rdparty_rewards() {
 			)
 			.unwrap();
 
-			roll_to_session(1);
+			roll_to_session::<Test>(1);
 			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
 				RuntimeOrigin::signed(BOB),
 				LIQUIDITY_TOKEN,
@@ -2108,7 +2108,7 @@ fn user_can_claim_3rdparty_rewards() {
 				Ok(0)
 			);
 
-			roll_to_session(2);
+			roll_to_session::<Test>(2);
 			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
 				RuntimeOrigin::signed(CHARLIE),
 				LIQUIDITY_TOKEN,
@@ -2130,7 +2130,7 @@ fn user_can_claim_3rdparty_rewards() {
 				Ok(1000)
 			);
 
-			roll_to_session(3);
+			roll_to_session::<Test>(3);
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
 				Ok(1500)
@@ -2177,7 +2177,7 @@ fn overlapping_3rdparty_rewards_works() {
 			)
 			.unwrap();
 
-			roll_to_session(1);
+			roll_to_session::<Test>(1);
 			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
 				RuntimeOrigin::signed(BOB),
 				LIQUIDITY_TOKEN,
@@ -2187,7 +2187,7 @@ fn overlapping_3rdparty_rewards_works() {
 			)
 			.unwrap();
 
-			roll_to_session(5);
+			roll_to_session::<Test>(5);
 			let second_reward_token_id = TokensOf::<Test>::create(&ALICE, MILLION).unwrap();
 			ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
@@ -2206,7 +2206,7 @@ fn overlapping_3rdparty_rewards_works() {
 			)
 			.unwrap();
 
-			roll_to_session(7);
+			roll_to_session::<Test>(7);
 
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_amount(
@@ -2252,7 +2252,7 @@ fn reuse_activated_liquiddity_tokens_for_multiple_3rdparty_schedules() {
 			)
 			.unwrap();
 
-			roll_to_session(1);
+			roll_to_session::<Test>(1);
 			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
 				RuntimeOrigin::signed(BOB),
 				LIQUIDITY_TOKEN,
@@ -2262,7 +2262,7 @@ fn reuse_activated_liquiddity_tokens_for_multiple_3rdparty_schedules() {
 			)
 			.unwrap();
 
-			roll_to_session(5);
+			roll_to_session::<Test>(5);
 			ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
 				REWARDED_PAIR,
@@ -2281,7 +2281,7 @@ fn reuse_activated_liquiddity_tokens_for_multiple_3rdparty_schedules() {
 			)
 			.unwrap();
 
-			roll_to_session(7);
+			roll_to_session::<Test>(7);
 
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_amount(
@@ -2327,7 +2327,7 @@ fn deactivate_3rdparty_rewards() {
 			)
 			.unwrap();
 
-			roll_to_session(1);
+			roll_to_session::<Test>(1);
 			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
 				RuntimeOrigin::signed(BOB),
 				LIQUIDITY_TOKEN,
@@ -2346,7 +2346,7 @@ fn deactivate_3rdparty_rewards() {
 			)
 			.unwrap();
 
-			roll_to_session(2);
+			roll_to_session::<Test>(2);
 
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
@@ -2369,7 +2369,7 @@ fn deactivate_3rdparty_rewards() {
 			)
 			.unwrap();
 
-			roll_to_session(3);
+			roll_to_session::<Test>(3);
 
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
@@ -2431,7 +2431,7 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 			)
 			.unwrap();
 
-			roll_to_session(2);
+			roll_to_session::<Test>(2);
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
 				vec![(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 1 * 1000u128),]
@@ -2453,7 +2453,7 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 			)
 			.unwrap();
 
-			roll_to_session(3);
+			roll_to_session::<Test>(3);
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
 				vec![
@@ -2462,7 +2462,7 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 				]
 			);
 
-			roll_to_session(4);
+			roll_to_session::<Test>(4);
 
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
@@ -2488,7 +2488,7 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 			)
 			.unwrap();
 
-			roll_to_session(5);
+			roll_to_session::<Test>(5);
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
 				vec![
@@ -2514,7 +2514,7 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 			)
 			.unwrap();
 
-			roll_to_session(7);
+			roll_to_session::<Test>(7);
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
 				vec![
@@ -2674,7 +2674,7 @@ fn liquidity_minting_liquidity_can_be_resused() {
 			)
 			.unwrap();
 
-			roll_to_session(2);
+			roll_to_session::<Test>(2);
 
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_amount(
@@ -3027,7 +3027,7 @@ fn can_claim_schedule_rewards() {
 			)
 			.unwrap();
 
-			forward_to_block(20);
+			forward_to_block::<Test>(20);
 
 			assert_eq!(TokensOf::<Test>::free_balance(FIRST_REWARD_TOKEN, &BOB), 0,);
 			assert_eq!(TokensOf::<Test>::free_balance(SECOND_REWARD_TOKEN, &BOB), 0,);
@@ -3304,7 +3304,7 @@ fn claim_rewards_from_multiple_sessions_at_once() {
 			)
 			.unwrap();
 
-			roll_to_session(1);
+			roll_to_session::<Test>(1);
 			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
 				RuntimeOrigin::signed(BOB),
 				LIQUIDITY_TOKEN,
@@ -3318,13 +3318,13 @@ fn claim_rewards_from_multiple_sessions_at_once() {
 				Ok(0)
 			);
 
-			roll_to_session(2);
+			roll_to_session::<Test>(2);
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
 				Ok(1000)
 			);
 
-			roll_to_session(5);
+			roll_to_session::<Test>(5);
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
 				Ok(4000)
@@ -3364,7 +3364,7 @@ fn multi_user_rewards_distributeion_scenario() {
 			)
 			.unwrap();
 
-			roll_to_session(1);
+			roll_to_session::<Test>(1);
 			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
 				RuntimeOrigin::signed(BOB),
 				LIQUIDITY_TOKEN,
@@ -3378,7 +3378,7 @@ fn multi_user_rewards_distributeion_scenario() {
 				Ok(0)
 			);
 
-			roll_to_session(2);
+			roll_to_session::<Test>(2);
 			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
 				RuntimeOrigin::signed(CHARLIE),
 				LIQUIDITY_TOKEN,
@@ -3401,7 +3401,7 @@ fn multi_user_rewards_distributeion_scenario() {
 				Ok(1000)
 			);
 
-			roll_to_session(3);
+			roll_to_session::<Test>(3);
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
 				Ok(1500)
@@ -3451,7 +3451,7 @@ fn test_all_scheduled_rewards_are_distributed_when_activated_instantly() {
 			)
 			.unwrap();
 
-			roll_to_session(12);
+			roll_to_session::<Test>(12);
 
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
@@ -3486,7 +3486,7 @@ fn test_all_scheduled_rewards_are_distributed_when_activated_after_few_sessions(
 			)
 			.unwrap();
 
-			roll_to_session(7);
+			roll_to_session::<Test>(7);
 			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
 				RuntimeOrigin::signed(BOB),
 				LIQUIDITY_TOKEN,
@@ -3496,7 +3496,7 @@ fn test_all_scheduled_rewards_are_distributed_when_activated_after_few_sessions(
 			)
 			.unwrap();
 
-			roll_to_session(15);
+			roll_to_session::<Test>(15);
 
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
@@ -3531,7 +3531,7 @@ fn test_all_scheduled_rewards_are_distributed_when_activated_schedule_is_finishe
 			)
 			.unwrap();
 
-			roll_to_session(15);
+			roll_to_session::<Test>(15);
 
 			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
 				RuntimeOrigin::signed(BOB),
@@ -3542,7 +3542,7 @@ fn test_all_scheduled_rewards_are_distributed_when_activated_schedule_is_finishe
 			)
 			.unwrap();
 
-			roll_to_session(16);
+			roll_to_session::<Test>(16);
 
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
@@ -3578,7 +3578,7 @@ fn test_multiple_activations_in_same_block() {
 			)
 			.unwrap();
 
-			roll_to_session(1);
+			roll_to_session::<Test>(1);
 
 			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
 				RuntimeOrigin::signed(BOB),
@@ -3598,7 +3598,7 @@ fn test_multiple_activations_in_same_block() {
 			)
 			.unwrap();
 
-			roll_to_session(2);
+			roll_to_session::<Test>(2);
 
 			assert_eq!(
 				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
@@ -3660,7 +3660,7 @@ fn rewards_are_available_in_next_session_after_rewards_are_provided() {
 					.unwrap()
 			);
 
-			roll_to_session(1);
+			roll_to_session::<Test>(1);
 
 			assert_eq!(
 				0u128,
@@ -3709,7 +3709,7 @@ fn rewards_are_available_in_next_session_after_rewards_are_provided() {
 					.unwrap()
 			);
 
-			roll_to_session(2);
+			roll_to_session::<Test>(2);
 
 			assert_eq!(
 				15_000u128,
@@ -3758,7 +3758,7 @@ fn rewards_are_available_in_next_session_after_rewards_are_provided() {
 					.unwrap()
 			);
 
-			roll_to_session(3);
+			roll_to_session::<Test>(3);
 
 			assert_eq!(
 				15_000u128 + 10_000u128,
@@ -3826,7 +3826,7 @@ fn multiple_activations_and_deactivations_from_multiple_users_on_the_same_schedu
 			)
 			.unwrap();
 
-			roll_to_session(2);
+			roll_to_session::<Test>(2);
 
 			assert_eq!(
 				500u128,
@@ -3924,7 +3924,7 @@ fn multiple_activations_and_deactivations_from_multiple_users_on_the_same_schedu
 					.unwrap()
 			);
 
-			roll_to_session(3);
+			roll_to_session::<Test>(3);
 
 			assert_eq!(
 				1000u128,
@@ -4024,7 +4024,7 @@ fn multiple_activations_and_deactivations_from_multiple_users_on_the_same_schedu
 					.unwrap()
 			);
 
-			roll_to_session(4);
+			roll_to_session::<Test>(4);
 
 			assert_eq!(
 				1249u128,
@@ -4133,7 +4133,7 @@ fn reject_3rdparty_rewards_with_non_liq_token_and_too_small_volume() {
 			let get_pool_state_mock = MockValuationApi::get_pool_state_context();
 			get_pool_state_mock.expect().return_const(too_small_volume);
 
-			roll_to_session(4);
+			roll_to_session::<Test>(4);
 
 			assert_err!(
                 ProofOfStake::reward_pool(
@@ -4170,7 +4170,7 @@ fn accept_3rdparty_rewards_with_non_liq_token_and_proper_valuation() {
 			let get_pool_state_mock = MockValuationApi::get_pool_state_context();
 			get_pool_state_mock.expect().return_const(min_volume);
 
-			roll_to_session(4);
+			roll_to_session::<Test>(4);
 
 			assert_ok!(
                 ProofOfStake::reward_pool(
@@ -4207,7 +4207,7 @@ fn reject_3rdparty_rewards_with_liq_token_and_too_small_volume() {
 			let get_reserves_mock = MockValuationApi::get_reserves_context();
 			get_reserves_mock.expect().return_const(Ok((9u128, 0u128)));
 
-			roll_to_session(4);
+			roll_to_session::<Test>(4);
 
 			assert_err!(
                 ProofOfStake::reward_pool(
@@ -4243,7 +4243,7 @@ fn accept_3rdparty_rewards_with_liq_token_and_min_volume() {
 			let get_reserves_mock = MockValuationApi::get_reserves_context();
 			get_reserves_mock.expect().return_const(Ok((min_req_volume(), 0u128)));
 
-			roll_to_session(4);
+			roll_to_session::<Test>(4);
 
 			assert_ok!(
                 ProofOfStake::reward_pool(

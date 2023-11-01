@@ -478,75 +478,39 @@ macro_rules! assert_event_emitted {
 	};
 }
 
-pub fn roll_to_next_block() {
-	forward_to_block((System::block_number() + 1).saturated_into::<u32>());
-}
-
-pub fn roll_to_next_block2<T>() where
+pub fn roll_to_next_block<T>() where
 	T: pos::Config,
 	T: frame_system::Config
 {
     let new_block_number = frame_system::Pallet::<T>::block_number().saturating_add(1u32.into());
-	forward_to_block2::<T>(new_block_number);
+	forward_to_block::<T>(new_block_number);
 }
 
-pub fn roll_to_next_session() {
-	let current_session = ProofOfStake::session_index();
-	roll_to_session(current_session + 1);
-}
-
-pub fn roll_to_next_session2<T>() where
+pub fn roll_to_next_session<T>() where
 	T: pos::Config,
 	T: frame_system::Config
 {
 	let current_session = ProofOfStake::session_index();
-	roll_to_session2::<T>(current_session + 1);
+	roll_to_session::<T>(current_session + 1);
 }
 
-pub fn roll_to_session(n: u32) {
-	while ProofOfStake::session_index() < n {
-		roll_to_next_block();
-	}
-}
-
-pub fn roll_to_session2<T>(n: u32) where
+pub fn roll_to_session<T>(n: u32) where
 	T: pos::Config,
 	T: frame_system::Config
 {
 	while ProofOfStake::session_index() < n {
-		roll_to_next_block2::<T>();
+		roll_to_next_block::<T>();
 	}
 }
 
-pub fn forward_to_block(n: u32) {
-	forward_to_block_with_custom_rewards(n, 10000);
-}
-
-pub fn forward_to_block2<T>(n: T::BlockNumber) where
+pub fn forward_to_block<T>(n: T::BlockNumber) where
 	T: pos::Config,
 	T: frame_system::Config
 {
-	forward_to_block_with_custom_rewards2::<T>(n, 10000);
+	forward_to_block_with_custom_rewards::<T>(n, 10000);
 }
 
-pub fn forward_to_block_with_custom_rewards(n: u32, rewards: u128) {
-	while System::block_number().saturated_into::<u32>() < n {
-		let new_block_number = System::block_number().saturated_into::<u64>() + 1;
-		System::set_block_number(new_block_number);
-
-		System::on_initialize(new_block_number);
-		ProofOfStake::on_initialize(new_block_number);
-
-		if ProofOfStake::is_new_session() {
-			ProofOfStake::distribute_rewards(rewards);
-		}
-
-		ProofOfStake::on_finalize(new_block_number);
-		System::on_finalize(new_block_number);
-	}
-}
-
-pub fn forward_to_block_with_custom_rewards2<T>(n: T::BlockNumber, rewards: u128)  	where
+pub fn forward_to_block_with_custom_rewards<T>(n: T::BlockNumber, rewards: u128)  	where
 	T: pos::Config,
 	T: frame_system::Config
 {

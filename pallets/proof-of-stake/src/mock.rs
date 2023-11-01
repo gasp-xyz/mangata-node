@@ -24,6 +24,7 @@ use mangata_types::{assets::CustomMetadata, Amount, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
 use orml_traits::{asset_registry::AssetMetadata, parameter_type_with_key};
 use sp_runtime::{Perbill, Percent};
+use sp_runtime::Saturating;
 use std::{collections::HashMap, sync::Mutex};
 
 pub const NATIVE_CURRENCY_ID: u32 = 0;
@@ -477,13 +478,29 @@ macro_rules! assert_event_emitted {
 	};
 }
 
-fn roll_to_next_block() {
+pub fn roll_to_next_block() {
 	forward_to_block((System::block_number() + 1).saturated_into::<u32>());
+}
+
+pub fn roll_to_next_block2<T>() where
+	T: pos::Config,
+	T: frame_system::Config
+{
+    let new_block_number = frame_system::Pallet::<T>::block_number().saturating_add(1u32.into());
+	forward_to_block2::<T>(new_block_number);
 }
 
 pub fn roll_to_next_session() {
 	let current_session = ProofOfStake::session_index();
 	roll_to_session(current_session + 1);
+}
+
+pub fn roll_to_next_session2<T>() where
+	T: pos::Config,
+	T: frame_system::Config
+{
+	let current_session = ProofOfStake::session_index();
+	roll_to_session2::<T>(current_session + 1);
 }
 
 pub fn roll_to_session(n: u32) {
@@ -492,8 +509,24 @@ pub fn roll_to_session(n: u32) {
 	}
 }
 
+pub fn roll_to_session2<T>(n: u32) where
+	T: pos::Config,
+	T: frame_system::Config
+{
+	while ProofOfStake::session_index() < n {
+		roll_to_next_block2::<T>();
+	}
+}
+
 pub fn forward_to_block(n: u32) {
 	forward_to_block_with_custom_rewards(n, 10000);
+}
+
+pub fn forward_to_block2<T>(n: T::BlockNumber) where
+	T: pos::Config,
+	T: frame_system::Config
+{
+	forward_to_block_with_custom_rewards2::<T>(n, 10000);
 }
 
 pub fn forward_to_block_with_custom_rewards(n: u32, rewards: u128) {
@@ -510,5 +543,25 @@ pub fn forward_to_block_with_custom_rewards(n: u32, rewards: u128) {
 
 		ProofOfStake::on_finalize(new_block_number);
 		System::on_finalize(new_block_number);
+	}
+}
+
+pub fn forward_to_block_with_custom_rewards2<T>(n: T::BlockNumber, rewards: u128)  	where
+	T: pos::Config,
+	T: frame_system::Config
+{
+	while frame_system::Pallet::<T>::block_number() < n {
+		let new_block_number = frame_system::Pallet::<T>::block_number().saturating_add(1u32.into());
+		frame_system::Pallet::<T>::set_block_number(new_block_number);
+
+		frame_system::Pallet::<T>::on_initialize(new_block_number);
+		pos::Pallet::<T>::on_initialize(new_block_number);
+
+		if pos::Pallet::<T>::is_new_session() {
+			pos::Pallet::<T>::distribute_rewards(rewards);
+		}
+
+		pos::Pallet::<T>::on_finalize(new_block_number);
+		frame_system::Pallet::<T>::on_finalize(new_block_number);
 	}
 }

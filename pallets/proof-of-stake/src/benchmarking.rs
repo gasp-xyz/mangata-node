@@ -317,6 +317,7 @@ benchmarks! {
 	}: activate_liquidity_for_3rdparty_rewards(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id, 10_000u128, reward_token_id, None)
 	verify {
 		forward_to_next_session::<T>();
+		forward_to_next_session::<T>();
 		assert_eq!(
 		   PoS::<T>::calculate_3rdparty_rewards_amount(caller, liquidity_asset_id, reward_token_id).unwrap(),
 		   REWARDS_AMOUNT/2
@@ -334,7 +335,7 @@ benchmarks! {
 		let schedules_limit = <T as Config>::RewardsSchedulesLimit::get();
 		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
 		let native_asset_id = <T as Config>::NativeCurrencyId::get();
-		let REWARDS_AMOUNT: u128 = <T as Config>::Min3rdPartyRewardValutationPerSession::get();
+		let REWARDS_AMOUNT: u128 = 2u128 * <T as Config>::Min3rdPartyRewardValutationPerSession::get();
 
 		loop {
 			let token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.into()).unwrap().into();
@@ -414,7 +415,7 @@ benchmarks! {
 		let schedules_limit = <T as Config>::RewardsSchedulesLimit::get();
 		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
 		let native_asset_id = <T as Config>::NativeCurrencyId::get();
-		let REWARDS_AMOUNT: u128 = <T as Config>::Min3rdPartyRewardValutationPerSession::get();
+		let REWARDS_AMOUNT: u128 = 2u128 * <T as Config>::Min3rdPartyRewardValutationPerSession::get();
 
 		loop {
 			let token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.into()).unwrap().into();
@@ -450,6 +451,7 @@ benchmarks! {
 			None
 		).unwrap();
 
+		forward_to_next_session::<T>();
 		forward_to_next_session::<T>();
 		assert_eq!(
 			PoS::<T>::calculate_3rdparty_rewards_amount(caller.clone(), liquidity_asset_id, reward_token_id).unwrap(),

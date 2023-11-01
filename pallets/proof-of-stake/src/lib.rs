@@ -1397,19 +1397,15 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn verify_rewards_min_amount(token_id: TokenId, amount_per_session: Balance) -> bool {
-		log!(info, "blah 1 ");
 		if <T as Config>::ValuationApi::valuate_liquidity_token(token_id, amount_per_session) >= T::Min3rdPartyRewardValutationPerSession::get() {
-			log!(info, "blah 2 ");
 			return true;
 		}
 
 		if token_id == Into::<u32>::into(Self::native_token_id()) && amount_per_session >= T::Min3rdPartyRewardValutationPerSession::get() {
-			log!(info, "blah 3 ");
 			return true;
 		}
 
 		if <T as Config>::ValuationApi::valuate_non_liquidity_token( token_id, amount_per_session) >= T::Min3rdPartyRewardValutationPerSession::get() {
-			log!(info, "blah 4 ");
 			return true;
 		}
 
@@ -1509,8 +1505,6 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		let (rewards_info, total_available_rewards) =
 			calc.claim_rewards().map_err(|err| Into::<Error<T>>::into(err))?;
 
-		// TODO: mint rewards while rolling to next session
-		println!( "REWARDS : {}", total_available_rewards);
 		<T as Config>::Currency::transfer(
 			Self::native_token_id().into(),
 			&<T as Config>::LiquidityMiningIssuanceVault::get(),

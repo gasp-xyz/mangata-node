@@ -148,6 +148,8 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+mod utils;
+
 pub(crate) const LOG_TARGET: &str = "pos";
 
 // syntactic sugar for logging.

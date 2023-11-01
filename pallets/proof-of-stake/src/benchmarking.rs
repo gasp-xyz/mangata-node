@@ -29,27 +29,28 @@ type XykOf<Test> = <Test as Config>::ValuationApi;
 fn forward_to_next_session<T>()
 where
 	T: frame_system::Config,
-	T: pallet_issuance::Config,
+	// T: pallet_issuance::Config,
 	T: Config,
 {
-	let current_block: u32 = frame_system::Pallet::<T>::block_number().saturated_into::<u32>();
-
-	let blocks_per_session: u32 = PoS::<T>::rewards_period();
-	let target_block_nr: u32;
-	let target_session_nr: u32;
-
-	if current_block == 0_u32 || current_block == 1_u32 {
-		target_session_nr = 1_u32;
-		target_block_nr = blocks_per_session;
-	} else {
-		// to fail on user trying to manage block nr on its own
-		assert!(current_block % blocks_per_session == 0);
-		target_session_nr = (current_block / blocks_per_session) + 1_u32;
-		target_block_nr = target_session_nr * blocks_per_session;
-	}
-
-	frame_system::Pallet::<T>::set_block_number(target_block_nr.into());
-	pallet_issuance::Pallet::<T>::compute_issuance(target_session_nr);
+	crate::utils::roll_to_next_session::<T>();
+	// let current_block: u32 = frame_system::Pallet::<T>::block_number().saturated_into::<u32>();
+	//
+	// let blocks_per_session: u32 = PoS::<T>::rewards_period();
+	// let target_block_nr: u32;
+	// let target_session_nr: u32;
+	//
+	// if current_block == 0_u32 || current_block == 1_u32 {
+	// 	target_session_nr = 1_u32;
+	// 	target_block_nr = blocks_per_session;
+	// } else {
+	// 	// to fail on user trying to manage block nr on its own
+	// 	assert!(current_block % blocks_per_session == 0);
+	// 	target_session_nr = (current_block / blocks_per_session) + 1_u32;
+	// 	target_block_nr = target_session_nr * blocks_per_session;
+	// }
+	//
+	// frame_system::Pallet::<T>::set_block_number(target_block_nr.into());
+	// pallet_issuance::Pallet::<T>::compute_issuance(target_session_nr);
 }
 
 benchmarks! {
@@ -69,7 +70,7 @@ benchmarks! {
 		let non_native_asset_id2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
 
 		let liquidity_asset_id : TokenId= <T as Config>::Currency::create(&caller, ((40000000000000000000_u128/2_u128) + (60000000000000000000_u128/2_u128)).into()).unwrap().into();
-	   PoS::<T>::update_pool_promotion(RawOrigin::Root.into(), liquidity_asset_id, 1u8).unwrap();
+		PoS::<T>::update_pool_promotion(RawOrigin::Root.into(), liquidity_asset_id, 1u8).unwrap();
 
 		assert_eq!(
 			<T as Config>::Currency::total_issuance(liquidity_asset_id.into()),

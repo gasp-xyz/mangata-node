@@ -1509,6 +1509,8 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		let (rewards_info, total_available_rewards) =
 			calc.claim_rewards().map_err(|err| Into::<Error<T>>::into(err))?;
 
+		// TODO: mint rewards while rolling to next session
+		println!( "REWARDS : {}", total_available_rewards);
 		<T as Config>::Currency::transfer(
 			Self::native_token_id().into(),
 			&<T as Config>::LiquidityMiningIssuanceVault::get(),

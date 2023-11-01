@@ -11,7 +11,6 @@ use crate::utils::*;
 
 use mangata_support::traits::{ComputeIssuance, GetIssuance};
 
-type TokensOf<Test> = <Test as Config>::Currency;
 
 fn mint_and_activate_tokens(who: AccountId, token_id: TokenId, amount: Balance) {
 	TokensOf::<Test>::mint(token_id, &who, amount).unwrap();

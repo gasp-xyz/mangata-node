@@ -277,7 +277,8 @@ impl pallet_proof_of_stake::Config for Runtime {
 	type RewardsDistributionPeriod = cfg::SessionLenghtOf<Runtime>;
 	type WeightInfo = weights::pallet_proof_of_stake_weights::ModuleWeight<Runtime>;
 	type RewardsSchedulesLimit = cfg::pallet_proof_of_stake::RewardsSchedulesLimit;
-	type Min3rdPartyRewardValutationPerSession = cfg::pallet_proof_of_stake::Min3rdPartyRewardValutationPerSession;
+	type Min3rdPartyRewardValutationPerSession =
+		cfg::pallet_proof_of_stake::Min3rdPartyRewardValutationPerSession;
 	type Min3rdPartyRewardVolume = cfg::pallet_proof_of_stake::Min3rdPartyRewardVolume;
 	type ValuationApi = Xyk;
 }

@@ -23,8 +23,7 @@ pub use mangata_support::traits::ProofOfStakeRewardsApi;
 use mangata_types::{assets::CustomMetadata, Amount, Balance, TokenId};
 use orml_tokens::{MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
 use orml_traits::{asset_registry::AssetMetadata, parameter_type_with_key};
-use sp_runtime::{Perbill, Percent};
-use sp_runtime::Saturating;
+use sp_runtime::{Perbill, Percent, Saturating};
 use std::{collections::HashMap, sync::Mutex};
 
 pub const NATIVE_CURRENCY_ID: u32 = 0;
@@ -405,7 +404,7 @@ pub struct ExtBuilder {
 }
 
 fn min_req_volume() -> u128 {
- <<Test as Config>::Min3rdPartyRewardValutationPerSession as sp_core::Get<u128>>::get()
+	<<Test as Config>::Min3rdPartyRewardValutationPerSession as sp_core::Get<u128>>::get()
 }
 
 impl ExtBuilder {
@@ -444,7 +443,9 @@ impl ExtBuilder {
 			let valuate_liquidity_token_mock = MockValuationApi::valuate_liquidity_token_context();
 			valuate_liquidity_token_mock.expect().return_const(11u128);
 			let get_pool_state_mock = MockValuationApi::get_pool_state_context();
-			get_pool_state_mock.expect().return_const(Some((min_req_volume(),min_req_volume())));
+			get_pool_state_mock
+				.expect()
+				.return_const(Some((min_req_volume(), min_req_volume())));
 			f()
 		})
 	}
@@ -477,4 +478,3 @@ macro_rules! assert_event_emitted {
 		}
 	};
 }
-

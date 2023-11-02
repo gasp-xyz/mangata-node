@@ -142,12 +142,14 @@ use schedule_rewards_calculator::{
 
 mod benchmarking;
 
+
 #[cfg(test)]
 mod mock;
 
-#[cfg(test)]
+#[cfg(all(test, not(feature="runtime-benchmarks")))]
 mod tests;
 
+#[cfg(any(feature = "runtime-benchmarks", test))]
 mod utils;
 
 pub(crate) const LOG_TARGET: &str = "pos";

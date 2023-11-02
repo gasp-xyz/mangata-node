@@ -5,7 +5,7 @@ use frame_system::{Config, Pallet};
 use frame_support::traits::Hooks;
 use mangata_support::traits::LiquidityMiningApi;
 
-type TokensOf<Test> = <Test as crate::Config>::Currency;
+pub type TokensOf<Test> = <Test as crate::Config>::Currency;
 use orml_tokens::MultiTokenCurrencyExtended;
 
 

@@ -3068,31 +3068,48 @@ use frame_support::dispatch::{GetDispatchInfo, Pays};
 use sp_runtime::{traits::Dispatchable, Permill};
 
 #[test]
-#[ignore]
 #[serial]
 fn activate_deactivate_calls_are_free_of_charge() {
-	ExtBuilder::new().execute_with_default_mocks(|| {
-		System::set_block_number(1);
+	ExtBuilder::new()
+		.issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
+		.issue(BOB, LIQUIDITY_TOKEN, 100)
+		.execute_with_default_mocks(|| {
+			System::set_block_number(1);
 
-		let activate_call =
-			mock::RuntimeCall::ProofOfStake(Call::activate_liquidity_for_3rdparty_rewards {
-				liquidity_token_id: LIQUIDITY_TOKEN,
-				amount: 100,
-				reward_token: REWARD_TOKEN,
-				use_balance_from: None,
-			});
+			ProofOfStake::reward_pool(
+				RuntimeOrigin::signed(ALICE),
+				REWARDED_PAIR,
+				REWARD_TOKEN,
+				REWARD_AMOUNT,
+				10u32.into(),
+			)
+			.unwrap();
 
-		let deactivate_call =
-			mock::RuntimeCall::ProofOfStake(Call::deactivate_liquidity_for_3rdparty_rewards {
-				liquidity_token_id: LIQUIDITY_TOKEN,
-				amount: 100,
-				reward_token: REWARD_TOKEN,
-			});
+			let activate_call =
+				mock::RuntimeCall::ProofOfStake(Call::activate_liquidity_for_3rdparty_rewards {
+					liquidity_token_id: LIQUIDITY_TOKEN,
+					amount: 100,
+					reward_token: REWARD_TOKEN,
+					use_balance_from: None,
+				});
 
-		assert_eq!(activate_call.get_dispatch_info().pays_fee, Pays::No);
+			let deactivate_call =
+				mock::RuntimeCall::ProofOfStake(Call::deactivate_liquidity_for_3rdparty_rewards {
+					liquidity_token_id: LIQUIDITY_TOKEN,
+					amount: 100,
+					reward_token: REWARD_TOKEN,
+				});
 
-		assert_eq!(deactivate_call.get_dispatch_info().pays_fee, Pays::No);
-	});
+			assert_eq!(
+				activate_call.dispatch(RuntimeOrigin::signed(BOB)).unwrap().pays_fee,
+				Pays::No
+			);
+
+			assert_eq!(
+				deactivate_call.dispatch(RuntimeOrigin::signed(BOB)).unwrap().pays_fee,
+				Pays::No
+			);
+		});
 }
 
 #[test]

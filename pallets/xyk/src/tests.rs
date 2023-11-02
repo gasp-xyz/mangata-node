@@ -772,6 +772,7 @@ fn sell_N_zero_amount() {
 }
 
 #[test]
+#[serial]
 fn multiswap_sell_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1045,6 +1046,7 @@ fn multiswap_sell_just_enough_assets_pay_fee_but_not_to_swap_W() {
 }
 
 #[test]
+#[serial]
 fn multiswap_sell_with_two_hops_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1070,6 +1072,7 @@ fn multiswap_sell_with_two_hops_W() {
 }
 
 #[test]
+#[serial]
 fn multiswap_sell_with_single_hops_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1084,6 +1087,7 @@ fn multiswap_sell_with_single_hops_W() {
 }
 
 #[test]
+#[serial]
 fn multiswap_sell_same_pool_works_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1123,6 +1127,7 @@ fn multiswap_sell_same_pool_works_W() {
 }
 
 #[test]
+#[serial]
 fn multiswap_sell_loop_works_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1383,6 +1388,7 @@ fn buy_N_zero_amount() {
 }
 
 #[test]
+#[serial]
 fn multiswap_buy_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1440,6 +1446,7 @@ fn multiswap_buy_W() {
 }
 
 #[test]
+#[serial]
 fn multiswap_buy_bad_slippage_charges_fee_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1494,6 +1501,7 @@ fn multiswap_buy_bad_slippage_charges_fee_W() {
 }
 
 #[test]
+#[serial]
 fn multiswap_buy_bad_atomic_swap_charges_fee_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1551,6 +1559,7 @@ fn multiswap_buy_bad_atomic_swap_charges_fee_W() {
 }
 
 #[test]
+#[serial]
 fn multiswap_buy_not_enough_assets_pay_fees_fails_early_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1601,6 +1610,7 @@ fn multiswap_buy_not_enough_assets_pay_fees_fails_early_W() {
 }
 
 #[test]
+#[serial]
 fn multiswap_buy_just_enough_assets_pay_fee_but_not_to_swap_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1663,6 +1673,7 @@ fn multiswap_buy_just_enough_assets_pay_fee_but_not_to_swap_W() {
 }
 
 #[test]
+#[serial]
 fn multiswap_buy_with_two_hops_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1688,6 +1699,7 @@ fn multiswap_buy_with_two_hops_W() {
 }
 
 #[test]
+#[serial]
 fn multiswap_buy_with_single_hops_W() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1702,6 +1714,7 @@ fn multiswap_buy_with_single_hops_W() {
 }
 
 #[test]
+#[serial]
 fn multiswap_buy_same_pool_does_not_work_N() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1720,6 +1733,7 @@ fn multiswap_buy_same_pool_does_not_work_N() {
 }
 
 #[test]
+#[serial]
 fn multiswap_buy_loop_does_not_work_N() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);

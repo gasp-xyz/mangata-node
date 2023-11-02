@@ -20,7 +20,9 @@ permissions:
 
 jobs:
   performance-tests:
-    runs-on: [self-hosted, compile]
+    # Allows to keep e2e tests jobs running even if performance-tests fail
+    continue-on-error: true
+    runs-on: [compile-gke]
     timeout-minutes: 180
     env:
       ENV_REF: ${{ inputs.targetEnv || format('pr-{0}', github.event.number) }}
@@ -58,7 +60,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: "16"
+          node-version: "18"
           cache: "yarn"
           cache-dependency-path: "**/yarn.lock"
 
@@ -88,7 +90,3 @@ jobs:
             ./e2e/performance/enqueued.txt
             ./e2e/performance/executed.txt
             ./e2e/performance/pending.txt
-
-      - name: Fix permissions on self-hosted runner
-        if: always()
-        run: chown -R 1100:1100 $GITHUB_WORKSPACE

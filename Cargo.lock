@@ -15031,21 +15031,21 @@ dependencies = [
 ]
 
 [[patch.unused]]
+name = "sp-authorship"
+version = "4.0.0-dev"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/3rdparty-rewards#deb4623a00fa59f6cbbd0114bc0c0485ca500eae"
+
+[[patch.unused]]
+name = "sp-authorship"
+version = "4.0.0-dev"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/3rdparty-rewards#deb4623a00fa59f6cbbd0114bc0c0485ca500eae"
+
+[[patch.unused]]
+name = "sp-authorship"
+version = "4.0.0-dev"
+source = "git+https://github.com/mangata-finance//substrate?branch=feature/3rdparty-rewards#deb4623a00fa59f6cbbd0114bc0c0485ca500eae"
+
+[[patch.unused]]
 name = "pallet-vesting-mangata"
 version = "4.0.0-dev"
 source = "git+https://github.com/mangata-finance/substrate?branch=feature/3rdparty-rewards#deb4623a00fa59f6cbbd0114bc0c0485ca500eae"
-
-[[patch.unused]]
-name = "sp-authorship"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance//substrate?branch=feature/3rdparty-rewards#deb4623a00fa59f6cbbd0114bc0c0485ca500eae"
-
-[[patch.unused]]
-name = "sp-authorship"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance//substrate?branch=feature/3rdparty-rewards#deb4623a00fa59f6cbbd0114bc0c0485ca500eae"
-
-[[patch.unused]]
-name = "sp-authorship"
-version = "4.0.0-dev"
-source = "git+https://github.com/mangata-finance//substrate?branch=feature/3rdparty-rewards#deb4623a00fa59f6cbbd0114bc0c0485ca500eae"

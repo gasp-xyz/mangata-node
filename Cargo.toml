@@ -552,7 +552,7 @@ sp-staking = { git = "https://github.com/mangata-finance//substrate", branch = "
 sp-weights = { git = "https://github.com/mangata-finance//substrate", branch = "feature/3rdparty-rewards" }
 sp-arithmetic = { git = "https://github.com/mangata-finance//substrate", branch = "feature/3rdparty-rewards" }
 sp-npos-elections = { git = "https://github.com/mangata-finance//substrate", branch = "feature/3rdparty-rewards" }
-sp-authorship = { git = "https://github.com/mangata-finance//substrate", branch = "feature/3rdparty-rewards" }
+# sp-authorship = { git = "https://github.com/mangata-finance//substrate", branch = "feature/3rdparty-rewards" }
 sp-storage = { git = "https://github.com/mangata-finance//substrate", branch = "feature/3rdparty-rewards" }
 sp-inherents = { git = "https://github.com/mangata-finance//substrate", branch = "feature/3rdparty-rewards" }
 
@@ -735,7 +735,7 @@ sp-staking = { git = "https://github.com/mangata-finance//substrate", branch = "
 sp-weights = { git = "https://github.com/mangata-finance//substrate", branch = "feature/3rdparty-rewards" }
 sp-arithmetic = { git = "https://github.com/mangata-finance//substrate", branch = "feature/3rdparty-rewards" }
 sp-npos-elections = { git = "https://github.com/mangata-finance//substrate", branch = "feature/3rdparty-rewards" }
-sp-authorship = { git = "https://github.com/mangata-finance//substrate", branch = "feature/3rdparty-rewards" }
+# sp-authorship = { git = "https://github.com/mangata-finance//substrate", branch = "feature/3rdparty-rewards" }
 sp-storage = { git = "https://github.com/mangata-finance//substrate", branch = "feature/3rdparty-rewards" }
 sp-inherents = { git = "https://github.com/mangata-finance//substrate", branch = "feature/3rdparty-rewards" }
  sc-consensus-grandpa =  { git = "https://github.com/mangata-finance//substrate", branch = "feature/3rdparty-rewards" }
@@ -919,7 +919,7 @@ sp-staking = { git = "https://github.com/mangata-finance//substrate", branch = "
 sp-weights = { git = "https://github.com/mangata-finance//substrate", branch = "feature/3rdparty-rewards" }
 sp-arithmetic = { git = "https://github.com/mangata-finance//substrate", branch = "feature/3rdparty-rewards" }
 sp-npos-elections = { git = "https://github.com/mangata-finance//substrate", branch = "feature/3rdparty-rewards" }
-sp-authorship = { git = "https://github.com/mangata-finance//substrate", branch = "feature/3rdparty-rewards" }
+# sp-authorship = { git = "https://github.com/mangata-finance//substrate", branch = "feature/3rdparty-rewards" }
 sp-storage = { git = "https://github.com/mangata-finance//substrate", branch = "feature/3rdparty-rewards" }
 sp-inherents = { git = "https://github.com/mangata-finance//substrate", branch = "feature/3rdparty-rewards" }
 sc-consensus-grandpa =  { git = "https://github.com/mangata-finance//substrate", branch = "feature/3rdparty-rewards" }

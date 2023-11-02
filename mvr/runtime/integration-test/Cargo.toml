@@ -41,6 +41,7 @@ orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-l
 # Local
 mangata-polkadot-runtime = { path = "../mangata-polkadot", optional = true }
 xtokens-parachain = { path = "../xtokens-parachain", optional = true }
+pallet-proof-of-stake = { path = "../../pallets/proof-of-stake" }
 
 # Xcm simulator
 xcm-executor = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.42" }

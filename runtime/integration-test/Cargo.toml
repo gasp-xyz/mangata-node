@@ -9,10 +9,12 @@ mangata-types = { git = "https://github.com/mangata-finance/substrate", branch =
 frame-support = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 frame-system = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 pallet-balances = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+pallet-session = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-io = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 sp-runtime = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 pallet-proxy = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
 pallet-identity = { git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+parachain-staking = { git = "https://github.com/mangata-finance/moonbeam.git", branch = "mangata-dev" }
 
 # Polkadot
 pallet-xcm = { git = "https://github.com/mangata-finance/polkadot", branch = "mangata-dev" }
@@ -41,6 +43,7 @@ mangata-kusama-runtime = { path = "../mangata-kusama", optional = true }
 common-runtime = { path = "../common"}
 
 pallet-xyk = { path = '../../pallets/xyk', version = '0.1.0' }
+pallet-proof-of-stake = { path = '../../pallets/proof-of-stake', version = '0.1.0' }
 pallet-bootstrap = { path = '../../pallets/bootstrap', version = '0.1.0' }
 xyk-runtime-api = { path = '../../pallets/xyk/runtime-api', version = '2.0.0' }
 pallet-sudo-origin = { path = '../../pallets/sudo-origin' }

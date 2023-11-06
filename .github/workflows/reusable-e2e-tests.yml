@@ -80,7 +80,7 @@ jobs:
           '
           echo ::set-output name=matrix-combinations::{\"include\":[$MATRIX_PARAMS_COMBINATIONS]}
     outputs:
-      matrix-combinations: ${{ steps.setup-matrix-combinations.outputs.matrix-combinations }}
+      matrix-combinations: ${{ steps.matrix-setup.outputs.matrix-combinations }}
   setup-report:
     runs-on: [ubuntu-latest]
     outputs:
@@ -118,7 +118,7 @@ jobs:
     needs: [setup-report, matrix-setup]
     strategy:
       fail-fast: false
-      matrix: ${{ fromJson(needs.setup-matrix.outputs.matrix-combinations) }}
+      matrix: ${{ fromJson(needs.matrix-setup.outputs.matrix-combinations) }}
     runs-on: [e2e-gke]
     timeout-minutes: 180
     env:

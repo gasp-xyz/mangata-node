@@ -22,8 +22,8 @@ mod kusama_imports {
 	};
 	pub use mangata_kusama_runtime::{
 		xcm_config::*, AccountId, AssetRegistry, Balance, Bootstrap, CustomMetadata, Identity,
-		PolkadotXcm, Proxy, Runtime, RuntimeCall, RuntimeOrigin, System, TokenId, Tokens, XTokens,
-		XcmMetadata, XcmpQueue, Xyk, XykMetadata,
+		PolkadotXcm, ProofOfStake, Proxy, Runtime, RuntimeCall, RuntimeOrigin, System, TokenId,
+		Tokens, XTokens, XcmMetadata, XcmpQueue, Xyk, XykMetadata,
 	};
 	pub use xcm::{latest::Weight as XcmWeight, VersionedMultiLocation};
 
@@ -91,6 +91,10 @@ impl ExtBuilder {
 		}
 		.assimilate_storage(&mut t)
 		.unwrap();
+
+		parachain_staking::GenesisConfig::<Runtime>::default()
+			.assimilate_storage(&mut t)
+			.unwrap();
 
 		let encoded: Vec<(TokenId, Vec<u8>)> = self
 			.assets

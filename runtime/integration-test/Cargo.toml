@@ -15,6 +15,7 @@ mangata-types = { git = "https://github.com/mangata-finance/polkadot-sdk", branc
 pallet-balances = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 pallet-identity = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 pallet-proxy = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
+pallet-session = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 sp-io = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 sp-runtime = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
 sp-storage = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }
@@ -49,12 +50,14 @@ xcm-emulator = { git = "https://github.com/mangata-finance/polkadot-sdk", branch
 # Local
 common-runtime = { path = "../common" }
 mangata-kusama-runtime = { path = "../mangata-kusama" }
-pallet-bootstrap = { path = "../../pallets/bootstrap", version = "0.1.0" }
+pallet-bootstrap = { path = "../../pallets/bootstrap" }
 pallet-issuance = { path = "../../pallets/issuance" }
 pallet-multipurpose-liquidity = { path = "../../pallets/multipurpose-liquidity" }
+pallet-proof-of-stake = { path = "../../pallets/proof-of-stake" }
 pallet-sudo-origin = { path = "../../pallets/sudo-origin" }
-pallet-xyk = { path = "../../pallets/xyk", version = "0.1.0" }
-xyk-runtime-api = { path = "../../pallets/xyk/runtime-api", version = "2.0.0" }
+pallet-xyk = { path = "../../pallets/xyk" }
+parachain-staking = { path = "../../pallets/parachain-staking" }
+xyk-runtime-api = { path = "../../pallets/xyk/runtime-api" }
 
 [features]
 default = ["with-kusama-runtime"]

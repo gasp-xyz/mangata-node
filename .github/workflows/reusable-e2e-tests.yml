@@ -78,7 +78,7 @@ jobs:
               {"command": "yarn test-crowdloan", "fast": false },
               {"command": "yarn test-sdk", "fast": true },
           '
-          echo 'matrix={"include":[$MATRIX_PARAMS_COMBINATIONS]}' >> $GITHUB_OUTPUT
+          echo "matrix={\"include\":[$MATRIX_PARAMS_COMBINATIONS]}" >> $GITHUB_OUTPUT
     outputs:
       matrix: ${{ steps.matrixToRun.outputs.matrix }}
   setup-report:

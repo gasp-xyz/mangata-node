@@ -77,7 +77,7 @@ jobs:
               {"command": "yarn test-crowdloan", "fast": false },
               {"command": "yarn test-sdk", "fast": true },
           '
-          echo ::set-output name=matrix-combinations::{\"include\":[$MATRIX_PARAMS_COMBINATIONS]}
+          echo '::set-output name=matrix-combinations::{"include":[$MATRIX_PARAMS_COMBINATIONS]}'
     outputs:
       matrix-combinations: ${{ steps.matrix-setup.outputs.matrix-combinations }}
   setup-report:

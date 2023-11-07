@@ -79,12 +79,18 @@ jobs:
               {"command": "yarn test-crowdloan", "fast": false },
               {"command": "yarn test-sdk", "fast": true },
           '
+          if [[ "${{ github.event_name }}" != "pull_request" ]]; then
+            MATRIX_PARAMS_COMBINATIONS='
+              {"command": "yarn test-parallel-chops --max-workers=1", "fast": false },
+          '
+          fi
           echo "matrix<<EOF
           {\"include\":[$MATRIX_PARAMS_COMBINATIONS]}"
           echo EOF 
           } >> $GITHUB_OUTPUT
     outputs:
       matrix: ${{ steps.matrixToRun.outputs.matrix }}
+      
   setup-report:
     runs-on: [ubuntu-latest]
     outputs:

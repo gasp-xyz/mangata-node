@@ -80,7 +80,7 @@ jobs:
               {"command": "yarn test-sdk", "fast": true },
           '
           echo "matrix<<EOF
-          echo {\"include\":[$MATRIX_PARAMS_COMBINATIONS]}"
+          {\"include\":[$MATRIX_PARAMS_COMBINATIONS]}"
           echo EOF 
           } >> $GITHUB_OUTPUT
     outputs:

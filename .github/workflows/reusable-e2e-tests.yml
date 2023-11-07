@@ -59,7 +59,7 @@ jobs:
   matrix-setup:
     runs-on: [ubuntu-latest]
     steps:
-      - name: Setup-Matrix PullRequest Run
+      - name: matrix-to-run
         run: |
           MATRIX_PARAMS_COMBINATIONS='
               {"command": "yarn test-parallel --max-workers=10", "fast": false },
@@ -79,7 +79,7 @@ jobs:
           '
           echo 'matrix={"include":[$MATRIX_PARAMS_COMBINATIONS]}' >> $GITHUB_OUTPUT
     outputs:
-      matrix: ${{ steps.matrix-setup.outputs.matrix }}
+      matrix: ${{ steps.matrix-to-run.outputs.matrix }}
   setup-report:
     runs-on: [ubuntu-latest]
     outputs:

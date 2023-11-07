@@ -12,21 +12,27 @@ on:
         description: "Name of the parachain docker reference"
         type: string
         required: false
-        default: "mangatasolutions/mangata-node:latest"
+        default: "mangatasolutions/mangata-node:develop"
       skipBuild:
         description: "Skip build phase"
         type: string
         required: false
-        default: 'false'
+        default: 'true'
       globalVersion:
         description: "Set Mangata node version."
         type: string
         required: true
+        default: 'develop'
       mangataTypesVersion:
         description: "Set @mangata-finance/types version"
         type: string
         default: ""
         required: false
+      withChopsticks:
+        description: "Run with chopsticks"
+        type: bool
+        default: false
+        required: true
   workflow_call:
     inputs:
       e2eBranch:
@@ -79,7 +85,7 @@ jobs:
               {"command": "yarn test-crowdloan", "fast": false },
               {"command": "yarn test-sdk", "fast": true },
           '
-          if [[ "${{ github.event_name }}" != "pull_request" ]]; then
+          if [[ "${{ github.event_name }}" != "pull_request" ]] || [[  ${{ inputs.withChopsticks }} == 'true' ]] ; then
             MATRIX_PARAMS_COMBINATIONS='
               {"command": "yarn test-parallel-chops --max-workers=1", "fast": false },
           '

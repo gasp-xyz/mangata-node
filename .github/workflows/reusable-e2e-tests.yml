@@ -113,8 +113,18 @@ jobs:
         id: setTestRun
 
 
+  print:
+    runs-on: [ubuntu-latest]
+    needs: matrix-setup
+    steps:
+    - name: get
+      run: |
+        matrix="${{ needs.matrix-setup.outputs.matrix }}"
+        echo "Hello"
+        echo "$matrix"
+        
   e2e-test-matrix:
-    needs: [setup-report, matrix-setup]
+    needs: [setup-report, print]
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.matrix-setup.outputs.matrix) }}

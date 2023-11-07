@@ -85,7 +85,7 @@ jobs:
               {"command": "yarn test-crowdloan", "fast": false },
               {"command": "yarn test-sdk", "fast": true },
           '
-          if [[ "${{ github.event_name }}" != "pull_request" ]] || [[  ${{ inputs.withChopsticks }} == 'true' ]] ; then
+          if [[ "${{ github.event_name }}" != "pull_request" ]] || [[  "${{ inputs.withChopsticks }}" == "true" ]] ; then
             MATRIX_PARAMS_COMBINATIONS='
               {"command": "yarn test-parallel-chops --max-workers=1", "fast": false },
           '

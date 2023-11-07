@@ -68,7 +68,6 @@ jobs:
       - name: matrix-to-run
         id: matrixToRun
         run: |
-          {
           MATRIX_PARAMS_COMBINATIONS='
               {"command": "yarn test-parallel --max-workers=10", "fast": false },
               {"command": "yarn test-sequential-no-bootstrap", "fast": false },
@@ -84,15 +83,15 @@ jobs:
               {"command": "yarn test-experimentalStaking", "fast": true },
               {"command": "yarn test-crowdloan", "fast": false },
               {"command": "yarn test-sdk", "fast": true },
-          '
+            '
           if [[ "${{ github.event_name }}" == "pull_request" ]] || [[  "${{ inputs.withChopsticks }}" == "true" ]] ; then
             MATRIX_PARAMS_COMBINATIONS='
               {"command": "yarn test-parallel-chops --max-workers=1", "fast": false },
-              {"command": "yarn test-parallel-skipped-chops --max-workers=10", "fast": false },
+              {"command": "test-parallel-skipped-chops --max-workers=10", "fast": false },
               {"command": "yarn test-sequential-no-bootstrap", "fast": false },
               {"command": "yarn test-seqgasless", "fast": false },
               {"command": "yarn test-maintenance", "fast": true },
-              {"command": "yarn test-bootstrap-chops", "fast": false },
+              {"command": "test-bootstrap-chops", "fast": false },
               {"command": "yarn test-rewards-bootstrap", "fast": false },
               {"command": "yarn test-parallel-autocompound", "fast": true },
               {"command": "yarn test-sequential-autocompound", "fast": true },
@@ -102,12 +101,9 @@ jobs:
               {"command": "yarn test-experimentalStaking", "fast": true },
               {"command": "yarn test-crowdloan", "fast": false },
               {"command": "yarn test-sdk", "fast": true },
-          '
+            '
           fi
-          echo "matrix<<EOF
-          {\"include\":[$MATRIX_PARAMS_COMBINATIONS]}"
-          echo EOF 
-          } >> $GITHUB_OUTPUT
+          echo "matrix={\"include\":[$MATRIX_PARAMS_COMBINATIONS]}" >> $GITHUB_OUTPUT
     outputs:
       matrix: ${{ steps.matrixToRun.outputs.matrix }}
       

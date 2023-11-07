@@ -60,7 +60,6 @@ jobs:
     runs-on: [ubuntu-latest]
     steps:
       - name: Setup-Matrix PullRequest Run
-        if: github.event_name != 'pull_request' || true 
         run: |
           MATRIX_PARAMS_COMBINATIONS='
               {"command": "yarn test-parallel --max-workers=10", "fast": false },

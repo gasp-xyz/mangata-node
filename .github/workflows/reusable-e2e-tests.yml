@@ -62,6 +62,7 @@ jobs:
       - name: matrix-to-run
         id: matrixToRun
         run: |
+          {
           MATRIX_PARAMS_COMBINATIONS='
               {"command": "yarn test-parallel --max-workers=10", "fast": false },
               {"command": "yarn test-sequential-no-bootstrap", "fast": false },
@@ -78,7 +79,10 @@ jobs:
               {"command": "yarn test-crowdloan", "fast": false },
               {"command": "yarn test-sdk", "fast": true },
           '
-          echo "matrix={\"include\":[$MATRIX_PARAMS_COMBINATIONS]}" >> $GITHUB_OUTPUT
+          echo "matrix<<EOF
+          echo {\"include\":[$MATRIX_PARAMS_COMBINATIONS]}"
+          echo EOF 
+          } >> $GITHUB_OUTPUT
     outputs:
       matrix: ${{ steps.matrixToRun.outputs.matrix }}
   setup-report:

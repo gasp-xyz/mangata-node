@@ -131,9 +131,11 @@ use aquamarine::aquamarine;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarks;
 #[cfg(test)]
+#[cfg(not(feature = "runtime-benchmarks"))]
 mod mock;
 mod set;
 #[cfg(test)]
+#[cfg(not(feature = "runtime-benchmarks"))]
 mod tests;
 
 use crate::set::OrderedSet;

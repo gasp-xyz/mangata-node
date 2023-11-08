@@ -227,6 +227,27 @@ parameter_types! {
 	pub const HistoryLimit: u32 = 10u32;
 }
 
+impl pallet_issuance::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type NativeCurrencyId = MgaTokenId;
+	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
+	type BlocksPerRound = BlocksPerRound;
+	type HistoryLimit = HistoryLimit;
+	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
+	type StakingIssuanceVault = StakingIssuanceVault;
+	type TotalCrowdloanAllocation = TotalCrowdloanAllocation;
+	type IssuanceCap = IssuanceCap;
+	type LinearIssuanceBlocks = LinearIssuanceBlocks;
+	type LiquidityMiningSplit = LiquidityMiningSplit;
+	type StakingSplit = StakingSplit;
+	type ImmediateTGEReleasePercent = ImmediateTGEReleasePercent;
+	type TGEReleasePeriod = TGEReleasePeriod;
+	type TGEReleaseBegin = TGEReleaseBegin;
+	type VestingProvider = Vesting;
+	type WeightInfo = ();
+	type LiquidityMiningApi = ProofOfStake;
+}
+
 mockall::mock! {
 	pub PoolCreateApi {}
 
@@ -384,6 +405,7 @@ construct_runtime!(
 		Bootstrap: pallet_bootstrap,
 		Vesting: pallet_vesting_mangata,
 		ProofOfStake: pallet_proof_of_stake,
+		Issuance: pallet_issuance,
 	}
 );
 

@@ -37,7 +37,7 @@ cumulus_based = true
 
 [[parachains]]
 id = 2110
-chain = "mangata-rococo-local-testnet"
+chain = "mangata-rococo-local"
 cumulus_based = true
 
 	[[parachains.collators]]

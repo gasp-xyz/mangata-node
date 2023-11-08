@@ -54,38 +54,39 @@ benchmarks! {
 
 		init!();
 		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
-		let initial_amount:mangata_types::Balance = 1000000000000000000000;
-		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
-		let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-		let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-		let non_native_asset_id2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+		let initial_amount: BalanceOf<T> = 1000000000000000000000_u128.try_into().ok().expect("should fit");
+		let expected_native_asset_id = <T as Config>::NativeCurrencyId::get();
+		let native_asset_id = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		let non_native_asset_id1 = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		let non_native_asset_id2 = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
 
-		let liquidity_asset_id : TokenId= <T as Config>::Currency::create(&caller, ((40000000000000000000_u128/2_u128) + (60000000000000000000_u128/2_u128)).into()).unwrap().into();
-	   PoS::<T>::update_pool_promotion(RawOrigin::Root.into(), liquidity_asset_id, 1u8).unwrap();
+		let amount: BalanceOf<T> = ((40000000000000000000_u128/2_u128) + (60000000000000000000_u128/2_u128)).try_into().ok().expect("should fit");
+		let liquidity_asset_id = <T as Config>::Currency::create(&caller, amount).unwrap();
+		PoS::<T>::update_pool_promotion(RawOrigin::Root.into(), liquidity_asset_id, 1u8).unwrap();
 
 		assert_eq!(
-			<T as Config>::Currency::total_issuance(liquidity_asset_id.into()),
-			<T as Config>::Currency::free_balance(liquidity_asset_id.into(), &caller),
+			<T as Config>::Currency::total_issuance(liquidity_asset_id),
+			<T as Config>::Currency::free_balance(liquidity_asset_id, &caller),
 		);
 
-		let total_minted_liquidity = <T as Config>::Currency::total_issuance(liquidity_asset_id.into());
-		let half_of_minted_liquidity = total_minted_liquidity.into() / 2_u128;
-		let quater_of_minted_liquidity = total_minted_liquidity.into() / 4_u128;
+		let total_minted_liquidity = <T as Config>::Currency::total_issuance(liquidity_asset_id);
+		let half_of_minted_liquidity = total_minted_liquidity / 2_u32.into();
+		let quater_of_minted_liquidity = total_minted_liquidity / 4_u32.into();
 
 		forward_to_next_session!();
 
-		PoS::<T>::activate_liquidity(RawOrigin::Signed(caller.clone()).into(), liquidity_asset_id.into(), quater_of_minted_liquidity, None).unwrap();
+		PoS::<T>::activate_liquidity(RawOrigin::Signed(caller.clone()).into(), liquidity_asset_id, quater_of_minted_liquidity, None).unwrap();
 
 		forward_to_next_session!();
 		forward_to_next_session!();
 
-		assert!(PoS::<T>::calculate_rewards_amount(caller.clone(), liquidity_asset_id).unwrap() > 0);
+		assert!(PoS::<T>::calculate_rewards_amount(caller.clone(), liquidity_asset_id).unwrap() > 0_u32.into());
 
 	}: claim_rewards_all(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id)
 	verify {
 
 		assert_eq!(
-			0,
+			BalanceOf::<T>::zero(),
 			PoS::<T>::calculate_rewards_amount(caller.clone(), liquidity_asset_id).unwrap()
 		);
 
@@ -94,8 +95,8 @@ benchmarks! {
 
 	update_pool_promotion {
 		let caller: T::AccountId = whitelisted_caller();
-		let initial_amount:mangata_types::Balance = 1000000000000;
-		let token_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+		let initial_amount: BalanceOf<T> = 1000000000000_u128.try_into().ok().expect("should fit");
+		let token_id = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
 
 	}: update_pool_promotion(RawOrigin::Root, token_id, 1u8)
 
@@ -115,25 +116,26 @@ benchmarks! {
 
 		init!();
 		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
-		let initial_amount:mangata_types::Balance = 1000000000000000000000;
-		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
-		let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-		let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-		let non_native_asset_id2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
+		let initial_amount: BalanceOf<T> = 1000000000000000000000_u128.try_into().ok().expect("should fit");
+		let expected_native_asset_id  = <T as Config>::NativeCurrencyId::get();
+		let native_asset_id = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		let non_native_asset_id1 = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		let non_native_asset_id2 = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
 
-		let liquidity_asset_id : TokenId= <T as Config>::Currency::create(&caller, ((40000000000000000000_u128/2_u128) + (60000000000000000000_u128/2_u128)).into()).unwrap().into();
-	   PoS::<T>::update_pool_promotion(RawOrigin::Root.into(), liquidity_asset_id, 1u8).unwrap();
+		let amount: BalanceOf<T> = ((40000000000000000000_u128/2_u128) + (60000000000000000000_u128/2_u128)).try_into().ok().expect("should fit");
+		let liquidity_asset_id = <T as Config>::Currency::create(&caller, amount).unwrap();
+		PoS::<T>::update_pool_promotion(RawOrigin::Root.into(), liquidity_asset_id, 1u8).unwrap();
 
 		assert_eq!(
-			<T as Config>::Currency::total_issuance(liquidity_asset_id.into()),
-			<T as Config>::Currency::free_balance(liquidity_asset_id.into(), &caller),
+			<T as Config>::Currency::total_issuance(liquidity_asset_id),
+			<T as Config>::Currency::free_balance(liquidity_asset_id, &caller),
 		);
 
-		let total_minted_liquidity: u128 = <T as Config>::Currency::total_issuance(liquidity_asset_id.into()).into();
-		let half_of_minted_liquidity = total_minted_liquidity / 2_u128;
-		let quater_of_minted_liquidity = total_minted_liquidity / 4_u128;
+		let total_minted_liquidity = <T as Config>::Currency::total_issuance(liquidity_asset_id);
+		let half_of_minted_liquidity = total_minted_liquidity / 2_u32.into();
+		let quater_of_minted_liquidity = total_minted_liquidity / 4_u32.into();
 
-		PoS::<T>::activate_liquidity(RawOrigin::Signed(caller.clone()).into(), liquidity_asset_id.into(), quater_of_minted_liquidity, None).unwrap();
+		PoS::<T>::activate_liquidity(RawOrigin::Signed(caller.clone()).into(), liquidity_asset_id, quater_of_minted_liquidity, None).unwrap();
 
 		assert_eq!(
 			PoS::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).activated_amount,
@@ -142,11 +144,11 @@ benchmarks! {
 
 		forward_to_next_session!();
 
-	}: activate_liquidity(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), quater_of_minted_liquidity, None)
+	}: activate_liquidity(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id, quater_of_minted_liquidity, None)
 	verify {
 
 		assert_eq!(
-		 PoS::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).activated_amount,
+			PoS::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).activated_amount,
 			half_of_minted_liquidity
 		)
 	}
@@ -160,36 +162,37 @@ benchmarks! {
 
 		init!();
 		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
-		let initial_amount:mangata_types::Balance = 1000000000000000000000;
-		let expected_native_asset_id : TokenId = <T as Config>::NativeCurrencyId::get().into();
-		let native_asset_id : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-		let non_native_asset_id1 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-		let non_native_asset_id2 : TokenId= <T as Config>::Currency::create(&caller, initial_amount.into()).unwrap().into();
-		let liquidity_asset_id : TokenId= <T as Config>::Currency::create(&caller, ((40000000000000000000_u128/2_u128) + (60000000000000000000_u128/2_u128)).into()).unwrap().into();
+		let initial_amount: BalanceOf<T> = 1000000000000000000000_u128.try_into().ok().expect("should fit");
+		let expected_native_asset_id  = <T as Config>::NativeCurrencyId::get();
+		let native_asset_id = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		let non_native_asset_id1 = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		let non_native_asset_id2 = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		let amount: BalanceOf<T> = ((40000000000000000000_u128/2_u128) + (60000000000000000000_u128/2_u128)).try_into().ok().expect("should fit");
+		let liquidity_asset_id = <T as Config>::Currency::create(&caller, amount).unwrap();
 		PoS::<T>::enable(liquidity_asset_id, 1u8);
 
 		assert_eq!(
-			<T as Config>::Currency::total_issuance(liquidity_asset_id.into()),
-			<T as Config>::Currency::free_balance(liquidity_asset_id.into(), &caller),
+			<T as Config>::Currency::total_issuance(liquidity_asset_id),
+			<T as Config>::Currency::free_balance(liquidity_asset_id, &caller),
 		);
 
-		let total_minted_liquidity = <T as Config>::Currency::total_issuance(liquidity_asset_id.into());
-		let half_of_minted_liquidity = total_minted_liquidity.into() / 2_u128;
-		let quater_of_minted_liquidity = total_minted_liquidity.into() / 4_u128;
+		let total_minted_liquidity = <T as Config>::Currency::total_issuance(liquidity_asset_id);
+		let half_of_minted_liquidity = total_minted_liquidity / 2_u32.into();
+		let quater_of_minted_liquidity = total_minted_liquidity / 4_u32.into();
 
-		PoS::<T>::activate_liquidity(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id.into(), half_of_minted_liquidity, None).unwrap();
+		PoS::<T>::activate_liquidity(RawOrigin::Signed(caller.clone().into()).into(), liquidity_asset_id, half_of_minted_liquidity, None).unwrap();
 
 		assert_eq!(
-		 PoS::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).activated_amount,
+			 PoS::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).activated_amount,
 			half_of_minted_liquidity
 		);
 
 		forward_to_next_session!();
 
-	}: deactivate_liquidity(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), quater_of_minted_liquidity.into())
+	}: deactivate_liquidity(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id, quater_of_minted_liquidity)
 	verify {
 		assert_eq!(
-		 PoS::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).activated_amount,
+			 PoS::<T>::get_rewards_info(caller.clone(), liquidity_asset_id).activated_amount,
 			quater_of_minted_liquidity
 		);
 	}

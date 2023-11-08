@@ -1,18 +1,5 @@
-.git
-.github
-target
-devops
-!devops/dockerfiles/parachain-registrator/src
-launch
-scripts
-workflows
-Makefile
-Tiltfile
-**/target/
-**/*.txt
-**/*.md
-./docker-cargo
-./mvr/docker-cargo
+*
+
 !/target/release/polkadot-collator
 !/docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm
 !/docker-cargo/release/wbuild/mangata-kusama-runtime/mangata_kusama_runtime.compact.compressed.wasm.md5
@@ -38,6 +25,3 @@ Tiltfile
 
 !target/release/mangata-node
 !target/release/wbuild/mangata*
-
-# dotfiles in the repo root
-/.*

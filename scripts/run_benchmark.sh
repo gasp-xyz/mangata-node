@@ -4,7 +4,7 @@ REPO_ROOT=$(dirname $(readlink -f $0))/../
 mkdir ./benchmarks
 
 ${REPO_ROOT}/target/release/mangata-node benchmark pallet \
-    --chain kusama-local \
+    --chain mangata-kusama-local \
     --execution wasm \
     --wasm-execution compiled \
     --pallet $1 \

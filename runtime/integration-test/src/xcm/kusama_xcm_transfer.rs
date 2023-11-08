@@ -19,7 +19,7 @@ fn asset_location(para: u32, key: Vec<u8>) -> VersionedMultiLocation {
 }
 
 fn reserve_account(id: u32) -> AccountId {
-	polkadot_parachain::primitives::Sibling::from(id).into_account_truncating()
+	polkadot_parachain_primitives::primitives::Sibling::from(id).into_account_truncating()
 }
 
 #[test]
@@ -49,7 +49,7 @@ fn transfer_to_relay_chain() {
 
 	let weight: XcmWeight = Weight::from_parts(299_506_000, 0);
 	let fee = WeightToFee::weight_to_fee(&weight);
-	assert_eq!(94_172_727, fee);
+	assert_eq!(80_056_560, fee);
 
 	Mangata::execute_with(|| {
 		assert_ok!(XTokens::transfer(
@@ -72,7 +72,6 @@ fn transfer_to_relay_chain() {
 
 #[test]
 fn transfer_asset() {
-	TestNet::reset();
 	let unit = unit(18);
 	let fee = native_per_second_as_fee(4);
 	let registered_asset_id = RELAY_ASSET_ID + 1;
@@ -86,8 +85,8 @@ fn transfer_asset() {
 			RuntimeOrigin::root(),
 			AssetMetadataOf {
 				decimals: 18,
-				name: b"MGX".to_vec(),
-				symbol: b"MGX".to_vec(),
+				name: BoundedVec::truncate_from(b"MGX".to_vec()),
+				symbol: BoundedVec::truncate_from(b"MGX".to_vec()),
 				location: None,
 				existential_deposit: Default::default(),
 				additional: CustomMetadata {
@@ -186,7 +185,6 @@ fn transfer_asset() {
 
 #[test]
 fn receive_asset() {
-	TestNet::reset();
 	let unit = unit(18);
 	let registered_asset_id = RELAY_ASSET_ID + 1;
 
@@ -225,8 +223,8 @@ fn receive_asset() {
 			RuntimeOrigin::root(),
 			AssetMetadataOf {
 				decimals: 18,
-				name: b"TKN_f".to_vec(),
-				symbol: b"TKN_f".to_vec(),
+				name: BoundedVec::truncate_from(b"TKN_f".to_vec()),
+				symbol: BoundedVec::truncate_from(b"TKN_f".to_vec()),
 				location: Some(asset_location(SIBLING_ID, NATIVE_ASSET_ID.encode())),
 				existential_deposit: Default::default(),
 				additional: Default::default(),
@@ -310,7 +308,7 @@ fn receive_asset() {
 		assert!(System::events().iter().any(|r| matches!(
 			r.event,
 			mangata_kusama_runtime::RuntimeEvent::XcmpQueue(
-				cumulus_pallet_xcmp_queue::Event::Success { message_hash: Some(_), .. }
+				cumulus_pallet_xcmp_queue::Event::Success { message_hash: _, .. }
 			)
 		)));
 		assert_eq!(Tokens::free_balance(registered_asset_id, &AccountId::from(BOB)), 20 * unit);
@@ -319,8 +317,6 @@ fn receive_asset() {
 
 #[test]
 fn send_arbitrary_xcm_fails() {
-	TestNet::reset();
-
 	Mangata::execute_with(|| {
 		assert_noop!(
 			PolkadotXcm::send(

@@ -31,7 +31,7 @@ chain = "turing-dev"
 [[parachains]]
 id = 2110
 cumulus_based = true
-chain = "mangata-rococo-local-testnet"
+chain = "mangata-rococo-local"
 
     [[parachains.collators]]
     name = "alice"

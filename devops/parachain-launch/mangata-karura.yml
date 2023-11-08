@@ -54,7 +54,7 @@ parachains:
 
 - image: mangatasolutions/mangata-node:dev
   chain:
-    base: rococo-local
+    base: mangata-rococo-local
     collators:
       - alice
       - bob

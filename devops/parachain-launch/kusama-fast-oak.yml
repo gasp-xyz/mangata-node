@@ -28,7 +28,7 @@ relaychain:
 parachains:
   - image: mangatasolutions/mangata-node:develop-fast
     chain:
-      base: kusama-local
+      base: mangata-kusama-local
       collators:
         - alice
         - bob

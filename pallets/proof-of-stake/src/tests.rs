@@ -17,7 +17,7 @@ fn mint_and_activate_tokens(who: AccountId, token_id: TokenId, amount: Balance) 
 
 fn initialize_liquidity_rewards() {
 	System::set_block_number(1);
-	let acc_id: u128 = 2;
+	let acc_id: AccountId = 2;
 	let amount: u128 = std::u128::MAX;
 	PromotedPoolRewards::<Test>::get();
 	TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -53,7 +53,7 @@ fn liquidity_rewards_single_user_mint_W() {
 	new_test_ext().execute_with(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -118,7 +118,7 @@ fn liquidity_rewards_three_users_burn_W() {
 	new_test_ext().execute_with(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -161,7 +161,7 @@ fn liquidity_rewards_claim_W() {
 	new_test_ext().execute_with(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -199,7 +199,7 @@ fn liquidity_rewards_promote_pool_W() {
 	new_test_ext().execute_with(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max;
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -216,7 +216,7 @@ fn liquidity_rewards_promote_pool_already_promoted_NW() {
 	new_test_ext().execute_with(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max;
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -235,7 +235,7 @@ fn liquidity_rewards_work_after_burn_W() {
 	new_test_ext().execute_with(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -279,7 +279,7 @@ fn liquidity_rewards_deactivate_transfer_controled_W() {
 	new_test_ext().execute_with(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -314,7 +314,7 @@ fn liquidity_rewards_deactivate_more_NW() {
 	new_test_ext().execute_with(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -344,7 +344,7 @@ fn liquidity_rewards_activate_more_NW() {
 	new_test_ext().execute_with(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -373,7 +373,7 @@ fn liquidity_rewards_calculate_rewards_pool_not_promoted() {
 	new_test_ext().execute_with(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -391,7 +391,7 @@ fn liquidity_rewards_claim_pool_not_promoted() {
 	new_test_ext().execute_with(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -423,7 +423,7 @@ fn liquidity_rewards_not_yet_claimed_already_claimed_W() {
 	new_test_ext().execute_with(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max;
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -473,7 +473,7 @@ fn extreme_case_pool_ratio() {
 	new_test_ext().execute_with(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -503,7 +503,7 @@ fn rewards_rounding_during_often_mint() {
 	new_test_ext().execute_with(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -593,7 +593,7 @@ fn rewards_storage_right_amounts_start1() {
 	new_test_ext().execute_with(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -729,7 +729,7 @@ fn rewards_storage_right_amounts_start2() {
 	new_test_ext().execute_with(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -853,7 +853,7 @@ fn rewards_storage_right_amounts_start3() {
 	new_test_ext().execute_with(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -925,7 +925,7 @@ fn liquidity_rewards_transfered_liq_tokens_produce_rewards_W() {
 	new_test_ext().execute_with(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -975,7 +975,7 @@ pub(crate) fn roll_to_while_minting(n: u64, expected_amount_minted: Option<Balan
 		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
 		session_number = System::block_number().saturated_into::<u32>() / BlocksPerRound::get();
-		session_issuance = <Issuance as GetIssuance>::get_all_issuance(session_number)
+		session_issuance = <Issuance as GetIssuance<_>>::get_all_issuance(session_number)
 			.expect("session issuance is always populated in advance");
 		block_issuance = (session_issuance.0 + session_issuance.1) /
 			(BlocksPerRound::get().saturated_into::<u128>());
@@ -995,7 +995,7 @@ pub(crate) fn roll_to_while_minting(n: u64, expected_amount_minted: Option<Balan
 #[test]
 fn test_migrated_from_pallet_issuance() {
 	new_test_ext().execute_with(|| {
-		env_logger::try_init();
+		let _ = env_logger::try_init();
 		System::set_block_number(1);
 
 		let token_id = TokensOf::<Test>::create(&99999, 2000_000_000).unwrap();
@@ -1056,7 +1056,7 @@ fn claim_rewards_from_pool_that_has_been_disabled() {
 	new_test_ext().execute_with(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max;
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();

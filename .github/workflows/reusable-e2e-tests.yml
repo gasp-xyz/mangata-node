@@ -120,9 +120,9 @@ jobs:
           - command: "yarn test-experimentalStaking"
             fast: true
           - command: "yarn test-crowdloan"
-            fast: false 
+            fast: false
           - command: "yarn test-sdk"
-            fast: true 
+            fast: true
     runs-on: [e2e-gke]
     timeout-minutes: 180
     env:
@@ -195,6 +195,10 @@ jobs:
       - name: Run parachain launch
         working-directory: devops/parachain-launch
         run: npx @open-web3/parachain-launch generate config.yml
+
+      - name: Remove obsolete node run args from generated docker-compose.yml
+        working-directory: devops/parachain-launch/output
+        run: sed -i '/ws-external/d' docker-compose.yml
 
       - run: docker ps --no-trunc
       - name: Start mangata-node parachain
@@ -275,13 +279,13 @@ jobs:
       - name: Add GCP bucket URL link for stored node data on job failure
         if: failure()
         run: echo '[GCP Bucket link](https://console.cloud.google.com/storage/browser/mangata-node-ci-cache/${{ github.sha }}/${{ env.MATRIX_COMMAND_PATH }})' >> $GITHUB_STEP_SUMMARY
-      
+
       - name: Stop previous parachain if running
         working-directory: devops/parachain-launch/output
         run: |
           docker kill $(docker ps -q) 2>/dev/null && echo $?
           docker-compose down -v
-        
+
   test-complete:
     needs: [setup-report, e2e-test-matrix]
     if: always()
@@ -299,7 +303,7 @@ jobs:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
         continue-on-error: true
-        
+
   slack-notify-nook:
     needs: [e2e-test-matrix]
     if: failure()

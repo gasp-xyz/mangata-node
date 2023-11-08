@@ -2,74 +2,63 @@
 
 use super::*;
 
-use sp_core::H256;
-use sp_std::convert::TryFrom;
-
-use sp_runtime::{
-	testing::Header,
-	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
-	Permill,
-};
-
 use crate as pallet_multipurpose_liquidity;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{ConstU32, Contains, Everything},
+	traits::{Contains, Everything},
 	PalletId,
 };
 use frame_system as system;
-use mangata_types::{Amount, Balance, TokenId};
 use orml_tokens::MultiTokenCurrencyAdapter;
 use orml_traits::parameter_type_with_key;
+use sp_runtime::{traits::AccountIdConversion, BuildStorage, Permill};
+use sp_std::convert::TryFrom;
 
 pub const NATIVE_CURRENCY_ID: u32 = 0;
 
-pub(crate) type AccountId = u128;
+pub(crate) type AccountId = u64;
+pub(crate) type Amount = i128;
+pub(crate) type Balance = u128;
+pub(crate) type TokenId = u32;
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
 construct_runtime!(
-	pub enum Test where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
-	{
-		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
-		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>},
-		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>},
-		MultiPurposeLiquidity: pallet_multipurpose_liquidity::{Pallet, Call, Storage, Event<T>},
+	pub enum Test {
+		System: frame_system,
+		Tokens: orml_tokens,
+		Vesting: pallet_vesting_mangata,
+		MultiPurposeLiquidity: pallet_multipurpose_liquidity,
 	}
 );
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 }
-impl system::Config for Test {
+impl frame_system::Config for Test {
 	type BaseCallFilter = Everything;
 	type RuntimeOrigin = RuntimeOrigin;
+	type Nonce = u64;
 	type RuntimeCall = RuntimeCall;
-	type Index = u64;
-	type BlockNumber = u64;
-	type Hash = H256;
-	type Hashing = BlakeTwo256;
+	type Hash = sp_runtime::testing::H256;
+	type Hashing = sp_runtime::traits::BlakeTwo256;
 	type AccountId = AccountId;
-	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
+	type Lookup = sp_runtime::traits::IdentityLookup<Self::AccountId>;
 	type RuntimeEvent = RuntimeEvent;
+	type Block = Block;
 	type BlockHashCount = BlockHashCount;
+	type BlockWeights = ();
+	type BlockLength = ();
 	type DbWeight = ();
 	type Version = ();
+	type PalletInfo = PalletInfo;
 	type AccountData = ();
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
-	type PalletInfo = PalletInfo;
-	type BlockWeights = ();
-	type BlockLength = ();
 	type SS58Prefix = ();
 	type OnSetCode = ();
-	type MaxConsumers = ConstU32<16>;
+	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 parameter_type_with_key! {
@@ -114,6 +103,8 @@ parameter_types! {
 
 parameter_types! {
 	pub const MinVestedTransfer: Balance = 0;
+	pub UnvestedFundsAllowedWithdrawReasons: WithdrawReasons =
+		WithdrawReasons::except(WithdrawReasons::TRANSFER | WithdrawReasons::RESERVE);
 }
 
 impl pallet_vesting_mangata::Config for Test {
@@ -122,6 +113,7 @@ impl pallet_vesting_mangata::Config for Test {
 	type BlockNumberToBalance = sp_runtime::traits::ConvertInto;
 	type MinVestedTransfer = MinVestedTransfer;
 	type WeightInfo = pallet_vesting_mangata::weights::SubstrateWeight<Test>;
+	type UnvestedFundsAllowedWithdrawReasons = UnvestedFundsAllowedWithdrawReasons;
 	// `VestingInfo` encode length is 36bytes. 28 schedules gets encoded as 1009 bytes, which is the
 	// highest number of schedules that encodes less than 2^10.
 	const MAX_VESTING_SCHEDULES: u32 = 50;
@@ -138,128 +130,124 @@ impl Config for Test {
 }
 
 pub struct MockXyk<T>(PhantomData<T>);
-impl<T: Config> XykFunctionsTrait<T::AccountId> for MockXyk<T> {
-	type Balance = Balance;
-
-	type CurrencyId = TokenId;
-
+impl<T: Config> XykFunctionsTrait<AccountId, Balance, TokenId> for MockXyk<T> {
 	fn create_pool(
-		sender: T::AccountId,
-		first_asset_id: Self::CurrencyId,
-		first_asset_amount: Self::Balance,
-		second_asset_id: Self::CurrencyId,
-		second_asset_amount: Self::Balance,
+		_sender: AccountId,
+		_first_asset_id: TokenId,
+		_first_asset_amount: Balance,
+		_second_asset_id: TokenId,
+		_second_asset_amount: Balance,
 	) -> DispatchResult {
 		unimplemented!()
 	}
 
 	fn sell_asset(
-		sender: T::AccountId,
-		sold_asset_id: Self::CurrencyId,
-		bought_asset_id: Self::CurrencyId,
-		sold_asset_amount: Self::Balance,
-		min_amount_out: Self::Balance,
-		err_upon_bad_slippage: bool,
-	) -> Result<Self::Balance, DispatchError> {
+		_sender: AccountId,
+		_sold_asset_id: TokenId,
+		_bought_asset_id: TokenId,
+		_sold_asset_amount: Balance,
+		_min_amount_out: Balance,
+		_err_upon_bad_slippage: bool,
+	) -> Result<Balance, DispatchError> {
 		unimplemented!()
 	}
 
 	fn do_multiswap_sell_asset(
-		sender: T::AccountId,
-		swap_token_list: Vec<Self::CurrencyId>,
-		sold_asset_amount: Self::Balance,
-		min_amount_out: Self::Balance,
-	) -> Result<Self::Balance, DispatchError> {
+		_sender: AccountId,
+		_swap_token_list: Vec<TokenId>,
+		_sold_asset_amount: Balance,
+		_min_amount_out: Balance,
+	) -> Result<Balance, DispatchError> {
 		unimplemented!()
 	}
 	fn do_multiswap_buy_asset(
-		sender: T::AccountId,
-		swap_token_list: Vec<Self::CurrencyId>,
-		bought_asset_amount: Self::Balance,
-		max_amount_in: Self::Balance,
-	) -> Result<Self::Balance, DispatchError> {
+		_sender: AccountId,
+		_swap_token_list: Vec<TokenId>,
+		_bought_asset_amount: Balance,
+		_max_amount_in: Balance,
+	) -> Result<Balance, DispatchError> {
 		unimplemented!()
 	}
 
 	fn buy_asset(
-		sender: T::AccountId,
-		sold_asset_id: Self::CurrencyId,
-		bought_asset_id: Self::CurrencyId,
-		bought_asset_amount: Self::Balance,
-		max_amount_in: Self::Balance,
-		err_upon_bad_slippage: bool,
-	) -> Result<Self::Balance, DispatchError> {
+		_sender: AccountId,
+		_sold_asset_id: TokenId,
+		_bought_asset_id: TokenId,
+		_bought_asset_amount: Balance,
+		_max_amount_in: Balance,
+		_err_upon_bad_slippage: bool,
+	) -> Result<Balance, DispatchError> {
 		unimplemented!()
 	}
 
 	fn multiswap_sell_asset(
-		sender: T::AccountId,
-		swap_token_list: Vec<Self::CurrencyId>,
-		sold_asset_amount: Self::Balance,
-		min_amount_out: Self::Balance,
-		err_upon_bad_slippage: bool,
-		err_upon_non_slippage_fail: bool,
-	) -> Result<Self::Balance, DispatchError> {
+		_sender: AccountId,
+		_swap_token_list: Vec<TokenId>,
+		_sold_asset_amount: Balance,
+		_min_amount_out: Balance,
+		_err_upon_bad_slippage: bool,
+		_err_upon_non_slippage_fail: bool,
+	) -> Result<Balance, DispatchError> {
 		unimplemented!()
 	}
 
 	fn multiswap_buy_asset(
-		sender: T::AccountId,
-		swap_token_list: Vec<Self::CurrencyId>,
-		bought_asset_amount: Self::Balance,
-		max_amount_in: Self::Balance,
-		err_upon_bad_slippage: bool,
-		err_upon_non_slippage_fail: bool,
-	) -> Result<Self::Balance, DispatchError> {
+		_sender: AccountId,
+		_swap_token_list: Vec<TokenId>,
+		_bought_asset_amount: Balance,
+		_max_amount_in: Balance,
+		_err_upon_bad_slippage: bool,
+		_err_upon_non_slippage_fail: bool,
+	) -> Result<Balance, DispatchError> {
 		unimplemented!()
 	}
 
 	fn mint_liquidity(
-		sender: T::AccountId,
-		first_asset_id: Self::CurrencyId,
-		second_asset_id: Self::CurrencyId,
-		first_asset_amount: Self::Balance,
-		expected_second_asset_amount: Self::Balance,
-		activate_minted_liquidity: bool,
-	) -> Result<(Self::CurrencyId, Self::Balance), DispatchError> {
+		_sender: AccountId,
+		_first_asset_id: TokenId,
+		_second_asset_id: TokenId,
+		_first_asset_amount: Balance,
+		_expected_second_asset_amount: Balance,
+		_activate_minted_liquidity: bool,
+	) -> Result<(TokenId, Balance), DispatchError> {
 		unimplemented!()
 	}
 
 	fn provide_liquidity_with_conversion(
-		sender: T::AccountId,
-		first_asset_id: Self::CurrencyId,
-		second_asset_id: Self::CurrencyId,
-		provided_asset_id: Self::CurrencyId,
-		provided_asset_amount: Self::Balance,
-		activate_minted_liquidity: bool,
-	) -> Result<(Self::CurrencyId, Self::Balance), DispatchError> {
+		_sender: AccountId,
+		_first_asset_id: TokenId,
+		_second_asset_id: TokenId,
+		_provided_asset_id: TokenId,
+		_provided_asset_amount: Balance,
+		_activate_minted_liquidity: bool,
+	) -> Result<(TokenId, Balance), DispatchError> {
 		unimplemented!()
 	}
 
 	fn burn_liquidity(
-		sender: T::AccountId,
-		first_asset_id: Self::CurrencyId,
-		second_asset_id: Self::CurrencyId,
-		liquidity_asset_amount: Self::Balance,
+		_sender: AccountId,
+		_first_asset_id: TokenId,
+		_second_asset_id: TokenId,
+		_liquidity_asset_amount: Balance,
 	) -> DispatchResult {
 		unimplemented!()
 	}
 
 	fn get_tokens_required_for_minting(
-		liquidity_asset_id: Self::CurrencyId,
-		liquidity_token_amount: Self::Balance,
-	) -> Result<(Self::CurrencyId, Self::Balance, Self::CurrencyId, Self::Balance), DispatchError> {
+		_liquidity_asset_id: TokenId,
+		_liquidity_token_amount: Balance,
+	) -> Result<(TokenId, Balance, TokenId, Balance), DispatchError> {
 		unimplemented!()
 	}
 
-	fn is_liquidity_token(liquidity_asset_id: TokenId) -> bool {
+	fn is_liquidity_token(_liquidity_asset_id: TokenId) -> bool {
 		true
 	}
 
 	fn do_compound_rewards(
-		sender: T::AccountId,
-		liquidity_asset_id: TokenId,
-		amount_permille: Permill,
+		_sender: AccountId,
+		_liquidity_asset_id: TokenId,
+		_amount_permille: Permill,
 	) -> DispatchResult {
 		unimplemented!()
 	}
@@ -268,5 +256,5 @@ impl<T: Config> XykFunctionsTrait<T::AccountId> for MockXyk<T> {
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+	system::GenesisConfig::<Test>::default().build_storage().unwrap().into()
 }

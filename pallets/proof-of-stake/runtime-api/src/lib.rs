@@ -23,7 +23,6 @@ sp_api::decl_runtime_apis! {
 
 		fn calculate_3rdparty_rewards_all(
 			user: AccountId,
-			liquidity_asset_id: TokenId,
 		) -> Vec<(TokenId, TokenId, Balance)>;
 	}
 }

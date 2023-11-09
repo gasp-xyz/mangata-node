@@ -2,7 +2,6 @@ use frame_support::dispatch::DispatchResult;
 
 use crate::{schedule_rewards_calculator::ScheduleRewardsCalculator, Config, Error, Pallet};
 use frame_support::pallet_prelude::*;
-use mangata_types::Balance;
 use sp_core::U256;
 use sp_std::{
 	convert::{TryFrom, TryInto},
@@ -36,27 +35,25 @@ pub struct RewardInfo<Balance> {
 	pub missing_at_last_checkpoint: U256,
 }
 
-
 //impl<Balance> RewardInfo<Balance>
 //where
 //	Balance: frame_support::traits::tokens::Balance + Into<u128> + TryFrom<u128>,
-
 
 pub struct RewardsContext {
 	pub current_time: u32,
 	pub pool_ratio_current: U256,
 }
 
-pub struct RewardsCalculator<Curve> {
+pub struct RewardsCalculator<Curve, Balance> {
 	rewards_context: RewardsContext,
-	rewards_info: RewardInfo,
+	rewards_info: RewardInfo<Balance>,
 	_curve: sp_std::marker::PhantomData<Curve>,
 }
 
-impl RewardsCalculator<AsymptoticCurveRewards> {
+impl<Balance> RewardsCalculator<AsymptoticCurveRewards<Balance>, Balance> {
 	pub fn mining_rewards<T: Config>(
 		user: T::AccountId,
-		asset_id: TokenId,
+		asset_id: crate::CurrencyIdOf<T>,
 	) -> sp_std::result::Result<Self, DispatchError> {
 		let current_time: u32 = Pallet::<T>::get_current_rewards_time()?;
 		let pool_ratio_current = Pallet::<T>::get_pool_rewards(asset_id)?;
@@ -83,11 +80,11 @@ impl RewardsCalculator<AsymptoticCurveRewards> {
 	}
 }
 
-impl RewardsCalculator<ConstCurveRewards> {
+impl<Balance> RewardsCalculator<ConstCurveRewards<Balance>, Balance> {
 	pub fn schedule_rewards<T: Config>(
 		user: T::AccountId,
-		asset_id: TokenId,
-		reward_asset_id: TokenId,
+		asset_id: crate::CurrencyIdOf<T>,
+		reward_asset_id: crate::CurrencyIdOf<T>,
 	) -> sp_std::result::Result<Self, DispatchError> {
 		let current_time: u32 = Pallet::<T>::get_current_rewards_time()?;
 		ensure!(
@@ -124,21 +121,35 @@ impl RewardsCalculator<ConstCurveRewards> {
 }
 
 pub trait CurveRewards {
-	fn calculate_curve_position(ctx: &RewardsContext, user_info: &RewardInfo) -> Option<U256>;
-	fn calculate_curve_rewards(ctx: &RewardsContext, user_info: &RewardInfo) -> Option<Balance>;
+	type Balance;
+	fn calculate_curve_position(
+		ctx: &RewardsContext,
+		user_info: &RewardInfo<Self::Balance>,
+	) -> Option<U256>;
+	fn calculate_curve_rewards(
+		ctx: &RewardsContext,
+		user_info: &RewardInfo<Self::Balance>,
+	) -> Option<Self::Balance>;
 }
 
-pub struct ConstCurveRewards(RewardsContext, RewardInfo);
-pub struct AsymptoticCurveRewards(RewardsContext, RewardInfo);
+pub struct ConstCurveRewards<Balance>(RewardsContext, RewardInfo<Balance>);
+pub struct AsymptoticCurveRewards<Balance>(RewardsContext, RewardInfo<Balance>);
 
-impl CurveRewards for AsymptoticCurveRewards {
-	fn calculate_curve_position(ctx: &RewardsContext, user_info: &RewardInfo) -> Option<U256> {
+impl<Balance> CurveRewards for AsymptoticCurveRewards<Balance> {
+	type Balance = Balance;
+	fn calculate_curve_position(
+		ctx: &RewardsContext,
+		user_info: &RewardInfo<Balance>,
+	) -> Option<U256> {
 		let time_passed = ctx.current_time.checked_sub(user_info.last_checkpoint).unwrap();
 		let q_pow = calculate_q_pow(Q, time_passed);
 		Some(user_info.missing_at_last_checkpoint * U256::from(REWARDS_PRECISION) / q_pow)
 	}
 
-	fn calculate_curve_rewards(ctx: &RewardsContext, user_info: &RewardInfo) -> Option<Balance> {
+	fn calculate_curve_rewards(
+		ctx: &RewardsContext,
+		user_info: &RewardInfo<Balance>,
+	) -> Option<Balance> {
 		let pool_rewards_ratio_new =
 			ctx.pool_ratio_current.checked_sub(user_info.pool_ratio_at_last_checkpoint)?;
 
@@ -185,12 +196,19 @@ impl CurveRewards for AsymptoticCurveRewards {
 	}
 }
 
-impl CurveRewards for ConstCurveRewards {
-	fn calculate_curve_position(ctx: &RewardsContext, user_info: &RewardInfo) -> Option<U256> {
+impl<Balance> CurveRewards for ConstCurveRewards<Balance> {
+	type Balance = Balance;
+	fn calculate_curve_position(
+		ctx: &RewardsContext,
+		user_info: &RewardInfo<Balance>,
+	) -> Option<U256> {
 		Some(U256::from(0))
 	}
 
-	fn calculate_curve_rewards(ctx: &RewardsContext, user_info: &RewardInfo) -> Option<Balance> {
+	fn calculate_curve_rewards(
+		ctx: &RewardsContext,
+		user_info: &RewardInfo<Balance>,
+	) -> Option<Balance> {
 		let pool_rewards_ratio_new =
 			ctx.pool_ratio_current.checked_sub(user_info.pool_ratio_at_last_checkpoint)?;
 
@@ -213,11 +231,11 @@ impl<T: Config> Into<Error<T>> for RewardsCalcError {
 	}
 }
 
-impl<T: CurveRewards> RewardsCalculator<T> {
+impl<T: CurveRewards, Balance> RewardsCalculator<T, Balance> {
 	pub fn activate_more(
 		self,
 		liquidity_assets_added: Balance,
-	) -> sp_std::result::Result<RewardInfo, RewardsCalcError> {
+	) -> sp_std::result::Result<RewardInfo<Balance>, RewardsCalcError> {
 		let activated_amount = self
 			.rewards_info
 			.activated_amount
@@ -249,7 +267,7 @@ impl<T: CurveRewards> RewardsCalculator<T> {
 	pub fn activate_less(
 		self,
 		liquidity_assets_removed: Balance,
-	) -> sp_std::result::Result<RewardInfo, RewardsCalcError> {
+	) -> sp_std::result::Result<RewardInfo<Balance>, RewardsCalcError> {
 		let activated_amount = self
 			.rewards_info
 			.activated_amount
@@ -287,7 +305,9 @@ impl<T: CurveRewards> RewardsCalculator<T> {
 		})
 	}
 
-	pub fn claim_rewards(self) -> sp_std::result::Result<(RewardInfo, Balance), RewardsCalcError> {
+	pub fn claim_rewards(
+		self,
+	) -> sp_std::result::Result<(RewardInfo<Balance>, Balance), RewardsCalcError> {
 		let current_rewards = self.calculate_rewards_impl()?;
 
 		let total_available_rewards = current_rewards

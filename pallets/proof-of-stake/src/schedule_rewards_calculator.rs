@@ -1,10 +1,9 @@
 use crate::{
-	Config, Pallet, ScheduleRewardsPerLiquidity, ScheduleRewardsTotal, SessionId,
-	TotalActivatedLiquidityForSchedules,
+	BalanceOf, Config, CurrencyIdOf, Pallet, ScheduleRewardsPerLiquidity, ScheduleRewardsTotal,
+	SessionId, TotalActivatedLiquidityForSchedules,
 };
 use core::marker::PhantomData;
 use frame_support::pallet_prelude::*;
-use mangata_types::{Balance, TokenId};
 use sp_core::U256;
 
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq, TypeInfo)]
@@ -111,8 +110,8 @@ impl<T: Config> ScheduleRewardsCalculator<T> {
 	/// updates cumulative number of rewards per 1 liquidity (mulipliedd by u128::MAX) because of
 	/// precision.
 	pub fn update_cumulative_rewards(
-		liquidity_asset_id: TokenId,
-		liquidity_assets_reward: TokenId,
+		liquidity_asset_id: CurrencyIdOf<T>,
+		liquidity_assets_reward: CurrencyIdOf<T>,
 	) {
 		let session_id = Pallet::<T>::session_index() as u64;
 
@@ -146,8 +145,8 @@ impl<T: Config> ScheduleRewardsCalculator<T> {
 	/// returns cumulative number of rewards per 1 liquidity (mulipliedd by u128::MAX) because of
 	/// precision.
 	pub fn total_rewards_for_liquidity(
-		liquidity_asset_id: TokenId,
-		liquidity_assets_reward: TokenId,
+		liquidity_asset_id: CurrencyIdOf<T>,
+		liquidity_assets_reward: CurrencyIdOf<T>,
 	) -> U256 {
 		let (cumulative, idx) =
 			ScheduleRewardsPerLiquidity::<T>::get((liquidity_asset_id, liquidity_assets_reward));
@@ -168,9 +167,9 @@ impl<T: Config> ScheduleRewardsCalculator<T> {
 	/// returns amount of schedule rewards that has been accumulated since last update of `ScheduleRewardsPerLiquidity`
 	/// its beeing tracked only for purpose of `ScheduleRewardsPerLiquidity` calculations
 	pub fn total_schedule_rewards(
-		liquidity_asset_id: TokenId,
-		liquidity_assets_reward: TokenId,
-	) -> Balance {
+		liquidity_asset_id: CurrencyIdOf<T>,
+		liquidity_assets_reward: CurrencyIdOf<T>,
+	) -> BalanceOf<T> {
 		ScheduleRewardsTotal::<T>::get((liquidity_asset_id, liquidity_assets_reward))
 			.total_rewards(Pallet::<T>::session_index() as u64)
 	}
@@ -178,9 +177,9 @@ impl<T: Config> ScheduleRewardsCalculator<T> {
 	/// returns amount of schedule rewards that has been accumulated since last update of `ScheduleRewardsPerLiquidity`
 	/// its beeing tracked only for purpose of `ScheduleRewardsPerLiquidity` calculations
 	pub fn update_total_activated_liqudity(
-		liquidity_asset_id: TokenId,
-		liquidity_assets_reward: TokenId,
-		diff: Balance,
+		liquidity_asset_id: CurrencyIdOf<T>,
+		liquidity_assets_reward: CurrencyIdOf<T>,
+		diff: BalanceOf<T>,
 		change: bool,
 	) {
 		let session_id = Pallet::<T>::session_index() as u64;
@@ -195,9 +194,9 @@ impl<T: Config> ScheduleRewardsCalculator<T> {
 
 	/// returns info about total activated liquidity per schedule
 	pub fn total_activated_liquidity(
-		liquidity_asset_id: TokenId,
-		liquidity_assets_reward: TokenId,
-	) -> Balance {
+		liquidity_asset_id: CurrencyIdOf<T>,
+		liquidity_assets_reward: CurrencyIdOf<T>,
+	) -> BalanceOf<T> {
 		let session_id = Pallet::<T>::session_index() as u64;
 		TotalActivatedLiquidityForSchedules::<T>::get(liquidity_asset_id, liquidity_assets_reward)
 			.total(session_id)

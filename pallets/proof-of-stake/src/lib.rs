@@ -125,11 +125,14 @@ use frame_system::pallet_prelude::*;
 use mangata_support::traits::{
 	ActivationReservesProviderTrait, LiquidityMiningApi, ProofOfStakeRewardsApi, XykFunctionsTrait,
 };
-use mangata_types::{multipurpose_liquidity::ActivateKind, Balance, TokenId};
+use mangata_types::multipurpose_liquidity::ActivateKind;
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use sp_std::collections::btree_map::BTreeMap;
 
-use sp_runtime::{traits::SaturatedConversion, Perbill};
+use sp_runtime::{
+	traits::{CheckedAdd, CheckedSub, SaturatedConversion, Zero},
+	DispatchError, Perbill,
+};
 use sp_std::{convert::TryInto, prelude::*};
 
 mod reward_info;
@@ -171,9 +174,13 @@ pub use weights::WeightInfo;
 
 type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 
-/// Wrapper over origin ActivateKind that is used in [`Pallet::activat_liquidity`]
-/// with extension that allows activating liquidity that was already used for:
-/// - `ActivatedLiquidity` - already activated liquidity (for scheduled rewards)
+type BalanceOf<T> = <<T as pallet::Config>::Currency as MultiTokenCurrency<
+	<T as frame_system::Config>::AccountId,
+>>::Balance;
+
+type CurrencyIdOf<T> = <<T as pallet::Config>::Currency as MultiTokenCurrency<
+	<T as frame_system::Config>::AccountId,
+>>::CurrencyId;
 /// - `LiquidityMining` - already activated liquidity (for liquidity mining rewards)
 #[derive(Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum ThirdPartyActivationKind {
@@ -182,8 +189,7 @@ pub enum ThirdPartyActivationKind {
 	LiquidityMining,
 }
 
-const PALLET_ID: frame_support::PalletId = frame_support::PalletId(*b"rewards!");
-pub type SessionId = u64;
+>>::CurrencyId;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -196,7 +202,7 @@ pub mod pallet {
 	pub struct Pallet<T>(PhantomData<T>);
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
+	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
 		fn on_initialize(_n: T::BlockNumber) -> Weight {
 			let session_id = Self::session_index() as u64;
 
@@ -345,9 +351,11 @@ pub mod pallet {
 	pub trait Config: frame_system::Config + PoSBenchmarkingConfig {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		type ActivationReservesProvider: ActivationReservesProviderTrait<
-			AccountId = Self::AccountId,
+			Self::AccountId,
+			BalanceOf<Self>,
+			CurrencyIdOf<Self>,
 		>;
-		type NativeCurrencyId: Get<TokenId>;
+		type NativeCurrencyId: Get<CurrencyIdOf<Self>>;
 		type Currency: MultiTokenCurrencyExtended<Self::AccountId>
 			+ MultiTokenReservableCurrency<Self::AccountId>;
 		#[pallet::constant]
@@ -400,10 +408,10 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		PoolPromotionUpdated(TokenId, Option<u8>),
-		LiquidityActivated(T::AccountId, TokenId, Balance),
-		LiquidityDeactivated(T::AccountId, TokenId, Balance),
-		RewardsClaimed(T::AccountId, TokenId, Balance),
+		PoolPromotionUpdated(CurrencyIdOf<T>, Option<u8>),
+		LiquidityActivated(T::AccountId, CurrencyIdOf<T>, BalanceOf<T>),
+		LiquidityDeactivated(T::AccountId, CurrencyIdOf<T>, BalanceOf<T>),
+		RewardsClaimed(T::AccountId, CurrencyIdOf<T>, BalanceOf<T>),
 	}
 
 	#[pallet::storage]
@@ -413,8 +421,8 @@ pub mod pallet {
 		Twox64Concat,
 		AccountIdOf<T>,
 		Twox64Concat,
-		TokenId,
-		RewardInfo,
+		CurrencyIdOf<T>,
+		RewardInfo<BalanceOf<T>>,
 		ValueQuery,
 	>;
 
@@ -424,7 +432,7 @@ pub mod pallet {
 	/// token. Here is tracked the number of rewards per liquidity token relationship.
 	/// Expect larger values when the number of liquidity tokens are smaller.
 	pub type PromotedPoolRewards<T: Config> =
-		StorageValue<_, BTreeMap<TokenId, PromotedPools>, ValueQuery>;
+		StorageValue<_, BTreeMap<CurrencyIdOf<T>, PromotedPools>, ValueQuery>;
 
 	#[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq, TypeInfo)]
 	/// Information about single token rewards
@@ -440,7 +448,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn total_activated_amount)]
 	pub type TotalActivatedLiquidity<T: Config> =
-		StorageMap<_, Twox64Concat, TokenId, u128, ValueQuery>;
+		StorageMap<_, Twox64Concat, CurrencyIdOf<T>, BalanceOf<T>, ValueQuery>;
 
 	// //////////////////////////////////////////////////////////////////////////////////////////////
 	// 3rd Party Rewards
@@ -555,11 +563,11 @@ pub mod pallet {
 		#[deprecated(note = "claim_native_rewards should be used instead")]
 		pub fn claim_rewards_all(
 			origin: OriginFor<T>,
-			liquidity_token_id: TokenId,
+			liquidity_token_id: CurrencyIdOf<T>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			<Self as ProofOfStakeRewardsApi<T::AccountId>>::claim_rewards_all(
+			<Self as ProofOfStakeRewardsApi<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>>>::claim_rewards_all(
 				sender,
 				liquidity_token_id,
 			)?;
@@ -572,18 +580,18 @@ pub mod pallet {
 		#[pallet::weight(<<T as Config>::WeightInfo>::update_pool_promotion())]
 		pub fn update_pool_promotion(
 			origin: OriginFor<T>,
-			liquidity_token_id: TokenId,
+			liquidity_token_id: CurrencyIdOf<T>,
 			liquidity_mining_issuance_weight: u8,
 		) -> DispatchResult {
 			ensure_root(origin)?;
 
 			if liquidity_mining_issuance_weight > 0 {
-				<Self as ProofOfStakeRewardsApi<T::AccountId>>::enable(
+				<Self as ProofOfStakeRewardsApi<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>>>::enable(
 					liquidity_token_id,
 					liquidity_mining_issuance_weight,
 				);
 			} else {
-				<Self as ProofOfStakeRewardsApi<T::AccountId>>::disable(liquidity_token_id);
+				<Self as ProofOfStakeRewardsApi<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>>>::disable(liquidity_token_id);
 			}
 			Ok(())
 		}
@@ -600,13 +608,13 @@ pub mod pallet {
 		#[deprecated(note = "activate_liquidity_for_native_rewards should be used instead")]
 		pub fn activate_liquidity(
 			origin: OriginFor<T>,
-			liquidity_token_id: TokenId,
-			amount: Balance,
+			liquidity_token_id: CurrencyIdOf<T>,
+			amount: BalanceOf<T>,
 			use_balance_from: Option<ActivateKind>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			Self::activate_liquidity_for_native_rewards_impl(
+			<Self as ProofOfStakeRewardsApi<T::AccountId>>::activate_liquidity(
 				sender,
 				liquidity_token_id,
 				amount,
@@ -621,8 +629,8 @@ pub mod pallet {
 		#[deprecated(note = "deactivate_liquidity_for_native_rewards should be used instead")]
 		pub fn deactivate_liquidity(
 			origin: OriginFor<T>,
-			liquidity_token_id: TokenId,
-			amount: Balance,
+			liquidity_token_id: CurrencyIdOf<T>,
+			amount: BalanceOf<T>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
@@ -677,7 +685,7 @@ pub mod pallet {
 			.map_err(|err| DispatchErrorWithPostInfo {
 				post_info: PostDispatchInfo {
 					actual_weight: Some(
-						<<T as Config>::WeightInfo>::activate_liquidity_for_3rdparty_rewards(),
+			<Self as ProofOfStakeRewardsApi<T::AccountId>>::deactivate_liquidity(
 					),
 					pays_fee: Pays::Yes,
 				},
@@ -1048,18 +1056,18 @@ impl<T: Config> Pallet<T> {
 		(block_nr + 1) % Self::rewards_period() == 0u32
 	}
 
-	fn native_token_id() -> TokenId {
+	fn native_token_id() -> CurrencyIdOf<T> {
 		<T as Config>::NativeCurrencyId::get()
 	}
 
-	fn get_pool_rewards(liquidity_asset_id: TokenId) -> Result<U256, sp_runtime::DispatchError> {
+	fn get_pool_rewards(liquidity_asset_id: CurrencyIdOf<T>) -> Result<U256, DispatchError> {
 		Ok(PromotedPoolRewards::<T>::get()
 			.get(&liquidity_asset_id)
 			.map(|v| v.rewards)
 			.ok_or(Error::<T>::NotAPromotedPool)?)
 	}
 
-	fn get_current_rewards_time() -> Result<u32, sp_runtime::DispatchError> {
+	fn get_current_rewards_time() -> Result<u32, DispatchError> {
 		<frame_system::Pallet<T>>::block_number()
 			.saturated_into::<u32>()
 			.checked_add(1)
@@ -1067,7 +1075,7 @@ impl<T: Config> Pallet<T> {
 			.ok_or(DispatchError::from(Error::<T>::CalculateRewardsMathError))
 	}
 
-	fn ensure_is_promoted_pool(liquidity_asset_id: TokenId) -> Result<(), DispatchError> {
+	fn ensure_is_promoted_pool(liquidity_asset_id: CurrencyIdOf<T>) -> Result<(), DispatchError> {
 		if Self::get_pool_rewards(liquidity_asset_id).is_ok() ||
 			RewardTokensPerPool::<T>::iter_prefix_values(liquidity_asset_id)
 				.next()
@@ -1081,14 +1089,16 @@ impl<T: Config> Pallet<T> {
 
 	fn set_liquidity_minting_checkpoint(
 		user: AccountIdOf<T>,
-		liquidity_asset_id: TokenId,
-		liquidity_assets_added: Balance,
+		liquidity_asset_id: CurrencyIdOf<T>,
+		liquidity_assets_added: BalanceOf<T>,
 	) -> DispatchResult {
 		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
 
 		{
 			let calc = RewardsCalculator::mining_rewards::<T>(user.clone(), liquidity_asset_id)?;
-			let rewards_info = calc
+				activated_amount: BalanceOf::<T>::zero(),
+				rewards_not_yet_claimed: BalanceOf::<T>::zero(),
+				rewards_already_claimed: BalanceOf::<T>::zero(),
 				.activate_more(liquidity_assets_added)
 				.map_err(|err| Into::<Error<T>>::into(err))?;
 
@@ -1096,7 +1106,7 @@ impl<T: Config> Pallet<T> {
 		}
 
 		TotalActivatedLiquidity::<T>::try_mutate(liquidity_asset_id, |active_amount| {
-			if let Some(val) = active_amount.checked_add(liquidity_assets_added) {
+			if let Some(val) = active_amount.checked_add(&liquidity_assets_added) {
 				*active_amount = val;
 				Ok(())
 			} else {
@@ -1163,8 +1173,8 @@ impl<T: Config> Pallet<T> {
 
 	fn set_liquidity_burning_checkpoint(
 		user: AccountIdOf<T>,
-		liquidity_asset_id: TokenId,
-		liquidity_assets_burned: Balance,
+		liquidity_asset_id: CurrencyIdOf<T>,
+		liquidity_assets_burned: BalanceOf<T>,
 	) -> DispatchResult {
 		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
 		let current_time: u32 = Self::get_current_rewards_time()?;
@@ -1185,7 +1195,7 @@ impl<T: Config> Pallet<T> {
 		RewardsInfo::<T>::insert(user.clone(), liquidity_asset_id, rewards_info);
 
 		TotalActivatedLiquidity::<T>::try_mutate(liquidity_asset_id, |active_amount| {
-			if let Some(val) = active_amount.checked_sub(liquidity_assets_burned) {
+			if let Some(val) = active_amount.checked_sub(&liquidity_assets_burned) {
 				*active_amount = val;
 				Ok(())
 			} else {
@@ -1435,10 +1445,7 @@ impl<T: Config> Pallet<T> {
 	}
 }
 
-impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
-	type Balance = Balance;
-
-	type CurrencyId = TokenId;
+impl<T: Config> ProofOfStakeRewardsApi<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>> for Pallet<T> {
 
 	#[cfg(feature = "runtime-benchmarks")]
 	fn enable_3rdparty_rewards(
@@ -1476,8 +1483,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		)
 		.expect("call should pass")
 	}
-
-	fn enable(liquidity_token_id: TokenId, weight: u8) {
+	fn enable(liquidity_token_id: CurrencyIdOf<T>, weight: u8) {
 		PromotedPoolRewards::<T>::mutate(|promoted_pools| {
 			promoted_pools
 				.entry(liquidity_token_id)
@@ -1487,7 +1493,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		Pallet::<T>::deposit_event(Event::PoolPromotionUpdated(liquidity_token_id, Some(weight)));
 	}
 
-	fn disable(liquidity_token_id: TokenId) {
+	fn disable(liquidity_token_id: CurrencyIdOf<T>) {
 		PromotedPoolRewards::<T>::mutate(|promoted_pools| {
 			if let Some(info) = promoted_pools.get_mut(&liquidity_token_id) {
 				info.weight = 0;
@@ -1496,14 +1502,14 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 		Pallet::<T>::deposit_event(Event::PoolPromotionUpdated(liquidity_token_id, None));
 	}
 
-	fn is_enabled(liquidity_token_id: TokenId) -> bool {
+	fn is_enabled(liquidity_token_id: CurrencyIdOf<T>) -> bool {
 		PromotedPoolRewards::<T>::get().contains_key(&liquidity_token_id)
 	}
 
 	fn claim_rewards_all(
 		user: T::AccountId,
-		liquidity_asset_id: Self::CurrencyId,
-	) -> Result<Self::Balance, DispatchError> {
+		liquidity_asset_id: CurrencyIdOf<T>,
+	) -> Result<BalanceOf<T>, DispatchError> {
 		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
 
 		let calc = RewardsCalculator::mining_rewards::<T>(user.clone(), liquidity_asset_id)?;
@@ -1514,7 +1520,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 			Self::native_token_id().into(),
 			&<T as Config>::LiquidityMiningIssuanceVault::get(),
 			&user,
-			total_available_rewards.into(),
+			total_available_rewards,
 			ExistenceRequirement::KeepAlive,
 		)?;
 
@@ -1531,8 +1537,8 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 
 	fn activate_liquidity(
 		user: T::AccountId,
-		liquidity_asset_id: Self::CurrencyId,
-		amount: Self::Balance,
+		liquidity_asset_id: CurrencyIdOf<T>,
+		amount: BalanceOf<T>,
 		use_balance_from: Option<ActivateKind>,
 	) -> DispatchResult {
 		Self::activate_liquidity_for_native_rewards_impl(
@@ -1545,23 +1551,24 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId> for Pallet<T> {
 
 	fn deactivate_liquidity(
 		user: T::AccountId,
-		liquidity_asset_id: Self::CurrencyId,
-		amount: Self::Balance,
+		liquidity_asset_id: CurrencyIdOf<T>,
+		amount: BalanceOf<T>,
 	) -> DispatchResult {
+		if amount > 0 {
 		Self::deactivate_liquidity_for_native_rewards_impl(user, liquidity_asset_id, amount)
 	}
 
 	fn calculate_rewards_amount(
 		user: AccountIdOf<T>,
-		liquidity_asset_id: TokenId,
+		liquidity_asset_id: CurrencyIdOf<T>,
 	) -> Result<Balance, DispatchError> {
 		Self::calculate_native_rewards_amount(user, liquidity_asset_id)
 	}
 }
 
-impl<T: Config> LiquidityMiningApi for Pallet<T> {
+impl<T: Config> LiquidityMiningApi<BalanceOf<T>> for Pallet<T> {
 	/// Distributs liquidity mining rewards between all the activated tokens based on their weight
-	fn distribute_rewards(liquidity_mining_rewards: Balance) {
+	fn distribute_rewards(liquidity_mining_rewards: BalanceOf<T>) {
 		let _ = PromotedPoolRewards::<T>::try_mutate(|promoted_pools| -> DispatchResult {
 			// benchmark with max of X prom pools
 			let activated_pools: Vec<_> = promoted_pools
@@ -1569,7 +1576,7 @@ impl<T: Config> LiquidityMiningApi for Pallet<T> {
 				.into_iter()
 				.filter_map(|(token_id, info)| {
 					let activated_amount = Self::total_activated_amount(token_id);
-					if activated_amount > 0 && info.weight > 0 {
+					if activated_amount > BalanceOf::<T>::zero() && info.weight > 0 {
 						Some((token_id, info.weight, info.rewards, activated_amount))
 					} else {
 						None
@@ -1589,14 +1596,15 @@ impl<T: Config> LiquidityMiningApi for Pallet<T> {
 					Some(total_weight) if !total_weight.is_zero() =>
 						Perbill::from_rational(weight.into(), total_weight)
 							.mul_floor(liquidity_mining_rewards),
-					_ => Balance::zero(),
+					_ => BalanceOf::<T>::zero(),
 				};
 
-				let rewards_for_liquidity: U256 = U256::from(liquidity_mining_issuance_for_pool)
-					.checked_mul(U256::from(u128::MAX))
-					.and_then(|x| x.checked_div(activated_amount.into()))
-					.and_then(|x| x.checked_add(rewards))
-					.ok_or(Error::<T>::MathError)?;
+				let rewards_for_liquidity: U256 =
+					U256::from(liquidity_mining_issuance_for_pool.into())
+						.checked_mul(U256::from(u128::MAX))
+						.and_then(|x| x.checked_div(activated_amount.into().into()))
+						.and_then(|x| x.checked_add(rewards))
+						.ok_or(Error::<T>::MathError)?;
 
 				promoted_pools
 					.entry(token_id.clone())

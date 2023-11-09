@@ -3,12 +3,13 @@
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::unnecessary_mut_passed)]
 use codec::{Codec, Decode, Encode};
+use frame_support::pallet_prelude::TypeInfo;
 #[cfg(feature = "std")]
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 use sp_runtime::traits::{MaybeDisplay, MaybeFromStr};
 use sp_std::vec::Vec;
 
-#[derive(Eq, PartialEq, Encode, Decode, Default)]
+#[derive(Eq, PartialEq, Encode, Decode, Default, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
 pub struct RpcAssetMetadata<TokenId> {

@@ -2,34 +2,36 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
-use codec::{Decode, Encode};
+use codec::Encode;
+pub use common_runtime::{
+	consts::DAYS, currency::*, deposit, runtime_types, tokens, types::*, CallType,
+};
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{Everything, Get, InstanceFilter},
+	traits::{Everything, InstanceFilter},
 	weights::{constants::RocksDbWeight, Weight},
 };
 #[cfg(any(feature = "std", test))]
 pub use frame_system::Call as SystemCall;
 use frame_system::EnsureRoot;
+use mangata_support::traits::ProofOfStakeRewardsApi;
+pub use mangata_types::assets::{CustomMetadata, XcmMetadata, XykMetadata};
 pub use orml_tokens;
-
+pub use pallet_issuance::IssuanceInfo;
 pub use pallet_sudo_mangata;
-
-use pallet_vesting_mangata::VestingInfo;
-// Polkadot Imports
+pub use pallet_sudo_origin;
+pub use pallet_xyk;
 pub use polkadot_runtime_common::BlockHashCount;
-
-pub use common_runtime::{currency::*, deposit, runtime_types, tokens, CallType};
 use sp_api::impl_runtime_apis;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_core::{crypto::KeyTypeId, ConstBool, OpaqueMetadata};
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 use sp_runtime::{
 	create_runtime_str, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto,
-		StaticLookup,
+		SignedExtension, StaticLookup,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
@@ -44,19 +46,8 @@ use sp_std::{
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 use static_assertions::const_assert;
-pub use xcm::{latest::prelude::*, VersionedMultiLocation};
-// pub use constants::{fee::*, parachains::*};
-use mangata_support::traits::ProofOfStakeRewardsApi;
-pub use mangata_types::{
-	assets::{CustomMetadata, XcmMetadata, XykMetadata},
-	AccountId, Address, Amount, Balance, BlockNumber, Hash, Index, Signature, TokenId,
-};
-pub use pallet_issuance::IssuanceInfo;
-pub use pallet_sudo_origin;
-pub use pallet_xyk;
-// XCM Imports
-
 use xyk_runtime_api::RpcAssetMetadata;
+
 // Make the WASM binary available.
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
@@ -88,8 +79,13 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	common_runtime::migration::AssetRegistryMigration<Runtime>,
+	Migrations,
 >;
+
+type Migrations = (
+	pallet_xcm::migration::v1::VersionUncheckedMigrateToV1<Runtime>,
+	orml_unknown_tokens::Migration<Runtime>,
+);
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -124,8 +120,6 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	state_version: 0,
 };
 
-use common_runtime::consts::DAYS;
-
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
 pub fn native_version() -> NativeVersion {
@@ -139,28 +133,34 @@ parameter_types! {
 use common_runtime::config as cfg;
 
 impl frame_system::Config for Runtime {
-	/// The identifier used to distinguish between accounts.
-	type AccountId = AccountId;
+	/// The basic call filter to use in dispatchable.
+	type BaseCallFilter = Everything;
+	/// Block & extrinsics weights: base values and limits.
+	type BlockWeights = cfg::frame_system::RuntimeBlockWeights;
+	/// The maximum length of a block (in bytes).
+	type BlockLength = cfg::frame_system::RuntimeBlockLength;
+	/// The ubiquitous origin type.
+	type RuntimeOrigin = RuntimeOrigin;
 	/// The aggregated dispatch type that is available for extrinsics.
 	type RuntimeCall = RuntimeCall;
-	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
-	type Lookup = AccountIdLookup<AccountId, ()>;
 	/// The index type for storing how many extrinsics an account has signed.
-	type Index = Index;
-	/// The index type for blocks.
-	type BlockNumber = BlockNumber;
+	type Nonce = Nonce;
 	/// The type for hashing blocks and tries.
 	type Hash = Hash;
 	/// The hashing algorithm used.
 	type Hashing = BlakeTwo256;
-	/// The header type.
-	type Header = runtime_types::Header;
+	/// The block type.
+	type Block = Block;
+	/// The identifier used to distinguish between accounts.
+	type AccountId = AccountId;
+	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
+	type Lookup = AccountIdLookup<AccountId, ()>;
 	/// The ubiquitous event type.
 	type RuntimeEvent = RuntimeEvent;
-	/// The ubiquitous origin type.
-	type RuntimeOrigin = RuntimeOrigin;
 	/// Maximum number of block number to block hash mappings to keep (oldest pruned first).
 	type BlockHashCount = BlockHashCount;
+	/// The weight of database operations that the runtime can invoke.
+	type DbWeight = RocksDbWeight;
 	/// Runtime version.
 	type Version = Version;
 	/// Converts a module to an index of this module in the runtime.
@@ -171,16 +171,8 @@ impl frame_system::Config for Runtime {
 	type OnNewAccount = ();
 	/// What to do if an account is fully reaped from the system.
 	type OnKilledAccount = ();
-	/// The weight of database operations that the runtime can invoke.
-	type DbWeight = RocksDbWeight;
-	/// The basic call filter to use in dispatchable.
-	type BaseCallFilter = Everything;
 	/// Weight information for the extrinsics of this pallet.
 	type SystemWeightInfo = weights::frame_system_weights::ModuleWeight<Runtime>;
-	/// Block & extrinsics weights: base values and limits.
-	type BlockWeights = cfg::frame_system::RuntimeBlockWeights;
-	/// The maximum length of a block (in bytes).
-	type BlockLength = cfg::frame_system::RuntimeBlockLength;
 	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
 	type SS58Prefix = cfg::frame_system::SS58Prefix;
 	/// The action to take on a Runtime Upgrade
@@ -230,7 +222,7 @@ parameter_types! {
 // This is because orml_tokens uses BoundedVec for Locks storage item and does not inform on failure
 // Balances uses WeakBoundedVec and so does not fail
 const_assert!(
-	cfg::orml_tokens::MaxLocks::get() >=
+	<Runtime as orml_tokens::Config>::MaxLocks::get() >=
 		<Runtime as pallet_vesting_mangata::Config>::MAX_VESTING_SCHEDULES
 );
 
@@ -398,11 +390,15 @@ impl pallet_transaction_payment_mangata::Config for Runtime {
 		OnChargeTransactionHandler<Runtime>,
 		FeeLock,
 	>;
+	type LengthToFee = cfg::pallet_transaction_payment_mangata::LengthToFee;
+	type WeightToFee = common_runtime::constants::fee::WeightToFee;
+	type FeeMultiplierUpdate = cfg::pallet_transaction_payment_mangata::FeeMultiplierUpdate;
 	type OperationalFeeMultiplier =
 		cfg::pallet_transaction_payment_mangata::OperationalFeeMultiplier;
-	type WeightToFee = common_runtime::constants::fee::WeightToFee;
-	type LengthToFee = cfg::pallet_transaction_payment_mangata::LengthToFee;
-	type FeeMultiplierUpdate = cfg::pallet_transaction_payment_mangata::FeeMultiplierUpdate;
+}
+
+parameter_types! {
+	pub const MaxCuratedTokens: u32 = 100;
 }
 
 impl pallet_fee_lock::Config for Runtime {
@@ -449,11 +445,13 @@ impl pallet_aura::Config for Runtime {
 	type AuthorityId = AuraId;
 	type DisabledValidators = ();
 	type MaxAuthorities = cfg::pallet_aura::MaxAuthorities;
+	type AllowMultipleBlocksPerSlot = ConstBool<false>;
 }
 
 impl pallet_sudo_mangata::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
+	type WeightInfo = ();
 }
 
 impl pallet_sudo_origin::Config for Runtime {
@@ -490,6 +488,8 @@ impl pallet_collective_mangata::Config<CouncilCollective> for Runtime {
 	type FoundationAccountsProvider = cfg::pallet_maintenance::FoundationAccountsProvider<Runtime>;
 	type DefaultVote = pallet_collective_mangata::PrimeDefaultVote;
 	type WeightInfo = weights::pallet_collective_mangata_weights::ModuleWeight<Runtime>;
+	type SetMembersOrigin = cfg::pallet_collective_mangata::SetMembersOrigin<Self::AccountId>;
+	type MaxProposalWeight = cfg::pallet_collective_mangata::MaxProposalWeight;
 }
 
 // To ensure that BlocksPerRound is not zero, breaking issuance calculations
@@ -526,14 +526,18 @@ impl parachain_staking::Config for Runtime {
 	type DefaultPayoutLimit = cfg::parachain_staking::DefaultPayoutLimit;
 }
 
-impl pallet_xyk::XykBenchmarkingConfig for Runtime {}
-
 impl parachain_staking::StakingBenchmarkConfig for Runtime {
+	#[cfg(feature = "runtime-benchmarks")]
+	type Balance = Balance;
+	#[cfg(feature = "runtime-benchmarks")]
+	type CurrencyId = TokenId;
 	#[cfg(feature = "runtime-benchmarks")]
 	type RewardsApi = ProofOfStake;
 	#[cfg(feature = "runtime-benchmarks")]
 	type Xyk = Xyk;
 }
+
+impl pallet_xyk::XykBenchmarkingConfig for Runtime {}
 
 // Issuance history must be kept for atleast the staking reward delay
 const_assert!(
@@ -571,6 +575,8 @@ impl pallet_vesting_mangata::Config for Runtime {
 	// `VestingInfo` encode length is 36bytes. 28 schedules gets encoded as 1009 bytes, which is the
 	// highest number of schedules that encodes less than 2^10.
 	const MAX_VESTING_SCHEDULES: u32 = 50;
+	type UnvestedFundsAllowedWithdrawReasons =
+		cfg::pallet_vesting_mangata::UnvestedFundsAllowedWithdrawReasons;
 }
 
 impl pallet_crowdloan_rewards::Config for Runtime {
@@ -613,8 +619,6 @@ impl orml_xcm::Config for Runtime {
 
 impl pallet_root_testing::Config for Runtime {}
 
-use common_runtime::config::orml_asset_registry::AssetMetadataOf;
-
 impl orml_asset_registry::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type CustomMetadata = CustomMetadata;
@@ -623,7 +627,9 @@ impl orml_asset_registry::Config for Runtime {
 	type AssetProcessor = cfg::orml_asset_registry::SequentialIdWithCreation<Runtime>;
 	type Balance = Balance;
 	type WeightInfo = weights::orml_asset_registry_weights::ModuleWeight<Runtime>;
+	type StringLimit = cfg::orml_asset_registry::StringLimit;
 }
+
 use cfg::pallet_proxy::ProxyType;
 
 // TODO: ideally should be moved to common runtime
@@ -685,74 +691,68 @@ impl pallet_maintenance::Config for Runtime {
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
-	pub enum Runtime where
-		Block = Block,
-		NodeBlock = opaque::Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
+	pub enum Runtime
 	{
 		// System support stuff.
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>} = 0,
-		ParachainSystem: cumulus_pallet_parachain_system::{
-			Pallet, Call, Config, Storage, Inherent, Event<T>, ValidateUnsigned,
-		} = 1,
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 2,
-		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 3,
-		Utility: pallet_utility_mangata::{Pallet, Call, Event} = 4,
-		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 5,
-		Maintenance: pallet_maintenance::{Pallet, Call, Storage, Event<T>} = 6,
-		RootTesting: pallet_root_testing::{Pallet, Call, Storage} = 9,
+		System: frame_system = 0,
+		ParachainSystem: cumulus_pallet_parachain_system = 1,
+		Timestamp: pallet_timestamp = 2,
+		ParachainInfo: parachain_info = 3,
+		Utility: pallet_utility_mangata = 4,
+		Proxy: pallet_proxy = 5,
+		Maintenance: pallet_maintenance = 6,
 
 		// Monetary stuff.
-		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>} = 10,
-		TransactionPayment: pallet_transaction_payment_mangata::{Pallet, Storage, Event<Runtime>} = 11,
+		Tokens: orml_tokens = 10,
+		TransactionPayment: pallet_transaction_payment_mangata = 11,
 
 		// Xyk stuff
-		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>} = 13,
-		ProofOfStake: pallet_proof_of_stake::{Pallet, Call, Storage, Event<T>} = 14,
+		Xyk: pallet_xyk = 13,
+		ProofOfStake: pallet_proof_of_stake = 14,
 
 		// Fee Locks
-		FeeLock: pallet_fee_lock::{Pallet, Storage, Call, Event<T>, Config<T>} = 15,
+		FeeLock: pallet_fee_lock = 15,
 
 		// Vesting
-		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>} = 17,
+		Vesting: pallet_vesting_mangata = 17,
 
 		// Crowdloan
-		Crowdloan: pallet_crowdloan_rewards::{Pallet, Call, Storage, Event<T>} = 18,
+		Crowdloan: pallet_crowdloan_rewards = 18,
 
 		// Issuance
-		Issuance: pallet_issuance::{Pallet, Event<T>, Storage, Call} = 19,
+		Issuance: pallet_issuance = 19,
 
 		// MultiPurposeLiquidity
-		MultiPurposeLiquidity: pallet_multipurpose_liquidity::{Pallet, Call, Storage, Event<T>} = 20,
+		MultiPurposeLiquidity: pallet_multipurpose_liquidity = 20,
 
 		// Bootstrap
-		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>} = 21,
+		Bootstrap: pallet_bootstrap = 21,
 
 		// Collator support. The order of these 4 are important and shall not change.
-		Authorship: pallet_authorship::{Pallet, Storage} = 30,
-		ParachainStaking: parachain_staking::{Pallet, Call, Storage, Event<T>, Config<T>} = 31,
-		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 32,
-		Aura: pallet_aura::{Pallet, Storage, Config<T>} = 33,
-		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config} = 34,
+		Authorship: pallet_authorship = 30,
+		ParachainStaking: parachain_staking = 31,
+		Session: pallet_session = 32,
+		Aura: pallet_aura = 33,
+		AuraExt: cumulus_pallet_aura_ext = 34,
 
 		// XCM helpers.
-		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 40,
-		PolkadotXcm: pallet_xcm::{Pallet, Storage, Call, Event<T>, Origin, Config} = 41,
-		CumulusXcm: cumulus_pallet_xcm::{Pallet, Event<T>, Origin} = 42,
-		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
+		XcmpQueue: cumulus_pallet_xcmp_queue = 40,
+		PolkadotXcm: pallet_xcm = 41,
+		CumulusXcm: cumulus_pallet_xcm = 42,
+		DmpQueue: cumulus_pallet_dmp_queue = 43,
 
 		// ORML XCM
-		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 50,
-		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 51,
-		OrmlXcm: orml_xcm::{Pallet, Call, Event<T>} = 52,
-		AssetRegistry: orml_asset_registry::{Pallet, Call, Storage, Event<T>, Config<T>} = 53,
+		XTokens: orml_xtokens = 50,
+		UnknownTokens: orml_unknown_tokens = 51,
+		OrmlXcm: orml_xcm = 52,
+		AssetRegistry: orml_asset_registry = 53,
 
 		// Governance stuff
-		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 60,
-		Sudo: pallet_sudo_mangata::{Pallet, Call, Config<T>, Storage, Event<T>} = 61,
-		SudoOrigin: pallet_sudo_origin::{Pallet, Call, Event<T>} = 62,
-		Council: pallet_collective_mangata::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 63,
-		Identity: pallet_identity::{Pallet, Call, Storage, Event<T>} = 64,
+		Treasury: pallet_treasury = 60,
+		Sudo: pallet_sudo_mangata = 61,
+		SudoOrigin: pallet_sudo_origin = 62,
+		Council: pallet_collective_mangata::<Instance1> = 63,
+		Identity: pallet_identity = 64,
 	}
 );
 
@@ -766,8 +766,8 @@ mod benches {
 		[frame_system, SystemBench::<Runtime>]
 		[pallet_session, SessionBench::<Runtime>]
 		[pallet_timestamp, Timestamp]
-		[orml_tokens, Tokens]
 		[orml_asset_registry, AssetRegistry]
+		[orml_tokens, Tokens]
 		[parachain_staking, ParachainStaking]
 		[pallet_xyk, Xyk]
 		[pallet_treasury, Treasury]
@@ -843,24 +843,28 @@ impl_runtime_apis! {
 			System::get_previous_blocks_txs()
 		}
 
-		fn pop_txs(count: u64) -> Vec<Vec<u8>>{
+		fn pop_txs(count: u64) -> Vec<Vec<u8>> {
 			System::pop_txs(count as usize)
 		}
 
-		fn create_enqueue_txs_inherent(txs: Vec<<Block as BlockT>::Extrinsic>) -> <Block as BlockT>::Extrinsic{
+		fn create_enqueue_txs_inherent(txs: Vec<<Block as BlockT>::Extrinsic>) -> <Block as BlockT>::Extrinsic {
+			for t in txs.iter() {
+				if let Some((_, _, extra)) = &t.signature {
+					let _ = extra.additional_signed();
+				}
+			}
 			UncheckedExtrinsic::new_unsigned(
-				RuntimeCall::System(frame_system::Call::enqueue_txs{txs:
-					txs.into_iter()
-					.map(|tx|
-						(
-							tx.signature.clone().and_then(|sig| <Runtime as frame_system::Config>::Lookup::lookup(sig.0).ok()),
-							tx.encode()
-						)
-					)
-					.collect()}))
+					RuntimeCall::System(frame_system::Call::enqueue_txs{txs:
+						txs.into_iter()
+							.map(|tx| (
+									tx.signature.clone().and_then(|sig|
+										<Runtime as frame_system::Config>::Lookup::lookup(sig.0).ok()
+									),
+									tx.encode())
+							).collect()}))
 		}
 
-		fn can_enqueue_txs() -> bool{
+		fn can_enqueue_txs() -> bool {
 			System::can_enqueue_txs()
 		}
 
@@ -1076,7 +1080,7 @@ impl_runtime_apis! {
 			}
 		}
 
-		fn get_tradeable_tokens() -> Vec<RpcAssetMetadata<mangata_types::TokenId>> {
+		fn get_tradeable_tokens() -> Vec<RpcAssetMetadata<TokenId>> {
 			orml_asset_registry::Metadata::<Runtime>::iter()
 			.filter_map(|(token_id, metadata)| {
 				if !metadata.name.is_empty()
@@ -1086,8 +1090,8 @@ impl_runtime_apis! {
 					let rpc_metadata = RpcAssetMetadata {
 						token_id: token_id,
 						decimals: metadata.decimals,
-						name: metadata.name.clone(),
-						symbol: metadata.symbol.clone(),
+						name: metadata.name.to_vec(),
+						symbol: metadata.symbol.to_vec(),
 					};
 					Some(rpc_metadata)
 				} else {
@@ -1126,6 +1130,14 @@ impl_runtime_apis! {
 	impl sp_api::Metadata<Block> for Runtime {
 		fn metadata() -> OpaqueMetadata {
 			OpaqueMetadata::new(Runtime::metadata().into())
+		}
+
+		fn metadata_at_version(version: u32) -> Option<OpaqueMetadata> {
+			Runtime::metadata_at_version(version)
+		}
+
+		fn metadata_versions() -> sp_std::vec::Vec<u32> {
+			Runtime::metadata_versions()
 		}
 	}
 
@@ -1178,8 +1190,8 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Index> for Runtime {
-		fn account_nonce(account: AccountId) -> Index {
+	impl frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce> for Runtime {
+		fn account_nonce(account: AccountId) -> Nonce {
 			System::account_nonce(account)
 		}
 	}
@@ -1196,6 +1208,12 @@ impl_runtime_apis! {
 			len: u32,
 		) -> pallet_transaction_payment_mangata::FeeDetails<Balance> {
 			TransactionPayment::query_fee_details(uxt, len)
+		}
+		fn query_weight_to_fee(weight: Weight) -> Balance {
+			TransactionPayment::weight_to_fee(weight)
+		}
+		fn query_length_to_fee(length: u32) -> Balance {
+			TransactionPayment::length_to_fee(length)
 		}
 	}
 
@@ -1240,7 +1258,7 @@ impl_runtime_apis! {
 			Vec<frame_benchmarking::BenchmarkList>,
 			Vec<frame_support::traits::StorageInfo>,
 		) {
-			use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
+			use frame_benchmarking::{Benchmarking, BenchmarkList};
 			use frame_support::traits::StorageInfoTrait;
 			use frame_system_benchmarking::Pallet as SystemBench;
 			use cumulus_pallet_session_benchmarking::Pallet as SessionBench;
@@ -1257,10 +1275,20 @@ impl_runtime_apis! {
 		fn dispatch_benchmark(
 			config: frame_benchmarking::BenchmarkConfig
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
+			use frame_benchmarking::{Benchmarking, BenchmarkBatch, BenchmarkError};
+			use sp_storage::TrackedStorageKey;
 
 			use frame_system_benchmarking::Pallet as SystemBench;
-			impl frame_system_benchmarking::Config for Runtime {}
+			impl frame_system_benchmarking::Config for Runtime {
+				fn setup_set_code_requirements(code: &sp_std::vec::Vec<u8>) -> Result<(), BenchmarkError> {
+					ParachainSystem::initialize_for_set_code_benchmark(code.len() as u32);
+					Ok(())
+				}
+
+				fn verify_set_code() {
+					System::assert_last_event(cumulus_pallet_parachain_system::Event::<Runtime>::ValidationFunctionStored.into());
+				}
+			}
 
 			use cumulus_pallet_session_benchmarking::Pallet as SessionBench;
 			impl cumulus_pallet_session_benchmarking::Config for Runtime {}
@@ -1289,57 +1317,7 @@ impl_runtime_apis! {
 	}
 }
 
-struct CheckInherents;
-
-impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
-	fn check_inherents(
-		block: &Block,
-		relay_state_proof: &cumulus_pallet_parachain_system::RelayChainStateProof,
-	) -> sp_inherents::CheckInherentsResult {
-		let relay_chain_slot = relay_state_proof
-			.read_slot()
-			.expect("Could not read the relay chain slot from the proof");
-
-		let inherent_data =
-			cumulus_primitives_timestamp::InherentDataProvider::from_relay_chain_slot_and_duration(
-				relay_chain_slot,
-				sp_std::time::Duration::from_secs(6),
-			)
-			.create_inherent_data()
-			.expect("Could not create the timestamp inherent data");
-		inherent_data.check_extrinsics(block)
-	}
-}
-
-// replace validate block function with its expanded version
-#[doc(hidden)]
-mod parachain_validate_block {
-	use crate::Runtime;
-
-	#[no_mangle]
-	#[cfg(not(feature = "std"))]
-	unsafe fn validate_block(arguments: *mut u8, arguments_len: usize) -> u64 {
-		let args = cumulus_pallet_parachain_system::validate_block::sp_std::boxed::Box::from_raw(
-			cumulus_pallet_parachain_system::validate_block::sp_std::slice::from_raw_parts_mut(
-				arguments,
-				arguments_len,
-			),
-		);
-		let args = cumulus_pallet_parachain_system::validate_block::bytes::Bytes::from(args);
-
-		// Then we decode from these bytes the `MemoryOptimizedValidationParams`.
-		let params = cumulus_pallet_parachain_system::validate_block::decode_from_bytes::<
-			cumulus_pallet_parachain_system::validate_block::MemoryOptimizedValidationParams,
-		>(args)
-		.expect("Invalid arguments to `validate_block`.");
-
-		let res =
-            cumulus_pallet_parachain_system::validate_block::implementation::validate_block::<<crate::Runtime
-                                                                                              as
-                                                                                              cumulus_pallet_parachain_system::validate_block::GetRuntimeBlockType>::RuntimeBlock,
-                                                                                              cumulus_pallet_aura_ext::BlockExecutorVer<crate::Runtime, crate::Executive>,
-                                                                                              crate::Runtime,
-                                                                                              crate::CheckInherents>(params);
-		cumulus_pallet_parachain_system::validate_block::polkadot_parachain::write_result(&res)
-	}
+cumulus_pallet_parachain_system::register_validate_block! {
+	Runtime = Runtime,
+	BlockExecutor = cumulus_pallet_aura_ext::BlockExecutorVer::<Runtime, Executive>,
 }

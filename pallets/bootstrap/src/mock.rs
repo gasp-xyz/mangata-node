@@ -18,23 +18,26 @@
 
 use super::*;
 use crate as pallet_bootstrap;
-use codec::EncodeLike;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
 		tokens::currency::MultiTokenCurrency, ConstU128, ConstU32, Contains, Everything, Nothing,
+		WithdrawReasons,
 	},
 };
 use mangata_support::traits::ActivationReservesProviderTrait;
-use mangata_types::{multipurpose_liquidity::ActivateKind, Amount, Balance, TokenId};
+use mangata_types::multipurpose_liquidity::ActivateKind;
 use orml_tokens::MultiTokenCurrencyAdapter;
 use orml_traits::parameter_type_with_key;
 use pallet_xyk::AssetMetadataMutationTrait;
-use sp_runtime::{Perbill, Percent};
+use sp_runtime::{BuildStorage, Perbill, Percent};
 use sp_std::convert::TryFrom;
 use std::sync::Mutex;
 
 pub(crate) type AccountId = u128;
+pub(crate) type Balance = u128;
+pub(crate) type TokenId = u32;
+pub(crate) type Amount = i128;
 
 parameter_types!(
 	pub const SomeConst: u64 = 10;
@@ -44,15 +47,14 @@ parameter_types!(
 impl frame_system::Config for Test {
 	type BaseCallFilter = Everything;
 	type RuntimeOrigin = RuntimeOrigin;
-	type Index = u64;
-	type BlockNumber = u64;
+	type Nonce = u64;
 	type RuntimeCall = RuntimeCall;
 	type Hash = sp_runtime::testing::H256;
 	type Hashing = sp_runtime::traits::BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = sp_runtime::traits::IdentityLookup<Self::AccountId>;
-	type Header = sp_runtime::testing::Header;
 	type RuntimeEvent = RuntimeEvent;
+	type Block = Block;
 	type BlockHashCount = BlockHashCount;
 	type BlockWeights = ();
 	type BlockLength = ();
@@ -111,6 +113,8 @@ parameter_types! {
 
 parameter_types! {
 	pub const MinVestedTransfer: Balance = 0;
+	pub UnvestedFundsAllowedWithdrawReasons: WithdrawReasons =
+		WithdrawReasons::except(WithdrawReasons::TRANSFER | WithdrawReasons::RESERVE);
 }
 
 impl pallet_vesting_mangata::Config for Test {
@@ -119,6 +123,7 @@ impl pallet_vesting_mangata::Config for Test {
 	type BlockNumberToBalance = sp_runtime::traits::ConvertInto;
 	type MinVestedTransfer = MinVestedTransfer;
 	type WeightInfo = pallet_vesting_mangata::weights::SubstrateWeight<Test>;
+	type UnvestedFundsAllowedWithdrawReasons = UnvestedFundsAllowedWithdrawReasons;
 	// `VestingInfo` encode length is 36bytes. 28 schedules gets encoded as 1009 bytes, which is the
 	// highest number of schedules that encodes less than 2^10.
 	const MAX_VESTING_SCHEDULES: u32 = 28;
@@ -127,7 +132,7 @@ impl pallet_vesting_mangata::Config for Test {
 impl pallet_xyk::XykBenchmarkingConfig for Test {}
 
 pub struct AssetMetadataMutation;
-impl AssetMetadataMutationTrait for AssetMetadataMutation {
+impl AssetMetadataMutationTrait<TokenId> for AssetMetadataMutation {
 	fn set_asset_info(
 		_asset: TokenId,
 		_name: Vec<u8>,
@@ -174,40 +179,36 @@ impl pallet_proof_of_stake::Config for Test {
 impl BootstrapBenchmarkingConfig for Test {}
 
 pub struct TokensActivationPassthrough<T: Config>(PhantomData<T>);
-impl<T: Config> ActivationReservesProviderTrait for TokensActivationPassthrough<T>
+impl<T: Config> ActivationReservesProviderTrait<AccountId, Balance, TokenId>
+	for TokensActivationPassthrough<T>
 where
-	<T as frame_system::Config>::AccountId: EncodeLike<AccountId>,
+	T: frame_system::Config<AccountId = AccountId>,
+	T::Currency: MultiTokenCurrency<AccountId, Balance = Balance, CurrencyId = TokenId>,
 {
-	type AccountId = T::AccountId;
-
-	fn get_max_instant_unreserve_amount(token_id: TokenId, account_id: &Self::AccountId) -> Balance
-	where
-		<T as frame_system::Config>::AccountId: EncodeLike<AccountId>,
-	{
+	fn get_max_instant_unreserve_amount(token_id: TokenId, account_id: &AccountId) -> Balance {
 		ProofOfStake::get_rewards_info(account_id.clone(), token_id).activated_amount
 	}
 
 	fn can_activate(
 		token_id: TokenId,
-		account_id: &Self::AccountId,
+		account_id: &AccountId,
 		amount: Balance,
 		_use_balance_from: Option<ActivateKind>,
 	) -> bool {
-		<T as pallet::Config>::Currency::can_reserve(token_id.into(), account_id, amount.into())
+		<T as pallet::Config>::Currency::can_reserve(token_id.into(), account_id, amount)
 	}
 
 	fn activate(
 		token_id: TokenId,
-		account_id: &Self::AccountId,
+		account_id: &AccountId,
 		amount: Balance,
 		_use_balance_from: Option<ActivateKind>,
 	) -> DispatchResult {
-		<T as pallet::Config>::Currency::reserve(token_id.into(), account_id, amount.into())
+		<T as pallet::Config>::Currency::reserve(token_id.into(), account_id, amount)
 	}
 
-	fn deactivate(token_id: TokenId, account_id: &Self::AccountId, amount: Balance) -> Balance {
-		<T as pallet::Config>::Currency::unreserve(token_id.into(), account_id, amount.into())
-			.into()
+	fn deactivate(token_id: TokenId, account_id: &AccountId, amount: Balance) -> Balance {
+		<T as pallet::Config>::Currency::unreserve(token_id.into(), account_id, amount)
 	}
 }
 
@@ -230,56 +231,72 @@ parameter_types! {
 	pub const HistoryLimit: u32 = 10u32;
 }
 
+impl pallet_issuance::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type NativeCurrencyId = MgaTokenId;
+	type Tokens = orml_tokens::MultiTokenCurrencyAdapter<Test>;
+	type BlocksPerRound = BlocksPerRound;
+	type HistoryLimit = HistoryLimit;
+	type LiquidityMiningIssuanceVault = LiquidityMiningIssuanceVault;
+	type StakingIssuanceVault = StakingIssuanceVault;
+	type TotalCrowdloanAllocation = TotalCrowdloanAllocation;
+	type IssuanceCap = IssuanceCap;
+	type LinearIssuanceBlocks = LinearIssuanceBlocks;
+	type LiquidityMiningSplit = LiquidityMiningSplit;
+	type StakingSplit = StakingSplit;
+	type ImmediateTGEReleasePercent = ImmediateTGEReleasePercent;
+	type TGEReleasePeriod = TGEReleasePeriod;
+	type TGEReleaseBegin = TGEReleaseBegin;
+	type VestingProvider = Vesting;
+	type WeightInfo = ();
+	type LiquidityMiningApi = ProofOfStake;
+}
+
 mockall::mock! {
 	pub PoolCreateApi {}
 
-	impl PoolCreateApi for PoolCreateApi {
-		type AccountId = u128;
-
+	impl PoolCreateApi<AccountId, Balance, TokenId> for PoolCreateApi {
 		fn pool_exists(first: TokenId, second: TokenId) -> bool;
 		fn pool_create(account: u128, first: TokenId, first_amount: Balance, second: TokenId, second_amount: Balance) -> Option<(TokenId, Balance)>;
-
 	}
 }
 
 mockall::mock! {
 	pub RewardsApi {}
 
-	impl ProofOfStakeRewardsApi<AccountId> for RewardsApi {
-		type Balance = <Test as orml_tokens::Config>::Balance;
-		type CurrencyId = <Test as orml_tokens::Config>::CurrencyId;
+	impl ProofOfStakeRewardsApi<AccountId, Balance, TokenId> for RewardsApi {
 
-	fn enable(liquidity_token_id: <mock::MockRewardsApi as ProofOfStakeRewardsApi<AccountId>>::CurrencyId, weight: u8);
+	fn enable(liquidity_token_id: TokenId, weight: u8);
 
-	fn disable(liquidity_token_id: <mock::MockRewardsApi as ProofOfStakeRewardsApi<AccountId>>::CurrencyId);
+	fn disable(liquidity_token_id: TokenId);
 
 	fn is_enabled(
-		liquidity_token_id: <mock::MockRewardsApi as ProofOfStakeRewardsApi<AccountId>>::CurrencyId,
+		liquidity_token_id: TokenId,
 	) -> bool;
 
 	fn claim_rewards_all(
 		sender: AccountId,
-		liquidity_token_id: <mock::MockRewardsApi as ProofOfStakeRewardsApi<AccountId>>::CurrencyId,
-	) -> Result<<mock::MockRewardsApi as ProofOfStakeRewardsApi<AccountId>>::Balance, DispatchError>;
+		liquidity_token_id: TokenId,
+	) -> Result<Balance, DispatchError>;
 
 	// Activation & deactivation should happen in PoS
 	fn activate_liquidity(
 		sender: AccountId,
-		liquidity_token_id: <mock::MockRewardsApi as ProofOfStakeRewardsApi<AccountId>>::CurrencyId,
-		amount: <mock::MockRewardsApi as ProofOfStakeRewardsApi<AccountId>>::Balance,
+		liquidity_token_id: TokenId,
+		amount: Balance,
 		use_balance_from: Option<ActivateKind>,
 	) -> DispatchResult;
 
 	// Activation & deactivation should happen in PoS
 	fn deactivate_liquidity(
 		sender: AccountId,
-		liquidity_token_id: <mock::MockRewardsApi as ProofOfStakeRewardsApi<AccountId>>::CurrencyId,
-		amount: <mock::MockRewardsApi as ProofOfStakeRewardsApi<AccountId>>::Balance,
+		liquidity_token_id: TokenId,
+		amount: Balance,
 	) -> DispatchResult;
 
 	fn calculate_rewards_amount(
 		user: AccountId,
-		liquidity_asset_id: <mock::MockRewardsApi as ProofOfStakeRewardsApi<AccountId>>::CurrencyId,
+		liquidity_asset_id: TokenId,
 	) -> Result<Balance, DispatchError>;
 
 	}
@@ -288,13 +305,13 @@ mockall::mock! {
 mockall::mock! {
 	pub AssetRegistryApi {}
 
-	impl AssetRegistryApi for AssetRegistryApi {
+	impl AssetRegistryApi<TokenId> for AssetRegistryApi {
 		fn enable_pool_creation(assets: (TokenId, TokenId)) -> bool;
 	}
 }
 
 pub struct AssetRegistry;
-impl AssetRegistryApi for AssetRegistry {
+impl AssetRegistryApi<TokenId> for AssetRegistry {
 	fn enable_pool_creation(_assets: (TokenId, TokenId)) -> bool {
 		true
 	}
@@ -335,7 +352,7 @@ impl GetMaintenanceStatusTrait for MockMaintenanceStatusProvider {
 }
 
 parameter_types! {
-	pub const BootstrapUpdateBuffer: <Test as frame_system::Config>::BlockNumber = 10;
+	pub const BootstrapUpdateBuffer: BlockNumberFor<Test> = 10;
 	pub const DefaultBootstrapPromotedPoolWeight: u8 = 1u8;
 	pub const ClearStorageLimit: u32 = 10u32;
 }
@@ -382,39 +399,34 @@ parameter_types! {
 	pub const MaxDecimals: u32 = 255;
 }
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
 construct_runtime!(
-	pub enum Test where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic
-	{
-		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
-		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>},
-		Xyk: pallet_xyk::{Pallet, Call, Storage, Event<T>, Config<T>},
-		Bootstrap: pallet_bootstrap::{Pallet, Call, Storage, Event<T>},
-		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>},
-		ProofOfStake: pallet_proof_of_stake::{Pallet, Call, Storage, Event<T>},
+	pub enum Test {
+		System: frame_system,
+		Tokens: orml_tokens,
+		Xyk: pallet_xyk,
+		Bootstrap: pallet_bootstrap,
+		Vesting: pallet_vesting_mangata,
+		ProofOfStake: pallet_proof_of_stake,
+		Issuance: pallet_issuance,
 	}
 );
 
 impl<T: Config> Pallet<T>
 where
-	u128: From<<T as frame_system::Config>::AccountId>,
+	T::Currency: MultiTokenCurrencyExtended<AccountId, Balance = Balance, CurrencyId = TokenId>,
 {
-	pub fn balance(id: TokenId, who: T::AccountId) -> Balance {
-		Tokens::accounts(Into::<u128>::into(who.clone()), Into::<u32>::into(id)).free -
-			Tokens::accounts(Into::<u128>::into(who), Into::<u32>::into(id)).frozen
+	pub fn balance(id: TokenId, who: AccountId) -> Balance {
+		Tokens::accounts(who.clone(), id).free - Tokens::accounts(who, id).frozen
 	}
 
-	pub fn reserved_balance(id: TokenId, who: <T as frame_system::Config>::AccountId) -> Balance {
-		Tokens::accounts(Into::<u128>::into(who), Into::<u32>::into(id)).reserved
+	pub fn reserved_balance(id: TokenId, who: AccountId) -> Balance {
+		Tokens::accounts(who, id).reserved
 	}
 
-	pub fn locked_balance(id: TokenId, who: <T as frame_system::Config>::AccountId) -> Balance {
-		Tokens::accounts(Into::<u128>::into(who), Into::<u32>::into(id)).frozen
+	pub fn locked_balance(id: TokenId, who: AccountId) -> Balance {
+		Tokens::accounts(who, id).frozen
 	}
 
 	pub fn total_supply(id: TokenId) -> Balance {
@@ -422,30 +434,28 @@ where
 	}
 	pub fn transfer(
 		currency_id: TokenId,
-		source: T::AccountId,
-		dest: T::AccountId,
+		source: AccountId,
+		dest: AccountId,
 		value: Balance,
 	) -> DispatchResult {
 		<T as Config>::Currency::transfer(
-			currency_id.into(),
+			currency_id,
 			&source,
 			&dest,
-			value.into(),
+			value,
 			frame_support::traits::ExistenceRequirement::KeepAlive,
 		)
 	}
-	pub fn create_new_token(who: &T::AccountId, amount: Balance) -> TokenId {
-		<T as Config>::Currency::create(who, amount.into())
-			.expect("Token creation failed")
-			.into()
+	pub fn create_new_token(who: &AccountId, amount: Balance) -> TokenId {
+		<T as Config>::Currency::create(who, amount).expect("Token creation failed")
 	}
 }
 
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let t = frame_system::GenesisConfig::default()
-		.build_storage::<Test>()
+	let t = frame_system::GenesisConfig::<Test>::default()
+		.build_storage()
 		.expect("Frame system builds valid default genesis config");
 
 	let mut ext = sp_io::TestExternalities::new(t);

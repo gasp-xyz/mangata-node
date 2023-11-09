@@ -1,5 +1,5 @@
 use crate::setup::*;
-use frame_support::traits::Hooks;
+use frame_support::traits::{OnFinalize, OnInitialize};
 use orml_tokens::MultiTokenCurrencyExtended;
 
 type TokensOf<Test> = <Test as pallet_proof_of_stake::Config>::Currency;

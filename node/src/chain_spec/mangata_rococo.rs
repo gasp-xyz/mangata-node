@@ -1,21 +1,22 @@
-use crate::chain_spec::Extensions;
-use codec::Encode;
+use crate::chain_spec::{
+	get_account_id_from_seed, get_collator_keys_from_seed, Extensions, SAFE_XCM_VERSION,
+};
+
 use common_runtime::{
 	config::orml_asset_registry::AssetMetadataOf,
 	constants::parachains,
 	ksm_per_second,
 	tokens::{KAR_TOKEN_ID, MGX_TOKEN_ID, RELAY_TOKEN_ID, TUR_TOKEN_ID},
 	xcm_config::general_key,
+	AccountId, AuraId, CustomMetadata, XcmMetadata,
 };
 use cumulus_primitives_core::ParaId;
-use hex::FromHex;
-use mangata_rococo_runtime::{
-	AccountId, AuraId, CustomMetadata, MultiLocation, Parachain, Signature, XcmMetadata, X1, X2,
-};
-
 use sc_service::ChainType;
-use sp_core::{sr25519, ByteArray, Pair, Public};
-use sp_runtime::traits::{IdentifyAccount, Verify};
+use sp_core::{sr25519, ByteArray, Encode};
+use sp_runtime::BoundedVec;
+use xcm::prelude::{MultiLocation, Parachain, X1, X2};
+
+use hex::FromHex;
 
 pub mod public_testnet_keys {
 	pub const ALICE_SR25519: &str =
@@ -32,31 +33,7 @@ pub mod public_testnet_keys {
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec =
-	sc_service::GenericChainSpec<mangata_rococo_runtime::GenesisConfig, Extensions>;
-
-/// Helper function to generate a crypto pair from seed
-pub fn get_public_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
-	TPublic::Pair::from_string(&format!("//{}", seed), None)
-		.expect("static values are valid; qed")
-		.public()
-}
-
-type AccountPublic = <Signature as Verify>::Signer;
-
-/// Generate collator keys from seed.
-///
-/// This function's return type must always match the session keys of the chain in tuple format.
-pub fn get_collator_keys_from_seed(seed: &str) -> AuraId {
-	get_public_from_seed::<AuraId>(seed)
-}
-
-/// Helper function to generate an account ID from seed
-pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
-where
-	AccountPublic: From<<TPublic::Pair as Pair>::Public>,
-{
-	AccountPublic::from(get_public_from_seed::<TPublic>(seed)).into_account()
-}
+	sc_service::GenericChainSpec<mangata_rococo_runtime::RuntimeGenesisConfig, Extensions>;
 
 /// Generate the session keys from individual elements.
 ///
@@ -68,7 +45,7 @@ pub fn mangata_session_keys(keys: AuraId) -> mangata_rococo_runtime::SessionKeys
 pub fn mangata_rococo_prod_config() -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
-	properties.insert("tokenSymbol".into(), "MGAT".into());
+	properties.insert("tokenSymbol".into(), "MGR".into());
 	properties.insert("tokenDecimals".into(), 18.into());
 	properties.insert("ss58Format".into(), 42.into());
 
@@ -183,8 +160,8 @@ pub fn mangata_rococo_prod_config() -> ChainSpec {
 						MGX_TOKEN_ID,
 						AssetMetadataOf {
 							decimals: 18,
-							name: b"Mangata".to_vec(),
-							symbol: b"MGR".to_vec(),
+							name: BoundedVec::truncate_from(b"Mangata".to_vec()),
+							symbol: BoundedVec::truncate_from(b"MGR".to_vec()),
 							additional: Default::default(),
 							existential_deposit: Default::default(),
 							location: None,
@@ -194,8 +171,8 @@ pub fn mangata_rococo_prod_config() -> ChainSpec {
 						1,
 						AssetMetadataOf {
 							decimals: 18,
-							name: b"Ether".to_vec(),
-							symbol: b"ETH".to_vec(),
+							name: BoundedVec::truncate_from(b"Ether".to_vec()),
+							symbol: BoundedVec::truncate_from(b"ETH".to_vec()),
 							additional: Default::default(),
 							existential_deposit: Default::default(),
 							location: None,
@@ -205,8 +182,8 @@ pub fn mangata_rococo_prod_config() -> ChainSpec {
 						RELAY_TOKEN_ID,
 						AssetMetadataOf {
 							decimals: 12,
-							name: b"Rococo Native".to_vec(),
-							symbol: b"ROC".to_vec(),
+							name: BoundedVec::truncate_from(b"Rococo Native".to_vec()),
+							symbol: BoundedVec::truncate_from(b"ROC".to_vec()),
 							additional: CustomMetadata {
 								// 10_000:1 MGR:ROC
 								xcm: Some(XcmMetadata { fee_per_second: ksm_per_second() }),
@@ -329,11 +306,11 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 				],
 				vec![
 					(
-						0,
+						MGX_TOKEN_ID,
 						AssetMetadataOf {
 							decimals: 18,
-							name: b"Mangata".to_vec(),
-							symbol: b"MGR".to_vec(),
+							name: BoundedVec::truncate_from(b"Mangata".to_vec()),
+							symbol: BoundedVec::truncate_from(b"MGRL".to_vec()),
 							additional: Default::default(),
 							existential_deposit: Default::default(),
 							location: None,
@@ -343,8 +320,8 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 						1,
 						AssetMetadataOf {
 							decimals: 18,
-							name: b"Ether".to_vec(),
-							symbol: b"ETH".to_vec(),
+							name: BoundedVec::truncate_from(b"Ether".to_vec()),
+							symbol: BoundedVec::truncate_from(b"ETH".to_vec()),
 							additional: Default::default(),
 							existential_deposit: Default::default(),
 							location: None,
@@ -354,8 +331,8 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 						RELAY_TOKEN_ID,
 						AssetMetadataOf {
 							decimals: 12,
-							name: b"Rococo Native".to_vec(),
-							symbol: b"ROC".to_vec(),
+							name: BoundedVec::truncate_from(b"Rococo Native".to_vec()),
+							symbol: BoundedVec::truncate_from(b"ROC".to_vec()),
 							additional: CustomMetadata {
 								// 10_000:1 MGR:ROC
 								xcm: Some(XcmMetadata { fee_per_second: ksm_per_second() }),
@@ -370,8 +347,8 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 						5,
 						AssetMetadataOf {
 							decimals: 0,
-							name: vec![],
-							symbol: vec![],
+							name: BoundedVec::new(),
+							symbol: BoundedVec::new(),
 							additional: Default::default(),
 							existential_deposit: Default::default(),
 							location: None,
@@ -381,8 +358,8 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 						KAR_TOKEN_ID,
 						AssetMetadataOf {
 							decimals: 12,
-							name: b"Karura".to_vec(),
-							symbol: b"KAR".to_vec(),
+							name: BoundedVec::truncate_from(b"Karura".to_vec()),
+							symbol: BoundedVec::truncate_from(b"KAR".to_vec()),
 							additional: CustomMetadata {
 								// 100:1 MGR:KAR
 								xcm: Some(XcmMetadata { fee_per_second: ksm_per_second() * 100 }),
@@ -405,8 +382,8 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 						TUR_TOKEN_ID,
 						AssetMetadataOf {
 							decimals: 10,
-							name: b"Turing native token".to_vec(),
-							symbol: b"TUR".to_vec(),
+							name: BoundedVec::truncate_from(b"Turing native token".to_vec()),
+							symbol: BoundedVec::truncate_from(b"TUR".to_vec()),
 							additional: CustomMetadata {
 								// 100:1 TUR:ROC, 10/12 decimals
 								xcm: Some(XcmMetadata { fee_per_second: ksm_per_second() }),
@@ -440,20 +417,21 @@ pub fn mangata_rococo_local_config() -> ChainSpec {
 	)
 }
 
-fn mangata_genesis(
+pub(crate) fn mangata_genesis(
 	initial_authorities: Vec<(AccountId, AuraId)>,
-	relay_key: AccountId,
+	_relay_key: AccountId,
 	root_key: AccountId,
 	tokens_endowment: Vec<(u32, u128, AccountId)>,
 	staking_accounts: Vec<(AccountId, u32, u128, u32, u128, u32, u128)>,
 	register_assets: Vec<(u32, AssetMetadataOf)>,
 	id: ParaId,
-) -> mangata_rococo_runtime::GenesisConfig {
-	mangata_rococo_runtime::GenesisConfig {
+) -> mangata_rococo_runtime::RuntimeGenesisConfig {
+	mangata_rococo_runtime::RuntimeGenesisConfig {
 		system: mangata_rococo_runtime::SystemConfig {
 			code: mangata_rococo_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
+			..Default::default()
 		},
 		tokens: mangata_rococo_runtime::TokensConfig {
 			tokens_endowment: tokens_endowment
@@ -485,7 +463,10 @@ fn mangata_genesis(
 			},
 		},
 		treasury: Default::default(),
-		parachain_info: mangata_rococo_runtime::ParachainInfoConfig { parachain_id: id },
+		parachain_info: mangata_rococo_runtime::ParachainInfoConfig {
+			parachain_id: id,
+			..Default::default()
+		},
 		parachain_staking: mangata_rococo_runtime::ParachainStakingConfig {
 			candidates: staking_accounts
 				.iter()
@@ -513,6 +494,10 @@ fn mangata_genesis(
 		aura: Default::default(),
 		aura_ext: Default::default(),
 		parachain_system: Default::default(),
+		polkadot_xcm: mangata_rococo_runtime::PolkadotXcmConfig {
+			safe_xcm_version: Some(SAFE_XCM_VERSION),
+			..Default::default()
+		},
 		xyk: mangata_rococo_runtime::XykConfig {
 			created_pools_for_staking: staking_accounts
 				.iter()
@@ -544,11 +529,11 @@ fn mangata_genesis(
 			whitelisted_tokens: Default::default(),
 		},
 		council: Default::default(),
+		transaction_payment: Default::default(),
 		sudo: mangata_rococo_runtime::SudoConfig {
 			// Assign network admin rights.
 			key: Some(root_key),
 		},
-		polkadot_xcm: mangata_rococo_runtime::PolkadotXcmConfig { safe_xcm_version: Some(2) },
 		asset_registry: mangata_rococo_runtime::AssetRegistryConfig {
 			assets: register_assets
 				.iter()
@@ -559,5 +544,6 @@ fn mangata_genesis(
 				})
 				.collect(),
 		},
+		vesting: Default::default(),
 	}
 }

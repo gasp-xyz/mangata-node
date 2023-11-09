@@ -3,28 +3,32 @@ provider = "native"
 timeout = 1000
 
 [relaychain]
-default_command = "../parity/polkadot/target/release/polkadot"
-# chain = "westend-local"
+default_command = "../../parity/polkadot-sdk/target/release/polkadot"
+default_args = [ "-lparachain=trace" ]
 chain = "rococo-local"
 
     [[relaychain.nodes]]
-    name = "alice"
+    name = "one"
     ws_port = 9944
+	args = ["-lparachain=trace,block_builder=trace,basic-authorship=trace,slots=trace,aura=trace,cumulus=trace,relay=trace,runtime=trace"]
 
     [[relaychain.nodes]]
-    name = "bob"
+    name = "two"
 
 [[parachains]]
 id = 2110
 cumulus_based = true
-chain = "mangata-rococo-local-testnet"
+chain = "mangata-rococo-local"
 
     [[parachains.collators]]
     name = "alice"
     command = "./target/release/mangata-node"
+	args = ["-lparachain=trace,block_builder=trace,basic-authorship=trace,slots=trace,aura=trace,cumulus=trace,relay=trace,runtime=trace"]
+	validator = true
     ws_port = 9946
-    rpc_port = 8866
 
     [[parachains.collators]]
     name = "bob"
     command = "./target/release/mangata-node"
+	args = [""]
+	validator = true

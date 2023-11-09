@@ -20,20 +20,23 @@ use super::*;
 use crate as pallet_issuance;
 use frame_support::{
 	assert_ok, construct_runtime, parameter_types,
-	traits::{Contains, Everything},
+	traits::{Contains, Everything, WithdrawReasons},
 	PalletId,
 };
-use mangata_types::{Amount, Balance, TokenId};
 use orml_traits::parameter_type_with_key;
 use sp_core::U256;
 use sp_runtime::{
 	traits::{AccountIdConversion, ConvertInto},
-	SaturatedConversion,
+	BuildStorage, SaturatedConversion,
 };
 use sp_std::convert::TryFrom;
 use std::{collections::HashMap, sync::Mutex};
+
+pub(crate) type AccountId = u64;
+pub(crate) type Amount = i128;
+pub(crate) type Balance = u128;
+pub(crate) type TokenId = u32;
 pub const MGA_TOKEN_ID: TokenId = 0;
-pub(crate) type AccountId = u128;
 
 parameter_types!(
 	pub const SomeConst: u64 = 10;
@@ -43,15 +46,14 @@ parameter_types!(
 impl frame_system::Config for Test {
 	type BaseCallFilter = Everything;
 	type RuntimeOrigin = RuntimeOrigin;
-	type Index = u64;
-	type BlockNumber = u64;
+	type Nonce = u64;
 	type RuntimeCall = RuntimeCall;
 	type Hash = sp_runtime::testing::H256;
 	type Hashing = sp_runtime::traits::BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = sp_runtime::traits::IdentityLookup<Self::AccountId>;
-	type Header = sp_runtime::testing::Header;
 	type RuntimeEvent = RuntimeEvent;
+	type Block = Block;
 	type BlockHashCount = BlockHashCount;
 	type BlockWeights = ();
 	type BlockLength = ();
@@ -132,7 +134,7 @@ lazy_static::lazy_static! {
 
 pub struct MockLiquidityMiningApi;
 
-impl LiquidityMiningApi for MockLiquidityMiningApi {
+impl LiquidityMiningApi<Balance> for MockLiquidityMiningApi {
 	fn distribute_rewards(_liquidity_mining_rewards: Balance) {}
 }
 
@@ -159,6 +161,8 @@ impl pallet_issuance::Config for Test {
 
 parameter_types! {
 	pub const MinVestedTransfer: Balance = 100u128;
+	pub UnvestedFundsAllowedWithdrawReasons: WithdrawReasons =
+		WithdrawReasons::except(WithdrawReasons::TRANSFER | WithdrawReasons::RESERVE);
 }
 
 impl pallet_vesting_mangata::Config for Test {
@@ -167,37 +171,33 @@ impl pallet_vesting_mangata::Config for Test {
 	type BlockNumberToBalance = ConvertInto;
 	type MinVestedTransfer = MinVestedTransfer;
 	type WeightInfo = pallet_vesting_mangata::weights::SubstrateWeight<Test>;
+	type UnvestedFundsAllowedWithdrawReasons = UnvestedFundsAllowedWithdrawReasons;
 	// `VestingInfo` encode length is 36bytes. 28 schedules gets encoded as 1009 bytes, which is the
 	// highest number of schedules that encodes less than 2^10.
 	// Should be atleast twice the number of tge recipients
 	const MAX_VESTING_SCHEDULES: u32 = 200;
 }
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
 construct_runtime!(
-	pub enum Test where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic
-	{
-		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
-		Tokens: orml_tokens::{Pallet, Storage, Call, Event<T>, Config<T>},
-		Vesting: pallet_vesting_mangata::{Pallet, Call, Storage, Event<T>},
-		Issuance: pallet_issuance::{Pallet, Event<T>, Storage},
+	pub enum Test {
+		System: frame_system,
+		Tokens: orml_tokens,
+		Vesting: pallet_vesting_mangata,
+		Issuance: pallet_issuance,
 	}
 );
 
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup.
 pub fn new_test_ext_without_issuance_config() -> sp_io::TestExternalities {
-	let mut t = frame_system::GenesisConfig::default()
-		.build_storage::<Test>()
+	let mut t = frame_system::GenesisConfig::<Test>::default()
+		.build_storage()
 		.expect("Frame system builds valid default genesis config");
 
 	orml_tokens::GenesisConfig::<Test> {
-		tokens_endowment: vec![(0u128, 0u32, 2_000_000_000)],
+		tokens_endowment: vec![(0u64, 0u32, 2_000_000_000)],
 		created_tokens_for_staking: Default::default(),
 	}
 	.assimilate_storage(&mut t)
@@ -217,12 +217,12 @@ pub fn new_test_ext_without_issuance_config() -> sp_io::TestExternalities {
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut t = frame_system::GenesisConfig::default()
-		.build_storage::<Test>()
+	let mut t = frame_system::GenesisConfig::<Test>::default()
+		.build_storage()
 		.expect("Frame system builds valid default genesis config");
 
 	orml_tokens::GenesisConfig::<Test> {
-		tokens_endowment: vec![(0u128, 0u32, 2_000_000_000)],
+		tokens_endowment: vec![(0u64, 0u32, 2_000_000_000)],
 		created_tokens_for_staking: Default::default(),
 	}
 	.assimilate_storage(&mut t)
@@ -260,7 +260,7 @@ pub(crate) fn roll_to_while_minting(n: u64, expected_amount_minted: Option<Balan
 		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
 		session_number = System::block_number().saturated_into::<u32>() / BlocksPerRound::get();
-		session_issuance = <Issuance as GetIssuance>::get_all_issuance(session_number)
+		session_issuance = <Issuance as GetIssuance<_>>::get_all_issuance(session_number)
 			.expect("session issuance is always populated in advance");
 		block_issuance = (session_issuance.0 + session_issuance.1) /
 			(BlocksPerRound::get().saturated_into::<u128>());

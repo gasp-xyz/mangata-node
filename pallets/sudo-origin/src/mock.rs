@@ -19,14 +19,14 @@
 
 use super::*;
 use crate as sudo_origin;
-use frame_support::{parameter_types, traits::Contains, weights::Weight};
-use frame_system::{limits, EnsureRoot};
-use sp_core::H256;
-use sp_io;
-use sp_runtime::{
-	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
+use frame_support::{
+	parameter_types,
+	traits::{Contains, Everything},
+	weights::Weight,
 };
+use frame_system::{limits, EnsureRoot};
+use sp_io;
+use sp_runtime::BuildStorage;
 use sp_std::convert::TryFrom;
 
 // Logger module to track execution.
@@ -93,18 +93,13 @@ pub mod logger {
 	pub(super) type I32Log<T> = StorageValue<_, Vec<i32>, ValueQuery>;
 }
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
 frame_support::construct_runtime!(
-	pub enum Test where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
-	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		SudoOrigin: sudo_origin::{Pallet, Call, Event<T>},
-		Logger: logger::{Pallet, Call, Storage, Event<T>},
+	pub enum Test {
+		System: frame_system,
+		SudoOrigin: sudo_origin,
+		Logger: logger,
 	}
 );
 
@@ -121,21 +116,20 @@ impl Contains<RuntimeCall> for BlockEverything {
 }
 
 impl frame_system::Config for Test {
-	type BaseCallFilter = BlockEverything;
+	type BaseCallFilter = Everything;
+	type RuntimeOrigin = RuntimeOrigin;
+	type Nonce = u64;
+	type RuntimeCall = RuntimeCall;
+	type Hash = sp_runtime::testing::H256;
+	type Hashing = sp_runtime::traits::BlakeTwo256;
+	type AccountId = u64;
+	type Lookup = sp_runtime::traits::IdentityLookup<Self::AccountId>;
+	type RuntimeEvent = RuntimeEvent;
+	type Block = Block;
+	type BlockHashCount = BlockHashCount;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
-	type RuntimeOrigin = RuntimeOrigin;
-	type RuntimeCall = RuntimeCall;
-	type Index = u64;
-	type BlockNumber = u64;
-	type Hash = H256;
-	type Hashing = BlakeTwo256;
-	type AccountId = u64;
-	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
-	type RuntimeEvent = RuntimeEvent;
-	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;
 	type AccountData = ();
@@ -165,6 +159,6 @@ pub type LoggerCall = logger::Call<Test>;
 
 // Build test environment by setting the root `key` for the Genesis.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	let t = frame_system::GenesisConfig::<Test>::default().build_storage().unwrap();
 	t.into()
 }

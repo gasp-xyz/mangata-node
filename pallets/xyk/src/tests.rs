@@ -5,14 +5,12 @@
 use super::{Event, *};
 use crate::mock::*;
 use frame_support::{assert_err, assert_err_ignore_postinfo, dispatch::GetDispatchInfo};
-use mangata_support::traits::{ComputeIssuance, GetIssuance, LiquidityMiningApi};
+use mangata_support::traits::LiquidityMiningApi;
 use mangata_types::assets::CustomMetadata;
 use orml_traits::asset_registry::AssetMetadata;
 use serial_test::serial;
 use sp_runtime::{traits::Dispatchable, Permill};
 use test_case::test_case;
-
-type TokensOf<T> = <T as Config>::Currency;
 
 const DUMMY_USER_ID: u128 = 2;
 const TRADER_ID: u128 = 3;
@@ -156,8 +154,8 @@ fn set_info_should_work() {
 		assert_eq!(
 			*MockAssetRegister::instance().lock().unwrap().get(&2u32).unwrap(),
 			AssetMetadata {
-				name: b"LiquidityPoolToken0x00000002".to_vec(),
-				symbol: b"TKN0x00000000-TKN0x00000001".to_vec(),
+				name: BoundedVec::truncate_from(b"LiquidityPoolToken0x00000002".to_vec()),
+				symbol: BoundedVec::truncate_from(b"TKN0x00000000-TKN0x00000001".to_vec()),
 				decimals: 18u32,
 				location: None,
 				additional: CustomMetadata::default(),
@@ -192,8 +190,8 @@ fn set_info_should_work_with_small_numbers() {
 		assert_eq!(
 			*MockAssetRegister::instance().lock().unwrap().get(&N).unwrap(),
 			AssetMetadata {
-				name: b"LiquidityPoolToken0x00003039".to_vec(),
-				symbol: b"TKN0x0000000F-TKN0x00002FC9".to_vec(),
+				name: BoundedVec::truncate_from(b"LiquidityPoolToken0x00003039".to_vec()),
+				symbol: BoundedVec::truncate_from(b"TKN0x0000000F-TKN0x00002FC9".to_vec()),
 				decimals: 18u32,
 				location: None,
 				additional: CustomMetadata::default(),
@@ -229,8 +227,8 @@ fn set_info_should_work_with_large_numbers() {
 		assert_eq!(
 			*MockAssetRegister::instance().lock().unwrap().get(&1524501234u32).unwrap(),
 			AssetMetadata {
-				name: b"LiquidityPoolToken0x5ADE0AF2".to_vec(),
-				symbol: b"TKN0x00E4E1C0-TKN0x00BAA928".to_vec(),
+				name: BoundedVec::truncate_from(b"LiquidityPoolToken0x5ADE0AF2".to_vec()),
+				symbol: BoundedVec::truncate_from(b"TKN0x00E4E1C0-TKN0x00BAA928".to_vec()),
 				decimals: 18u32,
 				location: None,
 				additional: CustomMetadata::default(),
@@ -740,7 +738,9 @@ fn sell_N_insufficient_output_amount_inner_function_error_upon_bad_slippage() {
 		initialize();
 
 		assert_err!(
-			<XykStorage as XykFunctionsTrait<AccountId>>::sell_asset(2, 1, 4, 250000, 500000, true),
+			<XykStorage as XykFunctionsTrait<AccountId, Balance, TokenId>>::sell_asset(
+				2, 1, 4, 250000, 500000, true
+			),
 			Error::<Test>::InsufficientOutputAmount,
 		); // selling 250000 assetId 0 of pool 0 1, by the formula user should get 166333 asset 1, but is requesting 500000
 	});
@@ -752,7 +752,7 @@ fn sell_W_insufficient_output_amount_inner_function_NO_error_upon_bad_slippage()
 	new_test_ext().execute_with(|| {
 		initialize();
 
-		assert_ok!(<XykStorage as XykFunctionsTrait<AccountId>>::sell_asset(
+		assert_ok!(<XykStorage as XykFunctionsTrait<AccountId, Balance, TokenId>>::sell_asset(
 			2, 1, 4, 250000, 500000, false
 		),); // selling 250000 assetId 0 of pool 0 1, by the formula user should get 166333 asset 1, but is requesting 500000
 	});
@@ -1355,7 +1355,9 @@ fn buy_N_insufficient_input_amount_inner_function_error_upon_bad_slippage() {
 
 		// buying 150000 liquidity assetId 1 of pool 0 1
 		assert_err!(
-			<XykStorage as XykFunctionsTrait<AccountId>>::buy_asset(2, 1, 4, 150000, 10, true),
+			<XykStorage as XykFunctionsTrait<AccountId, Balance, TokenId>>::buy_asset(
+				2, 1, 4, 150000, 10, true
+			),
 			Error::<Test>::InsufficientInputAmount,
 		);
 	});
@@ -1368,7 +1370,7 @@ fn buy_W_insufficient_input_amount_inner_function_NO_error_upon_bad_slippage() {
 		initialize();
 
 		// buying 150000 liquidity assetId 1 of pool 0 1
-		assert_ok!(<XykStorage as XykFunctionsTrait<AccountId>>::buy_asset(
+		assert_ok!(<XykStorage as XykFunctionsTrait<AccountId, Balance, TokenId>>::buy_asset(
 			2, 1, 4, 150000, 10, false
 		));
 	});
@@ -1898,7 +1900,13 @@ fn burn_all_liq_and_mint_it_again() {
 		assert_eq!(user_assets_4_value_after_sell, 1000000000000000000000);
 
 		// minting liq again and checking if the liq. asset is generated
-		XykStorage::mint_liquidity(RuntimeOrigin::signed(2), 1, 4, asset_value_1, asset_value_4);
+		let _ = XykStorage::mint_liquidity(
+			RuntimeOrigin::signed(2),
+			1,
+			4,
+			asset_value_1,
+			asset_value_4,
+		);
 
 		let liq_token_id_after_burn_and_mint = XykStorage::liquidity_asset((1, 4));
 
@@ -2327,7 +2335,9 @@ fn unsuccessful_sell_assets_charges_fee() {
 fn PoolCreateApi_test_pool_exists_return_false_for_non_existing_pool() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
-		assert!(!<XykStorage as PoolCreateApi>::pool_exists(1_u32, 4_u32));
+		assert!(!<XykStorage as PoolCreateApi<AccountId, Balance, TokenId>>::pool_exists(
+			1_u32, 4_u32
+		));
 	});
 }
 
@@ -2338,7 +2348,9 @@ fn PoolCreateApi_pool_exists_return_true_for_existing_pool() {
 		initialize();
 
 		XykStorage::create_pool(RuntimeOrigin::signed(2), 0, 500000, 1, 10000).unwrap();
-		assert!(<XykStorage as PoolCreateApi>::pool_exists(0_u32, 1_u32));
+		assert!(<XykStorage as PoolCreateApi<AccountId, Balance, TokenId>>::pool_exists(
+			0_u32, 1_u32
+		));
 	});
 }
 
@@ -2352,13 +2364,16 @@ fn PoolCreateApi_pool_create_creates_a_pool() {
 		let first_asset_amount = 10_000_u128;
 		let second_asset_id = 1_u32;
 		let second_asset_amount = 5_000_u128;
-		assert!(!<XykStorage as PoolCreateApi>::pool_exists(first_asset_id, second_asset_id));
+		assert!(!<XykStorage as PoolCreateApi<AccountId, Balance, TokenId>>::pool_exists(
+			first_asset_id,
+			second_asset_id
+		));
 
 		let liq_token_id = Tokens::next_asset_id();
 		let liq_token_amount = (first_asset_amount + second_asset_amount) / 2;
 
 		assert_eq!(
-			<XykStorage as PoolCreateApi>::pool_create(
+			<XykStorage as PoolCreateApi<AccountId, Balance, TokenId>>::pool_create(
 				DUMMY_USER_ID,
 				first_asset_id,
 				first_asset_amount,
@@ -2371,7 +2386,9 @@ fn PoolCreateApi_pool_create_creates_a_pool() {
 		assert_ne!(liq_token_id, Tokens::next_asset_id());
 		assert_eq!(liq_token_amount, XykStorage::balance(liq_token_id, DUMMY_USER_ID));
 
-		assert!(<XykStorage as PoolCreateApi>::pool_exists(0_u32, 1_u32));
+		assert!(<XykStorage as PoolCreateApi<AccountId, Balance, TokenId>>::pool_exists(
+			0_u32, 1_u32
+		));
 	});
 }
 

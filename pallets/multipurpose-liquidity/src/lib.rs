@@ -4,20 +4,19 @@ use frame_support::{
 	dispatch::DispatchResult,
 	ensure,
 	pallet_prelude::*,
-	traits::{tokens::currency::MultiTokenCurrency, Get, StorageVersion, WithdrawReasons},
+	traits::{
+		tokens::currency::{MultiTokenCurrency, MultiTokenVestingLocks},
+		Get, StorageVersion, WithdrawReasons,
+	},
 	transactional,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use mangata_support::traits::{
 	ActivationReservesProviderTrait, StakingReservesProviderTrait, XykFunctionsTrait,
 };
-use mangata_types::{
-	multipurpose_liquidity::{ActivateKind, BondKind},
-	Balance, BlockNumber, TokenId,
-};
+use mangata_types::multipurpose_liquidity::{ActivateKind, BondKind};
 use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
-use pallet_vesting_mangata::MultiTokenVestingLocks;
-use sp_runtime::traits::{SaturatedConversion, Zero};
+use sp_runtime::traits::{Bounded, CheckedAdd, CheckedSub, Saturating, Zero};
 use sp_std::{convert::TryInto, prelude::*};
 
 #[cfg(feature = "std")]
@@ -48,6 +47,13 @@ macro_rules! log {
 
 pub use pallet::*;
 
+type BalanceOf<T> =
+	<<T as Config>::Tokens as MultiTokenCurrency<<T as frame_system::Config>::AccountId>>::Balance;
+
+type CurrencyIdOf<T> = <<T as Config>::Tokens as MultiTokenCurrency<
+	<T as frame_system::Config>::AccountId,
+>>::CurrencyId;
+
 #[frame_support::pallet]
 pub mod pallet {
 
@@ -60,7 +66,7 @@ pub mod pallet {
 	pub struct Pallet<T>(PhantomData<T>);
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -68,9 +74,13 @@ pub mod pallet {
 		type MaxRelocks: Get<u32>;
 		type Tokens: MultiTokenCurrencyExtended<Self::AccountId>
 			+ MultiTokenReservableCurrency<Self::AccountId>;
-		type NativeCurrencyId: Get<TokenId>;
-		type VestingProvider: MultiTokenVestingLocks<Self::AccountId, Self::BlockNumber>;
-		type Xyk: XykFunctionsTrait<Self::AccountId>;
+		type NativeCurrencyId: Get<CurrencyIdOf<Self>>;
+		type VestingProvider: MultiTokenVestingLocks<
+			Self::AccountId,
+			Currency = Self::Tokens,
+			Moment = BlockNumberFor<Self>,
+		>;
+		type Xyk: XykFunctionsTrait<Self::AccountId, BalanceOf<Self>, CurrencyIdOf<Self>>;
 		type WeightInfo: WeightInfo;
 	}
 
@@ -94,15 +104,15 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		VestingTokensReserved(T::AccountId, TokenId, Balance),
-		TokensRelockedFromReserve(T::AccountId, TokenId, Balance, Balance),
+		VestingTokensReserved(T::AccountId, CurrencyIdOf<T>, BalanceOf<T>),
+		TokensRelockedFromReserve(T::AccountId, CurrencyIdOf<T>, BalanceOf<T>, BalanceOf<T>),
 	}
 
 	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 	#[derive(
 		Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo, Default,
 	)]
-	pub struct ReserveStatusInfo {
+	pub struct ReserveStatusInfo<Balance> {
 		pub staked_unactivated_reserves: Balance,
 		pub activated_unstaked_reserves: Balance,
 		pub staked_and_activated_reserves: Balance,
@@ -114,7 +124,7 @@ pub mod pallet {
 	#[derive(
 		Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo, Default,
 	)]
-	pub struct RelockStatusInfo {
+	pub struct RelockStatusInfo<Balance, BlockNumber> {
 		pub amount: Balance,
 		pub starting_block: BlockNumber,
 		pub ending_block_as_balance: Balance,
@@ -127,8 +137,8 @@ pub mod pallet {
 		Blake2_256,
 		T::AccountId,
 		Twox64Concat,
-		TokenId,
-		ReserveStatusInfo,
+		CurrencyIdOf<T>,
+		ReserveStatusInfo<BalanceOf<T>>,
 		ValueQuery,
 	>;
 
@@ -139,8 +149,8 @@ pub mod pallet {
 		Blake2_256,
 		T::AccountId,
 		Twox64Concat,
-		TokenId,
-		BoundedVec<RelockStatusInfo, T::MaxRelocks>,
+		CurrencyIdOf<T>,
+		BoundedVec<RelockStatusInfo<BalanceOf<T>, BlockNumberFor<T>>, T::MaxRelocks>,
 		ValueQuery,
 	>;
 
@@ -155,9 +165,9 @@ pub mod pallet {
 		/// Vested pallet tokens can be unlocked.
 		pub fn reserve_vesting_liquidity_tokens_by_vesting_index(
 			origin: OriginFor<T>,
-			liquidity_token_id: TokenId,
+			liquidity_token_id: CurrencyIdOf<T>,
 			liquidity_token_vesting_index: u32,
-			liquidity_token_unlock_some_amount_or_all: Option<Balance>,
+			liquidity_token_unlock_some_amount_or_all: Option<BalanceOf<T>>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
@@ -179,7 +189,7 @@ pub mod pallet {
 		pub fn reserve_vesting_native_tokens_by_vesting_index(
 			origin: OriginFor<T>,
 			liquidity_token_vesting_index: u32,
-			liquidity_token_unlock_some_amount_or_all: Option<Balance>,
+			liquidity_token_unlock_some_amount_or_all: Option<BalanceOf<T>>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
@@ -197,30 +207,28 @@ pub mod pallet {
 		// This extrinsic has to be transactional
 		pub fn reserve_vesting_liquidity_tokens(
 			origin: OriginFor<T>,
-			liquidity_token_id: TokenId,
-			liquidity_token_amount: Balance,
+			liquidity_token_id: CurrencyIdOf<T>,
+			liquidity_token_amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
 			ensure!(T::Xyk::is_liquidity_token(liquidity_token_id), Error::<T>::NotALiquidityToken);
 
-			let (vesting_starting_block, vesting_ending_block_as_balance): (BlockNumber, Balance) =
-				T::VestingProvider::unlock_tokens(
-					&sender,
-					liquidity_token_id.into(),
-					liquidity_token_amount.into(),
-				)
-				.map(|x| (x.0.saturated_into(), x.1.into()))?;
+			let (vesting_starting_block, vesting_ending_block_as_balance): (
+				BlockNumberFor<T>,
+				BalanceOf<T>,
+			) = T::VestingProvider::unlock_tokens(&sender, liquidity_token_id, liquidity_token_amount)
+				.map(|x| (x.0, x.1))?;
 
 			let mut reserve_status = Pallet::<T>::get_reserve_status(&sender, liquidity_token_id);
 
 			reserve_status.relock_amount = reserve_status
 				.relock_amount
-				.checked_add(liquidity_token_amount)
+				.checked_add(&liquidity_token_amount)
 				.ok_or(Error::<T>::MathError)?;
 			reserve_status.unspent_reserves = reserve_status
 				.unspent_reserves
-				.checked_add(liquidity_token_amount)
+				.checked_add(&liquidity_token_amount)
 				.ok_or(Error::<T>::MathError)?;
 
 			ReserveStatus::<T>::insert(&sender, liquidity_token_id, reserve_status);
@@ -236,7 +244,7 @@ pub mod pallet {
 			)
 			.map_err(|_| Error::<T>::RelockCountLimitExceeded)?;
 
-			T::Tokens::reserve(liquidity_token_id.into(), &sender, liquidity_token_amount.into())?;
+			T::Tokens::reserve(liquidity_token_id.into(), &sender, liquidity_token_amount)?;
 
 			Pallet::<T>::deposit_event(Event::VestingTokensReserved(
 				sender,
@@ -253,50 +261,53 @@ pub mod pallet {
 		// This extrinsic has to be transactional
 		pub fn unreserve_and_relock_instance(
 			origin: OriginFor<T>,
-			liquidity_token_id: TokenId,
+			liquidity_token_id: CurrencyIdOf<T>,
 			relock_instance_index: u32,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
-			let relock_instances: Vec<RelockStatusInfo> =
+			let relock_instances: Vec<RelockStatusInfo<BalanceOf<T>, BlockNumberFor<T>>> =
 				Self::get_relock_status(&sender, liquidity_token_id).into();
 
-			let selected_relock_instance: RelockStatusInfo = relock_instances
-				.get(relock_instance_index as usize)
-				.ok_or(Error::<T>::RelockInstanceIndexOOB)?
-				.clone();
-
-			let updated_relock_instances: BoundedVec<RelockStatusInfo, T::MaxRelocks> =
+			let selected_relock_instance: RelockStatusInfo<BalanceOf<T>, BlockNumberFor<T>> =
 				relock_instances
-					.into_iter()
-					.enumerate()
-					.filter_map(move |(index, relock_instance)| {
-						if index == relock_instance_index as usize {
-							None
-						} else {
-							Some(relock_instance)
-						}
-					})
-					.collect::<Vec<_>>()
-					.try_into()
-					.map_err(|_| Error::<T>::RelockCountLimitExceeded)?;
+					.get(relock_instance_index as usize)
+					.ok_or(Error::<T>::RelockInstanceIndexOOB)?
+					.clone();
+
+			let updated_relock_instances: BoundedVec<
+				RelockStatusInfo<BalanceOf<T>, BlockNumberFor<T>>,
+				T::MaxRelocks,
+			> = relock_instances
+				.into_iter()
+				.enumerate()
+				.filter_map(move |(index, relock_instance)| {
+					if index == relock_instance_index as usize {
+						None
+					} else {
+						Some(relock_instance)
+					}
+				})
+				.collect::<Vec<_>>()
+				.try_into()
+				.map_err(|_| Error::<T>::RelockCountLimitExceeded)?;
 
 			let mut reserve_status = Pallet::<T>::get_reserve_status(&sender, liquidity_token_id);
 
 			reserve_status.relock_amount = reserve_status
 				.relock_amount
-				.checked_sub(selected_relock_instance.amount)
+				.checked_sub(&selected_relock_instance.amount)
 				.ok_or(Error::<T>::MathError)?;
 			reserve_status.unspent_reserves = reserve_status
 				.unspent_reserves
-				.checked_sub(selected_relock_instance.amount)
+				.checked_sub(&selected_relock_instance.amount)
 				.ok_or(Error::<T>::NotEnoughUnspentReserves)?;
 
 			ensure!(
 				T::Tokens::unreserve(
 					liquidity_token_id.into(),
 					&sender,
-					selected_relock_instance.amount.into()
+					selected_relock_instance.amount
 				)
 				.is_zero(),
 				Error::<T>::MathError
@@ -305,9 +316,9 @@ pub mod pallet {
 			T::VestingProvider::lock_tokens(
 				&sender,
 				liquidity_token_id.into(),
-				selected_relock_instance.amount.into(),
+				selected_relock_instance.amount,
 				Some(selected_relock_instance.starting_block.into()),
-				selected_relock_instance.ending_block_as_balance.into(),
+				selected_relock_instance.ending_block_as_balance,
 			)?;
 
 			ReserveStatus::<T>::insert(&sender, liquidity_token_id, reserve_status);
@@ -326,13 +337,13 @@ pub mod pallet {
 	}
 }
 
-impl<T: Config> StakingReservesProviderTrait for Pallet<T> {
-	type AccountId = T::AccountId;
-
+impl<T: Config> StakingReservesProviderTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>>
+	for Pallet<T>
+{
 	fn can_bond(
-		token_id: TokenId,
-		account_id: &Self::AccountId,
-		amount: Balance,
+		token_id: CurrencyIdOf<T>,
+		account_id: &T::AccountId,
+		amount: BalanceOf<T>,
 		use_balance_from: Option<BondKind>,
 	) -> bool {
 		let reserve_status = Pallet::<T>::get_reserve_status(account_id, token_id);
@@ -344,24 +355,27 @@ impl<T: Config> StakingReservesProviderTrait for Pallet<T> {
 				T::Tokens::ensure_can_withdraw(
 					token_id.into(),
 					&account_id,
-					amount.into(),
+					amount,
 					WithdrawReasons::all(),
 					Default::default(),
 				)
-				.is_ok() && reserve_status.staked_unactivated_reserves.checked_add(amount).is_some(),
+				.is_ok() && reserve_status
+					.staked_unactivated_reserves
+					.checked_add(&amount)
+					.is_some(),
 			BondKind::ActivatedUnstakedReserves =>
-				reserve_status.activated_unstaked_reserves.checked_sub(amount).is_some() &&
-					reserve_status.staked_and_activated_reserves.checked_add(amount).is_some(),
+				reserve_status.activated_unstaked_reserves.checked_sub(&amount).is_some() &&
+					reserve_status.staked_and_activated_reserves.checked_add(&amount).is_some(),
 			BondKind::UnspentReserves =>
-				reserve_status.unspent_reserves.checked_sub(amount).is_some() &&
-					reserve_status.staked_unactivated_reserves.checked_add(amount).is_some(),
+				reserve_status.unspent_reserves.checked_sub(&amount).is_some() &&
+					reserve_status.staked_unactivated_reserves.checked_add(&amount).is_some(),
 		}
 	}
 
 	fn bond(
-		token_id: TokenId,
-		account_id: &Self::AccountId,
-		amount: Balance,
+		token_id: CurrencyIdOf<T>,
+		account_id: &T::AccountId,
+		amount: BalanceOf<T>,
 		use_balance_from: Option<BondKind>,
 	) -> DispatchResult {
 		let mut reserve_status = Pallet::<T>::get_reserve_status(account_id, token_id);
@@ -372,28 +386,28 @@ impl<T: Config> StakingReservesProviderTrait for Pallet<T> {
 			BondKind::AvailableBalance => {
 				reserve_status.staked_unactivated_reserves = reserve_status
 					.staked_unactivated_reserves
-					.checked_add(amount)
+					.checked_add(&amount)
 					.ok_or(Error::<T>::MathError)?;
-				T::Tokens::reserve(token_id.into(), &account_id, amount.into())?;
+				T::Tokens::reserve(token_id.into(), &account_id, amount)?;
 			},
 			BondKind::ActivatedUnstakedReserves => {
 				reserve_status.activated_unstaked_reserves = reserve_status
 					.activated_unstaked_reserves
-					.checked_sub(amount)
+					.checked_sub(&amount)
 					.ok_or(Error::<T>::NotEnoughTokens)?;
 				reserve_status.staked_and_activated_reserves = reserve_status
 					.staked_and_activated_reserves
-					.checked_add(amount)
+					.checked_add(&amount)
 					.ok_or(Error::<T>::MathError)?;
 			},
 			BondKind::UnspentReserves => {
 				reserve_status.unspent_reserves = reserve_status
 					.unspent_reserves
-					.checked_sub(amount)
+					.checked_sub(&amount)
 					.ok_or(Error::<T>::NotEnoughTokens)?;
 				reserve_status.staked_unactivated_reserves = reserve_status
 					.staked_unactivated_reserves
-					.checked_add(amount)
+					.checked_add(&amount)
 					.ok_or(Error::<T>::MathError)?;
 			},
 		}
@@ -402,23 +416,26 @@ impl<T: Config> StakingReservesProviderTrait for Pallet<T> {
 		Ok(())
 	}
 
-	fn unbond(token_id: TokenId, account_id: &Self::AccountId, amount: Balance) -> Balance {
+	fn unbond(
+		token_id: CurrencyIdOf<T>,
+		account_id: &T::AccountId,
+		amount: BalanceOf<T>,
+	) -> BalanceOf<T> {
 		// From staked_unactivated_reserves goes to either free balance or unspent reserves depending on relock_amount
 
 		// From staked_and_activated_reserves goes to activated always.
 
 		let mut reserve_status = Pallet::<T>::get_reserve_status(account_id, token_id);
 		let mut working_amount = amount;
-		let mut unreserve_amount = Balance::zero();
+		let mut unreserve_amount = working_amount.min(reserve_status.staked_unactivated_reserves);
 
-		unreserve_amount = working_amount.min(reserve_status.staked_unactivated_reserves);
 		working_amount = working_amount.saturating_sub(unreserve_amount);
 		reserve_status.staked_unactivated_reserves =
 			reserve_status.staked_unactivated_reserves.saturating_sub(unreserve_amount);
 
 		let mut move_reserve = working_amount.min(reserve_status.staked_and_activated_reserves);
 		// This is just to prevent overflow.
-		move_reserve = Balance::max_value()
+		move_reserve = BalanceOf::<T>::max_value()
 			.saturating_sub(reserve_status.activated_unstaked_reserves)
 			.min(move_reserve);
 		reserve_status.staked_and_activated_reserves =
@@ -448,8 +465,8 @@ impl<T: Config> StakingReservesProviderTrait for Pallet<T> {
 		reserve_status.unspent_reserves =
 			reserve_status.unspent_reserves.saturating_add(add_to_unspent);
 
-		let unreserve_result: Balance =
-			T::Tokens::unreserve(token_id.into(), account_id, unreserve_amount.into()).into();
+		let unreserve_result: BalanceOf<T> =
+			T::Tokens::unreserve(token_id.into(), account_id, unreserve_amount);
 
 		if !unreserve_result.is_zero() {
 			log::warn!("Unbond resulted in non-zero unreserve_result {:?}", unreserve_result);
@@ -464,13 +481,13 @@ impl<T: Config> StakingReservesProviderTrait for Pallet<T> {
 	}
 }
 
-impl<T: Config> ActivationReservesProviderTrait for Pallet<T> {
-	type AccountId = T::AccountId;
-
+impl<T: Config> ActivationReservesProviderTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>>
+	for Pallet<T>
+{
 	fn get_max_instant_unreserve_amount(
-		token_id: TokenId,
-		account_id: &Self::AccountId,
-	) -> Balance {
+		token_id: CurrencyIdOf<T>,
+		account_id: &T::AccountId,
+	) -> BalanceOf<T> {
 		let reserve_status = Pallet::<T>::get_reserve_status(account_id, token_id);
 
 		let total_remaining_reserve = reserve_status
@@ -488,9 +505,9 @@ impl<T: Config> ActivationReservesProviderTrait for Pallet<T> {
 	}
 
 	fn can_activate(
-		token_id: TokenId,
-		account_id: &Self::AccountId,
-		amount: Balance,
+		token_id: CurrencyIdOf<T>,
+		account_id: &T::AccountId,
+		amount: BalanceOf<T>,
 		use_balance_from: Option<ActivateKind>,
 	) -> bool {
 		let reserve_status = Pallet::<T>::get_reserve_status(account_id, token_id);
@@ -502,24 +519,27 @@ impl<T: Config> ActivationReservesProviderTrait for Pallet<T> {
 				T::Tokens::ensure_can_withdraw(
 					token_id.into(),
 					&account_id,
-					amount.into(),
+					amount,
 					WithdrawReasons::all(),
 					Default::default(),
 				)
-				.is_ok() && reserve_status.activated_unstaked_reserves.checked_add(amount).is_some(),
+				.is_ok() && reserve_status
+					.activated_unstaked_reserves
+					.checked_add(&amount)
+					.is_some(),
 			ActivateKind::StakedUnactivatedReserves =>
-				reserve_status.staked_unactivated_reserves.checked_sub(amount).is_some() &&
-					reserve_status.staked_and_activated_reserves.checked_add(amount).is_some(),
+				reserve_status.staked_unactivated_reserves.checked_sub(&amount).is_some() &&
+					reserve_status.staked_and_activated_reserves.checked_add(&amount).is_some(),
 			ActivateKind::UnspentReserves =>
-				reserve_status.unspent_reserves.checked_sub(amount).is_some() &&
-					reserve_status.activated_unstaked_reserves.checked_add(amount).is_some(),
+				reserve_status.unspent_reserves.checked_sub(&amount).is_some() &&
+					reserve_status.activated_unstaked_reserves.checked_add(&amount).is_some(),
 		}
 	}
 
 	fn activate(
-		token_id: TokenId,
-		account_id: &Self::AccountId,
-		amount: Balance,
+		token_id: CurrencyIdOf<T>,
+		account_id: &T::AccountId,
+		amount: BalanceOf<T>,
 		use_balance_from: Option<ActivateKind>,
 	) -> DispatchResult {
 		let mut reserve_status = Pallet::<T>::get_reserve_status(account_id, token_id);
@@ -530,28 +550,28 @@ impl<T: Config> ActivationReservesProviderTrait for Pallet<T> {
 			ActivateKind::AvailableBalance => {
 				reserve_status.activated_unstaked_reserves = reserve_status
 					.activated_unstaked_reserves
-					.checked_add(amount)
+					.checked_add(&amount)
 					.ok_or(Error::<T>::MathError)?;
-				T::Tokens::reserve(token_id.into(), &account_id, amount.into())?;
+				T::Tokens::reserve(token_id.into(), &account_id, amount)?;
 			},
 			ActivateKind::StakedUnactivatedReserves => {
 				reserve_status.staked_unactivated_reserves = reserve_status
 					.staked_unactivated_reserves
-					.checked_sub(amount)
+					.checked_sub(&amount)
 					.ok_or(Error::<T>::NotEnoughTokens)?;
 				reserve_status.staked_and_activated_reserves = reserve_status
 					.staked_and_activated_reserves
-					.checked_add(amount)
+					.checked_add(&amount)
 					.ok_or(Error::<T>::MathError)?;
 			},
 			ActivateKind::UnspentReserves => {
 				reserve_status.unspent_reserves = reserve_status
 					.unspent_reserves
-					.checked_sub(amount)
+					.checked_sub(&amount)
 					.ok_or(Error::<T>::NotEnoughTokens)?;
 				reserve_status.activated_unstaked_reserves = reserve_status
 					.activated_unstaked_reserves
-					.checked_add(amount)
+					.checked_add(&amount)
 					.ok_or(Error::<T>::MathError)?;
 			},
 		}
@@ -560,22 +580,25 @@ impl<T: Config> ActivationReservesProviderTrait for Pallet<T> {
 		Ok(())
 	}
 
-	fn deactivate(token_id: TokenId, account_id: &Self::AccountId, amount: Balance) -> Balance {
+	fn deactivate(
+		token_id: CurrencyIdOf<T>,
+		account_id: &T::AccountId,
+		amount: BalanceOf<T>,
+	) -> BalanceOf<T> {
 		// From ActivatedUnstakedReserves goes to either free balance or unspent reserves depending on relock_amount
 		// From staked_and_activated_reserves goes to staked always.
 
 		let mut reserve_status = Pallet::<T>::get_reserve_status(account_id, token_id);
 		let mut working_amount = amount;
-		let mut unreserve_amount = Balance::zero();
+		let mut unreserve_amount = working_amount.min(reserve_status.activated_unstaked_reserves);
 
-		unreserve_amount = working_amount.min(reserve_status.activated_unstaked_reserves);
 		working_amount = working_amount.saturating_sub(unreserve_amount);
 		reserve_status.activated_unstaked_reserves =
 			reserve_status.activated_unstaked_reserves.saturating_sub(unreserve_amount);
 
 		let mut move_reserve = working_amount.min(reserve_status.staked_and_activated_reserves);
 		// This is just to prevent overflow.
-		move_reserve = Balance::max_value()
+		move_reserve = BalanceOf::<T>::max_value()
 			.saturating_sub(reserve_status.staked_unactivated_reserves)
 			.min(move_reserve);
 		reserve_status.staked_and_activated_reserves =
@@ -605,8 +628,8 @@ impl<T: Config> ActivationReservesProviderTrait for Pallet<T> {
 		reserve_status.unspent_reserves =
 			reserve_status.unspent_reserves.saturating_add(add_to_unspent);
 
-		let unreserve_result: Balance =
-			T::Tokens::unreserve(token_id.into(), account_id, unreserve_amount.into()).into();
+		let unreserve_result: BalanceOf<T> =
+			T::Tokens::unreserve(token_id.into(), account_id, unreserve_amount);
 
 		if !unreserve_result.is_zero() {
 			log::warn!("Unbond resulted in non-zero unreserve_result {:?}", unreserve_result);
@@ -624,31 +647,31 @@ impl<T: Config> ActivationReservesProviderTrait for Pallet<T> {
 impl<T: Config> Pallet<T> {
 	fn do_reserve_tokens_by_vesting_index(
 		account: T::AccountId,
-		liquidity_token_id: TokenId,
+		liquidity_token_id: CurrencyIdOf<T>,
 		liquidity_token_vesting_index: u32,
-		liquidity_token_unlock_some_amount_or_all: Option<Balance>,
+		liquidity_token_unlock_some_amount_or_all: Option<BalanceOf<T>>,
 	) -> DispatchResultWithPostInfo {
 		let (unlocked_amount, vesting_starting_block, vesting_ending_block_as_balance): (
-			Balance,
-			BlockNumber,
-			Balance,
+			BalanceOf<T>,
+			BlockNumberFor<T>,
+			BalanceOf<T>,
 		) = T::VestingProvider::unlock_tokens_by_vesting_index(
 			&account,
-			liquidity_token_id.into(),
+			liquidity_token_id,
 			liquidity_token_vesting_index,
-			liquidity_token_unlock_some_amount_or_all.map(Into::into),
+			liquidity_token_unlock_some_amount_or_all,
 		)
-		.map(|x| (x.0.into(), x.1.saturated_into(), x.2.into()))?;
+		.map(|x| (x.0, x.1, x.2))?;
 
 		let mut reserve_status = Pallet::<T>::get_reserve_status(&account, liquidity_token_id);
 
 		reserve_status.relock_amount = reserve_status
 			.relock_amount
-			.checked_add(unlocked_amount)
+			.checked_add(&unlocked_amount)
 			.ok_or(Error::<T>::MathError)?;
 		reserve_status.unspent_reserves = reserve_status
 			.unspent_reserves
-			.checked_add(unlocked_amount)
+			.checked_add(&unlocked_amount)
 			.ok_or(Error::<T>::MathError)?;
 
 		ReserveStatus::<T>::insert(&account, liquidity_token_id, reserve_status);
@@ -664,7 +687,7 @@ impl<T: Config> Pallet<T> {
 		)
 		.map_err(|_| Error::<T>::RelockCountLimitExceeded)?;
 
-		T::Tokens::reserve(liquidity_token_id.into(), &account, unlocked_amount.into())?;
+		T::Tokens::reserve(liquidity_token_id.into(), &account, unlocked_amount)?;
 
 		Pallet::<T>::deposit_event(Event::VestingTokensReserved(
 			account,

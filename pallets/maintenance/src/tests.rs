@@ -1,10 +1,6 @@
 use super::*;
 use crate::mock::*;
 use frame_support::{assert_noop, assert_ok, error::BadOrigin};
-use sp_std::convert::TryFrom;
-
-use orml_tokens::AccountData;
-use sp_std::collections::btree_map::BTreeMap;
 
 #[test]
 fn switching_maintenance_mode_on_works() {

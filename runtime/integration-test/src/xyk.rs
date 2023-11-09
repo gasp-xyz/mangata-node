@@ -12,8 +12,8 @@ fn test_env(xyk_metadata: Option<XykMetadata>) -> TestExternalities {
 			ASSET_ID_1,
 			AssetMetadataOf {
 				decimals: 18,
-				name: b"Asset".to_vec(),
-				symbol: b"Asset".to_vec(),
+				name: BoundedVec::truncate_from(b"Asset".to_vec()),
+				symbol: BoundedVec::truncate_from(b"Asset".to_vec()),
 				location: None,
 				existential_deposit: Default::default(),
 				additional: CustomMetadata { xyk: xyk_metadata, ..CustomMetadata::default() },

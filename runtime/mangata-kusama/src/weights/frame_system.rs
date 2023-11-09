@@ -111,6 +111,10 @@ impl<T: frame_system::Config> frame_system::WeightInfo for ModuleWeight<T> {
 			.saturating_add(T::DbWeight::get().reads((1 as u64).saturating_mul(p as u64)))
 			.saturating_add(T::DbWeight::get().writes((1 as u64).saturating_mul(p as u64)))
 	}
+
+	fn set_code() -> Weight {
+		Weight::from_parts(0, 0)
+	}
 }
 
 // For backwards compatibility and tests

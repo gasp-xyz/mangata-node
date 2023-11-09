@@ -1,15 +1,31 @@
-//! A collection of node-specific RPC methods.
-//! Substrate provides the `sc-rpc` crate, which defines the core RPC layer
-//! used by Substrate nodes. This file extends those RPC definitions with
-//! capabilities that are specific to this project's runtime configuration.
+// Copyright (C) Parity Technologies (UK) Ltd.
+// This file is part of Cumulus.
+
+// Cumulus is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Cumulus is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
+
+//! Parachain-specific RPCs implementation.
 
 #![warn(missing_docs)]
 
 use std::sync::Arc;
 
-use mangata_types::{AccountId, Balance, Block, BlockNumber, Index as Nonce, TokenId};
+use common_runtime::{
+	opaque::Block,
+	types::{AccountId, Balance, Nonce, TokenId},
+};
 
-use sc_client_api::{AuxStore, BlockBackend};
+use sc_client_api::AuxStore;
 pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
 use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
@@ -36,8 +52,8 @@ pub fn create_full<C, P>(
 ) -> Result<RpcExtension, Box<dyn std::error::Error + Send + Sync>>
 where
 	C: ProvideRuntimeApi<Block>
+		+ sc_client_api::BlockBackend<Block>
 		+ HeaderBackend<Block>
-		+ BlockBackend<Block>
 		+ AuxStore
 		+ HeaderMetadata<Block, Error = BlockChainError>
 		+ Send
@@ -59,9 +75,9 @@ where
 	let mut module = RpcExtension::new(());
 	let FullDeps { client, pool, deny_unsafe } = deps;
 
-	module.merge(System::new(client.clone(), pool.clone(), deny_unsafe).into_rpc())?;
+	module.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
 	module.merge(TransactionPayment::new(client.clone()).into_rpc())?;
-	module.merge(Xyk::new(client.clone()).into_rpc())?;
+	module.merge(Xyk::new(client).into_rpc())?;
 	module.merge(ProofOfStake::new(client.clone()).into_rpc())?;
 
 	Ok(module)

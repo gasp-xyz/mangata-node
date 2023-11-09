@@ -22,7 +22,7 @@ fn mint_and_activate_tokens(who: AccountId, token_id: TokenId, amount: Balance) 
 
 fn initialize_liquidity_rewards() {
 	System::set_block_number(1);
-	let acc_id: u128 = 2;
+	let acc_id: AccountId = 2;
 	let amount: u128 = std::u128::MAX;
 	PromotedPoolRewards::<Test>::get();
 	TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -60,7 +60,7 @@ fn liquidity_rewards_single_user_mint_W() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max / 2u128;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -131,7 +131,7 @@ fn liquidity_rewards_three_users_burn_W() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max / 2u128;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -181,7 +181,7 @@ fn liquidity_rewards_claim_W() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max / 2u128;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -225,7 +225,7 @@ fn liquidity_rewards_promote_pool_W() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max / 2u128;
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -243,7 +243,7 @@ fn liquidity_rewards_promote_pool_already_promoted_NW() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max / 2u128;
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -263,7 +263,7 @@ fn liquidity_rewards_work_after_burn_W() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max / 2u128;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -314,7 +314,7 @@ fn liquidity_rewards_deactivate_transfer_controled_W() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max / 2u128;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -359,7 +359,7 @@ fn liquidity_rewards_deactivate_more_NW() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max / 2u128;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -395,7 +395,7 @@ fn liquidity_rewards_activate_more_NW() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max / 2u128;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -425,7 +425,7 @@ fn liquidity_rewards_calculate_rewards_pool_not_promoted() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max / 2u128;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -444,7 +444,7 @@ fn liquidity_rewards_claim_pool_not_promoted() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max / 2u128;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -478,7 +478,7 @@ fn liquidity_rewards_not_yet_claimed_already_claimed_W() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max / 2u128;
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -543,7 +543,7 @@ fn extreme_case_pool_ratio() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max / 2u128;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -575,7 +575,7 @@ fn rewards_rounding_during_often_mint() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max / 2u128;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -666,7 +666,7 @@ fn rewards_storage_right_amounts_start1() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max / 2u128;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -811,7 +811,7 @@ fn rewards_storage_right_amounts_start2() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max / 2u128;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -948,7 +948,7 @@ fn rewards_storage_right_amounts_start3() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = 100_000_000_000_000u128;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -1027,7 +1027,7 @@ fn liquidity_rewards_transfered_liq_tokens_produce_rewards_W() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max / 2u128;
 
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
@@ -1073,11 +1073,12 @@ fn liquidity_rewards_transfered_liq_tokens_produce_rewards_W() {
 	});
 }
 
+		session_issuance = <Issuance as GetIssuance>::get_all_issuance(session_number)
 #[test]
 #[serial]
 fn test_migrated_from_pallet_issuance() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
-		env_logger::try_init();
+		let _ = env_logger::try_init();
 		System::set_block_number(1);
 		const LIQUIDITY_ISSUANCE: Balance = 450045;
 
@@ -1152,7 +1153,7 @@ fn claim_rewards_from_pool_that_has_been_disabled() {
 	ExtBuilder::new().execute_with_default_mocks(|| {
 		let max = std::u128::MAX;
 		System::set_block_number(1);
-		let acc_id: u128 = 2;
+		let acc_id: AccountId = 2;
 		let amount: u128 = max / 2u128;
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();

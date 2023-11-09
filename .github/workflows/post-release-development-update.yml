@@ -8,6 +8,7 @@ on:
 
 jobs:
   update:
+    name: Post-Release `develop` update
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,6 +16,7 @@ jobs:
           ref: 'main'
           fetch-depth: 0
       
+      - uses: mxschmitt/action-tmate@v3
       - name: Update spec versions
         run: |
           sed -E -i 's/(spec_version: |transaction_version: )0+([0-9]+)/echo "\100$((10#0\2 + 100))"/ge' runtime/mangata-rococo/src/lib.rs
@@ -25,7 +27,7 @@ jobs:
         with:
           commit-message: 'chore: Post-Release `develop` branch update'
           title: 'chore: Post-Release `develop` branch update'
-          body: Update development branch to reflect latest main changes and to update spec versions
+          body: Update `develop` branch to reflect latest main changes and to update spec versions
           branch: chore/post-release-update
           base: develop
 

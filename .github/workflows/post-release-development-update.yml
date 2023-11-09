@@ -16,11 +16,10 @@ jobs:
           ref: 'main'
           fetch-depth: 0
       
-      - uses: mxschmitt/action-tmate@v3
       - name: Update spec versions
         run: |
-          sed -E -i 's/(spec_version: |transaction_version: )0+([0-9]+)/echo "\100$((10#0\2 + 100))"/ge' runtime/mangata-rococo/src/lib.rs
-          sed -E -i 's/(spec_version: |transaction_version: )0+([0-9]+)/echo "\100$((10#0\2 + 100))"/ge' runtime/mangata-kusama/src/lib.rs
+          sed -E -i 's/(spec_version: |transaction_version: )0+([0-9]+)/echo "\t\100$((\2 + 100))"/ge' runtime/mangata-rococo/src/lib.rs
+          sed -E -i 's/(spec_version: |transaction_version: )0+([0-9]+)/echo "\t\100$((\2 + 100))"/ge' runtime/mangata-kusama/src/lib.rs
       
       - name: Create post-release update Pull Request
         uses: peter-evans/create-pull-request@v5

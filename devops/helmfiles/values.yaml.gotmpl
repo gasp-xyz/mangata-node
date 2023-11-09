@@ -4,7 +4,7 @@ environment: {{ requiredEnv "ENVIRONMENT" | quote }}
 image:
   tag: {{ requiredEnv "IMAGE_TAG" | quote }}
 customChainspecUrl: {{ .Values | get "nodeCustomChainspecUrl" "" }}
-chain: {{ .Values | get "nodeChain" "mangata-rococo-local" }}
+chain: {{ .Values }}
 storageClass: {{ .Values.storageClass }}
 storageSize: {{ .Values.storageSize }}
 relaychain:

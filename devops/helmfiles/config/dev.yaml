@@ -1,4 +1,3 @@
-nodeChain: mangata-rococo
 enableServiceMonitorCollectors: true
 storageSize: 40Gi
 relaychainStorageSize: 40Gi

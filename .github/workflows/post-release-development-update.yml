@@ -1,0 +1,30 @@
+name: Post-Release development update
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 'main'
+          fetch-depth: 0
+      
+      - name: Update spec versions
+        run: |
+          sed -E -i 's/(spec_version: |transaction_version: )0+([0-9]+)/echo "\100$((10#0\2 + 100))"/ge' runtime/mangata-rococo/src/lib.rs
+          sed -E -i 's/(spec_version: |transaction_version: )0+([0-9]+)/echo "\100$((10#0\2 + 100))"/ge' runtime/mangata-kusama/src/lib.rs
+      
+      - name: Create post-release update Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          commit-message: 'chore: Post-Release `develop` branch update'
+          title: 'chore: Post-Release `develop` branch update'
+          body: Update development branch to reflect latest main changes and to update spec versions
+          branch: chore/post-release-update
+          base: develop
+

@@ -6,7 +6,7 @@
   "type": "module",
   "dependencies": {
     "@polkadot/api": "^7.15.1",
-    "axios": "^0.24.0",
+    "axios": "^1.6.0",
     "eciesjs": "^0.3.12"
   }
 }

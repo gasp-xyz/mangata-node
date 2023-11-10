@@ -1,5 +1,4 @@
 use crate::setup::*;
-use frame_support::error::BadOrigin;
 
 #[test]
 fn identity_permissions_correct() {

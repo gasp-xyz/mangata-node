@@ -18,12 +18,13 @@
 //! Tests for the module.
 
 use super::*;
-use frame_support::{assert_noop, assert_ok, dispatch::DispatchError, weights::Weight};
+use frame_support::{assert_noop, assert_ok, weights::Weight};
 use frame_system::RawOrigin;
 use mock::{
 	new_test_ext, Logger, LoggerCall, RuntimeCall, RuntimeEvent as TestEvent, RuntimeOrigin,
 	SudoOrigin, SudoOriginCall, System,
 };
+use sp_runtime::DispatchError;
 
 #[test]
 fn test_setup_works() {

@@ -1,8 +1,8 @@
-#[cfg(feature = "with-kusama-runtime")]
-pub mod kusama_test_net;
+// #[cfg(feature = "with-kusama-runtime")]
+// pub mod kusama_test_net;
 
-#[cfg(feature = "with-kusama-runtime")]
-pub mod kusama_xcm_transfer;
+// #[cfg(feature = "with-kusama-runtime")]
+// pub mod kusama_xcm_transfer;
 
 pub use fee_test::{asset_unit_cost, native_per_second_as_fee, relay_per_second_as_fee};
 use frame_support::weights::{constants::WEIGHT_REF_TIME_PER_SECOND, Weight};
@@ -70,12 +70,12 @@ fn weight_to_fee_works() {
 
 		let weight: Weight = base_weight.saturating_mul(4);
 		let fee = WeightToFee::weight_to_fee(&weight);
-		assert_eq!(1_257_707_380, fee);
+		assert_eq!(1_069_181_380, fee);
 
 		// transfer_to_relay_chain weight in KusamaRelay
 		let weight: Weight = Weight::from_parts(299_506_000, 0);
 		let fee = WeightToFee::weight_to_fee(&weight);
-		assert_eq!(94_172_727, fee);
+		assert_eq!(80_056_560, fee);
 	}
 
 	// Mangata

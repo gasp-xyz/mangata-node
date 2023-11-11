@@ -171,7 +171,7 @@ where
 		ctx: &RewardsContext,
 		user_info: &RewardInfo<Balance>,
 	) -> Option<U256> {
-		let time_passed = ctx.current_time.checked_sub(user_info.last_checkpoint).unwrap();
+		let time_passed = ctx.current_time.checked_sub(user_info.last_checkpoint)?;
 		let q_pow = calculate_q_pow(Q, time_passed);
 		Some(user_info.missing_at_last_checkpoint * U256::from(REWARDS_PRECISION) / q_pow)
 	}
@@ -187,8 +187,7 @@ where
 			.checked_mul(pool_rewards_ratio_new)?
 			.checked_div(U256::from(u128::MAX))?; // always fit into u128
 
-		let time_passed = ctx.current_time.checked_sub(user_info.last_checkpoint).unwrap();
-		// .ok_or(Error::<T>::PastTimeCalculation)?;
+		let time_passed = ctx.current_time.checked_sub(user_info.last_checkpoint)?;
 		let mut cummulative_work = U256::from(0);
 		let mut cummulative_work_max_possible_for_ratio = U256::from(1);
 

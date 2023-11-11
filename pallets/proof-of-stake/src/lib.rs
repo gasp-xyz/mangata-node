@@ -216,9 +216,7 @@ pub mod pallet {
 				return Default::default()
 			}
 
-			const AMOUNT_PER_BLOCK: u64 = 5;
-
-			for _ in 0..AMOUNT_PER_BLOCK {
+			for _ in 0..T::SchedulesPerBlock::get() {
 				// READS PER ITERTION
 				//
 				// 			ON VALID SCHEDULE  (AVERAGE)                        ====> 3R + 1 W + N*R + N*W
@@ -307,7 +305,12 @@ pub mod pallet {
 					break
 				}
 			}
-			Default::default()
+
+			// always use same amount of block space even if no schedules were processed
+			T::DbWeight::get().reads(3) +
+				T::DbWeight::get().writes(1) +
+				T::DbWeight::get().reads(T::SchedulesPerBlock::get().into()) +
+				T::DbWeight::get().writes(T::SchedulesPerBlock::get().into())
 		}
 	}
 
@@ -368,6 +371,9 @@ pub mod pallet {
 		/// The minimum number of rewards per session for schedule rewards
 		type Min3rdPartyRewardValutationPerSession: Get<u128>;
 		type Min3rdPartyRewardVolume: Get<u128>;
+		type ActiveSchedulesLimit: Get<u32>;
+		type SchedulesPerBlock: Get<u32>;
+
 		type WeightInfo: WeightInfo;
 		type ValuationApi: ValutationApiTrait<Self>;
 	}
@@ -1644,6 +1650,5 @@ impl<T: Config> LiquidityMiningApi<BalanceOf<T>> for Pallet<T> {
 		});
 	}
 }
-// TODO: use correct weights in on_initilize_hook
 // TODO: limit amount of active schedules
 // TODO: STATIC ASSERT ON NUMBER OF ACTIVE SCHEDULES

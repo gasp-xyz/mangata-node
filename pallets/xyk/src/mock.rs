@@ -326,6 +326,8 @@ impl pallet_proof_of_stake::Config for Test {
 	type Min3rdPartyRewardValutationPerSession = ConstU128<10>;
 	type Min3rdPartyRewardVolume = ConstU128<10>;
 	type ValuationApi = XykStorage;
+	type ActiveSchedulesLimit = ConstU32<10>;
+	type SchedulesPerBlock = ConstU32<5>;
 }
 
 #[cfg(feature = "runtime-benchmarks")]

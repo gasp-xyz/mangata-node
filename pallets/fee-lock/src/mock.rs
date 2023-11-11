@@ -149,9 +149,9 @@ impl<T: pallet_fee_lock::Config> Valuate<Balance, TokenId> for MockPoolReservesP
 	}
 
 	fn valuate_non_liquidity_token(
-		liquidity_token_id: Self::CurrencyId,
-		liquidity_token_amount: Self::Balance,
-	) -> Self::Balance {
+		liquidity_token_id: TokenId,
+		liquidity_token_amount: Balance,
+	) -> Balance {
 		unimplemented!()
 	}
 }

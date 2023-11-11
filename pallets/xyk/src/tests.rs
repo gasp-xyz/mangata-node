@@ -2644,8 +2644,14 @@ fn valuate_token_paired_with_mgx() {
 		)
 		.unwrap();
 
-		assert_eq!(<Pallet<Test> as Valuate>::valuate_non_liquidity_token(first_token, 100), 199);
+		assert_eq!(
+			<Pallet<Test> as Valuate<_, _>>::valuate_non_liquidity_token(first_token, 100),
+			199
+		);
 
-		assert_eq!(<Pallet<Test> as Valuate>::valuate_non_liquidity_token(second_token, 100), 49);
+		assert_eq!(
+			<Pallet<Test> as Valuate<_, _>>::valuate_non_liquidity_token(second_token, 100),
+			49
+		);
 	});
 }

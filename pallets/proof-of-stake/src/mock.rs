@@ -287,6 +287,8 @@ impl pos::Config for Test {
 	type Min3rdPartyRewardVolume = ConstU128<10>;
 	type WeightInfo = ();
 	type ValuationApi = MockValuationApi;
+	type ActiveSchedulesLimit = ConstU32<10>;
+	type SchedulesPerBlock = ConstU32<5>;
 }
 
 #[cfg(feature = "runtime-benchmarks")]

@@ -3567,9 +3567,9 @@ impl<T: Config> Valuate<BalanceOf<T>, CurrencyIdOf<T>> for Pallet<T> {
 	}
 
 	fn valuate_non_liquidity_token(
-		non_liquidity_token_id: Self::CurrencyId,
-		amount: Self::Balance,
-	) -> Self::Balance {
+		non_liquidity_token_id: CurrencyIdOf<T>,
+		amount: BalanceOf<T>,
+	) -> BalanceOf<T> {
 		let native_token_id = Pallet::<T>::native_token_id();
 
 		let (native_reserves, token_reserves) =

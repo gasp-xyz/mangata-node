@@ -4,14 +4,15 @@ use crate::{
 };
 use core::marker::PhantomData;
 use frame_support::pallet_prelude::*;
+use sp_arithmetic::traits::{AtLeast32BitUnsigned, Zero};
 use sp_core::U256;
 
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq, TypeInfo)]
-pub struct ActivatedLiquidityPerSchedule {
-	pending_positive: u128,
-	pending_negative: u128,
+pub struct ActivatedLiquidityPerSchedule<Balance> {
+	pending_positive: Balance,
+	pending_negative: Balance,
 	pending_session_id: SessionId,
-	total: u128,
+	total: Balance,
 }
 
 #[derive(Encode, Decode, Clone, RuntimeDebug, PartialEq, Eq, TypeInfo)]
@@ -20,16 +21,16 @@ pub enum LiquidityModification {
 	Decrease,
 }
 
-impl ActivatedLiquidityPerSchedule {
-	fn total(&self, now: SessionId) -> u128 {
+impl<Balance: AtLeast32BitUnsigned> ActivatedLiquidityPerSchedule<Balance> {
+	fn total(&self, now: SessionId) -> Balance {
 		if now <= self.pending_session_id {
-			self.total
+			self.total.clone()
 		} else {
-			self.total + self.pending_positive - self.pending_negative
+			self.total.clone() + self.pending_positive.clone() - self.pending_negative.clone()
 		}
 	}
 
-	fn update(&mut self, now: SessionId, amount: u128, kind: LiquidityModification) {
+	fn update(&mut self, now: SessionId, amount: Balance, kind: LiquidityModification) {
 		if now <= self.pending_session_id {
 			if kind == LiquidityModification::Increase {
 				self.pending_positive += amount;
@@ -37,12 +38,13 @@ impl ActivatedLiquidityPerSchedule {
 				self.pending_negative += amount;
 			}
 		} else {
-			self.total = self.total + self.pending_positive - self.pending_negative;
+			self.total =
+				self.total.clone() + self.pending_positive.clone() - self.pending_negative.clone();
 			if kind == LiquidityModification::Increase {
 				self.pending_positive = amount;
-				self.pending_negative = 0u128;
+				self.pending_negative = Balance::zero();
 			} else {
-				self.pending_positive = 0u128;
+				self.pending_positive = Balance::zero();
 				self.pending_negative = amount;
 			};
 			self.pending_session_id = now;
@@ -54,48 +56,48 @@ impl ActivatedLiquidityPerSchedule {
 /// and once `pending_session_id < current_session` they are moved to `total` and become ready for
 /// distribution to end users
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq, TypeInfo)]
-pub struct ScheduleRewards {
+pub struct ScheduleRewards<Balance: AtLeast32BitUnsigned> {
 	// Accumulated rewards in current or past session. Once `now > pending_session_id` they
 	// should be moved to total
-	pending: u128,
+	pending: Balance,
 
 	// id of the session when pending_rewards were recently updated
 	pending_session_id: SessionId,
 
 	// total amount of rewards ready for distribution
-	total: u128,
+	total: Balance,
 }
 
-impl ScheduleRewards {
-	pub fn provide_rewards(&mut self, now: SessionId, amount: u128) {
+impl<Balance: AtLeast32BitUnsigned> ScheduleRewards<Balance> {
+	pub fn provide_rewards(&mut self, now: SessionId, amount: Balance) {
 		if now <= self.pending_session_id {
 			self.pending += amount;
 		} else {
-			self.total += self.pending;
+			self.total += self.pending.clone();
 			self.pending = amount;
 			self.pending_session_id = now;
 		}
 	}
 
-	pub fn total_rewards(&self, now: SessionId) -> u128 {
+	pub fn total_rewards(&self, now: SessionId) -> Balance {
 		if now <= self.pending_session_id {
-			self.total
+			self.total.clone()
 		} else {
-			self.total + self.pending
+			self.total.clone() + self.pending.clone()
 		}
 	}
 
 	pub fn transfer_pending(&mut self, now: SessionId) {
 		if now > self.pending_session_id {
-			self.total += self.pending;
-			self.pending = 0;
+			self.total += self.pending.clone();
+			self.pending = Balance::zero();
 			self.pending_session_id = now;
 		}
 	}
 
 	pub fn clear(&mut self, now: SessionId) {
-		self.total = 0;
-		self.pending = 0;
+		self.total = Balance::zero();
+		self.pending = Balance::zero();
 		self.pending_session_id = now;
 	}
 }
@@ -123,7 +125,7 @@ impl<T: Config> ScheduleRewardsCalculator<T> {
 				Self::total_activated_liquidity(liquidity_asset_id, liquidity_assets_reward);
 			let total_schedule_rewards =
 				Self::total_schedule_rewards(liquidity_asset_id, liquidity_assets_reward);
-			if total_activated_liquidity > 0 {
+			if total_activated_liquidity > BalanceOf::<T>::zero() {
 				ScheduleRewardsTotal::<T>::mutate(
 					(liquidity_asset_id, liquidity_assets_reward),
 					|schedule| {
@@ -131,8 +133,8 @@ impl<T: Config> ScheduleRewardsCalculator<T> {
 						schedule.clear(session_id);
 					},
 				);
-				let pending = (U256::from(total_schedule_rewards) * U256::from(u128::MAX))
-					.checked_div(U256::from(total_activated_liquidity))
+				let pending = (U256::from(total_schedule_rewards.into()) * U256::from(u128::MAX))
+					.checked_div(U256::from(total_activated_liquidity.into()))
 					.unwrap_or_default();
 				ScheduleRewardsPerLiquidity::<T>::insert(
 					(liquidity_asset_id, liquidity_assets_reward),
@@ -157,8 +159,8 @@ impl<T: Config> ScheduleRewardsCalculator<T> {
 				Self::total_activated_liquidity(liquidity_asset_id, liquidity_assets_reward);
 			let total_schedule_rewards =
 				Self::total_schedule_rewards(liquidity_asset_id, liquidity_assets_reward);
-			let pending = (U256::from(total_schedule_rewards) * U256::from(u128::MAX))
-				.checked_div(U256::from(total_activated_liquidity))
+			let pending = (U256::from(total_schedule_rewards.into()) * U256::from(u128::MAX))
+				.checked_div(U256::from(total_activated_liquidity.into()))
 				.unwrap_or_default();
 			cumulative + pending
 		}

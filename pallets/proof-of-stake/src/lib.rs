@@ -96,6 +96,9 @@ use frame_support::pallet_prelude::*;
 pub type ScheduleId = u64;
 
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[codec(mel_bound(T: Config))]
+#[scale_info(skip_type_params(T))]
+
 pub struct Schedule<T: Config> {
 	scheduled_at: u64,
 	last_session: u64,
@@ -113,7 +116,7 @@ use frame_support::{
 use frame_system::ensure_signed;
 use mangata_support::traits::Valuate;
 use sp_core::U256;
-use sp_runtime::traits::AccountIdConversion;
+use sp_runtime::traits::{AccountIdConversion, AtLeast32BitUnsigned};
 
 use frame_support::{
 	pallet_prelude::*,
@@ -136,7 +139,7 @@ use sp_runtime::{
 use sp_std::{convert::TryInto, prelude::*};
 
 mod reward_info;
-use reward_info::{RewardInfo, RewardsCalculator};
+use reward_info::{ConstCurveRewards, RewardInfo, RewardsCalculator};
 
 mod schedule_rewards_calculator;
 use schedule_rewards_calculator::{
@@ -203,7 +206,6 @@ pub mod pallet {
 	pub struct Pallet<T>(PhantomData<T>);
 
 	#[pallet::hooks]
-
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
 			let session_id = Self::session_index() as u64;
@@ -471,7 +473,7 @@ pub mod pallet {
 		_,
 		Twox64Concat,
 		(CurrencyIdOf<T>, CurrencyIdOf<T>),
-		ScheduleRewards,
+		ScheduleRewards<BalanceOf<T>>,
 		ValueQuery,
 	>;
 
@@ -531,7 +533,7 @@ pub mod pallet {
 		CurrencyIdOf<T>,
 		Twox64Concat,
 		CurrencyIdOf<T>,
-		ActivatedLiquidityPerSchedule,
+		ActivatedLiquidityPerSchedule<BalanceOf<T>>,
 		ValueQuery,
 	>;
 
@@ -547,7 +549,7 @@ pub mod pallet {
 			NMapKey<Twox64Concat, CurrencyIdOf<T>>,
 			NMapKey<Twox64Concat, CurrencyIdOf<T>>,
 		),
-		u128,
+		BalanceOf<T>,
 		OptionQuery,
 	>;
 
@@ -561,7 +563,7 @@ pub mod pallet {
 		AccountIdOf<T>,
 		Twox64Concat,
 		CurrencyIdOf<T>,
-		u128,
+		BalanceOf<T>,
 		ValueQuery,
 	>;
 
@@ -575,7 +577,7 @@ pub mod pallet {
 		AccountIdOf<T>,
 		Twox64Concat,
 		CurrencyIdOf<T>,
-		u128,
+		BalanceOf<T>,
 		ValueQuery,
 	>;
 
@@ -639,12 +641,11 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			<Self as ProofOfStakeRewardsApi<T::AccountId>>::activate_liquidity(
-				sender,
-				liquidity_token_id,
-				amount,
-				use_balance_from,
-			)
+			<Self as ProofOfStakeRewardsApi<
+				AccountIdOf<T>,
+				BalanceOf<T>,
+				CurrencyIdOf<T>,
+			>>::activate_liquidity(sender, liquidity_token_id, amount, use_balance_from)
 		}
 
 		/// Decreases number of tokens used for liquidity mining purposes
@@ -826,7 +827,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			<Self as ProofOfStakeRewardsApi<T::AccountId>>::claim_rewards_all(
+			<Self as ProofOfStakeRewardsApi<_, _, _>>::claim_rewards_all(
 				sender,
 				liquidity_token_id,
 			)?;
@@ -876,18 +877,19 @@ impl<T: Config> Pallet<T> {
 		let rewards_info = RewardsInfo::<T>::try_get(user.clone(), liquidity_asset_id)
 			.or(Err(DispatchError::from(Error::<T>::MissingRewardsInfoError)))?;
 
-		let current_rewards = match rewards_info.activated_amount {
-			0 => 0u128,
-			_ => {
-				let calc =
-					RewardsCalculator::mining_rewards::<T>(user.clone(), liquidity_asset_id)?;
-				calc.calculate_rewards().map_err(|err| Into::<Error<T>>::into(err))?
-			},
+		let current_rewards = if rewards_info.activated_amount.is_zero() {
+			BalanceOf::<T>::zero()
+		} else {
+			let calc = RewardsCalculator::<_, BalanceOf<T>>::mining_rewards::<T>(
+				user.clone(),
+				liquidity_asset_id,
+			)?;
+			calc.calculate_rewards().map_err(|err| Into::<Error<T>>::into(err))?
 		};
 
 		Ok(current_rewards
-			.checked_add(rewards_info.rewards_not_yet_claimed)
-			.and_then(|v| v.checked_sub(rewards_info.rewards_already_claimed))
+			.checked_add(&rewards_info.rewards_not_yet_claimed)
+			.and_then(|v| v.checked_sub(&rewards_info.rewards_already_claimed))
 			.ok_or(Error::<T>::CalculateRewardsMathError)?)
 	}
 
@@ -897,11 +899,11 @@ impl<T: Config> Pallet<T> {
 		amount: BalanceOf<T>,
 	) -> DispatchResult {
 		ensure!(
-			ActivatedNativeRewardsLiq::<T>::get(user.clone(), liquidity_asset_id) == 0,
+			ActivatedNativeRewardsLiq::<T>::get(user.clone(), liquidity_asset_id).is_zero(),
 			Error::<T>::LiquidityLockedIn3rdpartyRewards
 		);
 
-		if amount > 0 {
+		if amount > BalanceOf::<T>::zero() {
 			Self::set_liquidity_burning_checkpoint(user.clone(), liquidity_asset_id, amount)?;
 			Pallet::<T>::deposit_event(Event::LiquidityDeactivated(
 				user,
@@ -1004,7 +1006,7 @@ impl<T: Config> Pallet<T> {
 		amount: BalanceOf<T>,
 		rewards_asset_id: CurrencyIdOf<T>,
 	) -> DispatchResult {
-		if amount > 0 {
+		if amount > BalanceOf::<T>::zero() {
 			Self::set_liquidity_burning_checkpoint_for_schedule(
 				user.clone(),
 				liquidity_asset_id,
@@ -1044,24 +1046,23 @@ impl<T: Config> Pallet<T> {
 			user.clone(),
 			(liquidity_asset_id, rewards_asset_id),
 		) {
-			let current_rewards = match info.activated_amount {
-				0 => 0u128,
-				_ => {
-					let calc = RewardsCalculator::schedule_rewards::<T>(
-						user.clone(),
-						liquidity_asset_id,
-						rewards_asset_id,
-					)?;
-					calc.calculate_rewards().map_err(|err| Into::<Error<T>>::into(err))?
-				},
+			let current_rewards = if info.activated_amount == BalanceOf::<T>::zero() {
+				BalanceOf::<T>::zero()
+			} else {
+				let calc = RewardsCalculator::schedule_rewards::<T>(
+					user.clone(),
+					liquidity_asset_id,
+					rewards_asset_id,
+				)?;
+				calc.calculate_rewards().map_err(|err| Into::<Error<T>>::into(err))?
 			};
 
 			Ok(current_rewards
-				.checked_add(info.rewards_not_yet_claimed)
-				.and_then(|v| v.checked_sub(info.rewards_already_claimed))
+				.checked_add(&info.rewards_not_yet_claimed)
+				.and_then(|v| v.checked_sub(&info.rewards_already_claimed))
 				.ok_or(Error::<T>::CalculateRewardsMathError)?)
 		} else {
-			Ok(0u128)
+			Ok(BalanceOf::<T>::zero())
 		}
 	}
 
@@ -1273,8 +1274,8 @@ impl<T: Config> Pallet<T> {
 			(user.clone(), liquidity_asset_id, reward_token),
 			|v| {
 				v.and_then(|a| {
-					a.checked_sub(liquidity_assets_burned).and_then(|val| {
-						if val > 0 {
+					a.checked_sub(&liquidity_assets_burned).and_then(|val| {
+						if val > BalanceOf::<T>::zero() {
 							*v = Some(val);
 						} else {
 							*v = None;
@@ -1297,7 +1298,7 @@ impl<T: Config> Pallet<T> {
 				liquidity_asset_id,
 				|val| {
 					let prev = *val;
-					*val = 0;
+					*val = BalanceOf::<T>::zero();
 					prev
 				},
 			);
@@ -1311,7 +1312,7 @@ impl<T: Config> Pallet<T> {
 			let amount =
 				ActivatedNativeRewardsLiq::<T>::mutate(user.clone(), liquidity_asset_id, |val| {
 					let prev = *val;
-					*val = 0;
+					*val = BalanceOf::<T>::zero();
 					prev
 				});
 		}
@@ -1338,7 +1339,7 @@ impl<T: Config> Pallet<T> {
 			reward_token.into(),
 			&Self::pallet_account(),
 			&user,
-			total_available_rewards.into(),
+			total_available_rewards,
 			ExistenceRequirement::KeepAlive,
 		)?;
 
@@ -1374,11 +1375,13 @@ impl<T: Config> Pallet<T> {
 			Error::<T>::CannotScheduleRewardsInPast
 		);
 
-		let amount_per_session = schedule_end
+		let amount_per_session: BalanceOf<T> = schedule_end
 			.saturated_into::<u32>()
 			.checked_sub(current_session)
-			.and_then(|v| amount.checked_div(v.into()))
-			.ok_or(Error::<T>::MathOverflow)?;
+			.and_then(|v| Into::<u128>::into(amount).checked_div(v.into()))
+			.ok_or(Error::<T>::MathOverflow)?
+			.try_into()
+			.or(Err(Error::<T>::MathOverflow))?;
 
 		ensure!(
 			Self::verify_rewards_min_amount(token_id, amount_per_session),
@@ -1393,7 +1396,7 @@ impl<T: Config> Pallet<T> {
 			token_id.into(),
 			&sender,
 			&Self::pallet_account(),
-			amount.into(),
+			amount,
 			ExistenceRequirement::KeepAlive,
 		)?;
 
@@ -1433,20 +1436,20 @@ impl<T: Config> Pallet<T> {
 		token_id: CurrencyIdOf<T>,
 		amount_per_session: BalanceOf<T>,
 	) -> bool {
-		if <T as Config>::ValuationApi::valuate_liquidity_token(token_id, amount_per_session) >=
+		if <T as Config>::ValuationApi::valuate_liquidity_token(token_id, amount_per_session).into() >=
 			T::Min3rdPartyRewardValutationPerSession::get()
 		{
 			return true
 		}
 
-		if token_id == Into::<u32>::into(Self::native_token_id()) &&
-			amount_per_session >= T::Min3rdPartyRewardValutationPerSession::get()
+		if token_id == Self::native_token_id() &&
+			amount_per_session.into() >= T::Min3rdPartyRewardValutationPerSession::get()
 		{
 			return true
 		}
 
-		if <T as Config>::ValuationApi::valuate_non_liquidity_token(token_id, amount_per_session) >=
-			T::Min3rdPartyRewardValutationPerSession::get()
+		if <T as Config>::ValuationApi::valuate_non_liquidity_token(token_id, amount_per_session)
+			.into() >= T::Min3rdPartyRewardValutationPerSession::get()
 		{
 			return true
 		}
@@ -1455,18 +1458,18 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn verify_rewards_min_volume(token_id: CurrencyIdOf<T>) -> bool {
-		if token_id == Into::<u32>::into(Self::native_token_id()) {
+		if token_id == Self::native_token_id() {
 			return true
 		}
 
 		if let Some((mga_reserves, _)) = <T as Config>::ValuationApi::get_pool_state(token_id) {
-			return mga_reserves >= T::Min3rdPartyRewardVolume::get()
+			return mga_reserves.into() >= T::Min3rdPartyRewardVolume::get()
 		}
 
 		if let Ok((mga_reserves, _)) =
 			<T as Config>::ValuationApi::get_reserves(Self::native_token_id(), token_id)
 		{
-			return mga_reserves >= T::Min3rdPartyRewardVolume::get()
+			return mga_reserves.into() >= T::Min3rdPartyRewardVolume::get()
 		}
 
 		return false
@@ -1641,3 +1644,6 @@ impl<T: Config> LiquidityMiningApi<BalanceOf<T>> for Pallet<T> {
 		});
 	}
 }
+// TODO: use correct weights in on_initilize_hook
+// TODO: limit amount of active schedules
+// TODO: unwraps!!!

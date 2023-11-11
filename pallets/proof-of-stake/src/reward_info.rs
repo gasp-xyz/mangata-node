@@ -1,6 +1,10 @@
-use frame_support::dispatch::DispatchResult;
+use codec::FullCodec;
+use frame_support::{dispatch::DispatchResult, traits::MultiTokenCurrency};
+use sp_arithmetic::traits::{AtLeast32BitUnsigned, Zero};
 
-use crate::{schedule_rewards_calculator::ScheduleRewardsCalculator, Config, Error, Pallet};
+use crate::{
+	schedule_rewards_calculator::ScheduleRewardsCalculator, BalanceOf, Config, Error, Pallet,
+};
 use frame_support::pallet_prelude::*;
 use sp_core::U256;
 use sp_std::{
@@ -35,10 +39,6 @@ pub struct RewardInfo<Balance> {
 	pub missing_at_last_checkpoint: U256,
 }
 
-//impl<Balance> RewardInfo<Balance>
-//where
-//	Balance: frame_support::traits::tokens::Balance + Into<u128> + TryFrom<u128>,
-
 pub struct RewardsContext {
 	pub current_time: u32,
 	pub pool_ratio_current: U256,
@@ -50,20 +50,35 @@ pub struct RewardsCalculator<Curve, Balance> {
 	_curve: sp_std::marker::PhantomData<Curve>,
 }
 
-impl<Balance> RewardsCalculator<AsymptoticCurveRewards<Balance>, Balance> {
-	pub fn mining_rewards<T: Config>(
+impl<Balance> RewardsCalculator<AsymptoticCurveRewards<Balance>, Balance>
+where
+	Balance: 'static
+		+ AtLeast32BitUnsigned
+		+ FullCodec
+		+ Copy
+		+ Default
+		+ sp_std::fmt::Debug
+		+ scale_info::TypeInfo
+		+ MaxEncodedLen
+		+ Into<u128>
+		+ TryFrom<u128>,
+{
+	// type Balance: Balance;
+	pub fn mining_rewards<T>(
 		user: T::AccountId,
 		asset_id: crate::CurrencyIdOf<T>,
-	) -> sp_std::result::Result<Self, DispatchError> {
+	) -> sp_std::result::Result<Self, DispatchError>
+	where
+		T: Config,
+		T::Currency: MultiTokenCurrency<T::AccountId, Balance = Balance>,
+	{
 		let current_time: u32 = Pallet::<T>::get_current_rewards_time()?;
 		let pool_ratio_current = Pallet::<T>::get_pool_rewards(asset_id)?;
-		let default_rewards = RewardInfo {
-			activated_amount: 0_u128,
-			rewards_not_yet_claimed: 0_u128,
-			rewards_already_claimed: 0_u128,
+		let default_rewards = RewardInfo::<BalanceOf<T>> {
 			last_checkpoint: current_time,
 			pool_ratio_at_last_checkpoint: pool_ratio_current,
 			missing_at_last_checkpoint: U256::from(0u128),
+			..Default::default()
 		};
 
 		let rewards_info =
@@ -75,17 +90,31 @@ impl<Balance> RewardsCalculator<AsymptoticCurveRewards<Balance>, Balance> {
 				pool_ratio_current: Pallet::<T>::get_pool_rewards(asset_id)?,
 			},
 			rewards_info,
-			_curve: PhantomData::<AsymptoticCurveRewards>,
+			_curve: PhantomData::<AsymptoticCurveRewards<Balance>>,
 		})
 	}
 }
 
-impl<Balance> RewardsCalculator<ConstCurveRewards<Balance>, Balance> {
+impl<Balance> RewardsCalculator<ConstCurveRewards<Balance>, Balance>
+where
+	Balance: 'static
+		+ AtLeast32BitUnsigned
+		+ FullCodec
+		+ Copy
+		+ Default
+		+ sp_std::fmt::Debug
+		+ scale_info::TypeInfo
+		+ MaxEncodedLen,
+{
 	pub fn schedule_rewards<T: Config>(
 		user: T::AccountId,
 		asset_id: crate::CurrencyIdOf<T>,
 		reward_asset_id: crate::CurrencyIdOf<T>,
-	) -> sp_std::result::Result<Self, DispatchError> {
+	) -> sp_std::result::Result<Self, DispatchError>
+	where
+		T: Config,
+		T::Currency: MultiTokenCurrency<T::AccountId, Balance = Balance>,
+	{
 		let current_time: u32 = Pallet::<T>::get_current_rewards_time()?;
 		ensure!(
 			crate::RewardTokensPerPool::<T>::try_get(asset_id, reward_asset_id).is_ok(),
@@ -95,12 +124,10 @@ impl<Balance> RewardsCalculator<ConstCurveRewards<Balance>, Balance> {
 			ScheduleRewardsCalculator::<T>::total_rewards_for_liquidity(asset_id, reward_asset_id);
 
 		let default_rewards = RewardInfo {
-			activated_amount: 0_u128,
-			rewards_not_yet_claimed: 0_u128,
-			rewards_already_claimed: 0_u128,
 			last_checkpoint: current_time,
 			pool_ratio_at_last_checkpoint: pool_ratio_current.into(),
 			missing_at_last_checkpoint: U256::from(0u128),
+			..Default::default()
 		};
 
 		let rewards_info = crate::RewardsInfoForScheduleRewards::<T>::try_get(
@@ -115,13 +142,13 @@ impl<Balance> RewardsCalculator<ConstCurveRewards<Balance>, Balance> {
 				pool_ratio_current: pool_ratio_current.into(),
 			},
 			rewards_info,
-			_curve: PhantomData::<ConstCurveRewards>,
+			_curve: PhantomData::<ConstCurveRewards<Balance>>,
 		})
 	}
 }
 
 pub trait CurveRewards {
-	type Balance;
+	type Balance: AtLeast32BitUnsigned + TryFrom<u128> + Into<u128>;
 	fn calculate_curve_position(
 		ctx: &RewardsContext,
 		user_info: &RewardInfo<Self::Balance>,
@@ -135,7 +162,10 @@ pub trait CurveRewards {
 pub struct ConstCurveRewards<Balance>(RewardsContext, RewardInfo<Balance>);
 pub struct AsymptoticCurveRewards<Balance>(RewardsContext, RewardInfo<Balance>);
 
-impl<Balance> CurveRewards for AsymptoticCurveRewards<Balance> {
+impl<Balance> CurveRewards for AsymptoticCurveRewards<Balance>
+where
+	Balance: AtLeast32BitUnsigned + TryFrom<u128> + Into<u128>,
+{
 	type Balance = Balance;
 	fn calculate_curve_position(
 		ctx: &RewardsContext,
@@ -153,7 +183,7 @@ impl<Balance> CurveRewards for AsymptoticCurveRewards<Balance> {
 		let pool_rewards_ratio_new =
 			ctx.pool_ratio_current.checked_sub(user_info.pool_ratio_at_last_checkpoint)?;
 
-		let rewards_base: U256 = U256::from(user_info.activated_amount)
+		let rewards_base: U256 = U256::from(user_info.activated_amount.clone().into())
 			.checked_mul(pool_rewards_ratio_new)?
 			.checked_div(U256::from(u128::MAX))?; // always fit into u128
 
@@ -162,8 +192,9 @@ impl<Balance> CurveRewards for AsymptoticCurveRewards<Balance> {
 		let mut cummulative_work = U256::from(0);
 		let mut cummulative_work_max_possible_for_ratio = U256::from(1);
 
-		if time_passed != 0 && user_info.activated_amount != 0 {
-			let liquidity_assets_amount_u256: U256 = user_info.activated_amount.into();
+		if time_passed != 0 && user_info.activated_amount != Balance::zero() {
+			let liquidity_assets_amount_u256: U256 =
+				U256::from(user_info.activated_amount.clone().into());
 
 			// whole formula: 	missing_at_last_checkpoint*106/6 - missing_at_last_checkpoint*106*precision/6/q_pow
 			// q_pow is multiplied by precision, thus there needs to be *precision in numenator as well
@@ -188,19 +219,24 @@ impl<Balance> CurveRewards for AsymptoticCurveRewards<Balance> {
 				cummulative_work_max_possible_for_ratio.checked_sub(cummulative_missing_new)?
 		}
 
-		rewards_base
-			.checked_mul(cummulative_work)?
-			.checked_div(cummulative_work_max_possible_for_ratio)?
-			.try_into()
-			.ok()
+		TryInto::<u128>::try_into(
+			rewards_base
+				.checked_mul(cummulative_work)?
+				.checked_div(cummulative_work_max_possible_for_ratio)?,
+		)
+		.ok()
+		.and_then(|v| TryInto::try_into(v).ok())
 	}
 }
 
-impl<Balance> CurveRewards for ConstCurveRewards<Balance> {
+impl<Balance> CurveRewards for ConstCurveRewards<Balance>
+where
+	Balance: AtLeast32BitUnsigned + TryFrom<u128> + Into<u128>,
+{
 	type Balance = Balance;
 	fn calculate_curve_position(
-		ctx: &RewardsContext,
-		user_info: &RewardInfo<Balance>,
+		_ctx: &RewardsContext,
+		_user_info: &RewardInfo<Balance>,
 	) -> Option<U256> {
 		Some(U256::from(0))
 	}
@@ -212,11 +248,13 @@ impl<Balance> CurveRewards for ConstCurveRewards<Balance> {
 		let pool_rewards_ratio_new =
 			ctx.pool_ratio_current.checked_sub(user_info.pool_ratio_at_last_checkpoint)?;
 
-		let rewards_base: U256 = U256::from(user_info.activated_amount)
+		let rewards_base: U256 = U256::from(user_info.activated_amount.clone().into())
 			.checked_mul(pool_rewards_ratio_new)?
 			.checked_div(U256::from(u128::MAX))?; // always fit into u128
 
-		rewards_base.try_into().ok()
+		TryInto::<u128>::try_into(rewards_base)
+			.ok()
+			.and_then(|v| TryInto::try_into(v).ok())
 	}
 }
 
@@ -231,7 +269,32 @@ impl<T: Config> Into<Error<T>> for RewardsCalcError {
 	}
 }
 
-impl<T: CurveRewards, Balance> RewardsCalculator<T, Balance> {
+pub trait MyBalance:
+	TryFrom<u128>
+	+ Into<u128>
+	+ AtLeast32BitUnsigned
+	+ FullCodec
+	+ Copy
+	+ Default
+	+ sp_std::fmt::Debug
+	+ scale_info::TypeInfo
+	+ MaxEncodedLen
+{
+}
+
+impl<T, Balance> RewardsCalculator<T, Balance>
+where
+	T: CurveRewards<Balance = Balance>,
+	Balance: TryFrom<u128>
+		+ Into<u128>
+		+ AtLeast32BitUnsigned
+		+ FullCodec
+		+ Copy
+		+ Default
+		+ sp_std::fmt::Debug
+		+ scale_info::TypeInfo
+		+ MaxEncodedLen,
+{
 	pub fn activate_more(
 		self,
 		liquidity_assets_added: Balance,
@@ -239,25 +302,27 @@ impl<T: CurveRewards, Balance> RewardsCalculator<T, Balance> {
 		let activated_amount = self
 			.rewards_info
 			.activated_amount
-			.checked_add(liquidity_assets_added)
+			.checked_add(&liquidity_assets_added)
 			.ok_or(RewardsCalcError::CheckpointMathError)?;
 
 		let missing_at_last_checkpoint =
 			T::calculate_curve_position(&self.rewards_context, &self.rewards_info)
-				.and_then(|v| v.checked_add(U256::from(liquidity_assets_added)))
+				.and_then(|v| v.checked_add(U256::from(liquidity_assets_added.into())))
 				.ok_or(RewardsCalcError::CheckpointMathError)?;
 
-		let user_current_rewards = self.calculate_rewards_impl()?;
+		let user_current_rewards = Into::<u128>::into(self.calculate_rewards_impl()?);
 
 		let rewards_not_yet_claimed = user_current_rewards
-			.checked_add(self.rewards_info.rewards_not_yet_claimed)
-			.and_then(|v| v.checked_sub(self.rewards_info.rewards_already_claimed))
-			.ok_or(RewardsCalcError::CheckpointMathError)?;
+			.checked_add(self.rewards_info.rewards_not_yet_claimed.into())
+			.and_then(|v| v.checked_sub(self.rewards_info.rewards_already_claimed.into()))
+			.ok_or(RewardsCalcError::CheckpointMathError)?
+			.try_into()
+			.or(Err(RewardsCalcError::CheckpointMathError))?;
 
 		Ok(RewardInfo {
 			activated_amount,
 			pool_ratio_at_last_checkpoint: self.rewards_context.pool_ratio_current,
-			rewards_already_claimed: 0_u128,
+			rewards_already_claimed: Balance::zero(),
 			missing_at_last_checkpoint,
 			rewards_not_yet_claimed,
 			last_checkpoint: self.rewards_context.current_time,
@@ -271,7 +336,7 @@ impl<T: CurveRewards, Balance> RewardsCalculator<T, Balance> {
 		let activated_amount = self
 			.rewards_info
 			.activated_amount
-			.checked_sub(liquidity_assets_removed)
+			.checked_sub(&liquidity_assets_removed)
 			.ok_or(RewardsCalcError::CheckpointMathError)?;
 
 		let missing_at_checkpoint_new =
@@ -281,24 +346,25 @@ impl<T: CurveRewards, Balance> RewardsCalculator<T, Balance> {
 		let activated_amount_new = self
 			.rewards_info
 			.activated_amount
-			.checked_sub(liquidity_assets_removed)
+			.checked_sub(&liquidity_assets_removed)
 			.ok_or(RewardsCalcError::CheckpointMathError)?;
-		let missing_at_checkpoint_after_burn = U256::from(activated_amount_new)
+
+		let missing_at_checkpoint_after_burn = U256::from(activated_amount_new.clone().into())
 			.checked_mul(missing_at_checkpoint_new)
-			.and_then(|v| v.checked_div(self.rewards_info.activated_amount.into()))
+			.and_then(|v| v.checked_div(self.rewards_info.activated_amount.clone().into().into()))
 			.ok_or(RewardsCalcError::CheckpointMathError)?;
 
 		let user_current_rewards = self.calculate_rewards_impl()?;
 
 		let total_available_rewards = user_current_rewards
-			.checked_add(self.rewards_info.rewards_not_yet_claimed)
-			.and_then(|v| v.checked_sub(self.rewards_info.rewards_already_claimed))
+			.checked_add(&self.rewards_info.rewards_not_yet_claimed)
+			.and_then(|v| v.checked_sub(&self.rewards_info.rewards_already_claimed))
 			.ok_or(RewardsCalcError::CheckpointMathError)?;
 
 		Ok(RewardInfo {
 			activated_amount,
 			pool_ratio_at_last_checkpoint: self.rewards_context.pool_ratio_current,
-			rewards_already_claimed: 0_u128,
+			rewards_already_claimed: Balance::zero(),
 			missing_at_last_checkpoint: missing_at_checkpoint_after_burn,
 			rewards_not_yet_claimed: total_available_rewards,
 			last_checkpoint: self.rewards_context.current_time,
@@ -311,13 +377,13 @@ impl<T: CurveRewards, Balance> RewardsCalculator<T, Balance> {
 		let current_rewards = self.calculate_rewards_impl()?;
 
 		let total_available_rewards = current_rewards
-			.checked_add(self.rewards_info.rewards_not_yet_claimed)
-			.and_then(|v| v.checked_sub(self.rewards_info.rewards_already_claimed))
+			.checked_add(&self.rewards_info.rewards_not_yet_claimed)
+			.and_then(|v| v.checked_sub(&self.rewards_info.rewards_already_claimed))
 			.ok_or(RewardsCalcError::CheckpointMathError)?;
 
 		let mut info = self.rewards_info.clone();
 
-		info.rewards_not_yet_claimed = 0_u128;
+		info.rewards_not_yet_claimed = Balance::zero();
 		info.rewards_already_claimed = current_rewards;
 		Ok((info, total_available_rewards))
 	}

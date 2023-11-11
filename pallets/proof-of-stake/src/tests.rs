@@ -1073,7 +1073,6 @@ fn liquidity_rewards_transfered_liq_tokens_produce_rewards_W() {
 	});
 }
 
-		session_issuance = <Issuance as GetIssuance>::get_all_issuance(session_number)
 #[test]
 #[serial]
 fn test_migrated_from_pallet_issuance() {
@@ -1205,10 +1204,10 @@ const LIQUIDITY_TOKEN: u32 = 10;
 const FIRST_LIQUIDITY_TOKEN: u32 = 10;
 const SECOND_LIQUIDITY_TOKEN: u32 = 11;
 const TOKEN_PAIRED_WITH_MGX: u32 = 15;
-const ALICE: u128 = 2;
-const BOB: u128 = 3;
-const CHARLIE: u128 = 4;
-const EVE: u128 = 5;
+const ALICE: u64 = 2;
+const BOB: u64 = 3;
+const CHARLIE: u64 = 4;
+const EVE: u64 = 5;
 
 fn min_req_volume() -> u128 {
 	<<Test as Config>::Min3rdPartyRewardValutationPerSession as sp_core::Get<u128>>::get()

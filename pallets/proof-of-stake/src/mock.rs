@@ -2,21 +2,25 @@
 
 use super::*;
 use mangata_support::traits::GetMaintenanceStatusTrait;
+use mangata_types::assets::CustomMetadata;
 
 use crate as pos;
 use core::convert::TryFrom;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		tokens::currency::MultiTokenCurrency, ConstU32,ConstU128, Contains, Everything, WithdrawReasons,
+		tokens::currency::MultiTokenCurrency, ConstU128, ConstU32, Contains, Everything,
+		WithdrawReasons,
 	},
 	PalletId,
 };
 use frame_system as system;
 pub use mangata_support::traits::ProofOfStakeRewardsApi;
 use orml_tokens::{MultiTokenCurrencyAdapter, MultiTokenCurrencyExtended};
-use orml_traits::parameter_type_with_key;
+use orml_traits::{asset_registry::AssetMetadata, parameter_type_with_key};
+use pallet_xyk::AssetMetadataMutationTrait;
 use sp_runtime::{traits::AccountIdConversion, BuildStorage, Perbill, Percent, Saturating};
+use std::{collections::hash_map::HashMap, sync::Mutex};
 
 pub const NATIVE_CURRENCY_ID: u32 = 0;
 
@@ -181,7 +185,7 @@ impl Contains<(TokenId, TokenId)> for DummyBlacklistedPool {
 pub struct MockAssetRegister;
 
 lazy_static::lazy_static! {
-	static ref ASSET_REGISTER: Mutex<HashMap<TokenId, AssetMetadata<Balance, CustomMetadata>>> = {
+	static ref ASSET_REGISTER: Mutex<HashMap<TokenId, AssetMetadata<Balance, CustomMetadata, ConstU32<20>>>> = {
 		let m = HashMap::new();
 		Mutex::new(m)
 	};
@@ -190,9 +194,7 @@ lazy_static::lazy_static! {
 mockall::mock! {
 	pub ValuationApi {}
 
-	impl Valuate for ValuationApi {
-	type Balance = Balance;
-	type CurrencyId = TokenId;
+	impl Valuate<Balance, TokenId> for ValuationApi {
 
 	fn get_liquidity_asset(
 	first_asset_id: TokenId,
@@ -229,7 +231,7 @@ mockall::mock! {
 }
 
 pub struct AssetMetadataMutation;
-impl AssetMetadataMutationTrait for AssetMetadataMutation {
+impl AssetMetadataMutationTrait<TokenId> for AssetMetadataMutation {
 	fn set_asset_info(
 		_asset: TokenId,
 		_name: Vec<u8>,
@@ -394,8 +396,8 @@ fn min_req_volume() -> u128 {
 
 impl ExtBuilder {
 	pub fn new() -> Self {
-		let t = frame_system::GenesisConfig::default()
-			.build_storage::<Test>()
+		let t = frame_system::GenesisConfig::<Test>::default()
+			.build_storage()
 			.expect("Frame system builds valid default genesis config");
 
 		let mut ext = sp_io::TestExternalities::new(t);

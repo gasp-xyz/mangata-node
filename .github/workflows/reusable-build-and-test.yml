@@ -222,12 +222,9 @@ jobs:
             /usr/local/cargo/registry
           key: cargo-benchmark-cache-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
       - name: Run benchmarks tests
-        run: cargo test --release -j8 --features=runtime-benchmarks -p pallet-xyk -p pallet-issuance -p pallet-multipurpose-liquidity -p pallet-fee-lock
+        run: cargo test --release -j8 --features=runtime-benchmarks -p pallet-xyk -p pallet-issuance -p pallet-multipurpose-liquidity -p pallet-fee-lock -p pallet-proof-of-stake -p pallet-proof-of-stake
       - name: Run benchmarks tests
         run: cargo test --release -j8 --features=runtime-benchmarks -p pallet-bootstrap
-      # NOTE: MGX-742
-      - name: Run benchmarks tests
-        run: cargo test --release -j8 --features=runtime-benchmarks -p pallet-proof-of-stake
 
   build-and-run-try-runtime:
     name: Run try-runtime checks

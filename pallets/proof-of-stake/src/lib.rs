@@ -107,6 +107,14 @@ pub struct Schedule<T: Config> {
 	amount_per_session: BalanceOf<T>,
 }
 
+#[derive(Encode, Decode, Default, TypeInfo)]
+pub struct SchedulesList {
+	pub head: Option<ScheduleId>,
+	pub tail: Option<ScheduleId>,
+	pub pos: Option<ScheduleId>,
+	pub count: u64,
+}
+
 use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResult, PostDispatchInfo},
 	ensure,
@@ -212,8 +220,8 @@ pub mod pallet {
 
 			// NOTE: 1R
 			if Self::is_new_session() {
-				ScheduleListPos::<T>::kill();
-				return Default::default()
+				SchedulesListMetadata::<T>::mutate(|s| s.pos = None);
+				return Default::default();
 			}
 
 			for _ in 0..T::SchedulesPerBlock::get() {
@@ -236,9 +244,10 @@ pub mod pallet {
 				// 					- 1 x WRITE update elem before last : ALWAYS (pesemisitic)
 
 				// NOTE: 1R
-				let last_valid = ScheduleListPos::<T>::get();
+				let s = SchedulesListMetadata::<T>::get();
+				let last_valid = s.pos;
 				// NOTE: 1R
-				let pos = match (last_valid, ScheduleListHead::<T>::get()) {
+				let pos = match (last_valid, s.head) {
 					(Some(pos), _) => {
 						if let Some((_schedule, next)) = RewardsSchedulesList::<T>::get(pos) {
 							next
@@ -262,25 +271,36 @@ pub mod pallet {
 								);
 							}
 							// NOTE: 1W
-							ScheduleListPos::<T>::put(pos_val);
+							SchedulesListMetadata::<T>::mutate(|s| s.pos = Some(pos_val));
 						} else {
 							// NOTE: 2R
-							match (Self::head(), Self::tail()) {
+							//
+							let meta = Self::list_metadata();
+							match (meta.head, meta.tail) {
 								(Some(head), Some(tail)) if head == pos_val && head != tail =>
 									if let Some(next) = next {
 										// NOTE: 1W
-										ScheduleListHead::<T>::put(next);
+										SchedulesListMetadata::<T>::mutate(|s| {
+											s.head = Some(next);
+											s.count -= 1;
+										});
 									},
 								(Some(head), Some(tail)) if tail == pos_val && head == tail => {
 									// NOTE: 3W
-									ScheduleListTail::<T>::kill();
-									ScheduleListHead::<T>::kill();
-									ScheduleListPos::<T>::kill();
+									SchedulesListMetadata::<T>::mutate(|s| {
+										s.tail = None;
+										s.head = None;
+										s.pos = None;
+										s.count = 0;
+									});
 								},
 								(Some(head), Some(tail)) if tail == pos_val && head != tail =>
 									if let Some(last_valid) = last_valid {
 										// NOTE: 1W
-										ScheduleListTail::<T>::put(last_valid);
+										SchedulesListMetadata::<T>::mutate(|s| {
+											s.tail = Some(last_valid);
+											s.count -= 1;
+										});
 										// NOTE: 1R 1W
 										RewardsSchedulesList::<T>::mutate(last_valid, |data| {
 											if let Some((_schedule, next)) = data.as_mut() {
@@ -290,6 +310,9 @@ pub mod pallet {
 									},
 								(Some(_head), Some(_tail)) =>
 									if let Some(last_valid) = last_valid {
+										SchedulesListMetadata::<T>::mutate(|s| {
+											s.count -= 1;
+										});
 										// NOTE: 1R 1W
 										RewardsSchedulesList::<T>::mutate(last_valid, |data| {
 											if let Some((_schedule, prev_next)) = data.as_mut() {
@@ -371,7 +394,6 @@ pub mod pallet {
 		/// The minimum number of rewards per session for schedule rewards
 		type Min3rdPartyRewardValutationPerSession: Get<u128>;
 		type Min3rdPartyRewardVolume: Get<u128>;
-		type ActiveSchedulesLimit: Get<u32>;
 		type SchedulesPerBlock: Get<u32>;
 
 		type WeightInfo: WeightInfo;
@@ -501,16 +523,8 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn pos)]
-	pub type ScheduleListPos<T: Config> = StorageValue<_, ScheduleId, OptionQuery>;
-
-	#[pallet::storage]
-	#[pallet::getter(fn head)]
-	pub type ScheduleListHead<T: Config> = StorageValue<_, ScheduleId, OptionQuery>;
-
-	#[pallet::storage]
-	#[pallet::getter(fn tail)]
-	pub type ScheduleListTail<T: Config> = StorageValue<_, ScheduleId, OptionQuery>;
+	#[pallet::getter(fn list_metadata)]
+	pub type SchedulesListMetadata<T: Config> = StorageValue<_, SchedulesList, ValueQuery>;
 
 	#[pallet::storage]
 	pub type RewardsSchedulesList<T: Config> =
@@ -518,7 +532,6 @@ pub mod pallet {
 
 	/// Maps liquidity token to list of tokens that it ever was rewarded with
 	#[pallet::storage]
-
 	pub type RewardTokensPerPool<T: Config> = StorageDoubleMap<
 		_,
 		Twox64Concat,
@@ -1406,8 +1419,9 @@ impl<T: Config> Pallet<T> {
 			ExistenceRequirement::KeepAlive,
 		)?;
 
-		let head = ScheduleListHead::<T>::get();
-		let tail = ScheduleListTail::<T>::get();
+		let head = SchedulesListMetadata::<T>::get().head;
+		let tail = SchedulesListMetadata::<T>::get().tail;
+
 		let schedule = Schedule {
 			scheduled_at: Self::session_index() as u64,
 			last_session: schedule_end.saturated_into::<u64>(),
@@ -1420,8 +1434,11 @@ impl<T: Config> Pallet<T> {
 			(None, None) => {
 				// first schedule
 				RewardsSchedulesList::<T>::insert(0, (schedule, None::<ScheduleId>));
-				ScheduleListHead::<T>::put(0);
-				ScheduleListTail::<T>::put(0);
+				SchedulesListMetadata::<T>::mutate(|s| {
+					s.head = Some(0);
+					s.tail = Some(0);
+					s.count = 1;
+				});
 			},
 			(Some(_head), Some(tail)) => {
 				RewardsSchedulesList::<T>::mutate(tail, |info| {
@@ -1430,7 +1447,15 @@ impl<T: Config> Pallet<T> {
 					}
 				});
 				RewardsSchedulesList::<T>::insert(tail + 1, (schedule, None::<ScheduleId>));
-				ScheduleListTail::<T>::put(tail + 1);
+				SchedulesListMetadata::<T>::try_mutate(|s| {
+					if s.count < T::RewardsSchedulesLimit::get().into() {
+						s.tail = Some(tail + 1);
+						s.count += 1;
+						Ok(s.count)
+					} else {
+						Err(Error::<T>::TooManySchedules)
+					}
+				})?;
 			},
 			_ => {}, // invariant assures this will never happen
 		}
@@ -1650,5 +1675,4 @@ impl<T: Config> LiquidityMiningApi<BalanceOf<T>> for Pallet<T> {
 		});
 	}
 }
-// TODO: limit amount of active schedules
 // TODO: STATIC ASSERT ON NUMBER OF ACTIVE SCHEDULES

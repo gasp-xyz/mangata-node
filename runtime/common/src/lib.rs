@@ -1481,7 +1481,6 @@ where
 			// TODO: allign properly
 			pub const Min3rdPartyRewardValutationPerSession: u128 = 100 * 30_000 * currency::DOLLARS;
 			pub const Min3rdPartyRewardVolume: u128 = 100 * 30_000 * currency::DOLLARS;
-			pub const ActiveSchedulesLimit: u32 = 10_000;
 			pub const SchedulesPerBlock: u32 = 5;
 		}
 	}

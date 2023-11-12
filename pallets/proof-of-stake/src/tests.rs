@@ -47,7 +47,9 @@ fn process_all_schedules_in_current_session() {
 			panic!("couldnt process all schedules within the session");
 		}
 
-		if !ProofOfStake::is_new_session() && ProofOfStake::pos() == ProofOfStake::tail() {
+		if !ProofOfStake::is_new_session() &&
+			ProofOfStake::list_metadata().pos == ProofOfStake::list_metadata().tail
+		{
 			break
 		}
 		roll_to_next_block::<Test>();
@@ -1370,8 +1372,8 @@ fn rewards_schedule_is_stored() {
 					None
 				)
 			);
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(0u64));
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(0u64));
+			assert_eq!(ProofOfStake::list_metadata().head, Some(0u64));
 		});
 }
 
@@ -1390,6 +1392,7 @@ fn rewards_linked_list_insert_multiple_schedules() {
 				REWARD_AMOUNT,
 				1u32.into()
 			),);
+			assert_eq!(ProofOfStake::list_metadata().count, 1);
 
 			assert_ok!(ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
@@ -1398,6 +1401,7 @@ fn rewards_linked_list_insert_multiple_schedules() {
 				REWARD_AMOUNT,
 				2u32.into()
 			),);
+			assert_eq!(ProofOfStake::list_metadata().count, 2);
 
 			assert_eq!(
 				RewardsSchedulesList::<Test>::get(0).unwrap(),
@@ -1427,9 +1431,9 @@ fn rewards_linked_list_insert_multiple_schedules() {
 				)
 			);
 
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
-
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
+			assert_eq!(ProofOfStake::list_metadata().head, Some(0u64));
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(1u64));
+			assert_eq!(ProofOfStake::list_metadata().count, 2);
 		});
 }
 
@@ -1456,56 +1460,55 @@ fn rewards_linked_list_removes_outdated_schedule_automatically() {
 				REWARD_AMOUNT,
 				2u32.into()
 			),);
+			assert_eq!(ProofOfStake::list_metadata().count, 2);
 
 			assert_ok!(RewardsSchedulesList::<Test>::get(0).ok_or(()));
 			assert_ok!(RewardsSchedulesList::<Test>::get(1).ok_or(()));
 
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!(ScheduleListPos::<Test>::get(), None);
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
+			assert_eq!(ProofOfStake::list_metadata().head, Some(0u64));
+			assert_eq!(ProofOfStake::list_metadata().pos, None);
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(1u64));
 
 			forward_to_block::<Test>(2);
 
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
-			assert_eq!(ScheduleListPos::<Test>::get(), Some(1u64));
+			assert_eq!(ProofOfStake::list_metadata().head, Some(0u64));
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(1u64));
+			assert_eq!(ProofOfStake::list_metadata().pos, Some(1u64));
 
 			forward_to_block::<Test>(5);
 
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
-			assert_eq!(ScheduleListPos::<Test>::get(), Some(1u64));
+			assert_eq!(ProofOfStake::list_metadata().head, Some(0u64));
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(1u64));
+			assert_eq!(ProofOfStake::list_metadata().pos, Some(1u64));
 
 			forward_to_block::<Test>(11);
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
-			assert_eq!(ScheduleListPos::<Test>::get(), Some(1u64));
+			assert_eq!(ProofOfStake::list_metadata().head, Some(0u64));
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(1u64));
+			assert_eq!(ProofOfStake::list_metadata().pos, Some(1u64));
 
+			assert_eq!(ProofOfStake::list_metadata().count, 2);
 			forward_to_block::<Test>(21);
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(1u64));
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
-			assert_eq!(ScheduleListPos::<Test>::get(), Some(1u64));
+			assert_eq!(ProofOfStake::list_metadata().count, 1);
+			assert_eq!(ProofOfStake::list_metadata().head, Some(1u64));
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(1u64));
+			assert_eq!(ProofOfStake::list_metadata().pos, Some(1u64));
 
 			forward_to_block::<Test>(25);
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(1u64));
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
-			assert_eq!(ScheduleListPos::<Test>::get(), Some(1u64));
+			assert_eq!(ProofOfStake::list_metadata().head, Some(1u64));
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(1u64));
+			assert_eq!(ProofOfStake::list_metadata().pos, Some(1u64));
 
 			forward_to_block::<Test>(29);
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(1u64));
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
+			assert_eq!(ProofOfStake::list_metadata().head, Some(1u64));
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(1u64));
 
 			forward_to_block::<Test>(30);
-			assert_eq!(ScheduleListHead::<Test>::get(), None);
-			assert_eq!(ScheduleListTail::<Test>::get(), None);
-			assert_eq!(ScheduleListPos::<Test>::get(), None);
+			assert_eq!(ProofOfStake::list_metadata().head, None);
+			assert_eq!(ProofOfStake::list_metadata().tail, None);
+			assert_eq!(ProofOfStake::list_metadata().pos, None);
+			assert_eq!(ProofOfStake::list_metadata().count, 0);
 		});
 }
-
-// rewards_first_schedule_from_linked_list
-// rewards_last_schedule_from_linked_list
-// rewards_middle_schedule_from_linked_list
-// rewards_multipleall_schedule_from_linked_list
 
 fn insert_schedule_ending_at_session(n: u32) {
 	assert_ok!(ProofOfStake::reward_pool(
@@ -1534,17 +1537,19 @@ fn rewards_first_schedule_from_linked_list_of_four() {
 			assert_ok!(RewardsSchedulesList::<Test>::get(1).ok_or(()));
 			assert_ok!(RewardsSchedulesList::<Test>::get(2).ok_or(()));
 			assert_ok!(RewardsSchedulesList::<Test>::get(3).ok_or(()));
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!(ScheduleListPos::<Test>::get(), None);
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
+			assert_eq!(ProofOfStake::list_metadata().head, Some(0u64));
+			assert_eq!(ProofOfStake::list_metadata().pos, None);
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(3u64));
 
+			assert_eq!(ProofOfStake::list_metadata().count, 4);
 			forward_to_block::<Test>(21);
 
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(1u64));
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
+			assert_eq!(ProofOfStake::list_metadata().head, Some(1u64));
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(3u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(1u64).unwrap().1, Some(2u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(2u64).unwrap().1, Some(3u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(3u64).unwrap().1, None);
+			assert_eq!(ProofOfStake::list_metadata().count, 3);
 		});
 }
 
@@ -1565,17 +1570,19 @@ fn remove_last_schedule_from_linked_list() {
 			assert_ok!(RewardsSchedulesList::<Test>::get(1).ok_or(()));
 			assert_ok!(RewardsSchedulesList::<Test>::get(2).ok_or(()));
 			assert_ok!(RewardsSchedulesList::<Test>::get(3).ok_or(()));
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!(ScheduleListPos::<Test>::get(), None);
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
+			assert_eq!(ProofOfStake::list_metadata().head, Some(0u64));
+			assert_eq!(ProofOfStake::list_metadata().pos, None);
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(3u64));
+			assert_eq!(ProofOfStake::list_metadata().count, 4);
 
 			forward_to_block::<Test>(21);
 
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(2u64));
+			assert_eq!(ProofOfStake::list_metadata().head, Some(0u64));
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(2u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(1u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(1u64).unwrap().1, Some(2u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(2u64).unwrap().1, None);
+			assert_eq!(ProofOfStake::list_metadata().count, 3);
 		});
 }
 
@@ -1596,17 +1603,19 @@ fn remove_middle_schedule_from_linked_list() {
 			assert_ok!(RewardsSchedulesList::<Test>::get(1).ok_or(()));
 			assert_ok!(RewardsSchedulesList::<Test>::get(2).ok_or(()));
 			assert_ok!(RewardsSchedulesList::<Test>::get(3).ok_or(()));
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!(ScheduleListPos::<Test>::get(), None);
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
+			assert_eq!(ProofOfStake::list_metadata().head, Some(0u64));
+			assert_eq!(ProofOfStake::list_metadata().pos, None);
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(3u64));
+			assert_eq!(ProofOfStake::list_metadata().count, 4);
 
 			forward_to_block::<Test>(21);
 
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
+			assert_eq!(ProofOfStake::list_metadata().head, Some(0u64));
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(3u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(2u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(2u64).unwrap().1, Some(3u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(3u64).unwrap().1, None);
+			assert_eq!(ProofOfStake::list_metadata().count, 3);
 		});
 }
 
@@ -1627,16 +1636,18 @@ fn remove_first_few_elems_at_once_from_linked_list() {
 			assert_ok!(RewardsSchedulesList::<Test>::get(1).ok_or(()));
 			assert_ok!(RewardsSchedulesList::<Test>::get(2).ok_or(()));
 			assert_ok!(RewardsSchedulesList::<Test>::get(3).ok_or(()));
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!(ScheduleListPos::<Test>::get(), None);
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
+			assert_eq!(ProofOfStake::list_metadata().head, Some(0u64));
+			assert_eq!(ProofOfStake::list_metadata().pos, None);
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(3u64));
+			assert_eq!(ProofOfStake::list_metadata().count, 4);
 
 			forward_to_block::<Test>(20);
 
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(2u64));
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
+			assert_eq!(ProofOfStake::list_metadata().head, Some(2u64));
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(3u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(2u64).unwrap().1, Some(3u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(3u64).unwrap().1, None);
+			assert_eq!(ProofOfStake::list_metadata().count, 2);
 		});
 }
 
@@ -1657,16 +1668,18 @@ fn remove_few_last_elems_at_once_from_linked_list() {
 			assert_ok!(RewardsSchedulesList::<Test>::get(1).ok_or(()));
 			assert_ok!(RewardsSchedulesList::<Test>::get(2).ok_or(()));
 			assert_ok!(RewardsSchedulesList::<Test>::get(3).ok_or(()));
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!(ScheduleListPos::<Test>::get(), None);
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
+			assert_eq!(ProofOfStake::list_metadata().head, Some(0u64));
+			assert_eq!(ProofOfStake::list_metadata().pos, None);
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(3u64));
+			assert_eq!(ProofOfStake::list_metadata().count, 4);
 
 			forward_to_block::<Test>(21);
 
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
+			assert_eq!(ProofOfStake::list_metadata().head, Some(0u64));
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(1u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(1u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(1u64).unwrap().1, None);
+			assert_eq!(ProofOfStake::list_metadata().count, 2);
 		});
 }
 
@@ -1687,16 +1700,18 @@ fn remove_few_middle_elements_from_linkedd_list() {
 			assert_ok!(RewardsSchedulesList::<Test>::get(1).ok_or(()));
 			assert_ok!(RewardsSchedulesList::<Test>::get(2).ok_or(()));
 			assert_ok!(RewardsSchedulesList::<Test>::get(3).ok_or(()));
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!(ScheduleListPos::<Test>::get(), None);
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
+			assert_eq!(ProofOfStake::list_metadata().head, Some(0u64));
+			assert_eq!(ProofOfStake::list_metadata().pos, None);
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(3u64));
+			assert_eq!(ProofOfStake::list_metadata().count, 4);
 
 			forward_to_block::<Test>(21);
 
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(3u64));
+			assert_eq!(ProofOfStake::list_metadata().head, Some(0u64));
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(3u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(3u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(3u64).unwrap().1, None);
+			assert_eq!(ProofOfStake::list_metadata().count, 2);
 		});
 }
 
@@ -1719,17 +1734,19 @@ fn remove_random_elements_from_linked_list() {
 			assert_ok!(RewardsSchedulesList::<Test>::get(2).ok_or(()));
 			assert_ok!(RewardsSchedulesList::<Test>::get(3).ok_or(()));
 			assert_ok!(RewardsSchedulesList::<Test>::get(4).ok_or(()));
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!(ScheduleListPos::<Test>::get(), None);
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(4u64));
+			assert_eq!(ProofOfStake::list_metadata().head, Some(0u64));
+			assert_eq!(ProofOfStake::list_metadata().pos, None);
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(4u64));
+			assert_eq!(ProofOfStake::list_metadata().count, 5);
 
 			forward_to_block::<Test>(21);
 
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(4u64));
+			assert_eq!(ProofOfStake::list_metadata().head, Some(0u64));
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(4u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(2u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(2u64).unwrap().1, Some(4u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(4u64).unwrap().1, None);
+			assert_eq!(ProofOfStake::list_metadata().count, 3);
 		});
 }
 
@@ -1749,27 +1766,30 @@ fn remove_random_elements_from_linked_list_over_time() {
 			insert_schedule_ending_at_session(1); // 5
 			insert_schedule_ending_at_session(3); // 6
 
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!(ScheduleListPos::<Test>::get(), None);
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(6u64));
+			assert_eq!(ProofOfStake::list_metadata().head, Some(0u64));
+			assert_eq!(ProofOfStake::list_metadata().pos, None);
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(6u64));
+			assert_eq!(ProofOfStake::list_metadata().count, 7);
 
 			roll_to_session::<Test>(2);
 			process_all_schedules_in_current_session();
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(6u64));
+			assert_eq!(ProofOfStake::list_metadata().head, Some(0u64));
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(6u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(1u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(1u64).unwrap().1, Some(3u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(3u64).unwrap().1, Some(4u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(4u64).unwrap().1, Some(6u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(6u64).unwrap().1, None);
+			assert_eq!(ProofOfStake::list_metadata().count, 5);
 
 			roll_to_session::<Test>(3);
 			process_all_schedules_in_current_session();
 
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(6u64));
+			assert_eq!(ProofOfStake::list_metadata().head, Some(0u64));
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(6u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(6u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(6u64).unwrap().1, None);
+			assert_eq!(ProofOfStake::list_metadata().count, 2);
 		});
 }
 
@@ -1791,25 +1811,27 @@ fn remove_lot_of_schedules_from_linked_list_in_single_iteration() {
 			insert_schedule_ending_at_session(1); // 5
 			insert_schedule_ending_at_session(3); // 6
 
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!(ScheduleListPos::<Test>::get(), None);
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(8u64));
+			assert_eq!(ProofOfStake::list_metadata().head, Some(0u64));
+			assert_eq!(ProofOfStake::list_metadata().pos, None);
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(8u64));
+			assert_eq!(ProofOfStake::list_metadata().count, 9);
 
 			forward_to_block::<Test>(24);
 
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(8u64));
+			assert_eq!(ProofOfStake::list_metadata().head, Some(0u64));
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(8u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(0u64).unwrap().1, Some(8u64));
 			assert_eq!(RewardsSchedulesList::<Test>::get(8u64).unwrap().1, None);
+			assert_eq!(ProofOfStake::list_metadata().count, 2);
 
 			forward_to_block::<Test>(100);
-			assert_eq!(ScheduleListHead::<Test>::get(), None);
-			assert_eq!(ScheduleListTail::<Test>::get(), None);
+			assert_eq!(ProofOfStake::list_metadata().head, None);
+			assert_eq!(ProofOfStake::list_metadata().tail, None);
+			assert_eq!(ProofOfStake::list_metadata().count, 0);
 		});
 }
 
 #[test]
-#[ignore]
 #[serial]
 fn number_of_active_schedules_is_limited() {
 	ExtBuilder::new()
@@ -1860,8 +1882,8 @@ fn duplicated_schedules_works() {
 		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
 
-			assert_eq!(ScheduleListHead::<Test>::get(), None);
-			assert_eq!(ScheduleListTail::<Test>::get(), None);
+			assert_eq!(ProofOfStake::list_metadata().head, None);
+			assert_eq!(ProofOfStake::list_metadata().tail, None);
 
 			assert_ok!(ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
@@ -1871,8 +1893,8 @@ fn duplicated_schedules_works() {
 				5u32.into()
 			));
 
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(0u64));
+			assert_eq!(ProofOfStake::list_metadata().head, Some(0u64));
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(0u64));
 
 			assert_ok!(ProofOfStake::reward_pool(
 				RuntimeOrigin::signed(ALICE),
@@ -1882,8 +1904,8 @@ fn duplicated_schedules_works() {
 				5u32.into()
 			));
 
-			assert_eq!(ScheduleListHead::<Test>::get(), Some(0u64));
-			assert_eq!(ScheduleListTail::<Test>::get(), Some(1u64));
+			assert_eq!(ProofOfStake::list_metadata().head, Some(0u64));
+			assert_eq!(ProofOfStake::list_metadata().tail, Some(1u64));
 		});
 }
 

@@ -1673,4 +1673,3 @@ impl<T: Config> LiquidityMiningApi<BalanceOf<T>> for Pallet<T> {
 		});
 	}
 }
-// TODO: STATIC ASSERT ON NUMBER OF ACTIVE SCHEDULES

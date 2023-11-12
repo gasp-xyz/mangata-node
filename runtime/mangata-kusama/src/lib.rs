@@ -225,6 +225,12 @@ const_assert!(
 		<Runtime as pallet_vesting_mangata::Config>::MAX_VESTING_SCHEDULES
 );
 
+const_assert!(
+	<Runtime as pallet_proof_of_stake::Config>::RewardsSchedulesLimit::get() >=
+		(<Runtime as pallet_proof_of_stake::Config>::SchedulesPerBlock::get() - 1) *
+			<Runtime as parachain_staking::Config>::BlocksPerRound::get()
+);
+
 impl orml_tokens::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;

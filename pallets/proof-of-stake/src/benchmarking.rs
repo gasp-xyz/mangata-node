@@ -32,7 +32,6 @@ where
 	T: Config,
 {
 	crate::utils::roll_to_next_session::<T>();
-
 }
 
 benchmarks! {

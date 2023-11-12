@@ -497,6 +497,12 @@ impl pallet_collective_mangata::Config<CouncilCollective> for Runtime {
 // Also since 1 block is used for session change, atleast 1 block more needed for extrinsics to work
 const_assert!(<Runtime as parachain_staking::Config>::BlocksPerRound::get() >= 2);
 
+const_assert!(
+	<Runtime as pallet_proof_of_stake::Config>::RewardsSchedulesLimit::get() >=
+		(<Runtime as pallet_proof_of_stake::Config>::SchedulesPerBlock::get() - 1) *
+			<Runtime as parachain_staking::Config>::BlocksPerRound::get()
+);
+
 impl parachain_staking::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type StakingReservesProvider = MultiPurposeLiquidity;

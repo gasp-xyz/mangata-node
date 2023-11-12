@@ -121,13 +121,19 @@ where
 		let at = self.client.info().best_hash;
 
 		api.calculate_3rdparty_rewards_all(at, account)
-		.map(|vec| vec.into_iter().map(|(token1, token2, balance)| (token1, token2, Into::<NumberOrHex>::into(balance))).collect())
-		.map_err(|e| {
-			JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
-				1,
-				"Unable to serve the request",
-				Some(format!("{:?}", e)),
-			)))
-		})
+			.map(|vec| {
+				vec.into_iter()
+					.map(|(token1, token2, balance)| {
+						(token1, token2, Into::<NumberOrHex>::into(balance))
+					})
+					.collect()
+			})
+			.map_err(|e| {
+				JsonRpseeError::Call(CallError::Custom(ErrorObject::owned(
+					1,
+					"Unable to serve the request",
+					Some(format!("{:?}", e)),
+				)))
+			})
 	}
 }

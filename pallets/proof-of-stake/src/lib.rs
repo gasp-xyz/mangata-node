@@ -227,20 +227,18 @@ pub mod pallet {
 			for _ in 0..T::SchedulesPerBlock::get() {
 				// READS PER ITERTION
 				//
-				// 			ON VALID SCHEDULE  (AVERAGE)                        ====> 3R + 1 W + N*R + N*W
-				// 				3 x READ HEAD,TAIL,POS            : ALWAYS
-				// 				1 x WRITE ScheduleListPos         : ALWAYS (pesimistic)
+				// 			ON VALID SCHEDULE  (AVERAGE)                        ====> 1 RW + N*R + N*W
+				// 				1 x READ/WRITE SCHEDULE META(HEAD,TAIL,POS)            : ALWAYS
 				// 				PER ITER:
 				// 					- READ RewardsSchedulesList   : ALWAYS
 				// 					- WRITE ScheduleRewardsTotal  : ALWAYS (pesemisitic)
 
-				// 			ON OUTDATED SCHEDULE (PESIMITIC)                   =====> 3R + 1W + (N-1)*W + 2W
-				// 				3 x READ HEAD,TAIL,POS                         : ALWAYS
-				// 				1 x WRITE ScheduleListPos `next`               : ONCE (pesemisitic)
+				// 			ON OUTDATED SCHEDULE (PESIMITIC)                   =====> 1 RW + (N-1)*W + 1W
+				// 				1 x READ/WRITE SCHEDULE META(HEAD,TAIL,POS)            : ALWAYS
 				// 				REMOVE N-1 SCHEDULES IN THE MIDDDLE
 				// 					- 1 x WRITE update previous schedudle `next`  : ALWAYS (pesemisitic)
 				// 				REMOVE LAST ELEM:
-				// 					- 1 x WRITE update list tail
+				// 					- 1 x write update list tail (already counted in)
 				// 					- 1 x WRITE update elem before last : ALWAYS (pesemisitic)
 
 				// NOTE: 1R
@@ -330,7 +328,7 @@ pub mod pallet {
 			}
 
 			// always use same amount of block space even if no schedules were processed
-			T::DbWeight::get().reads(3) +
+			T::DbWeight::get().reads(1) +
 				T::DbWeight::get().writes(1) +
 				T::DbWeight::get().reads(T::SchedulesPerBlock::get().into()) +
 				T::DbWeight::get().writes(T::SchedulesPerBlock::get().into())

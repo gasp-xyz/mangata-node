@@ -221,7 +221,7 @@ pub mod pallet {
 			// NOTE: 1R
 			if Self::is_new_session() {
 				SchedulesListMetadata::<T>::mutate(|s| s.pos = None);
-				return Default::default();
+				return Default::default()
 			}
 
 			for _ in 0..T::SchedulesPerBlock::get() {

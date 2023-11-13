@@ -1,8 +1,9 @@
+nodeChain: mangata-rococo-local
 enableLocalRelaychain: true
 enableParachainRegisterSidecar: true
 enableServiceMonitorCollectors: false
 storageSize: 20Gi
-relaychainImage: parity/polkadot:v0.9.38
+relaychainImage: parity/polkadot:v1.1.0
 relaychainStorageSize: 20Gi
 relaychainBootnodeAddr: /dns/relaychain-alice/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
 

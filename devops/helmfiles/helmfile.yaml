@@ -14,18 +14,13 @@ environments:
 ---
 repositories:
   - name: mangata-node
-    url: git+https://github.com/mangata-finance/helm-charts@charts?ref=node-v1.3.0
+    url: git+https://github.com/mangata-finance/helm-charts@charts?ref=node-v2.0.2
   - name: mangata-relaychain
-    url: git+https://github.com/mangata-finance/helm-charts@charts?ref=relaychain-testnet-v1.0.0
+    url: git+https://github.com/mangata-finance/helm-charts@charts?ref=relaychain-testnet-v1.1.0
 
 
 helmDefaults:
   wait: true
-
-templates:
-  nodeDefault: &nodeDefault
-    chart: mangata-node/node
-    namespace: '{{ requiredEnv "ENVIRONMENT" }}'
 
 releases:
   - name: relaychain
@@ -39,7 +34,8 @@ releases:
         storageSize: {{ .Values.relaychainStorageSize }}
         remoteCluster: true
   - name: node-01
-    <<: *nodeDefault
+    chart: mangata-node/node
+    namespace: '{{ requiredEnv "ENVIRONMENT" }}'
     values:
       - values.yaml.gotmpl
       - isCollator: {{ .Values.node01.isCollator  | toYaml }}
@@ -52,7 +48,8 @@ releases:
             scheme: sr25519
             seed: {{ .Values.node01.accountKeySeed | fetchSecretValue | quote }}
   - name: node-02
-    <<: *nodeDefault
+    chart: mangata-node/node
+    namespace: '{{ requiredEnv "ENVIRONMENT" }}'
     values:
       - values.yaml.gotmpl
       - isCollator: {{ .Values.node02.isCollator  | toYaml }}

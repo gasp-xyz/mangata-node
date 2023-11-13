@@ -350,7 +350,8 @@ pub mod pallet {
 
 	#[cfg(feature = "runtime-benchmarks")]
 	pub trait ValutationApiTrait<T: Config>:
-		Valuate<BalanceOf<T>, CurrencyIdOf<T>> + XykFunctionsTrait<T::AccountId>
+		Valuate<BalanceOf<T>, CurrencyIdOf<T>>
+		+ XykFunctionsTrait<AccountIdOf<T>, BalanceOf<T>, CurrencyIdOf<T>>
 	{
 	}
 
@@ -367,7 +368,7 @@ pub mod pallet {
 	where
 		C: Config,
 		T: Valuate<BalanceOf<C>, CurrencyIdOf<C>>,
-		T: XykFunctionsTrait<C::AccountId>,
+		T: XykFunctionsTrait<AccountIdOf<C>, BalanceOf<C>, CurrencyIdOf<C>>,
 	{
 	}
 

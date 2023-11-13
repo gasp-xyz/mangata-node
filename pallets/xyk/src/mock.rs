@@ -342,6 +342,7 @@ impl pallet_proof_of_stake::Config for Test {
 	type Min3rdPartyRewardValutationPerSession = ConstU128<10>;
 	type Min3rdPartyRewardVolume = ConstU128<10>;
 	type ValuationApi = XykStorage;
+	type SchedulesPerBlock = ConstU32<5>;
 }
 
 pub struct TokensActivationPassthrough<T: Config>(PhantomData<T>);

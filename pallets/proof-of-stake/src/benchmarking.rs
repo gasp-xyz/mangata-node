@@ -3,14 +3,25 @@
 use super::*;
 
 use frame_benchmarking::{account, benchmarks, whitelisted_caller};
+use frame_support::traits::WithdrawReasons;
 use frame_system::RawOrigin;
 use mangata_support::traits::{ComputeIssuance, ProofOfStakeRewardsApi};
 use orml_tokens::MultiTokenCurrencyExtended;
-use sp_runtime::{Permill, SaturatedConversion};
+use sp_runtime::{traits::One, Permill, SaturatedConversion};
 
 use crate::Pallet as PoS;
 
 const MILION: u128 = 1_000__000_000__000_000;
+
+trait ToBalance {
+	fn to_balance<T: Config>(self) -> BalanceOf<T>;
+}
+
+impl ToBalance for u128 {
+	fn to_balance<T: Config>(self) -> BalanceOf<T> {
+		self.try_into().ok().expect("u128 should fit into Balance type")
+	}
+}
 
 fn init<T>()
 where
@@ -104,7 +115,7 @@ benchmarks! {
 		// 4 wait some time
 		// 5 mint some
 
-		init!();
+		init::<T>();
 		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
 		let initial_amount: BalanceOf<T> = 1000000000000000000000_u128.try_into().ok().expect("should fit");
 		let expected_native_asset_id  = <T as Config>::NativeCurrencyId::get();
@@ -199,7 +210,7 @@ benchmarks! {
 		let native_asset_id = <T as Config>::NativeCurrencyId::get();
 
 		loop {
-			let token_id = TokensOf::<T>::create(&caller, MILION.into()).unwrap().into();
+			let token_id = TokensOf::<T>::create(&caller, MILION.to_balance::<T>()).unwrap();
 			if token_id > native_asset_id {
 				break;
 			}
@@ -207,12 +218,12 @@ benchmarks! {
 
 		let REWARDS_AMOUNT: u128 = <T as Config>::Min3rdPartyRewardValutationPerSession::get() * 10u128;
 		let native_asset_amount: u128 = REWARDS_AMOUNT * Into::<u128>::into(schedules_limit + 1);
-		TokensOf::<T>::mint(native_asset_id.into(), &caller, native_asset_amount.into()).unwrap();
+		TokensOf::<T>::mint(native_asset_id.into(), &caller, native_asset_amount.to_balance::<T>()).unwrap();
 
-		for _ in 0 .. schedules_limit - 1 {
-			let token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.into()).unwrap().into();
-			XykOf::<T>::create_pool(caller.clone(), native_asset_id.into(), REWARDS_AMOUNT.into(), token_id.into(), REWARDS_AMOUNT.into()).unwrap();
-			let reward_token = token_id + 1;
+		for _ in 0 .. schedules_limit - 2 {
+			let token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.to_balance::<T>()).unwrap();
+			XykOf::<T>::create_pool(caller.clone(), native_asset_id.into(), REWARDS_AMOUNT.to_balance::<T>(), token_id, REWARDS_AMOUNT.to_balance::<T>()).unwrap();
+			let reward_token = token_id + One::one();
 			let balance:u128 = TokensOf::<T>::free_balance(reward_token.into(), &caller).into();
 			assert_eq!(balance, REWARDS_AMOUNT);
 
@@ -220,19 +231,19 @@ benchmarks! {
 				RawOrigin::Signed(caller.clone().into()).into(),
 				(native_asset_id, token_id),
 				reward_token.into(),
-				(REWARDS_AMOUNT).into(),
+				(REWARDS_AMOUNT).to_balance::<T>(),
 				10u32.into(),
 			).unwrap();
 		}
 
-		let token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.into()).unwrap().into();
-		XykOf::<T>::create_pool(caller.clone(), native_asset_id.into(), REWARDS_AMOUNT.into(), token_id.into(), REWARDS_AMOUNT.into()).unwrap();
-		let reward_token = token_id + 1;
+		let token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.to_balance::<T>()).unwrap();
+		XykOf::<T>::create_pool(caller.clone(), native_asset_id.into(), REWARDS_AMOUNT.to_balance::<T>(), token_id.into(), REWARDS_AMOUNT.to_balance::<T>()).unwrap();
+		let reward_token = token_id + One::one();
 		PoS::<T>::reward_pool(
 			RawOrigin::Signed(caller.clone().into()).into(),
 			(native_asset_id, token_id),
 			reward_token.into(),
-			REWARDS_AMOUNT,
+			REWARDS_AMOUNT.to_balance::<T>(),
 			2u32.into(),
 		).unwrap();
 
@@ -240,21 +251,21 @@ benchmarks! {
 		forward_to_next_session::<T>();
 		forward_to_next_session::<T>();
 
-		let token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.into()).unwrap().into();
-		XykOf::<T>::create_pool(caller.clone(), native_asset_id.into(), REWARDS_AMOUNT.into(), token_id.into(), REWARDS_AMOUNT.into()).unwrap();
-		let reward_token = token_id + 1;
+		let token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.to_balance::<T>()).unwrap();
+		XykOf::<T>::create_pool(caller.clone(), native_asset_id.into(), REWARDS_AMOUNT.to_balance::<T>(), token_id.into(), REWARDS_AMOUNT.to_balance::<T>()).unwrap();
+		let reward_token = token_id + One::one();
 
 		assert_eq!(
-			PoS::<T>::tail().unwrap(),
+			PoS::<T>::list_metadata().count,
 			(schedules_limit - 1 ) as u64
 		);
 
-	}: reward_pool(RawOrigin::Signed(caller.clone().into()), (native_asset_id,token_id), reward_token.into(), REWARDS_AMOUNT, 10u32.into())
+	}: reward_pool(RawOrigin::Signed(caller.clone().into()), (native_asset_id,token_id), reward_token.into(), REWARDS_AMOUNT.to_balance::<T>(), 10u32.into())
 	verify {
 
 		assert_eq!(
-			PoS::<T>::tail().unwrap(),
-			schedules_limit as u64
+			PoS::<T>::list_metadata().count,
+			(schedules_limit as u64)
 		);
 
 	}
@@ -272,39 +283,39 @@ benchmarks! {
 		let REWARDS_AMOUNT: u128 = <T as Config>::Min3rdPartyRewardValutationPerSession::get() * (schedules_limit as u128);
 
 		loop {
-			let token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.into()).unwrap().into();
+			let token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.to_balance::<T>()).unwrap();
 			if token_id > native_asset_id {
 				break;
 			}
 		}
 
 		let native_asset_amount: u128 = REWARDS_AMOUNT * Into::<u128>::into(schedules_limit);
-		TokensOf::<T>::mint(native_asset_id.into(), &caller, native_asset_amount.into()).unwrap();
+		TokensOf::<T>::mint(native_asset_id.into(), &caller, native_asset_amount.to_balance::<T>()).unwrap();
 
-		let first_token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.into()).unwrap().into();
-		XykOf::<T>::create_pool(caller.clone(), native_asset_id.into(), REWARDS_AMOUNT.into(), first_token_id.into(), REWARDS_AMOUNT.into()).unwrap();
-		let liquidity_asset_id = first_token_id + 1;
+		let first_token_id= TokensOf::<T>::create(&caller, REWARDS_AMOUNT.to_balance::<T>()).unwrap();
+		XykOf::<T>::create_pool(caller.clone(), native_asset_id, REWARDS_AMOUNT.to_balance::<T>(), first_token_id, REWARDS_AMOUNT.to_balance::<T>()).unwrap();
+		let liquidity_asset_id = first_token_id + One::one();
 
-		let second_token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.into()).unwrap().into();
-		XykOf::<T>::create_pool(caller.clone(), native_asset_id.into(), REWARDS_AMOUNT.into(), second_token_id.into(), REWARDS_AMOUNT.into()).unwrap();
-		let reward_token_id = second_token_id + 1;
+		let second_token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.to_balance::<T>()).unwrap();
+		XykOf::<T>::create_pool(caller.clone(), native_asset_id.into(), REWARDS_AMOUNT.to_balance::<T>(), second_token_id.into(), REWARDS_AMOUNT.to_balance::<T>()).unwrap();
+		let reward_token_id = second_token_id + One::one();
 
 
 		PoS::<T>::reward_pool(
 			RawOrigin::Signed(caller.clone().into()).into(),
 			(native_asset_id, first_token_id),
 			reward_token_id.into(),
-			REWARDS_AMOUNT,
+			REWARDS_AMOUNT.to_balance::<T>(),
 			2u32.into(),
 		).unwrap();
 
-	}: activate_liquidity_for_3rdparty_rewards(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id, 10_000u128, reward_token_id, None)
+	}: activate_liquidity_for_3rdparty_rewards(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id.into(), 10_000u128.to_balance::<T>(), reward_token_id, None)
 	verify {
 		forward_to_next_session::<T>();
 		forward_to_next_session::<T>();
 		assert_eq!(
-		   PoS::<T>::calculate_3rdparty_rewards_amount(caller, liquidity_asset_id, reward_token_id).unwrap(),
-		   REWARDS_AMOUNT/2
+		   PoS::<T>::calculate_3rdparty_rewards_amount(caller, liquidity_asset_id.into(), reward_token_id).unwrap(),
+					(REWARDS_AMOUNT/2).to_balance::<T>()
 		)
 	}
 
@@ -322,35 +333,34 @@ benchmarks! {
 		let REWARDS_AMOUNT: u128 = 2u128 * <T as Config>::Min3rdPartyRewardValutationPerSession::get();
 
 		loop {
-			let token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.into()).unwrap().into();
+			let token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.to_balance::<T>()).unwrap();
 			if token_id > native_asset_id {
 				break;
 			}
 		}
+		TokensOf::<T>::mint(native_asset_id.into(), &caller, REWARDS_AMOUNT.to_balance::<T>()).unwrap();
 
 		let native_asset_amount: u128 = REWARDS_AMOUNT * Into::<u128>::into(schedules_limit);
-		TokensOf::<T>::mint(native_asset_id.into(), &caller, native_asset_amount.into()).unwrap();
+		let first_token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.to_balance::<T>()).unwrap();
+		XykOf::<T>::create_pool(caller.clone(), native_asset_id.into(), REWARDS_AMOUNT.to_balance::<T>(), first_token_id.into(), REWARDS_AMOUNT.to_balance::<T>()).unwrap();
+		let liquidity_asset_id = first_token_id + One::one();
 
-		let first_token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.into()).unwrap().into();
-		XykOf::<T>::create_pool(caller.clone(), native_asset_id.into(), REWARDS_AMOUNT.into(), first_token_id.into(), REWARDS_AMOUNT.into()).unwrap();
-		let liquidity_asset_id = first_token_id + 1;
-
-		let second_token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.into()).unwrap().into();
-		XykOf::<T>::create_pool(caller.clone(), native_asset_id.into(), REWARDS_AMOUNT.into(), second_token_id.into(), REWARDS_AMOUNT.into()).unwrap();
-		let reward_token_id = second_token_id + 1;
+		let second_token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.to_balance::<T>()).unwrap();
+		XykOf::<T>::create_pool(caller.clone(), native_asset_id.into(), REWARDS_AMOUNT.to_balance::<T>(), second_token_id.into(), REWARDS_AMOUNT.to_balance::<T>()).unwrap();
+		let reward_token_id = second_token_id + One::one();
 
 		PoS::<T>::reward_pool(
 			RawOrigin::Signed(caller.clone().into()).into(),
 			(native_asset_id, first_token_id),
 			reward_token_id.into(),
-			REWARDS_AMOUNT,
+			REWARDS_AMOUNT.to_balance::<T>(),
 			2u32.into(),
 		).unwrap();
 
 		assert!(TokensOf::<T>::ensure_can_withdraw(
 			liquidity_asset_id.into(),
 			&caller,
-			REWARDS_AMOUNT.into(),
+			REWARDS_AMOUNT.to_balance::<T>(),
 			WithdrawReasons::all(),
 			Default::default(),
 		).is_ok());
@@ -358,7 +368,7 @@ benchmarks! {
 		PoS::<T>::activate_liquidity_for_3rdparty_rewards(
 			RawOrigin::Signed(caller.clone().into()).into(),
 			liquidity_asset_id,
-			10_000u128,
+			10_000u128.to_balance::<T>(),
 			reward_token_id,
 			None
 		).unwrap();
@@ -367,20 +377,20 @@ benchmarks! {
 			TokensOf::<T>::ensure_can_withdraw(
 			liquidity_asset_id.into(),
 			&caller,
-			REWARDS_AMOUNT.into(),
+			REWARDS_AMOUNT.to_balance::<T>(),
 			WithdrawReasons::all(),
 			Default::default(),
 			).is_err()
 		);
 
 
-	}: deactivate_liquidity_for_3rdparty_rewards(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id, 10_000u128, reward_token_id)
+	}: deactivate_liquidity_for_3rdparty_rewards(RawOrigin::Signed(caller.clone().into()), liquidity_asset_id, 10_000u128.to_balance::<T>(), reward_token_id)
 	verify {
 
 		assert!(TokensOf::<T>::ensure_can_withdraw(
 			liquidity_asset_id.into(),
 			&caller,
-			REWARDS_AMOUNT.into(),
+			REWARDS_AMOUNT.to_balance::<T>(),
 			WithdrawReasons::all(),
 			Default::default(),
 		).is_ok());
@@ -402,35 +412,35 @@ benchmarks! {
 		let REWARDS_AMOUNT: u128 = 2u128 * <T as Config>::Min3rdPartyRewardValutationPerSession::get();
 
 		loop {
-			let token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.into()).unwrap().into();
+			let token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.to_balance::<T>()).unwrap();
 			if token_id > native_asset_id {
 				break;
 			}
 		}
 
 		let native_asset_amount: u128 = REWARDS_AMOUNT * Into::<u128>::into(schedules_limit);
-		TokensOf::<T>::mint(native_asset_id.into(), &caller, native_asset_amount.into()).unwrap();
+		TokensOf::<T>::mint(native_asset_id.into(), &caller, native_asset_amount.to_balance::<T>()).unwrap();
 
-		let first_token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.into()).unwrap().into();
-		XykOf::<T>::create_pool(caller.clone(), native_asset_id.into(), REWARDS_AMOUNT.into(), first_token_id.into(), REWARDS_AMOUNT.into()).unwrap();
-		let liquidity_asset_id = first_token_id + 1;
+		let first_token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.to_balance::<T>()).unwrap();
+		XykOf::<T>::create_pool(caller.clone(), native_asset_id.into(), REWARDS_AMOUNT.to_balance::<T>(), first_token_id.into(), REWARDS_AMOUNT.to_balance::<T>()).unwrap();
+		let liquidity_asset_id = first_token_id + One::one();
 
-		let second_token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.into()).unwrap().into();
-		XykOf::<T>::create_pool(caller.clone(), native_asset_id.into(), REWARDS_AMOUNT.into(), second_token_id.into(), REWARDS_AMOUNT.into()).unwrap();
-		let reward_token_id = second_token_id + 1;
+		let second_token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.to_balance::<T>()).unwrap();
+		XykOf::<T>::create_pool(caller.clone(), native_asset_id.into(), REWARDS_AMOUNT.to_balance::<T>(), second_token_id.into(), REWARDS_AMOUNT.to_balance::<T>()).unwrap();
+		let reward_token_id = second_token_id + One::one();
 
 		PoS::<T>::reward_pool(
 			RawOrigin::Signed(caller.clone().into()).into(),
 			(native_asset_id, first_token_id),
 			reward_token_id.into(),
-			REWARDS_AMOUNT,
+			REWARDS_AMOUNT.to_balance::<T>(),
 			2u32.into(),
 		).unwrap();
 
 		PoS::<T>::activate_liquidity_for_3rdparty_rewards(
 			RawOrigin::Signed(caller.clone().into()).into(),
 			liquidity_asset_id,
-			10_000u128,
+			10_000u128.to_balance::<T>(),
 			reward_token_id,
 			None
 		).unwrap();
@@ -439,17 +449,17 @@ benchmarks! {
 		forward_to_next_session::<T>();
 		assert_eq!(
 			PoS::<T>::calculate_3rdparty_rewards_amount(caller.clone(), liquidity_asset_id, reward_token_id).unwrap(),
-			REWARDS_AMOUNT / 2
+			(REWARDS_AMOUNT / 2).to_balance::<T>()
 		);
 		forward_to_next_session::<T>();
 		assert_eq!(
 			PoS::<T>::calculate_3rdparty_rewards_amount(caller.clone(), liquidity_asset_id, reward_token_id).unwrap(),
-			REWARDS_AMOUNT
+			REWARDS_AMOUNT.to_balance::<T>()
 		);
 		forward_to_next_session::<T>();
 		assert_eq!(
 			PoS::<T>::calculate_3rdparty_rewards_amount(caller.clone(), liquidity_asset_id, reward_token_id).unwrap(),
-			REWARDS_AMOUNT
+			REWARDS_AMOUNT.to_balance::<T>()
 		);
 
 		let balance_before:u128 = TokensOf::<T>::free_balance(reward_token_id.into(), &caller).into();
@@ -460,7 +470,7 @@ benchmarks! {
 		let balance_after:u128 = TokensOf::<T>::free_balance(reward_token_id.into(), &caller).into();
 		assert_eq!(
 			PoS::<T>::calculate_3rdparty_rewards_amount(caller.clone(), liquidity_asset_id, reward_token_id).unwrap(),
-			0u128
+			0u128.to_balance::<T>()
 		);
 
 		assert_eq!(balance_after - balance_before, REWARDS_AMOUNT);

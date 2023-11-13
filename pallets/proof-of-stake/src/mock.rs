@@ -303,6 +303,7 @@ impl pos::Config for Test {
 	type Min3rdPartyRewardVolume = ConstU128<10>;
 	type WeightInfo = ();
 	type ValuationApi = Xyk;
+	type SchedulesPerBlock = ConstU32<5>;
 }
 
 pub struct TokensActivationPassthrough<T: Config>(PhantomData<T>);

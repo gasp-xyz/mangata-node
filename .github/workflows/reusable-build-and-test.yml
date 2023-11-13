@@ -34,7 +34,7 @@ jobs:
     container:
       image: ${{ inputs.builder_image }}
       env:
-        DOCKER_HOST: 'unix:///run/docker/docker.sock'
+        DOCKER_HOST: "unix:///run/docker/docker.sock"
       volumes:
         - /run/docker:/run/docker
     steps:
@@ -42,8 +42,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
 
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
@@ -130,8 +130,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
         with:
@@ -154,8 +154,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
         with:
@@ -179,8 +179,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
         with:
@@ -210,8 +210,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
         with:
@@ -222,9 +222,12 @@ jobs:
             /usr/local/cargo/registry
           key: cargo-benchmark-cache-${{ inputs.cache_version }}-${{ hashFiles('Cargo.lock') }}
       - name: Run benchmarks tests
-        run: cargo test --release -j8 --features=runtime-benchmarks -p pallet-xyk -p pallet-issuance -p pallet-multipurpose-liquidity -p pallet-fee-lock -p pallet-proof-of-stake -p pallet-proof-of-stake
+        run: cargo test --release -j8 --features=runtime-benchmarks -p pallet-xyk -p pallet-issuance -p pallet-multipurpose-liquidity -p pallet-fee-lock
       - name: Run benchmarks tests
         run: cargo test --release -j8 --features=runtime-benchmarks -p pallet-bootstrap
+      # NOTE: MGX-742
+      - name: Run benchmarks tests
+        run: cargo test --release -j8 --features=runtime-benchmarks -p pallet-proof-of-stake
 
   build-and-run-try-runtime:
     name: Run try-runtime checks
@@ -236,8 +239,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
         with:
@@ -272,8 +275,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
 
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
@@ -321,7 +324,6 @@ jobs:
           name: benchmarks
           path: ./benchmarks
 
-
   build-wasms:
     name: Export wasm artifacts
     runs-on: [compile-gke]
@@ -335,8 +337,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
 
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
@@ -362,4 +364,3 @@ jobs:
           /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=mangata-rococo -l=info,xyk=error > /dev/null'
           /bin/bash -c 'target/release/mangata-node export-genesis-state --chain=mangata-rococo-local -l=info,xyk=error > /dev/null'
           /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=mangata-rococo-local -l=info,xyk=error > /dev/null'
-

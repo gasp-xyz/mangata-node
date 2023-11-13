@@ -13,13 +13,13 @@ serde = { version = "1.0.126", features = ["derive"], optional = true }
 
 # Substrate packages
 
-sp-api = { version = '4.0.0-dev', default-features = false , git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-blockchain = { version = '4.0.0-dev', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-rpc = { version = '6.0.0', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-core = { version = '7.0.0', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-std = { version = '5.0.0', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-sp-runtime = { version = '7.0.0', default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
-mangata-types = { default-features = false, git = "https://github.com/mangata-finance/substrate", branch = "mangata-dev" }
+sp-api = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+sp-blockchain = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+sp-rpc = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+sp-core = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+sp-std = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+sp-runtime = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+mangata-types = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
 
 # local packages
 
@@ -27,11 +27,14 @@ proof-of-stake-runtime-api = { version = "2.0.0", path = "../runtime-api", defau
 
 [features]
 default = ["std"]
+
 std = [
-    "serde",
-    "sp-api/std",
-    "sp-core/std",
-    "sp-std/std",
-    "sp-runtime/std",
-    "proof-of-stake-runtime-api/std"
+	"serde",
+	"sp-api/std",
+	"sp-core/std",
+	"sp-std/std",
+	"sp-runtime/std",
+	"proof-of-stake-runtime-api/std",
+	"mangata-types/std",
+	"codec/std",
 ]

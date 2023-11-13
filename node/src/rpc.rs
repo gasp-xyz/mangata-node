@@ -77,8 +77,8 @@ where
 
 	module.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
 	module.merge(TransactionPayment::new(client.clone()).into_rpc())?;
-	module.merge(Xyk::new(client).into_rpc())?;
-	module.merge(ProofOfStake::new(client.clone()).into_rpc())?;
+	module.merge(Xyk::new(client.clone()).into_rpc())?;
+	module.merge(ProofOfStake::new(client).into_rpc())?;
 
 	Ok(module)
 }

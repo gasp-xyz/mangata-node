@@ -338,13 +338,14 @@ benchmarks! {
 				break;
 			}
 		}
-		TokensOf::<T>::mint(native_asset_id.into(), &caller, REWARDS_AMOUNT.to_balance::<T>()).unwrap();
 
 		let native_asset_amount: u128 = REWARDS_AMOUNT * Into::<u128>::into(schedules_limit);
+		TokensOf::<T>::mint(native_asset_id.into(), &caller, REWARDS_AMOUNT.to_balance::<T>()).unwrap();
 		let first_token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.to_balance::<T>()).unwrap();
 		XykOf::<T>::create_pool(caller.clone(), native_asset_id.into(), REWARDS_AMOUNT.to_balance::<T>(), first_token_id.into(), REWARDS_AMOUNT.to_balance::<T>()).unwrap();
 		let liquidity_asset_id = first_token_id + One::one();
 
+		TokensOf::<T>::mint(native_asset_id.into(), &caller, REWARDS_AMOUNT.to_balance::<T>()).unwrap();
 		let second_token_id = TokensOf::<T>::create(&caller, REWARDS_AMOUNT.to_balance::<T>()).unwrap();
 		XykOf::<T>::create_pool(caller.clone(), native_asset_id.into(), REWARDS_AMOUNT.to_balance::<T>(), second_token_id.into(), REWARDS_AMOUNT.to_balance::<T>()).unwrap();
 		let reward_token_id = second_token_id + One::one();

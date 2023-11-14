@@ -1687,25 +1687,25 @@ benchmarks! {
 
 	active_session_change {
 
-		// // liquidity tokens
-		// let x in 3..100;
-		// // candidate_count
-		// let y in (<<T as Config>::MinSelectedCandidates as Get<u32>>::get() + 1u32)..(<<T as Config>::MaxCollatorCandidates as Get<u32>>::get() - 2u32); // to account for the two candidates we start with
-		// // MaxDelegatorsPerCandidate
-		// let z in 3..<<T as Config>::MaxDelegatorsPerCandidate as Get<u32>>::get();
-		//
-		// // // Since now an aggregator can have multiple collators each of whose rewards will be written to the storage individually
-		// // // Total selected
-		// let w = <<T as Config>::MinSelectedCandidates as Get<u32>>::get() + 1u32;
-
 		// liquidity tokens
-		let x = 100;
+		let x in 3..100;
 		// candidate_count
-		let y = 55;
+		let y in (<<T as Config>::MinSelectedCandidates as Get<u32>>::get() + 1u32)..(<<T as Config>::MaxCollatorCandidates as Get<u32>>::get() - 2u32); // to account for the two candidates we start with
 		// MaxDelegatorsPerCandidate
-		let z = 30;
-		// Total selected
-		let w = 51;
+		let z in 3..<<T as Config>::MaxDelegatorsPerCandidate as Get<u32>>::get();
+
+		// // Since now an aggregator can have multiple collators each of whose rewards will be written to the storage individually
+		// // Total selected
+		let w = <<T as Config>::MinSelectedCandidates as Get<u32>>::get() + 1u32;
+
+		// // liquidity tokens
+		// let x = 100;
+		// // candidate_count
+		// let y = 190;
+		// // MaxDelegatorsPerCandidate
+		// let z = 200;
+		// // Total selected
+		// let w = 190;
 
 		assert_ok!(<pallet_issuance::Pallet<T>>::finalize_tge(RawOrigin::Root.into()));
 		assert_ok!(<pallet_issuance::Pallet<T>>::init_issuance_config(RawOrigin::Root.into()));

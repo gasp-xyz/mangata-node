@@ -5808,7 +5808,6 @@ dependencies = [
  "orml-xtokens",
  "pallet-aura",
  "pallet-authorship",
- "pallet-balances",
  "pallet-bootstrap",
  "pallet-collective-mangata",
  "pallet-crowdloan-rewards",

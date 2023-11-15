@@ -72,7 +72,6 @@ ver-api = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "d
 ## Substrate Pallet Dependencies
 pallet-aura = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
 pallet-authorship = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-pallet-balances = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
 pallet-collective-mangata = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
 pallet-identity = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
 pallet-proxy = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
@@ -150,7 +149,6 @@ std = [
 	"orml-xtokens/std",
 	"pallet-aura/std",
 	"pallet-authorship/std",
-	"pallet-balances/std",
 	"pallet-bootstrap/std",
 	"pallet-collective-mangata/std",
 	"pallet-crowdloan-rewards/std",
@@ -219,7 +217,6 @@ try-runtime = [
 	"orml-xtokens/try-runtime",
 	"pallet-aura/try-runtime",
 	"pallet-authorship/try-runtime",
-	"pallet-balances/try-runtime",
 	"pallet-bootstrap/try-runtime",
 	"pallet-collective-mangata/try-runtime",
 	"pallet-crowdloan-rewards/try-runtime",
@@ -262,7 +259,6 @@ runtime-benchmarks = [
 	"orml-asset-registry/runtime-benchmarks",
 	"orml-tokens/runtime-benchmarks",
 	"orml-xtokens/runtime-benchmarks",
-	"pallet-balances/runtime-benchmarks",
 	"pallet-bootstrap/runtime-benchmarks",
 	"pallet-collective-mangata/runtime-benchmarks",
 	"pallet-crowdloan-rewards/runtime-benchmarks",

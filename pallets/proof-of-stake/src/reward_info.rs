@@ -52,18 +52,8 @@ pub struct RewardsCalculator<Curve, Balance> {
 
 impl<Balance> RewardsCalculator<AsymptoticCurveRewards<Balance>, Balance>
 where
-	Balance: 'static
-		+ AtLeast32BitUnsigned
-		+ FullCodec
-		+ Copy
-		+ Default
-		+ sp_std::fmt::Debug
-		+ scale_info::TypeInfo
-		+ MaxEncodedLen
-		+ Into<u128>
-		+ TryFrom<u128>,
+	Balance: 'static + CurrencyBalance,
 {
-	// type Balance: Balance;
 	pub fn mining_rewards<T>(
 		user: T::AccountId,
 		asset_id: crate::CurrencyIdOf<T>,
@@ -97,14 +87,7 @@ where
 
 impl<Balance> RewardsCalculator<ConstCurveRewards<Balance>, Balance>
 where
-	Balance: 'static
-		+ AtLeast32BitUnsigned
-		+ FullCodec
-		+ Copy
-		+ Default
-		+ sp_std::fmt::Debug
-		+ scale_info::TypeInfo
-		+ MaxEncodedLen,
+	Balance: 'static + CurrencyBalance,
 {
 	pub fn schedule_rewards<T: Config>(
 		user: T::AccountId,
@@ -148,7 +131,7 @@ where
 }
 
 pub trait CurveRewards {
-	type Balance: AtLeast32BitUnsigned + TryFrom<u128> + Into<u128>;
+	type Balance: CurrencyBalance;
 	fn calculate_curve_position(
 		ctx: &RewardsContext,
 		user_info: &RewardInfo<Self::Balance>,
@@ -164,7 +147,7 @@ pub struct AsymptoticCurveRewards<Balance>(RewardsContext, RewardInfo<Balance>);
 
 impl<Balance> CurveRewards for AsymptoticCurveRewards<Balance>
 where
-	Balance: AtLeast32BitUnsigned + TryFrom<u128> + Into<u128>,
+	Balance: 'static + CurrencyBalance,
 {
 	type Balance = Balance;
 	fn calculate_curve_position(
@@ -230,7 +213,7 @@ where
 
 impl<Balance> CurveRewards for ConstCurveRewards<Balance>
 where
-	Balance: AtLeast32BitUnsigned + TryFrom<u128> + Into<u128>,
+	Balance: 'static + CurrencyBalance,
 {
 	type Balance = Balance;
 	fn calculate_curve_position(
@@ -268,7 +251,9 @@ impl<T: Config> Into<Error<T>> for RewardsCalcError {
 	}
 }
 
-pub trait MyBalance:
+/// Balance of MultiToken currency is quite complex and cannot be reexported so lets recreate it
+/// here to simplify trait bounds
+pub trait CurrencyBalance:
 	TryFrom<u128>
 	+ Into<u128>
 	+ AtLeast32BitUnsigned
@@ -281,10 +266,8 @@ pub trait MyBalance:
 {
 }
 
-impl<T, Balance> RewardsCalculator<T, Balance>
-where
-	T: CurveRewards<Balance = Balance>,
-	Balance: TryFrom<u128>
+impl<T> CurrencyBalance for T where
+	T: TryFrom<u128>
 		+ Into<u128>
 		+ AtLeast32BitUnsigned
 		+ FullCodec
@@ -292,7 +275,14 @@ where
 		+ Default
 		+ sp_std::fmt::Debug
 		+ scale_info::TypeInfo
-		+ MaxEncodedLen,
+		+ MaxEncodedLen
+{
+}
+
+impl<T, Balance> RewardsCalculator<T, Balance>
+where
+	T: CurveRewards<Balance = Balance>,
+	Balance: CurrencyBalance,
 {
 	pub fn activate_more(
 		self,

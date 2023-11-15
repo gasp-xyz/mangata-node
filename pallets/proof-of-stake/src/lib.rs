@@ -119,7 +119,7 @@ use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResult, PostDispatchInfo},
 	ensure,
 	storage::bounded_btree_map::BoundedBTreeMap,
-	traits::Nothing,
+	traits::{Currency, Nothing},
 };
 use frame_system::ensure_signed;
 use mangata_support::traits::Valuate;
@@ -205,7 +205,6 @@ const PALLET_ID: frame_support::PalletId = frame_support::PalletId(*b"rewards!")
 pub type SessionId = u64;
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::traits::Currency;
 
 	use super::*;
 
@@ -612,7 +611,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			<Self as ProofOfStakeRewardsApi<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>>>::claim_rewards_all(
+			<Self as ProofOfStakeRewardsApi<_, _, _>>::claim_rewards_all(
 				sender,
 				liquidity_token_id,
 			)?;
@@ -631,12 +630,12 @@ pub mod pallet {
 			ensure_root(origin)?;
 
 			if liquidity_mining_issuance_weight > 0 {
-				<Self as ProofOfStakeRewardsApi<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>>>::enable(
+				<Self as ProofOfStakeRewardsApi<_, _, _>>::enable(
 					liquidity_token_id,
 					liquidity_mining_issuance_weight,
 				);
 			} else {
-				<Self as ProofOfStakeRewardsApi<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>>>::disable(liquidity_token_id);
+				<Self as ProofOfStakeRewardsApi<_, _, _>>::disable(liquidity_token_id);
 			}
 			Ok(())
 		}
@@ -659,11 +658,12 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
-			<Self as ProofOfStakeRewardsApi<
-				AccountIdOf<T>,
-				BalanceOf<T>,
-				CurrencyIdOf<T>,
-			>>::activate_liquidity(sender, liquidity_token_id, amount, use_balance_from)
+			<Self as ProofOfStakeRewardsApi<_, _, _>>::activate_liquidity(
+				sender,
+				liquidity_token_id,
+				amount,
+				use_balance_from,
+			)
 		}
 
 		/// Decreases number of tokens used for liquidity mining purposes

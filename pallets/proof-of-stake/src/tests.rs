@@ -2364,7 +2364,7 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 
 			roll_to_session::<Test>(2);
 			assert_eq!(
-				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
+				ProofOfStake::calculate_3rdparty_rewards_all(BOB),
 				vec![(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 1 * 1000u128),]
 			);
 			ProofOfStake::reward_pool(
@@ -2386,7 +2386,7 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 
 			roll_to_session::<Test>(3);
 			assert_eq!(
-				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
+				ProofOfStake::calculate_3rdparty_rewards_all(BOB),
 				vec![
 					(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 2 * 1000u128),
 					(FIRST_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 0 * 2000u128),
@@ -2396,7 +2396,7 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 			roll_to_session::<Test>(4);
 
 			assert_eq!(
-				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
+				ProofOfStake::calculate_3rdparty_rewards_all(BOB),
 				vec![
 					(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 3 * 1000u128),
 					(FIRST_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 1 * 2000u128),
@@ -2421,7 +2421,7 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 
 			roll_to_session::<Test>(5);
 			assert_eq!(
-				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
+				ProofOfStake::calculate_3rdparty_rewards_all(BOB),
 				vec![
 					(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 4 * 1000u128),
 					(FIRST_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 2 * 2000u128),
@@ -2447,7 +2447,7 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 
 			roll_to_session::<Test>(7);
 			assert_eq!(
-				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
+				ProofOfStake::calculate_3rdparty_rewards_all(BOB),
 				vec![
 					(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 6 * 1000u128),
 					(FIRST_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 4 * 2000u128),
@@ -2464,7 +2464,7 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 			.unwrap();
 
 			assert_eq!(
-				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
+				ProofOfStake::calculate_3rdparty_rewards_all(BOB),
 				vec![
 					(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 0u128),
 					(FIRST_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 4 * 2000u128),
@@ -2480,7 +2480,7 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 			)
 			.unwrap();
 			assert_eq!(
-				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
+				ProofOfStake::calculate_3rdparty_rewards_all(BOB),
 				vec![
 					(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 0u128),
 					(FIRST_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 0u128),
@@ -2496,7 +2496,7 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 			)
 			.unwrap();
 			assert_eq!(
-				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
+				ProofOfStake::calculate_3rdparty_rewards_all(BOB),
 				vec![
 					(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 0u128),
 					(FIRST_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 0u128),
@@ -2513,7 +2513,7 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 			.unwrap();
 
 			assert_eq!(
-				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
+				ProofOfStake::calculate_3rdparty_rewards_all(BOB),
 				vec![
 					(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 0u128),
 					(FIRST_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 0u128),
@@ -2552,7 +2552,7 @@ fn calculate_and_claim_rewards_from_multiple_schedules_using_single_liquidity() 
 			)
 			.unwrap();
 			assert_eq!(
-				ProofOfStake::calculate_3rdparty_rewards_all(BOB).unwrap(),
+				ProofOfStake::calculate_3rdparty_rewards_all(BOB),
 				vec![
 					(FIRST_LIQUIDITY_TOKEN, FIRST_REWARD_TOKEN, 0u128),
 					(FIRST_LIQUIDITY_TOKEN, SECOND_REWARD_TOKEN, 0u128),

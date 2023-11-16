@@ -1043,14 +1043,15 @@ impl<T: Config> Pallet<T> {
 
 	pub fn calculate_3rdparty_rewards_all(
 		user: AccountIdOf<T>,
-	) -> Result<Vec<(CurrencyIdOf<T>, CurrencyIdOf<T>, BalanceOf<T>)>, DispatchError> {
-		let mut result = RewardsInfoForScheduleRewards::<T>::iter_prefix(user.clone())
+	) -> Vec<(CurrencyIdOf<T>, CurrencyIdOf<T>, BalanceOf<T>)> {
+		let result = RewardsInfoForScheduleRewards::<T>::iter_prefix(user.clone())
 			.map(|((liq_token, reward_token), _)| {
 				Self::calculate_3rdparty_rewards_amount(user.clone(), liq_token, reward_token)
 					.map(|amount| (liq_token, reward_token, amount))
 			})
 			.collect::<Result<Vec<_>, _>>();
-		result.as_mut().map(|v| v.sort());
+		let mut result = result.unwrap_or_default();
+		result.sort();
 		result
 	}
 

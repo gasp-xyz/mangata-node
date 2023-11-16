@@ -1,6 +1,6 @@
 // Copyright (C) 2021 Mangata team
 #![cfg_attr(not(feature = "std"), no_std)]
-use codec::{Codec, Decode, Encode};
+use codec::Codec;
 use sp_runtime::traits::{MaybeDisplay, MaybeFromStr};
 use sp_std::vec::Vec;
 

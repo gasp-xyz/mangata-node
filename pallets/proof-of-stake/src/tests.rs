@@ -2596,7 +2596,7 @@ fn liquidity_minting_liquidity_can_be_resused() {
 				LIQUIDITY_TOKEN,
 				100,
 				FIRST_REWARD_TOKEN,
-				Some(ThirdPartyActivationKind::LiquidityMining),
+				Some(ThirdPartyActivationKind::NativeRewardsLiquidity),
 			)
 			.unwrap();
 
@@ -2651,7 +2651,7 @@ fn fail_to_transfer_tokens_that_has_been_partially_deactivated() {
 				LIQUIDITY_TOKEN,
 				100,
 				FIRST_REWARD_TOKEN,
-				Some(ThirdPartyActivationKind::LiquidityMining),
+				Some(ThirdPartyActivationKind::NativeRewardsLiquidity),
 			)
 			.unwrap();
 
@@ -2751,7 +2751,7 @@ fn when_liquidity_mining_is_reused_it_is_unlocked_properly() {
 				LIQUIDITY_TOKEN,
 				100,
 				FIRST_REWARD_TOKEN,
-				Some(ThirdPartyActivationKind::LiquidityMining),
+				Some(ThirdPartyActivationKind::NativeRewardsLiquidity),
 			)
 			.unwrap();
 

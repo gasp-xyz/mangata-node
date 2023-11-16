@@ -50,7 +50,7 @@
 //! #### Storage entries
 //!
 //! - [`RewardsInfoForScheduleRewards`] - Stores information about rewards for scheduled rewards.
-//! - [`ScheduleRewardsPerSingleLiquidity`] - Stores the amount of rewards per single liquidity token.
+//! - [`ScheduleRewardsTotal`] - Stores the amount of rewards per single liquidity token.
 //! - [`RewardsSchedules`] - Stores information about scheduled rewards.
 //! - [`ScheduleId`] - Stores the unique id of the schedule.
 //! - [`RewardTokensPerPool`] - Stores information about which reward tokens are used for a particular
@@ -85,7 +85,7 @@
 //!
 //! - The user can reuse liquidity used for scheduled rewards (X) to sign up for rewards from other tokens (provided by Bob). In that case, [`Pallet::activate_liquidity_for_3rdparty_rewards`] should be used with [`ActivateKind::ActivatedLiquidity(X)`].
 //!
-//! - The user can't directly provide liquidity activated for scheduled rewards to activate it for liquidity mining rewards. Instead:
+//! - The user can't directly provide liquidity activated for scheduled rewards to activate it for native rewards. Instead:
 //!     * Liquidity used for schedule rewards can be deactivated
 //!     [`Pallet::deactivate_liquidity_for_3rdparty_rewards`].
 //!     * Liquidity can be activated for liquidity mining rewards [`Pallet::activate_liquidity`].
@@ -119,12 +119,14 @@ use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResult, PostDispatchInfo},
 	ensure,
 	storage::bounded_btree_map::BoundedBTreeMap,
-	traits::{Currency, Nothing},
+	traits::Currency,
 };
 use frame_system::ensure_signed;
 use mangata_support::traits::Valuate;
+use mangata_types::multipurpose_liquidity::ActivateKind;
+use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use sp_core::U256;
-use sp_runtime::traits::{AccountIdConversion, AtLeast32BitUnsigned};
+use sp_runtime::traits::AccountIdConversion;
 
 use frame_support::{
 	pallet_prelude::*,
@@ -134,10 +136,8 @@ use frame_support::{
 
 use frame_system::pallet_prelude::*;
 use mangata_support::traits::{
-	ActivationReservesProviderTrait, LiquidityMiningApi, ProofOfStakeRewardsApi, XykFunctionsTrait,
+	ActivationReservesProviderTrait, LiquidityMiningApi, ProofOfStakeRewardsApi,
 };
-use mangata_types::multipurpose_liquidity::ActivateKind;
-use orml_tokens::{MultiTokenCurrencyExtended, MultiTokenReservableCurrency};
 use sp_std::collections::btree_map::BTreeMap;
 
 use sp_runtime::{
@@ -147,7 +147,7 @@ use sp_runtime::{
 use sp_std::{convert::TryInto, prelude::*};
 
 mod reward_info;
-use reward_info::{ConstCurveRewards, RewardInfo, RewardsCalculator};
+use reward_info::{RewardInfo, RewardsCalculator};
 
 mod schedule_rewards_calculator;
 use schedule_rewards_calculator::{
@@ -197,8 +197,9 @@ type CurrencyIdOf<T> = <<T as Config>::Currency as MultiTokenCurrency<
 #[derive(Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum ThirdPartyActivationKind<CurrencyId> {
 	ActivateKind(Option<ActivateKind>),
+
 	ActivatedLiquidity(CurrencyId),
-	LiquidityMining,
+	NativeRewardsLiquidity,
 }
 
 const PALLET_ID: frame_support::PalletId = frame_support::PalletId(*b"rewards!");
@@ -976,7 +977,7 @@ impl<T: Config> Pallet<T> {
 					Error::<T>::NotEnoughAssets
 				);
 			},
-			ThirdPartyActivationKind::LiquidityMining => {
+			ThirdPartyActivationKind::NativeRewardsLiquidity => {
 				let already_activated_amount = RewardsInfoForScheduleRewards::<T>::get(
 					user.clone(),
 					(liquidity_asset_id, reward_token),

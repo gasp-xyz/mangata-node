@@ -9,7 +9,7 @@ use core::convert::TryFrom;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		tokens::currency::MultiTokenCurrency, ConstU128, ConstU32, Contains, Everything,
+		tokens::currency::MultiTokenCurrency, ConstU128, ConstU32, Contains, Everything, Nothing,
 		WithdrawReasons,
 	},
 	PalletId,

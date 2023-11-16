@@ -7,20 +7,19 @@ use jsonrpsee::{
 	types::error::{CallError, ErrorObject},
 };
 pub use proof_of_stake_runtime_api::ProofOfStakeApi as ProofOfStakeRuntimeApi;
-// use proof_of_stake_runtime_api::{RpcAmountsResult, RpcAssetMetadata, XYKRpcResult};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
-use sp_core::U256;
 use sp_rpc::number::NumberOrHex;
-use sp_runtime::{
-	generic::BlockId,
-	traits::{Block as BlockT, MaybeDisplay, MaybeFromStr},
-};
-use sp_std::convert::{TryFrom, TryInto};
+use sp_runtime::traits::{Block as BlockT, MaybeDisplay, MaybeFromStr};
 use std::sync::Arc;
 
 #[rpc(client, server)]
 pub trait ProofOfStakeApi<BlockHash, Balance, TokenId, AccountId> {
+	/// Calculates amount of available native rewards
+	///
+	/// * `account` - user account address
+	/// * `liquidity_token` - liquidity token id
+	/// * `at` - optional block hash
 	#[method(name = "pos_calculate_native_rewards_amount")]
 	fn calculate_native_rewards_amount(
 		&self,
@@ -29,6 +28,12 @@ pub trait ProofOfStakeApi<BlockHash, Balance, TokenId, AccountId> {
 		at: Option<BlockHash>,
 	) -> RpcResult<NumberOrHex>;
 
+	/// Calculates amount of available 3rdparty rewards
+	///
+	/// * `account` - user account address
+	/// * `liquidity_token` - liquidity token id
+	/// * `reward_token` - particular token that given pool is rewarded with
+	/// * `at` - optional block hash
 	#[method(name = "pos_calculate_3rdparty_rewards_amount")]
 	fn calculate_3rdparty_rewards_amount(
 		&self,
@@ -38,6 +43,10 @@ pub trait ProofOfStakeApi<BlockHash, Balance, TokenId, AccountId> {
 		at: Option<BlockHash>,
 	) -> RpcResult<NumberOrHex>;
 
+	/// # Calculates amount of all available 3rdparty rewards for given account
+	///
+	/// * `account` - user account address
+	/// * `at` - optional block hash
 	#[method(name = "pos_calculate_3rdparty_rewards_all")]
 	fn calculate_3rdparty_rewards_all(
 		&self,
@@ -78,7 +87,7 @@ where
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<NumberOrHex> {
 		let api = self.client.runtime_api();
-		let at = self.client.info().best_hash;
+		let at = at.unwrap_or(self.client.info().best_hash);
 
 		api.calculate_native_rewards_amount(at, account, liquidity_token)
 			.map(Into::<NumberOrHex>::into)
@@ -99,7 +108,7 @@ where
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<NumberOrHex> {
 		let api = self.client.runtime_api();
-		let at = self.client.info().best_hash;
+		let at = at.unwrap_or(self.client.info().best_hash);
 
 		api.calculate_3rdparty_rewards_amount(at, account, liquidity_token, reward_token)
 			.map(Into::<NumberOrHex>::into)
@@ -118,7 +127,7 @@ where
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<Vec<(TokenId, TokenId, NumberOrHex)>> {
 		let api = self.client.runtime_api();
-		let at = self.client.info().best_hash;
+		let at = at.unwrap_or(self.client.info().best_hash);
 
 		api.calculate_3rdparty_rewards_all(at, account)
 			.map(|vec| {

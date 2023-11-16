@@ -138,6 +138,10 @@ use frame_system::pallet_prelude::*;
 use mangata_support::traits::{
 	ActivationReservesProviderTrait, LiquidityMiningApi, ProofOfStakeRewardsApi,
 };
+
+#[cfg(feature = "runtime-benchmarks")]
+use mangata_support::traits::XykFunctionsTrait;
+
 use sp_std::collections::btree_map::BTreeMap;
 
 use sp_runtime::{

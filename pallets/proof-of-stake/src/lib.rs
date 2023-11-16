@@ -441,6 +441,7 @@ pub mod pallet {
 		LiquidityActivated(T::AccountId, CurrencyIdOf<T>, BalanceOf<T>),
 		LiquidityDeactivated(T::AccountId, CurrencyIdOf<T>, BalanceOf<T>),
 		RewardsClaimed(T::AccountId, CurrencyIdOf<T>, BalanceOf<T>),
+		ThirdPartyRewardsClaimed(T::AccountId, CurrencyIdOf<T>, CurrencyIdOf<T>, BalanceOf<T>),
 	}
 
 	#[pallet::storage]
@@ -1388,9 +1389,10 @@ impl<T: Config> Pallet<T> {
 			rewards_info,
 		);
 
-		Pallet::<T>::deposit_event(Event::RewardsClaimed(
+		Pallet::<T>::deposit_event(Event::ThirdPartyRewardsClaimed(
 			user,
 			liquidity_asset_id,
+			reward_token,
 			total_available_rewards,
 		));
 

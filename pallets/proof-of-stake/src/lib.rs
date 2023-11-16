@@ -430,6 +430,8 @@ pub mod pallet {
 		TooSmallVolume,
 		// Liquidity is reused for 3rdparty rewards
 		LiquidityLockedIn3rdpartyRewards,
+		// No rewards to claim
+		NoThirdPartyPartyRewardsToClaim,
 	}
 
 	#[pallet::event]
@@ -786,15 +788,22 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			liquidity_token_id: CurrencyIdOf<T>,
 			reward_token: CurrencyIdOf<T>,
-		) -> DispatchResult {
+		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
 			ScheduleRewardsCalculator::<T>::update_cumulative_rewards(
 				liquidity_token_id,
 				reward_token,
 			);
-			Self::claim_schedule_rewards_all_impl(sender, liquidity_token_id, reward_token)?;
-			Ok(())
+			Self::claim_schedule_rewards_all_impl(sender, liquidity_token_id, reward_token)
+				.map_err(|err| DispatchErrorWithPostInfo {
+					post_info: PostDispatchInfo {
+						actual_weight: Some(<<T as Config>::WeightInfo>::claim_3rdparty_rewards()),
+						pays_fee: Pays::Yes,
+					},
+					error: err,
+				})?;
+			Ok(Pays::No.into())
 		}
 
 		/// Increases number of tokens used for liquidity mining purposes.
@@ -1359,6 +1368,11 @@ impl<T: Config> Pallet<T> {
 		)?;
 		let (rewards_info, total_available_rewards) =
 			calc.claim_rewards().map_err(|err| Into::<Error<T>>::into(err))?;
+
+		ensure!(
+			total_available_rewards > Zero::zero(),
+			Error::<T>::NoThirdPartyPartyRewardsToClaim
+		);
 
 		<T as Config>::Currency::transfer(
 			reward_token.into(),

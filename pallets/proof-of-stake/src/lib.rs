@@ -863,7 +863,7 @@ impl<T: Config> Pallet<T> {
 		amount: BalanceOf<T>,
 		use_balance_from: Option<ActivateKind>,
 	) -> DispatchResult {
-		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
+		Self::ensure_native_rewards_enabled(liquidity_asset_id)?;
 
 		ensure!(
 			<T as Config>::ActivationReservesProvider::can_activate(
@@ -892,7 +892,7 @@ impl<T: Config> Pallet<T> {
 		user: AccountIdOf<T>,
 		liquidity_asset_id: CurrencyIdOf<T>,
 	) -> Result<BalanceOf<T>, DispatchError> {
-		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
+		Self::ensure_native_rewards_enabled(liquidity_asset_id)?;
 		let rewards_info = RewardsInfo::<T>::try_get(user.clone(), liquidity_asset_id)
 			.or(Err(DispatchError::from(Error::<T>::MissingRewardsInfoError)))?;
 
@@ -940,7 +940,7 @@ impl<T: Config> Pallet<T> {
 		use_balance_from: ThirdPartyActivationKind<CurrencyIdOf<T>>,
 		reward_token: CurrencyIdOf<T>,
 	) -> DispatchResult {
-		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
+		Self::ensure_3rdparty_rewards_enabled(liquidity_asset_id)?;
 
 		match use_balance_from {
 			// 1R 1W
@@ -1060,7 +1060,7 @@ impl<T: Config> Pallet<T> {
 		liquidity_asset_id: CurrencyIdOf<T>,
 		rewards_asset_id: CurrencyIdOf<T>,
 	) -> Result<BalanceOf<T>, DispatchError> {
-		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
+		Self::ensure_3rdparty_rewards_enabled(liquidity_asset_id)?;
 
 		if let Ok(info) = RewardsInfoForScheduleRewards::<T>::try_get(
 			user.clone(),
@@ -1122,16 +1122,23 @@ impl<T: Config> Pallet<T> {
 			.ok_or(DispatchError::from(Error::<T>::CalculateRewardsMathError))
 	}
 
-	fn ensure_is_promoted_pool(liquidity_asset_id: CurrencyIdOf<T>) -> Result<(), DispatchError> {
-		if Self::get_pool_rewards(liquidity_asset_id).is_ok() ||
+	fn ensure_native_rewards_enabled(
+		liquidity_asset_id: CurrencyIdOf<T>,
+	) -> Result<(), DispatchError> {
+		ensure!(Self::get_pool_rewards(liquidity_asset_id).is_ok(), Error::<T>::NotAPromotedPool);
+		Ok(())
+	}
+
+	fn ensure_3rdparty_rewards_enabled(
+		liquidity_asset_id: CurrencyIdOf<T>,
+	) -> Result<(), DispatchError> {
+		ensure!(
 			RewardTokensPerPool::<T>::iter_prefix_values(liquidity_asset_id)
 				.next()
-				.is_some()
-		{
-			Ok(())
-		} else {
-			Err(DispatchError::from(Error::<T>::NotAPromotedPool))
-		}
+				.is_some(),
+			Error::<T>::NotAPromotedPool
+		);
+		Ok(())
 	}
 
 	fn set_liquidity_minting_checkpoint(
@@ -1139,7 +1146,7 @@ impl<T: Config> Pallet<T> {
 		liquidity_asset_id: CurrencyIdOf<T>,
 		liquidity_assets_added: BalanceOf<T>,
 	) -> DispatchResult {
-		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
+		Self::ensure_native_rewards_enabled(liquidity_asset_id)?;
 
 		{
 			let calc = RewardsCalculator::mining_rewards::<T>(user.clone(), liquidity_asset_id)?;
@@ -1169,7 +1176,7 @@ impl<T: Config> Pallet<T> {
 		liquidity_assets_added: BalanceOf<T>,
 		liquidity_assets_reward: CurrencyIdOf<T>,
 	) -> DispatchResult {
-		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
+		Self::ensure_3rdparty_rewards_enabled(liquidity_asset_id)?;
 
 		ScheduleRewardsCalculator::<T>::update_cumulative_rewards(
 			liquidity_asset_id,
@@ -1221,11 +1228,9 @@ impl<T: Config> Pallet<T> {
 		liquidity_asset_id: CurrencyIdOf<T>,
 		liquidity_assets_burned: BalanceOf<T>,
 	) -> DispatchResult {
-		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
-		let current_time: u32 = Self::get_current_rewards_time()?;
-		let pool_ratio_current = Self::get_pool_rewards(liquidity_asset_id)?;
+		Self::ensure_native_rewards_enabled(liquidity_asset_id)?;
 
-		let mut rewards_info = RewardsInfo::<T>::try_get(user.clone(), liquidity_asset_id)
+		let rewards_info = RewardsInfo::<T>::try_get(user.clone(), liquidity_asset_id)
 			.or(Err(DispatchError::from(Error::<T>::MissingRewardsInfoError)))?;
 		ensure!(
 			rewards_info.activated_amount >= liquidity_assets_burned,
@@ -1264,7 +1269,7 @@ impl<T: Config> Pallet<T> {
 		liquidity_assets_burned: BalanceOf<T>,
 		reward_token: CurrencyIdOf<T>,
 	) -> DispatchResult {
-		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
+		Self::ensure_3rdparty_rewards_enabled(liquidity_asset_id)?;
 		ScheduleRewardsCalculator::<T>::update_cumulative_rewards(liquidity_asset_id, reward_token);
 
 		let calc = RewardsCalculator::schedule_rewards::<T>(
@@ -1329,7 +1334,7 @@ impl<T: Config> Pallet<T> {
 				amount,
 			);
 
-			let amount =
+			let _ =
 				ActivatedNativeRewardsLiq::<T>::mutate(user.clone(), liquidity_asset_id, |val| {
 					let prev = *val;
 					*val = BalanceOf::<T>::zero();
@@ -1345,7 +1350,7 @@ impl<T: Config> Pallet<T> {
 		liquidity_asset_id: CurrencyIdOf<T>,
 		reward_token: CurrencyIdOf<T>,
 	) -> Result<BalanceOf<T>, DispatchError> {
-		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
+		Self::ensure_3rdparty_rewards_enabled(liquidity_asset_id)?;
 
 		let calc = RewardsCalculator::schedule_rewards::<T>(
 			user.clone(),
@@ -1573,7 +1578,7 @@ impl<T: Config> ProofOfStakeRewardsApi<T::AccountId, BalanceOf<T>, CurrencyIdOf<
 		user: T::AccountId,
 		liquidity_asset_id: CurrencyIdOf<T>,
 	) -> Result<BalanceOf<T>, DispatchError> {
-		Self::ensure_is_promoted_pool(liquidity_asset_id)?;
+		Self::ensure_native_rewards_enabled(liquidity_asset_id)?;
 
 		let calc = RewardsCalculator::mining_rewards::<T>(user.clone(), liquidity_asset_id)?;
 		let (rewards_info, total_available_rewards) =

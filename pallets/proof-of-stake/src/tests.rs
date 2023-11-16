@@ -4112,3 +4112,82 @@ fn accept_3rdparty_rewards_with_liq_token_and_min_volume() {
 			),);
 		});
 }
+
+#[test]
+#[serial]
+fn user_can_withdraw_liquidity_from_withdrown_rewards_when_its_not_used_for_liquidity_mining() {
+	ExtBuilder::new()
+		.issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
+		.issue(BOB, LIQUIDITY_TOKEN, 100)
+		.issue(CHARLIE, LIQUIDITY_TOKEN, 100)
+		.execute_with_default_mocks(|| {
+			System::set_block_number(1);
+
+			ProofOfStake::reward_pool(
+				RuntimeOrigin::signed(ALICE),
+				REWARDED_PAIR,
+				REWARD_TOKEN,
+				REWARD_AMOUNT,
+				10u32.into(),
+			)
+			.unwrap();
+
+			roll_to_session::<Test>(1);
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(BOB),
+				LIQUIDITY_TOKEN,
+				100,
+				REWARD_TOKEN,
+				None,
+			)
+			.unwrap();
+
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(CHARLIE),
+				LIQUIDITY_TOKEN,
+				100,
+				REWARD_TOKEN,
+				None,
+			)
+			.unwrap();
+
+			roll_to_session::<Test>(2);
+
+			assert_eq!(
+				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
+				Ok(500)
+			);
+
+			assert_eq!(
+				ProofOfStake::calculate_3rdparty_rewards_amount(
+					CHARLIE,
+					LIQUIDITY_TOKEN,
+					REWARD_TOKEN
+				),
+				Ok(500)
+			);
+			ProofOfStake::deactivate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(CHARLIE),
+				LIQUIDITY_TOKEN,
+				100,
+				REWARD_TOKEN,
+			)
+			.unwrap();
+
+			roll_to_session::<Test>(3);
+
+			assert_eq!(
+				ProofOfStake::calculate_3rdparty_rewards_amount(BOB, LIQUIDITY_TOKEN, REWARD_TOKEN),
+				Ok(1500)
+			);
+
+			assert_eq!(
+				ProofOfStake::calculate_3rdparty_rewards_amount(
+					CHARLIE,
+					LIQUIDITY_TOKEN,
+					REWARD_TOKEN
+				),
+				Ok(500)
+			);
+		});
+}

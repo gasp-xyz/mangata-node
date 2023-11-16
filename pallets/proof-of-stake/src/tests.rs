@@ -1363,8 +1363,8 @@ fn rewards_schedule_is_stored() {
 				RewardsSchedulesList::<Test>::get(0).unwrap(),
 				(
 					Schedule {
-						scheduled_at: 0u64,
-						last_session: 5u64,
+						scheduled_at: 0u32,
+						last_session: 5u32,
 						liq_token: LIQUIDITY_TOKEN,
 						reward_token: REWARD_TOKEN,
 						amount_per_session: rewards_per_session,
@@ -1407,8 +1407,8 @@ fn rewards_linked_list_insert_multiple_schedules() {
 				RewardsSchedulesList::<Test>::get(0).unwrap(),
 				(
 					Schedule {
-						scheduled_at: 0u64,
-						last_session: 1u64,
+						scheduled_at: 0u32,
+						last_session: 1u32,
 						liq_token: LIQUIDITY_TOKEN,
 						reward_token: REWARD_TOKEN,
 						amount_per_session: REWARD_AMOUNT / 1,
@@ -1421,8 +1421,8 @@ fn rewards_linked_list_insert_multiple_schedules() {
 				RewardsSchedulesList::<Test>::get(1).unwrap(),
 				(
 					Schedule {
-						scheduled_at: 0u64,
-						last_session: 2u64,
+						scheduled_at: 0u32,
+						last_session: 2u32,
 						liq_token: LIQUIDITY_TOKEN,
 						reward_token: REWARD_TOKEN,
 						amount_per_session: REWARD_AMOUNT / 2,

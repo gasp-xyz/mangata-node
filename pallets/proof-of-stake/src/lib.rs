@@ -100,8 +100,8 @@ pub type ScheduleId = u64;
 #[scale_info(skip_type_params(T))]
 
 pub struct Schedule<T: Config> {
-	scheduled_at: u64,
-	last_session: u64,
+	scheduled_at: SessionId,
+	last_session: SessionId,
 	liq_token: CurrencyIdOf<T>,
 	reward_token: CurrencyIdOf<T>,
 	amount_per_session: BalanceOf<T>,
@@ -203,7 +203,7 @@ pub enum ThirdPartyActivationKind<CurrencyId> {
 }
 
 const PALLET_ID: frame_support::PalletId = frame_support::PalletId(*b"rewards!");
-pub type SessionId = u64;
+pub type SessionId = u32;
 #[frame_support::pallet]
 pub mod pallet {
 
@@ -216,7 +216,7 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
-			let session_id = Self::session_index() as u64;
+			let session_id = Self::session_index();
 
 			// NOTE: 1R
 			if Self::is_new_session() {
@@ -695,7 +695,7 @@ pub mod pallet {
 			pool: (CurrencyIdOf<T>, CurrencyIdOf<T>),
 			token_id: CurrencyIdOf<T>,
 			amount: BalanceOf<T>,
-			schedule_end: BlockNumberFor<T>,
+			schedule_end: SessionId,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			Self::reward_pool_impl(sender, pool, token_id, amount, schedule_end)
@@ -1389,7 +1389,7 @@ impl<T: Config> Pallet<T> {
 		pool: (CurrencyIdOf<T>, CurrencyIdOf<T>),
 		token_id: CurrencyIdOf<T>,
 		amount: BalanceOf<T>,
-		schedule_end: BlockNumberFor<T>,
+		schedule_end: SessionId,
 	) -> DispatchResult {
 		let liquidity_token_id = <T as Config>::ValuationApi::get_liquidity_asset(pool.0, pool.1)
 			.map_err(|_| Error::<T>::PoolDoesNotExist)?;
@@ -1429,8 +1429,8 @@ impl<T: Config> Pallet<T> {
 		let tail = SchedulesListMetadata::<T>::get().tail;
 
 		let schedule = Schedule {
-			scheduled_at: Self::session_index() as u64,
-			last_session: schedule_end.saturated_into::<u64>(),
+			scheduled_at: Self::session_index(),
+			last_session: schedule_end,
 			liq_token: liquidity_token_id,
 			reward_token: token_id,
 			amount_per_session,

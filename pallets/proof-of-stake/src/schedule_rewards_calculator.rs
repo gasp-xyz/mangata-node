@@ -115,7 +115,7 @@ impl<T: Config> ScheduleRewardsCalculator<T> {
 		liquidity_asset_id: CurrencyIdOf<T>,
 		liquidity_assets_reward: CurrencyIdOf<T>,
 	) {
-		let session_id = Pallet::<T>::session_index() as u64;
+		let session_id = Pallet::<T>::session_index();
 
 		let (cumulative, idx) =
 			ScheduleRewardsPerLiquidity::<T>::get((liquidity_asset_id, liquidity_assets_reward));
@@ -173,7 +173,7 @@ impl<T: Config> ScheduleRewardsCalculator<T> {
 		liquidity_assets_reward: CurrencyIdOf<T>,
 	) -> BalanceOf<T> {
 		ScheduleRewardsTotal::<T>::get((liquidity_asset_id, liquidity_assets_reward))
-			.total_rewards(Pallet::<T>::session_index() as u64)
+			.total_rewards(Pallet::<T>::session_index())
 	}
 
 	/// returns amount of schedule rewards that has been accumulated since last update of `ScheduleRewardsPerLiquidity`
@@ -184,7 +184,7 @@ impl<T: Config> ScheduleRewardsCalculator<T> {
 		diff: BalanceOf<T>,
 		change: bool,
 	) {
-		let session_id = Pallet::<T>::session_index() as u64;
+		let session_id = Pallet::<T>::session_index();
 		let kind =
 			if change { LiquidityModification::Increase } else { LiquidityModification::Decrease };
 		TotalActivatedLiquidityForSchedules::<T>::mutate(
@@ -199,7 +199,7 @@ impl<T: Config> ScheduleRewardsCalculator<T> {
 		liquidity_asset_id: CurrencyIdOf<T>,
 		liquidity_assets_reward: CurrencyIdOf<T>,
 	) -> BalanceOf<T> {
-		let session_id = Pallet::<T>::session_index() as u64;
+		let session_id = Pallet::<T>::session_index();
 		TotalActivatedLiquidityForSchedules::<T>::get(liquidity_asset_id, liquidity_assets_reward)
 			.total(session_id)
 	}

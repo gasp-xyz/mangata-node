@@ -796,7 +796,6 @@ impl_runtime_apis! {
 			user: AccountId,
 		) -> Vec<(TokenId, TokenId, Balance)>{
 			pallet_proof_of_stake::Pallet::<Runtime>::calculate_3rdparty_rewards_all(user)
-				.unwrap_or_default()
 		}
 	}
 

@@ -927,11 +927,6 @@ impl<T: Config> Pallet<T> {
 		liquidity_asset_id: CurrencyIdOf<T>,
 		amount: BalanceOf<T>,
 	) -> DispatchResult {
-		ensure!(
-			ActivatedNativeRewardsLiq::<T>::get(user.clone(), liquidity_asset_id).is_zero(),
-			Error::<T>::LiquidityLockedIn3rdpartyRewards
-		);
-
 		if amount > BalanceOf::<T>::zero() {
 			Self::set_liquidity_burning_checkpoint(user.clone(), liquidity_asset_id, amount)?;
 			Pallet::<T>::deposit_event(Event::LiquidityDeactivated(
@@ -1245,6 +1240,15 @@ impl<T: Config> Pallet<T> {
 		ensure!(
 			rewards_info.activated_amount >= liquidity_assets_burned,
 			Error::<T>::NotEnoughAssets
+		);
+
+		ensure!(
+			rewards_info
+				.activated_amount
+				.checked_sub(&ActivatedNativeRewardsLiq::<T>::get(user.clone(), liquidity_asset_id))
+				.ok_or(Error::<T>::MathOverflow)? >=
+				liquidity_assets_burned,
+			Error::<T>::LiquidityLockedIn3rdpartyRewards
 		);
 
 		let calc = RewardsCalculator::mining_rewards::<T>(user.clone(), liquidity_asset_id)?;

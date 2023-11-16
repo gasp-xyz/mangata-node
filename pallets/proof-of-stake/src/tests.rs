@@ -2701,6 +2701,84 @@ fn fail_to_transfer_tokens_that_has_been_partially_deactivated() {
 
 #[test]
 #[serial]
+fn allow_to_deactive_native_liq_when_only_part_of_it_is_used_for_3rdpaty_rewards() {
+	// 1. activate tokens for native rewards
+	// 2. re-activate tokens for 3rdparty rewards
+	// 4. deactivate tokens for 3rdparty rewards
+	// 5. fail to transfer assets as they are still locked
+	// 6. deactivate tokens for native rewards
+	// 7. successfully transfer unlocked tokens
+	ExtBuilder::new()
+		.issue(ALICE, FIRST_REWARD_TOKEN, REWARD_AMOUNT)
+		.issue(ALICE, SECOND_REWARD_TOKEN, 100_000u128)
+		.issue(BOB, LIQUIDITY_TOKEN, 100)
+		.execute_with_default_mocks(|| {
+			System::set_block_number(1);
+
+			ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 1u8)
+				.unwrap();
+			ProofOfStake::reward_pool(
+				RuntimeOrigin::signed(ALICE),
+				REWARDED_PAIR,
+				FIRST_REWARD_TOKEN,
+				REWARD_AMOUNT,
+				10u32.into(),
+			)
+			.unwrap();
+			ProofOfStake::activate_liquidity_for_native_rewards(
+				RuntimeOrigin::signed(BOB),
+				LIQUIDITY_TOKEN,
+				100,
+				None,
+			)
+			.unwrap();
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(BOB),
+				LIQUIDITY_TOKEN,
+				80,
+				FIRST_REWARD_TOKEN,
+				Some(ThirdPartyActivationKind::NativeRewardsLiquidity),
+			)
+			.unwrap();
+
+			assert_err!(
+				ProofOfStake::deactivate_liquidity_for_native_rewards(
+					RuntimeOrigin::signed(BOB),
+					LIQUIDITY_TOKEN,
+					100,
+				),
+				Error::<Test>::LiquidityLockedIn3rdpartyRewards
+			);
+
+			assert_ok!(ProofOfStake::deactivate_liquidity_for_native_rewards(
+				RuntimeOrigin::signed(BOB),
+				LIQUIDITY_TOKEN,
+				20,
+			));
+
+			assert_err!(
+				TokensOf::<Test>::transfer(
+					LIQUIDITY_TOKEN,
+					&BOB,
+					&CHARLIE,
+					100,
+					ExistenceRequirement::AllowDeath
+				),
+				orml_tokens::Error::<Test>::BalanceTooLow
+			);
+
+			assert_ok!(TokensOf::<Test>::transfer(
+				LIQUIDITY_TOKEN,
+				&BOB,
+				&CHARLIE,
+				20,
+				ExistenceRequirement::AllowDeath
+			));
+		});
+}
+
+#[test]
+#[serial]
 fn when_liquidity_mining_is_reused_it_is_unlocked_properly() {
 	ExtBuilder::new()
 		.issue(ALICE, FIRST_REWARD_TOKEN, REWARD_AMOUNT)

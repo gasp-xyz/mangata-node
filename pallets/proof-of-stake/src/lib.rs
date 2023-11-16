@@ -442,6 +442,13 @@ pub mod pallet {
 		LiquidityDeactivated(T::AccountId, CurrencyIdOf<T>, BalanceOf<T>),
 		RewardsClaimed(T::AccountId, CurrencyIdOf<T>, BalanceOf<T>),
 		ThirdPartyRewardsClaimed(T::AccountId, CurrencyIdOf<T>, CurrencyIdOf<T>, BalanceOf<T>),
+		ThirdPartyLiquidityActivated(T::AccountId, CurrencyIdOf<T>, CurrencyIdOf<T>, BalanceOf<T>),
+		ThirdPartyLiquidityDeactivated(
+			T::AccountId,
+			CurrencyIdOf<T>,
+			CurrencyIdOf<T>,
+			BalanceOf<T>,
+		),
 	}
 
 	#[pallet::storage]
@@ -1019,7 +1026,12 @@ impl<T: Config> Pallet<T> {
 			_ => {},
 		}
 
-		Pallet::<T>::deposit_event(Event::LiquidityActivated(user, liquidity_asset_id, amount));
+		Pallet::<T>::deposit_event(Event::ThirdPartyLiquidityActivated(
+			user,
+			liquidity_asset_id,
+			reward_token,
+			amount,
+		));
 
 		Ok(())
 	}
@@ -1037,9 +1049,10 @@ impl<T: Config> Pallet<T> {
 				amount,
 				rewards_asset_id,
 			)?;
-			Pallet::<T>::deposit_event(Event::LiquidityDeactivated(
+			Pallet::<T>::deposit_event(Event::ThirdPartyLiquidityDeactivated(
 				user,
 				liquidity_asset_id,
+				rewards_asset_id,
 				amount,
 			));
 		}

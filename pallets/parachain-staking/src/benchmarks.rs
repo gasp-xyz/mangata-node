@@ -136,7 +136,7 @@ fn create_funded_user<T: Config<Balance = BalanceOf<T>, CurrencyId = CurrencyIdO
 	let funding_account: T::AccountId = account("funding", 0u32, 0u32);
 	const SEED: u32 = 0;
 	let user = account(string, n, SEED);
-	log::info!("create user {}-{}-{}", string, n, SEED);
+	log::debug!("create user {}-{}-{}", string, n, SEED);
 	let v = v.unwrap_or((1_000_000_000 * DOLLAR).to_balance::<T>());
 	assert_ok!(T::Currency::transfer(
 		token_id.into(),
@@ -305,7 +305,7 @@ benchmarks! {
 			);
 			if res.is_err(){
 				let res_str: &str = res.unwrap_err().try_into().unwrap();
-				log::info!("res_str: {:?}", res_str);
+				log::debug!("res_str: {:?}", res_str);
 			} else {
 				let collator = res.unwrap();
 			}

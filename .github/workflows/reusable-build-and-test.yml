@@ -34,7 +34,7 @@ jobs:
     container:
       image: ${{ inputs.builder_image }}
       env:
-        DOCKER_HOST: 'unix:///run/docker/docker.sock'
+        DOCKER_HOST: "unix:///run/docker/docker.sock"
       volumes:
         - /run/docker:/run/docker
     steps:
@@ -42,8 +42,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
 
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
@@ -130,8 +130,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
         with:
@@ -154,8 +154,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
         with:
@@ -179,8 +179,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
         with:
@@ -210,8 +210,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
         with:
@@ -236,8 +236,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
         with:
@@ -272,8 +272,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
 
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
@@ -298,7 +298,7 @@ jobs:
       - name: Run pallet benchmarks
         run: |
           mkdir ./benchmarks && target/release/mangata-node benchmark pallet \
-          -l=info,xyk=error,collective-mangata=warn,bootstrap=warn \
+          -l=info,runtime::collective=warn \
           --chain mangata-kusama \
           --execution wasm \
           --wasm-execution compiled \
@@ -321,7 +321,6 @@ jobs:
           name: benchmarks
           path: ./benchmarks
 
-
   build-wasms:
     name: Export wasm artifacts
     runs-on: [compile-gke]
@@ -335,8 +334,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
 
       - name: Cache the Cargo dependencies
         uses: mansagroup/gcs-cache-action@v1.0.3
@@ -362,4 +361,3 @@ jobs:
           /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=mangata-rococo -l=info,xyk=error > /dev/null'
           /bin/bash -c 'target/release/mangata-node export-genesis-state --chain=mangata-rococo-local -l=info,xyk=error > /dev/null'
           /bin/bash -c 'target/release/mangata-node export-genesis-wasm --chain=mangata-rococo-local -l=info,xyk=error > /dev/null'
-

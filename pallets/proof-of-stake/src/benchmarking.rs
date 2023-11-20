@@ -46,7 +46,7 @@ where
 }
 
 benchmarks! {
-	claim_rewards_all{
+	claim_native_rewards{
 		// 1. create
 		// 2. promote
 		// 3. mint
@@ -107,7 +107,7 @@ benchmarks! {
 		 );
 	}
 
-	activate_liquidity{
+	activate_liquidity_for_native_rewards{
 		// activate :
 		// 1 crate pool
 		// 2 promote pool

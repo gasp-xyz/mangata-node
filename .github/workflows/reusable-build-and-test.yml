@@ -301,7 +301,7 @@ jobs:
       - name: Run pallet benchmarks
         run: |
           mkdir ./benchmarks && target/release/mangata-node benchmark pallet \
-          -l=info,runtime::collective=warn \
+          -l=info,runtime::collective=warn,xyk=warn \
           --chain mangata-kusama \
           --execution wasm \
           --wasm-execution compiled \

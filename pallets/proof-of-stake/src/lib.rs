@@ -90,6 +90,48 @@
 //!     [`Pallet::deactivate_liquidity_for_3rdparty_rewards`].
 //!     * Liquidity can be activated for liquidity mining rewards [`Pallet::activate_liquidity`].
 //!     * Liquidity can be activated for scheduled rewards [`Pallet::activate_liquidity_for_3rdparty_rewards`] with [`ThirdPartyActivationKind::Mining`].
+//!
+//! ## Unlocking tokens used for rewards
+//!
+//! Once liquidity tokens are used to sign up for rewards they persist on user account but they
+//! become reserved/untransferable. In order to unlock them they need to be deactivated. Depending on rewards kind
+//! (native or 3rdparty) deactivation process differs.
+//!
+//! ### Native rewards
+//! - If liq tokens are used *only* for native rewards they are locked/unlocked in the same moment
+//! liquidity is activated/deactivated.
+//! - If liq tokens are `reactivated` (see [`ThirdPartyActivationKind::NativeRewardsLiquidity`])
+//! then:
+//! 	* remaining( **not reactivated**) liq tokens that were not reactivated can be unlocked using [`Pallet::deactivate_liquidity_for_native_rewards`]
+//! 	* reactivated liq tokens can be unlocked only after all of liquidity tokens ( **not only reactivated part** ) are deactivated from 3rdparty tokens and then [`Pallet::deactivate_liquidity_for_native_rewards`] is used
+//!
+//! ### 3rdparty rewards
+//! If liq tokens are used for 3rdparty rewards they are locked in the moment of activation. To get
+//! them unlocked you need to unlock all of them(liq tokens) for every 3rdparty rewards schedule/token they were used/activated.
+//! Even if you want to deactivate only part of it, all of them needs to be deactivated, afterwards they
+//! can be reactivated with no penalty in terms of recevied rewards (you will get same amount of rewards as you would
+//! not be deactivating them)
+//!
+//! ### 3rdparty Rewards
+//!
+//! It may happen that a single liquidity token is rewarded with:
+//! - Liquidity Mining Rewards - because the pool was promoted by the council.
+//! - Scheduled rewards with token X - because Alice decided to do so.
+//! - Scheduled rewards with token Y - because Bob decided to do so.
+//!
+//! In that case, a single liquidity token can be used to obtain rewards from multiple sources. There are
+//! several options to do that:
+//!
+//! - The user can reuse liquidity used for liquidity mining rewards to claim scheduled rewards. In
+//!   this case, [`Pallet::activate_liquidity_for_3rdparty_rewards`] should be used with [`ActivateKind::LiquidityMining`].
+//!
+//! - The user can reuse liquidity used for scheduled rewards (X) to sign up for rewards from other tokens (provided by Bob). In that case, [`Pallet::activate_liquidity_for_3rdparty_rewards`] should be used with [`ActivateKind::ActivatedLiquidity(X)`].
+//!
+//! - The user can't directly provide liquidity activated for scheduled rewards to activate it for native rewards. Instead:
+//!     * Liquidity used for schedule rewards can be deactivated
+//!     [`Pallet::deactivate_liquidity_for_3rdparty_rewards`].
+//!     * Liquidity can be activated for liquidity mining rewards [`Pallet::activate_liquidity`].
+//!     * Liquidity can be activated for scheduled rewards [`Pallet::activate_liquidity_for_3rdparty_rewards`] with [`ThirdPartyActivationKind::Mining`].
 
 use frame_support::pallet_prelude::*;
 

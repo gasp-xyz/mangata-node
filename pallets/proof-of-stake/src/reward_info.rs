@@ -243,11 +243,15 @@ where
 #[derive(Debug)]
 pub enum RewardsCalcError {
 	CheckpointMathError,
+	NotEnoughAssets,
 }
 
 impl<T: Config> Into<Error<T>> for RewardsCalcError {
 	fn into(self) -> Error<T> {
-		Error::<T>::LiquidityCheckpointMathError
+		match self {
+			RewardsCalcError::CheckpointMathError => Error::<T>::LiquidityCheckpointMathError,
+			RewardsCalcError::NotEnoughAssets => Error::<T>::NotEnoughAssets,
+		}
 	}
 }
 
@@ -326,7 +330,7 @@ where
 			.rewards_info
 			.activated_amount
 			.checked_sub(&liquidity_assets_removed)
-			.ok_or(RewardsCalcError::CheckpointMathError)?;
+			.ok_or(RewardsCalcError::NotEnoughAssets)?;
 
 		let missing_at_checkpoint_new =
 			T::calculate_curve_position(&self.rewards_context, &self.rewards_info)

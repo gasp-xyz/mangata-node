@@ -4269,3 +4269,43 @@ fn user_can_withdraw_liquidity_from_withdrown_rewards_when_its_not_used_for_liqu
 			);
 		});
 }
+
+#[test]
+#[serial]
+fn test_NotEnoughAssets_is_triggered_when_user_wants_to_deactive_more_tokens_that_he_owns() {
+	ExtBuilder::new()
+		.issue(ALICE, REWARD_TOKEN, REWARD_AMOUNT)
+		.issue(BOB, LIQUIDITY_TOKEN, 100)
+		.execute_with_default_mocks(|| {
+			System::set_block_number(1);
+
+			ProofOfStake::reward_pool(
+				RuntimeOrigin::signed(ALICE),
+				REWARDED_PAIR,
+				REWARD_TOKEN,
+				REWARD_AMOUNT,
+				10u32.into(),
+			)
+			.unwrap();
+
+			roll_to_session::<Test>(1);
+			ProofOfStake::activate_liquidity_for_3rdparty_rewards(
+				RuntimeOrigin::signed(BOB),
+				LIQUIDITY_TOKEN,
+				100,
+				REWARD_TOKEN,
+				None,
+			)
+			.unwrap();
+
+			assert_err_ignore_postinfo!(
+				ProofOfStake::deactivate_liquidity_for_3rdparty_rewards(
+					RuntimeOrigin::signed(CHARLIE),
+					LIQUIDITY_TOKEN,
+					101,
+					REWARD_TOKEN,
+				),
+				Error::<Test>::NotEnoughAssets
+			);
+		});
+}

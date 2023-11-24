@@ -114,7 +114,7 @@ xcm-builder = { package = "staging-xcm-builder", git = "https://github.com/manga
 xcm-executor = { package = "staging-xcm-executor", git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
 
 # Crowdloan dependencies
-pallet-crowdloan-rewards = { git = "https://github.com/mangata-finance/crowdloan-rewards", branch = "upgrade/v1.1.0", default-features = false }
+pallet-crowdloan-rewards = { git = "https://github.com/mangata-finance/crowdloan-rewards", branch = "develop", default-features = false }
 
 [features]
 default = ["std"]

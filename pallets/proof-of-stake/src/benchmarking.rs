@@ -56,13 +56,21 @@ benchmarks! {
 		init::<T>();
 		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
 		let initial_amount: BalanceOf<T> = 1000000000000000000000_u128.try_into().ok().expect("should fit");
-		let expected_native_asset_id = <T as Config>::NativeCurrencyId::get();
-		let native_asset_id = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
-		let non_native_asset_id1 = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
-		let non_native_asset_id2 = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		<T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		<T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		<T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		let first_token_id = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		let second_token_id = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		let liquidity_asset_id = <T as Config>::Currency::get_next_currency_id();
 
-		let amount: BalanceOf<T> = ((40000000000000000000_u128/2_u128) + (60000000000000000000_u128/2_u128)).try_into().ok().expect("should fit");
-		let liquidity_asset_id = <T as Config>::Currency::create(&caller, amount).unwrap();
+		XykOf::<T>::create_pool(
+			caller.clone(),
+			first_token_id.into(),
+			(40000000000000000000_u128/2_u128).to_balance::<T>(),
+			second_token_id.into(),
+			(60000000000000000000_u128/2_u128).to_balance::<T>()
+		).unwrap();
+
 		PoS::<T>::update_pool_promotion(RawOrigin::Root.into(), liquidity_asset_id, 1u8).unwrap();
 
 		assert_eq!(
@@ -96,14 +104,28 @@ benchmarks! {
 
 	update_pool_promotion {
 		let caller: T::AccountId = whitelisted_caller();
-		let initial_amount: BalanceOf<T> = 1000000000000_u128.try_into().ok().expect("should fit");
-		let token_id = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		let initial_amount: BalanceOf<T> = 1000000000000000000000_u128.try_into().ok().expect("should fit");
+		<T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		<T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		<T as Config>::Currency::create(&caller, initial_amount).unwrap();
 
-	}: update_pool_promotion(RawOrigin::Root, token_id, 1u8)
+		let first_token_id = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		let second_token_id = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		let liquidity_asset_id = <T as Config>::Currency::get_next_currency_id();
+
+		XykOf::<T>::create_pool(
+			caller.clone(),
+			first_token_id.into(),
+			(40000000000000000000_u128/2_u128).to_balance::<T>(),
+			second_token_id.into(),
+			(60000000000000000000_u128/2_u128).to_balance::<T>()
+		).unwrap();
+
+	}: update_pool_promotion(RawOrigin::Root, liquidity_asset_id, 1u8)
 
 	verify {
 		assert!(
-			PoS::<T>::is_enabled(token_id)
+			PoS::<T>::is_enabled(liquidity_asset_id)
 		 );
 	}
 
@@ -118,13 +140,21 @@ benchmarks! {
 		init::<T>();
 		let caller: <T as frame_system::Config>::AccountId = whitelisted_caller();
 		let initial_amount: BalanceOf<T> = 1000000000000000000000_u128.try_into().ok().expect("should fit");
-		let expected_native_asset_id  = <T as Config>::NativeCurrencyId::get();
-		let native_asset_id = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
-		let non_native_asset_id1 = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
-		let non_native_asset_id2 = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		<T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		<T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		<T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		let first_token_id = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		let second_token_id = <T as Config>::Currency::create(&caller, initial_amount).unwrap();
+		let liquidity_asset_id = <T as Config>::Currency::get_next_currency_id();
 
-		let amount: BalanceOf<T> = ((40000000000000000000_u128/2_u128) + (60000000000000000000_u128/2_u128)).try_into().ok().expect("should fit");
-		let liquidity_asset_id = <T as Config>::Currency::create(&caller, amount).unwrap();
+		XykOf::<T>::create_pool(
+			caller.clone(),
+			first_token_id.into(),
+			(40000000000000000000_u128/2_u128).to_balance::<T>(),
+			second_token_id.into(),
+			(60000000000000000000_u128/2_u128).to_balance::<T>()
+		).unwrap();
+
 		PoS::<T>::update_pool_promotion(RawOrigin::Root.into(), liquidity_asset_id, 1u8).unwrap();
 
 		assert_eq!(

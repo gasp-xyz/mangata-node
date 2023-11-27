@@ -31,6 +31,9 @@ fn initialize_liquidity_rewards() {
 	TokensOf::<Test>::create(&acc_id, amount).unwrap();
 	TokensOf::<Test>::create(&acc_id, 10000).unwrap();
 
+	let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
+	is_liquidity_token_mock.expect().return_const(true);
+
 	ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 2u8).unwrap();
 	PromotedPoolRewards::<Test>::mutate(|pools| {
 		pools.get_mut(&4).unwrap().rewards = U256::from(0);
@@ -69,6 +72,9 @@ fn liquidity_rewards_single_user_mint_W() {
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
+
+		let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
+		is_liquidity_token_mock.expect().return_const(true);
 
 		TokensOf::<Test>::create(&acc_id, 10000).unwrap();
 
@@ -142,6 +148,9 @@ fn liquidity_rewards_three_users_burn_W() {
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 		TokensOf::<Test>::create(&acc_id, 10000).unwrap();
 
+		let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
+		is_liquidity_token_mock.expect().return_const(true);
+
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
 
 		TokensOf::<Test>::transfer(0, &2, &3, 1000000, ExistenceRequirement::AllowDeath).unwrap();
@@ -199,6 +208,9 @@ fn liquidity_rewards_claim_W() {
 		)
 		.unwrap();
 
+		let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
+		is_liquidity_token_mock.expect().return_const(true);
+
 		TokensOf::<Test>::create(&acc_id, 10000).unwrap();
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
 		let liquidity_tokens_owned = TokensOf::<Test>::free_balance(4, &2);
@@ -235,6 +247,9 @@ fn liquidity_rewards_promote_pool_W() {
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 
+		let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
+		is_liquidity_token_mock.expect().return_const(true);
+
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
 	});
 }
@@ -252,6 +267,10 @@ fn liquidity_rewards_promote_pool_already_promoted_NW() {
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
+
+		let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
+		is_liquidity_token_mock.expect().return_const(true);
+
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
 
 		// assert!(Test::is_enabled(4));
@@ -273,6 +292,10 @@ fn liquidity_rewards_work_after_burn_W() {
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 		TokensOf::<Test>::create(&acc_id, 10000).unwrap();
+
+		let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
+		is_liquidity_token_mock.expect().return_const(true);
+
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
 
 		TokensOf::<Test>::transfer(0, &2, &3, 1000000, ExistenceRequirement::AllowDeath).unwrap();
@@ -324,6 +347,9 @@ fn liquidity_rewards_deactivate_transfer_controled_W() {
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 
+		let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
+		is_liquidity_token_mock.expect().return_const(true);
+
 		TokensOf::<Test>::create(&acc_id, 10000).unwrap();
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
 
@@ -369,6 +395,9 @@ fn liquidity_rewards_deactivate_more_NW() {
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 
+		let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
+		is_liquidity_token_mock.expect().return_const(true);
+
 		TokensOf::<Test>::create(&acc_id, 10000).unwrap();
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
 
@@ -404,6 +433,9 @@ fn liquidity_rewards_activate_more_NW() {
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
+
+		let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
+		is_liquidity_token_mock.expect().return_const(true);
 
 		TokensOf::<Test>::create(&acc_id, 10000).unwrap();
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
@@ -487,6 +519,9 @@ fn liquidity_rewards_not_yet_claimed_already_claimed_W() {
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 
+		let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
+		is_liquidity_token_mock.expect().return_const(true);
+
 		TokensOf::<Test>::transfer(
 			0,
 			&2,
@@ -553,6 +588,9 @@ fn extreme_case_pool_ratio() {
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 
+		let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
+		is_liquidity_token_mock.expect().return_const(true);
+
 		TokensOf::<Test>::create(&acc_id, max).unwrap();
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
 
@@ -593,6 +631,9 @@ fn rewards_rounding_during_often_mint() {
 			ExistenceRequirement::AllowDeath,
 		)
 		.unwrap();
+
+		let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
+		is_liquidity_token_mock.expect().return_const(true);
 
 		let calculate_liq_tokens_amount = |first_amount: u128, second_amount: u128| -> u128 {
 			((first_amount / 2) + (second_amount / 2)).try_into().unwrap()
@@ -684,6 +725,9 @@ fn rewards_storage_right_amounts_start1() {
 			ExistenceRequirement::AllowDeath,
 		)
 		.unwrap();
+
+		let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
+		is_liquidity_token_mock.expect().return_const(true);
 
 		TokensOf::<Test>::create(&acc_id, 10000).unwrap();
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
@@ -830,6 +874,9 @@ fn rewards_storage_right_amounts_start2() {
 		)
 		.unwrap();
 
+		let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
+		is_liquidity_token_mock.expect().return_const(true);
+
 		// XykStorage::create_pool(RuntimeOrigin::signed(2), 1, 10000, 2, 10000).unwrap();
 		TokensOf::<Test>::create(&acc_id, 10000).unwrap();
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
@@ -967,7 +1014,9 @@ fn rewards_storage_right_amounts_start3() {
 		)
 		.unwrap();
 
-		// XykStorage::create_pool(RuntimeOrigin::signed(2), 1, 10000, 2, 10000).unwrap();
+		let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
+		is_liquidity_token_mock.expect().return_const(true);
+
 		TokensOf::<Test>::create(&acc_id, 10000).unwrap();
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 1u8).unwrap();
 
@@ -1045,6 +1094,10 @@ fn liquidity_rewards_transfered_liq_tokens_produce_rewards_W() {
 			ExistenceRequirement::AllowDeath,
 		)
 		.unwrap();
+
+		let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
+		is_liquidity_token_mock.expect().return_const(true);
+
 
 		TokensOf::<Test>::create(&acc_id, 10000).unwrap();
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 2u8).unwrap();
@@ -1160,6 +1213,9 @@ fn claim_rewards_from_pool_that_has_been_disabled() {
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
 		TokensOf::<Test>::create(&acc_id, amount).unwrap();
+
+		let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
+		is_liquidity_token_mock.expect().return_const(true);
 
 		TokensOf::<Test>::transfer(
 			0,
@@ -2573,6 +2629,9 @@ fn liquidity_minting_liquidity_can_be_resused() {
 		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
 
+			let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
+			is_liquidity_token_mock.expect().return_const(true);
+
 			ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 1u8)
 				.unwrap();
 			ProofOfStake::reward_pool(
@@ -2628,6 +2687,9 @@ fn fail_to_transfer_tokens_that_has_been_partially_deactivated() {
 		.issue(BOB, LIQUIDITY_TOKEN, 100)
 		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
+
+			let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
+			is_liquidity_token_mock.expect().return_const(true);
 
 			ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 1u8)
 				.unwrap();
@@ -2715,6 +2777,10 @@ fn allow_to_deactive_native_liq_when_only_part_of_it_is_used_for_3rdpaty_rewards
 		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
 
+			let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
+			is_liquidity_token_mock.expect().return_const(true);
+
+
 			ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 1u8)
 				.unwrap();
 			ProofOfStake::reward_pool(
@@ -2786,6 +2852,9 @@ fn when_liquidity_mining_is_reused_it_is_unlocked_properly() {
 		.issue(BOB, LIQUIDITY_TOKEN, 100)
 		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
+
+			let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
+			is_liquidity_token_mock.expect().return_const(true);
 
 			ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 1u8)
 				.unwrap();
@@ -2881,6 +2950,9 @@ fn liquidity_can_be_deactivated_when_all_reward_participation_were_deactivated()
 		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
 
+			let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
+			is_liquidity_token_mock.expect().return_const(true);
+
 			ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 1u8)
 				.unwrap();
 			ProofOfStake::reward_pool(
@@ -2973,6 +3045,9 @@ fn can_claim_schedule_rewards() {
 		.issue(BOB, LIQUIDITY_TOKEN, 100)
 		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
+
+			let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
+			is_liquidity_token_mock.expect().return_const(true);
 
 			ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 1u8)
 				.unwrap();
@@ -3117,6 +3192,9 @@ fn can_not_provide_liquidity_for_schedule_rewards_when_its_only_activated_for_li
 		.issue(BOB, LIQUIDITY_TOKEN, 100)
 		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
+
+			let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
+			is_liquidity_token_mock.expect().return_const(true);
 
 			ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 1u8)
 				.unwrap();
@@ -4003,6 +4081,9 @@ fn activity_for_schedule_rewards_can_be_activated_only_after_pool_is_rewarded_fo
 		.issue(BOB, LIQUIDITY_TOKEN, 100)
 		.execute_with_default_mocks(|| {
 			System::set_block_number(1);
+
+			let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
+			is_liquidity_token_mock.expect().return_const(true);
 
 			assert_err_ignore_postinfo!(
 				ProofOfStake::activate_liquidity_for_3rdparty_rewards(

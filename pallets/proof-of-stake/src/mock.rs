@@ -205,6 +205,10 @@ mockall::mock! {
 	liquidity_token_id: TokenId,
 	) -> Result<(TokenId, TokenId), DispatchError>;
 
+		fn is_liquidity_token(
+			liquidity_token_id: TokenId,
+		) -> bool;
+
 	fn valuate_liquidity_token(
 	liquidity_token_id: TokenId,
 	liquidity_token_amount: Balance,
@@ -227,6 +231,8 @@ mockall::mock! {
 	first_asset_id: TokenId,
 	second_asset_id: TokenId,
 	) -> Result<(Balance, Balance), DispatchError>;
+
+
 	}
 }
 

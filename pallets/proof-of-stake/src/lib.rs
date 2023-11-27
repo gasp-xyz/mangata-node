@@ -478,6 +478,8 @@ pub mod pallet {
 		LiquidityLockedIn3rdpartyRewards,
 		// No rewards to claim
 		NoThirdPartyPartyRewardsToClaim,
+		// cannot promote solo token
+		SoloTokenPromotionForbiddenError,
 	}
 
 	#[pallet::event]
@@ -685,6 +687,11 @@ pub mod pallet {
 			liquidity_mining_issuance_weight: u8,
 		) -> DispatchResult {
 			ensure_root(origin)?;
+
+			ensure!(
+				<<T as Config>::ValuationApi as Valuate<BalanceOf<T>, CurrencyIdOf<T>>>::is_liquidity_token(liquidity_token_id),
+				Error::<T>::SoloTokenPromotionForbiddenError
+			);
 
 			if liquidity_mining_issuance_weight > 0 {
 				<Self as ProofOfStakeRewardsApi<_, _, _>>::enable(

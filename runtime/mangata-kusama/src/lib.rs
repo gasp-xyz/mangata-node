@@ -367,6 +367,13 @@ impl Into<CallType> for RuntimeCall {
 	}
 }
 
+use sp_runtime::generic::ExtendedCall;
+impl ExtendedCall for RuntimeCall {
+	fn context(&self) -> Option<(String, String)> {
+		Some(("dummy_call".to_string(), "dummy_params".to_string()))
+	}
+}
+
 pub type OnChargeTransactionHandler<T> = ThreeCurrencyOnChargeAdapter<
 	orml_tokens::MultiTokenCurrencyAdapter<T>,
 	ToAuthor<T>,

@@ -72,6 +72,13 @@ pub type UncheckedExtrinsic = runtime_types::UncheckedExtrinsic<Runtime, Runtime
 /// Extrinsic type that has already been checked.
 pub type CheckedExtrinsic = runtime_types::CheckedExtrinsic<Runtime, RuntimeCall>;
 
+use sp_runtime::generic::ExtendedCall;
+impl ExtendedCall for RuntimeCall {
+	fn context(&self) -> Option<(String, String)> {
+		Some(("dummy_call".to_string(), "dummy_params".to_string()))
+	}
+}
+
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
 	Runtime,

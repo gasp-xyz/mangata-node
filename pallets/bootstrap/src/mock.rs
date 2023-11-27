@@ -170,6 +170,11 @@ impl pallet_proof_of_stake::Config for Test {
 	type LiquidityMiningIssuanceVault = FakeLiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = ConstU32<10000>;
 	type WeightInfo = ();
+	type RewardsSchedulesLimit = ConstU32<10>;
+	type Min3rdPartyRewardValutationPerSession = ConstU128<10>;
+	type Min3rdPartyRewardVolume = ConstU128<10>;
+	type ValuationApi = Xyk;
+	type SchedulesPerBlock = ConstU32<5>;
 }
 
 impl BootstrapBenchmarkingConfig for Test {}

@@ -24,6 +24,8 @@ mangata-kusama-runtime = { path = "../runtime/mangata-kusama"}
 mangata-rococo-runtime = { path = "../runtime/mangata-rococo"}
 xyk-rpc = { path = "../pallets/xyk/rpc" }
 xyk-runtime-api = { path = "../pallets/xyk/runtime-api" }
+proof-of-stake-runtime-api = { path = '../pallets/proof-of-stake/runtime-api' }
+proof-of-stake-rpc = { path = '../pallets/proof-of-stake/rpc' }
 
 # Substrate
 frame-benchmarking = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop" }

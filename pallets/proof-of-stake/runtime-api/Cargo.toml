@@ -1,6 +1,6 @@
 [package]
-authors = ["Mangata team"]
-name = "xyk-runtime-api"
+authors = ['Mangata team']
+name = "proof-of-stake-runtime-api"
 version = "2.0.0"
 edition = "2018"
 license = "GPL-3.0-or-later"
@@ -14,23 +14,23 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 	"derive",
 ] }
 
+sp-api = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+sp-std = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
+sp-runtime = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
 frame-support = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
 frame-system = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-api = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
 sp-core = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-runtime = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-sp-std = { git = "https://github.com/mangata-finance/polkadot-sdk", branch = "develop", default-features = false }
-
-[dev-dependencies]
-serde_json = "1.0.68"
 
 [features]
 default = ["std"]
+
 std = [
 	"codec/std",
 	"frame-support/std",
 	"frame-system/std",
 	"serde",
 	"sp-api/std",
+	"sp-core/std",
 	"sp-runtime/std",
+	"sp-std/std",
 ]

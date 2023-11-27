@@ -268,6 +268,12 @@ impl pallet_proof_of_stake::Config for Runtime {
 	type LiquidityMiningIssuanceVault = cfg::pallet_issuance::LiquidityMiningIssuanceVault;
 	type RewardsDistributionPeriod = cfg::SessionLenghtOf<Runtime>;
 	type WeightInfo = weights::pallet_proof_of_stake_weights::ModuleWeight<Runtime>;
+	type RewardsSchedulesLimit = cfg::pallet_proof_of_stake::RewardsSchedulesLimit;
+	type Min3rdPartyRewardValutationPerSession =
+		cfg::pallet_proof_of_stake::Min3rdPartyRewardValutationPerSession;
+	type Min3rdPartyRewardVolume = cfg::pallet_proof_of_stake::Min3rdPartyRewardVolume;
+	type SchedulesPerBlock = cfg::pallet_proof_of_stake::SchedulesPerBlock;
+	type ValuationApi = Xyk;
 }
 
 impl pallet_bootstrap::BootstrapBenchmarkingConfig for Runtime {}
@@ -490,6 +496,12 @@ impl pallet_collective_mangata::Config<CouncilCollective> for Runtime {
 // To ensure that BlocksPerRound is not zero, breaking issuance calculations
 // Also since 1 block is used for session change, atleast 1 block more needed for extrinsics to work
 const_assert!(<Runtime as parachain_staking::Config>::BlocksPerRound::get() >= 2);
+
+const_assert!(
+	<Runtime as pallet_proof_of_stake::Config>::RewardsSchedulesLimit::get() >=
+		(<Runtime as pallet_proof_of_stake::Config>::SchedulesPerBlock::get() - 1) *
+			<Runtime as parachain_staking::Config>::BlocksPerRound::get()
+);
 
 impl parachain_staking::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -779,6 +791,33 @@ mod benches {
 }
 
 impl_runtime_apis! {
+
+
+	impl proof_of_stake_runtime_api::ProofOfStakeApi<Block, Balance , TokenId,  AccountId> for Runtime{
+		fn calculate_native_rewards_amount(
+			user: AccountId,
+			liquidity_asset_id: TokenId,
+		) -> Balance{
+			pallet_proof_of_stake::Pallet::<Runtime>::calculate_native_rewards_amount(user, liquidity_asset_id)
+				.unwrap_or_default()
+		}
+
+		fn calculate_3rdparty_rewards_amount(
+			user: AccountId,
+			liquidity_asset_id: TokenId,
+			reward_asset_id: TokenId,
+		) -> Balance{
+			pallet_proof_of_stake::Pallet::<Runtime>::calculate_3rdparty_rewards_amount(user, liquidity_asset_id, reward_asset_id)
+				.unwrap_or_default()
+		}
+
+		fn calculate_3rdparty_rewards_all(
+			user: AccountId,
+		) -> Vec<(TokenId, TokenId, Balance)>{
+			pallet_proof_of_stake::Pallet::<Runtime>::calculate_3rdparty_rewards_all(user)
+		}
+	}
+
 
 	impl ver_api::VerApi<Block> for Runtime {
 		fn get_signer(

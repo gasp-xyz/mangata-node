@@ -3631,7 +3631,6 @@ impl<T: Config> Valuate<BalanceOf<T>, CurrencyIdOf<T>> for Pallet<T> {
 
 	fn is_liquidity_token(liquidity_asset_id: CurrencyIdOf<T>) -> bool {
 		LiquidityPools::<T>::get(liquidity_asset_id).is_some()
-		// <Self as XykFunctionsTrait<T::AccountId, BalanceOf<T>, CurrencyIdOf<T>>>::is_liquidity_token(liquidity_asset_id)
 	}
 }
 

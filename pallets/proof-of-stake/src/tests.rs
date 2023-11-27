@@ -1098,7 +1098,6 @@ fn liquidity_rewards_transfered_liq_tokens_produce_rewards_W() {
 		let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
 		is_liquidity_token_mock.expect().return_const(true);
 
-
 		TokensOf::<Test>::create(&acc_id, 10000).unwrap();
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), 4, 2u8).unwrap();
 
@@ -2779,7 +2778,6 @@ fn allow_to_deactive_native_liq_when_only_part_of_it_is_used_for_3rdpaty_rewards
 
 			let is_liquidity_token_mock = MockValuationApi::is_liquidity_token_context();
 			is_liquidity_token_mock.expect().return_const(true);
-
 
 			ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), LIQUIDITY_TOKEN, 1u8)
 				.unwrap();

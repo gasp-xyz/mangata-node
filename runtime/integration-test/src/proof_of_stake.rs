@@ -43,12 +43,24 @@ fn rewards_are_aligned_with_sessions() {
 		TokensOf::<Runtime>::mint(first_token_id, &charlie, amount).unwrap();
 		TokensOf::<Runtime>::mint(second_token_id, &charlie, amount).unwrap();
 
-		XykOf::<Runtime>::create_pool(RuntimeOrigin::signed(alice.clone()), first_token_id, 100000_u128, second_token_id, 100000_u128).unwrap();
+		XykOf::<Runtime>::create_pool(
+			RuntimeOrigin::signed(alice.clone()),
+			first_token_id,
+			100000_u128,
+			second_token_id,
+			100000_u128,
+		)
+		.unwrap();
 
 		assert_eq!(0, pallet_session::Pallet::<Runtime>::current_index());
 		ProofOfStake::update_pool_promotion(RuntimeOrigin::root(), liqudity_token_id, 1u8).unwrap();
-		ProofOfStake::activate_liquidity(RuntimeOrigin::signed(alice.clone()), liqudity_token_id, amount, None)
-			.unwrap();
+		ProofOfStake::activate_liquidity(
+			RuntimeOrigin::signed(alice.clone()),
+			liqudity_token_id,
+			amount,
+			None,
+		)
+		.unwrap();
 
 		forward_to_block(blocks_per_round - 10);
 		assert_eq!(0, pallet_session::Pallet::<Runtime>::current_index());
@@ -57,8 +69,9 @@ fn rewards_are_aligned_with_sessions() {
 			first_token_id,
 			second_token_id,
 			1000,
-			10000
-		).unwrap();
+			10000,
+		)
+		.unwrap();
 
 		forward_to_block(blocks_per_round - 2);
 		assert_eq!(0, pallet_session::Pallet::<Runtime>::current_index());
@@ -67,8 +80,9 @@ fn rewards_are_aligned_with_sessions() {
 			first_token_id,
 			second_token_id,
 			1000,
-			10000
-		).unwrap();
+			10000,
+		)
+		.unwrap();
 
 		forward_to_block(blocks_per_round - 1);
 		assert_eq!(1, pallet_session::Pallet::<Runtime>::current_index());

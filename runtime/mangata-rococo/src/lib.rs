@@ -696,6 +696,10 @@ impl pallet_maintenance::Config for Runtime {
 	type FoundationAccountsProvider = cfg::pallet_maintenance::FoundationAccountsProvider<Runtime>;
 }
 
+impl pallet_rolldown::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime
@@ -708,6 +712,7 @@ construct_runtime!(
 		Utility: pallet_utility_mangata = 4,
 		Proxy: pallet_proxy = 5,
 		Maintenance: pallet_maintenance = 6,
+		Rolldown: pallet_rolldown = 7,
 
 		// Monetary stuff.
 		Tokens: orml_tokens = 10,
